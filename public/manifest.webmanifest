@@ -1,0 +1,16 @@
+{
+  "id": "./",
+  "name": "Closet Current",
+  "short_name": "Closet Current",
+  "description": "Scan your wardrobe and recreate inspiration looks with clothes you already own.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f7f5ee",
+  "theme_color": "#283d32",
+  "icons": [
+    {"src":"icons/icon-192.png","sizes":"192x192","type":"image/png","purpose":"any"},
+    {"src":"icons/icon-512.png","sizes":"512x512","type":"image/png","purpose":"any"},
+    {"src":"icons/icon-maskable-512.png","sizes":"512x512","type":"image/png","purpose":"maskable"}
+  ]
+}

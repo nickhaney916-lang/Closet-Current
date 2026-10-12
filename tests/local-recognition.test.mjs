@@ -1,0 +1,17 @@
+import assert from 'node:assert/strict';import fs from 'node:fs';import vm from 'node:vm';
+import {localCandidates,clothingChoices,strongMatch} from '../public/local-catalog.mjs';
+const ctx={};vm.createContext(ctx);vm.runInContext(fs.readFileSync('public/taxonomy.js','utf8')+'\nglobalThis.schema=clothingSchema;',ctx);
+for(const candidate of localCandidates){if(candidate.category==='Uncategorized')continue;assert.ok(ctx.schema.types[candidate.category].includes(candidate.itemType));assert.ok(ctx.schema.sleeve.includes(candidate.sleeveLength));}
+assert.equal(new Set(localCandidates.map(x=>x.label)).size,localCandidates.length);
+const top=localCandidates[0],second=localCandidates[1];
+const choices=clothingChoices([{label:second.label,score:.15},{label:top.label,score:.6},{label:'invalid',score:.9}]);
+assert.equal(choices[0].itemType,'T-shirt');assert.equal(choices[0].sleeveLength,'Unknown');assert.equal(strongMatch(choices),true);
+assert.equal(strongMatch([{...top,score:.30},{...second,score:.28}]),false);
+assert.equal(strongMatch([{category:'Uncategorized',score:.9}]),false);
+const app=fs.readFileSync('public/app.js','utf8');
+const testContext={normalizeClothing:ctx.normalizeClothing};vm.createContext(testContext);vm.runInContext(app.slice(app.indexOf('function applyLocalChoice'),app.indexOf('async function recognizeItem')),testContext);
+const item={name:'My sweater',category:'Tops',itemType:'Sweater',sleeveLength:'Long sleeve',seasons:['Winter']};
+testContext.applyLocalChoice(item,top);assert.equal(item.itemType,'Sweater');assert.equal(item.sleeveLength,'Long sleeve');assert.equal(item.name,'My sweater');assert.equal(item.seasons[0],'Winter');
+testContext.applyLocalChoice(item,top,true);assert.equal(item.itemType,'T-shirt');assert.equal(item.sleeveLength,'Unknown');assert.equal(item.seasons[0],'Winter');
+assert.ok(!app.includes('/api/recognize'));assert.ok(!fs.readFileSync('public/local-worker.mjs','utf8').includes('api.openai.com'));
+console.log('Local label mapping, uncertain matches, manual overrides, seasons preservation and no paid API checks passed.');

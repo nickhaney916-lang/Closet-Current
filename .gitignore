@@ -1,0 +1,5 @@
+.env*
+.sites-runtime/
+dist/
+.openai/
+node_modules/
