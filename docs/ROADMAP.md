@@ -16,6 +16,25 @@ Custom SMTP is not configured. The default Supabase sender restricts recipients 
 
 Do not disable email confirmation or grant users project-team access as a workaround. Do not modify Drive Duel.
 
-## Current work — A more inviting app for younger users and parents
+## P1 — Real-phone pilot and recognition accuracy
 
-Preserve the bottom navigation, the direct Style shortcut, and every existing feature. Increase touch targets, use bright readable colors, keep clothing photos prominent, and shorten instructions. Inspiration and Style my collection remain distinct features and use the shared verified trend library where applicable.
+Status: device-check tooling added; physical-phone results still required. Updated October 13, 2026.
+
+Use More → Help & device check with an existing account. Start an optional local test, take photos of three different garments, verify the labels, create an outfit, close and reopen the app, and download a backup. Mark each step Works or Needs help. Download the test report if support is needed. The report includes sanitized scanner stages, durations and error codes, without photos, garment names, email addresses, tokens or account IDs. No report is sent automatically.
+
+Recognition logic, model loading, retry and timeout behavior have automated checks. A synthetic test image has run through the actual model; this does not establish accuracy on real clothing or physical phones. Wider signup and password-reset inbox tests remain blocked by the sender configuration above.
+
+## P1 — Cloud backup and synchronization
+
+Status: not implemented. Clothing and outfits currently stay in per-account browser IndexedDB. Different devices do not synchronize. Before offering a paid subscription, implement private account-owned storage, reliable recovery and migration of existing local closets.
+
+## P2 — Subscription readiness
+
+- Personalized feedback, favorites and recently worn outfits.
+- Reliable app-owned trend-refresh jobs with monitoring.
+- Subscription billing, cancellations, failed payments and server-side paid-feature access.
+- Pilot the full signup → clothing capture → useful outfit → return-and-recovery experience before charging.
+
+## Design work completed
+
+The brighter theme, larger controls, bottom navigation, direct Style shortcut, and all original styling features are retained. Inspiration and Style my collection remain separate features and use the shared verified trend library where applicable.

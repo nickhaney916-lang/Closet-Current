@@ -9,7 +9,7 @@ is independent of Drive Duel.
 - Continuous camera capture, video imports, and multiple clothing-photo imports.
 - Separate clothing cards with category, type, sleeves, color, pattern, fit,
   seasons, brand, size, material, occasion, and notes.
-- Optional experimental on-device FashionCLIP recognition. Its first load
+- Automatic experimental on-device FashionCLIP recognition. Its first load
   downloads about 154 MB of model weights plus runtime files. No billed AI API.
 - Inspiration reference images and links, editable outfit components, closet
   matches, substitutes, and shopping search links.
@@ -18,8 +18,17 @@ is independent of Drive Duel.
   hosting. Recognition still needs its model/runtime files available; external
   inspiration links and shopping searches require a connection.
 
-The app does not automatically import articles, verify live prices, sync closets
-between devices, or identify every clothing attribute reliably.
+The app signs users in through Supabase Auth. Clothing and outfits remain in
+per-account IndexedDB on the current browser/device; signing in does not synchronize
+them across devices. The outfit builder and Style my collection use a shared,
+weekly researched trend dataset. Retailer prices and stock are not live guarantees,
+and recognition cannot reliably identify every clothing attribute.
+
+Use More → Help & device check for an optional local pilot checklist and sanitized
+scanner diagnostics. Reports are downloaded manually; no photos, email addresses,
+credentials, garment names or account IDs are included, and no report is sent
+automatically. See [project priorities](docs/ROADMAP.md) for email-delivery setup,
+real-phone validation, cloud synchronization, and subscription readiness.
 
 ## Build and checks
 
@@ -58,8 +67,8 @@ storage belongs to each origin and does not migrate with the source code.
 
 Test importing two photos, saving different clothing details, a short video
 scan, local recognition, outfit matching, backup recovery, and installation.
-Each visitor has their own device-local closet; there is no shared closet or
-server account. Export backups regularly, especially before switching browsers
+Each authenticated account has its own device-local closet; cloud closet
+synchronization and shared household profiles are not yet implemented. Export backups regularly, especially before switching browsers
 or reinstalling.
 
 ## Source conventions

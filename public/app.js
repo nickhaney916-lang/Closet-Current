@@ -15,7 +15,7 @@ function switchView(view){
  if((stream||cameraOpening)&&view!=='scan')stopCamera();
  document.querySelectorAll('.view').forEach(x=>x.hidden=x.id!==view);
  document.querySelectorAll('.tab').forEach(x=>{const active=x.dataset.view===view;x.classList.toggle('active',active);if(active)x.setAttribute('aria-current','page');else x.removeAttribute('aria-current');});
- const more=$('moreMenu');if(more){more.open=false;more.classList.toggle('has-active',['builder','trends','review'].includes(view));}
+ const more=$('moreMenu');if(more){more.open=false;more.classList.toggle('has-active',['builder','trends','review','devicecheck'].includes(view));}
  render();
  const section=document.getElementById(view);section.scrollIntoView?.({block:'start',behavior:'instant'});
  const heading=section.querySelector?.('h1,h2');if(heading){heading.tabIndex=-1;heading.focus({preventScroll:true});}
@@ -110,8 +110,9 @@ function difference(a,b){if(!a||!b)return 255;let total=0;for(let i=0;i<a.length
 function snap(){if(!video.videoWidth||video.readyState<2)throw Error('The camera has not provided a usable frame yet.');canvas.width=Math.min(900,video.videoWidth);canvas.height=Math.round(canvas.width*video.videoHeight/video.videoWidth);canvas.getContext('2d').drawImage(video,0,0,canvas.width,canvas.height);return canvas.toDataURL('image/jpeg',.8);}
 function beep(){if(!$('sound').checked||!audio)return;try{const o=audio.createOscillator(),g=audio.createGain();o.frequency.value=740;g.gain.value=.04;o.connect(g);g.connect(audio.destination);o.start();o.stop(audio.currentTime+.12);}catch{}}
 function candidate(image){
- if([...items,...batch].some(item=>item.image===image)){message('Exact duplicate skipped. Show the next garment.');return false;}
+ if([...items,...batch].some(item=>item.image===image)){if(typeof recordDeviceEvent==='function')recordDeviceEvent('exact_duplicate_skipped');message('Exact duplicate skipped. Show the next garment.');return false;}
  const item={id:crypto.randomUUID(),image,name:'',category:'Uncategorized',color:'',notes:'',localStatus:'Reading photo…'};
+ if(typeof recordDeviceEvent==='function')recordDeviceEvent('photo_queued');
  batch.push(item);sessionCapturedIds.add(item.id);persistDraft();session++;$('sessionCount').textContent=session;$('reviewCount').textContent=batch.length;$('lastCaptureImage').src=image;$('lastCaptureImage').hidden=false;
  queueAutomatic(item);return true;
 }
@@ -202,7 +203,8 @@ $('applyCategory').onclick=()=>{const category=$('batchCategory').value;if(!cate
 
 for(const season of clothingSchema.seasons.slice(0,4))$('seasonFilter').append(node('option',season));for(const sleeve of clothingSchema.sleeve)$('sleeveFilter').append(node('option',sleeve));$('seasonFilter').onchange=render;$('sleeveFilter').onchange=render;
 
-function stopRecognitionWorker(text){
+function stopRecognitionWorker(text,eventType='worker_start_failed'){
+ if(typeof recordDeviceEvent==='function')recordDeviceEvent(eventType);
  localReady=false;recognitionUnavailable=true;recognitionState.phase='failed';recognitionState.percent=null;
  for(const job of localJobs.values()){clearTimeout(job.timer);job.reject(Error(text));}
  localJobs.clear();if(localWorker)localWorker.terminate();localWorker=null;renderRecognitionNotice();
@@ -218,21 +220,22 @@ function localRequest(type,image,itemId){
      const data=event.data;
      if(data.type==='progress'){
       for(const job of localJobs.values())if(job.type==='load')job.touch();
+      if(typeof recordDeviceEvent==='function')recordDeviceEvent('scanner_progress',{stage:data.phase||data.stage,percent:data.percent});
       if(data.stage==='weights'&&Number.isFinite(data.percent))recognitionState.percent=Math.max(recognitionState.percent||0,data.percent);
       renderRecognitionNotice();return;
      }
      const job=localJobs.get(data.id);if(!job)return;
      if(data.type==='identified'){const item=batch.find(x=>x.id===job.itemId);if(item&&!item.userAdjusted){applyLocalChoice(item,data.choice);render();}return;}
      clearTimeout(job.timer);localJobs.delete(data.id);
-     if(data.type==='error'){localReady=false;job.reject(Error(data.text));}else job.resolve(data);
+     if(data.type==='error'){localReady=false;if(typeof recordDeviceEvent==='function')recordDeviceEvent('scanner_error',{stage:data.stage,code:data.code,durationMs:Date.now()-job.started});job.reject(Error(data.text));}else job.resolve(data);
     };
     localWorker.onerror=()=>{if(worker===localWorker)stopRecognitionWorker('Local recognition is unavailable. Try again or use Adjust.');};
    }
    const id=crypto.randomUUID(),started=Date.now();
-   const job={resolve,reject,type,itemId,timer:null,touch(){
+   const job={resolve,reject,type,itemId,started,timer:null,touch(){
     clearTimeout(job.timer);
     const remaining=(type==='load'?300000:60000)-(Date.now()-started);
-    job.timer=setTimeout(()=>stopRecognitionWorker('Recognition timed out. Your photos are kept. Try again or use Adjust.'),Math.max(0,Math.min(type==='load'?60000:remaining,remaining)));
+    job.timer=setTimeout(()=>stopRecognitionWorker('Recognition timed out. Your photos are kept. Try again or use Adjust.','timeout'),Math.max(0,Math.min(type==='load'?60000:remaining,remaining)));
    }};
    localJobs.set(id,job);job.touch();localWorker.postMessage({type,id,image});
   }catch{stopRecognitionWorker('Recognition could not start. Try again or use Adjust.');reject(Error('Recognition could not start.'));}
@@ -241,8 +244,8 @@ function localRequest(type,image,itemId){
 async function enableLocal(){
  if(localReady)return true;
  if(!localLoadPromise)localLoadPromise=(async()=>{
-  recognitionState.phase='loading';recognitionState.percent=null;render();
-  try{await localRequest('load');localReady=true;recognitionUnavailable=false;recognitionState.phase='ready';recognitionState.percent=null;render();return true;}
+  recognitionState.phase='loading';recognitionState.percent=null;if(typeof recordDeviceEvent==='function')recordDeviceEvent('setup_start');const setupStarted=Date.now();render();
+  try{await localRequest('load');localReady=true;recognitionUnavailable=false;if(typeof recordDeviceEvent==='function')recordDeviceEvent('setup_ready',{durationMs:Date.now()-setupStarted});recognitionState.phase='ready';recognitionState.percent=null;render();return true;}
   catch(error){recognitionState.phase='failed';renderRecognitionNotice();throw error;}
   finally{localLoadPromise=null;}
  })();
@@ -270,14 +273,14 @@ async function saveIndexed(item){
  batch=batch.filter(x=>x.id!==item.id);persistDraft();return true;
 }
 async function recognizeItem(item){
- recognitionState.activeId=item.id;item.scanFailed=false;item.localStatus='Checking photo quality…';render();
+ const scanStarted=Date.now();recognitionState.activeId=item.id;item.scanFailed=false;item.localStatus='Checking photo quality…';render();
  try{
   const quality=await checkPhoto(item.image);
   if(!batch.some(x=>x.id===item.id))return;
-  if(quality.blank){batch=batch.filter(x=>x.id!==item.id);message('Blank or featureless photo skipped. Frame one garment and try again.');return true;}
+  if(quality.blank){if(typeof recordDeviceEvent==='function')recordDeviceEvent('blank_skipped');batch=batch.filter(x=>x.id!==item.id);message('Blank or featureless photo skipped. Frame one garment and try again.');return true;}
   item.visualSignature=quality.signature;item.visualAspect=quality.aspect;
   const matches=[...items,...batch].filter(x=>x.id!==item.id);
-  if(matches.some(x=>x.image===item.image)){batch=batch.filter(x=>x.id!==item.id);message('Exact duplicate skipped.');return true;}
+  if(matches.some(x=>x.image===item.image)){if(typeof recordDeviceEvent==='function')recordDeviceEvent('exact_duplicate_skipped');batch=batch.filter(x=>x.id!==item.id);message('Exact duplicate skipped.');return true;}
   item.possibleDuplicate=matches.some(x=>Math.abs((x.visualAspect||0)-quality.aspect)<.02&&similarPhotos(quality.signature,x.visualSignature));
   if(recognitionUnavailable)throw Error('Recognition is unavailable. Try again or use Adjust.');
   item.localStatus='Identifying this garment…';render();
@@ -286,17 +289,17 @@ async function recognizeItem(item){
   catch(error){recognitionUnavailable=true;throw error;}
   if(!batch.some(x=>x.id===item.id))return;
   item.localAnalyzed=true;item.localChoices=[];
-  if(!result.strong){item.localStatus=(item.possibleDuplicate?'Possible duplicate. ':'')+'Not identified confidently.';return true;}
+  if(!result.strong){if(typeof recordDeviceEvent==='function')recordDeviceEvent('not_recognized',{durationMs:Date.now()-scanStarted});item.localStatus=(item.possibleDuplicate?'Possible duplicate. ':'')+'Not identified confidently.';return true;}
   if(item.userAdjusted){item.localStatus='Your adjustments are preserved. Save this piece when ready.';return true;}
   applyLocalChoice(item,result.choices[0]);
   for(const [key,value]of Object.entries(result.details||{}))if(['color','pattern','fit','sleeveLength'].includes(key)&&(!item[key]||item[key]==='Unknown'))item[key]=value;
   item.name=[item.color,item.itemType].filter(x=>x&&x!=='Unknown').join(' ');
-  if(item.possibleDuplicate){item.localStatus='Possible duplicate: compare this photo with your closet before saving.';return true;}
+  if(item.possibleDuplicate){if(typeof recordDeviceEvent==='function')recordDeviceEvent('duplicate_review');item.localStatus='Possible duplicate: compare this photo with your closet before saving.';return true;}
   item.localStatus='Recognized. Saving to your closet…';
-  await saveIndexed(item);
+  if(await saveIndexed(item))if(typeof recordDeviceEvent==='function')recordDeviceEvent('recognized_saved',{durationMs:Date.now()-scanStarted});
   return true;
  }catch(error){
-  item.scanFailed=true;if(recognitionUnavailable)recognitionState.phase='failed';
+  item.scanFailed=true;if(!item.visualSignature&&typeof recordDeviceEvent==='function')recordDeviceEvent('photo_check_failed',{stage:'photo_check',durationMs:Date.now()-scanStarted});if(recognitionUnavailable)recognitionState.phase='failed';
   if(!item.visualSignature)item.localStatus='Could not read this photo. Retake it or adjust details.';
   else{item.localStatus=error.message||'Automatic indexing stopped. Retry or adjust details.';}
   $('localStatus').textContent=item.localStatus;return false;
