@@ -1,7 +1,7 @@
 'use strict';
 const $=id=>document.getElementById(id), categories=['Uncategorized','Tops','Bottoms','Dresses','Outerwear','Shoes','Accessories'];
 const recognitionAssetVersion=new URL(document.currentScript?.src||location.href).searchParams.get('v')||'';
-let saving=false;
+let saving=false;const sessionCapturedIds=new Set();
 let localWorker,localReady=false,localBatch=false,localLoadPromise=null,recognitionUnavailable=false;const automaticQueue=[];let automaticRunning=false;const localJobs=new Map(),localPending=new Set();
 let writes=Promise.resolve();
 function queued(work){const result=writes.then(work);writes=result.catch(()=>{});return result;}
@@ -39,15 +39,44 @@ function clothingFields(body,item,onChange=()=>{}){
  for(const [key,el]of Object.entries(fields))el.oninput=()=>{item[key]=el.value;if(key==='category'){const types=['Unknown',...(clothingSchema.types[item.category]||[])];fields.itemType.replaceChildren(...types.map(x=>node('option',x)));item.itemType='Unknown';fields.itemType.value='Unknown';if(['Shoes','Accessories','Bottoms'].includes(item.category)){item.sleeveLength='Not applicable';fields.sleeveLength.value='Not applicable';}else if(item.sleeveLength==='Not applicable'){item.sleeveLength='Unknown';fields.sleeveLength.value='Unknown';}}onChange();};
  return ()=>normalizeClothing(item);
 }
+function adjustPhoto(item){
+ const dialog=document.createElement('dialog');dialog.className='photo-adjust';
+ const form=node('form'),draft=structuredClone(item),collect=clothingFields(form,draft);
+ const save=node('button','Save changes','primary'),cancel=node('button','Cancel','secondary'),remove=node('button','Remove photo','secondary');
+ cancel.type=remove.type='button';cancel.onclick=()=>dialog.close();
+ const wasAdjusted=item.userAdjusted;item.userAdjusted=true;
+ remove.onclick=async()=>{try{if(items.some(x=>x.id===item.id))await removeItem(item.id);items=items.filter(x=>x.id!==item.id);batch=batch.filter(x=>x.id!==item.id);sessionCapturedIds.delete(item.id);await persistDraft();dialog.close();render();}catch{message('Could not remove this photo. Try again.');}};
+ form.onsubmit=async event=>{event.preventDefault();save.disabled=true;try{
+  const value={...collect(),name:draft.name.trim()||draft.itemType||'Closet piece',savedAt:new Date().toISOString(),userAdjusted:true};
+  await savePiece(value,batch.filter(x=>x.id!==item.id));
+  const existing=items.find(x=>x.id===item.id);if(existing)Object.assign(existing,value);else items.push(value);
+  batch=batch.filter(x=>x.id!==item.id);await persistDraft();dialog.close();render();
+ }catch{save.disabled=false;message('Could not save changes. Try again.');}};
+ dialog.onclose=()=>{if(batch.some(x=>x.id===item.id)&&!wasAdjusted)item.userAdjusted=false;dialog.remove();};
+ const actions=node('div',null,'actions');actions.append(save,cancel,remove);form.append(actions);dialog.append(form);document.body.append(dialog);dialog.showModal();
+}
+function renderPhotoResults(grid,results){
+ grid.replaceChildren();
+ for(const item of results){
+  const card=node('article',null,'card'),image=node('img');image.src=item.image;image.alt=item.name||'Clothing photo';
+  const body=node('div',null,'card-body'),pending=localPending.has(item.id),saved=items.some(x=>x.id===item.id);
+  const title=pending?(item.category!=='Uncategorized'?(item.itemType||'Garment'):'Reading photo…'):saved?(item.name||item.itemType):item.possibleDuplicate?'Possible duplicate':'Not recognized';
+  body.append(node('h3',title));
+  if(pending&&item.category!=='Uncategorized')body.append(node('p',item.category+' · finishing details…','fine'));
+  else if(pending)body.append(node('p',localReady?'Identifying garment…':'Preparing recognition · first use may take a few minutes on Wi-Fi.','fine'));
+  else if(item.category!=='Uncategorized')body.append(node('p',[item.category,item.itemType,item.color,item.pattern,item.sleeveLength,item.fit,...(item.seasons||[])].filter(x=>x&&x!=='Unknown'&&x!=='Not applicable').join(' · ')));
+  else body.append(node('p','Try a clearer photo or fill in the details.','fine'));
+  if(!pending&&!saved&&item.category!=='Uncategorized')body.append(node('p',item.possibleDuplicate?'Check whether this piece is already in your closet.':'Not saved yet · use Adjust to finish.','fine'));
+  if(!pending){const adjust=node('button','Adjust','secondary');adjust.type='button';adjust.onclick=()=>adjustPhoto(item);body.append(adjust);}
+  card.append(image,body);grid.append(card);
+ }
+}
 function render(){
  $('reviewCount').textContent=batch.length;$('closetCount').textContent=items.length;$('sessionCount').textContent=session;
- $('indexingStatus').textContent=localPending.size?`Automatically indexing ${localPending.size} photo(s)…`:(recognitionUnavailable?'Automatic indexing needs a retry. Your photos are safe in Review.':'Photos are indexed automatically. Uncertain details stay in Review.');
- const grid=$('reviewGrid');grid.replaceChildren();
- if(!batch.length)empty(grid,'Your next piece starts with a scan.','Take photos with the camera or choose saved photos or a short video.');
- for(const item of batch){const card=node('article',null,'card'),im=node('img');im.src=item.image;im.alt='Candidate clothing image';const body=node('div',null,'card-body');const panel=node('div',null,'local-panel');panel.append(node('p',item.localStatus||'Needs review'));body.append(panel);
- const summary=node('p',[item.category,item.itemType,item.color,item.pattern,item.sleeveLength].filter(x=>x&&x!=='Unknown'&&x!=='Not applicable').join(' · '));body.append(summary);
- const adjust=node('button','Adjust details','secondary'),editor=node('div');adjust.type='button';editor.hidden=!item.editing;adjust.setAttribute('aria-expanded',String(!!item.editing));adjust.onclick=()=>{item.editing=!item.editing;item.userAdjusted=true;editor.hidden=!item.editing;adjust.setAttribute('aria-expanded',String(item.editing));};body.append(adjust,editor);clothingFields(editor,item,()=>{item.userAdjusted=true;persistDraft();});
- const actions=node('div',null,'actions'),save=node('button','Save piece','primary'),discard=node('button','Remove','secondary');save.disabled=localPending.has(item.id);save.onclick=async()=>{if(saving||localPending.has(item.id))return;if(!db)return message('Storage is unavailable. Please use a regular browser.');saving=true;save.disabled=true;try{const value={...normalizeClothing(item),name:item.name.trim()||'Closet piece',category:item.category||'Uncategorized',savedAt:new Date().toISOString()};const nextBatch=batch.filter(x=>x.id!==item.id);await savePiece(value,nextBatch);items.push(value);batch=batch.filter(x=>x.id!==item.id);persistDraft();render();message('Piece saved to your closet.');}catch(e){message('Could not save this piece. Free browser storage and try again.');save.disabled=false;}finally{saving=false;}};discard.onclick=()=>{batch=batch.filter(x=>x.id!==item.id);persistDraft();render();};actions.append(save,discard);body.append(actions);card.append(im,body);grid.append(card);}
+ $('indexingStatus').textContent='';
+ const results=[...batch,...items.filter(item=>sessionCapturedIds.has(item.id))];
+ renderPhotoResults($('reviewGrid'),results);
+ renderPhotoResults($('scanResults'),results);
  const cg=$('closetGrid');cg.replaceChildren();const query=$('search').value.toLowerCase(),filter=$('filter').value,visible=items.filter(x=>clothingMatches(x,query,filter,$('seasonFilter').value,$('sleeveFilter').value));
  if(!visible.length)empty(cg,items.length?'No matching pieces.':'Your closet is ready to grow.',items.length?'Try a different search or category.':'Save your first piece from the review tab.');
  for(const item of visible){const card=node('article',null,'card'),im=node('img');im.src=item.image;im.alt=item.name;const body=node('div',null,'card-body');body.append(node('h3',item.name),node('p',[item.category,item.itemType,item.sleeveLength,item.color,item.pattern,item.fit].filter(x=>x&&x!=='Unknown'&&x!=='Not applicable').join(' · ')),node('p',item.seasons.length?item.seasons.join(' · '):'Season unknown'),node('p',[item.brand,item.size,item.material,item.occasion].filter(Boolean).join(' · ')),node('p',item.notes));const actions=node('div',null,'actions'),edit=node('button','Adjust details','secondary'),del=node('button','Delete','secondary');edit.onclick=()=>{const dialog=document.createElement('dialog');dialog.style.cssText='border:1px solid #d9ddd2;border-radius:8px;max-width:440px;width:90%;padding:24px';const f=node('form');const draft=structuredClone(item),collect=clothingFields(f,draft),ok=node('button','Save changes','primary'),cancel=node('button','Cancel','secondary');f.className='card';f.style.padding='15px';cancel.type='button';cancel.onclick=()=>dialog.close();f.onsubmit=async e=>{e.preventDefault();ok.disabled=true;try{const updated={...collect(),name:draft.name.trim()||'Closet piece'};await writeAll([updated]);Object.assign(item,updated);dialog.close();render();}catch{message('Changes could not be saved.');ok.disabled=false;}};f.append(ok,cancel);dialog.append(f);document.body.append(dialog);dialog.onclose=()=>dialog.remove();dialog.showModal();};del.onclick=async()=>{if(!confirm('Delete this closet piece?'))return;try{await removeItem(item.id);items=items.filter(x=>x.id!==item.id);render();}catch{message('Could not delete the piece.');}};actions.append(edit,del);body.append(actions);card.append(im,body);cg.append(card);}
@@ -60,8 +89,8 @@ function snap(){if(!video.videoWidth||video.readyState<2)throw Error('The camera
 function beep(){if(!$('sound').checked||!audio)return;try{const o=audio.createOscillator(),g=audio.createGain();o.frequency.value=740;g.gain.value=.04;o.connect(g);g.connect(audio.destination);o.start();o.stop(audio.currentTime+.12);}catch{}}
 function candidate(image){
  if([...items,...batch].some(item=>item.image===image)){message('Exact duplicate skipped. Show the next garment.');return false;}
- const item={id:crypto.randomUUID(),image,name:'',category:'Uncategorized',color:'',notes:'',localStatus:'Queued for automatic indexing…'};
- batch.push(item);persistDraft();session++;$('sessionCount').textContent=session;$('reviewCount').textContent=batch.length;$('lastCaptureImage').src=image;$('lastCaptureImage').hidden=false;
+ const item={id:crypto.randomUUID(),image,name:'',category:'Uncategorized',color:'',notes:'',localStatus:'Reading photo…'};
+ batch.push(item);sessionCapturedIds.add(item.id);persistDraft();session++;$('sessionCount').textContent=session;$('reviewCount').textContent=batch.length;$('lastCaptureImage').src=image;$('lastCaptureImage').hidden=false;
  queueAutomatic(item);return true;
 }
 function queueAutomatic(item){
@@ -85,8 +114,8 @@ function finishScan(){
  const wasManual=cameraMode==='manual';
  if(!wasManual&&stream&&session===0&&video.readyState>=2&&video.videoWidth){try{candidate(snap());}catch{}}
  stopCamera();
- if(batch.length){message(`${session} photos collected. Automatic indexing is running; adjust only the pieces that need help.`);switchView('review');}
- else if(session>0){message('Your photos have been processed. Open My closet to see saved matches.');switchView('closet');}
+ if(batch.length){message('');switchView('review');}
+ else if(session>0){message('');switchView('review');}
  else{message(wasManual?'No photos taken yet. Open camera and tap Take photo when a garment is ready.':'No camera frames were received. Try Open camera or choose a saved closet video.');$('captureState').textContent='No photos captured · choose a camera option to try again';}
 }
 function captureTick(now=Date.now()){
@@ -138,7 +167,7 @@ $('startAuto').onclick=()=>startCamera('auto');
 $('takePhoto').onclick=takePhoto;
 $('stop').onclick=finishScan;
 function waitEvent(target,event,timeout=15000){return new Promise((resolve,reject)=>{let t;const clean=()=>{clearTimeout(t);target.removeEventListener(event,ok);target.removeEventListener('error',fail);};const ok=()=>{clean();resolve();},fail=()=>{clean();reject(Error('This video could not be read. Try an MP4 recorded by your phone.'));};target.addEventListener(event,ok,{once:true});target.addEventListener('error',fail,{once:true});t=setTimeout(fail,timeout);});}
-async function upload(file){if(!file||busy)return;if(file.size>150*1024*1024)return message('Choose a video smaller than 150 MB. Short batches work best.');stopCamera();busy=true;controls(true);let url;const startLength=batch.length;try{url=URL.createObjectURL(file);video.src=url;video.classList.add('visible');$('placeholder').hidden=true;const loaded=waitEvent(video,'loadedmetadata');video.load();await loaded;if(!Number.isFinite(video.duration)||video.duration<=0)throw Error('Video duration could not be read. Try a regular MP4.');if(video.duration>180)throw Error('Please trim this video to 3 minutes or less.');session=0;const interval=Number($('interval').value);for(let t=Math.min(.1,video.duration/2);t<video.duration;t+=interval){const seek=waitEvent(video,'seeked');video.currentTime=t;await seek;candidate(snap());const progress=Math.round(t/video.duration*100);$('captureState').textContent=`Collecting images · ${progress}%`;}message(`${session} candidate images collected. Keep the best view of each garment. Automatic indexing is running; clear matches are saved to My closet.`);switchView('review');}catch(e){render();if(batch.length>startLength){message(`${session} images recovered before processing stopped. ${e.message}`);switchView('review');}else message(e.message);}finally{busy=false;controls(false);video.removeAttribute('src');video.load();if(url)URL.revokeObjectURL(url);$('captureState').textContent='Ready for another batch';}}
+async function upload(file){if(!file||busy)return;if(file.size>150*1024*1024)return message('Choose a video smaller than 150 MB. Short batches work best.');stopCamera();busy=true;controls(true);let url;const startLength=batch.length;try{url=URL.createObjectURL(file);video.src=url;video.classList.add('visible');$('placeholder').hidden=true;const loaded=waitEvent(video,'loadedmetadata');video.load();await loaded;if(!Number.isFinite(video.duration)||video.duration<=0)throw Error('Video duration could not be read. Try a regular MP4.');if(video.duration>180)throw Error('Please trim this video to 3 minutes or less.');session=0;const interval=Number($('interval').value);for(let t=Math.min(.1,video.duration/2);t<video.duration;t+=interval){const seek=waitEvent(video,'seeked');video.currentTime=t;await seek;candidate(snap());const progress=Math.round(t/video.duration*100);$('captureState').textContent=`Collecting images · ${progress}%`;}message('');switchView('review');}catch(e){render();if(batch.length>startLength){message(`${session} images recovered before processing stopped. ${e.message}`);switchView('review');}else message(e.message);}finally{busy=false;controls(false);video.removeAttribute('src');video.load();if(url)URL.revokeObjectURL(url);$('captureState').textContent='Ready for another batch';}}
 $('upload').onchange=e=>{upload(e.target.files[0]);e.target.value='';};
 $('discard').onclick=()=>{if(batch.length&&confirm('Discard all unsaved images in this batch?')){batch=[];persistDraft();session=0;render();}};
 $('export').onclick=async()=>{if(typeof outfitBoardReady!=='undefined')await outfitBoardReady;if(!items.length&&(typeof inspirationLooks==='undefined'||!inspirationLooks.length))return message('Save a closet piece or inspiration look before exporting.');const blob=new Blob([JSON.stringify({format:'closet-current',version:3,items,looks:typeof inspirationLooks!=='undefined'?inspirationLooks:[],outfitBoard:typeof boardBackup==='function'?boardBackup():undefined})],{type:'application/json'}),url=URL.createObjectURL(blob),a=node('a');a.href=url;a.download='closet-current-backup.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);message('Backup downloaded. Keep it somewhere you can find again.');};
@@ -151,15 +180,15 @@ $('applyCategory').onclick=()=>{const category=$('batchCategory').value;if(!cate
 
 for(const season of clothingSchema.seasons.slice(0,4))$('seasonFilter').append(node('option',season));for(const sleeve of clothingSchema.sleeve)$('sleeveFilter').append(node('option',sleeve));$('seasonFilter').onchange=render;$('sleeveFilter').onchange=render;
 
-function localRequest(type,image){
+function localRequest(type,image,itemId){
  return new Promise((resolve,reject)=>{
   if(!localWorker){
    localWorker=new Worker('local-worker.mjs'+(recognitionAssetVersion?'?v='+recognitionAssetVersion:''),{type:'module'});
-   localWorker.onmessage=event=>{const data=event.data;if(data.type==='progress'){$('localStatus').textContent=data.text;$('indexingStatus').textContent=data.text;return;}const job=localJobs.get(data.id);if(!job)return;clearTimeout(job.timer);localJobs.delete(data.id);if(data.type==='error')job.reject(Error(data.text));else job.resolve(data);};
+   localWorker.onmessage=event=>{const data=event.data;if(data.type==='progress'){$('localStatus').textContent=data.text;return;}const job=localJobs.get(data.id);if(!job)return;if(data.type==='identified'){const item=batch.find(x=>x.id===job.itemId);if(item&&!item.userAdjusted){applyLocalChoice(item,data.choice);render();}return;}clearTimeout(job.timer);localJobs.delete(data.id);if(data.type==='error')job.reject(Error(data.text));else job.resolve(data);};
    localWorker.onerror=()=>{localReady=false;for(const job of localJobs.values()){clearTimeout(job.timer);job.reject(Error('Local recognition is unavailable. Try Chrome with Wi-Fi.'));}localJobs.clear();localWorker.terminate();localWorker=null;};
   }
   const id=crypto.randomUUID(),timer=setTimeout(()=>{const job=localJobs.get(id);if(job){localJobs.delete(id);job.reject(Error('The local model is taking too long. Retry with Wi-Fi.'));}if(localWorker){localWorker.terminate();localWorker=null;localReady=false;for(const other of localJobs.values()){clearTimeout(other.timer);other.reject(Error('Local recognition stopped. Please try again.'));}localJobs.clear();}},240000);
-  localJobs.set(id,{resolve,reject,timer});localWorker.postMessage({type,id,image});
+  localJobs.set(id,{resolve,reject,timer,itemId});localWorker.postMessage({type,id,image});
  });
 }
 async function enableLocal(){
@@ -205,18 +234,18 @@ async function recognizeItem(item){
   if(recognitionUnavailable)throw Error('Automatic recognition is unavailable. Tap Retry unfinished photos or adjust this piece yourself.');
   item.localStatus='Identifying this garment…';render();
   let result;
-  try{if(!localReady)await enableLocal();result=await localRequest('classify',item.image);}
+  try{if(!localReady)await enableLocal();result=await localRequest('classify',item.image,item.id);}
   catch(error){recognitionUnavailable=true;throw error;}
   if(!batch.some(x=>x.id===item.id))return;
   item.localAnalyzed=true;item.localChoices=[];
-  if(!result.strong){item.localStatus=(item.possibleDuplicate?'Possible duplicate. ':'')+'Not identified confidently. Adjust details or retake this photo.';return true;}
+  if(!result.strong){item.localStatus=(item.possibleDuplicate?'Possible duplicate. ':'')+'Not identified confidently.';return true;}
   if(item.userAdjusted){item.localStatus='Your adjustments are preserved. Save this piece when ready.';return true;}
   applyLocalChoice(item,result.choices[0]);
-  for(const [key,value]of Object.entries(result.details||{}))if(['color','pattern'].includes(key)&&(!item[key]||item[key]==='Unknown'))item[key]=value;
+  for(const [key,value]of Object.entries(result.details||{}))if(['color','pattern','fit','sleeveLength'].includes(key)&&(!item[key]||item[key]==='Unknown'))item[key]=value;
   item.name=[item.color,item.itemType].filter(x=>x&&x!=='Unknown').join(' ');
   if(item.possibleDuplicate){item.localStatus='Possible duplicate: compare this photo with your closet before saving.';return true;}
   item.localStatus='Recognized. Saving to your closet…';
-  if(await saveIndexed(item))message('Indexed '+item.name+' in My closet.');
+  await saveIndexed(item);
   return true;
  }catch(error){
   if(!item.visualSignature)item.localStatus='Could not read this photo. Retake it or adjust details.';
@@ -237,7 +266,7 @@ async function importClothingPhotos(files){
  stopCamera();busy=true;controls(true);session=0;
  try{
   const result=await readPhotoBatch(files,photoToJPEG,image=>candidate(image));
-  if(result.added){switchView('review');message(`${result.added} clothing photos added. Automatic indexing is running; clear matches are saved to My closet.${result.errors.length?' '+result.errors.join('; '):''}`);}
+  if(result.added){switchView('review');message(result.errors.length?result.errors.join('; '):'');}
   else message(result.errors.length?'No photos could be imported. '+result.errors.join('; '):'Exact duplicate photos were skipped; they are already in your closet or review batch.');
  }finally{busy=false;controls(false);}
 }

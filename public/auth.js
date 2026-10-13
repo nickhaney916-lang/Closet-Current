@@ -3,12 +3,14 @@
 (function(){
  const URL='https://hlkgymugtfbirlpunsra.supabase.co';
  const KEY='sb_publishable_5bw6Gkrw3Qx73dZYGNzmIw_x_OoauDO';
+ const APP_URL='https://nickhaney916-lang.github.io/Closet-Current/';
+ const EMAIL_REDIRECT='?redirect_to='+encodeURIComponent(APP_URL);
  const STORE='closet-current-auth-v1';
  const $=id=>document.getElementById(id);
  let resolveReady,rejectReady;
  const ready=new Promise((resolve,reject)=>{resolveReady=resolve;rejectReady=reject;});
  window.closetAuth={ready,user:null};
- let signup=false,session=null,busy=false;
+ let signup=false,session=null,busy=false,recovery=false;
  const status=t=>$('authStatus').textContent=t;
  function setPasswordVisible(visible){
   $('authPassword').type=visible?'text':'password';
@@ -21,9 +23,9 @@
  const modeHint=()=>signup?'Create an account with a username, email, and password of at least 8 characters.':'Have an account? Log in below. New here? Choose Create an account first.';
  function setBusy(on){
   busy=on;
-  for(const id of ['authSubmit','authMode','authReset'])$(id).disabled=on;
+  for(const id of ['authSubmit','authMode','authReset','authResend'])$(id).disabled=on;
   $('authForm').setAttribute('aria-busy',String(on));
-  $('authSubmit').textContent=on?(signup?'Creating account…':'Logging in…'):(signup?'Create account':'Log in');
+  $('authSubmit').textContent=recovery?(on?'Updating password…':'Save new password'):on?(signup?'Creating account…':'Logging in…'):(signup?'Create account':'Log in');
  }
  function errorMessage(err){
   if(err.code==='invalid_credentials'||/invalid login credentials/i.test(err.message))return 'Email or password is incorrect. If you have not registered yet, choose Create an account first.';
@@ -41,10 +43,10 @@
   else if(input.validity.patternMismatch)status('Username must be 3–32 letters, numbers or underscores.');
   else status(input.validationMessage||'Check your '+label+'.');
  },true);
- async function request(path,body,token){
+ async function request(path,body,token,method='POST'){
   const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),15000);
   try{
-   const res=await fetch(URL+'/auth/v1/'+path,{method:'POST',signal:controller.signal,headers:{'apikey':KEY,'Content-Type':'application/json',...(token?{'Authorization':'Bearer '+token}:{})},body:JSON.stringify(body)});
+   const res=await fetch(URL+'/auth/v1/'+path,{method,signal:controller.signal,headers:{'apikey':KEY,'Content-Type':'application/json',...(token?{'Authorization':'Bearer '+token}:{})},...(method==='GET'?{}:{body:JSON.stringify(body)})});
    const data=await res.json().catch(()=>({}));
    if(!res.ok){const err=Error(data.msg||data.error_description||data.message||'Authentication failed');err.code=data.error_code||data.code;throw err;}
    return data;
@@ -71,10 +73,14 @@
   e.preventDefault();if(busy)return;setBusy(true);status(signup?'Creating your account…':'Checking your email and password…');
   const email=$('authEmail').value.trim(),password=$('authPassword').value;
   try{
-   if(signup){
+   if(recovery){
+    if(password.length<8)throw Error('Your password must have at least 8 characters.');
+    const user=await request('user',{password},session.access_token,'PUT');
+    recovery=false;showUser({...session,user});
+   }else if(signup){
     const username=$('authUsername').value.trim();
     if(!/^[A-Za-z0-9_]{3,32}$/.test(username))throw Error('Username must be 3–32 letters, numbers or underscores.');
-    const data=await request('signup',{email,password,data:{username}});
+    const data=await request('signup'+EMAIL_REDIRECT,{email,password,data:{username}});
     if(data.access_token&&data.user)showUser(data);
     else status('Check your email to confirm your account, then log in.');
    }else showUser(await request('token?grant_type=password',{email,password}));
@@ -85,7 +91,15 @@
   if(busy)return;
   if(!email||!$('authEmail').checkValidity())return status('Enter a valid email address first.');
   setBusy(true);status('Requesting a password reset email…');
-  try{await request('recover',{email});status('If the address is registered, a password reset email will arrive.');}catch(err){status(errorMessage(err));}finally{setBusy(false);}
+  try{await request('recover'+EMAIL_REDIRECT,{email});status('If the address is registered, a password reset email will arrive.');}catch(err){status(errorMessage(err));}finally{setBusy(false);}
+ };
+ $('authResend').onclick=async()=>{
+  const email=$('authEmail').value.trim();
+  if(busy)return;
+  if(!email||!$('authEmail').checkValidity())return status('Enter your email address first.');
+  setBusy(true);
+  try{await request('resend'+EMAIL_REDIRECT,{email,type:'signup'});status('A fresh confirmation link has been requested. Open the newest email. If you can already log in, no confirmation is needed.');}
+  catch(err){status(errorMessage(err));}finally{setBusy(false);}
  };
  $('logout').onclick=async()=>{
   try{if(session?.access_token)await request('logout',{},session.access_token);}catch{}
@@ -96,12 +110,30 @@
  setMode(false);
  (async()=>{
   try{
+   const callback=new URLSearchParams((location.hash||'').replace(/^#/,''));
+   const query=new URLSearchParams(location.search||'');
+   const error=callback.get('error_code')||query.get('error_code')||callback.get('error')||query.get('error');
+   const access=callback.get('access_token'),refresh=callback.get('refresh_token');
+   if(error||access){
+    history.replaceState(null,'',location.pathname);
+    if(error){status('This email link has expired or was already used. Log in below. If your email still needs confirmation, enter it and choose Resend confirmation email.');return;}
+    // Do not trust URL claims: verify the token with Supabase before unlocking any wardrobe.
+    const user=await request('user',null,access,'GET');
+    const data={user,access_token:access,refresh_token:refresh,expires_in:Number(callback.get('expires_in'))||3600};
+    if(callback.get('type')==='recovery'){
+     session=data;recovery=true;$('authEmail').value=user.email||'';$('authEmail').disabled=true;
+     $('authPassword').value='';$('authPassword').minLength=8;$('authPassword').autocomplete='new-password';
+     $('authMode').hidden=true;$('authReset').hidden=true;$('authResend').hidden=true;
+     $('authSubmit').textContent='Save new password';status('Choose a new password of at least 8 characters.');return;
+    }
+    showUser(data);return;
+   }
    const saved=JSON.parse(localStorage.getItem(STORE)||'null');
    if(saved?.refresh_token){
     const data=await request('token?grant_type=refresh_token',{refresh_token:saved.refresh_token});
     showUser(data);return;
    }
-  }catch{localStorage.removeItem(STORE);}
+  }catch{localStorage.removeItem(STORE);status('This sign-in link could not be verified. Log in with your email and password, or request a fresh email link.');return;}
   status(modeHint());
  })();
 })();

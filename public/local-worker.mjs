@@ -21,12 +21,14 @@ self.onmessage=event=>{const request=event.data;chain=chain.then(async()=>{
   const choices=clothingChoices(results);
   const first=choices[0];
   const strong=strongMatch(choices),details={};
+  // Publish the category immediately; optional detail passes follow in the same job.
+  if(strong)self.postMessage({type:'identified',id:request.id,choice:first});
   if(strong&&['Tops','Dresses','Outerwear'].includes(first.category)&&first.sleeveLength==='Unknown'){
    const sleeves=sleeveChoices(first.itemType),ranked=await model(request.image,sleeves.map(x=>x.label),{hypothesis_template:'A photo of {}.'});
    first.sleeveLength=detailMatch(ranked,sleeves)||'Unknown';
   }
   if(strong){
-   for(const [key,values]of Object.entries({color:['Black','White','Gray','Beige','Brown','Blue','Green','Red','Pink','Purple','Yellow','Orange','Multicolor'],pattern:['Solid','Striped','Floral','Plaid','Checked','Polka dot','Animal print','Graphic']})){
+   for(const [key,values]of Object.entries({color:['Black','White','Gray','Beige','Brown','Blue','Green','Red','Pink','Purple','Yellow','Orange','Multicolor'],fit:['Fitted','Regular','Relaxed','Oversized'],pattern:['Solid','Striped','Floral','Plaid','Checked','Polka dot','Animal print','Graphic']})){
     const options=values.map(value=>({value,label:'a '+value.toLowerCase()+' '+first.itemType.toLowerCase()}));
     options.push({value:'Unknown',label:'a garment with an unclear '+key});
     const ranked=await model(request.image,options.map(x=>x.label),{hypothesis_template:'A photo of {}.'});
