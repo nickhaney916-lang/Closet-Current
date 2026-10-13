@@ -18,3 +18,12 @@ testContext.applyLocalChoice(item,top);assert.equal(item.itemType,'Sweater');ass
 testContext.applyLocalChoice(item,top,true);assert.equal(item.itemType,'T-shirt');assert.equal(item.sleeveLength,'Unknown');assert.equal(item.seasons[0],'Winter');
 assert.ok(!app.includes('/api/recognize'));assert.ok(!fs.readFileSync('public/local-worker.mjs','utf8').includes('api.openai.com'));
 console.log('Local label mapping, uncertain matches, manual overrides, seasons preservation and no paid API checks passed.');
+const {garmentDetailGroups,groupedGarmentDetails}=await import('../public/local-catalog.mjs');
+const groups=garmentDetailGroups(localCandidates[0]);
+const groupScores=Object.entries(groups).flatMap(([key,choices])=>choices.map((option,index)=>({label:option.label,score:index===0?.09:.001})));
+const grouped=groupedGarmentDetails(groupScores,groups);
+assert.equal(grouped.color,'Black');assert.equal(grouped.pattern,'Solid');assert.equal(grouped.fit,'Fitted');assert.equal(grouped.sleeveLength,'Sleeveless');
+assert.deepEqual(groupedGarmentDetails([],groups),{});
+assert.deepEqual(groupedGarmentDetails([{label:groups.color[0].label,score:.1},{label:groups.color[1].label,score:.099}],{color:groups.color}),{});
+const worker=fs.readFileSync('public/local-worker.mjs','utf8');
+assert.equal((worker.match(/await model\(/g)||[]).length,2,'Only two image model passes per recognized garment');

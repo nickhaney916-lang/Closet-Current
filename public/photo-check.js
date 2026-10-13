@@ -17,7 +17,8 @@ function similarPhotos(a,b){
  return total/a.length<=2.5;
 }
 async function checkPhoto(image){
- const decoded=new Image();decoded.src=image;await decoded.decode();
+ const decoded=new Image();decoded.src=image;let timeout;
+ try{await Promise.race([decoded.decode(),new Promise((_,reject)=>{timeout=setTimeout(()=>reject(Error('Photo decoding timed out.')),15000);})]);}finally{clearTimeout(timeout);}
  if(!decoded.width||!decoded.height)throw Error('The photo could not be decoded.');
  const sample=document.createElement('canvas');sample.width=16;sample.height=16;
  const ctx=sample.getContext('2d',{willReadFrequently:true});ctx.drawImage(decoded,0,0,16,16);

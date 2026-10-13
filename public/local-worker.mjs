@@ -1,15 +1,18 @@
-import {pipeline,env} from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1/dist/transformers.min.js';
-const {localCandidates,clothingChoices,strongMatch,sleeveChoices,detailMatch}=await import('./local-catalog.mjs'+new URL(import.meta.url).search);
-env.allowLocalModels=false;
-env.useBrowserCache=true;
-env.backends.onnx.wasm.numThreads=1;
-let classifier;
+// Register the message handler before downloading dependencies, so import
+// failures become explicit job errors instead of an unexplained setup wait.
+let classifierPromise;
 async function load(){
- if(!classifier)classifier=await pipeline('zero-shot-image-classification','ff13/fashion-clip',{device:'wasm',dtype:'q8',progress_callback:event=>{
-  const percent=Number.isFinite(event.progress)?Math.round(event.progress):null;
-  self.postMessage({type:'progress',text:percent===null?'Loading local recognition model…':`Downloading recognition model · ${percent}%`});
- }});
- return classifier;
+ if(!classifierPromise)classifierPromise=(async()=>{
+  self.postMessage({type:'progress',stage:'runtime'});
+  const {pipeline,env}=await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1/dist/transformers.min.js');
+  env.allowLocalModels=false;env.useBrowserCache=true;
+  env.backends.onnx.wasm.numThreads=1;env.backends.onnx.wasm.proxy=false;
+  return pipeline('zero-shot-image-classification','ff13/fashion-clip',{device:'wasm',dtype:'q8',progress_callback:event=>{
+   const weights=String(event.file||'').endsWith('.onnx');
+   self.postMessage({type:'progress',stage:weights?'weights':'runtime',percent:weights&&Number.isFinite(event.progress)?Math.round(event.progress):null});
+  }});
+ })().catch(error=>{classifierPromise=null;throw error;});
+ return classifierPromise;
 }
 let chain=Promise.resolve();
 self.onmessage=event=>{const request=event.data;chain=chain.then(async()=>{
@@ -17,24 +20,18 @@ self.onmessage=event=>{const request=event.data;chain=chain.then(async()=>{
   const model=await load();
   if(request.type==='load'){self.postMessage({type:'ready',id:request.id});return;}
   if(request.type!=='classify'||typeof request.image!=='string'||!request.image.startsWith('data:image/jpeg;base64,'))throw Error('Invalid captured image.');
+  const {localCandidates,clothingChoices,strongMatch,garmentDetailGroups,groupedGarmentDetails}=await import('./local-catalog.mjs'+new URL(import.meta.url).search);
   const results=await model(request.image,localCandidates.map(c=>c.label),{hypothesis_template:'A photo of {}.'});
-  const choices=clothingChoices(results);
-  const first=choices[0];
-  const strong=strongMatch(choices),details={};
-  // Publish the category immediately; optional detail passes follow in the same job.
-  if(strong)self.postMessage({type:'identified',id:request.id,choice:first});
-  if(strong&&['Tops','Dresses','Outerwear'].includes(first.category)&&first.sleeveLength==='Unknown'){
-   const sleeves=sleeveChoices(first.itemType),ranked=await model(request.image,sleeves.map(x=>x.label),{hypothesis_template:'A photo of {}.'});
-   first.sleeveLength=detailMatch(ranked,sleeves)||'Unknown';
-  }
+  const choices=clothingChoices(results),first=choices[0],strong=strongMatch(choices);let details={};
   if(strong){
-   for(const [key,values]of Object.entries({color:['Black','White','Gray','Beige','Brown','Blue','Green','Red','Pink','Purple','Yellow','Orange','Multicolor'],fit:['Fitted','Regular','Relaxed','Oversized'],pattern:['Solid','Striped','Floral','Plaid','Checked','Polka dot','Animal print','Graphic']})){
-    const options=values.map(value=>({value,label:'a '+value.toLowerCase()+' '+first.itemType.toLowerCase()}));
-    options.push({value:'Unknown',label:'a garment with an unclear '+key});
-    const ranked=await model(request.image,options.map(x=>x.label),{hypothesis_template:'A photo of {}.'});
-    const value=detailMatch(ranked,options);if(value&&value!=='Unknown')details[key]=value;
-   }
+   self.postMessage({type:'identified',id:request.id,choice:first});
+   const groups=garmentDetailGroups(first),labels=Object.values(groups).flat().map(x=>x.label);
+   const ranked=await model(request.image,labels,{hypothesis_template:'A photo of {}.'});
+   details=groupedGarmentDetails(ranked,groups);
+   if(details.sleeveLength)first.sleeveLength=details.sleeveLength;
   }
   self.postMessage({type:'result',id:request.id,choices,strong,details});
- }catch{self.postMessage({type:'error',id:request.id,text:'Local recognition could not load or run on this device. Try Chrome with Wi-Fi, or use the category fields.'});}
-});};
+ }catch{
+  self.postMessage({type:'error',id:request.id,text:'Recognition could not finish on this device. Try again or use Adjust.'});
+ }
+}).catch(()=>{self.postMessage({type:'error',id:request.id,text:'Recognition stopped. Try again or use Adjust.'});});};

@@ -20,3 +20,27 @@ export function detailMatch(ranked,choices){
 }
 
 export function sleeveChoices(type){return [['Sleeveless','sleeveless'],['Short sleeve','short-sleeved'],['Elbow length','elbow-length sleeve'],['Three-quarter sleeve','three-quarter sleeve'],['Long sleeve','long-sleeved']].map(([value,style])=>({label:`a ${style} ${type.toLowerCase()}`,value}));}
+
+export function garmentDetailGroups(choice){
+ const groups={};
+ for(const [key,values] of Object.entries({color:['Black','White','Gray','Beige','Brown','Blue','Green','Red','Pink','Purple','Yellow','Orange','Multicolor'],fit:['Fitted','Regular','Relaxed','Oversized'],pattern:['Solid','Striped','Floral','Plaid','Checked','Polka dot','Animal print','Graphic']})){
+  groups[key]=values.map(value=>({value,label:'a '+value.toLowerCase()+' '+choice.itemType.toLowerCase()}));
+  groups[key].push({value:'Unknown',label:'a garment with an unclear '+key});
+ }
+ if(['Tops','Dresses','Outerwear'].includes(choice.category)&&choice.sleeveLength==='Unknown')groups.sleeveLength=sleeveChoices(choice.itemType);
+ return groups;
+}
+// A single model pass can score all detail labels. Normalize within each group
+// for meaningful per-field comparisons. Quantized batches can shift scores,
+// so grouped details use a stricter confidence gate than single-field calls.
+export function groupedGarmentDetails(results,groups){
+ const details={};
+ for(const [key,options]of Object.entries(groups)){
+  const labels=new Set(options.map(x=>x.label)),ranked=results.filter(x=>labels.has(x.label)&&Number.isFinite(x.score)&&x.score>=0);
+  const total=ranked.reduce((sum,x)=>sum+x.score,0);if(!total)continue;
+  const normalized=ranked.map(x=>({...x,score:x.score/total})).sort((a,b)=>b.score-a.score);
+  if(!normalized[0]||normalized[0].score<.65||normalized[0].score-(normalized[1]?.score||0)<.25)continue;
+  const value=detailMatch(normalized,options);if(value&&value!=='Unknown')details[key]=value;
+ }
+ return details;
+}
