@@ -50,10 +50,24 @@ export function clothingMaskGroups(map){
  }
  return output;
 }
-export function isolateClothingPixels(image,map,group){
+export function clothingCropBounds(image,map,group){
  if(![3,4].includes(image.channels)||image.data.length!==image.width*image.height*image.channels)throw Error('Invalid outfit image pixels.');
  const scaleX=image.width/map.width,scaleY=image.height/map.height,pad=Math.max(2,Math.round(Math.max((group.bounds.right-group.bounds.left)*scaleX,(group.bounds.bottom-group.bounds.top)*scaleY)*.025));
  const left=Math.max(0,Math.floor(group.bounds.left*scaleX)-pad),top=Math.max(0,Math.floor(group.bounds.top*scaleY)-pad),right=Math.min(image.width,Math.ceil(group.bounds.right*scaleX)+pad),bottom=Math.min(image.height,Math.ceil(group.bounds.bottom*scaleY)+pad),width=right-left,height=bottom-top;
+ return {left,top,width,height};
+}
+// Keep source pixels for review and classification. A coarse semantic mask
+// locates the crop; it must not erase fine garment texture or nearby edges.
+export function cropClothingPhotoPixels(image,map,group){
+ const bounds=clothingCropBounds(image,map,group),{left,top,width,height}=bounds,data=new Uint8ClampedArray(width*height*3);
+ for(let y=0;y<height;y++)for(let x=0;x<width;x++){
+  const source=((y+top)*image.width+x+left)*image.channels,target=(y*width+x)*3;
+  for(let c=0;c<3;c++)data[target+c]=image.data[source+c];
+ }
+ return {data,width,height,channels:3,bounds};
+}
+export function isolateClothingPixels(image,map,group){
+ const {left,top,width,height}=clothingCropBounds(image,map,group),scaleX=image.width/map.width,scaleY=image.height/map.height;
  const data=new Uint8ClampedArray(width*height*3);data.fill(255);
  for(let y=0;y<height;y++)for(let x=0;x<width;x++){
   const sourceX=x+left,sourceY=y+top,maskIndex=Math.min(map.height-1,Math.floor(sourceY/scaleY))*map.width+Math.min(map.width-1,Math.floor(sourceX/scaleX));

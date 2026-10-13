@@ -41,7 +41,7 @@ function startOutfitSplit(image,sourceId=crypto.randomUUID()){
     if(!p||typeof p.image!=='string'||p.image.length>8000000||!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(p.image)||!Array.isArray(p.hint?.categories)||p.hint.categories.some(x=>!categories.includes(x))||!Array.isArray(p.hint.types)||p.hint.types.length>8)return;
     if(candidate(p.image,{outfitSourceId:sourceId,segmentHint:p.hint}))job.added++;renderOutfitCapture();return;
    }
-   if(data.type==='done')finishOutfitSplit(job,job.added?job.added+' individual clothing photos isolated. Categories are being checked.':'No new clothing pieces could be isolated. Try a clearer full-body photo; exact duplicates may already be in Photo results.',false);
+   if(data.type==='done')finishOutfitSplit(job,job.added?job.added+' individual clothing photos cropped. Categories are being checked.':'No new clothing pieces could be located. Try a clearer full-body photo; exact duplicates may already be in Photo results.',false);
    else if(data.type==='error')finishOutfitSplit(job,job.added?'Some pieces are kept; the rest could not be separated. Try again.':'This outfit could not be separated. Try another clear photo of one person, head to toe.',true);
   };
   job.worker.onerror=()=>finishOutfitSplit(job,'Outfit separation could not start. Your existing photos are kept. Try again.',true);
@@ -53,7 +53,7 @@ async function readOutfitPhoto(file){
  if(file.size>10*1024*1024)return $('outfitSplitStatus').textContent='Choose an outfit photo smaller than 10 MB.';
  if(!file.type?.startsWith('image/')&&!/\.(jpe?g|png|webp|avif|heic|heif)$/i.test(file.name||''))return $('outfitSplitStatus').textContent='Choose a clothing photo.';
  stopCamera();busy=true;controls(true);let timer;
- try{const image=await Promise.race([photoToJPEG(file,{maxDimension:2048,quality:.94}),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('decode timeout')),15000);})]);busy=false;controls(false);session=0;startOutfitSplit(image);}
+ try{const image=await Promise.race([photoToJPEG(file,{maxDimension:3072,quality:.94}),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('decode timeout')),15000);})]);busy=false;controls(false);session=0;startOutfitSplit(image);}
  catch{$('outfitSplitStatus').textContent='Could not open that outfit photo. Try JPEG or PNG.';}
  finally{clearTimeout(timer);if(!outfitSplitJob){busy=false;controls(false);}}
 }

@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {clothingLabelMap,clothingMaskGroups,isolateClothingPixels} from '../public/outfit-segmentation.mjs';
+import {clothingLabelMap,clothingMaskGroups,isolateClothingPixels,cropClothingPhotoPixels} from '../public/outfit-segmentation.mjs';
 function logits(width=20,height=20){const data=new Float32Array(18*width*height);data.fill(-10);for(let i=0;i<width*height;i++)data[i]=10;return {data,dims:[1,18,height,width],paint(label,left,top,w,h){for(let y=top;y<top+h;y++)for(let x=left;x<left+w;x++){const i=y*width+x;for(let c=0;c<18;c++)data[c*width*height+i]=c===label?10:-10;}}};}
 test('one photo yields separate upper clothing, pants and one shoe-pair mask',()=>{
  const l=logits();l.paint(4,5,4,8,5);l.paint(6,6,10,6,5);l.paint(9,6,16,3,3);l.paint(10,10,16,3,3);const map=clothingLabelMap(l.data,l.dims),pieces=clothingMaskGroups(map);assert.deepEqual(pieces.map(x=>x.label),['Upper garment','Bottoms','Shoes']);assert.equal(pieces[2].count,18);
@@ -17,3 +17,15 @@ test('isolated garment image contains its clothing pixels on a white background'
 test('garments cut off by the edge are marked for review and malformed output fails safely',()=>{
  const l=logits();l.paint(6,6,12,7,8);const group=clothingMaskGroups(clothingLabelMap(l.data,l.dims))[0];assert.equal(group.clipped,true);assert.throws(()=>clothingLabelMap(l.data,[1,17,20,20]));l.data[0]=NaN;assert.throws(()=>clothingLabelMap(l.data,l.dims));
 });
+
+test('photo crops preserve one-pixel fabric texture and detail omitted by a coarse mask',()=>{
+ const width=64,height=64,data=new Uint8ClampedArray(width*height*3);
+ for(let y=0;y<height;y++)for(let x=0;x<width;x++)for(let c=0;c<3;c++)data[(y*width+x)*3+c]=x%2?180:30;
+ const selected=new Uint8Array(16);for(const i of [5,6,9])selected[i]=1;
+ const map={width:4,height:4},group={selected,bounds:{left:1,top:1,right:3,bottom:3}};
+ const image={data,width,height,channels:3},photo=cropClothingPhotoPixels(image,map,group),masked=isolateClothingPixels(image,map,group);
+ const pixel=(crop,x,y)=>Array.from(crop.data.slice(((y-crop.bounds.top)*crop.width+x-crop.bounds.left)*3,((y-crop.bounds.top)*crop.width+x-crop.bounds.left)*3+3));
+ assert.deepEqual(pixel(photo,40,40),[30,30,30]);assert.deepEqual(pixel(photo,41,40),[180,180,180]);assert.deepEqual(pixel(masked,40,40),[255,255,255]);
+ assert.equal(photo.width,36);assert.equal(photo.height,36);
+});
+
