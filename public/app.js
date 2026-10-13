@@ -5,9 +5,10 @@ let localWorker,localReady=false,localBatch=false;const localJobs=new Map(),loca
 let writes=Promise.resolve();
 function queued(work){const result=writes.then(work);writes=result.catch(()=>{});return result;}
 let db,items=[],batch=[],stream,timer,busy=false,lastPixels=null,lastSaved=null,stable=0,lastCapture=0,session=0,audio,cadence;
+let cameraMode=null,cameraOpening=false,cameraRequest=0;
 const video=$('video'),canvas=document.createElement('canvas'),tiny=document.createElement('canvas');tiny.width=32;tiny.height=32;
 function message(t){$('message').textContent=t;}
-function switchView(view){if(stream&&view!=='scan')stopCamera();document.querySelectorAll('.view').forEach(x=>x.hidden=x.id!==view);document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.view===view));render();}
+function switchView(view){if((stream||cameraOpening)&&view!=='scan')stopCamera();document.querySelectorAll('.view').forEach(x=>x.hidden=x.id!==view);document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.view===view));render();}
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>switchView(b.dataset.view));
 function openDB(){return new Promise((resolve,reject)=>{const r=indexedDB.open('closet-current-user-'+window.closetAuth.user.id,2);r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains('items'))r.result.createObjectStore('items',{keyPath:'id'});if(!r.result.objectStoreNames.contains('state'))r.result.createObjectStore('state',{keyPath:'id'});};r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});}
 function readAll(){return new Promise((resolve,reject)=>{const r=db.transaction('items').objectStore('items').getAll();r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});}
@@ -40,7 +41,7 @@ function clothingFields(body,item,onChange=()=>{}){
 function render(){
  $('reviewCount').textContent=batch.length;$('closetCount').textContent=items.length;$('sessionCount').textContent=session;
  const grid=$('reviewGrid');grid.replaceChildren();
- if(!batch.length)empty(grid,'Your next piece starts with a scan.','Record or upload a short video to collect candidate images.');
+ if(!batch.length)empty(grid,'Your next piece starts with a scan.','Take photos with the camera or choose saved photos or a short video.');
  for(const item of batch){const card=node('article',null,'card'),im=node('img');im.src=item.image;im.alt='Candidate clothing image';const body=node('div',null,'card-body');const panel=node('div',null,'local-panel'),recognize=node('button',localPending.has(item.id)?'Recognizing…':'Recognize on this device','secondary');recognize.disabled=localPending.has(item.id)||!!stream;recognize.onclick=()=>recognizeItem(item);panel.append(recognize);if(item.localStatus)panel.append(node('p',item.localStatus));for(const suggestion of item.localChoices||[]){if(suggestion.category==='Uncategorized')continue;const use=node('button','Use '+suggestion.label.replace(/^a |^an /,''),'choice-button');use.onclick=()=>{applyLocalChoice(item,suggestion,true);persistDraft();render();};panel.append(use);}body.append(panel);clothingFields(body,item,persistDraft);
  const actions=node('div',null,'actions'),save=node('button','Save piece','primary'),discard=node('button','Remove','secondary');save.disabled=localPending.has(item.id);save.onclick=async()=>{if(saving||localPending.has(item.id))return;if(!db)return message('Storage is unavailable. Please use a regular browser.');saving=true;save.disabled=true;try{const value={...normalizeClothing(item),name:item.name.trim()||'Closet piece',category:item.category||'Uncategorized',savedAt:new Date().toISOString()};const nextBatch=batch.filter(x=>x.id!==item.id);await savePiece(value,nextBatch);items.push(value);batch=nextBatch;render();message('Piece saved to your closet.');}catch(e){message('Could not save this piece. Free browser storage and try again.');save.disabled=false;}finally{saving=false;}};discard.onclick=()=>{batch=batch.filter(x=>x.id!==item.id);persistDraft();render();};actions.append(save,discard);body.append(actions);card.append(im,body);grid.append(card);}
  const cg=$('closetGrid');cg.replaceChildren();const query=$('search').value.toLowerCase(),filter=$('filter').value,visible=items.filter(x=>clothingMatches(x,query,filter,$('seasonFilter').value,$('sleeveFilter').value));
@@ -54,50 +55,76 @@ function difference(a,b){if(!a||!b)return 255;let total=0;for(let i=0;i<a.length
 function snap(){if(!video.videoWidth||video.readyState<2)throw Error('The camera has not provided a usable frame yet.');canvas.width=Math.min(900,video.videoWidth);canvas.height=Math.round(canvas.width*video.videoHeight/video.videoWidth);canvas.getContext('2d').drawImage(video,0,0,canvas.width,canvas.height);return canvas.toDataURL('image/jpeg',.8);}
 function beep(){if(!$('sound').checked||!audio)return;try{const o=audio.createOscillator(),g=audio.createGain();o.frequency.value=740;g.gain.value=.04;o.connect(g);g.connect(audio.destination);o.start();o.stop(audio.currentTime+.12);}catch{}}
 function candidate(image){batch.push({id:crypto.randomUUID(),image,name:'',category:'Uncategorized',color:'',notes:''});persistDraft();session++;$('sessionCount').textContent=session;$('reviewCount').textContent=batch.length;$('lastCaptureImage').src=image;$('lastCaptureImage').hidden=false;}
-function stopCamera(){clearInterval(timer);if(stream)stream.getTracks().forEach(t=>t.stop());stream=null;video.srcObject=null;$('start').hidden=false;$('stop').hidden=true;$('interval').disabled=false;$('captureState').textContent='Session finished — review your candidates';}
-function controls(disabled){for(const id of ['start','upload','record','interval','clothingPhotos'])$(id).disabled=disabled;}
+function stopCamera(){
+ cameraRequest++;cameraOpening=false;clearInterval(timer);timer=null;
+ if(stream)stream.getTracks().forEach(t=>t.stop());
+ stream=null;cameraMode=null;video.srcObject=null;video.classList.remove('visible');
+ $('placeholder').hidden=false;$('cameraChoices').hidden=false;$('cameraActions').hidden=true;
+ controls(false);$('captureState').textContent='Camera stopped · your photos are ready to review';
+}
+function controls(disabled){for(const id of ['start','startAuto','upload','interval','clothingPhotos'])$(id).disabled=disabled;}
 function finishScan(){
- if(stream&&session===0&&video.readyState>=2&&video.videoWidth){try{candidate(snap());}catch{}}
+ const wasManual=cameraMode==='manual';
+ if(!wasManual&&stream&&session===0&&video.readyState>=2&&video.videoWidth){try{candidate(snap());}catch{}}
  stopCamera();
  if(batch.length){message(`${session} images collected in this session. Review the images and keep the clearest view of each garment.`);switchView('review');if(localReady&&$('autoLocal').checked)recognizeBatch();}
- else{message('No camera frames were received. Stay on this screen and try Record with phone camera or Upload a closet video.');$('captureState').textContent='No images captured — try a recorded video';}
+ else{message(wasManual?'No photos taken yet. Open camera and tap Take photo when a garment is ready.':'No camera frames were received. Try Open camera or choose a saved closet video.');$('captureState').textContent='No photos captured · choose a camera option to try again';}
 }
 function captureTick(now=Date.now()){
- if(!stream)return;
+ if(!stream||cameraMode!=='auto')return;
  const ready=video.readyState>=2&&video.videoWidth>0;
  if(!cadence.due(now,ready)){
   if(!ready)$('captureState').textContent='Waiting for camera images…';
+  else $('captureState').textContent=`Next photo in ${Math.max(1,Math.ceil((cadence.intervalMs-(now-cadence.last))/1000))} seconds · hold the garment still`;
   return;
  }
  try{candidate(snap());cadence.captured(now);beep();$('captureState').textContent=`${session} images captured · show the next piece`;
  if(session>=60){finishScan();message('60 images collected. Review this batch before continuing.');}}
  catch(e){$('captureState').textContent='Waiting for a usable camera frame…';}
 }
-$('start').onclick=async()=>{
+function takePhoto(){
+ if(!stream||cameraMode!=='manual')return;
+ try{candidate(snap());beep();$('captureState').textContent=`${session} photos taken · ready for the next piece`;if(session>=60){finishScan();message('60 photos collected. Review this batch before continuing.');}}
+ catch{message('The camera is still getting ready. Wait a moment, then tap Take photo again.');}
+}
+async function startCamera(mode){
  if(busy||stream)return;
- busy=true;$('start').disabled=true;
+ const request=++cameraRequest;cameraOpening=true;busy=true;controls(true);
+ $('captureState').textContent='Opening camera…';
  try{audio=new(window.AudioContext||window.webkitAudioContext)();await audio.resume();}catch{}
  try{
-  if(!navigator.mediaDevices?.getUserMedia)throw Error('Camera access unavailable. Use Record with phone camera or upload a video.');
-  stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280}},audio:false});
+  if(!navigator.mediaDevices?.getUserMedia)throw Error('Camera access unavailable. Choose saved photos or a closet video instead.');
+  const acquired=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280}},audio:false});
+  if(request!==cameraRequest){acquired.getTracks().forEach(track=>track.stop());return;}
+  stream=acquired;cameraMode=mode;
   video.removeAttribute('src');video.srcObject=stream;video.classList.add('visible');$('placeholder').hidden=true;
   await video.play();session=0;$('sessionCount').textContent='0';$('lastCaptureImage').hidden=true;
-  cadence=new CaptureCadence(Number($('interval').value)*1000);
-  $('start').hidden=true;$('stop').hidden=false;$('interval').disabled=true;
-  $('captureState').textContent='Camera ready · hold the first garment in view';
-  timer=setInterval(()=>captureTick(),250);captureTick();
-  message(`Capturing one image every ${$('interval').value} seconds. Watch the image count increase; hold each garment still for one interval before moving to the next.`);
- }catch(e){stopCamera();message(e.message||'Camera could not start. Try uploading a recorded video.');}
- finally{busy=false;$('start').disabled=false;}
-};
+  if(request!==cameraRequest)return;
+  cameraOpening=false;$('cameraChoices').hidden=true;$('cameraActions').hidden=false;$('takePhoto').hidden=mode!=='manual';
+  if(mode==='auto'){
+   cadence=new CaptureCadence(Number($('interval').value)*1000,Date.now());
+   timer=setInterval(()=>captureTick(),250);captureTick();
+   message(`Automatic scan: one photo every ${$('interval').value} seconds. Watch the countdown and hold each garment still. Finish & review stops the camera.`);
+  }else{
+   $('captureState').textContent='Frame a garment · tap Take photo when ready';
+   message('Take each photo at your own pace. Tap Finish & review when you are done.');
+  }
+ }catch(e){
+  if(request===cameraRequest){stopCamera();message(e.name==='NotAllowedError'?'Camera permission was denied. Allow camera access in your browser, or choose saved photos.':(e.message||'Camera could not start. Choose saved photos or a closet video.'));}
+ }
+ finally{busy=false;if(!stream)controls(false);}
+}
+$('start').onclick=()=>startCamera('manual');
+$('startAuto').onclick=()=>startCamera('auto');
+$('takePhoto').onclick=takePhoto;
 $('stop').onclick=finishScan;
 function waitEvent(target,event,timeout=15000){return new Promise((resolve,reject)=>{let t;const clean=()=>{clearTimeout(t);target.removeEventListener(event,ok);target.removeEventListener('error',fail);};const ok=()=>{clean();resolve();},fail=()=>{clean();reject(Error('This video could not be read. Try an MP4 recorded by your phone.'));};target.addEventListener(event,ok,{once:true});target.addEventListener('error',fail,{once:true});t=setTimeout(fail,timeout);});}
 async function upload(file){if(!file||busy)return;if(file.size>150*1024*1024)return message('Choose a video smaller than 150 MB. Short batches work best.');stopCamera();busy=true;controls(true);let url;const startLength=batch.length;try{url=URL.createObjectURL(file);video.src=url;video.classList.add('visible');$('placeholder').hidden=true;const loaded=waitEvent(video,'loadedmetadata');video.load();await loaded;if(!Number.isFinite(video.duration)||video.duration<=0)throw Error('Video duration could not be read. Try a regular MP4.');if(video.duration>180)throw Error('Please trim this video to 3 minutes or less.');session=0;const interval=Number($('interval').value);for(let t=Math.min(.1,video.duration/2);t<video.duration;t+=interval){const seek=waitEvent(video,'seeked');video.currentTime=t;await seek;candidate(snap());const progress=Math.round(t/video.duration*100);$('captureState').textContent=`Collecting images · ${progress}%`;}message(`${session} candidate images collected. Keep the best view of each garment. Categories are entered during review.`);switchView('review');if(localReady&&$('autoLocal').checked)recognizeBatch();}catch(e){render();if(batch.length>startLength){message(`${session} images recovered before processing stopped. ${e.message}`);switchView('review');}else message(e.message);}finally{busy=false;controls(false);video.removeAttribute('src');video.load();if(url)URL.revokeObjectURL(url);$('captureState').textContent='Ready for another batch';}}
-for(const id of ['upload','record'])$(id).onchange=e=>{upload(e.target.files[0]);e.target.value='';};
+$('upload').onchange=e=>{upload(e.target.files[0]);e.target.value='';};
 $('discard').onclick=()=>{if(batch.length&&confirm('Discard all unsaved images in this batch?')){batch=[];persistDraft();session=0;render();}};
 $('export').onclick=()=>{if(!items.length&&(typeof inspirationLooks==='undefined'||!inspirationLooks.length))return message('Save a closet piece or inspiration look before exporting.');const blob=new Blob([JSON.stringify({format:'closet-current',version:3,items,looks:typeof inspirationLooks!=='undefined'?inspirationLooks:[]})],{type:'application/json'}),url=URL.createObjectURL(blob),a=node('a');a.href=url;a.download='closet-current-backup.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);message('Backup downloaded. Keep it somewhere you can find again.');};
 $('import').onchange=async e=>{const file=e.target.files[0];e.target.value='';if(!file)return;if(!db)return message('Browser storage is unavailable.');if(file.size>100*1024*1024)return message('Backup must be smaller than 100 MB.');try{const data=JSON.parse(await file.text());if(data.format!=='closet-current'||![1,2,3].includes(data.version)||!Array.isArray(data.items)||data.items.length>1000)throw Error('Choose a Closet Current backup.');const valid=data.items.map(x=>{if(typeof x.id!=='string'||!x.id||typeof x.image!=='string'||!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(x.image)||x.image.length>3000000)throw Error('Backup contains an invalid image.');return normalizeClothing({...x,id:x.id.slice(0,100),image:x.image,name:String(x.name||'Closet piece').slice(0,120),category:categories.includes(x.category)?x.category:'Uncategorized',color:String(x.color||'').slice(0,120),notes:String(x.notes||'').slice(0,500),savedAt:String(x.savedAt||'')});});if(data.looks){if(!Array.isArray(data.looks)||data.looks.length>100)throw Error('Invalid inspiration backup.');data.looks=data.looks.map(validLook);}if(!confirm(`Import ${valid.length} pieces? Matching IDs will update existing pieces.`))return;await writeAll(valid);items=(await readAll()).map(normalizeClothing);if(data.looks)await importLooks(data.looks);render();message('Backup imported.');}catch(err){message(err.message||'Import failed.');}};
-window.addEventListener('pagehide',stopCamera);window.addEventListener('beforeunload',e=>{if(batch.length||busy){e.preventDefault();e.returnValue='';}});document.addEventListener('visibilitychange',()=>{if(document.hidden&&stream){stopCamera();message('Camera stopped while the app was in the background. Your candidate images are ready to review.');}});
+window.addEventListener('pagehide',stopCamera);window.addEventListener('beforeunload',e=>{if(batch.length||busy){e.preventDefault();e.returnValue='';}});document.addEventListener('visibilitychange',()=>{if(document.hidden&&(stream||cameraOpening)){stopCamera();message('Camera stopped while the app was in the background. Your photos are ready to review.');}});
 const closetReady=(async()=>{await window.closetAuth.ready;try{db=await openDB();items=(await readAll()).map(normalizeClothing);batch=(await readDraft()).map(normalizeClothing);if(batch.length)message(`${batch.length} unfinished candidates restored. Continue in Review.`);}catch{message('Browser storage is unavailable. Use a regular browser to save your closet.');}render();})();
 
 for(const c of categories.slice(1))$('batchCategory').append(node('option',c));
