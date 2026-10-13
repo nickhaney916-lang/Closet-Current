@@ -38,7 +38,7 @@ function startOutfitSplit(image,sourceId=crypto.randomUUID()){
    }
    if(data.type==='piece'){
     const p=data.piece;
-    if(!p||typeof p.image!=='string'||p.image.length>3000000||!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(p.image)||!Array.isArray(p.hint?.categories)||p.hint.categories.some(x=>!categories.includes(x))||!Array.isArray(p.hint.types)||p.hint.types.length>8)return;
+    if(!p||typeof p.image!=='string'||p.image.length>8000000||!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(p.image)||!Array.isArray(p.hint?.categories)||p.hint.categories.some(x=>!categories.includes(x))||!Array.isArray(p.hint.types)||p.hint.types.length>8)return;
     if(candidate(p.image,{outfitSourceId:sourceId,segmentHint:p.hint}))job.added++;renderOutfitCapture();return;
    }
    if(data.type==='done')finishOutfitSplit(job,job.added?job.added+' individual clothing photos isolated. Categories are being checked.':'No new clothing pieces could be isolated. Try a clearer full-body photo; exact duplicates may already be in Photo results.',false);
@@ -53,7 +53,7 @@ async function readOutfitPhoto(file){
  if(file.size>10*1024*1024)return $('outfitSplitStatus').textContent='Choose an outfit photo smaller than 10 MB.';
  if(!file.type?.startsWith('image/')&&!/\.(jpe?g|png|webp|avif|heic|heif)$/i.test(file.name||''))return $('outfitSplitStatus').textContent='Choose a clothing photo.';
  stopCamera();busy=true;controls(true);let timer;
- try{const image=await Promise.race([photoToJPEG(file),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('decode timeout')),15000);})]);busy=false;controls(false);session=0;startOutfitSplit(image);}
+ try{const image=await Promise.race([photoToJPEG(file,{maxDimension:2048,quality:.94}),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('decode timeout')),15000);})]);busy=false;controls(false);session=0;startOutfitSplit(image);}
  catch{$('outfitSplitStatus').textContent='Could not open that outfit photo. Try JPEG or PNG.';}
  finally{clearTimeout(timer);if(!outfitSplitJob){busy=false;controls(false);}}
 }

@@ -12,14 +12,14 @@ async function load(requestId){
  return loader;
 }
 async function jpegData(image){
- const bytes=new Uint8Array(await(await image.toBlob('image/jpeg',.85)).arrayBuffer());let text='';for(let i=0;i<bytes.length;i+=32768)text+=String.fromCharCode(...bytes.subarray(i,i+32768));return 'data:image/jpeg;base64,'+btoa(text);
+ const bytes=new Uint8Array(await(await image.toBlob('image/jpeg',.94)).arrayBuffer());let text='';for(let i=0;i<bytes.length;i+=32768)text+=String.fromCharCode(...bytes.subarray(i,i+32768));return 'data:image/jpeg;base64,'+btoa(text);
 }
 let chain=Promise.resolve();
 self.onmessage=event=>{const request=event.data;chain=chain.then(async()=>{
  try{
-  if(typeof request.image!=='string'||!/^data:image\/jpeg;base64,/.test(request.image)||request.image.length>3000000)throw Error('Invalid outfit photo.');
+  if(typeof request.image!=='string'||!/^data:image\/jpeg;base64,/.test(request.image)||request.image.length>12000000)throw Error('Invalid outfit photo.');
   const {model,processor,RawImage}=await load(request.id);self.postMessage({type:'progress',id:request.id,phase:'separating'});
-  const image=await RawImage.read(request.image);if(!image.width||!image.height||Math.max(image.width,image.height)>1000)throw Error('Invalid outfit photo dimensions.');
+  const image=await RawImage.read(request.image);if(!image.width||!image.height||Math.max(image.width,image.height)>2048)throw Error('Invalid outfit photo dimensions.');
   const output=await model(await processor(image)),{clothingLabelMap,clothingMaskGroups,isolateClothingPixels}=await import('./outfit-segmentation.mjs'+new URL(import.meta.url).search);
   const map=clothingLabelMap(output.logits.data,output.logits.dims),groups=map.personDetected?clothingMaskGroups(map):[];let count=0;
   for(const group of groups){
