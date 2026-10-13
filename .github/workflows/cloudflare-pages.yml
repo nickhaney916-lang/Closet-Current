@@ -33,7 +33,7 @@ jobs:
         run: |
           node --input-type=module <<'NODE'
           const token = process.env.CLOUDFLARE_API_TOKEN?.trim();
-          const account = process.env.CLOUDFLARE_ACCOUNT_ID?.trim();
+          const account = '43ad9703708ddb191712306bebadcace';
           if (!token || !account) throw new Error('Add CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID repository secrets.');
           if (!/^[a-f0-9]{32}$/i.test(account)) throw new Error('CLOUDFLARE_ACCOUNT_ID must be the 32-character account ID.');
           const base = 'https://api.cloudflare.com/client/v4/accounts/' + account + '/pages/projects';
@@ -60,6 +60,6 @@ jobs:
         uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          accountId: '43ad9703708ddb191712306bebadcace'
           command: pages deploy dist --project-name=closet-current --branch=main
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
