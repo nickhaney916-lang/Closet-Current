@@ -17,5 +17,16 @@ for(const asset of assets)hash.update(asset).update(await readFile('public/'+ass
 const template=await readFile('public/sw.js','utf8');
 hash.update(template);
 const version=hash.digest('hex').slice(0,12);
-await writeFile('dist/sw.js',template.replace('__VERSION__',version).replace('__ASSETS__',JSON.stringify(assets)));
+// Give each release fresh script/style URLs even when the host or browser
+// still considers the previous URLs cacheable.
+const versionedAssets=new Set();
+const index=await readFile('public/index.html','utf8');
+const builtIndex=index.replace(/(src|href)="([^"]+\.(?:js|css))"/g,(match,attribute,asset)=>{
+ if(!assets.includes(asset))return match;
+ const url=asset+'?v='+version;
+ versionedAssets.add(url);
+ return attribute+'="'+url+'"';
+});
+await writeFile('dist/index.html',builtIndex);
+await writeFile('dist/sw.js',template.replace('__VERSION__',version).replace('__ASSETS__',JSON.stringify([...assets,...versionedAssets])));
 console.log('Built closet inventory without paid AI services.');
