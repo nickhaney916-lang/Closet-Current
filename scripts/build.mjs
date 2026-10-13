@@ -20,7 +20,7 @@ const version=hash.digest('hex').slice(0,12);
 // Give each release fresh script/style URLs even when the host or browser
 // still considers the previous URLs cacheable.
 const versionedAssets=new Set();
-for(const asset of assets)if(/\.(?:js|mjs|css)$/.test(asset))versionedAssets.add(asset+'?v='+version);
+for(const asset of assets)if(/\.(?:js|mjs|css)$/.test(asset)||/^recognition-vectors\.(?:json|bin)$/.test(asset))versionedAssets.add(asset+'?v='+version);
 const index=await readFile('public/index.html','utf8');
 const builtIndex=index.replace(/(src|href)="([^"]+\.(?:js|css))"/g,(match,attribute,asset)=>{
  if(!assets.includes(asset))return match;

@@ -22,7 +22,7 @@ Status: device-check tooling added; physical-phone results still required. Updat
 
 Use More → Help & device check with an existing account. Start an optional local test, take photos of three different garments, verify the labels, create an outfit, close and reopen the app, and download a backup. Mark each step Works or Needs help. Download the test report if support is needed. The report includes sanitized scanner stages, durations and error codes, without photos, garment names, email addresses, tokens or account IDs. No report is sent automatically.
 
-Recognition logic, model loading, retry and timeout behavior have automated checks. The actual model has now been checked on 100 real dataset photos: 68 correct automatic categories, 30 uncertain cases, and 2 incorrect automatic categories. Detail smoke tests exposed wrong labels and now use agreement checks to withhold unsupported details. See [recognition test results](RECOGNITION-TEST-RESULTS.md). Physical-phone speed and broader detail accuracy remain unverified. Wider signup and password-reset inbox tests remain blocked by the sender configuration above.
+Staged category/type recognition, whole-photo preservation, cross-view checks and precomputed high-precision text vectors are implemented. The frozen 100-photo WebAssembly comparison reduced wrong automatic categories from 6 to 2, while increasing photos needing adjustment from 21 to 34. See [staged recognition results](STAGED-RECOGNITION-RESULTS.md). Physical-phone speed, browser preprocessing and broader detail accuracy remain unverified. Wider signup and password-reset inbox tests remain blocked by the sender configuration above.
 
 ## P1 — Cloud backup and synchronization
 

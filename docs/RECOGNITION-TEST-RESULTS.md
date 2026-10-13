@@ -1,5 +1,7 @@
 # Indexing and categorization checks — October 13, 2026
 
+Historical baseline: see [the subsequent staged-recognition results](STAGED-RECOGNITION-RESULTS.md) for the current implementation and release comparison.
+
 ## Result
 
 The functional suite passes 93 automated tests, including 100 simulated captures in five batches of twenty. These simulations inject recognition responses; they verify indexing, saving, filtering and queue behavior, not visual recognition accuracy.

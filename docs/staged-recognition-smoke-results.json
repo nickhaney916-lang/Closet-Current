@@ -1,0 +1,375 @@
+{
+  "runtime": "Node CPU q8 vision + fp32 text vectors; not physical phone",
+  "results": [
+    {
+      "file": "16198646.jpg",
+      "variant": "original",
+      "expected": {
+        "category": "Tops",
+        "color": "Red",
+        "pattern": "Solid",
+        "sleeveLength": "Short sleeve"
+      },
+      "result": {
+        "strong": true,
+        "choices": [
+          {
+            "label": "a polo shirt",
+            "category": "Tops",
+            "itemType": "Polo",
+            "sleeveLength": "Short sleeve",
+            "score": 0.9998071915767456
+          },
+          {
+            "label": "a T-shirt",
+            "category": "Tops",
+            "itemType": "T-shirt",
+            "sleeveLength": "Unknown",
+            "score": 0.00012687598483266259
+          },
+          {
+            "label": "a button-down shirt",
+            "category": "Tops",
+            "itemType": "Button-down shirt",
+            "sleeveLength": "Unknown",
+            "score": 4.331497114411848e-05
+          }
+        ],
+        "details": {
+          "pattern": "Solid",
+          "sleeveLength": "Short sleeve"
+        }
+      },
+      "wrongFields": []
+    },
+    {
+      "file": "16198646.jpg",
+      "variant": "dim",
+      "expected": {
+        "category": "Tops",
+        "color": "Red",
+        "pattern": "Solid",
+        "sleeveLength": "Short sleeve"
+      },
+      "result": {
+        "strong": true,
+        "choices": [
+          {
+            "label": "a polo shirt",
+            "category": "Tops",
+            "itemType": "Polo",
+            "sleeveLength": "Short sleeve",
+            "score": 0.9989217992340534
+          },
+          {
+            "label": "a blurry image with no identifiable garment",
+            "category": "Uncategorized",
+            "itemType": "Unknown",
+            "sleeveLength": "Unknown",
+            "score": 0.0003800160006229386
+          },
+          {
+            "label": "a button-down shirt",
+            "category": "Tops",
+            "itemType": "Button-down shirt",
+            "sleeveLength": "Unknown",
+            "score": 0.00033529221875621285
+          }
+        ],
+        "details": {
+          "sleeveLength": "Short sleeve"
+        }
+      },
+      "wrongFields": []
+    },
+    {
+      "file": "16198646.jpg",
+      "variant": "small",
+      "expected": {
+        "category": "Tops",
+        "color": "Red",
+        "pattern": "Solid",
+        "sleeveLength": "Short sleeve"
+      },
+      "result": {
+        "strong": false,
+        "choices": [],
+        "details": {},
+        "reason": "category_uncertain"
+      },
+      "wrongFields": []
+    },
+    {
+      "file": "16790484.jpg",
+      "variant": "original",
+      "expected": {
+        "category": "Shoes",
+        "color": "Multicolor"
+      },
+      "result": {
+        "strong": false,
+        "choices": [],
+        "details": {},
+        "reason": "category_uncertain"
+      },
+      "wrongFields": []
+    },
+    {
+      "file": "16790484.jpg",
+      "variant": "dim",
+      "expected": {
+        "category": "Shoes",
+        "color": "Multicolor"
+      },
+      "result": {
+        "strong": false,
+        "choices": [],
+        "details": {},
+        "reason": "category_uncertain"
+      },
+      "wrongFields": []
+    },
+    {
+      "file": "16790484.jpg",
+      "variant": "small",
+      "expected": {
+        "category": "Shoes",
+        "color": "Multicolor"
+      },
+      "result": {
+        "strong": false,
+        "choices": [],
+        "details": {},
+        "reason": "category_uncertain"
+      },
+      "wrongFields": []
+    },
+    {
+      "file": "16867424.jpg",
+      "variant": "original",
+      "expected": {
+        "category": "Tops",
+        "color": "Red",
+        "pattern": "Solid",
+        "sleeveLength": "Short sleeve"
+      },
+      "result": {
+        "strong": true,
+        "choices": [
+          {
+            "label": "a polo shirt",
+            "category": "Tops",
+            "itemType": "Polo",
+            "sleeveLength": "Short sleeve",
+            "score": 0.9990909513361671
+          },
+          {
+            "label": "a button-down shirt",
+            "category": "Tops",
+            "itemType": "Button-down shirt",
+            "sleeveLength": "Unknown",
+            "score": 0.0006291863214554015
+          },
+          {
+            "label": "a T-shirt",
+            "category": "Tops",
+            "itemType": "T-shirt",
+            "sleeveLength": "Unknown",
+            "score": 0.00022063993043576076
+          }
+        ],
+        "details": {
+          "color": "Red",
+          "sleeveLength": "Short sleeve"
+        }
+      },
+      "wrongFields": []
+    },
+    {
+      "file": "16867424.jpg",
+      "variant": "dim",
+      "expected": {
+        "category": "Tops",
+        "color": "Red",
+        "pattern": "Solid",
+        "sleeveLength": "Short sleeve"
+      },
+      "result": {
+        "strong": true,
+        "choices": [
+          {
+            "label": "a polo shirt",
+            "category": "Tops",
+            "itemType": "Polo",
+            "sleeveLength": "Short sleeve",
+            "score": 0.9986660823629518
+          },
+          {
+            "label": "a button-down shirt",
+            "category": "Tops",
+            "itemType": "Button-down shirt",
+            "sleeveLength": "Unknown",
+            "score": 0.0005728615579580899
+          },
+          {
+            "label": "a blurry image with no identifiable garment",
+            "category": "Uncategorized",
+            "itemType": "Unknown",
+            "sleeveLength": "Unknown",
+            "score": 0.00043620933837505585
+          }
+        ],
+        "details": {
+          "color": "Red",
+          "sleeveLength": "Short sleeve"
+        }
+      },
+      "wrongFields": []
+    },
+    {
+      "file": "16867424.jpg",
+      "variant": "small",
+      "expected": {
+        "category": "Tops",
+        "color": "Red",
+        "pattern": "Solid",
+        "sleeveLength": "Short sleeve"
+      },
+      "result": {
+        "strong": false,
+        "choices": [],
+        "details": {},
+        "reason": "category_uncertain"
+      },
+      "wrongFields": []
+    },
+    {
+      "file": "nike_dress.jpg",
+      "variant": "original",
+      "expected": {
+        "category": "Dresses",
+        "color": "Black",
+        "sleeveLength": "Sleeveless"
+      },
+      "result": {
+        "strong": false,
+        "choices": [],
+        "details": {},
+        "reason": "category_uncertain"
+      },
+      "wrongFields": []
+    },
+    {
+      "file": "nike_dress.jpg",
+      "variant": "dim",
+      "expected": {
+        "category": "Dresses",
+        "color": "Black",
+        "sleeveLength": "Sleeveless"
+      },
+      "result": {
+        "strong": false,
+        "choices": [],
+        "details": {},
+        "reason": "category_uncertain"
+      },
+      "wrongFields": []
+    },
+    {
+      "file": "nike_dress.jpg",
+      "variant": "small",
+      "expected": {
+        "category": "Dresses",
+        "color": "Black",
+        "sleeveLength": "Sleeveless"
+      },
+      "result": {
+        "strong": false,
+        "choices": [],
+        "details": {},
+        "reason": "category_uncertain"
+      },
+      "wrongFields": []
+    },
+    {
+      "file": "airport.jpg",
+      "expected": "no garment",
+      "result": {
+        "strong": false,
+        "choices": [],
+        "details": {},
+        "reason": "category_uncertain"
+      }
+    },
+    {
+      "file": "book-cover.png",
+      "expected": "no garment",
+      "result": {
+        "strong": false,
+        "choices": [],
+        "details": {},
+        "reason": "type_uncertain"
+      }
+    },
+    {
+      "file": "bread.png",
+      "expected": "no garment",
+      "result": {
+        "strong": false,
+        "choices": [],
+        "details": {},
+        "reason": "checks_disagree"
+      }
+    },
+    {
+      "file": "cats.jpg",
+      "expected": "no garment",
+      "result": {
+        "strong": false,
+        "choices": [],
+        "details": {},
+        "reason": "category_uncertain"
+      }
+    },
+    {
+      "file": "corgi.jpg",
+      "expected": "no garment",
+      "result": {
+        "strong": false,
+        "choices": [],
+        "details": {},
+        "reason": "category_uncertain"
+      }
+    },
+    {
+      "file": "house.jpg",
+      "expected": "no garment",
+      "result": {
+        "strong": false,
+        "choices": [],
+        "details": {},
+        "reason": "category_uncertain"
+      }
+    },
+    {
+      "file": "invoice.png",
+      "expected": "no garment",
+      "result": {
+        "strong": false,
+        "choices": [],
+        "details": {},
+        "reason": "type_uncertain"
+      }
+    },
+    {
+      "file": "moraine-lake.png",
+      "expected": "no garment",
+      "result": {
+        "strong": false,
+        "choices": [],
+        "details": {},
+        "reason": "category_uncertain"
+      }
+    }
+  ]
+}

@@ -10,7 +10,9 @@ is independent of Drive Duel.
 - Separate clothing cards with category, type, sleeves, color, pattern, fit,
   seasons, brand, size, material, occasion, and notes.
 - Automatic experimental on-device FashionCLIP recognition. Its first load
-  downloads about 154 MB of model weights plus runtime files. No billed AI API.
+  downloads about 89 MB of vision weights plus runtime files. High-precision
+  clothing text vectors (2.36 MB) are included in the app. Category, type and
+  image-view checks must agree before automatic saving. No billed AI API.
 - Inspiration reference images and links, editable outfit components, closet
   matches, substitutes, and shopping search links.
 - IndexedDB storage and export/import of clothing and inspiration backups.
@@ -79,6 +81,9 @@ register the offline service worker, to preserve its sign-in boundary.
 
 Never commit `.env*`, credentials, private model caches, or user clothing photos.
 The independent migration checkout excludes Sites identity and Git metadata.
+
+See [staged recognition results](docs/STAGED-RECOGNITION-RESULTS.md) for accuracy,
+coverage tradeoffs and remaining phone-validation work.
 
 Model: https://huggingface.co/ff13/fashion-clip (MIT).
 Runtime: https://github.com/huggingface/transformers.js (Apache-2.0).

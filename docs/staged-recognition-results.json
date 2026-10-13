@@ -1,0 +1,3384 @@
+{
+  "date": "2026-10-13",
+  "runtime": "onnxruntime-web WASM SIMD with one thread, inside Node, not a physical browser or phone. Pixel preparation uses Node image resize; real browser Canvas resizing remains unverified.",
+  "source": "https://github.com/alexeygrigorev/clothing-dataset-small",
+  "selection": "100 photos disjoint from the earlier three samples; sorted unused validation, test, then train paths, ten per class. No model training or threshold tuning used this sample.",
+  "summary": {
+    "baseline": {
+      "total": 100,
+      "accepted": 79,
+      "correctAccepted": 73,
+      "wrongAccepted": 6,
+      "scorableTypeAccepted": 63,
+      "wrongClassType": 12
+    },
+    "staged": {
+      "total": 100,
+      "accepted": 66,
+      "correctAccepted": 64,
+      "wrongAccepted": 2,
+      "scorableTypeAccepted": 56,
+      "wrongClassType": 5
+    }
+  },
+  "encodings": 173,
+  "results": [
+    {
+      "path": "validation/dress/881c62dc-a47a-444d-86b7-93a27b431f51.jpg",
+      "class": "dress",
+      "file": "dress-0.jpg",
+      "expectedCategory": "Dresses",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "a shirt dress",
+          "category": "Dresses",
+          "itemType": "Shirt dress",
+          "sleeveLength": "Unknown",
+          "score": 0.782882658291985
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true
+      },
+      "staged": {
+        "accepted": false,
+        "predicted": null,
+        "correctCategory": false,
+        "classTypeCorrect": false,
+        "reason": "category_uncertain",
+        "details": {},
+        "elapsedMs": 225
+      },
+      "totalMs": 1664
+    },
+    {
+      "path": "validation/dress/9044c1d9-92ae-42aa-adee-4aeb468f6d5b.jpg",
+      "class": "dress",
+      "file": "dress-1.jpg",
+      "expectedCategory": "Dresses",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "a tunic",
+          "category": "Tops",
+          "itemType": "Tunic",
+          "sleeveLength": "Unknown",
+          "score": 0.5716691496397389
+        },
+        "correctCategory": false,
+        "classTypeCorrect": false
+      },
+      "staged": {
+        "accepted": true,
+        "predicted": {
+          "label": "a blouse",
+          "category": "Tops",
+          "itemType": "Blouse",
+          "sleeveLength": "Long sleeve",
+          "score": 0.928844935481287
+        },
+        "correctCategory": false,
+        "classTypeCorrect": false,
+        "reason": null,
+        "details": {
+          "pattern": "Graphic",
+          "sleeveLength": "Long sleeve"
+        },
+        "elapsedMs": 432
+      },
+      "totalMs": 1839
+    },
+    {
+      "path": "validation/dress/92f5cc49-20c0-4b60-a206-9f26e4b736a7.jpg",
+      "class": "dress",
+      "file": "dress-2.jpg",
+      "expectedCategory": "Dresses",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "a tunic",
+          "category": "Tops",
+          "itemType": "Tunic",
+          "sleeveLength": "Unknown",
+          "score": 0.6836666662748363
+        },
+        "correctCategory": false,
+        "classTypeCorrect": false
+      },
+      "staged": {
+        "accepted": false,
+        "predicted": null,
+        "correctCategory": false,
+        "classTypeCorrect": false,
+        "reason": "views_disagree",
+        "details": {},
+        "elapsedMs": 406
+      },
+      "totalMs": 1685
+    },
+    {
+      "path": "validation/dress/937e2c8f-500e-44fa-b2dc-e5e769e7c5a2.jpg",
+      "class": "dress",
+      "file": "dress-3.jpg",
+      "expectedCategory": "Dresses",
+      "baseline": {
+        "accepted": false,
+        "predicted": {
+          "label": "a shirt dress",
+          "category": "Dresses",
+          "itemType": "Shirt dress",
+          "sleeveLength": "Unknown",
+          "score": 0.4681811587215208
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true
+      },
+      "staged": {
+        "accepted": false,
+        "predicted": null,
+        "correctCategory": false,
+        "classTypeCorrect": false,
+        "reason": "category_uncertain",
+        "details": {},
+        "elapsedMs": 202
+      },
+      "totalMs": 1607
+    },
+    {
+      "path": "validation/dress/974964a0-77cc-47b3-a54f-57eea90bb3fe.jpg",
+      "class": "dress",
+      "file": "dress-4.jpg",
+      "expectedCategory": "Dresses",
+      "baseline": {
+        "accepted": false,
+        "predicted": {
+          "label": "a sweater dress",
+          "category": "Dresses",
+          "itemType": "Sweater dress",
+          "sleeveLength": "Unknown",
+          "score": 0.47065940673035705
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true
+      },
+      "staged": {
+        "accepted": false,
+        "predicted": null,
+        "correctCategory": false,
+        "classTypeCorrect": false,
+        "reason": "type_uncertain",
+        "details": {},
+        "elapsedMs": 232
+      },
+      "totalMs": 1518
+    },
+    {
+      "path": "validation/dress/a65dc730-f117-4a1a-8fe9-917fad90a167.jpg",
+      "class": "dress",
+      "file": "dress-5.jpg",
+      "expectedCategory": "Dresses",
+      "baseline": {
+        "accepted": false,
+        "predicted": {
+          "label": "a shirt dress",
+          "category": "Dresses",
+          "itemType": "Shirt dress",
+          "sleeveLength": "Unknown",
+          "score": 0.5328828483693223
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true
+      },
+      "staged": {
+        "accepted": true,
+        "predicted": {
+          "label": "a casual dress",
+          "category": "Dresses",
+          "itemType": "Casual dress",
+          "sleeveLength": "Short sleeve",
+          "score": 0.7945414618376727
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true,
+        "reason": null,
+        "details": {
+          "fit": "Regular",
+          "pattern": "Floral",
+          "sleeveLength": "Short sleeve"
+        },
+        "elapsedMs": 471
+      },
+      "totalMs": 1918
+    },
+    {
+      "path": "validation/dress/b2f77e73-5ae0-49ca-bb0e-aaad215bcd8f.jpg",
+      "class": "dress",
+      "file": "dress-6.jpg",
+      "expectedCategory": "Dresses",
+      "baseline": {
+        "accepted": false,
+        "predicted": {
+          "label": "a shirt dress",
+          "category": "Dresses",
+          "itemType": "Shirt dress",
+          "sleeveLength": "Unknown",
+          "score": 0.2804004526227951
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true
+      },
+      "staged": {
+        "accepted": false,
+        "predicted": null,
+        "correctCategory": false,
+        "classTypeCorrect": false,
+        "reason": "category_uncertain",
+        "details": {},
+        "elapsedMs": 204
+      },
+      "totalMs": 1718
+    },
+    {
+      "path": "validation/dress/b5c9449f-f1fe-4b81-a247-329145b6c277.jpg",
+      "class": "dress",
+      "file": "dress-7.jpg",
+      "expectedCategory": "Dresses",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "a sweater dress",
+          "category": "Dresses",
+          "itemType": "Sweater dress",
+          "sleeveLength": "Unknown",
+          "score": 0.9909845939628458
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true
+      },
+      "staged": {
+        "accepted": false,
+        "predicted": null,
+        "correctCategory": false,
+        "classTypeCorrect": false,
+        "reason": "category_uncertain",
+        "details": {},
+        "elapsedMs": 225
+      },
+      "totalMs": 1707
+    },
+    {
+      "path": "validation/dress/bcb839e0-9055-4760-b5a4-b7fd703b716f.jpg",
+      "class": "dress",
+      "file": "dress-8.jpg",
+      "expectedCategory": "Dresses",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "a shirt dress",
+          "category": "Dresses",
+          "itemType": "Shirt dress",
+          "sleeveLength": "Unknown",
+          "score": 0.7953441392588896
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true
+      },
+      "staged": {
+        "accepted": false,
+        "predicted": null,
+        "correctCategory": false,
+        "classTypeCorrect": false,
+        "reason": "type_uncertain",
+        "details": {},
+        "elapsedMs": 206
+      },
+      "totalMs": 1476
+    },
+    {
+      "path": "validation/dress/be545b93-c60d-4be6-ae3a-64efd37b7fee.jpg",
+      "class": "dress",
+      "file": "dress-9.jpg",
+      "expectedCategory": "Dresses",
+      "baseline": {
+        "accepted": false,
+        "predicted": {
+          "label": "a casual dress",
+          "category": "Dresses",
+          "itemType": "Casual dress",
+          "sleeveLength": "Unknown",
+          "score": 0.4189224241168054
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true
+      },
+      "staged": {
+        "accepted": true,
+        "predicted": {
+          "label": "a casual dress",
+          "category": "Dresses",
+          "itemType": "Casual dress",
+          "sleeveLength": "Sleeveless",
+          "score": 0.8718407929623027
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true,
+        "reason": null,
+        "details": {
+          "fit": "Regular",
+          "sleeveLength": "Sleeveless"
+        },
+        "elapsedMs": 475
+      },
+      "totalMs": 1814
+    },
+    {
+      "path": "train/hat/0979a14e-051a-4659-8e87-2f6a424e2c12.jpg",
+      "class": "hat",
+      "file": "hat-0.jpg",
+      "expectedCategory": "Accessories",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "a hat",
+          "category": "Accessories",
+          "itemType": "Hat",
+          "sleeveLength": "Not applicable",
+          "score": 0.9843327392075782
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true
+      },
+      "staged": {
+        "accepted": true,
+        "predicted": {
+          "label": "a hat",
+          "category": "Accessories",
+          "itemType": "Hat",
+          "sleeveLength": "Not applicable",
+          "score": 0.999914997494175
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true,
+        "reason": null,
+        "details": {
+          "color": "Blue",
+          "fit": "Fitted"
+        },
+        "elapsedMs": 482
+      },
+      "totalMs": 1707
+    },
+    {
+      "path": "train/hat/127708b5-72ad-4793-9512-3d33427459bb.jpg",
+      "class": "hat",
+      "file": "hat-1.jpg",
+      "expectedCategory": "Accessories",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "a knitted sweater",
+          "category": "Tops",
+          "itemType": "Sweater",
+          "sleeveLength": "Unknown",
+          "score": 0.7347940509116511
+        },
+        "correctCategory": false,
+        "classTypeCorrect": false
+      },
+      "staged": {
+        "accepted": true,
+        "predicted": {
+          "label": "a hat",
+          "category": "Accessories",
+          "itemType": "Hat",
+          "sleeveLength": "Not applicable",
+          "score": 0.9992914211262682
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true,
+        "reason": null,
+        "details": {
+          "color": "Gray",
+          "fit": "Regular"
+        },
+        "elapsedMs": 414
+      },
+      "totalMs": 1647
+    },
+    {
+      "path": "train/hat/13a17d51-3560-445c-8802-8749fcf27ed7.jpg",
+      "class": "hat",
+      "file": "hat-2.jpg",
+      "expectedCategory": "Accessories",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "a hat",
+          "category": "Accessories",
+          "itemType": "Hat",
+          "sleeveLength": "Not applicable",
+          "score": 0.9679702125553626
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true
+      },
+      "staged": {
+        "accepted": true,
+        "predicted": {
+          "label": "a hat",
+          "category": "Accessories",
+          "itemType": "Hat",
+          "sleeveLength": "Not applicable",
+          "score": 0.9988133948822353
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true,
+        "reason": null,
+        "details": {
+          "color": "Beige"
+        },
+        "elapsedMs": 383
+      },
+      "totalMs": 1770
+    },
+    {
+      "path": "train/hat/14d9f39c-48f5-4da6-bea4-b9f8b94633ed.jpg",
+      "class": "hat",
+      "file": "hat-3.jpg",
+      "expectedCategory": "Accessories",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "a hat",
+          "category": "Accessories",
+          "itemType": "Hat",
+          "sleeveLength": "Not applicable",
+          "score": 0.9664225863893312
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true
+      },
+      "staged": {
+        "accepted": true,
+        "predicted": {
+          "label": "a hat",
+          "category": "Accessories",
+          "itemType": "Hat",
+          "sleeveLength": "Not applicable",
+          "score": 0.9985699817134213
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true,
+        "reason": null,
+        "details": {
+          "color": "Beige",
+          "fit": "Relaxed"
+        },
+        "elapsedMs": 391
+      },
+      "totalMs": 1635
+    },
+    {
+      "path": "train/hat/153a69c6-4c18-49c0-a3d5-8af2ce547fa7.jpg",
+      "class": "hat",
+      "file": "hat-4.jpg",
+      "expectedCategory": "Accessories",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "a hat",
+          "category": "Accessories",
+          "itemType": "Hat",
+          "sleeveLength": "Not applicable",
+          "score": 0.9699961434357323
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true
+      },
+      "staged": {
+        "accepted": true,
+        "predicted": {
+          "label": "a hat",
+          "category": "Accessories",
+          "itemType": "Hat",
+          "sleeveLength": "Not applicable",
+          "score": 0.9998409226874356
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true,
+        "reason": null,
+        "details": {
+          "fit": "Fitted",
+          "pattern": "Graphic"
+        },
+        "elapsedMs": 375
+      },
+      "totalMs": 1571
+    },
+    {
+      "path": "train/hat/19b8f13e-9f17-4fcc-a4cd-7496672b1675.jpg",
+      "class": "hat",
+      "file": "hat-5.jpg",
+      "expectedCategory": "Accessories",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "a hat",
+          "category": "Accessories",
+          "itemType": "Hat",
+          "sleeveLength": "Not applicable",
+          "score": 0.8921914873549877
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true
+      },
+      "staged": {
+        "accepted": true,
+        "predicted": {
+          "label": "a hat",
+          "category": "Accessories",
+          "itemType": "Hat",
+          "sleeveLength": "Not applicable",
+          "score": 0.995678173297787
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true,
+        "reason": null,
+        "details": {
+          "pattern": "Graphic"
+        },
+        "elapsedMs": 394
+      },
+      "totalMs": 1756
+    },
+    {
+      "path": "train/hat/1aac00cd-b42a-40f1-a82a-dcc44a0879d4.jpg",
+      "class": "hat",
+      "file": "hat-6.jpg",
+      "expectedCategory": "Accessories",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "a hat",
+          "category": "Accessories",
+          "itemType": "Hat",
+          "sleeveLength": "Not applicable",
+          "score": 0.9945943730555553
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true
+      },
+      "staged": {
+        "accepted": true,
+        "predicted": {
+          "label": "a hat",
+          "category": "Accessories",
+          "itemType": "Hat",
+          "sleeveLength": "Not applicable",
+          "score": 0.9984031074443719
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true,
+        "reason": null,
+        "details": {
+          "fit": "Relaxed",
+          "pattern": "Solid"
+        },
+        "elapsedMs": 405
+      },
+      "totalMs": 1663
+    },
+    {
+      "path": "train/hat/1ea1d5e8-6613-442b-822c-f10319d14da3.jpg",
+      "class": "hat",
+      "file": "hat-7.jpg",
+      "expectedCategory": "Accessories",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "a hat",
+          "category": "Accessories",
+          "itemType": "Hat",
+          "sleeveLength": "Not applicable",
+          "score": 0.8194931555559547
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true
+      },
+      "staged": {
+        "accepted": false,
+        "predicted": null,
+        "correctCategory": false,
+        "classTypeCorrect": false,
+        "reason": "category_uncertain",
+        "details": {},
+        "elapsedMs": 219
+      },
+      "totalMs": 1576
+    },
+    {
+      "path": "train/hat/1febd681-151b-4c8c-baff-ddc52d16c6c0.jpg",
+      "class": "hat",
+      "file": "hat-8.jpg",
+      "expectedCategory": "Accessories",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "a hat",
+          "category": "Accessories",
+          "itemType": "Hat",
+          "sleeveLength": "Not applicable",
+          "score": 0.8715332911002923
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true
+      },
+      "staged": {
+        "accepted": true,
+        "predicted": {
+          "label": "a hat",
+          "category": "Accessories",
+          "itemType": "Hat",
+          "sleeveLength": "Not applicable",
+          "score": 0.9997015775284332
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true,
+        "reason": null,
+        "details": {
+          "color": "Red",
+          "pattern": "Graphic"
+        },
+        "elapsedMs": 468
+      },
+      "totalMs": 1827
+    },
+    {
+      "path": "train/hat/216ddb53-2a80-4218-99b0-b5b721744fc3.jpg",
+      "class": "hat",
+      "file": "hat-9.jpg",
+      "expectedCategory": "Accessories",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "a hat",
+          "category": "Accessories",
+          "itemType": "Hat",
+          "sleeveLength": "Not applicable",
+          "score": 0.9566340610303686
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true
+      },
+      "staged": {
+        "accepted": true,
+        "predicted": {
+          "label": "a hat",
+          "category": "Accessories",
+          "itemType": "Hat",
+          "sleeveLength": "Not applicable",
+          "score": 0.9997188817138106
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true,
+        "reason": null,
+        "details": {
+          "color": "Beige",
+          "pattern": "Graphic"
+        },
+        "elapsedMs": 390
+      },
+      "totalMs": 1697
+    },
+    {
+      "path": "validation/longsleeve/3723b671-6846-4d22-af73-fc655eb52093.jpg",
+      "class": "longsleeve",
+      "file": "longsleeve-0.jpg",
+      "expectedCategory": "Tops",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "a knitted sweater",
+          "category": "Tops",
+          "itemType": "Sweater",
+          "sleeveLength": "Unknown",
+          "score": 0.730208649423355
+        },
+        "correctCategory": true,
+        "classTypeCorrect": null
+      },
+      "staged": {
+        "accepted": false,
+        "predicted": null,
+        "correctCategory": false,
+        "classTypeCorrect": null,
+        "reason": "category_uncertain",
+        "details": {},
+        "elapsedMs": 187
+      },
+      "totalMs": 1413
+    },
+    {
+      "path": "validation/longsleeve/4014f464-8bd5-4425-b934-735630cce566.jpg",
+      "class": "longsleeve",
+      "file": "longsleeve-1.jpg",
+      "expectedCategory": "Tops",
+      "baseline": {
+        "accepted": false,
+        "predicted": {
+          "label": "a jacket",
+          "category": "Outerwear",
+          "itemType": "Jacket",
+          "sleeveLength": "Unknown",
+          "score": 0.4875156844109927
+        },
+        "correctCategory": false,
+        "classTypeCorrect": null
+      },
+      "staged": {
+        "accepted": false,
+        "predicted": null,
+        "correctCategory": false,
+        "classTypeCorrect": null,
+        "reason": "checks_disagree",
+        "details": {},
+        "elapsedMs": 204
+      },
+      "totalMs": 1443
+    },
+    {
+      "path": "validation/longsleeve/42c30a48-5e35-4117-847d-66cad1383955.jpg",
+      "class": "longsleeve",
+      "file": "longsleeve-2.jpg",
+      "expectedCategory": "Tops",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "a blouse",
+          "category": "Tops",
+          "itemType": "Blouse",
+          "sleeveLength": "Unknown",
+          "score": 0.9652165125841266
+        },
+        "correctCategory": true,
+        "classTypeCorrect": null
+      },
+      "staged": {
+        "accepted": true,
+        "predicted": {
+          "label": "a blouse",
+          "category": "Tops",
+          "itemType": "Blouse",
+          "sleeveLength": "Long sleeve",
+          "score": 0.9041026439465709
+        },
+        "correctCategory": true,
+        "classTypeCorrect": null,
+        "reason": null,
+        "details": {
+          "sleeveLength": "Long sleeve"
+        },
+        "elapsedMs": 406
+      },
+      "totalMs": 1615
+    },
+    {
+      "path": "validation/longsleeve/44b0c5e7-5174-421b-959c-720483509d5e.jpg",
+      "class": "longsleeve",
+      "file": "longsleeve-3.jpg",
+      "expectedCategory": "Tops",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "a polo shirt",
+          "category": "Tops",
+          "itemType": "Polo",
+          "sleeveLength": "Unknown",
+          "score": 0.9083894409871254
+        },
+        "correctCategory": true,
+        "classTypeCorrect": null
+      },
+      "staged": {
+        "accepted": true,
+        "predicted": {
+          "label": "a sweatshirt",
+          "category": "Tops",
+          "itemType": "Sweatshirt",
+          "sleeveLength": "Unknown",
+          "score": 0.6257879725723341
+        },
+        "correctCategory": true,
+        "classTypeCorrect": null,
+        "reason": null,
+        "details": {
+          "fit": "Fitted"
+        },
+        "elapsedMs": 389
+      },
+      "totalMs": 1611
+    },
+    {
+      "path": "validation/longsleeve/461a97c1-1738-46f8-9318-efff65d642a0.jpg",
+      "class": "longsleeve",
+      "file": "longsleeve-4.jpg",
+      "expectedCategory": "Tops",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "a cardigan",
+          "category": "Outerwear",
+          "itemType": "Cardigan",
+          "sleeveLength": "Unknown",
+          "score": 0.8666733963332507
+        },
+        "correctCategory": false,
+        "classTypeCorrect": null
+      },
+      "staged": {
+        "accepted": false,
+        "predicted": null,
+        "correctCategory": false,
+        "classTypeCorrect": null,
+        "reason": "checks_disagree",
+        "details": {},
+        "elapsedMs": 207
+      },
+      "totalMs": 1439
+    },
+    {
+      "path": "validation/longsleeve/4c816a30-b848-4476-9ae2-a2d8d01e34a8.jpg",
+      "class": "longsleeve",
+      "file": "longsleeve-5.jpg",
+      "expectedCategory": "Tops",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "a sweater dress",
+          "category": "Dresses",
+          "itemType": "Sweater dress",
+          "sleeveLength": "Unknown",
+          "score": 0.8019387376192921
+        },
+        "correctCategory": false,
+        "classTypeCorrect": null
+      },
+      "staged": {
+        "accepted": false,
+        "predicted": null,
+        "correctCategory": false,
+        "classTypeCorrect": null,
+        "reason": "type_uncertain",
+        "details": {},
+        "elapsedMs": 196
+      },
+      "totalMs": 1446
+    },
+    {
+      "path": "validation/longsleeve/527fd818-556f-420a-8fbd-8bea64dea5a2.jpg",
+      "class": "longsleeve",
+      "file": "longsleeve-6.jpg",
+      "expectedCategory": "Tops",
+      "baseline": {
+        "accepted": false,
+        "predicted": {
+          "label": "a tunic",
+          "category": "Tops",
+          "itemType": "Tunic",
+          "sleeveLength": "Unknown",
+          "score": 0.4461709820104894
+        },
+        "correctCategory": true,
+        "classTypeCorrect": null
+      },
+      "staged": {
+        "accepted": false,
+        "predicted": null,
+        "correctCategory": false,
+        "classTypeCorrect": null,
+        "reason": "checks_disagree",
+        "details": {},
+        "elapsedMs": 200
+      },
+      "totalMs": 1455
+    },
+    {
+      "path": "validation/longsleeve/55b4f2d7-56b3-4463-86ea-6cb821a2c68e.jpg",
+      "class": "longsleeve",
+      "file": "longsleeve-7.jpg",
+      "expectedCategory": "Tops",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "a sweatshirt",
+          "category": "Tops",
+          "itemType": "Sweatshirt",
+          "sleeveLength": "Unknown",
+          "score": 0.9302190198287796
+        },
+        "correctCategory": true,
+        "classTypeCorrect": null
+      },
+      "staged": {
+        "accepted": true,
+        "predicted": {
+          "label": "a sweatshirt",
+          "category": "Tops",
+          "itemType": "Sweatshirt",
+          "sleeveLength": "Long sleeve",
+          "score": 0.7919764986435636
+        },
+        "correctCategory": true,
+        "classTypeCorrect": null,
+        "reason": null,
+        "details": {
+          "color": "Red",
+          "sleeveLength": "Long sleeve"
+        },
+        "elapsedMs": 387
+      },
+      "totalMs": 1593
+    },
+    {
+      "path": "validation/longsleeve/5720381c-a7d8-465a-9395-1f55a5d51b6f.jpg",
+      "class": "longsleeve",
+      "file": "longsleeve-8.jpg",
+      "expectedCategory": "Tops",
+      "baseline": {
+        "accepted": false,
+        "predicted": {
+          "label": "a sweatshirt",
+          "category": "Tops",
+          "itemType": "Sweatshirt",
+          "sleeveLength": "Unknown",
+          "score": 0.27848963380749076
+        },
+        "correctCategory": true,
+        "classTypeCorrect": null
+      },
+      "staged": {
+        "accepted": false,
+        "predicted": null,
+        "correctCategory": false,
+        "classTypeCorrect": null,
+        "reason": "checks_disagree",
+        "details": {},
+        "elapsedMs": 191
+      },
+      "totalMs": 1396
+    },
+    {
+      "path": "validation/longsleeve/5ab4696e-91fc-4bae-9fc5-39291b1b29a4.jpg",
+      "class": "longsleeve",
+      "file": "longsleeve-9.jpg",
+      "expectedCategory": "Tops",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "a blouse",
+          "category": "Tops",
+          "itemType": "Blouse",
+          "sleeveLength": "Unknown",
+          "score": 0.8496306885965895
+        },
+        "correctCategory": true,
+        "classTypeCorrect": null
+      },
+      "staged": {
+        "accepted": true,
+        "predicted": {
+          "label": "a blouse",
+          "category": "Tops",
+          "itemType": "Blouse",
+          "sleeveLength": "Three-quarter sleeve",
+          "score": 0.8524361767951073
+        },
+        "correctCategory": true,
+        "classTypeCorrect": null,
+        "reason": null,
+        "details": {
+          "sleeveLength": "Three-quarter sleeve"
+        },
+        "elapsedMs": 397
+      },
+      "totalMs": 1615
+    },
+    {
+      "path": "validation/outwear/446df066-edee-4c69-90d7-5013bcc72cf2.jpg",
+      "class": "outwear",
+      "file": "outwear-0.jpg",
+      "expectedCategory": "Outerwear",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "a jacket",
+          "category": "Outerwear",
+          "itemType": "Jacket",
+          "sleeveLength": "Unknown",
+          "score": 0.8775504919315011
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true
+      },
+      "staged": {
+        "accepted": true,
+        "predicted": {
+          "label": "a jacket",
+          "category": "Outerwear",
+          "itemType": "Jacket",
+          "sleeveLength": "Long sleeve",
+          "score": 0.9775149312392482
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true,
+        "reason": null,
+        "details": {
+          "color": "Blue",
+          "pattern": "Solid",
+          "sleeveLength": "Long sleeve"
+        },
+        "elapsedMs": 412
+      },
+      "totalMs": 1647
+    },
+    {
+      "path": "validation/outwear/5d365198-b2e9-404a-b160-58248c136ef3.jpg",
+      "class": "outwear",
+      "file": "outwear-1.jpg",
+      "expectedCategory": "Outerwear",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "a jacket",
+          "category": "Outerwear",
+          "itemType": "Jacket",
+          "sleeveLength": "Unknown",
+          "score": 0.7307966446189051
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true
+      },
+      "staged": {
+        "accepted": false,
+        "predicted": null,
+        "correctCategory": false,
+        "classTypeCorrect": false,
+        "reason": "checks_disagree",
+        "details": {},
+        "elapsedMs": 211
+      },
+      "totalMs": 1531
+    },
+    {
+      "path": "validation/outwear/5f983364-29a4-48f5-8f25-1dd4f220b3ed.jpg",
+      "class": "outwear",
+      "file": "outwear-2.jpg",
+      "expectedCategory": "Outerwear",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "a romper",
+          "category": "Dresses",
+          "itemType": "Romper",
+          "sleeveLength": "Unknown",
+          "score": 0.7643832341343725
+        },
+        "correctCategory": false,
+        "classTypeCorrect": false
+      },
+      "staged": {
+        "accepted": true,
+        "predicted": {
+          "label": "a jumpsuit",
+          "category": "Dresses",
+          "itemType": "Jumpsuit",
+          "sleeveLength": "Long sleeve",
+          "score": 0.8717973883305993
+        },
+        "correctCategory": false,
+        "classTypeCorrect": false,
+        "reason": null,
+        "details": {
+          "color": "Multicolor",
+          "pattern": "Graphic",
+          "sleeveLength": "Long sleeve"
+        },
+        "elapsedMs": 374
+      },
+      "totalMs": 1588
+    },
+    {
+      "path": "validation/outwear/6e28fa59-5fe0-418a-ab6a-9b7e1cc9972a.jpg",
+      "class": "outwear",
+      "file": "outwear-3.jpg",
+      "expectedCategory": "Outerwear",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "a cardigan",
+          "category": "Outerwear",
+          "itemType": "Cardigan",
+          "sleeveLength": "Unknown",
+          "score": 0.739895805038962
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true
+      },
+      "staged": {
+        "accepted": false,
+        "predicted": null,
+        "correctCategory": false,
+        "classTypeCorrect": false,
+        "reason": "type_uncertain",
+        "details": {},
+        "elapsedMs": 181
+      },
+      "totalMs": 1332
+    },
+    {
+      "path": "validation/outwear/73580d79-4fce-47f6-a6c3-433b32622774.jpg",
+      "class": "outwear",
+      "file": "outwear-4.jpg",
+      "expectedCategory": "Outerwear",
+      "baseline": {
+        "accepted": false,
+        "predicted": {
+          "label": "a jacket",
+          "category": "Outerwear",
+          "itemType": "Jacket",
+          "sleeveLength": "Unknown",
+          "score": 0.5379097247479288
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true
+      },
+      "staged": {
+        "accepted": true,
+        "predicted": {
+          "label": "a jacket",
+          "category": "Outerwear",
+          "itemType": "Jacket",
+          "sleeveLength": "Unknown",
+          "score": 0.847455372463653
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true,
+        "reason": null,
+        "details": {
+          "pattern": "Solid"
+        },
+        "elapsedMs": 393
+      },
+      "totalMs": 1622
+    },
+    {
+      "path": "validation/outwear/80ea2b05-080f-45f8-afe7-5a09b5071144.jpg",
+      "class": "outwear",
+      "file": "outwear-5.jpg",
+      "expectedCategory": "Outerwear",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "a raincoat",
+          "category": "Outerwear",
+          "itemType": "Raincoat",
+          "sleeveLength": "Unknown",
+          "score": 0.72645200307221
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true
+      },
+      "staged": {
+        "accepted": false,
+        "predicted": null,
+        "correctCategory": false,
+        "classTypeCorrect": false,
+        "reason": "views_disagree",
+        "details": {},
+        "elapsedMs": 390
+      },
+      "totalMs": 1710
+    },
+    {
+      "path": "validation/outwear/a18f1511-770a-4900-b748-691c6021a3b4.jpg",
+      "class": "outwear",
+      "file": "outwear-6.jpg",
+      "expectedCategory": "Outerwear",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "a jacket",
+          "category": "Outerwear",
+          "itemType": "Jacket",
+          "sleeveLength": "Unknown",
+          "score": 0.6923167358859562
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true
+      },
+      "staged": {
+        "accepted": true,
+        "predicted": {
+          "label": "a jacket",
+          "category": "Outerwear",
+          "itemType": "Jacket",
+          "sleeveLength": "Long sleeve",
+          "score": 0.774750939591121
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true,
+        "reason": null,
+        "details": {
+          "color": "Blue",
+          "pattern": "Solid",
+          "sleeveLength": "Long sleeve"
+        },
+        "elapsedMs": 387
+      },
+      "totalMs": 1634
+    },
+    {
+      "path": "validation/outwear/a5c2284f-a7e2-4d4a-aa73-4d5ce5c1443f.jpg",
+      "class": "outwear",
+      "file": "outwear-7.jpg",
+      "expectedCategory": "Outerwear",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "a coat",
+          "category": "Outerwear",
+          "itemType": "Coat",
+          "sleeveLength": "Unknown",
+          "score": 0.6766431386042959
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true
+      },
+      "staged": {
+        "accepted": true,
+        "predicted": {
+          "label": "a coat",
+          "category": "Outerwear",
+          "itemType": "Coat",
+          "sleeveLength": "Long sleeve",
+          "score": 0.7693644919905195
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true,
+        "reason": null,
+        "details": {
+          "sleeveLength": "Long sleeve"
+        },
+        "elapsedMs": 396
+      },
+      "totalMs": 1618
+    },
+    {
+      "path": "validation/outwear/ba7624a3-d953-4a17-9003-61f350f5785b.jpg",
+      "class": "outwear",
+      "file": "outwear-8.jpg",
+      "expectedCategory": "Outerwear",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "a jacket",
+          "category": "Outerwear",
+          "itemType": "Jacket",
+          "sleeveLength": "Unknown",
+          "score": 0.6927200657618557
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true
+      },
+      "staged": {
+        "accepted": true,
+        "predicted": {
+          "label": "a jacket",
+          "category": "Outerwear",
+          "itemType": "Jacket",
+          "sleeveLength": "Long sleeve",
+          "score": 0.8325323296468655
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true,
+        "reason": null,
+        "details": {
+          "color": "Blue",
+          "sleeveLength": "Long sleeve"
+        },
+        "elapsedMs": 437
+      },
+      "totalMs": 1816
+    },
+    {
+      "path": "validation/outwear/df6097a1-e252-4d2d-bf7a-2d208f932273.jpg",
+      "class": "outwear",
+      "file": "outwear-9.jpg",
+      "expectedCategory": "Outerwear",
+      "baseline": {
+        "accepted": false,
+        "predicted": {
+          "label": "a jacket",
+          "category": "Outerwear",
+          "itemType": "Jacket",
+          "sleeveLength": "Unknown",
+          "score": 0.5238647378044158
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true
+      },
+      "staged": {
+        "accepted": true,
+        "predicted": {
+          "label": "a jacket",
+          "category": "Outerwear",
+          "itemType": "Jacket",
+          "sleeveLength": "Unknown",
+          "score": 0.7293713192641824
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true,
+        "reason": null,
+        "details": {
+          "fit": "Fitted"
+        },
+        "elapsedMs": 474
+      },
+      "totalMs": 1841
+    },
+    {
+      "path": "validation/pants/38dbb71c-2e31-4f17-af08-90719ad818d0.jpg",
+      "class": "pants",
+      "file": "pants-0.jpg",
+      "expectedCategory": "Bottoms",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "a pair of trousers",
+          "category": "Bottoms",
+          "itemType": "Trousers",
+          "sleeveLength": "Not applicable",
+          "score": 0.7509941207944887
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true
+      },
+      "staged": {
+        "accepted": true,
+        "predicted": {
+          "label": "a pair of trousers",
+          "category": "Bottoms",
+          "itemType": "Trousers",
+          "sleeveLength": "Not applicable",
+          "score": 0.8850728765395806
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true,
+        "reason": null,
+        "details": {
+          "color": "Blue"
+        },
+        "elapsedMs": 442
+      },
+      "totalMs": 1823
+    },
+    {
+      "path": "validation/pants/38e03d31-8068-4d73-82ac-c66334f907a5.jpg",
+      "class": "pants",
+      "file": "pants-1.jpg",
+      "expectedCategory": "Bottoms",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "a pair of jeans",
+          "category": "Bottoms",
+          "itemType": "Jeans",
+          "sleeveLength": "Not applicable",
+          "score": 0.9852852888540582
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true
+      },
+      "staged": {
+        "accepted": true,
+        "predicted": {
+          "label": "a pair of jeans",
+          "category": "Bottoms",
+          "itemType": "Jeans",
+          "sleeveLength": "Not applicable",
+          "score": 0.9923138343226595
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true,
+        "reason": null,
+        "details": {
+          "color": "Blue"
+        },
+        "elapsedMs": 392
+      },
+      "totalMs": 1653
+    },
+    {
+      "path": "validation/pants/3c8b71f9-ed39-4916-8fa1-ecc82a3d5986.jpg",
+      "class": "pants",
+      "file": "pants-2.jpg",
+      "expectedCategory": "Bottoms",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "a pair of trousers",
+          "category": "Bottoms",
+          "itemType": "Trousers",
+          "sleeveLength": "Not applicable",
+          "score": 0.7070344964571668
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true
+      },
+      "staged": {
+        "accepted": true,
+        "predicted": {
+          "label": "a pair of trousers",
+          "category": "Bottoms",
+          "itemType": "Trousers",
+          "sleeveLength": "Not applicable",
+          "score": 0.6623242534499691
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true,
+        "reason": null,
+        "details": {
+          "color": "Multicolor",
+          "pattern": "Floral"
+        },
+        "elapsedMs": 377
+      },
+      "totalMs": 1584
+    },
+    {
+      "path": "validation/pants/3fa6aae4-c8de-4681-bd3b-1faa60dca0d0.jpg",
+      "class": "pants",
+      "file": "pants-3.jpg",
+      "expectedCategory": "Bottoms",
+      "baseline": {
+        "accepted": false,
+        "predicted": {
+          "label": "a pair of joggers",
+          "category": "Bottoms",
+          "itemType": "Joggers",
+          "sleeveLength": "Not applicable",
+          "score": 0.5476433614473216
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true
+      },
+      "staged": {
+        "accepted": false,
+        "predicted": null,
+        "correctCategory": false,
+        "classTypeCorrect": false,
+        "reason": "type_uncertain",
+        "details": {},
+        "elapsedMs": 188
+      },
+      "totalMs": 1387
+    },
+    {
+      "path": "validation/pants/47106cae-9eee-4147-bcd1-458f2f00fd3d.jpg",
+      "class": "pants",
+      "file": "pants-4.jpg",
+      "expectedCategory": "Bottoms",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "a pair of jeans",
+          "category": "Bottoms",
+          "itemType": "Jeans",
+          "sleeveLength": "Not applicable",
+          "score": 0.8912443168301288
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true
+      },
+      "staged": {
+        "accepted": true,
+        "predicted": {
+          "label": "a pair of jeans",
+          "category": "Bottoms",
+          "itemType": "Jeans",
+          "sleeveLength": "Not applicable",
+          "score": 0.9634161010640049
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true,
+        "reason": null,
+        "details": {
+          "color": "Gray"
+        },
+        "elapsedMs": 402
+      },
+      "totalMs": 1582
+    },
+    {
+      "path": "validation/pants/4cc4e673-fecd-4e4e-a7eb-f2efd39a5291.jpg",
+      "class": "pants",
+      "file": "pants-5.jpg",
+      "expectedCategory": "Bottoms",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "a pair of jeans",
+          "category": "Bottoms",
+          "itemType": "Jeans",
+          "sleeveLength": "Not applicable",
+          "score": 0.9594694108333763
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true
+      },
+      "staged": {
+        "accepted": true,
+        "predicted": {
+          "label": "a pair of jeans",
+          "category": "Bottoms",
+          "itemType": "Jeans",
+          "sleeveLength": "Not applicable",
+          "score": 0.9927385853100518
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true,
+        "reason": null,
+        "details": {
+          "color": "Blue"
+        },
+        "elapsedMs": 388
+      },
+      "totalMs": 1787
+    },
+    {
+      "path": "validation/pants/5081af53-6dd0-454b-be59-e9575b031f98.jpg",
+      "class": "pants",
+      "file": "pants-6.jpg",
+      "expectedCategory": "Bottoms",
+      "baseline": {
+        "accepted": false,
+        "predicted": {
+          "label": "a pair of trousers",
+          "category": "Bottoms",
+          "itemType": "Trousers",
+          "sleeveLength": "Not applicable",
+          "score": 0.5018620963113928
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true
+      },
+      "staged": {
+        "accepted": false,
+        "predicted": null,
+        "correctCategory": false,
+        "classTypeCorrect": false,
+        "reason": "views_disagree",
+        "details": {},
+        "elapsedMs": 403
+      },
+      "totalMs": 1737
+    },
+    {
+      "path": "validation/pants/511cbfa4-cc0c-416f-9e8b-c4e3fb16b9df.jpg",
+      "class": "pants",
+      "file": "pants-7.jpg",
+      "expectedCategory": "Bottoms",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "a pair of jeans",
+          "category": "Bottoms",
+          "itemType": "Jeans",
+          "sleeveLength": "Not applicable",
+          "score": 0.8786926729342796
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true
+      },
+      "staged": {
+        "accepted": true,
+        "predicted": {
+          "label": "a pair of jeans",
+          "category": "Bottoms",
+          "itemType": "Jeans",
+          "sleeveLength": "Not applicable",
+          "score": 0.8904006555989117
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true,
+        "reason": null,
+        "details": {
+          "color": "Blue"
+        },
+        "elapsedMs": 411
+      },
+      "totalMs": 1673
+    },
+    {
+      "path": "validation/pants/522cf1b9-f25b-4e6f-81b4-787bbe1d28ce.jpg",
+      "class": "pants",
+      "file": "pants-8.jpg",
+      "expectedCategory": "Bottoms",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "a pair of trousers",
+          "category": "Bottoms",
+          "itemType": "Trousers",
+          "sleeveLength": "Not applicable",
+          "score": 0.5980287322108436
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true
+      },
+      "staged": {
+        "accepted": true,
+        "predicted": {
+          "label": "a pair of trousers",
+          "category": "Bottoms",
+          "itemType": "Trousers",
+          "sleeveLength": "Not applicable",
+          "score": 0.8459807132159783
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true,
+        "reason": null,
+        "details": {
+          "color": "Blue"
+        },
+        "elapsedMs": 476
+      },
+      "totalMs": 1786
+    },
+    {
+      "path": "validation/pants/5795a645-45b8-423a-887a-f8af020fa08d.jpg",
+      "class": "pants",
+      "file": "pants-9.jpg",
+      "expectedCategory": "Bottoms",
+      "baseline": {
+        "accepted": false,
+        "predicted": {
+          "label": "a pair of trousers",
+          "category": "Bottoms",
+          "itemType": "Trousers",
+          "sleeveLength": "Not applicable",
+          "score": 0.5149571617920785
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true
+      },
+      "staged": {
+        "accepted": false,
+        "predicted": null,
+        "correctCategory": false,
+        "classTypeCorrect": false,
+        "reason": "category_uncertain",
+        "details": {},
+        "elapsedMs": 209
+      },
+      "totalMs": 1428
+    },
+    {
+      "path": "validation/shirt/5d97eab8-e62b-49cf-b73e-7cec4951d9c2.jpg",
+      "class": "shirt",
+      "file": "shirt-0.jpg",
+      "expectedCategory": "Tops",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "a button-down shirt",
+          "category": "Tops",
+          "itemType": "Button-down shirt",
+          "sleeveLength": "Unknown",
+          "score": 0.7436532849738472
+        },
+        "correctCategory": true,
+        "classTypeCorrect": null
+      },
+      "staged": {
+        "accepted": true,
+        "predicted": {
+          "label": "a button-down shirt",
+          "category": "Tops",
+          "itemType": "Button-down shirt",
+          "sleeveLength": "Long sleeve",
+          "score": 0.9207190929522012
+        },
+        "correctCategory": true,
+        "classTypeCorrect": null,
+        "reason": null,
+        "details": {
+          "color": "Red",
+          "pattern": "Checked",
+          "sleeveLength": "Long sleeve"
+        },
+        "elapsedMs": 387
+      },
+      "totalMs": 1636
+    },
+    {
+      "path": "validation/shirt/6104b71c-017f-4631-95c9-6ff414091a7d.jpg",
+      "class": "shirt",
+      "file": "shirt-1.jpg",
+      "expectedCategory": "Tops",
+      "baseline": {
+        "accepted": false,
+        "predicted": {
+          "label": "a blazer",
+          "category": "Outerwear",
+          "itemType": "Blazer",
+          "sleeveLength": "Unknown",
+          "score": 0.31413113066341275
+        },
+        "correctCategory": false,
+        "classTypeCorrect": null
+      },
+      "staged": {
+        "accepted": false,
+        "predicted": null,
+        "correctCategory": false,
+        "classTypeCorrect": null,
+        "reason": "type_uncertain",
+        "details": {},
+        "elapsedMs": 186
+      },
+      "totalMs": 1439
+    },
+    {
+      "path": "validation/shirt/619655e3-2925-4ff3-94d6-f0e2d3f78b2f.jpg",
+      "class": "shirt",
+      "file": "shirt-2.jpg",
+      "expectedCategory": "Tops",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "a blouse",
+          "category": "Tops",
+          "itemType": "Blouse",
+          "sleeveLength": "Unknown",
+          "score": 0.7585157866395797
+        },
+        "correctCategory": true,
+        "classTypeCorrect": null
+      },
+      "staged": {
+        "accepted": false,
+        "predicted": null,
+        "correctCategory": false,
+        "classTypeCorrect": null,
+        "reason": "checks_disagree",
+        "details": {},
+        "elapsedMs": 190
+      },
+      "totalMs": 1405
+    },
+    {
+      "path": "validation/shirt/66f2df55-c425-40ae-9932-fa929df752d3.jpg",
+      "class": "shirt",
+      "file": "shirt-3.jpg",
+      "expectedCategory": "Tops",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "a button-down shirt",
+          "category": "Tops",
+          "itemType": "Button-down shirt",
+          "sleeveLength": "Unknown",
+          "score": 0.9021784101742596
+        },
+        "correctCategory": true,
+        "classTypeCorrect": null
+      },
+      "staged": {
+        "accepted": true,
+        "predicted": {
+          "label": "a button-down shirt",
+          "category": "Tops",
+          "itemType": "Button-down shirt",
+          "sleeveLength": "Long sleeve",
+          "score": 0.7662372014049338
+        },
+        "correctCategory": true,
+        "classTypeCorrect": null,
+        "reason": null,
+        "details": {
+          "sleeveLength": "Long sleeve"
+        },
+        "elapsedMs": 383
+      },
+      "totalMs": 1598
+    },
+    {
+      "path": "validation/shirt/6791b759-a30d-40bb-84f2-ff32ce939988.jpg",
+      "class": "shirt",
+      "file": "shirt-4.jpg",
+      "expectedCategory": "Tops",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "a button-down shirt",
+          "category": "Tops",
+          "itemType": "Button-down shirt",
+          "sleeveLength": "Unknown",
+          "score": 0.6796767554795948
+        },
+        "correctCategory": true,
+        "classTypeCorrect": null
+      },
+      "staged": {
+        "accepted": false,
+        "predicted": null,
+        "correctCategory": false,
+        "classTypeCorrect": null,
+        "reason": "category_uncertain",
+        "details": {},
+        "elapsedMs": 204
+      },
+      "totalMs": 1422
+    },
+    {
+      "path": "validation/shirt/6dd9f374-da25-4bc8-9bbf-39693da3a266.jpg",
+      "class": "shirt",
+      "file": "shirt-5.jpg",
+      "expectedCategory": "Tops",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "a button-down shirt",
+          "category": "Tops",
+          "itemType": "Button-down shirt",
+          "sleeveLength": "Unknown",
+          "score": 0.6407915639718978
+        },
+        "correctCategory": true,
+        "classTypeCorrect": null
+      },
+      "staged": {
+        "accepted": false,
+        "predicted": null,
+        "correctCategory": false,
+        "classTypeCorrect": null,
+        "reason": "checks_disagree",
+        "details": {},
+        "elapsedMs": 189
+      },
+      "totalMs": 1430
+    },
+    {
+      "path": "validation/shirt/832898d6-3ac7-472b-835b-4dd3e5843342.jpg",
+      "class": "shirt",
+      "file": "shirt-6.jpg",
+      "expectedCategory": "Tops",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "a blouse",
+          "category": "Tops",
+          "itemType": "Blouse",
+          "sleeveLength": "Unknown",
+          "score": 0.6820369739569291
+        },
+        "correctCategory": true,
+        "classTypeCorrect": null
+      },
+      "staged": {
+        "accepted": true,
+        "predicted": {
+          "label": "a button-down shirt",
+          "category": "Tops",
+          "itemType": "Button-down shirt",
+          "sleeveLength": "Long sleeve",
+          "score": 0.6217235174415888
+        },
+        "correctCategory": true,
+        "classTypeCorrect": null,
+        "reason": null,
+        "details": {
+          "color": "Blue",
+          "sleeveLength": "Long sleeve"
+        },
+        "elapsedMs": 453
+      },
+      "totalMs": 1817
+    },
+    {
+      "path": "validation/shirt/a85064d6-0f5d-4fce-9e3a-d1b5902c6098.jpg",
+      "class": "shirt",
+      "file": "shirt-7.jpg",
+      "expectedCategory": "Tops",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "a button-down shirt",
+          "category": "Tops",
+          "itemType": "Button-down shirt",
+          "sleeveLength": "Unknown",
+          "score": 0.7485567486325213
+        },
+        "correctCategory": true,
+        "classTypeCorrect": null
+      },
+      "staged": {
+        "accepted": true,
+        "predicted": {
+          "label": "a button-down shirt",
+          "category": "Tops",
+          "itemType": "Button-down shirt",
+          "sleeveLength": "Long sleeve",
+          "score": 0.7336268088582896
+        },
+        "correctCategory": true,
+        "classTypeCorrect": null,
+        "reason": null,
+        "details": {
+          "color": "Multicolor",
+          "sleeveLength": "Long sleeve"
+        },
+        "elapsedMs": 373
+      },
+      "totalMs": 1542
+    },
+    {
+      "path": "validation/shirt/a9fe576c-a408-4b3f-80de-d9cb04d36360.jpg",
+      "class": "shirt",
+      "file": "shirt-8.jpg",
+      "expectedCategory": "Tops",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "a button-down shirt",
+          "category": "Tops",
+          "itemType": "Button-down shirt",
+          "sleeveLength": "Unknown",
+          "score": 0.7705949700386586
+        },
+        "correctCategory": true,
+        "classTypeCorrect": null
+      },
+      "staged": {
+        "accepted": true,
+        "predicted": {
+          "label": "a button-down shirt",
+          "category": "Tops",
+          "itemType": "Button-down shirt",
+          "sleeveLength": "Long sleeve",
+          "score": 0.8449028577722612
+        },
+        "correctCategory": true,
+        "classTypeCorrect": null,
+        "reason": null,
+        "details": {
+          "pattern": "Striped",
+          "sleeveLength": "Long sleeve"
+        },
+        "elapsedMs": 387
+      },
+      "totalMs": 1578
+    },
+    {
+      "path": "validation/shirt/b09b92a8-4e52-4ac6-946b-6b8fbf83898f.jpg",
+      "class": "shirt",
+      "file": "shirt-9.jpg",
+      "expectedCategory": "Tops",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "a button-down shirt",
+          "category": "Tops",
+          "itemType": "Button-down shirt",
+          "sleeveLength": "Unknown",
+          "score": 0.7723418672181435
+        },
+        "correctCategory": true,
+        "classTypeCorrect": null
+      },
+      "staged": {
+        "accepted": true,
+        "predicted": {
+          "label": "a button-down shirt",
+          "category": "Tops",
+          "itemType": "Button-down shirt",
+          "sleeveLength": "Long sleeve",
+          "score": 0.9057260116156182
+        },
+        "correctCategory": true,
+        "classTypeCorrect": null,
+        "reason": null,
+        "details": {
+          "color": "Green",
+          "pattern": "Checked",
+          "sleeveLength": "Long sleeve"
+        },
+        "elapsedMs": 383
+      },
+      "totalMs": 1592
+    },
+    {
+      "path": "validation/shoes/6cb6102f-cf2a-4b60-8b44-97e8b8e1e4f2.jpg",
+      "class": "shoes",
+      "file": "shoes-0.jpg",
+      "expectedCategory": "Shoes",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "flat shoes",
+          "category": "Shoes",
+          "itemType": "Flats",
+          "sleeveLength": "Not applicable",
+          "score": 0.7124357232882914
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true
+      },
+      "staged": {
+        "accepted": false,
+        "predicted": null,
+        "correctCategory": false,
+        "classTypeCorrect": false,
+        "reason": "type_uncertain",
+        "details": {},
+        "elapsedMs": 192
+      },
+      "totalMs": 1395
+    },
+    {
+      "path": "validation/shoes/6ce1572f-bf7a-4940-8b4f-611cbac3f8ce.jpg",
+      "class": "shoes",
+      "file": "shoes-1.jpg",
+      "expectedCategory": "Shoes",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "sandals",
+          "category": "Shoes",
+          "itemType": "Sandals",
+          "sleeveLength": "Not applicable",
+          "score": 0.87508823279033
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true
+      },
+      "staged": {
+        "accepted": true,
+        "predicted": {
+          "label": "sandals",
+          "category": "Shoes",
+          "itemType": "Sandals",
+          "sleeveLength": "Not applicable",
+          "score": 0.9387081498614298
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true,
+        "reason": null,
+        "details": {
+          "color": "Purple"
+        },
+        "elapsedMs": 449
+      },
+      "totalMs": 1654
+    },
+    {
+      "path": "validation/shoes/7bb0226b-f068-4b46-9e40-1e5110319fcd.jpg",
+      "class": "shoes",
+      "file": "shoes-2.jpg",
+      "expectedCategory": "Shoes",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "sneakers",
+          "category": "Shoes",
+          "itemType": "Sneakers",
+          "sleeveLength": "Not applicable",
+          "score": 0.8785376901429924
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true
+      },
+      "staged": {
+        "accepted": true,
+        "predicted": {
+          "label": "sneakers",
+          "category": "Shoes",
+          "itemType": "Sneakers",
+          "sleeveLength": "Not applicable",
+          "score": 0.9982954405149933
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true,
+        "reason": null,
+        "details": {
+          "color": "Blue",
+          "pattern": "Solid"
+        },
+        "elapsedMs": 402
+      },
+      "totalMs": 1716
+    },
+    {
+      "path": "validation/shoes/7d5a20ff-6431-404e-9870-78140166cf7a.jpg",
+      "class": "shoes",
+      "file": "shoes-3.jpg",
+      "expectedCategory": "Shoes",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "flat shoes",
+          "category": "Shoes",
+          "itemType": "Flats",
+          "sleeveLength": "Not applicable",
+          "score": 0.7352343723913445
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true
+      },
+      "staged": {
+        "accepted": false,
+        "predicted": null,
+        "correctCategory": false,
+        "classTypeCorrect": false,
+        "reason": "views_disagree",
+        "details": {},
+        "elapsedMs": 418
+      },
+      "totalMs": 1790
+    },
+    {
+      "path": "validation/shoes/873dcb7d-34db-488c-b29e-1bbf78102a23.jpg",
+      "class": "shoes",
+      "file": "shoes-4.jpg",
+      "expectedCategory": "Shoes",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "high heel shoes",
+          "category": "Shoes",
+          "itemType": "Heels",
+          "sleeveLength": "Not applicable",
+          "score": 0.8046391247071503
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true
+      },
+      "staged": {
+        "accepted": false,
+        "predicted": null,
+        "correctCategory": false,
+        "classTypeCorrect": false,
+        "reason": "views_disagree",
+        "details": {},
+        "elapsedMs": 409
+      },
+      "totalMs": 1674
+    },
+    {
+      "path": "validation/shoes/8e3553a1-859e-4e56-a7b5-154a0b1c2c57.jpg",
+      "class": "shoes",
+      "file": "shoes-5.jpg",
+      "expectedCategory": "Shoes",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "flat shoes",
+          "category": "Shoes",
+          "itemType": "Flats",
+          "sleeveLength": "Not applicable",
+          "score": 0.7054534667550352
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true
+      },
+      "staged": {
+        "accepted": true,
+        "predicted": {
+          "label": "flat shoes",
+          "category": "Shoes",
+          "itemType": "Flats",
+          "sleeveLength": "Not applicable",
+          "score": 0.9977387660149306
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true,
+        "reason": null,
+        "details": {
+          "pattern": "Checked"
+        },
+        "elapsedMs": 409
+      },
+      "totalMs": 1598
+    },
+    {
+      "path": "validation/shoes/b34268f1-78ad-4e58-bc16-2aa0728c1f7b.jpg",
+      "class": "shoes",
+      "file": "shoes-6.jpg",
+      "expectedCategory": "Shoes",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "sandals",
+          "category": "Shoes",
+          "itemType": "Sandals",
+          "sleeveLength": "Not applicable",
+          "score": 0.9673982355766576
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true
+      },
+      "staged": {
+        "accepted": true,
+        "predicted": {
+          "label": "sandals",
+          "category": "Shoes",
+          "itemType": "Sandals",
+          "sleeveLength": "Not applicable",
+          "score": 0.9793653283215432
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true,
+        "reason": null,
+        "details": {},
+        "elapsedMs": 411
+      },
+      "totalMs": 1717
+    },
+    {
+      "path": "validation/shoes/c1480bd3-e7cb-421e-a58b-1b3cb7e4ff27.jpg",
+      "class": "shoes",
+      "file": "shoes-7.jpg",
+      "expectedCategory": "Shoes",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "tall boots",
+          "category": "Shoes",
+          "itemType": "Tall boots",
+          "sleeveLength": "Not applicable",
+          "score": 0.8798359064360942
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true
+      },
+      "staged": {
+        "accepted": true,
+        "predicted": {
+          "label": "tall boots",
+          "category": "Shoes",
+          "itemType": "Tall boots",
+          "sleeveLength": "Not applicable",
+          "score": 0.9780192406361975
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true,
+        "reason": null,
+        "details": {},
+        "elapsedMs": 379
+      },
+      "totalMs": 1620
+    },
+    {
+      "path": "validation/shoes/d9218439-14f1-46fa-8c35-f17f112b08fe.jpg",
+      "class": "shoes",
+      "file": "shoes-8.jpg",
+      "expectedCategory": "Shoes",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "sandals",
+          "category": "Shoes",
+          "itemType": "Sandals",
+          "sleeveLength": "Not applicable",
+          "score": 0.9670687077703601
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true
+      },
+      "staged": {
+        "accepted": true,
+        "predicted": {
+          "label": "sandals",
+          "category": "Shoes",
+          "itemType": "Sandals",
+          "sleeveLength": "Not applicable",
+          "score": 0.9937427428281043
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true,
+        "reason": null,
+        "details": {},
+        "elapsedMs": 393
+      },
+      "totalMs": 1622
+    },
+    {
+      "path": "validation/shoes/dc0d9ba1-165e-46d8-bdb1-fba1d753ead8.jpg",
+      "class": "shoes",
+      "file": "shoes-9.jpg",
+      "expectedCategory": "Shoes",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "sneakers",
+          "category": "Shoes",
+          "itemType": "Sneakers",
+          "sleeveLength": "Not applicable",
+          "score": 0.6194125210899067
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true
+      },
+      "staged": {
+        "accepted": true,
+        "predicted": {
+          "label": "sneakers",
+          "category": "Shoes",
+          "itemType": "Sneakers",
+          "sleeveLength": "Not applicable",
+          "score": 0.9949741920755479
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true,
+        "reason": null,
+        "details": {},
+        "elapsedMs": 389
+      },
+      "totalMs": 1584
+    },
+    {
+      "path": "validation/shorts/456578a1-8a2e-4906-85a4-c93ceef8c108.jpg",
+      "class": "shorts",
+      "file": "shorts-0.jpg",
+      "expectedCategory": "Bottoms",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "a pair of trousers",
+          "category": "Bottoms",
+          "itemType": "Trousers",
+          "sleeveLength": "Not applicable",
+          "score": 0.5924957877435367
+        },
+        "correctCategory": true,
+        "classTypeCorrect": false
+      },
+      "staged": {
+        "accepted": false,
+        "predicted": null,
+        "correctCategory": false,
+        "classTypeCorrect": false,
+        "reason": "views_disagree",
+        "details": {},
+        "elapsedMs": 389
+      },
+      "totalMs": 1616
+    },
+    {
+      "path": "validation/shorts/6505e289-1236-4675-8430-ebcc52fe4ca6.jpg",
+      "class": "shorts",
+      "file": "shorts-1.jpg",
+      "expectedCategory": "Bottoms",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "a pair of shorts",
+          "category": "Bottoms",
+          "itemType": "Shorts",
+          "sleeveLength": "Not applicable",
+          "score": 0.9761926223038538
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true
+      },
+      "staged": {
+        "accepted": true,
+        "predicted": {
+          "label": "a pair of shorts",
+          "category": "Bottoms",
+          "itemType": "Shorts",
+          "sleeveLength": "Not applicable",
+          "score": 0.999321487871345
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true,
+        "reason": null,
+        "details": {},
+        "elapsedMs": 389
+      },
+      "totalMs": 1591
+    },
+    {
+      "path": "validation/shorts/671603f9-b503-4d14-a389-3c46ff8bf163.jpg",
+      "class": "shorts",
+      "file": "shorts-2.jpg",
+      "expectedCategory": "Bottoms",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "a pair of shorts",
+          "category": "Bottoms",
+          "itemType": "Shorts",
+          "sleeveLength": "Not applicable",
+          "score": 0.5800968623476799
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true
+      },
+      "staged": {
+        "accepted": true,
+        "predicted": {
+          "label": "a pair of shorts",
+          "category": "Bottoms",
+          "itemType": "Shorts",
+          "sleeveLength": "Not applicable",
+          "score": 0.8992240222580781
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true,
+        "reason": null,
+        "details": {
+          "color": "Blue"
+        },
+        "elapsedMs": 385
+      },
+      "totalMs": 1591
+    },
+    {
+      "path": "validation/shorts/6b825ceb-4d84-4fa2-8953-af936b3233ac.jpg",
+      "class": "shorts",
+      "file": "shorts-3.jpg",
+      "expectedCategory": "Bottoms",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "a pair of shorts",
+          "category": "Bottoms",
+          "itemType": "Shorts",
+          "sleeveLength": "Not applicable",
+          "score": 0.99348933238155
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true
+      },
+      "staged": {
+        "accepted": true,
+        "predicted": {
+          "label": "a pair of shorts",
+          "category": "Bottoms",
+          "itemType": "Shorts",
+          "sleeveLength": "Not applicable",
+          "score": 0.992809553752034
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true,
+        "reason": null,
+        "details": {
+          "pattern": "Graphic"
+        },
+        "elapsedMs": 394
+      },
+      "totalMs": 1589
+    },
+    {
+      "path": "validation/shorts/73074cee-871e-4b79-8b25-197bb404e7d3.jpg",
+      "class": "shorts",
+      "file": "shorts-4.jpg",
+      "expectedCategory": "Bottoms",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "a pair of shorts",
+          "category": "Bottoms",
+          "itemType": "Shorts",
+          "sleeveLength": "Not applicable",
+          "score": 0.9902396503423302
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true
+      },
+      "staged": {
+        "accepted": true,
+        "predicted": {
+          "label": "a pair of shorts",
+          "category": "Bottoms",
+          "itemType": "Shorts",
+          "sleeveLength": "Not applicable",
+          "score": 0.9953627721087491
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true,
+        "reason": null,
+        "details": {
+          "color": "Multicolor",
+          "pattern": "Graphic"
+        },
+        "elapsedMs": 416
+      },
+      "totalMs": 1745
+    },
+    {
+      "path": "validation/shorts/73d0010c-e5f1-49aa-bc8d-222002cdb5b6.jpg",
+      "class": "shorts",
+      "file": "shorts-5.jpg",
+      "expectedCategory": "Bottoms",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "a pair of shorts",
+          "category": "Bottoms",
+          "itemType": "Shorts",
+          "sleeveLength": "Not applicable",
+          "score": 0.7886141614756023
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true
+      },
+      "staged": {
+        "accepted": true,
+        "predicted": {
+          "label": "a pair of shorts",
+          "category": "Bottoms",
+          "itemType": "Shorts",
+          "sleeveLength": "Not applicable",
+          "score": 0.9802980093506162
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true,
+        "reason": null,
+        "details": {
+          "color": "Blue",
+          "fit": "Fitted"
+        },
+        "elapsedMs": 386
+      },
+      "totalMs": 1816
+    },
+    {
+      "path": "validation/shorts/8a763700-8a1a-4396-947d-d1264e2005ee.jpg",
+      "class": "shorts",
+      "file": "shorts-6.jpg",
+      "expectedCategory": "Bottoms",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "a pair of shorts",
+          "category": "Bottoms",
+          "itemType": "Shorts",
+          "sleeveLength": "Not applicable",
+          "score": 0.9741493710678343
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true
+      },
+      "staged": {
+        "accepted": true,
+        "predicted": {
+          "label": "a pair of shorts",
+          "category": "Bottoms",
+          "itemType": "Shorts",
+          "sleeveLength": "Not applicable",
+          "score": 0.9976017032296327
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true,
+        "reason": null,
+        "details": {
+          "color": "White",
+          "pattern": "Graphic"
+        },
+        "elapsedMs": 423
+      },
+      "totalMs": 1631
+    },
+    {
+      "path": "validation/shorts/9de18803-34d3-4737-b958-075a1ffadbc1.jpg",
+      "class": "shorts",
+      "file": "shorts-7.jpg",
+      "expectedCategory": "Bottoms",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "a pair of shorts",
+          "category": "Bottoms",
+          "itemType": "Shorts",
+          "sleeveLength": "Not applicable",
+          "score": 0.9563924948094273
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true
+      },
+      "staged": {
+        "accepted": true,
+        "predicted": {
+          "label": "a pair of shorts",
+          "category": "Bottoms",
+          "itemType": "Shorts",
+          "sleeveLength": "Not applicable",
+          "score": 0.9932154664030608
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true,
+        "reason": null,
+        "details": {
+          "fit": "Fitted"
+        },
+        "elapsedMs": 398
+      },
+      "totalMs": 1674
+    },
+    {
+      "path": "validation/shorts/a5fa97cf-e45e-4a14-a001-93276576a58d.jpg",
+      "class": "shorts",
+      "file": "shorts-8.jpg",
+      "expectedCategory": "Bottoms",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "a pair of shorts",
+          "category": "Bottoms",
+          "itemType": "Shorts",
+          "sleeveLength": "Not applicable",
+          "score": 0.9343283085648526
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true
+      },
+      "staged": {
+        "accepted": true,
+        "predicted": {
+          "label": "a pair of shorts",
+          "category": "Bottoms",
+          "itemType": "Shorts",
+          "sleeveLength": "Not applicable",
+          "score": 0.9766597824581864
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true,
+        "reason": null,
+        "details": {},
+        "elapsedMs": 432
+      },
+      "totalMs": 1717
+    },
+    {
+      "path": "validation/shorts/c6689216-f1cf-4b72-9711-c9c81ee31618.jpg",
+      "class": "shorts",
+      "file": "shorts-9.jpg",
+      "expectedCategory": "Bottoms",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "a pair of jeans",
+          "category": "Bottoms",
+          "itemType": "Jeans",
+          "sleeveLength": "Not applicable",
+          "score": 0.6367823667797781
+        },
+        "correctCategory": true,
+        "classTypeCorrect": false
+      },
+      "staged": {
+        "accepted": true,
+        "predicted": {
+          "label": "a pair of shorts",
+          "category": "Bottoms",
+          "itemType": "Shorts",
+          "sleeveLength": "Not applicable",
+          "score": 0.8905132449833966
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true,
+        "reason": null,
+        "details": {
+          "color": "Blue"
+        },
+        "elapsedMs": 452
+      },
+      "totalMs": 1725
+    },
+    {
+      "path": "train/skirt/0ab26941-211e-44d7-a62a-20207fa7a3e0.jpg",
+      "class": "skirt",
+      "file": "skirt-0.jpg",
+      "expectedCategory": "Bottoms",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "a pair of jeans",
+          "category": "Bottoms",
+          "itemType": "Jeans",
+          "sleeveLength": "Not applicable",
+          "score": 0.6183183064401582
+        },
+        "correctCategory": true,
+        "classTypeCorrect": false
+      },
+      "staged": {
+        "accepted": false,
+        "predicted": null,
+        "correctCategory": false,
+        "classTypeCorrect": false,
+        "reason": "type_uncertain",
+        "details": {},
+        "elapsedMs": 199
+      },
+      "totalMs": 1429
+    },
+    {
+      "path": "train/skirt/0da586b0-bbfb-44fd-a629-12aee2b1d430.jpg",
+      "class": "skirt",
+      "file": "skirt-1.jpg",
+      "expectedCategory": "Bottoms",
+      "baseline": {
+        "accepted": false,
+        "predicted": {
+          "label": "a skirt",
+          "category": "Bottoms",
+          "itemType": "Skirt",
+          "sleeveLength": "Not applicable",
+          "score": 0.4461224153069135
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true
+      },
+      "staged": {
+        "accepted": false,
+        "predicted": null,
+        "correctCategory": false,
+        "classTypeCorrect": false,
+        "reason": "views_disagree",
+        "details": {},
+        "elapsedMs": 415
+      },
+      "totalMs": 1663
+    },
+    {
+      "path": "train/skirt/0f8c39ba-e2b1-4c94-be5e-6ac2d924f7ed.jpg",
+      "class": "skirt",
+      "file": "skirt-2.jpg",
+      "expectedCategory": "Bottoms",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "a skirt",
+          "category": "Bottoms",
+          "itemType": "Skirt",
+          "sleeveLength": "Not applicable",
+          "score": 0.5708464695630279
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true
+      },
+      "staged": {
+        "accepted": true,
+        "predicted": {
+          "label": "a skirt",
+          "category": "Bottoms",
+          "itemType": "Skirt",
+          "sleeveLength": "Not applicable",
+          "score": 0.6961276996116907
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true,
+        "reason": null,
+        "details": {
+          "color": "Blue"
+        },
+        "elapsedMs": 387
+      },
+      "totalMs": 1641
+    },
+    {
+      "path": "train/skirt/104b1054-3d95-4738-8199-d4b0581e735f.jpg",
+      "class": "skirt",
+      "file": "skirt-3.jpg",
+      "expectedCategory": "Bottoms",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "a skirt",
+          "category": "Bottoms",
+          "itemType": "Skirt",
+          "sleeveLength": "Not applicable",
+          "score": 0.8824897484539947
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true
+      },
+      "staged": {
+        "accepted": true,
+        "predicted": {
+          "label": "a skirt",
+          "category": "Bottoms",
+          "itemType": "Skirt",
+          "sleeveLength": "Not applicable",
+          "score": 0.9952633540815119
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true,
+        "reason": null,
+        "details": {
+          "color": "Blue",
+          "pattern": "Polka dot"
+        },
+        "elapsedMs": 429
+      },
+      "totalMs": 1672
+    },
+    {
+      "path": "train/skirt/125472d8-0f0a-4d45-b531-fb87a9d9d95e.jpg",
+      "class": "skirt",
+      "file": "skirt-4.jpg",
+      "expectedCategory": "Bottoms",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "a skirt",
+          "category": "Bottoms",
+          "itemType": "Skirt",
+          "sleeveLength": "Not applicable",
+          "score": 0.7426364453435245
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true
+      },
+      "staged": {
+        "accepted": true,
+        "predicted": {
+          "label": "a skirt",
+          "category": "Bottoms",
+          "itemType": "Skirt",
+          "sleeveLength": "Not applicable",
+          "score": 0.9201385638503171
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true,
+        "reason": null,
+        "details": {
+          "pattern": "Solid"
+        },
+        "elapsedMs": 395
+      },
+      "totalMs": 1673
+    },
+    {
+      "path": "train/skirt/12f6208b-331e-4257-bcfe-bb48f8c924aa.jpg",
+      "class": "skirt",
+      "file": "skirt-5.jpg",
+      "expectedCategory": "Bottoms",
+      "baseline": {
+        "accepted": false,
+        "predicted": {
+          "label": "a pair of leggings",
+          "category": "Bottoms",
+          "itemType": "Leggings",
+          "sleeveLength": "Not applicable",
+          "score": 0.3061459075465447
+        },
+        "correctCategory": true,
+        "classTypeCorrect": false
+      },
+      "staged": {
+        "accepted": true,
+        "predicted": {
+          "label": "a skirt",
+          "category": "Bottoms",
+          "itemType": "Skirt",
+          "sleeveLength": "Not applicable",
+          "score": 0.9751152629471872
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true,
+        "reason": null,
+        "details": {
+          "pattern": "Animal print"
+        },
+        "elapsedMs": 388
+      },
+      "totalMs": 1631
+    },
+    {
+      "path": "train/skirt/16dae877-412a-489e-8935-4bd08db2fa23.jpg",
+      "class": "skirt",
+      "file": "skirt-6.jpg",
+      "expectedCategory": "Bottoms",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "a skirt",
+          "category": "Bottoms",
+          "itemType": "Skirt",
+          "sleeveLength": "Not applicable",
+          "score": 0.9818127608855437
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true
+      },
+      "staged": {
+        "accepted": true,
+        "predicted": {
+          "label": "a skirt",
+          "category": "Bottoms",
+          "itemType": "Skirt",
+          "sleeveLength": "Not applicable",
+          "score": 0.9960649134336851
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true,
+        "reason": null,
+        "details": {
+          "fit": "Regular",
+          "pattern": "Solid"
+        },
+        "elapsedMs": 405
+      },
+      "totalMs": 1663
+    },
+    {
+      "path": "train/skirt/1d08ddfe-dfd4-4bf9-81a7-9cc8dfa2833f.jpg",
+      "class": "skirt",
+      "file": "skirt-7.jpg",
+      "expectedCategory": "Bottoms",
+      "baseline": {
+        "accepted": false,
+        "predicted": {
+          "label": "a pair of jeans",
+          "category": "Bottoms",
+          "itemType": "Jeans",
+          "sleeveLength": "Not applicable",
+          "score": 0.3498259652411333
+        },
+        "correctCategory": true,
+        "classTypeCorrect": false
+      },
+      "staged": {
+        "accepted": false,
+        "predicted": null,
+        "correctCategory": false,
+        "classTypeCorrect": false,
+        "reason": "checks_disagree",
+        "details": {},
+        "elapsedMs": 190
+      },
+      "totalMs": 1420
+    },
+    {
+      "path": "train/skirt/22d78476-595a-412d-861e-880264696556.jpg",
+      "class": "skirt",
+      "file": "skirt-8.jpg",
+      "expectedCategory": "Bottoms",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "a pair of trousers",
+          "category": "Bottoms",
+          "itemType": "Trousers",
+          "sleeveLength": "Not applicable",
+          "score": 0.5918657428920048
+        },
+        "correctCategory": true,
+        "classTypeCorrect": false
+      },
+      "staged": {
+        "accepted": true,
+        "predicted": {
+          "label": "a pair of shorts",
+          "category": "Bottoms",
+          "itemType": "Shorts",
+          "sleeveLength": "Not applicable",
+          "score": 0.7983722541544264
+        },
+        "correctCategory": true,
+        "classTypeCorrect": false,
+        "reason": null,
+        "details": {
+          "color": "Purple",
+          "pattern": "Solid"
+        },
+        "elapsedMs": 391
+      },
+      "totalMs": 1598
+    },
+    {
+      "path": "train/skirt/2503103d-48e1-4be1-b90e-c2e80b5f1eed.jpg",
+      "class": "skirt",
+      "file": "skirt-9.jpg",
+      "expectedCategory": "Bottoms",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "a skirt",
+          "category": "Bottoms",
+          "itemType": "Skirt",
+          "sleeveLength": "Not applicable",
+          "score": 0.9869380212532644
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true
+      },
+      "staged": {
+        "accepted": true,
+        "predicted": {
+          "label": "a skirt",
+          "category": "Bottoms",
+          "itemType": "Skirt",
+          "sleeveLength": "Not applicable",
+          "score": 0.9970376731977546
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true,
+        "reason": null,
+        "details": {
+          "fit": "Fitted"
+        },
+        "elapsedMs": 405
+      },
+      "totalMs": 1701
+    },
+    {
+      "path": "validation/t-shirt/164900f8-4d29-454b-97ba-5d7d22f5cfe2.jpg",
+      "class": "t-shirt",
+      "file": "t-shirt-0.jpg",
+      "expectedCategory": "Tops",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "a T-shirt",
+          "category": "Tops",
+          "itemType": "T-shirt",
+          "sleeveLength": "Unknown",
+          "score": 0.882803618812892
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true
+      },
+      "staged": {
+        "accepted": true,
+        "predicted": {
+          "label": "a T-shirt",
+          "category": "Tops",
+          "itemType": "T-shirt",
+          "sleeveLength": "Short sleeve",
+          "score": 0.9902165073257958
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true,
+        "reason": null,
+        "details": {
+          "sleeveLength": "Short sleeve"
+        },
+        "elapsedMs": 468
+      },
+      "totalMs": 2053
+    },
+    {
+      "path": "validation/t-shirt/16f1fbdf-d339-40f6-aecb-e55199db7a96.jpg",
+      "class": "t-shirt",
+      "file": "t-shirt-1.jpg",
+      "expectedCategory": "Tops",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "a blouse",
+          "category": "Tops",
+          "itemType": "Blouse",
+          "sleeveLength": "Unknown",
+          "score": 0.6023956403366693
+        },
+        "correctCategory": true,
+        "classTypeCorrect": false
+      },
+      "staged": {
+        "accepted": false,
+        "predicted": null,
+        "correctCategory": false,
+        "classTypeCorrect": false,
+        "reason": "checks_disagree",
+        "details": {},
+        "elapsedMs": 257
+      },
+      "totalMs": 1720
+    },
+    {
+      "path": "validation/t-shirt/1a5d03c8-1a59-409d-bb5e-5958dc7620b8.jpg",
+      "class": "t-shirt",
+      "file": "t-shirt-2.jpg",
+      "expectedCategory": "Tops",
+      "baseline": {
+        "accepted": false,
+        "predicted": {
+          "label": "a blouse",
+          "category": "Tops",
+          "itemType": "Blouse",
+          "sleeveLength": "Unknown",
+          "score": 0.3460570196902937
+        },
+        "correctCategory": true,
+        "classTypeCorrect": false
+      },
+      "staged": {
+        "accepted": true,
+        "predicted": {
+          "label": "a T-shirt",
+          "category": "Tops",
+          "itemType": "T-shirt",
+          "sleeveLength": "Short sleeve",
+          "score": 0.9054751334746186
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true,
+        "reason": null,
+        "details": {
+          "fit": "Fitted",
+          "pattern": "Solid",
+          "sleeveLength": "Short sleeve"
+        },
+        "elapsedMs": 443
+      },
+      "totalMs": 1745
+    },
+    {
+      "path": "validation/t-shirt/1ab00c0e-4fc7-45d4-b9af-7d1bd75e1fd9.jpg",
+      "class": "t-shirt",
+      "file": "t-shirt-3.jpg",
+      "expectedCategory": "Tops",
+      "baseline": {
+        "accepted": false,
+        "predicted": {
+          "label": "a polo shirt",
+          "category": "Tops",
+          "itemType": "Polo",
+          "sleeveLength": "Unknown",
+          "score": 0.46305313478169374
+        },
+        "correctCategory": true,
+        "classTypeCorrect": false
+      },
+      "staged": {
+        "accepted": true,
+        "predicted": {
+          "label": "a T-shirt",
+          "category": "Tops",
+          "itemType": "T-shirt",
+          "sleeveLength": "Short sleeve",
+          "score": 0.7947165185863135
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true,
+        "reason": null,
+        "details": {
+          "color": "Yellow",
+          "sleeveLength": "Short sleeve"
+        },
+        "elapsedMs": 406
+      },
+      "totalMs": 1731
+    },
+    {
+      "path": "validation/t-shirt/2324306f-d9a3-47b7-b648-8684b8aca35c.jpg",
+      "class": "t-shirt",
+      "file": "t-shirt-4.jpg",
+      "expectedCategory": "Tops",
+      "baseline": {
+        "accepted": false,
+        "predicted": {
+          "label": "a T-shirt",
+          "category": "Tops",
+          "itemType": "T-shirt",
+          "sleeveLength": "Unknown",
+          "score": 0.31865143650026667
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true
+      },
+      "staged": {
+        "accepted": true,
+        "predicted": {
+          "label": "a T-shirt",
+          "category": "Tops",
+          "itemType": "T-shirt",
+          "sleeveLength": "Short sleeve",
+          "score": 0.9061949545816327
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true,
+        "reason": null,
+        "details": {
+          "fit": "Fitted",
+          "sleeveLength": "Short sleeve"
+        },
+        "elapsedMs": 396
+      },
+      "totalMs": 1647
+    },
+    {
+      "path": "validation/t-shirt/24ccd098-8f30-4b75-a1aa-06a8c42d9835.jpg",
+      "class": "t-shirt",
+      "file": "t-shirt-5.jpg",
+      "expectedCategory": "Tops",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "a T-shirt",
+          "category": "Tops",
+          "itemType": "T-shirt",
+          "sleeveLength": "Unknown",
+          "score": 0.5600279042483687
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true
+      },
+      "staged": {
+        "accepted": true,
+        "predicted": {
+          "label": "a T-shirt",
+          "category": "Tops",
+          "itemType": "T-shirt",
+          "sleeveLength": "Short sleeve",
+          "score": 0.9895164807651385
+        },
+        "correctCategory": true,
+        "classTypeCorrect": true,
+        "reason": null,
+        "details": {
+          "color": "Gray",
+          "sleeveLength": "Short sleeve"
+        },
+        "elapsedMs": 397
+      },
+      "totalMs": 1634
+    },
+    {
+      "path": "validation/t-shirt/275874a1-4cfd-4852-a751-24cf7f666517.jpg",
+      "class": "t-shirt",
+      "file": "t-shirt-6.jpg",
+      "expectedCategory": "Tops",
+      "baseline": {
+        "accepted": false,
+        "predicted": {
+          "label": "a sweatshirt",
+          "category": "Tops",
+          "itemType": "Sweatshirt",
+          "sleeveLength": "Unknown",
+          "score": 0.5462157077999218
+        },
+        "correctCategory": true,
+        "classTypeCorrect": false
+      },
+      "staged": {
+        "accepted": true,
+        "predicted": {
+          "label": "a sweatshirt",
+          "category": "Tops",
+          "itemType": "Sweatshirt",
+          "sleeveLength": "Short sleeve",
+          "score": 0.6132695695522349
+        },
+        "correctCategory": true,
+        "classTypeCorrect": false,
+        "reason": null,
+        "details": {
+          "color": "Blue",
+          "pattern": "Solid",
+          "sleeveLength": "Short sleeve"
+        },
+        "elapsedMs": 386
+      },
+      "totalMs": 1612
+    },
+    {
+      "path": "validation/t-shirt/27983c13-54bf-463d-84a6-94ec799b70ab.jpg",
+      "class": "t-shirt",
+      "file": "t-shirt-7.jpg",
+      "expectedCategory": "Tops",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "a tunic",
+          "category": "Tops",
+          "itemType": "Tunic",
+          "sleeveLength": "Unknown",
+          "score": 0.7308917117291246
+        },
+        "correctCategory": true,
+        "classTypeCorrect": false
+      },
+      "staged": {
+        "accepted": false,
+        "predicted": null,
+        "correctCategory": false,
+        "classTypeCorrect": false,
+        "reason": "category_uncertain",
+        "details": {},
+        "elapsedMs": 220
+      },
+      "totalMs": 1520
+    },
+    {
+      "path": "validation/t-shirt/27e1dfc7-4a9a-4049-ad9c-253535a92b94.jpg",
+      "class": "t-shirt",
+      "file": "t-shirt-8.jpg",
+      "expectedCategory": "Tops",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "a blouse",
+          "category": "Tops",
+          "itemType": "Blouse",
+          "sleeveLength": "Unknown",
+          "score": 0.8774279704009809
+        },
+        "correctCategory": true,
+        "classTypeCorrect": false
+      },
+      "staged": {
+        "accepted": true,
+        "predicted": {
+          "label": "a blouse",
+          "category": "Tops",
+          "itemType": "Blouse",
+          "sleeveLength": "Unknown",
+          "score": 0.9782275923821164
+        },
+        "correctCategory": true,
+        "classTypeCorrect": false,
+        "reason": null,
+        "details": {
+          "pattern": "Checked"
+        },
+        "elapsedMs": 405
+      },
+      "totalMs": 1652
+    },
+    {
+      "path": "validation/t-shirt/28709ef4-cebf-40c5-8347-f59932bf9323.jpg",
+      "class": "t-shirt",
+      "file": "t-shirt-9.jpg",
+      "expectedCategory": "Tops",
+      "baseline": {
+        "accepted": true,
+        "predicted": {
+          "label": "a tunic",
+          "category": "Tops",
+          "itemType": "Tunic",
+          "sleeveLength": "Unknown",
+          "score": 0.7207799165036368
+        },
+        "correctCategory": true,
+        "classTypeCorrect": false
+      },
+      "staged": {
+        "accepted": false,
+        "predicted": null,
+        "correctCategory": false,
+        "classTypeCorrect": false,
+        "reason": "checks_disagree",
+        "details": {},
+        "elapsedMs": 195
+      },
+      "totalMs": 1417
+    }
+  ]
+}
