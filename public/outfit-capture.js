@@ -1,12 +1,16 @@
 'use strict';
+const outfitExcludedIds=new Set();
 let outfitActiveId=null,lastOutfitPhoto='',outfitSplitJob=null,outfitSaving=false;
 function outfitReadyPieces(){return batch.filter(x=>x.outfitSourceId===outfitActiveId&&x.requiresOwnershipConfirmation&&x.localAnalyzed&&!x.scanFailed&&!x.possibleDuplicate&&!x.userAdjusted&&!localPending.has(x.id)&&x.category!=='Uncategorized'&&x.itemType&&segmentationAllows(x,{category:x.category,itemType:x.itemType}));}
+function outfitPieceSelectable(item){return outfitReadyPieces().some(x=>x.id===item.id);}
 function renderOutfitCapture(){
  if(!outfitActiveId)outfitActiveId=batch.find(x=>x.outfitSourceId&&x.requiresOwnershipConfirmation)?.outfitSourceId||null;
  const pending=batch.filter(x=>x.outfitSourceId===outfitActiveId),saved=items.filter(x=>x.outfitSourceId===outfitActiveId),ready=outfitReadyPieces();
  $('outfitPieceActions').hidden=!outfitActiveId||(!pending.length&&!saved.length);
- $('outfitPieceSummary').textContent=ready.length+' ready to add · '+pending.filter(x=>localPending.has(x.id)).length+' identifying · '+pending.filter(x=>!localPending.has(x.id)&&!ready.includes(x)).length+' need review · '+saved.length+' saved';
- $('addOutfitPieces').disabled=outfitSaving||!ready.length;$('useCapturedOutfit').disabled=outfitSaving||!saved.length;
+ const selected=ready.filter(x=>!outfitExcludedIds.has(x.id));
+ $('outfitPieceSummary').textContent=selected.length+' selected'+(pending.some(x=>localPending.has(x.id))?' · checking photos…':'')+(pending.some(x=>!localPending.has(x.id)&&!ready.includes(x))?' · some pieces need Adjust':'')+(saved.length?' · '+saved.length+' saved':'');
+ $('addOutfitPieces').textContent=outfitSaving?'Adding…':'Add selected clothes';
+ $('addOutfitPieces').disabled=outfitSaving||!selected.length;$('useCapturedOutfit').disabled=outfitSaving||!saved.length;
 }
 function finishOutfitSplit(job,text,failed=false){
  if(job!==outfitSplitJob)return;
@@ -22,7 +26,7 @@ function startOutfitSplit(image,sourceId=crypto.randomUUID()){
  const job={id:crypto.randomUUID(),sourceId,started:Date.now(),phase:'loading',worker:null,timer:null,added:0};outfitSplitJob=job;
  const timeout=()=>finishOutfitSplit(job,'Outfit separation timed out. Your existing and separated photos are kept. Try again with one person, head to toe.',true);
  const touch=()=>{clearTimeout(job.timer);const remaining=300000-(Date.now()-job.started);job.timer=setTimeout(timeout,Math.max(0,Math.min(60000,remaining)));};touch();
- $('outfitSplitStatus').textContent='Preparing the outfit separator…';
+ $('outfitSplitStatus').textContent='Preparing…';
  try{
   const version=recognitionAssetVersion?'?v='+recognitionAssetVersion:'';job.worker=new Worker('outfit-worker.mjs'+version,{type:'module'});
   job.worker.onmessage=event=>{
@@ -30,7 +34,7 @@ function startOutfitSplit(image,sourceId=crypto.randomUUID()){
    if(data.type==='progress'){
     if(data.phase==='separating'&&job.phase!=='separating'){job.phase='separating';clearTimeout(job.timer);job.timer=setTimeout(timeout,60000);}
     else if(job.phase==='loading')touch();
-    $('outfitSplitStatus').textContent=data.phase==='separating'?'Isolating visible clothing…':Number.isFinite(data.percent)?'Downloading outfit separator · '+data.percent+'%':'Preparing the outfit separator…';return;
+    $('outfitSplitStatus').textContent=data.phase==='separating'?'Separating clothes…':Number.isFinite(data.percent)?'Downloading · '+data.percent+'%':'Preparing…';return;
    }
    if(data.type==='piece'){
     const p=data.piece;
@@ -56,7 +60,7 @@ async function readOutfitPhoto(file){
 for(const id of ['outfitCamera','outfitUpload']){$(id).onclick=()=>{if(!busy)stopCamera();};$(id).onchange=event=>{const file=event.target.files?.[0];event.target.value='';readOutfitPhoto(file);};}
 $('outfitRetry').onclick=()=>{if(lastOutfitPhoto)startOutfitSplit(lastOutfitPhoto,outfitActiveId);};
 $('addOutfitPieces').onclick=async()=>{
- if(outfitSaving)return;const selected=outfitReadyPieces();if(!selected.length)return;
+ if(outfitSaving)return;const selected=outfitReadyPieces().filter(x=>!outfitExcludedIds.has(x.id));if(!selected.length)return;
  outfitSaving=true;renderOutfitCapture();let count=0,failed=0;
  for(const item of selected){
   item.requiresOwnershipConfirmation=false;

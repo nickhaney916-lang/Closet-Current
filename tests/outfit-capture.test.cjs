@@ -24,3 +24,11 @@ test('failed ownership save restores the review flag and preserves the isolated 
 test('completion does not pull a user away from another feature',()=>{
  const h=setup();h.c.startOutfitSplit('data:image/jpeg;base64,AAAA');h.el('scan').hidden=true;h.c.view='stylist';h.emit({type:'piece',piece:{image:'data:image/jpeg;base64,AABB',hint:{categories:['Tops'],types:[],clipped:false}}});h.emit({type:'done',count:1});assert.equal(h.c.view,'stylist');
 });
+
+test('bulk add saves only selected ready clothes and leaves deselected cutouts untouched',async()=>{
+ const h=setup();h.c.startOutfitSplit('data:image/jpeg;base64,AAAA');const hint={categories:['Tops'],types:[],clipped:false};
+ for(const image of ['data:image/jpeg;base64,AABB','data:image/jpeg;base64,AACC'])h.emit({type:'piece',piece:{image,hint}});h.emit({type:'done',count:2});
+ for(const item of h.c.batch)Object.assign(item,{localAnalyzed:true,category:'Tops',itemType:'T-shirt'});
+ const excluded=h.c.batch[0].id;vm.runInContext('outfitExcludedIds.add(batch[0].id)',h.c);h.c.renderOutfitCapture();
+ await h.el('addOutfitPieces').onclick();assert.equal(h.c.items.length,1);assert.equal(h.c.batch.length,1);assert.equal(h.c.batch[0].id,excluded);assert.equal(h.c.batch[0].requiresOwnershipConfirmation,true);
+});

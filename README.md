@@ -90,7 +90,7 @@ Runtime: https://github.com/huggingface/transformers.js (Apache-2.0).
 
 ## Outfit photo capture (experimental)
 
-Add clothes → One outfit photo → separate clothes accepts a new camera photo
+Add clothes → Whole outfit accepts a new camera photo
 or an existing image of one person. SegFormer B0 isolates visible clothing
 regions into separate white-background photos. FashionCLIP checks each cutout;
 uncertain types and attributes stay unknown. A complete strong mask may retain

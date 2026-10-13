@@ -48,3 +48,9 @@ and patent disclosure timing if a novel technical invention exists. Before
 subscriptions: business structure, insurance, terms, privacy, model/data licenses,
 cancellation rules, and an age/parental-consent approach. No filings or access
 changes have been made.
+
+## Capture and result navigation — completed October 13, 2026
+
+Single item / Whole outfit choices, compact per-photo statuses, collapsible
+extra attributes, and explicit outfit-piece selection are deployed for the pilot.
+The bottom navigation and separate styling/inspiration features are preserved.

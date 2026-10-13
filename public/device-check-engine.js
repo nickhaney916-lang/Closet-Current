@@ -5,7 +5,7 @@ const deviceCheckSteps=[
  ['cameraModes','Try camera controls','Take a manual photo, then try hands-free photos at 5 seconds. Tap Done and confirm capturing stops.'],
  ['recognition','Check the result','Confirm the type and color are correct. Unknown details should stay unknown.'],
  ['adjust','Adjust a result','Use Adjust to correct one garment, save it, and confirm the correction appears in My closet.'],
- ['outfitCapture','Separate an outfit photo','Use Add clothes → One outfit photo → separate clothes. Check each cutout; add only pieces you own. Unclear pieces should allow Adjust.'],
+ ['outfitCapture','Separate an outfit photo','Use Add clothes → Whole outfit. Check each cutout; add only pieces you own. Unclear pieces should allow Adjust.'],
  ['closet','Find it in My closet','Confirm the photo and corrected details are saved.'],
  ['outfit','Create an outfit','Choose Style → Everyday and check that it uses your own clothes.'],
  ['return','Close and reopen','Return to this same app and account. Check your clothes and outfit are still here.'],

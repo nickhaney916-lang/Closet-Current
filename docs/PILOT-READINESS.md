@@ -8,7 +8,7 @@ Do not share accounts, disable confirmation, or grant project-team access.
 
 ## Verification
 
-128 automated checks pass. Live Supabase project reports ACTIVE_HEALTHY;
+132 automated checks pass. Live Supabase project reports ACTIVE_HEALTHY;
 public auth health returns 200, signup is enabled, and confirmation is required.
 The live visitor form renders; empty-field validation revealed a misleading
 password prompt, now fixed to report the first invalid field. These checks do
@@ -19,7 +19,7 @@ not constitute a successful real inbox or authenticated phone test.
 Open the current GitHub Pages app, then More → Help & device check. Start the
 optional local recording. Mark each step Works or Needs help. Test login,
 manual capture, hands-free capture and stopping, recognition of three different
-garments, Adjust and save, outfit separation, My closet, styling with owned
+garments, Adjust and save, Whole outfit separation and selected-piece saving, My closet, styling with owned
 clothes, close/reopen persistence and backup export. Download a sanitized test
 report for problems; no report is automatically uploaded.
 
@@ -34,3 +34,14 @@ Connect a verified transactional email sender to project hlkgymugtfbirlpunsra.
 Check rate limits and real signup, newest confirmation email, resend and reset
 links with an address outside the project team. The default Supabase sender
 restricts recipients and cannot support this broader pilot reliably.
+
+## Streamlined pilot interface
+
+Add clothes now starts with two large choices: Single item and Whole outfit.
+Camera and hands-free controls belong to Single item; the outfit photo chooser
+has its own panel. Photo cards show a short status, category, and one Adjust
+action; additional attributes are available under More details. Ready outfit
+cutouts have selection checkboxes, and Add selected clothes saves only checked
+pieces. Deselected cutouts remain unfinished photos. Original navigation,
+Inspiration, Style my collection, backup, and device checks remain available.
+Authenticated physical-phone layout and native camera checks remain open.

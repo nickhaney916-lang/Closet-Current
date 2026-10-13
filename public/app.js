@@ -71,25 +71,32 @@ function renderRecognitionNotice(){
  const loading=recognitionState.phase==='loading',saveFailed=recognitionState.phase==='save-failed',failed=(recognitionState.phase==='failed'||saveFailed)&&batch.some(x=>!x.localAnalyzed),pending=localPending.size;
  notice.hidden=!loading&&!failed&&!pending;
  if(notice.hidden)return;
- $('recognitionLabel').textContent=failed?(saveFailed?'Couldn’t save this piece':'Photo scanner couldn’t start'):loading?(recognitionState.percent===null?'Getting the scanner ready…':recognitionState.percent>=100?'Finishing scanner setup…':'Downloading scanner · '+recognitionState.percent+'%'):'Scanning '+pending+' photo'+(pending===1?'':'s')+'…';
- $('recognitionHint').textContent=failed?(saveFailed?'Keep this page open. Check available device storage, then try again or tap Adjust.':'Your photos are kept. Try again, or tap Adjust on any photo.'):loading?'One download on this device. Your photos are kept while it prepares.':'Results appear below automatically.';
+ $('recognitionLabel').textContent=failed?(saveFailed?'Couldn’t save this piece':'Photo scanner couldn’t start'):loading?(recognitionState.percent===null?'Preparing scanner…':recognitionState.percent>=100?'Finishing setup…':'Downloading scanner · '+recognitionState.percent+'%'):'Checking '+pending+' photo'+(pending===1?'':'s')+'…';
+ $('recognitionHint').textContent=failed?(saveFailed?'Keep this page open. Check available device storage, then try again or tap Adjust.':'Your photos are kept. Try again, or tap Adjust on any photo.'):loading?'First use needs a download. Your photos are kept.':'Results appear below automatically.';
  $('retryRecognition').hidden=!failed;
  const progress=$('recognitionProgress');progress.hidden=!loading;
  if(loading){if(recognitionState.percent===null)progress.removeAttribute('value');else progress.value=recognitionState.percent;}
 }
 function renderPhotoResults(grid,results){
  grid.replaceChildren();
+ if(!results.length){const box=node('div',null,'empty');box.append(node('h3','Your photos appear here'),node('p','Take a photo to add your first piece.'));grid.append(box);return;}
  for(const item of results){
-  const card=node('article',null,'card'),image=node('img');image.src=item.image;image.alt=item.name||'Clothing photo';
-  const body=node('div',null,'card-body'),pending=localPending.has(item.id),saved=items.some(x=>x.id===item.id);
-  const title=pending?(item.category!=='Uncategorized'?(item.itemType||'Garment'):(recognitionState.activeId===item.id&&localReady?'Reading photo…':'Waiting to scan')):saved?(item.name||item.itemType):item.saveFailed?'Not saved':item.scanFailed?'Scan unavailable':item.possibleDuplicate?'Possible duplicate':item.localAnalyzed&&item.category!=='Uncategorized'?(item.name||item.itemType||'Identified piece'):'Not recognized';
-  body.append(node('h3',title));
-  if(pending&&item.category!=='Uncategorized')body.append(node('p',item.category+' · finishing details…','fine'));
-  else if(pending)body.append(node('p',recognitionState.activeId===item.id&&localReady?'Checking this piece.':'Your photo is kept.','fine'));
-  else if(item.category!=='Uncategorized')body.append(node('p',[item.category,item.itemType,item.color,item.pattern,item.sleeveLength,item.fit,...(item.seasons||[])].filter(x=>x&&x!=='Unknown'&&x!=='Not applicable').join(' · ')));
-  else body.append(node('p',item.scanFailed?'Try the scanner again, or fill in the details.':'Try a clearer photo or fill in the details.','fine'));
-  if(!pending&&!saved&&item.category!=='Uncategorized')body.append(node('p',item.possibleDuplicate?'Check whether this piece is already in your closet.':item.requiresOwnershipConfirmation?'Ready to add · only save pieces you own.':'Not saved yet · use Adjust to finish.','fine'));
-  {const adjust=node('button','Adjust','secondary');adjust.type='button';adjust.onclick=()=>adjustPhoto(item);body.append(adjust);}
+  const card=node('article',null,'card photo-result'),image=node('img');image.src=item.image;image.alt=item.name||'Clothing photo';
+  const body=node('div',null,'card-body'),pending=localPending.has(item.id),saved=items.some(x=>x.id===item.id),known=item.category!=='Uncategorized';
+  const title=item.name||(known&&item.itemType&&item.itemType!=='Unknown'?item.itemType:known?item.category:'Clothing photo');
+  const state=pending?'checking':saved?'saved':item.saveFailed||item.scanFailed?'error':item.possibleDuplicate?'review':known&&item.localAnalyzed&&item.requiresOwnershipConfirmation?'ready':'review';
+  const label=pending?(recognitionState.activeId===item.id&&localReady?'Checking…':'Waiting…'):saved?'Saved':item.saveFailed?'Not saved':item.scanFailed?'Scanner unavailable':item.possibleDuplicate?'Check duplicate':state==='ready'?'Ready to add':known?'Needs review':'Needs a clearer photo';
+  body.append(node('span',label,'photo-status '+state),node('h3',title));
+  if(known)body.append(node('p',[item.category,item.itemType,item.color].filter(x=>x&&x!=='Unknown').join(' · '),'photo-category'));
+  else if(!pending)body.append(node('p',item.scanFailed?'Try again, or add the details with Adjust.':'Retake this item, or add its details with Adjust.','fine'));
+  const extra=[item.pattern,item.sleeveLength,item.fit,...(item.seasons||[])].filter(x=>x&&x!=='Unknown'&&x!=='Not applicable');
+  if(extra.length){const details=node('details',null,'photo-extra');details.append(node('summary','More details'),node('p',extra.join(' · ')));body.append(details);}
+  if(!pending&&!saved&&item.possibleDuplicate)body.append(node('p','Compare with your closet before adding.','fine'));
+  if(typeof outfitPieceSelectable==='function'&&outfitPieceSelectable(item)){
+   const select=node('input');select.type='checkbox';select.checked=!outfitExcludedIds.has(item.id);select.onchange=()=>{if(select.checked)outfitExcludedIds.delete(item.id);else outfitExcludedIds.add(item.id);renderOutfitCapture();};
+   const label=node('label',null,'outfit-piece-select');label.append(select,node('span','Add to my closet'));body.append(label);
+  }
+  const adjust=node('button','Adjust','secondary');adjust.type='button';adjust.onclick=()=>adjustPhoto(item);body.append(adjust);
   card.append(image,body);grid.append(card);
  }
 }
@@ -133,14 +140,14 @@ function stopCamera(){
  $('placeholder').hidden=false;$('cameraChoices').hidden=false;$('cameraActions').hidden=true;
  controls(false);$('captureState').textContent='Camera stopped · your photos are ready to review';
 }
-function controls(disabled){for(const id of ['start','startAuto','upload','interval','clothingPhotos','outfitCamera','outfitUpload','outfitRetry'])$(id).disabled=disabled;}
+function controls(disabled){for(const id of ['start','startAuto','upload','interval','clothingPhotos','outfitCamera','outfitUpload','outfitRetry','captureSingle','captureOutfit'])$(id).disabled=disabled;}
 function finishScan(){
  const wasManual=cameraMode==='manual';
  if(!wasManual&&stream&&session===0&&video.readyState>=2&&video.videoWidth){try{candidate(snap());}catch{}}
  stopCamera();
  if(batch.length){message('');switchView('review');}
  else if(session>0){message('');switchView('review');}
- else{message(wasManual?'No photos taken yet. Open camera and tap Take photo when a garment is ready.':'No camera frames were received. Try Open camera or choose a saved closet video.');$('captureState').textContent='No photos captured · choose a camera option to try again';}
+ else{message(wasManual?'No photos taken yet. Take photos and tap the shutter when a garment is ready.':'No camera frames were received. Try Take photos or choose a saved closet video.');$('captureState').textContent='No photos captured · choose a camera option to try again';}
 }
 function captureTick(now=Date.now()){
  if(!stream||cameraMode!=='auto')return;
