@@ -12,6 +12,16 @@ const context={self,URL,Response,caches:{open:async()=>cache,keys:async()=>[],de
 vm.createContext(context);vm.runInContext(source,context);
 let job;events.install({waitUntil(promise){job=promise;}});await job;
 assert.ok(saved.has('https://example.com/Closet-Current/index.html'));
+const html=fs.readFileSync('dist/index.html','utf8');
+const scriptURLs=[...html.matchAll(/src="([^"]+\.js\?v=[a-f0-9]+)"/g)].map(match=>match[1]);
+assert.ok(scriptURLs.some(url=>url.startsWith('auth.js?v=')));
+for(const url of scriptURLs){
+ const absolute=new URL(url,self.registration.scope).href;
+ assert.ok(saved.has(absolute),'Versioned script is available offline: '+url);
+ let cached;
+ events.fetch({request:{method:'GET',url:absolute},respondWith(promise){cached=promise;}});
+ assert.equal((await cached).status,200);
+}
 let result;events.fetch({request:{method:'GET',url:'https://example.com/Closet-Current/',mode:'navigate'},respondWith(promise){result=promise;}});assert.equal((await result).status,200);
 let intercepted=false;
 events.fetch({request:{method:'GET',url:'https://example.com/Closet-Current/api/private'},respondWith(){intercepted=true;}});assert.equal(intercepted,false);
