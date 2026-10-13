@@ -1,5 +1,5 @@
 import {pipeline,env} from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1/dist/transformers.min.js';
-import {localCandidates,clothingChoices,strongMatch,sleeveChoices} from './local-catalog.mjs';
+const {localCandidates,clothingChoices,strongMatch,sleeveChoices,detailMatch}=await import('./local-catalog.mjs'+new URL(import.meta.url).search);
 env.allowLocalModels=false;
 env.useBrowserCache=true;
 env.backends.onnx.wasm.numThreads=1;
@@ -20,10 +20,19 @@ self.onmessage=event=>{const request=event.data;chain=chain.then(async()=>{
   const results=await model(request.image,localCandidates.map(c=>c.label),{hypothesis_template:'A photo of {}.'});
   const choices=clothingChoices(results);
   const first=choices[0];
-  if(first&&['Tops','Dresses','Outerwear'].includes(first.category)&&first.sleeveLength==='Unknown'){
+  const strong=strongMatch(choices),details={};
+  if(strong&&['Tops','Dresses','Outerwear'].includes(first.category)&&first.sleeveLength==='Unknown'){
    const sleeves=sleeveChoices(first.itemType),ranked=await model(request.image,sleeves.map(x=>x.label),{hypothesis_template:'A photo of {}.'});
-   if(ranked[0]?.score>=.6&&ranked[0].score-(ranked[1]?.score||0)>=.2)first.sleeveLength=sleeves.find(x=>x.label===ranked[0].label)?.value||'Unknown';
+   first.sleeveLength=detailMatch(ranked,sleeves)||'Unknown';
   }
-  self.postMessage({type:'result',id:request.id,choices,strong:strongMatch(choices)});
+  if(strong){
+   for(const [key,values]of Object.entries({color:['Black','White','Gray','Beige','Brown','Blue','Green','Red','Pink','Purple','Yellow','Orange','Multicolor'],pattern:['Solid','Striped','Floral','Plaid','Checked','Polka dot','Animal print','Graphic']})){
+    const options=values.map(value=>({value,label:'a '+value.toLowerCase()+' '+first.itemType.toLowerCase()}));
+    options.push({value:'Unknown',label:'a garment with an unclear '+key});
+    const ranked=await model(request.image,options.map(x=>x.label),{hypothesis_template:'A photo of {}.'});
+    const value=detailMatch(ranked,options);if(value&&value!=='Unknown')details[key]=value;
+   }
+  }
+  self.postMessage({type:'result',id:request.id,choices,strong,details});
  }catch{self.postMessage({type:'error',id:request.id,text:'Local recognition could not load or run on this device. Try Chrome with Wi-Fi, or use the category fields.'});}
 });};

@@ -1,8 +1,8 @@
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict'),{randomUUID}=require('node:crypto');
-const ctx={crypto:{randomUUID},busy:false,localReady:false,session:0,batch:[],view:'scan',stopCamera(){},controls(){},message(t){ctx.messageText=t;},switchView(v){ctx.view=v;},persistDraft(){},$:()=>({}),photoToJPEG:async file=>{if(file.name==='bad.heic')throw Error('decode');return 'data:image/jpeg;base64,'+file.name;}};
+const ctx={crypto:{randomUUID},busy:false,localReady:false,session:0,items:[],batch:[],queueAutomatic(){},view:'scan',stopCamera(){},controls(){},message(t){ctx.messageText=t;},switchView(v){ctx.view=v;},persistDraft(){},$:()=>({}),photoToJPEG:async file=>{if(file.name==='bad.heic')throw Error('decode');return 'data:image/jpeg;base64,'+file.name;}};
 vm.createContext(ctx);vm.runInContext(fs.readFileSync('public/photo-import.js','utf8').split('async function readPhotoBatch')[1].replace(/^\(files/, 'async function readPhotoBatch(files'),ctx);
 const source=fs.readFileSync('public/app.js','utf8');
-vm.runInContext(source.slice(source.indexOf('function candidate('),source.indexOf('function stopCamera(')),ctx);
+vm.runInContext(source.slice(source.indexOf('function candidate('),source.indexOf('function queueAutomatic(')),ctx);
 vm.runInContext(source.slice(source.indexOf('async function importClothingPhotos('),source.indexOf("$('clothingPhotos').onchange")),ctx);
 (async()=>{
  await ctx.importClothingPhotos([{name:'one.jpg',type:'image/jpeg',size:100},{name:'two.png',type:'image/png',size:200}]);

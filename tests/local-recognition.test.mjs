@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';import fs from 'node:fs';import vm from 'node:vm';
-import {localCandidates,clothingChoices,strongMatch} from '../public/local-catalog.mjs';
+import {localCandidates,clothingChoices,strongMatch,detailMatch} from '../public/local-catalog.mjs';
 const ctx={};vm.createContext(ctx);vm.runInContext(fs.readFileSync('public/taxonomy.js','utf8')+'\nglobalThis.schema=clothingSchema;',ctx);
 for(const candidate of localCandidates){if(candidate.category==='Uncategorized')continue;assert.ok(ctx.schema.types[candidate.category].includes(candidate.itemType));assert.ok(ctx.schema.sleeve.includes(candidate.sleeveLength));}
 assert.equal(new Set(localCandidates.map(x=>x.label)).size,localCandidates.length);
@@ -8,6 +8,9 @@ const choices=clothingChoices([{label:second.label,score:.15},{label:top.label,s
 assert.equal(choices[0].itemType,'T-shirt');assert.equal(choices[0].sleeveLength,'Unknown');assert.equal(strongMatch(choices),true);
 assert.equal(strongMatch([{...top,score:.30},{...second,score:.28}]),false);
 assert.equal(strongMatch([{category:'Uncategorized',score:.9}]),false);
+assert.equal(strongMatch([{...top,score:.3},{...second,score:.1}]),false,'Weak category guesses are never applied automatically');
+assert.equal(detailMatch([{label:'blue',score:.5},{label:'red',score:.4}],[{label:'blue',value:'Blue'}]),null);
+assert.equal(detailMatch([{label:'blue',score:.8},{label:'red',score:.1}],[{label:'blue',value:'Blue'}]),'Blue');
 const app=fs.readFileSync('public/app.js','utf8');
 const testContext={normalizeClothing:ctx.normalizeClothing};vm.createContext(testContext);vm.runInContext(app.slice(app.indexOf('function applyLocalChoice'),app.indexOf('async function recognizeItem')),testContext);
 const item={name:'My sweater',category:'Tops',itemType:'Sweater',sleeveLength:'Long sleeve',seasons:['Winter']};

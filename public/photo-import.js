@@ -15,7 +15,7 @@ async function readPhotoBatch(files,decode,onPhoto){
  for(const file of files){
   if(file.size>10*1024*1024){errors.push(file.name+': larger than 10 MB');continue;}
   if(!file.type.startsWith('image/')&&!/\.(jpe?g|png|webp|avif|heic|heif)$/i.test(file.name)){errors.push(file.name+': not an image');continue;}
-  try{const image=await decode(file);onPhoto(image);added++;}catch{errors.push(file.name+': could not open; try JPEG or PNG');}
+  try{const image=await decode(file);if(await onPhoto(image)!==false)added++;}catch{errors.push(file.name+': could not open; try JPEG or PNG');}
  }
  return {added,errors};
 }
