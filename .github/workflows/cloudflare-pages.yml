@@ -50,7 +50,8 @@ jobs:
             if (!created.ok || !data.success) throw new Error('Cloudflare project creation failed (HTTP ' + created.status + '; codes ' + (data.errors || []).map(e => e.code).join(',') + ').');
             project = data.result;
           } else {
-            throw new Error('Cloudflare project lookup failed (HTTP ' + response.status + '). Check the token and account ID.');
+            const failure = await response.json();
+            throw new Error('Cloudflare project lookup failed (HTTP ' + response.status + '; codes ' + (failure.errors || []).map(e => e.code).join(',') + ').');
           }
           if (project.production_branch !== 'main') throw new Error('Existing closet-current project uses a different production branch; review it before deploying.');
           console.log('Cloudflare Pages project ready.');
