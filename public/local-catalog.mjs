@@ -44,3 +44,15 @@ export function groupedGarmentDetails(results,groups){
  }
  return details;
 }
+// A high score in the combined quantized batch is not enough: accept a detail
+// only when an independent field-only comparison agrees at the same threshold.
+export function verifiedGarmentDetails(proposed,checks,groups){
+ const details={};
+ for(const [key,value]of Object.entries(proposed)){
+  if(!groups[key]||!Array.isArray(checks[key]))continue;
+  const checked=groupedGarmentDetails(checks[key],{[key]:groups[key]});
+  if(checked[key]===value)details[key]=value;
+ }
+ return details;
+}
+export function detailPhotoUsable(width,height){return Number.isFinite(width)&&Number.isFinite(height)&&Math.min(width,height)>=224;}

@@ -2,11 +2,12 @@ import {scannerErrorCode} from './scanner-errors.mjs';
 let scannerStage='idle';
 // Register the message handler before downloading dependencies, so import
 // failures become explicit job errors instead of an unexplained setup wait.
-let classifierPromise;
+let classifierPromise,RawImageClass;
 async function load(){
  if(!classifierPromise)classifierPromise=(async()=>{
   scannerStage='runtime_import';self.postMessage({type:'progress',stage:'runtime',phase:scannerStage});
-  const {pipeline,env}=await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1/dist/transformers.min.js');
+  const {pipeline,env,RawImage}=await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1/dist/transformers.min.js');
+  RawImageClass=RawImage;
   env.allowLocalModels=false;env.useBrowserCache=true;
   env.backends.onnx.wasm.numThreads=1;env.backends.onnx.wasm.proxy=false;
   const model=await pipeline('zero-shot-image-classification','ff13/fashion-clip',{device:'wasm',dtype:'q8',progress_callback:event=>{
@@ -22,14 +23,18 @@ self.onmessage=event=>{const request=event.data;chain=chain.then(async()=>{
   const model=await load();
   if(request.type==='load'){self.postMessage({type:'ready',id:request.id});return;}
   if(request.type!=='classify'||typeof request.image!=='string'||!request.image.startsWith('data:image/jpeg;base64,'))throw Error('Invalid captured image.');
-  scannerStage='catalog_import';const {localCandidates,clothingChoices,strongMatch,garmentDetailGroups,groupedGarmentDetails}=await import('./local-catalog.mjs'+new URL(import.meta.url).search);
-  scannerStage='identify';const results=await model(request.image,localCandidates.map(c=>c.label),{hypothesis_template:'A photo of {}.'});
+  scannerStage='catalog_import';const {localCandidates,clothingChoices,strongMatch,garmentDetailGroups,groupedGarmentDetails,verifiedGarmentDetails,detailPhotoUsable}=await import('./local-catalog.mjs'+new URL(import.meta.url).search);
+  scannerStage='identify';const image=await RawImageClass.read(request.image),results=await model(image,localCandidates.map(c=>c.label),{hypothesis_template:'A photo of {}.'});
   const choices=clothingChoices(results),first=choices[0],strong=strongMatch(choices);let details={};
   if(strong){
    self.postMessage({type:'identified',id:request.id,choice:first});
-   const groups=garmentDetailGroups(first),labels=Object.values(groups).flat().map(x=>x.label);
-   scannerStage='details';const ranked=await model(request.image,labels,{hypothesis_template:'A photo of {}.'});
-   details=groupedGarmentDetails(ranked,groups);
+   if(detailPhotoUsable(image.width,image.height)){
+    const groups=garmentDetailGroups(first),labels=Object.values(groups).flat().map(x=>x.label);
+    scannerStage='details';const ranked=await model(image,labels,{hypothesis_template:'A photo of {}.'});
+    const proposed=groupedGarmentDetails(ranked,groups),checks={};
+    for(const key of Object.keys(proposed))checks[key]=await model(image,groups[key].map(x=>x.label),{hypothesis_template:'A photo of {}.'});
+    details=verifiedGarmentDetails(proposed,checks,groups);
+   }
    if(details.sleeveLength)first.sleeveLength=details.sleeveLength;
   }
   self.postMessage({type:'result',id:request.id,choices,strong,details});

@@ -27,3 +27,8 @@ test('queued photos stay compact and offer Adjust during model setup',()=>{
 test('a scanner failure is distinguished from a garment that was not recognized',()=>{
  const {c,grid}=setup();c.renderPhotoResults(grid,[{id:'failed',category:'Uncategorized',scanFailed:true}]);const nodes=descendants(grid);assert.ok(nodes.some(x=>x.text==='Scan unavailable'));assert.ok(!nodes.some(x=>x.text==='Not recognized'));
 });
+
+test('storage failure shows Not saved and keeps recognized labels with one Adjust action',()=>{
+ const {c,grid}=setup();c.renderPhotoResults(grid,[{id:'unsaved',category:'Tops',itemType:'Polo',color:'Red',saveFailed:true,scanFailed:true}]);
+ const nodes=descendants(grid);assert.ok(nodes.some(x=>x.text==='Not saved'));assert.ok(nodes.some(x=>x.text==='Tops · Polo · Red'));assert.equal(nodes.filter(x=>x.tag==='button').length,1);
+});

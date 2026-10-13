@@ -1,0 +1,278 @@
+{
+  "date": "2026-10-13",
+  "runtime": "Node CPU, q8; not browser WASM",
+  "source": "https://github.com/patrickjohncyh/fashion-clip/tree/master/images",
+  "results": [
+    {
+      "file": "16198646.jpg",
+      "variant": "original",
+      "expected": {
+        "category": "Tops",
+        "itemType": "Polo",
+        "color": "Red"
+      },
+      "accepted": true,
+      "predicted": {
+        "label": "a polo shirt",
+        "category": "Tops",
+        "itemType": "Polo",
+        "sleeveLength": "Unknown",
+        "score": 0.997207760810852
+      },
+      "details": {},
+      "categoryCorrect": true,
+      "typeCorrect": true,
+      "colorCorrect": true,
+      "elapsedMs": 238
+    },
+    {
+      "file": "16198646.jpg",
+      "variant": "dim",
+      "expected": {
+        "category": "Tops",
+        "itemType": "Polo",
+        "color": "Red"
+      },
+      "accepted": true,
+      "predicted": {
+        "label": "a polo shirt",
+        "category": "Tops",
+        "itemType": "Polo",
+        "sleeveLength": "Unknown",
+        "score": 0.9930825233459473
+      },
+      "details": {},
+      "categoryCorrect": true,
+      "typeCorrect": true,
+      "colorCorrect": true,
+      "elapsedMs": 256
+    },
+    {
+      "file": "16198646.jpg",
+      "variant": "small",
+      "expected": {
+        "category": "Tops",
+        "itemType": "Polo",
+        "color": "Red"
+      },
+      "accepted": true,
+      "predicted": {
+        "label": "a polo shirt",
+        "category": "Tops",
+        "itemType": "Polo",
+        "sleeveLength": "Unknown",
+        "score": 0.9870826005935669
+      },
+      "details": {},
+      "categoryCorrect": true,
+      "typeCorrect": true,
+      "colorCorrect": true,
+      "elapsedMs": 87
+    },
+    {
+      "file": "16790484.jpg",
+      "variant": "original",
+      "expected": {
+        "category": "Shoes",
+        "itemType": "Sneakers",
+        "color": null
+      },
+      "accepted": true,
+      "predicted": {
+        "label": "sneakers",
+        "category": "Shoes",
+        "itemType": "Sneakers",
+        "sleeveLength": "Not applicable",
+        "score": 0.6989879608154297
+      },
+      "details": {
+        "color": "Multicolor"
+      },
+      "categoryCorrect": true,
+      "typeCorrect": true,
+      "colorCorrect": true,
+      "elapsedMs": 255
+    },
+    {
+      "file": "16790484.jpg",
+      "variant": "dim",
+      "expected": {
+        "category": "Shoes",
+        "itemType": "Sneakers",
+        "color": null
+      },
+      "accepted": true,
+      "predicted": {
+        "label": "sneakers",
+        "category": "Shoes",
+        "itemType": "Sneakers",
+        "sleeveLength": "Not applicable",
+        "score": 0.6494268178939819
+      },
+      "details": {
+        "color": "Multicolor",
+        "pattern": "Graphic"
+      },
+      "categoryCorrect": true,
+      "typeCorrect": true,
+      "colorCorrect": true,
+      "elapsedMs": 374
+    },
+    {
+      "file": "16790484.jpg",
+      "variant": "small",
+      "expected": {
+        "category": "Shoes",
+        "itemType": "Sneakers",
+        "color": null
+      },
+      "accepted": true,
+      "predicted": {
+        "label": "sneakers",
+        "category": "Shoes",
+        "itemType": "Sneakers",
+        "sleeveLength": "Not applicable",
+        "score": 0.7088859677314758
+      },
+      "details": {},
+      "categoryCorrect": true,
+      "typeCorrect": true,
+      "colorCorrect": true,
+      "elapsedMs": 96
+    },
+    {
+      "file": "16867424.jpg",
+      "variant": "original",
+      "expected": {
+        "category": "Tops",
+        "itemType": "Polo",
+        "color": "Red"
+      },
+      "accepted": true,
+      "predicted": {
+        "label": "a polo shirt",
+        "category": "Tops",
+        "itemType": "Polo",
+        "sleeveLength": "Unknown",
+        "score": 0.9979991912841797
+      },
+      "details": {},
+      "categoryCorrect": true,
+      "typeCorrect": true,
+      "colorCorrect": true,
+      "elapsedMs": 289
+    },
+    {
+      "file": "16867424.jpg",
+      "variant": "dim",
+      "expected": {
+        "category": "Tops",
+        "itemType": "Polo",
+        "color": "Red"
+      },
+      "accepted": true,
+      "predicted": {
+        "label": "a polo shirt",
+        "category": "Tops",
+        "itemType": "Polo",
+        "sleeveLength": "Unknown",
+        "score": 0.9970712661743164
+      },
+      "details": {
+        "color": "Red"
+      },
+      "categoryCorrect": true,
+      "typeCorrect": true,
+      "colorCorrect": true,
+      "elapsedMs": 418
+    },
+    {
+      "file": "16867424.jpg",
+      "variant": "small",
+      "expected": {
+        "category": "Tops",
+        "itemType": "Polo",
+        "color": "Red"
+      },
+      "accepted": true,
+      "predicted": {
+        "label": "a polo shirt",
+        "category": "Tops",
+        "itemType": "Polo",
+        "sleeveLength": "Unknown",
+        "score": 0.9975007176399231
+      },
+      "details": {},
+      "categoryCorrect": true,
+      "typeCorrect": true,
+      "colorCorrect": true,
+      "elapsedMs": 122
+    },
+    {
+      "file": "nike_dress.jpg",
+      "variant": "original",
+      "expected": {
+        "category": "Dresses",
+        "itemType": "Casual dress",
+        "color": "Black"
+      },
+      "accepted": false,
+      "predicted": {
+        "label": "a casual dress",
+        "category": "Dresses",
+        "itemType": "Casual dress",
+        "sleeveLength": "Unknown",
+        "score": 0.3929600715637207
+      },
+      "details": {},
+      "categoryCorrect": true,
+      "typeCorrect": true,
+      "colorCorrect": true,
+      "elapsedMs": 134
+    },
+    {
+      "file": "nike_dress.jpg",
+      "variant": "dim",
+      "expected": {
+        "category": "Dresses",
+        "itemType": "Casual dress",
+        "color": "Black"
+      },
+      "accepted": false,
+      "predicted": {
+        "label": "a casual dress",
+        "category": "Dresses",
+        "itemType": "Casual dress",
+        "sleeveLength": "Unknown",
+        "score": 0.3677254319190979
+      },
+      "details": {},
+      "categoryCorrect": true,
+      "typeCorrect": true,
+      "colorCorrect": true,
+      "elapsedMs": 114
+    },
+    {
+      "file": "nike_dress.jpg",
+      "variant": "small",
+      "expected": {
+        "category": "Dresses",
+        "itemType": "Casual dress",
+        "color": "Black"
+      },
+      "accepted": false,
+      "predicted": {
+        "label": "a casual dress",
+        "category": "Dresses",
+        "itemType": "Casual dress",
+        "sleeveLength": "Unknown",
+        "score": 0.28949761390686035
+      },
+      "details": {},
+      "categoryCorrect": true,
+      "typeCorrect": true,
+      "colorCorrect": true,
+      "elapsedMs": 95
+    }
+  ]
+}

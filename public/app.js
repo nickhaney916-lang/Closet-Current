@@ -68,11 +68,11 @@ function adjustPhoto(item){
 }
 function renderRecognitionNotice(){
  const notice=$('recognitionNotice');if(!notice)return;
- const loading=recognitionState.phase==='loading',failed=recognitionState.phase==='failed'&&batch.some(x=>!x.localAnalyzed),pending=localPending.size;
+ const loading=recognitionState.phase==='loading',saveFailed=recognitionState.phase==='save-failed',failed=(recognitionState.phase==='failed'||saveFailed)&&batch.some(x=>!x.localAnalyzed),pending=localPending.size;
  notice.hidden=!loading&&!failed&&!pending;
  if(notice.hidden)return;
- $('recognitionLabel').textContent=failed?'Photo scanner couldn’t start':loading?(recognitionState.percent===null?'Getting the scanner ready…':recognitionState.percent>=100?'Finishing scanner setup…':'Downloading scanner · '+recognitionState.percent+'%'):'Scanning '+pending+' photo'+(pending===1?'':'s')+'…';
- $('recognitionHint').textContent=failed?'Your photos are kept. Try again, or tap Adjust on any photo.':loading?'One download on this device. Your photos are kept while it prepares.':'Results appear below automatically.';
+ $('recognitionLabel').textContent=failed?(saveFailed?'Couldn’t save this piece':'Photo scanner couldn’t start'):loading?(recognitionState.percent===null?'Getting the scanner ready…':recognitionState.percent>=100?'Finishing scanner setup…':'Downloading scanner · '+recognitionState.percent+'%'):'Scanning '+pending+' photo'+(pending===1?'':'s')+'…';
+ $('recognitionHint').textContent=failed?(saveFailed?'Keep this page open. Check available device storage, then try again or tap Adjust.':'Your photos are kept. Try again, or tap Adjust on any photo.'):loading?'One download on this device. Your photos are kept while it prepares.':'Results appear below automatically.';
  $('retryRecognition').hidden=!failed;
  const progress=$('recognitionProgress');progress.hidden=!loading;
  if(loading){if(recognitionState.percent===null)progress.removeAttribute('value');else progress.value=recognitionState.percent;}
@@ -82,7 +82,7 @@ function renderPhotoResults(grid,results){
  for(const item of results){
   const card=node('article',null,'card'),image=node('img');image.src=item.image;image.alt=item.name||'Clothing photo';
   const body=node('div',null,'card-body'),pending=localPending.has(item.id),saved=items.some(x=>x.id===item.id);
-  const title=pending?(item.category!=='Uncategorized'?(item.itemType||'Garment'):(recognitionState.activeId===item.id&&localReady?'Reading photo…':'Waiting to scan')):saved?(item.name||item.itemType):item.scanFailed?'Scan unavailable':item.possibleDuplicate?'Possible duplicate':'Not recognized';
+  const title=pending?(item.category!=='Uncategorized'?(item.itemType||'Garment'):(recognitionState.activeId===item.id&&localReady?'Reading photo…':'Waiting to scan')):saved?(item.name||item.itemType):item.saveFailed?'Not saved':item.scanFailed?'Scan unavailable':item.possibleDuplicate?'Possible duplicate':'Not recognized';
   body.append(node('h3',title));
   if(pending&&item.category!=='Uncategorized')body.append(node('p',item.category+' · finishing details…','fine'));
   else if(pending)body.append(node('p',recognitionState.activeId===item.id&&localReady?'Checking this piece.':'Your photo is kept.','fine'));
@@ -273,7 +273,7 @@ async function saveIndexed(item){
  batch=batch.filter(x=>x.id!==item.id);persistDraft();return true;
 }
 async function recognizeItem(item){
- const scanStarted=Date.now();recognitionState.activeId=item.id;item.scanFailed=false;item.localStatus='Checking photo quality…';render();
+ const scanStarted=Date.now();let savingIndexed=false;recognitionState.activeId=item.id;item.scanFailed=false;item.saveFailed=false;item.localStatus='Checking photo quality…';render();
  try{
   const quality=await checkPhoto(item.image);
   if(!batch.some(x=>x.id===item.id))return;
@@ -296,11 +296,14 @@ async function recognizeItem(item){
   item.name=[item.color,item.itemType].filter(x=>x&&x!=='Unknown').join(' ');
   if(item.possibleDuplicate){if(typeof recordDeviceEvent==='function')recordDeviceEvent('duplicate_review');item.localStatus='Possible duplicate: compare this photo with your closet before saving.';return true;}
   item.localStatus='Recognized. Saving to your closet…';
+  savingIndexed=true;
   if(await saveIndexed(item))if(typeof recordDeviceEvent==='function')recordDeviceEvent('recognized_saved',{durationMs:Date.now()-scanStarted});
+  if(recognitionState.phase==='save-failed')recognitionState.phase='ready';
   return true;
  }catch(error){
-  item.scanFailed=true;if(!item.visualSignature&&typeof recordDeviceEvent==='function')recordDeviceEvent('photo_check_failed',{stage:'photo_check',durationMs:Date.now()-scanStarted});if(recognitionUnavailable)recognitionState.phase='failed';
-  if(!item.visualSignature)item.localStatus='Could not read this photo. Retake it or adjust details.';
+  item.localAnalyzed=false;item.scanFailed=true;item.saveFailed=savingIndexed;if(!item.visualSignature&&typeof recordDeviceEvent==='function')recordDeviceEvent('photo_check_failed',{stage:'photo_check',durationMs:Date.now()-scanStarted});if(recognitionUnavailable)recognitionState.phase='failed';
+  if(savingIndexed){recognitionState.phase='save-failed';item.localStatus='Could not save this piece. Keep this page open, check device storage, then try again or use Adjust.';}
+  else if(!item.visualSignature)item.localStatus='Could not read this photo. Retake it or adjust details.';
   else{item.localStatus=error.message||'Automatic indexing stopped. Retry or adjust details.';}
   $('localStatus').textContent=item.localStatus;return false;
  }finally{localPending.delete(item.id);if(recognitionState.activeId===item.id)recognitionState.activeId=null;persistDraft();render();}

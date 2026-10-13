@@ -26,4 +26,8 @@ assert.equal(grouped.color,'Black');assert.equal(grouped.pattern,'Solid');assert
 assert.deepEqual(groupedGarmentDetails([],groups),{});
 assert.deepEqual(groupedGarmentDetails([{label:groups.color[0].label,score:.1},{label:groups.color[1].label,score:.099}],{color:groups.color}),{});
 const worker=fs.readFileSync('public/local-worker.mjs','utf8');
-assert.equal((worker.match(/await model\(/g)||[]).length,2,'Only two image model passes per recognized garment');
+assert.ok(worker.includes('verifiedGarmentDetails(proposed,checks,groups)'),'Combined details must be independently checked before returning');
+const {verifiedGarmentDetails,detailPhotoUsable}=await import('../public/local-catalog.mjs');
+assert.deepEqual(verifiedGarmentDetails({color:'Black'}, {color:[{label:groups.color[1].label,score:.95},{label:groups.color[0].label,score:.05}]},groups),{});
+assert.deepEqual(verifiedGarmentDetails({color:'Black'}, {color:[{label:groups.color[0].label,score:.95},{label:groups.color[1].label,score:.05}]},groups),{color:'Black'});
+assert.equal(detailPhotoUsable(112,200),false);assert.equal(detailPhotoUsable(900,224),true);assert.equal(detailPhotoUsable(NaN,900),false);

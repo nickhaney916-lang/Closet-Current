@@ -23,4 +23,5 @@ test('one setup banner displays progress and exposes a retry after failure',()=>
  const c={$:get,batch:[{id:'one'},{id:'two'}],localPending:new Set(['one','two']),recognitionState:{phase:'loading',percent:42}};vm.createContext(c);vm.runInContext(source.slice(source.indexOf('function renderRecognitionNotice('),source.indexOf('function renderPhotoResults(')),c);
  c.renderRecognitionNotice();assert.equal(get('recognitionLabel').textContent,'Downloading scanner · 42%');assert.equal(get('recognitionProgress').value,42);assert.equal(get('retryRecognition').hidden,true);
  c.recognitionState.phase='failed';c.localPending.clear();c.renderRecognitionNotice();assert.equal(get('retryRecognition').hidden,false);assert.match(get('recognitionHint').textContent,/photos are kept/);
+ c.recognitionState.phase='save-failed';c.renderRecognitionNotice();assert.equal(get('recognitionLabel').textContent,'Couldn’t save this piece');assert.match(get('recognitionHint').textContent,/Keep this page open/);assert.equal(get('retryRecognition').hidden,false);
 });

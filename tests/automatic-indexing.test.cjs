@@ -50,3 +50,45 @@ test('photo checks reject uniform frames and preserve visible structure',()=>{
  const patterned=Array.from({length:256},(_,i)=>[i%2?0:255,100,100,255]).flat();assert.equal(c.photoQuality(patterned).blank,false);
  assert.equal(c.similarPhotos([10,20,30],[10,21,30]),true);assert.equal(c.similarPhotos([10,20,30],[200,200,200]),false);
 });
+
+test('a failed closet write remains retryable without losing the photo',async()=>{
+ const {c}=setup();const good=c.db.transaction;let fail=true;
+ c.db.transaction=()=>{if(!fail)return good();const tx={objectStore:()=>({put(){}}),error:Error('Storage write failed')};setImmediate(()=>tx.onabort?.());return tx;};
+ c.candidate('one');await done(c);
+ assert.equal(c.items.length,0);assert.equal(c.batch.length,1);assert.equal(c.batch[0].scanFailed,true);
+ fail=false;await c.recognizeBatch();await done(c);
+ assert.equal(c.items.length,1);assert.equal(c.batch.length,0);
+});
+
+test('100 simulated captures index every supported garment family and stay searchable',async()=>{
+ const {localCandidates}=await import('../public/local-catalog.mjs');
+ const garments=localCandidates.filter(x=>x.category!=='Uncategorized');
+ const {c,stored}=setup({quality:async image=>({blank:false,signature:[Number(image.slice(6)),20,30],aspect:1}),request:async(type,image)=>({strong:true,choices:[garments[Number(image.slice(6))%garments.length]],details:{color:Number(image.slice(6))%2?'Blue':'Black',pattern:'Solid'}})});
+ for(let group=0;group<5;group++){
+  for(let i=group*20;i<group*20+20;i++)c.candidate('photo-'+i);
+  for(let spin=0;spin<300&&(c.automaticRunning||c.localPending.size);spin++)await new Promise(setImmediate);
+  assert.equal(c.automaticRunning,false);assert.equal(c.batch.length,0);assert.equal(c.items.length,(group+1)*20);
+ }
+ assert.equal(stored.length,100);assert.equal(new Set(c.items.map(x=>x.id)).size,100);
+ for(let i=0;i<100;i++){
+  const item=c.items[i],expected=garments[i%garments.length];
+  assert.equal(item.category,expected.category);assert.equal(item.itemType,expected.itemType);
+  assert.equal(c.clothingMatches(item,expected.itemType,expected.category,'',''),true);
+  assert.equal(c.clothingMatches(item,'',item.category==='Tops'?'Shoes':'Tops','',''),false);
+  assert.equal(item.brand,'');assert.equal(item.size,'');assert.equal(item.material,'');assert.deepEqual(Array.from(item.seasons),[]);
+ }
+});
+
+test('a removed photo cannot be saved by a late recognition response',async()=>{
+ let finish;const {c,stored}=setup({request:()=>new Promise(resolve=>finish=resolve)});
+ c.candidate('one');await new Promise(setImmediate);c.batch=[];
+ finish({strong:true,choices:[choice],details:{color:'Blue'}});await done(c);
+ assert.equal(stored.length,0);assert.equal(c.items.length,0);assert.equal(c.localPending.size,0);
+});
+
+test('unreadable photo does not block the next garment or fabricate labels',async()=>{
+ const {c}=setup({quality:async image=>{if(image==='broken')throw Error('Decode failed');return {blank:false,signature:[1,2,3],aspect:1};}});
+ c.candidate('broken');c.candidate('good');await done(c);
+ assert.equal(c.items.length,1);assert.equal(c.items[0].image,'good');assert.equal(c.batch.length,1);
+ assert.equal(c.batch[0].image,'broken');assert.equal(c.batch[0].category,'Uncategorized');assert.equal(c.batch[0].scanFailed,true);
+});
