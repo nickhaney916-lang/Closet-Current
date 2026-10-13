@@ -47,3 +47,33 @@ export async function recognizeGarment(model,image,{onStage=()=>{},onIdentified=
  }
  return {strong:true,choices:[{...first,sleeveLength:details.sleeveLength||first.sleeveLength},...branch.slice(1)],details};
 }
+
+function garmentCategoryTotals(results){
+ const totals=new Map();
+ for(const result of results){const candidate=localCandidates.find(x=>x.label===result.label);if(candidate&&Number.isFinite(result.score)&&result.score>=0&&result.score<=1)totals.set(candidate.category,(totals.get(candidate.category)||0)+result.score);}
+ return [...totals].map(([category,score])=>({category,score})).sort((a,b)=>b.score-a.score);
+}
+// A clothing mask supplies independent category evidence. Validate its category
+// against both image views, then refine the type only when the views support it.
+export async function classifyIsolatedGarment(model,image,{hint,confirmationModel=model,onStage=()=>{},onIdentified=()=>{}}={}){
+ const valid=['Tops','Bottoms','Dresses','Outerwear','Shoes','Accessories'];
+ if(!hint||!Array.isArray(hint.categories)||!hint.categories.length||hint.categories.some(x=>!valid.includes(x))||!Array.isArray(hint.types))throw Error('Invalid clothing mask context.');
+ if(hint.clipped)return {strong:false,choices:[],details:{},reason:'clipped_garment'};
+ onStage('identify');const labels=localCandidates.map(x=>x.label),whole=await model(image,labels,options),close=await confirmationModel(image,labels,options),a=garmentCategoryTotals(whole),b=garmentCategoryTotals(close);
+ const supported=ranked=>ranked[0]&&ranked[0].score>=.55&&ranked[0].score-(ranked[1]?.score||0)>=.15;
+ const agreed=supported(a)&&supported(b)&&a[0].category===b[0].category&&hint.categories.includes(a[0].category);
+ // A strong, complete mask can retain a single broad category when the
+ // classifier is uncertain. Confident contradictions still require Adjust.
+ const maskOnly=hint.categories.length===1&&Number.isFinite(hint.confidence)&&hint.confidence>=.9&&hint.confidence<=1&&[a,b].every(r=>!supported(r)||r[0].category===hint.categories[0]);
+ if(!agreed&&!maskOnly)return {strong:false,choices:[],details:{},reason:'mask_category_disagrees'};
+ const category=agreed?a[0].category:hint.categories[0];
+ const first=clothingChoices(whole)[0],confirmation=clothingChoices(close),sameType=agreed&&strongMatch(clothingChoices(whole))&&confirmation[0]?.category===first.category&&confirmation[0]?.itemType===first.itemType&&confirmation[0].score>=.35&&confirmation[0].score-(confirmation[1]?.score||0)>=.1&&(!hint.types.length||hint.types.includes(first.itemType));
+ const choice=sameType?{...first}:{label:category,category,itemType:'Unknown',sleeveLength:['Bottoms','Shoes','Accessories'].includes(category)?'Not applicable':'Unknown',score:Math.min(a[0].score,b[0].score)};
+ onIdentified(choice);let details={};
+ if(sameType&&detailPhotoUsable(image.width,image.height)){
+  onStage('details');const groups=garmentDetailGroups(choice),proposed=groupedGarmentDetails(await model(image,Object.values(groups).flat().map(x=>x.label),options),groups),checks={};
+  for(const key of Object.keys(proposed))checks[key]=await confirmationModel(image,groups[key].map(x=>x.label),options);
+  details=verifiedGarmentDetails(proposed,checks,groups);
+ }
+ return {strong:true,categoryOnly:!sameType,choices:[{...choice,sleeveLength:details.sleeveLength||choice.sleeveLength}],details};
+}

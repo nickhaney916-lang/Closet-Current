@@ -34,9 +34,11 @@ self.onmessage=event=>{const request=event.data;chain=chain.then(async()=>{
   const model=await load();
   if(request.type==='load'){self.postMessage({type:'ready',id:request.id});return;}
   if(request.type!=='classify'||typeof request.image!=='string'||!request.image.startsWith('data:image/jpeg;base64,'))throw Error('Invalid captured image.');
-  scannerStage='catalog_import';const {recognizeGarment}=await import('./recognition-engine.mjs'+new URL(import.meta.url).search);
+  scannerStage='catalog_import';const {recognizeGarment,classifyIsolatedGarment}=await import('./recognition-engine.mjs'+new URL(import.meta.url).search);
   scannerStage='identify';const image=await RawImageClass.read(request.image);
-  const result=await recognizeGarment(model.whole,image,{
+  const classify=request.hint?classifyIsolatedGarment:recognizeGarment;
+  const result=await classify(model.whole,image,{
+   hint:request.hint,
    confirmationModel:model.center,
    onStage:stage=>{scannerStage=stage;},
    onIdentified:choice=>self.postMessage({type:'identified',id:request.id,choice})

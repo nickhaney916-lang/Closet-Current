@@ -87,3 +87,25 @@ coverage tradeoffs and remaining phone-validation work.
 
 Model: https://huggingface.co/ff13/fashion-clip (MIT).
 Runtime: https://github.com/huggingface/transformers.js (Apache-2.0).
+
+## Outfit photo capture (experimental)
+
+Add clothes → One outfit photo → separate clothes accepts a new camera photo
+or an existing image of one person. SegFormer B0 isolates visible clothing
+regions into separate white-background photos. FashionCLIP checks each cutout;
+uncertain types and attributes stay unknown. A complete strong mask may retain
+a broad category when the classifier is uncertain, but confident disagreements
+and clipped clothing require Adjust. Outfit pieces require an explicit Add to
+my closet action before they become owned items. Saved pieces can open in the
+existing Outfit builder for alternatives and gaps.
+
+The original outfit frame is kept only in memory for retry. Cutouts use the
+existing account-specific local storage; this does not add cloud sync. Body
+parts are excluded and left/right shoes form one pair. Overlapping garments
+of the same segmentation class can merge; this is semantic parsing rather
+than reliable instance segmentation. Physical phone validation remains open.
+
+Parser: https://huggingface.co/Xenova/segformer_b0_clothes
+Original model: https://huggingface.co/mattmdjaga/segformer_b0_clothes (MIT).
+Pinned conversion revision: a2489ea8e7ec1ee912190546bad31a4906ccca76.
+See [outfit capture validation](docs/OUTFIT-CAPTURE-RESULTS.md).

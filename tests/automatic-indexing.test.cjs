@@ -92,3 +92,14 @@ test('unreadable photo does not block the next garment or fabricate labels',asyn
  assert.equal(c.items.length,1);assert.equal(c.items[0].image,'good');assert.equal(c.batch.length,1);
  assert.equal(c.batch[0].image,'broken');assert.equal(c.batch[0].category,'Uncategorized');assert.equal(c.batch[0].scanFailed,true);
 });
+
+test('outfit cutouts are categorized individually but are not claimed as owned automatically',async()=>{
+ const {c,stored}=setup();c.candidate('outfit-top',{outfitSourceId:'capture',segmentHint:{categories:['Tops','Outerwear'],types:[],clipped:false}});await done(c);
+ assert.equal(stored.length,0);assert.equal(c.items.length,0);assert.equal(c.batch.length,1);assert.equal(c.batch[0].itemType,'T-shirt');assert.equal(c.batch[0].requiresOwnershipConfirmation,true);
+ assert.equal(await c.saveIndexed(c.batch[0]),false);c.batch[0].requiresOwnershipConfirmation=false;assert.equal(await c.saveIndexed(c.batch[0]),true);assert.equal(c.items.length,1);assert.equal(c.items[0].outfitSourceId,'capture');
+});
+test('clipped cutouts and segmentation/category disagreements do not get guessed labels',async()=>{
+ for(const hint of [{categories:['Bottoms'],types:[],clipped:false},{categories:['Tops'],types:[],clipped:true},{categories:['Tops'],types:['Polo'],clipped:false}]){
+  const {c,stored}=setup();c.candidate('outfit-top',{outfitSourceId:'capture',segmentHint:hint});await done(c);assert.equal(stored.length,0);assert.equal(c.batch[0].category,'Uncategorized');assert.equal(c.batch[0].itemType,'Unknown');
+ }
+});
