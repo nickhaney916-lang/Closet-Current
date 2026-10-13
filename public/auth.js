@@ -10,6 +10,14 @@
  window.closetAuth={ready,user:null};
  let signup=false,session=null,busy=false;
  const status=t=>$('authStatus').textContent=t;
+ function setPasswordVisible(visible){
+  $('authPassword').type=visible?'text':'password';
+  const label=visible?'Hide password':'Show password';
+  $('authPasswordToggle').setAttribute('aria-label',label);
+  $('authPasswordToggle').setAttribute('aria-pressed',String(visible));
+  $('authPasswordToggle').title=label;
+ }
+ $('authPasswordToggle').onclick=()=>setPasswordVisible($('authPassword').type==='password');
  const modeHint=()=>signup?'Create an account with a username, email, and password of at least 8 characters.':'Have an account? Log in below. New here? Choose Create an account first.';
  function setBusy(on){
   busy=on;
@@ -51,6 +59,7 @@
   resolveReady(data.user);
  }
  function setMode(on){
+  setPasswordVisible(false);
   signup=on;$('usernameWrap').hidden=!on;$('authUsername').required=on;$('authUsername').disabled=!on;
   $('authPassword').minLength=on?8:1;
   $('authPassword').autocomplete=on?'new-password':'current-password';

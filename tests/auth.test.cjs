@@ -7,7 +7,7 @@ const path=require('node:path');
 const source=fs.readFileSync(path.join(__dirname,'../public/auth.js'),'utf8');
 function app(fetchImpl=async()=>{throw new TypeError('network unavailable');}){
  const elements=new Map(),listeners={},timers=new Map(),requests=[];
- for(const id of ['authStatus','authForm','authSubmit','authMode','authReset','authEmail','authPassword','authUsername','usernameWrap','authGate','appShell','accountLabel','logout']){
+ for(const id of ['authStatus','authForm','authSubmit','authMode','authReset','authEmail','authPassword','authPasswordToggle','authUsername','usernameWrap','authGate','appShell','accountLabel','logout']){
   elements.set(id,{id,value:'',hidden:false,disabled:false,required:false,textContent:'',setAttribute(){},addEventListener(name,fn){listeners[name]=fn;},checkValidity(){return true;}});
  }
  elements.get('authEmail').value='test@example.invalid';
