@@ -8,15 +8,17 @@ const outfitSlots=[
  {id:'accessory',label:'Jewelry / sunglasses',category:'Accessories',categories:['Accessories'],types:['Jewelry','Sunglasses'],optional:true},
  {id:'finish',label:'Belt / scarf / hat',category:'Accessories',categories:['Accessories'],types:['Belt','Scarf','Hat'],optional:true}
 ];
-const outfitTrendSources=[
+let outfitTrendSources=[
  {title:'Vogue · Fall 2026 shoe trends',url:'https://www.vogue.com/article/fall-2026-shoe-trends',checked:'2026-10-12'},
  {title:'Who What Wear · Winter 2026 shoes',url:'https://www.whowhatwear.com/fashion/shoes/winter-shoe-trends-2026',checked:'2026-10-12'}
 ];
-const outfitProductExamples=[
+let outfitProductExamples=[
  {type:'Sneakers',audience:'Women',name:'Nike Court Legacy Next Nature',url:'https://www.nike.com/t/court-legacy-next-nature-womens-shoes-8r07x0',priceAtCheck:75},
  {type:'Loafers',audience:'Women',name:'Sam Edelman Loraine Bit Loafer',url:'https://www.nordstrom.com/s/loraine-bit-loafer-wide-width-available-women/4447269?slpfid=3',priceAtCheck:150},
  {type:'Flats',audience:'Women',name:'Madewell The Greta Ballet Flat',url:'https://www.nordstrom.com/s/madewell-the-greta-ballet-flat-women/7575401',priceAtCheck:98}
 ];
+let activeTrendLibrary=null;
+function applyLoadedTrendLibrary(value){const library=normalizeTrendLibrary(value);activeTrendLibrary=library;outfitTrendSources=library.sources;outfitProductExamples=library.products;return library;}
 function slotAllows(slot,item){return slot.categories.includes(item.category)&&(!slot.types||slot.types.includes(item.itemType)||item.itemType==='Unknown'||item.itemType==='Other');}
 function cleanOutfitBoard(value,closet){
  const result={name:String(value?.name||'My outfit').slice(0,80),slots:{},ideas:{},occasion:['Casual','Work','Dinner','Active'].includes(value?.occasion)?value.occasion:'Casual',season:['Spring','Summer','Fall','Winter'].includes(value?.season)?value.season:'Fall',audience:['Women','Men','All'].includes(value?.audience)?value.audience:'Women',size:String(value?.size||'').slice(0,30),budget:Math.max(0,Math.min(10000,Number(value?.budget)||0))};
@@ -50,10 +52,16 @@ function wardrobeGapIdeas(slotId,board,closet){
   const options={top:[['T-shirt','white'],['Button-down shirt','cream'],['Sweater',warm?'beige':'gray']],bottom:[['Jeans','blue'],['Trousers',neutral],['Skirt',neutral]],layer:[['Cardigan',warm?'cream':'gray'],['Blazer',neutral],['Jacket',warm?'brown':'navy']],bag:[['Bag',neutral],['Bag','cream'],['Bag','burgundy']],accessory:[['Jewelry','gold'],['Jewelry','silver'],['Sunglasses',neutral]],finish:[['Belt',neutral],['Scarf',warm?'cream':'gray'],['Hat',neutral]]};
   for(const [type,color]of options[slotId]||[])add(type,color,busy?'Keep this piece simple so your existing pattern remains the focus.':'A coordinating finishing option for the pieces you selected.');
  }
+ if(activeTrendLibrary){
+  const matching=activeTrendLibrary.directions.filter(d=>d.slot===slotId&&(d.audiences.includes('All')||d.audiences.includes(board.audience))&&(!d.occasions.length||d.occasions.includes(board.occasion))&&(!d.seasons.length||d.seasons.includes(board.season))&&(!busy||d.color==='neutral'));
+  const trendIdeas=matching.map(d=>({slot:slotId,category:slot.category,type:d.type,label:d.label,color:d.color==='neutral'?neutral:d.color,reason:d.reason+' '+paletteReason,trendSource:outfitTrendSources.find(source=>source.id===d.sourceId)}));
+  const types=new Set(trendIdeas.map(x=>x.type));ideas.splice(0,ideas.length,...trendIdeas,...ideas.filter(x=>!types.has(x.type)));
+ }
  const audience=board.audience==='All'?'':board.audience.toLowerCase();
- return ideas.map(idea=>{
-  const query=[audience,idea.color,idea.type,board.size?'size '+board.size:'',board.budget?'under $'+board.budget:''].filter(Boolean).join(' ');
-  return {...idea,query,shoppingUrl:'https://www.google.com/search?tbm=shop&q='+encodeURIComponent(query),retailerUrl:'https://www.nordstrom.com/sr?keyword='+encodeURIComponent(query),examples:outfitProductExamples.filter(p=>p.type===idea.type&&p.audience===board.audience&&(!board.budget||p.priceAtCheck<=board.budget))};
+ return ideas.slice(0,3).map(idea=>{
+  const query=[audience,idea.color,idea.label||idea.type,board.size?'size '+board.size:'',board.budget?'under $'+board.budget:''].filter(Boolean).join(' ');
+  const retailerLinks=(activeTrendLibrary?.retailers||[]).filter(r=>(r.audience==='All'||r.audience===board.audience)&&(!r.types.length||r.types.includes(idea.type)));
+  return {...idea,retailerLinks,query,shoppingUrl:'https://www.google.com/search?tbm=shop&q='+encodeURIComponent(query),retailerUrl:'https://www.nordstrom.com/sr?keyword='+encodeURIComponent(query),examples:outfitProductExamples.filter(p=>p.type===idea.type&&p.audience===board.audience&&(!board.budget||(Number.isFinite(p.priceAtCheck)&&p.priceAtCheck<=board.budget)))};
  });
 }
 function closetGapOptions(slotId,board,closet){const slot=outfitSlots.find(s=>s.id===slotId);if(!slot)return [];const used=new Set(Object.values(board.slots));return closet.filter(item=>slotAllows(slot,item)&&!used.has(item.id));}

@@ -3,6 +3,8 @@ name: Deploy Closet Current to GitHub Pages
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - 'public/trend-data.json'
   workflow_dispatch:
 
 permissions:

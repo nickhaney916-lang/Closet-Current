@@ -1,0 +1,489 @@
+{
+  "schema_version": 1,
+  "updated_at": "2026-10-13T03:12:45.537535Z",
+  "next_refresh_at": "2026-10-19T15:00:00Z",
+  "sources": [
+    {
+      "id": "vogue-shoes",
+      "title": "Vogue \u00b7 Fall 2026 shoes",
+      "publication": "Vogue",
+      "url": "https://www.vogue.com/article/fall-2026-shoe-trends",
+      "published_at": "2026-09-16",
+      "checked_at": "2026-10-13T03:12:45.537535Z"
+    },
+    {
+      "id": "www-shoes",
+      "title": "Who What Wear \u00b7 Winter 2026 shoes",
+      "publication": "Who What Wear",
+      "url": "https://www.whowhatwear.com/fashion/shoes/winter-shoe-trends-2026",
+      "published_at": "",
+      "checked_at": "2026-10-13T03:12:45.537535Z"
+    },
+    {
+      "id": "elle-style",
+      "title": "ELLE \u00b7 Fall 2026 fashion",
+      "publication": "ELLE",
+      "url": "https://www.elle.com/fashion/shopping/a73393083/fall-2026-fashion-trends/",
+      "published_at": "2026-08-11",
+      "checked_at": "2026-10-13T03:12:45.537535Z"
+    },
+    {
+      "id": "bazaar-shoes",
+      "title": "Harper's Bazaar \u00b7 Fall 2026 shoes",
+      "publication": "Harper's Bazaar",
+      "url": "https://www.harpersbazaar.com/fashion/trends/a73707256/fall-shoe-trends-2026/",
+      "published_at": "2026-09-22",
+      "checked_at": "2026-10-13T03:12:45.537535Z"
+    },
+    {
+      "id": "instyle-paris",
+      "title": "InStyle \u00b7 Parisian fall style",
+      "publication": "InStyle",
+      "url": "https://www.instyle.com/paris-stylist-approved-fall-trends-12166418",
+      "published_at": "",
+      "checked_at": "2026-10-13T03:12:45.537535Z"
+    },
+    {
+      "id": "gq-shoes",
+      "title": "GQ \u00b7 Fall footwear",
+      "publication": "GQ",
+      "url": "https://www.gq.com/story/boots-shoes-sneakers-fall-2026",
+      "published_at": "2026-10-05",
+      "checked_at": "2026-10-13T03:12:45.537535Z"
+    },
+    {
+      "id": "instyle-fall",
+      "title": "InStyle \u00b7 Fall wardrobe directions",
+      "publication": "InStyle",
+      "url": "https://www.instyle.com/fall-fashion-trends-2026-12122269",
+      "published_at": "",
+      "checked_at": "2026-10-13T03:12:45.537535Z"
+    }
+  ],
+  "products": [
+    {
+      "type": "Sneakers",
+      "audience": "Women",
+      "name": "Nike Court Legacy Next Nature",
+      "url": "https://www.nike.com/t/court-legacy-next-nature-womens-shoes-8r07x0",
+      "price_at_check": 75,
+      "retailer": "Nike",
+      "checked_at": "2026-10-13T03:12:45.537535Z"
+    },
+    {
+      "type": "Loafers",
+      "audience": "Women",
+      "name": "Sam Edelman Loraine Bit Loafer",
+      "url": "https://www.nordstrom.com/s/loraine-bit-loafer-wide-width-available-women/4447269?slpfid=3",
+      "price_at_check": 150,
+      "retailer": "Nordstrom",
+      "checked_at": "2026-10-13T03:12:45.537535Z"
+    },
+    {
+      "type": "Flats",
+      "audience": "Women",
+      "name": "Madewell Greta Ballet Flat",
+      "url": "https://www.nordstrom.com/s/madewell-the-greta-ballet-flat-women/7575401",
+      "price_at_check": 98,
+      "retailer": "Nordstrom",
+      "checked_at": "2026-10-13T03:12:45.537535Z"
+    },
+    {
+      "type": "Loafers",
+      "audience": "Women",
+      "name": "A New Day Adrienne Loafers",
+      "url": "https://www.target.com/p/-/A-95245315",
+      "price_at_check": 35,
+      "retailer": "Target",
+      "checked_at": "2026-10-13T03:12:45.537535Z"
+    },
+    {
+      "type": "Bag",
+      "audience": "Women",
+      "name": "Zara Fringed Shoulder Bag",
+      "url": "https://www.zara.com/us/en/fringed-shoulder-bag-p16442810.html",
+      "price_at_check": 59.9,
+      "retailer": "Zara",
+      "checked_at": "2026-10-13T03:12:45.537535Z"
+    },
+    {
+      "type": "Button-down shirt",
+      "audience": "Women",
+      "name": "UNIQLO Cotton Long-Sleeve Shirt",
+      "url": "https://www.uniqlo.com/us/en/products/E455744-000/00",
+      "price_at_check": null,
+      "retailer": "UNIQLO",
+      "checked_at": "2026-10-13T03:12:45.537535Z"
+    },
+    {
+      "type": "Button-down shirt",
+      "audience": "Women",
+      "name": "Banana Republic Cotton Foldover Collar Shirt",
+      "url": "https://bananarepublic.gap.com/browse/product.do?pid=1180410012",
+      "price_at_check": null,
+      "retailer": "Banana Republic",
+      "checked_at": "2026-10-13T03:12:45.537535Z"
+    },
+    {
+      "type": "Jacket",
+      "audience": "Women",
+      "name": "Gap Waxed Canvas Barn Jacket",
+      "url": "https://www.gap.com/browse/product.do?pid=909434002&vid=",
+      "price_at_check": null,
+      "retailer": "Gap",
+      "checked_at": "2026-10-13T03:12:45.537535Z"
+    }
+  ],
+  "directions": [
+    {
+      "id": "kitten",
+      "slot": "shoes",
+      "type": "Kitten heel pumps",
+      "label": "Kitten heel pumps",
+      "source_id": "vogue-shoes",
+      "reason": "A low-heel option drawn from the seasonal shoe report.",
+      "audiences": [
+        "Women"
+      ],
+      "occasions": [
+        "Dinner",
+        "Work"
+      ],
+      "seasons": [
+        "Fall",
+        "Winter"
+      ],
+      "color": "neutral"
+    },
+    {
+      "id": "soft-loafers",
+      "slot": "shoes",
+      "type": "Loafers",
+      "label": "Soft loafers",
+      "source_id": "www-shoes",
+      "reason": "A softer slip-on direction for relaxed trousers or jeans.",
+      "audiences": [
+        "Women"
+      ],
+      "occasions": [
+        "Casual",
+        "Work",
+        "Dinner"
+      ],
+      "seasons": [
+        "Fall",
+        "Winter"
+      ],
+      "color": "neutral"
+    },
+    {
+      "id": "two-tone",
+      "slot": "shoes",
+      "type": "Flats",
+      "label": "Two-tone flats",
+      "source_id": "bazaar-shoes",
+      "reason": "A contrasting two-tone option for a simple outfit.",
+      "audiences": [
+        "Women"
+      ],
+      "occasions": [
+        "Casual",
+        "Work",
+        "Dinner"
+      ],
+      "seasons": [
+        "Fall",
+        "Winter"
+      ],
+      "color": "black and cream"
+    },
+    {
+      "id": "men-boots",
+      "slot": "shoes",
+      "type": "Ankle boots",
+      "label": "Leather ankle boots",
+      "source_id": "gq-shoes",
+      "reason": "A fall footwear direction to pair with denim.",
+      "audiences": [
+        "Men",
+        "All"
+      ],
+      "occasions": [
+        "Casual",
+        "Work",
+        "Dinner"
+      ],
+      "seasons": [
+        "Fall",
+        "Winter"
+      ],
+      "color": "neutral"
+    },
+    {
+      "id": "men-loafer",
+      "slot": "shoes",
+      "type": "Loafers",
+      "label": "Low-profile loafers",
+      "source_id": "gq-shoes",
+      "reason": "An alternative to boots for a polished casual look.",
+      "audiences": [
+        "Men",
+        "All"
+      ],
+      "occasions": [
+        "Casual",
+        "Work",
+        "Dinner"
+      ],
+      "seasons": [
+        "Fall",
+        "Winter"
+      ],
+      "color": "neutral"
+    },
+    {
+      "id": "elevated-shirt",
+      "slot": "top",
+      "type": "Button-down shirt",
+      "label": "Detailed cotton shirt",
+      "source_id": "instyle-paris",
+      "reason": "Add interest through a distinctive collar or cuffs.",
+      "audiences": [
+        "Women"
+      ],
+      "occasions": [
+        "Casual",
+        "Work",
+        "Dinner"
+      ],
+      "seasons": [
+        "Fall",
+        "Winter"
+      ],
+      "color": "neutral"
+    },
+    {
+      "id": "pencil-skirt",
+      "slot": "bottom",
+      "type": "Skirt",
+      "label": "Pencil skirt",
+      "source_id": "instyle-paris",
+      "reason": "A streamlined shape for work or evening outfits.",
+      "audiences": [
+        "Women"
+      ],
+      "occasions": [
+        "Work",
+        "Dinner"
+      ],
+      "seasons": [
+        "Fall",
+        "Winter"
+      ],
+      "color": "neutral"
+    },
+    {
+      "id": "dark-denim",
+      "slot": "bottom",
+      "type": "Jeans",
+      "label": "Dark straight-leg jeans",
+      "source_id": "instyle-fall",
+      "reason": "A tailored denim direction for everyday combinations.",
+      "audiences": [
+        "All"
+      ],
+      "occasions": [
+        "Casual",
+        "Work",
+        "Dinner"
+      ],
+      "seasons": [
+        "Fall",
+        "Winter"
+      ],
+      "color": "dark blue"
+    },
+    {
+      "id": "utility-jacket",
+      "slot": "layer",
+      "type": "Jacket",
+      "label": "Refined utility jacket",
+      "source_id": "instyle-fall",
+      "reason": "Contrast a practical jacket with softer or tailored pieces.",
+      "audiences": [
+        "All"
+      ],
+      "occasions": [
+        "Casual",
+        "Work",
+        "Dinner"
+      ],
+      "seasons": [
+        "Fall",
+        "Winter"
+      ],
+      "color": "neutral"
+    },
+    {
+      "id": "lady-jacket",
+      "slot": "layer",
+      "type": "Jacket",
+      "label": "Cropped collarless jacket",
+      "source_id": "instyle-paris",
+      "reason": "A shorter jacket can change the balance of your outfit.",
+      "audiences": [
+        "Women"
+      ],
+      "occasions": [
+        "Casual",
+        "Work",
+        "Dinner"
+      ],
+      "seasons": [
+        "Fall",
+        "Winter"
+      ],
+      "color": "neutral"
+    },
+    {
+      "id": "textured-bag",
+      "slot": "bag",
+      "type": "Bag",
+      "label": "Textured leather-look bag",
+      "source_id": "elle-style",
+      "reason": "Bring a single textured accent into an otherwise simple outfit.",
+      "audiences": [
+        "Women"
+      ],
+      "occasions": [
+        "Casual",
+        "Work",
+        "Dinner"
+      ],
+      "seasons": [
+        "Fall",
+        "Winter"
+      ],
+      "color": "neutral"
+    },
+    {
+      "id": "fringe-bag",
+      "slot": "bag",
+      "type": "Bag",
+      "label": "Fringed shoulder bag",
+      "source_id": "instyle-paris",
+      "reason": "Use fringe as one accent rather than throughout the outfit.",
+      "audiences": [
+        "Women"
+      ],
+      "occasions": [
+        "Casual",
+        "Dinner"
+      ],
+      "seasons": [
+        "Fall",
+        "Winter"
+      ],
+      "color": "neutral"
+    },
+    {
+      "id": "bold-jewelry",
+      "slot": "accessory",
+      "type": "Jewelry",
+      "label": "Statement jewelry",
+      "source_id": "instyle-paris",
+      "reason": "Choose one bolder accessory with quieter clothing.",
+      "audiences": [
+        "Women"
+      ],
+      "occasions": [
+        "Casual",
+        "Work",
+        "Dinner"
+      ],
+      "seasons": [],
+      "color": "neutral"
+    },
+    {
+      "id": "small-scarf",
+      "slot": "finish",
+      "type": "Scarf",
+      "label": "Small silk-style scarf",
+      "source_id": "instyle-paris",
+      "reason": "A small scarf offers another way to finish the look.",
+      "audiences": [
+        "Women"
+      ],
+      "occasions": [
+        "Casual",
+        "Work",
+        "Dinner"
+      ],
+      "seasons": [],
+      "color": "neutral"
+    }
+  ],
+  "retailers": [
+    {
+      "name": "Target",
+      "url": "https://www.target.com/c/loafers-women-s-shoes/a-new-day/-/N-5xtcvZxrye7",
+      "audience": "Women",
+      "types": [
+        "Loafers"
+      ]
+    },
+    {
+      "name": "Madewell",
+      "url": "https://www.madewell.com/womens/bags/crossbody-bags/",
+      "audience": "Women",
+      "types": [
+        "Bag"
+      ]
+    },
+    {
+      "name": "Nordstrom",
+      "url": "https://www.nordstrom.com/browse/women/shoes",
+      "audience": "Women",
+      "types": [
+        "Sneakers",
+        "Loafers",
+        "Flats",
+        "Ankle boots",
+        "Kitten heel pumps",
+        "Sandals"
+      ]
+    },
+    {
+      "name": "UNIQLO",
+      "url": "https://www.uniqlo.com/us/en/products/E455744-000/00",
+      "audience": "Women",
+      "types": [
+        "Button-down shirt"
+      ]
+    },
+    {
+      "name": "Gap",
+      "url": "https://www.gap.com/browse/product.do?pid=909434002&vid=",
+      "audience": "Women",
+      "types": [
+        "Jacket"
+      ]
+    },
+    {
+      "name": "Banana Republic",
+      "url": "https://bananarepublic.gap.com/browse/product.do?pid=1180410012",
+      "audience": "Women",
+      "types": [
+        "Button-down shirt"
+      ]
+    },
+    {
+      "name": "Zara",
+      "url": "https://www.zara.com/us/en/fringed-shoulder-bag-p16442810.html",
+      "audience": "Women",
+      "types": [
+        "Bag"
+      ]
+    }
+  ]
+}
