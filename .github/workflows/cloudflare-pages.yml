@@ -1,0 +1,65 @@
+name: Deploy Closet Current to Cloudflare Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  deployments: write
+
+concurrency:
+  group: closet-current-cloudflare
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v6
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build Closet Current
+        run: node scripts/build.mjs
+      - name: Ensure Cloudflare Pages project exists
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          node --input-type=module <<'NODE'
+          const token = process.env.CLOUDFLARE_API_TOKEN?.trim();
+          const account = process.env.CLOUDFLARE_ACCOUNT_ID?.trim();
+          if (!token || !account) throw new Error('Add CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID repository secrets.');
+          if (!/^[a-f0-9]{32}$/i.test(account)) throw new Error('CLOUDFLARE_ACCOUNT_ID must be the 32-character account ID.');
+          const base = 'https://api.cloudflare.com/client/v4/accounts/' + account + '/pages/projects';
+          const headers = {Authorization: 'Bearer ' + token, 'Content-Type': 'application/json'};
+          const response = await fetch(base + '/closet-current', {headers});
+          let project;
+          if (response.ok) {
+            const data = await response.json();
+            if (!data.success) throw new Error('Cloudflare project lookup failed.');
+            project = data.result;
+          } else if (response.status === 404) {
+            const created = await fetch(base, {method: 'POST', headers, body: JSON.stringify({name: 'closet-current', production_branch: 'main'})});
+            const data = await created.json();
+            if (!created.ok || !data.success) throw new Error('Cloudflare project creation failed (HTTP ' + created.status + '; codes ' + (data.errors || []).map(e => e.code).join(',') + ').');
+            project = data.result;
+          } else {
+            throw new Error('Cloudflare project lookup failed (HTTP ' + response.status + '). Check the token and account ID.');
+          }
+          if (project.production_branch !== 'main') throw new Error('Existing closet-current project uses a different production branch; review it before deploying.');
+          console.log('Cloudflare Pages project ready.');
+          NODE
+      - name: Deploy website
+        id: deployment
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist --project-name=closet-current --branch=main
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
