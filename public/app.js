@@ -161,10 +161,10 @@ async function startCamera(mode){
   if(mode==='auto'){
    cadence=new CaptureCadence(Number($('interval').value)*1000,Date.now());
    timer=setInterval(()=>captureTick(),250);captureTick();
-   message(`Automatic scan: one photo every ${$('interval').value} seconds. Watch the countdown and hold each garment still. Finish & review stops the camera.`);
+   message(`Automatic scan: one photo every ${$('interval').value} seconds. Watch the countdown and hold each garment still. Tap Done to stop the camera.`);
   }else{
    $('captureState').textContent='Frame a garment · tap Take photo when ready';
-   message('Take each photo at your own pace. Tap Finish & review when you are done.');
+   message('Take each photo at your own pace. Tap Done when you are finished.');
   }
  }catch(e){
   if(request===cameraRequest){stopCamera();message(e.name==='NotAllowedError'?'Camera permission was denied. Allow camera access in your browser, or choose saved photos.':(e.message||'Camera could not start. Choose saved photos or a closet video.'));}

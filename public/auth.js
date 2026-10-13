@@ -10,7 +10,7 @@
  let resolveReady,rejectReady;
  const ready=new Promise((resolve,reject)=>{resolveReady=resolve;rejectReady=reject;});
  window.closetAuth={ready,user:null};
- let signup=false,session=null,busy=false,recovery=false;
+ let signup=false,session=null,busy=false,recovery=false,restoringSession=false;
  const status=t=>$('authStatus').textContent=t;
  function setPasswordVisible(visible){
   $('authPassword').type=visible?'text':'password';
@@ -117,6 +117,7 @@
    if(error||access){
     history.replaceState(null,'',location.pathname);
     if(error){status('This email link has expired or was already used. Log in below. If your email still needs confirmation, enter it and choose Resend confirmation email.');return;}
+    setBusy(true);status('Verifying your email link…');
     // Do not trust URL claims: verify the token with Supabase before unlocking any wardrobe.
     const user=await request('user',null,access,'GET');
     const data={user,access_token:access,refresh_token:refresh,expires_in:Number(callback.get('expires_in'))||3600};
@@ -130,10 +131,11 @@
    }
    const saved=JSON.parse(localStorage.getItem(STORE)||'null');
    if(saved?.refresh_token){
+    restoringSession=true;setBusy(true);status('Restoring your login…');
     const data=await request('token?grant_type=refresh_token',{refresh_token:saved.refresh_token});
     showUser(data);return;
    }
-  }catch{localStorage.removeItem(STORE);status('This sign-in link could not be verified. Log in with your email and password, or request a fresh email link.');return;}
+  }catch(error){localStorage.removeItem(STORE);status(restoringSession?(error instanceof TypeError?'Could not restore your login. Check your connection and log in again.':'Your login session has expired. Log in again.'):'This sign-in link could not be verified. Log in with your email and password, or request a fresh email link.');return;}finally{setBusy(false);}
   status(modeHint());
  })();
 })();

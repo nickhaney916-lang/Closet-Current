@@ -57,3 +57,7 @@ test('leaving during permission prompt stops a late camera stream',async()=>{
  const opening=c.startCamera('manual');c.stopCamera();grant(media);await opening;
  assert.equal(c.stream,null);assert.equal(stopped(),1);assert.equal(c.busy,false);
 });
+
+test('the eight-second option and all four camera buttons use their intended actions',async()=>{
+ const {context:c,clock,element}=setup();element('interval').value='8';await element('startAuto').onclick();clock.now=7999;c.captureTick();assert.equal(c.session,0);clock.now=8000;c.captureTick();assert.equal(c.session,1);element('stop').onclick();assert.equal(c.view,'review');await element('start').onclick();assert.equal(c.cameraMode,'manual');element('takePhoto').onclick();assert.equal(c.session,1);element('stop').onclick();assert.equal(c.stream,null);
+});
