@@ -15,3 +15,8 @@ test('recording defaults off and saved test states remain account-local data',()
 test('worker error codes distinguish network, memory, runtime, and image problems without exposing messages',async()=>{
  const {scannerErrorCode}=await import('../public/scanner-errors.mjs');assert.equal(scannerErrorCode(Error('Failed to fetch private URL'),'model_download'),'network');assert.equal(scannerErrorCode(Error('memory allocation failure'),'identify'),'memory');assert.equal(scannerErrorCode(Error('unsupported wasm kernel'),'runtime_import'),'runtime');assert.equal(scannerErrorCode(Error('image decode failure'),'identify'),'image');
 });
+
+test('outfit capture diagnostics retain timing without photos or body information',()=>{
+ const event=cleanDeviceEvent('outfit_split_ready',{durationMs:1123,image:'private-image',label:'private-label',face:'private-face',sourceId:'private-id'});
+ assert.deepEqual(event,{type:'outfit_split_ready',durationMs:1123});assert.equal(cleanDeviceEvent('outfit_split_failed',{}).type,'outfit_split_failed');
+});

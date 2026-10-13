@@ -31,3 +31,17 @@ blank details are intentional. No original person photo is persisted.
 
 Email confirmation/redirect configuration remains a separate high-priority
 open item; this feature does not change auth settings or email templates.
+
+## Pilot hardening
+
+A person-presence gate now requires confident head/body region evidence before
+the worker emits cutouts. This avoids treating clothing-shaped regions alone
+as an outfit. It is a heuristic, not an independent person detector. A six-photo
+negative smoke set (cat, dog, house, bread, book cover, invoice) exposed false
+clothing regions before this gate. The downstream ownership and classifier
+checks remain in place; phone and independent full-body validation are open.
+
+The new gate rejected all six negative images and accepted all seven outfit
+development images. Thresholds were checked on these development examples;
+this is not independent accuracy evidence. The full automated suite now has
+128 passing checks.

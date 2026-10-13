@@ -10,6 +10,7 @@ function renderOutfitCapture(){
 }
 function finishOutfitSplit(job,text,failed=false){
  if(job!==outfitSplitJob)return;
+ if(typeof recordDeviceEvent==='function')recordDeviceEvent(failed?'outfit_split_failed':'outfit_split_ready',{durationMs:Date.now()-job.started});
  clearTimeout(job.timer);job.worker?.terminate();outfitSplitJob=null;busy=false;controls(false);
  $('outfitSplitStatus').textContent=text;$('outfitRetry').hidden=!failed;renderOutfitCapture();
  if(job.added){if(!$('scan').hidden)switchView('review');$('outfitSaveStatus').textContent=failed?'The separated pieces below are kept. Return to Add clothes to try separating the rest again.':'Check these individual pieces, then add the ones you own.';}
@@ -17,6 +18,7 @@ function finishOutfitSplit(job,text,failed=false){
 function startOutfitSplit(image,sourceId=crypto.randomUUID()){
  if(busy||outfitSplitJob)return;
  stopCamera();busy=true;controls(true);outfitActiveId=sourceId;lastOutfitPhoto=image;$('outfitRetry').hidden=true;$('outfitSaveStatus').textContent='';
+ if(typeof recordDeviceEvent==='function')recordDeviceEvent('outfit_split_start');
  const job={id:crypto.randomUUID(),sourceId,started:Date.now(),phase:'loading',worker:null,timer:null,added:0};outfitSplitJob=job;
  const timeout=()=>finishOutfitSplit(job,'Outfit separation timed out. Your existing and separated photos are kept. Try again with one person, head to toe.',true);
  const touch=()=>{clearTimeout(job.timer);const remaining=300000-(Date.now()-job.started);job.timer=setTimeout(timeout,Math.max(0,Math.min(60000,remaining)));};touch();

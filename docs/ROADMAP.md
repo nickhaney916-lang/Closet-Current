@@ -38,3 +38,13 @@ Status: not implemented. Clothing and outfits currently stay in per-account brow
 ## Design work completed
 
 The brighter theme, larger controls, bottom navigation, direct Style shortcut, and all original styling features are retained. Inspiration and Style my collection remain separate features and use the shared verified trend library where applicable.
+
+## P2 — Ownership and commercial protection
+
+Recorded October 13, 2026; deferred while product pilot testing is prioritized.
+Review private development and confidential server logic, trademark clearance
+for Closet Current, contributor IP assignments, eligible copyright registration,
+and patent disclosure timing if a novel technical invention exists. Before
+subscriptions: business structure, insurance, terms, privacy, model/data licenses,
+cancellation rules, and an age/parental-consent approach. No filings or access
+changes have been made.

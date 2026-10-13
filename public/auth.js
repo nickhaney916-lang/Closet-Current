@@ -35,7 +35,7 @@
   return err.message||'Something went wrong. Please try again.';
  }
  $('authForm').addEventListener('invalid',event=>{
-  const input=event.target;
+  const input=['authEmail','authPassword','authUsername'].map($).find(field=>!field.disabled&&field.validity&&field.validity.valid===false)||event.target;
   const label=input.id==='authEmail'?'email':input.id==='authPassword'?'password':'username';
   if(input.validity.valueMissing)status('Enter your '+label+' to '+(signup?'create an account.':'log in. New here? Choose Create an account first.'));
   else if(input.validity.typeMismatch)status('Enter a valid email address.');

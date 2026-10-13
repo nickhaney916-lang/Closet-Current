@@ -15,7 +15,7 @@ function recordDeviceEvent(type,value={}){
 function renderDeviceCheckSummary(){
  const checked=Object.keys(deviceCheckState.steps).length,failed=Object.values(deviceCheckState.steps).filter(x=>x==='fail').length;
  $('deviceCheckSummary').textContent=checked+' of '+deviceCheckSteps.length+' steps checked'+(failed?' · '+failed+' need attention':'')+'. '+(deviceCheckState.enabled?'Scan timing is being recorded on this device.':'Scan timing recording is off.');
- const events=deviceCheckState.events,failures=events.filter(x=>['scanner_error','worker_start_failed','timeout','photo_check_failed'].includes(x.type)).length,scans=events.filter(x=>x.type==='recognized_saved').length;
+ const events=deviceCheckState.events,failures=events.filter(x=>['scanner_error','worker_start_failed','timeout','photo_check_failed','outfit_split_failed'].includes(x.type)).length,scans=events.filter(x=>x.type==='recognized_saved').length;
  $('deviceScanSummary').textContent=events.length?scans+' saved scan result'+(scans===1?'':'s')+' · '+failures+' scanner issue'+(failures===1?'':'s')+' recorded in this test.':'Start a test, then take a photo to record scanner timing.';
 }
 function renderDeviceCheck(){

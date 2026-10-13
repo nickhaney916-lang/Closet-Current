@@ -21,7 +21,7 @@ self.onmessage=event=>{const request=event.data;chain=chain.then(async()=>{
   const {model,processor,RawImage}=await load(request.id);self.postMessage({type:'progress',id:request.id,phase:'separating'});
   const image=await RawImage.read(request.image);if(!image.width||!image.height||Math.max(image.width,image.height)>1000)throw Error('Invalid outfit photo dimensions.');
   const output=await model(await processor(image)),{clothingLabelMap,clothingMaskGroups,isolateClothingPixels}=await import('./outfit-segmentation.mjs'+new URL(import.meta.url).search);
-  const map=clothingLabelMap(output.logits.data,output.logits.dims),groups=clothingMaskGroups(map);let count=0;
+  const map=clothingLabelMap(output.logits.data,output.logits.dims),groups=map.personDetected?clothingMaskGroups(map):[];let count=0;
   for(const group of groups){
    const isolated=isolateClothingPixels(image,map,group),cutout=new RawImage(isolated.data,isolated.width,isolated.height,3);
    const piece={image:await jpegData(cutout),label:group.label,hint:{categories:group.categories,types:group.types||[],clipped:group.clipped,confidence:group.confidence}};
