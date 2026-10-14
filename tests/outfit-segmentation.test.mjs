@@ -29,3 +29,11 @@ test('photo crops preserve one-pixel fabric texture and detail omitted by a coar
  assert.equal(photo.width,36);assert.equal(photo.height,36);
 });
 
+
+test('garment color sampling excludes dominant background and display white',async()=>{
+ const {clothingColorSample}=await import('../public/outfit-segmentation.mjs');
+ const data=new Uint8ClampedArray(20*20*3).fill(255),selected=new Uint8Array(400);
+ for(let y=6;y<14;y++)for(let x=6;x<14;x++){selected[y*20+x]=1;data.set([20,70,210],(y*20+x)*3);}
+ const sample=clothingColorSample({data,width:20,height:20,channels:3},{width:20,height:20},{selected,bounds:{left:6,top:6,right:14,bottom:14}});
+ for(let i=0;i<sample.data.length;i+=4)assert.deepEqual(Array.from(sample.data.slice(i,i+4)),[20,70,210,255]);
+});

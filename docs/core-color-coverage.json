@@ -1,0 +1,378 @@
+{
+  "photos": 32,
+  "acceptedGarments": 26,
+  "comparison": "Verified model attributes versus the same attributes plus prioritized photo-color estimates",
+  "beforeVisualFieldCounts": {
+    "color": 12,
+    "pattern": 8,
+    "fit": 2,
+    "sleeveLength": 3
+  },
+  "afterVisualFieldCounts": {
+    "color": 26,
+    "pattern": 8,
+    "fit": 2,
+    "sleeveLength": 3
+  },
+  "limitation": "Field coverage only. These photos have category/type annotations, not attribute ground truth; attribute accuracy is not measured. Photo estimates require user confirmation; background and lighting can affect them.",
+  "rows": [
+    {
+      "id": "commons-0001",
+      "category": "Tops",
+      "itemType": "T-shirt",
+      "before": {
+        "sleeveLength": "Short sleeve"
+      },
+      "after": {
+        "sleeveLength": "Short sleeve",
+        "color": "Multicolor"
+      }
+    },
+    {
+      "id": "commons-0002",
+      "category": "Tops",
+      "itemType": "T-shirt",
+      "before": {
+        "color": "Red",
+        "sleeveLength": "Short sleeve"
+      },
+      "after": {
+        "color": "Red",
+        "sleeveLength": "Short sleeve"
+      }
+    },
+    {
+      "id": "commons-0021",
+      "category": "Bottoms",
+      "itemType": "Jeans",
+      "before": {
+        "color": "Blue",
+        "sleeveLength": "Not applicable"
+      },
+      "after": {
+        "color": "Blue",
+        "sleeveLength": "Not applicable"
+      }
+    },
+    {
+      "id": "commons-0023",
+      "category": "Bottoms",
+      "itemType": "Jeans",
+      "before": {
+        "color": "Blue",
+        "sleeveLength": "Not applicable"
+      },
+      "after": {
+        "color": "Blue",
+        "sleeveLength": "Not applicable"
+      }
+    },
+    {
+      "id": "commons-0024",
+      "category": "Bottoms",
+      "itemType": "Jeans",
+      "before": {
+        "color": "Blue",
+        "fit": "Fitted",
+        "sleeveLength": "Not applicable"
+      },
+      "after": {
+        "color": "Blue",
+        "fit": "Fitted",
+        "sleeveLength": "Not applicable"
+      }
+    },
+    {
+      "id": "commons-0033",
+      "category": "Bottoms",
+      "itemType": "Shorts",
+      "before": {
+        "color": "Orange",
+        "pattern": "Solid",
+        "sleeveLength": "Not applicable"
+      },
+      "after": {
+        "color": "Orange",
+        "pattern": "Solid",
+        "sleeveLength": "Not applicable"
+      }
+    },
+    {
+      "id": "commons-0041",
+      "category": "Bottoms",
+      "itemType": "Skirt",
+      "before": {
+        "color": "Beige",
+        "sleeveLength": "Not applicable"
+      },
+      "after": {
+        "color": "Beige",
+        "sleeveLength": "Not applicable"
+      }
+    },
+    {
+      "id": "commons-0043",
+      "category": "Bottoms",
+      "itemType": "Skirt",
+      "before": {
+        "fit": "Regular",
+        "sleeveLength": "Not applicable"
+      },
+      "after": {
+        "fit": "Regular",
+        "sleeveLength": "Not applicable",
+        "color": "Multicolor"
+      }
+    },
+    {
+      "id": "commons-0044",
+      "category": "Bottoms",
+      "itemType": "Skirt",
+      "before": {
+        "color": "Multicolor",
+        "pattern": "Graphic",
+        "sleeveLength": "Not applicable"
+      },
+      "after": {
+        "color": "Multicolor",
+        "pattern": "Graphic",
+        "sleeveLength": "Not applicable"
+      }
+    },
+    {
+      "id": "commons-0052",
+      "category": "Dresses",
+      "itemType": "Unknown",
+      "before": {},
+      "after": {
+        "color": "Gray"
+      }
+    },
+    {
+      "id": "commons-0064",
+      "category": "Outerwear",
+      "itemType": "Blazer",
+      "before": {
+        "color": "Blue",
+        "pattern": "Solid"
+      },
+      "after": {
+        "color": "Blue",
+        "pattern": "Solid"
+      }
+    },
+    {
+      "id": "commons-0067",
+      "category": "Outerwear",
+      "itemType": "Coat",
+      "before": {
+        "pattern": "Animal print"
+      },
+      "after": {
+        "pattern": "Animal print",
+        "color": "Beige"
+      }
+    },
+    {
+      "id": "commons-0068",
+      "category": "Outerwear",
+      "itemType": "Coat",
+      "before": {
+        "color": "Gray",
+        "sleeveLength": "Long sleeve"
+      },
+      "after": {
+        "color": "Gray",
+        "sleeveLength": "Long sleeve"
+      }
+    },
+    {
+      "id": "commons-0069",
+      "category": "Outerwear",
+      "itemType": "Coat",
+      "before": {},
+      "after": {
+        "color": "Multicolor"
+      }
+    },
+    {
+      "id": "commons-0079",
+      "category": "Shoes",
+      "itemType": "Sneakers",
+      "before": {
+        "pattern": "Graphic",
+        "sleeveLength": "Not applicable",
+        "fit": "Not applicable"
+      },
+      "after": {
+        "pattern": "Graphic",
+        "sleeveLength": "Not applicable",
+        "fit": "Not applicable",
+        "color": "Multicolor"
+      }
+    },
+    {
+      "id": "commons-0080",
+      "category": "Shoes",
+      "itemType": "Sneakers",
+      "before": {
+        "sleeveLength": "Not applicable",
+        "fit": "Not applicable"
+      },
+      "after": {
+        "sleeveLength": "Not applicable",
+        "fit": "Not applicable",
+        "color": "Blue"
+      }
+    },
+    {
+      "id": "commons-0081",
+      "category": "Shoes",
+      "itemType": "Sneakers",
+      "before": {
+        "sleeveLength": "Not applicable",
+        "fit": "Not applicable"
+      },
+      "after": {
+        "sleeveLength": "Not applicable",
+        "fit": "Not applicable",
+        "color": "Gray"
+      }
+    },
+    {
+      "id": "commons-0082",
+      "category": "Shoes",
+      "itemType": "Sneakers",
+      "before": {
+        "color": "Beige",
+        "fit": "Not applicable",
+        "sleeveLength": "Not applicable"
+      },
+      "after": {
+        "color": "Beige",
+        "fit": "Not applicable",
+        "sleeveLength": "Not applicable"
+      }
+    },
+    {
+      "id": "commons-0084",
+      "category": "Shoes",
+      "itemType": "Sneakers",
+      "before": {
+        "pattern": "Graphic",
+        "sleeveLength": "Not applicable",
+        "fit": "Not applicable"
+      },
+      "after": {
+        "pattern": "Graphic",
+        "sleeveLength": "Not applicable",
+        "fit": "Not applicable",
+        "color": "Blue"
+      }
+    },
+    {
+      "id": "commons-0085",
+      "category": "Shoes",
+      "itemType": "Sneakers",
+      "before": {
+        "fit": "Not applicable",
+        "sleeveLength": "Not applicable"
+      },
+      "after": {
+        "fit": "Not applicable",
+        "sleeveLength": "Not applicable",
+        "color": "Blue"
+      }
+    },
+    {
+      "id": "commons-0087",
+      "category": "Shoes",
+      "itemType": "Tall boots",
+      "before": {
+        "pattern": "Graphic",
+        "sleeveLength": "Not applicable",
+        "fit": "Not applicable"
+      },
+      "after": {
+        "pattern": "Graphic",
+        "sleeveLength": "Not applicable",
+        "fit": "Not applicable",
+        "color": "Gray"
+      }
+    },
+    {
+      "id": "commons-0088",
+      "category": "Shoes",
+      "itemType": "Ankle boots",
+      "before": {
+        "color": "Black",
+        "sleeveLength": "Not applicable",
+        "fit": "Not applicable"
+      },
+      "after": {
+        "color": "Black",
+        "sleeveLength": "Not applicable",
+        "fit": "Not applicable"
+      }
+    },
+    {
+      "id": "commons-0089",
+      "category": "Shoes",
+      "itemType": "Ankle boots",
+      "before": {
+        "color": "Multicolor",
+        "pattern": "Graphic",
+        "sleeveLength": "Not applicable",
+        "fit": "Not applicable"
+      },
+      "after": {
+        "color": "Multicolor",
+        "pattern": "Graphic",
+        "sleeveLength": "Not applicable",
+        "fit": "Not applicable"
+      }
+    },
+    {
+      "id": "commons-0092",
+      "category": "Shoes",
+      "itemType": "Ankle boots",
+      "before": {
+        "sleeveLength": "Not applicable",
+        "fit": "Not applicable"
+      },
+      "after": {
+        "sleeveLength": "Not applicable",
+        "fit": "Not applicable",
+        "color": "Black"
+      }
+    },
+    {
+      "id": "commons-0093",
+      "category": "Shoes",
+      "itemType": "Ankle boots",
+      "before": {
+        "sleeveLength": "Not applicable",
+        "fit": "Not applicable"
+      },
+      "after": {
+        "sleeveLength": "Not applicable",
+        "fit": "Not applicable",
+        "color": "Multicolor"
+      }
+    },
+    {
+      "id": "commons-0094",
+      "category": "Shoes",
+      "itemType": "Ankle boots",
+      "before": {
+        "sleeveLength": "Not applicable",
+        "fit": "Not applicable"
+      },
+      "after": {
+        "sleeveLength": "Not applicable",
+        "fit": "Not applicable",
+        "color": "Multicolor"
+      }
+    }
+  ]
+}

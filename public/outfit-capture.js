@@ -1,23 +1,18 @@
 'use strict';
-const outfitExcludedIds=new Set();
-let outfitActiveId=null,lastOutfitPhoto='',outfitSplitJob=null,outfitSaving=false;
-function outfitReadyPieces(){return batch.filter(x=>x.outfitSourceId===outfitActiveId&&x.requiresOwnershipConfirmation&&x.localAnalyzed&&!x.scanFailed&&!x.possibleDuplicate&&!x.userAdjusted&&!localPending.has(x.id)&&x.category!=='Uncategorized'&&x.itemType&&segmentationAllows(x,{category:x.category,itemType:x.itemType}));}
-function outfitPieceSelectable(item){return outfitReadyPieces().some(x=>x.id===item.id);}
+let outfitActiveId=null,lastOutfitPhoto='',outfitSplitJob=null;
 function renderOutfitCapture(){
- if(!outfitActiveId)outfitActiveId=batch.find(x=>x.outfitSourceId&&x.requiresOwnershipConfirmation)?.outfitSourceId||null;
- const pending=batch.filter(x=>x.outfitSourceId===outfitActiveId),saved=items.filter(x=>x.outfitSourceId===outfitActiveId),ready=outfitReadyPieces();
+ if(!outfitActiveId)outfitActiveId=batch.find(x=>x.outfitSourceId)?.outfitSourceId||null;
+ const pending=batch.filter(x=>x.outfitSourceId===outfitActiveId),saved=items.filter(x=>x.outfitSourceId===outfitActiveId);
  $('outfitPieceActions').hidden=!outfitActiveId||(!pending.length&&!saved.length);
- const selected=ready.filter(x=>!outfitExcludedIds.has(x.id));
- $('outfitPieceSummary').textContent=selected.length+' selected'+(pending.some(x=>localPending.has(x.id))?' · checking photos…':'')+(pending.some(x=>!localPending.has(x.id)&&!ready.includes(x))?' · some pieces need Adjust':'')+(saved.length?' · '+saved.length+' saved':'');
- $('addOutfitPieces').textContent=outfitSaving?'Adding…':'Add selected clothes';
- $('addOutfitPieces').disabled=outfitSaving||!selected.length;$('useCapturedOutfit').disabled=outfitSaving||!saved.length;
+ $('outfitPieceSummary').textContent=saved.length+' saved'+(pending.some(x=>localPending.has(x.id))?' · checking photos…':'')+(pending.some(x=>!localPending.has(x.id))?' · some pieces need review':'');
+ $('useCapturedOutfit').disabled=!saved.length;
 }
 function finishOutfitSplit(job,text,failed=false){
  if(job!==outfitSplitJob)return;
  if(typeof recordDeviceEvent==='function')recordDeviceEvent(failed?'outfit_split_failed':'outfit_split_ready',{durationMs:Date.now()-job.started});
  clearTimeout(job.timer);job.worker?.terminate();outfitSplitJob=null;busy=false;controls(false);
  $('outfitSplitStatus').textContent=text;$('outfitRetry').hidden=!failed;renderOutfitCapture();
- if(job.added){if(!$('scan').hidden)switchView('review');$('outfitSaveStatus').textContent=failed?'The separated pieces below are kept. Return to Add clothes to try separating the rest again.':'Check these individual pieces, then add the ones you own.';}
+ if(job.added){if(!$('scan').hidden)switchView('review');$('outfitSaveStatus').textContent=failed?'The separated pieces below are kept. Return to Add clothes to try separating the rest again.':'Recognized pieces save automatically. Unclear or duplicate pieces remain here for review.';}
 }
 function startOutfitSplit(image,sourceId=crypto.randomUUID()){
  if(busy||outfitSplitJob)return;
@@ -39,7 +34,8 @@ function startOutfitSplit(image,sourceId=crypto.randomUUID()){
    if(data.type==='piece'){
     const p=data.piece;
     if(!p||typeof p.image!=='string'||p.image.length>8000000||!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(p.image)||!Array.isArray(p.hint?.categories)||p.hint.categories.some(x=>!categories.includes(x))||!Array.isArray(p.hint.types)||p.hint.types.length>8)return;
-    if(candidate(p.image,{outfitSourceId:sourceId,segmentHint:p.hint}))job.added++;renderOutfitCapture();return;
+    if(p.recognitionPhoto&&(!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(p.recognitionPhoto.image)||p.recognitionPhoto.image.length>8000000))return;
+    if(candidate(p.image,{outfitSourceId:sourceId,segmentHint:p.hint,recognitionPhoto:p.recognitionPhoto,originalPhoto:{image},cropBounds:p.cropBounds,colorEstimate:p.colorEstimate}))job.added++;renderOutfitCapture();return;
    }
    if(data.type==='done')finishOutfitSplit(job,job.added?job.added+' individual clothing photos cropped. Categories are being checked.':'No new clothing pieces could be located. Try a clearer full-body photo; exact duplicates may already be in Photo results.',false);
    else if(data.type==='error')finishOutfitSplit(job,job.added?'Some pieces are kept; the rest could not be separated. Try again.':'This outfit could not be separated. Try another clear photo of one person, head to toe.',true);
@@ -59,16 +55,6 @@ async function readOutfitPhoto(file){
 }
 for(const id of ['outfitCamera','outfitUpload']){$(id).onclick=()=>{if(!busy)stopCamera();};$(id).onchange=event=>{const file=event.target.files?.[0];event.target.value='';readOutfitPhoto(file);};}
 $('outfitRetry').onclick=()=>{if(lastOutfitPhoto)startOutfitSplit(lastOutfitPhoto,outfitActiveId);};
-$('addOutfitPieces').onclick=async()=>{
- if(outfitSaving)return;const selected=outfitReadyPieces().filter(x=>!outfitExcludedIds.has(x.id));if(!selected.length)return;
- outfitSaving=true;renderOutfitCapture();let count=0,failed=0;
- for(const item of selected){
-  item.requiresOwnershipConfirmation=false;
-  try{if(await saveIndexed(item))count++;else if(batch.some(x=>x.id===item.id))item.requiresOwnershipConfirmation=true;}
-  catch{item.requiresOwnershipConfirmation=true;failed++;}
- }
- outfitSaving=false;render();$('outfitSaveStatus').textContent=count+' individual pieces added to your closet.'+(failed?' '+failed+' could not save; your photos are kept. Try again.':' Unclear or duplicate pieces remain available for Adjust.');
-};
 function capturedPieceSlot(item){
  if(['Tops','Dresses'].includes(item.category))return 'top';if(item.category==='Bottoms')return 'bottom';if(item.category==='Outerwear')return 'layer';if(item.category==='Shoes')return 'shoes';
  return item.itemType==='Bag'?'bag':['Jewelry','Sunglasses'].includes(item.itemType)?'accessory':['Belt','Scarf','Hat'].includes(item.itemType)?'finish':null;
