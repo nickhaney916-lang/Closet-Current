@@ -1,0 +1,27 @@
+#!/usr/bin/env node
+import fs from 'node:fs';
+const [manifestPath,resultsPath]=process.argv.slice(2);
+if(!manifestPath||!resultsPath){console.error('Usage: node scripts/evaluate-recognition-benchmark.mjs benchmark/manifest.json benchmark/results.json');process.exit(2);}
+const manifest=JSON.parse(fs.readFileSync(manifestPath,'utf8')),results=JSON.parse(fs.readFileSync(resultsPath,'utf8'));
+if(!Array.isArray(manifest)||!Array.isArray(results))throw Error('Manifest and results must be arrays');
+const byId=new Map();
+for(const r of results){if(!r.id||byId.has(r.id))throw Error('Missing or duplicate result ID: '+r.id);byId.set(r.id,r);}
+let single=0,categoryCorrect=0,typeCorrect=0,abstained=0,outfits=0,expectedPieces=0,matchedPieces=0,unexpectedPieces=0;
+const errors=[];
+for(const item of manifest){
+ if(!item.id||!['single','outfit'].includes(item.mode))throw Error('Invalid manifest entry');
+ const r=byId.get(item.id);if(!r){errors.push({id:item.id,reason:'missing_result'});continue;}
+ if(item.mode==='single'){
+  single++;const prediction=r.prediction||{};if(!prediction.category||prediction.category==='Uncategorized')abstained++;
+  if(prediction.category===item.expectedCategory)categoryCorrect++;else errors.push({id:item.id,reason:'category',expected:item.expectedCategory,actual:prediction.category||'none'});
+  if(prediction.category===item.expectedCategory&&prediction.type===item.expectedType)typeCorrect++;
+ }else{
+  outfits++;const expected=item.expectedPieces||[],predicted=r.predictedPieces||[];expectedPieces+=expected.length;
+  const used=new Set();
+  for(const e of expected){const idx=predicted.findIndex((p,i)=>!used.has(i)&&p.category===e.category&&p.type===e.type);if(idx>=0){used.add(idx);matchedPieces++;}else errors.push({id:item.id,reason:'missing_outfit_piece',expected:e});}
+  unexpectedPieces+=predicted.length-used.size;
+ }
+}
+const percent=(n,d)=>d?+(100*n/d).toFixed(2):null;
+console.log(JSON.stringify({manifestCount:manifest.length,resultsCount:results.length,missingResults:errors.filter(e=>e.reason==='missing_result').length,single:{evaluated:single,categoryAccuracyPercent:percent(categoryCorrect,single),typeAccuracyPercent:percent(typeCorrect,single),abstentionPercent:percent(abstained,single)},outfit:{evaluated:outfits,expectedPieces,matchedPieces,pieceRecallPercent:percent(matchedPieces,expectedPieces),unexpectedPieces},errors},null,2));
+if(errors.some(e=>e.reason==='missing_result'))process.exitCode=1;
