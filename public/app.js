@@ -301,6 +301,11 @@ async function recognizeItem(item){
   catch(error){recognitionUnavailable=true;throw error;}
   if(!batch.some(x=>x.id===item.id))return;
   item.localAnalyzed=true;item.localChoices=[];
+  if(!result.strong&&result.categoryConfirmed&&result.categoryOnly&&result.choices?.[0]?.category==='Dresses'&&result.choices[0].itemType==='Unknown'){
+   if(!item.userAdjusted&&segmentationAllows(item,result.choices[0])){applyLocalChoice(item,result.choices[0]);item.name='Dresses';item.localStatus='Dress category recognized. Use Adjust to confirm the type.';}
+   else item.localStatus=item.userAdjusted?'Your adjustments are preserved. Save this piece when ready.':'The clothing checks disagree. Use Adjust or take a clearer photo.';
+   return true;
+  }
   if(!result.strong){if(typeof recordDeviceEvent==='function')recordDeviceEvent('not_recognized',{durationMs:Date.now()-scanStarted});item.localStatus=(item.possibleDuplicate?'Possible duplicate. ':'')+'Not identified confidently.';return true;}
   if(!segmentationAllows(item,result.choices[0])){item.localStatus=item.segmentHint?.clipped?'This piece is partly outside the photo. Retake the whole garment or use Adjust.':'The clothing mask and garment checks disagree. Use Adjust or take a clearer photo.';return true;}
   if(item.userAdjusted){item.localStatus='Your adjustments are preserved. Save this piece when ready.';return true;}

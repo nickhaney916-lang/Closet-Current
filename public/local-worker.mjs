@@ -11,8 +11,8 @@ async function load(){
   env.allowLocalModels=false;env.useBrowserCache=true;
   env.backends.onnx.wasm.numThreads=1;env.backends.onnx.wasm.proxy=false;
   scannerStage='catalog_import';const version=new URL(import.meta.url).search;
-  const {makeVectorScorer,loadVectorAssets}=await import('./vector-scorer.mjs'+version);
-  const {prepareRecognitionPhoto}=await import('./recognition-photo.mjs'+version);
+  const {makeVectorScorer,loadVectorAssets,averageImageFeatures}=await import('./vector-scorer.mjs'+version);
+  const {prepareRecognitionPhoto,fitWholePhoto}=await import('./recognition-photo.mjs'+version);
   const {metadata,vectors}=await loadVectorAssets('recognition-vectors.json'+version,'recognition-vectors.bin'+version);
   const processor=await AutoProcessor.from_pretrained(metadata.model,{revision:metadata.revision});
   const vision=await CLIPVisionModelWithProjection.from_pretrained(metadata.model,{revision:metadata.revision,device:'wasm',dtype:'q8',progress_callback:event=>{
@@ -20,8 +20,9 @@ async function load(){
    self.postMessage({type:'progress',stage:weights?'weights':'runtime',phase:scannerStage,percent:weights&&Number.isFinite(event.progress)?Math.round(event.progress):null});
   }});
   const whole=makeVectorScorer(async image=>{
-   const fitted=await prepareRecognitionPhoto(image,RawImageClass),result=await vision(await processor(fitted));
-   return result.image_embeds.data;
+   const fitted=await prepareRecognitionPhoto(image,RawImageClass),native=await fitWholePhoto(image,RawImageClass);
+   const first=await vision(await processor(fitted)),second=await vision(await processor(native));
+   return averageImageFeatures([first.image_embeds.data,second.image_embeds.data],metadata.dimensions);
   },metadata,vectors);
   const center=makeVectorScorer(async image=>{
    const fitted=await prepareRecognitionPhoto(image,RawImageClass,{confirmation:true});

@@ -26,3 +26,12 @@ test('whole-photo preparation preserves portrait and landscape edges',async()=>{
  class Image{constructor(data,width,height,channels){Object.assign(this,{data,width,height,channels});}}
  const fitted=await fitWholePhoto(raw,Image);assert.deepEqual(requested,{width:224,height:56});assert.equal(fitted.width,224);assert.equal(fitted.height,224);assert.equal(fitted.data[0],255);
 });
+
+test('multi-scale fusion normalizes each view before averaging and rejects invalid features',async()=>{
+ const {averageImageFeatures}=await import('../public/vector-scorer.mjs');
+ const result=averageImageFeatures([[100,0],[0,1]],2);
+ assert.ok(Math.abs(result[0]-Math.SQRT1_2)<1e-6);assert.ok(Math.abs(result[1]-Math.SQRT1_2)<1e-6);
+ assert.throws(()=>averageImageFeatures([[1,0],[NaN,1]],2),/Invalid/);
+ assert.throws(()=>averageImageFeatures([[1,0]],2),/Invalid/);
+ assert.throws(()=>averageImageFeatures([[1,0],[-1,0]],2),/Invalid/);
+});

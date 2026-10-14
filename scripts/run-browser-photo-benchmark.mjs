@@ -2,7 +2,8 @@ import {chromium} from 'playwright';
 import {createServer} from 'node:http';
 import {readFile,readdir,mkdir,writeFile} from 'node:fs/promises';
 import {extname,join,resolve} from 'node:path';
-const root=resolve('dist'),photoDir=resolve('benchmark/photos'),manifest=resolve('benchmark/manifest-reviewed-32.json');
+const root=resolve('dist'),photoDir=resolve('benchmark/photos'),manifest=resolve(process.argv[2]||'benchmark/manifest-reviewed-32.json');
+const outputDir=resolve(process.argv[3]||'benchmark/output');
 const types={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.json':'application/json','.bin':'application/octet-stream','.css':'text/css','.webmanifest':'application/manifest+json'};
 const server=createServer(async(req,res)=>{try{const p=new URL(req.url,'http://localhost').pathname;const name=resolve(root,'.'+decodeURIComponent(p==='/'?'/index.html':p));if(!name.startsWith(root+'/'))throw Error('Forbidden');const data=await readFile(name);res.writeHead(200,{'Content-Type':types[extname(name)]||'application/octet-stream','Access-Control-Allow-Origin':'*'});res.end(data);}catch{res.writeHead(404);res.end('Not found');}});
 await new Promise(r=>server.listen(0,'127.0.0.1',r));
@@ -20,7 +21,7 @@ try{
  try{await page.locator('#download').waitFor({state:'visible',timeout:900000});await page.waitForFunction(()=>!document.querySelector('#download').disabled,null,{timeout:900000});}
  catch(e){console.error('Runner status:',await page.locator('#status').innerText());throw e;}
  const downloadPromise=page.waitForEvent('download');await page.locator('#download').click();const download=await downloadPromise;
- await mkdir('benchmark/output',{recursive:true});await download.saveAs('benchmark/output/results.json');
- const result=JSON.parse(await readFile('benchmark/output/results.json','utf8'));const errors=result.filter(x=>x.error);const reasons=Object.fromEntries([...new Set(result.map(x=>x.reason|| (x.error?'runtime_error':'accepted')))].map(reason=>[reason,result.filter(x=>(x.reason||(x.error?'runtime_error':'accepted'))===reason).length]));console.log('Rejection reasons:',JSON.stringify(reasons));console.log('Actual browser inference results:',result.length,'errors:',errors.length);console.log('Error examples:',JSON.stringify(errors.slice(0,8)));await writeFile('benchmark/output/run-summary.json',JSON.stringify({count:result.length,errors:errors.length,reasons,errorExamples:errors.slice(0,8)},null,2));
+ await mkdir(outputDir,{recursive:true});await download.saveAs(join(outputDir,'results.json'));
+ const result=JSON.parse(await readFile(join(outputDir,'results.json'),'utf8'));const errors=result.filter(x=>x.error);const reasons=Object.fromEntries([...new Set(result.map(x=>x.reason|| (x.error?'runtime_error':'accepted')))].map(reason=>[reason,result.filter(x=>(x.reason||(x.error?'runtime_error':'accepted'))===reason).length]));console.log('Rejection reasons:',JSON.stringify(reasons));console.log('Actual browser inference results:',result.length,'errors:',errors.length);console.log('Error examples:',JSON.stringify(errors.slice(0,8)));await writeFile(join(outputDir,'run-summary.json'),JSON.stringify({count:result.length,errors:errors.length,reasons,errorExamples:errors.slice(0,8)},null,2));
  if(errors.length)process.exitCode=1;
 }finally{await browser?.close();await new Promise(r=>server.close(r));}
