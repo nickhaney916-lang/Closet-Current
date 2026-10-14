@@ -173,7 +173,7 @@ async function startCamera(mode){
  try{audio=new(window.AudioContext||window.webkitAudioContext)();await audio.resume();}catch{}
  try{
   if(!navigator.mediaDevices?.getUserMedia)throw Error('Camera access unavailable. Choose saved photos or a closet video instead.');
-  const acquired=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280}},audio:false});
+  const acquired=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}},audio:false});
   if(request!==cameraRequest){acquired.getTracks().forEach(track=>track.stop());return;}
   stream=acquired;cameraMode=mode;
   video.removeAttribute('src');video.srcObject=stream;video.classList.add('visible');$('placeholder').hidden=true;
