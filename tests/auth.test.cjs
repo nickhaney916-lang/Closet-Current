@@ -152,3 +152,17 @@ test('disabled email provider and unsupported email address give actionable mess
   assert.match(a.get('authStatus').textContent,expected);assert.equal(a.window.closetAuth.user,null);assert.equal(a.get('authSubmit').disabled,false);
  }
 });
+
+test('cloud requests reuse a valid session without sending another login',async()=>{
+ const a=app(async()=>response({access_token:'test-access',refresh_token:'test-refresh',user:{id:'test-user'},expires_in:3600}));await a.submit();
+ assert.equal(await a.window.closetAuth.getAccessToken(),'test-access');assert.equal(a.requests.length,1);
+});
+test('simultaneous cloud refreshes rotate the token only once and retain the account',async()=>{
+ let finish,calls=0;const a=app(async()=>++calls===1?response({access_token:'old-access',refresh_token:'old-refresh',user:{id:'test-user'}}):new Promise(r=>finish=r));await a.submit();
+ const one=a.window.closetAuth.getAccessToken({force:true}),two=a.window.closetAuth.getAccessToken({force:true});assert.equal(a.requests.length,2);
+ finish(response({access_token:'fresh-access',refresh_token:'fresh-refresh',user:{id:'test-user'}}));assert.deepEqual(await Promise.all([one,two]),['fresh-access','fresh-access']);
+});
+test('cloud token refresh cannot switch to a different account',async()=>{
+ let calls=0;const a=app(async()=>++calls===1?response({access_token:'old-access',refresh_token:'old-refresh',user:{id:'first-user'}}):response({access_token:'other-access',user:{id:'other-user'}}));await a.submit();
+ await assert.rejects(a.window.closetAuth.getAccessToken({force:true}),/account changed/);assert.equal(a.window.closetAuth.user.id,'first-user');
+});

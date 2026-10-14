@@ -1,0 +1,43 @@
+name: Private closet backup and multi-device recovery
+on:
+  push:
+    branches: [main, 'cloud/private-backup']
+    paths:
+      - 'public/**'
+      - 'tests/cloud-backup.test.cjs'
+      - 'scripts/run-cloud-backup-flow.mjs'
+      - '.github/workflows/cloud-backup-flow.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  cloud:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prepare browser and licensed fixture
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium
+          gh run download 38491639135 -n commons-clothing-photo-candidates -D benchmark/input
+          mkdir -p benchmark/photos benchmark/cloud-backup
+          cp benchmark/input/photos/commons-0002.jpg benchmark/photos/
+          cp benchmark/input/attributions.json benchmark/cloud-backup/
+      - name: Verify migration, offline edits and recovery across browser sessions
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+          node scripts/run-cloud-backup-flow.mjs benchmark/cloud-backup
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: private-cloud-backup-results
+          path: benchmark/cloud-backup/
+          retention-days: 14
