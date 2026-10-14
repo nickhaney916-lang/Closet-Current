@@ -33,6 +33,6 @@ test('small photos still classify but cannot autosupply detailed attributes',asy
 test('unreadable image returns a safe image error instead of categories',async()=>{
  const h=setup({decodeError:true});assert.equal(await h.scan(),undefined);assert.equal(h.calls.length,0);const error=h.sent.find(x=>x.type==='error');assert.equal(error.code,'image');assert.ok(!JSON.stringify(error).includes('private path'));
 });
-test('detail comparison failure returns an error instead of saving partial guesses',async()=>{
- const h=setup({detailError:true});assert.equal(await h.scan(),undefined);const error=h.sent.find(x=>x.type==='error');assert.equal(error.stage,'details');assert.ok(!JSON.stringify(error).includes('private error text'));
+test('optional detail failure preserves confirmed garment identity without inventing attributes',async()=>{
+ const h=setup({detailError:true}),result=await h.scan();assert.equal(result.strong,true);assert.equal(result.choices[0].itemType,'T-shirt');assert.deepEqual({...result.details},{});assert.equal(h.sent.some(x=>x.type==='error'),false);assert.ok(!JSON.stringify(h.sent).includes('private error text'));
 });
