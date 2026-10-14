@@ -1,0 +1,21 @@
+{
+  "a shirt, blouse, sweater, or other top": ["a shirt, blouse, sweater, or other top", "an upper body shirt or blouse", "a top worn on the torso"],
+  "pants, shorts, or a skirt": ["pants, shorts, or a skirt", "lower body trousers, jeans or shorts", "a skirt or folded pair of pants"],
+  "a dress, jumpsuit, or romper": ["a dress, jumpsuit, or romper", "a one piece dress with a bodice and skirt", "a knee length or full length dress", "a one piece jumpsuit or romper"],
+  "a jacket, coat, or other outerwear": ["a jacket, coat, or other outerwear", "a jacket or coat worn as an outer layer", "a structured jacket with lapels and buttons"],
+  "a blurry image with no identifiable garment": ["a blurry image with no identifiable garment", "an out of focus abstract image", "unrecognizable blurred shapes"],
+  "a blouse": ["a blouse", "a women's blouse with a neckline and sleeves", "a loose blouse ending near the waist"],
+  "a tunic": ["a tunic", "a long loose top extending below the hips", "a tunic shirt worn over pants"],
+  "a T-shirt": ["a T-shirt", "a cotton jersey tee shirt", "a short or long sleeved T-shirt"],
+  "a sweatshirt": ["a sweatshirt", "a thick fleece pullover with ribbed cuffs", "a sweatshirt with ribbed waistband and cuffs"],
+  "a pair of jeans": ["a pair of jeans", "blue denim jeans with pockets and seams", "a folded pair of denim jeans"],
+  "a skirt": ["a skirt", "a separate lower body skirt with a waistband", "a skirt garment laid flat"],
+  "a casual dress": ["a casual dress", "a one piece everyday dress with bodice and skirt", "a sleeveless casual dress with a skirt"],
+  "a formal dress": ["a formal dress", "a long formal gown with a fitted bodice and skirt", "an elegant full length dress"],
+  "a shirt dress": ["a shirt dress", "a one piece dress with a shirt collar and buttons", "a button front shirt dress"],
+  "a sweater dress": ["a sweater dress", "a knitted one piece dress extending below the hips", "a long knitted dress"],
+  "a jacket": ["a jacket", "a short outerwear jacket with sleeves and front opening", "a jacket laid flat"],
+  "a coat": ["a coat", "a long outerwear coat with sleeves and front fastening", "a coat with lapels and buttons"],
+  "sneakers": ["sneakers", "athletic sneaker shoes with rubber soles", "high top canvas sneakers with laces"],
+  "ankle boots": ["ankle boots", "leather ankle boots with boot shafts", "short leather boots covering the ankles"]
+}
