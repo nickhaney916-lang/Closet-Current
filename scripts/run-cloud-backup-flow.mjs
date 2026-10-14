@@ -108,7 +108,7 @@ try{
    pieces.push({image:encode(cutout),recognitionPhoto:{image:encode(raw)},colorEstimate:PhotoColor.estimate(sample.data,16,16),cropBounds:{x:b.left/120,y:b.top/240,width:b.width/120,height:b.height/240},hint:{categories:[category],types:[],clipped:false},category,type,color});
   }
   window.outfitFixture={source,pieces};const native=Worker;window.Worker=class{constructor(url,options){if(!String(url).includes('outfit-worker.mjs'))return new native(url,options);}postMessage(request){setTimeout(()=>{for(const piece of pieces)this.onmessage({data:{type:'piece',id:request.id,piece}});this.onmessage({data:{type:'done',id:request.id,count:2}});},20);}terminate(){}};
-  localReady=true;recognitionUnavailable=false;localRequest=async(type,image)=>{const p=pieces.find(x=>x.recognitionPhoto.image===image);if(!p)throw Error('Expected original crop pixels for classification');return {strong:true,choices:[{category:p.category,itemType:p.type,sleeveLength:'Unknown'}],details:{color:'Green',pattern:'Solid'}};};
+  localReady=true;recognitionUnavailable=false;localRequest=async(type,image)=>{const p=pieces.find(x=>x.recognitionPhoto.image===image);if(!p)throw Error('Expected original crop pixels for classification');return {strong:true,choices:[{label:p.type,category:p.category,itemType:p.type,sleeveLength:'Unknown'}],details:{color:'Green',pattern:'Solid'}};};
   switchView('scan');startOutfitSplit(source,'automatic-outfit-fixture');
  });
  await clean.page.waitForFunction(()=>items.filter(x=>x.outfitSourceId==='automatic-outfit-fixture').length===2);
