@@ -15,3 +15,12 @@ test('clipped or weaker masks do not supply a category on their own',async()=>{
 test('an upper-clothes mask cannot choose between a top and outerwear without evidence',async()=>{
  assert.equal((await classifyIsolatedGarment(uncertain,image,{hint:{...hint,categories:['Tops','Outerwear']}})).strong,false);
 });
+
+test('negative-only scores do not crash a high-confidence mask fallback',async()=>{
+ const negatives=async()=>[{label:'a blank wall',score:.9},{label:'a dog or cat',score:.1}];
+ const result=await classifyIsolatedGarment(negatives,image,{hint});
+ assert.equal(result.strong,true);
+ assert.equal(result.categoryOnly,true);
+ assert.equal(result.choices[0].category,'Bottoms');
+ assert.equal(result.choices[0].score,0);
+});
