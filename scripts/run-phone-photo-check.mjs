@@ -28,7 +28,7 @@ try{
  const downloadPromise=page.waitForEvent('download');await page.locator('#download').click();const download=await downloadPromise;const reportPath=join(output,'results.json');await download.saveAs(reportPath);
  const raw=await readFile(reportPath,'utf8'),report=JSON.parse(raw);assert.ok(!raw.includes('PRIVATE_PHONE'));assert.ok(!raw.includes('data:image'));assert.equal(report.summary.photos,2);assert.equal(report.summary.errors,0);assert.equal(report.summary.categoryMatches,1);assert.equal(report.summary.typeMatches,1);assert.equal(report.summary.negativeRejected,1);assert.match(report.release,/^[a-f0-9]{12}$/);assert.equal(report.recognitionIndex,JSON.parse(await readFile('public/recognition-vectors.json','utf8')).sha256);
  assert.equal(await page.locator('#category-0').isDisabled(),true);
- assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+ assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=390&&innerWidth<=390),true);
  await page.screenshot({path:join(output,'phone-photo-flow.png'),fullPage:true});
  await page.locator('#restart').click();assert.equal(await page.locator('.photo').count(),0);assert.equal(await page.locator('#photos').isDisabled(),false);assert.equal(await page.locator('#download').isVisible(),false);
  await page.locator('#photos').setInputFiles({name:'PRIVATE_PHONE_RETRY.jpg',mimeType:'image/jpeg',buffer:await readFile('benchmark/photos/commons-0001.jpg')});await page.locator('#category-0').selectOption('Tops');await page.locator('#run').click();await page.locator('#restart').click();

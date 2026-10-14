@@ -3,13 +3,13 @@ import {photoTestSession} from './photo-test-session.mjs';
 const $=id=>document.getElementById(id);let rows=[],report=null,session=null,generation=0,locked=false;
 function option(select,text,value){const item=document.createElement('option');item.textContent=text;item.value=value;select.append(item);}
 function readiness(){ $('run').disabled=locked||!rows.length||rows.some(r=>!r.category.value); }
-function reset(){
+function reset({preserveFiles=false}={}){
  generation++;session?.close();session=null;for(const row of rows){clearTimeout(row.decodeTimer);URL.revokeObjectURL(row.url);}rows=[];report=null;locked=false;
- $('photoRows').replaceChildren();$('photos').value='';$('photos').disabled=false;$('run').textContent='Check recognition';$('run').disabled=true;$('restart').hidden=true;$('download').hidden=true;$('summary').hidden=true;$('status').textContent='Choose your photos to begin.';
+ $('photoRows').replaceChildren();if(!preserveFiles)$('photos').value='';$('photos').disabled=false;$('run').textContent='Check recognition';$('run').disabled=true;$('restart').hidden=true;$('download').hidden=true;$('summary').hidden=true;$('status').textContent='Choose your photos to begin.';
 }
 $('restart').onclick=reset;
 $('photos').onchange=()=>{
- const files=[...$('photos').files];reset();if(!files.length)return;
+ const files=[...$('photos').files];reset({preserveFiles:true});if(!files.length)return;
  if(files.length>20||files.some(f=>f.size>10*1024*1024)){$('status').textContent='Choose up to 20 photos, each smaller than 10 MB.';return;}
  for(const [i,file] of files.entries()){
   const card=document.createElement('section');card.className='photo';const url=URL.createObjectURL(file),image=document.createElement('img');image.src=url;image.alt='Photo '+(i+1);card.append(image);
@@ -39,7 +39,7 @@ $('run').onclick=async()=>{
     const raw=await session.call({type:'classify',image});result=phonePhotoResult(labels[i].id,raw,performance.now()-started);
    }catch(e){clearTimeout(row.decodeTimer);result=photoFailure(labels[i].id,e.code||'image');}
    if(mine!==generation)return;results.push(result);
-   row.result.textContent=result.error?'Could not finish this photo.':!result.strong&&!result.categoryConfirmed?'Needs review':result.prediction.category+' · '+(result.prediction.type||'Unknown')+(result.categoryConfirmed&&!result.strong?' · Review type':'');
+   row.result.textContent=result.error?'Could not finish this photo.':!result.strong&&!result.categoryConfirmed?(labels[i].expectedCategory==='Uncategorized'?'No clothing label accepted':'Needs review'):result.prediction.category+' · '+(result.prediction.type||'Unknown')+(result.categoryConfirmed&&!result.strong?' · Review type':'');
   }
   report=scorePhonePhotos(labels,results,{release:document.querySelector('meta[name="closet-release"]').content,indexHash:document.querySelector('meta[name="recognition-index"]').content});
   const s=report.summary;$('summary').textContent=s.categoryMatches+' of '+s.garments+' garment categories matched. '+s.typeMatches+' of '+s.typesChecked+' labeled types matched. '+s.errors+' photos could not finish.'+(s.negativePhotos?' '+s.negativeRejected+' of '+s.negativePhotos+' nonclothing photos rejected.':'');$('summary').hidden=false;$('download').hidden=false;$('status').textContent='Finished. Download the results, or start over with different photos.';
