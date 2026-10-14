@@ -7,6 +7,8 @@ on:
       - 'tests/cloud-backup.test.cjs'
       - 'scripts/run-cloud-backup-flow.mjs'
       - '.github/workflows/cloud-backup-flow.yml'
+      - 'scripts/download-reviewed-photos.mjs'
+      - 'benchmark/locked-photo-sources.json'
   workflow_dispatch:
 permissions:
   contents: read

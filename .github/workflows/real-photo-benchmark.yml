@@ -3,6 +3,7 @@ on:
   push:
     paths:
       - '.github/workflows/real-photo-benchmark.yml'
+      - 'benchmark/locked-photo-sources.json'
       - 'scripts/evaluate-recognition-benchmark.mjs'
       - 'scripts/compare-detail-field-coverage.mjs'
       - 'scripts/check-recognition-regressions.mjs'

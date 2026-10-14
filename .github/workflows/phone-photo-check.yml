@@ -3,6 +3,8 @@ on:
   push:
     paths:
       - '.github/workflows/phone-photo-check.yml'
+      - 'scripts/download-reviewed-photos.mjs'
+      - 'benchmark/locked-photo-sources.json'
       - 'public/phone-photo-*.mjs'
       - 'public/phone-photo-check.html'
       - 'public/photo-test-session.mjs'

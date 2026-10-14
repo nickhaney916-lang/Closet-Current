@@ -6,6 +6,8 @@ on:
       - 'public/**'
       - 'scripts/run-mobile-flow.mjs'
       - '.github/workflows/mobile-flow.yml'
+      - 'scripts/download-reviewed-photos.mjs'
+      - 'benchmark/locked-photo-sources.json'
   workflow_dispatch:
 permissions:
   contents: read

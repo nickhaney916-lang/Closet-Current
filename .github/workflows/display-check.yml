@@ -8,6 +8,8 @@ on:
       - 'public/app-theme.css'
       - 'scripts/check-display.mjs'
       - '.github/workflows/display-check.yml'
+      - 'scripts/download-reviewed-photos.mjs'
+      - 'benchmark/locked-photo-sources.json'
   workflow_dispatch:
 permissions:
   contents: read
