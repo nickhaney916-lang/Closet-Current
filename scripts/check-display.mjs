@@ -1,0 +1,46 @@
+import {chromium} from 'playwright';
+import {createServer} from 'node:http';
+import {readFile,writeFile,mkdir} from 'node:fs/promises';
+import {resolve,extname} from 'node:path';
+import assert from 'node:assert/strict';
+const root=resolve('dist'),out=resolve(process.argv[2]||'benchmark/display'),checks=[];
+const types={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.json':'application/json'};
+const server=createServer(async(req,res)=>{try{
+ const p=new URL(req.url,'http://localhost').pathname,file=resolve(root,'.'+decodeURIComponent(p==='/'?'/index.html':p));if(!file.startsWith(root+'/'))throw Error('Invalid path');
+ const data=await readFile(file);res.writeHead(200,{'Content-Type':types[extname(file)]||'application/octet-stream'});res.end(data);
+}catch{res.writeHead(404);res.end();}});
+await new Promise(r=>server.listen(0,'127.0.0.1',r));let browser;
+try{
+ await mkdir(out,{recursive:true});browser=await chromium.launch({headless:true,args:['--no-sandbox']});
+ const specs=[['commons-0002','Red T-shirt for casual weekends','Tops','T-shirt','Red'],['commons-0025','Blue jeans','Bottoms','Jeans','Blue'],['commons-0052','Everyday dress','Dresses','Casual dress','Multicolor'],['commons-0064','Light jacket','Outerwear','Jacket','Beige'],['commons-0081','Everyday sneakers','Shoes','Sneakers','White'],['commons-0087','Ankle boots','Shoes','Ankle boots','Brown']];
+ const seed=await Promise.all(specs.map(async([id,name,category,itemType,color])=>({id,name,category,itemType,color,image:'data:image/jpeg;base64,'+(await readFile('benchmark/photos/'+id+'.jpg')).toString('base64'),seasons:['Fall'],sleeveLength:'Unknown',userAdjusted:true,savedAt:'2026-10-14T00:00:00Z'})));
+ for(const width of [360,390,768,1280]){
+  const context=await browser.newContext({viewport:{width,height:width<760?844:900},isMobile:width<760,hasTouch:width<760,serviceWorkers:'block'});
+  // Synthetic test identity and licensed fixture garments only; no live login.
+  await context.route('**/auth.js*',r=>r.fulfill({contentType:'text/javascript',body:"window.closetAuth={user:{id:'display-check'},ready:Promise.resolve()};document.getElementById('authGate').hidden=true;document.getElementById('appShell').hidden=false;"}));
+  const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
+  await page.goto('http://127.0.0.1:'+server.address().port+'/');await page.evaluate(()=>closetReady);
+  await page.evaluate(async data=>{await writeAll(data);items=data;render();},seed);await page.evaluate(()=>document.fonts.ready);
+  for(const view of ['home','closet','scan','stylist']){
+   await page.locator('.tab[data-view="'+view+'"]').click();await page.evaluate(()=>document.activeElement?.blur());
+   assert.equal(await page.locator('.main-nav>.tab.active').count(),1);assert.equal(await page.locator('.main-nav>.tab.active').getAttribute('data-view'),view);
+   await page.mouse.move(0,0);
+   const layout=await page.evaluate(()=>({viewport:innerWidth,document:document.documentElement.scrollWidth}));
+   if(process.env.DISPLAY_ASSERT_LAYOUT==='1')assert.ok(layout.document<=layout.viewport+1,view+' overflow at '+width);
+   if(view==='closet'){
+    assert.equal(await page.locator('#closetGrid article').count(),6);
+    const first=await page.locator('#closetGrid article').first().boundingBox();checks.push({width,view,layout,firstPhotoTop:first.y});
+    await page.screenshot({path:out+'/'+width+'-'+view+'.png',fullPage:true,animations:'disabled'});
+    await page.locator('#filter').selectOption('Shoes');assert.equal(await page.locator('#closetGrid article').count(),2);await page.locator('#filter').selectOption('All categories');
+    await page.locator('#search').fill('Blue jeans');assert.equal(await page.locator('#closetGrid article').count(),1);await page.locator('#search').fill('');
+   }else{checks.push({width,view,layout});await page.screenshot({path:out+'/'+width+'-'+view+'.png',fullPage:true,animations:'disabled'});}
+  }
+  await page.locator('.tab[data-view="closet"]').click();await page.locator('#closetGrid').getByRole('button',{name:'Adjust details',exact:true}).first().click();
+  const dialog=page.locator('dialog[open]');await dialog.waitFor();const box=await dialog.boundingBox();assert.ok(box.x>=-1&&box.x+box.width<=width+1,'Adjust dialog must fit '+width);
+  await page.screenshot({path:out+'/'+width+'-adjust.png',fullPage:true,animations:'disabled'});await dialog.getByRole('button',{name:'Cancel',exact:true}).click();
+  if(width<760){for(const control of await page.locator('.main-nav>.tab,.more-menu>summary').all()){const b=await control.boundingBox();assert.ok(b.width>=44&&b.height>=44,'Navigation touch target too small');}}
+  assert.deepEqual(errors,[]);await context.close();
+ }
+ await writeFile(out+'/results.json',JSON.stringify({checks,filtersAndSearch:true,adjustDialogsFit:true,phoneNavigationTouchTargets:true,limitations:'Synthetic identity and licensed fixture wardrobe; no physical phone or production login.'},null,2));
+ console.log(JSON.stringify(checks));
+}finally{await browser?.close();await new Promise(r=>server.close(r));}

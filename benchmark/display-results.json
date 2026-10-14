@@ -1,0 +1,286 @@
+{
+  "baseline": "04d200729eaf8d409e8342fc00c3c782e3013a8e",
+  "comparisonRun": 38610205291,
+  "results": {
+    "before": {
+      "checks": [
+        {
+          "width": 360,
+          "view": "home",
+          "layout": {
+            "viewport": 360,
+            "document": 360
+          }
+        },
+        {
+          "width": 360,
+          "view": "closet",
+          "layout": {
+            "viewport": 360,
+            "document": 360
+          },
+          "firstPhotoTop": 507.078125
+        },
+        {
+          "width": 360,
+          "view": "scan",
+          "layout": {
+            "viewport": 360,
+            "document": 360
+          }
+        },
+        {
+          "width": 360,
+          "view": "stylist",
+          "layout": {
+            "viewport": 360,
+            "document": 360
+          }
+        },
+        {
+          "width": 390,
+          "view": "home",
+          "layout": {
+            "viewport": 390,
+            "document": 390
+          }
+        },
+        {
+          "width": 390,
+          "view": "closet",
+          "layout": {
+            "viewport": 390,
+            "document": 390
+          },
+          "firstPhotoTop": 507.078125
+        },
+        {
+          "width": 390,
+          "view": "scan",
+          "layout": {
+            "viewport": 390,
+            "document": 390
+          }
+        },
+        {
+          "width": 390,
+          "view": "stylist",
+          "layout": {
+            "viewport": 390,
+            "document": 390
+          }
+        },
+        {
+          "width": 768,
+          "view": "home",
+          "layout": {
+            "viewport": 768,
+            "document": 768
+          }
+        },
+        {
+          "width": 768,
+          "view": "closet",
+          "layout": {
+            "viewport": 768,
+            "document": 768
+          },
+          "firstPhotoTop": 322.78125
+        },
+        {
+          "width": 768,
+          "view": "scan",
+          "layout": {
+            "viewport": 768,
+            "document": 768
+          }
+        },
+        {
+          "width": 768,
+          "view": "stylist",
+          "layout": {
+            "viewport": 768,
+            "document": 768
+          }
+        },
+        {
+          "width": 1280,
+          "view": "home",
+          "layout": {
+            "viewport": 1280,
+            "document": 1280
+          }
+        },
+        {
+          "width": 1280,
+          "view": "closet",
+          "layout": {
+            "viewport": 1280,
+            "document": 1280
+          },
+          "firstPhotoTop": 227.984375
+        },
+        {
+          "width": 1280,
+          "view": "scan",
+          "layout": {
+            "viewport": 1280,
+            "document": 1280
+          }
+        },
+        {
+          "width": 1280,
+          "view": "stylist",
+          "layout": {
+            "viewport": 1280,
+            "document": 1280
+          }
+        }
+      ],
+      "filtersAndSearch": true,
+      "adjustDialogsFit": true,
+      "phoneNavigationTouchTargets": true,
+      "limitations": "Synthetic identity and licensed fixture wardrobe; no physical phone or production login."
+    },
+    "after": {
+      "checks": [
+        {
+          "width": 360,
+          "view": "home",
+          "layout": {
+            "viewport": 360,
+            "document": 360
+          }
+        },
+        {
+          "width": 360,
+          "view": "closet",
+          "layout": {
+            "viewport": 360,
+            "document": 360
+          },
+          "firstPhotoTop": 437
+        },
+        {
+          "width": 360,
+          "view": "scan",
+          "layout": {
+            "viewport": 360,
+            "document": 360
+          }
+        },
+        {
+          "width": 360,
+          "view": "stylist",
+          "layout": {
+            "viewport": 360,
+            "document": 360
+          }
+        },
+        {
+          "width": 390,
+          "view": "home",
+          "layout": {
+            "viewport": 390,
+            "document": 390
+          }
+        },
+        {
+          "width": 390,
+          "view": "closet",
+          "layout": {
+            "viewport": 390,
+            "document": 390
+          },
+          "firstPhotoTop": 437
+        },
+        {
+          "width": 390,
+          "view": "scan",
+          "layout": {
+            "viewport": 390,
+            "document": 390
+          }
+        },
+        {
+          "width": 390,
+          "view": "stylist",
+          "layout": {
+            "viewport": 390,
+            "document": 390
+          }
+        },
+        {
+          "width": 768,
+          "view": "home",
+          "layout": {
+            "viewport": 768,
+            "document": 768
+          }
+        },
+        {
+          "width": 768,
+          "view": "closet",
+          "layout": {
+            "viewport": 768,
+            "document": 768
+          },
+          "firstPhotoTop": 402.78125
+        },
+        {
+          "width": 768,
+          "view": "scan",
+          "layout": {
+            "viewport": 768,
+            "document": 768
+          }
+        },
+        {
+          "width": 768,
+          "view": "stylist",
+          "layout": {
+            "viewport": 768,
+            "document": 768
+          }
+        },
+        {
+          "width": 1280,
+          "view": "home",
+          "layout": {
+            "viewport": 1280,
+            "document": 1280
+          }
+        },
+        {
+          "width": 1280,
+          "view": "closet",
+          "layout": {
+            "viewport": 1280,
+            "document": 1280
+          },
+          "firstPhotoTop": 230.984375
+        },
+        {
+          "width": 1280,
+          "view": "scan",
+          "layout": {
+            "viewport": 1280,
+            "document": 1280
+          }
+        },
+        {
+          "width": 1280,
+          "view": "stylist",
+          "layout": {
+            "viewport": 1280,
+            "document": 1280
+          }
+        }
+      ],
+      "filtersAndSearch": true,
+      "adjustDialogsFit": true,
+      "phoneNavigationTouchTargets": true,
+      "limitations": "Synthetic identity and licensed fixture wardrobe; no physical phone or production login."
+    }
+  }
+}

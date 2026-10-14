@@ -55,3 +55,7 @@ Development is resumed. Real phone garment reports remain the next input needed 
 ## Authentication continuation
 
 Reviewed Closet Current's public Auth settings and project health. Added clear email delivery/rate-limit messages and validation of unreadable service responses; 170 automated checks passed. Supabase management access requested reauthentication, so SMTP settings were not modified and real inbox tests remain open. See docs/AUTH-EMAIL-READINESS.md. Recognition, simplified navigation, camera resolution and Drive Duel are preserved.
+
+## Display continuation
+
+The owner chose to polish the existing display rather than redesign the app. Compact labeled filters, more consistent clothing cards and responsive spacing passed a four-width visual comparison and 170 automated checks. See docs/DISPLAY-POLISH.md. Preserve the current purple/peach colors and simplified navigation in subsequent work.
