@@ -1,0 +1,35 @@
+name: Rebuild recognition index
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "scripts/rebuild-recognition-vectors.py"
+      - "scripts/recognition-requirements.txt"
+      - ".github/workflows/rebuild-recognition-index.yml"
+permissions:
+  contents: read
+jobs:
+  regenerate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: scripts/recognition-requirements.txt
+      - name: Install pinned recognition dependencies
+        run: pip install -r scripts/recognition-requirements.txt
+      - name: Regenerate pinned FashionCLIP text vectors
+        run: python scripts/rebuild-recognition-vectors.py
+      - name: Validate vectors and regression tests
+        run: node --test tests/recognition-assets.test.mjs tests/recognition-index-coverage.test.mjs tests/staged-recognition.test.mjs tests/isolated-recognition.test.mjs
+      - name: Upload generated index for review
+        uses: actions/upload-artifact@v4
+        with:
+          name: fashionclip-recognition-index
+          path: |
+            public/recognition-vectors.json
+            public/recognition-vectors.bin
+          retention-days: 14
