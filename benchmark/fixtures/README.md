@@ -1,0 +1,1 @@
+The licensed Commons photograph commons-0035.jpg is kept here because its source thumbnail is unreliable from GitHub Actions. The exact validated bytes are preserved; the downloader verifies its SHA-256 before use. Attribution, author, original source and CC BY-SA 4.0 license are recorded in ../locked-photo-sources.json. No private wardrobe images are bundled.

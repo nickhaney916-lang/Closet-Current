@@ -13,13 +13,17 @@ for(const row of manifest){
  for(const value of urls){const url=new URL(value);if(url.protocol!=='https:'||!allowedHosts.has(url.hostname))throw Error('Unexpected photo host.');}
  const path=join(directory,row.image),digest=bytes=>createHash('sha256').update(bytes).digest('hex');
  try{if(digest(await readFile(path))===row.sha256)continue;}catch{}
- let verified=false;
+ try{const bundled=await readFile(join('benchmark/fixtures',row.image));if(digest(bundled)===row.sha256){await writeFile(path,bundled);continue;}}catch{}
+ let verified=false,lastFailure='no source';
+ for(let attempt=0;attempt<3&&!verified;attempt++){
  for(const url of urls){try{
   const response=await fetch(url,{headers:{'User-Agent':'ClosetCurrentBenchmark/1.0 (https://github.com/nickhaney916-lang/Closet-Current)'},signal:AbortSignal.timeout(30000)});
-  if(!response.ok||!allowedHosts.has(new URL(response.url).hostname))continue;
-  const bytes=new Uint8Array(await response.arrayBuffer());if(bytes.length>8*1024*1024||digest(bytes)!==row.sha256)continue;
+  if(!response.ok){lastFailure='HTTP '+response.status;continue;}if(!allowedHosts.has(new URL(response.url).hostname)){lastFailure='redirect';continue;}
+  const bytes=new Uint8Array(await response.arrayBuffer());if(bytes.length>8*1024*1024||digest(bytes)!==row.sha256){lastFailure='checksum or size';continue;}
   await writeFile(path,bytes);verified=true;break;
- }catch{}}
- if(!verified)throw Error('Verified source photo unavailable or changed: '+row.id);
+ }catch(error){lastFailure=error.name;}}
+ if(!verified&&attempt<2)await new Promise(resolve=>setTimeout(resolve,1000*(attempt+1)));
+ }
+ if(!verified)throw Error('Verified source photo unavailable or changed: '+row.id+' ('+lastFailure+')');
 }
 console.log('Verified '+manifest.length+' reviewed photographs.');
