@@ -58,7 +58,11 @@ jobs:
           node scripts/evaluate-recognition-benchmark.mjs benchmark/manifest-holdout-16.json benchmark/output/holdout/results.json > benchmark/output/holdout/evaluation.json
           cat benchmark/output/holdout/evaluation.json
       - name: Evaluate locked independent fresh photographs
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
+          gh run download 38500351254 -n fresh-validation-candidates -D benchmark/fresh-candidates
+          cp benchmark/fresh-candidates/photos/* benchmark/photos/
           node scripts/download-reviewed-photos.mjs benchmark/manifest-fresh-11.json
           node scripts/run-browser-photo-benchmark.mjs benchmark/manifest-fresh-11.json benchmark/output/fresh
           node scripts/evaluate-recognition-benchmark.mjs benchmark/manifest-fresh-11.json benchmark/output/fresh/results.json > benchmark/output/fresh/evaluation.json
