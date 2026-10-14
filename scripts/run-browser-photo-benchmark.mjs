@@ -17,7 +17,7 @@ try{
  const names=(await readdir(photoDir)).filter(x=>/\.(jpg|png|webp)$/i.test(x)).map(x=>join(photoDir,x));
  await page.locator('#photos').setInputFiles(names);
  await page.locator('#run').click();
- try{await page.locator('#download').waitFor({state:'visible',timeout:900000});await page.waitForFunction(()=>!document.querySelector('#download').disabled,{timeout:900000});}
+ try{await page.locator('#download').waitFor({state:'visible',timeout:900000});await page.waitForFunction(()=>!document.querySelector('#download').disabled,null,{timeout:900000});}
  catch(e){console.error('Runner status:',await page.locator('#status').innerText());throw e;}
  const downloadPromise=page.waitForEvent('download');await page.locator('#download').click();const download=await downloadPromise;
  await mkdir('benchmark/output',{recursive:true});await download.saveAs('benchmark/output/results.json');
