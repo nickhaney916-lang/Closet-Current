@@ -1,0 +1,53 @@
+name: App display comparison
+on:
+  push:
+    branches: [main, 'display/polish']
+    paths:
+      - 'public/index.html'
+      - 'public/style.css'
+      - 'public/app-theme.css'
+      - 'scripts/check-display.mjs'
+      - '.github/workflows/display-check.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  display:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prepare browser and licensed sample wardrobe
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium
+          gh run download 38491639135 -n commons-clothing-photo-candidates -D benchmark/input
+          mkdir -p benchmark/photos benchmark/display
+          cp benchmark/input/photos/* benchmark/photos/
+          cp benchmark/input/attributions.json benchmark/display/
+      - name: Compare original and polished display
+        run: |
+          cp public/index.html /tmp/polished-index.html
+          cp public/app-theme.css /tmp/polished-theme.css
+          git fetch origin 04d200729eaf8d409e8342fc00c3c782e3013a8e
+          git show 04d200729eaf8d409e8342fc00c3c782e3013a8e:public/index.html > public/index.html
+          git show 04d200729eaf8d409e8342fc00c3c782e3013a8e:public/app-theme.css > public/app-theme.css
+          node scripts/build.mjs
+          node scripts/check-display.mjs benchmark/display/before
+          cp /tmp/polished-index.html public/index.html
+          cp /tmp/polished-theme.css public/app-theme.css
+          node scripts/build.mjs
+          DISPLAY_ASSERT_LAYOUT=1 node scripts/check-display.mjs benchmark/display/after
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: app-display-comparison
+          path: benchmark/display/
+          retention-days: 14
