@@ -50,7 +50,9 @@ export async function recognizeGarment(model,image,{onStage=()=>{},onIdentified=
 
 function garmentCategoryTotals(results){
  const totals=new Map();
- for(const result of results){const candidate=localCandidates.find(x=>x.label===result.label);if(candidate&&Number.isFinite(result.score)&&result.score>=0&&result.score<=1)totals.set(candidate.category,(totals.get(candidate.category)||0)+result.score);}
+ // Sum only clothing classes: background/negative prompts must never win a
+ // clothing category vote simply because they appear in the candidate list.
+ for(const result of results){const candidate=localCandidates.find(x=>x.label===result.label);if(candidate&&candidate.category!=='Uncategorized'&&Number.isFinite(result.score)&&result.score>=0&&result.score<=1)totals.set(candidate.category,(totals.get(candidate.category)||0)+result.score);}
  return [...totals].map(([category,score])=>({category,score})).sort((a,b)=>b.score-a.score);
 }
 // A clothing mask supplies independent category evidence. Validate its category
