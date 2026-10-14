@@ -1,0 +1,322 @@
+[
+  {
+    "id": "validation-0001",
+    "image": "validation-0001.jpg",
+    "mode": "single",
+    "expectedCategory": "Dresses",
+    "expectedType": "Dress",
+    "verified": true,
+    "conditions": [
+      "visual-review",
+      "fresh-independent-validation",
+      "commons-public-photo"
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:Summer_dress_(5634765615).jpg",
+    "downloadUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f1/Summer_dress_%285634765615%29.jpg/1920px-Summer_dress_%285634765615%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "sourceImage": "https://upload.wikimedia.org/wikipedia/commons/f/f1/Summer_dress_%285634765615%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "sha256": "7953018d9f4bba2998b68d16fce4a59e4189e66d40f82b24459cb1200b4394c0",
+    "attribution": {
+      "id": "validation-0001",
+      "title": "File:Summer dress (5634765615).jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Summer_dress_(5634765615).jpg",
+      "license": "Public domain",
+      "licenseUrl": "",
+      "author": "USAID Africa Bureau",
+      "credit": "Summer dress Uploaded by Elitre"
+    },
+    "acceptedTypes": [
+      "Casual dress",
+      "Shirt dress",
+      "Sweater dress",
+      "Formal dress"
+    ]
+  },
+  {
+    "id": "validation-0002",
+    "image": "validation-0002.jpg",
+    "mode": "single",
+    "expectedCategory": "Dresses",
+    "expectedType": "Formal dress",
+    "verified": true,
+    "conditions": [
+      "visual-review",
+      "fresh-independent-validation",
+      "commons-public-photo"
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:Elie_Saab_Wedding_Dress_-_Paris_Haute_Couture_Spring-Summer_2012.jpg",
+    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/3/35/Elie_Saab_Wedding_Dress_-_Paris_Haute_Couture_Spring-Summer_2012.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",
+    "sourceImage": "https://upload.wikimedia.org/wikipedia/commons/3/35/Elie_Saab_Wedding_Dress_-_Paris_Haute_Couture_Spring-Summer_2012.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "sha256": "ded1c225fc7f02989303bd693bf2b839adb7fdd3bacea78eb0d35d539af2fab1",
+    "attribution": {
+      "id": "validation-0002",
+      "title": "File:Elie Saab Wedding Dress - Paris Haute Couture Spring-Summer 2012.jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Elie_Saab_Wedding_Dress_-_Paris_Haute_Couture_Spring-Summer_2012.jpg",
+      "license": "CC BY 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+      "author": "CHRISTOPHER MACSURAK from Chicago, USA",
+      "credit": "Elie Saab Wedding Dress Uploaded by paris 17"
+    }
+  },
+  {
+    "id": "validation-0003",
+    "image": "validation-0003.jpg",
+    "mode": "single",
+    "expectedCategory": "Dresses",
+    "expectedType": "Dress",
+    "verified": true,
+    "conditions": [
+      "visual-review",
+      "fresh-independent-validation",
+      "commons-public-photo"
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:Summer_Dress_LACMA_M.2007.211.740_(1_of_5).jpg",
+    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/8/8c/Summer_Dress_LACMA_M.2007.211.740_%281_of_5%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",
+    "sourceImage": "https://upload.wikimedia.org/wikipedia/commons/8/8c/Summer_Dress_LACMA_M.2007.211.740_%281_of_5%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "sha256": "de3fa07115e6e2805ff492506a6c99ad9674e675eef0e5e0642e2227207d7c7a",
+    "attribution": {
+      "id": "validation-0003",
+      "title": "File:Summer Dress LACMA M.2007.211.740 (1 of 5).jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Summer_Dress_LACMA_M.2007.211.740_(1_of_5).jpg",
+      "license": "Public domain",
+      "licenseUrl": "",
+      "author": "",
+      "credit": "Image: http://collections.lacma.org/sites/default/files/remote_images/piction/ma-31248409-O3.jpg Gallery: http://collections.lacma.org/node/214456 archive copy at the Wayback Machine"
+    },
+    "acceptedTypes": [
+      "Casual dress",
+      "Shirt dress",
+      "Sweater dress",
+      "Formal dress"
+    ]
+  },
+  {
+    "id": "validation-0004",
+    "image": "validation-0004.jpg",
+    "mode": "single",
+    "expectedCategory": "Dresses",
+    "expectedType": "Dress",
+    "verified": true,
+    "conditions": [
+      "visual-review",
+      "fresh-independent-validation",
+      "commons-public-photo"
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:Summer_Dress_LACMA_M.2007.211.856_(1_of_6).jpg",
+    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/6/67/Summer_Dress_LACMA_M.2007.211.856_%281_of_6%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",
+    "sourceImage": "https://upload.wikimedia.org/wikipedia/commons/6/67/Summer_Dress_LACMA_M.2007.211.856_%281_of_6%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "sha256": "e17f5a64e32f8b3ab87aaedb773cef9277040e0dda0506dc48f587be4da033c7",
+    "attribution": {
+      "id": "validation-0004",
+      "title": "File:Summer Dress LACMA M.2007.211.856 (1 of 6).jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Summer_Dress_LACMA_M.2007.211.856_(1_of_6).jpg",
+      "license": "Public domain",
+      "licenseUrl": "",
+      "author": "",
+      "credit": "Image: http://collections.lacma.org/sites/default/files/remote_images/piction/ma-31256632-O3.jpg Gallery: http://collections.lacma.org/node/214567 archive copy at the Wayback Machine"
+    },
+    "acceptedTypes": [
+      "Casual dress",
+      "Shirt dress",
+      "Sweater dress",
+      "Formal dress"
+    ]
+  },
+  {
+    "id": "validation-0008",
+    "image": "validation-0008.jpg",
+    "mode": "single",
+    "expectedCategory": "Accessories",
+    "expectedType": "Scarf",
+    "verified": true,
+    "conditions": [
+      "visual-review",
+      "fresh-independent-validation",
+      "commons-public-photo",
+      "headtie"
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:Nigerian_woman_in_a_buba_blouse_and_the_gele_headtie2.jpg",
+    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/3/39/Nigerian_woman_in_a_buba_blouse_and_the_gele_headtie2.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",
+    "sourceImage": "https://upload.wikimedia.org/wikipedia/commons/3/39/Nigerian_woman_in_a_buba_blouse_and_the_gele_headtie2.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "sha256": "16ed95a6212ecf0500c6b25047f3e9029fc49a04e4786b2c5f13c15d65e45f6f",
+    "attribution": {
+      "id": "validation-0008",
+      "title": "File:Nigerian woman in a buba blouse and the gele headtie2.jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Nigerian_woman_in_a_buba_blouse_and_the_gele_headtie2.jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "author": "Jamie Tubers",
+      "credit": "Own work"
+    },
+    "acceptedTypes": [
+      "Scarf",
+      "Hat"
+    ]
+  },
+  {
+    "id": "validation-0010",
+    "image": "validation-0010.jpg",
+    "mode": "single",
+    "expectedCategory": "Dresses",
+    "expectedType": "Dress",
+    "verified": true,
+    "conditions": [
+      "visual-review",
+      "fresh-independent-validation",
+      "commons-public-photo",
+      "worn-dress-with-collar-layer"
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:Blue_Crushed_Velvet_Dress_with_blouse_underneath.jpg",
+    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/c/c2/Blue_Crushed_Velvet_Dress_with_blouse_underneath.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",
+    "sourceImage": "https://upload.wikimedia.org/wikipedia/commons/c/c2/Blue_Crushed_Velvet_Dress_with_blouse_underneath.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "sha256": "2e2d757d60b5bce8b1e34765c7b59c21ede85c7c69cfbf63d802566934b847c7",
+    "attribution": {
+      "id": "validation-0010",
+      "title": "File:Blue Crushed Velvet Dress with blouse underneath.jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Blue_Crushed_Velvet_Dress_with_blouse_underneath.jpg",
+      "license": "CC BY-SA 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0",
+      "author": "Jamie",
+      "credit": "https://www.flickr.com/photos/63405864@N04/6786406687/in/dateposted/"
+    },
+    "acceptedTypes": [
+      "Casual dress",
+      "Shirt dress",
+      "Sweater dress",
+      "Formal dress"
+    ]
+  },
+  {
+    "id": "validation-0017",
+    "image": "validation-0017.jpg",
+    "mode": "single",
+    "expectedCategory": "Bottoms",
+    "expectedType": "Jeans",
+    "verified": true,
+    "conditions": [
+      "visual-review",
+      "fresh-independent-validation",
+      "commons-public-photo"
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:Grey_Jeans_(3168533938).jpg",
+    "downloadUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/0f/Grey_Jeans_%283168533938%29.jpg/1920px-Grey_Jeans_%283168533938%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "sourceImage": "https://upload.wikimedia.org/wikipedia/commons/0/0f/Grey_Jeans_%283168533938%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "sha256": "6f83b0769215cf7e19475a0b946b9be4d5d00747c50df18136aafe18a08dbb58",
+    "attribution": {
+      "id": "validation-0017",
+      "title": "File:Grey Jeans (3168533938).jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Grey_Jeans_(3168533938).jpg",
+      "license": "CC BY-SA 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0",
+      "author": "Marcus Quigmire from Florida, USA",
+      "credit": "Grey Jeans"
+    }
+  },
+  {
+    "id": "validation-0019",
+    "image": "validation-0019.jpg",
+    "mode": "single",
+    "expectedCategory": "Shoes",
+    "expectedType": "Sneakers",
+    "verified": true,
+    "conditions": [
+      "visual-review",
+      "fresh-independent-validation",
+      "commons-public-photo",
+      "studio-product-photo"
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:DKNY_Marie_Sneaker_23142034_schwarz_-_orange_(1)_(15798649564).jpg",
+    "downloadUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/59/DKNY_Marie_Sneaker_23142034_schwarz_-_orange_%281%29_%2815798649564%29.jpg/1920px-DKNY_Marie_Sneaker_23142034_schwarz_-_orange_%281%29_%2815798649564%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "sourceImage": "https://upload.wikimedia.org/wikipedia/commons/5/59/DKNY_Marie_Sneaker_23142034_schwarz_-_orange_%281%29_%2815798649564%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "sha256": "16c806adf3d3e39d0cfa260901da9de6c87f2eab7eafa6e0e56593d7782a5140",
+    "attribution": {
+      "id": "validation-0019",
+      "title": "File:DKNY Marie Sneaker 23142034 schwarz - orange (1) (15798649564).jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:DKNY_Marie_Sneaker_23142034_schwarz_-_orange_(1)_(15798649564).jpg",
+      "license": "CC BY 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+      "author": "SPERA.de Designerschuhe, Taschen und Accessoires from Deutschland",
+      "credit": "DKNY Marie Sneaker 23142034 schwarz / orange (1)"
+    }
+  },
+  {
+    "id": "validation-0021",
+    "image": "validation-0021.jpg",
+    "mode": "single",
+    "expectedCategory": "Shoes",
+    "expectedType": "Sneakers",
+    "verified": true,
+    "conditions": [
+      "visual-review",
+      "fresh-independent-validation",
+      "commons-public-photo",
+      "studio-product-photo"
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:DKNY_Marie_Sneaker_23142034_rot-orange_-_wei%C3%9F_(1)_(16235746307).jpg",
+    "downloadUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/41/DKNY_Marie_Sneaker_23142034_rot-orange_-_wei%C3%9F_%281%29_%2816235746307%29.jpg/1920px-DKNY_Marie_Sneaker_23142034_rot-orange_-_wei%C3%9F_%281%29_%2816235746307%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "sourceImage": "https://upload.wikimedia.org/wikipedia/commons/4/41/DKNY_Marie_Sneaker_23142034_rot-orange_-_wei%C3%9F_%281%29_%2816235746307%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "sha256": "a80a0c707c7aa99e4ee4df7a766109121f8b6baafe51ba9dd764e382f9094f61",
+    "attribution": {
+      "id": "validation-0021",
+      "title": "File:DKNY Marie Sneaker 23142034 rot-orange - wei\u00df (1) (16235746307).jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:DKNY_Marie_Sneaker_23142034_rot-orange_-_wei%C3%9F_(1)_(16235746307).jpg",
+      "license": "CC BY 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+      "author": "SPERA.de Designerschuhe, Taschen und Accessoires from Deutschland",
+      "credit": "DKNY Marie Sneaker 23142034 rot-orange / wei\u00df (1)"
+    }
+  },
+  {
+    "id": "validation-0023",
+    "image": "validation-0023.jpg",
+    "mode": "single",
+    "expectedCategory": "Shoes",
+    "expectedType": "Sneakers",
+    "verified": true,
+    "conditions": [
+      "visual-review",
+      "fresh-independent-validation",
+      "commons-public-photo",
+      "studio-product-photo"
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:DKNY_Brave_Logo_Varsity_High-Top_Sneaker_23340363_schwarz_-_tigerlook_(1)_(16415389490).jpg",
+    "downloadUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/16/DKNY_Brave_Logo_Varsity_High-Top_Sneaker_23340363_schwarz_-_tigerlook_%281%29_%2816415389490%29.jpg/1920px-DKNY_Brave_Logo_Varsity_High-Top_Sneaker_23340363_schwarz_-_tigerlook_%281%29_%2816415389490%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "sourceImage": "https://upload.wikimedia.org/wikipedia/commons/1/16/DKNY_Brave_Logo_Varsity_High-Top_Sneaker_23340363_schwarz_-_tigerlook_%281%29_%2816415389490%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "sha256": "4fa7836d0275c1d393b6e71db0044674d04e4fc2c09e6c8946ca8ad8eed5276b",
+    "attribution": {
+      "id": "validation-0023",
+      "title": "File:DKNY Brave Logo Varsity High-Top Sneaker 23340363 schwarz - tigerlook (1) (16415389490).jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:DKNY_Brave_Logo_Varsity_High-Top_Sneaker_23340363_schwarz_-_tigerlook_(1)_(16415389490).jpg",
+      "license": "CC BY 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+      "author": "SPERA.de Designerschuhe, Taschen und Accessoires from Deutschland",
+      "credit": "DKNY Brave Logo Varsity High-Top Sneaker 23340363 schwarz / tigerlook (1)"
+    }
+  },
+  {
+    "id": "validation-0024",
+    "image": "validation-0024.jpg",
+    "mode": "single",
+    "expectedCategory": "Shoes",
+    "expectedType": "Sneakers",
+    "verified": true,
+    "conditions": [
+      "visual-review",
+      "fresh-independent-validation",
+      "commons-public-photo",
+      "studio-product-photo"
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:DKNY_Barbara_Hardware_Sneaker_23340609_silber_(1)_(16417111589).jpg",
+    "downloadUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/9c/DKNY_Barbara_Hardware_Sneaker_23340609_silber_%281%29_%2816417111589%29.jpg/1920px-DKNY_Barbara_Hardware_Sneaker_23340609_silber_%281%29_%2816417111589%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "sourceImage": "https://upload.wikimedia.org/wikipedia/commons/9/9c/DKNY_Barbara_Hardware_Sneaker_23340609_silber_%281%29_%2816417111589%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "sha256": "2183cbbb8af17dee3bab0ea0b9657b61ccbb6be953ae047f7119be0f0e7067a0",
+    "attribution": {
+      "id": "validation-0024",
+      "title": "File:DKNY Barbara Hardware Sneaker 23340609 silber (1) (16417111589).jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:DKNY_Barbara_Hardware_Sneaker_23340609_silber_(1)_(16417111589).jpg",
+      "license": "CC BY 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+      "author": "SPERA.de Designerschuhe, Taschen und Accessoires from Deutschland",
+      "credit": "DKNY Barbara Hardware Sneaker 23340609 silber (1)"
+    }
+  }
+]
