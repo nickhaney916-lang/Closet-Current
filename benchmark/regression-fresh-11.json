@@ -1,0 +1,105 @@
+{
+  "sourceCommit": "01ca64d2d38c89eefe41e400efae1a19ad94e5af",
+  "sourceRun": "https://github.com/nickhaney916-lang/Closet-Current/actions/runs/38505942565",
+  "results": [
+    {
+      "id": "validation-0001",
+      "prediction": {
+        "category": "Dresses",
+        "type": "Unknown"
+      },
+      "strong": false,
+      "categoryConfirmed": true
+    },
+    {
+      "id": "validation-0002",
+      "prediction": {
+        "category": "Dresses",
+        "type": "Formal dress"
+      },
+      "strong": true,
+      "categoryConfirmed": false
+    },
+    {
+      "id": "validation-0003",
+      "prediction": {
+        "category": "Dresses",
+        "type": "Formal dress"
+      },
+      "strong": true,
+      "categoryConfirmed": false
+    },
+    {
+      "id": "validation-0004",
+      "prediction": {
+        "category": "Dresses",
+        "type": "Formal dress"
+      },
+      "strong": true,
+      "categoryConfirmed": false
+    },
+    {
+      "id": "validation-0008",
+      "prediction": {
+        "category": "Accessories",
+        "type": "Scarf"
+      },
+      "strong": true,
+      "categoryConfirmed": false
+    },
+    {
+      "id": "validation-0010",
+      "prediction": {
+        "category": "Dresses",
+        "type": "Sweater dress"
+      },
+      "strong": true,
+      "categoryConfirmed": false
+    },
+    {
+      "id": "validation-0017",
+      "prediction": {
+        "category": null,
+        "type": null
+      },
+      "strong": false,
+      "categoryConfirmed": false
+    },
+    {
+      "id": "validation-0019",
+      "prediction": {
+        "category": "Shoes",
+        "type": "Sneakers"
+      },
+      "strong": true,
+      "categoryConfirmed": false
+    },
+    {
+      "id": "validation-0021",
+      "prediction": {
+        "category": "Shoes",
+        "type": "Sneakers"
+      },
+      "strong": true,
+      "categoryConfirmed": false
+    },
+    {
+      "id": "validation-0023",
+      "prediction": {
+        "category": "Shoes",
+        "type": "Sneakers"
+      },
+      "strong": true,
+      "categoryConfirmed": false
+    },
+    {
+      "id": "validation-0024",
+      "prediction": {
+        "category": "Shoes",
+        "type": "Sneakers"
+      },
+      "strong": true,
+      "categoryConfirmed": false
+    }
+  ]
+}

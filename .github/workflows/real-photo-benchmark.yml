@@ -4,6 +4,8 @@ on:
     paths:
       - '.github/workflows/real-photo-benchmark.yml'
       - 'scripts/evaluate-recognition-benchmark.mjs'
+      - 'scripts/check-recognition-regressions.mjs'
+      - 'benchmark/regression-*.json'
       - 'scripts/run-browser-photo-benchmark.mjs'
       - 'public/benchmark-runner.mjs'
       - 'public/recognition-engine.mjs'
@@ -51,12 +53,14 @@ jobs:
           if [ -f benchmark/output/results.json ]; then
             node scripts/evaluate-recognition-benchmark.mjs benchmark/manifest-reviewed-32.json benchmark/output/results.json > benchmark/output/evaluation.json
             cat benchmark/output/evaluation.json
+            node scripts/check-recognition-regressions.mjs benchmark/manifest-reviewed-32.json benchmark/output/results.json benchmark/regression-reviewed-32.json
           fi
       - name: Evaluate additional clothing and negative regression set
         run: |
           node scripts/run-browser-photo-benchmark.mjs benchmark/manifest-holdout-16.json benchmark/output/holdout
           node scripts/evaluate-recognition-benchmark.mjs benchmark/manifest-holdout-16.json benchmark/output/holdout/results.json > benchmark/output/holdout/evaluation.json
           cat benchmark/output/holdout/evaluation.json
+          node scripts/check-recognition-regressions.mjs benchmark/manifest-holdout-16.json benchmark/output/holdout/results.json benchmark/regression-holdout-16.json
       - name: Evaluate locked independent fresh photographs
         env:
           GH_TOKEN: ${{ github.token }}
@@ -67,6 +71,7 @@ jobs:
           node scripts/run-browser-photo-benchmark.mjs benchmark/manifest-fresh-11.json benchmark/output/fresh
           node scripts/evaluate-recognition-benchmark.mjs benchmark/manifest-fresh-11.json benchmark/output/fresh/results.json > benchmark/output/fresh/evaluation.json
           cat benchmark/output/fresh/evaluation.json
+          node scripts/check-recognition-regressions.mjs benchmark/manifest-fresh-11.json benchmark/output/fresh/results.json benchmark/regression-fresh-11.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:

@@ -28,3 +28,13 @@ Validation evidence:
 The mobile flow uses Chromium at a 390×844 touch viewport with a simulated 1920×1080 camera and the real recognition worker. Capture preserves 1920×1080 pixels; Adjust, save, search, filters, reload persistence and subsequent automatic photo indexing pass without page errors. Authentication uses a synthetic identity; production login and physical phone hardware have not been tested. A dedicated mobile workflow repeats this check on relevant main changes.
 
 The simplified interface and high-resolution camera code are unchanged. Drive Duel is untouched. Dress/tunic and shoe subtype ambiguity remain priorities, along with physical-phone capture and login validation. Raw predictions and metrics are in `semantic-recognition-results.json`.
+
+## Regression enforcement — October 14, 2026
+
+The [latest production rerun](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/38505942565) confirms the selected profile on all 59 photographs. Its actual predictions are frozen in `benchmark/regression-*.json`, with their source commit and run recorded. These contain labels and acceptance flags only, without photos or private data.
+
+The real-photo workflow now checks each result against those snapshots. Losing a previously correct category or accepted type, losing correct automatic indexing, accepting a nonclothing photo, introducing a new incorrect automatic subtype, guessing a subtype in category-only review, or producing missing, duplicate, unexpected or malformed results fails the workflow. Runtime errors also fail. Improvements remain allowed, including a reviewed dress becoming a correctly identified automatic result.
+
+Four existing annotated automatic subtype mismatches remain explicitly reported: `commons-0064` (Blazer), `commons-0003` (Sweatshirt), `commons-0014` (Tunic), and `commons-0078` (Ankle boots). Only the same measured prediction is tolerated; a different wrong prediction fails. A green run therefore means no regression against this measured baseline, not perfect recognition. Expected labels and accepted subtype lists have not changed.
+
+The checker passes on all three actual production result files. Six focused tests exercise deliberately degraded shoe/dress results, nonclothing acceptance, runtime failures, missing/duplicate/extra results, and the known mismatch exceptions. This change adds validation only; model, confidence gates, photo preprocessing, camera resolution and interface behavior are unchanged. Further inference changes must pass these checks before promotion. Physical-phone accuracy remains unverified.
