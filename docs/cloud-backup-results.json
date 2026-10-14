@@ -25,5 +25,23 @@
   },
   "nodeChecks": 181,
   "syntheticAccountsAndPhotosRemoved": true,
-  "scope": "Closet Current only; no personal wardrobe inspected"
+  "scope": "Closet Current only; no personal wardrobe inspected",
+  "conflictRecovery": {
+    "legacyNineMigrated": true,
+    "secondDeviceRestore": true,
+    "accountIsolation": true,
+    "outfitsAndInspirationRestored": true,
+    "unfinishedPhotosRestored": true,
+    "offlineReloadAndRetry": true,
+    "editsDuringUploadPreserved": true,
+    "deletionSynced": true,
+    "emptyBrowserRestore": true,
+    "independentOfflineEditsMerged": true,
+    "conflictingVersionsPreserved": true,
+    "lostSaveResponseDoesNotDuplicateCopies": true,
+    "corruptRestoreKeepsLocalPhotos": true,
+    "pageErrors": [],
+    "backend": "Controlled HTTP backend with production browser client; actual Supabase auth/storage/RLS verified separately",
+    "workflowRun": "https://github.com/nickhaney916-lang/Closet-Current/actions/runs/38621528403"
+  }
 }
