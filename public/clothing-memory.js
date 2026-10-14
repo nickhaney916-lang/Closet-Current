@@ -14,7 +14,7 @@
   matches.sort((a,b)=>b.score-a.score);const top=matches.slice(0,3);if(top.length<2)return null;
   const category=top[0].other.confirmedDetails.category,type=top[0].other.confirmedDetails.itemType;
   if(top.some(x=>x.other.confirmedDetails.category!==category||x.other.confirmedDetails.itemType!==type)||!missing(item.category)&&item.category!==category||item.segmentHint&&(item.segmentHint.clipped||!item.segmentHint.categories?.includes(category)||item.segmentHint.types?.length&&!item.segmentHint.types.includes(type)))return null;
-  const fields={};for(const key of keys){const value=top[0].other.confirmedDetails[key];if(missing(item[key])&&!missing(value)&&top.every(x=>x.other.confirmedDetails[key]===value))fields[key]=value;}
+  const fields={};for(const key of keys){const value=top[0].other.confirmedDetails[key];if(missing(item[key])&&!missing(value)&&top.every(x=>x.other.confirmedDetails[key]===value&&x.other[key]===value))fields[key]=value;}
   if(!Object.keys(fields).length)return null;
   return {fields,sourceIds:top.map(x=>x.other.id),similarity:top[0].score,requiresConfirmation:true};
  }

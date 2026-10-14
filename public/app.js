@@ -400,3 +400,5 @@ function saveMemoryReview(value){return queued(()=>new Promise((resolve,reject)=
  if(current.category===value.category&&value.weeklySuggestion)saved.weeklySuggestion=value.weeklySuggestion;store.put(saved);
  };tx.oncomplete=()=>resolve(saved);tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);
 }));}
+
+setInterval(scheduleMemoryReview,60*60*1000);
