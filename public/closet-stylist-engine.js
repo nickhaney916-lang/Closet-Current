@@ -11,13 +11,15 @@ function stylistNeutral(color){return ['black','white','gray','cream','tan','bei
 function stylistTrendMatches(item,slot,context,library){return (library?.directions||[]).filter(d=>d.slot===slot&&d.type===item.itemType&&(!d.audiences.length||d.audiences.includes('All')||context.audience==='All'||d.audiences.includes(context.audience))&&(!d.occasions.length||d.occasions.includes(context.occasion))&&(!d.seasons.length||d.seasons.includes(context.season))).filter(d=>library.sources.some(s=>s.id===d.sourceId));}
 function stylistItemScore(item,slot,context,library){
  const profile=stylistProfiles[context.request],type=item.itemType;
- if(!item.id||item.category==='Uncategorized'||!type||type==='Unknown'||type==='Other')return null;
+ const partial=!type||type==='Unknown'||type==='Other';
+ if(!item.id||item.category==='Uncategorized')return null;
+ if(partial&&(context.request!=='Casual'||!item.color||item.color==='Unknown'||!['top','bottom','shoes','layer'].includes(slot)))return null;
  if(item.seasons?.length&&!item.seasons.includes('All seasons')&&!item.seasons.includes(context.season))return null;
  // Style preference shapes the look; it does not infer a garment owner's gender.
  if(context.audience==='Men'&&(item.category==='Dresses'||['Skirt','Heels','Flats'].includes(type)))return null;
  let score=0;
  if(['top','bottom','shoes'].includes(slot)){
-  const index=profile[slot].indexOf(type);if(index<0)return null;score=16-index;
+  const index=profile[slot].indexOf(type);if(index<0&&!partial)return null;score=partial?1:16-index;
  }else{
   if(context.request==='Activewear')return null;
   if(slot==='layer'){
@@ -62,6 +64,8 @@ function styleOwnedCollection(closet,request={},library=null){
   score-=required.length*30;
   const references=selected.flatMap(x=>stylistTrendMatches(x.item,outfitSlots.find(s=>board.slots[s.id]===x.item.id)?.id,context,library).map(d=>({itemId:x.item.id,label:d.label,reason:d.reason,source:library.sources.find(s=>s.id===d.sourceId)})));
   const notices=[];
+  if(selected.some(x=>!x.item.itemType||['Unknown','Other'].includes(x.item.itemType)))notices.push('Some garment types are unconfirmed; these are category and color matches.');
+  if(selected.some(x=>x.item.colorSource==='photo-estimate'))notices.push('Some colors are estimated from photos; confirm the colors together.');
   if(selected.some(x=>!x.item.color))notices.push('Some colors are unknown; check the photos together.');
   if(selected.some(x=>!x.item.seasons?.length))notices.push('Some seasonal details are unknown; check the weather and comfort.');
   if(intent==='School')notices.push('Check your school’s dress code before choosing this outfit.');
