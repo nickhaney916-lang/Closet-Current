@@ -4,6 +4,7 @@ on:
     paths:
       - '.github/workflows/real-photo-benchmark.yml'
       - 'scripts/evaluate-recognition-benchmark.mjs'
+      - 'scripts/compare-detail-field-coverage.mjs'
       - 'scripts/check-recognition-regressions.mjs'
       - 'benchmark/regression-*.json'
       - 'scripts/run-browser-photo-benchmark.mjs'
@@ -55,6 +56,8 @@ jobs:
             cat benchmark/output/evaluation.json
             node scripts/check-recognition-regressions.mjs benchmark/manifest-reviewed-32.json benchmark/output/results.json benchmark/regression-reviewed-32.json
           fi
+      - name: Compare retained crop detail fields on identical model outputs
+        run: node scripts/compare-detail-field-coverage.mjs benchmark/output/results.json > benchmark/output/detail-coverage.json
       - name: Evaluate additional clothing and negative regression set
         run: |
           node scripts/run-browser-photo-benchmark.mjs benchmark/manifest-holdout-16.json benchmark/output/holdout
