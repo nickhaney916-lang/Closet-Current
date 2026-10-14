@@ -24,3 +24,9 @@ Use the app's actual browser model, not mocked recognition responses. Record eac
 Open Closet Current, use its existing single-shot or full-outfit capture, and compare the photo with the visible category and type assigned to each piece. Record those results in the JSON schema above. A capture simulation is not an image-model benchmark; do not report its mocked predictions as real accuracy.
 
 For each failed classification, record whether the photo was blurry, clipped, dark, partially hidden, or contained multiple items. Keep a separate held-out evaluation set to avoid tuning to the same examples.
+
+## Browser batch runner (real inference)
+
+After deployment, open `/benchmark.html` on the same host as the app. Select the JSON manifest and the matching local JPEG/PNG files, then click **Run single-garment benchmark**. This invokes the **actual production FashionCLIP browser worker** for each image using the app's 2048-pixel, 0.94-quality JPEG preprocessing. Download `closet-benchmark-results.json` and evaluate with `node scripts/evaluate-recognition-benchmark.mjs benchmark/manifest.json closet-benchmark-results.json`. Images are processed in the browser and not uploaded by this runner. The browser must support Web Workers, WebAssembly, and the model's CDN dependencies.
+
+**Limitations:** This runner currently supports single-item photos, not segmentation of complete outfits. No licensed photo collection is bundled or automatically downloaded. Real recognition accuracy cannot be claimed until actual labeled photos are processed and their outputs evaluated. A worker error is an evaluation failure, not a correct classification.
