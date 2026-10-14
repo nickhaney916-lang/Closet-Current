@@ -1,0 +1,48 @@
+name: Real-photo recognition benchmark
+on:
+  push:
+    paths:
+      - '.github/workflows/real-photo-benchmark.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  inference:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Download licensed candidate photographs from completed collection run
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p benchmark/input
+          gh run download 38491639135 -n commons-clothing-photo-candidates -D benchmark/input
+          mkdir -p benchmark/photos
+          cp benchmark/input/photos/* benchmark/photos/
+      - name: Install headless browser
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium
+      - name: Build production app
+        run: node scripts/build.mjs
+      - name: Run real FashionCLIP inference in Chromium
+        run: node scripts/run-browser-photo-benchmark.mjs
+      - name: Evaluate real predictions
+        if: always()
+        run: |
+          if [ -f benchmark/output/results.json ]; then
+            node scripts/evaluate-recognition-benchmark.mjs benchmark/manifest-reviewed-32.json benchmark/output/results.json > benchmark/output/evaluation.json
+            cat benchmark/output/evaluation.json
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: real-photo-inference-results
+          path: benchmark/output/
+          if-no-files-found: warn
+          retention-days: 14
