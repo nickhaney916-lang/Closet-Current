@@ -3,7 +3,7 @@
  const E=window.ClosetBackupEngine,BASE='https://hlkgymugtfbirlpunsra.supabase.co',KEY='sb_publishable_5bw6Gkrw3Qx73dZYGNzmIw_x_OoauDO',BUCKET='closet-private';
  let db=null,user=null,enabled=false,syncing=false,timer=null,retryDelay=2000,callbacks={},generation=0;
  const empty=()=>({schemaVersion:1,items:[],state:{}}),markerDefault=()=>({id:'cloud-sync',baseVersion:0,baseDocument:null,localRevision:0,dirty:false});
- function status(text){const p=document.getElementById('cloudStatus');if(p){p.hidden=false;p.textContent=text;}}
+ function status(text){const p=document.getElementById('cloudStatus');if(p){p.hidden=false;p.textContent=text;}const banner=document.getElementById('cloudBanner');if(banner){banner.textContent=text;banner.hidden=['Cloud backup up to date','Your closet will back up automatically'].includes(text);}}
  function transact(stores,mode,fn){return new Promise((resolve,reject)=>{const tx=db.transaction(stores,mode);let value;try{value=fn(tx);}catch(e){tx.abort();reject(e);return;}tx.oncomplete=()=>resolve(typeof value==='function'?value():value);tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error||Error('Storage transaction stopped'));});}
  async function marker(){let value;await transact(['state'],'readonly',tx=>{const r=tx.objectStore('state').get('cloud-sync');r.onsuccess=()=>value=r.result;});return value||markerDefault();}
  async function markDirty(){await transact(['state'],'readwrite',tx=>{const store=tx.objectStore('state'),r=store.get('cloud-sync');r.onsuccess=()=>{const m=r.result||markerDefault();store.put({...m,dirty:true,localRevision:m.localRevision+1});};});}
@@ -35,9 +35,9 @@
  }
  function schedule(delay=1500){clearTimeout(timer);timer=setTimeout(()=>sync(),delay);}
  async function sync(){
-  if(!enabled||syncing)return;syncing=true;const mine=generation;
+  if(!enabled||syncing)return;syncing=true;const mine=generation;let dirtyAtStart=false;
   try{
-   let {local,m}=await callbacks.capture(snapshot);const remote=await getRemote();
+   let {local,m}=await callbacks.capture(snapshot);dirtyAtStart=m.dirty;status('Checking cloud backup…');const remote=await getRemote();
    if(mine!==generation)return;
    if(!m.baseVersion&&!m.dirty&&(local.items.length||Object.values(local.state).some(x=>x.batch?.length||x.looks?.length||x.saved?.length||Object.keys(x.current?.slots||{}).length))){await markDirty();({local,m}=await callbacks.capture(snapshot));}
    if(!m.dirty){
@@ -55,7 +55,7 @@
    else if(!E.equal(document,encoded.document)){if(!await apply(document,revision,current.localRevision))schedule();else status('Cloud backup up to date');}
    else status('Cloud backup up to date');retryDelay=2000;
   }catch(e){
-   if(mine===generation){status(e.code==='conflict'?'Changes differ on another device. Both copies are kept; cloud backup needs review.':'Saved on this device · cloud backup pending. Retrying when connected.');if(e.code!=='conflict'){schedule(retryDelay);retryDelay=Math.min(retryDelay*2,60000);}}
+   if(mine===generation){status(e.code==='conflict'?'Changes differ on another device. Both copies are kept; cloud backup needs review.':dirtyAtStart?'Saved on this device · cloud backup pending. Retrying when connected.':'Cloud connection unavailable. Local items are kept; retrying.');if(e.code!=='conflict'){schedule(retryDelay);retryDelay=Math.min(retryDelay*2,60000);}}
   }finally{syncing=false;}
  }
  window.closetCloud={
