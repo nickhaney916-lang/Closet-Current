@@ -49,11 +49,7 @@ export async function recognizeGarment(model,image,{onStage=()=>{},onIdentified=
  // never force a room, pet, or pile of clothes to become a clothing type.
  const branchLabels=localCandidates.filter(x=>x.category===category[0].category||x.category==='Uncategorized');
  const branch=clothingChoices(await model(image,branchLabels.map(x=>x.label),options)),dressEvidence={};
- if(!strongMatch(branch)||branch[0].category!==category[0].category){
-  const review=await reviewDressCategory(model,confirmationModel,image,category,undefined,dressEvidence);
-  if(review)return {...review,reviewSource:'type_uncertain'};
-  return {strong:false,choices:[],details:{},reason:'type_uncertain',diagnostics:{dressEvidence,category:category.slice(0,2).map(x=>({category:x.category,score:x.score})),branch:branch.slice(0,3).map(x=>({category:x.category,type:x.itemType,score:x.score}))}};
- }
+ if(!strongMatch(branch)||branch[0].category!==category[0].category)return await reviewDressCategory(model,confirmationModel,image,category,undefined,dressEvidence)||{strong:false,choices:[],details:{},reason:'type_uncertain',diagnostics:{dressEvidence,category:category.slice(0,2).map(x=>({category:x.category,score:x.score})),branch:branch.slice(0,3).map(x=>({category:x.category,type:x.itemType,score:x.score}))}};
  // Independent vocabulary comparison, using the same model. Scores are gates,
  // not calibrated probabilities. A disagreement always requires adjustment.
  const overallResults=await model(image,localCandidates.map(x=>x.label),options),overall=clothingChoices(overallResults);
@@ -70,15 +66,14 @@ export async function recognizeGarment(model,image,{onStage=()=>{},onIdentified=
  return {strong:true,choices:[{...first,sleeveLength:details.sleeveLength||first.sleeveLength},...branch.slice(1)],details};
 }
 
-// Retry an uncertain top or dress type. Category, type, complete-vocabulary and
+// Retry only an uncertain top type. Category, type, complete-vocabulary and
 // independent-view gates must all pass again; contradictions are not retried.
 export async function recognizeWithRecovery(model,image,settings={}){
  const result=await recognizeGarment(model,image,settings),category=result.diagnostics?.category;
- const review=result.categoryConfirmed&&result.categoryOnly&&result.reviewSource==='type_uncertain'&&result.choices[0]?.category==='Dresses';
- const eligible=review||result.reason==='type_uncertain'&&['Tops','Dresses'].includes(category?.[0]?.category)&&category[0].score>=.85&&category[0].score-(category[1]?.score||0)>=.35;
+ const eligible=result.reason==='type_uncertain'&&category?.[0]?.category==='Tops'&&category[0].score>=.85&&category[0].score-(category[1]?.score||0)>=.35;
  if(!eligible||!settings.recoveryModel||!settings.recoveryConfirmationModel)return result;
  const recovered=await recognizeGarment(settings.recoveryModel,image,{...settings,confirmationModel:settings.recoveryConfirmationModel,onIdentified:()=>{}});
- if(!recovered.strong||recovered.choices[0]?.category!==(review?'Dresses':category[0].category))return result;
+ if(!recovered.strong||recovered.choices[0]?.category!=='Tops')return result;
  settings.onIdentified?.(recovered.choices[0]);
  return {...recovered,preprocessingRecovery:true};
 }
