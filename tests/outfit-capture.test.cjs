@@ -32,3 +32,25 @@ test('bulk add saves only selected ready clothes and leaves deselected cutouts u
  const excluded=h.c.batch[0].id;vm.runInContext('outfitExcludedIds.add(batch[0].id)',h.c);h.c.renderOutfitCapture();
  await h.el('addOutfitPieces').onclick();assert.equal(h.c.items.length,1);assert.equal(h.c.batch.length,1);assert.equal(h.c.batch[0].id,excluded);assert.equal(h.c.batch[0].requiresOwnershipConfirmation,true);
 });
+
+
+test('100 simulated full-outfit camera captures keep cutouts distinct and require explicit ownership approval',async()=>{
+ const h=setup();let total=0;
+ for(let scene=0;scene<100;scene++){
+  h.c.startOutfitSplit('data:image/jpeg;base64,SCENE'+scene,'outfit-'+scene);
+  const count=scene%4+1;
+  for(let piece=0;piece<count;piece++){
+   const image='data:image/jpeg;base64,SCENE'+scene+'PIECE'+piece;
+   const category=['Tops','Bottoms','Outerwear','Shoes'][piece];
+   h.emit({type:'piece',piece:{image,hint:{categories:[category],types:[],clipped:false}}});
+  }
+  h.emit({type:'done',count});
+  total+=count;
+  assert.equal(h.c.items.length,0,'no outfit cutout is owned before approval');
+  assert.equal(h.c.batch.length,total,'no separated item is lost');
+  assert.equal(h.c.busy,false,'camera is released after every scene');
+  assert.ok(h.c.batch.every(x=>x.requiresOwnershipConfirmation));
+ }
+ assert.equal(total,250);
+ assert.equal(new Set(h.c.batch.map(x=>x.image)).size,250);
+});
