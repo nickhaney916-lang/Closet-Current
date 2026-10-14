@@ -8,8 +8,8 @@ $('moreMenu').addEventListener('keydown',event=>{if(event.key==='Escape'){$('mor
 document.addEventListener('click',event=>{const more=$('moreMenu');if(more.open&&!more.contains(event.target))more.open=false;});
 function renderHomePieces(){
  const grid=$('homePieces');if(!grid)return;grid.replaceChildren();
- $('homeClosetSummary').textContent=items.length?items.length+' piece'+(items.length===1?'':'s')+' in your collection. Every one is a new possibility.':'Your collection starts with one photo.';
- if(!items.length){const box=node('div',null,'home-empty');box.append(node('span','✦','empty-spark'),node('h3','Your first piece is waiting.'),node('p','Take a photo of a favorite top, jeans, or shoes.'));const start=node('button','Add my first piece','primary');start.type='button';start.onclick=()=>switchView('scan');box.append(start);grid.append(box);return;}
+ $('homeClosetSummary').textContent=items.length?items.length+' piece'+(items.length===1?'':'s')+' in your collection. Every one is a new possibility.':'Start with a snap 📸';
+ if(!items.length){const box=node('div',null,'home-empty');box.append(node('span','✦','empty-spark'),node('h3','Your closet starts here ✨'),node('p','Snap your first piece.'));const start=node('button','Add a photo','primary');start.type='button';start.onclick=()=>switchView('scan');box.append(start);grid.append(box);return;}
  const recent=[...items].sort((a,b)=>String(b.savedAt||'').localeCompare(String(a.savedAt||''))).slice(0,4);
  for(const item of recent){const button=node('button',null,'home-piece'),image=node('img');image.src=item.image;image.alt=item.name||item.itemType||'Your clothing photo';button.type='button';button.append(image,node('strong',item.name||item.itemType||'Closet piece'),node('span',item.category));button.onclick=()=>{$('search').value=item.name||'';$('filter').value='All categories';$('seasonFilter').value='';$('sleeveFilter').value='';switchView('closet');};grid.append(button);}
 }
