@@ -31,7 +31,7 @@ async function reviewDressCategory(model,confirmationModel,image,category,overal
  const supported=results=>{
   const totals=garmentCategoryTotals(results),first=clothingChoices(results)[0];
   const negative=results.reduce((sum,x)=>sum+(localCandidates.some(c=>c.label===x.label&&c.category==='Uncategorized')?x.score:0),0);
-  return first?.category==='Dresses'&&totals[0]?.category==='Dresses'&&totals[0].score>=.85&&totals[0].score-(totals[1]?.score||0)>=.6&&negative<=.1;
+  return first?.category==='Dresses'&&totals[0]?.category==='Dresses'&&totals[0].score>=.75&&totals[0].score-(totals[1]?.score||0)>=.5&&negative<=.1;
  };
  if(evidence)evidence.primary={totals:garmentCategoryTotals(whole).slice(0,3),top:clothingChoices(whole).slice(0,3)};
  if(!supported(whole))return null;
@@ -55,7 +55,7 @@ export async function recognizeGarment(model,image,{onStage=()=>{},onIdentified=
  const overallResults=await model(image,localCandidates.map(x=>x.label),options),overall=clothingChoices(overallResults);
  if(!agreementMatch(category,branch,overall))return await reviewDressCategory(model,confirmationModel,image,category,overallResults,dressEvidence)||{strong:false,choices:[],details:{},reason:'checks_disagree',diagnostics:{dressEvidence,category:category.slice(0,2).map(x=>({category:x.category,score:x.score})),branch:branch.slice(0,2).map(x=>({category:x.category,type:x.itemType,score:x.score})),overall:overall.slice(0,2).map(x=>({category:x.category,type:x.itemType,score:x.score}))}};
  const confirmation=clothingChoices(await confirmationModel(image,localCandidates.map(x=>x.label),options));
- if(!confirmation[0]||confirmation[0].score<.35||confirmation[0].score-(confirmation[1]?.score||0)<.1||confirmation[0].category!==branch[0].category||confirmation[0].itemType!==branch[0].itemType)return {strong:false,choices:[],details:{},reason:'views_disagree',diagnostics:{branch:branch.slice(0,2).map(x=>({category:x.category,type:x.itemType,score:x.score})),confirmation:confirmation.slice(0,2).map(x=>({category:x.category,type:x.itemType,score:x.score}))}};
+ if(!confirmation[0]||confirmation[0].score<.35||confirmation[0].score-(confirmation[1]?.score||0)<.1||confirmation[0].category!==branch[0].category||confirmation[0].itemType!==branch[0].itemType)return await reviewDressCategory(model,confirmationModel,image,category,overallResults,dressEvidence)||{strong:false,choices:[],details:{},reason:'views_disagree',diagnostics:{dressEvidence,branch:branch.slice(0,2).map(x=>({category:x.category,type:x.itemType,score:x.score})),confirmation:confirmation.slice(0,2).map(x=>({category:x.category,type:x.itemType,score:x.score}))}};
  const first={...branch[0]};onIdentified(first);let details={};
  if(detailPhotoUsable(image.width,image.height)){
   onStage('details');const groups=garmentDetailGroups(first),labels=Object.values(groups).flat().map(x=>x.label);

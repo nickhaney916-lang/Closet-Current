@@ -38,7 +38,7 @@ test('category review rejects vocabulary contradictions, negatives and uncertain
   [[type('Tunic',.6),type('Casual dress',.4)],null],
   [[type('Casual dress',.44),type('Sweater dress',.44),type('Unknown',.12)],null],
   [whole,[[cat('Dresses',.84),cat('Tops',.16)]]],
-  [whole,[[cat('Dresses',.95),cat('Tops',.05)],[type('Casual dress',.48),type('Sweater dress',.3),type('Tunic',.22)]]]
+  [whole,[[cat('Dresses',.95),cat('Tops',.05)],[type('Casual dress',.48),type('Sweater dress',.26),type('Tunic',.26)]]]
  ]){
   const primary=[[cat('Dresses',.95),cat('Tops',.05)],[type('Casual dress',.5),type('Sweater dress',.4)],vocabulary];
   const r=await recognizeGarment(async()=>primary.shift(),{width:112,height:200},{confirmationModel:async()=>{assert.ok(confirm?.length);return confirm.shift();}});
@@ -65,4 +65,10 @@ test('recovery cannot override a conflicting vocabulary/view or an uncertain cat
  const primary=[[cat('Tops',.95),cat('Shoes',.05)],[type('T-shirt',.5),type('Blouse',.4)]];
  const original=[[cat('Tops',.95),cat('Shoes',.05)],[type('T-shirt',.9),type('Blouse',.05)],[type('T-shirt',.59),type('Blouse',.05)]];
  const r=await recognizeWithRecovery(async()=>primary.shift(),{width:112,height:200},{recoveryModel:async()=>original.shift(),recoveryConfirmationModel:async()=>{throw Error('failed full gate must stop first');}});assert.equal(r.strong,false);assert.equal(r.reason,'type_uncertain');
+});
+
+test('dress category review permits split subtype votes without relaxing automatic type gates',async()=>{
+ const primary=[[cat('Dresses',.98),cat('Tops',.02)],[type('Casual dress',.57),type('Sweater dress',.22)],[type('Casual dress',.48),type('Sweater dress',.37),type('Tunic',.15)]];
+ const close=[[cat('Dresses',.97),cat('Tops',.03)],[type('Casual dress',.56),type('Romper',.21),type('Tunic',.23)]];
+ const r=await recognizeGarment(async()=>primary.shift(),{width:112,height:200},{confirmationModel:async()=>close.shift()});assert.equal(r.strong,false);assert.equal(r.categoryConfirmed,true);assert.equal(r.choices[0].itemType,'Unknown');assert.deepEqual(r.details,{});
 });
