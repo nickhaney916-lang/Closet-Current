@@ -35,9 +35,9 @@ export async function recognizeGarment(model,image,{onStage=()=>{},onIdentified=
  // Independent vocabulary comparison, using the same model. Scores are gates,
  // not calibrated probabilities. A disagreement always requires adjustment.
  const overall=clothingChoices(await model(image,localCandidates.map(x=>x.label),options));
- if(!agreementMatch(category,branch,overall))return {strong:false,choices:[],details:{},reason:'checks_disagree'};
+ if(!agreementMatch(category,branch,overall))return {strong:false,choices:[],details:{},reason:'checks_disagree',diagnostics:{category:category.slice(0,2).map(x=>({category:x.category,score:x.score})),branch:branch.slice(0,2).map(x=>({category:x.category,type:x.itemType,score:x.score})),overall:overall.slice(0,2).map(x=>({category:x.category,type:x.itemType,score:x.score}))}};
  const confirmation=clothingChoices(await confirmationModel(image,localCandidates.map(x=>x.label),options));
- if(!confirmation[0]||confirmation[0].score<.35||confirmation[0].score-(confirmation[1]?.score||0)<.1||confirmation[0].category!==branch[0].category||confirmation[0].itemType!==branch[0].itemType)return {strong:false,choices:[],details:{},reason:'views_disagree'};
+ if(!confirmation[0]||confirmation[0].score<.35||confirmation[0].score-(confirmation[1]?.score||0)<.1||confirmation[0].category!==branch[0].category||confirmation[0].itemType!==branch[0].itemType)return {strong:false,choices:[],details:{},reason:'views_disagree',diagnostics:{branch:branch.slice(0,2).map(x=>({category:x.category,type:x.itemType,score:x.score})),confirmation:confirmation.slice(0,2).map(x=>({category:x.category,type:x.itemType,score:x.score}))}};
  const first={...branch[0]};onIdentified(first);let details={};
  if(detailPhotoUsable(image.width,image.height)){
   onStage('details');const groups=garmentDetailGroups(first),labels=Object.values(groups).flat().map(x=>x.label);
