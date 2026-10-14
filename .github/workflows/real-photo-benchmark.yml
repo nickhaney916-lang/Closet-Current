@@ -11,6 +11,8 @@ on:
       - 'public/benchmark-runner.mjs'
       - 'public/benchmark.html'
       - 'public/photo-color.js'
+      - 'public/outfit-worker.mjs'
+      - 'public/outfit-segmentation.mjs'
       - 'public/recognition-engine.mjs'
       - 'public/recognition-photo.mjs'
       - 'public/local-worker.mjs'
