@@ -1,0 +1,33 @@
+{
+  "a shirt, blouse, sweater, or other top": [
+    "a shirt, blouse, sweater, or other top",
+    "an upper body shirt or blouse",
+    "a top worn on the torso"
+  ],
+  "pants, shorts, or a skirt": [
+    "pants, shorts, or a skirt",
+    "lower body trousers, jeans or shorts",
+    "a skirt or folded pair of pants"
+  ],
+  "a dress, jumpsuit, or romper": [
+    "a dress, jumpsuit, or romper",
+    "a one piece dress with a bodice and skirt",
+    "a knee length or full length dress",
+    "a one piece jumpsuit or romper"
+  ],
+  "a jacket, coat, or other outerwear": [
+    "a jacket, coat, or other outerwear",
+    "a jacket or coat worn as an outer layer",
+    "a structured jacket with lapels and buttons"
+  ],
+  "a blurry image with no identifiable garment": [
+    "a blurry image with no identifiable garment",
+    "an out of focus abstract image",
+    "unrecognizable blurred shapes"
+  ],
+  "a jacket": [
+    "a jacket",
+    "a short outerwear jacket with sleeves and front opening",
+    "a jacket laid flat"
+  ]
+}

@@ -1,0 +1,74 @@
+name: Semantic recognition and mobile flow comparison
+on:
+  push:
+    branches: ['recognition/semantic-prompts']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: scripts/recognition-requirements.txt
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prepare licensed photos and browser
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+          gh run download 38491639135 -n commons-clothing-photo-candidates -D benchmark/input
+          mkdir -p benchmark/photos
+          cp benchmark/input/photos/* benchmark/photos/
+      - name: Encode candidate descriptions with pinned fp32 text model
+        run: |
+          pip install -r scripts/recognition-requirements.txt
+          python scripts/rebuild-recognition-vectors.py --prompt-overrides benchmark/prompt-ensembles.json --output-dir benchmark/index-candidate
+      - name: Measure both sets before and after
+        run: |
+          mkdir -p benchmark/index-baseline
+          cp public/recognition-vectors.* benchmark/index-baseline/
+          for variant in before dress-only positive-half positive-full gentle coarse-jacket; do
+            if [ "$variant" != before ]; then
+              python scripts/select-recognition-prompts.py benchmark/index-baseline benchmark/index-candidate "benchmark/index-$variant" --profile "$variant"
+              cp "benchmark/index-$variant/recognition-vectors.json" public/
+              cp "benchmark/index-$variant/recognition-vectors.bin" public/
+            fi
+            node scripts/build.mjs
+            node --test tests/*.test.cjs tests/*.test.mjs
+            for set in reviewed-32 holdout-16; do
+              output="benchmark/semantic-comparison/$variant-$set"
+              node scripts/run-browser-photo-benchmark.mjs "benchmark/manifest-$set.json" "$output"
+              node scripts/evaluate-recognition-benchmark.mjs "benchmark/manifest-$set.json" "$output/results.json" > "$output/evaluation.json"
+              cat "$output/evaluation.json"
+            done
+          done
+      - name: Test mobile capture, Adjust, save, search and reload with real worker
+        run: |
+          ffmpeg -loglevel error -loop 1 -i benchmark/photos/commons-0001.jpg -vf 'scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2:black' -r 10 -t 2 -pix_fmt yuv420p -f yuv4mpegpipe benchmark/mobile-camera.y4m
+          node scripts/run-mobile-flow.mjs benchmark/semantic-comparison/mobile-flow
+          cp benchmark/input/attributions.json benchmark/semantic-comparison/mobile-flow/
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: semantic-recognition-comparison
+          path: |
+            benchmark/semantic-comparison/
+            benchmark/index-candidate/
+            benchmark/index-dress-only/
+            benchmark/index-positive-half/
+            benchmark/index-positive-full/
+            benchmark/index-gentle/
+            benchmark/index-coarse-jacket/
+          retention-days: 14

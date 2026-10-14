@@ -1,10 +1,13 @@
 #!/usr/bin/env node
 // Fetch Wikimedia Commons garment photos with license/source metadata.
 // Candidate labels come from search terms and MUST be human-verified before evaluation.
-import {mkdir,writeFile} from 'node:fs/promises';
+import {mkdir,writeFile,readFile} from 'node:fs/promises';
 import path from 'node:path';
-const categories=[['Tops','T-shirt','t shirt clothing garment'],['Tops','Blouse','blouse clothing'],['Bottoms','Jeans','blue jeans clothing'],['Bottoms','Shorts','shorts garment clothing'],['Bottoms','Skirt','skirt clothing'],['Dresses','Dress','dress garment'],['Outerwear','Jacket','jacket clothing'],['Outerwear','Coat','coat clothing'],['Shoes','Sneakers','sneakers shoes'],['Shoes','Boots','boots footwear']];
+const defaultCategories=[['Tops','T-shirt','t shirt clothing garment'],['Tops','Blouse','blouse clothing'],['Bottoms','Jeans','blue jeans clothing'],['Bottoms','Shorts','shorts garment clothing'],['Bottoms','Skirt','skirt clothing'],['Dresses','Dress','dress garment'],['Outerwear','Jacket','jacket clothing'],['Outerwear','Coat','coat clothing'],['Shoes','Sneakers','sneakers shoes'],['Shoes','Boots','boots footwear']];
 const target=Number(process.argv[2]||10);
+const categories=process.argv[3]?JSON.parse(await readFile(process.argv[3],'utf8')):defaultCategories;
+if(!Array.isArray(categories)||!categories.length||categories.some(x=>!Array.isArray(x)||x.length!==3||x.some(v=>typeof v!=='string'||!v.trim())))throw Error('Invalid collection queries.');
+const headers={'User-Agent':'ClosetCurrentBenchmark/1.0 (https://github.com/nickhaney916-lang/Closet-Current)'};
 if(!Number.isInteger(target)||target<1||target>30)throw Error('Usage: node scripts/collect-commons-photos.mjs [1-30 images per query]');
 const api='https://commons.wikimedia.org/w/api.php';
 const manifest=[],attributions=[],seen=new Set();
@@ -12,7 +15,7 @@ await mkdir('benchmark/photos',{recursive:true});
 const clean=s=>String(s||'').replace(/<[^>]*>/g,' ').replace(/&amp;/g,'&').replace(/\s+/g,' ').trim();
 for(const [category,type,query] of categories){
  const params=new URLSearchParams({action:'query',generator:'search',gsrsearch:'filetype:bitmap '+query,gsrnamespace:'6',gsrlimit:String(Math.min(50,target*4)),prop:'imageinfo',iiprop:'url|extmetadata|mime|size',iiurlwidth:'1600',format:'json',origin:'*'});
- let data;try{const res=await fetch(api+'?'+params);if(!res.ok)throw Error('HTTP '+res.status);data=await res.json();}catch(e){console.error('Search failed:',query,e.message);continue;}
+ let data;try{const res=await fetch(api+'?'+params,{headers});if(!res.ok)throw Error('HTTP '+res.status);data=await res.json();}catch(e){console.error('Search failed:',query,e.message);continue;}
  let collected=0;
  for(const page of Object.values(data.query?.pages||{})){
   if(collected>=target)break;
@@ -21,12 +24,12 @@ for(const [category,type,query] of categories){
   if(seen.has(info.url))continue;
   const url=info.thumburl||info.url;
   try{
-   const response=await fetch(url);if(!response.ok)continue;
+   const response=await fetch(url,{headers});if(!response.ok)continue;
    const bytes=new Uint8Array(await response.arrayBuffer());if(bytes.length>8*1024*1024||bytes.length<10000)continue;
    const ext=info.mime==='image/png'?'png':info.mime==='image/webp'?'webp':'jpg';
-   const id='commons-'+String(manifest.length+1).padStart(4,'0'),filename=id+'.'+ext;
+   const id=(process.argv[3]?'validation-':'commons-')+String(manifest.length+1).padStart(4,'0'),filename=id+'.'+ext;
    await writeFile(path.join('benchmark/photos',filename),bytes);
-   manifest.push({id,image:filename,mode:'single',expectedCategory:category,expectedType:type,verified:false,conditions:['commons-public-photo'],source:info.descriptionurl||info.url});
+   manifest.push({id,image:filename,mode:'single',expectedCategory:category,expectedType:type,verified:false,conditions:['commons-public-photo'],source:info.descriptionurl||info.url,downloadUrl:url,sourceImage:info.url});
    attributions.push({id,title:page.title,source:info.descriptionurl||info.url,license,licenseUrl,author:clean(meta.Artist?.value),credit:clean(meta.Credit?.value)});
    seen.add(info.url);collected++;
   }catch(e){console.error('Skipped',page.title,e.message);}

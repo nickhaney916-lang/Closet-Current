@@ -1,0 +1,27 @@
+name: Collect fresh clothing validation candidates
+on:
+  push:
+    branches: ['recognition/fresh-photos']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node scripts/collect-commons-photos.mjs 6 benchmark/fresh-candidate-queries.json
+      - run: node -e "const fs=require('fs');const m=JSON.parse(fs.readFileSync('benchmark/candidates.json'));console.log('Fresh candidates:',m.length);if(!m.length)process.exitCode=1"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: fresh-validation-candidates
+          path: |
+            benchmark/photos/
+            benchmark/candidates.json
+            benchmark/attributions.json
+          retention-days: 14

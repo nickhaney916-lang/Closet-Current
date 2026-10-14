@@ -1,0 +1,44 @@
+name: Mobile capture and closet persistence flow
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'public/**'
+      - 'scripts/run-mobile-flow.mjs'
+      - '.github/workflows/mobile-flow.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  mobile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prepare browser and licensed camera fixture
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+          gh run download 38491639135 -n commons-clothing-photo-candidates -D benchmark/input
+          mkdir -p benchmark/photos benchmark/mobile-flow
+          cp benchmark/input/photos/* benchmark/photos/
+          cp benchmark/input/attributions.json benchmark/mobile-flow/
+          ffmpeg -loglevel error -loop 1 -i benchmark/photos/commons-0001.jpg -vf 'scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2:black' -r 10 -t 2 -pix_fmt yuv420p -f yuv4mpegpipe benchmark/mobile-camera.y4m
+      - name: Build and verify touch viewport flow with real worker
+        run: |
+          node scripts/build.mjs
+          node scripts/run-mobile-flow.mjs benchmark/mobile-flow
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mobile-flow-results
+          path: benchmark/mobile-flow/
+          retention-days: 14

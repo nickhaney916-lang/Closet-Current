@@ -10,7 +10,11 @@ on:
       - 'public/recognition-photo.mjs'
       - 'public/local-worker.mjs'
       - 'public/vector-scorer.mjs'
+      - 'public/recognition-vectors.json'
+      - 'public/recognition-vectors.bin'
       - 'benchmark/manifest-holdout-16.json'
+      - 'benchmark/manifest-fresh-11.json'
+      - 'scripts/download-reviewed-photos.mjs'
       - 'benchmark/manifest-reviewed-32.json'
   workflow_dispatch:
 permissions:
@@ -48,11 +52,17 @@ jobs:
             node scripts/evaluate-recognition-benchmark.mjs benchmark/manifest-reviewed-32.json benchmark/output/results.json > benchmark/output/evaluation.json
             cat benchmark/output/evaluation.json
           fi
-      - name: Evaluate independent clothing and negative holdout
+      - name: Evaluate additional clothing and negative regression set
         run: |
           node scripts/run-browser-photo-benchmark.mjs benchmark/manifest-holdout-16.json benchmark/output/holdout
           node scripts/evaluate-recognition-benchmark.mjs benchmark/manifest-holdout-16.json benchmark/output/holdout/results.json > benchmark/output/holdout/evaluation.json
           cat benchmark/output/holdout/evaluation.json
+      - name: Evaluate locked independent fresh photographs
+        run: |
+          node scripts/download-reviewed-photos.mjs benchmark/manifest-fresh-11.json
+          node scripts/run-browser-photo-benchmark.mjs benchmark/manifest-fresh-11.json benchmark/output/fresh
+          node scripts/evaluate-recognition-benchmark.mjs benchmark/manifest-fresh-11.json benchmark/output/fresh/results.json > benchmark/output/fresh/evaluation.json
+          cat benchmark/output/fresh/evaluation.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:

@@ -1,0 +1,70 @@
+name: Selected recognition and fresh-photo validation
+on:
+  push:
+    branches: ['recognition/semantic-prompts']
+    paths:
+      - '.github/workflows/selected-recognition-validation.yml'
+      - 'benchmark/manifest-fresh-11.json'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prepare locked photo sets, selected index and browser
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+          gh run download 38491639135 -n commons-clothing-photo-candidates -D benchmark/input
+          gh run download 38500351254 -n fresh-validation-candidates -D benchmark/fresh-candidates
+          gh run download 38499936293 -n semantic-recognition-comparison -D benchmark/selected-artifact
+          mkdir -p benchmark/photos
+          cp benchmark/input/photos/* benchmark/photos/
+          cp benchmark/fresh-candidates/photos/* benchmark/photos/
+      - name: Verify fresh-photo identities before inference
+        run: |
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';import {createHash} from 'node:crypto';
+          for(const row of JSON.parse(fs.readFileSync('benchmark/manifest-fresh-11.json'))){if(createHash('sha256').update(fs.readFileSync('benchmark/photos/'+row.image)).digest('hex')!==row.sha256)throw Error('Photo mismatch: '+row.id);}
+          JS
+      - name: Run baseline and selected model on all three photo sets
+        run: |
+          git fetch origin d0f1cdff58bfb3c679016fe1a140bd016da490b7
+          git show d0f1cdff58bfb3c679016fe1a140bd016da490b7:public/recognition-vectors.json > public/recognition-vectors.json
+          git show d0f1cdff58bfb3c679016fe1a140bd016da490b7:public/recognition-vectors.bin > public/recognition-vectors.bin
+          for variant in before after; do
+            if [ "$variant" = after ]; then
+              cp benchmark/selected-artifact/index-coarse-jacket/recognition-vectors.* public/
+            fi
+            node scripts/build.mjs
+            node --test tests/*.test.cjs tests/*.test.mjs
+            for set in reviewed-32 holdout-16 fresh-11; do
+              output="benchmark/selected-validation/$variant-$set"
+              node scripts/run-browser-photo-benchmark.mjs "benchmark/manifest-$set.json" "$output"
+              node scripts/evaluate-recognition-benchmark.mjs "benchmark/manifest-$set.json" "$output/results.json" > "$output/evaluation.json"
+              cat "$output/evaluation.json"
+            done
+          done
+      - name: Run mobile capture and persistence flow with selected index
+        run: |
+          ffmpeg -loglevel error -loop 1 -i benchmark/photos/commons-0001.jpg -vf 'scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2:black' -r 10 -t 2 -pix_fmt yuv420p -f yuv4mpegpipe benchmark/mobile-camera.y4m
+          mkdir -p benchmark/selected-validation/mobile-flow
+          cp benchmark/input/attributions.json benchmark/selected-validation/mobile-flow/
+          node scripts/run-mobile-flow.mjs benchmark/selected-validation/mobile-flow
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: selected-recognition-validation
+          path: benchmark/selected-validation/
+          retention-days: 14
