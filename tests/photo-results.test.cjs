@@ -33,9 +33,6 @@ test('storage failure shows Not saved and keeps recognized labels with one Adjus
  const nodes=descendants(grid);assert.ok(nodes.some(x=>x.text==='Not saved'));assert.ok(nodes.some(x=>x.text==='Tops · Polo · Red'));assert.equal(nodes.filter(x=>x.tag==='button').length,2);
 });
 
-test('ready outfit photos have a selection control that preserves an explicit deselection',()=>{
- const {c,grid}=setup();c.outfitPieceSelectable=()=>true;c.outfitExcludedIds=new Set();c.renderOutfitCapture=()=>{c.updated=true;};
- const item={id:'ready',category:'Tops',itemType:'T-shirt',localAnalyzed:true,requiresOwnershipConfirmation:true};c.renderPhotoResults(grid,[item]);
- const checkbox=descendants(grid).find(x=>x.tag==='input');assert.equal(checkbox.checked,true);checkbox.checked=false;checkbox.onchange();assert.equal(c.outfitExcludedIds.has('ready'),true);assert.equal(c.updated,true);
- c.renderPhotoResults(grid,[item]);assert.equal(descendants(grid).find(x=>x.tag==='input').checked,false);assert.ok(descendants(grid).some(x=>x.text==='Ready to add'));
+test('saved outfit pieces show their clipped image without an add or selection step',()=>{
+ const {c,grid}=setup();const item={id:'ready',image:'auto-clipped-photo',outfitSourceId:'outfit',category:'Tops',itemType:'T-shirt',localAnalyzed:true};c.items=[item];c.renderPhotoResults(grid,[item]);const nodes=descendants(grid);assert.ok(nodes.some(x=>x.text==='Saved'));assert.ok(nodes.some(x=>x.tag==='img'&&x.src==='auto-clipped-photo'));assert.ok(!nodes.some(x=>x.tag==='input'||x.text==='Ready to add'));
 });
