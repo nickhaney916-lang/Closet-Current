@@ -45,3 +45,24 @@ test('category review rejects vocabulary contradictions, negatives and uncertain
   assert.equal(r.strong,false);assert.equal(r.categoryConfirmed,undefined);assert.deepEqual(r.choices,[]);
  }
 });
+
+test('uncertain top type may recover only after all original-view gates pass',async()=>{
+ const {recognizeWithRecovery}=await import('../public/recognition-engine.mjs');let notified=0;
+ const primary=[[cat('Tops',.98),cat('Shoes',.02)],[type('T-shirt',.5),type('Blouse',.4)]];
+ const original=[[cat('Tops',.95),cat('Shoes',.05)],[type('T-shirt',.9),type('Blouse',.05)],[type('T-shirt',.9),type('Blouse',.05)]];
+ const r=await recognizeWithRecovery(async()=>primary.shift(),{width:112,height:200},{recoveryModel:async()=>original.shift(),recoveryConfirmationModel:async()=>[type('T-shirt',.9),type('Blouse',.05)],onIdentified:()=>notified++});
+ assert.equal(r.strong,true);assert.equal(r.preprocessingRecovery,true);assert.equal(r.choices[0].itemType,'T-shirt');assert.equal(notified,1);
+});
+test('recovery cannot override a conflicting vocabulary/view or an uncertain category',async()=>{
+ const {recognizeWithRecovery}=await import('../public/recognition-engine.mjs');
+ for(const responses of [
+  [[cat('Tops',.6),cat('Dresses',.3)],[type('T-shirt',.5),type('Blouse',.4)]],
+  [[cat('Shoes',.95),cat('Tops',.05)],[type('Sneakers',.5),type('Flats',.4)]],
+  [[cat('Tops',.95),cat('Shoes',.05)],[type('T-shirt',.9),type('Blouse',.05)],[type('Blouse',.9),type('T-shirt',.05)]]
+ ]){
+  let recovered=0;const r=await recognizeWithRecovery(async()=>responses.shift(),{width:112,height:200},{recoveryModel:async()=>{recovered++;throw Error('must not retry');},recoveryConfirmationModel:async()=>[]});assert.equal(r.strong,false);assert.equal(recovered,0);
+ }
+ const primary=[[cat('Tops',.95),cat('Shoes',.05)],[type('T-shirt',.5),type('Blouse',.4)]];
+ const original=[[cat('Tops',.95),cat('Shoes',.05)],[type('T-shirt',.9),type('Blouse',.05)],[type('T-shirt',.59),type('Blouse',.05)]];
+ const r=await recognizeWithRecovery(async()=>primary.shift(),{width:112,height:200},{recoveryModel:async()=>original.shift(),recoveryConfirmationModel:async()=>{throw Error('failed full gate must stop first');}});assert.equal(r.strong,false);assert.equal(r.reason,'type_uncertain');
+});

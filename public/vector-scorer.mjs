@@ -8,14 +8,6 @@ export function normalizedVector(values,dimensions){
  norm=Math.sqrt(norm);if(norm<1e-8)throw Error('Invalid image features.');
  return Float32Array.from(values,x=>x/norm);
 }
-// Combine normalized image features, not softmax scores whose denominators
-// change with each vocabulary. The normal scorer still enforces every gate.
-export function averageImageFeatures(features,dimensions=512){
- if(!Array.isArray(features)||features.length<2)throw Error('Invalid image feature views.');
- const views=features.map(x=>normalizedVector(x,dimensions)),mean=new Float32Array(dimensions);
- for(const view of views)for(let i=0;i<dimensions;i++)mean[i]+=view[i]/views.length;
- return normalizedVector(mean,dimensions);
-}
 export function makeVectorScorer(encode,metadata,vectors){
  validateVectorBundle(metadata,vectors);const positions=new Map(metadata.labels.map((label,i)=>[label,i*metadata.dimensions])),cache=new WeakMap();
  return async function score(image,labels){
