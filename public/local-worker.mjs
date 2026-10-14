@@ -32,7 +32,7 @@ async function load(){
    return (await vision(await processor(fitted))).image_embeds.data;
   },metadata,vectors);
   const originalCenter=makeVectorScorer(async image=>(await vision(await processor(image))).image_embeds.data,metadata,vectors);
-  scannerStage='ready';return {whole,center,originalWhole,originalCenter};
+  scannerStage='ready';return {whole,center,originalWhole,originalCenter,modelKey:'fashion-clip/whole-v1/'+metadata.revision};
  })().catch(error=>{classifierPromise=null;throw error;});
  return classifierPromise;
 }
@@ -41,9 +41,10 @@ self.onmessage=event=>{const request=event.data;chain=chain.then(async()=>{
  try{
   const model=await load();
   if(request.type==='load'){self.postMessage({type:'ready',id:request.id});return;}
-  if(request.type!=='classify'||typeof request.image!=='string'||!request.image.startsWith('data:image/jpeg;base64,'))throw Error('Invalid captured image.');
+  if(!['classify','features'].includes(request.type)||typeof request.image!=='string'||!request.image.startsWith('data:image/jpeg;base64,'))throw Error('Invalid captured image.');
   scannerStage='catalog_import';const {recognizeWithRecovery,classifyIsolatedGarment}=await import('./recognition-engine.mjs'+new URL(import.meta.url).search);
   scannerStage='identify';const image=await RawImageClass.read(request.image);
+  if(request.type==='features'){const features=await model.whole.features(image);self.postMessage({type:'result',id:request.id,recognitionMemory:{version:1,modelKey:model.modelKey,features}});return;}
   const classify=request.hint?classifyIsolatedGarment:recognizeWithRecovery;
   const result=await classify(model.whole,image,{
    hint:request.hint,
@@ -52,7 +53,8 @@ self.onmessage=event=>{const request=event.data;chain=chain.then(async()=>{
    onStage:stage=>{scannerStage=stage;},
    onIdentified:choice=>self.postMessage({type:'identified',id:request.id,choice})
   });
-  self.postMessage({type:'result',id:request.id,...result});
+  let recognitionMemory;try{if(model.whole.features)recognitionMemory={version:1,modelKey:model.modelKey,features:await model.whole.features(image)};}catch{/* Optional memory cannot reject a garment. */}
+  self.postMessage({type:'result',id:request.id,...result,recognitionMemory});
  }catch(error){
   self.postMessage({type:'error',id:request.id,stage:scannerStage,code:scannerErrorCode(error,scannerStage),text:'Recognition could not finish on this device. Try again or use Adjust.'});
  }

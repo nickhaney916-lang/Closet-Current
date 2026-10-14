@@ -1,0 +1,276 @@
+{
+  "date": "2026-10-14",
+  "baselineCommit": "cce936fffc91c562f8a541ef8215c747ce57f5d2",
+  "validatedCandidateCommit": "5a9524b97c9e9d8c4a6c8b69653c1bf974e1d2bf",
+  "changes": [
+    "Automatic garment mask isolation for outfit display",
+    "Unmasked crop used for classification and quality checks",
+    "Garment-only source pixels determine tentative color",
+    "Recognized outfit pieces save automatically without selection or add step",
+    "Source outfit, clipped image and recognition crop privately restored"
+  ],
+  "unitChecks": {
+    "passed": 213,
+    "failed": 0
+  },
+  "browserChecks": {
+    "legacyNineMigrated": true,
+    "secondDeviceRestore": true,
+    "accountIsolation": true,
+    "outfitsAndInspirationRestored": true,
+    "unfinishedPhotosRestored": true,
+    "offlineReloadAndRetry": true,
+    "editsDuringUploadPreserved": true,
+    "deletionSynced": true,
+    "emptyBrowserRestore": true,
+    "independentOfflineEditsMerged": true,
+    "conflictingVersionsPreserved": true,
+    "lostSaveResponseDoesNotDuplicateCopies": true,
+    "corruptRestoreKeepsLocalPhotos": true,
+    "cropTouchAndKeyboardResize": true,
+    "cropCancelPreservesPhoto": true,
+    "cropSaveFailurePreservesPhoto": true,
+    "cropRecognitionUsesSavedPixels": true,
+    "cropOriginalPrivatelyRestored": true,
+    "cropCanResetToOriginal": true,
+    "verifiedCropDetailsSaved": true,
+    "missingFieldsFilled": true,
+    "manualEditsDuringDetailCheckPreserved": true,
+    "labelInformationNotInvented": true,
+    "seasonsRequireConfirmation": true,
+    "colorAppearsOnOpeningEditor": true,
+    "colorSurvivesTypeFailure": true,
+    "categoryAndColorCanBeSavedAndMatched": true,
+    "partialColorPrivatelyRestored": true,
+    "coreIdentityAutoSavesWithoutSubtype": true,
+    "automaticOutfitCrops": true,
+    "recognizedOutfitAutoSaves": true,
+    "garmentMaskColorPreserved": true,
+    "outfitOriginalAndRecognitionCropsPrivatelyRestored": true,
+    "pageErrors": [],
+    "backend": "Controlled HTTP backend with production browser client; actual Supabase auth/storage/RLS verified separately"
+  },
+  "sources": {
+    "browser": "https://github.com/nickhaney916-lang/Closet-Current/actions/runs/38637703889",
+    "display": "https://github.com/nickhaney916-lang/Closet-Current/actions/runs/38637107366",
+    "beforeBenchmark": "https://github.com/nickhaney916-lang/Closet-Current/actions/runs/38634274613",
+    "afterBenchmark": "https://github.com/nickhaney916-lang/Closet-Current/actions/runs/38637254174"
+  },
+  "beforeEvaluation": {
+    "manifestCount": 32,
+    "resultsCount": 32,
+    "missingResults": 0,
+    "single": {
+      "evaluated": 32,
+      "autoIndexedCount": 25,
+      "categoryReviewCount": 1,
+      "categoryAccuracyPercent": 81.25,
+      "typeAccuracyPercent": 56.25,
+      "acceptedTypeAccuracyPercent": 75,
+      "abstentionPercent": 18.75
+    },
+    "negative": {
+      "evaluated": 0,
+      "rejected": 0,
+      "falsePositives": 0
+    },
+    "outfit": {
+      "evaluated": 0,
+      "expectedPieces": 0,
+      "matchedPieces": 0,
+      "pieceRecallPercent": null,
+      "unexpectedPieces": 0
+    },
+    "reasonCounts": {
+      "accepted": 25,
+      "type_uncertain": 1,
+      "views_disagree": 3,
+      "dress_type_review": 1,
+      "checks_disagree": 2
+    },
+    "perCategory": {
+      "Tops": {
+        "total": 2,
+        "categoryCorrect": 2,
+        "typeCorrect": 2,
+        "abstained": 0
+      },
+      "Bottoms": {
+        "total": 9,
+        "categoryCorrect": 7,
+        "typeCorrect": 7,
+        "abstained": 2
+      },
+      "Dresses": {
+        "total": 2,
+        "categoryCorrect": 1,
+        "typeCorrect": 0,
+        "abstained": 1
+      },
+      "Outerwear": {
+        "total": 6,
+        "categoryCorrect": 4,
+        "typeCorrect": 3,
+        "abstained": 2
+      },
+      "Shoes": {
+        "total": 13,
+        "categoryCorrect": 12,
+        "typeCorrect": 6,
+        "abstained": 1
+      }
+    },
+    "errors": [
+      {
+        "id": "commons-0035",
+        "reason": "category",
+        "expected": "Bottoms",
+        "actual": "none"
+      },
+      {
+        "id": "commons-0045",
+        "reason": "category",
+        "expected": "Bottoms",
+        "actual": "none"
+      },
+      {
+        "id": "commons-0053",
+        "reason": "category",
+        "expected": "Dresses",
+        "actual": "none"
+      },
+      {
+        "id": "commons-0065",
+        "reason": "category",
+        "expected": "Outerwear",
+        "actual": "none"
+      },
+      {
+        "id": "commons-0070",
+        "reason": "category",
+        "expected": "Outerwear",
+        "actual": "none"
+      },
+      {
+        "id": "commons-0083",
+        "reason": "category",
+        "expected": "Shoes",
+        "actual": "none"
+      }
+    ]
+  },
+  "afterEvaluation": {
+    "manifestCount": 32,
+    "resultsCount": 32,
+    "missingResults": 0,
+    "single": {
+      "evaluated": 32,
+      "autoIndexedCount": 25,
+      "categoryReviewCount": 1,
+      "categoryAccuracyPercent": 81.25,
+      "typeAccuracyPercent": 56.25,
+      "acceptedTypeAccuracyPercent": 75,
+      "abstentionPercent": 18.75
+    },
+    "negative": {
+      "evaluated": 0,
+      "rejected": 0,
+      "falsePositives": 0
+    },
+    "outfit": {
+      "evaluated": 0,
+      "expectedPieces": 0,
+      "matchedPieces": 0,
+      "pieceRecallPercent": null,
+      "unexpectedPieces": 0
+    },
+    "reasonCounts": {
+      "accepted": 25,
+      "type_uncertain": 1,
+      "views_disagree": 3,
+      "dress_type_review": 1,
+      "checks_disagree": 2
+    },
+    "perCategory": {
+      "Tops": {
+        "total": 2,
+        "categoryCorrect": 2,
+        "typeCorrect": 2,
+        "abstained": 0
+      },
+      "Bottoms": {
+        "total": 9,
+        "categoryCorrect": 7,
+        "typeCorrect": 7,
+        "abstained": 2
+      },
+      "Dresses": {
+        "total": 2,
+        "categoryCorrect": 1,
+        "typeCorrect": 0,
+        "abstained": 1
+      },
+      "Outerwear": {
+        "total": 6,
+        "categoryCorrect": 4,
+        "typeCorrect": 3,
+        "abstained": 2
+      },
+      "Shoes": {
+        "total": 13,
+        "categoryCorrect": 12,
+        "typeCorrect": 6,
+        "abstained": 1
+      }
+    },
+    "errors": [
+      {
+        "id": "commons-0035",
+        "reason": "category",
+        "expected": "Bottoms",
+        "actual": "none"
+      },
+      {
+        "id": "commons-0045",
+        "reason": "category",
+        "expected": "Bottoms",
+        "actual": "none"
+      },
+      {
+        "id": "commons-0053",
+        "reason": "category",
+        "expected": "Dresses",
+        "actual": "none"
+      },
+      {
+        "id": "commons-0065",
+        "reason": "category",
+        "expected": "Outerwear",
+        "actual": "none"
+      },
+      {
+        "id": "commons-0070",
+        "reason": "category",
+        "expected": "Outerwear",
+        "actual": "none"
+      },
+      {
+        "id": "commons-0083",
+        "reason": "category",
+        "expected": "Shoes",
+        "actual": "none"
+      }
+    ]
+  },
+  "identicalEvaluations": {
+    "evaluation.json": true,
+    "holdout/evaluation.json": true,
+    "fresh/evaluation.json": true
+  },
+  "limits": [
+    "Browser outfit flow uses controlled masks and classification responses, not real-photo segmentation accuracy.",
+    "The 32-photo benchmark covers single garments, not complete outfits.",
+    "Mask color is a pixel estimate; lighting can affect it and no labeled color accuracy was measured.",
+    "Existing saved photos are not recropped retroactively; new outfit captures use automatic isolation."
+  ]
+}
