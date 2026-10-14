@@ -16,6 +16,8 @@ Custom SMTP is not configured. The default Supabase sender restricts recipients 
 
 Do not disable email confirmation or grant users project-team access as a workaround. Do not modify Drive Duel.
 
+Authentication review, October 14: the project is healthy and confirmation remains required. Added clear delivery/rate-limit errors and rejection of malformed successful responses; all 170 automated checks passed. Current SMTP settings could not be reread because Supabase management access requires reauthentication. Sender activation and real inbox testing remain open. See [email readiness review](AUTH-EMAIL-READINESS.md).
+
 ## P1 — Real-phone pilot and recognition accuracy
 
 Status: device-check tooling added; physical-phone results still required. Updated October 13, 2026.

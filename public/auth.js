@@ -29,6 +29,12 @@
  }
  function errorMessage(err){
   if(err.code==='invalid_credentials'||/invalid login credentials/i.test(err.message))return 'Email or password is incorrect. If you have not registered yet, choose Create an account first.';
+  if(err.code==='email_address_not_authorized')return 'Email delivery is not ready for this address yet. Please try again later.';
+  if(err.code==='over_email_send_rate_limit')return 'Too many emails have been requested. Wait a while before requesting another email.';
+  if(err.code==='over_request_rate_limit'||err.status===429)return 'Too many requests. Please wait a few minutes and try again.';
+  if(err.code==='email_provider_disabled')return 'Email signup is temporarily unavailable. Please try again later.';
+  if(err.code==='email_address_invalid')return 'Use a valid email address that can receive messages.';
+  if(err.code==='invalid_response')return 'The login service returned an unreadable response. Please try again.';
   if(err.code==='email_not_confirmed')return 'Confirm your email using the link in your inbox, then log in.';
   if(err.name==='AbortError')return 'The request timed out. Check your connection and try again.';
   if(err instanceof TypeError)return 'Could not connect to the login service. Check your connection and try again.';
@@ -47,8 +53,13 @@
   const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),15000);
   try{
    const res=await fetch(URL+'/auth/v1/'+path,{method,signal:controller.signal,headers:{'apikey':KEY,'Content-Type':'application/json',...(token?{'Authorization':'Bearer '+token}:{})},...(method==='GET'?{}:{body:JSON.stringify(body)})});
-   const data=await res.json().catch(()=>({}));
-   if(!res.ok){const err=Error(data.msg||data.error_description||data.message||'Authentication failed');err.code=data.error_code||data.code;throw err;}
+   let data;
+   try{data=await res.json();}catch{data=null;}
+   if(!data||typeof data!=='object'||Array.isArray(data)){
+    if(res.ok){const err=Error('Unreadable authentication response');err.code='invalid_response';throw err;}
+    data={};
+   }
+   if(!res.ok){const err=Error(data.msg||data.error_description||data.message||'Authentication failed');err.code=data.error_code||data.code;err.status=res.status;throw err;}
    return data;
   }finally{clearTimeout(timer);}
  }

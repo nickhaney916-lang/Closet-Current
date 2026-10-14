@@ -51,3 +51,7 @@ Physical-phone capture/login validation, reliable authentication email delivery,
 Added an automated mobile WebKit photo-import and persistence check. EXIF orientation, high-resolution import limits, actual-worker T-shirt recognition, IndexedDB persistence and phone layout passed on the validation branch; all 166 existing Node checks passed. See docs/WEBKIT-MOBILE-RESULTS.md. Product camera and recognition behavior are unchanged.
 
 Development is resumed. Real phone garment reports remain the next input needed for recognition tuning; physical-phone camera and production-login tests remain open.
+
+## Authentication continuation
+
+Reviewed Closet Current's public Auth settings and project health. Added clear email delivery/rate-limit messages and validation of unreadable service responses; 170 automated checks passed. Supabase management access requested reauthentication, so SMTP settings were not modified and real inbox tests remain open. See docs/AUTH-EMAIL-READINESS.md. Recognition, simplified navigation, camera resolution and Drive Duel are preserved.

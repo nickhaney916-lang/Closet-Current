@@ -120,3 +120,35 @@ test('multiple empty login fields report the first invalid field rather than the
  const a=app();a.get('authEmail').validity={valid:false,valueMissing:true};a.get('authPassword').validity={valid:false,valueMissing:true};
  a.listeners.invalid({target:a.get('authPassword')});assert.match(a.get('authStatus').textContent,/Enter your email/);assert.equal(a.requests.length,0);
 });
+
+
+test('blocked email delivery stays locked, restores controls and hides provider details',async()=>{
+ for(const action of ['signup','reset','resend']){
+  const a=app(async()=>response({error_code:'email_address_not_authorized',msg:'Private recipient and SMTP configuration details'},false));
+  if(action==='signup'){a.get('authMode').onclick();await a.submit();}else await a.get(action==='reset'?'authReset':'authResend').onclick();
+  assert.match(a.get('authStatus').textContent,/Email delivery is not ready/);
+  assert.doesNotMatch(a.get('authStatus').textContent,/Private recipient|SMTP|Check your email|requested/);
+  assert.equal(a.window.closetAuth.user,null);assert.equal(a.get('authSubmit').disabled,false);assert.equal(a.get('authResend').disabled,false);assert.equal(a.timers.size,0);
+ }
+});
+test('email and request throttling give wait guidance without retrying automatically',async()=>{
+ for(const [code,status,expected] of [['over_email_send_rate_limit',429,/Too many emails/],['over_request_rate_limit',429,/Too many requests/],[undefined,429,/Too many requests/]]){
+  const a=app(async()=>({...response({error_code:code,msg:'Internal limiter details'},false),status}));await a.get('authResend').onclick();
+  assert.match(a.get('authStatus').textContent,expected);assert.doesNotMatch(a.get('authStatus').textContent,/Internal limiter/);assert.equal(a.requests.length,1);assert.equal(a.get('authResend').disabled,false);
+ }
+});
+test('malformed successful email responses cannot report delivery success',async()=>{
+ for(const data of [null,[], 'not an object','invalid-json']){
+  for(const action of ['reset','resend']){
+   const a=app(async()=>data==='invalid-json'?{ok:true,json:async()=>{throw new SyntaxError('not JSON');}}:response(data));
+   await a.get(action==='reset'?'authReset':'authResend').onclick();assert.match(a.get('authStatus').textContent,/unreadable response/);
+   assert.equal(a.window.closetAuth.user,null);assert.equal(a.get('authReset').disabled,false);assert.equal(a.timers.size,0);
+  }
+ }
+});
+test('disabled email provider and unsupported email address give actionable messages',async()=>{
+ for(const [code,expected] of [['email_provider_disabled',/signup is temporarily unavailable/],['email_address_invalid',/valid email address that can receive/]]){
+  const a=app(async()=>response({code,msg:'Internal provider details'},false));a.get('authMode').onclick();await a.submit();
+  assert.match(a.get('authStatus').textContent,expected);assert.equal(a.window.closetAuth.user,null);assert.equal(a.get('authSubmit').disabled,false);
+ }
+});
