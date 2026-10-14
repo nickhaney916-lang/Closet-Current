@@ -21,7 +21,7 @@ export function confidentCategory(choices){
 export function agreementMatch(category,branch,overall){
  const first=branch[0],full=overall[0];
  return confidentCategory(category)&&strongMatch(branch)&&first.category===category[0].category&&
-  !!full&&full.category===first.category&&full.itemType===first.itemType&&full.score>=.6&&full.score-(overall[1]?.score||0)>=.2;
+  !!full&&full.category===first.category&&full.itemType===first.itemType&&full.score>=.55&&full.score-(overall[1]?.score||0)>=.2;
 }
 export async function recognizeGarment(model,image,{onStage=()=>{},onIdentified=()=>{},confirmationModel=model}={}){
  onStage('identify');
