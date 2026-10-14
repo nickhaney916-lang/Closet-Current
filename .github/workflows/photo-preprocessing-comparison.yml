@@ -48,13 +48,13 @@ jobs:
           cat benchmark/comparison/before-evaluation.json benchmark/comparison/after-evaluation.json
       - name: Compare conservative scale variants
         run: |
-          for variant in consistent224 consistent336 trimmed336 consistent448; do
+          for variant in trimmed272 trimmed288 trimmed320 trimmed384 consistent288; do
             VARIANT="$variant" python3 - <<'PYTHON'
           import os
           from pathlib import Path
           variant=os.environ['VARIANT']
           source=Path('/tmp/recognition-photo-after.mjs').read_text()
-          size=448 if variant.endswith('448') else 336 if variant.endswith('336') else 224
+          size=int(variant[-3:])
           content=size-8 if size==224 else size-16
           source=source.replace('const size=224,contentSize=confirmation?208:size',f'const size={size},contentSize=confirmation?{content}:size')
           if not variant.startswith('trimmed'):
