@@ -1,0 +1,14 @@
+{
+  "a tunic": ["a tunic", "a loose long shirt worn over trousers", "a hip length tunic top without a dress skirt"],
+  "a casual dress": ["a casual dress", "a one piece everyday dress with a bodice and skirt", "a short or knee length casual dress"],
+  "a formal dress": ["a formal dress", "a full length evening gown", "an elegant occasion dress with a bodice and long skirt"],
+  "a shirt dress": ["a shirt dress", "a dress with a shirt collar and buttons down the front", "a long button front shirt with a dress skirt"],
+  "a sweater dress": ["a sweater dress", "a knitted dress with a bodice and skirt", "a long sweater worn as a one piece dress"],
+  "sneakers": ["sneakers", "lace up athletic shoes with rubber soles", "canvas or leather trainers with laces"],
+  "flat shoes": ["flat shoes", "low cut ballet flat shoes without high heels", "flat slip on shoes with an open instep"],
+  "high heel shoes": ["high heel shoes", "dress pumps with raised heels", "high heeled shoes with low cut uppers"],
+  "sandals": ["sandals", "open toe shoes with straps", "open sandals exposing the toes and feet"],
+  "ankle boots": ["ankle boots", "short boots with shafts ending at the ankle", "boots covering the foot and ankle but not the calf"],
+  "tall boots": ["tall boots", "long boots with shafts extending up the calf", "knee high boots covering the lower leg"],
+  "loafers": ["loafers", "low slip on leather shoes with a moccasin seam", "laceless loafers with a low heel and closed toe"]
+}
