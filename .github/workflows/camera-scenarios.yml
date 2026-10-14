@@ -19,7 +19,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Run complete Node test suite (all application and recognition tests)
-        run: node --test tests/*.test.cjs tests/*.test.mjs
       - name: Validate production build
         run: node scripts/build.mjs
+      - name: Run complete Node test suite (all application and recognition tests)
+        run: node --test tests/*.test.cjs tests/*.test.mjs
