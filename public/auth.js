@@ -1,5 +1,5 @@
 'use strict';
-// Authentication only: wardrobe images remain in per-account IndexedDB on this device.
+// Account sessions authenticate private cloud backup as well as the local closet.
 (function(){
  const URL='https://hlkgymugtfbirlpunsra.supabase.co';
  const KEY='sb_publishable_5bw6Gkrw3Qx73dZYGNzmIw_x_OoauDO';
@@ -10,7 +10,16 @@
  let resolveReady,rejectReady;
  const ready=new Promise((resolve,reject)=>{resolveReady=resolve;rejectReady=reject;});
  window.closetAuth={ready,user:null};
- let signup=false,session=null,busy=false,recovery=false,restoringSession=false;
+ let signup=false,session=null,busy=false,recovery=false,restoringSession=false,refreshing=null;
+ window.closetAuth.getAccessToken=async({force=false}={})=>{
+  if(!session?.access_token||!window.closetAuth.user?.id)throw Error('Sign in required');
+  if(force||session.expires_at<Date.now()/1000+60){
+   if(!session.refresh_token)throw Error('Sign in again');
+   if(!refreshing){const expected=window.closetAuth.user.id;refreshing=request('token?grant_type=refresh_token',{refresh_token:session.refresh_token}).then(data=>{if(data.user?.id!==expected||!data.access_token)throw Error('Session account changed');showUser(data);}).finally(()=>{refreshing=null;});}
+   await refreshing;
+  }
+  return session.access_token;
+ };
  const status=t=>$('authStatus').textContent=t;
  function setPasswordVisible(visible){
   $('authPassword').type=visible?'text':'password';
@@ -65,7 +74,7 @@
  }
  function showUser(data){
   if(!data?.user?.id)throw Error('No verified user session');
-  session=data;window.closetAuth.user=data.user;
+  session={...data,expires_at:Math.floor(Date.now()/1000)+(data.expires_in||3600)};window.closetAuth.user=data.user;
   localStorage.setItem(STORE,JSON.stringify({access_token:data.access_token,refresh_token:data.refresh_token,expires_at:Math.floor(Date.now()/1000)+(data.expires_in||3600)}));
   $('authGate').hidden=true;$('appShell').hidden=false;
   $('accountLabel').textContent=data.user.user_metadata?.username||data.user.email||'My account';

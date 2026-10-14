@@ -1,0 +1,29 @@
+{
+  "browserFlowRun": 38618846384,
+  "browserFlow": {
+    "legacyNineMigrated": true,
+    "secondDeviceRestore": true,
+    "accountIsolation": true,
+    "outfitsAndInspirationRestored": true,
+    "unfinishedPhotosRestored": true,
+    "offlineReloadAndRetry": true,
+    "editsDuringUploadPreserved": true,
+    "deletionSynced": true,
+    "emptyBrowserRestore": true,
+    "independentOfflineEditsMerged": true,
+    "pageErrors": [],
+    "backend": "Controlled HTTP backend with production browser client; actual Supabase auth/storage/RLS verified separately"
+  },
+  "liveSupabaseApi": {
+    "realAuth": true,
+    "privateUploadDownload": true,
+    "metadataSave": true,
+    "staleRevisionRejected": true,
+    "otherAccountDenied": true,
+    "anonymousDenied": true,
+    "publicPhotoDenied": true
+  },
+  "nodeChecks": 181,
+  "syntheticAccountsAndPhotosRemoved": true,
+  "scope": "Closet Current only; no personal wardrobe inspected"
+}

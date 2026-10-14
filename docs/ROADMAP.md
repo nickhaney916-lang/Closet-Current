@@ -34,7 +34,7 @@ Mobile WebKit validation, October 14: EXIF portrait orientation, 2048/3072-pixel
 
 ## P1 — Cloud backup and synchronization
 
-Status: not implemented. Clothing and outfits currently stay in per-account browser IndexedDB. Different devices do not synchronize. Before offering a paid subscription, implement private account-owned storage, reliable recovery and migration of existing local closets.
+Status: initial private cloud backup implemented October 14. Existing local clothing migrates automatically on the next signed-in client visit; photos, drafts, inspiration and outfit data retain local mirrors and can restore under the same account. Live account-isolation and 181 automated checks passed. Follow-up: same-field conflict resolution, private-object retention/cleanup and physical-phone migration validation before broad release. See [cloud saving and recovery](CLOUD-BACKUP.md).
 
 ## P2 — Subscription readiness
 
