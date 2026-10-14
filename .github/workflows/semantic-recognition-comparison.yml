@@ -26,6 +26,8 @@ jobs:
         run: |
           npm install --no-save --no-package-lock playwright
           npx playwright install --with-deps chromium
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
           gh run download 38491639135 -n commons-clothing-photo-candidates -D benchmark/input
           mkdir -p benchmark/photos
           cp benchmark/input/photos/* benchmark/photos/
@@ -35,9 +37,13 @@ jobs:
           python scripts/rebuild-recognition-vectors.py --prompt-overrides benchmark/prompt-ensembles.json --output-dir benchmark/index-candidate
       - name: Measure both sets before and after
         run: |
-          for variant in before after; do
-            if [ "$variant" = after ]; then
-              cp benchmark/index-candidate/recognition-vectors.* public/
+          mkdir -p benchmark/index-baseline
+          cp public/recognition-vectors.* benchmark/index-baseline/
+          for variant in before coarse half footwear-coarse; do
+            if [ "$variant" != before ]; then
+              python scripts/select-recognition-prompts.py benchmark/index-baseline benchmark/index-candidate "benchmark/index-$variant" --profile "$variant"
+              cp "benchmark/index-$variant/recognition-vectors.json" public/
+              cp "benchmark/index-$variant/recognition-vectors.bin" public/
             fi
             node scripts/build.mjs
             node --test tests/*.test.cjs tests/*.test.mjs
@@ -60,4 +66,7 @@ jobs:
           path: |
             benchmark/semantic-comparison/
             benchmark/index-candidate/
+            benchmark/index-coarse/
+            benchmark/index-half/
+            benchmark/index-footwear-coarse/
           retention-days: 14
