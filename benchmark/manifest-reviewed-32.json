@@ -1,0 +1,386 @@
+[
+  {
+    "id": "commons-0001",
+    "image": "commons-0001.jpg",
+    "mode": "single",
+    "expectedCategory": "Tops",
+    "expectedType": "T-shirt",
+    "verified": true,
+    "conditions": [
+      "visual-review",
+      "commons-public-photo"
+    ]
+  },
+  {
+    "id": "commons-0002",
+    "image": "commons-0002.jpg",
+    "mode": "single",
+    "expectedCategory": "Tops",
+    "expectedType": "T-shirt",
+    "verified": true,
+    "conditions": [
+      "visual-review",
+      "commons-public-photo"
+    ]
+  },
+  {
+    "id": "commons-0021",
+    "image": "commons-0021.jpg",
+    "mode": "single",
+    "expectedCategory": "Bottoms",
+    "expectedType": "Jeans",
+    "verified": true,
+    "conditions": [
+      "visual-review",
+      "commons-public-photo"
+    ]
+  },
+  {
+    "id": "commons-0023",
+    "image": "commons-0023.jpg",
+    "mode": "single",
+    "expectedCategory": "Bottoms",
+    "expectedType": "Jeans",
+    "verified": true,
+    "conditions": [
+      "visual-review",
+      "commons-public-photo"
+    ]
+  },
+  {
+    "id": "commons-0024",
+    "image": "commons-0024.jpg",
+    "mode": "single",
+    "expectedCategory": "Bottoms",
+    "expectedType": "Jeans",
+    "verified": true,
+    "conditions": [
+      "visual-review",
+      "commons-public-photo"
+    ]
+  },
+  {
+    "id": "commons-0033",
+    "image": "commons-0033.jpg",
+    "mode": "single",
+    "expectedCategory": "Bottoms",
+    "expectedType": "Shorts",
+    "verified": true,
+    "conditions": [
+      "visual-review",
+      "commons-public-photo"
+    ]
+  },
+  {
+    "id": "commons-0035",
+    "image": "commons-0035.jpg",
+    "mode": "single",
+    "expectedCategory": "Bottoms",
+    "expectedType": "Shorts",
+    "verified": true,
+    "conditions": [
+      "visual-review",
+      "commons-public-photo"
+    ]
+  },
+  {
+    "id": "commons-0041",
+    "image": "commons-0041.jpg",
+    "mode": "single",
+    "expectedCategory": "Bottoms",
+    "expectedType": "Skirt",
+    "verified": true,
+    "conditions": [
+      "visual-review",
+      "commons-public-photo"
+    ]
+  },
+  {
+    "id": "commons-0043",
+    "image": "commons-0043.jpg",
+    "mode": "single",
+    "expectedCategory": "Bottoms",
+    "expectedType": "Skirt",
+    "verified": true,
+    "conditions": [
+      "visual-review",
+      "commons-public-photo"
+    ]
+  },
+  {
+    "id": "commons-0044",
+    "image": "commons-0044.jpg",
+    "mode": "single",
+    "expectedCategory": "Bottoms",
+    "expectedType": "Skirt",
+    "verified": true,
+    "conditions": [
+      "visual-review",
+      "commons-public-photo"
+    ]
+  },
+  {
+    "id": "commons-0045",
+    "image": "commons-0045.jpg",
+    "mode": "single",
+    "expectedCategory": "Bottoms",
+    "expectedType": "Skirt",
+    "verified": true,
+    "conditions": [
+      "visual-review",
+      "commons-public-photo"
+    ]
+  },
+  {
+    "id": "commons-0052",
+    "image": "commons-0052.jpg",
+    "mode": "single",
+    "expectedCategory": "Dresses",
+    "expectedType": "Dress",
+    "verified": true,
+    "conditions": [
+      "visual-review",
+      "commons-public-photo"
+    ]
+  },
+  {
+    "id": "commons-0053",
+    "image": "commons-0053.jpg",
+    "mode": "single",
+    "expectedCategory": "Dresses",
+    "expectedType": "Dress",
+    "verified": true,
+    "conditions": [
+      "visual-review",
+      "commons-public-photo"
+    ]
+  },
+  {
+    "id": "commons-0064",
+    "image": "commons-0064.jpg",
+    "mode": "single",
+    "expectedCategory": "Outerwear",
+    "expectedType": "Jacket",
+    "verified": true,
+    "conditions": [
+      "visual-review",
+      "commons-public-photo"
+    ]
+  },
+  {
+    "id": "commons-0065",
+    "image": "commons-0065.jpg",
+    "mode": "single",
+    "expectedCategory": "Outerwear",
+    "expectedType": "Jacket",
+    "verified": true,
+    "conditions": [
+      "visual-review",
+      "commons-public-photo"
+    ]
+  },
+  {
+    "id": "commons-0067",
+    "image": "commons-0067.jpg",
+    "mode": "single",
+    "expectedCategory": "Outerwear",
+    "expectedType": "Coat",
+    "verified": true,
+    "conditions": [
+      "visual-review",
+      "commons-public-photo"
+    ]
+  },
+  {
+    "id": "commons-0068",
+    "image": "commons-0068.jpg",
+    "mode": "single",
+    "expectedCategory": "Outerwear",
+    "expectedType": "Coat",
+    "verified": true,
+    "conditions": [
+      "visual-review",
+      "commons-public-photo"
+    ]
+  },
+  {
+    "id": "commons-0069",
+    "image": "commons-0069.jpg",
+    "mode": "single",
+    "expectedCategory": "Outerwear",
+    "expectedType": "Coat",
+    "verified": true,
+    "conditions": [
+      "visual-review",
+      "commons-public-photo"
+    ]
+  },
+  {
+    "id": "commons-0070",
+    "image": "commons-0070.jpg",
+    "mode": "single",
+    "expectedCategory": "Outerwear",
+    "expectedType": "Coat",
+    "verified": true,
+    "conditions": [
+      "visual-review",
+      "commons-public-photo"
+    ]
+  },
+  {
+    "id": "commons-0079",
+    "image": "commons-0079.jpg",
+    "mode": "single",
+    "expectedCategory": "Shoes",
+    "expectedType": "Sneakers",
+    "verified": true,
+    "conditions": [
+      "visual-review",
+      "commons-public-photo"
+    ]
+  },
+  {
+    "id": "commons-0080",
+    "image": "commons-0080.jpg",
+    "mode": "single",
+    "expectedCategory": "Shoes",
+    "expectedType": "Sneakers",
+    "verified": true,
+    "conditions": [
+      "visual-review",
+      "commons-public-photo"
+    ]
+  },
+  {
+    "id": "commons-0081",
+    "image": "commons-0081.jpg",
+    "mode": "single",
+    "expectedCategory": "Shoes",
+    "expectedType": "Sneakers",
+    "verified": true,
+    "conditions": [
+      "visual-review",
+      "commons-public-photo"
+    ]
+  },
+  {
+    "id": "commons-0082",
+    "image": "commons-0082.jpg",
+    "mode": "single",
+    "expectedCategory": "Shoes",
+    "expectedType": "Sneakers",
+    "verified": true,
+    "conditions": [
+      "visual-review",
+      "commons-public-photo"
+    ]
+  },
+  {
+    "id": "commons-0083",
+    "image": "commons-0083.jpg",
+    "mode": "single",
+    "expectedCategory": "Shoes",
+    "expectedType": "Sneakers",
+    "verified": true,
+    "conditions": [
+      "visual-review",
+      "commons-public-photo"
+    ]
+  },
+  {
+    "id": "commons-0084",
+    "image": "commons-0084.jpg",
+    "mode": "single",
+    "expectedCategory": "Shoes",
+    "expectedType": "Sneakers",
+    "verified": true,
+    "conditions": [
+      "visual-review",
+      "commons-public-photo"
+    ]
+  },
+  {
+    "id": "commons-0085",
+    "image": "commons-0085.jpg",
+    "mode": "single",
+    "expectedCategory": "Shoes",
+    "expectedType": "Sneakers",
+    "verified": true,
+    "conditions": [
+      "visual-review",
+      "commons-public-photo"
+    ]
+  },
+  {
+    "id": "commons-0087",
+    "image": "commons-0087.jpg",
+    "mode": "single",
+    "expectedCategory": "Shoes",
+    "expectedType": "Boots",
+    "verified": true,
+    "conditions": [
+      "visual-review",
+      "commons-public-photo"
+    ]
+  },
+  {
+    "id": "commons-0088",
+    "image": "commons-0088.jpg",
+    "mode": "single",
+    "expectedCategory": "Shoes",
+    "expectedType": "Boots",
+    "verified": true,
+    "conditions": [
+      "visual-review",
+      "commons-public-photo"
+    ]
+  },
+  {
+    "id": "commons-0089",
+    "image": "commons-0089.jpg",
+    "mode": "single",
+    "expectedCategory": "Shoes",
+    "expectedType": "Boots",
+    "verified": true,
+    "conditions": [
+      "visual-review",
+      "commons-public-photo"
+    ]
+  },
+  {
+    "id": "commons-0092",
+    "image": "commons-0092.jpg",
+    "mode": "single",
+    "expectedCategory": "Shoes",
+    "expectedType": "Boots",
+    "verified": true,
+    "conditions": [
+      "visual-review",
+      "commons-public-photo"
+    ]
+  },
+  {
+    "id": "commons-0093",
+    "image": "commons-0093.jpg",
+    "mode": "single",
+    "expectedCategory": "Shoes",
+    "expectedType": "Boots",
+    "verified": true,
+    "conditions": [
+      "visual-review",
+      "commons-public-photo"
+    ]
+  },
+  {
+    "id": "commons-0094",
+    "image": "commons-0094.jpg",
+    "mode": "single",
+    "expectedCategory": "Shoes",
+    "expectedType": "Boots",
+    "verified": true,
+    "conditions": [
+      "visual-review",
+      "commons-public-photo"
+    ]
+  }
+]
