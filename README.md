@@ -15,14 +15,13 @@ is independent of Drive Duel.
   image-view checks must agree before automatic saving. No billed AI API.
 - Inspiration reference images and links, editable outfit components, closet
   matches, substitutes, and shopping search links.
-- IndexedDB storage and export/import of clothing and inspiration backups.
+- Private account cloud backup, an IndexedDB offline mirror, and export/import of clothing and inspiration backups.
 - Home-screen installation and an offline application shell on independent
   hosting. Recognition still needs its model/runtime files available; external
   inspiration links and shopping searches require a connection.
 
-The app signs users in through Supabase Auth. Clothing and outfits remain in
-per-account IndexedDB on the current browser/device; signing in does not synchronize
-them across devices. The outfit builder and Style my collection use a shared,
+The app signs users in through Supabase Auth. Clothing photos and outfit data back up privately to that account, with a
+per-account IndexedDB mirror for offline use and automatic recovery across devices. The outfit builder and Style my collection use a shared,
 weekly researched trend dataset. Retailer prices and stock are not live guarantees,
 and recognition cannot reliably identify every clothing attribute.
 
@@ -30,7 +29,7 @@ Use More → Help & device check for an optional local pilot checklist and sanit
 scanner diagnostics. Reports are downloaded manually; no photos, email addresses,
 credentials, garment names or account IDs are included, and no report is sent
 automatically. See [project priorities](docs/ROADMAP.md) for email-delivery setup,
-real-phone validation, cloud synchronization, and subscription readiness.
+real-phone validation, cloud-backup follow-up, and subscription readiness. See [cloud backup](docs/CLOUD-BACKUP.md) for migration, privacy and validation details.
 
 Device help also links to an optional [phone photo recognition check](docs/PHONE-PHOTO-VALIDATION.md). Supply expected category/type labels before inference, then download a report containing those generic labels, recognition results and timings. Photos and filenames stay out of that report. This uses the production local worker without adding wardrobe items.
 
@@ -63,17 +62,17 @@ CDN/model hosts. Clothing images are processed locally.
    `dist`. No environment variables or API keys are needed.
 6. Deploy and test the generated HTTPS link on Android and iPhone.
 
-Keep existing test hosting until data has been transferred successfully. Export
-the closet backup from the old app link, then import it at the new link. Browser
-storage belongs to each origin and does not migrate with the source code.
+Keep the existing browser until My account reports Cloud backup up to date.
+Then sign into the same account at the new app link to restore its cloud closet.
+Browser caches remain separate per origin; export/import remains an optional fallback.
 
 ## First family pilot
 
 Test importing two photos, saving different clothing details, a short video
 scan, local recognition, outfit matching, backup recovery, and installation.
-Each authenticated account has its own device-local closet; cloud closet
-synchronization and shared household profiles are not yet implemented. Export backups regularly, especially before switching browsers
-or reinstalling.
+Each authenticated account has a private cloud closet and a device-local mirror.
+Check cloud backup status before switching browsers or reinstalling. Shared
+household profiles are not implemented; optional export backups remain available.
 
 ## Source conventions
 
@@ -102,7 +101,7 @@ my closet action before they become owned items. Saved pieces can open in the
 existing Outfit builder for alternatives and gaps.
 
 The original outfit frame is kept only in memory for retry. Cutouts use the
-existing account-specific local storage; this does not add cloud sync. Body
+account-specific local storage and the private cloud backup when connected. Body
 parts are excluded and left/right shoes form one pair. Overlapping garments
 of the same segmentation class can merge; this is semantic parsing rather
 than reliable instance segmentation. Physical phone validation remains open.

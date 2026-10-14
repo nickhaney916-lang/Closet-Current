@@ -23,8 +23,8 @@ garments, Adjust and save, Whole outfit separation and selected-piece saving, My
 clothes, close/reopen persistence and backup export. Download a sanitized test
 report for problems; no report is automatically uploaded.
 
-Use Wi-Fi for the first model download. Stay on the same phone/browser for
-closet persistence. Cloud synchronization is not implemented. Outfit separation
+Use Wi-Fi for the first model download. Keep the current browser until My account reports Cloud backup up to date.
+Private account backup then supports restoration across browsers and devices. Outfit separation
 is experimental and may require Adjust, especially overlapping or clipped
 clothes. Unknown details should remain blank.
 

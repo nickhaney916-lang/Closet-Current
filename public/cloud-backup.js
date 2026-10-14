@@ -3,7 +3,7 @@
  const E=window.ClosetBackupEngine,BASE='https://hlkgymugtfbirlpunsra.supabase.co',KEY='sb_publishable_5bw6Gkrw3Qx73dZYGNzmIw_x_OoauDO',BUCKET='closet-private';
  let db=null,user=null,enabled=false,syncing=false,timer=null,retryDelay=2000,callbacks={},generation=0;
  const empty=()=>({schemaVersion:1,items:[],state:{}}),markerDefault=()=>({id:'cloud-sync',baseVersion:0,baseDocument:null,localRevision:0,dirty:false});
- function status(text){const p=document.getElementById('cloudStatus');if(p){p.hidden=false;p.textContent=text;}const banner=document.getElementById('cloudBanner');if(banner){banner.textContent=text;banner.hidden=['Cloud backup up to date','Your closet will back up automatically'].includes(text);}}
+ function status(text){if(['Cloud backup up to date','Your closet will back up automatically'].includes(text)){const button=document.getElementById('resolveCloudConflict');if(button)button.hidden=true;}const p=document.getElementById('cloudStatus');if(p){p.hidden=false;p.textContent=text;}const banner=document.getElementById('cloudBanner');if(banner){banner.textContent=text;banner.hidden=['Cloud backup up to date','Your closet will back up automatically'].includes(text);}}
  function transact(stores,mode,fn){return new Promise((resolve,reject)=>{const tx=db.transaction(stores,mode);let value;try{value=fn(tx);}catch(e){tx.abort();reject(e);return;}tx.oncomplete=()=>resolve(typeof value==='function'?value():value);tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error||Error('Storage transaction stopped'));});}
  async function marker(){let value;await transact(['state'],'readonly',tx=>{const r=tx.objectStore('state').get('cloud-sync');r.onsuccess=()=>value=r.result;});return value||markerDefault();}
  async function markDirty(){await transact(['state'],'readwrite',tx=>{const store=tx.objectStore('state'),r=store.get('cloud-sync');r.onsuccess=()=>{const m=r.result||markerDefault();store.put({...m,dirty:true,localRevision:m.localRevision+1});};});}
@@ -30,22 +30,28 @@
  async function apply(document,revision,expectedRevision){
   if(callbacks.canRestore&&!callbacks.canRestore())return false;
   const local=await decode(document);let applied=false;
-  await callbacks.capture(()=>transact(['items','state'],'readwrite',tx=>{const state=tx.objectStore('state'),r=state.get('cloud-sync');r.onsuccess=()=>{const m=r.result||markerDefault();if(m.localRevision!==expectedRevision)return;const store=tx.objectStore('items');store.clear();for(const item of local.items)store.put(item);for(const id of E.stateIds)state.delete(id);for(const row of Object.values(local.state))state.put(row);state.put({...m,dirty:false,needsRestore:false,baseVersion:revision,baseDocument:document});applied=true;};}));
+  await callbacks.capture(()=>transact(['items','state'],'readwrite',tx=>{const state=tx.objectStore('state'),r=state.get('cloud-sync');r.onsuccess=()=>{const m=r.result||markerDefault();if(m.localRevision!==expectedRevision)return;const store=tx.objectStore('items');store.clear();for(const item of local.items)store.put(item);for(const id of E.stateIds)state.delete(id);for(const row of Object.values(local.state))state.put(row);state.put({...m,dirty:false,resolutionIds:[],needsRestore:false,baseVersion:revision,baseDocument:document});applied=true;};}));
   if(applied)await callbacks.restored?.();return applied;
  }
  function schedule(delay=1500){clearTimeout(timer);timer=setTimeout(()=>sync(),delay);}
- async function sync(){
+ async function sync({keepBoth=false}={}){
   if(!enabled||syncing)return;syncing=true;const mine=generation;let dirtyAtStart=false;
   try{
    let {local,m}=await callbacks.capture(snapshot);dirtyAtStart=m.dirty;status('Checking cloud backup…');const remote=await getRemote();
    if(mine!==generation)return;
-   if(!m.baseVersion&&!m.dirty&&(local.items.length||Object.values(local.state).some(x=>x.batch?.length||x.looks?.length||x.saved?.length||Object.keys(x.current?.slots||{}).length))){await markDirty();({local,m}=await callbacks.capture(snapshot));}
+   if(!m.baseVersion&&!m.dirty&&(local.items.length||Object.values(local.state).some(x=>x.batch?.length||x.looks?.length||x.saved?.length||Object.keys(x.current?.slots||{}).length))){await markDirty();({local,m}=await callbacks.capture(snapshot));dirtyAtStart=true;}
    if(!m.dirty){
     if(remote&&(remote.revision!==m.baseVersion||m.needsRestore)){status('Restoring your cloud closet…');if(!await apply(remote.document,remote.revision,m.localRevision)){schedule();return;}}
     status(remote?'Cloud backup up to date':'Your closet will back up automatically');retryDelay=2000;return;
    }
    status('Backing up your closet…');const encoded=await encode(local);let document=encoded.document;
-   if(remote&&(remote.revision!==m.baseVersion||m.needsRestore))document=E.mergeDocuments(m.baseDocument,document,remote.document);
+   if(remote&&(remote.revision!==m.baseVersion||m.needsRestore)){
+    if(keepBoth){
+     const ids=new Map(m.resolutionIds||[]);document=E.keepBothDocuments(m.baseDocument,document,remote.document,row=>{const key=E.canonical(row);if(!ids.has(key))ids.set(key,crypto.randomUUID());return ids.get(key);});
+     // Persist copy identities before the request so retries cannot create duplicate copies.
+     await transact(['state'],'readwrite',tx=>{const store=tx.objectStore('state'),r=store.get('cloud-sync');r.onsuccess=()=>store.put({...r.result,resolutionIds:[...ids]});});
+    }else document=E.mergeDocuments(m.baseDocument,document,remote.document);
+   }
    await upload(encoded.photos);if(mine!==generation)return;
    const response=await api('/rest/v1/rpc/save_closet_backup',{method:'POST',body:{p_expected_revision:remote?.revision||0,p_document:document}}),revision=await response.json();
    if(revision===null){schedule();return;}if(!Number.isSafeInteger(revision)||revision<1)throw Error('Invalid cloud save');
@@ -55,12 +61,12 @@
    else if(!E.equal(document,encoded.document)){if(!await apply(document,revision,current.localRevision))schedule();else status('Cloud backup up to date');}
    else status('Cloud backup up to date');retryDelay=2000;
   }catch(e){
-   if(mine===generation){status(e.code==='conflict'?'Changes differ on another device. Both copies are kept; cloud backup needs review.':dirtyAtStart?'Saved on this device · cloud backup pending. Retrying when connected.':'Cloud connection unavailable. Local items are kept; retrying.');if(e.code!=='conflict'){schedule(retryDelay);retryDelay=Math.min(retryDelay*2,60000);}}
+   if(mine===generation){const resolveButton=document.getElementById('resolveCloudConflict');if(resolveButton)resolveButton.hidden=e.code!=='conflict';status(e.code==='conflict'?'Changes differ on another device. Both copies are kept; choose Keep both versions in My account.':dirtyAtStart?'Saved on this device · cloud backup pending. Retrying when connected.':'Cloud connection unavailable. Local items are kept; retrying.');if(e.code!=='conflict'){schedule(retryDelay);retryDelay=Math.min(retryDelay*2,60000);}}
   }finally{syncing=false;}
  }
  window.closetCloud={
   async start(database,settings){db=database;callbacks=settings||{};user=window.closetAuth?.user?.id;enabled=!!db&&typeof window.closetAuth?.getAccessToken==='function'&&/^[a-f0-9-]{36}$/i.test(user||'');if(!enabled)return;
-   navigator.storage?.persist?.().catch(()=>{});const button=document.getElementById('syncCloset');if(button){button.hidden=false;button.onclick=()=>sync();}await sync();
+   navigator.storage?.persist?.().catch(()=>{});const button=document.getElementById('syncCloset');if(button){button.hidden=false;button.onclick=()=>sync();}const resolveButton=document.getElementById('resolveCloudConflict');if(resolveButton)resolveButton.onclick=()=>sync({keepBoth:true});await sync();
   },
   async beforeWrite(database){if(enabled&&database===db)await markDirty();},
   changed(){if(enabled){status('Saved on this device · cloud backup pending');schedule();}},sync

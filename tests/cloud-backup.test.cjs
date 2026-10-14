@@ -30,3 +30,29 @@ test('photo conversion includes closet, drafts and inspiration without changing 
 test('unsafe object keys cannot become prototype changes during cloud decoding',async()=>{
  await assert.rejects(()=>mapImages(JSON.parse('{"__proto__":{"admin":true}}'),async x=>x));assert.equal({}.admin,undefined);
 });
+const {keepBothDocuments}=require('../public/cloud-backup-engine.js');
+const copyId=row=>'copy-'+row.id;
+test('keep both preserves conflicting photos and maps local outfits to the local garment copy',()=>{
+ const board={id:'outfit-board',current:{id:'current',name:'My outfit',slots:{top:'one'}},saved:[]};
+ const base=doc([piece('one')],{'outfit-board':board}),local=structuredClone(base),remote=structuredClone(base);
+ local.items[0].name='Local shirt';local.items[0].image='local-photo';remote.items[0].name='Remote shirt';remote.items[0].image='remote-photo';
+ const result=keepBothDocuments(base,local,remote,copyId);
+ assert.equal(result.items.find(x=>x.id==='one').image,'remote-photo');assert.equal(result.items.find(x=>x.id==='copy-one').image,'local-photo');
+ assert.equal(result.state['outfit-board'].current.slots.top,'copy-one');assert.equal(local.items[0].id,'one');
+});
+test('keep both retains edited pieces against deletion without undoing unrelated deletes',()=>{
+ const base=doc([piece('one'),piece('two')]),local=doc([piece('one','Edited')]),remote=doc([piece('two')]);
+ assert.deepEqual(keepBothDocuments(base,local,remote,copyId).items.map(x=>x.id),['one']);
+});
+test('keep both retains conflicting inspiration and current outfit as a saved copy',()=>{
+ const state=title=>({looks:{id:'looks',looks:[{id:'look',title,image:title}]},'outfit-board':{id:'outfit-board',current:{id:'board',name:title,slots:{}},saved:[]}});
+ const result=keepBothDocuments(doc([],state('Base')),doc([],state('Local')),doc([],state('Remote')),copyId);
+ assert.equal(result.state.looks.looks.length,2);assert.equal(result.state['outfit-board'].saved[0].name,'Local (saved copy)');assert.equal(result.state['outfit-board'].current.name,'Remote');
+});
+test('keep both refuses capacity overflow and invalid copy identities without dropping photos',()=>{
+ const base=doc([piece('one')]),local=doc([piece('one','Local')]),remote=doc(Array.from({length:1000},(_,i)=>piece(i?'remote-'+i:'one','Remote')));
+ assert.throws(()=>keepBothDocuments(base,local,remote,copyId));assert.throws(()=>keepBothDocuments(base,local,doc([piece('one','Remote')]),row=>row.id));
+});
+test('document validation rejects unsafe keys before merging',()=>{
+ assert.throws(()=>validateDocument(JSON.parse('{"schemaVersion":1,"items":[],"state":{},"__proto__":{"admin":true}}')));assert.equal({}.admin,undefined);
+});
