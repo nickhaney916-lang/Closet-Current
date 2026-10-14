@@ -16,7 +16,7 @@ binary_path = ROOT / "public/recognition-vectors.bin"
 metadata = json.loads(manifest_path.read_text())
 assert metadata["model"] == "ff13/fashion-clip"
 assert len(set(metadata["labels"])) == len(metadata["labels"])
-model = CLIPTextModelWithProjection.from_pretrained(metadata["model"], revision=metadata["revision"]).eval()
+model = CLIPTextModelWithProjection.from_pretrained(metadata["model"], revision=metadata["revision"], from_tf=True).eval()
 tokenizer = CLIPTokenizer.from_pretrained(metadata["model"], revision=metadata["revision"])
 labels = metadata["labels"]
 vectors = []
