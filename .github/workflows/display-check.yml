@@ -1,7 +1,7 @@
 name: App display comparison
 on:
   push:
-    branches: [main, 'display/polish']
+    branches: [main, 'display/polish', 'cloud/private-backup']
     paths:
       - 'public/index.html'
       - 'public/style.css'
@@ -35,13 +35,16 @@ jobs:
         run: |
           cp public/index.html /tmp/polished-index.html
           cp public/app-theme.css /tmp/polished-theme.css
+          cp public/app.js /tmp/polished-app.js
           git fetch origin 04d200729eaf8d409e8342fc00c3c782e3013a8e
           git show 04d200729eaf8d409e8342fc00c3c782e3013a8e:public/index.html > public/index.html
           git show 04d200729eaf8d409e8342fc00c3c782e3013a8e:public/app-theme.css > public/app-theme.css
+          git show 04d200729eaf8d409e8342fc00c3c782e3013a8e:public/app.js > public/app.js
           node scripts/build.mjs
           node scripts/check-display.mjs benchmark/display/before
           cp /tmp/polished-index.html public/index.html
           cp /tmp/polished-theme.css public/app-theme.css
+          cp /tmp/polished-app.js public/app.js
           node scripts/build.mjs
           DISPLAY_ASSERT_LAYOUT=1 node scripts/check-display.mjs benchmark/display/after
           node --test tests/*.test.cjs tests/*.test.mjs
