@@ -9,6 +9,8 @@ on:
       - 'benchmark/regression-*.json'
       - 'scripts/run-browser-photo-benchmark.mjs'
       - 'public/benchmark-runner.mjs'
+      - 'public/benchmark.html'
+      - 'public/photo-color.js'
       - 'public/recognition-engine.mjs'
       - 'public/recognition-photo.mjs'
       - 'public/local-worker.mjs'
@@ -56,7 +58,7 @@ jobs:
             cat benchmark/output/evaluation.json
             node scripts/check-recognition-regressions.mjs benchmark/manifest-reviewed-32.json benchmark/output/results.json benchmark/regression-reviewed-32.json
           fi
-      - name: Compare retained crop detail fields on identical model outputs
+      - name: Compare prioritized color coverage on identical model outputs
         run: node scripts/compare-detail-field-coverage.mjs benchmark/output/results.json > benchmark/output/detail-coverage.json
       - name: Evaluate additional clothing and negative regression set
         run: |

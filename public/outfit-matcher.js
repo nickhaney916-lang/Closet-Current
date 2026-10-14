@@ -20,7 +20,7 @@ function rankClosetPiece(component,item,season){
  const reasons=[],missing=[];let score=0,close=item.itemType===component.itemType;
  if(close){score+=6;reasons.push('Same item type');}else{score+=1;missing.push(item.itemType==='Unknown'?'Item type not documented':'Different item type');}
  const wanted=colorFamily(component.color),owned=colorFamily(item.color);
- if(wanted){if(owned&&owned===wanted){score+=3;reasons.push('Matching color');}else{close=false;missing.push(owned?'Different color':'Color not documented');}}
+ if(wanted){if(owned&&owned===wanted){if(item.colorSource==='photo-estimate'){score+=1;close=false;reasons.push('Estimated color match');missing.push('Confirm estimated color');}else{score+=3;reasons.push('Matching color');}}else{close=false;missing.push(owned?'Different color':'Color not documented');}}
  if(component.sleeveLength&&component.sleeveLength!=='Unknown'&&component.sleeveLength!=='Not applicable'){
   if(item.sleeveLength===component.sleeveLength){score+=2;reasons.push('Matching sleeves');}else{close=false;missing.push(!item.sleeveLength||item.sleeveLength==='Unknown'?'Sleeves not documented':'Different sleeves');}
  }

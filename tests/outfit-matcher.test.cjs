@@ -21,3 +21,6 @@ assert.equal(context.validLook({...saved,sourceUrl:'javascript:bad()'}).sourceUr
 console.log('Saved inspiration and backup round-trip checks passed.');
 const oversize=context.parseOutfit('Cream oversized long sleeve sweater')[0];assert.equal(oversize.fit,'Oversized');assert.equal(context.matchOutfit([oversize],[{...closet[0],fit:'Regular'}],'Winter')[0].status,'substitute');
 console.log('Fit mismatch checks passed.');
+const estimatedColor={...closet[1],colorSource:'photo-estimate'};
+const estimatedMatch=context.matchOutfit([look[1]],[estimatedColor],'Winter')[0];assert.equal(estimatedMatch.status,'substitute');assert.ok(estimatedMatch.best.missing.includes('Confirm estimated color'));
+assert.equal(context.matchOutfit([look[1]],[{...estimatedColor,colorSource:'user'}],'Winter')[0].status,'match');
