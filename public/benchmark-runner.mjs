@@ -20,7 +20,7 @@ $('run').onclick=async()=>{
    const file=files.get(item.image);if(!file){output.push({id:item.id,error:'Image file missing'});continue;}
    status.textContent='Processing '+(i+1)+'/'+manifest.length+': '+item.image;
    const started=performance.now();
-   try{const data=await jpeg(file),result=await session.call({type:'classify',image:data});const choice=result.choices?.[0];output.push({id:item.id,prediction:{category:choice?.category||null,type:choice?.itemType||null},strong:!!result.strong,reason:result.reason||null,elapsedMs:Math.round(performance.now()-started)});}
+   try{const data=await jpeg(file),result=await session.call({type:'classify',image:data});const choice=result.choices?.[0];output.push({id:item.id,prediction:{category:choice?.category||null,type:choice?.itemType||null},strong:!!result.strong,reason:result.reason||null,diagnostics:result.diagnostics||null,elapsedMs:Math.round(performance.now()-started)});}
    catch(e){output.push({id:item.id,error:String(e.message||e)});}
   }
   status.textContent='Finished '+output.length+' images. Download results and run the evaluator. '+output.filter(x=>x.error).length+' errors.';$('download').disabled=false;
