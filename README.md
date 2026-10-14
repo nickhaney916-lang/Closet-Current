@@ -32,6 +32,8 @@ credentials, garment names or account IDs are included, and no report is sent
 automatically. See [project priorities](docs/ROADMAP.md) for email-delivery setup,
 real-phone validation, cloud synchronization, and subscription readiness.
 
+Device help also links to an optional [phone photo recognition check](docs/PHONE-PHOTO-VALIDATION.md). Supply expected category/type labels before inference, then download a report containing those generic labels, recognition results and timings. Photos and filenames stay out of that report. This uses the production local worker without adding wardrobe items.
+
 ## Build and checks
 
 Requires Node.js 20 or newer. No dependency installation is needed to build.

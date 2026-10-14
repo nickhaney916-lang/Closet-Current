@@ -29,5 +29,8 @@ const builtIndex=index.replace(/(src|href)="([^"]+\.(?:js|css))"/g,(match,attrib
  return attribute+'="'+url+'"';
 });
 await writeFile('dist/index.html',builtIndex);
+const photoCheck=await readFile('public/phone-photo-check.html','utf8');
+const recognitionIndex=JSON.parse(await readFile('public/recognition-vectors.json','utf8')).sha256;
+await writeFile('dist/phone-photo-check.html',photoCheck.replace('__RELEASE__',version).replace('__RECOGNITION_INDEX__',recognitionIndex).replace(/(src|href)="([^"]+\.(?:js|mjs|css))"/g,(match,attribute,asset)=>assets.includes(asset)?attribute+'="'+asset+'?v='+version+'"':match));
 await writeFile('dist/sw.js',template.replace('__VERSION__',version).replace('__ASSETS__',JSON.stringify([...assets,...versionedAssets])));
 console.log('Built closet inventory without paid AI services.');

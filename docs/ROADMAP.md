@@ -26,6 +26,8 @@ Staged category/type recognition, whole-photo preservation, cross-view checks an
 
 Recognition checkpoint, October 14: per-photo regression enforcement protects all 59 labeled fixtures. Eight dress/shoe subtype candidates were tested; none safely improved the baseline, so production recognition remains unchanged. Next accuracy work needs more ordinary phone photographs and framing evidence. See [subtype experiment results](SUBTYPE-RECOGNITION-RESULTS.md).
 
+Private phone-photo validation tooling is available through Device help. It locks user-supplied labels before inference and exports sanitized results without photos or filenames. No actual user phone garment accuracy has been measured yet; the available uploaded files checked were setup screenshots. See [phone validation instructions](PHONE-PHOTO-VALIDATION.md).
+
 ## P1 — Cloud backup and synchronization
 
 Status: not implemented. Clothing and outfits currently stay in per-account browser IndexedDB. Different devices do not synchronize. Before offering a paid subscription, implement private account-owned storage, reliable recovery and migration of existing local closets.

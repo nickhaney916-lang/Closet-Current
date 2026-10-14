@@ -1,0 +1,47 @@
+name: Phone photo-check flow
+on:
+  push:
+    paths:
+      - '.github/workflows/phone-photo-check.yml'
+      - 'public/phone-photo-*.mjs'
+      - 'public/phone-photo-check.html'
+      - 'public/photo-test-session.mjs'
+      - 'public/local-worker.mjs'
+      - 'public/recognition-engine.mjs'
+      - 'public/recognition-vectors.*'
+      - 'public/photo-import.js'
+      - 'scripts/run-phone-photo-check.mjs'
+      - 'scripts/build.mjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  phone:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prepare browser and licensed fixture photographs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium
+          gh run download 38491639135 -n commons-clothing-photo-candidates -D benchmark/input
+          mkdir -p benchmark/photos
+          cp benchmark/input/photos/* benchmark/photos/
+      - name: Build and verify photo-check flow at a phone viewport
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+          node scripts/run-phone-photo-check.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: phone-photo-check-results
+          path: benchmark/phone-photo-flow/
+          retention-days: 14
