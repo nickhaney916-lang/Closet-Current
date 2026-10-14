@@ -1,5 +1,5 @@
 'use strict';
-async function photoToJPEG(file,{maxDimension=900,quality=.8}={}){
+async function photoToJPEG(file,{maxDimension=2048,quality=.94}={}){
  const url=URL.createObjectURL(file);
  try{
   const image=new Image();image.src=url;await image.decode();
