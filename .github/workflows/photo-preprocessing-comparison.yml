@@ -1,0 +1,54 @@
+name: Photo preprocessing comparison
+on:
+  push:
+    branches: ['recognition/photo-preprocessing']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install browser
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium
+      - name: Download same reviewed photographs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh run download 38491639135 -n commons-clothing-photo-candidates -D benchmark/input
+          mkdir -p benchmark/photos
+          cp benchmark/input/photos/* benchmark/photos/
+      - name: Run before and after with unchanged model and thresholds
+        run: |
+          mkdir -p benchmark/comparison
+          cp public/recognition-photo.mjs /tmp/recognition-photo-after.mjs
+          cp public/local-worker.mjs /tmp/local-worker-after.mjs
+          git fetch origin bc233f0127ad1917fa4a889e55dbf359404ca1e3
+          git show bc233f0127ad1917fa4a889e55dbf359404ca1e3:public/recognition-photo.mjs > public/recognition-photo.mjs
+          git show bc233f0127ad1917fa4a889e55dbf359404ca1e3:public/local-worker.mjs > public/local-worker.mjs
+          node scripts/build.mjs
+          node scripts/run-browser-photo-benchmark.mjs
+          cp benchmark/output/results.json benchmark/comparison/before.json
+          node scripts/evaluate-recognition-benchmark.mjs benchmark/manifest-reviewed-32.json benchmark/comparison/before.json > benchmark/comparison/before-evaluation.json
+          cp /tmp/recognition-photo-after.mjs public/recognition-photo.mjs
+          cp /tmp/local-worker-after.mjs public/local-worker.mjs
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+          node scripts/run-browser-photo-benchmark.mjs
+          cp benchmark/output/results.json benchmark/comparison/after.json
+          node scripts/evaluate-recognition-benchmark.mjs benchmark/manifest-reviewed-32.json benchmark/comparison/after.json > benchmark/comparison/after-evaluation.json
+          cat benchmark/comparison/before-evaluation.json benchmark/comparison/after-evaluation.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: photo-preprocessing-comparison
+          path: benchmark/comparison/
+          retention-days: 14

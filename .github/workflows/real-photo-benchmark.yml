@@ -7,6 +7,8 @@ on:
       - 'scripts/run-browser-photo-benchmark.mjs'
       - 'public/benchmark-runner.mjs'
       - 'public/recognition-engine.mjs'
+      - 'public/recognition-photo.mjs'
+      - 'public/local-worker.mjs'
       - 'benchmark/manifest-reviewed-32.json'
   workflow_dispatch:
 permissions:

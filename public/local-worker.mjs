@@ -12,7 +12,7 @@ async function load(){
   env.backends.onnx.wasm.numThreads=1;env.backends.onnx.wasm.proxy=false;
   scannerStage='catalog_import';const version=new URL(import.meta.url).search;
   const {makeVectorScorer,loadVectorAssets}=await import('./vector-scorer.mjs'+version);
-  const {fitWholePhoto}=await import('./recognition-photo.mjs'+version);
+  const {prepareRecognitionPhoto}=await import('./recognition-photo.mjs'+version);
   const {metadata,vectors}=await loadVectorAssets('recognition-vectors.json'+version,'recognition-vectors.bin'+version);
   const processor=await AutoProcessor.from_pretrained(metadata.model,{revision:metadata.revision});
   const vision=await CLIPVisionModelWithProjection.from_pretrained(metadata.model,{revision:metadata.revision,device:'wasm',dtype:'q8',progress_callback:event=>{
@@ -20,10 +20,13 @@ async function load(){
    self.postMessage({type:'progress',stage:weights?'weights':'runtime',phase:scannerStage,percent:weights&&Number.isFinite(event.progress)?Math.round(event.progress):null});
   }});
   const whole=makeVectorScorer(async image=>{
-   const fitted=await fitWholePhoto(image,RawImageClass),result=await vision(await processor(fitted));
+   const fitted=await prepareRecognitionPhoto(image,RawImageClass),result=await vision(await processor(fitted));
    return result.image_embeds.data;
   },metadata,vectors);
-  const center=makeVectorScorer(async image=>(await vision(await processor(image))).image_embeds.data,metadata,vectors);
+  const center=makeVectorScorer(async image=>{
+   const fitted=await prepareRecognitionPhoto(image,RawImageClass,{confirmation:true});
+   return (await vision(await processor(fitted))).image_embeds.data;
+  },metadata,vectors);
   scannerStage='ready';return {whole,center};
  })().catch(error=>{classifierPromise=null;throw error;});
  return classifierPromise;
