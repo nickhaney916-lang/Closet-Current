@@ -46,6 +46,27 @@ jobs:
           cp benchmark/output/results.json benchmark/comparison/after.json
           node scripts/evaluate-recognition-benchmark.mjs benchmark/manifest-reviewed-32.json benchmark/comparison/after.json > benchmark/comparison/after-evaluation.json
           cat benchmark/comparison/before-evaluation.json benchmark/comparison/after-evaluation.json
+      - name: Compare conservative scale variants
+        run: |
+          for variant in consistent224 consistent336 trimmed336 consistent448; do
+            VARIANT="$variant" python3 - <<'PYTHON'
+          import os
+          from pathlib import Path
+          variant=os.environ['VARIANT']
+          source=Path('/tmp/recognition-photo-after.mjs').read_text()
+          size=448 if variant.endswith('448') else 336 if variant.endswith('336') else 224
+          content=size-8 if size==224 else size-16
+          source=source.replace('const size=224,contentSize=confirmation?208:size',f'const size={size},contentSize=confirmation?{content}:size')
+          if not variant.startswith('trimmed'):
+              source=source.replace('const bounds=uniformPhotoBounds(image);','const bounds={left:0,top:0,right:image.width,bottom:image.height};')
+          Path('public/recognition-photo.mjs').write_text(source)
+          PYTHON
+            node scripts/build.mjs
+            node scripts/run-browser-photo-benchmark.mjs
+            cp benchmark/output/results.json "benchmark/comparison/$variant.json"
+            node scripts/evaluate-recognition-benchmark.mjs benchmark/manifest-reviewed-32.json "benchmark/comparison/$variant.json" > "benchmark/comparison/$variant-evaluation.json"
+          done
+          cp /tmp/recognition-photo-after.mjs public/recognition-photo.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
