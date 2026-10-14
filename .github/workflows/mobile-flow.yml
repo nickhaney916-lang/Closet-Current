@@ -27,10 +27,9 @@ jobs:
           npx playwright install --with-deps chromium
           sudo apt-get update
           sudo apt-get install -y ffmpeg
-          gh run download 38491639135 -n commons-clothing-photo-candidates -D benchmark/input
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos commons-0001,commons-0002
           mkdir -p benchmark/photos benchmark/mobile-flow
-          cp benchmark/input/photos/* benchmark/photos/
-          cp benchmark/input/attributions.json benchmark/mobile-flow/
+          cp benchmark/locked-photo-sources.json benchmark/mobile-flow/
           ffmpeg -loglevel error -loop 1 -i benchmark/photos/commons-0001.jpg -vf 'scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2:black' -r 10 -t 2 -pix_fmt yuv420p -f yuv4mpegpipe benchmark/mobile-camera.y4m
       - name: Build and verify touch viewport flow with real worker
         run: |

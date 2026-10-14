@@ -26,10 +26,9 @@ jobs:
         run: |
           npm install --no-save --no-package-lock playwright
           npx playwright install --with-deps chromium
-          gh run download 38491639135 -n commons-clothing-photo-candidates -D benchmark/input
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos commons-0002
           mkdir -p benchmark/photos benchmark/cloud-backup
-          cp benchmark/input/photos/commons-0002.jpg benchmark/photos/
-          cp benchmark/input/attributions.json benchmark/cloud-backup/
+          cp benchmark/locked-photo-sources.json benchmark/cloud-backup/
       - name: Verify migration, offline edits and recovery across browser sessions
         run: |
           node scripts/build.mjs

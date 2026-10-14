@@ -377,7 +377,7 @@ function scheduleMemoryReview(){
 }
 async function reviewRecognitionMemory(){
  if(typeof ClothingMemory==='undefined'||!db||memoryReviewRunning||busy||automaticRunning||localPending.size||document.hidden||document.querySelector('dialog[open]'))return;
- const week=ClothingMemory.week(),targets=items.filter(x=>x.confirmedDetails&&(!ClothingMemory.valid(x.recognitionMemory)||x.learningReviewedWeek!==week)||x.learningReviewedWeek!==week&&(x.itemType==='Unknown'||!x.color)).slice(0,8);
+ const week=ClothingMemory.week(),targets=items.filter(x=>(x.confirmedDetails||ClothingMemory.valid(x.recognitionMemory))&&(x.learningReviewedWeek!==week||!ClothingMemory.valid(x.recognitionMemory))).slice(0,8);
  if(!targets.length)return;
  memoryReviewRunning=true;let completed=0;
  try{if(!localReady)await enableLocal();for(const target of targets){

@@ -38,14 +38,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Download licensed candidate photographs from completed collection run
+      - name: Download and verify locked licensed source photographs
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          mkdir -p benchmark/input
-          gh run download 38491639135 -n commons-clothing-photo-candidates -D benchmark/input
-          mkdir -p benchmark/photos
-          cp benchmark/input/photos/* benchmark/photos/
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json
       - name: Install headless browser
         run: |
           npm install --no-save --no-package-lock playwright
@@ -74,8 +71,6 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh run download 38500351254 -n fresh-validation-candidates -D benchmark/fresh-candidates
-          cp benchmark/fresh-candidates/photos/* benchmark/photos/
           node scripts/download-reviewed-photos.mjs benchmark/manifest-fresh-11.json
           node scripts/run-browser-photo-benchmark.mjs benchmark/manifest-fresh-11.json benchmark/output/fresh
           node scripts/evaluate-recognition-benchmark.mjs benchmark/manifest-fresh-11.json benchmark/output/fresh/results.json > benchmark/output/fresh/evaluation.json

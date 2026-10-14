@@ -31,9 +31,8 @@ jobs:
         run: |
           npm install --no-save --no-package-lock playwright
           npx playwright install --with-deps chromium
-          gh run download 38491639135 -n commons-clothing-photo-candidates -D benchmark/input
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos commons-0001,commons-0090
           mkdir -p benchmark/photos
-          cp benchmark/input/photos/* benchmark/photos/
       - name: Build and verify photo-check flow at a phone viewport
         run: |
           node scripts/build.mjs

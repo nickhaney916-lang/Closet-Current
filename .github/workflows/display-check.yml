@@ -27,10 +27,9 @@ jobs:
         run: |
           npm install --no-save --no-package-lock playwright
           npx playwright install --with-deps chromium
-          gh run download 38491639135 -n commons-clothing-photo-candidates -D benchmark/input
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos commons-0002,commons-0025,commons-0052,commons-0064,commons-0081,commons-0087
           mkdir -p benchmark/photos benchmark/display
-          cp benchmark/input/photos/* benchmark/photos/
-          cp benchmark/input/attributions.json benchmark/display/
+          cp benchmark/locked-photo-sources.json benchmark/display/
       - name: Compare original and polished display
         run: |
           cp public/index.html /tmp/polished-index.html
