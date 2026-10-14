@@ -8,7 +8,7 @@ import json
 from pathlib import Path
 import numpy as np
 import torch
-from transformers import CLIPModel, CLIPTokenizer
+from transformers import CLIPTextModelWithProjection, CLIPTokenizer
 
 ROOT = Path(__file__).resolve().parents[1]
 manifest_path = ROOT / "public/recognition-vectors.json"
@@ -16,7 +16,7 @@ binary_path = ROOT / "public/recognition-vectors.bin"
 metadata = json.loads(manifest_path.read_text())
 assert metadata["model"] == "ff13/fashion-clip"
 assert len(set(metadata["labels"])) == len(metadata["labels"])
-model = CLIPModel.from_pretrained(metadata["model"], revision=metadata["revision"]).eval()
+model = CLIPTextModelWithProjection.from_pretrained(metadata["model"], revision=metadata["revision"]).eval()
 tokenizer = CLIPTokenizer.from_pretrained(metadata["model"], revision=metadata["revision"])
 labels = metadata["labels"]
 vectors = []
@@ -24,7 +24,7 @@ with torch.inference_mode():
     for start in range(0, len(labels), 32):
         batch = ["A photo of " + label + "." for label in labels[start:start+32]]
         tokens = tokenizer(batch, padding=True, truncation=True, return_tensors="pt")
-        features = model.get_text_features(**tokens)
+        features = model(**tokens).text_embeds
         # transformers may return an object rather than a tensor in newer versions
         if hasattr(features, "pooler_output"):
             features = features.pooler_output
@@ -34,7 +34,7 @@ matrix = np.concatenate(vectors, axis=0)
 assert matrix.shape == (len(labels), 512), matrix.shape
 payload = matrix.tobytes()
 metadata["sha256"] = hashlib.sha256(payload).hexdigest()
-metadata["scale"] = float(model.logit_scale.exp().item())
+metadata["scale"] = float(metadata["scale"])  # Preserve calibrated scale: text-only checkpoint lacks logit_scale
 binary_path.write_bytes(payload)
 manifest_path.write_text(json.dumps(metadata, indent=2) + "\n")
 print(f"Regenerated {len(labels)} embeddings ({len(payload)} bytes), sha256={metadata['sha256']}")
