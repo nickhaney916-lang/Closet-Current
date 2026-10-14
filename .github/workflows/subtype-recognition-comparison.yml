@@ -1,0 +1,51 @@
+name: Dress and shoe subtype comparison
+on:
+  push:
+    branches: ['recognition/subtype-validation']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: scripts/recognition-requirements.txt
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prepare locked photographs and inference dependencies
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium
+          pip install -r scripts/recognition-requirements.txt
+          gh run download 38491639135 -n commons-clothing-photo-candidates -D benchmark/input
+          gh run download 38500351254 -n fresh-validation-candidates -D benchmark/fresh-input
+          mkdir -p benchmark/photos
+          cp benchmark/input/photos/* benchmark/photos/
+          cp benchmark/fresh-input/photos/* benchmark/photos/
+          node scripts/download-reviewed-photos.mjs benchmark/manifest-fresh-11.json
+      - name: Validate existing production build
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Compare bounded subtype descriptions without changing confidence gates
+        env:
+          SUBTYPE_FOCUS: 'sneakers'
+        run: |
+          git fetch origin 4ba0f31d4fe899e59efff4beb6d3e7da11324909
+          node scripts/compare-recognition-subtypes.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: subtype-recognition-comparison
+          path: benchmark/subtype-comparison/
+          retention-days: 14

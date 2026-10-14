@@ -1,0 +1,1721 @@
+{
+  "baselineCommit": "4ba0f31d4fe899e59efff4beb6d3e7da11324909",
+  "decision": "Retain current production recognizer. No candidate safely improved recognition.",
+  "experiments": [
+    {
+      "variant": "before",
+      "blend": 0,
+      "sets": {
+        "reviewed-32": {
+          "evaluated": 32,
+          "autoIndexedCount": 25,
+          "categoryReviewCount": 1,
+          "categoryAccuracyPercent": 81.25,
+          "typeAccuracyPercent": 56.25,
+          "acceptedTypeAccuracyPercent": 75,
+          "abstentionPercent": 18.75,
+          "negative": {
+            "evaluated": 0,
+            "rejected": 0,
+            "falsePositives": 0
+          },
+          "perCategory": {
+            "Tops": {
+              "total": 2,
+              "categoryCorrect": 2,
+              "typeCorrect": 2,
+              "abstained": 0
+            },
+            "Bottoms": {
+              "total": 9,
+              "categoryCorrect": 7,
+              "typeCorrect": 7,
+              "abstained": 2
+            },
+            "Dresses": {
+              "total": 2,
+              "categoryCorrect": 1,
+              "typeCorrect": 0,
+              "abstained": 1
+            },
+            "Outerwear": {
+              "total": 6,
+              "categoryCorrect": 4,
+              "typeCorrect": 3,
+              "abstained": 2
+            },
+            "Shoes": {
+              "total": 13,
+              "categoryCorrect": 12,
+              "typeCorrect": 6,
+              "abstained": 1
+            }
+          }
+        },
+        "holdout-16": {
+          "evaluated": 13,
+          "autoIndexedCount": 6,
+          "categoryReviewCount": 1,
+          "categoryAccuracyPercent": 53.85,
+          "typeAccuracyPercent": 23.08,
+          "acceptedTypeAccuracyPercent": 23.08,
+          "abstentionPercent": 46.15,
+          "negative": {
+            "evaluated": 3,
+            "rejected": 3,
+            "falsePositives": 0
+          },
+          "perCategory": {
+            "Tops": {
+              "total": 3,
+              "categoryCorrect": 2,
+              "typeCorrect": 0,
+              "abstained": 1
+            },
+            "Bottoms": {
+              "total": 3,
+              "categoryCorrect": 2,
+              "typeCorrect": 2,
+              "abstained": 1
+            },
+            "Dresses": {
+              "total": 2,
+              "categoryCorrect": 1,
+              "typeCorrect": 0,
+              "abstained": 1
+            },
+            "Outerwear": {
+              "total": 2,
+              "categoryCorrect": 0,
+              "typeCorrect": 0,
+              "abstained": 2
+            },
+            "Shoes": {
+              "total": 3,
+              "categoryCorrect": 2,
+              "typeCorrect": 1,
+              "abstained": 1
+            }
+          }
+        },
+        "fresh-11": {
+          "evaluated": 11,
+          "autoIndexedCount": 9,
+          "categoryReviewCount": 1,
+          "categoryAccuracyPercent": 90.91,
+          "typeAccuracyPercent": 54.55,
+          "acceptedTypeAccuracyPercent": 81.82,
+          "abstentionPercent": 9.09,
+          "negative": {
+            "evaluated": 0,
+            "rejected": 0,
+            "falsePositives": 0
+          },
+          "perCategory": {
+            "Dresses": {
+              "total": 5,
+              "categoryCorrect": 5,
+              "typeCorrect": 1,
+              "abstained": 0
+            },
+            "Accessories": {
+              "total": 1,
+              "categoryCorrect": 1,
+              "typeCorrect": 1,
+              "abstained": 0
+            },
+            "Bottoms": {
+              "total": 1,
+              "categoryCorrect": 0,
+              "typeCorrect": 0,
+              "abstained": 1
+            },
+            "Shoes": {
+              "total": 4,
+              "categoryCorrect": 4,
+              "typeCorrect": 4,
+              "abstained": 0
+            }
+          }
+        }
+      },
+      "regressions": 0,
+      "sourceRun": "https://github.com/nickhaney916-lang/Closet-Current/actions/runs/38573182735",
+      "regressionFailures": {
+        "reviewed-32": [],
+        "holdout-16": [],
+        "fresh-11": []
+      }
+    },
+    {
+      "variant": "shoes-quarter",
+      "blend": 0.25,
+      "sets": {
+        "reviewed-32": {
+          "evaluated": 32,
+          "autoIndexedCount": 24,
+          "categoryReviewCount": 1,
+          "categoryAccuracyPercent": 78.13,
+          "typeAccuracyPercent": 59.38,
+          "acceptedTypeAccuracyPercent": 71.88,
+          "abstentionPercent": 21.88,
+          "negative": {
+            "evaluated": 0,
+            "rejected": 0,
+            "falsePositives": 0
+          },
+          "perCategory": {
+            "Tops": {
+              "total": 2,
+              "categoryCorrect": 2,
+              "typeCorrect": 2,
+              "abstained": 0
+            },
+            "Bottoms": {
+              "total": 9,
+              "categoryCorrect": 7,
+              "typeCorrect": 7,
+              "abstained": 2
+            },
+            "Dresses": {
+              "total": 2,
+              "categoryCorrect": 1,
+              "typeCorrect": 0,
+              "abstained": 1
+            },
+            "Outerwear": {
+              "total": 6,
+              "categoryCorrect": 4,
+              "typeCorrect": 3,
+              "abstained": 2
+            },
+            "Shoes": {
+              "total": 13,
+              "categoryCorrect": 11,
+              "typeCorrect": 7,
+              "abstained": 2
+            }
+          }
+        },
+        "holdout-16": {
+          "evaluated": 13,
+          "autoIndexedCount": 6,
+          "categoryReviewCount": 1,
+          "categoryAccuracyPercent": 53.85,
+          "typeAccuracyPercent": 23.08,
+          "acceptedTypeAccuracyPercent": 23.08,
+          "abstentionPercent": 46.15,
+          "negative": {
+            "evaluated": 3,
+            "rejected": 3,
+            "falsePositives": 0
+          },
+          "perCategory": {
+            "Tops": {
+              "total": 3,
+              "categoryCorrect": 2,
+              "typeCorrect": 0,
+              "abstained": 1
+            },
+            "Bottoms": {
+              "total": 3,
+              "categoryCorrect": 2,
+              "typeCorrect": 2,
+              "abstained": 1
+            },
+            "Dresses": {
+              "total": 2,
+              "categoryCorrect": 1,
+              "typeCorrect": 0,
+              "abstained": 1
+            },
+            "Outerwear": {
+              "total": 2,
+              "categoryCorrect": 0,
+              "typeCorrect": 0,
+              "abstained": 2
+            },
+            "Shoes": {
+              "total": 3,
+              "categoryCorrect": 2,
+              "typeCorrect": 1,
+              "abstained": 1
+            }
+          }
+        },
+        "fresh-11": {
+          "evaluated": 11,
+          "autoIndexedCount": 9,
+          "categoryReviewCount": 1,
+          "categoryAccuracyPercent": 90.91,
+          "typeAccuracyPercent": 54.55,
+          "acceptedTypeAccuracyPercent": 81.82,
+          "abstentionPercent": 9.09,
+          "negative": {
+            "evaluated": 0,
+            "rejected": 0,
+            "falsePositives": 0
+          },
+          "perCategory": {
+            "Dresses": {
+              "total": 5,
+              "categoryCorrect": 5,
+              "typeCorrect": 1,
+              "abstained": 0
+            },
+            "Accessories": {
+              "total": 1,
+              "categoryCorrect": 1,
+              "typeCorrect": 1,
+              "abstained": 0
+            },
+            "Bottoms": {
+              "total": 1,
+              "categoryCorrect": 0,
+              "typeCorrect": 0,
+              "abstained": 1
+            },
+            "Shoes": {
+              "total": 4,
+              "categoryCorrect": 4,
+              "typeCorrect": 4,
+              "abstained": 0
+            }
+          }
+        }
+      },
+      "regressions": 6,
+      "sourceRun": "https://github.com/nickhaney916-lang/Closet-Current/actions/runs/38573182735",
+      "regressionFailures": {
+        "reviewed-32": [
+          {
+            "id": "commons-0087",
+            "reason": "category_regression"
+          },
+          {
+            "id": "commons-0087",
+            "reason": "type_regression"
+          },
+          {
+            "id": "commons-0087",
+            "reason": "automatic_indexing_regression"
+          },
+          {
+            "id": "commons-0093",
+            "reason": "category_regression"
+          },
+          {
+            "id": "commons-0093",
+            "reason": "type_regression"
+          },
+          {
+            "id": "commons-0093",
+            "reason": "automatic_indexing_regression"
+          }
+        ],
+        "holdout-16": [],
+        "fresh-11": []
+      }
+    },
+    {
+      "variant": "shoes-half",
+      "blend": 0.5,
+      "sets": {
+        "reviewed-32": {
+          "evaluated": 32,
+          "autoIndexedCount": 24,
+          "categoryReviewCount": 1,
+          "categoryAccuracyPercent": 78.13,
+          "typeAccuracyPercent": 59.38,
+          "acceptedTypeAccuracyPercent": 71.88,
+          "abstentionPercent": 21.88,
+          "negative": {
+            "evaluated": 0,
+            "rejected": 0,
+            "falsePositives": 0
+          },
+          "perCategory": {
+            "Tops": {
+              "total": 2,
+              "categoryCorrect": 2,
+              "typeCorrect": 2,
+              "abstained": 0
+            },
+            "Bottoms": {
+              "total": 9,
+              "categoryCorrect": 7,
+              "typeCorrect": 7,
+              "abstained": 2
+            },
+            "Dresses": {
+              "total": 2,
+              "categoryCorrect": 1,
+              "typeCorrect": 0,
+              "abstained": 1
+            },
+            "Outerwear": {
+              "total": 6,
+              "categoryCorrect": 4,
+              "typeCorrect": 3,
+              "abstained": 2
+            },
+            "Shoes": {
+              "total": 13,
+              "categoryCorrect": 11,
+              "typeCorrect": 7,
+              "abstained": 2
+            }
+          }
+        },
+        "holdout-16": {
+          "evaluated": 13,
+          "autoIndexedCount": 6,
+          "categoryReviewCount": 1,
+          "categoryAccuracyPercent": 53.85,
+          "typeAccuracyPercent": 23.08,
+          "acceptedTypeAccuracyPercent": 23.08,
+          "abstentionPercent": 46.15,
+          "negative": {
+            "evaluated": 3,
+            "rejected": 3,
+            "falsePositives": 0
+          },
+          "perCategory": {
+            "Tops": {
+              "total": 3,
+              "categoryCorrect": 2,
+              "typeCorrect": 0,
+              "abstained": 1
+            },
+            "Bottoms": {
+              "total": 3,
+              "categoryCorrect": 2,
+              "typeCorrect": 2,
+              "abstained": 1
+            },
+            "Dresses": {
+              "total": 2,
+              "categoryCorrect": 1,
+              "typeCorrect": 0,
+              "abstained": 1
+            },
+            "Outerwear": {
+              "total": 2,
+              "categoryCorrect": 0,
+              "typeCorrect": 0,
+              "abstained": 2
+            },
+            "Shoes": {
+              "total": 3,
+              "categoryCorrect": 2,
+              "typeCorrect": 1,
+              "abstained": 1
+            }
+          }
+        },
+        "fresh-11": {
+          "evaluated": 11,
+          "autoIndexedCount": 9,
+          "categoryReviewCount": 1,
+          "categoryAccuracyPercent": 90.91,
+          "typeAccuracyPercent": 54.55,
+          "acceptedTypeAccuracyPercent": 81.82,
+          "abstentionPercent": 9.09,
+          "negative": {
+            "evaluated": 0,
+            "rejected": 0,
+            "falsePositives": 0
+          },
+          "perCategory": {
+            "Dresses": {
+              "total": 5,
+              "categoryCorrect": 5,
+              "typeCorrect": 1,
+              "abstained": 0
+            },
+            "Accessories": {
+              "total": 1,
+              "categoryCorrect": 1,
+              "typeCorrect": 1,
+              "abstained": 0
+            },
+            "Bottoms": {
+              "total": 1,
+              "categoryCorrect": 0,
+              "typeCorrect": 0,
+              "abstained": 1
+            },
+            "Shoes": {
+              "total": 4,
+              "categoryCorrect": 4,
+              "typeCorrect": 4,
+              "abstained": 0
+            }
+          }
+        }
+      },
+      "regressions": 6,
+      "sourceRun": "https://github.com/nickhaney916-lang/Closet-Current/actions/runs/38573182735",
+      "regressionFailures": {
+        "reviewed-32": [
+          {
+            "id": "commons-0087",
+            "reason": "category_regression"
+          },
+          {
+            "id": "commons-0087",
+            "reason": "type_regression"
+          },
+          {
+            "id": "commons-0087",
+            "reason": "automatic_indexing_regression"
+          },
+          {
+            "id": "commons-0093",
+            "reason": "category_regression"
+          },
+          {
+            "id": "commons-0093",
+            "reason": "type_regression"
+          },
+          {
+            "id": "commons-0093",
+            "reason": "automatic_indexing_regression"
+          }
+        ],
+        "holdout-16": [],
+        "fresh-11": []
+      }
+    },
+    {
+      "variant": "dress-quarter",
+      "blend": 0.25,
+      "sets": {
+        "reviewed-32": {
+          "evaluated": 32,
+          "autoIndexedCount": 25,
+          "categoryReviewCount": 0,
+          "categoryAccuracyPercent": 78.13,
+          "typeAccuracyPercent": 56.25,
+          "acceptedTypeAccuracyPercent": 75,
+          "abstentionPercent": 21.88,
+          "negative": {
+            "evaluated": 0,
+            "rejected": 0,
+            "falsePositives": 0
+          },
+          "perCategory": {
+            "Tops": {
+              "total": 2,
+              "categoryCorrect": 2,
+              "typeCorrect": 2,
+              "abstained": 0
+            },
+            "Bottoms": {
+              "total": 9,
+              "categoryCorrect": 7,
+              "typeCorrect": 7,
+              "abstained": 2
+            },
+            "Dresses": {
+              "total": 2,
+              "categoryCorrect": 0,
+              "typeCorrect": 0,
+              "abstained": 2
+            },
+            "Outerwear": {
+              "total": 6,
+              "categoryCorrect": 4,
+              "typeCorrect": 3,
+              "abstained": 2
+            },
+            "Shoes": {
+              "total": 13,
+              "categoryCorrect": 12,
+              "typeCorrect": 6,
+              "abstained": 1
+            }
+          }
+        },
+        "holdout-16": {
+          "evaluated": 13,
+          "autoIndexedCount": 6,
+          "categoryReviewCount": 1,
+          "categoryAccuracyPercent": 53.85,
+          "typeAccuracyPercent": 23.08,
+          "acceptedTypeAccuracyPercent": 23.08,
+          "abstentionPercent": 46.15,
+          "negative": {
+            "evaluated": 3,
+            "rejected": 3,
+            "falsePositives": 0
+          },
+          "perCategory": {
+            "Tops": {
+              "total": 3,
+              "categoryCorrect": 2,
+              "typeCorrect": 0,
+              "abstained": 1
+            },
+            "Bottoms": {
+              "total": 3,
+              "categoryCorrect": 2,
+              "typeCorrect": 2,
+              "abstained": 1
+            },
+            "Dresses": {
+              "total": 2,
+              "categoryCorrect": 1,
+              "typeCorrect": 0,
+              "abstained": 1
+            },
+            "Outerwear": {
+              "total": 2,
+              "categoryCorrect": 0,
+              "typeCorrect": 0,
+              "abstained": 2
+            },
+            "Shoes": {
+              "total": 3,
+              "categoryCorrect": 2,
+              "typeCorrect": 1,
+              "abstained": 1
+            }
+          }
+        },
+        "fresh-11": {
+          "evaluated": 11,
+          "autoIndexedCount": 9,
+          "categoryReviewCount": 1,
+          "categoryAccuracyPercent": 90.91,
+          "typeAccuracyPercent": 54.55,
+          "acceptedTypeAccuracyPercent": 81.82,
+          "abstentionPercent": 9.09,
+          "negative": {
+            "evaluated": 0,
+            "rejected": 0,
+            "falsePositives": 0
+          },
+          "perCategory": {
+            "Dresses": {
+              "total": 5,
+              "categoryCorrect": 5,
+              "typeCorrect": 1,
+              "abstained": 0
+            },
+            "Accessories": {
+              "total": 1,
+              "categoryCorrect": 1,
+              "typeCorrect": 1,
+              "abstained": 0
+            },
+            "Bottoms": {
+              "total": 1,
+              "categoryCorrect": 0,
+              "typeCorrect": 0,
+              "abstained": 1
+            },
+            "Shoes": {
+              "total": 4,
+              "categoryCorrect": 4,
+              "typeCorrect": 4,
+              "abstained": 0
+            }
+          }
+        }
+      },
+      "regressions": 1,
+      "sourceRun": "https://github.com/nickhaney916-lang/Closet-Current/actions/runs/38573182735",
+      "regressionFailures": {
+        "reviewed-32": [
+          {
+            "id": "commons-0052",
+            "reason": "category_regression"
+          }
+        ],
+        "holdout-16": [],
+        "fresh-11": []
+      }
+    },
+    {
+      "variant": "dress-half",
+      "blend": 0.5,
+      "sets": {
+        "reviewed-32": {
+          "evaluated": 32,
+          "autoIndexedCount": 25,
+          "categoryReviewCount": 0,
+          "categoryAccuracyPercent": 78.13,
+          "typeAccuracyPercent": 56.25,
+          "acceptedTypeAccuracyPercent": 75,
+          "abstentionPercent": 21.88,
+          "negative": {
+            "evaluated": 0,
+            "rejected": 0,
+            "falsePositives": 0
+          },
+          "perCategory": {
+            "Tops": {
+              "total": 2,
+              "categoryCorrect": 2,
+              "typeCorrect": 2,
+              "abstained": 0
+            },
+            "Bottoms": {
+              "total": 9,
+              "categoryCorrect": 7,
+              "typeCorrect": 7,
+              "abstained": 2
+            },
+            "Dresses": {
+              "total": 2,
+              "categoryCorrect": 0,
+              "typeCorrect": 0,
+              "abstained": 2
+            },
+            "Outerwear": {
+              "total": 6,
+              "categoryCorrect": 4,
+              "typeCorrect": 3,
+              "abstained": 2
+            },
+            "Shoes": {
+              "total": 13,
+              "categoryCorrect": 12,
+              "typeCorrect": 6,
+              "abstained": 1
+            }
+          }
+        },
+        "holdout-16": {
+          "evaluated": 13,
+          "autoIndexedCount": 5,
+          "categoryReviewCount": 1,
+          "categoryAccuracyPercent": 46.15,
+          "typeAccuracyPercent": 23.08,
+          "acceptedTypeAccuracyPercent": 23.08,
+          "abstentionPercent": 53.85,
+          "negative": {
+            "evaluated": 3,
+            "rejected": 3,
+            "falsePositives": 0
+          },
+          "perCategory": {
+            "Tops": {
+              "total": 3,
+              "categoryCorrect": 1,
+              "typeCorrect": 0,
+              "abstained": 2
+            },
+            "Bottoms": {
+              "total": 3,
+              "categoryCorrect": 2,
+              "typeCorrect": 2,
+              "abstained": 1
+            },
+            "Dresses": {
+              "total": 2,
+              "categoryCorrect": 1,
+              "typeCorrect": 0,
+              "abstained": 1
+            },
+            "Outerwear": {
+              "total": 2,
+              "categoryCorrect": 0,
+              "typeCorrect": 0,
+              "abstained": 2
+            },
+            "Shoes": {
+              "total": 3,
+              "categoryCorrect": 2,
+              "typeCorrect": 1,
+              "abstained": 1
+            }
+          }
+        },
+        "fresh-11": {
+          "evaluated": 11,
+          "autoIndexedCount": 9,
+          "categoryReviewCount": 1,
+          "categoryAccuracyPercent": 90.91,
+          "typeAccuracyPercent": 54.55,
+          "acceptedTypeAccuracyPercent": 81.82,
+          "abstentionPercent": 9.09,
+          "negative": {
+            "evaluated": 0,
+            "rejected": 0,
+            "falsePositives": 0
+          },
+          "perCategory": {
+            "Dresses": {
+              "total": 5,
+              "categoryCorrect": 5,
+              "typeCorrect": 1,
+              "abstained": 0
+            },
+            "Accessories": {
+              "total": 1,
+              "categoryCorrect": 1,
+              "typeCorrect": 1,
+              "abstained": 0
+            },
+            "Bottoms": {
+              "total": 1,
+              "categoryCorrect": 0,
+              "typeCorrect": 0,
+              "abstained": 1
+            },
+            "Shoes": {
+              "total": 4,
+              "categoryCorrect": 4,
+              "typeCorrect": 4,
+              "abstained": 0
+            }
+          }
+        }
+      },
+      "regressions": 2,
+      "sourceRun": "https://github.com/nickhaney916-lang/Closet-Current/actions/runs/38573182735",
+      "regressionFailures": {
+        "reviewed-32": [
+          {
+            "id": "commons-0052",
+            "reason": "category_regression"
+          }
+        ],
+        "holdout-16": [
+          {
+            "id": "commons-0014",
+            "reason": "category_regression"
+          }
+        ],
+        "fresh-11": []
+      }
+    },
+    {
+      "variant": "combined-quarter",
+      "blend": 0.25,
+      "sets": {
+        "reviewed-32": {
+          "evaluated": 32,
+          "autoIndexedCount": 24,
+          "categoryReviewCount": 0,
+          "categoryAccuracyPercent": 75,
+          "typeAccuracyPercent": 59.38,
+          "acceptedTypeAccuracyPercent": 71.88,
+          "abstentionPercent": 25,
+          "negative": {
+            "evaluated": 0,
+            "rejected": 0,
+            "falsePositives": 0
+          },
+          "perCategory": {
+            "Tops": {
+              "total": 2,
+              "categoryCorrect": 2,
+              "typeCorrect": 2,
+              "abstained": 0
+            },
+            "Bottoms": {
+              "total": 9,
+              "categoryCorrect": 7,
+              "typeCorrect": 7,
+              "abstained": 2
+            },
+            "Dresses": {
+              "total": 2,
+              "categoryCorrect": 0,
+              "typeCorrect": 0,
+              "abstained": 2
+            },
+            "Outerwear": {
+              "total": 6,
+              "categoryCorrect": 4,
+              "typeCorrect": 3,
+              "abstained": 2
+            },
+            "Shoes": {
+              "total": 13,
+              "categoryCorrect": 11,
+              "typeCorrect": 7,
+              "abstained": 2
+            }
+          }
+        },
+        "holdout-16": {
+          "evaluated": 13,
+          "autoIndexedCount": 6,
+          "categoryReviewCount": 1,
+          "categoryAccuracyPercent": 53.85,
+          "typeAccuracyPercent": 23.08,
+          "acceptedTypeAccuracyPercent": 23.08,
+          "abstentionPercent": 46.15,
+          "negative": {
+            "evaluated": 3,
+            "rejected": 3,
+            "falsePositives": 0
+          },
+          "perCategory": {
+            "Tops": {
+              "total": 3,
+              "categoryCorrect": 2,
+              "typeCorrect": 0,
+              "abstained": 1
+            },
+            "Bottoms": {
+              "total": 3,
+              "categoryCorrect": 2,
+              "typeCorrect": 2,
+              "abstained": 1
+            },
+            "Dresses": {
+              "total": 2,
+              "categoryCorrect": 1,
+              "typeCorrect": 0,
+              "abstained": 1
+            },
+            "Outerwear": {
+              "total": 2,
+              "categoryCorrect": 0,
+              "typeCorrect": 0,
+              "abstained": 2
+            },
+            "Shoes": {
+              "total": 3,
+              "categoryCorrect": 2,
+              "typeCorrect": 1,
+              "abstained": 1
+            }
+          }
+        },
+        "fresh-11": {
+          "evaluated": 11,
+          "autoIndexedCount": 9,
+          "categoryReviewCount": 1,
+          "categoryAccuracyPercent": 90.91,
+          "typeAccuracyPercent": 54.55,
+          "acceptedTypeAccuracyPercent": 81.82,
+          "abstentionPercent": 9.09,
+          "negative": {
+            "evaluated": 0,
+            "rejected": 0,
+            "falsePositives": 0
+          },
+          "perCategory": {
+            "Dresses": {
+              "total": 5,
+              "categoryCorrect": 5,
+              "typeCorrect": 1,
+              "abstained": 0
+            },
+            "Accessories": {
+              "total": 1,
+              "categoryCorrect": 1,
+              "typeCorrect": 1,
+              "abstained": 0
+            },
+            "Bottoms": {
+              "total": 1,
+              "categoryCorrect": 0,
+              "typeCorrect": 0,
+              "abstained": 1
+            },
+            "Shoes": {
+              "total": 4,
+              "categoryCorrect": 4,
+              "typeCorrect": 4,
+              "abstained": 0
+            }
+          }
+        }
+      },
+      "regressions": 7,
+      "sourceRun": "https://github.com/nickhaney916-lang/Closet-Current/actions/runs/38573182735",
+      "regressionFailures": {
+        "reviewed-32": [
+          {
+            "id": "commons-0052",
+            "reason": "category_regression"
+          },
+          {
+            "id": "commons-0087",
+            "reason": "category_regression"
+          },
+          {
+            "id": "commons-0087",
+            "reason": "type_regression"
+          },
+          {
+            "id": "commons-0087",
+            "reason": "automatic_indexing_regression"
+          },
+          {
+            "id": "commons-0093",
+            "reason": "category_regression"
+          },
+          {
+            "id": "commons-0093",
+            "reason": "type_regression"
+          },
+          {
+            "id": "commons-0093",
+            "reason": "automatic_indexing_regression"
+          }
+        ],
+        "holdout-16": [],
+        "fresh-11": []
+      }
+    },
+    {
+      "variant": "before",
+      "blend": 0,
+      "sets": {
+        "reviewed-32": {
+          "evaluated": 32,
+          "autoIndexedCount": 25,
+          "categoryReviewCount": 1,
+          "categoryAccuracyPercent": 81.25,
+          "typeAccuracyPercent": 56.25,
+          "acceptedTypeAccuracyPercent": 75,
+          "abstentionPercent": 18.75,
+          "negative": {
+            "evaluated": 0,
+            "rejected": 0,
+            "falsePositives": 0
+          },
+          "perCategory": {
+            "Tops": {
+              "total": 2,
+              "categoryCorrect": 2,
+              "typeCorrect": 2,
+              "abstained": 0
+            },
+            "Bottoms": {
+              "total": 9,
+              "categoryCorrect": 7,
+              "typeCorrect": 7,
+              "abstained": 2
+            },
+            "Dresses": {
+              "total": 2,
+              "categoryCorrect": 1,
+              "typeCorrect": 0,
+              "abstained": 1
+            },
+            "Outerwear": {
+              "total": 6,
+              "categoryCorrect": 4,
+              "typeCorrect": 3,
+              "abstained": 2
+            },
+            "Shoes": {
+              "total": 13,
+              "categoryCorrect": 12,
+              "typeCorrect": 6,
+              "abstained": 1
+            }
+          }
+        },
+        "holdout-16": {
+          "evaluated": 13,
+          "autoIndexedCount": 6,
+          "categoryReviewCount": 1,
+          "categoryAccuracyPercent": 53.85,
+          "typeAccuracyPercent": 23.08,
+          "acceptedTypeAccuracyPercent": 23.08,
+          "abstentionPercent": 46.15,
+          "negative": {
+            "evaluated": 3,
+            "rejected": 3,
+            "falsePositives": 0
+          },
+          "perCategory": {
+            "Tops": {
+              "total": 3,
+              "categoryCorrect": 2,
+              "typeCorrect": 0,
+              "abstained": 1
+            },
+            "Bottoms": {
+              "total": 3,
+              "categoryCorrect": 2,
+              "typeCorrect": 2,
+              "abstained": 1
+            },
+            "Dresses": {
+              "total": 2,
+              "categoryCorrect": 1,
+              "typeCorrect": 0,
+              "abstained": 1
+            },
+            "Outerwear": {
+              "total": 2,
+              "categoryCorrect": 0,
+              "typeCorrect": 0,
+              "abstained": 2
+            },
+            "Shoes": {
+              "total": 3,
+              "categoryCorrect": 2,
+              "typeCorrect": 1,
+              "abstained": 1
+            }
+          }
+        },
+        "fresh-11": {
+          "evaluated": 11,
+          "autoIndexedCount": 9,
+          "categoryReviewCount": 1,
+          "categoryAccuracyPercent": 90.91,
+          "typeAccuracyPercent": 54.55,
+          "acceptedTypeAccuracyPercent": 81.82,
+          "abstentionPercent": 9.09,
+          "negative": {
+            "evaluated": 0,
+            "rejected": 0,
+            "falsePositives": 0
+          },
+          "perCategory": {
+            "Dresses": {
+              "total": 5,
+              "categoryCorrect": 5,
+              "typeCorrect": 1,
+              "abstained": 0
+            },
+            "Accessories": {
+              "total": 1,
+              "categoryCorrect": 1,
+              "typeCorrect": 1,
+              "abstained": 0
+            },
+            "Bottoms": {
+              "total": 1,
+              "categoryCorrect": 0,
+              "typeCorrect": 0,
+              "abstained": 1
+            },
+            "Shoes": {
+              "total": 4,
+              "categoryCorrect": 4,
+              "typeCorrect": 4,
+              "abstained": 0
+            }
+          }
+        }
+      },
+      "regressions": 0,
+      "sourceRun": "https://github.com/nickhaney916-lang/Closet-Current/actions/runs/38574649758",
+      "regressionFailures": {
+        "reviewed-32": [],
+        "holdout-16": [],
+        "fresh-11": []
+      }
+    },
+    {
+      "variant": "dress-recovery",
+      "blend": 0,
+      "sets": {
+        "reviewed-32": {
+          "evaluated": 32,
+          "autoIndexedCount": 25,
+          "categoryReviewCount": 1,
+          "categoryAccuracyPercent": 81.25,
+          "typeAccuracyPercent": 56.25,
+          "acceptedTypeAccuracyPercent": 75,
+          "abstentionPercent": 18.75,
+          "negative": {
+            "evaluated": 0,
+            "rejected": 0,
+            "falsePositives": 0
+          },
+          "perCategory": {
+            "Tops": {
+              "total": 2,
+              "categoryCorrect": 2,
+              "typeCorrect": 2,
+              "abstained": 0
+            },
+            "Bottoms": {
+              "total": 9,
+              "categoryCorrect": 7,
+              "typeCorrect": 7,
+              "abstained": 2
+            },
+            "Dresses": {
+              "total": 2,
+              "categoryCorrect": 1,
+              "typeCorrect": 0,
+              "abstained": 1
+            },
+            "Outerwear": {
+              "total": 6,
+              "categoryCorrect": 4,
+              "typeCorrect": 3,
+              "abstained": 2
+            },
+            "Shoes": {
+              "total": 13,
+              "categoryCorrect": 12,
+              "typeCorrect": 6,
+              "abstained": 1
+            }
+          }
+        },
+        "holdout-16": {
+          "evaluated": 13,
+          "autoIndexedCount": 6,
+          "categoryReviewCount": 1,
+          "categoryAccuracyPercent": 53.85,
+          "typeAccuracyPercent": 23.08,
+          "acceptedTypeAccuracyPercent": 23.08,
+          "abstentionPercent": 46.15,
+          "negative": {
+            "evaluated": 3,
+            "rejected": 3,
+            "falsePositives": 0
+          },
+          "perCategory": {
+            "Tops": {
+              "total": 3,
+              "categoryCorrect": 2,
+              "typeCorrect": 0,
+              "abstained": 1
+            },
+            "Bottoms": {
+              "total": 3,
+              "categoryCorrect": 2,
+              "typeCorrect": 2,
+              "abstained": 1
+            },
+            "Dresses": {
+              "total": 2,
+              "categoryCorrect": 1,
+              "typeCorrect": 0,
+              "abstained": 1
+            },
+            "Outerwear": {
+              "total": 2,
+              "categoryCorrect": 0,
+              "typeCorrect": 0,
+              "abstained": 2
+            },
+            "Shoes": {
+              "total": 3,
+              "categoryCorrect": 2,
+              "typeCorrect": 1,
+              "abstained": 1
+            }
+          }
+        },
+        "fresh-11": {
+          "evaluated": 11,
+          "autoIndexedCount": 9,
+          "categoryReviewCount": 1,
+          "categoryAccuracyPercent": 90.91,
+          "typeAccuracyPercent": 54.55,
+          "acceptedTypeAccuracyPercent": 81.82,
+          "abstentionPercent": 9.09,
+          "negative": {
+            "evaluated": 0,
+            "rejected": 0,
+            "falsePositives": 0
+          },
+          "perCategory": {
+            "Dresses": {
+              "total": 5,
+              "categoryCorrect": 5,
+              "typeCorrect": 1,
+              "abstained": 0
+            },
+            "Accessories": {
+              "total": 1,
+              "categoryCorrect": 1,
+              "typeCorrect": 1,
+              "abstained": 0
+            },
+            "Bottoms": {
+              "total": 1,
+              "categoryCorrect": 0,
+              "typeCorrect": 0,
+              "abstained": 1
+            },
+            "Shoes": {
+              "total": 4,
+              "categoryCorrect": 4,
+              "typeCorrect": 4,
+              "abstained": 0
+            }
+          }
+        }
+      },
+      "regressions": 0,
+      "sourceRun": "https://github.com/nickhaney916-lang/Closet-Current/actions/runs/38574649758",
+      "regressionFailures": {
+        "reviewed-32": [],
+        "holdout-16": [],
+        "fresh-11": []
+      }
+    },
+    {
+      "variant": "before",
+      "blend": 0,
+      "sets": {
+        "reviewed-32": {
+          "evaluated": 32,
+          "autoIndexedCount": 25,
+          "categoryReviewCount": 1,
+          "categoryAccuracyPercent": 81.25,
+          "typeAccuracyPercent": 56.25,
+          "acceptedTypeAccuracyPercent": 75,
+          "abstentionPercent": 18.75,
+          "negative": {
+            "evaluated": 0,
+            "rejected": 0,
+            "falsePositives": 0
+          },
+          "perCategory": {
+            "Tops": {
+              "total": 2,
+              "categoryCorrect": 2,
+              "typeCorrect": 2,
+              "abstained": 0
+            },
+            "Bottoms": {
+              "total": 9,
+              "categoryCorrect": 7,
+              "typeCorrect": 7,
+              "abstained": 2
+            },
+            "Dresses": {
+              "total": 2,
+              "categoryCorrect": 1,
+              "typeCorrect": 0,
+              "abstained": 1
+            },
+            "Outerwear": {
+              "total": 6,
+              "categoryCorrect": 4,
+              "typeCorrect": 3,
+              "abstained": 2
+            },
+            "Shoes": {
+              "total": 13,
+              "categoryCorrect": 12,
+              "typeCorrect": 6,
+              "abstained": 1
+            }
+          }
+        },
+        "holdout-16": {
+          "evaluated": 13,
+          "autoIndexedCount": 6,
+          "categoryReviewCount": 1,
+          "categoryAccuracyPercent": 53.85,
+          "typeAccuracyPercent": 23.08,
+          "acceptedTypeAccuracyPercent": 23.08,
+          "abstentionPercent": 46.15,
+          "negative": {
+            "evaluated": 3,
+            "rejected": 3,
+            "falsePositives": 0
+          },
+          "perCategory": {
+            "Tops": {
+              "total": 3,
+              "categoryCorrect": 2,
+              "typeCorrect": 0,
+              "abstained": 1
+            },
+            "Bottoms": {
+              "total": 3,
+              "categoryCorrect": 2,
+              "typeCorrect": 2,
+              "abstained": 1
+            },
+            "Dresses": {
+              "total": 2,
+              "categoryCorrect": 1,
+              "typeCorrect": 0,
+              "abstained": 1
+            },
+            "Outerwear": {
+              "total": 2,
+              "categoryCorrect": 0,
+              "typeCorrect": 0,
+              "abstained": 2
+            },
+            "Shoes": {
+              "total": 3,
+              "categoryCorrect": 2,
+              "typeCorrect": 1,
+              "abstained": 1
+            }
+          }
+        },
+        "fresh-11": {
+          "evaluated": 11,
+          "autoIndexedCount": 9,
+          "categoryReviewCount": 1,
+          "categoryAccuracyPercent": 90.91,
+          "typeAccuracyPercent": 54.55,
+          "acceptedTypeAccuracyPercent": 81.82,
+          "abstentionPercent": 9.09,
+          "negative": {
+            "evaluated": 0,
+            "rejected": 0,
+            "falsePositives": 0
+          },
+          "perCategory": {
+            "Dresses": {
+              "total": 5,
+              "categoryCorrect": 5,
+              "typeCorrect": 1,
+              "abstained": 0
+            },
+            "Accessories": {
+              "total": 1,
+              "categoryCorrect": 1,
+              "typeCorrect": 1,
+              "abstained": 0
+            },
+            "Bottoms": {
+              "total": 1,
+              "categoryCorrect": 0,
+              "typeCorrect": 0,
+              "abstained": 1
+            },
+            "Shoes": {
+              "total": 4,
+              "categoryCorrect": 4,
+              "typeCorrect": 4,
+              "abstained": 0
+            }
+          }
+        }
+      },
+      "regressions": 0,
+      "sourceRun": "https://github.com/nickhaney916-lang/Closet-Current/actions/runs/38575055496",
+      "regressionFailures": {
+        "reviewed-32": [],
+        "holdout-16": [],
+        "fresh-11": []
+      }
+    },
+    {
+      "variant": "sneakers-quarter",
+      "blend": 0.25,
+      "sets": {
+        "reviewed-32": {
+          "evaluated": 32,
+          "autoIndexedCount": 25,
+          "categoryReviewCount": 1,
+          "categoryAccuracyPercent": 81.25,
+          "typeAccuracyPercent": 59.38,
+          "acceptedTypeAccuracyPercent": 75,
+          "abstentionPercent": 18.75,
+          "negative": {
+            "evaluated": 0,
+            "rejected": 0,
+            "falsePositives": 0
+          },
+          "perCategory": {
+            "Tops": {
+              "total": 2,
+              "categoryCorrect": 2,
+              "typeCorrect": 2,
+              "abstained": 0
+            },
+            "Bottoms": {
+              "total": 9,
+              "categoryCorrect": 7,
+              "typeCorrect": 7,
+              "abstained": 2
+            },
+            "Dresses": {
+              "total": 2,
+              "categoryCorrect": 1,
+              "typeCorrect": 0,
+              "abstained": 1
+            },
+            "Outerwear": {
+              "total": 6,
+              "categoryCorrect": 4,
+              "typeCorrect": 3,
+              "abstained": 2
+            },
+            "Shoes": {
+              "total": 13,
+              "categoryCorrect": 12,
+              "typeCorrect": 7,
+              "abstained": 1
+            }
+          }
+        },
+        "holdout-16": {
+          "evaluated": 13,
+          "autoIndexedCount": 6,
+          "categoryReviewCount": 1,
+          "categoryAccuracyPercent": 53.85,
+          "typeAccuracyPercent": 23.08,
+          "acceptedTypeAccuracyPercent": 23.08,
+          "abstentionPercent": 46.15,
+          "negative": {
+            "evaluated": 3,
+            "rejected": 3,
+            "falsePositives": 0
+          },
+          "perCategory": {
+            "Tops": {
+              "total": 3,
+              "categoryCorrect": 2,
+              "typeCorrect": 0,
+              "abstained": 1
+            },
+            "Bottoms": {
+              "total": 3,
+              "categoryCorrect": 2,
+              "typeCorrect": 2,
+              "abstained": 1
+            },
+            "Dresses": {
+              "total": 2,
+              "categoryCorrect": 1,
+              "typeCorrect": 0,
+              "abstained": 1
+            },
+            "Outerwear": {
+              "total": 2,
+              "categoryCorrect": 0,
+              "typeCorrect": 0,
+              "abstained": 2
+            },
+            "Shoes": {
+              "total": 3,
+              "categoryCorrect": 2,
+              "typeCorrect": 1,
+              "abstained": 1
+            }
+          }
+        },
+        "fresh-11": {
+          "evaluated": 11,
+          "autoIndexedCount": 9,
+          "categoryReviewCount": 1,
+          "categoryAccuracyPercent": 90.91,
+          "typeAccuracyPercent": 54.55,
+          "acceptedTypeAccuracyPercent": 81.82,
+          "abstentionPercent": 9.09,
+          "negative": {
+            "evaluated": 0,
+            "rejected": 0,
+            "falsePositives": 0
+          },
+          "perCategory": {
+            "Dresses": {
+              "total": 5,
+              "categoryCorrect": 5,
+              "typeCorrect": 1,
+              "abstained": 0
+            },
+            "Accessories": {
+              "total": 1,
+              "categoryCorrect": 1,
+              "typeCorrect": 1,
+              "abstained": 0
+            },
+            "Bottoms": {
+              "total": 1,
+              "categoryCorrect": 0,
+              "typeCorrect": 0,
+              "abstained": 1
+            },
+            "Shoes": {
+              "total": 4,
+              "categoryCorrect": 4,
+              "typeCorrect": 4,
+              "abstained": 0
+            }
+          }
+        }
+      },
+      "regressions": 3,
+      "sourceRun": "https://github.com/nickhaney916-lang/Closet-Current/actions/runs/38575055496",
+      "regressionFailures": {
+        "reviewed-32": [
+          {
+            "id": "commons-0093",
+            "reason": "category_regression"
+          },
+          {
+            "id": "commons-0093",
+            "reason": "type_regression"
+          },
+          {
+            "id": "commons-0093",
+            "reason": "automatic_indexing_regression"
+          }
+        ],
+        "holdout-16": [],
+        "fresh-11": []
+      }
+    },
+    {
+      "variant": "sneakers-half",
+      "blend": 0.5,
+      "sets": {
+        "reviewed-32": {
+          "evaluated": 32,
+          "autoIndexedCount": 25,
+          "categoryReviewCount": 1,
+          "categoryAccuracyPercent": 81.25,
+          "typeAccuracyPercent": 59.38,
+          "acceptedTypeAccuracyPercent": 75,
+          "abstentionPercent": 18.75,
+          "negative": {
+            "evaluated": 0,
+            "rejected": 0,
+            "falsePositives": 0
+          },
+          "perCategory": {
+            "Tops": {
+              "total": 2,
+              "categoryCorrect": 2,
+              "typeCorrect": 2,
+              "abstained": 0
+            },
+            "Bottoms": {
+              "total": 9,
+              "categoryCorrect": 7,
+              "typeCorrect": 7,
+              "abstained": 2
+            },
+            "Dresses": {
+              "total": 2,
+              "categoryCorrect": 1,
+              "typeCorrect": 0,
+              "abstained": 1
+            },
+            "Outerwear": {
+              "total": 6,
+              "categoryCorrect": 4,
+              "typeCorrect": 3,
+              "abstained": 2
+            },
+            "Shoes": {
+              "total": 13,
+              "categoryCorrect": 12,
+              "typeCorrect": 7,
+              "abstained": 1
+            }
+          }
+        },
+        "holdout-16": {
+          "evaluated": 13,
+          "autoIndexedCount": 6,
+          "categoryReviewCount": 1,
+          "categoryAccuracyPercent": 53.85,
+          "typeAccuracyPercent": 23.08,
+          "acceptedTypeAccuracyPercent": 23.08,
+          "abstentionPercent": 46.15,
+          "negative": {
+            "evaluated": 3,
+            "rejected": 3,
+            "falsePositives": 0
+          },
+          "perCategory": {
+            "Tops": {
+              "total": 3,
+              "categoryCorrect": 2,
+              "typeCorrect": 0,
+              "abstained": 1
+            },
+            "Bottoms": {
+              "total": 3,
+              "categoryCorrect": 2,
+              "typeCorrect": 2,
+              "abstained": 1
+            },
+            "Dresses": {
+              "total": 2,
+              "categoryCorrect": 1,
+              "typeCorrect": 0,
+              "abstained": 1
+            },
+            "Outerwear": {
+              "total": 2,
+              "categoryCorrect": 0,
+              "typeCorrect": 0,
+              "abstained": 2
+            },
+            "Shoes": {
+              "total": 3,
+              "categoryCorrect": 2,
+              "typeCorrect": 1,
+              "abstained": 1
+            }
+          }
+        },
+        "fresh-11": {
+          "evaluated": 11,
+          "autoIndexedCount": 9,
+          "categoryReviewCount": 1,
+          "categoryAccuracyPercent": 90.91,
+          "typeAccuracyPercent": 54.55,
+          "acceptedTypeAccuracyPercent": 81.82,
+          "abstentionPercent": 9.09,
+          "negative": {
+            "evaluated": 0,
+            "rejected": 0,
+            "falsePositives": 0
+          },
+          "perCategory": {
+            "Dresses": {
+              "total": 5,
+              "categoryCorrect": 5,
+              "typeCorrect": 1,
+              "abstained": 0
+            },
+            "Accessories": {
+              "total": 1,
+              "categoryCorrect": 1,
+              "typeCorrect": 1,
+              "abstained": 0
+            },
+            "Bottoms": {
+              "total": 1,
+              "categoryCorrect": 0,
+              "typeCorrect": 0,
+              "abstained": 1
+            },
+            "Shoes": {
+              "total": 4,
+              "categoryCorrect": 4,
+              "typeCorrect": 4,
+              "abstained": 0
+            }
+          }
+        }
+      },
+      "regressions": 3,
+      "sourceRun": "https://github.com/nickhaney916-lang/Closet-Current/actions/runs/38575055496",
+      "regressionFailures": {
+        "reviewed-32": [
+          {
+            "id": "commons-0093",
+            "reason": "category_regression"
+          },
+          {
+            "id": "commons-0093",
+            "reason": "type_regression"
+          },
+          {
+            "id": "commons-0093",
+            "reason": "automatic_indexing_regression"
+          }
+        ],
+        "holdout-16": [],
+        "fresh-11": []
+      }
+    }
+  ]
+}

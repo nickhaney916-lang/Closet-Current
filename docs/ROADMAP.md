@@ -24,6 +24,8 @@ Use More → Help & device check with an existing account. Start an optional loc
 
 Staged category/type recognition, whole-photo preservation, cross-view checks and precomputed high-precision text vectors are implemented. The frozen 100-photo WebAssembly comparison reduced wrong automatic categories from 6 to 2, while increasing photos needing adjustment from 21 to 34. See [staged recognition results](STAGED-RECOGNITION-RESULTS.md). Physical-phone speed, browser preprocessing and broader detail accuracy remain unverified. Wider signup and password-reset inbox tests remain blocked by the sender configuration above.
 
+Recognition checkpoint, October 14: per-photo regression enforcement protects all 59 labeled fixtures. Eight dress/shoe subtype candidates were tested; none safely improved the baseline, so production recognition remains unchanged. Next accuracy work needs more ordinary phone photographs and framing evidence. See [subtype experiment results](SUBTYPE-RECOGNITION-RESULTS.md).
+
 ## P1 — Cloud backup and synchronization
 
 Status: not implemented. Clothing and outfits currently stay in per-account browser IndexedDB. Different devices do not synchronize. Before offering a paid subscription, implement private account-owned storage, reliable recovery and migration of existing local closets.
