@@ -5,7 +5,8 @@ on:
       - 'tests/**'
       - 'public/app.js'
       - 'public/outfit-capture.js'
-      - 'public/taxonomy.js'
+      - 'public/**'
+      - 'scripts/**'
       - '.github/workflows/camera-scenarios.yml'
   workflow_dispatch:
 permissions:
@@ -18,5 +19,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Test single-shot indexing, 100 images, 100 outfits, and segmentation safeguards
-        run: node --test tests/automatic-indexing.test.cjs tests/outfit-capture.test.cjs tests/capture.test.cjs tests/recognition-index-coverage.test.mjs tests/recognition-benchmark.test.mjs
+      - name: Run complete Node test suite (all application and recognition tests)
+        run: node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Validate production build
+        run: node scripts/build.mjs
