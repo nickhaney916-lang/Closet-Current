@@ -26,12 +26,12 @@ export function agreementMatch(category,branch,overall){
 export async function recognizeGarment(model,image,{onStage=()=>{},onIdentified=()=>{},confirmationModel=model}={}){
  onStage('identify');
  const category=categoryChoices(await model(image,categoryCandidates.map(x=>x.label),options));
- if(!confidentCategory(category))return {strong:false,choices:[],details:{},reason:'category_uncertain'};
+ if(!confidentCategory(category))return {strong:false,choices:[],details:{},reason:'category_uncertain',diagnostics:{category:category.slice(0,3).map(x=>({category:x.category,score:x.score}))}};
  // Keep non-garment candidates in each branch: narrowing the vocabulary must
  // never force a room, pet, or pile of clothes to become a clothing type.
  const branchLabels=localCandidates.filter(x=>x.category===category[0].category||x.category==='Uncategorized');
  const branch=clothingChoices(await model(image,branchLabels.map(x=>x.label),options));
- if(!strongMatch(branch)||branch[0].category!==category[0].category)return {strong:false,choices:[],details:{},reason:'type_uncertain'};
+ if(!strongMatch(branch)||branch[0].category!==category[0].category)return {strong:false,choices:[],details:{},reason:'type_uncertain',diagnostics:{category:category.slice(0,2).map(x=>({category:x.category,score:x.score})),branch:branch.slice(0,3).map(x=>({category:x.category,type:x.itemType,score:x.score}))}};
  // Independent vocabulary comparison, using the same model. Scores are gates,
  // not calibrated probabilities. A disagreement always requires adjustment.
  const overall=clothingChoices(await model(image,localCandidates.map(x=>x.label),options));
