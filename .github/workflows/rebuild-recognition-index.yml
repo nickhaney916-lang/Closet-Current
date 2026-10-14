@@ -1,6 +1,11 @@
 name: Rebuild recognition index
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - "scripts/rebuild-recognition-vectors.py"
+      - "scripts/recognition-requirements.txt"
+      - ".github/workflows/rebuild-recognition-index.yml"
 permissions:
   contents: read
 jobs:
