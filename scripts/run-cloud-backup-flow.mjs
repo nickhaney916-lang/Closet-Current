@@ -1,6 +1,6 @@
 import {chromium} from 'playwright';import {createServer} from 'node:http';import {readFile,writeFile,mkdir} from 'node:fs/promises';import {resolve,extname} from 'node:path';import assert from 'node:assert/strict';
 const root=resolve('dist'),output=resolve(process.argv[2]||'benchmark/cloud-backup'),owners=['a1111111-1111-4111-8111-111111111111','b2222222-2222-4222-8222-222222222222'];
-const records=new Map(),photos=new Map(),errors=[],types={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.json':'application/json'};let offline=false,blockSave=false,releaseSave=null;
+const records=new Map(),photos=new Map(),errors=[],types={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.json':'application/json'};let offline=false,blockSave=false,releaseSave=null,loseSaveResponse=false;
 const server=createServer(async(req,res)=>{try{const p=new URL(req.url,'http://localhost').pathname,file=resolve(root,'.'+decodeURIComponent(p==='/'?'/index.html':p));if(!file.startsWith(root+'/'))throw Error('Invalid path');const data=await readFile(file);res.writeHead(200,{'Content-Type':types[extname(file)]||'application/octet-stream'});res.end(data);}catch{res.writeHead(404);res.end();}});await new Promise(r=>server.listen(0,'127.0.0.1',r));let browser;
 const clone=x=>JSON.parse(JSON.stringify(x));
 try{
@@ -16,7 +16,7 @@ try{
    if(url.pathname==='/rest/v1/rpc/save_closet_backup'){
     const data=request.postDataJSON();if(blockSave){blockSave=false;await new Promise(r=>releaseSave=r);}
     const previous=records.get(actor);if((previous?.revision||0)!==data.p_expected_revision)return json(null);
-    const next={revision:(previous?.revision||0)+1,document:clone(data.p_document)};records.set(actor,next);return json(next.revision);
+    const next={revision:(previous?.revision||0)+1,document:clone(data.p_document)};records.set(actor,next);if(loseSaveResponse){loseSaveResponse=false;return route.abort('failed');}return json(next.revision);
    }
    const prefix='/storage/v1/object/closet-private/';if(url.pathname.startsWith(prefix)){const path=url.pathname.slice(prefix.length);if(!path.startsWith(actor+'/'))return json({},403);
     if(request.method()==='POST'){if(photos.has(path))return json({},409);photos.set(path,request.postDataBuffer());return json({});}
@@ -53,7 +53,21 @@ try{
  await one.page.evaluate(()=>closetCloud.sync());await one.page.waitForFunction(()=>document.getElementById('cloudStatus').textContent==='Cloud backup up to date');
  await two.page.evaluate(()=>closetCloud.sync());await two.page.waitForFunction(()=>items.length===10&&document.getElementById('cloudStatus').textContent==='Cloud backup up to date');
  await one.page.evaluate(()=>closetCloud.sync());await one.page.waitForFunction(()=>items.length===10);
- const clean=await device(owners[0]);await clean.page.waitForFunction(()=>items.length===10&&savedOutfitBoards.length===1&&inspirationLooks.length===1&&batch.length===1);await clean.page.locator('.tab[data-view="closet"]').click();await clean.page.screenshot({path:output+'/restored-closet.png',fullPage:true});
- assert.deepEqual(errors,[]);const result={legacyNineMigrated:true,secondDeviceRestore:true,accountIsolation:true,outfitsAndInspirationRestored:true,unfinishedPhotosRestored:true,offlineReloadAndRetry:true,editsDuringUploadPreserved:true,deletionSynced:true,emptyBrowserRestore:true,independentOfflineEditsMerged:true,pageErrors:errors,backend:'Controlled HTTP backend with production browser client; actual Supabase auth/storage/RLS verified separately'};await writeFile(output+'/results.json',JSON.stringify(result,null,2));console.log(JSON.stringify(result));
+ // Same-field edits stop safely until the owner chooses to preserve both copies.
+ offline=true;
+ for(const [device,name]of [[one,'First conflicting shirt'],[two,'Second conflicting shirt']])await device.page.evaluate(async name=>{const value={...items.find(x=>x.id==='legacy-0'),name};await writeAll([value]);Object.assign(items.find(x=>x.id===value.id),value);},name);
+ offline=false;await one.page.evaluate(()=>closetCloud.sync());await one.page.waitForFunction(()=>document.getElementById('cloudStatus').textContent==='Cloud backup up to date');
+ await two.page.evaluate(()=>closetCloud.sync());await two.page.waitForFunction(()=>!document.getElementById('resolveCloudConflict').hidden);
+ assert.equal(records.get(owners[0]).document.items.length,10);assert.equal(await two.page.evaluate(()=>items.find(x=>x.id==='legacy-0').name),'Second conflicting shirt');
+ await two.page.locator('.account-menu summary').click();loseSaveResponse=true;await two.page.locator('#resolveCloudConflict').click();await two.page.waitForFunction(()=>document.getElementById('cloudStatus').textContent.includes('pending'));assert.equal(records.get(owners[0]).document.items.length,11);
+ await two.page.evaluate(()=>closetCloud.sync());await two.page.waitForFunction(()=>document.getElementById('cloudStatus').textContent.includes('choose Keep both'));await two.page.locator('#resolveCloudConflict').click();await two.page.waitForFunction(()=>items.length===11&&document.getElementById('cloudStatus').textContent==='Cloud backup up to date');
+ assert.ok(records.get(owners[0]).document.items.some(x=>x.name==='First conflicting shirt'));assert.ok(records.get(owners[0]).document.items.some(x=>x.name==='Second conflicting shirt (saved copy)'));
+ // A corrupt cloud image must not replace any local photos or acknowledge restoration.
+ await one.page.evaluate(()=>closetCloud.sync());await one.page.waitForFunction(()=>items.length===11);
+ const target=records.get(owners[0]);target.revision++;target.document.items[0].notes='Cloud-only recovery edit';const photoPath=target.document.items[0].image.slice('closet-photo:'.length),originalPhoto=photos.get(photoPath);photos.set(photoPath,Buffer.from('corrupt'));
+ await one.page.evaluate(()=>closetCloud.sync());assert.equal(await one.page.evaluate(()=>items.length),11);assert.equal(await one.page.evaluate(()=>items.some(x=>x.notes==='Cloud-only recovery edit')),false);assert.match(await one.page.locator('#cloudStatus').textContent(),/unavailable/);
+ photos.set(photoPath,originalPhoto);await one.page.evaluate(()=>closetCloud.sync());await one.page.waitForFunction(()=>items.some(x=>x.notes==='Cloud-only recovery edit')&&document.getElementById('cloudStatus').textContent==='Cloud backup up to date');
+ const clean=await device(owners[0]);await clean.page.waitForFunction(()=>items.length===11&&savedOutfitBoards.length===1&&inspirationLooks.length===1&&batch.length===1);await clean.page.locator('.tab[data-view="closet"]').click();await clean.page.screenshot({path:output+'/restored-closet.png',fullPage:true});
+ assert.deepEqual(errors,[]);const result={legacyNineMigrated:true,secondDeviceRestore:true,accountIsolation:true,outfitsAndInspirationRestored:true,unfinishedPhotosRestored:true,offlineReloadAndRetry:true,editsDuringUploadPreserved:true,deletionSynced:true,emptyBrowserRestore:true,independentOfflineEditsMerged:true,conflictingVersionsPreserved:true,lostSaveResponseDoesNotDuplicateCopies:true,corruptRestoreKeepsLocalPhotos:true,pageErrors:errors,backend:'Controlled HTTP backend with production browser client; actual Supabase auth/storage/RLS verified separately'};await writeFile(output+'/results.json',JSON.stringify(result,null,2));console.log(JSON.stringify(result));
  for(const context of browser.contexts())await context.close();
 }finally{await browser?.close();await new Promise(r=>server.close(r));}
