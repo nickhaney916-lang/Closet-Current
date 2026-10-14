@@ -70,7 +70,7 @@ export async function classifyIsolatedGarment(model,image,{hint,confirmationMode
  if(!agreed&&!maskOnly)return {strong:false,choices:[],details:{},reason:'mask_category_disagrees'};
  const category=agreed?a[0].category:hint.categories[0];
  const first=clothingChoices(whole)[0],confirmation=clothingChoices(close),sameType=agreed&&strongMatch(clothingChoices(whole))&&confirmation[0]?.category===first.category&&confirmation[0]?.itemType===first.itemType&&confirmation[0].score>=.35&&confirmation[0].score-(confirmation[1]?.score||0)>=.1&&(!hint.types.length||hint.types.includes(first.itemType));
- const choice=sameType?{...first}:{label:category,category,itemType:'Unknown',sleeveLength:['Bottoms','Shoes','Accessories'].includes(category)?'Not applicable':'Unknown',score:Math.min(a[0].score,b[0].score)};
+ const choice=sameType?{...first}:{label:category,category,itemType:'Unknown',sleeveLength:['Bottoms','Shoes','Accessories'].includes(category)?'Not applicable':'Unknown',score:Math.min(a[0]?.score??0,b[0]?.score??0)};
  onIdentified(choice);let details={};
  if(sameType&&detailPhotoUsable(image.width,image.height)){
   onStage('details');const groups=garmentDetailGroups(choice),proposed=groupedGarmentDetails(await model(image,Object.values(groups).flat().map(x=>x.label),options),groups),checks={};
