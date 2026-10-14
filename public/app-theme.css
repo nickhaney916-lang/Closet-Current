@@ -72,3 +72,14 @@ header{padding-top:22px;padding-bottom:18px}.brand-mark{background:#7043ba;color
  .home-heading{margin-top:24px}.home-piece strong{line-height:1.4;overflow-wrap:anywhere}
  .capture-heading h2{font-size:30px}.capture-heading p{line-height:1.5}
 }
+
+/* Garment crop editor: original photo coordinates are independent of screen size. */
+.photo-crop-editor{width:min(94vw,560px);max-height:90dvh;overflow:auto;border:1px solid var(--line);border-radius:24px;padding:20px;color:var(--ink);background:var(--cream)}
+.photo-crop-editor::backdrop{background:rgba(30,20,45,.65)}
+.photo-crop-editor h2{margin:0 0 10px;font-size:26px}.crop-stage{position:relative;width:fit-content;max-width:100%;margin:24px auto;line-height:0;overflow:hidden;border-radius:10px;background:#eee}
+.crop-stage>img{display:block;max-width:100%;max-height:44dvh;width:auto;height:auto}.crop-frame{position:absolute;border:3px solid #fff;outline:2px solid #7042b3;box-shadow:0 0 0 1000px rgba(20,10,30,.45);touch-action:none;cursor:move}
+.crop-handle{position:absolute!important;width:44px;height:44px;min-height:44px;padding:0!important;border:0!important;border-radius:50%!important;background:transparent!important;touch-action:none;transform:translate(-50%,-50%)}
+.crop-handle::after{content:'';display:block;width:16px;height:16px;margin:auto;background:#7042b3;border:3px solid #fff;border-radius:50%}.crop-handle.nw{left:0;top:0}.crop-handle.ne{left:100%;top:0}.crop-handle.sw{left:0;top:100%}.crop-handle.se{left:100%;top:100%}
+.crop-preview{display:block;max-width:100%;max-height:220px;width:auto;height:auto;margin:0 auto;border-radius:10px}.crop-use-choice{display:flex;gap:10px;align-items:center;margin:16px 0}.photo-crop-editor .actions{margin:12px 0}.photo-crop-editor .actions>button{flex:1}
+
+.crop-handle{transform:none}.crop-handle.nw{left:0;top:0}.crop-handle.ne{left:auto;right:0;top:0}.crop-handle.sw{left:0;top:auto;bottom:0}.crop-handle.se{left:auto;right:0;top:auto;bottom:0}
