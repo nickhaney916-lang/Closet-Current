@@ -18,3 +18,9 @@ Aim for 100 single-garment photos and 100 full outfits, with distinct items, siz
 ## Run
 
 Use the app's actual browser model, not mocked recognition responses. Record each classification or segmentation outcome to `benchmark/results.json`, including image ID, mode, predicted category/type, confidence gates, whether the user was asked to adjust, segment count, and latency. Run `node scripts/evaluate-recognition-benchmark.mjs benchmark/manifest.json benchmark/results.json` to calculate category/type accuracy, false positives, abstentions, and outfit piece recall. Results must be measured before making accuracy claims.
+
+## Capture results from a real browser session
+
+Open Closet Current, use its existing single-shot or full-outfit capture, and compare the photo with the visible category and type assigned to each piece. Record those results in the JSON schema above. A capture simulation is not an image-model benchmark; do not report its mocked predictions as real accuracy.
+
+For each failed classification, record whether the photo was blurry, clipped, dark, partially hidden, or contained multiple items. Keep a separate held-out evaluation set to avoid tuning to the same examples.
