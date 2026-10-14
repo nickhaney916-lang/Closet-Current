@@ -23,7 +23,7 @@ try{
  const image=await page.locator('#scanResults .photo-result img').evaluate(async img=>{await img.decode();return {width:img.naturalWidth,height:img.naturalHeight};});assert.deepEqual(image,camera);
  await page.locator('#scanResults .photo-result button').filter({hasText:'Adjust'}).click();
  const dialog=page.locator('dialog.photo-adjust');await dialog.getByLabel('Item name',{exact:true}).fill('Phone test blue top');
- await dialog.getByLabel('Main category',{exact:true}).selectOption('Tops');await dialog.getByLabel('Item type',{exact:true}).selectOption('T-shirt');await dialog.getByLabel('Color',{exact:true}).fill('Blue');await dialog.getByLabel('Summer',{exact:true}).check();
+ await dialog.locator('label').filter({hasText:/^Main category/}).locator('select').selectOption('Tops');await dialog.locator('label').filter({hasText:/^Item type/}).locator('select').selectOption('T-shirt');await dialog.getByLabel('Color',{exact:true}).fill('Blue');await dialog.getByLabel('Summer',{exact:true}).check();
  await dialog.getByRole('button',{name:'Save changes',exact:true}).click();await dialog.waitFor({state:'detached'});
  await page.waitForFunction(()=>localPending.size===0&&!automaticRunning,null,{timeout:300000});
  assert.equal(await page.evaluate(()=>localReady&&!recognitionUnavailable),true,'Actual recognition worker must finish successfully.');

@@ -24,6 +24,7 @@ def validate_overrides(overrides, labels):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--prompt-overrides', type=Path)
+    parser.add_argument('--blend', type=float, help='Fraction of ensemble versus canonical prompt; defaults to current metadata or 1.')
     parser.add_argument('--output-dir', type=Path, default=ROOT / 'public')
     args = parser.parse_args()
     import numpy as np
@@ -38,7 +39,11 @@ def main():
     source = (ROOT / 'public/recognition-vectors.bin').read_bytes()
     assert hashlib.sha256(source).hexdigest() == metadata['sha256']
     matrix = np.frombuffer(source, dtype='<f4').reshape(len(labels), 512).copy()
-    overrides = validate_overrides(json.loads(args.prompt_overrides.read_text()), labels) if args.prompt_overrides else None
+    raw_overrides = json.loads(args.prompt_overrides.read_text()) if args.prompt_overrides else metadata.get('promptEnsembles')
+    overrides = validate_overrides(raw_overrides, labels) if raw_overrides else None
+    blend = args.blend if args.blend is not None else (1.0 if args.prompt_overrides else metadata.get('promptBlend', 1.0))
+    if not 0 < blend <= 1:
+        parser.error('--blend must be greater than 0 and at most 1.')
     descriptions = overrides or {label: [label] for label in labels}
     text_path = hf_hub_download(metadata['model'], filename='onnx/text_model.onnx', revision=metadata['revision'])
     tokenizer = AutoTokenizer.from_pretrained(metadata['model'], revision=metadata['revision'])
@@ -67,7 +72,8 @@ def main():
         feature = np.mean(features, axis=0)
         norm = np.linalg.norm(feature)
         assert norm > 1e-8 and np.isfinite(feature).all()
-        matrix[positions[label]] = feature / norm
+        feature = (feature / norm) * blend + features[0] * (1 - blend)
+        matrix[positions[label]] = feature / np.linalg.norm(feature)
     assert matrix.shape == (len(labels), 512) and np.isfinite(matrix).all()
     assert np.allclose(np.linalg.norm(matrix, axis=1), 1, atol=.001)
     payload = matrix.astype('<f4').tobytes()
@@ -75,6 +81,7 @@ def main():
     metadata['textDtype'] = 'fp32'
     metadata['textEncoder'] = 'onnx/text_model.onnx'
     metadata['promptEnsembles'] = overrides or {}
+    metadata['promptBlend'] = blend
     args.output_dir.mkdir(parents=True, exist_ok=True)
     (args.output_dir / 'recognition-vectors.bin').write_bytes(payload)
     (args.output_dir / 'recognition-vectors.json').write_text(json.dumps(metadata, indent=2) + '\n')
