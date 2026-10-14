@@ -30,10 +30,13 @@ function readDraft(){return new Promise((resolve,reject)=>{const r=db.transactio
 function savePiece(value,nextBatch){return queued(()=>new Promise((resolve,reject)=>{const tx=db.transaction(['items','state'],'readwrite');tx.objectStore('items').put(value);tx.objectStore('state').put({id:'draft',batch:structuredClone(nextBatch)});tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);}));}
 function node(tag,text,className){const n=document.createElement(tag);if(text)n.textContent=text;if(className)n.className=className;return n;}
 function empty(grid,title,subtitle){const n=node('div',null,'empty');n.append(node('h3',title),node('p',subtitle));grid.append(n);}
-function field(body,title,value,type='input'){const label=node('label',title),input=node(type);if(type==='select'){for(const c of categories){const o=node('option',c);o.value=c;input.append(o);}}input.value=value||'';if(type==='input')input.maxLength=120;if(type==='textarea')input.maxLength=500;label.append(input);body.append(label);return input;}
-function choice(body,title,value,options){const label=node('label',title),select=node('select');for(const option of options)select.append(node('option',option));select.value=options.includes(value)?value:options[0];label.append(select);body.append(label);return select;}
+function field(body,title,value,type='input'){const label=node('label',title),input=node(type);input.setAttribute('aria-label',title);if(type==='select'){for(const c of categories){const o=node('option',c);o.value=c;input.append(o);}}input.value=value||'';if(type==='input')input.maxLength=120;if(type==='textarea')input.maxLength=500;label.append(input);body.append(label);return input;}
+function choice(body,title,value,options){const label=node('label',title),select=node('select');select.setAttribute('aria-label',title);for(const option of options)select.append(node('option',option));select.value=options.includes(value)?value:options[0];label.append(select);body.append(label);return select;}
 function clothingFields(body,item,onChange=()=>{}){
  Object.assign(item,normalizeClothing(item));
+ const completion=node('p',null,'fine'),fillPhoto=node('button','Fill missing details from photo','secondary');fillPhoto.type='button';
+ const refreshCompletion=()=>{const missing=ClothingDetails.missing(item);completion.textContent=missing.length?'Details to confirm: '+missing.join(', ')+'.':'Core details complete. Brand, size and fabric can be added from the label.';};refreshCompletion();body.append(completion);
+ if(item.image){body.append(fillPhoto,node('p','Confirm seasons for how you wear it. Enter brand, size and fabric from the label.','fine'));}
  const fields={name:field(body,'Item name',item.name),category:field(body,'Main category',item.category,'select')};
  const details=node('details',null,'clothing-details');details.open=true;details.append(node('summary','Clothing details'));body.append(details);
  fields.itemType=choice(details,'Item type',item.itemType,['Unknown',...(clothingSchema.types[item.category]||[])]);
@@ -42,22 +45,23 @@ function clothingFields(body,item,onChange=()=>{}){
  fields.pattern=choice(details,'Pattern',item.pattern,clothingSchema.pattern);
  fields.fit=choice(details,'Fit',item.fit,clothingSchema.fit);
  const seasons=node('fieldset',null,'season-picker');seasons.append(node('legend','Seasons · choose all that apply'));const checks=[];
- for(const season of clothingSchema.seasons){const label=node('label'),input=node('input');input.type='checkbox';input.value=season;input.checked=item.seasons.includes(season);label.append(input,document.createTextNode(season));seasons.append(label);checks.push(input);input.onchange=()=>{if(input.checked){for(const other of checks)if(other!==input&&(season==='All seasons'||other.value==='All seasons'))other.checked=false;}item.seasons=checks.filter(x=>x.checked).map(x=>x.value);onChange();};}details.append(seasons);
+ for(const season of clothingSchema.seasons){const label=node('label'),input=node('input');input.type='checkbox';input.value=season;input.checked=item.seasons.includes(season);label.append(input,document.createTextNode(season));seasons.append(label);checks.push(input);input.onchange=()=>{if(input.checked){for(const other of checks)if(other!==input&&(season==='All seasons'||other.value==='All seasons'))other.checked=false;}item.seasons=checks.filter(x=>x.checked).map(x=>x.value);refreshCompletion();onChange();};}details.append(seasons);
  const extra=node('details',null,'optional-details');extra.append(node('summary','Brand, size & other details'));details.append(extra);
  for(const [key,title]of [['brand','Brand'],['size','Size'],['material','Material'],['occasion','Occasion']])fields[key]=field(extra,title,item[key]);
  fields.notes=field(extra,'Notes',item.notes,'textarea');
- for(const [key,el]of Object.entries(fields))el.oninput=()=>{item[key]=el.value;if(key==='category'){const types=['Unknown',...(clothingSchema.types[item.category]||[])];fields.itemType.replaceChildren(...types.map(x=>node('option',x)));item.itemType='Unknown';fields.itemType.value='Unknown';if(['Shoes','Accessories','Bottoms'].includes(item.category)){item.sleeveLength='Not applicable';fields.sleeveLength.value='Not applicable';}else if(item.sleeveLength==='Not applicable'){item.sleeveLength='Unknown';fields.sleeveLength.value='Unknown';}}onChange();};
+ for(const [key,el]of Object.entries(fields))el.oninput=()=>{item[key]=el.value;if(key==='category'){const types=['Unknown',...(clothingSchema.types[item.category]||[])];fields.itemType.replaceChildren(...types.map(x=>node('option',x)));item.itemType='Unknown';fields.itemType.value='Unknown';if(['Shoes','Accessories','Bottoms'].includes(item.category)){item.sleeveLength='Not applicable';fields.sleeveLength.value='Not applicable';}else if(item.sleeveLength==='Not applicable'){item.sleeveLength='Unknown';fields.sleeveLength.value='Unknown';}}refreshCompletion();onChange();};
+ fillPhoto.onclick=async()=>{fillPhoto.disabled=true;completion.textContent='Checking visible clothing details…';try{if(!localReady)await enableLocal();const result=await localRequest('classify',item.image,null,item.segmentHint),choice=result.choices?.[0];if(!fillPhoto.isConnected)return;if(!result.strong||!choice||!segmentationAllows(item,choice)){completion.textContent='Some details are uncertain. Enter what you can confirm from the garment.';return;}if(item.category!=='Uncategorized'&&item.category!==choice.category){completion.textContent='Photo suggests '+choice.category+' · '+choice.itemType+'. Use Crop photo to review and change the category.';return;}applyLocalChoice(item,choice);Object.assign(item,ClothingDetails.fill(item,choice,result.details));fields.category.value=item.category;fields.itemType.replaceChildren(...['Unknown',...(clothingSchema.types[item.category]||[])].map(x=>node('option',x)));for(const [key,input]of Object.entries(fields))input.value=item[key]||'';refreshCompletion();onChange();}catch{if(fillPhoto.isConnected)completion.textContent='Photo recognition is unavailable. Your details are kept; enter any missing fields.';}finally{fillPhoto.disabled=false;}};
  return ()=>normalizeClothing(item);
 }
 function cropClothingPhoto(item){
  if(localPending.has(item.id)||busy)return;
  if(stream||cameraOpening)stopCamera();
  openPhotoCrop(item,{
-  async analyze(image){if(!localReady)await enableLocal();const result=await localRequest('classify',image,null);return result.strong&&result.choices?.[0]&&segmentationAllows(item,result.choices[0])?result.choices[0]:null;},
+  async analyze(image){if(!localReady)await enableLocal();const result=await localRequest('classify',image,null);return result.strong&&result.choices?.[0]&&segmentationAllows(item,result.choices[0])?{...result.choices[0],details:ClothingDetails.recognizedFields(result.choices[0],result.details)}:null;},
   async save(photo,choice){
    const value={...structuredClone(item),...photo,userAdjusted:true,localAnalyzed:true,scanFailed:false,saveFailed:false,possibleDuplicate:false};
    const quality=await checkPhoto(photo.image);value.visualSignature=quality.signature;value.visualAspect=quality.aspect;delete value.localChoices;delete value.indexedAt;
-   if(choice){applyLocalChoice(value,choice,true);value.indexedAt=new Date().toISOString();}
+   if(choice){applyLocalChoice(value,choice,true);Object.assign(value,ClothingDetails.fill(value,choice,choice.details,true));value.indexedAt=new Date().toISOString();}
    value.localStatus=choice?'Crop checked. Suggested details applied.':'Crop saved. Check recognition or adjust the clothing details.';
    if(items.some(x=>x.id===item.id))await writeAll([value]);else await queued(()=>new Promise((resolve,reject)=>{const tx=db.transaction('state','readwrite');tx.objectStore('state').put({id:'draft',batch:batch.map(x=>x.id===item.id?value:x)});tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);}));
    Object.assign(item,value);for(const key of ['visualSignature','visualAspect','localChoices','indexedAt'])if(!(key in value))delete item[key];render();
@@ -326,7 +330,7 @@ async function recognizeItem(item){
   if(!segmentationAllows(item,result.choices[0])){item.localStatus=item.segmentHint?.clipped?'This piece is partly outside the photo. Retake the whole garment or use Adjust.':'The clothing mask and garment checks disagree. Use Adjust or take a clearer photo.';return true;}
   if(item.userAdjusted){item.localStatus='Your adjustments are preserved. Save this piece when ready.';return true;}
   applyLocalChoice(item,result.choices[0]);
-  for(const [key,value]of Object.entries(result.details||{}))if(['color','pattern','fit','sleeveLength'].includes(key)&&(!item[key]||item[key]==='Unknown'))item[key]=value;
+  Object.assign(item,ClothingDetails.fill(item,result.choices[0],result.details));
   item.name=[item.color,item.itemType].filter(x=>x&&x!=='Unknown').join(' ')||item.category;
   if(item.possibleDuplicate){if(typeof recordDeviceEvent==='function')recordDeviceEvent('duplicate_review');item.localStatus='Possible duplicate: compare this photo with your closet before saving.';return true;}
   if(item.requiresOwnershipConfirmation){item.localStatus='Identified. Add this piece only if it belongs in your closet.';return true;}
