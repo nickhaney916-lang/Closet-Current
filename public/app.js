@@ -377,18 +377,18 @@ function scheduleMemoryReview(){
 }
 async function reviewRecognitionMemory(){
  if(typeof ClothingMemory==='undefined'||!db||memoryReviewRunning||busy||automaticRunning||localPending.size||document.hidden||document.querySelector('dialog[open]'))return;
- const week=ClothingMemory.week(),targets=items.filter(x=>x.confirmedDetails&&!ClothingMemory.valid(x.recognitionMemory)||x.learningReviewedWeek!==week&&(x.itemType==='Unknown'||!x.color)).slice(0,8);
+ const week=ClothingMemory.week(),targets=items.filter(x=>x.confirmedDetails&&(!ClothingMemory.valid(x.recognitionMemory)||x.learningReviewedWeek!==week)||x.learningReviewedWeek!==week&&(x.itemType==='Unknown'||!x.color)).slice(0,8);
  if(!targets.length)return;
- memoryReviewRunning=true;
+ memoryReviewRunning=true;let completed=0;
  try{if(!localReady)await enableLocal();for(const target of targets){
   if(busy||automaticRunning||localPending.size||document.hidden||document.querySelector('dialog[open]'))break;
   const before=JSON.stringify(target),image=target.recognitionPhoto?.image||target.image;let result;
   try{result=await localRequest(target.itemType==='Unknown'||!target.color?'classify':'features',image,null,target.segmentHint);}catch{break;}
   const current=items.find(x=>x.id===target.id);if(!current||JSON.stringify(current)!==before)continue;
   if(!ClothingMemory.valid(result.recognitionMemory))continue;
-  const value={...current,recognitionMemory:result.recognitionMemory,learningReviewedWeek:week};delete value.weeklySuggestion;const choice=result.choices?.[0];if(result.strong&&choice&&segmentationAllows(current,choice)&&current.category===choice.category){const fields={itemType:choice.itemType,...ClothingDetails.recognizedFields(choice,result.details)};delete fields.color;value.weeklySuggestion={fields,requiresConfirmation:true,week};}const saved=await saveMemoryReview(value);if(saved&&(current.recognitionPhoto?.image||current.image)===image){current.recognitionMemory=saved.recognitionMemory;current.learningReviewedWeek=saved.learningReviewedWeek;if(saved.weeklySuggestion)current.weeklySuggestion=saved.weeklySuggestion;else delete current.weeklySuggestion;}
+  const value={...current,recognitionMemory:result.recognitionMemory,learningReviewedWeek:week};delete value.weeklySuggestion;const choice=result.choices?.[0];if(result.strong&&choice&&segmentationAllows(current,choice)&&current.category===choice.category){const fields={itemType:choice.itemType,...ClothingDetails.recognizedFields(choice,result.details)};delete fields.color;value.weeklySuggestion={fields,requiresConfirmation:true,week};}const saved=await saveMemoryReview(value);if(saved&&(current.recognitionPhoto?.image||current.image)===image){completed++;current.recognitionMemory=saved.recognitionMemory;current.learningReviewedWeek=saved.learningReviewedWeek;if(saved.weeklySuggestion)current.weeklySuggestion=saved.weeklySuggestion;else delete current.weeklySuggestion;}
  }
- }finally{memoryReviewRunning=false;render();}
+ }finally{memoryReviewRunning=false;render();if(completed===8&&!memoryReviewTimer)memoryReviewTimer=setTimeout(()=>{memoryReviewTimer=null;reviewRecognitionMemory().catch(()=>{});},20000);}
 }
 closetReady.then(scheduleMemoryReview);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)scheduleMemoryReview();});

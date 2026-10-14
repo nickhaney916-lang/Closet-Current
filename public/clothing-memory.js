@@ -3,7 +3,7 @@
  const keys=['category','itemType','pattern','sleeveLength','fit'];
  const missing=value=>!value||['Unknown','Uncategorized','Not applicable'].includes(value);
  function valid(memory){return memory?.version===1&&typeof memory.modelKey==='string'&&memory.modelKey.length<160&&Array.isArray(memory.features)&&memory.features.length===512&&memory.features.every(Number.isFinite)&&Math.abs(memory.features.reduce((n,x)=>n+x*x,0)-1)<.02;}
- function confirm(item){const details={};for(const key of keys)if(!missing(item[key]))details[key]=item[key];return {...item,confirmedDetails:details};}
+ function confirm(item){const details={};for(const key of keys)if(!missing(item[key]))details[key]=item[key];const out={...item,confirmedDetails:details};delete out.learningReviewedWeek;return out;}
  function suggest(item,examples){
   if(!valid(item.recognitionMemory))return null;
   const seen=new Set(),matches=[];
