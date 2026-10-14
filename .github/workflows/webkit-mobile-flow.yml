@@ -1,0 +1,41 @@
+name: WebKit mobile photo import and persistence
+on:
+  push:
+    branches: [main, 'validation/webkit-mobile']
+    paths:
+      - 'public/**'
+      - 'scripts/run-webkit-mobile-flow.mjs'
+      - '.github/workflows/webkit-mobile-flow.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  webkit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prepare WebKit and licensed fixture
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps webkit
+          gh run download 38491639135 -n commons-clothing-photo-candidates -D benchmark/input
+          mkdir -p benchmark/photos benchmark/webkit-mobile-flow
+          cp benchmark/input/photos/commons-0002.jpg benchmark/photos/
+          cp benchmark/input/attributions.json benchmark/webkit-mobile-flow/
+      - name: Verify oriented high-resolution imports and real-worker persistence
+        run: |
+          node scripts/build.mjs
+          node scripts/run-webkit-mobile-flow.mjs benchmark/webkit-mobile-flow
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: webkit-mobile-flow-results
+          path: benchmark/webkit-mobile-flow/
+          retention-days: 14

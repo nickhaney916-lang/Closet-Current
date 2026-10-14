@@ -28,6 +28,8 @@ Recognition checkpoint, October 14: per-photo regression enforcement protects al
 
 Private phone-photo validation tooling is available through Device help. It locks user-supplied labels before inference and exports sanitized results without photos or filenames. No actual user phone garment accuracy has been measured yet; the available uploaded files checked were setup screenshots. See [phone validation instructions](PHONE-PHOTO-VALIDATION.md).
 
+Mobile WebKit validation, October 14: EXIF portrait orientation, 2048/3072-pixel import limits, actual-worker T-shirt recognition, reload persistence and phone layout passed in desktop WebKit with an iPhone profile. This supplements the Chromium camera test; physical phone hardware and production login remain unverified. See [WebKit validation results](WEBKIT-MOBILE-RESULTS.md).
+
 ## P1 — Cloud backup and synchronization
 
 Status: not implemented. Clothing and outfits currently stay in per-account browser IndexedDB. Different devices do not synchronize. Before offering a paid subscription, implement private account-owned storage, reliable recovery and migration of existing local closets.

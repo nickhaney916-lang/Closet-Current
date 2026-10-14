@@ -1,6 +1,6 @@
 # Closet Current progress checkpoint
 
-Paused at the owner's request on October 14, 2026, 7:44 AM America/Los_Angeles.
+Originally paused at the owner's request on October 14, 2026, 7:44 AM America/Los_Angeles. Development resumed at the owner's request later that morning.
 
 ## Current saved state
 
@@ -46,4 +46,8 @@ The prior uploads inspected were setup screenshots, so no user phone garment dat
 
 Physical-phone capture/login validation, reliable authentication email delivery, cloud wardrobe backup/synchronization and eventual subscription readiness remain open as documented in docs/ROADMAP.md. They have not been completed by these recognition tasks.
 
-Development is paused. No further product changes are requested until the owner resumes.
+## Resume validation
+
+Added an automated mobile WebKit photo-import and persistence check. EXIF orientation, high-resolution import limits, actual-worker T-shirt recognition, IndexedDB persistence and phone layout passed on the validation branch; all 166 existing Node checks passed. See docs/WEBKIT-MOBILE-RESULTS.md. Product camera and recognition behavior are unchanged.
+
+Development is resumed. Real phone garment reports remain the next input needed for recognition tuning; physical-phone camera and production-login tests remain open.
