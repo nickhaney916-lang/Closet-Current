@@ -37,6 +37,11 @@ try{
   }
   await page.locator('.tab[data-view="closet"]').click();await page.locator('#closetGrid').getByRole('button',{name:'Adjust details',exact:true}).first().click();
   const dialog=page.locator('dialog[open]');await dialog.waitFor();const box=await dialog.boundingBox();assert.ok(box.x>=-1&&box.x+box.width<=width+1,'Adjust dialog must fit '+width);
+  if(process.env.DISPLAY_ASSERT_LAYOUT==='1'){
+   const reference=dialog.locator('.clothing-reference'),photo=reference.locator('img');assert.equal(await photo.getAttribute('src'),seed[0].image);assert.equal(await photo.evaluate(el=>el.complete&&el.naturalWidth>0),true);
+   await dialog.evaluate(el=>el.scrollTop=el.scrollHeight);const visible=await reference.boundingBox(),scrolled=await dialog.boundingBox();assert.ok(visible.y>=scrolled.y-1&&visible.y+visible.height<=scrolled.y+scrolled.height,'Reference photo must remain visible during editing');
+   await page.screenshot({path:out+'/'+width+'-adjust-scrolled.png',fullPage:true,animations:'disabled'});await dialog.evaluate(el=>el.scrollTop=0);
+  }
   await page.screenshot({path:out+'/'+width+'-adjust.png',fullPage:true,animations:'disabled'});await dialog.getByRole('button',{name:'Cancel',exact:true}).click();
   if(width<760){for(const control of await page.locator('.main-nav>.tab,.more-menu>summary').all()){const b=await control.boundingBox();assert.ok(b.width>=44&&b.height>=44,'Navigation touch target too small');}}
   assert.deepEqual(errors,[]);await context.close();
