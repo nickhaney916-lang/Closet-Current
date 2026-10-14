@@ -78,3 +78,26 @@ test('dress subtype disagreement can retain only the category with no identifica
  const close=[[type('Sweater dress',.9),type('Casual dress',.05)],[cat('Dresses',.97),cat('Tops',.03)],[type('Sweater dress',.9),type('Casual dress',.05),type('Tunic',.05)]];let callbacks=0;
  const r=await recognizeGarment(async()=>primary.shift(),{width:112,height:200},{confirmationModel:async()=>close.shift(),onIdentified:()=>callbacks++});assert.equal(r.strong,false);assert.equal(r.categoryConfirmed,true);assert.equal(r.choices[0].itemType,'Unknown');assert.equal(callbacks,0);
 });
+
+test('a dress with ambiguous types can recover only after all original-view checks agree',async()=>{
+ const {recognizeWithRecovery}=await import('../public/recognition-engine.mjs');let notified=0;
+ const primary=[[cat('Dresses',.98),cat('Tops',.02)],[type('Casual dress',.5),type('Sweater dress',.4)],[type('Casual dress',.5),type('Sweater dress',.4)]];
+ const close=[[cat('Dresses',.97),cat('Tops',.03)],[type('Casual dress',.5),type('Sweater dress',.4)]];
+ const original=[[cat('Dresses',.95),cat('Tops',.05)],[type('Casual dress',.9),type('Sweater dress',.05)],[type('Casual dress',.9),type('Sweater dress',.05)]];
+ const r=await recognizeWithRecovery(async()=>primary.shift(),{width:112,height:200},{confirmationModel:async()=>close.shift(),recoveryModel:async()=>original.shift(),recoveryConfirmationModel:async()=>[type('Casual dress',.9),type('Sweater dress',.05)],onIdentified:()=>notified++});
+ assert.equal(r.strong,true);assert.equal(r.preprocessingRecovery,true);assert.equal(r.choices[0].itemType,'Casual dress');assert.equal(notified,1);
+});
+test('failed dress recovery retains the confirmed category and no guessed subtype',async()=>{
+ const {recognizeWithRecovery}=await import('../public/recognition-engine.mjs');
+ const primary=[[cat('Dresses',.98),cat('Tops',.02)],[type('Casual dress',.5),type('Sweater dress',.4)],[type('Casual dress',.5),type('Sweater dress',.4)]];
+ const close=[[cat('Dresses',.97),cat('Tops',.03)],[type('Casual dress',.5),type('Sweater dress',.4)]];
+ const original=[[cat('Tops',.95),cat('Dresses',.05)],[type('Tunic',.9),type('Blouse',.05)],[type('Tunic',.9),type('Blouse',.05)]];
+ const r=await recognizeWithRecovery(async()=>primary.shift(),{width:112,height:200},{confirmationModel:async()=>close.shift(),recoveryModel:async()=>original.shift(),recoveryConfirmationModel:async()=>[type('Tunic',.9),type('Blouse',.05)],onIdentified:()=>{throw Error('category conflict must not notify');}});
+ assert.equal(r.strong,false);assert.equal(r.categoryConfirmed,true);assert.equal(r.choices[0].itemType,'Unknown');
+});
+test('a dress vocabulary contradiction never enters original-view recovery',async()=>{
+ const {recognizeWithRecovery}=await import('../public/recognition-engine.mjs');let recovered=0;
+ const primary=[[cat('Dresses',.98),cat('Tops',.02)],[type('Casual dress',.9),type('Sweater dress',.05)],[type('Tunic',.9),type('Casual dress',.05)]];
+ const r=await recognizeWithRecovery(async()=>primary.shift(),{width:112,height:200},{recoveryModel:async()=>{recovered++;throw Error('must not retry');},recoveryConfirmationModel:async()=>[]});
+ assert.equal(r.strong,false);assert.equal(recovered,0);assert.equal(r.reason,'checks_disagree');
+});

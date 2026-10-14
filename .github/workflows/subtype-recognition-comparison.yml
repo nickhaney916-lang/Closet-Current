@@ -38,7 +38,11 @@ jobs:
           node scripts/build.mjs
           node --test tests/*.test.cjs tests/*.test.mjs
       - name: Compare bounded subtype descriptions without changing confidence gates
-        run: node scripts/compare-recognition-subtypes.mjs
+        env:
+          RECOVERY_ONLY: '1'
+        run: |
+          git fetch origin 4ba0f31d4fe899e59efff4beb6d3e7da11324909
+          node scripts/compare-recognition-subtypes.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:

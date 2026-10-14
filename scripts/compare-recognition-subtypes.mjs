@@ -6,9 +6,12 @@ import {join} from 'node:path';
 // the same photo manifests, source images, model, crops and acceptance gates.
 const output='benchmark/subtype-comparison',python=process.env.RECOGNITION_PYTHON||'python';
 const original=Object.fromEntries(['json','bin'].map(ext=>[ext,fs.readFileSync('public/recognition-vectors.'+ext)]));
+const recoveryOnly=process.env.RECOVERY_ONLY==='1',engine=fs.readFileSync('public/recognition-engine.mjs');
+const baselineEngine=recoveryOnly?spawnSync('git',['show','4ba0f31d4fe899e59efff4beb6d3e7da11324909:public/recognition-engine.mjs']).stdout:null;
+if(recoveryOnly&&!baselineEngine?.length)throw Error('Missing pinned recovery baseline.');
 const prompts=JSON.parse(fs.readFileSync('benchmark/prompt-subtypes.json','utf8'));
 const shoes=new Set(['sneakers','flat shoes','high heel shoes','sandals','ankle boots','tall boots','loafers']);
-const variants=[['before',null,0],['shoes-quarter','shoes',.25],['shoes-half','shoes',.5],['dress-quarter','dress',.25],['dress-half','dress',.5],['combined-quarter','all',.25]];
+const variants=recoveryOnly?[['before',null,0],['dress-recovery',null,0]]:[['before',null,0],['shoes-quarter','shoes',.25],['shoes-half','shoes',.5],['dress-quarter','dress',.25],['dress-half','dress',.5],['combined-quarter','all',.25]];
 const sets=['reviewed-32','holdout-16','fresh-11'],reports=[];
 fs.mkdirSync(output,{recursive:true});
 function run(command,args,{allowFailure=false}={}){
@@ -18,6 +21,7 @@ function run(command,args,{allowFailure=false}={}){
 }
 try{
  for(const [name,group,blend] of variants){
+  if(recoveryOnly)fs.writeFileSync('public/recognition-engine.mjs',name==='before'?baselineEngine:engine);
   for(const [ext,bytes] of Object.entries(original))fs.writeFileSync('public/recognition-vectors.'+ext,bytes);
   const directory=join(output,name);fs.mkdirSync(directory,{recursive:true});
   if(group){
@@ -44,6 +48,7 @@ try{
   console.log('Variant complete:',JSON.stringify(summary));
  }
 }finally{
+ fs.writeFileSync('public/recognition-engine.mjs',engine);
  for(const [ext,bytes] of Object.entries(original))fs.writeFileSync('public/recognition-vectors.'+ext,bytes);
  run(process.execPath,['scripts/build.mjs']);
 }
