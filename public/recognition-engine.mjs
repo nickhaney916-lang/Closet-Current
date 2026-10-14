@@ -23,6 +23,24 @@ export function agreementMatch(category,branch,overall){
  return confidentCategory(category)&&strongMatch(branch)&&first.category===category[0].category&&
   !!full&&full.category===first.category&&full.itemType===first.itemType&&full.score>=.6&&full.score-(overall[1]?.score||0)>=.2;
 }
+// A broad dress category can be useful even when its subtype is uncertain.
+// This result always stays in review and never supplies guessed attributes.
+async function reviewDressCategory(model,confirmationModel,image,category,overall,evidence){
+ if(category[0]?.category!=='Dresses'||category[0].score<.85||category[0].score-(category[1]?.score||0)<.35)return null;
+ const labels=localCandidates.map(x=>x.label),whole=overall||await model(image,labels,options);
+ const supported=results=>{
+  const totals=garmentCategoryTotals(results),first=clothingChoices(results)[0];
+  const negative=results.reduce((sum,x)=>sum+(localCandidates.some(c=>c.label===x.label&&c.category==='Uncategorized')?x.score:0),0);
+  return first?.category==='Dresses'&&totals[0]?.category==='Dresses'&&totals[0].score>=.75&&totals[0].score-(totals[1]?.score||0)>=.5&&negative<=.1;
+ };
+ if(evidence)evidence.primary={totals:garmentCategoryTotals(whole).slice(0,3),top:clothingChoices(whole).slice(0,3)};
+ if(!supported(whole))return null;
+ const closeCategory=categoryChoices(await confirmationModel(image,categoryCandidates.map(x=>x.label),options));
+ if(evidence)evidence.confirmationCategory=closeCategory.slice(0,3);
+ if(closeCategory[0]?.category!=='Dresses'||closeCategory[0].score<.85||closeCategory[0].score-(closeCategory[1]?.score||0)<.35)return null;
+ const close=await confirmationModel(image,labels,options);if(evidence)evidence.confirmation={totals:garmentCategoryTotals(close).slice(0,3),top:clothingChoices(close).slice(0,3)};if(!supported(close))return null;
+ return {strong:false,categoryConfirmed:true,categoryOnly:true,choices:[{label:'Dresses',category:'Dresses',itemType:'Unknown',sleeveLength:'Unknown',score:Math.min(category[0].score,closeCategory[0].score)}],details:{},reason:'dress_type_review'};
+}
 export async function recognizeGarment(model,image,{onStage=()=>{},onIdentified=()=>{},confirmationModel=model}={}){
  onStage('identify');
  const category=categoryChoices(await model(image,categoryCandidates.map(x=>x.label),options));
@@ -30,14 +48,14 @@ export async function recognizeGarment(model,image,{onStage=()=>{},onIdentified=
  // Keep non-garment candidates in each branch: narrowing the vocabulary must
  // never force a room, pet, or pile of clothes to become a clothing type.
  const branchLabels=localCandidates.filter(x=>x.category===category[0].category||x.category==='Uncategorized');
- const branch=clothingChoices(await model(image,branchLabels.map(x=>x.label),options));
- if(!strongMatch(branch)||branch[0].category!==category[0].category)return {strong:false,choices:[],details:{},reason:'type_uncertain',diagnostics:{category:category.slice(0,2).map(x=>({category:x.category,score:x.score})),branch:branch.slice(0,3).map(x=>({category:x.category,type:x.itemType,score:x.score}))}};
+ const branch=clothingChoices(await model(image,branchLabels.map(x=>x.label),options)),dressEvidence={};
+ if(!strongMatch(branch)||branch[0].category!==category[0].category)return await reviewDressCategory(model,confirmationModel,image,category,undefined,dressEvidence)||{strong:false,choices:[],details:{},reason:'type_uncertain',diagnostics:{dressEvidence,category:category.slice(0,2).map(x=>({category:x.category,score:x.score})),branch:branch.slice(0,3).map(x=>({category:x.category,type:x.itemType,score:x.score}))}};
  // Independent vocabulary comparison, using the same model. Scores are gates,
  // not calibrated probabilities. A disagreement always requires adjustment.
- const overall=clothingChoices(await model(image,localCandidates.map(x=>x.label),options));
- if(!agreementMatch(category,branch,overall))return {strong:false,choices:[],details:{},reason:'checks_disagree',diagnostics:{category:category.slice(0,2).map(x=>({category:x.category,score:x.score})),branch:branch.slice(0,2).map(x=>({category:x.category,type:x.itemType,score:x.score})),overall:overall.slice(0,2).map(x=>({category:x.category,type:x.itemType,score:x.score}))}};
+ const overallResults=await model(image,localCandidates.map(x=>x.label),options),overall=clothingChoices(overallResults);
+ if(!agreementMatch(category,branch,overall))return await reviewDressCategory(model,confirmationModel,image,category,overallResults,dressEvidence)||{strong:false,choices:[],details:{},reason:'checks_disagree',diagnostics:{dressEvidence,category:category.slice(0,2).map(x=>({category:x.category,score:x.score})),branch:branch.slice(0,2).map(x=>({category:x.category,type:x.itemType,score:x.score})),overall:overall.slice(0,2).map(x=>({category:x.category,type:x.itemType,score:x.score}))}};
  const confirmation=clothingChoices(await confirmationModel(image,localCandidates.map(x=>x.label),options));
- if(!confirmation[0]||confirmation[0].score<.35||confirmation[0].score-(confirmation[1]?.score||0)<.1||confirmation[0].category!==branch[0].category||confirmation[0].itemType!==branch[0].itemType)return {strong:false,choices:[],details:{},reason:'views_disagree',diagnostics:{branch:branch.slice(0,2).map(x=>({category:x.category,type:x.itemType,score:x.score})),confirmation:confirmation.slice(0,2).map(x=>({category:x.category,type:x.itemType,score:x.score}))}};
+ if(!confirmation[0]||confirmation[0].score<.35||confirmation[0].score-(confirmation[1]?.score||0)<.1||confirmation[0].category!==branch[0].category||confirmation[0].itemType!==branch[0].itemType)return await reviewDressCategory(model,confirmationModel,image,category,overallResults,dressEvidence)||{strong:false,choices:[],details:{},reason:'views_disagree',diagnostics:{dressEvidence,branch:branch.slice(0,2).map(x=>({category:x.category,type:x.itemType,score:x.score})),confirmation:confirmation.slice(0,2).map(x=>({category:x.category,type:x.itemType,score:x.score}))}};
  const first={...branch[0]};onIdentified(first);let details={};
  if(detailPhotoUsable(image.width,image.height)){
   onStage('details');const groups=garmentDetailGroups(first),labels=Object.values(groups).flat().map(x=>x.label);
@@ -48,6 +66,17 @@ export async function recognizeGarment(model,image,{onStage=()=>{},onIdentified=
  return {strong:true,choices:[{...first,sleeveLength:details.sleeveLength||first.sleeveLength},...branch.slice(1)],details};
 }
 
+// Retry only an uncertain top type. Category, type, complete-vocabulary and
+// independent-view gates must all pass again; contradictions are not retried.
+export async function recognizeWithRecovery(model,image,settings={}){
+ const result=await recognizeGarment(model,image,settings),category=result.diagnostics?.category;
+ const eligible=result.reason==='type_uncertain'&&category?.[0]?.category==='Tops'&&category[0].score>=.85&&category[0].score-(category[1]?.score||0)>=.35;
+ if(!eligible||!settings.recoveryModel||!settings.recoveryConfirmationModel)return result;
+ const recovered=await recognizeGarment(settings.recoveryModel,image,{...settings,confirmationModel:settings.recoveryConfirmationModel,onIdentified:()=>{}});
+ if(!recovered.strong||recovered.choices[0]?.category!=='Tops')return result;
+ settings.onIdentified?.(recovered.choices[0]);
+ return {...recovered,preprocessingRecovery:true};
+}
 function garmentCategoryTotals(results){
  const totals=new Map();
  // Sum only clothing classes: background/negative prompts must never win a

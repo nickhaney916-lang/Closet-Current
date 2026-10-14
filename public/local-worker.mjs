@@ -12,7 +12,7 @@ async function load(){
   env.backends.onnx.wasm.numThreads=1;env.backends.onnx.wasm.proxy=false;
   scannerStage='catalog_import';const version=new URL(import.meta.url).search;
   const {makeVectorScorer,loadVectorAssets}=await import('./vector-scorer.mjs'+version);
-  const {prepareRecognitionPhoto}=await import('./recognition-photo.mjs'+version);
+  const {prepareRecognitionPhoto,fitWholePhoto}=await import('./recognition-photo.mjs'+version);
   const {metadata,vectors}=await loadVectorAssets('recognition-vectors.json'+version,'recognition-vectors.bin'+version);
   const processor=await AutoProcessor.from_pretrained(metadata.model,{revision:metadata.revision});
   const vision=await CLIPVisionModelWithProjection.from_pretrained(metadata.model,{revision:metadata.revision,device:'wasm',dtype:'q8',progress_callback:event=>{
@@ -27,7 +27,12 @@ async function load(){
    const fitted=await prepareRecognitionPhoto(image,RawImageClass,{confirmation:true});
    return (await vision(await processor(fitted))).image_embeds.data;
   },metadata,vectors);
-  scannerStage='ready';return {whole,center};
+  const originalWhole=makeVectorScorer(async image=>{
+   const fitted=await fitWholePhoto(image,RawImageClass);
+   return (await vision(await processor(fitted))).image_embeds.data;
+  },metadata,vectors);
+  const originalCenter=makeVectorScorer(async image=>(await vision(await processor(image))).image_embeds.data,metadata,vectors);
+  scannerStage='ready';return {whole,center,originalWhole,originalCenter};
  })().catch(error=>{classifierPromise=null;throw error;});
  return classifierPromise;
 }
@@ -37,12 +42,13 @@ self.onmessage=event=>{const request=event.data;chain=chain.then(async()=>{
   const model=await load();
   if(request.type==='load'){self.postMessage({type:'ready',id:request.id});return;}
   if(request.type!=='classify'||typeof request.image!=='string'||!request.image.startsWith('data:image/jpeg;base64,'))throw Error('Invalid captured image.');
-  scannerStage='catalog_import';const {recognizeGarment,classifyIsolatedGarment}=await import('./recognition-engine.mjs'+new URL(import.meta.url).search);
+  scannerStage='catalog_import';const {recognizeWithRecovery,classifyIsolatedGarment}=await import('./recognition-engine.mjs'+new URL(import.meta.url).search);
   scannerStage='identify';const image=await RawImageClass.read(request.image);
-  const classify=request.hint?classifyIsolatedGarment:recognizeGarment;
+  const classify=request.hint?classifyIsolatedGarment:recognizeWithRecovery;
   const result=await classify(model.whole,image,{
    hint:request.hint,
    confirmationModel:model.center,
+   recoveryModel:model.originalWhole,recoveryConfirmationModel:model.originalCenter,
    onStage:stage=>{scannerStage=stage;},
    onIdentified:choice=>self.postMessage({type:'identified',id:request.id,choice})
   });

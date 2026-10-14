@@ -1,0 +1,249 @@
+[
+  {
+    "id": "commons-0003",
+    "image": "commons-0003.jpg",
+    "mode": "single",
+    "expectedCategory": "Tops",
+    "expectedType": "T-shirt",
+    "verified": true,
+    "conditions": [
+      "visual-review",
+      "independent-garment-holdout",
+      "commons-public-photo"
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:Zwart_shirt_met_lange_mouwen_van_merk_Armani_Jeans,_opdruk_letters_%E2%80%9CAJ%E2%80%9D_op_voorkant,_maat_M,_objectnr_86975-3.JPG"
+  },
+  {
+    "id": "commons-0014",
+    "image": "commons-0014.jpg",
+    "mode": "single",
+    "expectedCategory": "Tops",
+    "expectedType": "Blouse",
+    "verified": true,
+    "conditions": [
+      "visual-review",
+      "independent-garment-holdout",
+      "commons-public-photo"
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:Blouse_MET_CI44.111_F.jpg"
+  },
+  {
+    "id": "commons-0016",
+    "image": "commons-0016.jpg",
+    "mode": "single",
+    "expectedCategory": "Tops",
+    "expectedType": "Blouse",
+    "verified": true,
+    "conditions": [
+      "visual-review",
+      "independent-garment-holdout",
+      "commons-public-photo"
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:Blouse_MET_41.64_F.jpg"
+  },
+  {
+    "id": "commons-0025",
+    "image": "commons-0025.jpg",
+    "mode": "single",
+    "expectedCategory": "Bottoms",
+    "expectedType": "Jeans",
+    "verified": true,
+    "conditions": [
+      "visual-review",
+      "independent-garment-holdout",
+      "commons-public-photo"
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:Wisent_Blue_Jeans_(6).JPG"
+  },
+  {
+    "id": "commons-0036",
+    "image": "commons-0036.jpg",
+    "mode": "single",
+    "expectedCategory": "Bottoms",
+    "expectedType": "Skirt",
+    "verified": true,
+    "conditions": [
+      "visual-review",
+      "independent-garment-holdout",
+      "commons-public-photo"
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:Iraqw_initiation_skirt.jpg"
+  },
+  {
+    "id": "commons-0040",
+    "image": "commons-0040.jpg",
+    "mode": "single",
+    "expectedCategory": "Bottoms",
+    "expectedType": "Skirt",
+    "verified": true,
+    "conditions": [
+      "visual-review",
+      "independent-garment-holdout",
+      "commons-public-photo"
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:Malong_(tube_skirt)_from_Mindanao,_Honolulu_Museum_of_Art_9178.1.JPG"
+  },
+  {
+    "id": "commons-0049",
+    "image": "commons-0049.jpg",
+    "mode": "single",
+    "expectedCategory": "Dresses",
+    "expectedType": "Dress",
+    "verified": true,
+    "conditions": [
+      "visual-review",
+      "independent-garment-holdout",
+      "commons-public-photo"
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:Dress_(AM_17186-5).jpg",
+    "acceptedTypes": [
+      "Dress",
+      "Casual dress",
+      "Shirt dress",
+      "Sweater dress",
+      "Formal dress"
+    ]
+  },
+  {
+    "id": "commons-0059",
+    "image": "commons-0059.jpg",
+    "mode": "single",
+    "expectedCategory": "Dresses",
+    "expectedType": "Dress",
+    "verified": true,
+    "conditions": [
+      "visual-review",
+      "independent-garment-holdout",
+      "commons-public-photo"
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:Dress_and_jacket_(AM_1970.236-4).jpg",
+    "acceptedTypes": [
+      "Dress",
+      "Casual dress",
+      "Shirt dress",
+      "Sweater dress",
+      "Formal dress"
+    ]
+  },
+  {
+    "id": "commons-0060",
+    "image": "commons-0060.jpg",
+    "mode": "single",
+    "expectedCategory": "Outerwear",
+    "expectedType": "Jacket",
+    "verified": true,
+    "conditions": [
+      "visual-review",
+      "independent-garment-holdout",
+      "commons-public-photo"
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:Jacket_(AM_1969.193-1).jpg"
+  },
+  {
+    "id": "commons-0062",
+    "image": "commons-0062.jpg",
+    "mode": "single",
+    "expectedCategory": "Outerwear",
+    "expectedType": "Jacket",
+    "verified": true,
+    "conditions": [
+      "visual-review",
+      "independent-garment-holdout",
+      "commons-public-photo"
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:Jacket_(AM_906-2).jpg"
+  },
+  {
+    "id": "commons-0077",
+    "image": "commons-0077.jpg",
+    "mode": "single",
+    "expectedCategory": "Shoes",
+    "expectedType": "Sneakers",
+    "verified": true,
+    "conditions": [
+      "visual-review",
+      "independent-garment-holdout",
+      "commons-public-photo"
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:Garrison_high-top_sneakers,_1940,_US_Army,_manufacturer_unknown_-_Bata_Shoe_Museum_-_DSC00771.JPG"
+  },
+  {
+    "id": "commons-0078",
+    "image": "commons-0078.jpg",
+    "mode": "single",
+    "expectedCategory": "Shoes",
+    "expectedType": "Sneakers",
+    "verified": true,
+    "conditions": [
+      "visual-review",
+      "independent-garment-holdout",
+      "commons-public-photo"
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:Perfection_high-top_sneakers,_1900-1929_-_Bata_Shoe_Museum_-_DSC00727.JPG"
+  },
+  {
+    "id": "commons-0095",
+    "image": "commons-0095.jpg",
+    "mode": "single",
+    "expectedCategory": "Shoes",
+    "expectedType": "Boots",
+    "verified": true,
+    "conditions": [
+      "visual-review",
+      "independent-garment-holdout",
+      "commons-public-photo",
+      "detail-crop"
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:Boots,_pair_woman%27s_(AM_1992.157-15).jpg",
+    "acceptedTypes": [
+      "Boots",
+      "Ankle boots",
+      "Tall boots"
+    ]
+  },
+  {
+    "id": "commons-0046",
+    "image": "commons-0046.jpg",
+    "mode": "single",
+    "expectedCategory": "Uncategorized",
+    "expectedType": "Unknown",
+    "verified": true,
+    "conditions": [
+      "visual-review",
+      "independent-garment-holdout",
+      "commons-public-photo",
+      "non-clothing-landscape"
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:2015_Garb_Goli%C5%84ca.jpg"
+  },
+  {
+    "id": "commons-0086",
+    "image": "commons-0086.jpg",
+    "mode": "single",
+    "expectedCategory": "Uncategorized",
+    "expectedType": "Unknown",
+    "verified": true,
+    "conditions": [
+      "visual-review",
+      "independent-garment-holdout",
+      "commons-public-photo",
+      "non-photo-painting"
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:H._Piffard_-_The_Thin_Red_Line_-_restoration.jpg"
+  },
+  {
+    "id": "commons-0090",
+    "image": "commons-0090.jpg",
+    "mode": "single",
+    "expectedCategory": "Uncategorized",
+    "expectedType": "Unknown",
+    "verified": true,
+    "conditions": [
+      "visual-review",
+      "independent-garment-holdout",
+      "commons-public-photo",
+      "non-clothing-landscape"
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:Menambang_Belerang.jpg"
+  }
+]

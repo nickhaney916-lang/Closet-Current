@@ -1,0 +1,62 @@
+name: Dress recognition and holdout comparison
+on:
+  push:
+    branches: ['recognition/dress-consensus']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install browser and retrieve licensed photographs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium
+          gh run download 38491639135 -n commons-clothing-photo-candidates -D benchmark/input
+          mkdir -p benchmark/photos
+          cp benchmark/input/photos/* benchmark/photos/
+      - name: Compare baseline, dress category review and top recovery
+        run: |
+          mkdir -p benchmark/dress-comparison /tmp/closet-candidate
+          git fetch origin 3a7020ceb0ff0ede2f86bc6277b87ad6028aca11
+          for file in local-worker.mjs recognition-engine.mjs vector-scorer.mjs; do
+            cp "public/$file" "/tmp/closet-candidate/$file"
+            git show 3a7020ceb0ff0ede2f86bc6277b87ad6028aca11:"public/$file" > "public/$file"
+          done
+          node scripts/build.mjs
+          for set in reviewed-32 holdout-16; do
+            node scripts/run-browser-photo-benchmark.mjs "benchmark/manifest-$set.json"
+            cp benchmark/output/results.json "benchmark/dress-comparison/before-$set.json"
+            node scripts/evaluate-recognition-benchmark.mjs "benchmark/manifest-$set.json" "benchmark/output/results.json" > "benchmark/dress-comparison/before-$set-evaluation.json"
+          done
+          cp /tmp/closet-candidate/recognition-engine.mjs public/recognition-engine.mjs
+          node scripts/build.mjs
+          node scripts/run-browser-photo-benchmark.mjs
+          cp benchmark/output/results.json benchmark/dress-comparison/review-only-32.json
+          node scripts/evaluate-recognition-benchmark.mjs benchmark/manifest-reviewed-32.json benchmark/output/results.json > benchmark/dress-comparison/review-only-32-evaluation.json
+          for file in local-worker.mjs recognition-engine.mjs vector-scorer.mjs; do
+            cp "/tmp/closet-candidate/$file" "public/$file"
+          done
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+          for set in reviewed-32 holdout-16; do
+            node scripts/run-browser-photo-benchmark.mjs "benchmark/manifest-$set.json"
+            cp benchmark/output/results.json "benchmark/dress-comparison/after-$set.json"
+            node scripts/evaluate-recognition-benchmark.mjs "benchmark/manifest-$set.json" benchmark/output/results.json > "benchmark/dress-comparison/after-$set-evaluation.json"
+            cat "benchmark/dress-comparison/after-$set-evaluation.json"
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dress-recognition-comparison
+          path: benchmark/dress-comparison/
+          retention-days: 14
