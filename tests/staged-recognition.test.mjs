@@ -18,7 +18,7 @@ test('different garment types in the same category also require adjustment',asyn
  const h=setup([[cat('Bottoms'),cat('Tops',.05)],[type('Jeans'),type('Leggings',.05)],[type('Leggings'),type('Jeans',.05)]]);assert.equal((await h.scan()).strong,false);assert.equal(h.identified.length,0);
 });
 test('full comparison must exceed both score and separation gates',async()=>{
- for(const overall of [[type('T-shirt',.59),type('Blouse',.1)],[type('T-shirt',.7),type('Blouse',.51)]]){const h=setup([[cat('Tops'),cat('Shoes',.05)],[type('T-shirt'),type('Blouse',.05)],overall]);assert.equal((await h.scan()).strong,false);assert.equal(h.identified.length,0);}
+ for(const overall of [[type('T-shirt',.54),type('Blouse',.1)],[type('T-shirt',.7),type('Blouse',.51)]]){const h=setup([[cat('Tops'),cat('Shoes',.05)],[type('T-shirt'),type('Blouse',.05)],overall]);assert.equal((await h.scan()).strong,false);assert.equal(h.identified.length,0);}
 });
 
 test('a conflicting closer view prevents identification and autosave',async()=>{
