@@ -141,6 +141,13 @@
     "conditions": [
       "visual-review",
       "commons-public-photo"
+    ],
+    "acceptedTypes": [
+      "Dress",
+      "Casual dress",
+      "Shirt dress",
+      "Sweater dress",
+      "Formal dress"
     ]
   },
   {
@@ -153,6 +160,13 @@
     "conditions": [
       "visual-review",
       "commons-public-photo"
+    ],
+    "acceptedTypes": [
+      "Dress",
+      "Casual dress",
+      "Shirt dress",
+      "Sweater dress",
+      "Formal dress"
     ]
   },
   {
@@ -321,6 +335,11 @@
     "conditions": [
       "visual-review",
       "commons-public-photo"
+    ],
+    "acceptedTypes": [
+      "Boots",
+      "Ankle boots",
+      "Tall boots"
     ]
   },
   {
@@ -333,6 +352,11 @@
     "conditions": [
       "visual-review",
       "commons-public-photo"
+    ],
+    "acceptedTypes": [
+      "Boots",
+      "Ankle boots",
+      "Tall boots"
     ]
   },
   {
@@ -345,6 +369,11 @@
     "conditions": [
       "visual-review",
       "commons-public-photo"
+    ],
+    "acceptedTypes": [
+      "Boots",
+      "Ankle boots",
+      "Tall boots"
     ]
   },
   {
@@ -357,6 +386,11 @@
     "conditions": [
       "visual-review",
       "commons-public-photo"
+    ],
+    "acceptedTypes": [
+      "Boots",
+      "Ankle boots",
+      "Tall boots"
     ]
   },
   {
@@ -369,6 +403,11 @@
     "conditions": [
       "visual-review",
       "commons-public-photo"
+    ],
+    "acceptedTypes": [
+      "Boots",
+      "Ankle boots",
+      "Tall boots"
     ]
   },
   {
@@ -381,6 +420,11 @@
     "conditions": [
       "visual-review",
       "commons-public-photo"
+    ],
+    "acceptedTypes": [
+      "Boots",
+      "Ankle boots",
+      "Tall boots"
     ]
   }
 ]
