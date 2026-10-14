@@ -19,4 +19,4 @@ jobs:
         with:
           node-version: '22'
       - name: Test single-shot indexing, 100 images, 100 outfits, and segmentation safeguards
-        run: node --test tests/automatic-indexing.test.cjs tests/outfit-capture.test.cjs tests/capture.test.cjs tests/recognition-index-coverage.test.mjs
+        run: node --test tests/automatic-indexing.test.cjs tests/outfit-capture.test.cjs tests/capture.test.cjs tests/recognition-index-coverage.test.mjs tests/recognition-benchmark.test.mjs
