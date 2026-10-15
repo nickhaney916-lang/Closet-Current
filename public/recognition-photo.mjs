@@ -57,6 +57,19 @@ export function recognitionFramingDiagnostics(image,{confirmation=false}={}){
   fullGarmentRetained:true
  };
 }
+// Produce a bounded set of alternate views for offline recognition comparison.
+// No view is selected automatically: callers must compare outcomes against
+// the complete regression set before considering a production change.
+export async function prepareRecognitionPhotoVariants(image,RawImageClass,contentSizes=[256,288,320,336]){
+ if(!Array.isArray(contentSizes)||contentSizes.length<1||contentSizes.length>8||
+    contentSizes.some(size=>!Number.isInteger(size)||size<128||size>336)||
+    new Set(contentSizes).size!==contentSizes.length)throw Error('Invalid recognition variant sizes.');
+ const variants=[];
+ for(const contentSize of contentSizes){
+  variants.push({contentSize,image:await prepareRecognitionPhoto(image,RawImageClass,{contentSizeOverride:contentSize})});
+ }
+ return variants;
+}
 export async function prepareRecognitionPhoto(image,RawImageClass,{confirmation=false,contentSizeOverride=null}={}){
  const bounds=uniformPhotoBounds(image);
  const cropped=bounds.left||bounds.top||bounds.right!==image.width||bounds.bottom!==image.height?
