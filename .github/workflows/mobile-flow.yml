@@ -13,6 +13,10 @@ on:
     paths:
       - 'scripts/run-mobile-flow.mjs'
       - '.github/workflows/mobile-flow.yml'
+      - '.github/workflows/reviewed-photo-baseline.yml'
+      - 'scripts/audit-100-photo-results.mjs'
+      - 'scripts/assemble-reviewed-baseline.mjs'
+      - 'tests/reviewed-photo-audit.test.mjs'
   workflow_dispatch:
 permissions:
   contents: read
@@ -38,6 +42,8 @@ jobs:
           mkdir -p benchmark/photos benchmark/mobile-flow
           cp benchmark/locked-photo-sources.json benchmark/mobile-flow/
           ffmpeg -loglevel error -loop 1 -i benchmark/photos/commons-0001.jpg -vf 'scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2:black' -r 10 -t 2 -pix_fmt yuv420p -f yuv4mpegpipe benchmark/mobile-camera.y4m
+      - name: Check benchmark audit regression tests
+        run: node --test tests/reviewed-photo-audit.test.mjs
       - name: Build and verify touch viewport flow with real worker
         run: |
           node scripts/build.mjs
