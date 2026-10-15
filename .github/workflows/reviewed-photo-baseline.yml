@@ -19,6 +19,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Verify recognition audit correctness
+        run: node --test tests/reviewed-photo-audit.test.mjs
       - name: Assemble separately reviewed photo collections
         run: |
           node scripts/assemble-reviewed-baseline.mjs benchmark/manifest-combined-59.json benchmark/manifest-reviewed-32.json benchmark/manifest-holdout-16.json benchmark/manifest-fresh-11.json
