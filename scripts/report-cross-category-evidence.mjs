@@ -31,6 +31,37 @@ for(const entry of report){
  entry.shadowDetailedCandidate=candidate?{category:'Outerwear',type:w.type,minimumViewScore:Math.min(w.score,c.score)}:null;
  entry.shadowMatchesExpected=entry.shadowDetailedCandidate?entry.expectedCategory==='Outerwear'&&entry.expectedType===entry.shadowDetailedCandidate.type:null;
 }
-const output={sampleSize:manifest.length,outerwearDisagreements:report.length,contradictoryPrimary:report.filter(x=>x.primaryContradictsAlternatives).length,shadowCandidateCount:report.filter(x=>x.shadowDetailedCandidate).length,shadowCorrectCount:report.filter(x=>x.shadowMatchesExpected===true).length,shadowIncorrectCount:report.filter(x=>x.shadowMatchesExpected===false).length,items:report};
+// Evaluate rule candidates only on unresolved garments, including non-outerwear
+// controls. A rule is a proposed decision, never an actual recognition result.
+const rules=[
+ {name:'matching-detailed-views-030',minimum:.30,requireBroad:false},
+ {name:'matching-detailed-views-040',minimum:.40,requireBroad:false},
+ {name:'matching-detailed-views-050',minimum:.50,requireBroad:false},
+ {name:'matching-detailed-views-055',minimum:.55,requireBroad:false},
+ {name:'matching-detailed-views-040-broad-support',minimum:.40,requireBroad:true}
+];
+const candidates=[];
+for(const item of manifest){
+ const result=results.get(item.id);
+ if(!result||result.error||result.strong||result.categoryConfirmed)continue;
+ const s=result.diagnostics?.shadowPreprocessing||{};
+ const whole=top(s.originalWholeTypes),center=top(s.originalCenterTypes);
+ const broad=[top(s.originalWholeCategory),top(s.originalCenterCategory)];
+ candidates.push({item,whole,center,broad});
+}
+const ruleComparisons=rules.map(rule=>{
+ const predictions=candidates.filter(x=>x.whole?.category==='Outerwear'&&x.center?.category==='Outerwear'&&
+  x.whole.type===x.center.type&&outerwearTypes.has(x.whole.type)&&
+  x.whole.score>=rule.minimum&&x.center.score>=rule.minimum&&
+  (!rule.requireBroad||x.broad.some(b=>b?.category==='Outerwear'&&b.score>=.5)))
+ .map(x=>({id:x.item.id,type:x.whole.type,expectedCategory:x.item.expectedCategory,expectedType:x.item.expectedType,
+  categoryCorrect:x.item.expectedCategory==='Outerwear',subtypeCorrect:x.item.expectedCategory==='Outerwear'&&x.item.expectedType===x.whole.type}));
+ return {name:rule.name,minimumViewScore:rule.minimum,requireBroadSupport:rule.requireBroad,
+  candidateCount:predictions.length,correctCategory:predictions.filter(x=>x.categoryCorrect).length,
+  incorrectCategory:predictions.filter(x=>!x.categoryCorrect).length,
+  correctSubtype:predictions.filter(x=>x.subtypeCorrect).length,
+  incorrectSubtype:predictions.filter(x=>!x.subtypeCorrect).length,predictions};
+});
+const output={sampleSize:manifest.length,outerwearDisagreements:report.length,contradictoryPrimary:report.filter(x=>x.primaryContradictsAlternatives).length,shadowCandidateCount:report.filter(x=>x.shadowDetailedCandidate).length,shadowCorrectCount:report.filter(x=>x.shadowMatchesExpected===true).length,shadowIncorrectCount:report.filter(x=>x.shadowMatchesExpected===false).length,ruleComparisons,items:report};
 writeFileSync(outputFile,JSON.stringify(output,null,2)+'\n');
 console.log(JSON.stringify({outerwearDisagreements:output.outerwearDisagreements,contradictoryPrimary:output.contradictoryPrimary}));
