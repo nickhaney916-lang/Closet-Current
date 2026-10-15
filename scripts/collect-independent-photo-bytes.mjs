@@ -28,6 +28,7 @@ const orderedRows=[...rows].sort((a,b)=>{
 });
 for(const row of orderedRows){
  if(row.reviewStatus?.startsWith('excluded-')){report.push({id:row.id,status:'excluded'});continue;}
+ if(row.verified===true&&row.reviewStatus==='approved'){report.push({id:row.id,status:'already-approved'});continue;}
  let originalUrl=row.downloadUrl;
  try{
   if(!originalUrl){
