@@ -5,9 +5,23 @@ await mkdir('benchmark/photo-collection',{recursive:true});
 const report=[];
 for(const row of rows){
  if(row.reviewStatus?.startsWith('excluded-')){report.push({id:row.id,status:'excluded'});continue;}
- if(!row.downloadUrl){report.push({id:row.id,status:'missing-original-url'});continue;}
+ let originalUrl=row.downloadUrl;
  try{
-  const url=new URL(row.downloadUrl);
+  if(!originalUrl){
+   const page=new URL(row.source);
+   if(page.protocol!=='https:'||page.hostname!=='commons.wikimedia.org'||!page.pathname.startsWith('/wiki/File:'))throw Error('invalid-commons-source');
+   const title=decodeURIComponent(page.pathname.slice('/wiki/'.length)).replaceAll('_',' ');
+   const api=new URL('https://commons.wikimedia.org/w/api.php');
+   api.searchParams.set('action','query');api.searchParams.set('format','json');
+   api.searchParams.set('prop','imageinfo');api.searchParams.set('iiprop','url');api.searchParams.set('titles',title);
+   const response=await fetch(api,{headers:{'User-Agent':'ClosetCurrentBenchmark/1.0 (https://github.com/nickhaney916-lang/Closet-Current)'},signal:AbortSignal.timeout(25000)});
+   if(!response.ok)throw Error('commons-api-HTTP-'+response.status);
+   const info=await response.json();
+   const pageInfo=Object.values(info.query?.pages||{}).find(p=>p.ns===6&&!('missing' in p));
+   originalUrl=pageInfo?.imageinfo?.[0]?.url;
+   if(!originalUrl)throw Error('commons-image-url-unavailable');
+  }
+  const url=new URL(originalUrl);
   if(url.protocol!=='https:'||!['upload.wikimedia.org','thumb.wikimedia.org'].includes(url.hostname))throw Error('unsupported-host');
   const res=await fetch(url,{headers:{'User-Agent':'ClosetCurrentBenchmark/1.0 (https://github.com/nickhaney916-lang/Closet-Current)'},signal:AbortSignal.timeout(25000)});
   if(!res.ok)throw Error('HTTP '+res.status);
@@ -22,7 +36,7 @@ for(const row of rows){
   const sha256=createHash('sha256').update(data).digest('hex');
   const ext=jpeg?'jpg':png?'png':'webp';
   await writeFile('benchmark/photo-collection/'+row.id+'.'+ext,data);
-  report.push({id:row.id,status:'downloaded-unreviewed',sha256,bytes:data.length,format:ext,downloadUrl:row.downloadUrl});
+  report.push({id:row.id,status:'downloaded-unreviewed',sha256,bytes:data.length,format:ext,downloadUrl:originalUrl});
  }catch(e){report.push({id:row.id,status:'download-failed',reason:String(e.message).slice(0,150)});}
 }
 await writeFile('benchmark/photo-collection/report.json',JSON.stringify(report,null,2)+'\n');
