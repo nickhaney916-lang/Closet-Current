@@ -1,6 +1,11 @@
 import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 const rows=JSON.parse(await readFile('benchmark/independent-candidates.json','utf8'));
+const requestedIds=new Set((process.env.CLOSET_COLLECTION_IDS||'').split(',').map(x=>x.trim()).filter(Boolean));
+if(requestedIds.size){
+ const available=new Set(rows.map(x=>x.id));
+ for(const id of requestedIds)if(!available.has(id))throw Error('Unknown collection candidate: '+id);
+}
 await mkdir('benchmark/photo-collection',{recursive:true});
 const report=[];
 const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
@@ -27,6 +32,7 @@ const orderedRows=[...rows].sort((a,b)=>{
  return priority(a)-priority(b);
 });
 for(const row of orderedRows){
+ if(requestedIds.size&&!requestedIds.has(row.id))continue;
  if(row.reviewStatus?.startsWith('excluded-')){report.push({id:row.id,status:'excluded'});continue;}
  if(row.verified===true&&row.reviewStatus==='approved'){report.push({id:row.id,status:'already-approved'});continue;}
  let originalUrl=row.downloadUrl;
