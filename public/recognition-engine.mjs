@@ -130,6 +130,31 @@ export async function recognizeWithRecovery(model,image,settings={}){
    }};
   }catch{/* Preserve the original uncertain result. */}
  }
+ // Independently verify an Outerwear jacket when a Tops broad prompt
+ // conflicts with the full catalog. Two recovery views must both favor
+ // Outerwear strongly and agree on Jacket; never trust a single branch vote.
+ if(!result.strong&&result.reason==='checks_disagree'&&
+    result.diagnostics?.category?.[0]?.category==='Tops'&&
+    result.diagnostics?.overall?.[0]?.category==='Outerwear'&&
+    result.diagnostics?.overall?.[0]?.type==='Jacket'&&
+    settings.recoveryModel&&settings.recoveryConfirmationModel){
+  try{
+   const labels=localCandidates.map(x=>x.label);
+   const [first,second]=await Promise.all([
+    settings.recoveryModel(image,labels,options),
+    settings.recoveryConfirmationModel(image,labels,options)
+   ]);
+   const a=clothingChoices(first),b=clothingChoices(second);
+   const ca=garmentCategoryTotals(first),cb=garmentCategoryTotals(second);
+   const supports=(choices,cats)=>choices[0]?.category==='Outerwear'&&
+    choices[0]?.itemType==='Jacket'&&cats[0]?.category==='Outerwear'&&
+    cats[0].score>=.75&&cats[0].score-(cats[1]?.score||0)>=.5;
+   if(supports(a,ca)&&supports(b,cb)){
+    settings.onIdentified?.(a[0]);
+    return {strong:true,choices:[a[0]],details:{},reason:'outerwear_independent_agreement',preprocessingRecovery:true};
+   }
+  }catch{/* Keep the original uncertain result if a view fails. */}
+ }
  // When the broad prompt mistakes a jacket for a blouse, independently retry
  // the original full photograph. Never promote a conflicting guess: all normal
  // category, type, full-vocabulary and second-view gates must pass on retry.
