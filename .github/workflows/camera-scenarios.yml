@@ -32,7 +32,6 @@ jobs:
   collect-independent-photos:
     if: github.ref_name == 'fix/mobile-recognition-timeout-diagnostics' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
-    continue-on-error: true
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
@@ -51,6 +50,10 @@ jobs:
           else
             echo 'Photo collector did not produce a report.' >> "$GITHUB_STEP_SUMMARY"
           fi
+      - name: Verify focused rainwear downloads
+        if: always()
+        run: |
+          node scripts/check-photo-collection.mjs benchmark/photo-collection/report.json candidate-shell-001 candidate-shell-003 candidate-trench-001
       - name: Upload photo review evidence
         if: always()
         uses: actions/upload-artifact@v4
