@@ -118,7 +118,7 @@ try{
   suggestedType:x.recognitionDiagnostics.outerwearRecovery.fullCatalogEvidence?.whole?.top?.[0]?.type||null,
   correct:x.expected==='Outerwear',savedCategory:x.category
  }));
- const report={cases:realResults,submitted:realCases.length,imported:observed.imports.added,evaluated:evaluated.length,categoryAccuracy:evaluated.length?evaluated.filter(x=>x.correctCategory).length/evaluated.length:null,allSubmittedAccuracy:realResults.filter(x=>x.correctCategory).length/realCases.length,reviewSuggestions,reviewSuggestionCount:reviewSuggestions.length,reviewSuggestionCorrect:reviewSuggestions.filter(x=>x.correct).length,importDiagnostics:observed,pageErrors:errors};
+ const report={cases:realResults,submitted:realCases.length,imported:observed.imports.added,evaluated:evaluated.length,categoryAccuracy:evaluated.length?evaluated.filter(x=>x.correctCategory).length/evaluated.length:null,allSubmittedAccuracy:realResults.filter(x=>x.correctCategory).length/realCases.length,reviewSuggestions,reviewSuggestionCount:reviewSuggestions.length,reviewSuggestionCorrect:reviewSuggestions.filter(x=>x.correct).length,reviewSuggestionIncorrect:reviewSuggestions.filter(x=>!x.correct).length,reviewSuggestionPrecision:reviewSuggestions.length?reviewSuggestions.filter(x=>x.correct).length/reviewSuggestions.length:null,importDiagnostics:observed,pageErrors:errors};
  await writeFile(out+'/real-photo-indexing.json',JSON.stringify(report,null,2));
  console.log('REAL_PHOTO_INDEXING '+JSON.stringify(report));
  console.log('REAL_PHOTO_REVIEW_SUGGESTIONS '+JSON.stringify({count:reviewSuggestions.length,correct:reviewSuggestions.filter(x=>x.correct).length,incorrect:reviewSuggestions.filter(x=>!x.correct)}));
