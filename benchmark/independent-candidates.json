@@ -164,9 +164,9 @@
     "expectedType": "Raincoat",
     "verified": false,
     "reviewStatus": "needs-visual-review",
-    "license": "license-needs-review",
-    "credit": "source-page-attribution-needs-review",
-    "notes": "Museum trench coat with bulletproof liner; candidate for raincoat vs coat comparison; visually inspect and verify licensing and subtype before approval. Not a representative modern rain jacket."
+    "license": "Public domain (US federal government work)",
+    "credit": "Gerald R. Ford Presidential Library and Museum; photographer unknown",
+    "notes": "Source page verifies a beige historical trenchcoat with Kevlar liner, 3200x4000 original. Not representative modern consumer rainwear; still needs original-image visual review, hash and independence check. Not approved."
   },
   {
     "id": "candidate-trench-002",
@@ -175,9 +175,9 @@
     "expectedCategory": "Outerwear",
     "expectedType": "Raincoat",
     "verified": false,
-    "reviewStatus": "needs-visual-review",
-    "license": "CC BY-SA 3.0 / GFDL (verify source)",
+    "reviewStatus": "excluded-low-resolution",
+    "license": "CC BY-SA 3.0 / GFDL",
     "credit": "Hephaestos",
-    "notes": "Low-resolution trenchcoat photo of person wearing garments; assess single-item suitability; may be excluded for full-outfit context."
+    "notes": "Source original only 286x800 pixels (18KB), a poor mobile-camera benchmark exemplar. Exclude from main single-garment independent holdout; potentially keep as low-resolution robustness fixture, without counting toward 40-photo target."
   }
 ]
