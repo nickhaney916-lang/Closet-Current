@@ -14,7 +14,7 @@ test('gray jacket diagnostic only stages an actual checksum-matching image and n
   const report=join(root,'report.json'),candidates=join(root,'candidates.json'),manifest=join(root,'diagnostic/manifest.json'),photos=join(root,'benchmark/photos');
   await writeFile(join(root,'benchmark/photo-collection/candidate-shell-001.jpg'),photo);
   await writeFile(report,JSON.stringify([{id:'candidate-shell-001',status:'downloaded-unreviewed',format:'jpg',sha256,bytes:photo.length}]));
-  await writeFile(candidates,JSON.stringify([{id:'candidate-shell-001',verified:false,expectedCategory:'Outerwear',expectedType:'Jacket',source:'https://commons.wikimedia.org/wiki/File:Hard-shell-jacket.jpg'}]));
+  await writeFile(candidates,JSON.stringify([{id:'candidate-shell-001',verified:false,sha256,expectedCategory:'Outerwear',expectedType:'Jacket',source:'https://commons.wikimedia.org/wiki/File:Hard-shell-jacket.jpg'}]));
   await mkdir(join(root,'diagnostic'),{recursive:true});
   const script=join(process.cwd(),'scripts/stage-shell-diagnostic.mjs');
   const run=()=>spawnSync(process.execPath,[script,report,candidates,manifest,photos],{cwd:root,encoding:'utf8'});
@@ -26,6 +26,8 @@ test('gray jacket diagnostic only stages an actual checksum-matching image and n
   assert.equal(rows[0].sha256,sha256);
   assert.equal(rows[0].verified,undefined);
   assert.deepEqual(await readFile(join(photos,rows[0].image)),photo);
+  await writeFile(candidates,JSON.stringify([{id:'candidate-shell-001',verified:false,sha256:'b'.repeat(64),expectedCategory:'Outerwear',expectedType:'Jacket',source:'https://commons.wikimedia.org/wiki/File:Hard-shell-jacket.jpg'}]));
+  assert.notEqual(run().status,0,'manifest checksum mismatch must fail');
   await writeFile(join(root,'benchmark/photo-collection/candidate-shell-001.jpg'),Buffer.from('tampered image'));
   assert.notEqual(run().status,0,'image tampering must fail');
  }finally{await rm(root,{recursive:true,force:true});}
