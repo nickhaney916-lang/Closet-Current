@@ -72,7 +72,7 @@ export async function recognizeGarment(model,image,{onStage=()=>{},onIdentified=
   return await reviewGarmentCategory(model,confirmationModel,image,category,overallResults,dressEvidence)||{strong:false,choices:[],details:{},reason:'outerwear_subtype_uncertain',diagnostics:{branch:branch.slice(0,2),confirmation:confirmation.slice(0,2)}};
  }
  const first={...branch[0]};onIdentified(first);const details=await readVerifiedDetails(model,confirmationModel,image,first,onStage);
- return {strong:true,choices:[{...first,sleeveLength:details.sleeveLength||first.sleeveLength},...branch.slice(1)],details};
+ return {strong:true,choices:[{...first,sleeveLength:details.sleeveLength||first.sleeveLength},...branch.slice(1)],details,diagnostics:first.category==='Outerwear'?{acceptedEvidence:{category:category.slice(0,2).map(x=>({category:x.category,score:x.score})),branch:branch.slice(0,2).map(x=>({category:x.category,type:x.itemType,score:x.score})),overall:overall.slice(0,2).map(x=>({category:x.category,type:x.itemType,score:x.score})),confirmation:confirmation.slice(0,2).map(x=>({category:x.category,type:x.itemType,score:x.score}))}}:undefined};
 }
 
 // Retry only an uncertain top type. Category, type, complete-vocabulary and
