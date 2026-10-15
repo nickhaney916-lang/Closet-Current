@@ -170,6 +170,38 @@ export async function recognizeWithRecovery(model,image,settings={}){
    }};
   }catch{/* Preserve the original uncertain result. */}
  }
+ // A near-tied Jacket runner-up is worth independent checking even when
+ // Blouse narrowly leads the initial full catalog. Never promote the runner-
+ // up without two strongly agreeing complete-catalog views.
+ if(!result.strong&&result.reason==='checks_disagree'&&
+    result.diagnostics?.category?.[0]?.category==='Tops'&&
+    result.diagnostics?.overall?.[0]?.category==='Tops'&&
+    result.diagnostics?.overall?.[1]?.category==='Outerwear'&&
+    result.diagnostics?.overall?.[1]?.type==='Jacket'&&
+    result.diagnostics.overall[0].score-result.diagnostics.overall[1].score<=.08&&
+    settings.recoveryModel&&settings.recoveryConfirmationModel){
+  try{
+   const labels=localCandidates.map(x=>x.label);
+   const [first,second]=await Promise.all([
+    settings.recoveryModel(image,labels,options),
+    settings.recoveryConfirmationModel(image,labels,options)
+   ]);
+   const a=clothingChoices(first),b=clothingChoices(second);
+   const ca=garmentCategoryTotals(first),cb=garmentCategoryTotals(second);
+   const supports=(choices,cats)=>choices[0]?.category==='Outerwear'&&
+    choices[0]?.itemType==='Jacket'&&cats[0]?.category==='Outerwear'&&
+    cats[0].score>=.75&&cats[0].score-(cats[1]?.score||0)>=.5;
+   if(supports(a,ca)&&supports(b,cb)){
+    settings.onIdentified?.(a[0]);
+    return {strong:true,choices:[a[0]],details:{},reason:'jacket_runner_up_independent_agreement',preprocessingRecovery:true};
+   }
+   result.diagnostics={...result.diagnostics,jacketRunnerUpRecovery:{
+    first:a.slice(0,2).map(x=>({category:x.category,type:x.itemType,score:x.score})),
+    confirmation:b.slice(0,2).map(x=>({category:x.category,type:x.itemType,score:x.score})),
+    firstCategories:ca.slice(0,2),confirmationCategories:cb.slice(0,2)
+   }};
+  }catch{/* Keep the original uncertain result when verification fails. */}
+ }
  // Independently verify an Outerwear jacket when a Tops broad prompt
  // conflicts with the full catalog. Two recovery views must both favor
  // Outerwear strongly and agree on Jacket; never trust a single branch vote.
