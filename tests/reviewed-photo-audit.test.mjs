@@ -4,6 +4,7 @@ import {mkdtemp,writeFile,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {spawnSync} from 'node:child_process';
+import {readFile} from 'node:fs/promises';
 const script='scripts/audit-100-photo-results.mjs';
 async function audit(manifest,results){
  const folder=await mkdtemp(join(tmpdir(),'closet-audit-'));
@@ -58,4 +59,9 @@ test('category-only Unknown subtype is a mismatch, not a confident wrong subtype
  assert.equal(status,1);
  assert.equal(report.automaticWrongSubtypeCount,0);
  assert.ok(report.issues.some(x=>x.id==='top'&&x.kind==='type_mismatch'));
+});
+
+test('browser benchmark preserves category-only result for audit',async()=>{
+ const runner=await readFile('public/benchmark-runner.mjs','utf8');
+ assert.match(runner,/categoryOnly:\s*!!result\.categoryOnly/);
 });
