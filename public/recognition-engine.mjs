@@ -103,6 +103,32 @@ export async function recognizeWithRecovery(model,image,settings={}){
    }};
   }catch{/* A failed optional recheck never overrides the original result. */}
  }
+ // Skirt/dress conflicts need a balanced comparison, not a Bottoms-only
+ // vocabulary that would force every dress into a skirt. Keep uncertain
+ // results unchanged unless both independent views select the same garment.
+ if(!result.strong&&['checks_disagree','views_disagree'].includes(result.reason)&&
+    settings.recoveryModel&&settings.recoveryConfirmationModel&&
+    (category?.[0]?.category==='Dresses'||category?.[0]?.category==='Bottoms')){
+  try{
+   const labels=localCandidates.filter(x=>['Bottoms','Dresses','Uncategorized'].includes(x.category)).map(x=>x.label);
+   const [first,second]=await Promise.all([
+    settings.recoveryModel(image,labels,options),
+    settings.recoveryConfirmationModel(image,labels,options)
+   ]);
+   const a=clothingChoices(first),b=clothingChoices(second);
+   const same=a[0]?.category===b[0]?.category&&a[0]?.itemType===b[0]?.itemType;
+   const strong=v=>v[0]?.category!=='Uncategorized'&&v[0]?.score>=.65&&
+    v[0].score-(v[1]?.score||0)>=.2;
+   if(same&&strong(a)&&strong(b)){
+    settings.onIdentified?.(a[0]);
+    return {strong:true,choices:[a[0]],details:{},reason:'skirt_dress_independent_agreement',preprocessingRecovery:true};
+   }
+   result.diagnostics={...result.diagnostics,skirtDressRecovery:{
+    first:a.slice(0,2).map(x=>({category:x.category,type:x.itemType,score:x.score})),
+    confirmation:b.slice(0,2).map(x=>({category:x.category,type:x.itemType,score:x.score}))
+   }};
+  }catch{/* Preserve the original uncertain result. */}
+ }
  // When the broad prompt mistakes a jacket for a blouse, independently retry
  // the original full photograph. Never promote a conflicting guess: all normal
  // category, type, full-vocabulary and second-view gates must pass on retry.
