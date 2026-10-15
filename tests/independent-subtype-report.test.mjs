@@ -10,13 +10,15 @@ test('independent subtype report keeps a broad raincoat-to-coat mismatch while a
  const manifest=join(dir,'manifest.json'),results=join(dir,'results.json'),report=join(dir,'report.json');
  const items=[{id:'rain',expectedCategory:'Outerwear',expectedType:'Raincoat'},{id:'shirt',expectedCategory:'Tops',expectedType:'Shirt'},{id:'blazer',expectedCategory:'Outerwear',expectedType:'Blazer'}];
  await writeFile(manifest,JSON.stringify(items));
- await writeFile(results,JSON.stringify([{id:'rain',prediction:{category:'Outerwear',type:'Coat'}},{id:'shirt',prediction:{category:'Tops',type:'Button-down shirt'}},{id:'blazer',prediction:{category:'Outerwear',type:'Blazer'}}]));
+ await writeFile(results,JSON.stringify([{id:'rain',prediction:{category:'Outerwear',type:'Coat'},diagnostics:{acceptedEvidence:{branch:[{type:'Coat'}],confirmation:[{type:'Coat'}]},shadowPreprocessing:{originalWholeTypes:[{type:'Coat'}],originalCenterTypes:[{type:'Coat'}]}}},{id:'shirt',prediction:{category:'Tops',type:'Button-down shirt'}},{id:'blazer',prediction:{category:'Outerwear',type:'Blazer'}}]));
  const run=spawnSync(process.execPath,['scripts/report-independent-subtypes.mjs',manifest,results,report],{encoding:'utf8'});
  assert.equal(run.status,0,run.stderr);
  const stats=JSON.parse(await readFile(report,'utf8'));
  assert.equal(stats.categoryCorrect,3);assert.equal(stats.exactSubtypeCorrect,1);
  assert.equal(stats.compatibleSpecificCount,1);assert.equal(stats.acceptableSubtypeCount,2);
  assert.equal(stats.items[0].outcome,'subtype-mismatch');
+ assert.equal(stats.consensusSubtypeMismatchCount,1);
+ assert.equal(stats.items[0].subtypeConsensusMismatch,true);
  assert.equal(stats.items[1].outcome,'compatible-specific-subtype');
  }finally{await rm(dir,{recursive:true,force:true});}
 });
