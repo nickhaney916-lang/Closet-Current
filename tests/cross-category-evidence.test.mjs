@@ -15,8 +15,8 @@ test('cross-category evidence reports contradiction but never auto-accepts it',a
     originalWholeTypes:[{category:'Outerwear',type:'Jacket',score:.7}],originalCenterTypes:[{category:'Outerwear',type:'Jacket',score:.8}]
    }
   }}]));
-  const process=spawnSync(process.execPath,['scripts/report-cross-category-evidence.mjs',manifest,results,output],{encoding:'utf8'});
-  assert.equal(process.status,0,process.stderr);
+  const run=spawnSync(process.execPath,['scripts/report-cross-category-evidence.mjs',manifest,results,output],{encoding:'utf8'});
+  assert.equal(run.status,0,run.stderr);
   const report=JSON.parse(await readFile(output,'utf8'));
   assert.equal(report.contradictoryPrimary,1);assert.equal(report.items[0].id,'jacket');
   assert.ok(!('prediction' in report.items[0]));assert.ok(!('strong' in report.items[0]));
