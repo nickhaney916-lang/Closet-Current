@@ -111,9 +111,17 @@ export async function recognizeWithRecovery(model,image,settings={}){
     fullCatalogEvidence={whole:summarize(whole),confirmation:summarize(close)};
    }catch{fullCatalogEvidence={error:'confirmation_unavailable'};}
   }
+  // Independent full-catalog views may justify a category-only suggestion,
+  // but a conflicting broad prompt still forbids automatic saving.
+  const whole=fullCatalogEvidence?.whole,close=fullCatalogEvidence?.confirmation;
+  const supportsOuterwear=view=>view?.categories?.[0]?.category==='Outerwear'&&
+   view.categories[0].score>=.75&&
+   view.categories[0].score-(view.categories[1]?.score||0)>=.5&&
+   view.top?.[0]?.category==='Outerwear';
+  const outerwearReviewSuggested=supportsOuterwear(whole)&&supportsOuterwear(close);
   // Record why the independent retry failed so real-photo tests can distinguish
   // category prompt bias from type or view disagreement. Do not override gates.
-  result.diagnostics={...result.diagnostics,outerwearRecovery:{fullCatalogEvidence,
+  result.diagnostics={...result.diagnostics,outerwearRecovery:{outerwearReviewSuggested,fullCatalogEvidence,
    reason:recovered.reason||'unconfirmed',
    category:recovered.diagnostics?.category||null,
    branch:recovered.diagnostics?.branch||null,
