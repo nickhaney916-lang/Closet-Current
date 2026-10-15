@@ -20,3 +20,9 @@ test('unreviewed rain shells are prioritized ahead of already approved image re-
  assert.match(source,/x\.verified===false&&x\.reviewStatus==='needs-visual-review'/);
  assert.match(source,/for\(const row of orderedRows\)/);
 });
+
+test('approved images do not consume collection requests before rainwear review',()=>{
+ const source=readFileSync('scripts/collect-independent-photo-bytes.mjs','utf8');
+ assert.match(source,/row\.verified===true&&row\.reviewStatus==='approved'/);
+ assert.match(source,/status:'already-approved'/);
+});
