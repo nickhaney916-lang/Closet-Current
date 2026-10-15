@@ -27,6 +27,7 @@ function renderOutfitBoard(){
  currentBoard=cleanOutfitBoard(currentBoard,items);const top=items.find(x=>x.id===currentBoard.slots.top),dress=top?.category==='Dresses';
  const slots=$('boardSlots');slots.replaceChildren();
  for(const slot of outfitSlots){
+  if(slot.extra&&currentBoard.layerCount<2)continue;
   const item=items.find(x=>x.id===currentBoard.slots[slot.id]),idea=currentBoard.ideas[slot.id],covered=dress&&slot.id==='bottom';
   const b=node('button',null,'board-slot board-slot-'+slot.id+(item?' owned':idea?' planned':' blank')+(covered?' covered':'')+(dress&&slot.id==='top'?' dress':''));b.type='button';b.disabled=covered;b.setAttribute('aria-label',covered?'Bottoms covered by your dress':slot.label+': '+(item?.name||(idea?idea.color+' '+idea.type:'empty'))+'. Choose a piece');
   b.append(node('span',slot.label,'slot-label'));
@@ -41,7 +42,7 @@ function renderOutfitBoard(){
 }
 function renderBoardSuggestions(){
  const target=$('boardTarget').value||'shoes',slot=outfitSlots.find(s=>s.id===target),owned=closetGapOptions(target,currentBoard,items).slice(0,3);
- $('boardGapStatus').textContent=(currentBoard.slots[target]?'Alternatives for your '+slot.label.toLowerCase()+'. ':'Ideas for the '+slot.label.toLowerCase()+' space. ')+(owned.length?'Try a piece you already own first.':'Compare the directions below, then open a purchase source.');
+ $('boardGapStatus').textContent=(['bag','accessory','finish'].includes(target)?'Optional finishing ideas. No accessory photos are needed. ':'')+(currentBoard.slots[target]?'Alternatives for your '+slot.label.toLowerCase()+'. ':'Ideas for the '+slot.label.toLowerCase()+' space. ')+(owned.length?'Try a piece you already own first.':'Compare the directions below, then open a purchase source.');
  const ownGrid=$('boardOwnedOptions');ownGrid.replaceChildren();
  for(const item of owned){const b=node('button',null,'board-owned-pick');b.type='button';const im=node('img');im.src=item.image;im.alt=item.name;b.append(im,node('span','Already in your closet'),node('strong',item.name),node('small','Use this piece'));b.onclick=()=>selectBoardPiece(target,item.id);ownGrid.append(b);}
  const grid=$('boardRecommendations');grid.replaceChildren();

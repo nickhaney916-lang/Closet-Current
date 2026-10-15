@@ -3,6 +3,7 @@ const outfitSlots=[
  {id:'top',label:'Top or dress',category:'Tops',categories:['Tops','Dresses']},
  {id:'bottom',label:'Bottoms',category:'Bottoms',categories:['Bottoms']},
  {id:'layer',label:'Outer layer',category:'Outerwear',categories:['Outerwear'],optional:true},
+ {id:'layer2',label:'Second layer',category:'Outerwear',categories:['Outerwear'],optional:true,extra:true},
  {id:'shoes',label:'Shoes',category:'Shoes',categories:['Shoes']},
  {id:'bag',label:'Bag',category:'Accessories',categories:['Accessories'],types:['Bag'],optional:true},
  {id:'accessory',label:'Jewelry / sunglasses',category:'Accessories',categories:['Accessories'],types:['Jewelry','Sunglasses'],optional:true},
@@ -24,10 +25,11 @@ function cleanOutfitBoard(value,closet){
  const result={name:String(value?.name||'My outfit').slice(0,80),slots:{},ideas:{},occasion:['Casual','Work','Dinner','Active'].includes(value?.occasion)?value.occasion:'Casual',season:['Spring','Summer','Fall','Winter'].includes(value?.season)?value.season:'Fall',audience:['Women','Men','All'].includes(value?.audience)?value.audience:'Women',size:String(value?.size||'').slice(0,30),budget:Math.max(0,Math.min(10000,Number(value?.budget)||0))};
  const used=new Set();
  for(const slot of outfitSlots){const item=closet.find(x=>x.id===value?.slots?.[slot.id]);if(item&&slotAllows(slot,item)&&!used.has(item.id)){result.slots[slot.id]=item.id;used.add(item.id);}const idea=value?.ideas?.[slot.id];if(idea&&typeof idea.type==='string')result.ideas[slot.id]={type:idea.type.slice(0,50),color:String(idea.color||'').slice(0,40)};}
+ result.layerCount=Math.max([0,1,2].includes(Number(value?.layerCount))?Number(value.layerCount):0,result.slots.layer2||result.ideas.layer2?2:result.slots.layer||result.ideas.layer?1:0);
  const top=closet.find(x=>x.id===result.slots.top);if(top?.category==='Dresses'){delete result.slots.bottom;delete result.ideas.bottom;}
  return result;
 }
-function boardGaps(board,closet){const top=closet.find(x=>x.id===board.slots.top);return outfitSlots.filter(s=>!board.slots[s.id]&&!(s.id==='bottom'&&top?.category==='Dresses'));}
+function boardGaps(board,closet){const top=closet.find(x=>x.id===board.slots.top);return outfitSlots.filter(s=>(!s.extra||board.layerCount>=2)&&!board.slots[s.id]&&!(s.id==='bottom'&&top?.category==='Dresses'));}
 function boardPalette(board,closet){return [...new Set(Object.values(board.slots).map(id=>closet.find(x=>x.id===id)?.color?.trim().toLowerCase()).filter(x=>x&&x!=='unknown'))];}
 function wardrobeGapIdeas(slotId,board,closet){
  const slot=outfitSlots.find(x=>x.id===slotId);if(!slot)return [];
@@ -50,10 +52,10 @@ function wardrobeGapIdeas(slotId,board,closet){
   }
  }else{
   const options={top:[['T-shirt','white'],['Button-down shirt','cream'],['Sweater',warm?'beige':'gray']],bottom:[['Jeans','blue'],['Trousers',neutral],['Skirt',neutral]],layer:[['Cardigan',warm?'cream':'gray'],['Blazer',neutral],['Jacket',warm?'brown':'navy']],bag:[['Bag',neutral],['Bag','cream'],['Bag','burgundy']],accessory:[['Jewelry','gold'],['Jewelry','silver'],['Sunglasses',neutral]],finish:[['Belt',neutral],['Scarf',warm?'cream':'gray'],['Hat',neutral]]};
-  for(const [type,color]of options[slotId]||[])add(type,color,busy?'Keep this piece simple so your existing pattern remains the focus.':'A coordinating finishing option for the pieces you selected.');
+  for(const [type,color]of options[slotId==='layer2'?'layer':slotId]||[])add(type,color,busy?'Keep this piece simple so your existing pattern remains the focus.':'A coordinating finishing option for the pieces you selected.');
  }
  if(activeTrendLibrary){
-  const matching=activeTrendLibrary.directions.filter(d=>d.slot===slotId&&(d.audiences.includes('All')||d.audiences.includes(board.audience))&&(!d.occasions.length||d.occasions.includes(board.occasion))&&(!d.seasons.length||d.seasons.includes(board.season))&&(!busy||d.color==='neutral'));
+  const matching=activeTrendLibrary.directions.filter(d=>d.slot===(slotId==='layer2'?'layer':slotId)&&(d.audiences.includes('All')||d.audiences.includes(board.audience))&&(!d.occasions.length||d.occasions.includes(board.occasion))&&(!d.seasons.length||d.seasons.includes(board.season))&&(!busy||d.color==='neutral'));
   const trendIdeas=matching.map(d=>({slot:slotId,category:slot.category,type:d.type,label:d.label,color:d.color==='neutral'?neutral:d.color,reason:d.reason+' '+paletteReason,trendSource:outfitTrendSources.find(source=>source.id===d.sourceId)}));
   const types=new Set(trendIdeas.map(x=>x.type));ideas.splice(0,ideas.length,...trendIdeas,...ideas.filter(x=>!types.has(x.type)));
  }
