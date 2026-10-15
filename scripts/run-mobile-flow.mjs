@@ -87,6 +87,21 @@ try{
  await page.waitForFunction(()=>items.length===2&&localPending.size===0,null,{timeout:300000});
  const automatic=await page.evaluate(()=>items.find(x=>x.name!=='Phone test blue top'));assert.equal(automatic.category,'Tops');assert.equal(automatic.itemType,'T-shirt');assert.notEqual(automatic.userAdjusted,true);
  await page.locator('.tab[data-view="closet"]').click();await page.locator('#search').fill('');await page.locator('#closetAllPieces').click();assert.equal(await page.locator('#closetGrid article').count(),2);
+ // Real-photo batch: import licensed, independently sourced garment photographs.
+ const realCases=[
+  ['commons-0003','Tops'],['commons-0021','Bottoms'],['commons-0024','Bottoms'],
+  ['commons-0033','Bottoms'],['commons-0049','Dresses'],['commons-0060','Layers'],
+  ['commons-0079','Shoes'],['commons-0094','Shoes']
+ ];
+ const realResults=[];
+ for(const [id,expected] of realCases){
+  const before=await page.evaluate(()=>new Set(items.map(x=>x.id)).size);
+  await page.locator('#clothingPhotos').setInputFiles(resolve('benchmark/photos/'+id+'.jpg'));
+  await page.waitForFunction(n=>items.length>n&&localPending.size===0&&!automaticRunning,before,{timeout:300000});
+  const observed=await page.evaluate(()=>{const x=items.at(-1);return {category:x.category,itemType:x.itemType,color:x.color||null,needsReview:!!x.needsReview,scanFailed:!!x.scanFailed};});
+  realResults.push({id,expected,...observed,correctCategory:observed.category===expected});
+ }
+ await writeFile(out+'/real-photo-indexing.json',JSON.stringify({cases:realResults,categoryAccuracy:realResults.filter(x=>x.correctCategory).length/realResults.length},null,2));
  assert.deepEqual(errors,[]);await page.screenshot({path:out+'/closet.png',fullPage:true});
  const result={viewport:{width:390,height:844},camera,image,manualSave:true,searchAndFilters:true,reloadPersistence:true,automaticPhotoIndexing:true,realRecognitionWorker:true,auth:'test identity stub; production auth not tested',hardware:'Chromium fake camera; physical phone not tested',pageErrors:errors};await writeFile(out+'/results.json',JSON.stringify(result,null,2));console.log(JSON.stringify(result));
 }finally{await browser?.close();await new Promise(r=>server.close(r));}
