@@ -82,7 +82,7 @@ export async function recognizeWithRecovery(model,image,settings={}){
  // Use alternate image views only after a highly confident primary category
  // has an uncertain subtype; a contradictory primary category never triggers recovery.
  const expectedCategory=category?.[0]?.category;
- const eligible=result.reason==='type_uncertain'&&expectedCategory!=='Uncategorized'&&category?.[0]?.score>=.85&&category[0].score-(category[1]?.score||0)>=.35;
+ const eligible=result.reason==='type_uncertain'&&['Tops','Bottoms','Outerwear','Dresses'].includes(expectedCategory)&&category?.[0]?.score>=.85&&category[0].score-(category[1]?.score||0)>=.35;
  if(eligible&&settings.recoveryModel&&settings.recoveryConfirmationModel){
   try{
    const recovered=await recognizeGarment(settings.recoveryModel,image,{...settings,confirmationModel:settings.recoveryConfirmationModel,onIdentified:()=>{}});
