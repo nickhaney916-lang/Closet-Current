@@ -76,6 +76,20 @@ function adjustPhoto(item){
  if(stream||cameraOpening)stopCamera();
  const dialog=document.createElement('dialog');dialog.className='photo-adjust clothing-editor';
  const form=node('form'),draft=structuredClone(item),collect=clothingFields(form,draft);
+ const evidence=item.recognitionDiagnostics?.outerwearRecovery;
+ if(evidence?.outerwearReviewSuggested&&draft.category!=='Outerwear'){
+  const suggestion=node('div',null,'recognition-review-suggestion');
+  suggestion.append(node('p','Photo checks suggest Outerwear. Confirm against the picture before applying.','fine'));
+  const use=node('button','Use Outerwear category','secondary');use.type='button';
+  use.onclick=()=>{
+   draft.category='Outerwear';draft.itemType='Unknown';
+   const category=form.querySelector('select[name="category"]');
+   if(category){category.value='Outerwear';category.dispatchEvent(new Event('change',{bubbles:true}));}
+   const type=form.querySelector('select[name="itemType"]');if(type)type.value='Unknown';
+   use.disabled=true;
+  };
+  suggestion.append(use);form.prepend(suggestion);
+ }
  const save=node('button','Save changes','primary'),cancel=node('button','Cancel','secondary'),remove=node('button','Remove photo','secondary');
  cancel.type=remove.type='button';cancel.onclick=()=>dialog.close();
  const wasAdjusted=item.userAdjusted,wasScanning=localPending.has(item.id);item.userAdjusted=true;
