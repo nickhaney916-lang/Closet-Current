@@ -21,7 +21,26 @@ function renderStyledCollection(){
   if(changed)card.append(node('p','A selected garment was removed or recategorized. Create outfits again.','fine'));
   edit.onclick=async()=>{await outfitBoardReady;currentBoard=cleanOutfitBoard({...board,name:result.context.request+' · option '+(index+1)},items);syncBoardInputs();renderOutfitBoard();await storeBoard();switchView('builder');};
   save.onclick=async()=>{save.disabled=true;const status=node('p',null,'fine');card.append(status);try{await outfitBoardReady;if(savedOutfitBoards.length>=50)throw Error('You can save up to 50 outfits.');const saved=cleanOutfitBoard({...board,name:result.context.request+' · option '+(index+1)},items);savedOutfitBoards.push(saved);try{await persistBoardState();}catch(error){savedOutfitBoards.pop();throw error;}status.textContent='Saved. Find it in Outfit builder → Saved outfits.';save.textContent='Saved';renderSavedOutfitBoards();}catch(error){status.textContent=error.message||'Could not save this outfit.';save.disabled=false;}};
-  actions.append(edit,save);card.append(actions);grid.append(card);
+  const view=node('button','View outfit','secondary');view.type='button';
+  view.onclick=()=>{
+   const dialog=document.createElement('dialog');dialog.className='styled-outfit-detail';
+   const title=node('h2',result.context.request+' · option '+(index+1));
+   const close=node('button','Close','secondary');close.type='button';close.onclick=()=>dialog.close();
+   const larger=node('div');window.OutfitFigure.render(larger,board,items,{size:'detail'});
+   const label=node('h3','Items in this outfit');const pieces=node('ul');
+   for(const slot of outfitSlots){const item=items.find(x=>x.id===board.slots[slot.id]);if(!item)continue;
+    pieces.append(node('li',slot.label+': '+(item.name||item.itemType||'Clothing item')));}
+   const info=node('p','Styling approximation only. Check original photos for actual color and fabric.','fine');
+   const detailActions=node('div',null,'actions'),adjust=node('button','Adjust on outfit board','secondary'),saveDetail=node('button','Save outfit','primary');
+   for(const button of [adjust,saveDetail])button.type='button';
+   adjust.onclick=()=>{dialog.close();edit.click();};
+   saveDetail.disabled=save.disabled;
+   saveDetail.onclick=()=>{dialog.close();save.click();};
+   detailActions.append(adjust,saveDetail,close);dialog.append(title,larger,label,pieces,info,detailActions);
+   dialog.addEventListener('close',()=>{dialog.remove();view.focus();},{once:true});
+   document.body.append(dialog);dialog.showModal();
+  };
+  actions.prepend(view);card.append(actions);grid.append(card);
  }
 }
 $('styleCollectionForm').onsubmit=async event=>{
