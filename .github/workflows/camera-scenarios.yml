@@ -29,6 +29,37 @@ jobs:
         run: node scripts/build.mjs
       - name: Run complete Node test suite (all application and recognition tests)
         run: node --test tests/*.test.cjs tests/*.test.mjs
+  resolution-comparison:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Assemble and verify the locked 56-photo baseline
+        run: |
+          mkdir -p benchmark/resolution-comparison
+          node scripts/assemble-reviewed-baseline.mjs benchmark/resolution-comparison/manifest.json benchmark/manifest-reviewed-32.json benchmark/manifest-holdout-16.json benchmark/manifest-fresh-11.json
+          node scripts/download-reviewed-photos.mjs benchmark/resolution-comparison/manifest.json
+          node scripts/validate-100-photo-set.mjs benchmark/resolution-comparison/manifest.json benchmark/photos 56
+      - name: Install browser benchmark dependencies
+        run: |
+          npm install --no-save --no-package-lock --fetch-retries=4 playwright
+          npx playwright install --with-deps chromium
+          node scripts/build.mjs
+      - name: Run paired recognition at 2048 and 4096 pixels
+        run: |
+          node scripts/run-browser-photo-benchmark.mjs benchmark/resolution-comparison/manifest.json benchmark/resolution-comparison/old 2048
+          node scripts/run-browser-photo-benchmark.mjs benchmark/resolution-comparison/manifest.json benchmark/resolution-comparison/new 4096
+          node scripts/compare-photo-resolutions.mjs benchmark/resolution-comparison/manifest.json benchmark/resolution-comparison/old/results.json benchmark/resolution-comparison/new/results.json benchmark/resolution-comparison/comparison.json
+      - name: Upload resolution comparison and per-photo diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: recognition-resolution-2048-vs-4096
+          path: benchmark/resolution-comparison/
+          retention-days: 14
   collect-independent-photos:
     if: github.ref_name == 'fix/mobile-recognition-timeout-diagnostics' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
