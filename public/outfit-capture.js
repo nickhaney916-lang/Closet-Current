@@ -49,7 +49,7 @@ async function readOutfitPhoto(file){
  if(file.size>10*1024*1024)return $('outfitSplitStatus').textContent='Choose an outfit photo smaller than 10 MB.';
  if(!file.type?.startsWith('image/')&&!/\.(jpe?g|png|webp|avif|heic|heif)$/i.test(file.name||''))return $('outfitSplitStatus').textContent='Choose a clothing photo.';
  stopCamera();busy=true;controls(true);let timer;
- try{const image=await Promise.race([photoToJPEG(file,{maxDimension:3072,quality:.94}),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('decode timeout')),15000);})]);busy=false;controls(false);session=0;startOutfitSplit(image);}
+ try{const image=await Promise.race([photoToJPEG(file,{maxDimension:4096,quality:.94}),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('decode timeout')),15000);})]);busy=false;controls(false);session=0;startOutfitSplit(image);}
  catch{$('outfitSplitStatus').textContent='Could not open that outfit photo. Try JPEG or PNG.';}
  finally{clearTimeout(timer);if(!outfitSplitJob){busy=false;controls(false);}}
 }
