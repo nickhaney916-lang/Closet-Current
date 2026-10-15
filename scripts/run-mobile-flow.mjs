@@ -121,6 +121,10 @@ try{
  const report={cases:realResults,submitted:realCases.length,imported:observed.imports.added,evaluated:evaluated.length,categoryAccuracy:evaluated.length?evaluated.filter(x=>x.correctCategory).length/evaluated.length:null,allSubmittedAccuracy:realResults.filter(x=>x.correctCategory).length/realCases.length,reviewSuggestions,reviewSuggestionCount:reviewSuggestions.length,reviewSuggestionCorrect:reviewSuggestions.filter(x=>x.correct).length,importDiagnostics:observed,pageErrors:errors};
  await writeFile(out+'/real-photo-indexing.json',JSON.stringify(report,null,2));
  console.log('REAL_PHOTO_INDEXING '+JSON.stringify(report));
+ console.log('REAL_PHOTO_REVIEW_SUGGESTIONS '+JSON.stringify({count:reviewSuggestions.length,correct:reviewSuggestions.filter(x=>x.correct).length,incorrect:reviewSuggestions.filter(x=>!x.correct)}));
+ // A wrong review hint is actionable evidence, even though suggestions never
+ // auto-save. Keep the benchmark passing while exposing every false hint.
+ if(reviewSuggestions.some(x=>!x.correct))console.warn('REAL_PHOTO_FALSE_REVIEW_SUGGESTION '+JSON.stringify(reviewSuggestions.filter(x=>!x.correct)));
  if(realResults.some(x=>x.importStatus==='added'&&(!x.category||x.category==='Uncategorized')))console.warn('REAL_PHOTO_REVIEW_REQUIRED '+JSON.stringify(realResults.filter(x=>x.importStatus==='added'&&(!x.category||x.category==='Uncategorized'))));
  if(realResults.some(x=>x.importStatus==='unaccounted'))throw Error('Some submitted photos have no import outcome');
  // Regression: independent jacket evidence must offer a review-only category
