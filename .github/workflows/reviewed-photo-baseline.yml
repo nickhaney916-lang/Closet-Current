@@ -1,0 +1,58 @@
+name: Reviewed 59-photo recognition baseline
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'scripts/assemble-reviewed-baseline.mjs'
+      - 'scripts/audit-100-photo-results.mjs'
+      - 'scripts/validate-100-photo-set.mjs'
+      - '.github/workflows/reviewed-photo-baseline.yml'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  recognition:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Assemble separately reviewed photo collections
+        run: |
+          node scripts/assemble-reviewed-baseline.mjs benchmark/manifest-combined-59.json benchmark/manifest-reviewed-32.json benchmark/manifest-holdout-16.json benchmark/manifest-fresh-11.json
+      - name: Retrieve cryptographically locked licensed photos
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json
+          node scripts/download-reviewed-photos.mjs benchmark/manifest-fresh-11.json
+      - name: Verify baseline photos exist and are unique
+        run: node scripts/validate-100-photo-set.mjs benchmark/manifest-combined-59.json benchmark/photos 59 > benchmark/validation-59.json
+      - name: Install Chromium
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium
+      - name: Build application
+        run: node scripts/build.mjs
+      - name: Run actual browser model on all reviewed photos
+        run: node scripts/run-browser-photo-benchmark.mjs benchmark/manifest-combined-59.json benchmark/output/combined-59
+      - name: Record every category and subtype error
+        if: always()
+        run: |
+          if [ -f benchmark/output/combined-59/results.json ]; then
+            node scripts/evaluate-recognition-benchmark.mjs benchmark/manifest-combined-59.json benchmark/output/combined-59/results.json > benchmark/output/combined-59/evaluation.json
+            node scripts/audit-100-photo-results.mjs benchmark/manifest-combined-59.json benchmark/output/combined-59/results.json benchmark/output/combined-59/audit.json 59
+          fi
+      - name: Upload diagnostics and individual predictions
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reviewed-59-photo-results
+          path: |
+            benchmark/validation-59.json
+            benchmark/manifest-combined-59.json
+            benchmark/output/combined-59/
+          if-no-files-found: warn
+          retention-days: 14
