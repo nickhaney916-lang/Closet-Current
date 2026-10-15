@@ -55,11 +55,11 @@
     "expectedCategory": "Outerwear",
     "expectedType": "Jacket",
     "verified": false,
-    "reviewStatus": "needs-visual-review",
+    "reviewStatus": "excluded-multiple-garments",
     "source": "https://commons.wikimedia.org/wiki/File:Denim_jacket.jpg",
     "license": "CC BY-SA 2.0",
     "credit": "Lucius Kwok",
-    "notes": "Real-world outfit photo with multiple garments; jacket visible but needs review for isolated single-garment benchmark suitability."
+    "notes": "Source explicitly describes a person wearing denim jacket, western shirt, jeans, belt and boots. Excluded from single-garment validation; may be useful later for full-outfit testing."
   },
   {
     "id": "candidate-jacket-002",
@@ -83,7 +83,7 @@
     "source": "https://commons.wikimedia.org/wiki/File:Jumper_sweater.jpg",
     "license": "Public domain",
     "credit": "Dmn",
-    "notes": "Photograph of a sweater on a wooden surface; check suitability, condition and duplicate content before promotion."
+    "notes": "Wikimedia source confirms jumper/sweater and public-domain reuse; still requires direct visual assessment and file integrity before approval."
   },
   {
     "id": "candidate-blazer-001",
@@ -93,7 +93,7 @@
     "source": "https://commons.wikimedia.org/wiki/File:Navy_blazer_jacket.jpg",
     "license": "CC BY-SA 4.0",
     "credit": "サフィル",
-    "notes": "Navy blazer garment image. Review visual isolation and independence before approval.",
+    "notes": "Wikimedia source located; direct image-level visual assessment and confirmed labeling still required before approval.",
     "verified": false,
     "reviewStatus": "needs-visual-review"
   },
