@@ -11,8 +11,11 @@ const results=JSON.parse(fs.readFileSync(resultsPath,'utf8'));
 if(!Array.isArray(manifest)||!Array.isArray(results))throw Error('Expected two JSON arrays');
 const issues=[],byId=new Map(),grouped={};
 const negatives={total:0,correctlyRejected:0,falsePositives:0,runtimeErrors:0};
+const manifestIds=new Set();
 for(const r of results){if(!r?.id||byId.has(r.id))issues.push({id:r?.id||null,kind:'duplicate_or_missing_result_id'});else byId.set(r.id,r);}
 for(const m of manifest){
+ if(m?.id&&manifestIds.has(m.id))issues.push({id:m.id,kind:'duplicate_manifest_id'});
+ if(m?.id)manifestIds.add(m.id);
  if(!m?.id||m.verified!==true||m.mode!=='single')issues.push({id:m?.id||null,kind:'unverified_or_invalid_manifest_entry'});
  const r=byId.get(m.id);
  if(m.expectedCategory==='Uncategorized'){
