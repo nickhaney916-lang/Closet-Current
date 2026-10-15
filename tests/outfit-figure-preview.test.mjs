@@ -12,3 +12,11 @@ test('mannequin respects dress-versus-bottom conflict and exact saved item image
  assert.match(src,/item\.itemType==='Shorts'/);
  assert.match(src,/Approximate outfit figure/);
 });
+
+test('recommendation detail reuses the same board and existing edit/save callbacks',()=>{
+ const src=readFileSync('public/closet-stylist.js','utf8');
+ assert.match(src,/OutfitFigure\.render\(larger,board,items,\{size:'detail'\}\)/);
+ assert.match(src,/adjust\.onclick=\(\)=>\{dialog\.close\(\);edit\.click\(\);\}/);
+ assert.match(src,/saveDetail\.onclick=\(\)=>\{dialog\.close\(\);save\.click\(\);\}/);
+ assert.match(src,/dialog\.addEventListener\('close'/);
+});
