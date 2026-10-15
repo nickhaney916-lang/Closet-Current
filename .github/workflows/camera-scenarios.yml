@@ -9,6 +9,7 @@ on:
       - 'public/outfit-capture.js'
       - 'public/**'
       - 'scripts/**'
+      - 'benchmark/independent-candidates.json'
       - '.github/workflows/camera-scenarios.yml'
   workflow_dispatch:
 concurrency:
