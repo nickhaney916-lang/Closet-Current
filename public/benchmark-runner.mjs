@@ -8,6 +8,22 @@ function workerSession(){
 async function jpeg(file){
  const bitmap=await createImageBitmap(file);try{const canvas=document.createElement('canvas'),scale=Math.min(1,2048/Math.max(bitmap.width,bitmap.height));canvas.width=Math.max(1,Math.round(bitmap.width*scale));canvas.height=Math.max(1,Math.round(bitmap.height*scale));const ctx=canvas.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(bitmap,0,0,canvas.width,canvas.height);return canvas.toDataURL('image/jpeg',.94);}finally{bitmap.close();}
 }
+
+// Offline-only framing experiment: keep 94% of the original height and width.
+// This compares mild framing against the existing full-photo preprocessing.
+async function paddedFrameData(file){
+ const bitmap=await createImageBitmap(file);
+ try{
+  const canvas=document.createElement('canvas');
+  const sx=Math.floor(bitmap.width*.03),sy=Math.floor(bitmap.height*.03);
+  const sw=bitmap.width-2*sx,sh=bitmap.height-2*sy;
+  const scale=Math.min(1,2048/Math.max(sw,sh));
+  canvas.width=Math.max(1,Math.round(sw*scale));canvas.height=Math.max(1,Math.round(sh*scale));
+  const ctx=canvas.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.drawImage(bitmap,sx,sy,sw,sh,0,0,canvas.width,canvas.height);
+  return canvas.toDataURL('image/jpeg',.94);
+ }finally{bitmap.close();}
+}
 async function estimateColor(image){const img=new Image();img.src=image;await img.decode();const c=document.createElement('canvas');c.width=c.height=16;const ctx=c.getContext('2d',{willReadFrequently:true});ctx.drawImage(img,0,0,16,16);return window.PhotoColor.estimate(ctx.getImageData(0,0,16,16).data,16,16);}
 $('run').onclick=async()=>{
  $('run').disabled=true;$('download').disabled=true;output=[];
@@ -21,7 +37,14 @@ $('run').onclick=async()=>{
    const file=files.get(item.image);if(!file){output.push({id:item.id,error:'Image file missing'});continue;}
    status.textContent='Processing '+(i+1)+'/'+manifest.length+': '+item.image;
    const started=performance.now();
-   try{const data=await jpeg(file),colorEstimate=await estimateColor(data),result=await session.call({type:'classify',image:data,benchmarkDiagnostics:true});const choice=result.choices?.[0];output.push({id:item.id,prediction:{category:choice?.category||null,type:choice?.itemType||null},strong:!!result.strong,categoryOnly:!!result.categoryOnly,categoryConfirmed:!!result.categoryConfirmed,preprocessingRecovery:!!result.preprocessingRecovery,reason:result.reason||null,details:result.details||{},recognitionMemory:result.recognitionMemory||null,colorEstimate,sleeveLength:choice?.sleeveLength||'Unknown',diagnostics:result.diagnostics||null,elapsedMs:Math.round(performance.now()-started)});}
+   try{const data=await jpeg(file),colorEstimate=await estimateColor(data),result=await session.call({type:'classify',image:data,benchmarkDiagnostics:true});const choice=result.choices?.[0];let framingExperiment=null;
+   if(item.diagnosticOnly===true&&item.contextContaminated===true){
+    const frame=await paddedFrameData(file);
+    const framed=await session.call({type:'classify',image:frame,benchmarkDiagnostics:true});
+    const picked=framed.choices?.[0];
+    framingExperiment={method:'inset-3-percent-each-side',prediction:{category:picked?.category||null,type:picked?.itemType||null},reason:framed.reason||null,diagnostics:framed.diagnostics||null};
+   }
+   output.push({id:item.id,framingExperiment,prediction:{category:choice?.category||null,type:choice?.itemType||null},strong:!!result.strong,categoryOnly:!!result.categoryOnly,categoryConfirmed:!!result.categoryConfirmed,preprocessingRecovery:!!result.preprocessingRecovery,reason:result.reason||null,details:result.details||{},recognitionMemory:result.recognitionMemory||null,colorEstimate,sleeveLength:choice?.sleeveLength||'Unknown',diagnostics:result.diagnostics||null,elapsedMs:Math.round(performance.now()-started)});}
    catch(e){output.push({id:item.id,error:String(e.message||e)});}
   }
   status.textContent='Finished '+output.length+' images. Download results and run the evaluator. '+output.filter(x=>x.error).length+' errors.';$('download').disabled=false;
