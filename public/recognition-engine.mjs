@@ -78,6 +78,22 @@ export async function recognizeWithRecovery(model,image,settings={}){
   const recovered=await recognizeGarment(settings.recoveryModel,image,{...settings,confirmationModel:settings.recoveryConfirmationModel,onIdentified:()=>{}});
   if(recovered.strong&&recovered.choices[0]?.category==='Tops'){settings.onIdentified?.(recovered.choices[0]);return {...recovered,preprocessingRecovery:true};}
  }
+ // When the broad prompt mistakes a jacket for a blouse, independently retry
+ // the original full photograph. Never promote a conflicting guess: all normal
+ // category, type, full-vocabulary and second-view gates must pass on retry.
+ const outerwearConflict=result.reason==='checks_disagree'&&
+  result.diagnostics?.overall?.[0]?.category==='Outerwear'&&
+  result.diagnostics?.overall?.[0]?.type==='Jacket'&&
+  result.diagnostics?.category?.[0]?.category==='Tops';
+ if(outerwearConflict&&settings.recoveryModel&&settings.recoveryConfirmationModel){
+  const recovered=await recognizeGarment(settings.recoveryModel,image,{
+   ...settings,confirmationModel:settings.recoveryConfirmationModel,onIdentified:()=>{}
+  });
+  if(recovered.strong&&recovered.choices[0]?.category==='Outerwear'){
+   settings.onIdentified?.(recovered.choices[0]);
+   return {...recovered,preprocessingRecovery:true};
+  }
+ }
  if(result.strong||result.categoryConfirmed||!['type_uncertain','checks_disagree','views_disagree'].includes(result.reason))return result;
  // Keep a verified broad category when subtype votes disagree. It remains in
  // review; negative prompts and both image views must still support clothing.
