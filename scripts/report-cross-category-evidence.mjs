@@ -21,6 +21,16 @@ for(const item of manifest){
   agreesAcrossAlternatives:!!alternative&&!!center&&alternative.category===center.category,
   primaryContradictsAlternatives:!!primary&&!!alternative&&!!center&&alternative.category===center.category&&primary.category!==alternative.category});
 }
-const output={sampleSize:manifest.length,outerwearDisagreements:report.length,contradictoryPrimary:report.filter(x=>x.primaryContradictsAlternatives).length,items:report};
+// Shadow decision only: require both independent detailed image views to agree
+// on the exact outerwear subtype, each with substantial top-vs-runner-up separation.
+// Never feed this decision back into the worker or user's wardrobe.
+const outerwearTypes=new Set(['Jacket','Coat','Blazer','Raincoat','Cardigan','Vest']);
+for(const entry of report){
+ const w=entry.alternativeWholeType,c=entry.alternativeCenterType;
+ const candidate=!!w&&!!c&&w.category==='Outerwear'&&c.category==='Outerwear'&&w.type===c.type&&outerwearTypes.has(w.type)&&w.score>=.55&&c.score>=.55;
+ entry.shadowDetailedCandidate=candidate?{category:'Outerwear',type:w.type,minimumViewScore:Math.min(w.score,c.score)}:null;
+ entry.shadowMatchesExpected=entry.shadowDetailedCandidate?entry.expectedCategory==='Outerwear'&&entry.expectedType===entry.shadowDetailedCandidate.type:null;
+}
+const output={sampleSize:manifest.length,outerwearDisagreements:report.length,contradictoryPrimary:report.filter(x=>x.primaryContradictsAlternatives).length,shadowCandidateCount:report.filter(x=>x.shadowDetailedCandidate).length,shadowCorrectCount:report.filter(x=>x.shadowMatchesExpected===true).length,shadowIncorrectCount:report.filter(x=>x.shadowMatchesExpected===false).length,items:report};
 writeFileSync(outputFile,JSON.stringify(output,null,2)+'\n');
 console.log(JSON.stringify({outerwearDisagreements:output.outerwearDisagreements,contradictoryPrimary:output.contradictoryPrimary}));
