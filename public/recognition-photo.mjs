@@ -57,11 +57,14 @@ export function recognitionFramingDiagnostics(image,{confirmation=false}={}){
   fullGarmentRetained:true
  };
 }
-export async function prepareRecognitionPhoto(image,RawImageClass,{confirmation=false}={}){
+export async function prepareRecognitionPhoto(image,RawImageClass,{confirmation=false,contentSizeOverride=null}={}){
  const bounds=uniformPhotoBounds(image);
  const cropped=bounds.left||bounds.top||bounds.right!==image.width||bounds.bottom!==image.height?
   await image.crop([bounds.left,bounds.top,bounds.right-1,bounds.bottom-1]):image;
- const size=336,contentSize=confirmation?320:size,fit=fitPhotoDimensions(cropped.width,cropped.height,contentSize);
+ const size=336,defaultContentSize=confirmation?320:size;
+ const contentSize=contentSizeOverride===null?defaultContentSize:contentSizeOverride;
+ if(!Number.isInteger(contentSize)||contentSize<128||contentSize>size)throw Error('Invalid recognition content size.');
+ const fit=fitPhotoDimensions(cropped.width,cropped.height,contentSize);
  // The second view changes scale slightly, but retains cuffs, soles and hems.
  const positioned={...fit,size,left:fit.left+(size-contentSize)/2,top:fit.top+(size-contentSize)/2};
  const resized=await cropped.resize(fit.width,fit.height);
