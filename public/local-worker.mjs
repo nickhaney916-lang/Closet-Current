@@ -53,6 +53,21 @@ self.onmessage=event=>{const request=event.data;chain=chain.then(async()=>{
    onStage:stage=>{scannerStage=stage;},
    onIdentified:choice=>self.postMessage({type:'identified',id:request.id,choice})
   });
+  // Benchmark-only shadow comparison: never changes recognition decisions or saved items.
+  if(request.benchmarkDiagnostics===true){
+   try{
+    const {localCandidates,clothingChoices}=await import('./local-catalog.mjs'+new URL(import.meta.url).search);
+    const {categoryCandidates,categoryChoices}=await import('./recognition-engine.mjs'+new URL(import.meta.url).search);
+    const types=localCandidates.map(x=>x.label),cats=categoryCandidates.map(x=>x.label);
+    const compact=rank=>rank.slice(0,3).map(x=>({category:x.category,type:x.itemType||null,score:x.score}));
+    result.diagnostics={...result.diagnostics,shadowPreprocessing:{
+     originalWholeCategory:compact(categoryChoices(await model.originalWhole(image,cats))),
+     originalWholeTypes:compact(clothingChoices(await model.originalWhole(image,types))),
+     originalCenterCategory:compact(categoryChoices(await model.originalCenter(image,cats))),
+     originalCenterTypes:compact(clothingChoices(await model.originalCenter(image,types)))
+    }};
+   }catch(error){result.diagnostics={...result.diagnostics,shadowPreprocessingError:String(error.message||error)};}
+  }
   let recognitionMemory;try{if(model.whole.features)recognitionMemory={version:1,modelKey:model.modelKey,features:await model.whole.features(image)};}catch{/* Optional memory cannot reject a garment. */}
   self.postMessage({type:'result',id:request.id,...result,recognitionMemory});
  }catch(error){
