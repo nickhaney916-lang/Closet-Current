@@ -38,7 +38,7 @@ test('wrong automatic subtype is reported as a failure',async()=>{
   {id:'top',strong:true,prediction:{category:'Tops',type:'Blouse'}},
   {id:'negative',strong:false,prediction:{}}
  ]);
- assert.equal(status,1);assert.ok(report.issues.some(x=>x.kind==='type_mismatch'));
+ assert.equal(status,1);assert.ok(report.issues.some(x=>x.kind==='wrong_automatic_subtype'));
 });
 
 test('duplicate manifest IDs cannot inflate measured accuracy',async()=>{
