@@ -33,5 +33,5 @@ test('collection filter selects only requested candidate IDs',()=>{
  assert.match(source,/requestedIds\.size&&!requestedIds\.has\(row\.id\)/);
  assert.match(source,/Unknown collection candidate/);
  const workflow=readFileSync('.github/workflows/camera-scenarios.yml','utf8');
- assert.match(workflow,/CLOSET_COLLECTION_IDS: candidate-shell-001,candidate-shell-003,candidate-trench-001/);
+ assert.match(workflow,/CLOSET_COLLECTION_IDS: candidate-shell-001,candidate-shell-003,candidate-trench-001,candidate-rainwear-001/);
 });
