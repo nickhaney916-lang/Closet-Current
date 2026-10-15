@@ -216,7 +216,8 @@
     "reviewStatus": "visual-reviewed-multiple-garments",
     "license": "CC BY-SA 4.0",
     "credit": "Joe Mabel",
-    "notes": "Direct visual inspection: clear red Gore-Tex hooded rain jacket worn by museum mannequin, but trousers and underlying clothing visible. Good candidate for outfit/mask or cropped-jacket diagnostics, not an isolated single-garment benchmark without independent bounding-box review.",
-    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/3/36/Early_Gore-Tex_hooded_rain_jacket.jpg"
+    "notes": "Hooded red rain jacket on a mannequin with trousers/underlayers in frame: not suitable for isolated-garment accuracy scoring. Actual 4569254-byte original SHA-256 downloaded in GitHub Actions run 38812000994, no overlap found among 59 baseline source refs or hashes. Retain expected Raincoat only as a provisional challenge label; verified=false and unapproved.",
+    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/3/36/Early_Gore-Tex_hooded_rain_jacket.jpg",
+    "sha256": "da3e0ffa79309dde435e84286d6816400ac543b52de250402134d759e2ad2ad8"
   }
 ]
