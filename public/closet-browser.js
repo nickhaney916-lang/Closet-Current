@@ -42,7 +42,7 @@ function closetWearButton(item){
 $('filter').onchange=()=>{window.closetItemType='';window.closetBrowseAll=$('filter').value==='All categories';render();};
 $('closetAllPieces').onclick=()=>{window.closetItemType='';window.closetBrowseAll=true;$('filter').value='All categories';render();};
 $('closetBack').onclick=()=>{window.closetItemType='';window.closetBrowseAll=false;for(const id of ['search','seasonFilter','sleeveFilter'])$(id).value='';$('filter').value='All categories';render();$('closetCategories').scrollIntoView({block:'start',behavior:'smooth'});};
-$('closetClearLook').onclick=()=>{$('clearBoard').onclick();$('closetLookStatus').textContent='Look cleared. Your closet pieces are kept.';};
+$('closetClearLook').onclick=async()=>{await outfitBoardReady;currentBoard=cleanOutfitBoard({...currentBoard,slots:{},ideas:{}},items);syncBoardInputs();renderOutfitBoard();const saved=await storeBoard();$('closetLookStatus').textContent=saved?'Look cleared. Your closet pieces are kept.':'Cleared look could not save. Please try again.';};
 $('closetSaveLook').onclick=async()=>{await outfitBoardReady;await $('saveBoard').onclick();$('closetLookStatus').textContent=$('boardSaveStatus').textContent;};
 $('search').oninput=()=>{window.closetItemType='';render();};
 $('closetLayerView').onchange=()=>{window.closetLayers=$('closetLayerView').checked;try{localStorage.setItem('closet-layer-view',String(window.closetLayers));}catch{}renderClosetBrowser();};
