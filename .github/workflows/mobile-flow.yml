@@ -58,12 +58,24 @@ jobs:
           node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json
           node scripts/download-reviewed-photos.mjs benchmark/manifest-fresh-11.json
           node scripts/validate-100-photo-set.mjs benchmark/combined-59/manifest.json benchmark/photos 59 > benchmark/combined-59/validation.json
-      - name: Run real 59-photo browser recognition and accuracy audit
+      - name: Run real 59-photo browser recognition
         if: success() || failure()
         run: |
+          if [ ! -f benchmark/combined-59/manifest.json ]; then
+            echo "::error::Reviewed benchmark manifest was not assembled"
+            exit 1
+          fi
           node scripts/run-browser-photo-benchmark.mjs benchmark/combined-59/manifest.json benchmark/combined-59/results
-          node scripts/evaluate-recognition-benchmark.mjs benchmark/combined-59/manifest.json benchmark/combined-59/results/results.json > benchmark/combined-59/evaluation.json
-          node scripts/audit-100-photo-results.mjs benchmark/combined-59/manifest.json benchmark/combined-59/results/results.json benchmark/combined-59/audit.json 59
+      - name: Evaluate any available recognition predictions
+        if: always()
+        run: |
+          if [ -f benchmark/combined-59/manifest.json ] && [ -f benchmark/combined-59/results/results.json ]; then
+            node scripts/evaluate-recognition-benchmark.mjs benchmark/combined-59/manifest.json benchmark/combined-59/results/results.json > benchmark/combined-59/evaluation.json
+            node scripts/audit-100-photo-results.mjs benchmark/combined-59/manifest.json benchmark/combined-59/results/results.json benchmark/combined-59/audit.json 59
+          else
+            echo "::error::Recognition predictions unavailable; inspect the preceding browser step"
+            exit 1
+          fi
       - uses: actions/upload-artifact@v4
         if: always()
         with:
