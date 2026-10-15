@@ -40,7 +40,7 @@ for(const row of rows){
   }
   const url=new URL(originalUrl);
   if(url.protocol!=='https:'||!['upload.wikimedia.org','thumb.wikimedia.org'].includes(url.hostname))throw Error('unsupported-host');
-  const res=await fetch(url,{headers:{'User-Agent':'ClosetCurrentBenchmark/1.0 (https://github.com/nickhaney916-lang/Closet-Current)'},signal:AbortSignal.timeout(25000)});
+  const res=await wikimediaFetch(url);
   if(!res.ok)throw Error('HTTP '+res.status);
   if(!['upload.wikimedia.org','thumb.wikimedia.org'].includes(new URL(res.url).hostname))throw Error('redirected-host');
   const data=new Uint8Array(await res.arrayBuffer());
