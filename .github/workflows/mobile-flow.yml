@@ -71,6 +71,7 @@ jobs:
         run: |
           if [ -f benchmark/combined-59/manifest.json ] && [ -f benchmark/combined-59/results/results.json ]; then
             node scripts/evaluate-recognition-benchmark.mjs benchmark/combined-59/manifest.json benchmark/combined-59/results/results.json > benchmark/combined-59/evaluation.json
+            node scripts/report-cross-category-evidence.mjs benchmark/combined-59/manifest.json benchmark/combined-59/results/results.json benchmark/combined-59/cross-category-evidence.json
             node scripts/audit-100-photo-results.mjs benchmark/combined-59/manifest.json benchmark/combined-59/results/results.json benchmark/combined-59/audit.json 59
           else
             echo "::error::Recognition predictions unavailable; inspect the preceding browser step"
