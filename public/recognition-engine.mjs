@@ -93,7 +93,7 @@ export async function recognizeWithRecovery(model,image,settings={}){
    const a=clothingChoices(first),b=clothingChoices(second);
    const safe=v=>v[0]?.category==='Bottoms'&&v[0].score>=.7&&
     v[0].score-(v[1]?.score||0)>=.25;
-   if(safe(a)&&safe(b)&&a[0].itemType===b[0].itemType){
+   if(a[0]?.category==='Bottoms'&&b[0]?.category==='Bottoms'&&a[0].itemType===b[0].itemType&&safe(b)&&a[0].score>=.45&&a[0].score-(a[1]?.score||0)>=.07){
     settings.onIdentified?.(a[0]);
     return {strong:true,choices:[a[0]],details:{},reason:'bottoms_independent_agreement',preprocessingRecovery:true};
    }
