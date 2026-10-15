@@ -21,10 +21,18 @@ const items=manifest.map(row=>{
  const evidence=result?.diagnostics?.acceptedEvidence||{};
  const alternative=result?.diagnostics?.shadowPreprocessing||{};
  const topType=rows=>Array.isArray(rows)?rows[0]?.type||null:null;
+ const views=[evidence.branch,evidence.confirmation,alternative.originalWholeTypes,alternative.originalCenterTypes];
  const subtypeConsensusMismatch=categoryCorrect&&!exactSubtype&&!acceptableSpecific&&!!prediction.type&&
-  [topType(evidence.branch),topType(evidence.confirmation),topType(alternative.originalWholeTypes),topType(alternative.originalCenterTypes)].every(type=>type===prediction.type);
+  views.every(rows=>Array.isArray(rows)&&rows.length>0&&topType(rows)===prediction.type);
+ const viewMargins=views.map(rows=>{
+  if(!Array.isArray(rows)||!rows.length)return null;
+  const [first,second]=rows;
+  return {topType:first.type||null,topScore:Number.isFinite(first.score)?first.score:null,
+   runnerUpType:second?.type||null,runnerUpScore:Number.isFinite(second?.score)?second.score:null,
+   margin:Number.isFinite(first.score)&&Number.isFinite(second?.score)?first.score-second.score:null};
+ });
  const outcome=!result?'missing-result':result.error?'inference-error':!categoryCorrect?'wrong-category':exactSubtype?'exact-subtype':acceptableSpecific?'compatible-specific-subtype':'subtype-mismatch';
- return {id:row.id,expectedCategory:row.expectedCategory,expectedType:row.expectedType,predictedCategory:prediction.category||null,predictedType:prediction.type||null,categoryCorrect,exactSubtype,acceptableSpecific,subtypeConsensusMismatch,modelViews:{branch:topType(evidence.branch),confirmation:topType(evidence.confirmation),originalWhole:topType(alternative.originalWholeTypes),originalCenter:topType(alternative.originalCenterTypes)},outcome};
+ return {id:row.id,expectedCategory:row.expectedCategory,expectedType:row.expectedType,predictedCategory:prediction.category||null,predictedType:prediction.type||null,categoryCorrect,exactSubtype,acceptableSpecific,subtypeConsensusMismatch,modelViews:{branch:viewMargins[0],confirmation:viewMargins[1],originalWhole:viewMargins[2],originalCenter:viewMargins[3]},outcome};
 });
 const count=key=>items.filter(x=>x[key]).length;
 const report={sampleSize:manifest.length,categoryCorrect:count('categoryCorrect'),exactSubtypeCorrect:count('exactSubtype'),compatibleSpecificCount:count('acceptableSpecific'),consensusSubtypeMismatchCount:count('subtypeConsensusMismatch'),acceptableSubtypeCount:items.filter(x=>x.exactSubtype||x.acceptableSpecific).length,items};
