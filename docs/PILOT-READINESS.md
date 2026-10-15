@@ -1,47 +1,56 @@
-# Friends and family pilot — October 13, 2026
+# Pilot readiness — October 14, 2026
 
-## Current decision
+## Decision
 
-Ready for a guided pilot with existing working accounts. Not yet verified ready
-for new friends to sign up: custom email delivery is still an open blocker.
-Do not share accounts, disable confirmation, or grant project-team access.
+Preserve stable application source `b6490e8af2eabefb370fac7b5bf0a7d375dd9922` and continue owner testing. A small, guided pilot is the next release stage after real-device and external-email gates pass. Unrestricted public access is not yet validated. Do not share accounts or disable email confirmation to bypass delivery problems.
 
-## Verification
+## Evidence and limits
 
-132 automated checks pass. Live Supabase project reports ACTIVE_HEALTHY;
-public auth health returns 200, signup is enabled, and confirmation is required.
-The live visitor form renders; empty-field validation revealed a misleading
-password prompt, now fixed to report the first invalid field. These checks do
-not constitute a successful real inbox or authenticated phone test.
+| Area | Current evidence | Remaining release evidence |
+| --- | --- | --- |
+| Runtime and persistence | 237 Node checks; camera/indexing, mobile capture, WebKit, display and private-backup workflows passed | Physical Android and iPhone capture, close/reopen and account recovery |
+| Recognition | Reviewed categories 26/32, exact types 18/32; fresh categories 11/11; holdout clothing categories 7/13 | Independently labeled new phone photographs, primary-color accuracy and per-category coverage |
+| Automatic crops | Automated separation, saved crop pixels and original preservation covered | Real outfits with overlapping clothing, hems, soles and difficult backgrounds |
+| Private backup | Synthetic account isolation, offline retry and independent-browser restoration tested | Pilot users verify their own photo-backed items and backup status |
+| Email | Signup, confirmation handling, resend and reset client flows implemented | Current sender configuration, allowlist and actual external-inbox delivery |
+| Installation | Manifest, install prompt and Android/iPhone instructions implemented | Physical-device installation and opening the correct account afterward |
 
-## Tonight's device checks
+Recognition figures come from `docs/recognition-learning-results.json`. Passing UI tests is not recognition accuracy. The reviewed dress sample is only two photos; no broad dress reliability claim is warranted. Correction memory is confirmed-example retrieval, not neural self-training; the evaluated retrieval run produced no qualifying proposals.
 
-Open the current GitHub Pages app, then More → Help & device check. Start the
-optional local recording. Mark each step Works or Needs help. Test login,
-manual capture, hands-free capture and stopping, recognition of three different
-garments, Adjust and save, Whole outfit separation and selected-piece saving, My closet, styling with owned
-clothes, close/reopen persistence and backup export. Download a sanitized test
-report for problems; no report is automatically uploaded.
+## 1. Validate recognition before tuning
 
-Use Wi-Fi for the first model download. Keep the current browser until My account reports Cloud backup up to date.
-Private account backup then supports restoration across browsers and devices. Outfit separation
-is experimental and may require Adjust, especially overlapping or clipped
-clothes. Unknown details should remain blank.
+Build a consented, independently labeled set of at least 50 new phone photos, including shirts of both sleeve lengths, pants, dresses, shoes and layered outfits. Include different people/devices, portrait orientations, lighting, clutter, dark garments and similar colors. Expand each key category to at least 10 examples before claiming category-specific reliability. Define expected category and primary color before inference; keep tuning examples separate from a frozen release holdout.
 
-## Before inviting new accounts
+For each photo record automatic crop completeness, category, primary color, automatic acceptance versus review, optional-field errors and processing failures. Preserve dress hems and shoe soles; avoid including neighboring garments in crop/color samples. Test automatic whole-outfit isolation, not only manual adjustment. Retain the original and allow corrections without requiring optional material/brand/size fields.
 
-Connect a verified transactional email sender to project hlkgymugtfbirlpunsra.
-Check rate limits and real signup, newest confirmation email, resend and reset
-links with an address outside the project team. The default Supabase sender
-restricts recipients and cannot support this broader pilot reliably.
+Proposed release gates, not achieved results:
 
-## Streamlined pilot interface
+- At least 95% correct category AND primary color among automatically accepted items on the new frozen set. Report counts, sample size, acceptance coverage and per-category errors alongside precision so rejecting everything cannot appear successful.
+- Any confidently wrong automatic save gets investigated; uncertain items receive a clear review path. Unknown optional attributes remain blank. User-confirmed corrections survive rescans and synchronization.
+- Zero photo loss, cross-account exposure or silent save failure in the exercised capture, refresh, offline and recovery scenarios.
+- All existing 59-photo regression safeguards and relevant automated workflows pass after each targeted recognition change. Compare before/after on identical inputs and publish regressions as well as gains.
 
-Add clothes now starts with two large choices: Single item and Whole outfit.
-Camera and hands-free controls belong to Single item; the outfit photo chooser
-has its own panel. Photo cards show a short status, category, and one Adjust
-action; additional attributes are available under More details. Ready outfit
-cutouts have selection checkboxes, and Add selected clothes saves only checked
-pieces. Deselected cutouts remain unfinished photos. Original navigation,
-Inspiration, Style my collection, backup, and device checks remain available.
-Authenticated physical-phone layout and native camera checks remain open.
+## 2. Complete email onboarding
+
+Verify current Supabase SMTP settings, a verified transactional sender/domain, provider delivery limits and authentication redirect allowlist. Custom SMTP is required for a broader pilot: the default sender is restricted testing infrastructure. Do not put credentials in the repository.
+
+Choose the canonical app origin. The currently shared URL is Cloudflare; signup/resend/recovery currently target GitHub Pages. Align links and allowlist deliberately, then test external Gmail, Outlook and iCloud inboxes: signup, confirmation, resend, expired/used links, reset, subsequent login and opening on another device. API success alone is insufficient. Keep confirmation enabled.
+
+Proposed experience: email/password signup → confirm email → welcome/open app → optional Add to Home Screen. Send a short welcome after verified signup with the app link, install instructions and help. Email must not promise automatic installation. No paid membership is needed for the free pilot. Provider setup and welcome automation have not been implemented by this checkpoint.
+
+## 3. Explain the service and provide recovery
+
+Before public signup, publish plain privacy and terms pages appropriate to the actual operator and service. Explain private clothing-photo storage, backup, correction use, retention and deletion; obtain versioned agreement acceptance and keep marketing consent separate. Provide account/data deletion and a support/feedback route. Verify deletion includes stored photos and related records. These are outstanding product requirements, not a claim of legal compliance.
+
+## 4. Run a controlled pilot, then widen access
+
+Start with 5–10 consenting testers after email gates pass. Each captures 5–10 garments, tries an outfit and dress mode, corrects an error, closes/reopens the app and checks backup/restoration. Include Android and iPhone, first model download, denied camera permission, slow connection and interrupted saving. Keep reports free of private imagery unless separately provided with consent.
+
+Review category/color/crop failures and onboarding issues before inviting more people. Confirm storage, bandwidth, authentication-email quotas, model hosting and operating-cost limits. Retain a known-good rollback version and use the existing rollback checks. Preserve the simplified interface and high-resolution camera throughout stabilization.
+
+## References
+
+- https://supabase.com/docs/guides/auth/auth-smtp
+- https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Guides/Making_PWAs_installable
+- [Authentication readiness](AUTH-EMAIL-READINESS.md)
+- [Current checkpoint](PROGRESS-CHECKPOINT.md)

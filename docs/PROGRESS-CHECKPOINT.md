@@ -1,5 +1,23 @@
 # Closet Current progress checkpoint
 
+## Current checkpoint — October 14, 2026, evening Pacific
+
+Saved at the owner's request before further personal testing. Stable application source: `b6490e8af2eabefb370fac7b5bf0a7d375dd9922` on `main`. Live app: https://closet-current.pages.dev/
+
+- Preserve the current interface: shared clothing figure without gender controls; one base shirt; independent shirt/sweater, jacket and outer-coat layers; Dresses switches to a dress-and-shoes figure. Backup controls remain at the bottom.
+- Separate clothing photos populate independent layers and survive reload. Dress preview can be canceled without changing the shirt look; selecting a dress removes incompatible outfit slots without deleting clothing records.
+- High-resolution capture, automatic outfit crops, originals, private account backup and existing recognition remain preserved. Drive Duel was not accessed or modified.
+- All 237 Node checks passed. Main's camera/indexing, mobile capture/persistence, WebKit, display comparison, private backup, Cloudflare deployment and GitHub Pages workflows passed. Physical-phone accuracy is a separate open validation task.
+- Latest recognition evaluation: reviewed categories 26/32, exact types 18/32; fresh categories 11/11; harder holdout clothing categories 7/13. These results do not justify unrestricted public-launch accuracy claims.
+- Email/password flows and PWA installation help exist. Current SMTP configuration and real inbox delivery remain unverified. Authentication links still target GitHub Pages while the main shared app link is Cloudflare; verify the redirect allowlist and align the chosen origin before invitations.
+
+Next work: follow [PILOT-READINESS.md](PILOT-READINESS.md). Prioritize labeled real-phone crops, category and primary-color accuracy, reliable saving, and email onboarding before adding features. No runtime or authentication settings changed for this checkpoint.
+
+## Earlier checkpoint history
+
+The dated notes below describe earlier states; the current checkpoint above supersedes their counts and open-item status.
+
+
 Originally paused at the owner's request on October 14, 2026, 7:44 AM America/Los_Angeles. Development resumed at the owner's request later that morning.
 
 ## Current saved state

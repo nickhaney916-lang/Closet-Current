@@ -2,7 +2,15 @@
 
 Reviewed October 14, 2026. Only Closet Current project `hlkgymugtfbirlpunsra` was accessed. Drive Duel was not accessed or modified.
 
-## Verified read-only facts
+## Current checkpoint review — October 14, evening Pacific
+
+The application now has 237 passing Node checks plus passing private-backup and mobile workflows. This is not evidence of email delivery. This checkpoint review changed documentation only; it did not change SMTP settings, send email or reread current management settings.
+
+The shared production URL is `https://closet-current.pages.dev/`, but `public/auth.js` still directs signup, resend and recovery to GitHub Pages. Before external invitations, verify the allowlist and align all confirmation, recovery, welcome and install links with the chosen primary app origin. Current sender verification, SMTP configuration, delivery limits and templates remain unverified.
+
+PWA installation help already exists under My account → Add to phone. A proposed post-confirmation welcome can link to the app and explain installation; the person must choose to install. Welcome automation, privacy/terms acceptance and account/data deletion remain open requirements in [PILOT-READINESS.md](PILOT-READINESS.md).
+
+## Earlier verified read-only facts
 
 - Supabase reports Closet Current as ACTIVE_HEALTHY.
 - The public Auth settings endpoint reports email/password enabled, signup enabled and automatic email confirmation disabled.
@@ -21,7 +29,7 @@ All 170 Node checks passed, including signup, reset and resend error handling, m
 
 Reconnect Supabase management access and choose an existing transactional email provider and verified sender/domain (or create one). Configure SMTP host, port, username, password and sender identity in the project's Authentication settings; keep credentials out of the repository and conversation. Preserve confirmation requirements and project isolation.
 
-Verify custom sender/domain settings, sending limits and the exact redirect allowlist. Add the Cloudflare destination only if the owner chooses to migrate the existing canonical authentication URL. Confirm behavior separately on both deployed origins because browser wardrobes are stored per origin and are not cloud-synchronized.
+Verify custom sender/domain settings, sending limits and the exact redirect allowlist. Add the Cloudflare destination only if the owner chooses to migrate the existing canonical authentication URL. Confirm behavior separately on both deployed origins: local browser storage remains origin-specific, while the subsequently implemented private account backup can restore synchronized clothing after sign-in. Confirm backup is up to date before switching origins.
 
 Once configured, run explicitly authorized real inbox tests for signup, newest confirmation link, resend and password recovery for an address outside the project team. Confirm expired/used links, password update and subsequent login. A successful API response alone is not evidence of inbox delivery.
 
