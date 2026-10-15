@@ -84,5 +84,66 @@
     "license": "Public domain",
     "credit": "Dmn",
     "notes": "Photograph of a sweater on a wooden surface; check suitability, condition and duplicate content before promotion."
+  },
+  {
+    "id": "candidate-blazer-001",
+    "image": "candidate-blazer-001.jpg",
+    "expectedCategory": "Outerwear",
+    "expectedType": "Blazer",
+    "source": "https://commons.wikimedia.org/wiki/File:Navy_blazer_jacket.jpg",
+    "license": "CC BY-SA 4.0",
+    "credit": "サフィル",
+    "notes": "Navy blazer garment image. Review visual isolation and independence before approval.",
+    "verified": false,
+    "reviewStatus": "needs-visual-review"
+  },
+  {
+    "id": "candidate-blazer-002",
+    "image": "candidate-blazer-002.jpg",
+    "expectedCategory": "Outerwear",
+    "expectedType": "Blazer",
+    "source": "https://commons.wikimedia.org/wiki/File:Navy_Blazer_(51011161195).jpg",
+    "license": "CC BY 2.0",
+    "credit": "ajay_suresh",
+    "notes": "Navy blazer photograph. Confirm single garment is prominent and not a storefront scene.",
+    "verified": false,
+    "reviewStatus": "needs-visual-review"
+  },
+  {
+    "id": "candidate-coat-001",
+    "image": "candidate-coat-001.jpg",
+    "expectedCategory": "Outerwear",
+    "expectedType": "Coat",
+    "source": "https://commons.wikimedia.org/wiki/File:Woman%27s_wool_coat,_sold_by_J.S._Graham_in_Seattle_c._1890.jpg",
+    "license": "CC BY-SA 4.0",
+    "credit": "Joe Mabel",
+    "notes": "Museum garment from circa 1890; keep as edge-case candidate, not representative modern wardrobe photo.",
+    "verified": false,
+    "reviewStatus": "needs-visual-review"
+  },
+  {
+    "id": "candidate-shirt-001",
+    "image": "candidate-shirt-001.jpg",
+    "expectedCategory": "Tops",
+    "expectedType": "Shirt",
+    "source": "https://commons.wikimedia.org/wiki/File:Banana_Republic_Button-Down_Shirt_1_2019-03-21.jpg",
+    "license": "CC BY-SA 4.0",
+    "credit": "FASTILY",
+    "sourceObjectId": "Banana-Republic-Shirt-2019-03-21",
+    "notes": "Smartphone clothing photo; other numbered images may depict same shirt, so use one garment only.",
+    "verified": false,
+    "reviewStatus": "needs-visual-review"
+  },
+  {
+    "id": "candidate-shirt-002",
+    "image": "candidate-shirt-002.jpg",
+    "expectedCategory": "Tops",
+    "expectedType": "Shirt",
+    "source": "https://commons.wikimedia.org/wiki/File:Modern_Tailor_testshirt.jpg",
+    "license": "CC BY-SA 2.0",
+    "credit": "Guy Sie",
+    "notes": "Oxford shirt photo; review focus and category before approval.",
+    "verified": false,
+    "reviewStatus": "needs-visual-review"
   }
 ]
