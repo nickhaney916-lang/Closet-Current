@@ -27,7 +27,7 @@ for(const m of manifest){
   else {negatives.falsePositives++;issues.push({id:m.id,kind:'negative_false_positive',actual:predicted,strong:!!r.strong,categoryConfirmed:!!r.categoryConfirmed});}
   continue;
  }
- const group=grouped[m.expectedType]??={total:0,categoryCorrect:0,typeCorrect:0,automaticWrong:0,abstentions:0};
+ const group=grouped[m.expectedType]??={total:0,categoryCorrect:0,typeCorrect:0,automaticWrong:0,automaticWrongSubtype:0,abstentions:0};
  group.total++;
  if(!r){issues.push({id:m.id,kind:'missing_result'});continue;}
  if(r.error){issues.push({id:m.id,kind:'inference_error',detail:String(r.error)});continue;}
@@ -39,12 +39,15 @@ for(const m of manifest){
   group.automaticWrong++;
   issues.push({id:m.id,kind:'wrong_automatic_category',expected:m.expectedCategory,actual:category});
  }else if(category!==m.expectedCategory)issues.push({id:m.id,kind:'category_mismatch',expected:m.expectedCategory,actual:category});
- else if(!(m.acceptedTypes||[m.expectedType]).includes(type))issues.push({id:m.id,kind:'type_mismatch',expected:m.expectedType,actual:type});
+ else if(!(m.acceptedTypes||[m.expectedType]).includes(type)){
+  if(r.strong)group.automaticWrongSubtype++;
+  issues.push({id:m.id,kind:r.strong?'wrong_automatic_subtype':'type_mismatch',expected:m.expectedType,actual:type});
+ }
 }
 for(const id of byId.keys())if(!manifest.some(m=>m.id===id))issues.push({id,kind:'unexpected_result'});
 const pct=(num,den)=>den?+(100*num/den).toFixed(2):null;
-const totals=Object.values(grouped).reduce((a,b)=>({total:a.total+b.total,categoryCorrect:a.categoryCorrect+b.categoryCorrect,typeCorrect:a.typeCorrect+b.typeCorrect,automaticWrong:a.automaticWrong+b.automaticWrong,abstentions:a.abstentions+b.abstentions}),{total:0,categoryCorrect:0,typeCorrect:0,automaticWrong:0,abstentions:0});
-const report={requiredMinimum:minimum,sampleSize:manifest.length,resultCount:results.length,categoryAccuracyPercent:pct(totals.categoryCorrect,totals.total),acceptedTypeAccuracyPercent:pct(totals.typeCorrect,totals.total),automaticWrongCount:totals.automaticWrong,abstentionCount:totals.abstentions,negativeControls:negatives,byType:grouped,issues,passing:manifest.length>=minimum&&totals.automaticWrong===0&&negatives.falsePositives===0&&issues.length===0};
+const totals=Object.values(grouped).reduce((a,b)=>({total:a.total+b.total,categoryCorrect:a.categoryCorrect+b.categoryCorrect,typeCorrect:a.typeCorrect+b.typeCorrect,automaticWrong:a.automaticWrong+b.automaticWrong,automaticWrongSubtype:a.automaticWrongSubtype+b.automaticWrongSubtype,abstentions:a.abstentions+b.abstentions}),{total:0,categoryCorrect:0,typeCorrect:0,automaticWrong:0,abstentions:0});
+const report={requiredMinimum:minimum,sampleSize:manifest.length,resultCount:results.length,categoryAccuracyPercent:pct(totals.categoryCorrect,totals.total),acceptedTypeAccuracyPercent:pct(totals.typeCorrect,totals.total),automaticWrongCount:totals.automaticWrong,automaticWrongSubtypeCount:totals.automaticWrongSubtype,abstentionCount:totals.abstentions,negativeControls:negatives,byType:grouped,issues,passing:manifest.length>=minimum&&totals.automaticWrong===0&&totals.automaticWrongSubtype===0&&negatives.falsePositives===0&&issues.length===0};
 const data=JSON.stringify(report,null,2)+'\n';
 if(outputPath)fs.writeFileSync(outputPath,data);
 process.stdout.write(data);
