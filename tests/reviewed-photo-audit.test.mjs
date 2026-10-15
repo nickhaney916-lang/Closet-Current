@@ -49,3 +49,13 @@ test('duplicate manifest IDs cannot inflate measured accuracy',async()=>{
  assert.equal(status,1);
  assert.ok(report.issues.some(x=>x.kind==='duplicate_manifest_id'));
 });
+
+test('category-only Unknown subtype is a mismatch, not a confident wrong subtype',async()=>{
+ const {status,report}=await audit(fixtures,[
+  {id:'top',strong:true,categoryOnly:true,prediction:{category:'Tops',type:'Unknown'}},
+  {id:'negative',strong:false,prediction:{}}
+ ]);
+ assert.equal(status,1);
+ assert.equal(report.automaticWrongSubtypeCount,0);
+ assert.ok(report.issues.some(x=>x.id==='top'&&x.kind==='type_mismatch'));
+});
