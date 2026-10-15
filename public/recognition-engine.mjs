@@ -65,6 +65,12 @@ export async function recognizeGarment(model,image,{onStage=()=>{},onIdentified=
  if(!agreementMatch(category,branch,overall))return await reviewDressCategory(model,confirmationModel,image,category,overallResults,dressEvidence)||{strong:false,choices:[],details:{},reason:'checks_disagree',diagnostics:{dressEvidence,category:category.slice(0,2).map(x=>({category:x.category,score:x.score})),branch:branch.slice(0,2).map(x=>({category:x.category,type:x.itemType,score:x.score})),overall:overall.slice(0,2).map(x=>({category:x.category,type:x.itemType,score:x.score}))}};
  const confirmation=clothingChoices(await confirmationModel(image,localCandidates.map(x=>x.label),options));
  if(!confirmation[0]||confirmation[0].score<.35||confirmation[0].score-(confirmation[1]?.score||0)<.1||confirmation[0].category!==branch[0].category||confirmation[0].itemType!==branch[0].itemType)return await reviewDressCategory(model,confirmationModel,image,category,overallResults,dressEvidence)||{strong:false,choices:[],details:{},reason:'views_disagree',diagnostics:{dressEvidence,branch:branch.slice(0,2).map(x=>({category:x.category,type:x.itemType,score:x.score})),confirmation:confirmation.slice(0,2).map(x=>({category:x.category,type:x.itemType,score:x.score}))}};
+ // Tailored and casual outerwear are visually similar. Do not automatically
+ // commit a jacket/blazer subtype unless the independent view separates it
+ // more clearly than the generic garment threshold.
+ if(branch[0].category==='Outerwear'&&['Jacket','Blazer'].includes(branch[0].itemType)&&confirmation[0].score-(confirmation[1]?.score||0)<.25){
+  return await reviewGarmentCategory(model,confirmationModel,image,category,overallResults,dressEvidence)||{strong:false,choices:[],details:{},reason:'outerwear_subtype_uncertain',diagnostics:{branch:branch.slice(0,2),confirmation:confirmation.slice(0,2)}};
+ }
  const first={...branch[0]};onIdentified(first);const details=await readVerifiedDetails(model,confirmationModel,image,first,onStage);
  return {strong:true,choices:[{...first,sleeveLength:details.sleeveLength||first.sleeveLength},...branch.slice(1)],details};
 }
