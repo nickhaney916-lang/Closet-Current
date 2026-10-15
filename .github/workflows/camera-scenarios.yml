@@ -23,3 +23,22 @@ jobs:
         run: node scripts/build.mjs
       - name: Run complete Node test suite (all application and recognition tests)
         run: node --test tests/*.test.cjs tests/*.test.mjs
+  collect-independent-photos:
+    if: github.event_name == 'workflow_dispatch' && github.ref_name == 'fix/mobile-recognition-timeout-diagnostics'
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Collect original candidate images and hashes
+        run: node scripts/collect-independent-photo-bytes.mjs
+      - name: Upload photo review evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: independent-photo-collection
+          path: benchmark/photo-collection/
+          retention-days: 14
