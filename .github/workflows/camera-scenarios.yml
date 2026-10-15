@@ -60,6 +60,37 @@ jobs:
           name: recognition-resolution-2048-vs-4096
           path: benchmark/resolution-comparison/
           retention-days: 14
+  original-photo-comparison:
+    runs-on: ubuntu-latest
+    timeout-minutes: 65
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prepare independently reviewed source photos
+        run: |
+          mkdir -p benchmark/original-photo-comparison
+          cp benchmark/manifest-fresh-11.json benchmark/original-photo-comparison/manifest.json
+          node scripts/download-reviewed-photos.mjs benchmark/original-photo-comparison/manifest.json
+          node scripts/validate-100-photo-set.mjs benchmark/original-photo-comparison/manifest.json benchmark/photos 11
+      - name: Prepare browser runner
+        run: |
+          npm install --no-save --no-package-lock --fetch-retries=4 playwright
+          npx playwright install --with-deps chromium
+          node scripts/build.mjs
+      - name: Compare full original photo to capped 4096px
+        run: |
+          node scripts/run-browser-photo-benchmark.mjs benchmark/original-photo-comparison/manifest.json benchmark/original-photo-comparison/original original
+          node scripts/run-browser-photo-benchmark.mjs benchmark/original-photo-comparison/manifest.json benchmark/original-photo-comparison/4096 4096
+          node scripts/compare-photo-resolutions.mjs benchmark/original-photo-comparison/manifest.json benchmark/original-photo-comparison/4096/results.json benchmark/original-photo-comparison/original/results.json benchmark/original-photo-comparison/comparison.json
+      - name: Upload original versus 4096 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: recognition-original-vs-4096
+          path: benchmark/original-photo-comparison/
+          retention-days: 14
   collect-independent-photos:
     if: github.ref_name == 'fix/mobile-recognition-timeout-diagnostics' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
