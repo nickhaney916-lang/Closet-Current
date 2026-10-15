@@ -52,7 +52,20 @@ try{
  const dialog=page.locator('dialog.photo-adjust');await dialog.getByLabel('Item name',{exact:true}).fill('Phone test blue top');
  await dialog.locator('label').filter({hasText:/^Main category/}).locator('select').selectOption('Tops');await dialog.locator('label').filter({hasText:/^Item type/}).locator('select').selectOption('T-shirt');await dialog.getByLabel('Color',{exact:true}).fill('Blue');await dialog.getByLabel('Summer',{exact:true}).check();
  await dialog.getByRole('button',{name:'Save changes',exact:true}).click();await dialog.waitFor({state:'detached'});
- await page.waitForFunction(()=>localPending.size===0&&!automaticRunning,null,{timeout:300000});
+ // Bound the wait and preserve diagnostics rather than hanging for five minutes.
+ try {
+  await page.waitForFunction(()=>localPending.size===0&&!automaticRunning,null,{timeout:45000});
+ } catch (error) {
+  const diagnostics=await page.evaluate(()=>({
+   pendingIds:[...localPending],automaticRunning,
+   localReady,recognitionUnavailable,busy,
+   message:document.querySelector('#message')?.textContent||null,
+   items:items.map(x=>({id:x.id,name:x.name,category:x.category,scanFailed:x.scanFailed,needsReview:x.needsReview}))
+  }));
+  await writeFile(out+'/recognition-timeout-diagnostics.json',JSON.stringify({diagnostics,pageErrors:errors},null,2));
+  await page.screenshot({path:out+'/recognition-timeout.png',fullPage:true});
+  throw new Error('Recognition did not settle after manual save: '+JSON.stringify(diagnostics),{cause:error});
+ }
  assert.equal(await page.evaluate(()=>localReady&&!recognitionUnavailable),true,'Actual recognition worker must finish successfully.');
  await page.locator('.tab[data-view="closet"]').click();await page.locator('#search').fill('Phone test');await page.locator('.closet-refine').evaluate(el=>el.open=true);await page.locator('#filter').selectOption('Tops');await page.locator('#seasonFilter').selectOption('Summer');assert.equal(await page.locator('#closetGrid article').count(),1);
  await page.reload();await page.evaluate(()=>closetReady);await page.locator('.tab[data-view="closet"]').click();await page.locator('#search').fill('Phone test');assert.equal(await page.locator('#closetGrid article').count(),1);
