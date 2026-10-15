@@ -10,6 +10,7 @@ const id='candidate-shell-001';
 const row=rows.find(x=>x.id===id),candidate=candidates.find(x=>x.id===id);
 if(!candidate||candidate.verified||candidate.expectedType!=='Jacket'||candidate.expectedCategory!=='Outerwear')throw Error('Unexpected diagnostic candidate state');
 if(row?.status!=='downloaded-unreviewed'||row.format!=='jpg'||!/^[a-f0-9]{64}$/.test(row.sha256))throw Error('Gray shell image was not downloaded and hashed');
+if(!/^[a-f0-9]{64}$/.test(candidate.sha256)||candidate.sha256!==row.sha256)throw Error('Gray shell download does not match locked candidate checksum');
 const bytes=readFileSync('benchmark/photo-collection/'+id+'.jpg');
 if(bytes.length!==row.bytes||createHash('sha256').update(bytes).digest('hex')!==row.sha256)throw Error('Collected image checksum mismatch');
 mkdirSync(outputDirectory,{recursive:true});
