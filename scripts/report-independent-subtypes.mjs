@@ -43,8 +43,14 @@ const outerwearConfusion=Object.fromEntries(outerwearTypes.map(expectedType=>{
 }));
 const raincoatVsCoat=items.filter(x=>x.expectedCategory==='Outerwear'&&x.expectedType==='Raincoat').map(x=>({
  id:x.id,expectedType:x.expectedType,predictedType:x.predictedType,consensusWrongSubtype:x.subtypeConsensusMismatch,
- originalWhole:x.modelViews.originalWhole,originalCenter:x.modelViews.originalCenter
+ originalWhole:x.modelViews.originalWhole,originalCenter:x.modelViews.originalCenter,
+ raincoatScoreWhole:(results.find(r=>r.id===x.id)?.diagnostics?.shadowPreprocessing?.originalWholeTypes||[]).find(v=>v.type==='Raincoat')?.score??null,
+ raincoatScoreCenter:(results.find(r=>r.id===x.id)?.diagnostics?.shadowPreprocessing?.originalCenterTypes||[]).find(v=>v.type==='Raincoat')?.score??null
 }));
+for(const item of raincoatVsCoat){
+ item.raincoatScoreCenterMinusWhole=Number.isFinite(item.raincoatScoreWhole)&&Number.isFinite(item.raincoatScoreCenter)?item.raincoatScoreCenter-item.raincoatScoreWhole:null;
+ item.cropChangesTopSubtype=!!item.originalWhole?.topType&&!!item.originalCenter?.topType&&item.originalWhole.topType!==item.originalCenter.topType;
+}
 const report={sampleSize:manifest.length,categoryCorrect:count('categoryCorrect'),exactSubtypeCorrect:count('exactSubtype'),compatibleSpecificCount:count('acceptableSpecific'),consensusSubtypeMismatchCount:count('subtypeConsensusMismatch'),acceptableSubtypeCount:items.filter(x=>x.exactSubtype||x.acceptableSpecific).length,outerwearConfusion,raincoatVsCoat,items};
 writeFileSync(reportPath,JSON.stringify(report,null,2)+'\n');
 console.log(JSON.stringify({sampleSize:report.sampleSize,categoryCorrect:report.categoryCorrect,exactSubtypeCorrect:report.exactSubtypeCorrect,compatibleSpecificCount:report.compatibleSpecificCount,acceptableSubtypeCount:report.acceptableSubtypeCount}));
