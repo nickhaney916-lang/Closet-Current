@@ -52,7 +52,20 @@ try{
  const dialog=page.locator('dialog.photo-adjust');await dialog.getByLabel('Item name',{exact:true}).fill('Phone test blue top');
  await dialog.locator('label').filter({hasText:/^Main category/}).locator('select').selectOption('Tops');await dialog.locator('label').filter({hasText:/^Item type/}).locator('select').selectOption('T-shirt');await dialog.getByLabel('Color',{exact:true}).fill('Blue');await dialog.getByLabel('Summer',{exact:true}).check();
  await dialog.getByRole('button',{name:'Save changes',exact:true}).click();await dialog.waitFor({state:'detached'});
- await page.waitForFunction(()=>localPending.size===0&&!automaticRunning,null,{timeout:300000});
+ // Bound the wait and preserve diagnostics rather than hanging for five minutes.
+ try {
+  await page.waitForFunction(()=>localPending.size===0&&!automaticRunning,null,{timeout:45000});
+ } catch (error) {
+  const diagnostics=await page.evaluate(()=>({
+   pendingIds:[...localPending],automaticRunning,
+   localReady,recognitionUnavailable,busy,
+   message:document.querySelector('#message')?.textContent||null,
+   items:items.map(x=>({id:x.id,name:x.name,category:x.category,scanFailed:x.scanFailed,needsReview:x.needsReview}))
+  }));
+  await writeFile(out+'/recognition-timeout-diagnostics.json',JSON.stringify({diagnostics,pageErrors:errors},null,2));
+  await page.screenshot({path:out+'/recognition-timeout.png',fullPage:true});
+  throw new Error('Recognition did not settle after manual save: '+JSON.stringify(diagnostics),{cause:error});
+ }
  assert.equal(await page.evaluate(()=>localReady&&!recognitionUnavailable),true,'Actual recognition worker must finish successfully.');
  await page.locator('.tab[data-view="closet"]').click();await page.locator('#search').fill('Phone test');await page.locator('.closet-refine').evaluate(el=>el.open=true);await page.locator('#filter').selectOption('Tops');await page.locator('#seasonFilter').selectOption('Summer');assert.equal(await page.locator('#closetGrid article').count(),1);
  await page.reload();await page.evaluate(()=>closetReady);await page.locator('.tab[data-view="closet"]').click();await page.locator('#search').fill('Phone test');assert.equal(await page.locator('#closetGrid article').count(),1);
@@ -99,14 +112,29 @@ try{
  const initialIds=await page.evaluate(()=>items.map(x=>x.id));
  await page.locator('#clothingPhotos').setInputFiles(realCases.map(([id])=>resolve('benchmark/photos/'+id+'.jpg')));
  try{
-  await page.waitForFunction(({ids,count})=>items.filter(x=>!ids.includes(x.id)).length>=count,{ids:initialIds,count:realCases.length},{timeout:90000});
+  await page.waitForFunction(({ids,count})=>[...items,...batch].filter(x=>!ids.includes(x.id)).length>=count,{ids:initialIds,count:realCases.length},{timeout:90000});
  }catch(error){
-  const diagnostics=await page.evaluate(ids=>({items:items.length,newItems:items.filter(x=>!ids.includes(x.id)).map(x=>({category:x.category,itemType:x.itemType,scanFailed:x.scanFailed})),busy,localPending:localPending.size,automaticRunning,message:document.querySelector('#message')?.textContent||null}),initialIds);
+  const diagnostics=await page.evaluate(ids=>({
+   items:items.length,
+   newItems:items.filter(x=>!ids.includes(x.id)).map(x=>({id:x.id,category:x.category,itemType:x.itemType,scanFailed:x.scanFailed})),
+   batchItems:batch.map(x=>({id:x.id,category:x.category,itemType:x.itemType})),
+   busy,localPending:localPending.size,automaticRunning,
+   message:document.querySelector('#message')?.textContent||null,
+   captureState:document.querySelector('#captureState')?.textContent||null,
+   sessionCount:document.querySelector('#sessionCount')?.textContent||null
+  }),initialIds);
+  const {createHash}=await import('node:crypto');
+  const sources=await Promise.all(realCases.map(async ([id])=>{
+   const bytes=await readFile(resolve('benchmark/photos/'+id+'.jpg'));
+   return {id,bytes:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex')};
+  }));
+  const sourceDuplicates=sources.flatMap((a,i)=>sources.slice(i+1).filter(b=>a.sha256===b.sha256).map(b=>[a.id,b.id]));
+  diagnostics.sources=sources;diagnostics.sourceDuplicates=sourceDuplicates;
   await writeFile(out+'/real-photo-import-diagnostics.json',JSON.stringify({diagnostics,pageErrors:errors},null,2));
   throw new Error('Real photo import did not produce eight distinct items: '+JSON.stringify(diagnostics),{cause:error});
  }
- await page.waitForFunction(ids=>items.filter(x=>!ids.includes(x.id)).every(x=>!localPending.has(x.id)),initialIds,{timeout:90000});
- const imported=await page.evaluate(ids=>items.filter(x=>!ids.includes(x.id)).map(x=>({category:x.category,itemType:x.itemType,color:x.color||null,needsReview:!!x.needsReview,scanFailed:!!x.scanFailed})),initialIds);
+ await page.waitForFunction(ids=>[...items,...batch].filter(x=>!ids.includes(x.id)).every(x=>!localPending.has(x.id))&&!automaticRunning,initialIds,{timeout:90000});
+ const imported=await page.evaluate(ids=>[...items,...batch].filter(x=>!ids.includes(x.id)).map(x=>({category:x.category,itemType:x.itemType,color:x.color||null,needsReview:!!x.needsReview,scanFailed:!!x.scanFailed})),initialIds);
  for(let i=0;i<realCases.length;i++){const [id,expected]=realCases[i],observed=imported[i];realResults.push({id,expected,...observed,correctCategory:observed.category===expected});}
  await writeFile(out+'/real-photo-indexing.json',JSON.stringify({cases:realResults,categoryAccuracy:realResults.filter(x=>x.correctCategory).length/realResults.length},null,2));
  assert.deepEqual(errors,[]);await page.screenshot({path:out+'/closet.png',fullPage:true});
