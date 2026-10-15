@@ -179,5 +179,41 @@
     "license": "CC BY-SA 3.0 / GFDL",
     "credit": "Hephaestos",
     "notes": "Source original only 286x800 pixels (18KB), a poor mobile-camera benchmark exemplar. Exclude from main single-garment independent holdout; potentially keep as low-resolution robustness fixture, without counting toward 40-photo target."
+  },
+  {
+    "id": "candidate-shell-001",
+    "image": "candidate-shell-001.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Hard-shell-jacket.jpg",
+    "expectedCategory": "Outerwear",
+    "expectedType": "Jacket",
+    "verified": false,
+    "reviewStatus": "needs-visual-review",
+    "license": "Public domain",
+    "credit": "Skarkkai (source uploader; author attribution assumed)",
+    "notes": "Waterproof breathable hard-shell jacket, original 1728x2226 JPEG 478 KB. Candidate modern-style rain shell; Jacket versus Raincoat subtype needs visual review before locking label. Do not promote automatically."
+  },
+  {
+    "id": "candidate-shell-002",
+    "image": "candidate-shell-002.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Water_repellent_shell_layer_jacket.jpg",
+    "expectedCategory": "Outerwear",
+    "expectedType": "Jacket",
+    "verified": false,
+    "reviewStatus": "needs-visual-review",
+    "license": "CC BY-SA 3.0 / GFDL",
+    "credit": "alinja",
+    "notes": "Water repellent on shell layer jacket (Haglöfs Heli II), original 1254x1242 JPEG 227 KB. Inspect whether image shows sufficiently complete garment versus fabric close-up; may be unsuitable."
+  },
+  {
+    "id": "candidate-shell-003",
+    "image": "candidate-shell-003.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Early_Gore-Tex_hooded_rain_jacket.jpg",
+    "expectedCategory": "Outerwear",
+    "expectedType": "Raincoat",
+    "verified": false,
+    "reviewStatus": "needs-visual-review",
+    "license": "CC BY-SA 4.0",
+    "credit": "Joe Mabel",
+    "notes": "Hooded Gore-Tex rain jacket c. 1976, museum exhibit, original 3264x4928 JPEG 4.36 MB. More jacket-shaped than historical trenchcoats; visual review and label adjudication required."
   }
 ]
