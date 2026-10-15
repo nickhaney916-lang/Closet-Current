@@ -39,10 +39,14 @@ $('run').onclick=async()=>{
    const started=performance.now();
    try{const data=await jpeg(file),colorEstimate=await estimateColor(data),result=await session.call({type:'classify',image:data,benchmarkDiagnostics:true});const choice=result.choices?.[0];let framingExperiment=null;
    if(item.diagnosticOnly===true&&item.contextContaminated===true){
-    const frame=await paddedFrameData(file);
-    const framed=await session.call({type:'classify',image:frame,benchmarkDiagnostics:true});
-    const picked=framed.choices?.[0];
-    framingExperiment={method:'inset-3-percent-each-side',prediction:{category:picked?.category||null,type:picked?.itemType||null},reason:framed.reason||null,diagnostics:framed.diagnostics||null};
+    try{
+     const frame=await paddedFrameData(file);
+     const framed=await session.call({type:'classify',image:frame,benchmarkDiagnostics:true});
+     const picked=framed.choices?.[0];
+     framingExperiment={method:'inset-3-percent-each-side',prediction:{category:picked?.category||null,type:picked?.itemType||null},reason:framed.reason||null,diagnostics:framed.diagnostics||null};
+    }catch(error){
+     framingExperiment={method:'inset-3-percent-each-side',error:String(error.message||error)};
+    }
    }
    output.push({id:item.id,framingExperiment,prediction:{category:choice?.category||null,type:choice?.itemType||null},strong:!!result.strong,categoryOnly:!!result.categoryOnly,categoryConfirmed:!!result.categoryConfirmed,preprocessingRecovery:!!result.preprocessingRecovery,reason:result.reason||null,details:result.details||{},recognitionMemory:result.recognitionMemory||null,colorEstimate,sleeveLength:choice?.sleeveLength||'Unknown',diagnostics:result.diagnostics||null,elapsedMs:Math.round(performance.now()-started)});}
    catch(e){output.push({id:item.id,error:String(e.message||e)});}
