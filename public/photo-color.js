@@ -5,5 +5,22 @@
   if(support>=.55&&agrees>=3)return {color,source:'photo-estimate',support:+support.toFixed(3)};
   const chromatic=ranked.filter(([name,n])=>!['Black','White','Gray','Beige','Brown'].includes(name)&&n/total>=.12);if(chromatic.length>=2&&support<.55&&chromatic.reduce((sum,[,n])=>sum+n/total,0)>=.65)return {color:'Multicolor',source:'photo-estimate',support:+chromatic.reduce((sum,[,n])=>sum+n/total,0).toFixed(3)};return {color:support>=.6?color:'Multicolor',source:'photo-estimate',support:+support.toFixed(3),needsConfirmation:true};
  }
- const api={family,estimate};root.PhotoColor=api;if(typeof module!=='undefined')module.exports=api;
+
+ // Mask-aware palette: ignore transparent background and low-alpha antialias edges.
+ // Keep uncertain colors for review instead of silently assigning them.
+ function maskedPalette(pixels,width,height,{minimumAlpha=224,minimumShare=.12}={}){
+  if(!Number.isInteger(width)||!Number.isInteger(height)||width<8||height<8||!pixels||pixels.length!==width*height*4)throw Error('Invalid masked color sample');
+  const counts=new Map();let total=0;
+  for(let i=0;i<pixels.length;i+=4){
+   if(pixels[i+3]<minimumAlpha)continue;
+   const name=family(pixels[i],pixels[i+1],pixels[i+2]);
+   counts.set(name,(counts.get(name)||0)+1);total++;
+  }
+  if(total<32)return null;
+  const ranked=[...counts].sort((a,b)=>b[1]-a[1]);
+  const colors=ranked.filter(([,n])=>n/total>=minimumShare).map(([color,n])=>({color,share:+(n/total).toFixed(3)}));
+  const primary=ranked[0][0],confidence=ranked[0][1]/total;
+  return {primary,secondary:colors.find(x=>x.color!==primary)?.color||null,colors,coverage:+(total/(width*height)).toFixed(3),needsConfirmation:confidence<.6||total<100};
+ }
+ const api={family,estimate,maskedPalette};root.PhotoColor=api;if(typeof module!=='undefined')module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);
