@@ -1,0 +1,38 @@
+[
+  {
+    "id": "candidate-rainwear-001",
+    "expectedCategory": "Outerwear",
+    "expectedType": "Raincoat",
+    "verified": false,
+    "image": "candidate-rainwear-001.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Raincoat.jpg",
+    "notes": "Yellow hooded rain cape; confirm visual label, ordinary rainwear suitability, uniqueness and source license before promotion."
+  },
+  {
+    "id": "candidate-rainwear-002",
+    "expectedCategory": "Outerwear",
+    "expectedType": "Raincoat",
+    "verified": false,
+    "image": "candidate-rainwear-002.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Raincoat_(AM_1979.59-1).jpg",
+    "notes": "Museum raincoat, confirm photograph quality and subtype."
+  },
+  {
+    "id": "candidate-rainwear-003",
+    "expectedCategory": "Outerwear",
+    "expectedType": "Raincoat",
+    "verified": false,
+    "image": "candidate-rainwear-003.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Harold_Wilson%27s_raincoat.jpg",
+    "notes": "Museum raincoat; visually review before validation."
+  },
+  {
+    "id": "candidate-rainwear-004",
+    "expectedCategory": "Outerwear",
+    "expectedType": "Raincoat",
+    "verified": false,
+    "image": "candidate-rainwear-004.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Raincoat_(AM_1979.59-5).jpg",
+    "notes": "Museum raincoat; check for overlap with second museum garment and confirm type."
+  }
+]
