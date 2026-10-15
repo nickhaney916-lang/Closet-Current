@@ -43,3 +43,25 @@ test('shadow outerwear vote requires agreement, never changes stored predictions
   assert.equal(data[0].prediction.category,null);
  }finally{await rm(dir,{recursive:true,force:true});}
 });
+
+test('offline rule comparison counts non-outerwear false positives and threshold tradeoffs',async()=>{
+ const dir=await mkdtemp(join(tmpdir(),'closet-rules-'));
+ try{
+  const manifest=join(dir,'manifest.json'),results=join(dir,'results.json'),output=join(dir,'report.json');
+  const items=[{id:'jacket',expectedCategory:'Outerwear',expectedType:'Jacket'},{id:'shirt',expectedCategory:'Tops',expectedType:'Shirt'}];
+  const data=items.map(item=>({id:item.id,strong:false,categoryConfirmed:false,diagnostics:{category:[{category:'Tops',score:.8}],shadowPreprocessing:{
+   originalWholeCategory:[{category:'Tops',score:.8}],originalCenterCategory:[{category:'Tops',score:.8}],
+   originalWholeTypes:[{category:'Outerwear',type:'Jacket',score:item.id==='jacket'?.45:.38}],
+   originalCenterTypes:[{category:'Outerwear',type:'Jacket',score:item.id==='jacket'?.46:.39}]
+  }}}));
+  await writeFile(manifest,JSON.stringify(items));await writeFile(results,JSON.stringify(data));
+  const run=spawnSync(process.execPath,['scripts/report-cross-category-evidence.mjs',manifest,results,output],{encoding:'utf8'});
+  assert.equal(run.status,0,run.stderr);
+  const report=JSON.parse(await readFile(output,'utf8'));
+  const loose=report.ruleComparisons.find(x=>x.minimumViewScore===.3);
+  assert.equal(loose.candidateCount,2);assert.equal(loose.correctCategory,1);assert.equal(loose.incorrectCategory,1);
+  const strict=report.ruleComparisons.find(x=>x.minimumViewScore===.4);
+  assert.equal(strict.candidateCount,1);assert.equal(strict.incorrectCategory,0);
+  assert.equal(report.ruleComparisons.find(x=>x.requireBroadSupport).candidateCount,0);
+ }finally{await rm(dir,{recursive:true,force:true});}
+});
