@@ -47,6 +47,15 @@ try{
   categoryStable:stability.filter(x=>x.categoryStable).length,
   unstable:stability.filter(x=>!x.stable).map(x=>x.id),categoryUnstable:stability.filter(x=>!x.categoryStable).map(x=>x.id),cases:stability
  },null,2));
+ const coatCases=stability.filter(x=>x.expectedCategory==='Outerwear'&&['commons-0067','commons-0068','commons-0069','commons-0070'].includes(x.id));
+ const coatResults=coatCases.map(x=>({
+  id:x.id,original:x.original,views:x.views.map(v=>({
+   size:v.size,label:v.label,category:v.category,score:v.score,
+   margin:+(v.score-(result.find(r=>r.id===x.id)?.framingComparison?.find(p=>p.contentSize===v.size)?.top?.[1]?.score||0)).toFixed(4)
+  }))
+ }));
+ await writeFile(join(outputDir,'coat-framing-comparison.json'),JSON.stringify(coatResults,null,2));
+ console.log('COAT_FRAMING_COMPARISON '+JSON.stringify(coatResults));
  console.log('FRAMING_STABILITY '+JSON.stringify({
   evaluated:stability.length,stable:stability.filter(x=>x.stable).length,
   categoryUnstable:stability.filter(x=>!x.categoryStable).map(x=>x.id),
