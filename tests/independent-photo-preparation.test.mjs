@@ -14,7 +14,7 @@ test('photo preparation promotes only approved licensed reviewed candidates and 
   assert.equal(run.status,0,run.stderr);
   const out=JSON.parse(await readFile(manifest,'utf8')),stats=JSON.parse(await readFile(report,'utf8'));
   assert.equal(out.length,1);assert.equal(out[0].id,'approved');
-  assert.equal(stats.approvedCount,1);assert.equal(stats.blocked.length,2);
+  assert.equal(stats.approvedCount,1);assert.equal(stats.blocked.length,2);assert.equal(stats.reviewQueueCount,1);assert.equal(stats.excludedCount,1);assert.equal(stats.reviewQueue[0].id,'unreviewed');
   assert.equal(stats.coverageByType.Raincoat,1);assert.equal(stats.missingByType.Jacket,5);
   assert.equal(stats.ready,false);
  }finally{await rm(dir,{recursive:true,force:true});}
