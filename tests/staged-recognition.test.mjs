@@ -97,3 +97,13 @@ test('clear independent jacket evidence still allows automatic identification',a
  assert.equal(r.choices[0].itemType,'Jacket');
  assert.equal(h.identified.length,1);
 });
+
+test('accepted outerwear records independent classifier evidence for photo audits',async()=>{
+ const h=setup([[cat('Outerwear'),cat('Tops',.05)],[type('Jacket'),type('Blazer',.05)],[type('Jacket'),type('Blazer',.05)],[type('Jacket'),type('Blazer',.05)]]);
+ const r=await h.scan();
+ assert.equal(r.strong,true);
+ assert.equal(r.diagnostics.acceptedEvidence.category[0].category,'Outerwear');
+ assert.equal(r.diagnostics.acceptedEvidence.branch[0].type,'Jacket');
+ assert.equal(r.diagnostics.acceptedEvidence.overall[0].type,'Jacket');
+ assert.equal(r.diagnostics.acceptedEvidence.confirmation[0].type,'Jacket');
+});
