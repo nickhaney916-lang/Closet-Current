@@ -30,7 +30,7 @@ jobs:
       - name: Run complete Node test suite (all application and recognition tests)
         run: node --test tests/*.test.cjs tests/*.test.mjs
   collect-independent-photos:
-    if: github.event_name == 'workflow_dispatch' && github.ref_name == 'fix/mobile-recognition-timeout-diagnostics'
+    if: github.ref_name == 'fix/mobile-recognition-timeout-diagnostics' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     continue-on-error: true
     timeout-minutes: 15
@@ -41,6 +41,14 @@ jobs:
           node-version: '22'
       - name: Collect original candidate images and hashes
         run: node scripts/collect-independent-photo-bytes.mjs
+      - name: Summarize rainwear photo collection
+        if: always()
+        run: |
+          if [ -f benchmark/photo-collection/report.json ]; then
+            node --input-type=module -e 'import {readFileSync,appendFileSync} from "node:fs"; const rows=JSON.parse(readFileSync("benchmark/photo-collection/report.json")); const pending=rows.filter(x=>x.id.includes("shell")||x.id.includes("trench")); const output=["## Rainwear photo downloads","","| Photo candidate | Collection result |","|---|---|",...pending.map(x=>`| ${x.id} | ${x.status}${x.reason?" — "+x.reason:""} |`),"","Downloaded photos are **not approved** until image content, license, subtype and baseline independence are reviewed."]; appendFileSync(process.env.GITHUB_STEP_SUMMARY,output.join("\\n")+"\\n");'
+          else
+            echo 'Photo collector did not produce a report.' >> "$GITHUB_STEP_SUMMARY"
+          fi
       - name: Upload photo review evidence
         if: always()
         uses: actions/upload-artifact@v4
