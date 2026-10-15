@@ -2,7 +2,9 @@
 // Evaluate a reviewed >=100-image result set and fail on missing results, wrong automatic labels,
 // duplicates, or unsupported automatic saves. Recognition inference is performed separately.
 import fs from 'node:fs';
-const [manifestPath,resultsPath,outputPath]=process.argv.slice(2);
+const [manifestPath,resultsPath,outputPath,minimumArg]=process.argv.slice(2);
+const minimum=minimumArg===undefined?100:Number(minimumArg);
+if(!Number.isInteger(minimum)||minimum<1)throw Error('Minimum must be a positive integer');
 if(!manifestPath||!resultsPath)throw Error('Usage: node scripts/audit-100-photo-results.mjs MANIFEST RESULTS [OUTPUT]');
 const manifest=JSON.parse(fs.readFileSync(manifestPath,'utf8'));
 const results=JSON.parse(fs.readFileSync(resultsPath,'utf8'));
@@ -29,7 +31,7 @@ for(const m of manifest){
 for(const id of byId.keys())if(!manifest.some(m=>m.id===id))issues.push({id,kind:'unexpected_result'});
 const pct=(num,den)=>den?+(100*num/den).toFixed(2):null;
 const totals=Object.values(grouped).reduce((a,b)=>({total:a.total+b.total,categoryCorrect:a.categoryCorrect+b.categoryCorrect,typeCorrect:a.typeCorrect+b.typeCorrect,automaticWrong:a.automaticWrong+b.automaticWrong,abstentions:a.abstentions+b.abstentions}),{total:0,categoryCorrect:0,typeCorrect:0,automaticWrong:0,abstentions:0});
-const report={sampleSize:manifest.length,resultCount:results.length,categoryAccuracyPercent:pct(totals.categoryCorrect,totals.total),acceptedTypeAccuracyPercent:pct(totals.typeCorrect,totals.total),automaticWrongCount:totals.automaticWrong,abstentionCount:totals.abstentions,byType:grouped,issues,passing:manifest.length>=100&&totals.automaticWrong===0&&issues.length===0};
+const report={requiredMinimum:minimum,sampleSize:manifest.length,resultCount:results.length,categoryAccuracyPercent:pct(totals.categoryCorrect,totals.total),acceptedTypeAccuracyPercent:pct(totals.typeCorrect,totals.total),automaticWrongCount:totals.automaticWrong,abstentionCount:totals.abstentions,byType:grouped,issues,passing:manifest.length>=minimum&&totals.automaticWrong===0&&issues.length===0};
 const data=JSON.stringify(report,null,2)+'\n';
 if(outputPath)fs.writeFileSync(outputPath,data);
 process.stdout.write(data);
