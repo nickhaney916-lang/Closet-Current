@@ -6,7 +6,24 @@ if(!candidatesFile||!manifestFile||!reportFile)throw Error('Usage: node scripts/
 const candidates=JSON.parse(readFileSync(candidatesFile,'utf8'));
 if(!Array.isArray(candidates))throw Error('Candidates must be an array.');
 const types=['Jacket','Coat','Blazer','Raincoat','Sweater','T-shirt','Blouse','Shirt'];
-const reviewed=candidates.filter(c=>c.verified===true&&c.reviewStatus==='approved'&&c.source&&c.image&&c.expectedCategory&&c.expectedType&&c.license&&c.credit);
+const categoryFor={Jacket:'Outerwear',Coat:'Outerwear',Blazer:'Outerwear',Raincoat:'Outerwear',Sweater:'Tops','T-shirt':'Tops',Blouse:'Tops',Shirt:'Tops'};
+const valid=c=>c.verified===true&&c.reviewStatus==='approved'&&
+ typeof c.id==='string'&&c.id.trim()&&typeof c.image==='string'&&c.image.trim()&&
+ typeof c.source==='string'&&/^https:\/\//.test(c.source)&&
+ typeof c.license==='string'&&c.license.trim()&&typeof c.credit==='string'&&c.credit.trim()&&
+ categoryFor[c.expectedType]===c.expectedCategory;
+const reviewed=candidates.filter(valid);
+const duplicates=[];
+const identities=new Map();
+for(const c of reviewed){
+ for(const [field,value] of [['id',c.id],['image',c.image],['source',c.source],['sourceObjectId',c.sourceObjectId],['sha256',c.sha256]]){
+  if(typeof value!=='string'||!value.trim())continue;
+  const key=field+':'+value.trim().toLowerCase();
+  if(identities.has(key))duplicates.push({field,id:c.id,conflictsWith:identities.get(key)});
+  else identities.set(key,c.id);
+ }
+}
+if(duplicates.length)throw Error('Duplicate approved independent photos: '+JSON.stringify(duplicates));
 const blocked=candidates.filter(c=>!reviewed.includes(c)).map(c=>({id:c.id,status:c.reviewStatus||'not-reviewed',type:c.expectedType||null,source:c.source||null}));
 const reviewQueue=blocked.filter(c=>!c.status.startsWith('excluded-'));
 const pendingCounts=Object.fromEntries(types.map(type=>[type,reviewQueue.filter(c=>c.type===type).length]));
