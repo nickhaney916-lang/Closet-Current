@@ -365,7 +365,7 @@ async function importClothingPhotos(files){
  stopCamera();busy=true;controls(true);session=0;
  try{
   const result=await readPhotoBatch(files,photoToJPEG,(image,file)=>{const accepted=candidate(image);if(accepted){const item=batch.at(-1);if(item)item.importFilename=file.name;}return accepted;});
-  window.__lastPhotoImportResult=result;
+  if(typeof window!=='undefined')window.__lastPhotoImportResult=result;
   if(result.added){switchView('review');message(result.errors.length?result.errors.join('; '):'');}
   else message(result.errors.length?'No photos could be imported. '+result.errors.join('; '):'Exact duplicate photos were skipped; they are already in your closet or review batch.');
  }finally{busy=false;controls(false);}
