@@ -28,6 +28,21 @@ try{
   variants:x.framingComparison?.map(v=>({size:v.contentSize,top:v.top?.slice(0,3)}))||null
  }));
  if(frameCases.length)console.log('FRAMING_MODEL_COMPARISON '+JSON.stringify(frameCases));
+ const stability=result.filter(x=>Array.isArray(x.framingComparison)&&x.framingComparison.length).map(x=>{
+  const views=x.framingComparison.map(v=>({size:v.contentSize,label:v.top?.[0]?.label||null,score:v.top?.[0]?.score||0}));
+  const uniqueTopLabels=[...new Set(views.map(v=>v.label))];
+  return {id:x.id,original:x.prediction,reason:x.reason,views,distinctTopLabels:uniqueTopLabels.length,
+   stable:uniqueTopLabels.length===1};
+ });
+ await writeFile(join(outputDir,'framing-stability.json'),JSON.stringify({
+  evaluated:stability.length,stable:stability.filter(x=>x.stable).length,
+  unstable:stability.filter(x=>!x.stable).map(x=>x.id),cases:stability
+ },null,2));
+ console.log('FRAMING_STABILITY '+JSON.stringify({
+  evaluated:stability.length,stable:stability.filter(x=>x.stable).length,
+  unstable:stability.filter(x=>!x.stable).map(x=>({id:x.id,views:x.views}))
+ }));
+
 const errors=result.filter(x=>x.error);const reasons=Object.fromEntries([...new Set(result.map(x=>x.reason|| (x.error?'runtime_error':'accepted')))].map(reason=>[reason,result.filter(x=>(x.reason||(x.error?'runtime_error':'accepted'))===reason).length]));console.log('Rejection reasons:',JSON.stringify(reasons));console.log('Actual browser inference results:',result.length,'errors:',errors.length);console.log('Error examples:',JSON.stringify(errors.slice(0,8)));await writeFile(join(outputDir,'run-summary.json'),JSON.stringify({count:result.length,errors:errors.length,reasons,errorExamples:errors.slice(0,8)},null,2));
  if(errors.length)process.exitCode=1;
 }finally{await browser?.close();await new Promise(r=>server.close(r));}
