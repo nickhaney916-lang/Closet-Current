@@ -13,7 +13,7 @@ try{
  const context=await browser.newContext({acceptDownloads:true});const page=await context.newPage();
  page.on('console',msg=>console.log('Browser:',msg.type(),msg.text().slice(0,300)));
  page.on('pageerror',e=>console.log('Page error:',e.message));
- const resolution=process.argv[4]||'2048';if(!['2048','4096'].includes(resolution))throw Error('Invalid benchmark resolution');
+ const resolution=process.argv[4]||'2048';if(!['2048','4096','original'].includes(resolution))throw Error('Invalid benchmark resolution');
  await page.goto('http://127.0.0.1:'+port+'/benchmark.html?maxDimension='+resolution);
  await page.locator('#manifest').setInputFiles(manifest);
  const names=(await readdir(photoDir)).filter(x=>/\.(jpg|png|webp)$/i.test(x)).map(x=>join(photoDir,x));
