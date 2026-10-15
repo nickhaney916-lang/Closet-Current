@@ -7,7 +7,7 @@ const [reportPath,candidatesPath,outputManifest,outputDirectory,requestedId='can
 if(!reportPath||!candidatesPath||!outputManifest||!outputDirectory)throw Error('Usage: node scripts/stage-shell-diagnostic.mjs REPORT CANDIDATES OUT_MANIFEST OUT_DIR');
 const rows=JSON.parse(readFileSync(reportPath,'utf8')),candidates=JSON.parse(readFileSync(candidatesPath,'utf8'));
 const id=requestedId;
-if(!['candidate-shell-001','candidate-shell-003'].includes(id))throw Error('Unsupported diagnostic image');
+if(!['candidate-shell-001','candidate-shell-003','candidate-rainwear-001'].includes(id))throw Error('Unsupported diagnostic image');
 const row=rows.find(x=>x.id===id),candidate=candidates.find(x=>x.id===id);
 if(!candidate||candidate.verified||candidate.expectedCategory!=='Outerwear'||!['Jacket','Raincoat'].includes(candidate.expectedType))throw Error('Unexpected diagnostic candidate state');
 if(row?.status!=='downloaded-unreviewed'||row.format!=='jpg'||!/^[a-f0-9]{64}$/.test(row.sha256))throw Error('Gray shell image was not downloaded and hashed');
