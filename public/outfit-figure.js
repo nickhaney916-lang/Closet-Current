@@ -19,7 +19,10 @@
    if(slot==='bottom'&&item.itemType==='Skirt')p.width=47;
    const region=document.createElement('div');region.className='outfit-mannequin-garment outfit-mannequin-'+slot;
    Object.assign(region.style,{left:p.left+'%',top:p.top+'%',width:p.width+'%',height:p.height+'%',zIndex:String(p.z)});
-   const img=document.createElement('img');img.src=item.image;img.alt='';img.loading='lazy';img.decoding='async';region.append(img);target.append(region);
+   const img=document.createElement('img');img.src=item.image;img.alt='';img.loading='lazy';img.decoding='async';
+   const fallback=document.createElement('span');fallback.className='outfit-mannequin-fallback';fallback.textContent=item.itemType||item.category||'Clothing';fallback.hidden=true;
+   img.addEventListener('error',()=>{img.hidden=true;fallback.hidden=false;},{once:true});
+   region.append(img,fallback);target.append(region);
   }
   const caption=document.createElement('span');caption.className='outfit-mannequin-caption';caption.textContent='Styling preview · photos show actual garments';target.append(caption);
   return target;
