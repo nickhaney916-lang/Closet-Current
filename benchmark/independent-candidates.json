@@ -6,7 +6,10 @@
     "verified": false,
     "image": "candidate-rainwear-001.jpg",
     "source": "https://commons.wikimedia.org/wiki/File:Raincoat.jpg",
-    "notes": "Yellow hooded rain cape; confirm visual label, ordinary rainwear suitability, uniqueness and source license before promotion."
+    "notes": "Source verified; rain cape rather than standard rain jacket. Hold for visual/category review; possible rainwear edge case.",
+    "reviewStatus": "needs-visual-review",
+    "license": "Public domain",
+    "credit": "B. Kroll"
   },
   {
     "id": "candidate-rainwear-002",
@@ -15,7 +18,11 @@
     "verified": false,
     "image": "candidate-rainwear-002.jpg",
     "source": "https://commons.wikimedia.org/wiki/File:Raincoat_(AM_1979.59-1).jpg",
-    "notes": "Museum raincoat, confirm photograph quality and subtype."
+    "notes": "Source verified as museum raincoat; must review photograph and label before using as independent validation.",
+    "reviewStatus": "needs-visual-review",
+    "license": "CC BY 4.0",
+    "credit": "Auckland Museum",
+    "sourceObjectId": "AucklandMuseum-1979.59"
   },
   {
     "id": "candidate-rainwear-003",
@@ -24,7 +31,10 @@
     "verified": false,
     "image": "candidate-rainwear-003.jpg",
     "source": "https://commons.wikimedia.org/wiki/File:Harold_Wilson%27s_raincoat.jpg",
-    "notes": "Museum raincoat; visually review before validation."
+    "notes": "Source verified as Harold Wilson's raincoat displayed in museum. Photo must be visually reviewed before promotion.",
+    "reviewStatus": "needs-visual-review",
+    "license": "CC BY-SA 4.0",
+    "credit": "Rathfelder"
   },
   {
     "id": "candidate-rainwear-004",
@@ -33,6 +43,10 @@
     "verified": false,
     "image": "candidate-rainwear-004.jpg",
     "source": "https://commons.wikimedia.org/wiki/File:Raincoat_(AM_1979.59-5).jpg",
-    "notes": "Museum raincoat; check for overlap with second museum garment and confirm type."
+    "notes": "EXCLUDE: Image 5/5 is another view of the same Auckland Museum item 1979.59 as candidate-rainwear-002. Would leak the same garment between validation examples.",
+    "reviewStatus": "excluded-same-garment",
+    "license": "CC BY 4.0",
+    "credit": "Auckland Museum",
+    "sourceObjectId": "AucklandMuseum-1979.59"
   }
 ]
