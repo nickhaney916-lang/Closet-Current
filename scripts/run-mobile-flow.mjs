@@ -116,6 +116,25 @@ try{
  console.log('REAL_PHOTO_INDEXING '+JSON.stringify(report));
  if(realResults.some(x=>x.importStatus==='added'&&(!x.category||x.category==='Uncategorized')))console.warn('REAL_PHOTO_REVIEW_REQUIRED '+JSON.stringify(realResults.filter(x=>x.importStatus==='added'&&(!x.category||x.category==='Uncategorized'))));
  if(realResults.some(x=>x.importStatus==='unaccounted'))throw Error('Some submitted photos have no import outcome');
+ // Regression: independent jacket evidence must offer a review-only category
+ // action that updates the real editor fields, without saving automatically.
+ const jacket=realResults.find(x=>x.id==='commons-0060');
+ if(jacket?.recognitionDiagnostics?.outerwearRecovery?.outerwearReviewSuggested){
+  const state=await page.evaluate(()=>{
+   const item=batch.find(x=>x.importFilename==='commons-0060.jpg');
+   assertItem: if(!item)break assertItem;
+   adjustPhoto(item);
+   return {found:!!item};
+  });
+  assert.equal(state.found,true,'Jacket should remain available for manual review');
+  const dialog=page.locator('dialog.clothing-editor');
+  await dialog.getByRole('button',{name:'Use Outerwear category'}).click();
+  assert.equal(await dialog.locator('select[aria-label="Main category"]').inputValue(),'Outerwear');
+  assert.equal(await dialog.locator('select[aria-label="Item type"]').inputValue(),'Unknown');
+  await dialog.getByRole('button',{name:'Cancel'}).click();
+  const after=await page.evaluate(()=>batch.find(x=>x.importFilename==='commons-0060.jpg')?.category);
+  assert.equal(after,'Uncategorized','Cancel must not silently save the suggested category');
+ }
  assert.deepEqual(errors,[]);await page.screenshot({path:out+'/closet.png',fullPage:true});
  const result={viewport:{width:390,height:844},camera,image,manualSave:true,searchAndFilters:true,reloadPersistence:true,automaticPhotoIndexing:true,realRecognitionWorker:true,auth:'test identity stub; production auth not tested',hardware:'Chromium fake camera; physical phone not tested',pageErrors:errors};await writeFile(out+'/results.json',JSON.stringify(result,null,2));console.log(JSON.stringify(result));
 }finally{await browser?.close();await new Promise(r=>server.close(r));}
