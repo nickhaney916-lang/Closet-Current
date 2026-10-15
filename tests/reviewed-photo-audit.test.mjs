@@ -40,3 +40,12 @@ test('wrong automatic subtype is reported as a failure',async()=>{
  ]);
  assert.equal(status,1);assert.ok(report.issues.some(x=>x.kind==='type_mismatch'));
 });
+
+test('duplicate manifest IDs cannot inflate measured accuracy',async()=>{
+ const duplicate=[fixtures[0],{...fixtures[0]}];
+ const {status,report}=await audit(duplicate,[
+  {id:'top',strong:true,prediction:{category:'Tops',type:'T-shirt'}}
+ ]);
+ assert.equal(status,1);
+ assert.ok(report.issues.some(x=>x.kind==='duplicate_manifest_id'));
+});
