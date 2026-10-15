@@ -5,8 +5,9 @@ function workerSession(){
  worker.onerror=e=>{for(const p of pending.values())p.reject(Error(e.message||'Worker failed'));pending.clear();};
  return {call(payload){const id=++sequence;return new Promise((resolve,reject)=>{pending.set(id,{resolve,reject});worker.postMessage({...payload,id});});},close(){worker.terminate();}};
 }
-const benchmarkMaxDimension=Number(new URL(location.href).searchParams.get('maxDimension')||2048);
-if(![2048,4096].includes(benchmarkMaxDimension))throw Error('Unsupported benchmark resolution');
+const resolutionParameter=new URL(location.href).searchParams.get('maxDimension')||'2048';
+if(!['2048','4096','original'].includes(resolutionParameter))throw Error('Unsupported benchmark resolution');
+const benchmarkMaxDimension=resolutionParameter==='original'?Infinity:Number(resolutionParameter);
 async function jpeg(file){
  const bitmap=await createImageBitmap(file);try{const canvas=document.createElement('canvas'),scale=Math.min(1,benchmarkMaxDimension/Math.max(bitmap.width,bitmap.height));canvas.width=Math.max(1,Math.round(bitmap.width*scale));canvas.height=Math.max(1,Math.round(bitmap.height*scale));const ctx=canvas.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(bitmap,0,0,canvas.width,canvas.height);return canvas.toDataURL('image/jpeg',.94);}finally{bitmap.close();}
 }
