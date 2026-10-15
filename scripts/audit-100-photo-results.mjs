@@ -46,7 +46,7 @@ for(const m of manifest){
 }
 for(const id of byId.keys())if(!manifest.some(m=>m.id===id))issues.push({id,kind:'unexpected_result'});
 const pct=(num,den)=>den?+(100*num/den).toFixed(2):null;
-const totals=Object.values(grouped).reduce((a,b)=>({total:a.total+b.total,categoryCorrect:a.categoryCorrect+b.categoryCorrect,typeCorrect:a.typeCorrect+b.typeCorrect,automaticWrong:a.automaticWrong+b.automaticWrong,automaticWrongSubtype:a.automaticWrongSubtype+b.automaticWrongSubtype,abstentions:a.abstentions+b.abstentions}),{total:0,categoryCorrect:0,typeCorrect:0,automaticWrong:0,abstentions:0});
+const totals=Object.values(grouped).reduce((a,b)=>({total:a.total+b.total,categoryCorrect:a.categoryCorrect+b.categoryCorrect,typeCorrect:a.typeCorrect+b.typeCorrect,automaticWrong:a.automaticWrong+b.automaticWrong,automaticWrongSubtype:a.automaticWrongSubtype+b.automaticWrongSubtype,abstentions:a.abstentions+b.abstentions}),{total:0,categoryCorrect:0,typeCorrect:0,automaticWrong:0,automaticWrongSubtype:0,abstentions:0});
 const report={requiredMinimum:minimum,sampleSize:manifest.length,resultCount:results.length,categoryAccuracyPercent:pct(totals.categoryCorrect,totals.total),acceptedTypeAccuracyPercent:pct(totals.typeCorrect,totals.total),automaticWrongCount:totals.automaticWrong,automaticWrongSubtypeCount:totals.automaticWrongSubtype,abstentionCount:totals.abstentions,negativeControls:negatives,byType:grouped,issues,passing:manifest.length>=minimum&&totals.automaticWrong===0&&totals.automaticWrongSubtype===0&&negatives.falsePositives===0&&issues.length===0};
 const data=JSON.stringify(report,null,2)+'\n';
 if(outputPath)fs.writeFileSync(outputPath,data);
