@@ -4,7 +4,7 @@ export const categoryCandidates=[
  {label:'a shirt, blouse, sweater, or other top',category:'Tops'},
  {label:'pants, shorts, or a skirt',category:'Bottoms'},
  {label:'a dress, jumpsuit, or romper',category:'Dresses'},
- {label:'a jacket, coat, blazer, cardigan, vest, or other outerwear garment',category:'Outerwear'},
+ {label:'a jacket, coat, or other outerwear',category:'Outerwear'},
  {label:'shoes, boots, or sandals',category:'Shoes'},
  {label:'a hat, bag, belt, scarf, jewelry, or sunglasses',category:'Accessories'},
  ...localCandidates.filter(x=>x.category==='Uncategorized').map(x=>({label:x.label,category:x.category}))
