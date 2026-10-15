@@ -28,9 +28,8 @@ try{
    const layout=await page.evaluate(()=>({viewport:innerWidth,document:document.documentElement.scrollWidth}));
    if(process.env.DISPLAY_ASSERT_LAYOUT==='1')assert.ok(layout.document<=layout.viewport+1,view+' overflow at '+width);
    if(view==='closet'){
+    const tiled=await page.locator('#closetCategories').count()>0;if(tiled){assert.equal(await page.locator('#closetGrid article').count(),0);assert.equal(await page.locator('.closet-category').count(),7);assert.equal(await page.locator('#closetCollection').isVisible(),false);assert.equal(await page.locator('#export').isVisible(),false);checks.push({width,view,layout,categoryTiles:7});await page.screenshot({path:out+'/'+width+'-'+view+'.png',fullPage:true,animations:'disabled'});await page.locator('.closet-category[data-category="Shoes"]').click();assert.equal(await page.locator('#closetGrid article').count(),2);await page.locator('#closetAllPieces').click();await page.locator('.closet-refine').evaluate(el=>el.open=true);}else{const first=await page.locator('#closetGrid article').first().boundingBox();checks.push({width,view,layout,firstPhotoTop:first.y});await page.screenshot({path:out+'/'+width+'-'+view+'.png',fullPage:true,animations:'disabled'});}
     assert.equal(await page.locator('#closetGrid article').count(),6);
-    const first=await page.locator('#closetGrid article').first().boundingBox();checks.push({width,view,layout,firstPhotoTop:first.y});
-    await page.screenshot({path:out+'/'+width+'-'+view+'.png',fullPage:true,animations:'disabled'});
     await page.locator('#filter').selectOption('Shoes');assert.equal(await page.locator('#closetGrid article').count(),2);await page.locator('#filter').selectOption('All categories');
     await page.locator('#search').fill('Blue jeans');assert.equal(await page.locator('#closetGrid article').count(),1);await page.locator('#search').fill('');
    }else{checks.push({width,view,layout});await page.screenshot({path:out+'/'+width+'-'+view+'.png',fullPage:true,animations:'disabled'});}
@@ -44,8 +43,16 @@ try{
   }
   await page.screenshot({path:out+'/'+width+'-adjust.png',fullPage:true,animations:'disabled'});await dialog.getByRole('button',{name:'Cancel',exact:true}).click();
   if(width<760){for(const control of await page.locator('.main-nav>.tab,.more-menu>summary').all()){const b=await control.boundingBox();assert.ok(b.width>=44&&b.height>=44,'Navigation touch target too small');}}
+  if(await page.locator('#closetCategories').count()){
+   await page.locator('#closetAllPieces').click();
+   const red=page.locator('#closetGrid article').filter({hasText:'Red T-shirt for casual weekends'}),target=page.locator('.closet-category[data-category="Tops"]');
+   if(width>=760){await red.locator('img').dragTo(target);await page.waitForFunction(()=>currentBoard.slots.top==='commons-0002');await red.locator('img').dragTo(page.locator('.closet-category[data-category="Shoes"]'));assert.equal(await page.evaluate(()=>currentBoard.slots.shoes||null),null);}
+   else{const button=red.locator('.closet-wear'),box=await button.boundingBox();await button.dispatchEvent('pointerdown',{pointerId:7,pointerType:'touch',button:0,clientX:box.x+20,clientY:box.y+20});await button.dispatchEvent('pointermove',{pointerId:7,pointerType:'touch',buttons:1,clientX:box.x+40,clientY:box.y});const drop=await target.boundingBox();await button.dispatchEvent('pointerup',{pointerId:7,pointerType:'touch',button:0,clientX:drop.x+drop.width/2,clientY:drop.y+drop.height/2});await page.waitForFunction(()=>currentBoard.slots.top==='commons-0002');}
+   await page.locator('#closetSaveLook').click();await page.waitForFunction(()=>savedOutfitBoards.some(x=>x.slots.top==='commons-0002'));await page.screenshot({path:out+'/'+width+'-closet-look.png',fullPage:true,animations:'disabled'});
+   await page.reload();await page.evaluate(()=>Promise.all([closetReady,outfitBoardReady]));assert.equal(await page.evaluate(()=>currentBoard.slots.top),'commons-0002');await page.locator('.tab[data-view="closet"]').click();assert.equal(await page.locator('#closetGrid article').count(),0);await page.locator('#closetClearLook').click();assert.equal(await page.evaluate(()=>Object.keys(currentBoard.slots).length),0);assert.equal(await page.evaluate(()=>items.length),6);
+  }
   assert.deepEqual(errors,[]);await context.close();
  }
- await writeFile(out+'/results.json',JSON.stringify({checks,filtersAndSearch:true,adjustDialogsFit:true,phoneNavigationTouchTargets:true,limitations:'Synthetic identity and licensed fixture wardrobe; no physical phone or production login.'},null,2));
+ await writeFile(out+'/results.json',JSON.stringify({checks,filtersAndSearch:true,categoryTilesAndDeferredPhotos:true,bodyLayoutDragAndTap:true,outfitPersistsOnReload:true,clearLookKeepsClothes:true,adjustDialogsFit:true,phoneNavigationTouchTargets:true,limitations:'Synthetic identity and licensed fixture wardrobe; no physical phone or production login.'},null,2));
  console.log(JSON.stringify(checks));
 }finally{await browser?.close();await new Promise(r=>server.close(r));}

@@ -7,13 +7,13 @@ async function persistBoardState(){
  const snapshot=boardBackup();
  await queued(()=>new Promise((resolve,reject)=>{const tx=db.transaction('state','readwrite');tx.objectStore('state').put({id:'outfit-board',...snapshot});tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);}));
 }
-async function storeBoard(){try{await persistBoardState();}catch{$('boardSaveStatus').textContent='This outfit could not be saved. Please try again.';}}
+async function storeBoard(){try{await persistBoardState();return true;}catch{$('boardSaveStatus').textContent='This outfit could not be saved. Please try again.';return false;}}
 function syncBoardInputs(){for(const [id,key]of Object.entries({boardName:'name',boardOccasion:'occasion',boardSeason:'season',boardAudience:'audience',boardSize:'size',boardBudget:'budget'}))$(id).value=currentBoard[key]||'';}
 function selectBoardPiece(slotId,itemId){
  delete currentBoard.ideas[slotId];
  for(const key of Object.keys(currentBoard.slots))if(currentBoard.slots[key]===itemId)delete currentBoard.slots[key];
  if(itemId)currentBoard.slots[slotId]=itemId;else delete currentBoard.slots[slotId];
- currentBoard=cleanOutfitBoard(currentBoard,items);renderOutfitBoard();storeBoard();
+ currentBoard=cleanOutfitBoard(currentBoard,items);renderOutfitBoard();return storeBoard();
 }
 function openBoardPicker(slotId){
  choosingSlot=slotId;const slot=outfitSlots.find(s=>s.id===slotId);$('boardPickerTitle').textContent='Choose '+slot.label.toLowerCase();
@@ -37,7 +37,7 @@ function renderOutfitBoard(){
   b.onclick=()=>openBoardPicker(slot.id);slots.append(b);
  }
  const count=Object.keys(currentBoard.slots).length,gaps=boardGaps(currentBoard,items);$('boardSummary').textContent=count+' of your own pieces selected · '+gaps.length+' open spaces'+(dress?' · dress covers top and bottoms':'');
- renderBoardSuggestions();renderSavedOutfitBoards();
+ renderBoardSuggestions();renderSavedOutfitBoards();if(typeof renderClosetBrowser==='function')renderClosetBrowser();
 }
 function renderBoardSuggestions(){
  const target=$('boardTarget').value||'shoes',slot=outfitSlots.find(s=>s.id===target),owned=closetGapOptions(target,currentBoard,items).slice(0,3);

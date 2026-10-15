@@ -27,13 +27,13 @@ try{
  await dialog.getByRole('button',{name:'Save changes',exact:true}).click();await dialog.waitFor({state:'detached'});
  await page.waitForFunction(()=>localPending.size===0&&!automaticRunning,null,{timeout:300000});
  assert.equal(await page.evaluate(()=>localReady&&!recognitionUnavailable),true,'Actual recognition worker must finish successfully.');
- await page.locator('.tab[data-view="closet"]').click();await page.locator('#search').fill('Phone test');await page.locator('#filter').selectOption('Tops');await page.locator('#seasonFilter').selectOption('Summer');assert.equal(await page.locator('#closetGrid article').count(),1);
+ await page.locator('.tab[data-view="closet"]').click();await page.locator('#search').fill('Phone test');await page.locator('.closet-refine').evaluate(el=>el.open=true);await page.locator('#filter').selectOption('Tops');await page.locator('#seasonFilter').selectOption('Summer');assert.equal(await page.locator('#closetGrid article').count(),1);
  await page.reload();await page.evaluate(()=>closetReady);await page.locator('.tab[data-view="closet"]').click();await page.locator('#search').fill('Phone test');assert.equal(await page.locator('#closetGrid article').count(),1);
  const saved=await page.evaluate(()=>items.find(x=>x.name==='Phone test blue top'));assert.equal(saved.category,'Tops');assert.equal(saved.itemType,'T-shirt');assert.equal(saved.userAdjusted,true);assert.equal(saved.color,'Blue');assert.deepEqual(saved.seasons,['Summer']);
  await page.locator('.tab[data-view="scan"]').click();await page.locator('summary').filter({hasText:'Add saved photos or a video'}).click();await page.locator('#clothingPhotos').setInputFiles(resolve('benchmark/photos/commons-0002.jpg'));
  await page.waitForFunction(()=>items.length===2&&localPending.size===0,null,{timeout:300000});
  const automatic=await page.evaluate(()=>items.find(x=>x.name!=='Phone test blue top'));assert.equal(automatic.category,'Tops');assert.equal(automatic.itemType,'T-shirt');assert.notEqual(automatic.userAdjusted,true);
- await page.locator('.tab[data-view="closet"]').click();await page.locator('#search').fill('');await page.locator('#filter').selectOption('All categories');assert.equal(await page.locator('#closetGrid article').count(),2);
+ await page.locator('.tab[data-view="closet"]').click();await page.locator('#search').fill('');await page.locator('#closetAllPieces').click();assert.equal(await page.locator('#closetGrid article').count(),2);
  assert.deepEqual(errors,[]);await page.screenshot({path:out+'/closet.png',fullPage:true});
  const result={viewport:{width:390,height:844},camera,image,manualSave:true,searchAndFilters:true,reloadPersistence:true,automaticPhotoIndexing:true,realRecognitionWorker:true,auth:'test identity stub; production auth not tested',hardware:'Chromium fake camera; physical phone not tested',pageErrors:errors};await writeFile(out+'/results.json',JSON.stringify(result,null,2));console.log(JSON.stringify(result));
 }finally{await browser?.close();await new Promise(r=>server.close(r));}
