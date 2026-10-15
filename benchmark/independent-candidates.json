@@ -79,11 +79,11 @@
     "expectedCategory": "Tops",
     "expectedType": "Sweater",
     "verified": false,
-    "reviewStatus": "needs-visual-review",
+    "reviewStatus": "visual-reviewed-awaiting-integrity",
     "source": "https://commons.wikimedia.org/wiki/File:Jumper_sweater.jpg",
     "license": "Public domain",
     "credit": "Dmn",
-    "notes": "Wikimedia source confirms jumper/sweater and public-domain reuse; still requires direct visual assessment and file integrity before approval."
+    "notes": "Image preview inspected: single light-colored crew-neck, long-sleeved knit sweater laid flat on wood. Sweater label appropriate. Source is public domain. Awaiting original download, checksum and baseline-overlap check."
   },
   {
     "id": "candidate-blazer-001",
@@ -93,9 +93,9 @@
     "source": "https://commons.wikimedia.org/wiki/File:Navy_blazer_jacket.jpg",
     "license": "CC BY-SA 4.0",
     "credit": "サフィル",
-    "notes": "Wikimedia source located; direct image-level visual assessment and confirmed labeling still required before approval.",
+    "notes": "Image preview inspected: single dark tailored blazer on hanger, lapels and buttons visible, wood background. Blazer label appropriate. CC BY-SA 4.0; attribution required. Awaiting original download, checksum and baseline-overlap check.",
     "verified": false,
-    "reviewStatus": "needs-visual-review"
+    "reviewStatus": "visual-reviewed-awaiting-integrity"
   },
   {
     "id": "candidate-blazer-002",
