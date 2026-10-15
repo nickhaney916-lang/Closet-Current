@@ -187,11 +187,12 @@
     "expectedCategory": "Outerwear",
     "expectedType": "Jacket",
     "verified": false,
-    "reviewStatus": "label-reviewed-awaiting-hash",
+    "reviewStatus": "label-reviewed-hash-collected",
     "license": "Public domain",
     "credit": "Skarkkai (source uploader; author attribution assumed)",
-    "notes": "Original 1728x2226 JPG visually inspected: one isolated gray waterproof breathable hard-shell jacket on a hanger. Commons description explicitly calls it a hard-shell jacket (not a raincoat); expectedType Jacket retained to test waterproof shell vs Raincoat/Coat confusion. Public-domain source and credit reviewed. No image SHA-256 has been verified; do not approve for accuracy benchmark until original bytes downloaded, hashed and baseline overlap checked.",
-    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/9/9d/Hard-shell-jacket.jpg"
+    "notes": "Isolated waterproof hard-shell, labeled Outerwear/Jacket after visual source review. GitHub Actions run 38809794669 downloaded original 489337-byte JPEG with this SHA-256; no SHA or source overlaps among 59 reviewed baseline examples. Candidate remains unapproved pending separate real browser diagnostic and acceptance review.",
+    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/9/9d/Hard-shell-jacket.jpg",
+    "sha256": "f275e71ccd6a74c85f1aab4f7f0a2487fa93c0fa867f35d671525717ae747c59"
   },
   {
     "id": "candidate-shell-002",
