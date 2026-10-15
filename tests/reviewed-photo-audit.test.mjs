@@ -65,3 +65,13 @@ test('browser benchmark preserves category-only result for audit',async()=>{
  const runner=await readFile('public/benchmark-runner.mjs','utf8');
  assert.match(runner,/categoryOnly:\s*!!result\.categoryOnly/);
 });
+
+test('photo benchmark opts into shadow preprocessing without changing regular capture',async()=>{
+ const runner=await readFile('public/benchmark-runner.mjs','utf8');
+ const worker=await readFile('public/local-worker.mjs','utf8');
+ assert.match(runner,/type:'classify',image:data,benchmarkDiagnostics:true/);
+ assert.match(worker,/if\(request\.benchmarkDiagnostics===true\)/);
+ assert.match(worker,/shadowPreprocessing/);
+ assert.match(worker,/originalWholeTypes/);
+ assert.match(worker,/originalCenterTypes/);
+});
