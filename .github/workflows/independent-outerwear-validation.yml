@@ -1,0 +1,45 @@
+name: Independent outerwear photo validation
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prepare baseline and require newly reviewed photos
+        run: |
+          mkdir -p benchmark/independent-validation
+          node scripts/assemble-reviewed-baseline.mjs benchmark/independent-validation/baseline.json benchmark/manifest-reviewed-32.json benchmark/manifest-holdout-16.json benchmark/manifest-fresh-11.json
+          if [ ! -f benchmark/manifest-independent.json ]; then
+            echo "::error::Add newly reviewed photographs in benchmark/manifest-independent.json before starting independent validation."
+            exit 1
+          fi
+          node scripts/check-independent-validation.mjs benchmark/independent-validation/baseline.json benchmark/manifest-independent.json benchmark/independent-validation/independence.json
+      - name: Prepare real FashionCLIP benchmark
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium
+          node scripts/download-reviewed-photos.mjs benchmark/manifest-independent.json
+          node scripts/validate-100-photo-set.mjs benchmark/manifest-independent.json benchmark/photos 1 > benchmark/independent-validation/photos.json
+          node scripts/build.mjs
+      - name: Run only genuinely new images
+        run: node scripts/run-browser-photo-benchmark.mjs benchmark/manifest-independent.json benchmark/independent-validation/results
+      - name: Evaluate frozen 40-percent candidate offline
+        if: always()
+        run: |
+          if [ -f benchmark/independent-validation/results/results.json ]; then
+            node scripts/report-cross-category-evidence.mjs benchmark/manifest-independent.json benchmark/independent-validation/results/results.json benchmark/independent-validation/rules.json
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: independent-outerwear-validation
+          path: benchmark/independent-validation/
+          retention-days: 14
