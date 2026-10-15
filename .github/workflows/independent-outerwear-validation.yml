@@ -17,10 +17,8 @@ jobs:
         run: |
           mkdir -p benchmark/independent-validation
           node scripts/assemble-reviewed-baseline.mjs benchmark/independent-validation/baseline.json benchmark/manifest-reviewed-32.json benchmark/manifest-holdout-16.json benchmark/manifest-fresh-11.json
-          if [ ! -f benchmark/manifest-independent.json ]; then
-            echo "::error::Add newly reviewed photographs in benchmark/manifest-independent.json before starting independent validation."
-            exit 1
-          fi
+          node scripts/prepare-independent-photos.mjs benchmark/independent-candidates.json benchmark/manifest-independent.json benchmark/independent-validation/coverage.json
+          node -e "const r=require('./benchmark/independent-validation/coverage.json'); if(!r.ready){console.error('Independent validation needs five approved reviewed examples in each garment category. Missing:',JSON.stringify(r.missingByType));process.exit(1)}"
           node scripts/check-independent-validation.mjs benchmark/independent-validation/baseline.json benchmark/manifest-independent.json benchmark/independent-validation/independence.json
       - name: Prepare real FashionCLIP benchmark
         run: |
