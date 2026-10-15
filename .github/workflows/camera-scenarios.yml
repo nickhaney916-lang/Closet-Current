@@ -76,10 +76,13 @@ jobs:
         run: |
           node --input-type=module -e 'import {readFileSync,appendFileSync} from "node:fs";const x=JSON.parse(readFileSync("benchmark/shell-diagnostic/results/results.json"))[0];appendFileSync(process.env.GITHUB_STEP_SUMMARY,`\n## Gray shell jacket recognition (diagnostic only)\n\n- Predicted: ${x?.prediction?.category||"none"} / ${x?.prediction?.type||"none"}\n- Expected label: Outerwear / Jacket\n- Runtime error: ${x?.error||"none"}\n- **Not an approved independent accuracy sample.**\n`);'
       - name: Stage unscored red rain jacket challenge
+        id: red-stage
+        continue-on-error: true
         run: |
           mkdir -p benchmark/rain-jacket-challenge
           node scripts/stage-shell-diagnostic.mjs benchmark/photo-collection/report.json benchmark/independent-candidates.json benchmark/rain-jacket-challenge/manifest.json benchmark/photos candidate-shell-003
       - name: Run FashionCLIP on mixed-garment rain jacket
+        if: steps.red-stage.outcome == 'success'
         run: |
           node scripts/run-browser-photo-benchmark.mjs benchmark/rain-jacket-challenge/manifest.json benchmark/rain-jacket-challenge/results
           node scripts/report-independent-subtypes.mjs benchmark/rain-jacket-challenge/manifest.json benchmark/rain-jacket-challenge/results/results.json benchmark/rain-jacket-challenge/subtypes.json
