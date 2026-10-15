@@ -79,7 +79,9 @@ function adjustPhoto(item){
  const evidence=item.recognitionDiagnostics?.outerwearRecovery;
  if(evidence?.outerwearReviewSuggested&&draft.category!=='Outerwear'){
   const suggestion=node('div',null,'recognition-review-suggestion');
-  suggestion.append(node('p','Photo checks suggest Outerwear. Confirm against the picture before applying.','fine'));
+  const proposedType=evidence.fullCatalogEvidence?.whole?.top?.[0]?.type;
+  const agreedType=proposedType&&proposedType===evidence.fullCatalogEvidence?.confirmation?.top?.[0]?.type?proposedType:null;
+  suggestion.append(node('p',agreedType?'Two photo checks suggest Outerwear ('+agreedType+'). Review the picture; the specific type will remain unconfirmed.':'Two photo checks suggest Outerwear. Confirm against the picture before applying.','fine'));
   const use=node('button','Use Outerwear category','secondary');use.type='button';
   use.onclick=()=>{
    draft.category='Outerwear';draft.itemType='Unknown';
