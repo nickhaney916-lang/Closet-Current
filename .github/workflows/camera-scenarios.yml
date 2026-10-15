@@ -39,7 +39,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Collect original candidate images and hashes
+      - name: Collect focused shell jacket and rainwear review photos
+        env:
+          CLOSET_COLLECTION_IDS: candidate-shell-001,candidate-shell-003,candidate-trench-001
         run: node scripts/collect-independent-photo-bytes.mjs
       - name: Summarize rainwear photo collection
         if: always()
