@@ -167,6 +167,31 @@ export async function recognizeWithRecovery(model,image,settings={}){
    }};
   }catch{/* Keep the uncertain result if either independent check fails. */}
  }
+ // A third, moderately padded full-catalog view can resolve a skirt/dress
+ // conflict without loosening the coat or general acceptance rules. Both
+ // padded views must independently favor Skirt by a wide margin.
+ if(!result.strong&&result.diagnostics?.skirtDressConflict?.requiresManualReview&&
+    settings.skirtPaddingModel&&settings.confirmationModel){
+  try{
+   const labels=localCandidates.map(x=>x.label);
+   const [padded,confirmation]=await Promise.all([
+    settings.skirtPaddingModel(image,labels,options),
+    settings.confirmationModel(image,labels,options)
+   ]);
+   const a=clothingChoices(padded),b=clothingChoices(confirmation);
+   const confident=v=>v[0]?.category==='Bottoms'&&v[0]?.itemType==='Skirt'&&
+    v[0].score>=.9&&v[0].score-(v[1]?.score||0)>=.75;
+   if(confident(a)&&confident(b)){
+    settings.onIdentified?.(a[0]);
+    return {strong:true,choices:[a[0]],details:{},
+     reason:'skirt_padded_views_agreement',preprocessingRecovery:true};
+   }
+   result.diagnostics={...result.diagnostics,skirtPaddingRecovery:{
+    padded:a.slice(0,2).map(x=>({category:x.category,type:x.itemType,score:x.score})),
+    confirmation:b.slice(0,2).map(x=>({category:x.category,type:x.itemType,score:x.score}))
+   }};
+  }catch{/* Ambiguous garments stay uncategorized if verification fails. */}
+ }
  // A coat with a strong category-specific vote but a conflicting whole-
  // catalog confirmation gets two independent full-catalog rechecks. Do not
  // weaken the general confirmation threshold for unrelated garment types.
