@@ -126,7 +126,13 @@ export async function recognizeWithRecovery(model,image,settings={}){
     settings.onIdentified?.(a[0]);
     return {strong:true,choices:[a[0]],details:{},reason:'skirt_dress_independent_agreement',preprocessingRecovery:true};
    }
-   result.diagnostics={...result.diagnostics,skirtDressRecovery:{
+   // Record the two-category conflict explicitly for future photo-quality
+   // benchmarking; never auto-save when the independent views disagree.
+   const conflict=a[0]?.category!==b[0]?.category;
+   result.diagnostics={...result.diagnostics,skirtDressConflict:conflict?{
+    firstCategory:a[0]?.category||null,confirmationCategory:b[0]?.category||null,
+    requiresManualReview:true
+   }:null,skirtDressRecovery:{
     first:a.slice(0,2).map(x=>({category:x.category,type:x.itemType,score:x.score})),
     confirmation:b.slice(0,2).map(x=>({category:x.category,type:x.itemType,score:x.score}))
    }};
