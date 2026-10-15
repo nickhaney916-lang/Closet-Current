@@ -32,7 +32,7 @@ async function load(){
    return (await vision(await processor(fitted))).image_embeds.data;
   },metadata,vectors);
   const originalCenter=makeVectorScorer(async image=>(await vision(await processor(image))).image_embeds.data,metadata,vectors);
-  scannerStage='ready';return {whole,center,originalWhole,originalCenter,modelKey:'fashion-clip/whole-v1/'+metadata.revision};
+  scannerStage='ready';return {whole,center,originalWhole,originalCenter,RawImage,prepareRecognitionPhoto,modelKey:'fashion-clip/whole-v1/'+metadata.revision};
  })().catch(error=>{classifierPromise=null;throw error;});
  return classifierPromise;
 }
@@ -41,9 +41,21 @@ self.onmessage=event=>{const request=event.data;chain=chain.then(async()=>{
  try{
   const model=await load();
   if(request.type==='load'){self.postMessage({type:'ready',id:request.id});return;}
-  if(!['classify','features'].includes(request.type)||typeof request.image!=='string'||!request.image.startsWith('data:image/jpeg;base64,'))throw Error('Invalid captured image.');
+  if(!['classify','features','benchmark-frames'].includes(request.type)||typeof request.image!=='string'||!request.image.startsWith('data:image/jpeg;base64,'))throw Error('Invalid captured image.');
   scannerStage='catalog_import';const {recognizeWithRecovery,classifyIsolatedGarment}=await import('./recognition-engine.mjs'+new URL(import.meta.url).search);
   scannerStage='identify';const image=await RawImageClass.read(request.image);
+  if(request.type==='benchmark-frames'){
+   // Offline test only. Do not save garments or alter production recognition.
+   const {localCandidates}=await import('./local-catalog.mjs'+new URL(import.meta.url).search);
+   const labels=localCandidates.map(x=>x.label);
+   const variants=[];
+   for(const size of [256,288,320,336]){
+    const framed=await model.prepareRecognitionPhoto(image,RawImageClass,{contentSizeOverride:size});
+    const ranked=await model.originalCenter(framed,labels);
+    variants.push({contentSize:size,top:ranked.slice(0,5)});
+   }
+   self.postMessage({type:'result',id:request.id,variants});return;
+  }
   if(request.type==='features'){const features=await model.whole.features(image);self.postMessage({type:'result',id:request.id,recognitionMemory:{version:1,modelKey:model.modelKey,features}});return;}
   const classify=request.hint?classifyIsolatedGarment:recognizeWithRecovery;
   const result=await classify(model.whole,image,{
