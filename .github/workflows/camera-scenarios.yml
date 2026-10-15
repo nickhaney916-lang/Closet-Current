@@ -90,7 +90,7 @@ jobs:
         if: always()
         run: |
           if [ -f benchmark/rain-jacket-challenge/results/results.json ]; then
-            node --input-type=module -e 'import {readFileSync,appendFileSync} from "node:fs";const rows=JSON.parse(readFileSync("benchmark/rain-jacket-challenge/results/results.json","utf8"));const x=rows[0]||{};appendFileSync(process.env.GITHUB_STEP_SUMMARY,"\n## Red rain jacket (unscored, other garments visible)\n\n"+JSON.stringify({id:x.id,prediction:x.prediction,framingExperiment:x.framingExperiment?{method:x.framingExperiment.method,prediction:x.framingExperiment.prediction,reason:x.framingExperiment.reason}:null,category:x.category,type:x.type,reason:x.reason,error:x.error},null,2)+"\n");'
+            node --input-type=module -e 'import {readFileSync,appendFileSync} from "node:fs";const rows=JSON.parse(readFileSync("benchmark/rain-jacket-challenge/results/results.json","utf8"));const x=rows[0]||{};appendFileSync(process.env.GITHUB_STEP_SUMMARY,"\n## Red rain jacket (unscored, other garments visible)\n\n"+JSON.stringify({id:x.id,prediction:x.prediction,framingExperiment:x.framingExperiment?{method:x.framingExperiment.method,prediction:x.framingExperiment.prediction,reason:x.framingExperiment.reason,error:x.framingExperiment.error}:null,category:x.category,type:x.type,reason:x.reason,error:x.error},null,2)+"\n");'
           else
             echo 'Red jacket challenge was not run or did not produce a result; it remains optional and is not an accuracy sample.' >> "$GITHUB_STEP_SUMMARY"
           fi
