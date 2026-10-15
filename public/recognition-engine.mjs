@@ -93,6 +93,15 @@ export async function recognizeWithRecovery(model,image,settings={}){
    settings.onIdentified?.(recovered.choices[0]);
    return {...recovered,preprocessingRecovery:true};
   }
+  // Record why the independent retry failed so real-photo tests can distinguish
+  // category prompt bias from type or view disagreement. Do not override gates.
+  result.diagnostics={...result.diagnostics,outerwearRecovery:{
+   reason:recovered.reason||'unconfirmed',
+   category:recovered.diagnostics?.category||null,
+   branch:recovered.diagnostics?.branch||null,
+   overall:recovered.diagnostics?.overall||null,
+   confirmation:recovered.diagnostics?.confirmation||null
+  }};
  }
  if(result.strong||result.categoryConfirmed||!['type_uncertain','checks_disagree','views_disagree'].includes(result.reason))return result;
  // Keep a verified broad category when subtype votes disagree. It remains in
