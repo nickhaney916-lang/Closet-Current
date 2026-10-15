@@ -8,7 +8,7 @@ if(!Array.isArray(candidates))throw Error('Candidates must be an array.');
 const types=['Jacket','Coat','Blazer','Raincoat','Sweater','T-shirt','Blouse','Shirt'];
 const reviewed=candidates.filter(c=>c.verified===true&&c.reviewStatus==='approved'&&c.source&&c.image&&c.expectedCategory&&c.expectedType&&c.license&&c.credit);
 const blocked=candidates.filter(c=>!reviewed.includes(c)).map(c=>({id:c.id,status:c.reviewStatus||'not-reviewed',type:c.expectedType||null,source:c.source||null}));
-const reviewQueue=blocked.filter(c=>c.status!=='excluded-same-garment');
+const reviewQueue=blocked.filter(c=>!c.status.startsWith('excluded-'));
 const pendingCounts=Object.fromEntries(types.map(type=>[type,reviewQueue.filter(c=>c.type===type).length]));
 const excludedCount=blocked.length-reviewQueue.length;
 const manifest=reviewed.map(({id,image,expectedCategory,expectedType,source,sourceImage,sourceObjectId,sha256,downloadUrl,license,credit})=>({
