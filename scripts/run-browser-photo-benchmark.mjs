@@ -56,6 +56,14 @@ try{
  }));
  await writeFile(join(outputDir,'coat-framing-comparison.json'),JSON.stringify(coatResults,null,2));
  console.log('COAT_FRAMING_COMPARISON '+JSON.stringify(coatResults));
+ const coatControls=stability.filter(x=>['commons-0053','commons-0065'].includes(x.id));
+ const falseCoatPredictions=coatControls.flatMap(x=>x.views.filter(v=>v.label==='a coat').map(v=>({id:x.id,expectedCategory:x.expectedCategory,size:v.size,score:v.score})));
+ const coatControlsReport={controlPhotos:coatControls.length,
+  comparedFrames:coatControls.reduce((n,x)=>n+x.views.length,0),
+  falseCoatPredictions,controls:coatControls.map(x=>({id:x.id,expectedCategory:x.expectedCategory,views:x.views}))};
+ await writeFile(join(outputDir,'coat-negative-controls.json'),JSON.stringify(coatControlsReport,null,2));
+ console.log('COAT_NEGATIVE_CONTROLS '+JSON.stringify(coatControlsReport));
+
  console.log('FRAMING_STABILITY '+JSON.stringify({
   evaluated:stability.length,stable:stability.filter(x=>x.stable).length,
   categoryUnstable:stability.filter(x=>!x.categoryStable).map(x=>x.id),
