@@ -114,7 +114,22 @@ try{
  try{
   await page.waitForFunction(({ids,count})=>items.filter(x=>!ids.includes(x.id)).length>=count,{ids:initialIds,count:realCases.length},{timeout:90000});
  }catch(error){
-  const diagnostics=await page.evaluate(ids=>({items:items.length,newItems:items.filter(x=>!ids.includes(x.id)).map(x=>({category:x.category,itemType:x.itemType,scanFailed:x.scanFailed})),busy,localPending:localPending.size,automaticRunning,message:document.querySelector('#message')?.textContent||null}),initialIds);
+  const diagnostics=await page.evaluate(ids=>({
+   items:items.length,
+   newItems:items.filter(x=>!ids.includes(x.id)).map(x=>({id:x.id,category:x.category,itemType:x.itemType,scanFailed:x.scanFailed})),
+   batchItems:batch.map(x=>({id:x.id,category:x.category,itemType:x.itemType})),
+   busy,localPending:localPending.size,automaticRunning,
+   message:document.querySelector('#message')?.textContent||null,
+   captureState:document.querySelector('#captureState')?.textContent||null,
+   sessionCount:document.querySelector('#sessionCount')?.textContent||null
+  }),initialIds);
+  const {createHash}=await import('node:crypto');
+  const sources=await Promise.all(realCases.map(async ([id])=>{
+   const bytes=await readFile(resolve('benchmark/photos/'+id+'.jpg'));
+   return {id,bytes:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex')};
+  }));
+  const sourceDuplicates=sources.flatMap((a,i)=>sources.slice(i+1).filter(b=>a.sha256===b.sha256).map(b=>[a.id,b.id]));
+  diagnostics.sources=sources;diagnostics.sourceDuplicates=sourceDuplicates;
   await writeFile(out+'/real-photo-import-diagnostics.json',JSON.stringify({diagnostics,pageErrors:errors},null,2));
   throw new Error('Real photo import did not produce eight distinct items: '+JSON.stringify(diagnostics),{cause:error});
  }
