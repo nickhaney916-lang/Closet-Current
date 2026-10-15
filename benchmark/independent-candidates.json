@@ -6,8 +6,8 @@
     "verified": false,
     "image": "candidate-rainwear-001.jpg",
     "source": "https://commons.wikimedia.org/wiki/File:Raincoat.jpg",
-    "notes": "Source verified; rain cape rather than standard rain jacket. Hold for visual/category review; possible rainwear edge case.",
-    "reviewStatus": "needs-visual-review",
+    "notes": "Yellow rain cape on hanger; not a typical sleeved raincoat. Hold subtype label for review; not included in independent smoke.",
+    "reviewStatus": "visual-reviewed-edge-case",
     "license": "Public domain",
     "credit": "B. Kroll"
   },
@@ -15,14 +15,16 @@
     "id": "candidate-rainwear-002",
     "expectedCategory": "Outerwear",
     "expectedType": "Raincoat",
-    "verified": false,
-    "image": "candidate-rainwear-002.jpg",
+    "verified": true,
+    "image": "commons-9003.jpg",
     "source": "https://commons.wikimedia.org/wiki/File:Raincoat_(AM_1979.59-1).jpg",
-    "notes": "Source verified as museum raincoat; must review photograph and label before using as independent validation.",
-    "reviewStatus": "needs-visual-review",
+    "notes": "Original image inspected: isolated belted raincoat on mannequin; image hash and source checked against original 59 reviewed records. Historical garment; label supported. Use limited smoke testing.",
+    "reviewStatus": "approved",
     "license": "CC BY 4.0",
     "credit": "Auckland Museum",
-    "sourceObjectId": "AucklandMuseum-1979.59"
+    "sourceObjectId": "AucklandMuseum-1979.59",
+    "sha256": "ceda5dc2a0036aa12858c2b28e485b8dd249630c4a5d57da9d851e59e38a57a0",
+    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/1/1c/Raincoat_%28AM_1979.59-1%29.jpg"
   },
   {
     "id": "candidate-rainwear-003",
@@ -31,8 +33,8 @@
     "verified": false,
     "image": "candidate-rainwear-003.jpg",
     "source": "https://commons.wikimedia.org/wiki/File:Harold_Wilson%27s_raincoat.jpg",
-    "notes": "Source verified as Harold Wilson's raincoat displayed in museum. Photo must be visually reviewed before promotion.",
-    "reviewStatus": "needs-visual-review",
+    "notes": "Coat on display with multiple garments/accessories underneath. Hold pending subtype and crop review.",
+    "reviewStatus": "visual-reviewed-edge-case",
     "license": "CC BY-SA 4.0",
     "credit": "Rathfelder"
   },
@@ -67,11 +69,11 @@
     "expectedCategory": "Outerwear",
     "expectedType": "Jacket",
     "verified": false,
-    "reviewStatus": "needs-visual-review",
+    "reviewStatus": "excluded-multiple-garments",
     "source": "https://commons.wikimedia.org/wiki/File:Denim_jacket_with_fox_lining,_D%C3%BCsseldorf,_November_2025.jpg",
     "license": "CC0 1.0",
     "credit": "Kürschner",
-    "notes": "Denim jacket display; review visual framing and ensure it is independent of prior benchmark photos."
+    "notes": "Actual original is street photograph of person carrying shopping bags wearing denim jacket and other clothing, not a single isolated jacket. Exclude from single-item benchmark."
   },
   {
     "id": "candidate-sweater-001",
@@ -121,33 +123,37 @@
     "source": "https://commons.wikimedia.org/wiki/File:Woman%27s_wool_coat,_sold_by_J.S._Graham_in_Seattle_c._1890.jpg",
     "license": "CC BY-SA 4.0",
     "credit": "Joe Mabel",
-    "notes": "Museum garment from circa 1890; keep as edge-case candidate, not representative modern wardrobe photo.",
+    "notes": "Historical crimson tailored long coat or coat-dress on mannequin; classification Coat versus Dress ambiguous, do not approve without independent label consensus.",
     "verified": false,
-    "reviewStatus": "needs-visual-review"
+    "reviewStatus": "visual-reviewed-edge-case"
   },
   {
     "id": "candidate-shirt-001",
-    "image": "candidate-shirt-001.jpg",
+    "image": "commons-9004.jpg",
     "expectedCategory": "Tops",
     "expectedType": "Shirt",
     "source": "https://commons.wikimedia.org/wiki/File:Banana_Republic_Button-Down_Shirt_1_2019-03-21.jpg",
     "license": "CC BY-SA 4.0",
     "credit": "FASTILY",
     "sourceObjectId": "Banana-Republic-Shirt-2019-03-21",
-    "notes": "Smartphone clothing photo; other numbered images may depict same shirt, so use one garment only.",
-    "verified": false,
-    "reviewStatus": "needs-visual-review"
+    "notes": "Original photo inspected: single navy collared button-up shirt on hanger. Original hash and source checked against all 59 baseline entries. Approved as Tops/Shirt limited independent smoke.",
+    "verified": true,
+    "reviewStatus": "approved",
+    "sha256": "cf4b802a99deed22ea6d7352d1933188d73fe594c86f1f10bed9aada59a49e18",
+    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/5/58/Banana_Republic_Button-Down_Shirt_1_2019-03-21.jpg"
   },
   {
     "id": "candidate-shirt-002",
-    "image": "candidate-shirt-002.jpg",
+    "image": "commons-9005.jpg",
     "expectedCategory": "Tops",
     "expectedType": "Shirt",
     "source": "https://commons.wikimedia.org/wiki/File:Modern_Tailor_testshirt.jpg",
     "license": "CC BY-SA 2.0",
     "credit": "Guy Sie",
-    "notes": "Oxford shirt photo; review focus and category before approval.",
-    "verified": false,
-    "reviewStatus": "needs-visual-review"
+    "notes": "Original photo inspected: folded light-blue button-down collared shirt, clear single garment. Hash and source absent from original 59 baseline entries. Approved as Tops/Shirt limited smoke.",
+    "verified": true,
+    "reviewStatus": "approved",
+    "sha256": "ac6bf392ecfc5eaee805fd59685b246aac7198ed18eda8a46e1230abe215b934",
+    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/c/c8/Modern_Tailor_testshirt.jpg"
   }
 ]
