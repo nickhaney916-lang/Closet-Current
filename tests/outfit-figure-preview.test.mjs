@@ -20,3 +20,12 @@ test('recommendation detail reuses the same board and existing edit/save callbac
  assert.match(src,/saveDetail\.onclick=\(\)=>\{dialog\.close\(\);save\.click\(\);\}/);
  assert.match(src,/dialog\.addEventListener\('close'/);
 });
+
+test('missing garment photos preserve the figure and show a labeled fallback',()=>{
+ const figure=readFileSync('public/outfit-figure.js','utf8');
+ const styles=readFileSync('public/style.css','utf8');
+ assert.match(figure,/img\.addEventListener\('error'/);
+ assert.match(figure,/fallback\.textContent=item\.itemType\|\|item\.category\|\|'Clothing'/);
+ assert.match(styles,/\.outfit-mannequin-fallback\[hidden\]\{display:none\}/);
+ assert.match(styles,/@media\(max-width:390px\)\{\.styled-outfit \.outfit-mannequin-card/);
+});
