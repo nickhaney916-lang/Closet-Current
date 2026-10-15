@@ -28,19 +28,29 @@ try{
   variants:x.framingComparison?.map(v=>({size:v.contentSize,top:v.top?.slice(0,3)}))||null
  }));
  if(frameCases.length)console.log('FRAMING_MODEL_COMPARISON '+JSON.stringify(frameCases));
+ const benchmarkEntries=JSON.parse(await readFile(manifest,'utf8'));
+ const expectedById=new Map(benchmarkEntries.map(x=>[x.id,x.expectedCategory]));
+ const {localCandidates}=await import('../public/local-catalog.mjs');
+ const labelCategories=new Map(localCandidates.map(x=>[Array.isArray(x)?x[0]:x.label,Array.isArray(x)?x[1]:x.category]));
  const stability=result.filter(x=>Array.isArray(x.framingComparison)&&x.framingComparison.length).map(x=>{
-  const views=x.framingComparison.map(v=>({size:v.contentSize,label:v.top?.[0]?.label||null,score:v.top?.[0]?.score||0}));
+  const views=x.framingComparison.map(v=>({size:v.contentSize,label:v.top?.[0]?.label||null,category:labelCategories.get(v.top?.[0]?.label)||null,score:v.top?.[0]?.score||0}));
   const uniqueTopLabels=[...new Set(views.map(v=>v.label))];
-  return {id:x.id,original:x.prediction,reason:x.reason,views,distinctTopLabels:uniqueTopLabels.length,
+  const distinctCategories=new Set(views.map(v=>v.category)).size;
+  const expectedCategory=expectedById.get(x.id)||null;
+  return {id:x.id,expectedCategory,original:x.prediction,reason:x.reason,views,
+   distinctTopLabels:uniqueTopLabels.length,distinctCategories,
+   categoryStable:distinctCategories===1,correctViewCount:views.filter(v=>v.category===expectedCategory).length,
    stable:uniqueTopLabels.length===1};
  });
  await writeFile(join(outputDir,'framing-stability.json'),JSON.stringify({
   evaluated:stability.length,stable:stability.filter(x=>x.stable).length,
-  unstable:stability.filter(x=>!x.stable).map(x=>x.id),cases:stability
+  categoryStable:stability.filter(x=>x.categoryStable).length,
+  unstable:stability.filter(x=>!x.stable).map(x=>x.id),categoryUnstable:stability.filter(x=>!x.categoryStable).map(x=>x.id),cases:stability
  },null,2));
  console.log('FRAMING_STABILITY '+JSON.stringify({
   evaluated:stability.length,stable:stability.filter(x=>x.stable).length,
-  unstable:stability.filter(x=>!x.stable).map(x=>({id:x.id,views:x.views}))
+  categoryUnstable:stability.filter(x=>!x.categoryStable).map(x=>x.id),
+  unstable:stability.filter(x=>!x.stable).map(x=>({id:x.id,expectedCategory:x.expectedCategory,correctViewCount:x.correctViewCount,views:x.views}))
  }));
 
 const errors=result.filter(x=>x.error);const reasons=Object.fromEntries([...new Set(result.map(x=>x.reason|| (x.error?'runtime_error':'accepted')))].map(reason=>[reason,result.filter(x=>(x.reason||(x.error?'runtime_error':'accepted'))===reason).length]));console.log('Rejection reasons:',JSON.stringify(reasons));console.log('Actual browser inference results:',result.length,'errors:',errors.length);console.log('Error examples:',JSON.stringify(errors.slice(0,8)));await writeFile(join(outputDir,'run-summary.json'),JSON.stringify({count:result.length,errors:errors.length,reasons,errorExamples:errors.slice(0,8)},null,2));
