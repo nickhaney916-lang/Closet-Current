@@ -56,6 +56,32 @@ jobs:
         if: always()
         run: |
           node scripts/check-photo-collection.mjs benchmark/photo-collection/report.json candidate-shell-001
+      - name: Stage unscored gray shell diagnostic
+        run: |
+          mkdir -p benchmark/shell-diagnostic
+          node scripts/stage-shell-diagnostic.mjs benchmark/photo-collection/report.json benchmark/independent-candidates.json benchmark/shell-diagnostic/manifest.json benchmark/photos
+      - name: Run real FashionCLIP recognition on gray waterproof jacket
+        run: |
+          for attempt in 1 2 3; do
+            if npm install --no-save --no-package-lock --fetch-retries=4 --fetch-retry-mintimeout=10000 playwright; then break; fi
+            if [ "$attempt" -eq 3 ]; then exit 1; fi
+            sleep $((attempt * 10))
+          done
+          npx playwright install --with-deps chromium
+          node scripts/build.mjs
+          node scripts/run-browser-photo-benchmark.mjs benchmark/shell-diagnostic/manifest.json benchmark/shell-diagnostic/results
+          node scripts/report-independent-subtypes.mjs benchmark/shell-diagnostic/manifest.json benchmark/shell-diagnostic/results/results.json benchmark/shell-diagnostic/subtypes.json
+      - name: Publish gray shell diagnostic result
+        if: success()
+        run: |
+          node --input-type=module -e 'import {readFileSync,appendFileSync} from "node:fs";const x=JSON.parse(readFileSync("benchmark/shell-diagnostic/results/results.json"))[0];appendFileSync(process.env.GITHUB_STEP_SUMMARY,`\n## Gray shell jacket recognition (diagnostic only)\n\n- Predicted: ${x?.prediction?.category||"none"} / ${x?.prediction?.type||"none"}\n- Expected label: Outerwear / Jacket\n- Runtime error: ${x?.error||"none"}\n- **Not an approved independent accuracy sample.**\n`);'
+      - name: Upload gray shell diagnostic evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: shell-jacket-unscored-diagnostic
+          path: benchmark/shell-diagnostic/
+          retention-days: 14
       - name: Upload photo review evidence
         if: always()
         uses: actions/upload-artifact@v4
