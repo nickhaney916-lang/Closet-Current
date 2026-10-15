@@ -65,7 +65,11 @@ jobs:
           node scripts/validate-100-photo-set.mjs benchmark/independent-smoke/manifest.json benchmark/photos 2 > benchmark/independent-smoke/photos.json
       - name: Run independent FashionCLIP browser smoke test
         run: |
-          npm install --no-save --no-package-lock playwright
+          for attempt in 1 2 3; do
+            if npm install --no-save --no-package-lock --fetch-retries=4 --fetch-retry-mintimeout=10000 playwright; then break; fi
+            if [ "$attempt" -eq 3 ]; then echo "::error::Playwright install failed after 3 attempts"; exit 1; fi
+            sleep $((attempt * 10))
+          done
           npx playwright install --with-deps chromium
           node scripts/build.mjs
           node scripts/run-browser-photo-benchmark.mjs benchmark/independent-smoke/manifest.json benchmark/independent-smoke/results
