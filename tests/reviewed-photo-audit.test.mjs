@@ -24,7 +24,7 @@ test('correct positive plus safely rejected negative passes',async()=>{
   {id:'top',strong:true,prediction:{category:'Tops',type:'T-shirt'}},
   {id:'negative',strong:false,categoryConfirmed:false,prediction:{category:null,type:null}}
  ]);
- assert.equal(status,0);assert.equal(report.negativeControls.correctlyRejected,1);assert.equal(report.categoryAccuracyPercent,100);
+ assert.equal(status,0);assert.equal(report.negativeControls.correctlyRejected,1);assert.equal(report.categoryAccuracyPercent,100);assert.equal(report.automaticWrongSubtypeCount,0);assert.equal(report.passing,true);
 });
 test('negative classified as a garment fails',async()=>{
  const {status,report}=await audit(fixtures,[
