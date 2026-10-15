@@ -26,3 +26,12 @@ test('approved images do not consume collection requests before rainwear review'
  assert.match(source,/row\.verified===true&&row\.reviewStatus==='approved'/);
  assert.match(source,/status:'already-approved'/);
 });
+
+test('collection filter selects only requested candidate IDs',()=>{
+ const source=readFileSync('scripts/collect-independent-photo-bytes.mjs','utf8');
+ assert.match(source,/process\.env\.CLOSET_COLLECTION_IDS/);
+ assert.match(source,/requestedIds\.size&&!requestedIds\.has\(row\.id\)/);
+ assert.match(source,/Unknown collection candidate/);
+ const workflow=readFileSync('.github/workflows/camera-scenarios.yml','utf8');
+ assert.match(workflow,/CLOSET_COLLECTION_IDS: candidate-shell-001,candidate-shell-003,candidate-trench-001/);
+});
