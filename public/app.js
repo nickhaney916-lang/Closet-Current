@@ -83,9 +83,9 @@ function adjustPhoto(item){
   const use=node('button','Use Outerwear category','secondary');use.type='button';
   use.onclick=()=>{
    draft.category='Outerwear';draft.itemType='Unknown';
-   const category=form.querySelector('select[name="category"]');
-   if(category){category.value='Outerwear';category.dispatchEvent(new Event('change',{bubbles:true}));}
-   const type=form.querySelector('select[name="itemType"]');if(type)type.value='Unknown';
+   const category=form.querySelector('select[aria-label="Main category"]');
+   if(category){category.value='Outerwear';category.dispatchEvent(new Event('input',{bubbles:true}));}
+   const type=form.querySelector('select[aria-label="Item type"]');if(type)type.value='Unknown';
    use.disabled=true;
   };
   suggestion.append(use);form.prepend(suggestion);
