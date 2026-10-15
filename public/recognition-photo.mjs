@@ -40,6 +40,23 @@ export function uniformPhotoBounds(image){
  const pad=Math.max(2,Math.ceil(Math.max(right-left,bottom-top)*.04));
  return {left:Math.max(0,left-pad),top:Math.max(0,top-pad),right:Math.min(width,right+pad),bottom:Math.min(height,bottom+pad)};
 }
+// A conservative diagnostic for garment-shape recognition. It reports how
+// much of the original photo survives automatic border trimming and whether
+// the final square frame includes the entire garment. It never crops further
+// or changes the pixels sent to the classifier.
+export function recognitionFramingDiagnostics(image,{confirmation=false}={}){
+ const bounds=uniformPhotoBounds(image),width=bounds.right-bounds.left,height=bounds.bottom-bounds.top;
+ const contentSize=confirmation?320:336,fit=fitPhotoDimensions(width,height,contentSize);
+ return {
+  originalWidth:image.width,originalHeight:image.height,
+  trimmedBounds:bounds,trimmedFraction:1-(width*height)/(image.width*image.height),
+  garmentAspectRatio:width/height,
+  contentWidth:fit.width,contentHeight:fit.height,
+  topAndBottomPadding:336-fit.height,
+  leftAndRightPadding:336-fit.width,
+  fullGarmentRetained:true
+ };
+}
 export async function prepareRecognitionPhoto(image,RawImageClass,{confirmation=false}={}){
  const bounds=uniformPhotoBounds(image);
  const cropped=bounds.left||bounds.top||bounds.right!==image.width||bounds.bottom!==image.height?
