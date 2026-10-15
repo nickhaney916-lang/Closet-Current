@@ -39,9 +39,7 @@ try{
    });
   });
   for(const variant of variants){if(variant.actual!==variant.expected)throw Error(label+': '+variant.name+' expected '+variant.expected+' garments, found '+variant.actual);if(variant.name==='dress'&&variant.bottom)throw Error(label+': dress conflicts with trousers');}
-  await page.waitForTimeout(100);
-  const failure=await page.locator('#detail .outfit-mannequin-fallback').evaluate(el=>({visible:!el.hidden,text:el.textContent}));
-  if(!failure.visible||failure.text!=='Shirt')throw Error(label+': broken image fallback unavailable '+JSON.stringify(failure));
+  await page.waitForFunction(()=>{const el=document.querySelector('#detail .outfit-mannequin-fallback');return el&&!el.hidden&&el.textContent==='Shirt';},{timeout:5000});
   await page.screenshot({path:resolve(shots,label+'-broken-image.png')});
   await page.locator('#close').click();
   if(await page.locator('dialog').evaluate(el=>el.open))throw Error(label+': detail failed to close');
