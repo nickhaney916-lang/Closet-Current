@@ -224,6 +224,35 @@ export async function recognizeWithRecovery(model,image,settings={}){
    }};
   }catch{/* Preserve the original uncertain result. */}
  }
+ // Recover a disputed coat only when two nearly full-frame images both
+ // favor Coat against the entire catalog, plus the original Coat branch.
+ // This is deliberately narrower than a global category threshold change.
+ if(!result.strong&&result.reason==='views_disagree'&&
+    result.diagnostics?.branch?.[0]?.category==='Outerwear'&&
+    result.diagnostics?.branch?.[0]?.type==='Coat'&&
+    result.diagnostics.branch[0].score>=.9&&
+    settings.coatNearFullModel&&settings.recoveryModel){
+  try{
+   const labels=localCandidates.map(x=>x.label);
+   const [near,full]=await Promise.all([
+    settings.coatNearFullModel(image,labels,options),
+    settings.recoveryModel(image,labels,options)
+   ]);
+   const a=clothingChoices(near),b=clothingChoices(full);
+   const isCoat=v=>v[0]?.category==='Outerwear'&&v[0]?.itemType==='Coat';
+   const margin=v=>(v[0]?.score||0)-(v[1]?.score||0);
+   if(isCoat(a)&&isCoat(b)&&a[0].score>=.4&&margin(a)>=.15&&
+      b[0].score>=.85&&margin(b)>=.7){
+    settings.onIdentified?.(b[0]);
+    return {strong:true,choices:[b[0]],details:{},
+     reason:'coat_near_full_independent_agreement',preprocessingRecovery:true};
+   }
+   result.diagnostics={...result.diagnostics,coatNearFullRecovery:{
+    near:a.slice(0,2).map(x=>({category:x.category,type:x.itemType,score:x.score})),
+    full:b.slice(0,2).map(x=>({category:x.category,type:x.itemType,score:x.score}))
+   }};
+  }catch{/* Leave ambiguous coat uncategorized. */}
+ }
  // A near-tied Jacket runner-up is worth independent checking even when
  // Blouse narrowly leads the initial full catalog. Never promote the runner-
  // up without two strongly agreeing complete-catalog views.
