@@ -159,13 +159,13 @@ try{
  if(reviewSuggestions.some(x=>!x.correct))console.warn('REAL_PHOTO_FALSE_REVIEW_SUGGESTION '+JSON.stringify(reviewSuggestions.filter(x=>!x.correct)));
  if(realResults.some(x=>x.importStatus==='added'&&(!x.category||x.category==='Uncategorized')))console.warn('REAL_PHOTO_REVIEW_REQUIRED '+JSON.stringify(realResults.filter(x=>x.importStatus==='added'&&(!x.category||x.category==='Uncategorized'))));
  if(realResults.some(x=>x.importStatus==='unaccounted'))throw Error('Some submitted photos have no import outcome');
- // Guard the verified 13/14 baseline and prevent false automatic labels.
+ // Guard the verified 14/14 baseline and prevent false automatic labels.
  // Uncategorized is a safe fallback, but a wrong saved category is not.
  const incorrectlyCategorized=realResults.filter(x=>x.category&&x.category!=='Uncategorized'&&x.category!==x.expected);
  assert.deepEqual(incorrectlyCategorized.map(x=>({id:x.id,expected:x.expected,actual:x.category})),[],
   'Recognition must not silently save a wrong category');
- assert.ok(realResults.filter(x=>x.correctCategory).length>=13,
-  'Real-photo category accuracy must not regress below the verified 13/14 baseline');
+ assert.ok(realResults.filter(x=>x.correctCategory).length===14,
+  'Real-photo category accuracy must preserve the verified 14/14 baseline');
  assert.equal(observed.imports.added,realCases.length,'Every real photo must import');
  // Preserve the known ambiguous skirt/coat outcomes until genuinely
  // independent recognition evidence resolves them. A dress or top must never
