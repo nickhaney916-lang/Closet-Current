@@ -190,7 +190,7 @@ export async function recognizeWithRecovery(model,image,settings={}){
    const ca=garmentCategoryTotals(first),cb=garmentCategoryTotals(second);
    const supports=(choices,cats)=>choices[0]?.category==='Outerwear'&&
     choices[0]?.itemType==='Jacket'&&cats[0]?.category==='Outerwear'&&
-    cats[0].score>=.75&&cats[0].score-(cats[1]?.score||0)>=.5;
+    cats[0].score>=.62&&cats[0].score-(cats[1]?.score||0)>=.28;
    if(supports(a,ca)&&supports(b,cb)){
     settings.onIdentified?.(a[0]);
     return {strong:true,choices:[a[0]],details:{},reason:'jacket_runner_up_independent_agreement',preprocessingRecovery:true};
