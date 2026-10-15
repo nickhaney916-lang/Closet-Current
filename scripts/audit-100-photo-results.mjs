@@ -40,8 +40,11 @@ for(const m of manifest){
   issues.push({id:m.id,kind:'wrong_automatic_category',expected:m.expectedCategory,actual:category});
  }else if(category!==m.expectedCategory)issues.push({id:m.id,kind:'category_mismatch',expected:m.expectedCategory,actual:category});
  else if(!(m.acceptedTypes||[m.expectedType]).includes(type)){
-  if(r.strong)group.automaticWrongSubtype++;
-  issues.push({id:m.id,kind:r.strong?'wrong_automatic_subtype':'type_mismatch',expected:m.expectedType,actual:type});
+  // Category-only results deliberately abstain from a garment subtype.
+  // They still count as subtype mismatches, never as confident wrong subtypes.
+  const confidentSubtype=!!r.strong&&!r.categoryOnly&&!!type&&type!=='Unknown';
+  if(confidentSubtype)group.automaticWrongSubtype++;
+  issues.push({id:m.id,kind:confidentSubtype?'wrong_automatic_subtype':'type_mismatch',expected:m.expectedType,actual:type});
  }
 }
 for(const id of byId.keys())if(!manifest.some(m=>m.id===id))issues.push({id,kind:'unexpected_result'});
