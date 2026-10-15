@@ -17,5 +17,13 @@ test('photo preparation promotes only approved licensed reviewed candidates and 
   assert.equal(stats.approvedCount,1);assert.equal(stats.blocked.length,3);assert.equal(stats.reviewQueueCount,1);assert.equal(stats.excludedCount,2);assert.equal(stats.reviewQueue[0].id,'unreviewed');
   assert.equal(stats.coverageByType.Raincoat,1);assert.equal(stats.missingByType.Jacket,5);
   assert.equal(stats.ready,false);
+  await writeFile(input,JSON.stringify([{...approved,id:'bad-category',expectedCategory:'Tops'}]));
+  const wrong=spawnSync(process.execPath,['scripts/prepare-independent-photos.mjs',input,manifest,report],{encoding:'utf8'});
+  assert.equal(wrong.status,0,wrong.stderr);
+  assert.equal(JSON.parse(await readFile(manifest,'utf8')).length,0);
+  await writeFile(input,JSON.stringify([approved,{...approved,id:'another',image:'second.jpg',source:'https://example.com/second'}]));
+  const duplicate=spawnSync(process.execPath,['scripts/prepare-independent-photos.mjs',input,manifest,report],{encoding:'utf8'});
+  assert.notEqual(duplicate.status,0);assert.match(duplicate.stderr,/Duplicate approved independent photos/);
+
  }finally{await rm(dir,{recursive:true,force:true});}
 });
