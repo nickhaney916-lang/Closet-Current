@@ -35,7 +35,17 @@ const items=manifest.map(row=>{
  return {id:row.id,expectedCategory:row.expectedCategory,expectedType:row.expectedType,predictedCategory:prediction.category||null,predictedType:prediction.type||null,categoryCorrect,exactSubtype,acceptableSpecific,subtypeConsensusMismatch,modelViews:{branch:viewMargins[0],confirmation:viewMargins[1],originalWhole:viewMargins[2],originalCenter:viewMargins[3]},outcome};
 });
 const count=key=>items.filter(x=>x[key]).length;
-const report={sampleSize:manifest.length,categoryCorrect:count('categoryCorrect'),exactSubtypeCorrect:count('exactSubtype'),compatibleSpecificCount:count('acceptableSpecific'),consensusSubtypeMismatchCount:count('subtypeConsensusMismatch'),acceptableSubtypeCount:items.filter(x=>x.exactSubtype||x.acceptableSpecific).length,items};
+const outerwearTypes=['Raincoat','Coat','Jacket','Blazer'];
+const outerwearConfusion=Object.fromEntries(outerwearTypes.map(expectedType=>{
+ const subset=items.filter(x=>x.expectedCategory==='Outerwear'&&x.expectedType===expectedType);
+ const predicted=Object.fromEntries([...new Set(subset.map(x=>x.predictedType||'Unclassified'))].sort().map(type=>[type,subset.filter(x=>(x.predictedType||'Unclassified')===type).length]));
+ return [expectedType,{count:subset.length,exactCorrect:subset.filter(x=>x.exactSubtype).length,predicted}];
+}));
+const raincoatVsCoat=items.filter(x=>x.expectedCategory==='Outerwear'&&x.expectedType==='Raincoat').map(x=>({
+ id:x.id,expectedType:x.expectedType,predictedType:x.predictedType,consensusWrongSubtype:x.subtypeConsensusMismatch,
+ originalWhole:x.modelViews.originalWhole,originalCenter:x.modelViews.originalCenter
+}));
+const report={sampleSize:manifest.length,categoryCorrect:count('categoryCorrect'),exactSubtypeCorrect:count('exactSubtype'),compatibleSpecificCount:count('acceptableSpecific'),consensusSubtypeMismatchCount:count('subtypeConsensusMismatch'),acceptableSubtypeCount:items.filter(x=>x.exactSubtype||x.acceptableSpecific).length,outerwearConfusion,raincoatVsCoat,items};
 writeFileSync(reportPath,JSON.stringify(report,null,2)+'\n');
 console.log(JSON.stringify({sampleSize:report.sampleSize,categoryCorrect:report.categoryCorrect,exactSubtypeCorrect:report.exactSubtypeCorrect,compatibleSpecificCount:report.compatibleSpecificCount,acceptableSubtypeCount:report.acceptableSubtypeCount}));
 if(items.some(x=>x.outcome==='missing-result'||x.outcome==='inference-error'))process.exitCode=1;
