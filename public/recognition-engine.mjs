@@ -93,9 +93,27 @@ export async function recognizeWithRecovery(model,image,settings={}){
    settings.onIdentified?.(recovered.choices[0]);
    return {...recovered,preprocessingRecovery:true};
   }
+  // When the retry narrowly favors Outerwear, inspect both complete-catalog
+  // views independently. This is diagnostic only: a weak category vote must
+  // not become an automatic jacket classification.
+  let fullCatalogEvidence=null;
+  if(recovered.reason==='category_uncertain'&&recovered.diagnostics?.category?.[0]?.category==='Outerwear'){
+   const labels=localCandidates.map(x=>x.label);
+   try{
+    const [whole,close]=await Promise.all([
+     settings.recoveryModel(image,labels,options),
+     settings.recoveryConfirmationModel(image,labels,options)
+    ]);
+    const summarize=ranked=>({
+     top:clothingChoices(ranked).slice(0,3).map(x=>({category:x.category,type:x.itemType,score:x.score})),
+     categories:garmentCategoryTotals(ranked).slice(0,3)
+    });
+    fullCatalogEvidence={whole:summarize(whole),confirmation:summarize(close)};
+   }catch{fullCatalogEvidence={error:'confirmation_unavailable'};}
+  }
   // Record why the independent retry failed so real-photo tests can distinguish
   // category prompt bias from type or view disagreement. Do not override gates.
-  result.diagnostics={...result.diagnostics,outerwearRecovery:{
+  result.diagnostics={...result.diagnostics,outerwearRecovery:{fullCatalogEvidence,
    reason:recovered.reason||'unconfirmed',
    category:recovered.diagnostics?.category||null,
    branch:recovered.diagnostics?.branch||null,
