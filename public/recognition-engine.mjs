@@ -109,7 +109,9 @@ export async function recognizeWithRecovery(model,image,settings={}){
  // results unchanged unless both independent views select the same garment.
  if(!result.strong&&['checks_disagree','views_disagree'].includes(result.reason)&&
     settings.recoveryModel&&settings.recoveryConfirmationModel&&
-    (category?.[0]?.category==='Dresses'||category?.[0]?.category==='Bottoms')){
+    (category?.[0]?.category==='Dresses'||category?.[0]?.category==='Bottoms'||
+     (result.diagnostics?.dressEvidence?.primary?.totals?.[0]?.category==='Dresses'&&
+      result.diagnostics?.dressEvidence?.confirmationCategory?.[0]?.category==='Bottoms'))){
   try{
    const labels=localCandidates.filter(x=>['Bottoms','Dresses','Uncategorized'].includes(x.category)).map(x=>x.label);
    const [first,second]=await Promise.all([
