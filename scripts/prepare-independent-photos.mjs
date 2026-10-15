@@ -12,10 +12,10 @@ const valid=c=>c.verified===true&&c.reviewStatus==='approved'&&
  typeof c.source==='string'&&/^https:\/\//.test(c.source)&&
  typeof c.license==='string'&&c.license.trim()&&typeof c.credit==='string'&&c.credit.trim()&&
  categoryFor[c.expectedType]===c.expectedCategory&&
- /^(?:validation|commons)-[0-9]+\\.(?:jpg|png|webp)$/.test(c.image)&&
+ /^(?:validation|commons)-[0-9]+\.(?:jpg|png|webp)$/.test(c.image)&&
  typeof c.sha256==='string'&&/^[a-f0-9]{64}$/.test(c.sha256)&&
- typeof c.downloadUrl==='string'&&(/^https:\/\/(?:upload|thumb)\\.wikimedia\\.org\\//).test(c.downloadUrl)&&
- (!c.alternateDownloadUrls||Array.isArray(c.alternateDownloadUrls)&&c.alternateDownloadUrls.length<=2&&c.alternateDownloadUrls.every(u=>typeof u==='string'&&/^https:\/\/(?:upload|thumb)\\.wikimedia\\.org\\//.test(u)));
+ typeof c.downloadUrl==='string'&&(/^https:\/\/(?:upload|thumb)\.wikimedia\.org\//).test(c.downloadUrl)&&
+ (!c.alternateDownloadUrls||Array.isArray(c.alternateDownloadUrls)&&c.alternateDownloadUrls.length<=2&&c.alternateDownloadUrls.every(u=>typeof u==='string'&&/^https:\/\/(?:upload|thumb)\.wikimedia\.org\//.test(u)));
 const reviewed=candidates.filter(valid);
 const duplicates=[];
 const identities=new Map();
