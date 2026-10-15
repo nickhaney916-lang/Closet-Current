@@ -107,3 +107,35 @@ test('accepted outerwear records independent classifier evidence for photo audit
  assert.equal(r.diagnostics.acceptedEvidence.overall[0].type,'Jacket');
  assert.equal(r.diagnostics.acceptedEvidence.confirmation[0].type,'Jacket');
 });
+
+test('uncertain outerwear subtype can recover with matching independent original views',async()=>{
+ const {recognizeWithRecovery}=await import('../public/recognition-engine.mjs');
+ const primary=[[cat('Outerwear',.96),cat('Tops',.04)],[type('Jacket',.5),type('Blazer',.4)]];
+ const alternate=[[cat('Outerwear',.96),cat('Tops',.04)],[type('Jacket',.9),type('Blazer',.05)],[type('Jacket',.9),type('Blazer',.05)]];
+ let identified=0;
+ const r=await recognizeWithRecovery(async()=>primary.shift(),{width:112,height:200},{
+  recoveryModel:async()=>alternate.shift(),recoveryConfirmationModel:async()=>[type('Jacket',.9),type('Blazer',.05)],
+  onIdentified:()=>identified++
+ });
+ assert.equal(r.strong,true);assert.equal(r.preprocessingRecovery,true);assert.equal(r.choices[0].itemType,'Jacket');assert.equal(identified,1);
+});
+test('alternate view cannot change a confidently established category',async()=>{
+ const {recognizeWithRecovery}=await import('../public/recognition-engine.mjs');
+ const primary=[[cat('Outerwear',.95),cat('Tops',.05)],[type('Jacket',.5),type('Blazer',.4)]];
+ const alternate=[[cat('Tops',.95),cat('Outerwear',.05)],[type('T-shirt',.9),type('Blouse',.05)],[type('T-shirt',.9),type('Blouse',.05)]];
+ let identified=0;
+ const r=await recognizeWithRecovery(async()=>primary.shift(),{width:112,height:200},{
+  recoveryModel:async()=>alternate.shift(),recoveryConfirmationModel:async()=>[type('T-shirt',.9),type('Blouse',.05)],
+  onIdentified:()=>identified++
+ });
+ assert.equal(r.strong,false);assert.equal(r.reason,'type_uncertain');assert.equal(identified,0);
+});
+test('failed alternate view leaves uncertain primary result intact',async()=>{
+ const {recognizeWithRecovery}=await import('../public/recognition-engine.mjs');
+ const primary=[[cat('Bottoms',.95),cat('Tops',.05)],[type('Skirt',.5),type('Shorts',.4)]];
+ const r=await recognizeWithRecovery(async()=>primary.shift(),{width:112,height:200},{
+  recoveryModel:async()=>{throw Error('alternate view unavailable');},
+  recoveryConfirmationModel:async()=>[]
+ });
+ assert.equal(r.strong,false);assert.equal(r.reason,'type_uncertain');
+});
