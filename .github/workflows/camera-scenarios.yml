@@ -40,7 +40,7 @@ jobs:
           node-version: '22'
       - name: Collect focused shell jacket and rainwear review photos
         env:
-          CLOSET_COLLECTION_IDS: candidate-shell-001,candidate-shell-003,candidate-trench-001
+          CLOSET_COLLECTION_IDS: candidate-shell-001,candidate-shell-003,candidate-trench-001,candidate-rainwear-001
         run: node scripts/collect-independent-photo-bytes.mjs
       - name: Summarize rainwear photo collection
         if: always()
@@ -94,6 +94,24 @@ jobs:
           else
             echo 'Red jacket challenge was not run or did not produce a result; it remains optional and is not an accuracy sample.' >> "$GITHUB_STEP_SUMMARY"
           fi
+      - name: Stage optional yellow rain cape edge case
+        id: cape-stage
+        continue-on-error: true
+        run: |
+          mkdir -p benchmark/yellow-rain-cape
+          node scripts/stage-shell-diagnostic.mjs benchmark/photo-collection/report.json benchmark/independent-candidates.json benchmark/yellow-rain-cape/manifest.json benchmark/photos candidate-rainwear-001
+      - name: Run unscored yellow rain cape recognition
+        if: steps.cape-stage.outcome == 'success'
+        run: |
+          node scripts/run-browser-photo-benchmark.mjs benchmark/yellow-rain-cape/manifest.json benchmark/yellow-rain-cape/results
+          node scripts/report-independent-subtypes.mjs benchmark/yellow-rain-cape/manifest.json benchmark/yellow-rain-cape/results/results.json benchmark/yellow-rain-cape/subtypes.json
+      - name: Upload unscored yellow rain cape result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: yellow-rain-cape-unscored
+          path: benchmark/yellow-rain-cape/
+          retention-days: 14
       - name: Upload unscored rain jacket challenge
         if: always()
         uses: actions/upload-artifact@v4
