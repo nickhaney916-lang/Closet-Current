@@ -9,6 +9,9 @@ on:
       - 'scripts/**'
       - '.github/workflows/camera-scenarios.yml'
   workflow_dispatch:
+concurrency:
+  group: closet-camera-${{ github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:
@@ -42,11 +45,10 @@ jobs:
           name: independent-photo-collection
           path: benchmark/photo-collection/
           retention-days: 14
-  independent-two-photo-smoke:
-    if: github.event_name == 'workflow_dispatch' && github.ref_name == 'fix/mobile-recognition-timeout-diagnostics'
+  independent-approved-photo-smoke:
+    if: github.ref_name == 'fix/mobile-recognition-timeout-diagnostics' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     timeout-minutes: 35
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -74,10 +76,18 @@ jobs:
           node scripts/build.mjs
           node scripts/run-browser-photo-benchmark.mjs benchmark/independent-smoke/manifest.json benchmark/independent-smoke/results
           node scripts/report-independent-subtypes.mjs benchmark/independent-smoke/manifest.json benchmark/independent-smoke/results/results.json benchmark/independent-smoke/subtypes.json
+      - name: Publish benchmark result summary
+        if: always()
+        run: |
+          if [ -f benchmark/independent-smoke/subtypes.json ]; then
+            node --input-type=module -e 'import {readFileSync,appendFileSync} from "node:fs";const x=JSON.parse(readFileSync("benchmark/independent-smoke/subtypes.json"));appendFileSync(process.env.GITHUB_STEP_SUMMARY,`## Closet Current independent recognition\n\n- Samples: ${x.sampleSize}\n- Correct categories: ${x.categoryCorrect}/${x.sampleSize}\n- Exact subtypes: ${x.exactSubtypeCorrect}/${x.sampleSize}\n- Acceptable subtypes: ${x.acceptableSubtypeCount}/${x.sampleSize}\n- Consistent wrong subtypes: ${x.consensusSubtypeMismatchCount}\n\nNo changes to production recognition.\n`);'
+          else
+            echo 'Independent recognition test did not produce a subtype report; see job logs.' >> "$GITHUB_STEP_SUMMARY"
+          fi
       - name: Upload independent smoke evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: independent-two-photo-smoke
+          name: independent-approved-photo-smoke
           path: benchmark/independent-smoke/
           retention-days: 14
