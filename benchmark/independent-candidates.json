@@ -155,5 +155,29 @@
     "reviewStatus": "approved",
     "sha256": "ac6bf392ecfc5eaee805fd59685b246aac7198ed18eda8a46e1230abe215b934",
     "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/c/c8/Modern_Tailor_testshirt.jpg"
+  },
+  {
+    "id": "candidate-trench-001",
+    "image": "candidate-trench-001.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Trenchcoat_worn_by_President_Gerald_R._Ford.jpg",
+    "expectedCategory": "Outerwear",
+    "expectedType": "Raincoat",
+    "verified": false,
+    "reviewStatus": "needs-visual-review",
+    "license": "license-needs-review",
+    "credit": "source-page-attribution-needs-review",
+    "notes": "Museum trench coat with bulletproof liner; candidate for raincoat vs coat comparison; visually inspect and verify licensing and subtype before approval. Not a representative modern rain jacket."
+  },
+  {
+    "id": "candidate-trench-002",
+    "image": "candidate-trench-002.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Trenchcoat.jpeg",
+    "expectedCategory": "Outerwear",
+    "expectedType": "Raincoat",
+    "verified": false,
+    "reviewStatus": "needs-visual-review",
+    "license": "CC BY-SA 3.0 / GFDL (verify source)",
+    "credit": "Hephaestos",
+    "notes": "Low-resolution trenchcoat photo of person wearing garments; assess single-item suitability; may be excluded for full-outfit context."
   }
 ]
