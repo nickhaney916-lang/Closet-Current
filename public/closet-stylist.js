@@ -6,6 +6,7 @@ function renderStyledCollection(){
  for(const [index,result]of styledCollectionResults.entries()){
   const board=cleanOutfitBoard(result.board,items),changed=Object.keys(board.slots).length!==Object.keys(result.board.slots).length;
   const card=node('article',null,'styled-outfit');card.append(node('p','FROM YOUR COLLECTION','eyebrow'),node('h3',result.context.request+' · option '+(index+1)));
+  const figure=node('div');window.OutfitFigure.render(figure,board,items,{size:'card'});card.append(figure);
   const photos=node('div',null,'styled-outfit-photos');
   for(const slot of outfitSlots){const item=items.find(x=>x.id===board.slots[slot.id]);if(!item)continue;const piece=node('figure'),img=node('img');img.src=item.image;img.alt=item.name||item.itemType;piece.append(img,node('figcaption',item.name||item.itemType));photos.append(piece);}card.append(photos);
   const missing=boardGaps(board,items).filter(s=>!s.optional);
