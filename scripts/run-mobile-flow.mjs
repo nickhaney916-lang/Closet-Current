@@ -128,6 +128,9 @@ try{
   });
   assert.equal(state.found,true,'Jacket should remain available for manual review');
   const dialog=page.locator('dialog.clothing-editor');
+  const reviewText=await dialog.locator('.recognition-review-suggestion').innerText();
+  assert.match(reviewText,/Two photo checks suggest Outerwear/);
+  assert.match(reviewText,/Jacket/,'Both views should agree on the suggested garment type');
   await dialog.getByRole('button',{name:'Use Outerwear category'}).click();
   assert.equal(await dialog.locator('select[aria-label="Main category"]').inputValue(),'Outerwear');
   assert.equal(await dialog.locator('select[aria-label="Item type"]').inputValue(),'Unknown');
