@@ -1,0 +1,12 @@
+{
+  "description": "Seven existing licensed photographs visually labeled before running this color experiment. Development sample, not an independent phone holdout. Expected pieces include only clearly visible clothing regions; background people and accessories are excluded from scoring. Color describes the main visible garment, not the scene.",
+  "photos": [
+    {"id":"commons-0021","image":"commons-0021.jpg","expectedPieces":[{"label":"Upper garment","color":"White"},{"label":"Bottoms","color":"Blue"},{"label":"Shoes","color":"White"}]},
+    {"id":"commons-0033","image":"commons-0033.jpg","expectedPieces":[{"label":"Upper garment","color":"White"},{"label":"Bottoms","color":"Orange"}]},
+    {"id":"commons-0080","image":"commons-0080.jpg","expectedPieces":[{"label":"Bottoms","color":"Blue"},{"label":"Shoes","color":"Gray"}]},
+    {"id":"commons-0081","image":"commons-0081.jpg","expectedPieces":[{"label":"Bottoms","color":"Black"},{"label":"Shoes","color":"Black"}]},
+    {"id":"validation-0001","image":"validation-0001.jpg","expectedPieces":[{"label":"Dress","color":"Multicolor"}]},
+    {"id":"validation-0002","image":"validation-0002.jpg","expectedPieces":[{"label":"Dress","color":"White"}]},
+    {"id":"validation-0010","image":"validation-0010.jpg","expectedPieces":[{"label":"Dress","color":"Blue"}]}
+  ]
+}

@@ -1,0 +1,62 @@
+name: Automatic outfit crop and color comparison
+on:
+  push:
+    branches: ['recognition/mask-color-consistency']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prepare browser and locked licensed photos
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json
+      - name: Run baseline against the same source photos
+        run: |
+          mkdir -p /tmp/closet-mask-candidate
+          cp public/photo-color.js public/outfit-worker.mjs /tmp/closet-mask-candidate/
+          git fetch origin a9569883470c119fa7146aba70f0dd003aabad72
+          git show a9569883470c119fa7146aba70f0dd003aabad72:public/photo-color.js > public/photo-color.js
+          git show a9569883470c119fa7146aba70f0dd003aabad72:public/outfit-worker.mjs > public/outfit-worker.mjs
+          node scripts/build.mjs
+          node scripts/run-browser-photo-benchmark.mjs benchmark/manifest-reviewed-32.json benchmark/mask-comparison/before-reviewed
+          node scripts/run-outfit-color-benchmark.mjs benchmark/mask-comparison/before-outfits
+      - name: Run candidate and protect per-photo recognition
+        run: |
+          cp /tmp/closet-mask-candidate/* public/
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+          node scripts/run-outfit-color-benchmark.mjs benchmark/mask-comparison/after-outfits
+          for set in reviewed-32 holdout-16 fresh-11; do
+            output="benchmark/mask-comparison/after-$set"
+            node scripts/run-browser-photo-benchmark.mjs "benchmark/manifest-$set.json" "$output"
+            node scripts/evaluate-recognition-benchmark.mjs "benchmark/manifest-$set.json" "$output/results.json" > "$output/evaluation.json"
+            node scripts/check-recognition-regressions.mjs "benchmark/manifest-$set.json" "$output/results.json" "benchmark/regression-$set.json"
+          done
+      - name: Check unchanged crops and garment identity
+        run: |
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';import assert from 'node:assert/strict';
+          const read=p=>JSON.parse(fs.readFileSync('benchmark/mask-comparison/'+p+'/results.json'));
+          const before=read('before-outfits'),after=read('after-outfits');
+          const identity=r=>r.results.map(x=>({id:x.id,pieces:x.pieces.map(({colorEstimate,...p})=>p)}));
+          assert.deepEqual(identity(after),identity(before),'Crop pixels, bounds, hints and garment predictions must remain identical');
+          const core=rows=>rows.map(({elapsedMs,...r})=>r);
+          assert.deepEqual(core(read('after-reviewed-32')),core(read('before-reviewed')),'32-photo predictions and single-photo colors must remain unchanged');
+          console.log(JSON.stringify({before:before.summary,after:after.summary},null,2));
+          JS
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: automatic-outfit-color-comparison
+          path: benchmark/mask-comparison/
+          if-no-files-found: error
+          retention-days: 14
