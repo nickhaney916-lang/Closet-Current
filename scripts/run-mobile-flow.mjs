@@ -90,7 +90,7 @@ try{
  // Real-photo batch: import licensed, independently sourced garment photographs.
  const realCases=[
   ['commons-0003','Tops'],['commons-0021','Bottoms'],['commons-0024','Bottoms'],
-  ['commons-0033','Bottoms'],['commons-0049','Dresses'],['commons-0060','Layers'],
+  ['commons-0033','Bottoms'],['commons-0049','Dresses'],['commons-0060','Outerwear'],
   ['commons-0079','Shoes'],['commons-0094','Shoes']
  ];
  // Account for every submitted photograph even when quality checks skip an item.
@@ -114,6 +114,7 @@ try{
  const report={cases:realResults,submitted:realCases.length,imported:observed.imports.added,evaluated:evaluated.length,categoryAccuracy:evaluated.length?evaluated.filter(x=>x.correctCategory).length/evaluated.length:null,allSubmittedAccuracy:realResults.filter(x=>x.correctCategory).length/realCases.length,importDiagnostics:observed,pageErrors:errors};
  await writeFile(out+'/real-photo-indexing.json',JSON.stringify(report,null,2));
  console.log('REAL_PHOTO_INDEXING '+JSON.stringify(report));
+ if(realResults.some(x=>x.importStatus==='added'&&(!x.category||x.category==='Uncategorized')))console.warn('REAL_PHOTO_REVIEW_REQUIRED '+JSON.stringify(realResults.filter(x=>x.importStatus==='added'&&(!x.category||x.category==='Uncategorized'))));
  if(realResults.some(x=>x.importStatus==='unaccounted'))throw Error('Some submitted photos have no import outcome');
  assert.deepEqual(errors,[]);await page.screenshot({path:out+'/closet.png',fullPage:true});
  const result={viewport:{width:390,height:844},camera,image,manualSave:true,searchAndFilters:true,reloadPersistence:true,automaticPhotoIndexing:true,realRecognitionWorker:true,auth:'test identity stub; production auth not tested',hardware:'Chromium fake camera; physical phone not tested',pageErrors:errors};await writeFile(out+'/results.json',JSON.stringify(result,null,2));console.log(JSON.stringify(result));
