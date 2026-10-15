@@ -5,7 +5,7 @@ import {resolve,extname} from 'node:path';
 import assert from 'node:assert/strict';
 const root=resolve('dist'),out=resolve(process.argv[2]||'benchmark/mobile-flow');
 const types={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.json':'application/json','.bin':'application/octet-stream','.css':'text/css'};
-const server=createServer(async(req,res)=>{try{const url=new URL(req.url,'http://localhost'),file=resolve(root,'.'+decodeURIComponent(url.pathname==='/'?'/index.html':url.pathname));if(!file.startsWith(root+'/'))throw Error('Forbidden');res.writeHead(200,{'Content-Type':types[extname(file)]||'application/octet-stream'});res.end(await readFile(file));}catch{res.writeHead(404);res.end('Not found');}});
+const server=createServer(async(req,res)=>{try{const url=new URL(req.url,'http://localhost'),photo=url.pathname.match(/^\/benchmark-photo\/(commons-\d+\.jpg)$/);const file=photo?resolve('benchmark/photos',photo[1]):resolve(root,'.'+decodeURIComponent(url.pathname==='/'?'/index.html':url.pathname));if(!photo&&!file.startsWith(root+'/'))throw Error('Forbidden');const data=await readFile(file);res.writeHead(200,{'Content-Type':photo?'image/jpeg':types[extname(file)]||'application/octet-stream'});res.end(data);}catch{if(!res.headersSent){res.writeHead(404);res.end('Not found');}else res.end();}});
 await new Promise(r=>server.listen(0,'127.0.0.1',r));let browser;const errors=[];
 try{
  await mkdir(out,{recursive:true});
@@ -126,7 +126,7 @@ try{
   const {recognitionFramingDiagnostics}=await import('/recognition-photo.mjs');
   const output={};
   for(const id of ['commons-0045','commons-0070']){
-   const response=await fetch('/benchmark/photos/'+id+'.jpg');
+   const response=await fetch('/benchmark-photo/'+id+'.jpg');
    if(!response.ok){output[id]={error:'benchmark_photo_not_served'};continue;}
    const blob=await response.blob(),bitmap=await createImageBitmap(blob);
    const canvas=document.createElement('canvas');canvas.width=bitmap.width;canvas.height=bitmap.height;
