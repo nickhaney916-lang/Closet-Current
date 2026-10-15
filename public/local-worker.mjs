@@ -27,12 +27,17 @@ async function load(){
    const fitted=await prepareRecognitionPhoto(image,RawImageClass,{confirmation:true});
    return (await vision(await processor(fitted))).image_embeds.data;
   },metadata,vectors);
+  // Secondary padding only for unresolved skirt-versus-dress disagreements.
+  const skirtPadding=makeVectorScorer(async image=>{
+   const fitted=await prepareRecognitionPhoto(image,RawImageClass,{contentSizeOverride:288});
+   return (await vision(await processor(fitted))).image_embeds.data;
+  },metadata,vectors);
   const originalWhole=makeVectorScorer(async image=>{
    const fitted=await fitWholePhoto(image,RawImageClass);
    return (await vision(await processor(fitted))).image_embeds.data;
   },metadata,vectors);
   const originalCenter=makeVectorScorer(async image=>(await vision(await processor(image))).image_embeds.data,metadata,vectors);
-  scannerStage='ready';return {whole,center,originalWhole,originalCenter,RawImage,prepareRecognitionPhoto,modelKey:'fashion-clip/whole-v1/'+metadata.revision};
+  scannerStage='ready';return {whole,center,skirtPadding,originalWhole,originalCenter,RawImage,prepareRecognitionPhoto,modelKey:'fashion-clip/whole-v1/'+metadata.revision};
  })().catch(error=>{classifierPromise=null;throw error;});
  return classifierPromise;
 }
@@ -60,7 +65,7 @@ self.onmessage=event=>{const request=event.data;chain=chain.then(async()=>{
   const classify=request.hint?classifyIsolatedGarment:recognizeWithRecovery;
   const result=await classify(model.whole,image,{
    hint:request.hint,
-   confirmationModel:model.center,
+   confirmationModel:model.center,skirtPaddingModel:model.skirtPadding,
    recoveryModel:model.originalWhole,recoveryConfirmationModel:model.originalCenter,
    onStage:stage=>{scannerStage=stage;},
    onIdentified:choice=>self.postMessage({type:'identified',id:request.id,choice})
