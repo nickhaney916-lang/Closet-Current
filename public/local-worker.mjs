@@ -54,7 +54,7 @@ self.onmessage=event=>{const request=event.data;chain=chain.then(async()=>{
    const {localCandidates}=await import('./local-catalog.mjs'+new URL(import.meta.url).search);
    const labels=localCandidates.map(x=>Array.isArray(x)?x[0]:x.label);
    const variants=[];
-   for(const size of (request.benchmarkId==='commons-0070'?[256,320,328,332,334,336]:[256,288,320,336])){
+   for(const size of (request.benchmarkId==='commons-0070'?[256,320,328,332,334,336]:request.benchmarkId==='commons-0045'?[256,288,320,336]:[320,328,336])){
     const framed=await model.prepareRecognitionPhoto(image,RawImageClass,{contentSizeOverride:size});
     const ranked=await model.originalCenter(framed,labels);
     variants.push({contentSize:size,top:ranked.slice(0,5)});
