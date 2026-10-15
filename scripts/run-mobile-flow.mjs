@@ -112,7 +112,7 @@ try{
  const initialIds=await page.evaluate(()=>items.map(x=>x.id));
  await page.locator('#clothingPhotos').setInputFiles(realCases.map(([id])=>resolve('benchmark/photos/'+id+'.jpg')));
  try{
-  await page.waitForFunction(({ids,count})=>items.filter(x=>!ids.includes(x.id)).length>=count,{ids:initialIds,count:realCases.length},{timeout:90000});
+  await page.waitForFunction(({ids,count})=>[...items,...batch].filter(x=>!ids.includes(x.id)).length>=count,{ids:initialIds,count:realCases.length},{timeout:90000});
  }catch(error){
   const diagnostics=await page.evaluate(ids=>({
    items:items.length,
@@ -133,8 +133,8 @@ try{
   await writeFile(out+'/real-photo-import-diagnostics.json',JSON.stringify({diagnostics,pageErrors:errors},null,2));
   throw new Error('Real photo import did not produce eight distinct items: '+JSON.stringify(diagnostics),{cause:error});
  }
- await page.waitForFunction(ids=>items.filter(x=>!ids.includes(x.id)).every(x=>!localPending.has(x.id)),initialIds,{timeout:90000});
- const imported=await page.evaluate(ids=>items.filter(x=>!ids.includes(x.id)).map(x=>({category:x.category,itemType:x.itemType,color:x.color||null,needsReview:!!x.needsReview,scanFailed:!!x.scanFailed})),initialIds);
+ await page.waitForFunction(ids=>[...items,...batch].filter(x=>!ids.includes(x.id)).every(x=>!localPending.has(x.id))&&!automaticRunning,initialIds,{timeout:90000});
+ const imported=await page.evaluate(ids=>[...items,...batch].filter(x=>!ids.includes(x.id)).map(x=>({category:x.category,itemType:x.itemType,color:x.color||null,needsReview:!!x.needsReview,scanFailed:!!x.scanFailed})),initialIds);
  for(let i=0;i<realCases.length;i++){const [id,expected]=realCases[i],observed=imported[i];realResults.push({id,expected,...observed,correctCategory:observed.category===expected});}
  await writeFile(out+'/real-photo-indexing.json',JSON.stringify({cases:realResults,categoryAccuracy:realResults.filter(x=>x.correctCategory).length/realResults.length},null,2));
  assert.deepEqual(errors,[]);await page.screenshot({path:out+'/closet.png',fullPage:true});
