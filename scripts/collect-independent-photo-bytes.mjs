@@ -12,7 +12,7 @@ async function wikimediaFetch(url){
   const wait=Math.max(0,1200-(Date.now()-lastRequestAt));
   if(wait)await pause(wait);
   lastRequestAt=Date.now();
-  const res=await wikimediaFetch(url);
+  const res=await fetch(url,{headers:{'User-Agent':'ClosetCurrentBenchmark/1.0 (https://github.com/nickhaney916-lang/Closet-Current)'},signal:AbortSignal.timeout(25000)});
   if(![429,503].includes(res.status)||attempt===2)return res;
   const retryAfter=Number(res.headers.get('retry-after'));
   const delay=Number.isFinite(retryAfter)&&retryAfter>=0?Math.min(30000,Math.max(3000,retryAfter*1000)):3000*(attempt+1);
