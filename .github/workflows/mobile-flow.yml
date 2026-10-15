@@ -24,7 +24,7 @@ permissions:
 jobs:
   mobile:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -48,9 +48,25 @@ jobs:
         run: |
           node scripts/build.mjs
           node scripts/run-mobile-flow.mjs benchmark/mobile-flow
+      - name: Assemble and verify the reviewed 59-photo set
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p benchmark/combined-59
+          node scripts/assemble-reviewed-baseline.mjs benchmark/combined-59/manifest.json benchmark/manifest-reviewed-32.json benchmark/manifest-holdout-16.json benchmark/manifest-fresh-11.json
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json
+          node scripts/download-reviewed-photos.mjs benchmark/manifest-fresh-11.json
+          node scripts/validate-100-photo-set.mjs benchmark/combined-59/manifest.json benchmark/photos 59 > benchmark/combined-59/validation.json
+      - name: Run real 59-photo browser recognition and accuracy audit
+        run: |
+          node scripts/run-browser-photo-benchmark.mjs benchmark/combined-59/manifest.json benchmark/combined-59/results
+          node scripts/evaluate-recognition-benchmark.mjs benchmark/combined-59/manifest.json benchmark/combined-59/results/results.json > benchmark/combined-59/evaluation.json
+          node scripts/audit-100-photo-results.mjs benchmark/combined-59/manifest.json benchmark/combined-59/results/results.json benchmark/combined-59/audit.json 59
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: mobile-flow-results
-          path: benchmark/mobile-flow/
+          path: |
+            benchmark/mobile-flow/
+            benchmark/combined-59/
           retention-days: 14
