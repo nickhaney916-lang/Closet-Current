@@ -120,6 +120,25 @@ try{
   suggestedType:x.recognitionDiagnostics.outerwearRecovery.fullCatalogEvidence?.whole?.top?.[0]?.type||null,
   correct:x.expected==='Outerwear',savedCategory:x.category
  }));
+ // Record non-destructive framing metrics for the ambiguous garments.
+ // These measurements are diagnostic only and never change recognition pixels.
+ const framing=await page.evaluate(async()=>{
+  const {recognitionFramingDiagnostics}=await import('/recognition-photo.mjs');
+  const output={};
+  for(const id of ['commons-0045','commons-0070']){
+   const response=await fetch('/benchmark/photos/'+id+'.jpg');
+   if(!response.ok){output[id]={error:'benchmark_photo_not_served'};continue;}
+   const blob=await response.blob(),bitmap=await createImageBitmap(blob);
+   const canvas=document.createElement('canvas');canvas.width=bitmap.width;canvas.height=bitmap.height;
+   const context=canvas.getContext('2d',{willReadFrequently:true});context.drawImage(bitmap,0,0);
+   const pixels=context.getImageData(0,0,canvas.width,canvas.height);
+   output[id]=recognitionFramingDiagnostics({width:canvas.width,height:canvas.height,channels:4,data:pixels.data});
+   bitmap.close();
+  }
+  return output;
+ });
+ await writeFile(out+'/recognition-framing.json',JSON.stringify(framing,null,2));
+ console.log('REAL_PHOTO_FRAMING '+JSON.stringify(framing));
  const report={cases:realResults,submitted:realCases.length,imported:observed.imports.added,evaluated:evaluated.length,categoryAccuracy:evaluated.length?evaluated.filter(x=>x.correctCategory).length/evaluated.length:null,allSubmittedAccuracy:realResults.filter(x=>x.correctCategory).length/realCases.length,uncategorizedCases:realResults.filter(x=>x.category==='Uncategorized').map(x=>({id:x.id,expected:x.expected,diagnostics:x.recognitionDiagnostics||null})),uncategorizedCount:realResults.filter(x=>x.category==='Uncategorized').length,reviewSuggestions,reviewSuggestionCount:reviewSuggestions.length,reviewSuggestionCorrect:reviewSuggestions.filter(x=>x.correct).length,reviewSuggestionIncorrect:reviewSuggestions.filter(x=>!x.correct).length,reviewSuggestionPrecision:reviewSuggestions.length?reviewSuggestions.filter(x=>x.correct).length/reviewSuggestions.length:null,importDiagnostics:observed,pageErrors:errors};
  await writeFile(out+'/real-photo-indexing.json',JSON.stringify(report,null,2));
  console.log('REAL_PHOTO_INDEXING '+JSON.stringify(report));
