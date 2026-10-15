@@ -324,6 +324,8 @@ async function recognizeItem(item){
   if(!batch.some(x=>x.id===item.id))return;
   if(typeof ClothingMemory!=='undefined'&&ClothingMemory.valid(result.recognitionMemory))item.recognitionMemory=result.recognitionMemory;
   item.localAnalyzed=true;item.localChoices=[];
+  // Diagnostic evidence contains category/type scores only, never wardrobe images.
+  if(result.diagnostics)item.recognitionDiagnostics={reason:result.reason||null,...result.diagnostics};
   const corePartial=!result.strong&&result.categoryConfirmed&&result.categoryOnly&&result.choices?.[0]&&result.choices[0].itemType==='Unknown';
   if(corePartial){
    if(item.userAdjusted||!segmentationAllows(item,result.choices[0])){item.localStatus=item.userAdjusted?'Your adjustments are preserved. Save this piece when ready.':'The clothing checks disagree. Use Adjust or take a clearer photo.';return true;}
