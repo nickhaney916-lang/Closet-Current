@@ -132,7 +132,18 @@ try{
    const canvas=document.createElement('canvas');canvas.width=bitmap.width;canvas.height=bitmap.height;
    const context=canvas.getContext('2d',{willReadFrequently:true});context.drawImage(bitmap,0,0);
    const pixels=context.getImageData(0,0,canvas.width,canvas.height);
-   output[id]=recognitionFramingDiagnostics({width:canvas.width,height:canvas.height,channels:4,data:pixels.data});
+   const raw={width:canvas.width,height:canvas.height,channels:4,data:pixels.data};
+   const primary=recognitionFramingDiagnostics(raw);
+   const confirmation=recognitionFramingDiagnostics(raw,{confirmation:true});
+   const scales=[256,288,320,336,384,448].map(target=>{
+    const factor=target/Math.max(canvas.width,canvas.height);
+    const width=Math.max(1,Math.round(canvas.width*factor));
+    const height=Math.max(1,Math.round(canvas.height*factor));
+    return {target,longestSide:Math.max(width,height),shortestSide:Math.min(width,height),
+     originalPixelsPerModelPixel:Math.max(canvas.width,canvas.height)/target,
+     width,height};
+   });
+   output[id]={primary,confirmation,scaleCandidates:scales};
    bitmap.close();
   }
   return output;
