@@ -138,6 +138,35 @@ export async function recognizeWithRecovery(model,image,settings={}){
    }};
   }catch{/* Preserve the original uncertain result. */}
  }
+ // A skirt/dress disagreement is also tested against the complete garment
+ // vocabulary. This avoids treating a restricted Bottoms/Dresses prompt as
+ // decisive evidence and records whether the two full-catalog views agree.
+ if(!result.strong&&result.diagnostics?.skirtDressConflict?.requiresManualReview&&
+    settings.recoveryModel&&settings.recoveryConfirmationModel){
+  try{
+   const labels=localCandidates.map(x=>x.label);
+   const [first,second]=await Promise.all([
+    settings.recoveryModel(image,labels,options),
+    settings.recoveryConfirmationModel(image,labels,options)
+   ]);
+   const a=clothingChoices(first),b=clothingChoices(second);
+   const ca=garmentCategoryTotals(first),cb=garmentCategoryTotals(second);
+   const supports=(choices,cats)=>choices[0]?.category==='Bottoms'&&
+    choices[0]?.itemType==='Skirt'&&choices[0].score>=.45&&
+    choices[0].score-(choices[1]?.score||0)>=.2&&
+    cats[0]?.category==='Bottoms'&&cats[0].score>=.7&&
+    cats[0].score-(cats[1]?.score||0)>=.4;
+   if(supports(a,ca)&&supports(b,cb)){
+    settings.onIdentified?.(a[0]);
+    return {strong:true,choices:[a[0]],details:{},reason:'skirt_full_catalog_independent_agreement',preprocessingRecovery:true};
+   }
+   result.diagnostics={...result.diagnostics,skirtFullCatalogRecovery:{
+    first:a.slice(0,2).map(x=>({category:x.category,type:x.itemType,score:x.score})),
+    confirmation:b.slice(0,2).map(x=>({category:x.category,type:x.itemType,score:x.score})),
+    firstCategories:ca.slice(0,2),confirmationCategories:cb.slice(0,2)
+   }};
+  }catch{/* Keep the uncertain result if either independent check fails. */}
+ }
  // A coat with a strong category-specific vote but a conflicting whole-
  // catalog confirmation gets two independent full-catalog rechecks. Do not
  // weaken the general confirmation threshold for unrelated garment types.
