@@ -1,0 +1,1090 @@
+[
+  {
+    "id": "commons-0001",
+    "image": "commons-0001.jpg",
+    "verified": true,
+    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1f/T-shirt%2C_oversized%2C_maat_XL%2C_Merk_Ecko_Unlimited%2C_blauw%2C_wit_en_grijs_met_opdruk%2C_objectnr_86904-3.JPG/1920px-T-shirt%2C_oversized%2C_maat_XL%2C_Merk_Ecko_Unlimited%2C_blauw%2C_wit_en_grijs_met_opdruk%2C_objectnr_86904-3.JPG",
+    "alternateDownloadUrls": [
+      "https://upload.wikimedia.org/wikipedia/commons/1/1f/T-shirt%2C_oversized%2C_maat_XL%2C_Merk_Ecko_Unlimited%2C_blauw%2C_wit_en_grijs_met_opdruk%2C_objectnr_86904-3.JPG"
+    ],
+    "sha256": "d20d66d4173f56c47e35540f081ecdfcee6e019df665ee245d967d126e117684",
+    "attribution": {
+      "id": "commons-0001",
+      "title": "File:T-shirt, oversized, maat XL, Merk Ecko Unlimited, blauw, wit en grijs met opdruk, objectnr 86904-3.JPG",
+      "source": "https://commons.wikimedia.org/wiki/File:T-shirt,_oversized,_maat_XL,_Merk_Ecko_Unlimited,_blauw,_wit_en_grijs_met_opdruk,_objectnr_86904-3.JPG",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+      "author": "Ecko Unlimited",
+      "credit": "https://museumrotterdam.nl/collectie/item/86904-3"
+    }
+  },
+  {
+    "id": "commons-0002",
+    "image": "commons-0002.jpg",
+    "verified": true,
+    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Rood_t-shirt%2C_merk_Diesel%2C_maat_M%2C_objectnr_86503.JPG/1920px-Rood_t-shirt%2C_merk_Diesel%2C_maat_M%2C_objectnr_86503.JPG",
+    "alternateDownloadUrls": [
+      "https://upload.wikimedia.org/wikipedia/commons/1/18/Rood_t-shirt%2C_merk_Diesel%2C_maat_M%2C_objectnr_86503.JPG"
+    ],
+    "sha256": "fef606d6ed7354a2238f1bcc2584942747ca6fa4a2b16b2e9eec21f639d10667",
+    "attribution": {
+      "id": "commons-0002",
+      "title": "File:Rood t-shirt, merk Diesel, maat M, objectnr 86503.JPG",
+      "source": "https://commons.wikimedia.org/wiki/File:Rood_t-shirt,_merk_Diesel,_maat_M,_objectnr_86503.JPG",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+      "author": "Diesel",
+      "credit": "https://museumrotterdam.nl/collectie/item/86503"
+    }
+  },
+  {
+    "id": "commons-0003",
+    "image": "commons-0003.jpg",
+    "verified": true,
+    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/Zwart_shirt_met_lange_mouwen_van_merk_Armani_Jeans%2C_opdruk_letters_%E2%80%9CAJ%E2%80%9D_op_voorkant%2C_maat_M%2C_objectnr_86975-3.JPG/1920px-Zwart_shirt_met_lange_mouwen_van_merk_Armani_Jeans%2C_opdruk_letters_%E2%80%9CAJ%E2%80%9D_op_voorkant%2C_maat_M%2C_objectnr_86975-3.JPG",
+    "alternateDownloadUrls": [
+      "https://upload.wikimedia.org/wikipedia/commons/0/0a/Zwart_shirt_met_lange_mouwen_van_merk_Armani_Jeans%2C_opdruk_letters_%E2%80%9CAJ%E2%80%9D_op_voorkant%2C_maat_M%2C_objectnr_86975-3.JPG"
+    ],
+    "sha256": "cb909d7ad9c3940bfa4db0cc50b2ea7025faebe3dcec8fe80067f900760bba64",
+    "attribution": {
+      "id": "commons-0003",
+      "title": "File:Zwart shirt met lange mouwen van merk Armani Jeans, opdruk letters \u201cAJ\u201d op voorkant, maat M, objectnr 86975-3.JPG",
+      "source": "https://commons.wikimedia.org/wiki/File:Zwart_shirt_met_lange_mouwen_van_merk_Armani_Jeans,_opdruk_letters_%E2%80%9CAJ%E2%80%9D_op_voorkant,_maat_M,_objectnr_86975-3.JPG",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+      "author": "Armani?",
+      "credit": "https://museumrotterdam.nl/collectie/item/86975-3"
+    }
+  },
+  {
+    "id": "commons-0014",
+    "image": "commons-0014.jpg",
+    "verified": true,
+    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/40/Blouse_MET_CI44.111_F.jpg/1920px-Blouse_MET_CI44.111_F.jpg",
+    "alternateDownloadUrls": [
+      "https://upload.wikimedia.org/wikipedia/commons/4/40/Blouse_MET_CI44.111_F.jpg"
+    ],
+    "sha256": "d1074e4375b5e60f1bc43996c41b168dcb67425c9d0fac376e43719ecf9fe35f",
+    "attribution": {
+      "id": "commons-0014",
+      "title": "File:Blouse MET CI44.111 F.jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Blouse_MET_CI44.111_F.jpg",
+      "license": "CC0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+      "author": "",
+      "credit": "This file was donated to Wikimedia Commons as part of a project by the Metropolitan Museum of Art . See the Image and Data Resources Open Access Policy"
+    }
+  },
+  {
+    "id": "commons-0016",
+    "image": "commons-0016.jpg",
+    "verified": true,
+    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/Blouse_MET_41.64_F.jpg/1920px-Blouse_MET_41.64_F.jpg",
+    "alternateDownloadUrls": [
+      "https://upload.wikimedia.org/wikipedia/commons/5/53/Blouse_MET_41.64_F.jpg"
+    ],
+    "sha256": "e0510f06c475fa048585e6ff437359cb4255ce3a425e40a69dc54cc337f5ab24",
+    "attribution": {
+      "id": "commons-0016",
+      "title": "File:Blouse MET 41.64 F.jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Blouse_MET_41.64_F.jpg",
+      "license": "CC0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+      "author": "",
+      "credit": "This file was donated to Wikimedia Commons as part of a project by the Metropolitan Museum of Art . See the Image and Data Resources Open Access Policy"
+    }
+  },
+  {
+    "id": "commons-0021",
+    "image": "commons-0021.jpg",
+    "verified": true,
+    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d2/Jeans_for_men.jpg/564px-Jeans_for_men.jpg",
+    "alternateDownloadUrls": [
+      "https://upload.wikimedia.org/wikipedia/commons/d/d2/Jeans_for_men.jpg"
+    ],
+    "sha256": "04c0ca5bed1bee26e83be98b9a992619b0777811a7fb8a99fe955939334bbd8c",
+    "attribution": {
+      "id": "commons-0021",
+      "title": "File:Jeans for men.jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Jeans_for_men.jpg",
+      "license": "Public domain",
+      "licenseUrl": "",
+      "author": "Honeyhuyue",
+      "credit": "Own work"
+    }
+  },
+  {
+    "id": "commons-0023",
+    "image": "commons-0023.jpg",
+    "verified": true,
+    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/Blauwe_jeans%2C_merk_Artful_Dodger%2C_maat_32%2C_zakken_achterzijde_met_opvallende_witte_print%2C_objectnr_86905-3%281%29.JPG/1920px-Blauwe_jeans%2C_merk_Artful_Dodger%2C_maat_32%2C_zakken_achterzijde_met_opvallende_witte_print%2C_objectnr_86905-3%281%29.JPG",
+    "alternateDownloadUrls": [
+      "https://upload.wikimedia.org/wikipedia/commons/1/14/Blauwe_jeans%2C_merk_Artful_Dodger%2C_maat_32%2C_zakken_achterzijde_met_opvallende_witte_print%2C_objectnr_86905-3%281%29.JPG"
+    ],
+    "sha256": "5be4cb0d7017987d8625caf53ac979f0c78245617dc5828aec5f77ae8f4ea8ef",
+    "attribution": {
+      "id": "commons-0023",
+      "title": "File:Blauwe jeans, merk Artful Dodger, maat 32, zakken achterzijde met opvallende witte print, objectnr 86905-3(1).JPG",
+      "source": "https://commons.wikimedia.org/wiki/File:Blauwe_jeans,_merk_Artful_Dodger,_maat_32,_zakken_achterzijde_met_opvallende_witte_print,_objectnr_86905-3(1).JPG",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+      "author": "Artful Dodger",
+      "credit": "https://museumrotterdam.nl/collectie/item/86905-3"
+    }
+  },
+  {
+    "id": "commons-0024",
+    "image": "commons-0024.jpg",
+    "verified": true,
+    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/Blauwe_jeans%2C_skinny_jeans_model%2C_merk_Revers_Jeans%2C_maat_S36%2C_objectnr_86974-3%281%29.JPG/1920px-Blauwe_jeans%2C_skinny_jeans_model%2C_merk_Revers_Jeans%2C_maat_S36%2C_objectnr_86974-3%281%29.JPG",
+    "alternateDownloadUrls": [
+      "https://upload.wikimedia.org/wikipedia/commons/3/3b/Blauwe_jeans%2C_skinny_jeans_model%2C_merk_Revers_Jeans%2C_maat_S36%2C_objectnr_86974-3%281%29.JPG"
+    ],
+    "sha256": "8e28473b101c70a5e4b7daae819a0342405bfcb7abbf4850dbbb4e801dd7ac4f",
+    "attribution": {
+      "id": "commons-0024",
+      "title": "File:Blauwe jeans, skinny jeans model, merk Revers Jeans, maat S36, objectnr 86974-3(1).JPG",
+      "source": "https://commons.wikimedia.org/wiki/File:Blauwe_jeans,_skinny_jeans_model,_merk_Revers_Jeans,_maat_S36,_objectnr_86974-3(1).JPG",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+      "author": "Revers Jeans",
+      "credit": "https://museumrotterdam.nl/collectie/item/86974-3"
+    }
+  },
+  {
+    "id": "commons-0025",
+    "image": "commons-0025.jpg",
+    "verified": true,
+    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1f/Wisent_Blue_Jeans_%286%29.JPG/1920px-Wisent_Blue_Jeans_%286%29.JPG",
+    "alternateDownloadUrls": [
+      "https://upload.wikimedia.org/wikipedia/commons/1/1f/Wisent_Blue_Jeans_%286%29.JPG"
+    ],
+    "sha256": "54de15a268c8cbdd767b9247da91abd22efa546004623eec23da1b2492625f9d",
+    "attribution": {
+      "id": "commons-0025",
+      "title": "File:Wisent Blue Jeans (6).JPG",
+      "source": "https://commons.wikimedia.org/wiki/File:Wisent_Blue_Jeans_(6).JPG",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "author": "Minderbinder",
+      "credit": "Own work"
+    }
+  },
+  {
+    "id": "commons-0033",
+    "image": "commons-0033.jpg",
+    "verified": true,
+    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/96/Men%27s_Shorts_-_Old_Bull_Lee_-_Orange.jpg/1920px-Men%27s_Shorts_-_Old_Bull_Lee_-_Orange.jpg",
+    "alternateDownloadUrls": [
+      "https://upload.wikimedia.org/wikipedia/commons/9/96/Men%27s_Shorts_-_Old_Bull_Lee_-_Orange.jpg"
+    ],
+    "sha256": "7e31adee6fabca386faabd8ca6f0f1f4d93291f74cb84a6ab10cb4bd724cd2f7",
+    "attribution": {
+      "id": "commons-0033",
+      "title": "File:Men's Shorts - Old Bull Lee - Orange.jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Men%27s_Shorts_-_Old_Bull_Lee_-_Orange.jpg",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+      "author": "OldBullLeeWasHere",
+      "credit": "Own work"
+    }
+  },
+  {
+    "id": "commons-0035",
+    "image": "commons-0035.jpg",
+    "verified": true,
+    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/Orange_men%27s_shorts_for_sale_at_Target.jpg/1920px-Orange_men%27s_shorts_for_sale_at_Target.jpg",
+    "alternateDownloadUrls": [
+      "https://upload.wikimedia.org/wikipedia/commons/3/30/Orange_men%27s_shorts_for_sale_at_Target.jpg"
+    ],
+    "sha256": "9fd067b0919d519eb7924ebd5c4ddf0bc0f3956cfd229fe1ab12c16cccb085ca",
+    "attribution": {
+      "id": "commons-0035",
+      "title": "File:Orange men's shorts for sale at Target.jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Orange_men%27s_shorts_for_sale_at_Target.jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "author": "Ser Amantio di Nicolao",
+      "credit": "Own work"
+    }
+  },
+  {
+    "id": "commons-0036",
+    "image": "commons-0036.jpg",
+    "verified": true,
+    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1e/Iraqw_initiation_skirt.jpg/1920px-Iraqw_initiation_skirt.jpg",
+    "alternateDownloadUrls": [
+      "https://upload.wikimedia.org/wikipedia/commons/1/1e/Iraqw_initiation_skirt.jpg"
+    ],
+    "sha256": "5668ffc3c84aaecd8c25854e3da13c62a06a04cf9d294411b33d42e40d5e6386",
+    "attribution": {
+      "id": "commons-0036",
+      "title": "File:Iraqw initiation skirt.jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Iraqw_initiation_skirt.jpg",
+      "license": "CC BY 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+      "author": "Ellen from Ann Arbor, MI, USA",
+      "credit": "Girl's initiation skirt"
+    }
+  },
+  {
+    "id": "commons-0040",
+    "image": "commons-0040.jpg",
+    "verified": true,
+    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/54/Malong_%28tube_skirt%29_from_Mindanao%2C_Honolulu_Museum_of_Art_9178.1.JPG/1920px-Malong_%28tube_skirt%29_from_Mindanao%2C_Honolulu_Museum_of_Art_9178.1.JPG",
+    "alternateDownloadUrls": [
+      "https://upload.wikimedia.org/wikipedia/commons/5/54/Malong_%28tube_skirt%29_from_Mindanao%2C_Honolulu_Museum_of_Art_9178.1.JPG"
+    ],
+    "sha256": "b681dc1dbc32dde043fbf9e208437f60e83fa37365ad8023012b2df866cb637e",
+    "attribution": {
+      "id": "commons-0040",
+      "title": "File:Malong (tube skirt) from Mindanao, Honolulu Museum of Art 9178.1.JPG",
+      "source": "https://commons.wikimedia.org/wiki/File:Malong_(tube_skirt)_from_Mindanao,_Honolulu_Museum_of_Art_9178.1.JPG",
+      "license": "CC0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+      "author": "Hiart",
+      "credit": "Own work"
+    }
+  },
+  {
+    "id": "commons-0041",
+    "image": "commons-0041.jpg",
+    "verified": true,
+    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Skirt_%28AM_1968.105-2%29.jpg/1920px-Skirt_%28AM_1968.105-2%29.jpg",
+    "alternateDownloadUrls": [
+      "https://upload.wikimedia.org/wikipedia/commons/c/c8/Skirt_%28AM_1968.105-2%29.jpg"
+    ],
+    "sha256": "0e4d278fe02d2e527a5b73a08407dda8a57e5597260dc08461bc83e720cf2278",
+    "attribution": {
+      "id": "commons-0041",
+      "title": "File:Skirt (AM 1968.105-2).jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Skirt_(AM_1968.105-2).jpg",
+      "license": "CC BY 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
+      "author": "Unknown author Unknown author",
+      "credit": "API data Catalogue record Photo"
+    }
+  },
+  {
+    "id": "commons-0043",
+    "image": "commons-0043.jpg",
+    "verified": true,
+    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/42/Woman%27s_summer_skirt_from_China%2C_Honolulu_Museum_of_Art_5152.1.JPG/1920px-Woman%27s_summer_skirt_from_China%2C_Honolulu_Museum_of_Art_5152.1.JPG",
+    "alternateDownloadUrls": [
+      "https://upload.wikimedia.org/wikipedia/commons/4/42/Woman%27s_summer_skirt_from_China%2C_Honolulu_Museum_of_Art_5152.1.JPG"
+    ],
+    "sha256": "c8d0812ab69d698f5bf8dc5a14ace6b8034e4c74152471acf4f079fdd6d0c344",
+    "attribution": {
+      "id": "commons-0043",
+      "title": "File:Woman's summer skirt from China, Honolulu Museum of Art 5152.1.JPG",
+      "source": "https://commons.wikimedia.org/wiki/File:Woman%27s_summer_skirt_from_China,_Honolulu_Museum_of_Art_5152.1.JPG",
+      "license": "CC0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+      "author": "Hiart",
+      "credit": "Own work"
+    }
+  },
+  {
+    "id": "commons-0044",
+    "image": "commons-0044.jpg",
+    "verified": true,
+    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/Ho_%28woman%27s_tube_skirt%29_from_Vietnam%2C_Honolulu_Museum_of_Art_12632.1.JPG/1920px-Ho_%28woman%27s_tube_skirt%29_from_Vietnam%2C_Honolulu_Museum_of_Art_12632.1.JPG",
+    "alternateDownloadUrls": [
+      "https://upload.wikimedia.org/wikipedia/commons/0/0b/Ho_%28woman%27s_tube_skirt%29_from_Vietnam%2C_Honolulu_Museum_of_Art_12632.1.JPG"
+    ],
+    "sha256": "b3fb8eac5815d1e1cdfde4eb766fc71d6a3640cb0e80c0c82560c45f0b65e501",
+    "attribution": {
+      "id": "commons-0044",
+      "title": "File:Ho (woman's tube skirt) from Vietnam, Honolulu Museum of Art 12632.1.JPG",
+      "source": "https://commons.wikimedia.org/wiki/File:Ho_(woman%27s_tube_skirt)_from_Vietnam,_Honolulu_Museum_of_Art_12632.1.JPG",
+      "license": "CC0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+      "author": "Hiart",
+      "credit": "Own work"
+    }
+  },
+  {
+    "id": "commons-0045",
+    "image": "commons-0045.jpg",
+    "verified": true,
+    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cb/Chaofu_%28formal_court_skirt%29_from_China%2C_Honolulu_Museum_of_Art_1076.JPG/1920px-Chaofu_%28formal_court_skirt%29_from_China%2C_Honolulu_Museum_of_Art_1076.JPG",
+    "alternateDownloadUrls": [
+      "https://upload.wikimedia.org/wikipedia/commons/c/cb/Chaofu_%28formal_court_skirt%29_from_China%2C_Honolulu_Museum_of_Art_1076.JPG"
+    ],
+    "sha256": "eada8b18770db3c5099b664432ad6423e43b120e37d4c4031b6ada718fde2d7d",
+    "attribution": {
+      "id": "commons-0045",
+      "title": "File:Chaofu (formal court skirt) from China, Honolulu Museum of Art 1076.JPG",
+      "source": "https://commons.wikimedia.org/wiki/File:Chaofu_(formal_court_skirt)_from_China,_Honolulu_Museum_of_Art_1076.JPG",
+      "license": "CC0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+      "author": "Hiart",
+      "credit": "Own work"
+    }
+  },
+  {
+    "id": "commons-0046",
+    "image": "commons-0046.jpg",
+    "verified": true,
+    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/43/2015_Garb_Goli%C5%84ca.jpg/1920px-2015_Garb_Goli%C5%84ca.jpg",
+    "alternateDownloadUrls": [
+      "https://upload.wikimedia.org/wikipedia/commons/4/43/2015_Garb_Goli%C5%84ca.jpg"
+    ],
+    "sha256": "7f94b8bc8edc340200f0353968f54868dc72e3180bc191530e19f2a82ce91ead",
+    "attribution": {
+      "id": "commons-0046",
+      "title": "File:2015 Garb Goli\u0144ca.jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:2015_Garb_Goli%C5%84ca.jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "author": "Jacek Halicki",
+      "credit": "Own work"
+    }
+  },
+  {
+    "id": "commons-0049",
+    "image": "commons-0049.jpg",
+    "verified": true,
+    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Dress_%28AM_17186-5%29.jpg/1920px-Dress_%28AM_17186-5%29.jpg",
+    "alternateDownloadUrls": [
+      "https://upload.wikimedia.org/wikipedia/commons/5/5e/Dress_%28AM_17186-5%29.jpg"
+    ],
+    "sha256": "819ff96e55abf6f79cb99b5abca1870bc0bccfc669681bbc755562be9dbab547",
+    "attribution": {
+      "id": "commons-0049",
+      "title": "File:Dress (AM 17186-5).jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Dress_(AM_17186-5).jpg",
+      "license": "CC BY 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
+      "author": "Unknown author Unknown author",
+      "credit": "API data Catalogue record Photo"
+    }
+  },
+  {
+    "id": "commons-0052",
+    "image": "commons-0052.jpg",
+    "verified": true,
+    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3d/Costume%2C_swimming%2C_child%27s_%28AM_1994.201-1%29.jpg/1920px-Costume%2C_swimming%2C_child%27s_%28AM_1994.201-1%29.jpg",
+    "alternateDownloadUrls": [
+      "https://upload.wikimedia.org/wikipedia/commons/3/3d/Costume%2C_swimming%2C_child%27s_%28AM_1994.201-1%29.jpg"
+    ],
+    "sha256": "a6efd0e1d007ba63c0afd2afe9697f336336944d949d57c67e3aedbfe68e9824",
+    "attribution": {
+      "id": "commons-0052",
+      "title": "File:Costume, swimming, child's (AM 1994.201-1).jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Costume,_swimming,_child%27s_(AM_1994.201-1).jpg",
+      "license": "CC BY 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
+      "author": "",
+      "credit": "API data Catalogue record Photo"
+    }
+  },
+  {
+    "id": "commons-0053",
+    "image": "commons-0053.jpg",
+    "verified": true,
+    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fd/Dress%2C_match_%28AM_2017.66.33-1%29.jpg/1920px-Dress%2C_match_%28AM_2017.66.33-1%29.jpg",
+    "alternateDownloadUrls": [
+      "https://upload.wikimedia.org/wikipedia/commons/f/fd/Dress%2C_match_%28AM_2017.66.33-1%29.jpg"
+    ],
+    "sha256": "e7a617cd23a159864f619e8397d5f37d48b684e47dddc4ad6b46b14481042019",
+    "attribution": {
+      "id": "commons-0053",
+      "title": "File:Dress, match (AM 2017.66.33-1).jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Dress,_match_(AM_2017.66.33-1).jpg",
+      "license": "CC BY 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
+      "author": "",
+      "credit": "API data Catalogue record Photo"
+    }
+  },
+  {
+    "id": "commons-0059",
+    "image": "commons-0059.jpg",
+    "verified": true,
+    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Dress_and_jacket_%28AM_1970.236-4%29.jpg/1920px-Dress_and_jacket_%28AM_1970.236-4%29.jpg",
+    "alternateDownloadUrls": [
+      "https://upload.wikimedia.org/wikipedia/commons/c/c8/Dress_and_jacket_%28AM_1970.236-4%29.jpg"
+    ],
+    "sha256": "f7b8eea8f6d741a5f685119cc5c92f69300a5f294940162429e3febd1482f44c",
+    "attribution": {
+      "id": "commons-0059",
+      "title": "File:Dress and jacket (AM 1970.236-4).jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Dress_and_jacket_(AM_1970.236-4).jpg",
+      "license": "CC BY 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
+      "author": "Unknown author Unknown author",
+      "credit": "API data Catalogue record Photo"
+    }
+  },
+  {
+    "id": "commons-0060",
+    "image": "commons-0060.jpg",
+    "verified": true,
+    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/00/Jacket_%28AM_1969.193-1%29.jpg/1920px-Jacket_%28AM_1969.193-1%29.jpg",
+    "alternateDownloadUrls": [
+      "https://upload.wikimedia.org/wikipedia/commons/0/00/Jacket_%28AM_1969.193-1%29.jpg"
+    ],
+    "sha256": "198cd0d18fc3d2b9e2ff7d30ca024e860ee4b90dac3165890ed4e3721e5f153f",
+    "attribution": {
+      "id": "commons-0060",
+      "title": "File:Jacket (AM 1969.193-1).jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Jacket_(AM_1969.193-1).jpg",
+      "license": "CC BY 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
+      "author": "Unknown author Unknown author",
+      "credit": "API data Catalogue record Photo"
+    }
+  },
+  {
+    "id": "commons-0062",
+    "image": "commons-0062.jpg",
+    "verified": true,
+    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5c/Jacket_%28AM_906-2%29.jpg/1920px-Jacket_%28AM_906-2%29.jpg",
+    "alternateDownloadUrls": [
+      "https://upload.wikimedia.org/wikipedia/commons/5/5c/Jacket_%28AM_906-2%29.jpg"
+    ],
+    "sha256": "ed42247af077518ac3532d851a4330ae7cd69bee9969ab3f784431cfbc61f350",
+    "attribution": {
+      "id": "commons-0062",
+      "title": "File:Jacket (AM 906-2).jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Jacket_(AM_906-2).jpg",
+      "license": "CC BY 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
+      "author": "",
+      "credit": "API data Catalogue record Photo"
+    }
+  },
+  {
+    "id": "commons-0064",
+    "image": "commons-0064.jpg",
+    "verified": true,
+    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a1/Jacket_%28AM_740158-3%29.jpg/1920px-Jacket_%28AM_740158-3%29.jpg",
+    "alternateDownloadUrls": [
+      "https://upload.wikimedia.org/wikipedia/commons/a/a1/Jacket_%28AM_740158-3%29.jpg"
+    ],
+    "sha256": "bb68b22a7fdaff20e71eb969bb5d857598a5ca6f4b47f172dc7a8623b7bd6b83",
+    "attribution": {
+      "id": "commons-0064",
+      "title": "File:Jacket (AM 740158-3).jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Jacket_(AM_740158-3).jpg",
+      "license": "CC BY 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
+      "author": "",
+      "credit": "API data Catalogue record Photo"
+    }
+  },
+  {
+    "id": "commons-0065",
+    "image": "commons-0065.jpg",
+    "verified": true,
+    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/Jacket%2C_woman%27s_%28AM_15987-1%29.jpg/1920px-Jacket%2C_woman%27s_%28AM_15987-1%29.jpg",
+    "alternateDownloadUrls": [
+      "https://upload.wikimedia.org/wikipedia/commons/3/30/Jacket%2C_woman%27s_%28AM_15987-1%29.jpg"
+    ],
+    "sha256": "0d094b023d86942acbc89fc5a4bc02968c1b5d0b2c78639cdeb985f522a78494",
+    "attribution": {
+      "id": "commons-0065",
+      "title": "File:Jacket, woman's (AM 15987-1).jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Jacket,_woman%27s_(AM_15987-1).jpg",
+      "license": "CC BY 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
+      "author": "Unknown author Unknown author",
+      "credit": "API data Catalogue record Photo"
+    }
+  },
+  {
+    "id": "commons-0067",
+    "image": "commons-0067.jpg",
+    "verified": true,
+    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/32/Mexican_Ocelot_fur_coat_1.jpg/1920px-Mexican_Ocelot_fur_coat_1.jpg",
+    "alternateDownloadUrls": [
+      "https://upload.wikimedia.org/wikipedia/commons/3/32/Mexican_Ocelot_fur_coat_1.jpg"
+    ],
+    "sha256": "7d1d7456c5719af5a74dd6788896cb34fb4c0701d0c3555c06e91c93c9078857",
+    "attribution": {
+      "id": "commons-0067",
+      "title": "File:Mexican Ocelot fur coat 1.jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Mexican_Ocelot_fur_coat_1.jpg",
+      "license": "Public domain",
+      "licenseUrl": "",
+      "author": "Libricool ( talk ) 16:19, 11 October 2010 (UTC)",
+      "credit": "Own work"
+    }
+  },
+  {
+    "id": "commons-0068",
+    "image": "commons-0068.jpg",
+    "verified": true,
+    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ed/Sapphire_mink_fur_coat_1980.jpg/1920px-Sapphire_mink_fur_coat_1980.jpg",
+    "alternateDownloadUrls": [
+      "https://upload.wikimedia.org/wikipedia/commons/e/ed/Sapphire_mink_fur_coat_1980.jpg"
+    ],
+    "sha256": "5d372824e1054c4c392969bed227784cd30d7011e95db769218b20a28302633f",
+    "attribution": {
+      "id": "commons-0068",
+      "title": "File:Sapphire mink fur coat 1980.jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Sapphire_mink_fur_coat_1980.jpg",
+      "license": "Public domain",
+      "licenseUrl": "",
+      "author": "Libricool ( talk ) 19:57, 14 October 2010 (UTC)",
+      "credit": "Own work"
+    }
+  },
+  {
+    "id": "commons-0069",
+    "image": "commons-0069.jpg",
+    "verified": true,
+    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/78/Greenland_seal_fur_coat_1.jpg/1920px-Greenland_seal_fur_coat_1.jpg",
+    "alternateDownloadUrls": [
+      "https://upload.wikimedia.org/wikipedia/commons/7/78/Greenland_seal_fur_coat_1.jpg"
+    ],
+    "sha256": "5c7b56ab8cf1d681d16f94dedebccdb6aa7e37838a2da13bd59a0e54f56897f3",
+    "attribution": {
+      "id": "commons-0069",
+      "title": "File:Greenland seal fur coat 1.jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Greenland_seal_fur_coat_1.jpg",
+      "license": "Public domain",
+      "licenseUrl": "",
+      "author": "Libricool ( talk ) 10:10, 15 October 2010 (UTC)",
+      "credit": "Own work"
+    }
+  },
+  {
+    "id": "commons-0070",
+    "image": "commons-0070.jpg",
+    "verified": true,
+    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9b/Greenland_seal_fur_coat_2.jpg/1920px-Greenland_seal_fur_coat_2.jpg",
+    "alternateDownloadUrls": [
+      "https://upload.wikimedia.org/wikipedia/commons/9/9b/Greenland_seal_fur_coat_2.jpg"
+    ],
+    "sha256": "8a1fec00b50c99ee69ef70bf3576d2f034047c58c54736231b00bd22ffb25c2f",
+    "attribution": {
+      "id": "commons-0070",
+      "title": "File:Greenland seal fur coat 2.jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Greenland_seal_fur_coat_2.jpg",
+      "license": "Public domain",
+      "licenseUrl": "",
+      "author": "Libricool ( talk ) 10:10, 15 October 2010 (UTC)",
+      "credit": "Own work"
+    }
+  },
+  {
+    "id": "commons-0077",
+    "image": "commons-0077.jpg",
+    "verified": true,
+    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/60/Garrison_high-top_sneakers%2C_1940%2C_US_Army%2C_manufacturer_unknown_-_Bata_Shoe_Museum_-_DSC00771.JPG/1920px-Garrison_high-top_sneakers%2C_1940%2C_US_Army%2C_manufacturer_unknown_-_Bata_Shoe_Museum_-_DSC00771.JPG",
+    "alternateDownloadUrls": [
+      "https://upload.wikimedia.org/wikipedia/commons/6/60/Garrison_high-top_sneakers%2C_1940%2C_US_Army%2C_manufacturer_unknown_-_Bata_Shoe_Museum_-_DSC00771.JPG"
+    ],
+    "sha256": "b968758a00cd458040b90ca31a48c5aafe6f3cab4fe708f021bc3a341a58cf70",
+    "attribution": {
+      "id": "commons-0077",
+      "title": "File:Garrison high-top sneakers, 1940, US Army, manufacturer unknown - Bata Shoe Museum - DSC00771.JPG",
+      "source": "https://commons.wikimedia.org/wiki/File:Garrison_high-top_sneakers,_1940,_US_Army,_manufacturer_unknown_-_Bata_Shoe_Museum_-_DSC00771.JPG",
+      "license": "CC0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+      "author": "Daderot",
+      "credit": "Own work"
+    }
+  },
+  {
+    "id": "commons-0078",
+    "image": "commons-0078.jpg",
+    "verified": true,
+    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fe/Perfection_high-top_sneakers%2C_1900-1929_-_Bata_Shoe_Museum_-_DSC00727.JPG/1920px-Perfection_high-top_sneakers%2C_1900-1929_-_Bata_Shoe_Museum_-_DSC00727.JPG",
+    "alternateDownloadUrls": [
+      "https://upload.wikimedia.org/wikipedia/commons/f/fe/Perfection_high-top_sneakers%2C_1900-1929_-_Bata_Shoe_Museum_-_DSC00727.JPG"
+    ],
+    "sha256": "ba080a9a5d4aa68c193738e728e83c45b6a833a9bf80c45de4d2b35ece38154e",
+    "attribution": {
+      "id": "commons-0078",
+      "title": "File:Perfection high-top sneakers, 1900-1929 - Bata Shoe Museum - DSC00727.JPG",
+      "source": "https://commons.wikimedia.org/wiki/File:Perfection_high-top_sneakers,_1900-1929_-_Bata_Shoe_Museum_-_DSC00727.JPG",
+      "license": "CC0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+      "author": "Daderot",
+      "credit": "Own work"
+    }
+  },
+  {
+    "id": "commons-0079",
+    "image": "commons-0079.jpg",
+    "verified": true,
+    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9d/Nike_SB_Dunk_High_MF_Doom.jpg/1920px-Nike_SB_Dunk_High_MF_Doom.jpg",
+    "alternateDownloadUrls": [
+      "https://upload.wikimedia.org/wikipedia/commons/9/9d/Nike_SB_Dunk_High_MF_Doom.jpg"
+    ],
+    "sha256": "b577483e5244dfb53e60cc8a0b54a4130e695cf388e5534e38a2b04580727ec6",
+    "attribution": {
+      "id": "commons-0079",
+      "title": "File:Nike SB Dunk High MF Doom.jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Nike_SB_Dunk_High_MF_Doom.jpg",
+      "license": "CC BY 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+      "author": "TanSenpai from Philadelphia, United States",
+      "credit": "MF Doom's"
+    }
+  },
+  {
+    "id": "commons-0080",
+    "image": "commons-0080.jpg",
+    "verified": true,
+    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/Houston_sneakers_%28Unsplash%29.jpg/1920px-Houston_sneakers_%28Unsplash%29.jpg",
+    "alternateDownloadUrls": [
+      "https://upload.wikimedia.org/wikipedia/commons/c/c7/Houston_sneakers_%28Unsplash%29.jpg"
+    ],
+    "sha256": "4675887ee36dbaeb894faf1e0879b05473f39fb555024424d52fcdce37d35bb9",
+    "attribution": {
+      "id": "commons-0080",
+      "title": "File:Houston sneakers (Unsplash).jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Houston_sneakers_(Unsplash).jpg",
+      "license": "CC0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+      "author": "Ayo Ogunseinde armedshutter",
+      "credit": "https://unsplash.com/photos/Mp0qYV0fCfA Image at the Wayback Machine Gallery at the Wayback Machine"
+    }
+  },
+  {
+    "id": "commons-0081",
+    "image": "commons-0081.jpg",
+    "verified": true,
+    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Black_white_sneakers_logo_%28Unsplash%29.jpg/1920px-Black_white_sneakers_logo_%28Unsplash%29.jpg",
+    "alternateDownloadUrls": [
+      "https://upload.wikimedia.org/wikipedia/commons/3/3a/Black_white_sneakers_logo_%28Unsplash%29.jpg"
+    ],
+    "sha256": "72b53abd07e9438fd5a11631f6595c10d2abc98fda432d22611a58ba3b289952",
+    "attribution": {
+      "id": "commons-0081",
+      "title": "File:Black white sneakers logo (Unsplash).jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Black_white_sneakers_logo_(Unsplash).jpg",
+      "license": "CC0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+      "author": "chuttersnap chuttersnap",
+      "credit": "https://unsplash.com/photos/qmusKxOAL24 Image at the Wayback Machine Gallery at the Wayback Machine"
+    }
+  },
+  {
+    "id": "commons-0082",
+    "image": "commons-0082.jpg",
+    "verified": true,
+    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/Shoes%2C_leather_tennis_%28pair%29_%28AM_2017.30.1-15%29.jpg/1920px-Shoes%2C_leather_tennis_%28pair%29_%28AM_2017.30.1-15%29.jpg",
+    "alternateDownloadUrls": [
+      "https://upload.wikimedia.org/wikipedia/commons/0/05/Shoes%2C_leather_tennis_%28pair%29_%28AM_2017.30.1-15%29.jpg"
+    ],
+    "sha256": "d312800f42d207212ef45d7d0bd6a41fbd4d61193ed3b0e5df6193f1cedddbd2",
+    "attribution": {
+      "id": "commons-0082",
+      "title": "File:Shoes, leather tennis (pair) (AM 2017.30.1-15).jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Shoes,_leather_tennis_(pair)_(AM_2017.30.1-15).jpg",
+      "license": "CC BY 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
+      "author": "Adidas",
+      "credit": "API data Catalogue record Photo"
+    }
+  },
+  {
+    "id": "commons-0083",
+    "image": "commons-0083.jpg",
+    "verified": true,
+    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d0/Shoes%2C_leather_tennis_%28pair%29_%28AM_2017.30.1-20%29.jpg/1920px-Shoes%2C_leather_tennis_%28pair%29_%28AM_2017.30.1-20%29.jpg",
+    "alternateDownloadUrls": [
+      "https://upload.wikimedia.org/wikipedia/commons/d/d0/Shoes%2C_leather_tennis_%28pair%29_%28AM_2017.30.1-20%29.jpg"
+    ],
+    "sha256": "e001f7249573020a200b9edfd211a44fef97d57380d8ced46b0916f60d596077",
+    "attribution": {
+      "id": "commons-0083",
+      "title": "File:Shoes, leather tennis (pair) (AM 2017.30.1-20).jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Shoes,_leather_tennis_(pair)_(AM_2017.30.1-20).jpg",
+      "license": "CC BY 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
+      "author": "Adidas",
+      "credit": "API data Catalogue record Photo"
+    }
+  },
+  {
+    "id": "commons-0084",
+    "image": "commons-0084.jpg",
+    "verified": true,
+    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/North_Star_sneakers_%281%29.jpg/1920px-North_Star_sneakers_%281%29.jpg",
+    "alternateDownloadUrls": [
+      "https://upload.wikimedia.org/wikipedia/commons/6/6c/North_Star_sneakers_%281%29.jpg"
+    ],
+    "sha256": "4cf56d6ce959e70a8e67bb723d295feaaaa3fad01ba739a44c4cef83c39ee1e0",
+    "attribution": {
+      "id": "commons-0084",
+      "title": "File:North Star sneakers (1).jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:North_Star_sneakers_(1).jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "author": "Sherwin",
+      "credit": "Own work"
+    }
+  },
+  {
+    "id": "commons-0085",
+    "image": "commons-0085.jpg",
+    "verified": true,
+    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ef/North_Star_sneakers_%282%29.jpg/1920px-North_Star_sneakers_%282%29.jpg",
+    "alternateDownloadUrls": [
+      "https://upload.wikimedia.org/wikipedia/commons/e/ef/North_Star_sneakers_%282%29.jpg"
+    ],
+    "sha256": "b790c875d85395e5c30f43c180e10a9e144829d4d9c3c8f67b65348cc621cf43",
+    "attribution": {
+      "id": "commons-0085",
+      "title": "File:North Star sneakers (2).jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:North_Star_sneakers_(2).jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "author": "Sherwin",
+      "credit": "Own work"
+    }
+  },
+  {
+    "id": "commons-0086",
+    "image": "commons-0086.jpg",
+    "verified": true,
+    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/H._Piffard_-_The_Thin_Red_Line_-_restoration.jpg/1920px-H._Piffard_-_The_Thin_Red_Line_-_restoration.jpg",
+    "alternateDownloadUrls": [
+      "https://upload.wikimedia.org/wikipedia/commons/b/b9/H._Piffard_-_The_Thin_Red_Line_-_restoration.jpg"
+    ],
+    "sha256": "d9c3beb00a82f49356d80628bacf985f1985f709b651e1eb50c9f2feaaea440c",
+    "attribution": {
+      "id": "commons-0086",
+      "title": "File:H. Piffard - The Thin Red Line - restoration.jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:H._Piffard_-_The_Thin_Red_Line_-_restoration.jpg",
+      "license": "Public domain",
+      "licenseUrl": "",
+      "author": "Harold H. Piffard (Original artist) Restoration by Adam Cuerden",
+      "credit": "University of Victoria Digital Collections"
+    }
+  },
+  {
+    "id": "commons-0087",
+    "image": "commons-0087.jpg",
+    "verified": true,
+    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0d/Boots_%28drawing%29.jpg/734px-Boots_%28drawing%29.jpg",
+    "alternateDownloadUrls": [
+      "https://upload.wikimedia.org/wikipedia/commons/0/0d/Boots_%28drawing%29.jpg"
+    ],
+    "sha256": "9b0f36a07a07491009b3ea5c01a5100464022150091bab13ce6d15e598c9e7c9",
+    "attribution": {
+      "id": "commons-0087",
+      "title": "File:Boots (drawing).jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Boots_(drawing).jpg",
+      "license": "CC0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+      "author": "David Ring",
+      "credit": "Drawing made by David Ring, commissioned by Europeana Fashion, scanned by team of MoMu \u2013 Fashion Museum Province of Antwerp. https://commons.wikimedia.org/wiki/Commons:Europeana_Fashion_-_MoMu_-_Thesaurus_drawings"
+    }
+  },
+  {
+    "id": "commons-0088",
+    "image": "commons-0088.jpg",
+    "verified": true,
+    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b7/Boot_with_Spur_MET_182113.jpg/1920px-Boot_with_Spur_MET_182113.jpg",
+    "alternateDownloadUrls": [
+      "https://upload.wikimedia.org/wikipedia/commons/b/b7/Boot_with_Spur_MET_182113.jpg"
+    ],
+    "sha256": "8e5e9cd86c22a0c03b120cd57af33144cc2e61a29b0beed50b5db3c5c222cbba",
+    "attribution": {
+      "id": "commons-0088",
+      "title": "File:Boot with Spur MET 182113.jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Boot_with_Spur_MET_182113.jpg",
+      "license": "CC0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+      "author": "Challinor, Taylor, and Company",
+      "credit": "This file was donated to Wikimedia Commons as part of a project by the Metropolitan Museum of Art . See the Image and Data Resources Open Access Policy"
+    }
+  },
+  {
+    "id": "commons-0089",
+    "image": "commons-0089.jpg",
+    "verified": true,
+    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5d/Boot_with_Spur_MET_DP238269.jpg/1920px-Boot_with_Spur_MET_DP238269.jpg",
+    "alternateDownloadUrls": [
+      "https://upload.wikimedia.org/wikipedia/commons/5/5d/Boot_with_Spur_MET_DP238269.jpg"
+    ],
+    "sha256": "44f3c2a087fe5cde4006dadb41903964b8cd906e933c4fae4bf54db7758f9b8b",
+    "attribution": {
+      "id": "commons-0089",
+      "title": "File:Boot with Spur MET DP238269.jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Boot_with_Spur_MET_DP238269.jpg",
+      "license": "CC0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+      "author": "Challinor, Taylor, and Company",
+      "credit": "This file was donated to Wikimedia Commons as part of a project by the Metropolitan Museum of Art . See the Image and Data Resources Open Access Policy"
+    }
+  },
+  {
+    "id": "commons-0090",
+    "image": "commons-0090.jpg",
+    "verified": true,
+    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/35/Menambang_Belerang.jpg/1920px-Menambang_Belerang.jpg",
+    "alternateDownloadUrls": [
+      "https://upload.wikimedia.org/wikipedia/commons/3/35/Menambang_Belerang.jpg"
+    ],
+    "sha256": "ed9f58647fcbda1d033b6fdfdf1cf1d4c72c1b36bed0f40e16fea07495ed6baf",
+    "attribution": {
+      "id": "commons-0090",
+      "title": "File:Menambang Belerang.jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Menambang_Belerang.jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "author": "Candra Firmansyah",
+      "credit": "Own work"
+    }
+  },
+  {
+    "id": "commons-0092",
+    "image": "commons-0092.jpg",
+    "verified": true,
+    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/Boots_%28AM_762134-6%29.jpg/1920px-Boots_%28AM_762134-6%29.jpg",
+    "alternateDownloadUrls": [
+      "https://upload.wikimedia.org/wikipedia/commons/2/22/Boots_%28AM_762134-6%29.jpg"
+    ],
+    "sha256": "e098a78500ada7159c9cbea6559ef3c64c87b8e2417fc96487cb34570ca8754d",
+    "attribution": {
+      "id": "commons-0092",
+      "title": "File:Boots (AM 762134-6).jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Boots_(AM_762134-6).jpg",
+      "license": "CC BY 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
+      "author": "",
+      "credit": "API data Catalogue record Photo"
+    }
+  },
+  {
+    "id": "commons-0093",
+    "image": "commons-0093.jpg",
+    "verified": true,
+    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/Boots_%28AM_762134-7%29.jpg/1920px-Boots_%28AM_762134-7%29.jpg",
+    "alternateDownloadUrls": [
+      "https://upload.wikimedia.org/wikipedia/commons/2/2e/Boots_%28AM_762134-7%29.jpg"
+    ],
+    "sha256": "83a011c50253fe6f4fd9ae9a7f677a6fb17e598af48647ce64479081223b1769",
+    "attribution": {
+      "id": "commons-0093",
+      "title": "File:Boots (AM 762134-7).jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Boots_(AM_762134-7).jpg",
+      "license": "CC BY 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
+      "author": "",
+      "credit": "API data Catalogue record Photo"
+    }
+  },
+  {
+    "id": "commons-0094",
+    "image": "commons-0094.jpg",
+    "verified": true,
+    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f5/Boots%2C_pair_woman%27s_%28AM_1992.157-4%29.jpg/1920px-Boots%2C_pair_woman%27s_%28AM_1992.157-4%29.jpg",
+    "alternateDownloadUrls": [
+      "https://upload.wikimedia.org/wikipedia/commons/f/f5/Boots%2C_pair_woman%27s_%28AM_1992.157-4%29.jpg"
+    ],
+    "sha256": "ff3d49e30be2d1141179b7ad2d08d9edff2384926cd5a6f5a8f6818c97fa57ae",
+    "attribution": {
+      "id": "commons-0094",
+      "title": "File:Boots, pair woman's (AM 1992.157-4).jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Boots,_pair_woman%27s_(AM_1992.157-4).jpg",
+      "license": "CC BY 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
+      "author": "Crockett & Jones",
+      "credit": "API data Catalogue record Photo"
+    }
+  },
+  {
+    "id": "commons-0095",
+    "image": "commons-0095.jpg",
+    "verified": true,
+    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/Boots%2C_pair_woman%27s_%28AM_1992.157-15%29.jpg/1920px-Boots%2C_pair_woman%27s_%28AM_1992.157-15%29.jpg",
+    "alternateDownloadUrls": [
+      "https://upload.wikimedia.org/wikipedia/commons/0/05/Boots%2C_pair_woman%27s_%28AM_1992.157-15%29.jpg"
+    ],
+    "sha256": "4905ac445855b950a116ac4074e87f6c3c5b7159d1e923089e17a2bdd26d8f3d",
+    "attribution": {
+      "id": "commons-0095",
+      "title": "File:Boots, pair woman's (AM 1992.157-15).jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Boots,_pair_woman%27s_(AM_1992.157-15).jpg",
+      "license": "CC BY 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
+      "author": "Crockett & Jones",
+      "credit": "API data Catalogue record Photo"
+    }
+  },
+  {
+    "id": "validation-0001",
+    "image": "validation-0001.jpg",
+    "verified": true,
+    "downloadUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f1/Summer_dress_%285634765615%29.jpg/1920px-Summer_dress_%285634765615%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "sha256": "7953018d9f4bba2998b68d16fce4a59e4189e66d40f82b24459cb1200b4394c0",
+    "attribution": {
+      "id": "validation-0001",
+      "title": "File:Summer dress (5634765615).jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Summer_dress_(5634765615).jpg",
+      "license": "Public domain",
+      "licenseUrl": "",
+      "author": "USAID Africa Bureau",
+      "credit": "Summer dress Uploaded by Elitre"
+    }
+  },
+  {
+    "id": "validation-0002",
+    "image": "validation-0002.jpg",
+    "verified": true,
+    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/3/35/Elie_Saab_Wedding_Dress_-_Paris_Haute_Couture_Spring-Summer_2012.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",
+    "sha256": "ded1c225fc7f02989303bd693bf2b839adb7fdd3bacea78eb0d35d539af2fab1",
+    "attribution": {
+      "id": "validation-0002",
+      "title": "File:Elie Saab Wedding Dress - Paris Haute Couture Spring-Summer 2012.jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Elie_Saab_Wedding_Dress_-_Paris_Haute_Couture_Spring-Summer_2012.jpg",
+      "license": "CC BY 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+      "author": "CHRISTOPHER MACSURAK from Chicago, USA",
+      "credit": "Elie Saab Wedding Dress Uploaded by paris 17"
+    }
+  },
+  {
+    "id": "validation-0003",
+    "image": "validation-0003.jpg",
+    "verified": true,
+    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/8/8c/Summer_Dress_LACMA_M.2007.211.740_%281_of_5%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",
+    "sha256": "de3fa07115e6e2805ff492506a6c99ad9674e675eef0e5e0642e2227207d7c7a",
+    "attribution": {
+      "id": "validation-0003",
+      "title": "File:Summer Dress LACMA M.2007.211.740 (1 of 5).jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Summer_Dress_LACMA_M.2007.211.740_(1_of_5).jpg",
+      "license": "Public domain",
+      "licenseUrl": "",
+      "author": "",
+      "credit": "Image: http://collections.lacma.org/sites/default/files/remote_images/piction/ma-31248409-O3.jpg Gallery: http://collections.lacma.org/node/214456 archive copy at the Wayback Machine"
+    }
+  },
+  {
+    "id": "validation-0004",
+    "image": "validation-0004.jpg",
+    "verified": true,
+    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/6/67/Summer_Dress_LACMA_M.2007.211.856_%281_of_6%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",
+    "sha256": "e17f5a64e32f8b3ab87aaedb773cef9277040e0dda0506dc48f587be4da033c7",
+    "attribution": {
+      "id": "validation-0004",
+      "title": "File:Summer Dress LACMA M.2007.211.856 (1 of 6).jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Summer_Dress_LACMA_M.2007.211.856_(1_of_6).jpg",
+      "license": "Public domain",
+      "licenseUrl": "",
+      "author": "",
+      "credit": "Image: http://collections.lacma.org/sites/default/files/remote_images/piction/ma-31256632-O3.jpg Gallery: http://collections.lacma.org/node/214567 archive copy at the Wayback Machine"
+    }
+  },
+  {
+    "id": "validation-0008",
+    "image": "validation-0008.jpg",
+    "verified": true,
+    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/3/39/Nigerian_woman_in_a_buba_blouse_and_the_gele_headtie2.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",
+    "sha256": "16ed95a6212ecf0500c6b25047f3e9029fc49a04e4786b2c5f13c15d65e45f6f",
+    "attribution": {
+      "id": "validation-0008",
+      "title": "File:Nigerian woman in a buba blouse and the gele headtie2.jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Nigerian_woman_in_a_buba_blouse_and_the_gele_headtie2.jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "author": "Jamie Tubers",
+      "credit": "Own work"
+    }
+  },
+  {
+    "id": "validation-0010",
+    "image": "validation-0010.jpg",
+    "verified": true,
+    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/c/c2/Blue_Crushed_Velvet_Dress_with_blouse_underneath.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",
+    "sha256": "2e2d757d60b5bce8b1e34765c7b59c21ede85c7c69cfbf63d802566934b847c7",
+    "attribution": {
+      "id": "validation-0010",
+      "title": "File:Blue Crushed Velvet Dress with blouse underneath.jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Blue_Crushed_Velvet_Dress_with_blouse_underneath.jpg",
+      "license": "CC BY-SA 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0",
+      "author": "Jamie",
+      "credit": "https://www.flickr.com/photos/63405864@N04/6786406687/in/dateposted/"
+    }
+  },
+  {
+    "id": "validation-0017",
+    "image": "validation-0017.jpg",
+    "verified": true,
+    "downloadUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/0f/Grey_Jeans_%283168533938%29.jpg/1920px-Grey_Jeans_%283168533938%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "sha256": "6f83b0769215cf7e19475a0b946b9be4d5d00747c50df18136aafe18a08dbb58",
+    "attribution": {
+      "id": "validation-0017",
+      "title": "File:Grey Jeans (3168533938).jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Grey_Jeans_(3168533938).jpg",
+      "license": "CC BY-SA 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0",
+      "author": "Marcus Quigmire from Florida, USA",
+      "credit": "Grey Jeans"
+    }
+  },
+  {
+    "id": "validation-0019",
+    "image": "validation-0019.jpg",
+    "verified": true,
+    "downloadUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/59/DKNY_Marie_Sneaker_23142034_schwarz_-_orange_%281%29_%2815798649564%29.jpg/1920px-DKNY_Marie_Sneaker_23142034_schwarz_-_orange_%281%29_%2815798649564%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "sha256": "16c806adf3d3e39d0cfa260901da9de6c87f2eab7eafa6e0e56593d7782a5140",
+    "attribution": {
+      "id": "validation-0019",
+      "title": "File:DKNY Marie Sneaker 23142034 schwarz - orange (1) (15798649564).jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:DKNY_Marie_Sneaker_23142034_schwarz_-_orange_(1)_(15798649564).jpg",
+      "license": "CC BY 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+      "author": "SPERA.de Designerschuhe, Taschen und Accessoires from Deutschland",
+      "credit": "DKNY Marie Sneaker 23142034 schwarz / orange (1)"
+    }
+  },
+  {
+    "id": "validation-0021",
+    "image": "validation-0021.jpg",
+    "verified": true,
+    "downloadUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/41/DKNY_Marie_Sneaker_23142034_rot-orange_-_wei%C3%9F_%281%29_%2816235746307%29.jpg/1920px-DKNY_Marie_Sneaker_23142034_rot-orange_-_wei%C3%9F_%281%29_%2816235746307%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "sha256": "a80a0c707c7aa99e4ee4df7a766109121f8b6baafe51ba9dd764e382f9094f61",
+    "attribution": {
+      "id": "validation-0021",
+      "title": "File:DKNY Marie Sneaker 23142034 rot-orange - wei\u00df (1) (16235746307).jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:DKNY_Marie_Sneaker_23142034_rot-orange_-_wei%C3%9F_(1)_(16235746307).jpg",
+      "license": "CC BY 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+      "author": "SPERA.de Designerschuhe, Taschen und Accessoires from Deutschland",
+      "credit": "DKNY Marie Sneaker 23142034 rot-orange / wei\u00df (1)"
+    }
+  },
+  {
+    "id": "validation-0023",
+    "image": "validation-0023.jpg",
+    "verified": true,
+    "downloadUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/16/DKNY_Brave_Logo_Varsity_High-Top_Sneaker_23340363_schwarz_-_tigerlook_%281%29_%2816415389490%29.jpg/1920px-DKNY_Brave_Logo_Varsity_High-Top_Sneaker_23340363_schwarz_-_tigerlook_%281%29_%2816415389490%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "sha256": "4fa7836d0275c1d393b6e71db0044674d04e4fc2c09e6c8946ca8ad8eed5276b",
+    "attribution": {
+      "id": "validation-0023",
+      "title": "File:DKNY Brave Logo Varsity High-Top Sneaker 23340363 schwarz - tigerlook (1) (16415389490).jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:DKNY_Brave_Logo_Varsity_High-Top_Sneaker_23340363_schwarz_-_tigerlook_(1)_(16415389490).jpg",
+      "license": "CC BY 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+      "author": "SPERA.de Designerschuhe, Taschen und Accessoires from Deutschland",
+      "credit": "DKNY Brave Logo Varsity High-Top Sneaker 23340363 schwarz / tigerlook (1)"
+    }
+  },
+  {
+    "id": "validation-0024",
+    "image": "validation-0024.jpg",
+    "verified": true,
+    "downloadUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/9c/DKNY_Barbara_Hardware_Sneaker_23340609_silber_%281%29_%2816417111589%29.jpg/1920px-DKNY_Barbara_Hardware_Sneaker_23340609_silber_%281%29_%2816417111589%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "sha256": "2183cbbb8af17dee3bab0ea0b9657b61ccbb6be953ae047f7119be0f0e7067a0",
+    "attribution": {
+      "id": "validation-0024",
+      "title": "File:DKNY Barbara Hardware Sneaker 23340609 silber (1) (16417111589).jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:DKNY_Barbara_Hardware_Sneaker_23340609_silber_(1)_(16417111589).jpg",
+      "license": "CC BY 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+      "author": "SPERA.de Designerschuhe, Taschen und Accessoires from Deutschland",
+      "credit": "DKNY Barbara Hardware Sneaker 23340609 silber (1)"
+    }
+  }
+]

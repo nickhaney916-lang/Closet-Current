@@ -3,6 +3,7 @@ on:
   push:
     paths:
       - '.github/workflows/real-photo-benchmark.yml'
+      - 'benchmark/locked-photo-sources.json'
       - 'scripts/evaluate-recognition-benchmark.mjs'
       - 'scripts/compare-detail-field-coverage.mjs'
       - 'scripts/check-recognition-regressions.mjs'
@@ -17,6 +18,8 @@ on:
       - 'public/recognition-photo.mjs'
       - 'public/local-worker.mjs'
       - 'public/vector-scorer.mjs'
+      - 'public/clothing-memory.js'
+      - 'scripts/evaluate-clothing-memory.mjs'
       - 'public/recognition-vectors.json'
       - 'public/recognition-vectors.bin'
       - 'benchmark/manifest-holdout-16.json'
@@ -36,14 +39,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Download licensed candidate photographs from completed collection run
+      - name: Download and verify locked licensed source photographs
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          mkdir -p benchmark/input
-          gh run download 38491639135 -n commons-clothing-photo-candidates -D benchmark/input
-          mkdir -p benchmark/photos
-          cp benchmark/input/photos/* benchmark/photos/
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json
       - name: Install headless browser
         run: |
           npm install --no-save --no-package-lock playwright
@@ -72,13 +72,13 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh run download 38500351254 -n fresh-validation-candidates -D benchmark/fresh-candidates
-          cp benchmark/fresh-candidates/photos/* benchmark/photos/
           node scripts/download-reviewed-photos.mjs benchmark/manifest-fresh-11.json
           node scripts/run-browser-photo-benchmark.mjs benchmark/manifest-fresh-11.json benchmark/output/fresh
           node scripts/evaluate-recognition-benchmark.mjs benchmark/manifest-fresh-11.json benchmark/output/fresh/results.json > benchmark/output/fresh/evaluation.json
           cat benchmark/output/fresh/evaluation.json
           node scripts/check-recognition-regressions.mjs benchmark/manifest-fresh-11.json benchmark/output/fresh/results.json benchmark/regression-fresh-11.json
+      - name: Verify real image features and confirmed-example retrieval
+        run: node scripts/evaluate-clothing-memory.mjs > benchmark/output/recognition-memory.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:

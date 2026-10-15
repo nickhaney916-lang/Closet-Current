@@ -1,0 +1,342 @@
+{
+  "date": "2026-10-14",
+  "baselineCommit": "b4b28db49c6ae56b61972b66b58407428b8661ca",
+  "validatedCandidateCommit": "c12d2404442a92373e6828d0d5b27a81a28ca8b0",
+  "unitChecks": {
+    "passed": 224,
+    "failed": 0
+  },
+  "browserChecks": {
+    "confirmedExampleLearning": true,
+    "suggestionsRequireConfirmation": true,
+    "manualFieldsAndOwnPhotoColorPreserved": true,
+    "learningPrivatelyRestored": true,
+    "automaticOutfitCroppingAndSaving": true,
+    "pageErrors": []
+  },
+  "workflowRuns": {
+    "privateBackup": "https://github.com/nickhaney916-lang/Closet-Current/actions/runs/38663675358",
+    "realPhotos": "https://github.com/nickhaney916-lang/Closet-Current/actions/runs/38663675539",
+    "display": "https://github.com/nickhaney916-lang/Closet-Current/actions/runs/38663675540",
+    "phone": "https://github.com/nickhaney916-lang/Closet-Current/actions/runs/38663675706"
+  },
+  "photoEvaluations": {
+    "reviewed32": {
+      "manifestCount": 32,
+      "resultsCount": 32,
+      "missingResults": 0,
+      "single": {
+        "evaluated": 32,
+        "autoIndexedCount": 25,
+        "categoryReviewCount": 1,
+        "categoryAccuracyPercent": 81.25,
+        "typeAccuracyPercent": 56.25,
+        "acceptedTypeAccuracyPercent": 75,
+        "abstentionPercent": 18.75
+      },
+      "negative": {
+        "evaluated": 0,
+        "rejected": 0,
+        "falsePositives": 0
+      },
+      "outfit": {
+        "evaluated": 0,
+        "expectedPieces": 0,
+        "matchedPieces": 0,
+        "pieceRecallPercent": null,
+        "unexpectedPieces": 0
+      },
+      "reasonCounts": {
+        "accepted": 25,
+        "type_uncertain": 1,
+        "views_disagree": 3,
+        "dress_type_review": 1,
+        "checks_disagree": 2
+      },
+      "perCategory": {
+        "Tops": {
+          "total": 2,
+          "categoryCorrect": 2,
+          "typeCorrect": 2,
+          "abstained": 0
+        },
+        "Bottoms": {
+          "total": 9,
+          "categoryCorrect": 7,
+          "typeCorrect": 7,
+          "abstained": 2
+        },
+        "Dresses": {
+          "total": 2,
+          "categoryCorrect": 1,
+          "typeCorrect": 0,
+          "abstained": 1
+        },
+        "Outerwear": {
+          "total": 6,
+          "categoryCorrect": 4,
+          "typeCorrect": 3,
+          "abstained": 2
+        },
+        "Shoes": {
+          "total": 13,
+          "categoryCorrect": 12,
+          "typeCorrect": 6,
+          "abstained": 1
+        }
+      },
+      "errors": [
+        {
+          "id": "commons-0035",
+          "reason": "category",
+          "expected": "Bottoms",
+          "actual": "none"
+        },
+        {
+          "id": "commons-0045",
+          "reason": "category",
+          "expected": "Bottoms",
+          "actual": "none"
+        },
+        {
+          "id": "commons-0053",
+          "reason": "category",
+          "expected": "Dresses",
+          "actual": "none"
+        },
+        {
+          "id": "commons-0065",
+          "reason": "category",
+          "expected": "Outerwear",
+          "actual": "none"
+        },
+        {
+          "id": "commons-0070",
+          "reason": "category",
+          "expected": "Outerwear",
+          "actual": "none"
+        },
+        {
+          "id": "commons-0083",
+          "reason": "category",
+          "expected": "Shoes",
+          "actual": "none"
+        }
+      ]
+    },
+    "fresh11": {
+      "manifestCount": 11,
+      "resultsCount": 11,
+      "missingResults": 0,
+      "single": {
+        "evaluated": 11,
+        "autoIndexedCount": 9,
+        "categoryReviewCount": 2,
+        "categoryAccuracyPercent": 100,
+        "typeAccuracyPercent": 54.55,
+        "acceptedTypeAccuracyPercent": 81.82,
+        "abstentionPercent": 0
+      },
+      "negative": {
+        "evaluated": 0,
+        "rejected": 0,
+        "falsePositives": 0
+      },
+      "outfit": {
+        "evaluated": 0,
+        "expectedPieces": 0,
+        "matchedPieces": 0,
+        "pieceRecallPercent": null,
+        "unexpectedPieces": 0
+      },
+      "reasonCounts": {
+        "dress_type_review": 1,
+        "accepted": 9,
+        "category_type_review": 1
+      },
+      "perCategory": {
+        "Dresses": {
+          "total": 5,
+          "categoryCorrect": 5,
+          "typeCorrect": 1,
+          "abstained": 0
+        },
+        "Accessories": {
+          "total": 1,
+          "categoryCorrect": 1,
+          "typeCorrect": 1,
+          "abstained": 0
+        },
+        "Bottoms": {
+          "total": 1,
+          "categoryCorrect": 1,
+          "typeCorrect": 0,
+          "abstained": 0
+        },
+        "Shoes": {
+          "total": 4,
+          "categoryCorrect": 4,
+          "typeCorrect": 4,
+          "abstained": 0
+        }
+      },
+      "errors": []
+    },
+    "holdout16": {
+      "manifestCount": 16,
+      "resultsCount": 16,
+      "missingResults": 0,
+      "single": {
+        "evaluated": 13,
+        "autoIndexedCount": 6,
+        "categoryReviewCount": 1,
+        "categoryAccuracyPercent": 53.85,
+        "typeAccuracyPercent": 23.08,
+        "acceptedTypeAccuracyPercent": 23.08,
+        "abstentionPercent": 46.15
+      },
+      "negative": {
+        "evaluated": 3,
+        "rejected": 3,
+        "falsePositives": 0
+      },
+      "outfit": {
+        "evaluated": 0,
+        "expectedPieces": 0,
+        "matchedPieces": 0,
+        "pieceRecallPercent": null,
+        "unexpectedPieces": 0
+      },
+      "reasonCounts": {
+        "accepted": 6,
+        "checks_disagree": 3,
+        "category_uncertain": 2,
+        "dress_type_review": 1,
+        "type_uncertain": 1
+      },
+      "perCategory": {
+        "Tops": {
+          "total": 3,
+          "categoryCorrect": 2,
+          "typeCorrect": 0,
+          "abstained": 1
+        },
+        "Bottoms": {
+          "total": 3,
+          "categoryCorrect": 2,
+          "typeCorrect": 2,
+          "abstained": 1
+        },
+        "Dresses": {
+          "total": 2,
+          "categoryCorrect": 1,
+          "typeCorrect": 0,
+          "abstained": 1
+        },
+        "Outerwear": {
+          "total": 2,
+          "categoryCorrect": 0,
+          "typeCorrect": 0,
+          "abstained": 2
+        },
+        "Shoes": {
+          "total": 3,
+          "categoryCorrect": 2,
+          "typeCorrect": 1,
+          "abstained": 1
+        }
+      },
+      "errors": [
+        {
+          "id": "commons-0016",
+          "reason": "category",
+          "expected": "Tops",
+          "actual": "none"
+        },
+        {
+          "id": "commons-0036",
+          "reason": "category",
+          "expected": "Bottoms",
+          "actual": "none"
+        },
+        {
+          "id": "commons-0059",
+          "reason": "category",
+          "expected": "Dresses",
+          "actual": "none"
+        },
+        {
+          "id": "commons-0060",
+          "reason": "category",
+          "expected": "Outerwear",
+          "actual": "none"
+        },
+        {
+          "id": "commons-0062",
+          "reason": "category",
+          "expected": "Outerwear",
+          "actual": "none"
+        },
+        {
+          "id": "commons-0095",
+          "reason": "category",
+          "expected": "Shoes",
+          "actual": "none"
+        }
+      ]
+    }
+  },
+  "recognitionMemoryEvaluation": {
+    "description": "Reference labels use reviewed annotations. Each 32-photo query excludes itself. Fresh and holdout queries use only the 32 reference photos. Suggestions require human review and are not automatic classifications.",
+    "referenceCount": 32,
+    "threshold": 0.9,
+    "sets": {
+      "reviewed32": {
+        "evaluated": 32,
+        "suggestions": 0,
+        "correctTypeSuggestions": 0,
+        "incorrectTypeSuggestions": 0,
+        "negativeSuggestions": 0,
+        "details": []
+      },
+      "fresh11": {
+        "evaluated": 11,
+        "suggestions": 0,
+        "correctTypeSuggestions": 0,
+        "incorrectTypeSuggestions": 0,
+        "negativeSuggestions": 0,
+        "details": []
+      },
+      "holdout16": {
+        "evaluated": 16,
+        "suggestions": 0,
+        "correctTypeSuggestions": 0,
+        "incorrectTypeSuggestions": 0,
+        "negativeSuggestions": 0,
+        "details": []
+      }
+    }
+  },
+  "weeklyReview": {
+    "timezone": "America/Los_Angeles",
+    "weekStarts": "Monday",
+    "firstScheduledMaintenance": "2026-10-19",
+    "privateCloset": "Foreground catch-up when the app is open; eight items per idle batch. Confirmed labels are preserved; missing-field proposals need review.",
+    "maintenance": "Separate Monday automation reviews repository changes and benchmark evidence; no private wardrobe access or pooled photo training."
+  },
+  "learning": "Versioned normalized image features plus user-confirmed labels in the owner closet. At least two distinct close examples must agree. Color, brand, size and fabric are not copied.",
+  "fixtures": {
+    "count": 59,
+    "bytes": 41198733,
+    "checksumsVerified": true,
+    "source": "Public licensed Commons photographs, attribution and licenses retained in benchmark/locked-photo-sources.json",
+    "privateWardrobePhotos": false
+  },
+  "limits": [
+    "This is private correction memory and reviewed suggestions; the neural model weights are not self-trained.",
+    "No additional suggestions qualified in the real 59-photo retrieval evaluation, so no recognition accuracy improvement is claimed.",
+    "Browser learning tests use controlled embeddings; real feature extraction is verified separately by the photo benchmark.",
+    "Private rechecks run when the app is open, not on a closed phone.",
+    "Universal identification cannot be guaranteed."
+  ]
+}

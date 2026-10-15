@@ -10,13 +10,14 @@ export function normalizedVector(values,dimensions){
 }
 export function makeVectorScorer(encode,metadata,vectors){
  validateVectorBundle(metadata,vectors);const positions=new Map(metadata.labels.map((label,i)=>[label,i*metadata.dimensions])),cache=new WeakMap();
- return async function score(image,labels){
+ const features=image=>{if(!image||typeof image!=='object')throw Error('Invalid feature image.');if(!cache.has(image))cache.set(image,Promise.resolve().then(()=>encode(image)).then(x=>normalizedVector(x,metadata.dimensions)).catch(error=>{cache.delete(image);throw error;}));return cache.get(image);};
+ const score=async function(image,labels){
   if(!image||typeof image!=='object'||!Array.isArray(labels)||!labels.length||new Set(labels).size!==labels.length||labels.some(x=>!positions.has(x)))throw Error('Invalid recognition labels or image.');
-  if(!cache.has(image))cache.set(image,Promise.resolve().then(()=>encode(image)).then(x=>normalizedVector(x,metadata.dimensions)).catch(error=>{cache.delete(image);throw error;}));
-  const features=await cache.get(image),logits=labels.map(label=>{const start=positions.get(label);let dot=0;for(let i=0;i<metadata.dimensions;i++)dot+=features[i]*vectors[start+i];return dot*metadata.scale;});
+  const embedding=await features(image),logits=labels.map(label=>{const start=positions.get(label);let dot=0;for(let i=0;i<metadata.dimensions;i++)dot+=embedding[i]*vectors[start+i];return dot*metadata.scale;});
   const maximum=Math.max(...logits),weights=logits.map(x=>Math.exp(x-maximum)),sum=weights.reduce((a,b)=>a+b,0);
   return labels.map((label,i)=>({label,score:weights[i]/sum})).sort((a,b)=>b.score-a.score);
  };
+ score.features=async image=>Array.from(await features(image));return score;
 }
 
 export async function loadVectorAssets(metadataUrl,binaryUrl,{fetcher=fetch,digest=bytes=>crypto.subtle.digest('SHA-256',bytes)}={}){
