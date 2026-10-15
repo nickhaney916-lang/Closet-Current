@@ -6,10 +6,11 @@
     "verified": false,
     "image": "candidate-rainwear-001.jpg",
     "source": "https://commons.wikimedia.org/wiki/File:Raincoat.jpg",
-    "notes": "Yellow rain cape on hanger; not a typical sleeved raincoat. Hold subtype label for review; not included in independent smoke.",
+    "notes": "Classic signal-yellow hooded rain cape, not representative of modern fitted raincoats; Wikimedia Commons public-domain source by B. Kroll. Downloaded 626249-byte original and recorded SHA-256 in GitHub Actions run 38809794669. Unscored edge-case diagnostic only, verified=false. Raincoat is an umbrella label; unusual cape silhouette may confuse subtype.",
     "reviewStatus": "visual-reviewed-edge-case",
     "license": "Public domain",
-    "credit": "B. Kroll"
+    "credit": "B. Kroll",
+    "sha256": "2b037b6c5d589c1647bb336b53f3fbb591d39a61d986567a7ccfb281a02f9484"
   },
   {
     "id": "candidate-rainwear-002",
