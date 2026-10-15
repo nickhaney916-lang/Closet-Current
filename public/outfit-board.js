@@ -27,7 +27,7 @@ function renderOutfitBoard(){
  currentBoard=cleanOutfitBoard(currentBoard,items);const top=items.find(x=>x.id===currentBoard.slots.top),dress=top?.category==='Dresses';
  $('outfitFigure').classList.toggle('has-outer-coat',currentBoard.layerCount>=3);const slots=$('boardSlots');slots.replaceChildren();
  for(const slot of outfitSlots){
-  if(slot.extra&&currentBoard.layerCount<slot.level)continue;
+  if(dress&&slot.level||slot.extra&&currentBoard.layerCount<slot.level)continue;
   const item=items.find(x=>x.id===currentBoard.slots[slot.id]),idea=currentBoard.ideas[slot.id],covered=dress&&slot.id==='bottom';
   const b=node('button',null,'board-slot board-slot-'+slot.id+(item?' owned':idea?' planned':' blank')+(covered?' covered':'')+(dress&&slot.id==='top'?' dress':''));b.type='button';b.disabled=covered;b.setAttribute('aria-label',covered?'Bottoms covered by your dress':slot.label+': '+(item?.name||(idea?idea.color+' '+idea.type:'empty'))+'. Choose a piece');
   b.append(node('span',slot.label,'slot-label'));
@@ -46,7 +46,7 @@ function renderBoardSuggestions(){
  const ownGrid=$('boardOwnedOptions');ownGrid.replaceChildren();
  for(const item of owned){const b=node('button',null,'board-owned-pick');b.type='button';const im=node('img');im.src=item.image;im.alt=item.name;b.append(im,node('span','Already in your closet'),node('strong',item.name),node('small','Use this piece'));b.onclick=()=>selectBoardPiece(target,item.id);ownGrid.append(b);}
  const grid=$('boardRecommendations');grid.replaceChildren();
- if(target==='bottom'&&items.find(x=>x.id===currentBoard.slots.top)?.category==='Dresses'){$('boardGapStatus').textContent='Your dress already covers this space. Choose another piece to complete the look.';ownGrid.replaceChildren();return;}
+ if((target==='bottom'||slot.level)&&items.find(x=>x.id===currentBoard.slots.top)?.category==='Dresses'){$('boardGapStatus').textContent='Choose shoes or optional finishing ideas for your dress.';ownGrid.replaceChildren();return;}
  for(const idea of wardrobeGapIdeas(target,currentBoard,items)){
   const card=node('article',null,'gap-idea-card');card.append(node('p',idea.trendSource?'TREND-INSPIRED DIRECTION':'STYLING DIRECTION','eyebrow'),node('h3',idea.color+' '+(idea.label||idea.type)),node('p',idea.reason));
   if(idea.trendSource)card.append(boardLink('Read the magazine reference',idea.trendSource.url));
