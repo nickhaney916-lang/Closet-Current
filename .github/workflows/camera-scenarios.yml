@@ -73,6 +73,7 @@ jobs:
           npx playwright install --with-deps chromium
           node scripts/build.mjs
           node scripts/run-browser-photo-benchmark.mjs benchmark/independent-smoke/manifest.json benchmark/independent-smoke/results
+          node scripts/report-independent-subtypes.mjs benchmark/independent-smoke/manifest.json benchmark/independent-smoke/results/results.json benchmark/independent-smoke/subtypes.json
       - name: Upload independent smoke evidence
         if: always()
         uses: actions/upload-artifact@v4
