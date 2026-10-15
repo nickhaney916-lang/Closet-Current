@@ -145,6 +145,8 @@ try{
   assert.ok(sample, 'Missing ambiguity regression fixture: '+id);
   assert.ok(sample.category===expected||sample.category==='Uncategorized',
    id+' must not receive a conflicting automatic category');
+  if(sample.category===expected)assert.equal(sample.itemType,id==='commons-0045'?'Skirt':'Coat',
+   id+' must not be automatically saved with an incorrect garment subtype');
  }
  const verifiedJacket=realResults.find(x=>x.id==='commons-0065');
  assert.equal(verifiedJacket?.category,'Outerwear','Previously recovered jacket must remain recognized');
