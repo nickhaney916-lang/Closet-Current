@@ -90,8 +90,10 @@ try{
  // Real-photo batch: import licensed, independently sourced garment photographs.
  const realCases=[
   ['commons-0003','Tops'],['commons-0021','Bottoms'],['commons-0024','Bottoms'],
-  ['commons-0033','Bottoms'],['commons-0049','Dresses'],['commons-0060','Outerwear'],
-  ['commons-0079','Shoes'],['commons-0094','Shoes']
+  ['commons-0033','Bottoms'],['commons-0035','Bottoms'],['commons-0045','Bottoms'],
+  ['commons-0049','Dresses'],['commons-0053','Dresses'],
+  ['commons-0060','Outerwear'],['commons-0065','Outerwear'],['commons-0070','Outerwear'],
+  ['commons-0079','Shoes'],['commons-0083','Shoes'],['commons-0094','Shoes']
  ];
  // Account for every submitted photograph even when quality checks skip an item.
  const initialIds=await page.evaluate(()=>items.map(x=>x.id));
