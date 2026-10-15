@@ -2,7 +2,7 @@ import {readFile,writeFile} from 'node:fs/promises';
 const [manifestPath,oldPath,newPath,outPath]=process.argv.slice(2);
 if(!outPath)throw Error('Usage: compare-photo-resolutions.mjs MANIFEST 2048_RESULTS 4096_RESULTS OUTPUT');
 const [manifest,oldRows,newRows]=await Promise.all([manifestPath,oldPath,newPath].map(p=>readFile(p,'utf8').then(JSON.parse)));
-if(!Array.isArray(manifest)||manifest.length!==56)throw Error('Expected original 56-garment baseline');
+if(!Array.isArray(manifest)||manifest.length<5)throw Error('Expected a labeled independent benchmark sample');
 const old=new Map(oldRows.map(x=>[x.id,x])),updated=new Map(newRows.map(x=>[x.id,x]));
 const compare=({id,expectedCategory,expectedType})=>{
  const a=old.get(id),b=updated.get(id);
