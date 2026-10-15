@@ -4,4 +4,7 @@ test('resolution evaluator reports an inconclusive comparison when originals do 
  assert.match(source,/Math\.max\(x\.sourceDimensions\?\.width\|\|0,x\.sourceDimensions\?\.height\|\|0\)>4096/);
  assert.match(source,/resolutionGainTestConclusive:eligible\.length>0/);
  assert.match(source,/highResolutionEligible:eligible\.length/);
+ assert.match(source,/eligibleCategoryCorrectBefore:eligibleCount\('oldCategoryCorrect'\)/);
+ assert.match(source,/eligibleCategoryCorrectAfter:eligibleCount\('newCategoryCorrect'\)/);
+ assert.match(source,/eligibleCategoryRecoveries:eligible\.filter/);
 });
