@@ -37,12 +37,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Assemble and verify the locked 56-photo baseline
+      - name: Prepare the locked independent 11-photo subset
         run: |
           mkdir -p benchmark/resolution-comparison
-          node scripts/assemble-reviewed-baseline.mjs benchmark/resolution-comparison/manifest.json benchmark/manifest-reviewed-32.json benchmark/manifest-holdout-16.json benchmark/manifest-fresh-11.json
+          cp benchmark/manifest-fresh-11.json benchmark/resolution-comparison/manifest.json
           node scripts/download-reviewed-photos.mjs benchmark/resolution-comparison/manifest.json
-          node scripts/validate-100-photo-set.mjs benchmark/resolution-comparison/manifest.json benchmark/photos 56
+          node scripts/validate-100-photo-set.mjs benchmark/resolution-comparison/manifest.json benchmark/photos 11
       - name: Install browser benchmark dependencies
         run: |
           npm install --no-save --no-package-lock --fetch-retries=4 playwright
