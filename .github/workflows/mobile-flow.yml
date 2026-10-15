@@ -49,6 +49,7 @@ jobs:
           node scripts/build.mjs
           node scripts/run-mobile-flow.mjs benchmark/mobile-flow
       - name: Assemble and verify the reviewed 59-photo set
+        if: success() || failure()
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -58,6 +59,7 @@ jobs:
           node scripts/download-reviewed-photos.mjs benchmark/manifest-fresh-11.json
           node scripts/validate-100-photo-set.mjs benchmark/combined-59/manifest.json benchmark/photos 59 > benchmark/combined-59/validation.json
       - name: Run real 59-photo browser recognition and accuracy audit
+        if: success() || failure()
         run: |
           node scripts/run-browser-photo-benchmark.mjs benchmark/combined-59/manifest.json benchmark/combined-59/results
           node scripts/evaluate-recognition-benchmark.mjs benchmark/combined-59/manifest.json benchmark/combined-59/results/results.json > benchmark/combined-59/evaluation.json
