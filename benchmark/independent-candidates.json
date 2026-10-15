@@ -48,5 +48,41 @@
     "license": "CC BY 4.0",
     "credit": "Auckland Museum",
     "sourceObjectId": "AucklandMuseum-1979.59"
+  },
+  {
+    "id": "candidate-jacket-001",
+    "image": "candidate-jacket-001.jpg",
+    "expectedCategory": "Outerwear",
+    "expectedType": "Jacket",
+    "verified": false,
+    "reviewStatus": "needs-visual-review",
+    "source": "https://commons.wikimedia.org/wiki/File:Denim_jacket.jpg",
+    "license": "CC BY-SA 2.0",
+    "credit": "Lucius Kwok",
+    "notes": "Real-world outfit photo with multiple garments; jacket visible but needs review for isolated single-garment benchmark suitability."
+  },
+  {
+    "id": "candidate-jacket-002",
+    "image": "candidate-jacket-002.jpg",
+    "expectedCategory": "Outerwear",
+    "expectedType": "Jacket",
+    "verified": false,
+    "reviewStatus": "needs-visual-review",
+    "source": "https://commons.wikimedia.org/wiki/File:Denim_jacket_with_fox_lining,_D%C3%BCsseldorf,_November_2025.jpg",
+    "license": "CC0 1.0",
+    "credit": "Kürschner",
+    "notes": "Denim jacket display; review visual framing and ensure it is independent of prior benchmark photos."
+  },
+  {
+    "id": "candidate-sweater-001",
+    "image": "candidate-sweater-001.jpg",
+    "expectedCategory": "Tops",
+    "expectedType": "Sweater",
+    "verified": false,
+    "reviewStatus": "needs-visual-review",
+    "source": "https://commons.wikimedia.org/wiki/File:Jumper_sweater.jpg",
+    "license": "Public domain",
+    "credit": "Dmn",
+    "notes": "Photograph of a sweater on a wooden surface; check suitability, condition and duplicate content before promotion."
   }
 ]
