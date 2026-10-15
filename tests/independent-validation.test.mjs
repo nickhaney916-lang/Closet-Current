@@ -16,5 +16,9 @@ test('independent validation guard rejects benchmark leakage and accepts reviewe
   run=check();assert.equal(run.status,1);assert.equal(JSON.parse(run.stdout).issues[0].issue,'baseline_overlap');
   await writeFile(validation,JSON.stringify([{id:'x',image:'x.jpg',verified:false,expectedCategory:'Outerwear',expectedType:'Jacket'}]));
   run=check();assert.equal(run.status,1);assert.equal(JSON.parse(run.stdout).issues[0].issue,'unreviewed_or_unlabeled');
+  await writeFile(validation,JSON.stringify([{id:'museum-1',image:'one.jpg',sourceObjectId:'Museum-123',verified:true,expectedCategory:'Outerwear',expectedType:'Raincoat'},{id:'museum-2',image:'two.jpg',sourceObjectId:'Museum-123',verified:true,expectedCategory:'Outerwear',expectedType:'Raincoat'}]));
+  run=check();assert.equal(run.status,1);assert.ok(JSON.parse(run.stdout).issues.some(x=>x.issue==='duplicate_validation_image'&&x.key==='sourceObjectId'));
+  await writeFile(validation,JSON.stringify([{id:'excluded',image:'excluded.jpg',reviewStatus:'excluded-same-garment',verified:true,expectedCategory:'Outerwear',expectedType:'Raincoat'}]));
+  run=check();assert.equal(run.status,1);assert.ok(JSON.parse(run.stdout).issues.some(x=>x.issue==='unreviewed_or_unlabeled'));
  }finally{await rm(dir,{recursive:true,force:true});}
 });
