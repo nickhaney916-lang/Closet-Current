@@ -139,3 +139,12 @@ test('failed alternate view leaves uncertain primary result intact',async()=>{
  });
  assert.equal(r.strong,false);assert.equal(r.reason,'type_uncertain');
 });
+
+test('independent-view disagreement retains broad and full-vocabulary evidence',async()=>{
+ const primary=[[cat('Outerwear',.95),cat('Tops',.05)],[type('Jacket',.9),type('Coat',.05)],[type('Jacket',.9),type('Coat',.05)]];
+ const r=await recognizeGarment(async()=>primary.shift(),{width:112,height:200},{confirmationModel:async()=>[type('Tunic',.7),type('Jacket',.2)]});
+ assert.equal(r.strong,false);assert.equal(r.reason,'views_disagree');
+ assert.equal(r.diagnostics.category[0].category,'Outerwear');
+ assert.equal(r.diagnostics.overall[0].type,'Jacket');
+ assert.equal(r.diagnostics.confirmation[0].type,'Tunic');
+});
