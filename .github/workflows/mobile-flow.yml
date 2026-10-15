@@ -8,6 +8,11 @@ on:
       - '.github/workflows/mobile-flow.yml'
       - 'scripts/download-reviewed-photos.mjs'
       - 'benchmark/locked-photo-sources.json'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'scripts/run-mobile-flow.mjs'
+      - '.github/workflows/mobile-flow.yml'
   workflow_dispatch:
 permissions:
   contents: read
