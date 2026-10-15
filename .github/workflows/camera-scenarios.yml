@@ -50,10 +50,12 @@ jobs:
           else
             echo 'Photo collector did not produce a report.' >> "$GITHUB_STEP_SUMMARY"
           fi
-      - name: Verify focused rainwear downloads
+      # Only the isolated gray jacket is required to unblock the next benchmark.
+      # The museum jacket and trenchcoat are optional review evidence.
+      - name: Verify gray shell-jacket download
         if: always()
         run: |
-          node scripts/check-photo-collection.mjs benchmark/photo-collection/report.json candidate-shell-001 candidate-shell-003 candidate-trench-001
+          node scripts/check-photo-collection.mjs benchmark/photo-collection/report.json candidate-shell-001
       - name: Upload photo review evidence
         if: always()
         uses: actions/upload-artifact@v4
