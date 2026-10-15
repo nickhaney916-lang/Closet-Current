@@ -117,7 +117,7 @@ export async function recognizeWithRecovery(model,image,settings={}){
    ]);
    const a=clothingChoices(first),b=clothingChoices(second);
    const same=a[0]?.category===b[0]?.category&&a[0]?.itemType===b[0]?.itemType;
-   const strong=v=>v[0]?.category!=='Uncategorized'&&v[0]?.score>=.65&&
+   const strong=v=>v[0]?.category!=='Uncategorized'&&v[0]?.score>=.55&&
     v[0].score-(v[1]?.score||0)>=.2;
    if(same&&strong(a)&&strong(b)){
     settings.onIdentified?.(a[0]);
