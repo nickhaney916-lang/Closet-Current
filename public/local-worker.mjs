@@ -47,7 +47,7 @@ self.onmessage=event=>{const request=event.data;chain=chain.then(async()=>{
   if(request.type==='benchmark-frames'){
    // Offline test only. Do not save garments or alter production recognition.
    const {localCandidates}=await import('./local-catalog.mjs'+new URL(import.meta.url).search);
-   const labels=localCandidates.map(x=>x.label);
+   const labels=localCandidates.map(x=>Array.isArray(x)?x[0]:x.label);
    const variants=[];
    for(const size of [256,288,320,336]){
     const framed=await model.prepareRecognitionPhoto(image,RawImageClass,{contentSizeOverride:size});
