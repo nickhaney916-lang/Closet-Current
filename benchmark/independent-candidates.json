@@ -187,10 +187,11 @@
     "expectedCategory": "Outerwear",
     "expectedType": "Jacket",
     "verified": false,
-    "reviewStatus": "needs-visual-review",
+    "reviewStatus": "visual-reviewed-label-pending",
     "license": "Public domain",
     "credit": "Skarkkai (source uploader; author attribution assumed)",
-    "notes": "Waterproof breathable hard-shell jacket, original 1728x2226 JPEG 478 KB. Candidate modern-style rain shell; Jacket versus Raincoat subtype needs visual review before locking label. Do not promote automatically."
+    "notes": "Visually reviewed original from Wikimedia: one complete gray waterproof hard-shell jacket on hanger, clear outline, good isolated single-garment test. Jacket-versus-Raincoat taxonomy still needs independent label adjudication; SHA256 and download confirmation pending. Do not approve yet.",
+    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/9/9d/Hard-shell-jacket.jpg"
   },
   {
     "id": "candidate-shell-002",
@@ -199,10 +200,10 @@
     "expectedCategory": "Outerwear",
     "expectedType": "Jacket",
     "verified": false,
-    "reviewStatus": "needs-visual-review",
+    "reviewStatus": "excluded-fabric-detail",
     "license": "CC BY-SA 3.0 / GFDL",
     "credit": "alinja",
-    "notes": "Water repellent on shell layer jacket (Haglöfs Heli II), original 1254x1242 JPEG 227 KB. Inspect whether image shows sufficiently complete garment versus fabric close-up; may be unsuitable."
+    "notes": "Direct visual inspection of original: extreme close-up of water droplets on jacket fabric; no garment outline. Excluded from single-garment indexing accuracy benchmark; may be a separate fabric/detail negative control."
   },
   {
     "id": "candidate-shell-003",
@@ -211,9 +212,10 @@
     "expectedCategory": "Outerwear",
     "expectedType": "Raincoat",
     "verified": false,
-    "reviewStatus": "needs-visual-review",
+    "reviewStatus": "visual-reviewed-multiple-garments",
     "license": "CC BY-SA 4.0",
     "credit": "Joe Mabel",
-    "notes": "Hooded Gore-Tex rain jacket c. 1976, museum exhibit, original 3264x4928 JPEG 4.36 MB. More jacket-shaped than historical trenchcoats; visual review and label adjudication required."
+    "notes": "Direct visual inspection: clear red Gore-Tex hooded rain jacket worn by museum mannequin, but trousers and underlying clothing visible. Good candidate for outfit/mask or cropped-jacket diagnostics, not an isolated single-garment benchmark without independent bounding-box review.",
+    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/3/36/Early_Gore-Tex_hooded_rain_jacket.jpg"
   }
 ]
