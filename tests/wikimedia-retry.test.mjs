@@ -13,3 +13,10 @@ test('Wikimedia metadata and original images both use the bounded rate-limit ret
  assert.match(collection,/res=await wikimediaFetch\(url\)/,'original image fetch needs retry');
  assert.doesNotMatch(collection,/await fetch\(/,'no direct unthrottled requests in collection loop');
 });
+
+test('unreviewed rain shells are prioritized ahead of already approved image re-downloads',()=>{
+ const source=readFileSync('scripts/collect-independent-photo-bytes.mjs','utf8');
+ assert.match(source,/const orderedRows=\[\.\.\.rows\]\.sort/);
+ assert.match(source,/x\.verified===false&&x\.reviewStatus==='needs-visual-review'/);
+ assert.match(source,/for\(const row of orderedRows\)/);
+});
