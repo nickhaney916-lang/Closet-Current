@@ -57,20 +57,17 @@ try{
  await page.locator('.tab[data-view="closet"]').click();await page.locator('#search').fill('Phone test');await page.locator('.closet-refine').evaluate(el=>el.open=true);await page.locator('#filter').selectOption('Tops');await page.locator('#seasonFilter').selectOption('Summer');assert.equal(await page.locator('#closetGrid article').count(),1);
  await page.reload();await page.evaluate(()=>closetReady);await page.locator('.tab[data-view="closet"]').click();await page.locator('#search').fill('Phone test');assert.equal(await page.locator('#closetGrid article').count(),1);
  const saved=await page.evaluate(()=>items.find(x=>x.name==='Phone test blue top'));assert.equal(saved.category,'Tops');assert.equal(saved.itemType,'T-shirt');assert.equal(saved.userAdjusted,true);assert.equal(saved.color,'Blue');assert.deepEqual(saved.seasons,['Summer']);
- // Verify a manually masked saved garment survives a full browser reload.
+ // Exercise the production crop button and production save callback, not a test-only callback.
  await page.evaluate(async()=>{
-  const original=items.find(x=>x.name==='Phone test blue top');
+  const item=items.find(x=>x.name==='Phone test blue top');
   const crop=document.createElement('canvas');crop.width=240;crop.height=240;
   const ctx=crop.getContext('2d');ctx.fillStyle='#e11e1e';ctx.fillRect(0,0,240,240);
-  window.maskPersistenceTarget=original.id;
-  await window.openPhotoCrop({...original,image:crop.toDataURL('image/jpeg',.95),originalPhoto:null,cropBounds:null},{
-   analyze:async()=>null,
-   save:async photo=>{
-    const value={...original,image:photo.image,originalPhoto:photo.originalPhoto,cropBounds:photo.cropBounds,maskedColorEstimate:photo.maskedColorEstimate||null,color:photo.maskedColorEstimate?.color||'',colorMethod:photo.maskedColorEstimate?'garment-mask':null,userAdjusted:true};
-    await writeAll([value]);Object.assign(original,value);
-   }
-  });
+  const value={...item,image:crop.toDataURL('image/jpeg',.95),originalPhoto:null,cropBounds:null,color:'',colorSource:'photo-estimate'};
+  await writeAll([value]);Object.assign(item,value);render();
  });
+ await page.locator('.tab[data-view="closet"]').click();
+ await page.locator('#search').fill('Phone test');
+ await page.locator('#closetGrid article button').filter({hasText:'Crop photo'}).click();
  const persistenceDialog=page.locator('dialog.photo-crop-editor');
  await persistenceDialog.getByRole('button',{name:'Erase background'}).click();
  const persistenceFrame=await persistenceDialog.locator('.crop-frame').boundingBox();
