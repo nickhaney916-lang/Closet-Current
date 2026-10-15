@@ -20,7 +20,13 @@ async function wikimediaFetch(url){
   await pause(delay);
  }
 }
-for(const row of rows){
+// Review-blocking new rainwear candidates go first. Approved photos already have
+// verified URLs and can be fetched later without exhausting early API capacity.
+const orderedRows=[...rows].sort((a,b)=>{
+ const priority=x=>x.verified===false&&x.reviewStatus==='needs-visual-review'&&(x.id.startsWith('candidate-shell-')||x.id.startsWith('candidate-trench-'))?0:1;
+ return priority(a)-priority(b);
+});
+for(const row of orderedRows){
  if(row.reviewStatus?.startsWith('excluded-')){report.push({id:row.id,status:'excluded'});continue;}
  let originalUrl=row.downloadUrl;
  try{
