@@ -27,7 +27,7 @@ export function agreementMatch(category,branch,overall){
 // This result always stays in review and never supplies guessed attributes.
 async function reviewGarmentCategory(model,confirmationModel,image,category,overall,evidence){
  const categoryName=category[0]?.category;
- if(!categoryName||categoryName==='Uncategorized'||category[0].score<.85||category[0].score-(category[1]?.score||0)<.35)return null;
+ if(!categoryName||categoryName==='Uncategorized'||category[0].score<.84||category[0].score-(category[1]?.score||0)<.35)return null;
  const labels=localCandidates.map(x=>x.label),whole=overall||await model(image,labels,options);
  const supported=results=>{
   const totals=garmentCategoryTotals(results),first=clothingChoices(results)[0];
