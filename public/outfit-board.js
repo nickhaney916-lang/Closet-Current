@@ -25,9 +25,9 @@ function openBoardPicker(slotId){
 function renderOutfitBoard(){
  if(!boardInitialized)return;
  currentBoard=cleanOutfitBoard(currentBoard,items);const top=items.find(x=>x.id===currentBoard.slots.top),dress=top?.category==='Dresses';
- const slots=$('boardSlots');slots.replaceChildren();
+ $('outfitFigure').classList.toggle('has-outer-coat',currentBoard.layerCount>=3);const slots=$('boardSlots');slots.replaceChildren();
  for(const slot of outfitSlots){
-  if(slot.extra&&currentBoard.layerCount<2)continue;
+  if(slot.extra&&currentBoard.layerCount<slot.level)continue;
   const item=items.find(x=>x.id===currentBoard.slots[slot.id]),idea=currentBoard.ideas[slot.id],covered=dress&&slot.id==='bottom';
   const b=node('button',null,'board-slot board-slot-'+slot.id+(item?' owned':idea?' planned':' blank')+(covered?' covered':'')+(dress&&slot.id==='top'?' dress':''));b.type='button';b.disabled=covered;b.setAttribute('aria-label',covered?'Bottoms covered by your dress':slot.label+': '+(item?.name||(idea?idea.color+' '+idea.type:'empty'))+'. Choose a piece');
   b.append(node('span',slot.label,'slot-label'));

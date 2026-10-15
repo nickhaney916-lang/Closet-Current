@@ -14,6 +14,7 @@ function stylistItemScore(item,slot,context,library){
  const partial=!type||type==='Unknown'||type==='Other';
  if(!item.id||item.category==='Uncategorized')return null;
  if(partial&&(context.request!=='Casual'||!item.color||item.color==='Unknown'||!['top','bottom','shoes','layer'].includes(slot)))return null;
+ if(slot==='layer'&&item.category==='Tops'&&!['Sweater','Sweatshirt','Hoodie','Button-down shirt','Tunic'].includes(type)&&item.sleeveLength!=='Long sleeve')return null;
  if(item.seasons?.length&&!item.seasons.includes('All seasons')&&!item.seasons.includes(context.season))return null;
  // Style preference shapes the look; it does not infer a garment owner's gender.
  if(context.audience==='Men'&&(item.category==='Dresses'||['Skirt','Heels','Flats'].includes(type)))return null;
