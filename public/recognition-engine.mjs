@@ -78,6 +78,31 @@ export async function recognizeWithRecovery(model,image,settings={}){
   const recovered=await recognizeGarment(settings.recoveryModel,image,{...settings,confirmationModel:settings.recoveryConfirmationModel,onIdentified:()=>{}});
   if(recovered.strong&&recovered.choices[0]?.category==='Tops'){settings.onIdentified?.(recovered.choices[0]);return {...recovered,preprocessingRecovery:true};}
  }
+ // Recheck ambiguous Bottoms subtypes against the existing catalog on two
+ // independent photo views. No new prompts/assets or user interaction needed.
+ // Only accept a subtype when both views agree on it and reject background.
+ if(!result.strong&&category?.[0]?.category==='Bottoms'&&
+    ['type_uncertain','checks_disagree','views_disagree'].includes(result.reason)&&
+    settings.recoveryModel&&settings.recoveryConfirmationModel){
+  try{
+   const labels=localCandidates.filter(x=>x.category==='Bottoms'||x.category==='Uncategorized').map(x=>x.label);
+   const [first,second]=await Promise.all([
+    settings.recoveryModel(image,labels,options),
+    settings.recoveryConfirmationModel(image,labels,options)
+   ]);
+   const a=clothingChoices(first),b=clothingChoices(second);
+   const safe=v=>v[0]?.category==='Bottoms'&&v[0].score>=.7&&
+    v[0].score-(v[1]?.score||0)>=.25;
+   if(safe(a)&&safe(b)&&a[0].itemType===b[0].itemType){
+    settings.onIdentified?.(a[0]);
+    return {strong:true,choices:[a[0]],details:{},reason:'bottoms_independent_agreement',preprocessingRecovery:true};
+   }
+   result.diagnostics={...result.diagnostics,bottomsRecovery:{
+    first:a.slice(0,2).map(x=>({category:x.category,type:x.itemType,score:x.score})),
+    confirmation:b.slice(0,2).map(x=>({category:x.category,type:x.itemType,score:x.score}))
+   }};
+  }catch{/* A failed optional recheck never overrides the original result. */}
+ }
  // When the broad prompt mistakes a jacket for a blouse, independently retry
  // the original full photograph. Never promote a conflicting guess: all normal
  // category, type, full-vocabulary and second-view gates must pass on retry.
