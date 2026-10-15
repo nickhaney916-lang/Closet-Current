@@ -28,5 +28,7 @@ test('independent subtype report keeps a broad raincoat-to-coat mismatch while a
  assert.deepEqual(stats.outerwearConfusion.Blazer.predicted,{Blazer:1});
  assert.equal(stats.outerwearConfusion.Jacket.count,0);
  assert.equal(stats.raincoatVsCoat[0].consensusWrongSubtype,true);
+ assert.ok(Math.abs(stats.raincoatVsCoat[0].raincoatScoreCenterMinusWhole-0.05)<1e-10);
+ assert.equal(stats.raincoatVsCoat[0].cropChangesTopSubtype,false);
  }finally{await rm(dir,{recursive:true,force:true});}
 });
