@@ -111,7 +111,14 @@ try{
   return {id,expected,importStatus:outcome?.status||'unaccounted',importReason:outcome?.reason||null,...(item||{}),correctCategory:!!item&&item.category===expected};
  });
  const evaluated=realResults.filter(x=>x.category&&!x.scanFailed);
- const report={cases:realResults,submitted:realCases.length,imported:observed.imports.added,evaluated:evaluated.length,categoryAccuracy:evaluated.length?evaluated.filter(x=>x.correctCategory).length/evaluated.length:null,allSubmittedAccuracy:realResults.filter(x=>x.correctCategory).length/realCases.length,importDiagnostics:observed,pageErrors:errors};
+ // Review-only suggestions are measured separately from saved categories:
+ // they must never inflate the app's automatic recognition accuracy.
+ const reviewSuggestions=realResults.filter(x=>x.recognitionDiagnostics?.outerwearRecovery?.outerwearReviewSuggested).map(x=>({
+  id:x.id,expected:x.expected,suggestedCategory:'Outerwear',
+  suggestedType:x.recognitionDiagnostics.outerwearRecovery.fullCatalogEvidence?.whole?.top?.[0]?.type||null,
+  correct:x.expected==='Outerwear',savedCategory:x.category
+ }));
+ const report={cases:realResults,submitted:realCases.length,imported:observed.imports.added,evaluated:evaluated.length,categoryAccuracy:evaluated.length?evaluated.filter(x=>x.correctCategory).length/evaluated.length:null,allSubmittedAccuracy:realResults.filter(x=>x.correctCategory).length/realCases.length,reviewSuggestions,reviewSuggestionCount:reviewSuggestions.length,reviewSuggestionCorrect:reviewSuggestions.filter(x=>x.correct).length,importDiagnostics:observed,pageErrors:errors};
  await writeFile(out+'/real-photo-indexing.json',JSON.stringify(report,null,2));
  console.log('REAL_PHOTO_INDEXING '+JSON.stringify(report));
  if(realResults.some(x=>x.importStatus==='added'&&(!x.category||x.category==='Uncategorized')))console.warn('REAL_PHOTO_REVIEW_REQUIRED '+JSON.stringify(realResults.filter(x=>x.importStatus==='added'&&(!x.category||x.category==='Uncategorized'))));
