@@ -42,3 +42,37 @@ jobs:
           name: independent-photo-collection
           path: benchmark/photo-collection/
           retention-days: 14
+  independent-two-photo-smoke:
+    if: github.event_name == 'workflow_dispatch' && github.ref_name == 'fix/mobile-recognition-timeout-diagnostics'
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prepare approved photos and guard against prior benchmark leakage
+        run: |
+          mkdir -p benchmark/independent-smoke
+          node scripts/prepare-independent-photos.mjs benchmark/independent-candidates.json benchmark/independent-smoke/manifest.json benchmark/independent-smoke/coverage.json
+          node -e "const r=require('./benchmark/independent-smoke/coverage.json');if(r.approvedCount<2)process.exit(1)"
+          node scripts/assemble-reviewed-baseline.mjs benchmark/independent-smoke/baseline.json benchmark/manifest-reviewed-32.json benchmark/manifest-holdout-16.json benchmark/manifest-fresh-11.json
+          node scripts/check-independent-validation.mjs benchmark/independent-smoke/baseline.json benchmark/independent-smoke/manifest.json benchmark/independent-smoke/independence.json
+      - name: Download and verify exact approved photos
+        run: |
+          node scripts/download-reviewed-photos.mjs benchmark/independent-smoke/manifest.json
+          node scripts/validate-100-photo-set.mjs benchmark/independent-smoke/manifest.json benchmark/photos 2 > benchmark/independent-smoke/photos.json
+      - name: Run independent FashionCLIP browser smoke test
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium
+          node scripts/build.mjs
+          node scripts/run-browser-photo-benchmark.mjs benchmark/independent-smoke/manifest.json benchmark/independent-smoke/results
+      - name: Upload independent smoke evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: independent-two-photo-smoke
+          path: benchmark/independent-smoke/
+          retention-days: 14
