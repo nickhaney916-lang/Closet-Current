@@ -32,12 +32,17 @@ async function load(){
    const fitted=await prepareRecognitionPhoto(image,RawImageClass,{contentSizeOverride:288});
    return (await vision(await processor(fitted))).image_embeds.data;
   },metadata,vectors);
+  // Minimal alternate framing used only after an unresolved Coat conflict.
+  const coatNearFull=makeVectorScorer(async image=>{
+   const fitted=await prepareRecognitionPhoto(image,RawImageClass,{contentSizeOverride:334});
+   return (await vision(await processor(fitted))).image_embeds.data;
+  },metadata,vectors);
   const originalWhole=makeVectorScorer(async image=>{
    const fitted=await fitWholePhoto(image,RawImageClass);
    return (await vision(await processor(fitted))).image_embeds.data;
   },metadata,vectors);
   const originalCenter=makeVectorScorer(async image=>(await vision(await processor(image))).image_embeds.data,metadata,vectors);
-  scannerStage='ready';return {whole,center,skirtPadding,originalWhole,originalCenter,RawImage,prepareRecognitionPhoto,modelKey:'fashion-clip/whole-v1/'+metadata.revision};
+  scannerStage='ready';return {whole,center,skirtPadding,coatNearFull,originalWhole,originalCenter,RawImage,prepareRecognitionPhoto,modelKey:'fashion-clip/whole-v1/'+metadata.revision};
  })().catch(error=>{classifierPromise=null;throw error;});
  return classifierPromise;
 }
@@ -65,7 +70,7 @@ self.onmessage=event=>{const request=event.data;chain=chain.then(async()=>{
   const classify=request.hint?classifyIsolatedGarment:recognizeWithRecovery;
   const result=await classify(model.whole,image,{
    hint:request.hint,
-   confirmationModel:model.center,skirtPaddingModel:model.skirtPadding,
+   confirmationModel:model.center,skirtPaddingModel:model.skirtPadding,coatNearFullModel:model.coatNearFull,
    recoveryModel:model.originalWhole,recoveryConfirmationModel:model.originalCenter,
    onStage:stage=>{scannerStage=stage;},
    onIdentified:choice=>self.postMessage({type:'identified',id:request.id,choice})
