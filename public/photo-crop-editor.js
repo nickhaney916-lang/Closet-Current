@@ -4,7 +4,7 @@ window.openPhotoCrop=async function(item,{analyze,save}){
  const el=(tag,text,className)=>{const n=document.createElement(tag);if(text)n.textContent=text;if(className)n.className=className;return n;};
  const button=(text,fn)=>{const b=el('button',text,'secondary');b.type='button';b.onclick=fn;return b;};
  const source=item.originalPhoto?.image||item.image;if(typeof source!=='string'||source.length>12000000||!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(source))throw Error('Invalid crop photo');const img=new Image();img.src=source;await img.decode();
- let crop=E.bounds(item.cropBounds),savingCrop=false,busy=false,choice=null,gesture=null,mask=null,maskMode='crop',brushMode='erase',brushSize=18,painting=false,lastBrush=null;
+ let crop=E.bounds(item.cropBounds||undefined),savingCrop=false,busy=false,choice=null,gesture=null,mask=null,maskMode='crop',brushMode='erase',brushSize=18,painting=false,lastBrush=null;
  const heading=el('h2','Crop clothing'),help=el('p','Drag the frame or its corners. Include the whole garment, dress hem, or both shoes. Leave a little space around the edges.','fine'),stage=el('div',null,'crop-stage'),photo=el('img'),frame=el('div',null,'crop-frame');photo.src=source;photo.alt='Original clothing photo';frame.tabIndex=0;frame.setAttribute('role','group');frame.setAttribute('aria-label','Move crop selection with arrow keys');
  stage.append(photo,frame);
  for(const [handle,label]of [['nw','Top left'],['ne','Top right'],['sw','Bottom left'],['se','Bottom right']]){const b=button('',()=>{});b.className='crop-handle '+handle;b.dataset.handle=handle;b.setAttribute('aria-label',label+' crop corner. Use arrow keys to resize.');frame.append(b);}
