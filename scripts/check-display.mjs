@@ -42,7 +42,7 @@ try{
    await page.screenshot({path:out+'/'+width+'-adjust-scrolled.png',fullPage:true,animations:'disabled'});await dialog.evaluate(el=>el.scrollTop=0);
   }
   await page.screenshot({path:out+'/'+width+'-adjust.png',fullPage:true,animations:'disabled'});await dialog.getByRole('button',{name:'Cancel',exact:true}).click();
-  if(width<760){for(const control of await page.locator('.main-nav>.tab,.more-menu>summary').all()){const b=await control.boundingBox();assert.ok(b.width>=44&&b.height>=44,'Navigation touch target too small');}}
+  if(width<760){for(const control of await page.locator('.main-nav>.tab,.more-menu>summary,.closet-category').all()){const b=await control.boundingBox();assert.ok(b.width>=44&&b.height>=44,'Navigation touch target too small');}}
   if(await page.locator('#closetCategories').count()){
    await page.locator('#closetAllPieces').click();
    const red=page.locator('#closetGrid article').filter({hasText:'Red T-shirt for casual weekends'}),target=page.locator('.closet-category[data-category="Tops"]');
