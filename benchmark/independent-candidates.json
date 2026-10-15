@@ -187,10 +187,10 @@
     "expectedCategory": "Outerwear",
     "expectedType": "Jacket",
     "verified": false,
-    "reviewStatus": "visual-reviewed-label-pending",
+    "reviewStatus": "label-reviewed-awaiting-hash",
     "license": "Public domain",
     "credit": "Skarkkai (source uploader; author attribution assumed)",
-    "notes": "Visually reviewed original from Wikimedia: one complete gray waterproof hard-shell jacket on hanger, clear outline, good isolated single-garment test. Jacket-versus-Raincoat taxonomy still needs independent label adjudication; SHA256 and download confirmation pending. Do not approve yet.",
+    "notes": "Original 1728x2226 JPG visually inspected: one isolated gray waterproof breathable hard-shell jacket on a hanger. Commons description explicitly calls it a hard-shell jacket (not a raincoat); expectedType Jacket retained to test waterproof shell vs Raincoat/Coat confusion. Public-domain source and credit reviewed. No image SHA-256 has been verified; do not approve for accuracy benchmark until original bytes downloaded, hashed and baseline overlap checked.",
     "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/9/9d/Hard-shell-jacket.jpg"
   },
   {
