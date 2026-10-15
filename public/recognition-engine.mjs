@@ -118,7 +118,11 @@ export async function recognizeWithRecovery(model,image,settings={}){
    view.categories[0].score>=.75&&
    view.categories[0].score-(view.categories[1]?.score||0)>=.5&&
    view.top?.[0]?.category==='Outerwear';
-  const outerwearReviewSuggested=supportsOuterwear(whole)&&supportsOuterwear(close);
+  // Category-only evidence requires independent agreement on the leading
+  // garment type as well as the category. Keep a contradictory broad-category
+  // prompt in review; never silently promote this evidence to an auto-save.
+  const sameType=whole?.top?.[0]?.type&&whole.top[0].type===close?.top?.[0]?.type;
+  const outerwearReviewSuggested=!!sameType&&supportsOuterwear(whole)&&supportsOuterwear(close);
   // Record why the independent retry failed so real-photo tests can distinguish
   // category prompt bias from type or view disagreement. Do not override gates.
   result.diagnostics={...result.diagnostics,outerwearRecovery:{outerwearReviewSuggested,fullCatalogEvidence,
