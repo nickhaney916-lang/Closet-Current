@@ -11,7 +11,11 @@ const valid=c=>c.verified===true&&c.reviewStatus==='approved'&&
  typeof c.id==='string'&&c.id.trim()&&typeof c.image==='string'&&c.image.trim()&&
  typeof c.source==='string'&&/^https:\/\//.test(c.source)&&
  typeof c.license==='string'&&c.license.trim()&&typeof c.credit==='string'&&c.credit.trim()&&
- categoryFor[c.expectedType]===c.expectedCategory;
+ categoryFor[c.expectedType]===c.expectedCategory&&
+ /^(?:validation|commons)-[0-9]+\\.(?:jpg|png|webp)$/.test(c.image)&&
+ typeof c.sha256==='string'&&/^[a-f0-9]{64}$/.test(c.sha256)&&
+ typeof c.downloadUrl==='string'&&(/^https:\/\/(?:upload|thumb)\\.wikimedia\\.org\\//).test(c.downloadUrl)&&
+ (!c.alternateDownloadUrls||Array.isArray(c.alternateDownloadUrls)&&c.alternateDownloadUrls.length<=2&&c.alternateDownloadUrls.every(u=>typeof u==='string'&&/^https:\/\/(?:upload|thumb)\\.wikimedia\\.org\\//.test(u)));
 const reviewed=candidates.filter(valid);
 const duplicates=[];
 const identities=new Map();
@@ -28,8 +32,8 @@ const blocked=candidates.filter(c=>!reviewed.includes(c)).map(c=>({id:c.id,statu
 const reviewQueue=blocked.filter(c=>!c.status.startsWith('excluded-'));
 const pendingCounts=Object.fromEntries(types.map(type=>[type,reviewQueue.filter(c=>c.type===type).length]));
 const excludedCount=blocked.length-reviewQueue.length;
-const manifest=reviewed.map(({id,image,expectedCategory,expectedType,source,sourceImage,sourceObjectId,sha256,downloadUrl,license,credit})=>({
- id,image,mode:'single',expectedCategory,expectedType,source,sourceImage,sourceObjectId,sha256,downloadUrl,license,credit,verified:true
+const manifest=reviewed.map(({id,image,expectedCategory,expectedType,source,sourceImage,sourceObjectId,sha256,downloadUrl,alternateDownloadUrls,license,credit})=>({
+ id,image,mode:'single',expectedCategory,expectedType,source,sourceImage,sourceObjectId,sha256,downloadUrl,alternateDownloadUrls,license,credit,verified:true
 }));
 const counts=Object.fromEntries(types.map(type=>[type,reviewed.filter(c=>c.expectedType===type).length]));
 const report={candidateCount:candidates.length,approvedCount:reviewed.length,blocked,coverageByType:counts,
