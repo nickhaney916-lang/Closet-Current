@@ -7,5 +7,7 @@ test('optional rain-jacket framing experiment stays in benchmark only',()=>{
  assert.match(runner,/item\.diagnosticOnly===true&&item\.contextContaminated===true/);
  assert.match(runner,/framingExperiment=\{method:'inset-3-percent-each-side'/);
  assert.match(runner,/await session\.call\(\{type:'classify',image:frame,benchmarkDiagnostics:true\}\)/);
+ assert.match(runner,/framingExperiment=\{method:'inset-3-percent-each-side',error:String\(error\.message\|\|error\)\}/);
  assert.match(workflow,/framingExperiment:x\.framingExperiment/);
+ assert.match(workflow,/error:x\.framingExperiment\.error/);
 });
