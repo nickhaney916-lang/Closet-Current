@@ -79,10 +79,17 @@ export async function recognizeGarment(model,image,{onStage=()=>{},onIdentified=
 // independent-view gates must all pass again; contradictions are not retried.
 export async function recognizeWithRecovery(model,image,settings={}){
  const result=await recognizeGarment(model,image,settings),category=result.diagnostics?.category;
- const eligible=result.reason==='type_uncertain'&&category?.[0]?.category==='Tops'&&category[0].score>=.85&&category[0].score-(category[1]?.score||0)>=.35;
+ // Use alternate image views only after a highly confident primary category
+ // has an uncertain subtype; a contradictory primary category never triggers recovery.
+ const expectedCategory=category?.[0]?.category;
+ const eligible=result.reason==='type_uncertain'&&expectedCategory!=='Uncategorized'&&category?.[0]?.score>=.85&&category[0].score-(category[1]?.score||0)>=.35;
  if(eligible&&settings.recoveryModel&&settings.recoveryConfirmationModel){
-  const recovered=await recognizeGarment(settings.recoveryModel,image,{...settings,confirmationModel:settings.recoveryConfirmationModel,onIdentified:()=>{}});
-  if(recovered.strong&&recovered.choices[0]?.category==='Tops'){settings.onIdentified?.(recovered.choices[0]);return {...recovered,preprocessingRecovery:true};}
+  try{
+   const recovered=await recognizeGarment(settings.recoveryModel,image,{...settings,confirmationModel:settings.recoveryConfirmationModel,onIdentified:()=>{}});
+   if(recovered.strong&&recovered.choices[0]?.category===expectedCategory){
+    settings.onIdentified?.(recovered.choices[0]);return {...recovered,preprocessingRecovery:true};
+   }
+  }catch{/* Optional recovery failure must not discard the primary result. */}
  }
  if(result.strong||result.categoryConfirmed||!['type_uncertain','checks_disagree','views_disagree'].includes(result.reason))return result;
  // Keep a verified broad category when subtype votes disagree. It remains in
