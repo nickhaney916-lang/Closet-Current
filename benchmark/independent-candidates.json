@@ -75,29 +75,31 @@
   },
   {
     "id": "candidate-sweater-001",
-    "image": "candidate-sweater-001.jpg",
+    "image": "commons-9001.jpg",
     "expectedCategory": "Tops",
     "expectedType": "Sweater",
     "verified": false,
-    "reviewStatus": "visual-reviewed-awaiting-integrity",
+    "reviewStatus": "visual-reviewed-awaiting-independence",
     "source": "https://commons.wikimedia.org/wiki/File:Jumper_sweater.jpg",
     "license": "Public domain",
     "credit": "Dmn",
-    "notes": "Original Wikimedia Commons file URL verified via source page; direct binary download in execution environment failed. SHA256 remains unknown. Do not approve until hashed file obtained.",
-    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/d/dd/Jumper_sweater.jpg"
+    "notes": "Original image retrieved and SHA-256 calculated by GitHub Actions run 38803921108. Requires baseline overlap and final review before approval.",
+    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/d/dd/Jumper_sweater.jpg",
+    "sha256": "eedcacc80ad000b171517b55960da01e0410d706f3893a110d96a606f2e2a192"
   },
   {
     "id": "candidate-blazer-001",
-    "image": "candidate-blazer-001.jpg",
+    "image": "commons-9002.jpg",
     "expectedCategory": "Outerwear",
     "expectedType": "Blazer",
     "source": "https://commons.wikimedia.org/wiki/File:Navy_blazer_jacket.jpg",
     "license": "CC BY-SA 4.0",
     "credit": "サフィル",
-    "notes": "Original Wikimedia Commons file URL verified via source page; SHA256 not yet obtained. Do not approve until hashed file obtained.",
+    "notes": "Original image retrieved and SHA-256 calculated by GitHub Actions run 38803921108. Requires baseline overlap and final review before approval.",
     "verified": false,
-    "reviewStatus": "visual-reviewed-awaiting-integrity",
-    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/0/04/Navy_blazer_jacket.jpg"
+    "reviewStatus": "visual-reviewed-awaiting-independence",
+    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/0/04/Navy_blazer_jacket.jpg",
+    "sha256": "e90da2b49bfdc7beed33a5b20422e9279ca1270168a61a2dd38d5483d497414b"
   },
   {
     "id": "candidate-blazer-002",
