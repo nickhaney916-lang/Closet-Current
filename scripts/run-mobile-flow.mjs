@@ -137,6 +137,18 @@ try{
  assert.ok(realResults.filter(x=>x.correctCategory).length>=12,
   'Real-photo category accuracy must not regress below the verified 12/14 baseline');
  assert.equal(observed.imports.added,realCases.length,'Every real photo must import');
+ // Preserve the known ambiguous skirt/coat outcomes until genuinely
+ // independent recognition evidence resolves them. A dress or top must never
+ // be silently substituted for the expected garment.
+ for(const [id,expected] of [['commons-0045','Bottoms'],['commons-0070','Outerwear']]){
+  const sample=realResults.find(x=>x.id===id);
+  assert.ok(sample, 'Missing ambiguity regression fixture: '+id);
+  assert.ok(sample.category===expected||sample.category==='Uncategorized',
+   id+' must not receive a conflicting automatic category');
+ }
+ const verifiedJacket=realResults.find(x=>x.id==='commons-0065');
+ assert.equal(verifiedJacket?.category,'Outerwear','Previously recovered jacket must remain recognized');
+ assert.equal(verifiedJacket?.itemType,'Jacket','Previously recovered jacket subtype must remain stable');
  // Regression: independent jacket evidence must offer a review-only category
  // action that updates the real editor fields, without saving automatically.
  const jacket=realResults.find(x=>x.id==='commons-0060');
