@@ -63,3 +63,9 @@ input[type="checkbox"]{min-height:20px;width:20px;height:20px;vertical-align:mid
 .styled-outfit-detail ul{padding-left:22px;line-height:1.7}
 .styled-outfit-detail .actions{display:flex;gap:8px;flex-wrap:wrap}
 @media(max-width:420px){.styled-outfit-detail{padding:14px}.styled-outfit-detail .actions button{flex:1 1 40%}}
+
+/* Keep previews proportional and legible even in narrow recommendation cards. */
+.outfit-mannequin-garment img[hidden]{display:none}
+.outfit-mannequin-fallback{width:100%;padding:5px;border:1px dashed #758281;border-radius:7px;background:rgba(255,255,255,.88);color:#344141;text-align:center;font-size:clamp(9px,2.5vw,12px);overflow-wrap:anywhere}
+.outfit-mannequin-fallback[hidden]{display:none}
+@media(max-width:390px){.styled-outfit .outfit-mannequin-card{width:min(100%,190px)}.styled-outfit .outfit-mannequin-caption{font-size:9px}.styled-outfit-detail .outfit-mannequin-detail{width:min(100%,300px)}}
