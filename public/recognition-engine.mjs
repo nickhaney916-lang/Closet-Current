@@ -138,6 +138,38 @@ export async function recognizeWithRecovery(model,image,settings={}){
    }};
   }catch{/* Preserve the original uncertain result. */}
  }
+ // A coat with a strong category-specific vote but a conflicting whole-
+ // catalog confirmation gets two independent full-catalog rechecks. Do not
+ // weaken the general confirmation threshold for unrelated garment types.
+ if(!result.strong&&result.reason==='views_disagree'&&
+    result.diagnostics?.branch?.[0]?.category==='Outerwear'&&
+    result.diagnostics?.branch?.[0]?.type==='Coat'&&
+    result.diagnostics.branch[0].score>=.9&&
+    settings.recoveryModel&&settings.recoveryConfirmationModel){
+  try{
+   const labels=localCandidates.map(x=>x.label);
+   const [first,second]=await Promise.all([
+    settings.recoveryModel(image,labels,options),
+    settings.recoveryConfirmationModel(image,labels,options)
+   ]);
+   const a=clothingChoices(first),b=clothingChoices(second);
+   const ca=garmentCategoryTotals(first),cb=garmentCategoryTotals(second);
+   const supports=(choices,cats)=>choices[0]?.category==='Outerwear'&&
+    choices[0]?.itemType==='Coat'&&choices[0].score>=.3&&
+    choices[0].score-(choices[1]?.score||0)>=.1&&
+    cats[0]?.category==='Outerwear'&&cats[0].score>=.65&&
+    cats[0].score-(cats[1]?.score||0)>=.3;
+   if(supports(a,ca)&&supports(b,cb)){
+    settings.onIdentified?.(a[0]);
+    return {strong:true,choices:[a[0]],details:{},reason:'coat_independent_agreement',preprocessingRecovery:true};
+   }
+   result.diagnostics={...result.diagnostics,coatRecovery:{
+    first:a.slice(0,2).map(x=>({category:x.category,type:x.itemType,score:x.score})),
+    confirmation:b.slice(0,2).map(x=>({category:x.category,type:x.itemType,score:x.score})),
+    firstCategories:ca.slice(0,2),confirmationCategories:cb.slice(0,2)
+   }};
+  }catch{/* Preserve the original uncertain result. */}
+ }
  // Independently verify an Outerwear jacket when a Tops broad prompt
  // conflicts with the full catalog. Two recovery views must both favor
  // Outerwear strongly and agree on Jacket; never trust a single branch vote.
