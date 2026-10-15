@@ -39,6 +39,17 @@ try{
    });
   });
   for(const variant of variants){if(variant.actual!==variant.expected)throw Error(label+': '+variant.name+' expected '+variant.expected+' garments, found '+variant.actual);if(variant.name==='dress'&&variant.bottom)throw Error(label+': dress conflicts with trousers');}
+  // The last variant is intentionally broken; capture distinct valid layouts too.
+  for(const variant of ['dress','skirt']){
+   await page.evaluate(kind=>{
+    const colors={dress:'#e95',skirt:'#d79'};
+    const photo='data:image/svg+xml;charset=utf-8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="120" height="240"><rect width="120" height="240" fill="'+colors[kind]+'"/></svg>');
+    const item={id:kind,category:kind==='dress'?'Dresses':'Bottoms',itemType:kind==='dress'?'Dress':'Skirt',image:photo};
+    OutfitFigure.render(document.querySelector('#detail'),{slots:{[kind==='dress'?'top':'bottom']:kind}},[item],{size:'detail'});
+   },variant);
+   await page.screenshot({path:resolve(shots,label+'-'+variant+'.png')});
+  }
+  await page.evaluate(()=>{const el=document.querySelector('#detail');OutfitFigure.render(el,{slots:{top:'broken'}},[{id:'broken',category:'Tops',itemType:'Shirt',image:'data:image/png;base64,not-an-image'}],{size:'detail'});});
   await page.waitForFunction(()=>{const el=document.querySelector('#detail .outfit-mannequin-fallback');return el&&!el.hidden&&el.textContent==='Shirt';},null,{timeout:5000});
   await page.screenshot({path:resolve(shots,label+'-broken-image.png')});
   await page.locator('#close').click();
