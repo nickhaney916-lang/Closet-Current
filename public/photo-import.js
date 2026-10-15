@@ -18,7 +18,7 @@ async function readPhotoBatch(files,decode,onPhoto){
   else if(!file.type.startsWith('image/')&&!/\\.(jpe?g|png|webp|avif|heic|heif)$/i.test(file.name))reason='not an image';
   if(reason){errors.push(file.name+': '+reason);results.push({name:file.name,status:'rejected',reason});continue;}
   try{
-   const image=await decode(file),accepted=await onPhoto(image);
+   const image=await decode(file),accepted=await onPhoto(image,file);
    if(accepted===false){results.push({name:file.name,status:'duplicate',reason:'exact duplicate image'});}
    else{added++;results.push({name:file.name,status:'added'});}
   }catch(error){
