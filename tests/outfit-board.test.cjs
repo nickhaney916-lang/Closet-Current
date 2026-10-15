@@ -26,3 +26,6 @@ test('shopping ideas remain separate from owned clothing and round-trip with bac
 test('men and all-style searches do not include women-only product examples',()=>{
  for(const audience of ['Men','All']){const b=c.cleanOutfitBoard({audience},closet);assert.ok(c.wardrobeGapIdeas('shoes',b,closet).every(x=>x.examples.length===0));}
 });
+
+test('two distinct optional layers survive save and restore with their colors',()=>{const second={id:'second-layer',category:'Outerwear',color:'Blue'},all=[...closet,second];const b=c.cleanOutfitBoard({slots:{top:'top',layer:'layer',layer2:'second-layer'}},all),restored=c.cleanOutfitBoard(JSON.parse(JSON.stringify(b)),all);assert.equal(restored.layerCount,2);assert.equal(restored.slots.layer2,'second-layer');assert.ok(c.boardPalette(restored,all).includes('blue'));assert.equal(closet.length,7);});
+test('legacy single layers migrate and extra slots reject duplicate or incompatible clothing',()=>{assert.equal(c.cleanOutfitBoard({slots:{layer:'layer'}},closet).layerCount,1);assert.equal(c.cleanOutfitBoard({},closet).layerCount,0);assert.equal(c.cleanOutfitBoard({slots:{layer:'layer',layer2:'layer'}},closet).slots.layer2,undefined);assert.equal(c.cleanOutfitBoard({slots:{layer2:'top'}},closet).slots.layer2,undefined);});
