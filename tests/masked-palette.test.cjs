@@ -31,3 +31,28 @@ test('unusable masks do not produce invented colors',()=>{
  const data=sample(20,20,()=>[0,0,0,0]);
  assert.equal(maskedPalette(data,20,20),null);
 });
+
+test('white garment is not confused with removed white background',()=>{
+ const data=sample(32,32,(x,y)=>x>=6&&x<26&&y>=4&&y<28?[245,245,245,255]:[255,255,255,0]);
+ const result=maskedPalette(data,32,32);
+ assert.equal(result.primary,'White');
+ assert.equal(result.needsConfirmation,false);
+ assert.ok(result.coverage<.5);
+});
+test('balanced red and blue garments require confirmation instead of a guessed dominant color',()=>{
+ const data=sample(32,32,(x,y)=>x<16?[225,30,30,255]:[20,80,220,255]);
+ const result=maskedPalette(data,32,32);
+ assert.equal(result.needsConfirmation,true);
+ assert.ok(result.secondary);
+});
+test('dim blue remains blue when mask contains enough valid pixels',()=>{
+ const data=sample(32,32,(x,y)=>x<25?[14,45,125,255]:[255,255,255,0]);
+ const result=maskedPalette(data,32,32);
+ assert.equal(result.primary,'Blue');
+ assert.equal(result.needsConfirmation,false);
+});
+test('tiny garment masks are withheld from automatic indexing',()=>{
+ const data=sample(32,32,(x,y)=>x<5&&y<5?[225,30,30,255]:[255,255,255,0]);
+ const result=maskedPalette(data,32,32);
+ assert.equal(result,null);
+});
