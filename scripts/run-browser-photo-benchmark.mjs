@@ -22,6 +22,12 @@ try{
  catch(e){console.error('Runner status:',await page.locator('#status').innerText());throw e;}
  const downloadPromise=page.waitForEvent('download');await page.locator('#download').click();const download=await downloadPromise;
  await mkdir(outputDir,{recursive:true});await download.saveAs(join(outputDir,'results.json'));
- const result=JSON.parse(await readFile(join(outputDir,'results.json'),'utf8'));const errors=result.filter(x=>x.error);const reasons=Object.fromEntries([...new Set(result.map(x=>x.reason|| (x.error?'runtime_error':'accepted')))].map(reason=>[reason,result.filter(x=>(x.reason||(x.error?'runtime_error':'accepted'))===reason).length]));console.log('Rejection reasons:',JSON.stringify(reasons));console.log('Actual browser inference results:',result.length,'errors:',errors.length);console.log('Error examples:',JSON.stringify(errors.slice(0,8)));await writeFile(join(outputDir,'run-summary.json'),JSON.stringify({count:result.length,errors:errors.length,reasons,errorExamples:errors.slice(0,8)},null,2));
+ const result=JSON.parse(await readFile(join(outputDir,'results.json'),'utf8'));
+ const frameCases=result.filter(x=>['commons-0045','commons-0070'].includes(x.id)).map(x=>({
+  id:x.id,original:x.prediction,reason:x.reason,
+  variants:x.framingComparison?.map(v=>({size:v.contentSize,top:v.top?.slice(0,3)}))||null
+ }));
+ if(frameCases.length)console.log('FRAMING_MODEL_COMPARISON '+JSON.stringify(frameCases));
+const errors=result.filter(x=>x.error);const reasons=Object.fromEntries([...new Set(result.map(x=>x.reason|| (x.error?'runtime_error':'accepted')))].map(reason=>[reason,result.filter(x=>(x.reason||(x.error?'runtime_error':'accepted'))===reason).length]));console.log('Rejection reasons:',JSON.stringify(reasons));console.log('Actual browser inference results:',result.length,'errors:',errors.length);console.log('Error examples:',JSON.stringify(errors.slice(0,8)));await writeFile(join(outputDir,'run-summary.json'),JSON.stringify({count:result.length,errors:errors.length,reasons,errorExamples:errors.slice(0,8)},null,2));
  if(errors.length)process.exitCode=1;
 }finally{await browser?.close();await new Promise(r=>server.close(r));}
