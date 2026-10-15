@@ -78,3 +78,22 @@ test('dress subtype disagreement can retain only the category with no identifica
  const close=[[type('Sweater dress',.9),type('Casual dress',.05)],[cat('Dresses',.97),cat('Tops',.03)],[type('Sweater dress',.9),type('Casual dress',.05),type('Tunic',.05)]];let callbacks=0;
  const r=await recognizeGarment(async()=>primary.shift(),{width:112,height:200},{confirmationModel:async()=>close.shift(),onIdentified:()=>callbacks++});assert.equal(r.strong,false);assert.equal(r.categoryConfirmed,true);assert.equal(r.choices[0].itemType,'Unknown');assert.equal(callbacks,0);
 });
+
+test('ambiguous jacket-versus-blazer confirmation does not autosave a subtype',async()=>{
+ const primary=[[cat('Outerwear',.9),cat('Tops',.08)],[type('Blazer',.9),type('Jacket',.05)],[type('Blazer',.9),type('Jacket',.05)]];
+ let identified=0;
+ const r=await recognizeGarment(async()=>primary.shift(),{width:112,height:200},{
+  confirmationModel:async()=>[type('Blazer',.62),type('Jacket',.42)],
+  onIdentified:()=>identified++
+ });
+ assert.equal(r.strong,false);
+ assert.equal(r.reason,'outerwear_subtype_uncertain');
+ assert.equal(identified,0);
+});
+test('clear independent jacket evidence still allows automatic identification',async()=>{
+ const h=setup([[cat('Outerwear'),cat('Tops',.05)],[type('Jacket'),type('Blazer',.05)],[type('Jacket'),type('Blazer',.05)],[type('Jacket'),type('Blazer',.05)]]);
+ const r=await h.scan();
+ assert.equal(r.strong,true);
+ assert.equal(r.choices[0].itemType,'Jacket');
+ assert.equal(h.identified.length,1);
+});
