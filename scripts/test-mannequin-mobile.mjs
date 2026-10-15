@@ -22,8 +22,27 @@ try{
   });
   if(result.pieces!==4||!result.dialogOpen)throw Error(label+': missing garment or dialog');
   await page.screenshot({path:resolve(shots,label+'-detail.png')});
+  const cardBox=await page.locator('#figure').boundingBox();
+  if(!cardBox||cardBox.x<0||cardBox.x+cardBox.width>width+1)throw Error(label+': card overflows viewport '+JSON.stringify(cardBox));
   const box=await page.locator('#detail').boundingBox();
   if(!box||box.x<0||box.x+box.width>width+1)throw Error(label+': figure overflows viewport '+JSON.stringify(box));
+  const variants=await page.evaluate(()=>{
+   const svg=(color)=>'data:image/svg+xml;charset=utf-8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="120" height="240"><rect width="120" height="240" fill="'+color+'"/></svg>');
+   const cases=[
+    {name:'dress',items:[{id:'dress',category:'Dresses',itemType:'Dress',image:svg('#e95')},{id:'trousers',category:'Bottoms',itemType:'Trousers',image:svg('#369')}],slots:{top:'dress',bottom:'trousers'},expected:1},
+    {name:'skirt',items:[{id:'skirt',category:'Bottoms',itemType:'Skirt',image:svg('#e95')}],slots:{bottom:'skirt'},expected:1},
+    {name:'broken-image',items:[{id:'broken',category:'Tops',itemType:'Shirt',image:'data:image/png;base64,not-an-image'}],slots:{top:'broken'},expected:1}
+   ];
+   return cases.map(test=>{
+    OutfitFigure.render(document.querySelector('#detail'),{slots:test.slots},test.items,{size:'detail'});
+    return {name:test.name,expected:test.expected,actual:document.querySelectorAll('#detail .outfit-mannequin-garment').length,bottom:document.querySelector('#detail .outfit-mannequin-bottom')!==null};
+   });
+  });
+  for(const variant of variants){if(variant.actual!==variant.expected)throw Error(label+': '+variant.name+' expected '+variant.expected+' garments, found '+variant.actual);if(variant.name==='dress'&&variant.bottom)throw Error(label+': dress conflicts with trousers');}
+  await page.waitForTimeout(100);
+  const failure=await page.locator('#detail .outfit-mannequin-fallback').evaluate(el=>({visible:!el.hidden,text:el.textContent}));
+  if(!failure.visible||failure.text!=='Shirt')throw Error(label+': broken image fallback unavailable '+JSON.stringify(failure));
+  await page.screenshot({path:resolve(shots,label+'-broken-image.png')});
   await page.locator('#close').click();
   if(await page.locator('dialog').evaluate(el=>el.open))throw Error(label+': detail failed to close');
   await page.close();
