@@ -94,13 +94,20 @@ try{
   ['commons-0079','Shoes'],['commons-0094','Shoes']
  ];
  const realResults=[];
- for(const [id,expected] of realCases){
-  const before=await page.evaluate(()=>new Set(items.map(x=>x.id)).size);
-  await page.locator('#clothingPhotos').setInputFiles(resolve('benchmark/photos/'+id+'.jpg'));
-  await page.waitForFunction(n=>items.length>n&&localPending.size===0&&!automaticRunning,before,{timeout:300000});
-  const observed=await page.evaluate(()=>{const x=items.at(-1);return {category:x.category,itemType:x.itemType,color:x.color||null,needsReview:!!x.needsReview,scanFailed:!!x.scanFailed};});
-  realResults.push({id,expected,...observed,correctCategory:observed.category===expected});
+ // Import as one user batch, rather than repeatedly selecting a hidden file input
+ // while automatic recognition is running. Wait for imported IDs, not a global idle flag.
+ const initialIds=await page.evaluate(()=>items.map(x=>x.id));
+ await page.locator('#clothingPhotos').setInputFiles(realCases.map(([id])=>resolve('benchmark/photos/'+id+'.jpg')));
+ try{
+  await page.waitForFunction(({ids,count})=>items.filter(x=>!ids.includes(x.id)).length>=count,{ids:initialIds,count:realCases.length},{timeout:90000});
+ }catch(error){
+  const diagnostics=await page.evaluate(ids=>({items:items.length,newItems:items.filter(x=>!ids.includes(x.id)).map(x=>({category:x.category,itemType:x.itemType,scanFailed:x.scanFailed})),busy,localPending:localPending.size,automaticRunning,message:document.querySelector('#message')?.textContent||null}),initialIds);
+  await writeFile(out+'/real-photo-import-diagnostics.json',JSON.stringify({diagnostics,pageErrors:errors},null,2));
+  throw new Error('Real photo import did not produce eight distinct items: '+JSON.stringify(diagnostics),{cause:error});
  }
+ await page.waitForFunction(ids=>items.filter(x=>!ids.includes(x.id)).every(x=>!localPending.has(x.id)),initialIds,{timeout:90000});
+ const imported=await page.evaluate(ids=>items.filter(x=>!ids.includes(x.id)).map(x=>({category:x.category,itemType:x.itemType,color:x.color||null,needsReview:!!x.needsReview,scanFailed:!!x.scanFailed})),initialIds);
+ for(let i=0;i<realCases.length;i++){const [id,expected]=realCases[i],observed=imported[i];realResults.push({id,expected,...observed,correctCategory:observed.category===expected});}
  await writeFile(out+'/real-photo-indexing.json',JSON.stringify({cases:realResults,categoryAccuracy:realResults.filter(x=>x.correctCategory).length/realResults.length},null,2));
  assert.deepEqual(errors,[]);await page.screenshot({path:out+'/closet.png',fullPage:true});
  const result={viewport:{width:390,height:844},camera,image,manualSave:true,searchAndFilters:true,reloadPersistence:true,automaticPhotoIndexing:true,realRecognitionWorker:true,auth:'test identity stub; production auth not tested',hardware:'Chromium fake camera; physical phone not tested',pageErrors:errors};await writeFile(out+'/results.json',JSON.stringify(result,null,2));console.log(JSON.stringify(result));
