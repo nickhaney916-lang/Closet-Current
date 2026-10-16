@@ -26,7 +26,7 @@ try{
  await page.locator('#resume').setInputFiles({name:'wrong.mask.draft.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify({...draft,image:'other.png'}))});
  await page.locator('#status').getByText(/mismatch/).waitFor();
  assert.equal(await page.locator('#download').isDisabled(),false);
- const seed={image:'review-case.png',width:40,height:30,runs:[0,200,1000],model:'test-model'};
+ const seed={image:'review-case.png',width:40,height:30,runs:[200,200,800],model:'test-model'};
  await page.locator('#prediction').setInputFiles({name:'prediction.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(seed))});
  await page.locator('#status').getByText(/AI starting mask loaded/).waitFor();
  const seededDownload=page.waitForEvent('download');
