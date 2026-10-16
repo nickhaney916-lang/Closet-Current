@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {cropClothingPhotoPixels,isolateClothingPixels,clothingCropBounds,conservativeEdgeMask,connectedEdgeMask,adaptiveEdgeMask} from '../public/outfit-segmentation.mjs';
+import {cropClothingPhotoPixels,isolateClothingPixels,clothingCropBounds,conservativeEdgeMask,connectedEdgeMask,adaptiveEdgeMask,discriminativeEdgeMask} from '../public/outfit-segmentation.mjs';
 
 function fixture(){
  const width=96,height=96,channels=3,data=new Uint8ClampedArray(width*height*channels);
@@ -186,4 +186,32 @@ test('adaptive recovery limits mask growth across textured backgrounds and multi
   results.push({case:item.name,initial,unrestricted,limited,acceptedSteps:adaptive.acceptedSteps,addedPixels:adaptive.addedPixels,budget:adaptive.budget});
  }
  console.log('ADAPTIVE_EDGE_BENCHMARK '+JSON.stringify(results));
+});
+
+test('discriminative mask compares garment recall and background leakage in varied scenes',()=>{
+ const cases=[
+  {name:'strap',rects:[[34,5,38,25],[24,25,72,79]],bg:'plain'},
+  {name:'shoe textured',rects:[[18,40,75,62],[12,62,83,67]],bg:'textured'},
+  {name:'multicolor dress',rects:[[36,8,60,65],[19,65,77,87]],bg:'plain',multicolor:true},
+  {name:'sleeve similar background',rects:[[12,30,84,62],[8,42,88,51]],bg:'similar'}
+ ];
+ const result=[];
+ for(const entry of cases){
+  const w=96,h=96,truth=new Uint8Array(w*h),data=new Uint8ClampedArray(w*h*3);
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+   const k=(y*w+x)*3,n=entry.bg==='textured'?(x*7+y*11)%45:0;
+   data[k]=entry.bg==='similar'?83:200+n;data[k+1]=entry.bg==='similar'?112:195+n;data[k+2]=entry.bg==='similar'?145:190+n;
+  }
+  for(const [x0,y0,x1,y1] of entry.rects)for(let y=y0;y<y1;y++)for(let x=x0;x<x1;x++){
+   const i=y*w+x,k=3*i;truth[i]=1;const alt=entry.multicolor&&(x+y)%8<4;
+   data[k]=alt?95:40;data[k+1]=alt?125:70;data[k+2]=alt?170:110;
+  }
+  const selected=new Uint8Array(24*24);for(let y=7;y<19;y++)for(let x=7;x<17;x++)selected[y*24+x]=1;
+  const image={width:w,height:h,channels:3,data},map={width:24,height:24},group={selected,id:4};
+  const candidate=discriminativeEdgeMask(image,map,group);
+  const score=(mask)=>{let tp=0,p=0,fp=0;for(let i=0;i<truth.length;i++){const x=i%w,y=Math.floor(i/w),kept=!!mask[Math.floor(y/4)*24+Math.floor(x/4)];if(truth[i]){p++;if(kept)tp++;}else if(kept)fp++;}return {recall:Number((tp/p).toFixed(4)),backgroundPixels:fp};};
+  assert.ok(candidate.addedPixels<=candidate.budget);
+  result.push({name:entry.name,original:score(selected),candidate:score(candidate.selected),acceptedSteps:candidate.acceptedSteps});
+ }
+ console.log('DISCRIMINATIVE_EDGE_COMPARISON '+JSON.stringify(result));
 });
