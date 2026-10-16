@@ -19,6 +19,7 @@ try{
  const fs=await import('node:fs/promises');
  const draft=JSON.parse(await fs.readFile(await download.path(),'utf8'));
  assert.equal(draft.reviewStatus,'draft');
+ assert.match(draft.sourceSha256,/^[a-f0-9]{64}$/);
  assert.equal(draft.width,40);assert.equal(draft.height,30);
  assert.ok(draft.runs.length>1);
  await page.locator('#resume').setInputFiles({name:'review-case.mask.draft.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(draft))});
@@ -26,7 +27,7 @@ try{
  await page.locator('#resume').setInputFiles({name:'wrong.mask.draft.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify({...draft,image:'other.png'}))});
  await page.locator('#status').getByText(/mismatch/).waitFor();
  assert.equal(await page.locator('#download').isDisabled(),false);
- const seed={image:'review-case.png',width:40,height:30,runs:[200,200,800],model:'test-model'};
+ const seed={image:'review-case.png',sourceSha256:draft.sourceSha256,width:40,height:30,runs:[200,200,800],model:'test-model'};
  await page.locator('#prediction').setInputFiles({name:'prediction.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(seed))});
  await page.locator('#status').getByText(/AI starting mask loaded/).waitFor();
  // AI suggestions must be manually corrected before export.
