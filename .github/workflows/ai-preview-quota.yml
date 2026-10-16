@@ -7,6 +7,7 @@ on:
       - 'workers/ai-preview-quota/**'
       - 'config/closet-current-ai-staging.wrangler.example.json'
       - '.github/workflows/cloudflare-pages.yml'
+      - '.github/workflows/deploy-ai-staging.yml'
       - 'functions/api/ai-outfit-preview.js'
       - 'tests/ai-preview-*.test.mjs'
       - '.github/workflows/ai-preview-quota.yml'
