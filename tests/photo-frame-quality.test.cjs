@@ -12,8 +12,8 @@ function assess(value){
  vm.createContext(sandbox);vm.runInContext(qualityCode,sandbox);
  return sandbox.cameraFrameQuality();
 }
-test('nearly black frame is rejected',()=>assert.equal(assess(3).usable,false));
-test('plain white garment frame remains accepted',()=>assert.equal(assess(240).usable,true));
+test('nearly black frame is rejected',()=>{assert.equal(assess(3).usable,false);assert.equal(assess(3).reason,'very-dark-frame');});
+test('plain white garment frame remains accepted',()=>{assert.equal(assess(240).usable,true);assert.equal(assess(240).reason,null);});
 test('medium-gray low-texture garment remains accepted',()=>assert.equal(assess(100).usable,true));
 test('quality check does not reject when browser sampling is unavailable',()=>{
  const sandbox={video:{readyState:2,videoWidth:1920,videoHeight:1080},Math};
