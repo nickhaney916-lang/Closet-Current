@@ -153,6 +153,7 @@ for(const c of categories){const o=node('option',c);$('filter').append(o);}$('se
 function pixels(){const ctx=tiny.getContext('2d',{willReadFrequently:true});ctx.drawImage(video,0,0,32,32);return ctx.getImageData(0,0,32,32).data.slice();}
 function difference(a,b){if(!a||!b)return 255;let total=0;for(let i=0;i<a.length;i+=4)total+=Math.abs(a[i]-b[i])+Math.abs(a[i+1]-b[i+1])+Math.abs(a[i+2]-b[i+2]);return total/(a.length/4*3);}
 function cameraFrameQuality(){
+ if(typeof document==='undefined')return {usable:true};
  // A low-information frame may be a plain garment, not an out-of-focus photo.
  // Only the combination of very low contrast and very low edge variation is flagged.
  if(video.readyState<2||video.videoWidth<320||video.videoHeight<240)return {usable:false,reason:'resolution'};
