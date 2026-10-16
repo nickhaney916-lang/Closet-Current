@@ -4,11 +4,11 @@
 <style>body{font:16px system-ui;max-width:920px;margin:auto;padding:16px;background:#f8f7fb;color:#231e2d}button,select,input{font:inherit;padding:10px;margin:4px}canvas{width:100%;max-width:720px;touch-action:none;background:#ddd}#status{white-space:pre-wrap} .controls{display:flex;flex-wrap:wrap;gap:8px}</style>
 <h1>Reference garment outline review</h1>
 <p>Internal benchmark tool, not part of the Closet Current customer interface. Load a verified source photo, paint the clothing foreground, and export a reference mask for independent review. Never assume the initial blank mask is complete.</p>
-<div class="controls"><input id="photo" type="file" accept="image/*"><select id="mode"><option value="1">Mark garment</option><option value="0">Erase / background</option></select><label>Brush radius <input type="range" id="radius" min="1" max="30" value="7"></label><button id="download" disabled>Export annotation JSON</button></div>
+<div class="controls"><input id="photo" type="file" accept="image/*"><label>Resume previous draft <input id="resume" type="file" accept=".json,application/json"></label><select id="mode"><option value="1">Mark garment</option><option value="0">Erase / background</option></select><label>Brush radius <input type="range" id="radius" min="1" max="30" value="7"></label><button id="download" disabled>Export annotation JSON</button></div>
 <canvas id="canvas" width="256" height="256" aria-label="Image and reference mask editor"></canvas><p id="status" role="status">Choose a source image. Paint all of the garment before export.</p>
 <script>
 'use strict';
-const photo=document.querySelector('#photo'),canvas=document.querySelector('#canvas'),ctx=canvas.getContext('2d'),status=document.querySelector('#status'),download=document.querySelector('#download'),mode=document.querySelector('#mode'),radius=document.querySelector('#radius');
+const resume=document.querySelector('#resume'),photo=document.querySelector('#photo'),canvas=document.querySelector('#canvas'),ctx=canvas.getContext('2d'),status=document.querySelector('#status'),download=document.querySelector('#download'),mode=document.querySelector('#mode'),radius=document.querySelector('#radius');
 let source=null,mask=null,painting=false,strokes=0;
 photo.onchange=async()=>{
  const file=photo.files[0];if(!file)return;
@@ -20,6 +20,20 @@ photo.onchange=async()=>{
   const base=document.createElement('canvas');base.width=canvas.width;base.height=canvas.height;base.getContext('2d').drawImage(image,0,0,base.width,base.height);
   source={fileName:file.name,base};mask=new Uint8Array(canvas.width*canvas.height);strokes=0;download.disabled=true;redraw();status.textContent='Paint garment outline carefully; initial mask is blank.';
  }catch{status.textContent='Unable to decode image';}finally{URL.revokeObjectURL(url);}
+};
+resume.onchange=async()=>{
+ if(!source||!mask){status.textContent='Load the matching original photograph first.';return;}
+ const file=resume.files?.[0];if(!file)return;
+ try {
+  if(file.size>16000000)throw Error('Draft too large');
+  const draft=JSON.parse(await file.text()),n=canvas.width*canvas.height;
+  if(draft.schemaVersion!==1||draft.reviewStatus!=='draft'||draft.image!==source.fileName||draft.width!==canvas.width||draft.height!==canvas.height||!Array.isArray(draft.runs)||draft.runs.length>n)throw Error('Draft image or dimensions mismatch');
+  const restored=new Uint8Array(n);let offset=0,foreground=false;
+  for(const count of draft.runs){if(!Number.isInteger(count)||count<0||offset+count>n)throw Error('Invalid run encoding');if(foreground)restored.fill(1,offset,offset+count);offset+=count;foreground=!foreground;}
+  if(offset!==n)throw Error('Incomplete mask');
+  mask=restored;strokes=0;download.disabled=!mask.some(Boolean);redraw();
+  status.textContent='Draft restored for editing. Independent review is still required.';
+ }catch(e){status.textContent='Could not restore draft: '+e.message;}
 };
 function redraw(){
  if(!source)return;ctx.drawImage(source.base,0,0);
