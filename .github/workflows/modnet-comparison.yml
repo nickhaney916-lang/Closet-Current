@@ -16,6 +16,7 @@ on:
       - 'scripts/build-soft-edge-comparison.mjs'
       - 'scripts/build-boundary-defect-review.mjs'
       - 'scripts/build-selective-boundary-proposal.mjs'
+      - 'scripts/build-post-cleanup-check.mjs'
       - 'scripts/footwear-edge-contrast.mjs'
       - 'tests/footwear-shadow-candidates.test.mjs'
       - 'tests/compare-garment-models.test.mjs'
@@ -145,6 +146,18 @@ jobs:
         with:
           name: experimental-six-garment-selective-boundary-candidates
           path: benchmark/selective-boundary-proposals/
+          retention-days: 14
+      - name: Post-check residual boundaries and matte blending
+        run: node scripts/build-post-cleanup-check.mjs benchmark/post-cleanup-check
+      - name: Verify six post-check images
+        run: |
+          for id in commons-0035 commons-0049 commons-0053 commons-0065 commons-0079 commons-0094; do
+            test -s "benchmark/post-cleanup-check/$id-postcheck.png"
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: experimental-six-garment-post-cleanup-check
+          path: benchmark/post-cleanup-check/
           retention-days: 14
       - name: Prepare six-photo human review pack
         run: node scripts/build-segmentation-review-pack.mjs
