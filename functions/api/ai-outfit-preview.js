@@ -37,7 +37,16 @@ export async function reservePreviewQuota(env,userId){
  const response=await stub.fetch('https://quota.internal/reserve',{method:'POST',headers:{'content-type':'application/json'},body:'{}'});
  if(!response.ok)throw Error('Secure quota service unavailable.');
  const result=await response.json();
- if(typeof result?.allowed!=='boolean'||!Number.isInteger(result.remaining))throw Error('Invalid quota response.');
+ if(typeof result?.allowed!=='boolean'||!Number.isInteger(result.remaining)||result.allowed&&typeof result.reservationId!=='string')throw Error('Invalid quota response.');
+ return result;
+}
+export async function finalizePreviewQuota(env,userId,reservationId,{refund=false}={}){
+ if(!env?.AI_PREVIEW_QUOTAS||typeof userId!=='string'||!userId||typeof reservationId!=='string')throw Error('Secure quota storage not configured.');
+ const id=env.AI_PREVIEW_QUOTAS.idFromName('user:'+userId),stub=env.AI_PREVIEW_QUOTAS.get(id);
+ const response=await stub.fetch('https://quota.internal/'+(refund?'refund':'commit'),{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({reservationId})});
+ if(!response.ok)throw Error('Secure quota service unavailable.');
+ const result=await response.json();
+ if(typeof result?.ok!=='boolean')throw Error('Invalid quota response.');
  return result;
 }
 export async function onRequestPost({request,env}){
