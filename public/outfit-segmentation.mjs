@@ -66,6 +66,32 @@ export function cropClothingPhotoPixels(image,map,group){
  }
  return {data,width,height,channels:3,bounds};
 }
+// Experimental edge recovery for comparison only. Never alter recognition masks.
+// Candidate pixels must be near the original region AND match its sampled fabric
+// color; this cannot reliably recover arbitrary multicolor garments.
+export function conservativeEdgeMask(image,map,group,{maxColorDistance=35}={}){
+ const {width,height}=map,{selected}=group;
+ if(selected.length!==width*height||!Number.isFinite(maxColorDistance)||maxColorDistance<0)throw Error('Invalid conservative mask');
+ const output=new Uint8Array(selected);
+ const samples=[0,0,0];let n=0;
+ const sx=image.width/width,sy=image.height/height;
+ const color=(x,y)=>{const px=Math.min(image.width-1,Math.floor((x+.5)*sx)),py=Math.min(image.height-1,Math.floor((y+.5)*sy)),i=(py*image.width+px)*image.channels;return [image.data[i],image.data[i+1],image.data[i+2]];};
+ for(let y=0;y<height;y++)for(let x=0;x<width;x++)if(selected[y*width+x]){
+  const rgb=color(x,y);for(let c=0;c<3;c++)samples[c]+=rgb[c];n++;
+ }
+ if(!n)return output;
+ for(let c=0;c<3;c++)samples[c]/=n;
+ for(let y=0;y<height;y++)for(let x=0;x<width;x++){
+  const i=y*width+x;if(selected[i])continue;
+  const nearby=(x>0&&selected[i-1])||(x<width-1&&selected[i+1])||(y>0&&selected[i-width])||(y<height-1&&selected[i+width]);
+  if(!nearby)continue;
+  // Reject pixels assigned to another known garment.
+  if(map.labels&&map.labels[i]&&map.labels[i]!==group.id)continue;
+  const rgb=color(x,y),dist=Math.hypot(rgb[0]-samples[0],rgb[1]-samples[1],rgb[2]-samples[2]);
+  if(dist<=maxColorDistance)output[i]=1;
+ }
+ return output;
+}
 export function isolateClothingPixels(image,map,group){
  const {left,top,width,height}=clothingCropBounds(image,map,group),scaleX=image.width/map.width,scaleY=image.height/map.height;
  const data=new Uint8ClampedArray(width*height*3);data.fill(255);
