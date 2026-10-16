@@ -16,3 +16,7 @@ export class AIPreviewQuota {
   return Response.json(result,{headers:{'cache-control':'no-store'}});
  }
 }
+
+// Public requests to this Worker never reserve quota; only authenticated Pages
+// Functions may access the Durable Object namespace via an account binding.
+export default {fetch(){return new Response('Not found',{status:404});}};
