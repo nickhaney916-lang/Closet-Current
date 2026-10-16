@@ -5,6 +5,8 @@ on:
     branches: [main]
     paths:
       - 'scripts/run-modnet-comparison.mjs'
+      - 'scripts/build-segmentation-review-pack.mjs'
+      - 'benchmark/annotate-garment.html'
       - 'benchmark/modnet-boundary-report.mjs'
       - 'tests/modnet-boundary-report.test.mjs'
       - '.github/workflows/modnet-comparison.yml'
@@ -29,6 +31,13 @@ jobs:
         run: node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos commons-0035,commons-0049,commons-0053,commons-0065,commons-0079,commons-0094
       - name: Generate experimental MODNet masks
         run: node scripts/run-modnet-comparison.mjs benchmark/modnet-predictions
+      - name: Prepare six-photo human review pack
+        run: node scripts/build-segmentation-review-pack.mjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: segmentation-human-review-pack
+          path: benchmark/review-pack/
+          retention-days: 14
       - uses: actions/upload-artifact@v4
         if: always()
         with:
