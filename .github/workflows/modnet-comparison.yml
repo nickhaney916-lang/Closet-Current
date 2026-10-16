@@ -95,6 +95,8 @@ jobs:
         run: |
           test -s benchmark/review-pack/FOOTWEAR-OUTLINE-REVIEW.txt
           test -s benchmark/review-pack/START-FOOTWEAR-REVIEW.html
+          test -s benchmark/review-pack/OPEN-IMAGES-ON-PHONE/commons-0079-comparison.png
+          test -s benchmark/review-pack/OPEN-IMAGES-ON-PHONE/commons-0094-comparison.png
           grep -q 'commons-0079' benchmark/review-pack/START-FOOTWEAR-REVIEW.html
           grep -q 'commons-0094' benchmark/review-pack/START-FOOTWEAR-REVIEW.html
       - name: Verify one-tap mobile review screen
