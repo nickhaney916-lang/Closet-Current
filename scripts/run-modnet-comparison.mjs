@@ -4,6 +4,7 @@ import {join} from 'node:path';
 import {chromium} from 'playwright';
 import {scoreApprovedPredictionAtReferenceResolution} from '../benchmark/garment-mask-metrics.mjs';
 import {thresholdBoundaryReport} from '../benchmark/modnet-boundary-report.mjs';
+import {proposeIslandCleanup} from '../benchmark/propose-island-cleanup.mjs';
 const manifest=JSON.parse(await readFile('benchmark/segmentation-review-manifest.json','utf8'));
 const sources=JSON.parse(await readFile('benchmark/locked-photo-sources.json','utf8'));
 const directory=process.argv[2]||'benchmark/modnet-predictions';
@@ -56,13 +57,15 @@ try {
   await writeFile(join(directory,item.id+'.modnet-strict-overlay.png'),Buffer.from(strictOverlayPng,'base64'));
   await writeFile(join(directory,item.id+'.modnet-overlay.png'),Buffer.from(overlayPng,'base64'));
   await writeFile(join(directory,item.id+'.modnet-prediction.json'),JSON.stringify(prediction));
+  const cleanup=proposeIslandCleanup(prediction);
+  const cleanupSummary={removedPixels:cleanup.removedPixels,flaggedComponents:cleanup.flaggedComponents,threshold:cleanup.threshold,retainedPixels:cleanup.retainedPixels};
   let metrics=null,status='unscored-no-approved-reference';
   if(item.referenceMask&&item.reviewStatus==='approved'){
    const annotation=JSON.parse(await readFile(item.referenceMask,'utf8'));
    metrics=scoreApprovedPredictionAtReferenceResolution(annotation,item,prediction);
    status='scored';
   }
-  results.push({id:item.id,metrics,foregroundPixels:prediction.foregroundPixels,strictPixels:prediction.strictPixels,borderlinePixels:prediction.borderlinePixels,boundary:prediction.boundary,status});
+  results.push({id:item.id,metrics,cleanupProposal:cleanupSummary,foregroundPixels:prediction.foregroundPixels,strictPixels:prediction.strictPixels,borderlinePixels:prediction.borderlinePixels,boundary:prediction.boundary,status});
   console.log('MODNET_CASE '+JSON.stringify(results.at(-1)));
  }
 }finally{await browser.close();}
