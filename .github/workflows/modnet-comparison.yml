@@ -13,6 +13,7 @@ on:
       - 'tests/lower-footwear-disagreement.test.mjs tests/validate-visual-feedback.test.mjs'
       - 'scripts/build-footwear-shadow-overlay.mjs'
       - 'scripts/build-footwear-shadow-before-after.mjs'
+      - 'scripts/build-soft-edge-comparison.mjs'
       - 'scripts/footwear-edge-contrast.mjs'
       - 'tests/footwear-shadow-candidates.test.mjs'
       - 'tests/compare-garment-models.test.mjs'
@@ -106,6 +107,18 @@ jobs:
         with:
           name: experimental-footwear-edge-contrast
           path: benchmark/footwear-edge-contrast/
+          retention-days: 14
+      - name: Generate six-garment conservative soft-edge comparisons
+        run: node scripts/build-soft-edge-comparison.mjs benchmark/soft-edge-comparison
+      - name: Verify all six soft edge comparison PNGs
+        run: |
+          for id in commons-0035 commons-0049 commons-0053 commons-0065 commons-0079 commons-0094; do
+            test -s "benchmark/soft-edge-comparison/$id-hard-vs-soft.png"
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: experimental-six-garment-soft-edge-comparisons
+          path: benchmark/soft-edge-comparison/
           retention-days: 14
       - name: Prepare six-photo human review pack
         run: node scripts/build-segmentation-review-pack.mjs
