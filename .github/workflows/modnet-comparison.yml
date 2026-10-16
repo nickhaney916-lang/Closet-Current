@@ -7,6 +7,7 @@ on:
       - 'scripts/run-modnet-comparison.mjs'
       - 'scripts/compare-garment-models.mjs'
       - 'scripts/build-three-way-visual.mjs'
+      - 'scripts/build-footwear-disagreement-visual.mjs'
       - 'tests/compare-garment-models.test.mjs'
       - 'scripts/build-segmentation-review-pack.mjs'
       - 'scripts/test-mobile-garment-review.mjs'
@@ -48,6 +49,13 @@ jobs:
         run: node scripts/compare-garment-models.mjs benchmark/segmentation-predictions benchmark/modnet-predictions benchmark/model-disagreements
       - name: Build three-way visual comparison for jacket and footwear
         run: node scripts/build-three-way-visual.mjs benchmark/model-visual-comparison
+      - name: Build footwear-only disagreement visualizations
+        run: node scripts/build-footwear-disagreement-visual.mjs benchmark/footwear-disagreement-visuals
+      - uses: actions/upload-artifact@v4
+        with:
+          name: experimental-footwear-disagreement-visuals
+          path: benchmark/footwear-disagreement-visuals/
+          retention-days: 14
       - uses: actions/upload-artifact@v4
         with:
           name: experimental-three-way-visuals
