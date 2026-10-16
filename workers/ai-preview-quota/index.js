@@ -4,8 +4,8 @@ export class AIPreviewQuota {
  constructor(state){this.state=state;}
  async fetch(request){
   if(request.method!=='POST')return new Response('Method not allowed',{status:405});
-  const {day,limit}=await request.json();
-  if(!/^\d{4}-\d{2}-\d{2}$/.test(day)||!Number.isInteger(limit)||limit<1||limit>10)return new Response('Invalid quota',{status:400});
+  // The Worker—not the caller—chooses the UTC day and daily cap.
+  const day=new Date().toISOString().slice(0,10),limit=2;
   const result=await this.state.storage.transaction(async txn=>{
    const key='day:'+day;
    const count=(await txn.get(key))||0;
