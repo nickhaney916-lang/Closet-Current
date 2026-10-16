@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {scoreGarmentMask,decodeReferenceMask,approvedReferenceMask,scoreApprovedPrediction} from '../benchmark/garment-mask-metrics.mjs';
+import {scoreGarmentMask,decodeReferenceMask,approvedReferenceMask,scoreApprovedPrediction,scoreApprovedPredictionAtReferenceResolution} from '../benchmark/garment-mask-metrics.mjs';
 
 test('a perfect annotated cutout achieves full recall, precision, and overlap',()=>{
  const reference=Uint8Array.from([0,1,1,0,0,1]);
@@ -72,4 +72,16 @@ test('approved scoring rejects mismatched image identity or mask dimensions',()=
  assert.throws(()=>scoreApprovedPrediction(approved,manifest,{...prediction,image:'shirt.jpg'}),/mismatch/);
  assert.throws(()=>scoreApprovedPrediction(approved,manifest,{...prediction,width:4,height:1}),/mismatch/);
  assert.throws(()=>scoreApprovedPrediction({...approved,reviewStatus:'draft'},manifest,prediction),/not independently approved/);
+});
+
+test('approved prediction aligns 4x4 mask to reviewed 2x2 mask using nearest-neighbor',()=>{
+ const entry={image:'dress.jpg',sourceSha256:'checked'};
+ const approved={schemaVersion:1,reviewStatus:'approved',image:'dress.jpg',sourceSha256:'checked',reviewer:'A',approvedBy:'B',width:2,height:2,runs:[1,2,1]};
+ const prediction={image:'dress.jpg',sourceSha256:'checked',width:4,height:4,runs:[2,2,2,2,2,2,2,2]};
+ const score=scoreApprovedPredictionAtReferenceResolution(approved,entry,prediction);
+ assert.equal(score.referenceWidth,2);
+ assert.equal(score.predictionWidth,4);
+ assert.equal(score.alignment,'nearest-neighbor at reference resolution');
+ assert.throws(()=>scoreApprovedPredictionAtReferenceResolution(approved,entry,{...prediction,height:3}),/aspect ratios/);
+ assert.throws(()=>scoreApprovedPredictionAtReferenceResolution({...approved,reviewStatus:'draft'},entry,prediction),/not independently approved/);
 });
