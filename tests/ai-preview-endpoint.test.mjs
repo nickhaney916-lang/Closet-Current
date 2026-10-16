@@ -39,8 +39,8 @@ test('quota reservations fail closed without bound durable storage',async()=>{
 });
 test('quota reservations use verified user-specific object and enforce result shape',async()=>{
  let key,received;
- const env={AI_PREVIEW_QUOTAS:{idFromName(name){key=name;return name;},get(){return {fetch:async(url,init)=>{received=JSON.parse(init.body);return Response.json({allowed:true,remaining:1});}};}}};
- assert.deepEqual(await reservePreviewQuota(env,'user-123'),{allowed:true,remaining:1});
+ const env={AI_PREVIEW_QUOTAS:{idFromName(name){key=name;return name;},get(){return {fetch:async(url,init)=>{received=JSON.parse(init.body);return Response.json({allowed:true,remaining:1,reservationId:'abcd'});}};}}};
+ assert.deepEqual(await reservePreviewQuota(env,'user-123'),{allowed:true,remaining:1,reservationId:'abcd'});
  assert.equal(key,'user:user-123');
  assert.deepEqual(received,{});
 });
