@@ -52,7 +52,9 @@ export class AIPreviewQuota {
     await txn.put(key,{...current,status:'refunded'});
    });
   }
+  // Clear a spent alarm; otherwise Cloudflare may keep stale alarm metadata.
   if(Number.isFinite(next))await this.state.storage.setAlarm(next);
+  else await this.state.storage.deleteAlarm();
  }
 }
 export default {fetch(){return new Response('Not found',{status:404});}};
