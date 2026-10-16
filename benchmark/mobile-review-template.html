@@ -18,17 +18,17 @@
 <p><small>For precise boundary corrections, use the <a href="annotate-garment.html">advanced outline editor</a>. Your ratings are saved in a downloaded JSON file, not uploaded automatically.</small></p></main>
 <script>
 'use strict';
-const cases=__REVIEW_DATA__,views=cases.map(()=>null),issues=cases.map(()=>null);let current=0,showCutout=true,zoomed=false;
+const cases=__REVIEW_DATA__,views=cases.map(()=>null),issues=cases.map(()=>null);let current=0,showCutout=true,zoomed=false,renderVersion=0;
 const el=id=>document.getElementById(id),canvas=el('preview'),ctx=canvas.getContext('2d',{willReadFrequently:true});
 function decodeRuns(obj){const n=obj.width*obj.height,m=new Uint8Array(n);let index=0,fg=false;for(const count of obj.runs){if(!Number.isInteger(count)||count<0||index+count>n)throw Error('Invalid mask');if(fg)m.fill(1,index,index+count);index+=count;fg=!fg;}if(index!==n)throw Error('Mask length mismatch');return m;}
 async function render(){
- const item=cases[current];el('count').textContent=(current+1)+' / '+cases.length;el('garment').textContent=item.label;
+ const version=++renderVersion,item=cases[current],cutoutRequested=showCutout;el('count').textContent=(current+1)+' / '+cases.length;el('garment').textContent=item.label;
  el('image-wrap').classList.toggle('zoom',zoomed);el('inspect').setAttribute('aria-pressed',String(zoomed));el('inspect').textContent=zoomed?'Fit whole garment':'Inspect edges · 2× zoom';
  el('previous').disabled=current===0;el('next').disabled=current===cases.length-1;
  el('original').setAttribute('aria-pressed',String(!showCutout));el('cutout').setAttribute('aria-pressed',String(showCutout));
- const img=new Image();img.src=item.photo;await img.decode();if(item!==cases[current])return;
+ const img=new Image();img.src=item.photo;await img.decode();if(version!==renderVersion)return;
  canvas.width=img.naturalWidth;canvas.height=img.naturalHeight;ctx.clearRect(0,0,canvas.width,canvas.height);ctx.drawImage(img,0,0);
- if(showCutout){
+ if(cutoutRequested){
   const mask=decodeRuns(item.prediction),image=ctx.getImageData(0,0,canvas.width,canvas.height);
   if(mask.length!==canvas.width*canvas.height)throw Error('Photo and prediction dimensions mismatch');
   for(let i=0;i<mask.length;i++)image.data[i*4+3]=mask[i]?255:0;
