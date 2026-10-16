@@ -28,6 +28,18 @@ export async function verifyClosetSession(request,{fetcher=fetch}={}){
   return typeof user?.id==='string'&&user.id.length>0?{id:user.id}:null;
  }catch{return null;}finally{clearTimeout(timer);}
 }
+// Reservation must be serialized in a Durable Object keyed by verified account ID.
+// Do not call until consent, payload validation and the actual provider are ready.
+export async function reservePreviewQuota(env,userId,{day=new Date().toISOString().slice(0,10),limit=2}={}){
+ if(!env?.AI_PREVIEW_QUOTAS||typeof userId!=='string'||!userId)throw Error('Secure quota storage not configured.');
+ const id=env.AI_PREVIEW_QUOTAS.idFromName('user:'+userId);
+ const stub=env.AI_PREVIEW_QUOTAS.get(id);
+ const response=await stub.fetch('https://quota.internal/reserve',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({day,limit})});
+ if(!response.ok)throw Error('Secure quota service unavailable.');
+ const result=await response.json();
+ if(typeof result?.allowed!=='boolean'||!Number.isInteger(result.remaining))throw Error('Invalid quota response.');
+ return result;
+}
 export async function onRequestPost({request,env}){
  if(env?.AI_PREVIEW_ENABLED!=='true')return json({error:'AI_PREVIEW_NOT_ENABLED',message:'Realistic AI previews are not available yet.'},503);
  const user=await verifyClosetSession(request);
