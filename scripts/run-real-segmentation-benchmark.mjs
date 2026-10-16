@@ -3,7 +3,7 @@ import {createHash} from 'node:crypto';
 import {resolve,join} from 'node:path';
 import {chromium} from 'playwright';
 import {createServer} from 'node:http';
-import {approvedReferenceMask,scoreApprovedPrediction} from '../benchmark/garment-mask-metrics.mjs';
+import {approvedReferenceMask,scoreApprovedPredictionAtReferenceResolution} from '../benchmark/garment-mask-metrics.mjs';
 import {maskComponents} from '../benchmark/mask-components.mjs';
 const manifest=JSON.parse(await readFile('benchmark/segmentation-review-manifest.json','utf8'));
 const sources=JSON.parse(await readFile('benchmark/locked-photo-sources.json','utf8'));
@@ -57,9 +57,9 @@ try{
   let status='awaiting-human-reference',metrics=null;
   if(entry.referenceMask&&entry.reviewStatus==='approved'){
    const annotation=JSON.parse(await readFile(entry.referenceMask,'utf8'));
-   // Scoring requires equal dimensions; never silently rescale a reference.
+   // Align predictions to an independently approved reference with nearest-neighbor sampling.
    approvedReferenceMask(annotation,entry);
-   metrics=scoreApprovedPrediction(annotation,entry,predicted);status='scored';
+   metrics=scoreApprovedPredictionAtReferenceResolution(annotation,entry,maskPrediction);status='scored';
   }
   report.push({id:entry.id,status,foregroundPixels:predicted.foregroundPixels,personDetected:predicted.personDetected,fragments,metrics});
   console.log('SEGMENTATION_CASE '+JSON.stringify(report.at(-1)));
