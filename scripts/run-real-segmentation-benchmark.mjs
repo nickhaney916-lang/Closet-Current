@@ -41,9 +41,16 @@ try{
    }
    const runs=[];let current=0,count=0;for(const bit of mask){if(bit!==current){runs.push(count);count=0;current=bit;}count++;}runs.push(count);
    const overlay=document.createElement('canvas');overlay.width=width;overlay.height=height;const context=overlay.getContext('2d'),pixels=context.createImageData(width,height);for(let i=0;i<mask.length;i++){pixels.data[i*4]=225;pixels.data[i*4+1]=25;pixels.data[i*4+2]=130;pixels.data[i*4+3]=mask[i]?140:0;}context.putImageData(pixels,0,0);
-   return {overlayPng:overlay.toDataURL('image/png').split(',')[1],image:imageName,sourceSha256,width,height,runs,modelId:'Xenova/segformer_b0_clothes',revision:'a2489ea8e7ec1ee912190546bad31a4906ccca76',personDetected:map.personDetected,foregroundPixels:mask.reduce((a,b)=>a+b,0)};
+   const original=new Image();original.src='data:image/jpeg;base64,'+base64;await original.decode();
+   const panelWidth=480,panelHeight=Math.max(1,Math.round(height*panelWidth/width)),comparison=document.createElement('canvas');
+   comparison.width=panelWidth*2;comparison.height=panelHeight;
+   const cc=comparison.getContext('2d');cc.drawImage(original,0,0,panelWidth,panelHeight);
+   cc.drawImage(original,panelWidth,0,panelWidth,panelHeight);
+   cc.drawImage(overlay,panelWidth,0,panelWidth,panelHeight);
+   return {comparisonPng:comparison.toDataURL('image/png').split(',')[1],overlayPng:overlay.toDataURL('image/png').split(',')[1],image:imageName,sourceSha256,width,height,runs,modelId:'Xenova/segformer_b0_clothes',revision:'a2489ea8e7ec1ee912190546bad31a4906ccca76',personDetected:map.personDetected,foregroundPixels:mask.reduce((a,b)=>a+b,0)};
   },{base64,imageName:entry.image,sourceSha256:entry.sourceSha256});
-  const {overlayPng,...maskPrediction}=predicted;
+  const {overlayPng,comparisonPng,...maskPrediction}=predicted;
+  await writeFile(join(outDir,entry.id+'.side-by-side.png'),Buffer.from(comparisonPng,'base64'));
   await writeFile(join(outDir,entry.id+'.overlay.png'),Buffer.from(overlayPng,'base64'));
   await writeFile(join(outDir,entry.id+'.prediction.json'),JSON.stringify(maskPrediction,null,2));
   const fragments=maskComponents(maskPrediction);
