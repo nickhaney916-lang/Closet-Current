@@ -10,6 +10,7 @@ try{
  const nativeSize=await page.locator('#preview').evaluate(c=>[c.width,c.height]);
  await page.locator('#inspect').click();
  assert.equal(await page.locator('#inspect').getAttribute('aria-pressed'),'true');
+ assert.equal(await page.locator('#preview').evaluate(c=>getComputedStyle(c).imageRendering),'pixelated');
  assert.deepEqual(await page.locator('#preview').evaluate(c=>[c.width,c.height]),nativeSize);
  await page.locator('#inspect').click();
  assert.equal(await page.locator('#inspect').getAttribute('aria-pressed'),'false');
