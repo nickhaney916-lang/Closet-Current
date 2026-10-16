@@ -2,7 +2,7 @@
 <html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Closet Current · Garment Review</title>
 <style>
-*{box-sizing:border-box}body{margin:0;background:#f7f6fa;color:#221e2c;font:17px system-ui}main{max-width:620px;margin:auto;padding:16px}h1{font-size:1.45rem;margin:6px 0}p{line-height:1.4}small{color:#625b70}.top{display:flex;justify-content:space-between;align-items:center}.panel{background:white;border-radius:20px;padding:12px;margin:16px 0;box-shadow:0 3px 15px #30204b14}canvas{display:block;width:100%;height:auto;border-radius:12px;background:repeating-conic-gradient(#eee 0% 25%,#fff 0% 50%) 50% / 24px 24px}button{font:inherit;border:0;border-radius:14px;min-height:56px;padding:12px 16px;font-weight:700;cursor:pointer}button:focus-visible{outline:3px solid #6d4fbb}button:disabled{opacity:.45}.choices{display:grid;grid-template-columns:1fr 1fr;gap:10px}.yes{background:#dff2e7;color:#205336}.no{background:#f9e0df;color:#7c2825}.nav{display:flex;gap:10px;margin-top:12px}.nav button{flex:1;background:#e8e4f2;color:#332a4b}.switch{display:flex;gap:8px;margin:12px 0}.switch button{flex:1;background:#e7e5ee}.switch button[aria-pressed=true]{background:#332653;color:#fff}.action{display:block;width:100%;background:#362954;color:#fff;margin-top:14px}.status{min-height:24px}a{color:#554295}#count{font-weight:700}
+*{box-sizing:border-box}body{margin:0;background:#f7f6fa;color:#221e2c;font:17px system-ui}main{max-width:620px;margin:auto;padding:16px}h1{font-size:1.45rem;margin:6px 0}p{line-height:1.4}small{color:#625b70}.top{display:flex;justify-content:space-between;align-items:center}.panel{background:white;border-radius:20px;padding:12px;margin:16px 0;box-shadow:0 3px 15px #30204b14}canvas{display:block;width:100%;height:auto;border-radius:12px;background:repeating-conic-gradient(#eee 0% 25%,#fff 0% 50%) 50% / 24px 24px}button{font:inherit;border:0;border-radius:14px;min-height:56px;padding:12px 16px;font-weight:700;cursor:pointer}button:focus-visible{outline:3px solid #6d4fbb}button:disabled{opacity:.45}.choices{display:grid;grid-template-columns:1fr 1fr;gap:10px}.yes{background:#dff2e7;color:#205336}.no{background:#f9e0df;color:#7c2825}.nav{display:flex;gap:10px;margin-top:12px}.nav button{flex:1;background:#e8e4f2;color:#332a4b}.switch{display:flex;gap:8px;margin:12px 0}.switch button{flex:1;background:#e7e5ee}.switch button[aria-pressed=true]{background:#332653;color:#fff}.action{display:block;width:100%;background:#362954;color:#fff;margin-top:14px}.status{min-height:24px}.reason{display:none;margin:12px 0;padding:12px;border-radius:12px;background:#f7f3ed}.reason button{background:white;margin:4px;min-height:48px;border:2px solid #ddd}.reason button[aria-pressed=true]{border-color:#483379;background:#eae3ff}a{color:#554295}#count{font-weight:700}
 </style>
 <main><div class="top"><h1>Closet Current</h1><span id="count">1 / 6</span></div>
 <p><strong>Check the clothing cutout</strong><br><small>Big buttons, clear images. This is visual feedback, not pixel-accurate ground truth.</small></p>
@@ -11,14 +11,14 @@
 <canvas id="preview" aria-label="High-resolution garment preview"></canvas>
 <p class="status" id="status" role="status">Choose whether the AI cutout looks usable.</p>
 <div class="choices"><button class="yes" id="good">✓ Looks good</button><button class="no" id="bad">✕ Needs work</button></div>
-<div class="nav"><button id="previous">← Back</button><button id="next">Next →</button></div>
+<div class="reason" id="reason"><strong>What needs improvement?</strong><div id="reasons"><button data-issue="Missing fabric">Missing fabric</button><button data-issue="Background left">Background left</button><button data-issue="Blurry edges">Blurry edges</button><button data-issue="Wrong garment">Wrong garment</button></div><button id="confirm" class="action">Save issue & next →</button></div><div class="nav"><button id="previous">← Back</button><button id="next">Next →</button></div>
 </div>
 <button class="action" id="export">Save my feedback</button>
 <p><small id="progress">0 of 6 reviewed</small></p>
 <p><small>For precise boundary corrections, use the <a href="annotate-garment.html">advanced outline editor</a>. Your ratings are saved in a downloaded JSON file, not uploaded automatically.</small></p></main>
 <script>
 'use strict';
-const cases=__REVIEW_DATA__,views=cases.map(()=>null);let current=0,showCutout=true;
+const cases=__REVIEW_DATA__,views=cases.map(()=>null),issues=cases.map(()=>null);let current=0,showCutout=true;
 const el=id=>document.getElementById(id),canvas=el('preview'),ctx=canvas.getContext('2d',{willReadFrequently:true});
 function decodeRuns(obj){const n=obj.width*obj.height,m=new Uint8Array(n);let index=0,fg=false;for(const count of obj.runs){if(!Number.isInteger(count)||count<0||index+count>n)throw Error('Invalid mask');if(fg)m.fill(1,index,index+count);index+=count;fg=!fg;}if(index!==n)throw Error('Mask length mismatch');return m;}
 async function render(){
@@ -33,13 +33,16 @@ async function render(){
   for(let i=0;i<mask.length;i++)image.data[i*4+3]=mask[i]?255:0;
   ctx.putImageData(image,0,0);
  }
+ el('reason').style.display=views[current]==='bad'?'block':'none';for(const b of el('reasons').querySelectorAll('button'))b.setAttribute('aria-pressed',String(issues[current]===b.dataset.issue));
  const answer=views[current];el('status').textContent=answer==='good'?'Marked: Looks good':answer==='bad'?'Marked: Needs work':'Choose whether the cutout looks usable.';
  el('progress').textContent=views.filter(Boolean).length+' of '+cases.length+' reviewed';
 }
-function judge(value){views[current]=value;render();if(current<cases.length-1){current++;render();}}
+function judge(value){views[current]=value;if(value==='good'){issues[current]=null;if(current<cases.length-1)current++;}render();}
 el('good').onclick=()=>judge('good');el('bad').onclick=()=>judge('bad');
+el('reasons').onclick=e=>{const b=e.target.closest('button[data-issue]');if(!b)return;issues[current]=b.dataset.issue;render();};
+el('confirm').onclick=()=>{if(!issues[current]){el('status').textContent='Choose one issue first.';return;}if(current<cases.length-1)current++;render();};
 el('previous').onclick=()=>{if(current>0){current--;render();}};el('next').onclick=()=>{if(current<cases.length-1){current++;render();}};
 el('original').onclick=()=>{showCutout=false;render();};el('cutout').onclick=()=>{showCutout=true;render();};
-el('export').onclick=()=>{const data={schemaVersion:1,kind:'visual-feedback-not-ground-truth',model:'Xenova/modnet',results:cases.map((c,i)=>({id:c.id,image:c.image,sourceSha256:c.sourceSha256,assessment:views[i]||'not-reviewed'}))};const url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download='closet-current-visual-feedback.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
+el('export').onclick=()=>{const data={schemaVersion:1,kind:'visual-feedback-not-ground-truth',model:'Xenova/modnet',results:cases.map((c,i)=>({id:c.id,image:c.image,sourceSha256:c.sourceSha256,assessment:views[i]||'not-reviewed',issue:issues[i]}))};const url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download='closet-current-visual-feedback.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
 render().catch(e=>el('status').textContent='Unable to display garment: '+e.message);
 </script></html>
