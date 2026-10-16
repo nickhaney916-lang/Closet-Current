@@ -83,17 +83,21 @@ jobs:
           name: experimental-footwear-shadow-overlays
           path: benchmark/footwear-shadow-review/
           retention-days: 14
-      - name: Generate shadow before-after and native edge inspections
+      - name: Generate six-garment native edge inspections and footwear shadow comparisons
         run: node scripts/build-footwear-shadow-before-after.mjs benchmark/footwear-shadow-before-after
       - name: Verify shoe and boot native-resolution evidence
         run: |
+          test -s benchmark/footwear-shadow-before-after/commons-0035-native-edges-2x.png
+          test -s benchmark/footwear-shadow-before-after/commons-0049-native-edges-2x.png
+          test -s benchmark/footwear-shadow-before-after/commons-0053-native-edges-2x.png
+          test -s benchmark/footwear-shadow-before-after/commons-0065-native-edges-2x.png
           test -s benchmark/footwear-shadow-before-after/commons-0079-native-edges-2x.png
           test -s benchmark/footwear-shadow-before-after/commons-0094-native-edges-2x.png
           test -s benchmark/footwear-shadow-before-after/commons-0079-shadow-before-after.png
           test -s benchmark/footwear-shadow-before-after/commons-0094-shadow-before-after.png
       - uses: actions/upload-artifact@v4
         with:
-          name: experimental-footwear-native-edge-and-shadow
+          name: experimental-six-garment-native-edge-and-footwear-shadow
           path: benchmark/footwear-shadow-before-after/
           retention-days: 14
       - name: Measure shoe-edge contrast without mask modification
