@@ -20,7 +20,7 @@ export class AIPreviewQuota {
     await txn.put('reservation:'+reservationId,{day,status:'pending',expiresAt});
     return {allowed:true,remaining:limit-count-1,reservationId};
    });
-   if(result.allowed)await this.state.storage.setAlarm(expiresAt);
+   if(result.allowed){const currentAlarm=await this.state.storage.getAlarm();if(currentAlarm===null||currentAlarm>expiresAt)await this.state.storage.setAlarm(expiresAt);}
    return Response.json(result,{headers:{'cache-control':'no-store'}});
   }
   if(typeof payload?.reservationId!=='string'||!/^[-0-9a-f]{36}$/.test(payload.reservationId))return new Response('Invalid reservation',{status:400});
