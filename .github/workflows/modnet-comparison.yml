@@ -16,6 +16,7 @@ on:
       - 'tests/footwear-shadow-candidates.test.mjs'
       - 'tests/compare-garment-models.test.mjs'
       - 'scripts/build-segmentation-review-pack.mjs'
+      - 'benchmark/FOOTWEAR-OUTLINE-REVIEW.txt'
       - 'scripts/test-mobile-garment-review.mjs'
       - 'benchmark/mobile-review-template.html'
       - 'benchmark/propose-island-cleanup.mjs'
@@ -88,6 +89,8 @@ jobs:
           retention-days: 14
       - name: Prepare six-photo human review pack
         run: node scripts/build-segmentation-review-pack.mjs
+      - name: Verify footwear reviewer instructions included
+        run: test -s benchmark/review-pack/FOOTWEAR-OUTLINE-REVIEW.txt
       - name: Verify one-tap mobile review screen
         run: node scripts/test-mobile-garment-review.mjs
       - uses: actions/upload-artifact@v4
