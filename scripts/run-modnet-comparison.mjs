@@ -2,6 +2,7 @@ import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import {join} from 'node:path';
 import {chromium} from 'playwright';
+import {thresholdBoundaryReport} from '../benchmark/modnet-boundary-report.mjs';
 const manifest=JSON.parse(await readFile('benchmark/segmentation-review-manifest.json','utf8'));
 const sources=JSON.parse(await readFile('benchmark/locked-photo-sources.json','utf8'));
 const directory=process.argv[2]||'benchmark/modnet-predictions';
@@ -46,13 +47,15 @@ try {
     if(alpha!==previous){runs.push(count);previous=alpha;count=0;}count++;
     pixels.data[i*4]=225;pixels.data[i*4+1]=25;pixels.data[i*4+2]=130;pixels.data[i*4+3]=alpha?140:0;
    }runs.push(count);ctx.putImageData(pixels,0,0);strictCtx.putImageData(strictData,0,0);
-   return {strictOverlayPng:strictCanvas.toDataURL('image/png').split(',')[1],strictPixels,borderlinePixels,image,sourceSha256:sha,width:photo.width,height:photo.height,runs,foregroundPixels,overlayPng:canvas.toDataURL('image/png').split(',')[1],model:'Xenova/modnet',maskChannels:mask.channels,maskChannel,status:'experimental-unscored'};
+   const boundary=(()=>{let adjacent=0,isolated=0;const val=(i)=>mask.data[i*mask.channels+maskChannel];for(let y=0;y<photo.height;y++)for(let x=0;x<photo.width;x++){const i=y*photo.width+x,v=val(i);if(v<128||v>=192)continue;const neighbors=[x>0?i-1:-1,x+1<photo.width?i+1:-1,y>0?i-photo.width:-1,y+1<photo.height?i+photo.width:-1];if(neighbors.some(n=>n>=0&&val(n)>=192))adjacent++;else isolated++;}return {adjacent,isolated};})();
+   return {boundary,strictOverlayPng:strictCanvas.toDataURL('image/png').split(',')[1],strictPixels,borderlinePixels,image,sourceSha256:sha,width:photo.width,height:photo.height,runs,foregroundPixels,overlayPng:canvas.toDataURL('image/png').split(',')[1],model:'Xenova/modnet',maskChannels:mask.channels,maskChannel,status:'experimental-unscored'};
   },{base64:bytes.toString('base64'),image:item.image,sha:source.sha256});
   const {overlayPng,strictOverlayPng,...prediction}=result;
+  if(prediction.boundary.adjacent+prediction.boundary.isolated!==prediction.borderlinePixels)throw Error('Threshold boundary count mismatch');
   await writeFile(join(directory,item.id+'.modnet-strict-overlay.png'),Buffer.from(strictOverlayPng,'base64'));
   await writeFile(join(directory,item.id+'.modnet-overlay.png'),Buffer.from(overlayPng,'base64'));
   await writeFile(join(directory,item.id+'.modnet-prediction.json'),JSON.stringify(prediction));
-  results.push({id:item.id,foregroundPixels:prediction.foregroundPixels,strictPixels:prediction.strictPixels,borderlinePixels:prediction.borderlinePixels,status:'unscored-no-approved-reference'});
+  results.push({id:item.id,foregroundPixels:prediction.foregroundPixels,strictPixels:prediction.strictPixels,borderlinePixels:prediction.borderlinePixels,boundary:prediction.boundary,status:'unscored-no-approved-reference'});
   console.log('MODNET_CASE '+JSON.stringify(results.at(-1)));
  }
 }finally{await browser.close();}
