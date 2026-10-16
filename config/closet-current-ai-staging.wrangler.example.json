@@ -1,0 +1,20 @@
+{
+  "name": "closet-current-ai-staging",
+  "pages_build_output_dir": "./dist",
+  "compatibility_date": "2026-10-15",
+  "vars": {
+    "AI_PREVIEW_ENABLED": "false"
+  },
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "AI_PREVIEW_QUOTAS",
+        "class_name": "AIPreviewQuota",
+        "script_name": "closet-current-ai-preview-quota"
+      }
+    ]
+  },
+  "ai": {
+    "binding": "AI"
+  }
+}
