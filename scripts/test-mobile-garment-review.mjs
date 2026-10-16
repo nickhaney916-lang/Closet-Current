@@ -10,11 +10,14 @@ try{
  await page.locator('#original').click();assert.equal(await page.locator('#original').getAttribute('aria-pressed'),'true');
  await page.locator('#cutout').click();assert.equal(await page.locator('#cutout').getAttribute('aria-pressed'),'true');
  await page.locator('#good').click();assert.equal(await page.locator('#count').textContent(),'2 / 6');
- await page.locator('#bad').click();assert.equal(await page.locator('#count').textContent(),'3 / 6');
+ await page.locator('#bad').click();assert.equal(await page.locator('#count').textContent(),'2 / 6');
+ await page.locator('[data-issue="Missing fabric"]').click();
+ await page.locator('#confirm').click();assert.equal(await page.locator('#count').textContent(),'3 / 6');
  const p=page.waitForEvent('download');await page.locator('#export').click();const d=await p;
  const fs=await import('node:fs/promises');const feedback=JSON.parse(await fs.readFile(await d.path(),'utf8'));
  assert.equal(feedback.kind,'visual-feedback-not-ground-truth');
  assert.deepEqual(feedback.results.slice(0,3).map(x=>x.assessment),['good','bad','not-reviewed']);
+ assert.equal(feedback.results[1].issue,'Missing fabric');
  assert.deepEqual(errors,[]);
  console.log('MOBILE_REVIEW_SMOKE '+JSON.stringify({cases:feedback.results.length,decisions:2,pageErrors:errors.length,status:'passed'}));
 }finally{await browser.close();}
