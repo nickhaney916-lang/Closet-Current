@@ -1,6 +1,6 @@
 import test from 'node:test';import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';const require=createRequire(import.meta.url);
-const {prepare}=require('../public/ai-outfit-preview.js');
+const {prepare,selectCloudflareReferences}=require('../public/ai-outfit-preview.js');
 const img='data:image/png;base64,aGVsbG8=';
 test('AI preview uses exact selected clothing references in wearing order',()=>{
  const result=prepare({slots:{top:'a',bottom:'b',layer:'c',shoes:'d'}},[
@@ -18,4 +18,12 @@ test('AI preview excludes bottoms hidden by a dress',()=>{
 });
 test('AI preview excludes unsafe and remote image references',()=>{
  assert.throws(()=>prepare({slots:{top:'a'}},[{id:'a',image:'https://example.com/private.jpg'}]),/at least one/);
+});
+
+test('Cloudflare pilot reserves one of four reference slots for the model',()=>{
+ const garments=['top','bottom','layer','shoes'].map((slot,i)=>({slot,itemId:String(i),image:img}));
+ const selection=selectCloudflareReferences({garments});
+ assert.deepEqual(selection.included.map(x=>x.slot),['top','bottom','layer']);
+ assert.deepEqual(selection.excluded.map(x=>x.slot),['shoes']);
+ assert.throws(()=>selectCloudflareReferences({garments},{maxImages:5}),/at most four/);
 });
