@@ -1,0 +1,3 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {footwearShadowCandidates} from '../benchmark/footwear-shadow-candidates.mjs';
+test('flags sparse lower foreground rows but does not remove pixels',()=>{const p={width:10,height:4,runs:[10,10,10,1,9]};const before=JSON.stringify(p),r=footwearShadowCandidates(p,{bottomFraction:1});assert.equal(r.candidatePixels,1);assert.equal(r.reviewOnly,true);assert.equal(JSON.stringify(p),before);});
+test('rejects invalid fraction',()=>assert.throws(()=>footwearShadowCandidates({width:1,height:1,runs:[1]},{bottomFraction:0}),/Invalid/));
