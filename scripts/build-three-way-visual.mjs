@@ -12,7 +12,7 @@ try{const page=await browser.newPage();for(const [id,label] of cases){
  const mod=JSON.parse(await readFile('benchmark/modnet-predictions/'+id+'.modnet-prediction.json','utf8'));
  if(seg.sourceSha256!==entry.sourceSha256||mod.sourceSha256!==entry.sourceSha256||seg.width!==mod.width||seg.height!==mod.height)throw Error('Source or dimensions differ');
  const png=await page.evaluate(async ({photo,seg,mod,label})=>{
-  const image=new Image();image.src='data:image/jpeg;base64,'+photo;await image.decode();
+  const image=new Image();image.src=photo;await image.decode();
   const decode=p=>{const bits=new Uint8Array(p.width*p.height);let index=0,fg=0;for(const count of p.runs){if(!Number.isInteger(count)||count<0||index+count>bits.length)throw Error('Invalid runs');if(fg)bits.fill(1,index,index+count);index+=count;fg=1-fg;}if(index!==bits.length)throw Error('Truncated runs');return bits;};
   const a=decode(seg),b=decode(mod),w=image.naturalWidth,h=image.naturalHeight;
   const panelWidth=540,panelHeight=Math.round(panelWidth*h/w),header=56;
