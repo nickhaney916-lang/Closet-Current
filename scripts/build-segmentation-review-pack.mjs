@@ -3,10 +3,14 @@ import {join} from 'node:path';
 const root=process.argv[2]||'benchmark/review-pack';
 const manifest=JSON.parse(await readFile('benchmark/segmentation-review-manifest.json','utf8'));
 await mkdir(join(root,'photos'),{recursive:true});
+await mkdir(join(root,'OPEN-IMAGES-ON-PHONE'),{recursive:true});
 await mkdir(join(root,'predictions'),{recursive:true});
 for(const item of manifest.cases){
  await copyFile(join('benchmark/photos',item.image),join(root,'photos',item.image));
  await copyFile(join('benchmark/modnet-predictions',item.id+'.modnet-prediction.json'),join(root,'predictions',item.id+'.modnet-prediction.json'));
+}
+for(const id of ['commons-0079','commons-0094']){
+ await copyFile(join('benchmark/model-visual-comparison',id+'-three-way.png'),join(root,'OPEN-IMAGES-ON-PHONE',id+'-comparison.png'));
 }
 const labels={'commons-0035':'Orange shorts','commons-0049':'Beige dress','commons-0053':'Black dress','commons-0065':'Jacket','commons-0079':'Sneakers','commons-0094':'Boots'};
 const reviewCases=[];
@@ -22,7 +26,10 @@ await copyFile('benchmark/segmentation-review-manifest.json',join(root,'manifest
 await writeFile(join(root,'START-HERE.txt'),[
  'CLOSET CURRENT — SIX-PHOTO OUTLINE REVIEW PACK',
  '',
- '1. Extract the ZIP; open START-FOOTWEAR-REVIEW.html to inspect sneakers and boots first.',
+ '1. ON ANDROID: open OPEN-IMAGES-ON-PHONE/commons-0079-comparison.png and commons-0094-comparison.png first. These are regular pictures and work without JavaScript.',
+ '2. Reply in ChatGPT with what is missing or what background remains. You can also attach these images.',
+ '3. The optional HTML reviewer may not run in Android document-preview apps; do not use it if it stays on Loading garment.',
+ '4. Extract the ZIP; optionally open START-FOOTWEAR-REVIEW.html in a full browser to record structured feedback.',
  '   Alternatively open START-REVIEW.html to rate all six cutouts.',
  '2. For shoe and boot reference outlines, see FOOTWEAR-OUTLINE-REVIEW.txt.',
  '3. Open annotate-garment.html in a modern browser.',
