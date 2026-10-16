@@ -6,13 +6,13 @@ test('quota worker public URL cannot reserve credits',async()=>{
 test('durable quota reserves at most two previews per account per UTC day',async()=>{
  const state=new Map();
  const quota=new AIPreviewQuota({storage:{transaction:async callback=>callback({get:async k=>state.get(k),put:async(k,v)=>{state.set(k,v);}})}});
- const req=()=>new Request('https://quota.internal/reserve',{method:'POST',body:JSON.stringify({day:'2026-10-15',limit:2})});
+ const req=()=>new Request('https://quota.internal/reserve',{method:'POST',body:JSON.stringify({day:'2099-12-31',limit:99999})});
  assert.deepEqual(await (await quota.fetch(req())).json(),{allowed:true,remaining:1});
  assert.deepEqual(await (await quota.fetch(req())).json(),{allowed:true,remaining:0});
  assert.deepEqual(await (await quota.fetch(req())).json(),{allowed:false,remaining:0});
 });
-test('quota worker rejects invalid limits',async()=>{
+test('quota worker rejects non-POST methods',async()=>{
  const quota=new AIPreviewQuota({storage:{}});
- const response=await quota.fetch(new Request('https://quota.internal/reserve',{method:'POST',body:JSON.stringify({day:'wrong',limit:100})}));
- assert.equal(response.status,400);
+ const response=await quota.fetch(new Request('https://quota.internal/reserve',{method:'GET'}));
+ assert.equal(response.status,405);
 });
