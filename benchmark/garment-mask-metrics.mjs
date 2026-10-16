@@ -40,3 +40,10 @@ export function approvedReferenceMask(annotation,manifestEntry){
  if(marked===0||marked===mask.length)throw Error('Annotation must contain garment and background');
  return mask;
 }
+
+export function scoreApprovedPrediction(annotation,manifestEntry,prediction){
+ const reference=approvedReferenceMask(annotation,manifestEntry);
+ if(!prediction||prediction.width!==annotation.width||prediction.height!==annotation.height||prediction.image!==manifestEntry.image||prediction.sourceSha256!==manifestEntry.sourceSha256)throw Error('Prediction source or dimensions mismatch');
+ const predicted=decodeReferenceMask(prediction);
+ return {image:manifestEntry.image,...scoreGarmentMask(reference,predicted,annotation.width,annotation.height)};
+}
