@@ -1,0 +1,29 @@
+name: AI preview quota safety
+on:
+  push:
+    branches:
+      - fix/mobile-recognition-timeout-diagnostics
+    paths:
+      - 'workers/ai-preview-quota/**'
+      - 'functions/api/ai-outfit-preview.js'
+      - 'tests/ai-preview-*.test.mjs'
+      - '.github/workflows/ai-preview-quota.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  quota-safety:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify quota worker and authentication safeguards
+        run: node --test tests/ai-preview-quota-worker.test.mjs tests/ai-preview-endpoint.test.mjs tests/ai-outfit-preview.test.mjs
+      - name: Validate JavaScript syntax
+        run: |
+          node --check workers/ai-preview-quota/index.js
+          node --check functions/api/ai-outfit-preview.js
+          node --check public/ai-outfit-preview.js
