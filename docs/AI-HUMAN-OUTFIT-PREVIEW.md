@@ -30,3 +30,15 @@ FASHN's published on-demand price is $0.075 per credit, minimum purchase $7.50/1
 The API key and enabled flag belong only in encrypted Cloudflare Pages secrets/variables. The new `functions/api/ai-outfit-preview.js` is deliberately **fail closed**, returning 503 even when manually enabled until user authentication, per-user quota enforcement, explicit consent, and provider response handling are ready. **Do not set AI_PREVIEW_ENABLED=true** as a shortcut. See https://docs.fashn.ai/api-reference/tryon-v1-6 and https://developers.cloudflare.com/pages/functions/bindings/.
 
 Next engineering milestone: verify that the existing Cloudflare Pages deployment method supports Functions (plain static uploads may not); implement authenticated user ownership and a budget cap; pick a licensed consistent base model photo; run a supervised 2–3-garment image-fidelity experiment after credits are explicitly approved. No actual garment images have been transmitted to FASHN.
+
+## Preferred free-allowance prototype: Cloudflare Workers AI FLUX.2 klein 4B
+
+Cloudflare's FLUX.2 klein 4B supports up to **four reference images**, all **smaller than 512×512**, supplied as multipart `input_image_0` to `input_image_3`. Its free neuron allowance is limited and shared across Workers AI use; free availability and pricing can change. Sources:
+- https://developers.cloudflare.com/changelog/post/2026-01-15-flux-2-klein-4b-workers-ai/
+- https://developers.cloudflare.com/workers-ai/models/flux-2-klein-4b/
+
+Reserve image 0 for a consistent, licensed adult model photograph, and allow at most three garment reference photos. `ClosetAIPreview.selectCloudflareReferences` returns **both included and omitted** garment references so the UI can disclose when shoes or accessories were excluded. Do **not** claim the generated human exactly wears all clothing when the request omits garments. The FLUX model is reference-image generation, **not specialized virtual try-on**. Test shirt/pants/jacket fidelity against originals before enabling the workflow.
+
+Before sending any photos, resample reference images in-browser to **strictly below 512×512** (for example max 510px), with no upscaling, and validate size/type again on the server. Do not send raw 4096px images to FLUX.2. Limit to three selected garments plus a base-model reference, or investigate an alternative model/API for full outfits with more garment inputs.
+
+The Cloudflare endpoint remains fail-closed; **no account, AI binding, deployment, request processing, or generation was enabled by this commit**. Needed: Cloudflare Pages Functions compatibility, binding named `AI`, authenticated account/session checks, quota and abuse limits, user consent, image preprocessing, credit visibility, end-to-end tests, and a nonproduction test environment.
