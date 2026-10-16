@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {onRequestPost,onRequestGet,validatePreviewRequest} from '../functions/api/ai-outfit-preview.js';
+import {onRequestPost,onRequestGet,validatePreviewRequest,verifyClosetSession} from '../functions/api/ai-outfit-preview.js';
 test('image-generation endpoint remains disabled without feature flag',async()=>{
  const response=await onRequestPost({request:new Request('https://example.test/api/ai-outfit-preview',{method:'POST'}),env:{}});
  assert.equal(response.status,503);
@@ -8,7 +8,7 @@ test('image-generation endpoint remains disabled without feature flag',async()=>
 test('feature flag cannot bypass authentication and quota safeguards',async()=>{
  const response=await onRequestPost({request:new Request('https://example.test/api/ai-outfit-preview',{method:'POST'}),env:{AI_PREVIEW_ENABLED:'true',FASHN_API_KEY:'test'}});
  assert.equal(response.status,503);
- assert.equal((await response.json()).error,'AI_PREVIEW_SETUP_INCOMPLETE');
+ assert.equal((await response.json()).error,'AUTH_REQUIRED');
 });
 test('GET cannot trigger generation',async()=>{
  assert.equal((await onRequestGet()).status,405);
@@ -20,4 +20,16 @@ test('generation request validator requires consent and valid limited image refe
  assert.equal(validatePreviewRequest({consentToSharePhotos:true,garments:[{slot:'top',image}]}),null);
  assert.equal(validatePreviewRequest({consentToSharePhotos:true,garments:Array.from({length:4},()=>({slot:'top',image}))}),'INVALID_GARMENT_COUNT');
  assert.equal(validatePreviewRequest({consentToSharePhotos:true,garments:[{slot:'top',image:'https://other.site/asset'}]}),'INVALID_GARMENT_IMAGE');
+});
+
+test('Supabase session verification rejects missing and invalid tokens',async()=>{
+ const request=new Request('https://example.test/api/ai-outfit-preview');
+ assert.equal(await verifyClosetSession(request,{fetcher:()=>{throw Error('Should not fetch')}}),null);
+ const invalid=new Request(request.url,{headers:{authorization:'Bearer abc'}});
+ assert.equal(await verifyClosetSession(invalid,{fetcher:async()=>new Response('{}',{status:401})}),null);
+});
+test('Supabase verification accepts only server-validated user ids',async()=>{
+ const request=new Request('https://example.test/api/ai-outfit-preview',{headers:{authorization:'Bearer abc'}});
+ assert.deepEqual(await verifyClosetSession(request,{fetcher:async()=>new Response(JSON.stringify({id:'user-1'}),{status:200})}),{id:'user-1'});
+ assert.equal(await verifyClosetSession(request,{fetcher:async()=>new Response('{}',{status:200})}),null);
 });
