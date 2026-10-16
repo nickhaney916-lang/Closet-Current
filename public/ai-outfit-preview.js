@@ -26,9 +26,10 @@
  // Cloudflare FLUX.2 klein accepts at most four input images, each <512x512.
  // Restrict pilot references deterministically rather than silently uploading
  // every saved closet image. No network requests are made here.
- function selectCloudflareReferences(prepared,{maxImages=4}={}){
+ function selectCloudflareReferences(prepared,{maxImages=3}={}){
   if(!prepared||!Array.isArray(prepared.garments))throw Error('Prepare a selected outfit first.');
   if(!Number.isInteger(maxImages)||maxImages<1||maxImages>4)throw Error('Cloudflare accepts at most four references.');
+  // Reserve reference image 0 for the consistent adult model; three garment photos remain.
   const priority=['top','bottom','layer','layer2','layer3','shoes','bag','accessory'];
   const images=[...prepared.garments].sort((a,b)=>priority.indexOf(a.slot)-priority.indexOf(b.slot));
   return {included:images.slice(0,maxImages),excluded:images.slice(maxImages),maxImages};
