@@ -17,3 +17,15 @@ test('staging config does not modify live Pages workflow',()=>{
  assert.match(deployment,/--project-name=closet-current --branch=main/);
  assert.doesNotMatch(deployment,/closet-current-ai-staging/);
 });
+
+test('manual staging deployment cannot run from main or without opt-in',()=>{
+ const deploy=readFileSync(new URL('../.github/workflows/deploy-ai-staging.yml',import.meta.url),'utf8');
+ assert.match(deploy,/workflow_dispatch:/);
+ assert.match(deploy,/inputs\.confirmation == 'DEPLOY_STAGING'/);
+ assert.match(deploy,/github\.ref == 'refs\/heads\/fix\/mobile-recognition-timeout-diagnostics'/);
+ assert.match(deploy,/CLOUDFLARE_STAGING_API_TOKEN/);
+ assert.match(deploy,/CLOUDFLARE_STAGING_ACCOUNT_ID/);
+ assert.doesNotMatch(deploy,/secrets\.CLOUDFLARE_API_TOKEN/);
+ assert.doesNotMatch(deploy,/--project-name=closet-current(?:\s|$)/m);
+ assert.match(deploy,/--project-name closet-current-ai-staging/);
+});
