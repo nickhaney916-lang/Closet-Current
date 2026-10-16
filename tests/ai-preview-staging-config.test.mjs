@@ -29,3 +29,10 @@ test('manual staging deployment cannot run from main or without opt-in',()=>{
  assert.doesNotMatch(deploy,/--project-name=closet-current(?:\s|$)/m);
  assert.match(deploy,/--project-name closet-current-ai-staging/);
 });
+
+test('Pages deployment reads root staging Wrangler configuration without unsupported --config option',()=>{
+ const deploy=readFileSync(new URL('../.github/workflows/deploy-ai-staging.yml',import.meta.url),'utf8');
+ assert.match(deploy,/cp config\/closet-current-ai-staging\.wrangler\.example\.json wrangler\.json/);
+ assert.match(deploy,/npx wrangler pages deploy dist --project-name closet-current-ai-staging --branch staging/);
+ assert.doesNotMatch(deploy,/wrangler pages deploy[^\n]*--config/);
+});
