@@ -39,7 +39,7 @@ try{
     mask[y*width+x]=garmentClasses.includes(map.labels[i])?1:0;
    }
    const runs=[];let current=0,count=0;for(const bit of mask){if(bit!==current){runs.push(count);count=0;current=bit;}count++;}runs.push(count);
-   return {image:imageName,sourceSha256,width,height,runs,modelId,revision,personDetected:map.personDetected,foregroundPixels:mask.reduce((a,b)=>a+b,0)};
+   return {image:imageName,sourceSha256,width,height,runs,modelId:'Xenova/segformer_b0_clothes',revision:'a2489ea8e7ec1ee912190546bad31a4906ccca76',personDetected:map.personDetected,foregroundPixels:mask.reduce((a,b)=>a+b,0)};
   },{base64,imageName:entry.image,sourceSha256:entry.sourceSha256});
   await writeFile(join(outDir,entry.id+'.prediction.json'),JSON.stringify(predicted,null,2));
   let status='awaiting-human-reference',metrics=null;
