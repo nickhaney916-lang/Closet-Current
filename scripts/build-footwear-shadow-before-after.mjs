@@ -8,12 +8,14 @@ const manifest=JSON.parse(await readFile('benchmark/segmentation-review-manifest
 const browser=await chromium.launch({headless:true});
 try{
  const page=await browser.newPage();
- for(const id of ['commons-0079','commons-0094']){
+ for(const id of ['commons-0035','commons-0049','commons-0053','commons-0065','commons-0079','commons-0094']){
+  const isFootwear=['commons-0079','commons-0094'].includes(id);
   const item=manifest.cases.find(c=>c.id===id);
   const prediction=JSON.parse(await readFile('benchmark/modnet-predictions/'+id+'.modnet-prediction.json','utf8'));
   if(!item||prediction.sourceSha256!==item.sourceSha256)throw Error('Unverified source');
-  const {rows,candidatePixels}=footwearShadowCandidates(prediction);
+  const {rows,candidatePixels}=isFootwear?footwearShadowCandidates(prediction):{rows:[],candidatePixels:0};
   const photo='data:image/jpeg;base64,'+(await readFile(join('benchmark/photos',item.image))).toString('base64');
+  if(isFootwear){
   const outputPng=await page.evaluate(async ({photo,prediction,rows,id})=>{
    const img=new Image();img.src=photo;await img.decode();
    const w=img.naturalWidth,h=img.naturalHeight;
@@ -42,6 +44,7 @@ try{
    return sheet.toDataURL('image/png').split(',')[1];
   },{photo,prediction,rows,id});
   await writeFile(join(output,id+'-shadow-before-after.png'),Buffer.from(outputPng,'base64'));
+  }
   const detail=await page.evaluate(async ({photo,prediction})=>{
    const image=new Image();image.src=photo;await image.decode();
    const w=prediction.width,h=prediction.height;
@@ -69,6 +72,6 @@ try{
   },{photo,prediction});
   await writeFile(join(output,id+'-native-edges-2x.png'),Buffer.from(detail.png,'base64'));
   console.log('NATIVE_EDGE_REVIEW '+JSON.stringify({id,...detail.crop,binaryAlpha:detail.binaryAlpha,warning:'Pixelated edges may be intrinsic to binary alpha mask; this is not an accuracy score'}));
-  console.log('SHADOW_EXPERIMENT '+JSON.stringify({id,candidatePixels,rows:rows.length,reviewOnly:true,productionUnchanged:true,warning:'May remove real sole pixels'}));
+  if(isFootwear)console.log('SHADOW_EXPERIMENT '+JSON.stringify({id,candidatePixels,rows:rows.length,reviewOnly:true,productionUnchanged:true,warning:'May remove real sole pixels'}));
  }
 }finally{await browser.close();}
