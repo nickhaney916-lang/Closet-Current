@@ -1,6 +1,6 @@
 import test from 'node:test';import assert from 'node:assert/strict';
 import quotaWorker,{AIPreviewQuota} from '../workers/ai-preview-quota/index.js';
-const store=()=>{const rows=new Map();let alarm=null;return {rows,storage:{transaction:async callback=>callback({get:async k=>rows.get(k),put:async(k,v)=>{rows.set(k,v)}}),list:async({prefix})=>new Map([...rows].filter(([key])=>key.startsWith(prefix))),getAlarm:async()=>alarm,setAlarm:async time=>{alarm=time;}}};};
+const store=()=>{const rows=new Map();let alarm=null;return {rows,getAlarm:()=>alarm,storage:{transaction:async callback=>callback({get:async k=>rows.get(k),put:async(k,v)=>{rows.set(k,v)}}),list:async({prefix})=>new Map([...rows].filter(([key])=>key.startsWith(prefix))),getAlarm:async()=>alarm,setAlarm:async time=>{alarm=time;},deleteAlarm:async()=>{alarm=null;}}};};
 const call=async(quota,path='/reserve',payload={})=>(await quota.fetch(new Request('https://quota.internal'+path,{method:'POST',body:JSON.stringify(payload)}))).json();
 test('public Worker refuses quota access',async()=>assert.equal((await quotaWorker.fetch()).status,404));
 test('quota allows only two reservations and issues distinct opaque identifiers',async()=>{
@@ -44,4 +44,14 @@ test('expired pending reservation is refunded by Durable Object alarm, with no d
  assert.equal((await call(q)).allowed,false);
  assert.equal((await call(q,'/commit',{reservationId:first.reservationId})).ok,false);
  assert.equal((await call(q,'/commit',{reservationId:second.reservationId})).ok,true);
+});
+
+test('cleanup clears stale alarm after the last pending reservation expires',async()=>{
+ const state=store(),q=new AIPreviewQuota(state),reservation=await call(q);
+ assert.ok(state.getAlarm()!==null);
+ const key='reservation:'+reservation.reservationId;
+ state.rows.set(key,{...state.rows.get(key),expiresAt:Date.now()-1000});
+ await q.alarm();
+ assert.equal(state.getAlarm(),null);
+ assert.equal(state.rows.get(key).status,'refunded');
 });
