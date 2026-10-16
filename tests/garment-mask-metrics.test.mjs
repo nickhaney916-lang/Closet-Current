@@ -31,3 +31,22 @@ test('missing, partial, invalid and untrusted reference annotations fail closed'
  assert.throws(()=>scoreGarmentMask([0,2],[0,1],2,1),/binary/);
  assert.throws(()=>scoreGarmentMask([1],[1],2,2),/Invalid segmentation/);
 });
+
+test('review manifest uses verified distinct photos and never treats pending labels as ground truth',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const manifest=JSON.parse(readFileSync('benchmark/segmentation-review-manifest.json','utf8'));
+ const sources=JSON.parse(readFileSync('benchmark/locked-photo-sources.json','utf8'));
+ assert.equal(manifest.schemaVersion,1);
+ assert.equal(manifest.status,'awaiting-human-annotations');
+ assert.equal(manifest.cases.length,6);
+ const unique=new Set();
+ for(const item of manifest.cases){
+  assert.ok(!unique.has(item.id));unique.add(item.id);
+  const source=sources.find(x=>x.id===item.id);
+  assert.ok(source?.verified);
+  assert.equal(item.image,source.image);
+  assert.equal(item.sourceSha256,source.sha256);
+  assert.equal(item.referenceMask,null);
+  assert.equal(item.reviewStatus,'pending');
+ }
+});
