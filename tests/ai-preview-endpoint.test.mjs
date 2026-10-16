@@ -7,7 +7,7 @@ test('image-generation endpoint remains disabled without feature flag',async()=>
 });
 test('feature flag cannot bypass authentication and quota safeguards',async()=>{
  const response=await onRequestPost({request:new Request('https://example.test/api/ai-outfit-preview',{method:'POST'}),env:{AI_PREVIEW_ENABLED:'true',FASHN_API_KEY:'test'}});
- assert.equal(response.status,503);
+ assert.equal(response.status,401);
  assert.equal((await response.json()).error,'AUTH_REQUIRED');
 });
 test('GET cannot trigger generation',async()=>{
