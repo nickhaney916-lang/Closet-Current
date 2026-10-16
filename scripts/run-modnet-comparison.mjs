@@ -53,10 +53,16 @@ try {
     pixels.data[i*4]=225;pixels.data[i*4+1]=25;pixels.data[i*4+2]=130;pixels.data[i*4+3]=alpha?140:0;
    }runs.push(count);ctx.putImageData(pixels,0,0);strictCtx.putImageData(strictData,0,0);
    const boundary=(()=>{let adjacent=0,isolated=0;const val=(i)=>mask.data[i*mask.channels+maskChannel];for(let y=0;y<photo.height;y++)for(let x=0;x<photo.width;x++){const i=y*photo.width+x,v=val(i);if(v<128||v>=192)continue;const neighbors=[x>0?i-1:-1,x+1<photo.width?i+1:-1,y>0?i-photo.width:-1,y+1<photo.height?i+photo.width:-1];if(neighbors.some(n=>n>=0&&val(n)>=192))adjacent++;else isolated++;}return {adjacent,isolated};})();
-   return {boundary,strictOverlayPng:strictCanvas.toDataURL('image/png').split(',')[1],strictPixels,borderlinePixels,image,sourceSha256:sha,width:photo.width,height:photo.height,runs,foregroundPixels,overlayPng:canvas.toDataURL('image/png').split(',')[1],model:'Xenova/modnet',maskChannels:mask.channels,maskChannel,status:'experimental-unscored'};
+   // Save the model's actual 8-bit confidence/alpha independently of binary thresholds.
+   const rawCanvas=document.createElement('canvas');rawCanvas.width=photo.width;rawCanvas.height=photo.height;
+   const rawCtx=rawCanvas.getContext('2d'),raw=rawCtx.createImageData(photo.width,photo.height);
+   for(let i=0;i<photo.width*photo.height;i++){const v=mask.data[i*mask.channels+maskChannel],k=i*4;raw.data[k]=v;raw.data[k+1]=v;raw.data[k+2]=v;raw.data[k+3]=255;}
+   rawCtx.putImageData(raw,0,0);
+   return {rawAlphaPng:rawCanvas.toDataURL('image/png').split(',')[1],boundary,strictOverlayPng:strictCanvas.toDataURL('image/png').split(',')[1],strictPixels,borderlinePixels,image,sourceSha256:sha,width:photo.width,height:photo.height,runs,foregroundPixels,overlayPng:canvas.toDataURL('image/png').split(',')[1],model:'Xenova/modnet',maskChannels:mask.channels,maskChannel,status:'experimental-unscored'};
   },{base64:bytes.toString('base64'),image:item.image,sha:source.sha256});
-  const {overlayPng,strictOverlayPng,...prediction}=result;
+  const {overlayPng,strictOverlayPng,rawAlphaPng,...prediction}=result;
   if(prediction.boundary.adjacent+prediction.boundary.isolated!==prediction.borderlinePixels)throw Error('Threshold boundary count mismatch');
+  await writeFile(join(directory,item.id+'.modnet-alpha.png'),Buffer.from(rawAlphaPng,'base64'));
   await writeFile(join(directory,item.id+'.modnet-strict-overlay.png'),Buffer.from(strictOverlayPng,'base64'));
   await writeFile(join(directory,item.id+'.modnet-overlay.png'),Buffer.from(overlayPng,'base64'));
   await writeFile(join(directory,item.id+'.modnet-prediction.json'),JSON.stringify(prediction));
