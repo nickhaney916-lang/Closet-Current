@@ -157,10 +157,10 @@ function cameraFrameQuality(){
  // A low-information frame may be a plain garment, not an out-of-focus photo.
  // Only the combination of very low contrast and very low edge variation is flagged.
  if(video.readyState<2||video.videoWidth<320||video.videoHeight<240)return {usable:false,reason:'resolution'};
- const sample=document.createElement('canvas');sample.width=64;sample.height=48;
- const context=sample.getContext('2d',{willReadFrequently:true});
- if(!context)return {usable:true};
  try{
+  const sample=document.createElement('canvas');sample.width=64;sample.height=48;
+  const context=sample.getContext('2d',{willReadFrequently:true});
+  if(!context)return {usable:true};
   context.drawImage(video,0,0,64,48);
   const pixels=context.getImageData(0,0,64,48).data,gray=new Float32Array(64*48);
   let min=255,max=0,edges=0,count=0;
