@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {cropClothingPhotoPixels,isolateClothingPixels,clothingCropBounds} from '../public/outfit-segmentation.mjs';
+import {cropClothingPhotoPixels,isolateClothingPixels,clothingCropBounds,conservativeEdgeMask} from '../public/outfit-segmentation.mjs';
 
 function fixture(){
  const width=96,height=96,channels=3,data=new Uint8ClampedArray(width*height*channels);
@@ -79,4 +79,38 @@ test('thin garment extremities expose coarse-mask recall losses without altering
   observations.push({garment:entry.name,visibleFabricPixels:visible,groundTruthFabricPixels:total,maskRecall:Number(recall.toFixed(4)),sourceCropRecall:1});
  }
  console.log('GARMENT_EDGE_RECALL '+JSON.stringify(observations));
+});
+
+test('conservative edge recovery measures recall against background contamination',()=>{
+ const cases=[
+  {name:'shoulder strap',rects:[[34,5,38,25],[24,25,72,79]]},
+  {name:'sleeve cuff',rects:[[12,30,84,62],[8,42,88,51]]},
+  {name:'dress hem',rects:[[36,8,60,65],[19,65,77,87]]},
+  {name:'shoe sole',rects:[[18,40,75,62],[12,62,83,67]]}
+ ];
+ const report=[];
+ for(const item of cases){
+  const width=96,height=96,truth=new Uint8Array(width*height),pixels=new Uint8ClampedArray(width*height*3);
+  pixels.fill(220);
+  for(const [x0,y0,x1,y1] of item.rects)for(let y=y0;y<y1;y++)for(let x=x0;x<x1;x++){
+   truth[y*width+x]=1;const i=(y*width+x)*3;pixels[i]=40;pixels[i+1]=70;pixels[i+2]=110;
+  }
+  const selected=new Uint8Array(24*24);
+  for(let y=7;y<19;y++)for(let x=7;x<17;x++)selected[y*24+x]=1;
+  const image={width,height,channels:3,data:pixels},map={width:24,height:24},group={selected,id:4};
+  const proposed=conservativeEdgeMask(image,map,group);
+  function score(mask){
+   let positives=0,retained=0,backgroundIncluded=0;
+   for(let y=0;y<height;y++)for(let x=0;x<width;x++){
+    const isFabric=truth[y*width+x]===1,kept=mask[Math.floor(y/4)*24+Math.floor(x/4)]===1;
+    if(isFabric){positives++;if(kept)retained++;}else if(kept)backgroundIncluded++;
+   }
+   return {recall:Number((retained/positives).toFixed(4)),backgroundPixels:backgroundIncluded};
+  }
+  const original=score(selected),candidate=score(proposed);
+  assert.ok(candidate.recall>=original.recall,'recovery must not reduce garment recall');
+  assert.ok(candidate.backgroundPixels<=original.backgroundPixels+384,'recovery must limit background exposure');
+  report.push({garment:item.name,original,candidate});
+ }
+ console.log('CONSERVATIVE_EDGE_COMPARISON '+JSON.stringify(report));
 });
