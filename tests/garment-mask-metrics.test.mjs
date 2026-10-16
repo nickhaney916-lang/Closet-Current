@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {scoreGarmentMask,decodeReferenceMask,approvedReferenceMask} from '../benchmark/garment-mask-metrics.mjs';
+import {scoreGarmentMask,decodeReferenceMask,approvedReferenceMask,scoreApprovedPrediction} from '../benchmark/garment-mask-metrics.mjs';
 
 test('a perfect annotated cutout achieves full recall, precision, and overlap',()=>{
  const reference=Uint8Array.from([0,1,1,0,0,1]);
@@ -59,4 +59,17 @@ test('draft, wrong source, self-approved, and trivial masks cannot become benchm
  assert.throws(()=>approvedReferenceMask({...good,image:'dress.jpg'},entry),/source mismatch/);
  assert.throws(()=>approvedReferenceMask({...good,approvedBy:'first'},entry),/second reviewer/);
  assert.throws(()=>approvedReferenceMask({...good,runs:[0,4]},entry),/garment and background/);
+});
+
+test('approved scoring rejects mismatched image identity or mask dimensions',()=>{
+ const manifest={image:'boots.jpg',sourceSha256:'verifiedhash'};
+ const approved={schemaVersion:1,image:'boots.jpg',sourceSha256:'verifiedhash',reviewStatus:'approved',reviewer:'A',approvedBy:'B',width:2,height:2,runs:[1,2,1]};
+ const prediction={image:'boots.jpg',sourceSha256:'verifiedhash',width:2,height:2,runs:[1,1,2]};
+ const result=scoreApprovedPrediction(approved,manifest,prediction);
+ assert.equal(result.truePositive,1);
+ assert.equal(result.falseNegative,1);
+ assert.equal(result.intersectionOverUnion,.5);
+ assert.throws(()=>scoreApprovedPrediction(approved,manifest,{...prediction,image:'shirt.jpg'}),/mismatch/);
+ assert.throws(()=>scoreApprovedPrediction(approved,manifest,{...prediction,width:4,height:1}),/mismatch/);
+ assert.throws(()=>scoreApprovedPrediction({...approved,reviewStatus:'draft'},manifest,prediction),/not independently approved/);
 });
