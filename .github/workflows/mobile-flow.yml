@@ -13,6 +13,7 @@ on:
     paths:
       - 'public/**'
       - 'tests/photo-*.test.cjs'
+      - 'tests/outfit-segmentation-edge.test.mjs'
       - 'scripts/run-mobile-flow.mjs'
       - '.github/workflows/mobile-flow.yml'
   workflow_dispatch:
