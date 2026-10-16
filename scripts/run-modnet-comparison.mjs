@@ -5,6 +5,7 @@ import {chromium} from 'playwright';
 import {scoreApprovedPredictionAtReferenceResolution} from '../benchmark/garment-mask-metrics.mjs';
 import {thresholdBoundaryReport} from '../benchmark/modnet-boundary-report.mjs';
 import {proposeIslandCleanup} from '../benchmark/propose-island-cleanup.mjs';
+import {foregroundGeometry} from '../benchmark/foreground-geometry.mjs';
 const manifest=JSON.parse(await readFile('benchmark/segmentation-review-manifest.json','utf8'));
 const sources=JSON.parse(await readFile('benchmark/locked-photo-sources.json','utf8'));
 const directory=process.argv[2]||'benchmark/modnet-predictions';
@@ -65,7 +66,7 @@ try {
    metrics=scoreApprovedPredictionAtReferenceResolution(annotation,item,prediction);
    status='scored';
   }
-  results.push({id:item.id,metrics,cleanupProposal:cleanupSummary,foregroundPixels:prediction.foregroundPixels,strictPixels:prediction.strictPixels,borderlinePixels:prediction.borderlinePixels,boundary:prediction.boundary,status});
+  results.push({id:item.id,metrics,cleanupProposal:cleanupSummary,geometry:foregroundGeometry(prediction),foregroundPixels:prediction.foregroundPixels,strictPixels:prediction.strictPixels,borderlinePixels:prediction.borderlinePixels,boundary:prediction.boundary,status});
   console.log('MODNET_CASE '+JSON.stringify(results.at(-1)));
  }
 }finally{await browser.close();}
