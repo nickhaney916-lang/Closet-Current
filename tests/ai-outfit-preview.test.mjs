@@ -1,6 +1,6 @@
 import test from 'node:test';import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';const require=createRequire(import.meta.url);
-const {prepare,selectCloudflareReferences}=require('../public/ai-outfit-preview.js');
+const {prepare,selectCloudflareReferences,referenceDimensions}=require('../public/ai-outfit-preview.js');
 const img='data:image/png;base64,aGVsbG8=';
 test('AI preview uses exact selected clothing references in wearing order',()=>{
  const result=prepare({slots:{top:'a',bottom:'b',layer:'c',shoes:'d'}},[
@@ -25,5 +25,14 @@ test('Cloudflare pilot reserves one of four reference slots for the model',()=>{
  const selection=selectCloudflareReferences({garments});
  assert.deepEqual(selection.included.map(x=>x.slot),['top','bottom','layer']);
  assert.deepEqual(selection.excluded.map(x=>x.slot),['shoes']);
- assert.throws(()=>selectCloudflareReferences({garments},{maxImages:5}),/at most four/);
+ assert.throws(()=>selectCloudflareReferences({garments},{maxImages:4}),/at most three/);
+});
+
+test('Cloudflare reference sizes never exceed 510 pixels and never upscale',()=>{
+ assert.deepEqual(referenceDimensions(6000,4000),{width:510,height:340});
+ assert.deepEqual(referenceDimensions(4000,6000),{width:340,height:510});
+ assert.deepEqual(referenceDimensions(250,200),{width:250,height:200});
+ assert.deepEqual(referenceDimensions(1,10000),{width:1,height:510});
+ assert.throws(()=>referenceDimensions(500,0),/Invalid photo dimensions/);
+ assert.throws(()=>referenceDimensions(6000,4000,512),/below 512/);
 });
