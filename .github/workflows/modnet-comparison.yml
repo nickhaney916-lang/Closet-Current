@@ -6,6 +6,7 @@ on:
     paths:
       - 'scripts/run-modnet-comparison.mjs'
       - 'scripts/build-raw-alpha-review.mjs'
+      - 'scripts/build-threshold128-edge-review.mjs'
       - 'scripts/compare-garment-models.mjs'
       - 'scripts/build-three-way-visual.mjs'
       - 'scripts/build-four-way-model-review.mjs'
@@ -80,6 +81,18 @@ jobs:
         with:
           name: experimental-six-garment-native-alpha-review
           path: benchmark/raw-alpha-review/
+          retention-days: 14
+      - name: Generate threshold-128 sharp and feathered cutout review
+        run: node scripts/build-threshold128-edge-review.mjs benchmark/threshold128-edge-review
+      - name: Confirm all six threshold review images
+        run: |
+          for id in commons-0035 commons-0049 commons-0053 commons-0065 commons-0079 commons-0094; do
+            test -s "benchmark/threshold128-edge-review/$id-threshold128-review.png"
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: experimental-modnet-threshold128-edge-review
+          path: benchmark/threshold128-edge-review/
           retention-days: 14
       - name: Generate experimental SegFormer masks for paired comparison
         run: node scripts/run-real-segmentation-benchmark.mjs benchmark/segmentation-predictions
