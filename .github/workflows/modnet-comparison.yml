@@ -12,6 +12,7 @@ on:
       - 'benchmark/lower-footwear-disagreement.mjs'
       - 'tests/lower-footwear-disagreement.test.mjs'
       - 'scripts/build-footwear-shadow-overlay.mjs'
+      - 'scripts/footwear-edge-contrast.mjs'
       - 'tests/footwear-shadow-candidates.test.mjs'
       - 'tests/compare-garment-models.test.mjs'
       - 'scripts/build-segmentation-review-pack.mjs'
@@ -77,6 +78,13 @@ jobs:
         with:
           name: experimental-footwear-shadow-overlays
           path: benchmark/footwear-shadow-review/
+          retention-days: 14
+      - name: Measure shoe-edge contrast without mask modification
+        run: node scripts/footwear-edge-contrast.mjs benchmark/footwear-edge-contrast
+      - uses: actions/upload-artifact@v4
+        with:
+          name: experimental-footwear-edge-contrast
+          path: benchmark/footwear-edge-contrast/
           retention-days: 14
       - name: Prepare six-photo human review pack
         run: node scripts/build-segmentation-review-pack.mjs
