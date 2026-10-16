@@ -42,3 +42,8 @@ Reserve image 0 for a consistent, licensed adult model photograph, and allow at 
 Before sending any photos, resample reference images in-browser to **strictly below 512×512** (for example max 510px), with no upscaling, and validate size/type again on the server. Do not send raw 4096px images to FLUX.2. Limit to three selected garments plus a base-model reference, or investigate an alternative model/API for full outfits with more garment inputs.
 
 The Cloudflare endpoint remains fail-closed; **no account, AI binding, deployment, request processing, or generation was enabled by this commit**. Needed: Cloudflare Pages Functions compatibility, binding named `AI`, authenticated account/session checks, quota and abuse limits, user consent, image preprocessing, credit visibility, end-to-end tests, and a nonproduction test environment.
+
+## Local photo preprocessing implemented
+`ClosetAIPreview.referenceDimensions` caps the longest side to 510px without upscaling. `ClosetAIPreview.resizeReference` decodes a saved image locally and returns a temporary JPEG reference; it never updates inventory or sends a network request. `selectCloudflareReferences` now forbids selecting four garments because one of the provider's four image inputs must be reserved for the model photograph. These helpers are not yet wired to the disabled backend or a user-visible generate button.
+
+Caveat: Browser `fetch(data:...)` only reads the embedded photo data URL, not a remote service. Browser test and deployment verification are still required before use. Reference-only generation cannot guarantee true virtual try-on of exact patterns and garment cuts.
