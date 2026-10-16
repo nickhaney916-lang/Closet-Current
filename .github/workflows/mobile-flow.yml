@@ -14,6 +14,8 @@ on:
       - 'public/**'
       - 'tests/photo-*.test.cjs'
       - 'tests/outfit-segmentation-edge.test.mjs'
+      - 'tests/garment-mask-metrics.test.mjs'
+      - 'benchmark/garment-mask-metrics.mjs'
       - 'scripts/run-mobile-flow.mjs'
       - '.github/workflows/mobile-flow.yml'
   workflow_dispatch:
@@ -42,7 +44,7 @@ jobs:
           cp benchmark/locked-photo-sources.json benchmark/mobile-flow/
           ffmpeg -loglevel error -loop 1 -i benchmark/photos/commons-0001.jpg -vf 'scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2:black' -r 10 -t 2 -pix_fmt yuv420p -f yuv4mpegpipe benchmark/mobile-camera.y4m
       - name: Check camera frame quality and stability
-        run: node --test tests/photo-capture-quality.test.cjs tests/photo-frame-quality.test.cjs tests/photo-stability.test.cjs tests/photo-crop-resolution.test.cjs tests/outfit-segmentation-edge.test.mjs
+        run: node --test tests/photo-capture-quality.test.cjs tests/photo-frame-quality.test.cjs tests/photo-stability.test.cjs tests/photo-crop-resolution.test.cjs tests/outfit-segmentation-edge.test.mjs tests/garment-mask-metrics.test.mjs
       - name: Build and verify touch viewport flow with real worker
         run: |
           node scripts/build.mjs
