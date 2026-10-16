@@ -30,3 +30,21 @@ Do not merge, deploy to production, enable paid Workers AI, or modify Drive Duel
 - AI realistic human preview: ~30% (infrastructure code, no running generation)
 - Cloudflare staging readiness: ~65% (configuration/tests present, no deployed resource)
 - **Overall readiness for a small invited pilot: ~65%**, subjective planning estimate only; production public launch readiness is lower. Do not present these as instrumented QA results.
+
+## Revised product strategy — agreed before next session
+
+The three defining product requirements for Closet Current are:
+1. **Recognition substantially better than competitors:** one-tap camera, automatic crop, background removal, category and fine subtype indexing. Explicitly challenge shorts vs skirts, jeans vs trousers, sleeve length, layers, dresses, footwear, multi-garment photos. Gather a larger representative real-photo evaluation dataset and report class-by-class confusion, false positives, manual correction rates and mobile latency. **98% broad-category / 95% subtype are aspirational goals, NOT measured outcomes or competitor-validated claims.**
+2. **Photorealistic outfit visualization of the user's actual saved garments:** assess garment color, logos, pattern, texture and fit fidelity, not merely pretty human images. Existing Cloudflare AI prototype is fail-closed and general image generation is not yet proven accurate virtual try-on. Require photo-sharing consent and free-cost control before staging inference.
+3. **Radically simple mobile UX:** large tap targets, clean uncluttered dashboard, no duplicate navigation or redundant tabs, primary paths 'Photograph Clothing', 'Photograph Full Outfit', 'My Closet', 'Create Outfit'. Minimize steps and manual classification; when uncertain ask one brief meaningful confirmation. Treat camera-to-saved-closet and closet-to-outfit tap counts as release metrics.
+
+### Tomorrow — FIRST PRIORITY: CLOTHING RECOGNITION
+- Establish a reproducible realistic labeled test corpus, including difficult shorts/skirt, sleeve-length and whole-outfit cases, sharp mobile camera photos, lighting/background variations.
+- Measure baseline broad and subtype accuracy, auto-crop clarity, confidence calibration, correction rate and processing time against that corpus; keep original photos unmodified.
+- Fix highest-frequency confirmed confusions and run regression tests; prioritize hands-off point-and-click identification.
+- After recognition: realistic outfit-on-human AI fidelity, then large-button clutter-free UX validation; staging credentials and commercial subscriptions remain tracked but should not distract from this product-quality order.
+
+### Monetization — planning only
+Favor free basic tier plus an optional premium monthly/annual subscription, with metered realistic AI previews; floated pricing to **test**: $4.99/month or $39.99/year. No fees or feature gating enabled. Validate willingness to pay, retention and actual AI inference costs before choosing prices.
+
+This revised prioritization supersedes the older 'tomorrow priorities' list above. Do not touch Drive Duel, production, or merge PR #4 without approval.
