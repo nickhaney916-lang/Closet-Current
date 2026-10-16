@@ -5,6 +5,8 @@ on:
       - fix/mobile-recognition-timeout-diagnostics
     paths:
       - 'workers/ai-preview-quota/**'
+      - 'config/closet-current-ai-staging.wrangler.example.json'
+      - '.github/workflows/cloudflare-pages.yml'
       - 'functions/api/ai-outfit-preview.js'
       - 'tests/ai-preview-*.test.mjs'
       - '.github/workflows/ai-preview-quota.yml'
@@ -21,7 +23,7 @@ jobs:
         with:
           node-version: '22'
       - name: Verify quota worker and authentication safeguards
-        run: node --test tests/ai-preview-quota-worker.test.mjs tests/ai-preview-endpoint.test.mjs tests/ai-outfit-preview.test.mjs
+        run: node --test tests/ai-preview-quota-worker.test.mjs tests/ai-preview-endpoint.test.mjs tests/ai-outfit-preview.test.mjs tests/ai-preview-staging-config.test.mjs
       - name: Validate JavaScript syntax
         run: |
           node --check workers/ai-preview-quota/index.js
