@@ -166,7 +166,8 @@ function cameraFrameQuality(){
   let min=255,max=0,edges=0,count=0;
   for(let p=0;p<gray.length;p++){const k=p*4;const value=.2126*pixels[k]+.7152*pixels[k+1]+.0722*pixels[k+2];gray[p]=value;min=Math.min(min,value);max=Math.max(max,value);}
   for(let y=1;y<47;y++)for(let x=1;x<63;x++){const p=y*64+x;edges+=Math.abs(4*gray[p]-gray[p-1]-gray[p+1]-gray[p-64]-gray[p+64]);count++;}
-  return {usable:!(max<45&&max-min<18&&edges/count<4),reason:'very-dark-frame'};
+  const tooDark=max<45&&max-min<18&&edges/count<4;
+  return {usable:!tooDark,reason:tooDark?'very-dark-frame':null};
  }catch{return {usable:true};}
 }
 // Compare successive samples only when their visual structure is similar.
