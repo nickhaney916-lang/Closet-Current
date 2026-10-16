@@ -90,7 +90,11 @@ jobs:
       - name: Prepare six-photo human review pack
         run: node scripts/build-segmentation-review-pack.mjs
       - name: Verify footwear reviewer instructions included
-        run: test -s benchmark/review-pack/FOOTWEAR-OUTLINE-REVIEW.txt
+        run: |
+          test -s benchmark/review-pack/FOOTWEAR-OUTLINE-REVIEW.txt
+          test -s benchmark/review-pack/START-FOOTWEAR-REVIEW.html
+          grep -q 'commons-0079' benchmark/review-pack/START-FOOTWEAR-REVIEW.html
+          grep -q 'commons-0094' benchmark/review-pack/START-FOOTWEAR-REVIEW.html
       - name: Verify one-tap mobile review screen
         run: node scripts/test-mobile-garment-review.mjs
       - uses: actions/upload-artifact@v4
