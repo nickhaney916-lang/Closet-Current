@@ -9,6 +9,8 @@ on:
       - 'scripts/build-three-way-visual.mjs'
       - 'scripts/build-footwear-disagreement-visual.mjs'
       - 'benchmark/footwear-shadow-candidates.mjs'
+      - 'benchmark/lower-footwear-disagreement.mjs'
+      - 'tests/lower-footwear-disagreement.test.mjs'
       - 'scripts/build-footwear-shadow-overlay.mjs'
       - 'tests/footwear-shadow-candidates.test.mjs'
       - 'tests/compare-garment-models.test.mjs'
@@ -41,7 +43,7 @@ jobs:
           npm install --no-save --no-package-lock playwright
           npx playwright install --with-deps chromium
       - name: Validate threshold boundary analysis
-        run: node --test tests/modnet-boundary-report.test.mjs tests/propose-island-cleanup.test.mjs tests/foreground-geometry.test.mjs tests/border-connected-foreground.test.mjs tests/compare-garment-models.test.mjs tests/footwear-shadow-candidates.test.mjs
+        run: node --test tests/modnet-boundary-report.test.mjs tests/propose-island-cleanup.test.mjs tests/foreground-geometry.test.mjs tests/border-connected-foreground.test.mjs tests/compare-garment-models.test.mjs tests/footwear-shadow-candidates.test.mjs tests/lower-footwear-disagreement.test.mjs
       - name: Download and verify source photographs
         run: node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos commons-0035,commons-0049,commons-0053,commons-0065,commons-0079,commons-0094
       - name: Generate experimental MODNet masks
