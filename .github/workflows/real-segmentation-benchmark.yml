@@ -5,6 +5,8 @@ on:
     branches: [main]
     paths:
       - 'scripts/run-real-segmentation-benchmark.mjs'
+      - 'benchmark/mask-components.mjs'
+      - 'tests/mask-components.test.mjs'
       - '.github/workflows/real-segmentation-benchmark.yml'
       - 'benchmark/segmentation-review-manifest.json'
 permissions:
@@ -22,6 +24,8 @@ jobs:
         run: |
           npm install --no-save --no-package-lock playwright
           npx playwright install --with-deps chromium
+      - name: Check segmentation fragment diagnostic
+        run: node --test tests/mask-components.test.mjs
       - name: Download verified real photos
         run: node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos commons-0035,commons-0049,commons-0053,commons-0065,commons-0079,commons-0094
       - name: Generate model masks and score only independently approved outlines
