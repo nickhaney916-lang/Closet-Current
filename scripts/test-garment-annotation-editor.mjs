@@ -1,0 +1,26 @@
+import {chromium} from 'playwright';
+import assert from 'node:assert/strict';
+import {resolve} from 'node:path';
+const browser=await chromium.launch({headless:true});
+try{
+ const page=await browser.newPage({viewport:{width:390,height:844},acceptDownloads:true});
+ const errors=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.goto('file://'+resolve('benchmark/annotate-garment.html'));
+ const png=await page.evaluate(()=>{const c=document.createElement('canvas');c.width=40;c.height=30;const x=c.getContext('2d');x.fillStyle='white';x.fillRect(0,0,40,30);x.fillStyle='red';x.fillRect(10,4,20,20);return c.toDataURL('image/png').split(',')[1];});
+ await page.locator('#photo').setInputFiles({name:'review-case.png',mimeType:'image/png',buffer:Buffer.from(png,'base64')});
+ await assert.doesNotReject(async()=>await page.locator('#canvas').waitFor({state:'visible'}));
+ const bounds=await page.locator('#canvas').boundingBox();assert.ok(bounds);
+ await page.mouse.move(bounds.x+bounds.width*.5,bounds.y+bounds.height*.5);
+ await page.mouse.down();await page.mouse.up();
+ assert.equal(await page.locator('#download').isDisabled(),false);
+ const downloadPromise=page.waitForEvent('download');
+ await page.locator('#download').click();
+ const download=await downloadPromise;
+ const fs=await import('node:fs/promises');
+ const draft=JSON.parse(await fs.readFile(await download.path(),'utf8'));
+ assert.equal(draft.reviewStatus,'draft');
+ assert.equal(draft.width,40);assert.equal(draft.height,30);
+ assert.ok(draft.runs.length>1);
+ assert.deepEqual(errors,[]);
+ console.log('ANNOTATION_EDITOR_SMOKE '+JSON.stringify({status:'passed',width:draft.width,height:draft.height,runs:draft.runs.length,reviewStatus:draft.reviewStatus,pageErrors:errors.length}));
+}finally{await browser.close();}
