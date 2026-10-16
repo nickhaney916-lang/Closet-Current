@@ -28,14 +28,14 @@ try{
  assert.equal(await page.locator('#download').isDisabled(),false);
  const seed={image:'review-case.png',width:40,height:30,runs:[0,200,1000],model:'test-model'};
  await page.locator('#prediction').setInputFiles({name:'prediction.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(seed))});
- assert.match(await page.locator('#status').textContent(),/AI starting mask loaded/);
+ await page.locator('#status').getByText(/AI starting mask loaded/).waitFor();
  const seededDownload=page.waitForEvent('download');
  await page.locator('#download').click();
  const seeded=JSON.parse(await fs.readFile(await(await seededDownload).path(),'utf8'));
  assert.equal(seeded.reviewStatus,'draft');
  assert.equal(seeded.seedModel,'test-model');
  await page.locator('#prediction').setInputFiles({name:'wrong.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify({...seed,image:'wrong.png'}))});
- assert.match(await page.locator('#status').textContent(),/mismatch/);
+ await page.locator('#status').getByText(/mismatch/).waitFor();
  assert.deepEqual(errors,[]);
  console.log('ANNOTATION_EDITOR_SMOKE '+JSON.stringify({status:'passed',width:draft.width,height:draft.height,runs:draft.runs.length,reviewStatus:draft.reviewStatus,pageErrors:errors.length}));
 }finally{await browser.close();}
