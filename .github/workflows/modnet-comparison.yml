@@ -14,6 +14,7 @@ on:
       - 'scripts/build-footwear-shadow-overlay.mjs'
       - 'scripts/build-footwear-shadow-before-after.mjs'
       - 'scripts/build-soft-edge-comparison.mjs'
+      - 'scripts/build-boundary-defect-review.mjs'
       - 'scripts/footwear-edge-contrast.mjs'
       - 'tests/footwear-shadow-candidates.test.mjs'
       - 'tests/compare-garment-models.test.mjs'
@@ -119,6 +120,18 @@ jobs:
         with:
           name: experimental-six-garment-soft-edge-shadow-comparisons
           path: benchmark/soft-edge-comparison/
+          retention-days: 14
+      - name: Review side and bottom boundary contamination across six garments
+        run: node scripts/build-boundary-defect-review.mjs benchmark/boundary-defect-review
+      - name: Confirm all boundary review PNGs generated
+        run: |
+          for id in commons-0035 commons-0049 commons-0053 commons-0065 commons-0079 commons-0094; do
+            test -s "benchmark/boundary-defect-review/$id-boundary-risks.png"
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: experimental-six-garment-boundary-defect-review
+          path: benchmark/boundary-defect-review/
           retention-days: 14
       - name: Prepare six-photo human review pack
         run: node scripts/build-segmentation-review-pack.mjs
