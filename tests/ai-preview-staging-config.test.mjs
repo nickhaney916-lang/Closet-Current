@@ -36,3 +36,11 @@ test('Pages deployment reads root staging Wrangler configuration without unsuppo
  assert.match(deploy,/npx wrangler pages deploy dist --project-name closet-current-ai-staging --branch staging/);
  assert.doesNotMatch(deploy,/wrangler pages deploy[^\n]*--config/);
 });
+
+test('manual staging setup creates only the isolated staging Pages project',()=>{
+ const deploy=readFileSync(new URL('../.github/workflows/deploy-ai-staging.yml',import.meta.url),'utf8');
+ assert.match(deploy,/name:'closet-current-ai-staging',production_branch:'staging'/);
+ assert.match(deploy,/response\.status===404/);
+ assert.match(deploy,/result\.result\?\.production_branch!=='staging'/);
+ assert.doesNotMatch(deploy,/name:'closet-current',production_branch:'main'/);
+});
