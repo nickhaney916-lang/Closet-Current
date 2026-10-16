@@ -1,0 +1,39 @@
+{
+  "date": "2026-10-16",
+  "sourceRun": 38981240505,
+  "sourceArtifact": 12081003081,
+  "method": "MODNet binary-mask connected-components review",
+  "summary": "Method does not isolate shadows attached to garment silhouettes. Do not enable component deletion.",
+  "confirmed": {
+    "workflow": "success",
+    "testsPassed": 16,
+    "testsFailed": 0,
+    "modifiedMaskPixels": 0
+  },
+  "byGarment": {
+    "commons-0035": {
+      "detachedCandidates": 1
+    },
+    "commons-0049": {
+      "detachedCandidates": 0
+    },
+    "commons-0053": {
+      "detachedCandidates": 0
+    },
+    "commons-0065": {
+      "detachedCandidates": 0
+    },
+    "commons-0079": {
+      "detachedCandidates": 10
+    },
+    "commons-0094": {
+      "detachedCandidates": 4
+    }
+  },
+  "followUp": {
+    "preferredModel": "MODNet",
+    "nextExperiment": "Evaluate continuous alpha/confidence and garment-specific evidence, with independently annotated real shadow/garment boundaries; no deletion based solely on color or component separation",
+    "humanApprovalRequired": true,
+    "productionEnabled": false
+  }
+}
