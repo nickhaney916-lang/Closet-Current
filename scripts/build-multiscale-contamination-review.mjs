@@ -28,7 +28,7 @@ try{
     const i=y*w+x;if(!mask[i])continue;
     let outside=null;
     for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){
-     if(!mask[i+dy*w+dx]&&!mask[i+dy*w+dx*4]){outside=[dx,dy];break;}
+     if(!mask[i+dy*w+dx]){outside=[dx,dy];break;}
     }
     if(!outside)continue;examined++;
     const [dx,dy]=outside,inside=Math.max(0,i-dy*w-dx),outer=i+dy*w*5+dx*5;
