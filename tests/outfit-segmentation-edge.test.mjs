@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {cropClothingPhotoPixels,isolateClothingPixels,clothingCropBounds,conservativeEdgeMask,connectedEdgeMask} from '../public/outfit-segmentation.mjs';
+import {cropClothingPhotoPixels,isolateClothingPixels,clothingCropBounds,conservativeEdgeMask,connectedEdgeMask,adaptiveEdgeMask} from '../public/outfit-segmentation.mjs';
 
 function fixture(){
  const width=96,height=96,channels=3,data=new Uint8ClampedArray(width*height*channels);
@@ -145,4 +145,45 @@ test('connected edge recovery compares radius and background leakage on four gar
   results.push({garment:name,measured});
  }
  console.log('CONNECTED_EDGE_SWEEP '+JSON.stringify(results));
+});
+
+test('adaptive recovery limits mask growth across textured backgrounds and multicolored fabric',()=>{
+ const cases=[
+  {name:'strap contrasting background',kind:'strap',texture:false,multicolor:false},
+  {name:'shoe textured background',kind:'shoe',texture:true,multicolor:false},
+  {name:'dress multicolor',kind:'dress',texture:false,multicolor:true},
+  {name:'sleeve similar-color background',kind:'sleeve',texture:true,multicolor:true}
+ ];
+ const results=[];
+ for(const item of cases){
+  const width=96,height=96,truth=new Uint8Array(width*height),data=new Uint8ClampedArray(width*height*3);
+  const regions=item.kind==='strap'?[[34,5,38,25],[24,25,72,79]]:item.kind==='shoe'?[[18,40,75,62],[12,62,83,67]]:item.kind==='dress'?[[36,8,60,65],[19,65,77,87]]:[[12,30,84,62],[8,42,88,51]];
+  for(let y=0;y<height;y++)for(let x=0;x<width;x++){
+   const i=y*width+x,k=i*3,noise=item.texture?((x*17+y*11)%37):0;
+   data[k]=195+noise;data[k+1]=192+noise;data[k+2]=190+noise;
+  }
+  for(const [x0,y0,x1,y1] of regions)for(let y=y0;y<y1;y++)for(let x=x0;x<x1;x++){
+   const i=y*width+x,k=i*3;truth[i]=1;const alt=item.multicolor&&(x+y)%8<4;
+   data[k]=alt?95:40;data[k+1]=alt?125:70;data[k+2]=alt?170:110;
+  }
+  const selected=new Uint8Array(24*24);
+  for(let y=7;y<19;y++)for(let x=7;x<17;x++)selected[y*24+x]=1;
+  const image={width,height,channels:3,data},map={width:24,height:24},group={id:4,selected};
+  const baseline=connectedEdgeMask(image,map,group,{maxSteps:4});
+  const adaptive=adaptiveEdgeMask(image,map,group,{maxSteps:4,maxGrowthRatio:.2});
+  const evaluate=(mask)=>{
+   let retained=0,total=0,background=0;
+   for(let i=0;i<truth.length;i++){
+    const x=i%width,y=Math.floor(i/width),kept=Boolean(mask[Math.floor(y/4)*24+Math.floor(x/4)]);
+    if(truth[i]){total++;if(kept)retained++;}else if(kept)background++;
+   }
+   return {recall:Number((retained/total).toFixed(4)),backgroundPixels:background};
+  };
+  const initial=evaluate(selected),unrestricted=evaluate(baseline),limited=evaluate(adaptive.selected);
+  assert.ok(adaptive.addedPixels<=adaptive.budget);
+  assert.ok(limited.recall>=initial.recall);
+  assert.ok(limited.backgroundPixels<=unrestricted.backgroundPixels);
+  results.push({case:item.name,initial,unrestricted,limited,acceptedSteps:adaptive.acceptedSteps,addedPixels:adaptive.addedPixels,budget:adaptive.budget});
+ }
+ console.log('ADAPTIVE_EDGE_BENCHMARK '+JSON.stringify(results));
 });
