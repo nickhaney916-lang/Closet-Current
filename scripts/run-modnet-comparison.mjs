@@ -34,19 +34,25 @@ try {
    const maskChannel=mask.channels===4?3:0;
    const canvas=document.createElement('canvas');canvas.width=photo.width;canvas.height=photo.height;
    const ctx=canvas.getContext('2d'),pixels=ctx.createImageData(photo.width,photo.height);
-   const runs=[];let previous=0,count=0,foregroundPixels=0;
+   const runs=[];let previous=0,count=0,foregroundPixels=0,strictPixels=0,borderlinePixels=0;
+   const strictCanvas=document.createElement('canvas');strictCanvas.width=photo.width;strictCanvas.height=photo.height;
+   const strictCtx=strictCanvas.getContext('2d'),strictData=strictCtx.createImageData(photo.width,photo.height);
    for(let i=0;i<photo.width*photo.height;i++){
-    const alpha=mask.data[i*mask.channels+maskChannel]>=128?1:0;
+    const score=mask.data[i*mask.channels+maskChannel];
+    const alpha=score>=128?1:0,strict=score>=192?1:0;
+    strictPixels+=strict;borderlinePixels+=score>=128&&score<192?1:0;
+    strictData.data[i*4]=225;strictData.data[i*4+1]=25;strictData.data[i*4+2]=130;strictData.data[i*4+3]=strict?140:0;
     foregroundPixels+=alpha;
     if(alpha!==previous){runs.push(count);previous=alpha;count=0;}count++;
     pixels.data[i*4]=225;pixels.data[i*4+1]=25;pixels.data[i*4+2]=130;pixels.data[i*4+3]=alpha?140:0;
-   }runs.push(count);ctx.putImageData(pixels,0,0);
-   return {image,sourceSha256:sha,width:photo.width,height:photo.height,runs,foregroundPixels,overlayPng:canvas.toDataURL('image/png').split(',')[1],model:'Xenova/modnet',maskChannels:mask.channels,maskChannel,status:'experimental-unscored'};
+   }runs.push(count);ctx.putImageData(pixels,0,0);strictCtx.putImageData(strictData,0,0);
+   return {strictOverlayPng:strictCanvas.toDataURL('image/png').split(',')[1],strictPixels,borderlinePixels,image,sourceSha256:sha,width:photo.width,height:photo.height,runs,foregroundPixels,overlayPng:canvas.toDataURL('image/png').split(',')[1],model:'Xenova/modnet',maskChannels:mask.channels,maskChannel,status:'experimental-unscored'};
   },{base64:bytes.toString('base64'),image:item.image,sha:source.sha256});
-  const {overlayPng,...prediction}=result;
+  const {overlayPng,strictOverlayPng,...prediction}=result;
+  await writeFile(join(directory,item.id+'.modnet-strict-overlay.png'),Buffer.from(strictOverlayPng,'base64'));
   await writeFile(join(directory,item.id+'.modnet-overlay.png'),Buffer.from(overlayPng,'base64'));
   await writeFile(join(directory,item.id+'.modnet-prediction.json'),JSON.stringify(prediction));
-  results.push({id:item.id,foregroundPixels:prediction.foregroundPixels,status:'unscored-no-approved-reference'});
+  results.push({id:item.id,foregroundPixels:prediction.foregroundPixels,strictPixels:prediction.strictPixels,borderlinePixels:prediction.borderlinePixels,status:'unscored-no-approved-reference'});
   console.log('MODNET_CASE '+JSON.stringify(results.at(-1)));
  }
 }finally{await browser.close();}
