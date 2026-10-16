@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {cropClothingPhotoPixels,isolateClothingPixels,clothingCropBounds,conservativeEdgeMask} from '../public/outfit-segmentation.mjs';
+import {cropClothingPhotoPixels,isolateClothingPixels,clothingCropBounds,conservativeEdgeMask,connectedEdgeMask} from '../public/outfit-segmentation.mjs';
 
 function fixture(){
  const width=96,height=96,channels=3,data=new Uint8ClampedArray(width*height*channels);
@@ -113,4 +113,36 @@ test('conservative edge recovery measures recall against background contaminatio
   report.push({garment:item.name,original,candidate});
  }
  console.log('CONSERVATIVE_EDGE_COMPARISON '+JSON.stringify(report));
+});
+
+test('connected edge recovery compares radius and background leakage on four garment outlines',()=>{
+ const cases=[
+  ['shoulder strap',[[34,5,38,25],[24,25,72,79]]],
+  ['sleeve cuff',[[12,30,84,62],[8,42,88,51]]],
+  ['dress hem',[[36,8,60,65],[19,65,77,87]]],
+  ['shoe sole',[[18,40,75,62],[12,62,83,67]]]
+ ];
+ const results=[];
+ for(const [name,rectangles] of cases){
+  const width=96,height=96,truth=new Uint8Array(width*height),data=new Uint8ClampedArray(width*height*3);data.fill(220);
+  for(const [a,b,c,d] of rectangles)for(let y=b;y<d;y++)for(let x=a;x<c;x++){
+   const i=y*width+x;truth[i]=1;data[3*i]=40;data[3*i+1]=70;data[3*i+2]=110;
+  }
+  const seed=new Uint8Array(24*24);
+  for(let y=7;y<19;y++)for(let x=7;x<17;x++)seed[y*24+x]=1;
+  const image={width,height,channels:3,data},map={width:24,height:24},group={selected:seed,id:4};
+  const measured=[];
+  for(const steps of [0,1,2,3,4]){
+   const mask=connectedEdgeMask(image,map,group,{maxSteps:steps});
+   let retained=0,total=0,contamination=0;
+   for(let i=0;i<truth.length;i++){
+    const x=i%width,y=Math.floor(i/width),keep=mask[Math.floor(y/4)*24+Math.floor(x/4)]===1;
+    if(truth[i]){total++;if(keep)retained++;}else if(keep)contamination++;
+   }
+   measured.push({steps,recall:Number((retained/total).toFixed(4)),backgroundPixels:contamination});
+  }
+  for(let i=1;i<measured.length;i++)assert.ok(measured[i].recall>=measured[i-1].recall);
+  results.push({garment:name,measured});
+ }
+ console.log('CONNECTED_EDGE_SWEEP '+JSON.stringify(results));
 });
