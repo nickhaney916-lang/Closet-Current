@@ -4,6 +4,7 @@ import {resolve,join} from 'node:path';
 import {chromium} from 'playwright';
 import {createServer} from 'node:http';
 import {approvedReferenceMask,scoreApprovedPrediction} from '../benchmark/garment-mask-metrics.mjs';
+import {maskComponents} from '../benchmark/mask-components.mjs';
 const manifest=JSON.parse(await readFile('benchmark/segmentation-review-manifest.json','utf8'));
 const sources=JSON.parse(await readFile('benchmark/locked-photo-sources.json','utf8'));
 const outDir=process.argv[2]||'benchmark/segmentation-predictions';
@@ -45,6 +46,7 @@ try{
   const {overlayPng,...maskPrediction}=predicted;
   await writeFile(join(outDir,entry.id+'.overlay.png'),Buffer.from(overlayPng,'base64'));
   await writeFile(join(outDir,entry.id+'.prediction.json'),JSON.stringify(maskPrediction,null,2));
+  const fragments=maskComponents(maskPrediction);
   let status='awaiting-human-reference',metrics=null;
   if(entry.referenceMask&&entry.reviewStatus==='approved'){
    const annotation=JSON.parse(await readFile(entry.referenceMask,'utf8'));
@@ -52,7 +54,7 @@ try{
    approvedReferenceMask(annotation,entry);
    metrics=scoreApprovedPrediction(annotation,entry,predicted);status='scored';
   }
-  report.push({id:entry.id,status,foregroundPixels:predicted.foregroundPixels,personDetected:predicted.personDetected,metrics});
+  report.push({id:entry.id,status,foregroundPixels:predicted.foregroundPixels,personDetected:predicted.personDetected,fragments,metrics});
   console.log('SEGMENTATION_CASE '+JSON.stringify(report.at(-1)));
  }
 }finally{await browser.close();await new Promise(resolve=>server.close(resolve));}
