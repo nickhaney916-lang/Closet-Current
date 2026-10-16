@@ -1,0 +1,33 @@
+name: Experimental MODNet six-photo comparison
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'scripts/run-modnet-comparison.mjs'
+      - '.github/workflows/modnet-comparison.yml'
+permissions:
+  contents: read
+jobs:
+  experimental:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install browser
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium
+      - name: Download and verify source photographs
+        run: node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos commons-0035,commons-0049,commons-0053,commons-0065,commons-0079,commons-0094
+      - name: Generate experimental MODNet masks
+        run: node scripts/run-modnet-comparison.mjs benchmark/modnet-predictions
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: experimental-modnet-masks
+          path: benchmark/modnet-predictions/
+          retention-days: 14
