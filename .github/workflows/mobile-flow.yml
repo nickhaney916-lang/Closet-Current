@@ -8,6 +8,13 @@ on:
       - '.github/workflows/mobile-flow.yml'
       - 'scripts/download-reviewed-photos.mjs'
       - 'benchmark/locked-photo-sources.json'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'public/**'
+      - 'tests/photo-*.test.cjs'
+      - 'scripts/run-mobile-flow.mjs'
+      - '.github/workflows/mobile-flow.yml'
   workflow_dispatch:
 permissions:
   contents: read
@@ -33,6 +40,8 @@ jobs:
           mkdir -p benchmark/photos benchmark/mobile-flow
           cp benchmark/locked-photo-sources.json benchmark/mobile-flow/
           ffmpeg -loglevel error -loop 1 -i benchmark/photos/commons-0001.jpg -vf 'scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2:black' -r 10 -t 2 -pix_fmt yuv420p -f yuv4mpegpipe benchmark/mobile-camera.y4m
+      - name: Check camera frame quality and stability
+        run: node --test tests/photo-capture-quality.test.cjs tests/photo-frame-quality.test.cjs tests/photo-stability.test.cjs
       - name: Build and verify touch viewport flow with real worker
         run: |
           node scripts/build.mjs
