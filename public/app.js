@@ -166,7 +166,7 @@ function cameraFrameQuality(){
   let min=255,max=0,edges=0,count=0;
   for(let p=0;p<gray.length;p++){const k=p*4;const value=.2126*pixels[k]+.7152*pixels[k+1]+.0722*pixels[k+2];gray[p]=value;min=Math.min(min,value);max=Math.max(max,value);}
   for(let y=1;y<47;y++)for(let x=1;x<63;x++){const p=y*64+x;edges+=Math.abs(4*gray[p]-gray[p-1]-gray[p+1]-gray[p-64]-gray[p+64]);count++;}
-  return {usable:!(max-min<18&&edges/count<4),reason:'low-detail'};
+  return {usable:!(max<45&&max-min<18&&edges/count<4),reason:'very-dark-frame'};
  }catch{return {usable:true};}
 }
 function snap(){if(!video.videoWidth||video.readyState<2)throw Error('The camera has not provided a usable frame yet.');const scale=Math.min(1,2048/Math.max(video.videoWidth,video.videoHeight));canvas.width=Math.max(1,Math.round(video.videoWidth*scale));canvas.height=Math.max(1,Math.round(video.videoHeight*scale));const context=canvas.getContext('2d');context.imageSmoothingEnabled=true;context.imageSmoothingQuality='high';context.drawImage(video,0,0,canvas.width,canvas.height);return canvas.toDataURL('image/jpeg',.94);}
