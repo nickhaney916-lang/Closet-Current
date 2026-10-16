@@ -6,6 +6,8 @@ on:
     paths:
       - 'scripts/run-modnet-comparison.mjs'
       - 'scripts/build-segmentation-review-pack.mjs'
+      - 'scripts/test-mobile-garment-review.mjs'
+      - 'benchmark/mobile-review-template.html'
       - 'benchmark/annotate-garment.html'
       - 'benchmark/modnet-boundary-report.mjs'
       - 'tests/modnet-boundary-report.test.mjs'
@@ -33,6 +35,8 @@ jobs:
         run: node scripts/run-modnet-comparison.mjs benchmark/modnet-predictions
       - name: Prepare six-photo human review pack
         run: node scripts/build-segmentation-review-pack.mjs
+      - name: Verify one-tap mobile review screen
+        run: node scripts/test-mobile-garment-review.mjs
       - uses: actions/upload-artifact@v4
         with:
           name: segmentation-human-review-pack
