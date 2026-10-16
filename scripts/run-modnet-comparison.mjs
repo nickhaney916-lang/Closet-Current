@@ -2,6 +2,7 @@ import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import {join} from 'node:path';
 import {chromium} from 'playwright';
+import {scoreApprovedPredictionAtReferenceResolution} from '../benchmark/garment-mask-metrics.mjs';
 import {thresholdBoundaryReport} from '../benchmark/modnet-boundary-report.mjs';
 const manifest=JSON.parse(await readFile('benchmark/segmentation-review-manifest.json','utf8'));
 const sources=JSON.parse(await readFile('benchmark/locked-photo-sources.json','utf8'));
@@ -55,8 +56,14 @@ try {
   await writeFile(join(directory,item.id+'.modnet-strict-overlay.png'),Buffer.from(strictOverlayPng,'base64'));
   await writeFile(join(directory,item.id+'.modnet-overlay.png'),Buffer.from(overlayPng,'base64'));
   await writeFile(join(directory,item.id+'.modnet-prediction.json'),JSON.stringify(prediction));
-  results.push({id:item.id,foregroundPixels:prediction.foregroundPixels,strictPixels:prediction.strictPixels,borderlinePixels:prediction.borderlinePixels,boundary:prediction.boundary,status:'unscored-no-approved-reference'});
+  let metrics=null,status='unscored-no-approved-reference';
+  if(item.referenceMask&&item.reviewStatus==='approved'){
+   const annotation=JSON.parse(await readFile(item.referenceMask,'utf8'));
+   metrics=scoreApprovedPredictionAtReferenceResolution(annotation,item,prediction);
+   status='scored';
+  }
+  results.push({id:item.id,metrics,foregroundPixels:prediction.foregroundPixels,strictPixels:prediction.strictPixels,borderlinePixels:prediction.borderlinePixels,boundary:prediction.boundary,status});
   console.log('MODNET_CASE '+JSON.stringify(results.at(-1)));
  }
 }finally{await browser.close();}
-await writeFile(join(directory,'summary.json'),JSON.stringify({model:'Xenova/modnet',license:'Apache-2.0 (model card)',notProduction:true,accuracy:'unavailable-without-approved-reference',results},null,2));
+await writeFile(join(directory,'summary.json'),JSON.stringify({model:'Xenova/modnet',license:'Apache-2.0 (model card)',notProduction:true,accuracy:results.every(r=>r.status==='scored')?'approved-references-scored':'unavailable-without-approved-reference',results},null,2));
