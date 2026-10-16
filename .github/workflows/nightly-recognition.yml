@@ -51,6 +51,27 @@ jobs:
             echo "$failures/2 attempts failed. Inspect uploaded diagnostics. No production code was changed." >> benchmark/nightly/summary.txt
             exit 1
           fi
+      - name: Summarize quality gates from both attempts
+        if: always()
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import {readFile,appendFile} from 'node:fs/promises';
+          for (const n of [1,2]) {
+            const base = `benchmark/nightly/attempt-${n}`;
+            try {
+              const report = JSON.parse(await readFile(`${base}/real-photo-indexing.json`, 'utf8'));
+              const accuracy = report.allSubmittedAccuracy == null ? 'unknown' : (report.allSubmittedAccuracy*100).toFixed(1)+'%';
+              const summary = `Attempt ${n}: category accuracy=${accuracy}, submitted=${report.submitted}, uncategorized=${report.uncategorizedCount ?? 'unknown'}. Camera resolution and original-photo preservation are asserted by mobile-flow runner.\n`;
+              await appendFile('benchmark/nightly/summary.txt',summary);
+              console.log(summary);
+            } catch (error) {
+              const summary = `Attempt ${n}: accuracy report unavailable (${error.message}); inspect runner.log.\n`;
+              await appendFile('benchmark/nightly/summary.txt',summary);
+              console.log(summary);
+            }
+          }
+          NODE
       - name: Save logs and photo diagnostics, including on failures
         uses: actions/upload-artifact@v4
         if: always()
