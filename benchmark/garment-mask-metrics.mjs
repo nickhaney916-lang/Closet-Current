@@ -1,0 +1,32 @@
+// Pixel-level segmentation scoring. A reference mask must come from human-reviewed
+// annotation, never from the model prediction being evaluated.
+export function scoreGarmentMask(reference,prediction,width,height){
+ if(!Number.isInteger(width)||!Number.isInteger(height)||width<1||height<1||reference?.length!==width*height||prediction?.length!==width*height)throw Error('Invalid segmentation benchmark masks');
+ let truePositive=0,falsePositive=0,falseNegative=0,trueNegative=0;
+ for(let i=0;i<reference.length;i++){
+  const truth=reference[i],pred=prediction[i];
+  if(![0,1].includes(truth)||![0,1].includes(pred))throw Error('Masks must be binary 0/1');
+  if(truth&&pred)truePositive++;
+  else if(!truth&&pred)falsePositive++;
+  else if(truth&&!pred)falseNegative++;
+  else trueNegative++;
+ }
+ const divide=(a,b)=>b?a/b:null;
+ return {width,height,truePositive,falsePositive,falseNegative,trueNegative,
+  garmentRecall:divide(truePositive,truePositive+falseNegative),
+  garmentPrecision:divide(truePositive,truePositive+falsePositive),
+  intersectionOverUnion:divide(truePositive,truePositive+falsePositive+falseNegative),
+  backgroundContaminationRate:divide(falsePositive,falsePositive+trueNegative)};
+}
+export function decodeReferenceMask(annotation){
+ const {width,height,runs}=annotation||{};
+ if(!Number.isInteger(width)||!Number.isInteger(height)||width<1||height<1||width*height>12e6||!Array.isArray(runs)||runs.length>width*height)throw Error('Invalid garment annotation');
+ const mask=new Uint8Array(width*height);let offset=0,foreground=false;
+ for(const count of runs){
+  if(!Number.isInteger(count)||count<0||offset+count>mask.length)throw Error('Invalid annotation run');
+  if(foreground)mask.fill(1,offset,offset+count);
+  offset+=count;foreground=!foreground;
+ }
+ if(offset!==mask.length)throw Error('Incomplete annotation');
+ return mask;
+}
