@@ -18,7 +18,9 @@ photo.onchange=async()=>{
   const scale=Math.min(1,768/Math.max(image.naturalWidth,image.naturalHeight));
   canvas.width=Math.round(image.naturalWidth*scale);canvas.height=Math.round(image.naturalHeight*scale);
   const base=document.createElement('canvas');base.width=canvas.width;base.height=canvas.height;base.getContext('2d').drawImage(image,0,0,base.width,base.height);
-  source={fileName:file.name,base};mask=new Uint8Array(canvas.width*canvas.height);strokes=0;seedModel=null;download.disabled=true;redraw();status.textContent='Paint garment outline carefully; initial mask is blank.';
+  const digest=await crypto.subtle.digest('SHA-256',await file.arrayBuffer());
+  const sourceSha256=Array.from(new Uint8Array(digest),b=>b.toString(16).padStart(2,'0')).join('');
+  source={fileName:file.name,sourceSha256,base};mask=new Uint8Array(canvas.width*canvas.height);strokes=0;seedModel=null;download.disabled=true;redraw();status.textContent='Paint garment outline carefully; initial mask is blank.';
  }catch{status.textContent='Unable to decode image';}finally{URL.revokeObjectURL(url);}
 };
 resume.onchange=async()=>{
@@ -27,7 +29,7 @@ resume.onchange=async()=>{
  try {
   if(file.size>16000000)throw Error('Draft too large');
   const draft=JSON.parse(await file.text()),n=canvas.width*canvas.height;
-  if(draft.schemaVersion!==1||draft.reviewStatus!=='draft'||draft.image!==source.fileName||draft.width!==canvas.width||draft.height!==canvas.height||!Array.isArray(draft.runs)||draft.runs.length>n)throw Error('Draft image or dimensions mismatch');
+  if(draft.schemaVersion!==1||draft.reviewStatus!=='draft'||draft.image!==source.fileName||draft.sourceSha256!==source.sourceSha256||draft.width!==canvas.width||draft.height!==canvas.height||!Array.isArray(draft.runs)||draft.runs.length>n)throw Error('Draft image or dimensions mismatch');
   const restored=new Uint8Array(n);let offset=0,foreground=false;
   for(const count of draft.runs){if(!Number.isInteger(count)||count<0||offset+count>n)throw Error('Invalid run encoding');if(foreground)restored.fill(1,offset,offset+count);offset+=count;foreground=!foreground;}
   if(offset!==n)throw Error('Incomplete mask');
@@ -41,7 +43,7 @@ prediction.onchange=async()=>{
  try{
   if(file.size>16000000)throw Error('Prediction too large');
   const data=JSON.parse(await file.text()),w=data.width,h=data.height,n=w*h;
-  if(data.image!==source.fileName||!Number.isInteger(w)||!Number.isInteger(h)||w<1||h<1||n>12000000||!Array.isArray(data.runs)||data.runs.length>n)throw Error('Prediction image or dimensions mismatch');
+  if(data.image!==source.fileName||data.sourceSha256!==source.sourceSha256||!Number.isInteger(w)||!Number.isInteger(h)||w<1||h<1||n>12000000||!Array.isArray(data.runs)||data.runs.length>n)throw Error('Prediction image or dimensions mismatch');
   if(Math.abs(w/h-canvas.width/canvas.height)>.005)throw Error('Prediction aspect ratio mismatch');
   const decoded=new Uint8Array(n);let offset=0,foreground=false;
   for(const count of data.runs){if(!Number.isInteger(count)||count<0||offset+count>n)throw Error('Invalid prediction runs');if(foreground)decoded.fill(1,offset,offset+count);offset+=count;foreground=!foreground;}
@@ -72,7 +74,7 @@ download.onclick=()=>{
  const runs=[];let previous=0,count=0;
  for(const value of mask){if(value!==previous){runs.push(count);count=0;previous=value;}count++;}
  runs.push(count);
- const annotation={schemaVersion:1,image:source.fileName,width:canvas.width,height:canvas.height,runs,reviewStatus:'draft',seedModel,note:'Requires independent human verification before benchmark scoring'};
+ const annotation={schemaVersion:1,image:source.fileName,sourceSha256:source.sourceSha256,width:canvas.width,height:canvas.height,runs,reviewStatus:'draft',seedModel,note:'Requires independent human verification before benchmark scoring'};
  const blob=new Blob([JSON.stringify(annotation,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');
  a.href=url;a.download=source.fileName.replace(/\.[^.]+$/,'')+'.mask.draft.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
  status.textContent='Draft exported. A second reviewer must verify garment boundaries before changing reviewStatus to approved.';
