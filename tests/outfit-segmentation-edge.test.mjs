@@ -41,3 +41,42 @@ test('thin boundary areas are measured separately from original crop',()=>{
  // garment edges from an unlabeled real-world photograph.
  console.log('EDGE_MASK_DIAGNOSTIC '+JSON.stringify({removedGarmentPixels,sourceWidth:image.width,sourceHeight:image.height}));
 });
+
+test('thin garment extremities expose coarse-mask recall losses without altering recognition source',()=>{
+ const cases=[
+  {name:'thin shoulder strap',rects:[[34,5,38,25],[24,25,72,79]]},
+  {name:'extended sleeve cuff',rects:[[12,30,84,62],[8,42,88,51]]},
+  {name:'dress hem',rects:[[36,8,60,65],[19,65,77,87]]},
+  {name:'shoe sole',rects:[[18,40,75,62],[12,62,83,67]]}
+ ];
+ const observations=[];
+ for(const entry of cases){
+  const width=96,height=96,data=new Uint8ClampedArray(width*height*3);
+  data.fill(220);const truth=new Uint8Array(width*height);
+  for(const [x0,y0,x1,y1] of entry.rects)for(let y=y0;y<y1;y++)for(let x=x0;x<x1;x++){
+   truth[y*width+x]=1;const i=(y*width+x)*3;data[i]=40;data[i+1]=70;data[i+2]=110;
+  }
+  const selected=new Uint8Array(24*24);
+  // Coarse segmentation recognizes the garment core but clips narrow details.
+  for(let y=7;y<19;y++)for(let x=7;x<17;x++)selected[y*24+x]=1;
+  const group={selected,bounds:{left:4,top:1,right:22,bottom:23}};
+  const map={width:24,height:24};
+  const image={width,height,channels:3,data};
+  const isolated=isolateClothingPixels(image,map,group);
+  const raw=cropClothingPhotoPixels(image,map,group);
+  let visible=0,total=0,originalRetained=0;
+  for(let y=0;y<raw.height;y++)for(let x=0;x<raw.width;x++){
+   const xx=x+raw.bounds.left,yy=y+raw.bounds.top;
+   if(!truth[yy*width+xx])continue;
+   total++;
+   const i=(y*raw.width+x)*3;
+   if(isolated.data[i]===40)visible++;
+   if(raw.data[i]===40)originalRetained++;
+  }
+  assert.ok(total>0&&originalRetained===total);
+  const recall=visible/total;
+  assert.ok(recall<1,entry.name+' should reveal missing thin boundary fabric in coarse mask');
+  observations.push({garment:entry.name,visibleFabricPixels:visible,groundTruthFabricPixels:total,maskRecall:Number(recall.toFixed(4)),sourceCropRecall:1});
+ }
+ console.log('GARMENT_EDGE_RECALL '+JSON.stringify(observations));
+});
