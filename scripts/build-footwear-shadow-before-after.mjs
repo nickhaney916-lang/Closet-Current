@@ -42,6 +42,33 @@ try{
    return sheet.toDataURL('image/png').split(',')[1];
   },{photo,prediction,rows,id});
   await writeFile(join(output,id+'-shadow-before-after.png'),Buffer.from(outputPng,'base64'));
+  const detail=await page.evaluate(async ({photo,prediction})=>{
+   const image=new Image();image.src=photo;await image.decode();
+   const w=prediction.width,h=prediction.height;
+   if(image.naturalWidth!==w||image.naturalHeight!==h)throw Error('Native resolution mismatch');
+   const source=document.createElement('canvas');source.width=w;source.height=h;
+   const ctx=source.getContext('2d');ctx.drawImage(image,0,0);const data=ctx.getImageData(0,0,w,h);
+   const bits=new Uint8Array(w*h);let at=0,on=false;
+   for(const n of prediction.runs){if(!Number.isInteger(n)||n<0||at+n>bits.length)throw Error('Bad prediction');if(on)bits.fill(1,at,at+n);at+=n;on=!on;}
+   if(at!==bits.length)throw Error('Bad prediction length');
+   let minX=w,maxX=0,minY=h,maxY=0;
+   for(let y=0;y<h;y++)for(let x=0;x<w;x++)if(bits[y*w+x]){minX=Math.min(minX,x);maxX=Math.max(maxX,x);minY=Math.min(minY,y);maxY=Math.max(maxY,y);}
+   const left=Math.max(0,minX),top=Math.max(0,Math.floor(minY+(maxY-minY)*.65));
+   const cw=Math.max(1,Math.min(w-left,maxX-left+1)),ch=Math.max(1,Math.min(h-top,maxY-top+1));
+   const masked=new ImageData(new Uint8ClampedArray(data.data),w,h);
+   for(let i=0;i<bits.length;i++)masked.data[4*i+3]=bits[i]?255:0;
+   const cut=document.createElement('canvas');cut.width=w;cut.height=h;
+   const cc=cut.getContext('2d');cc.fillStyle='#eee9f3';cc.fillRect(0,0,w,h);
+   const transparent=document.createElement('canvas');transparent.width=w;transparent.height=h;transparent.getContext('2d').putImageData(masked,0,0);
+   cc.drawImage(transparent,0,0);
+   const scale=2,out=document.createElement('canvas');out.width=cw*scale*2;out.height=ch*scale;
+   const oc=out.getContext('2d');oc.imageSmoothingEnabled=false;
+   oc.drawImage(source,left,top,cw,ch,0,0,cw*scale,ch*scale);
+   oc.drawImage(cut,left,top,cw,ch,cw*scale,0,cw*scale,ch*scale);
+   return {png:out.toDataURL('image/png').split(',')[1],crop:{left,top,width:cw,height:ch,scale,sourceWidth:w,sourceHeight:h},binaryAlpha:true};
+  },{photo,prediction});
+  await writeFile(join(output,id+'-native-edges-2x.png'),Buffer.from(detail.png,'base64'));
+  console.log('NATIVE_EDGE_REVIEW '+JSON.stringify({id,...detail.crop,binaryAlpha:detail.binaryAlpha,warning:'Pixelated edges may be intrinsic to binary alpha mask; this is not an accuracy score'}));
   console.log('SHADOW_EXPERIMENT '+JSON.stringify({id,candidatePixels,rows:rows.length,reviewOnly:true,productionUnchanged:true,warning:'May remove real sole pixels'}));
  }
 }finally{await browser.close();}
