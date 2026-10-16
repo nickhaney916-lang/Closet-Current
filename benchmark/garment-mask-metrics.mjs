@@ -30,3 +30,13 @@ export function decodeReferenceMask(annotation){
  if(offset!==mask.length)throw Error('Incomplete annotation');
  return mask;
 }
+
+export function approvedReferenceMask(annotation,manifestEntry){
+ if(!manifestEntry||annotation?.schemaVersion!==1||annotation.reviewStatus!=='approved')throw Error('Annotation not independently approved');
+ if(annotation.image!==manifestEntry.image||annotation.sourceSha256!==manifestEntry.sourceSha256)throw Error('Annotation source mismatch');
+ if(typeof annotation.reviewer!=='string'||!annotation.reviewer.trim()||typeof annotation.approvedBy!=='string'||!annotation.approvedBy.trim()||annotation.reviewer.trim()===annotation.approvedBy.trim())throw Error('Independent second reviewer required');
+ const mask=decodeReferenceMask(annotation);
+ const marked=mask.reduce((sum,v)=>sum+v,0);
+ if(marked===0||marked===mask.length)throw Error('Annotation must contain garment and background');
+ return mask;
+}
