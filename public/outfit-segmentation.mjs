@@ -131,6 +131,34 @@ export function adaptiveEdgeMask(image,map,group,{maxSteps=4,maxColorDistance=35
  }
  return {selected:best,acceptedSteps,addedPixels:best.reduce((sum,v,i)=>sum+(v&&!seed[i]?1:0),0),budget};
 }
+// Experimental discriminative recovery. Compare each proposed coarse pixel
+// against neighboring confirmed garment AND background samples. Never applied
+// to the production isolation or recognition paths.
+export function discriminativeEdgeMask(image,map,group,{maxSteps=3,margin=12,maxGrowthRatio=.4}={}){
+ const {width,height}=map,seed=group.selected;
+ if(seed?.length!==width*height||![3,4].includes(image.channels)||!Number.isInteger(maxSteps)||maxSteps<0||maxSteps>6||!Number.isFinite(margin)||margin<0||!Number.isFinite(maxGrowthRatio)||maxGrowthRatio<0||maxGrowthRatio>2)throw Error('Invalid edge recovery inputs');
+ const color=i=>{const x=i%width,y=Math.floor(i/width),px=Math.min(image.width-1,Math.floor((x+.5)*image.width/width)),py=Math.min(image.height-1,Math.floor((y+.5)*image.height/height)),k=(py*image.width+px)*image.channels;return [image.data[k],image.data[k+1],image.data[k+2]];};
+ const distance=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1],a[2]-b[2]);
+ const neighbors=i=>{const x=i%width,y=Math.floor(i/width);return [x>0?i-1:-1,x<width-1?i+1:-1,y>0?i-width:-1,y<height-1?i+width:-1].filter(n=>n>=0);};
+ const out=new Uint8Array(seed),original=seed.reduce((n,v)=>n+(v?1:0),0),budget=Math.floor(original*maxGrowthRatio);let added=0,acceptedSteps=0;
+ // Fixed reference backgrounds prevent a recovered garment region from
+ // redefining the background as it grows.
+ for(let step=0;step<maxSteps;step++){
+  const candidates=[];
+  for(let i=0;i<seed.length;i++){
+   if(out[i]||(map.labels?.[i]&&map.labels[i]!==group.id))continue;
+   const touching=neighbors(i).filter(n=>out[n]);if(!touching.length)continue;
+   const rgb=color(i),garmentDistance=Math.min(...touching.map(n=>distance(rgb,color(n))));
+   const external=neighbors(i).filter(n=>!out[n]&&!seed[n]);
+   if(!external.length)continue;
+   const backgroundDistance=Math.min(...external.map(n=>distance(rgb,color(n))));
+   if(garmentDistance+margin<backgroundDistance)candidates.push(i);
+  }
+  if(!candidates.length||added+candidates.length>budget)break;
+  for(const i of candidates)out[i]=1;added+=candidates.length;acceptedSteps++;
+ }
+ return {selected:out,acceptedSteps,addedPixels:added,budget};
+}
 export function isolateClothingPixels(image,map,group){
  const {left,top,width,height}=clothingCropBounds(image,map,group),scaleX=image.width/map.width,scaleY=image.height/map.height;
  const data=new Uint8ClampedArray(width*height*3);data.fill(255);
