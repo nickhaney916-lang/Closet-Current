@@ -20,3 +20,14 @@ test('quality check does not reject when browser sampling is unavailable',()=>{
  vm.createContext(sandbox);vm.runInContext(qualityCode,sandbox);
  assert.equal(sandbox.cameraFrameQuality().usable,true);
 });
+
+test('low resolution camera frames are rejected even if bright',()=>{
+ const sandbox={video:{readyState:2,videoWidth:200,videoHeight:180},document:{},Math};
+ vm.createContext(sandbox);vm.runInContext(qualityCode,sandbox);
+ assert.equal(sandbox.cameraFrameQuality().usable,false);
+});
+test('browser canvas security or device failures do not prevent capture',()=>{
+ const sandbox={video:{readyState:2,videoWidth:1920,videoHeight:1080},document:{createElement(){throw Error('Canvas unavailable');}},Math};
+ vm.createContext(sandbox);vm.runInContext(qualityCode,sandbox);
+ assert.equal(sandbox.cameraFrameQuality().usable,true);
+});
