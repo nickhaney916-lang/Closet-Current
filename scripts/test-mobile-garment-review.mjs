@@ -7,6 +7,12 @@ try{
  await page.locator('#garment').getByText('Orange shorts').waitFor();
  await page.locator('#preview').evaluate(async c=>{if(!c.width||!c.height)throw Error('Canvas not loaded');});
  assert.equal(await page.locator('#count').textContent(),'1 / 6');
+ const nativeSize=await page.locator('#preview').evaluate(c=>[c.width,c.height]);
+ await page.locator('#inspect').click();
+ assert.equal(await page.locator('#inspect').getAttribute('aria-pressed'),'true');
+ assert.deepEqual(await page.locator('#preview').evaluate(c=>[c.width,c.height]),nativeSize);
+ await page.locator('#inspect').click();
+ assert.equal(await page.locator('#inspect').getAttribute('aria-pressed'),'false');
  await page.locator('#original').click();assert.equal(await page.locator('#original').getAttribute('aria-pressed'),'true');
  await page.locator('#cutout').click();assert.equal(await page.locator('#cutout').getAttribute('aria-pressed'),'true');
  await page.locator('#good').click();assert.equal(await page.locator('#count').textContent(),'2 / 6');
