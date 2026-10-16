@@ -36,6 +36,8 @@ try{
  await page.locator('#confirm').click();
  assert.equal(await page.locator('#count').textContent(),'2 / 2');
  await page.locator('#good').click();
+ await page.locator('#copy').click();
+ assert.equal(JSON.parse(await page.locator('#feedback-text').inputValue()).results.length,2);
  const p2=page.waitForEvent('download');await page.locator('#export').click();const d2=await p2;
  const footwear=JSON.parse(await fs.readFile(await d2.path(),'utf8'));
  assert.deepEqual(footwear.results.map(x=>x.id),['commons-0079','commons-0094']);
