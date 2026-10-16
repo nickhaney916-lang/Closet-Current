@@ -42,7 +42,7 @@
  }
  // Local preprocessing only. Never updates the saved photo or contacts a server.
  async function resizeReference(dataUrl,{maxDimension=510,quality=.88}={}){
-  if(typeof dataUrl!=='string'||!/^data:image\\/(?:jpeg|png|webp);base64,/i.test(dataUrl))throw Error('A saved clothing photograph is required.');
+  if(typeof dataUrl!=='string'||!/^data:image[/](?:jpeg|png|webp);base64,/i.test(dataUrl))throw Error('A saved clothing photograph is required.');
   if(typeof document==='undefined'||typeof createImageBitmap!=='function')throw Error('Browser image decoding is unavailable.');
   const response=await fetch(dataUrl),blob=await response.blob();
   if(blob.size>16*1024*1024)throw Error('Reference photo is too large to prepare.');
