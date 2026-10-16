@@ -92,6 +92,28 @@ export function conservativeEdgeMask(image,map,group,{maxColorDistance=35}={}){
  }
  return output;
 }
+// Experimental multi-step recovery: grow only through pixels similar to the
+// garment seed. This is intentionally NOT used by the production crop path.
+export function connectedEdgeMask(image,map,group,{maxSteps=3,maxColorDistance=35}={}){
+ if(!Number.isInteger(maxSteps)||maxSteps<0||maxSteps>6)throw Error('Invalid edge recovery steps');
+ const {width,height}=map,seed=group.selected;
+ if(seed?.length!==width*height||![3,4].includes(image.channels)||image.data.length!==image.width*image.height*image.channels||!Number.isFinite(maxColorDistance)||maxColorDistance<0)throw Error('Invalid edge recovery inputs');
+ const out=new Uint8Array(seed),sx=image.width/width,sy=image.height/height;
+ const color=(i)=>{const x=i%width,y=Math.floor(i/width),px=Math.min(image.width-1,Math.floor((x+.5)*sx)),py=Math.min(image.height-1,Math.floor((y+.5)*sy)),offset=(py*image.width+px)*image.channels;return [image.data[offset],image.data[offset+1],image.data[offset+2]];};
+ for(let step=0;step<maxSteps;step++){
+  const frontier=[];
+  for(let i=0;i<out.length;i++){
+   if(out[i])continue;
+   if(map.labels?.[i]&&map.labels[i]!==group.id)continue;
+   const x=i%width,y=Math.floor(i/width),neighbors=[x>0?i-1:-1,x<width-1?i+1:-1,y>0?i-width:-1,y<height-1?i+width:-1];
+   const rgb=color(i);
+   if(neighbors.some(n=>{if(n<0||!out[n])return false;const reference=color(n);return Math.hypot(...rgb.map((v,k)=>v-reference[k]))<=maxColorDistance;}))frontier.push(i);
+  }
+  if(!frontier.length)break;
+  for(const i of frontier)out[i]=1;
+ }
+ return out;
+}
 export function isolateClothingPixels(image,map,group){
  const {left,top,width,height}=clothingCropBounds(image,map,group),scaleX=image.width/map.width,scaleY=image.height/map.height;
  const data=new Uint8ClampedArray(width*height*3);data.fill(255);
