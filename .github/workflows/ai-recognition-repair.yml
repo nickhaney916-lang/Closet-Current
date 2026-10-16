@@ -1,0 +1,136 @@
+name: AI repair for failed closet recognition tests
+on:
+  workflow_run:
+    workflows: ["Nightly repeated clothing recognition checks"]
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: closet-recognition-ai-repair
+  cancel-in-progress: false
+
+jobs:
+  repair:
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'failure' && github.event.workflow_run.head_branch == 'main') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - name: Check for API key
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          if [ -z "$OPENAI_API_KEY" ]; then
+            echo "::error::Add OPENAI_API_KEY as a GitHub Actions repository secret to enable AI repair."
+            exit 1
+          fi
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prepare browser and independently sourced photo fixtures
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos commons-0001,commons-0002,commons-0003,commons-0021,commons-0024,commons-0033,commons-0035,commons-0045,commons-0049,commons-0053,commons-0060,commons-0065,commons-0070,commons-0079,commons-0083,commons-0094
+          mkdir -p benchmark/ai-repair
+          ffmpeg -loglevel error -loop 1 -i benchmark/photos/commons-0001.jpg -vf 'scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2:black' -r 10 -t 2 -pix_fmt yuv420p -f yuv4mpegpipe benchmark/mobile-camera.y4m
+      - name: Baseline diagnostic run
+        id: baseline
+        continue-on-error: true
+        shell: bash
+        run: |
+          node scripts/build.mjs
+          node scripts/run-mobile-flow.mjs benchmark/ai-repair/baseline > benchmark/ai-repair/baseline.log 2>&1
+      - name: First AI diagnostic and correction
+        if: ${{ steps.baseline.outcome == 'failure' }}
+        uses: openai/codex-action@v1
+        with:
+          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+          permission-profile: ":workspace"
+          prompt: |
+            You are correcting a regression in Closet Current, not Drive Duel.
+            Inspect benchmark/ai-repair/baseline.log and baseline artifacts.
+            Find the actual reproducible cause of any mobile clothing recognition, image-resolution, cropping, or indexing regression.
+            Implement the smallest responsible source fix and add a regression assertion if practical.
+            Do not edit CI workflows, auth, secrets, build configuration or benchmark expected labels.
+            Do not lower thresholds, skip tests, alter ground truth, or touch unrelated projects.
+            Original high-resolution photos must be preserved and clothing pixels not degraded.
+            You may inspect files and make code changes locally. Do not push, merge or deploy.
+            Finish with a concise description of the issue and changed files.
+      - name: Retest after first AI repair
+        if: ${{ steps.baseline.outcome == 'failure' }}
+        id: retest
+        continue-on-error: true
+        shell: bash
+        run: |
+          node scripts/build.mjs
+          node scripts/run-mobile-flow.mjs benchmark/ai-repair/retest > benchmark/ai-repair/retest.log 2>&1
+      - name: Second AI correction when still failing
+        if: ${{ steps.baseline.outcome == 'failure' && steps.retest.outcome == 'failure' }}
+        uses: openai/codex-action@v1
+        with:
+          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+          permission-profile: ":workspace"
+          prompt: |
+            First repair did not pass the mobile recognition benchmark.
+            Inspect benchmark/ai-repair/baseline.log and benchmark/ai-repair/retest.log.
+            Make one further narrowly scoped fix to application code, not tests or expected labels.
+            Preserve full-resolution source images, correct garment category labels, and crop fidelity.
+            Do not change workflows, credentials or unrelated repositories. Do not push/merge/deploy.
+      - name: Final regression verification
+        if: ${{ steps.baseline.outcome == 'failure' }}
+        id: final
+        continue-on-error: true
+        shell: bash
+        run: |
+          node scripts/build.mjs
+          node scripts/run-mobile-flow.mjs benchmark/ai-repair/final > benchmark/ai-repair/final.log 2>&1
+      - name: Remove generated fixtures and ensure changes are limited to application code
+        if: ${{ steps.baseline.outcome == 'failure' }}
+        run: |
+          git restore --staged --worktree -- .github scripts/run-mobile-flow.mjs benchmark/locked-photo-sources.json || true
+          git status --short > benchmark/ai-repair/changed-files.txt
+          if git status --porcelain | grep -E '^.. (\.github/|benchmark/)' | grep -v 'benchmark/photos/' | grep -v 'benchmark/ai-repair/'; then
+            echo "::error::Unexpected edits to benchmark or workflow; no PR will be created."
+            exit 1
+          fi
+      - name: Open review-only fix PR if application files changed
+        if: ${{ steps.baseline.outcome == 'failure' }}
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ github.token }}
+          commit-message: "fix: AI-proposed clothing recognition regression correction"
+          branch: automation/ai-proposed-recognition-fix
+          delete-branch: false
+          title: "Review AI-proposed recognition regression fix"
+          body: |
+            Automated repair attempt following a failed nightly recognition test.
+            This is an unreviewed code proposal. No automatic merge or deployment.
+            Review full-resolution photo preservation, category accuracy and the logged test outcome.
+            Look at the workflow artifacts before merging.
+          draft: true
+          add-paths: |
+            public/**
+            src/**
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ai-repair-diagnostics
+          path: benchmark/ai-repair/
+          retention-days: 14
+      - name: Fail if final test still fails
+        if: ${{ steps.baseline.outcome == 'failure' && steps.final.outcome == 'failure' }}
+        run: |
+          echo "::error::AI changes did not clear all tests; review diagnostics and draft PR. Do not merge."
+          exit 1
