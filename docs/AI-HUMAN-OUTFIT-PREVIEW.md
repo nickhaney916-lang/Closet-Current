@@ -21,3 +21,12 @@ Status: **request preparation only**. No AI image backend is configured or invok
 
 ## Current code
 `public/ai-outfit-preview.js`: pure, local request preparer; no external requests or secrets. `tests/ai-outfit-preview.test.mjs` covers reference selection, dress conflict, and rejecting remote reference URLs.
+
+## Provider candidate for first pilot (research 2026-10-15)
+FASHN virtual try-on is a practical reference-photo option. The stable v1.6 endpoint takes **one garment image + one existing model image per generation**, not an entire closet outfit in one call. To dress a model in several selected pieces may require sequential calls (with accumulated visual drift and added cost) or assessing the newer Try-On Max endpoint for multi-item fidelity. Neither is yet validated for Closet Current's photos; shoes/layers especially require testing.
+
+FASHN's published on-demand price is $0.075 per credit, minimum purchase $7.50/100 credits; v1.6 try-on is one credit per output. An outfit requiring 3 sequential try-on calls could cost roughly $0.225 before retries or other operations. Never imply this is free or guarantee this cost. Pricing: https://help.fashn.ai/plans-and-pricing/api-pricing
+
+The API key and enabled flag belong only in encrypted Cloudflare Pages secrets/variables. The new `functions/api/ai-outfit-preview.js` is deliberately **fail closed**, returning 503 even when manually enabled until user authentication, per-user quota enforcement, explicit consent, and provider response handling are ready. **Do not set AI_PREVIEW_ENABLED=true** as a shortcut. See https://docs.fashn.ai/api-reference/tryon-v1-6 and https://developers.cloudflare.com/pages/functions/bindings/.
+
+Next engineering milestone: verify that the existing Cloudflare Pages deployment method supports Functions (plain static uploads may not); implement authenticated user ownership and a budget cap; pick a licensed consistent base model photo; run a supervised 2–3-garment image-fidelity experiment after credits are explicitly approved. No actual garment images have been transmitted to FASHN.
