@@ -14,6 +14,7 @@ for(const item of manifest.cases){const prediction=JSON.parse(await readFile(joi
 const template=await readFile('benchmark/mobile-review-template.html','utf8');
 await writeFile(join(root,'START-REVIEW.html'),template.replace('__REVIEW_DATA__',JSON.stringify(reviewCases).replaceAll('<','\\u003c')));
 await copyFile('benchmark/annotate-garment.html',join(root,'annotate-garment.html'));
+await copyFile('benchmark/FOOTWEAR-OUTLINE-REVIEW.txt',join(root,'FOOTWEAR-OUTLINE-REVIEW.txt'));
 await copyFile('benchmark/segmentation-review-manifest.json',join(root,'manifest.json'));
 await writeFile(join(root,'START-HERE.txt'),[
  'CLOSET CURRENT — SIX-PHOTO OUTLINE REVIEW PACK',
