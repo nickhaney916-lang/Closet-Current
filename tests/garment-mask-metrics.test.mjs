@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {scoreGarmentMask,decodeReferenceMask} from '../benchmark/garment-mask-metrics.mjs';
+import {scoreGarmentMask,decodeReferenceMask,approvedReferenceMask} from '../benchmark/garment-mask-metrics.mjs';
 
 test('a perfect annotated cutout achieves full recall, precision, and overlap',()=>{
  const reference=Uint8Array.from([0,1,1,0,0,1]);
@@ -49,4 +49,14 @@ test('review manifest uses verified distinct photos and never treats pending lab
   assert.equal(item.referenceMask,null);
   assert.equal(item.reviewStatus,'pending');
  }
+});
+
+test('draft, wrong source, self-approved, and trivial masks cannot become benchmark ground truth',()=>{
+ const entry={image:'shoe.jpg',sourceSha256:'abc'};
+ const good={schemaVersion:1,image:'shoe.jpg',sourceSha256:'abc',reviewStatus:'approved',reviewer:'first',approvedBy:'second',width:2,height:2,runs:[1,2,1]};
+ assert.deepEqual([...approvedReferenceMask(good,entry)],[0,1,1,0]);
+ assert.throws(()=>approvedReferenceMask({...good,reviewStatus:'draft'},entry),/not independently approved/);
+ assert.throws(()=>approvedReferenceMask({...good,image:'dress.jpg'},entry),/source mismatch/);
+ assert.throws(()=>approvedReferenceMask({...good,approvedBy:'first'},entry),/second reviewer/);
+ assert.throws(()=>approvedReferenceMask({...good,runs:[0,4]},entry),/garment and background/);
 });
