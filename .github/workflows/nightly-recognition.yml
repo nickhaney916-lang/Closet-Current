@@ -1,0 +1,81 @@
+name: Nightly repeated clothing recognition checks
+
+on:
+  schedule:
+    # 00:00-05:00 PST / 01:00-06:00 PDT, every night
+    - cron: '0 8-13 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nightly-recognition-checks
+  cancel-in-progress: false
+
+jobs:
+  repeat-mobile-recognition:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install test dependencies and licensed photo fixtures
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos commons-0001,commons-0002,commons-0003,commons-0021,commons-0024,commons-0033,commons-0035,commons-0045,commons-0049,commons-0053,commons-0060,commons-0065,commons-0070,commons-0079,commons-0083,commons-0094
+          mkdir -p benchmark/nightly
+          ffmpeg -loglevel error -loop 1 -i benchmark/photos/commons-0001.jpg -vf 'scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2:black' -r 10 -t 2 -pix_fmt yuv420p -f yuv4mpegpipe benchmark/mobile-camera.y4m
+          node scripts/build.mjs
+      - name: Repeat complete mobile recognition test twice and retain both outcomes
+        shell: bash
+        run: |
+          failures=0
+          for attempt in 1 2; do
+            mkdir -p "benchmark/nightly/attempt-$attempt"
+            if node scripts/run-mobile-flow.mjs "benchmark/nightly/attempt-$attempt" > "benchmark/nightly/attempt-$attempt/runner.log" 2>&1; then
+              echo "Attempt $attempt: passed" | tee -a benchmark/nightly/summary.txt
+            else
+              echo "Attempt $attempt: failed" | tee -a benchmark/nightly/summary.txt
+              failures=$((failures + 1))
+            fi
+          done
+          if [ "$failures" -ne 0 ]; then
+            echo "$failures/2 attempts failed. Inspect uploaded diagnostics. No production code was changed." >> benchmark/nightly/summary.txt
+            exit 1
+          fi
+      - name: Summarize quality gates from both attempts
+        if: always()
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import {readFile,appendFile} from 'node:fs/promises';
+          for (const n of [1,2]) {
+            const base = `benchmark/nightly/attempt-${n}`;
+            try {
+              const report = JSON.parse(await readFile(`${base}/real-photo-indexing.json`, 'utf8'));
+              const accuracy = report.allSubmittedAccuracy == null ? 'unknown' : (report.allSubmittedAccuracy*100).toFixed(1)+'%';
+              const summary = `Attempt ${n}: category accuracy=${accuracy}, submitted=${report.submitted}, uncategorized=${report.uncategorizedCount ?? 'unknown'}. Camera resolution and original-photo preservation are asserted by mobile-flow runner.\n`;
+              await appendFile('benchmark/nightly/summary.txt',summary);
+              console.log(summary);
+            } catch (error) {
+              const summary = `Attempt ${n}: accuracy report unavailable (${error.message}); inspect runner.log.\n`;
+              await appendFile('benchmark/nightly/summary.txt',summary);
+              console.log(summary);
+            }
+          }
+          NODE
+      - name: Save logs and photo diagnostics, including on failures
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: nightly-recognition-results
+          path: benchmark/nightly/
+          retention-days: 14
