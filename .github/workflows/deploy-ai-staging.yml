@@ -51,4 +51,4 @@ jobs:
       - name: Prepare isolated staging Pages configuration
         run: cp config/closet-current-ai-staging.wrangler.example.json wrangler.json
       - name: Deploy to existing staging Pages project only
-        run: npx wrangler pages deploy dist --config wrangler.json --project-name closet-current-ai-staging --branch staging
+        run: npx wrangler pages deploy dist --project-name closet-current-ai-staging --branch staging
