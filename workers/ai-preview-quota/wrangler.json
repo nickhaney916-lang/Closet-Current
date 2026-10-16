@@ -1,0 +1,21 @@
+{
+  "name": "closet-current-ai-preview-quota",
+  "main": "index.js",
+  "compatibility_date": "2026-10-15",
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "AI_PREVIEW_QUOTAS",
+        "class_name": "AIPreviewQuota"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": [
+        "AIPreviewQuota"
+      ]
+    }
+  ]
+}
