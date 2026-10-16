@@ -82,6 +82,6 @@ test('approved prediction aligns 4x4 mask to reviewed 2x2 mask using nearest-nei
  assert.equal(score.referenceWidth,2);
  assert.equal(score.predictionWidth,4);
  assert.equal(score.alignment,'nearest-neighbor at reference resolution');
- assert.throws(()=>scoreApprovedPredictionAtReferenceResolution(approved,entry,{...prediction,height:3}),/aspect ratios/);
+ assert.throws(()=>scoreApprovedPredictionAtReferenceResolution(approved,entry,{...prediction,height:3,runs:[2,2,2,2,2,2]}),/aspect ratios/);
  assert.throws(()=>scoreApprovedPredictionAtReferenceResolution({...approved,reviewStatus:'draft'},entry,prediction),/not independently approved/);
 });
