@@ -28,16 +28,20 @@ try {
    const out=await segmenter(photo);
    if(!out.length)throw Error('MODNet returned no masks');
    const mask=await out[0].resize(photo.width,photo.height);
+   // Background-removal outputs may be RGBA: RGB pixels are colors, NOT a binary mask.
+   // Use the alpha channel for RGBA, or the sole channel for grayscale masks.
+   if(![1,4].includes(mask.channels))throw Error('Unsupported MODNet output channels: '+mask.channels);
+   const maskChannel=mask.channels===4?3:0;
    const canvas=document.createElement('canvas');canvas.width=photo.width;canvas.height=photo.height;
    const ctx=canvas.getContext('2d'),pixels=ctx.createImageData(photo.width,photo.height);
    const runs=[];let previous=0,count=0,foregroundPixels=0;
    for(let i=0;i<photo.width*photo.height;i++){
-    const alpha=mask.data[i*mask.channels]>=128?1:0;
+    const alpha=mask.data[i*mask.channels+maskChannel]>=128?1:0;
     foregroundPixels+=alpha;
     if(alpha!==previous){runs.push(count);previous=alpha;count=0;}count++;
     pixels.data[i*4]=225;pixels.data[i*4+1]=25;pixels.data[i*4+2]=130;pixels.data[i*4+3]=alpha?140:0;
    }runs.push(count);ctx.putImageData(pixels,0,0);
-   return {image,sourceSha256:sha,width:photo.width,height:photo.height,runs,foregroundPixels,overlayPng:canvas.toDataURL('image/png').split(',')[1],model:'Xenova/modnet',status:'experimental-unscored'};
+   return {image,sourceSha256:sha,width:photo.width,height:photo.height,runs,foregroundPixels,overlayPng:canvas.toDataURL('image/png').split(',')[1],model:'Xenova/modnet',maskChannels:mask.channels,maskChannel,status:'experimental-unscored'};
   },{base64:bytes.toString('base64'),image:item.image,sha:source.sha256});
   const {overlayPng,...prediction}=result;
   await writeFile(join(directory,item.id+'.modnet-overlay.png'),Buffer.from(overlayPng,'base64'));
