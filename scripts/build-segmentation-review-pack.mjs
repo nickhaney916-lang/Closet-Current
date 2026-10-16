@@ -13,13 +13,17 @@ const reviewCases=[];
 for(const item of manifest.cases){const prediction=JSON.parse(await readFile(join('benchmark/modnet-predictions',item.id+'.modnet-prediction.json'),'utf8'));const photo=await readFile(join('benchmark/photos',item.image));reviewCases.push({id:item.id,image:item.image,label:labels[item.id]||item.id,sourceSha256:item.sourceSha256,photo:'data:image/jpeg;base64,'+photo.toString('base64'),prediction:{width:prediction.width,height:prediction.height,runs:prediction.runs}});}
 const template=await readFile('benchmark/mobile-review-template.html','utf8');
 await writeFile(join(root,'START-REVIEW.html'),template.replace('__REVIEW_DATA__',JSON.stringify(reviewCases).replaceAll('<','\\u003c')));
+const footwearCases=reviewCases.filter(item=>['commons-0079','commons-0094'].includes(item.id));
+if(footwearCases.length!==2)throw Error('Footwear cases missing');
+await writeFile(join(root,'START-FOOTWEAR-REVIEW.html'),template.replace('__REVIEW_DATA__',JSON.stringify(footwearCases).replaceAll('<','\\u003c')));
 await copyFile('benchmark/annotate-garment.html',join(root,'annotate-garment.html'));
 await copyFile('benchmark/FOOTWEAR-OUTLINE-REVIEW.txt',join(root,'FOOTWEAR-OUTLINE-REVIEW.txt'));
 await copyFile('benchmark/segmentation-review-manifest.json',join(root,'manifest.json'));
 await writeFile(join(root,'START-HERE.txt'),[
  'CLOSET CURRENT — SIX-PHOTO OUTLINE REVIEW PACK',
  '',
- '1. Extract the ZIP and open START-REVIEW.html to rate all six cutouts.',
+ '1. Extract the ZIP; open START-FOOTWEAR-REVIEW.html to inspect sneakers and boots first.',
+ '   Alternatively open START-REVIEW.html to rate all six cutouts.',
  '2. For shoe and boot reference outlines, see FOOTWEAR-OUTLINE-REVIEW.txt.',
  '3. Open annotate-garment.html in a modern browser.',
  '4. Load a photo from photos/ and the matching experimental mask from predictions/.',
