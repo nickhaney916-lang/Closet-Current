@@ -92,6 +92,26 @@ try{
  assert.ok(Number.isFinite(photoDetail.meanAbsoluteChannelError),'JPEG error metric must be finite');
  assert.ok(photoDetail.psnrDb===null||Number.isFinite(photoDetail.psnrDb),'PSNR must be valid');
  assert.ok(photoDetail.edgeEnergyRetentionRatio===null||Number.isFinite(photoDetail.edgeEnergyRetentionRatio),'Edge retention must be valid');
+ // Controlled stress fixtures supplement the real camera capture comparison.
+ // Synthetic patterns provide known ground truth without risking user photos.
+ const detailStress=await page.evaluate(async()=>{
+  const w=256,h=256;
+  const source=document.createElement('canvas');source.width=w;source.height=h;
+  const ctx=source.getContext('2d');
+  ctx.fillStyle='#dddddd';ctx.fillRect(0,0,w,h);
+  for(let y=0;y<128;y+=4){ctx.fillStyle=y%8===0?'#292929':'#eeeeee';ctx.fillRect(0,y,w,2);}
+  for(let y=128;y<h;y+=8)for(let x=0;x<w;x+=8){ctx.fillStyle=((x+y)/8)%2===0?'#345b89':'#eedeb8';ctx.fillRect(x,y,8,8);}
+  function pixels(c){return c.getContext('2d',{willReadFrequently:true}).getImageData(0,0,w,h).data;}
+  async function jpeg(quality){const img=new Image();img.src=source.toDataURL('image/jpeg',quality);await img.decode();const c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(img,0,0);return c;}
+  function smooth(){const small=document.createElement('canvas');small.width=32;small.height=32;small.getContext('2d').drawImage(source,0,0,32,32);const c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d');x.imageSmoothingEnabled=true;x.imageSmoothingQuality='high';x.drawImage(small,0,0,w,h);return c;}
+  function metrics(a,b){let error=0,edgeA=0,edgeB=0;const lum=(p,x,y)=>{const i=(y*w+x)*4;return .2126*p[i]+.7152*p[i+1]+.0722*p[i+2];};for(let i=0;i<a.length;i+=4)for(let k=0;k<3;k++)error+=Math.abs(a[i+k]-b[i+k]);for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){const lap=p=>4*lum(p,x,y)-lum(p,x-1,y)-lum(p,x+1,y)-lum(p,x,y-1)-lum(p,x,y+1);edgeA+=Math.abs(lap(a));edgeB+=Math.abs(lap(b));}return {meanAbsoluteError:Number((error/(w*h*3)).toFixed(3)),edgeRetention:Number((edgeB/edgeA).toFixed(4))};}
+  const original=pixels(source),high=pixels(await jpeg(.94)),low=pixels(await jpeg(.2)),blur=pixels(smooth());
+  return {fixture:'generated fabric lines and check pattern',highQualityJpeg:metrics(original,high),lowQualityJpeg:metrics(original,low),blurred:metrics(original,blur)};
+ });
+ assert.ok(detailStress.blurred.edgeRetention<detailStress.highQualityJpeg.edgeRetention,'Blurred garment must lose more edge detail than high-quality capture');
+ assert.ok(detailStress.lowQualityJpeg.meanAbsoluteError>detailStress.highQualityJpeg.meanAbsoluteError,'Aggressive JPEG compression must increase pixel error');
+ await writeFile(out+'/photo-detail-stress.json',JSON.stringify(detailStress,null,2));
+ console.log('PHOTO_DETAIL_STRESS '+JSON.stringify(detailStress));
  await writeFile(out+'/photo-detail-retention.json',JSON.stringify(photoDetail,null,2));
  console.log('PHOTO_DETAIL_RETENTION '+JSON.stringify(photoDetail));
  await page.locator('#scanResults .photo-result button').filter({hasText:'Adjust'}).click();
