@@ -21,6 +21,11 @@ try{
  assert.equal(draft.reviewStatus,'draft');
  assert.equal(draft.width,40);assert.equal(draft.height,30);
  assert.ok(draft.runs.length>1);
+ await page.locator('#resume').setInputFiles({name:'review-case.mask.draft.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(draft))});
+ assert.match(await page.locator('#status').textContent(),/Draft restored/);
+ await page.locator('#resume').setInputFiles({name:'wrong.mask.draft.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify({...draft,image:'other.png'}))});
+ assert.match(await page.locator('#status').textContent(),/mismatch/);
+ assert.equal(await page.locator('#download').isDisabled(),false);
  assert.deepEqual(errors,[]);
  console.log('ANNOTATION_EDITOR_SMOKE '+JSON.stringify({status:'passed',width:draft.width,height:draft.height,runs:draft.runs.length,reviewStatus:draft.reviewStatus,pageErrors:errors.length}));
 }finally{await browser.close();}
