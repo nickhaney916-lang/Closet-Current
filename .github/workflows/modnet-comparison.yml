@@ -20,6 +20,7 @@ on:
       - 'scripts/build-boundary-defect-review.mjs'
       - 'scripts/build-selective-boundary-proposal.mjs'
       - 'scripts/build-post-cleanup-check.mjs'
+      - 'scripts/build-multiscale-contamination-review.mjs'
       - 'scripts/footwear-edge-contrast.mjs'
       - 'tests/footwear-shadow-candidates.test.mjs'
       - 'tests/compare-garment-models.test.mjs'
@@ -177,6 +178,18 @@ jobs:
         with:
           name: experimental-six-garment-post-cleanup-check
           path: benchmark/post-cleanup-check/
+          retention-days: 14
+      - name: Analyze wider shadows and attached background at several distances
+        run: node scripts/build-multiscale-contamination-review.mjs benchmark/multiscale-contamination
+      - name: Verify six multiscale review images
+        run: |
+          for id in commons-0035 commons-0049 commons-0053 commons-0065 commons-0079 commons-0094; do
+            test -s "benchmark/multiscale-contamination/$id-multiscale.png"
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: experimental-six-garment-multiscale-contamination
+          path: benchmark/multiscale-contamination/
           retention-days: 14
       - name: Prepare six-photo human review pack
         run: node scripts/build-segmentation-review-pack.mjs
