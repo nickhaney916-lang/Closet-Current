@@ -5,6 +5,8 @@ on:
     branches: [main]
     paths:
       - 'scripts/run-modnet-comparison.mjs'
+      - 'scripts/compare-garment-models.mjs'
+      - 'tests/compare-garment-models.test.mjs'
       - 'scripts/build-segmentation-review-pack.mjs'
       - 'scripts/test-mobile-garment-review.mjs'
       - 'benchmark/mobile-review-template.html'
@@ -12,8 +14,8 @@ on:
       - 'benchmark/foreground-geometry.mjs'
       - 'benchmark/border-connected-foreground.mjs'
       - 'tests/border-connected-foreground.test.mjs'
-      - 'tests/foreground-geometry.test.mjs tests/border-connected-foreground.test.mjs'
-      - 'tests/propose-island-cleanup.test.mjs tests/foreground-geometry.test.mjs'
+      - 'tests/foreground-geometry.test.mjs'
+      - 'tests/propose-island-cleanup.test.mjs'
       - 'benchmark/annotate-garment.html'
       - 'benchmark/modnet-boundary-report.mjs'
       - 'tests/modnet-boundary-report.test.mjs'
@@ -34,11 +36,20 @@ jobs:
           npm install --no-save --no-package-lock playwright
           npx playwright install --with-deps chromium
       - name: Validate threshold boundary analysis
-        run: node --test tests/modnet-boundary-report.test.mjs tests/propose-island-cleanup.test.mjs
+        run: node --test tests/modnet-boundary-report.test.mjs tests/propose-island-cleanup.test.mjs tests/foreground-geometry.test.mjs tests/border-connected-foreground.test.mjs tests/compare-garment-models.test.mjs
       - name: Download and verify source photographs
         run: node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos commons-0035,commons-0049,commons-0053,commons-0065,commons-0079,commons-0094
       - name: Generate experimental MODNet masks
         run: node scripts/run-modnet-comparison.mjs benchmark/modnet-predictions
+      - name: Generate experimental SegFormer masks for paired comparison
+        run: node scripts/run-real-segmentation-benchmark.mjs benchmark/segmentation-predictions
+      - name: Compare model disagreement without claiming accuracy
+        run: node scripts/compare-garment-models.mjs benchmark/segmentation-predictions benchmark/modnet-predictions benchmark/model-disagreements
+      - uses: actions/upload-artifact@v4
+        with:
+          name: experimental-model-disagreement
+          path: benchmark/model-disagreements/
+          retention-days: 14
       - name: Prepare six-photo human review pack
         run: node scripts/build-segmentation-review-pack.mjs
       - name: Verify one-tap mobile review screen
