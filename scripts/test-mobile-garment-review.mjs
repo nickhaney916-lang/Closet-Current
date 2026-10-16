@@ -27,6 +27,20 @@ try{
  assert.equal(feedback.kind,'visual-feedback-not-ground-truth');
  assert.deepEqual(feedback.results.slice(0,3).map(x=>x.assessment),['good','bad','not-reviewed']);
  assert.equal(feedback.results[1].issue,'Missing fabric');
+ await page.goto('file://'+resolve('benchmark/review-pack/START-FOOTWEAR-REVIEW.html'));
+ await page.locator('#garment').getByText('Sneakers').waitFor();
+ assert.equal(await page.locator('#count').textContent(),'1 / 2');
+ await page.locator('#preview').evaluate(c=>{if(!c.width||!c.height)throw Error('Footwear canvas not loaded');});
+ await page.locator('#bad').click();
+ await page.locator('[data-issue="Background left"]').click();
+ await page.locator('#confirm').click();
+ assert.equal(await page.locator('#count').textContent(),'2 / 2');
+ await page.locator('#good').click();
+ const p2=page.waitForEvent('download');await page.locator('#export').click();const d2=await p2;
+ const footwear=JSON.parse(await fs.readFile(await d2.path(),'utf8'));
+ assert.deepEqual(footwear.results.map(x=>x.id),['commons-0079','commons-0094']);
+ assert.deepEqual(footwear.results.map(x=>x.assessment),['bad','good']);
+ assert.equal(footwear.results[0].issue,'Background left');
  assert.deepEqual(errors,[]);
  console.log('MOBILE_REVIEW_SMOKE '+JSON.stringify({cases:feedback.results.length,decisions:2,pageErrors:errors.length,status:'passed'}));
 }finally{await browser.close();}
