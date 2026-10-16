@@ -22,6 +22,7 @@ on:
       - 'scripts/build-post-cleanup-check.mjs'
       - 'scripts/build-multiscale-contamination-review.mjs'
       - 'scripts/build-lower-edge-zoom.mjs'
+      - 'scripts/build-detached-component-review.mjs'
       - 'scripts/footwear-edge-contrast.mjs'
       - 'tests/footwear-shadow-candidates.test.mjs'
       - 'tests/compare-garment-models.test.mjs'
@@ -203,6 +204,18 @@ jobs:
         with:
           name: experimental-lower-edge-zoom-review
           path: benchmark/lower-edge-zoom/
+          retention-days: 14
+      - name: Review detached foreground components without deleting fabric
+        run: node scripts/build-detached-component-review.mjs benchmark/detached-component-review
+      - name: Verify all component review previews
+        run: |
+          for id in commons-0035 commons-0049 commons-0053 commons-0065 commons-0079 commons-0094; do
+            test -s "benchmark/detached-component-review/$id-component-review.png"
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: experimental-six-garment-detached-component-review
+          path: benchmark/detached-component-review/
           retention-days: 14
       - name: Prepare six-photo human review pack
         run: node scripts/build-segmentation-review-pack.mjs
