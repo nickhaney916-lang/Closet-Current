@@ -47,3 +47,14 @@ export function scoreApprovedPrediction(annotation,manifestEntry,prediction){
  const predicted=decodeReferenceMask(prediction);
  return {image:manifestEntry.image,...scoreGarmentMask(reference,predicted,annotation.width,annotation.height)};
 }
+
+export function scoreApprovedPredictionAtReferenceResolution(annotation,manifestEntry,prediction){
+ const reference=approvedReferenceMask(annotation,manifestEntry);
+ if(!prediction||prediction.image!==manifestEntry.image||prediction.sourceSha256!==manifestEntry.sourceSha256)throw Error('Prediction source mismatch');
+ const predicted=decodeReferenceMask(prediction);
+ const {width:rw,height:rh}=annotation,{width:pw,height:ph}=prediction;
+ if(rw/pw!==rh/ph)throw Error('Different image aspect ratios');
+ const aligned=new Uint8Array(rw*rh);
+ for(let y=0;y<rh;y++)for(let x=0;x<rw;x++)aligned[y*rw+x]=predicted[Math.min(ph-1,Math.floor((y+.5)*ph/rh))*pw+Math.min(pw-1,Math.floor((x+.5)*pw/rw))];
+ return {image:manifestEntry.image,referenceWidth:rw,referenceHeight:rh,predictionWidth:pw,predictionHeight:ph,alignment:'nearest-neighbor at reference resolution',...scoreGarmentMask(reference,aligned,rw,rh)};
+}
