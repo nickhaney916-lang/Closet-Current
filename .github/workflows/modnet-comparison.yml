@@ -7,6 +7,7 @@ on:
       - 'scripts/run-modnet-comparison.mjs'
       - 'scripts/compare-garment-models.mjs'
       - 'scripts/build-three-way-visual.mjs'
+      - 'scripts/build-four-way-model-review.mjs'
       - 'scripts/build-footwear-disagreement-visual.mjs'
       - 'benchmark/footwear-shadow-candidates.mjs'
       - 'benchmark/lower-footwear-disagreement.mjs'
@@ -63,6 +64,18 @@ jobs:
         run: node scripts/compare-garment-models.mjs benchmark/segmentation-predictions benchmark/modnet-predictions benchmark/model-disagreements
       - name: Build three-way visual comparison for jacket and footwear
         run: node scripts/build-three-way-visual.mjs benchmark/model-visual-comparison
+      - name: Build six-garment four-way model review
+        run: node scripts/build-four-way-model-review.mjs benchmark/four-way-model-review
+      - name: Verify all model review photographs
+        run: |
+          for id in commons-0035 commons-0049 commons-0053 commons-0065 commons-0079 commons-0094; do
+            test -s "benchmark/four-way-model-review/$id-four-way.png"
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: experimental-six-garment-four-way-model-review
+          path: benchmark/four-way-model-review/
+          retention-days: 14
       - name: Build footwear-only disagreement visualizations
         run: node scripts/build-footwear-disagreement-visual.mjs benchmark/footwear-disagreement-visuals
       - uses: actions/upload-artifact@v4
