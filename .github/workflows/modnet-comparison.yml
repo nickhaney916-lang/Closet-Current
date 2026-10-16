@@ -5,6 +5,8 @@ on:
     branches: [main]
     paths:
       - 'scripts/run-modnet-comparison.mjs'
+      - 'benchmark/modnet-boundary-report.mjs'
+      - 'tests/modnet-boundary-report.test.mjs'
       - '.github/workflows/modnet-comparison.yml'
 permissions:
   contents: read
@@ -21,6 +23,8 @@ jobs:
         run: |
           npm install --no-save --no-package-lock playwright
           npx playwright install --with-deps chromium
+      - name: Validate threshold boundary analysis
+        run: node --test tests/modnet-boundary-report.test.mjs
       - name: Download and verify source photographs
         run: node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos commons-0035,commons-0049,commons-0053,commons-0065,commons-0079,commons-0094
       - name: Generate experimental MODNet masks
