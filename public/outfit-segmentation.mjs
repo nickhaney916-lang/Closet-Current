@@ -114,6 +114,23 @@ export function connectedEdgeMask(image,map,group,{maxSteps=3,maxColorDistance=3
  }
  return out;
 }
+// Experimental only: limit recovery by how much *new* mask area is admitted.
+// Area is a contamination proxy, not a guarantee that background is excluded.
+// Preserve model-assigned other garment regions. Do not use for live isolation.
+export function adaptiveEdgeMask(image,map,group,{maxSteps=4,maxColorDistance=35,maxGrowthRatio=.2}={}){
+ if(!Number.isFinite(maxGrowthRatio)||maxGrowthRatio<0||maxGrowthRatio>1)throw Error('Invalid growth limit');
+ const seed=group.selected,baseCount=seed.reduce((sum,v)=>sum+(v?1:0),0);
+ if(!baseCount)throw Error('Empty garment mask');
+ const budget=Math.floor(baseCount*maxGrowthRatio);
+ let best=new Uint8Array(seed),acceptedSteps=0;
+ for(let steps=1;steps<=maxSteps;steps++){
+  const candidate=connectedEdgeMask(image,map,group,{maxSteps:steps,maxColorDistance});
+  const growth=candidate.reduce((sum,v,i)=>sum+(v&&!seed[i]?1:0),0);
+  if(growth>budget)break;
+  best=candidate;acceptedSteps=steps;
+ }
+ return {selected:best,acceptedSteps,addedPixels:best.reduce((sum,v,i)=>sum+(v&&!seed[i]?1:0),0),budget};
+}
 export function isolateClothingPixels(image,map,group){
  const {left,top,width,height}=clothingCropBounds(image,map,group),scaleX=image.width/map.width,scaleY=image.height/map.height;
  const data=new Uint8ClampedArray(width*height*3);data.fill(255);
