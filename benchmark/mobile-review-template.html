@@ -13,7 +13,7 @@
 <div class="choices"><button class="yes" id="good">✓ Looks good</button><button class="no" id="bad">✕ Needs work</button></div>
 <div class="reason" id="reason"><strong>What needs improvement?</strong><div id="reasons"><button data-issue="Missing fabric">Missing fabric</button><button data-issue="Background left">Background left</button><button data-issue="Blurry edges">Blurry edges</button><button data-issue="Wrong garment">Wrong garment</button></div><button id="confirm" class="action">Save issue & next →</button></div><div class="nav"><button id="previous">← Back</button><button id="next">Next →</button></div>
 </div>
-<button class="action" id="export">Save my feedback</button>
+<button class="action" id="export">Save my feedback</button><button id="copy" class="inspect" type="button">Copy feedback to paste here</button><p id="save-status" role="status"><small>Review the photos, then save or copy your feedback.</small></p><textarea id="feedback-text" aria-label="Feedback text you can copy" readonly style="display:none;width:100%;min-height:140px;font:13px monospace"></textarea>
 <p><small id="progress">0 of 6 reviewed</small></p>
 <p><small>For precise boundary corrections, use the <a href="annotate-garment.html">advanced outline editor</a>. Your ratings are saved in a downloaded JSON file, not uploaded automatically.</small></p></main>
 <script>
@@ -45,6 +45,10 @@ el('confirm').onclick=()=>{if(!issues[current]){el('status').textContent='Choose
 el('previous').onclick=()=>{if(current>0){current--;render();}};el('next').onclick=()=>{if(current<cases.length-1){current++;render();}};
 el('inspect').onclick=()=>{zoomed=!zoomed;el('image-wrap').classList.toggle('zoom',zoomed);el('inspect').setAttribute('aria-pressed',String(zoomed));el('inspect').textContent=zoomed?'Fit whole garment':'Inspect edges · 2× zoom';};
 el('original').onclick=()=>{showCutout=false;render();};el('cutout').onclick=()=>{showCutout=true;render();};
-el('export').onclick=()=>{const data={schemaVersion:1,kind:'visual-feedback-not-ground-truth',model:'Xenova/modnet',results:cases.map((c,i)=>({id:c.id,image:c.image,sourceSha256:c.sourceSha256,assessment:views[i]||'not-reviewed',issue:issues[i]}))};const url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download='closet-current-visual-feedback.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
-render().catch(e=>el('status').textContent='Unable to display garment: '+e.message);
+function exportData(){return {schemaVersion:1,kind:'visual-feedback-not-ground-truth',model:'Xenova/modnet',results:cases.map((c,i)=>({id:c.id,image:c.image,sourceSha256:c.sourceSha256,assessment:views[i]||'not-reviewed',issue:issues[i]}))};}
+function showText(){const t=el('feedback-text');t.value=JSON.stringify(exportData(),null,2);t.style.display='block';t.focus();t.select();return t.value;}
+el('copy').onclick=async()=>{const value=showText();try{await navigator.clipboard.writeText(value);el('save-status').textContent='Feedback copied. Paste it directly into ChatGPT.';}catch{el('save-status').textContent='Feedback is shown below. Long-press the text, select all, and copy it into ChatGPT.';}};
+el('export').onclick=()=>{const value=JSON.stringify(exportData(),null,2);try{const url=URL.createObjectURL(new Blob([value],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download='closet-current-visual-feedback.json';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),15000);el('save-status').textContent='Download requested. Check your Downloads folder. If nothing saves, use Copy feedback to paste here.';}catch{showText();el('save-status').textContent='Download unavailable. Copy the feedback text below and paste it into ChatGPT.';}};
+
+render().catch(e=>{el('garment').textContent='Image could not load';el('status').textContent='Unable to display garment: '+e.message+'; you can still export feedback.';});
 </script></html>
