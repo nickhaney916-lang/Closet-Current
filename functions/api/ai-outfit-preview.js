@@ -30,11 +30,11 @@ export async function verifyClosetSession(request,{fetcher=fetch}={}){
 }
 // Reservation must be serialized in a Durable Object keyed by verified account ID.
 // Do not call until consent, payload validation and the actual provider are ready.
-export async function reservePreviewQuota(env,userId,{day=new Date().toISOString().slice(0,10),limit=2}={}){
+export async function reservePreviewQuota(env,userId){
  if(!env?.AI_PREVIEW_QUOTAS||typeof userId!=='string'||!userId)throw Error('Secure quota storage not configured.');
  const id=env.AI_PREVIEW_QUOTAS.idFromName('user:'+userId);
  const stub=env.AI_PREVIEW_QUOTAS.get(id);
- const response=await stub.fetch('https://quota.internal/reserve',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({day,limit})});
+ const response=await stub.fetch('https://quota.internal/reserve',{method:'POST',headers:{'content-type':'application/json'},body:'{}'});
  if(!response.ok)throw Error('Secure quota service unavailable.');
  const result=await response.json();
  if(typeof result?.allowed!=='boolean'||!Number.isInteger(result.remaining))throw Error('Invalid quota response.');
