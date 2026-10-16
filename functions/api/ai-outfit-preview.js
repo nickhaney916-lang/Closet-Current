@@ -11,10 +11,29 @@ export function validatePreviewRequest(body){
  }
  return null;
 }
+const SUPABASE_URL='https://hlkgymugtfbirlpunsra.supabase.co';
+export async function verifyClosetSession(request,{fetcher=fetch}={}){
+ const authorization=request.headers.get('authorization')||'';
+ if(!/^Bearer [A-Za-z0-9._~-]+$/.test(authorization))return null;
+ const token=authorization.slice(7);
+ const controller=new AbortController();
+ const timer=setTimeout(()=>controller.abort(),7000);
+ try{
+  const response=await fetcher(SUPABASE_URL+'/auth/v1/user',{
+   method:'GET',headers:{authorization:'Bearer '+token,apikey:'sb_publishable_5bw6Gkrw3Qx73dZYGNzmIw_x_OoauDO'},
+   signal:controller.signal
+  });
+  if(!response.ok)return null;
+  const user=await response.json();
+  return typeof user?.id==='string'&&user.id.length>0?{id:user.id}:null;
+ }catch{return null;}finally{clearTimeout(timer);}
+}
 export async function onRequestPost({request,env}){
  if(env?.AI_PREVIEW_ENABLED!=='true')return json({error:'AI_PREVIEW_NOT_ENABLED',message:'Realistic AI previews are not available yet.'},503);
- // Do not inspect image contents until identity and quotas are enforced.
- // Fail closed even if a deployment flag is accidentally enabled.
- return json({error:'AI_PREVIEW_SETUP_INCOMPLETE',message:'Authentication, consent verification and usage limits are required before generation.'},503);
+ const user=await verifyClosetSession(request);
+ if(!user)return json({error:'AUTH_REQUIRED',message:'Sign in again to request an AI preview.'},401);
+ // Still fail closed: authentication alone cannot bypass per-user quotas or
+ // authorization to transmit user-provided photographs to an AI provider.
+ return json({error:'AI_PREVIEW_SETUP_INCOMPLETE',message:'Per-user limits and explicit consent flow must be completed before generation.'},503);
 }
 export async function onRequestGet(){return json({error:'METHOD_NOT_ALLOWED'},405);}
