@@ -29,6 +29,11 @@ try{
  const seed={image:'review-case.png',width:40,height:30,runs:[200,200,800],model:'test-model'};
  await page.locator('#prediction').setInputFiles({name:'prediction.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(seed))});
  await page.locator('#status').getByText(/AI starting mask loaded/).waitFor();
+ // AI suggestions must be manually corrected before export.
+ const seededBounds=await page.locator('#canvas').boundingBox();
+ await page.mouse.move(seededBounds.x+seededBounds.width*.3,seededBounds.y+seededBounds.height*.3);
+ await page.mouse.down();await page.mouse.up();
+ assert.equal(await page.locator('#download').isDisabled(),false);
  const seededDownload=page.waitForEvent('download');
  await page.locator('#download').click();
  const seeded=JSON.parse(await fs.readFile(await(await seededDownload).path(),'utf8'));
