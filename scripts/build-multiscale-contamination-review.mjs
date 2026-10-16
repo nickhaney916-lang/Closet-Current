@@ -22,6 +22,7 @@ try{
    const data=c.getImageData(0,0,w,h).data;
    const lum=i=>(data[i*4]*.2126+data[i*4+1]*.7152+data[i*4+2]*.0722);
    const risk=new Uint8Array(n);let shadowLike=0,backgroundLike=0,examined=0;
+   const regions={upper:{backgroundLike:0,shadowLike:0},middle:{backgroundLike:0,shadowLike:0},lower:{backgroundLike:0,shadowLike:0}};
    // Compare inward pixels against outside samples at multiple distances,
    // not merely the single-pixel boundary. Remains a diagnostic, not an automatic deletion.
    for(let y=8;y<h-8;y++)for(let x=8;x<w-8;x++){
@@ -34,8 +35,9 @@ try{
     const [dx,dy]=outside,inside=Math.max(0,i-dy*w-dx),outer=i+dy*w*5+dx*5;
     if(outer<0||outer>=n||mask[outer])continue;
     const diff=Math.abs(lum(i)-lum(outer)),local=Math.abs(lum(i)-lum(inside));
-    if(diff<14&&local<22){risk[i]=1;backgroundLike++;}
-    else if(lum(i)+24<lum(outer)&&local<35){risk[i]=2;shadowLike++;}
+    const region=y<h/3?'upper':y<2*h/3?'middle':'lower';
+    if(diff<14&&local<22){risk[i]=1;backgroundLike++;regions[region].backgroundLike++;}
+    else if(lum(i)+24<lum(outer)&&local<35){risk[i]=2;shadowLike++;regions[region].shadowLike++;}
    }
    const pw=Math.min(w,650),ph=Math.round(pw*h/w),header=72;
    const out=document.createElement('canvas');out.width=pw*2;out.height=ph+header;const oc=out.getContext('2d');
@@ -47,7 +49,7 @@ try{
    for(let i=0;i<n;i++){const v=risk[i];if(!v)continue;overlay.data[i*4]=v===1?255:0;overlay.data[i*4+1]=v===1?15:215;overlay.data[i*4+2]=v===1?175:245;}
    const canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;canvas.getContext('2d').putImageData(overlay,0,0);
    oc.drawImage(canvas,pw,header,pw,ph);
-   return {image:out.toDataURL('image/png').split(',')[1],examined,backgroundLike,shadowLike,changedMaskPixels:0,verifiedShadowPixels:0};
+   return {image:out.toDataURL('image/png').split(',')[1],examined,backgroundLike,shadowLike,regions,changedMaskPixels:0,verifiedShadowPixels:0};
   },{photo,pred});
   await writeFile(join(output,item.id+'-multiscale.png'),Buffer.from(result.image,'base64'));
   const {image,...metrics}=result;console.log('MULTISCALE_CONTAMINATION '+JSON.stringify({id:item.id,...metrics,reviewOnly:true}));
