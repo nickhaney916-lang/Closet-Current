@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Closet Current — reference mask review</title>
+<style>body{font:16px system-ui;max-width:920px;margin:auto;padding:16px;background:#f8f7fb;color:#231e2d}button,select,input{font:inherit;padding:10px;margin:4px}canvas{width:100%;max-width:720px;touch-action:none;background:#ddd}#status{white-space:pre-wrap} .controls{display:flex;flex-wrap:wrap;gap:8px}</style>
+<h1>Reference garment outline review</h1>
+<p>Internal benchmark tool, not part of the Closet Current customer interface. Load a verified source photo, paint the clothing foreground, and export a reference mask for independent review. Never assume the initial blank mask is complete.</p>
+<div class="controls"><input id="photo" type="file" accept="image/*"><select id="mode"><option value="1">Mark garment</option><option value="0">Erase / background</option></select><label>Brush radius <input type="range" id="radius" min="1" max="30" value="7"></label><button id="download" disabled>Export annotation JSON</button></div>
+<canvas id="canvas" width="256" height="256" aria-label="Image and reference mask editor"></canvas><p id="status" role="status">Choose a source image. Paint all of the garment before export.</p>
+<script>
+'use strict';
+const photo=document.querySelector('#photo'),canvas=document.querySelector('#canvas'),ctx=canvas.getContext('2d'),status=document.querySelector('#status'),download=document.querySelector('#download'),mode=document.querySelector('#mode'),radius=document.querySelector('#radius');
+let source=null,mask=null,painting=false,strokes=0;
+photo.onchange=async()=>{
+ const file=photo.files[0];if(!file)return;
+ if(file.size>16000000){status.textContent='Image too large';return;}
+ const url=URL.createObjectURL(file);
+ try{const image=new Image();image.src=url;await image.decode();
+  const scale=Math.min(1,768/Math.max(image.naturalWidth,image.naturalHeight));
+  canvas.width=Math.round(image.naturalWidth*scale);canvas.height=Math.round(image.naturalHeight*scale);
+  const base=document.createElement('canvas');base.width=canvas.width;base.height=canvas.height;base.getContext('2d').drawImage(image,0,0,base.width,base.height);
+  source={fileName:file.name,base};mask=new Uint8Array(canvas.width*canvas.height);strokes=0;download.disabled=true;redraw();status.textContent='Paint garment outline carefully; initial mask is blank.';
+ }catch{status.textContent='Unable to decode image';}finally{URL.revokeObjectURL(url);}
+};
+function redraw(){
+ if(!source)return;ctx.drawImage(source.base,0,0);
+ const image=ctx.getImageData(0,0,canvas.width,canvas.height);
+ for(let i=0;i<mask.length;i++)if(mask[i]){image.data[4*i]=Math.round(image.data[4*i]*.6+130);image.data[4*i+1]=Math.round(image.data[4*i+1]*.6+35);image.data[4*i+2]=Math.round(image.data[4*i+2]*.6+170);}
+ ctx.putImageData(image,0,0);
+}
+function paint(e){
+ if(!mask)return;
+ const box=canvas.getBoundingClientRect(),x=Math.floor((e.clientX-box.left)*canvas.width/box.width),y=Math.floor((e.clientY-box.top)*canvas.height/box.height),r=Number(radius.value),value=Number(mode.value);
+ for(let yy=Math.max(0,y-r);yy<Math.min(canvas.height,y+r+1);yy++)for(let xx=Math.max(0,x-r);xx<Math.min(canvas.width,x+r+1);xx++)if((xx-x)**2+(yy-y)**2<=r*r)mask[yy*canvas.width+xx]=value;
+ strokes++;download.disabled=false;redraw();
+}
+canvas.onpointerdown=e=>{painting=true;canvas.setPointerCapture(e.pointerId);paint(e);};
+canvas.onpointermove=e=>{if(painting)paint(e);};
+canvas.onpointerup=canvas.onpointercancel=()=>painting=false;
+download.onclick=()=>{
+ if(!source||!strokes||!mask.some(Boolean)){status.textContent='No garment marked';return;}
+ const runs=[];let previous=0,count=0;
+ for(const value of mask){if(value!==previous){runs.push(count);count=0;previous=value;}count++;}
+ runs.push(count);
+ const annotation={schemaVersion:1,image:source.fileName,width:canvas.width,height:canvas.height,runs,reviewStatus:'draft',note:'Requires independent human verification before benchmark scoring'};
+ const blob=new Blob([JSON.stringify(annotation,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');
+ a.href=url;a.download=source.fileName.replace(/\.[^.]+$/,'')+'.mask.draft.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+ status.textContent='Draft exported. A second reviewer must verify garment boundaries before changing reviewStatus to approved.';
+};
+</script></html>
