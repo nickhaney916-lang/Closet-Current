@@ -16,6 +16,8 @@ try{
  assert.equal(await page.locator('#inspect').getAttribute('aria-pressed'),'false');
  await page.locator('#original').click();assert.equal(await page.locator('#original').getAttribute('aria-pressed'),'true');
  await page.locator('#cutout').click();assert.equal(await page.locator('#cutout').getAttribute('aria-pressed'),'true');
+ await page.locator('#original').click();await page.locator('#cutout').click();await page.locator('#original').click();await page.locator('#cutout').click();
+ await page.locator('#preview').evaluate(async c=>{if(c.width===0)throw Error('Image lost during rapid switching');});
  await page.locator('#good').click();assert.equal(await page.locator('#count').textContent(),'2 / 6');
  await page.locator('#bad').click();assert.equal(await page.locator('#count').textContent(),'2 / 6');
  await page.locator('[data-issue="Missing fabric"]').click();
