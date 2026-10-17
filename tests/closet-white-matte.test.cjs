@@ -65,3 +65,22 @@ test('three-channel RGB supported and malformed images fail closed',()=>{
  assert.throws(()=>analyze(im.data,1,120));
  assert.throws(()=>analyze(im.data,1000,1000));
 });
+
+test('already transparent cutout stays transparent on the virtual hanger',()=>{
+ const src=make({hole:false}),{data,width,height}=src;
+ for(let y=0;y<height;y++)for(let x=0;x<width;x++){
+  const isGarment=x>=22&&x<=77&&y>=12&&y<=107;
+  if(!isGarment)data[(y*width+x)*4+3]=0;
+ }
+ const before=data.slice();
+ const {hasTransparentBackground}=require('../public/closet-white-matte.js');
+ assert.equal(hasTransparentBackground(data,width,height),true);
+ assert.equal(analyze(data,width,height).eligible,false);
+ assert.deepEqual(data,before);
+});
+test('no false transparent source on a fully opaque photograph',()=>{
+ const {hasTransparentBackground}=require('../public/closet-white-matte.js');
+ const src=make(),busy=make({background:'scene'});
+ assert.equal(hasTransparentBackground(src.data,src.width,src.height),false);
+ assert.equal(hasTransparentBackground(busy.data,busy.width,busy.height),false);
+});

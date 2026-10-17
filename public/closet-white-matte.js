@@ -71,6 +71,26 @@
    foregroundColoredPixels:colored,sourceAltered:false,
    garmentReconstructed:false,originalDetailsPreserved:true};
  }
- root.ClosetWhiteMatte={analyze};
+ // Existing transparent garment PNGs/webp don't need white matting, but
+ // must NOT be painted onto an opaque rectangle in the hanger carousel.
+ function hasTransparentBackground(data,width,height){
+  if(!Number.isInteger(width)||!Number.isInteger(height)||
+     width<24||height<24||width*height>MAX_PIXELS||
+     !(data instanceof Uint8Array||data instanceof Uint8ClampedArray)||
+     data.length!==width*height*4)return false;
+  let allClear=0,allOpaque=0,edgeClear=0,edgeTotal=0;
+  for(let i=0;i<width*height;i++){
+   const x=i%width,y=Math.floor(i/width),a=data[i*4+3];
+   if(a<=24)allClear++;
+   if(a>=230)allOpaque++;
+   if(x===0||y===0||x===width-1||y===height-1){
+    edgeTotal++;if(a<=24)edgeClear++;
+   }
+  }
+  return allClear/(width*height)>=.08&&
+   allOpaque/(width*height)>=.08&&
+   edgeClear/edgeTotal>=.90;
+ }
+ root.ClosetWhiteMatte={analyze,hasTransparentBackground};
  if(typeof module!=='undefined')module.exports=root.ClosetWhiteMatte;
 })(typeof window!=='undefined'?window:globalThis);
