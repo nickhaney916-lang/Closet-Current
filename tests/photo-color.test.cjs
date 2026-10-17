@@ -49,3 +49,18 @@ test('neutral true-brown control is not flagged for red-orange ambiguity',()=>{
  assert.equal(masked.primary,'Brown');
  assert.equal(masked.needsConfirmation,false);
 });
+
+test('garment palette requires both mask and inner fabric to agree on one supported color',()=>{
+ const whole={primary:'Blue',colors:[{color:'Blue',share:.9}],secondary:null,needsConfirmation:false};
+ const inner={primary:'Blue',colors:[{color:'Blue',share:.98}],secondary:null,needsConfirmation:false};
+ assert.deepEqual(C.confirmedGarmentPalette(whole,inner),{color:'Blue',source:'photo-estimate',support:.9,secondaryColor:null});
+});
+test('garment palette refuses competing boundary colors and insufficient interior samples',()=>{
+ const whole={primary:'Blue',colors:[{color:'Blue',share:.85}],needsConfirmation:false};
+ const inner={primary:'Red',colors:[{color:'Red',share:.98}],needsConfirmation:false};
+ assert.equal(C.confirmedGarmentPalette(whole,inner),null);
+ assert.equal(C.confirmedGarmentPalette(whole,null),null);
+ assert.equal(C.confirmedGarmentPalette(whole,{...inner,primary:'Blue',needsConfirmation:true}),null);
+ assert.equal(C.confirmedGarmentPalette({...whole,needsConfirmation:true},{...inner,primary:'Blue'}),null);
+ assert.equal(C.confirmedGarmentPalette(whole,{...inner,primary:'Blue',colors:[]}),null);
+});
