@@ -27,10 +27,11 @@ const detector=await pipeline('zero-shot-object-detection',modelId,{
 });
 summary.modelLoadMs=Math.round(performance.now()-time);
 await save();
-// Grounding DINO ONNX expects a single query sequence (input_ids batch 1).
-// Join phrase prompts into ONE dotted text query; never batch them as six rows.
-const prompts=['a jacket.','a shirt.','a coat.','a blouse.','a cardigan.','a dress.'];
-const query=[prompts.join(' ')];
+// Grounding DINO ONNX expects input_ids batch 1. Each category gets its
+// own independent inference pass; concatenated prompts can create fake
+// text spans such as 'a jacket shirt'. Never label a box using a prompt
+// unless the actual decoded model label supports it.
+const prompts=['a jacket.','a shirt.','a dress.'];
 try{
  for(const id of ids){
   const source=byId.get(id);
@@ -42,8 +43,12 @@ try{
    throw Error('Source checksum mismatch '+id);
   const photo=await RawImage.read(join('benchmark/photos',source.image));
   const t=performance.now();
-  const predictions=await detector(photo,query,{threshold:.12});
-  if(!Array.isArray(predictions))throw Error('Unexpected zero-shot result');
+  const predictions=[];
+  for(const prompt of prompts){
+    const one=await detector(photo,[prompt],{threshold:.12});
+    if(!Array.isArray(one))throw Error('Unexpected independent zero-shot result');
+    for(const detected of one)predictions.push({...detected,requestedPrompt:prompt});
+  }
   const inferenceMs=Math.round(performance.now()-t);
   const report=validateGarmentDetectionBoxes({
    sourceSha256:source.sha256,width:photo.width,height:photo.height,
