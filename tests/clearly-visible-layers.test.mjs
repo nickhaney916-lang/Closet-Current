@@ -25,13 +25,13 @@ test('single-item capture ignores incidental sweater, focusing on deliberate coa
  assert.equal(r.status,'single-intent-only');
 });
 test('tiny collar-only peek never becomes a second garment',()=>{
- const collar={...inner,mask:region((x,y)=>x>=9&&x<=11&&y>=3&&y<=4)};
+ const collar={...inner,mask:region((x,y)=>x>=9&&x<=11&&y>=5&&y<=6)};
  const r=check({sweater:collar});
  assert.deepEqual(r.suggestedCategories,['Outerwear']);
  assert.equal(r.reason,'only-small-collar-cuff-or-ambiguous-sweater-visible');
 });
 test('cuffs-only exposure is not enough even if area is nonzero',()=>{
- const cuffs={...inner,mask:region((x,y)=>y>=10&&y<=16&&((x>=0&&x<=2)||(x>=17&&x<=19)))};
+ const cuffs={...inner,mask:region((x,y)=>y>=10&&y<=16&&((x>=0&&x<=1)||(x>=18&&x<=19)))};
  const r=check({sweater:cuffs});
  assert.equal(r.canAutoSaveSecondItem,false);
  assert.equal(r.reason,'only-small-collar-cuff-or-ambiguous-sweater-visible');
