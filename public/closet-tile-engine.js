@@ -48,6 +48,7 @@
   const cv=document.createElement('canvas');cv.width=W;cv.height=H;
   const ctx=cv.getContext('2d');if(!ctx)return null;
   let bounds={x:0,y:0,width:im.naturalWidth,height:im.naturalHeight};
+  let pose={rotationDeg:0,action:'keep-original-or-centered'};
   // Inspect only a small preview (< 350px on the longest side) rather
   // than allocating millions of RGBA pixels while swiping on a phone.
   const ratio=Math.min(1,320/Math.max(im.naturalWidth,im.naturalHeight));
@@ -57,17 +58,28 @@
   const tc=tmp.getContext('2d',{willReadFrequently:true});
   if(tc)try{
     tc.drawImage(im,0,0,aw,ah);
-    const detected=safeWhiteBounds(tc.getImageData(0,0,aw,ah).data,aw,ah);
+    const thumbnail=tc.getImageData(0,0,aw,ah);
+    const detected=safeWhiteBounds(thumbnail.data,aw,ah);
+    if(typeof root.GarmentPoseNormalizer!=='undefined')
+     pose=root.GarmentPoseNormalizer.axisPlan(thumbnail.data,aw,ah,item.category);
     if(detected.trimmed)bounds={
       x:detected.x*im.naturalWidth/aw,y:detected.y*im.naturalHeight/ah,
       width:detected.width*im.naturalWidth/aw,
       height:detected.height*im.naturalHeight/ah};
    }catch{/* retain the full image if inspection cannot be done */ }
   tmp.width=0;tmp.height=0;
-  ctx.fillStyle='#f6f3f8';ctx.fillRect(0,0,W,H);
+  // Use a uniform white matte to avoid background wedges when rotating a
+  // clean white studio cutout. The saved source remains exactly unchanged.
+  const rotation=pose.action==='rotate-derived-tile'?-pose.rotationDeg*Math.PI/180:0;
+  ctx.fillStyle=rotation?'#fff':'#f6f3f8';ctx.fillRect(0,0,W,H);
   ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
-  const to=placement(bounds.width,bounds.height);
-  ctx.drawImage(im,bounds.x,bounds.y,bounds.width,bounds.height,to.x,to.y,to.width,to.height);
+  const to=placement(bounds.width,bounds.height,W,H,rotation?.125:.085);
+  if(rotation){
+   ctx.save();ctx.translate(W/2,H/2);ctx.rotate(rotation);
+   ctx.drawImage(im,bounds.x,bounds.y,bounds.width,bounds.height,
+      -to.width/2,-to.height/2,to.width,to.height);ctx.restore();
+  }else ctx.drawImage(im,bounds.x,bounds.y,bounds.width,bounds.height,
+      to.x,to.y,to.width,to.height);
   try{return cv.toDataURL('image/webp',.86);}catch{return null;}
  }
  async function normalized(item){
@@ -80,12 +92,29 @@
  }
  function apply(img,item){
   if(!img||!item?.image)return;
-  const original=item.image;img.src=original;
+  const original=item.image;
+  if(img.getAttribute('src')!==original)return; // do not overwrite current preview
   normalized(item).then(tile=>{
     if(tile&&img.isConnected&&item.image===original&&img.getAttribute('src')===original)
       img.src=tile;
   }).catch(()=>{});
  }
- root.ClosetTileEngine={placement,safeWhiteBounds,normalized,apply,valid};
+ // Reduce mobile CPU/battery use by preparing images only when near viewport.
+ // Separate record integrity: observer changes an <img>, never stored items.
+ let observer;
+ const queued=new WeakMap();
+ function observe(img,item){
+  if(!img||!item?.image)return;
+  if(typeof IntersectionObserver==='undefined'){apply(img,item);return;}
+  if(!observer)observer=new IntersectionObserver(entries=>{
+    for(const entry of entries)if(entry.isIntersecting){
+      observer.unobserve(entry.target);
+      const owned=queued.get(entry.target);if(owned)apply(entry.target,owned);
+      queued.delete(entry.target);
+    }
+  },{rootMargin:'120px'});
+  queued.set(img,item);observer.observe(img);
+ }
+ root.ClosetTileEngine={placement,safeWhiteBounds,normalized,apply,observe,valid};
  if(typeof module!=='undefined')module.exports=root.ClosetTileEngine;
 })(typeof window!=='undefined'?window:globalThis);

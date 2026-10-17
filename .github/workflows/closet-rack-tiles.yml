@@ -5,12 +5,14 @@ on:
     branches: [main]
     paths:
       - 'public/closet-tile-engine.js'
+      - 'public/garment-pose-normalizer.js'
       - 'public/closet-rack-engine.js'
       - 'public/index.html'
       - 'public/app.js'
       - 'public/closet-browser.js'
       - 'public/app-theme.css'
       - 'tests/closet-rack-tiles.test.cjs'
+      - 'tests/garment-pose-normalizer.test.cjs'
       - '.github/workflows/closet-rack-tiles.yml'
 permissions:
   contents: read
@@ -25,12 +27,13 @@ jobs:
           node-version: '22'
       - name: Validate browser scripts and data-preserving tile support
         run: |
+          node --check public/garment-pose-normalizer.js
           node --check public/closet-rack-engine.js
           node --check public/closet-tile-engine.js
           node --check public/closet-browser.js
           node --check public/app.js
-          node --test tests/closet-rack-tiles.test.cjs tests/closet-browser.test.cjs
+          node --test tests/closet-rack-tiles.test.cjs tests/garment-pose-normalizer.test.cjs tests/closet-browser.test.cjs
       - name: Build full app and verify all closet categories can use the rack
         run: |
           node scripts/build.mjs
-          node -e "const fs=require('fs');const h=fs.readFileSync('dist/index.html','utf8');const b=fs.readFileSync('dist/closet-browser.js','utf8');if(!h.includes('closetRackMode')||!h.includes('closet-tile-engine.js')||!h.includes('closet-rack-engine.js')||!b.includes('closetPresentationMode'))throw Error('Universal closet rack missing from build')"
+          node -e "const fs=require('fs');const h=fs.readFileSync('dist/index.html','utf8');const b=fs.readFileSync('dist/closet-browser.js','utf8');if(!h.includes('closetRackMode')||!h.includes('closet-tile-engine.js')||!h.includes('closet-rack-engine.js')||!h.includes('garment-pose-normalizer.js')||!b.includes('closetPresentationMode'))throw Error('Universal closet rack missing from build')"
