@@ -222,7 +222,7 @@ try{
  // tuning, generated ground truth, garment editing or customer image exposure.
  const colorEvidence=await page.evaluate(async()=>{
   const results={};
-  for(const id of ['commons-0033','commons-0035','commons-0070']){
+  for(const id of ['commons-0003','commons-0033','commons-0035','commons-0045','commons-0049','commons-0053','commons-0065','commons-0070','commons-0079','commons-0094']){
    const response=await fetch('/benchmark-photo/'+id+'.jpg');
    if(!response.ok){results[id]={error:'fixture-unavailable'};continue;}
    const blob=await response.blob(),bitmap=await createImageBitmap(blob);
