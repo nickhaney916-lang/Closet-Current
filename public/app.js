@@ -196,12 +196,14 @@ function snap(){if(!video.videoWidth||video.readyState<2)throw Error('The camera
 
 // Prefer a genuine sensor still over freezing the preview when the browser
 // supports ImageCapture. Preserve full aspect ratio, without artificial upscaling.
-async function captureCameraStill(track,StillCapture){
+async function captureCameraStill(track,StillCapture,isCurrent=()=>true){
  const blob=await new StillCapture(track).takePhoto();
+ if(!isCurrent())throw Error('Camera session ended before photo arrived.');
  if(!blob||!blob.size||(blob.type&&!blob.type.startsWith('image/')))
    throw Error('Camera did not supply an image.');
  const bitmap=await createImageBitmap(blob);
  try{
+  if(!isCurrent())throw Error('Camera session ended before photo decoded.');
   const width=bitmap.width,height=bitmap.height;
   if(!Number.isInteger(width)||!Number.isInteger(height)||width<320||height<240)
     throw Error('Still image was too small.');
@@ -288,7 +290,7 @@ function takePhoto(){
   const shot={stream:activeStream,request:activeRequest};
   manualStillShot=shot;$('takePhoto').disabled=true;
   $('captureState').textContent='Taking high-quality photo…';
-  captureCameraStill(track,StillCapture).then(image=>{
+  captureCameraStill(track,StillCapture,()=>active()&&manualStillShot===shot).then(image=>{
    if(manualStillShot===shot)saveCaptured(image);
   },()=>{
    // Unsupported ImageCapture and transient failures must not lose the tap.
