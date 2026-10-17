@@ -197,8 +197,8 @@ function render(){
  const cg=$('closetGrid');
  // Preserve the currently viewed garment across capture, save, edit, and
  // rerender; otherwise a full redraw jumps the rack back to its first card.
- if(window.closetPresentationMode==='rack'&&typeof ClosetRackEngine!=='undefined'&&
-    !($('closetCollection')?.hidden)){
+ if(window.closetPresentationMode==='rack'&&window.closetActiveItemId!==null&&
+    typeof ClosetRackEngine!=='undefined'&&!($('closetCollection')?.hidden)){
   window.closetActiveItemId=ClosetRackEngine.activeItemId(cg)||window.closetActiveItemId;
  }
  cg.replaceChildren();const query=$('search').value.toLowerCase(),filter=$('filter').value,visible=(query||filter!=='All categories'||window.closetBrowseAll||window.closetSlotFilter)?items.filter(x=>(!window.closetSlotFilter||outfitSlots.some(slot=>slot.id===window.closetSlotFilter&&slotAllows(slot,x)))&&(!window.closetItemType||x.itemType===window.closetItemType)&&(!window.closetSleeves||window.closetSleeves.includes(x.sleeveLength))&&clothingMatches(x,query,filter,$('seasonFilter').value,$('sleeveFilter').value)):[];

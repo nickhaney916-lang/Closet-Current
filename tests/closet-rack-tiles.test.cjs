@@ -85,7 +85,7 @@ test('next and previous move exactly one garment; controls clamp to first and la
 });
 test('rack redraw resumes the exact same garment and missing items safely reset',()=>{
  const {grid}=fakeRack(4);
- rack.jumpBy(grid,2);
+ rack.jump(grid,2);
  const active=rack.activeItemId(grid);
  grid.scrollLeft=0;
  assert.equal(rack.restore(grid,active).id,'item-2');
@@ -100,4 +100,12 @@ test('closet rail is primary but grid remains available for all garments',()=>{
  assert.match(html,/id="closetRackPosition"/);
  assert.match(source,/closetGridMode.*onclick/);
  assert.match(source,/closetRackNext.*jumpBy/);
+});
+
+test('category change deliberately forgets prior rack item before redraw',()=>{
+ const app=require('node:fs').readFileSync('public/app.js','utf8');
+ const browser=require('node:fs').readFileSync('public/closet-browser.js','utf8');
+ assert.match(browser,/\('filter'\)\.onchange=\(\)=>\{window\.closetActiveItemId=null/);
+ assert.match(app,/closetActiveItemId!==null/);
+ assert.match(browser,/b\.onclick=\(\)=>\{window\.closetActiveItemId=null/);
 });
