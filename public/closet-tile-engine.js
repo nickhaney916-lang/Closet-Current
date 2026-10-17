@@ -84,10 +84,24 @@
  }
  async function normalized(item){
   if(!item?.id||!valid(item.image))return null;
+  // A separately stored generated tile may appear ONLY after explicit visual
+  // review with SHA-256 identity checks. Most items use safe local centering.
+  const key=item.image+'|'+(item.normalizedPreview?.image||'')+'|'+
+    (item.normalizedPreview?.review?.status||'');
   const existing=cache.get(item.id);
-  if(existing&&existing.source===item.image)return existing.value;
-  const value=draw(item);cache.set(item.id,{source:item.image,value});
-  if(cache.size>20)cache.delete(cache.keys().next().value);
+  if(existing&&existing.source===key)return existing.value;
+  const value=(async()=>{
+    if(typeof root.GarmentDisplayPreview!=='undefined'){
+      const candidate=await root.GarmentDisplayPreview.approved(item);
+      if(candidate&&typeof Image!=='undefined'){
+        const check=new Image();check.src=candidate;
+        try{await check.decode();return candidate;}catch{/* original fallback */}
+      }
+    }
+    return draw(item);
+  })();
+  cache.set(item.id,{source:key,value});
+  if(cache.size>12)cache.delete(cache.keys().next().value);
   return value;
  }
  function apply(img,item){
