@@ -14,6 +14,8 @@ on:
       - 'scripts/build-threshold-sensitivity-review.mjs'
       - 'scripts/build-annotation-reference-pack.mjs'
       - 'benchmark/shadow-annotation-validator.mjs'
+      - 'benchmark/review-shadow-outlines.html'
+      - 'scripts/test-independent-shadow-review.mjs'
       - 'benchmark/annotate-shadow-polygons.html'
       - 'scripts/test-shadow-outline-editor.mjs'
       - 'tests/shadow-annotation-validator.test.mjs'
@@ -97,6 +99,8 @@ jobs:
         run: node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos commons-0035,commons-0049,commons-0053,commons-0065,commons-0079,commons-0094
       - name: Smoke-test polygon editor with verified original photo
         run: node scripts/test-shadow-outline-editor.mjs
+      - name: Smoke-test independently reviewed shadow approval
+        run: node scripts/test-independent-shadow-review.mjs
       - name: Generate clean original-photo annotation reference pack
         run: node scripts/build-annotation-reference-pack.mjs benchmark/annotation-reference-pack
       - name: Verify annotation reference images
