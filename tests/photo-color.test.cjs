@@ -25,3 +25,27 @@ test('a uniformly brown piece or clearly orange piece retains its useful color e
  assert.equal(orange.color,'Orange');assert.notEqual(orange.needsConfirmation,true);
  assert.equal(C.maskedPalette(sample(()=>[105,65,30]),16,16).needsConfirmation,false);
 });
+
+test('real-photo-inspired rust orange has Brown and Red evidence and stays uncertain',()=>{
+ const darkRust=[150,47,22],litRed=[225,35,30];
+ const rgba=sample((x,y)=>x<11?darkRust:litRed);
+ assert.equal(C.family(...darkRust),'Brown');
+ assert.equal(C.family(...litRed),'Red');
+ const estimate=C.estimate(rgba,16,16);
+ assert.equal(estimate.color,'Brown');
+ assert.equal(estimate.needsConfirmation,true);
+ assert.equal(estimate.reason,'warm-tone-lighting-ambiguity');
+ const palette=C.maskedPalette(rgba,16,16);
+ assert.equal(palette.primary,'Brown');
+ assert.equal(palette.needsConfirmation,true);
+});
+test('neutral true-brown control is not flagged for red-orange ambiguity',()=>{
+ const coat=[121,109,97],gray=[125,125,125];
+ const rgba=sample((x,y)=>x<11?coat:gray);
+ const estimate=C.estimate(rgba,16,16);
+ assert.equal(estimate.color,'Brown');
+ assert.notEqual(estimate.reason,'warm-tone-lighting-ambiguity');
+ const masked=C.maskedPalette(rgba,16,16);
+ assert.equal(masked.primary,'Brown');
+ assert.equal(masked.needsConfirmation,false);
+});
