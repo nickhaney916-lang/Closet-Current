@@ -35,7 +35,8 @@ export function buildGarmentReviewPacket(manifest,sources,report){
    title:source.attribution.title||entry.image,
    sourceUrl:source.attribution.source,license:source.attribution.license,
    licenseUrl:source.attribution.licenseUrl,author:source.attribution.author||'See source',
-   status:result.status,fragmentCount:result.fragments?.count??null,
+   status:result.status,personDetected:typeof result.personDetected==='boolean'?result.personDetected:null,
+   fragmentCount:result.fragments?.count??null,
    files:{
     original:entry.id+'.original.jpg',
     comparison:entry.id+'.side-by-side.png',
@@ -51,7 +52,8 @@ export function buildGarmentReviewPacket(manifest,sources,report){
    '<a href="'+escaped(t.files.modelSuggestion)+'">Optional prediction seed</a>';
   return '<article><h2>'+escaped(t.id)+' — '+escaped(t.title)+'</h2>'+
    '<p><strong>'+ (t.status==='scored'?'Reviewed reference scored':'Awaiting independent human review') +
-   '</strong> · '+escaped(t.fragmentCount??'Not counted')+' predicted region(s), not verified pieces</p>'+
+   '</strong> · '+escaped(t.fragmentCount??'Not counted')+' predicted region(s), not verified pieces</p>'+ 
+   '<p><small>Model person-evidence signal: '+escaped(t.personDetected===null?'not provided':t.personDetected?'yes':'no')+'. Standalone garment photographs are not a full-outfit multi-piece accuracy test.</small></p>'+
    '<img src="'+escaped(t.files.comparison)+'" alt="Original garment photo alongside overlaid AI prediction (not verified)" loading="lazy">'+
    '<p>'+links+'</p><p><small>Source: <a href="'+escaped(t.sourceUrl)+'">'+escaped(t.title)+'</a> · '+
    escaped(t.license)+' (<a href="'+escaped(t.licenseUrl)+'">license</a>) · '+escaped(t.author)+'</small></p>'+
@@ -67,7 +69,7 @@ export function buildGarmentReviewPacket(manifest,sources,report){
   '.warning{font-weight:650}</style>'+
   '<h1>Independent garment outline review</h1><p><strong>'+pending+' of '+tasks.length+
   ' references still awaiting two-person human approval.</strong> This packet is an offline internal QA tool, not the customer app.</p>'+
-  '<p class="warning">AI-produced mask overlays are only suggestions. They are NOT ground truth and cannot be used to report segmentation or color accuracy.</p>'+
+  '<p class="warning">AI-produced mask overlays are only suggestions. They are NOT ground truth and cannot be used to report segmentation or color accuracy. Standalone reference photos do not establish accuracy on multi-layer whole outfits.</p>'+
   '<nav><a href="tools/annotate-garment.html">1 · Create / correct first-review draft</a>'+
   '<a href="tools/approve-garment-mask.html">2 · Independent second review</a></nav>'+
   '<p>For each case: save the linked original image, open the first-review tool, optionally import the model suggestion, and draw or correct the entire fabric boundary. '+
