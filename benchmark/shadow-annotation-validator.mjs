@@ -20,6 +20,9 @@ export function validateShadowAnnotation(annotation,entry){
  if(annotation?.imageId!==entry.id)issues.push('image ID mismatch');
  if(annotation?.sourceSha256!==entry.sourceSha256)issues.push('source checksum mismatch');
  if(annotation?.reviewStatus!=='approved')issues.push('independent reviewer approval missing');
+ const reviewer=typeof annotation?.reviewer==='string'?annotation.reviewer.trim():'';
+ const approvedBy=typeof annotation?.approvedBy==='string'?annotation.approvedBy.trim():'';
+ if(!reviewer||!approvedBy||reviewer.toLowerCase()===approvedBy.toLowerCase())issues.push('two distinct reviewer and approvedBy identities are required');
  for(const key of ['garment','shadow']){
   const polygons=annotation?.regions?.[key];
   if(!Array.isArray(polygons)||polygons.length===0){issues.push(key+' polygons missing');continue;}
