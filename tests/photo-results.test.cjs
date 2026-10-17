@@ -44,7 +44,7 @@ test('an unresolved color offers one-choice inline saving without adding tabs',a
  c.renderPhotoResults(grid,[item]);const nodes=descendants(grid),picker=nodes.find(x=>x.tag==='select');
  assert.ok(picker);
  assert.ok(nodes.some(x=>x.text==='Choose color · save'));
- assert.deepEqual(nodes.filter(x=>x.tag==='option').map(x=>x.text),['Choose color','Black','Blue','Red']);
+ assert.deepEqual(nodes.filter(x=>x.tag==='option').map(x=>x.text),['Choose color to save','Black','Blue','Red']);
  picker.value='Blue';await picker.onchange();
  assert.equal(picker.disabled,true);
  assert.equal(selected.length,1);assert.equal(selected[0].input,item);
