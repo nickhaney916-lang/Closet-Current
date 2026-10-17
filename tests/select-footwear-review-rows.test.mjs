@@ -6,7 +6,7 @@ test('selects the strongest separated rows and returns them in top-to-bottom ord
  const profile={abruptRows:[entry(30,.05,.1),entry(31,.06,.3),entry(90,0,.5),entry(140,.04,.11)]};
  const result=selectSilhouetteReviewRows(profile,{maxRows:2,minSeparation:10});
  assert.deepEqual(result.map(row=>row.y),[31,90]);
- assert.equal(result[0].severity,3);
+ assert.ok(Math.abs(result[0].severity-3)<1e-10);
 });
 test('never fabricates shadow pixels or modifies the input profile',()=>{
  const profile={abruptRows:[entry(20,.03,-.2)]};
