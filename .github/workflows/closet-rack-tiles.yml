@@ -6,6 +6,7 @@ on:
     paths:
       - 'public/closet-tile-engine.js'
       - 'public/garment-display-preview.js'
+      - 'public/garment-fidelity-review.js'
       - 'public/garment-pose-normalizer.js'
       - 'public/closet-rack-engine.js'
       - 'public/index.html'
@@ -14,6 +15,7 @@ on:
       - 'public/app-theme.css'
       - 'tests/closet-rack-tiles.test.cjs'
       - 'tests/garment-display-preview.test.cjs'
+      - 'tests/garment-fidelity-review.test.mjs'
       - 'tests/garment-pose-normalizer.test.cjs'
       - 'scripts/run-real-pose-normalization.mjs'
       - '.github/workflows/closet-rack-tiles.yml'
@@ -30,13 +32,14 @@ jobs:
           node-version: '22'
       - name: Validate browser scripts and data-preserving tile support
         run: |
+          node --check public/garment-fidelity-review.js
           node --check public/garment-display-preview.js
           node --check public/garment-pose-normalizer.js
           node --check public/closet-rack-engine.js
           node --check public/closet-tile-engine.js
           node --check public/closet-browser.js
           node --check public/app.js
-          node --test tests/closet-rack-tiles.test.cjs tests/garment-pose-normalizer.test.cjs tests/garment-display-preview.test.cjs tests/closet-browser.test.cjs
+          node --test tests/closet-rack-tiles.test.cjs tests/garment-pose-normalizer.test.cjs tests/garment-display-preview.test.cjs tests/garment-fidelity-review.test.mjs tests/closet-browser.test.cjs
       - name: Install image decoder for licensed real-photo review
         run: npm install --no-save --no-package-lock sharp@0.34.4
       - name: Download 4 checksum-verified garment photographs
@@ -57,4 +60,4 @@ jobs:
       - name: Build full app and verify all closet categories can use the rack
         run: |
           node scripts/build.mjs
-          node -e "const fs=require('fs');const h=fs.readFileSync('dist/index.html','utf8');const b=fs.readFileSync('dist/closet-browser.js','utf8');if(!h.includes('closetRackMode')||!h.includes('closet-tile-engine.js')||!h.includes('closet-rack-engine.js')||!h.includes('garment-pose-normalizer.js')||!h.includes('garment-display-preview.js')||!b.includes('closetPresentationMode'))throw Error('Universal closet rack missing from build')"
+          node -e "const fs=require('fs');const h=fs.readFileSync('dist/index.html','utf8');const b=fs.readFileSync('dist/closet-browser.js','utf8');if(!h.includes('closetRackMode')||!h.includes('closet-tile-engine.js')||!h.includes('closet-rack-engine.js')||!h.includes('garment-pose-normalizer.js')||!h.includes('garment-display-preview.js')||!h.includes('garment-fidelity-review.js')||!b.includes('closetPresentationMode'))throw Error('Universal closet rack missing from build')"

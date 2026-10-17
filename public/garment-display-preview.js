@@ -26,6 +26,8 @@
    ||record.previewOnly!==true||review.status!=='approved'
    ||review.approvedByOwner!==true||review.identityChecked!==true
    ||review.explicitVisualReview!==true
+   ||typeof root.GarmentFidelityReview==='undefined'
+   ||root.GarmentFidelityReview.evaluate(review.fidelity).approved!==true
    ||record.itemId!==String(item.id)||record.category!==item.category
    ||!sha.test(record.sourceSha256||'')||!sha.test(record.previewSha256||'')
    ||!isDataImage(item.image)||!isDataImage(record.image)

@@ -3,13 +3,18 @@ const test=require('node:test');
 const assert=require('node:assert/strict');
 const {createHash,webcrypto}=require('node:crypto');
 const gate=require('../public/garment-display-preview.js');
+const fidelity=require('../public/garment-fidelity-review.js');
+globalThis.GarmentFidelityReview=fidelity;
 const sha=s=>createHash('sha256').update(Buffer.from(s.split(',')[1],'base64')).digest('hex');
 const a='data:image/png;base64,'+'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9ck5wAAAAASUVORK5CYII=';
 const b='data:image/png;base64,'+'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLJPQAAAABJRU5ErkJggg==';
 const make=()=>({id:'shirt-1',category:'Tops',image:a,normalizedPreview:{
  previewOnly:true,itemId:'shirt-1',category:'Tops',image:b,
  sourceSha256:sha(a),previewSha256:sha(b),
- review:{status:'approved',approvedByOwner:true,identityChecked:true,explicitVisualReview:true}
+ review:{status:'approved',approvedByOwner:true,identityChecked:true,explicitVisualReview:true,
+ fidelity:{mode:'owner-compared-original',comparedOriginal:true,sourceConditionedGeneration:true,
+ checks:Object.fromEntries(fidelity.ASPECTS.map(x=>[x,'same'])),
+ inventedDetails:false,unseenBrandingIntroduced:false}}
 }});
 test('opt-in reviewed generated tile requires valid original and preview checksums',async()=>{
  const item=make();
@@ -81,4 +86,31 @@ test('cached generated tile is revoked if its owner review or garment category c
   globalThis.Image=imageClass;
   globalThis.GarmentDisplayPreview=oldGate;
  }
+});
+
+test('one generated fake button or invented branding blocks preview even with valid hashes',async()=>{
+ const x=make();
+ x.normalizedPreview.review.fidelity.checks.visibleConstruction='different';
+ assert.equal(await gate.approved(x),null);
+ const y=make();y.normalizedPreview.review.fidelity.unseenBrandingIntroduced=true;
+ assert.equal(await gate.approved(y),null);
+});
+test('unknown pattern, color, item count and missing comparison fail closed',async()=>{
+ const a1=make();a1.normalizedPreview.review.fidelity.checks.patternGraphics='unknown';
+ assert.equal(await gate.approved(a1),null);
+ const a2=make();a2.normalizedPreview.review.fidelity.checks.itemCount='different';
+ assert.equal(await gate.approved(a2),null);
+ const a3=make();a3.normalizedPreview.review.fidelity.comparedOriginal=false;
+ assert.equal(await gate.approved(a3),null);
+ const a4=make();a4.normalizedPreview.review.fidelity.sourceConditionedGeneration=false;
+ assert.equal(await gate.approved(a4),null);
+});
+test('an AI-only assessment without an actual owner comparison cannot mark its output as approved',()=>{
+ const fake={mode:'ai-estimated-only',comparedOriginal:false,sourceConditionedGeneration:false,
+ checks:Object.fromEntries(fidelity.ASPECTS.map(x=>[x,'same'])),
+ inventedDetails:false,unseenBrandingIntroduced:false};
+ const r=fidelity.evaluate(fake);
+ assert.equal(r.decision,'needs-review');
+ assert.equal(r.approved,false);
+ assert.equal(r.automaticApprovalAllowed,false);
 });
