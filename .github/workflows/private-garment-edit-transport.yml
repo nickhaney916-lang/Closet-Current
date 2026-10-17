@@ -24,4 +24,4 @@ jobs:
           node --test tests/private-garment-edit-transport.test.mjs
       - name: Reject accidental production enablement
         run: |
-          node -e "const fs=require('fs');const s=fs.readFileSync('supabase/functions/garment-normalize/private-edit-transport.mjs','utf8');if(!s.includes('PRIVATE_EDIT_DEFAULT_ENABLED=false')||!s.includes('durableDbReservation===true'))throw Error('Unsafe AI transport config')"
+          node -e "const fs=require('fs');const s=fs.readFileSync('supabase/functions/garment-normalize/private-edit-transport.mjs','utf8');if(!s.includes('PRIVATE_EDIT_DEFAULT_ENABLED=false')||!s.includes('durableDbReservation!==true'))throw Error('Unsafe AI transport config')"
