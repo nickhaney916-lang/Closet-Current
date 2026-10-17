@@ -60,3 +60,25 @@ test('photo hash calculation fails closed if browser crypto is unavailable',asyn
   else delete globalThis.crypto;
  }
 });
+
+test('cached generated tile is revoked if its owner review or garment category changes',async()=>{
+ const imageClass=globalThis.Image,oldGate=globalThis.GarmentDisplayPreview;
+ try{
+  globalThis.Image=class{set src(s){this._src=s;}async decode(){}};
+  globalThis.GarmentDisplayPreview=gate;
+  const engine=require('../public/closet-tile-engine.js');
+  const item=make();
+  assert.equal(await engine.normalized(item),b);
+  item.normalizedPreview.review.status='rejected';
+  assert.equal(await engine.normalized(item),null);
+  item.normalizedPreview.review.status='approved';
+  item.category='Bottoms';
+  assert.equal(await engine.normalized(item),null);
+  item.category='Tops';
+  item.normalizedPreview.previewSha256='f'.repeat(64);
+  assert.equal(await engine.normalized(item),null);
+ }finally{
+  globalThis.Image=imageClass;
+  globalThis.GarmentDisplayPreview=oldGate;
+ }
+});
