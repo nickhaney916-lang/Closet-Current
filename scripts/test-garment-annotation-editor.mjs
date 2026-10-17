@@ -14,7 +14,8 @@ try{
  await page.locator('#reviewer').fill('First Reviewer');
  await page.mouse.move(bounds.x+bounds.width*.5,bounds.y+bounds.height*.5);
  await page.mouse.down();await page.mouse.up();
- assert.equal(await page.locator('#download').isDisabled(),false);
+ const debug=await page.evaluate(()=>({loaded:!!source,maskPixels:mask?.reduce((a,b)=>a+b,0),strokes,tool:tool.value,mode:mode.value,canExport:canExport(),errors:document.querySelector('#status').textContent}));
+ assert.equal(await page.locator('#download').isDisabled(),false,'Initial brush did not activate export: '+JSON.stringify(debug));
  const downloadPromise=page.waitForEvent('download');
  await page.locator('#download').click();
  const download=await downloadPromise;
