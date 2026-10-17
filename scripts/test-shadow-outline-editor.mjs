@@ -8,6 +8,7 @@ try{
  await page.goto(pathToFileURL(resolve('benchmark/annotate-shadow-polygons.html')).href);
  await page.locator('#photo').setInputFiles('benchmark/photos/commons-0035.jpg');
  await page.locator('#id').selectOption('commons-0035');
+ await page.waitForFunction(()=>document.querySelector('#notice').textContent.includes('Image loaded')||document.querySelector('#notice').textContent.includes('Cannot load'),{timeout:10000});
  const loaded=await page.locator('#notice').textContent();
  if(!loaded.includes('Image loaded'))throw Error('Image load failed: '+loaded);
  const box=await page.locator('#view').boundingBox();
