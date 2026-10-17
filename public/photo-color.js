@@ -56,7 +56,7 @@
   if(anchors.some(c=>c[3]<250))return null;
   const mean=[0,1,2].map(k=>anchors.reduce((sum,c)=>sum+c[k],0)/anchors.length);
   if(Math.min(...mean)<210||Math.max(...mean)-Math.min(...mean)>22||
-     anchors.some(c=>Math.max(...c.slice(0,3).map((v,k)=>Math.abs(v-mean[k])))>24))return null;
+     anchors.some(c=>Math.max(...c.slice(0,3).map((v,k)=>Math.abs(v-mean[k])))>17))return null;
   // Strong difference from the sampled scene background is evidence of a
   // garment foreground, not proof of its subtype, pose or physical cut.
   const foreground=new Uint8ClampedArray(pixels.length),interior=new Uint8ClampedArray(pixels.length);
