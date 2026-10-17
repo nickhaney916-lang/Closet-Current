@@ -20,6 +20,8 @@ on:
       - 'benchmark/approve-garment-mask.html'
       - 'scripts/test-independent-mask-approval.mjs'
       - 'scripts/test-garment-annotation-editor.mjs'
+      - 'scripts/test-ai-tryon-pilot.mjs'
+      - 'supabase/functions/ai-try-on/**'
       - 'scripts/run-mobile-flow.mjs'
       - '.github/workflows/mobile-flow.yml'
   workflow_dispatch:
@@ -51,8 +53,9 @@ jobs:
         run: |
           node scripts/test-garment-annotation-editor.mjs
           node scripts/test-independent-mask-approval.mjs
+          node scripts/test-ai-tryon-pilot.mjs
       - name: Check camera frame quality and stability
-        run: node --test tests/quick-color-review.test.cjs tests/automatic-indexing.test.cjs tests/clothing-details.test.cjs tests/capture.test.cjs tests/photo-native-still.test.cjs tests/photo-capture-quality.test.cjs tests/photo-frame-quality.test.cjs tests/photo-stability.test.cjs tests/photo-crop-resolution.test.cjs tests/outfit-segmentation-edge.test.mjs tests/outfit-color-evidence.test.mjs tests/photo-color.test.cjs tests/photo-foreground-color.test.cjs tests/garment-mask-metrics.test.mjs
+        run: node --test tests/quick-color-review.test.cjs tests/automatic-indexing.test.cjs tests/clothing-details.test.cjs tests/capture.test.cjs tests/photo-native-still.test.cjs tests/photo-capture-quality.test.cjs tests/photo-frame-quality.test.cjs tests/photo-stability.test.cjs tests/photo-crop-resolution.test.cjs tests/outfit-segmentation-edge.test.mjs tests/outfit-color-evidence.test.mjs tests/photo-color.test.cjs tests/photo-foreground-color.test.cjs tests/garment-mask-metrics.test.mjs tests/ai-tryon-plan.test.cjs tests/ai-tryon-protocol.test.mjs
       - name: Build and verify touch viewport flow with real worker
         run: |
           node scripts/build.mjs
