@@ -5,7 +5,7 @@ import {createGarmentNormalizeCreditLedger} from '../supabase/functions/garment-
 import {submitGuardedGarmentPreview,GARMENT_PREVIEW_SUBMISSION_ENABLED} from '../supabase/functions/garment-normalize/guarded-preview-submission.mjs';
 
 const id='11111111-1111-4111-8111-111111111111',ownerId='33333333-3333-4333-8333-333333333333';
-const body='data:image/png;base64,'+'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9ck5wAAAAASUVORK5CYII=';
+const body='data:image/png;base64,'+'iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAAH0lEQVR4nGOU03DjYWAnHrEwcLMzMJCARjWMahg6GgC7EAkcaboM0gAAAABJRU5ErkJggg==';
 const hash=createHash('sha256').update(Buffer.from(body.split(',')[1],'base64')).digest('hex');
 const user={id:ownerId,verifiedBySupabase:true};
 function ctx(){
