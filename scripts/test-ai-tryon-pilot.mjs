@@ -9,7 +9,7 @@ try{
  const page=await browser.newPage();
  const errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.setContent(`<!DOCTYPE html><select id="tryOnFigure"><option value="female">Female</option><option value="male">Male</option></select>
- <button id="tryOnGenerate" disabled>Generate</button><p id="tryOnStatus"></p><img id="tryOnImage" hidden>`);
+ <button id="tryOnGenerate" disabled>Generate</button><p id="tryOnStatus"></p><div id="outfitFigure"><img id="tryOnImage" hidden></div>`);
  const fakeImage=await page.evaluate(()=>{
   const c=document.createElement('canvas');c.width=48;c.height=64;
   const ctx=c.getContext('2d');ctx.fillStyle='#1358ca';ctx.fillRect(0,0,48,64);
@@ -44,8 +44,10 @@ try{
  assert.equal(start.figure,'male');assert.equal(start.category,'tops');
  assert.equal(start.garmentImage,fakeImage);
  assert.equal(await page.locator('#tryOnImage').getAttribute('src'),fakeImage);
+ assert.equal(await page.locator('#outfitFigure').evaluate(el=>el.classList.contains('ai-tryon-active')),true,'true render replaces the silhouette viewport');
  await page.locator('#tryOnFigure').selectOption('female');
  assert.equal(await page.locator('#tryOnImage').isHidden(),true,'changing model invalidates existing preview');
+ assert.equal(await page.locator('#outfitFigure').evaluate(el=>el.classList.contains('ai-tryon-active')),false);
  assert.equal(calls.length,2,'switching figure must not trigger paid inference');
 
  reject=true;
