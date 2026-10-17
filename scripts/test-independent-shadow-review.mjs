@@ -37,9 +37,10 @@ try{
  if(approved.reviewStatus!=='approved'||approved.reviewer!=='Reviewer A'||approved.approvedBy!=='Reviewer B'||!validateShadowAnnotation(approved,entry).valid)throw Error('Exported schema/identities invalid');
  if(approved.regions.garment.length!==1||approved.regions.shadow.length!==1)throw Error('Export altered polygons');
  // Changing just the draft identity must invalidate the matching original.
- await writeFile(draftPath,JSON.stringify({...draft,imageId:'commons-0094'}));
- await page.locator('#draft').setInputFiles(draftPath);
- await page.waitForFunction(()=>document.querySelector('#status').textContent.includes('Cannot begin review'));
+ const wrongDraftPath=join(dir,'wrong-image-draft.json');
+ await writeFile(wrongDraftPath,JSON.stringify({...draft,imageId:'commons-0094'}));
+ await page.locator('#draft').setInputFiles(wrongDraftPath);
+ await page.waitForFunction(()=>document.querySelector('#status').textContent.includes('Cannot begin review'),{timeout:10000});
  if(await page.locator('#approve').isEnabled())throw Error('Mismatched image was allowed for approval');
  console.log('SECOND_REVIEW_UI_SMOKE '+JSON.stringify({testedImage:entry.id,checksumVerified:true,selfApprovalRejected:true,explicitChecklistRequired:true,exportValidated:true,mismatchedSourceRejected:true,syntheticFixturesOnly:true}));
 }finally{await browser.close();await rm(dir,{recursive:true,force:true})}
