@@ -1,0 +1,27 @@
+name: Private disabled single-garment AI edit transport
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'supabase/functions/garment-normalize/private-edit-transport.mjs'
+      - 'tests/private-garment-edit-transport.test.mjs'
+      - '.github/workflows/private-garment-edit-transport.yml'
+permissions:
+  contents: read
+jobs:
+  mock-server-transport:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check no paid call can happen without private spend authorization
+        run: |
+          node --check supabase/functions/garment-normalize/private-edit-transport.mjs
+          node --test tests/private-garment-edit-transport.test.mjs
+      - name: Reject accidental production enablement
+        run: |
+          node -e "const fs=require('fs');const s=fs.readFileSync('supabase/functions/garment-normalize/private-edit-transport.mjs','utf8');if(!s.includes('PRIVATE_EDIT_DEFAULT_ENABLED=false')||!s.includes('durableDbReservation===true'))throw Error('Unsafe AI transport config')"
