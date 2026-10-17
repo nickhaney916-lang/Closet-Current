@@ -8,6 +8,7 @@ on:
       - 'scripts/build-raw-alpha-review.mjs'
       - 'scripts/build-threshold128-edge-review.mjs'
       - 'scripts/build-edge-background-stress.mjs'
+      - 'scripts/build-threshold-sensitivity-review.mjs'
       - 'scripts/compare-garment-models.mjs'
       - 'scripts/build-three-way-visual.mjs'
       - 'scripts/build-four-way-model-review.mjs'
@@ -110,6 +111,18 @@ jobs:
         with:
           name: experimental-modnet-edge-background-stress
           path: benchmark/edge-background-stress/
+          retention-days: 14
+      - name: Compare sharp baseline against stricter alpha thresholds
+        run: node scripts/build-threshold-sensitivity-review.mjs benchmark/threshold-sensitivity-review
+      - name: Verify threshold sensitivity images
+        run: |
+          for id in commons-0035 commons-0049 commons-0053 commons-0065 commons-0079 commons-0094; do
+            test -s "benchmark/threshold-sensitivity-review/$id-threshold-sensitivity.png"
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: experimental-modnet-threshold-sensitivity
+          path: benchmark/threshold-sensitivity-review/
           retention-days: 14
       - name: Generate experimental SegFormer masks for paired comparison
         run: node scripts/run-real-segmentation-benchmark.mjs benchmark/segmentation-predictions
