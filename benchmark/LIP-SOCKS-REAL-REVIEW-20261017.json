@@ -1,0 +1,39 @@
+{
+  "experiment": "LIP 20-class socks/shoes on two previously SHA-locked Commons images",
+  "run": "https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39058535027",
+  "model": "pirocheto/schp-lip-20",
+  "modelSha256": "871c9e209dc67d6be61c73dcc79cb49e638fcf5bbc35a19b4c7429eba0bfc046",
+  "modelLicense": "MIT",
+  "photosCount": 2,
+  "unitTestsPassed": 5,
+  "groundTruthPixelMasksAvailable": false,
+  "accuracyPercentage": null,
+  "realPhoneSpeedMeasured": false,
+  "automaticHosieryCatalogApproved": false,
+  "addedClosetEntries": 0,
+  "recommendation": "do-not-promote-to-live",
+  "findings": [
+    {
+      "id": "validation-0030",
+      "scene": "blue striped socks above white boots",
+      "sockClassPixels": 1725,
+      "shoeClassPixels": 1367,
+      "cpuInferenceMs": 681,
+      "sockAndShoeClassesPresent": true,
+      "visualReview": "Sock-colored overlay covers substantial sections of white boot shafts; blue striped socks are not reliably segmented as independent garment.",
+      "clothingSeparatedCorrectly": false,
+      "perPixelAccuracyMeasured": false
+    },
+    {
+      "id": "validation-0031",
+      "scene": "sheer tights with strappy heels",
+      "sockClassPixels": 0,
+      "shoeClassPixels": 2681,
+      "cpuInferenceMs": 682,
+      "sockAndShoeClassesPresent": false,
+      "visualReview": "Tights were not identified as legwear; model does not have a tights/stockings class, and legs are assigned a skin/leg region.",
+      "clothingSeparatedCorrectly": false,
+      "perPixelAccuracyMeasured": false
+    }
+  ]
+}

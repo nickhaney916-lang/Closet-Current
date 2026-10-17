@@ -1,0 +1,23 @@
+{
+  "date": "2026-10-16",
+  "sourceRun": 38987574527,
+  "sourceArtifact": 12083622229,
+  "review": "User visually selected sharp MODNet threshold 128 over inside-edge blending on contrasting backgrounds",
+  "selectedBaseline": {
+    "model": "Xenova/modnet",
+    "foregroundThreshold": 128,
+    "alpha": "hard",
+    "colorHandling": "retain original garment RGB"
+  },
+  "rejectedAsDefault": "Inside-only softened edge, aesthetically less preferred",
+  "unresolved": [
+    "cast shadow attached to garments",
+    "background extensions"
+  ],
+  "rules": [
+    "No blanket blur or edge feather in experimental baseline",
+    "Do not remove candidate pixels without visual confirmation",
+    "Do not deploy to production before independent annotation review"
+  ],
+  "productionChanged": false
+}

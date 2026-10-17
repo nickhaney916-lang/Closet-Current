@@ -1,0 +1,46 @@
+name: Experimental garment instance evidence
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'benchmark/garment-instance-evidence.mjs'
+      - 'tests/garment-instance-evidence.test.mjs'
+      - 'benchmark/clearly-visible-layers.mjs'
+      - 'benchmark/visible-garment-pairs.mjs'
+      - 'tests/clearly-visible-layers.test.mjs'
+      - 'tests/visible-garment-pairs.test.mjs'
+      - 'scripts/run-real-instance-fragments.mjs'
+      - '.github/workflows/garment-instance-evidence.yml'
+permissions:
+  contents: read
+jobs:
+  real-photo-instance-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned image model dependencies
+        run: npm install --no-save --no-package-lock @huggingface/transformers@3.8.1 sharp@0.34.4
+      - name: Guard distinct garment instance evidence
+        run: |
+          node --check scripts/run-real-instance-fragments.mjs
+          node --test tests/garment-instance-evidence.test.mjs tests/clearly-visible-layers.test.mjs tests/visible-garment-pairs.test.mjs tests/garment-subtype-consensus.test.mjs tests/multilayer-review-safety.test.mjs
+      - name: Load eight SHA-256 verified independent test photographs
+        run: |
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos commons-0001,commons-0003,commons-0041,commons-0043,commons-0060,commons-0062,commons-0059
+          node scripts/download-reviewed-photos.mjs benchmark/manifest-fresh-11.json benchmark/photos validation-0008
+      - name: Extract real semantic components and missing independent instance evidence
+        run: node scripts/run-real-instance-fragments.mjs benchmark/instance-fragments-review
+      - name: Explicitly prohibit fake split accuracy and automatic wardrobe entries
+        run: |
+          node -e "const s=require('./benchmark/instance-fragments-review/summary.json');if(s.status!=='complete'||s.cases.length!==8||s.independentInstanceMasksAvailable!==false||s.productionAuthorized!==false||s.cases.some(c=>!c.originalPreserved||c.autoCreatedItems!==0||c.physicalInstancesVerified))throw Error('Instance gate violated')"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: experimental-eight-photo-instance-evidence
+          path: benchmark/instance-fragments-review/
+          retention-days: 14

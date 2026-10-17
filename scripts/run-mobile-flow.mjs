@@ -48,6 +48,72 @@ try{
  assert.deepEqual(camera,{width:1920,height:1080});
  await page.locator('#takePhoto').click();await page.locator('#scanResults .photo-result').waitFor();
  const image=await page.locator('#scanResults .photo-result img').evaluate(async img=>{await img.decode();return {width:img.naturalWidth,height:img.naturalHeight};});assert.deepEqual(image,camera);
+ // Pixel-level camera benchmark: compare the exact capture JPEG to the
+ // currently displayed fixture frame. The fixture is static, so comparisons
+ // are reproducible. Scores are diagnostic, not clothing acceptance gates.
+ const photoDetail=await page.evaluate(async()=>{
+  const video=document.querySelector('#video');
+  const saved=document.querySelector('#scanResults .photo-result img');
+  await saved.decode();
+  const size=256;
+  function pixels(source){
+   const c=document.createElement('canvas');c.width=size;c.height=size;
+   const ctx=c.getContext('2d',{willReadFrequently:true});
+   ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
+   ctx.drawImage(source,0,0,size,size);
+   return ctx.getImageData(0,0,size,size).data;
+  }
+  const original=pixels(video),encoded=pixels(saved);
+  let absoluteError=0,squaredError=0,edgeBefore=0,edgeAfter=0,edgeError=0;
+  const gray=(buffer,x,y)=>{const p=(y*size+x)*4;return .2126*buffer[p]+.7152*buffer[p+1]+.0722*buffer[p+2];};
+  for(let p=0;p<original.length;p+=4)for(let channel=0;channel<3;channel++){
+   const difference=original[p+channel]-encoded[p+channel];
+   absoluteError+=Math.abs(difference);squaredError+=difference*difference;
+  }
+  for(let y=1;y<size-1;y++)for(let x=1;x<size-1;x++){
+   const lap=b=>4*gray(b,x,y)-gray(b,x-1,y)-gray(b,x+1,y)-gray(b,x,y-1)-gray(b,x,y+1);
+   const before=lap(original),after=lap(encoded);
+   edgeBefore+=Math.abs(before);edgeAfter+=Math.abs(after);edgeError+=Math.abs(before-after);
+  }
+  const count=size*size*3,mse=squaredError/count;
+  return {method:'static-video-to-saved-jpeg-pixel-comparison',
+   source:{width:video.videoWidth,height:video.videoHeight},
+   saved:{width:saved.naturalWidth,height:saved.naturalHeight},
+   sampleWidth:size,sampleHeight:size,
+   meanAbsoluteChannelError:Number((absoluteError/count).toFixed(4)),
+   psnrDb:mse===0?null:Number((10*Math.log10(255*255/mse)).toFixed(3)),
+   edgeEnergyBefore:Number(edgeBefore.toFixed(2)),
+   edgeEnergyAfter:Number(edgeAfter.toFixed(2)),
+   edgeEnergyRetentionRatio:edgeBefore?Number((edgeAfter/edgeBefore).toFixed(4)):null,
+   meanAbsoluteEdgeError:Number((edgeError/((size-2)*(size-2))).toFixed(4)),
+   noTextureWarning:edgeBefore<100,
+   note:'Reproducible simulated-camera JPEG fidelity, not physical-phone focus or optical sharpness'};
+ });
+ assert.ok(Number.isFinite(photoDetail.meanAbsoluteChannelError),'JPEG error metric must be finite');
+ assert.ok(photoDetail.psnrDb===null||Number.isFinite(photoDetail.psnrDb),'PSNR must be valid');
+ assert.ok(photoDetail.edgeEnergyRetentionRatio===null||Number.isFinite(photoDetail.edgeEnergyRetentionRatio),'Edge retention must be valid');
+ // Controlled stress fixtures supplement the real camera capture comparison.
+ // Synthetic patterns provide known ground truth without risking user photos.
+ const detailStress=await page.evaluate(async()=>{
+  const w=256,h=256;
+  const source=document.createElement('canvas');source.width=w;source.height=h;
+  const ctx=source.getContext('2d');
+  ctx.fillStyle='#dddddd';ctx.fillRect(0,0,w,h);
+  for(let y=0;y<128;y+=4){ctx.fillStyle=y%8===0?'#292929':'#eeeeee';ctx.fillRect(0,y,w,2);}
+  for(let y=128;y<h;y+=8)for(let x=0;x<w;x+=8){ctx.fillStyle=((x+y)/8)%2===0?'#345b89':'#eedeb8';ctx.fillRect(x,y,8,8);}
+  function pixels(c){return c.getContext('2d',{willReadFrequently:true}).getImageData(0,0,w,h).data;}
+  async function jpeg(quality){const img=new Image();img.src=source.toDataURL('image/jpeg',quality);await img.decode();const c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(img,0,0);return c;}
+  function smooth(){const small=document.createElement('canvas');small.width=32;small.height=32;small.getContext('2d').drawImage(source,0,0,32,32);const c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d');x.imageSmoothingEnabled=true;x.imageSmoothingQuality='high';x.drawImage(small,0,0,w,h);return c;}
+  function metrics(a,b){let error=0,edgeA=0,edgeB=0;const lum=(p,x,y)=>{const i=(y*w+x)*4;return .2126*p[i]+.7152*p[i+1]+.0722*p[i+2];};for(let i=0;i<a.length;i+=4)for(let k=0;k<3;k++)error+=Math.abs(a[i+k]-b[i+k]);for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){const lap=p=>4*lum(p,x,y)-lum(p,x-1,y)-lum(p,x+1,y)-lum(p,x,y-1)-lum(p,x,y+1);edgeA+=Math.abs(lap(a));edgeB+=Math.abs(lap(b));}return {meanAbsoluteError:Number((error/(w*h*3)).toFixed(3)),edgeRetention:Number((edgeB/edgeA).toFixed(4))};}
+  const original=pixels(source),high=pixels(await jpeg(.94)),low=pixels(await jpeg(.2)),blur=pixels(smooth());
+  return {fixture:'generated fabric lines and check pattern',highQualityJpeg:metrics(original,high),lowQualityJpeg:metrics(original,low),blurred:metrics(original,blur)};
+ });
+ assert.ok(detailStress.blurred.edgeRetention<detailStress.highQualityJpeg.edgeRetention,'Blurred garment must lose more edge detail than high-quality capture');
+ assert.ok(detailStress.lowQualityJpeg.meanAbsoluteError>detailStress.highQualityJpeg.meanAbsoluteError,'Aggressive JPEG compression must increase pixel error');
+ await writeFile(out+'/photo-detail-stress.json',JSON.stringify(detailStress,null,2));
+ console.log('PHOTO_DETAIL_STRESS '+JSON.stringify(detailStress));
+ await writeFile(out+'/photo-detail-retention.json',JSON.stringify(photoDetail,null,2));
+ console.log('PHOTO_DETAIL_RETENTION '+JSON.stringify(photoDetail));
  await page.locator('#scanResults .photo-result button').filter({hasText:'Adjust'}).click();
  const dialog=page.locator('dialog.photo-adjust');await dialog.getByLabel('Item name',{exact:true}).fill('Phone test blue top');
  await dialog.locator('label').filter({hasText:/^Main category/}).locator('select').selectOption('Tops');await dialog.locator('label').filter({hasText:/^Item type/}).locator('select').selectOption('T-shirt');await dialog.getByLabel('Color',{exact:true}).fill('Blue');await dialog.getByLabel('Summer',{exact:true}).check();

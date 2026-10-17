@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "source": "GitHub Actions real-photo model logs on run 39053340948; classification output not manually annotated masks",
+  "classificationNotGroundTruth": true,
+  "cases": [
+    {
+      "id": "commons-0001",
+      "semanticClasses": [
+        4,
+        5,
+        7
+      ]
+    },
+    {
+      "id": "commons-0003",
+      "semanticClasses": [
+        4,
+        6
+      ]
+    },
+    {
+      "id": "commons-0041",
+      "semanticClasses": [
+        4,
+        5,
+        6
+      ]
+    },
+    {
+      "id": "commons-0043",
+      "semanticClasses": [
+        4,
+        5
+      ]
+    },
+    {
+      "id": "commons-0060",
+      "semanticClasses": [
+        4,
+        6
+      ]
+    },
+    {
+      "id": "commons-0062",
+      "semanticClasses": [
+        4,
+        7,
+        9
+      ]
+    },
+    {
+      "id": "commons-0059",
+      "semanticClasses": [
+        7
+      ]
+    },
+    {
+      "id": "validation-0008",
+      "semanticClasses": [
+        4
+      ]
+    }
+  ]
+}

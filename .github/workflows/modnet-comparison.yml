@@ -1,0 +1,394 @@
+name: Experimental MODNet six-photo comparison
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'scripts/run-modnet-comparison.mjs'
+      - 'scripts/run-object-cutout-comparison.mjs'
+      - 'benchmark/object-cutout-mask.mjs'
+      - 'tests/object-cutout-mask.test.mjs'
+      - 'scripts/build-footwear-silhouette-review.mjs'
+      - 'benchmark/select-footwear-review-rows.mjs'
+      - 'tests/select-footwear-review-rows.test.mjs'
+      - 'scripts/build-raw-alpha-review.mjs'
+      - 'scripts/build-threshold128-edge-review.mjs'
+      - 'scripts/build-edge-background-stress.mjs'
+      - 'scripts/build-threshold-sensitivity-review.mjs'
+      - 'scripts/build-annotation-reference-pack.mjs'
+      - 'benchmark/shadow-annotation-validator.mjs'
+      - 'benchmark/review-shadow-outlines.html'
+      - 'scripts/test-independent-shadow-review.mjs'
+      - 'benchmark/annotate-shadow-polygons.html'
+      - 'scripts/test-shadow-outline-editor.mjs'
+      - 'tests/shadow-annotation-validator.test.mjs'
+      - 'scripts/check-shadow-outline-readiness.mjs'
+      - 'benchmark/score-reviewed-shadow-cleanup.mjs'
+      - 'benchmark/compare-approved-shadow-cleanup.mjs'
+      - 'tests/compare-approved-shadow-cleanup.test.mjs'
+      - 'tests/score-reviewed-shadow-cleanup.test.mjs'
+      - 'benchmark/propose-supported-hole-repair.mjs'
+      - 'tests/supported-hole-repair.test.mjs'
+      - 'scripts/build-supported-hole-repair.mjs'
+      - 'scripts/compare-garment-models.mjs'
+      - 'scripts/build-three-way-visual.mjs'
+      - 'scripts/build-four-way-model-review.mjs'
+      - 'benchmark/modnet-promotion-gate.mjs'
+      - 'tests/modnet-promotion-gate.test.mjs'
+      - 'tests/modnet-sharp128-baseline.test.mjs'
+      - 'benchmark/modnet-sharp128-baseline-decision.json'
+      - 'scripts/build-footwear-disagreement-visual.mjs'
+      - 'benchmark/footwear-shadow-candidates.mjs'
+      - 'benchmark/lower-footwear-disagreement.mjs'
+      - 'tests/lower-footwear-disagreement.test.mjs tests/validate-visual-feedback.test.mjs'
+      - 'scripts/build-footwear-shadow-overlay.mjs'
+      - 'scripts/build-footwear-shadow-before-after.mjs'
+      - 'scripts/build-soft-edge-comparison.mjs'
+      - 'scripts/build-boundary-defect-review.mjs'
+      - 'scripts/build-selective-boundary-proposal.mjs'
+      - 'scripts/build-post-cleanup-check.mjs'
+      - 'scripts/build-multiscale-contamination-review.mjs'
+      - 'scripts/build-lower-edge-zoom.mjs'
+      - 'scripts/build-detached-component-review.mjs'
+      - 'scripts/footwear-edge-contrast.mjs'
+      - 'tests/footwear-shadow-candidates.test.mjs'
+      - 'tests/compare-garment-models.test.mjs'
+      - 'scripts/build-segmentation-review-pack.mjs'
+      - 'benchmark/FOOTWEAR-OUTLINE-REVIEW.txt'
+      - 'scripts/test-mobile-garment-review.mjs'
+      - 'scripts/validate-visual-feedback.mjs'
+      - 'tests/validate-visual-feedback.test.mjs'
+      - 'benchmark/mobile-review-template.html'
+      - 'benchmark/propose-island-cleanup.mjs'
+      - 'benchmark/foreground-geometry.mjs'
+      - 'benchmark/border-connected-foreground.mjs'
+      - 'tests/border-connected-foreground.test.mjs'
+      - 'tests/foreground-geometry.test.mjs'
+      - 'tests/propose-island-cleanup.test.mjs'
+      - 'benchmark/annotate-garment.html'
+      - 'benchmark/modnet-boundary-report.mjs'
+      - 'tests/modnet-boundary-report.test.mjs'
+      - '.github/workflows/modnet-comparison.yml'
+permissions:
+  contents: read
+jobs:
+  experimental:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install browser
+        run: |
+          npm install --no-save --no-package-lock playwright @huggingface/transformers@3.8.1 sharp@0.34.4
+          npx playwright install --with-deps chromium
+      - name: Validate threshold boundary analysis
+        run: node --test tests/modnet-boundary-report.test.mjs tests/propose-island-cleanup.test.mjs tests/foreground-geometry.test.mjs tests/border-connected-foreground.test.mjs tests/compare-garment-models.test.mjs tests/footwear-shadow-candidates.test.mjs tests/lower-footwear-disagreement.test.mjs
+      - name: Test conservative footwear component review
+        run: node --test tests/review-detached-footwear-regions.test.mjs
+      - name: Validate MODNet fail-closed promotion criteria
+        run: |
+          node --test tests/modnet-promotion-gate.test.mjs
+          node benchmark/modnet-promotion-gate.mjs
+      - name: Enforce user-selected sharp MODNet 128 benchmark baseline
+        run: node --test tests/modnet-sharp128-baseline.test.mjs
+      - name: Check independent shadow annotation schema
+        run: |
+          node --test tests/shadow-annotation-validator.test.mjs
+          node benchmark/shadow-annotation-validator.mjs
+          node scripts/check-shadow-outline-readiness.mjs
+          node --test tests/score-reviewed-shadow-cleanup.test.mjs
+          node --test tests/compare-approved-shadow-cleanup.test.mjs
+      - name: Download and verify source photographs
+        run: node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos commons-0035,commons-0049,commons-0053,commons-0065,commons-0079,commons-0094
+      - name: Smoke-test polygon editor with verified original photo
+        run: node scripts/test-shadow-outline-editor.mjs
+      - name: Smoke-test independently reviewed shadow approval
+        run: node scripts/test-independent-shadow-review.mjs
+      - name: Generate clean original-photo annotation reference pack
+        run: node scripts/build-annotation-reference-pack.mjs benchmark/annotation-reference-pack
+      - name: Verify annotation reference images
+        run: |
+          for id in commons-0035 commons-0049 commons-0053 commons-0065 commons-0079 commons-0094; do
+            test -s "benchmark/annotation-reference-pack/$id-annotation-source.png"
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: experimental-six-garment-annotation-sources
+          path: benchmark/annotation-reference-pack/
+          retention-days: 14
+      - name: Generate experimental MODNet masks
+        run: node scripts/run-modnet-comparison.mjs benchmark/modnet-predictions
+      - name: Test review-only footwear row selection
+        run: node --test tests/select-footwear-review-rows.test.mjs
+      - name: Generate marked sneaker and boot silhouette reviews
+        run: node scripts/build-footwear-silhouette-review.mjs benchmark/footwear-silhouette-review
+      - name: Verify footwear images and safe review metadata
+        run: |
+          for id in commons-0079 commons-0094; do
+            test -s "benchmark/footwear-silhouette-review/$id-silhouette-rows.png"
+          done
+          node -e "const x=require('./benchmark/footwear-silhouette-review/summary.json');if(x.cases.length!==2||!x.reviewOnly||x.modifiedMaskPixels!==0||x.verifiedShadowRemoval!==false||x.cases.some(c=>!c.shownRows.length||c.modifiedMaskPixels!==0||!c.reviewOnly))throw Error('Silhouette review failed safe metadata checks')"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: experimental-sneaker-boot-silhouette-row-review
+          path: benchmark/footwear-silhouette-review/
+          retention-days: 14
+      - name: Compare native MODNet alpha versus binary segmentation
+        run: node scripts/build-raw-alpha-review.mjs benchmark/raw-alpha-review
+      - name: Verify six native alpha edge diagnostics
+        run: |
+          node --test tests/inspect-alpha-edges.test.mjs
+          node -e "const r=require('./benchmark/raw-alpha-review/edge-diagnostics.json'); if(r.photos.length!==6||r.photos.some(p=>!p.edgeRegions||!p.edgeReviewOnly||p.shadowRemovalVerified!==false))process.exit(1)"
+      - name: Verify original alpha reviews for six garments
+        run: |
+          for id in commons-0035 commons-0049 commons-0053 commons-0065 commons-0079 commons-0094; do
+            test -s "benchmark/modnet-predictions/$id.modnet-alpha.png"
+            test -s "benchmark/raw-alpha-review/$id-raw-alpha-review.png"
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: experimental-six-garment-native-alpha-review
+          path: benchmark/raw-alpha-review/
+          retention-days: 14
+      - name: Generate threshold-128 sharp and feathered cutout review
+        run: node scripts/build-threshold128-edge-review.mjs benchmark/threshold128-edge-review
+      - name: Confirm all six threshold review images
+        run: |
+          for id in commons-0035 commons-0049 commons-0053 commons-0065 commons-0079 commons-0094; do
+            test -s "benchmark/threshold128-edge-review/$id-threshold128-review.png"
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: experimental-modnet-threshold128-edge-review
+          path: benchmark/threshold128-edge-review/
+          retention-days: 14
+      - name: Stress-test sharp and softened edges on contrasting backgrounds
+        run: node scripts/build-edge-background-stress.mjs benchmark/edge-background-stress
+      - name: Verify contrasting-background reviews
+        run: |
+          for id in commons-0035 commons-0049 commons-0053 commons-0065 commons-0079 commons-0094; do
+            test -s "benchmark/edge-background-stress/$id-edge-background-stress.png"
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: experimental-modnet-edge-background-stress
+          path: benchmark/edge-background-stress/
+          retention-days: 14
+      - name: Compare sharp baseline against stricter alpha thresholds
+        run: node scripts/build-threshold-sensitivity-review.mjs benchmark/threshold-sensitivity-review
+      - name: Verify threshold sensitivity images
+        run: |
+          for id in commons-0035 commons-0049 commons-0053 commons-0065 commons-0079 commons-0094; do
+            test -s "benchmark/threshold-sensitivity-review/$id-threshold-sensitivity.png"
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: experimental-modnet-threshold-sensitivity
+          path: benchmark/threshold-sensitivity-review/
+          retention-days: 14
+      - name: Generate experimental SegFormer masks for paired comparison
+        run: node scripts/run-real-segmentation-benchmark.mjs benchmark/segmentation-predictions
+      - name: Compare model disagreement without claiming accuracy
+        run: node scripts/compare-garment-models.mjs benchmark/segmentation-predictions benchmark/modnet-predictions benchmark/model-disagreements
+      - name: Test enclosed-gap repair safeguards
+        run: node --test tests/supported-hole-repair.test.mjs
+      - name: Compare supported interior repair against sharp baseline
+        run: node scripts/build-supported-hole-repair.mjs benchmark/supported-hole-repair
+      - name: Verify review-only interior repair output
+        run: |
+          node -e "const s=require('./benchmark/supported-hole-repair/summary.json');if(s.cases.length!==6||!s.reviewOnly||s.productionAuthorized||s.cases.some(c=>c.removedPixels!==0||c.verifiedGarmentRecovery||c.verifiedShadowRemoval))throw Error('Unsafe repair metadata')"
+          for id in commons-0035 commons-0049 commons-0053 commons-0065 commons-0079 commons-0094; do
+            test -s "benchmark/supported-hole-repair/$id-supported-repair.png"
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: experimental-supported-interior-repair
+          path: benchmark/supported-hole-repair/
+          retention-days: 14
+      - name: Build three-way visual comparison for jacket and footwear
+        run: node scripts/build-three-way-visual.mjs benchmark/model-visual-comparison
+      - name: Build six-garment four-way model review
+        run: node scripts/build-four-way-model-review.mjs benchmark/four-way-model-review
+      - name: Verify all model review photographs
+        run: |
+          for id in commons-0035 commons-0049 commons-0053 commons-0065 commons-0079 commons-0094; do
+            test -s "benchmark/four-way-model-review/$id-four-way.png"
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: experimental-six-garment-four-way-model-review
+          path: benchmark/four-way-model-review/
+          retention-days: 14
+      - name: Build footwear-only disagreement visualizations
+        run: node scripts/build-footwear-disagreement-visual.mjs benchmark/footwear-disagreement-visuals
+      - uses: actions/upload-artifact@v4
+        with:
+          name: experimental-footwear-disagreement-visuals
+          path: benchmark/footwear-disagreement-visuals/
+          retention-days: 14
+      - uses: actions/upload-artifact@v4
+        with:
+          name: experimental-three-way-visuals
+          path: benchmark/model-visual-comparison/
+          retention-days: 14
+      - uses: actions/upload-artifact@v4
+        with:
+          name: experimental-model-disagreement
+          path: benchmark/model-disagreements/
+          retention-days: 14
+      - name: Visualize suspected shoe-shadow pixels on source photos
+        run: node scripts/build-footwear-shadow-overlay.mjs benchmark/footwear-shadow-review
+      - uses: actions/upload-artifact@v4
+        with:
+          name: experimental-footwear-shadow-overlays
+          path: benchmark/footwear-shadow-review/
+          retention-days: 14
+      - name: Generate six-garment native edge inspections and footwear shadow comparisons
+        run: node scripts/build-footwear-shadow-before-after.mjs benchmark/footwear-shadow-before-after
+      - name: Verify shoe and boot native-resolution evidence
+        run: |
+          test -s benchmark/footwear-shadow-before-after/commons-0035-native-edges-2x.png
+          test -s benchmark/footwear-shadow-before-after/commons-0049-native-edges-2x.png
+          test -s benchmark/footwear-shadow-before-after/commons-0053-native-edges-2x.png
+          test -s benchmark/footwear-shadow-before-after/commons-0065-native-edges-2x.png
+          test -s benchmark/footwear-shadow-before-after/commons-0079-native-edges-2x.png
+          test -s benchmark/footwear-shadow-before-after/commons-0094-native-edges-2x.png
+          test -s benchmark/footwear-shadow-before-after/commons-0079-shadow-before-after.png
+          test -s benchmark/footwear-shadow-before-after/commons-0094-shadow-before-after.png
+      - uses: actions/upload-artifact@v4
+        with:
+          name: experimental-six-garment-native-edge-and-footwear-shadow
+          path: benchmark/footwear-shadow-before-after/
+          retention-days: 14
+      - name: Measure shoe-edge contrast without mask modification
+        run: node scripts/footwear-edge-contrast.mjs benchmark/footwear-edge-contrast
+      - uses: actions/upload-artifact@v4
+        with:
+          name: experimental-footwear-edge-contrast
+          path: benchmark/footwear-edge-contrast/
+          retention-days: 14
+      - name: Generate three-way edge and shadow candidate comparisons
+        run: node scripts/build-soft-edge-comparison.mjs benchmark/soft-edge-comparison
+      - name: Verify all six soft edge comparison PNGs
+        run: |
+          for id in commons-0035 commons-0049 commons-0053 commons-0065 commons-0079 commons-0094; do
+            test -s "benchmark/soft-edge-comparison/$id-hard-soft-shadow.png"
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: experimental-six-garment-soft-edge-shadow-comparisons
+          path: benchmark/soft-edge-comparison/
+          retention-days: 14
+      - name: Review side and bottom boundary contamination across six garments
+        run: node scripts/build-boundary-defect-review.mjs benchmark/boundary-defect-review
+      - name: Confirm all boundary review PNGs generated
+        run: |
+          for id in commons-0035 commons-0049 commons-0053 commons-0065 commons-0079 commons-0094; do
+            test -s "benchmark/boundary-defect-review/$id-boundary-risks.png"
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: experimental-six-garment-boundary-defect-review
+          path: benchmark/boundary-defect-review/
+          retention-days: 14
+      - name: Generate six-garment selective cleanup proposal images
+        run: node scripts/build-selective-boundary-proposal.mjs benchmark/selective-boundary-proposals
+      - name: Verify selective cleanup previews exist
+        run: |
+          for id in commons-0035 commons-0049 commons-0053 commons-0065 commons-0079 commons-0094; do
+            test -s "benchmark/selective-boundary-proposals/$id-selective-candidate.png"
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: experimental-six-garment-selective-boundary-candidates
+          path: benchmark/selective-boundary-proposals/
+          retention-days: 14
+      - name: Post-check residual boundaries and matte blending
+        run: node scripts/build-post-cleanup-check.mjs benchmark/post-cleanup-check
+      - name: Verify six post-check images
+        run: |
+          for id in commons-0035 commons-0049 commons-0053 commons-0065 commons-0079 commons-0094; do
+            test -s "benchmark/post-cleanup-check/$id-postcheck.png"
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: experimental-six-garment-post-cleanup-check
+          path: benchmark/post-cleanup-check/
+          retention-days: 14
+      - name: Analyze wider shadows and attached background at several distances
+        run: node scripts/build-multiscale-contamination-review.mjs benchmark/multiscale-contamination
+      - name: Verify six multiscale review images
+        run: |
+          for id in commons-0035 commons-0049 commons-0053 commons-0065 commons-0079 commons-0094; do
+            test -s "benchmark/multiscale-contamination/$id-multiscale.png"
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: experimental-six-garment-multiscale-contamination
+          path: benchmark/multiscale-contamination/
+          retention-days: 14
+      - name: Generate enlarged lower-edge verification images
+        run: node scripts/build-lower-edge-zoom.mjs benchmark/multiscale-contamination benchmark/lower-edge-zoom
+      - name: Verify lower-edge details exist
+        run: |
+          for id in commons-0035 commons-0049 commons-0053 commons-0065 commons-0079 commons-0094; do
+            test -s "benchmark/lower-edge-zoom/$id-lower-edge-zoom.png"
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: experimental-lower-edge-zoom-review
+          path: benchmark/lower-edge-zoom/
+          retention-days: 14
+      - name: Review detached foreground components without deleting fabric
+        run: node scripts/build-detached-component-review.mjs benchmark/detached-component-review
+      - name: Verify all component review previews
+        run: |
+          for id in commons-0035 commons-0049 commons-0053 commons-0065 commons-0079 commons-0094; do
+            test -s "benchmark/detached-component-review/$id-component-review.png"
+          done
+          node -e "for(const id of ['commons-0079','commons-0094']){const r=require('./benchmark/detached-component-review/'+id+'-detached-preview-summary.json');if(!r.detachedOnlyPreview||r.modifiedMaskPixels!==0||!r.reviewOnly||r.candidatePreviewPixels<1)throw Error('Unsafe or empty footwear proposal: '+id)}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: experimental-six-garment-detached-component-review
+          path: benchmark/detached-component-review/
+          retention-days: 14
+      - name: Prepare six-photo human review pack
+        run: node scripts/build-segmentation-review-pack.mjs
+      - name: Verify footwear reviewer instructions included
+        run: |
+          test -s benchmark/review-pack/FOOTWEAR-OUTLINE-REVIEW.txt
+          test -s benchmark/review-pack/START-FOOTWEAR-REVIEW.html
+          test -s benchmark/review-pack/OPEN-IMAGES-ON-PHONE/commons-0079-comparison.png
+          test -s benchmark/review-pack/OPEN-IMAGES-ON-PHONE/commons-0094-comparison.png
+          grep -q 'commons-0079' benchmark/review-pack/START-FOOTWEAR-REVIEW.html
+          grep -q 'commons-0094' benchmark/review-pack/START-FOOTWEAR-REVIEW.html
+      - name: Verify one-tap mobile review screen
+        run: node scripts/test-mobile-garment-review.mjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: segmentation-human-review-pack
+          path: benchmark/review-pack/
+          retention-days: 14
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: experimental-modnet-masks
+          path: benchmark/modnet-predictions/
+          retention-days: 14
+
+      - name: Validate object cutout alpha and source preservation
+        run: node --test tests/object-cutout-mask.test.mjs
+      - name: Compare BiRefNet Lite with the sharp MODNet baseline
+        run: node scripts/run-object-cutout-comparison.mjs benchmark/object-cutout-comparison
+      - name: Verify complete object cutout experiment
+        run: |
+          node -e "const s=require('./benchmark/object-cutout-comparison/summary.json');if(s.status!=='complete'||s.cases.length!==6||!s.reviewOnly||s.productionAuthorized||s.cases.some(c=>!c.notAccuracy||c.verifiedShadowRemoval))throw Error('Incomplete or unsafe object comparison')"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: experimental-object-cutout-comparison
+          path: benchmark/object-cutout-comparison/
+          retention-days: 14

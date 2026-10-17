@@ -1,0 +1,47 @@
+import {chromium} from 'playwright';
+import assert from 'node:assert/strict';
+import {resolve} from 'node:path';
+const browser=await chromium.launch({headless:true});
+try{
+ const page=await browser.newPage({viewport:{width:390,height:844},acceptDownloads:true});
+ const errors=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.goto('file://'+resolve('benchmark/annotate-garment.html'));
+ const png=await page.evaluate(()=>{const c=document.createElement('canvas');c.width=40;c.height=30;const x=c.getContext('2d');x.fillStyle='white';x.fillRect(0,0,40,30);x.fillStyle='red';x.fillRect(10,4,20,20);return c.toDataURL('image/png').split(',')[1];});
+ await page.locator('#photo').setInputFiles({name:'review-case.png',mimeType:'image/png',buffer:Buffer.from(png,'base64')});
+ await assert.doesNotReject(async()=>await page.locator('#canvas').waitFor({state:'visible'}));
+ const bounds=await page.locator('#canvas').boundingBox();assert.ok(bounds);
+ await page.mouse.move(bounds.x+bounds.width*.5,bounds.y+bounds.height*.5);
+ await page.mouse.down();await page.mouse.up();
+ assert.equal(await page.locator('#download').isDisabled(),false);
+ const downloadPromise=page.waitForEvent('download');
+ await page.locator('#download').click();
+ const download=await downloadPromise;
+ const fs=await import('node:fs/promises');
+ const draft=JSON.parse(await fs.readFile(await download.path(),'utf8'));
+ assert.equal(draft.reviewStatus,'draft');
+ assert.match(draft.sourceSha256,/^[a-f0-9]{64}$/);
+ assert.equal(draft.width,40);assert.equal(draft.height,30);
+ assert.ok(draft.runs.length>1);
+ await page.locator('#resume').setInputFiles({name:'review-case.mask.draft.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(draft))});
+ await page.locator('#status').getByText(/Draft restored/).waitFor();
+ await page.locator('#resume').setInputFiles({name:'wrong.mask.draft.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify({...draft,image:'other.png'}))});
+ await page.locator('#status').getByText(/mismatch/).waitFor();
+ assert.equal(await page.locator('#download').isDisabled(),false);
+ const seed={image:'review-case.png',sourceSha256:draft.sourceSha256,width:40,height:30,runs:[200,200,800],model:'test-model'};
+ await page.locator('#prediction').setInputFiles({name:'prediction.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(seed))});
+ await page.locator('#status').getByText(/AI starting mask loaded/).waitFor();
+ // AI suggestions must be manually corrected before export.
+ const seededBounds=await page.locator('#canvas').boundingBox();
+ await page.mouse.move(seededBounds.x+seededBounds.width*.3,seededBounds.y+seededBounds.height*.3);
+ await page.mouse.down();await page.mouse.up();
+ assert.equal(await page.locator('#download').isDisabled(),false);
+ const seededDownload=page.waitForEvent('download');
+ await page.locator('#download').click();
+ const seeded=JSON.parse(await fs.readFile(await(await seededDownload).path(),'utf8'));
+ assert.equal(seeded.reviewStatus,'draft');
+ assert.equal(seeded.seedModel,'test-model');
+ await page.locator('#prediction').setInputFiles({name:'wrong.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify({...seed,image:'wrong.png'}))});
+ await page.locator('#status').getByText(/mismatch/).waitFor();
+ assert.deepEqual(errors,[]);
+ console.log('ANNOTATION_EDITOR_SMOKE '+JSON.stringify({status:'passed',width:draft.width,height:draft.height,runs:draft.runs.length,reviewStatus:draft.reviewStatus,pageErrors:errors.length}));
+}finally{await browser.close();}

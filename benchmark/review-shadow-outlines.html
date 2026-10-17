@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Closet Current — Independent Outline Review</title>
+<style>
+*{box-sizing:border-box}body{font:16px system-ui,sans-serif;background:#f7f6fa;color:#242336;margin:0}
+main{max-width:920px;margin:auto;padding:16px}h1{font-size:1.5rem;margin:.5rem 0}p{line-height:1.45}
+label{display:block;font-weight:650;margin:12px 0 4px}
+input[type=file],input[type=text]{display:block;font:inherit;width:100%;padding:11px;border:1px solid #9d99a9;border-radius:10px;min-height:48px;background:white}
+button{font:inherit;font-weight:700;padding:12px 18px;min-height:48px;border:1px solid #666;border-radius:12px;background:white}
+button:disabled{opacity:.4}button:not(:disabled){cursor:pointer}
+#approve{background:#144e39;color:white;border-color:#144e39;width:100%;margin:18px 0}
+#stage{border:1px solid #aaa;background:#eee;border-radius:12px;overflow:auto;max-height:70vh;padding:8px}
+canvas{display:block;width:100%;height:auto;background:#fff}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.row>*{flex:1}
+legend{font-weight:700}.check{display:flex;gap:10px;align-items:flex-start;margin:12px 0;line-height:1.4;font-weight:500}
+.check input{width:23px;height:23px;flex:none;margin:0}
+#status{white-space:pre-wrap;border-left:4px solid #666;padding:10px;background:#fff}
+small{color:#575464}.swatch{display:inline-block;width:13px;height:13px;border-radius:4px;margin-right:4px}
+</style>
+<main>
+<h1>Independent garment/shadow review</h1>
+<p><strong>Internal benchmark only.</strong> Load the verified original photograph and an outline draft created by a different person. Inspect both regions closely. This does not change the app or upload photos.</p>
+<label for="photo">1. Original verified photograph</label>
+<input id="photo" type="file" accept="image/jpeg,image/png,image/webp">
+<label for="draft">2. Garment/shadow outline draft (.json)</label>
+<input id="draft" type="file" accept="application/json,.json">
+<p id="status" role="status">Select both files to begin independent review.</p>
+<p><span class="swatch" style="background:#ab11d1"></span>Garment outline&nbsp;&nbsp;<span class="swatch" style="background:#f58a11"></span>Cast shadow outline</p>
+<div class="row"><button id="zoomOut" type="button" disabled>Zoom out −</button><button id="zoomIn" type="button" disabled>Zoom in +</button></div>
+<div id="stage"><canvas id="preview" width="600" height="400" aria-label="Original photograph with garment and shadow outlines"></canvas></div>
+<p id="details"></p>
+<label for="firstReviewer">3. Original outline reviewer</label>
+<input id="firstReviewer" type="text" maxlength="80" placeholder="Person who traced the draft">
+<label for="secondReviewer">4. Independent approving reviewer</label>
+<input id="secondReviewer" type="text" maxlength="80" placeholder="Different person who checked the outline">
+<fieldset>
+<legend>5. Confirm each item after inspecting the original</legend>
+<label class="check"><input type="checkbox" id="checkedPhoto">I verified the original photo and its matching checksum.</label>
+<label class="check"><input type="checkbox" id="checkedGarment">I checked the garment outline, including soles, heels, hems, and thin details.</label>
+<label class="check"><input type="checkbox" id="checkedShadow">I checked the shadow outline and confirmed it does not include garment material.</label>
+<label class="check"><input type="checkbox" id="independent">I am a different person from the original outline reviewer. I performed this review myself.</label>
+</fieldset>
+<button id="approve" type="button" disabled>Export independently reviewed reference</button>
+<small>This screen records reviewers' attestations; it cannot independently verify who a person is. The exported reference must still pass the repository's validation and pixel-overlap checks. It never authorizes production masking changes.</small>
+<script>
+'use strict';
+const $=id=>document.getElementById(id),canvas=$('preview'),ctx=canvas.getContext('2d');
+const expected={
+'commons-0035':'9fd067b0919d519eb7924ebd5c4ddf0bc0f3956cfd229fe1ab12c16cccb085ca',
+'commons-0049':'819ff96e55abf6f79cb99b5abca1870bc0bccfc669681bbc755562be9dbab547',
+'commons-0053':'e7a617cd23a159864f619e8397d5f37d48b684e47dddc4ad6b46b14481042019',
+'commons-0065':'0d094b023d86942acbc89fc5a4bc02968c1b5d0b2c78639cdeb985f522a78494',
+'commons-0079':'b577483e5244dfb53e60cc8a0b54a4130e695cf388e5534e38a2b04580727ec6',
+'commons-0094':'ff3d49e30be2d1141179b7ad2d08d9edff2384926cd5a6f5a8f6818c97fa57ae'
+};
+let ready=false,original=null,annotation=null,zoom=1,hash='';
+function note(text){$('status').textContent=text}
+function reset(){
+ ready=false;annotation=null;original=null;hash='';zoom=1;
+ $('approve').disabled=true;$('zoomIn').disabled=true;$('zoomOut').disabled=true;
+ $('details').textContent='';ctx.clearRect(0,0,canvas.width,canvas.height);
+ for(const id of ['checkedPhoto','checkedGarment','checkedShadow','independent'])$(id).checked=false;
+}
+function polygonValid(poly){
+ if(!Array.isArray(poly)||poly.length<3||poly.some(p=>!Array.isArray(p)||p.length!==2||p.some(n=>!Number.isFinite(n)||n<0||n>1)))return false;
+ let area=0;for(let i=0;i<poly.length;i++){const p=poly[i],q=poly[(i+1)%poly.length];area+=p[0]*q[1]-q[0]*p[1]}
+ return Math.abs(area)>1e-8;
+}
+function draw(){
+ if(!ready)return;
+ const maxSide=1100,scale=Math.min(1,maxSide/original.naturalWidth,maxSide/original.naturalHeight);
+ canvas.width=Math.max(1,Math.round(original.naturalWidth*scale));canvas.height=Math.max(1,Math.round(original.naturalHeight*scale));
+ canvas.style.width=(100*zoom)+'%';
+ ctx.drawImage(original,0,0,canvas.width,canvas.height);
+ for(const [type,color] of [['garment','#ab11d1'],['shadow','#f58a11']]){
+  ctx.strokeStyle=color;ctx.lineWidth=3;ctx.fillStyle=type==='garment'?'#ab11d130':'#f58a1130';
+  for(const poly of annotation.regions[type]){ctx.beginPath();poly.forEach(([x,y],i)=>i?ctx.lineTo(x*canvas.width,y*canvas.height):ctx.moveTo(x*canvas.width,y*canvas.height));ctx.closePath();ctx.fill();ctx.stroke()}
+ }
+}
+async function load(){
+ reset();
+ const file=$('photo').files?.[0],json=$('draft').files?.[0];if(!file||!json){note('Select the original photo and a draft outline JSON.');return}
+ try{
+  if(file.size>16000000||json.size>1000000)throw Error('File size exceeds review limit');
+  const bytes=await file.arrayBuffer(),digest=await crypto.subtle.digest('SHA-256',bytes);
+  hash=Array.from(new Uint8Array(digest),n=>n.toString(16).padStart(2,'0')).join('');
+  annotation=JSON.parse(await json.text());
+  const id=annotation?.imageId;
+  if(!Object.hasOwn(expected,id)||hash!==expected[id]||annotation.sourceSha256!==hash)throw Error('Original photograph does not match this reviewed case or SHA-256');
+  if(annotation.schemaVersion!==1||annotation.reviewStatus!=='draft')throw Error('Load an unapproved outline draft, not a pre-approved reference');
+  for(const type of ['garment','shadow'])if(!Array.isArray(annotation?.regions?.[type])||!annotation.regions[type].length||!annotation.regions[type].every(polygonValid))throw Error('Invalid or missing '+type+' outline');
+  const url=URL.createObjectURL(file);
+  try{original=new Image();original.src=url;await original.decode()}finally{URL.revokeObjectURL(url)}
+  ready=true;$('zoomIn').disabled=false;$('zoomOut').disabled=false;
+  $('details').textContent=id+' · '+original.naturalWidth+' × '+original.naturalHeight+' pixels · exact original checksum verified';
+  note('Photo and draft match. Inspect BOTH outlines, then confirm the review below.');
+  draw();update();
+ }catch(e){reset();note('Cannot begin review: '+e.message)}
+}
+function update(){
+ const a=$('firstReviewer').value.trim(),b=$('secondReviewer').value.trim();
+ const distinct=a&&b&&a.toLowerCase()!==b.toLowerCase();
+ $('approve').disabled=!(ready&&distinct&&['checkedPhoto','checkedGarment','checkedShadow','independent'].every(id=>$(id).checked));
+}
+$('photo').addEventListener('change',load);$('draft').addEventListener('change',load);
+for(const id of ['firstReviewer','secondReviewer'])$(id).addEventListener('input',update);
+for(const id of ['checkedPhoto','checkedGarment','checkedShadow','independent'])$(id).addEventListener('change',update);
+$('zoomIn').onclick=()=>{zoom=Math.min(4,zoom*1.5);draw()};
+$('zoomOut').onclick=()=>{zoom=Math.max(1,zoom/1.5);draw()};
+$('approve').onclick=()=>{
+ update();if($('approve').disabled||!ready)return;
+ const payload={...annotation,reviewStatus:'approved',reviewer:$('firstReviewer').value.trim(),approvedBy:$('secondReviewer').value.trim(),reviewNotes:'Second reviewer explicitly checked original SHA-256 photo, garment boundary and shadow boundary; local attestation only.'};
+ const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+ const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=annotation.imageId+'-shadow-outline-approved.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+ note('Approval JSON exported locally. Run repository validation before treating the reference as benchmark ground truth.');
+};
+</script>
+</main></html>

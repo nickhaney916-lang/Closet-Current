@@ -133,7 +133,8 @@ function renderPhotoResults(grid,results){
   const extra=[item.pattern,item.sleeveLength,item.fit,...(item.seasons||[])].filter(x=>x&&x!=='Unknown'&&x!=='Not applicable');
   if(extra.length){const details=node('details',null,'photo-extra');details.append(node('summary','More details'),node('p',extra.join(' · ')));body.append(details);}
   if(!pending&&!saved&&item.possibleDuplicate)body.append(node('p','Compare with your closet before adding.','fine'));
-  const adjust=node('button','Adjust','secondary');adjust.type='button';adjust.onclick=()=>adjustPhoto(item);body.append(adjust,cropButton(item));
+  const adjust=node('button','Adjust','secondary');adjust.type='button';
+  adjust.onclick=()=>adjustPhoto(item);body.append(adjust,cropButton(item));
   card.append(image,body);grid.append(card);
  }
 }
@@ -152,7 +153,71 @@ function render(){
 for(const c of categories){const o=node('option',c);$('filter').append(o);}$('search').oninput=render;$('filter').onchange=render;
 function pixels(){const ctx=tiny.getContext('2d',{willReadFrequently:true});ctx.drawImage(video,0,0,32,32);return ctx.getImageData(0,0,32,32).data.slice();}
 function difference(a,b){if(!a||!b)return 255;let total=0;for(let i=0;i<a.length;i+=4)total+=Math.abs(a[i]-b[i])+Math.abs(a[i+1]-b[i+1])+Math.abs(a[i+2]-b[i+2]);return total/(a.length/4*3);}
-function snap(){if(!video.videoWidth||video.readyState<2)throw Error('The camera has not provided a usable frame yet.');const scale=Math.min(1,2048/Math.max(video.videoWidth,video.videoHeight));canvas.width=Math.max(1,Math.round(video.videoWidth*scale));canvas.height=Math.max(1,Math.round(video.videoHeight*scale));canvas.getContext('2d').drawImage(video,0,0,canvas.width,canvas.height);return canvas.toDataURL('image/jpeg',.94);}
+function cameraFrameQuality(){
+ if(typeof document==='undefined')return {usable:true};
+ // A low-information frame may be a plain garment, not an out-of-focus photo.
+ // Only the combination of very low contrast and very low edge variation is flagged.
+ if(video.readyState<2||video.videoWidth<320||video.videoHeight<240)return {usable:false,reason:'resolution'};
+ try{
+  const sample=document.createElement('canvas');sample.width=64;sample.height=48;
+  const context=sample.getContext('2d',{willReadFrequently:true});
+  if(!context)return {usable:true};
+  context.drawImage(video,0,0,64,48);
+  const pixels=context.getImageData(0,0,64,48).data,gray=new Float32Array(64*48);
+  let min=255,max=0,edges=0,count=0;
+  for(let p=0;p<gray.length;p++){const k=p*4;const value=.2126*pixels[k]+.7152*pixels[k+1]+.0722*pixels[k+2];gray[p]=value;min=Math.min(min,value);max=Math.max(max,value);}
+  for(let y=1;y<47;y++)for(let x=1;x<63;x++){const p=y*64+x;edges+=Math.abs(4*gray[p]-gray[p-1]-gray[p+1]-gray[p-64]-gray[p+64]);count++;}
+  const tooDark=max<45&&max-min<18&&edges/count<4;
+  return {usable:!tooDark,reason:tooDark?'very-dark-frame':null};
+ }catch{return {usable:true};}
+}
+// Compare successive samples only when their visual structure is similar.
+// This is advisory: moving garments and uniform fabrics must not be rejected.
+let previousQualityFrame=null;
+function cameraStability(){
+ if(typeof document==='undefined'||video.readyState<2)return {stable:true};
+ try{
+  const c=document.createElement('canvas');c.width=32;c.height=24;
+  const ctx=c.getContext('2d',{willReadFrequently:true});if(!ctx)return {stable:true};
+  ctx.drawImage(video,0,0,32,24);
+  const rgba=ctx.getImageData(0,0,32,24).data,values=new Uint8Array(32*24);
+  let variance=0,sum=0,difference=0;
+  for(let i=0;i<values.length;i++){const p=i*4;values[i]=Math.round(.2126*rgba[p]+.7152*rgba[p+1]+.0722*rgba[p+2]);sum+=values[i];}
+  const mean=sum/values.length;
+  for(let i=0;i<values.length;i++)variance+=(values[i]-mean)**2;
+  if(previousQualityFrame){for(let i=0;i<values.length;i++)difference+=Math.abs(values[i]-previousQualityFrame[i]);}
+  const hadPrevious=!!previousQualityFrame;previousQualityFrame=values;
+  const motion=hadPrevious?difference/values.length:0;
+  // Report movement for diagnostics only. Motion alone cannot prove blur.
+  return {stable:!hadPrevious||motion<24,motion:Math.round(motion*10)/10,lowTexture:variance/values.length<100};
+ }catch{return {stable:true};}
+}
+function snap(){if(!video.videoWidth||video.readyState<2)throw Error('The camera has not provided a usable frame yet.');const scale=Math.min(1,2048/Math.max(video.videoWidth,video.videoHeight));canvas.width=Math.max(1,Math.round(video.videoWidth*scale));canvas.height=Math.max(1,Math.round(video.videoHeight*scale));const context=canvas.getContext('2d');context.imageSmoothingEnabled=true;context.imageSmoothingQuality='high';context.drawImage(video,0,0,canvas.width,canvas.height);return canvas.toDataURL('image/jpeg',.94);}
+
+// Prefer a genuine sensor still over freezing the preview when the browser
+// supports ImageCapture. Preserve full aspect ratio, without artificial upscaling.
+async function captureCameraStill(track,StillCapture,isCurrent=()=>true){
+ const blob=await new StillCapture(track).takePhoto();
+ if(!isCurrent())throw Error('Camera session ended before photo arrived.');
+ if(!blob||!blob.size||(blob.type&&!blob.type.startsWith('image/')))
+   throw Error('Camera did not supply an image.');
+ const bitmap=await createImageBitmap(blob);
+ try{
+  if(!isCurrent())throw Error('Camera session ended before photo decoded.');
+  const width=bitmap.width,height=bitmap.height;
+  if(!Number.isInteger(width)||!Number.isInteger(height)||width<320||height<240)
+    throw Error('Still image was too small.');
+  const scale=Math.min(1,2048/Math.max(width,height));
+  canvas.width=Math.max(1,Math.round(width*scale));
+  canvas.height=Math.max(1,Math.round(height*scale));
+  const context=canvas.getContext('2d');
+  if(!context)throw Error('Unable to prepare camera photo.');
+  context.imageSmoothingEnabled=true;
+  context.imageSmoothingQuality='high';
+  context.drawImage(bitmap,0,0,canvas.width,canvas.height);
+  return canvas.toDataURL('image/jpeg',.94);
+ }finally{bitmap.close?.();}
+}
 function beep(){if(!$('sound').checked||!audio)return;try{const o=audio.createOscillator(),g=audio.createGain();o.frequency.value=740;g.gain.value=.04;o.connect(g);g.connect(audio.destination);o.start();o.stop(audio.currentTime+.12);}catch{}}
 function candidate(image,options={}){
  if([...items,...batch].some(item=>item.image===image)){if(typeof recordDeviceEvent==='function')recordDeviceEvent('exact_duplicate_skipped');message('Exact duplicate skipped. Show the next garment.');return false;}
@@ -171,17 +236,18 @@ async function drainAutomatic(){
  try{while(automaticQueue.length){const item=automaticQueue.shift();if(batch.some(x=>x.id===item.id))await recognizeItem(item);else localPending.delete(item.id);}}
  finally{automaticRunning=false;render();scheduleMemoryReview();}
 }
+let manualStillShot=null;
 function stopCamera(){
- cameraRequest++;cameraOpening=false;clearInterval(timer);timer=null;
+ cameraRequest++;cameraOpening=false;manualStillShot=null;$('takePhoto').disabled=false;$('stop').disabled=false;clearInterval(timer);timer=null;
  if(stream)stream.getTracks().forEach(t=>t.stop());
- stream=null;cameraMode=null;video.srcObject=null;video.classList.remove('visible');
+ stream=null;cameraMode=null;previousQualityFrame=null;video.srcObject=null;video.classList.remove('visible');
  $('placeholder').hidden=false;$('cameraChoices').hidden=false;$('cameraActions').hidden=true;
  controls(false);$('captureState').textContent='Camera stopped · your photos are ready to review';
 }
 function controls(disabled){for(const id of ['start','startAuto','upload','interval','clothingPhotos','outfitCamera','outfitUpload','outfitRetry','captureSingle','captureOutfit'])$(id).disabled=disabled;}
 function finishScan(){
  const wasManual=cameraMode==='manual';
- if(!wasManual&&stream&&session===0&&video.readyState>=2&&video.videoWidth){try{candidate(snap());}catch{}}
+ if(!wasManual&&stream&&session===0&&video.readyState>=2&&video.videoWidth){try{if(cameraFrameQuality().usable)candidate(snap());}catch{}}
  stopCamera();
  if(batch.length){message('');switchView('review');}
  else if(session>0){message('');switchView('review');}
@@ -195,14 +261,54 @@ function captureTick(now=Date.now()){
   else $('captureState').textContent=`Next photo in ${Math.max(1,Math.ceil((cadence.intervalMs-(now-cadence.last))/1000))} seconds · hold the garment still`;
   return;
  }
- try{candidate(snap());cadence.captured(now);beep();$('captureState').textContent=`${session} images captured · show the next piece`;
+ try{const quality=cameraFrameQuality();if(!quality.usable){$('captureState').textContent='Hold steady in brighter light · trying the next frame';return;}const stability=cameraStability();if(!stability.stable&&!stability.lowTexture){$('captureState').textContent='Movement detected · capturing when steady';return;}candidate(snap());cadence.captured(now);beep();$('captureState').textContent=`${session} images captured · show the next piece`;
  if(session>=60){finishScan();message('60 images collected. Review this batch before continuing.');}}
  catch(e){$('captureState').textContent='Waiting for a usable camera frame…';}
 }
 function takePhoto(){
- if(!stream||cameraMode!=='manual')return;
- try{candidate(snap());beep();$('captureState').textContent=`${session} photos taken · ready for the next piece`;if(session>=60){finishScan();message('60 photos collected. Review this batch before continuing.');}}
- catch{message('The camera is still getting ready. Wait a moment, then tap Take photo again.');}
+ if(!stream||cameraMode!=='manual'||manualStillShot)return;
+ const activeStream=stream,activeRequest=cameraRequest;
+ const active=()=>stream===activeStream&&cameraRequest===activeRequest&&cameraMode==='manual';
+ const saveCaptured=image=>{
+  if(!active())return;
+  candidate(image);beep();$('captureState').textContent=`${session} photos taken · ready for the next piece`;
+  if(session>=60){finishScan();message('60 photos collected. Review this batch before continuing.');}
+ };
+ const fallback=()=>{
+  if(!active())return;
+  try{saveCaptured(snap());}
+  catch{message('The camera is still getting ready. Wait a moment, then tap Take photo again.');}
+ };
+ try{
+  const quality=cameraFrameQuality();
+  if(!quality.usable){message('Photo looks too dark or low-resolution. Try brighter light and take it again.');return;}
+  cameraStability();
+  const StillCapture=window.ImageCapture,track=stream.getVideoTracks?.()[0];
+  if(typeof StillCapture!=='function'||!track||typeof createImageBitmap!=='function'){
+   fallback();return;
+  }
+  const shot={stream:activeStream,request:activeRequest};
+  manualStillShot=shot;$('takePhoto').disabled=true;$('stop').disabled=true;
+  $('captureState').textContent='Taking high-quality photo…';
+  // Some Android camera drivers never settle takePhoto(). Fall back rather
+  // than locking the shutter. A late resolution cannot modify our canvas.
+  let timer;
+  const bounded=Promise.race([
+   captureCameraStill(track,StillCapture,()=>active()&&manualStillShot===shot),
+   new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('Still photo timed out')),4000);})
+  ]);
+  bounded.then(image=>{
+   if(manualStillShot===shot){
+    try{saveCaptured(image);}catch{message('Photo could not be added. Try again.');}
+   }
+  },()=>{
+   // Unsupported ImageCapture, timeouts and camera errors must not lose a tap.
+   if(manualStillShot===shot)fallback();
+  }).finally(()=>{
+   clearTimeout(timer);
+   if(manualStillShot===shot){manualStillShot=null;$('takePhoto').disabled=false;$('stop').disabled=false;}
+  });
+ }catch{fallback();}
 }
 async function startCamera(mode){
  if(busy||stream)return;

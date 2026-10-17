@@ -122,3 +122,29 @@ test('outfit recognition uses original crop texture while masked garment color w
  c.candidate('isolated-display',{outfitSourceId:'capture',recognitionPhoto:{image:'raw-textured-crop'},originalPhoto:{image:'whole-outfit'},cropBounds:{x:.1,y:.2,width:.3,height:.4},colorEstimate:{color:'Blue'},segmentHint:{categories:['Tops'],types:[],clipped:false}});await done(c);
  assert.equal(modelImage,'raw-textured-crop');assert.equal(qualityImage,'raw-textured-crop');assert.equal(stored.length,1);assert.equal(stored[0].image,'isolated-display');assert.equal(stored[0].color,'Blue');assert.equal(stored[0].name,'Blue T-shirt');assert.equal(stored[0].colorMethod,'garment-mask');assert.equal(stored[0].originalPhoto.image,'whole-outfit');assert.equal(stored[0].recognitionPhoto.image,'raw-textured-crop');
 });
+
+test('accidentally visible clothing beneath a garment is not guessed as a Top',async()=>{
+ const {c,stored}=setup({result:{strong:false,categoryConfirmed:false,choices:[],details:{}}});
+ c.candidate('partial-underlayer',{outfitSourceId:'outfit1',
+  segmentHint:{categories:['Tops','Outerwear'],types:[],clipped:false,layerRole:'underlayer'},
+  colorEstimate:{color:'Blue',source:'photo-estimate',support:.9}});
+ await done(c);
+ assert.equal(c.items.length,0);
+ assert.equal(stored.length,0);
+ assert.equal(c.batch.length,1);
+ assert.equal(c.batch[0].category,'Uncategorized');
+ assert.equal(c.batch[0].itemType,'Unknown');
+ assert.equal(c.batch[0].underlayerReview,undefined);
+ assert.match(c.batch[0].localStatus,/Confirm the garment category/);
+});
+test('single visible jacket keeps correct identity instead of prompting for underneath clothing',async()=>{
+ const jacket={category:'Outerwear',itemType:'Jacket',label:'a jacket',sleeveLength:'Long sleeve'};
+ const {c,stored}=setup({result:{strong:true,choices:[jacket],details:{color:'Blue'}}});
+ c.candidate('one-visible-jacket',{outfitSourceId:'outfit1',
+  segmentHint:{categories:['Tops','Outerwear'],types:[],clipped:false}});
+ await done(c);
+ assert.equal(stored.length,1);
+ assert.equal(c.items[0].category,'Outerwear');
+ assert.equal(c.items[0].itemType,'Jacket');
+ assert.equal(c.items[0].underlayerReview,undefined);
+});

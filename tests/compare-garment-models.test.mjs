@@ -1,0 +1,3 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {compareGarmentMasks} from '../scripts/compare-garment-models.mjs';
+test('reports exclusive model pixels without implying accuracy',()=>{const a={width:2,height:2,sourceSha256:'same',runs:[0,2,2]};const b={width:2,height:2,sourceSha256:'same',runs:[1,2,1]};const r=compareGarmentMasks(a,b);assert.deepEqual([r.both,r.segformerOnly,r.modnetOnly],[1,1,1]);assert.equal(r.agreementIoU,1/3);assert.equal(r.notAccuracy,true);});
+test('rejects mismatched photos even with equal dimensions',()=>assert.throws(()=>compareGarmentMasks({width:1,height:1,sourceSha256:'a',runs:[1]},{width:1,height:1,sourceSha256:'b',runs:[1]}),/Different source/));
