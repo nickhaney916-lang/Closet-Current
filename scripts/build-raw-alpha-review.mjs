@@ -42,11 +42,20 @@ try {
     const a=pixels[i*4];if(a===0)transparent++;if(a>=192)strict++;if(a>0&&a<192)uncertain++;
     hist[a<64?0:a<128?1:a<192?2:3]++;
    }
+   // Native-resolution diagnostic only: label ambiguous alpha, never presume shadow.
+   const edgeRegions={left:{pixels:0,uncertain:0},right:{pixels:0,uncertain:0},bottom:{pixels:0,uncertain:0},interior:{pixels:0,uncertain:0}};
+   const sidePx=Math.max(1,Math.ceil(w*.18)),bottomY=Math.floor(h*.78);
+   for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+    const region=y>=bottomY?'bottom':x<sidePx?'left':x>=w-sidePx?'right':'interior';
+    const a=pixels[(y*w+x)*4],stats=edgeRegions[region];stats.pixels++;
+    if(a>=16&&a<224)stats.uncertain++;
+   }
+   for(const stats of Object.values(edgeRegions))stats.uncertainFraction=stats.pixels?stats.uncertain/stats.pixels:0;
    const pw=Math.min(520,w),ph=Math.round(pw*h/w),header=63;
    const sheet=document.createElement('canvas');sheet.width=pw*3;sheet.height=ph+header;const out=sheet.getContext('2d');
    out.fillStyle='#fff';out.fillRect(0,0,sheet.width,sheet.height);out.fillStyle='#222';out.font='bold 19px sans-serif';
    ['Original','Native MODNet alpha','Threshold at 128'].forEach((name,i)=>{out.fillText(name,i*pw+12,30);out.drawImage(panels[i],i*pw,header,pw,ph);});
-   return {png:sheet.toDataURL('image/png').split(',')[1],hist,uncertain,strict,transparent,sourcePixels:w*h,verifiedShadowPixels:0,shadowRemovalVerified:false};
+   return {png:sheet.toDataURL('image/png').split(',')[1],hist,uncertain,strict,transparent,sourcePixels:w*h,edgeRegions,edgeReviewOnly:true,verifiedShadowPixels:0,shadowRemovalVerified:false};
   },{photo,alpha});
   await writeFile(join(destination,item.id+'-raw-alpha-review.png'),Buffer.from(result.png,'base64'));
   const {png,...stats}=result;console.log('RAW_ALPHA_REVIEW '+JSON.stringify({id:item.id,...stats}));
