@@ -17,6 +17,8 @@ on:
       - 'tests/garment-mask-metrics.test.mjs'
       - 'benchmark/garment-mask-metrics.mjs'
       - 'benchmark/annotate-garment.html'
+      - 'benchmark/approve-garment-mask.html'
+      - 'scripts/test-independent-mask-approval.mjs'
       - 'scripts/test-garment-annotation-editor.mjs'
       - 'scripts/run-mobile-flow.mjs'
       - '.github/workflows/mobile-flow.yml'
@@ -46,7 +48,9 @@ jobs:
           cp benchmark/locked-photo-sources.json benchmark/mobile-flow/
           ffmpeg -loglevel error -loop 1 -i benchmark/photos/commons-0001.jpg -vf 'scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2:black' -r 10 -t 2 -pix_fmt yuv420p -f yuv4mpegpipe benchmark/mobile-camera.y4m
       - name: Verify garment annotation editor draft export
-        run: node scripts/test-garment-annotation-editor.mjs
+        run: |
+          node scripts/test-garment-annotation-editor.mjs
+          node scripts/test-independent-mask-approval.mjs
       - name: Check camera frame quality and stability
         run: node --test tests/quick-color-review.test.cjs tests/automatic-indexing.test.cjs tests/clothing-details.test.cjs tests/capture.test.cjs tests/photo-native-still.test.cjs tests/photo-capture-quality.test.cjs tests/photo-frame-quality.test.cjs tests/photo-stability.test.cjs tests/photo-crop-resolution.test.cjs tests/outfit-segmentation-edge.test.mjs tests/outfit-color-evidence.test.mjs tests/photo-color.test.cjs tests/garment-mask-metrics.test.mjs
       - name: Build and verify touch viewport flow with real worker
