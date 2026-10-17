@@ -4,7 +4,7 @@
 let tryOnFigure='female',tryOnBusy=false,tryOnRevision=0,tryOnImage=null,tryOnFingerprint='';
 function tryOnSignature(){
  const ids=currentBoard?.slots||{};
- return tryOnFigure+':'+['top','bottom','layer','layer2','layer3','shoes'].map(k=>ids[k]||'').join('|');
+ return tryOnFigure+':'+['top','bottom','layer','layer2','layer3','shoes'].map(k=>{const item=items.find(x=>x.id===ids[k]);return (ids[k]||'')+':'+(item?.image?.length||0)+':'+(item?.image?.slice(-24)||'');}).join('|');
 }
 function resetTryOnPreview(){
  tryOnRevision++;tryOnImage=null;tryOnFingerprint='';
@@ -77,7 +77,7 @@ async function generateTryOn(){
   if(!isCurrent())return;
   $('tryOnStatus').textContent=error instanceof Error?error.message:'Try-on unavailable';
  }finally{
-  if(revision===tryOnRevision){tryOnBusy=false;onTryOnBoardChanged();}
+  tryOnBusy=false;onTryOnBoardChanged();
  }
 }
 $('tryOnFigure').onchange=event=>{
