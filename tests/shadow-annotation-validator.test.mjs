@@ -28,7 +28,8 @@ test('rejects a self-crossing garment or shadow outline',()=>{
  assert.ok(result.issues.some(issue=>issue.includes('edges must not cross')));
 });
 test('rejects crossed polygon even if its signed area is not zero',()=>{
- const crossed=[[[0,0],[1,0],[0.25,1],[0.75,-0.1]]];
- // Coordinates outside 0–1 must also fail.
- assert.equal(validateShadowAnnotation({...approved,regions:{...approved.regions,shadow:crossed}},entry).valid,false);
+ const crossed=[[[0,0],[1,0],[0,1],[0.8,0.8]]];
+ const result=validateShadowAnnotation({...approved,regions:{...approved.regions,shadow:crossed}},entry);
+ assert.equal(result.valid,false);
+ assert.ok(result.issues.some(issue=>issue.includes('edges must not cross')));
 });
