@@ -3,7 +3,7 @@ import {createHash} from 'node:crypto';
 import {resolve,join} from 'node:path';
 import {chromium} from 'playwright';
 import {createServer} from 'node:http';
-import {approvedReferenceMask,scoreApprovedPredictionAtReferenceResolution} from '../benchmark/garment-mask-metrics.mjs';
+import {approvedReferenceMask,scoreApprovedPredictionAtReferenceResolution,scoreApprovedColorSampling} from '../benchmark/garment-mask-metrics.mjs';
 import {maskComponents} from '../benchmark/mask-components.mjs';
 const manifest=JSON.parse(await readFile('benchmark/segmentation-review-manifest.json','utf8'));
 const sources=JSON.parse(await readFile('benchmark/locked-photo-sources.json','utf8'));
@@ -54,15 +54,24 @@ try{
   await writeFile(join(outDir,entry.id+'.overlay.png'),Buffer.from(overlayPng,'base64'));
   await writeFile(join(outDir,entry.id+'.prediction.json'),JSON.stringify(maskPrediction,null,2));
   const fragments=maskComponents(maskPrediction);
-  let status='awaiting-human-reference',metrics=null;
+  let status='awaiting-human-reference',metrics=null,colorSampling=null;
   if(entry.referenceMask&&entry.reviewStatus==='approved'){
    const annotation=JSON.parse(await readFile(entry.referenceMask,'utf8'));
    // Align predictions to an independently approved reference with nearest-neighbor sampling.
    approvedReferenceMask(annotation,entry);
-   metrics=scoreApprovedPredictionAtReferenceResolution(annotation,entry,maskPrediction);status='scored';
+   metrics=scoreApprovedPredictionAtReferenceResolution(annotation,entry,maskPrediction);
+   colorSampling=scoreApprovedColorSampling(annotation,entry,maskPrediction);status='scored';
   }
-  report.push({id:entry.id,status,foregroundPixels:predicted.foregroundPixels,personDetected:predicted.personDetected,fragments,metrics});
+  report.push({id:entry.id,status,foregroundPixels:predicted.foregroundPixels,personDetected:predicted.personDetected,fragments,metrics,colorSampling});
   console.log('SEGMENTATION_CASE '+JSON.stringify(report.at(-1)));
  }
 }finally{await browser.close();await new Promise(resolve=>server.close(resolve));}
-await writeFile(join(outDir,'summary.json'),JSON.stringify({status:report.every(x=>x.status==='scored')?'scored':'unscored-incomplete-references',cases:report},null,2));
+const approvedCount=report.filter(x=>x.status==='scored').length;
+await writeFile(join(outDir,'summary.json'),JSON.stringify({
+ status:approvedCount===report.length?'scored':'unscored-incomplete-references',
+ approvedReferenceCount:approvedCount,pendingReferenceCount:report.length-approvedCount,
+ // No mean accuracy or foreground purity until every real-world reference
+ // has received independent human approval. Individual approved cases are
+ // still visible for diagnostic review; never count unreviewed photos as zero.
+ overallColorSampling:null,overallSegmentationAccuracy:null,cases:report
+},null,2));
