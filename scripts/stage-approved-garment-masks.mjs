@@ -15,7 +15,7 @@ const [manifest,sources]=await Promise.all([
 ]);
 const submissions=await Promise.all(approvedFiles.map(async file=>{
  const annotation=JSON.parse(await readFile(file,'utf8'));
- const id=typeof annotation.image==='string'?annotation.image.replace(/\\.jpg$/,''):null;
+ const id=typeof annotation.image==='string'?annotation.image.replace(/\.jpg$/,''):null;
  if(!/^commons-[0-9]{4}$/.test(id||''))throw Error('Unexpected approved mask filename: '+file);
  return {id,annotation};
 }));
@@ -33,13 +33,13 @@ const candidate='benchmark/segmentation-review-manifest.candidate.json';
 const outputRoot=resolve('benchmark/approved-reference-masks');
 const planned=[...plan.files.map(x=>resolve(x.path)),resolve(candidate)];
 for(const name of planned){
- if(relative(resolve('benchmark'),name).startsWith('..')||name.includes('\\0'))throw Error('Unsafe output path');
+ if(relative(resolve('benchmark'),name).startsWith('..')||name.includes('\0'))throw Error('Unsafe output path');
  try{await access(name);throw Error('Output exists. Review it before changing or overwriting: '+name);}
  catch(error){if(error.code!=='ENOENT')throw error;}
 }
 await mkdir(outputRoot,{recursive:true});
-for(const file of plan.files)await writeFile(file.path,JSON.stringify(file.annotation,null,2)+'\\n',{flag:'wx'});
-await writeFile(candidate,JSON.stringify(plan.candidate,null,2)+'\\n',{flag:'wx'});
+for(const file of plan.files)await writeFile(file.path,JSON.stringify(file.annotation,null,2)+'\n',{flag:'wx'});
+await writeFile(candidate,JSON.stringify(plan.candidate,null,2)+'\n',{flag:'wx'});
 console.log(JSON.stringify({
  status:'candidate-only-not-promoted',
  imported:plan.added,stillPending:plan.pending,
