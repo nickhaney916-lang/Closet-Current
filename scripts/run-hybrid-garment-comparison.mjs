@@ -1,4 +1,4 @@
-// Review-only 3-way hybrid experiment using the same verified source bytes.
+// Review-only multilayer hybrid experiment using the same verified source bytes.
 // Stage 1: segment a specific clothing class; Stage 2: refine with BiRefNet
 // object alpha restricted to the target clothing area, veto known body classes.
 import {readFile,writeFile,mkdir} from 'node:fs/promises';
@@ -10,6 +10,7 @@ import {AutoModel,AutoModelForSemanticSegmentation,AutoProcessor,RawImage,env} f
 import {clothingLabelMap} from '../public/outfit-segmentation.mjs';
 import {selectHoldoutPhotos} from '../benchmark/object-cutout-holdout.mjs';
 import {hybridGarmentAlpha,protectedBodyFromLogits} from '../benchmark/hybrid-garment-mask.mjs';
+import {proposeCutoutRoute,summarizeCutoutRoutes} from '../benchmark/experimental-cutout-router.mjs';
 
 const modelConfigs={
   object:{id:'onnx-community/BiRefNet_lite-ONNX',revision:'de15b22ba131738a16dff04aab8bdf8dc32e3ac1'},
@@ -75,7 +76,19 @@ try{
     return sharp(rgba,{raw:{width:w,height:h,channels:4}})
       .flatten({background:'#e8e7ee'}).resize(pw,ph).png().toBuffer();
   };
+  const route=proposeCutoutRoute({category:entry.expectedCategory,personDetected:map.personDetected,
+    semanticPixels:combined.semanticPixels,objectPixels:combined.objectPixels,
+    retainedPixels:combined.keptPixels,retentionRatio:combined.objectPixels?
+      combined.keptPixels/combined.objectPixels:0,sourceVerified:true,captureQuality:'unmeasured'});
   const panels=[original,await makePanel(raw.data),await makePanel(combined.alpha)];
+  const selectedPanel=route.candidate==='clothing-guided-hybrid'?panels[2]:
+    route.candidate==='object-alpha-only'?panels[1]:panels[0];
+  await writeFile(join(dest,entry.id+'-layered-candidate.png'),selectedPanel);
+  const layeredPanels=[...panels,selectedPanel];
+  const layeredTitle=Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="1680" height="90"><rect width="1680" height="90" fill="white"/><g font-family="sans-serif" font-size="19" fill="#242424"><text x="12" y="28">Verified original</text><text x="432" y="28">Object segmentation</text><text x="852" y="28">Garment-guided hybrid</text><text x="1272" y="28">Layered route candidate</text></g><text x="12" y="55" font-size="15" fill="#333">Selected for further review: '+route.candidate+'</text><text x="12" y="77" font-size="13" fill="#555">No measured accuracy, phone speed, or production deployment approval</text></svg>');
+  await sharp({create:{width:4*pw,height:ph+90,channels:3,background:'white'}})
+    .composite([{input:layeredTitle,left:0,top:0},...layeredPanels.map((input,i)=>({input,left:i*pw,top:90}))])
+    .png().toFile(join(dest,entry.id+'-layered-comparison.png'));
   const top=Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="1260" height="75"><rect width="1260" height="75" fill="white"/><g font-family="sans-serif" font-size="20" fill="#242424"><text x="12" y="28">Original</text><text x="432" y="28">BiRefNet object cutout</text><text x="852" y="28">B0 clothing + BiRefNet hybrid</text></g><text x="12" y="55" font-size="14" fill="#555">Review only · original RGB · no reference mask accuracy or deployment approval</text></svg>');
   await sharp({create:{width:3*pw,height:ph+75,channels:3,background:'white'}})
     .composite([{input:top,left:0,top:0},...panels.map((input,i)=>({input,left:i*pw,top:75}))])
@@ -92,11 +105,16 @@ try{
     semanticOverlap:combined.seedOverlap,retentionRatio:combined.objectPixels?
       combined.keptPixels/combined.objectPixels:0,
     observationsNotGroundTruth:true,needsHumanReview:true,garmentOnlyVerified:false,
-    independentlyApproved:false};
+    independentlyApproved:false,experimentalRoute:route.candidate,routeReason:route.reason,
+    routeIsReviewOnly:true,originalSourcePreserved:route.originalSourcePreserved};
   report.cases.push(result);
   console.log('HYBRID_CASE '+JSON.stringify(result));
   await save();
  }
+ report.routeSummary=summarizeCutoutRoutes(report.cases.map(c=>({id:c.id,category:c.category,
+   personDetected:c.personDetected,semanticPixels:c.semanticPixels,
+   retainedPixels:c.retainedPixels,objectPixels:c.objectPixels,
+   retentionRatio:c.retentionRatio,sourceVerified:true,captureQuality:'unmeasured'})));
  report.status='complete';
  await save();
 }finally{
