@@ -8,6 +8,7 @@ try{
  await page.goto('file://'+resolve('benchmark/annotate-garment.html'));
  const png=await page.evaluate(()=>{const c=document.createElement('canvas');c.width=40;c.height=30;const x=c.getContext('2d');x.fillStyle='white';x.fillRect(0,0,40,30);x.fillStyle='red';x.fillRect(10,4,20,20);return c.toDataURL('image/png').split(',')[1];});
  await page.locator('#photo').setInputFiles({name:'review-case.png',mimeType:'image/png',buffer:Buffer.from(png,'base64')});
+ await page.locator('#status').getByText(/initial mask is blank/).waitFor();
  await assert.doesNotReject(async()=>await page.locator('#canvas').waitFor({state:'visible'}));
  const bounds=await page.locator('#canvas').boundingBox();assert.ok(bounds);
  await page.locator('#reviewer').fill('First Reviewer');
@@ -49,6 +50,7 @@ try{
  // Trace four polygon corners on an internal synthetic image. Filling makes a
  // new human-edited draft; undo must fully restore the previous pixels.
  await page.locator('#photo').setInputFiles({name:'review-case.png',mimeType:'image/png',buffer:Buffer.from(png,'base64')});
+ await page.locator('#status').getByText(/initial mask is blank/).waitFor();
  await page.locator('#tool').selectOption('polygon');
  const pb=await page.locator('#canvas').boundingBox();
  const at=(x,y)=>({x:pb.x+(x+.5)*pb.width/40,y:pb.y+(y+.5)*pb.height/30});
