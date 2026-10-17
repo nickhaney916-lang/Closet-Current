@@ -30,7 +30,14 @@ async function readPrediction(token:string,uid:string){
 }
 const allowedOrigin=()=>Deno.env.get('TRYON_ALLOWED_ORIGIN')||'https://nickhaney916-lang.github.io';
 async function userFromToken(jwt:string){
- const url=Deno.env.get('SUPABASE_URL'),key=Deno.env.get('SUPABASE_ANON_KEY');
+ const url=Deno.env.get('SUPABASE_URL');
+ let key=Deno.env.get('SUPABASE_ANON_KEY')||Deno.env.get('SUPABASE_PUBLISHABLE_KEY')||'';
+ if(!key){
+  try{
+   const names=JSON.parse(Deno.env.get('SUPABASE_PUBLISHABLE_KEYS')||'{}');
+   key=Object.values(names).find(v=>typeof v==='string'&&v.startsWith('sb_publishable_')) as string||'';
+  }catch{/* no publishable key configured */}
+ }
  if(!url||!key)throw Error('Authentication configuration unavailable');
  const response=await fetch(url+'/auth/v1/user',{headers:{Authorization:'Bearer '+jwt,apikey:key},signal:AbortSignal.timeout(8000)});
  if(!response.ok)throw Error('Authentication required');
