@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {scoreGarmentMask,decodeReferenceMask,approvedReferenceMask,scoreApprovedPrediction,scoreApprovedPredictionAtReferenceResolution} from '../benchmark/garment-mask-metrics.mjs';
+import {scoreGarmentMask,decodeReferenceMask,approvedReferenceMask,scoreApprovedPrediction,scoreApprovedPredictionAtReferenceResolution,scoreApprovedColorSampling,erodeMaskInterior} from '../benchmark/garment-mask-metrics.mjs';
 
 test('a perfect annotated cutout achieves full recall, precision, and overlap',()=>{
  const reference=Uint8Array.from([0,1,1,0,0,1]);
@@ -84,4 +84,67 @@ test('approved prediction aligns 4x4 mask to reviewed 2x2 mask using nearest-nei
  assert.equal(score.alignment,'nearest-neighbor at reference resolution');
  assert.throws(()=>scoreApprovedPredictionAtReferenceResolution(approved,entry,{...prediction,height:3,runs:[2,2,2,2,2,2]}),/aspect ratios/);
  assert.throws(()=>scoreApprovedPredictionAtReferenceResolution({...approved,reviewStatus:'draft'},entry,prediction),/not independently approved/);
+});
+
+function encoded(mask,width,height){
+ let previous=0,count=0;const runs=[];
+ for(const value of mask){if(value!==previous){runs.push(count);count=0;previous=value;}count++;}
+ runs.push(count);return {width,height,runs};
+}
+function rectangleMask(width,height,left,top,right,bottom){
+ const a=new Uint8Array(width*height);
+ for(let y=top;y<bottom;y++)for(let x=left;x<right;x++)a[y*width+x]=1;
+ return a;
+}
+function reviewedPair(width,height,truth,predicted){
+ const entry={image:'garment.jpg',sourceSha256:'hash-from-source'};
+ return {
+  entry,
+  reference:{schemaVersion:1,reviewStatus:'approved',image:entry.image,sourceSha256:entry.sourceSha256,reviewer:'Reviewer 1',approvedBy:'Reviewer 2',...encoded(truth,width,height)},
+  prediction:{image:entry.image,sourceSha256:entry.sourceSha256,...encoded(predicted,width,height)}
+ };
+}
+test('human-approved comparison measures background contamination removed by interior sampling',()=>{
+ const truth=rectangleMask(8,8,2,2,6,6),pred=rectangleMask(8,8,1,1,7,7),p=reviewedPair(8,8,truth,pred);
+ const score=scoreApprovedColorSampling(p.reference,p.entry,p.prediction);
+ assert.equal(score.referenceStatus,'independently-approved');
+ assert.equal(score.full.foregroundPrecision,16/36);
+ assert.equal(score.full.backgroundPixelsSampled,20);
+ assert.equal(score.interior.foregroundPrecision,1);
+ assert.equal(score.interior.backgroundPixelsSampled,0);
+ assert.equal(score.garmentPixelsRemoved,0);
+ assert.equal(score.backgroundPixelsRemoved,20);
+ assert.equal(score.sampledPixelRetention,16/36);
+ assert.equal(score.additionalGarmentMissRate,0);
+});
+test('eroding a correct thin garment has a measurable garment-recall cost',()=>{
+ const trueMask=rectangleMask(8,8,1,1,7,7),p=reviewedPair(8,8,trueMask,trueMask);
+ const result=scoreApprovedColorSampling(p.reference,p.entry,p.prediction);
+ assert.equal(result.full.garmentRecall,1);
+ assert.equal(result.interior.garmentRecall,16/36);
+ assert.equal(result.garmentPixelsRemoved,20);
+ assert.equal(result.backgroundPixelsRemoved,0);
+ assert.equal(result.additionalGarmentMissRate,20/36);
+});
+test('one-pixel-thin socks and disconnected details are not colored from fabricated interior',()=>{
+ const thin=rectangleMask(7,7,3,1,4,6);
+ const inner=erodeMaskInterior(thin,7,7);
+ assert.equal(inner.reduce((a,b)=>a+b,0),0);
+});
+test('reference scoring cannot run on drafts, fake reviewers, or unrelated photos',()=>{
+ const p=reviewedPair(8,8,rectangleMask(8,8,2,2,6,6),rectangleMask(8,8,2,2,6,6));
+ assert.throws(()=>scoreApprovedColorSampling({...p.reference,reviewStatus:'draft'},p.entry,p.prediction),/independently approved/);
+ assert.throws(()=>scoreApprovedColorSampling({...p.reference,approvedBy:'Reviewer 1'},p.entry,p.prediction),/second reviewer/);
+ assert.throws(()=>scoreApprovedColorSampling(p.reference,p.entry,{...p.prediction,sourceSha256:'different'}),/source mismatch/);
+ assert.throws(()=>scoreApprovedColorSampling(p.reference,p.entry,{...p.prediction,width:4,height:16,runs:[0,64]}),/aspect ratios/);
+});
+test('annotation editor rounding allows same source aspect within one reference pixel, not changed composition',()=>{
+ const entry={image:'same.jpg',sourceSha256:'source'};
+ const w=65,h=64,pw=260,ph=257;
+ const truth=rectangleMask(w,h,10,10,60,50),pred=rectangleMask(pw,ph,40,40,240,201);
+ const reference={schemaVersion:1,reviewStatus:'approved',reviewer:'1',approvedBy:'2',image:entry.image,sourceSha256:entry.sourceSha256,...encoded(truth,w,h)};
+ const prediction={image:entry.image,sourceSha256:entry.sourceSha256,...encoded(pred,pw,ph)};
+ assert.doesNotThrow(()=>scoreApprovedPredictionAtReferenceResolution(reference,entry,prediction));
+ assert.doesNotThrow(()=>scoreApprovedColorSampling(reference,entry,prediction));
+ assert.throws(()=>scoreApprovedColorSampling(reference,entry,{...prediction,width:300,height:ph,runs:encoded(rectangleMask(300,ph,40,40,240,201),300,ph).runs}),/aspect ratios/);
 });
