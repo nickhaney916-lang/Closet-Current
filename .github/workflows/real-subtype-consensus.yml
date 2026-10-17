@@ -1,0 +1,42 @@
+name: Real-photo garment subtype consensus experiment
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'benchmark/garment-subtype-consensus.mjs'
+      - 'benchmark/observed-segmentation-regions-20261017.json'
+      - 'scripts/run-real-subtype-consensus.mjs'
+      - '.github/workflows/real-subtype-consensus.yml'
+permissions:
+  contents: read
+jobs:
+  actual-photo-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install recognition dependencies
+        run: npm install --no-save --no-package-lock @huggingface/transformers@3.8.1 sharp@0.34.4
+      - name: Test strict source, subtype and duplicate safeguards
+        run: |
+          node --check scripts/run-real-subtype-consensus.mjs
+          node --test tests/garment-subtype-consensus.test.mjs
+      - name: Obtain hash-verified previously reviewed photographs
+        run: |
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos commons-0001,commons-0003,commons-0041,commons-0043,commons-0060,commons-0062,commons-0059
+          node scripts/download-reviewed-photos.mjs benchmark/manifest-fresh-11.json benchmark/photos validation-0008
+      - name: Run existing FashionCLIP image model on two framings
+        run: node scripts/run-real-subtype-consensus.mjs benchmark/real-subtype-consensus
+      - name: Ensure no automatic records or unsupported accuracy claims
+        run: |
+          node -e "const r=require('./benchmark/real-subtype-consensus/summary.json');if(r.status!=='complete'||r.cases.length!==8||r.productionAuthorized!==false||r.accuracyMeasured!==false||r.cases.some(x=>!x.originalPreserved||x.autoCreatedItems||x.duplicateItemsCreated))throw Error('Experimental inference safety check failed')"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: experimental-fashionclip-eight-photo-subtypes
+          path: benchmark/real-subtype-consensus/
+          retention-days: 14
