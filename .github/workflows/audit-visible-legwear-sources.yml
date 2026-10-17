@@ -1,0 +1,35 @@
+name: Audit licensed real visible-layer photos
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'benchmark/visible-legwear-source-candidates.json'
+      - 'scripts/audit-visible-legwear-sources.mjs'
+      - '.github/workflows/audit-visible-legwear-sources.yml'
+permissions:
+  contents: read
+jobs:
+  real-photo-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install image decoder
+        run: npm install --no-save --no-package-lock sharp@0.34.4
+      - name: Check audit source
+        run: node --check scripts/audit-visible-legwear-sources.mjs
+      - name: Download and lock legal and image metadata
+        run: node scripts/audit-visible-legwear-sources.mjs benchmark/visible-legwear-source-audit
+      - name: Enforce both independent real photographs
+        run: |
+          node -e "const x=require('./benchmark/visible-legwear-source-audit/manifest.json');if(x.status!=='complete'||x.cases.length!==2||!x.rawPhotoPixelsVerified||x.cases.some(c=>!c.sha256||c.pixelGroundTruthAvailable))throw Error('Real photo audit incomplete')"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: licensed-visible-legwear-reference-photos
+          path: benchmark/visible-legwear-source-audit/
+          retention-days: 14
