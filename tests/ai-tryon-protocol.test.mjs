@@ -48,6 +48,6 @@ test('server is deny-by-default, requires signed user-bound jobs, and keeps prov
  assert.match(server,/userFromToken/);
  assert.match(server,/\/auth\/v1\/user/);
  assert.match(server,/FASHN_API_KEY/);
- assert.match(server,/\[input\.figure==='female'/);
+ assert.match(server,/input\.figure==='female'/);
  assert.doesNotMatch(readFileSync('public/ai-tryon.js','utf8'),/FASHN_API_KEY/);
 });
