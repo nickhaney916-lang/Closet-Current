@@ -4,6 +4,7 @@ import {chromium} from 'playwright';
 const destination=process.argv[2]||'benchmark/raw-alpha-review';
 await mkdir(destination,{recursive:true});
 const manifest=JSON.parse(await readFile('benchmark/segmentation-review-manifest.json','utf8'));
+const reports=[];
 const browser=await chromium.launch({headless:true});
 try {
  const page=await browser.newPage();
@@ -58,6 +59,9 @@ try {
    return {png:sheet.toDataURL('image/png').split(',')[1],hist,uncertain,strict,transparent,sourcePixels:w*h,edgeRegions,edgeReviewOnly:true,verifiedShadowPixels:0,shadowRemovalVerified:false};
   },{photo,alpha});
   await writeFile(join(destination,item.id+'-raw-alpha-review.png'),Buffer.from(result.png,'base64'));
-  const {png,...stats}=result;console.log('RAW_ALPHA_REVIEW '+JSON.stringify({id:item.id,...stats}));
+  const {png,...stats}=result;
+  reports.push({id:item.id,...stats});
+  console.log('RAW_ALPHA_REVIEW '+JSON.stringify({id:item.id,...stats}));
  }
+ await writeFile(join(destination,'edge-diagnostics.json'),JSON.stringify({schemaVersion:1,source:'native-modnet-alpha',reviewOnly:true,approvedShadowAnnotations:0,photos:reports},null,2)+'\n');
 }finally{await browser.close();}
