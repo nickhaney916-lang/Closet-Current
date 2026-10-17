@@ -25,3 +25,27 @@ test('reports actual shadow removal proportion on validated reference masks',()=
  assert.equal(result.garmentFullyPreserved,true);
  assert.equal(result.improvedWithoutGarmentLoss,true);
 });
+
+test('separately measures stray background included in a crop',()=>{
+ const result=scoreReviewedShadowCleanup({
+  baseline:[1,1,1,1,0,0],
+  candidate:[1,1,0,1,1,0],
+  garment:[1,1,0,0,0,0],
+  shadow:[0,0,1,0,0,0]
+ });
+ assert.equal(result.baselineBackgroundPixels,1);
+ assert.equal(result.candidateBackgroundPixels,2);
+ assert.equal(result.backgroundLeakageDelta,1);
+ assert.equal(result.improvedWithoutGarmentLoss,false);
+});
+test('reports reduction of background contamination without confusing it with shadow removal',()=>{
+ const result=scoreReviewedShadowCleanup({
+  baseline:[1,1,1,1],
+  candidate:[1,1,1,0],
+  garment:[1,0,0,0],
+  shadow:[0,1,0,0]
+ });
+ assert.equal(result.backgroundLeakageDelta,-1);
+ assert.equal(result.shadowPixelsRemovedComparedToBaseline,0);
+ assert.equal(result.improvedWithoutGarmentLoss,false);
+});
