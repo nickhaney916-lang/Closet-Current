@@ -9,7 +9,7 @@ const tapCode=code.slice(code.indexOf('function takePhoto(){'),code.indexOf('asy
 
 function harness({still=true,reject=false}={}){
  const draws=[],saved=[],messages=[],buttons={takePhoto:{disabled:false},captureState:{textContent:''}};
- let settle,closed=0;
+ let settle,closed=0,nextTimer=0;const timers=new Map();
  const bitmap={width:4000,height:3000,close(){closed++;}};
  const canvas={width:0,height:0,getContext(){return {drawImage(...args){draws.push(args);},imageSmoothingEnabled:false,imageSmoothingQuality:'low'};},toDataURL(type,quality){assert.equal(type,'image/jpeg');assert.equal(quality,.94);return 'still-jpeg';}};
  class ImageCapture{constructor(track){assert.equal(track.kind,'video');}takePhoto(){return new Promise((resolve,rejectPromise)=>{settle=()=>reject?rejectPromise(Error('unsupported still')):resolve({type:'image/jpeg',size:1024});});}}
@@ -20,10 +20,12 @@ function harness({still=true,reject=false}={}){
   cameraFrameQuality:()=>({usable:true}),cameraStability:()=>({stable:true}),
   snap:()=> 'preview-jpeg',candidate:image=>{saved.push(image);c.session++;},
   beep(){},finishScan(){},$:id=>buttons[id]||(buttons[id]={}),message:msg=>messages.push(msg),
+  setTimeout:fn=>{const id=++nextTimer;timers.set(id,fn);return id;},
+  clearTimeout:id=>timers.delete(id),
   Math,Number,Error
  };
  vm.createContext(c);vm.runInContext(photoCode+'\n'+tapCode,c);
- return {c,canvas,draws,saved,messages,buttons,bitmap,closed:()=>closed,settle:()=>settle?.()};
+ return {c,canvas,draws,saved,messages,buttons,bitmap,closed:()=>closed,settle:()=>settle?.(),expire:()=>{for(const [id,fn] of timers){timers.delete(id);fn();}},pendingTimers:()=>timers.size};
 }
 const flush=async()=>{for(let i=0;i<5;i++)await new Promise(setImmediate);};
 
@@ -87,4 +89,15 @@ test('low-resolution native still is not upscaled by the encoder',async()=>{
  h.c.takePhoto();h.settle();await flush();
  assert.equal(h.canvas.width,800);assert.equal(h.canvas.height,600);
  assert.deepEqual(h.saved,['still-jpeg']);
+});
+
+test('hung native still falls back once, and late decoded data cannot overwrite preview',async()=>{
+ const h=harness();h.c.takePhoto();assert.equal(h.saved.length,0);
+ assert.equal(h.pendingTimers(),1);
+ h.expire();await flush();
+ assert.deepEqual(h.saved,['preview-jpeg']);
+ assert.equal(h.buttons.takePhoto.disabled,false);
+ h.settle();await flush();
+ assert.deepEqual(h.saved,['preview-jpeg']);
+ assert.equal(h.draws.length,0);
 });
