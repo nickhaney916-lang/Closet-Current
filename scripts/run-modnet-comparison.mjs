@@ -7,7 +7,7 @@ import {thresholdBoundaryReport} from '../benchmark/modnet-boundary-report.mjs';
 import {proposeIslandCleanup} from '../benchmark/propose-island-cleanup.mjs';
 import {foregroundGeometry} from '../benchmark/foreground-geometry.mjs';
 import {borderConnectedForeground} from '../benchmark/border-connected-foreground.mjs';
-import {footwearShadowCandidates} from '../benchmark/footwear-shadow-candidates.mjs';
+import {footwearShadowCandidates,footwearLowerSilhouetteProfile} from '../benchmark/footwear-shadow-candidates.mjs';
 import {reviewDetachedFootwearRegions} from '../benchmark/review-detached-footwear-regions.mjs';
 const manifest=JSON.parse(await readFile('benchmark/segmentation-review-manifest.json','utf8'));
 const sources=JSON.parse(await readFile('benchmark/locked-photo-sources.json','utf8'));
@@ -75,7 +75,7 @@ try {
    metrics=scoreApprovedPredictionAtReferenceResolution(annotation,item,prediction);
    status='scored';
   }
-  results.push({id:item.id,metrics,cleanupProposal:cleanupSummary,geometry:foregroundGeometry(prediction),borderConnected:borderConnectedForeground(prediction),footwearShadow:item.id==='commons-0079'||item.id==='commons-0094'?footwearShadowCandidates(prediction):null,detachedFootwearReview:item.id==='commons-0079'||item.id==='commons-0094'?reviewDetachedFootwearRegions(prediction):null,foregroundPixels:prediction.foregroundPixels,strictPixels:prediction.strictPixels,borderlinePixels:prediction.borderlinePixels,boundary:prediction.boundary,status});
+  results.push({id:item.id,metrics,cleanupProposal:cleanupSummary,geometry:foregroundGeometry(prediction),borderConnected:borderConnectedForeground(prediction),footwearShadow:item.id==='commons-0079'||item.id==='commons-0094'?footwearShadowCandidates(prediction):null,detachedFootwearReview:item.id==='commons-0079'||item.id==='commons-0094'?reviewDetachedFootwearRegions(prediction):null,connectedFootwearProfile:item.id==='commons-0079'||item.id==='commons-0094'?footwearLowerSilhouetteProfile(prediction):null,foregroundPixels:prediction.foregroundPixels,strictPixels:prediction.strictPixels,borderlinePixels:prediction.borderlinePixels,boundary:prediction.boundary,status});
   console.log('MODNET_CASE '+JSON.stringify(results.at(-1)));
  }
 }finally{await browser.close();}
