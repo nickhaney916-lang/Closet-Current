@@ -241,7 +241,7 @@ try{
       colorCounts[family]=(colorCounts[family]||0)+1;total++;
       rTotal+=rgba[k];gTotal+=rgba[k+1];bTotal+=rgba[k+2];
      }
-     observations.push({size,estimate:window.PhotoColor.estimate(rgba,size,size),sampledCenterPixels:total,regionFamilyCounts:colorCounts,meanCenterRGB:[rTotal,gTotal,bTotal].map(v=>Math.round(v/total))});
+     observations.push({size,estimate:window.PhotoColor.estimate(rgba,size,size),foregroundPalette:size===64?window.PhotoColor.uniformLightBackgroundPalette(rgba,size,size):null,sampledCenterPixels:total,regionFamilyCounts:colorCounts,meanCenterRGB:[rTotal,gTotal,bTotal].map(v=>Math.round(v/total))});
     }
     results[id]={width:bitmap.width,height:bitmap.height,observations};
    }finally{bitmap.close();}
