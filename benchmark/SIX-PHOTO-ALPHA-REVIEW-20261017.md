@@ -49,3 +49,7 @@ Experimental commit `3886dcb61b3d5169c805503083d44122ec8832f6`, comparison run `
 - Visual inspection confirms the obvious jacket chest hole and smaller shorts hole are filled. The larger shorts hole exceeds the budget and remains; missing outer garment portions also remain. Shadows and background leakage are unchanged.
 - Four new safeguard tests and eight related comparison/baseline tests passed locally. The candidate is not authorized for production and is not independently approved ground truth.
 - Next work: independently review recovered regions and the remaining large/open garment gaps, then evaluate shadow removal separately. Avoid subtracting the general SegFormer prediction from footwear: its visible omissions would cut away substantial shoe material.
+
+## Latest follow-up: object-focused comparison
+
+See [OBJECT-CUTOUT-REVIEW-20261017.md](OBJECT-CUTOUT-REVIEW-20261017.md). Run `39049745869` completed all six BiRefNet Lite comparisons. The object-model candidate visibly resolves the prominent sneaker shadow, boot/jacket leakage, and both shorts holes, but retains the shorts hanger/tag and dress mannequins. CPU inference was about nine seconds per photo; phone performance and independent pixel accuracy are unverified. Preserve the sharp MODNet reference and keep the candidate experimental.
