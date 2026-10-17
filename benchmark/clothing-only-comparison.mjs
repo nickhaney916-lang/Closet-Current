@@ -2,7 +2,14 @@
 export const CLASS_SELECTION=Object.freeze({
   Dresses:Object.freeze([7]),
   Bottoms:Object.freeze([5,6]),
-  Shoes:Object.freeze([9])
+  Shoes:Object.freeze([9]),
+  'Upper garment':Object.freeze([4]),
+  Tops:Object.freeze([4]),
+  Outerwear:Object.freeze([4]),
+  Skirts:Object.freeze([5]),
+  Skirt:Object.freeze([5]),
+  Pants:Object.freeze([6]),
+  Shorts:Object.freeze([6])
 });
 export const HOLDOUT_CATEGORY_IDS=Object.freeze([
   'validation-0001','validation-0003','validation-0010','validation-0017',
