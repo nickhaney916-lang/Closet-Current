@@ -23,7 +23,8 @@ const indexes={locked:new Map(locked.map(x=>[x.id,x])),
  fresh:new Map(fresh.map(x=>[x.id,x]))};
 const report={status:'running',sourcePhotosHashVerified:false,
  benchmarkUsesActualOriginalImageBytes:true,licensedSources:4,
- sourcePixelIdentityPreserved:true,appRecordsModified:0,paidProviderCalls:0,
+ sourcePixelIdentityPreserved:true,oneChannelAlphaVerified:true,
+ appRecordsModified:0,paidProviderCalls:0,
  garmentSegmentationGroundTruth:false,garmentIdentityVerifiedByHuman:false,
  reconstructionAccuracy:null,autoApproveForLiveCustomers:false,cases:[]};
 const save=()=>writeFile(join(dir,'summary.json'),JSON.stringify(report,null,2)+'\n');
@@ -48,10 +49,21 @@ for(const row of samples){
   for(let i=0;i<proposal.alpha.length;i++)mask[i]=proposal.alpha[i];
   const full=await sharp(jpeg).rotate().ensureAlpha().png().toBuffer();
   const whole=await sharp(full).metadata();
-  const alpha=await sharp(mask,{raw:{width:info.width,height:info.height,channels:1}})
-    .resize(whole.width,whole.height,{kernel:'nearest'}).raw().toBuffer();
+  const {data:alpha,info:matteInfo}=await sharp(mask,{
+   raw:{width:info.width,height:info.height,channels:1}
+  }).resize(whole.width,whole.height,{kernel:'nearest'})
+    .greyscale().raw().toBuffer({resolveWithObject:true});
   const {data:rgba,info:original}=await sharp(full).raw().toBuffer({resolveWithObject:true});
-  for(let i=0;i<alpha.length;i++)rgba[i*original.channels+3]=alpha[i];
+  if(matteInfo.channels!==1||matteInfo.width!==original.width||
+     matteInfo.height!==original.height||
+     alpha.length!==original.width*original.height||original.channels!==4)
+   throw Error('Invalid one-channel shoe alpha map, would corrupt image');
+  // Sharp expands a 1-channel raw image to three channels on resize unless
+  // output is explicitly grayscale, shifting alpha and erasing shoe material.
+  const foreground=alpha.reduce((n,value)=>n+(value>127?1:0),0)/alpha.length;
+  if(Math.abs(foreground-(1-proposal.backgroundFraction))>.08)
+   throw Error('Resampled alpha removed real shoe foreground');
+  for(let i=0;i<alpha.length;i++)rgba[i*4+3]=alpha[i];
   derived=await sharp(rgba,{raw:original}).png().toBuffer();
  }
  const size={width:360,height:360},background={r:236,g:226,b:246,alpha:1};
