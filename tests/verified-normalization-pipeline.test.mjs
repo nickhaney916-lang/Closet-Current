@@ -4,7 +4,7 @@ import {createHash} from 'node:crypto';
 import {runVerifiedMockEdit,verifyMockReceipt} from '../supabase/functions/garment-normalize/verified-pipeline.mjs';
 
 const img='data:image/png;base64,'+
- 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9ck5wAAAAASUVORK5CYII=';
+ 'iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAIAAABLbSncAAAAG0lEQVR4nGNkYGCQYxDARCwMcgIMDFjQ4JQAAHYYBbI/Hyo4AAAAAElFTkSuQmCC';
 const preview='data:image/png;base64,'+
  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLJPQAAAABJRU5ErkJggg==';
 const sha=uri=>createHash('sha256').update(Buffer.from(uri.split(',')[1],'base64')).digest('hex');
