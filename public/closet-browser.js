@@ -1,5 +1,6 @@
 'use strict';
 window.closetBrowseAll=false;
+window.closetPresentationMode='grid';
 window.closetItemType='';
 window.closetDressPreview=false;
 window.closetTargetSlot=null;
@@ -59,6 +60,21 @@ function renderClosetBrowser(){
  }
  const unsorted=items.filter(closetReviewMatches).length;$('closetUnsorted').hidden=!unsorted;$('closetUnsorted').textContent='Unsorted clothing ('+unsorted+')';
  const browsing=!!(window.closetSlotFilter||$('search').value.trim()||$('filter').value!=='All categories'||window.closetBrowseAll);$('closetCollection').hidden=!browsing;$('closetLayout').classList.toggle('is-browsing',browsing);$('closetCollectionTitle').textContent=$('search').value.trim()?'Search results':dressMode&&window.closetSlotFilter==='top'?'Dresses':window.closetSlotFilter?closetSections.find(section=>section.slot===window.closetSlotFilter)?.label||'Your pieces':$('filter').value==='All categories'?'All pieces':$('filter').value==='Tops'&&!window.closetSleeves?'Shirts':$('filter').value==='Outerwear'?'Layers':closetSections.find(x=>x.category===$('filter').value&&(x.itemType||'')===window.closetItemType&&(!window.closetSleeves||x.sleeves===window.closetSleeves))?.label||'Your pieces';
+ const rackActive=browsing&&window.closetPresentationMode==='rack';
+ $('closetPresentation').hidden=!browsing;
+ $('closetRackHint').hidden=!rackActive;
+ $('closetRackNav').hidden=!rackActive;
+ $('closetGrid').classList.toggle('rack-mode',rackActive);
+ $('closetGridMode').setAttribute('aria-pressed',String(!rackActive));
+ $('closetRackMode').setAttribute('aria-pressed',String(rackActive));
+ $('closetGridMode').classList.toggle('active',!rackActive);
+ $('closetRackMode').classList.toggle('active',rackActive);
+ if(rackActive&&typeof ClosetTileEngine!=='undefined'){
+  for(const card of $('closetGrid').querySelectorAll('[data-item-id]')){
+   const piece=items.find(item=>String(item.id)===card.dataset.itemId);
+   if(piece)ClosetTileEngine.apply(card.querySelector('img'),piece);
+  }
+ }
 }
 function enableClosetDrag(image,item){image.draggable=true;image.ondragstart=event=>{window.closetDraggedId=item.id;event.dataTransfer.setData('text/plain',item.id);event.dataTransfer.effectAllowed='move';};image.ondragend=()=>{window.closetDraggedId=null;document.querySelectorAll('.drag-over').forEach(x=>x.classList.remove('drag-over'));};}
 function closetWearButton(item){
@@ -70,6 +86,10 @@ function closetWearButton(item){
  b.onpointerup=end;b.onpointercancel=()=>{drag?.ghost?.remove();drag=null;document.body.classList.remove('closet-pointer-dragging');};return b;
 }
 $('filter').onchange=()=>{window.closetTargetSlot=null;window.closetSlotFilter=null;window.closetItemType='';window.closetSleeves=null;window.closetBrowseAll=$('filter').value==='All categories';render();};
+$('closetGridMode').onclick=()=>{window.closetPresentationMode='grid';render();};
+$('closetRackMode').onclick=()=>{window.closetPresentationMode='rack';render();};
+$('closetRackPrev').onclick=()=>$('closetGrid').scrollBy({left:-ClosetRackEngine.scrollAmount($('closetGrid').clientWidth),behavior:'smooth'});
+$('closetRackNext').onclick=()=>$('closetGrid').scrollBy({left:ClosetRackEngine.scrollAmount($('closetGrid').clientWidth),behavior:'smooth'});
 $('closetAllPieces').onclick=()=>{window.closetTargetSlot=null;window.closetSlotFilter=null;window.closetItemType='';window.closetSleeves=null;window.closetBrowseAll=true;$('filter').value='All categories';render();};
 $('closetBack').onclick=()=>{window.closetTargetSlot=null;window.closetSlotFilter=null;window.closetItemType='';window.closetSleeves=null;window.closetBrowseAll=false;for(const id of ['search','seasonFilter','sleeveFilter'])$(id).value='';$('filter').value='All categories';render();$('closetCategories').scrollIntoView({block:'start',behavior:'smooth'});};
 $('closetClearLook').onclick=async()=>{await outfitBoardReady;window.closetDressPreview=false;currentBoard=cleanOutfitBoard({...currentBoard,slots:{},ideas:{}},items);syncBoardInputs();renderOutfitBoard();const saved=await storeBoard();$('closetLookStatus').textContent=saved?'Look cleared. Your closet pieces are kept.':'Cleared look could not save. Please try again.';};
