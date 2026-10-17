@@ -193,6 +193,29 @@ function cameraStability(){
  }catch{return {stable:true};}
 }
 function snap(){if(!video.videoWidth||video.readyState<2)throw Error('The camera has not provided a usable frame yet.');const scale=Math.min(1,2048/Math.max(video.videoWidth,video.videoHeight));canvas.width=Math.max(1,Math.round(video.videoWidth*scale));canvas.height=Math.max(1,Math.round(video.videoHeight*scale));const context=canvas.getContext('2d');context.imageSmoothingEnabled=true;context.imageSmoothingQuality='high';context.drawImage(video,0,0,canvas.width,canvas.height);return canvas.toDataURL('image/jpeg',.94);}
+
+// Prefer a genuine sensor still over freezing the preview when the browser
+// supports ImageCapture. Preserve full aspect ratio, without artificial upscaling.
+async function captureCameraStill(track,StillCapture){
+ const blob=await new StillCapture(track).takePhoto();
+ if(!blob||!blob.size||(blob.type&&!blob.type.startsWith('image/')))
+   throw Error('Camera did not supply an image.');
+ const bitmap=await createImageBitmap(blob);
+ try{
+  const width=bitmap.width,height=bitmap.height;
+  if(!Number.isInteger(width)||!Number.isInteger(height)||width<320||height<240)
+    throw Error('Still image was too small.');
+  const scale=Math.min(1,2048/Math.max(width,height));
+  canvas.width=Math.max(1,Math.round(width*scale));
+  canvas.height=Math.max(1,Math.round(height*scale));
+  const context=canvas.getContext('2d');
+  if(!context)throw Error('Unable to prepare camera photo.');
+  context.imageSmoothingEnabled=true;
+  context.imageSmoothingQuality='high';
+  context.drawImage(bitmap,0,0,canvas.width,canvas.height);
+  return canvas.toDataURL('image/jpeg',.94);
+ }finally{bitmap.close?.();}
+}
 function beep(){if(!$('sound').checked||!audio)return;try{const o=audio.createOscillator(),g=audio.createGain();o.frequency.value=740;g.gain.value=.04;o.connect(g);g.connect(audio.destination);o.start();o.stop(audio.currentTime+.12);}catch{}}
 function candidate(image,options={}){
  if([...items,...batch].some(item=>item.image===image)){if(typeof recordDeviceEvent==='function')recordDeviceEvent('exact_duplicate_skipped');message('Exact duplicate skipped. Show the next garment.');return false;}
@@ -211,8 +234,9 @@ async function drainAutomatic(){
  try{while(automaticQueue.length){const item=automaticQueue.shift();if(batch.some(x=>x.id===item.id))await recognizeItem(item);else localPending.delete(item.id);}}
  finally{automaticRunning=false;render();scheduleMemoryReview();}
 }
+let manualStillShot=null;
 function stopCamera(){
- cameraRequest++;cameraOpening=false;clearInterval(timer);timer=null;
+ cameraRequest++;cameraOpening=false;manualStillShot=null;$('takePhoto').disabled=false;clearInterval(timer);timer=null;
  if(stream)stream.getTracks().forEach(t=>t.stop());
  stream=null;cameraMode=null;previousQualityFrame=null;video.srcObject=null;video.classList.remove('visible');
  $('placeholder').hidden=false;$('cameraChoices').hidden=false;$('cameraActions').hidden=true;
@@ -240,9 +264,39 @@ function captureTick(now=Date.now()){
  catch(e){$('captureState').textContent='Waiting for a usable camera frame…';}
 }
 function takePhoto(){
- if(!stream||cameraMode!=='manual')return;
- try{const quality=cameraFrameQuality();if(!quality.usable){message('Photo looks too dark or low-resolution. Try brighter light and take it again.');return;}cameraStability();candidate(snap());beep();$('captureState').textContent=`${session} photos taken · ready for the next piece`;if(session>=60){finishScan();message('60 photos collected. Review this batch before continuing.');}}
- catch{message('The camera is still getting ready. Wait a moment, then tap Take photo again.');}
+ if(!stream||cameraMode!=='manual'||manualStillShot)return;
+ const activeStream=stream,activeRequest=cameraRequest;
+ const active=()=>stream===activeStream&&cameraRequest===activeRequest&&cameraMode==='manual';
+ const saveCaptured=image=>{
+  if(!active())return;
+  candidate(image);beep();$('captureState').textContent=`${session} photos taken · ready for the next piece`;
+  if(session>=60){finishScan();message('60 photos collected. Review this batch before continuing.');}
+ };
+ const fallback=()=>{
+  if(!active())return;
+  try{saveCaptured(snap());}
+  catch{message('The camera is still getting ready. Wait a moment, then tap Take photo again.');}
+ };
+ try{
+  const quality=cameraFrameQuality();
+  if(!quality.usable){message('Photo looks too dark or low-resolution. Try brighter light and take it again.');return;}
+  cameraStability();
+  const StillCapture=window.ImageCapture,track=stream.getVideoTracks?.()[0];
+  if(typeof StillCapture!=='function'||!track||typeof createImageBitmap!=='function'){
+   fallback();return;
+  }
+  const shot={stream:activeStream,request:activeRequest};
+  manualStillShot=shot;$('takePhoto').disabled=true;
+  $('captureState').textContent='Taking high-quality photo…';
+  captureCameraStill(track,StillCapture).then(image=>{
+   if(manualStillShot===shot)saveCaptured(image);
+  },()=>{
+   // Unsupported ImageCapture and transient failures must not lose the tap.
+   if(manualStillShot===shot)fallback();
+  }).finally(()=>{
+   if(manualStillShot===shot){manualStillShot=null;$('takePhoto').disabled=false;}
+  });
+ }catch{fallback();}
 }
 async function startCamera(mode){
  if(busy||stream)return;
