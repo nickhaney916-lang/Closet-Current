@@ -72,7 +72,7 @@ try{
  assert.equal(await page.locator('#download').isDisabled(),false,'Redo recovers the human-drawn mask');
  await page.locator('#tool').selectOption('brush');
  await page.locator('#mode').selectOption('0');
- await page.locator('#radius').fill('1');
+ await page.locator('#radius').evaluate(el=>{el.value='1';el.dispatchEvent(new Event('input',{bubbles:true}));});
  const mid=at(20,15);
  await page.mouse.click(mid.x,mid.y);
  assert.equal(await page.locator('#undo').isDisabled(),false);
@@ -88,7 +88,7 @@ try{
  await page.locator('#status').getByText(/AI starting mask loaded/).waitFor();
  assert.equal(await page.locator('#download').isDisabled(),true);
  await page.locator('#mode').selectOption('1');
- await page.locator('#radius').fill('1');
+ await page.locator('#radius').evaluate(el=>{el.value='1';el.dispatchEvent(new Event('input',{bubbles:true}));});
  const inSeed=at(5,6);
  await page.mouse.click(inSeed.x,inSeed.y);
  assert.equal(await page.locator('#download').isDisabled(),true,'A no-op brush tap cannot validate a model mask');
