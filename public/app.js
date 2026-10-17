@@ -118,6 +118,40 @@ function renderRecognitionNotice(){
  const progress=$('recognitionProgress');progress.hidden=!loading;
  if(loading){if(recognitionState.percent===null)progress.removeAttribute('value');else progress.value=recognitionState.percent;}
 }
+
+// The normal scanner remains automatic. Only images with a confirmed garment
+// category and no reliable color offer this one-choice inline fallback.
+// Saving is transactional and rechecks eligibility at write time so it cannot
+// overwrite a newer capture, duplicate, or unfinished recognition result.
+function canConfirmReviewedColor(item){
+ return !!item&&batch.some(x=>x.id===item.id)&&!items.some(x=>x.id===item.id)&&
+  !localPending.has(item.id)&&item.localAnalyzed&&!item.userAdjusted&&
+  !item.possibleDuplicate&&!item.requiresOwnershipConfirmation&&
+  !item.scanFailed&&!item.saveFailed&&
+  categories.includes(item.category)&&item.category!=='Uncategorized'&&
+  !ClothingDetails.validColor(item.color);
+}
+async function confirmReviewedColor(item,color){
+ if(!ClothingDetails.validColor(color)||!canConfirmReviewedColor(item))return false;
+ const value=normalizeClothing({...structuredClone(item),color,colorSource:'user',
+  name:[color,item.itemType&&item.itemType!=='Unknown'?item.itemType:item.category].filter(Boolean).join(' '),
+  userAdjusted:true,requiresOwnershipConfirmation:false,
+  indexingLevel:item.itemType==='Unknown'?'category-color':'specific-type',
+  savedAt:new Date().toISOString(),indexedAt:new Date().toISOString()});
+ const saved=await queued(()=>new Promise((resolve,reject)=>{
+  if(!canConfirmReviewedColor(item))return resolve(false);
+  if(!db)return reject(Error('Browser storage is unavailable.'));
+  const tx=db.transaction(['items','state'],'readwrite');
+  tx.objectStore('items').put(value);
+  tx.objectStore('state').put({id:'draft',batch:structuredClone(batch.filter(x=>x.id!==item.id))});
+  tx.oncomplete=()=>resolve(true);tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);
+ }));
+ if(!saved)return false;
+ if(!items.some(x=>x.id===item.id))items.push(value);
+ batch=batch.filter(x=>x.id!==item.id);
+ persistDraft();render();scheduleMemoryReview();
+ return true;
+}
 function renderPhotoResults(grid,results){
  grid.replaceChildren();
  if(!results.length){const box=node('div',null,'empty');box.append(node('h3','Your photos appear here'),node('p','Take a photo to add your first piece.'));grid.append(box);return;}
@@ -133,6 +167,22 @@ function renderPhotoResults(grid,results){
   const extra=[item.pattern,item.sleeveLength,item.fit,...(item.seasons||[])].filter(x=>x&&x!=='Unknown'&&x!=='Not applicable');
   if(extra.length){const details=node('details',null,'photo-extra');details.append(node('summary','More details'),node('p',extra.join(' · ')));body.append(details);}
   if(!pending&&!saved&&item.possibleDuplicate)body.append(node('p','Compare with your closet before adding.','fine'));
+  if(canConfirmReviewedColor(item)){
+   const label=node('label',null,'quick-color-confirm'),picker=node('select');
+   const prompt=node('option','Choose color to save');
+   prompt.value='';picker.append(prompt);
+   for(const color of ClothingDetails.colors){const option=node('option',color);option.value=color;picker.append(option);}
+   picker.value='';picker.setAttribute('aria-label','Choose the color of '+title+' and save');
+   label.append(node('span','Choose color · save','fine'),picker);
+   picker.onchange=async()=>{
+    if(!picker.value)return;
+    picker.disabled=true;
+    try{if(!await confirmReviewedColor(item,picker.value)){
+     picker.disabled=false;message('This photo needs another check. Use Adjust to save your choice.');
+    }}catch{picker.disabled=false;message('Could not save this color. Your photo is still here.');}
+   };
+   body.append(label);
+  }
   const adjust=node('button','Adjust','secondary');adjust.type='button';
   adjust.onclick=()=>adjustPhoto(item);body.append(adjust,cropButton(item));
   card.append(image,body);grid.append(card);
