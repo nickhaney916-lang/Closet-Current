@@ -216,7 +216,7 @@ try{
  });
  await writeFile(out+'/recognition-framing.json',JSON.stringify(framing,null,2));
  console.log('REAL_PHOTO_FRAMING '+JSON.stringify(framing));
- const report={cases:realResults,submitted:realCases.length,imported:observed.imports.added,evaluated:evaluated.length,categoryAccuracy:evaluated.length?evaluated.filter(x=>x.correctCategory).length/evaluated.length:null,allSubmittedAccuracy:realResults.filter(x=>x.correctCategory).length/realCases.length,uncategorizedCases:realResults.filter(x=>x.category==='Uncategorized').map(x=>({id:x.id,expected:x.expected,diagnostics:x.recognitionDiagnostics||null})),uncategorizedCount:realResults.filter(x=>x.category==='Uncategorized').length,reviewSuggestions,reviewSuggestionCount:reviewSuggestions.length,reviewSuggestionCorrect:reviewSuggestions.filter(x=>x.correct).length,reviewSuggestionIncorrect:reviewSuggestions.filter(x=>!x.correct).length,reviewSuggestionPrecision:reviewSuggestions.length?reviewSuggestions.filter(x=>x.correct).length/reviewSuggestions.length:null,importDiagnostics:observed,pageErrors:errors};
+ const report={cases:realResults,submitted:realCases.length,imported:observed.imports.added,evaluated:evaluated.length,automaticallySavedCount:observed.newItems.length,reviewPendingCount:observed.pending.length,automaticSaveRate:observed.newItems.length/realCases.length,colorPopulatedCount:realResults.filter(x=>!!x.color&&x.color!=='Unknown').length,colorCoverage:realResults.filter(x=>!!x.color&&x.color!=='Unknown').length/realCases.length,categoryAccuracy:evaluated.length?evaluated.filter(x=>x.correctCategory).length/evaluated.length:null,allSubmittedAccuracy:realResults.filter(x=>x.correctCategory).length/realCases.length,uncategorizedCases:realResults.filter(x=>x.category==='Uncategorized').map(x=>({id:x.id,expected:x.expected,diagnostics:x.recognitionDiagnostics||null})),uncategorizedCount:realResults.filter(x=>x.category==='Uncategorized').length,reviewSuggestions,reviewSuggestionCount:reviewSuggestions.length,reviewSuggestionCorrect:reviewSuggestions.filter(x=>x.correct).length,reviewSuggestionIncorrect:reviewSuggestions.filter(x=>!x.correct).length,reviewSuggestionPrecision:reviewSuggestions.length?reviewSuggestions.filter(x=>x.correct).length/reviewSuggestions.length:null,importDiagnostics:observed,pageErrors:errors};
 
  // Read-only color evidence from verified, licensed real photographs. No model
  // tuning, generated ground truth, garment editing or customer image exposure.
@@ -251,6 +251,21 @@ try{
  });
  await writeFile(out+'/real-photo-color-evidence.json',JSON.stringify(colorEvidence,null,2));
  console.log('REAL_PHOTO_COLOR_EVIDENCE '+JSON.stringify(colorEvidence));
+ // The independently titled orange-shorts fixture previously auto-saved as
+ // Brown. A color confidence guard must preserve the item for review, not
+ // recast the uncertainty as a different confident color.
+ const orangeTitleCase=colorEvidence.cases['commons-0035']?.observations?.find(x=>x.size===16);
+ const neutralBrownCase=colorEvidence.cases['commons-0070']?.observations?.find(x=>x.size===16);
+ assert.equal(orangeTitleCase?.estimate?.needsConfirmation,true,
+  'Rust-orange source photograph must not be confidently called brown');
+ assert.equal(neutralBrownCase?.estimate?.color,'Brown',
+  'Brown-coat control must remain classifiable as brown');
+ assert.notEqual(neutralBrownCase?.estimate?.needsConfirmation,true,
+  'Neutral brown control must not become uncertain from rust-orange protection');
+ const orangeIndexed=realResults.find(x=>x.id==='commons-0035');
+ assert.notEqual(orangeIndexed?.color,'Brown',
+  'Orange shorts must not silently auto-save a conflicting brown photo label');
+
  await writeFile(out+'/real-photo-indexing.json',JSON.stringify(report,null,2));
  console.log('REAL_PHOTO_INDEXING '+JSON.stringify(report));
  console.log('REAL_PHOTO_REVIEW_SUGGESTIONS '+JSON.stringify({count:reviewSuggestions.length,correct:reviewSuggestions.filter(x=>x.correct).length,incorrect:reviewSuggestions.filter(x=>!x.correct)}));
