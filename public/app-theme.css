@@ -183,3 +183,13 @@ header{padding-top:22px;padding-bottom:18px}.brand-mark{background:#7043ba;color
 @media(max-width:480px){#closetGrid.rack-mode{gap:12px;padding-left:calc((100% - min(290px,78vw))/2);
  padding-right:calc((100% - min(290px,78vw))/2)}}
 @media(prefers-reduced-motion:reduce){#closetGrid.rack-mode{scroll-behavior:auto}}
+
+/* Free, one-item-at-a-time rack navigation with a prominent position count. */
+.closet-rack-position{display:flex;justify-content:center;align-items:center;min-width:78px;
+ font-size:14px;font-weight:750;font-variant-numeric:tabular-nums;color:#432d59}
+.closet-rack-nav{align-items:center}
+.closet-rack-nav button:disabled{opacity:.45;cursor:not-allowed}
+#closetGrid.rack-mode{scroll-snap-stop:always}
+#closetGrid.rack-mode>.card{scroll-snap-stop:always}
+@media(max-width:390px){.closet-rack-nav{gap:7px}.closet-rack-position{min-width:56px;font-size:13px}
+ .closet-rack-nav button{font-size:14px;padding-inline:8px}}

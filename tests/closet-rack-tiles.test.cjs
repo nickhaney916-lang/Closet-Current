@@ -52,3 +52,52 @@ test('tile generation skips missing images without touching user data',async()=>
  assert.equal(await tile.normalized({id:'x',image:'not-an-image'}),null);
  assert.equal(await tile.normalized({id:'x'}),null);
 });
+
+test('rack highlights the exact nearest garment instead of skipping on wide viewports',()=>{
+ assert.equal(rack.nearestIndex([100,350,600,850],370),1);
+ assert.equal(rack.nearestIndex([100,350,600,850],705),2);
+ assert.equal(rack.nearestIndex([0,300,600],600),2);
+ assert.equal(rack.nearestIndex([],0),-1);
+ assert.throws(()=>rack.nearestIndex([0,NaN],0));
+});
+function fakeRack(n=3){
+ const list=Array.from({length:n},(_,i)=>({
+  dataset:{itemId:'item-'+i},
+  getBoundingClientRect(){return {left:20+i*250-grid.scrollLeft,right:220+i*250-grid.scrollLeft};}
+ }));
+ const grid={scrollLeft:0,
+  getBoundingClientRect:()=>({left:0,right:240}),
+  querySelectorAll:()=>list,
+  scrollTo({left}){this.scrollLeft=left;}
+ };
+ return {grid,list};
+}
+test('next and previous move exactly one garment; controls clamp to first and last',()=>{
+ const {grid}=fakeRack();
+ assert.equal(rack.activeIndex(grid),0);
+ assert.equal(rack.jumpBy(grid,1).id,'item-1');
+ assert.equal(rack.activeItemId(grid),'item-1');
+ assert.equal(rack.jumpBy(grid,1).id,'item-2');
+ assert.equal(rack.jumpBy(grid,1).id,'item-2');
+ assert.equal(rack.jumpBy(grid,-1).id,'item-1');
+ assert.equal(rack.jumpBy(grid,-1).id,'item-0');
+ assert.throws(()=>rack.jumpBy(grid,3));
+});
+test('rack redraw resumes the exact same garment and missing items safely reset',()=>{
+ const {grid}=fakeRack(4);
+ rack.jumpBy(grid,2);
+ const active=rack.activeItemId(grid);
+ grid.scrollLeft=0;
+ assert.equal(rack.restore(grid,active).id,'item-2');
+ assert.equal(rack.restore(grid,'removed-elsewhere').id,'item-0');
+ assert.equal(rack.restore(fakeRack(0).grid,'any'),null);
+});
+test('closet rail is primary but grid remains available for all garments',()=>{
+ const source=require('node:fs').readFileSync('public/closet-browser.js','utf8');
+ const html=require('node:fs').readFileSync('public/index.html','utf8');
+ assert.match(source,/closetPresentationMode='rack'/);
+ assert.match(html,/id="closetRackMode".*aria-pressed="true"/);
+ assert.match(html,/id="closetRackPosition"/);
+ assert.match(source,/closetGridMode.*onclick/);
+ assert.match(source,/closetRackNext.*jumpBy/);
+});
