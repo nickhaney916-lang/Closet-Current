@@ -42,7 +42,7 @@ test('new capture during an IndexedDB save is preserved',async()=>{
 test('model failure preserves all photos and retry processes the backlog',async()=>{
  const {c}=setup({request:async()=>{throw Error('model unavailable');}});c.candidate('one');c.candidate('two');await done(c);
  assert.equal(c.items.length,0);assert.equal(c.batch.length,2);assert.equal(c.localPending.size,0);
- c.localRequest=async()=>({strong:true,choices:[choice],details:{}});await c.recognizeBatch();await done(c);assert.equal(c.items.length,2);
+ c.localRequest=async()=>({strong:true,choices:[choice],details:{color:'Blue'}});await c.recognizeBatch();await done(c);assert.equal(c.items.length,2);
 });
 test('photo checks reject uniform frames and preserve visible structure',()=>{
  const c={};vm.createContext(c);vm.runInContext(fs.readFileSync('public/photo-check.js','utf8'),c);
@@ -147,4 +147,33 @@ test('single visible jacket keeps correct identity instead of prompting for unde
  assert.equal(c.items[0].category,'Outerwear');
  assert.equal(c.items[0].itemType,'Jacket');
  assert.equal(c.items[0].underlayerReview,undefined);
+});
+
+test('a strongly recognized garment with missing color stays in photo review instead of autosaving',async()=>{
+ const {c,stored}=setup({result:{strong:true,choices:[choice],details:{}}});
+ c.candidate('no-color');await done(c);
+ assert.equal(stored.length,0);assert.equal(c.items.length,0);
+ assert.equal(c.batch.length,1);assert.equal(c.batch[0].category,'Tops');
+ assert.equal(c.batch[0].color,'');
+ assert.match(c.batch[0].localStatus,/color needs confirmation/i);
+});
+test('uncertain photo color never becomes an automatic category-color save',async()=>{
+ const {c,stored}=setup({
+  quality:async()=>({blank:false,signature:[22,33,44],aspect:1,colorEstimate:{color:'Brown',needsConfirmation:true}}),
+  result:{strong:false,categoryConfirmed:true,categoryOnly:true,choices:[{category:'Bottoms',itemType:'Unknown',label:'Bottoms'}],details:{}}
+ });
+ c.candidate('orange-shorts-photo');await done(c);
+ assert.equal(stored.length,0);assert.equal(c.items.length,0);assert.equal(c.batch.length,1);
+ assert.equal(c.batch[0].category,'Bottoms');assert.equal(c.batch[0].color,'');
+ assert.match(c.batch[0].localStatus,/specific type and color/i);
+});
+test('strong model color is accepted when photographic color is uncertain',async()=>{
+ const {c,stored}=setup({quality:async()=>({blank:false,signature:[1,2,3],aspect:1,colorEstimate:{color:'Brown',needsConfirmation:true}})});
+ c.candidate('orange-shorts-photo');await done(c);
+ assert.equal(stored.length,1);assert.equal(stored[0].color,'Blue');
+ assert.equal(stored[0].colorSource,'recognition');
+});
+test('fabric color suggestions cannot overwrite user-entered color',async()=>{
+ const {c,stored}=setup({quality:async()=>({blank:false,signature:[11,22,33],aspect:1,colorEstimate:{color:'Brown',needsConfirmation:true}})});
+ c.candidate('one');await done(c);assert.equal(stored[0].color,'Blue');
 });
