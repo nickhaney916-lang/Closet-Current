@@ -1,9 +1,15 @@
-# One-tap underlayer review — experimental (October 17, 2026)
+# Underlayer detection — removed from experimental user flow
 
-User intent: **point and take a picture**, and never force sleeve-length or button-down-type decisions to store an item.
+**Decision on October 17, 2026:** Do not hunt for concealed or accidentally visible garments behind the item the customer intentionally photographed. The prior one-tap speculative Top fallback has been removed. A user who wants to catalog an underlying shirt should expose it and photograph it deliberately.
 
-When one captured **outfit** region is broadly labelled 'upper garment' and the classifier does not identify a trustworthy type, the app's experimental branch now proposes **Top** as a category, and marks it *unverified* in the existing photo result card. The category is NOT silently auto-saved. The card simply says "Top — is this right?" with **Yes, save** and **Change**; no new dashboard or tab. One yes also confirms ownership and keeps the observed photo color; sleeve length, type, fit and pattern remain optional Unknown. If color is not available the customer uses Change to supply it. Confirming a possible duplicate is blocked.
+### Simple capture contract
+- Single-item photo: recognize the clearly photographed foreground garment. Do not invent hidden layers.
+- Whole-outfit capture: index distinctly visible pieces supported by actual segmentation and classification evidence; physical separation remains a prerequisite.
+- Unknown or blocked identity: retain the photo in review with the existing Adjust action, without guessing a Top or automatically adding another item. No special underlayer question or extra flow.
+- A confident jacket stays Outerwear; explicitly recognized visible Tops retain ordinary auto-save when all existing checks pass.
+- Keep sleeve type, garment style and other detail corrections optional where feasible.
+- Original photos remain intact. No duplicate closet entries from an incidental glimpse of another item.
 
-Crucial boundary: current semantic class 4 cannot establish whether the photographed item is an underlayer or outerwear. A future instance/layer model may supply `layerRole:'underlayer'`. Without this signal the Top is strictly a *tentative question*, not an asserted layer. Known jackets with strong type evidence are not overridden. Missing, clipped, duplicate or conflicting evidence remains in review.
+This decision removes the previous `underlayer-review.js` experimental module and Yes/Change special-case controls. Do not spend mobile inference time pursuing concealed underlayers. Later work should improve recognition of the **visible intended target** instead.
 
-This requires ONE opt-in user tap only for uncertain captured upper garments; confident results keep their current behavior. No customer-facing main branch changes or Drive Duel changes until benchmark and test approval. Note: this does not automatically fix physically overlapping clothing—instance segmentation is still a separate unresolved requirement.
+No deployment to the live app, and no Drive Duel modifications.

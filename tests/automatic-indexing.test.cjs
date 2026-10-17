@@ -5,7 +5,6 @@ function setup({result={strong:true,choices:[choice],details:{color:'Blue',patte
  const stored=[],elements=new Map();const el=id=>{if(!elements.has(id))elements.set(id,{});return elements.get(id);};
  const c={scheduleMemoryReview(){},recognitionState:{phase:'idle',percent:null,activeId:null},renderRecognitionNotice(){},sessionCapturedIds:new Set(),items:[],batch:[],session:0,localPending:new Set(),automaticQueue:[],automaticRunning:false,localReady:true,localLoadPromise:null,recognitionUnavailable:false,localBatch:false,crypto:{randomUUID},Date,structuredClone,$:el,render(){},persistDraft(){},message(text){c.messageText=text;},checkPhoto:quality||(async(image)=>({blank:false,signature:[image.charCodeAt(0),100,200],aspect:1})),similarPhotos:(a,b)=>Array.isArray(a)&&Array.isArray(b)&&a.join()===b.join(),localRequest:request||(async()=>result),queued:work=>work(),db:{transaction(){const tx={objectStore:name=>({put(value){if(name==='items')stored.push(value);}})};setImmediate(()=>tx.oncomplete?.());return tx;}}};
  vm.createContext(c);vm.runInContext(fs.readFileSync('public/taxonomy.js','utf8'),c);vm.runInContext(fs.readFileSync('public/clothing-details.js','utf8'),c);
- vm.runInContext(fs.readFileSync('public/underlayer-review.js','utf8'),c);
  vm.runInContext(source.slice(source.indexOf('function candidate('),source.indexOf('function stopCamera(')),c);
  vm.runInContext(source.slice(source.indexOf('async function enableLocal('),source.indexOf('async function importClothingPhotos(')),c);
  return {c,stored,el};
@@ -124,43 +123,28 @@ test('outfit recognition uses original crop texture while masked garment color w
  assert.equal(modelImage,'raw-textured-crop');assert.equal(qualityImage,'raw-textured-crop');assert.equal(stored.length,1);assert.equal(stored[0].image,'isolated-display');assert.equal(stored[0].color,'Blue');assert.equal(stored[0].name,'Blue T-shirt');assert.equal(stored[0].colorMethod,'garment-mask');assert.equal(stored[0].originalPhoto.image,'whole-outfit');assert.equal(stored[0].recognitionPhoto.image,'raw-textured-crop');
 });
 
-test('uncertain outfit upper garment suggests Top but cannot save before one-tap verification',async()=>{
- const {c,stored}=setup({result:{strong:false,categoryConfirmed:false,
-  choices:[],details:{}}});
- c.candidate('underlayer',{outfitSourceId:'outfit1',
+test('accidentally visible clothing beneath a garment is not guessed as a Top',async()=>{
+ const {c,stored}=setup({result:{strong:false,categoryConfirmed:false,choices:[],details:{}}});
+ c.candidate('partial-underlayer',{outfitSourceId:'outfit1',
   segmentHint:{categories:['Tops','Outerwear'],types:[],clipped:false,layerRole:'underlayer'},
   colorEstimate:{color:'Blue',source:'photo-estimate',support:.9}});
  await done(c);
  assert.equal(c.items.length,0);
- assert.equal(c.batch.length,1);
- assert.equal(c.batch[0].category,'Tops');
- assert.equal(c.batch[0].itemType,'Unknown');
- assert.equal(c.batch[0].sleeveLength,'Unknown');
- assert.equal(c.batch[0].underlayerReview.needsUserVerification,true);
  assert.equal(stored.length,0);
- c.savePiece=async value=>stored.push(value);
- const ok=await c.confirmUnderlayerReview(c.batch[0]);
- assert.equal(ok,true);
- assert.equal(c.items.length,1);
- assert.equal(c.items[0].categoryVerifiedByUser,true);
- assert.equal(c.items[0].itemType,'Unknown');
- assert.equal(c.items[0].sleeveLength,'Unknown');
- assert.equal(c.items[0].underlayerReview,undefined);
+ assert.equal(c.batch.length,1);
+ assert.equal(c.batch[0].category,'Uncategorized');
+ assert.equal(c.batch[0].itemType,'Unknown');
+ assert.equal(c.batch[0].underlayerReview,undefined);
+ assert.match(c.batch[0].localStatus,/Confirm the garment category/);
+});
+test('single visible jacket keeps correct identity instead of prompting for underneath clothing',async()=>{
+ const jacket={category:'Outerwear',itemType:'Jacket',label:'a jacket',sleeveLength:'Long sleeve'};
+ const {c,stored}=setup({result:{strong:true,choices:[jacket],details:{color:'Blue'}}});
+ c.candidate('one-visible-jacket',{outfitSourceId:'outfit1',
+  segmentHint:{categories:['Tops','Outerwear'],types:[],clipped:false}});
+ await done(c);
  assert.equal(stored.length,1);
-});
-test('ambiguous upper class does not override confidently recognized outerwear',async()=>{
- const result={strong:true,choices:[{category:'Outerwear',itemType:'Jacket',score:.9}]};
- const item={segmentHint:{categories:['Tops','Outerwear'],types:[],clipped:false}};
- assert.equal(caselessReview().suggestion(item,result),null);
- function caselessReview(){return require('../public/underlayer-review.js');}
-});
-test('no color, a duplicate, and a clipped mask cannot save a provisional Top',()=>{
- const review=require('../public/underlayer-review.js');
- const item={category:'Tops',itemType:'Unknown',color:'',
-  underlayerReview:{proposedCategory:'Tops',needsUserVerification:true}};
- assert.equal(review.canConfirm(item),false);
- assert.equal(review.canConfirm({...item,color:'Blue',possibleDuplicate:true}),false);
- assert.equal(review.canConfirm({...item,color:'Blue',possibleDuplicate:false}),true);
- assert.equal(review.suggestion({segmentHint:{categories:['Tops','Outerwear'],clipped:true}},
-  {strong:false,choices:[]}),null);
+ assert.equal(c.items[0].category,'Outerwear');
+ assert.equal(c.items[0].itemType,'Jacket');
+ assert.equal(c.items[0].underlayerReview,undefined);
 });
