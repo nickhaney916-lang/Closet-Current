@@ -25,7 +25,8 @@ const requiresSource={skip:fixtureAvailable?false:'Licensed photo downloaded onl
 const input={
  action:'start',requestId,consentToProvider:true,consentVersion:'pilot-licensed-v1',
  candidate:{action:'normalize-preview',itemId:'commons-0035',category:'Bottoms',
-  photoSha256:actualHash,garmentImage:'data:image/jpeg;base64,'+imageBytes.toString('base64'),
+  photoSha256:actualHash||sample.sourceSha256,
+  garmentImage:imageBytes?'data:image/jpeg;base64,'+imageBytes.toString('base64'):'',
   userInitiated:true,storeResult:false}
 };
 const png='data:image/png;base64,'+
