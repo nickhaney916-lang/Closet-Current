@@ -38,3 +38,14 @@ Experimental commit `0c469007781efd1e9e7f3475a84a78a8e8e178a3`, comparison run `
 - Visually inspected all six regenerated selective-boundary sheets. The narrow color-similarity removal does not resolve the sneaker's attached ground shadow or the boot/jacket background patches. Do not promote this heuristic as a shadow fix.
 - The sharp baseline also visibly omits interior fabric in the shorts and a small chest region in the jacket. Include these retention failures in future reference review; shadow-only evaluation would miss them.
 - No production crop pipeline changes. Next evaluation needs garment retention, attached shadow and detached background measured separately against independently reviewed references. Do not repeat edge-softening experiments as the selected baseline.
+
+
+## Supported enclosed-gap candidate — October 17, morning Pacific
+
+Experimental commit `3886dcb61b3d5169c805503083d44122ec8832f6`, comparison run `39048128438`, artifact `12106094876` (`experimental-supported-interior-repair`).
+
+- Added a review-only mask candidate that restores only enclosed background components with at least 98% SegFormer support, within a cumulative 2% baseline-foreground area budget. Eight-way background connectivity preserves openings connected diagonally to the image edge. It never removes foreground, alters RGB, softens edges or changes production.
+- Actual added pixels: shorts 11,075; beige dress 0; black dress 54; jacket 4,808; sneaker 0; boot 0. These are candidate mask changes, not verified garment-recovery scores.
+- Visual inspection confirms the obvious jacket chest hole and smaller shorts hole are filled. The larger shorts hole exceeds the budget and remains; missing outer garment portions also remain. Shadows and background leakage are unchanged.
+- Four new safeguard tests and eight related comparison/baseline tests passed locally. The candidate is not authorized for production and is not independently approved ground truth.
+- Next work: independently review recovered regions and the remaining large/open garment gaps, then evaluate shadow removal separately. Avoid subtracting the general SegFormer prediction from footwear: its visible omissions would cut away substantial shoe material.
