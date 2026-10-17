@@ -55,8 +55,7 @@ test('identical boot and sock masks are duplicate-label conflict, not distinct p
 });
 test('uncertain source and low-confidence hosiery do not become closet inventory',()=>{
  assert.equal(query({secondary:{...sock,confidence:.40}}).status,'foreground-only');
- assert.equal(query({secondary:{...sock,sourceSha256:'b'.repeat(64)}}).productionAuthorized,false);
- assert.throws(()=>query({secondary:{...sock,sourceSha256:'b'.repeat(64)}}));
+ assert.throws(()=>query({secondary:{...sock,sourceSha256:'b'.repeat(64)}}),/source|evidence|Invalid/);
 });
 test('a mitten or jacket cannot be mistaken for legwear just because close to boots',()=>{
  const r=query({secondary:{...sock,category:'Outerwear',itemType:'Coat'}});
