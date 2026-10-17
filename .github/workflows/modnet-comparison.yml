@@ -19,6 +19,8 @@ on:
       - 'tests/shadow-annotation-validator.test.mjs'
       - 'scripts/check-shadow-outline-readiness.mjs'
       - 'benchmark/score-reviewed-shadow-cleanup.mjs'
+      - 'benchmark/compare-approved-shadow-cleanup.mjs'
+      - 'tests/compare-approved-shadow-cleanup.test.mjs'
       - 'tests/score-reviewed-shadow-cleanup.test.mjs'
       - 'scripts/compare-garment-models.mjs'
       - 'scripts/build-three-way-visual.mjs'
@@ -90,6 +92,7 @@ jobs:
           node benchmark/shadow-annotation-validator.mjs
           node scripts/check-shadow-outline-readiness.mjs
           node --test tests/score-reviewed-shadow-cleanup.test.mjs
+          node --test tests/compare-approved-shadow-cleanup.test.mjs
       - name: Download and verify source photographs
         run: node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos commons-0035,commons-0049,commons-0053,commons-0065,commons-0079,commons-0094
       - name: Smoke-test polygon editor with verified original photo
