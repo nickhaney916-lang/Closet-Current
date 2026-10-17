@@ -8,7 +8,7 @@ const photoCode=code.slice(code.indexOf('async function captureCameraStill('),co
 const tapCode=code.slice(code.indexOf('function takePhoto(){'),code.indexOf('async function startCamera('));
 
 function harness({still=true,reject=false}={}){
- const draws=[],saved=[],messages=[],buttons={takePhoto:{disabled:false},captureState:{textContent:''}};
+ const draws=[],saved=[],messages=[],buttons={takePhoto:{disabled:false},stop:{disabled:false},captureState:{textContent:''}};
  let settle,closed=0,nextTimer=0;const timers=new Map();
  const bitmap={width:4000,height:3000,close(){closed++;}};
  const canvas={width:0,height:0,getContext(){return {drawImage(...args){draws.push(args);},imageSmoothingEnabled:false,imageSmoothingQuality:'low'};},toDataURL(type,quality){assert.equal(type,'image/jpeg');assert.equal(quality,.94);return 'still-jpeg';}};
@@ -34,6 +34,7 @@ test('native still uses a 4:3 sensor photo rather than 16:9 preview, with no enl
  h.c.takePhoto();
  assert.equal(h.saved.length,0);
  assert.equal(h.buttons.takePhoto.disabled,true);
+ assert.equal(h.buttons.stop.disabled,true);
  h.settle();await flush();
  assert.deepEqual(h.saved,['still-jpeg']);
  assert.equal(h.canvas.width,2048);
@@ -42,6 +43,7 @@ test('native still uses a 4:3 sensor photo rather than 16:9 preview, with no enl
  assert.equal(h.draws[0][0],h.bitmap);
  assert.equal(h.closed(),1);
  assert.equal(h.buttons.takePhoto.disabled,false);
+ assert.equal(h.buttons.stop.disabled,false);
  assert.equal(h.c.manualStillShot,null);
 });
 
