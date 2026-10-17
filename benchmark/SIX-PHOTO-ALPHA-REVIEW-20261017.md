@@ -28,3 +28,13 @@
 5. Do **not** modify the production crop pipeline until both visual review and independently approved reference-mask scores support improvement.
 
 All six approved shadow references remain unavailable. No pixel-removal algorithm was changed as part of this review.
+
+## Sharp-baseline follow-up — October 17, morning Pacific
+
+Experimental commit `0c469007781efd1e9e7f3475a84a78a8e8e178a3`, comparison run `39047730843`.
+
+- Corrected selective-boundary and post-cleanup previews to use the selected hard threshold-128 baseline and hard candidate alpha. Removed implicit feathering and matte blending from these comparisons; the third post-check panel now highlights proposed removals in pink. Source RGB is retained in cutout panels; the diagnostic overlay intentionally recolors proposed removals.
+- Eighteen focused Node checks passed. Camera/indexing, mobile persistence, segmentation and experimental six-photo workflows all passed. These are execution checks, not segmentation accuracy scores.
+- Visually inspected all six regenerated selective-boundary sheets. The narrow color-similarity removal does not resolve the sneaker's attached ground shadow or the boot/jacket background patches. Do not promote this heuristic as a shadow fix.
+- The sharp baseline also visibly omits interior fabric in the shorts and a small chest region in the jacket. Include these retention failures in future reference review; shadow-only evaluation would miss them.
+- No production crop pipeline changes. Next evaluation needs garment retention, attached shadow and detached background measured separately against independently reviewed references. Do not repeat edge-softening experiments as the selected baseline.
