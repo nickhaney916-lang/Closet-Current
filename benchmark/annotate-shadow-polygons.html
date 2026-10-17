@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Closet Current — Garment and shadow outlines</title>
+<style>
+*{box-sizing:border-box}body{font:16px system-ui;margin:0;background:#f7f6fa;color:#272137}main{max-width:820px;margin:auto;padding:16px}h1{font-size:1.4rem}button,select,input{font:inherit;min-height:48px;margin:4px 0}button{padding:8px 14px;border-radius:12px;border:1px solid #aaa;background:#fff}button:disabled{opacity:.45}.row{display:flex;gap:8px;flex-wrap:wrap}.row>*{flex:1}canvas{width:100%;height:auto;display:block;touch-action:none;background:#ddd;border-radius:12px}#notice{white-space:pre-wrap}.frame{overflow:auto;background:#fff;padding:8px;border-radius:12px}small{color:#584e65}
+</style><main>
+<h1>Garment and shadow outline draft</h1>
+<p>Internal benchmark tool. Trace true clothing and attached cast shadows as separate polygons. This is not a customer-facing step. Drafts require independent review before use as ground truth.</p>
+<label>Original source photograph <input id="photo" type="file" accept="image/jpeg,image/png,image/webp"></label>
+<div class="row"><label>Image ID <select id="id"><option value="">Select garment</option><option value="commons-0035">Shorts</option><option value="commons-0049">Beige dress</option><option value="commons-0053">Black dress</option><option value="commons-0065">Jacket</option><option value="commons-0079">Sneakers</option><option value="commons-0094">Boots</option></select></label>
+<label>Draw region <select id="kind"><option value="garment">Garment</option><option value="shadow">Cast shadow</option></select></label></div>
+<div class="row"><button id="close" disabled>Finish polygon</button><button id="undo" disabled>Undo last point</button><button id="clear" disabled>Clear current polygon</button></div>
+<div class="frame"><canvas id="view" width="600" height="400" aria-label="Tap to trace polygon points"></canvas></div>
+<div class="row"><button id="export" disabled>Save draft JSON</button><button id="reset" disabled>Start again</button></div>
+<p id="notice" role="status">Load an original image, choose its ID, then tap around the garment or shadow. Finish each polygon with at least three points.</p>
+<small>Export is a draft only. Matching SHA-256 is required for later validation; the file is not automatically uploaded.</small>
+<script>
+'use strict';
+const el=id=>document.getElementById(id),canvas=el('view'),ctx=canvas.getContext('2d');
+const state={img:null,sha:null,regions:{garment:[],shadow:[]},points:[]};
+const expected={
+'commons-0035':'9fd067b0919d519eb7924ebd5c4ddf0bc0f3956cfd229fe1ab12c16cccb085ca',
+'commons-0049':'819ff96e55abf6f79cb99b5abca1870bc0bccfc669681bbc755562be9dbab547',
+'commons-0053':'e7a617cd23a159864f619e8397d5f37d48b684e47dddc4ad6b46b14481042019',
+'commons-0065':'0d094b023d86942acbc89fc5a4bc02968c1b5d0b2c78639cdeb985f522a78494'
+};
+function status(s){el('notice').textContent=s}
+function paint(){ctx.clearRect(0,0,canvas.width,canvas.height);if(!state.img)return;ctx.drawImage(state.img,0,0,canvas.width,canvas.height);
+ for(const type of ['garment','shadow']){ctx.strokeStyle=type==='garment'?'#a300da':'#ff8c00';ctx.fillStyle=type==='garment'?'#a300da33':'#ff8c0033';ctx.lineWidth=3;
+ for(const poly of state.regions[type]){ctx.beginPath();poly.forEach(([x,y],i)=>i?ctx.lineTo(x*canvas.width,y*canvas.height):ctx.moveTo(x*canvas.width,y*canvas.height));ctx.closePath();ctx.fill();ctx.stroke();}}
+ ctx.strokeStyle=el('kind').value==='garment'?'#a300da':'#ff8c00';ctx.lineWidth=3;ctx.beginPath();state.points.forEach(([x,y],i)=>i?ctx.lineTo(x*canvas.width,y*canvas.height):ctx.moveTo(x*canvas.width,y*canvas.height));ctx.stroke();
+ for(const [x,y] of state.points){ctx.beginPath();ctx.arc(x*canvas.width,y*canvas.height,5,0,Math.PI*2);ctx.fillStyle=ctx.strokeStyle;ctx.fill();}
+ el('close').disabled=state.points.length<3;el('undo').disabled=!state.points.length;el('clear').disabled=!state.points.length;
+ el('export').disabled=!state.img||!el('id').value||!state.regions.garment.length||!state.regions.shadow.length||!!state.points.length;
+ el('reset').disabled=!state.img;
+}
+el('photo').onchange=async()=>{const f=el('photo').files?.[0];if(!f)return;
+ try{if(f.size>16000000)throw Error('Image larger than 16 MB');const bytes=await f.arrayBuffer();const hash=await crypto.subtle.digest('SHA-256',bytes);state.sha=Array.from(new Uint8Array(hash),x=>x.toString(16).padStart(2,'0')).join('');
+ const url=URL.createObjectURL(f);try{const img=new Image();img.src=url;await img.decode();state.img=img;const scale=Math.min(1,1000/img.naturalWidth,1000/img.naturalHeight);canvas.width=Math.max(1,Math.round(img.naturalWidth*scale));canvas.height=Math.max(1,Math.round(img.naturalHeight*scale));}finally{URL.revokeObjectURL(url);}
+ state.regions={garment:[],shadow:[]};state.points=[];paint();status('Image loaded. Select its image ID, then outline the garment and cast shadow separately.');
+ }catch(e){status('Cannot load image: '+e.message);}
+};
+canvas.addEventListener('pointerdown',e=>{if(!state.img)return;const box=canvas.getBoundingClientRect();const x=(e.clientX-box.left)/box.width,y=(e.clientY-box.top)/box.height;if(x<0||y<0||x>1||y>1)return;state.points.push([Number(x.toFixed(6)),Number(y.toFixed(6))]);paint();});
+el('close').onclick=()=>{if(state.points.length<3)return;state.regions[el('kind').value].push(state.points);state.points=[];paint();status('Polygon saved. Add more regions or export when garment and shadow are both marked.');};
+el('undo').onclick=()=>{state.points.pop();paint();};el('clear').onclick=()=>{state.points=[];paint();};el('kind').onchange=()=>{if(state.points.length)status('Finish or clear the active polygon first.');else paint();};
+el('id').onchange=paint;
+el('reset').onclick=()=>{state.regions={garment:[],shadow:[]};state.points=[];paint();status('Outlines cleared.');};
+el('export').onclick=()=>{
+ const id=el('id').value;if(!state.sha||!id||state.points.length||!state.regions.garment.length||!state.regions.shadow.length)return;
+ if(expected[id]&&state.sha!==expected[id]){status('Original photo checksum does not match selected ID. Please choose the matching verified original.');return;}
+ const payload={schemaVersion:1,imageId:id,sourceSha256:state.sha,reviewStatus:'draft',regions:state.regions,reviewNotes:'Requires independent outline approval. Not automatically trusted as ground truth.'};
+ const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});const a=document.createElement('a');const url=URL.createObjectURL(blob);a.href=url;a.download=id+'-shadow-outline-draft.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+ status('Draft saved. An independent reviewer must verify the polygons before scoring.');
+};
+</script></main></html>
