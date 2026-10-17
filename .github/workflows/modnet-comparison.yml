@@ -303,6 +303,7 @@ jobs:
           for id in commons-0035 commons-0049 commons-0053 commons-0065 commons-0079 commons-0094; do
             test -s "benchmark/detached-component-review/$id-component-review.png"
           done
+          node -e "for(const id of ['commons-0079','commons-0094']){const r=require('./benchmark/detached-component-review/'+id+'-detached-preview-summary.json');if(!r.detachedOnlyPreview||r.modifiedMaskPixels!==0||!r.reviewOnly||r.candidatePreviewPixels<1)throw Error('Unsafe or empty footwear proposal: '+id)}"
       - uses: actions/upload-artifact@v4
         with:
           name: experimental-six-garment-detached-component-review
