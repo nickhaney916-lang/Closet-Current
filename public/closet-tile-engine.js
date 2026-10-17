@@ -49,6 +49,7 @@
   const ctx=cv.getContext('2d');if(!ctx)return null;
   let bounds={x:0,y:0,width:im.naturalWidth,height:im.naturalHeight};
   let pose={rotationDeg:0,action:'keep-original-or-centered'};
+  let whiteMatte=null;
   // Inspect only a small preview (< 350px on the longest side) rather
   // than allocating millions of RGBA pixels while swiping on a phone.
   const ratio=Math.min(1,320/Math.max(im.naturalWidth,im.naturalHeight));
@@ -59,6 +60,8 @@
   if(tc)try{
     tc.drawImage(im,0,0,aw,ah);
     const thumbnail=tc.getImageData(0,0,aw,ah);
+    if(typeof root.ClosetWhiteMatte!=='undefined')
+      whiteMatte=root.ClosetWhiteMatte.analyze(thumbnail.data,aw,ah);
     const detected=safeWhiteBounds(thumbnail.data,aw,ah);
     if(typeof root.GarmentPoseNormalizer!=='undefined')
      pose=root.GarmentPoseNormalizer.axisPlan(thumbnail.data,aw,ah,item.category);
@@ -71,16 +74,45 @@
   // Use a uniform white matte to avoid background wedges when rotating a
   // clean white studio cutout. The saved source remains exactly unchanged.
   const rotation=pose.action==='rotate-derived-tile'?-pose.rotationDeg*Math.PI/180:0;
-  ctx.fillStyle=rotation?'#fff':'#f6f3f8';ctx.fillRect(0,0,W,H);
+  const transparent=whiteMatte?.eligible===true;
+  if(!transparent){
+   ctx.fillStyle=rotation?'#fff':'#f6f3f8';ctx.fillRect(0,0,W,H);
+  }
   ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
   const to=placement(bounds.width,bounds.height,W,H,rotation?.125:.085);
-  if(rotation){
-   ctx.save();ctx.translate(W/2,H/2);ctx.rotate(rotation);
-   ctx.drawImage(im,bounds.x,bounds.y,bounds.width,bounds.height,
+  const render=(canvas,from)=>{
+   if(rotation){
+    ctx.save();ctx.translate(W/2,H/2);ctx.rotate(rotation);
+    ctx.drawImage(canvas,from.x,from.y,from.width,from.height,
       -to.width/2,-to.height/2,to.width,to.height);ctx.restore();
-  }else ctx.drawImage(im,bounds.x,bounds.y,bounds.width,bounds.height,
+   }else ctx.drawImage(canvas,from.x,from.y,from.width,from.height,
       to.x,to.y,to.width,to.height);
-  try{return cv.toDataURL('image/webp',.86);}catch{return null;}
+  };
+  render(im,bounds);
+  if(transparent){
+   // Apply a low-resolution alpha map to the original high-resolution RGB.
+   // The canvas stays transparent only where exterior background was proven
+   // plain white; no garment texture is regenerated.
+   const maskCanvas=document.createElement('canvas');
+   maskCanvas.width=aw;maskCanvas.height=ah;
+   const maskContext=maskCanvas.getContext('2d');
+   if(maskContext){
+    const imageData=maskContext.createImageData(aw,ah);
+    for(let i=0;i<whiteMatte.alpha.length;i++){
+     const k=i*4;imageData.data[k]=255;imageData.data[k+1]=255;
+     imageData.data[k+2]=255;imageData.data[k+3]=whiteMatte.alpha[i];
+    }
+    maskContext.putImageData(imageData,0,0);
+    ctx.globalCompositeOperation='destination-in';
+    try{render(maskCanvas,{x:bounds.x*aw/im.naturalWidth,
+      y:bounds.y*ah/im.naturalHeight,
+      width:bounds.width*aw/im.naturalWidth,
+      height:bounds.height*ah/im.naturalHeight});}
+    finally{ctx.globalCompositeOperation='source-over';}
+   }
+   maskCanvas.width=0;maskCanvas.height=0;
+  }
+  try{return cv.toDataURL('image/webp',.88);}catch{return null;}
  }
  async function normalized(item){
   if(!item?.id||!valid(item.image))return null;
