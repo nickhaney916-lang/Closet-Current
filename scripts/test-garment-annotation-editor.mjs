@@ -45,6 +45,59 @@ try{
  assert.equal(seeded.reviewer,'First Reviewer');
  await page.locator('#prediction').setInputFiles({name:'wrong.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify({...seed,image:'wrong.png'}))});
  await page.locator('#status').getByText(/mismatch/).waitFor();
+
+ // Trace four polygon corners on an internal synthetic image. Filling makes a
+ // new human-edited draft; undo must fully restore the previous pixels.
+ await page.locator('#photo').setInputFiles({name:'review-case.png',mimeType:'image/png',buffer:Buffer.from(png,'base64')});
+ await page.locator('#tool').selectOption('polygon');
+ const pb=await page.locator('#canvas').boundingBox();
+ const at=(x,y)=>({x:pb.x+(x+.5)*pb.width/40,y:pb.y+(y+.5)*pb.height/30});
+ for(const [x,y] of [[10,5],[30,5],[30,25],[10,25]]){
+  const p=at(x,y);await page.mouse.click(p.x,p.y);
+ }
+ assert.equal(await page.locator('#applyPolygon').isDisabled(),false);
+ assert.equal(await page.locator('#download').isDisabled(),true,'Unapplied points are not garment pixels');
+ await page.locator('#applyPolygon').click();
+ assert.equal(await page.locator('#download').isDisabled(),false);
+ const polyDownload=page.waitForEvent('download');
+ await page.locator('#download').click();
+ const polygonDraft=JSON.parse(await fs.readFile(await(await polyDownload).path(),'utf8'));
+ const decode=(data)=>{const pixels=[];let bit=0;for(const count of data.runs){for(let i=0;i<count;i++)pixels.push(bit);bit=1-bit;}return pixels;};
+ const pixels=decode(polygonDraft);
+ assert.equal(pixels[15*40+20],1,'filled polygon contains its center');
+ assert.equal(pixels[1*40+1],0,'outer background stays excluded');
+ await page.locator('#undo').click();
+ assert.equal(await page.locator('#download').isDisabled(),true,'Undo to blank must not export');
+ await page.locator('#redo').click();
+ assert.equal(await page.locator('#download').isDisabled(),false,'Redo recovers the human-drawn mask');
+ await page.locator('#tool').selectOption('brush');
+ await page.locator('#mode').selectOption('0');
+ await page.locator('#radius').fill('1');
+ const mid=at(20,15);
+ await page.mouse.click(mid.x,mid.y);
+ assert.equal(await page.locator('#undo').isDisabled(),false);
+ await page.locator('#undo').click();
+ const restoredExport=page.waitForEvent('download');
+ await page.locator('#download').click();
+ const restored=JSON.parse(await fs.readFile(await(await restoredExport).path(),'utf8'));
+ assert.deepEqual(restored.runs,polygonDraft.runs,'Undo restores previously reviewed outline exactly');
+
+ // AI predictions must be edited. A stale Resume file selection or a
+ // no-op tap on an already-masked pixel must never authorize untouched AI.
+ await page.locator('#prediction').setInputFiles({name:'seed.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(seed))});
+ await page.locator('#status').getByText(/AI starting mask loaded/).waitFor();
+ assert.equal(await page.locator('#download').isDisabled(),true);
+ await page.locator('#mode').selectOption('1');
+ await page.locator('#radius').fill('1');
+ const inSeed=at(5,6);
+ await page.mouse.click(inSeed.x,inSeed.y);
+ assert.equal(await page.locator('#download').isDisabled(),true,'A no-op brush tap cannot validate a model mask');
+ await page.locator('#mode').selectOption('0');
+ await page.mouse.click(inSeed.x,inSeed.y);
+ assert.equal(await page.locator('#download').isDisabled(),false);
+ await page.locator('#undo').click();
+ assert.equal(await page.locator('#download').isDisabled(),true,'Undo back to untouched model suggestion must require review');
+
  assert.deepEqual(errors,[]);
  console.log('ANNOTATION_EDITOR_SMOKE '+JSON.stringify({status:'passed',width:draft.width,height:draft.height,runs:draft.runs.length,reviewStatus:draft.reviewStatus,pageErrors:errors.length}));
 }finally{await browser.close();}
