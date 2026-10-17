@@ -10,8 +10,9 @@ try{
  await page.locator('#photo').setInputFiles({name:'review-case.png',mimeType:'image/png',buffer:Buffer.from(png,'base64')});
  await page.locator('#status').getByText(/initial mask is blank/).waitFor();
  await assert.doesNotReject(async()=>await page.locator('#canvas').waitFor({state:'visible'}));
- const bounds=await page.locator('#canvas').boundingBox();assert.ok(bounds);
  await page.locator('#reviewer').fill('First Reviewer');
+ await page.locator('#canvas').scrollIntoViewIfNeeded();
+ const bounds=await page.locator('#canvas').boundingBox();assert.ok(bounds);
  await page.mouse.move(bounds.x+bounds.width*.5,bounds.y+bounds.height*.5);
  await page.mouse.down();await page.mouse.up();
  const debug=await page.evaluate(()=>({loaded:!!source,maskPixels:mask?.reduce((a,b)=>a+b,0),strokes,tool:tool.value,mode:mode.value,canExport:canExport(),errors:document.querySelector('#status').textContent}));
@@ -35,6 +36,7 @@ try{
  await page.locator('#prediction').setInputFiles({name:'prediction.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(seed))});
  await page.locator('#status').getByText(/AI starting mask loaded/).waitFor();
  // AI suggestions must be manually corrected before export.
+ await page.locator('#canvas').scrollIntoViewIfNeeded();
  const seededBounds=await page.locator('#canvas').boundingBox();
  await page.mouse.move(seededBounds.x+seededBounds.width*.3,seededBounds.y+seededBounds.height*.3);
  await page.mouse.down();await page.mouse.up();
@@ -53,6 +55,7 @@ try{
  await page.locator('#photo').setInputFiles({name:'review-case.png',mimeType:'image/png',buffer:Buffer.from(png,'base64')});
  await page.locator('#status').getByText(/initial mask is blank/).waitFor();
  await page.locator('#tool').selectOption('polygon');
+ await page.locator('#canvas').scrollIntoViewIfNeeded();
  const pb=await page.locator('#canvas').boundingBox();
  const at=(x,y)=>({x:pb.x+(x+.5)*pb.width/40,y:pb.y+(y+.5)*pb.height/30});
  for(const [x,y] of [[10,5],[30,5],[30,25],[10,25]]){
