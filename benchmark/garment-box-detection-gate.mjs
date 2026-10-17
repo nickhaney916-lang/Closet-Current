@@ -13,7 +13,10 @@ const overlap=(a,b)=>{
  const x=Math.max(0,Math.min(a.xmax,b.xmax)-Math.max(a.xmin,b.xmin));
  const y=Math.max(0,Math.min(a.ymax,b.ymax)-Math.max(a.ymin,b.ymin));
  const intersection=x*y;
- return intersection/Math.max(1e-9,area(a)+area(b)-intersection);
+ return {
+   iou:intersection/Math.max(1e-9,area(a)+area(b)-intersection),
+   nestedOverlap:intersection/Math.max(1e-9,Math.min(area(a),area(b)))
+ };
 };
 export function validateGarmentDetectionBoxes({
  sourceSha256,width,height,detections,threshold=.12
@@ -46,8 +49,8 @@ export function validateGarmentDetectionBoxes({
  // High IoU across names is often the exact same article of clothing.
  // Keep raw boxes for display, but forbid counting them as independent items.
  for(let i=0;i<recognized.length;i++)for(let j=i+1;j<recognized.length;j++){
-  const a=recognized[i],b=recognized[j],iou=overlap(a.box,b.box);
-  if(iou>=.35)conflicts.push({a:a.index,b:b.index,iou,
+  const a=recognized[i],b=recognized[j],{iou,nestedOverlap}=overlap(a.box,b.box);
+  if(iou>=.35||nestedOverlap>=.8)conflicts.push({a:a.index,b:b.index,iou,nestedOverlap,
     reason:a.category===b.category?'possibly-same-clothing-two-prompts':
       'overlapping-layer-boxes-not-instance-masks'});
  }
