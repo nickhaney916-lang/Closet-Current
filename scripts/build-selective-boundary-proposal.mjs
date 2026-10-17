@@ -44,27 +44,25 @@ try{
     if(similar[i]){removed++;continue;}
     alpha[i]=255;
    }
-   // Two alpha variants: existing softened baseline and optional pink-candidate removal with cyan unchanged.
-   const soft=(m,i,x,y)=>{if(!m[i])return 0;let neighbors=0;for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){
-    const xx=x+dx,yy=y+dy;if(xx>=0&&yy>=0&&xx<w&&yy<h&&m[yy*w+xx])neighbors++;
-   }return neighbors===9?255:Math.max(85,Math.round(255*neighbors/9));};
+   // Preserve the user-selected sharp-128 baseline in both panels.
+   // This heuristic is an unverified proposal, never an approved shadow mask.
    const pw=Math.min(540,w),ph=Math.round(pw*h/w),header=83;
    const sheet=document.createElement('canvas');sheet.width=pw*3;sheet.height=header+ph;
    const out=sheet.getContext('2d');out.fillStyle='#fff';out.fillRect(0,0,sheet.width,sheet.height);out.fillStyle='#222';
-   out.font='bold 19px sans-serif';out.fillText('Original',10,27);out.fillText('MODNet + soft edge',pw+10,27);out.fillText('Pink candidate removed',pw*2+10,27);
+   out.font='bold 19px sans-serif';out.fillText('Original',10,27);out.fillText('Sharp MODNet 128',pw+10,27);out.fillText('Sharp cleanup candidate',pw*2+10,27);
    out.font='14px sans-serif';out.fillText('Risk: removal may damage real fabric · visual review only',10,55);
    out.drawImage(base,0,header,pw,ph);
    for(let variant=1;variant<3;variant++){
     const m=variant===1?fg:alpha;
     const data=new ImageData(new Uint8ClampedArray(source.data),w,h);
-    for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=y*w+x;data.data[i*4+3]=soft(m,i,x,y);}
+    for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=y*w+x;data.data[i*4+3]=m[i]?255:0;}
     const transparent=document.createElement('canvas');transparent.width=w;transparent.height=h;
     transparent.getContext('2d').putImageData(data,0,0);
     const panel=document.createElement('canvas');panel.width=w;panel.height=h;
     const pc=panel.getContext('2d');pc.fillStyle='#eee9f3';pc.fillRect(0,0,w,h);pc.drawImage(transparent,0,0);
     out.drawImage(panel,pw*variant,header,pw,ph);
    }
-   return {png:sheet.toDataURL('image/png').split(',')[1],pinkCandidates:pink,protectedDarkBoundary:cyan,removed,reviewOnly:true,notGroundTruth:true};
+   return {png:sheet.toDataURL('image/png').split(',')[1],pinkCandidates:pink,protectedDarkBoundary:cyan,removed,baselineAlpha:'hard',candidateAlpha:'hard',foregroundThreshold:128,sourceRgbPreserved:true,reviewOnly:true,notGroundTruth:true,verifiedShadowRemoval:false};
   },{photo,prediction});
   await writeFile(join(output,item.id+'-selective-candidate.png'),Buffer.from(result.png,'base64'));
   const {png,...metrics}=result;console.log('SELECTIVE_BOUNDARY_PROPOSAL '+JSON.stringify({id:item.id,...metrics}));
