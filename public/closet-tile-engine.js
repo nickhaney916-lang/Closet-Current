@@ -48,16 +48,22 @@
   const cv=document.createElement('canvas');cv.width=W;cv.height=H;
   const ctx=cv.getContext('2d');if(!ctx)return null;
   let bounds={x:0,y:0,width:im.naturalWidth,height:im.naturalHeight};
-  if(im.naturalWidth*im.naturalHeight<=3500000){
-   const tmp=document.createElement('canvas');
-   tmp.width=im.naturalWidth;tmp.height=im.naturalHeight;
-   const tc=tmp.getContext('2d',{willReadFrequently:true});
-   if(tc)try{
-     tc.drawImage(im,0,0);
-     bounds=safeWhiteBounds(tc.getImageData(0,0,tmp.width,tmp.height).data,tmp.width,tmp.height);
-    }catch{/* retain untrimmed source */ }
-   tmp.width=0;tmp.height=0;
-  }
+  // Inspect only a small preview (< 350px on the longest side) rather
+  // than allocating millions of RGBA pixels while swiping on a phone.
+  const ratio=Math.min(1,320/Math.max(im.naturalWidth,im.naturalHeight));
+  const aw=Math.max(4,Math.round(im.naturalWidth*ratio)),
+   ah=Math.max(4,Math.round(im.naturalHeight*ratio));
+  const tmp=document.createElement('canvas');tmp.width=aw;tmp.height=ah;
+  const tc=tmp.getContext('2d',{willReadFrequently:true});
+  if(tc)try{
+    tc.drawImage(im,0,0,aw,ah);
+    const detected=safeWhiteBounds(tc.getImageData(0,0,aw,ah).data,aw,ah);
+    if(detected.trimmed)bounds={
+      x:detected.x*im.naturalWidth/aw,y:detected.y*im.naturalHeight/ah,
+      width:detected.width*im.naturalWidth/aw,
+      height:detected.height*im.naturalHeight/ah};
+   }catch{/* retain the full image if inspection cannot be done */ }
+  tmp.width=0;tmp.height=0;
   ctx.fillStyle='#f6f3f8';ctx.fillRect(0,0,W,H);
   ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
   const to=placement(bounds.width,bounds.height);
