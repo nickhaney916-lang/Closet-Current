@@ -27,14 +27,8 @@ self.onmessage=event=>{const request=event.data;chain=chain.then(async()=>{
    const isolated=isolateClothingPixels(image,map,group),raw=cropClothingPhotoPixels(image,map,group),sample=clothingColorSample(image,map,group),core=clothingInteriorColorSample(image,map,group),b=raw.bounds;
    const piece={image:await jpegData(new RawImage(isolated.data,isolated.width,isolated.height,3)),recognitionPhoto:{image:await jpegData(new RawImage(raw.data,raw.width,raw.height,3))},cropBounds:{x:b.left/image.width,y:b.top/image.height,width:b.width/image.width,height:b.height/image.height},colorEstimate:(()=>{const full=PhotoColor.maskedPalette(sample.data,sample.width,sample.height);
     const interior=core&&PhotoColor.maskedPalette(core.data,core.width,core.height);
-    // Every automatic color must agree with sufficiently sampled INNER fabric.
-    // Do not let a coarse edge, adjacent garment or background overrule it.
-    // Missing, slim, multi-colored or conflicting evidence goes to one-tap review.
-    if(!full||full.needsConfirmation||!interior||interior.needsConfirmation||
-       full.primary!==interior.primary)return null;
-    return {color:interior.primary,source:'photo-estimate',
-     support:Math.min(full.colors[0]?.share||0,interior.colors[0]?.share||0),
-     secondaryColor:interior.secondary};
+    // Both spatial views must agree; a boundary-only color isn't reliable.
+    return PhotoColor.confirmedGarmentPalette(full,interior);
    })(),label:group.label,hint:{categories:group.categories,types:group.types||[],clipped:group.clipped,confidence:group.confidence}};
    self.postMessage({type:'piece',id:request.id,piece});count++;
   }
