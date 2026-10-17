@@ -30,7 +30,7 @@ fieldset{border:1px solid #aca0bb;border-radius:12px;margin:15px 0;padding:12px}
 const photo=document.querySelector('#photo'),draftInput=document.querySelector('#draft'),opacity=document.querySelector('#opacity'),canvas=document.querySelector('#canvas'),ctx=canvas.getContext('2d'),approver=document.querySelector('#approver'),verified=document.querySelector('#verified'),approve=document.querySelector('#approve'),reject=document.querySelector('#reject'),status=document.querySelector('#status');
 let source=null,draft=null,mask=null,accepted=false;
 function refresh(){
- approve.disabled=!(source&&draft&&mask&&accepted&&verified.checked&&approver.value.trim()&&approver.value.trim()!==draft.reviewer?.trim());
+ approve.disabled=!(source&&draft&&mask&&accepted&&verified.checked&&approver.value.trim()&&approver.value.trim().toLocaleLowerCase('en-US')!==draft.reviewer?.trim().toLocaleLowerCase('en-US'));
 }
 function redraw(){
  if(!source)return;
