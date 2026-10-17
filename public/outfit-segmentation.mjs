@@ -69,6 +69,86 @@ export function cropClothingPhotoPixels(image,map,group){
  }
  return {data,width,height,channels:3,bounds};
 }
+// Production display-only cleanup: repair TINY, entirely enclosed pinholes
+// using *actual original RGB*, never invented colors or external foreground.
+// Recognition crops, account originals and classification masks remain intact.
+// This is not generic shape completion, de-occlusion, or proof of mask accuracy.
+export function repairGarmentDisplayPinholes(image,map,group,{
+ maxHolePixels=4,maxTotalGrowthFraction=.015,maxNeighborColorDistance=32
+}={}){
+ const {width,height}=map??{},n=width*height,seed=group?.selected;
+ if(!Number.isInteger(width)||!Number.isInteger(height)||width<3||height<3
+   ||n>262144||seed?.length!==n||![3,4].includes(image?.channels)
+   ||!Number.isInteger(image.width)||!Number.isInteger(image.height)
+   ||image.width<width||image.height<height
+   ||image.data?.length!==image.width*image.height*image.channels
+   ||map.labels&&map.labels.length!==n
+   ||!Number.isInteger(maxHolePixels)||maxHolePixels<1||maxHolePixels>12
+   ||!Number.isFinite(maxTotalGrowthFraction)||maxTotalGrowthFraction<0||maxTotalGrowthFraction>.04
+   ||!Number.isFinite(maxNeighborColorDistance)||maxNeighborColorDistance<0||maxNeighborColorDistance>60)
+  throw Error('Invalid display pinhole repair inputs');
+ const out=new Uint8Array(seed),seen=new Uint8Array(n),queue=new Int32Array(n);
+ let base=0;
+ for(const value of seed){if(value!==0&&value!==1&&value!==255)throw Error('Invalid garment seed');if(value)base++;}
+ const budget=Math.floor(base*maxTotalGrowthFraction);
+ const diagnostic={repairedPixels:0,examinedHoles:0,repairedHoles:0,
+  unchangedForegroundPixels:base,growthBudget:budget,
+  originalPixelsOnly:true,semanticMaskUntouched:true,
+  recognitionPixelsUntouched:true,notVerifiedSegmentationAccuracy:true};
+ if(base<64||budget<1||group.clipped===true)return {selected:out,...diagnostic};
+ const rgb=i=>{
+  const x=i%width,y=Math.floor(i/width),px=Math.min(image.width-1,Math.floor((x+.5)*image.width/width)),
+    py=Math.min(image.height-1,Math.floor((y+.5)*image.height/height)),k=(py*image.width+px)*image.channels;
+  return [image.data[k],image.data[k+1],image.data[k+2]];
+ };
+ const neighbors=i=>{
+  const x=i%width,y=Math.floor(i/width);
+  return [x>0?i-1:-1,x<width-1?i+1:-1,y>0?i-width:-1,y<height-1?i+width:-1]
+   .filter(v=>v>=0);
+ };
+ // Eight-way traversal prevents filling legitimate diagonal openings.
+ for(let start=0;start<n;start++){
+  if(seed[start]||seen[start])continue;
+  let front=0,back=1,border=false,otherClass=false;
+  queue[0]=start;seen[start]=1;
+  while(front<back){
+   const i=queue[front++],x=i%width,y=Math.floor(i/width);
+   if(x===0||x===width-1||y===0||y===height-1)border=true;
+   if(map.labels?.[i]&&map.labels[i]!==group.id)otherClass=true;
+   for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){
+    if(!dx&&!dy)continue;
+    const xx=x+dx,yy=y+dy;
+    if(xx<0||xx>=width||yy<0||yy>=height)continue;
+    const j=yy*width+xx;
+    if(!seed[j]&&!seen[j]){queue[back++]=j;seen[j]=1;}
+   }
+  }
+  if(border)continue;
+  diagnostic.examinedHoles++;
+  if(otherClass||back>maxHolePixels||diagnostic.repairedPixels+back>budget)continue;
+  // At least TWO trusted four-neighbor garment pixels must locally support
+  // every restored pixel. Do not use a global garment color (patterns vary).
+  let supported=true;
+  for(let p=0;p<back&&supported;p++){
+   const i=queue[p],candidate=rgb(i);
+   const confirmed=neighbors(i).filter(j=>Boolean(seed[j]));
+   if(confirmed.length<2){supported=false;break;}
+   let matching=0;
+   for(const j of confirmed){
+    const fabric=rgb(j);
+    if(Math.hypot(candidate[0]-fabric[0],candidate[1]-fabric[1],candidate[2]-fabric[2])
+       <=maxNeighborColorDistance)matching++;
+   }
+   if(matching<2||matching/confirmed.length<.75)supported=false;
+  }
+  if(!supported)continue;
+  for(let p=0;p<back;p++)out[queue[p]]=1;
+  diagnostic.repairedHoles++;
+  diagnostic.repairedPixels+=back;
+ }
+ return {selected:out,...diagnostic};
+}
+
 // Experimental edge recovery for comparison only. Never alter recognition masks.
 // Candidate pixels must be near the original region AND match its sampled fabric
 // color; this cannot reliably recover arbitrary multicolor garments.
@@ -162,16 +242,18 @@ export function discriminativeEdgeMask(image,map,group,{maxSteps=3,margin=12,max
  }
  return {selected:out,acceptedSteps,addedPixels:added,budget};
 }
-export function isolateClothingPixels(image,map,group){
+export function isolateClothingPixels(image,map,group,{repairDisplayPinholes=true}={}){
  const {left,top,width,height}=clothingCropBounds(image,map,group),scaleX=image.width/map.width,scaleY=image.height/map.height;
+ const repaired=repairDisplayPinholes?repairGarmentDisplayPinholes(image,map,group):
+  {selected:group.selected,repairedPixels:0,repairedHoles:0,originalPixelsOnly:true};
  const data=new Uint8ClampedArray(width*height*3);data.fill(255);
  for(let y=0;y<height;y++)for(let x=0;x<width;x++){
   const sourceX=x+left,sourceY=y+top,maskIndex=Math.min(map.height-1,Math.floor(sourceY/scaleY))*map.width+Math.min(map.width-1,Math.floor(sourceX/scaleX));
-  if(!group.selected[maskIndex])continue;
+  if(!repaired.selected[maskIndex])continue;
   const source=(sourceY*image.width+sourceX)*image.channels,target=(y*width+x)*3;
   for(let c=0;c<3;c++)data[target+c]=image.data[source+c];
  }
- return {data,width,height,channels:3,bounds:{left,top,width,height}};
+ return {data,width,height,channels:3,bounds:{left,top,width,height},displayRepair:{repairedPixels:repaired.repairedPixels,repairedHoles:repaired.repairedHoles,originalPixelsOnly:true}};
 }
 
 // Sample only original pixels belonging to this garment, never the scene or

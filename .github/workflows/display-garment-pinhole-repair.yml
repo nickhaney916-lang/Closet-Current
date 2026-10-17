@@ -1,0 +1,29 @@
+name: Display-only garment clipping gap repair
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'public/outfit-segmentation.mjs'
+      - 'tests/garment-display-pinhole.test.mjs'
+      - '.github/workflows/display-garment-pinhole-repair.yml'
+permissions:
+  contents: read
+jobs:
+  verify-display-crops:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check original RGB preservation and clipping regressions
+        run: |
+          node --check public/outfit-segmentation.mjs
+          node --test tests/garment-display-pinhole.test.mjs tests/outfit-segmentation.test.mjs tests/outfit-segmentation-edge.test.mjs
+      - name: Ensure browser app builds with no extra model downloads
+        run: node scripts/build.mjs
+      - name: Verify repair remains limited to display cutout only
+        run: |
+          node -e "const fs=require('fs');const s=fs.readFileSync('public/outfit-segmentation.mjs','utf8');if(!s.includes('repairGarmentDisplayPinholes(image,map,group)')||!s.includes('displayRepair')||!s.includes('recognitionPixelsUntouched:true'))throw Error('Missing display-only mask guard')"
