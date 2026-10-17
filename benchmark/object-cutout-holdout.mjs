@@ -36,3 +36,14 @@ export function holdoutReport({cases,modelId,revision,loadMs,status='running'}){
     sourceRgbPreserved:true,alphaThreshold:128,cases
   };
 }
+
+export function promotionReadiness(review){
+  if(!review||!Array.isArray(review.cases)||!review.cases.length)throw Error('Missing visual review');
+  const reasons=[];
+  if(review.allCasesProcessed!==true||review.cases.length<7)reasons.push('incomplete-independent-photo-set');
+  if(review.cases.some(x=>x.personOrMannequinRetained===true))reasons.push('worn-garment-or-mannequin-not-isolated');
+  if(review.cases.some(x=>x.approvedGarmentOnly!==true))reasons.push('garment-only-isolation-unverified');
+  if(review.independentlyApprovedMasks!==true)reasons.push('independent-pixel-references-missing');
+  if(review.realPhonePerformanceMeasured!==true)reasons.push('real-phone-performance-unmeasured');
+  return {canPromote:reasons.length===0,reasons,productionChanged:false};
+}
