@@ -238,7 +238,7 @@ async function drainAutomatic(){
 }
 let manualStillShot=null;
 function stopCamera(){
- cameraRequest++;cameraOpening=false;manualStillShot=null;$('takePhoto').disabled=false;clearInterval(timer);timer=null;
+ cameraRequest++;cameraOpening=false;manualStillShot=null;$('takePhoto').disabled=false;$('stop').disabled=false;clearInterval(timer);timer=null;
  if(stream)stream.getTracks().forEach(t=>t.stop());
  stream=null;cameraMode=null;previousQualityFrame=null;video.srcObject=null;video.classList.remove('visible');
  $('placeholder').hidden=false;$('cameraChoices').hidden=false;$('cameraActions').hidden=true;
@@ -288,7 +288,7 @@ function takePhoto(){
    fallback();return;
   }
   const shot={stream:activeStream,request:activeRequest};
-  manualStillShot=shot;$('takePhoto').disabled=true;
+  manualStillShot=shot;$('takePhoto').disabled=true;$('stop').disabled=true;
   $('captureState').textContent='Taking high-quality photo…';
   // Some Android camera drivers never settle takePhoto(). Fall back rather
   // than locking the shutter. A late resolution cannot modify our canvas.
@@ -306,7 +306,7 @@ function takePhoto(){
    if(manualStillShot===shot)fallback();
   }).finally(()=>{
    clearTimeout(timer);
-   if(manualStillShot===shot){manualStillShot=null;$('takePhoto').disabled=false;}
+   if(manualStillShot===shot){manualStillShot=null;$('takePhoto').disabled=false;$('stop').disabled=false;}
   });
  }catch{fallback();}
 }
