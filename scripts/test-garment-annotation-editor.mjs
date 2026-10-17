@@ -56,10 +56,9 @@ try{
  await page.locator('#status').getByText(/initial mask is blank/).waitFor();
  await page.locator('#tool').selectOption('polygon');
  await page.locator('#canvas').scrollIntoViewIfNeeded();
- const pb=await page.locator('#canvas').boundingBox();
- const at=(x,y)=>({x:pb.x+(x+.5)*pb.width/40,y:pb.y+(y+.5)*pb.height/30});
+ const at=async(x,y)=>{await page.locator('#canvas').scrollIntoViewIfNeeded();const box=await page.locator('#canvas').boundingBox();return {x:box.x+(x+.5)*box.width/40,y:box.y+(y+.5)*box.height/30};};
  for(const [x,y] of [[10,5],[30,5],[30,25],[10,25]]){
-  const p=at(x,y);await page.mouse.click(p.x,p.y);
+  const p=await at(x,y);await page.mouse.click(p.x,p.y);
  }
  assert.equal(await page.locator('#applyPolygon').isDisabled(),false);
  assert.equal(await page.locator('#download').isDisabled(),true,'Unapplied points are not garment pixels');
@@ -79,7 +78,7 @@ try{
  await page.locator('#tool').selectOption('brush');
  await page.locator('#mode').selectOption('0');
  await page.locator('#radius').evaluate(el=>{el.value='1';el.dispatchEvent(new Event('input',{bubbles:true}));});
- const mid=at(20,15);
+ const mid=await at(20,15);
  await page.mouse.click(mid.x,mid.y);
  assert.equal(await page.locator('#undo').isDisabled(),false);
  await page.locator('#undo').click();
@@ -95,11 +94,11 @@ try{
  assert.equal(await page.locator('#download').isDisabled(),true);
  await page.locator('#mode').selectOption('1');
  await page.locator('#radius').evaluate(el=>{el.value='1';el.dispatchEvent(new Event('input',{bubbles:true}));});
- const inSeed=at(5,6);
+ const inSeed=await at(5,6);
  await page.mouse.click(inSeed.x,inSeed.y);
  assert.equal(await page.locator('#download').isDisabled(),true,'A no-op brush tap cannot validate a model mask');
  await page.locator('#mode').selectOption('0');
- await page.mouse.click(inSeed.x,inSeed.y);
+ const eraseSeed=await at(5,6);await page.mouse.click(eraseSeed.x,eraseSeed.y);
  assert.equal(await page.locator('#download').isDisabled(),false);
  await page.locator('#undo').click();
  assert.equal(await page.locator('#download').isDisabled(),true,'Undo back to untouched model suggestion must require review');
