@@ -133,7 +133,22 @@ function renderPhotoResults(grid,results){
   const extra=[item.pattern,item.sleeveLength,item.fit,...(item.seasons||[])].filter(x=>x&&x!=='Unknown'&&x!=='Not applicable');
   if(extra.length){const details=node('details',null,'photo-extra');details.append(node('summary','More details'),node('p',extra.join(' · ')));body.append(details);}
   if(!pending&&!saved&&item.possibleDuplicate)body.append(node('p','Compare with your closet before adding.','fine'));
-  const adjust=node('button','Adjust','secondary');adjust.type='button';adjust.onclick=()=>adjustPhoto(item);body.append(adjust,cropButton(item));
+  if(!pending&&!saved&&item.underlayerReview?.needsUserVerification){
+   body.append(node('p',item.color&&item.color!=='Unknown'
+     ?'Top · '+item.color+' — is this right?':'Top — is this right? Add a color to save.','fine'));
+   const actions=node('div',null,'actions');
+   const yes=node('button','Yes, save','primary');yes.type='button';
+   yes.disabled=typeof UnderlayerReview==='undefined'||!UnderlayerReview.canConfirm(item);
+   yes.onclick=async()=>{yes.disabled=true;try{
+     if(!await confirmUnderlayerReview(item))yes.disabled=false;
+   }catch{yes.disabled=false;message('Could not save this piece. Try again.');}};
+   const change=node('button','Change','secondary');change.type='button';
+   change.onclick=()=>adjustPhoto(item);
+   actions.append(yes,change);body.append(actions);
+  }else{
+   const adjust=node('button','Adjust','secondary');adjust.type='button';
+   adjust.onclick=()=>adjustPhoto(item);body.append(adjust,cropButton(item));
+  }
   card.append(image,body);grid.append(card);
  }
 }
@@ -200,6 +215,22 @@ function candidate(image,options={}){
  if(options.outfitSourceId){item.outfitSourceId=options.outfitSourceId;item.requiresOwnershipConfirmation=false;item.segmentHint=options.segmentHint;item.recognitionPhoto=options.recognitionPhoto;item.originalPhoto=options.originalPhoto;item.cropBounds=options.cropBounds;if(options.colorEstimate){Object.assign(item,ClothingDetails.fillColor(item,options.colorEstimate));if(item.colorSource==='photo-estimate')item.colorMethod='garment-mask';}}
  batch.push(item);sessionCapturedIds.add(item.id);persistDraft();session++;$('sessionCount').textContent=session;$('reviewCount').textContent=batch.length;$('lastCaptureImage').src=image;$('lastCaptureImage').hidden=false;
  queueAutomatic(item);return true;
+}
+async function confirmUnderlayerReview(item){
+ // A single yes confirms the proposed category and ownership; fine details
+ // remain unknown. Never persist an unreviewed or colorless proposal.
+ if(!batch.some(x=>x.id===item.id)||localPending.has(item.id)
+   ||typeof UnderlayerReview==='undefined'||!UnderlayerReview.canConfirm(item))return false;
+ const value={...normalizeClothing(item),category:'Tops',itemType:'Unknown',
+   sleeveLength:'Unknown',name:[item.color,'Top'].filter(Boolean).join(' '),
+   indexingLevel:'category-color',categoryVerifiedByUser:true,
+   userAdjusted:true,requiresOwnershipConfirmation:false,
+   savedAt:new Date().toISOString()};
+ delete value.underlayerReview;
+ await savePiece(value,batch.filter(x=>x.id!==item.id));
+ if(!items.some(x=>x.id===item.id))items.push(value);
+ batch=batch.filter(x=>x.id!==item.id);
+ await persistDraft();render();scheduleMemoryReview();return true;
 }
 function queueAutomatic(item){
  if(localPending.has(item.id)||!batch.some(x=>x.id===item.id))return;
@@ -381,6 +412,14 @@ async function recognizeItem(item){
   item.localAnalyzed=true;item.localChoices=[];
   // Diagnostic evidence contains category/type scores only, never wardrobe images.
   if(result.diagnostics)item.recognitionDiagnostics={reason:result.reason||null,...result.diagnostics};
+  const topReview=typeof UnderlayerReview!=='undefined'?UnderlayerReview.suggestion(item,result):null;
+  if(topReview){
+   item.category='Tops';item.itemType='Unknown';item.sleeveLength='Unknown';
+   item.name=[item.color,'Top'].filter(Boolean).join(' ');
+   item.indexingLevel='category-review';item.underlayerReview=topReview;
+   item.localStatus='Suggested Top. Tap Yes, save or Change. Sleeve and style details are optional.';
+   return true;
+  }
   const corePartial=!result.strong&&result.categoryConfirmed&&result.categoryOnly&&result.choices?.[0]&&result.choices[0].itemType==='Unknown';
   if(corePartial){
    if(item.userAdjusted||!segmentationAllows(item,result.choices[0])){item.localStatus=item.userAdjusted?'Your adjustments are preserved. Save this piece when ready.':'The clothing checks disagree. Use Adjust or take a clearer photo.';return true;}
