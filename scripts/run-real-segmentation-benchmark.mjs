@@ -1,10 +1,11 @@
-import {readFile,writeFile,mkdir} from 'node:fs/promises';
+import {readFile,writeFile,mkdir,copyFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import {resolve,join} from 'node:path';
 import {chromium} from 'playwright';
 import {createServer} from 'node:http';
 import {approvedReferenceMask,scoreApprovedPredictionAtReferenceResolution,scoreApprovedColorSampling} from '../benchmark/garment-mask-metrics.mjs';
 import {maskComponents} from '../benchmark/mask-components.mjs';
+import {buildGarmentReviewPacket} from '../benchmark/garment-review-packet.mjs';
 const manifest=JSON.parse(await readFile('benchmark/segmentation-review-manifest.json','utf8'));
 const sources=JSON.parse(await readFile('benchmark/locked-photo-sources.json','utf8'));
 const outDir=process.argv[2]||'benchmark/segmentation-predictions';
@@ -21,6 +22,9 @@ try{
   if(!source||!source.verified||source.sha256!==entry.sourceSha256)throw Error('Source manifest mismatch '+entry.id);
   const imagePath=join('benchmark/photos',entry.image),bytes=await readFile(imagePath);
   if(createHash('sha256').update(bytes).digest('hex')!==entry.sourceSha256)throw Error('Source photo checksum mismatch '+entry.id);
+  // Keep the exact SHA-verified Commons image alongside the overlay. Human
+  // reviewers need original pixels; AI-generated overlays aren't reference masks.
+  await copyFile(imagePath,join(outDir,entry.id+'.original.jpg'));
   const base64=bytes.toString('base64');
   const predicted=await page.evaluate(async({base64,imageName,sourceSha256})=>{
    if(!window.__closetSegModel){window.__closetSegModel=(async()=>{const {AutoModelForSemanticSegmentation,AutoProcessor,RawImage,env}=await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1/dist/transformers.min.js');
@@ -66,6 +70,15 @@ try{
   console.log('SEGMENTATION_CASE '+JSON.stringify(report.at(-1)));
  }
 }finally{await browser.close();await new Promise(resolve=>server.close(resolve));}
+// Package all six verified images, source attributions and existing QA tools
+// for an offline two-reviewer handoff. No reference is approved here.
+const packet=buildGarmentReviewPacket(manifest,sources,report);
+await mkdir(join(outDir,'tools'),{recursive:true});
+await copyFile('benchmark/annotate-garment.html',join(outDir,'tools/annotate-garment.html'));
+await copyFile('benchmark/approve-garment-mask.html',join(outDir,'tools/approve-garment-mask.html'));
+await writeFile(join(outDir,'review-index.html'),packet.html);
+await writeFile(join(outDir,'review-packet.json'),JSON.stringify(packet.manifest,null,2));
+console.log('SEGMENTATION_REVIEW_PACKET '+JSON.stringify({cases:packet.manifest.cases.length,pendingReferences:packet.manifest.pendingReferences,groundTruthGenerated:false}));
 const approvedCount=report.filter(x=>x.status==='scored').length;
 await writeFile(join(outDir,'summary.json'),JSON.stringify({
  status:approvedCount===report.length?'scored':'unscored-incomplete-references',
