@@ -6,7 +6,7 @@ import {buildGarmentReviewPacket} from '../benchmark/garment-review-packet.mjs';
 const manifest=JSON.parse(readFileSync('benchmark/segmentation-review-manifest.json','utf8'));
 const sources=JSON.parse(readFileSync('benchmark/locked-photo-sources.json','utf8'));
 const pending=()=>manifest.cases.map((c,i)=>({
- id:c.id,status:'awaiting-human-reference',metrics:null,colorSampling:null,
+ id:c.id,status:'awaiting-human-reference',personDetected:false,metrics:null,colorSampling:null,
  fragments:{count:3+i,components:[]}
 }));
 test('offline packet identifies six SHA-locked source photos without ground-truth claims',()=>{
@@ -16,6 +16,8 @@ test('offline packet identifies six SHA-locked source photos without ground-trut
  assert.equal(output.manifest.approvedReferences,0);
  assert.equal(output.manifest.accuracyAvailable,false);
  assert.equal(output.manifest.kind,'review-preparation-not-ground-truth');
+ assert.ok(output.manifest.cases.every(x=>x.personDetected===false));
+ assert.match(output.html,/not a full-outfit multi-piece accuracy test/);
  for(const entry of manifest.cases){
   assert.match(output.html,new RegExp(entry.id+'\\.side-by-side\\.png'));
   assert.match(output.html,new RegExp(entry.id+'\\.original\\.jpg'));
