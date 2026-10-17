@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
-import {clothingColorSample} from '../public/outfit-segmentation.mjs';
+import {clothingColorSample,clothingInteriorColorSample} from '../public/outfit-segmentation.mjs';
 const require=createRequire(import.meta.url);
 const Color=require('../public/photo-color.js');
 
@@ -57,4 +57,46 @@ test('masked estimator samples actual garment not neighboring orange backdrop',(
  const f=scene({background:[225,100,20],garment:[35,65,160]});
  const sample=clothingColorSample(f.image,f.map,f.group);
  assert.equal(palette(sample).primary,'Blue');
+});
+
+test('interior color sample removes the coarse outer mask ring without touching original source RGB',()=>{
+ const f=scene(),s=clothingInteriorColorSample(f.image,f.map,f.group);
+ assert.ok(s);assert.equal(s.maskPixels,196);assert.equal(s.corePixels,144);
+ assert.equal(s.sampledPixels,144);
+ assert.equal(s.interiorFraction,.735);
+ assert.equal(palette(s).primary,'Blue');
+ assert.equal(palette(s).needsConfirmation,false);
+});
+test('red background leakage in the one-pixel mask edge cannot override blue fabric interior',()=>{
+ const f=scene();
+ // The segmentation mask accidentally includes one-pixel ring colored red.
+ // Only source pixels are changed; no mask labels or neighbor pixels are guessed.
+ for(let y=3;y<17;y++)for(let x=3;x<17;x++)
+  if(x===3||x===16||y===3||y===16)
+   for(let yy=y*3;yy<y*3+3;yy++)for(let xx=x*3;xx<x*3+3;xx++)
+    f.image.data.set([180,20,25],(yy*f.image.width+xx)*3);
+ const full=clothingColorSample(f.image,f.map,f.group);
+ const core=clothingInteriorColorSample(f.image,f.map,f.group);
+ assert.equal(full.sampledPixels,196);assert.ok(core);
+ assert.equal(palette(core).primary,'Blue');
+ assert.equal(palette(core).colors.length,1,'outer red pixels never appear in core color evidence');
+ assert.equal(core.distinctMaskPixels,144);
+});
+test('narrow socks, straps, and tiny masks return no interior instead of upsampling border pixels',()=>{
+ const narrow=scene({mapWidth:30,mapHeight:30,inside:(x,y)=>x>=10&&x<12&&y>=2&&y<28});
+ assert.equal(clothingInteriorColorSample(narrow.image,narrow.map,narrow.group),null);
+ const tiny=scene({inside:(x,y)=>x>=8&&x<12&&y>=8&&y<12});
+ assert.equal(clothingInteriorColorSample(tiny.image,tiny.map,tiny.group),null);
+});
+test('interior mask excludes neighboring clothing colors even when adjoining outside pixels touch the shape',()=>{
+ const f=scene({background:[235,95,25],garment:[30,60,170]});
+ const center=clothingInteriorColorSample(f.image,f.map,f.group);
+ assert.equal(palette(center).primary,'Blue');
+ assert.ok(!palette(center).colors.some(x=>x.color==='Orange'));
+});
+test('invalid and untrustworthy interior masks fail closed',()=>{
+ const f=scene();
+ assert.throws(()=>clothingInteriorColorSample(f.image,f.map,{selected:new Uint8Array(8)}));
+ assert.throws(()=>clothingInteriorColorSample(f.image,f.map,f.group,{minimumInterior:300}));
+ assert.throws(()=>clothingInteriorColorSample(f.image,{width:0,height:20},f.group));
 });
