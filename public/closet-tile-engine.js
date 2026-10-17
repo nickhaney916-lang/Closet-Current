@@ -64,6 +64,13 @@
       sourceHasAlpha=root.ClosetWhiteMatte.hasTransparentBackground(thumbnail.data,aw,ah);
       if(!sourceHasAlpha)whiteMatte=root.ClosetWhiteMatte.analyze(thumbnail.data,aw,ah);
     }
+    // Gray studio backdrops need a separate, very narrow safety gate. This
+    // opt-in per-category branch never erases pale shoe uppers or store scenes.
+    if(!sourceHasAlpha&&!whiteMatte?.eligible&&
+       typeof root.ClosetNeutralMatte!=='undefined'){
+      const proposed=root.ClosetNeutralMatte.analyze(thumbnail.data,aw,ah,item.category);
+      if(proposed.eligible)whiteMatte=proposed;
+    }
     const detected=safeWhiteBounds(thumbnail.data,aw,ah);
     if(typeof root.GarmentPoseNormalizer!=='undefined')
      pose=root.GarmentPoseNormalizer.axisPlan(thumbnail.data,aw,ah,item.category);
