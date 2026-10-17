@@ -10,7 +10,7 @@ function setup({ready=true,getUserMedia}={}){
  context.switchView=view=>context.view=view;
  vm.createContext(context);vm.runInContext(fs.readFileSync('public/capture.js','utf8')+'\nlet cadence;',context);
  vm.runInContext('function cameraFrameQuality(){return {usable:true};} function cameraStability(){return {stable:true,lowTexture:false};} let previousQualityFrame=null;',context);
- vm.runInContext(source.slice(source.indexOf('function stopCamera'),source.indexOf('function waitEvent')),context);
+ vm.runInContext(source.slice(source.indexOf('let manualStillShot=null'),source.indexOf('function waitEvent')),context);
  return {context,element,clock,intervals,media,stopped:()=>stopped};
 }
 test('manual camera takes photos only on shutter taps',async()=>{
