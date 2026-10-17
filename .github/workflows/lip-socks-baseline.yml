@@ -8,6 +8,9 @@ on:
       - 'benchmark/lip_mask_evidence.py'
       - 'scripts/run-lip-socks-baseline.py'
       - 'tests/test_lip_mask_evidence.py'
+      - 'benchmark/real-hosiery-readiness.mjs'
+      - 'tests/real-hosiery-readiness.test.mjs'
+      - 'benchmark/LIP-SOCKS-REAL-REVIEW-20261017.json'
       - '.github/workflows/lip-socks-baseline.yml'
 permissions:
   contents: read
@@ -29,6 +32,8 @@ jobs:
         run: |
           python -m py_compile scripts/run-lip-socks-baseline.py
           PYTHONPATH=benchmark python -m unittest discover -s tests -p test_lip_mask_evidence.py -v
+      - name: Test evidence-bound real-photo promotion gate
+        run: node --test tests/real-hosiery-readiness.test.mjs
       - name: Download previously source-verified real sock and footwear photos
         run: node scripts/download-reviewed-photos.mjs benchmark/manifest-visible-legwear-2.json benchmark/photos validation-0030,validation-0031
       - name: Run pinned MIT ONNX human parser as research-only comparison
@@ -47,11 +52,14 @@ jobs:
               assert not row['evaluation']['differentPhysicalGarmentsVerified']
               assert (pathlib.Path('benchmark/lip-socks-review') / (row['id']+'-model-overlay.png')).is_file()
           PY
+      - name: Cross-check new model output against reviewed visual failures
+        run: node benchmark/real-hosiery-readiness.mjs benchmark/lip-socks-review/summary.json benchmark/lip-socks-review/readiness.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: experimental-lip-20-socks-shoes-real-photo-review
           path: |
             benchmark/lip-socks-review/summary.json
+            benchmark/lip-socks-review/readiness.json
             benchmark/lip-socks-review/*-model-overlay.png
           retention-days: 14
