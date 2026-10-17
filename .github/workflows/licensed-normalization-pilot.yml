@@ -7,13 +7,14 @@ on:
       - 'supabase/functions/garment-normalize/licensed-pilot-handler.mjs'
       - 'supabase/functions/garment-normalize/index.ts'
       - 'tests/licensed-pilot-handler.test.mjs'
+      - 'tests/licensed-pilot-real-image.test.mjs'
       - '.github/workflows/licensed-normalization-pilot.yml'
 permissions:
   contents: read
 jobs:
   pilot-request-mocks:
     runs-on: ubuntu-latest
-    timeout-minutes: 6
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -23,6 +24,10 @@ jobs:
         run: |
           node --check supabase/functions/garment-normalize/licensed-pilot-handler.mjs
           node --test tests/licensed-pilot-handler.test.mjs tests/guarded-preview-submission.test.mjs
+      - name: Download the actual SHA-locked CC BY-SA orange shorts benchmark photo
+        run: node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos commons-0035
+      - name: Verify source-to-mock-provider and status lifecycle on REAL garment bytes
+        run: node --test tests/licensed-pilot-real-image.test.mjs
       - name: Prevent inadvertently enabled pilot and customer-photo admission
         run: |
           node -e "const fs=require('fs');const a=fs.readFileSync('supabase/functions/garment-normalize/licensed-pilot-handler.mjs','utf8');const b=fs.readFileSync('supabase/functions/garment-normalize/index.ts','utf8');if(!a.includes('PILOT_ENABLED_BY_DEFAULT=false')||!b.includes(\"GARMENT_NORMALIZE_PILOT_ENABLED\")||!a.includes('Only licensed benchmark photos allowed'))throw Error('Pilot not safely gated')"
