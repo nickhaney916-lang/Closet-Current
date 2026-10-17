@@ -22,5 +22,18 @@ async function checkPhoto(image){
  if(!decoded.width||!decoded.height)throw Error('The photo could not be decoded.');
  const sample=document.createElement('canvas');sample.width=16;sample.height=16;
  const ctx=sample.getContext('2d',{willReadFrequently:true});ctx.drawImage(decoded,0,0,16,16);
- const pixels=ctx.getImageData(0,0,16,16).data;return {...photoQuality(pixels),colorEstimate:window.PhotoColor?.estimate(pixels,16,16)||null,aspect:decoded.width/decoded.height};
+ const pixels=ctx.getImageData(0,0,16,16).data;
+ const primary=window.PhotoColor?.estimate(pixels,16,16)||null;
+ // Preserve the existing center estimate when confident. Only rescue
+ // uncertain photos if their light background is demonstrably uniform and
+ // the garment-only full/interior palettes independently agree.
+ let colorEstimate=primary;
+ if(!primary||primary.needsConfirmation){
+  const colorCanvas=document.createElement('canvas');colorCanvas.width=64;colorCanvas.height=64;
+  const colorCtx=colorCanvas.getContext('2d',{willReadFrequently:true});
+  colorCtx.drawImage(decoded,0,0,64,64);
+  const separated=window.PhotoColor?.uniformLightBackgroundPalette?.(colorCtx.getImageData(0,0,64,64).data,64,64);
+  if(separated)colorEstimate=separated;
+ }
+ return {...photoQuality(pixels),colorEstimate,aspect:decoded.width/decoded.height};
 }
