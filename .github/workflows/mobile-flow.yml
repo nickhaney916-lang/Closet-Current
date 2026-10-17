@@ -48,7 +48,7 @@ jobs:
       - name: Verify garment annotation editor draft export
         run: node scripts/test-garment-annotation-editor.mjs
       - name: Check camera frame quality and stability
-        run: node --test tests/capture.test.cjs tests/photo-native-still.test.cjs tests/photo-capture-quality.test.cjs tests/photo-frame-quality.test.cjs tests/photo-stability.test.cjs tests/photo-crop-resolution.test.cjs tests/outfit-segmentation-edge.test.mjs tests/outfit-color-evidence.test.mjs tests/photo-color.test.cjs tests/garment-mask-metrics.test.mjs
+        run: node --test tests/automatic-indexing.test.cjs tests/clothing-details.test.cjs tests/capture.test.cjs tests/photo-native-still.test.cjs tests/photo-capture-quality.test.cjs tests/photo-frame-quality.test.cjs tests/photo-stability.test.cjs tests/photo-crop-resolution.test.cjs tests/outfit-segmentation-edge.test.mjs tests/outfit-color-evidence.test.mjs tests/photo-color.test.cjs tests/garment-mask-metrics.test.mjs
       - name: Build and verify touch viewport flow with real worker
         run: |
           node scripts/build.mjs
