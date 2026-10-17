@@ -460,6 +460,13 @@ async function recognizeItem(item){
   applyLocalChoice(item,result.choices[0]);
   Object.assign(item,ClothingDetails.fill(item,result.choices[0],result.details));
   item.name=[item.color,item.itemType&&item.itemType!=='Unknown'?item.itemType:item.category].filter(Boolean).join(' ');item.indexingLevel=item.itemType==='Unknown'?'category-color':'specific-type';
+  // Category and color are required for automatic closet indexing. A valid
+  // garment photo stays reviewable when neither reliable photo color nor model
+  // color is available; optional subtype and label details can remain blank.
+  if(item.category==='Uncategorized'||!ClothingDetails.validColor(item.color)){
+   item.localStatus='Garment identified, but color needs confirmation. Use Adjust when convenient; your photo is kept.';
+   return true;
+  }
   if(item.possibleDuplicate){if(typeof recordDeviceEvent==='function')recordDeviceEvent('duplicate_review');item.localStatus='Possible duplicate: compare this photo with your closet before saving.';return true;}
   if(item.requiresOwnershipConfirmation){item.localStatus='Identified. Add this piece only if it belongs in your closet.';return true;}
   item.localStatus='Recognized. Saving to your closet…';
