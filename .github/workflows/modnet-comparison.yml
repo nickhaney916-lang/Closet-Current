@@ -13,6 +13,8 @@ on:
       - 'scripts/build-four-way-model-review.mjs'
       - 'benchmark/modnet-promotion-gate.mjs'
       - 'tests/modnet-promotion-gate.test.mjs'
+      - 'tests/modnet-sharp128-baseline.test.mjs'
+      - 'benchmark/modnet-sharp128-baseline-decision.json'
       - 'scripts/build-footwear-disagreement-visual.mjs'
       - 'benchmark/footwear-shadow-candidates.mjs'
       - 'benchmark/lower-footwear-disagreement.mjs'
@@ -66,6 +68,8 @@ jobs:
         run: |
           node --test tests/modnet-promotion-gate.test.mjs
           node benchmark/modnet-promotion-gate.mjs
+      - name: Enforce user-selected sharp MODNet 128 benchmark baseline
+        run: node --test tests/modnet-sharp128-baseline.test.mjs
       - name: Download and verify source photographs
         run: node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos commons-0035,commons-0049,commons-0053,commons-0065,commons-0079,commons-0094
       - name: Generate experimental MODNet masks
