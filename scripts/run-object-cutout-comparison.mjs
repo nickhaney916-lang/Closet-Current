@@ -23,7 +23,7 @@ try{
   const bytes=await readFile(join('benchmark/photos',entry.image));
   if(createHash('sha256').update(bytes).digest('hex')!==entry.sourceSha256)throw Error('Unverified photo '+entry.id);
   const baseline=JSON.parse(await readFile('benchmark/modnet-predictions/'+entry.id+'.modnet-prediction.json','utf8'));
-  const photo=await RawImage.read('data:image/jpeg;base64,'+bytes.toString('base64'));
+  const photo=await RawImage.read(join('benchmark/photos',entry.image));
   const inferenceStart=performance.now();
   const inputs=await processor(photo);
   const outputs=await model({input_image:inputs.pixel_values});
