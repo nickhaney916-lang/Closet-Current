@@ -177,11 +177,14 @@ export function clothingColorSample(image,map,group){
  clothingCropBounds(image,map,group);
  const selected=[];for(let i=0;i<group.selected.length;i++)if(group.selected[i])selected.push(i);
  if(!selected.length)throw Error('Empty clothing mask.');
- const data=new Uint8ClampedArray(16*16*4);
- for(let n=0;n<256;n++){
-  const i=selected[Math.min(selected.length-1,Math.floor((n+.5)*selected.length/256))];
+ // Do not inflate a tiny mask into 256 apparently independent observations.
+ // The color estimator ignores transparent, unfilled slots and can request
+ // review rather than confidently label a handful of repeated pixels.
+ const sampleCount=Math.min(256,selected.length),data=new Uint8ClampedArray(16*16*4);
+ for(let n=0;n<sampleCount;n++){
+  const i=selected[Math.min(selected.length-1,Math.floor((n+.5)*selected.length/sampleCount))];
   const x=Math.min(image.width-1,Math.floor((i%map.width+.5)*image.width/map.width)),y=Math.min(image.height-1,Math.floor((Math.floor(i/map.width)+.5)*image.height/map.height)),source=(y*image.width+x)*image.channels;
   for(let c=0;c<3;c++)data[n*4+c]=image.data[source+c];data[n*4+3]=255;
  }
- return {data,width:16,height:16};
+ return {data,width:16,height:16,distinctMaskPixels:selected.length,sampledPixels:sampleCount};
 }
