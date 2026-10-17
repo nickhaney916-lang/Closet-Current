@@ -23,6 +23,7 @@ test('real boots and socks plus heels and tights fail visual readiness despite i
  const r=assess(summary(),review);
  assert.equal(r.status,'research-only-not-ready');
  assert.equal(r.reviewMatchesThisRun,true);
+ assert.equal(r.visualReviewStatus,'matched-reviewed-output');
  assert.deepEqual(r.observedVisualFailures,['validation-0030','validation-0031']);
  assert.ok(r.blockers.includes('reviewed-segmentation-failures'));
  assert.ok(r.blockers.includes('no-independent-reference-masks'));
@@ -36,7 +37,11 @@ test('changed inference output requires fresh human review instead of reusing ve
  const s=summary();s.cases[0].evaluation.sockPixels++;
  const r=assess(s,review);
  assert.equal(r.reviewMatchesThisRun,false);
+ assert.equal(r.visualReviewStatus,'current-output-needs-visual-review');
+ assert.deepEqual(r.observedVisualFailures,[]);
+ assert.deepEqual(r.previouslyReviewedVisualFailures,['validation-0030','validation-0031']);
  assert.ok(r.blockers.includes('model-or-source-output-requires-fresh-review'));
+ assert.ok(r.blockers.includes('previously-reviewed-segmentation-failures'));
  assert.equal(r.automaticClosetSavesAllowed,false);
 });
 test('model change or missing photographed case invalidates prior review',()=>{
