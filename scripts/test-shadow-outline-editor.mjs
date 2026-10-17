@@ -8,9 +8,11 @@ try{
  await page.goto(pathToFileURL(resolve('benchmark/annotate-shadow-polygons.html')).href);
  await page.locator('#photo').setInputFiles('benchmark/photos/commons-0035.jpg');
  await page.locator('#id').selectOption('commons-0035');
+ const loaded=await page.locator('#notice').textContent();
+ if(!loaded.includes('Image loaded'))throw Error('Image load failed: '+loaded);
  const box=await page.locator('#view').boundingBox();
  if(!box)throw Error('Editor canvas absent');
- const point=async(x,y)=>page.mouse.click(box.x+box.width*x,box.y+box.height*y);
+ const point=async(x,y)=>{await page.locator('#view').dispatchEvent('pointerdown',{clientX:box.x+box.width*x,clientY:box.y+box.height*y});};
  for(const [x,y] of [[.2,.2],[.7,.2],[.5,.7]])await point(x,y);
  await page.locator('#close').click();
  await page.locator('#kind').selectOption('shadow');
