@@ -16,6 +16,7 @@ on:
       - 'tests/garment-mask-metrics.test.mjs'
       - 'tests/garment-review-packet.test.mjs'
       - 'tests/stage-reviewed-masks.test.mjs'
+      - 'tests/stage-reviewed-masks-cli.test.mjs'
       - 'benchmark/approve-garment-mask.html'
       - 'scripts/test-independent-mask-approval.mjs'
 permissions:
@@ -34,7 +35,7 @@ jobs:
           npm install --no-save --no-package-lock playwright
           npx playwright install --with-deps chromium
       - name: Check segmentation fragments and approved-reference metrics
-        run: node --test tests/mask-components.test.mjs tests/garment-mask-metrics.test.mjs tests/garment-review-packet.test.mjs tests/stage-reviewed-masks.test.mjs
+        run: node --test tests/mask-components.test.mjs tests/garment-mask-metrics.test.mjs tests/garment-review-packet.test.mjs tests/stage-reviewed-masks.test.mjs tests/stage-reviewed-masks-cli.test.mjs
       - name: Download verified real photos
         run: node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos commons-0035,commons-0049,commons-0053,commons-0065,commons-0079,commons-0094
       - name: Generate model masks and score only independently approved outlines
