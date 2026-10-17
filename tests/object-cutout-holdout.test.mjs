@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {HOLDOUT_IDS,selectHoldoutPhotos,holdoutReport} from '../benchmark/object-cutout-holdout.mjs';
+import {readFileSync} from 'node:fs';
+import {HOLDOUT_IDS,selectHoldoutPhotos,holdoutReport,promotionReadiness} from '../benchmark/object-cutout-holdout.mjs';
 const row=id=>({id,image:id+'.jpg',verified:true,sha256:'a'.repeat(64),conditions:['fresh-independent-validation'],
   attribution:{license:'CC0',source:'https://commons.wikimedia.org/wiki/File:Example.jpg'},expectedCategory:'Shoes'});
 test('independent verified photos are selected in stable order',()=>{
@@ -32,4 +33,25 @@ test('holdout report never asserts measured mask accuracy or phone performance',
  assert.equal(s.phonePerformanceMeasured,false);assert.equal(s.noProductionChanges,true);
  assert.equal(s.sourceRgbPreserved,true);assert.equal(s.cases.length,1);
  assert.throws(()=>holdoutReport({cases:[],status:'claimed-accurate',modelId:'id',revision:'sha'}));
+});
+
+test('visual failures block production even when all seven inference runs succeeded',()=>{
+ const r=JSON.parse(readFileSync('benchmark/object-cutout-holdout-review.json','utf8'));
+ assert.equal(r.allCasesProcessed,true);
+ const assessment=promotionReadiness(r);
+ assert.equal(assessment.canPromote,false);
+ assert.equal(assessment.productionChanged,false);
+ assert.ok(assessment.reasons.includes('worn-garment-or-mannequin-not-isolated'));
+ assert.ok(assessment.reasons.includes('independent-pixel-references-missing'));
+ assert.ok(assessment.reasons.includes('real-phone-performance-unmeasured'));
+ assert.equal(r.cases.filter(x=>x.personOrMannequinRetained).length,3);
+ assert.equal(r.productionAuthorized,false);
+});
+test('review checklist refuses unsupported or partial automatic promotion',()=>{
+ const all=HOLDOUT_IDS.map(id=>({id,personOrMannequinRetained:false,approvedGarmentOnly:true}));
+ const ready={cases:all,allCasesProcessed:true,independentlyApprovedMasks:true,realPhonePerformanceMeasured:true};
+ assert.equal(promotionReadiness(ready).canPromote,true);
+ assert.equal(promotionReadiness({...ready,cases:all.slice(0,6)}).canPromote,false);
+ assert.equal(promotionReadiness({...ready,cases:[{...all[0],personOrMannequinRetained:true},...all.slice(1)]}).canPromote,false);
+ assert.throws(()=>promotionReadiness(null));
 });
