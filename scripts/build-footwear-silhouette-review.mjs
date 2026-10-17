@@ -35,7 +35,7 @@ try{
    }
    ctx.fillStyle='#33434a';ctx.font='12px sans-serif';
    ctx.fillText(caseId+' · original pixels unchanged',12,51);
-   ctx.fillText('Yellow lines = inspection only',paneWidth+12,51);
+   ctx.fillText('Flagged rows: '+rows.map(row=>row.y).join(', '),paneWidth+12,51);
    ctx.fillText('No garment/shadow classification',paneWidth*2+12,51);
    ctx.drawImage(image,0,header,paneWidth,displayHeight);
    ctx.drawImage(image,paneWidth,header,paneWidth,displayHeight);
@@ -44,14 +44,14 @@ try{
    for(const row of rows){
     const originalY=header+displayHeight*row.y/height;
     ctx.strokeStyle='#ffe500';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(paneWidth,originalY);ctx.lineTo(2*paneWidth,originalY);ctx.stroke();
-    ctx.fillStyle='#102628';ctx.font='bold 14px sans-serif';ctx.fillText('y='+row.y,paneWidth+8,originalY-10);
+
     if(row.y>=lowerStart){
      const zoomY=header+displayHeight*(row.y-lowerStart)/cropHeight;
      ctx.strokeStyle='#ffe500';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(2*paneWidth,zoomY);ctx.lineTo(3*paneWidth,zoomY);ctx.stroke();
-     ctx.fillStyle='#102628';ctx.fillText('row '+row.y,2*paneWidth+8,zoomY-10);
+
     }
    }
-   ctx.fillStyle='#111';ctx.font='11px sans-serif';ctx.fillText('Experimental diagnostic — not approved background removal',paneWidth*2+8,canvas.height-12);
+
    return canvas.toDataURL('image/png').split(',')[1];
   },{photo:source.toString('base64'),width:prediction.width,height:prediction.height,rows:selected,caseId:id});
   await writeFile(join(destination,id+'-silhouette-rows.png'),Buffer.from(png,'base64'));
