@@ -26,5 +26,17 @@
   const primary=ranked[0][0],confidence=ranked[0][1]/total;
   return {primary,secondary:colors.find(x=>x.color!==primary)?.color||null,colors,coverage:+(total/(width*height)).toFixed(3),needsConfirmation:confidence<.6||total<100||(primary==='Brown'&&((counts.get('Orange')||0)+(counts.get('Red')||0))/total>=.15)};
  }
- const api={family,estimate,maskedPalette};root.PhotoColor=api;if(typeof module!=='undefined')module.exports=api;
+ // Require two independent spatial views of the same known garment region
+ // to support a color. A foreground-mask border may include skin or scenery;
+ // confidence from that border alone cannot authorize automatic indexing.
+ function confirmedGarmentPalette(whole,interior){
+  if(!whole||whole.needsConfirmation||!interior||interior.needsConfirmation||
+     whole.primary!==interior.primary)return null;
+  const a=whole.colors?.find(x=>x.color===whole.primary)?.share;
+  const b=interior.colors?.find(x=>x.color===interior.primary)?.share;
+  if(!Number.isFinite(a)||!Number.isFinite(b)||a<=0||b<=0)return null;
+  return {color:interior.primary,source:'photo-estimate',
+   support:Math.min(a,b),secondaryColor:interior.secondary||null};
+ }
+ const api={family,estimate,maskedPalette,confirmedGarmentPalette};root.PhotoColor=api;if(typeof module!=='undefined')module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);
