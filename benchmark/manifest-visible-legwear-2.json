@@ -1,0 +1,43 @@
+[
+  {
+    "id": "validation-0030",
+    "image": "validation-0030.jpg",
+    "expectedVisibleGarments": [
+      "Tall boots",
+      "Knee-high socks"
+    ],
+    "scene": "performers wearing visibly striped knee-high socks above tall boots",
+    "verified": true,
+    "sha256": "7e1e20dede55d9981d26ef3675c637112c81283edbec567c768c2abfab911d17",
+    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/6/6d/Members_of_KOBerrieS_in_Kobe_Matsuri_2013_%288986240247%29.jpg",
+    "attribution": {
+      "title": "Members of KOBerrieS in Kobe Matsuri 2013 (8986240247).jpg",
+      "author": "Ogiyoshisan",
+      "license": "CC BY-SA 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0/",
+      "source": "https://commons.wikimedia.org/wiki/File:Members_of_KOBerrieS_in_Kobe_Matsuri_2013_(8986240247).jpg"
+    }
+  },
+  {
+    "id": "validation-0031",
+    "image": "validation-0031.jpg",
+    "expectedVisibleGarments": [
+      "Blazer",
+      "Shirt",
+      "Skirt",
+      "Tights",
+      "Heels"
+    ],
+    "scene": "person wearing blazer and top, tights and shoes",
+    "verified": true,
+    "sha256": "0e145aa5432df3457521200d1e1bb896f66abd66fb041d31ed0db591e00e2fdc",
+    "downloadUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/92/Gray_blazer_brown_shirt_black_split_skirt_sheer_tights_and_strappy_heels_-_modeled_by_Marina_Daschner.jpg/960px-Gray_blazer_brown_shirt_black_split_skirt_sheer_tights_and_strappy_heels_-_modeled_by_Marina_Daschner.jpg",
+    "attribution": {
+      "title": "Gray blazer brown shirt black split skirt sheer tights and strappy heels - modeled by Marina Daschner.jpg",
+      "author": "Tobias ToMar Maier",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "source": "https://commons.wikimedia.org/wiki/File:Gray_blazer_brown_shirt_black_split_skirt_sheer_tights_and_strappy_heels_-_modeled_by_Marina_Daschner.jpg"
+    }
+  }
+]
