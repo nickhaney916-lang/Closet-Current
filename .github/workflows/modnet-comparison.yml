@@ -5,6 +5,9 @@ on:
     branches: [main]
     paths:
       - 'scripts/run-modnet-comparison.mjs'
+      - 'scripts/build-footwear-silhouette-review.mjs'
+      - 'benchmark/select-footwear-review-rows.mjs'
+      - 'tests/select-footwear-review-rows.test.mjs'
       - 'scripts/build-raw-alpha-review.mjs'
       - 'scripts/build-threshold128-edge-review.mjs'
       - 'scripts/build-edge-background-stress.mjs'
@@ -105,6 +108,21 @@ jobs:
           retention-days: 14
       - name: Generate experimental MODNet masks
         run: node scripts/run-modnet-comparison.mjs benchmark/modnet-predictions
+      - name: Test review-only footwear row selection
+        run: node --test tests/select-footwear-review-rows.test.mjs
+      - name: Generate marked sneaker and boot silhouette reviews
+        run: node scripts/build-footwear-silhouette-review.mjs benchmark/footwear-silhouette-review
+      - name: Verify footwear images and safe review metadata
+        run: |
+          for id in commons-0079 commons-0094; do
+            test -s "benchmark/footwear-silhouette-review/$id-silhouette-rows.png"
+          done
+          node -e "const x=require('./benchmark/footwear-silhouette-review/summary.json');if(x.cases.length!==2||!x.reviewOnly||x.modifiedMaskPixels!==0||x.verifiedShadowRemoval!==false||x.cases.some(c=>!c.shownRows.length||c.modifiedMaskPixels!==0||!c.reviewOnly))throw Error('Silhouette review failed safe metadata checks')"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: experimental-sneaker-boot-silhouette-row-review
+          path: benchmark/footwear-silhouette-review/
+          retention-days: 14
       - name: Compare native MODNet alpha versus binary segmentation
         run: node scripts/build-raw-alpha-review.mjs benchmark/raw-alpha-review
       - name: Verify six native alpha edge diagnostics
