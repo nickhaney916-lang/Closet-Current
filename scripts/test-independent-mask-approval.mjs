@@ -43,6 +43,8 @@ try{
  await page.locator('#approver').fill('Reviewer One');
  await page.locator('#verified').check();
  assert.equal(await page.locator('#approve').isDisabled(),true,'first reviewer cannot self-approve');
+ await page.locator('#approver').fill('reviewer one');
+ assert.equal(await page.locator('#approve').isDisabled(),true,'capitalization cannot bypass independent review');
  await page.locator('#approver').fill('Reviewer Two');
  assert.equal(await page.locator('#approve').isDisabled(),false);
  await page.locator('#reject').click();
