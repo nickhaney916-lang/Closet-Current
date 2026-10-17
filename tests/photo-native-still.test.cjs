@@ -69,7 +69,8 @@ test('a still returned after leaving camera must never be added to the closet qu
  h.c.cameraRequest++;h.c.stream=null;h.c.cameraMode=null;h.c.manualStillShot=null;
  h.settle();await flush();
  assert.deepEqual(h.saved,[]);
- assert.equal(h.closed(),1);
+ assert.equal(h.closed(),0);
+ assert.equal(h.draws.length,0);
 });
 
 test('still capture rejects invalid dimensions and releases decoded bitmap',async()=>{
