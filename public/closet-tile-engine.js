@@ -86,10 +86,14 @@
   if(!item?.id||!valid(item.image))return null;
   // A separately stored generated tile may appear ONLY after explicit visual
   // review with SHA-256 identity checks. Most items use safe local centering.
-  const key=item.image+'|'+(item.normalizedPreview?.image||'')+'|'+
-    (item.normalizedPreview?.review?.status||'');
+  // Compare string references directly instead of concatenating multi-MB
+  // photo/preview data URIs into a new cache key on every closet redraw.
+  const preview=item.normalizedPreview?.image||null;
+  const status=item.normalizedPreview?.review?.status||'none';
+  const approval=item.normalizedPreview?.review?.approvedByOwner===true;
   const existing=cache.get(item.id);
-  if(existing&&existing.source===key)return existing.value;
+  if(existing&&existing.source===item.image&&existing.preview===preview&&
+     existing.status===status&&existing.approval===approval)return existing.value;
   const value=(async()=>{
     if(typeof root.GarmentDisplayPreview!=='undefined'){
       const candidate=await root.GarmentDisplayPreview.approved(item);
@@ -100,7 +104,7 @@
     }
     return draw(item);
   })();
-  cache.set(item.id,{source:key,value});
+  cache.set(item.id,{source:item.image,preview,status,approval,value});
   if(cache.size>12)cache.delete(cache.keys().next().value);
   return value;
  }
