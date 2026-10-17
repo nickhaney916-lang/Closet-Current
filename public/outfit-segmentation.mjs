@@ -52,7 +52,10 @@ export function clothingMaskGroups(map){
 }
 export function clothingCropBounds(image,map,group){
  if(![3,4].includes(image.channels)||image.data.length!==image.width*image.height*image.channels)throw Error('Invalid outfit image pixels.');
- const scaleX=image.width/map.width,scaleY=image.height/map.height,pad=Math.max(2,Math.round(Math.max((group.bounds.right-group.bounds.left)*scaleX,(group.bounds.bottom-group.bounds.top)*scaleY)*.025));
+ // Keep a small margin of ORIGINAL scene pixels around coarse model boxes.
+ // This affects the recognition crop, not the semantic alpha mask; a sleeve
+ // cuff or shoe sole just beyond a predicted boundary must not be hard-cut.
+ const scaleX=image.width/map.width,scaleY=image.height/map.height,pad=Math.max(2,Math.round(Math.max((group.bounds.right-group.bounds.left)*scaleX,(group.bounds.bottom-group.bounds.top)*scaleY)*.05));
  const left=Math.max(0,Math.floor(group.bounds.left*scaleX)-pad),top=Math.max(0,Math.floor(group.bounds.top*scaleY)-pad),right=Math.min(image.width,Math.ceil(group.bounds.right*scaleX)+pad),bottom=Math.min(image.height,Math.ceil(group.bounds.bottom*scaleY)+pad),width=right-left,height=bottom-top;
  return {left,top,width,height};
 }
