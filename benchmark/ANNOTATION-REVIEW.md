@@ -18,3 +18,20 @@ An annotation remains a **draft** until a second person confirms its outline aga
 - `reviewStatus`: `approved` only after independent review.
 
 The `image` filename must match the manifest exactly. Use `approvedReferenceMask(annotation, manifestCase)` to validate and decode it before scoring. Drafts, wrong sources, self-approval, and all-empty/all-filled masks are rejected. The editor does not automatically approve annotations.
+
+## Independent garment/shadow comparison (experimental)
+
+Use the separate internal outline editor `benchmark/annotate-shadow-polygons.html` to trace **garment** and **cast-shadow** polygons from the verified source photograph. Export remains a draft. A second reviewer must check the source image, outline edges, and labels, then supply **distinct** `reviewer` and `approvedBy` identities and explicitly set `reviewStatus: "approved"`. Reviewer names and approval statuses must never be invented or inferred by a model.
+
+Only after approved garment and shadow polygons are available, compare a baseline mask and a proposed mask at identical native dimensions:
+
+```sh
+node scripts/evaluate-reviewed-shadow-comparison.mjs commons-0079 \
+  benchmark/annotations/commons-0079-approved.json \
+  benchmark/modnet-predictions/commons-0079.modnet-prediction.json \
+  /path/to/experimental-candidate-mask.json
+```
+
+The command rejects unapproved or self-approved outlines, mismatched image identities, overlapping reference regions, and invalid masks. It calculates pixel-level garment retention, shadow removal rate, and background contamination without changing the original image, approved reference, or prediction.
+
+**The command cannot establish that a candidate is safe without real independent ground truth.** An automated test passing with synthetic reference polygons is a code-correctness test, not measured garment-removal accuracy. No production crop or shadow algorithm is authorized by the comparison command.
