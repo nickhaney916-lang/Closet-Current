@@ -21,6 +21,9 @@ const footwearCases=reviewCases.filter(item=>['commons-0079','commons-0094'].inc
 if(footwearCases.length!==2)throw Error('Footwear cases missing');
 await writeFile(join(root,'START-FOOTWEAR-REVIEW.html'),template.replace('__REVIEW_DATA__',JSON.stringify(footwearCases).replaceAll('<','\\u003c')));
 await copyFile('benchmark/annotate-garment.html',join(root,'annotate-garment.html'));
+await copyFile('benchmark/annotate-shadow-polygons.html',join(root,'annotate-shadow-polygons.html'));
+await copyFile('benchmark/review-shadow-outlines.html',join(root,'review-shadow-outlines.html'));
+await copyFile('benchmark/ANNOTATION-REVIEW.md',join(root,'ANNOTATION-REVIEW.md'));
 await copyFile('benchmark/FOOTWEAR-OUTLINE-REVIEW.txt',join(root,'FOOTWEAR-OUTLINE-REVIEW.txt'));
 await copyFile('benchmark/segmentation-review-manifest.json',join(root,'manifest.json'));
 await writeFile(join(root,'START-HERE.txt'),[
@@ -31,13 +34,14 @@ await writeFile(join(root,'START-HERE.txt'),[
  '3. The optional HTML reviewer may not run in Android document-preview apps; do not use it if it stays on Loading garment.',
  '4. Extract the ZIP; optionally open START-FOOTWEAR-REVIEW.html in a full browser to record structured feedback.',
  '   Alternatively open START-REVIEW.html to rate all six cutouts.',
- '2. For shoe and boot reference outlines, see FOOTWEAR-OUTLINE-REVIEW.txt.',
- '3. Open annotate-garment.html in a modern browser.',
- '4. Load a photo from photos/ and the matching experimental mask from predictions/.',
- '5. Correct all shoe pixels and exclude flooring, shadows, mannequin and other objects.',
- '6. Export a draft annotation JSON. The editor works at an annotated canvas resolution (up to 768px), not the full source resolution.',
- '7. Have a separate reviewer inspect each full-resolution original and draft before approval.',
- '8. Only independently reviewed, approved outlines may be scored. Ratings alone are NOT ground truth.',
+ '5. For independently reviewed GARMENT and SHADOW outlines: open annotate-shadow-polygons.html in a modern browser.',
+ '   Choose the original photo from photos/ and its matching ID. Draw garment and cast-shadow regions separately, then export a DRAFT JSON.',
+ '6. Have a DIFFERENT person open review-shadow-outlines.html in a modern browser, load the ORIGINAL verified photo and draft JSON,',
+ '   inspect both outlines, provide reviewer identities and confirmations, then export a candidate approved JSON.',
+ '7. Run repository shadow-annotation validation and mask-overlap scoring before treating it as verified benchmark ground truth.',
+ '8. If you only need a garment silhouette (not shadow regions), annotate-garment.html creates a separate draft mask.',
+ '   See ANNOTATION-REVIEW.md and FOOTWEAR-OUTLINE-REVIEW.txt for the independent-review criteria.',
+ '9. Rating a picture or checking a box does NOT establish actual shadow-removal accuracy. Do not promote an experimental model automatically.',
  '',
  'Images and AI predictions are experimental. No customer-facing changes.',
  'Source list and expected checksums are in manifest.json.'
