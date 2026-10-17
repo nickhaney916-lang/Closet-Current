@@ -217,6 +217,40 @@ try{
  await writeFile(out+'/recognition-framing.json',JSON.stringify(framing,null,2));
  console.log('REAL_PHOTO_FRAMING '+JSON.stringify(framing));
  const report={cases:realResults,submitted:realCases.length,imported:observed.imports.added,evaluated:evaluated.length,categoryAccuracy:evaluated.length?evaluated.filter(x=>x.correctCategory).length/evaluated.length:null,allSubmittedAccuracy:realResults.filter(x=>x.correctCategory).length/realCases.length,uncategorizedCases:realResults.filter(x=>x.category==='Uncategorized').map(x=>({id:x.id,expected:x.expected,diagnostics:x.recognitionDiagnostics||null})),uncategorizedCount:realResults.filter(x=>x.category==='Uncategorized').length,reviewSuggestions,reviewSuggestionCount:reviewSuggestions.length,reviewSuggestionCorrect:reviewSuggestions.filter(x=>x.correct).length,reviewSuggestionIncorrect:reviewSuggestions.filter(x=>!x.correct).length,reviewSuggestionPrecision:reviewSuggestions.length?reviewSuggestions.filter(x=>x.correct).length/reviewSuggestions.length:null,importDiagnostics:observed,pageErrors:errors};
+
+ // Read-only color evidence from verified, licensed real photographs. No model
+ // tuning, generated ground truth, garment editing or customer image exposure.
+ const colorEvidence=await page.evaluate(async()=>{
+  const results={};
+  for(const id of ['commons-0033','commons-0035','commons-0070']){
+   const response=await fetch('/benchmark-photo/'+id+'.jpg');
+   if(!response.ok){results[id]={error:'fixture-unavailable'};continue;}
+   const blob=await response.blob(),bitmap=await createImageBitmap(blob);
+   try{
+    const observations=[];
+    for(const size of [16,32,64]){
+     const canvas=document.createElement('canvas');canvas.width=size;canvas.height=size;
+     const ctx=canvas.getContext('2d',{willReadFrequently:true});
+     ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
+     ctx.drawImage(bitmap,0,0,size,size);
+     const rgba=ctx.getImageData(0,0,size,size).data;
+     const colorCounts={},left=Math.floor(size*.2),right=Math.ceil(size*.8),top=Math.floor(size*.2),bottom=Math.ceil(size*.8);
+     let total=0,rTotal=0,gTotal=0,bTotal=0;
+     for(let y=top;y<bottom;y++)for(let x=left;x<right;x++){
+      const k=(y*size+x)*4,family=window.PhotoColor.family(rgba[k],rgba[k+1],rgba[k+2]);
+      colorCounts[family]=(colorCounts[family]||0)+1;total++;
+      rTotal+=rgba[k];gTotal+=rgba[k+1];bTotal+=rgba[k+2];
+     }
+     observations.push({size,estimate:window.PhotoColor.estimate(rgba,size,size),sampledCenterPixels:total,regionFamilyCounts:colorCounts,meanCenterRGB:[rTotal,gTotal,bTotal].map(v=>Math.round(v/total))});
+    }
+    results[id]={width:bitmap.width,height:bitmap.height,observations};
+   }finally{bitmap.close();}
+  }
+  return {method:'same-source-canvas-center-color-resolution-comparison',cases:results,
+   note:'Observed image pixel colors, not independently validated garment masks or fabric color ground truth'};
+ });
+ await writeFile(out+'/real-photo-color-evidence.json',JSON.stringify(colorEvidence,null,2));
+ console.log('REAL_PHOTO_COLOR_EVIDENCE '+JSON.stringify(colorEvidence));
  await writeFile(out+'/real-photo-indexing.json',JSON.stringify(report,null,2));
  console.log('REAL_PHOTO_INDEXING '+JSON.stringify(report));
  console.log('REAL_PHOTO_REVIEW_SUGGESTIONS '+JSON.stringify({count:reviewSuggestions.length,correct:reviewSuggestions.filter(x=>x.correct).length,incorrect:reviewSuggestions.filter(x=>!x.correct)}));
