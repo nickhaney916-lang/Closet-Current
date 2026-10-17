@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
+import {existsSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {APPROVED_LICENSED_SOURCE_SET,createLicensedPilotHandler} from
  '../supabase/functions/garment-normalize/licensed-pilot-handler.mjs';
@@ -13,9 +14,14 @@ const requestId='11111111-1111-4111-8111-111111111111';
 const origin='https://closet-current.pages.dev';
 const sample=APPROVED_LICENSED_SOURCE_SET['commons-0035'];
 const fakeJwt='Bearer verified-test-token-not-a-real-user-session-123';
-const imageBytes=await readFile('benchmark/photos/commons-0035.jpg');
-const actualHash=createHash('sha256').update(imageBytes).digest('hex');
-assert.equal(actualHash,sample.sourceSha256,'Real licensed photo changed');
+// The full application test suite does not download external photo fixtures.
+// The dedicated pilot workflow DOES. Never misreport the photo benchmark as
+// executed when the original source is absent.
+const fixtureAvailable=existsSync('benchmark/photos/commons-0035.jpg');
+const imageBytes=fixtureAvailable?await readFile('benchmark/photos/commons-0035.jpg'):null;
+const actualHash=imageBytes?createHash('sha256').update(imageBytes).digest('hex'):null;
+if(fixtureAvailable)assert.equal(actualHash,sample.sourceSha256,'Real licensed photo changed');
+const requiresSource={skip:fixtureAvailable?false:'Licensed photo downloaded only by dedicated pilot CI'};
 const input={
  action:'start',requestId,consentToProvider:true,consentVersion:'pilot-licensed-v1',
  candidate:{action:'normalize-preview',itemId:'commons-0035',category:'Bottoms',
@@ -62,7 +68,7 @@ function harness(){
  return {send,get claims(){return claims},get submissions(){return submissions},
   get reservations(){return reservations},get polls(){return polls}};
 }
-test('exact licensed source photo yields one simulated job, never enters closet',async()=>{
+test('exact licensed source photo yields one simulated job, never enters closet',requiresSource,async()=>{
  const h=harness();
  const first=await h.send(input);
  assert.equal(first.status,202);
@@ -82,7 +88,7 @@ test('exact licensed source photo yields one simulated job, never enters closet'
  assert.equal(b.canAutoSave,false);
  assert.equal(h.polls,1);
 });
-test('a single altered pixel after photo license verification stops before credit',async()=>{
+test('a single altered pixel after photo license verification stops before credit',requiresSource,async()=>{
  const h=harness();
  const copy=structuredClone(input);
  const corrupted=Buffer.from(imageBytes);
@@ -92,7 +98,7 @@ test('a single altered pixel after photo license verification stops before credi
  assert.equal(result.status,409);
  assert.equal(h.reservations,0);assert.equal(h.submissions,0);
 });
-test('missing permission for external upload blocks even correctly sourced photo',async()=>{
+test('missing permission for external upload blocks even correctly sourced photo',requiresSource,async()=>{
  const h=harness();
  const candidate=structuredClone(input);candidate.consentToProvider=false;
  assert.equal((await h.send(candidate)).status,400);
