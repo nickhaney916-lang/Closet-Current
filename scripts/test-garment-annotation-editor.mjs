@@ -10,6 +10,7 @@ try{
  await page.locator('#photo').setInputFiles({name:'review-case.png',mimeType:'image/png',buffer:Buffer.from(png,'base64')});
  await assert.doesNotReject(async()=>await page.locator('#canvas').waitFor({state:'visible'}));
  const bounds=await page.locator('#canvas').boundingBox();assert.ok(bounds);
+ await page.locator('#reviewer').fill('First Reviewer');
  await page.mouse.move(bounds.x+bounds.width*.5,bounds.y+bounds.height*.5);
  await page.mouse.down();await page.mouse.up();
  assert.equal(await page.locator('#download').isDisabled(),false);
@@ -19,6 +20,7 @@ try{
  const fs=await import('node:fs/promises');
  const draft=JSON.parse(await fs.readFile(await download.path(),'utf8'));
  assert.equal(draft.reviewStatus,'draft');
+ assert.equal(draft.reviewer,'First Reviewer');
  assert.match(draft.sourceSha256,/^[a-f0-9]{64}$/);
  assert.equal(draft.width,40);assert.equal(draft.height,30);
  assert.ok(draft.runs.length>1);
@@ -40,6 +42,7 @@ try{
  const seeded=JSON.parse(await fs.readFile(await(await seededDownload).path(),'utf8'));
  assert.equal(seeded.reviewStatus,'draft');
  assert.equal(seeded.seedModel,'test-model');
+ assert.equal(seeded.reviewer,'First Reviewer');
  await page.locator('#prediction').setInputFiles({name:'wrong.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify({...seed,image:'wrong.png'}))});
  await page.locator('#status').getByText(/mismatch/).waitFor();
  assert.deepEqual(errors,[]);
