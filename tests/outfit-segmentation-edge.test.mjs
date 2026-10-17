@@ -215,3 +215,18 @@ test('discriminative mask compares garment recall and background leakage in vari
  }
  console.log('DISCRIMINATIVE_EDGE_COMPARISON '+JSON.stringify(result));
 });
+
+test('automatic raw recognition crop keeps a thin cuff just outside the coarse mask box',()=>{
+ const {image,map,group}=fixture();
+ const x=20,y=44,source=(y*image.width+x)*3;
+ image.data[source]=9;image.data[source+1]=22;image.data[source+2]=33;
+ const raw=cropClothingPhotoPixels(image,map,group);
+ const isolated=isolateClothingPixels(image,map,group);
+ assert.ok(raw.bounds.left<=x,'margin must include original cuff pixels left of a coarse box');
+ assert.ok(raw.bounds.top<=y&&y<raw.bounds.top+raw.height);
+ const index=((y-raw.bounds.top)*raw.width+x-raw.bounds.left)*3;
+ assert.deepEqual([...raw.data.slice(index,index+3)],[9,22,33],
+  'classification receives original uncropped fabric texture');
+ assert.deepEqual([...isolated.data.slice(index,index+3)],[255,255,255],
+  'the display mask remains conservative and never invents garment regions');
+});
