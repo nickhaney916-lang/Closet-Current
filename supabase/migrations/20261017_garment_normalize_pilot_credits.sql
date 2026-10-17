@@ -23,6 +23,8 @@ create index if not exists garment_normalize_pilot_credits_created
 alter table public.garment_normalize_pilot_credits enable row level security;
 revoke all on public.garment_normalize_pilot_credits from public;
 revoke all on public.garment_normalize_pilot_credits from anon, authenticated;
+-- Read-only job lookup restricted to service-role for authenticated poll requests.
+grant select on public.garment_normalize_pilot_credits to service_role;
 -- Even with no permissive RLS policy, SECURITY DEFINER RPCs below can update.
 -- IMPORTANT: these SECURITY DEFINER functions must be owned by migration owner,
 -- not exposed as a normal client-accessible SELECT or insert.

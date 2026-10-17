@@ -121,3 +121,37 @@ test('server rejects lying DB reservation body, before provider or claim',async(
  await assert.rejects(ledger.reserve({owner:user,requestId:id,sourceSha256:hash,category:'Tops'}));
  assert.equal(sent.length,1);
 });
+
+test('server-only status lookup requires exact authenticated owner and bound job',async()=>{
+ const fake=rpcFake();
+ // This is an HTTP-mocked table read; no actual credential or user records.
+ const owner={id:ownerId,verifiedBySupabase:true};
+ const ledger=createGarmentNormalizeCreditLedger({enabled:true,
+  supabaseUrl:'https://testing-ref.supabase.co',serviceRoleKey:'x'.repeat(40),
+  fetchImpl:async(url,options)=>{
+   assert.equal(options.method,'GET');
+   const parsed=new URL(url);
+   assert.equal(parsed.pathname,'/rest/v1/garment_normalize_pilot_credits');
+   assert.equal(parsed.searchParams.get('owner_id'),'eq.'+ownerId);
+   assert.equal(parsed.searchParams.get('request_id'),'eq.'+id);
+   return {ok:true,text:async()=>JSON.stringify([{
+    request_id:id,owner_id:ownerId,source_sha256:hash,category:'Tops',
+    status:'submitted',provider_job_id:'provider-job-123456789'
+   }])};
+  }
+ });
+ const rec=await ledger.status({owner,requestId:id});
+ assert.equal(rec.jobId,'provider-job-123456789');
+ assert.equal(rec.sourceSha256,hash);
+ await assert.rejects(ledger.status({owner:{id:ownerId,verifiedBySupabase:false},requestId:id}));
+});
+test('unauthorized or mismatched provider job row cannot be polled',async()=>{
+ const ledger=createGarmentNormalizeCreditLedger({enabled:true,
+  supabaseUrl:'https://testing-ref.supabase.co',serviceRoleKey:'x'.repeat(40),
+  fetchImpl:async()=>({ok:true,text:async()=>JSON.stringify([{
+   request_id:id,owner_id:'44444444-4444-4444-8444-444444444444',
+   source_sha256:hash,category:'Tops',status:'submitted',provider_job_id:'provider-job-123456789'
+  }])})
+ });
+ await assert.rejects(ledger.status({owner:user,requestId:id}),/mismatched/);
+});

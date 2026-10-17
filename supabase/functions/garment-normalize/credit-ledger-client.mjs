@@ -59,6 +59,34 @@ export function createGarmentNormalizeCreditLedger({supabaseUrl,serviceRoleKey,f
      p_request_id:requestId,p_owner_id:ownerId,p_source_sha256:sourceSha256
     }))===true;
   },
+  async status({owner,requestId}){
+   const ownerId=validatedOwner(owner);
+   if(!UUID.test(requestId||''))throw Error('Invalid pilot request identity');
+   if(enabled!==true)throw Error('AI pilot ledger disabled');
+   const params=new URLSearchParams({
+    select:'request_id,owner_id,source_sha256,category,status,provider_job_id',
+    owner_id:'eq.'+ownerId,request_id:'eq.'+requestId,limit:'1'
+   });
+   const response=await fetchImpl(url.origin+'/rest/v1/garment_normalize_pilot_credits?'+params,{
+    method:'GET',headers:{apikey:serviceRoleKey,Authorization:'Bearer '+serviceRoleKey,
+     'Accept':'application/json'},
+    signal:AbortSignal.timeout(10_000)
+   });
+   if(!response?.ok)throw Error('Pilot request not found');
+   const raw=await response.text();
+   if(raw.length>4096)throw Error('Unsafe ledger response size');
+   let rows;
+   try{rows=JSON.parse(raw);}catch{throw Error('Bad ledger response');}
+   if(!Array.isArray(rows)||rows.length!==1)throw Error('No scoped pilot request');
+   const row=rows[0];
+   if(row.owner_id!==ownerId||row.request_id!==requestId||
+      !SHA.test(row.source_sha256||'')||!CATEGORY.has(row.category)||
+      row.status!=='submitted'||typeof row.provider_job_id!=='string'||
+      !/^[A-Za-z0-9-]{12,100}$/.test(row.provider_job_id))
+    throw Error('Unbound or mismatched pilot job');
+   return {status:'submitted',jobId:row.provider_job_id,
+    sourceSha256:row.source_sha256,category:row.category};
+  },
   async bind({owner,requestId,jobId}){
    const ownerId=validatedOwner(owner);
    if(!UUID.test(requestId||'')||typeof jobId!=='string'||

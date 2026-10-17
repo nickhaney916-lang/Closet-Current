@@ -17,6 +17,10 @@ begin
    or has_function_privilege('authenticated','public.claim_garment_normalize_pilot(uuid,uuid,text)','EXECUTE')
    or has_function_privilege('anon','public.bind_garment_normalize_pilot(uuid,uuid,text)','EXECUTE')
   then raise exception 'Public request access exposed';end if;
+  if has_table_privilege('anon','public.garment_normalize_pilot_credits','SELECT')
+    or has_table_privilege('authenticated','public.garment_normalize_pilot_credits','SELECT')
+    or not has_table_privilege('service_role','public.garment_normalize_pilot_credits','SELECT')
+  then raise exception 'Pilot ledger job lookup privileges unsafe';end if;
   if not has_function_privilege('service_role','public.reserve_garment_normalize_pilot(uuid,uuid,text,text)','EXECUTE')
   then raise exception 'Service role unavailable';end if;
   r:=public.reserve_garment_normalize_pilot(a,u,x,'Bottoms');
