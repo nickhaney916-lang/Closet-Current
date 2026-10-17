@@ -69,6 +69,8 @@ try{
    return {png:sheet.toDataURL('image/png').split(',')[1],componentCount:components.length,detachedCandidates:candidates.map(c=>({pixels:c.pixels.length,box:[c.minx,c.miny,c.maxx,c.maxy]})),candidatePreviewPixels:candidates.reduce((n,c)=>n+c.pixels.length,0),detachedOnlyPreview:footwear,largestComponentPixels:components[0]?.pixels.length||0,modifiedMaskPixels:0,limitation:'Connected shadows cannot be separated using connected components; detached real garment items can also be candidates.'};
   },{photo,pred});
   await writeFile(join(target,item.id+'-component-review.png'),Buffer.from(output.png,'base64'));
-  const {png,...metrics}=output;console.log('COMPONENT_REVIEW '+JSON.stringify({id:item.id,...metrics}));
+  const {png,...metrics}=output;
+  if(item.id==='commons-0079'||item.id==='commons-0094')await writeFile(join(target,item.id+'-detached-preview-summary.json'),JSON.stringify({imageId:item.id,...metrics,reviewOnly:true},null,2)+'\n');
+  console.log('COMPONENT_REVIEW '+JSON.stringify({id:item.id,...metrics}));
  }
 }finally{await browser.close();}
