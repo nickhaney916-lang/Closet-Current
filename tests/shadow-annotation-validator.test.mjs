@@ -6,3 +6,17 @@ const approved={schemaVersion:1,imageId:'photo',sourceSha256:'verified-sha',revi
 test('rejects unapproved annotations',()=>{assert.equal(validateShadowAnnotation({...approved,reviewStatus:'pending'},entry).valid,false);});
 test('rejects mismatched photos and unsafe coordinates',()=>{assert.equal(validateShadowAnnotation({...approved,sourceSha256:'other'},entry).valid,false);assert.equal(validateShadowAnnotation({...approved,regions:{...approved.regions,shadow:[[[0,0],[2,0],[1,1]]]}},entry).valid,false);});
 test('valid annotation is a reviewed reference, never automatic production authorization',()=>{assert.equal(validateShadowAnnotation(approved,entry).valid,true);});
+
+test('rejects collapsed or zero-area reference polygons',()=>{
+ const duplicate=[[[0,0],[0,0],[1,1]]];
+ const collinear=[[[0,0],[0.5,0.5],[1,1]]];
+ for(const invalid of [duplicate,collinear]){
+  const result=validateShadowAnnotation({...approved,regions:{...approved.regions,shadow:invalid}},entry);
+  assert.equal(result.valid,false);
+  assert.equal(result.usableAsGroundTruth,false);
+ }
+});
+test('accepts a genuine polygon with more than three vertices',()=>{
+ const shape=[[[0,0],[1,0],[1,1],[0,1]]];
+ assert.equal(validateShadowAnnotation({...approved,regions:{...approved.regions,garment:shape}},entry).valid,true);
+});
