@@ -13,13 +13,14 @@ on:
       - 'public/app-theme.css'
       - 'tests/closet-rack-tiles.test.cjs'
       - 'tests/garment-pose-normalizer.test.cjs'
+      - 'scripts/run-real-pose-normalization.mjs'
       - '.github/workflows/closet-rack-tiles.yml'
 permissions:
   contents: read
 jobs:
   all-category-closet:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 16
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -33,6 +34,23 @@ jobs:
           node --check public/closet-browser.js
           node --check public/app.js
           node --test tests/closet-rack-tiles.test.cjs tests/garment-pose-normalizer.test.cjs tests/closet-browser.test.cjs
+      - name: Install image decoder for licensed real-photo review
+        run: npm install --no-save --no-package-lock sharp@0.34.4
+      - name: Download 4 checksum-verified garment photographs
+        run: |
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos commons-0035,commons-0065
+          node scripts/download-reviewed-photos.mjs benchmark/manifest-fresh-11.json benchmark/photos validation-0017,validation-0019
+      - name: Compare original and proposed derived display normalization
+        run: node scripts/run-real-pose-normalization.mjs benchmark/real-pose-review
+      - name: Fail closed if photo quality is falsely reported as verified
+        run: |
+          node -e "const x=require('./benchmark/real-pose-review/summary.json');if(x.status!=='complete'||x.cases.length!==4||!x.sourcePhotosHashVerified||x.sourceGarmentPixelGroundTruth||x.normalizationAccuracy!==null||x.productionQualityApproved||x.alteredSavedClothes||x.cases.some(c=>!c.sourcePreserved||!c.outputNotAutoSaved||c.improvedVisualQualityMeasured))throw Error('Unsafe normalization report')"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: real-garment-pose-normalization-comparison
+          path: benchmark/real-pose-review/
+          retention-days: 14
       - name: Build full app and verify all closet categories can use the rack
         run: |
           node scripts/build.mjs
