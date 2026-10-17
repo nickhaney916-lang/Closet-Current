@@ -15,5 +15,7 @@ export function scoreReviewedShadowCleanup({baseline,candidate,garment,shadow}){
  const garmentRetention=candidateGarment/garmentCount;
  const baselineRetention=baselineGarment/garmentCount;
  const shadowRemoval=baselineShadow-candidateShadow;
- return {garmentRetention,baselineGarmentRetention:baselineRetention,garmentPixelsLostComparedToBaseline:baselineGarment-candidateGarment,shadowPixelsRemovedComparedToBaseline:shadowRemoval,baselineShadowPixels:baselineShadow,candidateShadowPixels:candidateShadow,addedForegroundPixels:added,improvedWithoutGarmentLoss:shadowRemoval>0&&candidateGarment>=baselineGarment&&added===0,verified:true};
+ const garmentFullyPreserved=candidateGarment===garmentCount;
+ const shadowRemovalRate=baselineShadow?shadowRemoval/baselineShadow:0;
+ return {garmentRetention,garmentFullyPreserved,shadowRemovalRate,baselineGarmentRetention:baselineRetention,garmentPixelsLostComparedToBaseline:baselineGarment-candidateGarment,shadowPixelsRemovedComparedToBaseline:shadowRemoval,baselineShadowPixels:baselineShadow,candidateShadowPixels:candidateShadow,addedForegroundPixels:added,improvedWithoutGarmentLoss:shadowRemoval>0&&garmentFullyPreserved&&added===0,verified:true};
 }
