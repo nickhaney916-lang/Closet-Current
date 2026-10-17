@@ -15,7 +15,9 @@
   for(const [slot,category] of ordered){
    const item=find(selected[slot]);
    if(!item||!(slot==='top'?['Tops','Dresses'].includes(item.category):item.category==='Bottoms'))continue;
-   const image=item.originalPhoto?.image||item.image;
+   // A whole-outfit originalPhoto may contain people and unrelated items.
+   // Use the cropped catalog garment itself as the try-on reference.
+   const image=item.image;
    if(!validImage(image))continue;
    steps.push({slot,category,image,itemId:item.id});
   }
