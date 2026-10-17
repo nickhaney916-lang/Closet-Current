@@ -290,12 +290,22 @@ function takePhoto(){
   const shot={stream:activeStream,request:activeRequest};
   manualStillShot=shot;$('takePhoto').disabled=true;
   $('captureState').textContent='Taking high-quality photo…';
-  captureCameraStill(track,StillCapture,()=>active()&&manualStillShot===shot).then(image=>{
-   if(manualStillShot===shot)saveCaptured(image);
+  // Some Android camera drivers never settle takePhoto(). Fall back rather
+  // than locking the shutter. A late resolution cannot modify our canvas.
+  let timer;
+  const bounded=Promise.race([
+   captureCameraStill(track,StillCapture,()=>active()&&manualStillShot===shot),
+   new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('Still photo timed out')),4000);})
+  ]);
+  bounded.then(image=>{
+   if(manualStillShot===shot){
+    try{saveCaptured(image);}catch{message('Photo could not be added. Try again.');}
+   }
   },()=>{
-   // Unsupported ImageCapture and transient failures must not lose the tap.
+   // Unsupported ImageCapture, timeouts and camera errors must not lose a tap.
    if(manualStillShot===shot)fallback();
   }).finally(()=>{
+   clearTimeout(timer);
    if(manualStillShot===shot){manualStillShot=null;$('takePhoto').disabled=false;}
   });
  }catch{fallback();}
