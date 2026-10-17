@@ -168,8 +168,8 @@ try{
  try{await page.waitForFunction(()=>!automaticRunning&&localPending.size===0,null,{timeout:90000});}catch(error){console.warn('Recognition did not settle:',error.message);}
  const observed=await page.evaluate(ids=>({
   imports:window.__lastPhotoImportResult,
-  newItems:items.filter(x=>!ids.includes(x.id)).map(x=>({filename:x.importFilename||null,category:x.category,itemType:x.itemType,color:x.color||null,needsReview:!!x.needsReview,scanFailed:!!x.scanFailed})),
-  pending:batch.map(x=>({filename:x.importFilename||null,category:x.category,itemType:x.itemType,color:x.color||null,needsReview:!!x.needsReview,scanFailed:!!x.scanFailed,localStatus:x.localStatus||null,possibleDuplicate:!!x.possibleDuplicate,segmentHint:x.segmentHint||null,recognitionDiagnostics:x.recognitionDiagnostics||null})),
+  newItems:items.filter(x=>!ids.includes(x.id)).map(x=>({filename:x.importFilename||null,category:x.category,itemType:x.itemType,color:x.color||null,colorSource:x.colorSource||null,colorMethod:x.colorMethod||null,needsReview:!!x.needsReview,scanFailed:!!x.scanFailed})),
+  pending:batch.map(x=>({filename:x.importFilename||null,category:x.category,itemType:x.itemType,color:x.color||null,colorSource:x.colorSource||null,colorMethod:x.colorMethod||null,needsReview:!!x.needsReview,scanFailed:!!x.scanFailed,localStatus:x.localStatus||null,possibleDuplicate:!!x.possibleDuplicate,segmentHint:x.segmentHint||null,recognitionDiagnostics:x.recognitionDiagnostics||null})),
   busy,localPending:localPending.size,automaticRunning,
   message:document.querySelector('#message')?.textContent||null
  }),initialIds);
