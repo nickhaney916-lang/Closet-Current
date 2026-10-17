@@ -38,5 +38,54 @@
   return {color:interior.primary,source:'photo-estimate',
    support:Math.min(a,b),secondaryColor:interior.secondary||null};
  }
- const api={family,estimate,maskedPalette,confirmedGarmentPalette};root.PhotoColor=api;if(typeof module!=='undefined')module.exports=api;
+
+ // Conservative single-garment foreground color extraction for photographs
+ // against a verified, near-white, uniform background. This is NOT
+ // segmentation: if the scene, shadows, or item edge is ambiguous, return null.
+ // Never alter the source pixels or generate an artificial garment texture.
+ function uniformLightBackgroundPalette(pixels,width,height){
+  if(!Number.isInteger(width)||!Number.isInteger(height)||width<32||height<32||
+     pixels?.length!==width*height*4)throw Error('Invalid foreground color sample');
+  const rgbAt=(x,y)=>{const i=(y*width+x)*4;return [pixels[i],pixels[i+1],pixels[i+2],pixels[i+3]];};
+  const anchors=[];
+  for(const [cx,cy] of [[.03,.03],[.97,.03],[.03,.97],[.97,.97],[.5,.03],[.5,.97],[.03,.5],[.97,.5]]){
+   const x=Math.min(width-2,Math.max(1,Math.round(cx*(width-1))));
+   const y=Math.min(height-2,Math.max(1,Math.round(cy*(height-1))));
+   for(const dy of [-1,0,1])for(const dx of [-1,0,1])anchors.push(rgbAt(x+dx,y+dy));
+  }
+  if(anchors.some(c=>c[3]<250))return null;
+  const mean=[0,1,2].map(k=>anchors.reduce((sum,c)=>sum+c[k],0)/anchors.length);
+  if(Math.min(...mean)<210||Math.max(...mean)-Math.min(...mean)>22||
+     anchors.some(c=>Math.max(...c.slice(0,3).map((v,k)=>Math.abs(v-mean[k])))>24))return null;
+  // Strong difference from the sampled scene background is evidence of a
+  // garment foreground, not proof of its subtype, pose or physical cut.
+  const foreground=new Uint8ClampedArray(pixels.length),interior=new Uint8ClampedArray(pixels.length);
+  const chosen=new Uint8Array(width*height);
+  let foregroundCount=0,centerCount=0;
+  for(let y=0;y<height;y++)for(let x=0;x<width;x++){
+   const i=y*width+x,j=i*4;
+   const diff=Math.max(Math.abs(pixels[j]-mean[0]),Math.abs(pixels[j+1]-mean[1]),Math.abs(pixels[j+2]-mean[2]));
+   if(pixels[j+3]>=250&&diff>=65){
+    chosen[i]=1;foreground.set(pixels.slice(j,j+4),j);foregroundCount++;
+    if(x>=width*.35&&x<width*.65&&y>=height*.35&&y<height*.65)centerCount++;
+   }
+  }
+  if(foregroundCount<Math.max(100,Math.ceil(width*height*.09))||
+     foregroundCount>width*height*.8||centerCount<20)return null;
+  let interiorCount=0;
+  for(let y=1;y<height-1;y++)for(let x=1;x<width-1;x++){
+   const i=y*width+x;if(!chosen[i])continue;
+   let solid=true;
+   for(let dy=-1;dy<=1&&solid;dy++)for(let dx=-1;dx<=1;dx++)
+    if(!chosen[i+dy*width+dx]){solid=false;break;}
+   if(solid){interior.set(pixels.slice(i*4,i*4+4),i*4);interiorCount++;}
+  }
+  if(interiorCount<100||interiorCount/foregroundCount<.35)return null;
+  const whole=maskedPalette(foreground,width,height),inside=maskedPalette(interior,width,height);
+  const confirmed=confirmedGarmentPalette(whole,inside);
+  if(!confirmed||confirmed.support<.74)return null;
+  return {...confirmed,method:'uniform-light-background',foregroundCoverage:+(foregroundCount/(width*height)).toFixed(3)};
+ }
+
+ const api={family,estimate,maskedPalette,confirmedGarmentPalette,uniformLightBackgroundPalette};root.PhotoColor=api;if(typeof module!=='undefined')module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);
