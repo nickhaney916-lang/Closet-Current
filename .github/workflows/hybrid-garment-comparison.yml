@@ -6,6 +6,8 @@ on:
     paths:
       - 'benchmark/hybrid-garment-mask.mjs'
       - 'tests/hybrid-garment-mask.test.mjs'
+      - 'benchmark/experimental-cutout-router.mjs'
+      - 'tests/experimental-cutout-router.test.mjs'
       - 'benchmark/clothing-only-comparison.mjs'
       - 'tests/clothing-only-comparison.test.mjs'
       - 'scripts/run-hybrid-garment-comparison.mjs'
@@ -26,17 +28,19 @@ jobs:
       - name: Check class-specific hybrid mask and body exclusion tests
         run: |
           node --check scripts/run-hybrid-garment-comparison.mjs
-          node --test tests/hybrid-garment-mask.test.mjs tests/clothing-only-comparison.test.mjs
+          node --test tests/hybrid-garment-mask.test.mjs tests/clothing-only-comparison.test.mjs tests/experimental-cutout-router.test.mjs
       - name: Download checksum-verified independent photos
         run: node scripts/download-reviewed-photos.mjs benchmark/manifest-fresh-11.json benchmark/photos validation-0001,validation-0003,validation-0010,validation-0017,validation-0019
       - name: Compare original, object-only and clothing-aware hybrid
         run: node scripts/run-hybrid-garment-comparison.mjs benchmark/hybrid-garment-review
       - name: Reject incomplete results or claims of release readiness
         run: |
-          node -e "const s=require('./benchmark/hybrid-garment-review/summary.json'); if(s.status!=='complete'||s.cases.length!==5||s.accuracyMeasured!==false||s.mobilePerformanceMeasured!==false||s.productionAuthorized!==false||s.cases.some(c=>c.independentlyApproved||c.garmentOnlyVerified))throw Error('Unsafe hybrid report')"
+          node -e "const s=require('./benchmark/hybrid-garment-review/summary.json'); if(s.status!=='complete'||s.cases.length!==5||s.accuracyMeasured!==false||s.mobilePerformanceMeasured!==false||s.productionAuthorized!==false||s.cases.some(c=>c.independentlyApproved||c.garmentOnlyVerified||!c.originalSourcePreserved)||s.routeSummary?.productionAuthorized!==false||s.routeSummary?.counts?.hybrid!==2||s.routeSummary?.counts?.original!==2||s.routeSummary?.counts?.object!==1)throw Error('Unsafe hybrid report')"
           for id in validation-0001 validation-0003 validation-0010 validation-0017 validation-0019; do
             test -s "benchmark/hybrid-garment-review/$id-hybrid-review.png"
             test -s "benchmark/hybrid-garment-review/$id-hybrid-alpha.png"
+            test -s "benchmark/hybrid-garment-review/$id-layered-comparison.png"
+            test -s "benchmark/hybrid-garment-review/$id-layered-candidate.png"
           done
       - uses: actions/upload-artifact@v4
         if: always()
