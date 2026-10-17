@@ -6,3 +6,22 @@ test('mixed neutral regions retain a multicolor estimate that requires confirmat
 test('three significant chromatic regions produce a multicolor estimate',()=>{const result=C.estimate(sample((x,y)=>x<8?y<8?[200,20,20]:[20,150,30]:y<8?[20,40,190]:[240,220,20]),16,16);assert.equal(result.color,'Multicolor');});
 test('transparent and invalid samples cannot become a confident color',()=>{assert.equal(C.estimate(new Uint8ClampedArray(16*16*4),16,16),null);assert.throws(()=>C.estimate([],16,16));assert.throws(()=>C.estimate([],2,2));});
 test('a clear two-tone chromatic garment is kept as multicolor rather than left blank',()=>{assert.equal(C.estimate(sample((x,y)=>x<8?[180,20,20]:[20,40,190]),16,16).color,'Multicolor');});
+
+test('shadowed orange fabric with a material bright-orange share cannot silently become confirmed Brown',()=>{
+ const dim=[145,65,20],bright=[225,100,20];
+ const rgba=sample((x,y)=>x%4===0?bright:dim);
+ const estimate=C.estimate(rgba,16,16);
+ assert.equal(estimate.color,'Brown','the legacy raw hue threshold favors the darker swatches');
+ assert.equal(estimate.needsConfirmation,true,'mixed lighting is not confident brown fabric evidence');
+ assert.equal(estimate.reason,'warm-tone-lighting-ambiguity');
+ const masked=C.maskedPalette(rgba,16,16);
+ assert.equal(masked.primary,'Brown');
+ assert.equal(masked.needsConfirmation,true);
+});
+test('a uniformly brown piece or clearly orange piece retains its useful color estimate',()=>{
+ const brown=C.estimate(sample(()=>[105,65,30]),16,16);
+ const orange=C.estimate(sample(()=>[230,105,20]),16,16);
+ assert.equal(brown.color,'Brown');assert.notEqual(brown.needsConfirmation,true);
+ assert.equal(orange.color,'Orange');assert.notEqual(orange.needsConfirmation,true);
+ assert.equal(C.maskedPalette(sample(()=>[105,65,30]),16,16).needsConfirmation,false);
+});
