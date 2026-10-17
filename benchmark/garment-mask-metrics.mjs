@@ -53,8 +53,68 @@ export function scoreApprovedPredictionAtReferenceResolution(annotation,manifest
  if(!prediction||prediction.image!==manifestEntry.image||prediction.sourceSha256!==manifestEntry.sourceSha256)throw Error('Prediction source mismatch');
  const predicted=decodeReferenceMask(prediction);
  const {width:rw,height:rh}=annotation,{width:pw,height:ph}=prediction;
- if(rw/pw!==rh/ph)throw Error('Different image aspect ratios');
+ // Matching photos may be resized by the annotation editor with
+ // rounded dimensions. Allow <= one reference pixel of rounding only for
+ // large images; small synthetic masks retain exact aspect requirements.
+ if((Math.min(rw,rh,pw,ph)<32&&rw*ph!==rh*pw)||
+    (Math.min(rw,rh,pw,ph)>=32&&Math.abs(pw*rh/ph-rw)>1))
+  throw Error('Different image aspect ratios');
  const aligned=new Uint8Array(rw*rh);
  for(let y=0;y<rh;y++)for(let x=0;x<rw;x++)aligned[y*rw+x]=predicted[Math.min(ph-1,Math.floor((y+.5)*ph/rh))*pw+Math.min(pw-1,Math.floor((x+.5)*pw/rw))];
  return {image:manifestEntry.image,referenceWidth:rw,referenceHeight:rh,predictionWidth:pw,predictionHeight:ph,alignment:'nearest-neighbor at reference resolution',...scoreGarmentMask(reference,aligned,rw,rh)};
+}
+
+// Quantify sampled foreground against an APPROVED garment outline.
+// This scores mask contamination, not clothing color correctness.
+export function erodeMaskInterior(mask,width,height){
+ if(!Number.isInteger(width)||!Number.isInteger(height)||width<1||height<1||
+    width*height>12e6||mask?.length!==width*height)throw Error('Invalid interior mask');
+ const core=new Uint8Array(mask.length);
+ for(let y=1;y<height-1;y++)for(let x=1;x<width-1;x++){
+  const i=y*width+x;
+  if(!mask[i])continue;
+  let all=true;
+  for(let dy=-1;dy<=1&&all;dy++)for(let dx=-1;dx<=1;dx++)
+   if(mask[i+dy*width+dx]!==1){all=false;break;}
+  if(all)core[i]=1;
+ }
+ return core;
+}
+function alignPredictionToReference(mask,pw,ph,rw,rh){
+ const aligned=new Uint8Array(rw*rh);
+ for(let y=0;y<rh;y++)for(let x=0;x<rw;x++)
+  aligned[y*rw+x]=mask[Math.min(ph-1,Math.floor((y+.5)*ph/rh))*pw+
+    Math.min(pw-1,Math.floor((x+.5)*pw/rw))];
+ return aligned;
+}
+export function scoreApprovedColorSampling(annotation,manifestEntry,prediction){
+ const reference=approvedReferenceMask(annotation,manifestEntry);
+ if(!prediction||prediction.image!==manifestEntry.image||
+    prediction.sourceSha256!==manifestEntry.sourceSha256)
+  throw Error('Prediction source mismatch');
+ const predicted=decodeReferenceMask(prediction);
+ const {width:rw,height:rh}=annotation,{width:pw,height:ph}=prediction;
+ if((Math.min(rw,rh,pw,ph)<32&&rw*ph!==rh*pw)||
+    (Math.min(rw,rh,pw,ph)>=32&&Math.abs(pw*rh/ph-rw)>1))
+  throw Error('Different image aspect ratios');
+ const interiorMask=erodeMaskInterior(predicted,pw,ph);
+ const full=scoreGarmentMask(reference,alignPredictionToReference(predicted,pw,ph,rw,rh),rw,rh);
+ const inner=scoreGarmentMask(reference,alignPredictionToReference(interiorMask,pw,ph,rw,rh),rw,rh);
+ const total=full.truePositive+full.falsePositive,
+       innerTotal=inner.truePositive+inner.falsePositive,
+       referenceTotal=full.truePositive+full.falseNegative;
+ return {
+  image:manifestEntry.image,sourceSha256:manifestEntry.sourceSha256,
+  referenceStatus:'independently-approved',
+  method:'predicted-region overlap with human outline; no RGB accuracy measured',
+  predictionDimensions:{width:pw,height:ph},referenceDimensions:{width:rw,height:rh},
+  full:{foregroundPrecision:full.garmentPrecision,garmentRecall:full.garmentRecall,
+    selectedPixels:total,backgroundPixelsSampled:full.falsePositive},
+  interior:{foregroundPrecision:inner.garmentPrecision,garmentRecall:inner.garmentRecall,
+    selectedPixels:innerTotal,backgroundPixelsSampled:inner.falsePositive},
+  sampledPixelRetention:total?innerTotal/total:null,
+  backgroundPixelsRemoved:full.falsePositive-inner.falsePositive,
+  garmentPixelsRemoved:full.truePositive-inner.truePositive,
+  additionalGarmentMissRate:referenceTotal?(full.truePositive-inner.truePositive)/referenceTotal:null
+ };
 }
