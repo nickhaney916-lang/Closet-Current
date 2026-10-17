@@ -191,3 +191,29 @@ export function clothingColorSample(image,map,group){
  }
  return {data,width:16,height:16,distinctMaskPixels:selected.length,sampledPixels:sampleCount};
 }
+
+
+// Deliberately excludes the outer one-model-pixel ring of a garment mask.
+// Coarse segmentation boundaries are where skin, walls, adjacent clothing,
+// hangers and floor frequently leak into sampled colors. A slim or fragmented
+// garment without a useful interior returns null rather than invented color.
+export function clothingInteriorColorSample(image,map,group,{minimumInterior=96}={}){
+ const width=map.width,height=map.height,selected=group.selected;
+ if(!Number.isInteger(width)||!Number.isInteger(height)||width<3||height<3||
+    selected?.length!==width*height||!Number.isInteger(minimumInterior)||minimumInterior<32||minimumInterior>256)
+  throw Error('Invalid garment interior mask');
+ const core=new Uint8Array(selected.length);
+ let corePixels=0,maskPixels=0;
+ for(let i=0;i<selected.length;i++)if(selected[i]){
+  maskPixels++;
+  const x=i%width,y=Math.floor(i/width);
+  if(x===0||y===0||x===width-1||y===height-1)continue;
+  let interior=true;
+  for(let dy=-1;dy<=1&&interior;dy++)for(let dx=-1;dx<=1;dx++)
+   if(!selected[i+dy*width+dx]){interior=false;break;}
+  if(interior){core[i]=1;corePixels++;}
+ }
+ if(corePixels<minimumInterior)return null;
+ const sample=clothingColorSample(image,map,{...group,selected:core});
+ return {...sample,corePixels,maskPixels,interiorFraction:+(corePixels/maskPixels).toFixed(3)};
+}
