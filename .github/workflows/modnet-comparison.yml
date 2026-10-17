@@ -11,6 +11,7 @@ on:
       - 'scripts/build-threshold-sensitivity-review.mjs'
       - 'scripts/build-annotation-reference-pack.mjs'
       - 'benchmark/shadow-annotation-validator.mjs'
+      - 'benchmark/annotate-shadow-polygons.html'
       - 'tests/shadow-annotation-validator.test.mjs'
       - 'scripts/check-shadow-outline-readiness.mjs'
       - 'benchmark/score-reviewed-shadow-cleanup.mjs'
