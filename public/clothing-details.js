@@ -6,5 +6,5 @@
  function missing(item){const fields=[['color','color'],['category','garment category'],['itemType','specific type'],['pattern','pattern']];if(!['Bottoms','Shoes','Accessories'].includes(item.category))fields.push(['sleeveLength','sleeves']);if(!['Shoes','Accessories'].includes(item.category))fields.push(['fit','fit']);const result=fields.filter(([key])=>!item[key]||['Unknown','Uncategorized','Not applicable'].includes(item[key])).map(([,label])=>label);if(!item.seasons?.length)result.push('seasons');return result;}
  // A suggested color with unresolved evidence must not enter the wardrobe as confirmed.
  function fillColor(item,estimate){if(!estimate||estimate.needsConfirmation===true||!values.color.includes(estimate.color)||item.color&&item.color!=='Unknown')return item;return {...item,color:estimate.color,colorSource:'photo-estimate'};}
- const api={recognizedFields,fill,fillColor,missing,validColor:value=>values.color.includes(value)};root.ClothingDetails=api;if(typeof module!=='undefined')module.exports=api;
+ const api={recognizedFields,fill,fillColor,missing,colors:Object.freeze([...values.color]),validColor:value=>values.color.includes(value)};root.ClothingDetails=api;if(typeof module!=='undefined')module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);
