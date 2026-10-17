@@ -6,6 +6,8 @@ on:
     paths:
       - 'benchmark/garment-instance-evidence.mjs'
       - 'tests/garment-instance-evidence.test.mjs'
+      - 'benchmark/clearly-visible-layers.mjs'
+      - 'tests/clearly-visible-layers.test.mjs'
       - 'scripts/run-real-instance-fragments.mjs'
       - '.github/workflows/garment-instance-evidence.yml'
 permissions:
@@ -24,7 +26,7 @@ jobs:
       - name: Guard distinct garment instance evidence
         run: |
           node --check scripts/run-real-instance-fragments.mjs
-          node --test tests/garment-instance-evidence.test.mjs tests/garment-subtype-consensus.test.mjs tests/multilayer-review-safety.test.mjs
+          node --test tests/garment-instance-evidence.test.mjs tests/clearly-visible-layers.test.mjs tests/garment-subtype-consensus.test.mjs tests/multilayer-review-safety.test.mjs
       - name: Load eight SHA-256 verified independent test photographs
         run: |
           node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos commons-0001,commons-0003,commons-0041,commons-0043,commons-0060,commons-0062,commons-0059
