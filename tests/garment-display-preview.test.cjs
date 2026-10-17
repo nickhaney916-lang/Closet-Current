@@ -51,12 +51,12 @@ test('external links, HTML/SVG, unexpected image types are rejected',async()=>{
  assert.equal(await gate.approved(item),null);
 });
 test('photo hash calculation fails closed if browser crypto is unavailable',async()=>{
- const saved=global.crypto,oldAtob=global.atob;
+ const own=Object.getOwnPropertyDescriptor(globalThis,'crypto');
  try{
-  global.crypto=undefined;
+  Object.defineProperty(globalThis,'crypto',{value:undefined,configurable:true});
   assert.equal(await gate.sourceHash(a),null);
  }finally{
-  global.crypto=saved;
-  global.atob=oldAtob;
+  if(own)Object.defineProperty(globalThis,'crypto',own);
+  else delete globalThis.crypto;
  }
 });
