@@ -105,6 +105,10 @@ jobs:
         run: node scripts/run-modnet-comparison.mjs benchmark/modnet-predictions
       - name: Compare native MODNet alpha versus binary segmentation
         run: node scripts/build-raw-alpha-review.mjs benchmark/raw-alpha-review
+      - name: Verify six native alpha edge diagnostics
+        run: |
+          node --test tests/inspect-alpha-edges.test.mjs
+          node -e "const r=require('./benchmark/raw-alpha-review/edge-diagnostics.json'); if(r.photos.length!==6||r.photos.some(p=>!p.edgeRegions||!p.edgeReviewOnly||p.shadowRemovalVerified!==false))process.exit(1)"
       - name: Verify original alpha reviews for six garments
         run: |
           for id in commons-0035 commons-0049 commons-0053 commons-0065 commons-0079 commons-0094; do
