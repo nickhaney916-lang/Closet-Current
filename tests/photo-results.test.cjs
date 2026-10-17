@@ -1,9 +1,9 @@
 const test=require('node:test'),assert=require('node:assert/strict'),vm=require('node:vm'),fs=require('node:fs');
 const source=fs.readFileSync('public/app.js','utf8');
 function setup(){
- function node(tag,text){return {tag,text:text||'',children:[],append(...children){this.children.push(...children);},replaceChildren(...children){this.children=children;}};}
- const c={recognitionState:{phase:'idle',percent:null,activeId:null},node,items:[],localPending:new Set(),localReady:true,adjustPhoto(item){c.adjusted=item;},cropClothingPhoto(item){c.cropped=item;}};
- vm.createContext(c);vm.runInContext(source.slice(source.indexOf('function cropButton('),source.indexOf('function adjustPhoto(')),c);vm.runInContext(source.slice(source.indexOf('function renderPhotoResults('),source.indexOf('function render(){')),c);
+ function node(tag,text){return {tag,text:text||'',children:[],setAttribute(){},append(...children){this.children.push(...children);},replaceChildren(...children){this.children=children;}};}
+ const c={recognitionState:{phase:'idle',percent:null,activeId:null},node,items:[],batch:[],categories:['Tops','Dresses'],ClothingDetails:{colors:['Black','Blue','Red'],validColor:v=>['Black','Blue','Red'].includes(v)},localPending:new Set(),localReady:true,adjustPhoto(item){c.adjusted=item;},cropClothingPhoto(item){c.cropped=item;}};
+ vm.createContext(c);vm.runInContext(source.slice(source.indexOf('function cropButton('),source.indexOf('function adjustPhoto(')),c);vm.runInContext(source.slice(source.indexOf('function canConfirmReviewedColor('),source.indexOf('function renderPhotoResults(')),c);vm.runInContext(source.slice(source.indexOf('function renderPhotoResults('),source.indexOf('function render(){')),c);
  return {c,grid:node('div')};
 }
 function descendants(x){return [x,...x.children.flatMap(descendants)];}
@@ -35,4 +35,29 @@ test('storage failure shows Not saved and keeps recognized labels with one Adjus
 
 test('saved outfit pieces show their clipped image without an add or selection step',()=>{
  const {c,grid}=setup();const item={id:'ready',image:'auto-clipped-photo',outfitSourceId:'outfit',category:'Tops',itemType:'T-shirt',localAnalyzed:true};c.items=[item];c.renderPhotoResults(grid,[item]);const nodes=descendants(grid);assert.ok(nodes.some(x=>x.text==='Saved'));assert.ok(nodes.some(x=>x.tag==='img'&&x.src==='auto-clipped-photo'));assert.ok(!nodes.some(x=>x.tag==='input'||x.text==='Ready to add'));
+});
+
+test('an unresolved color offers one-choice inline saving without adding tabs',async()=>{
+ const {c,grid}=setup(),item={id:'shirt',image:'photo',category:'Tops',itemType:'T-shirt',color:'',localAnalyzed:true,seasons:[]};
+ c.batch=[item];const selected=[];
+ c.confirmReviewedColor=async(input,color)=>{selected.push({input,color});return true;};
+ c.renderPhotoResults(grid,[item]);const nodes=descendants(grid),picker=nodes.find(x=>x.tag==='select');
+ assert.ok(picker);
+ assert.ok(nodes.some(x=>x.text==='Choose color · save'));
+ assert.deepEqual(nodes.filter(x=>x.tag==='option').map(x=>x.text),['Choose color','Black','Blue','Red']);
+ picker.value='Blue';await picker.onchange();
+ assert.equal(picker.disabled,true);
+ assert.equal(selected.length,1);assert.equal(selected[0].input,item);
+ assert.equal(selected[0].color,'Blue');
+ assert.equal(nodes.filter(x=>x.tag==='button').length,2);
+});
+test('processing, already-saved, and duplicate items never show quick color save',()=>{
+ const {c,grid}=setup();
+ const item={id:'shirt',category:'Tops',itemType:'T-shirt',localAnalyzed:true,color:''};
+ for(const variation of [{pending:true},{saved:true},{possibleDuplicate:true},{requiresOwnershipConfirmation:true}]){
+  c.batch=[item];c.items=[];c.localPending.clear();
+  const one={...item,...variation};
+  c.batch=[one];if(variation.pending)c.localPending.add(one.id);if(variation.saved){c.items=[one];c.batch=[];}
+  c.renderPhotoResults(grid,[one]);assert.equal(descendants(grid).filter(x=>x.tag==='select').length,0);
+ }
 });
