@@ -318,6 +318,24 @@ try{
   const after=await page.evaluate(()=>batch.find(x=>x.importFilename==='commons-0060.jpg')?.category);
   assert.equal(after,'Uncategorized','Cancel must not silently save the suggested category');
  }
+ // Exercise the real mobile review UI after measurements are recorded.
+ // The explicit selection simulates the user, not another AI inference.
+ const quickCardIndex=await page.evaluate(()=>{
+  const i=batch.findIndex(x=>x.importFilename==='commons-0035.jpg');
+  if(i>=0)switchView('review');
+  return i;
+ });
+ assert.ok(quickCardIndex>=0,'Uncertain orange shorts must remain available to review');
+ const quickPicker=page.locator('#reviewGrid .photo-result').nth(quickCardIndex).locator('.quick-color-confirm select');
+ assert.equal(await quickPicker.count(),1,'One inline color choice must be visible for a reviewable piece');
+ await quickPicker.selectOption('Orange');
+ await page.waitForFunction(()=>items.some(x=>x.importFilename==='commons-0035.jpg'&&x.color==='Orange')&&!batch.some(x=>x.importFilename==='commons-0035.jpg'),null,{timeout:10000});
+ const chosen=await page.evaluate(()=>{
+  const piece=items.find(x=>x.importFilename==='commons-0035.jpg');
+  return piece?{category:piece.category,itemType:piece.itemType,color:piece.color,colorSource:piece.colorSource}:null;
+ });
+ assert.deepEqual(chosen,{category:'Bottoms',itemType:'Shorts',color:'Orange',colorSource:'user'});
+ console.log('QUICK_COLOR_USER_CONFIRMATION '+JSON.stringify({fixture:'commons-0035',...chosen,requiredExtraScreen:false,automaticInference:false}));
  assert.deepEqual(errors,[]);await page.screenshot({path:out+'/closet.png',fullPage:true});
  const result={viewport:{width:390,height:844},camera,image,manualSave:true,searchAndFilters:true,reloadPersistence:true,automaticPhotoIndexing:true,realRecognitionWorker:true,auth:'test identity stub; production auth not tested',hardware:'Chromium fake camera; physical phone not tested',pageErrors:errors};await writeFile(out+'/results.json',JSON.stringify(result,null,2));console.log(JSON.stringify(result));
 }finally{await browser?.close();await new Promise(r=>server.close(r));}
