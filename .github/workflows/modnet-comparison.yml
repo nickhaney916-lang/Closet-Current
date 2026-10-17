@@ -9,6 +9,7 @@ on:
       - 'scripts/build-threshold128-edge-review.mjs'
       - 'scripts/build-edge-background-stress.mjs'
       - 'scripts/build-threshold-sensitivity-review.mjs'
+      - 'scripts/build-annotation-reference-pack.mjs'
       - 'scripts/compare-garment-models.mjs'
       - 'scripts/build-three-way-visual.mjs'
       - 'scripts/build-four-way-model-review.mjs'
@@ -73,6 +74,18 @@ jobs:
         run: node --test tests/modnet-sharp128-baseline.test.mjs
       - name: Download and verify source photographs
         run: node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos commons-0035,commons-0049,commons-0053,commons-0065,commons-0079,commons-0094
+      - name: Generate clean original-photo annotation reference pack
+        run: node scripts/build-annotation-reference-pack.mjs benchmark/annotation-reference-pack
+      - name: Verify annotation reference images
+        run: |
+          for id in commons-0035 commons-0049 commons-0053 commons-0065 commons-0079 commons-0094; do
+            test -s "benchmark/annotation-reference-pack/$id-annotation-source.png"
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: experimental-six-garment-annotation-sources
+          path: benchmark/annotation-reference-pack/
+          retention-days: 14
       - name: Generate experimental MODNet masks
         run: node scripts/run-modnet-comparison.mjs benchmark/modnet-predictions
       - name: Compare native MODNet alpha versus binary segmentation
