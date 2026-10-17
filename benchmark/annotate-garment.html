@@ -54,21 +54,98 @@ prediction.onchange=async()=>{
   status.textContent='AI starting mask loaded. Correct all edges manually before exporting a draft. Independent review is required.';
  }catch(e){status.textContent='Could not load prediction: '+e.message;}
 };
+function canExport(){
+ if(!mask||!mask.some(Boolean)||!mask.some(value=>value===0))return false;
+ if(reviewedDraft)return true;
+ if(!strokes)return false;
+ // Undoing an AI-assisted edit back to the original suggestion isn't review.
+ if(seedMask&&mask.every((value,i)=>value===seedMask[i]))return false;
+ return true;
+}
+function refreshEditButtons(){
+ download.disabled=!canExport();
+ undo.disabled=!undoStack.length;redo.disabled=!redoStack.length;
+ applyPolygon.disabled=!mask||polygon.length<3;
+ cancelPolygon.disabled=!polygon.length;
+}
+function startEdit(){
+ if(!mask)return;
+ undoStack.push(new Uint8Array(mask));if(undoStack.length>12)undoStack.shift();
+ redoStack.length=0;strokes++;refreshEditButtons();
+}
+function restore(history,other){
+ if(!history.length||!mask)return;
+ other.push(new Uint8Array(mask));if(other.length>12)other.shift();
+ mask=history.pop();polygon=[];redraw();refreshEditButtons();
+}
+undo.onclick=()=>restore(undoStack,redoStack);
+redo.onclick=()=>restore(redoStack,undoStack);
 function redraw(){
  if(!source)return;ctx.drawImage(source.base,0,0);
  const image=ctx.getImageData(0,0,canvas.width,canvas.height);
  for(let i=0;i<mask.length;i++)if(mask[i]){image.data[4*i]=Math.round(image.data[4*i]*.6+130);image.data[4*i+1]=Math.round(image.data[4*i+1]*.6+35);image.data[4*i+2]=Math.round(image.data[4*i+2]*.6+170);}
  ctx.putImageData(image,0,0);
+ if(polygon.length){
+  ctx.save();ctx.lineWidth=2;ctx.strokeStyle='#00f2a8';ctx.fillStyle='#00f2a8';
+  ctx.beginPath();ctx.moveTo(polygon[0].x,polygon[0].y);
+  for(const point of polygon.slice(1))ctx.lineTo(point.x,point.y);
+  ctx.stroke();
+  for(const point of polygon){ctx.beginPath();ctx.arc(point.x,point.y,3,0,Math.PI*2);ctx.fill();}
+  ctx.restore();
+ }
 }
-function paint(e){
+function point(e){
+ const box=canvas.getBoundingClientRect();
+ return {x:Math.max(0,Math.min(canvas.width-1,Math.floor((e.clientX-box.left)*canvas.width/box.width))),
+ y:Math.max(0,Math.min(canvas.height-1,Math.floor((e.clientY-box.top)*canvas.height/box.height)))};
+}
+function dot(x,y){
+ const r=Number(radius.value),value=Number(mode.value);
+ for(let yy=Math.max(0,y-r);yy<Math.min(canvas.height,y+r+1);yy++)
+  for(let xx=Math.max(0,x-r);xx<Math.min(canvas.width,x+r+1);xx++)
+   if((xx-x)**2+(yy-y)**2<=r*r)mask[yy*canvas.width+xx]=value;
+}
+function paintLine(from,to){
+ const steps=Math.max(1,Math.ceil(Math.hypot(to.x-from.x,to.y-from.y)));
+ for(let i=0;i<=steps;i++)dot(Math.round(from.x+(to.x-from.x)*i/steps),Math.round(from.y+(to.y-from.y)*i/steps));
+ redraw();refreshEditButtons();
+}
+function pointInPolygon(x,y,vertices){
+ let inside=false;
+ for(let i=0,j=vertices.length-1;i<vertices.length;j=i++){
+  const a=vertices[i],b=vertices[j];
+  if((a.y>y)!==(b.y>y)&&x<(b.x-a.x)*(y-a.y)/(b.y-a.y)+a.x)inside=!inside;
+ }
+ return inside;
+}
+applyPolygon.onclick=()=>{
+ if(!mask||polygon.length<3)return;
+ startEdit();
+ const xs=polygon.map(p=>p.x),ys=polygon.map(p=>p.y),
+  left=Math.max(0,Math.floor(Math.min(...xs))),right=Math.min(canvas.width,Math.ceil(Math.max(...xs))+1),
+  top=Math.max(0,Math.floor(Math.min(...ys))),bottom=Math.min(canvas.height,Math.ceil(Math.max(...ys))+1);
+ const bit=Number(mode.value);
+ for(let y=top;y<bottom;y++)for(let x=left;x<right;x++)
+  if(pointInPolygon(x+.5,y+.5,polygon))mask[y*canvas.width+x]=bit;
+ polygon=[];redraw();refreshEditButtons();
+ status.textContent='Outline filled. Refine edges with the brush, then export a draft for independent review.';
+};
+cancelPolygon.onclick=()=>{polygon=[];redraw();refreshEditButtons();};
+tool.onchange=()=>{painting=false;polygon=[];redraw();refreshEditButtons();};
+canvas.onpointerdown=e=>{
  if(!mask)return;
- const box=canvas.getBoundingClientRect(),x=Math.floor((e.clientX-box.left)*canvas.width/box.width),y=Math.floor((e.clientY-box.top)*canvas.height/box.height),r=Number(radius.value),value=Number(mode.value);
- for(let yy=Math.max(0,y-r);yy<Math.min(canvas.height,y+r+1);yy++)for(let xx=Math.max(0,x-r);xx<Math.min(canvas.width,x+r+1);xx++)if((xx-x)**2+(yy-y)**2<=r*r)mask[yy*canvas.width+xx]=value;
- strokes++;download.disabled=false;redraw();
-}
-canvas.onpointerdown=e=>{painting=true;canvas.setPointerCapture(e.pointerId);paint(e);};
-canvas.onpointermove=e=>{if(painting)paint(e);};
-canvas.onpointerup=canvas.onpointercancel=()=>painting=false;
+ e.preventDefault();
+ const p=point(e);
+ if(tool.value==='polygon'){
+  if(polygon.length>=2000){status.textContent='Too many outline points. Apply or cancel this outline.';return;}
+  polygon.push(p);redraw();refreshEditButtons();
+  return;
+ }
+ painting=true;lastPoint=p;startEdit();
+ canvas.setPointerCapture(e.pointerId);paintLine(p,p);
+};
+canvas.onpointermove=e=>{if(!painting||!mask||tool.value!=='brush')return;const p=point(e);paintLine(lastPoint,p);lastPoint=p;};
+canvas.onpointerup=canvas.onpointercancel=()=>{painting=false;lastPoint=null;refreshEditButtons();};
 download.onclick=()=>{
  if(!source||!canExport()){status.textContent='Mark or correct the garment boundary before exporting. Untouched AI masks cannot become a draft.';return;}
  if(!reviewer.value.trim()){status.textContent='Enter the first reviewer name before exporting a draft.';return;}
