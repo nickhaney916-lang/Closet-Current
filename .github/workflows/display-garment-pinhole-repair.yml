@@ -6,13 +6,14 @@ on:
     paths:
       - 'public/outfit-segmentation.mjs'
       - 'tests/garment-display-pinhole.test.mjs'
+      - 'scripts/run-real-display-pinhole-benchmark.mjs'
       - '.github/workflows/display-garment-pinhole-repair.yml'
 permissions:
   contents: read
 jobs:
   verify-display-crops:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -22,6 +23,21 @@ jobs:
         run: |
           node --check public/outfit-segmentation.mjs
           node --test tests/garment-display-pinhole.test.mjs tests/outfit-segmentation.test.mjs tests/outfit-segmentation-edge.test.mjs
+      - name: Install pinned existing garment segmentation runtime
+        run: npm install --no-save --no-package-lock @huggingface/transformers@3.8.1 sharp@0.34.4
+      - name: Download three independent hash-verified photos
+        run: node scripts/download-reviewed-photos.mjs benchmark/manifest-fresh-11.json benchmark/photos validation-0001,validation-0017,validation-0019
+      - name: Run real photographic before/after clipping comparison
+        run: node scripts/run-real-display-pinhole-benchmark.mjs benchmark/real-pinhole-review
+      - name: Enforce no hallucinated quality scores or source modifications
+        run: |
+          node -e "const s=require('./benchmark/real-pinhole-review/summary.json');if(s.status!=='complete'||s.cases.length!==3||s.maskAccuracyPercent!==null||s.pixelGroundTruthAvailable||!s.originalImageUnchanged||s.productionPromotionApproved||s.cases.some(c=>!c.originalPhotoPreserved||c.entries.some(x=>x.repairedCoarsePixels>x.maskGrowthBudget||x.sourceRgbModified||x.sourceColorSynthesized)))throw Error('Real photo safety gate failed')"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: priority-one-real-photo-clipping-comparisons
+          path: benchmark/real-pinhole-review/
+          retention-days: 14
       - name: Ensure browser app builds with no extra model downloads
         run: node scripts/build.mjs
       - name: Verify repair remains limited to display cutout only
