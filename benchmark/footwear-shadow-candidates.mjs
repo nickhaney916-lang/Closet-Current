@@ -26,7 +26,16 @@ export function footwearLowerSilhouetteProfile(prediction,{bottomFraction=.35}={
   for(let x=0;x<width;x++)if(mask[y*width+x]){left=Math.min(left,x);right=Math.max(right,x);sum+=x;count++;}
   if(count)rows.push({y,count,left,right,span:right-left+1,center:sum/count,occupancy:count/width});
  }
- const shifts=[];
- for(let i=1;i<rows.length;i++)shifts.push({y:rows[i].y,centerShift:rows[i].center-rows[i-1].center,spanChange:rows[i].span-rows[i-1].span});
- return {rows,shifts,reviewOnly:true,removedPixels:0,requiresApprovedReference:true};
+ const shifts=[],abruptRows=[];
+ for(let i=1;i<rows.length;i++){
+  const previous=rows[i-1],current=rows[i];
+  // Never compare disconnected image rows as if they were consecutive.
+  if(current.y!==previous.y+1)continue;
+  const centerShift=current.center-previous.center,spanChange=current.span-previous.span;
+  const step={y:current.y,centerShift,spanChange,centerShiftFraction:centerShift/width,spanChangeFraction:spanChange/width};
+  shifts.push(step);
+  // Large silhouette transitions deserve inspection, NOT automatic removal.
+  if(Math.abs(step.centerShiftFraction)>=.03||Math.abs(step.spanChangeFraction)>=.1)abruptRows.push(step);
+ }
+ return {rows,shifts,abruptRows,reviewOnly:true,removedPixels:0,requiresApprovedReference:true,thresholds:{centerShiftFraction:.03,spanChangeFraction:.1}};
 }
