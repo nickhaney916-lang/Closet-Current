@@ -1,0 +1,40 @@
+name: Experimental jacket shirt instance box proposals
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'benchmark/garment-box-detection-gate.mjs'
+      - 'tests/garment-box-detection-gate.test.mjs'
+      - 'scripts/run-grounded-layer-detection.mjs'
+      - '.github/workflows/grounded-layer-detection.yml'
+permissions:
+  contents: read
+jobs:
+  separate-layer-boxes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned experimental inference packages
+        run: npm install --no-save --no-package-lock @huggingface/transformers@3.8.1 sharp@0.34.4
+      - name: Test garment detection box safety rules
+        run: |
+          node --check scripts/run-grounded-layer-detection.mjs
+          node --test tests/garment-box-detection-gate.test.mjs tests/garment-instance-evidence.test.mjs
+      - name: Recover verified licensed photos
+        run: node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos commons-0059,commons-0062,commons-0003
+      - name: Evaluate real zero-shot shirt/jacket/dress boxes
+        run: node scripts/run-grounded-layer-detection.mjs benchmark/grounded-layer-review
+      - name: Verify unapproved experimental output
+        run: |
+          node -e "const x=require('./benchmark/grounded-layer-review/summary.json');if(x.status!=='complete'||x.cases.length!==3||x.productionAuthorized!==false||x.physicalGarmentInstancesVerified!==false||x.cases.some(c=>c.autoCreatedItems!==0||!c.sourcePhotoPreserved))throw Error('Garment box safety report failed')"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: experimental-grounding-dino-three-photo-boxes
+          path: benchmark/grounded-layer-review/
+          retention-days: 14
