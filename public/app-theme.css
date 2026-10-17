@@ -126,3 +126,16 @@ header{padding-top:22px;padding-bottom:18px}.brand-mark{background:#7043ba;color
 .photo-result .quick-color-confirm>span{display:block;margin-bottom:4px;font-size:14px}
 .photo-result .quick-color-confirm select{width:100%;min-height:58px;font-size:17px;border:2px solid #9266c3;background:#fff;border-radius:16px}
 .photo-result .quick-color-confirm select:disabled{opacity:.65}
+
+/* Optional real AI try-on. Never visually substitutes the ordinary figure
+   until the private paid service returns an actual rendered image. */
+.ai-tryon-panel{margin:14px 0 20px;padding:16px;border:1px solid var(--line,#d7dccd);border-radius:16px;background:var(--surface,#fff)}
+.ai-tryon-panel h3{margin:0 0 8px;font-size:1.1rem}
+.ai-tryon-panel h3 small{font-weight:500;font-size:.72rem;opacity:.75}
+.ai-tryon-panel p{line-height:1.5}
+.ai-tryon-controls{display:flex;flex-wrap:wrap;gap:12px;align-items:end}
+.ai-tryon-controls label{display:grid;gap:4px;font-weight:600;flex:1;min-width:145px}
+.ai-tryon-controls select,.ai-tryon-controls button{min-height:48px;font:inherit}
+.ai-tryon-controls button{flex:1;min-width:150px}
+.ai-tryon-result{display:block;width:100%;height:auto;max-height:530px;object-fit:contain;border-radius:12px;background:#f0f0ee}
+.ai-tryon-result[hidden]{display:none}
