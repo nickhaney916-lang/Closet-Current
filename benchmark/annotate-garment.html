@@ -4,12 +4,12 @@
 <style>body{font:16px system-ui;max-width:920px;margin:auto;padding:16px;background:#f8f7fb;color:#231e2d}button,select,input{font:inherit;padding:10px;margin:4px}canvas{width:100%;max-width:720px;touch-action:none;background:#ddd}#status{white-space:pre-wrap} .controls{display:flex;flex-wrap:wrap;gap:8px}</style>
 <h1>Reference garment outline review</h1>
 <p>Internal benchmark tool, not part of the Closet Current customer interface. Load a verified source photo, paint the clothing foreground, and export a reference mask for independent review. Never assume the initial blank mask is complete.</p>
-<div class="controls"><input id="photo" type="file" accept="image/*"><label>Resume previous draft <input id="resume" type="file" accept=".json,application/json"></label><label>Load AI mask as editable starting point <input id="prediction" type="file" accept=".json,application/json"></label><select id="mode"><option value="1">Mark garment</option><option value="0">Erase / background</option></select><label>First reviewer <input id="reviewer" type="text" maxlength="80" autocomplete="off" placeholder="Your reviewer name"></label><label>Brush radius <input type="range" id="radius" min="1" max="30" value="7"></label><button id="download" disabled>Export annotation JSON</button></div>
+<div class="controls"><input id="photo" type="file" accept="image/*"><label>Resume previous draft <input id="resume" type="file" accept=".json,application/json"></label><label>Load AI mask as editable starting point <input id="prediction" type="file" accept=".json,application/json"></label><label>Tool <select id="tool"><option value="brush">Paint brush</option><option value="polygon">Outline polygon (tap corners)</option></select></label><select id="mode" aria-label="Mask edit mode"><option value="1">Mark garment</option><option value="0">Erase / background</option></select><label>First reviewer <input id="reviewer" type="text" maxlength="80" autocomplete="off" placeholder="Your reviewer name"></label><label>Brush radius <input type="range" id="radius" min="1" max="30" value="7"></label><button id="applyPolygon" type="button" disabled>Fill outline</button><button id="cancelPolygon" type="button" disabled>Cancel outline</button><button id="undo" type="button" disabled>Undo</button><button id="redo" type="button" disabled>Redo</button><button id="download" disabled>Export annotation JSON</button></div>
 <canvas id="canvas" width="256" height="256" aria-label="Image and reference mask editor"></canvas><p id="status" role="status">Choose a source image. Paint all of the garment before export.</p>
 <script>
 'use strict';
-const prediction=document.querySelector('#prediction'),resume=document.querySelector('#resume'),photo=document.querySelector('#photo'),canvas=document.querySelector('#canvas'),ctx=canvas.getContext('2d'),status=document.querySelector('#status'),download=document.querySelector('#download'),mode=document.querySelector('#mode'),radius=document.querySelector('#radius'),reviewer=document.querySelector('#reviewer');
-let source=null,mask=null,painting=false,strokes=0,seedModel=null;
+const prediction=document.querySelector('#prediction'),resume=document.querySelector('#resume'),photo=document.querySelector('#photo'),canvas=document.querySelector('#canvas'),ctx=canvas.getContext('2d'),status=document.querySelector('#status'),download=document.querySelector('#download'),mode=document.querySelector('#mode'),radius=document.querySelector('#radius'),reviewer=document.querySelector('#reviewer'),tool=document.querySelector('#tool'),applyPolygon=document.querySelector('#applyPolygon'),cancelPolygon=document.querySelector('#cancelPolygon'),undo=document.querySelector('#undo'),redo=document.querySelector('#redo');
+let source=null,mask=null,painting=false,strokes=0,seedModel=null,reviewedDraft=false,seedMask=null,polygon=[],lastPoint=null;const undoStack=[],redoStack=[];
 photo.onchange=async()=>{
  const file=photo.files[0];if(!file)return;
  if(file.size>16000000){status.textContent='Image too large';return;}
@@ -20,7 +20,7 @@ photo.onchange=async()=>{
   const base=document.createElement('canvas');base.width=canvas.width;base.height=canvas.height;base.getContext('2d').drawImage(image,0,0,base.width,base.height);
   const digest=await crypto.subtle.digest('SHA-256',await file.arrayBuffer());
   const sourceSha256=Array.from(new Uint8Array(digest),b=>b.toString(16).padStart(2,'0')).join('');
-  source={fileName:file.name,sourceSha256,base};mask=new Uint8Array(canvas.width*canvas.height);strokes=0;seedModel=null;download.disabled=true;redraw();status.textContent='Paint garment outline carefully; initial mask is blank.';
+  source={fileName:file.name,sourceSha256,base};mask=new Uint8Array(canvas.width*canvas.height);strokes=0;seedModel=null;reviewedDraft=false;seedMask=null;polygon=[];undoStack.length=redoStack.length=0;refreshEditButtons();redraw();status.textContent='Paint or outline the actual garment carefully; the initial mask is blank.';
  }catch{status.textContent='Unable to decode image';}finally{URL.revokeObjectURL(url);}
 };
 resume.onchange=async()=>{
@@ -33,7 +33,7 @@ resume.onchange=async()=>{
   const restored=new Uint8Array(n);let offset=0,foreground=false;
   for(const count of draft.runs){if(!Number.isInteger(count)||count<0||offset+count>n)throw Error('Invalid run encoding');if(foreground)restored.fill(1,offset,offset+count);offset+=count;foreground=!foreground;}
   if(offset!==n)throw Error('Incomplete mask');
-  mask=restored;seedModel=draft.seedModel||null;reviewer.value=draft.reviewer||'';strokes=0;download.disabled=!mask.some(Boolean);redraw();
+  mask=restored;seedModel=draft.seedModel||null;reviewer.value=draft.reviewer||'';strokes=0;reviewedDraft=true;seedMask=null;polygon=[];undoStack.length=redoStack.length=0;refreshEditButtons();redraw();
   status.textContent='Draft restored for editing. Independent review is still required.';
  }catch(e){status.textContent='Could not restore draft: '+e.message;}
 };
@@ -50,7 +50,7 @@ prediction.onchange=async()=>{
   if(offset!==n)throw Error('Incomplete prediction');
   const reduced=new Uint8Array(canvas.width*canvas.height);
   for(let y=0;y<canvas.height;y++)for(let x=0;x<canvas.width;x++)reduced[y*canvas.width+x]=decoded[Math.min(h-1,Math.floor((y+.5)*h/canvas.height))*w+Math.min(w-1,Math.floor((x+.5)*w/canvas.width))];
-  mask=reduced;seedModel=data.model||data.modelId||'AI prediction';strokes=0;download.disabled=!mask.some(Boolean);redraw();
+  mask=reduced;seedModel=data.model||data.modelId||'AI prediction';strokes=0;reviewedDraft=false;seedMask=new Uint8Array(reduced);polygon=[];undoStack.length=redoStack.length=0;refreshEditButtons();redraw();
   status.textContent='AI starting mask loaded. Correct all edges manually before exporting a draft. Independent review is required.';
  }catch(e){status.textContent='Could not load prediction: '+e.message;}
 };
@@ -70,7 +70,7 @@ canvas.onpointerdown=e=>{painting=true;canvas.setPointerCapture(e.pointerId);pai
 canvas.onpointermove=e=>{if(painting)paint(e);};
 canvas.onpointerup=canvas.onpointercancel=()=>painting=false;
 download.onclick=()=>{
- if(!source||!mask.some(Boolean)||(!strokes&&!resume.files?.length)){status.textContent='No garment marked';return;}
+ if(!source||!canExport()){status.textContent='Mark or correct the garment boundary before exporting. Untouched AI masks cannot become a draft.';return;}
  if(!reviewer.value.trim()){status.textContent='Enter the first reviewer name before exporting a draft.';return;}
  const runs=[];let previous=0,count=0;
  for(const value of mask){if(value!==previous){runs.push(count);count=0;previous=value;}count++;}
