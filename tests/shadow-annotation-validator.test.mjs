@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {validateShadowAnnotation} from '../benchmark/shadow-annotation-validator.mjs';
 const entry={id:'photo',sourceSha256:'verified-sha'};
-const approved={schemaVersion:1,imageId:'photo',sourceSha256:'verified-sha',reviewStatus:'approved',regions:{garment:[[[0,0],[1,0],[1,1]]],shadow:[[[0,0],[0,1],[1,1]]]}};
+const approved={schemaVersion:1,imageId:'photo',sourceSha256:'verified-sha',reviewStatus:'approved',reviewer:'primary-reviewer',approvedBy:'independent-reviewer',regions:{garment:[[[0,0],[1,0],[1,1]]],shadow:[[[0,0],[0,1],[1,1]]]}};
 test('rejects unapproved annotations',()=>{assert.equal(validateShadowAnnotation({...approved,reviewStatus:'pending'},entry).valid,false);});
 test('rejects mismatched photos and unsafe coordinates',()=>{assert.equal(validateShadowAnnotation({...approved,sourceSha256:'other'},entry).valid,false);assert.equal(validateShadowAnnotation({...approved,regions:{...approved.regions,shadow:[[[0,0],[2,0],[1,1]]]}},entry).valid,false);});
 test('valid annotation is a reviewed reference, never automatic production authorization',()=>{assert.equal(validateShadowAnnotation(approved,entry).valid,true);});
@@ -32,4 +32,17 @@ test('rejects crossed polygon even if its signed area is not zero',()=>{
  const result=validateShadowAnnotation({...approved,regions:{...approved.regions,shadow:crossed}},entry);
  assert.equal(result.valid,false);
  assert.ok(result.issues.some(issue=>issue.includes('edges must not cross')));
+});
+
+test('refuses self-approval or missing independent reviewer identities',()=>{
+ for(const invalid of [
+  {...approved,approvedBy:'primary-reviewer'},
+  {...approved,approvedBy:'PRIMARY-REVIEWER'},
+  {...approved,reviewer:''},
+  {...approved,approvedBy:' '}
+ ]){
+  const validation=validateShadowAnnotation(invalid,entry);
+  assert.equal(validation.valid,false);
+  assert.ok(validation.issues.some(issue=>issue.includes('two distinct reviewer')));
+ }
 });
