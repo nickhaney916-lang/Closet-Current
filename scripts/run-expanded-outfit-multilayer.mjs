@@ -8,6 +8,7 @@ import {AutoProcessor,AutoModel,AutoModelForSemanticSegmentation,RawImage,env} f
 import {clothingLabelMap} from '../public/outfit-segmentation.mjs';
 import {protectedBodyFromLogits,hybridGarmentAlpha} from '../benchmark/hybrid-garment-mask.mjs';
 import {partitionOutfitClothing} from '../benchmark/multilayer-outfit-evaluation.mjs';
+import {evaluateMultiGarmentReview} from '../benchmark/multilayer-review-safety.mjs';
 
 const root=process.argv[2]||'benchmark/expanded-outfit-review';
 const manifest=JSON.parse(await readFile('benchmark/expanded-outfit-review-manifest.json','utf8'));
@@ -105,12 +106,15 @@ try{
     }
     // No detected category: save original preview without inventing any cutout.
     if(!emitted.length)await writeFile(join(root,entry.id+'-original-fallback.png'),original);
+    const review=evaluateMultiGarmentReview({expected:entry.expected,
+      personDetected:map.personDetected,parts:emitted,
+      objectPixels:emitted[0]?.objectPixels ?? object.data.reduce((n,v)=>n+(v>=128?1:0),0)});
     const record={id:entry.id,scenario:entry.scenario,expected:entry.expected,
       sourceSha256:entry.source.sha256,sourceUrl:entry.source.attribution.source,
       license:entry.source.attribution.license,sourceWidth:w,sourceHeight:h,
       semanticMs,objectMs,personDetected:map.personDetected,
       detected:partition.parts.map(p=>p.slot),missing:partition.missing,
-      issues:partition.issues,parts:emitted,
+      issues:partition.issues,parts:emitted,review,
       originalPreserved:true,automaticCatalogApproved:false,accuracyMeasured:false};
     report.cases.push(record);
     await save();
