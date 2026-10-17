@@ -12,6 +12,7 @@ on:
       - 'scripts/build-annotation-reference-pack.mjs'
       - 'benchmark/shadow-annotation-validator.mjs'
       - 'tests/shadow-annotation-validator.test.mjs'
+      - 'scripts/check-shadow-outline-readiness.mjs'
       - 'scripts/compare-garment-models.mjs'
       - 'scripts/build-three-way-visual.mjs'
       - 'scripts/build-four-way-model-review.mjs'
@@ -78,6 +79,7 @@ jobs:
         run: |
           node --test tests/shadow-annotation-validator.test.mjs
           node benchmark/shadow-annotation-validator.mjs
+          node scripts/check-shadow-outline-readiness.mjs
       - name: Download and verify source photographs
         run: node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos commons-0035,commons-0049,commons-0053,commons-0065,commons-0079,commons-0094
       - name: Generate clean original-photo annotation reference pack
