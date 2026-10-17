@@ -5,6 +5,9 @@ on:
     branches: [main]
     paths:
       - 'scripts/run-modnet-comparison.mjs'
+      - 'scripts/run-object-cutout-comparison.mjs'
+      - 'benchmark/object-cutout-mask.mjs'
+      - 'tests/object-cutout-mask.test.mjs'
       - 'scripts/build-footwear-silhouette-review.mjs'
       - 'benchmark/select-footwear-review-rows.mjs'
       - 'tests/select-footwear-review-rows.test.mjs'
@@ -79,7 +82,7 @@ jobs:
           node-version: '22'
       - name: Install browser
         run: |
-          npm install --no-save --no-package-lock playwright
+          npm install --no-save --no-package-lock playwright @huggingface/transformers@3.8.1 sharp@0.34.4
           npx playwright install --with-deps chromium
       - name: Validate threshold boundary analysis
         run: node --test tests/modnet-boundary-report.test.mjs tests/propose-island-cleanup.test.mjs tests/foreground-geometry.test.mjs tests/border-connected-foreground.test.mjs tests/compare-garment-models.test.mjs tests/footwear-shadow-candidates.test.mjs tests/lower-footwear-disagreement.test.mjs
@@ -374,4 +377,18 @@ jobs:
         with:
           name: experimental-modnet-masks
           path: benchmark/modnet-predictions/
+          retention-days: 14
+
+      - name: Validate object cutout alpha and source preservation
+        run: node --test tests/object-cutout-mask.test.mjs
+      - name: Compare BiRefNet Lite with the sharp MODNet baseline
+        run: node scripts/run-object-cutout-comparison.mjs benchmark/object-cutout-comparison
+      - name: Verify complete object cutout experiment
+        run: |
+          node -e "const s=require('./benchmark/object-cutout-comparison/summary.json');if(s.status!=='complete'||s.cases.length!==6||!s.reviewOnly||s.productionAuthorized||s.cases.some(c=>!c.notAccuracy||c.verifiedShadowRemoval))throw Error('Incomplete or unsafe object comparison')"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: experimental-object-cutout-comparison
+          path: benchmark/object-cutout-comparison/
           retention-days: 14

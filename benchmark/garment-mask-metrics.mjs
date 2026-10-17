@@ -20,7 +20,7 @@ export function scoreGarmentMask(reference,prediction,width,height){
 }
 export function decodeReferenceMask(annotation){
  const {width,height,runs}=annotation||{};
- if(!Number.isInteger(width)||!Number.isInteger(height)||width<1||height<1||width*height>12e6||!Array.isArray(runs)||runs.length>width*height)throw Error('Invalid garment annotation');
+ if(!Number.isInteger(width)||!Number.isInteger(height)||width<1||height<1||width*height>12e6||!Array.isArray(runs)||runs.length>width*height+1)throw Error('Invalid garment annotation');
  const mask=new Uint8Array(width*height);let offset=0,foreground=false;
  for(const count of runs){
   if(!Number.isInteger(count)||count<0||offset+count>mask.length)throw Error('Invalid annotation run');
