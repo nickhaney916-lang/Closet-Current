@@ -73,6 +73,8 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Validate threshold boundary analysis
         run: node --test tests/modnet-boundary-report.test.mjs tests/propose-island-cleanup.test.mjs tests/foreground-geometry.test.mjs tests/border-connected-foreground.test.mjs tests/compare-garment-models.test.mjs tests/footwear-shadow-candidates.test.mjs tests/lower-footwear-disagreement.test.mjs
+      - name: Test conservative footwear component review
+        run: node --test tests/review-detached-footwear-regions.test.mjs
       - name: Validate MODNet fail-closed promotion criteria
         run: |
           node --test tests/modnet-promotion-gate.test.mjs
