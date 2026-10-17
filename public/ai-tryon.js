@@ -9,6 +9,7 @@ function tryOnSignature(){
 function resetTryOnPreview(){
  tryOnRevision++;tryOnImage=null;tryOnFingerprint='';
  const image=$('tryOnImage');if(image){image.hidden=true;image.removeAttribute('src');}
+ $('outfitFigure')?.classList.remove('ai-tryon-active');
  $('tryOnStatus').textContent='Select your clothes, then tap Generate AI try-on.';
 }
 function onTryOnBoardChanged(){
@@ -70,6 +71,7 @@ async function generateTryOn(){
   if(!isCurrent()||!modelImage)return;
   tryOnImage=modelImage;tryOnFingerprint=signature;
   const image=$('tryOnImage');image.src=modelImage;image.hidden=false;
+  $('outfitFigure')?.classList.add('ai-tryon-active');
   $('tryOnStatus').textContent=plan.steps.length>1?
    'AI try-on of your '+plan.steps[0].slot+' is ready. Other selected pieces are not rendered yet.':
    'AI-generated try-on preview. Exact sizing and fabric drape are not guaranteed.';
