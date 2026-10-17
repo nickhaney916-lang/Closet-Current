@@ -27,7 +27,10 @@ const detector=await pipeline('zero-shot-object-detection',modelId,{
 });
 summary.modelLoadMs=Math.round(performance.now()-time);
 await save();
-const labels=['a jacket.','a shirt.','a coat.','a blouse.','a cardigan.','a dress.'];
+// Grounding DINO ONNX expects a single query sequence (input_ids batch 1).
+// Join phrase prompts into ONE dotted text query; never batch them as six rows.
+const prompts=['a jacket.','a shirt.','a coat.','a blouse.','a cardigan.','a dress.'];
+const query=[prompts.join(' ')];
 try{
  for(const id of ids){
   const source=byId.get(id);
@@ -39,7 +42,7 @@ try{
    throw Error('Source checksum mismatch '+id);
   const photo=await RawImage.read(join('benchmark/photos',source.image));
   const t=performance.now();
-  const predictions=await detector(photo,labels,{threshold:.12});
+  const predictions=await detector(photo,query,{threshold:.12});
   if(!Array.isArray(predictions))throw Error('Unexpected zero-shot result');
   const inferenceMs=Math.round(performance.now()-t);
   const report=validateGarmentDetectionBoxes({
