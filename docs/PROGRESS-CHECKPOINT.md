@@ -1,6 +1,56 @@
 # Closet Current master development checkpoint
 
 
+## Unsorted Clothing two-field review queue — October 18, 2026, Pacific
+
+- **Next customer-usability priority implemented** on the shared Closet Current
+  development branch, still draft PR #7, without touching the separate
+  ChatGPT Work session's image-recognition/model branch. No production
+  merge/deploy, paid services or Drive Duel changes.
+- Existing **Unsorted clothing (N)** button in My Closet now starts an
+  inline modal review of each uncategorized saved clothing item. It shows
+  the saved garment photo, optional source/original photo when different,
+  a large category selector and a color selector. **Both are required human
+  choices** (with no auto-accepted predictions); optional subtype, fabric,
+  fit, brand, size and season details remain for later. It supports
+  **Save & next**, **Skip for now**, and **Close** without adding an app
+  screen, extra tabs, mandatory manual crop, or paid recognition.
+- `public/closet-review-engine.js` implements fail-closed human category
+  and color confirmation, immutable photo/reference preservation, untrusted
+  old subtype/sleeve hint reset and model-color-provenance removal. An
+  explicit saved color gains `colorSource='user'` and a confirmed category;
+  the original photo and recognition reference are never regenerated.
+  `public/closet-browser.js` saves the revised existing item ID using
+  the normal authenticated IndexedDB `writeAll` path, rerenders counts and
+  automatically opens the next unsorted item. Skips are session-only, never
+  delete or categorize a garment, and can be revisited later. Modal
+  actions have 52px targets in `public/style.css`.
+- Added `tests/closet-review-queue.test.cjs` (five focused unit tests)
+  exercising missing category/color rejection, subtype and sleeves reset,
+  preservation of source photo and metadata, skip counts and no paid network
+  calls or AI reclassification.
+- Extended `scripts/test-style-my-new-item-mobile.mjs`: synthetic,
+  account-local garments, previously suggested unconfirmed color, mandatory
+  manual category and color selection, validation preventing incomplete save,
+  automatically opening the next saved garment, skip-and-return, reloading
+  the page and checking the original garment pixels/reference unchanged.
+  This is an emulated **390×844 browser touch viewport**, not an actual
+  physical phone or measured camera recognition accuracy.
+- Verified [full Node run 39171919906](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39171919906):
+  **765 total tests, 762 passed, 0 failed, 3 skipped**; app build passed.
+  Verified [mobile-browser run 39171923738](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39171923738):
+  all stages passed, `NEW_ITEM_STYLE_MOBILE`
+  `unsortedCategoryColorSaved=true`,
+  `unsortedQueueSkipResumes=true`,
+  `originalUnsortedPhotoPreserved=true`, `pageErrors=0`.
+- The previous real-photo clipping and recognition accuracy limitation
+  remains unchanged and is being addressed separately in ChatGPT Work.
+  **Next priority** in this main conversation: verify pilot reliability
+  of cloud backup/account sync, error recovery and safe save behavior,
+  without changing user data or deploying to production.
+
+
+
 ## Exact-item Home → closet navigation — October 18, 2026, Pacific
 
 - **Customer usability priority completed** on draft PR #7 integration
