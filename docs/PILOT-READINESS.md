@@ -40,6 +40,19 @@ Proposed experience: email/password signup → confirm email → welcome/open ap
 
 ## 3. Explain the service and provide recovery
 
+
+**October 18 development update:** The factual, nonlegal pilot-data
+notice and a new-account "I reviewed" acknowledgment are now implemented
+and tested on draft PR #7. Existing sign-in is unaffected. A user-visible
+My account privacy link exists. The acknowledgment version/timestamp is
+sent as editable Auth user metadata, **not valid proof of final legal
+agreement**. Full owner-approved legal terms, separate marketing choice,
+actual request/support route and end-to-end removal of private Storage
+objects, backup records and Auth identity are still blockers. Review
+`docs/PILOT-DATA-CONTROL-RELEASE-GATES-20261018.md` before inviting testers.
+
+
+
 Before public signup, publish plain privacy and terms pages appropriate to the actual operator and service. Explain private clothing-photo storage, backup, correction use, retention and deletion; obtain versioned agreement acceptance and keep marketing consent separate. Provide account/data deletion and a support/feedback route. Verify deletion includes stored photos and related records. These are outstanding product requirements, not a claim of legal compliance.
 
 ## 4. Run a controlled pilot, then widen access

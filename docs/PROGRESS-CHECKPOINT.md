@@ -1,6 +1,58 @@
 # Closet Current master development checkpoint
 
 
+## Pilot photo-data notice and signup acknowledgment — October 18, 2026, Pacific
+
+- **Next developer-ready pilot privacy priority implemented** on draft PR #7
+  only. Added public `public/pilot-data-notice.html` with factual,
+  deliberately **nonlegal/nonfinal** explanation of browser and private
+  cloud storage, model processing, owner-account separation, sync delays,
+  unchanged original photo preservation, lingering private photos after
+  clothing-item deletion, and unavailable self-service full account
+  deletion. Signup screen links to the notice; signed-in "My account"
+  adds "Privacy & my data". No contact channel, deletion success or
+  privacy compliance is falsely advertised.
+- Added `public/pilot-notice.js` with
+  `pilot-data-notice-2026-10-18` version and fail-closed new-signup
+  acknowledgment. New signups must actively check that they reviewed
+  the notice before any Auth signup request; existing-account login
+  and password recovery do not need a new checkbox. Signup
+  `user_metadata` gets the version and ISO review timestamp.
+  **Important:** user metadata is editable and is NOT a legal audit log,
+  server authorization or marketing permission; no ads/promotional
+  opt-in or approved legal terms were introduced.
+- Added focused `tests/auth.test.cjs` and expanded
+  `scripts/test-auth-pilot-mobile.mjs`. Verified code commit
+  `4db3578e6d63a7fa2777f3d08670f75598bb0193`:
+  [full Node run 39175897454](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39175897454):
+  **772 total, 769 passed, 0 failed, 3 skipped** and build passed.
+  [cloud/auth mobile workflow 39175897437](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39175897437):
+  controlled multi-device recovery and emulated 390×844 Auth passed,
+  `pilotNoticeReadable=true`, `signupBlockedWithoutNoticeReview=true`,
+  `pilotNoticeVersionRecorded=true`, `noMarketingOptIn=true`,
+  `pageErrors=[]`. No real signup email sent, physical phone used,
+  live production Supabase Auth settings changed, or legal approval
+  obtained.
+- Read-only Supabase management connection confirmed project
+  `hlkgymugtfbirlpunsra` `ACTIVE_HEALTHY`. Cataloging schema
+  showed RLS enabled for `public.closet_backups` and
+  `storage.objects`, with policy named `closet_photos_delete`
+  for authenticated users. **This is NOT proof that every user can
+  request and finish complete account deletion.** No user content
+  inspected, storage object deleted, SQL mutated or accounts removed.
+- Owner/release checklist:
+  `docs/PILOT-DATA-CONTROL-RELEASE-GATES-20261018.md`.
+  This informational notice does **not** satisfy final operator-approved
+  privacy/terms, legally verified consent retention, full cloud image
+  garbage collection, verified deletion of private photo objects +
+  metadata + Auth identities, actual support/deletion request route,
+  age/guardian rules, external inbox setup or physical-phone checks.
+  **Broader pilot invitations remain blocked.**
+- No merge to `main`, production deployment, paid services,
+  customer data access, or Drive Duel modifications.
+
+
+
 ## Pilot sign-in resilience and guarded password recovery — October 18, 2026, Pacific
 
 - **Development-priority code and browser behavior verified**, on draft

@@ -68,3 +68,16 @@ deliverability; only then consider updating the callback URL.
 No sender, email provider or billing settings were modified. Supabase
 current redirect guidance: https://supabase.com/docs/guides/auth/redirect-urls
 
+
+
+## Pilot data notice — October 18, 2026
+
+Draft PR #7 now links to a factual pilot notice from signup and the My
+account menu. New signups must acknowledge reading that specific version;
+Auth user metadata records its version/time but **cannot serve as a
+tamper-proof legal consent log**. No marketing consent is collected, no
+terms have been approved, and no real signup email was sent. The
+authentication callback still points at the existing GitHub Pages URL
+until Supabase redirect allowlist, sender setup and the canonical
+Cloudflare origin are verified. This is not a release authorization.
+
