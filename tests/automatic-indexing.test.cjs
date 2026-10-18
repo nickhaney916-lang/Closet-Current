@@ -218,7 +218,7 @@ test('a verified mask color retains priority over both scene color and model det
   colorEstimate:{color:'White'}}),result:{strong:true,choices:[choice],details:{color:'Red'}}});
  c.candidate('outfit-display',{outfitSourceId:'outfit',
   recognitionPhoto:{image:'original-crop'},segmentHint:{categories:['Tops'],types:[],
-   clipped:false,displayFallback:'original-crop'},
+   clipped:false},
   colorEstimate:{color:'Blue',source:'photo-estimate'}});
  await done(c);
  assert.equal(stored.length,1);
@@ -242,4 +242,21 @@ test('real-photo-style fragmented outfit proposals stay review-only despite stro
  assert.equal(c.batch[0].originalPhoto.image,'full-original');
  assert.equal(c.batch[0].recognitionPhoto.image,'original-rgb');
  assert.match(c.batch[0].localStatus,/multiple garments or background/);
+});
+
+test('all unreliable source-only fallback reasons block strong recognition and proposed color',async()=>{
+ for(const reason of ['fragmented-mask','unexplained-enclosed-gap','clipped-frame','insufficient-mask']){
+  const {c,stored}=setup({quality:async()=>({blank:false,signature:[1,2,3],aspect:1,
+   colorEstimate:{color:'White'}}),result:{strong:true,choices:[choice],details:{color:'Red'}}});
+  c.candidate('unmasked-'+reason,{outfitSourceId:'outfit',
+   recognitionPhoto:{image:'original-rgb'},originalPhoto:{image:'untouched-outfit'},
+   colorEstimate:{color:'Blue'},segmentHint:{categories:['Tops'],types:[],clipped:false,
+    displayFallback:'original-crop',displayFallbackReason:reason}});
+  await done(c);
+  assert.equal(stored.length,0,reason);
+  assert.equal(c.batch.length,1);
+  assert.equal(c.batch[0].originalPhoto.image,'untouched-outfit');
+  assert.equal(c.batch[0].recognitionPhoto.image,'original-rgb');
+  assert.match(c.batch[0].localStatus,/multiple garments or background/);
+ }
 });

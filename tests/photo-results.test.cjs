@@ -70,8 +70,20 @@ test('fragmented whole-outfit photo warns against treating a mixed region as a c
   localAnalyzed:true,color:''};
  c.batch=[item];c.renderPhotoResults(grid,[item]);
  const all=descendants(grid);
- assert.ok(all.some(x=>/Outline uncertain: this photo region/.test(x.text)));
+ assert.ok(all.some(x=>/Photo region needs review: this cutout/.test(x.text)));
  assert.equal(all.filter(x=>x.tag==='select').length,0,
   'fragmented candidate requires Adjust, not color-only acceptance');
  assert.ok(all.some(x=>x.tag==='button'&&x.text==='Adjust'));
+});
+
+test('all unreliable outfit original-crop reasons have a human review label',()=>{
+ for(const reason of ['unexplained-enclosed-gap','clipped-frame']){
+  const {c,grid}=setup(),item={id:'region',image:'source',category:'Tops',
+   itemType:'Unknown',outfitSourceId:'capture',localAnalyzed:true,color:'',
+   segmentHint:{categories:['Tops'],types:[],clipped:false,
+    displayFallback:'original-crop',displayFallbackReason:reason}};
+  c.batch=[item];c.renderPhotoResults(grid,[item]);
+  assert.ok(descendants(grid).some(x=>/Photo region needs review/.test(x.text)));
+  assert.equal(descendants(grid).filter(x=>x.tag==='select').length,0);
+ }
 });

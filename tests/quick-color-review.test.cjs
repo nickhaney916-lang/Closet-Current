@@ -115,3 +115,13 @@ test('fragmented whole-outfit region cannot be quick-saved merely by choosing co
  assert.equal(other.state.canConfirmReviewedColor(other.item),true,
   'reliable masks keep the normal one-choice color flow');
 });
+
+test('all untrusted whole-outfit original-crop fallbacks require review, not color-only save',async()=>{
+ for(const reason of ['fragmented-mask','unexplained-enclosed-gap','clipped-frame','insufficient-mask']){
+  const h=setup({outfitSourceId:'outfit',segmentHint:{categories:['Tops'],types:[],clipped:false,
+   displayFallback:'original-crop',displayFallbackReason:reason}});
+  assert.equal(h.state.canConfirmReviewedColor(h.item),false,reason);
+  assert.equal(await h.state.confirmReviewedColor(h.item,'Blue'),false,reason);
+  assert.equal(h.saves.length,0);
+ }
+});
