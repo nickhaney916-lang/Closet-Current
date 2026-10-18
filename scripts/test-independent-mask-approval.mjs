@@ -39,6 +39,18 @@ try{
  assert.equal(await page.locator('#approve').isDisabled(),true);
  await load(valid);
  await page.getByRole('status').getByText(/Source verified/).waitFor();
+ assert.match(await page.locator('#detailHint').innerText(),/Original 40 × 30 pixels/);
+ assert.equal(await page.locator('#detailSource').getAttribute('width'),'220');
+ const originalDetail=await page.locator('#detailSource').evaluate(el=>el.toDataURL());
+ const overlayBefore=await page.locator('#detailMask').evaluate(el=>el.toDataURL());
+ await page.locator('#detailZoom').selectOption('8');
+ await page.locator('#opacity').fill('75');
+ const overlayAfter=await page.locator('#detailMask').evaluate(el=>el.toDataURL());
+ const stillOriginal=await page.locator('#detailSource').evaluate(el=>el.toDataURL());
+ assert.notEqual(overlayAfter,overlayBefore,'mask opacity and zoom redraw the detail overlay');
+ assert.equal(stillOriginal.startsWith('data:image/png'),true);
+ assert.equal(originalDetail.startsWith('data:image/png'),true);
+ assert.equal(await page.locator('#approve').isDisabled(),true,'zooming cannot approve a draft');
  assert.equal(await page.locator('#approve').isDisabled(),true);
  await page.locator('#approver').fill('Reviewer One');
  await page.locator('#verified').check();

@@ -9,12 +9,25 @@ try{
  const png=await page.evaluate(()=>{const c=document.createElement('canvas');c.width=40;c.height=30;const x=c.getContext('2d');x.fillStyle='white';x.fillRect(0,0,40,30);x.fillStyle='red';x.fillRect(10,4,20,20);return c.toDataURL('image/png').split(',')[1];});
  await page.locator('#photo').setInputFiles({name:'review-case.png',mimeType:'image/png',buffer:Buffer.from(png,'base64')});
  await page.locator('#status').getByText(/initial mask is blank/).waitFor();
+ assert.match(await page.locator('#detailHint').innerText(),/Original 40 × 30 pixels/);
+ assert.equal(await page.locator('#detailSource').getAttribute('width'),'220');
+ const nativeBefore=await page.locator('#detailSource').evaluate(el=>el.toDataURL());
+ const annotationBefore=await page.locator('#detailMask').evaluate(el=>el.toDataURL());
+ // Merely inspecting native detail must NEVER count as a human correction.
+ await page.locator('#detailZoom').selectOption('8');
+ assert.equal(await page.locator('#download').isDisabled(),true);
+ assert.equal(await page.locator('#detailSource').getAttribute('height'),'220');
  await assert.doesNotReject(async()=>await page.locator('#canvas').waitFor({state:'visible'}));
  await page.locator('#reviewer').fill('First Reviewer');
  await page.locator('#canvas').scrollIntoViewIfNeeded();
  const bounds=await page.locator('#canvas').boundingBox();assert.ok(bounds);
  await page.mouse.move(bounds.x+bounds.width*.5,bounds.y+bounds.height*.5);
  await page.mouse.down();await page.mouse.up();
+ const nativeAfter=await page.locator('#detailSource').evaluate(el=>el.toDataURL());
+ const annotationAfter=await page.locator('#detailMask').evaluate(el=>el.toDataURL());
+ assert.equal(nativeAfter===annotationAfter,false,'edited mask differs from original source detail');
+ assert.notEqual(annotationAfter,annotationBefore,'the mask loupe repaints after a brush edit');
+ assert.equal(nativeBefore.startsWith('data:image/png'),true);
  const debug=await page.evaluate(()=>({loaded:!!source,maskPixels:mask?.reduce((a,b)=>a+b,0),strokes,tool:tool.value,mode:mode.value,canExport:canExport(),errors:document.querySelector('#status').textContent}));
  assert.equal(await page.locator('#download').isDisabled(),false,'Initial brush did not activate export: '+JSON.stringify(debug));
  const downloadPromise=page.waitForEvent('download');
