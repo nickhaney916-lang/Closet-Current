@@ -26,8 +26,14 @@ def decode(decs,proto,geo,threshold=.20):
         if conf<threshold:break
         cls=int(round(float(row[5])));box=row[:4]
         if not (0<=conf<=1 and 0<=cls<13 and abs(cls-row[5])<1e-4 and
-           0<=box[0]<box[2]<=n+1 and 0<=box[1]<box[3]<=n+1):
+           -n*.05<=box[0]<box[2]<=n*1.05 and
+           -n*.05<=box[1]<box[3]<=n*1.05):
             raise ValueError("Invalid garment class/box, possible unknown ONNX format")
+        # YOLO boxes can extend a few pixels beyond the letterbox canvas.
+        # Clamp only after checking that extension is bounded and finite.
+        box=np.clip(box,0,n)
+        if box[2]<=box[0] or box[3]<=box[1]:
+            continue
         logits=np.clip(row[6:38]@flat,-40,40).reshape(protop,protop)
         probabilities=1/(1+np.exp(-logits))
         preview=Image.fromarray((probabilities*255).astype(np.uint8),'L').resize((n,n),Image.Resampling.BILINEAR)

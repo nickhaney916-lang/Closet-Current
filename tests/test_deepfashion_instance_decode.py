@@ -22,6 +22,10 @@ class Decoder(unittest.TestCase):
     self.assertEqual(decode(d,p,g)['candidates'][0]['mask'].shape,(1440,960))
     for bad,pr in [(d[:,:,:30],p),(d,p[:,:,:80,:80]),(np.full_like(d,np.nan),p)]:
       with self.assertRaises(ValueError):decode(bad,pr,g)
+    edge=d.copy();edge[0,0,0]=-2;edge[0,0,2]=417
+    self.assertEqual(len(decode(edge,p,g)['candidates']),1)
+    far=d.copy();far[0,0,0]=-200
+    with self.assertRaises(ValueError):decode(far,p,g)
     wrong=d.copy();wrong[0,0,5]=39
     with self.assertRaises(ValueError):decode(wrong,p,g)
 if __name__=='__main__':unittest.main()
