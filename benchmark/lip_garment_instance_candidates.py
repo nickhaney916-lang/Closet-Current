@@ -11,6 +11,9 @@ GARMENT_CLASSES = {
     "dress": (6,),
     "coat": (7,),
     "skirt": (12,),
+    "socks": (8,),
+    "pants": (9,),
+    "jumpsuit": (10,),
     "shoe_pair": (18, 19),
 }
 BODY_CLASSES = (2, 13, 14, 15, 16, 17)
@@ -73,6 +76,8 @@ def candidate_class_regions(labels, *, min_area_fraction=0.003):
         "possibleSeparateCoatSkirtClassEvidence": possible,
         "classCandidates": results,
         "modelIsSemanticOnly": True,
+        "stockingsOrTightsSeparateClass": False,
+        "socksPixelsVerifyTights": False,
         "physicalInstancesConfirmed": 0,
         "automaticallySavedGarments": 0,
         "originalPhotoModified": False,

@@ -44,6 +44,33 @@ class LIPGarmentClassCandidateTests(unittest.TestCase):
         self.assertEqual(r["classCandidates"],[])
         self.assertEqual(r["reviewDisposition"],"no-garment-parsing-evidence")
         self.assertFalse(r["possibleSeparateCoatSkirtClassEvidence"])
+    def test_supported_socks_pants_jumpsuit_pixels_are_not_dropped(self):
+        # Synthetic labels test extraction, not real-photo recognition.
+        a=np.zeros((40,50),dtype=np.uint8)
+        a[0:4,:]=13
+        a[5:10,4:30]=8
+        a[11:20,4:30]=9
+        a[21:30,4:30]=10
+        before=a.copy()
+        r=candidate_class_regions(a)
+        by={c['role']:c for c in r['classCandidates']}
+        for role,ident in [('socks',8),('pants',9),('jumpsuit',10)]:
+            np.testing.assert_array_equal(by[role]['mask'],a==ident)
+            self.assertEqual(by[role]['pixels'],int((a==ident).sum()))
+            self.assertFalse(by[role]['verifiedSinglePhysicalGarment'])
+        self.assertFalse(r['stockingsOrTightsSeparateClass'])
+        self.assertFalse(r['socksPixelsVerifyTights'])
+        self.assertFalse(r['productionAuthorized'])
+        np.testing.assert_array_equal(a,before)
+
+    def test_leg_and_shoe_pixels_never_substitute_for_missing_socks(self):
+        a=np.zeros((40,50),dtype=np.uint8)
+        a[0:10,:]=16;a[10:20,:]=17
+        a[20:30,:]=18;a[30:40,:]=19
+        r=candidate_class_regions(a)
+        self.assertEqual([x['role'] for x in r['classCandidates']],['shoe_pair'])
+        self.assertFalse(r['socksPixelsVerifyTights'])
+
     def test_fails_closed_on_shape_dtype_class_and_threshold(self):
         a=np.zeros((40,50),dtype=np.uint8)
         for bad in [np.ones((3,3),dtype=np.uint8),np.zeros((40,50),dtype=np.float32),

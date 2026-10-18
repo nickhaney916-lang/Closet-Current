@@ -1,5 +1,38 @@
 # Closet Current master development checkpoint
 
+## Isolated LIP supported-class export correction — October 18, 2026, Pacific
+
+- Continues isolated `work/garment-instance-recognition-20261018` after
+  published `dca61010312749699fcd6ee3575513de74adfc34`; integration branch
+  and draft PR #7 are not modified by this conversation.
+- Confirmed exporter defect: the pinned LIP model has Socks (8), Pants (9)
+  and Jumpsuits (10), but `candidate_class_regions` omitted all three.
+  Added exact class-specific masks, dynamic nine-panel source-RGB previews,
+  and per-label counts checked against every newly exported role in CI.
+  No inference thresholds, source RGB, production model or masks were edited.
+- Expanded the real-photo runner from two to four checksum-verified licensed
+  photos: existing layered/flat-lay cases plus striped socks/boots and jeans.
+  Pinned CPU inference completed; 17 focused Python tests and the exact
+  workflow's four-photo assertions passed locally. This is not a claim that
+  remote CI ran on this commit.
+- Actual previously omitted model outputs now visible: validation-0030 has
+  3,981 sock-class pixels and 7,896 pants-class pixels; validation-0017 has
+  71,753 pants-class pixels. No jumpsuit pixels in these four sources.
+  Counts describe the model's low-resolution labels, NOT correct garment pixels.
+- AI visual inspection, NOT independent human approval: sock proposal includes
+  boot shafts; pants proposal in the performers photo includes socks/skin;
+  layered validation-0031 coat includes skirt fabric; jeans are mostly visible
+  in the pants preview but include contamination near the waistband. The
+  photo includes a reflected person, so it is not a pure no-person control.
+- Explicit flags prohibit equating socks to tights: this taxonomy has no
+  separate tights/stockings class. No masks are approved or auto-saved.
+  Human-reference accuracy remains unmeasured and production promotion blocked.
+- Committed numerical evidence: `benchmark/LIP-CLASS-EXPORT-COVERAGE-20261018.json`.
+  Next work should target cross-class contamination and physical garment
+  separation using independently approved references, not relabel sock/skin
+  masks as tights or treat more exported candidates as improved accuracy.
+
+
 ## Isolated instance proposal coverage fix — October 18, 2026, Pacific
 
 - This conversation owns only `work/garment-instance-recognition-20261018`,

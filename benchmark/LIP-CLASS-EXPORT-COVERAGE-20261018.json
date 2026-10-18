@@ -1,0 +1,692 @@
+{
+  "status": "complete",
+  "model": "pirocheto/schp-lip-20",
+  "modelSha256": "871c9e209dc67d6be61c73dcc79cb49e638fcf5bbc35a19b4c7429eba0bfc046",
+  "sourceHashesVerified": true,
+  "independentGarmentInstanceMasks": false,
+  "humanReferenceMasksAvailable": false,
+  "automaticItemsCreated": 0,
+  "realDeviceLatencyTested": false,
+  "productionAuthorized": false,
+  "sourcePhotosPreserved": true,
+  "perClassSourceRgbOnly": true,
+  "cases": [
+    {
+      "id": "validation-0031",
+      "sourceSha256": "0e145aa5432df3457521200d1e1bb896f66abd66fb041d31ed0db591e00e2fdc",
+      "originalAttribution": "https://commons.wikimedia.org/wiki/File:Gray_blazer_brown_shirt_black_split_skirt_sheer_tights_and_strappy_heels_-_modeled_by_Marina_Daschner.jpg",
+      "license": "CC BY-SA 3.0",
+      "imageDimensions": [
+        960,
+        1440
+      ],
+      "maskDimensions": [
+        473,
+        473
+      ],
+      "exportedRoles": [
+        "upper",
+        "dress",
+        "coat",
+        "skirt",
+        "socks",
+        "pants",
+        "jumpsuit",
+        "shoe_pair"
+      ],
+      "modelLabelPixelCounts": {
+        "0": 177322,
+        "1": 0,
+        "2": 5788,
+        "3": 0,
+        "4": 0,
+        "5": 0,
+        "6": 148,
+        "7": 17505,
+        "8": 0,
+        "9": 0,
+        "10": 0,
+        "11": 0,
+        "12": 3741,
+        "13": 1968,
+        "14": 0,
+        "15": 0,
+        "16": 9384,
+        "17": 5313,
+        "18": 1435,
+        "19": 1125
+      },
+      "reviewDisposition": "distinct-classes-needing-outline-review",
+      "humanBodyEvidencePixels": 22453,
+      "onPersonContextSupported": true,
+      "minimumCandidatePixels": 671,
+      "possibleSeparateCoatSkirtClassEvidence": true,
+      "modelIsSemanticOnly": true,
+      "stockingsOrTightsSeparateClass": false,
+      "socksPixelsVerifyTights": false,
+      "physicalInstancesConfirmed": 0,
+      "automaticallySavedGarments": 0,
+      "originalPhotoModified": false,
+      "pixelAccuracyMeasured": false,
+      "productionAuthorized": false,
+      "humanBodyClassesExcluded": [
+        2,
+        13,
+        14,
+        15,
+        16,
+        17
+      ],
+      "classCandidates": [
+        {
+          "role": "dress",
+          "labelIds": [
+            6
+          ],
+          "pixels": 148,
+          "bounds": {
+            "left": 216,
+            "top": 242,
+            "right": 378,
+            "bottom": 265
+          },
+          "centerY": 257.6689189189189,
+          "substantialModelRegion": false,
+          "verifiedSinglePhysicalGarment": false,
+          "reviewRequired": true
+        },
+        {
+          "role": "coat",
+          "labelIds": [
+            7
+          ],
+          "pixels": 17505,
+          "bounds": {
+            "left": 229,
+            "top": 108,
+            "right": 395,
+            "bottom": 315
+          },
+          "centerY": 196.83924592973437,
+          "substantialModelRegion": true,
+          "verifiedSinglePhysicalGarment": false,
+          "reviewRequired": true
+        },
+        {
+          "role": "skirt",
+          "labelIds": [
+            12
+          ],
+          "pixels": 3741,
+          "bounds": {
+            "left": 197,
+            "top": 223,
+            "right": 393,
+            "bottom": 305
+          },
+          "centerY": 250.89708634055066,
+          "substantialModelRegion": true,
+          "verifiedSinglePhysicalGarment": false,
+          "reviewRequired": true
+        },
+        {
+          "role": "shoe_pair",
+          "labelIds": [
+            18,
+            19
+          ],
+          "pixels": 2560,
+          "bounds": {
+            "left": 86,
+            "top": 394,
+            "right": 273,
+            "bottom": 445
+          },
+          "centerY": 422.125390625,
+          "substantialModelRegion": true,
+          "verifiedSinglePhysicalGarment": false,
+          "reviewRequired": true
+        }
+      ],
+      "skirtBoundaryReview": {
+        "classes": [
+          {
+            "role": "coat",
+            "strictModelPixels": 17505,
+            "additionalUncertainModelPixels": 846,
+            "sourceBackgroundOrBodyPixelsAdmitted": 0,
+            "unverifiedCompetingGarmentClass": true,
+            "independentMaskAccuracyVerified": false,
+            "reviewOnly": true
+          },
+          {
+            "role": "skirt",
+            "strictModelPixels": 3741,
+            "additionalUncertainModelPixels": 727,
+            "sourceBackgroundOrBodyPixelsAdmitted": 0,
+            "unverifiedCompetingGarmentClass": true,
+            "independentMaskAccuracyVerified": false,
+            "reviewOnly": true
+          },
+          {
+            "role": "shoe_pair",
+            "strictModelPixels": 2560,
+            "additionalUncertainModelPixels": 0,
+            "sourceBackgroundOrBodyPixelsAdmitted": 0,
+            "unverifiedCompetingGarmentClass": true,
+            "independentMaskAccuracyVerified": false,
+            "reviewOnly": true
+          }
+        ],
+        "pixelsClaimedByMultipleReviewVariants": 42,
+        "maximumLogitGap": 1.5,
+        "verifiedRecoveredFabricPixels": 0,
+        "independentGarmentAccuracyMeasured": false,
+        "productionAuthorized": false
+      },
+      "sourceRgbPreserved": true,
+      "automaticItemsCreated": 0,
+      "independentMaskAccuracyVerified": false
+    },
+    {
+      "id": "commons-0059",
+      "sourceSha256": "f7b8eea8f6d741a5f685119cc5c92f69300a5f294940162429e3febd1482f44c",
+      "originalAttribution": "https://commons.wikimedia.org/wiki/File:Dress_and_jacket_(AM_1970.236-4).jpg",
+      "license": "CC BY 4.0",
+      "imageDimensions": [
+        1920,
+        1440
+      ],
+      "maskDimensions": [
+        473,
+        473
+      ],
+      "exportedRoles": [
+        "upper",
+        "dress",
+        "coat",
+        "skirt",
+        "socks",
+        "pants",
+        "jumpsuit",
+        "shoe_pair"
+      ],
+      "modelLabelPixelCounts": {
+        "0": 223316,
+        "1": 0,
+        "2": 413,
+        "3": 0,
+        "4": 0,
+        "5": 0,
+        "6": 0,
+        "7": 0,
+        "8": 0,
+        "9": 0,
+        "10": 0,
+        "11": 0,
+        "12": 0,
+        "13": 0,
+        "14": 0,
+        "15": 0,
+        "16": 0,
+        "17": 0,
+        "18": 0,
+        "19": 0
+      },
+      "reviewDisposition": "no-garment-parsing-evidence",
+      "humanBodyEvidencePixels": 413,
+      "onPersonContextSupported": false,
+      "minimumCandidatePixels": 671,
+      "possibleSeparateCoatSkirtClassEvidence": false,
+      "modelIsSemanticOnly": true,
+      "stockingsOrTightsSeparateClass": false,
+      "socksPixelsVerifyTights": false,
+      "physicalInstancesConfirmed": 0,
+      "automaticallySavedGarments": 0,
+      "originalPhotoModified": false,
+      "pixelAccuracyMeasured": false,
+      "productionAuthorized": false,
+      "humanBodyClassesExcluded": [
+        2,
+        13,
+        14,
+        15,
+        16,
+        17
+      ],
+      "classCandidates": [],
+      "skirtBoundaryReview": {
+        "classes": [
+          {
+            "role": "coat",
+            "strictModelPixels": 0,
+            "additionalUncertainModelPixels": 0,
+            "sourceBackgroundOrBodyPixelsAdmitted": 0,
+            "unverifiedCompetingGarmentClass": true,
+            "independentMaskAccuracyVerified": false,
+            "reviewOnly": true
+          },
+          {
+            "role": "skirt",
+            "strictModelPixels": 0,
+            "additionalUncertainModelPixels": 0,
+            "sourceBackgroundOrBodyPixelsAdmitted": 0,
+            "unverifiedCompetingGarmentClass": true,
+            "independentMaskAccuracyVerified": false,
+            "reviewOnly": true
+          },
+          {
+            "role": "shoe_pair",
+            "strictModelPixels": 0,
+            "additionalUncertainModelPixels": 0,
+            "sourceBackgroundOrBodyPixelsAdmitted": 0,
+            "unverifiedCompetingGarmentClass": true,
+            "independentMaskAccuracyVerified": false,
+            "reviewOnly": true
+          }
+        ],
+        "pixelsClaimedByMultipleReviewVariants": 0,
+        "maximumLogitGap": 1.5,
+        "verifiedRecoveredFabricPixels": 0,
+        "independentGarmentAccuracyMeasured": false,
+        "productionAuthorized": false
+      },
+      "sourceRgbPreserved": true,
+      "automaticItemsCreated": 0,
+      "independentMaskAccuracyVerified": false
+    },
+    {
+      "id": "validation-0030",
+      "sourceSha256": "7e1e20dede55d9981d26ef3675c637112c81283edbec567c768c2abfab911d17",
+      "originalAttribution": "https://commons.wikimedia.org/wiki/File:Members_of_KOBerrieS_in_Kobe_Matsuri_2013_(8986240247).jpg",
+      "license": "CC BY-SA 2.0",
+      "imageDimensions": [
+        1200,
+        1600
+      ],
+      "maskDimensions": [
+        473,
+        473
+      ],
+      "exportedRoles": [
+        "upper",
+        "dress",
+        "coat",
+        "skirt",
+        "socks",
+        "pants",
+        "jumpsuit",
+        "shoe_pair"
+      ],
+      "modelLabelPixelCounts": {
+        "0": 177296,
+        "1": 25,
+        "2": 3912,
+        "3": 1664,
+        "4": 168,
+        "5": 155,
+        "6": 959,
+        "7": 22830,
+        "8": 3981,
+        "9": 7896,
+        "10": 0,
+        "11": 0,
+        "12": 2322,
+        "13": 745,
+        "14": 0,
+        "15": 0,
+        "16": 0,
+        "17": 0,
+        "18": 977,
+        "19": 799
+      },
+      "reviewDisposition": "distinct-classes-needing-outline-review",
+      "humanBodyEvidencePixels": 4657,
+      "onPersonContextSupported": true,
+      "minimumCandidatePixels": 671,
+      "possibleSeparateCoatSkirtClassEvidence": true,
+      "modelIsSemanticOnly": true,
+      "stockingsOrTightsSeparateClass": false,
+      "socksPixelsVerifyTights": false,
+      "physicalInstancesConfirmed": 0,
+      "automaticallySavedGarments": 0,
+      "originalPhotoModified": false,
+      "pixelAccuracyMeasured": false,
+      "productionAuthorized": false,
+      "humanBodyClassesExcluded": [
+        2,
+        13,
+        14,
+        15,
+        16,
+        17
+      ],
+      "classCandidates": [
+        {
+          "role": "upper",
+          "labelIds": [
+            5
+          ],
+          "pixels": 155,
+          "bounds": {
+            "left": 370,
+            "top": 184,
+            "right": 385,
+            "bottom": 207
+          },
+          "centerY": 194.47096774193548,
+          "substantialModelRegion": false,
+          "verifiedSinglePhysicalGarment": false,
+          "reviewRequired": true
+        },
+        {
+          "role": "dress",
+          "labelIds": [
+            6
+          ],
+          "pixels": 959,
+          "bounds": {
+            "left": 227,
+            "top": 184,
+            "right": 379,
+            "bottom": 311
+          },
+          "centerY": 292.7101147028154,
+          "substantialModelRegion": true,
+          "verifiedSinglePhysicalGarment": false,
+          "reviewRequired": true
+        },
+        {
+          "role": "coat",
+          "labelIds": [
+            7
+          ],
+          "pixels": 22830,
+          "bounds": {
+            "left": 79,
+            "top": 160,
+            "right": 439,
+            "bottom": 309
+          },
+          "centerY": 224.6633815155497,
+          "substantialModelRegion": true,
+          "verifiedSinglePhysicalGarment": false,
+          "reviewRequired": true
+        },
+        {
+          "role": "skirt",
+          "labelIds": [
+            12
+          ],
+          "pixels": 2322,
+          "bounds": {
+            "left": 79,
+            "top": 271,
+            "right": 297,
+            "bottom": 308
+          },
+          "centerY": 288.62704565030145,
+          "substantialModelRegion": true,
+          "verifiedSinglePhysicalGarment": false,
+          "reviewRequired": true
+        },
+        {
+          "role": "socks",
+          "labelIds": [
+            8
+          ],
+          "pixels": 3981,
+          "bounds": {
+            "left": 93,
+            "top": 305,
+            "right": 415,
+            "bottom": 406
+          },
+          "centerY": 367.86510926902787,
+          "substantialModelRegion": true,
+          "verifiedSinglePhysicalGarment": false,
+          "reviewRequired": true
+        },
+        {
+          "role": "pants",
+          "labelIds": [
+            9
+          ],
+          "pixels": 7896,
+          "bounds": {
+            "left": 98,
+            "top": 295,
+            "right": 419,
+            "bottom": 411
+          },
+          "centerY": 332.92920466058763,
+          "substantialModelRegion": true,
+          "verifiedSinglePhysicalGarment": false,
+          "reviewRequired": true
+        },
+        {
+          "role": "shoe_pair",
+          "labelIds": [
+            18,
+            19
+          ],
+          "pixels": 1776,
+          "bounds": {
+            "left": 92,
+            "top": 396,
+            "right": 407,
+            "bottom": 425
+          },
+          "centerY": 411.4966216216216,
+          "substantialModelRegion": true,
+          "verifiedSinglePhysicalGarment": false,
+          "reviewRequired": true
+        }
+      ],
+      "skirtBoundaryReview": {
+        "classes": [
+          {
+            "role": "coat",
+            "strictModelPixels": 22830,
+            "additionalUncertainModelPixels": 273,
+            "sourceBackgroundOrBodyPixelsAdmitted": 0,
+            "unverifiedCompetingGarmentClass": true,
+            "independentMaskAccuracyVerified": false,
+            "reviewOnly": true
+          },
+          {
+            "role": "skirt",
+            "strictModelPixels": 2322,
+            "additionalUncertainModelPixels": 471,
+            "sourceBackgroundOrBodyPixelsAdmitted": 0,
+            "unverifiedCompetingGarmentClass": true,
+            "independentMaskAccuracyVerified": false,
+            "reviewOnly": true
+          },
+          {
+            "role": "shoe_pair",
+            "strictModelPixels": 1776,
+            "additionalUncertainModelPixels": 86,
+            "sourceBackgroundOrBodyPixelsAdmitted": 0,
+            "unverifiedCompetingGarmentClass": true,
+            "independentMaskAccuracyVerified": false,
+            "reviewOnly": true
+          }
+        ],
+        "pixelsClaimedByMultipleReviewVariants": 2,
+        "maximumLogitGap": 1.5,
+        "verifiedRecoveredFabricPixels": 0,
+        "independentGarmentAccuracyMeasured": false,
+        "productionAuthorized": false
+      },
+      "sourceRgbPreserved": true,
+      "automaticItemsCreated": 0,
+      "independentMaskAccuracyVerified": false
+    },
+    {
+      "id": "validation-0017",
+      "sourceSha256": "6f83b0769215cf7e19475a0b946b9be4d5d00747c50df18136aafe18a08dbb58",
+      "originalAttribution": "https://commons.wikimedia.org/wiki/File:Grey_Jeans_(3168533938).jpg",
+      "license": "CC BY-SA 2.0",
+      "imageDimensions": [
+        1920,
+        2880
+      ],
+      "maskDimensions": [
+        473,
+        473
+      ],
+      "exportedRoles": [
+        "upper",
+        "dress",
+        "coat",
+        "skirt",
+        "socks",
+        "pants",
+        "jumpsuit",
+        "shoe_pair"
+      ],
+      "modelLabelPixelCounts": {
+        "0": 150199,
+        "1": 0,
+        "2": 0,
+        "3": 0,
+        "4": 0,
+        "5": 1686,
+        "6": 0,
+        "7": 4,
+        "8": 0,
+        "9": 71753,
+        "10": 0,
+        "11": 0,
+        "12": 0,
+        "13": 0,
+        "14": 0,
+        "15": 87,
+        "16": 0,
+        "17": 0,
+        "18": 0,
+        "19": 0
+      },
+      "reviewDisposition": "wearer-context-not-supported",
+      "humanBodyEvidencePixels": 87,
+      "onPersonContextSupported": false,
+      "minimumCandidatePixels": 671,
+      "possibleSeparateCoatSkirtClassEvidence": false,
+      "modelIsSemanticOnly": true,
+      "stockingsOrTightsSeparateClass": false,
+      "socksPixelsVerifyTights": false,
+      "physicalInstancesConfirmed": 0,
+      "automaticallySavedGarments": 0,
+      "originalPhotoModified": false,
+      "pixelAccuracyMeasured": false,
+      "productionAuthorized": false,
+      "humanBodyClassesExcluded": [
+        2,
+        13,
+        14,
+        15,
+        16,
+        17
+      ],
+      "classCandidates": [
+        {
+          "role": "upper",
+          "labelIds": [
+            5
+          ],
+          "pixels": 1686,
+          "bounds": {
+            "left": 123,
+            "top": 10,
+            "right": 186,
+            "bottom": 52
+          },
+          "centerY": 29.86061684460261,
+          "substantialModelRegion": true,
+          "verifiedSinglePhysicalGarment": false,
+          "reviewRequired": true
+        },
+        {
+          "role": "coat",
+          "labelIds": [
+            7
+          ],
+          "pixels": 4,
+          "bounds": {
+            "left": 180,
+            "top": 32,
+            "right": 182,
+            "bottom": 35
+          },
+          "centerY": 33.25,
+          "substantialModelRegion": false,
+          "verifiedSinglePhysicalGarment": false,
+          "reviewRequired": true
+        },
+        {
+          "role": "pants",
+          "labelIds": [
+            9
+          ],
+          "pixels": 71753,
+          "bounds": {
+            "left": 107,
+            "top": 50,
+            "right": 381,
+            "bottom": 425
+          },
+          "centerY": 219.56449207698634,
+          "substantialModelRegion": true,
+          "verifiedSinglePhysicalGarment": false,
+          "reviewRequired": true
+        }
+      ],
+      "skirtBoundaryReview": {
+        "classes": [
+          {
+            "role": "coat",
+            "strictModelPixels": 4,
+            "additionalUncertainModelPixels": 25,
+            "sourceBackgroundOrBodyPixelsAdmitted": 0,
+            "unverifiedCompetingGarmentClass": true,
+            "independentMaskAccuracyVerified": false,
+            "reviewOnly": true
+          },
+          {
+            "role": "skirt",
+            "strictModelPixels": 0,
+            "additionalUncertainModelPixels": 0,
+            "sourceBackgroundOrBodyPixelsAdmitted": 0,
+            "unverifiedCompetingGarmentClass": true,
+            "independentMaskAccuracyVerified": false,
+            "reviewOnly": true
+          },
+          {
+            "role": "shoe_pair",
+            "strictModelPixels": 0,
+            "additionalUncertainModelPixels": 0,
+            "sourceBackgroundOrBodyPixelsAdmitted": 0,
+            "unverifiedCompetingGarmentClass": true,
+            "independentMaskAccuracyVerified": false,
+            "reviewOnly": true
+          }
+        ],
+        "pixelsClaimedByMultipleReviewVariants": 0,
+        "maximumLogitGap": 1.5,
+        "verifiedRecoveredFabricPixels": 0,
+        "independentGarmentAccuracyMeasured": false,
+        "productionAuthorized": false
+      },
+      "sourceRgbPreserved": true,
+      "automaticItemsCreated": 0,
+      "independentMaskAccuracyVerified": false
+    }
+  ],
+  "evidenceKind": "Local CPU model output export coverage; AI visual inspection, not independent human review",
+  "runtime": {
+    "python": "3.12",
+    "onnxruntime": "1.21.0",
+    "numpy": "2.5.4"
+  }
+}

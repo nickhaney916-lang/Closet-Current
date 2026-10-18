@@ -10,6 +10,9 @@ on:
       - 'scripts/run-lip-garment-candidates.py'
       - 'tests/test_lip_garment_instances.py'
       - 'benchmark/schp-lip-20-reference.json'
+      - 'benchmark/manifest-visible-legwear-2.json'
+      - 'benchmark/manifest-fresh-11.json'
+      - 'benchmark/locked-photo-sources.json'
       - '.github/workflows/lip-garment-instance-candidates.yml'
 permissions:
   contents: read
@@ -32,10 +35,11 @@ jobs:
           python -m py_compile scripts/run-lip-garment-candidates.py
           PYTHONPATH=benchmark python -m unittest discover -s tests -p 'test_lip_garment_instances.py' -v
           PYTHONPATH=benchmark python -m unittest discover -s tests -p 'test_lip_boundary_review.py' -v
-      - name: Load the two SHA-verified licensed comparison photographs
+      - name: Load four SHA-verified licensed comparison photographs
         run: |
-          node scripts/download-reviewed-photos.mjs benchmark/manifest-visible-legwear-2.json benchmark/photos validation-0031
+          node scripts/download-reviewed-photos.mjs benchmark/manifest-visible-legwear-2.json benchmark/photos validation-0031,validation-0030
           node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos commons-0059
+          node scripts/download-reviewed-photos.mjs benchmark/manifest-fresh-11.json benchmark/photos validation-0017
       - name: Compare independent human parsing coat, skirt, dress and shoe pixels
         run: PYTHONPATH=benchmark python scripts/run-lip-garment-candidates.py benchmark/lip-garment-instance-review
       - name: Prohibit invented garment items or production promotion
@@ -45,7 +49,7 @@ jobs:
           from pathlib import Path
           p=Path('benchmark/lip-garment-instance-review')
           s=json.loads((p/'summary.json').read_text())
-          assert s['status']=='complete' and len(s['cases'])==2 and s['sourceHashesVerified']
+          assert s['status']=='complete' and len(s['cases'])==4 and s['sourceHashesVerified']
           assert s['automaticItemsCreated']==0 and s['productionAuthorized'] is False
           assert s['independentGarmentInstanceMasks'] is False
           by={case['id']:case for case in s['cases']}
@@ -53,6 +57,16 @@ jobs:
           assert by['commons-0059']['reviewDisposition']=='no-garment-parsing-evidence'
           for case in s['cases']:
               assert case['automaticItemsCreated']==0
+              assert case['stockingsOrTightsSeparateClass'] is False
+              assert case['socksPixelsVerifyTights'] is False
+              assert {'socks','pants','jumpsuit'}.issubset(case['exportedRoles'])
+              by_role={r['role']:r for r in case['classCandidates']}
+              for role,label in [('socks',8),('pants',9),('jumpsuit',10)]:
+                  pixels=case['modelLabelPixelCounts'][str(label)]
+                  assert (role in by_role)==(pixels>0)
+                  if pixels:
+                      assert by_role[role]['pixels']==pixels
+                      assert (p/(case['id']+'-'+role+'-unverified-mask.png')).is_file()
               assert case['physicalInstancesConfirmed']==0
               assert case['independentMaskAccuracyVerified'] is False
               assert (p/(case['id']+'-separate-classes.png')).is_file()

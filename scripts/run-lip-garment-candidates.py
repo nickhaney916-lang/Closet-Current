@@ -17,7 +17,7 @@ import onnxruntime as ort
 from PIL import Image, ImageDraw
 
 sys.path.insert(0, str(Path("benchmark").resolve()))
-from lip_garment_instance_candidates import candidate_class_regions
+from lip_garment_instance_candidates import candidate_class_regions, GARMENT_CLASSES
 from lip_boundary_review import lip_boundary_review
 
 # Reuse exactly the pinned MIT ONNX model, checksum-verifying loader and
@@ -30,8 +30,9 @@ spec.loader.exec_module(lip)
 DEST = Path(sys.argv[1] if len(sys.argv)>1 else "benchmark/lip-garment-instance-review")
 LOCKED = json.loads(Path("benchmark/locked-photo-sources.json").read_text())
 VISIBLE = json.loads(Path("benchmark/manifest-visible-legwear-2.json").read_text())
-SOURCES = {r["id"]:r for r in LOCKED+VISIBLE}
-IDS = ["validation-0031", "commons-0059"]
+FRESH = json.loads(Path("benchmark/manifest-fresh-11.json").read_text())
+SOURCES = {r["id"]:r for r in LOCKED+VISIBLE+FRESH}
+IDS = ["validation-0031", "commons-0059", "validation-0030", "validation-0017"]
 
 
 def source_photo(row):
@@ -114,7 +115,7 @@ def main():
         boundary=lip_boundary_review(labels,raw_logits)
         groups=details.pop("classCandidates")
         source=preview(photo,np.ones_like(labels,dtype=bool))
-        names=["coat","upper","skirt","dress","shoe_pair"]
+        names=list(GARMENT_CLASSES)
         by={c["role"]:c for c in groups}
         panes=[source]
         for name in names:
@@ -123,7 +124,8 @@ def main():
                 np.zeros_like(labels,dtype=bool))
             panes.append(pane)
         width=380;height=panes[0].height
-        canvas=Image.new("RGB",(width*3,(height+64)*2),"white")
+        rows=(len(panes)+2)//3
+        canvas=Image.new("RGB",(width*3,(height+64)*rows),"white")
         drawer=ImageDraw.Draw(canvas)
         for i,pane in enumerate(panes):
             x=(i%3)*width;y=(i//3)*(height+64)
@@ -158,6 +160,8 @@ def main():
           "license":row["attribution"]["license"],
           "imageDimensions":[photo.width,photo.height],
           "maskDimensions":[int(labels.shape[1]),int(labels.shape[0])],
+          "exportedRoles":names,
+          "modelLabelPixelCounts":{str(i):int((labels==i).sum()) for i in range(20)},
           "cpuInferenceMs":ms,
           **details,"classCandidates":groups,
           "skirtBoundaryReview":{
