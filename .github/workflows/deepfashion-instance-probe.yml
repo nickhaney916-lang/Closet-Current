@@ -19,6 +19,7 @@ on:
       - 'tests/footwear-readiness.test.mjs'
       - 'scripts/audit-footwear-readiness.mjs'
       - 'tests/physical-garment-inventory.test.mjs'
+      - 'tests/physical-garment-cli.test.mjs'
       - 'scripts/score-physical-garment-inventory.mjs'
       - 'tests/instance-review-coverage.test.mjs'
       - 'scripts/audit-independent-instance-reviews.mjs'
@@ -54,7 +55,7 @@ jobs:
           PYTHONPATH=benchmark python -m unittest discover -s tests -p 'test_deepfashion_review_risks.py' -v
           PYTHONPATH=benchmark python -m unittest discover -s tests -p 'test_deepfashion_mask_seed.py' -v
           PYTHONPATH=benchmark python -m unittest discover -s tests -p 'test_whole_outfit_review_packet.py' -v
-          node --test tests/instance-review-coverage.test.mjs tests/instance-spatial-review.test.mjs tests/physical-garment-inventory.test.mjs tests/footwear-readiness.test.mjs
+          node --test tests/instance-review-coverage.test.mjs tests/instance-spatial-review.test.mjs tests/physical-garment-inventory.test.mjs tests/physical-garment-cli.test.mjs tests/footwear-readiness.test.mjs
       - name: Download SHA-verified source photographs
         run: |
           node scripts/download-reviewed-photos.mjs benchmark/manifest-visible-legwear-2.json benchmark/photos validation-0031
