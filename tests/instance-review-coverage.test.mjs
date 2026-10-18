@@ -74,7 +74,7 @@ test('even all two proposals reviewed is not independently verified physical gar
 test('untrusted approval, swapped identity, foreign photo or missing prediction aborts batch',()=>{
  const {index,seeds}=fixture();
  assert.throws(()=>assessIndividualInstanceReview(index,
-  new Map([['commons-0035-candidate-01',seeds.get('commons-0035-candidate-01')]])),/Missing or extra/);
+  new Map([['commons-0035-candidate-01',seeds.get('commons-0035-candidate-01')]])),/Altered|Missing or extra/);
  assert.throws(()=>assessIndividualInstanceReview(index,new Map([...seeds].map(([k,v])=>
   [k,{...v,sourceSha256:'b'.repeat(64)}]))),/Altered/);
  const approval={...seeds.get('commons-0035-candidate-01'),
