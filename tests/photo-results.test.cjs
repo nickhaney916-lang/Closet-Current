@@ -61,3 +61,17 @@ test('processing, already-saved, and duplicate items never show quick color save
   c.renderPhotoResults(grid,[one]);assert.equal(descendants(grid).filter(x=>x.tag==='select').length,0);
  }
 });
+
+test('fragmented whole-outfit photo warns against treating a mixed region as a clean garment',()=>{
+ const {c,grid}=setup();
+ const item={id:'mixed',image:'original-region',category:'Shoes',itemType:'Unknown',
+  outfitSourceId:'outfit',segmentHint:{categories:['Shoes'],types:[],clipped:false,
+   displayFallback:'original-crop',displayFallbackReason:'fragmented-mask'},
+  localAnalyzed:true,color:''};
+ c.batch=[item];c.renderPhotoResults(grid,[item]);
+ const all=descendants(grid);
+ assert.ok(all.some(x=>/Outline uncertain: this photo region/.test(x.text)));
+ assert.equal(all.filter(x=>x.tag==='select').length,0,
+  'fragmented candidate requires Adjust, not color-only acceptance');
+ assert.ok(all.some(x=>x.tag==='button'&&x.text==='Adjust'));
+});

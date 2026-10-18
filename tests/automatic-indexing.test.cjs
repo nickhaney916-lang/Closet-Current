@@ -226,3 +226,20 @@ test('a verified mask color retains priority over both scene color and model det
  assert.equal(stored[0].colorMethod,'garment-mask');
  assert.equal(stored[0].recognitionPhoto.image,'original-crop');
 });
+
+test('real-photo-style fragmented outfit proposals stay review-only despite strong labels and color',async()=>{
+ const {c,stored}=setup({quality:async()=>({blank:false,signature:[10,20,30],aspect:1,
+  colorEstimate:{color:'White'}}),result:{strong:true,choices:[choice],details:{color:'Red'}}});
+ c.candidate('mixed-blazer-skirt',{outfitSourceId:'person-photo',
+  recognitionPhoto:{image:'original-rgb'},originalPhoto:{image:'full-original'},
+  segmentHint:{categories:['Tops'],types:[],clipped:false,
+   displayFallback:'original-crop',displayFallbackReason:'fragmented-mask'},
+  colorEstimate:{color:'Blue'}});
+ await done(c);
+ assert.equal(stored.length,0);
+ assert.equal(c.items.length,0);
+ assert.equal(c.batch.length,1);
+ assert.equal(c.batch[0].originalPhoto.image,'full-original');
+ assert.equal(c.batch[0].recognitionPhoto.image,'original-rgb');
+ assert.match(c.batch[0].localStatus,/multiple garments or background/);
+});

@@ -101,3 +101,17 @@ test('one-choice color confirmation is clearly offered rather than forcing Adjus
  assert.match(code,/Garment category recognized\. Choose a color below to save; specific type is optional/);
  assert.match(code,/Garment identified\. Choose a color below to save; your original photo is kept/);
 });
+
+test('fragmented whole-outfit region cannot be quick-saved merely by choosing color',async()=>{
+ const h=setup({outfitSourceId:'outfit-photo',
+  segmentHint:{categories:['Tops'],types:[],clipped:false,
+   displayFallback:'original-crop',displayFallbackReason:'fragmented-mask'}});
+ assert.equal(h.state.canConfirmReviewedColor(h.item),false);
+ assert.equal(await h.state.confirmReviewedColor(h.item,'Blue'),false);
+ assert.equal(h.saves.length,0);
+ assert.equal(h.state.batch.length,1);
+ const other=setup({outfitSourceId:'outfit-photo',
+  segmentHint:{categories:['Tops'],types:[],clipped:false}});
+ assert.equal(other.state.canConfirmReviewedColor(other.item),true,
+  'reliable masks keep the normal one-choice color flow');
+});

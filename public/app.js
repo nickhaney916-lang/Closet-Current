@@ -136,6 +136,9 @@ function canConfirmReviewedColor(item){
   !localPending.has(item.id)&&item.localAnalyzed&&!item.userAdjusted&&
   !item.possibleDuplicate&&!item.requiresOwnershipConfirmation&&
   !item.scanFailed&&!item.saveFailed&&
+  // A fragmented outline often includes the person's skin or a second
+  // garment. Color-only confirmation is not sufficient to approve it.
+  item.segmentHint?.displayFallbackReason!=='fragmented-mask'&&
   categories.includes(item.category)&&item.category!=='Uncategorized'&&
   // Quick save must obey the same outfit-piece checks as automatic indexing.
   // A clipped region or category/type conflict cannot be authorized by simply
@@ -176,6 +179,8 @@ function renderPhotoResults(grid,results){
   const state=pending?'checking':saved?'saved':item.saveFailed||item.scanFailed?'error':item.possibleDuplicate?'review':known&&item.localAnalyzed&&item.requiresOwnershipConfirmation?'ready':'review';
   const label=pending?(recognitionState.activeId===item.id&&localReady?'Checking…':'Waiting…'):saved?(item.itemType==='Unknown'&&item.color?'Saved · refine type':'Saved'):item.saveFailed?'Not saved':item.scanFailed?'Scanner unavailable':item.possibleDuplicate?'Check duplicate':state==='ready'?'Ready to add':canConfirmReviewedColor(item)?'Choose color to save':known?'Needs review':item.color?'Color found · confirm garment':'Needs a clearer photo';
   body.append(node('span',label,'photo-status '+state),node('h3',title));
+  if(item.outfitSourceId&&item.segmentHint?.displayFallbackReason==='fragmented-mask')
+   body.append(node('p','Outline uncertain: this photo region may contain other clothes, skin or background. Check with Adjust or photograph the item alone before saving.','fine'));
   if(known)body.append(node('p',[item.category,item.itemType,item.color].filter(x=>x&&x!=='Unknown').join(' · '),'photo-category'));
   else if(!pending)body.append(node('p',item.color?'Color: '+item.color+' · confirm the garment category.':item.scanFailed?'Try again, or add the details with Adjust.':'Retake this item, or add its details with Adjust.','fine'));
   const extra=[item.pattern,item.sleeveLength,item.fit,...(item.seasons||[])].filter(x=>x&&x!=='Unknown'&&x!=='Not applicable');
@@ -539,14 +544,20 @@ async function recognizeItem(item){
   if(corePartial){
    if(item.userAdjusted||!segmentationAllows(item,result.choices[0])){item.localStatus=item.userAdjusted?'Your adjustments are preserved. Save this piece when ready.':'The clothing checks disagree. Use Adjust or take a clearer photo.';return true;}
    applyLocalChoice(item,result.choices[0]);item.name=[item.color,result.choices[0].category].filter(Boolean).join(' ');
+   if(item.outfitSourceId&&item.segmentHint?.displayFallbackReason==='fragmented-mask'){
+    item.localStatus='The outline may contain more than one item or background. Check with Adjust or photograph the garment alone before saving.';return true;
+   }
    if(!item.color||item.color==='Unknown'){item.localStatus=item.possibleDuplicate?'Possible duplicate: compare this photo with your closet before saving.':item.requiresOwnershipConfirmation?'Confirm this garment belongs in your closet before saving.':'Garment category recognized. Choose a color below to save; specific type is optional.';return true;}
   }
-  if(!result.strong&&!corePartial){if(typeof recordDeviceEvent==='function')recordDeviceEvent('not_recognized',{durationMs:Date.now()-scanStarted});item.localStatus=(item.possibleDuplicate?'Possible duplicate. ':'')+(item.color?'Color kept. Confirm the garment category and type in Adjust.':'Garment identity needs confirmation. Choose a color and category in Adjust.');return true;}
+  if(!result.strong&&!corePartial){if(typeof recordDeviceEvent==='function')recordDeviceEvent('not_recognized',{durationMs:Date.now()-scanStarted});if(item.outfitSourceId&&item.segmentHint?.displayFallbackReason==='fragmented-mask'){item.localStatus='The outline may contain more than one garment or background. Check with Adjust or photograph the item alone.';return true;}item.localStatus=(item.possibleDuplicate?'Possible duplicate. ':'')+(item.color?'Color kept. Confirm the garment category and type in Adjust.':'Garment identity needs confirmation. Choose a color and category in Adjust.');return true;}
   if(!segmentationAllows(item,result.choices[0])){item.localStatus=item.segmentHint?.clipped?'This piece is partly outside the photo. Retake the whole garment or use Adjust.':'The clothing mask and garment checks disagree. Use Adjust or take a clearer photo.';return true;}
   if(item.userAdjusted){item.localStatus='Your adjustments are preserved. Save this piece when ready.';return true;}
   applyLocalChoice(item,result.choices[0]);
   Object.assign(item,ClothingDetails.fill(item,result.choices[0],result.details));
   item.name=[item.color,item.itemType&&item.itemType!=='Unknown'?item.itemType:item.category].filter(Boolean).join(' ');item.indexingLevel=item.itemType==='Unknown'?'category-color':'specific-type';
+  if(item.outfitSourceId&&item.segmentHint?.displayFallbackReason==='fragmented-mask'){
+   item.localStatus='This photo region may include multiple garments or background. Verify it with Adjust or photograph the item alone before saving.';return true;
+  }
   // Category and color are required for automatic closet indexing. A valid
   // garment photo stays reviewable when neither reliable photo color nor model
   // color is available; optional subtype and label details can remain blank.
