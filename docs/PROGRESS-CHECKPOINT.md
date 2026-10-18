@@ -1,6 +1,48 @@
 # Closet Current master development checkpoint
 
 
+## Experimental real-photo garment-fragmentation spatial audit — October 18, 2026, Pacific
+
+- Implemented `benchmark/instance-spatial-review.mjs`, regression tests
+  `tests/instance-spatial-review.test.mjs`, and plugged analysis into
+  `scripts/audit-independent-instance-reviews.mjs` and the existing
+  pinned DeepFashion GitHub Actions workflow. All changes remain research-only
+  in draft PR #7, development branch
+  `fix/photo-clarity-high-quality-downsampling-20261016`.
+- The problem: model proposals can represent two sleeves, two trouser legs,
+  or several jacket panels of **one physical article** even when masks do
+  not overlap. Earlier overlap-only checks could not surface nearby
+  non-overlapping same-class proposals. The new audit retains exact
+  source SHA, unapproved model status, exact model-mask foreground overlap,
+  and a bounded 96×96 spatial gap. It records review-priority candidates
+  **without merging masks, inferring garment counts, fabric truth, or
+  changing automatic recognition or user UI**.
+- Actual GitHub [DeepFashion 10-photo run 39167434166](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39167434166)
+  succeeded: 15 focused Node tests pass, 0 fail. Inspected archived
+  artifact `12150593325`, particularly
+  `individual-instance-spatial-review.json`: **10 verified licensed
+  source images, 34 unapproved model proposals, 81 proposal pairs,
+  22 same-category near/overlap review pairs, 19 cross-category overlap
+  review pairs, 41 combined priorities**. Importantly **5** same-category
+  priority pairs are non-overlapping at exact source-pixel resolution;
+  examples include `commons-0049` dress panels and `commons-0065`
+  jacket panels. None is confirmed to be a duplicate garment or a valid
+  separation without human reference outlines.
+- Detail in `benchmark/REAL-INSTANCE-SPATIAL-REVIEW-20261018.md`.
+  Original source images and original recognition RGB remain unchanged,
+  0 automatic customer saves from research run, 0 independently approved
+  human masks, null measured garment accuracy/recall, no paid inference,
+  no model promotion or threshold relaxation. Existing 2-region,
+  0-auto-save semantic worker baseline on worn `validation-0031` remains.
+- **Next dependency, not faked:** obtain independent two-human source-identical
+  per-item mask annotations and complete physical-garment inventories to
+  distinguish model duplicate fragments vs genuinely separate layers.
+  Compare garment recall, precision, contamination and original color,
+  then select a safe replacement segmentation model only on verified data.
+  No production merge/deployment or Drive Duel changes.
+
+
+
 ## New-item photo review → one-tap owned-wardrobe styling — October 18, 2026, Pacific
 
 - Priority completed **only on draft PR #7 development branch**. In
