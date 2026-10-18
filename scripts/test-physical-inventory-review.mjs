@@ -62,7 +62,8 @@ try{
  await page.locator('#status').getByText(/Rejected approved outlines/).waitFor();
  await provide([{...garmentA,sourceSha256:'f'.repeat(64)}]);
  await page.locator('#status').getByText(/Rejected approved outlines/).waitFor();
- await provide([garmentA,{...garmentB,reviewer:'Different first human'}]);
+ await provide([garmentA,{...garmentB,reviewer:'Different first human',
+  targetIndependentlyIdentifiedBy:'Different first human'}]);
  await page.locator('#status').getByText(/same two named reviewers/).waitFor();
  await provide([garmentA,garmentB]);
  await page.locator('#status').getByText(/Independent garment count/).waitFor();
