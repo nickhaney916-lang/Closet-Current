@@ -9,7 +9,7 @@ import onnxruntime as ort
 from PIL import Image, ImageDraw
 sys.path.insert(0,str(Path('benchmark').resolve()))
 from deepfashion_instance_decode import decode,instance_overlap_review
-from deepfashion_review_risks import review_instance_scene
+from deepfashion_review_risks import review_instance_scene,category_union_preview
 D=Path(sys.argv[1] if len(sys.argv)>1 else "benchmark/deepfashion-instance-review")
 R=Path("benchmark")
 M=json.loads((R/"deepfashion-instance-onnx-reference.json").read_text())
@@ -115,6 +115,27 @@ def main():
         risk=review_instance_scene(
             [{"itemType":x["itemType"]} for x in candidates],
             scenario["expectedCategory"],scenario["expectedTypeHint"],overlap)
+        reviewUnions=[]
+        for broad in ("Bottoms","Outerwear","Dresses","Tops"):
+            part=category_union_preview(candidates,broad)
+            if part is None:continue
+            mask=Image.fromarray(part["sourceMaskUnion"].astype(np.uint8)*255,'L')
+            rgba=img.copy().convert('RGBA')
+            rgba.putalpha(mask)
+            panel_bg=Image.new('RGBA',img.size,(235,235,240,255))
+            panel_bg.alpha_composite(rgba)
+            width_r=400
+            height_r=max(1,round(img.height*width_r/img.width))
+            comparative=Image.new('RGB',(width_r*2,height_r+72),'white')
+            comparative.paste(img.resize((width_r,height_r),Image.Resampling.LANCZOS),(0,72))
+            comparative.paste(panel_bg.convert('RGB').resize(
+                (width_r,height_r),Image.Resampling.LANCZOS),(width_r,72))
+            text=ImageDraw.Draw(comparative)
+            text.text((8,10),'Original unchanged source',fill='black')
+            text.text((width_r+8,10),'Candidate panel union — not verified',fill='black')
+            text.text((8,42),f'{broad}: {part["modelProposals"]} proposals, no wardrobe save',fill='black')
+            comparative.save(D/(row["id"]+"-"+broad.lower()+"-union-review.png"))
+            reviewUnions.append({k:v for k,v in part.items() if k!="sourceMaskUnion"})
         width=400;height=max(1,round(img.height*width/img.width))
         original=img.resize((width,height),Image.Resampling.LANCZOS)
         source=np.asarray(img).copy()
@@ -153,6 +174,7 @@ def main():
           sourceGeometry=transform,cpuInferenceMs=ms,instanceMasksVerified=0,
           masksNotDecoded=False,proposedMasks=len(candidates),
           categoryCoverageReview=comparison,manualReviewRisk=risk,
+          unverifiedCategoryUnions=reviewUnions,
           overlapReview={k:v for k,v in overlap.items()},
           proposals=[dict(itemType=c["itemType"],confidence=round(c["score"],3),
             pixelArea=c["pixels"]) for c in candidates],

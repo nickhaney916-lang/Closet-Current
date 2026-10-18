@@ -75,3 +75,44 @@ def review_instance_scene(proposals, expected_category, expected_type_hint, over
         "pixelAccuracyMeasured":False,
         "allowAutomaticSaving":False,
     }
+
+
+def category_union_preview(candidates, category):
+    """Review-only union of candidate panels assigned to the SAME broad class.
+
+    Two trouser legs or six jacket panels can belong to one article, but
+    the union might also mix two physical garments or model contamination.
+    Never promote the union to an inventory item or a validated instance.
+    """
+    if category not in ("Tops","Bottoms","Outerwear","Dresses"):
+        raise ValueError("Unsupported garment category")
+    masks=[]
+    for p in candidates:
+        kind=p.get("itemType")
+        if kind not in CLASS_TO_CATEGORY:
+            raise ValueError("Unknown garment mask taxonomy")
+        if CLASS_TO_CATEGORY[kind]!=category:continue
+        mask=p.get("mask")
+        # Strict source-mask layout validation prevents accidental unions
+        # across different resolution images.
+        import numpy as np
+        if (not isinstance(mask,np.ndarray) or mask.ndim!=2 or
+            mask.dtype!=bool or mask.size==0 or mask.size>12_000_000):
+            raise ValueError("Invalid source image candidate mask")
+        masks.append(mask)
+    if len(masks)<2:return None
+    import numpy as np
+    if any(m.shape!=masks[0].shape for m in masks):
+        raise ValueError("Cannot unite masks from different photo geometries")
+    union=np.zeros(masks[0].shape,dtype=bool)
+    summed=0
+    for m in masks:
+        union |= m
+        summed += int(m.sum())
+    total=int(union.sum())
+    return dict(category=category,sourceMaskUnion=union,
+       modelProposals=len(masks),originalPixelsAcrossProposals=summed,
+       unionPixels=total,sharedOrDuplicatePixels=summed-total,
+       certifiedSingleArticle=False,independentMaskGroundTruth=False,
+       garmentOnlyVerified=False,reviewOnly=True,
+       sourcePhotoUnchanged=True,autoSaveAllowed=False)

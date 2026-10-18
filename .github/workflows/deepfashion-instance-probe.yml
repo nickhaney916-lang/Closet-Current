@@ -68,7 +68,10 @@ jobs:
                       'unsupported-footwear-taxonomy' in c['manualReviewRisk']['manualReviewFlags']])==2
           assert x['automaticItemsCreated']==0 and not x['customerModelChanged'] and not x['paidServicesUsed']
           assert all(not c['masksNotDecoded'] and c['automaticItemsSaved']==0 and
-                     c['overlapReview']['canAutoSaveAnyProposal'] is False for c in x['cases'])
+                     c['overlapReview']['canAutoSaveAnyProposal'] is False and
+                     all(not u['certifiedSingleArticle'] and not u['autoSaveAllowed']
+                         and u['sourcePhotoUnchanged'] for u in c['unverifiedCategoryUnions'])
+                     for c in x['cases'])
           from pathlib import Path
           assert all((Path('benchmark/deepfashion-instance-review')/(c['id']+'-instance-overlays.png')).is_file() for c in x['cases'])
           PY
@@ -79,4 +82,5 @@ jobs:
           path: |
             benchmark/deepfashion-instance-review/summary.json
             benchmark/deepfashion-instance-review/*-instance-overlays.png
+            benchmark/deepfashion-instance-review/*-union-review.png
           retention-days: 14
