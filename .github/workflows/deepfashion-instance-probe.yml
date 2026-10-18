@@ -14,6 +14,10 @@ on:
       - 'benchmark/instance-spatial-review.mjs'
       - 'tests/instance-spatial-review.test.mjs'
       - 'benchmark/physical-garment-inventory.mjs'
+      - 'benchmark/footwear-readiness.mjs'
+      - 'benchmark/LIP-SOCKS-REAL-REVIEW-20261017.json'
+      - 'tests/footwear-readiness.test.mjs'
+      - 'scripts/audit-footwear-readiness.mjs'
       - 'tests/physical-garment-inventory.test.mjs'
       - 'scripts/score-physical-garment-inventory.mjs'
       - 'tests/instance-review-coverage.test.mjs'
@@ -50,7 +54,7 @@ jobs:
           PYTHONPATH=benchmark python -m unittest discover -s tests -p 'test_deepfashion_review_risks.py' -v
           PYTHONPATH=benchmark python -m unittest discover -s tests -p 'test_deepfashion_mask_seed.py' -v
           PYTHONPATH=benchmark python -m unittest discover -s tests -p 'test_whole_outfit_review_packet.py' -v
-          node --test tests/instance-review-coverage.test.mjs tests/instance-spatial-review.test.mjs tests/physical-garment-inventory.test.mjs
+          node --test tests/instance-review-coverage.test.mjs tests/instance-spatial-review.test.mjs tests/physical-garment-inventory.test.mjs tests/footwear-readiness.test.mjs
       - name: Download SHA-verified source photographs
         run: |
           node scripts/download-reviewed-photos.mjs benchmark/manifest-visible-legwear-2.json benchmark/photos validation-0031
@@ -62,6 +66,8 @@ jobs:
         run: node scripts/audit-independent-instance-reviews.mjs benchmark/deepfashion-instance-review
       - name: Audit independent physical garments including model-missed items
         run: node scripts/score-physical-garment-inventory.mjs benchmark/deepfashion-instance-review
+      - name: Audit real-photo shoe/tights class support without inventing accuracy
+        run: node scripts/audit-footwear-readiness.mjs benchmark/deepfashion-instance-review
       - name: Block invented clothes and unverified instance accuracy
         run: |
           python - <<'PY'
@@ -95,6 +101,17 @@ jobs:
           physical=json.loads((root/'physical-garment-inventory-audit.json').read_text())
           assert physical['sources']==10 and physical['fullyHumanReviewedSources']==0
           assert physical['completeTenPhotoAccuracy'] is None and physical['partialDatasetAccuracy'] is None
+          footwear=json.loads((root/'footwear-hosiery-readiness-audit.json').read_text())
+          assert footwear['status']=='footwear-and-hosiery-promotion-blocked'
+          assert len(footwear['negativeFootwearControls'])==2
+          assert len(footwear['lipHistoricImages'])==2
+          assert footwear['humanApprovedPixelOutlinesAvailable'] is False
+          assert footwear['measuredFootwearPrecision'] is None
+          assert footwear['measuredFootwearRecall'] is None
+          assert footwear['comparableModelAccuracyImprovement'] is None
+          assert footwear['autoSavedCustomerItems']==0
+          assert footwear['canPromoteModel'] is False
+          assert all(r['actualDeepFashionProposals']==0 for r in footwear['negativeFootwearControls'])
           assert all(p['detectionRecall'] is None and p['missingGarments'] is None
                      for p in physical['perPhoto'])
           assert not physical['canPromoteModel'] and not physical['customerModelModified']
@@ -167,6 +184,7 @@ jobs:
             benchmark/deepfashion-instance-review/individual-instance-coverage-audit.json
             benchmark/deepfashion-instance-review/individual-instance-spatial-review.json
             benchmark/deepfashion-instance-review/physical-garment-inventory-audit.json
+            benchmark/deepfashion-instance-review/footwear-hosiery-readiness-audit.json
             benchmark/deepfashion-instance-review/independent-outline-review/reference-review-index.json
             benchmark/deepfashion-instance-review/independent-outline-review/source-original-coverage.json
             benchmark/deepfashion-instance-review/independent-outline-review/REVIEW-QUEUE.html
