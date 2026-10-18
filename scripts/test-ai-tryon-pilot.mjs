@@ -9,6 +9,7 @@ try{
  const page=await browser.newPage();
  const errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.setContent(`<!DOCTYPE html><select id="tryOnFigure"><option value="female">Female</option><option value="male">Male</option></select>
+ <img id="tryOnModelPreview" alt=""><p id="tryOnModelCaption"></p>
  <button id="tryOnGenerate" disabled>Generate</button><p id="tryOnStatus"></p><div id="outfitFigure"><img id="tryOnImage" hidden></div>`);
  const fakeImage=await page.evaluate(()=>{
   const c=document.createElement('canvas');c.width=48;c.height=64;
@@ -36,7 +37,9 @@ try{
  await page.waitForFunction(()=>!document.querySelector('#tryOnGenerate').disabled);
  assert.equal(calls.filter(x=>x.action==='availability').length,1,'Only a cost-free availability check may run on load');
  assert.equal(calls.filter(x=>x.action==='start').length,0,'Selecting clothing must not trigger paid inference');
+ assert.match(await page.locator('#tryOnModelPreview').getAttribute('src'),/female-preview\.webp$/);
  await page.locator('#tryOnFigure').selectOption('male');
+ assert.match(await page.locator('#tryOnModelPreview').getAttribute('src'),/male-preview\.webp$/);
  assert.equal(calls.filter(x=>x.action==='start').length,0,'Selecting figure must never submit image');
  await page.locator('#tryOnGenerate').click();
  await page.waitForFunction(()=>!document.querySelector('#tryOnImage').hidden,null,{timeout:7000});
@@ -48,6 +51,7 @@ try{
  assert.equal(await page.locator('#tryOnImage').getAttribute('src'),fakeImage);
  assert.equal(await page.locator('#outfitFigure').evaluate(el=>el.classList.contains('ai-tryon-active')),true,'true render replaces the silhouette viewport');
  await page.locator('#tryOnFigure').selectOption('female');
+ assert.match(await page.locator('#tryOnModelPreview').getAttribute('src'),/female-preview\.webp$/);
  assert.equal(await page.locator('#tryOnImage').isHidden(),true,'changing model invalidates existing preview');
  assert.equal(await page.locator('#outfitFigure').evaluate(el=>el.classList.contains('ai-tryon-active')),false);
  assert.equal(calls.filter(x=>x.action==='start').length,1,'switching figure must not trigger paid inference');
