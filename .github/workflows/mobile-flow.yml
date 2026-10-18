@@ -23,6 +23,8 @@ on:
       - 'benchmark/garment-mask-metrics.mjs'
       - 'benchmark/annotate-garment.html'
       - 'benchmark/approve-garment-mask.html'
+      - 'benchmark/assemble-physical-inventory.html'
+      - 'scripts/test-physical-inventory-review.mjs'
       - 'scripts/test-independent-mask-approval.mjs'
       - 'scripts/test-garment-annotation-editor.mjs'
       - 'scripts/test-ai-tryon-pilot.mjs'
@@ -63,6 +65,7 @@ jobs:
         run: |
           node scripts/test-garment-annotation-editor.mjs
           node scripts/test-independent-mask-approval.mjs
+          node scripts/test-physical-inventory-review.mjs
           node scripts/test-ai-tryon-pilot.mjs
       - name: Check camera frame quality and stability
         run: node --test tests/outfit-capture.test.cjs tests/outfit-worker.test.mjs tests/outfit-diagnostics.test.mjs tests/original-first-recognition.test.cjs tests/quick-color-review.test.cjs tests/automatic-indexing.test.cjs tests/clothing-details.test.cjs tests/capture.test.cjs tests/photo-native-still.test.cjs tests/photo-capture-quality.test.cjs tests/photo-frame-quality.test.cjs tests/photo-stability.test.cjs tests/photo-crop-resolution.test.cjs tests/outfit-segmentation-edge.test.mjs tests/outfit-segmentation.test.mjs tests/outfit-color-evidence.test.mjs tests/photo-color.test.cjs tests/photo-foreground-color.test.cjs tests/garment-mask-metrics.test.mjs tests/ai-tryon-plan.test.cjs tests/ai-tryon-protocol.test.mjs tests/ai-model-figures.test.mjs
