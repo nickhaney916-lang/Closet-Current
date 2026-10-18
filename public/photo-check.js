@@ -24,11 +24,12 @@ async function checkPhoto(image){
  const ctx=sample.getContext('2d',{willReadFrequently:true});ctx.drawImage(decoded,0,0,16,16);
  const pixels=ctx.getImageData(0,0,16,16).data;
  const primary=window.PhotoColor?.estimate(pixels,16,16)||null;
- // Preserve the existing center estimate when confident. Only rescue
- // uncertain photos if their light background is demonstrably uniform and
- // the garment-only full/interior palettes independently agree.
+ // Keep confident colored readings. A white center can be the product-photo
+ // backdrop rather than the garment, so verify only that case with the
+ // conservative, independently confirmed foreground palette.
  let colorEstimate=primary;
- if(!primary||primary.needsConfirmation){
+ const mayBeWhiteBackdrop=primary?.color==='White'&&!primary.needsConfirmation;
+ if(!primary||primary.needsConfirmation||mayBeWhiteBackdrop){
   const colorCanvas=document.createElement('canvas');colorCanvas.width=64;colorCanvas.height=64;
   const colorCtx=colorCanvas.getContext('2d',{willReadFrequently:true});
   colorCtx.drawImage(decoded,0,0,64,64);
