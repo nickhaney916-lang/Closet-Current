@@ -13,9 +13,11 @@ class LIPGarmentClassCandidateTests(unittest.TestCase):
         r=candidate_class_regions(a)
         by={x["role"]:x for x in r["classCandidates"]}
         self.assertTrue(r["possibleSeparateCoatSkirtClassEvidence"])
-        # Model-generated body evidence may be absent in a simplified mask.
-        self.assertEqual(r["reviewDisposition"],"wearer-context-not-supported")
-        self.assertFalse(r["onPersonContextSupported"])
+        # This fixture includes 36 pixels of face/skin (label 13), so the
+        # independent model's wearer-context heuristic has support. Still
+        # not a confirmed coat/skirt instance mask or an automatic save.
+        self.assertEqual(r["reviewDisposition"],"distinct-classes-needing-outline-review")
+        self.assertTrue(r["onPersonContextSupported"])
         self.assertTrue(by["coat"]["substantialModelRegion"])
         self.assertTrue(by["skirt"]["substantialModelRegion"])
         self.assertEqual(by["shoe_pair"]["pixels"],56)
