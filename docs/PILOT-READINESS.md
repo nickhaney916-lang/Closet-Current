@@ -67,3 +67,16 @@ Review category/color/crop failures and onboarding issues before inviting more p
 - https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Guides/Making_PWAs_installable
 - [Authentication readiness](AUTH-EMAIL-READINESS.md)
 - [Current checkpoint](PROGRESS-CHECKPOINT.md)
+
+
+### Account deletion — development-only progress, October 18
+
+The server-side deletion *algorithm* and synthetic tests now exist in
+`supabase/functions/account-delete/deletion-coordinator.mjs` and
+`tests/account-deletion-coordinator.test.mjs`. The callable entrypoint
+is **permanently disabled** pending owner approval and a genuine
+durable cross-device cloud-write lock plus audited server adapters.
+Nothing on the live project was removed. Users still cannot delete
+their full accounts through the app. See
+`docs/ACCOUNT-DELETION-DEVELOPMENT-GATE-20261018.md`.
+

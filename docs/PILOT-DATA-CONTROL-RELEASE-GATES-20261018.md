@@ -78,3 +78,20 @@ written, no objects were deleted, and no Auth users were deleted.
 development testing**. Broader pilot enrollment, final legal terms,
 actual deletion, SMTP changes, production merge/deploy or any paid service
 remain **not approved/not complete**.
+
+
+## October 18 developer checkpoint — still OFF
+
+Added `supabase/functions/account-delete/deletion-coordinator.mjs`
+with strict owner identity, password, exact irreversible confirmation,
+durable-write-lock requirement, Storage batch removal and verification,
+backup deletion verification, and Auth removal LAST. Unit tests use only
+synthetic owner UUIDs and fake photo paths. A Deno entrypoint
+`supabase/functions/account-delete/index.ts` **always responds 503**
+and cannot delete anything. Read the staged implementation/release gaps
+in `docs/ACCOUNT-DELETION-DEVELOPMENT-GATE-20261018.md`.
+No live Supabase migration or deletion was attempted.
+The durable database/Storage upload write lock, real server Auth/admin
+adapters and production policy approval are STILL NOT IMPLEMENTED.
+Do not advertise a finished deletion feature or invite broad pilots.
+

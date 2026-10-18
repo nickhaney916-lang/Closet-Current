@@ -1,6 +1,53 @@
 # Closet Current master development checkpoint
 
 
+## Server-only safe account deletion coordinator — October 18, 2026, Pacific
+
+- **Completed the server algorithm and synthetic regression priority** on
+  draft PR #7 development branch. Added
+  `supabase/functions/account-delete/deletion-coordinator.mjs` with
+  strict 2-factor-of-action gates: same-account verified bearer identity,
+  password reauthentication, exact `DELETE MY ACCOUNT` phrase, and a
+  required durable server-enforced per-account write lock. Caller-submitted
+  IDs/metadata are ignored for authorization or deletion scope.
+- Once all gates pass, the coordinator lists max-100 files per page in
+  `closet-private/{ownerUUID}/`, validates exact 64-hex SHA-256
+  `.jpg` filenames, deletes photo batches only via Storage API,
+  verifies removal actually happened (does not trust status-only success),
+  double-checks no remaining photos, then removes/validates private backup
+  and deletes/verifies Supabase Auth user **last**. Failures stop, rather
+  than falsely claiming full deletion. It never includes service-role
+  secrets in browser code. The orchestrator uses injected mock adapters,
+  **not connected live Supabase delete operations**.
+- `supabase/functions/account-delete/index.ts` returns HTTP **503**
+  unconditionally; NO deployment, migration, user-facing deletion button,
+  Auth deletion or photo deletion. Real account deletion is NOT yet
+  available. In particular, the required **durable write-lock adapter**
+  has not been designed/deployed across cloud backups and concurrent
+  photo uploads, and reauthentication/Storage/admin adapters are not
+  wired to the Supabase project. An environment variable alone cannot
+  enable the feature.
+- Synthetic-only
+  `tests/account-deletion-coordinator.test.mjs` covers >200 photos
+  over several pages, disabled/rejected/wrong-account confirmations,
+  nonexistent lock, fake-success Storage responses, missing photos,
+  interrupted cleanup, backup failure, and inability to verify final
+  Auth deletion. No user data was touched.
+- The cloud workflow now triggers on the new server module/tests and
+  runs the entire Node and multi-browser account-isolation recovery
+  suite. See `docs/ACCOUNT-DELETION-DEVELOPMENT-GATE-20261018.md`
+  for explicit fail-safe and release blockers.
+- This remains a **development milestone, NOT a completed customer
+  deletion process**. Next priority is to design/test a durable
+  deletion lock integrated with private backup writes and Storage
+  uploads, then owner-approved live disposable-account validation.
+  Final legal terms, verified support/deletion channel, SMTP, redirects
+  and real-phone pilot tests remain open.
+- Absolutely no production deployment/merge, paid AI, Drive Duel changes,
+  or real account/photo deletion.
+
+
+
 ## Pilot photo-data notice and signup acknowledgment — October 18, 2026, Pacific
 
 - **Next developer-ready pilot privacy priority implemented** on draft PR #7
