@@ -220,3 +220,31 @@ test('legacy saved records without source-photo provenance are never silently su
  assert.equal(h.c.batch.length,1,'missing original evidence must fail open into review');
  assert.equal(h.c.items.length,1);
 });
+
+test('a mismatched original starts its own outfit group, preserving earlier saved board contents',()=>{
+ const h=setup(),source='capture-group';
+ const priorOriginal='data:image/jpeg;base64,ORIGINAL1',next='data:image/jpeg;base64,ORIGINAL2';
+ h.c.items.push({id:'saved-top',outfitSourceId:source,
+  originalPhoto:{image:priorOriginal},category:'Tops',itemType:'T-shirt'});
+ h.c.startOutfitSplit(next,source);
+ const freshGroup=vm.runInContext('outfitActiveId',h.c);
+ assert.notEqual(freshGroup,source,'new original must not reuse previous outfit grouping');
+ h.emit({type:'piece',piece:{image:'data:image/jpeg;base64,ITEM2',
+  label:'Upper garment',
+  recognitionPhoto:{image:'data:image/jpeg;base64,RAW2'},
+  cropBounds:{x:.1,y:.2,width:.3,height:.4},
+  hint:{categories:['Tops','Outerwear'],types:[],clipped:false}}});
+ h.emit({type:'done',count:1});
+ assert.equal(h.c.items[0].outfitSourceId,source);
+ assert.equal(h.c.batch[0].outfitSourceId,freshGroup);
+ assert.equal(h.c.batch[0].originalPhoto.image,next);
+});
+test('legacy outfit with unverifiable original remains saved but cannot be silently grouped with new photo',()=>{
+ const h=setup();
+ h.c.items.push({id:'prior',outfitSourceId:'legacy',
+   category:'Bottoms',itemType:'Jeans'});
+ h.c.startOutfitSplit('data:image/jpeg;base64,NEW','legacy');
+ assert.notEqual(vm.runInContext('outfitActiveId',h.c),'legacy');
+ assert.equal(h.c.items.length,1);
+ h.emit({type:'done',count:0});
+});

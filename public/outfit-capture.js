@@ -56,6 +56,11 @@ function finishOutfitSplit(job,text,failed=false){
 }
 function startOutfitSplit(image,sourceId=crypto.randomUUID()){
  if(busy||outfitSplitJob)return;
+ // Never append a new original photograph to an existing outfit group.
+ // This also protects older entries whose original cannot be verified:
+ // they remain untouched, while a new group handles the new capture.
+ if([...items,...batch].some(x=>x.outfitSourceId===sourceId&&
+     x.originalPhoto?.image!==image))sourceId=crypto.randomUUID();
  stopCamera();busy=true;controls(true);outfitActiveId=sourceId;lastOutfitPhoto=image;$('outfitRetry').hidden=true;$('outfitSaveStatus').textContent='';
  if(typeof recordDeviceEvent==='function')recordDeviceEvent('outfit_split_start');
  const job={id:crypto.randomUUID(),sourceId,started:Date.now(),phase:'loading',worker:null,timer:null,added:0,rejected:0,unchanged:0};outfitSplitJob=job;
