@@ -62,6 +62,21 @@
   if(end/n<.25||end/n>.78)return fail('uncertain-background-share');
   const alpha=new Uint8ClampedArray(n);alpha.fill(255);
   for(let i=0;i<n;i++)if(visited[i])alpha[i]=0;
+  // A pale sole can connect to the exterior and disappear while its darker
+  // shadow remains below it. Widespread vertical gaps are ambiguous fabric,
+  // not proof of background: keep the original instead of erasing the sole.
+  let verticalGapPixels=0,splitColumns=0;
+  for(let x=0;x<width;x++){
+   let first=height,last=-1,gaps=0;
+   for(let y=0;y<height;y++)if(alpha[y*width+x]){
+    first=Math.min(first,y);last=y;
+   }
+   for(let y=first;y<=last;y++)if(!alpha[y*width+x])gaps++;
+   verticalGapPixels+=gaps;
+   if(gaps>=Math.max(3,Math.ceil(height*.015)))splitColumns++;
+  }
+  if(verticalGapPixels/n>.025&&splitColumns/width>.3)
+   return fail('possible-pale-sole-or-separated-shadow');
   return {eligible:true,reason:'light-neutral-exterior-on-dark-colorful-shoes',
    alpha,backgroundFraction:end/n,sourceAltered:false,
    garmentIdentityVerified:false,originalPixelColorsOnly:true,

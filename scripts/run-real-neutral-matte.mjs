@@ -12,7 +12,12 @@ const samples=[
  {id:'commons-0035',category:'Bottoms',manifest:'locked'},
  {id:'commons-0065',category:'Outerwear',manifest:'locked'},
  {id:'validation-0017',category:'Bottoms',manifest:'fresh'},
- {id:'validation-0019',category:'Shoes',manifest:'fresh'}
+ {id:'validation-0019',category:'Shoes',manifest:'fresh'},
+ {id:'commons-0079',category:'Shoes',manifest:'locked'},
+ {id:'commons-0094',category:'Shoes',manifest:'locked'},
+ {id:'validation-0021',category:'Shoes',manifest:'fresh'},
+ {id:'validation-0023',category:'Shoes',manifest:'fresh'},
+ {id:'validation-0024',category:'Shoes',manifest:'fresh'}
 ];
 const dir=process.argv[2]||'benchmark/real-neutral-matte-review';
 await mkdir(dir,{recursive:true});
@@ -22,7 +27,7 @@ const [locked,fresh]=await Promise.all([
 const indexes={locked:new Map(locked.map(x=>[x.id,x])),
  fresh:new Map(fresh.map(x=>[x.id,x]))};
 const report={status:'running',sourcePhotosHashVerified:false,
- benchmarkUsesActualOriginalImageBytes:true,licensedSources:4,
+ benchmarkUsesActualOriginalImageBytes:true,licensedSources:samples.length,
  sourcePixelIdentityPreserved:true,oneChannelAlphaVerified:true,
  appRecordsModified:0,paidProviderCalls:0,
  garmentSegmentationGroundTruth:false,garmentIdentityVerifiedByHuman:false,
@@ -42,6 +47,13 @@ for(const row of samples){
  const {data,info}=await sharp(jpeg).rotate().resize(w,h)
   .ensureAlpha().raw().toBuffer({resolveWithObject:true});
  const proposal=neutral.analyze(data,info.width,info.height,row.category);
+ // Real-image regression: this high-top's white soles were erased despite
+ // passing the original dark/colorful foreground checks.
+ if(row.id==='validation-0023'&&(proposal.eligible||
+    proposal.reason!=='possible-pale-sole-or-separated-shadow'))
+  throw Error('Pale high-top sole regression: must retain original photo');
+ if(row.id==='validation-0019'&&!proposal.eligible)
+  throw Error('Previously reviewed coral sneaker preview unexpectedly rejected');
  let derived=Buffer.from(jpeg);
  if(proposal.eligible){
   // Only change alpha. RGB bytes are those of the source's decoded image.

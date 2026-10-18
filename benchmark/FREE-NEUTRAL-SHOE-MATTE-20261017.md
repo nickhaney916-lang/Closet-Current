@@ -9,3 +9,18 @@
 This is a safe, isolated incremental preview for qualifying colored shoes, not proof all garment categories can be reconstructed for free. User's paid AI services remain **$0**. Never deploy/merge until evaluated on a real phone and against pale/white shoe edge cases. Drive Duel untouched.
 
 **Benchmark correction:** The first before/after shoe artifact revealed an error in the test renderer: Sharp expands RAW grayscale to RGB by default while resizing. Treating those three channels as one shifted the transparency and removed shoe material. The runner now forces grayscale, verifies the one-channel image dimensions, and asserts that foreground retention matches the original small preview. The production browser's mask rendering did not use Sharp and was unaffected.
+
+## Expanded nine-photo regression checkpoint
+
+The review now checks nine licensed, SHA-256-verified source photos (six footwear,
+three non-footwear). The added `validation-0023` patterned high-top case exposed a
+real defect: pale soles connected to the exterior were removed while dark shadows
+remained. A conservative vertical-gap guard now rejects that ambiguous mask and
+retains the complete source photo. The real-photo runner asserts this fallback,
+plus continued eligibility for the previously reviewed black/coral sneaker pair.
+
+Result: one preview accepted, eight originals retained, all nine checksums verified.
+This is coverage and fallback evidence, **not 9/9 segmentation accuracy**. Complex
+background segmentation remains unresolved. The guard does not establish that all
+pale soles are protected, particularly scenes without a darker shadow underneath.
+No broader category enablement, paid calls, merge or deployment is included.

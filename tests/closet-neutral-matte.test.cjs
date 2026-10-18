@@ -50,3 +50,16 @@ test('reject malformed and oversized preview pixels to protect low-memory mobile
  assert.throws(()=>matte.analyze(new Uint8Array(300000*4),600,500,'Shoes'));
  assert.throws(()=>matte.analyze(null,120,100,'Shoes'));
 });
+
+test('pale sole connected to backdrop above a dark shadow retains original photo',()=>{
+ const p=photo();
+ // Replace lower shoe rows with a pale sole; leave a dark shadow beneath.
+ for(let y=72;y<82;y++)for(let x=21;x<100;x++)
+  p.data.set([220,218,214,255],(y*W+x)*4);
+ const before=new Uint8ClampedArray(p.data);
+ const result=matte.analyze(p.data,W,H,'Shoes');
+ assert.equal(result.eligible,false);
+ assert.equal(result.reason,'possible-pale-sole-or-separated-shadow');
+ assert.equal(result.alpha,undefined);
+ assert.deepEqual(p.data,before);
+});

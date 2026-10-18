@@ -49,10 +49,10 @@ jobs:
           node --test tests/closet-neutral-matte.test.cjs tests/closet-white-matte.test.cjs tests/closet-rack-tiles.test.cjs tests/garment-pose-normalizer.test.cjs tests/garment-display-preview.test.cjs tests/garment-fidelity-review.test.mjs tests/closet-browser.test.cjs
       - name: Install image decoder for licensed real-photo review
         run: npm install --no-save --no-package-lock sharp@0.34.4
-      - name: Download 4 checksum-verified garment photographs
+      - name: Download 9 checksum-verified garment photographs
         run: |
-          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos commons-0035,commons-0065
-          node scripts/download-reviewed-photos.mjs benchmark/manifest-fresh-11.json benchmark/photos validation-0017,validation-0019
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos commons-0035,commons-0065,commons-0079,commons-0094
+          node scripts/download-reviewed-photos.mjs benchmark/manifest-fresh-11.json benchmark/photos validation-0017,validation-0019,validation-0021,validation-0023,validation-0024
       - name: Compare original and proposed derived display normalization
         run: node scripts/run-real-pose-normalization.mjs benchmark/real-pose-review
       - name: Fail closed if photo quality is falsely reported as verified
@@ -62,7 +62,7 @@ jobs:
         run: node scripts/run-real-neutral-matte.mjs benchmark/real-neutral-matte-review
       - name: Verify real-source hashes and prevent false garment-identity claims
         run: |
-          node -e "const x=require('./benchmark/real-neutral-matte-review/summary.json');if(x.status!=='complete'||!x.sourcePhotosHashVerified||x.cases.length!==4||x.appRecordsModified||x.paidProviderCalls||x.reconstructionAccuracy!==null||x.autoApproveForLiveCustomers||x.cases.some(c=>!c.originalBytesVerified||!c.savedSourceUnchanged||c.automaticIdentityApproval))throw Error('Unsafe free-matte review')"
+          node -e "const x=require('./benchmark/real-neutral-matte-review/summary.json');if(x.status!=='complete'||!x.sourcePhotosHashVerified||x.cases.length!==9||x.licensedSources!==9||x.appRecordsModified||x.paidProviderCalls||x.reconstructionAccuracy!==null||x.autoApproveForLiveCustomers||x.cases.some(c=>!c.originalBytesVerified||!c.savedSourceUnchanged||c.automaticIdentityApproval))throw Error('Unsafe free-matte review')"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
