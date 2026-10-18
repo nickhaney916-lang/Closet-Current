@@ -1,6 +1,55 @@
 # Closet Current master development checkpoint
 
 
+## Offline full-outfit independent review handoff — October 18, 2026 (latest)
+
+- Next priority completed **on draft PR #7 only**: added
+  `benchmark/assemble-physical-inventory.html`, a local/offline first/second
+  reviewer inventory assembly tool with source-JPEG byte validation,
+  SHA-256 and exact-name matched original photos, independently approved
+  human-drawn outline imports, unique IDs and identity/provenance checks,
+  consistent reviewer names, mask pixel validation, original-photo display
+  and individual mask overlays, deliberate garment count, and two explicit
+  full-photo completeness attestations.
+- The builder creates `<source>.inventory.json` in the exact existing
+  scorer format, **but does not make the masks, determine the correct
+  garment count, or grant human approval itself**. The two named human
+  reviewers must genuinely inspect every physical garment on the source
+  including garments omitted by the AI.
+- Added `scripts/test-physical-inventory-review.mjs` with synthetic-only
+  negative/positive browser checks; connected it to the existing mobile
+  CI workflow. Added a documented handoff guide in
+  `benchmark/FULL-OUTFIT-INDEPENDENT-INVENTORY-GATE-20261018.md`.
+- Full Node suite for code commit `2909926511b864f873e4b16afae7cdec9cc65950`
+  [run 39163831599](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39163831599):
+  **741 passed, 0 failed, 3 skipped**, including application build.
+- Independently verified [mobile CI run 39163834314](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39163834314)
+  **passed all stages**, including original mask editors, the new offline
+  inventory smoke test, actual garment segmentation/recognition workers,
+  real licensed outfit flow, owned-closet styling/swap and persisted outfit
+  review. Browser log: `OFFLINE_PHYSICAL_INVENTORY` synthetic-only,
+  `sourceHashBound=true`, `distinctReviewersRequired=true`,
+  `humanCompletenessRequired=true`, `allVisibleGarmentCountMatched=true`,
+  `offlineOnly=true`, `benchmarkRealPhotoAccuracyMeasured=false`,
+  `pageErrors=0`.
+- **Crucial limitation:** The real licensed full-outfit fixture is still
+  **two mixed/uncertain garment regions with no verified automatic
+  real-photo accuracy improvement**. No independently approved human
+  instance reference masks or genuinely complete reviewed source inventories
+  have been provided. Any reported accuracy stays null until that external
+  two-person review is complete. Passing synthetic tests or workflow status
+  cannot substitute for independent real-photo accuracy evidence.
+- **Next remaining dependency:** Obtain actual two-human independently
+  verified per-item reference outlines for `validation-0031` and other
+  source-identical licensed outfits; use the offline builder to export the
+  complete scene inventories, then run the independent detection/mask
+  benchmark. Only after held-out real-photo results, consider promoting
+  a revised segmentation model (requires user approval to change production).
+- No production merge, deployment, paid service, customer data upload, or
+  Drive Duel modifications.
+
+
+
 ## Full-outfit physical garment inventory scoring — October 18, 2026, Pacific
 
 - Continued after the genuine one-photo diagnosis at `3f5b07d82bd047908dc483ef09ba3d3ad56b5836` on development branch
