@@ -32,10 +32,9 @@ button:disabled{opacity:.45}fieldset{border:1px solid #a7a0b6;border-radius:10px
 <script>
 'use strict';
 const $=id=>document.getElementById(id);
-const state={photo:null,masks:[],image:null};
+const state={photo:null,masks:[],image:null,url:null};
 const base=name=>/^(commons|validation)-[0-9]{4}\.jpg$/.test(name||'')?name.slice(0,-4):null;
 const bytesToHex=bytes=>[...new Uint8Array(bytes)].map(b=>b.toString(16).padStart(2,'0')).join('');
-const sha256=async file=>bytesToHex(await crypto.subtle.digest('SHA-256',await file.arrayBuffer()));
 const categoryNames=new Set(['Tops','Bottoms','Dresses','Outerwear','Shoes','Hosiery','Accessories']);
 function fail(message){$('status').textContent=message;return false;}
 function getStatus(){
@@ -119,17 +118,27 @@ function showOverlay(){
 $('outlineSelect').onchange=showOverlay;
 $('photo').onchange=async()=>{
  clearReview();state.photo=null;state.image=null;$('original').hidden=true;
+ if(state.url){URL.revokeObjectURL(state.url);state.url=null;}
+ $('original').removeAttribute('src');
  const file=$('photo').files?.[0];
  if(!file||!base(file.name))return fail('Choose canonical source JPEG, e.g. validation-0031.jpg (not .original.jpg).');
  if(file.size>16000000)return fail('Photo exceeds 16 MB limit');
  try{
+  const buffer=await file.arrayBuffer(),view=new Uint8Array(buffer);
+  if(view.length<4||view[0]!==255||view[1]!==216||
+   view[view.length-2]!==255||view[view.length-1]!==217)
+   throw Error('Original source file must contain actual JPEG bytes');
   const img=new Image();const url=URL.createObjectURL(file);
-  try{img.src=url;await img.decode();}finally{URL.revokeObjectURL(url);}
-  const sha=await sha256(file),scale=Math.min(1,768/Math.max(img.naturalWidth,img.naturalHeight));
-  state.photo={name:file.name,sha,width:img.naturalWidth,height:img.naturalHeight,
-   reviewWidth:Math.round(img.naturalWidth*scale),reviewHeight:Math.round(img.naturalHeight*scale)};
-  state.image=img;$('original').src=img.src;$('original').hidden=false;
-  refresh();
+  try{
+   img.src=url;await img.decode();
+   const sha=bytesToHex(await crypto.subtle.digest('SHA-256',buffer));
+   const scale=Math.min(1,768/Math.max(img.naturalWidth,img.naturalHeight));
+   state.photo={name:file.name,sha,width:img.naturalWidth,height:img.naturalHeight,
+    reviewWidth:Math.round(img.naturalWidth*scale),reviewHeight:Math.round(img.naturalHeight*scale)};
+   state.image=img;state.url=url;
+   $('original').src=url;$('original').hidden=false;
+   refresh();
+  }catch(e){URL.revokeObjectURL(url);throw e;}
  }catch(e){state.photo=null;fail('Cannot decode or checksum source photograph: '+e.message);}
 };
 $('masks').onchange=async()=>{
