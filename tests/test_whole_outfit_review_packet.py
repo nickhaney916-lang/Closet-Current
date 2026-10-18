@@ -49,7 +49,7 @@ class FullPhotoReviewHandoffTests(unittest.TestCase):
                              row["sourceSha256"])
         html=(self.review/"REVIEW-QUEUE.html").read_text()
         self.assertIn("First reviewer",html)
-        self.assertIn("without opening AI proposals",html.upper().replace("WITHOUT","without"))
+        self.assertIn("without opening ai proposals",html.lower())
         self.assertIn("commons-0035.jpg",html)
         self.assertIn("validation-0031.jpg",html)
         self.assertLess(html.index("validation-0031 · review first"),
