@@ -181,3 +181,35 @@ test('edge-retention metrics fail closed on unreviewed, unrelated and malformed 
  assert.throws(()=>scoreApprovedGarmentEdgeRetention(p.reference,p.entry,p.prediction,{lowerBandFraction:0}),/Invalid garment lower-band/);
  assert.throws(()=>scoreApprovedGarmentEdgeRetention(p.reference,p.entry,{...p.prediction,width:11,runs:[0,132]}),/Incomplete|aspect|Invalid/);
 });
+
+
+test('multiple candidate IDs in one photo cannot cross-score against a different physical garment',async()=>{
+ const {scoreApprovedIndividualInstance}=await import('../benchmark/garment-mask-metrics.mjs');
+ const source='example-original.png',sha='f'.repeat(64);
+ const mask={width:4,height:4,runs:[5,2,2,2,5]};
+ const reference={...mask,image:source,sourceSha256:sha,schemaVersion:1,
+  modelProposalId:'example-original-candidate-02',
+  humanTargetLabel:'black knee-length skirt',
+  targetIndependentlyIdentifiedBy:'Outline Reviewer',
+  reviewer:'Outline Reviewer',approvedBy:'Different Reviewer',reviewStatus:'approved',
+  seedModel:'pinned-example-model'};
+ const prediction={...mask,image:source,sourceSha256:sha,
+  modelProposalId:'example-original-candidate-02',
+  reviewStatus:'prediction-unreviewed',independentReference:false,
+  canSaveToCustomerCloset:false};
+ const score=scoreApprovedIndividualInstance(reference,prediction);
+ assert.equal(score.intersectionOverUnion,1);
+ assert.equal(score.modelProposalId,'example-original-candidate-02');
+ assert.equal(score.reviewerIdentifiedPhysicalTarget,'black knee-length skirt');
+ assert.equal(score.referenceSeedWasAI,true);
+ assert.equal(score.automaticModelPromotionAllowed,false);
+ assert.throws(()=>scoreApprovedIndividualInstance(reference,
+   {...prediction,modelProposalId:'example-original-candidate-01'}),/identity|provenance/);
+ assert.throws(()=>scoreApprovedIndividualInstance({...reference,approvedBy:'Outline Reviewer'},prediction),/Independent second reviewer/);
+ assert.throws(()=>scoreApprovedIndividualInstance({...reference,humanTargetLabel:''},prediction),/identity|target/);
+ assert.throws(()=>scoreApprovedIndividualInstance({...reference,targetIndependentlyIdentifiedBy:'Someone Else'},prediction),/identity|target/);
+ assert.throws(()=>scoreApprovedIndividualInstance(reference,
+   {...prediction,reviewStatus:'approved'}),/identity|provenance/);
+ assert.throws(()=>scoreApprovedIndividualInstance(reference,
+   {...prediction,sourceSha256:'0'.repeat(64)}),/identity|provenance/);
+});

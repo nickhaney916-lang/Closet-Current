@@ -185,3 +185,42 @@ export function scoreApprovedGarmentEdgeRetention(annotation,manifestEntry,predi
   productionAuthorized:false
  };
 }
+
+
+/**
+ * Compare one model INSTANCE with its human-reviewed target. A source-image
+ * match alone is insufficient when multiple jackets/sleeves/skirts coexist.
+ * This diagnostic does not certify real-image accuracy unless the reviewers
+ * genuinely produced independent and correct garment-only reference pixels.
+ */
+export function scoreApprovedIndividualInstance(annotation,prediction){
+ const proposalId=annotation?.modelProposalId;
+ const base=annotation?.image?.replace(/\.[^.]+$/,'');
+ if(typeof base!=='string'||!base||typeof proposalId!=='string'||
+   !proposalId.startsWith(base+'-candidate-')||
+   !/^[0-9]{2}$/.test(proposalId.slice((base+'-candidate-').length))||
+   prediction?.modelProposalId!==proposalId||
+   typeof annotation.humanTargetLabel!=='string'||
+   !annotation.humanTargetLabel.trim()||
+   annotation.humanTargetLabel.trim().length>100||
+   annotation.targetIndependentlyIdentifiedBy!==annotation.reviewer||
+   annotation.reviewStatus!=='approved'||
+   prediction.reviewStatus!=='prediction-unreviewed'||
+   prediction.independentReference!==false||
+   prediction.canSaveToCustomerCloset!==false||
+   prediction.image!==annotation.image||
+   prediction.sourceSha256!==annotation.sourceSha256)
+  throw Error('Instance identity, independent human target, or prediction provenance mismatch');
+ // The generic approved scorer checks that TWO distinct humans reviewed the
+ // garment and that pixel masks, geometry, and sources actually match.
+ const result=scoreApprovedPredictionAtReferenceResolution(annotation,{
+   image:annotation.image,sourceSha256:annotation.sourceSha256
+ },prediction);
+ return {...result,modelProposalId:proposalId,
+  reviewerIdentifiedPhysicalTarget:annotation.humanTargetLabel.trim(),
+  firstReviewer:annotation.reviewer,secondReviewer:annotation.approvedBy,
+  referenceApproval:'two-reviewer approved',
+  referenceSeedWasAI:Boolean(annotation.seedModel),
+  pixelMetricsConditionalOnHumanOutlineValidity:true,
+  garmentTypeAccuracyMeasured:false,automaticModelPromotionAllowed:false};
+}
