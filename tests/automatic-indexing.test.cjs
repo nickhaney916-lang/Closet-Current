@@ -106,7 +106,7 @@ test('clipped cutouts and segmentation/category disagreements do not get guessed
 test('confirmed dress category fills review without subtype, attributes or autosave',async()=>{
  const result={strong:false,categoryConfirmed:true,categoryOnly:true,choices:[{label:'Dresses',category:'Dresses',itemType:'Unknown',sleeveLength:'Unknown'}],details:{color:'Red'}};
  const {c,stored}=setup({result});c.candidate('dress');await done(c);
- assert.equal(stored.length,0);assert.equal(c.items.length,0);assert.equal(c.batch[0].category,'Dresses');assert.equal(c.batch[0].itemType,'Unknown');assert.equal(c.batch[0].color,'');assert.match(c.batch[0].localStatus,/Confirm the specific type/);
+ assert.equal(stored.length,0);assert.equal(c.items.length,0);assert.equal(c.batch[0].category,'Dresses');assert.equal(c.batch[0].itemType,'Unknown');assert.equal(c.batch[0].color,'');assert.match(c.batch[0].localStatus,/Choose a color below to save; specific type is optional/);
 });
 test('category-only review preserves user corrections and clipped mask restrictions',async()=>{
  const result={strong:false,categoryConfirmed:true,categoryOnly:true,choices:[{category:'Dresses',itemType:'Unknown',sleeveLength:'Unknown'}]};
@@ -155,7 +155,7 @@ test('a strongly recognized garment with missing color stays in photo review ins
  assert.equal(stored.length,0);assert.equal(c.items.length,0);
  assert.equal(c.batch.length,1);assert.equal(c.batch[0].category,'Tops');
  assert.equal(c.batch[0].color,'');
- assert.match(c.batch[0].localStatus,/color needs confirmation/i);
+ assert.match(c.batch[0].localStatus,/Choose a color below to save; your original photo is kept/i);
 });
 test('uncertain photo color never becomes an automatic category-color save',async()=>{
  const {c,stored}=setup({
@@ -165,7 +165,7 @@ test('uncertain photo color never becomes an automatic category-color save',asyn
  c.candidate('orange-shorts-photo');await done(c);
  assert.equal(stored.length,0);assert.equal(c.items.length,0);assert.equal(c.batch.length,1);
  assert.equal(c.batch[0].category,'Bottoms');assert.equal(c.batch[0].color,'');
- assert.match(c.batch[0].localStatus,/specific type and color/i);
+ assert.match(c.batch[0].localStatus,/Choose a color below to save; specific type is optional/i);
 });
 test('strong model color is accepted when photographic color is uncertain',async()=>{
  const {c,stored}=setup({quality:async()=>({blank:false,signature:[1,2,3],aspect:1,colorEstimate:{color:'Brown',needsConfirmation:true}})});
