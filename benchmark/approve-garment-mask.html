@@ -10,13 +10,18 @@ button{background:#513182;color:white;border:0;min-height:48px}button:disabled{o
 canvas{width:100%;max-width:768px;height:auto;background:#dedde1;display:block}
 #status{white-space:pre-wrap;min-height:48px}
 fieldset{border:1px solid #aca0bb;border-radius:12px;margin:15px 0;padding:12px}
-</style>
+ .native-detail{border:1px solid #cbc0dc;border-radius:12px;padding:10px;margin:12px 0;background:white}.native-detail .windows{display:flex;flex-wrap:wrap;gap:12px}.native-detail figure{margin:0;flex:1 1 180px;max-width:240px}.native-detail canvas{width:100%;max-width:220px;aspect-ratio:1/1;height:auto;image-rendering:auto;border:1px solid #999;background:#e7e4eb;touch-action:auto}.native-detail figcaption{font-size:13px;font-weight:600}.native-detail p{font-size:13px}</style>
 <h1>Second-review garment outline</h1>
 <p><strong>Internal benchmark only.</strong> Independently inspect the garment outline against the matching original image, including cuffs, hems, laces, soles, hangers and background shadows. This step never runs AI or creates a predicted outline. Reject inaccurate drafts and return them to the first reviewer.</p>
 <label>Original verified photo <input id="photo" type="file" accept="image/*"></label>
 <label>First reviewer's draft JSON <input id="draft" type="file" accept=".json,application/json"></label>
 <label>Overlay opacity <input id="opacity" type="range" min="10" max="90" value="42"></label>
 <canvas id="canvas" width="256" height="256" aria-label="Original image with first reviewer's mask"></canvas>
+<section class="native-detail" aria-label="High resolution outline detail">
+<label>Inspect detail at <select id="detailZoom" aria-label="Detail magnification"><option value="4">4×</option><option value="8">8×</option></select></label>
+<p id="detailHint">Move or tap the large photo to inspect its original-resolution clothing edges. Magnification never changes the annotation.</p>
+<div class="windows"><figure><figcaption>Native source photo (unaltered)</figcaption><canvas id="detailSource" width="220" height="220"></canvas></figure>
+<figure><figcaption>Current outline overlay (review pixels)</figcaption><canvas id="detailMask" width="220" height="220"></canvas></figure></div></section>
 <fieldset>
 <legend>Independent human approval</legend>
 <label>Second reviewer name <input id="approver" type="text" maxlength="80" autocomplete="off" placeholder="Different from the first reviewer"></label>
@@ -27,11 +32,37 @@ fieldset{border:1px solid #aca0bb;border-radius:12px;margin:15px 0;padding:12px}
 <p id="status" role="status">Load the original photograph and the first reviewer's draft. Approval is disabled until the source checksum matches.</p>
 <script>
 'use strict';
+const detailZoom=document.querySelector('#detailZoom'),detailSource=document.querySelector('#detailSource'),detailMask=document.querySelector('#detailMask'),detailHint=document.querySelector('#detailHint');
 const photo=document.querySelector('#photo'),draftInput=document.querySelector('#draft'),opacity=document.querySelector('#opacity'),canvas=document.querySelector('#canvas'),ctx=canvas.getContext('2d'),approver=document.querySelector('#approver'),verified=document.querySelector('#verified'),approve=document.querySelector('#approve'),reject=document.querySelector('#reject'),status=document.querySelector('#status');
-let source=null,draft=null,mask=null,accepted=false;
+let source=null,draft=null,mask=null,accepted=false,detailPoint=null;
 function refresh(){
  approve.disabled=!(source&&draft&&mask&&accepted&&verified.checked&&approver.value.trim()&&approver.value.trim().toLocaleLowerCase('en-US')!==draft.reviewer?.trim().toLocaleLowerCase('en-US'));
 }
+function redrawDetail(){
+ if(!source?.photo||!mask||!detailPoint)return;
+ const z=Number(detailZoom.value),extent=Math.min(canvas.width,canvas.height,220/z);
+ if(!Number.isFinite(z)||z<2||z>12||extent<=0)return;
+ const sx=Math.max(0,Math.min(canvas.width-extent,detailPoint.x-extent/2)),
+  sy=Math.max(0,Math.min(canvas.height-extent,detailPoint.y-extent/2));
+ const fx=source.photo.naturalWidth/canvas.width,fy=source.photo.naturalHeight/canvas.height;
+ const original=detailSource.getContext('2d'),marked=detailMask.getContext('2d');
+ original.clearRect(0,0,220,220);marked.clearRect(0,0,220,220);
+ original.imageSmoothingEnabled=true;original.imageSmoothingQuality='high';
+ marked.imageSmoothingEnabled=false;
+ original.drawImage(source.photo,sx*fx,sy*fy,extent*fx,extent*fy,0,0,220,220);
+ marked.drawImage(canvas,sx,sy,extent,extent,0,0,220,220);
+ detailHint.textContent='Original '+source.photo.naturalWidth+' × '+source.photo.naturalHeight+
+  ' pixels · review mask '+canvas.width+' × '+canvas.height+
+  ' · inspecting a detail does not approve it';
+}
+detailZoom.onchange=redrawDetail;
+canvas.onpointermove=canvas.onpointerdown=e=>{
+ if(!source)return;
+ const box=canvas.getBoundingClientRect();
+ detailPoint={x:Math.max(0,Math.min(canvas.width-1,Math.floor((e.clientX-box.left)*canvas.width/box.width))),
+  y:Math.max(0,Math.min(canvas.height-1,Math.floor((e.clientY-box.top)*canvas.height/box.height)))};
+ redrawDetail();
+};
 function redraw(){
  if(!source)return;
  canvas.width=source.base.width;canvas.height=source.base.height;
@@ -44,6 +75,7 @@ function redraw(){
   img.data[i*4+2]=Math.round(img.data[i*4+2]*(1-a)+155*a);
  }
  ctx.putImageData(img,0,0);
+ redrawDetail();
 }
 function decode(data){
  const n=data.width*data.height;
@@ -57,7 +89,7 @@ function decode(data){
  return decoded;
 }
 async function load(){
- accepted=false;source=null;draft=null;mask=null;verified.checked=false;refresh();
+ accepted=false;source=null;draft=null;mask=null;detailPoint=null;verified.checked=false;refresh();
  const p=photo.files?.[0],d=draftInput.files?.[0];
  if(!p||!d){status.textContent='Select both a source photo and draft outline.';return;}
  try{
@@ -73,7 +105,8 @@ async function load(){
   const w=Math.round(picture.naturalWidth*scale),h=Math.round(picture.naturalHeight*scale);
   if(annotation.width!==w||annotation.height!==h)throw Error('Mask dimensions do not match the source review canvas');
   const base=document.createElement('canvas');base.width=w;base.height=h;base.getContext('2d').drawImage(picture,0,0,w,h);
-  source={base,name:p.name,sha256:hex};draft=annotation;mask=decoded;accepted=true;
+  source={base,name:p.name,sha256:hex,photo:picture};draft=annotation;mask=decoded;accepted=true;
+  detailPoint={x:Math.floor(w/2),y:Math.floor(h/2)};
   redraw();refresh();
   status.textContent='Source verified. First reviewer: '+draft.reviewer+'. Independently check all boundaries before approving.';
  }catch(e){status.textContent='Cannot review: '+e.message;accepted=false;refresh();}

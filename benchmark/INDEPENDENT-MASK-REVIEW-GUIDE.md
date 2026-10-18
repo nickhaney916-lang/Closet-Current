@@ -23,3 +23,7 @@
 - When references are absent, the report explicitly outputs `status: "unscored-incomplete-references"`, null aggregate scores and a count of pending references. Never interpret an AI-mask comparison as verified accuracy.
 
 The experiment must remain on [draft PR #7](https://github.com/nickhaney916-lang/Closet-Current/pull/7) until independently reviewed evidence and device testing justify merging. No changes are required in Drive Duel.
+
+## Native photo detail magnifier (internal review only)
+
+Both the first-review editor and second-review approval screen contain linked detail views for the native source photograph and its smaller, editable overlay. Move or tap on the main photo, then choose 4× or 8× magnification to check sneaker toes, soles, laces, dress hems, cuffs and whether the outline accidentally includes skin, a mannequin or cast shadows. The native view uses the decoded original photo instead of enlarging a downsampled preview. Changing the zoom never paints a pixel, supplies a reviewer identity or marks an annotation as approved. A separate human still needs to examine the whole source and the outline before approval. This tool is never displayed to Closet Current customers.

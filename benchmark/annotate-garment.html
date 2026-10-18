@@ -1,15 +1,20 @@
 <!doctype html>
 <html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Closet Current — reference mask review</title>
-<style>body{font:16px system-ui;max-width:920px;margin:auto;padding:16px;background:#f8f7fb;color:#231e2d}button,select,input{font:inherit;padding:10px;margin:4px}canvas{width:100%;max-width:720px;touch-action:none;background:#ddd}#status{white-space:pre-wrap} .controls{display:flex;flex-wrap:wrap;gap:8px}</style>
+<style>body{font:16px system-ui;max-width:920px;margin:auto;padding:16px;background:#f8f7fb;color:#231e2d}button,select,input{font:inherit;padding:10px;margin:4px}canvas{width:100%;max-width:720px;touch-action:none;background:#ddd}#status{white-space:pre-wrap} .controls{display:flex;flex-wrap:wrap;gap:8px} .native-detail{border:1px solid #cbc0dc;border-radius:12px;padding:10px;margin:12px 0;background:white}.native-detail .windows{display:flex;flex-wrap:wrap;gap:12px}.native-detail figure{margin:0;flex:1 1 180px;max-width:240px}.native-detail canvas{width:100%;max-width:220px;aspect-ratio:1/1;height:auto;image-rendering:auto;border:1px solid #999;background:#e7e4eb;touch-action:auto}.native-detail figcaption{font-size:13px;font-weight:600}.native-detail p{font-size:13px}</style>
 <h1>Reference garment outline review</h1>
 <p>Internal benchmark tool, not part of the Closet Current customer interface. Load a verified source photo, paint the clothing foreground, and export a reference mask for independent review. Never assume the initial blank mask is complete.</p>
 <div class="controls"><input id="photo" type="file" accept="image/*"><label>Resume previous draft <input id="resume" type="file" accept=".json,application/json"></label><label>Load AI mask as editable starting point <input id="prediction" type="file" accept=".json,application/json"></label><label>Tool <select id="tool"><option value="brush">Paint brush</option><option value="polygon">Outline polygon (tap corners)</option></select></label><select id="mode" aria-label="Mask edit mode"><option value="1">Mark garment</option><option value="0">Erase / background</option></select><label>First reviewer <input id="reviewer" type="text" maxlength="80" autocomplete="off" placeholder="Your reviewer name"></label><label>Brush radius <input type="range" id="radius" min="1" max="30" value="7"></label><button id="applyPolygon" type="button" disabled>Fill outline</button><button id="cancelPolygon" type="button" disabled>Cancel outline</button><button id="undo" type="button" disabled>Undo</button><button id="redo" type="button" disabled>Redo</button><button id="download" disabled>Export annotation JSON</button></div>
-<canvas id="canvas" width="256" height="256" aria-label="Image and reference mask editor"></canvas><p id="status" role="status">Choose a source image. Paint all of the garment before export.</p>
+<canvas id="canvas" width="256" height="256" aria-label="Image and reference mask editor"></canvas><section class="native-detail" aria-label="High resolution outline detail">
+<label>Inspect detail at <select id="detailZoom" aria-label="Detail magnification"><option value="4">4×</option><option value="8">8×</option></select></label>
+<p id="detailHint">Move or tap the large photo to inspect its original-resolution clothing edges. Magnification never changes the annotation.</p>
+<div class="windows"><figure><figcaption>Native source photo (unaltered)</figcaption><canvas id="detailSource" width="220" height="220"></canvas></figure>
+<figure><figcaption>Current outline overlay (review pixels)</figcaption><canvas id="detailMask" width="220" height="220"></canvas></figure></div></section><p id="status" role="status">Choose a source image. Paint all of the garment before export.</p>
 <script>
 'use strict';
+const detailZoom=document.querySelector('#detailZoom'),detailSource=document.querySelector('#detailSource'),detailMask=document.querySelector('#detailMask'),detailHint=document.querySelector('#detailHint');
 const prediction=document.querySelector('#prediction'),resume=document.querySelector('#resume'),photo=document.querySelector('#photo'),canvas=document.querySelector('#canvas'),ctx=canvas.getContext('2d'),status=document.querySelector('#status'),download=document.querySelector('#download'),mode=document.querySelector('#mode'),radius=document.querySelector('#radius'),reviewer=document.querySelector('#reviewer'),tool=document.querySelector('#tool'),applyPolygon=document.querySelector('#applyPolygon'),cancelPolygon=document.querySelector('#cancelPolygon'),undo=document.querySelector('#undo'),redo=document.querySelector('#redo');
-let source=null,mask=null,painting=false,strokes=0,seedModel=null,reviewedDraft=false,seedMask=null,polygon=[],lastPoint=null;const undoStack=[],redoStack=[];
+let source=null,mask=null,painting=false,strokes=0,seedModel=null,reviewedDraft=false,seedMask=null,polygon=[],lastPoint=null,detailPoint=null;const undoStack=[],redoStack=[];
 photo.onchange=async()=>{
  const file=photo.files[0];if(!file)return;
  if(file.size>16000000){status.textContent='Image too large';return;}
@@ -20,7 +25,7 @@ photo.onchange=async()=>{
   const base=document.createElement('canvas');base.width=canvas.width;base.height=canvas.height;base.getContext('2d').drawImage(image,0,0,base.width,base.height);
   const digest=await crypto.subtle.digest('SHA-256',await file.arrayBuffer());
   const sourceSha256=Array.from(new Uint8Array(digest),b=>b.toString(16).padStart(2,'0')).join('');
-  source={fileName:file.name,sourceSha256,base};mask=new Uint8Array(canvas.width*canvas.height);strokes=0;seedModel=null;reviewedDraft=false;seedMask=null;polygon=[];undoStack.length=redoStack.length=0;refreshEditButtons();redraw();status.textContent='Paint or outline the actual garment carefully; the initial mask is blank.';
+  source={fileName:file.name,sourceSha256,base,photo:image};detailPoint={x:Math.floor(canvas.width/2),y:Math.floor(canvas.height/2)};mask=new Uint8Array(canvas.width*canvas.height);strokes=0;seedModel=null;reviewedDraft=false;seedMask=null;polygon=[];undoStack.length=redoStack.length=0;refreshEditButtons();redraw();status.textContent='Paint or outline the actual garment carefully; the initial mask is blank.';
  }catch{status.textContent='Unable to decode image';}finally{URL.revokeObjectURL(url);}
 };
 resume.onchange=async()=>{
@@ -80,6 +85,26 @@ function restore(history,other){
 }
 undo.onclick=()=>restore(undoStack,redoStack);
 redo.onclick=()=>restore(redoStack,undoStack);
+// Native source pixels stay separate from the reduced review raster. The
+// magnifier draws directly from the decoded original, never the model preview.
+function redrawDetail(){
+ if(!source?.photo||!mask||!detailPoint)return;
+ const z=Number(detailZoom.value),extent=Math.min(canvas.width,canvas.height,220/z);
+ if(!Number.isFinite(z)||z<2||z>12||extent<=0)return;
+ const sx=Math.max(0,Math.min(canvas.width-extent,detailPoint.x-extent/2)),
+  sy=Math.max(0,Math.min(canvas.height-extent,detailPoint.y-extent/2));
+ const fx=source.photo.naturalWidth/canvas.width,fy=source.photo.naturalHeight/canvas.height;
+ const original=detailSource.getContext('2d'),marked=detailMask.getContext('2d');
+ original.clearRect(0,0,220,220);marked.clearRect(0,0,220,220);
+ original.imageSmoothingEnabled=true;original.imageSmoothingQuality='high';
+ marked.imageSmoothingEnabled=false;
+ original.drawImage(source.photo,sx*fx,sy*fy,extent*fx,extent*fy,0,0,220,220);
+ marked.drawImage(canvas,sx,sy,extent,extent,0,0,220,220);
+ detailHint.textContent='Original '+source.photo.naturalWidth+' × '+source.photo.naturalHeight+
+  ' pixels · review mask '+canvas.width+' × '+canvas.height+
+  ' · detail is preview only, not an approval';
+}
+detailZoom.onchange=redrawDetail;
 function redraw(){
  if(!source)return;ctx.drawImage(source.base,0,0);
  const image=ctx.getImageData(0,0,canvas.width,canvas.height);
@@ -93,6 +118,7 @@ function redraw(){
   for(const point of polygon){ctx.beginPath();ctx.arc(point.x,point.y,3,0,Math.PI*2);ctx.fill();}
   ctx.restore();
  }
+ redrawDetail();
 }
 function point(e){
  const box=canvas.getBoundingClientRect();
@@ -135,7 +161,7 @@ tool.onchange=()=>{painting=false;polygon=[];redraw();refreshEditButtons();};
 canvas.onpointerdown=e=>{
  if(!mask)return;
  e.preventDefault();
- const p=point(e);
+ const p=point(e);detailPoint=p;redrawDetail();
  if(tool.value==='polygon'){
   if(polygon.length>=2000){status.textContent='Too many outline points. Apply or cancel this outline.';return;}
   polygon.push(p);redraw();refreshEditButtons();
@@ -144,7 +170,12 @@ canvas.onpointerdown=e=>{
  painting=true;lastPoint=p;startEdit();
  canvas.setPointerCapture(e.pointerId);paintLine(p,p);
 };
-canvas.onpointermove=e=>{if(!painting||!mask||tool.value!=='brush')return;const p=point(e);paintLine(lastPoint,p);lastPoint=p;};
+canvas.onpointermove=e=>{
+ if(!mask)return;
+ const p=point(e);detailPoint=p;redrawDetail();
+ if(!painting||tool.value!=='brush')return;
+ paintLine(lastPoint,p);lastPoint=p;
+};
 canvas.onpointerup=canvas.onpointercancel=()=>{painting=false;lastPoint=null;refreshEditButtons();};
 download.onclick=()=>{
  if(!source||!canExport()){status.textContent='Mark or correct the garment boundary before exporting. Untouched AI masks cannot become a draft.';return;}
