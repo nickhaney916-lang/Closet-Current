@@ -135,6 +135,59 @@ try{
  await clean.page.evaluate(id=>adjustPhoto(items.find(x=>x.id===id)),learnedTarget);learningDialog=clean.page.locator('dialog[open]');await learningDialog.getByText('Suggestions from your confirmed clothes',{exact:true}).click();await learningDialog.getByRole('button',{name:'Use suggested details',exact:true}).click();assert.equal(await learningDialog.getByLabel('Item type',{exact:true}).inputValue(),'Polo');assert.equal(await learningDialog.getByLabel('Color',{exact:true}).inputValue(),'Purple');assert.equal(await learningDialog.getByLabel('Pattern',{exact:true}).inputValue(),'Striped');await clean.page.screenshot({path:output+'/confirmed-example-learning.png',fullPage:true});await learningDialog.getByRole('button',{name:'Save changes',exact:true}).click();await clean.page.waitForFunction(()=>!document.querySelector('dialog[open]'));
  const learned=await clean.page.evaluate(id=>items.find(x=>x.id===id),learnedTarget);assert.equal(learned.confirmedDetails.itemType,'Polo');assert.equal(learned.color,'Purple');assert.equal(learned.material,'');
  await clean.page.evaluate(()=>closetCloud.sync());await clean.page.waitForFunction(()=>document.getElementById('cloudStatus').textContent==='Cloud backup up to date',null,{timeout:60000});const learningRestore=await device(owners[0]);await learningRestore.page.waitForFunction(id=>items.some(x=>x.id===id&&x.confirmedDetails?.itemType==='Polo'),learnedTarget);assert.equal(await learningRestore.page.evaluate(id=>ClothingMemory.valid(items.find(x=>x.id===id).recognitionMemory),learnedTarget),true);assert.ok(!JSON.stringify(records.get(owners[0])).includes('data:image'));
- assert.deepEqual(errors,[]);const result={legacyNineMigrated:true,secondDeviceRestore:true,accountIsolation:true,outfitsAndInspirationRestored:true,unfinishedPhotosRestored:true,offlineReloadAndRetry:true,editsDuringUploadPreserved:true,deletionSynced:true,emptyBrowserRestore:true,independentOfflineEditsMerged:true,conflictingVersionsPreserved:true,lostSaveResponseDoesNotDuplicateCopies:true,corruptRestoreKeepsLocalPhotos:true,cropTouchAndKeyboardResize:true,cropCancelPreservesPhoto:true,cropSaveFailurePreservesPhoto:true,cropRecognitionUsesSavedPixels:true,cropOriginalPrivatelyRestored:true,cropCanResetToOriginal:true,verifiedCropDetailsSaved:true,missingFieldsFilled:true,manualEditsDuringDetailCheckPreserved:true,labelInformationNotInvented:true,seasonsRequireConfirmation:true,colorAppearsOnOpeningEditor:true,colorSurvivesTypeFailure:true,categoryAndColorCanBeSavedAndMatched:true,partialColorPrivatelyRestored:true,coreIdentityAutoSavesWithoutSubtype:true,confirmedExampleLearning:true,similarDetailsRequireReview:true,newPhotoColorPreserved:true,learningPrivatelyRestored:true,automaticOutfitCrops:true,recognizedOutfitAutoSaves:true,garmentMaskColorPreserved:true,outfitOriginalAndRecognitionCropsPrivatelyRestored:true,pageErrors:errors,backend:'Controlled HTTP backend with production browser client; actual Supabase auth/storage/RLS verified separately'};await writeFile(output+'/results.json',JSON.stringify(result,null,2));console.log(JSON.stringify(result));
+ // NEW: the one-tap Unsorted category+color review must enter the same
+ // per-account cloud backup without losing its original JPEG/reference crop.
+ // These are synthetic wardrobe records on a controlled HTTP backend, NOT
+ // permission to access or inspect a real subscriber's account.
+ const unsortedId='cloud-unsorted-review-synthetic';
+ const unsortedBefore=await clean.page.evaluate(async id=>{
+  const source=items.find(x=>x.id==='legacy-0');
+  const photo=source.image,original=source.originalPhoto?.image||photo;
+  const item=normalizeClothing({...source,id,name:'Cloud review fixture',
+   category:'Uncategorized',itemType:'Unknown',color:'Blue',
+   colorSource:'photo-estimate',savedAt:new Date().toISOString(),
+   originalPhoto:{image:original}});
+  await writeAll([item]);items.push(item);render();await closetCloud.sync();
+  return {photo,original,itemId:item.id};
+ },unsortedId);
+ await clean.page.waitForFunction(()=>document.getElementById('cloudStatus').textContent==='Cloud backup up to date');
+ await learningRestore.page.evaluate(()=>closetCloud.sync());
+ await learningRestore.page.waitForFunction(id=>items.some(x=>x.id===id&&x.category==='Uncategorized'),unsortedId);
+ await learningRestore.page.evaluate(()=>switchView('closet'));
+ await learningRestore.page.locator('#closetUnsorted').click();
+ const unsortedModal=learningRestore.page.locator('dialog.closet-quick-review');
+ await unsortedModal.waitFor({state:'visible'});
+ assert.equal(await unsortedModal.locator('img.closet-quick-review-photo').getAttribute('src'),unsortedBefore.photo);
+ assert.equal(await unsortedModal.getByLabel('Clothing category').inputValue(),'');
+ assert.equal(await unsortedModal.getByLabel('Garment color').inputValue(),'');
+ await unsortedModal.getByLabel('Clothing category').selectOption('Outerwear');
+ await unsortedModal.getByLabel('Garment color').selectOption('Green');
+ await unsortedModal.getByRole('button',{name:'Save & next'}).click();
+ await learningRestore.page.waitForFunction(id=>items.some(x=>x.id===id&&x.category==='Outerwear'&&x.color==='Green'),unsortedId);
+ await learningRestore.page.evaluate(()=>closetCloud.sync());
+ await learningRestore.page.waitForFunction(()=>document.getElementById('cloudStatus').textContent==='Cloud backup up to date');
+ await clean.page.evaluate(()=>closetCloud.sync());
+ await clean.page.waitForFunction(id=>items.some(x=>x.id===id&&x.category==='Outerwear'&&x.color==='Green'),unsortedId);
+ const restoredUnsorted=await clean.page.evaluate(id=>{
+  const item=items.find(x=>x.id===id);
+  return {category:item.category,color:item.color,colorSource:item.colorSource,
+   image:item.image,original:item.originalPhoto.image,
+   type:item.itemType,sleeves:item.sleeveLength};
+ },unsortedId);
+ assert.deepEqual(restoredUnsorted,{category:'Outerwear',color:'Green',colorSource:'user',
+  image:unsortedBefore.photo,original:unsortedBefore.original,type:'Unknown',sleeves:'Unknown'});
+ assert.equal(await other.page.evaluate(id=>items.some(x=>x.id===id),unsortedId),false,
+  'A separate authenticated owner must not receive another owner\'s confirmed garment');
+ await clean.page.reload();
+ await clean.page.evaluate(()=>Promise.all([closetReady,outfitBoardReady]));
+ assert.deepEqual(await clean.page.evaluate(id=>{
+  const item=items.find(x=>x.id===id);
+  return {category:item.category,color:item.color,colorSource:item.colorSource,
+   image:item.image,original:item.originalPhoto.image,
+   type:item.itemType,sleeves:item.sleeveLength};
+ },unsortedId),restoredUnsorted,'Latest confirmed category, color and photos must survive reload');
+ assert.deepEqual(errors,[]);const result={legacyNineMigrated:true,secondDeviceRestore:true,accountIsolation:true,
+  confirmedUnsortedCloudSync:true,confirmedUnsortedOriginalPreserved:true,
+  confirmedUnsortedReload:true,confirmedUnsortedOtherAccountIsolated:true,outfitsAndInspirationRestored:true,unfinishedPhotosRestored:true,offlineReloadAndRetry:true,editsDuringUploadPreserved:true,deletionSynced:true,emptyBrowserRestore:true,independentOfflineEditsMerged:true,conflictingVersionsPreserved:true,lostSaveResponseDoesNotDuplicateCopies:true,corruptRestoreKeepsLocalPhotos:true,cropTouchAndKeyboardResize:true,cropCancelPreservesPhoto:true,cropSaveFailurePreservesPhoto:true,cropRecognitionUsesSavedPixels:true,cropOriginalPrivatelyRestored:true,cropCanResetToOriginal:true,verifiedCropDetailsSaved:true,missingFieldsFilled:true,manualEditsDuringDetailCheckPreserved:true,labelInformationNotInvented:true,seasonsRequireConfirmation:true,colorAppearsOnOpeningEditor:true,colorSurvivesTypeFailure:true,categoryAndColorCanBeSavedAndMatched:true,partialColorPrivatelyRestored:true,coreIdentityAutoSavesWithoutSubtype:true,confirmedExampleLearning:true,similarDetailsRequireReview:true,newPhotoColorPreserved:true,learningPrivatelyRestored:true,automaticOutfitCrops:true,recognizedOutfitAutoSaves:true,garmentMaskColorPreserved:true,outfitOriginalAndRecognitionCropsPrivatelyRestored:true,pageErrors:errors,backend:'Controlled HTTP backend with production browser client; actual Supabase auth/storage/RLS verified separately'};await writeFile(output+'/results.json',JSON.stringify(result,null,2));console.log(JSON.stringify(result));
  for(const context of browser.contexts())await context.close();
 }finally{await browser?.close();await new Promise(r=>server.close(r));}
