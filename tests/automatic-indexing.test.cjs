@@ -194,8 +194,8 @@ test('unmasked outfit fallback cannot automatically take its background as cloth
    displayFallbackReason:'unexplained-enclosed-gap'}});
  await done(c);
  assert.equal(stored.length,0);
- assert.equal(c.batch[0].category,'Tops');assert.equal(c.batch[0].color,'');
- assert.match(c.batch[0].localStatus,/Choose a color below to save/);
+ assert.equal(c.batch[0].category,'Uncategorized');assert.equal(c.batch[0].color,'');
+ assert.match(c.batch[0].localStatus,/multiple garments or background/);
 });
 test('even strong outfit label cannot use room-color photo estimate without garment evidence',async()=>{
  const {c,stored}=setup({quality:async()=>({blank:false,signature:[10,20,30],aspect:1,

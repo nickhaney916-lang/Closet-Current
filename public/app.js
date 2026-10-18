@@ -542,7 +542,7 @@ async function recognizeItem(item){
   if(result.diagnostics)item.recognitionDiagnostics={reason:result.reason||null,...result.diagnostics};
   const corePartial=!result.strong&&result.categoryConfirmed&&result.categoryOnly&&result.choices?.[0]&&result.choices[0].itemType==='Unknown';
   if(corePartial){
-   if(item.userAdjusted||!segmentationAllows(item,result.choices[0])){item.localStatus=item.userAdjusted?'Your adjustments are preserved. Save this piece when ready.':'The clothing checks disagree. Use Adjust or take a clearer photo.';return true;}
+   if(item.userAdjusted||!segmentationAllows(item,result.choices[0])){item.localStatus=item.userAdjusted?'Your adjustments are preserved. Save this piece when ready.':item.outfitSourceId&&item.segmentHint?.displayFallback==='original-crop'?'This photo region may include multiple garments or background. Verify with Adjust or photograph the item alone.':'The clothing checks disagree. Use Adjust or take a clearer photo.';return true;}
    applyLocalChoice(item,result.choices[0]);item.name=[item.color,result.choices[0].category].filter(Boolean).join(' ');
    if(item.outfitSourceId&&item.segmentHint?.displayFallback==='original-crop'){
     item.localStatus='The outline may contain more than one item or background. Check with Adjust or photograph the garment alone before saving.';return true;
@@ -550,7 +550,7 @@ async function recognizeItem(item){
    if(!item.color||item.color==='Unknown'){item.localStatus=item.possibleDuplicate?'Possible duplicate: compare this photo with your closet before saving.':item.requiresOwnershipConfirmation?'Confirm this garment belongs in your closet before saving.':'Garment category recognized. Choose a color below to save; specific type is optional.';return true;}
   }
   if(!result.strong&&!corePartial){if(typeof recordDeviceEvent==='function')recordDeviceEvent('not_recognized',{durationMs:Date.now()-scanStarted});if(item.outfitSourceId&&item.segmentHint?.displayFallback==='original-crop'){item.localStatus='The outline may contain more than one garment or background. Check with Adjust or photograph the item alone.';return true;}item.localStatus=(item.possibleDuplicate?'Possible duplicate. ':'')+(item.color?'Color kept. Confirm the garment category and type in Adjust.':'Garment identity needs confirmation. Choose a color and category in Adjust.');return true;}
-  if(!segmentationAllows(item,result.choices[0])){item.localStatus=item.segmentHint?.clipped?'This piece is partly outside the photo. Retake the whole garment or use Adjust.':'The clothing mask and garment checks disagree. Use Adjust or take a clearer photo.';return true;}
+  if(!segmentationAllows(item,result.choices[0])){item.localStatus=item.segmentHint?.clipped?'This piece is partly outside the photo. Retake the whole garment or use Adjust.':item.outfitSourceId&&item.segmentHint?.displayFallback==='original-crop'?'This photo region may include multiple garments or background. Verify with Adjust or photograph the item alone.':'The clothing mask and garment checks disagree. Use Adjust or take a clearer photo.';return true;}
   if(item.userAdjusted){item.localStatus='Your adjustments are preserved. Save this piece when ready.';return true;}
   applyLocalChoice(item,result.choices[0]);
   Object.assign(item,ClothingDetails.fill(item,result.choices[0],result.details));
