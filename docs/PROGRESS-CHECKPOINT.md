@@ -1,6 +1,65 @@
 # Closet Current master development checkpoint
 
 
+## Work-session consolidation and cloud backup recovery — October 18, 2026, Pacific
+
+- The separate ChatGPT Work chat exhausted its workspace. Its **isolated**
+  recognition branch `work/garment-instance-recognition-20261018` remains
+  **preserved, unmerged** at `ab2323f1d0dc4979cb33a1ffcfc26989065cf488`,
+  three commits after `8053b9104980099f1904512286d81b041652e41f`.
+  Those commits cover experimental DeepFashion proposal coverage,
+  experimental LIP socks/pants/jumpsuit class export, and original-RGB
+  color sampling without stride aliasing. The Work tip has 2 successful
+  available checks (simulate, inference); its local verification and caveats
+  are documented in `docs/WORK-RECOGNITION-HANDOFF-20261018.md`.
+  **Zero independent ground-truth garment masks; no image-recognition
+  improvement percentage is claimed.** This normal ChatGPT conversation is
+  the only active workstream; closing the other chat tab is a user UI action.
+- Main development priority completed on draft PR #7:
+  verified actual `public/cloud-backup.js` client in its comprehensive
+  controlled-browser recovery workflow. Extended
+  `scripts/run-cloud-backup-flow.mjs` to save a synthetic unsorted photo,
+  synchronize it to a second authenticated session, explicitly confirm
+  `Outerwear` and `Green` with `colorSource='user'`, synchronize back,
+  retain exact original/recognition image data, survive reload, and reject
+  other-account access.
+- Enabled `.github/workflows/cloud-backup-flow.yml` for the **development
+  branch**, so changes to public client or backup tests trigger multi-device
+  verification before merging. Browser test keeps account records in a
+  controlled HTTP backend and uses only synthetic/authorized licensed
+  fixtures, not real subscriber data.
+- First CI attempt exposed an **existing synthetic multi-device edit
+  conflict** (local base revision 17 versus remote 19). The product
+  appropriately refused silent replacement and displayed **Keep both
+  versions**. The older recovery test incorrectly waited for an automatic
+  clean sync. Updated it to exercise the *real user-visible* conflict
+  control and then verify both sides are preserved. Do not remove the
+  protective merge conflict safety check from production.
+- **Verified** [private cloud-recovery Actions run 39173019247](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39173019247)
+  for code commit `715de4d3c4149880208a0efe644f6d194c99def1`:
+  full 765 Node tests (762 passed, 0 failed, 3 skipped) and the browser
+  recovery scenario succeeded. `confirmedUnsortedCloudSync=true`,
+  `confirmedUnsortedOriginalPreserved=true`,
+  `confirmedUnsortedReload=true`,
+  `confirmedUnsortedOtherAccountIsolated=true`,
+  `conflictingVersionsPreserved=true`,
+  `corruptRestoreKeepsLocalPhotos=true`,
+  `lostSaveResponseDoesNotDuplicateCopies=true`,
+  `accountIsolation=true`, `pageErrors=[]`.
+- This tests production browser **client code** against a simulated
+  authorization/storage/revision backend; it does **not** independently
+  retest live Supabase privacy policies or family accounts in this run.
+  Existing historical live disposable-account/RLS tests are described
+  in `docs/CLOUD-BACKUP.md`.
+- No paid services authorized, no real wardrobe inspected, no production
+  merge/deployment, no modifications to Drive Duel.
+  **Next remaining pilot work:** manually confirm sign-in/email delivery
+  and physical-phone persistence on real supported devices, after careful
+  staging/privacy review; do not assume the controlled browser test proves
+  those external systems.
+
+
+
 ## Unsorted Clothing two-field review queue — October 18, 2026, Pacific
 
 - **Next customer-usability priority implemented** on the shared Closet Current
