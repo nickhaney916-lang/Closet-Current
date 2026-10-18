@@ -1,6 +1,57 @@
 # Closet Current master development checkpoint
 
 
+## Same-card one-piece swaps in Style This — October 18, 2026, Pacific
+
+- This primary conversation continues **customer UX only**, while a separate
+  ChatGPT Work conversation handles experimental garment recognition on its
+  own branch. Shared integrated dev branch remains
+  `fix/photo-clarity-high-quality-downsampling-20261016`, draft PR #7.
+  Preserve other developer branch heads and do not merge/deploy production.
+- **Next UX priority implemented**: `public/closet-stylist.js` now displays
+  "Swap top", "Swap bottoms", "Swap shoes" or "Swap layer" directly on each
+  owned-clothing styling option when there is a compatible alternative.
+  `public/closet-stylist-engine.js` offers safe alternatives drawn **only
+  from current saved closet items**, never invented/shop items. It prevents
+  swapping the new anchored garment, silently changing other outfit slots,
+  or converting a dress to separates inside one-piece swaps.
+  On swap, stale trend citations are cleared. The new selection remains
+  an **unsaved preview** until the person taps "Save outfit";
+  the full board remains accessible for larger edits. 50px tap targets
+  and two-column controls on smaller screens in `public/style.css`.
+- Added five Node tests in `tests/closet-stylist.test.cjs` for anchored
+  new tops/shoes, dress safety, deleted/unowned items, source-record
+  preservation and touch UI. Extended
+  `scripts/test-style-my-new-item-mobile.mjs` to test a 390×844
+  simulated touch viewport: direct one-tap swap, zero premature saves,
+  explicit Save outfit, separate Outfit builder one-piece swap,
+  saved-look reload, and original clothing photo/record unchanged.
+- Verified [complete application suite run 39170560017](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39170560017)
+  at code commit `b591d9c19e1bcbc4e2b2fd572a332c5b7d222a3b`:
+  **760 Node tests total, 757 passed, 0 failed, 3 skipped**; build passed.
+  The initial cross-realm Node assertion issue was corrected; no model
+  or customer behavior was changed by that test fix.
+- Verified [390×844 mobile-browser run 39170430822](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39170430822)
+  at immediately preceding code commit
+  `80331dd612c74919553e52bc8b242c85c829aa94`:
+  **all mobile stages passed**, including
+  `NEW_ITEM_STYLE_MOBILE` `directOneTapSwap=true`,
+  `previewNotAutoSaved=true`, `directSwappedOutfitSaved=true`,
+  `onePieceSwapSaved=true`, `reloadVerified=true`, zero page errors.
+  The same unchanged UX code runs at the later test-only checkpoint.
+  The later rerun can independently confirm it as well.
+- This is a **functional UX flow** verification, not a real-physical-phone
+  test or improvement in actual worn-photo garment separation.
+  Real-photo independent human masks remain unavailable, so those
+  garment-clipping percentages cannot be asserted here.
+- Next main-conversation priority: reduce manual steps and improve clarity
+  of closet organization, outfit saving, account sync and everyday photo
+  review. The Work branch independently addresses original-photo garment
+  instance segmentation. No paid inference, no production merge/deploy,
+  no Drive Duel changes.
+
+
+
 ## Category-correct whole-outfit scoring + separate footwear readiness — October 18, 2026, Pacific
 
 - **Two next development priorities implemented on draft PR #7 only.**
