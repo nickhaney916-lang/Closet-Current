@@ -8,6 +8,9 @@ on:
       - 'benchmark/deepfashion-real-photo-suite.json'
       - 'benchmark/deepfashion_review_risks.py'
       - 'benchmark/deepfashion_mask_seed.py'
+      - 'benchmark/instance-review-coverage.mjs'
+      - 'tests/instance-review-coverage.test.mjs'
+      - 'scripts/audit-independent-instance-reviews.mjs'
       - 'tests/test_deepfashion_mask_seed.py'
       - 'tests/test_deepfashion_review_risks.py'
       - 'benchmark/manifest-fresh-11.json'
@@ -39,6 +42,7 @@ jobs:
           PYTHONPATH=benchmark python -m unittest discover -s tests -p 'test_deepfashion_instance_decode.py' -v
           PYTHONPATH=benchmark python -m unittest discover -s tests -p 'test_deepfashion_review_risks.py' -v
           PYTHONPATH=benchmark python -m unittest discover -s tests -p 'test_deepfashion_mask_seed.py' -v
+          node --test tests/instance-review-coverage.test.mjs
       - name: Download SHA-verified source photographs
         run: |
           node scripts/download-reviewed-photos.mjs benchmark/manifest-visible-legwear-2.json benchmark/photos validation-0031
@@ -46,6 +50,8 @@ jobs:
           node scripts/download-reviewed-photos.mjs benchmark/manifest-fresh-11.json benchmark/photos validation-0017,validation-0001,validation-0010,validation-0019
       - name: Profile pinned ONNX garment instances on ten licensed reference photos
         run: python scripts/run-deepfashion-instance-probe.py benchmark/deepfashion-instance-review
+      - name: Verify real seed review coverage and unchanged priority originals
+        run: node scripts/audit-independent-instance-reviews.mjs benchmark/deepfashion-instance-review
       - name: Block invented clothes and unverified instance accuracy
         run: |
           python - <<'PY'
@@ -76,6 +82,12 @@ jobs:
           assert review['approvedReferences']==0 and not review['predictionMasksAreGroundTruth']
           assert review['imageCount']==10 and not review['automaticCustomerMaskPromotion']
           assert review['pendingIndividualPredictions']==x['parsedInstanceMasks']
+          audit=json.loads((root/'individual-instance-coverage-audit.json').read_text())
+          assert audit['modelProposals']==x['parsedInstanceMasks']
+          assert audit['independentlyReviewedProposals']==0
+          assert audit['awaitingReview']==audit['modelProposals']
+          assert audit['aggregatePixelIoU'] is None and audit['missingPhysicalGarmentRecall'] is None
+          assert audit['canPromoteModel'] is False and audit['autoSavedCustomerItems']==0
           assert sum(c['exactOriginalIncludedForReview'] for c in review['cases'])==5
           for c in review['cases']:
               assert c['allMasksUnapproved'] and c['userPhotoModified'] is False
@@ -107,6 +119,7 @@ jobs:
             benchmark/deepfashion-instance-review/summary.json
             benchmark/deepfashion-instance-review/*-instance-overlays.png
             benchmark/deepfashion-instance-review/*-union-review.png
+            benchmark/deepfashion-instance-review/individual-instance-coverage-audit.json
             benchmark/deepfashion-instance-review/independent-outline-review/reference-review-index.json
             benchmark/deepfashion-instance-review/independent-outline-review/model-seeds/*.json
             benchmark/deepfashion-instance-review/independent-outline-review/original-photos/*
