@@ -50,6 +50,7 @@ jobs:
         run: |
           python - <<'PY'
           import json
+          from pathlib import Path
           x=json.load(open('benchmark/deepfashion-instance-review/summary.json'))
           assert x['status']=='complete' and x['modelHashVerified'] and x['sourceHashesVerified']
           assert len(x['cases'])==10 and x['parsedInstanceMasks']>=0
