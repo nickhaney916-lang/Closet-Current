@@ -6,7 +6,9 @@ from pathlib import Path
 import hashlib, io, json, sys, time, urllib.request
 import numpy as np
 import onnxruntime as ort
-from PIL import Image
+from PIL import Image, ImageDraw
+sys.path.insert(0,str(Path('benchmark').resolve()))
+from deepfashion_instance_decode import decode
 D=Path(sys.argv[1] if len(sys.argv)>1 else "benchmark/deepfashion-instance-review")
 R=Path("benchmark")
 M=json.loads((R/"deepfashion-instance-onnx-reference.json").read_text())
@@ -82,12 +84,36 @@ def main():
         ms=round((time.perf_counter()-start)*1000)
         if any(not np.isfinite(x).all() for x in outputs):
             raise ValueError("Nonfinite model prediction")
+        decoded=decode(outputs[0],outputs[1],transform)
+        candidates=decoded["candidates"]
+        width=400;height=max(1,round(img.height*width/img.width))
+        original=img.resize((width,height),Image.Resampling.LANCZOS)
+        source=np.asarray(img).copy()
+        colorful=source.copy();alpha=np.zeros(source.shape[:2],dtype=np.uint8)
+        colors=[(225,68,122),(24,137,202),(219,143,42),(77,169,101)]
+        for ix,c in enumerate(candidates):
+            colorful[c["mask"]]=colors[ix%len(colors)]
+            alpha[c["mask"]]=115
+        overlay=Image.composite(Image.fromarray(colorful),img,Image.fromarray(alpha,'L'))
+        overlay=overlay.resize((width,height),Image.Resampling.LANCZOS)
+        panel=Image.new('RGB',(width*2,height+72),'white')
+        panel.paste(original,(0,72));panel.paste(overlay,(width,72))
+        draw=ImageDraw.Draw(panel)
+        draw.text((10,10),'Original verified RGB',fill='black')
+        draw.text((width+10,10),'Separate instance mask proposals',fill='black')
+        caption=', '.join(x['itemType'] for x in candidates[:5]) or 'No masks above threshold'
+        draw.text((10,40),caption,fill='black')
+        panel.save(D/(row['id']+'-instance-overlays.png'))
         case=dict(id=row["id"],sourceSha256=row["sha256"],source=row["attribution"]["source"],
           license=row["attribution"]["license"],modelOutputShapes=[list(x.shape) for x in outputs],
           sourceGeometry=transform,cpuInferenceMs=ms,instanceMasksVerified=0,
-          masksNotDecoded=True,automaticItemsSaved=0,originalPreserved=True)
+          masksNotDecoded=False,proposedMasks=len(candidates),
+          proposals=[dict(itemType=c["itemType"],confidence=round(c["score"],3),
+            pixelArea=c["pixels"]) for c in candidates],
+          automaticItemsSaved=0,originalPreserved=True)
         report["cases"].append(case);save()
         print("DEEPFASHION_INSTANCE_PROFILE "+json.dumps(case),flush=True)
+    report["parsedInstanceMasks"]=sum(c["proposedMasks"] for c in report["cases"])
     report["status"]="complete";report["sourceHashesVerified"]=True;save()
 
 if __name__=="__main__":main()

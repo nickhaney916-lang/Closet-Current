@@ -6,6 +6,8 @@ on:
     paths:
       - 'benchmark/deepfashion-instance-onnx-reference.json'
       - 'scripts/run-deepfashion-instance-probe.py'
+      - 'benchmark/deepfashion_instance_decode.py'
+      - 'tests/test_deepfashion_instance_decode.py'
       - '.github/workflows/deepfashion-instance-probe.yml'
 permissions:
   contents: read
@@ -24,7 +26,9 @@ jobs:
       - name: Install CPU-only existing dependencies
         run: pip install numpy==1.26.4 Pillow==11.2.1 onnxruntime==1.21.0
       - name: Compile model audit
-        run: python -m py_compile scripts/run-deepfashion-instance-probe.py
+        run: |
+          python -m py_compile scripts/run-deepfashion-instance-probe.py
+          PYTHONPATH=benchmark python -m unittest discover -s tests -p 'test_deepfashion_instance_decode.py' -v
       - name: Download SHA-verified source photographs
         run: |
           node scripts/download-reviewed-photos.mjs benchmark/manifest-visible-legwear-2.json benchmark/photos validation-0031
@@ -37,13 +41,17 @@ jobs:
           import json
           x=json.load(open('benchmark/deepfashion-instance-review/summary.json'))
           assert x['status']=='complete' and x['modelHashVerified'] and x['sourceHashesVerified']
-          assert len(x['cases'])==2 and x['parsedInstanceMasks']==0
+          assert len(x['cases'])==2 and x['parsedInstanceMasks']>=0
           assert x['automaticItemsCreated']==0 and not x['customerModelChanged'] and not x['paidServicesUsed']
-          assert all(c['masksNotDecoded'] and c['automaticItemsSaved']==0 for c in x['cases'])
+          assert all(not c['masksNotDecoded'] and c['automaticItemsSaved']==0 for c in x['cases'])
+          from pathlib import Path
+          assert all((Path('benchmark/deepfashion-instance-review')/(c['id']+'-instance-overlays.png')).is_file() for c in x['cases'])
           PY
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: pinned-deepfashion-instance-feasibility
-          path: benchmark/deepfashion-instance-review/summary.json
+          path: |
+            benchmark/deepfashion-instance-review/summary.json
+            benchmark/deepfashion-instance-review/*-instance-overlays.png
           retention-days: 14
