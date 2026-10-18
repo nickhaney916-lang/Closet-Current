@@ -1,6 +1,55 @@
 # Closet Current master development checkpoint
 
 
+## Exact-item Home → closet navigation — October 18, 2026, Pacific
+
+- **Customer usability priority completed** on draft PR #7 integration
+  branch; separate ChatGPT Work session continues AI garment recognition
+  independently on its own branch. No model/segmentation, paid service,
+  production merge/deploy or Drive Duel code changed.
+- Home "Fresh in your closet" cards previously performed a **name search**
+  and opened the closet. This was ambiguous when two garments had the
+  same name and could be filtered away by a stale selected outfit slot,
+  item subtype, season, sleeve selection, or category filter.
+- Updated `public/navigation.js`:
+  cards now carry the exact saved garment `data-item-id`, clicking one
+  first verifies that ID still exists in the current account's items,
+  clears stale search, category, sleeve, season and outfit-slot filters,
+  switches the existing closet to its rack presentation, centers **that
+  precise garment** by ID, focuses its card for keyboard and accessibility
+  context, and scrolls to the current collection. No extra tab or
+  mandatory review step was introduced. Missing/deleted IDs fail closed
+  without navigation to a falsely matched name. Stored photos and item
+  indexing are not edited by browsing.
+- Extended `scripts/test-style-my-new-item-mobile.mjs` with a
+  **390×844 simulated mobile touch** scenario: seed a second saved item
+  with an identical name, set stale Shoes/Winter/sleeve/slot filters,
+  tap the original item's home card, then assert that the correct ID is
+  active and focused, all five items are browsable, all stale filters
+  are reset, rack view is visible, and the original garment record is
+  byte-for-byte unchanged. Existing one-piece swap/persistence assertions
+  remain.
+- Verified [full Node run 39171103763](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39171103763):
+  **760 total, 757 passed, 0 failed, 3 skipped**, production build test
+  passed. Verified [mobile browser run 39171107378](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39171107378):
+  all workflow stages passed, browser log
+  `NEW_ITEM_STYLE_MOBILE` reported `recentGarmentExactOpen=true`,
+  `duplicateNameSafe=true`, `oldFiltersCleared=true`,
+  `anchorPersisted=true`, `directOneTapSwap=true`,
+  `reloadVerified=true` and `pageErrors=0`. This is a simulated
+  touch viewport, **not an actual phone acceptance test**.
+- Code revision verified: `485104ba41bec026cb33eef566a3d8d93eec0480`.
+  At checkpoint creation 25 of 26 CI checks had passed; the remaining
+  experimental image-model comparison was not relevant to this UX change
+  and had not yet completed.
+- **Next user-experience priority:** simplify Uns​orted clothing review
+  and visible counts without expanding the main dashboard, then verify
+  backups/account sync before the broader family-and-friends pilot.
+  Real worn-photo recognition accuracy remains a separate Work task and
+  is not inferred from these navigation tests.
+
+
+
 ## Same-card one-piece swaps in Style This — October 18, 2026, Pacific
 
 - This primary conversation continues **customer UX only**, while a separate
