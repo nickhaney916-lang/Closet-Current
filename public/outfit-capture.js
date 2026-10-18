@@ -6,6 +6,15 @@ let outfitActiveId=null,lastOutfitPhoto='',outfitSplitJob=null;
 // adjacent pieces, or garments from separate photo captures.
 function sameCapturedRegion(a,b,sourceId){
  if(!a||a.outfitSourceId!==sourceId||typeof sourceId!=='string'||!sourceId)return false;
+ // A capture ID is not evidence that two photos are identical: ensure the
+ // preserved ORIGINAL source matches exactly before hiding a possible item.
+ const oldOriginal=a.originalPhoto?.image,newOriginal=b.originalPhoto?.image;
+ if(typeof oldOriginal!=='string'||typeof newOriginal!=='string'||
+    !oldOriginal.startsWith('data:image/jpeg;base64,')||oldOriginal!==newOriginal)return false;
+ const role=x=>typeof x?.layerRole==='string'?x.layerRole:null;
+ const label=x=>typeof x?.sourceLabel==='string'?x.sourceLabel:null;
+ if(role(a.segmentHint)!==role(b.segmentHint)||
+    label(a.segmentHint)!==label(b.segmentHint))return false;
  const box=a.cropBounds,other=b.cropBounds;
  if(!box||!other||!a.segmentHint||!b.segmentHint)return false;
  const valid=r=>['x','y','width','height'].every(k=>typeof r[k]==='number'&&Number.isFinite(r[k]))&&
@@ -72,10 +81,10 @@ function startOutfitSplit(image,sourceId=crypto.randomUUID()){
     // Only suppress duplicate regions from THIS exact capture, retaining any
     // previous user adjustment, saved clothing, or independent outer layer.
     // Missing/malformed boxes bypass suppression and use existing JPEG checks.
-    if([...items,...batch].some(x=>sameCapturedRegion(x,{
-      cropBounds:p.cropBounds,segmentHint:p.hint
-    },sourceId))){job.unchanged++;renderOutfitCapture();return;}
-    if(candidate(p.image,{outfitSourceId:sourceId,segmentHint:p.hint,recognitionPhoto:p.recognitionPhoto,originalPhoto:{image},cropBounds:p.cropBounds,colorEstimate:p.colorEstimate}))job.added++;renderOutfitCapture();return;
+    const hint={...p.hint,sourceLabel:typeof p.label==='string'?p.label:null};
+    const proposed={originalPhoto:{image},cropBounds:p.cropBounds,segmentHint:hint};
+    if([...items,...batch].some(x=>sameCapturedRegion(x,proposed,sourceId))){job.unchanged++;renderOutfitCapture();return;}
+    if(candidate(p.image,{outfitSourceId:sourceId,segmentHint:hint,recognitionPhoto:p.recognitionPhoto,originalPhoto:{image},cropBounds:p.cropBounds,colorEstimate:p.colorEstimate}))job.added++;renderOutfitCapture();return;
    }
    if(data.type==='done'&&job.rejected){finishOutfitSplit(job,'Some original clothing crops were unavailable. Valid pieces are kept; retry to separate the rest.',true);return;}
    if(data.type==='done')finishOutfitSplit(job,job.added?

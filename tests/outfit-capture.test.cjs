@@ -138,7 +138,8 @@ test('saved pieces deduplicate on retry, but other garments, overlapping layers,
  const b={x:.1,y:.15,width:.5,height:.6};
  const photo='data:image/jpeg;base64,WHOLE';
  h.c.items.push({id:'saved',outfitSourceId:'first-photo',
-  cropBounds:b,segmentHint:top,image:'data:image/jpeg;base64,SAVED',
+  originalPhoto:{image:photo},cropBounds:b,segmentHint:{...top,sourceLabel:null},
+  image:'data:image/jpeg;base64,SAVED',
   category:'Outerwear',itemType:'Jacket'});
  h.c.startOutfitSplit(photo,'first-photo');
  const emit=(image,bounds,hint=top)=>h.emit({type:'piece',piece:{image,recognitionPhoto:raw,
@@ -169,4 +170,53 @@ test('invalid or absent region metadata cannot suppress new captures from byte-s
  }
  h.emit({type:'done',count:3});
  assert.equal(h.c.batch.length,3);
+});
+
+test('reusing a capture ID with a different original photograph never hides a new garment',()=>{
+ const h=setup(),hint={categories:['Tops'],types:[],clipped:false};
+ const bounds={x:.15,y:.2,width:.3,height:.4};
+ h.c.items.push({id:'prior-shirt',outfitSourceId:'shared-group',
+  originalPhoto:{image:'data:image/jpeg;base64,ORIGINALA'},
+  cropBounds:bounds,segmentHint:{...hint,sourceLabel:'Upper garment'},
+  image:'data:image/jpeg;base64,SHIRTA'});
+ h.c.startOutfitSplit('data:image/jpeg;base64,ORIGINALB','shared-group');
+ h.emit({type:'piece',piece:{image:'data:image/jpeg;base64,SHIRTB',
+  label:'Upper garment',recognitionPhoto:{image:'data:image/jpeg;base64,RAWB'},
+  cropBounds:bounds,hint}});
+ h.emit({type:'done',count:1});
+ assert.equal(h.c.items.length,1);
+ assert.equal(h.c.batch.length,1,'new source must not be mistaken for old garment');
+ assert.equal(h.c.batch[0].originalPhoto.image,'data:image/jpeg;base64,ORIGINALB');
+});
+test('same-source near-identical regions are retained separately for distinct clothing layers',()=>{
+ const h=setup(),image='data:image/jpeg;base64,ORIGINAL';
+ const b={x:.1,y:.2,width:.4,height:.5};
+ const top={categories:['Tops','Outerwear'],types:[],clipped:false};
+ h.c.startOutfitSplit(image,'capture');
+ const emit=(photo,label,layerRole)=>h.emit({type:'piece',piece:{
+  image:photo,label,cropBounds:b,
+  hint:{...top,layerRole},recognitionPhoto:{image:'data:image/jpeg;base64,RGB'}
+ }});
+ emit('data:image/jpeg;base64,UNDER','Upper garment','underlayer');
+ emit('data:image/jpeg;base64,OVER','Upper garment','outerlayer');
+ emit('data:image/jpeg;base64,COAT','Coat','outerlayer');
+ emit('data:image/jpeg;base64,DUP','Upper garment','underlayer');
+ h.emit({type:'done',count:4});
+ assert.equal(h.c.batch.length,3,'underlayer, outerlayer and distinct semantic sources remain separate');
+ assert.equal(h.c.batch[0].segmentHint.layerRole,'underlayer');
+ assert.equal(h.c.batch[1].segmentHint.layerRole,'outerlayer');
+ assert.equal(h.c.batch[2].segmentHint.sourceLabel,'Coat');
+ assert.match(h.el('outfitSplitStatus').textContent,/3 new clothing regions/);
+});
+test('legacy saved records without source-photo provenance are never silently suppressed',()=>{
+ const h=setup(),b={x:.1,y:.1,width:.3,height:.4},
+ hint={categories:['Tops'],types:[],clipped:false};
+ h.c.items.push({id:'legacy',outfitSourceId:'capture',cropBounds:b,segmentHint:hint,
+  image:'data:image/jpeg;base64,OLD'});
+ h.c.startOutfitSplit('data:image/jpeg;base64,NEWORIGINAL','capture');
+ h.emit({type:'piece',piece:{image:'data:image/jpeg;base64,NEW',
+  recognitionPhoto:{image:'data:image/jpeg;base64,RAW'},cropBounds:b,hint}});
+ h.emit({type:'done',count:1});
+ assert.equal(h.c.batch.length,1,'missing original evidence must fail open into review');
+ assert.equal(h.c.items.length,1);
 });
