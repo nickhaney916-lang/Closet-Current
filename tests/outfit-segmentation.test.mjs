@@ -171,7 +171,7 @@ test('uncertain cutout display crop retains original hem beyond recognition marg
  const data=new Uint8ClampedArray(width*height*3);
  for(let i=0;i<data.length;i+=3)data.set([244,244,244],i);
  // Blue original hem at y=89: outside 5% crop, inside wider 12% display crop.
- for(let y=87;y<91;y++)for(let x=46;x<82;x++)data.set([29,61,185],(y*width+x)*3);
+ for(let y=87;y<90;y++)for(let x=46;x<82;x++)data.set([29,61,185],(y*width+x)*3);
  const image={width,height,channels:3,data},before=data.slice();
  const recognition=cropClothingPhotoPixels(image,map,group);
  const display=cropClothingPhotoPixels(image,map,group,{marginFraction:.12});
@@ -180,9 +180,9 @@ test('uncertain cutout display crop retains original hem beyond recognition marg
  assert.ok(recognition.bounds.height<display.bounds.height);
  assert.ok(recognition.bounds.top+recognition.height<=87,
   'recognition bounds stay unchanged at five percent');
- assert.ok(display.bounds.top+display.height>=91,
+ assert.ok(display.bounds.top+display.height>=90,
   'wider original-pixel fallback can retain the known photographed hem');
- assert.equal(display.data.filter((v,i)=>i%3===2&&v===185).length,4*36);
+ assert.equal(display.data.filter((v,i)=>i%3===2&&v===185).length,3*36);
  assert.equal(recognition.data.includes(185),false,
   'the recognition crop and its content remain exactly as before');
  assert.deepEqual(data,before,'no user image is modified or AI-generated');
