@@ -1,7 +1,7 @@
 name: Private closet backup and multi-device recovery
 on:
   push:
-    branches: [main, 'cloud/private-backup']
+    branches: [main, 'cloud/private-backup', 'fix/photo-clarity-high-quality-downsampling-20261016']
     paths:
       - 'public/**'
       - 'tests/cloud-backup.test.cjs'
