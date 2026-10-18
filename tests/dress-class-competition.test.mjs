@@ -33,6 +33,8 @@ test('spatial competing shirt and skirt logits are reported, not promoted',()=>{
  assert.equal(r.diagnosticLabels[2*12+3],4);
  assert.equal(r.diagnosticLabels[7*12+3],5);
  assert.equal(r.physicalGarmentCountVerified,0);
+ assert.equal(r.mixedClassReviewCandidate,false,
+  'small synthetic regions are not sufficient to flag mixed garments');
 });
 test('no dress labels never produces a false split from background evidence',()=>{
  const s=setup();const r=dressClassCompetition(s.data,s.dims,s.map);
@@ -47,4 +49,30 @@ test('invalid shapes, inconsistent labels, NaN, and unsafe thresholds fail close
  assert.throws(()=>dressClassCompetition(s.data,s.dims,s.map,{maxLogitMargin:10}),/Invalid/);
  s.data[7*120+2*12+2]=NaN;
  assert.throws(()=>dressClassCompetition(s.data,s.dims,s.map),/Invalid/);
+});
+
+test('strong distinct upper and skirt alternatives flag model-only mixed-outfit review',()=>{
+ const s=setup(24,20);
+ s.paint(5,2,12,7,5,4,3.5);
+ s.paint(5,10,12,7,5,5,3.4);
+ const r=dressClassCompetition(s.data,s.dims,s.map);
+ assert.equal(r.mixedClassReviewCandidate,true);
+ assert.equal(r.mixedClassReviewOnly,true);
+ assert.ok(r.upperBandUpperPixels>=16);
+ assert.ok(r.lowerBandSkirtPixels>=16);
+ assert.equal(r.physicalGarmentCountVerified,0);
+ assert.equal(r.automaticItemSplittingAuthorized,false);
+});
+test('scattered runner-up pixels in only one band cannot invent jacket/skirt pair',()=>{
+ const s=setup(24,20);
+ s.paint(5,2,12,7,5,4,3.5);
+ s.paint(5,10,12,7,5,4,3.5);
+ const r=dressClassCompetition(s.data,s.dims,s.map);
+ assert.equal(r.mixedClassReviewCandidate,false);
+ assert.equal(r.lowerBandSkirtPixels,0);
+});
+test('invalid band threshold cannot turn weak evidence into automatic garment splits',()=>{
+ const s=setup();
+ assert.throws(()=>dressClassCompetition(s.data,s.dims,s.map,{minBandEvidencePixels:0}));
+ assert.throws(()=>dressClassCompetition(s.data,s.dims,s.map,{minBandEvidencePixels:200}));
 });

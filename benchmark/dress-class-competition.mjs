@@ -1,14 +1,15 @@
 // Experimental competition between a committed dress label and near-runner-up
 // shirt / skirt / bottom logits. This is NOT garment instance segmentation.
 // Color-coded pixels are model uncertainty, not human-verified fabric.
-export function dressClassCompetition(data,dims,map,{maxLogitMargin=2}={}){
+export function dressClassCompetition(data,dims,map,{maxLogitMargin=2,minBandEvidencePixels=16}={}){
  if(!Array.isArray(dims)||dims.length!==4||dims[0]!==1||dims[1]!==18||
   !Number.isInteger(dims[2])||!Number.isInteger(dims[3])||
   dims[2]<1||dims[3]<1||dims[2]>512||dims[3]>512||
   data?.length!==dims.reduce((a,b)=>a*b,1)||
   map?.width!==dims[3]||map?.height!==dims[2]||
   map?.labels?.length!==dims[2]*dims[3]||
-  !Number.isFinite(maxLogitMargin)||maxLogitMargin<.25||maxLogitMargin>4)
+  !Number.isFinite(maxLogitMargin)||maxLogitMargin<.25||maxLogitMargin>4||
+  !Number.isInteger(minBandEvidencePixels)||minBandEvidencePixels<4||minBandEvidencePixels>128)
   throw Error('Invalid raw garment competition');
  const w=dims[3],h=dims[2],n=w*h,counts={upper:0,skirt:0,bottoms:0};
  const diagnostics=new Uint8Array(n);
@@ -39,7 +40,16 @@ export function dressClassCompetition(data,dims,map,{maxLogitMargin=2}={}){
   const group=Math.floor(i/w)<=splitY?bands.upper:bands.lower;
   group[names[classIds.indexOf(id)]]++;
  }
+ // A mixed-dress warning requires substantial and *oppositely located*
+ // model uncertainty for upper clothing and a skirt. This is a triage flag,
+ // NOT a segmentation mask or proof of two physical items.
+ const upperEvidence=bands.upper.upper;
+ const lowerSkirtEvidence=bands.lower.skirt;
+ const mixedClassReviewCandidate=dressPixels>=minBandEvidencePixels*4&&
+  upperEvidence>=minBandEvidencePixels&&lowerSkirtEvidence>=minBandEvidencePixels;
  return {analysis:'dress-vs-upper-skirt-bottoms',sourceClass:7,modelOnly:true,
+  mixedClassReviewCandidate,mixedClassReviewOnly:true,
+  upperBandUpperPixels:upperEvidence,lowerBandSkirtPixels:lowerSkirtEvidence,
   selectedDressPixels:dressPixels,lowMarginPixels:lowMarginCount,
   lowMarginShareOfDress:dressPixels?lowMarginCount/dressPixels:0,
   upperSkirtBottomsRunnerUp:counts,ambiguousRegionBands:bands,
