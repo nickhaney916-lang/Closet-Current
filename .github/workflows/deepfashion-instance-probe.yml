@@ -5,6 +5,10 @@ on:
     branches: [main]
     paths:
       - 'benchmark/deepfashion-instance-onnx-reference.json'
+      - 'benchmark/deepfashion-real-photo-suite.json'
+      - 'benchmark/manifest-fresh-11.json'
+      - 'benchmark/locked-photo-sources.json'
+      - 'benchmark/manifest-visible-legwear-2.json'
       - 'scripts/run-deepfashion-instance-probe.py'
       - 'benchmark/deepfashion_instance_decode.py'
       - 'tests/test_deepfashion_instance_decode.py'
@@ -32,8 +36,9 @@ jobs:
       - name: Download SHA-verified source photographs
         run: |
           node scripts/download-reviewed-photos.mjs benchmark/manifest-visible-legwear-2.json benchmark/photos validation-0031
-          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos commons-0059
-      - name: Profile pinned ONNX instance model on two real photos
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos commons-0059,commons-0035,commons-0049,commons-0065,commons-0079
+          node scripts/download-reviewed-photos.mjs benchmark/manifest-fresh-11.json benchmark/photos validation-0017,validation-0001,validation-0010,validation-0019
+      - name: Profile pinned ONNX garment instances on ten licensed reference photos
         run: python scripts/run-deepfashion-instance-probe.py benchmark/deepfashion-instance-review
       - name: Block invented clothes and unverified instance accuracy
         run: |
@@ -41,7 +46,15 @@ jobs:
           import json
           x=json.load(open('benchmark/deepfashion-instance-review/summary.json'))
           assert x['status']=='complete' and x['modelHashVerified'] and x['sourceHashesVerified']
-          assert len(x['cases'])==2 and x['parsedInstanceMasks']>=0
+          assert len(x['cases'])==10 and x['parsedInstanceMasks']>=0
+          assert len(set(c['id'] for c in x['cases']))==10
+          kinds={c['categoryCoverageReview']['expectedBroadCategoryContextOnly'] for c in x['cases']}
+          assert kinds=={'Layered','Bottoms','Dresses','Outerwear','Shoes'}
+          shoes=[c for c in x['cases'] if c['categoryCoverageReview']['negativeFootwearControl']]
+          assert len(shoes)==2 and all(not c['categoryCoverageReview']['categorySupportedByThisModel'] for c in shoes)
+          assert all(c['categoryCoverageReview']['contextCategoryIsNotGroundTruth']
+                     and not c['categoryCoverageReview']['instancePrecisionRecallMeasured']
+                     for c in x['cases'])
           assert x['automaticItemsCreated']==0 and not x['customerModelChanged'] and not x['paidServicesUsed']
           assert all(not c['masksNotDecoded'] and c['automaticItemsSaved']==0 and
                      c['overlapReview']['canAutoSaveAnyProposal'] is False for c in x['cases'])

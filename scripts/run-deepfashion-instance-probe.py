@@ -14,8 +14,24 @@ R=Path("benchmark")
 M=json.loads((R/"deepfashion-instance-onnx-reference.json").read_text())
 L=json.loads((R/"locked-photo-sources.json").read_text())
 V=json.loads((R/"manifest-visible-legwear-2.json").read_text())
-S={v["id"]:v for v in L+V}
-IDS=["validation-0031","commons-0059"]
+F=json.loads((R/"manifest-fresh-11.json").read_text())
+SUITE=json.loads((R/"deepfashion-real-photo-suite.json").read_text())
+S={v["id"]:v for v in L+V+F}
+if SUITE.get("realPhotoCount")!=10 or len(SUITE.get("cases",[]))!=10:
+    raise ValueError("The independent ten-photo trial is incomplete")
+CASES=SUITE["cases"]
+IDS=[case["id"] for case in CASES]
+if len(set(IDS))!=len(IDS):
+    raise ValueError("Duplicate photo identity in test suite")
+CATEGORIES={"Bottoms":("shorts","trousers","skirt"),
+ "Dresses":("short_sleeve_dress","long_sleeve_dress","vest_dress","sling_dress"),
+ "Outerwear":("short_sleeve_outwear","long_sleeve_outwear"),
+ "Shoes":(), "Layered":()}
+if (any(case.get("expectedCategory") not in CATEGORIES or
+        case.get("photoContext") not in ("worn","flat-lay","retail","product")
+        or not isinstance(case.get("reason"),str) for case in CASES)
+        or not all(id in S for id in IDS)):
+    raise ValueError("Unverified trial scenario")
 digest=lambda b:hashlib.sha256(b).hexdigest()
 
 def model_path():
@@ -62,7 +78,7 @@ def main():
       automaticItemsCreated=0,customerModelChanged=False,
       independentReferencesAvailable=False,paidServicesUsed=False,cases=[])
     save=lambda:(D/"summary.json").write_text(json.dumps(report,indent=2))
-    save();photos=[(S[i],photo(S[i])) for i in IDS]
+    save();photos=[(S[c["id"]],photo(S[c["id"]]),c) for c in CASES]
     path=model_path();report["modelHashVerified"]=True
     opts=ort.SessionOptions();opts.intra_op_num_threads=4
     session=ort.InferenceSession(str(path),sess_options=opts,providers=["CPUExecutionProvider"])
@@ -77,7 +93,7 @@ def main():
     if n not in (416,640):raise ValueError("Unexpected model size")
     report["onnxInputs"]=[dict(name=i.name,shape=i.shape,type=i.type) for i in inputs]
     report["onnxOutputs"]=[dict(name=o.name,shape=o.shape,type=o.type) for o in session.get_outputs()]
-    for row,img in photos:
+    for row,img,scenario in photos:
         tensor,transform=letterbox(img,n)
         start=time.perf_counter()
         outputs=session.run(None,{inputs[0].name:tensor})
@@ -114,10 +130,22 @@ def main():
           str(overlap["ambiguousProposalCount"])+" potentially duplicate/overlapping masks",
           fill='black')
         panel.save(D/(row['id']+'-instance-overlays.png'))
+        broad=scenario["expectedCategory"]
+        proposed_kinds=[x["itemType"] for x in candidates]
+        comparison={"expectedBroadCategoryContextOnly":broad,
+         "sourcePhotoContext":scenario["photoContext"],
+         "categorySupportedByThisModel":broad not in ("Shoes","Layered"),
+         "matchingBroadClassProposals":
+             sum(kind in CATEGORIES[broad] for kind in proposed_kinds)
+             if broad not in ("Shoes","Layered") else None,
+         "negativeFootwearControl":broad=="Shoes",
+         "contextCategoryIsNotGroundTruth":True,
+         "instancePrecisionRecallMeasured":False}
         case=dict(id=row["id"],sourceSha256=row["sha256"],source=row["attribution"]["source"],
           license=row["attribution"]["license"],modelOutputShapes=[list(x.shape) for x in outputs],
           sourceGeometry=transform,cpuInferenceMs=ms,instanceMasksVerified=0,
           masksNotDecoded=False,proposedMasks=len(candidates),
+          categoryCoverageReview=comparison,
           overlapReview={k:v for k,v in overlap.items()},
           proposals=[dict(itemType=c["itemType"],confidence=round(c["score"],3),
             pixelArea=c["pixels"]) for c in candidates],

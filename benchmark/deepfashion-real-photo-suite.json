@@ -1,0 +1,70 @@
+{
+  "experiment": "experimental-deepfashion2-ten-source-coverage",
+  "schemaVersion": 1,
+  "realPhotoCount": 10,
+  "sourceReferencesAreNotPixelMasks": true,
+  "expectedCategoryLabelsAreContextOnly": true,
+  "customerDeploymentAllowed": false,
+  "cases": [
+    {
+      "id": "validation-0031",
+      "expectedCategory": "Layered",
+      "photoContext": "worn",
+      "reason": "overlapping blazer skirt tights and shoes"
+    },
+    {
+      "id": "commons-0059",
+      "expectedCategory": "Layered",
+      "photoContext": "flat-lay",
+      "reason": "overlapping dress and jacket"
+    },
+    {
+      "id": "commons-0035",
+      "expectedCategory": "Bottoms",
+      "photoContext": "retail",
+      "reason": "orange shorts"
+    },
+    {
+      "id": "validation-0017",
+      "expectedCategory": "Bottoms",
+      "photoContext": "product",
+      "reason": "jeans"
+    },
+    {
+      "id": "commons-0049",
+      "expectedCategory": "Dresses",
+      "photoContext": "flat-lay",
+      "reason": "dress"
+    },
+    {
+      "id": "commons-0065",
+      "expectedCategory": "Outerwear",
+      "photoContext": "flat-lay",
+      "reason": "jacket"
+    },
+    {
+      "id": "validation-0001",
+      "expectedCategory": "Dresses",
+      "photoContext": "worn",
+      "reason": "summer dress"
+    },
+    {
+      "id": "validation-0010",
+      "expectedCategory": "Layered",
+      "photoContext": "flat-lay",
+      "reason": "dress and blouse"
+    },
+    {
+      "id": "commons-0079",
+      "expectedCategory": "Shoes",
+      "photoContext": "product",
+      "reason": "sneaker negative control unsupported model class"
+    },
+    {
+      "id": "validation-0019",
+      "expectedCategory": "Shoes",
+      "photoContext": "product",
+      "reason": "sneaker negative control unsupported model class"
+    }
+  ]
+}

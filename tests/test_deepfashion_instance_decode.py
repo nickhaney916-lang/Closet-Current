@@ -1,7 +1,15 @@
 import unittest
 import numpy as np
-from deepfashion_instance_decode import decode,instance_overlap_review
+from deepfashion_instance_decode import decode,instance_overlap_review,NAMES
 class Decoder(unittest.TestCase):
+ def test_model_taxonomy_covers_shorts_pants_skirts_outerwear_dresses_but_not_shoes(self):
+    self.assertIn('shorts',NAMES)
+    self.assertIn('trousers',NAMES)
+    self.assertIn('skirt',NAMES)
+    self.assertIn('long_sleeve_outwear',NAMES)
+    self.assertIn('short_sleeve_dress',NAMES)
+    self.assertFalse(any('shoe' in x or 'sneaker' in x for x in NAMES))
+
  def sample(self):
     det=np.zeros((1,300,38),dtype=np.float32)
     det[0,0,:6]=[80,100,250,310,.91,8];det[0,0,6]=4
