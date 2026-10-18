@@ -40,7 +40,26 @@ try{
  await context.route('**/auth.js*',route=>route.fulfill({contentType:'text/javascript',body:
   "window.closetAuth={user:{id:'real-whole-outfit-test'},ready:Promise.resolve()};document.getElementById('authGate').hidden=true;document.getElementById('appShell').hidden=false;"}));
  await context.route('https://raw.githubusercontent.com/**',route=>route.abort('internetdisconnected'));
- const page=await context.newPage();page.on('pageerror',e=>report.pageErrors.push(e.message));
+ const page=await context.newPage();
+ // Only this isolated research browser opts into worker diagnostics; the user
+ // app never collects, stores or uploads such records during normal use.
+ await page.addInitScript(()=>{
+  window.__outfitModelDiagnostics=[];
+  const NativeWorker=window.Worker;
+  window.Worker=function(url,options){
+   const worker=new NativeWorker(url,options);
+   if(String(url).includes('outfit-worker.mjs')){
+    worker.addEventListener('message',event=>{
+     if(event.data?.type==='diagnostics')window.__outfitModelDiagnostics.push(event.data.summary);
+    });
+    const send=worker.postMessage.bind(worker);
+    worker.postMessage=(payload,...args)=>send(payload?.image&&payload?.id?{...payload,diagnostics:true}:payload,...args);
+   }
+   return worker;
+  };
+  window.Worker.prototype=NativeWorker.prototype;
+ });
+ page.on('pageerror',e=>report.pageErrors.push(e.message));
  await page.goto('http://127.0.0.1:'+server.address().port+'/');
  await page.evaluate(()=>Promise.all([closetReady,outfitBoardReady]));
  await page.locator('.tab[data-view="scan"]').click();
@@ -68,9 +87,14 @@ try{
   assert.match(crop[kind],/^data:image\/jpeg;base64,/);
   await writeFile(join(out,source.id+'-piece-'+crop.index+'-'+kind+'.jpg'),Buffer.from(crop[kind].split(',')[1],'base64'));
  }
+ report.modelRegionDiagnostics=await page.evaluate(()=>window.__outfitModelDiagnostics?.[0]||null);
+ assert.equal(report.modelRegionDiagnostics?.version,1,
+  'Real worker should provide aggregate opt-in segmentation evidence');
  report.automaticSaved=observed.saved;report.pendingReview=observed.pending;
  report.splitStatus=observed.splitStatus;report.splitFailed=observed.splitFailed;
  report.emittedPieceCount=observed.saved.length+observed.pending.length;
+ assert.ok(report.modelRegionDiagnostics.emittedGroups>=report.emittedPieceCount,
+  'The diagnostic must count at least every delivered region');
  report.automaticSaveCount=observed.saved.length;report.reviewPendingCount=observed.pending.length;
  await save();
  assert.equal(observed.splitFailed,false,'Actual worker must finish; a model/download error is not a passing accuracy test');

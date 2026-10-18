@@ -22,7 +22,14 @@ self.onmessage=event=>{const request=event.data;chain=chain.then(async()=>{
   const image=await RawImage.read(request.image);if(!image.width||!image.height||Math.max(image.width,image.height)>3072)throw Error('Invalid outfit photo dimensions.');
   const output=await model(await processor(image)),{clothingLabelMap,clothingMaskGroups,cropClothingPhotoPixels,isolateClothingPixels,clothingColorSample,clothingInteriorColorSample,garmentDisplayMaskReliability}=await import('./outfit-segmentation.mjs'+new URL(import.meta.url).search);
   await import('./photo-color.js'+new URL(import.meta.url).search);
-  const map=clothingLabelMap(output.logits.data,output.logits.dims),groups=map.personDetected?clothingMaskGroups(map):[];let count=0;
+  const map=clothingLabelMap(output.logits.data,output.logits.dims),groups=map.personDetected?clothingMaskGroups(map):[];
+  // Explicit benchmark opt-in only. No per-pixel output or camera imagery.
+  // Never change masks, recognition inputs, or auto-save criteria for diagnostics.
+  if(request.diagnostics===true){
+   const {diagnoseOutfitRegions}=await import('./outfit-diagnostics.mjs'+new URL(import.meta.url).search);
+   self.postMessage({type:'diagnostics',id:request.id,summary:diagnoseOutfitRegions(output.logits.data,output.logits.dims,map,groups)});
+  }
+  let count=0;
   for(const group of groups){
    // Index/recognize using the fixed, narrow ORIGINAL 5% RGB crop only.
    // When a mask is structurally unreliable, DISPLAY a wider 12% source
