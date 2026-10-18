@@ -50,8 +50,27 @@ function styleOwnedCollection(closet,request={},library=null){
  const intent=Object.hasOwn(stylistProfiles,request.request)?request.request:'Casual';
  const context={request:intent,occasion:stylistProfiles[intent].occasion,audience:['Women','Men','All'].includes(request.audience)?request.audience:'All',season:['Spring','Summer','Fall','Winter'].includes(request.season)?request.season:'Fall'};
  const unique=[...new Map(closet.filter(x=>x&&typeof x.id==='string').map(x=>[x.id,x])).values()];
- const ranked=slot=>unique.filter(item=>slotAllows(outfitSlots.find(s=>s.id===slot),item)).map(item=>({item,score:stylistItemScore(item,slot,context,library)})).filter(x=>x.score!==null).sort((a,b)=>b.score-a.score||a.item.id.localeCompare(b.item.id)).slice(0,8);
- const tops=ranked('top'),bottoms=ranked('bottom'),shoes=ranked('shoes'),candidates=[];
+ // Explicitly selected garment must appear in every option. Never substitute
+ // another owner's item or choose a different top in place of the anchor.
+ const anchorId=typeof request.anchorItemId==='string'?request.anchorItemId:null;
+ const anchor=anchorId?unique.find(x=>x.id===anchorId):null;
+ const anchorSlot=anchor?.category==='Tops'||anchor?.category==='Dresses'?'top':
+  anchor?.category==='Bottoms'?'bottom':anchor?.category==='Shoes'?'shoes':
+  anchor?.category==='Outerwear'?'layer':null;
+ if(anchorId&&(!anchor||!anchorSlot))return [];
+ const ranked=slot=>{
+  if(slot===anchorSlot){
+   if(!slotAllows(outfitSlots.find(s=>s.id===slot),anchor))return [];
+   return [{item:anchor,score:stylistItemScore(anchor,slot,context,library)??0}];
+  }
+  return unique.filter(item=>item.id!==anchorId&&slotAllows(outfitSlots.find(s=>s.id===slot),item))
+   .map(item=>({item,score:stylistItemScore(item,slot,context,library)}))
+   .filter(x=>x.score!==null)
+   .sort((a,b)=>b.score-a.score||a.item.id.localeCompare(b.item.id)).slice(0,8);
+ };
+ const availableTops=ranked('top');
+ const tops=(anchorSlot==='bottom'||anchorSlot==='layer')?availableTops.filter(x=>x.item.category!=='Dresses'):availableTops;
+ const bottoms=ranked('bottom'),shoes=ranked('shoes'),candidates=[];
  // Keep partial outfits useful and label their missing required slots explicitly.
  for(const top of tops.length?tops:[null])for(const bottom of top?.item.category==='Dresses'?[null]:bottoms.length?bottoms:[null])for(const shoe of shoes.length?shoes:[null]){
   const selected=[top,bottom,shoe].filter(Boolean),slots={};if(top)slots.top=top.item.id;if(bottom)slots.bottom=bottom.item.id;if(shoe)slots.shoes=shoe.item.id;
@@ -59,9 +78,12 @@ function styleOwnedCollection(closet,request={},library=null){
   for(const slot of ['layer','bag','accessory','finish']){
    if(slot==='layer'&&top?.item.category==='Dresses')continue;
    const extra=ranked(slot).filter(x=>!Object.values(slots).includes(x.item.id)).map(x=>({...x,harmony:stylistHarmony([...selected.map(x=>x.item),x.item])-stylistHarmony(selected.map(x=>x.item))})).sort((a,b)=>(b.score+b.harmony)-(a.score+a.harmony))[0];
-   if(extra&&extra.score+extra.harmony>0){slots[slot]=extra.item.id;selected.push(extra);score+=extra.score+extra.harmony;}
+   if(extra&&(slot===anchorSlot||extra.score+extra.harmony>0)){
+    slots[slot]=extra.item.id;selected.push(extra);score+=extra.score+extra.harmony;
+   }
   }
   const board=cleanOutfitBoard({name:intent,slots,occasion:context.occasion,audience:context.audience,season:context.season},unique);
+  if(anchor&&!Object.values(board.slots).includes(anchor.id))continue;
   const required=boardGaps(board,unique).filter(s=>!s.optional).map(s=>s.id);
   score-=required.length*30;
   const references=selected.flatMap(x=>stylistTrendMatches(x.item,outfitSlots.find(s=>board.slots[s.id]===x.item.id)?.id,context,library).map(d=>({itemId:x.item.id,label:d.label,reason:d.reason,source:library.sources.find(s=>s.id===d.sourceId)})));
@@ -70,6 +92,7 @@ function styleOwnedCollection(closet,request={},library=null){
   if(selected.some(x=>x.item.colorSource==='photo-estimate'))notices.push('Some colors are estimated from photos; confirm the colors together.');
   if(selected.some(x=>!x.item.color))notices.push('Some colors are unknown; check the photos together.');
   if(selected.some(x=>!x.item.seasons?.length))notices.push('Some seasonal details are unknown; check the weather and comfort.');
+  if(anchor&&stylistItemScore(anchor,anchorSlot,context,library)===null)notices.push('Your chosen piece is included, but its recorded style or season may differ from this occasion.');
   if(intent==='School')notices.push('Check your school’s dress code before choosing this outfit.');
   if(intent==='Activewear')notices.push('Check that these garments and sneakers are suitable for your actual activity.');
   if(selected.length)candidates.push({board,score,missing:required,references,notices,context,trendUpdatedAt:library?.updatedAt||null});

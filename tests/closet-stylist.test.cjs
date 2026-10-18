@@ -34,3 +34,36 @@ test('casual suggestions can use a known garment category and color with an unco
 test('partial garment types do not masquerade as activewear, workwear or an accessory subtype',()=>{const c=setup(),partial=piece('partial','Tops','Unknown','Blue'),accessory=piece('accessory','Accessories','Unknown','Red');for(const request of ['Activewear','Work','Dressy dinner']){const result=c.styleOwnedCollection([partial,closet[2],closet[5]],{request})[0];assert.equal(result?.board.slots.top,undefined);}const result=c.styleOwnedCollection([closet[1],closet[2],closet[5],accessory],{request:'Casual'})[0];assert.equal(Object.values(result.board.slots).includes('accessory'),false);});
 
 test('hidden clothing layers cannot change the score of a dress-only outfit',()=>{const c=setup(),base=[piece('dress','Dresses','Formal dress'),piece('heels','Shoes','Heels')],request={request:'Dressy dinner',audience:'All',season:'Fall'},alone=c.styleOwnedCollection(base,request)[0],withJacket=c.styleOwnedCollection([...base,piece('jacket','Outerwear','Blazer')],request)[0];assert.equal(withJacket.board.slots.layer,undefined);assert.equal(withJacket.board.slots.bottom,undefined);assert.equal(withJacket.score,alone.score);assert.equal(withJacket.signature,alone.signature);});
+
+test('new shirt stays in every suggestion even outside the ordinary top-eight ranking',()=>{
+ const c=setup(),owned=[...Array.from({length:12},(_,i)=>piece('tee-'+i,'Tops','T-shirt','White')),
+  piece('new-shirt','Tops','Polo','Red'),piece('jeans','Bottoms','Jeans','Blue'),piece('shoes','Shoes','Sneakers','White')];
+ const before=JSON.stringify(owned),r=c.styleOwnedCollection(owned,{request:'Casual',anchorItemId:'new-shirt'});
+ assert.ok(r.length>0&&r.every(x=>x.board.slots.top==='new-shirt'));
+ assert.ok(r.every(x=>Object.values(x.board.slots).every(id=>owned.some(y=>y.id===id))));
+ assert.equal(JSON.stringify(owned),before);
+});
+test('pinned bottoms never disappear beneath a dress; pinned dress removes bottoms',()=>{
+ const c=setup(),owned=[piece('dress','Dresses','Casual dress'),piece('tee','Tops','T-shirt'),
+ piece('jeans','Bottoms','Jeans'),piece('shoe','Shoes','Sneakers'),piece('jacket','Outerwear','Jacket')];
+ const bottom=c.styleOwnedCollection(owned,{request:'Casual',anchorItemId:'jeans'});
+ assert.ok(bottom.length>0&&bottom.every(x=>x.board.slots.bottom==='jeans'&&x.board.slots.top!=='dress'));
+ const dress=c.styleOwnedCollection(owned,{request:'Casual',anchorItemId:'dress'});
+ assert.ok(dress.length>0&&dress.every(x=>x.board.slots.top==='dress'&&!x.board.slots.bottom&&!x.board.slots.layer));
+});
+test('pinned sneaker and jacket still appear when the chosen occasion usually rejects them',()=>{
+ const c=setup(),owned=[piece('tee','Tops','T-shirt'),piece('jeans','Bottoms','Jeans'),
+ piece('shoes','Shoes','Sneakers'),piece('jacket','Outerwear','Jacket')];
+ const shoe=c.styleOwnedCollection(owned,{request:'Dressy dinner',anchorItemId:'shoes'});
+ assert.ok(shoe.length>0&&shoe.every(x=>x.board.slots.shoes==='shoes'));
+ assert.ok(shoe[0].notices.some(x=>x.includes('chosen piece')));
+ const jacket=c.styleOwnedCollection(owned,{request:'Casual',season:'Summer',anchorItemId:'jacket'});
+ assert.ok(jacket.length>0&&jacket.every(x=>x.board.slots.layer==='jacket'));
+ assert.ok(jacket[0].notices.some(x=>x.includes('chosen piece')));
+});
+test('missing, deleted and uncategorized new pieces cannot be silently substituted',()=>{
+ const c=setup(),owned=[piece('tee','Tops','T-shirt'),piece('shoe','Shoes','Sneakers'),
+ piece('unknown','Uncategorized','Unknown')];
+ for(const id of ['missing','unknown'])assert.equal(c.styleOwnedCollection(owned,{anchorItemId:id}).length,0);
+ assert.ok(c.styleOwnedCollection(owned).length);
+});
