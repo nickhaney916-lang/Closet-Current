@@ -6,6 +6,10 @@ on:
     paths:
       - 'scripts/run-modnet-comparison.mjs'
       - 'scripts/run-object-cutout-comparison.mjs'
+      - 'scripts/score-approved-cutouts.mjs'
+      - 'benchmark/compare-approved-cutouts.mjs'
+      - 'tests/compare-approved-cutouts.test.mjs'
+      - 'benchmark/segmentation-review-manifest.json'
       - 'benchmark/object-cutout-mask.mjs'
       - 'tests/object-cutout-mask.test.mjs'
       - 'scripts/build-footwear-silhouette-review.mjs'
@@ -386,6 +390,19 @@ jobs:
       - name: Verify complete object cutout experiment
         run: |
           node -e "const s=require('./benchmark/object-cutout-comparison/summary.json');if(s.status!=='complete'||s.cases.length!==6||!s.reviewOnly||s.productionAuthorized||s.cases.some(c=>!c.notAccuracy||c.verifiedShadowRemoval))throw Error('Incomplete or unsafe object comparison')"
+      - name: Verify six-photo independent-reference comparison gate
+        run: node --test tests/compare-approved-cutouts.test.mjs
+      - name: Score MODNet versus BiRefNet only when approved references exist
+        run: node scripts/score-approved-cutouts.mjs benchmark/cutout-quality-gate
+      - name: Enforce blocked release without six independent masks
+        run: |
+          node -e "const s=require('./benchmark/cutout-quality-gate/summary.json');if(s.productionAuthorized!==false||s.manualRolloutRequired!==true||s.noCustomerModelChange!==true)throw Error('Unsafe model release gate')"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: experimental-approved-cutout-quality-gate
+          path: benchmark/cutout-quality-gate/
+          retention-days: 14
       - uses: actions/upload-artifact@v4
         if: always()
         with:
