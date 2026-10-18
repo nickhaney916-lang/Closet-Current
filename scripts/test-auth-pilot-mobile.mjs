@@ -98,11 +98,51 @@ try{
  assert.equal(await recovery.locator('#appShell').isVisible(),false);
  assert.equal(await recovery.evaluate(()=>localStorage.getItem('closet-current-auth-v1')),null);
  await recoveryContext.close();
+ // No real signup email is sent. The new pilot notice must be readable
+ // publicly, required only during new signup, and never treated as legal
+ // acceptance or advertising permission.
+ const signupContext=await browser.newContext({viewport:{width:390,height:844},isMobile:true,
+  hasTouch:true,serviceWorkers:'block'});
+ let signupRequests=0,submittedMetadata=null;
+ await signupContext.route('https://hlkgymugtfbirlpunsra.supabase.co/**',route=>{
+  const url=new URL(route.request().url());
+  if(url.pathname==='/auth/v1/signup'){
+   signupRequests++;submittedMetadata=JSON.parse(route.request().postData()||'{}').data;
+   return route.fulfill({status:200,contentType:'application/json',
+    body:JSON.stringify({user:{id:'pending-synthetic-confirmation'}})});
+  }
+  return route.fulfill({status:404,contentType:'application/json',body:'{}'});
+ });
+ const signup=await signupContext.newPage();signup.on('pageerror',e=>errors.push(e.message));
+ await signup.goto(base+'pilot-data-notice.html');
+ assert.match(await signup.locator('h1').innerText(),/clothing photos and account data/);
+ assert.match(await signup.locator('body').innerText(),/not yet automatically removed/);
+ assert.match(await signup.locator('body').innerText(),/Self-service full-account deletion is not yet available/);
+ await signup.goto(base);
+ await signup.getByRole('button',{name:'Create an account'}).tap();
+ assert.equal(await signup.locator('#pilotNoticeWrap').isVisible(),true);
+ await signup.locator('#authUsername').fill('synthetic_person');
+ await signup.locator('#authEmail').fill('synthetic@example.invalid');
+ await signup.locator('#authPassword').fill('synthetic-long-password');
+ await signup.getByRole('button',{name:'Create account',exact:true}).tap();
+ assert.equal(signupRequests,0,'unchecked pilot notice may not issue a signup email');
+ assert.equal(await signup.locator('#authGate').isVisible(),true);
+ await signup.locator('#pilotNoticeAck').check();
+ await signup.getByRole('button',{name:'Create account',exact:true}).tap();
+ await signup.waitForFunction(()=>document.getElementById('authStatus')?.textContent.includes('Check your email'));
+ assert.equal(signupRequests,1);
+ assert.equal(submittedMetadata.username,'synthetic_person');
+ assert.equal(submittedMetadata.pilot_data_notice_version,'pilot-data-notice-2026-10-18');
+ assert.equal(Object.hasOwn(submittedMetadata,'marketing_consent'),false);
+ assert.equal(await signup.locator('#appShell').isVisible(),false);
+ await signupContext.close();
  assert.deepEqual(errors,[]);
  const result={status:'passed',touchViewport:'390x844',
   offlineSessionRetained:true,manualRetryRestoredSameUser:true,rotatedRefreshTokenSaved:true,
   tokenlessSuccessRejected:true,mismatchedRecoveryRejected:true,
-  noPrivateClosetUnlockWithoutSession:true,simulatedAuthOnly:true,
+  noPrivateClosetUnlockWithoutSession:true,
+  pilotNoticeReadable:true,signupBlockedWithoutNoticeReview:true,
+  pilotNoticeVersionRecorded:true,noMarketingOptIn:true,simulatedAuthOnly:true,
   realEmailDeliveryTested:false,realPhoneTested:false,liveSupabaseAuthTested:false,
   pageErrors:errors};
  await writeFile(output+'/results.json',JSON.stringify(result,null,2)+'\n');
