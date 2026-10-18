@@ -1,5 +1,19 @@
 # Closet Current master development checkpoint
 
+## Single-conversation handoff — October 17, 2026, afternoon Pacific
+
+The owner selected this ChatGPT conversation as the **single place for project decisions and progress reports**, consolidating the previously separate ChatGPT Work-mode benchmarking and try-on threads. Chat transcripts themselves cannot be merged, and other open conversations are not automatically stopped; the GitHub draft branch and this checkpoint are the reproducible shared state. Future changes from another session must be read from current GitHub HEAD first; do not duplicate, overwrite or force-push.
+
+- Repository and integration target: `nickhaney916-lang/Closet-Current`, branch `fix/photo-clarity-high-quality-downsampling-20261016`, **draft PR #7**; `main` and Drive Duel must remain untouched.
+- Latest audited code head before this handoff: `85d79988f709ea4f5f2d67b9b9af8951e52b07ce`. Later development may advance it; always fetch the current head rather than assuming this SHA is current.
+- The Work benchmarking contributions include difficult-background segmentation experiments, preserving white sneaker soles, and **display-only** transparent garments on the closet rack; these are not proof of accurate clothing-only AI cutouts. Review-only masks and six independently unapproved reference outlines remain open.
+- Two **photorealistic fixed male/female model preview thumbnails** are in the draft app; their full-resolution provider input photographs are packaged separately and are **not hosted in the app yet**. The account-bound, server-side paid try-on interface is coded, but real provider inference has **not been run** and the pilot remains disabled. Selfie face personalization and multi-item generated outfits are not implemented.
+- Latest verified CI evidence on shared head: [camera/indexing run 39082003111](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39082003111) — 616 passed, 0 failed, 3 skipped; [mobile run 39082023950](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39082023950) — 143 passed, 0 failed; [AI request guard run 39082023937](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39082023937) — 3 passed, 0 failed. The phone-sized licensed-image flow observed 14/14 correct **broad** garment categories, 8/14 automatic saves and 6/14 pending review, with no page errors. The try-on browser simulation sent **zero** actual provider calls.
+- Current priorities, in order: reliable point-and-click real-phone clipping and accurate indexing (no mandatory human approval); the two standardized AI figures connected to **real** generated one-piece try-on with strict paid-cost authorization; extend to multi-garment outfit visualization; optional consent-based selfie face; one-tap owned-wardrobe swaps; launch privacy/onboarding testing.
+- Financial constraint: do not enable paid AI, purchase services or start billable inference without explicit owner approval. Keep real human selfie/face uploads opt-in only.
+- Immediate next technical hinge: securely stage/host the already prepared two full-size AI model photos, then verify a controlled single-garment provider run **only after** permission and budget safeguards. Continue realistic photo clipping benchmarks in parallel. Avoid claiming the silhouette, flat thumbnails, or isolated garment photographs are completed AI try-on.
+
+
 Updated October 17, 2026 (America/Los_Angeles). This section supersedes the
 historical notes below. This conversation is the owner's main development chat.
 
