@@ -177,3 +177,9 @@ test('fabric color suggestions cannot overwrite user-entered color',async()=>{
  const {c,stored}=setup({quality:async()=>({blank:false,signature:[11,22,33],aspect:1,colorEstimate:{color:'Brown',needsConfirmation:true}})});
  c.candidate('one');await done(c);assert.equal(stored[0].color,'Blue');
 });
+
+test('recognized color-pending garment offers quick color save, not a mandatory full Adjust screen',()=>{
+ const source=fs.readFileSync('public/app.js','utf8');
+ assert.match(source,/Garment identified\. Choose a color below to save; your original photo is kept/);
+ assert.match(source,/Garment category recognized\. Choose a color below to save; specific type is optional/);
+});

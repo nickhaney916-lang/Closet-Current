@@ -78,3 +78,26 @@ test('storage failure leaves original photo and does not create phantom closet i
  assert.equal(h.state.items.length,0);assert.equal(h.state.batch.length,1);
  assert.equal(h.counts().persistCount,0);
 });
+
+test('quick color save cannot bypass a clipped or category-conflicting outfit segmentation hint',async()=>{
+ for(const hint of [
+  {categories:['Tops'],types:[],clipped:true},
+  {categories:['Bottoms'],types:[],clipped:false},
+  {categories:['Tops'],types:['Polo'],clipped:false},
+  {categories:[],types:[],clipped:false},
+  {clipped:false}
+ ]){
+  const h=setup({segmentHint:hint});
+  assert.equal(h.state.canConfirmReviewedColor(h.item),false,'unsafe hint '+JSON.stringify(hint));
+  assert.equal(await h.state.confirmReviewedColor(h.item,'Blue'),false);
+  assert.equal(h.saves.length,0);
+ }
+ const safe=setup({segmentHint:{categories:['Tops'],types:['Polo'],clipped:false},itemType:'Unknown'});
+ assert.equal(safe.state.canConfirmReviewedColor(safe.item),true,'verified broad category may save without subtype');
+ assert.equal(await safe.state.confirmReviewedColor(safe.item,'Blue'),true);
+});
+test('one-choice color confirmation is clearly offered rather than forcing Adjust for known garments',()=>{
+ assert.match(code,/canConfirmReviewedColor\(item\)\?'Choose color to save'/);
+ assert.match(code,/Garment category recognized\. Choose a color below to save; specific type is optional/);
+ assert.match(code,/Garment identified\. Choose a color below to save; your original photo is kept/);
+});
