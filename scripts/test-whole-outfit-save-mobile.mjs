@@ -111,6 +111,7 @@ try{
  assert.ok(board.slots.top&&board.slots.bottom&&board.slots.layer2);
  assert.ok(board.savedImages.every(x=>x===normalizedCapturedPhoto));
  await page.locator('#saveBoard').click();
+ await page.locator('#boardSaveStatus').getByText('Outfit saved with references to your clothing photos.').waitFor({timeout:10000});
  await page.waitForFunction(()=>savedOutfitBoards.length===1);
  await page.reload();await page.evaluate(()=>Promise.all([closetReady,outfitBoardReady]));
  const restored=await page.evaluate(()=>({count:items.filter(x=>x.outfitSourceId).length,
