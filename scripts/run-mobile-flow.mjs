@@ -19,9 +19,9 @@ try{
  await page.evaluate(async()=>{
   const canvas=document.createElement('canvas');canvas.width=240;canvas.height=240;
   const ctx=canvas.getContext('2d');ctx.fillStyle='#dc1e1e';ctx.fillRect(0,0,240,240);
-  window.maskInteractionSaved=null;
+  window.maskInteractionSaved=null;window.maskInteractionAnalyzed=null;
   await window.openPhotoCrop({image:canvas.toDataURL('image/jpeg',.95)},{
-   analyze:async()=>null,save:async(photo)=>{window.maskInteractionSaved=photo;}
+   analyze:async(rawCrop)=>{window.maskInteractionAnalyzed=rawCrop;return null;},save:async(photo)=>{window.maskInteractionSaved=photo;}
   });
  });
  const maskDialog=page.locator('dialog.photo-crop-editor');
@@ -30,18 +30,31 @@ try{
  assert.ok(rect&&rect.width>0&&rect.height>0,'Mask editor must display a usable touch surface');
  await page.mouse.move(rect.x+rect.width/2,rect.y+rect.height/2);
  await page.mouse.down();await page.mouse.move(rect.x+rect.width*.6,rect.y+rect.height/2,{steps:6});await page.mouse.up();
+ await maskDialog.getByRole('button',{name:'Check recognition'}).click();
+ await page.waitForFunction(()=>!!window.maskInteractionAnalyzed);
  await maskDialog.getByRole('button',{name:'Save crop'}).click();
  await maskDialog.waitFor({state:'detached'});
  const masked=await page.evaluate(async()=>{
   const saved=window.maskInteractionSaved;
-  const image=new Image();image.src=saved.image;await image.decode();
-  const c=document.createElement('canvas');c.width=image.width;c.height=image.height;
-  const ctx=c.getContext('2d');ctx.drawImage(image,0,0);
-  return {center:[...ctx.getImageData(120,120,1,1).data],corner:[...ctx.getImageData(5,5,1,1).data],original:saved.originalPhoto?.image};
+  const getRGB=async(src)=>{
+   const img=new Image();img.src=src;await img.decode();
+   const c=document.createElement('canvas');c.width=img.width;c.height=img.height;
+   const ctx=c.getContext('2d');ctx.drawImage(img,0,0);
+   return {center:[...ctx.getImageData(120,120,1,1).data],
+    corner:[...ctx.getImageData(5,5,1,1).data]};
+  };
+  const display=await getRGB(saved.image);
+  const source=await getRGB(saved.recognitionPhoto?.image||'');
+  const analyzed=await getRGB(window.maskInteractionAnalyzed);
+  return {...display,source,analyzed,original:saved.originalPhoto?.image};
  });
  assert.ok(masked.center[0]>240&&masked.center[1]>230&&masked.center[2]>230,'Erase brush must remove red fabric from center');
  assert.ok(masked.corner[0]>150&&masked.corner[1]<90,'Unpainted pixels must remain red');
  assert.ok(masked.original?.startsWith('data:image/jpeg;base64,'),'Original photo must survive mask edits');
+ assert.ok(masked.source.center[0]>150&&masked.source.center[1]<90,
+  'Source for categorization retains original red behind erased display pixels');
+ assert.ok(masked.analyzed.center[0]>150&&masked.analyzed.center[1]<90,
+  'Check recognition must inspect original red, not white-masked display');
  await page.locator('.tab[data-view="scan"]').click();await page.locator('#start').click();
  await page.waitForFunction(()=>document.querySelector('#video').readyState>=2&&document.querySelector('#video').videoWidth>0);
  const camera=await page.locator('#video').evaluate(v=>({width:v.videoWidth,height:v.videoHeight}));
@@ -143,10 +156,11 @@ try{
  await page.reload();await page.evaluate(()=>closetReady);
  const persistedMask=await page.evaluate(()=>{
   const item=items.find(x=>x.name==='Phone test blue top');
-  return {image:item.image,original:item.originalPhoto?.image,color:item.color,method:item.colorMethod,category:item.category,type:item.itemType};
+  return {image:item.image,original:item.originalPhoto?.image,recognitionPhoto:item.recognitionPhoto?.image||null,color:item.color,method:item.colorMethod,category:item.category,type:item.itemType};
  });
  assert.ok(persistedMask.image?.startsWith('data:image/jpeg;base64,'),'Edited garment image must persist');
  assert.ok(persistedMask.original?.startsWith('data:image/jpeg;base64,'),'Original image must persist after reload');
+ assert.ok(persistedMask.recognitionPhoto?.startsWith('data:image/jpeg;base64,'),'Original-pixel recognition crop survives storage and reload');
  assert.equal(persistedMask.category,'Tops');assert.equal(persistedMask.type,'T-shirt');
  assert.equal(persistedMask.color,'Red');assert.equal(persistedMask.method,'garment-mask');
  await page.locator('.tab[data-view="scan"]').click();await page.locator('summary').filter({hasText:'Add saved photos or a video'}).click();await page.locator('#clothingPhotos').setInputFiles(resolve('benchmark/photos/commons-0002.jpg'));
