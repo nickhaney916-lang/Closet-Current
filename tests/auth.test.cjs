@@ -7,7 +7,7 @@ const path=require('node:path');
 const source=fs.readFileSync(path.join(__dirname,'../public/auth.js'),'utf8');
 function app(fetchImpl=async()=>{throw new TypeError('network unavailable');},callback={},initialSession=null){
  const elements=new Map(),listeners={},timers=new Map(),requests=[];
- for(const id of ['authStatus','authForm','authSubmit','authMode','authReset','authResend','authRetry','authEmail','authPassword','authPasswordToggle','authUsername','usernameWrap','authGate','appShell','accountLabel','logout']){
+ for(const id of ['authStatus','authForm','authSubmit','authMode','authReset','authResend','authRetry','authEmail','authPassword','authPasswordToggle','authUsername','usernameWrap','pilotNoticeWrap','pilotNoticeAck','authGate','appShell','accountLabel','logout']){
   elements.set(id,{id,value:'',hidden:false,disabled:false,required:false,textContent:'',setAttribute(){},addEventListener(name,fn){listeners[name]=fn;},checkValidity(){return true;}});
  }
  elements.get('authRetry').hidden=true;
@@ -15,7 +15,7 @@ function app(fetchImpl=async()=>{throw new TypeError('network unavailable');},ca
  elements.get('authEmail').value='test@example.invalid';
  elements.get('authPassword').value='test-password-only';
  elements.get('authUsername').value='test_user';
- const saved=new Map(),window={};if(initialSession)saved.set('closet-current-auth-v1',JSON.stringify(initialSession));let timerId=0,reloaded=false;
+ const saved=new Map(),window={ClosetPilotNotice:require('../public/pilot-notice.js')};if(initialSession)saved.set('closet-current-auth-v1',JSON.stringify(initialSession));let timerId=0,reloaded=false;
  vm.runInNewContext(source,{window,document:{getElementById:id=>elements.get(id)},localStorage:{getItem:key=>saved.get(key)||null,setItem:(key,value)=>saved.set(key,value),removeItem:key=>saved.delete(key)},location:{reload(){reloaded=true;},pathname:'/Closet-Current/',...callback},history:{replaceState(){}},URLSearchParams,AbortController,TypeError,setTimeout:fn=>{timers.set(++timerId,fn);return timerId;},clearTimeout:id=>timers.delete(id),fetch:async(...args)=>{requests.push(args);return fetchImpl(...args);}});
  return {get:id=>elements.get(id),listeners,timers,requests,window,saved,reloaded:()=>reloaded,submit:()=>elements.get('authForm').onsubmit({preventDefault(){}})};
 }
@@ -66,7 +66,7 @@ test('pending login blocks duplicates and a timeout restores controls',async()=>
 });
 test('signup requiring confirmation does not grant access prematurely',async()=>{
  const a=app(async()=>response({user:{id:'pending-user'}}));
- a.get('authMode').onclick();await a.submit();
+ a.get('authMode').onclick();a.get('pilotNoticeAck').checked=true;await a.submit();
  assert.match(a.requests[0][0],/signup\?redirect_to=/);
  assert.match(a.get('authStatus').textContent,/Check your email/);
  assert.equal(a.window.closetAuth.user,null);
@@ -80,7 +80,7 @@ test('valid login opens the closet after a verified session response',async()=>{
 });
 
 test('confirmation and reset emails explicitly target the live app',async()=>{
- const a=app(async()=>response({user:{id:'pending'}}));a.get('authMode').onclick();await a.submit();
+ const a=app(async()=>response({user:{id:'pending'}}));a.get('authMode').onclick();a.get('pilotNoticeAck').checked=true;await a.submit();
  assert.equal(new URL(a.requests[0][0]).searchParams.get('redirect_to'),'https://nickhaney916-lang.github.io/Closet-Current/');
  await a.get('authReset').onclick();assert.equal(new URL(a.requests[1][0]).searchParams.get('redirect_to'),'https://nickhaney916-lang.github.io/Closet-Current/');
 });
@@ -127,7 +127,7 @@ test('multiple empty login fields report the first invalid field rather than the
 test('blocked email delivery stays locked, restores controls and hides provider details',async()=>{
  for(const action of ['signup','reset','resend']){
   const a=app(async()=>response({error_code:'email_address_not_authorized',msg:'Private recipient and SMTP configuration details'},false));
-  if(action==='signup'){a.get('authMode').onclick();await a.submit();}else await a.get(action==='reset'?'authReset':'authResend').onclick();
+  if(action==='signup'){a.get('authMode').onclick();a.get('pilotNoticeAck').checked=true;await a.submit();}else await a.get(action==='reset'?'authReset':'authResend').onclick();
   assert.match(a.get('authStatus').textContent,/Email delivery is not ready/);
   assert.doesNotMatch(a.get('authStatus').textContent,/Private recipient|SMTP|Check your email|requested/);
   assert.equal(a.window.closetAuth.user,null);assert.equal(a.get('authSubmit').disabled,false);assert.equal(a.get('authResend').disabled,false);assert.equal(a.timers.size,0);
@@ -150,7 +150,7 @@ test('malformed successful email responses cannot report delivery success',async
 });
 test('disabled email provider and unsupported email address give actionable messages',async()=>{
  for(const [code,expected] of [['email_provider_disabled',/signup is temporarily unavailable/],['email_address_invalid',/valid email address that can receive/]]){
-  const a=app(async()=>response({code,msg:'Internal provider details'},false));a.get('authMode').onclick();await a.submit();
+  const a=app(async()=>response({code,msg:'Internal provider details'},false));a.get('authMode').onclick();a.get('pilotNoticeAck').checked=true;await a.submit();
   assert.match(a.get('authStatus').textContent,expected);assert.equal(a.window.closetAuth.user,null);assert.equal(a.get('authSubmit').disabled,false);
  }
 });
@@ -255,4 +255,45 @@ test('saved-session retries are serialized so double tapping does not send dupli
  finish(response({access_token:'success',refresh_token:'new',user:{id:'test-account'}}));
  await new Promise(setImmediate);
  assert.equal(a.window.closetAuth.user.id,'test-account');
+});
+
+
+test('early-pilot data notice acknowledgement gates signup but not login or recovery',async()=>{
+ const a=app(async()=>response({user:{id:'pending-signup'}}));
+ assert.equal(a.get('pilotNoticeWrap').hidden,true);
+ assert.equal(a.get('pilotNoticeAck').disabled,true);
+ a.get('authMode').onclick();
+ assert.equal(a.get('pilotNoticeWrap').hidden,false);
+ assert.equal(a.get('pilotNoticeAck').required,true);
+ assert.equal(a.get('pilotNoticeAck').disabled,false);
+ await a.submit();
+ assert.equal(a.requests.length,0,'never attempt signup without reviewed pilot data notice');
+ assert.equal(a.window.closetAuth.user,null);
+ assert.match(a.get('authStatus').textContent,/Review the pilot data notice/);
+ a.get('pilotNoticeAck').checked=true;await a.submit();
+ assert.equal(a.requests.length,1);
+ const signup=JSON.parse(a.requests[0][1].body);
+ assert.equal(signup.data.username,'test_user');
+ assert.equal(signup.data.pilot_data_notice_version,'pilot-data-notice-2026-10-18');
+ assert.match(signup.data.pilot_data_notice_acknowledged_at,/^20\d{2}-\d{2}-\d{2}T/);
+ assert.equal(Object.hasOwn(signup.data,'marketing_consent'),false);
+ assert.equal(a.window.closetAuth.user,null);
+ a.get('authMode').onclick();
+ assert.equal(a.get('pilotNoticeWrap').hidden,true);
+ assert.equal(a.get('pilotNoticeAck').required,false);
+ assert.equal(a.get('pilotNoticeAck').disabled,true);
+ assert.equal(a.get('pilotNoticeAck').checked,false);
+});
+test('pilot notice metadata rejects false acknowledgement and invalid times',()=>{
+ const notice=require('../public/pilot-notice.js');
+ assert.equal(notice.isAcknowledged('true'),false);
+ assert.throws(()=>notice.signupMetadata('test_user',false),/Review the pilot data notice/);
+ assert.throws(()=>notice.signupMetadata('test_user',true,new Date(NaN)),/Invalid timestamp/);
+ assert.equal(notice.signupMetadata('test_user',true,new Date('2026-10-18T00:00:00Z')).pilot_data_notice_acknowledged_at,
+  '2026-10-18T00:00:00.000Z');
+ const html=fs.readFileSync('public/pilot-data-notice.html','utf8');
+ assert.match(html,/previously uploaded private photo objects are/);
+ assert.match(html,/Self-service full-account deletion is not yet available/);
+ assert.match(html,/not final Terms of Service/);
+ assert.match(fs.readFileSync('public/index.html','utf8'),/href="pilot-data-notice.html"/);
 });
