@@ -148,3 +148,36 @@ test('annotation editor rounding allows same source aspect within one reference 
  assert.doesNotThrow(()=>scoreApprovedColorSampling(reference,entry,prediction));
  assert.throws(()=>scoreApprovedColorSampling(reference,entry,{...prediction,width:300,height:ph,runs:encoded(rectangleMask(300,ph,40,40,240,201),300,ph).runs}),/aspect ratios/);
 });
+
+
+test('approved edge-retention metrics isolate missing lower hems and soles from general recall',async()=>{
+ const {scoreApprovedGarmentEdgeRetention}=await import('../benchmark/garment-mask-metrics.mjs');
+ const truth=rectangleMask(12,12,4,2,9,10);
+ const baseline=reviewedPair(12,12,truth,truth);
+ const perfect=scoreApprovedGarmentEdgeRetention(baseline.reference,baseline.entry,baseline.prediction);
+ assert.equal(perfect.boundaryPixelRecall,1);
+ assert.equal(perfect.lowerBoundaryRecall,1);
+ assert.equal(perfect.lowerGarmentRecall,1);
+ assert.equal(perfect.missingLowerGarmentPixels,0);
+ const missingBottom=new Uint8Array(truth);
+ for(let y=8;y<10;y++)for(let x=4;x<9;x++)missingBottom[y*12+x]=0;
+ const clipped=reviewedPair(12,12,truth,missingBottom);
+ const result=scoreApprovedGarmentEdgeRetention(clipped.reference,clipped.entry,clipped.prediction);
+ assert.equal(result.missingLowerGarmentPixels,10);
+ assert.ok(result.lowerGarmentRecall<1);
+ assert.ok(result.lowerBoundaryRecall<1);
+ assert.ok(result.boundaryPixelRecall<1);
+ assert.equal(result.referenceStatus,'independently-approved');
+ assert.equal(result.verifiedHemOrSolePreservation,false);
+ assert.equal(result.productionAuthorized,false);
+ assert.equal(result.changesToPhotoOrIndex,false);
+});
+test('edge-retention metrics fail closed on unreviewed, unrelated and malformed references',async()=>{
+ const {scoreApprovedGarmentEdgeRetention}=await import('../benchmark/garment-mask-metrics.mjs');
+ const truth=rectangleMask(12,12,4,2,9,10);
+ const p=reviewedPair(12,12,truth,truth);
+ assert.throws(()=>scoreApprovedGarmentEdgeRetention({...p.reference,reviewStatus:'draft'},p.entry,p.prediction),/independently approved/);
+ assert.throws(()=>scoreApprovedGarmentEdgeRetention(p.reference,p.entry,{...p.prediction,sourceSha256:'wrong'}),/source mismatch/);
+ assert.throws(()=>scoreApprovedGarmentEdgeRetention(p.reference,p.entry,p.prediction,{lowerBandFraction:0}),/Invalid garment lower-band/);
+ assert.throws(()=>scoreApprovedGarmentEdgeRetention(p.reference,p.entry,{...p.prediction,width:11,runs:[0,132]}),/Incomplete|aspect|Invalid/);
+});
