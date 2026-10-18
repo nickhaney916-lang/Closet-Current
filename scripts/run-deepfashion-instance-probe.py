@@ -4,7 +4,6 @@ No inference over user data, no automated wardrobe entries, no model promotion.
 """
 from pathlib import Path
 import hashlib, io, json, sys, time, urllib.request
-from shutil import copyfile
 import numpy as np
 import onnxruntime as ort
 from PIL import Image, ImageDraw
@@ -12,6 +11,7 @@ sys.path.insert(0,str(Path('benchmark').resolve()))
 from deepfashion_instance_decode import decode,instance_overlap_review
 from deepfashion_review_risks import review_instance_scene,category_union_preview
 from deepfashion_mask_seed import proposal_seed
+from whole_outfit_review_packet import make_complete_review_packet
 D=Path(sys.argv[1] if len(sys.argv)>1 else "benchmark/deepfashion-instance-review")
 R=Path("benchmark")
 M=json.loads((R/"deepfashion-instance-onnx-reference.json").read_text())
@@ -132,16 +132,11 @@ def main():
                 "label":candidate["itemType"],"confidence":seed["modelConfidence"],
                 "referenceStatus":"pending-human-annotation",
                 "approvedReference":None})
-        if row["id"] in focus:
-            original_copy=original_dir/row["image"]
-            copyfile(R/"photos"/row["image"],original_copy)
-            if digest(original_copy.read_bytes())!=row["sha256"]:
-                raise ValueError("Source image failed verification in annotation review packet")
         review_entries.append({"id":row["id"],"image":row["image"],
              "sourceSha256":row["sha256"],"reviewFirst":row["id"] in focus,
              "candidateSeeds":exported,"allMasksUnapproved":True,
              "userPhotoModified":False,
-             "exactOriginalIncludedForReview":row["id"] in focus})
+             "exactOriginalIncludedForReview":True})
         risk=review_instance_scene(
             [{"itemType":x["itemType"]} for x in candidates],
             scenario["expectedCategory"],scenario["expectedTypeHint"],overlap)
@@ -221,6 +216,12 @@ def main():
       "automaticCustomerMaskPromotion":False,
       "sourcePhotosPreserved":True,"cases":review_entries}
     (review_dir/"reference-review-index.json").write_text(json.dumps(review_index,indent=2))
+    # All ten originals are essential for independent full-photo inventory:
+    # five reviewFirst originals previously left five other scenes unscorable.
+    original_packet=make_complete_review_packet(
+        review_dir,R/"photos",review_entries,expected_count=SUITE["realPhotoCount"])
+    if original_packet["verifiedOriginalCount"]!=len(review_entries):
+        raise ValueError("Partial real-photo review packet cannot be scored")
     report["independentReferenceReview"]=dict(status=review_index["status"],
       approvedReferences=0,predictions=review_index["pendingIndividualPredictions"],
       originalPhotosIncluded=sum(x["exactOriginalIncludedForReview"] for x in review_entries),
