@@ -61,19 +61,28 @@ Deno.serve(async request=>{
   'Access-Control-Allow-Headers':'authorization,apikey,content-type','Access-Control-Max-Age':'600','Vary':'Origin'
  }});
  if(request.method!=='POST')return json({error:'Method not allowed'},405,allowed);
- if(Deno.env.get('TRYON_ENABLED')!=='true')return json({error:'AI try-on pilot is not enabled'},503,allowed);
- const secret=Deno.env.get('FASHN_API_KEY');
- if(!secret)return json({error:'AI try-on provider is not configured'},503,allowed);
  const jwt=(request.headers.get('authorization')||'').match(/^Bearer ([-_.A-Za-z0-9]+)$/)?.[1];
  if(!jwt)return json({error:'Sign in required'},401,allowed);
  let user;
  try{user=await userFromToken(jwt);}catch{return json({error:'Authentication required'},401,allowed);}
  const allowedUsers=new Set((Deno.env.get('TRYON_PILOT_USER_IDS')||'').split(',').map(s=>s.trim()).filter(Boolean));
- if(!allowedUsers.has(user))return json({error:'AI try-on is limited to pilot accounts'},403,allowed);
  if(Number(request.headers.get('content-length')||'0')>8_000_000)return json({error:'Image too large'},413,allowed);
  let body;
  try{body=await request.json();}catch{return json({error:'Invalid JSON'},400,allowed);}
  try{
+  // Read-only readiness check. Never contacts the paid inference provider.
+  // Neither a missing secret nor a non-pilot account permits generation.
+  const allowedAccount=allowedUsers.has(user);
+  const enabled=Deno.env.get('TRYON_ENABLED')==='true'&&
+   !!Deno.env.get('FASHN_API_KEY')&&
+   (Deno.env.get('TRYON_JOB_SIGNING_KEY')||'').length>=32&&
+   !!Deno.env.get('TRYON_FEMALE_MODEL_IMAGE_URL')&&
+   !!Deno.env.get('TRYON_MALE_MODEL_IMAGE_URL');
+  if(body.action==='availability')
+   return json({status:enabled&&allowedAccount?'ready':'unavailable'},200,allowed);
+  if(!enabled||!allowedAccount)
+   return json({error:'AI try-on is not enabled for this account'},403,allowed);
+  const secret=Deno.env.get('FASHN_API_KEY')!;
   if(body.action==='start'){
    const input=validateStart(body);
    const modelImage=Deno.env.get(input.figure==='female'?'TRYON_FEMALE_MODEL_IMAGE_URL':'TRYON_MALE_MODEL_IMAGE_URL')||'';
