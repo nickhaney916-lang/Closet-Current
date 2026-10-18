@@ -31,6 +31,32 @@ missing garment invisible to recall measurement.
 - All metrics are conditional on genuine, comprehensive human outlines.
   Two reviewer names/flags are format checks, **not proof of review quality**.
 
+## New offline full-photo packet assembly
+
+Use `benchmark/assemble-physical-inventory.html` **after** the separate
+`annotate-garment.html` and `approve-garment-mask.html` steps. This page:
+
+- Accepts the canonical unchanged original JPEG and multiple
+  `<source>-item-XX.mask.approved.json` files.
+- Checks actual JPEG bytes and SHA-256 source agreement, review dimensions,
+  distinct same-pair reviewers, independently named physical target IDs,
+  unseeded hand-drawn outlines, category labels, binary mask integrity,
+  and exact per-item filenames.
+- Displays the original and lets the second reviewer inspect each approved
+  mask overlay; it cannot approve or invent missing masks.
+- Requires both human full-scene confirmations and a separate counted total
+  equal to the approved files, including clothes absent from AI predictions.
+- Exports `<source>.inventory.json`, ready for the already existing offline
+  `score-physical-garment-inventory.mjs` tool, with human-attested completeness.
+  The page makes no server requests, stores nothing in an account, and
+  performs no paid inference.
+
+**This automates packet assembly, not genuine human judgment.** An omitted
+garment can still pass a checkbox if reviewers miss it; the two people must
+really inspect the source. Synthetic browser tests exercise the format and
+safety gates only and never count as real-photo accuracy. Do not create
+invented identities or reference outlines to satisfy CI.
+
 ## Required human review (still outstanding)
 
 First review the five original photos already packaged in the model artifact:
