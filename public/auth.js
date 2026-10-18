@@ -32,7 +32,7 @@
  const modeHint=()=>signup?'Create an account with a username, email, and password of at least 8 characters.':'Have an account? Log in below. New here? Choose Create an account first.';
  function setBusy(on){
   busy=on;
-  for(const id of ['authSubmit','authMode','authReset','authResend'])$(id).disabled=on;
+  for(const id of ['authSubmit','authMode','authReset','authResend','authRetry'])$(id).disabled=on;
   $('authForm').setAttribute('aria-busy',String(on));
   $('authSubmit').textContent=recovery?(on?'Updating password…':'Save new password'):on?(signup?'Creating account…':'Logging in…'):(signup?'Create account':'Log in');
  }
@@ -73,7 +73,11 @@
   }finally{clearTimeout(timer);}
  }
  function showUser(data){
-  if(!data?.user?.id)throw Error('No verified user session');
+  // A successful HTTP response is not necessarily a usable login. Never
+  // expose the wardrobe until Auth supplies both an identity AND a token.
+  if(typeof data?.user?.id!=='string'||!data.user.id||
+     typeof data.access_token!=='string'||!data.access_token)
+   throw Error('No verified user session');
   session={...data,expires_at:Math.floor(Date.now()/1000)+(data.expires_in||3600)};window.closetAuth.user=data.user;
   localStorage.setItem(STORE,JSON.stringify({access_token:data.access_token,refresh_token:data.refresh_token,expires_at:Math.floor(Date.now()/1000)+(data.expires_in||3600)}));
   $('authGate').hidden=true;$('appShell').hidden=false;
@@ -96,6 +100,7 @@
    if(recovery){
     if(password.length<8)throw Error('Your password must have at least 8 characters.');
     const user=await request('user',{password},session.access_token,'PUT');
+    if(user?.id!==session.user?.id)throw Error('Session account changed');
     recovery=false;showUser({...session,user});
    }else if(signup){
     const username=$('authUsername').value.trim();
@@ -128,6 +133,39 @@
   location.reload();
  };
  setMode(false);
+ // Network outages and transient server errors do NOT revoke a saved
+ // refresh token. Only a verified rejection of that token does. No user
+ // data or local closet becomes accessible until Auth returns a new token.
+ const temporaryRestoreFailure=error=>error instanceof TypeError||
+  error.name==='AbortError'||[408,429].includes(error.status)||
+  (Number.isInteger(error.status)&&error.status>=500);
+ async function restoreSavedLogin(){
+  if(busy||window.closetAuth.user)return;
+  let saved;
+  try{saved=JSON.parse(localStorage.getItem(STORE)||'null');}catch{
+   localStorage.removeItem(STORE);
+  }
+  if(typeof saved?.refresh_token!=='string'||!saved.refresh_token){
+   $('authRetry').hidden=true;return;
+  }
+  restoringSession=true;setBusy(true);$('authRetry').hidden=true;
+  status('Restoring your login…');
+  try{
+   const data=await request('token?grant_type=refresh_token',
+    {refresh_token:saved.refresh_token});
+   showUser(data);
+  }catch(error){
+   if(temporaryRestoreFailure(error)){
+    $('authRetry').hidden=false;
+    status('Could not restore your saved login. Your session is still saved on this device. Check your connection and choose Retry saved login.');
+   }else{
+    localStorage.removeItem(STORE);
+    $('authRetry').hidden=true;
+    status('Your login session has expired. Log in again.');
+   }
+  }finally{restoringSession=false;setBusy(false);}
+ }
+ $('authRetry').onclick=()=>restoreSavedLogin();
  (async()=>{
   try{
    const callback=new URLSearchParams((location.hash||'').replace(/^#/,''));
@@ -135,6 +173,7 @@
    const error=callback.get('error_code')||query.get('error_code')||callback.get('error')||query.get('error');
    const access=callback.get('access_token'),refresh=callback.get('refresh_token');
    if(error||access){
+    // Keep tokens out of browser history once processed or rejected.
     history.replaceState(null,'',location.pathname);
     if(error){status('This email link has expired or was already used. Log in below. If your email still needs confirmation, enter it and choose Resend confirmation email.');return;}
     setBusy(true);status('Verifying your email link…');
@@ -142,6 +181,8 @@
     const user=await request('user',null,access,'GET');
     const data={user,access_token:access,refresh_token:refresh,expires_in:Number(callback.get('expires_in'))||3600};
     if(callback.get('type')==='recovery'){
+     if(typeof user?.id!=='string'||!user.id||!refresh)
+      throw Error('No verified user session');
      session=data;recovery=true;$('authEmail').value=user.email||'';$('authEmail').disabled=true;
      $('authPassword').value='';$('authPassword').minLength=8;$('authPassword').autocomplete='new-password';
      $('authMode').hidden=true;$('authReset').hidden=true;$('authResend').hidden=true;
@@ -149,13 +190,12 @@
     }
     showUser(data);return;
    }
-   const saved=JSON.parse(localStorage.getItem(STORE)||'null');
-   if(saved?.refresh_token){
-    restoringSession=true;setBusy(true);status('Restoring your login…');
-    const data=await request('token?grant_type=refresh_token',{refresh_token:saved.refresh_token});
-    showUser(data);return;
-   }
-  }catch(error){localStorage.removeItem(STORE);status(restoringSession?(error instanceof TypeError?'Could not restore your login. Check your connection and log in again.':'Your login session has expired. Log in again.'):'This sign-in link could not be verified. Log in with your email and password, or request a fresh email link.');return;}finally{setBusy(false);}
+  }catch(error){
+   status('This sign-in link could not be verified. Log in with your email and password, or request a fresh email link.');
+   return;
+  }finally{setBusy(false);}
+  const saved=localStorage.getItem(STORE);
+  if(saved){await restoreSavedLogin();return;}
   status(modeHint());
  })();
 })();
