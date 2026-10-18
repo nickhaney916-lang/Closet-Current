@@ -9,7 +9,8 @@ function setup({failLoad=false,failSecondCrop=false,noPerson=false,completeShoeP
  let crops=0;class Image{constructor(data,width,height,channels){Object.assign(this,{data,width,height,channels});}static async read(){return new Image(new Uint8ClampedArray(1200).fill(40),20,20,3);}async toBlob(){if(failSecondCrop&&++crops===3)throw Error('private decode error');return {arrayBuffer:async()=>new Uint8Array([255,216,255]).buffer};}}
  if(noPerson)for(let y=1;y<4;y++)for(let x=7;x<11;x++){data[11*400+y*20+x]=-10;data[y*20+x]=10;}
  const runtime={AutoModelForSemanticSegmentation:{from_pretrained:async()=>{if(failLoad)throw Error('private error');return async()=>({logits:{data,dims:[1,18,20,20]}});}},AutoProcessor:{from_pretrained:async()=>async()=>({})},RawImage:Image,env:{backends:{onnx:{wasm:{}}}}};
- const c={runtime,segmentation,diagnoseOutfitRegions,PhotoColor,self:{postMessage:value=>sent.push(value)},Uint8Array,Uint8ClampedArray,btoa:text=>Buffer.from(text,'binary').toString('base64')};vm.createContext(c);
+ const safeDiagnostic=(...args)=>{try{return diagnoseOutfitRegions(...args);}catch(error){sent.push({type:'diagnostic-test-error',text:String(error.message)});throw error;}};
+ const c={runtime,segmentation,diagnoseOutfitRegions:safeDiagnostic,PhotoColor,self:{postMessage:value=>sent.push(value)},Uint8Array,Uint8ClampedArray,btoa:text=>Buffer.from(text,'binary').toString('base64')};vm.createContext(c);
  vm.runInContext(source.replace(/await import\('https:[^']+'\)/,'await Promise.resolve(runtime)').replace("await import('./outfit-segmentation.mjs'+new URL(import.meta.url).search)",'await Promise.resolve(segmentation)').replace("await import('./photo-color.js'+new URL(import.meta.url).search)",'await Promise.resolve()').replace("await import('./outfit-diagnostics.mjs'+new URL(import.meta.url).search)",'await Promise.resolve({diagnoseOutfitRegions})'),c);
  return {sent,async run(diagnostics=false){c.self.onmessage({data:{id:'outfit',image:'data:image/jpeg;base64,AAAA',diagnostics}});await vm.runInContext('chain',c);}};
 }
@@ -54,7 +55,7 @@ test('worker keeps original narrow recognition bounds despite broader risky disp
 
 test('opt-in worker diagnostics report classification/filter counts without copying photographs',async()=>{
  const h=setup();await h.run(true);
- const messages=h.sent.filter(x=>x.type==='diagnostics');assert.equal(messages.length,1);
+ const messages=h.sent.filter(x=>x.type==='diagnostics');assert.equal(messages.length,1,JSON.stringify(h.sent));
  const summary=messages[0].summary;
  assert.equal(summary.version,1);assert.equal(summary.emittedGroups,3);
  assert.equal(summary.regions.find(x=>x.id===4).emitted,true);
