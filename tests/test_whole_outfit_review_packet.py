@@ -24,6 +24,10 @@ class FullPhotoReviewHandoffTests(unittest.TestCase):
             self.rows.append(dict(id=id,image=id+".jpg",sourceSha256=h,
                 reviewFirst=i==2,exactOriginalIncludedForReview=True,
                 allMasksUnapproved=True,userPhotoModified=False,
+                attribution=dict(title="Synthetic test image",author="Unit Test",
+                   license="CC BY-SA 4.0",
+                   licenseUrl="https://creativecommons.org/licenses/by-sa/4.0/",
+                   source="https://commons.wikimedia.org/wiki/File:Example.jpg"),
                 candidateSeeds=[dict(id=proposal,
                     prediction="independent-outline-review/model-seeds/"+
                        proposal+".prediction.json",
@@ -51,6 +55,8 @@ class FullPhotoReviewHandoffTests(unittest.TestCase):
         self.assertIn("First reviewer",html)
         self.assertIn("without opening ai proposals",html.lower())
         self.assertIn("commons-0035.jpg",html)
+        self.assertIn("license terms",html)
+        self.assertIn("Unit Test",html)
         self.assertIn("validation-0031.jpg",html)
         self.assertLess(html.index("validation-0031 · review first"),
                         html.index("commons-0035</h2>"))
@@ -76,6 +82,8 @@ class FullPhotoReviewHandoffTests(unittest.TestCase):
          [{**self.rows[0],"image":"../bad.jpg"},self.rows[1]],
          [{**self.rows[0],"id":"../../commons-0035"},self.rows[1]],
          [{**self.rows[0],"allMasksUnapproved":False},self.rows[1]],
+         [{**self.rows[0],"attribution":{**self.rows[0]["attribution"],
+             "source":"javascript:unsafe()"}},self.rows[1]],
          [{**self.rows[0],"exactOriginalIncludedForReview":False},self.rows[1]],
          [{**self.rows[0],"candidateSeeds":[{
              **self.rows[0]["candidateSeeds"][0],"approvedReference":"fake"

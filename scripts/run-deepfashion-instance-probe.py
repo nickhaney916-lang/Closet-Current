@@ -136,7 +136,8 @@ def main():
              "sourceSha256":row["sha256"],"reviewFirst":row["id"] in focus,
              "candidateSeeds":exported,"allMasksUnapproved":True,
              "userPhotoModified":False,
-             "exactOriginalIncludedForReview":True})
+             "exactOriginalIncludedForReview":True,
+             "attribution":row["attribution"]})
         risk=review_instance_scene(
             [{"itemType":x["itemType"]} for x in candidates],
             scenario["expectedCategory"],scenario["expectedTypeHint"],overlap)

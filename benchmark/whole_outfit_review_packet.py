@@ -38,6 +38,16 @@ def make_complete_review_packet(review_dir,photos_dir,scenes,*,expected_count=10
             or scene.get("exactOriginalIncludedForReview") is not True
             or not isinstance(scene.get("reviewFirst"),bool)):
             raise ValueError("Unsafe or incomplete source-photo review identity")
+        credit=scene.get("attribution")
+        if (not isinstance(credit,dict) or
+            any(not isinstance(credit.get(field),str) or
+                not credit[field].strip() or len(credit[field])>1200
+                for field in ("title","author","license","source")) or
+            not credit["source"].startswith("https://commons.wikimedia.org/wiki/") or
+            not isinstance(credit.get("licenseUrl",""),str) or
+            (credit.get("licenseUrl") and not credit["licenseUrl"].startswith(
+                "https://creativecommons.org/licenses/"))):
+            raise ValueError("Original source attribution missing or unsafe")
         seen.add(id)
         for candidate in scene["candidateSeeds"]:
             if (not isinstance(candidate,dict)
@@ -73,6 +83,7 @@ def make_complete_review_packet(review_dir,photos_dir,scenes,*,expected_count=10
           "bytes":len(raw),"includedUnchanged":True,
           "priorityForHumanReview":scene["reviewFirst"],
           "modelProposalCount":len(scene["candidateSeeds"]),
+          "attribution":scene["attribution"],
           "independentlyApprovedMasks":0,"physicalGarmentCount":None
         })
     manifest={
@@ -94,6 +105,13 @@ def make_complete_review_packet(review_dir,photos_dir,scenes,*,expected_count=10
           '<img loading="lazy" alt="Unchanged source photograph '+escape(id)+'" src="original-photos/'+id+'.jpg">',
           '<p>Verified unchanged original · '+str(len(scene["candidateSeeds"]))+
           ' unapproved AI proposals. Physical garment count: <strong>not reviewed</strong>.</p>',
+          '<p>Source: <a href="'+escape(scene["attribution"]["source"],quote=True)+
+          '">'+escape(scene["attribution"]["title"])+'</a> · '+
+          escape(scene["attribution"]["author"])+' · '+
+          escape(scene["attribution"]["license"])+
+          (' (<a href="'+escape(scene["attribution"].get("licenseUrl",""),quote=True)+
+           '">license terms</a>)' if scene["attribution"].get("licenseUrl") else '')+
+          '.</p>',
           '<p><a href="original-photos/'+id+'.jpg">Open original at full resolution</a> · '+
           '<a href="../'+id+'-instance-overlays.png">See model proposal overlay (not truth)</a></p>',
           '<details><summary>Optional model mask proposals — do not view before first independent review</summary>',
