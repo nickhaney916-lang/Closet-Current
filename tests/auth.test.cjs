@@ -197,7 +197,7 @@ test('HTTP 5xx and timeout preserve stored refresh token; service denial revokes
   ['503',async()=>({...response({error_code:'temporarily_unavailable'},false),status:503})],
   ['timeout',async(_url,{signal})=>new Promise((_ok,reject)=>signal.addEventListener('abort',()=>{
    const err=new Error('aborted');err.name='AbortError';reject(err);
-  })))]
+  }))]
  ]){
   const a=app(fetcher,{},{refresh_token:'still-saved'});
   if(kind==='timeout'){
