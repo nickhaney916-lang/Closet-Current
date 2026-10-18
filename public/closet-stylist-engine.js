@@ -106,3 +106,51 @@ function styleOwnedCollection(closet,request={},library=null){
  }
  return results;
 }
+
+
+// One-piece touch swaps on a styled outfit. Return ONLY closet-owned compatible
+// pieces; never invent garments, silently remove layers, or replace the pinned
+// newly scanned item. A swap is an in-memory preview until Save outfit.
+function stylistSwapChoices(result,slot,closet,anchorId=null){
+ if(!['top','bottom','shoes','layer'].includes(slot)||
+    !result?.board||!Array.isArray(closet))return [];
+ const owned=[...new Map(closet.filter(x=>x&&typeof x.id==='string')
+  .map(x=>[x.id,x])).values()];
+ const board=cleanOutfitBoard(result.board,owned),current=board.slots[slot];
+ if(!current||current===anchorId||anchorId&&!Object.values(board.slots).includes(anchorId))return [];
+ const allowed=outfitSlots.find(s=>s.id===slot);
+ if(!allowed)return [];
+ const occupied=new Set(Object.values(board.slots));
+ const context=result.context||{request:'Casual',occasion:'Casual',audience:'All',season:'Fall'};
+ const alternatives=[];
+ for(const item of owned){
+  if(occupied.has(item.id)||item.category==='Uncategorized'||!slotAllows(allowed,item))continue;
+  // A dress cannot replace a shirt in an existing bottoms/layered look,
+  // and a layered outfit cannot accept a dress without removing layers.
+  if(slot==='top'&&item.category==='Dresses'&&
+     Object.keys(board.slots).some(x=>x==='bottom'||x.startsWith('layer')))continue;
+  const points=stylistItemScore(item,slot,context,null);
+  if(points===null)continue;
+  const replacement=cleanOutfitBoard({...board,slots:{...board.slots,[slot]:item.id}},owned);
+  if(replacement.slots[slot]!==item.id||
+     Object.keys(replacement.slots).length!==Object.keys(board.slots).length||
+     Object.keys(board.slots).some(k=>k!==slot&&board.slots[k]!==replacement.slots[k])||
+     anchorId&&!Object.values(replacement.slots).includes(anchorId))continue;
+  const coordinated=Object.values(replacement.slots)
+   .map(id=>owned.find(x=>x.id===id)).filter(Boolean);
+  alternatives.push({id:item.id,name:item.name||item.itemType||item.category,
+   board:replacement,rank:points+stylistHarmony(coordinated)});
+ }
+ return alternatives.sort((a,b)=>b.rank-a.rank||a.id.localeCompare(b.id));
+}
+function stylistSwapOne(result,slot,closet,anchorId=null){
+ const choices=stylistSwapChoices(result,slot,closet,anchorId);
+ if(!choices.length)return null;
+ // Prefer the next eligible choice, rather than replacing a just-picked
+ // option with the same original high-ranked item each time.
+ const last=result?.lastSwapped?.[slot]||null;
+ const cursor=choices.findIndex(x=>x.id===last);
+ const selected=choices[(cursor+1)%choices.length];
+ return {id:selected.id,name:selected.name,board:selected.board,
+  otherOptions:choices.length};
+}
