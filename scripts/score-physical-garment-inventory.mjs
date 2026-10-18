@@ -9,8 +9,19 @@ import {evaluateCompletePhysicalInventory} from '../benchmark/physical-garment-i
 const root=resolve(process.argv[2]||'benchmark/deepfashion-instance-review');
 const review=join(root,'independent-outline-review');
 const index=JSON.parse(await readFile(join(review,'reference-review-index.json'),'utf8'));
-if(!Array.isArray(index.cases)||index.predictionMasksAreGroundTruth!==false||
-   index.automaticCustomerMaskPromotion!==false)throw Error('Untrusted review index');
+const suite=JSON.parse(await readFile('benchmark/deepfashion-real-photo-suite.json','utf8'));
+const sourceIds=suite?.cases?.map(x=>x.id);
+if(suite?.realPhotoCount!==10||!Array.isArray(sourceIds)||sourceIds.length!==10||
+   new Set(sourceIds).size!==10||
+   !Array.isArray(index.cases)||index.cases.length!==10||
+   index.imageCount!==10||
+   index.predictionMasksAreGroundTruth!==false||
+   index.automaticCustomerMaskPromotion!==false||
+   index.sourcePhotosPreserved!==true||
+   index.status!=='awaiting-independent-human-outlines'||
+   new Set(index.cases.map(x=>x.id)).size!==10||
+   index.cases.some(x=>!sourceIds.includes(x.id)))
+ throw Error('Untrusted or incomplete exact ten-source review index');
 const reports=[];
 async function optionalJson(path){
  try{return JSON.parse(await readFile(path,'utf8'));}
