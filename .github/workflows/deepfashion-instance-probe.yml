@@ -6,6 +6,8 @@ on:
     paths:
       - 'benchmark/deepfashion-instance-onnx-reference.json'
       - 'benchmark/deepfashion-real-photo-suite.json'
+      - 'benchmark/deepfashion_review_risks.py'
+      - 'tests/test_deepfashion_review_risks.py'
       - 'benchmark/manifest-fresh-11.json'
       - 'benchmark/locked-photo-sources.json'
       - 'benchmark/manifest-visible-legwear-2.json'
@@ -33,6 +35,7 @@ jobs:
         run: |
           python -m py_compile scripts/run-deepfashion-instance-probe.py
           PYTHONPATH=benchmark python -m unittest discover -s tests -p 'test_deepfashion_instance_decode.py' -v
+          PYTHONPATH=benchmark python -m unittest discover -s tests -p 'test_deepfashion_review_risks.py' -v
       - name: Download SHA-verified source photographs
         run: |
           node scripts/download-reviewed-photos.mjs benchmark/manifest-visible-legwear-2.json benchmark/photos validation-0031
@@ -54,7 +57,15 @@ jobs:
           assert len(shoes)==2 and all(not c['categoryCoverageReview']['categorySupportedByThisModel'] for c in shoes)
           assert all(c['categoryCoverageReview']['contextCategoryIsNotGroundTruth']
                      and not c['categoryCoverageReview']['instancePrecisionRecallMeasured']
+                     and not c['manualReviewRisk']['allowAutomaticSaving']
+                     and c['manualReviewRisk']['confirmedSeparateGarments']==0
                      for c in x['cases'])
+          by={c['id']:c for c in x['cases']}
+          assert 'no-expected-specific-garment-proposal' in by['commons-0035']['manualReviewRisk']['manualReviewFlags']
+          assert 'possible-single-garment-fragmentation' in by['commons-0065']['manualReviewRisk']['manualReviewFlags']
+          assert 'possible-single-garment-fragmentation' in by['commons-0049']['manualReviewRisk']['manualReviewFlags']
+          assert len([c for c in x['cases'] if
+                      'unsupported-footwear-taxonomy' in c['manualReviewRisk']['manualReviewFlags']])==2
           assert x['automaticItemsCreated']==0 and not x['customerModelChanged'] and not x['paidServicesUsed']
           assert all(not c['masksNotDecoded'] and c['automaticItemsSaved']==0 and
                      c['overlapReview']['canAutoSaveAnyProposal'] is False for c in x['cases'])

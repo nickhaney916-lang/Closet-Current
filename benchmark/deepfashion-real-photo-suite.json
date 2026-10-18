@@ -10,61 +10,71 @@
       "id": "validation-0031",
       "expectedCategory": "Layered",
       "photoContext": "worn",
-      "reason": "overlapping blazer skirt tights and shoes"
+      "reason": "overlapping blazer skirt tights and shoes",
+      "expectedTypeHint": "mixed"
     },
     {
       "id": "commons-0059",
       "expectedCategory": "Layered",
       "photoContext": "flat-lay",
-      "reason": "overlapping dress and jacket"
+      "reason": "overlapping dress and jacket",
+      "expectedTypeHint": "mixed"
     },
     {
       "id": "commons-0035",
       "expectedCategory": "Bottoms",
       "photoContext": "retail",
-      "reason": "orange shorts"
+      "reason": "orange shorts",
+      "expectedTypeHint": "shorts"
     },
     {
       "id": "validation-0017",
       "expectedCategory": "Bottoms",
       "photoContext": "product",
-      "reason": "jeans"
+      "reason": "jeans",
+      "expectedTypeHint": "trousers"
     },
     {
       "id": "commons-0049",
       "expectedCategory": "Dresses",
       "photoContext": "flat-lay",
-      "reason": "dress"
+      "reason": "dress",
+      "expectedTypeHint": "dress"
     },
     {
       "id": "commons-0065",
       "expectedCategory": "Outerwear",
       "photoContext": "flat-lay",
-      "reason": "jacket"
+      "reason": "jacket",
+      "expectedTypeHint": "outerwear"
     },
     {
       "id": "validation-0001",
       "expectedCategory": "Dresses",
       "photoContext": "worn",
-      "reason": "summer dress"
+      "reason": "summer dress",
+      "expectedTypeHint": "dress"
     },
     {
       "id": "validation-0010",
       "expectedCategory": "Layered",
       "photoContext": "flat-lay",
-      "reason": "dress and blouse"
+      "reason": "dress and blouse",
+      "expectedTypeHint": "mixed"
     },
     {
       "id": "commons-0079",
       "expectedCategory": "Shoes",
       "photoContext": "product",
-      "reason": "sneaker negative control unsupported model class"
+      "reason": "sneaker negative control unsupported model class",
+      "expectedTypeHint": "shoes"
     },
     {
       "id": "validation-0019",
       "expectedCategory": "Shoes",
       "photoContext": "product",
-      "reason": "sneaker negative control unsupported model class"
+      "reason": "sneaker negative control unsupported model class",
+      "expectedTypeHint": "shoes"
     }
   ]
 }

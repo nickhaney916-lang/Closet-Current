@@ -9,6 +9,7 @@ import onnxruntime as ort
 from PIL import Image, ImageDraw
 sys.path.insert(0,str(Path('benchmark').resolve()))
 from deepfashion_instance_decode import decode,instance_overlap_review
+from deepfashion_review_risks import review_instance_scene
 D=Path(sys.argv[1] if len(sys.argv)>1 else "benchmark/deepfashion-instance-review")
 R=Path("benchmark")
 M=json.loads((R/"deepfashion-instance-onnx-reference.json").read_text())
@@ -29,7 +30,10 @@ CATEGORIES={"Bottoms":("shorts","trousers","skirt"),
  "Shoes":(), "Layered":()}
 if (any(case.get("expectedCategory") not in CATEGORIES or
         case.get("photoContext") not in ("worn","flat-lay","retail","product")
-        or not isinstance(case.get("reason"),str) for case in CASES)
+        or not isinstance(case.get("reason"),str)
+        or case.get("expectedTypeHint") not in
+            ("shorts","trousers","dress","outerwear","shoes","mixed")
+        for case in CASES)
         or not all(id in S for id in IDS)):
     raise ValueError("Unverified trial scenario")
 digest=lambda b:hashlib.sha256(b).hexdigest()
@@ -108,6 +112,9 @@ def main():
         decoded=decode(outputs[0],outputs[1],transform)
         candidates=decoded["candidates"]
         overlap=instance_overlap_review(candidates)
+        risk=review_instance_scene(
+            [{"itemType":x["itemType"]} for x in candidates],
+            scenario["expectedCategory"],scenario["expectedTypeHint"],overlap)
         width=400;height=max(1,round(img.height*width/img.width))
         original=img.resize((width,height),Image.Resampling.LANCZOS)
         source=np.asarray(img).copy()
@@ -145,7 +152,7 @@ def main():
           license=row["attribution"]["license"],modelOutputShapes=[list(x.shape) for x in outputs],
           sourceGeometry=transform,cpuInferenceMs=ms,instanceMasksVerified=0,
           masksNotDecoded=False,proposedMasks=len(candidates),
-          categoryCoverageReview=comparison,
+          categoryCoverageReview=comparison,manualReviewRisk=risk,
           overlapReview={k:v for k,v in overlap.items()},
           proposals=[dict(itemType=c["itemType"],confidence=round(c["score"],3),
             pixelArea=c["pixels"]) for c in candidates],
@@ -153,6 +160,9 @@ def main():
         report["cases"].append(case);save()
         print("DEEPFASHION_INSTANCE_PROFILE "+json.dumps(case),flush=True)
     report["parsedInstanceMasks"]=sum(c["proposedMasks"] for c in report["cases"])
+    from collections import Counter
+    report["manualReviewRiskCounts"]=dict(Counter(
+        flag for c in report["cases"] for flag in c["manualReviewRisk"]["manualReviewFlags"]))
     report["status"]="complete";report["sourceHashesVerified"]=True;save()
 
 if __name__=="__main__":main()
