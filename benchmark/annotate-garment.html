@@ -20,6 +20,12 @@ photo.onchange=async()=>{
  // Archival photos have identical bytes but a filename rejected by the
  // benchmark's canonical annotation identity. Fail before human painting.
  if(/^commons-[0-9]{4}[.]original[.]jpg$/i.test(file.name)){
+  // A wrong photo selection also invalidates any earlier editable mask.
+  // Never let the previous verified photo's draft be exported under a
+  // new archival filename.
+  source=null;mask=null;detailPoint=null;seedMask=null;reviewedDraft=false;
+  polygon=[];strokes=0;undoStack.length=redoStack.length=0;
+  ctx.clearRect(0,0,canvas.width,canvas.height);refreshEditButtons();
   status.textContent='Choose '+file.name.replace('.original.jpg','.jpg')+
    ' instead. The .original.jpg copy is archival and cannot be staged.';
   return;

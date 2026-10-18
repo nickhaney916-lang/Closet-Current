@@ -43,6 +43,13 @@ try{
  assert.match(draft.sourceSha256,/^[a-f0-9]{64}$/);
  assert.equal(draft.width,40);assert.equal(draft.height,30);
  assert.ok(draft.runs.length>1);
+ // Switching from a reviewable photo to an archival-name photo must not
+ // leave a previously edited draft exportable.
+ await page.locator('#photo').setInputFiles({name:'commons-0079.original.jpg',mimeType:'image/png',buffer:Buffer.from(png,'base64')});
+ await page.getByRole('status').getByText(/Choose commons-0079.jpg instead/).waitFor();
+ assert.equal(await page.locator('#download').isDisabled(),true);
+ await page.locator('#photo').setInputFiles({name:'review-case.png',mimeType:'image/png',buffer:Buffer.from(png,'base64')});
+ await page.locator('#status').getByText(/initial mask is blank/).waitFor();
  await page.locator('#resume').setInputFiles({name:'review-case.mask.draft.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(draft))});
  await page.locator('#status').getByText(/Draft restored/).waitFor();
  await page.locator('#resume').setInputFiles({name:'wrong.mask.draft.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify({...draft,image:'other.png'}))});
