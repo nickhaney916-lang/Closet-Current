@@ -18,7 +18,7 @@ function harness(options={}){
   async lockWrites(uid){calls.push('lock');return options.lock===false?false:true;},
   async listPhotos(uid,limit){calls.push('list');return (files.get(uid)||[]).slice(0,limit);},
   async removePhotos(uid,paths){calls.push('remove');
-   if(options.failAtRemove&&paths[0]===A+'/'+f(options.failAtRemove))throw Error('injected storage error');
+   if(options.failAtRemove!==undefined&&paths[0]===A+'/'+f(options.failAtRemove))throw Error('injected storage error');
    for(const p of paths){
     assert.ok(p.startsWith(uid+'/'));
     const name=p.slice(uid.length+1);
