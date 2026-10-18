@@ -83,6 +83,15 @@ try{
  assert.equal(directSwap.saved,0,'swap preview does not silently save an outfit');
  assert.ok(directSwap.owned.includes(directSwap.selected));
  assert.equal(await page.evaluate(()=>JSON.stringify(items.find(x=>x.id==='new-green-top'))),original);
+ await page.locator('#styledCollectionResults .styled-outfit').first()
+  .getByRole('button',{name:'Save outfit'}).click();
+ await page.getByText('Saved. Find it in Outfit builder → Saved outfits.').first().waitFor();
+ const directSaved=await page.evaluate(()=>savedOutfitBoards.map(x=>({
+  top:x.slots.top,bottom:x.slots.bottom,shoes:x.slots.shoes
+ })));
+ assert.equal(directSaved.length,1,'directly swapped outfit must save only on tap');
+ assert.equal(directSaved[0].shoes,directSwap.selected);
+ assert.equal(directSaved[0].top,'new-green-top');
  await page.locator('#styledCollectionResults .styled-outfit').first().getByRole('button',{name:'Adjust on outfit board'}).click();
  await page.locator('#builder:not([hidden])').waitFor();
  const initialShoes=await page.evaluate(()=>currentBoard.slots.shoes);
@@ -101,7 +110,7 @@ try{
   saved:savedOutfitBoards.length,
   item:JSON.stringify(items.find(x=>x.id==='new-green-top'))
  }));
- assert.equal(before.saved,1);
+ assert.equal(before.saved,2);
  assert.equal(before.board.slots.shoes,nextShoes);
  assert.equal(before.board.slots.top,'new-green-top');
  assert.equal(before.item,original,'styling must not modify the original garment record');
@@ -109,7 +118,7 @@ try{
  await page.evaluate(()=>Promise.all([closetReady,outfitBoardReady]));
  const after=await page.evaluate(()=>({board:JSON.parse(JSON.stringify(currentBoard)),
   saved:savedOutfitBoards.length,item:JSON.stringify(items.find(x=>x.id==='new-green-top'))}));
- assert.equal(after.saved,1,'saved outfit survives reload');
+ assert.equal(after.saved,2,'direct card save and board save both survive reload');
  assert.equal(after.board.slots.top,'new-green-top','new item persists after reload');
  assert.equal(after.board.slots.shoes,nextShoes,'one-piece swap persists after reload');
  assert.equal(after.item,original,'original garment remains unchanged in saved collection');
@@ -117,7 +126,7 @@ try{
  console.log('NEW_ITEM_STYLE_MOBILE '+JSON.stringify({
   result:'passed',viewport:'390x844 touch',outfitOptions:outfits.length,
   anchorPersisted:true,directOneTapSwap:true,previewNotAutoSaved:true,
-  onePieceSwapSaved:true,reloadVerified:true,offlineTrendSafe:true,
+  directSwappedOutfitSaved:true,onePieceSwapSaved:true,reloadVerified:true,offlineTrendSafe:true,
   actualPhoneVerified:false,pageErrors:errors.length
  }));
  await context.close();
