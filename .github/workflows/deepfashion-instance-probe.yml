@@ -43,7 +43,8 @@ jobs:
           assert x['status']=='complete' and x['modelHashVerified'] and x['sourceHashesVerified']
           assert len(x['cases'])==2 and x['parsedInstanceMasks']>=0
           assert x['automaticItemsCreated']==0 and not x['customerModelChanged'] and not x['paidServicesUsed']
-          assert all(not c['masksNotDecoded'] and c['automaticItemsSaved']==0 for c in x['cases'])
+          assert all(not c['masksNotDecoded'] and c['automaticItemsSaved']==0 and
+                     c['overlapReview']['canAutoSaveAnyProposal'] is False for c in x['cases'])
           from pathlib import Path
           assert all((Path('benchmark/deepfashion-instance-review')/(c['id']+'-instance-overlays.png')).is_file() for c in x['cases'])
           PY

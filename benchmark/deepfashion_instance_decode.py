@@ -49,3 +49,40 @@ def decode(decs,proto,geo,threshold=.20):
     return dict(candidates=result,physicalInstancesVerified=0,
         pixelGroundTruthAccuracy=None,automaticSavedItems=0,
         sourcePhotoChanged=False,productionAuthorized=False)
+
+
+def instance_overlap_review(candidates, *, iou_threshold=.65, nested_threshold=.90):
+    """Expose conflicting overlapping instance masks without deleting any.
+
+    An outer jacket can legitimately overlap an inner top. Both duplicate
+    proposals and genuine layered items therefore remain human-review-only.
+    """
+    if (not isinstance(candidates,list) or len(candidates)>20 or
+        not 0.3<=iou_threshold<=.95 or not 0.7<=nested_threshold<=1):
+        raise ValueError("Invalid overlap review request")
+    flagged=[];matched=set()
+    for i,a in enumerate(candidates):
+        m=a.get("mask")
+        if (not isinstance(m,np.ndarray) or m.dtype!=bool or m.ndim!=2 or
+            not 0<m.size<=12_000_000):
+            raise ValueError("Invalid instance evidence pixels")
+        for j,b in enumerate(candidates[:i]):
+            n=b.get("mask")
+            if not isinstance(n,np.ndarray) or n.shape!=m.shape or n.dtype!=bool:
+                raise ValueError("Mismatched mask dimensions")
+            intersection=int(np.count_nonzero(m&n))
+            count_a=int(m.sum());count_b=int(n.sum())
+            union=count_a+count_b-intersection
+            iou=intersection/max(1,union)
+            nested=intersection/max(1,min(count_a,count_b))
+            if iou>=iou_threshold or nested>=nested_threshold:
+                matched.update((i,j))
+                flagged.append(dict(firstIndex=j,secondIndex=i,
+                    overlapIoU=round(iou,4),smallerMaskOverlap=round(nested,4),
+                    crossCategory= a.get("classId")!=b.get("classId"),
+                    reason="possible-same-garment-or-layered-clothing",
+                    independentlyVerifiedSeparateItems=False))
+    return dict(conflicts=flagged,ambiguousProposalCount=len(matched),
+        inputCandidates=len(candidates),independentInstancesVerified=0,
+        canAutoSaveAnyProposal=False,originalSourceChanged=False,
+        pixelAccuracyMeasured=False)

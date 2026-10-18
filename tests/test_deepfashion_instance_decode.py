@@ -1,6 +1,6 @@
 import unittest
 import numpy as np
-from deepfashion_instance_decode import decode
+from deepfashion_instance_decode import decode,instance_overlap_review
 class Decoder(unittest.TestCase):
  def sample(self):
     det=np.zeros((1,300,38),dtype=np.float32)
@@ -28,4 +28,19 @@ class Decoder(unittest.TestCase):
     with self.assertRaises(ValueError):decode(far,p,g)
     wrong=d.copy();wrong[0,0,5]=39
     with self.assertRaises(ValueError):decode(wrong,p,g)
+ def test_duplicate_vs_disjoint_and_layered_masks_flagged_without_deletion(self):
+    d,p,g=self.sample()
+    item=decode(d,p,g)['candidates'][0]
+    twin={**item,'classId':10,'itemType':'long_sleeve_dress'}
+    r=instance_overlap_review([item,twin])
+    self.assertEqual(len(r['conflicts']),1)
+    self.assertTrue(r['conflicts'][0]['crossCategory'])
+    self.assertEqual(r['ambiguousProposalCount'],2)
+    self.assertFalse(r['canAutoSaveAnyProposal'])
+    half=item['mask'].copy();half[:,:]=False;half[150:160,150:160]=True
+    other={**item,'mask':half,'classId':3}
+    self.assertEqual(len(instance_overlap_review([item,other])['conflicts']),1)
+    empty=item['mask'].copy();empty[:]=False;empty[0:10,0:10]=True
+    far={**item,'mask':empty}
+    self.assertEqual(instance_overlap_review([item,far])['conflicts'],[])
 if __name__=='__main__':unittest.main()

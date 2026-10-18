@@ -8,7 +8,7 @@ import numpy as np
 import onnxruntime as ort
 from PIL import Image, ImageDraw
 sys.path.insert(0,str(Path('benchmark').resolve()))
-from deepfashion_instance_decode import decode
+from deepfashion_instance_decode import decode,instance_overlap_review
 D=Path(sys.argv[1] if len(sys.argv)>1 else "benchmark/deepfashion-instance-review")
 R=Path("benchmark")
 M=json.loads((R/"deepfashion-instance-onnx-reference.json").read_text())
@@ -91,6 +91,7 @@ def main():
         }),flush=True)
         decoded=decode(outputs[0],outputs[1],transform)
         candidates=decoded["candidates"]
+        overlap=instance_overlap_review(candidates)
         width=400;height=max(1,round(img.height*width/img.width))
         original=img.resize((width,height),Image.Resampling.LANCZOS)
         source=np.asarray(img).copy()
@@ -108,11 +109,16 @@ def main():
         draw.text((width+10,10),'Separate instance mask proposals',fill='black')
         caption=', '.join(x['itemType'] for x in candidates[:5]) or 'No masks above threshold'
         draw.text((10,40),caption,fill='black')
+        # Overlaps are warnings, not license to remove real layers.
+        draw.text((width+10,40),
+          str(overlap["ambiguousProposalCount"])+" potentially duplicate/overlapping masks",
+          fill='black')
         panel.save(D/(row['id']+'-instance-overlays.png'))
         case=dict(id=row["id"],sourceSha256=row["sha256"],source=row["attribution"]["source"],
           license=row["attribution"]["license"],modelOutputShapes=[list(x.shape) for x in outputs],
           sourceGeometry=transform,cpuInferenceMs=ms,instanceMasksVerified=0,
           masksNotDecoded=False,proposedMasks=len(candidates),
+          overlapReview={k:v for k,v in overlap.items()},
           proposals=[dict(itemType=c["itemType"],confidence=round(c["score"],3),
             pixelArea=c["pixels"]) for c in candidates],
           automaticItemsSaved=0,originalPreserved=True)
