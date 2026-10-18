@@ -51,9 +51,6 @@ class LIPGarmentClassCandidateTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 candidate_class_regions(a,min_area_fraction=value)
 
-if __name__=="__main__":
-    unittest.main()
-
     def test_on_person_class_separation_requires_real_body_labels_and_stays_review_only(self):
         a=np.zeros((50,60),dtype=np.uint8)
         a[1:13,20:36]=13   # face
@@ -64,3 +61,6 @@ if __name__=="__main__":
         self.assertEqual(r["reviewDisposition"],"distinct-classes-needing-outline-review")
         self.assertEqual(r["physicalInstancesConfirmed"],0)
         self.assertFalse(r["productionAuthorized"])
+
+if __name__=="__main__":
+    unittest.main()
