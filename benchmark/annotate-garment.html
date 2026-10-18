@@ -4,7 +4,7 @@
 <style>body{font:16px system-ui;max-width:920px;margin:auto;padding:16px;background:#f8f7fb;color:#231e2d}button,select,input{font:inherit;padding:10px;margin:4px}canvas{width:100%;max-width:720px;touch-action:none;background:#ddd}#status{white-space:pre-wrap} .controls{display:flex;flex-wrap:wrap;gap:8px} .native-detail{border:1px solid #cbc0dc;border-radius:12px;padding:10px;margin:12px 0;background:white}.native-detail .windows{display:flex;flex-wrap:wrap;gap:12px}.native-detail figure{margin:0;flex:1 1 180px;max-width:240px}.native-detail canvas{width:100%;max-width:220px;aspect-ratio:1/1;height:auto;image-rendering:auto;border:1px solid #999;background:#e7e4eb;touch-action:auto}.native-detail figcaption{font-size:13px;font-weight:600}.native-detail p{font-size:13px}</style>
 <h1>Reference garment outline review</h1>
 <p>Internal benchmark tool, not part of the Closet Current customer interface. Load a verified source photo, paint the clothing foreground, and export a reference mask for independent review. Never assume the initial blank mask is complete.</p>
-<div class="controls"><input id="photo" type="file" accept="image/*"><label>Resume previous draft <input id="resume" type="file" accept=".json,application/json"></label><label>Load AI mask as editable starting point <input id="prediction" type="file" accept=".json,application/json"></label><label>Tool <select id="tool"><option value="brush">Paint brush</option><option value="polygon">Outline polygon (tap corners)</option></select></label><select id="mode" aria-label="Mask edit mode"><option value="1">Mark garment</option><option value="0">Erase / background</option></select><label>First reviewer <input id="reviewer" type="text" maxlength="80" autocomplete="off" placeholder="Your reviewer name"></label><label>Brush radius <input type="range" id="radius" min="1" max="30" value="7"></label><button id="applyPolygon" type="button" disabled>Fill outline</button><button id="cancelPolygon" type="button" disabled>Cancel outline</button><button id="undo" type="button" disabled>Undo</button><button id="redo" type="button" disabled>Redo</button><button id="download" disabled>Export annotation JSON</button></div>
+<div class="controls"><input id="photo" type="file" accept="image/*"><label>Resume previous draft <input id="resume" type="file" accept=".json,application/json"></label><label>Load AI mask as editable starting point <input id="prediction" type="file" accept=".json,application/json"></label><label>Tool <select id="tool"><option value="brush">Paint brush</option><option value="polygon">Outline polygon (tap corners)</option></select></label><select id="mode" aria-label="Mask edit mode"><option value="1">Mark garment</option><option value="0">Erase / background</option></select><label>First reviewer <input id="reviewer" type="text" maxlength="80" autocomplete="off" placeholder="Your reviewer name"></label><label id="targetLabel" hidden>Identify the actual garment independently of the model prediction <input id="targetGarment" type="text" maxlength="100" placeholder="e.g. black skirt worn by the person"></label><label>Brush radius <input type="range" id="radius" min="1" max="30" value="7"></label><button id="applyPolygon" type="button" disabled>Fill outline</button><button id="cancelPolygon" type="button" disabled>Cancel outline</button><button id="undo" type="button" disabled>Undo</button><button id="redo" type="button" disabled>Redo</button><button id="download" disabled>Export annotation JSON</button></div>
 <canvas id="canvas" width="256" height="256" aria-label="Image and reference mask editor"></canvas><section class="native-detail" aria-label="High resolution outline detail">
 <label>Inspect detail at <select id="detailZoom" aria-label="Detail magnification"><option value="4">4×</option><option value="8">8×</option></select></label>
 <p id="detailHint">Move or tap the large photo to inspect its original-resolution clothing edges. Magnification never changes the annotation.</p>
@@ -13,8 +13,16 @@
 <script>
 'use strict';
 const detailZoom=document.querySelector('#detailZoom'),detailSource=document.querySelector('#detailSource'),detailMask=document.querySelector('#detailMask'),detailHint=document.querySelector('#detailHint');
+const garmentTarget=document.querySelector('#targetGarment'),targetLabel=document.querySelector('#targetLabel');
 const prediction=document.querySelector('#prediction'),resume=document.querySelector('#resume'),photo=document.querySelector('#photo'),canvas=document.querySelector('#canvas'),ctx=canvas.getContext('2d'),status=document.querySelector('#status'),download=document.querySelector('#download'),mode=document.querySelector('#mode'),radius=document.querySelector('#radius'),reviewer=document.querySelector('#reviewer'),tool=document.querySelector('#tool'),applyPolygon=document.querySelector('#applyPolygon'),cancelPolygon=document.querySelector('#cancelPolygon'),undo=document.querySelector('#undo'),redo=document.querySelector('#redo');
-let source=null,mask=null,painting=false,strokes=0,seedModel=null,reviewedDraft=false,seedMask=null,polygon=[],lastPoint=null,detailPoint=null;const undoStack=[],redoStack=[];
+let source=null,mask=null,painting=false,strokes=0,seedModel=null,reviewedDraft=false,seedMask=null,polygon=[],lastPoint=null,detailPoint=null;
+let modelProposalId=null,modelGarmentLabel=null;
+function isProposalId(id,name){
+ if(typeof id!=='string'||typeof name!=='string')return false;
+ const base=name.replace(/\.[^.]+$/,'')+'-candidate-';
+ return id.startsWith(base)&&/^[0-9]{2}$/.test(id.slice(base.length));
+}
+function resetTarget(){modelProposalId=null;modelGarmentLabel=null;garmentTarget.value='';targetLabel.hidden=true;}const undoStack=[],redoStack=[];
 photo.onchange=async()=>{
  const file=photo.files[0];if(!file)return;
  // Archival photos have identical bytes but a filename rejected by the
@@ -23,7 +31,7 @@ photo.onchange=async()=>{
   // A wrong photo selection also invalidates any earlier editable mask.
   // Never let the previous verified photo's draft be exported under a
   // new archival filename.
-  source=null;mask=null;detailPoint=null;seedMask=null;reviewedDraft=false;
+  source=null;mask=null;detailPoint=null;seedMask=null;reviewedDraft=false;resetTarget();
   polygon=[];strokes=0;undoStack.length=redoStack.length=0;
   ctx.clearRect(0,0,canvas.width,canvas.height);refreshEditButtons();
   status.textContent='Choose '+file.name.replace('.original.jpg','.jpg')+
@@ -38,7 +46,7 @@ photo.onchange=async()=>{
   const base=document.createElement('canvas');base.width=canvas.width;base.height=canvas.height;base.getContext('2d').drawImage(image,0,0,base.width,base.height);
   const digest=await crypto.subtle.digest('SHA-256',await file.arrayBuffer());
   const sourceSha256=Array.from(new Uint8Array(digest),b=>b.toString(16).padStart(2,'0')).join('');
-  source={fileName:file.name,sourceSha256,base,photo:image};detailPoint={x:Math.floor(canvas.width/2),y:Math.floor(canvas.height/2)};mask=new Uint8Array(canvas.width*canvas.height);strokes=0;seedModel=null;reviewedDraft=false;seedMask=null;polygon=[];undoStack.length=redoStack.length=0;refreshEditButtons();redraw();status.textContent='Paint or outline the actual garment carefully; the initial mask is blank.';
+  resetTarget();source={fileName:file.name,sourceSha256,base,photo:image};detailPoint={x:Math.floor(canvas.width/2),y:Math.floor(canvas.height/2)};mask=new Uint8Array(canvas.width*canvas.height);strokes=0;seedModel=null;reviewedDraft=false;seedMask=null;polygon=[];undoStack.length=redoStack.length=0;refreshEditButtons();redraw();status.textContent='Paint or outline the actual garment carefully; the initial mask is blank.';
  }catch{status.textContent='Unable to decode image';}finally{URL.revokeObjectURL(url);}
 };
 resume.onchange=async()=>{
@@ -48,9 +56,15 @@ resume.onchange=async()=>{
   if(file.size>16000000)throw Error('Draft too large');
   const draft=JSON.parse(await file.text()),n=canvas.width*canvas.height;
   if(draft.schemaVersion!==1||draft.reviewStatus!=='draft'||draft.image!==source.fileName||draft.sourceSha256!==source.sourceSha256||draft.width!==canvas.width||draft.height!==canvas.height||!Array.isArray(draft.runs)||draft.runs.length>n)throw Error('Draft image or dimensions mismatch');
+  if(draft.modelProposalId!=null&&(!isProposalId(draft.modelProposalId,source.fileName)||
+   typeof draft.humanTargetLabel!=='string'||!draft.humanTargetLabel.trim()||
+   draft.humanTargetLabel.trim().length>100))throw Error('Invalid independent garment target');
   const restored=new Uint8Array(n);let offset=0,foreground=false;
   for(const count of draft.runs){if(!Number.isInteger(count)||count<0||offset+count>n)throw Error('Invalid run encoding');if(foreground)restored.fill(1,offset,offset+count);offset+=count;foreground=!foreground;}
   if(offset!==n)throw Error('Incomplete mask');
+  resetTarget();modelProposalId=draft.modelProposalId||null;
+  modelGarmentLabel=draft.modelGarmentLabel||null;
+  targetLabel.hidden=!modelProposalId;garmentTarget.value=draft.humanTargetLabel||'';
   mask=restored;seedModel=draft.seedModel||null;reviewer.value=draft.reviewer||'';strokes=0;reviewedDraft=true;seedMask=null;polygon=[];undoStack.length=redoStack.length=0;refreshEditButtons();redraw();
   status.textContent='Draft restored for editing. Independent review is still required.';
  }catch(e){status.textContent='Could not restore draft: '+e.message;}
@@ -62,17 +76,27 @@ prediction.onchange=async()=>{
   if(file.size>16000000)throw Error('Prediction too large');
   const data=JSON.parse(await file.text()),w=data.width,h=data.height,n=w*h;
   if(data.image!==source.fileName||data.sourceSha256!==source.sourceSha256||!Number.isInteger(w)||!Number.isInteger(h)||w<1||h<1||n>12000000||!Array.isArray(data.runs)||data.runs.length>n)throw Error('Prediction image or dimensions mismatch');
+  if(data.modelProposalId!==undefined&&
+   (!isProposalId(data.modelProposalId,source.fileName)||
+    !Number.isInteger(data.candidateOrdinal)||
+    Number(data.modelProposalId.slice(-2))!==data.candidateOrdinal||
+    typeof data.modelGarmentLabel!=='string'||!data.modelGarmentLabel.trim()))
+   throw Error('Invalid model proposal identity');
   if(Math.abs(w/h-canvas.width/canvas.height)>.005)throw Error('Prediction aspect ratio mismatch');
   const decoded=new Uint8Array(n);let offset=0,foreground=false;
   for(const count of data.runs){if(!Number.isInteger(count)||count<0||offset+count>n)throw Error('Invalid prediction runs');if(foreground)decoded.fill(1,offset,offset+count);offset+=count;foreground=!foreground;}
   if(offset!==n)throw Error('Incomplete prediction');
   const reduced=new Uint8Array(canvas.width*canvas.height);
   for(let y=0;y<canvas.height;y++)for(let x=0;x<canvas.width;x++)reduced[y*canvas.width+x]=decoded[Math.min(h-1,Math.floor((y+.5)*h/canvas.height))*w+Math.min(w-1,Math.floor((x+.5)*w/canvas.width))];
+  resetTarget();modelProposalId=data.modelProposalId||null;modelGarmentLabel=data.modelGarmentLabel||null;
+  targetLabel.hidden=!modelProposalId;
   mask=reduced;seedModel=data.model||data.modelId||'AI prediction';strokes=0;reviewedDraft=false;seedMask=new Uint8Array(reduced);polygon=[];undoStack.length=redoStack.length=0;refreshEditButtons();redraw();
   status.textContent='AI starting mask loaded. Correct all edges manually before exporting a draft. Independent review is required.';
  }catch(e){status.textContent='Could not load prediction: '+e.message;}
 };
+garmentTarget.oninput=refreshEditButtons;
 function canExport(){
+ if(modelProposalId&&!garmentTarget.value.trim())return false;
  if(!mask||!mask.some(Boolean)||!mask.some(value=>value===0))return false;
  if(reviewedDraft)return true;
  if(!strokes)return false;
@@ -196,9 +220,12 @@ download.onclick=()=>{
  const runs=[];let previous=0,count=0;
  for(const value of mask){if(value!==previous){runs.push(count);count=0;previous=value;}count++;}
  runs.push(count);
- const annotation={schemaVersion:1,image:source.fileName,sourceSha256:source.sourceSha256,width:canvas.width,height:canvas.height,runs,reviewStatus:'draft',reviewer:reviewer.value.trim(),seedModel,note:'Requires independent human verification before benchmark scoring'};
+ const annotation={schemaVersion:1,image:source.fileName,sourceSha256:source.sourceSha256,width:canvas.width,height:canvas.height,runs,reviewStatus:'draft',reviewer:reviewer.value.trim(),seedModel,
+  ...(modelProposalId?{modelProposalId,modelGarmentLabel,humanTargetLabel:garmentTarget.value.trim(),
+   targetIndependentlyIdentifiedBy:reviewer.value.trim()}:{}),
+  note:'Requires independent human verification before benchmark scoring'};
  const blob=new Blob([JSON.stringify(annotation,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');
- a.href=url;a.download=source.fileName.replace(/\.[^.]+$/,'')+'.mask.draft.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+ a.href=url;a.download=(modelProposalId||source.fileName.replace(/\.[^.]+$/,''))+'.mask.draft.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
  status.textContent='Draft exported. A second reviewer must verify garment boundaries before changing reviewStatus to approved.';
 };
 </script></html>
