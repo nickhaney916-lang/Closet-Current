@@ -53,6 +53,13 @@ test('complete independently drawn inventory counts missing skirt and unsupporte
  assert.equal(result.supportedCategoryDetectionRecall,.5);
  assert.equal(result.proposalPrecision,.5);
  assert.equal(result.correctCategoryRecall,0); // blazer called top
+ assert.equal(result.categoryConstrainedRecall,0);
+ assert.equal(result.categoryConstrainedMatchedGarments,0);
+ assert.equal(result.supportedCategoryConstrainedRecall,0);
+ assert.equal(result.unsupportedCategoryGarments.length,1);
+ assert.equal(result.unsupportedCategoryGarments[0].category,'Shoes');
+ assert.equal(result.footwearCategorySupportedByModel,false);
+ assert.equal(result.hosieryCategorySupportedByModel,false);
  assert.equal(result.meanMatchedIoU,1);
  assert.equal(result.missingGarments.find(x=>x.category==='Bottoms').label,'black skirt');
  assert.equal(result.missingGarments.find(x=>x.category==='Shoes').unsupportedByThisModel,true);
@@ -101,4 +108,53 @@ test('independent reviewed same-category pieces use one-to-one IoU matching',()=
  const result=evaluateCompletePhysicalInventory(scene,inventory,annotations,seeds);
  assert.equal(result.matchedGarments,1,'two duplicate blazer predictions are not two items');
  assert.equal(result.missingGarments.length,1);
+});
+
+test('category-optimal matching does not let misclassified higher-IoU proposal steal a valid garment',()=>{
+ const {inventory,annotations,seeds}=example();
+ inventory.targets=inventory.targets.slice(0,1);
+ const one=inventory.targets[0].id;
+ annotations.clear();
+ // The independent human says OUTERWEAR, not Tops.
+ annotations.set(one,{
+  schemaVersion:1,image:scene.image,sourceSha256:sha,reviewStatus:'approved',
+  reviewer:'Reviewer A',approvedBy:'Reviewer B',physicalTargetId:one,
+  humanCategory:'Outerwear',humanTargetLabel:'grey blazer',
+  targetIndependentlyIdentifiedBy:'Reviewer A',seedModel:null,
+  ...mask([1,1,5,5])
+ });
+ const wrong=[scene.id+'-candidate-01',{schemaVersion:1,image:scene.image,
+  sourceSha256:sha,modelProposalId:scene.id+'-candidate-01',
+  modelGarmentLabel:'long_sleeve_top',reviewStatus:'prediction-unreviewed',
+  independentReference:false,canSaveToCustomerCloset:false,...mask([1,1,5,5])}];
+ const correct=[scene.id+'-candidate-02',{...wrong[1],
+  modelProposalId:scene.id+'-candidate-02',
+  modelGarmentLabel:'long_sleeve_outwear',...mask([1,1,4,5])}];
+ const result=evaluateCompletePhysicalInventory(scene,inventory,annotations,new Map([wrong,correct]));
+ assert.equal(result.matchedGarments,1);
+ assert.equal(result.correctCategoryRecall,0,'legacy localization match picked top');
+ assert.equal(result.categoryConstrainedMatchedGarments,1,'correct jacket category must match independently');
+ assert.equal(result.categoryConstrainedRecall,1);
+ assert.equal(result.categoryConstrainedMatches[0].modelProposalId,correct[0]);
+ assert.equal(result.categoryConstrainedMatches[0].category,'Outerwear');
+ assert.equal(result.canPromoteModel,false);
+});
+test('category-constrained score never fabricates footwear or hosiery detection',()=>{
+ const {inventory,annotations}=example();
+ const id=scene.id+'-item-04';
+ inventory.targets.push({id,category:'Hosiery',label:'sheer tights'});
+ annotations.set(id,{
+  schemaVersion:1,image:scene.image,sourceSha256:sha,reviewStatus:'approved',
+  reviewer:'Reviewer A',approvedBy:'Reviewer B',physicalTargetId:id,
+  humanCategory:'Hosiery',humanTargetLabel:'sheer tights',
+  targetIndependentlyIdentifiedBy:'Reviewer A',seedModel:null,
+  ...mask([1,8,3,11])
+ });
+ const result=evaluateCompletePhysicalInventory(scene,inventory,annotations,new Map());
+ assert.equal(result.detectionRecall,0);
+ assert.equal(result.categoryConstrainedRecall,0);
+ assert.equal(result.supportedCategoryConstrainedRecall,0);
+ assert.deepEqual(result.unsupportedCategoryGarments.map(x=>x.category),['Shoes','Hosiery']);
+ assert.equal(result.modelProposals,0);
+ assert.equal(result.canPromoteModel,false);
 });
