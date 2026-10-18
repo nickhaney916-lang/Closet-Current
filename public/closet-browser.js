@@ -18,7 +18,7 @@ const closetSections=[
 ];
 window.closetSleeves=null;
 function closetLayerCount(){return typeof boardInitialized!=='undefined'&&boardInitialized?currentBoard.layerCount||0:0;}
-function closetReviewMatches(item){return item.category==='Uncategorized';}
+function closetReviewMatches(item){return typeof ClosetReviewEngine!=='undefined'&&ClosetReviewEngine.needsReview(item);}
 function closetDressMode(){return window.closetDressPreview||typeof boardInitialized!=='undefined'&&boardInitialized&&items.find(item=>item.id===currentBoard.slots.top)?.category==='Dresses';}
 function closetVisibleSections(){return closetDressMode()?[{category:'Dresses',label:'Dress',slot:'top',position:'base',torso:true},closetSections.find(section=>section.position==='shoes')]:closetSections.filter(section=>!section.level||section.level<=closetLayerCount());}
 
@@ -124,7 +124,93 @@ $('closetClearLook').onclick=async()=>{await outfitBoardReady;window.closetDress
 $('closetSaveLook').onclick=async()=>{await outfitBoardReady;await $('saveBoard').onclick();$('closetLookStatus').textContent=$('boardSaveStatus').textContent;};
 $('search').oninput=()=>{window.closetActiveItemId=null;window.closetTargetSlot=null;window.closetSlotFilter=null;window.closetItemType='';window.closetSleeves=null;render();};
 $('closetLayerCount').onchange=async()=>{await outfitBoardReady;const count=Number($('closetLayerCount').value);currentBoard.layerCount=count;for(const [slot,level]of [['layer',1],['layer2',2],['layer3',3]])if(level>count){delete currentBoard.slots[slot];delete currentBoard.ideas[slot];}window.closetTargetSlot=null;window.closetSlotFilter=null;render();const saved=await storeBoard();$('closetLookStatus').textContent=saved?(count?'Choose clothing for each layer.':'Choose one base shirt: short or long sleeve.'):'Layer choice could not save. Please try again.';};
-$('closetUnsorted').onclick=()=>{window.closetTargetSlot=null;window.closetSlotFilter=null;window.closetSleeves=null;window.closetItemType='';window.closetBrowseAll=false;$('search').value='';$('filter').value='Uncategorized';render();$('closetCollection').scrollIntoView({block:'start',behavior:'smooth'});};
+
+function reviewUnsortedClosetPiece(item,skipped=new Set()){
+ if(!closetReviewMatches(item)||!items.some(x=>x.id===item.id))return false;
+ // A repeated tap should not open overlapping modal dialogs.
+ if(document.querySelector('dialog.closet-quick-review'))return false;
+ const dialog=node('dialog',null,'closet-quick-review'),form=node('form');
+ form.className='closet-quick-review-form';
+ const heading=node('h2','Sort this clothing photo');
+ heading.id='closetQuickReviewHeading';
+ dialog.setAttribute('aria-labelledby',heading.id);
+ const hint=node('p','Confirm only its category and color. Other details can wait.','fine');
+ const count=ClosetReviewEngine.pending(items).length;
+ const progress=node('p',count+' unsorted piece'+(count===1?'':'s')+' remaining.','fine');
+ const photo=node('img');
+ photo.src=item.image;
+ photo.alt=item.name||'Unsorted clothing to identify';
+ photo.className='closet-quick-review-photo';
+ form.append(heading,hint,progress,photo);
+ // The masked/display crop may omit context. Make the genuine captured
+ // source independently viewable; do not modify or re-encode either image.
+ const original=item.originalPhoto?.image||item.recognitionPhoto?.image;
+ if(typeof original==='string'&&original!==item.image){
+  const originalDetails=node('details',null,'closet-quick-review-original');
+  originalDetails.append(node('summary','View original photograph'));
+  const source=node('img');source.src=original;
+  source.alt='Original photograph before clothing clipping';
+  originalDetails.append(source);form.append(originalDetails);
+ }
+ const categoryLabel=node('label','Clothing category');
+ const category=node('select');category.setAttribute('aria-label','Clothing category');
+ const first=node('option','Choose a category');first.value='';category.append(first);
+ for(const name of ClosetReviewEngine.allowed){const option=node('option',name);option.value=name;category.append(option);}
+ category.value='';category.required=true;categoryLabel.append(category);
+ const colorLabel=node('label','Garment color');
+ const color=node('select');color.setAttribute('aria-label','Garment color');
+ const empty=node('option','Choose a color');empty.value='';color.append(empty);
+ for(const name of ClothingDetails.colors){const option=node('option',name);option.value=name;color.append(option);}
+ color.value='';color.required=true;colorLabel.append(color);
+ const suggestion=typeof item.color==='string'&&ClothingDetails.validColor(item.color)?
+  node('p','Previously recorded color: '+item.color+'. Check the original photo before choosing.','fine'):null;
+ form.append(categoryLabel,colorLabel);if(suggestion)form.append(suggestion);
+ const status=node('p',null,'fine');status.setAttribute('role','status');
+ const buttons=node('div',null,'actions');
+ const save=node('button','Save & next','primary'),skip=node('button','Skip for now','secondary'),done=node('button','Close','secondary');
+ save.type='submit';skip.type=done.type='button';
+ const advance=()=>{
+  const next=ClosetReviewEngine.pending(items,skipped)[0];
+  if(next)queueMicrotask(()=>reviewUnsortedClosetPiece(next,skipped));
+  else $('closetLookStatus').textContent='All unsorted pieces reviewed or skipped. You can return any time.';
+ };
+ skip.onclick=()=>{skipped.add(item.id);dialog.close();dialog.remove();advance();};
+ done.onclick=()=>dialog.close();
+ form.onsubmit=async event=>{
+  event.preventDefault();save.disabled=true;skip.disabled=true;
+  try{
+   const current=items.find(x=>x.id===item.id);
+   if(!current||!closetReviewMatches(current))throw Error('This item changed. Reopen Unsorted clothing.');
+   let confirmed=ClosetReviewEngine.confirm(current,category.value,color.value,ClothingDetails.colors);
+   confirmed=normalizeClothing(confirmed);
+   if(typeof ClothingMemory!=='undefined')confirmed=ClothingMemory.confirm(confirmed);
+   // Commit to the current authenticated person's existing IndexedDB record.
+   // The original JPEG, mask inputs and photo identifiers are left untouched.
+   await writeAll([confirmed]);
+   Object.assign(current,confirmed);
+   window.closetActiveItemId=null;
+   dialog.close();dialog.remove();render();scheduleMemoryReview();
+   advance();
+  }catch(e){
+   status.textContent=e?.message||'Could not save the clothing details. Try again.';
+   save.disabled=false;skip.disabled=false;
+  }
+ };
+ buttons.append(save,skip,done);
+ form.append(status,buttons);dialog.append(form);document.body.append(dialog);
+ dialog.onclose=()=>dialog.remove();dialog.showModal();category.focus();
+ return true;
+}
+
+$('closetUnsorted').onclick=()=>{
+ window.closetTargetSlot=null;window.closetSlotFilter=null;window.closetSleeves=null;
+ window.closetItemType='';window.closetBrowseAll=false;
+ $('search').value='';$('seasonFilter').value='';$('sleeveFilter').value='';
+ $('filter').value='Uncategorized';render();
+ $('closetCollection').scrollIntoView({block:'start',behavior:'smooth'});
+ const next=ClosetReviewEngine.pending(items)[0];
+ if(next)reviewUnsortedClosetPiece(next);
+};
 $('closetSeparates').onclick=async()=>{await outfitBoardReady;window.closetDressPreview=false;const selectedDress=items.find(item=>item.id===currentBoard.slots.top)?.category==='Dresses';if(selectedDress){delete currentBoard.slots.top;delete currentBoard.ideas.top;currentBoard=cleanOutfitBoard(currentBoard,items);syncBoardInputs();}window.closetTargetSlot=null;window.closetSlotFilter=null;window.closetItemType='';window.closetSleeves=null;window.closetBrowseAll=false;for(const id of ['search','seasonFilter','sleeveFilter'])$(id).value='';$('filter').value='All categories';render();if(selectedDress&&!await storeBoard())$('closetLookStatus').textContent='Outfit change could not save. Please try again.';};
 $('closetStyleLook').onclick=()=>{switchView('builder');$('boardTarget').value='accessory';renderBoardSuggestions();refreshTrendLibrary(true);$('boardGapStatus').scrollIntoView({block:'start',behavior:'smooth'});};
 Promise.all([closetReady,outfitBoardReady]).then(render);
