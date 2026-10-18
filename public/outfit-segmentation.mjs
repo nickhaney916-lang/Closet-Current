@@ -252,11 +252,15 @@ export function discriminativeEdgeMask(image,map,group,{maxSteps=3,margin=12,max
 // clipped at the camera edge, show the untouched padded source crop rather
 // than a white-matted image that appears to have missing fabric. This never
 // expands model masks, recolors pixels or changes the classifier's source.
-export function garmentDisplayMaskReliability(map,group,{maxDetachedShare=.2}={}){
+export function garmentDisplayMaskReliability(map,group,{maxDetachedShare=.2,maxEnclosedHoleShare=.012}={}){
  const {width,height}=map??{},length=width*height,selected=group?.selected;
  if(!Number.isInteger(width)||!Number.isInteger(height)||width<2||height<2||
-   length>262144||selected?.length!==length||!Number.isFinite(maxDetachedShare)||
-   maxDetachedShare<0||maxDetachedShare>.5)
+   length>262144||selected?.length!==length||
+   (map.labels&&map.labels.length!==length)||
+   (map.semanticLabels&&map.semanticLabels.length!==length)||
+   !Number.isFinite(maxDetachedShare)||maxDetachedShare<0||maxDetachedShare>.5||
+   !Number.isFinite(maxEnclosedHoleShare)||
+   maxEnclosedHoleShare<.001||maxEnclosedHoleShare>.08)
   throw Error('Invalid garment display mask');
  const seen=new Uint8Array(length),queue=new Int32Array(length);
  let total=0,largest=0,components=0;const regions=[];
@@ -279,6 +283,40 @@ export function garmentDisplayMaskReliability(map,group,{maxDetachedShare=.2}={}
   regions.push({area:back,left:minX,top:minY,right:maxX+1,bottom:maxY+1});
  }
  const detachedShare=total?(total-largest)/total:1;
+ // A large enclosed void can erase material even when the outside silhouette
+ // remains one connected region (e.g., a sneaker side panel or dress bodice).
+ // Eight-way flood-fill distinguishes true interior gaps from exterior paths
+ // and diagonal sleeve/leg openings. Another trusted semantic garment, skin
+ // or limb label vetoes the warning: a visible underlayer is not lost fabric.
+ // This is a *display-only risk indicator*, NOT verified pixel accuracy and
+ // never a license to manufacture or grow garment pixels.
+ let largestUnexplainedHole=0,unexplainedHoles=0;
+ if(total>=48&&[4,5,6,7,9].includes(group.id)&&!group.clipped){
+  const seenBackground=new Uint8Array(length),backgroundQueue=new Int32Array(length);
+  for(let start=0;start<length;start++){
+   if(selected[start]||seenBackground[start])continue;
+   let front=0,back=1,exterior=false,otherSemantic=false;
+   backgroundQueue[0]=start;seenBackground[start]=1;
+   while(front<back){
+    const i=backgroundQueue[front++],x=i%width,y=Math.floor(i/width);
+    if(!x||!y||x===width-1||y===height-1)exterior=true;
+    if((map.labels?.[i]&&map.labels[i]!==group.id)||
+       (map.semanticLabels?.[i]&&map.semanticLabels[i]!==group.id))otherSemantic=true;
+    for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){
+     if(!dx&&!dy)continue;
+     const xx=x+dx,yy=y+dy;
+     if(xx<0||xx>=width||yy<0||yy>=height)continue;
+     const j=yy*width+xx;
+     if(!selected[j]&&!seenBackground[j]){seenBackground[j]=1;backgroundQueue[back++]=j;}
+    }
+   }
+   if(!exterior&&!otherSemantic){
+    largestUnexplainedHole=Math.max(largestUnexplainedHole,back);
+    unexplainedHoles++;
+   }
+  }
+ }
+ const riskyEnclosedGap=largestUnexplainedHole>=Math.max(8,Math.ceil(total*maxEnclosedHoleShare));
  // Left and right shoes can be two correctly isolated islands. They are not
  // a damaged garment just because their alpha masks do not touch. Accept ONLY
  // two comparable, well-separated, horizontally aligned shoe regions fully
@@ -300,9 +338,11 @@ export function garmentDisplayMaskReliability(map,group,{maxDetachedShare=.2}={}
  }
  const reason=group.clipped===true?'clipped-frame':
   total<16?'insufficient-mask':
+  riskyEnclosedGap?'unexplained-enclosed-gap':
   detachedShare>maxDetachedShare&&!pairedFootwear?'fragmented-mask':null;
  return {useOriginalCrop:reason!==null,reason,components,pairedFootwear,
   maskedPixels:total,detachedShare:+detachedShare.toFixed(4),
+  largestUnexplainedHole,unexplainedHoles,
   sourcePreserved:true,measuresPixelAccuracy:false};
 }
 export function isolateClothingPixels(image,map,group,{repairDisplayPinholes=true}={}){
