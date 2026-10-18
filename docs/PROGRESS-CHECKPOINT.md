@@ -1,5 +1,15 @@
 # Closet Current master development checkpoint
 
+## Clipping and color-evidence repair — October 17, 2026, evening Pacific
+
+Continued from `55e4a032383ff8e9910b161154878c20d37b3a4b` on the same development branch / draft PR #7.
+
+- Fixed a reproduced display-clipping defect: confident skin, hair and limb labels were discarded before tiny-hole cleanup, allowing same-color non-clothing pixels to be restored as fabric. Retain separate semantic labels solely to veto those repairs; clothing groups, source photos, recognition crops, model thresholds and MODNet 128 are unchanged.
+- Fixed a reproduced color-evidence defect: an upscaled mask could count the same source pixel repeatedly. Sample distinct original pixel positions; a 256-cell mask backed by only 16 source pixels now remains insufficient evidence rather than a confident color.
+- Both added regressions failed before the fix and passed afterward. Focused clipping/color/edge suite: 37 passed. Full local Node suite: 618 passed, 3 skipped, 0 failures. Build passed. All 59 locked and 11 fresh source photographs verified against their recorded hashes.
+- Real-photo browser inference could not start locally: Chromium was absent, and its download returned invalid archives. GitHub real-photo recognition and clipping workflows are the remaining verification gate; do not report an accuracy improvement until their results are inspected.
+- No paid inference enabled, production merge/deployment requested, or Drive Duel changes made.
+
 ## Single-conversation handoff — October 17, 2026, afternoon Pacific
 
 The owner selected this ChatGPT conversation as the **single place for project decisions and progress reports**, consolidating the previously separate ChatGPT Work-mode benchmarking and try-on threads. Chat transcripts themselves cannot be merged, and other open conversations are not automatically stopped; the GitHub draft branch and this checkpoint are the reproducible shared state. Future changes from another session must be read from current GitHub HEAD first; do not duplicate, overwrite or force-push.

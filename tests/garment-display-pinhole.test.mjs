@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {repairGarmentDisplayPinholes,isolateClothingPixels,cropClothingPhotoPixels}
+import {repairGarmentDisplayPinholes,isolateClothingPixels,cropClothingPhotoPixels,clothingLabelMap,clothingMaskGroups}
  from '../public/outfit-segmentation.mjs';
 
 function sample(){
@@ -18,6 +18,24 @@ const pixel=(view,x,y)=>{
  const i=((y-view.bounds.top)*view.width+x-view.bounds.left)*3;
  return Array.from(view.data.slice(i,i+3));
 };
+test('confident skin, hair and limb openings stay excluded even when their RGB matches fabric',()=>{
+ for(const excluded of [2,11,12,13,14,15]){
+  const {image}=sample(),area=32*32,logits=new Float32Array(18*area).fill(-10),hole=14*32+16;
+  for(let i=0;i<area;i++){
+   const x=i%32,y=Math.floor(i/32);
+   const id=i===hole?excluded:x>=4&&x<=27&&y>=4&&y<=27?4:0;
+   logits[id*area+i]=10;
+  }
+  const map=clothingLabelMap(logits,[1,18,32,32]),group=clothingMaskGroups(map)[0];
+  const before=image.data.slice();
+  assert.equal(map.labels[hole],0,'body pixels never become clothing entries');
+  const repaired=repairGarmentDisplayPinholes(image,map,group);
+  assert.equal(repaired.selected[hole],0,'must retain non-clothing class '+excluded);
+  assert.equal(repaired.repairedPixels,0);
+  assert.deepEqual(pixel(isolateClothingPixels(image,map,group),16,14),[255,255,255]);
+  assert.deepEqual(image.data,before);
+ }
+});
 test('enclosed 1-pixel garment mask dropout gets recovered from TRUE original RGB only',()=>{
  const {image,map,group}=sample(),i=13*32+15;
  group.selected[i]=0;map.labels[i]=0;

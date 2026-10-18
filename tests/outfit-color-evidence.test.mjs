@@ -20,6 +20,18 @@ function scene({mapWidth=20,mapHeight=20,inside=(x,y)=>x>=3&&x<17&&y>=3&&y<17,ga
 }
 const palette=s=>Color.maskedPalette(s.data,s.width,s.height);
 
+test('model upsampling cannot turn a few source pixels into confident color evidence',()=>{
+ const width=8,height=8,data=new Uint8ClampedArray(width*height*3);
+ for(let i=0;i<data.length;i+=3)data.set([30,60,170],i);
+ const map={width:32,height:32},selected=new Uint8Array(1024);
+ for(let y=8;y<24;y++)for(let x=8;x<24;x++)selected[y*32+x]=1;
+ const group={selected,bounds:{left:8,top:8,right:24,bottom:24}};
+ const sample=clothingColorSample({width,height,data,channels:3},map,group);
+ assert.equal(sample.distinctMaskPixels,256);
+ assert.equal(sample.sampledPixels,16,'only sixteen original pixels support this mask');
+ assert.equal(palette(sample),null);
+});
+
 test('small ambiguous garment masks do not become 256 fake independent color samples',()=>{
  const f=scene({inside:(x,y)=>x>=8&&x<12&&y>=8&&y<12});
  const sample=clothingColorSample(f.image,f.map,f.group);

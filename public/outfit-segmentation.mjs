@@ -14,7 +14,7 @@ export const clothingRegions=[
 ];
 export function clothingLabelMap(data,dims){
  if(!Array.isArray(dims)||dims.length!==4||dims[0]!==1||dims[1]!==18||!Number.isInteger(dims[2])||!Number.isInteger(dims[3])||dims[2]<1||dims[3]<1||dims[2]>512||dims[3]>512||data.length!==dims.reduce((a,b)=>a*b,1))throw Error('Invalid outfit segmentation output.');
- const height=dims[2],width=dims[3],area=height*width,labels=new Uint8Array(area),confidence=new Float32Array(area),groups=new Float64Array(18),bodyCounts=new Uint32Array(18);
+ const height=dims[2],width=dims[3],area=height*width,labels=new Uint8Array(area),semanticLabels=new Uint8Array(area),confidence=new Float32Array(area),groups=new Float64Array(18),bodyCounts=new Uint32Array(18);
  for(let i=0;i<area;i++){
   let max=-Infinity;for(let c=0;c<18;c++){const value=data[c*area+i];if(!Number.isFinite(value))throw Error('Invalid outfit segmentation values.');max=Math.max(max,value);}
   groups.fill(0);let total=0;
@@ -22,13 +22,16 @@ export function clothingLabelMap(data,dims){
   let first=0,second=0,id=0;for(let c=0;c<18;c++){if(groups[c]>first){second=first;first=groups[c];id=c;}else if(groups[c]>second)second=groups[c];}
   const score=first/total;
   if(score>=.7&&(first-second)/total>=.15){
+   // Retain trusted non-clothing evidence for cleanup vetoes without making
+   // skin, hair or limbs eligible for clothing groups or color sampling.
+   semanticLabels[i]=id;
    if([2,11,12,13,14,15].includes(id))bodyCounts[id]++;
    if(clothingRegions.some(x=>x.id===id)){labels[i]=id;confidence[i]=score;}
   }
  }
  const head=bodyCounts[2]+bodyCounts[11],limbs=bodyCounts[12]+bodyCounts[13]+bodyCounts[14]+bodyCounts[15];
  const personDetected=head+limbs>=Math.max(8,Math.ceil(area*.005))&&(head>=Math.max(4,Math.ceil(area*.002))||limbs>=Math.max(8,Math.ceil(area*.02)));
- return {labels,confidence,width,height,personDetected};
+ return {labels,semanticLabels,confidence,width,height,personDetected};
 }
 export function clothingMaskGroups(map){
  const {labels,confidence,width,height}=map;if(labels.length!==width*height||confidence.length!==labels.length)throw Error('Invalid outfit mask.');
@@ -83,6 +86,7 @@ export function repairGarmentDisplayPinholes(image,map,group,{
    ||image.width<width||image.height<height
    ||image.data?.length!==image.width*image.height*image.channels
    ||map.labels&&map.labels.length!==n
+   ||map.semanticLabels&&map.semanticLabels.length!==n
    ||!Number.isInteger(maxHolePixels)||maxHolePixels<1||maxHolePixels>12
    ||!Number.isFinite(maxTotalGrowthFraction)||maxTotalGrowthFraction<0||maxTotalGrowthFraction>.04
    ||!Number.isFinite(maxNeighborColorDistance)||maxNeighborColorDistance<0||maxNeighborColorDistance>60)
@@ -115,6 +119,7 @@ export function repairGarmentDisplayPinholes(image,map,group,{
    const i=queue[front++],x=i%width,y=Math.floor(i/width);
    if(x===0||x===width-1||y===0||y===height-1)border=true;
    if(map.labels?.[i]&&map.labels[i]!==group.id)otherClass=true;
+   if(map.semanticLabels?.[i]&&map.semanticLabels[i]!==group.id)otherClass=true;
    for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){
     if(!dx&&!dy)continue;
     const xx=x+dx,yy=y+dy;
@@ -260,18 +265,26 @@ export function isolateClothingPixels(image,map,group,{repairDisplayPinholes=tru
 // the white display background. Spread samples evenly across the mask.
 export function clothingColorSample(image,map,group){
  clothingCropBounds(image,map,group);
- const selected=[];for(let i=0;i<group.selected.length;i++)if(group.selected[i])selected.push(i);
+ const selected=[],sourcePixels=new Set();let distinctMaskPixels=0;
+ for(let i=0;i<group.selected.length;i++)if(group.selected[i]){
+  distinctMaskPixels++;
+  const x=Math.min(image.width-1,Math.floor((i%map.width+.5)*image.width/map.width)),
+   y=Math.min(image.height-1,Math.floor((Math.floor(i/map.width)+.5)*image.height/map.height)),
+   source=(y*image.width+x)*image.channels;
+  // A processor can upscale a small source into many model cells. Repeated
+  // references to one original pixel are not independent color observations.
+  if(!sourcePixels.has(source)){sourcePixels.add(source);selected.push(source);}
+ }
  if(!selected.length)throw Error('Empty clothing mask.');
  // Do not inflate a tiny mask into 256 apparently independent observations.
  // The color estimator ignores transparent, unfilled slots and can request
  // review rather than confidently label a handful of repeated pixels.
  const sampleCount=Math.min(256,selected.length),data=new Uint8ClampedArray(16*16*4);
  for(let n=0;n<sampleCount;n++){
-  const i=selected[Math.min(selected.length-1,Math.floor((n+.5)*selected.length/sampleCount))];
-  const x=Math.min(image.width-1,Math.floor((i%map.width+.5)*image.width/map.width)),y=Math.min(image.height-1,Math.floor((Math.floor(i/map.width)+.5)*image.height/map.height)),source=(y*image.width+x)*image.channels;
+  const source=selected[Math.min(selected.length-1,Math.floor((n+.5)*selected.length/sampleCount))];
   for(let c=0;c<3;c++)data[n*4+c]=image.data[source+c];data[n*4+3]=255;
  }
- return {data,width:16,height:16,distinctMaskPixels:selected.length,sampledPixels:sampleCount};
+ return {data,width:16,height:16,distinctMaskPixels,distinctSourcePixels:selected.length,sampledPixels:sampleCount};
 }
 
 
