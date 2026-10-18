@@ -7,7 +7,7 @@ function setup({workerFails=false,saveFails=false}={}){
 }
 test('automatically cropped pieces enter indexing separately with original photos retained',async()=>{
  const h=setup();h.c.startOutfitSplit('data:image/jpeg;base64,AAAA');const hint={categories:['Tops'],types:[],clipped:false};h.emit({type:'piece',piece:{image:'data:image/jpeg;base64,AABB',hint,recognitionPhoto:{image:'data:image/jpeg;base64,ABCD'},colorEstimate:{color:'Blue'}}});h.emit({type:'piece',piece:{image:'data:image/jpeg;base64,AACC',recognitionPhoto:{image:'data:image/jpeg;base64,ACCD'},hint}});h.emit({type:'done',count:2});assert.equal(h.c.batch.length,2);assert.equal(h.c.busy,false);assert.equal(h.c.worker.stopped,true);assert.ok(h.c.batch.every(x=>!x.requiresOwnershipConfirmation));assert.equal(h.c.batch[0].originalPhoto.image,'data:image/jpeg;base64,AAAA');assert.equal(h.c.batch[0].recognitionPhoto.image,'data:image/jpeg;base64,ABCD');assert.match(h.el('outfitSaveStatus').textContent,/may save automatically/);
- assert.match(h.el('outfitSplitStatus').textContent,/possible clothing regions found/);
+ assert.match(h.el('outfitSplitStatus').textContent,/new clothing regions found/);
 });
 test('partial failure keeps emitted photos, offers retry and does not invent owned clothing',()=>{
  const h=setup();h.c.startOutfitSplit('data:image/jpeg;base64,AAAA');h.emit({type:'piece',piece:{image:'data:image/jpeg;base64,AABB',recognitionPhoto:{image:'data:image/jpeg;base64,ABCD'},hint:{categories:['Bottoms'],types:[],clipped:false}}});h.emit({type:'error'});assert.equal(h.c.batch.length,1);assert.equal(h.c.items.length,0);assert.equal(h.el('outfitRetry').hidden,false);assert.equal(h.c.busy,false);assert.equal(h.timers.size,0);
