@@ -183,3 +183,46 @@ test('recognized color-pending garment offers quick color save, not a mandatory 
  assert.match(source,/Garment identified\. Choose a color below to save; your original photo is kept/);
  assert.match(source,/Garment category recognized\. Choose a color below to save; specific type is optional/);
 });
+
+test('unmasked outfit fallback cannot automatically take its background as clothing color',async()=>{
+ const {c,stored}=setup({quality:async()=>({blank:false,signature:[10,20,30],aspect:1,
+  colorEstimate:{color:'White'}}),result:{strong:false,categoryConfirmed:true,categoryOnly:true,
+  choices:[{category:'Tops',itemType:'Unknown',label:'Tops',sleeveLength:'Unknown'}],details:{}}});
+ c.candidate('unreliable-outfit-tile',{outfitSourceId:'capture',
+  recognitionPhoto:{image:'original-unmasked-crop'},segmentHint:{
+   categories:['Tops'],types:[],clipped:false,displayFallback:'original-crop',
+   displayFallbackReason:'unexplained-enclosed-gap'}});
+ await done(c);
+ assert.equal(stored.length,0);
+ assert.equal(c.batch[0].category,'Tops');assert.equal(c.batch[0].color,'');
+ assert.match(c.batch[0].localStatus,/Choose a color below to save/);
+});
+test('even strong outfit label cannot use room-color photo estimate without garment evidence',async()=>{
+ const {c,stored}=setup({quality:async()=>({blank:false,signature:[10,20,30],aspect:1,
+  colorEstimate:{color:'Red'}}),result:{strong:true,choices:[choice],details:{}}});
+ c.candidate('whole-outfit-piece',{outfitSourceId:'full-photo',
+  recognitionPhoto:{image:'original-rgb'},segmentHint:{categories:['Tops'],types:[],clipped:false}});
+ await done(c);
+ assert.equal(stored.length,0);assert.equal(c.batch[0].category,'Tops');
+ assert.equal(c.batch[0].color,'');
+});
+test('single-garment camera color remains available for automatic indexing',async()=>{
+ const {c,stored}=setup({quality:async()=>({blank:false,signature:[10,20,30],aspect:1,
+  colorEstimate:{color:'Blue'}}),result:{strong:true,choices:[choice],details:{}}});
+ c.candidate('single-item');await done(c);
+ assert.equal(stored.length,1);assert.equal(stored[0].color,'Blue');
+ assert.equal(stored[0].colorSource,'photo-estimate');
+});
+test('a verified mask color retains priority over both scene color and model detail',async()=>{
+ const {c,stored}=setup({quality:async()=>({blank:false,signature:[10,20,30],aspect:1,
+  colorEstimate:{color:'White'}}),result:{strong:true,choices:[choice],details:{color:'Red'}}});
+ c.candidate('outfit-display',{outfitSourceId:'outfit',
+  recognitionPhoto:{image:'original-crop'},segmentHint:{categories:['Tops'],types:[],
+   clipped:false,displayFallback:'original-crop'},
+  colorEstimate:{color:'Blue',source:'photo-estimate'}});
+ await done(c);
+ assert.equal(stored.length,1);
+ assert.equal(stored[0].color,'Blue');
+ assert.equal(stored[0].colorMethod,'garment-mask');
+ assert.equal(stored[0].recognitionPhoto.image,'original-crop');
+});
