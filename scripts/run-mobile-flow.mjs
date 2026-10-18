@@ -374,6 +374,64 @@ try{
  });
  assert.deepEqual(chosen,{category:'Bottoms',itemType:'Shorts',color:'Orange',colorSource:'user'});
  console.log('QUICK_COLOR_USER_CONFIRMATION '+JSON.stringify({fixture:'commons-0035',...chosen,requiredExtraScreen:false,automaticInference:false}));
+
+ // A licensed real-photo shorts image has just passed garment-category
+ // recognition and explicit user color confirmation. Check the entire
+ // saved-photo -> Style this handoff; no artificial classifier label or
+ // additional retailer items are inserted.
+ const realHandoff=await page.evaluate(()=>{
+  const piece=items.find(x=>x.importFilename==='commons-0035.jpg');
+  const currentPhotos=[...batch,...items.filter(x=>sessionCapturedIds.has(x.id))];
+  return {id:piece?.id,photoResultIndex:currentPhotos.findIndex(x=>x.id===piece?.id),
+   image:piece?.image||null,original:piece?.originalPhoto?.image||null,
+   recognition:piece?.recognitionPhoto?.image||null};
+ });
+ assert.ok(realHandoff.id,'Confirmed orange shorts must be saved');
+ assert.ok(realHandoff.photoResultIndex>=0,
+  'After saving a real photo it must remain in the session Photo results');
+ const realPhotoCard=page.locator('#reviewGrid .photo-result').nth(realHandoff.photoResultIndex);
+ const styleButton=realPhotoCard.getByRole('button',{name:'Style this',exact:true});
+ assert.equal(await styleButton.count(),1,'Saved clothing photo must have the one-tap Style this button');
+ const tapBounds=await styleButton.boundingBox();
+ assert.ok(tapBounds&&tapBounds.width>=44&&tapBounds.height>=44,
+  'Style this requires a phone-friendly 44px touch target');
+ await styleButton.tap();
+ await page.locator('#stylistAnchor').waitFor({state:'visible'});
+ await page.locator('#styledCollectionResults .styled-outfit').first().waitFor({timeout:15000});
+ const styledReal=await page.evaluate(id=>{
+  const selection=items.find(x=>x.id===id);
+  return {anchor:stylistAnchorItemId,category:selection?.category,
+   type:selection?.itemType,color:selection?.color,
+   options:styledCollectionResults.map(r=>({
+    hasAnchor:r.board.slots.bottom===id,
+    allOwned:Object.values(r.board.slots).every(pieceId=>items.some(item=>item.id===pieceId)),
+    gaps:r.missing
+   }))};
+ },realHandoff.id);
+ assert.equal(styledReal.anchor,realHandoff.id);
+ assert.equal(styledReal.category,'Bottoms');
+ assert.equal(styledReal.type,'Shorts');
+ assert.equal(styledReal.color,'Orange');
+ assert.ok(styledReal.options.length>0,'Real saved shorts should yield at least a partial owned outfit');
+ assert.ok(styledReal.options.every(x=>x.hasAnchor&&x.allOwned),
+  'All options must pin the confirmed shorts and include only owned clothing');
+ const sourceAfter=await page.evaluate(id=>{
+  const p=items.find(x=>x.id===id);
+  return {image:p.image,original:p.originalPhoto?.image||null,
+   recognition:p.recognitionPhoto?.image||null};
+ },realHandoff.id);
+ assert.deepEqual(sourceAfter,{image:realHandoff.image,original:realHandoff.original,
+  recognition:realHandoff.recognition},
+  'Styling must preserve original garment and its recognition photo');
+ console.log('REAL_PHOTO_STYLE_HANDOFF '+JSON.stringify({
+  photo:'commons-0035',outfitOptions:styledReal.options.length,
+  everyOptionPinned:true,allClothingOwned:true,
+  categoryRecognized:'Bottoms',typeRecognized:'Shorts',
+  orangeColorUserConfirmed:true,tapWidth:Math.round(tapBounds.width),
+  tapHeight:Math.round(tapBounds.height),originalPreserved:true,
+  physicalPhoneTested:false,automaticRecognitionAccuracyClaimed:false
+ }));
+
  assert.deepEqual(errors,[]);await page.screenshot({path:out+'/closet.png',fullPage:true});
  const result={viewport:{width:390,height:844},camera,image,manualSave:true,searchAndFilters:true,reloadPersistence:true,automaticPhotoIndexing:true,realRecognitionWorker:true,auth:'test identity stub; production auth not tested',hardware:'Chromium fake camera; physical phone not tested',pageErrors:errors};await writeFile(out+'/results.json',JSON.stringify(result,null,2));console.log(JSON.stringify(result));
 }finally{await browser?.close();await new Promise(r=>server.close(r));}
