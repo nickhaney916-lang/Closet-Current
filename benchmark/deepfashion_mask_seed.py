@@ -42,6 +42,7 @@ def proposal_seed(original, candidate, ordinal, model):
       "sourceSha256":original["sha256"],"width":int(mask.shape[1]),
       "height":int(mask.shape[0]),"runs":encode_binary_runs(mask),
       "model":model,"candidateOrdinal":ordinal,
+      "modelProposalId":original["image"].rsplit(".",1)[0]+f"-candidate-{ordinal:02d}",
       "modelGarmentLabel":candidate["itemType"],
       "modelConfidence":round(float(candidate["score"]),6),
       "reviewStatus":"prediction-unreviewed",
