@@ -103,3 +103,25 @@ test('never trusts caller owner id or caller supplied metadata',async()=>{
  assert.equal(out.completed,true);
  assert.deepEqual(h.files.get(B),[f(998)]);
 });
+
+
+test('a no-op Storage API never allows account or backup deletion',async()=>{
+ const h=harness({files:2});
+ h.api.removePhotos=async()=>{h.calls.push('remove-noop');};
+ await assert.rejects(createAccountDeletionCoordinator(h.api).deleteAccount(req),/Deleted private photos remain/);
+ assert.ok(!h.calls.includes('deleteBackup'));
+ assert.ok(!h.calls.includes('deleteAuth'));
+ assert.equal(h.files.get(A).length,2);
+});
+test('a backup that still appears after deletion blocks Auth removal',async()=>{
+ const h=harness({files:0});
+ h.api.hasBackup=async()=>{h.calls.push('verifyBackup');return true;};
+ await assert.rejects(createAccountDeletionCoordinator(h.api).deleteAccount(req),/Private backup still exists/);
+ assert.ok(!h.calls.includes('deleteAuth'));
+});
+test('a failed final Auth verification cannot be reported as complete deletion',async()=>{
+ const h=harness({files:0});
+ h.api.verifyUserDeleted=async()=>{h.calls.push('verifyAuth');return false;};
+ await assert.rejects(createAccountDeletionCoordinator(h.api).deleteAccount(req),/Auth account deletion unverified/);
+ assert.equal(h.calls.filter(x=>x==='deleteAuth').length,1);
+});
