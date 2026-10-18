@@ -3,6 +3,17 @@
 // mockups, hidden paid calls, or automatic selfie uploads.
 let tryOnFigure='female',tryOnBusy=false,tryOnRevision=0,tryOnImage=null,tryOnFingerprint='';
 let tryOnReady=false,tryOnReadinessPending=true;
+// These are lightweight local previews of the two fixed AI figures, not
+// generated try-on results. They make selecting a model possible offline.
+function updateStandardModelPreview(){
+ const preview=$('tryOnModelPreview');
+ if(preview){
+  preview.src='ai-models/'+tryOnFigure+'-preview.webp';
+  preview.alt='Standard '+tryOnFigure+' AI fashion model, before any outfit generation';
+ }
+ const caption=$('tryOnModelCaption');
+ if(caption)caption.textContent='Standard '+tryOnFigure+' model · preview only. Your selected clothing has not been rendered yet.';
+}
 function tryOnSignature(){
  const ids=currentBoard?.slots||{};
  return tryOnFigure+':'+['top','bottom','layer','layer2','layer3','shoes'].map(k=>{const item=items.find(x=>x.id===ids[k]);return (ids[k]||'')+':'+(item?.image?.length||0)+':'+(item?.image?.slice(-24)||'');}).join('|');
@@ -107,8 +118,10 @@ async function generateTryOn(){
 }
 $('tryOnFigure').onchange=event=>{
  tryOnFigure=window.AiTryOnPlan.figure(event.target.value);
+ updateStandardModelPreview();
  resetTryOnPreview();onTryOnBoardChanged();
 };
 $('tryOnGenerate').onclick=generateTryOn;
+updateStandardModelPreview();
 onTryOnBoardChanged();
 checkTryOnReadiness();
