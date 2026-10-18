@@ -11,7 +11,7 @@ def decode(decs,proto,geo,threshold=.20):
     n=geo["inputSize"];w=geo["originalWidth"];h=geo["originalHeight"]
     xp=geo["xPad"];yp=geo["yPad"];ratio=geo["scale"]
     if (d.shape!=(1,300,38) or p.ndim!=4 or p.shape[0]!=1 or
-       p.shape[1]!=32 or p.shape[2]!=p.shape[3] or
+       p.shape[1]!=32 or p.shape[2]!=p.shape[3] or p.shape[2]!=n//4 or
        not np.isfinite(d).all() or not np.isfinite(p).all() or
        n not in (416,640) or w*h>12_000_000 or w<1 or h<1 or
        not .05<=threshold<=.9):
