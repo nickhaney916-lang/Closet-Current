@@ -3,7 +3,7 @@ import {createHash} from 'node:crypto';
 import {resolve,join} from 'node:path';
 import {chromium} from 'playwright';
 import {createServer} from 'node:http';
-import {approvedReferenceMask,scoreApprovedPredictionAtReferenceResolution,scoreApprovedColorSampling} from '../benchmark/garment-mask-metrics.mjs';
+import {approvedReferenceMask,scoreApprovedPredictionAtReferenceResolution,scoreApprovedColorSampling,scoreApprovedGarmentEdgeRetention} from '../benchmark/garment-mask-metrics.mjs';
 import {maskComponents} from '../benchmark/mask-components.mjs';
 import {buildGarmentReviewPacket} from '../benchmark/garment-review-packet.mjs';
 const manifest=JSON.parse(await readFile('benchmark/segmentation-review-manifest.json','utf8'));
@@ -58,15 +58,16 @@ try{
   await writeFile(join(outDir,entry.id+'.overlay.png'),Buffer.from(overlayPng,'base64'));
   await writeFile(join(outDir,entry.id+'.prediction.json'),JSON.stringify(maskPrediction,null,2));
   const fragments=maskComponents(maskPrediction);
-  let status='awaiting-human-reference',metrics=null,colorSampling=null;
+  let status='awaiting-human-reference',metrics=null,colorSampling=null,edgeRetention=null;
   if(entry.referenceMask&&entry.reviewStatus==='approved'){
    const annotation=JSON.parse(await readFile(entry.referenceMask,'utf8'));
    // Align predictions to an independently approved reference with nearest-neighbor sampling.
    approvedReferenceMask(annotation,entry);
    metrics=scoreApprovedPredictionAtReferenceResolution(annotation,entry,maskPrediction);
-   colorSampling=scoreApprovedColorSampling(annotation,entry,maskPrediction);status='scored';
+   colorSampling=scoreApprovedColorSampling(annotation,entry,maskPrediction);
+   edgeRetention=scoreApprovedGarmentEdgeRetention(annotation,entry,maskPrediction);status='scored';
   }
-  report.push({id:entry.id,status,foregroundPixels:predicted.foregroundPixels,personDetected:predicted.personDetected,fragments,metrics,colorSampling});
+  report.push({id:entry.id,status,foregroundPixels:predicted.foregroundPixels,personDetected:predicted.personDetected,fragments,metrics,colorSampling,edgeRetention});
   console.log('SEGMENTATION_CASE '+JSON.stringify(report.at(-1)));
  }
 }finally{await browser.close();await new Promise(resolve=>server.close(resolve));}
