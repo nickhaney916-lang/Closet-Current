@@ -86,3 +86,15 @@ input[type="checkbox"]{min-height:20px;width:20px;height:20px;vertical-align:mid
 .closet-quick-review .actions .primary{grid-column:1/-1;width:100%}
 @media(max-width:420px){.closet-quick-review{padding:16px}
  .closet-quick-review-photo{height:166px}}
+
+/* Small factual data notice; the new signup acknowledgment is never
+   shown on login and never doubles as marketing opt-in. */
+.pilot-acknowledgment{display:flex;align-items:flex-start;gap:10px;
+ text-align:left;font-size:13px;line-height:1.55;font-weight:500}
+.pilot-acknowledgment[hidden]{display:none}
+.pilot-acknowledgment input{flex:0 0 21px;width:21px;height:21px;
+ margin:2px 0 0;accent-color:#7043ba}
+.pilot-acknowledgment span{flex:1}
+.pilot-acknowledgment a,.auth-card .fine a{color:#55359d;text-underline-offset:3px}
+.account-menu .account-data-link{display:block;text-align:center;
+ padding:12px;min-height:48px;text-decoration:none}
