@@ -1,5 +1,47 @@
 # Closet Current master development checkpoint
 
+
+## Full-outfit physical garment inventory scoring — October 18, 2026, Pacific
+
+- Continued after the genuine one-photo diagnosis at `3f5b07d82bd047908dc483ef09ba3d3ad56b5836` on development branch
+  `fix/photo-clarity-high-quality-downsampling-20261016`, draft PR #7.
+- Added research-only `benchmark/physical-garment-inventory.mjs`, its
+  synthetic unit regressions, and source-verified CLI
+  `scripts/score-physical-garment-inventory.mjs`. The entire photo's independently
+  identified garment inventory is now the denominator for missed-instance
+  recall, not the AI proposal count. One-to-one maximum-cardinality/IoU
+  matching prevents duplicate proposals from counting as extra clothing.
+  Wrong broad categories, unsupported shoes/hosiery/accessories, and
+  ambiguous unmatched predictions are explicitly reported.
+- Extended the **internal** original-photo annotation editor to create
+  blank, human-drawn physical garment targets (including garments with
+  zero model proposals), plus a distinct second-reviewer approval screen.
+  No customer UI changes or mandatory customer annotations.
+- The ten-photo pinned DeepFashion experiment executes the new CLI in CI.
+  The verified [pinned ONNX run 39162990829](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39162990829)
+  passed the non-promotion gates. The ten reviewed-source inventory reports
+  **zero independently approved complete human inventories**, so
+  ten-photo and per-photo garment instance accuracy remain **null**.
+  This is expected and correct; it is not a segmentation improvement.
+- Full application suite [run 39162399218](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39162399218):
+  **741 passed, 0 failed, 3 skipped** at the earlier pure scorer checkpoint.
+  The browser annotation/second-approval regression also passed on
+  `ad4e4a9c17e2a4e5010e5ff70bc1a53ae374243f`; final mobile workflow
+  at later commits remains a separately monitored gate.
+- Review instructions and a clearly **unapproved illustrative** inventory
+  schema are in `benchmark/FULL-OUTFIT-INDEPENDENT-INVENTORY-GATE-20261018.md`.
+  No reviewer outlines have been invented, approved, or promoted. Source
+  descriptions and model suggestions are not pixel ground truth.
+- **Next blocker, external to code:** obtain TWO genuinely independent human
+  reviews and complete garment masks from the original licensed photos,
+  especially `validation-0031` (blazer/shirt/skirt/tights/shoes).
+  Only then evaluate real garment precision/recall and contamination for
+  DeepFashion and separate shoe models. No model promotion without held-out
+  evidence and explicit owner approval for production.
+- No paid services, production merge/deployment, recognition-threshold
+  relaxation, customer photographs, or Drive Duel changes.
+
+
 ## Verified real-photo model-decision diagnosis — October 18, 2026, Pacific
 
 - Development commit `855f0261a09b636481347272de82647c0d1967b4`
