@@ -28,11 +28,21 @@ test('garment mask keeps unmodified fabric pixels intact and removes only erased
 });
 test('production crop export explicitly requests high quality sampling',()=>{
  const code=fs.readFileSync('public/photo-crop-editor.js','utf8');
- const start=code.indexOf('function exportPhoto()');
+ const start=code.indexOf('function exportPhoto(useMask=true)');
  const end=code.indexOf('function update()',start);
  assert.ok(start>=0&&end>start);
  const exportCode=code.slice(start,end);
  assert.match(exportCode,/imageSmoothingEnabled=true/);
  assert.match(exportCode,/imageSmoothingQuality='high'/);
  assert.match(exportCode,/toDataURL\('image\/jpeg',\.94\)/);
+});
+
+test('manual crop mask cannot become a category or primary color recognition source',()=>{
+ const code=fs.readFileSync('public/photo-crop-editor.js','utf8');
+ assert.match(code,/choice=await analyze\(exportPhoto\(false\)\)/);
+ assert.match(code,/if\(mask\)\{photo\.recognitionPhoto=\{image:exportPhoto\(false\)\}/);
+ assert.match(code,/if\(mask&&useMask\)/);
+ const app=fs.readFileSync('public/app.js','utf8');
+ assert.match(app,/if\(!photo\.recognitionPhoto\)delete value\.recognitionPhoto/);
+ assert.match(app,/checkPhoto\(photo\.recognitionPhoto\?\.image\|\|photo\.image\)/);
 });
