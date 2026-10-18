@@ -82,6 +82,9 @@ jobs:
               for item in c['candidateSeeds']:
                   seed=json.loads((root/item['prediction']).read_text())
                   assert seed['reviewStatus']=='prediction-unreviewed'
+                  assert seed['modelProposalId']==item['id']
+                  assert seed['candidateOrdinal']==int(item['id'].split('-candidate-')[-1])
+                  assert seed['modelGarmentLabel']==item['label']
                   assert seed['approvedBy'] is None and not seed['independentReference']
                   assert seed['sourceSha256']==c['sourceSha256'] and seed['image']==c['image']
                   assert seed['width']>0 and seed['height']>0

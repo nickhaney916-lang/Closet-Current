@@ -114,6 +114,7 @@ try{
  // new human-edited draft; undo must fully restore the previous pixels.
  await page.locator('#photo').setInputFiles({name:'review-case.png',mimeType:'image/png',buffer:Buffer.from(png,'base64')});
  await page.locator('#status').getByText(/initial mask is blank/).waitFor();
+ await page.locator('#mode').selectOption('1'); // Reset after previous seed's erase test.
  await page.locator('#tool').selectOption('polygon');
  await page.locator('#canvas').scrollIntoViewIfNeeded();
  const at=async(x,y)=>{await page.locator('#canvas').scrollIntoViewIfNeeded();const box=await page.locator('#canvas').boundingBox();return {x:box.x+(x+.5)*box.width/40,y:box.y+(y+.5)*box.height/30};};
