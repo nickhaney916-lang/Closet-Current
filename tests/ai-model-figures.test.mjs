@@ -39,3 +39,15 @@ test('the staging command cannot leave misleading partial figures when a source 
   await assert.rejects(()=>stat(output),/ENOENT/);
  }finally{await rm(dir,{recursive:true,force:true});}
 });
+
+test('two checked-in studio figure previews are real unmodified WebP image assets',async()=>{
+ const {createHash}=await import('node:crypto');
+ for(const [id,expected] of [
+  ['female','acb973c4a8084424197c26e389ea8819d3ec7765c0cf15a461a74d6c53b9eab4'],
+  ['male','92993d2a3a33a7d6ee7c504e308df0325632c424ce6202c72c3737e7c2562c29']]){
+  const image=await readFile('public/ai-models/'+id+'-preview.webp');
+  assert.equal(image.toString('ascii',0,4),'RIFF');
+  assert.equal(image.toString('ascii',8,12),'WEBP');
+  assert.equal(createHash('sha256').update(image).digest('hex'),expected);
+ }
+});
