@@ -11,6 +11,7 @@ import {clothingLabelMap} from '../public/outfit-segmentation.mjs';
 import {selectHoldoutPhotos} from '../benchmark/object-cutout-holdout.mjs';
 import {hybridGarmentAlpha,protectedBodyFromLogits} from '../benchmark/hybrid-garment-mask.mjs';
 import {proposeCutoutRoute,summarizeCutoutRoutes} from '../benchmark/experimental-cutout-router.mjs';
+import {analyzeObjectHybridDisagreement} from '../benchmark/object-hybrid-disagreement.mjs';
 
 const modelConfigs={
   object:{id:'onnx-community/BiRefNet_lite-ONNX',revision:'de15b22ba131738a16dff04aab8bdf8dc32e3ac1'},
@@ -66,6 +67,8 @@ try{
   const combined=hybridGarmentAlpha(raw.data,img.width,img.height,map,entry.expectedCategory,{
     protectedBody,haloCells:2,minSemanticPixels:8
   });
+  const difference=analyzeObjectHybridDisagreement(raw.data,combined.alpha,
+    img.width,img.height,{category:entry.expectedCategory,personDetected:map.personDetected});
   const confidenceCandidate=hybridGarmentAlpha(raw.data,img.width,img.height,map,entry.expectedCategory,{
     protectedBody:confidenceBody,haloCells:2,minSemanticPixels:8
   });
@@ -80,6 +83,23 @@ try{
   if(decoded.info.width!==img.width||decoded.info.height!==img.height||decoded.info.channels!==3)
     throw Error('Source dimensions mismatch: '+entry.id);
   const w=img.width,h=img.height,pw=420,ph=Math.max(1,Math.round(h*pw/w)),original=await sharp(bytes).resize(pw,ph).png().toBuffer();
+  // Image review only: mark object-only pixels amber, never alter the source
+  // or treat amber as recovered fabric. On person photos it could be skin.
+  const marked=new Uint8Array(decoded.data);
+  for(let i=0;i<w*h;i++){
+    if(raw.data[i]>=128&&!combined.alpha[i]){
+      const k=i*3;marked[k]=Math.round(marked[k]*.35+235*.65);
+      marked[k+1]=Math.round(marked[k+1]*.35+164*.65);
+      marked[k+2]=Math.round(marked[k+2]*.35+23*.65);
+    }
+  }
+  const auditPreview=await sharp(marked,{raw:{width:w,height:h,channels:3}})
+    .resize(pw,ph).png().toBuffer();
+  const auditTitle=Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="840" height="75"><rect width="840" height="75" fill="white"/><g font-family="sans-serif" fill="#222"><text x="12" y="26" font-size="18">Verified original</text><text x="432" y="26" font-size="18">Amber: object-only / absent in hybrid</text><text x="12" y="54" font-size="13">May be fabric, skin, mannequin or shadow — requires independent review</text><text x="12" y="69" font-size="12">Diagnostic only; original image and model masks unchanged</text></g></svg>');
+  await sharp({create:{width:840,height:ph+75,channels:3,background:'white'}})
+    .composite([{input:auditTitle,left:0,top:0},
+      {input:original,left:0,top:75},{input:auditPreview,left:pw,top:75}])
+    .png().toFile(join(dest,entry.id+'-object-only-disagreement.png'));
   const makePanel=async alpha=>{
     const rgba=new Uint8Array(w*h*4);
     for(let i=0;i<w*h;i++){
@@ -124,6 +144,7 @@ try{
     seedDetected:combined.seedDetected,semanticPixels:combined.semanticPixels,
     strictBodyVetoPixels:protectedBody.reduce((s,v)=>s+v,0),
     strongBodyVetoPixels:confidenceBody.reduce((s,v)=>s+v,0),
+    objectOnlyDisagreement:difference,
     alternatePixelsPotentiallyRestored:addedVisiblePixels,
     alternatePixelsPotentiallySkinOrMannequin:true,
     bodyExposureRiskReviewRequired:map.personDetected&&addedVisiblePixels>0,
