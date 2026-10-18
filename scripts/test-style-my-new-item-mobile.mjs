@@ -172,12 +172,78 @@ try{
  assert.equal(direct.slot,null);
  assert.equal(direct.itemType,'');
  assert.equal(direct.sourceType,null);
+ // Compact unsorted queue: an original picture + two mandatory human
+ // selections, an explicit save, then automatic next-photo navigation.
+ const beforeReview=await page.evaluate(async()=>{
+  const original=items.find(x=>x.id==='new-green-top');
+  const a=normalizeClothing({...original,id:'review-first-uncategorized',
+   name:'Unknown item A',category:'Uncategorized',itemType:'Unknown',
+   color:'Blue',colorSource:'photo-estimate',savedAt:'2026-10-18T23:51:00Z'});
+  const b=normalizeClothing({...original,id:'review-second-uncategorized',
+   name:'Unknown item B',category:'Uncategorized',itemType:'Unknown',
+   color:'',savedAt:'2026-10-18T23:52:00Z'});
+  a.originalPhoto={image:original.image};
+  await writeAll([a,b]);
+  items.push(a,b);
+  render();
+  return {first:JSON.stringify(a),second:JSON.stringify(b),
+   originalImage:a.image,sourceImage:a.originalPhoto.image};
+ });
+ assert.equal(await page.locator('#closetUnsorted').isVisible(),true);
+ assert.match(await page.locator('#closetUnsorted').innerText(),/2/);
+ await page.locator('#closetUnsorted').click();
+ const queue=page.locator('dialog.closet-quick-review');
+ await queue.waitFor({state:'visible'});
+ assert.equal(await queue.locator('img.closet-quick-review-photo').getAttribute('src'),beforeReview.originalImage);
+ assert.equal(await queue.getByLabel('Clothing category').inputValue(),'');
+ assert.equal(await queue.getByLabel('Garment color').inputValue(),'');
+ assert.equal(await queue.getByRole('button',{name:'Save & next'}).count(),1);
+ await queue.getByLabel('Clothing category').selectOption('Bottoms');
+ // Save remains blocked until color is explicitly selected.
+ await queue.getByRole('button',{name:'Save & next'}).click();
+ assert.equal(await queue.isVisible(),true);
+ assert.equal(await page.evaluate(()=>items.find(x=>x.id==='review-first-uncategorized').category),
+  'Uncategorized');
+ await queue.getByLabel('Garment color').selectOption('Green');
+ await queue.getByRole('button',{name:'Save & next'}).click();
+ await page.waitForFunction(()=>items.find(x=>x.id==='review-first-uncategorized').category==='Bottoms');
+ await queue.waitFor({state:'visible'});
+ assert.equal(await queue.locator('img.closet-quick-review-photo').getAttribute('alt'),'Unknown item B');
+ assert.equal(await page.evaluate(()=>{
+  const x=items.find(x=>x.id==='review-first-uncategorized');
+  return x.color==='Green'&&x.colorSource==='user'&&x.itemType==='Unknown'&&
+    x.sleeveLength==='Not applicable'&&x.image===items.find(y=>y.id==='new-green-top').image;
+ }),true);
+ await queue.getByRole('button',{name:'Skip for now'}).click();
+ await queue.waitFor({state:'detached'});
+ assert.match(await page.locator('#closetUnsorted').innerText(),/1/);
+ await page.locator('#closetUnsorted').click();
+ await queue.waitFor({state:'visible'});
+ assert.equal(await queue.locator('img.closet-quick-review-photo').getAttribute('alt'),'Unknown item B');
+ await queue.getByRole('button',{name:'Close'}).click();
+ await queue.waitFor({state:'detached'});
+ await page.reload();
+ await page.evaluate(()=>Promise.all([closetReady,outfitBoardReady]));
+ const reviewed=await page.evaluate(()=>({
+  first:items.find(x=>x.id==='review-first-uncategorized'),
+  second:items.find(x=>x.id==='review-second-uncategorized')
+ }));
+ assert.equal(reviewed.first.category,'Bottoms');
+ assert.equal(reviewed.first.color,'Green');
+ assert.equal(reviewed.first.colorSource,'user');
+ assert.equal(reviewed.first.image,beforeReview.originalImage);
+ assert.equal(reviewed.first.originalPhoto.image,beforeReview.sourceImage);
+ assert.equal(reviewed.second.category,'Uncategorized');
+ assert.equal(reviewed.second.color,'');
+ assert.equal(await page.locator('#closetUnsorted').count(),1);
  assert.deepEqual(errors,[]);
  console.log('NEW_ITEM_STYLE_MOBILE '+JSON.stringify({
   result:'passed',viewport:'390x844 touch',outfitOptions:outfits.length,
   anchorPersisted:true,directOneTapSwap:true,previewNotAutoSaved:true,
   directSwappedOutfitSaved:true,onePieceSwapSaved:true,reloadVerified:true,
-  recentGarmentExactOpen:true,duplicateNameSafe:true,oldFiltersCleared:true,offlineTrendSafe:true,
+  recentGarmentExactOpen:true,duplicateNameSafe:true,oldFiltersCleared:true,
+  unsortedCategoryColorSaved:true,unsortedQueueSkipResumes:true,
+  originalUnsortedPhotoPreserved:true,offlineTrendSafe:true,
   actualPhoneVerified:false,pageErrors:errors.length
  }));
  await context.close();
