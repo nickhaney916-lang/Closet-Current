@@ -89,7 +89,7 @@ function decode(data){
    !/^(?:commons|validation)-[0-9]{4}$/.test(base)||
    !/^(?:commons|validation)-[0-9]{4}-item-[0-9]{2}$/.test(data.physicalTargetId)||
    data.physicalTargetId.slice(0,-8)!==base||
-   !['Tops','Bottoms','Dresses','Outerwear','Shoes'].includes(data.humanCategory)||
+   !['Tops','Bottoms','Dresses','Outerwear','Shoes','Hosiery','Accessories'].includes(data.humanCategory)||
    typeof data.humanTargetLabel!=='string'||!data.humanTargetLabel.trim()||
    data.humanTargetLabel.trim().length>100||
    data.targetIndependentlyIdentifiedBy!==data.reviewer)

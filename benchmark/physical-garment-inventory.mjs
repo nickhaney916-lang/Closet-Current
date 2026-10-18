@@ -5,7 +5,7 @@ import {approvedReferenceMask,scoreApprovedPredictionAtReferenceResolution} from
 
 const SHA=/^[0-9a-f]{64}$/;
 const PHOTO=/^(?:commons|validation)-[0-9]{4}$/;
-const CATEGORIES=new Set(['Tops','Bottoms','Dresses','Outerwear','Shoes']);
+const CATEGORIES=new Set(['Tops','Bottoms','Dresses','Outerwear','Shoes','Hosiery','Accessories']);
 const MODEL_CATEGORY={
  short_sleeve_top:'Tops',long_sleeve_top:'Tops',sling:'Tops',vest:'Tops',
  short_sleeve_outwear:'Outerwear',long_sleeve_outwear:'Outerwear',
@@ -106,15 +106,15 @@ export function evaluateCompletePhysicalInventory(scene,inventory,annotations,se
  }));
  const missing=refs.filter((_,j)=>!usedRefs.has(j)).map(r=>({
   physicalTargetId:r.id,category:r.category,label:r.label,
-  unsupportedByThisModel:r.category==='Shoes'
+  unsupportedByThisModel:!Object.values(MODEL_CATEGORY).includes(r.category)
  }));
  const extra=proposals.filter((_,i)=>!usedProposals.has(i)).map(([id,seed])=>({
   modelProposalId:id,predictedClass:seed.modelGarmentLabel,
   issue:'unmatched-or-duplicate-model-mask',
   knownBackgroundFalsePositive:false // Needs independent semantic review.
  }));
- const supported=refs.filter(r=>r.category!=='Shoes');
- const matchedSupported=matches.filter(x=>x.reviewedCategory!=='Shoes').length;
+ const supported=refs.filter(r=>Object.values(MODEL_CATEGORY).includes(r.category));
+ const matchedSupported=matches.filter(x=>Object.values(MODEL_CATEGORY).includes(x.reviewedCategory)).length;
  const categoryCorrect=matches.filter(x=>x.categoryCorrect).length;
  return {sourceId:scene.id,status:'conditionally-scored-complete-human-inventory',
   sourceSha256:scene.sourceSha256,modelProposals:proposals.length,
