@@ -1,6 +1,57 @@
 # Closet Current master development checkpoint
 
 
+## New-item photo review → one-tap owned-wardrobe styling — October 18, 2026, Pacific
+
+- Priority completed **only on draft PR #7 development branch**. In
+  `public/app.js`, the existing manual photo-adjust dialog now offers
+  optional **Save & style this** for new pending garment photos. A user
+  selects/validates the category (Tops, Bottoms, Dresses, Outerwear, Shoes),
+  saves the actual photo record, then opens anchored `styleNewClosetItem`
+  suggestions in one action, using only items already stored in that closet.
+  **Save changes** remains available; nothing new is mandatory.
+- The combined action fails closed when the item remains Uncategorized or has
+  an unsupported category: it leaves the draft unsaved for correction. An
+  outfit worker's fragmented/original-crop region shows an explicit warning
+  to inspect or crop a single physical garment before saving. The actual
+  original, recognition crop, and display photo are not replaced.
+- Removed a redundant draft persistence request after `savePiece()`,
+  which already atomically commits saved garment and draft removal in one
+  IndexedDB transaction; a second failing write could previously have
+  displayed a false failed-save message after a successful save.
+  Errors during the subsequent stylist navigation are now reported separately,
+  so a durable wardrobe save cannot be mistaken for a failure to save.
+- Extended `scripts/test-whole-outfit-save-mobile.mjs`: synthetic
+  segmented-photo worker (explicitly **not real model accuracy**), two
+  preexisting seeded owned items, negative unrecognized-category save
+  attempt, positive one-action manual save → anchored stylist options,
+  all option item IDs belonging to the saved closet, original outfit photo
+  exactly preserved, independent captured-outfit board navigation, and
+  storage/reload persistence. Emulated 390×844 touch viewport.
+- Verified complete browser CI at
+  [run 39166250030](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39166250030):
+  every step passed. `OUTFIT_CAPTURE_HANDOFF`: `styledAfterOneTapSave=true`,
+  `preexistingOwnedPieces=2`, `stylingUsesOnlyOwned=true`,
+  `originalPhotoPreserved=true`, `savedBoardReloaded=true`,
+  `pageErrors=0`. Existing `NEW_ITEM_STYLE_MOBILE` was also green,
+  with 2 options and persisted one-piece swap.
+- Full app build and Node CI at
+  [run 39166245537](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39166245537):
+  **741 passed, 0 failed, 3 skipped** (744 total).
+- The **actual licensed whole-outfit** check still shows
+  `validation-0031` only yields two uncertain mixed regions and **zero
+  automatic saves**; no model accuracy was improved or claimed.
+  The separate manual handoff test uses a simulated garment-split worker and
+  synthetic owned items; do not present it as real-photo segmentation evidence
+  or real-phone validation.
+- **Next P1 blocker:** obtain real independently approved human outlines
+  and full-photo inventories for layered outfits, then compare model instance
+  masks and classification/missing-piece recall. The human review still
+  cannot be simulated as ground truth. No unverified production model switch,
+  paid inference, merge/deployment, or Drive Duel changes.
+
+
+
 ## Offline full-outfit independent review handoff — October 18, 2026 (latest)
 
 - Next priority completed **on draft PR #7 only**: added
