@@ -1,5 +1,6 @@
 import test from 'node:test';import assert from 'node:assert/strict';import vm from 'node:vm';import fs from 'node:fs';import {createRequire} from 'node:module';const require=createRequire(import.meta.url),PhotoColor=require('../public/photo-color.js');
 import * as segmentation from '../public/outfit-segmentation.mjs';
+import {diagnoseOutfitRegions} from '../public/outfit-diagnostics.mjs';
 const source=fs.readFileSync('public/outfit-worker.mjs','utf8');
 function setup({failLoad=false,failSecondCrop=false,noPerson=false,completeShoePair=false}={}){
  const sent=[],width=20,height=20,data=new Float32Array(18*width*height);data.fill(-10);for(let i=0;i<400;i++)data[i]=10;
@@ -8,9 +9,9 @@ function setup({failLoad=false,failSecondCrop=false,noPerson=false,completeShoeP
  let crops=0;class Image{constructor(data,width,height,channels){Object.assign(this,{data,width,height,channels});}static async read(){return new Image(new Uint8ClampedArray(1200).fill(40),20,20,3);}async toBlob(){if(failSecondCrop&&++crops===3)throw Error('private decode error');return {arrayBuffer:async()=>new Uint8Array([255,216,255]).buffer};}}
  if(noPerson)for(let y=1;y<4;y++)for(let x=7;x<11;x++){data[11*400+y*20+x]=-10;data[y*20+x]=10;}
  const runtime={AutoModelForSemanticSegmentation:{from_pretrained:async()=>{if(failLoad)throw Error('private error');return async()=>({logits:{data,dims:[1,18,20,20]}});}},AutoProcessor:{from_pretrained:async()=>async()=>({})},RawImage:Image,env:{backends:{onnx:{wasm:{}}}}};
- const c={runtime,segmentation,PhotoColor,self:{postMessage:value=>sent.push(value)},Uint8Array,Uint8ClampedArray,btoa:text=>Buffer.from(text,'binary').toString('base64')};vm.createContext(c);
- vm.runInContext(source.replace(/await import\('https:[^']+'\)/,'await Promise.resolve(runtime)').replace("await import('./outfit-segmentation.mjs'+new URL(import.meta.url).search)",'await Promise.resolve(segmentation)').replace("await import('./photo-color.js'+new URL(import.meta.url).search)",'await Promise.resolve()'),c);
- return {sent,async run(){c.self.onmessage({data:{id:'outfit',image:'data:image/jpeg;base64,AAAA'}});await vm.runInContext('chain',c);}};
+ const c={runtime,segmentation,diagnoseOutfitRegions,PhotoColor,self:{postMessage:value=>sent.push(value)},Uint8Array,Uint8ClampedArray,btoa:text=>Buffer.from(text,'binary').toString('base64')};vm.createContext(c);
+ vm.runInContext(source.replace(/await import\('https:[^']+'\)/,'await Promise.resolve(runtime)').replace("await import('./outfit-segmentation.mjs'+new URL(import.meta.url).search)",'await Promise.resolve(segmentation)').replace("await import('./photo-color.js'+new URL(import.meta.url).search)",'await Promise.resolve()').replace("await import('./outfit-diagnostics.mjs'+new URL(import.meta.url).search)",'await Promise.resolve({diagnoseOutfitRegions})'),c);
+ return {sent,async run(diagnostics=false){c.self.onmessage({data:{id:'outfit',image:'data:image/jpeg;base64,AAAA',diagnostics}});await vm.runInContext('chain',c);}};
 }
 test('full-outfit worker emits three separate garment images and excludes body labels',async()=>{
  const h=setup();await h.run();const pieces=h.sent.filter(x=>x.type==='piece');assert.deepEqual(pieces.map(x=>x.piece.label),['Upper garment','Bottoms','Shoes']);assert.ok(pieces.every(x=>x.piece.image.startsWith('data:image/jpeg;base64,')&&x.piece.recognitionPhoto.image.startsWith('data:image/jpeg;base64,')&&x.piece.cropBounds.width<1&&x.piece.colorEstimate===null));assert.equal(h.sent.find(x=>x.type==='done').count,3);assert.ok(!JSON.stringify(pieces).includes('Face'));assert.equal(pieces[2].piece.hint.displayFallback,'original-crop','tiny separate shoes need more reliable mask evidence');assert.equal(pieces[2].piece.hint.displayFallbackReason,'fragmented-mask');assert.equal(pieces[0].piece.hint.displayFallback,null,'contiguous shirt remains clipped');
@@ -49,4 +50,15 @@ test('worker keeps original narrow recognition bounds despite broader risky disp
  assert.ok(shoe.cropBounds.width>0&&shoe.cropBounds.width<1);
  assert.ok(shoe.recognitionPhoto.image.startsWith('data:image/jpeg;base64,'));
  assert.ok(shoe.image.startsWith('data:image/jpeg;base64,'));
+});
+
+test('opt-in worker diagnostics report classification/filter counts without copying photographs',async()=>{
+ const h=setup();await h.run(true);
+ const messages=h.sent.filter(x=>x.type==='diagnostics');assert.equal(messages.length,1);
+ const summary=messages[0].summary;
+ assert.equal(summary.version,1);assert.equal(summary.emittedGroups,3);
+ assert.equal(summary.regions.find(x=>x.id===4).emitted,true);
+ assert.equal(summary.regions.find(x=>x.id===9).emitted,true);
+ assert.equal(summary.realPhotoAccuracy,null);assert.equal(summary.sourcePixelsUnchanged,true);
+ assert.equal(JSON.stringify(summary).includes('data:image'),false);
 });
