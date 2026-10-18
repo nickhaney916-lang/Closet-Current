@@ -104,6 +104,28 @@ try{
  assert.equal(independentlyApproved.humanTargetLabel,'navy trousers');
  assert.equal(independentlyApproved.approvedBy,'Reviewer Two');
 
+
+ const physical={...valid,image:'validation-0031.jpg',seedModel:null,
+  physicalTargetId:'validation-0031-item-02',humanCategory:'Bottoms',
+  humanTargetLabel:'black skirt',targetIndependentlyIdentifiedBy:'Reviewer One'};
+ await page.locator('#photo').setInputFiles({name:physical.image,mimeType:'image/png',buffer:bytes});
+ await load({...physical,physicalTargetId:'validation-0031-item-09',seedModel:'AI'});
+ await page.getByRole('status').getByText(/Independent physical garment identity/).waitFor();
+ assert.equal(await page.locator('#approve').isDisabled(),true);
+ await load(physical);
+ await page.getByRole('status').getByText(/Source verified/).waitFor();
+ assert.match(await page.locator('#instanceTargetText').innerText(),/black skirt.*Bottoms/);
+ assert.equal(await page.locator('#approve').isDisabled(),true);
+ await page.locator('#approver').fill('Reviewer Two');
+ await page.locator('#verified').check();
+ const physicalDownload=page.waitForEvent('download');
+ await page.locator('#approve').click();
+ const physicalFile=await physicalDownload;
+ assert.equal(physicalFile.suggestedFilename(),'validation-0031-item-02.mask.approved.json');
+ const physicalApproved=JSON.parse(await readFile(await physicalFile.path(),'utf8'));
+ assert.equal(physicalApproved.physicalTargetId,'validation-0031-item-02');
+ assert.equal(physicalApproved.humanCategory,'Bottoms');
+ assert.equal(physicalApproved.approvedBy,'Reviewer Two');
  assert.deepEqual(errors,[]);
  console.log('INDEPENDENT_MASK_REVIEW '+JSON.stringify({status:'passed',
    sourcedByChecksum:true,reviewersDistinct:true,

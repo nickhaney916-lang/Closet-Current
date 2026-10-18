@@ -164,6 +164,36 @@ try{
  await page.locator('#undo').click();
  assert.equal(await page.locator('#download').isDisabled(),true,'Undo back to untouched model suggestion must require review');
 
+
+ // Independently identified garment absent from model proposals (e.g. skirt).
+ await page.locator('#photo').setInputFiles({name:'validation-0031.jpg',mimeType:'image/png',buffer:Buffer.from(png,'base64')});
+ await page.locator('#status').getByText(/initial mask is blank/).waitFor();
+ await page.locator('#tool').selectOption('brush');
+ await page.locator('#mode').selectOption('1');
+ await page.locator('#inventoryMode').check();
+ assert.equal(await page.locator('#download').isDisabled(),true);
+ await page.locator('#inventoryId').fill('validation-0031-item-02');
+ await page.locator('#inventoryCategory').selectOption('Bottoms');
+ await page.locator('#targetGarment').fill('black skirt');
+ assert.equal(await page.locator('#download').isDisabled(),true);
+ await page.locator('#canvas').scrollIntoViewIfNeeded();
+ const independentBox=await page.locator('#canvas').boundingBox();
+ await page.mouse.click(independentBox.x+independentBox.width*.5,independentBox.y+independentBox.height*.5);
+ assert.equal(await page.locator('#download').isDisabled(),false);
+ const physicalDownload=page.waitForEvent('download');
+ await page.locator('#download').click();
+ const physicalFile=await physicalDownload;
+ assert.equal(physicalFile.suggestedFilename(),'validation-0031-item-02.mask.draft.json');
+ const physicalDraft=JSON.parse(await fs.readFile(await physicalFile.path(),'utf8'));
+ assert.equal(physicalDraft.modelProposalId,undefined);
+ assert.equal(physicalDraft.seedModel,null);
+ assert.equal(physicalDraft.physicalTargetId,'validation-0031-item-02');
+ assert.equal(physicalDraft.humanCategory,'Bottoms');
+ assert.equal(physicalDraft.targetIndependentlyIdentifiedBy,'First Reviewer');
+ await page.locator('#prediction').setInputFiles({name:'seed.json',mimeType:'application/json',
+  buffer:Buffer.from(JSON.stringify({...seed,image:physicalDraft.image,sourceSha256:physicalDraft.sourceSha256}))});
+ await page.locator('#status').getByText(/must start blank/).waitFor();
+ assert.equal(await page.locator('#inventoryMode').isChecked(),true);
  assert.deepEqual(errors,[]);
  console.log('ANNOTATION_EDITOR_SMOKE '+JSON.stringify({status:'passed',width:draft.width,height:draft.height,runs:draft.runs.length,reviewStatus:draft.reviewStatus,pageErrors:errors.length}));
 }finally{await browser.close();}
