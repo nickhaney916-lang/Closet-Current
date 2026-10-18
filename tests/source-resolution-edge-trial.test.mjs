@@ -6,9 +6,10 @@ function example({pale=false,shadow=false,semanticVeto=false}={}){
   labels=new Uint8Array(24*24),semanticLabels=new Uint8Array(24*24);
  for(let y=0;y<height;y++)for(let x=0;x<width;x++){
   const i=y*width+x,inside=x>=26&&x<74&&y>=26&&y<78;
-  truth[i]=inside?1:0;
+  const shadowStrip=shadow&&x>=26&&x<28&&y>=35&&y<68;
+  truth[i]=inside&&!shadowStrip?1:0;
   const fg=pale?[233,234,231]:[32,72,150],bg=[235,235,233];
-  const rgb=inside||shadow&&x>=24&&x<28&&y>=35&&y<68?fg:bg;
+  const rgb=inside||shadowStrip?fg:bg;
   source.set(rgb,i*3);
  }
  for(let y=7;y<19;y++)for(let x=7;x<18;x++)coarse[y*24+x]=1;
@@ -41,14 +42,17 @@ test('pale garment similar to background cannot be confidently grown',()=>{
 });
 test('a similarly colored exterior shadow exposes why synthetic-only gain cannot authorize production',()=>{
  const {score}=run({shadow:true});
- assert.ok(score.candidate.falsePositive>=score.baseline.falsePositive);
+ assert.ok(score.candidate.falsePositive>score.baseline.falsePositive,
+  'similar-colored background can be falsely admitted despite a fabric recall gain');
+ assert.equal(score.passesSyntheticNoNewBackground,false,
+  'shadow case must reject any automatic promotion');
  assert.equal(score.productionAuthorized,false,'even idealized synthetic results never approve live model');
  console.log('SOURCE_EDGE_SYNTHETIC_SHADOW '+JSON.stringify(score));
 });
 test('trusted non-garment labels block edge proposals without losing seed',()=>{
  const {r}=run({semanticVeto:true});
  assert.ok(r.rejectedSemantic>0);
- for(let y=0;y<96;y++)for(let x=0;x<96;x++)if(x>=24&&x<28){
+ for(let y=28;y<76;y++)for(let x=24;x<28;x++){
   const i=y*96+x;assert.equal(r.candidate[i],r.baseline[i],
    'semantic veto strip cannot grow into confirmed body region');
  }
