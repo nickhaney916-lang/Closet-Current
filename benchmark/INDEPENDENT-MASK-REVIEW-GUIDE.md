@@ -4,7 +4,7 @@
 
 ## Process
 
-1. Use the original photo from `benchmark/locked-photo-sources.json`, verified against its SHA-256 hash. Save it locally; preserve the source attribution/license.
+1. Download the **canonical `commons-####.jpg`** from the offline review packet, matching the `image` field in `benchmark/segmentation-review-manifest.json`. Its SHA-256 must match the locked source; preserve the source attribution/license. The byte-identical `commons-####.original.jpg` is for archival traceability, **not** for selection in the annotation tool. The exporter records the photo filename, and a draft made from `.original.jpg` cannot be staged as a canonical reference.
 2. **First reviewer:** open `benchmark/annotate-garment.html` locally, choose the photo, paint the **entire actual garment**, correcting cuffs, hems, soles, laces, attached straps, mannequin, fixtures and shadows. The predicted-mask upload is only an optional draft starting point. Enter your reviewer name and export the `*.mask.draft.json`. Draft files never count as ground truth.
 3. **Second independent reviewer:** open `benchmark/approve-garment-mask.html`, choose the **same original photo** and the draft JSON, inspect the overlaid boundaries at multiple opacities and either reject for correction or enter a *different* reviewer name and check the independent-verification statement. Export the `*.mask.approved.json` only if it is genuinely correct. The tool checks filename, original photo SHA-256, dimensions, run length and distinct reviewer identities. It cannot attest to whether a human actually looked carefully; reviewers remain responsible for the quality.
 4. After genuinely independent approval, from the repository root run:

@@ -21,6 +21,10 @@ test('offline packet identifies six SHA-locked source photos without ground-trut
  for(const entry of manifest.cases){
   assert.match(output.html,new RegExp(entry.id+'\\.side-by-side\\.png'));
   assert.match(output.html,new RegExp(entry.id+'\\.original\\.jpg'));
+  assert.match(output.html,new RegExp('href="'+entry.id+'\\.jpg" download="'+entry.id+'\\.jpg"'));
+  const task=output.manifest.cases.find(x=>x.id===entry.id);
+  assert.equal(task.files.original,entry.image,'first reviewer must use manifest canonical image name');
+  assert.equal(task.files.archivalOriginal,entry.id+'.original.jpg');
   assert.match(output.html,new RegExp(entry.id+'\\.prediction\\.json'));
   assert.ok(output.manifest.cases.find(x=>x.id===entry.id)?.sourceSha256===entry.sourceSha256);
  }

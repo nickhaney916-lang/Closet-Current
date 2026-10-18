@@ -38,7 +38,8 @@ export function buildGarmentReviewPacket(manifest,sources,report){
    status:result.status,personDetected:typeof result.personDetected==='boolean'?result.personDetected:null,
    fragmentCount:result.fragments?.count??null,
    files:{
-    original:entry.id+'.original.jpg',
+    original:entry.image,
+    archivalOriginal:entry.id+'.original.jpg',
     comparison:entry.id+'.side-by-side.png',
     modelSuggestion:entry.id+'.prediction.json'
    }
@@ -47,9 +48,10 @@ export function buildGarmentReviewPacket(manifest,sources,report){
  if(reportMap.size!==caseIds.size)throw Error('Unexpected review prediction');
  const pending=tasks.filter(t=>t.status!=='scored').length;
  const cards=tasks.map(t=>{
-  const links='<a href="'+escaped(t.files.original)+'">Original licensed photo</a> · '+
+  const links='<a href="'+escaped(t.files.original)+'" download="'+escaped(t.image)+'">1 · Download source photo for annotation (correct filename)</a> · '+
    '<a href="'+escaped(t.files.comparison)+'">Model overlay comparison</a> · '+
-   '<a href="'+escaped(t.files.modelSuggestion)+'">Optional prediction seed</a>';
+   '<a href="'+escaped(t.files.modelSuggestion)+'">Optional prediction seed</a> · '+
+   '<a href="'+escaped(t.files.archivalOriginal)+'">Archival original copy (not for annotation)</a>';
   return '<article><h2>'+escaped(t.id)+' — '+escaped(t.title)+'</h2>'+
    '<p><strong>'+ (t.status==='scored'?'Reviewed reference scored':'Awaiting independent human review') +
    '</strong> · '+escaped(t.fragmentCount??'Not counted')+' predicted region(s), not verified pieces</p>'+ 
@@ -72,7 +74,8 @@ export function buildGarmentReviewPacket(manifest,sources,report){
   '<p class="warning">AI-produced mask overlays are only suggestions. They are NOT ground truth and cannot be used to report segmentation or color accuracy. Standalone reference photos do not establish accuracy on multi-layer whole outfits.</p>'+
   '<nav><a href="tools/annotate-garment.html">1 · Create / correct first-review draft</a>'+
   '<a href="tools/approve-garment-mask.html">2 · Independent second review</a></nav>'+
-  '<p>For each case: save the linked original image, open the first-review tool, optionally import the model suggestion, and draw or correct the entire fabric boundary. '+
+  '<p><strong>Use the source photo filename commons-####.jpg exactly.</strong> The byte-identical commons-####.original.jpg is an archival copy only. Annotation exporters use the chosen file name; choosing the archival name creates a draft rejected by the locked manifest.</p>'+
+  '<p>For each case: download the linked canonical source photo, open the first-review tool, optionally import the model suggestion, and draw or correct the entire fabric boundary. '+
   'Export a draft bearing your reviewer identity. A different reviewer must inspect the original and entire mask, reject inaccuracies or export an approved reference. '+
   'Only then may the manifest be updated and pixel accuracy measured. Preserve cuffs, hems, soles, straps, laces and actual fabric; exclude people, mannequins, shadows and scenery.</p>'+
   cards+'</html>';

@@ -24,6 +24,10 @@ try{
   if(createHash('sha256').update(bytes).digest('hex')!==entry.sourceSha256)throw Error('Source photo checksum mismatch '+entry.id);
   // Keep the exact SHA-verified Commons image alongside the overlay. Human
   // reviewers need original pixels; AI-generated overlays aren't reference masks.
+  // The review editors export annotation.image from the selected file name.
+  // Ship the byte-identical canonical entry.image too: a reviewer choosing
+  // commons-####.original.jpg would otherwise export an unstageable mask.
+  await copyFile(imagePath,join(outDir,entry.image));
   await copyFile(imagePath,join(outDir,entry.id+'.original.jpg'));
   const base64=bytes.toString('base64');
   const predicted=await page.evaluate(async({base64,imageName,sourceSha256})=>{

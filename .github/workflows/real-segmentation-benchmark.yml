@@ -18,6 +18,7 @@ on:
       - 'scripts/stage-approved-garment-masks.mjs'
       - 'tests/garment-mask-metrics.test.mjs'
       - 'tests/garment-review-packet.test.mjs'
+      - 'scripts/verify-review-photo-handoff.mjs'
       - 'tests/stage-reviewed-masks.test.mjs'
       - 'tests/stage-reviewed-masks-cli.test.mjs'
       - 'benchmark/approve-garment-mask.html'
@@ -43,6 +44,8 @@ jobs:
         run: node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos commons-0035,commons-0049,commons-0053,commons-0065,commons-0079,commons-0094
       - name: Generate model masks and score only independently approved outlines
         run: node scripts/run-real-segmentation-benchmark.mjs benchmark/segmentation-predictions
+      - name: Verify all six original images and annotation-ready filenames
+        run: node scripts/verify-review-photo-handoff.mjs benchmark/segmentation-predictions
       - name: Report independent clipping acceptance without falsely approving unreviewed photos
         run: node scripts/report-clipping-acceptance.mjs benchmark/segmentation-predictions
       - uses: actions/upload-artifact@v4
