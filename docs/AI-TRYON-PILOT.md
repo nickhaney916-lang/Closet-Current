@@ -4,7 +4,11 @@
 
 This is the **first functional integration stage**, not a finished AI try-on launch. It replaces neither the existing customer closet nor the outfit builder. The customer chooses **one of exactly two standardized, realistic full-body model photographs (female or male)** and explicitly taps **Generate AI try-on** after selecting clothing. A server-side FASHN v1.6 model changes one recognized garment on that standardized model; the returned image is actual generated inference, **not a cutout layered with CSS**. All remaining selected garments stay visible in the normal outfit board but are explicitly **not claimed to be rendered**. The customer keeps the untouched clothing photo.
 
-Neither live inference nor either of the two source model images is provisioned yet. No credits should be consumed on a repository build. The function defaults to disabled.
+Two fixed generated studio model photos now exist as an independently packaged handoff ZIP (female and male, each 647 × 1199 pixels), but **the photo binaries are not yet in this GitHub branch and are not publicly hosted**. The model-photo identity hashes are locked in `scripts/stage-ai-model-figures.mjs`: the script validates both JPEGs and only stages them with an explicit `--stage`. Real paid inference remains unprovisioned. No credits should be consumed on a repository build; the function defaults to disabled. The button stays disabled until an authenticated no-cost availability request reports that the private pilot is actually ready.
+
+### Approved base-model handoff
+
+Extract the prepared `closet_current_ai_model_assets_ready.zip` into a local folder. From the repository root, check exact file identities with `node scripts/stage-ai-model-figures.mjs <unpacked-folder>/public/ai-models`. For a deliberate review-ready checkout staging, run the same command with `--stage` to create `public/ai-models/female.jpg`, `male.jpg` and `figures.json`. The script refuses altered identities and partial inputs. Compare SHA-256 hashes with those recorded in its `ORIGINALS` constant and only then commit the binary assets to the **draft branch**, never directly to production. This step is preparation, not generated garment try-on or a public deployment.
 
 ## Provisioning checklist — do not activate until secure
 
