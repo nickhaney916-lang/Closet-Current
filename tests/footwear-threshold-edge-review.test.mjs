@@ -46,7 +46,7 @@ test('empty alpha outputs cannot invent a shoe silhouette',()=>{
 });
 test('wrong threshold, different image, or reversed subset fails closed',()=>{
  const source={width:5,height:5,image:'sneaker.jpg',sourceSha256:'a'.repeat(64)};
- const raw=Uint8Array.from(Array(25).fill(128));
+ const raw=Uint8Array.from([0,...Array(24).fill(128)]);
  const a=alphaPrediction(raw,source,128),b=alphaPrediction(raw,source,224);
  assert.throws(()=>footwearThresholdEdgeReview(a,a),/unpinned/);
  assert.throws(()=>footwearThresholdEdgeReview(a,{...b,image:'boots.jpg'}),/Different/);
