@@ -6,7 +6,7 @@ export function analyzeObjectHybridDisagreement(objectAlpha,hybridAlpha,width,he
 }={}){
  const n=width*height;
  if(!Number.isInteger(width)||!Number.isInteger(height)||width<4||height<4||
-  n>4_000_000||objectAlpha?.length!==n||hybridAlpha?.length!==n||
+  n>12_000_000||objectAlpha?.length!==n||hybridAlpha?.length!==n||
   !['Dresses','Bottoms','Shoes','Tops','Outerwear'].includes(category)||
   typeof personDetected!=='boolean'||
   !Number.isInteger(threshold)||threshold<1||threshold>255||
