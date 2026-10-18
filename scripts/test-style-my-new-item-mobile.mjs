@@ -122,11 +122,62 @@ try{
  assert.equal(after.board.slots.top,'new-green-top','new item persists after reload');
  assert.equal(after.board.slots.shoes,nextShoes,'one-piece swap persists after reload');
  assert.equal(after.item,original,'original garment remains unchanged in saved collection');
+ // Duplicate clothing names and stale search/slot filters must never redirect
+ // the home "Fresh in your closet" shortcut to the wrong garment.
+ await page.evaluate(async()=>{
+  const first=items.find(x=>x.id==='new-green-top');
+  const duplicate=normalizeClothing({...first,id:'same-name-second-top',
+   name:first.name,savedAt:'2026-10-18T23:59:59Z'});
+  await writeAll([duplicate]);
+  items.push(duplicate);
+  switchView('home');
+  window.closetBrowseAll=false;
+  window.closetSlotFilter='shoes';
+  window.closetTargetSlot='shoes';
+  window.closetItemType='Sneakers';
+  window.closetSleeves=['Long sleeve'];
+  window.closetActiveItemId='owned-white-sneakers';
+  $('search').value='owned-white-sneakers';
+  $('filter').value='Shoes';
+  $('seasonFilter').value='Winter';
+ });
+ assert.equal(await page.locator('#homePieces .home-piece[data-item-id="new-green-top"]').count(),1);
+ assert.equal(await page.locator('#homePieces .home-piece[data-item-id="same-name-second-top"]').count(),1);
+ await page.locator('#homePieces .home-piece[data-item-id="new-green-top"]').click();
+ await page.locator('#closetCollection:not([hidden])').waitFor();
+ const direct=await page.evaluate(()=>({
+  viewedExact:ClosetRackEngine.activeItemId($('closetGrid')),
+  stateId:window.closetActiveItemId,
+  original:JSON.stringify(items.find(x=>x.id==='new-green-top')),
+  photos:document.querySelectorAll('#closetGrid [data-item-id]').length,
+  targeted:document.activeElement?.dataset?.itemId,
+  rack:window.closetPresentationMode,
+  browseAll:window.closetBrowseAll,
+  search:$('search').value,category:$('filter').value,season:$('seasonFilter').value,
+  sleeves:$('sleeveFilter').value,
+  slot:window.closetSlotFilter,itemType:window.closetItemType,
+  sourceType:window.closetTargetSlot
+ }));
+ assert.equal(direct.viewedExact,'new-green-top','home must open selected UUID rather than shared name');
+ assert.equal(direct.stateId,'new-green-top');
+ assert.equal(direct.original,original,'home navigation cannot edit garment or original source');
+ assert.equal(direct.photos,5,'old shoe and long-sleeve filter may not restrict closet results');
+ assert.equal(direct.targeted,'new-green-top','keyboard focus follows selected garment');
+ assert.equal(direct.rack,'rack');
+ assert.equal(direct.browseAll,true);
+ assert.equal(direct.search,'');
+ assert.equal(direct.category,'All categories');
+ assert.equal(direct.season,'');
+ assert.equal(direct.sleeves,'');
+ assert.equal(direct.slot,null);
+ assert.equal(direct.itemType,'');
+ assert.equal(direct.sourceType,null);
  assert.deepEqual(errors,[]);
  console.log('NEW_ITEM_STYLE_MOBILE '+JSON.stringify({
   result:'passed',viewport:'390x844 touch',outfitOptions:outfits.length,
   anchorPersisted:true,directOneTapSwap:true,previewNotAutoSaved:true,
-  directSwappedOutfitSaved:true,onePieceSwapSaved:true,reloadVerified:true,offlineTrendSafe:true,
+  directSwappedOutfitSaved:true,onePieceSwapSaved:true,reloadVerified:true,
+  recentGarmentExactOpen:true,duplicateNameSafe:true,oldFiltersCleared:true,offlineTrendSafe:true,
   actualPhoneVerified:false,pageErrors:errors.length
  }));
  await context.close();
