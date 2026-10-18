@@ -7,6 +7,9 @@ on:
       - 'scripts/run-object-cutout-holdout.mjs'
       - 'benchmark/object-cutout-holdout.mjs'
       - 'benchmark/footwear-threshold-edge-review.mjs'
+      - 'benchmark/approved-footwear-threshold-comparison.mjs'
+      - 'tests/approved-footwear-threshold-comparison.test.mjs'
+      - 'scripts/audit-approved-footwear-thresholds.mjs'
       - 'tests/footwear-threshold-edge-review.test.mjs'
       - 'tests/object-cutout-holdout.test.mjs'
       - 'benchmark/manifest-fresh-11.json'
@@ -28,11 +31,13 @@ jobs:
       - name: Validate review-only holdout selection and report guards
         run: |
           node --check scripts/run-object-cutout-holdout.mjs
-          node --test tests/object-cutout-holdout.test.mjs tests/object-cutout-mask.test.mjs tests/footwear-threshold-edge-review.test.mjs
+          node --test tests/object-cutout-holdout.test.mjs tests/object-cutout-mask.test.mjs tests/footwear-threshold-edge-review.test.mjs tests/approved-footwear-threshold-comparison.test.mjs
       - name: Download and checksum-verify seven independent licensed photos
         run: node scripts/download-reviewed-photos.mjs benchmark/manifest-fresh-11.json benchmark/photos validation-0001,validation-0003,validation-0010,validation-0017,validation-0019,validation-0023,validation-0024
       - name: Produce original-versus-cutout review images
         run: node scripts/run-object-cutout-holdout.mjs benchmark/object-cutout-holdout-review
+      - name: Record independent shoe-outline approval gate
+        run: node scripts/audit-approved-footwear-thresholds.mjs benchmark/object-cutout-holdout-review
       - name: Confirm result is complete but not falsely approved
         run: |
           node -e "const s=require('./benchmark/object-cutout-holdout-review/summary.json');if(s.status!=='complete'||s.cases.length!==7||s.pixelAccuracyMeasured!==false||s.phonePerformanceMeasured!==false||s.noProductionChanges!==true||s.cases.some(c=>c.independentlyApproved!==false))throw Error('Holdout validation failed')"
@@ -43,6 +48,12 @@ jobs:
             c.footwearThresholdReview.pixelAccuracyMeasured!==false||
             c.footwearThresholdReview.verifiedSoleOrToeRetention!==false||
             c.footwearThresholdReview.productionAuthorized!==false))throw Error('Footwear review evidence cannot promote model');
+          NODE
+          node - <<'NODE'
+          const r=require('./benchmark/object-cutout-holdout-review/three-sneaker-reference-gate.json');
+          if(r.sourcePhotos!==3||r.approvedOutlines!==0||r.aggregateAccuracy!==null||
+             r.specificToeSoleAccuracyMeasured!==false||r.thresholdAutomaticallyChosen!==false||
+             r.productionAuthorized!==false)throw Error('Unapproved shoe reference promotion');
           NODE
           for id in validation-0019 validation-0023 validation-0024; do
             test -s "benchmark/object-cutout-holdout-review/$id-footwear-threshold-review.png"
