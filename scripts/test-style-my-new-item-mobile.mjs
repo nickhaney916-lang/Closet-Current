@@ -63,6 +63,26 @@ try{
  assert.ok(outfits.every(x=>x.top==='new-green-top'));
  assert.ok(outfits.every(x=>x.bottom==='owned-blue-jeans'));
  assert.ok(outfits.every(x=>['owned-white-sneakers','owned-black-sneakers'].includes(x.shoes)));
+ // The same-card tap swap must use another owned shoe and pin the new top.
+ const originalOptionShoes=outfits[0].shoes;
+ await page.locator('#styledCollectionResults .styled-outfit').first()
+  .getByRole('button',{name:'Swap shoes in option 1'}).tap();
+ await page.getByText(/Preview only — tap Save outfit when you like it/).first().waitFor();
+ const directSwap=await page.evaluate(()=>({
+  selected:styledCollectionResults[0].board.slots.shoes,
+  top:styledCollectionResults[0].board.slots.top,
+  bottom:styledCollectionResults[0].board.slots.bottom,
+  saved:savedOutfitBoards.length,
+  owned:items.map(item=>item.id),
+  anchor:stylistAnchorItemId
+ }));
+ assert.notEqual(directSwap.selected,originalOptionShoes);
+ assert.equal(directSwap.top,'new-green-top');
+ assert.equal(directSwap.bottom,'owned-blue-jeans');
+ assert.equal(directSwap.anchor,'new-green-top');
+ assert.equal(directSwap.saved,0,'swap preview does not silently save an outfit');
+ assert.ok(directSwap.owned.includes(directSwap.selected));
+ assert.equal(await page.evaluate(()=>JSON.stringify(items.find(x=>x.id==='new-green-top'))),original);
  await page.locator('#styledCollectionResults .styled-outfit').first().getByRole('button',{name:'Adjust on outfit board'}).click();
  await page.locator('#builder:not([hidden])').waitFor();
  const initialShoes=await page.evaluate(()=>currentBoard.slots.shoes);
@@ -96,7 +116,8 @@ try{
  assert.deepEqual(errors,[]);
  console.log('NEW_ITEM_STYLE_MOBILE '+JSON.stringify({
   result:'passed',viewport:'390x844 touch',outfitOptions:outfits.length,
-  anchorPersisted:true,onePieceSwapSaved:true,reloadVerified:true,offlineTrendSafe:true,
+  anchorPersisted:true,directOneTapSwap:true,previewNotAutoSaved:true,
+  onePieceSwapSaved:true,reloadVerified:true,offlineTrendSafe:true,
   actualPhoneVerified:false,pageErrors:errors.length
  }));
  await context.close();
