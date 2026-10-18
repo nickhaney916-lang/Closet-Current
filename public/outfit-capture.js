@@ -1,7 +1,14 @@
 'use strict';
 let outfitActiveId=null,lastOutfitPhoto='',outfitSplitJob=null;
 function renderOutfitCapture(){
- if(!outfitActiveId)outfitActiveId=batch.find(x=>x.outfitSourceId)?.outfitSourceId||null;
+ // Saved garment records survive reload, even when the unsaved review queue
+ // is empty. Recover only this account's latest captured outfit group.
+ if(!outfitActiveId){
+  const unfinished=batch.find(x=>x.outfitSourceId)?.outfitSourceId;
+  const mostRecentSaved=items.filter(x=>typeof x.outfitSourceId==='string'&&x.outfitSourceId)
+   .sort((a,b)=>String(b.savedAt||'').localeCompare(String(a.savedAt||'')))[0];
+  outfitActiveId=unfinished||mostRecentSaved?.outfitSourceId||null;
+ }
  const pending=batch.filter(x=>x.outfitSourceId===outfitActiveId),saved=items.filter(x=>x.outfitSourceId===outfitActiveId);
  $('outfitPieceActions').hidden=!outfitActiveId||(!pending.length&&!saved.length);
  $('outfitPieceSummary').textContent=saved.length+' saved'+(pending.some(x=>localPending.has(x.id))?' · checking photos…':'')+(pending.some(x=>!localPending.has(x.id))?' · some pieces need review':'');
@@ -56,7 +63,14 @@ async function readOutfitPhoto(file){
 for(const id of ['outfitCamera','outfitUpload']){$(id).onclick=()=>{if(!busy)stopCamera();};$(id).onchange=event=>{const file=event.target.files?.[0];event.target.value='';readOutfitPhoto(file);};}
 $('outfitRetry').onclick=()=>{if(lastOutfitPhoto)startOutfitSplit(lastOutfitPhoto,outfitActiveId);};
 function capturedPieceSlot(item){
- if(['Tops','Dresses'].includes(item.category))return 'top';if(item.category==='Bottoms')return 'bottom';if(item.category==='Outerwear')return 'layer';if(item.category==='Shoes')return 'shoes';
+ if(['Tops','Dresses'].includes(item.category))return 'top';
+ if(item.category==='Bottoms')return 'bottom';
+ // Respect the existing three clothing layers: a captured jacket belongs
+ // on the jacket slot, and a long coat on the outer coat slot.
+ if(item.category==='Outerwear')
+  return ['Coat','Raincoat'].includes(item.itemType)?'layer3':
+   ['Cardigan','Vest'].includes(item.itemType)?'layer':'layer2';
+ if(item.category==='Shoes')return 'shoes';
  return item.itemType==='Bag'?'bag':['Jewelry','Sunglasses'].includes(item.itemType)?'accessory':['Belt','Scarf','Hat'].includes(item.itemType)?'finish':null;
 }
 $('useCapturedOutfit').onclick=async()=>{
@@ -64,7 +78,7 @@ $('useCapturedOutfit').onclick=async()=>{
  for(const item of selected){const slot=capturedPieceSlot(item);if(slot&&(!slots[slot]||item.category==='Dresses'))slots[slot]=item.id;}
  if(!Object.keys(slots).length)return $('outfitSaveStatus').textContent='Adjust the saved categories first so these pieces can be placed on the outfit board.';
  const previous=structuredClone(currentBoard);
- try{currentBoard=cleanOutfitBoard({...currentBoard,name:'Captured outfit',slots,ideas:{},audience:'All'},items);await persistBoardState();syncBoardInputs();renderOutfitBoard();$('boardTarget').value=boardGaps(currentBoard,items).find(x=>!x.optional)?.id||'shoes';renderBoardSuggestions();switchView('builder');$('boardSaveStatus').textContent='Your captured clothing is on the board. Choose an open space or compare alternatives below.';}
+ try{currentBoard=cleanOutfitBoard({...currentBoard,name:'Captured outfit',slots,ideas:{},audience:'All',layerCount:0},items);await persistBoardState();syncBoardInputs();renderOutfitBoard();$('boardTarget').value=boardGaps(currentBoard,items).find(x=>!x.optional)?.id||'shoes';renderBoardSuggestions();switchView('builder');$('boardSaveStatus').textContent='Your captured clothing is on the board. Choose an open space or compare alternatives below.';}
  catch{currentBoard=previous;syncBoardInputs();renderOutfitBoard();$('outfitSaveStatus').textContent='Could not open this outfit board. Your saved clothing is still in My closet.';}
 };
 closetReady.then(renderOutfitCapture);

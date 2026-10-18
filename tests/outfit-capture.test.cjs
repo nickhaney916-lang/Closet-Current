@@ -41,3 +41,47 @@ test('100 simulated full-outfit camera captures keep cutouts distinct and queue 
  assert.equal(total,250);
  assert.equal(new Set(h.c.batch.map(x=>x.image)).size,250);
 });
+
+test('outfit review recovers the latest saved capture after page reload without inventing unsaved pieces',async()=>{
+ const h=setup();await Promise.resolve();
+ h.c.items.push({id:'old',outfitSourceId:'capture-old',savedAt:'2026-10-15T12:00:00Z'},
+ {id:'new',outfitSourceId:'capture-new',savedAt:'2026-10-18T12:00:00Z'});
+ h.c.renderOutfitCapture();
+ assert.equal(h.c.items.length,2);
+ assert.equal(h.el('outfitPieceActions').hidden,false);
+ assert.equal(h.el('useCapturedOutfit').disabled,false);
+ assert.match(h.el('outfitPieceSummary').textContent,/1 saved/);
+ assert.equal(vm.runInContext('outfitActiveId',h.c),'capture-new');
+});
+test('captured jacket and coat retain proper outerwear layers rather than sharing one shirt slot',()=>{
+ const h=setup();const slot=type=>h.c.capturedPieceSlot({category:'Outerwear',itemType:type});
+ assert.equal(slot('Cardigan'),'layer');
+ assert.equal(slot('Vest'),'layer');
+ assert.equal(slot('Jacket'),'layer2');
+ assert.equal(slot('Blazer'),'layer2');
+ assert.equal(slot('Unknown'),'layer2');
+ assert.equal(slot('Coat'),'layer3');
+ assert.equal(slot('Raincoat'),'layer3');
+});
+test('opening a new captured outfit does not carry over unused layers from the previous board',async()=>{
+ const h=setup();
+ h.c.items.push({id:'red-top',category:'Tops',itemType:'T-shirt',outfitSourceId:'new-capture'},
+ {id:'jeans',category:'Bottoms',itemType:'Jeans',outfitSourceId:'new-capture'});
+ h.c.currentBoard={slots:{layer3:'old-coat'},ideas:{layer3:{type:'Coat'}},layerCount:3};
+ h.c.cleanOutfitBoard=(board)=>({...board});
+ h.c.persistBoardState=async()=>{h.c.persisted=true;};
+ h.c.syncBoardInputs=()=>{};
+ h.c.renderOutfitBoard=()=>{};
+ h.c.boardGaps=()=>[];
+ h.c.renderBoardSuggestions=()=>{};
+ h.c.startOutfitSplit('data:image/jpeg;base64,AAAA','new-capture');
+ // The selected outfit has saved owned clothes only; the fake worker needn't
+ // emit segmentation results to exercise the existing board action.
+ await h.el('useCapturedOutfit').onclick();
+ assert.deepEqual(Object.assign({},h.c.currentBoard.slots),{top:'red-top',bottom:'jeans'});
+ assert.deepEqual(Object.assign({},h.c.currentBoard.ideas),{});
+ assert.equal(h.c.currentBoard.layerCount,0);
+ assert.equal(h.c.currentBoard.name,'Captured outfit');
+ assert.equal(h.c.view,'builder');
+ assert.equal(h.c.persisted,true);
+});

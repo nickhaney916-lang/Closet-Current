@@ -65,6 +65,8 @@ jobs:
           node scripts/run-mobile-flow.mjs benchmark/mobile-flow
       - name: Verify saved-item styling and one-piece swap on touch viewport
         run: node scripts/test-style-my-new-item-mobile.mjs
+      - name: Verify separated-outfit review, layering and persistence on touch viewport
+        run: node scripts/test-whole-outfit-save-mobile.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
