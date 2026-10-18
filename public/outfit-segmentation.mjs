@@ -259,7 +259,7 @@ export function garmentDisplayMaskReliability(map,group,{maxDetachedShare=.2}={}
    maxDetachedShare<0||maxDetachedShare>.5)
   throw Error('Invalid garment display mask');
  const seen=new Uint8Array(length),queue=new Int32Array(length);
- let total=0,largest=0,components=0;
+ let total=0,largest=0,components=0;const regions=[];
  for(const v of selected){if(v!==0&&v!==1&&v!==255)throw Error('Invalid garment display mask values');if(v)total++;}
  for(let start=0;start<length;start++){
   if(!selected[start]||seen[start])continue;
@@ -270,12 +270,38 @@ export function garmentDisplayMaskReliability(map,group,{maxDetachedShare=.2}={}
    for(const j of adjacent)if(j>=0&&selected[j]&&!seen[j]){seen[j]=1;queue[back++]=j;}
   }
   largest=Math.max(largest,back);components++;
+  let minX=width,minY=height,maxX=-1,maxY=-1;
+  for(let p=0;p<back;p++){
+   const x=queue[p]%width,y=Math.floor(queue[p]/width);
+   minX=Math.min(minX,x);maxX=Math.max(maxX,x);
+   minY=Math.min(minY,y);maxY=Math.max(maxY,y);
+  }
+  regions.push({area:back,left:minX,top:minY,right:maxX+1,bottom:maxY+1});
  }
  const detachedShare=total?(total-largest)/total:1;
+ // Left and right shoes can be two correctly isolated islands. They are not
+ // a damaged garment just because their alpha masks do not touch. Accept ONLY
+ // two comparable, well-separated, horizontally aligned shoe regions fully
+ // inside the frame; ambiguous pairs still retain the original crop.
+ // This is structural evidence, not a ground-truth segmentation score.
+ let pairedFootwear=false;
+ if(group.id===9&&!group.clipped&&regions.length===2&&total>=32){
+  const [a,b]=regions.sort((x,y)=>x.left-y.left);
+  const aw=a.right-a.left,bw=b.right-b.left,ah=a.bottom-a.top,bh=b.bottom-b.top;
+  const verticalOverlap=Math.max(0,Math.min(a.bottom,b.bottom)-Math.max(a.top,b.top));
+  const centerGap=Math.abs((a.top+a.bottom)-(b.top+b.bottom))/2;
+  pairedFootwear=a.area>=16&&b.area>=16&&
+   Math.min(a.area,b.area)/Math.max(a.area,b.area)>=.55&&
+   Math.min(aw,bw)/Math.max(aw,bw)>=.50&&
+   Math.min(ah,bh)/Math.max(ah,bh)>=.65&&
+   b.left-a.right>=1&&
+   verticalOverlap/Math.min(ah,bh)>=.70&&
+   centerGap/Math.min(ah,bh)<=.35;
+ }
  const reason=group.clipped===true?'clipped-frame':
   total<16?'insufficient-mask':
-  detachedShare>maxDetachedShare?'fragmented-mask':null;
- return {useOriginalCrop:reason!==null,reason,components,
+  detachedShare>maxDetachedShare&&!pairedFootwear?'fragmented-mask':null;
+ return {useOriginalCrop:reason!==null,reason,components,pairedFootwear,
   maskedPixels:total,detachedShare:+detachedShare.toFixed(4),
   sourcePreserved:true,measuresPixelAccuracy:false};
 }

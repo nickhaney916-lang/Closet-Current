@@ -69,8 +69,49 @@ test('intact garment and harmless tiny speckles keep transparent-style white dis
  for(let y=6;y<12;y++)for(let x=3;x<9;x++)pair[y*width+x]=1;
  for(let y=6;y<12;y++)for(let x=15;x<21;x++)pair[y*width+x]=1;
  const footwear=garmentDisplayMaskReliability(map,{id:9,selected:pair,clipped:false});
- assert.equal(footwear.reason,'fragmented-mask','keep both shoes visible when disconnected');
+ assert.equal(footwear.reason,null,'a complete left-right shoe pair can remain two masked islands');
+ assert.equal(footwear.useOriginalCrop,false);
+ assert.equal(footwear.pairedFootwear,true);
  assert.equal(garmentDisplayMaskReliability(map,{...group,clipped:true}).reason,'clipped-frame');
  assert.equal(garmentDisplayMaskReliability(map,{...group,selected:new Uint8Array(width*height)}).reason,'insufficient-mask');
  assert.throws(()=>garmentDisplayMaskReliability(map,{selected:new Uint8Array(2)}),/Invalid/);
+});
+
+test('shoe-pair display handling rejects shadows, torn footwear, partial crops and non-shoe masks',()=>{
+ const width=40,height=32,map={width,height};
+ const shape=(a,b)=>{const selected=new Uint8Array(width*height);for(const [x0,y0,x1,y1]of [a,b])
+  for(let y=y0;y<y1;y++)for(let x=x0;x<x1;x++)selected[y*width+x]=1;return selected;};
+ const left=[4,11,12,19],right=[22,11,30,19],pair=shape(left,right);
+ const group=(selected,id=9,clipped=false)=>({id,selected,clipped});
+ assert.equal(garmentDisplayMaskReliability(map,group(pair)).pairedFootwear,true);
+ assert.equal(garmentDisplayMaskReliability(map,group(pair,7)).reason,'fragmented-mask',
+  'detached pieces of a pale dress must still use the intact original crop');
+ assert.equal(garmentDisplayMaskReliability(map,group(pair,9,true)).reason,'clipped-frame');
+ const smallShadow=shape(left,[26,14,28,18]);
+ const shadow=garmentDisplayMaskReliability(map,group(smallShadow));
+ assert.equal(shadow.pairedFootwear,false);
+ assert.equal(shadow.useOriginalCrop,false,'tiny speck alone does not destroy a valid shoe mask');
+ const uneven=shape(left,[22,11,25,19]);
+ assert.equal(garmentDisplayMaskReliability(map,group(uneven)).reason,'fragmented-mask');
+ const stacked=shape(left,[22,22,30,30]);
+ assert.equal(garmentDisplayMaskReliability(map,group(stacked)).reason,'fragmented-mask');
+ const touching=shape(left,[12,11,20,19]);
+ assert.equal(garmentDisplayMaskReliability(map,group(touching)).pairedFootwear,false);
+});
+test('both separated shoes preserve original RGB only inside their semantic cutout',()=>{
+ const width=40,height=32,map={width,height},selected=new Uint8Array(width*height);
+ for(const left of [4,22])for(let y=11;y<19;y++)for(let x=left;x<left+8;x++)selected[y*width+x]=1;
+ const group={id:9,selected,clipped:false,bounds:{left:4,top:11,right:30,bottom:19}};
+ const data=new Uint8ClampedArray(width*height*3);
+ for(let i=0;i<data.length;i+=3)data.set([20,80,195],i);
+ const photo={width,height,channels:3,data},before=data.slice();
+ const risk=garmentDisplayMaskReliability(map,group);
+ assert.equal(risk.useOriginalCrop,false);
+ const out=isolateClothingPixels(photo,map,group);
+ const at=(x,y)=>[...out.data.slice(((y-out.bounds.top)*out.width+x-out.bounds.left)*3,
+  ((y-out.bounds.top)*out.width+x-out.bounds.left)*3+3)];
+ assert.deepEqual(at(6,15),[20,80,195]);
+ assert.deepEqual(at(25,15),[20,80,195]);
+ assert.deepEqual(at(16,15),[255,255,255],'the space between shoes stays masked');
+ assert.deepEqual(data,before,'original source bytes remain unchanged');
 });
