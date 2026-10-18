@@ -6,10 +6,10 @@ function setup({workerFails=false,saveFails=false}={}){
  vm.createContext(c);vm.runInContext(source,c);return {c,el,timers,advance:n=>now+=n,emit:data=>c.worker.onmessage({data:{id:c.worker.request.id,...data}})};
 }
 test('automatically cropped pieces enter indexing separately with original photos retained',async()=>{
- const h=setup();h.c.startOutfitSplit('data:image/jpeg;base64,AAAA');const hint={categories:['Tops'],types:[],clipped:false};h.emit({type:'piece',piece:{image:'data:image/jpeg;base64,AABB',hint,recognitionPhoto:{image:'data:image/jpeg;base64,ABCD'},colorEstimate:{color:'Blue'}}});h.emit({type:'piece',piece:{image:'data:image/jpeg;base64,AACC',hint}});h.emit({type:'done',count:2});assert.equal(h.c.batch.length,2);assert.equal(h.c.busy,false);assert.equal(h.c.worker.stopped,true);assert.ok(h.c.batch.every(x=>!x.requiresOwnershipConfirmation));assert.equal(h.c.batch[0].originalPhoto.image,'data:image/jpeg;base64,AAAA');assert.equal(h.c.batch[0].recognitionPhoto.image,'data:image/jpeg;base64,ABCD');assert.match(h.el('outfitSaveStatus').textContent,/save automatically/);
+ const h=setup();h.c.startOutfitSplit('data:image/jpeg;base64,AAAA');const hint={categories:['Tops'],types:[],clipped:false};h.emit({type:'piece',piece:{image:'data:image/jpeg;base64,AABB',hint,recognitionPhoto:{image:'data:image/jpeg;base64,ABCD'},colorEstimate:{color:'Blue'}}});h.emit({type:'piece',piece:{image:'data:image/jpeg;base64,AACC',recognitionPhoto:{image:'data:image/jpeg;base64,ACCD'},hint}});h.emit({type:'done',count:2});assert.equal(h.c.batch.length,2);assert.equal(h.c.busy,false);assert.equal(h.c.worker.stopped,true);assert.ok(h.c.batch.every(x=>!x.requiresOwnershipConfirmation));assert.equal(h.c.batch[0].originalPhoto.image,'data:image/jpeg;base64,AAAA');assert.equal(h.c.batch[0].recognitionPhoto.image,'data:image/jpeg;base64,ABCD');assert.match(h.el('outfitSaveStatus').textContent,/save automatically/);
 });
 test('partial failure keeps emitted photos, offers retry and does not invent owned clothing',()=>{
- const h=setup();h.c.startOutfitSplit('data:image/jpeg;base64,AAAA');h.emit({type:'piece',piece:{image:'data:image/jpeg;base64,AABB',hint:{categories:['Bottoms'],types:[],clipped:false}}});h.emit({type:'error'});assert.equal(h.c.batch.length,1);assert.equal(h.c.items.length,0);assert.equal(h.el('outfitRetry').hidden,false);assert.equal(h.c.busy,false);assert.equal(h.timers.size,0);
+ const h=setup();h.c.startOutfitSplit('data:image/jpeg;base64,AAAA');h.emit({type:'piece',piece:{image:'data:image/jpeg;base64,AABB',recognitionPhoto:{image:'data:image/jpeg;base64,ABCD'},hint:{categories:['Bottoms'],types:[],clipped:false}}});h.emit({type:'error'});assert.equal(h.c.batch.length,1);assert.equal(h.c.items.length,0);assert.equal(h.el('outfitRetry').hidden,false);assert.equal(h.c.busy,false);assert.equal(h.timers.size,0);
 });
 test('worker constructor failure restores controls rather than trapping capture',()=>{
  const h=setup({workerFails:true});h.c.startOutfitSplit('data:image/jpeg;base64,AAAA');assert.equal(h.c.busy,false);assert.equal(h.c.controlsDisabled,false);assert.equal(h.el('outfitRetry').hidden,false);assert.equal(h.timers.size,0);
@@ -18,7 +18,7 @@ test('setup progress cannot extend beyond five minutes and inference has a one-m
  const h=setup();h.c.startOutfitSplit('data:image/jpeg;base64,AAAA');h.advance(299000);h.emit({type:'progress',phase:'loading',percent:90});assert.equal([...h.timers.values()][0].delay,1000);h.emit({type:'progress',phase:'separating'});assert.equal([...h.timers.values()][0].delay,60000);[...h.timers.values()][0].fn();assert.equal(h.c.busy,false);assert.equal(h.c.items.length,0);
 });
 test('completion does not pull a user away from another feature',()=>{
- const h=setup();h.c.startOutfitSplit('data:image/jpeg;base64,AAAA');h.el('scan').hidden=true;h.c.view='stylist';h.emit({type:'piece',piece:{image:'data:image/jpeg;base64,AABB',hint:{categories:['Tops'],types:[],clipped:false}}});h.emit({type:'done',count:1});assert.equal(h.c.view,'stylist');
+ const h=setup();h.c.startOutfitSplit('data:image/jpeg;base64,AAAA');h.el('scan').hidden=true;h.c.view='stylist';h.emit({type:'piece',piece:{image:'data:image/jpeg;base64,AABB',recognitionPhoto:{image:'data:image/jpeg;base64,ABCD'},hint:{categories:['Tops'],types:[],clipped:false}}});h.emit({type:'done',count:1});assert.equal(h.c.view,'stylist');
 });
 
 test('100 simulated full-outfit camera captures keep cutouts distinct and queue automatic indexing',async()=>{
@@ -29,7 +29,7 @@ test('100 simulated full-outfit camera captures keep cutouts distinct and queue 
   for(let piece=0;piece<count;piece++){
    const image='data:image/jpeg;base64,SCENE'+scene+'PIECE'+piece;
    const category=['Tops','Bottoms','Outerwear','Shoes'][piece];
-   h.emit({type:'piece',piece:{image,hint:{categories:[category],types:[],clipped:false}}});
+   h.emit({type:'piece',piece:{image,recognitionPhoto:{image},hint:{categories:[category],types:[],clipped:false}}});
   }
   h.emit({type:'done',count});
   total+=count;
@@ -84,4 +84,27 @@ test('opening a new captured outfit does not carry over unused layers from the p
  assert.equal(h.c.currentBoard.name,'Captured outfit');
  assert.equal(h.c.view,'builder');
  assert.equal(h.c.persisted,true);
+});
+
+test('separated pieces without valid original RGB recognition crops never enter indexing',()=>{
+ for(const recognitionPhoto of [undefined,null,{}, {image:null},{image:42},{image:''},{image:'data:image/png;base64,AAAA'},{image:'data:image/jpeg;base64,'}]){
+  const h=setup();h.c.startOutfitSplit('data:image/jpeg;base64,AAAA');
+  assert.doesNotThrow(()=>h.emit({type:'piece',piece:{image:'data:image/jpeg;base64,AABB',recognitionPhoto,hint:{categories:['Tops'],types:[]}}}));
+  h.emit({type:'done',count:1});
+  assert.equal(h.c.batch.length,0,'a display cutout must not become recognition evidence');
+  assert.equal(h.c.busy,false);
+  assert.equal(h.el('outfitRetry').hidden,false,'missing source evidence must offer retry');
+ }
+});
+test('invalid source crop keeps valid earlier pieces and reports partial failure',()=>{
+ const h=setup();h.c.startOutfitSplit('data:image/jpeg;base64,AAAA');
+ const hint={categories:['Tops'],types:[]};
+ h.emit({type:'piece',piece:{image:'data:image/jpeg;base64,AABB',recognitionPhoto:{image:'data:image/jpeg;base64,ABCD'},hint}});
+ h.emit({type:'piece',piece:{image:'data:image/jpeg;base64,AACC',hint}});
+ h.emit({type:'done',count:2});
+ assert.equal(h.c.batch.length,1);
+ assert.equal(h.c.batch[0].recognitionPhoto.image,'data:image/jpeg;base64,ABCD');
+ assert.equal(h.c.batch[0].originalPhoto.image,'data:image/jpeg;base64,AAAA');
+ assert.equal(h.el('outfitRetry').hidden,false);
+ assert.match(h.el('outfitSplitStatus').textContent,/original.*retry/i);
 });

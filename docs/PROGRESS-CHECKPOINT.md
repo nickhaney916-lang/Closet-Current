@@ -1,5 +1,45 @@
 # Closet Current master development checkpoint
 
+## Work main-thread continuation — October 18, 2026, Pacific
+
+This Work conversation is now the main development thread. Supersedes the older
+priority order below: real-photo whole-outfit separation, original-first automatic
+indexing, clothing clarity, then Style this using owned clothes.
+
+- Resumed exact remote HEAD `7c9ed65f33ec525fc34ae702634871ad1638e090` on the existing
+  development branch / draft PR #7. Independently checked all 23 PR workflows:
+  completed successfully. PR remains open, draft and unmerged.
+- Reproduced and fixed a source-evidence gap: capture accepted separated garment
+  outputs without a valid original-RGB recognition crop, letting the indexing
+  fallback inspect a display cutout. Require the original crop before enqueueing;
+  preserve valid partial results and offer retry when source crops are missing.
+  Two behavioral regression tests failed before the fix and pass afterward.
+  This is input-contract protection, not a measured model accuracy improvement.
+- Build passed. Full local Node suite: **695 passed, 0 failed, 3 skipped**.
+  Focused source/capture/worker suite: **21 passed**. Added these checks to mobile CI.
+  The first pre-build test attempt lacked generated PWA assets; rebuilding resolved
+  that setup failure. No runtime patch was needed for it.
+- Inspected genuine checkpoint artifacts: mobile run **39143869856**, artifact
+  **12142796880**: 14/14 broad categories correct, **8/14 automatically saved**,
+  **6/14 awaiting color confirmation**, zero page errors. These are single-garment
+  photos, not whole-outfit extraction or independently scored color accuracy.
+- Inspected experimental run **39143869995**, artifact **12143110187**: all eight
+  cases processed, all eight automaticCatalogApproved=false. commons-0059 is a
+  dress-and-jacket display; the expected outerwear is absent from detected output.
+  Its comparison visibly loses upper garment material. Six other display fixtures
+  and one worn-upper-body fixture do not form a head-to-toe outfit benchmark.
+  Extra predicted regions are unverified, not automatically false positives.
+- Local genuine browser inference is blocked: Chromium absent; Playwright's
+  download repeatedly returned invalid ZIP archives. Do not substitute simulated
+  workers or report a new real-photo score. Existing GitHub workflows can run
+  browser regression coverage after this commit.
+- Next: inspect new exact-HEAD CI, establish licensed head-to-toe multi-garment
+  fixtures with expected visible pieces, then run actual outfit worker through
+  recognition, save and owned-clothes styling. Keep automatic saves separate from
+  manual confirmations. Six independent mask approvals remain outstanding;
+  do not promote experimental masks or tune thresholds to unapproved outlines.
+- No production merge/deployment, paid service, or Drive Duel changes.
+
 ## Clipping and color-evidence repair — October 17, 2026, evening Pacific
 
 Continued from `55e4a032383ff8e9910b161154878c20d37b3a4b` on the same development branch / draft PR #7.
