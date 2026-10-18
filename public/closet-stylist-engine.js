@@ -120,11 +120,16 @@ function stylistSwapChoices(result,slot,closet,anchorId=null){
  if(!current||current===anchorId||anchorId&&!Object.values(board.slots).includes(anchorId))return [];
  const allowed=outfitSlots.find(s=>s.id===slot);
  if(!allowed)return [];
+ const currentPiece=owned.find(x=>x.id===current);
+ if(!currentPiece)return [];
  const occupied=new Set(Object.values(board.slots));
  const context=result.context||{request:'Casual',occasion:'Casual',audience:'All',season:'Fall'};
  const alternatives=[];
  for(const item of owned){
   if(occupied.has(item.id)||item.category==='Uncategorized'||!slotAllows(allowed,item))continue;
+  // Dresses and separates are different outfit structures. A single-piece
+  // button never silently changes that structure or creates unlisted gaps.
+  if(slot==='top'&&item.category!==currentPiece.category)continue;
   // A dress cannot replace a shirt in an existing bottoms/layered look,
   // and a layered outfit cannot accept a dress without removing layers.
   if(slot==='top'&&item.category==='Dresses'&&
