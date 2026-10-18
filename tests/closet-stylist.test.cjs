@@ -123,7 +123,7 @@ test('one-tap shoe swap changes exactly one owned slot and preserves the selecte
  assert.deepEqual(Object.keys(switched.board.slots).sort(),Object.keys(original).sort());
  assert.ok(Object.values(switched.board.slots).every(id=>owned.some(x=>x.id===id)));
  assert.equal(JSON.stringify(owned),before,'original photos and clothing must remain unchanged');
- assert.deepEqual(c.stylistSwapChoices(result,'top',owned,'new-shirt'),[]);
+ assert.deepEqual(Array.from(c.stylistSwapChoices(result,'top',owned,'new-shirt')),[]);
 });
 test('one-piece swap cannot replace pinned shoes, clothes from other closets, or unknown types',()=>{
  const c=setup(),owned=[piece('tee','Tops','T-shirt'),piece('jeans','Bottoms','Jeans'),
@@ -131,13 +131,13 @@ test('one-piece swap cannot replace pinned shoes, clothes from other closets, or
   piece('unconfirmed-shoes','Uncategorized','Unknown')];
  const r=c.styleOwnedCollection(owned,{request:'Casual',anchorItemId:'white-shoes'})[0];
  assert.equal(r.board.slots.shoes,'white-shoes');
- assert.deepEqual(c.stylistSwapChoices(r,'shoes',owned,'white-shoes'),[]);
+ assert.deepEqual(Array.from(c.stylistSwapChoices(r,'shoes',owned,'white-shoes')),[]);
  const bottoms=c.stylistSwapChoices(r,'bottom',owned,'white-shoes');
  assert.ok(bottoms.every(x=>x.id!=='unconfirmed-shoes'));
- assert.deepEqual(c.stylistSwapChoices(r,'bottom',owned,'not-an-owned-anchor'),[],
+ assert.deepEqual(Array.from(c.stylistSwapChoices(r,'bottom',owned,'not-an-owned-anchor')),[],
   'missing selected piece must make swap fail closed');
  const without=owned.filter(x=>x.id!=='jeans');
- assert.deepEqual(c.stylistSwapChoices(r,'bottom',without,'white-shoes'),[],
+ assert.deepEqual(Array.from(c.stylistSwapChoices(r,'bottom',without,'white-shoes')),[],
   'deleted or missing original pieces must not invent a valid swap');
 });
 test('dress can only swap to another dress without adding bottoms or changing chosen footwear',()=>{
@@ -147,7 +147,7 @@ test('dress can only swap to another dress without adding bottoms or changing ch
  const r=c.styleOwnedCollection(owned,{request:'Casual',anchorItemId:'heels'})[0];
  assert.equal(r.board.slots.bottom,undefined);
  const options=c.stylistSwapChoices(r,'top',owned,'heels');
- assert.deepEqual(options.map(x=>x.id),['dress2']);
+ assert.deepEqual(Array.from(options,x=>x.id),['dress2']);
  const swapped=c.stylistSwapOne(r,'top',owned,'heels');
  assert.equal(swapped.board.slots.top,'dress2');
  assert.equal(swapped.board.slots.bottom,undefined);
