@@ -1,0 +1,62 @@
+name: Independent LIP garment class previews
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'benchmark/lip_garment_instance_candidates.py'
+      - 'scripts/run-lip-garment-candidates.py'
+      - 'tests/test_lip_garment_instances.py'
+      - 'benchmark/schp-lip-20-reference.json'
+      - '.github/workflows/lip-garment-instance-candidates.yml'
+permissions:
+  contents: read
+jobs:
+  real-lip-garment-comparison:
+    runs-on: ubuntu-latest
+    timeout-minutes: 22
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install already pinned CPU segmentation dependencies
+        run: pip install numpy==1.26.4 Pillow==11.2.1 onnxruntime==1.21.0
+      - name: Validate garment classes and source boundaries
+        run: |
+          python -m py_compile scripts/run-lip-garment-candidates.py
+          PYTHONPATH=benchmark python -m unittest discover -s tests -p 'test_lip_garment_instances.py' -v
+      - name: Load the two SHA-verified licensed comparison photographs
+        run: |
+          node scripts/download-reviewed-photos.mjs benchmark/manifest-visible-legwear-2.json benchmark/photos validation-0031
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos commons-0059
+      - name: Compare independent human parsing coat, skirt, dress and shoe pixels
+        run: PYTHONPATH=benchmark python scripts/run-lip-garment-candidates.py benchmark/lip-garment-instance-review
+      - name: Prohibit invented garment items or production promotion
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path('benchmark/lip-garment-instance-review')
+          s=json.loads((p/'summary.json').read_text())
+          assert s['status']=='complete' and len(s['cases'])==2 and s['sourceHashesVerified']
+          assert s['automaticItemsCreated']==0 and s['productionAuthorized'] is False
+          assert s['independentGarmentInstanceMasks'] is False
+          for case in s['cases']:
+              assert case['automaticItemsCreated']==0
+              assert case['physicalInstancesConfirmed']==0
+              assert case['independentMaskAccuracyVerified'] is False
+              assert (p/(case['id']+'-separate-classes.png')).is_file()
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: experimental-lip-separate-clothing-preview
+          path: |
+            benchmark/lip-garment-instance-review/summary.json
+            benchmark/lip-garment-instance-review/*-separate-classes.png
+            benchmark/lip-garment-instance-review/*-unverified-mask.png
+          retention-days: 14
