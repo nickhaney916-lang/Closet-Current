@@ -1,3 +1,74 @@
+# Closet Current master development checkpoint
+
+Updated October 17, 2026 (America/Los_Angeles). This section supersedes the
+historical notes below. This conversation is the owner's main development chat.
+
+## Single working branch
+
+- Repository: `nickhaney916-lang/Closet-Current`.
+- Development: `fix/photo-clarity-high-quality-downsampling-20261016` (draft PR #7).
+- Verified consolidation base: `ed35cb1a23a3075ae17da9db76c13d92c83d6940`.
+- All 18 published branch tips inspected at consolidation are ancestors of this
+  development head. No published branch merge was necessary.
+- `main` remains the production branch. Consolidation does not deploy or merge.
+- Another chat added `dd7917e` and `2ccf3fb` during this session; both are included.
+  Subsequent try-on tests `6be88ff` and `ed35cb1` were also preserved.
+  Other chats are not automatically paused by this checkpoint.
+
+## Current work included
+
+| Area | Included state | Remaining limit |
+| --- | --- | --- |
+| Photo/cutout quality | High-quality downsampling, mask review/scoring tools, original-pixel previews, sharp MODNet 128 reference | Difficult backgrounds, shadows, pale fabric and clothing-only isolation remain unresolved |
+| Shoe preview | `4de540d` guards against the observed white-sole erasure; nine licensed sources checked | One preview accepted, eight original-photo fallbacks; not a segmentation accuracy score |
+| Closet browsing | Default Closet View, one-item navigation, position restoration, transparent preview support | Physical-phone acceptance still needed |
+| AI figures / try-on | Standard male/female selection and private server-side pilot foundation | Real provider run, hosted model assets, layered outfits, shoes and optional selfie face are not established as complete |
+| Paid-service safeguards | Signed-in read-only readiness check; try-on UI stays disabled until availability succeeds | No paid calls authorized; no production configuration changed here |
+
+## Evidence and status
+
+- Shoe-preview checkpoint: 63 focused Node tests passed, nine source SHA-256 checks
+  passed, and app build passed locally. GitHub equivalent is `4de540d` (same tree
+  as local `919580c`).
+- CI for later branch heads must be checked by exact SHA. Previous test counts
+  do not establish that every newer workflow passed.
+- Do not equate passing software tests with garment pixel accuracy or real-phone
+  performance. Preserve original clothing photos and fail safely when uncertain.
+
+## Priority order
+
+1. Reliable photo clarity, automatic garment-only clipping, category and primary
+   color indexing; fix difficult-background/pale-fabric failures with real evidence.
+2. Real-phone capture, persistence and account onboarding validation.
+3. Two realistic standard AI figures and one-garment try-on, then layered outfits,
+   footwear and optional user selfie face. Paid usage requires explicit approval.
+4. Style new clothes using owned clothes, then the remaining trend workflow.
+
+Keep point-and-click controls large and uncluttered. Preserve the separation of
+Inspiration and owned-clothes styling. Do not add mandatory manual cropping.
+Drive Duel is outside this project and must not be modified.
+
+## Historical drafts preserved, not activated
+
+See [consolidation inventory](consolidation-20261017/README.md). Three local
+snapshots were absent as current, tested implementations. They are retained as
+inactive patches for deliberate reconciliation; do not blindly apply old full
+files over current runtime code. Original workspaces were left untouched.
+
+## Coordination rule for future chats
+
+Read this file first. Fetch the current branch and inspect its head before editing.
+Use this branch as the integration target, with an isolated worktree for changes.
+Before publishing, compare the latest head and preserve intervening commits;
+never force-push over another chat. Update this checkpoint with exact commit,
+validation, limitations and next action. Do not start duplicate work in another
+chat without assigning it a distinct scope. This is guidance, not an automatic
+cross-chat lock or cancellation mechanism.
+
+---
+
+# Historical checkpoints (not current status)
+
 # Closet Current progress checkpoint
 
 ## Current checkpoint — October 14, 2026, evening Pacific
