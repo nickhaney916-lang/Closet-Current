@@ -6,7 +6,7 @@ import {scoreGarmentMask} from './garment-mask-metrics.mjs';
 
 const distance=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1],a[2]-b[2]);
 export function sourceResolutionEdgeTrial(image,map,group,{
- haloPixels=2,maxColorDistance=28,minOutsideContrast=65,maxGrowthFraction=.12
+ haloPixels=2,maxColorDistance=28,minOutsideContrast=65,maxGrowthFraction=.2
 }={}){
  const w=image?.width,h=image?.height,n=w*h,mw=map?.width,mh=map?.height,
   coarse=group?.selected,labels=map?.labels,semantic=map?.semanticLabels;

@@ -5,7 +5,7 @@ function example({pale=false,shadow=false,semanticVeto=false}={}){
   source=new Uint8ClampedArray(width*height*3),coarse=new Uint8Array(24*24),
   labels=new Uint8Array(24*24),semanticLabels=new Uint8Array(24*24);
  for(let y=0;y<height;y++)for(let x=0;x<width;x++){
-  const i=y*width+x,inside=x>=26&&x<74&&y>=25&&y<79;
+  const i=y*width+x,inside=x>=26&&x<74&&y>=26&&y<78;
   truth[i]=inside?1:0;
   const fg=pale?[233,234,231]:[32,72,150],bg=[235,235,233];
   const rgb=inside||shadow&&x>=24&&x<28&&y>=35&&y<68?fg:bg;
