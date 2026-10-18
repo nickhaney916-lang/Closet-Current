@@ -131,7 +131,7 @@ jobs:
           for source in packet['sources']:
               original=root/'independent-outline-review'/'original-photos'/source['image']
               assert original.is_file()
-              assert original.read_bytes().startswith(b'\\xff\\xd8')
+              assert original.read_bytes().startswith(bytes((0xff,0xd8)))
               assert sha256(original.read_bytes()).hexdigest()==source['sha256']
               assert source['includedUnchanged'] and source['physicalGarmentCount'] is None
           for c in review['cases']:
