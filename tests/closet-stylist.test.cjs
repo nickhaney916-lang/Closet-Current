@@ -92,7 +92,7 @@ test('one-tap Style this opens the existing stylist and submits the chosen owned
  assert.match(app,/styleNewClosetItem\(item\.id\)/);
 });
 
-test('the collection's partial looks must have explicitly measured required gaps',()=>{
+test('partial looks retain explicit required garment gaps',()=>{
  const c=setup(),parts=[piece('new-shorts','Bottoms','Shorts','Orange')];
  const results=c.styleOwnedCollection(parts,{anchorItemId:'new-shorts',request:'Casual'});
  assert.equal(results.length,1);
