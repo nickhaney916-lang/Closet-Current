@@ -100,20 +100,51 @@ function adjustPhoto(item){
   };
   suggestion.append(use);form.prepend(suggestion);
  }
- const save=node('button','Save changes','primary'),cancel=node('button','Cancel','secondary'),remove=node('button','Remove photo','secondary');
+ const save=node('button','Save changes','primary'),
+  style=node('button','Save & style this','primary'),
+  cancel=node('button','Cancel','secondary'),remove=node('button','Remove photo','secondary');
+ const reviewingNewPiece=batch.some(x=>x.id===item.id);
+ style.type='submit';style.hidden=!reviewingNewPiece;
  cancel.type=remove.type='button';cancel.onclick=()=>dialog.close();
+ if(reviewingNewPiece&&item.outfitSourceId&&
+    (item.segmentHint?.displayFallback==='original-crop'||
+     item.segmentHint?.clipped||item.segmentHint?.categories?.length!==1)){
+  const caution=node('p','This region may contain more than one garment or background. Check the photo closely and use Crop photo first if it is not a single clothing piece.','fine');
+  form.prepend(caution);
+ }
  const wasAdjusted=item.userAdjusted,wasScanning=localPending.has(item.id);item.userAdjusted=true;
  remove.onclick=async()=>{try{if(items.some(x=>x.id===item.id))await removeItem(item.id);items=items.filter(x=>x.id!==item.id);batch=batch.filter(x=>x.id!==item.id);sessionCapturedIds.delete(item.id);await persistDraft();dialog.close();render();}catch{message('Could not remove this photo. Try again.');}};
- form.onsubmit=async event=>{event.preventDefault();save.disabled=true;try{
-  const value={...collect(),name:draft.name.trim()||(draft.itemType&&draft.itemType!=='Unknown'?draft.itemType:'Closet piece'),savedAt:new Date().toISOString(),userAdjusted:true,requiresOwnershipConfirmation:false};
-  if(typeof ClothingMemory!=='undefined')Object.assign(value,ClothingMemory.confirm(value));
-  if(value.color&&value.colorSource==='photo-estimate')value.colorSource='user';
-  await savePiece(value,batch.filter(x=>x.id!==item.id));
-  const existing=items.find(x=>x.id===item.id);if(existing)Object.assign(existing,value);else items.push(value);
-  batch=batch.filter(x=>x.id!==item.id);await persistDraft();dialog.close();render();scheduleMemoryReview();
- }catch{save.disabled=false;message('Could not save changes. Try again.');}};
+ form.onsubmit=async event=>{
+  event.preventDefault();
+  const withStyling=event.submitter===style&&reviewingNewPiece;
+  const value={...collect(),name:draft.name.trim()||
+   (draft.itemType&&draft.itemType!=='Unknown'?draft.itemType:'Closet piece'),
+   savedAt:new Date().toISOString(),userAdjusted:true,requiresOwnershipConfirmation:false};
+  // Never save an Uncategorized/unsupported item in response to a request
+  // to style it; the user can correct the category or choose plain Save.
+  if(withStyling&&!['Tops','Bottoms','Dresses','Outerwear','Shoes'].includes(value.category)){
+   message('Choose the clothing category before styling this piece.');
+   return;
+  }
+  save.disabled=style.disabled=true;
+  try{
+   if(typeof ClothingMemory!=='undefined')Object.assign(value,ClothingMemory.confirm(value));
+   if(value.color&&value.colorSource==='photo-estimate')value.colorSource='user';
+   // savePiece atomically writes the garment AND removes it from the draft.
+   // A second persistDraft here could fail after a successful transaction and
+   // incorrectly tell the customer that their wardrobe save failed.
+   await savePiece(value,batch.filter(x=>x.id!==item.id));
+   const existing=items.find(x=>x.id===item.id);if(existing)Object.assign(existing,value);else items.push(value);
+   batch=batch.filter(x=>x.id!==item.id);dialog.close();render();scheduleMemoryReview();
+   if(withStyling&&typeof styleNewClosetItem==='function'&&!styleNewClosetItem(value.id))
+    message('Your clothing was saved. Open My closet to style this piece.');
+  }catch{
+   save.disabled=style.disabled=false;
+   message('Could not save changes. Try again.');
+  }
+ };
  dialog.onclose=()=>{if(batch.some(x=>x.id===item.id)&&!wasAdjusted){item.userAdjusted=false;if(wasScanning&&item.localAnalyzed&&!localPending.has(item.id)){item.localAnalyzed=false;queueAutomatic(item);}}dialog.remove();};
- const actions=node('div',null,'actions');actions.append(save,cancel,remove);form.append(actions);dialog.append(form);document.body.append(dialog);dialog.showModal();
+ const actions=node('div',null,'actions');actions.append(save,style,cancel,remove);form.append(actions);dialog.append(form);document.body.append(dialog);dialog.showModal();
 }
 function renderRecognitionNotice(){
  const notice=$('recognitionNotice');if(!notice)return;
