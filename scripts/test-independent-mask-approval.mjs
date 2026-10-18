@@ -44,7 +44,7 @@ try{
  const originalDetail=await page.locator('#detailSource').evaluate(el=>el.toDataURL());
  const overlayBefore=await page.locator('#detailMask').evaluate(el=>el.toDataURL());
  await page.locator('#detailZoom').selectOption('8');
- await page.locator('#opacity').fill('75');
+ await page.locator('#opacity').evaluate(el=>{el.value='75';el.dispatchEvent(new Event('input',{bubbles:true}));});
  const overlayAfter=await page.locator('#detailMask').evaluate(el=>el.toDataURL());
  const stillOriginal=await page.locator('#detailSource').evaluate(el=>el.toDataURL());
  assert.notEqual(overlayAfter,overlayBefore,'mask opacity and zoom redraw the detail overlay');
