@@ -10,14 +10,14 @@ const encode=(bits,width=12,height=12)=>{
 };
 function rectangle(){
  const mask=new Uint8Array(144);
- for(let y=2;y<10;y++)for(let x=3;x<9;x++)mask[y*12+x]=1;
+ for(let y=2;y<10;y++)for(let x=2;x<10;x++)mask[y*12+x]=1;
  return mask;
 }
 function scene(id,change='repair'){
  const image=id+'.jpg',entry={id,image,sourceSha256:sha,
   reviewStatus:'approved',referenceMask:'approved/'+id+'.json'};
  const truth=rectangle(),base=new Uint8Array(truth),after=new Uint8Array(truth);
- base[9*12+5]=0;
+ base[6*12+5]=0;
  if(change==='same')after.set(base);
  if(change==='leak')after[0]=1;
  if(change==='lost-lower')for(let x=3;x<9;x++)after[9*12+x]=0;
@@ -36,7 +36,7 @@ function fixture(change='repair'){
   evidence:new Map(scenes.map(x=>[x.entry.id,x.evidence]))};
 }
 test('six distinct approved real-photo-shaped fixtures admit only an experimental mobile review',()=>{
- const x=fixture(),copy=x.evidence.get('commons-0035').evidence;
+ const x=fixture();
  const result=evaluateClippingAcceptance(x.manifest,x.evidence);
  assert.equal(result.status,'eligible-for-independent-mobile-review');
  assert.equal(result.reviewedPassingPhotos,6);
