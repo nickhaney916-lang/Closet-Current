@@ -66,8 +66,12 @@ test('captured jacket and coat retain proper outerwear layers rather than sharin
 });
 test('opening a new captured outfit does not carry over unused layers from the previous board',async()=>{
  const h=setup();
- h.c.items.push({id:'red-top',category:'Tops',itemType:'T-shirt',outfitSourceId:'new-capture'},
- {id:'jeans',category:'Bottoms',itemType:'Jeans',outfitSourceId:'new-capture'});
+ // These already-saved garments originate from the exact whole outfit
+ // being reopened; keep the original-photo provenance realistic.
+ h.c.items.push({id:'red-top',category:'Tops',itemType:'T-shirt',
+   outfitSourceId:'new-capture',originalPhoto:{image:'data:image/jpeg;base64,AAAA'}},
+ {id:'jeans',category:'Bottoms',itemType:'Jeans',
+   outfitSourceId:'new-capture',originalPhoto:{image:'data:image/jpeg;base64,AAAA'}});
  h.c.currentBoard={slots:{layer3:'old-coat'},ideas:{layer3:{type:'Coat'}},layerCount:3};
  h.c.cleanOutfitBoard=(board)=>({...board});
  h.c.persistBoardState=async()=>{h.c.persisted=true;};
