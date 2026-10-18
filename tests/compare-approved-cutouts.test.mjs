@@ -20,7 +20,7 @@ function fixture({pending=[],badIndex=-1,badKind=null,allPerfect=false}={}){
    old=bits(w,h,allPerfect?[3,3,13,13]:[4,4,12,12]),
    next=bits(w,h,[3,3,13,13]);
   if(i===badIndex){
-   if(badKind==='lost-hem')for(let y=11;y<13;y++)for(let x=3;x<13;x++)next[y*w+x]=0;
+   if(badKind==='lost-hem')for(let y=8;y<13;y++)for(let x=3;x<13;x++)next[y*w+x]=0;
    if(badKind==='background')for(let y=0;y<3;y++)for(let x=0;x<16;x++)next[y*w+x]=1;
   }
   const approved=!pending.includes(i);
