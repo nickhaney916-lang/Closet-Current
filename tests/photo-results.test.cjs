@@ -9,7 +9,7 @@ function setup(){
 function descendants(x){return [x,...x.children.flatMap(descendants)];}
 test('recognized photo immediately shows its saved category and Adjust and Crop actions',()=>{
  const {c,grid}=setup();const item={id:'shirt',name:'Blue T-shirt',category:'Tops',itemType:'T-shirt',color:'Blue',pattern:'Solid',sleeveLength:'Short sleeve',fit:'Regular',seasons:[]};c.items=[item];
- c.renderPhotoResults(grid,[item]);const nodes=descendants(grid),buttons=nodes.filter(x=>x.tag==='button');assert.equal(buttons.length,2);assert.equal(buttons[0].text,'Adjust');assert.ok(nodes.some(x=>x.text==='Tops · T-shirt · Blue'));assert.ok(nodes.some(x=>x.text.includes('Solid · Short sleeve')));buttons[0].onclick();assert.equal(c.adjusted,item);buttons[1].onclick();assert.equal(c.cropped,item);
+ c.renderPhotoResults(grid,[item]);const nodes=descendants(grid),buttons=nodes.filter(x=>x.tag==='button');assert.equal(buttons.length,3);assert.equal(buttons[0].text,'Style this');assert.equal(buttons[1].text,'Adjust');assert.ok(nodes.some(x=>x.text==='Tops · T-shirt · Blue'));assert.ok(nodes.some(x=>x.text.includes('Solid · Short sleeve')));c.styleNewClosetItem=id=>{c.styled=id;};buttons[0].onclick();assert.equal(c.styled,'shirt');buttons[1].onclick();assert.equal(c.adjusted,item);buttons[2].onclick();assert.equal(c.cropped,item);
 });
 test('failed recognition keeps the photo and offers correction and crop actions without guessing',()=>{
  const {c,grid}=setup();c.renderPhotoResults(grid,[{id:'unknown',image:'photo',category:'Uncategorized'}]);const nodes=descendants(grid);assert.ok(nodes.some(x=>x.text==='Needs a clearer photo'));assert.equal(nodes.filter(x=>x.tag==='button').length,2);assert.ok(nodes.some(x=>x.tag==='img'&&x.src==='photo'));

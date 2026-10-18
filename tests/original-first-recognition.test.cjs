@@ -39,6 +39,11 @@ function make(item){
  };
  vm.createContext(context);
  vm.runInContext(source.slice(start,end),context);
+ // The actual guarded photo-color helper is defined later in app.js.
+ const colorStart=source.indexOf('function trustedAutomaticPhotoColor(');
+ const colorEnd=source.indexOf('function queueAutomatic(',colorStart);
+ assert.ok(colorStart>end&&colorEnd>colorStart);
+ vm.runInContext(source.slice(colorStart,colorEnd),context);
  const original=structuredClone(item),body=node('form');
  context.clothingFields(body,item);
  function find(root,predicate){
@@ -52,13 +57,14 @@ function make(item){
 }
 async function flush(){await new Promise(setImmediate);}
 test('outfit color preview and Fill button use unmasked original RGB crop, not cleaned display or generated AI',async()=>{
- const h=make({id:'outfit',image:'display-mask-white-matte',
+ const h=make({id:'outfit',outfitSourceId:'captured-outfit',image:'display-mask-white-matte',
   recognitionPhoto:{image:'original-rgb-crop-before-matting'},
   originalPhoto:{image:'original-full-outfit'},
   normalizedPreview:{image:'AI-filled-prettified-image'},
   category:'Tops',itemType:'Unknown',color:'',seasons:[]});
- await flush(); // startup color suggestion
+ await flush(); // startup check must not infer garment color from room background
  assert.deepEqual(h.checked,['original-rgb-crop-before-matting']);
+ assert.equal(h.item.color,'');
  await h.btn.onclick();
  assert.deepEqual(h.checked,['original-rgb-crop-before-matting','original-rgb-crop-before-matting']);
  assert.deepEqual(h.classified.map(x=>x.image),['original-rgb-crop-before-matting']);
