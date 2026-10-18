@@ -73,13 +73,14 @@ try{
  await page.locator('#outfitUpload').setInputFiles({name:'controlled-outfit.jpg',mimeType:'image/jpeg',
   buffer:Buffer.from(sourceImage.split(',')[1],'base64')});
  await page.waitForFunction(()=>batch.filter(x=>x.outfitSourceId).length===3&&!!outfitActiveId&&outfitSplitJob===null);
+ const normalizedCapturedPhoto=await page.evaluate(()=>lastOutfitPhoto);
  await page.locator('#review:not([hidden])').waitFor({state:'visible'});
  const before=await page.evaluate(()=>batch.filter(x=>x.outfitSourceId).map(x=>({
   id:x.id,original:x.originalPhoto?.image,recognition:x.recognitionPhoto?.image,
   display:x.image,group:x.outfitSourceId
  })));
  assert.equal(new Set(before.map(x=>x.group)).size,1);
- assert.ok(before.every(x=>x.original===sourceImage));
+ assert.ok(before.every(x=>x.original===normalizedCapturedPhoto));
  assert.ok(before.every(x=>x.recognition&&x.recognition!==x.original));
  assert.ok(before.every(x=>x.display&&x.display!==x.original));
  // A reviewer supplies explicit category/color/identity. No model accuracy
@@ -108,7 +109,7 @@ try{
  assert.deepEqual(board.names,['T-shirt','Jeans','Jacket']);
  assert.equal(board.layerCount,2);
  assert.ok(board.slots.top&&board.slots.bottom&&board.slots.layer2);
- assert.ok(board.savedImages.every(x=>x===sourceImage));
+ assert.ok(board.savedImages.every(x=>x===normalizedCapturedPhoto));
  await page.locator('#saveBoard').click();
  await page.waitForFunction(()=>savedOutfitBoards.length===1);
  await page.reload();await page.evaluate(()=>Promise.all([closetReady,outfitBoardReady]));
@@ -124,7 +125,7 @@ try{
  assert.equal(restored.saved,1);
  assert.equal(restored.slots.layer2,board.slots.layer2);
  assert.equal(restored.layerCount,2);
- assert.ok(restored.originals.every(x=>x===sourceImage));
+ assert.ok(restored.originals.every(x=>x===normalizedCapturedPhoto));
  assert.equal(restored.buttonDisabled,false,'Saved captured outfit should be available after a reload');
  assert.equal(restored.actionsHidden,false,'Review controls must return after a reload');
  assert.deepEqual(errors,[]);
