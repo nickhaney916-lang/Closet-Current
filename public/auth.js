@@ -51,8 +51,11 @@
  }
  $('authForm').addEventListener('invalid',event=>{
   const input=['authEmail','authPassword','authUsername'].map($).find(field=>!field.disabled&&field.validity&&field.validity.valid===false)||event.target;
-  const label=input.id==='authEmail'?'email':input.id==='authPassword'?'password':'username';
-  if(input.validity.valueMissing)status('Enter your '+label+' to '+(signup?'create an account.':'log in. New here? Choose Create an account first.'));
+  const label=input.id==='authEmail'?'email':input.id==='authPassword'?'password':
+   input.id==='pilotNoticeAck'?'pilot data notice':'username';
+  if(input.validity.valueMissing)status(input.id==='pilotNoticeAck'?
+   'Please review the pilot data notice before creating an account.':
+   'Enter your '+label+' to '+(signup?'create an account.':'log in. New here? Choose Create an account first.'));
   else if(input.validity.typeMismatch)status('Enter a valid email address.');
   else if(input.validity.tooShort)status(signup?'Your password must have at least 8 characters.':'Enter your password.');
   else if(input.validity.patternMismatch)status('Username must be 3–32 letters, numbers or underscores.');
@@ -87,6 +90,11 @@
  function setMode(on){
   setPasswordVisible(false);
   signup=on;$('usernameWrap').hidden=!on;$('authUsername').required=on;$('authUsername').disabled=!on;
+  // Pilot information review is required for NEW signup only. It is not a
+  // final legal agreement and never opts anyone into marketing emails.
+  $('pilotNoticeWrap').hidden=!on;
+  $('pilotNoticeAck').required=on;$('pilotNoticeAck').disabled=!on;
+  if(!on)$('pilotNoticeAck').checked=false;
   $('authPassword').minLength=on?8:1;
   $('authPassword').autocomplete=on?'new-password':'current-password';
   $('authSubmit').textContent=on?'Create account':'Log in';$('authMode').textContent=on?'Already have an account? Log in':'Create an account';
@@ -105,7 +113,8 @@
    }else if(signup){
     const username=$('authUsername').value.trim();
     if(!/^[A-Za-z0-9_]{3,32}$/.test(username))throw Error('Username must be 3–32 letters, numbers or underscores.');
-    const data=await request('signup'+EMAIL_REDIRECT,{email,password,data:{username}});
+    const data=await request('signup'+EMAIL_REDIRECT,{email,password,
+     data:window.ClosetPilotNotice.signupMetadata(username,$('pilotNoticeAck').checked)});
     if(data.access_token&&data.user)showUser(data);
     else status('Check your email to confirm your account, then log in.');
    }else showUser(await request('token?grant_type=password',{email,password}));
