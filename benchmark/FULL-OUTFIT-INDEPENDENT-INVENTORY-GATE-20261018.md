@@ -7,9 +7,13 @@ missing garment invisible to recall measurement.
 
 ## Completed development, not completed human review
 
-- The experimental DeepFashion2 CI produces source-verified original JPEGs,
-  unapproved individual model mask proposals and an index. It cannot declare
-  complete physical garment truth from its own predictions.
+- The experimental DeepFashion2 CI produces **all ten source-verified
+  original JPEGs**, unapproved individual model-mask proposals, photographer
+  credits, license details, and a local `REVIEW-QUEUE.html`. The original
+  source bytes and per-image SHA-256 digests are independently rechecked in
+  `source-original-coverage.json`. The five priority cases appear first in
+  the dashboard, but none of the other five sources is omitted. It cannot
+  declare complete physical garment truth from its own predictions.
 - `benchmark/annotate-garment.html` now supports an **Independent physical
   garment** mode starting from a *blank mask*. Use the original JPEG to draw
   one actual visible garment, including one for which NO model proposal
@@ -59,7 +63,11 @@ invented identities or reference outlines to satisfy CI.
 
 ## Required human review (still outstanding)
 
-First review the five original photos already packaged in the model artifact:
+Begin with the five priority originals in the **ten-photo** packet
+(`independent-outline-review/REVIEW-QUEUE.html`, extracted from the GitHub
+`pinned-deepfashion-instance-feasibility` artifact). Then review all five
+remaining originals. All ten must be fully reviewed for the aggregate
+ten-photo result. Priority examples:
 `validation-0031` (blazer, shirt, skirt, tights, shoes);
 `commons-0035` (shorts, model labeled vest/skirt);
 `validation-0017` (trousers and mirror contamination);
