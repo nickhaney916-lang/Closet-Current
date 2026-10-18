@@ -161,3 +161,40 @@ test('real openings, visible underlayers and tiny pinholes never fabricate missi
  assert.throws(()=>garmentDisplayMaskReliability({width,height,semanticLabels:new Uint8Array(3)},group),/Invalid/);
  assert.throws(()=>garmentDisplayMaskReliability(map,group,{maxEnclosedHoleShare:0}),/Invalid/);
 });
+
+test('uncertain cutout display crop retains original hem beyond recognition margin',()=>{
+ const width=128,height=128,map={width:32,height:32},selected=new Uint8Array(32*32);
+ // Model identifies main top from x=10..21, y=8..20, but its hem extends
+ // beyond the inaccurate predicted bounds (the original pixels still exist).
+ for(let y=8;y<21;y++)for(let x=10;x<22;x++)selected[y*32+x]=1;
+ const group={id:4,selected,clipped:false,bounds:{left:10,top:8,right:22,bottom:21}};
+ const data=new Uint8ClampedArray(width*height*3);
+ for(let i=0;i<data.length;i+=3)data.set([244,244,244],i);
+ // Blue original hem at y=89: outside 5% crop, inside wider 12% display crop.
+ for(let y=87;y<91;y++)for(let x=46;x<82;x++)data.set([29,61,185],(y*width+x)*3);
+ const image={width,height,channels:3,data},before=data.slice();
+ const recognition=cropClothingPhotoPixels(image,map,group);
+ const display=cropClothingPhotoPixels(image,map,group,{marginFraction:.12});
+ assert.ok(recognition.bounds.top>0&&recognition.bounds.top<display.bounds.top+10);
+ assert.ok(recognition.bounds.top>display.bounds.top);
+ assert.ok(recognition.bounds.height<display.bounds.height);
+ assert.ok(recognition.bounds.top+recognition.height<=87,
+  'recognition bounds stay unchanged at five percent');
+ assert.ok(display.bounds.top+display.height>=91,
+  'wider original-pixel fallback can retain the known photographed hem');
+ assert.equal(display.data.filter((v,i)=>i%3===2&&v===185).length,4*36);
+ assert.equal(recognition.data.includes(185),false,
+  'the recognition crop and its content remain exactly as before');
+ assert.deepEqual(data,before,'no user image is modified or AI-generated');
+});
+test('photo crop margins are bounded and clipped safely at the original frame',()=>{
+ const width=64,height=64,map={width:16,height:16},data=new Uint8ClampedArray(width*height*3).fill(60),
+ group={id:9,selected:new Uint8Array(16*16),bounds:{left:0,top:0,right:12,bottom:12},clipped:true};
+ const image={data,width,height,channels:3};
+ const narrow=cropClothingPhotoPixels(image,map,group),wide=cropClothingPhotoPixels(image,map,group,{marginFraction:.12});
+ assert.equal(narrow.bounds.left,0);assert.equal(narrow.bounds.top,0);
+ assert.equal(wide.bounds.left,0);assert.equal(wide.bounds.top,0);
+ assert.ok(wide.width>=narrow.width&&wide.height>=narrow.height);
+ assert.throws(()=>cropClothingPhotoPixels(image,map,group,{marginFraction:.25}),/margin/);
+ assert.throws(()=>cropClothingPhotoPixels(image,map,group,{marginFraction:NaN}),/margin/);
+});

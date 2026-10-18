@@ -53,19 +53,22 @@ export function clothingMaskGroups(map){
  }
  return output;
 }
-export function clothingCropBounds(image,map,group){
+export function clothingCropBounds(image,map,group,{marginFraction=.05}={}){
  if(![3,4].includes(image.channels)||image.data.length!==image.width*image.height*image.channels)throw Error('Invalid outfit image pixels.');
- // Keep a small margin of ORIGINAL scene pixels around coarse model boxes.
- // This affects the recognition crop, not the semantic alpha mask; a sleeve
- // cuff or shoe sole just beyond a predicted boundary must not be hard-cut.
- const scaleX=image.width/map.width,scaleY=image.height/map.height,pad=Math.max(2,Math.round(Math.max((group.bounds.right-group.bounds.left)*scaleX,(group.bounds.bottom-group.bounds.top)*scaleY)*.05));
+ if(!Number.isFinite(marginFraction)||marginFraction<.05||marginFraction>.15)
+  throw Error('Invalid original photo crop margin.');
+ // Recognition must keep the same 5% source crop as before. A display-only
+ // fallback caused by unreliable segmentation may elect a broader margin to
+ // retain photographed cuffs, hems or soles just OUTSIDE the model box.
+ // Neither margin can infer, repaint, mask or reconstruct garment pixels.
+ const scaleX=image.width/map.width,scaleY=image.height/map.height,pad=Math.max(2,Math.round(Math.max((group.bounds.right-group.bounds.left)*scaleX,(group.bounds.bottom-group.bounds.top)*scaleY)*marginFraction));
  const left=Math.max(0,Math.floor(group.bounds.left*scaleX)-pad),top=Math.max(0,Math.floor(group.bounds.top*scaleY)-pad),right=Math.min(image.width,Math.ceil(group.bounds.right*scaleX)+pad),bottom=Math.min(image.height,Math.ceil(group.bounds.bottom*scaleY)+pad),width=right-left,height=bottom-top;
  return {left,top,width,height};
 }
 // Keep source pixels for review and classification. A coarse semantic mask
 // locates the crop; it must not erase fine garment texture or nearby edges.
-export function cropClothingPhotoPixels(image,map,group){
- const bounds=clothingCropBounds(image,map,group),{left,top,width,height}=bounds,data=new Uint8ClampedArray(width*height*3);
+export function cropClothingPhotoPixels(image,map,group,options){
+ const bounds=clothingCropBounds(image,map,group,options),{left,top,width,height}=bounds,data=new Uint8ClampedArray(width*height*3);
  for(let y=0;y<height;y++)for(let x=0;x<width;x++){
   const source=((y+top)*image.width+x+left)*image.channels,target=(y*width+x)*3;
   for(let c=0;c<3;c++)data[target+c]=image.data[source+c];

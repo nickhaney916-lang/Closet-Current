@@ -24,7 +24,14 @@ self.onmessage=event=>{const request=event.data;chain=chain.then(async()=>{
   await import('./photo-color.js'+new URL(import.meta.url).search);
   const map=clothingLabelMap(output.logits.data,output.logits.dims),groups=map.personDetected?clothingMaskGroups(map):[];let count=0;
   for(const group of groups){
-   const raw=cropClothingPhotoPixels(image,map,group),display=garmentDisplayMaskReliability(map,group),isolated=display.useOriginalCrop?raw:isolateClothingPixels(image,map,group),sample=display.useOriginalCrop?null:clothingColorSample(image,map,group),core=display.useOriginalCrop?null:clothingInteriorColorSample(image,map,group),b=raw.bounds;
+   // Index/recognize using the fixed, narrow ORIGINAL 5% RGB crop only.
+   // When a mask is structurally unreliable, DISPLAY a wider 12% source
+   // crop so missing hems/soles just beyond coarse model bounds survive.
+   // The enlarged display crop is NEVER sent to recognition or color inference.
+   const raw=cropClothingPhotoPixels(image,map,group),display=garmentDisplayMaskReliability(map,group),
+    isolated=display.useOriginalCrop?cropClothingPhotoPixels(image,map,group,{marginFraction:.12}):isolateClothingPixels(image,map,group),
+    sample=display.useOriginalCrop?null:clothingColorSample(image,map,group),
+    core=display.useOriginalCrop?null:clothingInteriorColorSample(image,map,group),b=raw.bounds;
    const piece={image:await jpegData(new RawImage(isolated.data,isolated.width,isolated.height,3)),recognitionPhoto:{image:await jpegData(new RawImage(raw.data,raw.width,raw.height,3))},cropBounds:{x:b.left/image.width,y:b.top/image.height,width:b.width/image.width,height:b.height/image.height},colorEstimate:(()=>{if(display.useOriginalCrop)return null;const full=PhotoColor.maskedPalette(sample.data,sample.width,sample.height);
     const interior=core&&PhotoColor.maskedPalette(core.data,core.width,core.height);
     // Both spatial views must agree; a boundary-only color isn't reliable.

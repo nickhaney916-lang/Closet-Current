@@ -36,3 +36,17 @@ test('supported left-right shoe pair retains both white-background cutouts in ou
  assert.equal(pieces[2].piece.hint.displayFallbackReason,null);
  assert.equal(pieces[0].piece.hint.displayFallback,null);
 });
+
+test('worker keeps original narrow recognition bounds despite broader risky display fallback',async()=>{
+ const h=setup();await h.run();
+ const pieces=h.sent.filter(x=>x.type==='piece');
+ const fallback=pieces.find(x=>x.piece.hint.displayFallback==='original-crop');
+ assert.ok(fallback,'tiny fragmented shoes require wider original-pixel display');
+ const shoe=fallback.piece;
+ assert.equal(shoe.label,'Shoes');
+ assert.equal(shoe.hint.displayFallbackReason,'fragmented-mask');
+ // Recognition box is still measured from original source narrow mask extent.
+ assert.ok(shoe.cropBounds.width>0&&shoe.cropBounds.width<1);
+ assert.ok(shoe.recognitionPhoto.image.startsWith('data:image/jpeg;base64,'));
+ assert.ok(shoe.image.startsWith('data:image/jpeg;base64,'));
+});
