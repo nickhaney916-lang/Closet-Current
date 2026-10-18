@@ -2,21 +2,38 @@
 // NEVER used by the shipping app. No heuristic can certify a clothing-only mask.
 import {selectedCategoryMask} from './clothing-only-comparison.mjs';
 
-export function protectedBodyFromLogits(data,dims){
+export function protectedBodyFromLogits(data,dims,{
+ minProbability=0,minMargin=0
+}={}){
   if(!Array.isArray(dims)||dims.length!==4||dims[0]!==1||dims[1]!==18
       ||!Number.isInteger(dims[2])||!Number.isInteger(dims[3])
       ||dims[2]<1||dims[3]<1||dims[2]>512||dims[3]>512
-      ||data?.length!==dims.reduce((a,b)=>a*b,1))throw Error('Invalid semantic logits');
+      ||data?.length!==dims.reduce((a,b)=>a*b,1)||
+      !Number.isFinite(minProbability)||minProbability<0||minProbability>1||
+      !Number.isFinite(minMargin)||minMargin<0||minMargin>1)
+    throw Error('Invalid semantic logits');
   const area=dims[2]*dims[3],protectedPixels=new Uint8Array(area);
   const body=new Set([2,11,12,13,14,15]);
   for(let i=0;i<area;i++){
-    let best=-Infinity,label=-1;
+    let best=-Infinity,runnerUp=-Infinity,label=-1;
     for(let c=0;c<18;c++){
       const score=data[c*area+i];
       if(!Number.isFinite(score))throw Error('Non-finite semantic class');
-      if(score>best){best=score;label=c;}
+      if(score>best){runnerUp=best;best=score;label=c;}
+      else if(score>runnerUp)runnerUp=score;
     }
-    if(body.has(label))protectedPixels[i]=1;
+    if(!body.has(label))continue;
+    // Experiment only: the original strict argmax mask is unchanged when both
+    // options are zero. The confidence-gated alternative is for human review.
+    // Weak body predictions may be missing clothing OR real exposed skin.
+    // Removing a veto cannot prove garment preservation or authorize a cutout.
+    if(minProbability>0||minMargin>0){
+      let sum=0;for(let c=0;c<18;c++)sum+=Math.exp(data[c*area+i]-best);
+      const confidence=1/sum;
+      const margin=(1-Math.exp(runnerUp-best))/sum;
+      if(confidence<minProbability||margin<minMargin)continue;
+    }
+    protectedPixels[i]=1;
   }
   return protectedPixels;
 }

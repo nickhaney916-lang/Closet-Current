@@ -52,6 +52,10 @@ try{
   const semanticMs=Math.round(performance.now()-segStart);
   const map=clothingLabelMap(semanticOutput.logits.data,semanticOutput.logits.dims);
   const protectedBody=protectedBodyFromLogits(semanticOutput.logits.data,semanticOutput.logits.dims);
+  // Separate experimental confidence sensitivity. Strict baseline above is
+  // never changed; newly visible regions might include person or mannequin.
+  const confidenceBody=protectedBodyFromLogits(semanticOutput.logits.data,
+    semanticOutput.logits.dims,{minProbability:.8,minMargin:.25});
   const objectStart=performance.now(),objectInputs=await objectProcessor(img);
   const objectOutput=await objectModel({input_image:objectInputs.pixel_values});
   if(!objectOutput.output_image)throw Error('Missing object alpha for '+entry.id);
@@ -62,6 +66,15 @@ try{
   const combined=hybridGarmentAlpha(raw.data,img.width,img.height,map,entry.expectedCategory,{
     protectedBody,haloCells:2,minSemanticPixels:8
   });
+  const confidenceCandidate=hybridGarmentAlpha(raw.data,img.width,img.height,map,entry.expectedCategory,{
+    protectedBody:confidenceBody,haloCells:2,minSemanticPixels:8
+  });
+  let addedVisiblePixels=0;
+  for(let i=0;i<combined.alpha.length;i++){
+    if(combined.alpha[i]&&!confidenceCandidate.alpha[i])
+      throw Error('Sensitivity study unexpectedly removed an existing garment candidate');
+    if(confidenceCandidate.alpha[i]&&!combined.alpha[i])addedVisiblePixels++;
+  }
   const decoded=await sharp(bytes).removeAlpha().toColourspace('srgb').raw()
     .toBuffer({resolveWithObject:true});
   if(decoded.info.width!==img.width||decoded.info.height!==img.height||decoded.info.channels!==3)
@@ -81,6 +94,15 @@ try{
     retainedPixels:combined.keptPixels,retentionRatio:combined.objectPixels?
       combined.keptPixels/combined.objectPixels:0,sourceVerified:true,captureQuality:'unmeasured'});
   const panels=[original,await makePanel(raw.data),await makePanel(combined.alpha)];
+  const sensitivePanel=await makePanel(confidenceCandidate.alpha);
+  await writeFile(join(dest,entry.id+'-body-veto-sensitivity.png'),sensitivePanel);
+  // These differences are *possible* recovered fabric, not verified clothing.
+  // Any unblocked skin or mannequin remains a release-blocking contamination.
+  const sensitivityHeader=Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="1260" height="88"><rect width="1260" height="88" fill="white"/><g font-family="sans-serif" font-size="18" fill="#242424"><text x="10" y="26">Verified source</text><text x="430" y="26">Strict body exclusion (baseline)</text><text x="850" y="26">High-confidence body exclusion</text></g><text x="10" y="54" font-size="14">Review newly exposed pixels: fabric OR skin/mannequin</text><text x="10" y="76" font-size="13">Not independently scored; original RGB unchanged; NOT approved for production</text></svg>');
+  await sharp({create:{width:1260,height:ph+88,channels:3,background:'white'}})
+    .composite([{input:sensitivityHeader,left:0,top:0},
+      ...[original,panels[2],sensitivePanel].map((input,i)=>({input,left:i*pw,top:88}))])
+    .png().toFile(join(dest,entry.id+'-body-veto-review.png'));
   const selectedPanel=route.candidate==='clothing-guided-hybrid'?panels[2]:
     route.candidate==='object-alpha-only'?panels[1]:panels[0];
   await writeFile(join(dest,entry.id+'-layered-candidate.png'),selectedPanel);
@@ -100,6 +122,11 @@ try{
     sourceWidth:w,sourceHeight:h,semanticMs,objectMs,protectedBodyPixels:protectedBody.reduce((s,v)=>s+v,0),
     personDetected:map.personDetected,
     seedDetected:combined.seedDetected,semanticPixels:combined.semanticPixels,
+    strictBodyVetoPixels:protectedBody.reduce((s,v)=>s+v,0),
+    strongBodyVetoPixels:confidenceBody.reduce((s,v)=>s+v,0),
+    alternatePixelsPotentiallyRestored:addedVisiblePixels,
+    alternatePixelsPotentiallySkinOrMannequin:true,
+    alternativeSegmentationApproved:false,
     objectPixels:combined.objectPixels,retainedPixels:combined.keptPixels,
     removedFromObject:combined.removedPixels,bodyVetoedPixels:combined.bodyVetoedPixels,
     semanticOverlap:combined.seedOverlap,retentionRatio:combined.objectPixels?

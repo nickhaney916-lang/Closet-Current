@@ -35,11 +35,13 @@ jobs:
         run: node scripts/run-hybrid-garment-comparison.mjs benchmark/hybrid-garment-review
       - name: Reject incomplete results or claims of release readiness
         run: |
-          node -e "const s=require('./benchmark/hybrid-garment-review/summary.json'); if(s.status!=='complete'||s.cases.length!==5||s.accuracyMeasured!==false||s.mobilePerformanceMeasured!==false||s.productionAuthorized!==false||s.cases.some(c=>c.independentlyApproved||c.garmentOnlyVerified||!c.originalSourcePreserved)||s.routeSummary?.productionAuthorized!==false||s.routeSummary?.counts?.hybrid!==2||s.routeSummary?.counts?.original!==2||s.routeSummary?.counts?.object!==1)throw Error('Unsafe hybrid report')"
+          node -e "const s=require('./benchmark/hybrid-garment-review/summary.json'); if(s.status!=='complete'||s.cases.length!==5||s.accuracyMeasured!==false||s.mobilePerformanceMeasured!==false||s.productionAuthorized!==false||s.cases.some(c=>c.independentlyApproved||c.garmentOnlyVerified||!c.originalSourcePreserved||c.alternativeSegmentationApproved!==false||c.alternatePixelsPotentiallySkinOrMannequin!==true||c.strongBodyVetoPixels>c.strictBodyVetoPixels)||s.routeSummary?.productionAuthorized!==false||s.routeSummary?.counts?.hybrid!==2||s.routeSummary?.counts?.original!==2||s.routeSummary?.counts?.object!==1)throw Error('Unsafe hybrid report')"
           for id in validation-0001 validation-0003 validation-0010 validation-0017 validation-0019; do
             test -s "benchmark/hybrid-garment-review/$id-hybrid-review.png"
             test -s "benchmark/hybrid-garment-review/$id-hybrid-alpha.png"
             test -s "benchmark/hybrid-garment-review/$id-layered-comparison.png"
+            test -s "benchmark/hybrid-garment-review/$id-body-veto-sensitivity.png"
+            test -s "benchmark/hybrid-garment-review/$id-body-veto-review.png"
             test -s "benchmark/hybrid-garment-review/$id-layered-candidate.png"
           done
       - uses: actions/upload-artifact@v4
