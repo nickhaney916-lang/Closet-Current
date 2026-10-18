@@ -134,7 +134,26 @@ try{
  assert.equal(await clean.page.evaluate(id=>items.find(x=>x.id===id).itemType,learnedTarget),'Unknown');
  await clean.page.evaluate(id=>adjustPhoto(items.find(x=>x.id===id)),learnedTarget);learningDialog=clean.page.locator('dialog[open]');await learningDialog.getByText('Suggestions from your confirmed clothes',{exact:true}).click();await learningDialog.getByRole('button',{name:'Use suggested details',exact:true}).click();assert.equal(await learningDialog.getByLabel('Item type',{exact:true}).inputValue(),'Polo');assert.equal(await learningDialog.getByLabel('Color',{exact:true}).inputValue(),'Purple');assert.equal(await learningDialog.getByLabel('Pattern',{exact:true}).inputValue(),'Striped');await clean.page.screenshot({path:output+'/confirmed-example-learning.png',fullPage:true});await learningDialog.getByRole('button',{name:'Save changes',exact:true}).click();await clean.page.waitForFunction(()=>!document.querySelector('dialog[open]'));
  const learned=await clean.page.evaluate(id=>items.find(x=>x.id===id),learnedTarget);assert.equal(learned.confirmedDetails.itemType,'Polo');assert.equal(learned.color,'Purple');assert.equal(learned.material,'');
- await clean.page.evaluate(()=>closetCloud.sync());await clean.page.waitForFunction(()=>document.getElementById('cloudStatus').textContent==='Cloud backup up to date',null,{timeout:60000});const learningRestore=await device(owners[0]);await learningRestore.page.waitForFunction(id=>items.some(x=>x.id===id&&x.confirmedDetails?.itemType==='Polo'),learnedTarget);assert.equal(await learningRestore.page.evaluate(id=>ClothingMemory.valid(items.find(x=>x.id===id).recognitionMemory),learnedTarget),true);assert.ok(!JSON.stringify(records.get(owners[0])).includes('data:image'));
+ await clean.page.evaluate(()=>closetCloud.sync());await clean.page.waitForFunction(()=>document.getElementById('cloudStatus').textContent==='Cloud backup up to date',null,{timeout:30000}).catch(async error=>{
+  // Synthetic-only diagnostic metadata. NEVER print photos, auth tokens,
+  // wardrobe fields, or any real account credentials.
+  const diagnostic=await clean.page.evaluate(async()=>{
+   const syncStatus=document.getElementById('cloudStatus')?.textContent;
+   const state=await new Promise(resolve=>{
+    const req=db.transaction('state').objectStore('state').get('cloud-sync');
+    req.onsuccess=()=>resolve(req.result);
+    req.onerror=()=>resolve(null);
+   });
+   return {syncStatus,localItemCount:items.length,
+    marker:state&&{baseVersion:state.baseVersion,localRevision:state.localRevision,
+      dirty:state.dirty,needsRestore:state.needsRestore,
+      copyIds:state.resolutionIds?.length||0}};
+  });
+  console.error('CLOUD_LEARNING_SYNC_DIAGNOSTIC '+JSON.stringify({
+   ...diagnostic,remoteRevision:records.get(owners[0])?.revision||null,
+   remoteItems:records.get(owners[0])?.document?.items?.length||0}));
+  throw error;
+ });const learningRestore=await device(owners[0]);await learningRestore.page.waitForFunction(id=>items.some(x=>x.id===id&&x.confirmedDetails?.itemType==='Polo'),learnedTarget);assert.equal(await learningRestore.page.evaluate(id=>ClothingMemory.valid(items.find(x=>x.id===id).recognitionMemory),learnedTarget),true);assert.ok(!JSON.stringify(records.get(owners[0])).includes('data:image'));
  // NEW: the one-tap Unsorted category+color review must enter the same
  // per-account cloud backup without losing its original JPEG/reference crop.
  // These are synthetic wardrobe records on a controlled HTTP backend, NOT
