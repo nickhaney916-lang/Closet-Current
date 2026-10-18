@@ -141,7 +141,11 @@ try{
   }
  }
  await page.waitForFunction(()=>items.filter(x=>x.outfitSourceId).length===3);
+ // The new one-tap shortcut correctly opened the stylist. Return to the
+ // captured photo's review screen before testing the separate outfit-board path.
+ await page.evaluate(()=>switchView('review'));
  const action=page.locator('#useCapturedOutfit');
+ await action.waitFor({state:'visible'});
  assert.equal(await action.isDisabled(),false);
  await action.tap();
  await page.locator('#builder:not([hidden])').waitFor({state:'visible'});
