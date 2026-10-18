@@ -229,3 +229,38 @@ test('large missing garment islands preserve original RGB rather than trusting o
   assert.deepEqual(original,prior,'original and recognition pixels unchanged');
  }
 });
+
+test('mixed skin and garment labels cannot collectively hide missing fabric',()=>{
+ const width=40,height=40,n=width*height,selected=new Uint8Array(n),
+  labels=new Uint8Array(n),semanticLabels=new Uint8Array(n),hole=[];
+ for(let y=4;y<36;y++)for(let x=4;x<36;x++)selected[y*width+x]=1;
+ for(let y=16;y<24;y++)for(let x=16;x<24;x++){const i=y*width+x;selected[i]=0;hole.push(i);}
+ const map={width,height,labels,semanticLabels},group={id:7,selected,clipped:false};
+ const check=()=>garmentDisplayMaskReliability(map,group);
+ assert.equal(check().reason,'unexplained-enclosed-gap');
+ // Every pixel has a different *trusted* label, with no dominant class.
+ for(let k=0;k<hole.length;k++){const i=hole[k];semanticLabels[i]=k%2?11:4;}
+ assert.equal(check().reason,'unexplained-enclosed-gap');
+ // Coherent skin and coherent second-clothing regions are legitimate openings.
+ for(const i of hole)semanticLabels[i]=11;
+ assert.equal(check().reason,null);
+ // Contradictory foreground-class evidence must not authorize a cutout.
+ for(const i of hole)labels[i]=4;
+ assert.equal(check().reason,'unexplained-enclosed-gap');
+ for(const i of hole)semanticLabels[i]=4;
+ assert.equal(check().reason,null);
+});
+test('mixed-class missing panels preserve originals for sleeves bottoms skirts and shoes',()=>{
+ for(const id of [4,5,6,9]){
+  const width=32,height=32,n=width*height,selected=new Uint8Array(n),
+    semanticLabels=new Uint8Array(n);
+  for(let y=2;y<30;y++)for(let x=2;x<30;x++)selected[y*width+x]=1;
+  for(let y=12;y<20;y++)for(let x=12;x<20;x++){
+   selected[y*width+x]=0;semanticLabels[y*width+x]=x%2?11:7;
+  }
+  const review=garmentDisplayMaskReliability({width,height,semanticLabels},
+   {id,selected,clipped:false});
+  assert.equal(review.reason,'unexplained-enclosed-gap','clothing class '+id);
+  assert.equal(review.useOriginalCrop,true);
+ }
+});
