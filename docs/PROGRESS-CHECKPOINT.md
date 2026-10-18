@@ -1,6 +1,51 @@
 # Closet Current master development checkpoint
 
 
+## Category-correct whole-outfit scoring + separate footwear readiness — October 18, 2026, Pacific
+
+- **Two next development priorities implemented on draft PR #7 only.**
+  Category-vs-localization accuracy: updated
+  `benchmark/physical-garment-inventory.mjs` to optimize a second,
+  category-constrained IoU assignment independently from broad localization.
+  Thus a blazer labeled Top can overlap the correct physical blazer but
+  **cannot count as correctly categorized**; a second correctly labeled
+  outerwear prediction is not incorrectly crowded out by a higher-IoU
+  wrong-category prediction. Report includes
+  `categoryConstrainedMatchedGarments`,
+  `categoryConstrainedRecall`,
+  `supportedCategoryConstrainedRecall` and unsupported Shoes/Hosiery
+  classes. Existing localization metrics remain separately visible.
+- Strengthened `scripts/score-physical-garment-inventory.mjs` to require
+  all **10 exact unique pinned real-source IDs** before any "complete
+  ten-photo" aggregate is permitted. Adds aggregate
+  `correctlyCategorizedGarmentRecall` and unsupported-class counts.
+  End-to-end synthetic-only CLI test asserts zero-reviews / one-of-ten
+  remain **null aggregate accuracy**, wrong-category overlap lowers category
+  score, and full ten-source synthetic fixtures exercise math **without
+  being passed off as real human measurement**.
+- Footwear/hosiery: `benchmark/footwear-readiness.mjs`,
+  `scripts/audit-footwear-readiness.mjs` and regression tests audit
+  the verified *different* DeepFashion2 (two sneaker negative controls
+  with unsupported category, zero proposals) and earlier pinned LIP
+  (boot shaft contamination, missing sheer tights) evidence. Cross-study
+  measured shoe accuracy and comparative improvement remain **null**;
+  unsupported taxonomy, absent approved masks and lack of paired
+  held-out results explicitly block model promotion.
+- Pinned [DeepFashion Actions run 39169378676](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39169378676):
+  **21 focused Node tests passed, zero failed**, real SHA-locked
+  ten-source worker completed, scorer reported **0 genuinely approved
+  full-photo inventories** and **null real-photo accuracy**; footwear audit
+  reported **2 negative-control sneakers and 2 earlier LIP review photos**,
+  0 customer saves, 0 paid inference, 0 production promotions.
+- Details: `benchmark/DUAL-PRIORITY-INDEPENDENT-SCORING-AND-FOOTWEAR-20261018.md`.
+  No production deployment/merge or Drive Duel changes.
+- **Unfinished external requirement:** obtain two-person independently
+  approved pixel masks and complete inventories for all ten source photos.
+  Only then compare held-out real-photo performance and decide on any
+  alternative segmentation/footwear model. No human review was fabricated.
+
+
+
 ## Complete 10-source independent review package — October 18, 2026, Pacific
 
 - **Actual next priority finished on draft PR #7.** A blocker in
