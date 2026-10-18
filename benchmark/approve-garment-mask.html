@@ -92,6 +92,11 @@ async function load(){
  accepted=false;source=null;draft=null;mask=null;detailPoint=null;verified.checked=false;refresh();
  const p=photo.files?.[0],d=draftInput.files?.[0];
  if(!p||!d){status.textContent='Select both a source photo and draft outline.';return;}
+ if(/^commons-[0-9]{4}[.]original[.]jpg$/i.test(p.name)){
+  status.textContent='Choose '+p.name.replace('.original.jpg','.jpg')+
+   ' instead. The archival filename is not valid for independent review.';
+  return;
+ }
  try{
   if(p.size>16000000||d.size>16000000)throw Error('Photo or draft too large');
   const annotation=JSON.parse(await d.text());

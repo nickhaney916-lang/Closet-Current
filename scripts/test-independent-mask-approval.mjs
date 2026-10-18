@@ -27,6 +27,10 @@ try{
  const load=async data=>{
   await page.locator('#draft').setInputFiles({name:'illustrative-review.mask.draft.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(data))});
  };
+ await page.locator('#photo').setInputFiles({name:'commons-0094.original.jpg',mimeType:'image/png',buffer:bytes});
+ await load(valid);
+ await page.getByRole('status').getByText(/Choose commons-0094.jpg instead/).waitFor();
+ assert.equal(await page.locator('#approve').isDisabled(),true);
  await page.locator('#photo').setInputFiles({name:valid.image,mimeType:'image/png',buffer:bytes});
  await load({...valid,sourceSha256:'wrong'});
  await page.getByRole('status').getByText(/checksum mismatch/).waitFor();

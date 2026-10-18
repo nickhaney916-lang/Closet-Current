@@ -17,6 +17,13 @@ const prediction=document.querySelector('#prediction'),resume=document.querySele
 let source=null,mask=null,painting=false,strokes=0,seedModel=null,reviewedDraft=false,seedMask=null,polygon=[],lastPoint=null,detailPoint=null;const undoStack=[],redoStack=[];
 photo.onchange=async()=>{
  const file=photo.files[0];if(!file)return;
+ // Archival photos have identical bytes but a filename rejected by the
+ // benchmark's canonical annotation identity. Fail before human painting.
+ if(/^commons-[0-9]{4}[.]original[.]jpg$/i.test(file.name)){
+  status.textContent='Choose '+file.name.replace('.original.jpg','.jpg')+
+   ' instead. The .original.jpg copy is archival and cannot be staged.';
+  return;
+ }
  if(file.size>16000000){status.textContent='Image too large';return;}
  const url=URL.createObjectURL(file);
  try{const image=new Image();image.src=url;await image.decode();
