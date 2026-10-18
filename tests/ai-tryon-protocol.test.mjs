@@ -41,7 +41,9 @@ test('provider responses are strictly normalized and do not expose arbitrary red
 });
 test('server is deny-by-default, requires signed user-bound jobs, and keeps provider key off client',()=>{
  const server=readFileSync('supabase/functions/ai-try-on/index.ts','utf8');
- assert.match(server,/TRYON_ENABLED.*!=='true'/);
+ assert.match(server,/TRYON_ENABLED.*==='true'/);
+ assert.match(server,/action==='availability'/);
+ assert.match(server,/status:enabled&&allowedAccount\?'ready':'unavailable'/);
  assert.match(server,/TRYON_PILOT_USER_IDS/);
  assert.match(server,/TRYON_JOB_SIGNING_KEY/);
  assert.match(server,/crypto\.subtle\.verify/);
