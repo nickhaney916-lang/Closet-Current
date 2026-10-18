@@ -133,6 +133,10 @@ header{padding-top:22px;padding-bottom:18px}.brand-mark{background:#7043ba;color
 .ai-tryon-panel h3{margin:0 0 8px;font-size:1.1rem}
 .ai-tryon-panel h3 small{font-weight:500;font-size:.72rem;opacity:.75}
 .ai-tryon-panel p{line-height:1.5}
+.ai-tryon-model-preview{display:flex;align-items:center;gap:12px;margin:12px 0 16px;padding:10px;border-radius:12px;background:#f6f4f6}
+.ai-tryon-model-preview img{display:block;width:96px;height:177px;object-fit:contain;flex:0 0 96px;border-radius:9px;background:#efeeeb}
+.ai-tryon-model-preview p{margin:0;font-size:13px;max-width:270px}
+@media(min-width:700px){.ai-tryon-model-preview img{width:128px;height:235px;flex-basis:128px}}
 .ai-tryon-controls{display:flex;flex-wrap:wrap;gap:12px;align-items:end}
 .ai-tryon-controls label{display:grid;gap:4px;font-weight:600;flex:1;min-width:145px}
 .ai-tryon-controls select,.ai-tryon-controls button{min-height:48px;font:inherit}
