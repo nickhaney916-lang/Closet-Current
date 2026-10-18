@@ -57,6 +57,21 @@ try{
  const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.goto('http://127.0.0.1:'+server.address().port+'/');
  await page.evaluate(()=>Promise.all([closetReady,outfitBoardReady]));
+ // Synthetic owned wardrobe provides matching options; neither the garments
+ // nor the simulated segmentation worker demonstrate real-photo accuracy.
+ const ownedIds=await page.evaluate(async()=>{
+  const svg='data:image/svg+xml,'+encodeURIComponent(
+   '<svg xmlns="http://www.w3.org/2000/svg" width="60" height="80"><rect width="60" height="80" fill="#596b77"/></svg>');
+  const records=[
+   normalizeClothing({id:'already-owned-jeans',name:'My blue jeans',image:svg,
+    category:'Bottoms',itemType:'Jeans',color:'Blue',seasons:[]}),
+   normalizeClothing({id:'already-owned-shoes',name:'My white sneakers',image:svg,
+    category:'Shoes',itemType:'Sneakers',color:'White',seasons:[]})
+  ];
+  await writeAll(records);items.push(...records);render();
+  return records.map(x=>x.id);
+ });
+ assert.equal(ownedIds.length,2);
  // Disable background recognition only for the deterministic segmentation
  // transport test: neither labels nor model reliability are being tested.
  await page.evaluate(()=>{queueAutomatic=()=>{};});
@@ -90,11 +105,40 @@ try{
   const match=before[i].id;
   await page.evaluate(id=>{const item=batch.find(x=>x.id===id);adjustPhoto(item);},match);
   const dialog=page.locator('dialog.clothing-editor');
+  if(i===0){
+   const action=dialog.getByRole('button',{name:'Save & style this'});
+   assert.equal(await action.isVisible(),true);
+   await action.click(); // Uncategorized cannot become an owned styled piece.
+   assert.equal(await page.evaluate(id=>items.some(x=>x.id===id),match),false);
+   assert.equal(await dialog.isVisible(),true);
+  }
   await dialog.locator('select[aria-label="Main category"]').selectOption(records[i][0]);
   await dialog.locator('select[aria-label="Item type"]').selectOption(records[i][1]);
   await dialog.getByLabel('Color',{exact:true}).fill(records[i][2]);
-  await dialog.getByRole('button',{name:'Save changes'}).click();
-  await dialog.waitFor({state:'detached'});
+  if(i===0){
+   await dialog.getByRole('button',{name:'Save & style this'}).click();
+   await dialog.waitFor({state:'detached'});
+   await page.locator('#stylist:not([hidden])').waitFor();
+   await page.locator('#styledCollectionResults .styled-outfit').first().waitFor({timeout:15000});
+   const handoff=await page.evaluate(id=>({
+    anchored:stylistAnchorItemId===id,
+    styles:styledCollectionResults.map(v=>Object.values(v.board.slots)),
+    owned:items.map(x=>x.id),
+    unchangedSource:items.find(x=>x.id===id)?.originalPhoto?.image===lastOutfitPhoto
+   }),match);
+   assert.equal(handoff.anchored,true);
+   assert.ok(handoff.styles.length>0);
+   assert.ok(handoff.styles.every(selected=>selected.includes(match)&&
+    selected.every(id=>handoff.owned.includes(id))),
+    'Styling must use only owned clothing after review');
+   assert.ok(handoff.styles.some(selected=>selected.includes('already-owned-jeans')&&
+    selected.includes('already-owned-shoes')),
+    'Saved new top should coordinate with existing shoes and pants');
+   assert.equal(handoff.unchangedSource,true);
+  }else{
+   await dialog.getByRole('button',{name:'Save changes'}).click();
+   await dialog.waitFor({state:'detached'});
+  }
  }
  await page.waitForFunction(()=>items.filter(x=>x.outfitSourceId).length===3);
  const action=page.locator('#useCapturedOutfit');
@@ -132,7 +176,9 @@ try{
  assert.deepEqual(errors,[]);
  console.log('OUTFIT_CAPTURE_HANDOFF '+JSON.stringify({
   result:'passed',viewport:'390x844 touch',simulatedWorkerPieces:3,
-  manuallyConfirmed:3,actualModelSegmentationTested:false,
+  manuallyConfirmed:3,styledAfterOneTapSave:true,
+  preexistingOwnedPieces:2,stylingUsesOnlyOwned:true,
+  actualModelSegmentationTested:false,
   originalPhotoPreserved:true,outerwearJacketLayer:2,
   savedBoardReloaded:true,capturedGroupRestored:true,pageErrors:0,
   realCameraTested:false,realModelClippingAccuracyMeasured:false
