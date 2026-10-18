@@ -22,6 +22,7 @@ class UnapprovedInstanceMaskSeedTests(unittest.TestCase):
         self.assertEqual(seed["image"],SOURCE["image"])
         self.assertEqual(seed["sourceSha256"],SOURCE["sha256"])
         self.assertEqual(seed["reviewStatus"],"prediction-unreviewed")
+        self.assertEqual(seed["modelProposalId"],"commons-0035-candidate-01")
         self.assertFalse(seed["independentReference"])
         self.assertFalse(seed["canSaveToCustomerCloset"])
         self.assertIsNone(seed["approvedBy"])
