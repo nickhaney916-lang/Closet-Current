@@ -82,8 +82,9 @@ test('wrong source, fake approvals, model-seeded truth and duplicate inventory a
  ];
  for(const [inv,ann] of variants)
   assert.throws(()=>evaluateCompletePhysicalInventory(scene,inv,ann,seeds));
+ const [firstId,firstSeed]=seeds.entries().next().value;
  assert.throws(()=>evaluateCompletePhysicalInventory(scene,inventory,annotations,
-  new Map([[...seeds][0].slice(0,1)[0],{...seeds.values().next().value,reviewStatus:'approved'}]])));
+  new Map([[firstId,{...firstSeed,reviewStatus:'approved'}]])));
 });
 test('physical target ID cannot be reused for a different photo or proposed mask',()=>{
  const {inventory,annotations,seeds}=example();
