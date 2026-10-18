@@ -10,7 +10,7 @@ import {clothingLabelMap} from '../public/outfit-segmentation.mjs';
 import {semanticFragmentEvidence,validateInstanceMaskProposals} from '../benchmark/garment-instance-evidence.mjs';
 import {dressClassCompetition} from '../benchmark/dress-class-competition.mjs';
 const output=process.argv[2]||'benchmark/instance-fragments-review';
-const [manifest,locked,fresh]=await Promise.all([
+const [manifest,locked,fresh,legwear]=await Promise.all([
  readFile('benchmark/expanded-outfit-review-manifest.json','utf8').then(JSON.parse),
  readFile('benchmark/locked-photo-sources.json','utf8').then(JSON.parse),
  readFile('benchmark/manifest-fresh-11.json','utf8').then(JSON.parse),
