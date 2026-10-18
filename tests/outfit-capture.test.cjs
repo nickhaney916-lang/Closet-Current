@@ -109,3 +109,64 @@ test('invalid source crop keeps valid earlier pieces and reports partial failure
  assert.equal(h.el('outfitRetry').hidden,false);
  assert.match(h.el('outfitSplitStatus').textContent,/original.*retry/i);
 });
+
+test('retry keeps a previously reviewed region even when recompressed JPEG bytes differ',()=>{
+ const h=setup();const hint={categories:['Tops','Outerwear'],types:[],clipped:false};
+ const original='data:image/jpeg;base64,AAAA',source='original-capture';
+ const b={x:.2,y:.15,width:.35,height:.30};
+ h.c.startOutfitSplit(original,source);
+ h.emit({type:'piece',piece:{image:'data:image/jpeg;base64,ONEA',
+  recognitionPhoto:{image:'data:image/jpeg;base64,RAW1'},cropBounds:b,hint}});
+ h.emit({type:'done',count:1});
+ assert.equal(h.c.batch.length,1);
+ h.c.batch[0].userAdjusted=true;h.c.batch[0].category='Outerwear';
+ h.c.startOutfitSplit(original,source);
+ h.emit({type:'piece',piece:{image:'data:image/jpeg;base64,ONEB',
+  recognitionPhoto:{image:'data:image/jpeg;base64,RAW2'},
+  cropBounds:{x:.201,y:.151,width:.350,height:.300},hint}});
+ h.emit({type:'done',count:1});
+ assert.equal(h.c.batch.length,1,'same source and near-identical region cannot add duplicate');
+ assert.equal(h.c.batch[0].image,'data:image/jpeg;base64,ONEA');
+ assert.equal(h.c.batch[0].userAdjusted,true,'keep prior user edits');
+ assert.equal(h.c.batch[0].category,'Outerwear');
+ assert.match(h.el('outfitSplitStatus').textContent,/Already found 1 clothing regions/);
+});
+test('saved pieces deduplicate on retry, but other garments, overlapping layers, and fresh captures remain distinct',()=>{
+ const h=setup(),raw={image:'data:image/jpeg;base64,RECOG'};
+ const top={categories:['Tops','Outerwear'],types:[],clipped:false};
+ const dress={categories:['Dresses'],types:[],clipped:false};
+ const b={x:.1,y:.15,width:.5,height:.6};
+ const photo='data:image/jpeg;base64,WHOLE';
+ h.c.items.push({id:'saved',outfitSourceId:'first-photo',
+  cropBounds:b,segmentHint:top,image:'data:image/jpeg;base64,SAVED',
+  category:'Outerwear',itemType:'Jacket'});
+ h.c.startOutfitSplit(photo,'first-photo');
+ const emit=(image,bounds,hint=top)=>h.emit({type:'piece',piece:{image,recognitionPhoto:raw,
+  cropBounds:bounds,hint}});
+ emit('data:image/jpeg;base64,SAVED2',b); // old jacket JPEG changed
+ emit('data:image/jpeg;base64,DRESS',b,dress); // same box, different class
+ emit('data:image/jpeg;base64,SHIRT',{x:.11,y:.16,width:.25,height:.28});
+ h.emit({type:'done',count:3});
+ assert.equal(h.c.batch.length,2,'different layers and separate smaller garment still enter review');
+ assert.equal(h.c.items.length,1,'original saved jacket preserved');
+ assert.match(h.el('outfitSplitStatus').textContent,/2 new clothing regions/);
+ h.c.startOutfitSplit(photo,'different-photo');
+ emit('data:image/jpeg;base64,ANOTHER',b);
+ h.emit({type:'done',count:1});
+ assert.equal(h.c.batch.length,3,'fresh capture cannot dedupe the previous capture by region');
+});
+test('invalid or absent region metadata cannot suppress new captures from byte-similar garments',()=>{
+ const h=setup(),hint={categories:['Tops'],types:[]};
+ h.c.items.push({outfitSourceId:'capture',cropBounds:{x:0,y:0,width:1,height:1},
+  segmentHint:hint,image:'data:image/jpeg;base64,OLD'});
+ h.c.startOutfitSplit('data:image/jpeg;base64,WHOLE','capture');
+ for(const [image,cropBounds] of [
+  ['data:image/jpeg;base64,NONE',undefined],
+  ['data:image/jpeg;base64,BAD',{x:0,y:0,width:1.3,height:1.1}],
+  ['data:image/jpeg;base64,DIFFERENT',{x:.5,y:.5,width:.2,height:.2}]
+ ]){
+  h.emit({type:'piece',piece:{image,recognitionPhoto:{image},cropBounds,hint}});
+ }
+ h.emit({type:'done',count:3});
+ assert.equal(h.c.batch.length,3);
+});
