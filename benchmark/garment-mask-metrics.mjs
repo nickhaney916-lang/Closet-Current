@@ -118,3 +118,70 @@ export function scoreApprovedColorSampling(annotation,manifestEntry,prediction){
   additionalGarmentMissRate:referenceTotal?(full.truePositive-inner.truePositive)/referenceTotal:null
  };
 }
+
+
+/**
+ * Diagnostic only: compare actual garment-edge retention against an independently
+ * approved outline. The bottom band is relative to the reviewed garment's bounds,
+ * not the photograph's bounds. It is a lower-edge warning, NOT a hem/sole label.
+ * Masks and original RGB are read-only; no predicted pixels are repaired here.
+ */
+export function scoreApprovedGarmentEdgeRetention(annotation,manifestEntry,prediction,{
+ lowerBandFraction=0.25
+}={}){
+ if(!Number.isFinite(lowerBandFraction)||lowerBandFraction<0.1||lowerBandFraction>0.5)
+  throw Error('Invalid garment lower-band fraction');
+ // Reuse the independent-review, source, dimension and aspect-ratio gates.
+ const overall=scoreApprovedPredictionAtReferenceResolution(annotation,manifestEntry,prediction);
+ const truth=approvedReferenceMask(annotation,manifestEntry);
+ const {width,height}=annotation;
+ const candidate=alignPredictionToReference(decodeReferenceMask(prediction),
+  prediction.width,prediction.height,width,height);
+ let minY=height,maxY=-1;
+ for(let i=0;i<truth.length;i++)if(truth[i]){
+  const y=Math.floor(i/width);minY=Math.min(minY,y);maxY=Math.max(maxY,y);
+ }
+ // approvedReferenceMask already rejects empty and all-foreground annotations.
+ const bandRows=Math.max(1,Math.ceil((maxY-minY+1)*lowerBandFraction));
+ const lowerBandStart=maxY-bandRows+1;
+ let garmentPixels=0,missingGarmentPixels=0,lowerGarmentPixels=0,
+  missingLowerGarmentPixels=0,referenceBoundaryPixels=0,missingBoundaryPixels=0,
+  lowerBoundaryPixels=0,missingLowerBoundaryPixels=0;
+ for(let y=0;y<height;y++)for(let x=0;x<width;x++){
+  const i=y*width+x;if(!truth[i])continue;
+  garmentPixels++;
+  const missing=!candidate[i];
+  if(missing)missingGarmentPixels++;
+  const lower=y>=lowerBandStart;
+  if(lower){lowerGarmentPixels++;if(missing)missingLowerGarmentPixels++;}
+  let edge=false;
+  for(let dy=-1;dy<=1&&!edge;dy++)for(let dx=-1;dx<=1;dx++){
+   if(!dx&&!dy)continue;
+   const xx=x+dx,yy=y+dy;
+   if(xx<0||yy<0||xx>=width||yy>=height||!truth[yy*width+xx]){
+    edge=true;break;
+   }
+  }
+  if(edge){
+   referenceBoundaryPixels++;if(missing)missingBoundaryPixels++;
+   if(lower){lowerBoundaryPixels++;if(missing)missingLowerBoundaryPixels++;}
+  }
+ }
+ return {
+  image:manifestEntry.image,sourceSha256:manifestEntry.sourceSha256,
+  referenceStatus:'independently-approved',method:'exact reference-pixel overlap; no inferred hem or shoe-sole labels',
+  boundaryPixelRecall:referenceBoundaryPixels?
+   (referenceBoundaryPixels-missingBoundaryPixels)/referenceBoundaryPixels:null,
+  missingBoundaryPixels,referenceBoundaryPixels,
+  lowerBandFraction,lowerBandStartRow:lowerBandStart,
+  lowerBoundaryRecall:lowerBoundaryPixels?
+   (lowerBoundaryPixels-missingLowerBoundaryPixels)/lowerBoundaryPixels:null,
+  missingLowerBoundaryPixels,lowerBoundaryPixels,
+  lowerGarmentRecall:lowerGarmentPixels?
+   (lowerGarmentPixels-missingLowerGarmentPixels)/lowerGarmentPixels:null,
+  missingLowerGarmentPixels,lowerGarmentPixels,
+  missingGarmentPixels,garmentPixels,intersectionOverUnion:overall.intersectionOverUnion,
+  verifiedHemOrSolePreservation:false,changesToPhotoOrIndex:false,
+  productionAuthorized:false
+ };
+}
