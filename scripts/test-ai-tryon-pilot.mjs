@@ -26,16 +26,18 @@ try{
   const request=route.request();
   if(request.method()==='OPTIONS')return route.fulfill({status:204,headers:{'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'authorization, content-type','Access-Control-Allow-Methods':'POST, OPTIONS'}});
   const b=request.postDataJSON();calls.push(b);
+  if(b.action==='availability')return route.fulfill({status:200,contentType:'application/json',headers:{'Access-Control-Allow-Origin':'*'},body:JSON.stringify({status:'ready'})});
   if(reject)return route.fulfill({status:503,contentType:'application/json',headers:{'Access-Control-Allow-Origin':'*'},body:JSON.stringify({error:'Pilot not configured'})});
   return route.fulfill({status:200,contentType:'application/json',headers:{'Access-Control-Allow-Origin':'*'},
    body:JSON.stringify(b.action==='start'?{status:'processing',token:'signed-provider-job'}:{status:'completed',image:fakeImage})});
  });
  await page.addScriptTag({path:resolve('public/ai-tryon-plan.js')});
  await page.addScriptTag({path:resolve('public/ai-tryon.js')});
- assert.equal(await page.locator('#tryOnGenerate').isDisabled(),false);
- assert.equal(calls.length,0,'Selecting clothing must not trigger paid inference');
+ await page.waitForFunction(()=>!document.querySelector('#tryOnGenerate').disabled);
+ assert.equal(calls.filter(x=>x.action==='availability').length,1,'Only a cost-free availability check may run on load');
+ assert.equal(calls.filter(x=>x.action==='start').length,0,'Selecting clothing must not trigger paid inference');
  await page.locator('#tryOnFigure').selectOption('male');
- assert.equal(calls.length,0,'Selecting figure must never submit image');
+ assert.equal(calls.filter(x=>x.action==='start').length,0,'Selecting figure must never submit image');
  await page.locator('#tryOnGenerate').click();
  await page.waitForFunction(()=>!document.querySelector('#tryOnImage').hidden,null,{timeout:7000});
  assert.equal(calls.filter(x=>x.action==='start').length,1);
@@ -48,13 +50,17 @@ try{
  await page.locator('#tryOnFigure').selectOption('female');
  assert.equal(await page.locator('#tryOnImage').isHidden(),true,'changing model invalidates existing preview');
  assert.equal(await page.locator('#outfitFigure').evaluate(el=>el.classList.contains('ai-tryon-active')),false);
- assert.equal(calls.length,2,'switching figure must not trigger paid inference');
+ assert.equal(calls.filter(x=>x.action==='start').length,1,'switching figure must not trigger paid inference');
 
  reject=true;
  await page.locator('#tryOnGenerate').click();
  await page.waitForFunction(()=>document.querySelector('#tryOnStatus').textContent.includes('Pilot not configured'));
  assert.equal(await page.locator('#tryOnImage').isHidden(),true,'provider failure cannot display a pretend result');
  assert.equal(await page.locator('#tryOnGenerate').isDisabled(),false,'pilot failure is retryable');
+ const charges=calls.filter(x=>x.action==='start').length;
+ await page.evaluate(()=>{tryOnReady=false;onTryOnBoardChanged();document.querySelector('#tryOnGenerate').click();});
+ assert.equal(await page.locator('#tryOnGenerate').isDisabled(),true,'disabled pilot blocks generation');
+ assert.equal(calls.filter(x=>x.action==='start').length,charges,'disabled pilot must never launch paid inference');
  assert.equal(errors.length,0,'client JS should not crash');
 
  console.log('REAL_AI_TRYON_PILOT_SMOKE '+JSON.stringify({
