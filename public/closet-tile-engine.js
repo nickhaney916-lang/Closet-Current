@@ -37,6 +37,12 @@
   if(left>width*.19||top>height*.19||width-right>width*.19||height-bottom>height*.19)return full;
   return {x:left,y:top,width:right-left,height:bottom-top,trimmed:true};
  }
+ // A cutout rejection that means *missing garment fabric* must be terminal;
+ // do not let the next preview algorithm override the same safety verdict.
+ function shouldTryNeutralMatte(whiteMatte){
+  return whiteMatte?.eligible!==true&&
+   !['pale-garment-background-ambiguity','possible-pale-sole-or-split-foreground'].includes(whiteMatte?.reason);
+ }
  const valid=s=>typeof s==='string'&&s.length<12000000&&
   /^data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(s);
  async function draw(item){
@@ -66,7 +72,7 @@
     }
     // Gray studio backdrops need a separate, very narrow safety gate. This
     // opt-in per-category branch never erases pale shoe uppers or store scenes.
-    if(!sourceHasAlpha&&!whiteMatte?.eligible&&
+    if(!sourceHasAlpha&&shouldTryNeutralMatte(whiteMatte)&&
        typeof root.ClosetNeutralMatte!=='undefined'){
       const proposed=root.ClosetNeutralMatte.analyze(thumbnail.data,aw,ah,item.category);
       if(proposed.eligible)whiteMatte=proposed;
@@ -183,6 +189,6 @@
   },{rootMargin:'120px'});
   queued.set(img,item);observer.observe(img);
  }
- root.ClosetTileEngine={placement,safeWhiteBounds,normalized,apply,observe,valid};
+ root.ClosetTileEngine={placement,safeWhiteBounds,shouldTryNeutralMatte,normalized,apply,observe,valid};
  if(typeof module!=='undefined')module.exports=root.ClosetTileEngine;
 })(typeof window!=='undefined'?window:globalThis);

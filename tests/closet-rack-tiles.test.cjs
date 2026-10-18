@@ -109,3 +109,12 @@ test('category change deliberately forgets prior rack item before redraw',()=>{
  assert.match(app,/closetActiveItemId!==null/);
  assert.match(browser,/b\.onclick=\(\)=>\{window\.closetActiveItemId=null/);
 });
+
+test('pale garment and split shoe-sole safeguards cannot be bypassed by neutral background removal',()=>{
+ const f=tile.shouldTryNeutralMatte;
+ assert.equal(f({eligible:false,reason:'pale-garment-background-ambiguity'}),false);
+ assert.equal(f({eligible:false,reason:'possible-pale-sole-or-split-foreground'}),false);
+ assert.equal(f({eligible:true,reason:'verified-white-exterior'}),false);
+ assert.equal(f({eligible:false,reason:'nonwhite-or-translucent-photo-border'}),true);
+ assert.equal(f(null),true);
+});
