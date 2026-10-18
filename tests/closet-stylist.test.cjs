@@ -91,3 +91,15 @@ test('one-tap Style this opens the existing stylist and submits the chosen owned
  for(const id of ['stylistAnchor','stylistAnchorPhoto','stylistAnchorName','stylistClearAnchor'])assert.ok(index.includes('id="'+id+'"'));
  assert.match(app,/styleNewClosetItem\(item\.id\)/);
 });
+
+test('the collection's partial looks must have explicitly measured required gaps',()=>{
+ const c=setup(),parts=[piece('new-shorts','Bottoms','Shorts','Orange')];
+ const results=c.styleOwnedCollection(parts,{anchorItemId:'new-shorts',request:'Casual'});
+ assert.equal(results.length,1);
+ assert.equal(results[0].board.slots.bottom,'new-shorts');
+ assert.deepEqual(Array.from(results[0].missing),['top','shoes']);
+ const script=fs.readFileSync('public/closet-stylist.js','utf8');
+ assert.match(script,/const onlyPartial=styledCollectionResults\.length>0/);
+ assert.match(script,/partial look/);
+ assert.match(script,/missing clothes listed below/);
+});

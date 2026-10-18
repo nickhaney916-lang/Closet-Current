@@ -56,12 +56,22 @@ $('styleCollectionForm').onsubmit=async event=>{
  // update independently; an offline device still knows what clothes it owns.
  try{await closetReady;
   styledCollectionResults=styleOwnedCollection(items,{request:$('stylistOccasion').value,audience:$('stylistAudience').value,season:$('stylistSeason').value,anchorItemId:stylistAnchorItemId||undefined},activeTrendLibrary);
-  renderStyledCollection();$('stylistStatus').textContent=styledCollectionResults.length?
-   'Here are '+styledCollectionResults.length+' outfit option'+(styledCollectionResults.length===1?'':'s')+
-   (stylistAnchorItemId?' using your chosen piece and clothes you own.':' from your collection.'):
-   stylistAnchorItemId?'No compatible outfit for that piece yet. Try Casual or adjust its details.':
-   items.length?'No suitable combination for this occasion yet. Add or adjust the clothing categories in My closet.':
-   'Add clothing photos to My closet first, then create an outfit.';
+  renderStyledCollection();
+  // The scorer intentionally returns partial outfits for sparse closets.
+  // Describe them as starting combinations rather than completed outfits.
+  // Each card states its actual missing slots; we never invent garments.
+  const onlyPartial=styledCollectionResults.length>0&&
+   styledCollectionResults.every(result=>result.missing.length>0);
+  $('stylistStatus').textContent=onlyPartial?
+   (stylistAnchorItemId?'Your chosen piece is included in a partial look. ':
+    'Your closet has starting combinations, but no complete outfit yet. ')+
+    'Add the missing clothes listed below to finish an outfit.':
+   styledCollectionResults.length?
+    'Here are '+styledCollectionResults.length+' outfit option'+(styledCollectionResults.length===1?'':'s')+
+    (stylistAnchorItemId?' using your chosen piece and clothes you own.':' from your collection.'):
+    stylistAnchorItemId?'No compatible outfit for that piece yet. Try Casual or adjust its details.':
+    items.length?'No suitable combination for this occasion yet. Add or adjust the clothing categories in My closet.':
+    'Add clothing photos to My closet first, then create an outfit.';
  }catch{$('stylistStatus').textContent='Could not create outfits. Your closet is unchanged; try again.';}finally{button.disabled=false;}
 };
 for(const id of ['stylistOccasion','stylistAudience','stylistSeason'])$(id).onchange=()=>{styledCollectionResults=[];renderStyledCollection();$('stylistStatus').textContent='Create outfits for your new preferences.';};

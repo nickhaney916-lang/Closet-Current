@@ -415,6 +415,10 @@ try{
  assert.ok(styledReal.options.length>0,'Real saved shorts should yield at least a partial owned outfit');
  assert.ok(styledReal.options.every(x=>x.hasAnchor&&x.allOwned),
   'All options must pin the confirmed shorts and include only owned clothing');
+ if(styledReal.options.every(x=>x.gaps.length>0)){
+  assert.match(await page.locator('#stylistStatus').innerText(),/partial look|no complete outfit/i,
+   'An incomplete real-photo outfit must never be described as complete');
+ }
  const sourceAfter=await page.evaluate(id=>{
   const p=items.find(x=>x.id===id);
   return {image:p.image,original:p.originalPhoto?.image||null,
