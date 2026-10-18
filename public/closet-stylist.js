@@ -51,7 +51,10 @@ function renderStyledCollection(){
 }
 $('styleCollectionForm').onsubmit=async event=>{
  event.preventDefault();const button=$('createCollectionOutfits');button.disabled=true;$('stylistStatus').textContent='Matching your clothes with the latest verified trends…';
- try{await closetReady;await refreshTrendLibrary(true);
+ // Owned-outfit suggestions must work immediately without waiting for a
+ // weekly magazine-data request. The trend cache and normal refresh process
+ // update independently; an offline device still knows what clothes it owns.
+ try{await closetReady;
   styledCollectionResults=styleOwnedCollection(items,{request:$('stylistOccasion').value,audience:$('stylistAudience').value,season:$('stylistSeason').value,anchorItemId:stylistAnchorItemId||undefined},activeTrendLibrary);
   renderStyledCollection();$('stylistStatus').textContent=styledCollectionResults.length?
    'Here are '+styledCollectionResults.length+' outfit option'+(styledCollectionResults.length===1?'':'s')+
