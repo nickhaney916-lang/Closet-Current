@@ -247,6 +247,38 @@ export function discriminativeEdgeMask(image,map,group,{maxSteps=3,margin=12,max
  }
  return {selected:out,acceptedSteps,addedPixels:added,budget};
 }
+// Display integrity is a conservative *structure* check, NOT garment-mask
+// accuracy. When a prediction splits into large disconnected pieces or is
+// clipped at the camera edge, show the untouched padded source crop rather
+// than a white-matted image that appears to have missing fabric. This never
+// expands model masks, recolors pixels or changes the classifier's source.
+export function garmentDisplayMaskReliability(map,group,{maxDetachedShare=.2}={}){
+ const {width,height}=map??{},length=width*height,selected=group?.selected;
+ if(!Number.isInteger(width)||!Number.isInteger(height)||width<2||height<2||
+   length>262144||selected?.length!==length||!Number.isFinite(maxDetachedShare)||
+   maxDetachedShare<0||maxDetachedShare>.5)
+  throw Error('Invalid garment display mask');
+ const seen=new Uint8Array(length),queue=new Int32Array(length);
+ let total=0,largest=0,components=0;
+ for(const v of selected){if(v!==0&&v!==1&&v!==255)throw Error('Invalid garment display mask values');if(v)total++;}
+ for(let start=0;start<length;start++){
+  if(!selected[start]||seen[start])continue;
+  queue[0]=start;seen[start]=1;let front=0,back=1;
+  while(front<back){
+   const i=queue[front++],x=i%width,y=Math.floor(i/width);
+   const adjacent=[x?i-1:-1,x+1<width?i+1:-1,y?i-width:-1,y+1<height?i+width:-1];
+   for(const j of adjacent)if(j>=0&&selected[j]&&!seen[j]){seen[j]=1;queue[back++]=j;}
+  }
+  largest=Math.max(largest,back);components++;
+ }
+ const detachedShare=total?(total-largest)/total:1;
+ const reason=group.clipped===true?'clipped-frame':
+  total<16?'insufficient-mask':
+  detachedShare>maxDetachedShare?'fragmented-mask':null;
+ return {useOriginalCrop:reason!==null,reason,components,
+  maskedPixels:total,detachedShare:+detachedShare.toFixed(4),
+  sourcePreserved:true,measuresPixelAccuracy:false};
+}
 export function isolateClothingPixels(image,map,group,{repairDisplayPinholes=true}={}){
  const {left,top,width,height}=clothingCropBounds(image,map,group),scaleX=image.width/map.width,scaleY=image.height/map.height;
  const repaired=repairDisplayPinholes?repairGarmentDisplayPinholes(image,map,group):

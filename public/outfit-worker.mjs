@@ -20,16 +20,16 @@ self.onmessage=event=>{const request=event.data;chain=chain.then(async()=>{
   if(typeof request.image!=='string'||!/^data:image\/jpeg;base64,/.test(request.image)||request.image.length>12000000)throw Error('Invalid outfit photo.');
   const {model,processor,RawImage}=await load(request.id);self.postMessage({type:'progress',id:request.id,phase:'separating'});
   const image=await RawImage.read(request.image);if(!image.width||!image.height||Math.max(image.width,image.height)>3072)throw Error('Invalid outfit photo dimensions.');
-  const output=await model(await processor(image)),{clothingLabelMap,clothingMaskGroups,cropClothingPhotoPixels,isolateClothingPixels,clothingColorSample,clothingInteriorColorSample}=await import('./outfit-segmentation.mjs'+new URL(import.meta.url).search);
+  const output=await model(await processor(image)),{clothingLabelMap,clothingMaskGroups,cropClothingPhotoPixels,isolateClothingPixels,clothingColorSample,clothingInteriorColorSample,garmentDisplayMaskReliability}=await import('./outfit-segmentation.mjs'+new URL(import.meta.url).search);
   await import('./photo-color.js'+new URL(import.meta.url).search);
   const map=clothingLabelMap(output.logits.data,output.logits.dims),groups=map.personDetected?clothingMaskGroups(map):[];let count=0;
   for(const group of groups){
-   const isolated=isolateClothingPixels(image,map,group),raw=cropClothingPhotoPixels(image,map,group),sample=clothingColorSample(image,map,group),core=clothingInteriorColorSample(image,map,group),b=raw.bounds;
-   const piece={image:await jpegData(new RawImage(isolated.data,isolated.width,isolated.height,3)),recognitionPhoto:{image:await jpegData(new RawImage(raw.data,raw.width,raw.height,3))},cropBounds:{x:b.left/image.width,y:b.top/image.height,width:b.width/image.width,height:b.height/image.height},colorEstimate:(()=>{const full=PhotoColor.maskedPalette(sample.data,sample.width,sample.height);
+   const raw=cropClothingPhotoPixels(image,map,group),display=garmentDisplayMaskReliability(map,group),isolated=display.useOriginalCrop?raw:isolateClothingPixels(image,map,group),sample=display.useOriginalCrop?null:clothingColorSample(image,map,group),core=display.useOriginalCrop?null:clothingInteriorColorSample(image,map,group),b=raw.bounds;
+   const piece={image:await jpegData(new RawImage(isolated.data,isolated.width,isolated.height,3)),recognitionPhoto:{image:await jpegData(new RawImage(raw.data,raw.width,raw.height,3))},cropBounds:{x:b.left/image.width,y:b.top/image.height,width:b.width/image.width,height:b.height/image.height},colorEstimate:(()=>{if(display.useOriginalCrop)return null;const full=PhotoColor.maskedPalette(sample.data,sample.width,sample.height);
     const interior=core&&PhotoColor.maskedPalette(core.data,core.width,core.height);
     // Both spatial views must agree; a boundary-only color isn't reliable.
     return PhotoColor.confirmedGarmentPalette(full,interior);
-   })(),label:group.label,hint:{categories:group.categories,types:group.types||[],clipped:group.clipped,confidence:group.confidence}};
+   })(),label:group.label,hint:{categories:group.categories,types:group.types||[],clipped:group.clipped,confidence:group.confidence,displayFallback:display.useOriginalCrop?'original-crop':null,displayFallbackReason:display.reason}};
    self.postMessage({type:'piece',id:request.id,piece});count++;
   }
   self.postMessage({type:'done',id:request.id,count});

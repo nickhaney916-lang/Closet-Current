@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {clothingLabelMap,clothingMaskGroups,isolateClothingPixels,cropClothingPhotoPixels} from '../public/outfit-segmentation.mjs';
+import {clothingLabelMap,clothingMaskGroups,isolateClothingPixels,cropClothingPhotoPixels,garmentDisplayMaskReliability} from '../public/outfit-segmentation.mjs';
 function logits(width=20,height=20){const data=new Float32Array(18*width*height);data.fill(-10);for(let i=0;i<width*height;i++)data[i]=10;return {data,dims:[1,18,height,width],paint(label,left,top,w,h){for(let y=top;y<top+h;y++)for(let x=left;x<left+w;x++){const i=y*width+x;for(let c=0;c<18;c++)data[c*width*height+i]=c===label?10:-10;}}};}
 test('one photo yields separate upper clothing, pants and one shoe-pair mask',()=>{
  const l=logits();l.paint(4,5,4,8,5);l.paint(6,6,10,6,5);l.paint(9,6,16,3,3);l.paint(10,10,16,3,3);const map=clothingLabelMap(l.data,l.dims),pieces=clothingMaskGroups(map);assert.deepEqual(pieces.map(x=>x.label),['Upper garment','Bottoms','Shoes']);assert.equal(pieces[2].count,18);
@@ -37,4 +37,40 @@ test('garment color sampling excludes dominant background and display white',asy
  const sample=clothingColorSample({data,width:20,height:20,channels:3},{width:20,height:20},{selected,bounds:{left:6,top:6,right:14,bottom:14}});
  assert.equal(sample.sampledPixels,64);
  for(let i=0;i<sample.data.length;i+=4)assert.deepEqual(Array.from(sample.data.slice(i,i+4)),i<64*4?[20,70,210,255]:[0,0,0,0]);
+});
+
+test('fragmented clothing mask chooses original crop without deleting source fabric',()=>{
+ const width=24,height=24,selected=new Uint8Array(width*height);
+ for(let y=4;y<12;y++)for(let x=3;x<11;x++)selected[y*width+x]=1;
+ for(let y=4;y<12;y++)for(let x=15;x<19;x++)selected[y*width+x]=1;
+ const map={width,height},group={id:7,selected,bounds:{left:3,top:4,right:19,bottom:12},clipped:false};
+ const original=new Uint8ClampedArray(width*height*3);
+ for(let i=0;i<original.length;i+=3){original[i]=37;original[i+1]=86;original[i+2]=191;}
+ const image={width,height,channels:3,data:original},risk=garmentDisplayMaskReliability(map,group);
+ assert.equal(risk.reason,'fragmented-mask');assert.equal(risk.useOriginalCrop,true);
+ assert.equal(risk.measuresPixelAccuracy,false);
+ assert.equal(risk.components,2);
+ const raw=cropClothingPhotoPixels(image,map,group);
+ const damaged=isolateClothingPixels(image,map,group);
+ assert.ok(damaged.data.includes(255),'white mat erases unselected source pixels');
+ assert.ok(!raw.data.includes(255),'raw fallback retains the actual photograph');
+ assert.deepEqual(image.data,original,'input photo must not be changed');
+});
+test('intact garment and harmless tiny speckles keep transparent-style white display masking',()=>{
+ const width=24,height=24,selected=new Uint8Array(width*height);
+ for(let y=4;y<14;y++)for(let x=5;x<15;x++)selected[y*width+x]=1;
+ const map={width,height},group={id:4,selected,clipped:false};
+ assert.equal(garmentDisplayMaskReliability(map,group).useOriginalCrop,false);
+ selected[20*width+20]=1;
+ const r=garmentDisplayMaskReliability(map,group);
+ assert.equal(r.useOriginalCrop,false);assert.equal(r.components,2);
+ assert.ok(r.detachedShare<.02);
+ const pair=new Uint8Array(width*height);
+ for(let y=6;y<12;y++)for(let x=3;x<9;x++)pair[y*width+x]=1;
+ for(let y=6;y<12;y++)for(let x=15;x<21;x++)pair[y*width+x]=1;
+ const footwear=garmentDisplayMaskReliability(map,{id:9,selected:pair,clipped:false});
+ assert.equal(footwear.reason,'fragmented-mask','keep both shoes visible when disconnected');
+ assert.equal(garmentDisplayMaskReliability(map,{...group,clipped:true}).reason,'clipped-frame');
+ assert.equal(garmentDisplayMaskReliability(map,{...group,selected:new Uint8Array(width*height)}).reason,'insufficient-mask');
+ assert.throws(()=>garmentDisplayMaskReliability(map,{selected:new Uint8Array(2)}),/Invalid/);
 });
