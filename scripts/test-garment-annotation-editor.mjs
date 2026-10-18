@@ -70,6 +70,43 @@ try{
  assert.equal(seeded.reviewStatus,'draft');
  assert.equal(seeded.seedModel,'test-model');
  assert.equal(seeded.reviewer,'First Reviewer');
+ // Instance proposals from the SAME photo must keep separate identities, and
+ // reviewers must identify the actual piece without trusting the model label.
+ const targeted={...seed,modelProposalId:'review-case-candidate-02',
+  candidateOrdinal:2,modelGarmentLabel:'skirt',reviewStatus:'prediction-unreviewed'};
+ await page.locator('#prediction').setInputFiles({name:'candidate-02.json',
+  mimeType:'application/json',buffer:Buffer.from(JSON.stringify(targeted))});
+ await page.locator('#status').getByText(/AI starting mask loaded/).waitFor();
+ assert.equal(await page.locator('#targetLabel').isVisible(),true);
+ assert.equal(await page.locator('#download').isDisabled(),true);
+ await page.locator('#mode').selectOption('0');
+ const maskBounds=await page.locator('#canvas').boundingBox();
+ await page.mouse.click(maskBounds.x+maskBounds.width*(5.5/40),
+                        maskBounds.y+maskBounds.height*(6.5/30));
+ assert.equal(await page.locator('#download').isDisabled(),true,
+  'Edited candidate cannot be exported without human target identification');
+ await page.locator('#targetGarment').fill('black knee-length skirt');
+ assert.equal(await page.locator('#download').isDisabled(),false);
+ const instanceDownload=page.waitForEvent('download');
+ await page.locator('#download').click();
+ const itemFile=await instanceDownload;
+ assert.equal(itemFile.suggestedFilename(),'review-case-candidate-02.mask.draft.json');
+ const instanceDraft=JSON.parse(await fs.readFile(await itemFile.path(),'utf8'));
+ assert.equal(instanceDraft.modelProposalId,'review-case-candidate-02');
+ assert.equal(instanceDraft.modelGarmentLabel,'skirt');
+ assert.equal(instanceDraft.humanTargetLabel,'black knee-length skirt');
+ assert.equal(instanceDraft.targetIndependentlyIdentifiedBy,'First Reviewer');
+ assert.equal(instanceDraft.reviewStatus,'draft');
+ await page.locator('#resume').setInputFiles({name:'instance.draft.json',
+  mimeType:'application/json',buffer:Buffer.from(JSON.stringify(instanceDraft))});
+ await page.locator('#status').getByText(/Draft restored/).waitFor();
+ assert.equal(await page.locator('#targetGarment').inputValue(),'black knee-length skirt');
+ assert.equal(await page.locator('#download').isDisabled(),false);
+ await page.locator('#prediction').setInputFiles({name:'wrong-candidate.json',
+  mimeType:'application/json',
+  buffer:Buffer.from(JSON.stringify({...targeted,modelProposalId:'other-candidate-02'}))});
+ await page.getByRole('status').getByText(/Invalid model proposal identity/).waitFor();
+
  await page.locator('#prediction').setInputFiles({name:'wrong.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify({...seed,image:'wrong.png'}))});
  await page.locator('#status').getByText(/mismatch/).waitFor();
 
