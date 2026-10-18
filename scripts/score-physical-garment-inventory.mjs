@@ -56,6 +56,16 @@ const report={
   // Metrics can be combined only after every source has full-photo review.
   physicalGarmentDetectionRecall:reviewed.reduce((s,x)=>s+x.matchedGarments,0)/
    reviewed.reduce((s,x)=>s+x.approvedPhysicalGarments,0),
+  correctlyCategorizedGarmentRecall:reviewed.reduce(
+   (s,x)=>s+x.categoryConstrainedMatchedGarments,0)/
+   reviewed.reduce((s,x)=>s+x.approvedPhysicalGarments,0),
+  supportedCategoryCorrectRecall:(()=>{
+   const supported=reviewed.reduce((s,x)=>
+    s+x.approvedPhysicalGarments-x.unsupportedCategoryGarments.length,0);
+   return supported?reviewed.reduce((s,x)=>s+x.categoryConstrainedMatchedGarments,0)/supported:null;
+  })(),
+  unsupportedPhysicalGarmentsByModel:reviewed.reduce(
+   (s,x)=>s+x.unsupportedCategoryGarments.length,0),
   predictionPrecision:(()=>{
    const total=reviewed.reduce((s,x)=>s+x.modelProposals,0);
    return total?reviewed.reduce((s,x)=>s+x.matchedGarments,0)/total:null;
