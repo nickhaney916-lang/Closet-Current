@@ -2,6 +2,7 @@
 // Pilot UI: one click starts REAL provider inference. No pasted-garment
 // mockups, hidden paid calls, or automatic selfie uploads.
 let tryOnFigure='female',tryOnBusy=false,tryOnRevision=0,tryOnImage=null,tryOnFingerprint='';
+let tryOnReady=false,tryOnReadinessPending=true;
 function tryOnSignature(){
  const ids=currentBoard?.slots||{};
  return tryOnFigure+':'+['top','bottom','layer','layer2','layer3','shoes'].map(k=>{const item=items.find(x=>x.id===ids[k]);return (ids[k]||'')+':'+(item?.image?.length||0)+':'+(item?.image?.slice(-24)||'');}).join('|');
@@ -10,11 +11,11 @@ function resetTryOnPreview(){
  tryOnRevision++;tryOnImage=null;tryOnFingerprint='';
  const image=$('tryOnImage');if(image){image.hidden=true;image.removeAttribute('src');}
  $('outfitFigure')?.classList.remove('ai-tryon-active');
- $('tryOnStatus').textContent='Select your clothes, then tap Generate AI try-on.';
+ $('tryOnStatus').textContent=tryOnReady?'Select your clothes, then tap Generate AI try-on.':'AI try-on preview is being prepared. No paid generation is enabled.';
 }
 function onTryOnBoardChanged(){
  if(tryOnImage&&tryOnFingerprint!==tryOnSignature())resetTryOnPreview();
- $('tryOnGenerate').disabled=tryOnBusy||!window.AiTryOnPlan?.plan(currentBoard,items).steps.length;
+ $('tryOnGenerate').disabled=tryOnBusy||!tryOnReady||!window.AiTryOnPlan?.plan(currentBoard,items).steps.length;
 }
 function tryOnRequest(token,body){
  return fetch('https://hlkgymugtfbirlpunsra.supabase.co/functions/v1/ai-try-on',{
@@ -25,6 +26,27 @@ function tryOnRequest(token,body){
   if(!response.ok)throw Error(result.error||'AI try-on is unavailable');
   return result;
  });
+}
+// A status check never starts an AI generation or uploads a clothing photo.
+async function checkTryOnReadiness(){
+ try{
+  await (window.closetAuth?.ready||Promise.resolve());
+  if(typeof window.closetAuth?.getAccessToken!=='function')throw Error('Sign in required');
+  const token=await window.closetAuth.getAccessToken();
+  const response=await tryOnRequest(token,{action:'availability'});
+  tryOnReady=response?.status==='ready';
+ }catch{tryOnReady=false;}
+ finally{
+  tryOnReadinessPending=false;
+  if(!tryOnReady){
+   $('tryOnStatus').textContent='AI virtual try-on is not available yet. Your closet and outfit builder still work normally; no paid AI call will run.';
+   $('tryOnGenerate').textContent='AI try-on coming soon';
+  }else{
+   $('tryOnGenerate').textContent='Generate AI try-on';
+   $('tryOnStatus').textContent='Ready for pilot accounts. Generate sends only the selected clothing crop to our AI provider.';
+  }
+  onTryOnBoardChanged();
+ }
 }
 async function tryOnOne(token,image,category,figure,isCurrent){
  let result=await tryOnRequest(token,{action:'start',figure,category,garmentImage:image});
@@ -45,6 +67,7 @@ async function tryOnOne(token,image,category,figure,isCurrent){
 }
 async function generateTryOn(){
  if(tryOnBusy)return;
+ if(!tryOnReady){$('tryOnStatus').textContent='AI try-on is not enabled for this account. No generation started.';return;}
  const plan=window.AiTryOnPlan.plan(currentBoard,items);
  if(!plan.steps.length){$('tryOnStatus').textContent='Choose a shirt, dress, or bottoms first.';return;}
  const signature=tryOnSignature(),revision=++tryOnRevision,figure=tryOnFigure;
@@ -88,3 +111,4 @@ $('tryOnFigure').onchange=event=>{
 };
 $('tryOnGenerate').onclick=generateTryOn;
 onTryOnBoardChanged();
+checkTryOnReadiness();
