@@ -1,0 +1,23 @@
+{
+  "modelRepo": "HasanKabir23/Yolov26s-DeepFashion2",
+  "revision": "670bd8b4a9a94c687c85df0b1376497c40a3759b",
+  "file": "best.onnx",
+  "sha256": "485bc106721febbd82fe24297e12a9fb49a435a552afff1e6b76308716555f76",
+  "license": "Apache-2.0",
+  "researchOnly": true,
+  "classes": [
+    "short_sleeve_top",
+    "long_sleeve_top",
+    "short_sleeve_outwear",
+    "long_sleeve_outwear",
+    "vest",
+    "sling",
+    "shorts",
+    "trousers",
+    "skirt",
+    "short_sleeve_dress",
+    "long_sleeve_dress",
+    "vest_dress",
+    "sling_dress"
+  ]
+}

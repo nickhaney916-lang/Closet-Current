@@ -1,0 +1,49 @@
+name: Experimental DeepFashion instance ONNX
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'benchmark/deepfashion-instance-onnx-reference.json'
+      - 'scripts/run-deepfashion-instance-probe.py'
+      - '.github/workflows/deepfashion-instance-probe.yml'
+permissions:
+  contents: read
+jobs:
+  pinned-model-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 16
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install CPU-only existing dependencies
+        run: pip install numpy==1.26.4 Pillow==11.2.1 onnxruntime==1.21.0
+      - name: Compile model audit
+        run: python -m py_compile scripts/run-deepfashion-instance-probe.py
+      - name: Download SHA-verified source photographs
+        run: |
+          node scripts/download-reviewed-photos.mjs benchmark/manifest-visible-legwear-2.json benchmark/photos validation-0031
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos commons-0059
+      - name: Profile pinned ONNX instance model on two real photos
+        run: python scripts/run-deepfashion-instance-probe.py benchmark/deepfashion-instance-review
+      - name: Block invented clothes and unverified instance accuracy
+        run: |
+          python - <<'PY'
+          import json
+          x=json.load(open('benchmark/deepfashion-instance-review/summary.json'))
+          assert x['status']=='complete' and x['modelHashVerified'] and x['sourceHashesVerified']
+          assert len(x['cases'])==2 and x['parsedInstanceMasks']==0
+          assert x['automaticItemsCreated']==0 and not x['customerModelChanged'] and not x['paidServicesUsed']
+          assert all(c['masksNotDecoded'] and c['automaticItemsSaved']==0 for c in x['cases'])
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pinned-deepfashion-instance-feasibility
+          path: benchmark/deepfashion-instance-review/summary.json
+          retention-days: 14
