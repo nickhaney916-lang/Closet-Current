@@ -48,3 +48,8 @@ button,.secondary,.file-label{min-height:48px;border-radius:14px;padding:13px 18
 @media(prefers-reduced-motion:reduce){button,.secondary,.file-label{transition:none}button:active{transform:none}html{scroll-behavior:auto}}
 
 input[type="checkbox"]{min-height:20px;width:20px;height:20px;vertical-align:middle}.season-picker label{min-height:44px}.auto-settings input[type="checkbox"]{margin-right:8px}details:not(.more-menu):not(.account-menu)>summary::after{content:'⌄';margin-left:auto;padding-left:12px;color:var(--muted);font-size:18px}@media(max-width:760px){.main-nav .tab .nav-label,.more-menu>summary{font-size:11px}}
+
+/* One-piece outfit styling inside the existing stylist: no extra tabs. */
+.stylist-anchor{display:flex;align-items:center;gap:14px;padding:14px;margin:14px 0;border:1px solid var(--line);border-radius:16px;background:#fff}
+.stylist-anchor[hidden]{display:none!important}.stylist-anchor img{width:72px;height:80px;object-fit:contain;border-radius:10px;background:#f1f3ec;flex:none}.stylist-anchor>div{flex:1;min-width:0}.stylist-anchor p{margin:5px 0 0;overflow-wrap:anywhere}.stylist-anchor button{min-height:48px}
+@media(max-width:600px){.stylist-anchor{flex-wrap:wrap}.stylist-anchor button{width:100%}}

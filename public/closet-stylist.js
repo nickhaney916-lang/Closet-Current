@@ -1,6 +1,32 @@
 'use strict';
-let styledCollectionResults=[];
+let styledCollectionResults=[],stylistAnchorItemId=null;
+function stylistSupportsPiece(piece){
+ return !!piece&&typeof piece.id==='string'&&
+  ['Tops','Bottoms','Dresses','Outerwear','Shoes'].includes(piece.category);
+}
+function renderStylistAnchor(){
+ let piece=items.find(x=>x.id===stylistAnchorItemId);
+ if(stylistAnchorItemId&&!stylistSupportsPiece(piece)){
+  stylistAnchorItemId=null;styledCollectionResults=[];piece=null;
+ }
+ $('stylistAnchor').hidden=!piece;
+ if(piece){
+  $('stylistAnchorPhoto').src=piece.image;
+  $('stylistAnchorPhoto').alt=piece.name||piece.itemType||'Selected piece';
+  $('stylistAnchorName').textContent=piece.name||piece.itemType||piece.category;
+ }else $('stylistAnchorPhoto').removeAttribute('src');
+}
+function styleNewClosetItem(id){
+ const piece=items.find(x=>x.id===id);
+ if(!stylistSupportsPiece(piece))return false;
+ stylistAnchorItemId=piece.id;styledCollectionResults=[];
+ renderStyledCollection();switchView('stylist');
+ $('stylistStatus').textContent='Finding outfits for '+(piece.name||piece.itemType||'this piece')+'…';
+ $('styleCollectionForm').requestSubmit();
+ return true;
+}
 function renderStyledCollection(){
+ renderStylistAnchor();
  const grid=$('styledCollectionResults');grid.replaceChildren();
  $('stylistFreshness').textContent=trendFreshnessText();
  for(const [index,result]of styledCollectionResults.entries()){
@@ -26,10 +52,20 @@ function renderStyledCollection(){
 $('styleCollectionForm').onsubmit=async event=>{
  event.preventDefault();const button=$('createCollectionOutfits');button.disabled=true;$('stylistStatus').textContent='Matching your clothes with the latest verified trends…';
  try{await closetReady;await refreshTrendLibrary(true);
-  styledCollectionResults=styleOwnedCollection(items,{request:$('stylistOccasion').value,audience:$('stylistAudience').value,season:$('stylistSeason').value},activeTrendLibrary);
-  renderStyledCollection();$('stylistStatus').textContent=styledCollectionResults.length?'Here are '+styledCollectionResults.length+' outfit option'+(styledCollectionResults.length===1?'':'s')+' from your collection.':items.length?'No suitable combination for this occasion yet. Add or adjust the clothing categories in My closet.':'Add clothing photos to My closet first, then create an outfit.';
+  styledCollectionResults=styleOwnedCollection(items,{request:$('stylistOccasion').value,audience:$('stylistAudience').value,season:$('stylistSeason').value,anchorItemId:stylistAnchorItemId||undefined},activeTrendLibrary);
+  renderStyledCollection();$('stylistStatus').textContent=styledCollectionResults.length?
+   'Here are '+styledCollectionResults.length+' outfit option'+(styledCollectionResults.length===1?'':'s')+
+   (stylistAnchorItemId?' using your chosen piece and clothes you own.':' from your collection.'):
+   stylistAnchorItemId?'No compatible outfit for that piece yet. Try Casual or adjust its details.':
+   items.length?'No suitable combination for this occasion yet. Add or adjust the clothing categories in My closet.':
+   'Add clothing photos to My closet first, then create an outfit.';
  }catch{$('stylistStatus').textContent='Could not create outfits. Your closet is unchanged; try again.';}finally{button.disabled=false;}
 };
 for(const id of ['stylistOccasion','stylistAudience','stylistSeason'])$(id).onchange=()=>{styledCollectionResults=[];renderStyledCollection();$('stylistStatus').textContent='Create outfits for your new preferences.';};
 $('stylistSeason').value=['Winter','Winter','Spring','Spring','Spring','Summer','Summer','Summer','Fall','Fall','Fall','Winter'][new Date().getMonth()];
+$('stylistClearAnchor').onclick=()=>{
+ stylistAnchorItemId=null;styledCollectionResults=[];
+ renderStyledCollection();
+ $('stylistStatus').textContent='Style my whole closet. Choose an occasion and create outfits.';
+};
 $('stylistAddClothes').onclick=()=>switchView('scan');
