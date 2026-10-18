@@ -146,11 +146,21 @@ test('real openings, visible underlayers and tiny pinholes never fabricate missi
  const map={width,height,labels:new Uint8Array(width*height),semanticLabels:new Uint8Array(width*height)};
  const group={id:7,selected,clipped:false};
  assert.equal(garmentDisplayMaskReliability(map,group).reason,'unexplained-enclosed-gap');
- map.semanticLabels[gap[10]]=11; // Confident visible skin: legitimate clothing opening.
- assert.equal(garmentDisplayMaskReliability(map,group).useOriginalCrop,false);
- map.semanticLabels[gap[10]]=0;map.labels[gap[10]]=4; // Known other garment.
- assert.equal(garmentDisplayMaskReliability(map,group).useOriginalCrop,false);
+ // One misclassified skin/underlayer pixel cannot excuse 35 missing pixels.
+ map.semanticLabels[gap[10]]=11;
+ assert.equal(garmentDisplayMaskReliability(map,group).reason,'unexplained-enclosed-gap');
+ map.semanticLabels[gap[10]]=0;map.labels[gap[10]]=4;
+ assert.equal(garmentDisplayMaskReliability(map,group).reason,'unexplained-enclosed-gap');
  map.labels[gap[10]]=0;
+ // Even 32 of 36 explained pixels is not sufficient evidence of a real opening.
+ for(const i of gap.slice(0,32))map.semanticLabels[i]=11;
+ assert.equal(garmentDisplayMaskReliability(map,group).reason,'unexplained-enclosed-gap');
+ map.semanticLabels[gap[32]]=11; // 33/36 >= 90% reviewed-evidence threshold.
+ assert.equal(garmentDisplayMaskReliability(map,group).useOriginalCrop,false);
+ // A complete other garment in the opening is similarly safe to preserve.
+ for(const i of gap){map.semanticLabels[i]=0;map.labels[i]=4;}
+ assert.equal(garmentDisplayMaskReliability(map,group).useOriginalCrop,false);
+ for(const i of gap)map.labels[i]=0;
  selected[gap[1]]=1;for(const i of gap)selected[i]=1;
  selected[20*width+20]=0; // Legitimately insignificant one-cell hole.
  const small=garmentDisplayMaskReliability(map,group);
@@ -197,4 +207,25 @@ test('photo crop margins are bounded and clipped safely at the original frame',(
  assert.ok(wide.width>=narrow.width&&wide.height>=narrow.height);
  assert.throws(()=>cropClothingPhotoPixels(image,map,group,{marginFraction:.25}),/margin/);
  assert.throws(()=>cropClothingPhotoPixels(image,map,group,{marginFraction:NaN}),/margin/);
+});
+
+
+test('large missing garment islands preserve original RGB rather than trusting one confident skin pixel',()=>{
+ for(const id of [4,5,6,7,9]){
+  const width=40,height=40,selected=new Uint8Array(width*height),semanticLabels=new Uint8Array(width*height);
+  for(let y=4;y<36;y++)for(let x=4;x<36;x++)selected[y*width+x]=1;
+  for(let y=14;y<26;y++)for(let x=14;x<26;x++)selected[y*width+x]=0;
+  semanticLabels[18*width+18]=11;
+  const map={width,height,semanticLabels};
+  const group={id,selected,clipped:false,bounds:{left:4,top:4,right:36,bottom:36}};
+  const original=new Uint8ClampedArray(width*height*3);
+  for(let i=0;i<original.length;i+=3)original.set([33,68,201],i);
+  const image={width,height,channels:3,data:original},prior=original.slice();
+  const risk=garmentDisplayMaskReliability(map,group);
+  assert.equal(risk.useOriginalCrop,true,'semantic id '+id);
+  assert.equal(risk.reason,'unexplained-enclosed-gap');
+  const intact=cropClothingPhotoPixels(image,map,group,{marginFraction:.12});
+  assert.equal(intact.data.some(v=>v===255),false,'real source blue fabric remains visible');
+  assert.deepEqual(original,prior,'original and recognition pixels unchanged');
+ }
 });

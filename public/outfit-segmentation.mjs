@@ -289,8 +289,9 @@ export function garmentDisplayMaskReliability(map,group,{maxDetachedShare=.2,max
  // A large enclosed void can erase material even when the outside silhouette
  // remains one connected region (e.g., a sneaker side panel or dress bodice).
  // Eight-way flood-fill distinguishes true interior gaps from exterior paths
- // and diagonal sleeve/leg openings. Another trusted semantic garment, skin
- // or limb label vetoes the warning: a visible underlayer is not lost fabric.
+ // and diagonal sleeve/leg openings. A *substantial* consistently classified
+ // skin/underlayer region can explain a real garment opening. A single noisy
+ // body pixel must NOT hide a large missing garment panel.
  // This is a *display-only risk indicator*, NOT verified pixel accuracy and
  // never a license to manufacture or grow garment pixels.
  let largestUnexplainedHole=0,unexplainedHoles=0;
@@ -298,13 +299,13 @@ export function garmentDisplayMaskReliability(map,group,{maxDetachedShare=.2,max
   const seenBackground=new Uint8Array(length),backgroundQueue=new Int32Array(length);
   for(let start=0;start<length;start++){
    if(selected[start]||seenBackground[start])continue;
-   let front=0,back=1,exterior=false,otherSemantic=false;
+   let front=0,back=1,exterior=false,otherSemanticPixels=0;
    backgroundQueue[0]=start;seenBackground[start]=1;
    while(front<back){
     const i=backgroundQueue[front++],x=i%width,y=Math.floor(i/width);
     if(!x||!y||x===width-1||y===height-1)exterior=true;
     if((map.labels?.[i]&&map.labels[i]!==group.id)||
-       (map.semanticLabels?.[i]&&map.semanticLabels[i]!==group.id))otherSemantic=true;
+       (map.semanticLabels?.[i]&&map.semanticLabels[i]!==group.id))otherSemanticPixels++;
     for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){
      if(!dx&&!dy)continue;
      const xx=x+dx,yy=y+dy;
@@ -313,7 +314,11 @@ export function garmentDisplayMaskReliability(map,group,{maxDetachedShare=.2,max
      if(!selected[j]&&!seenBackground[j]){seenBackground[j]=1;backgroundQueue[back++]=j;}
     }
    }
-   if(!exterior&&!otherSemantic){
+   // Require >=90% independently classified body/other-garment pixels.
+   // Low-confidence gaps preserve the original photograph instead of
+   // silently removing potentially missing fabric from the display cutout.
+   const explainedOpening=otherSemanticPixels>0&&otherSemanticPixels/back>=.9;
+   if(!exterior&&!explainedOpening){
     largestUnexplainedHole=Math.max(largestUnexplainedHole,back);
     unexplainedHoles++;
    }
