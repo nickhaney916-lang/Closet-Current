@@ -126,6 +126,8 @@ try{
     strongBodyVetoPixels:confidenceBody.reduce((s,v)=>s+v,0),
     alternatePixelsPotentiallyRestored:addedVisiblePixels,
     alternatePixelsPotentiallySkinOrMannequin:true,
+    bodyExposureRiskReviewRequired:map.personDetected&&addedVisiblePixels>0,
+    automaticBodyVetoRelaxationAllowed:false,
     alternativeSegmentationApproved:false,
     objectPixels:combined.objectPixels,retainedPixels:combined.keptPixels,
     removedFromObject:combined.removedPixels,bodyVetoedPixels:combined.bodyVetoedPixels,
