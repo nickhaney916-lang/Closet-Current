@@ -70,3 +70,17 @@ test('six real cases stay blocked without native high-confidence masks and human
  assert.equal(result.productionAuthorized,false);
  assert.equal(result.status,'blocked-incomplete-confidence-or-human-references');
 });
+
+test('six threshold-224 native candidates can be admitted for experimental scoring but never production',()=>{
+ const ids=['commons-0035','commons-0049','commons-0053','commons-0065','commons-0079','commons-0094'];
+ const data=ids.map(id=>fixture(id,224));
+ const result=summarizeLockedEdgeReadiness(
+  {schemaVersion:1,cases:data.map(x=>x.entry)},
+  new Map(data.map(x=>[x.entry.id,x.baseline])),
+  new Map(data.map(x=>[x.entry.id,x.candidate])));
+ assert.equal(result.highConfidenceMaskCases,6);
+ assert.equal(result.independentlyApprovedReferenceCases,0);
+ assert.equal(result.status,'blocked-incomplete-confidence-or-human-references');
+ assert.equal(result.accuracyMeasured,false);
+ assert.equal(result.productionAuthorized,false);
+});

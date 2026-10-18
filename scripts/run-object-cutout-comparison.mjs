@@ -32,6 +32,15 @@ try{
   if(alpha.channels!==1)throw Error('Expected one-channel alpha');
   const inferenceMs=Math.round(performance.now()-inferenceStart);
   const candidate=alphaPrediction(alpha.data,{width:photo.width,height:photo.height,image:entry.image,sourceSha256:entry.sourceSha256});
+  // Keep the established 128 binary cutout intact for all existing reviews.
+  // A *separate* threshold-224 candidate comes from the SAME native 8-bit
+  // BiRefNet alpha, not from a re-thresholded 0/255 mask. This cannot verify
+  // which pixels are garment vs cast shadow without human reference masks.
+  const strictCandidate=alphaPrediction(alpha.data,{width:photo.width,height:photo.height,
+   image:entry.image,sourceSha256:entry.sourceSha256},224);
+  const strictDifference=compareCutoutMasks(candidate,strictCandidate);
+  if(strictDifference.addedPixels!==0||strictCandidate.foregroundPixels>candidate.foregroundPixels)
+   throw Error('Strict BiRefNet mask must be a subset of threshold-128 candidate');
   const difference=compareCutoutMasks(baseline,candidate);
   const decoded=await sharp(bytes).removeAlpha().toColourspace('srgb').raw().toBuffer({resolveWithObject:true});
   if(decoded.info.width!==candidate.width||decoded.info.height!==candidate.height||decoded.info.channels!==3)throw Error('RGB source dimensions mismatch');
@@ -44,8 +53,17 @@ try{
   const heading=Buffer.from(`<svg width="1500" height="76"><rect width="1500" height="76" fill="white"/><g font-family="sans-serif" fill="#222"><text x="12" y="28" font-size="20">Original</text><text x="512" y="28" font-size="20">Sharp MODNet 128</text><text x="1012" y="28" font-size="20">Sharp BiRefNet Lite 128</text><text x="12" y="56" font-size="15">Experimental model comparison · original RGB · no measured accuracy or production approval</text></g></svg>`);
   await sharp({create:{width:pw*3,height:ph+header,channels:3,background:'white'}}).composite([{input:heading,left:0,top:0},...panels.map((input,i)=>({input,left:i*pw,top:header}))]).png().toFile(join(output,entry.id+'-object-comparison.png'));
   await writeFile(join(output,entry.id+'.candidate.json'),JSON.stringify({...candidate,modelId,revision,experimental:true}));
+  await writeFile(join(output,entry.id+'.strict-candidate.json'),
+   JSON.stringify({...strictCandidate,modelId,revision,experimental:true,
+    independentGarmentAccuracyVerified:false,productionAuthorized:false}));
   await sharp(alpha.data,{raw:{width:w,height:h,channels:1}}).png().toFile(join(output,entry.id+'-alpha.png'));
-  cases.push({id:entry.id,width:w,height:h,inferenceMs,foregroundPixels:candidate.foregroundPixels,...difference});
+  cases.push({id:entry.id,width:w,height:h,inferenceMs,
+   foregroundPixels:candidate.foregroundPixels,
+   strict224ForegroundPixels:strictCandidate.foregroundPixels,
+   strict224Subset128:strictDifference.addedPixels===0,
+   strict224RemovedFrom128:strictDifference.removedPixels,
+   nativeAlphaThreshold224Available:true,garmentAccuracyMeasured:false,
+   ...difference});
   const summary={status:cases.length===manifest.cases.length?'complete':'running',modelId,revision,loadMs,runtime:'node-cpu-fp32',mobilePerformanceMeasured:false,foregroundThreshold:128,sourceRgbPreserved:true,reviewOnly:true,productionAuthorized:false,cases};
   await writeFile(join(output,'summary.json'),JSON.stringify(summary,null,2));console.log('OBJECT_CUTOUT_CASE '+JSON.stringify(cases.at(-1)));
  }

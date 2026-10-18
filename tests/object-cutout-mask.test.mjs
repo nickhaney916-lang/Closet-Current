@@ -19,3 +19,18 @@ test('rejects truncated, non-byte alpha and invalid RGB data',()=>{
  assert.throws(()=>alphaPrediction([128],meta));assert.throws(()=>alphaPrediction([0,0,0,0,0,NaN],meta));assert.throws(()=>alphaPrediction([0,0,0,0,0,256],meta));
  assert.throws(()=>alphaPrediction([0,0,0,0,0,0],meta,0));assert.throws(()=>sharpSourceCutout(new Uint8Array(5),alphaPrediction([0,0,0,0,0,0],meta)));
 });
+
+test('224 alpha mask is a true subset of 128 generated from native 8-bit data',()=>{
+ const original=[0,127,128,191,192,223,224,255];
+ const m={width:4,height:2,image:'source.jpg',sourceSha256:'a'.repeat(64)};
+ const standard=alphaPrediction(original,m,128),strict=alphaPrediction(original,m,224);
+ assert.equal(standard.foregroundThreshold,128);
+ assert.equal(strict.foregroundThreshold,224);
+ assert.deepEqual([...decodeReferenceMask(standard)],[0,0,1,1,1,1,1,1]);
+ assert.deepEqual([...decodeReferenceMask(strict)],[0,0,0,0,0,0,1,1]);
+ const diff=compareCutoutMasks(standard,strict);
+ assert.equal(diff.addedPixels,0);
+ assert.equal(diff.removedPixels,4);
+ assert.equal(diff.sharedPixels,2);
+ assert.equal(diff.notAccuracy,true);
+});

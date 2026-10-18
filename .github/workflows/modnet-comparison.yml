@@ -6,6 +6,9 @@ on:
     paths:
       - 'scripts/run-modnet-comparison.mjs'
       - 'scripts/run-object-cutout-comparison.mjs'
+      - 'scripts/audit-locked-second-model-evidence.mjs'
+      - 'benchmark/locked-edge-support-evidence.mjs'
+      - 'tests/locked-edge-support-evidence.test.mjs'
       - 'scripts/score-approved-cutouts.mjs'
       - 'benchmark/compare-approved-cutouts.mjs'
       - 'tests/compare-approved-cutouts.test.mjs'
@@ -387,6 +390,17 @@ jobs:
         run: node --test tests/object-cutout-mask.test.mjs
       - name: Compare BiRefNet Lite with the sharp MODNet baseline
         run: node scripts/run-object-cutout-comparison.mjs benchmark/object-cutout-comparison
+      - name: Verify native strict alpha is preserved as separate unpromoted evidence
+        run: |
+          node --test tests/locked-edge-support-evidence.test.mjs tests/object-cutout-mask.test.mjs
+          node scripts/audit-locked-second-model-evidence.mjs benchmark/strong-alpha-evidence
+          node -e "const x=require('./benchmark/strong-alpha-evidence/summary.json');if(x.photos!==6||x.highConfidenceMaskCases!==6||x.productionAuthorized!==false||x.independentlyApprovedReferenceCases!==0||x.subsetChecks.some(c=>!c.removedOnly))throw Error('Unverified strict-alpha evidence')"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: experimental-locked-model-strict-alpha-preflight
+          path: benchmark/strong-alpha-evidence/
+          retention-days: 14
       - name: Verify complete object cutout experiment
         run: |
           node -e "const s=require('./benchmark/object-cutout-comparison/summary.json');if(s.status!=='complete'||s.cases.length!==6||!s.reviewOnly||s.productionAuthorized||s.cases.some(c=>!c.notAccuracy||c.verifiedShadowRemoval))throw Error('Incomplete or unsafe object comparison')"
