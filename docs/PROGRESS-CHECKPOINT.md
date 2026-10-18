@@ -1,5 +1,34 @@
 # Closet Current master development checkpoint
 
+## Isolated original-RGB color sampling correction — October 18, 2026, Pacific
+
+- Continues `work/garment-instance-recognition-20261018` after remote
+  `27ab7a0e39c7939789fa92412eb16321e3c3b8f7`. Integration branch untouched.
+- `clothingColorSample` previously chose 256 evenly spaced observations.
+  Periodic fabric can alias this stride: the new controlled regression has
+  15 blue columns for every red column, but the former stride picks only red.
+  Retain every distinct original RGB observation already selected by the
+  model grid instead. No new segmentation pixels, recoloring, clipping,
+  image interpolation or duplicate source observations are introduced.
+- Allocation stays bounded by the validated 512-by-512 model map: at most
+  one MiB per RGBA sample. Small-source deduplication, transparent padding,
+  low-evidence rejection and independent whole/interior agreement remain.
+  This is model-cell-center coverage, not all full-resolution photo pixels.
+- Added reproducible `scripts/audit-original-garment-color-sampling.mjs` and
+  CI integration with the four-photo LIP runner. All 14 nonempty real-model
+  regions use their SHA-verified original RGB; primary colors and confirmation
+  decisions unchanged, some secondary-color shares changed. Masks remain
+  unapproved, so garment-color accuracy remains null. See committed evidence
+  `benchmark/ORIGINAL-COLOR-SAMPLING-20261018.json`.
+- Verification: full sequential Node suite 757 passed / 0 failed / 0 skipped;
+  38 focused color/worker/segmentation tests; build passed; four-source workflow
+  assertions passed locally. No remote-CI or physical-phone speed claim.
+- This is a tested sampling fix, not a solution to mixed garment masks.
+  Color can still be wrong when source-model regions include another item,
+  skin or backdrop. Original photographs and model masks remain unchanged.
+  No production merge/deployment, paid calls or Drive Duel changes.
+
+
 ## Isolated LIP supported-class export correction — October 18, 2026, Pacific
 
 - Continues isolated `work/garment-instance-recognition-20261018` after

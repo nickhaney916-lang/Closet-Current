@@ -1,0 +1,538 @@
+{
+  "status": "complete",
+  "sourcePhotos": 4,
+  "regions": 14,
+  "sourceHashesVerified": true,
+  "originalsModified": false,
+  "modelMasksModified": false,
+  "observationScope": "Distinct original RGB pixels at model-cell centers, not every full-resolution pixel",
+  "humanApprovedMasks": false,
+  "garmentColorAccuracy": null,
+  "segmentationAccuracy": null,
+  "primaryChanges": 0,
+  "confirmationChanges": 0,
+  "cases": [
+    {
+      "id": "validation-0031",
+      "role": "dress",
+      "sourceSha256": "0e145aa5432df3457521200d1e1bb896f66abd66fb041d31ed0db591e00e2fdc",
+      "distinctSourceObservations": 148,
+      "baselineObservations": 148,
+      "candidateObservations": 148,
+      "baselinePalette": {
+        "primary": "Black",
+        "secondary": null,
+        "colors": [
+          {
+            "color": "Black",
+            "share": 1
+          }
+        ],
+        "coverage": 0.578,
+        "needsConfirmation": false
+      },
+      "candidatePalette": {
+        "primary": "Black",
+        "secondary": null,
+        "colors": [
+          {
+            "color": "Black",
+            "share": 1
+          }
+        ],
+        "coverage": 0.578,
+        "needsConfirmation": false
+      },
+      "primaryChanged": false,
+      "confirmationChanged": false
+    },
+    {
+      "id": "validation-0031",
+      "role": "coat",
+      "sourceSha256": "0e145aa5432df3457521200d1e1bb896f66abd66fb041d31ed0db591e00e2fdc",
+      "distinctSourceObservations": 17505,
+      "baselineObservations": 256,
+      "candidateObservations": 17505,
+      "baselinePalette": {
+        "primary": "Gray",
+        "secondary": "Black",
+        "colors": [
+          {
+            "color": "Gray",
+            "share": 0.445
+          },
+          {
+            "color": "Black",
+            "share": 0.422
+          }
+        ],
+        "coverage": 1,
+        "needsConfirmation": true
+      },
+      "candidatePalette": {
+        "primary": "Gray",
+        "secondary": "Black",
+        "colors": [
+          {
+            "color": "Gray",
+            "share": 0.458
+          },
+          {
+            "color": "Black",
+            "share": 0.39
+          },
+          {
+            "color": "Brown",
+            "share": 0.125
+          }
+        ],
+        "coverage": 0.99,
+        "needsConfirmation": true
+      },
+      "primaryChanged": false,
+      "confirmationChanged": false
+    },
+    {
+      "id": "validation-0031",
+      "role": "skirt",
+      "sourceSha256": "0e145aa5432df3457521200d1e1bb896f66abd66fb041d31ed0db591e00e2fdc",
+      "distinctSourceObservations": 3741,
+      "baselineObservations": 256,
+      "candidateObservations": 3741,
+      "baselinePalette": {
+        "primary": "Black",
+        "secondary": null,
+        "colors": [
+          {
+            "color": "Black",
+            "share": 0.914
+          }
+        ],
+        "coverage": 1,
+        "needsConfirmation": false
+      },
+      "candidatePalette": {
+        "primary": "Black",
+        "secondary": null,
+        "colors": [
+          {
+            "color": "Black",
+            "share": 0.928
+          }
+        ],
+        "coverage": 0.973,
+        "needsConfirmation": false
+      },
+      "primaryChanged": false,
+      "confirmationChanged": false
+    },
+    {
+      "id": "validation-0031",
+      "role": "shoe_pair",
+      "sourceSha256": "0e145aa5432df3457521200d1e1bb896f66abd66fb041d31ed0db591e00e2fdc",
+      "distinctSourceObservations": 2560,
+      "baselineObservations": 256,
+      "candidateObservations": 2560,
+      "baselinePalette": {
+        "primary": "Black",
+        "secondary": "Brown",
+        "colors": [
+          {
+            "color": "Black",
+            "share": 0.828
+          },
+          {
+            "color": "Brown",
+            "share": 0.121
+          }
+        ],
+        "coverage": 1,
+        "needsConfirmation": false
+      },
+      "candidatePalette": {
+        "primary": "Black",
+        "secondary": null,
+        "colors": [
+          {
+            "color": "Black",
+            "share": 0.831
+          }
+        ],
+        "coverage": 0.984,
+        "needsConfirmation": false
+      },
+      "primaryChanged": false,
+      "confirmationChanged": false
+    },
+    {
+      "id": "validation-0030",
+      "role": "upper",
+      "sourceSha256": "7e1e20dede55d9981d26ef3675c637112c81283edbec567c768c2abfab911d17",
+      "distinctSourceObservations": 155,
+      "baselineObservations": 155,
+      "candidateObservations": 155,
+      "baselinePalette": {
+        "primary": "White",
+        "secondary": null,
+        "colors": [
+          {
+            "color": "White",
+            "share": 0.981
+          }
+        ],
+        "coverage": 0.605,
+        "needsConfirmation": false
+      },
+      "candidatePalette": {
+        "primary": "White",
+        "secondary": null,
+        "colors": [
+          {
+            "color": "White",
+            "share": 0.981
+          }
+        ],
+        "coverage": 0.605,
+        "needsConfirmation": false
+      },
+      "primaryChanged": false,
+      "confirmationChanged": false
+    },
+    {
+      "id": "validation-0030",
+      "role": "dress",
+      "sourceSha256": "7e1e20dede55d9981d26ef3675c637112c81283edbec567c768c2abfab911d17",
+      "distinctSourceObservations": 959,
+      "baselineObservations": 256,
+      "candidateObservations": 959,
+      "baselinePalette": {
+        "primary": "White",
+        "secondary": null,
+        "colors": [
+          {
+            "color": "White",
+            "share": 0.863
+          }
+        ],
+        "coverage": 1,
+        "needsConfirmation": false
+      },
+      "candidatePalette": {
+        "primary": "White",
+        "secondary": null,
+        "colors": [
+          {
+            "color": "White",
+            "share": 0.861
+          }
+        ],
+        "coverage": 0.998,
+        "needsConfirmation": false
+      },
+      "primaryChanged": false,
+      "confirmationChanged": false
+    },
+    {
+      "id": "validation-0030",
+      "role": "coat",
+      "sourceSha256": "7e1e20dede55d9981d26ef3675c637112c81283edbec567c768c2abfab911d17",
+      "distinctSourceObservations": 22830,
+      "baselineObservations": 256,
+      "candidateObservations": 22830,
+      "baselinePalette": {
+        "primary": "Blue",
+        "secondary": null,
+        "colors": [
+          {
+            "color": "Blue",
+            "share": 0.871
+          }
+        ],
+        "coverage": 1,
+        "needsConfirmation": false
+      },
+      "candidatePalette": {
+        "primary": "Blue",
+        "secondary": null,
+        "colors": [
+          {
+            "color": "Blue",
+            "share": 0.879
+          }
+        ],
+        "coverage": 0.988,
+        "needsConfirmation": false
+      },
+      "primaryChanged": false,
+      "confirmationChanged": false
+    },
+    {
+      "id": "validation-0030",
+      "role": "skirt",
+      "sourceSha256": "7e1e20dede55d9981d26ef3675c637112c81283edbec567c768c2abfab911d17",
+      "distinctSourceObservations": 2322,
+      "baselineObservations": 256,
+      "candidateObservations": 2322,
+      "baselinePalette": {
+        "primary": "White",
+        "secondary": null,
+        "colors": [
+          {
+            "color": "White",
+            "share": 0.727
+          }
+        ],
+        "coverage": 1,
+        "needsConfirmation": false
+      },
+      "candidatePalette": {
+        "primary": "White",
+        "secondary": null,
+        "colors": [
+          {
+            "color": "White",
+            "share": 0.71
+          }
+        ],
+        "coverage": 0.967,
+        "needsConfirmation": false
+      },
+      "primaryChanged": false,
+      "confirmationChanged": false
+    },
+    {
+      "id": "validation-0030",
+      "role": "socks",
+      "sourceSha256": "7e1e20dede55d9981d26ef3675c637112c81283edbec567c768c2abfab911d17",
+      "distinctSourceObservations": 3981,
+      "baselineObservations": 256,
+      "candidateObservations": 3981,
+      "baselinePalette": {
+        "primary": "Gray",
+        "secondary": "White",
+        "colors": [
+          {
+            "color": "Gray",
+            "share": 0.641
+          },
+          {
+            "color": "White",
+            "share": 0.199
+          }
+        ],
+        "coverage": 1,
+        "needsConfirmation": false
+      },
+      "candidatePalette": {
+        "primary": "Gray",
+        "secondary": "White",
+        "colors": [
+          {
+            "color": "Gray",
+            "share": 0.62
+          },
+          {
+            "color": "White",
+            "share": 0.196
+          }
+        ],
+        "coverage": 0.972,
+        "needsConfirmation": false
+      },
+      "primaryChanged": false,
+      "confirmationChanged": false
+    },
+    {
+      "id": "validation-0030",
+      "role": "pants",
+      "sourceSha256": "7e1e20dede55d9981d26ef3675c637112c81283edbec567c768c2abfab911d17",
+      "distinctSourceObservations": 7896,
+      "baselineObservations": 256,
+      "candidateObservations": 7896,
+      "baselinePalette": {
+        "primary": "Blue",
+        "secondary": "Black",
+        "colors": [
+          {
+            "color": "Blue",
+            "share": 0.207
+          },
+          {
+            "color": "Black",
+            "share": 0.184
+          },
+          {
+            "color": "Brown",
+            "share": 0.172
+          },
+          {
+            "color": "Beige",
+            "share": 0.148
+          },
+          {
+            "color": "Orange",
+            "share": 0.121
+          }
+        ],
+        "coverage": 1,
+        "needsConfirmation": true
+      },
+      "candidatePalette": {
+        "primary": "Blue",
+        "secondary": "Black",
+        "colors": [
+          {
+            "color": "Blue",
+            "share": 0.201
+          },
+          {
+            "color": "Black",
+            "share": 0.182
+          },
+          {
+            "color": "Brown",
+            "share": 0.178
+          },
+          {
+            "color": "Beige",
+            "share": 0.15
+          }
+        ],
+        "coverage": 0.997,
+        "needsConfirmation": true
+      },
+      "primaryChanged": false,
+      "confirmationChanged": false
+    },
+    {
+      "id": "validation-0030",
+      "role": "shoe_pair",
+      "sourceSha256": "7e1e20dede55d9981d26ef3675c637112c81283edbec567c768c2abfab911d17",
+      "distinctSourceObservations": 1776,
+      "baselineObservations": 256,
+      "candidateObservations": 1776,
+      "baselinePalette": {
+        "primary": "White",
+        "secondary": "Gray",
+        "colors": [
+          {
+            "color": "White",
+            "share": 0.691
+          },
+          {
+            "color": "Gray",
+            "share": 0.188
+          }
+        ],
+        "coverage": 1,
+        "needsConfirmation": false
+      },
+      "candidatePalette": {
+        "primary": "White",
+        "secondary": "Gray",
+        "colors": [
+          {
+            "color": "White",
+            "share": 0.678
+          },
+          {
+            "color": "Gray",
+            "share": 0.192
+          }
+        ],
+        "coverage": 0.961,
+        "needsConfirmation": false
+      },
+      "primaryChanged": false,
+      "confirmationChanged": false
+    },
+    {
+      "id": "validation-0017",
+      "role": "upper",
+      "sourceSha256": "6f83b0769215cf7e19475a0b946b9be4d5d00747c50df18136aafe18a08dbb58",
+      "distinctSourceObservations": 1686,
+      "baselineObservations": 256,
+      "candidateObservations": 1686,
+      "baselinePalette": {
+        "primary": "Gray",
+        "secondary": "Black",
+        "colors": [
+          {
+            "color": "Gray",
+            "share": 0.633
+          },
+          {
+            "color": "Black",
+            "share": 0.309
+          }
+        ],
+        "coverage": 1,
+        "needsConfirmation": false
+      },
+      "candidatePalette": {
+        "primary": "Gray",
+        "secondary": "Black",
+        "colors": [
+          {
+            "color": "Gray",
+            "share": 0.631
+          },
+          {
+            "color": "Black",
+            "share": 0.316
+          }
+        ],
+        "coverage": 0.956,
+        "needsConfirmation": false
+      },
+      "primaryChanged": false,
+      "confirmationChanged": false
+    },
+    {
+      "id": "validation-0017",
+      "role": "coat",
+      "sourceSha256": "6f83b0769215cf7e19475a0b946b9be4d5d00747c50df18136aafe18a08dbb58",
+      "distinctSourceObservations": 4,
+      "baselineObservations": 4,
+      "candidateObservations": 4,
+      "baselinePalette": null,
+      "candidatePalette": null,
+      "primaryChanged": false,
+      "confirmationChanged": false
+    },
+    {
+      "id": "validation-0017",
+      "role": "pants",
+      "sourceSha256": "6f83b0769215cf7e19475a0b946b9be4d5d00747c50df18136aafe18a08dbb58",
+      "distinctSourceObservations": 71753,
+      "baselineObservations": 256,
+      "candidateObservations": 71753,
+      "baselinePalette": {
+        "primary": "Gray",
+        "secondary": null,
+        "colors": [
+          {
+            "color": "Gray",
+            "share": 0.906
+          }
+        ],
+        "coverage": 1,
+        "needsConfirmation": false
+      },
+      "candidatePalette": {
+        "primary": "Gray",
+        "secondary": null,
+        "colors": [
+          {
+            "color": "Gray",
+            "share": 0.915
+          }
+        ],
+        "coverage": 0.999,
+        "needsConfirmation": false
+      },
+      "primaryChanged": false,
+      "confirmationChanged": false
+    }
+  ]
+}

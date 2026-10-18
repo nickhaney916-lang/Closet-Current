@@ -5,6 +5,10 @@ on:
     branches: [main]
     paths:
       - 'benchmark/lip_garment_instance_candidates.py'
+      - 'public/outfit-segmentation.mjs'
+      - 'public/photo-color.js'
+      - 'tests/outfit-color-evidence.test.mjs'
+      - 'scripts/audit-original-garment-color-sampling.mjs'
       - 'benchmark/lip_boundary_review.py'
       - 'tests/test_lip_boundary_review.py'
       - 'scripts/run-lip-garment-candidates.py'
@@ -42,6 +46,11 @@ jobs:
           node scripts/download-reviewed-photos.mjs benchmark/manifest-fresh-11.json benchmark/photos validation-0017
       - name: Compare independent human parsing coat, skirt, dress and shoe pixels
         run: PYTHONPATH=benchmark python scripts/run-lip-garment-candidates.py benchmark/lip-garment-instance-review
+      - name: Check original RGB color sampling without inventing garment accuracy
+        run: |
+          npm install --no-save --no-package-lock sharp@0.34.4
+          node --test tests/outfit-color-evidence.test.mjs tests/outfit-worker.test.mjs
+          node scripts/audit-original-garment-color-sampling.mjs benchmark/lip-garment-instance-review
       - name: Prohibit invented garment items or production promotion
         run: |
           python - <<'PY'
@@ -52,6 +61,12 @@ jobs:
           assert s['status']=='complete' and len(s['cases'])==4 and s['sourceHashesVerified']
           assert s['automaticItemsCreated']==0 and s['productionAuthorized'] is False
           assert s['independentGarmentInstanceMasks'] is False
+          color=json.loads((p/'original-color-sampling-audit.json').read_text())
+          assert color['status']=='complete' and color['sourcePhotos']==4
+          assert color['sourceHashesVerified'] and color['regions']>0
+          assert color['garmentColorAccuracy'] is None and color['segmentationAccuracy'] is None
+          assert not color['originalsModified'] and not color['modelMasksModified']
+          assert all(c['candidateObservations']==c['distinctSourceObservations'] for c in color['cases'])
           by={case['id']:case for case in s['cases']}
           assert by['validation-0031']['reviewDisposition']=='distinct-classes-needing-outline-review'
           assert by['commons-0059']['reviewDisposition']=='no-garment-parsing-evidence'
@@ -80,6 +95,7 @@ jobs:
           name: experimental-lip-separate-clothing-preview
           path: |
             benchmark/lip-garment-instance-review/summary.json
+            benchmark/lip-garment-instance-review/original-color-sampling-audit.json
             benchmark/lip-garment-instance-review/*-separate-classes.png
             benchmark/lip-garment-instance-review/*-skirt-boundary-review.png
             benchmark/lip-garment-instance-review/*-unverified-mask.png

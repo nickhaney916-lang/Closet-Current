@@ -15,7 +15,7 @@ function scene({mapWidth=20,mapHeight=20,inside=(x,y)=>x>=3&&x<17&&y>=3&&y<17,ga
  }
  const indices=[];for(let i=0;i<selected.length;i++)if(selected[i])indices.push(i);
  const xs=indices.map(i=>i%mapWidth),ys=indices.map(i=>Math.floor(i/mapWidth));
- const group={selected,bounds:{left:Math.min(...xs),top:Math.min(...ys),right:Math.max(...xs)+1,bottom:Math.max(...ys)+1}};
+ const group={selected,bounds:{left:xs.reduce((a,b)=>Math.min(a,b),Infinity),top:ys.reduce((a,b)=>Math.min(a,b),Infinity),right:xs.reduce((a,b)=>Math.max(a,b),-1)+1,bottom:ys.reduce((a,b)=>Math.max(a,b),-1)+1}};
  return {image:{width,height,channels,data},map:{width:mapWidth,height:mapHeight},group};
 }
 const palette=s=>Color.maskedPalette(s.data,s.width,s.height);
@@ -58,11 +58,11 @@ test('sufficient distinct blue garment evidence ignores surrounding white room',
  assert.equal(result.needsConfirmation,false);
  assert.ok(result.coverage<1);
 });
-test('large mask caps samples at 256 while maintaining garment color',()=>{
+test('large mask retains every distinct source observation while maintaining garment color',()=>{
  const f=scene({inside:(x,y)=>x>=1&&x<19&&y>=1&&y<19});
  const sample=clothingColorSample(f.image,f.map,f.group);
  assert.equal(sample.distinctMaskPixels,324);
- assert.equal(sample.sampledPixels,256);
+ assert.equal(sample.sampledPixels,324);
  assert.equal(palette(sample).primary,'Blue');
 });
 test('masked estimator samples actual garment not neighboring orange backdrop',()=>{
@@ -111,4 +111,29 @@ test('invalid and untrustworthy interior masks fail closed',()=>{
  assert.throws(()=>clothingInteriorColorSample(f.image,f.map,{selected:new Uint8Array(8)}));
  assert.throws(()=>clothingInteriorColorSample(f.image,f.map,f.group,{minimumInterior:300}));
  assert.throws(()=>clothingInteriorColorSample(f.image,{width:0,height:20},f.group));
+});
+
+
+test('regular fabric stripes cannot alias the old 256-pixel sampling stride',()=>{
+ const f=scene({mapWidth:64,mapHeight:64,inside:()=>true});
+ // Sixteen repeating columns, only one red; the previous stride sampled
+ // exactly that red column on every row and returned a confident Red.
+ for(let y=0;y<f.image.height;y++)for(let x=0;x<f.image.width;x++)
+  f.image.data.set(Math.floor(x/3)%16===8?[180,20,25]:[30,60,170],(y*f.image.width+x)*3);
+ const before=new Uint8ClampedArray(f.image.data);
+ const s=clothingColorSample(f.image,f.map,f.group),result=palette(s);
+ assert.equal(s.sampledPixels,4096);
+ assert.equal(result.primary,'Blue');
+ assert.equal(result.colors[0].share,.938);
+ assert.deepEqual(f.image.data,before,'original RGB remains untouched');
+});
+
+test('color sampling stays bounded and rejects inconsistent mask dimensions',()=>{
+ const f=scene();
+ assert.throws(()=>clothingColorSample(f.image,{width:513,height:20},f.group));
+ assert.throws(()=>clothingColorSample(f.image,f.map,{...f.group,selected:new Uint8Array(3)}));
+ const full=scene({mapWidth:512,mapHeight:512,inside:()=>true});
+ const sample=clothingColorSample(full.image,full.map,full.group);
+ assert.equal(sample.sampledPixels,512*512);
+ assert.equal(sample.data.byteLength,1024*1024);
 });
