@@ -48,8 +48,14 @@ try{
  await page.locator('#photo').setInputFiles({...source,name:'validation-0031.original.jpg'});
  await page.locator('#status').getByText(/canonical source JPEG/).waitFor();
  assert.equal(await page.locator('#export').isDisabled(),true);
+ await page.locator('#photo').setInputFiles({...source,buffer:Buffer.from('not a jpeg')});
+ await page.locator('#status').getByText(/actual JPEG bytes/).waitFor();
+ assert.equal(await page.locator('#export').isDisabled(),true);
  await page.locator('#photo').setInputFiles(source);
  await page.locator('#status').getByText(/No approved outlines/).waitFor();
+ await page.locator('#original').evaluate(img=>img.decode());
+ assert.equal(await page.locator('#original').evaluate(img=>img.naturalWidth),40,
+  'Original remains visually available to inspect after file decoding');
  await provide([{...garmentA,seedModel:'AI'}]);
  await page.locator('#status').getByText(/Rejected approved outlines/).waitFor();
  await provide([{...garmentA,approvedBy:'First Human'}]);
