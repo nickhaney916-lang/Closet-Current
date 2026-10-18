@@ -1,6 +1,57 @@
 # Closet Current master development checkpoint
 
 
+## Pilot sign-in resilience and guarded password recovery — October 18, 2026, Pacific
+
+- **Development-priority code and browser behavior verified**, on draft
+  Closet Current PR #7 only. No production merge/deployment, paid services,
+  changes to Drive Duel or reads of real subscribers' personal data.
+- Fixed `public/auth.js` transient saved-session restoration:
+  transport/offline errors, AbortError timeouts, HTTP 408/429 and HTTP 5xx
+  **no longer delete the stored refresh token**. The private closet remains
+  locked while offline or unverified, with a single conditional
+  **Retry saved login** action after connectivity returns. A verified
+  invalid/revoked refresh token still clears the saved session and requires
+  fresh login. Auth requests remain serialized/bounded.
+- A successful HTTP 200 containing a user ID alone no longer unlocks a
+  private closet: the response must contain a nonempty access token.
+  Password-recovery completion also verifies the updated account ID matches
+  the account established by the recovery-token verification. No new
+  auth provider, emails, signup method or permission bypass was added.
+- Added coverage to `tests/auth.test.cjs` for offline refresh, retry,
+  account isolation, malformed successful responses, server failures,
+  timeouts, verified revoked sessions and concurrent retry safety.
+  Added synthetic-only `scripts/test-auth-pilot-mobile.mjs` with
+  390×844 touch viewport, and enabled it in existing
+  `.github/workflows/cloud-backup-flow.yml`.
+- Verified [cloud & pilot Auth run 39173979696](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39173979696)
+  on code commit `fe92d6dff6ccbd758f67deaac3cccf0edbeec212`:
+  Node test suite **770 total, 767 passed, 0 failed, 3 skipped**.
+  Controlled-browser multi-device cloud recovery passed, and
+  `AUTH_PILOT_MOBILE`: `offlineSessionRetained=true`,
+  `manualRetryRestoredSameUser=true`,
+  `rotatedRefreshTokenSaved=true`,
+  `tokenlessSuccessRejected=true`,
+  `mismatchedRecoveryRejected=true`,
+  `noPrivateClosetUnlockWithoutSession=true`,
+  `pageErrors=[]`.
+- **Open pilot blockers, NOT verified:** real inbox signup/confirmation,
+  resend and recovery delivery, live Supabase sender/domain configuration
+  and exact redirect allowlist, chosen Cloudflare custom-domain/GitHub Pages
+  canonical email destination, and installation/login on a physical phone.
+  The client STILL requests email callback links to
+  `https://nickhaney916-lang.github.io/Closet-Current/`, while historical
+  `docs/AUTH-EMAIL-READINESS.md` lists Cloudflare
+  `https://closet-current.pages.dev/` as deployed production. Do not
+  silently change the redirect before confirming Supabase URL Configuration,
+  email templates and owner-chosen app origin. The real-inbox test may send
+  email and must be authorized explicitly; none was sent here.
+- **Next priority:** pilot user consent/terms, privacy & account deletion
+  readiness and real-device installation checks before any friends/family
+  invite; keep signup and real emails behind explicit approval.
+
+
+
 ## Work-session consolidation and cloud backup recovery — October 18, 2026, Pacific
 
 - The separate ChatGPT Work chat exhausted its workspace. Its **isolated**
