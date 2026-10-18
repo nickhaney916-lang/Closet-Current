@@ -318,6 +318,30 @@ try{
   const after=await page.evaluate(()=>batch.find(x=>x.importFilename==='commons-0060.jpg')?.category);
   assert.equal(after,'Uncategorized','Cancel must not silently save the suggested category');
  }
+ // Verify that every otherwise eligible color-only item exposes its
+ // existing inline save control. No mock color prediction and no extra dialog.
+ // This measures fewer required taps, NOT automatic inference accuracy.
+ const inlineColorReview=await page.evaluate(()=>{
+  const cards=[...document.querySelectorAll('#reviewGrid .photo-result')];
+  return batch.filter(item=>item.importFilename&&item.category!=='Uncategorized'&&
+   !item.color&&!item.possibleDuplicate&&!item.requiresOwnershipConfirmation&&
+   !item.scanFailed&&!item.saveFailed&&!item.userAdjusted&&item.localAnalyzed&&
+   !item.segmentHint).map(item=>{
+    const index=batch.findIndex(x=>x.id===item.id),card=cards[index];
+    return {id:item.importFilename.replace(/\\.jpg$/,''),
+     hasPicker:!!card?.querySelector('.quick-color-confirm select'),
+     label:card?.querySelector('.photo-status')?.textContent||null,
+     hasAdjust:!!card?.querySelector('button.secondary')};
+   });
+ });
+ assert.ok(inlineColorReview.length>=5,'Expected at least five known-color-pending real photos');
+ assert.ok(inlineColorReview.every(x=>x.hasPicker&&x.label==='Choose color to save'),
+  'Confirmed garment with uncertain color must offer visible inline save');
+ console.log('REAL_PHOTO_INLINE_COLOR_REVIEW '+JSON.stringify({
+  eligible:inlineColorReview.length,available:inlineColorReview.filter(x=>x.hasPicker).length,
+  cases:inlineColorReview.map(x=>x.id),requiredExtraScreen:false,
+  automaticColorInferred:false
+ }));
  // Exercise the real mobile review UI after measurements are recorded.
  // The explicit selection simulates the user, not another AI inference.
  const quickCardIndex=await page.evaluate(()=>{
