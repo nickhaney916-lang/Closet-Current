@@ -11,6 +11,7 @@ function app(fetchImpl=async()=>{throw new TypeError('network unavailable');},ca
   elements.set(id,{id,value:'',hidden:false,disabled:false,required:false,textContent:'',setAttribute(){},addEventListener(name,fn){listeners[name]=fn;},checkValidity(){return true;}});
  }
  elements.get('authRetry').hidden=true;
+ elements.get('appShell').hidden=true;
  elements.get('authEmail').value='test@example.invalid';
  elements.get('authPassword').value='test-password-only';
  elements.get('authUsername').value='test_user';
@@ -177,7 +178,7 @@ test('temporarily offline stored login stays locked and refresh token survives f
   Promise.reject(new TypeError('network unavailable')),{},{refresh_token:'original-refresh'});
  await new Promise(setImmediate);
  assert.equal(a.window.closetAuth.user,null);
- assert.equal(a.get('appShell').hidden,false===true); // default gate never unlocked
+ assert.equal(a.get('appShell').hidden,true); // private closet stays locked
  assert.equal(a.saved.has('closet-current-auth-v1'),true);
  assert.equal(JSON.parse(a.saved.get('closet-current-auth-v1')).refresh_token,'original-refresh');
  assert.equal(a.get('authRetry').hidden,false);
@@ -225,7 +226,7 @@ test('200 OK without access token never opens closet, including recovery or logi
   await a.submit();
   assert.equal(a.window.closetAuth.user,null);
   assert.equal(a.get('authGate').hidden,false);
-  assert.equal(a.get('appShell').hidden,false);
+  assert.equal(a.get('appShell').hidden,true);
   assert.equal(a.saved.has('closet-current-auth-v1'),false);
  }
 });
