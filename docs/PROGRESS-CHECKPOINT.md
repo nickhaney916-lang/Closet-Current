@@ -1,5 +1,40 @@
 # Closet Current master development checkpoint
 
+## Genuine whole-outfit app benchmark — October 18, 2026, Pacific
+
+- Continued from `fd121845c526f74f3192d984ddbf2dd3e5396a30`, which passed all
+  23 PR workflows. This Work chat remains the main development thread.
+- Added `scripts/run-real-whole-outfit-flow.mjs` to existing mobile CI. Uses the
+  actual production segmentation and recognition workers on hash-verified,
+  licensed full-body fixture `validation-0031` (blazer, shirt, skirt, tights,
+  heels). Authentication alone uses a local test identity; no seeded closet
+  records, manual labels, synthetic workers, paid calls, or cloud writes.
+- First actual app run: commit `2e516024e9f1b343c2e56218d2d524d54f12f11a`,
+  GitHub mobile run **39145377246**, artifact **12143605708**, report
+  `real-whole-outfit-flow.json`: **2 emitted candidates, 0 automatically saved,
+  2 pending review, 0 page errors**. Both retained original photo and unmasked
+  recognition crop. Visually inspected exported original/display crop pairs.
+- Confirmed failure: one mixed blazer/shirt/skirt region has a Dresses hint,
+  but classification stays Uncategorized rather than inventing an owned dress.
+  The shoe crop reaches Shoes/Unknown, with no confirmed color. Blazer, shirt
+  and skirt are not independently recovered; tights remain outside the catalog.
+- This is a real model/app failure baseline, not an accuracy improvement or a
+  completed outfit workflow. Style this was **not exercised** from this capture:
+  no item saved automatically. No mask IoU, color accuracy or phone claim.
+- Tightened the benchmark to reject unexpected automatically saved categories,
+  explicitly mark styling blocked when nothing saves, and compare exact original,
+  recognition and display image strings for pending/saved records after reload.
+  An empty saved collection now yields null, never a successful-save claim.
+- Local build and Node suite remain **695 passed, 3 skipped, 0 failed**. Browser
+  validation runs in GitHub because local Chromium installation is unavailable.
+  Inspect final commit CI for the added pending-reload assertion.
+- Next priority: diagnose why the production worker emits only two regions for
+  this case; evaluate source-preserving region/instance candidates on this and
+  more licensed full-body fixtures before changing model thresholds. Keep the
+  existing safety gates and source RGB. Do not accept a false dress to raise
+  automatic-save counts. Clipping reference masks still need independent review.
+- Production, paid services and Drive Duel remain unchanged.
+
 ## Work main-thread continuation — October 18, 2026, Pacific
 
 This Work conversation is now the main development thread. Supersedes the older

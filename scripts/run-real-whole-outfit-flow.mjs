@@ -83,6 +83,9 @@ try{
  report.missingAutomaticCategories=report.expectedSupportedCategories.filter(x=>!actual.has(x));
  report.unexpectedAutomaticCategories=[...actual].filter(x=>!report.expectedSupportedCategories.includes(x));
  report.unsupportedVisibleGarments=['Tights'];
+ await save();
+ assert.deepEqual(report.unexpectedAutomaticCategories,[],
+  'This blazer/shirt/skirt/shoes source must not automatically save a fabricated dress');
  for(const item of observed.saved){
   await page.locator('.tab[data-view="closet"]').click();
   await page.locator('#closetAllPieces').click();
@@ -98,12 +101,29 @@ try{
   assert.ok(result.options.every(ids=>ids.includes(item.id)&&ids.every(id=>result.owned.includes(id))));
   report.styleChecks.push({id:item.id,status:result.options.length?'verified':'no-compatible-option',options:result.options.length});
  }
+ report.styleWorkflowTested=report.styleChecks.some(x=>x.status==='verified');
+ report.automaticWorkflowOutcome=observed.saved.length?'has-automatic-saves':'blocked-no-automatic-saves';
+ // Flush existing app persistence before reload, without changing any records.
+ await page.evaluate(()=>queued(()=>Promise.resolve()));
+ const beforeReload=await page.evaluate(group=>({
+  saved:items.filter(x=>x.outfitSourceId===group),pending:batch.filter(x=>x.outfitSourceId===group)
+ }),observed.group);
  await page.reload();await page.evaluate(()=>Promise.all([closetReady,outfitBoardReady]));
- const restored=await page.evaluate(group=>items.filter(x=>x.outfitSourceId===group).map(x=>({id:x.id,
-  source:!!x.originalPhoto?.image,recognition:!!x.recognitionPhoto?.image})),observed.group);
- assert.deepEqual(restored.map(x=>x.id).sort(),observed.saved.map(x=>x.id).sort());
- assert.ok(restored.every(x=>x.source&&x.recognition));
- report.localSavedReloadVerified=true;
+ const restored=await page.evaluate(group=>({
+  saved:items.filter(x=>x.outfitSourceId===group),pending:batch.filter(x=>x.outfitSourceId===group)
+ }),observed.group);
+ for(const state of ['saved','pending']){
+  assert.deepEqual(restored[state].map(x=>x.id).sort(),beforeReload[state].map(x=>x.id).sort());
+  for(const before of beforeReload[state]){
+   const after=restored[state].find(x=>x.id===before.id);
+   assert.equal(after.originalPhoto?.image,before.originalPhoto?.image);
+   assert.equal(after.recognitionPhoto?.image,before.recognitionPhoto?.image);
+   assert.equal(after.image,before.image);
+  }
+ }
+ // Empty saved collections must never count as verified successful saves.
+ report.localSavedReloadVerified=observed.saved.length?true:null;
+ report.pendingReviewReloadVerified=observed.pending.length?true:null;
  assert.deepEqual(report.pageErrors,[]);
  report.status='complete';await save();
  console.log('REAL_WHOLE_OUTFIT '+JSON.stringify(report));
