@@ -41,6 +41,37 @@ and not a measure of accuracy, recall or foreground contamination.
 Exact model-to-model IoU measures model disagreement, **not IoU against a
 human reference**. Class hints may be wrong.
 
+## Verified real-source results
+
+GitHub [experimental run 39167434166](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39167434166)
+completed successfully with the pinned model on **10 distinct verified licensed
+source images**. Downloaded artifact `pinned-deepfashion-instance-feasibility`
+(ID `12150593325`), examined its actual
+`individual-instance-spatial-review.json`:
+- **34** unapproved DeepFashion model proposals across 10 originals.
+- **81** distinct model-to-model proposal pairs; **41** geometry-priority
+  relationships (22 possible same-category panel/fragment pairs plus 19
+  overlapping cross-category/layer-conflict pairs).
+- **5** of the same-category priority pairs have **zero exact foreground
+  overlap** but occupy nearby/touching cells in the 96×96 review grid.
+  Examples: `commons-0049` dress proposals `02` and `04`, and
+  three pairs of jacket proposals in `commons-0065`. The new detector
+  surfaces these **previously invisible disjoint-fragment questions**.
+- `validation-0017`: 2 model trousers proposals, 1 potentially
+  same-article or duplicated-article pair. No human garment count inferred.
+- `validation-0031`: 2 proposals, with 1 overlapping top-versus-skirt
+  category conflict. This is NOT independent confirmation that the full
+  skirt and blazer were clipped correctly.
+- `commons-0079` and `validation-0019`: zero footwear proposals because
+  the pinned DeepFashion taxonomy lacks shoes. An empty detector result
+  is **not** an empty image.
+
+The test gate's 15 focused Node tests passed, 0 failed. The workflow
+independently verified 0 approved human references, null real-image
+instance accuracy, null missing-garment recall, 0 customer saves, unchanged
+source photos and no model promotion. **Do not describe any of the 41
+review flags as 41 accurate garments or confirmed clipping defects.**
+
 ## Human review priorities
 
 Inspect disjoint same-category pairs on the exact originals, particularly
