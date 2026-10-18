@@ -328,7 +328,7 @@ try{
    !item.scanFailed&&!item.saveFailed&&!item.userAdjusted&&item.localAnalyzed&&
    !item.segmentHint).map(item=>{
     const index=batch.findIndex(x=>x.id===item.id),card=cards[index];
-    return {id:item.importFilename.replace(/\\.jpg$/,''),
+    return {id:item.importFilename.replace(/\.jpg$/,''),
      hasPicker:!!card?.querySelector('.quick-color-confirm select'),
      label:card?.querySelector('.photo-status')?.textContent||null,
      hasAdjust:!!card?.querySelector('button.secondary')};
