@@ -103,3 +103,70 @@ test('partial looks retain explicit required garment gaps',()=>{
  assert.match(script,/partial look/);
  assert.match(script,/missing clothes listed below/);
 });
+
+
+test('one-tap shoe swap changes exactly one owned slot and preserves the selected new top',()=>{
+ const c=setup(),owned=[piece('new-shirt','Tops','T-shirt','Green'),
+  piece('jeans','Bottoms','Jeans','Blue'),piece('white-shoes','Shoes','Sneakers','White'),
+  piece('black-shoes','Shoes','Sneakers','Black')];
+ const before=JSON.stringify(owned),result=c.styleOwnedCollection(owned,
+  {request:'Casual',season:'Fall',anchorItemId:'new-shirt'})[0];
+ assert.ok(result);
+ const original={...result.board.slots};
+ const options=c.stylistSwapChoices(result,'shoes',owned,'new-shirt');
+ assert.equal(options.length,1);
+ const switched=c.stylistSwapOne(result,'shoes',owned,'new-shirt');
+ assert.ok(switched);
+ assert.notEqual(switched.board.slots.shoes,original.shoes);
+ assert.equal(switched.board.slots.top,'new-shirt');
+ assert.equal(switched.board.slots.bottom,original.bottom);
+ assert.deepEqual(Object.keys(switched.board.slots).sort(),Object.keys(original).sort());
+ assert.ok(Object.values(switched.board.slots).every(id=>owned.some(x=>x.id===id)));
+ assert.equal(JSON.stringify(owned),before,'original photos and clothing must remain unchanged');
+ assert.deepEqual(c.stylistSwapChoices(result,'top',owned,'new-shirt'),[]);
+});
+test('one-piece swap cannot replace pinned shoes, clothes from other closets, or unknown types',()=>{
+ const c=setup(),owned=[piece('tee','Tops','T-shirt'),piece('jeans','Bottoms','Jeans'),
+  piece('white-shoes','Shoes','Sneakers','White'),piece('black-shoes','Shoes','Sneakers','Black'),
+  piece('unconfirmed-shoes','Uncategorized','Unknown')];
+ const r=c.styleOwnedCollection(owned,{request:'Casual',anchorItemId:'white-shoes'})[0];
+ assert.equal(r.board.slots.shoes,'white-shoes');
+ assert.deepEqual(c.stylistSwapChoices(r,'shoes',owned,'white-shoes'),[]);
+ const bottoms=c.stylistSwapChoices(r,'bottom',owned,'white-shoes');
+ assert.ok(bottoms.every(x=>x.id!=='unconfirmed-shoes'));
+ assert.deepEqual(c.stylistSwapChoices(r,'bottom',owned,'not-an-owned-anchor'),[],
+  'missing selected piece must make swap fail closed');
+ const without=owned.filter(x=>x.id!=='jeans');
+ assert.deepEqual(c.stylistSwapChoices(r,'bottom',without,'white-shoes'),[],
+  'deleted or missing original pieces must not invent a valid swap');
+});
+test('dress can only swap to another dress without adding bottoms or changing chosen footwear',()=>{
+ const c=setup(),owned=[piece('dress1','Dresses','Casual dress'),
+  piece('dress2','Dresses','Shirt dress'),piece('tee','Tops','T-shirt'),
+  piece('heels','Shoes','Flats')];
+ const r=c.styleOwnedCollection(owned,{request:'Casual',anchorItemId:'heels'})[0];
+ assert.equal(r.board.slots.bottom,undefined);
+ const options=c.stylistSwapChoices(r,'top',owned,'heels');
+ assert.deepEqual(options.map(x=>x.id),['dress2']);
+ const swapped=c.stylistSwapOne(r,'top',owned,'heels');
+ assert.equal(swapped.board.slots.top,'dress2');
+ assert.equal(swapped.board.slots.bottom,undefined);
+ assert.equal(swapped.board.slots.shoes,'heels');
+});
+test('existing bottom or layers prevent dress swaps that would silently remove other saved pieces',()=>{
+ const c=setup(),owned=[piece('tee','Tops','T-shirt'),piece('jeans','Bottoms','Jeans'),
+  piece('dress','Dresses','Casual dress'),piece('sneakers','Shoes','Sneakers')];
+ const r=c.styleOwnedCollection(owned,{request:'Casual',anchorItemId:'jeans'})[0];
+ assert.equal(r.board.slots.bottom,'jeans');
+ assert.ok(!c.stylistSwapChoices(r,'top',owned,'jeans').some(x=>x.id==='dress'));
+ assert.equal(c.stylistSwapOne(r,'bottom',owned,'jeans'),null);
+});
+test('new touch swap UI does not overwrite the garment or navigate into outfit builder',()=>{
+ const script=fs.readFileSync('public/closet-stylist.js','utf8');
+ const style=fs.readFileSync('public/style.css','utf8');
+ assert.match(script,/Swap shoes/);
+ assert.match(script,/stylistSwapOne\(result,slot,items,stylistAnchorItemId\)/);
+ assert.match(script,/result\.references=\[\]/,'stale trend citations must be cleared after a swap');
+ assert.match(script,/tap Save outfit when you like it/);
+ assert.match(style,/\.styled-swap-button\{min-height:50px/);
+});
