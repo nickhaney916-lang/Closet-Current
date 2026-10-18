@@ -7,6 +7,7 @@ import {AutoModel,AutoProcessor,RawImage,env} from '@huggingface/transformers';
 import sharp from 'sharp';
 import {alphaPrediction,sharpSourceCutout} from '../benchmark/object-cutout-mask.mjs';
 import {selectHoldoutPhotos,holdoutReport} from '../benchmark/object-cutout-holdout.mjs';
+import {footwearThresholdEdgeReview} from '../benchmark/footwear-threshold-edge-review.mjs';
 
 const modelId='onnx-community/BiRefNet_lite-ONNX';
 const revision='de15b22ba131738a16dff04aab8bdf8dc32e3ac1';
@@ -42,6 +43,13 @@ try{
     const prediction=alphaPrediction(alpha.data,{
       width:photo.width,height:photo.height,image:item.image,sourceSha256:item.sha256
     });
+    // Three real, independent sneaker holdouts exercise the SAME BiRefNet
+    // logits at 128 and 224; they are never a shoe detector or true outline.
+    const isShoe=item.expectedCategory==='Shoes';
+    const strict=isShoe?alphaPrediction(alpha.data,{
+      width:photo.width,height:photo.height,image:item.image,sourceSha256:item.sha256
+    },224):null;
+    const footwearReview=isShoe?footwearThresholdEdgeReview(prediction,strict):null;
     const decoded=await sharp(bytes).removeAlpha().toColourspace('srgb').raw().toBuffer({resolveWithObject:true});
     const {width:w,height:h,channels}=decoded.info;
     if(w!==prediction.width||h!==prediction.height||channels!==3)
@@ -53,6 +61,22 @@ try{
       await sharp(rgba,{raw:{width:w,height:h,channels:4}})
         .flatten({background:'#eee9f3'}).resize(pw,ph).png().toBuffer()
     ];
+    if(isShoe){
+      const strictRGBA=sharpSourceCutout(decoded.data,strict);
+      const thresholdPanels=[
+        await sharp(bytes).resize(pw,ph).png().toBuffer(),
+        panels[1],
+        await sharp(strictRGBA,{raw:{width:w,height:h,channels:4}})
+          .flatten({background:'#eee9f3'}).resize(pw,ph).png().toBuffer()
+      ];
+      const title=Buffer.from('<svg width="1620" height="75" xmlns="http://www.w3.org/2000/svg"><rect width="1620" height="75" fill="white"/><g font-family="sans-serif" fill="#222"><text x="12" y="28" font-size="19">Verified source photo</text><text x="552" y="28" font-size="19">BiRefNet 128</text><text x="1092" y="28" font-size="19">BiRefNet 224 (strict)</text><text x="12" y="54" font-size="14">Same native RGB; ambiguous toe, sole, lace and shadow pixels are NOT measured accuracy</text></g></svg>');
+      await sharp({create:{width:pw*3,height:ph+75,channels:3,background:'white'}})
+        .composite([{input:title,left:0,top:0},...thresholdPanels.map((input,i)=>({input,left:i*pw,top:75}))])
+        .png().toFile(join(output,item.id+'-footwear-threshold-review.png'));
+      await writeFile(join(output,item.id+'.strict-footwear-candidate.json'),
+       JSON.stringify({...strict,modelId,revision,experimental:true,approved:false,
+        independentlyVerifiedShoeEdges:false,reviewOnly:true}));
+    }
     const heading=Buffer.from('<svg width="1080" height="70" xmlns="http://www.w3.org/2000/svg"><rect width="1080" height="70" fill="white"/><g fill="#222" font-family="sans-serif" font-size="20"><text x="10" y="28">Verified original</text><text x="550" y="28">Experimental BiRefNet Lite cutout</text></g><text x="10" y="55" font-size="15" fill="#444">Not measured accuracy · native source RGB retained · independent human review required</text></svg>');
     await sharp({create:{width:pw*2,height:ph+70,channels:3,background:'white'}})
       .composite([{input:heading,left:0,top:0},...panels.map((input,i)=>({input,left:pw*i,top:70}))])
@@ -65,7 +89,8 @@ try{
     report.push({id:item.id,expectedCategory:item.expectedCategory,expectedType:item.expectedType,
       sourceSha256:item.sha256,source:item.attribution.source,license:item.attribution.license,
       width:w,height:h,inferenceMs,foregroundPixels:prediction.foregroundPixels,
-      measuredAccuracy:false,independentlyApproved:false});
+      measuredAccuracy:false,independentlyApproved:false,
+      footwearThresholdReview:footwearReview});
     await writeReport(report.length===selected.length?'complete':'running',loadMs);
     console.log('CUTOUT_HOLDOUT '+JSON.stringify(report.at(-1)));
   }
