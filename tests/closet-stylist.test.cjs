@@ -67,3 +67,27 @@ test('missing, deleted and uncategorized new pieces cannot be silently substitut
  for(const id of ['missing','unknown'])assert.equal(c.styleOwnedCollection(owned,{anchorItemId:id}).length,0);
  assert.ok(c.styleOwnedCollection(owned).length);
 });
+
+test('one-tap Style this opens the existing stylist and submits the chosen owned piece',()=>{
+ const script=fs.readFileSync('public/closet-stylist.js','utf8');
+ const source=script.slice(script.indexOf('let styledCollectionResults='),script.indexOf('function renderStyledCollection(){'));
+ assert.ok(source.includes('function styleNewClosetItem('));
+ const elements=new Map(),pieces=[piece('fresh-shirt','Tops','T-shirt'),piece('dress','Dresses','Casual dress'),piece('unknown','Uncategorized','Unknown')];
+ let submitted=0,rendered=0,navigated='';
+ const c={items:pieces,renderStyledCollection(){rendered++;},switchView(v){navigated=v;},
+  $:id=>{if(!elements.has(id))elements.set(id,{textContent:'',requestSubmit(){submitted++;}});return elements.get(id);}};
+ vm.createContext(c);vm.runInContext(source,c);
+ assert.equal(c.styleNewClosetItem('fresh-shirt'),true);
+ assert.equal(vm.runInContext('stylistAnchorItemId',c),'fresh-shirt');
+ assert.equal(navigated,'stylist');assert.equal(submitted,1);assert.equal(rendered,1);
+ assert.match(elements.get('stylistStatus').textContent,/fresh-shirt|T-shirt/);
+ assert.equal(c.styleNewClosetItem('unknown'),false);
+ assert.equal(c.styleNewClosetItem('not-in-closet'),false);
+ assert.equal(submitted,1,'unknown and missing garments cannot create an outfit');
+ assert.equal(c.styleNewClosetItem('dress'),true);
+ assert.equal(vm.runInContext('stylistAnchorItemId',c),'dress');
+ assert.equal(submitted,2);
+ const index=fs.readFileSync('public/index.html','utf8'),app=fs.readFileSync('public/app.js','utf8');
+ for(const id of ['stylistAnchor','stylistAnchorPhoto','stylistAnchorName','stylistClearAnchor'])assert.ok(index.includes('id="'+id+'"'));
+ assert.match(app,/styleNewClosetItem\(item\.id\)/);
+});
