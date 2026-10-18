@@ -7,9 +7,10 @@ const path=require('node:path');
 const source=fs.readFileSync(path.join(__dirname,'../public/auth.js'),'utf8');
 function app(fetchImpl=async()=>{throw new TypeError('network unavailable');},callback={},initialSession=null){
  const elements=new Map(),listeners={},timers=new Map(),requests=[];
- for(const id of ['authStatus','authForm','authSubmit','authMode','authReset','authResend','authEmail','authPassword','authPasswordToggle','authUsername','usernameWrap','authGate','appShell','accountLabel','logout']){
+ for(const id of ['authStatus','authForm','authSubmit','authMode','authReset','authResend','authRetry','authEmail','authPassword','authPasswordToggle','authUsername','usernameWrap','authGate','appShell','accountLabel','logout']){
   elements.set(id,{id,value:'',hidden:false,disabled:false,required:false,textContent:'',setAttribute(){},addEventListener(name,fn){listeners[name]=fn;},checkValidity(){return true;}});
  }
+ elements.get('authRetry').hidden=true;
  elements.get('authEmail').value='test@example.invalid';
  elements.get('authPassword').value='test-password-only';
  elements.get('authUsername').value='test_user';
@@ -165,4 +166,92 @@ test('simultaneous cloud refreshes rotate the token only once and retain the acc
 test('cloud token refresh cannot switch to a different account',async()=>{
  let calls=0;const a=app(async()=>++calls===1?response({access_token:'old-access',refresh_token:'old-refresh',user:{id:'first-user'}}):response({access_token:'other-access',user:{id:'other-user'}}));await a.submit();
  await assert.rejects(a.window.closetAuth.getAccessToken({force:true}),/account changed/);assert.equal(a.window.closetAuth.user.id,'first-user');
+});
+
+
+test('temporarily offline stored login stays locked and refresh token survives for explicit retry',async()=>{
+ let available=false;
+ const a=app(async()=>available?
+  response({access_token:'recovered-access',refresh_token:'rotated-refresh',
+    user:{id:'same-account',email:'test@example.invalid'},expires_in:3600}):
+  Promise.reject(new TypeError('network unavailable')),{},{refresh_token:'original-refresh'});
+ await new Promise(setImmediate);
+ assert.equal(a.window.closetAuth.user,null);
+ assert.equal(a.get('appShell').hidden,false===true); // default gate never unlocked
+ assert.equal(a.saved.has('closet-current-auth-v1'),true);
+ assert.equal(JSON.parse(a.saved.get('closet-current-auth-v1')).refresh_token,'original-refresh');
+ assert.equal(a.get('authRetry').hidden,false);
+ assert.match(a.get('authStatus').textContent,/Your session is still saved/);
+ assert.equal(a.get('authSubmit').disabled,false);
+ available=true;
+ await a.get('authRetry').onclick();
+ assert.equal(a.window.closetAuth.user.id,'same-account');
+ assert.equal(a.get('authRetry').hidden,true);
+ assert.equal(a.get('authGate').hidden,true);
+ assert.equal(JSON.parse(a.saved.get('closet-current-auth-v1')).refresh_token,'rotated-refresh');
+ assert.equal(a.requests.length,2);
+});
+test('HTTP 5xx and timeout preserve stored refresh token; service denial revokes it',async()=>{
+ for(const [kind,fetcher] of [
+  ['503',async()=>({...response({error_code:'temporarily_unavailable'},false),status:503})],
+  ['timeout',async(_url,{signal})=>new Promise((_ok,reject)=>signal.addEventListener('abort',()=>{
+   const err=new Error('aborted');err.name='AbortError';reject(err);
+  })))]
+ ]){
+  const a=app(fetcher,{},{refresh_token:'still-saved'});
+  if(kind==='timeout'){
+   // restoration starts synchronously and is in-flight; trigger the bounded timeout.
+   assert.equal(a.timers.size,1);
+   [...a.timers.values()][0]();
+  }
+  await new Promise(setImmediate);
+  assert.equal(a.window.closetAuth.user,null);
+  assert.equal(a.saved.has('closet-current-auth-v1'),true);
+  assert.equal(a.get('authRetry').hidden,false);
+ }
+ const denied=app(async()=>({...response({error_code:'invalid_grant',msg:'Refresh token not found'},false),status:401}),
+  {},{refresh_token:'revoked'});
+ await new Promise(setImmediate);
+ assert.equal(denied.get('authRetry').hidden,true);
+ assert.equal(denied.saved.has('closet-current-auth-v1'),false);
+ assert.match(denied.get('authStatus').textContent,/expired/);
+});
+test('200 OK without access token never opens closet, including recovery or login',async()=>{
+ for(const payload of [
+  {user:{id:'claimed-user'}},{access_token:'',user:{id:'claimed-user'}},
+  {access_token:'test',user:{}}
+ ]){
+  const a=app(async()=>response(payload));
+  await a.submit();
+  assert.equal(a.window.closetAuth.user,null);
+  assert.equal(a.get('authGate').hidden,false);
+  assert.equal(a.get('appShell').hidden,false);
+  assert.equal(a.saved.has('closet-current-auth-v1'),false);
+ }
+});
+test('password reset cannot authenticate a different user on same callback token',async()=>{
+ let calls=0;
+ const a=app(async()=>response(++calls===1?
+  {id:'recovery-owner',email:'test@example.invalid'}:
+  {id:'other-user',email:'test@example.invalid'}),
+  {hash:'#access_token=recovery-token&refresh_token=recovery-refresh&type=recovery'});
+ await new Promise(setImmediate);
+ assert.equal(a.window.closetAuth.user,null);
+ a.get('authPassword').value='new-password-long';
+ await a.submit();
+ assert.equal(a.window.closetAuth.user,null);
+ assert.equal(a.get('authGate').hidden,false);
+ assert.match(a.get('authStatus').textContent,/Session account changed/);
+});
+test('saved-session retries are serialized so double tapping does not send duplicate requests',async()=>{
+ let finish;
+ const a=app(()=>new Promise(resolve=>finish=resolve),{},{refresh_token:'retry-token'});
+ await new Promise(setImmediate);
+ assert.equal(a.requests.length,1);
+ assert.equal(a.get('authSubmit').disabled,true);
+ await a.get('authRetry').onclick();
+ assert.equal(a.requests.length,1);
+ finish(response({access_token:'success',refresh_token:'new',user:{id:'test-account'}}));
+ await new Promise(setImmediate);
+ assert.equal(a.window.closetAuth.user.id,'test-account');
 });
