@@ -1,5 +1,49 @@
 # Closet Current master development checkpoint
 
+## Verified real-photo model-decision diagnosis — October 18, 2026, Pacific
+
+- Development commit `855f0261a09b636481347272de82647c0d1967b4`
+  on draft PR #7 added **opt-in, aggregate-only** segmentation diagnostics.
+  Normal customer capture does not request the diagnostic. It never changes
+  original RGB, recognition crops, thresholds, saved clothing or mask approvals.
+- Full GitHub Node suite [run 39161512221](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39161512221):
+  **735 passed, 0 failed, 3 skipped**; production build passed.
+  Independent mobile browser workflow [run 39161514948](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39161514948)
+  completed successfully, including actual outfit and recognition workers,
+  owned-item styling/swap checks and separated-outfit review/persistence checks.
+  Mobile artifact **12149455579** contains the exact diagnostics and
+  preserved source/display cutout pairs.
+- Source-verified CC BY-SA 3.0 `validation-0031` (blazer, shirt, skirt,
+  tights, heels): 128×128 semantic logits, person evidence passed. The
+  independent description expects garments; these are **not** pixel-level
+  ground-truth annotations.
+- Actual model decisions: **Upper garment** won 396 mask cells but only 56
+  survived strong pixel confidence; 52 survived small-component filtering,
+  then the group failed the mean-confidence gate. **Skirt** won **zero**
+  mask cells; **Bottoms** won 10 cells, none confident. **Dress** won 1,120
+  cells and 527 trusted cells and was emitted as a mixed, visibly incorrect
+  region. **Shoes** won 312 cells, 217 trusted and also emitted as an unsafe
+  fragmented region.
+- Observed end-to-end outcome remains **2 candidate regions, 0 automatic
+  saves, 2 manual review holds**. The 2 original photographs / source crops
+  per candidate are retained across the existing reload assertion; there were
+  no page errors. The source RGB and original classification source are
+  never overwritten by the diagnostic.
+- **Root-cause scope:** the production semantic segmentation model fails to
+  predict a distinct skirt on this one real layered outfit and has weak
+  confidence on the upper garment. Relaxing postprocessing gates cannot
+  recover the missing skirt class, and would risk false saved clothes.
+  Do not infer per-item recall/precision, color accuracy, phone performance,
+  improved model accuracy or readiness from this 1-photo result.
+- **Next priority:** obtain independently approved per-instance masks
+  on source-identical licensed worn outfits, then compare the pinned
+  DeepFashion review-only proposals (and separately licensed footwear
+  proposals) against actual references. Require held-out garment-level
+  precision/recall and background contamination evidence before any
+  automatic-save or customer-model change. Leave production, paid services
+  and Drive Duel untouched.
+
+
 ## Genuine whole-outfit app benchmark — October 18, 2026, Pacific
 
 - Continued from `fd121845c526f74f3192d984ddbf2dd3e5396a30`, which passed all
