@@ -1,6 +1,61 @@
 # Closet Current master development checkpoint
 
 
+## Complete 10-source independent review package — October 18, 2026, Pacific
+
+- **Actual next priority finished on draft PR #7.** A blocker in
+  `scripts/run-deepfashion-instance-probe.py` omitted **five of ten**
+  original photographs from the extracted human-reference packet, even
+  though inference processed all ten. Independent full-photo reviews and
+  source-verified scoring for those other five could not proceed.
+- Added `benchmark/whole_outfit_review_packet.py`:
+  prevalidates all ten original JPEG files for SHA-256/source identity,
+  uniqueness, byte size, model-proposal status and full photographer/license
+  attribution BEFORE staging any outputs. It copies all ten original
+  photographs without RGB edits, writes
+  `independent-outline-review/source-original-coverage.json`
+  and a mobile-responsive local `REVIEW-QUEUE.html` presenting five review
+  priorities followed by the other five. AI proposal links remain clearly
+  unapproved and concealed behind a disclosure that tells the first reviewer
+  to identify physical garments independently before opening predictions.
+  Sources, credit/license URLs, authors and original images are retained.
+- Added `tests/test_whole_outfit_review_packet.py` with synthetic JPEG
+  fixtures testing full-source coverage, missing/duplicate source rejection,
+  source hash tampering, hidden invalid JPEG formats, unsafe attribution
+  and unapproved model reference checks. Connected the tests, source
+  coverage gate and HTML export into the existing
+  `.github/workflows/deepfashion-instance-probe.yml`.
+- **Verified** [10-photo DeepFashion GitHub Actions run 39168398781](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39168398781)
+  for code commit `6def69f989d56b867970d716f38a29d6b3ce8bd9`:
+  the pinned-model job successfully completed original hash validation,
+  10-photo ONNX research, 34 unapproved proposal audit, full-source
+  review coverage and no-promotion protection. Artifact
+  `pinned-deepfashion-instance-feasibility`, ID `12151222707`.
+- Independently downloaded and inspected artifact ZIP in the active
+  container: ZIP integrity passed; **exactly ten** licensed original JPEGs,
+  **ten of ten SHA-256 matches**, all ten license credit records,
+  `REVIEW-QUEUE.html`, and 34 unapproved AI proposal JSON files.
+  Coverage manifest: ten source photos, ten unchanged originals,
+  five human-review priorities, **zero genuinely approved human masks**
+  and **null segmentation accuracy**.
+- The previous malformed workflow JPEG signature literal was fixed to
+  test `bytes((0xff,0xd8))` instead of escaped backslash bytes; final
+  pinned-model gate passed. The test fixture uses synthetic files;
+  that does not prove independent human accuracy.
+- The other product/mobile checks are separate from the pinned-model gate;
+  do not claim all checks passed unless the relevant run confirms.
+- The **remaining dependency** is actual independent first/second human
+  reviewers drawing/approving all visible physical garment outlines from
+  these unchanged originals, particularly layered outfits. Run existing
+  `benchmark/assemble-physical-inventory.html` and
+  `scripts/score-physical-garment-inventory.mjs` only after genuine human
+  approval. Do not invent reviewers, set real-photo segmentation precision
+  to a fabricated percentage, automatically save unverified masks,
+  change original photos, use paid inference, merge/deploy production, or
+  modify Drive Duel.
+
+
+
 ## Experimental real-photo garment-fragmentation spatial audit — October 18, 2026, Pacific
 
 - Implemented `benchmark/instance-spatial-review.mjs`, regression tests
