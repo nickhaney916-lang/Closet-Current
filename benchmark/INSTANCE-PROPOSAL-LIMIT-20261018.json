@@ -1,0 +1,361 @@
+{
+  "status": "complete",
+  "model": "HasanKabir23/Yolov26s-DeepFashion2",
+  "revision": "670bd8b4a9a94c687c85df0b1376497c40a3759b",
+  "modelHashVerified": true,
+  "sourceHashesVerified": true,
+  "originalPhotosPreserved": true,
+  "parsedInstanceMasks": 34,
+  "automaticItemsCreated": 0,
+  "customerModelChanged": false,
+  "paidServicesUsed": false,
+  "evidenceKind": "Local pinned-model real-photo proposal comparison; not human accuracy review",
+  "runtime": {
+    "python": "3.12",
+    "onnxruntime": "1.21.0",
+    "numpy": "2.5.4",
+    "provider": "CPUExecutionProvider"
+  },
+  "cases": [
+    {
+      "id": "validation-0031",
+      "sourceSha256": "0e145aa5432df3457521200d1e1bb896f66abd66fb041d31ed0db591e00e2fdc",
+      "proposedMasks": 2,
+      "proposalCoverage": {
+        "candidateLimit": 20,
+        "aboveThresholdRows": 2,
+        "examinedRows": 2,
+        "unexaminedRows": 0,
+        "truncated": false,
+        "completeAboveThresholdReview": true,
+        "missingPhysicalGarments": null
+      },
+      "proposalLimitComparison": {
+        "baselineLimit": 8,
+        "candidateLimit": 20,
+        "baselineProposals": 2,
+        "candidateProposals": 2,
+        "baselineMasksUnchanged": true,
+        "additionalUnapprovedProposals": 0,
+        "additionalProposalTypes": [],
+        "baselineCoverage": {
+          "candidateLimit": 8,
+          "aboveThresholdRows": 2,
+          "examinedRows": 2,
+          "unexaminedRows": 0,
+          "truncated": false,
+          "completeAboveThresholdReview": true,
+          "missingPhysicalGarments": null
+        },
+        "recoveredPhysicalGarments": null,
+        "realPhotoAccuracyImprovement": null
+      }
+    },
+    {
+      "id": "commons-0059",
+      "sourceSha256": "f7b8eea8f6d741a5f685119cc5c92f69300a5f294940162429e3febd1482f44c",
+      "proposedMasks": 7,
+      "proposalCoverage": {
+        "candidateLimit": 20,
+        "aboveThresholdRows": 7,
+        "examinedRows": 7,
+        "unexaminedRows": 0,
+        "truncated": false,
+        "completeAboveThresholdReview": true,
+        "missingPhysicalGarments": null
+      },
+      "proposalLimitComparison": {
+        "baselineLimit": 8,
+        "candidateLimit": 20,
+        "baselineProposals": 7,
+        "candidateProposals": 7,
+        "baselineMasksUnchanged": true,
+        "additionalUnapprovedProposals": 0,
+        "additionalProposalTypes": [],
+        "baselineCoverage": {
+          "candidateLimit": 8,
+          "aboveThresholdRows": 7,
+          "examinedRows": 7,
+          "unexaminedRows": 0,
+          "truncated": false,
+          "completeAboveThresholdReview": true,
+          "missingPhysicalGarments": null
+        },
+        "recoveredPhysicalGarments": null,
+        "realPhotoAccuracyImprovement": null
+      }
+    },
+    {
+      "id": "commons-0035",
+      "sourceSha256": "9fd067b0919d519eb7924ebd5c4ddf0bc0f3956cfd229fe1ab12c16cccb085ca",
+      "proposedMasks": 3,
+      "proposalCoverage": {
+        "candidateLimit": 20,
+        "aboveThresholdRows": 3,
+        "examinedRows": 3,
+        "unexaminedRows": 0,
+        "truncated": false,
+        "completeAboveThresholdReview": true,
+        "missingPhysicalGarments": null
+      },
+      "proposalLimitComparison": {
+        "baselineLimit": 8,
+        "candidateLimit": 20,
+        "baselineProposals": 3,
+        "candidateProposals": 3,
+        "baselineMasksUnchanged": true,
+        "additionalUnapprovedProposals": 0,
+        "additionalProposalTypes": [],
+        "baselineCoverage": {
+          "candidateLimit": 8,
+          "aboveThresholdRows": 3,
+          "examinedRows": 3,
+          "unexaminedRows": 0,
+          "truncated": false,
+          "completeAboveThresholdReview": true,
+          "missingPhysicalGarments": null
+        },
+        "recoveredPhysicalGarments": null,
+        "realPhotoAccuracyImprovement": null
+      }
+    },
+    {
+      "id": "validation-0017",
+      "sourceSha256": "6f83b0769215cf7e19475a0b946b9be4d5d00747c50df18136aafe18a08dbb58",
+      "proposedMasks": 2,
+      "proposalCoverage": {
+        "candidateLimit": 20,
+        "aboveThresholdRows": 3,
+        "examinedRows": 3,
+        "unexaminedRows": 0,
+        "truncated": false,
+        "completeAboveThresholdReview": true,
+        "missingPhysicalGarments": null
+      },
+      "proposalLimitComparison": {
+        "baselineLimit": 8,
+        "candidateLimit": 20,
+        "baselineProposals": 2,
+        "candidateProposals": 2,
+        "baselineMasksUnchanged": true,
+        "additionalUnapprovedProposals": 0,
+        "additionalProposalTypes": [],
+        "baselineCoverage": {
+          "candidateLimit": 8,
+          "aboveThresholdRows": 3,
+          "examinedRows": 3,
+          "unexaminedRows": 0,
+          "truncated": false,
+          "completeAboveThresholdReview": true,
+          "missingPhysicalGarments": null
+        },
+        "recoveredPhysicalGarments": null,
+        "realPhotoAccuracyImprovement": null
+      }
+    },
+    {
+      "id": "commons-0049",
+      "sourceSha256": "819ff96e55abf6f79cb99b5abca1870bc0bccfc669681bbc755562be9dbab547",
+      "proposedMasks": 4,
+      "proposalCoverage": {
+        "candidateLimit": 20,
+        "aboveThresholdRows": 4,
+        "examinedRows": 4,
+        "unexaminedRows": 0,
+        "truncated": false,
+        "completeAboveThresholdReview": true,
+        "missingPhysicalGarments": null
+      },
+      "proposalLimitComparison": {
+        "baselineLimit": 8,
+        "candidateLimit": 20,
+        "baselineProposals": 4,
+        "candidateProposals": 4,
+        "baselineMasksUnchanged": true,
+        "additionalUnapprovedProposals": 0,
+        "additionalProposalTypes": [],
+        "baselineCoverage": {
+          "candidateLimit": 8,
+          "aboveThresholdRows": 4,
+          "examinedRows": 4,
+          "unexaminedRows": 0,
+          "truncated": false,
+          "completeAboveThresholdReview": true,
+          "missingPhysicalGarments": null
+        },
+        "recoveredPhysicalGarments": null,
+        "realPhotoAccuracyImprovement": null
+      }
+    },
+    {
+      "id": "commons-0065",
+      "sourceSha256": "0d094b023d86942acbc89fc5a4bc02968c1b5d0b2c78639cdeb985f522a78494",
+      "proposedMasks": 7,
+      "proposalCoverage": {
+        "candidateLimit": 20,
+        "aboveThresholdRows": 7,
+        "examinedRows": 7,
+        "unexaminedRows": 0,
+        "truncated": false,
+        "completeAboveThresholdReview": true,
+        "missingPhysicalGarments": null
+      },
+      "proposalLimitComparison": {
+        "baselineLimit": 8,
+        "candidateLimit": 20,
+        "baselineProposals": 7,
+        "candidateProposals": 7,
+        "baselineMasksUnchanged": true,
+        "additionalUnapprovedProposals": 0,
+        "additionalProposalTypes": [],
+        "baselineCoverage": {
+          "candidateLimit": 8,
+          "aboveThresholdRows": 7,
+          "examinedRows": 7,
+          "unexaminedRows": 0,
+          "truncated": false,
+          "completeAboveThresholdReview": true,
+          "missingPhysicalGarments": null
+        },
+        "recoveredPhysicalGarments": null,
+        "realPhotoAccuracyImprovement": null
+      }
+    },
+    {
+      "id": "validation-0001",
+      "sourceSha256": "7953018d9f4bba2998b68d16fce4a59e4189e66d40f82b24459cb1200b4394c0",
+      "proposedMasks": 1,
+      "proposalCoverage": {
+        "candidateLimit": 20,
+        "aboveThresholdRows": 1,
+        "examinedRows": 1,
+        "unexaminedRows": 0,
+        "truncated": false,
+        "completeAboveThresholdReview": true,
+        "missingPhysicalGarments": null
+      },
+      "proposalLimitComparison": {
+        "baselineLimit": 8,
+        "candidateLimit": 20,
+        "baselineProposals": 1,
+        "candidateProposals": 1,
+        "baselineMasksUnchanged": true,
+        "additionalUnapprovedProposals": 0,
+        "additionalProposalTypes": [],
+        "baselineCoverage": {
+          "candidateLimit": 8,
+          "aboveThresholdRows": 1,
+          "examinedRows": 1,
+          "unexaminedRows": 0,
+          "truncated": false,
+          "completeAboveThresholdReview": true,
+          "missingPhysicalGarments": null
+        },
+        "recoveredPhysicalGarments": null,
+        "realPhotoAccuracyImprovement": null
+      }
+    },
+    {
+      "id": "validation-0010",
+      "sourceSha256": "2e2d757d60b5bce8b1e34765c7b59c21ede85c7c69cfbf63d802566934b847c7",
+      "proposedMasks": 8,
+      "proposalCoverage": {
+        "candidateLimit": 20,
+        "aboveThresholdRows": 9,
+        "examinedRows": 9,
+        "unexaminedRows": 0,
+        "truncated": false,
+        "completeAboveThresholdReview": true,
+        "missingPhysicalGarments": null
+      },
+      "proposalLimitComparison": {
+        "baselineLimit": 8,
+        "candidateLimit": 20,
+        "baselineProposals": 8,
+        "candidateProposals": 8,
+        "baselineMasksUnchanged": true,
+        "additionalUnapprovedProposals": 0,
+        "additionalProposalTypes": [],
+        "baselineCoverage": {
+          "candidateLimit": 8,
+          "aboveThresholdRows": 9,
+          "examinedRows": 9,
+          "unexaminedRows": 0,
+          "truncated": false,
+          "completeAboveThresholdReview": true,
+          "missingPhysicalGarments": null
+        },
+        "recoveredPhysicalGarments": null,
+        "realPhotoAccuracyImprovement": null
+      }
+    },
+    {
+      "id": "commons-0079",
+      "sourceSha256": "b577483e5244dfb53e60cc8a0b54a4130e695cf388e5534e38a2b04580727ec6",
+      "proposedMasks": 0,
+      "proposalCoverage": {
+        "candidateLimit": 20,
+        "aboveThresholdRows": 0,
+        "examinedRows": 0,
+        "unexaminedRows": 0,
+        "truncated": false,
+        "completeAboveThresholdReview": true,
+        "missingPhysicalGarments": null
+      },
+      "proposalLimitComparison": {
+        "baselineLimit": 8,
+        "candidateLimit": 20,
+        "baselineProposals": 0,
+        "candidateProposals": 0,
+        "baselineMasksUnchanged": true,
+        "additionalUnapprovedProposals": 0,
+        "additionalProposalTypes": [],
+        "baselineCoverage": {
+          "candidateLimit": 8,
+          "aboveThresholdRows": 0,
+          "examinedRows": 0,
+          "unexaminedRows": 0,
+          "truncated": false,
+          "completeAboveThresholdReview": true,
+          "missingPhysicalGarments": null
+        },
+        "recoveredPhysicalGarments": null,
+        "realPhotoAccuracyImprovement": null
+      }
+    },
+    {
+      "id": "validation-0019",
+      "sourceSha256": "16c806adf3d3e39d0cfa260901da9de6c87f2eab7eafa6e0e56593d7782a5140",
+      "proposedMasks": 0,
+      "proposalCoverage": {
+        "candidateLimit": 20,
+        "aboveThresholdRows": 0,
+        "examinedRows": 0,
+        "unexaminedRows": 0,
+        "truncated": false,
+        "completeAboveThresholdReview": true,
+        "missingPhysicalGarments": null
+      },
+      "proposalLimitComparison": {
+        "baselineLimit": 8,
+        "candidateLimit": 20,
+        "baselineProposals": 0,
+        "candidateProposals": 0,
+        "baselineMasksUnchanged": true,
+        "additionalUnapprovedProposals": 0,
+        "additionalProposalTypes": [],
+        "baselineCoverage": {
+          "candidateLimit": 8,
+          "aboveThresholdRows": 0,
+          "examinedRows": 0,
+          "unexaminedRows": 0,
+          "truncated": false,
+          "completeAboveThresholdReview": true,
+          "missingPhysicalGarments": null
+        },
+        "recoveredPhysicalGarments": null,
+        "realPhotoAccuracyImprovement": null
+      }
+    }
+  ]
+}

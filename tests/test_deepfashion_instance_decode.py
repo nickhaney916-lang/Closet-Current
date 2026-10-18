@@ -36,6 +36,41 @@ class Decoder(unittest.TestCase):
     with self.assertRaises(ValueError):decode(far,p,g)
     wrong=d.copy();wrong[0,0,5]=39
     with self.assertRaises(ValueError):decode(wrong,p,g)
+ def test_ninth_lower_confidence_skirt_is_not_silently_lost(self):
+    # Synthetic logits exercise proposal coverage, not real garment accuracy.
+    d,p,g=self.sample()
+    for i in range(9):
+      d[0,i]=d[0,0];d[0,i,4]=.95-i*.02;d[0,i,5]=3 if i<8 else 8
+    before=d.copy();original_proto=p.copy()
+    old_limit=decode(d,p,g,max_candidates=8)
+    current=decode(d,p,g)
+    self.assertEqual(len(old_limit['candidates']),8)
+    self.assertTrue(old_limit['proposalCoverage']['truncated'])
+    self.assertEqual(old_limit['proposalCoverage']['unexaminedRows'],1)
+    self.assertEqual(current['candidates'][-1]['itemType'],'skirt')
+    self.assertEqual(len(current['candidates']),9)
+    self.assertTrue(current['proposalCoverage']['completeAboveThresholdReview'])
+    self.assertIsNone(current['proposalCoverage']['missingPhysicalGarments'])
+    np.testing.assert_array_equal(d,before)
+    np.testing.assert_array_equal(p,original_proto)
+ def test_bounded_review_reports_remaining_rows_and_exact_limit(self):
+    d,p,g=self.sample()
+    d[0,:21]=d[0,0]
+    result=decode(d,p,g)
+    self.assertEqual(len(result['candidates']),20)
+    self.assertEqual(result['proposalCoverage']['unexaminedRows'],1)
+    self.assertTrue(result['proposalCoverage']['truncated'])
+    d[0,20]=0
+    self.assertFalse(decode(d,p,g)['proposalCoverage']['truncated'])
+    for limit in [0,21,True,8.5,None]:
+      with self.assertRaises(ValueError):decode(d,p,g,max_candidates=limit)
+ def test_small_rejected_masks_do_not_consume_review_capacity(self):
+    d,p,g=self.sample()
+    d[0,1]=d[0,0];d[0,0,:4]=[0,0,1,1]
+    result=decode(d,p,g,max_candidates=1)
+    self.assertEqual(len(result['candidates']),1)
+    self.assertEqual(result['proposalCoverage']['examinedRows'],2)
+    self.assertFalse(result['proposalCoverage']['truncated'])
  def test_duplicate_vs_disjoint_and_layered_masks_flagged_without_deletion(self):
     d,p,g=self.sample()
     item=decode(d,p,g)['candidates'][0]

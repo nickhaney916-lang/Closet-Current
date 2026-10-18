@@ -1,5 +1,41 @@
 # Closet Current master development checkpoint
 
+## Isolated instance proposal coverage fix — October 18, 2026, Pacific
+
+- This conversation owns only `work/garment-instance-recognition-20261018`,
+  branched from verified integration checkpoint
+  `8053b9104980099f1904512286d81b041652e41f`. Do not push this work directly
+  to the integration branch while another conversation is active there.
+- Experimental decoder formerly stopped silently after eight accepted masks.
+  It now retains up to the existing downstream limit of twenty and reports
+  above-threshold, examined and unexamined rows. Truncation is explicit;
+  unexamined proposals are never described as confirmed missing garments.
+- The real-photo runner compares both limits using the SAME pinned inference
+  outputs and checks that baseline category, confidence and mask pixels are
+  unchanged. CI validates coverage accounting and prohibits invented accuracy.
+- Local ten-photo CPU run: all source/model hashes verified; 34 proposals,
+  all baseline masks byte-for-byte equivalent, zero additional proposals,
+  zero truncated cases at the new limit. Therefore this change does NOT fix
+  the known missing clothes on this suite. Compact reproducible evidence:
+  `benchmark/INSTANCE-PROPOSAL-LIMIT-20261018.json`.
+- AI visual inspection (not independent human review): validation-0031 upper
+  mask combines visible clothing regions and omits much of the sleeve;
+  commons-0065 jacket is fragmented across multiple proposals. Shoe negative
+  controls remain zero proposals; this model has no footwear/hosiery classes.
+- Verified: 20 decoder/seed/risk Python tests plus 5 packet tests; 21 Node
+  inventory/spatial/footwear audit tests; 55 original-RGB/capture/worker tests;
+  all ten-photo downstream audits; app build. Full concurrent Node invocation
+  exited without a final summary; a sequential rerun completed all 755 tests
+  with 755 passed, zero failed, zero skipped.
+- Zero human-approved outlines; real segmentation accuracy remains null.
+  No runtime model, customer photograph, indexing/color behavior, paid service,
+  production branch, deployment or Drive Duel changes.
+- Next: independently approved complete garment inventories and pixel outlines
+  remain necessary to measure improvement. The eight-proposal limit is ruled
+  out as the source of current ten-photo misses; do not tune it as an accuracy
+  fix or promote the DeepFashion model to customers.
+
+
 
 ## Category-correct whole-outfit scoring + separate footwear readiness — October 18, 2026, Pacific
 

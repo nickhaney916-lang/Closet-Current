@@ -77,6 +77,17 @@ jobs:
           x=json.load(open('benchmark/deepfashion-instance-review/summary.json'))
           assert x['status']=='complete' and x['modelHashVerified'] and x['sourceHashesVerified']
           assert len(x['cases'])==10 and x['parsedInstanceMasks']>=0
+          for case in x['cases']:
+              coverage=case['proposalCoverage']
+              comparison=case['proposalLimitComparison']
+              assert coverage['candidateLimit']==20
+              assert coverage['aboveThresholdRows']==coverage['examinedRows']+coverage['unexaminedRows']
+              assert coverage['truncated']==(coverage['unexaminedRows']>0)
+              assert coverage['missingPhysicalGarments'] is None
+              assert comparison['baselineMasksUnchanged']
+              assert comparison['candidateProposals']==case['proposedMasks']
+              assert comparison['recoveredPhysicalGarments'] is None
+              assert comparison['realPhotoAccuracyImprovement'] is None
           assert len(set(c['id'] for c in x['cases']))==10
           kinds={c['categoryCoverageReview']['expectedBroadCategoryContextOnly'] for c in x['cases']}
           assert kinds=={'Layered','Bottoms','Dresses','Outerwear','Shoes'}

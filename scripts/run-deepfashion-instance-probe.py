@@ -121,6 +121,20 @@ def main():
         }),flush=True)
         decoded=decode(outputs[0],outputs[1],transform)
         candidates=decoded["candidates"]
+        baseline=decode(outputs[0],outputs[1],transform,max_candidates=8)
+        old=baseline["candidates"]
+        unchanged=len(candidates)>=len(old) and all(
+            a["itemType"]==b["itemType"] and a["score"]==b["score"] and
+            np.array_equal(a["mask"],b["mask"])
+            for a,b in zip(old,candidates))
+        if not unchanged:raise ValueError("Baseline proposal pixels changed")
+        coverage_comparison=dict(baselineLimit=8,candidateLimit=20,
+            baselineProposals=len(old),candidateProposals=len(candidates),
+            baselineMasksUnchanged=unchanged,
+            additionalUnapprovedProposals=len(candidates)-len(old),
+            additionalProposalTypes=[c["itemType"] for c in candidates[len(old):]],
+            baselineCoverage=baseline["proposalCoverage"],
+            recoveredPhysicalGarments=None,realPhotoAccuracyImprovement=None)
         overlap=instance_overlap_review(candidates)
         exported=[]
         for index,candidate in enumerate(candidates,1):
@@ -199,6 +213,8 @@ def main():
           license=row["attribution"]["license"],modelOutputShapes=[list(x.shape) for x in outputs],
           sourceGeometry=transform,cpuInferenceMs=ms,instanceMasksVerified=0,
           masksNotDecoded=False,proposedMasks=len(candidates),
+          proposalCoverage=decoded["proposalCoverage"],
+          proposalLimitComparison=coverage_comparison,
           independentHumanReferenceCount=0,
           candidateSeedsExported=len(exported),
           unapprovedSeedFiles=[x["prediction"] for x in exported],

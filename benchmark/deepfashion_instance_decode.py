@@ -6,7 +6,9 @@ NAMES=["short_sleeve_top","long_sleeve_top","short_sleeve_outwear",
  "long_sleeve_outwear","vest","sling","shorts","trousers","skirt",
  "short_sleeve_dress","long_sleeve_dress","vest_dress","sling_dress"]
 
-def decode(decs,proto,geo,threshold=.20):
+def decode(decs,proto,geo,threshold=.20, *, max_candidates=20):
+    if type(max_candidates) is not int or not 1<=max_candidates<=20:
+        raise ValueError("Instance review limit must be an integer from 1 to 20")
     d=np.asarray(decs);p=np.asarray(proto)
     n=geo["inputSize"];w=geo["originalWidth"];h=geo["originalHeight"]
     xp=geo["xPad"];yp=geo["yPad"];ratio=geo["scale"]
@@ -21,9 +23,13 @@ def decode(decs,proto,geo,threshold=.20):
         raise ValueError("Incorrect source-photo letterbox geometry")
     xx,yy=np.meshgrid(np.arange(n),np.arange(n))
     result=[];protop=p.shape[-1];flat=p[0].reshape(32,protop*protop)
-    for row in sorted(d[0],key=lambda r:float(r[4]),reverse=True):
+    ranked=sorted(d[0],key=lambda r:float(r[4]),reverse=True)
+    eligible=sum(float(row[4])>=threshold for row in ranked)
+    examined=0
+    for row in ranked:
         conf=float(row[4])
         if conf<threshold:break
+        examined+=1
         cls=int(round(float(row[5])));box=row[:4]
         if not (0<=conf<=1 and 0<=cls<13 and abs(cls-row[5])<1e-4 and
            -n*.05<=box[0]<box[2]<=n*1.05 and
@@ -45,8 +51,15 @@ def decode(decs,proto,geo,threshold=.20):
         if area<32:continue
         result.append(dict(itemType=NAMES[cls],classId=cls,score=conf,
             pixels=area,mask=original))
-        if len(result)==8:break
-    return dict(candidates=result,physicalInstancesVerified=0,
+        if len(result)==max_candidates:break
+    # Remaining rows are unknown proposals, NEVER confirmed missing garments.
+    # Keep the downstream 20-mask memory bound, but expose any truncation.
+    return dict(candidates=result,proposalCoverage=dict(
+        candidateLimit=max_candidates,aboveThresholdRows=eligible,
+        examinedRows=examined,unexaminedRows=eligible-examined,
+        truncated=eligible>examined,
+        completeAboveThresholdReview=eligible==examined,
+        missingPhysicalGarments=None),physicalInstancesVerified=0,
         pixelGroundTruthAccuracy=None,automaticSavedItems=0,
         sourcePhotoChanged=False,productionAuthorized=False)
 
