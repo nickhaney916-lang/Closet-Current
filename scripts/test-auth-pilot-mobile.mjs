@@ -71,7 +71,6 @@ try{
  await denied.locator('#authEmail').fill('synthetic@example.invalid');
  await denied.locator('#authPassword').fill('synthetic-password');
  await denied.getByRole('button',{name:'Log in',exact:true}).tap();
- await denied.pageWaitUnused?.();
  await denied.waitForFunction(()=>document.getElementById('authStatus')?.textContent.includes('No verified user session'));
  assert.equal(await denied.locator('#authGate').isVisible(),true);
  assert.equal(await denied.locator('#appShell').isVisible(),false);
