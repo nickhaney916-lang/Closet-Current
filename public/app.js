@@ -136,8 +136,13 @@ function adjustPhoto(item){
    await savePiece(value,batch.filter(x=>x.id!==item.id));
    const existing=items.find(x=>x.id===item.id);if(existing)Object.assign(existing,value);else items.push(value);
    batch=batch.filter(x=>x.id!==item.id);dialog.close();render();scheduleMemoryReview();
-   if(withStyling&&typeof styleNewClosetItem==='function'&&!styleNewClosetItem(value.id))
-    message('Your clothing was saved. Open My closet to style this piece.');
+   if(withStyling){
+    // The save is already durable. A stylist UI error is NOT a save failure.
+    try{
+     if(typeof styleNewClosetItem!=='function'||!styleNewClosetItem(value.id))
+      message('Your clothing was saved. Open My closet to style this piece.');
+    }catch{message('Your clothing was saved. Open My closet to style this piece.');}
+   }
   }catch{
    save.disabled=style.disabled=false;
    message('Could not save changes. Try again.');
