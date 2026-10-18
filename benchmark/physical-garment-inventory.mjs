@@ -75,24 +75,34 @@ export function evaluateCompletePhysicalInventory(scene,inventory,annotations,se
   scoreApprovedPredictionAtReferenceResolution(r.annotation,scene,seed)));
  // Exact maximum-cardinality, maximum-IoU matching. Each AI prediction may
  // match at most ONE actual garment; duplicates never improve recall.
- const memo=new Map();
- function optimize(i,used){
-  if(i===proposals.length)return {matches:0,sum:0,pairs:[]};
-  const key=i+':'+used;if(memo.has(key))return memo.get(key);
-  let best=optimize(i+1,used);
-  for(let j=0;j<refs.length;j++){
-   const overlap=scores[i][j].intersectionOverUnion;
-   if((used&(1<<j))||overlap===null||overlap<minimumIoU)continue;
-   const remaining=optimize(i+1,used|(1<<j));
-   const candidate={matches:remaining.matches+1,sum:remaining.sum+overlap,
-    pairs:[[i,j],...remaining.pairs]};
-   if(candidate.matches>best.matches||
-      (candidate.matches===best.matches&&candidate.sum>best.sum+1e-12))
-    best=candidate;
+ function maximumOneToOneMatch(requireCorrectCategory){
+  const memo=new Map();
+  function optimize(i,used){
+   if(i===proposals.length)return {matches:0,sum:0,pairs:[]};
+   const key=i+':'+used;if(memo.has(key))return memo.get(key);
+   let best=optimize(i+1,used);
+   for(let j=0;j<refs.length;j++){
+    if(requireCorrectCategory &&
+      MODEL_CATEGORY[proposals[i][1].modelGarmentLabel]!==refs[j].category)continue;
+    const overlap=scores[i][j].intersectionOverUnion;
+    if((used&(1<<j))||overlap===null||overlap<minimumIoU)continue;
+    const remaining=optimize(i+1,used|(1<<j));
+    const candidate={matches:remaining.matches+1,sum:remaining.sum+overlap,
+     pairs:[[i,j],...remaining.pairs]};
+    if(candidate.matches>best.matches||
+       (candidate.matches===best.matches&&candidate.sum>best.sum+1e-12))
+     best=candidate;
+   }
+   memo.set(key,best);return best;
   }
-  memo.set(key,best);return best;
+  return optimize(0,0);
  }
- const matched=optimize(0,0);
+ // The first assignment scores visual localization (even a wrong category).
+ // The second *independently* optimizes valid category-constrained matches.
+ // Counting only categories in the first assignment can miss valid correct
+ // predictions consumed by higher-IoU but wrongly labeled proposals.
+ const matched=maximumOneToOneMatch(false);
+ const categoryMatched=maximumOneToOneMatch(true);
  const usedRefs=new Set(matched.pairs.map(pair=>pair[1]));
  const usedProposals=new Set(matched.pairs.map(pair=>pair[0]));
  const matches=matched.pairs.map(([i,j])=>({
@@ -116,6 +126,15 @@ export function evaluateCompletePhysicalInventory(scene,inventory,annotations,se
  const supported=refs.filter(r=>Object.values(MODEL_CATEGORY).includes(r.category));
  const matchedSupported=matches.filter(x=>Object.values(MODEL_CATEGORY).includes(x.reviewedCategory)).length;
  const categoryCorrect=matches.filter(x=>x.categoryCorrect).length;
+ const independentlyCategoryMatched=categoryMatched.pairs.map(([i,j])=>({
+  physicalTargetId:refs[j].id,
+  modelProposalId:proposals[i][0],
+  category:refs[j].category,
+  intersectionOverUnion:scores[i][j].intersectionOverUnion
+ }));
+ const unsupportedPhysical=refs.filter(r=>!Object.values(MODEL_CATEGORY).includes(r.category));
+ const supportedCategoryMatches=independentlyCategoryMatched.filter(m=>
+  Object.values(MODEL_CATEGORY).includes(m.category)).length;
  return {sourceId:scene.id,status:'conditionally-scored-complete-human-inventory',
   sourceSha256:scene.sourceSha256,modelProposals:proposals.length,
   approvedPhysicalGarments:refs.length,matchedGarments:matches.length,
@@ -124,7 +143,23 @@ export function evaluateCompletePhysicalInventory(scene,inventory,annotations,se
   detectionRecall:matches.length/refs.length,
   supportedCategoryDetectionRecall:supported.length?matchedSupported/supported.length:null,
   proposalPrecision:proposals.length?matches.length/proposals.length:null,
+  // Legacy categoryCorrectMatches is tied to the *localization* assignment.
+  // Use the independently optimal category-constrained score to decide
+  // whether the model correctly identified the article and its category.
   correctCategoryRecall:categoryCorrect/refs.length,
+  categoryConstrainedMatchedGarments:independentlyCategoryMatched.length,
+  categoryConstrainedRecall:independentlyCategoryMatched.length/refs.length,
+  supportedCategoryConstrainedRecall:supported.length?
+   supportedCategoryMatches/supported.length:null,
+  unsupportedCategoryGarments:unsupportedPhysical.map(r=>({
+   physicalTargetId:r.id,category:r.category,label:r.label,
+   modelHasCategoryClass:false
+  })),
+  categoryConstrainedMatches:independentlyCategoryMatched,
+  // Neither shoe nor hosiery recall is reportable for this instance model
+  // as category-specific competence: both classes are absent entirely.
+  footwearCategorySupportedByModel:false,
+  hosieryCategorySupportedByModel:false,
   meanMatchedIoU:matches.length?matched.sum/matches.length:null,
   minimumIoU,matched:matches,missingGarments:missing,
   extraOrDuplicateProposals:extra,
