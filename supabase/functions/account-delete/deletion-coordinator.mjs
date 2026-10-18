@@ -40,6 +40,12 @@ export function createAccountDeletionCoordinator(deps){
    });
    if(new Set(paths).size!==paths.length)throw Error('Duplicate private object names');
    await removePhotos(uid,paths);
+   // A Storage API returning 200 is not sufficient if objects survive.
+   // Verify this entire deleted batch disappeared before advancing.
+   const subsequent=await listPhotos(uid,PAGE_SIZE);
+   if(!Array.isArray(subsequent)||subsequent.length>PAGE_SIZE||
+      subsequent.some(name=>paths.includes(uid+'/'+name)))
+    throw Error('Deleted private photos remain in Storage');
    photosDeleted+=paths.length;
   }
   // Two separately checked empty passes catch a backend that eventually
