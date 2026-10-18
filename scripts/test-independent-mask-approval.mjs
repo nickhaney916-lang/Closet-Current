@@ -77,6 +77,33 @@ try{
  assert.deepEqual([...approvedReferenceMask(approved,{image:valid.image,sourceSha256})],
   [...approvedReferenceMask({...approved}, {image:valid.image,sourceSha256})]);
  assert.equal(approved.sourceSha256,sourceSha256);
+ // A second physical garment in the same image needs a different target
+ // identity and a distinct export file. A bare predicted mask cannot pass.
+ const instance={...valid,modelProposalId:'illustrative-review-candidate-02',
+  modelGarmentLabel:'trousers',humanTargetLabel:'navy trousers',
+  targetIndependentlyIdentifiedBy:'Reviewer One'};
+ await load({...instance,humanTargetLabel:''});
+ await page.getByRole('status').getByText(/Independent garment identity/).waitFor();
+ assert.equal(await page.locator('#approve').isDisabled(),true);
+ await load({...instance,modelProposalId:'wrong-photo-candidate-02'});
+ await page.getByRole('status').getByText(/Independent garment identity/).waitFor();
+ assert.equal(await page.locator('#approve').isDisabled(),true);
+ await load(instance);
+ await page.getByRole('status').getByText(/Source verified/).waitFor();
+ assert.equal(await page.locator('#instanceTargetReview').isVisible(),true);
+ assert.match(await page.locator('#instanceTargetText').innerText(),/navy trousers/);
+ assert.equal(await page.locator('#approve').isDisabled(),true);
+ await page.locator('#approver').fill('Reviewer Two');
+ await page.locator('#verified').check();
+ const instanceDownload=page.waitForEvent('download');
+ await page.locator('#approve').click();
+ const instanceFile=await instanceDownload;
+ assert.equal(instanceFile.suggestedFilename(),'illustrative-review-candidate-02.mask.approved.json');
+ const independentlyApproved=JSON.parse(await readFile(await instanceFile.path(),'utf8'));
+ assert.equal(independentlyApproved.modelProposalId,'illustrative-review-candidate-02');
+ assert.equal(independentlyApproved.humanTargetLabel,'navy trousers');
+ assert.equal(independentlyApproved.approvedBy,'Reviewer Two');
+
  assert.deepEqual(errors,[]);
  console.log('INDEPENDENT_MASK_REVIEW '+JSON.stringify({status:'passed',
    sourcedByChecksum:true,reviewersDistinct:true,
