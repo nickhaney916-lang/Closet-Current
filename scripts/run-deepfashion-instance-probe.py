@@ -4,12 +4,14 @@ No inference over user data, no automated wardrobe entries, no model promotion.
 """
 from pathlib import Path
 import hashlib, io, json, sys, time, urllib.request
+from shutil import copyfile
 import numpy as np
 import onnxruntime as ort
 from PIL import Image, ImageDraw
 sys.path.insert(0,str(Path('benchmark').resolve()))
 from deepfashion_instance_decode import decode,instance_overlap_review
 from deepfashion_review_risks import review_instance_scene,category_union_preview
+from deepfashion_mask_seed import proposal_seed
 D=Path(sys.argv[1] if len(sys.argv)>1 else "benchmark/deepfashion-instance-review")
 R=Path("benchmark")
 M=json.loads((R/"deepfashion-instance-onnx-reference.json").read_text())
@@ -83,6 +85,14 @@ def main():
       independentReferencesAvailable=False,paidServicesUsed=False,cases=[])
     save=lambda:(D/"summary.json").write_text(json.dumps(report,indent=2))
     save();photos=[(S[c["id"]],photo(S[c["id"]]),c) for c in CASES]
+    review_dir=D/"independent-outline-review"
+    seed_dir=review_dir/"model-seeds"
+    original_dir=review_dir/"original-photos"
+    seed_dir.mkdir(parents=True,exist_ok=True)
+    original_dir.mkdir(parents=True,exist_ok=True)
+    focus={"commons-0035","validation-0017","commons-0049",
+           "commons-0065","validation-0031"}
+    review_entries=[]
     path=model_path();report["modelHashVerified"]=True
     opts=ort.SessionOptions();opts.intra_op_num_threads=4
     session=ort.InferenceSession(str(path),sess_options=opts,providers=["CPUExecutionProvider"])
@@ -112,6 +122,26 @@ def main():
         decoded=decode(outputs[0],outputs[1],transform)
         candidates=decoded["candidates"]
         overlap=instance_overlap_review(candidates)
+        exported=[]
+        for index,candidate in enumerate(candidates,1):
+            seed=proposal_seed(row,candidate,index,M["modelRepo"]+"@"+M["revision"])
+            stem=f'{row["id"]}-candidate-{index:02d}'
+            destination=seed_dir/(stem+".prediction.json")
+            destination.write_text(json.dumps(seed,separators=(",",":")))
+            exported.append({"id":stem,"prediction":str(destination.relative_to(D)),
+                "label":candidate["itemType"],"confidence":seed["modelConfidence"],
+                "referenceStatus":"pending-human-annotation",
+                "approvedReference":None})
+        if row["id"] in focus:
+            original_copy=original_dir/row["image"]
+            copyfile(R/"photos"/row["image"],original_copy)
+            if digest(original_copy.read_bytes())!=row["sha256"]:
+                raise ValueError("Source image failed verification in annotation review packet")
+        review_entries.append({"id":row["id"],"image":row["image"],
+             "sourceSha256":row["sha256"],"reviewFirst":row["id"] in focus,
+             "candidateSeeds":exported,"allMasksUnapproved":True,
+             "userPhotoModified":False,
+             "exactOriginalIncludedForReview":row["id"] in focus})
         risk=review_instance_scene(
             [{"itemType":x["itemType"]} for x in candidates],
             scenario["expectedCategory"],scenario["expectedTypeHint"],overlap)
@@ -173,6 +203,9 @@ def main():
           license=row["attribution"]["license"],modelOutputShapes=[list(x.shape) for x in outputs],
           sourceGeometry=transform,cpuInferenceMs=ms,instanceMasksVerified=0,
           masksNotDecoded=False,proposedMasks=len(candidates),
+          independentHumanReferenceCount=0,
+          candidateSeedsExported=len(exported),
+          unapprovedSeedFiles=[x["prediction"] for x in exported],
           categoryCoverageReview=comparison,manualReviewRisk=risk,
           unverifiedCategoryUnions=reviewUnions,
           overlapReview={k:v for k,v in overlap.items()},
@@ -181,6 +214,17 @@ def main():
           automaticItemsSaved=0,originalPreserved=True)
         report["cases"].append(case);save()
         print("DEEPFASHION_INSTANCE_PROFILE "+json.dumps(case),flush=True)
+    review_index={"status":"awaiting-independent-human-outlines",
+      "imageCount":len(review_entries),"approvedReferences":0,
+      "pendingIndividualPredictions":sum(len(x["candidateSeeds"]) for x in review_entries),
+      "predictionMasksAreGroundTruth":False,
+      "automaticCustomerMaskPromotion":False,
+      "sourcePhotosPreserved":True,"cases":review_entries}
+    (review_dir/"reference-review-index.json").write_text(json.dumps(review_index,indent=2))
+    report["independentReferenceReview"]=dict(status=review_index["status"],
+      approvedReferences=0,predictions=review_index["pendingIndividualPredictions"],
+      originalPhotosIncluded=sum(x["exactOriginalIncludedForReview"] for x in review_entries),
+      canPromoteModel=False)
     report["parsedInstanceMasks"]=sum(c["proposedMasks"] for c in report["cases"])
     from collections import Counter
     report["manualReviewRiskCounts"]=dict(Counter(

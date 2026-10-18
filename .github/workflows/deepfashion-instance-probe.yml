@@ -7,6 +7,8 @@ on:
       - 'benchmark/deepfashion-instance-onnx-reference.json'
       - 'benchmark/deepfashion-real-photo-suite.json'
       - 'benchmark/deepfashion_review_risks.py'
+      - 'benchmark/deepfashion_mask_seed.py'
+      - 'tests/test_deepfashion_mask_seed.py'
       - 'tests/test_deepfashion_review_risks.py'
       - 'benchmark/manifest-fresh-11.json'
       - 'benchmark/locked-photo-sources.json'
@@ -36,6 +38,7 @@ jobs:
           python -m py_compile scripts/run-deepfashion-instance-probe.py
           PYTHONPATH=benchmark python -m unittest discover -s tests -p 'test_deepfashion_instance_decode.py' -v
           PYTHONPATH=benchmark python -m unittest discover -s tests -p 'test_deepfashion_review_risks.py' -v
+          PYTHONPATH=benchmark python -m unittest discover -s tests -p 'test_deepfashion_mask_seed.py' -v
       - name: Download SHA-verified source photographs
         run: |
           node scripts/download-reviewed-photos.mjs benchmark/manifest-visible-legwear-2.json benchmark/photos validation-0031
@@ -67,6 +70,23 @@ jobs:
           assert len([c for c in x['cases'] if
                       'unsupported-footwear-taxonomy' in c['manualReviewRisk']['manualReviewFlags']])==2
           assert x['automaticItemsCreated']==0 and not x['customerModelChanged'] and not x['paidServicesUsed']
+          root=Path('benchmark/deepfashion-instance-review')
+          review=json.loads((root/'independent-outline-review'/'reference-review-index.json').read_text())
+          assert review['approvedReferences']==0 and not review['predictionMasksAreGroundTruth']
+          assert review['imageCount']==10 and not review['automaticCustomerMaskPromotion']
+          assert review['pendingIndividualPredictions']==x['parsedInstanceMasks']
+          assert sum(c['exactOriginalIncludedForReview'] for c in review['cases'])==5
+          for c in review['cases']:
+              assert c['allMasksUnapproved'] and c['userPhotoModified'] is False
+              for item in c['candidateSeeds']:
+                  seed=json.loads((root/item['prediction']).read_text())
+                  assert seed['reviewStatus']=='prediction-unreviewed'
+                  assert seed['approvedBy'] is None and not seed['independentReference']
+                  assert seed['sourceSha256']==c['sourceSha256'] and seed['image']==c['image']
+                  assert seed['width']>0 and seed['height']>0
+                  assert sum(seed['runs'])==seed['width']*seed['height']
+                  assert not seed['canSaveToCustomerCloset']
+          assert all(c['independentHumanReferenceCount']==0 for c in x['cases'])
           assert all(not c['masksNotDecoded'] and c['automaticItemsSaved']==0 and
                      c['overlapReview']['canAutoSaveAnyProposal'] is False and
                      all(not u['certifiedSingleArticle'] and not u['autoSaveAllowed']
@@ -83,4 +103,7 @@ jobs:
             benchmark/deepfashion-instance-review/summary.json
             benchmark/deepfashion-instance-review/*-instance-overlays.png
             benchmark/deepfashion-instance-review/*-union-review.png
+            benchmark/deepfashion-instance-review/independent-outline-review/reference-review-index.json
+            benchmark/deepfashion-instance-review/independent-outline-review/model-seeds/*.json
+            benchmark/deepfashion-instance-review/independent-outline-review/original-photos/*
           retention-days: 14
