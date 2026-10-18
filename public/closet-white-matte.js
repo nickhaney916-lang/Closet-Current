@@ -9,7 +9,7 @@
   return (c===3||data[k+3]>=250)&&r>=247&&g>=247&&b>=247&&
    Math.max(r,g,b)-Math.min(r,g,b)<=8;
  };
- function analyze(data,width,height){
+ function analyze(data,width,height,{category=null,primaryColor=null}={}){
   if(!Number.isInteger(width)||!Number.isInteger(height)||width<24||height<24||
     width*height>MAX_PIXELS||
     !(data instanceof Uint8Array||data instanceof Uint8ClampedArray)||
@@ -36,6 +36,12 @@
    }
   }
   if(whiteBorder/perimeter<.985)return untouched('nonwhite-or-translucent-photo-border');
+  // Identity evidence is a veto, never a license to hallucinate pale edges.
+  // White or beige material can be indistinguishable from the white backdrop,
+  // so keep the complete photo instead of erasing sleeves, hems or shoe soles.
+  if(['White','Beige'].includes(primaryColor)&&
+     ['Shoes','Tops','Bottoms','Dresses','Outerwear'].includes(category))
+   return untouched('pale-garment-background-ambiguity');
   if(colored/n<.08||colored/n>.77||maxX<0)
    return untouched('insufficient-distinct-colored-garment');
   if(minX<width*.025||maxX>width*.975||minY<height*.025||maxY>height*.975)
@@ -64,6 +70,27 @@
    if(x+1<width&&y+1<height)push(i+width+1);
   }
   if(back/n<.18||back/n>.88)return untouched('uncertain-background-extent');
+  // The exterior white flood can tunnel through a pale sole onto the other
+  // side of a dark shoe, leaving a fake missing band. Only a shoe-shaped,
+  // wide vertical internal void triggers this fail-safe. It is NOT a sole
+  // detector and does not infer missing material or change the saved photo.
+  if(category==='Shoes'){
+   let gapPixels=0,splitColumns=0;
+   const gapLimit=Math.max(3,Math.ceil(height*.015));
+   for(let x=minX;x<=maxX;x++){
+    let first=height,last=-1;
+    for(let y=0;y<height;y++)if(!visited[y*width+x]){
+     first=Math.min(first,y);last=y;
+    }
+    if(last<first)continue;
+    let gaps=0;
+    for(let y=first;y<=last;y++)if(visited[y*width+x])gaps++;
+    gapPixels+=gaps;
+    if(gaps>=gapLimit)splitColumns++;
+   }
+   if(gapPixels/n>.025&&splitColumns/Math.max(1,maxX-minX+1)>.30)
+    return untouched('possible-pale-sole-or-split-foreground');
+  }
   const alpha=new Uint8ClampedArray(n);alpha.fill(255);
   for(let i=0;i<n;i++)if(visited[i])alpha[i]=0;
   return {eligible:true,reason:'verified-white-exterior',

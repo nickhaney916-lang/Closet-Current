@@ -62,7 +62,7 @@
     const thumbnail=tc.getImageData(0,0,aw,ah);
     if(typeof root.ClosetWhiteMatte!=='undefined'){
       sourceHasAlpha=root.ClosetWhiteMatte.hasTransparentBackground(thumbnail.data,aw,ah);
-      if(!sourceHasAlpha)whiteMatte=root.ClosetWhiteMatte.analyze(thumbnail.data,aw,ah);
+      if(!sourceHasAlpha)whiteMatte=root.ClosetWhiteMatte.analyze(thumbnail.data,aw,ah,{category:item.category,primaryColor:item.color});
     }
     // Gray studio backdrops need a separate, very narrow safety gate. This
     // opt-in per-category branch never erases pale shoe uppers or store scenes.

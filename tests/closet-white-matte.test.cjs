@@ -84,3 +84,39 @@ test('no false transparent source on a fully opaque photograph',()=>{
  assert.equal(hasTransparentBackground(src.data,src.width,src.height),false);
  assert.equal(hasTransparentBackground(busy.data,busy.width,busy.height),false);
 });
+
+test('white-background cutout avoids removing a bright sole between shoe upper and outsole',()=>{
+ const im=make({hole:false}),original=im.data.slice();
+ for(let y=63;y<79;y++)for(let x=22;x<=77;x++)
+  im.data.set([252,252,252,255],(y*im.width+x)*4);
+ const originalWithSole=im.data.slice();
+ // The old mask falsely turns this middle shoe region transparent.
+ const unqualified=analyze(im.data,im.width,im.height);
+ assert.equal(unqualified.eligible,true);
+ assert.equal(unqualified.alpha[70*im.width+50],0);
+ const guarded=analyze(im.data,im.width,im.height,{category:'Shoes',primaryColor:'Blue'});
+ assert.equal(guarded.eligible,false);
+ assert.equal(guarded.reason,'possible-pale-sole-or-split-foreground');
+ assert.equal(guarded.alpha,undefined);
+ assert.deepEqual(im.data,originalWithSole,'never change original photo or shoe colors');
+ assert.notDeepEqual(im.data,original);
+});
+test('known white or beige clothing keeps the complete original before any matte',()=>{
+ const im=make({hole:false}),original=im.data.slice();
+ for(const cat of ['Shoes','Dresses','Outerwear','Tops','Bottoms']){
+  for(const color of ['White','Beige']){
+   const checked=analyze(im.data,im.width,im.height,{category:cat,primaryColor:color});
+   assert.equal(checked.eligible,false,cat+' '+color);
+   assert.equal(checked.reason,'pale-garment-background-ambiguity');
+   assert.equal(checked.alpha,undefined);
+  }
+ }
+ assert.equal(analyze(im.data,im.width,im.height,{category:'Tops',primaryColor:'Blue'}).eligible,true,
+  'normal saturated blue clothing still gets the approved white backdrop');
+ assert.deepEqual(im.data,original);
+});
+test('closet tile engine passes garment identity into conservative white backdrop safety',()=>{
+ const fs=require('node:fs');
+ const tile=fs.readFileSync('public/closet-tile-engine.js','utf8');
+ assert.match(tile,/ClosetWhiteMatte\.analyze\(thumbnail\.data,aw,ah,\{category:item\.category,primaryColor:item\.color\}\)/);
+});
