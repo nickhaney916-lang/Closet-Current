@@ -13,6 +13,9 @@ class LIPGarmentClassCandidateTests(unittest.TestCase):
         r=candidate_class_regions(a)
         by={x["role"]:x for x in r["classCandidates"]}
         self.assertTrue(r["possibleSeparateCoatSkirtClassEvidence"])
+        # Model-generated body evidence may be absent in a simplified mask.
+        self.assertEqual(r["reviewDisposition"],"wearer-context-not-supported")
+        self.assertFalse(r["onPersonContextSupported"])
         self.assertTrue(by["coat"]["substantialModelRegion"])
         self.assertTrue(by["skirt"]["substantialModelRegion"])
         self.assertEqual(by["shoe_pair"]["pixels"],56)
@@ -26,6 +29,7 @@ class LIPGarmentClassCandidateTests(unittest.TestCase):
         a=np.zeros((40,50),dtype=np.uint8);a[3:30,8:40]=6
         r=candidate_class_regions(a)
         self.assertFalse(r["possibleSeparateCoatSkirtClassEvidence"])
+        self.assertEqual(r["reviewDisposition"],"wearer-context-not-supported")
         self.assertEqual([x["role"] for x in r["classCandidates"]],["dress"])
     def test_two_labels_do_not_imply_two_instances_of_same_garment(self):
         a=np.zeros((40,50),dtype=np.uint8);a[6:21,8:19]=7;a[24:38,8:19]=7
@@ -36,6 +40,7 @@ class LIPGarmentClassCandidateTests(unittest.TestCase):
         a=np.full((40,50),13,dtype=np.uint8);a[0:4,:]=2
         r=candidate_class_regions(a)
         self.assertEqual(r["classCandidates"],[])
+        self.assertEqual(r["reviewDisposition"],"no-garment-parsing-evidence")
         self.assertFalse(r["possibleSeparateCoatSkirtClassEvidence"])
     def test_fails_closed_on_shape_dtype_class_and_threshold(self):
         a=np.zeros((40,50),dtype=np.uint8)
@@ -48,3 +53,14 @@ class LIPGarmentClassCandidateTests(unittest.TestCase):
 
 if __name__=="__main__":
     unittest.main()
+
+    def test_on_person_class_separation_requires_real_body_labels_and_stays_review_only(self):
+        a=np.zeros((50,60),dtype=np.uint8)
+        a[1:13,20:36]=13   # face
+        a[14:31,12:42]=7   # coat
+        a[32:46,15:38]=12  # skirt
+        r=candidate_class_regions(a)
+        self.assertTrue(r["onPersonContextSupported"])
+        self.assertEqual(r["reviewDisposition"],"distinct-classes-needing-outline-review")
+        self.assertEqual(r["physicalInstancesConfirmed"],0)
+        self.assertFalse(r["productionAuthorized"])

@@ -45,6 +45,9 @@ jobs:
           assert s['status']=='complete' and len(s['cases'])==2 and s['sourceHashesVerified']
           assert s['automaticItemsCreated']==0 and s['productionAuthorized'] is False
           assert s['independentGarmentInstanceMasks'] is False
+          by={case['id']:case for case in s['cases']}
+          assert by['validation-0031']['reviewDisposition']=='distinct-classes-needing-outline-review'
+          assert by['commons-0059']['reviewDisposition']=='no-garment-parsing-evidence'
           for case in s['cases']:
               assert case['automaticItemsCreated']==0
               assert case['physicalInstancesConfirmed']==0

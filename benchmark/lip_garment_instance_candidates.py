@@ -52,7 +52,23 @@ def candidate_class_regions(labels, *, min_area_fraction=0.003):
         and skirt["substantialModelRegion"]
         and coat["centerY"] < skirt["centerY"]
     )
+    body_evidence = int(np.isin(array, BODY_CLASSES).sum())
+    # LIP is an *on-person* parser. It can fail completely on garments
+    # photographed on a table. Do not use empty output as evidence that
+    # clothing is absent, or rely on hallucinated classes without wearer cues.
+    context_supported = body_evidence >= max(24, round(array.size * 0.005))
+    if not results:
+        disposition = "no-garment-parsing-evidence"
+    elif not context_supported:
+        disposition = "wearer-context-not-supported"
+    elif possible:
+        disposition = "distinct-classes-needing-outline-review"
+    else:
+        disposition = "semantic-class-review-only"
     return {
+        "reviewDisposition": disposition,
+        "humanBodyEvidencePixels": body_evidence,
+        "onPersonContextSupported": context_supported,
         "minimumCandidatePixels": threshold,
         "possibleSeparateCoatSkirtClassEvidence": possible,
         "classCandidates": results,
