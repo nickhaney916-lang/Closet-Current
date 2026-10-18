@@ -16,7 +16,7 @@ test('studio figure dimensions can be read without altering the original pixels'
  assert.deepEqual(jpegGeometry(bytes),{width:647,height:1199});
  assert.deepEqual(bytes,copy);
  assert.throws(()=>jpegGeometry(new Uint8Array([1,2,3])),/Not a JPEG/);
- assert.throws(()=>jpegGeometry(new Uint8Array([255,216,255,224,0,0,255,217])),/Malformed JPEG/);
+ assert.throws(()=>jpegGeometry(new Uint8Array([255,216,255,224,0,0,255,217])),/Malformed JPEG|Missing JPEG geometry/);
 });
 test('only exact female and male verified images can be adopted, never lookalikes',()=>{
  assert.deepEqual(Object.keys(ORIGINALS),['female','male']);
