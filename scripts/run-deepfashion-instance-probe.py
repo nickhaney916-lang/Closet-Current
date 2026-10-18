@@ -84,6 +84,11 @@ def main():
         ms=round((time.perf_counter()-start)*1000)
         if any(not np.isfinite(x).all() for x in outputs):
             raise ValueError("Nonfinite model prediction")
+        ranked=sorted(outputs[0][0],key=lambda r:float(r[4]),reverse=True)
+        print("DEEPFASHION_RAW_DETECTION_HEAD "+json.dumps({
+          "photo":row["id"],
+          "topSixColumns":[[round(float(x),3) for x in rec[:6]] for rec in ranked[:8]]
+        }),flush=True)
         decoded=decode(outputs[0],outputs[1],transform)
         candidates=decoded["candidates"]
         width=400;height=max(1,round(img.height*width/img.width))
