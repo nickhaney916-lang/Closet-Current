@@ -94,6 +94,23 @@ export function clothingMaskGroups(map){
  }
  return output;
 }
+// Research-only conservative route for clothing photographed without a
+// visible wearer. A large semantic region is NOT evidence of a clean garment:
+// explicitly block automatic saving and show original pixels for review.
+// Small background-like predictions stay suppressed; no user-uploaded data
+// or model predictions are classified as reliable by this helper.
+export function reviewOnlyUnwornOutfitGroups(map){
+ if(map?.personDetected!==false)return [];
+ const area=map.width*map.height;
+ return clothingMaskGroups(map).filter(group=>{
+  const b=group.bounds;
+  return [4,5,6,7,9].includes(group.id)&&
+   group.count>=Math.max(96,Math.ceil(area*.04))&&
+   group.confidence>=.85&&
+   (b.right-b.left)/map.width>=.25&&
+   (b.bottom-b.top)/map.height>=.25;
+ }).map(group=>({...group,reviewOnlyReason:'no-person-evidence-review-only'}));
+}
 export function clothingCropBounds(image,map,group,{marginFraction=.05}={}){
  if(![3,4].includes(image.channels)||image.data.length!==image.width*image.height*image.channels)throw Error('Invalid outfit image pixels.');
  if(!Number.isFinite(marginFraction)||marginFraction<.05||marginFraction>.15)
