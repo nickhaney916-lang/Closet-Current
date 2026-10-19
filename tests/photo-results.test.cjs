@@ -116,6 +116,45 @@ test('layered top/skirt conflict cannot be color-approved or treated as a single
  assert.ok(children.some(x=>x.tag==='img'&&x.src==='preserved-source'));
 });
 
+
+test('a queued save stores newly approved original-photo metadata, not a stale snapshot',async()=>{
+ const js=source.slice(source.indexOf('function segmentationAllows('),source.indexOf('function applyLocalChoice('))+
+  '\n'+source.slice(source.indexOf('async function saveIndexed('),source.indexOf('async function recognizeItem('));
+ let release,stored=null,transactions=0;
+ const item={id:'src-piece',name:'Blue shirt',category:'Tops',itemType:'T-shirt',color:'Blue'};
+ const c={batch:[item],items:[],ClothingDetails:{validColor:v=>v==='Blue'||v==='Red'},
+  normalizeClothing:x=>x,queued:fn=>new Promise((resolve,reject)=>{
+   release=()=>Promise.resolve().then(fn).then(resolve,reject);
+  }),db:{transaction(){transactions++;const tx={objectStore(name){return {put(value){if(name==='items')stored=structuredClone(value);}}};setImmediate(()=>tx.oncomplete?.());return tx;}},
+  structuredClone,Date,persistDraft(){},render(){}};
+ vm.createContext(c);vm.runInContext(js,c);
+ const pending=c.saveIndexed(item);
+ item.color='Red';item.name='Red shirt';
+ release();assert.equal(await pending,true);
+ assert.equal(transactions,1);
+ assert.equal(stored.color,'Red');
+ assert.equal(stored.name,'Red shirt');
+ assert.equal(c.items[0].color,'Red');
+ assert.equal(c.batch.length,0);
+});
+test('queued save rejects an original-photo draft whose category or color became unsafe',async()=>{
+ const js=source.slice(source.indexOf('function segmentationAllows('),source.indexOf('function applyLocalChoice('))+
+  '\n'+source.slice(source.indexOf('async function saveIndexed('),source.indexOf('async function recognizeItem('));
+ let release,opened=0;
+ const item={id:'src-piece',name:'Blue shirt',category:'Tops',itemType:'T-shirt',color:'Blue'};
+ const c={batch:[item],items:[],ClothingDetails:{validColor:v=>v==='Blue'},
+  normalizeClothing:x=>x,queued:fn=>new Promise((resolve,reject)=>{
+   release=()=>Promise.resolve().then(fn).then(resolve,reject);
+  }),db:{transaction(){opened++;throw Error('Invalid draft reached IndexedDB');}},
+  structuredClone,Date,persistDraft(){},render(){}};
+ vm.createContext(c);vm.runInContext(js,c);
+ const pending=c.saveIndexed(item);
+ item.color='Unknown';release();
+ assert.equal(await pending,false);
+ assert.equal(opened,0);
+ assert.equal(c.items.length,0);
+ assert.equal(c.batch[0],item);
+});
 test('automatic save revalidates a changed garment draft before opening storage',async()=>{
  const js=source.slice(source.indexOf('function segmentationAllows('),source.indexOf('function applyLocalChoice('))+'\n'+source.slice(source.indexOf('async function saveIndexed('),source.indexOf('async function recognizeItem('));
  const c={batch:[],items:[],ClothingDetails:{validColor:v=>v==='Blue'},normalizeClothing:x=>x,queued:fn=>fn(),db:{transaction(){throw Error('Unsafe item reached database');}},structuredClone,Date,persistDraft(){},render(){}};
