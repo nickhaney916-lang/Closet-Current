@@ -1,7 +1,8 @@
 name: Mobile capture and closet persistence flow
 on:
+  # One-time licensed original-photo test for dress-layer conflict; remove after CI.
   push:
-    branches: [main]
+    branches: [main, research/whole-outfit-readiness-evidence-20261018]
     paths:
       - 'public/**'
       - 'scripts/run-mobile-flow.mjs'
