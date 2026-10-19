@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "checkedDate": "2026-10-19",
+  "selectedProductionAssets": [],
+  "assetsDownloadedOrPurchased": 0,
+  "commercialLicensingApproved": false,
+  "preferredRoute": "Two fixed fictional adult characters created and rendered locally using individually verified permissive 3D components; no per-customer body generation",
+  "options": [
+    {
+      "id": "makehuman-mpfb-core",
+      "status": "promising-source-candidate-not-acquired-or-approved",
+      "sources": ["https://static.makehumancommunity.org/about/license.html", "https://static.makehumancommunity.org/mpfb/faq/can_i_sell_models.html", "https://static.makehumancommunity.org/assets/assetpacks.html", "https://github.com/makehumancommunity/mpfb2/blob/master/LICENSE.md"],
+      "publisherFinding": "Core mesh/targets/skins use CC0, separate from GPL/AGPL program source. The asset-pack directory distinguishes CC0 and CC-BY packs. Female Skins 01 and male Skins 02 are listed in the CC0 section.",
+      "possibleUse": "Locally author exactly one fixed female and one fixed male fictional character, with shared camera, lighting and pose conventions; render lossless full-resolution masters once.",
+      "requiredEvidence": ["pinned exact release and asset checksums", "license text and per-component provenance for mesh, skin, eyes, hair, clothing, pose and lights", "verify every third-party component separately", "record artistic modifications and fixed character presets", "human visual/anatomy/pose review and product sign-off"],
+      "limitations": "No selected files, renders, character presets, production look or final asset rights approval yet. Free software is not zero local compute or artist time. High resolution alone does not establish photorealism."
+    },
+    {
+      "id": "blender-human-base-meshes",
+      "status": "promising-source-candidate-not-acquired-or-approved",
+      "sources": ["https://www.blender.org/download/demo-files/", "https://www.blender.org/about/license/"],
+      "publisherFinding": "Official demo-file listing labels Human Base Meshes v1.4.1 (49 MB, Blender 4.2 LTS or newer) CC0. Blender permits commercial use of created artwork; rights to imported components remain separate.",
+      "possibleUse": "Alternative locally authored character starting point using a known camera/render rig.",
+      "limitations": "Base meshes are not finished photorealistic figure photographs or a verified matching adult male/female asset pair. Individual downloaded package, materials and final renders still require file-level review. No package downloaded."
+    },
+    {
+      "id": "unsplash-or-pexels-photo",
+      "status": "discovery-only-no-selected-or-approved-photo",
+      "sources": ["https://unsplash.com/license", "https://unsplash.com/terms", "https://www.pexels.com/license/"],
+      "publisherFinding": "Provider licenses allow broad photo use and editing but impose restrictions; recognizable people, endorsement, face replacement, redistribution/caching and exports need exact-use review. A generic free-photo label does not supply all those permissions.",
+      "limitations": "No exact pair identified with matched pose, lighting, high resolution, neutral base clothing and documented person permissions for optional face replacement. Do not substitute arbitrary stock photos."
+    },
+    {
+      "id": "existing-preview-pair",
+      "status": "blocked-provenance-and-resolution",
+      "sources": ["benchmark/figure-readiness/asset-evidence.json", "scripts/stage-ai-model-figures.mjs"],
+      "publisherFinding": "Repository contains only 160x297 WebP previews. Expected JPEG master filenames/hashes are known but master bytes and original creation terms are absent.",
+      "limitations": "Do not treat stage-script identity hashes, apparent AI style, or filenames as commercial rights, native-resolution provenance or permission to replace faces."
+    }
+  ]
+}

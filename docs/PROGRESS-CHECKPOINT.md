@@ -1,5 +1,30 @@
 # Closet Current master development checkpoint
 
+## Production figure asset readiness — October 19, 2026
+
+- Isolated `benchmark/production-figure-readiness-20261019`, based on PR #44
+  `6dee7851`; existing draft branches and silhouette/fitting coordinates untouched.
+- Preserved PR #37's two-asset audit. Both current previews decode to 160×297,
+  with exact file/RGBA hashes and no transparent pixels. Masters, commercial
+  rights, native-detail evidence, visual approvals and reviewed anchor pairs
+  remain absent. 0 production-ready figures; both gates BLOCKED.
+- Proposed minimum 1294×2398 and preferred 1941×3597; explicit DPR/zoom sampling,
+  pose/light/anatomy/base-clothing/background/color/layer requirements documented.
+- Researched primary MakeHuman/MPFB CC0 core assets and Blender CC0 human base
+  meshes. Local fixed-character rendering is a feasible no-recurring-inference
+  route, but no components acquired or figures rendered/approved. Stock-photo
+  pair permissions not established. No assets replaced or licenses invented.
+- Added deterministic pinned-Pillow integrity/readiness packet, source/review
+  proof-bound evaluator, normalized anchor consistency checker, proposed local
+  creation contract and 24-case Android Chromium/iPhone WebKit rendering fixture.
+  Browser decode/geometry is separate from native-detail/photorealism approval.
+- Local build/full suite: 1023 passed, 0 failed, 3 skipped; 6 new focused tests.
+  Repeated offline reports identical; exact-head CI runs asset and whole-app
+  browser emulation. Physical phones, anatomy and final licensing remain open.
+- Guide: `docs/PRODUCTION-FIGURE-READINESS-20261019.md`; actual snapshot:
+  `benchmark/figure-readiness/production-results-20261019.json`. No paid service,
+  purchases, customer uploads, merge/deploy or Drive Duel changes.
+
 ## Conservative real-photo extraction proposals — October 19, 2026 Pacific
 
 - Isolated branch `feature/conservative-dark-garment-extraction-20261019`, based
