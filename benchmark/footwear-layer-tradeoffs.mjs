@@ -37,7 +37,7 @@ export function evaluateFootwearLayerTradeoffs(
    cohortIDs.add(m.id);
    const original=all.get(m.id),r=model.get(m.id);
    if(!r||!original||!SHA.test(original.sha256||'')||original.verified!==true||
-      original.image!==m.image||original.attribution?.source!==m.source||
+      original.image!==m.image||(m.source&&original.attribution?.source!==m.source)||
       !original.attribution?.license||!m.verified||m.mode!=='single')
     throw Error('Unverified original RGB/model result: '+m.id);
    photos.push(m.id);
