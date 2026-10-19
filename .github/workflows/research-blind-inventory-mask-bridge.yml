@@ -1,0 +1,35 @@
+name: Research blind source to approved physical mask evidence gate
+on:
+  push:
+    branches: [research/blind-review-to-mask-inventory-gate-20261019]
+    paths:
+      - 'benchmark/blind-inventory-mask-gate.mjs'
+      - 'tests/blind-inventory-mask-gate.test.mjs'
+      - 'scripts/audit-blind-physical-inventory.mjs'
+      - '.github/workflows/research-blind-inventory-mask-bridge.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  reviewed-original-to-mask-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Test blind originals, third review, physical pixel masks and source matching
+        run: |
+          node --test tests/blind-inventory-mask-gate.test.mjs tests/independent-photo-adjudication.test.mjs tests/blind-original-review-submissions.test.mjs tests/physical-garment-inventory.test.mjs tests/garment-mask-metrics.test.mjs
+      - name: Verify new gate does not affect production auto-index or pricing
+        run: |
+          node --input-type=module -e "
+            import fs from 'node:fs';
+            const s=fs.readFileSync('benchmark/blind-inventory-mask-gate.mjs','utf8');
+            if(!s.includes('specificFootwearSubtypeAccuracy:null')||
+               !s.includes('canPromoteModel:false')||!s.includes('noAutomaticClosetSaving:true')||
+               !s.includes('trueIndependentInstanceIdentityVerified:false')||
+               !s.includes('evaluateCompletePhysicalInventory'))
+              throw Error('Must use existing independently approved source masks');
+          "
