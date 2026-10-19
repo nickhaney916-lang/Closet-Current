@@ -25,6 +25,8 @@ jobs:
             sudo apt-get update -qq
             sudo apt-get install -y -qq postgresql-client
           fi
+      - name: Check integration script syntax before container startup
+        run: node --check scripts/test-local-supabase-storage-deletion.mjs
       - name: Start isolated local Supabase Auth, PostgREST and Storage
         shell: bash
         run: |
