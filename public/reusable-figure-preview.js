@@ -38,20 +38,29 @@
   c.width=Math.max(24,Math.floor(w*scale));c.height=Math.max(24,Math.floor(h*scale));
   const ctx=c.getContext('2d',{willReadFrequently:true});
   if(!ctx)return null;
-  try{ctx.drawImage(photo,0,0,c.width,c.height);
+  try{
+   ctx.drawImage(photo,0,0,c.width,c.height);
    const pixels=ctx.getImageData(0,0,c.width,c.height);
    const white=root.ClosetWhiteMatte;
-   if(white?.hasTransparentBackground(pixels.data,c.width,c.height))
-    return c.toDataURL('image/png');
-   // Safe white-paper removal is optional and cannot reconstruct a garment.
-   const matte=white?.analyze(pixels.data,c.width,c.height,{category,primaryColor});
-   if(matte?.eligible===true&&matte.alpha?.length===c.width*c.height){
+   if(!white?.hasTransparentBackground(pixels.data,c.width,c.height)){
+    // Refuse to display opaque original-image rectangles as wearable clothes.
+    // White-matte processing is conservative and never changes source images.
+    const matte=white?.analyze(pixels.data,c.width,c.height,{category,primaryColor});
+    if(matte?.eligible!==true||matte.alpha?.length!==c.width*c.height)return null;
     for(let i=0;i<matte.alpha.length;i++)pixels.data[i*4+3]=matte.alpha[i];
     ctx.putImageData(pixels,0,0);
-    return c.toDataURL('image/png');
    }
+   // Trim only verified external transparent margins. The garment and source
+   // remain unchanged; a new PNG is generated only for this local preview.
+   const bounds=root.ClosetGarmentFitGeometry?.inspectAlpha(pixels.data,c.width,c.height);
+   if(!bounds)return null;
+   const {x,y,width,height}=bounds.crop;
+   const cropped=document.createElement('canvas');cropped.width=width;cropped.height=height;
+   const croppedCtx=cropped.getContext('2d');
+   if(!croppedCtx)return null;
+   croppedCtx.drawImage(c,x,y,width,height,0,0,width,height);
+   return {src:cropped.toDataURL('image/png'),width,height};
   }catch{return null;}
-  return null;
  }
  async function render(){
   const revision=++renderRevision;
@@ -63,28 +72,32 @@
   garmentContainer.replaceChildren();
   const counts={shown:0,skipped:plan.skipped.length};
   for(const placement of plan.placements){
-   const imgSource=await imagePixels(placement.image,placement.category,placement.primaryColor);
+   const prepared=await imagePixels(placement.image,placement.category,placement.primaryColor);
    if(revision!==renderRevision)return;
-   if(!imgSource){counts.skipped++;continue;}
+   if(!prepared){counts.skipped++;continue;}
    // Deform display-only transparent cutout using a deterministic local mesh.
-   // The unmasked saved original and item pixels remain untouched.
-   let fitted=imgSource;
+   // Original high-resolution classification imagery stays untouched.
+   let fitted=prepared.src;
    if(placement.slot!=='shoes'&&root.ClosetGarmentWarp){
-    const garment=new Image();garment.src=imgSource;
+    const garment=new Image();garment.src=prepared.src;
     try{
      await garment.decode();
      if(revision!==renderRevision)return;
      const warped=root.ClosetGarmentWarp.warpTransparentImage(
        garment,placement.category,document.createElement('canvas'));
      if(warped)fitted=warped;
-    }catch{/* Fall back to the intact transparent cutout, never invent pixels. */}
+    }catch{/* Fail open to existing transparent preview, never invent pixels. */}
    }
+   // Preserve garment aspect ratio instead of stretching every item to an
+   // identical rectangle. Upper garments align to shoulders; shoes to soles.
+   const fittedRect=root.ClosetGarmentFitGeometry?.fitPlacement(
+    placement.rect,prepared.width,prepared.height,placement.category);
+   if(!fittedRect){counts.skipped++;continue;}
    const img=document.createElement('img');
    img.src=fitted;
    img.alt='';
    img.className='reusable-figure-layer';
-   for(const [key,value] of Object.entries(placement.rect))
-    img.style[key]=value+'%';
+   for(const key of ['left','top','width','height'])img.style[key]=fittedRect[key]+'%';
    garmentContainer.append(img);counts.shown++;
   }
   status.textContent=counts.shown+' owned clothing layer'+(counts.shown===1?'':'s')+

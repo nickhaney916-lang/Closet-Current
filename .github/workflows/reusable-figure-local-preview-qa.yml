@@ -1,7 +1,7 @@
 name: Reusable figure local-only preview QA
 on:
   push:
-    branches: [feature/reusable-figure-local-closet-preview-20261019, feature/local-garment-mesh-warp-20261019]
+    branches: [feature/reusable-figure-local-closet-preview-20261019, feature/local-garment-mesh-warp-20261019, feature/alpha-bounds-avatar-alignment-20261019]
   workflow_dispatch:
 permissions:
   contents: read
@@ -15,7 +15,7 @@ jobs:
         with:
           node-version: '22'
       - name: Verify local wardrobe layering, privacy and no billable requests
-        run: node --test tests/local-garment-warp.test.cjs tests/reusable-figure-preview.test.cjs tests/outfit-board.test.cjs
+        run: node --test tests/garment-fit-geometry.test.cjs tests/local-garment-warp.test.cjs tests/reusable-figure-preview.test.cjs tests/outfit-board.test.cjs
       - name: Build and run full Node integration suite
         run: |
           node scripts/build.mjs
