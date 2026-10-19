@@ -3,8 +3,11 @@
  const FIGURES=Object.freeze([{id:'female',label:'Female AI model'},{id:'male',label:'Male AI model'}]);
  // v1.6 only understands tops, bottoms and one-pieces. Shoes, accessories
  // and coat layering are deferred; never advertise them as rendered.
- const LIMIT=2, MAX_IMAGE_CHARS=7_500_000;
+ const LIMIT=2, MAX_IMAGE_CHARS=7_500_000, MAX_OUTPUT_CHARS=10_000_000;
  function validImage(value){return typeof value==='string'&&value.length>24&&value.length<=MAX_IMAGE_CHARS&&/^data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/]+={0,2}$/.test(value);}
+ // The provider output limit differs from the catalog upload limit. A
+ // syntactically valid URI must still decode before it becomes a preview.
+ function validOutputImage(value){return typeof value==='string'&&value.length>=128&&value.length<=MAX_OUTPUT_CHARS&&/^data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/]+={0,2}$/.test(value);}
  function figure(value){return FIGURES.some(x=>x.id===value)?value:'female';}
  function plan(board,closet){
   const selected=board?.slots||{},items=Array.isArray(closet)?closet:[],
@@ -25,7 +28,7 @@
    unsupportedSlots:Object.keys(selected).filter(x=>!steps.some(step=>step.slot===x)),
    dress,completeOutfit:false};
  }
- const api={FIGURES,figure,plan,validImage,MAX_IMAGE_CHARS};
+ const api={FIGURES,figure,plan,validImage,validOutputImage,MAX_IMAGE_CHARS,MAX_OUTPUT_CHARS};
  root.AiTryOnPlan=api;
  if(typeof module!=='undefined')module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);

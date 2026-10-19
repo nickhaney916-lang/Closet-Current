@@ -35,6 +35,14 @@ test('unrecognized, network or invalid garment sources are refused; bottom alone
  assert.equal(P.validImage('data:image/jpeg;base64,a'.repeat(90)),false);
  assert.equal(P.validImage(uri()),true);
 });
+test('provider output size is independent of the smaller catalog upload limit',()=>{
+ const output='data:image/jpeg;base64,'+'A'.repeat(7_600_000);
+ assert.equal(P.validImage(output),false);
+ assert.equal(P.validOutputImage(output),true);
+ assert.equal(P.validOutputImage('data:image/jpeg;base64,'+'A'.repeat(10_000_000)),false);
+ assert.equal(P.validOutputImage('data:image/jpeg;base64,A'),false);
+ assert.equal(P.validOutputImage('https://example.com/generated.jpg'),false);
+});
 test('UI never exposes a provider key, runs paid inference automatically, or claims to render shoes',()=>{
  const ui=fs.readFileSync('public/ai-tryon.js','utf8');
  const html=fs.readFileSync('public/index.html','utf8');

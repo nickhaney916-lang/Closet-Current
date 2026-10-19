@@ -3,6 +3,7 @@
 import {chromium,webkit,devices} from 'playwright';
 import assert from 'node:assert/strict';
 import {resolve} from 'node:path';
+import {mkdir,writeFile} from 'node:fs/promises';
 
 async function check(engine,device,label){
  const browser=await engine.launch({headless:true});
@@ -32,7 +33,8 @@ async function check(engine,device,label){
    window.closetAuth={getAccessToken:async()=>'fake-local-jwt'};
   },images);
   const calls=[];
-  let delaySecond=false;
+  let delaySecond=false,mode='success',releaseSecondStatus;
+  const polls=new Map();
   await page.route('https://hlkgymugtfbirlpunsra.supabase.co/functions/v1/ai-try-on',async route=>{
    const request=route.request();
    const headers={'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'authorization,content-type',
@@ -41,13 +43,25 @@ async function check(engine,device,label){
    const body=request.postDataJSON();calls.push(body);
    let answer;
    if(body.action==='availability')answer={status:'ready',multiGarmentReady:true};
-   else if(body.action==='start')answer={status:'processing',token:'signed-stage-one'};
-   else if(body.action==='continue')answer={status:'processing',token:'signed-stage-two'};
+   else if(body.action==='start'){
+    polls.clear();
+    if(mode==='lost-start-response')return route.abort('failed');
+    answer={status:'processing',token:'signed-stage-one'};
+   }
+   else if(body.action==='continue'){
+    assert.equal(body.previousToken,'signed-stage-one');
+    answer={status:'processing',token:'signed-stage-two'};
+   }
    else if(body.action==='status'){
-    if(body.token==='signed-stage-one')answer={status:'completed',image:images.first};
+    assert.ok(['signed-stage-one','signed-stage-two'].includes(body.token),'all polls must carry the original signed job token');
+    const count=(polls.get(body.token)||0)+1;polls.set(body.token,count);
+    if(count===1)answer={status:'processing'};
+    else if(body.token==='signed-stage-one')answer={status:'completed',image:
+     mode==='corrupt-first'?'data:image/jpeg;base64,'+'Ab9/'.repeat(40):images.first};
     else{
-     if(delaySecond)await new Promise(done=>setTimeout(done,900));
-     answer={status:'completed',image:images.final};
+     if(delaySecond)await new Promise(done=>{releaseSecondStatus=done});
+     answer=mode==='failed-second'?{status:'failed'}:{status:'completed',image:
+      mode==='corrupt-second'?'data:image/jpeg;base64,'+'Ab9/'.repeat(40):images.final};
     }
    } else throw Error('Unexpected request action');
    return route.fulfill({status:200,headers,contentType:'application/json',body:JSON.stringify(answer)});
@@ -76,6 +90,46 @@ async function check(engine,device,label){
   assert.match(await page.locator('#tryOnStatus').innerText(),/top \+ bottom/i);
   assert.match(await page.locator('#tryOnStatus').innerText(),/Not rendered: shoes/);
   assert.match(await page.locator('#tryOnStatus').innerText(),/earlier garments may change/);
+  const originals=await page.evaluate(()=>JSON.stringify(items));
+  const outputDir=process.env.TRYON_QA_OUTPUT;
+  if(outputDir){
+   await mkdir(outputDir,{recursive:true});
+   await page.screenshot({path:resolve(outputDir,label.startsWith('iPhone')?'iphone-emulated-synthetic.png':'android-emulated-synthetic.png'),fullPage:true});
+  }
+
+  // Re-generating the same selection hides the old success immediately.
+  // A failed second pass must not relabel a first-pass or previous image.
+  mode='failed-second';
+  let beforeStart=calls.filter(x=>x.action==='start').length;
+  await page.locator('#tryOnGenerate').click();
+  assert.equal(await page.locator('#tryOnImage').isHidden(),true);
+  await page.waitForFunction(()=>!tryOnBusy,null,{timeout:14000});
+  assert.equal(await page.locator('#tryOnImage').isHidden(),true);
+  assert.match(await page.locator('#tryOnStatus').innerText(),/could not render/);
+  assert.equal(await page.locator('#tryOnGenerate').isDisabled(),false);
+  assert.equal(calls.filter(x=>x.action==='start').length,beforeStart+1);
+
+  for(const corrupt of ['corrupt-first','corrupt-second']){
+   mode=corrupt;
+   const beforeContinue=calls.filter(x=>x.action==='continue').length;
+   await page.locator('#tryOnGenerate').click();
+   await page.waitForFunction(()=>!tryOnBusy,null,{timeout:14000});
+   assert.equal(await page.locator('#tryOnImage').isHidden(),true);
+   assert.match(await page.locator('#tryOnStatus').innerText(),/could not be decoded/);
+   assert.equal(calls.filter(x=>x.action==='continue').length,beforeContinue+(corrupt==='corrupt-first'?0:1),
+    'a corrupt first image must never initiate another generation');
+  }
+  mode='lost-start-response';
+  beforeStart=calls.filter(x=>x.action==='start').length;
+  await page.locator('#tryOnGenerate').click();
+  await page.waitForFunction(()=>!tryOnBusy,null,{timeout:5000});
+  assert.equal(calls.filter(x=>x.action==='start').length,beforeStart+1,'an uncertain POST must never retry itself');
+  assert.equal(await page.locator('#tryOnImage').isHidden(),true);
+  mode='success';
+  await page.locator('#tryOnGenerate').click();
+  await page.waitForFunction(()=>!tryOnBusy,null,{timeout:14000});
+  assert.equal(await page.locator('#tryOnImage').getAttribute('src'),images.final,'an explicit new attempt recovers');
+  assert.equal(await page.evaluate(()=>JSON.stringify(items)),originals,'rendering never mutates the closet or source photos');
   const before=calls.length;
   await page.evaluate(()=>{items[1].image=items[0].image;onTryOnBoardChanged()});
   assert.equal(await page.locator('#tryOnImage').isHidden(),true,
@@ -88,18 +142,31 @@ async function check(engine,device,label){
   delaySecond=true;
   await page.locator('#tryOnGenerate').click();
   await page.waitForFunction(()=>document.getElementById('tryOnStatus').textContent.includes('2 of 2'),null,{timeout:9000});
+  // Wait for an actual second-stage response in flight, not only its label.
+  await assert.doesNotReject(async()=>{
+   const until=Date.now()+10000;
+   while(!releaseSecondStatus&&Date.now()<until)await new Promise(done=>setTimeout(done,50));
+   assert.ok(releaseSecondStatus,'second-stage provider response is held');
+  });
   await page.evaluate(()=>{items[0].itemType='Blouse';onTryOnBoardChanged()});
-  await page.waitForFunction(()=>!tryOnBusy,null,{timeout:12000});
+  await page.waitForFunction(()=>!tryOnBusy,null,{timeout:3000});
+  const afterCancel=calls.length;releaseSecondStatus();
+  await page.waitForTimeout(100);
+  assert.equal(calls.length,afterCancel,'a cancelled render cannot keep polling or continue');
   assert.equal(await page.locator('#tryOnImage').isHidden(),true);
   assert.equal(errors.length,0,'no runtime exceptions on emulated device');
   return {device:label,engine:engine===webkit?'WebKit':'Chromium',
    viewport:device.viewport,actualDevice:false,providerCalls:0,
    syntheticStarts:calls.filter(x=>x.action==='start').length,
    syntheticContinues:calls.filter(x=>x.action==='continue').length,
-   staleResultBlocked:true,sourcePhotosUnmodifiedByServer:true,pageErrors:errors.length};
+   repeatedProcessingPolls:true,corruptFirstAndSecondBlocked:true,
+   failedSecondPassHidden:true,uncertainStartNotRetried:true,explicitRetryRecovered:true,
+   staleResultBlocked:true,pendingFetchCancelled:true,sourcePhotosUnchanged:true,pageErrors:errors.length};
  }finally{await browser.close();}
 }
 const results=[];
 results.push(await check(chromium,devices['Pixel 7'],'Pixel 7 emulation'));
 results.push(await check(webkit,devices['iPhone 13'],'iPhone 13 emulation'));
 console.log('TWO_GARMENT_DEVICE_EMULATION '+JSON.stringify(results));
+if(process.env.TRYON_QA_OUTPUT)await writeFile(resolve(process.env.TRYON_QA_OUTPUT,'device-emulation-results.json'),JSON.stringify({
+ actualProviderCalls:0,physicalDeviceRuns:0,actualImageFidelity:null,results},null,2)+'\n');

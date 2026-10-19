@@ -1,7 +1,7 @@
 // Browser-level regression for the real "Style this" path. The actual
 // production scripts run on an emulated 390px touch viewport. No accounts,
 // vendor calls, paid inference, or unreviewed test photos are used.
-import {chromium} from 'playwright';
+import {chromium,webkit} from 'playwright';
 import {createServer} from 'node:http';
 import {readFile} from 'node:fs/promises';
 import {resolve,extname} from 'node:path';
@@ -22,7 +22,8 @@ const server=createServer(async(req,res)=>{
 await new Promise(ok=>server.listen(0,'127.0.0.1',ok));
 let browser;
 try{
- browser=await chromium.launch({headless:true,args:['--no-sandbox']});
+ const engine=process.env.STYLE_BROWSER==='webkit'?webkit:chromium;
+ browser=await engine.launch({headless:true,...(engine===chromium?{args:['--no-sandbox']}: {})});
  const context=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true,serviceWorkers:'block'});
  await context.route('**/auth.js*',route=>route.fulfill({contentType:'text/javascript',body:
   "window.closetAuth={user:{id:'new-item-mobile-test'},ready:Promise.resolve()};document.getElementById('authGate').hidden=true;document.getElementById('appShell').hidden=false;"}));
