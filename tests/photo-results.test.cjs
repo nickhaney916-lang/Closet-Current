@@ -101,6 +101,21 @@ test('disconnected upper regions require review and warn against double-saving a
  assert.equal(nodes.filter(x=>x.tag==='select').length,0,'color picker must not bypass review');
  assert.ok(nodes.some(x=>x.tag==='button'&&x.text==='Adjust'));
 });
+test('layered top/skirt conflict cannot be color-approved or treated as a single automatic dress',()=>{
+ const {c,grid}=setup();
+ const item={id:'suspected-dress',image:'preserved-source',category:'Dresses',
+  itemType:'Unknown',color:'',localAnalyzed:true,outfitSourceId:'outfit-3',
+  segmentHint:{clipped:false,categories:['Dresses'],types:[],
+   displayFallback:'original-crop',displayFallbackReason:'dress-layer-conflict-review-only'}};
+ c.batch=[item];c.renderPhotoResults(grid,[item]);
+ const children=descendants(grid);
+ assert.ok(children.some(x=>/top or jacket over a skirt, not one dress/.test(x.text)));
+ assert.equal(children.filter(x=>x.tag==='select').length,0,
+  'color-only approval would incorrectly save two physical garments as one dress');
+ assert.ok(children.some(x=>x.tag==='button'&&x.text==='Adjust'));
+ assert.ok(children.some(x=>x.tag==='img'&&x.src==='preserved-source'));
+});
+
 test('automatic save revalidates a changed garment draft before opening storage',async()=>{
  const js=source.slice(source.indexOf('function segmentationAllows('),source.indexOf('function applyLocalChoice('))+'\n'+source.slice(source.indexOf('async function saveIndexed('),source.indexOf('async function recognizeItem('));
  const c={batch:[],items:[],ClothingDetails:{validColor:v=>v==='Blue'},normalizeClothing:x=>x,queued:fn=>fn(),db:{transaction(){throw Error('Unsafe item reached database');}},structuredClone,Date,persistDraft(){},render(){}};
