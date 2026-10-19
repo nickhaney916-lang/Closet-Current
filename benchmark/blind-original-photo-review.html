@@ -58,7 +58,8 @@ function sourceSafe(p){
   p.manifestCategoryLabelsIncluded===false&&p.originalPhotosCopiedOrReencoded===false&&
   p.independentlyReviewed===false&&p.allGarmentFormsVerified===false&&
   p.photoCount===p.originals?.length&&p.photoCount>=1&&p.photoCount<=80&&
-  p.originals.every(x=>ID.test(x.sourceId)&&x.image===x.sourceId+'.jpg'&&SHA.test(x.sourceSha256)&&x.license);
+  p.originals.every(x=>ID.test(x.sourceId)&&x.image===x.sourceId+'.jpg'&&SHA.test(x.sourceSha256)&&x.license&&
+   !['originalSourceUrl','title','modelResult','manifestLabel'].some(key=>Object.hasOwn(x,key)));
 }
 function refreshProgress(){
  const total=packet?.photoCount||0,complete=[...reviewMap.values()].filter(x=>x.inspected&&x.allRecorded&&x.hashVerified).length;
