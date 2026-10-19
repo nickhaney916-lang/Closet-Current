@@ -1,7 +1,7 @@
 name: Local fixed figure creation evidence
 on:
   push:
-    branches: [feature/local-fixed-figure-creation-20261019]
+    branches: [feature/local-fixed-figure-creation-20261019, feature/rounded-original-figure-footwear-20261019]
   workflow_dispatch:
 permissions:
   contents: read
@@ -45,7 +45,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: locally-created-two-figure-candidates
+          name: locally-created-two-figure-shoe-refinement
           path: |
             artifacts/figure-creation/native/
             artifacts/figure-creation/delivery/
