@@ -15,5 +15,18 @@ for(const candidate of report.figures){
  assert.ok(hem.hemZRangeAfter<hem.hemZRangeBefore,
   'measured generated hem contour must be flatter, not just visually asserted');
 }
+for(const candidate of report.figures){
+ const rim=candidate.derivedClothingUpperRim;
+ assert.ok(rim&&rim.upperRimVertices>=6&&rim.upperRimMoved>=6,
+  'both 3D characters require real source-derived front upper shirt edits');
+ assert.ok(rim.upperRimRoughnessBefore>rim.upperRimRoughnessAfter,
+  'measured upper-edge local irregularity must actually be reduced');
+ assert.ok(rim.upperRimMaxMove<=.0150001);
+ assert.equal(rim.frontDerivedShellOnly,true);
+ assert.equal(rim.sourceBodyChanged,false);
+ assert.equal(rim.sleeveCuffsModified,false);
+ assert.equal(rim.neckOpeningReconstructed,false);
+ assert.equal(rim.independentAppearanceApproval,false);
+}
 assert.deepEqual(report.summary,{fixedCharacters:2,native1941x3597Renders:2,minimum1294x2398Derivatives:2,productionApproved:0,independentVisualApprovals:0,physicalPhones:0,customerImagesUsed:0,externalInferenceCalls:0});
 console.log('CREATED_FIGURE_GATE '+JSON.stringify(checkCreatedPacket(report)));
