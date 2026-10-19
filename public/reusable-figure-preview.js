@@ -66,8 +66,21 @@
    const imgSource=await imagePixels(placement.image,placement.category,placement.primaryColor);
    if(revision!==renderRevision)return;
    if(!imgSource){counts.skipped++;continue;}
+   // Deform display-only transparent cutout using a deterministic local mesh.
+   // The unmasked saved original and item pixels remain untouched.
+   let fitted=imgSource;
+   if(placement.slot!=='shoes'&&root.ClosetGarmentWarp){
+    const garment=new Image();garment.src=imgSource;
+    try{
+     await garment.decode();
+     if(revision!==renderRevision)return;
+     const warped=root.ClosetGarmentWarp.warpTransparentImage(
+       garment,placement.category,document.createElement('canvas'));
+     if(warped)fitted=warped;
+    }catch{/* Fall back to the intact transparent cutout, never invent pixels. */}
+   }
    const img=document.createElement('img');
-   img.src=imgSource;
+   img.src=fitted;
    img.alt='';
    img.className='reusable-figure-layer';
    for(const [key,value] of Object.entries(placement.rect))
