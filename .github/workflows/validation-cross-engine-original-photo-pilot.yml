@@ -4,6 +4,10 @@ on:
     branches: [validation/cross-engine-original-photo-pilot-20261019]
     paths:
       - 'scripts/run-phone-photo-check.mjs'
+      - 'scripts/compare-phone-photo-engines.mjs'
+      - 'benchmark/phone-photo-engine-comparison.mjs'
+      - 'tests/phone-photo-engine-comparison.test.mjs'
+      - 'benchmark/PHYSICAL-PHONE-PILOT-VALIDATION-20261019.md'
       - '.github/workflows/validation-cross-engine-original-photo-pilot.yml'
       - 'public/phone-photo-check.mjs'
       - 'public/phone-photo-benchmark.mjs'
@@ -35,6 +39,8 @@ jobs:
           node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos commons-0001,commons-0090
       - name: Build combined original-photo and outfit workflow without paid providers
         run: node scripts/build.mjs
+      - name: Reject falsely claimed real-phone confidence and leaked browser report content
+        run: node --test tests/phone-photo-engine-comparison.test.mjs
       - name: Classify the same original top and negative with the browser-local model (remote weights can download)
         run: node scripts/run-phone-photo-check.mjs "benchmark/phone-photo-pilot/$PHONE_BROWSER"
       - name: Reject misleading simulated-hardware or missing source attribution
@@ -57,4 +63,32 @@ jobs:
           name: licensed-original-phone-emulation-${{ matrix.engine }}
           path: benchmark/phone-photo-pilot/${{ matrix.engine }}
           if-no-files-found: ignore
+          retention-days: 14
+
+  compare-original-inference:
+    needs: real-model-phone-browser-emulation
+    if: ${{ always() && needs.real-model-phone-browser-emulation.result == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/download-artifact@v4
+        with:
+          name: licensed-original-phone-emulation-chromium
+          path: benchmark/phone-photo-pilot/chromium
+      - uses: actions/download-artifact@v4
+        with:
+          name: licensed-original-phone-emulation-webkit
+          path: benchmark/phone-photo-pilot/webkit
+      - name: Compare same locked original photograph outcomes between engines
+        run: |
+          node --test tests/phone-photo-engine-comparison.test.mjs
+          node scripts/compare-phone-photo-engines.mjs benchmark/phone-photo-pilot/chromium/results.json benchmark/phone-photo-pilot/webkit/results.json benchmark/phone-photo-pilot/engine-comparison.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-iphone-browser-original-photo-comparison
+          path: benchmark/phone-photo-pilot/engine-comparison.json
           retention-days: 14
