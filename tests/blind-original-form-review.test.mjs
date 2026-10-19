@@ -13,7 +13,9 @@ test('independent blind packets contain the original licensed link and SHA but n
   const p=blindOriginalFormReviewPacket(queue,slot),encoded=JSON.stringify(p);
   assert.equal(p.photoCount,1);
   assert.equal(p.originals[0].sourceSha256,'f'.repeat(64));
-  assert.equal(p.originals[0].originalSourceUrl,source);
+  assert.equal(Object.hasOwn(p.originals[0],'originalSourceUrl'),false,
+   'reviewer packet cannot leak descriptive source filename via URL');
+  assert.equal(JSON.stringify(p).includes('Dress and jacket'),false);
   assert.deepEqual(p.originals[0].sourceVisiblePhysicalGarments,[]);
   assert.equal(p.originals[0].allVisiblePhysicalGarmentsRecorded,null);
   assert.equal(p.modelPredictionsIncluded,false);
