@@ -18,7 +18,7 @@ const uniqueIds=(array,key)=>{
 };
 export function validateBlindOriginalSubmission(packet,submission){
  if(packet?.schemaVersion!==1||packet.reviewType!=='independent-blind-original-photo-inventory'||
-   !['first','second'].includes(packet.reviewerSlot)||packet.modelPredictionsIncluded!==false||
+   !['first','second','third'].includes(packet.reviewerSlot)||packet.modelPredictionsIncluded!==false||
    packet.manifestCategoryLabelsIncluded!==false||packet.originalPhotosCopiedOrReencoded!==false||
    packet.independentlyReviewed!==false||packet.allGarmentFormsVerified!==false||
    !Array.isArray(packet.originals)||packet.photoCount!==packet.originals.length||
