@@ -66,3 +66,24 @@ test('local UI has non-persistent optional selfie, no external try-on call, and 
  assert.match(edge,/RESERVED_PAID_INFERENCE_APPROVED=false/);
  assert.match(edge,/CHAINED_PAID_INFERENCE_APPROVED=false/);
 });
+
+test('fixed bodies have distinct shoulder/hip calibration and short hems',()=>{
+ const board={slots:{top:'t',bottom:'b',layer:'l'}};
+ const female=engine.plan(board,closet,'female'),male=engine.plan(board,closet,'male');
+ assert.notDeepEqual(female.placements.map(p=>p.rect),male.placements.map(p=>p.rect));
+ for(const sex of ['female','male']){
+  for(const itemType of ['Shorts','Mini skirt']){
+   const short=engine.plan({slots:{bottom:'b'}},[{...closet[1],itemType}],sex);
+   const pants=engine.plan({slots:{bottom:'b'}},closet,sex);
+   assert.ok(short.placements[0].rect.height<pants.placements[0].rect.height);
+  }
+ }
+});
+test('selfie positioning clamps invalid values and is separate for each fixed face',()=>{
+ assert.notDeepEqual(engine.selfieRect('female'),engine.selfieRect('male'));
+ const a=engine.selfieRect('male',{x:Infinity,y:NaN,zoom:'100'});
+ assert.deepEqual(a,engine.selfieRect('male'));
+ const b=engine.selfieRect('female',{x:1000,y:-1000,zoom:1000});
+ assert.equal(b.width,19.5);assert.equal(b.height,12);
+ assert.ok(Object.values(b).every(Number.isFinite));
+});
