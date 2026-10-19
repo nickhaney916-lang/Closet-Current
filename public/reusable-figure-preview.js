@@ -77,6 +77,16 @@
    const out=document.createElement('canvas');out.width=bounds.width;out.height=bounds.height;
    const output=out.getContext('2d');if(!output)return null;
    output.drawImage(source,bounds.left,bounds.top,bounds.width,bounds.height,0,0,bounds.width,bounds.height);
+   // Finish only an ALREADY-APPROVED hard-alpha display copy. This is
+   // separate from the untouched original used for recognition/indexing.
+   // Native soft alpha, fine cuffs or ambiguous masks are not modified.
+   try{
+    const rendered=output.getImageData(0,0,bounds.width,bounds.height);
+    const edge=root.ClosetGarmentEdgeFinish?.finish(rendered.data,bounds.width,bounds.height);
+    if(edge?.eligible===true&&edge.pixels?.length===rendered.data.length){
+     rendered.data.set(edge.pixels);output.putImageData(rendered,0,0);
+    }
+   }catch{/* Preserve the already-approved unmodified cutout on failures. */}
    // Use the already-approved transparent image, not its raw photo or
    // unreviewed high-resolution mask diagnostic. Metadata only; no uploads.
    const croppedPixels=new Uint8ClampedArray(bounds.width*bounds.height*4);
