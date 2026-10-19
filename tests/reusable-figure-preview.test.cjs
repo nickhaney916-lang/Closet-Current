@@ -104,3 +104,20 @@ test('dress displaces bottoms and jackets without changing original source or se
  assert.deepEqual(result.placements.map(x=>x.slot),['top','shoes']);
  assert.equal(JSON.stringify({board,closet}),before);
 });
+
+
+test('held garment images show one accessible recapture path with original still saved',()=>{
+ const html=fs.readFileSync('public/index.html','utf8');
+ const ui=fs.readFileSync('public/reusable-figure-preview.js','utf8');
+ const css=fs.readFileSync('public/style.css','utf8');
+ assert.match(html,/id="reusableFigurePhotoHelp"[^>]*hidden/);
+ assert.match(html,/id="reusableFigureRetake"[^>]*type="button"/);
+ assert.match(ui,/updatePhotoHelp\(false\)/);
+ assert.match(ui,/updatePhotoHelp\(counts\.skipped>0\)/);
+ assert.match(ui,/switchView\('scan'\)/);
+ assert.match(ui,/setCaptureMode\('single'\)/);
+ assert.match(ui,/photoHelpText\.textContent=/);
+ assert.match(ui,/photo is still saved/);
+ assert.match(css,/reusable-figure-photo-help\[hidden\]/);
+ assert.ok(!/fetch\(|\.setItem\(|localStorage|sessionStorage/.test(ui));
+});
