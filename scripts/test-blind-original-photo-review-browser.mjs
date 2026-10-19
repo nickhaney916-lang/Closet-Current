@@ -28,7 +28,10 @@ try{
    const page=await context.newPage(),errors=[];
    page.on('pageerror',error=>errors.push(String(error)));
    await context.route('**/*',route=>{
-    if(route.request().url().startsWith(url))return route.continue();
+    const target=route.request().url();
+    // Local blob images are source bytes verified in memory, not Internet.
+    if(target.startsWith(url)||target.startsWith('blob:')||target.startsWith('data:'))
+     return route.continue();
     return route.abort('internetdisconnected');
    });
    await page.goto(url);
@@ -70,6 +73,10 @@ try{
    await page.waitForFunction(()=>document.querySelector('#status').textContent.includes('2 of 2 original JPEG hashes verified'));
    for(const [index,c,form] of [[0,'Shoes','Sneakers'],[1,'Dresses','Dress']]){
     await page.locator('#source').selectOption(ids[index]);
+    await page.waitForFunction(()=>{
+      const image=document.getElementById('photo');
+      return image.complete&&image.naturalWidth>0&&image.naturalHeight>0;
+    },null,{timeout:10000});
     await page.locator('#add').click();
     await page.locator('#items .item').first().locator('select.category').selectOption(c);
     await page.locator('#items .item').first().locator('input.form').fill(form);
