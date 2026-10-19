@@ -113,6 +113,53 @@ try{
     assert.ok(Math.abs((p.width/p.height)*p.stageAspect-p.naturalWidth/p.naturalHeight)<.01,
      'owned garment '+i+' retains original cropped aspect ratio');
    }
+
+   // The same 2 owned garments should recompose from bounded private memory
+   // without repeating image reads/matting/mesh rasterization each time.
+   const cached=await page.evaluate(()=>{
+    const original=CanvasRenderingContext2D.prototype.getImageData;
+    let calls=0;
+    CanvasRenderingContext2D.prototype.getImageData=function(...args){
+     calls++;return original.apply(this,args);
+    };
+    try{renderReusableFigurePreview();return calls;}
+    finally{CanvasRenderingContext2D.prototype.getImageData=original;}
+   });
+   assert.equal(cached,0,'repeat outfit uses private cached display copies');
+   // Explicit stale async decoding race: a partially decoded old shirt must
+   // never appear after the user has already selected a newer outfit.
+   await page.evaluate(()=>{
+    const canvas=document.createElement('canvas');
+    canvas.width=100;canvas.height=150;
+    const x=canvas.getContext('2d');
+    x.fillStyle='#d62436';x.fillRect(18,13,65,125);
+    const oldImage=canvas.toDataURL('image/png');
+    items.push({id:'slow-stale-shirt',category:'Tops',itemType:'T-shirt',
+     color:'Red',image:oldImage});
+    const original=Image.prototype.decode;
+    let release;
+    const gate=new Promise(ok=>release=ok);
+    window.__releaseStaleDecode=release;
+    Image.prototype.decode=function(){
+     if(this.src===oldImage)return gate.then(()=>original.call(this));
+     return original.call(this);
+    };
+    window.__restoreDecode=()=>{Image.prototype.decode=original;};
+    currentBoard.slots.top='slow-stale-shirt';
+    renderOutfitBoard();
+   });
+   await page.waitForFunction(()=>document.querySelector('#reusableFigureStatus')
+    .textContent.includes('Preparing local clothing preview'));
+   assert.equal(await page.locator('#reusableFigureGarments img').count(),0,
+    'old garment is cleared before processing an updated outfit');
+   await page.evaluate(()=>{currentBoard.slots.top='test-shirt';renderOutfitBoard();});
+   await page.waitForFunction(()=>document.querySelectorAll('#reusableFigureGarments img').length===2&&
+    document.querySelector('#reusableFigureStatus').textContent.startsWith('2 owned clothing layers'));
+   const settledNew=await page.locator('#reusableFigureGarments img').evaluateAll(nodes=>nodes.map(n=>n.src));
+   await page.evaluate(()=>{window.__releaseStaleDecode();window.__restoreDecode();});
+   await page.waitForTimeout(80);
+   assert.deepEqual(await page.locator('#reusableFigureGarments img').evaluateAll(nodes=>nodes.map(n=>n.src)),
+    settledNew,'late old decoded garment must not overwrite newer outfit');
    assert.equal(proportions[0].top,44,'female jeans align with waist anchor');
    assert.equal(proportions[1].top,19,'female shirt aligns with shoulder anchor');
    for(let i=0;i<2;i++){
