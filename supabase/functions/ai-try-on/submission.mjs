@@ -1,7 +1,11 @@
-// Staged server-only coordinator. NOT connected to the HTTP entrypoint.
+// Server-only coordinator, reached only through hard-disabled deployment gates.
 // Authentication, consent and signed predecessor completion must be verified by
 // the server BEFORE calling this module. No provider is initialized here.
 import {providerRequest,safeJobId} from './protocol.mjs';
+export async function imageDigest(value){
+ const bytes=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(value));
+ return Array.from(new Uint8Array(bytes),x=>x.toString(16).padStart(2,'0')).join('');
+}
 const UUID=/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i;
 export async function submitReservedTryOn(input,{enabled=false,ledger,run}={}){
  if(enabled!==true)throw Error('Reserved try-on submission is disabled');
@@ -14,14 +18,18 @@ export async function submitReservedTryOn(input,{enabled=false,ledger,run}={}){
   throw Error('Invalid reserved submission');
  if(!ledger||typeof ledger.reserve!=='function'||typeof ledger.accept!=='function'||
   typeof ledger.unknown!=='function'||typeof run!=='function')throw Error('Durable submission ledger unavailable');
+ const passes=input.plannedPasses??1,next=input.nextGarmentDigest??null;
+ if(![1,2].includes(passes)||(passes===2&&(input.stage!==1||input.category==='one-pieces'||!/^([a-f0-9]{64})$/.test(next||'')))||
+  (passes===1&&next!==null))throw Error('Invalid outfit budget plan');
  const payload=providerRequest(input);
  // Bind idempotency to the entire provider payload, including model input,
  // options and garment bytes. Neither source images nor the JSON are stored.
- const bytes=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(JSON.stringify(payload)));
- const fingerprint=Array.from(new Uint8Array(bytes),x=>x.toString(16).padStart(2,'0')).join('');
+ const fingerprint=await imageDigest(JSON.stringify({payload,passes,next}));
+ const garmentDigest=await imageDigest(input.garmentImage);
  const key={owner:input.owner,requestId:input.requestId};
  const reservation=await ledger.reserve({...key,fingerprint,stage:input.stage,
-  figure:input.figure,category:input.category,parentJobId:input.parentJobId||null});
+  figure:input.figure,category:input.category,parentJobId:input.parentJobId||null,
+  plannedPasses:passes,nextGarmentDigest:next,garmentDigest});
  if(reservation?.disposition==='accepted'&&safeJobId(reservation.providerJobId))
   return {status:'processing',providerJobId:reservation.providerJobId,reused:true};
  if(reservation?.disposition!=='submit'){
@@ -47,13 +55,16 @@ export async function submitReservedTryOn(input,{enabled=false,ledger,run}={}){
 // Inject a server-only Supabase client; never initialize one in the browser.
 export function createSubmissionLedger(client){
  async function rpc(name,args){
-  const result=await client.rpc(name,args);
-  if(result?.error||!result?.data||typeof result.data!=='object')throw Error('Durable submission ledger unavailable');
-  return result.data;
+  try{
+   const result=await client.rpc(name,args);
+   if(result?.error||!result?.data||typeof result.data!=='object'||Array.isArray(result.data))throw Error();
+   return result.data;
+  }catch{throw Error('Durable submission ledger unavailable');}
  }
  return {
   reserve: x=>rpc('reserve_closet_tryon',{p_owner:x.owner,p_request:x.requestId,
-   p_fingerprint:x.fingerprint,p_stage:x.stage,p_figure:x.figure,p_category:x.category,p_parent:x.parentJobId}),
+   p_fingerprint:x.fingerprint,p_stage:x.stage,p_figure:x.figure,p_category:x.category,p_parent:x.parentJobId,
+   p_passes:x.plannedPasses,p_next:x.nextGarmentDigest,p_garment:x.garmentDigest}),
   accept: x=>rpc('finish_closet_tryon',{p_owner:x.owner,p_request:x.requestId,p_provider:x.providerJobId}),
   unknown: x=>rpc('hold_closet_tryon',{p_owner:x.owner,p_request:x.requestId})
  };

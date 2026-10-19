@@ -18,7 +18,7 @@ async function rpc(name,args){
  return JSON.parse(await db(`set role service_role; select public.${name}(${values});`));
 }
 const reserve=(owner=A,request=randomUUID(),extra={})=>rpc('reserve_closet_tryon',{
- p_owner:owner,p_request:request,p_fingerprint:'a'.repeat(64),p_stage:1,p_figure:'female',p_category:'tops',p_parent:null,...extra});
+ p_owner:owner,p_request:request,p_fingerprint:'a'.repeat(64),p_stage:1,p_figure:'female',p_category:'tops',p_parent:null,p_passes:1,p_next:null,p_garment:'a'.repeat(64),...extra});
 const finish=(owner,request,provider)=>rpc('finish_closet_tryon',{p_owner:owner,p_request:request,p_provider:provider});
 const reset=async(perOwner,global)=>db(`truncate closet_tryon_internal.jobs;
  update closet_tryon_internal.limits set enabled=true,per_owner_24h=${perOwner},global_24h=${global};`);
@@ -26,12 +26,23 @@ await db('create role anon; create role authenticated; create role service_role;
 await db(readFileSync('supabase/design/tryon-submission-ledger.DRAFT.sql','utf8'));
 assert.equal((await reserve()).disposition,'disabled','draft quotas default to disabled/zero');
 for(const role of ['anon','authenticated']){
- await assert.rejects(db(`set role ${role};select public.reserve_closet_tryon('${A}','${randomUUID()}','${'a'.repeat(64)}',1,'female','tops',null);`));
+ await assert.rejects(db(`set role ${role};select public.reserve_closet_tryon('${A}','${randomUUID()}','${'a'.repeat(64)}',1,'female','tops',null,1,null,'${'a'.repeat(64)}');`));
  await assert.rejects(db(`set role ${role};select * from closet_tryon_internal.jobs;`));
  await assert.rejects(db(`set role ${role};select public.hold_closet_tryon('${A}','${randomUUID()}');`));
  await assert.rejects(db(`set role ${role};select public.finish_closet_tryon('${A}','${randomUUID()}','synthetic-provider-12345');`));
 }
 await assert.rejects(db('set role service_role;update closet_tryon_internal.limits set enabled=true;'));
+await reset(1,100);
+assert.equal((await reserve(A,randomUUID(),{p_passes:2,p_next:'a'.repeat(64)})).disposition,'quota','both units required before first POST');
+assert.equal(await db('select count(*) from closet_tryon_internal.jobs;'),'0');
+await reset(2,2);
+const prepaid=randomUUID();
+assert.equal((await reserve(A,prepaid,{p_passes:2,p_next:'a'.repeat(64)})).disposition,'submit');
+await finish(A,prepaid,'prepaid-first-12345');
+assert.equal((await reserve(B)).disposition,'quota','root holds both global units');
+assert.equal((await reserve(A,randomUUID(),{p_stage:2,p_category:'bottoms',p_parent:'prepaid-first-12345',p_garment:'b'.repeat(64)})).disposition,'invalid','only preselected second garment allowed');
+assert.equal((await reserve(A,randomUUID(),{p_stage:2,p_category:'bottoms',p_parent:'prepaid-first-12345'})).disposition,'submit','prepaid second pass works at full cap');
+assert.equal(await db('select sum(charge_units) from closet_tryon_internal.jobs;'),'2','continuation cannot double-charge quota');
 await reset(2,100);
 let batch=await Promise.all(Array.from({length:16},()=>reserve()));
 assert.equal(batch.filter(x=>x.disposition==='submit').length,2,'per-owner concurrent quota');
@@ -40,16 +51,16 @@ await reset(20,3);
 batch=await Promise.all(Array.from({length:16},()=>reserve(randomUUID())));
 assert.equal(batch.filter(x=>x.disposition==='submit').length,3,'global concurrent quota');
 await reset(20,100);
-const request=randomUUID();
-batch=await Promise.all(Array.from({length:12},()=>reserve(A,request)));
+const request=randomUUID(),rootPlan={p_passes:2,p_next:'a'.repeat(64)};
+batch=await Promise.all(Array.from({length:12},()=>reserve(A,request,rootPlan)));
 assert.equal(batch.filter(x=>x.disposition==='submit').length,1,'one reservation across server instances');
 assert.equal(batch.filter(x=>x.disposition==='hold').length,11,'pending/crashed attempts cannot resubmit');
 await finish(A,request,'synthetic-first-12345');
-assert.equal((await reserve(A,request)).providerJobId,'synthetic-first-12345');
-assert.equal((await reserve(A,request,{p_fingerprint:'b'.repeat(64)})).disposition,'conflict');
+assert.equal((await reserve(A,request,rootPlan)).providerJobId,'synthetic-first-12345');
+assert.equal((await reserve(A,request,{...rootPlan,p_fingerprint:'b'.repeat(64)})).disposition,'conflict');
 await assert.rejects(finish(B,request,'foreign-job-123456'));
 await rpc('hold_closet_tryon',{p_owner:B,p_request:request});
-assert.equal((await reserve(A,request)).disposition,'accepted','foreign hold cannot alter owner reservation');
+assert.equal((await reserve(A,request,rootPlan)).disposition,'accepted','foreign hold cannot alter owner reservation');
 const second={p_stage:2,p_category:'bottoms',p_parent:'synthetic-first-12345'};
 batch=await Promise.all(Array.from({length:12},()=>reserve(A,randomUUID(),second)));
 assert.equal(batch.filter(x=>x.disposition==='submit').length,1,'one continuation despite DIFFERENT request UUIDs');
@@ -92,5 +103,5 @@ console.log('TRYON_DISPOSABLE_POSTGRES '+JSON.stringify({
  actualPostgres:true,actualSupabaseSdk:false,liveSupabase:false,actualProviderCalls:0,
  perOwnerRace:true,globalRace:true,sameRequestRace:true,changedRequestContinuationReplay:true,
  crossOwnerIsolation:true,unknownOutcomeHeld:true,lostCommitAcknowledgmentSafe:true,quotaDefaultsDisabled:true,
- browserRolesDenied:true,coordinatorConcurrentSyntheticRuns:1
+ browserRolesDenied:true,wholeOutfitBudgetPrepaid:true,continuationBoundToSelectedPhoto:true,coordinatorConcurrentSyntheticRuns:1
 }));

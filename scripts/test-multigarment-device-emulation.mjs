@@ -8,6 +8,8 @@ async function check(engine,device,label){
  const browser=await engine.launch({headless:true});
  try{
   const page=await browser.newPage({...device});
+  await page.route('https://closet-current.test/**',r=>r.fulfill({body:'<!doctype html>'}));
+  await page.goto('https://closet-current.test/');
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.setContent('<!doctype html><html><body>'+
     '<select id="tryOnFigure"><option value="female">Female</option><option value="male">Male</option></select>'+
@@ -73,6 +75,18 @@ async function check(engine,device,label){
   const start=calls.find(x=>x.action==='start'),second=calls.find(x=>x.action==='continue');
   assert.equal(start.garmentImage,images.top);
   assert.equal(start.category,'tops');
+  assert.equal(start.plannedPasses,2,'both passes must be budgeted before first submission');
+  assert.match(start.nextGarmentDigest,/^[a-f0-9]{64}$/);
+  assert.match(start.requestId,/^[a-f0-9-]{36}$/);
+  assert.match(second.requestId,/^[a-f0-9-]{36}$/);
+  assert.notEqual(start.requestId,second.requestId);
+  const retryIdentity=await page.evaluate(async()=>{
+   const a=await tryOnAttemptFor(tryOnInputs());tryOnAttempt=null;
+   const b=await tryOnAttemptFor(tryOnInputs());
+   return {a,b,stored:JSON.parse(sessionStorage.getItem('closet-tryon-attempt-v1'))};
+  });
+  assert.deepEqual(retryIdentity.a,retryIdentity.b,'reload recovery must preserve request IDs');
+  assert.deepEqual(Object.keys(retryIdentity.stored).sort(),['digest','ids']);
   assert.equal(second.garmentImage,images.bottom);
   assert.equal(second.category,'bottoms');
   assert.equal(second.previousToken,'signed-stage-one');
@@ -115,6 +129,13 @@ async function check(engine,device,label){
   assert.match(await page.locator('#tryOnStatus').innerText(),/Selected garment image could not be decoded/);
   assert.equal(calls.filter(x=>x.action==='start').length,startsBefore);
   await page.evaluate(x=>{items[0].image=x.top;onTryOnBoardChanged();},images);
+  // Bad second source must fail before even the first provider submission.
+  await page.evaluate(()=>{items[1].image='data:image/jpeg;base64,'+'A'.repeat(160);onTryOnBoardChanged();});
+  await page.locator('#tryOnGenerate').click();
+  await page.waitForFunction(()=>!tryOnBusy,null,{timeout:5000});
+  assert.match(await page.locator('#tryOnStatus').innerText(),/Selected garment image could not be decoded/);
+  assert.equal(calls.filter(x=>x.action==='start').length,startsBefore);
+  await page.evaluate(x=>{items[1].image=x.bottom;onTryOnBoardChanged();},images);
   const before=calls.length;
   await page.evaluate(()=>{items[1].image=items[0].image;onTryOnBoardChanged()});
   assert.equal(await page.locator('#tryOnImage').isHidden(),true,
@@ -136,7 +157,7 @@ async function check(engine,device,label){
    syntheticStarts:calls.filter(x=>x.action==='start').length,
    syntheticContinues:calls.filter(x=>x.action==='continue').length,
    staleResultBlocked:true,stablePollingTokens:true,corruptIntermediateBlocked:true,
-   corruptFinalBlocked:true,corruptSourceBlocked:true,failedRegenerationCleared:true,pageErrors:errors.length};
+   corruptFinalBlocked:true,corruptSourceBlocked:true,bothSourcesPreflighted:true,stableRequestIds:true,wholeOutfitBudgetRequested:true,failedRegenerationCleared:true,pageErrors:errors.length};
  }finally{await browser.close();}
 }
 const results=[];

@@ -44,7 +44,7 @@ function onTryOnBoardChanged(){
  $('tryOnGenerate').disabled=tryOnBusy||!tryOnReady||!window.AiTryOnPlan?.plan(currentBoard,items).steps.length;
 }
 async function tryOnRequest(token,body){
- const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),55000);
+ const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),85000);
  try{return await fetch('https://hlkgymugtfbirlpunsra.supabase.co/functions/v1/ai-try-on',{
   method:'POST',headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},
   body:JSON.stringify(body),cache:'no-store',signal:controller.signal
@@ -97,10 +97,40 @@ async function checkTryOnReadiness(){
   onTryOnBoardChanged();
  }
 }
-async function tryOnOne(token,image,category,figure,isCurrent,previousToken=null){
+// Keep the same request IDs after an uncertain HTTP outcome, including reload.
+// Only a digest and random IDs enter sessionStorage; garment pixels stay out.
+async function tryOnDigest(value){
+ const bytes=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(value));
+ return Array.from(new Uint8Array(bytes),x=>x.toString(16).padStart(2,'0')).join('');
+}
+let tryOnAttempt=null;
+async function tryOnAttemptFor(signature,steps){
+ steps=steps||window.AiTryOnPlan.plan(currentBoard,items).steps.slice(0,tryOnMultiReady?2:1);
+ // Hash sources individually: avoid expanding a whole closet of base64 photos
+ // into one large JSON string. Unsupported shoe/layer changes reuse the job.
+ const inputs=[];
+ for(const step of steps)inputs.push({slot:step.slot,id:step.itemId,category:step.category,image:await tryOnDigest(step.image)});
+ const digest=await tryOnDigest(JSON.stringify({owner:signature.owner,figure:signature.figure,inputs}));
+ if(tryOnAttempt?.digest===digest)return tryOnAttempt;
+ try{
+  const saved=JSON.parse(sessionStorage.getItem('closet-tryon-attempt-v1'));
+  if(saved?.digest===digest&&Array.isArray(saved.ids)&&saved.ids.length===2&&
+   saved.ids.every(x=>typeof x==='string'&&/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(x)))
+   return tryOnAttempt=saved;
+ }catch{}
+ const uuid=()=>{
+  const bytes=crypto.getRandomValues(new Uint8Array(16));bytes[6]=(bytes[6]&15)|64;bytes[8]=(bytes[8]&63)|128;
+  const h=Array.from(bytes,x=>x.toString(16).padStart(2,'0')).join('');
+  return h.slice(0,8)+'-'+h.slice(8,12)+'-'+h.slice(12,16)+'-'+h.slice(16,20)+'-'+h.slice(20);
+ };
+ tryOnAttempt={digest,ids:[uuid(),uuid()]};
+ try{sessionStorage.setItem('closet-tryon-attempt-v1',JSON.stringify(tryOnAttempt));}catch{}
+ return tryOnAttempt;
+}
+async function tryOnOne(token,image,category,figure,isCurrent,previousToken=null,requestId,plannedPasses=1,nextGarmentDigest=null){
  let result=await tryOnRequest(token,previousToken?
-  {action:'continue',previousToken,figure,category,garmentImage:image}:
-  {action:'start',figure,category,garmentImage:image});
+  {action:'continue',previousToken,figure,category,garmentImage:image,requestId}:
+  {action:'start',figure,category,garmentImage:image,requestId,plannedPasses,nextGarmentDigest});
  if(result.status!=='processing'||typeof result.token!=='string'||!result.token)throw Error('AI try-on did not start');
  const jobToken=result.token;
  // One provider call per step. Status requests never submit extra billable jobs.
@@ -138,16 +168,20 @@ async function generateTryOn(){
   const token=await auth.getAccessToken();
   let modelImage=null,priorJob=null;
   const enabledSteps=tryOnMultiReady?plan.steps:plan.steps.slice(0,1);
+  // Validate BOTH source photos before any paid submission or budget use.
+  for(const step of enabledSteps){
+   await decodeTryOnImage(step.image,'Selected garment');if(!isCurrent())return;
+  }
+  const attempt=await tryOnAttemptFor(signature,enabledSteps);
+  const nextDigest=enabledSteps.length===2?await tryOnDigest(enabledSteps[1].image):null;
   for(let i=0;i<enabledSteps.length;i++){
    if(!isCurrent())return;
    const step=enabledSteps[i];
-   await decodeTryOnImage(step.image,'Selected garment');
-   if(!isCurrent())return;
    $('tryOnStatus').textContent='Generating AI try-on · '+(i+1)+' of '+enabledSteps.length+'…';
    // "continue" is allowed only when the server verifies a completed,
    // same-user/same-figure prior job and is independently approved for
    // multi-pass paid inference. Never submit a client-picked model photo.
-   const current=await tryOnOne(token,step.image,step.category,figure,isCurrent,priorJob);
+   const current=await tryOnOne(token,step.image,step.category,figure,isCurrent,priorJob,attempt.ids[i],i===0?enabledSteps.length:1,i===0?nextDigest:null);
    modelImage=current.image;priorJob=current.jobToken;
   }
   if(!isCurrent()||!modelImage)return;

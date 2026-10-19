@@ -74,8 +74,26 @@ test('server SDK adapter propagates errors and uses only server RPCs',async()=>{
  const broken=createSubmissionLedger({rpc:async()=>({data:null,error:{message:'sensitive database details'}})});
  await assert.rejects(broken.reserve({}),/^Error: Durable submission ledger unavailable$/);
 });
-test('paid entrypoint stays hard disabled for chaining and does not import staged coordinator',()=>{
+test('paid entrypoint stays hard disabled for both reserved submission and chaining',()=>{
  const source=readFileSync('supabase/functions/ai-try-on/index.ts','utf8');
  assert.match(source,/CHAINED_PAID_INFERENCE_APPROVED=false/);
- assert.doesNotMatch(source,/submission\.mjs/);
+ assert.match(source,/RESERVED_PAID_INFERENCE_APPROVED=false/);
+ assert.match(source,/submissionApproved:RESERVED_PAID_INFERENCE_APPROVED/);
+});
+
+test('root reserves both passes and binds next garment without storing its pixels',async()=>{
+ const d=deps();await submitReservedTryOn({...input,plannedPasses:2,nextGarmentDigest:'a'.repeat(64)},d);
+ assert.equal(d.calls[0][1].plannedPasses,2);assert.equal(d.calls[0][1].nextGarmentDigest,'a'.repeat(64));
+ assert.match(d.calls[0][1].garmentDigest,/^[a-f0-9]{64}$/);
+});
+test('single-pass keys cannot be replayed as two-pass plans and malformed plans never reserve',async()=>{
+ const hashes=[];
+ for(const extra of [{},{plannedPasses:2,nextGarmentDigest:'a'.repeat(64)}]){
+  const d=deps();await submitReservedTryOn({...input,...extra},d);hashes.push(d.calls[0][1].fingerprint);
+ }
+ assert.notEqual(hashes[0],hashes[1]);
+ for(const extra of [{plannedPasses:2},{plannedPasses:1,nextGarmentDigest:'a'.repeat(64)},
+  {plannedPasses:2,nextGarmentDigest:'a'.repeat(64),category:'one-pieces'}]){
+  const d=deps();await assert.rejects(submitReservedTryOn({...input,...extra},d),/budget plan/);assert.equal(d.calls.length,0);
+ }
 });

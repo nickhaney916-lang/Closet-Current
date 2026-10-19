@@ -7,6 +7,8 @@ import {resolve} from 'node:path';
 const browser=await chromium.launch({headless:true});
 try{
  const page=await browser.newPage();
+  await page.route('https://closet-current.test/**',r=>r.fulfill({body:'<!doctype html>'}));
+  await page.goto('https://closet-current.test/');
  const errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.setContent(`<!DOCTYPE html><select id="tryOnFigure"><option value="female">Female</option><option value="male">Male</option></select>
  <img id="tryOnModelPreview" alt=""><p id="tryOnModelCaption"></p>

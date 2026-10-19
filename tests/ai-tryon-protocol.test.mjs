@@ -40,7 +40,7 @@ test('provider responses are strictly normalized and do not expose arbitrary red
  assert.equal(safeJobId('../evil'),false);
 });
 test('server is deny-by-default, requires signed user-bound jobs, and keeps provider key off client',()=>{
- const server=readFileSync('supabase/functions/ai-try-on/index.ts','utf8');
+ const server=readFileSync('supabase/functions/ai-try-on/index.ts','utf8')+readFileSync('supabase/functions/ai-try-on/http.mjs','utf8')+readFileSync('supabase/functions/ai-try-on/job-tokens.mjs','utf8');
  assert.match(server,/TRYON_ENABLED.*==='true'/);
  assert.match(server,/action==='availability'/);
  assert.match(server,/status:enabled&&allowedAccount\?'ready':'unavailable'/);
@@ -81,13 +81,13 @@ test('only completed provider-image data is acceptable for second-stage model im
   assert.throws(()=>completedIntermediateImage(v),/incomplete|unavailable/);
 });
 test('multi-garment production activation is hard-disabled pending consent, quotas and source fidelity',()=>{
- const server=readFileSync('supabase/functions/ai-try-on/index.ts','utf8');
+ const server=readFileSync('supabase/functions/ai-try-on/index.ts','utf8')+readFileSync('supabase/functions/ai-try-on/http.mjs','utf8')+readFileSync('supabase/functions/ai-try-on/job-tokens.mjs','utf8');
  assert.match(server,/CHAINED_PAID_INFERENCE_APPROVED=false/);
  assert.match(server,/TRYON_MULTI_ENABLED/);
- assert.match(server,/action==='continue'/);
+ assert.match(server,/body.action==='start'/);
  assert.match(server,/readPrediction\(body\.previousToken,user\)/);
  assert.match(server,/completedIntermediateImage/);
- assert.match(server,/signPrediction\(response\.id,user,input\.figure,input\.category,1\)/);
+ assert.match(server,/signPrediction\(response\.providerJobId,user,input\.figure,input\.category,prior\?2:1\)/);
  assert.match(server,/previousToken/);
  assert.match(server,/crypto\.subtle\.verify/);
 });
