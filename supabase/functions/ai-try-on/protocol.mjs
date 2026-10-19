@@ -9,7 +9,7 @@ export function validateStart(body){
  return {figure:body.figure,category:body.category,garmentImage:body.garmentImage};
 }
 export function providerRequest({modelImage,garmentImage,category}){
- if(typeof modelImage!=='string'||!/^https:\/\/[^\s<>"']+$/.test(modelImage))throw Error('Standard figure unavailable');
+ if(typeof modelImage!=='string'||!((/^https:\/\/[^\s<>"']+$/).test(modelImage)||(modelImage.length>=128&&modelImage.length<=10_000_000&&DATA_URI.test(modelImage))))throw Error('Standard figure unavailable');
  if(!DATA_URI.test(garmentImage))throw Error('Invalid private garment data');
  return {model_name:'tryon-v1.6',inputs:{
   model_image:modelImage,garment_image:garmentImage,category,
@@ -30,4 +30,27 @@ export function normalizeStatus(data){
  if(data?.status==='failed')return {status:'failed'};
  if(['starting','in_queue','processing'].includes(data?.status))return {status:'processing'};
  throw Error('Unexpected try-on state');
+}
+
+// Second real AI pass: only a signed, completed first provider job can supply
+// the model image. The browser never submits arbitrary people or generated
+// imagery as a replacement model. Server feature MUST remain hard disabled
+// until paid compute quotas, owner consent and real visual fidelity are tested.
+export function validateContinuation(body,previous){
+ const valid=['tops','bottoms'];
+ if(body?.action!=='continue'||!previous||previous.step!==1||
+    !valid.includes(previous.category)||!valid.includes(body.category)||
+    body.category===previous.category||
+    body.figure!==previous.figure||
+    typeof body.garmentImage!=='string'||body.garmentImage.length>7_500_000||
+    body.garmentImage.length<128||!DATA_URI.test(body.garmentImage))
+   throw Error('Invalid multi-garment continuation');
+ return {figure:previous.figure,category:body.category,garmentImage:body.garmentImage};
+}
+export function completedIntermediateImage(data){
+ const result=normalizeStatus(data);
+ if(result.status!=='completed'||typeof result.image!=='string'||
+    result.image.length<128||result.image.length>10_000_000)
+  throw Error('Previous garment render is incomplete');
+ return result.image;
 }
