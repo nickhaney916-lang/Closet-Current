@@ -22,6 +22,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Build app artifacts before tests (PWA checks require dist)
+        run: node scripts/build.mjs
       - name: Full application and multi-pass provider protocol regression suite
         run: node --test tests/*.test.cjs tests/*.test.mjs
       - name: Static build and device-emulated browser prerequisites
