@@ -73,7 +73,12 @@ test('renderer does not alter input garment pixels',()=>{
      restore(){calls.push('restore');},beginPath(){},moveTo(){},lineTo(){},
      closePath(){},clip(){},setTransform(...args){assert.equal(args.length,6);},
      drawImage(img){assert.equal(img,image);calls.push('draw');},
-     getImageData(){return {data:new Uint8ClampedArray(100*150*4)};},
+     getImageData(){
+      const data=new Uint8ClampedArray(100*150*4);
+      for(let y=12;y<138;y++)for(let x=20;x<80;x++)
+       data.set([65,40,180,255],(y*100+x)*4);
+      return {data};
+     },
      putImageData(pixels){assert.equal(pixels.data.length,100*150*4);calls.push('put');}
    };},toDataURL(t){assert.equal(t,'image/png');return 'data:image/png;base64,LOCAL';}
  };
