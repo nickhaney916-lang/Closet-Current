@@ -1,5 +1,41 @@
 # Real licensed layered-photo upper-garment review candidate — October 18, 2026 Pacific
 
+## Later verified correction — narrow sleeve fragment suppressed
+
+After inspecting the **actual six display/recognition crops** stored in GitHub Actions
+artifact `mobile-flow-results` for [run 39195853024](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39195853024),
+the newly exposed Upper garment crop showed **a narrow region of gray blazer
+shoulder/sleeve fabric**, not a useful entire garment. The Dress-labeled region
+also includes skirt, exposed legs and blazer, and the Shoes-labeled region
+contains background/floor and chair as well as footwear. These are **qualitative
+visual observations**, not human-approved full-photo pixel masks.
+
+The initial 3-region experiment below is retained as historical test evidence,
+**NOT as the recommended implementation**. The corrected research path retains
+only weak upper regions whose trusted mask bounds span at least 12% of the
+source model frame in both width and height. In particular, small narrow
+sleeve-like evidence no longer creates an additional customer review card.
+Strong-confidence processing is unchanged; suppressed fragments still appear
+in model diagnostic counts, not closet inventory.
+
+The existing **actual-worker licensed-photo** mobile workflow
+[run 39196872104](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39196872104)
+passed, after this correction:
+- **2** review-only candidate regions (Dress and Shoes), **0** automatically saved.
+- The narrow upper fragment is no longer user-facing; original-source and
+  recognition-crop preservation remain intact.
+- Readiness report remains `blocked`: zero automatic garments, missing
+  source-reference categories and two pending reviews.
+- Measured physical garment accuracy, pixel IoU, color accuracy: **null**;
+  no independent approved outline, physical phone test or production approval.
+
+This correction **reduces false review clutter**; it does not improve measured
+mask/recognition accuracy. The team still needs genuinely independent full-photo
+annotations and a model that can distinguish worn jacket, shirt and skirt.
+
+---
+
+
 ## Source and runs
 - Source: licensed original `validation-0031`, SHA-256 `0e145aa5432df3457521200d1e1bb896f66abd66fb041d31ed0db591e00e2fdc`. The photographer's description mentions blazer, shirt, skirt, tights and heels, but it **is not** independently reviewed pixel-level ground truth.
 - Baseline: PR #7 prior to this experiment, e.g. [mobile run 39194138916](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39194138916). Actual browser outfit worker: **2 uncertain source regions** (Dress and Shoes); **0 automatic saves**.
