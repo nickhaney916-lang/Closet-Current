@@ -4,6 +4,7 @@ on:
     branches: [fix/tryon-account-bound-availability-20261019]
     paths:
       - 'public/ai-tryon.js'
+      - 'public/auth.js'
       - 'tests/ai-tryon-recovery.test.cjs'
       - 'scripts/test-multigarment-device-emulation.mjs'
       - '.github/workflows/research-tryon-account-availability.yml'
