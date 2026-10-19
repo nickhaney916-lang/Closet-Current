@@ -55,6 +55,8 @@ test('abstained garments lower coverage without inventing incorrect positive cla
   assert.deepEqual(metrics.abstainedPhotoIds,['owned-8','owned-9','owned-10','owned-11','owned-12']);
   assert.equal(metrics.autoIndexedCorrectCategoryCount,5);
   assert.equal(metrics.autoIndexedWrongCategoryCount,0);
+  assert.equal(metrics.autoIndexedCorrectTypeCount,5);
+  assert.equal(metrics.autoIndexedWrongTypeCount,0);
   assert.deepEqual(report.negative,{evaluated:3,rejected:3,falsePositives:0});
  }finally{fs.rmSync(dir,{recursive:true,force:true});}
 });
@@ -77,6 +79,9 @@ test('wrong automatic category is flagged independently of abstention',()=>{
   assert.equal(metrics.categoryPrecisionAmongPredictionsPercent,50);
   assert.equal(metrics.autoIndexedCorrectCategoryCount,1);
   assert.equal(metrics.autoIndexedWrongCategoryCount,1);
+  assert.equal(metrics.autoIndexedCorrectTypeCount,1);
+  assert.equal(metrics.autoIndexedWrongTypeCount,1);
+  assert.deepEqual(metrics.incorrectAutoIndexedTypeIds,['wrong']);
   assert.deepEqual(metrics.incorrectAutoIndexedIds,['wrong']);
   assert.deepEqual(metrics.incorrectCategoryIds,['wrong']);
   assert.deepEqual(metrics.abstainedPhotoIds,['blank']);
