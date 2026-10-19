@@ -5,6 +5,7 @@ on:
     paths:
       - 'benchmark/blind-inventory-mask-gate.mjs'
       - 'tests/blind-inventory-mask-gate.test.mjs'
+      - 'tests/blind-inventory-mask-cli.test.mjs'
       - 'scripts/audit-blind-physical-inventory.mjs'
       - '.github/workflows/research-blind-inventory-mask-bridge.yml'
   workflow_dispatch:
@@ -21,7 +22,7 @@ jobs:
           node-version: '22'
       - name: Test blind originals, third review, physical pixel masks and source matching
         run: |
-          node --test tests/blind-inventory-mask-gate.test.mjs tests/independent-photo-adjudication.test.mjs tests/blind-original-review-submissions.test.mjs tests/physical-garment-inventory.test.mjs tests/garment-mask-metrics.test.mjs
+          node --test tests/blind-inventory-mask-gate.test.mjs tests/blind-inventory-mask-cli.test.mjs tests/independent-photo-adjudication.test.mjs tests/blind-original-review-submissions.test.mjs tests/physical-garment-inventory.test.mjs tests/garment-mask-metrics.test.mjs
       - name: Verify new gate does not affect production auto-index or pricing
         run: |
           node --input-type=module -e "
