@@ -32,6 +32,13 @@ export function createRpcTransport({env,fetchImpl=fetch}){
 }
 /** @type {(name: string) => string | undefined} */
 const emptyEnv=()=>undefined;
+/**
+ * @param {{env?: (name: string) => string | undefined, fetchImpl?: typeof fetch,
+ * ledger?: ReturnType<typeof import('./submission.mjs').createSubmissionLedger>,
+ * signPrediction?: (id: string, uid: string, figure: string, category: string, step: 1|2) => Promise<string>,
+ * readPrediction?: (token: string, uid: string) => Promise<{id: string, figure: string, category: string, step: number}>,
+ * submissionApproved?: boolean, chainedApproved?: boolean}} options
+ */
 export function createTryOnHandler({env=emptyEnv,fetchImpl=fetch,ledger,signPrediction,readPrediction,
  submissionApproved=false,chainedApproved=false}={}){
  async function userFromToken(jwt){
