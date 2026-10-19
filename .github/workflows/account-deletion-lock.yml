@@ -6,6 +6,7 @@ on:
       - 'supabase/design/account-deletion-write-barrier.DRAFT.sql'
       - 'supabase/functions/account-delete/**'
       - 'tests/account-deletion-lock-postgres.sql'
+      - 'scripts/test-account-deletion-lock-race.mjs'
       - 'tests/account-deletion-coordinator.test.mjs'
       - '.github/workflows/account-deletion-lock.yml'
   workflow_dispatch:
@@ -41,5 +42,6 @@ jobs:
         run: |
           command -v psql || (sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client)
           psql -X -v ON_ERROR_STOP=1 -f tests/account-deletion-lock-postgres.sql
+          node scripts/test-account-deletion-lock-race.mjs
       - name: Verify coordinator cannot delete without owner, password and durable lock
         run: node --test tests/account-deletion-coordinator.test.mjs

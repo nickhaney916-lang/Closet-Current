@@ -9,7 +9,9 @@ create table auth.users (id uuid primary key);
 create table public.closet_backups (owner_id uuid primary key, revision bigint, document jsonb);
 create table storage.objects (bucket_id text not null,name text not null,primary key(bucket_id,name));
 insert into auth.users(id) values
- ('a1111111-1111-4111-8111-111111111111'),('b2222222-2222-4222-8222-222222222222');
+ ('a1111111-1111-4111-8111-111111111111'),
+ ('b2222222-2222-4222-8222-222222222222'),
+ ('c3333333-3333-4333-8333-333333333333');
 \i supabase/design/account-deletion-write-barrier.DRAFT.sql
 
 -- The lock cannot be read or started using anonymous/authenticated grants.
