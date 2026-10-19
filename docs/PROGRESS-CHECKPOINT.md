@@ -1,5 +1,41 @@
 # Closet Current master development checkpoint
 
+## Staged durable try-on submission ledger — October 19, 2026, Pacific
+
+- Continued isolated PR #13 from `8206c500`; code commit
+  `2936c61ef604163ee112fbd0558136dbbc8e4f58`. No other PR branch modified.
+- Added a default-disabled server-only coordinator, injected RPC adapter and
+  UNDEPLOYED SQL draft. Atomic global transaction locking protects per-owner
+  and global rolling 24-hour job quotas. Request UUID plus payload digest
+  binds starts; unique owner/predecessor protects continuations even with new
+  request UUIDs. Accepted replays reuse the provider job; reserved/unknown
+  outcomes never automatically retry/refund. Lost database acknowledgments
+  cannot erase accepted state. No images or signing/provider tokens stored.
+- Local full build/suite: **833 total, 830 passed, 0 failed, 3 skipped**.
+  Eleven focused coordinator/adapter checks pass; no real inference.
+- CI run `39266063180`, disposable PostgreSQL job `118105823401` passed:
+  actual PostgreSQL 16 reservations under concurrent workers, per-owner/global
+  limits, different-ID continuation replay, owner isolation, denied browser
+  roles, unknown provider timeout, and committed-but-lost acceptance response.
+  Defaults disabled/zero. Actual SDK=false, hosted Supabase=false, actual
+  provider calls=0. No real customer data or hosted SQL changes.
+- [CI run 39266063180](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39266063180)
+  passed BOTH jobs: 830 Node checks passed, 0 failed, 3 skipped; build and
+  Deno check; single-garment mock, Pixel Chromium + iPhone WebKit emulation
+  with zero page errors, and owned-only Style this save/reload. Code SHA
+  `2936c61e` verified; subsequent documentation commits do not change runtime.
+- Read `docs/TRYON-SUBMISSION-LEDGER-DRAFT.md` before integration. This module is
+  NOT imported by the live HTTP entrypoint; no hosted ledger exists and paid
+  second-pass inference remains hard-disabled. It is not production protection.
+  HTTP/SDK integration, reviewed quotas and whole-outfit budget policy, operator
+  reconciliation, metadata retention, provider currency cap, assets/consent,
+  protected staging, actual provider fidelity and physical phones remain open.
+- Four-track validation remains **2/4 (50%)**, not overall product completion:
+  software and emulation passed previously; live AI and actual phones untested.
+  No merge/deployment/costs/Drive Duel change. Original photos and indexing
+  untouched. Regular ChatGPT conversation remains the main coordination thread.
+
+
 ## Parallel multi-garment rendering safeguards — October 19, 2026, Pacific
 
 - Isolated draft PR #13 (`work/multigarment-integrity-phone-qa-20261019`)
