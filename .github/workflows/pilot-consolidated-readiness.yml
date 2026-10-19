@@ -59,6 +59,43 @@ jobs:
           path: test-results/pilot-consolidation/
           if-no-files-found: ignore
           retention-days: 14
+  real-source-actual-app-pilot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 22
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prepare Chromium and two immutable licensed original photographs
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos commons-0001,commons-0090
+      - name: Run actual browser recognizer inside the built wardrobe importer, with no billable APIs
+        run: |
+          node scripts/build.mjs
+          node scripts/test-real-original-app-import.mjs test-results/pilot-real-original-import
+      - name: Do not mistake actual model QA for real phone or garment accuracy
+        run: |
+          node --input-type=module -e "
+            import fs from 'node:fs';
+            const r=JSON.parse(fs.readFileSync('test-results/pilot-real-original-import/summary.json'));
+            if(r.status!=='completed'||r.originalsVerifiedBySha256!==2||
+               r.originalsPreservedThroughReload!==2||
+               r.negativeAutoSaved!==false||r.realWorldGarmentAccuracy!==null||
+               r.actualPhysicalPhoneTested!==false||
+               r.realTwoGarmentAIProviderCalls!==0||r.paidCalls!==0||
+               r.externalWriteRequests!==0||r.privateOriginalPhotosInReport!==false)
+              throw Error('Real-source app importer did not meet source/provenance and privacy gate');
+          "
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: real-original-photo-through-built-app
+          path: test-results/pilot-real-original-import/summary.json
+          if-no-files-found: ignore
+          retention-days: 14
   phone-browser-pilot:
     runs-on: ubuntu-latest
     timeout-minutes: 30
