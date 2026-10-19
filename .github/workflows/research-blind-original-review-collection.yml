@@ -6,6 +6,7 @@ on:
       - 'benchmark/blind-original-photo-review.html'
       - 'benchmark/blind-original-review-submissions.mjs'
       - 'scripts/test-blind-original-photo-review-browser.mjs'
+      - 'scripts/test-blind-real-originals-browser.mjs'
       - 'scripts/reconcile-blind-original-reviews.mjs'
       - 'tests/blind-original-review-submissions.test.mjs'
       - '.github/workflows/research-blind-original-review-collection.yml'
@@ -30,6 +31,18 @@ jobs:
           npx playwright install --with-deps chromium webkit
       - name: Open the real offline review page and verify SHA-hashed JPEG selection, source inventory and export
         run: node scripts/test-blind-original-photo-review-browser.mjs
+      - name: Recover verified first reviewer blank packet and download 16 original SHA-locked licensed JPEGs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          mkdir -p benchmark/blind-original-review-packets
+          gh run download 39289879093 --repo "$GH_REPO" -n original-form-review-queue-real-photo -D benchmark/blind-original-review-packets
+          test -s benchmark/blind-original-review-packets/blind-first-reviewer.json
+          IDS=$(node -e "console.log(JSON.parse(require('fs').readFileSync('benchmark/manifest-holdout-16.json','utf8')).map(x=>x.id).join(','))")
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/blind-original-source-photos "$IDS"
+      - name: Verify all 16 actual originals load on offline review page with cryptographic source identity
+        run: node scripts/test-blind-real-originals-browser.mjs
       - name: Prove review collection never authorizes new customer garment indexing
         run: |
           node --input-type=module -e "
