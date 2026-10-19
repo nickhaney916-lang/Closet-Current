@@ -331,6 +331,59 @@ try{
     layeredResults.push({figure,layeredGarments:layered.count,dressGarments:dress.count,
      transparentOpenJacketCenter:true,actualRealPhotoFidelityMeasured:false});
    }
+   // Local compositing diagnostic sees garment-on-garment overlap; no
+   // anatomy guesses, paid inference, retained source edits or uploads.
+   const visibilityProbe=await page.evaluate(()=>{
+    const w=100,h=100,shirt=new Uint8ClampedArray(w*h),
+     coat=new Uint8ClampedArray(w*h),open=new Uint8ClampedArray(w*h);
+    for(let y=20;y<80;y++)for(let x=25;x<75;x++)shirt[y*w+x]=255;
+    coat.fill(255);
+    for(let y=0;y<85;y++)for(let x=0;x<20;x++)open[y*w+x]=255;
+    for(let y=0;y<85;y++)for(let x=80;x<100;x++)open[y*w+x]=255;
+    const before=new Uint8ClampedArray(shirt);
+    const hidden=ClosetLayerVisibility.auditAlphaMasks([shirt,coat],w,h);
+    const visible=ClosetLayerVisibility.auditAlphaMasks([shirt,open],w,h);
+    return {hidden:hidden[0].mostlyConcealed,
+     openVisible:visible[0].visibleFraction,
+     unchanged:shirt.every((v,i)=>v===before[i]),
+     noBodyGuess:hidden[0].bodyOcclusionMeasured===false};
+   });
+   assert.equal(visibilityProbe.hidden,true);
+   assert.equal(visibilityProbe.openVisible,1);
+   assert.equal(visibilityProbe.unchanged,true);
+   assert.equal(visibilityProbe.noBodyGuess,true);
+
+   // A solid synthetic coat is allowed to conceal a selected shirt, but
+   // the UI must explain that visibly, not silently count it as shown.
+   await page.evaluate(()=>{
+    const canvas=document.createElement('canvas');
+    canvas.width=100;canvas.height=150;
+    const ctx=canvas.getContext('2d');
+    ctx.fillStyle='#344e53';ctx.fillRect(6,5,88,140);
+    items.push({id:'test-solid-coat',category:'Outerwear',itemType:'Jacket',
+     color:'Dark Green',image:canvas.toDataURL('image/png')});
+    currentBoard.slots={top:'test-shirt',layer2:'test-solid-coat'};
+    currentBoard.layerCount=2;renderOutfitBoard();
+   });
+   await page.waitForFunction(()=>document.querySelectorAll('#reusableFigureGarments img').length===2&&
+    document.querySelector('#reusableFigureStatus').textContent.startsWith('2 owned clothing layers displayed'));
+   const layersReport=await page.evaluate(()=>{
+    const status=document.querySelector('#reusableFigureStatus').textContent;
+    const imgs=[...document.querySelectorAll('#reusableFigureGarments img')];
+    return {status,source:items.find(x=>x.id==='test-shirt').image,
+     garments:imgs.map(i=>i.dataset.slot)};
+   });
+   assert.deepEqual(layersReport.garments,['top','layer2']);
+   assert.match(layersReport.status,/mostly hidden behind other clothing/,
+    'fully covered shirt remains in the closet but receives accurate visibility feedback');
+   await page.evaluate(()=>{
+    currentBoard.slots={top:'test-shirt'};currentBoard.layerCount=0;
+    renderOutfitBoard();
+   });
+   await page.waitForFunction(()=>document.querySelector('#reusableFigureStatus')
+    .textContent.startsWith('1 owned clothing layer displayed'));
+   assert.doesNotMatch(await page.locator('#reusableFigureStatus').innerText(),/mostly hidden/,
+    'single visible shirt should not retain previous warning');
    // New display-only silhouette centerline uses the approved transparent
    // pixels instead of stretching or hallucinating asymmetric sleeves.
    await page.evaluate(()=>{
