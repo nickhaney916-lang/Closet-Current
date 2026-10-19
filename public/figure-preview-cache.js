@@ -19,7 +19,8 @@
    const i=entries.findIndex(e=>same(e,query));
    if(i<0)return null;
    const [hit]=entries.splice(i,1);entries.push(hit);
-   return Object.freeze({image:hit.result,width:hit.width,height:hit.height});
+   return Object.freeze({image:hit.result,width:hit.width,height:hit.height,
+    silhouetteCenter:hit.silhouetteCenter});
   }
   function put(query,result){
    if(!query||!result||!forOwner(query.owner))return false;
@@ -33,7 +34,10 @@
    bytes=entries.reduce((n,e)=>n+e.size,0);
    entries.push({id:query.id,source:query.source,category:query.category,
     primaryColor:query.primaryColor,result:result.image,
-    width:result.width,height:result.height,size});
+    width:result.width,height:result.height,
+    silhouetteCenter:Number.isFinite(result.silhouetteCenter)&&
+     result.silhouetteCenter>=.25&&result.silhouetteCenter<=.75
+      ?result.silhouetteCenter:null,size});
    bytes+=size;
    while(entries.length>MAX_ENTRIES||bytes>MAX_BYTES){
     const evicted=entries.shift();bytes-=evicted.size;
