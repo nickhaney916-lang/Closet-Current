@@ -3,7 +3,14 @@ const source=fs.readFileSync('public/app.js','utf8');
 function setup(){
  function node(tag,text){return {tag,text:text||'',children:[],setAttribute(){},append(...children){this.children.push(...children);},replaceChildren(...children){this.children=children;}};}
  const c={recognitionState:{phase:'idle',percent:null,activeId:null},node,items:[],batch:[],categories:['Tops','Dresses'],ClothingDetails:{colors:['Black','Blue','Red'],validColor:v=>['Black','Blue','Red'].includes(v)},localPending:new Set(),localReady:true,adjustPhoto(item){c.adjusted=item;},cropClothingPhoto(item){c.cropped=item;}};
- vm.createContext(c);vm.runInContext(source.slice(source.indexOf('function cropButton('),source.indexOf('function adjustPhoto(')),c);vm.runInContext(source.slice(source.indexOf('function canConfirmReviewedColor('),source.indexOf('function renderPhotoResults(')),c);vm.runInContext(source.slice(source.indexOf('function renderPhotoResults('),source.indexOf('function render(){')),c);
+ vm.createContext(c);
+ // Render and inline quick-save now share the production original-RGB guard.
+ // Slice that helper into this small DOM harness rather than replacing it
+ // with a permissive fake that would obscure a missing-original regression.
+ vm.runInContext(source.slice(source.indexOf('function recognitionSourcePhoto('),source.indexOf('function clothingFields(')),c);
+ vm.runInContext(source.slice(source.indexOf('function cropButton('),source.indexOf('function adjustPhoto(')),c);
+ vm.runInContext(source.slice(source.indexOf('function canConfirmReviewedColor('),source.indexOf('function renderPhotoResults(')),c);
+ vm.runInContext(source.slice(source.indexOf('function renderPhotoResults('),source.indexOf('function render(){')),c);
  return {c,grid:node('div')};
 }
 function descendants(x){return [x,...x.children.flatMap(descendants)];}
