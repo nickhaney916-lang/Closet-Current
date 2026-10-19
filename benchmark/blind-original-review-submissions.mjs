@@ -67,6 +67,10 @@ export function validateBlindOriginalSubmission(packet,submission){
   total+=items.length;
   rows.push({sourceId,sourceSha256:original.sourceSha256,itemCount:items.length,
    visibleForms:items.map(x=>({category:x.category,form:x.form,visibility:x.visibility})),
+   // Two people can AGREE that an item is unknown or partly covered.
+   // That agreement is not an independently verified form or physical mask.
+   unresolvedFormOrVisibility:items.some(x=>x.category==='Uncertain'||
+     /^(unknown|uncertain)$/i.test(x.form.trim())||x.visibility!=='visible'),
    sourceFullyInspected:true,photoHashVerified:true});
  }
  if(submissionMap.size!==sourceMap.size)throw Error('Unexpected extra original source');
@@ -96,6 +100,7 @@ export function reconcileBlindOriginalSubmissions(firstPacket,first,secondPacket
    map.set(key,(map.get(key)||0)+1);
   }return [...map].sort((x,y)=>x[0].localeCompare(y[0]));};
   const formAgreement=JSON.stringify(tally(row.visibleForms))===JSON.stringify(tally(other.visibleForms));
+  const unresolvedFormOrVisibility=row.unresolvedFormOrVisibility||other.unresolvedFormOrVisibility;
   const visibilityAgreement=JSON.stringify(
    [...row.visibleForms.map(x=>x.visibility)].sort())===
    JSON.stringify([...other.visibleForms.map(x=>x.visibility)].sort());
@@ -104,7 +109,9 @@ export function reconcileBlindOriginalSubmissions(firstPacket,first,secondPacket
    countAgreement:row.itemCount===other.itemCount,
    categoryAndFormMultisetAgreement:formAgreement,
    visibilityMultisetAgreement:visibilityAgreement,
-   needsThirdReviewer:row.itemCount!==other.itemCount||!formAgreement||!visibilityAgreement,
+   unresolvedFormOrVisibility,
+   needsThirdReviewer:row.itemCount!==other.itemCount||!formAgreement||
+     !visibilityAgreement||unresolvedFormOrVisibility,
    actualPhysicalGarmentCount:null,instanceCorrespondenceVerified:false,
    sourcePixelOutlinesApproved:false});
  }
@@ -114,6 +121,7 @@ export function reconcileBlindOriginalSubmissions(firstPacket,first,secondPacket
   reviewerAliases:[a.reviewerAlias,b.reviewerAlias],
   countsDisagree:photos.filter(x=>!x.countAgreement).map(x=>x.sourceId),
   categoryOrSpecificFormDisagree:photos.filter(x=>!x.categoryAndFormMultisetAgreement).map(x=>x.sourceId),
+  unknownOrPartiallyVisiblePhotos:photos.filter(x=>x.unresolvedFormOrVisibility).map(x=>x.sourceId),
   photosNeedingThirdReviewer:photos.filter(x=>x.needsThirdReviewer).map(x=>x.sourceId),
   photosWithSameLabelsNotInstanceVerified:photos.filter(x=>!x.needsThirdReviewer).map(x=>x.sourceId),
   physicalGarmentRecall:null,independentMaskIoU:null,
