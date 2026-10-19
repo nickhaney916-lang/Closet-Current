@@ -125,7 +125,7 @@ test('a queued save stores newly approved original-photo metadata, not a stale s
  const c={batch:[item],items:[],ClothingDetails:{validColor:v=>v==='Blue'||v==='Red'},
   normalizeClothing:x=>x,queued:fn=>new Promise((resolve,reject)=>{
    release=()=>Promise.resolve().then(fn).then(resolve,reject);
-  }),db:{transaction(){transactions++;const tx={objectStore(name){return {put(value){if(name==='items')stored=structuredClone(value);}}};setImmediate(()=>tx.oncomplete?.());return tx;}},
+  }),db:{transaction(){transactions++;const tx={objectStore(name){return {put(value){if(name==='items')stored=structuredClone(value);}}}};setImmediate(()=>tx.oncomplete?.());return tx;}},
   structuredClone,Date,persistDraft(){},render(){}};
  vm.createContext(c);vm.runInContext(js,c);
  const pending=c.saveIndexed(item);
