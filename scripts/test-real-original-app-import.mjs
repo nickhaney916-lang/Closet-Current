@@ -121,6 +121,70 @@ try{
   assert.equal(y.original,x.original);
   assert.equal(y.recognition,x.recognition);
  }
+ // Continue the ACTUAL model-produced garment from photo review -> owned
+ // closet -> Style This. Matching jeans/shoes are explicitly SYNTHETIC owned
+ // test fixtures: we are validating UI/source integrity, not style aesthetics.
+ const realSourceId=await page.evaluate(()=>[...items,...batch].find(x=>
+  x.importFilename==='original-shirt.jpg')?.id);
+ assert.ok(realSourceId);
+ await page.evaluate(async()=>{
+  const make=(id,category,itemType,color)=>{
+   const svg='<svg xmlns="http://www.w3.org/2000/svg" width="84" height="116"><rect width="84" height="116" fill="'+color+'"/></svg>';
+   return normalizeClothing({id,category,itemType,color,name:id.replaceAll('-',' '),
+    image:'data:image/svg+xml,'+encodeURIComponent(svg),
+    seasons:[],pattern:'Solid',sleeveLength:'Unknown',fit:'Regular',brand:'',
+    size:'',material:'',occasion:'',notes:''});
+  };
+  const owned=[make('pilot-owned-jeans','Bottoms','Jeans','Blue'),
+   make('pilot-owned-sneakers','Shoes','Sneakers','White')];
+  await writeAll(owned);items.push(...owned);render();
+ });
+ const needsReview=await page.evaluate(id=>batch.some(x=>x.id===id),realSourceId);
+ if(needsReview){
+  await page.evaluate(id=>adjustPhoto(batch.find(x=>x.id===id)),realSourceId);
+  const dialog=page.locator('dialog.clothing-editor');
+  await dialog.waitFor({state:'visible'});
+  await dialog.locator('select[aria-label="Main category"]').selectOption('Tops');
+  await dialog.locator('select[aria-label="Item type"]').selectOption('T-shirt');
+  // This is a SCRIPTED USER CONFIRMATION, not proof the actual photo is Blue.
+  await dialog.getByLabel('Color',{exact:true}).fill('Blue');
+  await dialog.getByRole('button',{name:'Save & style this'}).click();
+  await dialog.waitFor({state:'detached'});
+ }else{
+  await page.evaluate(id=>styleNewClosetItem(id),realSourceId);
+ }
+ await page.locator('#stylist:not([hidden])').waitFor({timeout:15000});
+ await page.locator('#styledCollectionResults .styled-outfit').first().waitFor({timeout:15000});
+ const styled=await page.evaluate(id=>({
+  savedRealGarment:items.some(x=>x.id===id),
+  pendingRealGarment:batch.some(x=>x.id===id),
+  originalPreserved:items.find(x=>x.id===id)?.image===
+    [...items,...batch].find(x=>x.id===id)?.image,
+  garmentSourceSaved:!!items.find(x=>x.id===id)?.image?.startsWith('data:image/jpeg;'),
+  options:styledCollectionResults.map(x=>x.board.slots),
+  owned:items.map(x=>x.id)
+ }),realSourceId);
+ assert.equal(styled.savedRealGarment,true,'Reviewed real photograph must reach owned closet');
+ assert.equal(styled.pendingRealGarment,false);
+ assert.equal(styled.garmentSourceSaved,true);
+ assert.ok(styled.options.length>0,'Reviewed real-source garment must open styling');
+ assert.ok(styled.options.every(x=>x.top===realSourceId&&
+  x.bottom==='pilot-owned-jeans'&&x.shoes==='pilot-owned-sneakers'));
+ assert.ok(styled.options.every(x=>Object.values(x).filter(Boolean).every(id=>styled.owned.includes(id))),
+  'Styling must never introduce unowned clothing');
+ await page.evaluate(()=>queued(()=>Promise.resolve()));
+ await page.reload();
+ await page.evaluate(()=>Promise.all([closetReady,outfitBoardReady]));
+ const final=await page.evaluate(id=>({
+  saved:items.some(x=>x.id===id),
+  original:items.find(x=>x.id===id)?.image,
+  recognition:recognitionSourcePhoto(items.find(x=>x.id===id)),
+  syntheticReferencesPresent:items.some(x=>x.id==='pilot-owned-jeans')&&
+   items.some(x=>x.id==='pilot-owned-sneakers')
+ }),realSourceId);
+ assert.ok(final.saved&&final.syntheticReferencesPresent);
+ assert.equal(final.original,after.find(x=>x.id===realSourceId)?.image);
+ assert.equal(final.recognition,after.find(x=>x.id===realSourceId)?.recognition);
  assert.deepEqual(errors,[]);
  assert.deepEqual(writes,[],'No private image upload or billable AI request');
  const summary={
@@ -130,6 +194,9 @@ try{
   garmentCategory:shirt.category,garmentSubtype:shirt.itemType,
   garmentSavedAutomatically:captured.saved.some(x=>x.sourceName==='original-shirt.jpg'),
   negativeAutoSaved:false,unfinishedGarmentRemainsReviewable:captured.review.some(x=>x.sourceName==='original-shirt.jpg'),
+  reviewedGarmentSavedAndRestored:final.saved,scriptedColorChoiceNotRealAccuracy:true,
+  ownedOnlyOutfitsGenerated:styled.options.length,
+  originalRgbUnchangedByStyling:final.recognition===after.find(x=>x.id===realSourceId)?.recognition,
   realWorldGarmentAccuracy:null,actualPhysicalPhoneTested:false,
   liveCameraTested:false,hostedLoginTested:false,
   realTwoGarmentAIProviderCalls:0,paidCalls:0,externalWriteRequests:0,
