@@ -135,7 +135,7 @@ test('a queued save stores newly approved original-photo metadata, not a stale s
   }),db:{transaction(){transactions++;const tx={objectStore(name){return {put(value){if(name==='items')stored=structuredClone(value);}}}};setImmediate(()=>tx.oncomplete?.());return tx;}},
   structuredClone,Date,persistDraft(){},render(){}};
  vm.createContext(c);vm.runInContext(js,c);
- const pending=c.saveIndexed(item);
+ const pending=c.saveIndexed(item,()=>true);
  item.color='Red';item.name='Red shirt';
  release();assert.equal(await pending,true);
  assert.equal(transactions,1);
@@ -155,7 +155,7 @@ test('queued save rejects an original-photo draft whose category or color became
   }),db:{transaction(){opened++;throw Error('Invalid draft reached IndexedDB');}},
   structuredClone,Date,persistDraft(){},render(){}};
  vm.createContext(c);vm.runInContext(js,c);
- const pending=c.saveIndexed(item);
+ const pending=c.saveIndexed(item,()=>true);
  item.color='Unknown';release();
  assert.equal(await pending,false);
  assert.equal(opened,0);
@@ -167,7 +167,7 @@ test('automatic save revalidates a changed garment draft before opening storage'
  const c={batch:[],items:[],ClothingDetails:{validColor:v=>v==='Blue'},normalizeClothing:x=>x,queued:fn=>fn(),db:{transaction(){throw Error('Unsafe item reached database');}},structuredClone,Date,persistDraft(){},render(){}};
  vm.createContext(c);vm.runInContext(js,c);
  const base={id:'one',outfitSourceId:'outfit-1',name:'Blue shirt',category:'Tops',itemType:'T-shirt',color:'Blue',segmentHint:{clipped:false,categories:['Tops'],types:['T-shirt']}};
- const stale=structuredClone(base);c.batch=[structuredClone(base)];assert.equal(await c.saveIndexed(stale),false,'superseded draft with same id must not save');
+ const stale=structuredClone(base);c.batch=[structuredClone(base)];assert.equal(await c.saveIndexed(stale,()=>true),false,'superseded draft with same id must not save');
  for(const mutate of [
   x=>x.segmentHint.clipped=true,
   x=>x.segmentHint.displayFallback='original-crop',
@@ -179,6 +179,20 @@ test('automatic save revalidates a changed garment draft before opening storage'
   x=>x.scanFailed=true
  ]){
   const item=structuredClone(base);mutate(item);c.batch=[item];
-  assert.equal(await c.saveIndexed(item),false,'invalid changed draft must not write');
+  assert.equal(await c.saveIndexed(item,()=>true),false,'invalid changed draft must not write');
  }
+});
+
+test('queued auto-save requires a verified current-original source callback',async()=>{
+ const js=source.slice(source.indexOf('function segmentationAllows('),source.indexOf('function applyLocalChoice('))+
+  '\n'+source.slice(source.indexOf('async function saveIndexed('),source.indexOf('async function recognizeItem('));
+ let txCount=0;
+ const item={id:'confirmed',image:'source-photo',name:'Blue shirt',category:'Tops',itemType:'T-shirt',color:'Blue'};
+ const c={batch:[item],items:[],ClothingDetails:{validColor:v=>v==='Blue'},normalizeClothing:x=>x,
+  queued:fn=>fn(),db:{transaction(){txCount++;throw Error('No unverified save permitted');}},
+  structuredClone,Date,persistDraft(){},render(){}};
+ vm.createContext(c);vm.runInContext(js,c);
+ assert.equal(await c.saveIndexed(item),false,'missing callback is not proof of the recognized photo');
+ assert.equal(await c.saveIndexed(item,()=>false),false,'changed source is not approved');
+ assert.equal(txCount,0,'both unsafe paths must stop before opening storage');
 });
