@@ -1,7 +1,8 @@
 name: Mobile capture and closet persistence flow
 on:
+  # Temporary same-source flat-lay research test; remove after run.
   push:
-    branches: [main]
+    branches: [main, research/whole-outfit-readiness-evidence-20261018]
     paths:
       - 'public/**'
       - 'scripts/run-mobile-flow.mjs'
@@ -58,6 +59,7 @@ jobs:
           sudo apt-get install -y ffmpeg
           node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos commons-0001,commons-0002,commons-0003,commons-0021,commons-0024,commons-0033,commons-0035,commons-0045,commons-0049,commons-0053,commons-0060,commons-0065,commons-0070,commons-0079,commons-0083,commons-0094
           node scripts/download-reviewed-photos.mjs benchmark/manifest-visible-legwear-2.json benchmark/photos validation-0031
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos commons-0059
           mkdir -p benchmark/photos benchmark/mobile-flow
           cp benchmark/locked-photo-sources.json benchmark/mobile-flow/
           ffmpeg -loglevel error -loop 1 -i benchmark/photos/commons-0001.jpg -vf 'scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2:black' -r 10 -t 2 -pix_fmt yuv420p -f yuv4mpegpipe benchmark/mobile-camera.y4m
@@ -75,6 +77,8 @@ jobs:
           node scripts/run-mobile-flow.mjs benchmark/mobile-flow
       - name: Measure real whole-outfit separation and automatic indexing
         run: node scripts/run-real-whole-outfit-flow.mjs benchmark/mobile-flow
+      - name: Verify no-person flat-lay review with actual licensed photograph
+        run: node scripts/run-real-whole-outfit-flow.mjs benchmark/mobile-flatlay commons-0059
       - name: Audit real-outfit readiness without making an accuracy claim
         run: node scripts/audit-whole-outfit-handoff.mjs benchmark/mobile-flow/real-whole-outfit-flow.json benchmark/mobile-flow/real-whole-outfit-readiness.json
       - name: Verify saved-item styling and one-piece swap on touch viewport
@@ -85,5 +89,7 @@ jobs:
         if: always()
         with:
           name: mobile-flow-results
-          path: benchmark/mobile-flow/
+          path: |
+            benchmark/mobile-flow/
+            benchmark/mobile-flatlay/
           retention-days: 14
