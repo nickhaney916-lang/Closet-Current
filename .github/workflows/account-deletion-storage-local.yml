@@ -4,6 +4,9 @@ on:
     branches: ['fix/photo-clarity-high-quality-downsampling-20261016']
     paths:
       - 'scripts/test-local-supabase-storage-deletion.mjs'
+      - 'scripts/test-local-supabase-sdk-account-deletion.mjs'
+      - 'supabase/functions/account-delete/deletion-coordinator.mjs'
+      - 'supabase/functions/account-delete/supabase-adapters.mjs'
       - 'supabase/cloud-backup.sql'
       - 'supabase/design/account-deletion-write-barrier.DRAFT.sql'
       - '.github/workflows/account-deletion-storage-local.yml'
@@ -26,7 +29,9 @@ jobs:
             sudo apt-get install -y -qq postgresql-client
           fi
       - name: Check integration script syntax before container startup
-        run: node --check scripts/test-local-supabase-storage-deletion.mjs
+        run: |
+          node --check scripts/test-local-supabase-storage-deletion.mjs
+          node --check scripts/test-local-supabase-sdk-account-deletion.mjs
       - name: Start isolated local Supabase Auth, PostgREST and Storage
         shell: bash
         run: |
@@ -63,6 +68,22 @@ jobs:
           source "$RUNNER_TEMP/closet-disposable-supabase.env"
           set +a
           node "$GITHUB_WORKSPACE/scripts/test-local-supabase-storage-deletion.mjs"
+      - name: Install pinned local SDK without changing repository dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --prefix "$RUNNER_TEMP/closet-current-local-sdk" \
+            --no-save --no-package-lock --no-audit --no-fund \
+            @supabase/supabase-js@2.75.0
+      - name: Run real SDK adapters against disposable local Supabase
+        shell: bash
+        run: |
+          set -euo pipefail
+          set -a
+          source "$RUNNER_TEMP/closet-disposable-supabase.env"
+          set +a
+          export LOCAL_SDK_ROOT="$RUNNER_TEMP/closet-current-local-sdk"
+          node "$GITHUB_WORKSPACE/scripts/test-local-supabase-sdk-account-deletion.mjs"
       - name: Shut down and destroy temporary containers
         if: always()
         shell: bash
