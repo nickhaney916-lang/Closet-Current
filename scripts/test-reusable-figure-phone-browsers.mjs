@@ -29,6 +29,14 @@ for(const [id,category,color,expectedLayers] of [
  licensed.push({id,category,color,expectedLayers,image:'data:image/jpeg;base64,'+bytes.toString('base64'),
   attribution:source.attribution,sha256:source.sha256});
 }
+const extractionCases=JSON.parse(await readFile('benchmark/local-fitting-real-photo-manifest.json','utf8')).cases;
+const extractionWitnesses=JSON.parse(await readFile('benchmark/dark-studio-source-witnesses.json','utf8'));
+const extractionInputs=[];
+for(const row of extractionCases){
+ const bytes=await readFile('benchmark/fixtures/'+row.image);
+ assert.equal(createHash('sha256').update(bytes).digest('hex'),row.sourceSha256);
+ extractionInputs.push({...row,image:'data:image/jpeg;base64,'+bytes.toString('base64')});
+}
 const results=[];
 await mkdir('artifacts/local-fitting',{recursive:true});
 try{
@@ -208,10 +216,50 @@ try{
     await page.locator('#reusableFigureStage').screenshot({path:'artifacts/local-fitting/'+
      (browserEngine===chromium?'android':'iphone')+'-'+fixture.id+'.png'});
    }
+   const extractionProbes=[];
+   for(const row of extractionInputs){
+    const measured=await page.evaluate(async({row,witnesses})=>{
+     const photo=new Image();photo.src=row.image;await photo.decode();
+     const scale=Math.min(1,Math.sqrt(150000/(photo.naturalWidth*photo.naturalHeight)));
+     const canvas=document.createElement('canvas');canvas.width=Math.floor(photo.naturalWidth*scale);canvas.height=Math.floor(photo.naturalHeight*scale);
+     const ctx=canvas.getContext('2d',{willReadFrequently:true});ctx.drawImage(photo,0,0,canvas.width,canvas.height);
+     const source=ctx.getImageData(0,0,canvas.width,canvas.height).data;
+     const proposal=ClosetDarkStudioMask.analyze(source,canvas.width,canvas.height,row);
+     const result={id:row.id,proposalAvailable:proposal.proposalAvailable,displayEligible:proposal.displayEligible,reason:proposal.reason};
+     if(proposal.proposalAvailable){
+      const output=ClosetDarkStudioMask.applyAlpha(source,proposal.alpha);
+      let rgbChanged=0;for(let i=0;i<source.length;i++)if(i%4!==3&&source[i]!==output[i])rgbChanged++;
+      const patches=[];
+      for(const patch of witnesses.witnesses){
+       const [l,t,r,b]=patch.box;let total=0,correct=0;
+       for(let y=Math.ceil(t*canvas.height);y<Math.floor(b*canvas.height);y++)
+        for(let x=Math.ceil(l*canvas.width);x<Math.floor(r*canvas.width);x++){
+         total++;if(output[(y*canvas.width+x)*4+3]===(patch.role==='garment'?255:0))correct++;
+        }
+       patches.push({name:patch.name,role:patch.role,total,correct:patch.role==='boundary-ambiguous'?null:correct});
+      }
+      const bounds=ClosetGarmentWarp.alphaBounds(output,canvas.width,canvas.height);
+      const trimmed=new Uint8ClampedArray(bounds.width*bounds.height*4);
+      for(let y=0;y<bounds.height;y++)trimmed.set(output.subarray(((bounds.top+y)*canvas.width+bounds.left)*4,
+       ((bounds.top+y)*canvas.width+bounds.left+bounds.width)*4),y*bounds.width*4);
+      const fitted=ClosetGarmentWarp.rasterize(trimmed,ClosetGarmentWarp.makeMesh(bounds.width,bounds.height,row.category));
+      Object.assign(result,{rgbChanged,backgroundPixelsRemoved:proposal.backgroundPixels,patches,meshPixelBytes:fitted.length});
+     }
+     return result;
+    },{row,witnesses:extractionWitnesses});
+    assert.equal(measured.proposalAvailable,row.id==='commons-0002');
+    assert.equal(measured.displayEligible,false,'unreviewed new candidates must not auto-display');
+    if(measured.proposalAvailable){
+     assert.equal(measured.rgbChanged,0);assert.ok(measured.meshPixelBytes>0);
+     for(const patch of measured.patches)if(patch.role!=='boundary-ambiguous')assert.equal(patch.correct,patch.total,patch.name);
+    }
+    extractionProbes.push(measured);
+   }
+   await writeFile('artifacts/local-fitting/'+(browserEngine===chromium?'android':'iphone')+'-extraction-probes.json',JSON.stringify(extractionProbes,null,2));
    assert.deepEqual(remoteWrites,[]);
    assert.deepEqual(errors,[]);
    results.push({engine:title,ownedLayers:2,reusedFigures:2,optionalSelfieLocalOnly:true,
-    remotePostCount:remoteWrites.length,licensedPhotoChecks:photoResults,realPhoneHardwareTested:false});
+    remotePostCount:remoteWrites.length,licensedPhotoChecks:photoResults,extractionProposals:extractionProbes.filter(x=>x.proposalAvailable).length,realPhoneHardwareTested:false});
    await ctx.close();
   }finally{await browser.close();}
  }

@@ -1,5 +1,33 @@
 # Closet Current master development checkpoint
 
+## Conservative real-photo extraction proposals — October 19, 2026 Pacific
+
+- Isolated branch `feature/conservative-dark-garment-extraction-20261019`, based
+  on PR #36 `9943f7e`. Existing PR #35/#36/#37 branches unchanged. Reuses PR #37's
+  12-case manifest. Adds no remote inference or customer-photo operations.
+- New bounded dark-neutral exterior flood proposes original-pixel alpha for
+  saturated upper garments, with category/material/border/component refusal.
+  Source RGB stays identical; native alpha remains on its existing path.
+- Actual 12-photo run: 1 proposal (red-shirt `commons-0002`), 11 with no proposal,
+  0 newly approved automatic displays and no independent full-mask scores.
+  New proposal stays `displayEligible:false`; existing customer display/cache
+  behavior is preserved until independent mask/composite evidence exists.
+- Red shirt at 316x473: 87,179 exterior pixels removed, 0 RGB bytes edited;
+  5,694/5,694 sampled garment-core pixels retained; 7,993/7,993 sampled background
+  pixels removed. Three initial edge rectangles remain explicitly ambiguous,
+  not counted as pure fabric. These are assistant-inspected partial patches,
+  not independent ground truth, whole-mask fidelity or real-fit proof.
+- Diagnostic candidate is exercised with the existing inverse mesh. Collar/cuff
+  dark fringes and indistinguishable black-trim loss remain risks; jeans,
+  waistlines, pale/black clothing, mannequins and outdoor scenes remain held.
+- Local build/full suite: **998 passed, 0 failed, 3 skipped**; 6 new focused
+  tests. CI configured for real-photo reproducibility/artifacts and Android
+  Chromium/iPhone WebKit execution with exact licensed sources/patches, native
+  privacy/cache/race regressions and zero remote writes. Verify final-head CI.
+- Evidence guide: `docs/DARK-STUDIO-EXTRACTION-EVIDENCE-20261019.md`; actual JSON:
+  `benchmark/dark-studio-extraction-results-20261019.json`. No production merge,
+  deployment, paid generation, new services, uploads or Drive Duel changes.
+
 ## Local fitting follow-up to PR #32 — October 19, 2026 Pacific
 
 - Isolated branch `feature/local-fitting-landmarks-20261019`, based exactly on

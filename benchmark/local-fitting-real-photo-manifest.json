@@ -1,0 +1,230 @@
+{
+  "schemaVersion": 1,
+  "baselineCommit": "ec32f7773451dcd3001ecea5c5747c71bd09e0b6",
+  "evidenceType": "assistant-inspected-source-risk-inventory-not-independent-ground-truth",
+  "independentlyApprovedMasks": 0,
+  "cases": [
+    {
+      "id": "commons-0001",
+      "image": "commons-0001.jpg",
+      "sourceSha256": "d20d66d4173f56c47e35540f081ecdfcee6e019df665ee245d967d126e117684",
+      "category": "Tops",
+      "primaryColor": "White",
+      "visibleFeatures": [
+        "collars",
+        "sleeves",
+        "seams",
+        "logos",
+        "colors",
+        "transparency",
+        "fabricDetail"
+      ],
+      "sourceInspection": "Pale printed shirt on dark mannequin; preserve pale sleeve edges and printed lettering.",
+      "expectedDisposition": "hold",
+      "independentReferenceMask": null,
+      "review": null
+    },
+    {
+      "id": "commons-0002",
+      "image": "commons-0002.jpg",
+      "sourceSha256": "fef606d6ed7354a2238f1bcc2584942747ca6fa4a2b16b2e9eec21f639d10667",
+      "category": "Tops",
+      "primaryColor": "Red",
+      "visibleFeatures": [
+        "collars",
+        "sleeves",
+        "seams",
+        "logos",
+        "colors",
+        "transparency",
+        "fabricDetail"
+      ],
+      "sourceInspection": "Dark mannequin and background; no garment-only alpha reference.",
+      "expectedDisposition": "hold",
+      "independentReferenceMask": null,
+      "review": null
+    },
+    {
+      "id": "commons-0003",
+      "image": "commons-0003.jpg",
+      "sourceSha256": "cb909d7ad9c3940bfa4db0cc50b2ea7025faebe3dcec8fe80067f900760bba64",
+      "category": "Tops",
+      "primaryColor": "Black",
+      "visibleFeatures": [
+        "collars",
+        "sleeves",
+        "seams",
+        "logos",
+        "colors",
+        "transparency",
+        "fabricDetail"
+      ],
+      "sourceInspection": "Mannequin neck, jeans and gray background; large AJ graphic.",
+      "expectedDisposition": "hold",
+      "independentReferenceMask": null,
+      "review": null
+    },
+    {
+      "id": "commons-0023",
+      "image": "commons-0023.jpg",
+      "sourceSha256": "5be4cb0d7017987d8625caf53ac979f0c78245617dc5828aec5f77ae8f4ea8ef",
+      "category": "Bottoms",
+      "primaryColor": "Blue",
+      "visibleFeatures": [
+        "seams",
+        "colors",
+        "transparency",
+        "fabricDetail"
+      ],
+      "sourceInspection": "Mannequin waist and shoes; preserve waistband, pockets, leg gap and hems.",
+      "expectedDisposition": "hold",
+      "independentReferenceMask": null,
+      "review": null
+    },
+    {
+      "id": "commons-0024",
+      "image": "commons-0024.jpg",
+      "sourceSha256": "8e28473b101c70a5e4b7daae819a0342405bfcb7abbf4850dbbb4e801dd7ac4f",
+      "category": "Bottoms",
+      "primaryColor": "Blue",
+      "visibleFeatures": [
+        "seams",
+        "colors",
+        "transparency",
+        "fabricDetail"
+      ],
+      "sourceInspection": "Mannequin waist, belt and gray scene; preserve pockets and jean hems.",
+      "expectedDisposition": "hold",
+      "independentReferenceMask": null,
+      "review": null
+    },
+    {
+      "id": "commons-0035",
+      "image": "commons-0035.jpg",
+      "sourceSha256": "9fd067b0919d519eb7924ebd5c4ddf0bc0f3956cfd229fe1ab12c16cccb085ca",
+      "category": "Bottoms",
+      "primaryColor": "Orange",
+      "visibleFeatures": [
+        "seams",
+        "colors",
+        "transparency",
+        "fabricDetail"
+      ],
+      "sourceInspection": "Retail scene, hangers and background clothing; preserve separate short legs.",
+      "expectedDisposition": "hold",
+      "independentReferenceMask": null,
+      "review": null
+    },
+    {
+      "id": "commons-0043",
+      "image": "commons-0043.jpg",
+      "sourceSha256": "c8d0812ab69d698f5bf8dc5a14ace6b8034e4c74152471acf4f079fdd6d0c344",
+      "category": "Bottoms",
+      "primaryColor": "Black",
+      "visibleFeatures": [
+        "seams",
+        "colors",
+        "transparency",
+        "fabricDetail"
+      ],
+      "sourceInspection": "Patterned skirt and mannequin waist; preserve pattern and wide hem.",
+      "expectedDisposition": "hold",
+      "independentReferenceMask": null,
+      "review": null
+    },
+    {
+      "id": "commons-0053",
+      "image": "commons-0053.jpg",
+      "sourceSha256": "e7a617cd23a159864f619e8397d5f37d48b684e47dddc4ad6b46b14481042019",
+      "category": "Dresses",
+      "primaryColor": "Black",
+      "visibleFeatures": [
+        "collars",
+        "seams",
+        "logos",
+        "colors",
+        "transparency",
+        "fabricDetail"
+      ],
+      "sourceInspection": "White exterior is not sufficient: attached pale mannequin neck contaminates cutout.",
+      "expectedDisposition": "hold",
+      "independentReferenceMask": null,
+      "review": null
+    },
+    {
+      "id": "commons-0064",
+      "image": "commons-0064.jpg",
+      "sourceSha256": "bb68b22a7fdaff20e71eb969bb5d857598a5ca6f4b47f172dc7a8623b7bd6b83",
+      "category": "Outerwear",
+      "primaryColor": "Gray",
+      "visibleFeatures": [
+        "collars",
+        "sleeves",
+        "seams",
+        "colors",
+        "transparency",
+        "fabricDetail"
+      ],
+      "sourceInspection": "Lapel, yellow patterned lining and gray backdrop; neckline/body distinction is uncertain.",
+      "expectedDisposition": "hold",
+      "independentReferenceMask": null,
+      "review": null
+    },
+    {
+      "id": "commons-0068",
+      "image": "commons-0068.jpg",
+      "sourceSha256": "5d372824e1054c4c392969bed227784cd30d7011e95db769218b20a28302633f",
+      "category": "Outerwear",
+      "primaryColor": "Gray",
+      "visibleFeatures": [
+        "collars",
+        "sleeves",
+        "seams",
+        "colors",
+        "transparency",
+        "fabricDetail"
+      ],
+      "sourceInspection": "Rear-view fur coat outdoors; front figure alignment is unsupported.",
+      "expectedDisposition": "hold",
+      "independentReferenceMask": null,
+      "review": null
+    },
+    {
+      "id": "commons-0079",
+      "image": "commons-0079.jpg",
+      "sourceSha256": "b577483e5244dfb53e60cc8a0b54a4130e695cf388e5534e38a2b04580727ec6",
+      "category": "Shoes",
+      "primaryColor": "Black",
+      "visibleFeatures": [
+        "seams",
+        "logos",
+        "colors",
+        "transparency",
+        "fabricDetail"
+      ],
+      "sourceInspection": "Shoe, laces and outdoor surface; preserve sole and detached lace details.",
+      "expectedDisposition": "hold",
+      "independentReferenceMask": null,
+      "review": null
+    },
+    {
+      "id": "commons-0016",
+      "image": "commons-0016.jpg",
+      "sourceSha256": "e0510f06c475fa048585e6ff437359cb4255ce3a425e40a69dc54cc337f5ab24",
+      "category": "Outerwear",
+      "primaryColor": "Beige",
+      "visibleFeatures": [
+        "collars",
+        "sleeves",
+        "seams",
+        "colors",
+        "transparency",
+        "fabricDetail"
+      ],
+      "sourceInspection": "Pale embroidered coat and non-white backdrop; preserve embroidery and sleeves.",
+      "expectedDisposition": "hold",
+      "independentReferenceMask": null,
+      "review": null
+    }
+  ]
+}
