@@ -1,5 +1,34 @@
 # Closet Current master development checkpoint
 
+## Actual local figure creation — October 19, 2026
+
+- Separate `feature/local-fixed-figure-creation-20261019`, based on PR #49
+  `15c7d16a`; existing branches, public assets, fitting and occlusion unchanged.
+- Official Blender 4.3.0 standalone archive verified against published SHA-256,
+  running locally. Pinned MakeHuman `a8bc2d54` CC0 mesh/adult targets/eyes/joints/
+  weights individually hashed; complete source licenses preserved. No upstream
+  application code, photo textures, paid inference or customer images used.
+- Actually rendered exactly one adult female and one adult male at native
+  1941×3597; editable Blender scenes, same-size sRGB masters, 1294×2398 PNG and
+  970×1798 lossless WebP derivatives. These are new candidate scene renders,
+  not upscaled previews. Actual outputs live in CI's review artifact; committed
+  code/source lock/recipe and local measurement snapshot enable recreation.
+- Final borders clear; 24,717 / 25,008 native soft-alpha pixels; leg motion from
+  arm posing 0; max projected source-joint pair delta 1.7722% of canvas.
+  Source joints are not approved body placements. Repeated derivative reports
+  match after atomic output writes/fixed sRGB profile metadata.
+- Rejected quick outputs exposed clipped hands, bad source-coordinate material
+  boundaries, unintended leg deformation and missing metacarpal pose weights.
+  Final synthetic eyes/skin/hair, jagged garment edges and block shoes still
+  fail a production-look claim. Independent anatomy/appearance/final commercial
+  product review and physical-phone evidence remain missing. 0 approvals.
+- Local build/full suite: 1042 passed, 0 failed, 3 skipped; 5 new tests. Exact-head
+  CI renders both scenes, checks artifacts and runs new-candidate Android/iPhone
+  browser emulation plus existing fitting regressions, never real phones.
+- Guide: `docs/LOCAL-FIGURE-CREATION-20261019.md`; local actual snapshot:
+  `benchmark/figure-creation/local-results-20261019.json`. No purchases, new
+  recurring charges, merge/deploy, customer uploads or Drive Duel changes.
+
 ## Conservative real-photo extraction proposals — October 19, 2026 Pacific
 
 - Isolated branch `feature/conservative-dark-garment-extraction-20261019`, based
