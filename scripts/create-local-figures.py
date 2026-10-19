@@ -108,8 +108,8 @@ for kind in recipe['figures']:
  for a,b in binding_segments:
   segment=trim_data.splines.new('POLY')
   segment.points.add(1)
-  for point,vertex in zip(segment.points,[cloth_coords[a],cloth_coords[b]]):
-   point.co=(vertex[0],vertex[1]-.002,vertex[2],1)
+  for spline_point,vertex in zip(segment.points,[cloth_coords[a],cloth_coords[b]]):
+   spline_point.co=(vertex[0],vertex[1]-.002,vertex[2],1)
  binding_ob=bpy.data.objects.new(kind+'-bounded-original-front-binding',trim_data)
  bpy.context.collection.objects.link(binding_ob)
  trim_data.materials.append(trim_mat)
