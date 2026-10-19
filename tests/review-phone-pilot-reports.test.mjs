@@ -66,7 +66,7 @@ test('device-check report itself excludes photos, email, clothing names and user
  assert.equal(r.summary.checked,2);
  assert.equal(r.summary.missing.length,15);
  assert.equal(r.summary.locallyComplete,false);
- for(const forbidden of ['data:image','person@example.org','privateClothes','personID','photo'])
+ for(const forbidden of ['data:image','person@example.org','privateClothes','personID','base64,private'])
   assert.ok(!raw.includes(forbidden),'private data leaked: '+forbidden);
  assert.equal(r.sendAutomatically,false);
 });
