@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 test('deletion HTTP entrypoint is disabled and cannot load service credentials',async()=>{
  const source=await readFile('supabase/functions/account-delete/index.ts','utf8');
+ const executable=source.split('\n').filter(line=>!line.trimStart().startsWith('//')).join('\n');
  assert.match(source,/status:503/);
  assert.match(source,/deletionCompleted:false/);
  assert.doesNotMatch(source,/SUPABASE_SERVICE_ROLE_KEY|Deno\.env\.get|createClient|import\(/);

@@ -37,16 +37,28 @@ function mock(cfg={}){
     return {data:paths.map(name=>({name})),error:null};
    }
   };}},
-  from(table){assert.equal(table,'closet_backups');return {
-   delete(){return {eq(col,uid){assert.equal(col,'owner_id');assert.equal(uid,A);
-    return Promise.resolve({data:null,error:cfg.deleteBackupError?{message:'no'}:null}).then(v=>{
-     calls.push('deleteBackup');if(!v.error)backup=false;return v;
-    });}}},
-   select(column){assert.equal(column,'owner_id');return {eq(col,uid){
-    assert.equal(col,'owner_id');assert.equal(uid,A);return {limit(n){
-     assert.equal(n,1);calls.push('hasBackup');return Promise.resolve({data:backup?[{owner_id:A}]:[],error:null});
-    }};
-   }}};
+  from(table){
+   assert.equal(table,'closet_backups');
+   return {
+    delete(){
+     return {eq(col,uid){
+      assert.equal(col,'owner_id');assert.equal(uid,A);
+      calls.push('deleteBackup');
+      if(cfg.deleteBackupError)return Promise.resolve({data:null,error:{message:'no'}});
+      backup=false;return Promise.resolve({data:null,error:null});
+     }};
+    },
+    select(column){
+     assert.equal(column,'owner_id');
+     return {eq(col,uid){
+      assert.equal(col,'owner_id');assert.equal(uid,A);
+      return {limit(n){
+       assert.equal(n,1);calls.push('hasBackup');
+       return Promise.resolve({data:backup?[{owner_id:A}]:[],error:null});
+      }};
+     }};
+    }
+   };
   }
  };
  const passwordClient={auth:{async signInWithPassword({email,password}){
