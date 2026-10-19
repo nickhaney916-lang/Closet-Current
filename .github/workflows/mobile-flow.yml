@@ -75,6 +75,8 @@ jobs:
           node scripts/run-mobile-flow.mjs benchmark/mobile-flow
       - name: Measure real whole-outfit separation and automatic indexing
         run: node scripts/run-real-whole-outfit-flow.mjs benchmark/mobile-flow
+      - name: Audit real-outfit readiness without making an accuracy claim
+        run: node scripts/audit-whole-outfit-handoff.mjs benchmark/mobile-flow/real-whole-outfit-flow.json benchmark/mobile-flow/real-whole-outfit-readiness.json
       - name: Verify saved-item styling and one-piece swap on touch viewport
         run: node scripts/test-style-my-new-item-mobile.mjs
       - name: Verify separated-outfit review, layering and persistence on touch viewport
