@@ -5,7 +5,7 @@ function setup({result={strong:true,choices:[choice],details:{color:'Blue',patte
  const stored=[],elements=new Map();const el=id=>{if(!elements.has(id))elements.set(id,{});return elements.get(id);};
  const c={scheduleMemoryReview(){},recognitionState:{phase:'idle',percent:null,activeId:null},renderRecognitionNotice(){},sessionCapturedIds:new Set(),items:[],batch:[],session:0,localPending:new Set(),automaticQueue:[],automaticRunning:false,localReady:true,localLoadPromise:null,recognitionUnavailable:false,localBatch:false,crypto:{randomUUID},Date,structuredClone,$:el,render(){},persistDraft(){},message(text){c.messageText=text;},checkPhoto:quality||(async(image)=>({blank:false,signature:[image.charCodeAt(0),100,200],aspect:1})),similarPhotos:(a,b)=>Array.isArray(a)&&Array.isArray(b)&&a.join()===b.join(),localRequest:request||(async()=>result),queued:work=>work(),db:{transaction(){const tx={objectStore:name=>({put(value){if(name==='items')stored.push(value);}})};setImmediate(()=>tx.oncomplete?.());return tx;}}};
  vm.createContext(c);vm.runInContext(fs.readFileSync('public/taxonomy.js','utf8'),c);vm.runInContext(fs.readFileSync('public/clothing-details.js','utf8'),c);
- vm.runInContext(source.slice(source.indexOf('function candidate('),source.indexOf('function stopCamera(')),c);
+ vm.runInContext(source.slice(source.indexOf('function exactlyRepeatedCapturedItem('),source.indexOf('function stopCamera(')),c);
  // The actual outfit worker always attaches an unmasked original-RGB crop.
  // Older simulated tests omitted it, then accidentally relied on using the
  // display cutout for recognition. Model the real worker contract explicitly.
