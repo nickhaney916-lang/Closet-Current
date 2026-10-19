@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "status": "proposed-not-production-approved",
+  "fixedIds": ["female", "male"],
+  "canonicalStage": {"width": 647, "height": 1199},
+  "minimumMaster": {"width": 1294, "height": 2398},
+  "preferredMaster": {"width": 1941, "height": 3597},
+  "maxAspectRelativeError": 0.002,
+  "maxPairAnchorDelta": 0.02,
+  "maxDecodedPixels": 20000000,
+  "samplingCases": [
+    {"cssWidth": 270, "dpr": 1, "cssZoom": 1},
+    {"cssWidth": 270, "dpr": 2, "cssZoom": 1},
+    {"cssWidth": 270, "dpr": 3, "cssZoom": 1},
+    {"cssWidth": 290, "dpr": 3, "cssZoom": 2},
+    {"cssWidth": 647, "dpr": 2, "cssZoom": 1}
+  ],
+  "requiredRights": ["commercialUse", "modificationAndClothingOverlays", "appDistributionAndCaching", "userCompositeExport", "optionalFaceReplacement", "recognizablePersonReleaseOrFictionalEvidence"],
+  "requiredVisualChecks": ["neutralBaseClothing", "frontPoseWithSeparateArms", "completeHandsFeetAndHead", "consistentLightAndScale", "landmarksReviewed", "occlusionLayersReviewed"],
+  "requiredPairAnchors": ["headTop", "chin", "shoulderCenter", "waistCenter", "hipCenter", "ankleCenter", "soleCenter"],
+  "note": "Canvas and reviewed anchor consistency do not prove anatomy, photorealism, clothing fit, legal rights or physical-phone quality. Policy tolerances require product review."
+}
