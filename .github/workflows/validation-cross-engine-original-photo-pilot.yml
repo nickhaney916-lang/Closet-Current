@@ -35,7 +35,7 @@ jobs:
           node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos commons-0001,commons-0090
       - name: Build combined original-photo and outfit workflow without paid providers
         run: node scripts/build.mjs
-      - name: Classify the same original top and negative with the real offline model
+      - name: Classify the same original top and negative with the browser-local model (remote weights can download)
         run: node scripts/run-phone-photo-check.mjs "benchmark/phone-photo-pilot/$PHONE_BROWSER"
       - name: Reject misleading simulated-hardware or missing source attribution
         run: |
@@ -45,7 +45,7 @@ jobs:
             const s=JSON.parse(fs.readFileSync('benchmark/phone-photo-pilot/'+process.env.PHONE_BROWSER+'/results.json','utf8'));
             if(!r.passed||!r.realWorker||r.originalSourceShaVerified!==2||
                r.physicallyTested!==false||r.liveCameraTested!==false||
-               r.providerBills!==0||r.externalRequests!==0||
+               r.providerBills!==0||r.externalWriteRequests!==0||
                r.categoryMatches!==1||r.negativeRejected!==1||
                s.summary.photos!==2||s.summary.errors!==0)
               throw Error('Original source or truthful emulator evidence gate failed');
