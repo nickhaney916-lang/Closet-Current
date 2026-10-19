@@ -6,9 +6,9 @@ const sha='a'.repeat(64),s='commons-0078',packet=slot=>({
  reviewerSlot:slot,modelPredictionsIncluded:false,manifestCategoryLabelsIncluded:false,
  originalPhotosCopiedOrReencoded:false,independentlyReviewed:false,allGarmentFormsVerified:false,
  photoCount:2,originals:[
-  {sourceId:s,image:s+'.jpg',sourceSha256:sha,originalSourceUrl:'https://commons.wikimedia.org/wiki/File:'+s,license:'CC0'},
+  {sourceId:s,image:s+'.jpg',sourceSha256:sha,license:'CC0'},
   {sourceId:'commons-0059',image:'commons-0059.jpg',sourceSha256:'b'.repeat(64),
-   originalSourceUrl:'https://commons.wikimedia.org/wiki/File:commons-0059',license:'CC0'}
+   license:'CC0'}
  ]});
 const invent=(id,sourceSha256,forms=[],notes='')=>({
  sourceId:id,sourceSha256,originalJpegShaVerified:true,
@@ -76,5 +76,9 @@ test('self-approval, wrong reviewer slot or missing true original image approval
  assert.throws(()=>reconcileBlindOriginalSubmissions(packet('first'),a,packet('second'),b),/different identities/);
  assert.throws(()=>validateBlindOriginalSubmission(packet('first'),{...a,reviewerSlot:'second'}),/Invalid/);
  assert.throws(()=>validateBlindOriginalSubmission({...packet('first'),modelPredictionsIncluded:true},a),/Untrusted/);
+ assert.throws(()=>validateBlindOriginalSubmission({...packet('first'),originals:[
+   {...packet('first').originals[0],originalSourceUrl:'https://commons.wikimedia.org/wiki/File:High_top_sneakers.jpg'},
+   packet('first').originals[1]
+  ]},a),/Untrusted/);
  assert.throws(()=>validateBlindOriginalSubmission(packet('first'),{...a,originalJpegsVerified:false}),/Invalid/);
 });
