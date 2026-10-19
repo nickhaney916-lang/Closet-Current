@@ -121,7 +121,7 @@ test('missing original outfit crop is blocked before scanner reads cleaned image
   localRequest:async(...x)=>{classifications.push(x);return {};},
   localReady:true,recognitionUnavailable:false,ClothingDetails:Details,
   node,normalizeClothing:x=>x,itemsSaved:0,
-  recordDeviceEvent(){},message(){},localPending:new Set()
+  recordDeviceEvent(){},message(){},persistDraft(){},localPending:new Set()
  };
  vm.createContext(c);vm.runInContext(helper+scanner,c);
  await c.recognizeItem(draft);
