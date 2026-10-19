@@ -366,8 +366,36 @@ async function captureCameraStill(track,StillCapture,isCurrent=()=>true){
  }finally{bitmap.close?.();}
 }
 function beep(){if(!$('sound').checked||!audio)return;try{const o=audio.createOscillator(),g=audio.createGain();o.frequency.value=740;g.gain.value=.04;o.connect(g);g.connect(audio.destination);o.start();o.stop(audio.currentTime+.12);}catch{}}
+// Identical AI-cleaned DISPLAY JPEG bytes are not evidence that two
+// *physical* clothes are identical. White-matted previews may collide across
+// photos or different garment regions. For outfit captures, compare the
+// original full-source photo and the rectangle instead. Never silently
+// discard an unverified physical item; retain it with a duplicate warning.
+function exactlyRepeatedCapturedItem(existing,proposed){
+ if(existing?.image!==proposed?.image)return false;
+ const validPhoto=x=>typeof x==='string'&&x.startsWith('data:image/jpeg;base64,');
+ const newSource=proposed.originalPhoto?.image;
+ if(!proposed.outfitSourceId||!validPhoto(newSource)||
+    !validPhoto(proposed.recognitionPhoto?.image))return true;
+ // Old single-item or incomplete records can't prove that the new garment
+ // is the same physical article. The review queue handles possible matches.
+ if(!existing.outfitSourceId||!validPhoto(existing.originalPhoto?.image))return false;
+ if(existing.originalPhoto.image!==newSource)return false;
+ // Re-scanning the same source in a different group is a true repeat.
+ if(existing.outfitSourceId!==proposed.outfitSourceId)return true;
+ const a=existing.cropBounds,b=proposed.cropBounds;
+ const valid=x=>x&&['x','y','width','height'].every(k=>
+  typeof x[k]==='number'&&Number.isFinite(x[k]))&&
+  x[k]>=0&&x[k]<=1)&&x.width>0&&x.height>0&&
+  x.x+x.width<=1.001&&x.y+x.height<=1.001;
+ if(!valid(a)||!valid(b))return true;
+ const overlap=Math.max(0,Math.min(a.x+a.width,b.x+b.width)-Math.max(a.x,b.x))*
+  Math.max(0,Math.min(a.y+a.height,b.y+b.height)-Math.max(a.y,b.y));
+ const union=a.width*a.height+b.width*b.height-overlap;
+ return union<=0||overlap/union>=.975;
+}
 function candidate(image,options={}){
- if([...items,...batch].some(item=>item.image===image)){if(typeof recordDeviceEvent==='function')recordDeviceEvent('exact_duplicate_skipped');message('Exact duplicate skipped. Show the next garment.');return false;}
+ if([...items,...batch].some(item=>exactlyRepeatedCapturedItem(item,{image,...options}))){if(typeof recordDeviceEvent==='function')recordDeviceEvent('exact_duplicate_skipped');message('Exact duplicate skipped. Show the next garment.');return false;}
  const item=normalizeClothing({id:crypto.randomUUID(),image,name:'',category:'Uncategorized',color:'',notes:'',localStatus:'Reading photo…'});
  if(typeof recordDeviceEvent==='function')recordDeviceEvent('photo_queued');
  if(options.outfitSourceId){item.outfitSourceId=options.outfitSourceId;item.requiresOwnershipConfirmation=false;item.segmentHint=options.segmentHint;item.recognitionPhoto=options.recognitionPhoto;item.originalPhoto=options.originalPhoto;item.cropBounds=options.cropBounds;if(options.colorEstimate){Object.assign(item,ClothingDetails.fillColor(item,options.colorEstimate));if(item.colorSource==='photo-estimate')item.colorMethod='garment-mask';}}
@@ -627,8 +655,12 @@ async function recognizeItem(item){
   if(quality.blank){if(typeof recordDeviceEvent==='function')recordDeviceEvent('blank_skipped');batch=batch.filter(x=>x.id!==item.id);message('Blank or featureless photo skipped. Frame one garment and try again.');return true;}
   if(!item.userAdjusted)Object.assign(item,ClothingDetails.fillColor(item,trustedAutomaticPhotoColor(item,quality)));item.visualSignature=quality.signature;item.visualAspect=quality.aspect;
   const matches=[...items,...batch].filter(x=>x.id!==item.id);
-  if(matches.some(x=>x.image===item.image)){if(typeof recordDeviceEvent==='function')recordDeviceEvent('exact_duplicate_skipped');batch=batch.filter(x=>x.id!==item.id);message('Exact duplicate skipped.');return true;}
-  item.possibleDuplicate=matches.some(x=>!independentlyDistinctOutfitRegions(item,x)&&Math.abs((x.visualAspect||0)-quality.aspect)<.02&&similarPhotos(quality.signature,x.visualSignature));
+  if(matches.some(x=>exactlyRepeatedCapturedItem(x,item))){if(typeof recordDeviceEvent==='function')recordDeviceEvent('exact_duplicate_skipped');batch=batch.filter(x=>x.id!==item.id);message('Exact duplicate skipped.');return true;}
+  // Two *different* physical garments can produce identical cleaned previews.
+  // Never auto-save a display collision even if semantic hints disagree:
+  // retain both original-source candidates for identity review.
+  item.possibleDuplicate=matches.some(x=>x.image===item.image||
+   (!independentlyDistinctOutfitRegions(item,x)&&Math.abs((x.visualAspect||0)-quality.aspect)<.02&&similarPhotos(quality.signature,x.visualSignature)));
   if(recognitionUnavailable)throw Error('Recognition is unavailable. Try again or use Adjust.');
   item.localStatus='Identifying this garment…';render();
   let result;
