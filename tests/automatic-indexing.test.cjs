@@ -435,6 +435,7 @@ test('a late model response must not classify newly replaced original RGB, scene
   assert.equal(stored.length,0,'stale model reply cannot auto-save a different source');
   assert.equal(c.items.length,0);
   assert.equal(Boolean(item.localAnalyzed),false,'stale response must not mark the source classified');
+  assert.equal(item.scanFailed,true,'stale recognition cannot expose a quick color-save shortcut');
   assert.match(item.localStatus,/Photo or category changed during recognition/);
  }
 });
@@ -449,6 +450,7 @@ test('a photo changed during async quality check never reaches classification',a
  finishQuality({blank:false,signature:[1,2,3],aspect:1});
  await done(c);
  assert.equal(modelCalls,0);assert.equal(stored.length,0);
+ assert.equal(c.batch[0].scanFailed,true,'changed original photo must not offer quick save');
  assert.equal(c.batch[0].category,'Uncategorized');
 });
 test('queued automatic save fails closed when original source or accepted type changes',async()=>{
