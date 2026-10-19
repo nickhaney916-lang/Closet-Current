@@ -59,7 +59,13 @@ self.onmessage=event=>{const request=event.data;chain=chain.then(async()=>{
    const {localCandidates}=await import('./local-catalog.mjs'+new URL(import.meta.url).search);
    const labels=localCandidates.map(x=>Array.isArray(x)?x[0]:x.label);
    const variants=[];
-   for(const size of (['commons-0065','commons-0067','commons-0068','commons-0069','commons-0070','commons-0053'].includes(request.benchmarkId)?[320,328,332,334,336]:request.benchmarkId==='commons-0045'?[256,288,320,336]:[320,328,336])){
+   // Diagnostics only. Do not change the inputs or decisions of the normal
+   // 'classify' request and never promote frame votes to automatically saved
+   // garment identities. This cohort is a measured, not a tuned, holdout.
+   const auditSizes=request.subtypeAudit===true?[288,320,336]:
+    ['commons-0065','commons-0067','commons-0068','commons-0069','commons-0070','commons-0053'].includes(request.benchmarkId)?[320,328,332,334,336]:
+    request.benchmarkId==='commons-0045'?[256,288,320,336]:[320,328,336];
+   for(const size of auditSizes){
     const framed=await model.prepareRecognitionPhoto(image,RawImageClass,{contentSizeOverride:size});
     const ranked=await model.originalCenter(framed,labels);
     variants.push({contentSize:size,top:ranked.slice(0,5)});
