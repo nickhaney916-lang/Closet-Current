@@ -2,12 +2,17 @@ import test from 'node:test';import assert from 'node:assert/strict';import vm f
 import * as segmentation from '../public/outfit-segmentation.mjs';
 import {diagnoseOutfitRegions} from '../public/outfit-diagnostics.mjs';
 const source=fs.readFileSync('public/outfit-worker.mjs','utf8');
-function setup({failLoad=false,failSecondCrop=false,noPerson=false,completeShoePair=false,twoUpper=false,weakUpper=false}={}){
+function setup({failLoad=false,failSecondCrop=false,noPerson=false,completeShoePair=false,twoUpper=false,weakUpper=false,flatLay=false}={}){
  const sent=[],width=20,height=20,data=new Float32Array(18*width*height);data.fill(-10);for(let i=0;i<400;i++)data[i]=10;
  const shoeRegions=completeShoePair?[[9,5,15,4,4],[10,11,15,4,4]]:[[9,6,16,3,3],[10,10,16,3,3]];
  for(const [id,left,top,w,h]of [[4,5,4,8,5],[6,6,10,6,5],...shoeRegions,[11,7,1,4,3]])for(let y=top;y<top+h;y++)for(let x=left;x<left+w;x++){const i=y*width+x;data[i]=-10;data[id*400+i]=10;}
  if(twoUpper)for(let y=4;y<9;y++)for(let x=15;x<19;x++){const i=y*width+x;data[i]=-10;data[4*400+i]=10;}
  if(weakUpper)for(let y=4;y<9;y++)for(let x=5;x<13;x++)data[y*width+x]=9.1;
+ if(flatLay){data.fill(-10);for(let i=0;i<400;i++)data[i]=10;
+  for(let y=2;y<18;y++)for(let x=2;x<18;x++){
+   const i=y*width+x;data[i]=-10;data[7*400+i]=10;
+  }
+ }
  let crops=0;class Image{constructor(data,width,height,channels){Object.assign(this,{data,width,height,channels});}static async read(){return new Image(new Uint8ClampedArray(1200).fill(40),20,20,3);}async toBlob(){if(failSecondCrop&&++crops===3)throw Error('private decode error');return {arrayBuffer:async()=>new Uint8Array([255,216,255]).buffer};}}
  if(noPerson)for(let y=1;y<4;y++)for(let x=7;x<11;x++){data[11*400+y*20+x]=-10;data[y*20+x]=10;}
  const runtime={AutoModelForSemanticSegmentation:{from_pretrained:async()=>{if(failLoad)throw Error('private error');return async()=>({logits:{data,dims:[1,18,20,20]}});}},AutoProcessor:{from_pretrained:async()=>async()=>({})},RawImage:Image,env:{backends:{onnx:{wasm:{}}}}};
@@ -86,4 +91,19 @@ test('uncertain but substantial upper region is surfaced only as original-pixel 
  assert.equal(upper[0].colorEstimate,null,'unreliable mask can never approve a color');
  assert.ok(upper[0].recognitionPhoto.image.startsWith('data:image/jpeg;base64,'));
  assert.equal(h.sent.find(x=>x.type==='done').count,3);
+});
+
+test('whole-outfit worker routes strong no-person garment only to source-pixel review',async()=>{
+ const h=setup({flatLay:true});await h.run(true);
+ const pieces=h.sent.filter(x=>x.type==='piece');
+ assert.equal(pieces.length,1);
+ const only=pieces[0].piece;
+ assert.equal(only.label,'Dress');
+ assert.equal(only.hint.displayFallback,'original-crop');
+ assert.equal(only.hint.displayFallbackReason,'no-person-evidence-review-only');
+ assert.equal(only.colorEstimate,null,'flat-lay prediction must never approve automatic color');
+ assert.ok(only.recognitionPhoto.image.startsWith('data:image/jpeg;base64,'));
+ const diagnostic=h.sent.find(x=>x.type==='diagnostics').summary;
+ assert.equal(diagnostic.personGatePassed,false);
+ assert.equal(diagnostic.regions.find(x=>x.id===7).emitted,true);
 });
