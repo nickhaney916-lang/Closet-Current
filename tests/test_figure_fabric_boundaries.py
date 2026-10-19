@@ -81,8 +81,18 @@ class UpperRimTests(unittest.TestCase):
 
 
 class DecorativeBindingTests(unittest.TestCase):
+    def binding_shell(self):
+        coords=[]
+        for upper in [False,True]:
+            for n in range(64):
+                angle=2*math.pi*n/64
+                coords.append([.22*math.cos(angle),-.12,
+                               1.47+.008*math.sin(3*angle) if upper else .90])
+        faces=[[n,(n+1)%64,64+(n+1)%64,64+n] for n in range(64)]
+        return coords,faces
+
     def test_trim_follows_actual_existing_upper_front_boundary_edges(self):
-        coords,faces=UpperRimTests().upper_shell()
+        coords,faces=self.binding_shell()
         edges=approved_front_binding_segments(coords,faces)
         self.assertGreaterEqual(len(edges),6)
         copied=copy.deepcopy(coords)
@@ -94,7 +104,7 @@ class DecorativeBindingTests(unittest.TestCase):
         self.assertEqual(coords,copied)
 
     def test_trim_refuses_wide_gaps_missing_boundaries_and_invalid_geometry(self):
-        coords,faces=UpperRimTests().upper_shell()
+        coords,faces=self.binding_shell()
         with self.assertRaises(ValueError):approved_front_binding_segments(coords,faces,max_segment=.11)
         with self.assertRaises(ValueError):approved_front_binding_segments(coords,faces,low=.35,high=.55)
         with self.assertRaises(ValueError):approved_front_binding_segments(coords,[[0,0,1]])
