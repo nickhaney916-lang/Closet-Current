@@ -75,6 +75,45 @@ test('a repeat of the exact original source region is suppressed, but another or
  assert.ok(c.batch.every(x=>x.possibleDuplicate));
  assert.notEqual(c.batch[0].originalPhoto.image,c.batch[1].originalPhoto.image);
 });
+test('reprocessing one original scene under another group keeps distinct top/jacket layers and separate locations',async()=>{
+ const {c,stored}=setup({quality:async()=>({blank:false,signature:[33,34,35],aspect:1})});
+ const scene='data:image/jpeg;base64,SAMEORIGINALPHOTO';
+ const source={image:'same-cleaned-preview',outfitSourceId:'session-1',
+  originalPhoto:{image:scene},recognitionPhoto:{image:'data:image/jpeg;base64,TOPSOURCE'},
+  cropBounds:{x:.12,y:.19,width:.43,height:.5},
+  segmentHint:{categories:['Tops'],types:[],sourceLabel:'Upper garment',
+   layerRole:'base',clipped:false}};
+ const jacket={...source,outfitSourceId:'session-2',
+  recognitionPhoto:{image:'data:image/jpeg;base64,JACKETSOURCE'},
+  segmentHint:{categories:['Outerwear'],types:[],sourceLabel:'Upper garment',
+   layerRole:'outer',clipped:false}};
+ const far={...source,outfitSourceId:'session-3',
+  recognitionPhoto:{image:'data:image/jpeg;base64,FARSOURCE'},
+  cropBounds:{x:.6,y:.1,width:.3,height:.35}};
+ assert.equal(c.candidate(source.image,source),true);
+ assert.equal(c.candidate(jacket.image,jacket),true,
+  'new source ID must not discard a distinct overlapping outer layer');
+ assert.equal(c.candidate(far.image,far),true,
+  'different original-photo location must not be deduped across group IDs');
+ assert.equal(c.candidate(far.image,{...far,outfitSourceId:'session-4'}),false,
+  'same source, role and position remains a verified repeat across session IDs');
+ await done(c);
+ assert.equal(stored.length,0,'same-looking items cannot be automatically saved');
+ assert.equal(c.batch.length,3);
+ assert.ok(c.batch.every(x=>x.possibleDuplicate));
+ assert.deepEqual(new Set(c.batch.map(x=>x.recognitionPhoto.image)).size,3);
+});
+test('different group with unavailable geometry cannot be silently deduped as one physical garment',()=>{
+ const {c}=setup({request:()=>new Promise(()=>{})});
+ const first={outfitSourceId:'one',originalPhoto:{image:'data:image/jpeg;base64,ORIGINAL'},
+  recognitionPhoto:{image:'data:image/jpeg;base64,CROPA'},
+  segmentHint:{categories:['Tops'],types:[],clipped:false}};
+ const second={...first,outfitSourceId:'two',
+  recognitionPhoto:{image:'data:image/jpeg;base64,CROPB'}};
+ assert.equal(c.exactlyRepeatedCapturedItem({image:'same-preview',...first},
+  {image:'same-preview',...second}),false,
+  'without source rectangle evidence, independently imported groups require review');
+});
 test('same-looking standalone photo remains an exact duplicate, but original-backed outfit comparison is not lost',async()=>{
  const {c,stored}=setup({quality:async()=>({blank:false,signature:[56,57,58],aspect:1})});
  assert.equal(c.candidate('one-shot-display'),true);
