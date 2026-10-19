@@ -52,7 +52,9 @@ try{
      method!=='GET'&&method!=='HEAD'){
    writes.push(method);return route.abort('blockedbyclient');
   }
-  return route.continue();
+  // Continue through the older synthetic-login and trend-network guards.
+  // route.continue() would skip those handlers and contact real auth.
+  return route.fallback();
  });
  const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));
  await page.goto('http://127.0.0.1:'+srv.address().port+'/');
