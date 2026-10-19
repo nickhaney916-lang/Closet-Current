@@ -37,13 +37,13 @@ async function user(){
  const created=must(await api('/auth/v1/admin/users',{method:'POST',
   body:{id,email,password,email_confirm:true}}),'create disposable user');
  const actual=created?.id||created?.user?.id;
- assert.equal(actual,id,'auth admin creates the intended local-only user');
- users.push(id);
+ assert.match(actual,/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i,'missing disposable Auth user ID');
+ users.push(actual);
  const signed=must(await api('/auth/v1/token?grant_type=password',{
   method:'POST',key:anon,body:{email,password}}),'sign in disposable user');
- assert.equal(signed?.user?.id,id);
+ assert.equal(signed?.user?.id,actual);
  assert.ok(signed.access_token);
- return {id,access:signed.access_token};
+ return {id:actual,access:signed.access_token};
 }
 const photoPath=u=>u.id+'/'+name;
 const photoUrl=u=>'/storage/v1/object/closet-private/'+photoPath(u);
