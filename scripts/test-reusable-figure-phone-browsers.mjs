@@ -317,7 +317,8 @@ try{
     assert.ok(offset.offset>0&&offset.offset<3.5,
      'approved upper silhouette is conservatively recentered for '+figure);
     assert.equal(offset.top,offset.expectedTop);
-    assert.ok(Math.abs(offset.width-offset.oldWidth)<1e-9);
+    assert.ok(Math.abs(offset.width-offset.oldWidth)<.005,
+     'browser-rounded CSS percentages retain the same fitting scale');
     silhouetteResults.push({figure,correctionPercent:offset.offset,sourceUnchanged:true});
    }
    // A corrupted/display-uncodable transparent garment is held rather than
