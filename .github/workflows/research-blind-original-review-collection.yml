@@ -4,6 +4,9 @@ on:
     branches: [research/blind-original-photo-review-collection-20261019]
     paths:
       - 'benchmark/blind-original-photo-review.html'
+      - 'benchmark/blind-original-form-review.mjs'
+      - 'scripts/stage-blind-original-form-review.mjs'
+      - 'tests/blind-original-form-review.test.mjs'
       - 'benchmark/blind-original-review-submissions.mjs'
       - 'scripts/test-blind-original-photo-review-browser.mjs'
       - 'scripts/test-blind-real-originals-browser.mjs'
@@ -38,11 +41,36 @@ jobs:
         run: |
           mkdir -p benchmark/blind-original-review-packets
           gh run download 39289879093 --repo "$GH_REPO" -n original-form-review-queue-real-photo -D benchmark/blind-original-review-packets
-          test -s benchmark/blind-original-review-packets/blind-first-reviewer.json
+          test -s benchmark/blind-original-review-packets/review-queue.json
+          # Regenerate truly blinded packets from the review queue using
+          # current code. Older packed reviewer files included descriptive
+          # Wikimedia URLs and must NEVER be handed to blinded reviewers.
+          node scripts/stage-blind-original-form-review.mjs benchmark/blind-original-review-packets/review-queue.json benchmark/blind-original-review-packets
+          node --input-type=module -e "
+            import fs from 'node:fs';
+            for(const slot of ['first','second']){
+              const p=JSON.parse(fs.readFileSync('benchmark/blind-original-review-packets/blind-'+slot+'-reviewer.json'));
+              if(p.originals.some(x=>Object.hasOwn(x,'originalSourceUrl')||Object.hasOwn(x,'title')||
+                  Object.hasOwn(x,'modelResult')||Object.hasOwn(x,'manifestLabel')))
+                throw Error('Cannot release descriptive source metadata into blind reviewer packet');
+            }
+          "
           IDS=$(node -e "console.log(JSON.parse(require('fs').readFileSync('benchmark/manifest-holdout-16.json','utf8')).map(x=>x.id).join(','))")
           node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/blind-original-source-photos "$IDS"
       - name: Verify all 16 actual originals load on offline review page with cryptographic source identity
         run: node scripts/test-blind-real-originals-browser.mjs
+      - name: Publish only the first independent reviewer packet without source titles or AI labels
+        uses: actions/upload-artifact@v4
+        with:
+          name: blind-original-reviewer-first-no-answers
+          path: benchmark/blind-original-review-packets/blind-first-reviewer.json
+          retention-days: 14
+      - name: Publish only the SECOND independent reviewer packet without source titles or AI labels
+        uses: actions/upload-artifact@v4
+        with:
+          name: blind-original-reviewer-second-no-answers
+          path: benchmark/blind-original-review-packets/blind-second-reviewer.json
+          retention-days: 14
       - name: Prove review collection never authorizes new customer garment indexing
         run: |
           node --input-type=module -e "
