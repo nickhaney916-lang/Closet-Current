@@ -15,7 +15,7 @@ const name=createHash('sha256').update(image).digest('hex')+'.jpg';
 const info={realSupabaseStorageHttp:false,realSupabaseAuthHttp:false,
  userScopedStorage:false,lockStopsUploads:false,lockStopsBackupRpc:false,
  otherOwnerPreserved:false,privatePhotoRemoved:false,
- postAuthTombstonePreserved:false,localOnly:true};
+ postAuthTombstonePreserved:false,interruptedCleanupRecovered:false,localOnly:true};
 const users=[];
 async function api(path,{method='GET',key=admin,body,contentType='application/json'}={}){
  const res=await fetch(url+path,{method,headers:{
@@ -131,6 +131,45 @@ try{
  assert.equal(must(lockAgain,'durable post-Auth tombstone'),true);
  info.postAuthTombstonePreserved=true;
  assert.ok((await list(bob)).some(x=>x.name===name),'other account photo disappeared');
+ // Simulate an interrupted cleanup with a second disposable owner.
+ // The durable lock must survive the interruption and a retry, while any
+ // remaining private photo must still be removable via Storage HTTP.
+ const interrupted=await user();
+ must(await upload(interrupted),'interrupted owner's first photo');
+ const secondImage=Buffer.from('ffd8ffe000104a46494600010100000100010000fffe0005616263ffd9','hex');
+ const secondName=createHash('sha256').update(secondImage).digest('hex')+'.jpg';
+ must(await api('/storage/v1/object/closet-private/'+interrupted.id+'/'+secondName,{
+  method:'POST',key:interrupted.access,body:secondImage,contentType:'image/jpeg'
+ }),'interrupted owner's second photo');
+ must(await backup(interrupted),'interrupted owner's backup');
+ assert.equal((await list(interrupted)).length,2);
+ const firstLock=await api('/rest/v1/rpc/begin_closet_account_deletion',{
+  method:'POST',body:{p_owner:interrupted.id}});
+ assert.equal(must(firstLock,'lock interrupted owner'),true);
+ must(await api('/storage/v1/object/closet-private',{
+  method:'DELETE',body:{prefixes:[photoPath(interrupted)]}}),'partially remove first photo');
+ assert.deepEqual((await list(interrupted)).map(x=>x.name),[secondName]);
+ // A worker stopped here; the next attempt starts a fresh request and
+ // reacquires the idempotent lock without lifting its write prohibition.
+ const retryLock=await api('/rest/v1/rpc/begin_closet_account_deletion',{
+  method:'POST',body:{p_owner:interrupted.id}});
+ assert.equal(must(retryLock,'retry deletion lock'),true);
+ acceptableReject(await upload(interrupted),'new photo upload during cleanup retry');
+ assert.deepEqual((await list(interrupted)).map(x=>x.name),[secondName]);
+ must(await api('/storage/v1/object/closet-private',{
+  method:'DELETE',body:{prefixes:[interrupted.id+'/'+secondName]}}),
+ 'remove photo left by interrupted cleanup');
+ assert.equal((await list(interrupted)).length,0);
+ must(await api('/rest/v1/closet_backups?owner_id=eq.'+interrupted.id,{
+  method:'DELETE'}),'delete interrupted owner backup',[200,204]);
+ assert.deepEqual(must(await api('/rest/v1/closet_backups?owner_id=eq.'+interrupted.id+
+  '&select=owner_id'),'verify interrupted backup removed'),[]);
+ must(await api('/auth/v1/admin/users/'+interrupted.id,{method:'DELETE'}),
+  'delete interrupted disposable account',[200,204]);
+ acceptableReject(await upload(interrupted),'reused JWT after resumed account deletion');
+ assert.ok((await list(bob)).some(x=>x.name===name),
+  'unrelated account photo removed by interrupted cleanup');
+ info.interruptedCleanupRecovered=true;
  console.log('LOCAL_SUPABASE_STORAGE_ACCOUNT_DELETION '+JSON.stringify(info));
 }finally{
  // All created identities are ephemeral inside the CI-local Auth service.
