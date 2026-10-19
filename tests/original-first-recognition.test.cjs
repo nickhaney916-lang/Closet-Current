@@ -102,9 +102,9 @@ test('scanner and background review never read display cutout as their inference
  assert.match(scanner,/checkPhoto\(sourcePhoto\)/);
  assert.match(scanner,/localRequest\('classify',sourcePhoto/);
  const background=source.slice(source.indexOf('async function',source.indexOf('function applyLocalChoice(')),source.length);
- assert.match(background,/target\.recognitionPhoto\?\.image\|\|target\.image/);
- assert.match(background,/current\.recognitionPhoto\?\.image\|\|current\.image/);
- assert.match(background,/value\.recognitionPhoto\?\.image\|\|value\.image/);
+ assert.match(background,/image=recognitionSourcePhoto\(target\);if\(!image\)continue/);
+ assert.match(background,/recognitionSourcePhoto\(current\)===image/);
+ assert.match(background,/recognitionSourcePhoto\(current\)!==recognitionSourcePhoto\(value\)/);
  assert.doesNotMatch(scanner,/(?:normalizedPreview|tryOnImage)/);
 });
 
