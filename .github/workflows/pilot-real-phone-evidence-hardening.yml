@@ -8,6 +8,7 @@ on:
       - 'public/index.html'
       - 'benchmark/review-phone-pilot-reports.mjs'
       - 'tests/review-phone-pilot-reports.test.mjs'
+      - 'tests/compare-private-phone-pilot-cli.test.mjs'
       - 'tests/device-check.test.cjs'
       - 'tests/device-check-ui.test.cjs'
       - 'scripts/compare-private-phone-pilot-reports.mjs'
@@ -27,7 +28,7 @@ jobs:
         with:
           node-version: '22'
       - name: Fail closed on spoofed physical-phone claim and leaked photo data
-        run: node --test tests/device-check.test.cjs tests/device-check-ui.test.cjs tests/review-phone-pilot-reports.test.mjs
+        run: node --test tests/device-check.test.cjs tests/device-check-ui.test.cjs tests/review-phone-pilot-reports.test.mjs tests/compare-private-phone-pilot-cli.test.mjs
       - name: Run full integrated Node regressions on same build
         run: |
           node scripts/build.mjs
