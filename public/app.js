@@ -385,7 +385,7 @@ function exactlyRepeatedCapturedItem(existing,proposed){
  if(existing.outfitSourceId!==proposed.outfitSourceId)return true;
  const a=existing.cropBounds,b=proposed.cropBounds;
  const valid=x=>x&&['x','y','width','height'].every(k=>
-  typeof x[k]==='number'&&Number.isFinite(x[k]))&&
+  typeof x[k]==='number'&&Number.isFinite(x[k])&&
   x[k]>=0&&x[k]<=1)&&x.width>0&&x.height>0&&
   x.x+x.width<=1.001&&x.y+x.height<=1.001;
  if(!valid(a)||!valid(b))return true;
