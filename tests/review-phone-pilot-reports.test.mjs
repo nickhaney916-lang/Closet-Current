@@ -41,7 +41,7 @@ test('spoofed completion, forged phone data, leaked image bytes and wrong platfo
  const attacks=[
   x=>x.summary.locallyComplete=false,
   x=>x.summary.checked=1,
-  x=>x.summary.missing=[],
+  x=>x.summary.missing=['capture'],
   x=>x.image='data:image/png;base64,PRIVATE',
   x=>x.events.push({type:'scanner_error',url:'https://private-photo.example',stage:'identify'}),
   x=>x.events.push({type:'test_custom',code:'user-name'}),
