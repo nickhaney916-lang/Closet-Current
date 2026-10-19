@@ -63,6 +63,19 @@ try{
    });
    await page.waitForFunction(()=>document.querySelectorAll('#reusableFigureGarments img').length===2);
    assert.match(await page.locator('#reusableFigureStatus').innerText(),/2 owned clothing layers? displayed/);
+   const warpedState=await page.evaluate(()=>({
+    output:[...document.querySelectorAll('#reusableFigureGarments img')].map(x=>x.src),
+    original:[items.find(x=>x.id==='test-trousers').image,
+      items.find(x=>x.id==='test-shirt').image],
+    geometry:ClosetGarmentWarp.makeMesh(100,150,'Tops')?.triangles.length
+   }));
+   assert.equal(warpedState.geometry,32);
+   assert.equal(warpedState.output.length,2);
+   for(let i=0;i<2;i++){
+    assert.match(warpedState.output[i],/^data:image\/png;base64,/);
+    assert.notEqual(warpedState.output[i],warpedState.original[i],
+      'local fitting should create a display-only transformed copy');
+   }
    await page.locator('#reusableFigureChoice').selectOption('male');
    assert.match(await page.locator('#reusableFigureBase').getAttribute('src'),/male-preview\.webp/);
    // Simulated optional local-only selfie: never persisted, never sent.
