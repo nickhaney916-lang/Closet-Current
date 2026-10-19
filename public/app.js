@@ -654,11 +654,11 @@ function applyLocalChoice(item,choice,overwrite=false){
  if(!item.name?.trim())item.name=choice.label.replace(/^a |^an /,'').replace(/^./,c=>c.toUpperCase());
  Object.assign(item,normalizeClothing(item));item.localStatus='Local suggestion applied. Confirm the category, sleeves, and seasons before saving.';
 }
-async function saveIndexed(item){
+async function saveIndexed(item,sourceStillCurrent){
  let value;
  const saved=await queued(()=>new Promise((resolve,reject)=>{
   if(!db)return reject(Error('Browser storage is unavailable.'));
-  if(!batch.includes(item)||items.some(x=>x.id===item.id)||item.userAdjusted||item.requiresOwnershipConfirmation||item.possibleDuplicate||item.scanFailed||item.saveFailed||!segmentationAllows(item,{category:item.category,itemType:item.itemType})||item.category==='Uncategorized'||!ClothingDetails.validColor(item.color))return resolve(false);
+  if(typeof sourceStillCurrent!=='function'||!sourceStillCurrent()||!batch.includes(item)||items.some(x=>x.id===item.id)||item.userAdjusted||item.requiresOwnershipConfirmation||item.possibleDuplicate||item.scanFailed||item.saveFailed||!segmentationAllows(item,{category:item.category,itemType:item.itemType})||item.category==='Uncategorized'||!ClothingDetails.validColor(item.color))return resolve(false);
   // The queue can wait while recognition or a user edit changes the draft.
   // Snapshot ONLY after the last safety validation, so the IndexedDB item
   // reflects the exact original-derived category/color that was approved.
@@ -676,6 +676,16 @@ async function recognizeItem(item){
  const scanStarted=Date.now();let savingIndexed=false;recognitionState.activeId=item.id;item.scanFailed=false;item.saveFailed=false;item.localStatus='Checking photo quality…';render();
  try{
   const sourcePhoto=recognitionSourcePhoto(item);
+  // Pin the entire source identity at scan start, not just the cropped JPEG.
+  // A user can replace the full outfit, move the crop or adjust its semantic
+  // hint while model work is pending. Old results must not classify new pixels.
+  const originalDisplay=item.image,originalFull=item.originalPhoto?.image??null,
+   originalCategory=item.category,originalType=item.itemType,
+   originalHint=item.segmentHint?JSON.stringify(item.segmentHint):null;
+  const sourceStillCurrent=()=>recognitionSourcePhoto(item)===sourcePhoto&&
+   item.image===originalDisplay&&(item.originalPhoto?.image??null)===originalFull&&
+   item.category===originalCategory&&item.itemType===originalType&&
+   (item.segmentHint?JSON.stringify(item.segmentHint):null)===originalHint;
   if(!sourcePhoto){
    item.scanFailed=true;
    item.localStatus='Original source crop unavailable. Photograph this garment again or use Adjust; a cleaned cutout cannot identify it.';
@@ -683,6 +693,10 @@ async function recognizeItem(item){
   }
   const quality=await checkPhoto(sourcePhoto);
   if(!batch.some(x=>x.id===item.id))return;
+  if(!sourceStillCurrent()){
+   item.localStatus='Photo changed while scanning. Retry to identify the new original photo.';
+   return true;
+  }
   if(quality.blank){if(typeof recordDeviceEvent==='function')recordDeviceEvent('blank_skipped');batch=batch.filter(x=>x.id!==item.id);message('Blank or featureless photo skipped. Frame one garment and try again.');return true;}
   if(!item.userAdjusted)Object.assign(item,ClothingDetails.fillColor(item,trustedAutomaticPhotoColor(item,quality)));item.visualSignature=quality.signature;item.visualAspect=quality.aspect;
   const matches=[...items,...batch].filter(x=>x.id!==item.id);
@@ -698,6 +712,10 @@ async function recognizeItem(item){
   try{if(!localReady)await enableLocal();result=await localRequest('classify',sourcePhoto,item.id,item.segmentHint);}
   catch(error){recognitionUnavailable=true;throw error;}
   if(!batch.some(x=>x.id===item.id))return;
+  if(!sourceStillCurrent()){
+   item.localStatus='Photo changed during recognition. Retry to identify the new original photo.';
+   return true;
+  }
   if(typeof ClothingMemory!=='undefined'&&ClothingMemory.valid(result.recognitionMemory))item.recognitionMemory=result.recognitionMemory;
   item.localAnalyzed=true;item.localChoices=[];
   // Diagnostic evidence contains category/type scores only, never wardrobe images.
@@ -731,7 +749,7 @@ async function recognizeItem(item){
   if(item.requiresOwnershipConfirmation){item.localStatus='Identified. Add this piece only if it belongs in your closet.';return true;}
   item.localStatus='Recognized. Saving to your closet…';
   savingIndexed=true;
-  if(await saveIndexed(item))if(typeof recordDeviceEvent==='function')recordDeviceEvent('recognized_saved',{durationMs:Date.now()-scanStarted});
+  if(await saveIndexed(item,sourceStillCurrent))if(typeof recordDeviceEvent==='function')recordDeviceEvent('recognized_saved',{durationMs:Date.now()-scanStarted});
   if(recognitionState.phase==='save-failed')recognitionState.phase='ready';
   return true;
  }catch(error){
