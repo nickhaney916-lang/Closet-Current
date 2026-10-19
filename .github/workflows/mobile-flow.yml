@@ -1,9 +1,7 @@
 name: Mobile capture and closet persistence flow
 on:
-  # Research-only trigger to validate the actual layered licensed photo.
-  # Remove this branch trigger before integration into the shared development branch.
   push:
-    branches: [main, research/whole-outfit-readiness-evidence-20261018]
+    branches: [main]
     paths:
       - 'public/**'
       - 'scripts/run-mobile-flow.mjs'
