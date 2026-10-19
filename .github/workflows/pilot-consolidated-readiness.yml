@@ -1,0 +1,106 @@
+name: Consolidated pilot candidate — source, auth, wardrobe and unpaid try-on QA
+on:
+  push:
+    branches: [pilot/consolidated-readiness-no-deploy-20261019]
+    paths:
+      - 'public/**'
+      - 'scripts/**'
+      - 'tests/**'
+      - 'supabase/functions/ai-try-on/**'
+      - '.github/workflows/pilot-consolidated-readiness.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-and-guardrails:
+    runs-on: ubuntu-latest
+    timeout-minutes: 24
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Test full integrated source and latest production trend catalog
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+          node --input-type=module -e "
+            import fs from 'node:fs';
+            const t=JSON.parse(fs.readFileSync('public/trend-data.json','utf8'));
+            if(!t.schema_version||!Array.isArray(t.products)||!Array.isArray(t.sources)||
+               t.products.length<1||t.sources.length<1||
+               !Number.isFinite(Date.parse(t.updated_at))||
+               !Number.isFinite(Date.parse(t.next_refresh_at)))
+              throw Error('Merged pilot is missing current production trend catalog');
+            console.log('Pilot trends loaded: '+t.products.length+' products from '+t.sources.length+' sources');
+          "
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Type check unpaid AI try-on HTTP function and local identity safety
+        run: |
+          deno check supabase/functions/ai-try-on/index.ts
+          deno test --allow-net=127.0.0.1 --allow-env tests/deno/ai-tryon-runtime.test.mjs
+      - name: Confirm live provider and physical phone remain unapproved
+        run: |
+          mkdir -p test-results/pilot-consolidation
+          node scripts/audit-tryon-acceptance-evidence.mjs --branch-sha "$GITHUB_SHA" > test-results/pilot-consolidation/acceptance.json
+          node --input-type=module -e "
+            import fs from 'node:fs';
+            const r=JSON.parse(fs.readFileSync('test-results/pilot-consolidation/acceptance.json'));
+            if(r.status!=='blocked'||r.actualGarmentAccuracy!==null||
+               r.providerActivationAllowed||r.productionReleaseApproved)
+              throw Error('No paid AI or production release approval was granted');
+          "
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: consolidated-pilot-server-and-release-guards
+          path: test-results/pilot-consolidation/
+          if-no-files-found: ignore
+          retention-days: 14
+  phone-browser-pilot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install standalone Chromium and WebKit mobile emulation
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium webkit
+      - name: Build actual app and test client source/phone workflows without hosted accounts
+        run: |
+          node scripts/build.mjs
+          node scripts/test-auth-pilot-mobile.mjs
+          node scripts/test-original-crop-source-mobile.mjs
+          node scripts/test-original-source-duplicate-mobile.mjs
+          node scripts/test-whole-outfit-save-mobile.mjs
+      - name: Style an owned new item and swap shoes in both mobile browser engines
+        run: |
+          node scripts/test-style-my-new-item-mobile.mjs
+          STYLE_BROWSER=webkit node scripts/test-style-my-new-item-mobile.mjs
+      - name: Two-stage top and bottom generation lifecycle without any paid AI provider
+        env:
+          TRYON_QA_OUTPUT: test-results/pilot-consolidation
+        run: |
+          mkdir -p test-results/pilot-consolidation
+          node scripts/test-multigarment-device-emulation.mjs
+      - name: Reject simulated-phone results as evidence of physical hardware
+        run: |
+          node --input-type=module -e "
+            import fs from 'node:fs';
+            const r=JSON.parse(fs.readFileSync('test-results/pilot-consolidation/device-emulation-results.json'));
+            if(r.actualProviderCalls!==0||r.physicalDeviceRuns!==0||
+               r.actualImageFidelity!==null||r.results.length!==2)
+              throw Error('Emulated device output must never claim actual live AI / hardware evidence');
+          "
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: consolidated-pilot-two-phone-emulation
+          path: test-results/pilot-consolidation/
+          if-no-files-found: ignore
+          retention-days: 14
