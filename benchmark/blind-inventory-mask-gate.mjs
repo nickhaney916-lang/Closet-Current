@@ -20,7 +20,7 @@ const equal=(a,b)=>canonical(a)===canonical(b);
 // Other clothing types may only have a broad mask label (e.g. Shoes vs
 // Sneakers); do not pretend an unavailable fine-grained label was checked.
 const bottomForm=x=>{
- const value=String(x||'').trim().toLocaleLowerCase('en-US').replace(/\\s+/g,' ');
+ const value=String(x||'').trim().toLocaleLowerCase('en-US').replace(/\s+/g,' ');
  if(['skirt','mini skirt','maxi skirt','midi skirt'].includes(value))return 'skirt';
  if(['shorts','short pants','bermuda shorts'].includes(value))return 'shorts';
  if(['trousers','pants','jeans','dress pants','chinos'].includes(value))return 'trousers';
