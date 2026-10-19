@@ -29,7 +29,7 @@
       !Number.isSafeInteger(result.height)||result.width<12||result.height<12)return false;
    const size=query.source.length+result.image.length;
    if(query.source.length>MAX_SOURCE_BYTES||size>MAX_BYTES)return false;
-   entries=entries.filter(e=>!same(e,query)); // Avoid duplicate versions.
+   entries=entries.filter(e=>e.id!==query.id); // Replace changed image/color, not keep stale versions.
    bytes=entries.reduce((n,e)=>n+e.size,0);
    entries.push({id:query.id,source:query.source,category:query.category,
     primaryColor:query.primaryColor,result:result.image,
