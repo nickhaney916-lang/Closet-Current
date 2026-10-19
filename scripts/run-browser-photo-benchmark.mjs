@@ -3,6 +3,7 @@ import {createServer} from 'node:http';
 import {readFile,readdir,mkdir,writeFile} from 'node:fs/promises';
 import {extname,join,resolve} from 'node:path';
 const root=resolve('dist'),photoDir=resolve('benchmark/photos'),manifest=resolve(process.argv[2]||'benchmark/manifest-reviewed-32.json');
+const subtypeAudit=process.argv.includes('--subtype-audit');
 const outputDir=resolve(process.argv[3]||'benchmark/output');
 const types={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.json':'application/json','.bin':'application/octet-stream','.css':'text/css','.webmanifest':'application/manifest+json'};
 const server=createServer(async(req,res)=>{try{const p=new URL(req.url,'http://localhost').pathname;const name=resolve(root,'.'+decodeURIComponent(p==='/'?'/index.html':p));if(!name.startsWith(root+'/'))throw Error('Forbidden');const data=await readFile(name);res.writeHead(200,{'Content-Type':types[extname(name)]||'application/octet-stream','Access-Control-Allow-Origin':'*'});res.end(data);}catch{res.writeHead(404);res.end('Not found');}});
@@ -13,7 +14,7 @@ try{
  const context=await browser.newContext({acceptDownloads:true});const page=await context.newPage();
  page.on('console',msg=>console.log('Browser:',msg.type(),msg.text().slice(0,300)));
  page.on('pageerror',e=>console.log('Page error:',e.message));
- await page.goto('http://127.0.0.1:'+port+'/benchmark.html');
+ await page.goto('http://127.0.0.1:'+port+'/benchmark.html'+(subtypeAudit?'?subtypeAudit=1':''));
  await page.locator('#manifest').setInputFiles(manifest);
  const names=(await readdir(photoDir)).filter(x=>/\.(jpg|png|webp)$/i.test(x)).map(x=>join(photoDir,x));
  await page.locator('#photos').setInputFiles(names);
