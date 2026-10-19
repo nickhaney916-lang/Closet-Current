@@ -82,6 +82,8 @@ try{
     renderOutfitBoard();
    });
    await page.waitForFunction(()=>document.querySelectorAll('#reusableFigureGarments img').length===2);
+   assert.equal(await page.locator('#reusableFigurePhotoHelp').isVisible(),false,
+    'clean local cutouts should not show retake guidance');
    assert.match(await page.locator('#reusableFigureStatus').innerText(),/2 owned clothing layers? displayed/);
    const warpedState=await page.evaluate(()=>({
     output:[...document.querySelectorAll('#reusableFigureGarments img')].map(x=>x.src),
@@ -313,6 +315,28 @@ try{
     await page.locator('#reusableFigureStage').screenshot({path:'artifacts/local-fitting/'+
      (browserEngine===chromium?'android':'iphone')+'-'+fixture.id+'.png'});
    }
+
+   // A real licensed photograph remains held, but the user can immediately
+   // reach the existing single-photo capture without modifying the source.
+   assert.equal(await page.locator('#reusableFigurePhotoHelp').isVisible(),true);
+   assert.equal(await page.locator('#reusableFigureRetake').isVisible(),true);
+   assert.match(await page.locator('#reusableFigurePhotoHelpText').innerText(),/still saved/);
+   const heldItem=await page.evaluate(()=>items.find(x=>x.id==='commons-0003').image);
+   await page.locator('#reusableFigureRetake').click();
+   assert.equal(await page.locator('#scan').isVisible(),true);
+   assert.equal(await page.locator('#captureSingle').getAttribute('aria-pressed'),'true');
+   assert.equal(await page.evaluate(()=>items.find(x=>x.id==='commons-0003').image),heldItem);
+   await page.evaluate(()=>{
+    switchView('builder');
+    currentBoard.slots={top:'test-shirt',bottom:'test-trousers'};
+    renderOutfitBoard();
+   });
+   await page.waitForFunction(()=>document.querySelector('#reusableFigureStatus').textContent
+    .startsWith('2 owned clothing layers displayed'));
+   assert.equal(await page.locator('#reusableFigurePhotoHelp').isVisible(),false,
+    'a valid outfit should not show misleading held-photo instructions');
+   assert.equal(await page.locator('#reusableFigureRetake').isVisible(),false);
+
    const extractionProbes=[];
    for(const row of extractionInputs){
     const measured=await page.evaluate(async({row,witnesses})=>{

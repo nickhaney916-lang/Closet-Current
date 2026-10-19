@@ -8,6 +8,25 @@
  const garmentContainer=byId('reusableFigureGarments'),selfie=byId('reusableFigureSelfie');
  const status=byId('reusableFigureStatus'),selector=byId('reusableFigureChoice');
  const upload=byId('reusableSelfieUpload'),remove=byId('reusableSelfieRemove');
+ const photoHelp=byId('reusableFigurePhotoHelp');
+ const photoHelpText=byId('reusableFigurePhotoHelpText');
+ const retake=byId('reusableFigureRetake');
+ if(retake)retake.addEventListener('click',()=>{
+  // Reuse the existing Add/Single-item workflow. Never edit/delete the
+  // previously saved original, auto-activate the camera or upload anything.
+  if(typeof switchView==='function'){
+   switchView('scan');
+   if(typeof setCaptureMode==='function')setCaptureMode('single');
+  }
+ });
+ function updatePhotoHelp(held){
+  if(!photoHelp||!photoHelpText||!retake)return;
+  photoHelp.hidden=!held;
+  retake.hidden=!held;
+  if(held)photoHelpText.textContent=
+   'That clothing photo is still saved. For a clearer automatic cutout, photograph one item against a plain, contrasting surface in even light. Avoid mannequins and other clothes.';
+ }
+
  if(!engine||!stage||!base||!garmentContainer||!selfie||!status||!selector||!upload||!remove)return;
  let renderRevision=0,localFaceURL=null,lastOwner=root.closetAuth?.user?.id||null;
  const previewCache=root.ClosetFigurePreviewCache?.create();
@@ -96,6 +115,7 @@
   // Never show the previous outfit with the newly selected figure, nor
   // expose half an outfit while async decoding/compositing is in flight.
   garmentContainer.replaceChildren();
+  updatePhotoHelp(false); // Only the current finished render may show advice.
   status.textContent='Preparing local clothing preview…';
   const counts={shown:0,skipped:plan.skipped.length};
   const nextLayers=document.createDocumentFragment();
@@ -153,6 +173,7 @@
    ' displayed; '+counts.skipped+' held for transparent-cutout review. '+
    'This is a local styling collage, not a fit or fabric simulation.'+
    (localFaceURL?' Your selfie is on-device only.':'');
+  updatePhotoHelp(counts.skipped>0);
  }
  root.renderReusableFigurePreview=()=>{void render();};
  // This page is already tied to its existing signed-in local closet database.
