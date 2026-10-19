@@ -25,9 +25,17 @@ try{
   const browser=await engine.launch({headless:true,...(engine===chromium?{args:['--no-sandbox']}: {})});
   try{
    const context=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
-   await context.route('**/*',route=>route.request().url().startsWith(url)?
-    route.continue():route.abort('internetdisconnected'));
+   await context.route('**/*',route=>{
+    const target=route.request().url();
+    // WebKit may route local blob: images through Playwright. They are local
+    // already-hash-verified bytes, not a remote network request.
+    return target.startsWith(url)||target.startsWith('blob:')||target.startsWith('data:')?
+      route.continue():route.abort('internetdisconnected');
+   });
    const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(String(e)));
+   page.on('requestfailed',req=>console.log('ORIGINAL_IMAGE_REQUEST_FAILED '+JSON.stringify({
+    browser:name,url:req.url().slice(0,100),error:req.failure()?.errorText
+   })));
    await page.goto(url);
    await page.locator('#packet').setInputFiles({
     name:'blind-first-reviewer.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(packet))
