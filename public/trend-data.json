@@ -1,253 +1,193 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-13T03:12:45.537535Z",
-  "next_refresh_at": "2026-10-19T15:00:00Z",
+  "updated_at": "2026-10-19T15:11:36.941252Z",
+  "next_refresh_at": "2026-10-26T15:11:36.941252Z",
   "sources": [
     {
-      "id": "vogue-shoes",
-      "title": "Vogue \u00b7 Fall 2026 shoes",
-      "publication": "Vogue",
-      "url": "https://www.vogue.com/article/fall-2026-shoe-trends",
-      "published_at": "2026-09-16",
-      "checked_at": "2026-10-13T03:12:45.537535Z"
+      "id": "gq-uk-autumn-2026",
+      "title": "Autumn/winter 2026 menswear directions",
+      "publication": "British GQ",
+      "url": "https://www.gq-magazine.co.uk/article/autumn-winter-2026-menswear-trends",
+      "published_at": "2026-10-06",
+      "checked_at": "2026-10-19T15:11:36.941252Z"
     },
     {
-      "id": "www-shoes",
-      "title": "Who What Wear \u00b7 Winter 2026 shoes",
+      "id": "opumo-autumn-2026",
+      "title": "Autumn menswear: texture and proportions",
+      "publication": "OPUMO",
+      "url": "https://www.opumo.com/magazine/fall-fashion-the-autumn-menswear-trends-you-should-know-in-2026/",
+      "published_at": "",
+      "checked_at": "2026-10-19T15:11:36.941252Z"
+    },
+    {
+      "id": "marie-paris-fall",
+      "title": "Paris fall style",
+      "publication": "Marie Claire",
+      "url": "https://www.marieclaire.com/fashion/fall-fashion/chic-fall-trends-paris-fashion-week/",
+      "published_at": "2026-10-03",
+      "checked_at": "2026-10-19T15:11:36.941252Z"
+    },
+    {
+      "id": "www-knit-2026",
+      "title": "Eight knitwear directions for 2026",
       "publication": "Who What Wear",
-      "url": "https://www.whowhatwear.com/fashion/shoes/winter-shoe-trends-2026",
+      "url": "https://www.whowhatwear.com/fashion/trends/knitwear-trends-2026",
       "published_at": "",
-      "checked_at": "2026-10-13T03:12:45.537535Z"
+      "checked_at": "2026-10-19T15:11:36.941252Z"
     },
     {
-      "id": "elle-style",
-      "title": "ELLE \u00b7 Fall 2026 fashion",
-      "publication": "ELLE",
-      "url": "https://www.elle.com/fashion/shopping/a73393083/fall-2026-fashion-trends/",
-      "published_at": "2026-08-11",
-      "checked_at": "2026-10-13T03:12:45.537535Z"
+      "id": "vogue-bags-2026",
+      "title": "Fall 2026 handbag shapes",
+      "publication": "Vogue",
+      "url": "https://www.vogue.com/article/fall-2026-handbag-trends",
+      "published_at": "2026-09-30",
+      "checked_at": "2026-10-19T15:11:36.941252Z"
     },
     {
-      "id": "bazaar-shoes",
-      "title": "Harper's Bazaar \u00b7 Fall 2026 shoes",
-      "publication": "Harper's Bazaar",
-      "url": "https://www.harpersbazaar.com/fashion/trends/a73707256/fall-shoe-trends-2026/",
-      "published_at": "2026-09-22",
-      "checked_at": "2026-10-13T03:12:45.537535Z"
-    },
-    {
-      "id": "instyle-paris",
-      "title": "InStyle \u00b7 Parisian fall style",
-      "publication": "InStyle",
-      "url": "https://www.instyle.com/paris-stylist-approved-fall-trends-12166418",
+      "id": "www-accessories-2026",
+      "title": "Autumn/winter 2026 accessories",
+      "publication": "Who What Wear",
+      "url": "https://www.whowhatwear.com/fashion/trends/autumn-accessory-trends-2026",
       "published_at": "",
-      "checked_at": "2026-10-13T03:12:45.537535Z"
+      "checked_at": "2026-10-19T15:11:36.941252Z"
     },
     {
-      "id": "gq-shoes",
-      "title": "GQ \u00b7 Fall footwear",
-      "publication": "GQ",
-      "url": "https://www.gq.com/story/boots-shoes-sneakers-fall-2026",
-      "published_at": "2026-10-05",
-      "checked_at": "2026-10-13T03:12:45.537535Z"
-    },
-    {
-      "id": "instyle-fall",
-      "title": "InStyle \u00b7 Fall wardrobe directions",
-      "publication": "InStyle",
-      "url": "https://www.instyle.com/fall-fashion-trends-2026-12122269",
-      "published_at": "",
-      "checked_at": "2026-10-13T03:12:45.537535Z"
+      "id": "cosmo-knit-scarf",
+      "title": "Knit triangle scarves for fall",
+      "publication": "Cosmopolitan",
+      "url": "https://www.cosmopolitan.com/style-beauty/fashion/a74109430/knit-bandana-triangle-scarf-trend-anthropologie/",
+      "published_at": "2026-10-12",
+      "checked_at": "2026-10-19T15:11:36.941252Z"
     }
   ],
   "products": [
     {
-      "type": "Sneakers",
-      "audience": "Women",
-      "name": "Nike Court Legacy Next Nature",
-      "url": "https://www.nike.com/t/court-legacy-next-nature-womens-shoes-8r07x0",
-      "price_at_check": 75,
-      "retailer": "Nike",
-      "checked_at": "2026-10-13T03:12:45.537535Z"
-    },
-    {
-      "type": "Loafers",
-      "audience": "Women",
-      "name": "Sam Edelman Loraine Bit Loafer",
-      "url": "https://www.nordstrom.com/s/loraine-bit-loafer-wide-width-available-women/4447269?slpfid=3",
-      "price_at_check": 150,
-      "retailer": "Nordstrom",
-      "checked_at": "2026-10-13T03:12:45.537535Z"
-    },
-    {
-      "type": "Flats",
-      "audience": "Women",
-      "name": "Madewell Greta Ballet Flat",
-      "url": "https://www.nordstrom.com/s/madewell-the-greta-ballet-flat-women/7575401",
-      "price_at_check": 98,
-      "retailer": "Nordstrom",
-      "checked_at": "2026-10-13T03:12:45.537535Z"
-    },
-    {
-      "type": "Loafers",
-      "audience": "Women",
-      "name": "A New Day Adrienne Loafers",
-      "url": "https://www.target.com/p/-/A-95245315",
-      "price_at_check": 35,
-      "retailer": "Target",
-      "checked_at": "2026-10-13T03:12:45.537535Z"
-    },
-    {
-      "type": "Bag",
-      "audience": "Women",
-      "name": "Zara Fringed Shoulder Bag",
-      "url": "https://www.zara.com/us/en/fringed-shoulder-bag-p16442810.html",
-      "price_at_check": 59.9,
-      "retailer": "Zara",
-      "checked_at": "2026-10-13T03:12:45.537535Z"
-    },
-    {
-      "type": "Button-down shirt",
-      "audience": "Women",
-      "name": "UNIQLO Cotton Long-Sleeve Shirt",
-      "url": "https://www.uniqlo.com/us/en/products/E455744-000/00",
+      "type": "Polo",
+      "audience": "Men",
+      "name": "J.Crew Factory 100% Cotton Striped Rugby Shirt",
+      "url": "https://factory.jcrew.com/p/mens/categories/clothing/polos/rugby-polos/100-cotton-striped-rugby-shirt/CV913",
       "price_at_check": null,
-      "retailer": "UNIQLO",
-      "checked_at": "2026-10-13T03:12:45.537535Z"
+      "retailer": "J.Crew Factory",
+      "checked_at": "2026-10-19T15:11:36.941252Z"
     },
     {
-      "type": "Button-down shirt",
+      "type": "Trousers",
+      "audience": "Men",
+      "name": "L.L.Bean BeanFlex Corduroy Five-Pocket Pants, Standard Fit",
+      "url": "https://www.llbean.com/llb/shop/128893?attrValue_0=136&csp=a&feat=men%27s+pants-SR0&page=mens-beanflex-corduroy-5-pocket-pants-standard-fit-mens&pos=27&searchTerm=men%27s+pants",
+      "price_at_check": 89.95,
+      "retailer": "L.L.Bean",
+      "checked_at": "2026-10-19T15:11:36.941252Z"
+    },
+    {
+      "type": "Sweater",
       "audience": "Women",
-      "name": "Banana Republic Cotton Foldover Collar Shirt",
-      "url": "https://bananarepublic.gap.com/browse/product.do?pid=1180410012",
-      "price_at_check": null,
-      "retailer": "Banana Republic",
-      "checked_at": "2026-10-13T03:12:45.537535Z"
+      "name": "Quince Organic Cotton Fisherman V-Neck Sweater",
+      "url": "https://www.quince.com/women/100-organic-cotton-v-neck-sweater?color=ivory",
+      "price_at_check": 49.9,
+      "retailer": "Quince",
+      "checked_at": "2026-10-19T15:11:36.941252Z"
     },
     {
       "type": "Jacket",
       "audience": "Women",
-      "name": "Gap Waxed Canvas Barn Jacket",
-      "url": "https://www.gap.com/browse/product.do?pid=909434002&vid=",
-      "price_at_check": null,
-      "retailer": "Gap",
-      "checked_at": "2026-10-13T03:12:45.537535Z"
+      "name": "Quince Double-Faced Merino Wool Funnel Neck Jacket",
+      "url": "https://www.quince.com/women/double-faced-merino-wool-funnel-neck-jacket?color=black&gender=women",
+      "price_at_check": 180,
+      "retailer": "Quince",
+      "checked_at": "2026-10-19T15:11:36.941252Z"
+    },
+    {
+      "type": "Bag",
+      "audience": "Women",
+      "name": "Quince Bea Shoulder Bag",
+      "url": "https://www.quince.com/women/bea-leather-east-west-shoulder-bag?color=deep-plum",
+      "price_at_check": 158,
+      "retailer": "Quince",
+      "checked_at": "2026-10-19T15:11:36.941252Z"
+    },
+    {
+      "type": "Bag",
+      "audience": "All",
+      "name": "L.L.Bean Wharf Street Messenger Bag",
+      "url": "https://www.llbean.com/llb/shop/5843439?attrValue_0=50118&bc=50-516672&csp=a&feat=516672-GN0&page=Wharf-Street-Messenger&pos=28",
+      "price_at_check": 79.95,
+      "retailer": "L.L.Bean",
+      "checked_at": "2026-10-19T15:11:36.941252Z"
+    },
+    {
+      "type": "Sneakers",
+      "audience": "Men",
+      "name": "adidas BW Army Shoes",
+      "url": "https://www.adidas.com/us/bw-army-shoes/JH7835.html",
+      "price_at_check": 120,
+      "retailer": "adidas",
+      "checked_at": "2026-10-19T15:11:36.941252Z"
+    },
+    {
+      "type": "Jewelry",
+      "audience": "Women",
+      "name": "gorjana Bryce Necklace",
+      "url": "https://www.gorjana.com/products/bryce-necklace",
+      "price_at_check": 125,
+      "retailer": "gorjana",
+      "checked_at": "2026-10-19T15:11:36.941252Z"
+    },
+    {
+      "type": "Scarf",
+      "audience": "Women",
+      "name": "By Anthropologie Knit Triangle Bandana Scarf, Black",
+      "url": "https://www.anthropologie.com/shop/by-anthropologie-knit-triangle-bandana-scarf?color=001&curation_id=triangle-scarves-curation&curation_name=Trend+Shop:+Triangle+Scarves",
+      "price_at_check": 28,
+      "retailer": "Anthropologie",
+      "checked_at": "2026-10-19T15:11:36.941252Z"
+    },
+    {
+      "type": "Coat",
+      "audience": "Men",
+      "name": "Drake’s Navy Donegal Wool Raglan Coat",
+      "url": "https://us.drakes.com/products/navy-donegal-wool-raglan-coat",
+      "price_at_check": 2295,
+      "retailer": "Drake’s",
+      "checked_at": "2026-10-19T15:11:36.941252Z"
+    },
+    {
+      "type": "Scarf",
+      "audience": "Women",
+      "name": "Madewell Medium Silk Bandana",
+      "url": "https://www.madewell.com/p/medium-silk-bandana/NS765/?ccode=BA0411",
+      "price_at_check": 54.99,
+      "retailer": "Madewell",
+      "checked_at": "2026-10-19T15:11:36.941252Z"
     }
   ],
   "directions": [
     {
-      "id": "kitten",
-      "slot": "shoes",
-      "type": "Kitten heel pumps",
-      "label": "Kitten heel pumps",
-      "source_id": "vogue-shoes",
-      "reason": "A low-heel option drawn from the seasonal shoe report.",
-      "audiences": [
-        "Women"
-      ],
-      "occasions": [
-        "Dinner",
-        "Work"
-      ],
-      "seasons": [
-        "Fall",
-        "Winter"
-      ],
-      "color": "neutral"
-    },
-    {
-      "id": "soft-loafers",
-      "slot": "shoes",
-      "type": "Loafers",
-      "label": "Soft loafers",
-      "source_id": "www-shoes",
-      "reason": "A softer slip-on direction for relaxed trousers or jeans.",
-      "audiences": [
-        "Women"
-      ],
-      "occasions": [
-        "Casual",
-        "Work",
-        "Dinner"
-      ],
-      "seasons": [
-        "Fall",
-        "Winter"
-      ],
-      "color": "neutral"
-    },
-    {
-      "id": "two-tone",
-      "slot": "shoes",
-      "type": "Flats",
-      "label": "Two-tone flats",
-      "source_id": "bazaar-shoes",
-      "reason": "A contrasting two-tone option for a simple outfit.",
-      "audiences": [
-        "Women"
-      ],
-      "occasions": [
-        "Casual",
-        "Work",
-        "Dinner"
-      ],
-      "seasons": [
-        "Fall",
-        "Winter"
-      ],
-      "color": "black and cream"
-    },
-    {
-      "id": "men-boots",
-      "slot": "shoes",
-      "type": "Ankle boots",
-      "label": "Leather ankle boots",
-      "source_id": "gq-shoes",
-      "reason": "A fall footwear direction to pair with denim.",
-      "audiences": [
-        "Men",
-        "All"
-      ],
-      "occasions": [
-        "Casual",
-        "Work",
-        "Dinner"
-      ],
-      "seasons": [
-        "Fall",
-        "Winter"
-      ],
-      "color": "neutral"
-    },
-    {
-      "id": "men-loafer",
-      "slot": "shoes",
-      "type": "Loafers",
-      "label": "Low-profile loafers",
-      "source_id": "gq-shoes",
-      "reason": "An alternative to boots for a polished casual look.",
-      "audiences": [
-        "Men",
-        "All"
-      ],
-      "occasions": [
-        "Casual",
-        "Work",
-        "Dinner"
-      ],
-      "seasons": [
-        "Fall",
-        "Winter"
-      ],
-      "color": "neutral"
-    },
-    {
-      "id": "elevated-shirt",
+      "id": "rugby-cotton",
       "slot": "top",
-      "type": "Button-down shirt",
-      "label": "Detailed cotton shirt",
-      "source_id": "instyle-paris",
-      "reason": "Add interest through a distinctive collar or cuffs.",
+      "type": "Polo",
+      "label": "Striped rugby shirt",
+      "source_id": "gq-uk-autumn-2026",
+      "reason": "Use a contrasting collar and rugby stripes with quieter trousers; keep the rest of the outfit simple.",
+      "audiences": [
+        "Men"
+      ],
+      "occasions": [
+        "Casual"
+      ],
+      "seasons": [
+        "Fall",
+        "Winter"
+      ],
+      "color": "neutral"
+    },
+    {
+      "id": "high-neck-knit",
+      "slot": "top",
+      "type": "Sweater",
+      "label": "High-neck knit",
+      "source_id": "www-knit-2026",
+      "reason": "Let a taller knit neckline be the focal point above clean, straight trousers.",
       "audiences": [
         "Women"
       ],
@@ -263,16 +203,17 @@
       "color": "neutral"
     },
     {
-      "id": "pencil-skirt",
-      "slot": "bottom",
-      "type": "Skirt",
-      "label": "Pencil skirt",
-      "source_id": "instyle-paris",
-      "reason": "A streamlined shape for work or evening outfits.",
+      "id": "open-v-knit",
+      "slot": "top",
+      "type": "Sweater",
+      "label": "Open V-neck sweater",
+      "source_id": "www-knit-2026",
+      "reason": "Try a wider V-neck over a simple base layer to change the proportions of familiar jeans.",
       "audiences": [
         "Women"
       ],
       "occasions": [
+        "Casual",
         "Work",
         "Dinner"
       ],
@@ -283,14 +224,35 @@
       "color": "neutral"
     },
     {
-      "id": "dark-denim",
+      "id": "corduroy-straight",
+      "slot": "bottom",
+      "type": "Trousers",
+      "label": "Straight corduroy trousers",
+      "source_id": "opumo-autumn-2026",
+      "reason": "Swap denim for textured cords with a plain knit; brown and olive work with existing autumn layers.",
+      "audiences": [
+        "Men"
+      ],
+      "occasions": [
+        "Casual",
+        "Work",
+        "Dinner"
+      ],
+      "seasons": [
+        "Fall",
+        "Winter"
+      ],
+      "color": "brown or olive"
+    },
+    {
+      "id": "considered-denim",
       "slot": "bottom",
       "type": "Jeans",
-      "label": "Dark straight-leg jeans",
-      "source_id": "instyle-fall",
-      "reason": "A tailored denim direction for everyday combinations.",
+      "label": "Roomy straight-leg denim",
+      "source_id": "opumo-autumn-2026",
+      "reason": "Keep room through the leg without excessive pooling; balance the volume with a tidier top.",
       "audiences": [
-        "All"
+        "Men"
       ],
       "occasions": [
         "Casual",
@@ -304,33 +266,33 @@
       "color": "dark blue"
     },
     {
-      "id": "utility-jacket",
+      "id": "raglan-wool-coat",
+      "slot": "layer",
+      "type": "Coat",
+      "label": "Raglan wool overcoat",
+      "source_id": "opumo-autumn-2026",
+      "reason": "A softly structured wool overcoat adds warmth over a knit without making the outfit look rigid.",
+      "audiences": [
+        "Men"
+      ],
+      "occasions": [
+        "Casual",
+        "Work",
+        "Dinner"
+      ],
+      "seasons": [
+        "Fall",
+        "Winter"
+      ],
+      "color": "neutral"
+    },
+    {
+      "id": "funnel-jacket",
       "slot": "layer",
       "type": "Jacket",
-      "label": "Refined utility jacket",
-      "source_id": "instyle-fall",
-      "reason": "Contrast a practical jacket with softer or tailored pieces.",
-      "audiences": [
-        "All"
-      ],
-      "occasions": [
-        "Casual",
-        "Work",
-        "Dinner"
-      ],
-      "seasons": [
-        "Fall",
-        "Winter"
-      ],
-      "color": "neutral"
-    },
-    {
-      "id": "lady-jacket",
-      "slot": "layer",
-      "type": "Jacket",
-      "label": "Cropped collarless jacket",
-      "source_id": "instyle-paris",
-      "reason": "A shorter jacket can change the balance of your outfit.",
+      "label": "Funnel-neck jacket",
+      "source_id": "marie-paris-fall",
+      "reason": "Balance a high collar with relaxed trousers.",
       "audiences": [
         "Women"
       ],
@@ -346,12 +308,52 @@
       "color": "neutral"
     },
     {
-      "id": "textured-bag",
+      "id": "german-army-trainer",
+      "slot": "shoes",
+      "type": "Sneakers",
+      "label": "Low-profile army trainers",
+      "source_id": "gq-uk-autumn-2026",
+      "reason": "Use simple leather-and-suede trainers under cords or jeans instead of an oversized sneaker.",
+      "audiences": [
+        "Men"
+      ],
+      "occasions": [
+        "Casual"
+      ],
+      "seasons": [
+        "Fall",
+        "Winter"
+      ],
+      "color": "neutral"
+    },
+    {
+      "id": "women-ankle-boots",
+      "slot": "shoes",
+      "type": "Ankle boots",
+      "label": "Ankle boots",
+      "source_id": "marie-paris-fall",
+      "reason": "Ground cropped jackets and jeans.",
+      "audiences": [
+        "Women"
+      ],
+      "occasions": [
+        "Casual",
+        "Work",
+        "Dinner"
+      ],
+      "seasons": [
+        "Fall",
+        "Winter"
+      ],
+      "color": "neutral"
+    },
+    {
+      "id": "east-west-bag",
       "slot": "bag",
       "type": "Bag",
-      "label": "Textured leather-look bag",
-      "source_id": "elle-style",
-      "reason": "Bring a single textured accent into an otherwise simple outfit.",
+      "label": "East–west shoulder bag",
+      "source_id": "vogue-bags-2026",
+      "reason": "A horizontal bag introduces a different silhouette alongside a straight skirt or a simple knit-and-trouser outfit.",
       "audiences": [
         "Women"
       ],
@@ -367,17 +369,18 @@
       "color": "neutral"
     },
     {
-      "id": "fringe-bag",
+      "id": "soft-messenger",
       "slot": "bag",
       "type": "Bag",
-      "label": "Fringed shoulder bag",
-      "source_id": "instyle-paris",
-      "reason": "Use fringe as one accent rather than throughout the outfit.",
+      "label": "Soft messenger bag",
+      "source_id": "gq-uk-autumn-2026",
+      "reason": "Try a softly shaped crossbody messenger with relaxed tailoring; a closure is more practical than an open tote.",
       "audiences": [
-        "Women"
+        "Men"
       ],
       "occasions": [
         "Casual",
+        "Work",
         "Dinner"
       ],
       "seasons": [
@@ -391,8 +394,8 @@
       "slot": "accessory",
       "type": "Jewelry",
       "label": "Statement jewelry",
-      "source_id": "instyle-paris",
-      "reason": "Choose one bolder accessory with quieter clothing.",
+      "source_id": "www-accessories-2026",
+      "reason": "Keep one substantial necklace or bracelet as the accent, with a plain neckline and fewer competing details.",
       "audiences": [
         "Women"
       ],
@@ -401,16 +404,19 @@
         "Work",
         "Dinner"
       ],
-      "seasons": [],
+      "seasons": [
+        "Fall",
+        "Winter"
+      ],
       "color": "neutral"
     },
     {
       "id": "small-scarf",
       "slot": "finish",
       "type": "Scarf",
-      "label": "Small silk-style scarf",
-      "source_id": "instyle-paris",
-      "reason": "A small scarf offers another way to finish the look.",
+      "label": "Printed neck scarf",
+      "source_id": "www-accessories-2026",
+      "reason": "A printed bandana-style scarf still works with a plain shirt; keep other accessories quieter.",
       "audiences": [
         "Women"
       ],
@@ -419,70 +425,142 @@
         "Work",
         "Dinner"
       ],
-      "seasons": [],
+      "seasons": [
+        "Fall",
+        "Winter"
+      ],
+      "color": "neutral"
+    },
+    {
+      "id": "knit-triangle",
+      "slot": "finish",
+      "type": "Scarf",
+      "label": "Knit triangle scarf",
+      "source_id": "cosmo-knit-scarf",
+      "reason": "Tie a small knitted triangle over a crewneck or coat collar for texture without a bulky full-length scarf.",
+      "audiences": [
+        "Women"
+      ],
+      "occasions": [
+        "Casual",
+        "Work",
+        "Dinner"
+      ],
+      "seasons": [
+        "Fall",
+        "Winter"
+      ],
+      "color": "neutral"
+    },
+    {
+      "id": "western-buckle",
+      "slot": "finish",
+      "type": "Belt",
+      "label": "Western-buckle belt",
+      "source_id": "gq-uk-autumn-2026",
+      "reason": "Use an ornate buckle as the only Western detail against otherwise straightforward trousers and a shirt.",
+      "audiences": [
+        "Men"
+      ],
+      "occasions": [
+        "Casual",
+        "Work",
+        "Dinner"
+      ],
+      "seasons": [
+        "Fall",
+        "Winter"
+      ],
       "color": "neutral"
     }
   ],
   "retailers": [
     {
-      "name": "Target",
-      "url": "https://www.target.com/c/loafers-women-s-shoes/a-new-day/-/N-5xtcvZxrye7",
-      "audience": "Women",
+      "name": "J.Crew Factory",
+      "url": "https://factory.jcrew.com/p/mens/categories/clothing/polos/rugby-polos/100-cotton-striped-rugby-shirt/CV913",
+      "audience": "Men",
       "types": [
-        "Loafers"
+        "Polo"
       ]
     },
     {
-      "name": "Madewell",
-      "url": "https://www.madewell.com/womens/bags/crossbody-bags/",
-      "audience": "Women",
+      "name": "L.L.Bean",
+      "url": "https://www.llbean.com/llb/shop/128893?attrValue_0=136&csp=a&feat=men%27s+pants-SR0&page=mens-beanflex-corduroy-5-pocket-pants-standard-fit-mens&pos=27&searchTerm=men%27s+pants",
+      "audience": "Men",
       "types": [
-        "Bag"
+        "Trousers"
       ]
     },
     {
-      "name": "Nordstrom",
-      "url": "https://www.nordstrom.com/browse/women/shoes",
+      "name": "Quince",
+      "url": "https://www.quince.com/women/100-organic-cotton-v-neck-sweater?color=ivory",
       "audience": "Women",
       "types": [
-        "Sneakers",
-        "Loafers",
-        "Flats",
-        "Ankle boots",
-        "Kitten heel pumps",
-        "Sandals"
+        "Sweater"
       ]
     },
     {
-      "name": "UNIQLO",
-      "url": "https://www.uniqlo.com/us/en/products/E455744-000/00",
-      "audience": "Women",
-      "types": [
-        "Button-down shirt"
-      ]
-    },
-    {
-      "name": "Gap",
-      "url": "https://www.gap.com/browse/product.do?pid=909434002&vid=",
+      "name": "Quince",
+      "url": "https://www.quince.com/women/double-faced-merino-wool-funnel-neck-jacket?color=black&gender=women",
       "audience": "Women",
       "types": [
         "Jacket"
       ]
     },
     {
-      "name": "Banana Republic",
-      "url": "https://bananarepublic.gap.com/browse/product.do?pid=1180410012",
-      "audience": "Women",
-      "types": [
-        "Button-down shirt"
-      ]
-    },
-    {
-      "name": "Zara",
-      "url": "https://www.zara.com/us/en/fringed-shoulder-bag-p16442810.html",
+      "name": "Quince",
+      "url": "https://www.quince.com/women/bea-leather-east-west-shoulder-bag?color=deep-plum",
       "audience": "Women",
       "types": [
         "Bag"
+      ]
+    },
+    {
+      "name": "L.L.Bean",
+      "url": "https://www.llbean.com/llb/shop/5843439?attrValue_0=50118&bc=50-516672&csp=a&feat=516672-GN0&page=Wharf-Street-Messenger&pos=28",
+      "audience": "All",
+      "types": [
+        "Bag"
+      ]
+    },
+    {
+      "name": "adidas",
+      "url": "https://www.adidas.com/us/bw-army-shoes/JH7835.html",
+      "audience": "Men",
+      "types": [
+        "Sneakers"
+      ]
+    },
+    {
+      "name": "gorjana",
+      "url": "https://www.gorjana.com/products/bryce-necklace",
+      "audience": "Women",
+      "types": [
+        "Jewelry"
+      ]
+    },
+    {
+      "name": "Anthropologie",
+      "url": "https://www.anthropologie.com/shop/by-anthropologie-knit-triangle-bandana-scarf?color=001&curation_id=triangle-scarves-curation&curation_name=Trend+Shop:+Triangle+Scarves",
+      "audience": "Women",
+      "types": [
+        "Scarf"
+      ]
+    },
+    {
+      "name": "Drake’s",
+      "url": "https://us.drakes.com/products/navy-donegal-wool-raglan-coat",
+      "audience": "Men",
+      "types": [
+        "Coat"
+      ]
+    },
+    {
+      "name": "Madewell",
+      "url": "https://www.madewell.com/p/medium-silk-bandana/NS765/?ccode=BA0411",
+      "audience": "Women",
+      "types": [
+        "Scarf"
       ]
     }
   ]
