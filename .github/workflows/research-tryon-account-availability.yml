@@ -1,0 +1,35 @@
+name: Research try-on account availability race and emulated phones
+on:
+  push:
+    branches: [fix/tryon-account-bound-availability-20261019]
+    paths:
+      - 'public/ai-tryon.js'
+      - 'tests/ai-tryon-recovery.test.cjs'
+      - 'scripts/test-multigarment-device-emulation.mjs'
+      - '.github/workflows/research-tryon-account-availability.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  account-session-safety:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify account-switch, token, image and safe recovery regressions
+        run: node --test tests/ai-tryon-recovery.test.cjs tests/ai-tryon-polling.test.cjs tests/ai-tryon-plan.test.cjs
+      - name: Build app before browser emulation
+        run: node scripts/build.mjs
+      - name: Install Chromium and WebKit browser emulation
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium webkit
+      - name: Exercise unchanged top/bottom flow with intercepted provider, Chromium and WebKit
+        run: node scripts/test-multigarment-device-emulation.mjs
+      - name: Verify Style this using owned clothes in Chromium and WebKit
+        run: |
+          node scripts/test-style-my-new-item-mobile.mjs
+          STYLE_BROWSER=webkit node scripts/test-style-my-new-item-mobile.mjs
