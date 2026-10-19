@@ -126,3 +126,29 @@ review, including verified active-session behavior and final irreversible
 confirmation. Passwordless members need an approved recent-authentication
 alternative; currently only password verification is modeled.
 
+
+
+## Local Supabase Storage/Auth HTTP integration — October 18 follow-up
+
+The first true local Supabase integration reached private Storage and exposed
+a subtle **RLS-filtered HTTP 200 / empty-array response** to a foreign
+user's delete attempt. It was not a successful deletion; the updated
+test independently confirms the actual owner's photo remains in Storage.
+
+The [successful isolated GitHub Actions run
+39186780893](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39186780893)
+then verified real local Supabase GoTrue/Auth and Storage HTTP semantics,
+per-user isolation, service-role-only RPC, locked uploads/backup changes,
+Storage photo removal, backup and Auth deletion, and old-token lock
+persistence. It also interrupted a second disposable account after
+removing one of two photos and successfully retried cleanup without
+lifting the lock or damaging an unrelated account.
+
+**This closes the local Auth/Storage behavior verification milestone**, not
+the customer-ready account-deletion feature. The HTTP entrypoint remains
+hard-disabled (503). Operator-approved terms/retention, passwordless
+reauthentication, service-client lifecycle, hosted configuration and key
+audit, careful migration planning and rollback, actual device testing,
+reliable recovery worker/support process and explicit launch approval
+remain prerequisites. No remote project, production user or customer
+photo was modified.
