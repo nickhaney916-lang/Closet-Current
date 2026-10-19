@@ -104,6 +104,42 @@ try{
     return defects;
    });
    assert.equal(alphaProbe,0,'no triangle cracks, doubled alpha or dark interpolation halos');
+   // Pure browser-side finishing probe on trusted synthetic transparent
+   // clothing pixels. Verify subtle alpha antialias only, not fit realism.
+   const finishedEdges=await page.evaluate(()=>{
+    const w=100,h=150,src=new Uint8ClampedArray(w*h*4);
+    for(let y=12;y<138;y++)for(let x=15;x<85;x++)
+     src.set([40,70,160,255],(y*w+x)*4);
+    for(let y=40;y<75;y++)for(let x=40;x<60;x++)
+     src.set([225,170,25,255],(y*w+x)*4);
+    const original=new Uint8ClampedArray(src);
+    const quality=ClosetGarmentEdgeFinish.finish(src,w,h);
+    let rgbDiff=0,removed=0,increased=0,sourceDiff=0,centerDiff=0;
+    for(let i=0;i<src.length;i++){
+     if(src[i]!==original[i])sourceDiff++;
+     if(i%4===3){
+      if(quality.pixels[i]<src[i])removed++;
+      if(quality.pixels[i]>src[i])increased++;
+     }else if(quality.pixels[i]!==src[i])rgbDiff++;
+    }
+    for(let y=40;y<75;y++)for(let x=40;x<60;x++){
+     const k=(y*w+x)*4;
+     for(let c=0;c<4;c++)if(quality.pixels[k+c]!==src[k+c])centerDiff++;
+    }
+    const preSoft=new Uint8ClampedArray(src);
+    preSoft[(15*w+15)*4+3]=128;
+    const existing=ClosetGarmentEdgeFinish.finish(preSoft,w,h);
+    return {eligible:quality.eligible,softened:quality.softenedEdgePixels,
+     rgbDiff,removed,increased,sourceDiff,centerDiff,loss:quality.alphaMassLossFraction,
+     existingSoftPreserved:!existing.eligible&&existing.reason==='existing-soft-alpha-preserved'};
+   });
+   assert.equal(finishedEdges.eligible,true);
+   assert.ok(finishedEdges.softened>=8&&finishedEdges.loss<=.01);
+   assert.equal(finishedEdges.softened,finishedEdges.removed);
+   assert.equal(finishedEdges.rgbDiff,0);assert.equal(finishedEdges.increased,0);
+   assert.equal(finishedEdges.sourceDiff,0);assert.equal(finishedEdges.centerDiff,0);
+   assert.equal(finishedEdges.existingSoftPreserved,true);
+
    const warpFidelity=await page.evaluate(()=>{
     const w=100,h=150,source=new Uint8ClampedArray(w*h*4);
     for(let y=12;y<138;y++)for(let x=12;x<88;x++)
