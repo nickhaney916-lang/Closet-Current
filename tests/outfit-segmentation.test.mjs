@@ -1,6 +1,21 @@
 import test from 'node:test';import assert from 'node:assert/strict';
 import {clothingLabelMap,clothingMaskGroups,isolateClothingPixels,cropClothingPhotoPixels,garmentDisplayMaskReliability} from '../public/outfit-segmentation.mjs';
 function logits(width=20,height=20){const data=new Float32Array(18*width*height);data.fill(-10);for(let i=0;i<width*height;i++)data[i]=10;return {data,dims:[1,18,height,width],paint(label,left,top,w,h){for(let y=top;y<top+h;y++)for(let x=left;x<left+w;x++){const i=y*width+x;for(let c=0;c<18;c++)data[c*width*height+i]=c===label?10:-10;}}};}
+test('small and narrow source photos retain original pixels without failing display isolation',()=>{
+ const l=logits(32,32);l.paint(4,6,6,20,20);
+ const map=clothingLabelMap(l.data,l.dims),group=clothingMaskGroups(map)[0];
+ for(const [width,height] of [[16,16],[16,64],[64,16]]){
+  const image={width,height,channels:3,data:Uint8ClampedArray.from({length:width*height*3},(_,i)=>i%193)};
+  const before=Uint8ClampedArray.from(image.data),mask=Uint8Array.from(group.selected);
+  const raw=cropClothingPhotoPixels(image,map,group);
+  const isolated=isolateClothingPixels(image,map,group);
+  const withoutRepair=isolateClothingPixels(image,map,group,{repairDisplayPinholes:false});
+  assert.deepEqual(isolated.data,withoutRepair.data,'insufficient source resolution skips optional repair');
+  assert.equal(isolated.displayRepair.repairedPixels,0);
+  assert.deepEqual(cropClothingPhotoPixels(image,map,group),raw);
+  assert.deepEqual(image.data,before);assert.deepEqual(group.selected,mask);
+ }
+});
 test('one photo yields separate upper clothing, pants and one shoe-pair mask',()=>{
  const l=logits();l.paint(4,5,4,8,5);l.paint(6,6,10,6,5);l.paint(9,6,16,3,3);l.paint(10,10,16,3,3);const map=clothingLabelMap(l.data,l.dims),pieces=clothingMaskGroups(map);assert.deepEqual(pieces.map(x=>x.label),['Upper garment','Bottoms','Shoes']);assert.equal(pieces[2].count,18);
 });

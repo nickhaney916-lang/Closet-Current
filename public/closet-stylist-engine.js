@@ -151,11 +151,15 @@ function stylistSwapChoices(result,slot,closet,anchorId=null){
 function stylistSwapOne(result,slot,closet,anchorId=null){
  const choices=stylistSwapChoices(result,slot,closet,anchorId);
  if(!choices.length)return null;
- // Prefer the next eligible choice, rather than replacing a just-picked
- // option with the same original high-ranked item each time.
- const last=result?.lastSwapped?.[slot]||null;
- const cursor=choices.findIndex(x=>x.id===last);
- const selected=choices[(cursor+1)%choices.length];
+ // The current item is excluded from choices, so looking it up as a cursor
+ // always returned -1 and bounced between the two highest-ranked items.
+ // Visit each eligible owned choice before restarting. Keep only IDs that
+ // remain eligible; removed/recategorized items can never be restored.
+ const current=result.board.slots[slot],eligible=new Set([current,...choices.map(x=>x.id)]);
+ let history=[...new Set([...(Array.isArray(result.swapHistory?.[slot])?
+  result.swapHistory[slot]:[]),current])].filter(id=>eligible.has(id));
+ let selected=choices.find(x=>!history.includes(x.id));
+ if(!selected){history=[];selected=choices[0];}
  return {id:selected.id,name:selected.name,board:selected.board,
-  otherOptions:choices.length};
+  history:[...history,selected.id],otherOptions:choices.length};
 }

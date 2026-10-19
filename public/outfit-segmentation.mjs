@@ -106,7 +106,7 @@ export function repairGarmentDisplayPinholes(image,map,group,{
  if(!Number.isInteger(width)||!Number.isInteger(height)||width<3||height<3
    ||n>262144||seed?.length!==n||![3,4].includes(image?.channels)
    ||!Number.isInteger(image.width)||!Number.isInteger(image.height)
-   ||image.width<width||image.height<height
+   ||image.width<1||image.height<1
    ||image.data?.length!==image.width*image.height*image.channels
    ||map.labels&&map.labels.length!==n
    ||map.semanticLabels&&map.semanticLabels.length!==n
@@ -122,7 +122,11 @@ export function repairGarmentDisplayPinholes(image,map,group,{
   unchangedForegroundPixels:base,growthBudget:budget,
   originalPixelsOnly:true,semanticMaskUntouched:true,
   recognitionPixelsUntouched:true,notVerifiedSegmentationAccuracy:true};
- if(base<64||budget<1||group.clipped===true)return {selected:out,...diagnostic};
+ // A processor may upscale a small or narrow original into this mask.
+ // Optional repair requires independent source pixels at mask resolution;
+ // skip it rather than aborting the entire outfit or enlarging the original.
+ if(image.width<width||image.height<height||base<64||budget<1||group.clipped===true)
+  return {selected:out,...diagnostic};
  const rgb=i=>{
   const x=i%width,y=Math.floor(i/width),px=Math.min(image.width-1,Math.floor((x+.5)*image.width/width)),
     py=Math.min(image.height-1,Math.floor((y+.5)*image.height/height)),k=(py*image.width+px)*image.channels;

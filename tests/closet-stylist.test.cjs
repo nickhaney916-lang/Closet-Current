@@ -2,6 +2,23 @@ const test=require('node:test'),assert=require('node:assert/strict'),vm=require(
 function setup(){const c={URL,encodeURIComponent,Date};vm.createContext(c);for(const file of ['outfit-matcher.js','trend-library.js','outfit-board-engine.js','closet-stylist-engine.js'])vm.runInContext(fs.readFileSync('public/'+file,'utf8'),c);return c;}
 const piece=(id,category,itemType,color='Black',extra={})=>({id,category,itemType,color,pattern:'Solid',sleeveLength:'Unknown',seasons:[],name:itemType,image:'photo-'+id,...extra});
 const closet=[piece('polo','Tops','Polo','White'),piece('tee','Tops','T-shirt','Blue'),piece('jeans','Bottoms','Jeans','Blue'),piece('trousers','Bottoms','Trousers'),piece('loafers','Shoes','Loafers','Brown'),piece('sneakers','Shoes','Sneakers','White'),piece('layer','Outerwear','Blazer'),piece('bag','Accessories','Bag','Brown')];
+test('repeated swaps visit every eligible owned shoe before repeating and preserve the pinned top',()=>{
+ const c=setup(),owned=[piece('top','Tops','T-shirt'),piece('bottom','Bottoms','Jeans'),
+  ...['a','b','c','d'].map(id=>piece(id,'Shoes','Sneakers'))];
+ const result=c.styleOwnedCollection(owned,{anchorItemId:'top'})[0];
+ const visited=[result.board.slots.shoes],before=JSON.stringify(owned);
+ for(let i=0;i<7;i++){
+  const swap=c.stylistSwapOne(result,'shoes',owned,'top');
+  result.board=swap.board;result.swapHistory={...result.swapHistory,shoes:swap.history};
+  visited.push(swap.id);assert.equal(result.board.slots.top,'top');
+ }
+ assert.equal(new Set(visited.slice(0,4)).size,4);
+ assert.equal(new Set(visited.slice(4,8)).size,4);
+ assert.equal(JSON.stringify(owned),before);
+ const removed=owned.filter(x=>x.id!=='b');
+ const next=c.stylistSwapOne(result,'shoes',removed,'top');
+ assert.ok(next&&next.id!=='b','removed pieces in swap history are never restored');
+});
 test('men casual date night builds combinations of actual owned pieces with no shopping placeholders',()=>{
  const c=setup(),before=JSON.stringify(closet),results=c.styleOwnedCollection(closet,{request:'Casual date night',audience:'Men',season:'Fall'});assert.equal(results.length,3);assert.equal(results[0].missing.length,0);
  for(const result of results){const ids=Object.values(result.board.slots);assert.equal(ids.length,new Set(ids).size);assert.ok(ids.every(id=>closet.some(x=>x.id===id)));assert.equal(Object.keys(result.board.ideas).length,0);}

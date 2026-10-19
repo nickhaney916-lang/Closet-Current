@@ -55,7 +55,7 @@ function renderStyledCollection(){
     const selected=stylistSwapOne(result,slot,items,stylistAnchorItemId);
     if(!selected)return;
     result.board=selected.board;
-    result.lastSwapped={...result.lastSwapped,[slot]:selected.id};
+    result.swapHistory={...result.swapHistory,[slot]:selected.history};
     result.signature=Object.entries(result.board.slots).sort()
      .map(([k,v])=>k+':'+v).join('|');
     result.missing=boardGaps(result.board,items).filter(x=>!x.optional).map(x=>x.id);

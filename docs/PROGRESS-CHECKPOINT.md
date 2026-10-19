@@ -1,5 +1,36 @@
 # Closet Current master development checkpoint
 
+## Small-source separation recovery and complete owned-piece swap cycling — October 18, 2026, Pacific
+
+- Resumed PR #7 at `ec2103484b2e7e33655ed25183fa03fcc5af6e35`;
+  all 25 workflows returned for that checkpoint succeeded. Inspected actual
+  mobile run `39192829496`: 14/14 broad single-garment categories, 8 automatic
+  saves and 6 color-review holds. Actual layered `validation-0031` still emits
+  2 uncertain regions, 0 automatic saves, and no automatic Style this handoff.
+  These are distinct datasets; successful CI does not establish mask accuracy.
+- Reproduced a valid small/narrow-photo crash in display pinhole repair:
+  when either source dimension is below the model mask dimension, optional
+  repair threw and could abort outfit processing. It now keeps the original
+  mask unchanged and skips repair when independent source pixels are lacking.
+  Original RGB, recognition crop, model thresholds and original dimensions
+  are preserved. Synthetic 16x16, 16x64 and 64x16 regression inputs verify
+  unchanged source/mask/recognition pixels, not real-photo accuracy gains.
+- Reproduced a Style this swap bug: the current garment was excluded from
+  choices, so the previous-item cursor was always absent; taps bounced between
+  two high-ranked pieces. Per-slot transient history now visits all eligible
+  owned pieces before repeating. Deleted/incompatible pieces are filtered,
+  the pinned item is preserved, and swaps do not save or mutate garments.
+- Both new regressions failed before fixes. Build passed; full Node suite:
+  **803 total, 800 passed, 0 failed, 3 skipped**. Extended actual touch-browser
+  UI test to tap through two cycles of four shoes and assert pinned top,
+  unchanged garment records, and no implicit outfit saves.
+- Local browser execution is blocked by missing Chromium; the new browser
+  assertion awaits the existing GitHub mobile workflow after publication.
+  No paid inference, production deployment/merge or Drive Duel changes.
+- Remaining: actual layered-photo segmentation/automatic indexing accuracy,
+  independent reference masks, physical-phone validation, and real AI try-on
+  are not completed by these software fixes. No paid provider run authorized.
+
 ## Real Supabase JavaScript SDK deletion adapter integration — October 18, 2026, Pacific
 
 - **Verified a new server-adapter milestone**, all on the draft PR #7

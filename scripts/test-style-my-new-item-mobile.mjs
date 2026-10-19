@@ -236,6 +236,29 @@ try{
  assert.equal(reviewed.second.category,'Uncategorized');
  assert.equal(reviewed.second.color,'');
  assert.equal(await page.locator('#closetUnsorted').count(),1);
+ // Exercise the actual button handler across more than two choices. Engine
+ // tests alone cannot prove that the UI carries swap history between taps.
+ const swapBaseline=await page.evaluate(()=>{
+  const shoe=items.find(x=>x.id==='owned-white-sneakers');
+  items.push({...shoe,id:'third-owned-shoe'},{...shoe,id:'fourth-owned-shoe'});
+  styleNewClosetItem('new-green-top');
+  return {saved:savedOutfitBoards.length,items:JSON.stringify(items)};
+ });
+ await page.locator('#styledCollectionResults .styled-outfit').first().waitFor();
+ const cycle=[await page.evaluate(()=>styledCollectionResults[0].board.slots.shoes)];
+ for(let tap=0;tap<7;tap++){
+  await page.locator('#styledCollectionResults .styled-outfit').first()
+   .getByRole('button',{name:'Swap shoes in option 1'}).tap();
+  const state=await page.evaluate(()=>({
+   shoe:styledCollectionResults[0].board.slots.shoes,
+   top:styledCollectionResults[0].board.slots.top,
+   saved:savedOutfitBoards.length,items:JSON.stringify(items)
+  }));
+  cycle.push(state.shoe);assert.equal(state.top,'new-green-top');
+  assert.equal(state.saved,swapBaseline.saved);assert.equal(state.items,swapBaseline.items);
+ }
+ assert.equal(new Set(cycle.slice(0,4)).size,4,'all four owned shoes are reachable');
+ assert.equal(new Set(cycle.slice(4,8)).size,4,'repeat cycle reaches every shoe again');
  assert.deepEqual(errors,[]);
  console.log('NEW_ITEM_STYLE_MOBILE '+JSON.stringify({
   result:'passed',viewport:'390x844 touch',outfitOptions:outfits.length,
@@ -244,7 +267,7 @@ try{
   recentGarmentExactOpen:true,duplicateNameSafe:true,oldFiltersCleared:true,
   unsortedCategoryColorSaved:true,unsortedQueueSkipResumes:true,
   originalUnsortedPhotoPreserved:true,offlineTrendSafe:true,
-  actualPhoneVerified:false,pageErrors:errors.length
+  allOwnedSwapChoicesReachable:true,actualPhoneVerified:false,pageErrors:errors.length
  }));
  await context.close();
 }finally{await browser?.close();await new Promise(done=>server.close(done));}
