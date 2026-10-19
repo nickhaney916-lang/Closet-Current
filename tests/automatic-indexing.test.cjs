@@ -413,3 +413,60 @@ test('same-photo same-category, overlapping, unmasked or unverifiable regions ke
   assert.equal(c.batch[0].possibleDuplicate,true);
  }
 });
+
+test('a late model response must not classify newly replaced original RGB, scene or category',async()=>{
+ for(const change of [
+  item=>{item.recognitionPhoto.image='NEW_SOURCE_RGB';},
+  item=>{item.originalPhoto.image='NEW_FULL_SCENE';},
+  item=>{item.image='NEW_DISPLAY';},
+  item=>{item.segmentHint.categories=['Shoes'];},
+  item=>{item.category='Outerwear';}
+ ]){
+  let resolveModel;
+  const {c,stored}=setup({request:()=>new Promise(resolve=>{resolveModel=resolve;})});
+  c.candidate('outfit-preview',{outfitSourceId:'outfit',
+   recognitionPhoto:{image:'ORIGINAL_SOURCE_RGB'},originalPhoto:{image:'ORIGINAL_FULL_SCENE'},
+   segmentHint:{categories:['Tops'],types:[],clipped:false}});
+  for(let i=0;i<12&&!resolveModel;i++)await new Promise(setImmediate);
+  assert.equal(typeof resolveModel,'function');
+  const item=c.batch[0];change(item);
+  resolveModel({strong:true,choices:[choice],details:{color:'Blue'}});
+  await done(c);
+  assert.equal(stored.length,0,'stale model reply cannot auto-save a different source');
+  assert.equal(c.items.length,0);
+  assert.equal(item.localAnalyzed,false);
+  assert.match(item.localStatus,/Photo or category changed during recognition/);
+ }
+});
+test('a photo changed during async quality check never reaches classification',async()=>{
+ let finishQuality,modelCalls=0;
+ const {c,stored}=setup({quality:()=>new Promise(resolve=>{finishQuality=resolve;}),
+  request:async()=>{modelCalls++;return {strong:true,choices:[choice],details:{color:'Blue'}};}});
+ c.candidate('camera-photo');
+ for(let i=0;i<12&&!finishQuality;i++)await new Promise(setImmediate);
+ assert.equal(typeof finishQuality,'function');
+ c.batch[0].image='different-camera-photo';
+ finishQuality({blank:false,signature:[1,2,3],aspect:1});
+ await done(c);
+ assert.equal(modelCalls,0);assert.equal(stored.length,0);
+ assert.equal(c.batch[0].category,'Uncategorized');
+});
+test('queued automatic save fails closed when original source or accepted type changes',async()=>{
+ for(const change of [
+  item=>{item.recognitionPhoto.image='NEW_RGB';},
+  item=>{item.originalPhoto.image='NEW_SCENE';},
+  item=>{item.image='NEW_DISPLAY';},
+  item=>{item.itemType='Sweatshirt';},
+  item=>{item.category='Bottoms';}
+ ]){
+  const {c,stored}=setup();
+  c.queued=work=>{change(c.batch[0]);return work();};
+  c.candidate('outfit-display',{outfitSourceId:'scene',
+   recognitionPhoto:{image:'ORIGINAL_RGB'},originalPhoto:{image:'ORIGINAL_SCENE'},
+   segmentHint:{categories:['Tops'],types:[],clipped:false}});
+  await done(c);
+  assert.equal(stored.length,0);
+  assert.equal(c.items.length,0);
+  assert.equal(c.batch.length,1);
+ }
+});
