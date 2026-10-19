@@ -1,0 +1,60 @@
+name: Validate real original garment photos in Android Chromium and iPhone WebKit emulation
+on:
+  push:
+    branches: [validation/cross-engine-original-photo-pilot-20261019]
+    paths:
+      - 'scripts/run-phone-photo-check.mjs'
+      - '.github/workflows/validation-cross-engine-original-photo-pilot.yml'
+      - 'public/phone-photo-check.mjs'
+      - 'public/phone-photo-benchmark.mjs'
+      - 'public/recognition-engine.mjs'
+      - 'public/local-worker.mjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  real-model-phone-browser-emulation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 24
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    env:
+      PHONE_BROWSER: ${{ matrix.engine }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install isolated phone browser and SHA-verified original licensed photos
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps "$PHONE_BROWSER"
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos commons-0001,commons-0090
+      - name: Build combined original-photo and outfit workflow without paid providers
+        run: node scripts/build.mjs
+      - name: Classify the same original top and negative with the real offline model
+        run: node scripts/run-phone-photo-check.mjs "benchmark/phone-photo-pilot/$PHONE_BROWSER"
+      - name: Reject misleading simulated-hardware or missing source attribution
+        run: |
+          node --input-type=module -e "
+            import fs from 'node:fs';
+            const r=JSON.parse(fs.readFileSync('benchmark/phone-photo-pilot/'+process.env.PHONE_BROWSER+'/summary.json','utf8'));
+            const s=JSON.parse(fs.readFileSync('benchmark/phone-photo-pilot/'+process.env.PHONE_BROWSER+'/results.json','utf8'));
+            if(!r.passed||!r.realWorker||r.originalSourceShaVerified!==2||
+               r.physicallyTested!==false||r.liveCameraTested!==false||
+               r.providerBills!==0||r.externalRequests!==0||
+               r.categoryMatches!==1||r.negativeRejected!==1||
+               s.summary.photos!==2||s.summary.errors!==0)
+              throw Error('Original source or truthful emulator evidence gate failed');
+          "
+      - name: Save test evidence (never actual physical-phone proof)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: licensed-original-phone-emulation-${{ matrix.engine }}
+          path: benchmark/phone-photo-pilot/${{ matrix.engine }}
+          if-no-files-found: ignore
+          retention-days: 14
