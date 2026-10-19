@@ -3,7 +3,7 @@ import {checkCreatedPacket} from '../benchmark/figure-creation/created-figure-ga
 import {checkProceduralFootwear} from '../benchmark/figure-creation/footwear-contract.mjs';
 const sha=b=>createHash('sha256').update(b).digest('hex'),report=JSON.parse(fs.readFileSync('artifacts/figure-creation/results.json'));
 for(const [p,h]of Object.entries(report.pipelineFiles))assert.equal(sha(fs.readFileSync(p)),h);
-for(const f of report.figures)for(const [key,suffix]of [['master','-master.png'],['minimum','-1294.png'],['mobile','-mobile.webp']])assert.equal(sha(fs.readFileSync('artifacts/figure-creation/delivery/'+f.id+suffix)),f.variants[key].sha256);
+for(const f of report.figures)for(const [key,suffix]of [['master','-master.png'],['minimum','-1294.png'],['mobile','-mobile.webp'],['phone1x','-phone-647.webp'],['tablet2x','-tablet-1294.webp']])assert.equal(sha(fs.readFileSync('artifacts/figure-creation/delivery/'+f.id+suffix)),f.variants[key].sha256);
 for(const candidate of report.figures)checkProceduralFootwear(candidate);
 for(const candidate of report.figures){
  const hem=candidate.derivedClothingHem;
@@ -27,6 +27,26 @@ for(const candidate of report.figures){
  assert.equal(rim.sleeveCuffsModified,false);
  assert.equal(rim.neckOpeningReconstructed,false);
  assert.equal(rim.independentAppearanceApproval,false);
+}
+for(const candidate of report.figures){
+ const art=candidate.derivedClothingBinding;
+ assert.ok(art&&art.frontSegments>=6&&art.frontSegments<1000,
+  'a checked generated collar binding must follow true short shell boundary edges');
+ assert.ok(art.bevelRadius>0&&art.bevelRadius<=.002);
+ assert.equal(art.unreviewedOriginalArt,true);
+ assert.equal(art.bodySourceVerticesChanged,false);
+ assert.equal(art.sourcePhotoChanged,false);
+ for(const [key,width,height] of [['phone1x',647,1199],['tablet2x',1294,2398]]){
+  const asset=candidate.variants[key];
+  assert.equal(asset.width,width);assert.equal(asset.height,height);
+  assert.equal(asset.fidelity.alphaExact,true);
+  assert.equal(asset.fidelity.visibleRgbExact,true);
+  assert.equal(asset.fidelity.sourceMasterUnchanged,true);
+  assert.equal(asset.iccProfilePresent,true);assert.equal(asset.borderClear,true);
+ }
+ assert.ok(candidate.variants.phone1x.smallerThanMobileBytes);
+ assert.ok(candidate.variants.tablet2x.smallerThanPngBytes);
+ assert.equal(candidate.responsiveClarityVerified,true);
 }
 assert.deepEqual(report.summary,{fixedCharacters:2,native1941x3597Renders:2,minimum1294x2398Derivatives:2,productionApproved:0,independentVisualApprovals:0,physicalPhones:0,customerImagesUsed:0,externalInferenceCalls:0});
 console.log('CREATED_FIGURE_GATE '+JSON.stringify(checkCreatedPacket(report)));

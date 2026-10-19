@@ -4,7 +4,7 @@ import pathlib
 import sys
 import unittest
 sys.path.insert(0,str(pathlib.Path(__file__).resolve().parents[1]/'scripts'))
-from figure_fabric_boundaries import flatten_lower_hem,smooth_upper_shell_rim
+from figure_fabric_boundaries import flatten_lower_hem,smooth_upper_shell_rim,approved_front_binding_segments
 
 def shell():
     coords=[]
@@ -78,6 +78,37 @@ class UpperRimTests(unittest.TestCase):
             coords,f=self.upper_shell()
             with self.assertRaises(ValueError):smooth_upper_shell_rim(coords,f,**kwargs)
 
+
+
+class DecorativeBindingTests(unittest.TestCase):
+    def binding_shell(self):
+        coords=[]
+        for upper in [False,True]:
+            for n in range(64):
+                angle=2*math.pi*n/64
+                coords.append([.22*math.cos(angle),-.12+.16*(1-math.cos(angle)),
+                               1.47+.008*math.sin(3*angle) if upper else .90])
+        faces=[[n,(n+1)%64,64+(n+1)%64,64+n] for n in range(64)]
+        return coords,faces
+
+    def test_trim_follows_actual_existing_upper_front_boundary_edges(self):
+        coords,faces=self.binding_shell()
+        edges=approved_front_binding_segments(coords,faces)
+        self.assertGreaterEqual(len(edges),6)
+        copied=copy.deepcopy(coords)
+        for a,b in edges:
+            self.assertLess(sum((x-y)**2 for x,y in zip(coords[a],coords[b]))**.5,.045)
+            for i in (a,b):
+                self.assertTrue(1.36<=coords[i][2]<=1.54)
+                self.assertLess(coords[i][1],-.04)
+        self.assertEqual(coords,copied)
+
+    def test_trim_refuses_wide_gaps_missing_boundaries_and_invalid_geometry(self):
+        coords,faces=self.binding_shell()
+        with self.assertRaises(ValueError):approved_front_binding_segments(coords,faces,max_segment=.11)
+        with self.assertRaises(ValueError):approved_front_binding_segments(coords,faces,low=.35,high=.55)
+        with self.assertRaises(ValueError):approved_front_binding_segments(coords,[[0,0,1]])
+        with self.assertRaises(ValueError):approved_front_binding_segments(coords,[[0,1000,2]])
 
 if __name__=='__main__':
     unittest.main()

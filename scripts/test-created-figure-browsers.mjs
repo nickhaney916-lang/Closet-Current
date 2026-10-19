@@ -3,15 +3,26 @@ import {chromium,webkit} from 'playwright';
 import {createServer} from 'node:http';
 import fs from 'node:fs/promises';import assert from 'node:assert/strict';
 import {sha,sampling} from '../benchmark/figure-readiness/production-figure-metrics.mjs';
+import {selectFigureAssetTier} from '../benchmark/figure-creation/responsive-asset-policy.mjs';
 const packet=JSON.parse(await fs.readFile('artifacts/figure-creation/results.json','utf8'));
-const evidence={figures:packet.figures.map(f=>({id:f.id,previewPath:'artifacts/figure-creation/delivery/'+f.id+'-master.png',previewSha256:f.variants.master.sha256}))};
+const evidence={figures:packet.figures.map(f=>({id:f.id,previewPath:'artifacts/figure-creation/delivery/'+f.id+'-master.png',previewSha256:f.variants.master.sha256,variants:f.variants}))};
 const policy=JSON.parse(await fs.readFile('benchmark/figure-readiness/production-policy.json','utf8'));
 const css=(await fs.readFile('public/style.css','utf8')).replace(/@import[^;]+;/g,'');
-const files={};for(const a of evidence.figures){const b=await fs.readFile(a.previewPath);assert.equal(sha(b),a.previewSha256);files['/'+a.id+'.png']=b;}
+const files={};for(const a of evidence.figures){
+ const b=await fs.readFile(a.previewPath);assert.equal(sha(b),a.previewSha256);
+ files['/'+a.id+'.png']=b;
+ for(const [tier,filename] of [
+  ['phone1x','-phone-647.webp'],['mobile','-mobile.webp'],
+  ['tablet2x','-tablet-1294.webp']]){
+  const body=await fs.readFile('artifacts/figure-creation/delivery/'+a.id+filename);
+  assert.equal(sha(body),a.variants[tier].sha256);
+  files['/'+a.id+filename]=body;
+ }
+}
 let writes=0;
 const server=createServer((req,res)=>{
  if(req.method!=='GET'){writes++;res.writeHead(405);return res.end();}
- if(files[req.url]){res.writeHead(200,{'Content-Type':'image/png'});return res.end(files[req.url]);}
+ if(files[req.url]){res.writeHead(200,{'Content-Type':req.url.endsWith('.webp')?'image/webp':'image/png','Cache-Control':'public,max-age=86400,immutable'});return res.end(files[req.url]);}
  if(req.url==='/'){
   res.writeHead(200,{'Content-Type':'text/html'});return res.end('<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1"><style>'+css+'</style><div id="fixture" style="width:270px"><div id="stage" class="reusable-figure-stage"><img id="reusableFigureBase" alt="Same reusable figure"></div></div>');
  }
@@ -44,7 +55,31 @@ try{
      assert.ok(actual.nonWhitePixels>500);assert.ok(actual.opaquePixels>1000&&actual.opaquePixels<64*128);assert.equal(actual.objectFit,'fill');
      const sample=sampling(1941,3597,{cssWidth:actual.width/zoom,dpr,cssZoom:zoom},policy.canonicalStage);
      assert.equal(sample.nativeSamplingSufficient,true,'Preferred native render covers all tested sampling cases');
-     rows.push({engine,id:asset.id,assetSha256:asset.previewSha256,cssZoom:zoom,...actual,sampling:sample,decodeAndGeometryPassed:true,nativeSamplingPassed:true,anatomyOrPhotorealismApproved:false});
+     // Preserve a known native-master baseline. Then switch this same
+     // calibrated figure to the smallest lossless candidate that covers the
+     // device's actual display pixels with no canvas RGB/alpha reconstruction.
+     const chosen=selectFigureAssetTier(actual.width/zoom,dpr,zoom);
+     const source=chosen.name==='master'?'/'+asset.id+'.png':
+      '/'+asset.id+chosen.suffix;
+     const shown=await page.evaluate(async({src})=>{
+       const img=document.getElementById('reusableFigureBase');
+       img.src=src;await img.decode();
+       const b=img.getBoundingClientRect();
+       return {naturalWidth:img.naturalWidth,naturalHeight:img.naturalHeight,
+         cssWidth:b.width,cssHeight:b.height};
+     },{src:source});
+     assert.equal(shown.naturalWidth,chosen.width);
+     assert.equal(shown.naturalHeight,chosen.width===1941?3597:chosen.width===1294?2398:
+      chosen.width===970?1798:1199);
+     assert.ok(Math.abs(shown.cssWidth-actual.width)<.6);
+     assert.ok(Math.abs(shown.cssHeight-actual.height)<.6);
+     assert.equal(chosen.nativeSamplingSufficient,true);
+     const bytes=chosen.name==='master'?asset.variants.master.bytes:asset.variants[chosen.name].bytes;
+     assert.ok(bytes<=asset.variants.master.bytes,'responsive image must never exceed original master bytes');
+     rows.push({engine,id:asset.id,assetSha256:asset.previewSha256,cssZoom:zoom,...actual,sampling:sample,
+       selectedTier:chosen.name,selectedBytes:bytes,masterBytes:asset.variants.master.bytes,
+       nativeSamplingSelectedPassed:true,decodeAndGeometryPassed:true,nativeSamplingPassed:true,
+       anatomyOrPhotorealismApproved:false});
      await page.locator('#stage').screenshot({path:`artifacts/figure-creation/browser/${type===chromium?'android':'iphone'}-${asset.id}-dpr${dpr}-csszoom${zoom}.png`});
     }
     assert.deepEqual(errors,[]);await ctx.close();
@@ -52,9 +87,12 @@ try{
   }finally{await browser.close();}
  }
  assert.equal(writes,0);assert.equal(external,0);
+ const totalResponsiveBytes=rows.reduce((n,r)=>n+r.selectedBytes,0);
+ const totalBaselineBytes=rows.reduce((n,r)=>n+r.masterBytes,0);
+ assert.ok(totalResponsiveBytes<totalBaselineBytes);
  const report={schemaVersion:1,evidence:'newly-rendered-two-asset-browser-fixture-using-app-stage-css-not-full-product-or-hardware',
   browserVersions:{chromium:chromium.executablePath().split('/').slice(-3,-1).join('/'),webkit:webkit.executablePath().split('/').slice(-3,-1).join('/')},
-  summary:{cases:rows.length,decodeGeometryPasses:rows.length,nativeSamplingPasses:rows.length,externalRequests:external,postRequests:writes,physicalPhones:0,visualQualityApprovals:0},rows};
+  summary:{cases:rows.length,decodeGeometryPasses:rows.length,nativeSamplingPasses:rows.length,responsiveTierPasses:rows.length,selectedTierBytes:totalResponsiveBytes,masterOnlyBytes:totalBaselineBytes,byteSavingsFraction:1-totalResponsiveBytes/totalBaselineBytes,externalRequests:external,postRequests:writes,physicalPhones:0,visualQualityApprovals:0},rows};
  await fs.writeFile('artifacts/figure-creation/browser/results.json',JSON.stringify(report,null,2)+'\n');
  console.log('CREATED_FIGURE_EMULATION '+JSON.stringify(report.summary));
 }finally{await new Promise(r=>server.close(r));}

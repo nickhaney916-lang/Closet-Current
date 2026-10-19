@@ -6,7 +6,7 @@ from mathutils import Vector
 from bpy_extras.object_utils import world_to_camera_view
 # Blender factory-startup does not always include the script directory.
 sys.path.insert(0,str(Path(__file__).resolve().parent))
-from figure_fabric_boundaries import flatten_lower_hem, smooth_upper_shell_rim
+from figure_fabric_boundaries import flatten_lower_hem, smooth_upper_shell_rim, approved_front_binding_segments
 ROOT=Path(__file__).resolve().parents[1]
 args=sys.argv[sys.argv.index('--')+1:];source=Path(args[0]).resolve();output=Path(args[1]).resolve();quick='--quick'in args
 if not output.is_relative_to(ROOT/'artifacts'):raise ValueError('Only artifacts/ output allowed')
@@ -95,6 +95,26 @@ for kind in recipe['figures']:
  # source joints and original user clothing/source pixels untouched.
  hem_diagnostics=flatten_lower_hem(cloth_coords,cloth_faces)
  upper_rim_diagnostics=smooth_upper_shell_rim(cloth_coords,cloth_faces)
+ # This narrow original *decorative* binding follows only truly adjacent
+ # front-facing shell boundaries. It does not pretend to reconstruct a 3D
+ # human neckline or connect unverified gaps. Never alter upstream body.
+ binding_segments=approved_front_binding_segments(cloth_coords,cloth_faces)
+ trim_data=bpy.data.curves.new(kind+'-front-rim-binding','CURVE')
+ trim_data.dimensions='3D'
+ trim_data.resolution_u=2
+ trim_data.bevel_depth=.00115
+ trim_data.bevel_resolution=3
+ trim_mat=material('neutral-binding',(.285,.305,.325,1),.94)
+ for a,b in binding_segments:
+  segment=trim_data.splines.new('POLY')
+  segment.points.add(1)
+  for spline_point,vertex in zip(segment.points,[cloth_coords[a],cloth_coords[b]]):
+   spline_point.co=(vertex[0],vertex[1]-.002,vertex[2],1)
+ binding_ob=bpy.data.objects.new(kind+'-bounded-original-front-binding',trim_data)
+ bpy.context.collection.objects.link(binding_ob)
+ trim_data.materials.append(trim_mat)
+ binding_evidence={'frontSegments':len(binding_segments),'bevelRadius':trim_data.bevel_depth,
+   'unreviewedOriginalArt':True,'bodySourceVerticesChanged':False,'sourcePhotoChanged':False}
  cloth=mesh(kind+'-neutral-base-shell',cloth_coords,cloth_faces,[mats[1]])
  solid=cloth.modifiers.new('modest cloth offset','SOLIDIFY');solid.thickness=.008;solid.offset=1
  # Original, low-profile shoes: smooth toe/instep/heel sections with a
@@ -178,7 +198,7 @@ for kind in recipe['figures']:
  # Waist diagnostic source joint, not an approved placement anchor.
  anchors['lowerSpineJoint']=joints['spine04____head']
  record={'id':kind,'sourceRevision':lock['revision'],'ageTarget':'young-adult-approximately-25','bodyScale':scale,'sourceBodyVertices':len(ids),'bodyFaces':len(faces),
-  'legPoseMaxMotion':leg_motion,'derivedClothingHem':hem_diagnostics,'derivedClothingUpperRim':upper_rim_diagnostics,'footwearGeometry':'procedural-rounded-upper-contoured-outsole-three-laces-per-shoe','shoeUpperCount':shoe_count,'shoeOutsoleCount':shoe_count,'shoeLaceStrokeCount':lace_count,'blockPrimitiveFootwear':False,'renderWidth':scene.render.resolution_x,'renderHeight':scene.render.resolution_y,'samples':scene.cycles.samples,'nativeSceneRender':True,'resizedFromPreview':False,
+  'legPoseMaxMotion':leg_motion,'derivedClothingHem':hem_diagnostics,'derivedClothingUpperRim':upper_rim_diagnostics,'derivedClothingBinding':binding_evidence,'footwearGeometry':'procedural-rounded-upper-contoured-outsole-three-laces-per-shoe','shoeUpperCount':shoe_count,'shoeOutsoleCount':shoe_count,'shoeLaceStrokeCount':lace_count,'blockPrimitiveFootwear':False,'renderWidth':scene.render.resolution_x,'renderHeight':scene.render.resolution_y,'samples':scene.cycles.samples,'nativeSceneRender':True,'resizedFromPreview':False,
   'projectedSourceJoints':{k:project(p)for k,p in anchors.items()},'jointApproval':False,'visualApproved':False,'commercialProductApproval':False,'sourceBounds':[low,high]}
  scene.render.filepath=str(output/(kind+'-master.png'));bpy.ops.wm.save_as_mainfile(filepath=str(output/(kind+'.blend')),compress=True);bpy.ops.render.render(write_still=True)
  record['sceneSha256']=hashlib.sha256((output/(kind+'.blend')).read_bytes()).hexdigest()
