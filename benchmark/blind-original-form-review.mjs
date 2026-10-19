@@ -17,7 +17,10 @@ export function blindOriginalFormReviewPacket(queue,reviewerSlot){
    throw Error('Untrusted original photograph');
   seen.add(r.sourceId);
   return {sourceId:r.sourceId,image:r.image,sourceSha256:r.sourceSha256,
-   originalSourceUrl:r.originalSourceUrl,license:r.attribution?.license,
+   // Do not disclose the source page URL: Wikimedia filenames may contain
+   // the specific garment answer, such as "Dress and jacket".
+   // Identity remains verifiable by a neutral ID, JPEG name and SHA.
+   license:r.attribution?.license,
    // Explicitly blank; no inference from captions, file titles or predictions.
    inspectedEntireOriginal:null,sourceVisiblePhysicalGarments:[],
    allVisiblePhysicalGarmentsRecorded:null,ambiguityNotes:null};
@@ -29,6 +32,6 @@ export function blindOriginalFormReviewPacket(queue,reviewerSlot){
   modelPredictionsIncluded:false,manifestCategoryLabelsIncluded:false,
   originalPhotosCopiedOrReencoded:false,photoCount:originals.length,
   independentlyReviewed:false,allGarmentFormsVerified:false,
-  instruction:'Inspect every complete source photo BEFORE viewing any model result or manifest labels. Record each distinct VISIBLE garment category and specific form, including unknown/uncertain and background negative controls. Never infer covered garments. Do not copy a garment from another reviewer. Source URL and SHA bind the review to the exact original.',
+  instruction:'Inspect every complete source photo BEFORE viewing any model result or manifest labels. Record each distinct VISIBLE garment category and specific form, including unknown/uncertain and background negative controls. Never infer covered garments. Do not copy a garment from another reviewer. Neutral source ID and SHA bind the review to the exact original.',
   originals};
 }

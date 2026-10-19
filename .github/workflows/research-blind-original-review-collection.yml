@@ -1,0 +1,86 @@
+name: Research original-photo blind reviewer collection and reconciliation
+on:
+  push:
+    branches: [research/blind-original-photo-review-collection-20261019]
+    paths:
+      - 'benchmark/blind-original-photo-review.html'
+      - 'benchmark/blind-original-form-review.mjs'
+      - 'scripts/stage-blind-original-form-review.mjs'
+      - 'tests/blind-original-form-review.test.mjs'
+      - 'benchmark/blind-original-review-submissions.mjs'
+      - 'scripts/test-blind-original-photo-review-browser.mjs'
+      - 'scripts/test-blind-real-originals-browser.mjs'
+      - 'scripts/reconcile-blind-original-reviews.mjs'
+      - 'tests/blind-original-review-submissions.test.mjs'
+      - '.github/workflows/research-blind-original-review-collection.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  original-photo-blind-review-validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate two-reviewer submissions, original source ids and no model promotion
+        run: |
+          node --test tests/blind-original-review-submissions.test.mjs tests/blind-original-form-review.test.mjs tests/original-photo-form-review.test.mjs tests/physical-garment-inventory.test.mjs
+      - name: Install isolated Chromium and WebKit browser emulation
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium webkit
+      - name: Open the real offline review page and verify SHA-hashed JPEG selection, source inventory and export
+        run: node scripts/test-blind-original-photo-review-browser.mjs
+      - name: Recover verified first reviewer blank packet and download 16 original SHA-locked licensed JPEGs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          mkdir -p benchmark/blind-original-review-packets
+          gh run download 39289879093 --repo "$GH_REPO" -n original-form-review-queue-real-photo -D benchmark/blind-original-review-packets
+          test -s benchmark/blind-original-review-packets/review-queue.json
+          # Regenerate truly blinded packets from the review queue using
+          # current code. Older packed reviewer files included descriptive
+          # Wikimedia URLs and must NEVER be handed to blinded reviewers.
+          node scripts/stage-blind-original-form-review.mjs benchmark/blind-original-review-packets/review-queue.json benchmark/blind-original-review-packets
+          node --input-type=module -e "
+            import fs from 'node:fs';
+            for(const slot of ['first','second']){
+              const p=JSON.parse(fs.readFileSync('benchmark/blind-original-review-packets/blind-'+slot+'-reviewer.json'));
+              if(p.originals.some(x=>Object.hasOwn(x,'originalSourceUrl')||Object.hasOwn(x,'title')||
+                  Object.hasOwn(x,'modelResult')||Object.hasOwn(x,'manifestLabel')))
+                throw Error('Cannot release descriptive source metadata into blind reviewer packet');
+            }
+          "
+          IDS=$(node -e "console.log(JSON.parse(require('fs').readFileSync('benchmark/manifest-holdout-16.json','utf8')).map(x=>x.id).join(','))")
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/blind-original-source-photos "$IDS"
+      - name: Verify all 16 actual originals load on offline review page with cryptographic source identity
+        run: node scripts/test-blind-real-originals-browser.mjs
+      - name: Publish only the first independent reviewer packet without source titles or AI labels
+        uses: actions/upload-artifact@v4
+        with:
+          name: blind-original-reviewer-first-no-answers
+          path: benchmark/blind-original-review-packets/blind-first-reviewer.json
+          retention-days: 14
+      - name: Publish only the SECOND independent reviewer packet without source titles or AI labels
+        uses: actions/upload-artifact@v4
+        with:
+          name: blind-original-reviewer-second-no-answers
+          path: benchmark/blind-original-review-packets/blind-second-reviewer.json
+          retention-days: 14
+      - name: Prove review collection never authorizes new customer garment indexing
+        run: |
+          node --input-type=module -e "
+            import fs from 'node:fs';
+            const code=fs.readFileSync('benchmark/blind-original-review-submissions.mjs','utf8');
+            const ui=fs.readFileSync('benchmark/blind-original-photo-review.html','utf8');
+            if(!code.includes('physicalGarmentRecall:null')||
+               !code.includes('independentMaskIoU:null')||
+               !code.includes('mayTrainOrAdjustModel:false')||
+               !ui.includes('crypto.subtle.digest')||
+               /https?:\/\/[^'\\x22]*\\.(?:js|css)/.test(ui))
+              throw Error('Blind reviewer research must remain provider-free, source-verified and non-releasing');
+          "
