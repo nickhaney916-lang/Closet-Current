@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "status": "proposed-workflow-not-rendered-not-approved",
+  "recurringExternalInference": false,
+  "characters": ["female", "male"],
+  "softwareRoute": "Official Blender plus MakeHuman/MPFB core assets or verified CC0 base meshes; pin exact versions before production creation",
+  "sourceLedgerRequired": ["component path", "component SHA-256", "creator", "original URL", "version", "license text and SHA-256", "commercial/modification/distribution permissions", "modification history"],
+  "sceneContract": {
+    "camera": "One shared front orthographic camera, no perspective distortion; full head/hands/feet inside reviewed margins",
+    "lighting": "Identical neutral studio area-light rig for both; diffuse frontal key/fill, no saturated cast or baked garment-like shadows",
+    "pose": "Modest fictional adults; arms and hands clear of torso/hips, feet visible, neutral stance; preserve each body's proportions",
+    "baseClothing": "Neutral modest fitted base, no logos; coverage and garment protrusion require review, including shorts/skirts/sleeveless tops",
+    "background": "Transparent RGBA master; stage background remains separately composited; keep hair/hand/body alpha layers on same source grid",
+    "color": "Pinned render/color-management settings; converted and explicitly tagged sRGB display masters; retain source scene/linear renders separately",
+    "output": "Exactly two 1941x3597 preferred lossless PNG masters plus web derivatives, no random generation at runtime"
+  },
+  "reproducibility": "Preserve scene, presets, component ledger, camera/light transforms, render engine/version, samples, seed, view transform and hardware. Pixel-identical rendering across different GPUs is not assumed; verify final deliverable hashes.",
+  "remainingWork": ["acquire and audit exact components", "create and art-direct the fixed characters", "review anatomy, expressions, skin, hair and base clothing", "review source-aligned anchors and occlusion masks with integration owner", "approve exact files and licensing evidence", "run the readiness benchmark on actual masters and derivatives", "physical Android/iPhone visual review"],
+  "limitations": "No Blender executable is installed in this Work container and no render components were acquired. This plan does not create or certify production figures. No asset generation or customer-image uploads occurred."
+}
