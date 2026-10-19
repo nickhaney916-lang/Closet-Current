@@ -122,9 +122,17 @@ async function generateTryOn(){
   tryOnImage=modelImage;tryOnFingerprint=signature;tryOnPendingInputs=null;
   const image=$('tryOnImage');image.src=modelImage;image.hidden=false;
   $('outfitFigure')?.classList.add('ai-tryon-active');
-  $('tryOnStatus').textContent=plan.steps.length>1?
-   'AI try-on of your '+plan.steps[0].slot+' is ready. Other selected pieces are not rendered yet.':
-   'AI-generated try-on preview. Exact sizing and fabric drape are not guaranteed.';
+  // The first pilot generates ONE garment, not the assembled whole outfit.
+  // A dress + shoes has only one supported plan step, but the shoes were
+  // never rendered; relying on plan.steps.length would falsely imply a
+  // complete-look preview. State every unrendered selected slot explicitly.
+  const rendered=plan.steps[0].slot,
+   unrendered=Object.keys(currentBoard?.slots||{}).filter(slot=>slot!==rendered);
+  const onlyGarment=plan.steps[0].category==='one-pieces'?'dress':rendered;
+  $('tryOnStatus').textContent=unrendered.length?
+   'AI try-on shows only your '+onlyGarment+'. Not rendered: '+unrendered.join(', ')+
+   '. Exact fit, colors and drape are not guaranteed.':
+   'AI-generated '+onlyGarment+' preview. Exact sizing and fabric drape are not guaranteed.';
  }catch(error){
   if(!isCurrent())return;
   $('tryOnStatus').textContent=error instanceof Error?error.message:'Try-on unavailable';
