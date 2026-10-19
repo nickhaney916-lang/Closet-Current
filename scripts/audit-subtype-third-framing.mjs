@@ -45,6 +45,14 @@ export function auditSubtypeFraming(manifest,results){
  const wrongAutomaticType=clothing.filter(c=>c.baselineStrong&&!c.baselineCorrectType);
  const abstained=clothing.filter(c=>!c.baselineCategory);
  const agreeingWrong=wrongAutomaticType.filter(c=>c.baselineAndThreeFramesAgree);
+ const strong=clothing.filter(c=>c.baselineStrong);
+ const retainedStrong=strong.filter(c=>c.baselineAndThreeFramesAgree);
+ const rejectedStrong=strong.filter(c=>!c.baselineAndThreeFramesAgree);
+ const retainedWrong=retainedStrong.filter(c=>!c.baselineCorrectType);
+ const deferredCorrect=rejectedStrong.filter(c=>c.baselineCorrectType);
+ // Counterfactual only. The existing scanner still uses the original
+ // classifier untouched; don't claim this policy is calibrated or safe
+ // outside the fixed observed sample.
  return {version:1,modelViewType:'same-model-three-original-photo-framings',
   requiredFramings:sizes,sourcePhotos:cases.length,clothingPhotos:clothing.length,negativeControls:negatives.length,
   baselineWrongAutomaticTypeCount:wrongAutomaticType.length,
@@ -52,6 +60,11 @@ export function auditSubtypeFraming(manifest,results){
   baselineWrongTypeWithFullFrameAgreementCount:agreeingWrong.length,
   baselineWrongTypeWithFullFrameAgreementIds:agreeingWrong.map(c=>c.id),
   baselineWrongTypeWithFramingDisagreementIds:wrongAutomaticType.filter(c=>!c.baselineAndThreeFramesAgree).map(c=>c.id),
+  simulatedUnanimityGate:{policy:'defer-automatic-specific-type-if-any-of-three-same-model-framings-disagree',
+   evaluatedStrong:strong.length,retainedStrong:retainedStrong.length,deferredStrong:rejectedStrong.length,
+   retainedWrongTypeIds:retainedWrong.map(c=>c.id),deferredWrongTypeIds:rejectedStrong.filter(c=>!c.baselineCorrectType).map(c=>c.id),
+   deferredCorrectTypeIds:deferredCorrect.map(c=>c.id),
+   onlyCounterfactual:true,productionPolicyChanged:false},
   baselineAbstentionIds:abstained.map(c=>c.id),
   frameCategoryAgreementPercent:percent(clothing.filter(c=>c.frameCategoryAgreement).length,clothing.length),
   frameSubtypeAgreementPercent:percent(clothing.filter(c=>c.frameSubtypeAgreement).length,clothing.length),
