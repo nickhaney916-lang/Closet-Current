@@ -37,7 +37,7 @@ try{
    const externalWrites=[];
    await context.route('**/auth.js*',route=>route.fulfill({
     contentType:'text/javascript',
-    body:"window.closetAuth={user:{id:'synthetic-device-check-'+Math.random()},ready:Promise.resolve()};document.getElementById('authGate').hidden=true;document.getElementById('appShell').hidden=false;"
+    body:"window.closetAuth={user:{id:'synthetic-device-check-"+(platform==='Android'?'android':'ios')+"'},ready:Promise.resolve()};document.getElementById('authGate').hidden=true;document.getElementById('appShell').hidden=false;"
    }));
    await context.route('**/*',route=>{
     const u=route.request().url(),method=route.request().method();
