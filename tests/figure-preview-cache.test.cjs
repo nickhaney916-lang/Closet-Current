@@ -86,7 +86,7 @@ test('decoded image integrity is checked before counting or caching a fitted gar
  const index=ui.indexOf('try{await img.decode();}');
  const dimensionCheck=ui.indexOf('img.naturalWidth!==prepared.width');
  const cacheWrite=ui.indexOf('if(preparedNow)previewCache?.put(query,prepared)');
- const append=ui.indexOf('nextLayers.append(img);counts.shown++');
+ const append=ui.indexOf('nextLayers.append(img);displayedSlots.add(placement.slot);counts.shown++');
  assert.ok(index>=0,'display image is decoded before publication');
  assert.ok(index<dimensionCheck&&dimensionCheck<cacheWrite&&cacheWrite<append,
   'decoder, dimensions and signed-in account cancellation precede cache/population');

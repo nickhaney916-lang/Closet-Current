@@ -292,6 +292,10 @@ try{
      const alpha=context.getImageData(Math.floor(c.width/2),Math.floor(c.height/2),1,1).data[3];
      return {order:plan.placements.map(p=>p.slot),count:images.length,
       coatCenterAlpha:alpha,
+      contourShadow:getComputedStyle(coat).filter,
+      jacketOnly:coat.classList.contains('reusable-figure-layer--contact-depth'),
+      shirtNotShadowed:!images[1].classList.contains('reusable-figure-layer--contact-depth'),
+      shoesNotShadowed:!images[3].classList.contains('reusable-figure-layer--contact-depth'),
       brokenImages:images.filter(i=>!i.naturalWidth||!i.naturalHeight).length};
     });
     assert.deepEqual(layered.order,['bottom','top','layer2','shoes']);
@@ -299,6 +303,10 @@ try{
     assert.equal(layered.brokenImages,0);
     assert.equal(layered.coatCenterAlpha,0,
      'the open jacket must not hide the underlying shirt in the center');
+    assert.equal(layered.jacketOnly,true,'only a successful outerwear layer receives depth');
+    assert.equal(layered.shirtNotShadowed,true);
+    assert.equal(layered.shoesNotShadowed,true);
+    assert.match(layered.contourShadow,/drop-shadow\(/,'shadow must follow transparent jacket pixels');
     await page.locator('#reusableFigureStage').screenshot({path:'artifacts/local-fitting/'+
      (figure==='female'?'female':'male')+'-synthetic-four-layer.png'});
     await page.evaluate(()=>{
@@ -316,6 +324,8 @@ try{
     assert.deepEqual(dress.plan,['top','shoes']);
     assert.equal(dress.count,2);
     assert.ok(!dress.slots.includes('bottom')&&!dress.slots.includes('layer2'));
+    assert.equal(await page.locator('#reusableFigureGarments img.reusable-figure-layer--contact-depth').count(),0,
+     'a dress with shoes must not receive fake outerwear depth');
     await page.locator('#reusableFigureStage').screenshot({path:'artifacts/local-fitting/'+
      (figure==='female'?'female':'male')+'-synthetic-dress.png'});
     layeredResults.push({figure,layeredGarments:layered.count,dressGarments:dress.count,

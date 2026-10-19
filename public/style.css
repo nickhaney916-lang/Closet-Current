@@ -133,3 +133,10 @@ input[type="checkbox"]{min-height:20px;width:20px;height:20px;vertical-align:mid
 .reusable-figure-photo-help[hidden]{display:none!important}
 .reusable-figure-photo-help .fine{margin:0;line-height:1.55}
 #reusableFigureRetake{width:100%;min-height:52px;white-space:normal}
+
+/* A gentle alpha-contour contact shadow on APPROVED, decoded outerwear above
+   an actual clothing underlayer. Do not use rectangular box shadows or blur
+   garment image colors. This does not simulate light or body occlusion. */
+.reusable-figure-layer--contact-depth{
+ filter:drop-shadow(0px 1px 1.25px rgba(30,28,26,.16));
+}
