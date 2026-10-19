@@ -387,6 +387,16 @@ function exactlyRepeatedCapturedItem(existing,proposed){
  if(existing.originalPhoto.image!==newSource)return false;
  // Re-scanning the same source in a different group is a true repeat.
  if(existing.outfitSourceId!==proposed.outfitSourceId)return true;
+ // Different underlayer/outerlayer labels may share nearly the same outer
+ // rectangle. The segmentation worker can identify distinct source hints even
+ // when the display fallback JPEG is identical. Keep both for review.
+ const role=x=>JSON.stringify([
+  typeof x.segmentHint?.layerRole==='string'?x.segmentHint.layerRole:null,
+  typeof x.segmentHint?.sourceLabel==='string'?x.segmentHint.sourceLabel:null,
+  Array.isArray(x.segmentHint?.categories)?[...x.segmentHint.categories].sort():[],
+  Array.isArray(x.segmentHint?.types)?[...x.segmentHint.types].sort():[]
+ ]);
+ if(role(existing)!==role(proposed))return false;
  const a=existing.cropBounds,b=proposed.cropBounds;
  const valid=x=>x&&['x','y','width','height'].every(k=>
   typeof x[k]==='number'&&Number.isFinite(x[k])&&
