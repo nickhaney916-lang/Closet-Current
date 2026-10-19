@@ -80,3 +80,16 @@ test('full module stays display-only without IO, network, storage or provider ca
  assert.match(edge,/RESERVED_PAID_INFERENCE_APPROVED=false/);
  assert.match(edge,/CHAINED_PAID_INFERENCE_APPROVED=false/);
 });
+
+test('decoded image integrity is checked before counting or caching a fitted garment',()=>{
+ const ui=fs.readFileSync('public/reusable-figure-preview.js','utf8');
+ const index=ui.indexOf('try{await img.decode();}');
+ const dimensionCheck=ui.indexOf('img.naturalWidth!==prepared.width');
+ const cacheWrite=ui.indexOf('if(preparedNow)previewCache?.put(query,prepared)');
+ const append=ui.indexOf('nextLayers.append(img);counts.shown++');
+ assert.ok(index>=0,'display image is decoded before publication');
+ assert.ok(index<dimensionCheck&&dimensionCheck<cacheWrite&&cacheWrite<append,
+  'decoder, dimensions and signed-in account cancellation precede cache/population');
+ assert.match(ui,/catch\{if\(cancelled\(\)\)return;counts\.skipped\+\+;continue;\}/);
+ assert.match(ui,/if\(cancelled\(\)\)return;/);
+});
