@@ -1,5 +1,60 @@
 # Closet Current master development checkpoint
 
+## Real Supabase JavaScript SDK deletion adapter integration — October 18, 2026, Pacific
+
+- **Verified a new server-adapter milestone**, all on the draft PR #7
+  development branch. Added
+  `scripts/test-local-supabase-sdk-account-deletion.mjs` and expanded
+  `.github/workflows/account-deletion-storage-local.yml`. The pinned
+  Supabase JS SDK `2.75.0` is installed only into the disposable runner,
+  not the application's deployed browser files.
+- GitHub Actions starts an isolated local Supabase CLI/Auth/Storage/PostgREST
+  stack, applies the existing backup schema and **undeployed draft**
+  deletion write barrier to the local database, then creates two
+  independently signed-in synthetic accounts. The test uses **actual
+  SDK** methods with separate service-role and password clients:
+  `auth.getUser(token)`, `auth.admin.getUserById`,
+  `signInWithPassword`, `rpc('begin_closet_account_deletion')`,
+  `storage.list`/`storage.remove`, backup table delete/select and
+  `auth.admin.deleteUser`.
+- Before deletion, the default-disabled coordinator **rejects** a request
+  without making destructive SDK calls; an incorrect password cannot
+  pass verified reauthentication. A test-only `enabled:true` coordinator
+  then exercises the full cleanup of **only synthetic local user A**:
+  original photo removal, private backup deletion, Auth deletion last,
+  complete verification, no cross-account loss, and blocked stale-token
+  upload. Synthetic user B's photograph and backup remain present.
+- Independently, the previously verified Storage REST test continues
+  to pass: RLS-filtered foreign DELETE no-op checked for actual file
+  survival, late upload and backup writes blocked after lock, ordinary
+  other-owner writes allowed, and two-photo **interrupted cleanup**
+  recovered under the idempotent tombstone.
+- [Verified run 39188315048](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39188315048),
+  tested code commit `853aaf175033c55249429d3afbfba628a7f76f6d`:
+  `LOCAL_SUPABASE_SDK_ACCOUNT_DELETE` reported
+  `actualSdkAuth=true`, `actualSdkStorage=true`,
+  `secureFreshPassword=true`, `privatePhotoRemoved=true`,
+  `backupRemoved=true`, `authUserRemoved=true`,
+  `otherOwnerIntact=true`, `staleTokenBlocked=true`,
+  `clientSideDeletionAvailable=false`, `hostedSupabaseAccess=false`.
+  `LOCAL_SUPABASE_STORAGE_ACCOUNT_DELETION` additionally reported
+  `interruptedCleanupRecovered=true` and all other safety flags true.
+  Both integration steps and temporary-container cleanup passed.
+  At inspection **25 of 26 PR checks passed**, with one unrelated
+  experimental-model check still in progress.
+- **The actual customer deletion endpoint remains hard-disabled HTTP 503**.
+  The draft SQL was NEVER applied to a hosted Supabase project.
+  `enabled:true` occurred only inside the local test against ephemeral
+  disposable identities. No real account, wardrobe photo, Drive Duel
+  database, paid service or production deployment was touched.
+- **Still required before a live self-service deletion release:** audited
+  deployment/configuration and privilege review, hosted environment
+  approval, passwordless/magic-link recent-auth proof, interruption retry
+  operations/support, final privacy/retention terms, explicit owner
+  authorization, and physical-phone acceptance tests. The successful
+  local suite is not proof that these are complete.
+
+
 
 ## Local Supabase deletion end-to-end + interruption recovery — October 18, 2026 (Pacific)
 

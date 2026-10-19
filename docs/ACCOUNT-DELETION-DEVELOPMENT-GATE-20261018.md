@@ -152,3 +152,29 @@ audit, careful migration planning and rollback, actual device testing,
 reliable recovery worker/support process and explicit launch approval
 remain prerequisites. No remote project, production user or customer
 photo was modified.
+
+## Verified real Supabase JS SDK account-delete adapters — October 18 follow-up
+
+[Isolated Supabase integration run 39188315048](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39188315048)
+used pinned actual `@supabase/supabase-js@2.75.0`, not an SDK mock,
+with a temporary local Supabase Auth, Storage, and PostgREST stack.
+It tested two disposable password-backed users, a wrong-password denial,
+test-only activated coordinator, photo Storage removal and verification,
+backup deletion, Auth deletion last, old-token write rejection, and
+preservation of another account's objects. The earlier direct REST tests
+also passed, including interrupted cleanup recovery. All temporary
+containers were destroyed after the run.
+
+This demonstrates **real local SDK compatibility** for the existing
+password-backed account flow. The deployed Deno deletion entrypoint
+still always returns 503 and has no privileged SDK initialization.
+The draft write-lock schema was **not** applied to hosted Supabase.
+Do not construe a local test's `enabled:true` coordinator as a
+production activation.
+
+**Remaining release gates:** independently approved passwordless
+reauthentication (most pilot users may use email links), final operator
+privacy/deletion commitments, supervised recovery/retry, signed-off
+production migration/RLS/key isolation, mobile validation, and owner
+approval before any hosted changes.
+
