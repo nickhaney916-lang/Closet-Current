@@ -6,6 +6,8 @@ on:
       - 'public/ai-tryon.js'
       - 'public/ai-tryon-plan.js'
       - 'supabase/functions/ai-try-on/**'
+      - 'supabase/design/tryon-submission-ledger.DRAFT.sql'
+      - 'scripts/test-tryon-ledger-postgres.mjs'
       - 'tests/ai-tryon-*.test.*'
       - 'scripts/test-multigarment-device-emulation.mjs'
       - 'scripts/test-ai-tryon-pilot.mjs'
@@ -42,3 +44,35 @@ jobs:
         run: node scripts/test-multigarment-device-emulation.mjs
       - name: Existing Style this mobile viewport and closet-owned changes
         run: node scripts/test-style-my-new-item-mobile.mjs
+
+  disposable-submission-ledger:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: closet_tryon_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d closet_tryon_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate staged ledger script
+        run: node --check scripts/test-tryon-ledger-postgres.mjs
+      - name: Actual disposable PostgreSQL quota and replay concurrency tests
+        env:
+          PGHOST: 127.0.0.1
+          PGPORT: '5432'
+          PGUSER: postgres
+          PGPASSWORD: postgres
+          PGDATABASE: closet_tryon_test
+        run: |
+          command -v psql || (sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client)
+          node scripts/test-tryon-ledger-postgres.mjs
