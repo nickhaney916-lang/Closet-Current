@@ -9,7 +9,7 @@
  const status=byId('reusableFigureStatus'),selector=byId('reusableFigureChoice');
  const upload=byId('reusableSelfieUpload'),remove=byId('reusableSelfieRemove');
  if(!engine||!stage||!base||!garmentContainer||!selfie||!status||!selector||!upload||!remove)return;
- let renderRevision=0,localFaceURL=null;
+ let renderRevision=0,localFaceURL=null,lastOwner=root.closetAuth?.user?.id||null;
  const acceptableFace=file=>file&&['image/jpeg','image/png','image/webp'].includes(file.type)&&
   file.size>0&&file.size<=8_000_000;
  function removeFace(){
@@ -28,7 +28,7 @@
  });
  remove.addEventListener('click',()=>{removeFace();render();});
  selector.addEventListener('change',()=>{render();});
- async function imagePixels(value){
+ async function imagePixels(value,category,primaryColor){
   const photo=new Image();photo.src=value;
   try{await photo.decode();}catch{return null;}
   const w=photo.naturalWidth,h=photo.naturalHeight;
@@ -44,7 +44,7 @@
    if(white?.hasTransparentBackground(pixels.data,c.width,c.height))
     return c.toDataURL('image/png');
    // Safe white-paper removal is optional and cannot reconstruct a garment.
-   const matte=white?.analyze(pixels.data,c.width,c.height);
+   const matte=white?.analyze(pixels.data,c.width,c.height,{category,primaryColor});
    if(matte?.eligible===true&&matte.alpha?.length===c.width*c.height){
     for(let i=0;i<matte.alpha.length;i++)pixels.data[i*4+3]=matte.alpha[i];
     ctx.putImageData(pixels,0,0);
@@ -55,13 +55,15 @@
  }
  async function render(){
   const revision=++renderRevision;
+  const owner=root.closetAuth?.user?.id||null;
+  if(owner!==lastOwner){removeFace();lastOwner=owner;}
   const plan=engine.plan(typeof currentBoard==='undefined'?null:currentBoard,
    typeof items==='undefined'?[]:items,selector.value);
   base.src=plan.figureImage;
   garmentContainer.replaceChildren();
   const counts={shown:0,skipped:plan.skipped.length};
   for(const placement of plan.placements){
-   const imgSource=await imagePixels(placement.image);
+   const imgSource=await imagePixels(placement.image,placement.category,placement.primaryColor);
    if(revision!==renderRevision)return;
    if(!imgSource){counts.skipped++;continue;}
    const img=document.createElement('img');
