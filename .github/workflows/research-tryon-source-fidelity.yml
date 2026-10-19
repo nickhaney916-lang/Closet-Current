@@ -27,3 +27,7 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Intercept every simulated try-on request and verify stale preview removal
         run: node scripts/test-ai-tryon-pilot.mjs
+      - name: Verify Style this with only account-owned clothes on mobile layout
+        run: |
+          node scripts/build.mjs
+          node scripts/test-style-my-new-item-mobile.mjs
