@@ -15,6 +15,22 @@ function counts(items) {
 }
 const canonical=x=>JSON.stringify(counts(x));
 const equal=(a,b)=>canonical(a)===canonical(b);
+// Explicitly comparable garment FORMS: a physical Bottoms outline marked
+// shorts must never be accepted against two independent "Skirt" reviews.
+// Other clothing types may only have a broad mask label (e.g. Shoes vs
+// Sneakers); do not pretend an unavailable fine-grained label was checked.
+const bottomForm=x=>{
+ const value=String(x||'').trim().toLocaleLowerCase('en-US').replace(/\\s+/g,' ');
+ if(['skirt','mini skirt','maxi skirt','midi skirt'].includes(value))return 'skirt';
+ if(['shorts','short pants','bermuda shorts'].includes(value))return 'shorts';
+ if(['trousers','pants','jeans','dress pants','chinos'].includes(value))return 'trousers';
+ return null;
+};
+const bottomsComparable=items=>{
+ const forms=items.filter(x=>x.category==='Bottoms').map(x=>bottomForm(x.form));
+ if(forms.some(x=>x===null))return null;
+ return forms.sort();
+};
 export function evaluateBlindLinkedPhysicalInventory({
  scene,lockedSource,firstPacket,firstSubmission,secondPacket,
  secondSubmission,physicalInventory,approvedMasks,modelProposals,
@@ -76,6 +92,14 @@ export function evaluateBlindLinkedPhysicalInventory({
   return blankResult('blocked-physical-item-category-count-mismatch',[
    'blind-observed-physical-categories-do-not-match-all-approved-mask-targets'
   ]);
+ const observedBottoms=bottomsComparable(first.items),
+  approvedBottoms=bottomsComparable(physicalInventory.targets);
+ if(first.items.some(x=>x.category==='Bottoms')&&
+    (!observedBottoms||!approvedBottoms||
+     JSON.stringify(observedBottoms)!==JSON.stringify(approvedBottoms)))
+  return blankResult('blocked-bottoms-specific-form-mismatch',[
+   'blind-skirt-shorts-or-trousers-form-disagrees-with-physical-mask-target'
+  ]);
  // Only the existing full-photo physical inventory scorer can validate
  // annotation review status, category/form, distinct mask approvers, pixel
  // dimensions, and enforce one-to-one prediction / reference matching.
@@ -109,6 +133,8 @@ export function evaluateBlindLinkedPhysicalInventory({
   physicalLayerRecall:scored.detectionRecall,
   maskMatching:'one-to-one-approved-outlines-at-reference-resolution',
   categoryCountAndFormAgreementAcrossBlindHumans:true,
+  observedBottomsCompatibleWithApprovedMaskForms:true,
+  specificShoeSubtypeCertifiedByMaskTaxonomy:false,
   humanAttestationCannotBeProvenFromJSON:true,
   trueIndependentInstanceIdentityVerified:false,
   unresolvedShoeSpecificFormEvidence:shoesPresent,
