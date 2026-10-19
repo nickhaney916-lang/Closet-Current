@@ -56,12 +56,21 @@ try{
  assert.equal(await page.locator('#outfitFigure').evaluate(el=>el.classList.contains('ai-tryon-active')),false);
  assert.equal(calls.filter(x=>x.action==='start').length,1,'switching figure must not trigger paid inference');
 
+ // A single rendered top plus owned shoes must NOT be described as a
+ // complete AI outfit; the pilot provider only paints the first garment.
+ await page.evaluate(img=>{
+  items.push({id:'owned-shoes',category:'Shoes',itemType:'Sneakers',image:img});
+  currentBoard.slots.shoes='owned-shoes';
+  onTryOnBoardChanged();
+ },fakeImage);
  // Re-create one mocked preview, then change ONLY interior image bytes while
  // preserving length and final 24 chars. Old lossy tryOnSignature missed this.
  // Every provider route remains intercepted; no actual billable request.
  await page.locator('#tryOnGenerate').click();
  await page.waitForFunction(()=>!document.querySelector('#tryOnImage').hidden,null,{timeout:7000});
  assert.equal(calls.filter(x=>x.action==='start').length,2);
+ assert.match(await page.locator('#tryOnStatus').innerText(),/not rendered: shoes/i,
+  'one rendered top plus real owned shoes must be labeled incomplete');
  const photoIdentity=await page.evaluate(()=>{
   const original=items[0].image,pos=original.indexOf(',')+13;
   const modified=original.slice(0,pos)+(original[pos]==='A'?'B':'A')+original.slice(pos+1);
