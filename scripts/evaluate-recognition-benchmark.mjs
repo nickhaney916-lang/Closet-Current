@@ -10,8 +10,8 @@ let single=0,categoryCorrect=0,typeCorrect=0,semanticTypeCorrect=0,abstained=0,o
 // Distinguish safe abstention from an emitted but wrong category; don't inflate
 // apparent accuracy by dividing only by the cases the model chose to answer.
 // This audits a FIXED ground-truth manifest and never changes inference.
-let predictedCategories=0,wrongCategories=0,correctAutoIndexed=0,incorrectAutoIndexed=0;
-const abstainedPhotoIds=[],incorrectCategoryIds=[],incorrectAutoIndexedIds=[],recoveredPhotoIds=[];
+let predictedCategories=0,wrongCategories=0,correctAutoIndexed=0,incorrectAutoIndexed=0,correctAutoIndexedType=0,incorrectAutoIndexedType=0;
+const abstainedPhotoIds=[],incorrectCategoryIds=[],incorrectAutoIndexedIds=[],incorrectAutoIndexedTypeIds=[],recoveredPhotoIds=[];
 const errors=[],reasonCounts={},perCategory={};let negatives=0,negativeRejected=0,autoIndexed=0,categoryReview=0;
 for(const item of manifest){
  if(!item.id||!['single','outfit'].includes(item.mode))throw Error('Invalid manifest entry');
@@ -33,7 +33,12 @@ for(const item of manifest){
   }
   if(prediction.category===item.expectedCategory){categoryCorrect++;cat.categoryCorrect++;}else errors.push({id:item.id,reason:'category',expected:item.expectedCategory,actual:prediction.category||'none'});
   if(prediction.category===item.expectedCategory&&prediction.type===item.expectedType){typeCorrect++;cat.typeCorrect++;}
-  const accepted=item.acceptedTypes||[item.expectedType];if(prediction.category===item.expectedCategory&&accepted.includes(prediction.type))semanticTypeCorrect++;
+  const accepted=item.acceptedTypes||[item.expectedType];
+  if(prediction.category===item.expectedCategory&&accepted.includes(prediction.type))semanticTypeCorrect++;
+  if(r.strong){
+   if(!r.error&&prediction.category===item.expectedCategory&&accepted.includes(prediction.type))correctAutoIndexedType++;
+   else{incorrectAutoIndexedType++;incorrectAutoIndexedTypeIds.push(item.id);}
+  }
  }else{
   outfits++;const expected=item.expectedPieces||[],predicted=r.predictedPieces||[];expectedPieces+=expected.length;
   const used=new Set();
@@ -49,7 +54,8 @@ console.log(JSON.stringify({manifestCount:manifest.length,resultsCount:results.l
   categoryCoveragePercent:percent(predictedCategories,single),categoryPrecisionAmongPredictionsPercent:percent(predictedCategories-wrongCategories,predictedCategories),
   categoryPredictedCount:predictedCategories,wrongCategoryCount:wrongCategories,
   autoIndexedCorrectCategoryCount:correctAutoIndexed,autoIndexedWrongCategoryCount:incorrectAutoIndexed,
-  abstainedCount:abstained,abstainedPhotoIds,incorrectCategoryIds,incorrectAutoIndexedIds,
+  autoIndexedCorrectTypeCount:correctAutoIndexedType,autoIndexedWrongTypeCount:incorrectAutoIndexedType,
+  abstainedCount:abstained,abstainedPhotoIds,incorrectCategoryIds,incorrectAutoIndexedIds,incorrectAutoIndexedTypeIds,
   recognizedCategoryPhotoIds:recoveredPhotoIds,
   typeAccuracyPercent:percent(typeCorrect,single),acceptedTypeAccuracyPercent:percent(semanticTypeCorrect,single),abstentionPercent:percent(abstained,single)},negative:{evaluated:negatives,rejected:negativeRejected,falsePositives:errors.filter(x=>x.reason==='negative_false_positive').length},outfit:{evaluated:outfits,expectedPieces,matchedPieces,pieceRecallPercent:percent(matchedPieces,expectedPieces),unexpectedPieces},reasonCounts,perCategory,errors},null,2));
 if(errors.some(e=>e.reason==='missing_result'))process.exitCode=1;
