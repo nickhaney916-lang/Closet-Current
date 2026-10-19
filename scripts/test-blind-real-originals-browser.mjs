@@ -39,16 +39,28 @@ try{
    // Every source can be selected and displayed without showing its model label.
    for(const original of packet.originals){
     await page.locator('#source').selectOption(original.sourceId);
+    console.log('REAL_ORIGINAL_PREVIEW_START '+JSON.stringify({engine:name,sourceId:original.sourceId}));
+    try{
+     await page.waitForFunction(()=>document.getElementById('photo').complete&&
+       document.getElementById('photo').naturalWidth>0,null,{timeout:15000});
+    }catch(error){
+     const diagnostic=await page.evaluate(()=>({
+      status:document.getElementById('status').textContent,
+      selected:document.getElementById('source').value,
+      photoSrc:document.getElementById('photo').src.slice(0,80),
+      completed:document.getElementById('photo').complete,
+      naturalWidth:document.getElementById('photo').naturalWidth
+     }));
+     throw new Error('Verified original preview failed '+name+'/'+original.sourceId+' '+JSON.stringify(diagnostic)+' '+error.message);
+    }
     const state=await page.evaluate(()=>({
      id:document.getElementById('source').value,
-     imageReady:document.getElementById('photo').complete&&document.getElementById('photo').naturalWidth>0,
      text:document.body.innerText,
      originalSrc:document.getElementById('photo').src
     }));
-    if(!state.imageReady)await page.waitForFunction(()=>
-      document.getElementById('photo').complete&&document.getElementById('photo').naturalWidth>0);
     assert.ok(!state.text.includes('modelResult')&&!state.text.includes('manifestLabel'));
     assert.ok(state.originalSrc.startsWith('blob:'),'image only opens local verified JPEG');
+    console.log('REAL_ORIGINAL_PREVIEW_OK '+JSON.stringify({engine:name,sourceId:original.sourceId}));
    }
    assert.deepEqual(errors,[]);
    scores.push({browser:name,realShaVerifiedOriginals:packet.photoCount,
