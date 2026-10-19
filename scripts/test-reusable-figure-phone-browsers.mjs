@@ -71,6 +71,31 @@ try{
    }));
    assert.equal(warpedState.geometry,32);
    assert.equal(warpedState.output.length,2);
+   // Actual display dimensions preserve cutout proportions after transparent
+   // margin trimming. This prevents the earlier full-rectangle distortion.
+   const placement=await page.evaluate(async()=>{
+    const imgs=[...document.querySelectorAll('#reusableFigureGarments img')];
+    return Promise.all(imgs.map(async img=>{
+     await img.decode();
+     const style=img.style;
+     const figure=document.getElementById('reusableFigureStage').getBoundingClientRect();
+     return {naturalWidth:img.naturalWidth,naturalHeight:img.naturalHeight,
+      width:parseFloat(style.width),height:parseFloat(style.height),
+      top:parseFloat(style.top),left:parseFloat(style.left),
+      figureRatio:figure.width/figure.height};
+    }));
+   });
+   assert.equal(placement.length,2);
+   assert.ok(placement[0].naturalWidth<100&&placement[0].naturalHeight<150,
+    'bottom alpha crop removes unused source margins');
+   for(const [i,p] of placement.entries()){
+    assert.ok(p.width>0&&p.height>0);
+    const displayedRatio=(p.width/p.height)*p.figureRatio;
+    assert.ok(Math.abs(displayedRatio-p.naturalWidth/p.naturalHeight)<0.01,
+     'layer '+i+' retains cropped garment aspect ratio');
+   }
+   assert.equal(placement[0].top,43,'bottoms align to waistband anchor');
+   assert.equal(placement[1].top,17,'tops align to shoulder anchor');
    for(let i=0;i<2;i++){
     assert.match(warpedState.output[i],/^data:image\/png;base64,/);
     assert.notEqual(warpedState.output[i],warpedState.original[i],
