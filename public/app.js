@@ -193,6 +193,10 @@ function canConfirmReviewedColor(item){
   !localPending.has(item.id)&&item.localAnalyzed&&!item.userAdjusted&&
   !item.possibleDuplicate&&!item.requiresOwnershipConfirmation&&
   !item.scanFailed&&!item.saveFailed&&
+  // A restored outfit lacking its unmasked ORIGINAL RGB crop must not
+  // become a closet item through the quick-color path. The display mask,
+  // repaired cutout or AI derivative is never a valid recognition source.
+  !!recognitionSourcePhoto(item)&&
   // A fragmented outline often includes the person's skin or a second
   // garment. Color-only confirmation is not sufficient to approve it.
   item.segmentHint?.displayFallback!=='original-crop'&&
@@ -207,14 +211,23 @@ function canConfirmReviewedColor(item){
 }
 async function confirmReviewedColor(item,color){
  if(!ClothingDetails.validColor(color)||!canConfirmReviewedColor(item))return false;
- const value=normalizeClothing({...structuredClone(item),color,colorSource:'user',
-  name:[color,item.itemType&&item.itemType!=='Unknown'?item.itemType:item.category].filter(Boolean).join(' '),
-  userAdjusted:true,requiresOwnershipConfirmation:false,
-  indexingLevel:item.itemType==='Unknown'?'category-color':'specific-type',
-  savedAt:new Date().toISOString(),indexedAt:new Date().toISOString()});
+ // A queued save may run after the user changes the crop, original scene,
+ // clothing type, or selected source photo. Refuse to transfer a color
+ // chosen for an OLD image onto a newer source or categorization.
+ const source=recognitionSourcePhoto(item),display=item.image,
+  scene=item.originalPhoto?.image??null,category=item.category,type=item.itemType;
+ let value;
  const saved=await queued(()=>new Promise((resolve,reject)=>{
-  if(!canConfirmReviewedColor(item))return resolve(false);
+  if(!canConfirmReviewedColor(item)||recognitionSourcePhoto(item)!==source||
+     item.image!==display||(item.originalPhoto?.image??null)!==scene||
+     item.category!==category||item.itemType!==type)return resolve(false);
   if(!db)return reject(Error('Browser storage is unavailable.'));
+  // Clone after the final safety/identity gate, never before the queue delay.
+  value=normalizeClothing({...structuredClone(item),color,colorSource:'user',
+   name:[color,item.itemType&&item.itemType!=='Unknown'?item.itemType:item.category].filter(Boolean).join(' '),
+   userAdjusted:true,requiresOwnershipConfirmation:false,
+   indexingLevel:item.itemType==='Unknown'?'category-color':'specific-type',
+   savedAt:new Date().toISOString(),indexedAt:new Date().toISOString()});
   const tx=db.transaction(['items','state'],'readwrite');
   tx.objectStore('items').put(value);
   tx.objectStore('state').put({id:'draft',batch:structuredClone(batch.filter(x=>x.id!==item.id))});
