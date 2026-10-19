@@ -1,0 +1,63 @@
+name: Research footwear and layered-garment recognition tradeoffs
+on:
+  push:
+    branches: [research/footwear-layer-recovery-tradeoffs-20261019]
+    paths:
+      - 'benchmark/footwear-layer-tradeoffs.mjs'
+      - 'scripts/evaluate-footwear-layer-tradeoffs.mjs'
+      - 'tests/footwear-layer-tradeoffs.test.mjs'
+      - '.github/workflows/research-footwear-layer-tradeoffs.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  held-out-original-photo-research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prove no automatic policy promotion, source substitution or hidden reference leakage
+        run: node --test tests/footwear-layer-tradeoffs.test.mjs tests/original-photo-form-review.test.mjs tests/blind-original-form-review.test.mjs
+      - name: Retrieve actual, previously pinned recognition and two-model layered evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          mkdir -p benchmark/footwear-layer-trial/photos benchmark/footwear-layer-trial/frames benchmark/footwear-layer-trial/layers
+          gh run download 39276247888 --repo "$GH_REPO" -n real-photo-inference-results -D benchmark/footwear-layer-trial/photos
+          gh run download 39278360491 --repo "$GH_REPO" -n original-photo-third-framing-research -D benchmark/footwear-layer-trial/frames
+          gh run download 39198099443 --repo "$GH_REPO" -n licensed-cross-model-review-evidence -D benchmark/footwear-layer-trial/layers
+          test -s benchmark/footwear-layer-trial/photos/results.json
+          test -s benchmark/footwear-layer-trial/photos/holdout/results.json
+          test -s benchmark/footwear-layer-trial/photos/fresh/results.json
+          test -s benchmark/footwear-layer-trial/frames/audit.json
+          test -s benchmark/footwear-layer-trial/layers/multi-photo-evidence.json
+      - name: Score existing 59 actual photo outputs without rerunning paid or free image models
+        run: |
+          node scripts/evaluate-footwear-layer-tradeoffs.mjs             benchmark/manifest-reviewed-32.json benchmark/footwear-layer-trial/photos/results.json             benchmark/manifest-holdout-16.json benchmark/footwear-layer-trial/photos/holdout/results.json             benchmark/manifest-fresh-11.json benchmark/footwear-layer-trial/photos/fresh/results.json             benchmark/locked-photo-sources.json             benchmark/footwear-layer-trial/frames/audit.json             benchmark/footwear-layer-trial/layers/multi-photo-evidence.json             benchmark/footwear-layer-trial/tradeoffs.json
+      - name: Fail if blanket ankle-boot review is falsely claimed a measured improvement
+        run: |
+          node --input-type=module -e "
+            import fs from 'node:fs';
+            const r=JSON.parse(fs.readFileSync('benchmark/footwear-layer-trial/tradeoffs.json'));
+            if(r.actualOriginalPhotoCount!==59||r.verifiedShoesTotal!==20||
+               r.cohorts.reviewed32.correctSpecificFormDeferredVsUnreviewedManifest.length!==5||
+               r.cohorts.holdout16.wrongSpecificFormDeferredVsUnreviewedManifest.length!==1||
+               r.wrongFormRemainsUnanimousAcrossSameModelOriginalFrames.length!==1||
+               r.physicalGarmentRecall!==null||r.recommendedAutomaticSubtypePolicy!==null||
+               r.paidInferenceCalls!==0||r.productionScannerModified!==false||
+               r.wholeOutfitCrossModelReview.length!==2||r.releaseApproved!==false)
+              throw Error('No trustworthy footwear/layered tradeoff conclusion or unapproved policy promotion');
+            console.log('Original photo evidence: one apparent wrong high-top shoe, five correct boots deferred; no model or production change');
+          "
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: footwear-and-layered-sources-tradeoffs
+          path: benchmark/footwear-layer-trial/tradeoffs.json
+          if-no-files-found: ignore
+          retention-days: 14
