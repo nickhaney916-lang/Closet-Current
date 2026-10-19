@@ -87,3 +87,20 @@ test('selfie positioning clamps invalid values and is separate for each fixed fa
  assert.equal(b.width,19.5);assert.equal(b.height,12);
  assert.ok(Object.values(b).every(Number.isFinite));
 });
+
+test('four approved owned layers retain explicit bottom/top/jacket/shoe draw order',()=>{
+ const selected={slots:{top:'t',bottom:'b',layer2:'l',shoes:'shoe'},layerCount:2};
+ for(const figure of ['male','female']){
+  const p=engine.plan(selected,closet,figure);
+  assert.deepEqual(p.placements.map(x=>x.slot),['bottom','top','layer2','shoes']);
+  assert.deepEqual(p.skipped,[]);
+  assert.equal(p.usesRemoteAI,false);
+ }
+});
+test('dress displaces bottoms and jackets without changing original source or selection',()=>{
+ const board={slots:{top:'d',bottom:'b',layer2:'l',shoes:'shoe'},layerCount:2};
+ const before=JSON.stringify({board,closet});
+ const result=engine.plan(board,closet,'male');
+ assert.deepEqual(result.placements.map(x=>x.slot),['top','shoes']);
+ assert.equal(JSON.stringify({board,closet}),before);
+});
