@@ -11,17 +11,19 @@
   automatic display approvals. New module remains diagnostic/held and is
   exercised with the existing inverse mesh, not default customer display.
 - Red shirt: 633x946 source copy / 316x473 guide; 11,680 uncertain boundary
-  pixels, 0 cleared foreground / 364 restored non-neutral pixels, 0 RGB edits,
+  pixels, 0 cleared foreground / 2,171 restored source-chroma pixels, 0 RGB edits,
   0 outside-band changes. All 23,808 garment-core and 32,483 background witness
   pixels retain their expected partial labels; no independent full-mask score.
-- Initial neutral-edge clearing failed browser validation (2 collar-patch
-  pixels erased). Removed that clearing stage: every projected foreground
-  pixel is now preserved. Failed experimental JSON is retained separately.
+- Initial browser probes missed 2 collar-patch pixels; detailed logs located
+  them in the guide, with dark red RGB wrongly treated as absolute neutral.
+  Added low-light relative-chroma restoration; 1,807 of the restored pixels
+  use that evidence. Foreground clearing remains disabled; every projected
+  foreground pixel is preserved. Earlier experimental JSON remains separate.
 - Comparison is same larger-grid internal projection vs refinement, not a
   pixel-identical PR #39 A/B. Original JPEG digests stay unchanged; repeated
   pinned-decoder reports match. Black-trim loss remains explicitly demonstrated
   in a synthetic counterexample, and dark fringes/hard alpha remain unresolved.
-- Local build and full suite: **1004 passed, 0 failed, 3 skipped**; 6 new focused
+- Local build and full suite: **1005 passed, 0 failed, 3 skipped**; 7 new focused
   tests. CI configured for exact-source real-photo reports/artifacts and
   Android Chromium/iPhone WebKit refinement execution plus prior regressions.
 - Guide: `docs/SOURCE-GUIDED-MASK-BOUNDARIES-20261019.md`; actual JSON:

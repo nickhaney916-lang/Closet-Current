@@ -36,7 +36,7 @@
    }
   }
   const n=width*height,baseline=new Uint8ClampedArray(n),uncertainty=new Uint8Array(n),alpha=new Uint8ClampedArray(n);
-  let uncertainPixels=0,restoredBoundary=0,experimentalClearable=0;
+  let uncertainPixels=0,restoredBoundary=0,experimentalClearable=0,restoredDarkChroma=0;
   for(let y=0;y<height;y++)for(let x=0;x<width;x++){
    const gx=Math.min(gw-1,Math.ceil((x+1)*gw/width)-1),gy=Math.min(gh-1,Math.ceil((y+1)*gh/height)-1),
     j=gy*gw+gx,i=y*width+x,at=i*4;
@@ -44,18 +44,21 @@
    if(!band[j])continue;
    uncertainPixels++;
    const hi=Math.max(data[at],data[at+1],data[at+2]),lo=Math.min(data[at],data[at+1],data[at+2]),
-    neutral=hi<=85&&hi-lo<=16;
+    absoluteNeutral=hi<=85&&hi-lo<=16,
+    // Low-light colored fabric can have a small absolute RGB spread but
+    // strong relative chroma. Preserve it near the source-supported edge.
+    darkChroma=hi>=20&&(hi-lo)/hi>=.3,neutral=absoluteNeutral&&!darkChroma;
    // Browser evidence showed that deleting dark boundary pixels can erase
    // collar material. Preserve EVERY projected foreground pixel, even if it
    // resembles the background. Only restore source-supported non-neutral
    // pixels in the uncertain band; keep the entire result held for review.
    if(baseline[i]===255&&neutral)experimentalClearable++;
-   if(baseline[i]===0&&!neutral){alpha[i]=255;restoredBoundary++;}
+   if(baseline[i]===0&&!neutral){alpha[i]=255;restoredBoundary++;if(absoluteNeutral&&darkChroma)restoredDarkChroma++;}
   }
   return {proposalAvailable:true,eligible:false,displayEligible:false,requiresIndependentMaskReview:true,
    reason:'source-guided-boundary-proposal',alpha,projectedAlpha:baseline,uncertainty,
    width,height,guideWidth:gw,guideHeight:gh,clearedBoundaryPixels:0,experimentalNeutralForegroundPixels:experimentalClearable,
-   safetyMode:'preserve-projected-foreground',
+   safetyMode:'preserve-projected-foreground',restoredDarkChromaPixels:restoredDarkChroma,
    restoredBoundaryPixels:restoredBoundary,uncertainBoundaryPixels:uncertainPixels,
    outsideBandChanges:0,sourceAltered:false,garmentReconstructed:false,
    completeBoundaryQualityVerified:false};

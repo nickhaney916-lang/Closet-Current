@@ -264,7 +264,7 @@ try{
       }
       result.refinement={proposalAvailable:refined.proposalAvailable,displayEligible:refined.displayEligible,
        width:high.width,height:high.height,uncertainBoundaryPixels:refined.uncertainBoundaryPixels,
-       clearedBoundaryPixels:refined.clearedBoundaryPixels,restoredBoundaryPixels:refined.restoredBoundaryPixels,
+       clearedBoundaryPixels:refined.clearedBoundaryPixels,restoredBoundaryPixels:refined.restoredBoundaryPixels,restoredDarkChromaPixels:refined.restoredDarkChromaPixels,
        outsideBandChanges,highRgbChanged,erasedProjectedForeground,patches:refinedPatches};
       const bounds=ClosetGarmentWarp.alphaBounds(output,canvas.width,canvas.height);
       const trimmed=new Uint8ClampedArray(bounds.width*bounds.height*4);

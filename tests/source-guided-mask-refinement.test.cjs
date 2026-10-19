@@ -58,3 +58,16 @@ test('indistinguishable black trim is an explicit unresolved counterexample, nev
  assert.equal(p.proposalAvailable,true);assert.equal(p.alpha[780*w+250],0);
  assert.equal(p.displayEligible,false);assert.equal(p.completeBoundaryQualityVerified,false);
 });
+
+test('relative chroma recovers dark red boundary fabric that absolute RGB neutrality misses',()=>{
+ const {d,w,h}=source();
+ for(let y=200;y<650;y++)d.set([29,15,15,255],(y*w+158)*4);
+ const p=refine.propose(d,w,h,{category:'Tops',primaryColor:'Red'});
+ let recovered=0;
+ for(let y=220;y<630;y++){
+  assert.equal(p.alpha[y*w+158],255);
+  if(p.projectedAlpha[y*w+158]===0)recovered++;
+ }
+ assert.ok(recovered>0);assert.ok(p.restoredDarkChromaPixels>=recovered);
+ assert.equal(p.displayEligible,false);
+});
