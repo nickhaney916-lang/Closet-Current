@@ -43,9 +43,14 @@ try{
   serviceWorkers:'block'
  }),pageErrors=[],networkRequests=[];
  page.on('request',req=>{
-  if(!req.url().startsWith('http://127.0.0.1:')&&
-     !req.url().startsWith('blob:')&&!req.url().startsWith('data:'))
-   networkRequests.push(req.url().replace(/\?.*/,'')); // never emit token query params
+  // The model's WASM runtime and weights are allowed to download by GET.
+  // These are not photo uploads. Check external WRITE requests and never
+  // save their URLs, headers, query strings, request bodies or identifiers.
+  const target=req.url();
+  if(!target.startsWith('http://127.0.0.1:')&&
+     !target.startsWith('blob:')&&!target.startsWith('data:')&&
+     req.method()!=='GET')
+   networkRequests.push(req.method());
  });page.on('pageerror',e=>pageErrors.push(e.message));
  await page.goto('http://127.0.0.1:'+server.address().port+'/phone-photo-check.html');
  assert.equal(await page.locator('#run').isDisabled(),true);
@@ -68,7 +73,7 @@ try{
   browserName+' phone photo test must have no horizontal overflow');
  assert.equal(layout.photoCount,2);
  assert.deepEqual(networkRequests,[],
-  'Phone photo checker cannot send photographs or identifiers to external domains');
+  'Browser-local inference must never submit photo data using an external write request');
  await page.screenshot({path:join(output,'phone-photo-flow.png'),fullPage:true});
  await page.locator('#restart').click();assert.equal(await page.locator('.photo').count(),0);assert.equal(await page.locator('#photos').isDisabled(),false);assert.equal(await page.locator('#download').isVisible(),false);
  await page.locator('#photos').setInputFiles({name:'PRIVATE_PHONE_RETRY.jpg',mimeType:'image/jpeg',buffer:fixtures[0].bytes});await page.locator('#category-0').selectOption('Tops');await page.locator('#run').click();await page.locator('#restart').click();
@@ -77,14 +82,14 @@ try{
   passed:true,realWorker:true,browser:browserName,
   phoneProfile:browserName==='webkit'?'iPhone 13 WebKit emulation':'Android Chromium emulation',
   physicallyTested:false,liveCameraTested:false,providerBills:0,
-  originalSourceShaVerified:2,fixturePhotos:2,
+  originalSourceShaVerified:2,fixturePhotos:2,modelAssetsMayDownload:true,
   recognitionOriginalFirst:true,categoryMatches:report.summary.categoryMatches,
   negativeRejected:report.summary.negativeRejected,
   viewport:layout,lockedLabels:true,reportPrivacy:true,cancellation:true,
-  externalRequests:networkRequests.length,pageErrors
+  externalWriteRequests:networkRequests.length,pageErrors
  },null,2));
  console.log('CROSS_ENGINE_REAL_PHOTO_PILOT '+JSON.stringify({
-   browser:browserName,originalShaVerified:2,realLocalModel:true,
+   browser:browserName,originalShaVerified:2,browserLocalInference:true,externalModelAssetDownloadsMayOccur:true,
    garmentCategoryCorrect:report.summary.categoryMatches,
    negativePhotosRejected:report.summary.negativeRejected,
    physicalPhoneTested:false,actualCameraTested:false,paidProviderCalls:0,
