@@ -48,7 +48,7 @@ async function check(engine,device,label){
    if(request.method()==='OPTIONS')return route.fulfill({status:204,headers});
    const body=request.postDataJSON();calls.push(body);
    let answer;
-   if(body.action==='availability')answer={status:'ready',multiGarmentReady:true};
+   if(body.action==='availability')answer=mode==='account-switch-denied'?{status:'unavailable',multiGarmentReady:false}:{status:'ready',multiGarmentReady:true};
    else if(body.action==='start'){
     polls.clear();
     if(mode==='lost-start-response')return route.abort('failed');
@@ -211,6 +211,22 @@ async function check(engine,device,label){
   await page.waitForTimeout(100);
   assert.equal(calls.length,afterCancel,'a cancelled render cannot keep polling or continue');
   assert.equal(await page.locator('#tryOnImage').isHidden(),true);
+  // Re-authentication to an account lacking pilot access cannot inherit the
+  // old user's positive capability or make an otherwise billable POST.
+  mode='account-switch-denied';
+  const paidBeforeAccountSwitch=calls.filter(x=>['start','continue'].includes(x.action)).length;
+  await page.evaluate(()=>{
+   window.closetAuth.user={id:'synthetic-tryon-other-owner'};
+   onTryOnBoardChanged();
+  });
+  await page.waitForFunction(()=>document.getElementById('tryOnStatus').textContent.includes('not available yet'),null,{timeout:8000});
+  assert.equal(await page.locator('#tryOnGenerate').isDisabled(),true,
+   'old-account availability cannot unlock the new signed-in owner');
+  assert.equal(await page.evaluate(()=>tryOnReadinessOwner),'synthetic-tryon-other-owner');
+  await page.evaluate(()=>generateTryOn());
+  assert.equal(calls.filter(x=>['start','continue'].includes(x.action)).length,paidBeforeAccountSwitch,
+   'switching accounts cannot issue a new provider generation request');
+  assert.equal(await page.locator('#tryOnImage').isHidden(),true);
   assert.equal(errors.length,0,'no runtime exceptions on emulated device');
   return {device:label,engine:engine===webkit?'WebKit':'Chromium',
    viewport:device.viewport,actualDevice:false,providerCalls:0,actualBuiltApp:true,
@@ -218,7 +234,7 @@ async function check(engine,device,label){
    syntheticContinues:calls.filter(x=>x.action==='continue').length,
    bothSourcesPreflighted:true,stableLedgerRequestIds:true,prepaidPairRequested:true,repeatedProcessingPolls:true,transientStatusRecoveredWithoutNewJob:true,statusRetryLimitEnforced:true,corruptFirstAndSecondBlocked:true,
    failedSecondPassHidden:true,uncertainStartNotRetried:true,explicitRetryRecovered:true,
-   staleResultBlocked:true,pendingFetchCancelled:true,sourcePhotosUnchanged:true,pageErrors:errors.length};
+   staleResultBlocked:true,pendingFetchCancelled:true,accountSwitchDeniedWithoutPaidCall:true,sourcePhotosUnchanged:true,pageErrors:errors.length};
  }finally{await browser.close();}
 }
 const results=[];
