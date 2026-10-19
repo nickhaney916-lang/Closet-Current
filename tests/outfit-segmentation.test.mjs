@@ -307,3 +307,30 @@ test('a small detached sleeve, two trouser legs and a pair of shoes never create
  assert.equal(groups[1].reviewOnlyReason,undefined,'trouser legs are not independent pants');
  assert.equal(groups[2].reviewOnlyReason,undefined,'a shoe pair remains one closet item');
 });
+
+test('marginal upper-region evidence becomes one review-only original crop, never a trusted shirt',()=>{
+ const l=logits(32,32);l.paint(4,8,6,12,12);
+ for(let y=6;y<18;y++)for(let x=8;x<20;x++)l.data[y*32+x]=9.1;
+ const map=clothingLabelMap(l.data,l.dims),groups=clothingMaskGroups(map);
+ assert.equal(groups.length,1);
+ const region=groups[0];
+ assert.equal(region.id,4);
+ assert.equal(region.count,144);
+ assert.ok(region.confidence>=.70&&region.confidence<.8);
+ assert.equal(region.reviewOnlyReason,'low-confidence-upper-mask');
+ const pixels=new Uint8ClampedArray(32*32*3);
+ for(let i=0;i<pixels.length;i++)pixels[i]=i%199;
+ const before=Uint8ClampedArray.from(pixels);
+ const crop=cropClothingPhotoPixels({data:pixels,width:32,height:32,channels:3},map,region);
+ assert.ok(crop.width>0&&crop.height>0);
+ assert.deepEqual(pixels,before,'full-resolution original bytes stay unchanged');
+});
+test('weak upper speckles remain suppressed, and strong upper garment still permits ordinary flow',()=>{
+ const tiny=logits(32,32);tiny.paint(4,8,6,4,4);
+ for(let y=6;y<10;y++)for(let x=8;x<12;x++)tiny.data[y*32+x]=9.1;
+ assert.equal(clothingMaskGroups(clothingLabelMap(tiny.data,tiny.dims)).length,0,
+  'tiny low-confidence patches should not create review clutter');
+ const strong=logits(32,32);strong.paint(4,8,6,12,12);
+ const piece=clothingMaskGroups(clothingLabelMap(strong.data,strong.dims))[0];
+ assert.equal(piece.id,4);assert.equal(piece.reviewOnlyReason,undefined);
+});
