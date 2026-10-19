@@ -22,7 +22,10 @@ export function validateBlindOriginalSubmission(packet,submission){
    packet.manifestCategoryLabelsIncluded!==false||packet.originalPhotosCopiedOrReencoded!==false||
    packet.independentlyReviewed!==false||packet.allGarmentFormsVerified!==false||
    !Array.isArray(packet.originals)||packet.photoCount!==packet.originals.length||
-   !packet.photoCount||packet.photoCount>80)
+   !packet.photoCount||packet.photoCount>80||
+   packet.originals.some(x=>Object.hasOwn(x||{},'originalSourceUrl')||
+     Object.hasOwn(x||{},'title')||Object.hasOwn(x||{},'modelResult')||
+     Object.hasOwn(x||{},'manifestLabel')))
   throw Error('Untrusted blind source packet');
  if(!exactKeys(submission,['schemaVersion','reviewType','reviewerSlot','reviewerAlias','reviewedAt',
     'originalJpegsVerified','modelAnswersNotShown','sourceInventories'])||
