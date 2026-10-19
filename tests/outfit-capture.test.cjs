@@ -262,7 +262,7 @@ test('actual outfit capture retains two source regions with identical cleaned th
  const hint={categories:['Tops','Outerwear'],types:[],clipped:false};
  const add=(x,role)=>h.emit({type:'piece',piece:{
   image:'data:image/jpeg;base64,IDENTICALDISPLAY',
-  recognitionPhoto:{image:'data:image/jpeg;base64,UNALTEREDRGB'+x},
+  recognitionPhoto:{image:'data:image/jpeg;base64,UNALTEREDRGB'+(x<.2?'A':'B')},
   cropBounds:{x,y:.15,width:.25,height:.4},
   label:'Upper garment',hint:{...hint,layerRole:role}
  }});
