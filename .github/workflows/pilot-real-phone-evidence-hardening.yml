@@ -1,7 +1,7 @@
 name: Pilot real-phone evidence capture and private comparison guardrails
 on:
   push:
-    branches: [pilot/real-phone-evidence-hardening-20261019]
+    branches: [pilot/real-phone-evidence-hardening-20261019, fix/private-phone-report-output-no-clobber-20261019]
     paths:
       - 'public/device-check-engine.js'
       - 'public/device-check.js'

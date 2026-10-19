@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {mkdtempSync,writeFileSync,readFileSync,rmSync,existsSync} from 'node:fs';
+import {mkdtempSync,writeFileSync,readFileSync,rmSync,existsSync,statSync,symlinkSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {spawnSync} from 'node:child_process';
@@ -44,4 +44,46 @@ test('full reports with unsolicited account or clothing private text are never w
  assert.equal(r.fileCreated,false);
  assert.ok(!r.stdout.includes('private@example.test'));
  assert.ok(!r.stderr.includes('private@example.test'));
+});
+
+test('never overwrite original Android or iPhone evidence or existing private summaries',()=>{
+ const folder=mkdtempSync(join(tmpdir(),'closet-private-no-clobber-'));
+ try{
+  const a=join(folder,'android.json'),i=join(folder,'iphone.json'),out=join(folder,'summary.json');
+  const android=JSON.stringify(deviceCheckReport({enabled:false,steps:checks(),events:[]},'abc123abc123','Android'));
+  const iphone=JSON.stringify(deviceCheckReport({enabled:false,steps:checks(),events:[]},'abc123abc123','iPhone/iPad'));
+  writeFileSync(a,android);writeFileSync(i,iphone);
+  const execute=destination=>spawnSync(process.execPath,
+   ['scripts/compare-private-phone-pilot-reports.mjs',a,i,destination],
+   {cwd:process.cwd(),encoding:'utf8'});
+  for(const target of [a,i]){
+   const r=execute(target);
+   assert.notEqual(r.status,0,'must not replace raw tester evidence');
+   assert.match(r.stderr,/output already exists or cannot be created/);
+  }
+  assert.equal(readFileSync(a,'utf8'),android);
+  assert.equal(readFileSync(i,'utf8'),iphone);
+  writeFileSync(out,'existing independent summary');
+  assert.notEqual(execute(out).status,0);
+  assert.equal(readFileSync(out,'utf8'),'existing independent summary');
+  const link=join(folder,'summary-link.json');
+  symlinkSync(a,link);
+  assert.notEqual(execute(link).status,0,'symlink must not overwrite a raw export');
+  assert.equal(readFileSync(a,'utf8'),android);
+  assert.equal(readFileSync(i,'utf8'),iphone);
+ }finally{rmSync(folder,{recursive:true,force:true});}
+});
+test('new local derived summary is a private file rather than world-readable output',()=>{
+ const folder=mkdtempSync(join(tmpdir(),'closet-private-mode-'));
+ try{
+  const a=join(folder,'android.json'),i=join(folder,'iphone.json'),out=join(folder,'summary.json');
+  writeFileSync(a,JSON.stringify(deviceCheckReport({enabled:false,steps:checks(),events:[]},'abc123abc123','Android')));
+  writeFileSync(i,JSON.stringify(deviceCheckReport({enabled:false,steps:checks(),events:[]},'abc123abc123','iPhone/iPad')));
+  const result=spawnSync(process.execPath,['scripts/compare-private-phone-pilot-reports.mjs',a,i,out],
+   {cwd:process.cwd(),encoding:'utf8'});
+  assert.equal(result.status,0,result.stderr);
+  assert.equal(JSON.parse(readFileSync(out,'utf8')).productionReleaseApproved,false);
+  if(process.platform!=='win32')
+   assert.equal(statSync(out).mode & 0o077,0,'group and other must have no summary access');
+ }finally{rmSync(folder,{recursive:true,force:true});}
 });
