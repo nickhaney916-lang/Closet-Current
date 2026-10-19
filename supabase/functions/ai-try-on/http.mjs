@@ -30,7 +30,9 @@ export function createRpcTransport({env,fetchImpl=fetch}){
   return {data:await response.json(),error:null};
  }};
 }
-export function createTryOnHandler({env=()=>undefined,fetchImpl=fetch,ledger,signPrediction,readPrediction,
+/** @type {(name: string) => string | undefined} */
+const emptyEnv=()=>undefined;
+export function createTryOnHandler({env=emptyEnv,fetchImpl=fetch,ledger,signPrediction,readPrediction,
  submissionApproved=false,chainedApproved=false}={}){
  async function userFromToken(jwt){
   const url=env('SUPABASE_URL');let key=env('SUPABASE_ANON_KEY')||env('SUPABASE_PUBLISHABLE_KEY')||'';
