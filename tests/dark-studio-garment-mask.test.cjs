@@ -54,3 +54,21 @@ test('proposal code has no network, persistence, generated pixels or default dis
  assert.match(text,/displayEligible:false/);assert.match(text,/requiresIndependentMaskReview:true/);
  assert.match(fs.readFileSync('public/index.html','utf8'),/src="dark-studio-garment-mask.js"/);
 });
+
+test('dark studio analysis never silently activates fitted display after integration',()=>{
+ const preview=fs.readFileSync('public/reusable-figure-preview.js','utf8');
+ const module=fs.readFileSync('public/dark-studio-garment-mask.js','utf8');
+ const html=fs.readFileSync('public/index.html','utf8');
+ assert.match(module,/displayEligible:false/);
+ assert.match(module,/requiresIndependentMaskReview:true/);
+ assert.match(html,/src="dark-studio-garment-mask\.js"/);
+ assert.ok(!/ClosetDarkStudioMask|darkStudioMask/.test(preview),
+  'unreviewed dark studio candidates may be measured but not pasted on a figure');
+ const image=new Uint8ClampedArray(100*150*4);
+ for(let i=0;i<100*150;i++)image.set([22,22,22,255],i*4);
+ for(let y=20;y<132;y++)for(let x=21;x<79;x++)image.set([194,35,41,255],(y*100+x)*4);
+ const proposal=mask.analyze(image,100,150,{category:'Tops',primaryColor:'Red'});
+ assert.equal(proposal.proposalAvailable,true);
+ assert.equal(proposal.displayEligible,false);
+ assert.equal(proposal.eligible,false);
+});
