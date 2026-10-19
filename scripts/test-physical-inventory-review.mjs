@@ -35,7 +35,7 @@ try{
   width:40,height:30,runs:encode(rect),reviewer:'First Human',
   approvedBy:'Second Human',seedModel:null,
   physicalTargetId:'validation-0031-item-'+String(num).padStart(2,'0'),
-  humanCategory:cat,humanTargetLabel:label,
+  humanCategory:cat,humanForm:cat==='Bottoms'?'skirt':cat==='Outerwear'?'outerwear':'top',humanTargetLabel:label,
   targetIndependentlyIdentifiedBy:'First Human'
  });
  const garmentA=piece(1,'Outerwear','grey blazer',[4,4,19,16]);
@@ -87,12 +87,15 @@ try{
  assert.equal(inventory.reviewedBy,'First Human');
  assert.equal(inventory.approvedBy,'Second Human');
  assert.equal(inventory.targets.find(x=>x.label==='black skirt').category,'Bottoms');
+ assert.equal(inventory.targets.find(x=>x.label==='black skirt').form,'skirt');
  // This result uses fabricated fixture geometries: verifies plumbing only.
  const score=evaluateCompletePhysicalInventory({
   id:'validation-0031',image:source.name,sourceSha256:sha
  },inventory,new Map([[garmentA.physicalTargetId,garmentA],[garmentB.physicalTargetId,garmentB]]),new Map());
  assert.equal(score.missedPhysicalGarments,2);
  assert.equal(score.detectionRecall,0);
+ assert.equal(score.formConstrainedRecall,0);
+ assert.equal(score.completeReviewedGarmentForms,true);
  assert.equal(score.canPromoteModel,false);
  await page.locator('#photo').setInputFiles({...source,name:'commons-0035.jpg'});
  await page.locator('#status').getByText(/No approved outlines/).waitFor();
