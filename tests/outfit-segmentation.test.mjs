@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {clothingLabelMap,clothingMaskGroups,isolateClothingPixels,cropClothingPhotoPixels,garmentDisplayMaskReliability} from '../public/outfit-segmentation.mjs';
+import {clothingLabelMap,clothingMaskGroups,reviewOnlyUnwornOutfitGroups,isolateClothingPixels,cropClothingPhotoPixels,garmentDisplayMaskReliability} from '../public/outfit-segmentation.mjs';
 function logits(width=20,height=20){const data=new Float32Array(18*width*height);data.fill(-10);for(let i=0;i<width*height;i++)data[i]=10;return {data,dims:[1,18,height,width],paint(label,left,top,w,h){for(let y=top;y<top+h;y++)for(let x=left;x<left+w;x++){const i=y*width+x;for(let c=0;c<18;c++)data[c*width*height+i]=c===label?10:-10;}}};}
 test('small and narrow source photos retain original pixels without failing display isolation',()=>{
  const l=logits(32,32);l.paint(4,6,6,20,20);
@@ -345,4 +345,26 @@ test('narrow low-confidence sleeve-shaped evidence does not become an extra clos
  const strong=logits(64,64);strong.paint(4,37,15,4,21);
  const strongPiece=clothingMaskGroups(clothingLabelMap(strong.data,strong.dims));
  assert.equal(strongPiece.length,1,'trusted region handling remains unchanged');
+});
+
+test('large flat-lay semantic regions are source-only review candidates, never auto-indexed garments',()=>{
+ const l=logits(64,64);l.paint(7,12,14,24,26);
+ const map=clothingLabelMap(l.data,l.dims);assert.equal(map.personDetected,false);
+ const pieces=reviewOnlyUnwornOutfitGroups(map);
+ assert.equal(pieces.length,1);assert.equal(pieces[0].id,7);
+ assert.equal(pieces[0].reviewOnlyReason,'no-person-evidence-review-only');
+ assert.equal(pieces[0].count,24*26);
+ const before=map.labels.slice();
+ const pixels=new Uint8ClampedArray(64*64*3).fill(91);
+ const raw=cropClothingPhotoPixels({data:pixels,width:64,height:64,channels:3},map,pieces[0]);
+ assert.ok(raw.data.every(v=>v===91));
+ assert.deepEqual(map.labels,before,'review routing leaves the semantic prediction unchanged');
+});
+test('flat-lay noise, tiny garment fragments and real wearer routing remain guarded',()=>{
+ const l=logits(64,64);l.paint(7,10,12,9,10);const map=clothingLabelMap(l.data,l.dims);
+ assert.equal(reviewOnlyUnwornOutfitGroups(map).length,0,'small predictions do not create review clutter');
+ const full=logits(64,64);full.paint(7,12,14,24,26);
+ const map2=clothingLabelMap(full.data,full.dims);
+ map2.personDetected=true;
+ assert.equal(reviewOnlyUnwornOutfitGroups(map2).length,0,'wearer flow uses its existing worker route');
 });
