@@ -76,7 +76,9 @@ try{
  acceptableReject(otherRead,'foreign private photo read');
  const otherDelete=await api('/storage/v1/object/closet-private',{
   key:bob.access,method:'DELETE',body:{prefixes:[photoPath(alice)]}});
- acceptableReject(otherDelete,'foreign private photo delete');
+ if(otherDelete.status!==200)acceptableReject(otherDelete,'foreign private photo delete');
+ else assert.deepEqual(otherDelete.body,[]);
+ assert.ok((await list(alice)).some(object=>object.name===name),'owner photo missing');
  info.userScopedStorage=true;
 
  must(await backup(alice),'owner A backup', [200,201,204]);
