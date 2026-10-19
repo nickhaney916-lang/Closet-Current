@@ -42,7 +42,7 @@ test('UI never exposes a provider key, runs paid inference automatically, or cla
  assert.match(ui,/\$\('tryOnGenerate'\)\.onclick=generateTryOn/);
  assert.match(ui,/ai-try-on/);
  assert.doesNotMatch(ui,/FASHN_API_KEY|api\.fashn\.ai/);
- assert.match(ui,/Other selected pieces are not rendered yet/);
+ assert.match(ui,/Not rendered:/);
  assert.match(html,/id="tryOnImage"[^>]*hidden/);
  assert.match(html,/Female AI model/);
  assert.match(html,/Male AI model/);
