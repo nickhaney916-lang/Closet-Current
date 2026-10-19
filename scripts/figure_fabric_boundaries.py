@@ -26,9 +26,11 @@ def flatten_lower_hem(coords, faces, *, low=.84, high=1.02, max_abs_x=.31, stren
     moved=0
     for i in selected:
         z=coords[i][2]
-        next_z=z+strength*(target-z)
-        if abs(next_z-z)>.075:
-            raise ValueError("Refusing oversized hem edit")
+        # Never pull a boundary vertex more than six scene centimeters.
+        # Cap motion rather than distorting the original topology or editing
+        # the underlying body mesh when a ragged edge spans a wider interval.
+        delta=max(-.06,min(.06,strength*(target-z)))
+        next_z=z+delta
         coords[i][2]=next_z
         moved+=abs(next_z-z)>1e-9
     after=[coords[i][2] for i in selected]
