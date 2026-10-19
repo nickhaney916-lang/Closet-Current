@@ -1,0 +1,29 @@
+name: Pilot authorized garment edit submission guards
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'supabase/functions/garment-normalize/credit-ledger-client.mjs'
+      - 'supabase/functions/garment-normalize/guarded-preview-submission.mjs'
+      - 'tests/guarded-preview-submission.test.mjs'
+      - '.github/workflows/guarded-garment-edit-submission.yml'
+permissions:
+  contents: read
+jobs:
+  mocked-service-rpcs-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate authenticated source, single claim, fail-closed retries and private RPC
+        run: |
+          node --check supabase/functions/garment-normalize/credit-ledger-client.mjs
+          node --check supabase/functions/garment-normalize/guarded-preview-submission.mjs
+          node --test tests/guarded-preview-submission.test.mjs
+      - name: Guard against implicit production enablement or extra previews
+        run: |
+          node -e "const fs=require('fs');const a=fs.readFileSync('supabase/functions/garment-normalize/guarded-preview-submission.mjs','utf8');if(!a.includes('GARMENT_PREVIEW_SUBMISSION_ENABLED=false')||!a.includes('await ledger.claim(')||!a.includes('consent?.verifiedByServer'))throw Error('Unsafe pilot orchestration')"

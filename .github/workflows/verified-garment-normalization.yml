@@ -1,0 +1,40 @@
+name: Verified single-photo normalization dry run
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'supabase/functions/garment-normalize/verified-pipeline.mjs'
+      - 'tests/verified-normalization-pipeline.test.mjs'
+      - 'scripts/run-verified-normalization-dry-run.mjs'
+      - '.github/workflows/verified-garment-normalization.yml'
+permissions:
+  contents: read
+jobs:
+  real-source-mocked-provider:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify exact input hashing, scoped HMAC receipts and fail closed behavior
+        run: |
+          node --check supabase/functions/garment-normalize/verified-pipeline.mjs
+          node --test tests/verified-normalization-pipeline.test.mjs tests/garment-normalization-contract.test.mjs
+      - name: Retrieve 4 previously licensed real input photographs
+        run: |
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos commons-0035,commons-0065
+          node scripts/download-reviewed-photos.mjs benchmark/manifest-fresh-11.json benchmark/photos validation-0017,validation-0019
+      - name: Prove exact one-input to mock-one-output provenance on original photo bytes
+        run: node scripts/run-verified-normalization-dry-run.mjs benchmark/verified-normalization-mock
+      - name: Ensure no generated-photo fidelity, payments, auto-saving, or uploads are claimed
+        run: |
+          node -e "const r=require('./benchmark/verified-normalization-mock/summary.json');if(r.status!=='complete'||r.cases.length!==4||!r.sourceBytesVerified||!r.simulationOnly||r.realAIImagesGenerated||r.modelSourceConditioningProven||r.sampleImagesUploaded||r.providerCharged||r.garmentFidelityAccuracy!==null||r.automaticallySavedClothes!==0||r.cases.some(x=>!x.originalBytesSentUnchanged||!x.receiptVerified||x.realNormalization||x.automaticSave))throw Error('Unsafe provenance claim')"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: real-input-mocked-ai-edit-provenance
+          path: benchmark/verified-normalization-mock/summary.json
+          retention-days: 14

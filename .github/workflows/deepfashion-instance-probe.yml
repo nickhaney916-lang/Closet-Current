@@ -1,0 +1,194 @@
+name: Experimental DeepFashion instance ONNX
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'benchmark/deepfashion-instance-onnx-reference.json'
+      - 'benchmark/deepfashion-real-photo-suite.json'
+      - 'benchmark/deepfashion_review_risks.py'
+      - 'benchmark/deepfashion_mask_seed.py'
+      - 'benchmark/whole_outfit_review_packet.py'
+      - 'tests/test_whole_outfit_review_packet.py'
+      - 'benchmark/instance-review-coverage.mjs'
+      - 'benchmark/instance-spatial-review.mjs'
+      - 'tests/instance-spatial-review.test.mjs'
+      - 'benchmark/physical-garment-inventory.mjs'
+      - 'benchmark/footwear-readiness.mjs'
+      - 'benchmark/LIP-SOCKS-REAL-REVIEW-20261017.json'
+      - 'tests/footwear-readiness.test.mjs'
+      - 'scripts/audit-footwear-readiness.mjs'
+      - 'tests/physical-garment-inventory.test.mjs'
+      - 'tests/physical-garment-cli.test.mjs'
+      - 'scripts/score-physical-garment-inventory.mjs'
+      - 'tests/instance-review-coverage.test.mjs'
+      - 'scripts/audit-independent-instance-reviews.mjs'
+      - 'tests/test_deepfashion_mask_seed.py'
+      - 'tests/test_deepfashion_review_risks.py'
+      - 'benchmark/manifest-fresh-11.json'
+      - 'benchmark/locked-photo-sources.json'
+      - 'benchmark/manifest-visible-legwear-2.json'
+      - 'scripts/run-deepfashion-instance-probe.py'
+      - 'benchmark/deepfashion_instance_decode.py'
+      - 'tests/test_deepfashion_instance_decode.py'
+      - '.github/workflows/deepfashion-instance-probe.yml'
+permissions:
+  contents: read
+jobs:
+  pinned-model-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 16
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install CPU-only existing dependencies
+        run: pip install numpy==1.26.4 Pillow==11.2.1 onnxruntime==1.21.0
+      - name: Compile model audit
+        run: |
+          python -m py_compile scripts/run-deepfashion-instance-probe.py
+          PYTHONPATH=benchmark python -m unittest discover -s tests -p 'test_deepfashion_instance_decode.py' -v
+          PYTHONPATH=benchmark python -m unittest discover -s tests -p 'test_deepfashion_review_risks.py' -v
+          PYTHONPATH=benchmark python -m unittest discover -s tests -p 'test_deepfashion_mask_seed.py' -v
+          PYTHONPATH=benchmark python -m unittest discover -s tests -p 'test_whole_outfit_review_packet.py' -v
+          node --test tests/instance-review-coverage.test.mjs tests/instance-spatial-review.test.mjs tests/physical-garment-inventory.test.mjs tests/physical-garment-cli.test.mjs tests/footwear-readiness.test.mjs
+      - name: Download SHA-verified source photographs
+        run: |
+          node scripts/download-reviewed-photos.mjs benchmark/manifest-visible-legwear-2.json benchmark/photos validation-0031
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos commons-0059,commons-0035,commons-0049,commons-0065,commons-0079
+          node scripts/download-reviewed-photos.mjs benchmark/manifest-fresh-11.json benchmark/photos validation-0017,validation-0001,validation-0010,validation-0019
+      - name: Profile pinned ONNX garment instances on ten licensed reference photos
+        run: python scripts/run-deepfashion-instance-probe.py benchmark/deepfashion-instance-review
+      - name: Verify real seed review coverage and unchanged priority originals
+        run: node scripts/audit-independent-instance-reviews.mjs benchmark/deepfashion-instance-review
+      - name: Audit independent physical garments including model-missed items
+        run: node scripts/score-physical-garment-inventory.mjs benchmark/deepfashion-instance-review
+      - name: Audit real-photo shoe/tights class support without inventing accuracy
+        run: node scripts/audit-footwear-readiness.mjs benchmark/deepfashion-instance-review
+      - name: Block invented clothes and unverified instance accuracy
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          x=json.load(open('benchmark/deepfashion-instance-review/summary.json'))
+          assert x['status']=='complete' and x['modelHashVerified'] and x['sourceHashesVerified']
+          assert len(x['cases'])==10 and x['parsedInstanceMasks']>=0
+          assert len(set(c['id'] for c in x['cases']))==10
+          kinds={c['categoryCoverageReview']['expectedBroadCategoryContextOnly'] for c in x['cases']}
+          assert kinds=={'Layered','Bottoms','Dresses','Outerwear','Shoes'}
+          shoes=[c for c in x['cases'] if c['categoryCoverageReview']['negativeFootwearControl']]
+          assert len(shoes)==2 and all(not c['categoryCoverageReview']['categorySupportedByThisModel'] for c in shoes)
+          assert all(c['categoryCoverageReview']['contextCategoryIsNotGroundTruth']
+                     and not c['categoryCoverageReview']['instancePrecisionRecallMeasured']
+                     and not c['manualReviewRisk']['allowAutomaticSaving']
+                     and c['manualReviewRisk']['confirmedSeparateGarments']==0
+                     for c in x['cases'])
+          by={c['id']:c for c in x['cases']}
+          assert 'no-expected-specific-garment-proposal' in by['commons-0035']['manualReviewRisk']['manualReviewFlags']
+          assert 'possible-single-garment-fragmentation' in by['commons-0065']['manualReviewRisk']['manualReviewFlags']
+          assert 'possible-single-garment-fragmentation' in by['commons-0049']['manualReviewRisk']['manualReviewFlags']
+          assert len([c for c in x['cases'] if
+                      'unsupported-footwear-taxonomy' in c['manualReviewRisk']['manualReviewFlags']])==2
+          assert x['automaticItemsCreated']==0 and not x['customerModelChanged'] and not x['paidServicesUsed']
+          root=Path('benchmark/deepfashion-instance-review')
+          review=json.loads((root/'independent-outline-review'/'reference-review-index.json').read_text())
+          assert review['approvedReferences']==0 and not review['predictionMasksAreGroundTruth']
+          assert review['imageCount']==10 and not review['automaticCustomerMaskPromotion']
+          assert review['pendingIndividualPredictions']==x['parsedInstanceMasks']
+          physical=json.loads((root/'physical-garment-inventory-audit.json').read_text())
+          assert physical['sources']==10 and physical['fullyHumanReviewedSources']==0
+          assert physical['completeTenPhotoAccuracy'] is None and physical['partialDatasetAccuracy'] is None
+          footwear=json.loads((root/'footwear-hosiery-readiness-audit.json').read_text())
+          assert footwear['status']=='footwear-and-hosiery-promotion-blocked'
+          assert len(footwear['negativeFootwearControls'])==2
+          assert len(footwear['lipHistoricImages'])==2
+          assert footwear['humanApprovedPixelOutlinesAvailable'] is False
+          assert footwear['measuredFootwearPrecision'] is None
+          assert footwear['measuredFootwearRecall'] is None
+          assert footwear['comparableModelAccuracyImprovement'] is None
+          assert footwear['autoSavedCustomerItems']==0
+          assert footwear['canPromoteModel'] is False
+          assert all(r['actualDeepFashionProposals']==0 for r in footwear['negativeFootwearControls'])
+          assert all(p['detectionRecall'] is None and p['missingGarments'] is None
+                     for p in physical['perPhoto'])
+          assert not physical['canPromoteModel'] and not physical['customerModelModified']
+          spatial=json.loads((root/'individual-instance-spatial-review.json').read_text())
+          assert spatial['sourcePhotos']==10 and spatial['modelProposals']==x['parsedInstanceMasks']
+          assert spatial['independentlyApprovedReferences']==0
+          assert spatial['physicalGarmentAccuracy'] is None
+          assert spatial['garmentPixelIoU'] is None
+          assert spatial['missingInstanceRecall'] is None
+          assert not spatial['canPromoteModel'] and spatial['autoSavedCustomerItems']==0
+          assert all(not p['pixelGroundTruth'] and p['physicalGarmentCount'] is None
+                     and p['instanceAccuracy'] is None
+                     and not p['canPromoteModel']
+                     and all(pair['independentlyVerifiedSameGarment'] is False
+                             for pair in p['candidatePairs'])
+                     for p in spatial['spatialRelationships'])
+          audit=json.loads((root/'individual-instance-coverage-audit.json').read_text())
+          assert audit['modelProposals']==x['parsedInstanceMasks']
+          assert audit['independentlyReviewedProposals']==0
+          assert audit['awaitingReview']==audit['modelProposals']
+          assert audit['aggregatePixelIoU'] is None and audit['missingPhysicalGarmentRecall'] is None
+          assert audit['canPromoteModel'] is False and audit['autoSavedCustomerItems']==0
+          assert sum(c['exactOriginalIncludedForReview'] for c in review['cases'])==10
+          packet=json.loads((root/'independent-outline-review'/'source-original-coverage.json').read_text())
+          assert packet['sourcePhotoCount']==10 and packet['verifiedOriginalCount']==10
+          assert packet['reviewPrioritySourceCount']==5
+          assert packet['allOriginalSHA256Matched'] and packet['independentlyApprovedGarmentMasks']==0
+          assert packet['measuredPhysicalGarmentAccuracy'] is None
+          assert packet['modelProposalMasksAreGroundTruth'] is False
+          assert packet['canAutoSaveOrPromote'] is False
+          assert (root/'independent-outline-review'/'REVIEW-QUEUE.html').is_file()
+          from hashlib import sha256
+          assert {x['id'] for x in packet['sources']}=={c['id'] for c in review['cases']}
+          for source in packet['sources']:
+              original=root/'independent-outline-review'/'original-photos'/source['image']
+              assert original.is_file()
+              assert original.read_bytes().startswith(bytes((0xff,0xd8)))
+              assert sha256(original.read_bytes()).hexdigest()==source['sha256']
+              assert source['includedUnchanged'] and source['physicalGarmentCount'] is None
+          for c in review['cases']:
+              assert c['allMasksUnapproved'] and c['userPhotoModified'] is False
+              for item in c['candidateSeeds']:
+                  seed=json.loads((root/item['prediction']).read_text())
+                  assert seed['reviewStatus']=='prediction-unreviewed'
+                  assert seed['modelProposalId']==item['id']
+                  assert seed['candidateOrdinal']==int(item['id'].split('-candidate-')[-1])
+                  assert seed['modelGarmentLabel']==item['label']
+                  assert seed['approvedBy'] is None and not seed['independentReference']
+                  assert seed['sourceSha256']==c['sourceSha256'] and seed['image']==c['image']
+                  assert seed['width']>0 and seed['height']>0
+                  assert sum(seed['runs'])==seed['width']*seed['height']
+                  assert not seed['canSaveToCustomerCloset']
+          assert all(c['independentHumanReferenceCount']==0 for c in x['cases'])
+          assert all(not c['masksNotDecoded'] and c['automaticItemsSaved']==0 and
+                     c['overlapReview']['canAutoSaveAnyProposal'] is False and
+                     all(not u['certifiedSingleArticle'] and not u['autoSaveAllowed']
+                         and u['sourcePhotoUnchanged'] for u in c['unverifiedCategoryUnions'])
+                     for c in x['cases'])
+          from pathlib import Path
+          assert all((Path('benchmark/deepfashion-instance-review')/(c['id']+'-instance-overlays.png')).is_file() for c in x['cases'])
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pinned-deepfashion-instance-feasibility
+          path: |
+            benchmark/deepfashion-instance-review/summary.json
+            benchmark/deepfashion-instance-review/*-instance-overlays.png
+            benchmark/deepfashion-instance-review/*-union-review.png
+            benchmark/deepfashion-instance-review/individual-instance-coverage-audit.json
+            benchmark/deepfashion-instance-review/individual-instance-spatial-review.json
+            benchmark/deepfashion-instance-review/physical-garment-inventory-audit.json
+            benchmark/deepfashion-instance-review/footwear-hosiery-readiness-audit.json
+            benchmark/deepfashion-instance-review/independent-outline-review/reference-review-index.json
+            benchmark/deepfashion-instance-review/independent-outline-review/source-original-coverage.json
+            benchmark/deepfashion-instance-review/independent-outline-review/REVIEW-QUEUE.html
+            benchmark/deepfashion-instance-review/independent-outline-review/model-seeds/*.json
+            benchmark/deepfashion-instance-review/independent-outline-review/original-photos/*
+          retention-days: 14

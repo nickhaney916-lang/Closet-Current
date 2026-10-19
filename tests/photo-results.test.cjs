@@ -1,15 +1,15 @@
 const test=require('node:test'),assert=require('node:assert/strict'),vm=require('node:vm'),fs=require('node:fs');
 const source=fs.readFileSync('public/app.js','utf8');
 function setup(){
- function node(tag,text){return {tag,text:text||'',children:[],append(...children){this.children.push(...children);},replaceChildren(...children){this.children=children;}};}
- const c={recognitionState:{phase:'idle',percent:null,activeId:null},node,items:[],localPending:new Set(),localReady:true,adjustPhoto(item){c.adjusted=item;},cropClothingPhoto(item){c.cropped=item;}};
- vm.createContext(c);vm.runInContext(source.slice(source.indexOf('function cropButton('),source.indexOf('function adjustPhoto(')),c);vm.runInContext(source.slice(source.indexOf('function renderPhotoResults('),source.indexOf('function render(){')),c);
+ function node(tag,text){return {tag,text:text||'',children:[],setAttribute(){},append(...children){this.children.push(...children);},replaceChildren(...children){this.children=children;}};}
+ const c={recognitionState:{phase:'idle',percent:null,activeId:null},node,items:[],batch:[],categories:['Tops','Dresses'],ClothingDetails:{colors:['Black','Blue','Red'],validColor:v=>['Black','Blue','Red'].includes(v)},localPending:new Set(),localReady:true,adjustPhoto(item){c.adjusted=item;},cropClothingPhoto(item){c.cropped=item;}};
+ vm.createContext(c);vm.runInContext(source.slice(source.indexOf('function recognitionSourcePhoto('),source.indexOf('function clothingFields(')),c);vm.runInContext(source.slice(source.indexOf('function cropButton('),source.indexOf('function adjustPhoto(')),c);vm.runInContext(source.slice(source.indexOf('function canConfirmReviewedColor('),source.indexOf('function renderPhotoResults(')),c);vm.runInContext(source.slice(source.indexOf('function renderPhotoResults('),source.indexOf('function render(){')),c);
  return {c,grid:node('div')};
 }
 function descendants(x){return [x,...x.children.flatMap(descendants)];}
 test('recognized photo immediately shows its saved category and Adjust and Crop actions',()=>{
  const {c,grid}=setup();const item={id:'shirt',name:'Blue T-shirt',category:'Tops',itemType:'T-shirt',color:'Blue',pattern:'Solid',sleeveLength:'Short sleeve',fit:'Regular',seasons:[]};c.items=[item];
- c.renderPhotoResults(grid,[item]);const nodes=descendants(grid),buttons=nodes.filter(x=>x.tag==='button');assert.equal(buttons.length,2);assert.equal(buttons[0].text,'Adjust');assert.ok(nodes.some(x=>x.text==='Tops · T-shirt · Blue'));assert.ok(nodes.some(x=>x.text.includes('Solid · Short sleeve')));buttons[0].onclick();assert.equal(c.adjusted,item);buttons[1].onclick();assert.equal(c.cropped,item);
+ c.renderPhotoResults(grid,[item]);const nodes=descendants(grid),buttons=nodes.filter(x=>x.tag==='button');assert.equal(buttons.length,3);assert.equal(buttons[0].text,'Style this');assert.equal(buttons[1].text,'Adjust');assert.ok(nodes.some(x=>x.text==='Tops · T-shirt · Blue'));assert.ok(nodes.some(x=>x.text.includes('Solid · Short sleeve')));c.styleNewClosetItem=id=>{c.styled=id;};buttons[0].onclick();assert.equal(c.styled,'shirt');buttons[1].onclick();assert.equal(c.adjusted,item);buttons[2].onclick();assert.equal(c.cropped,item);
 });
 test('failed recognition keeps the photo and offers correction and crop actions without guessing',()=>{
  const {c,grid}=setup();c.renderPhotoResults(grid,[{id:'unknown',image:'photo',category:'Uncategorized'}]);const nodes=descendants(grid);assert.ok(nodes.some(x=>x.text==='Needs a clearer photo'));assert.equal(nodes.filter(x=>x.tag==='button').length,2);assert.ok(nodes.some(x=>x.tag==='img'&&x.src==='photo'));
@@ -18,7 +18,7 @@ test('processing displays its category as soon as the worker identifies it',()=>
  const {c,grid}=setup();c.localPending.add('shirt');c.renderPhotoResults(grid,[{id:'shirt',category:'Tops',itemType:'T-shirt'}]);const nodes=descendants(grid);assert.ok(nodes.some(x=>x.text==='T-shirt'));assert.ok(nodes.some(x=>x.text==='Tops · T-shirt'));assert.equal(nodes.filter(x=>x.tag==='button').length,2);assert.equal(nodes.find(x=>x.tag==='button').text,'Adjust');
 });
 test('recognition errors release the job instead of leaving a perpetual spinner',()=>{
- const nodes=new Map();const c={recognitionState:{phase:'idle',percent:null,activeId:null},renderRecognitionNotice(){},recognitionUnavailable:false,localWorker:null,localReady:true,localJobs:new Map(),crypto:{randomUUID:()=> 'job'},recognitionAssetVersion:'',clearTimeout(){},setTimeout(){return 1;},$:id=>{if(!nodes.has(id))nodes.set(id,{});return nodes.get(id);},Worker:class{postMessage(){} terminate(){this.stopped=true;}}};vm.createContext(c);vm.runInContext(source.slice(source.indexOf('function stopRecognitionWorker('),source.indexOf('async function enableLocal(')),c);
+ const nodes=new Map();const c={recognitionState:{phase:'idle',percent:null,activeId:null},renderRecognitionNotice(){},recognitionUnavailable:false,localWorker:null,localReady:true,localJobs:new Map(),crypto:{randomUUID:()=> 'job'},recognitionAssetVersion:'',clearTimeout(){},setTimeout(){return 1;},$:id=>{if(!nodes.has(id))nodes.set(id,{});return nodes.get(id);},Worker:class{postMessage(){} terminate(){this.stopped=true;}}};vm.createContext(c);vm.runInContext(source.slice(source.indexOf('function recognitionSourcePhoto('),source.indexOf('function clothingFields(')),c);vm.runInContext(source.slice(source.indexOf('function stopRecognitionWorker('),source.indexOf('async function enableLocal(')),c);
  const result=c.localRequest('classify','photo').catch(e=>e);c.localWorker.onerror();assert.equal(c.localReady,false);assert.equal(c.localJobs.size,0);assert.equal(c.localWorker,null);return result.then(e=>assert.match(e.message,/unavailable/));
 });
 test('queued photos stay compact and offer Adjust during model setup',()=>{
@@ -35,4 +35,90 @@ test('storage failure shows Not saved and keeps recognized labels with one Adjus
 
 test('saved outfit pieces show their clipped image without an add or selection step',()=>{
  const {c,grid}=setup();const item={id:'ready',image:'auto-clipped-photo',outfitSourceId:'outfit',category:'Tops',itemType:'T-shirt',localAnalyzed:true};c.items=[item];c.renderPhotoResults(grid,[item]);const nodes=descendants(grid);assert.ok(nodes.some(x=>x.text==='Saved'));assert.ok(nodes.some(x=>x.tag==='img'&&x.src==='auto-clipped-photo'));assert.ok(!nodes.some(x=>x.tag==='input'||x.text==='Ready to add'));
+});
+
+test('an unresolved color offers one-choice inline saving without adding tabs',async()=>{
+ const {c,grid}=setup(),item={id:'shirt',image:'photo',category:'Tops',itemType:'T-shirt',color:'',localAnalyzed:true,seasons:[]};
+ c.batch=[item];const selected=[];
+ c.confirmReviewedColor=async(input,color)=>{selected.push({input,color});return true;};
+ c.renderPhotoResults(grid,[item]);const nodes=descendants(grid),picker=nodes.find(x=>x.tag==='select');
+ assert.ok(picker);
+ assert.ok(nodes.some(x=>x.text==='Choose color · save'));
+ assert.deepEqual(nodes.filter(x=>x.tag==='option').map(x=>x.text),['Choose color to save','Black','Blue','Red']);
+ picker.value='Blue';await picker.onchange();
+ assert.equal(picker.disabled,true);
+ assert.equal(selected.length,1);assert.equal(selected[0].input,item);
+ assert.equal(selected[0].color,'Blue');
+ assert.equal(nodes.filter(x=>x.tag==='button').length,2);
+});
+test('processing, already-saved, and duplicate items never show quick color save',()=>{
+ const {c,grid}=setup();
+ const item={id:'shirt',category:'Tops',itemType:'T-shirt',localAnalyzed:true,color:''};
+ for(const variation of [{pending:true},{saved:true},{possibleDuplicate:true},{requiresOwnershipConfirmation:true}]){
+  c.batch=[item];c.items=[];c.localPending.clear();
+  const one={...item,...variation};
+  c.batch=[one];if(variation.pending)c.localPending.add(one.id);if(variation.saved){c.items=[one];c.batch=[];}
+  c.renderPhotoResults(grid,[one]);assert.equal(descendants(grid).filter(x=>x.tag==='select').length,0);
+ }
+});
+
+test('fragmented whole-outfit photo warns against treating a mixed region as a clean garment',()=>{
+ const {c,grid}=setup();
+ const item={id:'mixed',image:'original-region',category:'Shoes',itemType:'Unknown',
+  outfitSourceId:'outfit',segmentHint:{categories:['Shoes'],types:[],clipped:false,
+   displayFallback:'original-crop',displayFallbackReason:'fragmented-mask'},
+  localAnalyzed:true,color:''};
+ c.batch=[item];c.renderPhotoResults(grid,[item]);
+ const all=descendants(grid);
+ assert.ok(all.some(x=>/Photo region needs review: this cutout/.test(x.text)));
+ assert.equal(all.filter(x=>x.tag==='select').length,0,
+  'fragmented candidate requires Adjust, not color-only acceptance');
+ assert.ok(all.some(x=>x.tag==='button'&&x.text==='Adjust'));
+});
+
+test('all unreliable outfit original-crop reasons have a human review label',()=>{
+ for(const reason of ['unexplained-enclosed-gap','clipped-frame']){
+  const {c,grid}=setup(),item={id:'region',image:'source',category:'Tops',
+   itemType:'Unknown',outfitSourceId:'capture',localAnalyzed:true,color:'',
+   segmentHint:{categories:['Tops'],types:[],clipped:false,
+    displayFallback:'original-crop',displayFallbackReason:reason}};
+  c.batch=[item];c.renderPhotoResults(grid,[item]);
+  assert.ok(descendants(grid).some(x=>/Photo region needs review/.test(x.text)));
+  assert.equal(descendants(grid).filter(x=>x.tag==='select').length,0);
+ }
+});
+
+
+test('disconnected upper regions require review and warn against double-saving a single shirt',()=>{
+ const {c,grid}=setup();
+ const item={id:'left-region',image:'source-photo',category:'Tops',itemType:'T-shirt',
+  color:'',localAnalyzed:true,outfitSourceId:'outfit-1',
+  segmentHint:{clipped:false,categories:['Tops'],types:[],
+   displayFallback:'original-crop',displayFallbackReason:'disconnected-upper-regions'}};
+ c.batch=[item];c.renderPhotoResults(grid,[item]);
+ const nodes=descendants(grid);
+ assert.ok(nodes.some(x=>/may be parts of ONE garment/.test(x.text)));
+ assert.equal(nodes.filter(x=>x.tag==='select').length,0,'color picker must not bypass review');
+ assert.ok(nodes.some(x=>x.tag==='button'&&x.text==='Adjust'));
+});
+test('automatic save revalidates a changed garment draft before opening storage',async()=>{
+ const js=source.slice(source.indexOf('function segmentationAllows('),source.indexOf('function applyLocalChoice('))+'\n'+source.slice(source.indexOf('async function saveIndexed('),source.indexOf('async function recognizeItem('));
+ const c={batch:[],items:[],ClothingDetails:{validColor:v=>v==='Blue'},normalizeClothing:x=>x,queued:fn=>fn(),db:{transaction(){throw Error('Unsafe item reached database');}},structuredClone,Date,persistDraft(){},render(){}};
+ vm.createContext(c);vm.runInContext(source.slice(source.indexOf('function recognitionSourcePhoto('),source.indexOf('function clothingFields(')),c);vm.runInContext(js,c);
+ const base={id:'one',outfitSourceId:'outfit-1',recognitionPhoto:{image:'raw-crop'},name:'Blue shirt',category:'Tops',itemType:'T-shirt',color:'Blue',segmentHint:{clipped:false,categories:['Tops'],types:['T-shirt']}};
+ const stale=structuredClone(base);c.batch=[structuredClone(base)];assert.equal(await c.saveIndexed(stale),false,'superseded draft with same id must not save');
+ for(const mutate of [
+  x=>delete x.recognitionPhoto,
+  x=>x.segmentHint.clipped=true,
+  x=>x.segmentHint.displayFallback='original-crop',
+  x=>x.segmentHint.categories=['Bottoms'],
+  x=>x.segmentHint.types=['Sweater'],
+  x=>x.possibleDuplicate=true,
+  x=>x.category='Uncategorized',
+  x=>x.color='',
+  x=>x.scanFailed=true
+ ]){
+  const item=structuredClone(base);mutate(item);c.batch=[item];
+  assert.equal(await c.saveIndexed(item),false,'invalid changed draft must not write');
+ }
 });

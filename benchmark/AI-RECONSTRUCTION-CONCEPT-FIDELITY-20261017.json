@@ -1,0 +1,39 @@
+{
+  "purpose": "Visual negative-control review of the illustrative AI-generated contact sheet shown in chat, NOT source-conditioned FASHN Edit results",
+  "status": "not-eligible-for-closet-admission",
+  "automaticFidelityAccuracy": null,
+  "conceptImageIsSourceConditioned": false,
+  "allOriginalPhotographsRecreatedInModel": false,
+  "sourceImageHashBoundToGeneratedSingleItem": false,
+  "photos": [
+    {
+      "id": "commons-0035",
+      "category": "Bottoms",
+      "review": "Orange shorts silhouette cleaner, but generated waistband button/belt loops and pocket stitching are not established from the draped source.",
+      "identity": "unverified",
+      "status": "needs-review"
+    },
+    {
+      "id": "commons-0065",
+      "category": "Outerwear",
+      "review": "Black jacket silhouette looks neater; lace/collar/fastenings and hanging accessory details do not establish exact same jacket.",
+      "identity": "unverified",
+      "status": "needs-review"
+    },
+    {
+      "id": "validation-0017",
+      "category": "Bottoms",
+      "review": "Generated denim is blue/light washed with newly clear front pockets, fly and seams; original trousers appear much lighter gray and details are not source-verified.",
+      "identity": "unverified",
+      "status": "potential-mismatch"
+    },
+    {
+      "id": "validation-0019",
+      "category": "Shoes",
+      "review": "Colors and broad athletic style broadly align, but fine mesh, laces, toe proportions and sole geometry cannot be treated as identical.",
+      "identity": "unverified",
+      "status": "needs-review"
+    }
+  ],
+  "conclusion": "This concept sheet demonstrates shape presentation, NOT source-faithful garment reconstruction. Do not pass it as an end-to-end image-edit benchmark or use any of its illustrative garments as a saved closet tile."
+}

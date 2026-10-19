@@ -1,0 +1,28 @@
+name: Experimental reconstructed garment color fidelity guard
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'benchmark/garment-reconstruction-color-signals.mjs'
+      - 'tests/garment-reconstruction-color-signals.test.mjs'
+      - 'benchmark/RECONSTRUCTION-REFERENCE-REVIEW-20261017.json'
+      - '.github/workflows/garment-reconstruction-color-signals.yml'
+permissions:
+  contents: read
+jobs:
+  source-color-evidence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Test source-mask color drift evidence and fail-closed intent
+        run: |
+          node --check benchmark/garment-reconstruction-color-signals.mjs
+          node --test tests/garment-reconstruction-color-signals.test.mjs tests/garment-fidelity-review.test.mjs
+      - name: Prevent experimental concept auto-save or fake fidelity scores
+        run: |
+          node -e "const r=require('./benchmark/RECONSTRUCTION-REFERENCE-REVIEW-20261017.json');if(r.cases.length!==4||r.outputCanAutoSave||r.fidelityAccuracyPercent!==null||r.sourcePixelConditioningAuthenticated||r.cases.some(c=>c.status!=='NOT_APPROVED'))throw Error('Unsafe generated clothing benchmark claim')"

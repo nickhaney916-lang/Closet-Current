@@ -20,12 +20,31 @@ self.onmessage=event=>{const request=event.data;chain=chain.then(async()=>{
   if(typeof request.image!=='string'||!/^data:image\/jpeg;base64,/.test(request.image)||request.image.length>12000000)throw Error('Invalid outfit photo.');
   const {model,processor,RawImage}=await load(request.id);self.postMessage({type:'progress',id:request.id,phase:'separating'});
   const image=await RawImage.read(request.image);if(!image.width||!image.height||Math.max(image.width,image.height)>3072)throw Error('Invalid outfit photo dimensions.');
-  const output=await model(await processor(image)),{clothingLabelMap,clothingMaskGroups,cropClothingPhotoPixels,isolateClothingPixels,clothingColorSample}=await import('./outfit-segmentation.mjs'+new URL(import.meta.url).search);
+  const output=await model(await processor(image)),{clothingLabelMap,clothingMaskGroups,cropClothingPhotoPixels,isolateClothingPixels,clothingColorSample,clothingInteriorColorSample,garmentDisplayMaskReliability}=await import('./outfit-segmentation.mjs'+new URL(import.meta.url).search);
   await import('./photo-color.js'+new URL(import.meta.url).search);
-  const map=clothingLabelMap(output.logits.data,output.logits.dims),groups=map.personDetected?clothingMaskGroups(map):[];let count=0;
+  const map=clothingLabelMap(output.logits.data,output.logits.dims),groups=map.personDetected?clothingMaskGroups(map):[];
+  // Explicit benchmark opt-in only. No per-pixel output or camera imagery.
+  // Never change masks, recognition inputs, or auto-save criteria for diagnostics.
+  if(request.diagnostics===true){
+   const {diagnoseOutfitRegions}=await import('./outfit-diagnostics.mjs'+new URL(import.meta.url).search);
+   self.postMessage({type:'diagnostics',id:request.id,summary:diagnoseOutfitRegions(output.logits.data,output.logits.dims,map,groups)});
+  }
+  let count=0;
   for(const group of groups){
-   const isolated=isolateClothingPixels(image,map,group),raw=cropClothingPhotoPixels(image,map,group),sample=clothingColorSample(image,map,group),b=raw.bounds;
-   const piece={image:await jpegData(new RawImage(isolated.data,isolated.width,isolated.height,3)),recognitionPhoto:{image:await jpegData(new RawImage(raw.data,raw.width,raw.height,3))},cropBounds:{x:b.left/image.width,y:b.top/image.height,width:b.width/image.width,height:b.height/image.height},colorEstimate:(()=>{const palette=PhotoColor.maskedPalette(sample.data,sample.width,sample.height);return palette&&!palette.needsConfirmation?{color:palette.primary,source:'photo-estimate',support:palette.colors[0]?.share||0,secondaryColor:palette.secondary}:null;})(),label:group.label,hint:{categories:group.categories,types:group.types||[],clipped:group.clipped,confidence:group.confidence}};
+   // Index/recognize using the fixed, narrow ORIGINAL 5% RGB crop only.
+   // When a mask is structurally unreliable, DISPLAY a wider 12% source
+   // crop so missing hems/soles just beyond coarse model bounds survive.
+   // The enlarged display crop is NEVER sent to recognition or color inference.
+   const raw=cropClothingPhotoPixels(image,map,group),maskReview=garmentDisplayMaskReliability(map,group),
+    display=group.reviewOnlyReason?{...maskReview,useOriginalCrop:true,reason:group.reviewOnlyReason}:maskReview,
+    isolated=display.useOriginalCrop?cropClothingPhotoPixels(image,map,group,{marginFraction:.12}):isolateClothingPixels(image,map,group),
+    sample=display.useOriginalCrop?null:clothingColorSample(image,map,group),
+    core=display.useOriginalCrop?null:clothingInteriorColorSample(image,map,group),b=raw.bounds;
+   const piece={image:await jpegData(new RawImage(isolated.data,isolated.width,isolated.height,3)),recognitionPhoto:{image:await jpegData(new RawImage(raw.data,raw.width,raw.height,3))},cropBounds:{x:b.left/image.width,y:b.top/image.height,width:b.width/image.width,height:b.height/image.height},colorEstimate:(()=>{if(display.useOriginalCrop)return null;const full=PhotoColor.maskedPalette(sample.data,sample.width,sample.height);
+    const interior=core&&PhotoColor.maskedPalette(core.data,core.width,core.height);
+    // Both spatial views must agree; a boundary-only color isn't reliable.
+    return PhotoColor.confirmedGarmentPalette(full,interior);
+   })(),label:group.label,hint:{categories:group.categories,types:group.types||[],clipped:group.clipped,confidence:group.confidence,displayFallback:display.useOriginalCrop?'original-crop':null,displayFallbackReason:display.reason}};
    self.postMessage({type:'piece',id:request.id,piece});count++;
   }
   self.postMessage({type:'done',id:request.id,count});

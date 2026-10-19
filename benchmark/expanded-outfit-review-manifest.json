@@ -1,0 +1,59 @@
+[
+  {
+    "id": "commons-0001",
+    "expected": [
+      "Tops"
+    ],
+    "scenario": "oversized-t-shirt"
+  },
+  {
+    "id": "commons-0003",
+    "expected": [
+      "Tops"
+    ],
+    "scenario": "long-sleeve-shirt"
+  },
+  {
+    "id": "commons-0041",
+    "expected": [
+      "Skirt"
+    ],
+    "scenario": "skirt-display"
+  },
+  {
+    "id": "commons-0043",
+    "expected": [
+      "Skirt"
+    ],
+    "scenario": "patterned-skirt"
+  },
+  {
+    "id": "commons-0060",
+    "expected": [
+      "Outerwear"
+    ],
+    "scenario": "jacket-display"
+  },
+  {
+    "id": "commons-0062",
+    "expected": [
+      "Outerwear"
+    ],
+    "scenario": "second-jacket"
+  },
+  {
+    "id": "commons-0059",
+    "expected": [
+      "Outerwear",
+      "Dresses"
+    ],
+    "scenario": "dress-and-jacket-display"
+  },
+  {
+    "id": "validation-0008",
+    "expected": [
+      "Tops"
+    ],
+    "scenario": "worn-upper-garment-with-headwear"
+  }
+]

@@ -1,0 +1,71 @@
+name: Experimental BiRefNet independent photo holdout
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'scripts/run-object-cutout-holdout.mjs'
+      - 'benchmark/object-cutout-holdout.mjs'
+      - 'benchmark/footwear-threshold-edge-review.mjs'
+      - 'benchmark/approved-footwear-threshold-comparison.mjs'
+      - 'tests/approved-footwear-threshold-comparison.test.mjs'
+      - 'scripts/audit-approved-footwear-thresholds.mjs'
+      - 'tests/footwear-threshold-edge-review.test.mjs'
+      - 'tests/object-cutout-holdout.test.mjs'
+      - 'benchmark/manifest-fresh-11.json'
+      - 'benchmark/OBJECT-CUTOUT-HOLDOUT-PLAN.md'
+      - '.github/workflows/object-cutout-holdout.yml'
+permissions:
+  contents: read
+jobs:
+  independent-holdout:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned experimental model dependencies
+        run: npm install --no-save --no-package-lock @huggingface/transformers@3.8.1 sharp@0.34.4
+      - name: Validate review-only holdout selection and report guards
+        run: |
+          node --check scripts/run-object-cutout-holdout.mjs
+          node --test tests/object-cutout-holdout.test.mjs tests/object-cutout-mask.test.mjs tests/footwear-threshold-edge-review.test.mjs tests/approved-footwear-threshold-comparison.test.mjs
+      - name: Download and checksum-verify seven independent licensed photos
+        run: node scripts/download-reviewed-photos.mjs benchmark/manifest-fresh-11.json benchmark/photos validation-0001,validation-0003,validation-0010,validation-0017,validation-0019,validation-0023,validation-0024
+      - name: Produce original-versus-cutout review images
+        run: node scripts/run-object-cutout-holdout.mjs benchmark/object-cutout-holdout-review
+      - name: Record independent shoe-outline approval gate
+        run: node scripts/audit-approved-footwear-thresholds.mjs benchmark/object-cutout-holdout-review
+      - name: Confirm result is complete but not falsely approved
+        run: |
+          node -e "const s=require('./benchmark/object-cutout-holdout-review/summary.json');if(s.status!=='complete'||s.cases.length!==7||s.pixelAccuracyMeasured!==false||s.phonePerformanceMeasured!==false||s.noProductionChanges!==true||s.cases.some(c=>c.independentlyApproved!==false))throw Error('Holdout validation failed')"
+          node - <<'NODE'
+          const s=require('./benchmark/object-cutout-holdout-review/summary.json');
+          const footwear=s.cases.filter(x=>x.expectedCategory==='Shoes');
+          if(footwear.length!==3||footwear.some(c=>!c.footwearThresholdReview||
+            c.footwearThresholdReview.pixelAccuracyMeasured!==false||
+            c.footwearThresholdReview.verifiedSoleOrToeRetention!==false||
+            c.footwearThresholdReview.productionAuthorized!==false))throw Error('Footwear review evidence cannot promote model');
+          NODE
+          node - <<'NODE'
+          const r=require('./benchmark/object-cutout-holdout-review/three-sneaker-reference-gate.json');
+          if(r.sourcePhotos!==3||r.approvedOutlines!==0||r.aggregateAccuracy!==null||
+             r.specificToeSoleAccuracyMeasured!==false||r.thresholdAutomaticallyChosen!==false||
+             r.productionAuthorized!==false)throw Error('Unapproved shoe reference promotion');
+          NODE
+          for id in validation-0019 validation-0023 validation-0024; do
+            test -s "benchmark/object-cutout-holdout-review/$id-footwear-threshold-review.png"
+            test -s "benchmark/object-cutout-holdout-review/$id.strict-footwear-candidate.json"
+          done
+          for id in validation-0001 validation-0003 validation-0010 validation-0017 validation-0019 validation-0023 validation-0024; do
+            test -s "benchmark/object-cutout-holdout-review/$id-holdout-review.png"
+            test -s "benchmark/object-cutout-holdout-review/$id-candidate-alpha.png"
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: experimental-birefnet-independent-seven-photo-holdout
+          path: benchmark/object-cutout-holdout-review/
+          retention-days: 14

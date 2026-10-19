@@ -1,10 +1,14 @@
 name: Private closet backup and multi-device recovery
 on:
   push:
-    branches: [main, 'cloud/private-backup']
+    branches: [main, 'cloud/private-backup', 'fix/photo-clarity-high-quality-downsampling-20261016']
     paths:
       - 'public/**'
       - 'tests/cloud-backup.test.cjs'
+      - 'tests/account-deletion-coordinator.test.mjs'
+      - 'supabase/functions/account-delete/**'
+      - 'tests/auth.test.cjs'
+      - 'scripts/test-auth-pilot-mobile.mjs'
       - 'scripts/run-cloud-backup-flow.mjs'
       - '.github/workflows/cloud-backup-flow.yml'
       - 'scripts/download-reviewed-photos.mjs'
@@ -36,9 +40,13 @@ jobs:
           node scripts/build.mjs
           node --test tests/*.test.cjs tests/*.test.mjs
           node scripts/run-cloud-backup-flow.mjs benchmark/cloud-backup
+      - name: Verify mobile email-login recovery without sending real email
+        run: node scripts/test-auth-pilot-mobile.mjs benchmark/auth-pilot
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: private-cloud-backup-results
-          path: benchmark/cloud-backup/
+          path: |
+            benchmark/cloud-backup/
+            benchmark/auth-pilot/
           retention-days: 14

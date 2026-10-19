@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "status": "experimental-visual-review",
+  "modelId": "onnx-community/BiRefNet_lite-ONNX",
+  "workflowRunId": 39051075491,
+  "artifactId": 12107463531,
+  "evidence": "Seven photo source-aligned side-by-side PNGs from the completed CI run; observations are visual only.",
+  "reviewerNote": "Visual assessment is not an independent pixel mask reference. No garment accuracy percentage is claimed.",
+  "allCasesProcessed": true,
+  "independentlyApprovedMasks": false,
+  "realPhonePerformanceMeasured": false,
+  "productionAuthorized": false,
+  "cases": [
+    {
+      "id": "validation-0001",
+      "scene": "worn dress with person",
+      "observation": "Background largely removed but person remains with dress",
+      "personOrMannequinRetained": true,
+      "approvedGarmentOnly": false
+    },
+    {
+      "id": "validation-0003",
+      "scene": "museum dress on display",
+      "observation": "Mannequin/head remains with dress",
+      "personOrMannequinRetained": true,
+      "approvedGarmentOnly": false
+    },
+    {
+      "id": "validation-0010",
+      "scene": "worn layered dress in outdoor scene",
+      "observation": "Foreground person, legs and face retained instead of dress alone",
+      "personOrMannequinRetained": true,
+      "approvedGarmentOnly": false
+    },
+    {
+      "id": "validation-0017",
+      "scene": "hanging grey jeans",
+      "observation": "Jeans visually separated from most of scene; seam, openings and silhouette not independently checked",
+      "personOrMannequinRetained": false,
+      "approvedGarmentOnly": false
+    },
+    {
+      "id": "validation-0019",
+      "scene": "studio low sneaker pair",
+      "observation": "Most backdrop/shadow separated; laces and soles not independently checked",
+      "personOrMannequinRetained": false,
+      "approvedGarmentOnly": false
+    },
+    {
+      "id": "validation-0023",
+      "scene": "studio high-top sneaker pair",
+      "observation": "Product cutout promising; soles/laces/background attachments need independent inspection",
+      "personOrMannequinRetained": false,
+      "approvedGarmentOnly": false
+    },
+    {
+      "id": "validation-0024",
+      "scene": "studio metallic sneaker pair",
+      "observation": "Product cutout promising; detailed boundaries not independently inspected",
+      "personOrMannequinRetained": false,
+      "approvedGarmentOnly": false
+    }
+  ]
+}

@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Closet Current — independent outfit inventory</title>
+<style>
+body{font:16px system-ui,sans-serif;max-width:860px;margin:auto;padding:20px;background:#faf9fc;color:#211a2b;line-height:1.45}
+h1{font-size:1.6rem} h2{font-size:1.15rem} label{display:block;margin:14px 0}
+input,button{font:inherit;padding:10px;max-width:100%}button{min-height:48px;background:#342052;color:white;border:0;border-radius:8px}
+button:disabled{opacity:.45}fieldset{border:1px solid #a7a0b6;border-radius:10px;padding:12px}
+#status{white-space:pre-wrap;min-height:3em}#original{max-width:100%;max-height:470px;object-fit:contain}
+#overlay{max-width:100%;height:auto;display:block;background:#eee}#outlines{padding-left:1.5rem}
+#outlines li{margin:6px 0}section{margin:18px 0}small{color:#595363}
+</style>
+<h1>Full-outfit independent inventory</h1>
+<p><strong>Internal benchmark only.</strong> This does not recognize clothes or approve AI output. It assembles already independently reviewed garment outlines, including garments the model missed. Never upload customer photographs into a public service.</p>
+<section>
+<label>Exact original source JPEG <input id="photo" type="file" accept=".jpg,.jpeg,image/jpeg"></label>
+<label>Independently approved individual garment masks (JSON, multiple) <input id="masks" type="file" multiple accept=".json,application/json"></label>
+<p id="status" role="status">Choose the unchanged original source photo and the approved outlines.</p>
+<img id="original" alt="Original source photograph for human review" hidden>
+<canvas id="overlay" width="1" height="1" aria-label="Original photograph with current reviewed outline" hidden></canvas>
+<label>Inspect individual outline <select id="outlineSelect"><option value="">Select reviewed garment</option></select></label>
+<ol id="outlines"></ol>
+</section>
+<fieldset><legend>Independent completeness attestation</legend>
+<p>Inspect the entire original image. Count every separately visible article, including layered clothes, shoes, tights, and garments with <strong>no AI prediction</strong>. The source description and model proposals are not ground truth.</p>
+<label>Number of independently identified visible items <input id="count" type="number" min="1" max="12" step="1" inputmode="numeric" placeholder="Count all garments in the photo"></label>
+<label><input id="firstCheck" type="checkbox"> First reviewer independently inspected the complete original scene and confirms every visible garment has an accurate approved outline.</label>
+<label><input id="secondCheck" type="checkbox"> The different second reviewer independently inspected the full original and confirms the garment count and all outlined identities; no missing garments.</label>
+</fieldset>
+<button id="export" disabled>Export full-photo inventory JSON</button>
+<p><small>Names are taken from the approved masks; this tool does not fabricate reviewer attestations or create new approvals. Export is a human attestation, not proof of review quality. The source photo and outlines remain local. No network calls.</small></p>
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+const state={photo:null,masks:[],image:null,url:null};
+const base=name=>/^(commons|validation)-[0-9]{4}\.jpg$/.test(name||'')?name.slice(0,-4):null;
+const bytesToHex=bytes=>[...new Uint8Array(bytes)].map(b=>b.toString(16).padStart(2,'0')).join('');
+const categoryNames=new Set(['Tops','Bottoms','Dresses','Outerwear','Shoes','Hosiery','Accessories']);
+function fail(message){$('status').textContent=message;return false;}
+function getStatus(){
+ if(!state.photo||!state.image)return 'Missing verified source photograph';
+ if(!state.masks.length)return 'No approved outlines selected';
+ if(!Number.isInteger(Number($('count').value))||Number($('count').value)!==state.masks.length||
+  !/^[1-9][0-9]*$/.test($('count').value)||state.masks.length>12)
+  return 'Independent garment count must match all approved outlines (1–12)';
+ if(!$('firstCheck').checked||!$('secondCheck').checked)return 'Both independent full-scene confirmations required';
+ return null;
+}
+function refresh(){
+ const error=getStatus();
+ $('export').disabled=Boolean(error);
+ if(state.photo)$('status').textContent=error||'Source, two-reviewer masks and complete scene attestation ready for export.';
+}
+function binaryMask(a){
+ if(a?.schemaVersion!==1||a.reviewStatus!=='approved'||!Number.isInteger(a.width)||
+  !Number.isInteger(a.height)||a.width<1||a.height<1||a.width*a.height>12000000||
+  !Array.isArray(a.runs)||a.runs.length>a.width*a.height+1)throw Error('Unapproved or invalid pixel mask');
+ const mask=new Uint8Array(a.width*a.height);let offset=0,bit=0;
+ for(const n of a.runs){if(!Number.isInteger(n)||n<0||offset+n>mask.length)throw Error('Unsafe mask run');if(bit)mask.fill(1,offset,offset+n);offset+=n;bit^=1;}
+ const pixels=mask.reduce((v,x)=>v+x,0);
+ if(offset!==mask.length||!pixels||pixels===mask.length)throw Error('Incomplete or trivial garment mask');
+ return mask;
+}
+function validatedMasks(photo,loaded){
+ const id=base(photo?.name);
+ if(!id||!/^[0-9a-f]{64}$/.test(photo.sha))throw Error('Original source must be canonical JPEG with verified SHA-256');
+ if(loaded.length<1||loaded.length>12)throw Error('Choose 1–12 independently approved garment masks');
+ const ids=new Set(),labels=new Set(),items=[];
+ let reviewer=null,approver=null;
+ const expectedWidth=Math.round(photo.width*Math.min(1,768/Math.max(photo.width,photo.height)));
+ const expectedHeight=Math.round(photo.height*Math.min(1,768/Math.max(photo.width,photo.height)));
+ for(const {filename,annotation:a} of loaded){
+  const expected=id+'-item-'+(a?.physicalTargetId||'').slice(-2);
+  if(!/^(commons|validation)-[0-9]{4}-item-[0-9]{2}$/.test(a?.physicalTargetId||'')||
+   a.physicalTargetId!==expected||ids.has(a.physicalTargetId)||
+   filename!==a.physicalTargetId+'.mask.approved.json')
+   throw Error('Duplicate, mismatched or incorrectly named physical target');
+  if(a.image!==photo.name||a.sourceSha256!==photo.sha||a.seedModel!=null||
+   a.modelProposalId!=null||!categoryNames.has(a.humanCategory)||
+   typeof a.humanTargetLabel!=='string'||!a.humanTargetLabel.trim()||
+   a.humanTargetLabel.trim().length>100||
+   !a.reviewer?.trim()||!a.approvedBy?.trim()||
+   a.targetIndependentlyIdentifiedBy!==a.reviewer||
+   a.reviewer.trim().toLowerCase()===a.approvedBy.trim().toLowerCase()||
+   a.width!==expectedWidth||a.height!==expectedHeight)
+   throw Error('Mask source, independent identity, reviewers or dimensions do not match the original');
+  if(reviewer!==null&&(reviewer!==a.reviewer||approver!==a.approvedBy))
+   throw Error('The same two named reviewers must verify the whole scene');
+  const label=a.humanTargetLabel.trim().toLowerCase();
+  if(labels.has(label))throw Error('Repeated physical target label; distinguish actual items before export');
+  const mask=binaryMask(a);
+  ids.add(a.physicalTargetId);labels.add(label);reviewer=a.reviewer;approver=a.approvedBy;
+  items.push({id:a.physicalTargetId,category:a.humanCategory,label:a.humanTargetLabel,
+   reviewer:a.reviewer,approvedBy:a.approvedBy,mask});
+ }
+ return items.sort((x,y)=>x.id.localeCompare(y.id));
+}
+function clearReview(){
+ state.masks=[];$('outlines').replaceChildren();
+ $('outlineSelect').replaceChildren(new Option('Select reviewed garment',''));
+ $('overlay').hidden=true;$('firstCheck').checked=false;$('secondCheck').checked=false;
+ $('count').value='';$('export').disabled=true;
+}
+function showOverlay(){
+ const key=$('outlineSelect').value,item=state.masks.find(x=>x.id===key);
+ if(!item||!state.image){$('overlay').hidden=true;return;}
+ const canvas=$('overlay'),ctx=canvas.getContext('2d');
+ const w=state.photo.reviewWidth,h=state.photo.reviewHeight;
+ canvas.width=w;canvas.height=h;ctx.drawImage(state.image,0,0,w,h);
+ const data=ctx.getImageData(0,0,w,h);
+ for(let i=0;i<item.mask.length;i++)if(item.mask[i]){
+  data.data[4*i]=Math.round(.55*data.data[4*i]+.45*235);
+  data.data[4*i+1]=Math.round(.55*data.data[4*i+1]+.45*48);
+  data.data[4*i+2]=Math.round(.55*data.data[4*i+2]+.45*118);
+ }
+ ctx.putImageData(data,0,0);canvas.hidden=false;
+}
+$('outlineSelect').onchange=showOverlay;
+$('photo').onchange=async()=>{
+ clearReview();state.photo=null;state.image=null;$('original').hidden=true;
+ if(state.url){URL.revokeObjectURL(state.url);state.url=null;}
+ $('original').removeAttribute('src');
+ const file=$('photo').files?.[0];
+ if(!file||!base(file.name))return fail('Choose canonical source JPEG, e.g. validation-0031.jpg (not .original.jpg).');
+ if(file.size>16000000)return fail('Photo exceeds 16 MB limit');
+ try{
+  const buffer=await file.arrayBuffer(),view=new Uint8Array(buffer);
+  if(view.length<4||view[0]!==255||view[1]!==216||
+   view[view.length-2]!==255||view[view.length-1]!==217)
+   throw Error('Original source file must contain actual JPEG bytes');
+  const img=new Image();const url=URL.createObjectURL(file);
+  try{
+   img.src=url;await img.decode();
+   const sha=bytesToHex(await crypto.subtle.digest('SHA-256',buffer));
+   const scale=Math.min(1,768/Math.max(img.naturalWidth,img.naturalHeight));
+   state.photo={name:file.name,sha,width:img.naturalWidth,height:img.naturalHeight,
+    reviewWidth:Math.round(img.naturalWidth*scale),reviewHeight:Math.round(img.naturalHeight*scale)};
+   state.image=img;state.url=url;
+   $('original').src=url;$('original').hidden=false;
+   refresh();
+  }catch(e){URL.revokeObjectURL(url);throw e;}
+ }catch(e){state.photo=null;fail('Cannot decode or checksum source photograph: '+e.message);}
+};
+$('masks').onchange=async()=>{
+ clearReview();
+ if(!state.photo)return fail('Load matching exact original source photo first');
+ const files=[...($('masks').files||[])];
+ if(!files.length||files.length>12)return fail('Select 1–12 approved mask JSON files');
+ try{
+  const loaded=await Promise.all(files.map(async file=>{
+   if(file.size>16000000)throw Error('Mask JSON exceeds 16 MB');
+   return {filename:file.name,annotation:JSON.parse(await file.text())};
+  }));
+  state.masks=validatedMasks(state.photo,loaded);
+  for(const item of state.masks){
+   const li=document.createElement('li');li.textContent=item.id+' — '+item.category+': '+item.label;
+   $('outlines').appendChild(li);
+   $('outlineSelect').add(new Option(item.category+' — '+item.label,item.id));
+  }
+  $('outlineSelect').value=state.masks[0].id;showOverlay();refresh();
+ }catch(e){clearReview();fail('Rejected approved outlines: '+e.message);}
+};
+for(const id of ['count','firstCheck','secondCheck'])$(id).oninput=refresh;
+$('export').onclick=()=>{
+ refresh();if($('export').disabled)return;
+ const masks=state.masks;const doc={
+  schemaVersion:1,status:'human-inventory-complete',image:state.photo.name,
+  sourceSha256:state.photo.sha,originalPhotoVerified:true,
+  allVisibleGarmentsAccountedFor:true,
+  reviewedBy:masks[0].reviewer,approvedBy:masks[0].approvedBy,
+  reviewedAt:new Date().toISOString(),
+  targets:masks.map(({id,category,label})=>({id,category,label}))
+ };
+ const blob=new Blob([JSON.stringify(doc,null,2)+'\n'],{type:'application/json'});
+ const url=URL.createObjectURL(blob),a=document.createElement('a');
+ a.href=url;a.download=base(state.photo.name)+'.inventory.json';a.click();
+ setTimeout(()=>URL.revokeObjectURL(url),1000);
+ $('status').textContent='Full-photo inventory exported for OFFLINE review scoring; no predictions or masks approved by this tool.';
+};
+</script></html>
