@@ -1,7 +1,7 @@
 'use strict';
 // Pilot UI: one click starts REAL provider inference. No pasted-garment
 // mockups, hidden paid calls, or automatic selfie uploads.
-let tryOnFigure='female',tryOnBusy=false,tryOnRevision=0,tryOnImage=null,tryOnFingerprint='';
+let tryOnFigure='female',tryOnBusy=false,tryOnRevision=0,tryOnImage=null,tryOnFingerprint=null,tryOnPendingInputs=null;
 let tryOnReady=false,tryOnReadinessPending=true;
 // These are lightweight local previews of the two fixed AI figures, not
 // generated try-on results. They make selecting a model possible offline.
@@ -14,18 +14,33 @@ function updateStandardModelPreview(){
  const caption=$('tryOnModelCaption');
  if(caption)caption.textContent='Standard '+tryOnFigure+' model · preview only. Your selected clothing has not been rendered yet.';
 }
-function tryOnSignature(){
- const ids=currentBoard?.slots||{};
- return tryOnFigure+':'+['top','bottom','layer','layer2','layer3','shoes'].map(k=>{const item=items.find(x=>x.id===ids[k]);return (ids[k]||'')+':'+(item?.image?.length||0)+':'+(item?.image?.slice(-24)||'');}).join('|');
+// Source photos must be checked EXACTLY. Same-length data URIs can share
+// their last 24 characters even when the clothing pixels have changed.
+// A snapshot holds references to existing strings, not copies of giant images;
+// equality compares the complete original selected input without lossy hashes.
+function tryOnInputs(){
+ const selected=currentBoard?.slots||{};
+ return {figure:tryOnFigure,slots:['top','bottom','layer','layer2','layer3','shoes'].map(slot=>{
+  const id=selected[slot]||null,item=items.find(x=>x.id===id);
+  return {slot,id,category:item?.category||null,itemType:item?.itemType||null,image:item?.image||null};
+ })};
+}
+function sameTryOnInputs(a,b){
+ return !!a&&!!b&&a.figure===b.figure&&a.slots.length===b.slots.length&&
+  a.slots.every((x,i)=>{const y=b.slots[i];return x.slot===y.slot&&x.id===y.id&&
+   x.category===y.category&&x.itemType===y.itemType&&x.image===y.image;});
 }
 function resetTryOnPreview(){
- tryOnRevision++;tryOnImage=null;tryOnFingerprint='';
+ tryOnRevision++;tryOnImage=null;tryOnFingerprint=null;tryOnPendingInputs=null;
  const image=$('tryOnImage');if(image){image.hidden=true;image.removeAttribute('src');}
  $('outfitFigure')?.classList.remove('ai-tryon-active');
  $('tryOnStatus').textContent=tryOnReady?'Select your clothes, then tap Generate AI try-on.':'AI try-on preview is being prepared. No paid generation is enabled.';
 }
 function onTryOnBoardChanged(){
- if(tryOnImage&&tryOnFingerprint!==tryOnSignature())resetTryOnPreview();
+ const now=tryOnInputs();
+ if((tryOnImage&&!sameTryOnInputs(tryOnFingerprint,now))||
+    (tryOnBusy&&tryOnPendingInputs&&!sameTryOnInputs(tryOnPendingInputs,now)))
+  resetTryOnPreview();
  $('tryOnGenerate').disabled=tryOnBusy||!tryOnReady||!window.AiTryOnPlan?.plan(currentBoard,items).steps.length;
 }
 function tryOnRequest(token,body){
@@ -81,8 +96,9 @@ async function generateTryOn(){
  if(!tryOnReady){$('tryOnStatus').textContent='AI try-on is not enabled for this account. No generation started.';return;}
  const plan=window.AiTryOnPlan.plan(currentBoard,items);
  if(!plan.steps.length){$('tryOnStatus').textContent='Choose a shirt, dress, or bottoms first.';return;}
- const signature=tryOnSignature(),revision=++tryOnRevision,figure=tryOnFigure;
- const isCurrent=()=>revision===tryOnRevision&&signature===tryOnSignature();
+ const signature=tryOnInputs(),revision=++tryOnRevision,figure=tryOnFigure;
+ const isCurrent=()=>revision===tryOnRevision&&sameTryOnInputs(signature,tryOnInputs());
+ tryOnPendingInputs=signature;
  tryOnBusy=true;$('tryOnGenerate').disabled=true;
  $('tryOnStatus').textContent='Generating a realistic AI try-on…';
  try{
@@ -103,17 +119,25 @@ async function generateTryOn(){
    modelImage=await tryOnOne(token,step.image,step.category,figure,isCurrent);
   }
   if(!isCurrent()||!modelImage)return;
-  tryOnImage=modelImage;tryOnFingerprint=signature;
+  tryOnImage=modelImage;tryOnFingerprint=signature;tryOnPendingInputs=null;
   const image=$('tryOnImage');image.src=modelImage;image.hidden=false;
   $('outfitFigure')?.classList.add('ai-tryon-active');
-  $('tryOnStatus').textContent=plan.steps.length>1?
-   'AI try-on of your '+plan.steps[0].slot+' is ready. Other selected pieces are not rendered yet.':
-   'AI-generated try-on preview. Exact sizing and fabric drape are not guaranteed.';
+  // The first pilot generates ONE garment, not the assembled whole outfit.
+  // A dress + shoes has only one supported plan step, but the shoes were
+  // never rendered; relying on plan.steps.length would falsely imply a
+  // complete-look preview. State every unrendered selected slot explicitly.
+  const rendered=plan.steps[0].slot,
+   unrendered=Object.keys(currentBoard?.slots||{}).filter(slot=>slot!==rendered);
+  const onlyGarment=plan.steps[0].category==='one-pieces'?'dress':rendered;
+  $('tryOnStatus').textContent=unrendered.length?
+   'AI try-on shows only your '+onlyGarment+'. Not rendered: '+unrendered.join(', ')+
+   '. Exact fit, colors and drape are not guaranteed.':
+   'AI-generated '+onlyGarment+' preview. Exact sizing and fabric drape are not guaranteed.';
  }catch(error){
   if(!isCurrent())return;
   $('tryOnStatus').textContent=error instanceof Error?error.message:'Try-on unavailable';
  }finally{
-  tryOnBusy=false;onTryOnBoardChanged();
+  tryOnBusy=false;tryOnPendingInputs=null;onTryOnBoardChanged();
  }
 }
 $('tryOnFigure').onchange=event=>{
