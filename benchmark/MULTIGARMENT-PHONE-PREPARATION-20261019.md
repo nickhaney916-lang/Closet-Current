@@ -80,3 +80,13 @@ captures plus live garment fidelity review. Report separately:
 If a progress number is required, report completed tracks / 4 with equal
 weighting and name the incomplete tracks. This is an acceptance-checklist
 percentage, not a prediction of product completion or photo accuracy.
+
+## Provider contract reference
+
+Reviewed October 19, 2026: the official [v1.6 reference](https://docs.fashn.ai/api-reference/tryon-v1-6)
+documents one garment per request, a base64 model-image input and prefixed data-URI
+output with `return_base64`. The [status quickstart](https://docs.fashn.ai/guides/tryon-python-quickstart-guide)
+uses a stable prediction ID through processing replies. These describe the
+request contract; they do not establish preservation of a first garment after
+a second inference. The [retention reference](https://docs.fashn.ai/api-overview/data-retention-privacy)
+must be reviewed for the final consent text before enabling the service.

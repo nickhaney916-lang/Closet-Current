@@ -1,5 +1,53 @@
 # Closet Current master development checkpoint
 
+## Parallel multi-garment rendering safeguards — October 19, 2026, Pacific
+
+- Isolated draft PR #13 (`work/multigarment-integrity-phone-qa-20261019`)
+  targets draft PR #12, parent `5e9cb665054b022a7ccfeced79ecdcef957b8b1b`.
+  PRs #7/#10/#11/#12 and their branches were not modified. The regular
+  ChatGPT conversation remains the owner's main coordination thread.
+- Published code commits: `43ecc9aede6cdbb856fbca9ce053340d0ed6c299`
+  and `f033a0a65d0a7c18757b0613ae1ff98d6e02e148`.
+  Fixed signed-job token loss after a processing reply, malformed start
+  handling, polling after stale-input changes, and prior successful images
+  lingering during failed regeneration. Input snapshots now include owner
+  identity. Source crops and each stage output must decode before submission,
+  continuation or display. Requests time out without automatic resubmission;
+  an HTTP abort does not cancel an already accepted provider job.
+- Four behavioral regressions fail against the PR #12 parent and pass with
+  the fix. Latest local build/full Node suite: **822 total, 819 passed,
+  0 failed, 3 skipped**. Skips are licensed-photo cases that require the
+  dedicated pilot fixture, not successful image-quality measurements.
+- CI code run `39264519514` at `43ecc9ae` passed full Node suite (816 passed,
+  0 failed, 3 skipped), Deno check, mocked single-garment flow, both multi-poll
+  Pixel 7 Chromium/iPhone 13 WebKit emulations, and owned-only Style this
+  mobile save/reload. Both engines reported zero page errors, corrupt
+  intermediate/final images blocked and previous failed previews cleared.
+- Follow-up [code run 39264859926](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39264859926)
+  at `f033a0a6` **passed every step**: 819 Node tests passed, 0 failed,
+  3 skipped; Deno check; single-garment mock; Pixel Chromium/iPhone WebKit
+  emulation, including corrupt SOURCE rejection before any start; owned-only
+  Style this mobile save/reload. Both engines reported zero page errors.
+  Validation-track completion is **2/4 (50%)** using equal weighting for
+  software regression, browser emulation, live AI fidelity and actual hardware.
+  This is not an overall product-completion or image-accuracy percentage.
+  Real provider calls: 0. Physical Android/iPhone runs: 0/2.
+- Added `benchmark/MULTIGARMENT-PHONE-PREPARATION-20261019.md` and
+  `benchmark/MULTIGARMENT-PHONE-EVIDENCE-TEMPLATE.json` with null/unexecuted
+  hardware fields, billing-disabled checks, separate live fidelity phase,
+  private evidence requirements and SHA-256 identity comparisons. No
+  protected staging deployment, test account or physical phone was provisioned.
+- Release blockers remain: approved live provider inference preserving BOTH
+  garments, physical Android AND iPhone reports, protected staging, licensed
+  model assets, disclosure/retention approval, durable per-user quotas and
+  atomic start/continuation idempotency plus provider spend cap. A signed
+  stage-one token alone does NOT prevent duplicate continuation submission.
+  `CHAINED_PAID_INFERENCE_APPROVED=false` remains unchanged.
+- No live inference, billed generations, customer-photo upload, merge,
+  production deployment or Drive Duel change. Original-photo storage,
+  original-photo-first recognition and wardrobe indexing were untouched.
+
+
 ## Original-source protection for restored outfit records — October 18, 2026, Pacific
 
 - Continued from `422999cc1656910e76cceca55f315a4a74028da5` on draft PR #7.
