@@ -2,8 +2,11 @@ const test=require('node:test'),assert=require('node:assert/strict'),fs=require(
 const source=fs.readFileSync('public/outfit-capture.js','utf8');
 function setup({workerFails=false,saveFails=false}={}){
  const nodes=new Map(),timers=new Map();let now=0,next=0;const el=id=>{if(!nodes.has(id))nodes.set(id,{hidden:false,value:'',disabled:false});return nodes.get(id);};
- const c={$:el,batch:[],items:[],localPending:new Set(),busy:false,session:0,recognitionAssetVersion:'release',categories:['Uncategorized','Tops','Bottoms','Dresses','Outerwear','Shoes','Accessories'],crypto:{randomUUID:()=> 'id-'+(++next)},Date:{now:()=>now},setTimeout(fn,delay){const id=++next;timers.set(id,{fn,delay});return id;},clearTimeout:id=>timers.delete(id),stopCamera(){c.stopped=true;},controls:disabled=>c.controlsDisabled=disabled,segmentationAllows:(item,choice)=>!item.segmentHint?.clipped&&(!item.segmentHint||item.segmentHint.categories.includes(choice.category)),candidate(image,options){if([...c.batch,...c.items].some(x=>x.image===image))return false;c.batch.push({id:'piece-'+(++next),image,...options,requiresOwnershipConfirmation:false});return true;},saveIndexed:async item=>{if(saveFails)throw Error('storage failed');c.items.push({...item});c.batch=c.batch.filter(x=>x.id!==item.id);return true;},switchView:view=>{c.view=view;},structuredClone,closetReady:Promise.resolve(),outfitBoardReady:Promise.resolve(),photoToJPEG:async()=> 'data:image/jpeg;base64,AAAA',Worker:class{constructor(){if(workerFails)throw Error('unsupported');c.worker=this;}postMessage(data){this.request=data;}terminate(){this.stopped=true;}},render(){c.renderOutfitCapture();}};
- vm.createContext(c);vm.runInContext(source,c);return {c,el,timers,advance:n=>now+=n,emit:data=>c.worker.onmessage({data:{id:c.worker.request.id,...data}})};
+ const c={$:el,batch:[],items:[],localPending:new Set(),busy:false,session:0,recognitionAssetVersion:'release',categories:['Uncategorized','Tops','Bottoms','Dresses','Outerwear','Shoes','Accessories'],crypto:{randomUUID:()=> 'id-'+(++next)},Date:{now:()=>now},setTimeout(fn,delay){const id=++next;timers.set(id,{fn,delay});return id;},clearTimeout:id=>timers.delete(id),stopCamera(){c.stopped=true;},controls:disabled=>c.controlsDisabled=disabled,segmentationAllows:(item,choice)=>!item.segmentHint?.clipped&&(!item.segmentHint||item.segmentHint.categories.includes(choice.category)),candidate(image,options){if([...c.batch,...c.items].some(x=>c.exactlyRepeatedCapturedItem(x,{image,...options})))return false;c.batch.push({id:'piece-'+(++next),image,...options,requiresOwnershipConfirmation:false});return true;},saveIndexed:async item=>{if(saveFails)throw Error('storage failed');c.items.push({...item});c.batch=c.batch.filter(x=>x.id!==item.id);return true;},switchView:view=>{c.view=view;},structuredClone,closetReady:Promise.resolve(),outfitBoardReady:Promise.resolve(),photoToJPEG:async()=> 'data:image/jpeg;base64,AAAA',Worker:class{constructor(){if(workerFails)throw Error('unsupported');c.worker=this;}postMessage(data){this.request=data;}terminate(){this.stopped=true;}},render(){c.renderOutfitCapture();}};
+ vm.createContext(c);
+ const app=fs.readFileSync('public/app.js','utf8');
+ vm.runInContext(app.slice(app.indexOf('function exactlyRepeatedCapturedItem('),app.indexOf('function candidate(')),c);
+ vm.runInContext(source,c);return {c,el,timers,advance:n=>now+=n,emit:data=>c.worker.onmessage({data:{id:c.worker.request.id,...data}})};
 }
 test('automatically cropped pieces enter indexing separately with original photos retained',async()=>{
  const h=setup();h.c.startOutfitSplit('data:image/jpeg;base64,AAAA');const hint={categories:['Tops'],types:[],clipped:false};h.emit({type:'piece',piece:{image:'data:image/jpeg;base64,AABB',hint,recognitionPhoto:{image:'data:image/jpeg;base64,ABCD'},colorEstimate:{color:'Blue'}}});h.emit({type:'piece',piece:{image:'data:image/jpeg;base64,AACC',recognitionPhoto:{image:'data:image/jpeg;base64,ACCD'},hint}});h.emit({type:'done',count:2});assert.equal(h.c.batch.length,2);assert.equal(h.c.busy,false);assert.equal(h.c.worker.stopped,true);assert.ok(h.c.batch.every(x=>!x.requiresOwnershipConfirmation));assert.equal(h.c.batch[0].originalPhoto.image,'data:image/jpeg;base64,AAAA');assert.equal(h.c.batch[0].recognitionPhoto.image,'data:image/jpeg;base64,ABCD');assert.match(h.el('outfitSaveStatus').textContent,/may save automatically/);
@@ -251,4 +254,39 @@ test('legacy outfit with unverifiable original remains saved but cannot be silen
  assert.notEqual(vm.runInContext('outfitActiveId',h.c),'legacy');
  assert.equal(h.c.items.length,1);
  h.emit({type:'done',count:0});
+});
+
+test('actual outfit capture retains two source regions with identical cleaned thumbnails',()=>{
+ const h=setup(),source='data:image/jpeg;base64,SAMEORIGINAL';
+ h.c.startOutfitSplit(source,'capture');
+ const hint={categories:['Tops','Outerwear'],types:[],clipped:false};
+ const add=(x,role)=>h.emit({type:'piece',piece:{
+  image:'data:image/jpeg;base64,IDENTICALDISPLAY',
+  recognitionPhoto:{image:'data:image/jpeg;base64,UNALTEREDRGB'+x},
+  cropBounds:{x,y:.15,width:.25,height:.4},
+  label:'Upper garment',hint:{...hint,layerRole:role}
+ }});
+ add(.05,'underlayer');add(.42,'outerlayer');
+ h.emit({type:'done',count:2});
+ assert.equal(h.c.batch.length,2,'same cleaned bytes do not erase separate original source regions');
+ assert.equal(h.c.batch[0].originalPhoto.image,source);
+ assert.equal(h.c.batch[1].originalPhoto.image,source);
+ assert.notEqual(h.c.batch[0].cropBounds.x,h.c.batch[1].cropBounds.x);
+ assert.match(h.el('outfitSplitStatus').textContent,/2 new clothing regions/);
+});
+test('overlapping layers with identical preview JPEGs remain separately reviewable by semantic role',()=>{
+ const h=setup(),source='data:image/jpeg;base64,ORIGINALSAME';
+ h.c.startOutfitSplit(source,'source-1');
+ const box={x:.1,y:.2,width:.5,height:.5};
+ const add=(role)=>h.emit({type:'piece',piece:{
+  image:'data:image/jpeg;base64,ONEPREVIEW',
+  recognitionPhoto:{image:'data:image/jpeg;base64,SOURCERGB'+role},
+  label:'Upper garment',hint:{categories:['Tops','Outerwear'],types:[],clipped:false,layerRole:role},
+  cropBounds:box
+ }});
+ add('underlayer');add('outerlayer');add('underlayer');
+ h.emit({type:'done',count:3});
+ assert.equal(h.c.batch.length,2,'underlayer and jacket stay separate but exact repeat is suppressed');
+ assert.equal(h.c.batch[0].segmentHint.layerRole,'underlayer');
+ assert.equal(h.c.batch[1].segmentHint.layerRole,'outerlayer');
 });
