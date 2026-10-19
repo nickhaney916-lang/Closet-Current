@@ -4,6 +4,8 @@ import bpy,json,hashlib,sys,math
 from pathlib import Path
 from mathutils import Vector
 from bpy_extras.object_utils import world_to_camera_view
+# Blender factory-startup does not always include the script directory.
+sys.path.insert(0,str(Path(__file__).resolve().parent))
 from figure_fabric_boundaries import flatten_lower_hem
 ROOT=Path(__file__).resolve().parents[1]
 args=sys.argv[sys.argv.index('--')+1:];source=Path(args[0]).resolve();output=Path(args[1]).resolve();quick='--quick'in args
