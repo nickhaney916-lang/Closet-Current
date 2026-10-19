@@ -53,7 +53,7 @@ function make(item){
  }
  const btn=find(body,n=>n.tag==='button'&&n.textContent==='Fill missing details from photo');
  assert.ok(btn,'Actual editor action is available');
- return {context,checked,classified,btn,item,original};
+ return {context,checked,classified,btn,item,original,body};
 }
 async function flush(){await new Promise(setImmediate);}
 test('outfit color preview and Fill button use unmasked original RGB crop, not cleaned display or generated AI',async()=>{
@@ -73,6 +73,28 @@ test('outfit color preview and Fill button use unmasked original RGB crop, not c
  assert.equal(h.item.recognitionPhoto.image,h.original.recognitionPhoto.image);
  assert.equal(h.item.originalPhoto.image,h.original.originalPhoto.image);
  assert.equal(h.item.normalizedPreview.image,h.original.normalizedPreview.image);
+});
+
+test('the full original outfit stays one tap away within the existing garment editor',async()=>{
+ const full='data:image/jpeg;base64,FULLSOURCEOUTFIT';
+ const crop='data:image/jpeg;base64,RAWGARMENTPIXELS';
+ const h=make({id:'jacket',outfitSourceId:'one-scene',
+  image:'AI-cleaned-display-preview',recognitionPhoto:{image:crop},
+  originalPhoto:{image:full},normalizedPreview:{image:'generated try-on'},
+  category:'Tops',itemType:'Unknown',color:'',seasons:[]});
+ const found=[];
+ const visit=n=>{found.push(n);for(const child of n.children||[])visit(child);};
+ visit(h.body);
+ const original=found.find(x=>x.className==='original-outfit-context');
+ assert.ok(original,'original source photograph is available without a new screen');
+ assert.equal(original.open,undefined,'original context starts collapsed');
+ assert.ok(original.children.some(x=>x.textContent==='View original outfit'));
+ assert.ok(original.children.some(x=>x.tag==='img'&&x.src===full));
+ assert.ok(found.some(x=>x.tag==='img'&&x.src==='AI-cleaned-display-preview'));
+ await h.btn.onclick();
+ assert.equal(h.classified[0].image,crop,
+  'the original full outfit is context only; the original unmasked region remains classification input');
+ assert.equal(h.item.originalPhoto.image,full);
 });
 test('single-garment source remains the original captured photo',async()=>{
  const h=make({id:'single',image:'uncropped-original-camera-rgb',
