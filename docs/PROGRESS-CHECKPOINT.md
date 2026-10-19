@@ -1,6 +1,47 @@
 # Closet Current master development checkpoint
 
 
+## Local actual-Supabase Storage deletion validation — October 18, 2026 (Pacific)
+
+- **Partially completed, not verified end-to-end.** Existing connected
+  hosted projects are Closet Current and Drive Duel only; a disposable
+  hosted project was NOT created, to avoid touching production or incurring
+  a possible new subscription cost.
+- Added `scripts/test-local-supabase-storage-deletion.mjs` and
+  `.github/workflows/account-deletion-storage-local.yml` at
+  `6f050c9f73c042ec027f742c8179f35dd451fceb`.
+  The workflow pins Supabase CLI 2.121.0, initializes a local Docker
+  Supabase Auth/Storage/PostgREST stack in an ephemeral GitHub runner,
+  applies existing `supabase/cloud-backup.sql` and the
+  **undeployed** deletion-write-barrier DRAFT SQL only to that local
+  instance, and intends to test disposable users, private photo uploads,
+  cross-account isolation, late-write denial, cleanup, and Auth deletion.
+- [First local Supabase integration run 39183183500](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39183183500)
+  **failed**. Local Supabase stack initialization and both SQL
+  applications passed, and the test progressed through local
+  user registration/login and initial private uploads. It failed
+  at the cross-account Storage deletion assertion because the actual
+  Storage API returned **HTTP 200 with an empty array**, while the
+  original test expected HTTP 4xx. This is an observed
+  **RLS-filtered no-op** response shape, not evidence that a foreign
+  photo was removed; the test did not reach its independent
+  post-request object-existence check. Real deletion compatibility
+  remains unproven until this assertion is corrected, rerun and the
+  entire suite passes.
+- Two attempts to update the new GitHub test assertion were blocked by
+  the connected GitHub tool's safety checks; no bypass was attempted.
+  **The local-storage-auth-integration check is red**, so this priority
+  must remain in progress. A correct follow-up test should recognize
+  either an HTTP 4xx or an HTTP 200 empty result, but **in both cases
+  require an independent owner-scoped Storage listing showing that the
+  photo still exists**. It must then validate the lock, safe cleanup,
+  backup deletion, Auth deletion and tombstone retention. Do not rely
+  on API HTTP status alone to conclude deletion or account isolation.
+- No live Supabase schema modifications, hosted user deletions, paid
+  services, production merges/deployments or Drive Duel changes.
+  Account-deletion HTTP entrypoint remains permanently disabled (503).
+
+
 ## Staged Supabase deletion server adapters + restricted RPC — October 18, 2026 (Pacific)
 
 - **Next development priority implemented and verified** on the draft
