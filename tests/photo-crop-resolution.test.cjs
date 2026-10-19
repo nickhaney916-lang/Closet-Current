@@ -40,7 +40,11 @@ test('production crop export explicitly requests high quality sampling',()=>{
 test('manual crop mask cannot become a category or primary color recognition source',()=>{
  const code=fs.readFileSync('public/photo-crop-editor.js','utf8');
  assert.match(code,/choice=await analyze\(exportPhoto\(false\)\)/);
- assert.match(code,/if\(mask\)\{photo\.recognitionPhoto=\{image:exportPhoto\(false\)\}/);
+ assert.match(code,/const originalScene=item\.outfitSourceId\?item\.originalPhoto\?\.image:null/);
+ assert.match(code,/if\(item\.outfitSourceId&&!originalScene\)throw Error\('Original outfit photo unavailable'\)/);
+ assert.match(code,/const rawCrop=exportPhoto\(false\)/);
+ assert.match(code,/const photo=\{image:mask\?exportPhoto\(\):rawCrop,originalPhoto:\{image:source\},cropBounds:crop\}/);
+ assert.match(code,/if\(item\.outfitSourceId\|\|mask\)photo\.recognitionPhoto=\{image:rawCrop\}/);
  assert.match(code,/if\(mask&&useMask\)/);
  const app=fs.readFileSync('public/app.js','utf8');
  assert.match(app,/if\(!photo\.recognitionPhoto\)delete value\.recognitionPhoto/);

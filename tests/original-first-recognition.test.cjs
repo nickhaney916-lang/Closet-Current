@@ -53,26 +53,48 @@ function make(item){
  }
  const btn=find(body,n=>n.tag==='button'&&n.textContent==='Fill missing details from photo');
  assert.ok(btn,'Actual editor action is available');
- return {context,checked,classified,btn,item,original};
+ return {context,checked,classified,btn,item,original,body};
 }
 async function flush(){await new Promise(setImmediate);}
 test('outfit color preview and Fill button use unmasked original RGB crop, not cleaned display or generated AI',async()=>{
  const h=make({id:'outfit',outfitSourceId:'captured-outfit',image:'display-mask-white-matte',
-  recognitionPhoto:{image:'original-rgb-crop-before-matting'},
+  recognitionPhoto:{image:'data:image/jpeg;base64,AAABBBCCCDDDEEEFFFGGG'},
   originalPhoto:{image:'original-full-outfit'},
   normalizedPreview:{image:'AI-filled-prettified-image'},
   category:'Tops',itemType:'Unknown',color:'',seasons:[]});
  await flush(); // startup check must not infer garment color from room background
- assert.deepEqual(h.checked,['original-rgb-crop-before-matting']);
+ assert.deepEqual(h.checked,['data:image/jpeg;base64,AAABBBCCCDDDEEEFFFGGG']);
  assert.equal(h.item.color,'');
  await h.btn.onclick();
- assert.deepEqual(h.checked,['original-rgb-crop-before-matting','original-rgb-crop-before-matting']);
- assert.deepEqual(h.classified.map(x=>x.image),['original-rgb-crop-before-matting']);
+ assert.deepEqual(h.checked,['data:image/jpeg;base64,AAABBBCCCDDDEEEFFFGGG','data:image/jpeg;base64,AAABBBCCCDDDEEEFFFGGG']);
+ assert.deepEqual(h.classified.map(x=>x.image),['data:image/jpeg;base64,AAABBBCCCDDDEEEFFFGGG']);
  assert.equal(h.item.color,'Blue');assert.equal(h.item.itemType,'T-shirt');
  assert.equal(h.item.image,h.original.image);
  assert.equal(h.item.recognitionPhoto.image,h.original.recognitionPhoto.image);
  assert.equal(h.item.originalPhoto.image,h.original.originalPhoto.image);
  assert.equal(h.item.normalizedPreview.image,h.original.normalizedPreview.image);
+});
+
+test('the full original outfit stays one tap away within the existing garment editor',async()=>{
+ const full='data:image/jpeg;base64,FULLSOURCEOUTFIT';
+ const crop='data:image/jpeg;base64,RAWGARMENTPIXELS';
+ const h=make({id:'jacket',outfitSourceId:'one-scene',
+  image:'AI-cleaned-display-preview',recognitionPhoto:{image:crop},
+  originalPhoto:{image:full},normalizedPreview:{image:'generated try-on'},
+  category:'Tops',itemType:'Unknown',color:'',seasons:[]});
+ const found=[];
+ const visit=n=>{found.push(n);for(const child of n.children||[])visit(child);};
+ visit(h.body);
+ const original=found.find(x=>x.className==='original-outfit-context');
+ assert.ok(original,'original source photograph is available without a new screen');
+ assert.equal(original.open,undefined,'original context starts collapsed');
+ assert.ok(original.children.some(x=>x.textContent==='View original outfit'));
+ assert.ok(original.children.some(x=>x.tag==='img'&&x.src===full));
+ assert.ok(found.some(x=>x.tag==='img'&&x.src==='AI-cleaned-display-preview'));
+ await h.btn.onclick();
+ assert.equal(h.classified[0].image,crop,
+  'the original full outfit is context only; the original unmasked region remains classification input');
+ assert.equal(h.item.originalPhoto.image,full);
 });
 test('single-garment source remains the original captured photo',async()=>{
  const h=make({id:'single',image:'uncropped-original-camera-rgb',
@@ -87,30 +109,47 @@ test('empty optional raw crop uses only source photo, not optional generated pre
  const c={};vm.createContext(c);vm.runInContext(source.slice(start,source.indexOf('function clothingFields(',start)),c);
  assert.equal(c.recognitionSourcePhoto({image:'original',recognitionPhoto:{image:''},
   normalizedPreview:{image:'generated'}}),'original');
- assert.equal(c.recognitionSourcePhoto({image:'original',recognitionPhoto:{image:'rgb crop'},
-  normalizedPreview:{image:'generated'}}),'rgb crop');
+ assert.equal(c.recognitionSourcePhoto({image:'original',recognitionPhoto:{image:'data:image/jpeg;base64,AAABBBCCCDDDEEEFFFGGG'},
+  normalizedPreview:{image:'generated'}}),'data:image/jpeg;base64,AAABBBCCCDDDEEEFFFGGG');
+ assert.equal(c.recognitionSourcePhoto({outfitSourceId:'outfit',image:'AI-filled-display-cutout',
+  originalPhoto:{image:'data:image/jpeg;base64,ORIGINALFULLPHOTO'}}),null,
+  'missing original RGB region must never classify using an AI-cleaned cutout');
+ assert.equal(c.recognitionSourcePhoto({outfitSourceId:'outfit',image:'display',
+  recognitionPhoto:{image:''},normalizedPreview:{image:'generated'}}),null);
 });
 test('scanner and background review never read display cutout as their inference source',()=>{
  const scanner=source.slice(source.indexOf('async function recognizeItem('),source.indexOf('async function recognizeBatch('));
- assert.match(scanner,/const image=recognitionSourcePhoto\(item\)/);
- assert.match(scanner,/checkPhoto\(image\)/);
- assert.match(scanner,/localRequest\('classify',image/);
- const background=source.slice(source.indexOf('async function reviewRecognitionMemory('));
+ assert.match(scanner,/const sourcePhoto=recognitionSourcePhoto\(item\)/);
+ assert.match(scanner,/if\(!sourcePhoto\)/);
+ assert.match(scanner,/checkPhoto\(sourcePhoto\)/);
+ assert.match(scanner,/localRequest\('classify',sourcePhoto/);
+ const background=source.slice(source.indexOf('async function',source.indexOf('function applyLocalChoice(')),source.length);
  assert.match(background,/image=recognitionSourcePhoto\(target\);if\(!image\)continue/);
- assert.match(background,/recognitionSourcePhoto\(current\)/);
- assert.match(background,/!recognitionSourcePhoto\(value\)/);
+ assert.match(background,/recognitionSourcePhoto\(current\)===image/);
+ assert.match(background,/recognitionSourcePhoto\(current\)!==recognitionSourcePhoto\(value\)/);
  assert.doesNotMatch(scanner,/(?:normalizedPreview|tryOnImage)/);
 });
 
-test('restored outfit without its raw crop cannot infer details from a display tile or whole scene',async()=>{
- for(const recognitionPhoto of [undefined,{image:''},{image:'   '},{image:42}]){
-  const h=make({id:'restored',outfitSourceId:'outfit',image:'white-matted-display',
-   recognitionPhoto,originalPhoto:{image:'whole-scene'},category:'Tops',
-   itemType:'Unknown',color:'',seasons:[]});
-  await flush();await h.btn.onclick();
-  assert.deepEqual(h.checked,[]);assert.deepEqual(h.classified,[]);
-  assert.equal(h.item.color,'');assert.equal(h.item.itemType,'Unknown');
-  assert.equal(h.item.image,'white-matted-display');
-  assert.equal(h.item.originalPhoto.image,'whole-scene');
- }
+test('missing original outfit crop is blocked before scanner reads cleaned image',async()=>{
+ const scanner=source.slice(source.indexOf('async function recognizeItem('),source.indexOf('async function recognizeBatch('));
+ const helper=source.slice(start,source.indexOf('function clothingFields(',start));
+ const read=[],classifications=[],draft={id:'old-piece',outfitSourceId:'outfit-source',
+  image:'matted AI display fragment',color:'',category:'Uncategorized',
+  originalPhoto:{image:'data:image/jpeg;base64,ORIGINALWHOLESCENE'}};
+ const c={
+  batch:[draft],items:[],Date:{now:()=>0},recognitionState:{activeId:null},
+  render(){},recognitionSourcePhoto:null,
+  checkPhoto:async x=>{read.push(x);return {blank:false};},
+  localRequest:async(...x)=>{classifications.push(x);return {};},
+  localReady:true,recognitionUnavailable:false,ClothingDetails:Details,
+  node,normalizeClothing:x=>x,itemsSaved:0,
+  recordDeviceEvent(){},message(){},persistDraft(){},localPending:new Set()
+ };
+ vm.createContext(c);vm.runInContext(helper+scanner,c);
+ await c.recognizeItem(draft);
+ assert.deepEqual(read,[]);
+ assert.deepEqual(classifications,[]);
+ assert.equal(draft.scanFailed,true);
+ assert.match(draft.localStatus,/Original source crop unavailable/);
+ assert.equal(draft.image,'matted AI display fragment');
 });

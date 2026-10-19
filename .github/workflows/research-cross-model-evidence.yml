@@ -1,0 +1,75 @@
+name: Experimental same-source garment-model disagreement audit
+on:
+  push:
+    branches: [research/whole-outfit-readiness-evidence-20261018]
+    paths:
+      - 'benchmark/real-outfit-cross-model-evidence.mjs'
+      - 'scripts/audit-real-outfit-model-disagreement.mjs'
+      - 'tests/real-outfit-cross-model-evidence.test.mjs'
+      - 'benchmark/real-outfit-suite-disagreement.mjs'
+      - 'scripts/audit-real-outfit-suite-disagreement.mjs'
+      - 'tests/real-outfit-suite-disagreement.test.mjs'
+      - '.github/workflows/research-cross-model-evidence.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  compare-observed-model-results:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run cross-model safety tests
+        run: node --test tests/real-outfit-cross-model-evidence.test.mjs tests/real-outfit-suite-disagreement.test.mjs
+      - name: Retrieve previously completed, source-verified research artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          mkdir -p benchmark/cross-model-actual/instance benchmark/cross-model-actual/semantic
+          gh run download 39194870053 --repo "$GH_REPO" -n pinned-deepfashion-instance-feasibility -D benchmark/cross-model-actual/instance
+          gh run download 39196872104 --repo "$GH_REPO" -n mobile-flow-results -D benchmark/cross-model-actual/semantic
+          mkdir -p benchmark/cross-model-actual/semantic-nine
+          gh run download 39194870115 --repo "$GH_REPO" -n experimental-nine-photo-instance-evidence -D benchmark/cross-model-actual/semantic-nine
+      - name: Compare actual instance and semantic outputs on the same licensed original
+        run: |
+          node scripts/audit-real-outfit-model-disagreement.mjs \
+            benchmark/cross-model-actual/instance/summary.json \
+            benchmark/cross-model-actual/semantic/real-whole-outfit-flow.json \
+            benchmark/cross-model-actual/cross-model-evidence.json
+          node --input-type=module -e "
+            import fs from 'node:fs';
+            const j=JSON.parse(fs.readFileSync('benchmark/cross-model-actual/cross-model-evidence.json','utf8'));
+            if(!j.sourcePhotosMatch||j.sourceId!=='validation-0031'||j.productionReady!==false||
+               j.categoryCorrectRecall!==null||j.wardrobeItemsAutoSavedByAudit!==0||
+               !j.deepFashionProposals.some(p=>p.proposedType==='skirt'&&
+                 p.evidenceRelation==='semantic-class-not-predicted'))
+              throw Error('Unexpected or unverified cross-model research evidence');
+            console.log('Actual licensed-photo skirt class disagreement is review-only, not accuracy');
+          "
+      - name: Cross-check real multi-photo model gaps and flat-lay person gating
+        run: |
+          node scripts/audit-real-outfit-suite-disagreement.mjs \
+            benchmark/cross-model-actual/instance/summary.json \
+            benchmark/cross-model-actual/semantic-nine/summary.json \
+            benchmark/cross-model-actual/multi-photo-evidence.json
+          node --input-type=module -e "
+            import fs from 'node:fs';
+            const r=JSON.parse(fs.readFileSync('benchmark/cross-model-actual/multi-photo-evidence.json','utf8'));
+            if(r.sharedSources!==2||r.categoryAccuracy!==null||r.canPromoteModel!==false||
+               !r.sourceRows.some(p=>p.id==='validation-0031'&&p.modelDisagreementTypes.includes('skirt'))||
+               !r.sourceRows.some(p=>p.id==='commons-0059'&&p.flatLayOrNonPersonRoutingRisk))
+              throw Error('Real multi-photo model evidence changed or is incomplete');
+          "
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: licensed-cross-model-review-evidence
+          path: |
+            benchmark/cross-model-actual/cross-model-evidence.json
+            benchmark/cross-model-actual/multi-photo-evidence.json
+          retention-days: 14

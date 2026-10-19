@@ -158,3 +158,42 @@ test('category-constrained score never fabricates footwear or hosiery detection'
  assert.equal(result.modelProposals,0);
  assert.equal(result.canPromoteModel,false);
 });
+
+test('independent physical form catches shorts falsely named skirt despite matching broad Bottoms',()=>{
+ const {inventory,annotations,seeds}=example();
+ const target=inventory.targets[1];
+ inventory.targets=[{...target,form:'skirt'}];
+ const approved={...annotations.get(target.id),humanForm:'skirt'};
+ annotations.clear();annotations.set(target.id,approved);
+ const id=scene.id+'-candidate-01';
+ const first={...seeds.get(id),modelGarmentLabel:'shorts',...mask([6,1,10,5])};
+ const result=evaluateCompletePhysicalInventory(scene,inventory,annotations,new Map([[id,first]]));
+ assert.equal(result.detectionRecall,1,'perfect overlap counts as physical localization');
+ assert.equal(result.categoryConstrainedRecall,1,'both shorts and skirts are Bottoms');
+ assert.equal(result.completeReviewedGarmentForms,true);
+ assert.equal(result.formConstrainedRecall,0,'wrong form must not be called correctly indexed');
+ assert.equal(result.formConstrainedMatchedGarments,0);
+ assert.equal(result.canPromoteModel,false);
+ const correct={...first,modelGarmentLabel:'skirt'};
+ const corrected=evaluateCompletePhysicalInventory(scene,inventory,annotations,new Map([[id,correct]]));
+ assert.equal(corrected.formConstrainedRecall,1);
+ assert.equal(corrected.formConstrainedMatches[0].reviewedForm,'skirt');
+});
+test('missing or disputed human form cannot generate a subtype accuracy claim',()=>{
+ const {inventory,annotations,seeds}=example();
+ const original=evaluateCompletePhysicalInventory(scene,inventory,annotations,seeds);
+ assert.equal(original.formConstrainedRecall,null);
+ assert.equal(original.formConstrainedMatchedGarments,null);
+ assert.equal(original.unreviewedGarmentFormCount,3);
+ const id=scene.id+'-item-02';
+ inventory.targets[1].form='shorts';
+ assert.throws(()=>evaluateCompletePhysicalInventory(scene,inventory,annotations,seeds),
+  /form missing, invalid/);
+ annotations.get(id).humanForm='skirt';
+ assert.throws(()=>evaluateCompletePhysicalInventory(scene,inventory,annotations,seeds),
+  /form missing, invalid/);
+ inventory.targets[1].form='skirt';
+ const partly=evaluateCompletePhysicalInventory(scene,inventory,annotations,seeds);
+ assert.equal(partly.unreviewedGarmentFormCount,2);
+ assert.equal(partly.formConstrainedRecall,null);
+});

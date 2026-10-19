@@ -1,0 +1,46 @@
+name: Research third-framing garment-subtype evidence
+on:
+  push:
+    branches: [research/third-view-subtype-validation-20261019]
+    paths:
+      - 'public/local-worker.mjs'
+      - 'public/benchmark-runner.mjs'
+      - 'scripts/run-browser-photo-benchmark.mjs'
+      - 'scripts/audit-subtype-third-framing.mjs'
+      - 'tests/subtype-third-framing.test.mjs'
+      - '.github/workflows/research-third-frame-subtypes.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  original-photo-framings:
+    runs-on: ubuntu-latest
+    timeout-minutes: 22
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify all diagnostic-only source and subtype invariants
+        run: node --test tests/subtype-third-framing.test.mjs tests/recognition-benchmark.test.mjs tests/recognition-priority.test.mjs
+      - name: Prepare local model browser and unchanged verified sources
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium
+          node scripts/build.mjs
+      - name: Compare three framings of every original holdout photograph
+        run: |
+          node scripts/run-browser-photo-benchmark.mjs benchmark/manifest-holdout-16.json benchmark/subtype-third-framing --subtype-audit
+          node scripts/audit-subtype-third-framing.mjs benchmark/manifest-holdout-16.json benchmark/subtype-third-framing/results.json benchmark/subtype-third-framing/audit.json
+          node scripts/evaluate-recognition-benchmark.mjs benchmark/manifest-holdout-16.json benchmark/subtype-third-framing/results.json > benchmark/subtype-third-framing/evaluation.json
+          node scripts/check-recognition-regressions.mjs benchmark/manifest-holdout-16.json benchmark/subtype-third-framing/results.json benchmark/regression-holdout-16.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: original-photo-third-framing-research
+          path: benchmark/subtype-third-framing/
+          retention-days: 14

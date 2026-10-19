@@ -55,6 +55,50 @@ try{
   'Source for categorization retains original red behind erased display pixels');
  assert.ok(masked.analyzed.center[0]>150&&masked.analyzed.center[1]<90,
   'Check recognition must inspect original red, not white-masked display');
+ // Exercise the complete crop editor without a brush on a captured
+ // outfit, not just a source-code assertion. Re-encoding the original crop
+ // must NOT silently delete the recognition source or use a display preview.
+ await page.evaluate(async()=>{
+  const canvas=document.createElement('canvas');canvas.width=240;canvas.height=240;
+  const ctx=canvas.getContext('2d');ctx.fillStyle='#1a67b3';ctx.fillRect(0,0,240,240);
+  window.plainOutfitOriginal=canvas.toDataURL('image/jpeg',.95);
+  window.plainOutfitSaved=null;
+  await window.openPhotoCrop({
+   outfitSourceId:'source-preservation-test',
+   image:'data:image/jpeg;base64,QUJDRA==',
+   originalPhoto:{image:window.plainOutfitOriginal},
+   cropBounds:{x:.2,y:.1,width:.6,height:.7}
+  },{
+   analyze:async()=>null,save:async photo=>{window.plainOutfitSaved=photo;}
+  });
+ });
+ const plainDialog=page.locator('dialog.photo-crop-editor');
+ await plainDialog.getByRole('button',{name:'Save crop'}).click();
+ await plainDialog.waitFor({state:'detached'});
+ const plainOutfit=await page.evaluate(async()=>{
+  const saved=window.plainOutfitSaved;
+  const source=saved?.recognitionPhoto?.image;
+  if(!source)return {hasRawCrop:false};
+  const image=new Image();image.src=source;await image.decode();
+  return {hasRawCrop:true,
+   originalPreserved:saved.originalPhoto.image===window.plainOutfitOriginal,
+   rawIsDisplay:saved.image===source,
+   cropWidth:image.naturalWidth,cropHeight:image.naturalHeight,
+   sourceWasUnmasked:!saved.maskApplied};
+ });
+ assert.equal(plainOutfit.hasRawCrop,true,'Plain outfit crop must retain an original RGB recognitionPhoto');
+ assert.equal(plainOutfit.originalPreserved,true,'Whole original photo must remain byte-identical');
+ assert.equal(plainOutfit.rawIsDisplay,true,'Unmasked display should equal the RGB recognition crop');
+ assert.equal(plainOutfit.sourceWasUnmasked,true,'No brush was used in this test');
+ assert.deepEqual([plainOutfit.cropWidth,plainOutfit.cropHeight],[144,168]);
+ const missingSourceRejected=await page.evaluate(async()=>{
+  try{
+   await window.openPhotoCrop({outfitSourceId:'legacy-missing-original',
+    image:'data:image/jpeg;base64,QUJDRA=='},{analyze:async()=>null,save:async()=>{}});
+   return false;
+  }catch{return true;}
+ });
+ assert.equal(missingSourceRejected,true,'A cleaned display preview must never be relabeled as original outfit RGB');
  await page.locator('.tab[data-view="scan"]').click();await page.locator('#start').click();
  await page.waitForFunction(()=>document.querySelector('#video').readyState>=2&&document.querySelector('#video').videoWidth>0);
  const camera=await page.locator('#video').evaluate(v=>({width:v.videoWidth,height:v.videoHeight}));

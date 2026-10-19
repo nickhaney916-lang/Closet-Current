@@ -70,6 +70,12 @@ const report={
   correctlyCategorizedGarmentRecall:reviewed.reduce(
    (s,x)=>s+x.categoryConstrainedMatchedGarments,0)/
    reviewed.reduce((s,x)=>s+x.approvedPhysicalGarments,0),
+  // Do NOT report the exact clothing form until every original photo has
+  // genuine two-reviewer labels. "Bottoms" alone hides shorts/skirt errors.
+  correctlyIdentifiedFormRecall:reviewed.every(x=>x.completeReviewedGarmentForms)?
+   reviewed.reduce((sum,x)=>sum+x.formConstrainedMatchedGarments,0)/
+   reviewed.reduce((sum,x)=>sum+x.approvedPhysicalGarments,0):null,
+  missingReviewedFormLabels:reviewed.reduce((sum,x)=>sum+x.unreviewedGarmentFormCount,0),
   supportedCategoryCorrectRecall:(()=>{
    const supported=reviewed.reduce((s,x)=>
     s+x.approvedPhysicalGarments-x.unsupportedCategoryGarments.length,0);

@@ -20,9 +20,20 @@ self.onmessage=event=>{const request=event.data;chain=chain.then(async()=>{
   if(typeof request.image!=='string'||!/^data:image\/jpeg;base64,/.test(request.image)||request.image.length>12000000)throw Error('Invalid outfit photo.');
   const {model,processor,RawImage}=await load(request.id);self.postMessage({type:'progress',id:request.id,phase:'separating'});
   const image=await RawImage.read(request.image);if(!image.width||!image.height||Math.max(image.width,image.height)>3072)throw Error('Invalid outfit photo dimensions.');
-  const output=await model(await processor(image)),{clothingLabelMap,clothingMaskGroups,cropClothingPhotoPixels,isolateClothingPixels,clothingColorSample,clothingInteriorColorSample,garmentDisplayMaskReliability}=await import('./outfit-segmentation.mjs'+new URL(import.meta.url).search);
+  const output=await model(await processor(image)),{clothingLabelMap,clothingMaskGroups,reviewOnlyUnwornOutfitGroups,reviewOnlyOverlappingGarmentGroups,cropClothingPhotoPixels,isolateClothingPixels,clothingColorSample,clothingInteriorColorSample,garmentDisplayMaskReliability}=await import('./outfit-segmentation.mjs'+new URL(import.meta.url).search);
   await import('./photo-color.js'+new URL(import.meta.url).search);
-  const map=clothingLabelMap(output.logits.data,output.logits.dims),groups=map.personDetected?clothingMaskGroups(map):[];
+  const map=clothingLabelMap(output.logits.data,output.logits.dims),
+   groups=reviewOnlyOverlappingGarmentGroups(map.personDetected?
+    clothingMaskGroups(map):reviewOnlyUnwornOutfitGroups(map));
+  // When a presumed dress also contains substantial competing shirt
+  // evidence above and skirt evidence below, the single dress mask may combine
+  // separate worn garments. Keep the ORIGINAL source crop for user review and
+  // never auto-approve its color or save it as one dress. This model-only
+  // signal is not evidence of two separate physical garments.
+  const dressConflict=map.personDetected&&groups.some(group=>group.id===7)
+   ?(await import('./dress-layer-review.mjs'+new URL(import.meta.url).search))
+     .dressClassCompetition(output.logits.data,output.logits.dims,map).mixedClassReviewCandidate
+   :false;
   // Explicit benchmark opt-in only. No per-pixel output or camera imagery.
   // Never change masks, recognition inputs, or auto-save criteria for diagnostics.
   if(request.diagnostics===true){
@@ -36,7 +47,9 @@ self.onmessage=event=>{const request=event.data;chain=chain.then(async()=>{
    // crop so missing hems/soles just beyond coarse model bounds survive.
    // The enlarged display crop is NEVER sent to recognition or color inference.
    const raw=cropClothingPhotoPixels(image,map,group),maskReview=garmentDisplayMaskReliability(map,group),
-    display=group.reviewOnlyReason?{...maskReview,useOriginalCrop:true,reason:group.reviewOnlyReason}:maskReview,
+    display=group.id===7&&dressConflict
+     ?{...maskReview,useOriginalCrop:true,reason:'dress-layer-conflict-review-only'}
+     :group.reviewOnlyReason?{...maskReview,useOriginalCrop:true,reason:group.reviewOnlyReason}:maskReview,
     isolated=display.useOriginalCrop?cropClothingPhotoPixels(image,map,group,{marginFraction:.12}):isolateClothingPixels(image,map,group),
     sample=display.useOriginalCrop?null:clothingColorSample(image,map,group),
     core=display.useOriginalCrop?null:clothingInteriorColorSample(image,map,group),b=raw.bounds;
