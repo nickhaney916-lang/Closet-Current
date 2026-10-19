@@ -1,0 +1,31 @@
+name: Research original crop recognition source on touch browser
+on:
+  push:
+    branches: [fix/manual-outfit-crop-original-rgb-20261019]
+    paths:
+      - 'public/photo-crop-editor.js'
+      - 'tests/photo-crop-resolution.test.cjs'
+      - 'scripts/test-original-crop-source-mobile.mjs'
+      - 'scripts/run-mobile-flow.mjs'
+      - '.github/workflows/research-original-crop-source-mobile.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify-original-crop:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run original RGB, crop and automatic indexing regressions
+        run: node --test tests/photo-crop-resolution.test.cjs tests/original-first-recognition.test.cjs tests/automatic-indexing.test.cjs
+      - name: Build app and install emulated Chromium
+        run: |
+          node scripts/build.mjs
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium
+      - name: Verify plain outfit crop on touch-sized app with durable draft storage
+        run: node scripts/test-original-crop-source-mobile.mjs
