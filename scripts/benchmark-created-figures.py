@@ -2,7 +2,7 @@
 """Measure actual locally rendered candidate files, never approve their appearance."""
 import hashlib,json,html,math,base64,io,os
 from pathlib import Path
-from PIL import Image,ImageCms,ImageDraw,__version__ as pillow_version
+from PIL import Image,ImageCms,ImageDraw,ImageChops,__version__ as pillow_version
 ROOT=Path(__file__).resolve().parents[1];OUT=ROOT/'artifacts/figure-creation';NATIVE=OUT/'native'
 def sha(b):return hashlib.sha256(b).hexdigest()
 def checker(im):
@@ -17,6 +17,18 @@ def save_atomic(im,path,**options):
  with open(tmp,'wb')as f:f.write(raw);f.flush();os.fsync(f.fileno())
  os.replace(tmp,path)
  if sha(path.read_bytes())!=sha(raw):raise ValueError('Incomplete output write')
+def verify_lossless_visible_pixels(original,webp_path):
+ with Image.open(webp_path) as loaded:
+  decoded=loaded.convert('RGBA')
+ if decoded.size!=original.size or ImageChops.difference(
+    original.getchannel('A'),decoded.getchannel('A')).getbbox():
+  raise ValueError('Responsive WebP lost transparency clarity')
+ diff=ImageChops.difference(original,decoded)
+ visible=original.getchannel('A').point(lambda v:255 if v else 0)
+ if any(ImageChops.multiply(channel,visible).getbbox() for channel in diff.convert('RGB').split()):
+  raise ValueError('Responsive WebP changed any visible clothing/body RGB pixel')
+ return {'alphaExact':True,'visibleRgbExact':True,'sourceMasterUnchanged':True}
+
 def inspect(path):
  b=path.read_bytes()
  with Image.open(path)as im:im.verify()
@@ -44,11 +56,29 @@ def main():
    if im.size!=(1941,3597)or im.mode!='RGBA':raise ValueError('Native master must be 1941x3597 RGBA')
    save_atomic(im,delivery/(kind+'-master.png'),icc_profile=icc)
    save_atomic(im.resize((1294,2398),Image.Resampling.LANCZOS),delivery/(kind+'-1294.png'),icc_profile=icc)
-   save_atomic(im.resize((970,1798),Image.Resampling.LANCZOS),delivery/(kind+'-mobile.webp'),lossless=True,icc_profile=icc)
+   save_atomic(im.resize((970,1798),Image.Resampling.LANCZOS),delivery/(kind+'-mobile.webp'),lossless=True,method=6,icc_profile=icc)
+   # New responsive clarity-preserving WEBP display-only candidates.
+   # Keep PNG minimum and full-resolution editable source for archival use.
+   sizes={'phone1x':(647,1199),'tablet2x':(1294,2398)}
+   fidelity={}
+   for tier,size in sizes.items():
+    rgba=im.resize(size,Image.Resampling.LANCZOS)
+    filename={'phone1x':'-phone-647.webp','tablet2x':'-tablet-1294.webp'}[tier]
+    path=delivery/(kind+filename)
+    save_atomic(rgba,path,lossless=True,method=6,icc_profile=icc)
+    fidelity[tier]=verify_lossless_visible_pixels(rgba,path)
    thumb=im.copy();thumb.thumbnail((350,650));checker(thumb).save(OUT/(kind+'-review.png'))
-  variants={name:inspect(delivery/(kind+suffix))for name,suffix in [('master','-master.png'),('minimum','-1294.png'),('mobile','-mobile.webp')]}
+  variants={name:inspect(delivery/(kind+suffix))for name,suffix in [
+    ('master','-master.png'),('minimum','-1294.png'),('mobile','-mobile.webp'),
+    ('phone1x','-phone-647.webp'),('tablet2x','-tablet-1294.webp')]}
+  variants['phone1x']['fidelity']=fidelity['phone1x']
+  variants['tablet2x']['fidelity']=fidelity['tablet2x']
+  variants['phone1x']['smallerThanMobileBytes']=variants['phone1x']['bytes']<variants['mobile']['bytes']
+  variants['tablet2x']['smallerThanPngBytes']=variants['tablet2x']['bytes']<variants['minimum']['bytes']
+  if not variants['phone1x']['smallerThanMobileBytes'] or not variants['tablet2x']['smallerThanPngBytes']:
+   raise ValueError('Responsive variant did not improve download byte cost')
   if not all(v['borderClear']for v in variants.values()):raise ValueError('Figure clipped at image border')
-  rows.append({**r,'nativeSceneRenderEvidence':'Pinned Blender scene + script/source/recipe/output hashes; not authenticated visual approval','variants':variants})
+  rows.append({**r,'responsiveClarityVerified':True,'nativeSceneRenderEvidence':'Pinned Blender scene + script/source/recipe/output hashes; not authenticated visual approval','variants':variants})
   sections.append('<section><h2>'+kind+' — candidate, not approved</h2><img src="'+kind+'-review.png" alt="New local '+kind+' candidate"><p>Native 1941×3597 scene render; simplified procedural materials, clothing and hair. No photorealism or commercial-product approval.</p></section>')
  a,b=rows;names=list(a['projectedSourceJoints']);deltas={name:{axis:abs(a['projectedSourceJoints'][name][axis]-b['projectedSourceJoints'][name][axis])for axis in ['x','y']}for name in names}
  files=['scripts/figure_fabric_boundaries.py','scripts/create-local-figures.py','scripts/benchmark-created-figures.py','benchmark/figure-creation/recipe.json','benchmark/figure-creation/source-lock.json','scripts/prepare-local-figure-tools.py','benchmark/figure-creation/srgb-profile.json']
