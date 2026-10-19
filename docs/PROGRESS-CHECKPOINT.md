@@ -22,9 +22,15 @@
   fixtures now explicitly provide the raw crops the real worker requires.
 - Local build passed; full Node suite **807 total, 804 passed, 0 failed,
   3 skipped**. These verify software behavior, not real-photo mask accuracy.
-  Exact-code GitHub mobile and real-photo workflows remain to be inspected
-  after publication. Layered-photo benchmark was last 2 uncertain regions,
-  0 automatic saves; no new accuracy or completed AI try-on claim.
+  Published code: `311a94e6690a6622fd43c174b40be58f43a6ecc0`.
+- Verified [mobile run 39194693304](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39194693304):
+  every step passed, including actual model inference, outfit handoff,
+  persistence and owned-piece swaps; no page errors. The single-item set
+  remains 14/14 broad categories, 8 auto-saves, 6 review holds. The actual
+  layered-photo case remains 2 uncertain regions, 0 auto-saves, 2 review holds.
+  The synthetic styling test confirms all owned swap choices reachable.
+  At inspection 24/25 reported workflows succeeded; experimental MODNet was
+  still running. No new segmentation accuracy or completed AI try-on claim.
 - No production merge/deploy, paid services, Drive Duel changes, original-photo
   replacement, model changes, threshold relaxation or manual-crop requirement.
 
