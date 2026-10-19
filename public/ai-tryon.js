@@ -56,11 +56,21 @@ async function tryOnRequest(token,body,signal){
   body:JSON.stringify(body),cache:'no-store',signal:controller.signal
   });
   const result=await response.json().catch(()=>null);
+  if(!response.ok){
+   const error=Error(typeof result?.error==='string'?result.error:'AI try-on is unavailable');
+   error.retryable=body.action==='status'&&[408,429,500,502,503,504].includes(response.status);
+   throw error;
+  }
   if(!result||typeof result!=='object'||Array.isArray(result))throw Error('AI try-on returned an unreadable response');
-  if(!response.ok)throw Error(typeof result.error==='string'?result.error:'AI try-on is unavailable');
   return result;
  }catch(error){
-  if(controller.signal.aborted)throw controller.signal.reason;
+  // Only read-only status polls can recover automatically. A start/continue
+  // POST might already have been accepted and must never be resubmitted.
+  if(signal?.aborted)throw signal.reason;
+  if(controller.signal.aborted){
+   const timeout=controller.signal.reason;timeout.retryable=body.action==='status';throw timeout;
+  }
+  if(body.action==='status'&&error?.name==='TypeError')error.retryable=true;
   throw error;
  }finally{clearTimeout(timer);signal?.removeEventListener('abort',cancel);}
 }
@@ -123,12 +133,20 @@ async function tryOnOne(token,image,category,figure,isCurrent,previousToken=null
   {action:'start',figure,category,garmentImage:image},signal);
  if(result.status!=='processing'||typeof result.token!=='string'||!result.token||result.token.length>1024)throw Error('AI try-on did not start');
  const jobToken=result.token;
+ let statusFailures=0;
  // One provider call per step. Status requests never submit extra billable jobs.
  for(let i=0;i<32;i++){
   if(!isCurrent())throw Error('Outfit changed; the old preview was discarded');
   await tryOnPollDelay(signal);
   if(!isCurrent())throw Error('Outfit changed; the old preview was discarded');
-  result=await tryOnRequest(token,{action:'status',token:jobToken},signal);
+  try{
+   result=await tryOnRequest(token,{action:'status',token:jobToken},signal);
+   statusFailures=0;
+  }catch(error){
+   if(signal?.aborted||!error.retryable||++statusFailures>2)throw error;
+   $('tryOnStatus').textContent='Connection interrupted. Checking the same AI render…';
+   continue;
+  }
   if(result.status==='completed'){
    if(!window.AiTryOnPlan.validOutputImage(result.image))throw Error('Generated try-on image is invalid');
    if(!isCurrent())throw Error('Outfit changed; stale result discarded');

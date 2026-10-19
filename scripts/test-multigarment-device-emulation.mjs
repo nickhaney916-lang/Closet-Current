@@ -61,7 +61,9 @@ async function check(engine,device,label){
    else if(body.action==='status'){
     assert.ok(['signed-stage-one','signed-stage-two'].includes(body.token),'all polls must carry the original signed job token');
     const count=(polls.get(body.token)||0)+1;polls.set(body.token,count);
-    if(count===1)answer={status:'processing'};
+    if(count===1||mode==='status-exhausted')return route.fulfill({status:503,headers,contentType:'application/json',
+     body:JSON.stringify({error:'Temporary status outage'})});
+    if(count===2)answer={status:'processing'};
     else if(body.token==='signed-stage-one')answer={status:'completed',image:
      mode==='corrupt-first'?'data:image/jpeg;base64,'+'Ab9/'.repeat(40):images.first};
     else{
@@ -105,6 +107,8 @@ async function check(engine,device,label){
   assert.match(await page.locator('#tryOnStatus').innerText(),/top \+ bottom/i);
   assert.match(await page.locator('#tryOnStatus').innerText(),/Not rendered: shoes/);
   assert.match(await page.locator('#tryOnStatus').innerText(),/earlier garments may change/);
+  assert.equal(calls.filter(x=>x.action==='status'&&x.token==='signed-stage-one').length,3);
+  assert.equal(calls.filter(x=>x.action==='status'&&x.token==='signed-stage-two').length,3);
   const originals=await page.evaluate(()=>JSON.stringify(items));
   const outputDir=process.env.TRYON_QA_OUTPUT;
   if(outputDir){
@@ -123,6 +127,18 @@ async function check(engine,device,label){
   assert.match(await page.locator('#tryOnStatus').innerText(),/could not render/);
   assert.equal(await page.locator('#tryOnGenerate').isDisabled(),false);
   assert.equal(calls.filter(x=>x.action==='start').length,beforeStart+1);
+
+  mode='status-exhausted';
+  const beforeContinueFailure=calls.filter(x=>x.action==='continue').length,
+   beforeFailedPoll=calls.filter(x=>x.action==='status').length;
+  beforeStart=calls.filter(x=>x.action==='start').length;
+  await page.locator('#tryOnGenerate').click();
+  await page.waitForFunction(()=>!tryOnBusy,null,{timeout:8000});
+  assert.equal(calls.filter(x=>x.action==='status').length,beforeFailedPoll+3,'only two read-only retries are permitted');
+  assert.equal(calls.filter(x=>x.action==='start').length,beforeStart+1);
+  assert.equal(calls.filter(x=>x.action==='continue').length,beforeContinueFailure);
+  assert.equal(await page.locator('#tryOnImage').isHidden(),true);
+  assert.equal(await page.locator('#tryOnGenerate').isDisabled(),false);
 
   for(const corrupt of ['corrupt-first','corrupt-second']){
    mode=corrupt;
@@ -174,7 +190,7 @@ async function check(engine,device,label){
    viewport:device.viewport,actualDevice:false,providerCalls:0,actualBuiltApp:true,
    syntheticStarts:calls.filter(x=>x.action==='start').length,
    syntheticContinues:calls.filter(x=>x.action==='continue').length,
-   repeatedProcessingPolls:true,corruptFirstAndSecondBlocked:true,
+   repeatedProcessingPolls:true,transientStatusRecoveredWithoutNewJob:true,statusRetryLimitEnforced:true,corruptFirstAndSecondBlocked:true,
    failedSecondPassHidden:true,uncertainStartNotRetried:true,explicitRetryRecovered:true,
    staleResultBlocked:true,pendingFetchCancelled:true,sourcePhotosUnchanged:true,pageErrors:errors.length};
  }finally{await browser.close();}
