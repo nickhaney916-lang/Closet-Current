@@ -105,9 +105,7 @@ grant execute on function closet_internal.begin_account_deletion(uuid)
 -- This is deliberately a non-destructive lock acquisition only.
 create or replace function public.begin_closet_account_deletion(p_owner uuid)
 returns boolean language sql security invoker set search_path = ''
-as $
- select closet_internal.begin_account_deletion(p_owner)
-$;
+as 'select closet_internal.begin_account_deletion(p_owner)';
 revoke all on function public.begin_closet_account_deletion(uuid)
  from public, anon, authenticated;
 grant execute on function public.begin_closet_account_deletion(uuid) to service_role;
