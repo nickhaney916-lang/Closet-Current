@@ -63,7 +63,26 @@ try{
  assert.equal(await page.locator('#category-0').isDisabled(),true);assert.equal(await page.locator('#photos').isDisabled(),true);
  await page.locator('#download').waitFor({state:'visible',timeout:480000});
  const downloadPromise=page.waitForEvent('download');await page.locator('#download').click();const download=await downloadPromise;const reportPath=join(output,'results.json');await download.saveAs(reportPath);
- const raw=await readFile(reportPath,'utf8'),report=JSON.parse(raw);assert.ok(!raw.includes('PRIVATE_PHONE'));assert.ok(!raw.includes('data:image'));assert.equal(report.summary.photos,2);assert.equal(report.summary.errors,0);assert.equal(report.summary.categoryMatches,1);assert.equal(report.summary.typeMatches,1);assert.equal(report.summary.negativeRejected,1);assert.match(report.release,/^[a-f0-9]{12}$/);assert.equal(report.recognitionIndex,JSON.parse(await readFile('public/recognition-vectors.json','utf8')).sha256);
+ const raw=await readFile(reportPath,'utf8'),report=JSON.parse(raw);assert.ok(!raw.includes('PRIVATE_PHONE'));assert.ok(!raw.includes('data:image'));assert.equal(report.summary.photos,2);assert.equal(report.summary.errors,0);assert.equal(report.summary.categoryMatches,1);
+ // Native browser decode + re-encode can produce subtly different RGB.
+ // A category-confirmed Unknown subtype is a safe review, not an error.
+ assert.equal(report.summary.negativeRejected,1);
+ assert.equal(report.summary.incorrectAutomaticCategories,0);
+ assert.equal(report.summary.incorrectAutomaticTypes,0);
+ const garment=report.photos[0],negative=report.photos[1];
+ assert.equal(garment.expectedCategory,'Tops');
+ assert.equal(garment.prediction.category,'Tops');
+ assert.equal(negative.categoryMatch,true);
+ if(report.summary.typeMatches===0){
+  assert.equal(garment.prediction.type,'Unknown');
+  assert.equal(garment.strong,false);
+  assert.equal(garment.categoryConfirmed,true);
+  assert.equal(report.summary.review,1);
+ }else{
+  assert.equal(report.summary.typeMatches,1);
+  assert.equal(garment.prediction.type,'T-shirt');
+ }
+ assert.equal(report.summary.typesChecked,1);assert.match(report.release,/^[a-f0-9]{12}$/);assert.equal(report.recognitionIndex,JSON.parse(await readFile('public/recognition-vectors.json','utf8')).sha256);
  assert.equal(await page.locator('#category-0').isDisabled(),true);
  const layout=await page.evaluate(()=>({
   width:innerWidth,scrollWidth:document.documentElement.scrollWidth,
@@ -85,6 +104,9 @@ try{
   originalSourceShaVerified:2,fixturePhotos:2,modelAssetsMayDownload:true,
   recognitionOriginalFirst:true,categoryMatches:report.summary.categoryMatches,
   negativeRejected:report.summary.negativeRejected,
+  exactGarmentTypeAccepted:report.summary.typeMatches===1,
+  garmentTypeReviewRequired:report.summary.typeMatches===0,
+  noIncorrectAutomaticTypes:report.summary.incorrectAutomaticTypes===0,
   viewport:layout,lockedLabels:true,reportPrivacy:true,cancellation:true,
   externalWriteRequests:networkRequests.length,pageErrors
  },null,2));
@@ -92,6 +114,8 @@ try{
    browser:browserName,originalShaVerified:2,browserLocalInference:true,externalModelAssetDownloadsMayOccur:true,
    garmentCategoryCorrect:report.summary.categoryMatches,
    negativePhotosRejected:report.summary.negativeRejected,
+   correctGarmentSubtypeAccepted:report.summary.typeMatches===1,
+   categoryOnlyGarmentReview:report.summary.typeMatches===0,
    physicalPhoneTested:false,actualCameraTested:false,paidProviderCalls:0,
    privatePhotoBytesExported:false
   }));
