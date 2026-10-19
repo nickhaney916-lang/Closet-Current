@@ -54,7 +54,7 @@ const option=(value,label)=>{const o=document.createElement('option');o.value=va
 const say=(message,warning=false)=>{$('status').textContent=message;$('status').className=warning?'status-warning':'status-ok';};
 function sourceSafe(p){
  return p&&p.schemaVersion===1&&p.reviewType==='independent-blind-original-photo-inventory'&&
-  ['first','second'].includes(p.reviewerSlot)&&p.modelPredictionsIncluded===false&&
+  ['first','second','third'].includes(p.reviewerSlot)&&p.modelPredictionsIncluded===false&&
   p.manifestCategoryLabelsIncluded===false&&p.originalPhotosCopiedOrReencoded===false&&
   p.independentlyReviewed===false&&p.allGarmentFormsVerified===false&&
   p.photoCount===p.originals?.length&&p.photoCount>=1&&p.photoCount<=80&&
