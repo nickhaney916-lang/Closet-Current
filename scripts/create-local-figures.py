@@ -94,22 +94,25 @@ for kind in recipe['figures']:
  # separately defined outsole and subdued laces. These are procedural meshes,
  # not purchased 3D products, image textures, or upscaled old preview blocks.
  shoe_upper=material('neutral-shoe-upper',(.205,.23,.245,1),.89)
- shoe_sole=material('neutral-shoe-outsole',(.135,.145,.15,1),.91)
+ shoe_sole=material('neutral-shoe-outsole',(.175,.185,.195,1),.91)
  shoe_lace=material('neutral-shoe-laces',(.34,.36,.365,1),.88)
  # Longitudinal contour: the front-facing view shows a rounded toe rather
  # than the former primitive cube. Values are in normalized scene units.
  foot_profile=[
-  (-.185,.026,.060,.020),(-.166,.056,.063,.028),
-  (-.132,.070,.069,.034),(-.065,.079,.075,.039),
-  (.005,.078,.078,.037),(.067,.060,.071,.029),(.113,.025,.058,.017)
+  (-.185,.026,.069,.020),(-.166,.056,.072,.028),
+  (-.132,.070,.078,.034),(-.065,.079,.084,.039),
+  (.005,.078,.087,.037),(.067,.060,.080,.029),(.113,.025,.067,.017)
  ]
  def shoe_surface(name,center,profile,mat,level=2):
   steps=16;points=[];quads=[]
   for y,halfwidth,mid,height in profile:
    for j in range(steps):
     t=2*math.pi*j/steps
-    points.append((center.x+halfwidth*math.cos(t),
-     center.y+y,mid+height*math.sin(t)))
+    cosine=math.cos(t);sine=math.sin(t)
+    # Gentle superellipse sides reduce the implausible spherical pod shape.
+    # This remains a very simple neutral shoe shape, not a footwear model.
+    points.append((center.x+halfwidth*math.copysign(abs(cosine)**.72,cosine),
+     center.y+y,mid+height*math.copysign(abs(sine)**.78,sine)))
   for k in range(len(profile)-1):
    for j in range(steps):
     a=k*steps+j;b=k*steps+(j+1)%steps
@@ -127,7 +130,9 @@ for kind in recipe['figures']:
   fc=sum((Vector(coords[i])for i in rig['joints']['foot.'+suffix+'____tail']),Vector())/len(rig['joints']['foot.'+suffix+'____tail'])
   shoe_surface(kind+'-'+suffix+'-rounded-upper',fc,foot_profile,shoe_upper)
   # Mid/sole is a smooth outsole, rather than a floating cuboid beneath toes.
-  sole=[(y,w+.004,.029,.013) for y,w,mid,height in foot_profile]
+  # Sole sidewall physically intersects the upper instead of floating
+  # visibly below it. Its bottom remains flat/ground-near in this view.
+  sole=[(y,w+.005,.042,.014) for y,w,mid,height in foot_profile]
   shoe_surface(kind+'-'+suffix+'-contoured-outsole',fc,sole,shoe_sole,1)
   shoe_count+=1
   for offset in [-.035,-.012,.011]:
