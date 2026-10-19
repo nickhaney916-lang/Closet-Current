@@ -260,3 +260,51 @@ test('all unreliable source-only fallback reasons block strong recognition and p
   assert.match(c.batch[0].localStatus,/multiple garments or background/);
  }
 });
+
+test('distinct top and trousers in the same original outfit are not blocked by background-driven lookalike signatures',async()=>{
+ const same=async()=>({blank:false,signature:[90,100,110],aspect:1});
+ const top={label:'a T-shirt',category:'Tops',itemType:'T-shirt',sleeveLength:'Unknown'};
+ const pants={label:'trousers',category:'Bottoms',itemType:'Trousers',sleeveLength:'Unknown'};
+ const {c,stored}=setup({quality:same,request:async(type,image)=>({
+  strong:true,choices:[image==='whole-top'?top:pants],details:{color:'Blue'}
+ })});
+ const originalPhoto={image:'data:image/jpeg;base64,SAMEUNTOUCHED'};
+ c.candidate('whole-top',{outfitSourceId:'outfit-original-1',originalPhoto,
+  cropBounds:{x:.2,y:.08,width:.48,height:.32},
+  segmentHint:{categories:['Tops'],types:[],clipped:false}});
+ c.candidate('whole-bottom',{outfitSourceId:'outfit-original-1',originalPhoto,
+  cropBounds:{x:.23,y:.48,width:.40,height:.38},
+  segmentHint:{categories:['Bottoms'],types:[],clipped:false}});
+ await done(c);
+ assert.equal(stored.length,2,'distinct source garment regions can both auto-index');
+ assert.equal(c.batch.length,0);
+ assert.deepEqual(c.items.map(i=>i.category),['Tops','Bottoms']);
+});
+test('same-photo same-category, overlapping, unmasked or unverifiable regions keep duplicate review',async()=>{
+ const base={outfitSourceId:'outfit-one',
+  originalPhoto:{image:'data:image/jpeg;base64,ORIGINAL'},
+  cropBounds:{x:.1,y:.1,width:.3,height:.3},
+  segmentHint:{categories:['Tops'],types:[],clipped:false}};
+ for(const variant of [
+  {cropBounds:{x:.65,y:.65,width:.2,height:.2},segmentHint:base.segmentHint},
+  {cropBounds:base.cropBounds,segmentHint:{categories:['Bottoms'],types:[],clipped:false}},
+  {cropBounds:{x:.65,y:.65,width:.2,height:.2},
+    segmentHint:{categories:['Bottoms'],types:[],displayFallback:'original-crop'}},
+  {cropBounds:{x:.65,y:.65,width:.2,height:.2},
+    segmentHint:{categories:['Bottoms'],types:[],clipped:true}},
+  {cropBounds:{x:.65,y:.65,width:.2,height:.2},segmentHint:{categories:['Bottoms'],types:[]},
+    originalPhoto:{image:'data:image/jpeg;base64,DIFFERENT'}},
+  {cropBounds:undefined,segmentHint:{categories:['Bottoms'],types:[]}}
+ ]){
+  const {c,stored}=setup({quality:async()=>({blank:false,signature:[10,20,30],aspect:1}),
+   request:async(type,image)=>({strong:true,choices:[image==='first'?
+     {label:'shirt',category:'Tops',itemType:'T-shirt',sleeveLength:'Unknown'}:
+     {label:'trousers',category:'Bottoms',itemType:'Trousers',sleeveLength:'Unknown'}],
+     details:{color:'Blue'}})});
+  c.candidate('first',base);await done(c);
+  c.candidate('second',{...base,...variant});await done(c);
+  assert.equal(stored.length,1,'uncertain lookalikes must not silently auto-save');
+  assert.equal(c.batch.length,1);
+  assert.equal(c.batch[0].possibleDuplicate,true);
+ }
+});

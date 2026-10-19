@@ -349,6 +349,34 @@ function candidate(image,options={}){
  batch.push(item);sessionCapturedIds.add(item.id);persistDraft();session++;$('sessionCount').textContent=session;$('reviewCount').textContent=batch.length;$('lastCaptureImage').src=image;$('lastCaptureImage').hidden=false;
  queueAutomatic(item);return true;
 }
+// An identical-looking color signature from the *same* source photograph
+// cannot establish that a separately segmented shoe and shirt are duplicates.
+// Exempt ONLY well-separated, incompatible semantic categories from the
+// visual-lookalike warning. Same-category, layered, touching, unsupported,
+// different-source and unverifiable pieces remain conservatively reviewable.
+function independentlyDistinctOutfitRegions(a,b){
+ if(!a?.outfitSourceId||a.outfitSourceId!==b?.outfitSourceId)return false;
+ const source=a.originalPhoto?.image;
+ if(typeof source!=='string'||!source.startsWith('data:image/jpeg;base64,')||
+    source!==b.originalPhoto?.image)return false;
+ const classes=x=>Array.isArray(x?.segmentHint?.categories)?
+  x.segmentHint.categories.filter(c=>['Tops','Bottoms','Dresses','Outerwear','Shoes'].includes(c)):[];
+ const ca=classes(a),cb=classes(b);
+ if(!ca.length||!cb.length||ca.some(v=>cb.includes(v)))return false;
+ if(a.segmentHint?.clipped||b.segmentHint?.clipped||
+    a.segmentHint?.displayFallback==='original-crop'||
+    b.segmentHint?.displayFallback==='original-crop')return false;
+ const r=a.cropBounds,s=b.cropBounds;
+ const valid=x=>x&&['x','y','width','height'].every(k=>
+  typeof x[k]==='number'&&Number.isFinite(x[k]))&&
+  x.x>=0&&x.y>=0&&x.width>0&&x.height>0&&
+  x.x+x.width<=1.001&&x.y+x.height<=1.001;
+ if(!valid(r)||!valid(s))return false;
+ const overlap=Math.max(0,Math.min(r.x+r.width,s.x+s.width)-Math.max(r.x,s.x))*
+  Math.max(0,Math.min(r.y+r.height,s.y+s.height)-Math.max(r.y,s.y));
+ const area=r.width*r.height+s.width*s.height-overlap;
+ return area>0&&overlap/area<.01;
+}
 // An unmasked whole-outfit RGB crop includes room and other garments. It
 // remains the recognition input, but its generic photo-check palette cannot
 // be trusted as garment color. Mask-derived color set during capture survives.
@@ -565,7 +593,7 @@ async function recognizeItem(item){
   if(!item.userAdjusted)Object.assign(item,ClothingDetails.fillColor(item,trustedAutomaticPhotoColor(item,quality)));item.visualSignature=quality.signature;item.visualAspect=quality.aspect;
   const matches=[...items,...batch].filter(x=>x.id!==item.id);
   if(matches.some(x=>x.image===item.image)){if(typeof recordDeviceEvent==='function')recordDeviceEvent('exact_duplicate_skipped');batch=batch.filter(x=>x.id!==item.id);message('Exact duplicate skipped.');return true;}
-  item.possibleDuplicate=matches.some(x=>Math.abs((x.visualAspect||0)-quality.aspect)<.02&&similarPhotos(quality.signature,x.visualSignature));
+  item.possibleDuplicate=matches.some(x=>!independentlyDistinctOutfitRegions(item,x)&&Math.abs((x.visualAspect||0)-quality.aspect)<.02&&similarPhotos(quality.signature,x.visualSignature));
   if(recognitionUnavailable)throw Error('Recognition is unavailable. Try again or use Adjust.');
   item.localStatus='Identifying this garment…';render();
   let result;
