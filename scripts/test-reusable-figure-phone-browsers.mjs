@@ -184,6 +184,103 @@ try{
    assert.equal(await page.locator('#reusableFigureSelfie').getAttribute('src'),null);
    assert.equal(await page.locator('#reusableFigureSelfie').isVisible(),false);
    assert.equal(await page.locator('#reusableSelfiePosition').isVisible(),false);
+   // Richer but deliberately SYNTHETIC composition evidence. Real-photo
+   // fidelity is separately blocked by the licensed HOLD fixtures below.
+   await page.evaluate(()=>{
+    const garment=(draw)=>{
+     const c=document.createElement('canvas');c.width=100;c.height=150;
+     const g=c.getContext('2d');draw(g);
+     return c.toDataURL('image/png');
+    };
+    items.push({id:'test-open-jacket',category:'Outerwear',itemType:'Jacket',color:'Green',
+     image:garment(g=>{g.fillStyle='#205e39';g.fillRect(8,5,28,132);
+      g.fillRect(64,5,28,132);}),name:'Synthetic open jacket'});
+    items.push({id:'test-shoes',category:'Shoes',itemType:'Sneakers',color:'White',
+     image:garment(g=>{g.fillStyle='#c0cad5';g.fillRect(12,102,32,28);
+      g.fillRect(56,102,32,28);}),name:'Synthetic shoes'});
+    items.push({id:'test-dress',category:'Dresses',itemType:'Dress',color:'Purple',
+     image:garment(g=>{g.fillStyle='#77339b';g.fillRect(24,12,52,126);}),
+     name:'Synthetic dress'});
+   });
+   const layeredResults=[];
+   for(const figure of ['female','male']){
+    await page.locator('#reusableFigureChoice').selectOption(figure);
+    await page.evaluate(()=>{
+     currentBoard.slots={bottom:'test-trousers',top:'test-shirt',
+      layer2:'test-open-jacket',shoes:'test-shoes'};
+     currentBoard.layerCount=2;renderOutfitBoard();
+    });
+    await page.waitForFunction(()=>document.querySelectorAll('#reusableFigureGarments img').length===4&&
+     document.querySelector('#reusableFigureStatus').textContent.startsWith('4 owned clothing layers'));
+    const layered=await page.evaluate(async()=>{
+     const plan=ClosetReusableFigure.plan(currentBoard,items,
+      document.getElementById('reusableFigureChoice').value);
+     const images=[...document.querySelectorAll('#reusableFigureGarments img')];
+     await Promise.all(images.map(i=>i.decode()));
+     const coat=images[2];
+     const c=document.createElement('canvas');c.width=coat.naturalWidth;c.height=coat.naturalHeight;
+     const context=c.getContext('2d');context.drawImage(coat,0,0);
+     const alpha=context.getImageData(Math.floor(c.width/2),Math.floor(c.height/2),1,1).data[3];
+     return {order:plan.placements.map(p=>p.slot),count:images.length,
+      coatCenterAlpha:alpha,
+      brokenImages:images.filter(i=>!i.naturalWidth||!i.naturalHeight).length};
+    });
+    assert.deepEqual(layered.order,['bottom','top','layer2','shoes']);
+    assert.equal(layered.count,4);
+    assert.equal(layered.brokenImages,0);
+    assert.equal(layered.coatCenterAlpha,0,
+     'the open jacket must not hide the underlying shirt in the center');
+    await page.locator('#reusableFigureStage').screenshot({path:'artifacts/local-fitting/'+
+     (figure==='female'?'female':'male')+'-synthetic-four-layer.png'});
+    await page.evaluate(()=>{
+     currentBoard.slots={top:'test-dress',bottom:'test-trousers',
+      layer2:'test-open-jacket',shoes:'test-shoes'};
+     currentBoard.layerCount=2;renderOutfitBoard();
+    });
+    await page.waitForFunction(()=>document.querySelectorAll('#reusableFigureGarments img').length===2&&
+     document.querySelector('#reusableFigureStatus').textContent.startsWith('2 owned clothing layers'));
+    const dress=await page.evaluate(()=>({
+     plan:ClosetReusableFigure.plan(currentBoard,items,
+      document.getElementById('reusableFigureChoice').value).placements.map(p=>p.slot),
+     slots:Object.keys(currentBoard.slots),count:document.querySelectorAll('#reusableFigureGarments img').length
+    }));
+    assert.deepEqual(dress.plan,['top','shoes']);
+    assert.equal(dress.count,2);
+    assert.ok(!dress.slots.includes('bottom')&&!dress.slots.includes('layer2'));
+    await page.locator('#reusableFigureStage').screenshot({path:'artifacts/local-fitting/'+
+     (figure==='female'?'female':'male')+'-synthetic-dress.png'});
+    layeredResults.push({figure,layeredGarments:layered.count,dressGarments:dress.count,
+     transparentOpenJacketCenter:true,actualRealPhotoFidelityMeasured:false});
+   }
+   // A corrupted/display-uncodable transparent garment is held rather than
+   // counting it as a complete outfit or displaying an image placeholder.
+   await page.evaluate(()=>{
+    const c=document.createElement('canvas');c.width=100;c.height=150;
+    const g=c.getContext('2d');g.fillStyle='#b05811';g.fillRect(20,12,60,125);
+    items.push({id:'test-broken-display',category:'Tops',itemType:'T-shirt',
+      color:'Orange',name:'Synthetic decode failure',image:c.toDataURL('image/png')});
+    const original=HTMLImageElement.prototype.decode;
+    window.__restoreDisplayDecode=()=>{HTMLImageElement.prototype.decode=original;};
+    window.__displayFailureCount=0;
+    HTMLImageElement.prototype.decode=function(){
+     if(this.classList.contains('reusable-figure-layer')&&window.__displayFailureCount===0){
+      window.__displayFailureCount++;return Promise.reject(Error('Synthetic display decode refusal'));
+     }
+     return original.call(this);
+    };
+    currentBoard.slots={top:'test-broken-display'};currentBoard.layerCount=0;
+    renderOutfitBoard();
+   });
+   await page.waitForFunction(()=>document.querySelector('#reusableFigureStatus').textContent
+    .startsWith('0 owned clothing layers displayed; 1 held'));
+   assert.equal(await page.locator('#reusableFigureGarments img').count(),0,
+    'uncodable displayed layer must never be published');
+   await page.evaluate(()=>{window.__restoreDisplayDecode();renderOutfitBoard();});
+   await page.waitForFunction(()=>document.querySelector('#reusableFigureStatus').textContent
+    .startsWith('1 owned clothing layer displayed'));
+   assert.equal(await page.locator('#reusableFigureGarments img').count(),1,
+    'the valid garment can recover after a transient display decode failure');
+   assert.deepEqual(remoteWrites,[]);
    const photoResults=[];
    for(const fixture of licensed){
     await page.evaluate(f=>{
@@ -211,7 +308,7 @@ try{
    assert.deepEqual(remoteWrites,[]);
    assert.deepEqual(errors,[]);
    results.push({engine:title,ownedLayers:2,reusedFigures:2,optionalSelfieLocalOnly:true,
-    remotePostCount:remoteWrites.length,licensedPhotoChecks:photoResults,realPhoneHardwareTested:false});
+    remotePostCount:remoteWrites.length,layering:layeredResults,licensedPhotoChecks:photoResults,realPhoneHardwareTested:false});
    await ctx.close();
   }finally{await browser.close();}
  }

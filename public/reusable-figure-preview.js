@@ -105,6 +105,7 @@
    const query={owner,id:String(placement.itemId),source:placement.image,
     category:placement.category,primaryColor:placement.primaryColor||''};
    let prepared=previewCache?.get(query);
+   let preparedNow=false;
    if(!prepared){
     const cutout=await imagePixels(placement.image,placement.category,placement.primaryColor);
     if(cancelled())return;
@@ -122,7 +123,7 @@
     }
     if(cancelled())return;
     prepared={image,width:cutout.width,height:cutout.height};
-    previewCache?.put(query,prepared);
+    preparedNow=true;
    }
    // Preserve the calibrated female/male shoulder, waist and sole anchors,
    // without stretching garment prints or white/transparent empty margins.
@@ -135,6 +136,15 @@
    img.alt='';
    img.className='reusable-figure-layer';
    for(const key of ['left','top','width','height'])img.style[key]=rect[key]+'%';
+   // Do not advertise a garment as displayed until the final transformed
+   // PNG has actually decoded to the dimensions used for aspect fitting.
+   // A corrupt cached/display URL should be held, never a broken-image tile.
+   try{await img.decode();}catch{if(cancelled())return;counts.skipped++;continue;}
+   if(cancelled())return;
+   if(img.naturalWidth!==prepared.width||img.naturalHeight!==prepared.height){
+    counts.skipped++;continue;
+   }
+   if(preparedNow)previewCache?.put(query,prepared); // Cache only proven images.
    nextLayers.append(img);counts.shown++;
   }
   if(cancelled())return;
