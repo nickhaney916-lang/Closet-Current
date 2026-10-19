@@ -58,7 +58,7 @@ export function clothingMaskGroups(map){
   // Keep shoes paired and avoid splitting the legs of trousers or dresses.
   if(region.id===4&&islands.length===2&&
      islands.every(island=>island.count>=Math.max(12,Math.ceil(count*.25)))){
-   for(const island of islands){
+   for(const island of islands.sort((a,b)=>a.bounds.left-b.bounds.left||a.bounds.top-b.bounds.top)){
     const mask=new Uint8Array(labels.length);
     for(const i of island.pixels)mask[i]=1;
     const b=island.bounds;
