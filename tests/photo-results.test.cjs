@@ -92,7 +92,7 @@ test('automatic save revalidates a changed garment draft before opening storage'
  const js=source.slice(source.indexOf('function segmentationAllows('),source.indexOf('function applyLocalChoice('))+'\n'+source.slice(source.indexOf('async function saveIndexed('),source.indexOf('async function recognizeItem('));
  const c={batch:[],items:[],ClothingDetails:{validColor:v=>v==='Blue'},normalizeClothing:x=>x,queued:fn=>fn(),db:{transaction(){throw Error('Unsafe item reached database');}},structuredClone,Date,persistDraft(){},render(){}};
  vm.createContext(c);vm.runInContext(js,c);
- const base={id:'one',name:'Blue shirt',category:'Tops',itemType:'T-shirt',color:'Blue',segmentHint:{clipped:false,categories:['Tops'],types:['T-shirt']}};
+ const base={id:'one',outfitSourceId:'outfit-1',name:'Blue shirt',category:'Tops',itemType:'T-shirt',color:'Blue',segmentHint:{clipped:false,categories:['Tops'],types:['T-shirt']}};
  for(const mutate of [
   x=>x.segmentHint.clipped=true,
   x=>x.segmentHint.displayFallback='original-crop',
