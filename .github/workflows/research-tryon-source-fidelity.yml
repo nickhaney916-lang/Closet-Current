@@ -6,6 +6,7 @@ on:
       - 'public/ai-tryon.js'
       - 'scripts/test-ai-tryon-pilot.mjs'
       - 'tests/ai-tryon-source-identity.test.cjs'
+      - 'tests/ai-tryon-plan.test.cjs'
       - '.github/workflows/research-tryon-source-fidelity.yml'
   workflow_dispatch:
 permissions:
