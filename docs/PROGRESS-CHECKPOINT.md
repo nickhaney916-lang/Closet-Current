@@ -1,5 +1,59 @@
 # Closet Current master development checkpoint
 
+## Prepaid two-pass HTTP integration and actual local Supabase — October 19, 2026, Pacific
+
+- Isolated PR #13 continues from `26da08cc`. Runtime integration commit
+  `5914d8143c313a6a0508ee894113c2ccd65e15f9`; complete Deno options typing
+  at `b7e4524be0622ad4b593037bc0ed53a20f1199e0`. Other PR branches untouched.
+- The actual Deno entrypoint now constructs the shared HTTP handler, real
+  HMAC job signer/verifier, server-only REST RPC transport and coordinator.
+  BOTH `RESERVED_PAID_INFERENCE_APPROVED=false` and
+  `CHAINED_PAID_INFERENCE_APPROVED=false` remain in source. Environment/body
+  flags cannot approve paid calls. No endpoint or hosted SQL was deployed.
+- A two-pass root atomically reserves TWO quota units before the first POST;
+  continuation uses its prepaid slot without an extra quota unit. A SHA-256
+  of the second selected crop binds its slot. Tests reject a one-unit budget,
+  changed second image, owner/figure/category changes and reused predecessor.
+  Reserved/unknown slots retain quota without automatic expiry/refund.
+- Client preflights BOTH source crops before any submission. Stable request
+  IDs and rendered-input digests support identical retry/reload while the last
+  session record survives; no source pixels stored in sessionStorage. Image
+  hashes are computed individually to avoid constructing a giant photo JSON.
+  Unsupported shoe/layer changes reuse the provider request identity. Recovery
+  after cleared/denied storage or switching attempts is NOT guaranteed.
+- HTTP checks online authenticated owner, origin/method, actual 8 MB body
+  limit independent of Content-Length, user-bound signed predecessor completion
+  and server-chosen model input. Transport/provider errors are sanitized.
+- Full local build/suite: **846 total, 843 passed, 0 failed, 3 skipped**.
+  Eleven HTTP integration tests and two new budget checks pass. Initial CI
+  exposed incomplete inferred JavaScript option types; final explicit handler
+  interface resolves Deno check without weakening runtime checks.
+- Actual local Supabase integration PASSED in jobs `118115407134` and
+  `118116536993`: pinned CLI 2.121.0 stack, actual SDK 2.75.0 Auth sign-in/RPC,
+  real Auth verification and REST RPC, real loopback HTTP, prepaid continuation
+  at global cap, different-ID continuation replay, foreign-account rejection,
+  and unknown-outcome retry hold. Synthetic identities/containers destroyed.
+  Hosted Supabase=false, actual provider calls=0, actual phone=false.
+- [Final CI run 39269418763](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39269418763)
+  at `b7e4524b` passed ALL THREE jobs: build, 843 Node tests passed/0 failed/
+  3 skipped, Deno check, actual PostgreSQL races, actual local Supabase Auth/
+  SDK/RPC plus loopback HTTP, single-garment mock, Pixel Chromium/iPhone WebKit
+  emulation and owned-only Style this save/reload. Both emulated devices report
+  stable request IDs, both sources preflighted, whole-outfit budget requested,
+  corrupt/stale results blocked and zero page errors. Temporary services were
+  destroyed. This is local software/emulation evidence, not real model fidelity.
+- Updated ledger integration guide and phone packet. Remaining: approved
+  hosted migration/configuration/privilege review, operator reconciliation,
+  idempotency-preserving retention, pilot limits and deliberate new-generation
+  consent/recovery UX, provider currency cap, licensed assets and privacy terms,
+  protected staging, approved actual model fidelity and physical Android/iPhone.
+  The shared handler runs through Node loopback HTTP locally; this does not
+  prove a deployed Deno gateway or physical device behavior.
+- Validation tracks remain **2/4 (50%)**, not overall product/accuracy progress.
+  Live inference=0; real phones=0/2. No merge/deployment/costs/customer photos/
+  Drive Duel change. Original-photo recognition/storage/indexing untouched.
+
+
 ## Staged durable try-on submission ledger — October 19, 2026, Pacific
 
 - Continued isolated PR #13 from `8206c500`; code commit

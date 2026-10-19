@@ -44,9 +44,11 @@ for those scenarios and does not satisfy hardware evidence requirements.
 Required first: durable per-account quotas and atomic idempotency reservations
 for starts AND continuations; provider-wide spend cap; licensed hosted model
 assets; approved third-party disclosures, consent and retention; staging review.
-The current signed predecessor token does not prevent repeated stage-one-token
-replay from submitting duplicate continuations if the hard disable were removed.
-Do not enable it as a substitute for durable idempotency.
+The undeployed HTTP/ledger integration now reserves both passes before the
+first job, binds the second crop digest, and rejects continuation replays under
+new request IDs. These controls have local tests; the hosted ledger is still
+unprovisioned. A signed predecessor alone is not a substitute for that ledger.
+Both submission and chaining approval constants remain false.
 
 After approval and controls, test at least three contrasting real owned pairs
 for both standard figures in two poses. Record original and stage-output
@@ -61,8 +63,10 @@ For each stage, change garment/figure/account during the pending result;
 background and reconnect the phone; inspect zero silent retries and no obsolete
 image display. Exercise provider failure, undecodable output and timeout.
 A timed-out HTTP request can still leave a billable provider job running:
-manual retries require checking the provider job/ledger first. Current client
-network abortion is not provider cancellation and not durable deduplication.
+a retry with the same retained browser request IDs can recover a recorded job.
+If those references were lost or inputs changed, check the provider ledger
+before creating a new generation. Client network abortion is not provider
+cancellation. Browser request-ID recovery has not been tested on real phones.
 
 ## Evidence and completion
 
