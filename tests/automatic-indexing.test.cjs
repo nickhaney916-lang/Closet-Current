@@ -33,6 +33,63 @@ test('flat frame is removed before contacting the model',async()=>{
 test('an exact duplicate of a saved or queued photo is skipped',async()=>{
  const {c}=setup();c.candidate('one');assert.equal(c.candidate('one'),false);await done(c);assert.equal(c.candidate('one'),false);assert.equal(c.items.length,1);
 });
+
+test('identical cleaned previews from two original-photo regions are retained for review, not silently dropped',async()=>{
+ const {c,stored}=setup({quality:async()=>({blank:false,signature:[40,40,40],aspect:1})});
+ const original='data:image/jpeg;base64,ORIGINALSAMEHIGHRES';
+ const options=box=>({outfitSourceId:'photo-1',
+  recognitionPhoto:{image:'data:image/jpeg;base64,ORIGINALREGION'+box.x},
+  originalPhoto:{image:original},cropBounds:box,
+  segmentHint:{categories:['Tops','Outerwear'],types:[],clipped:false}});
+ const first=options({x:.08,y:.15,width:.32,height:.26});
+ const second=options({x:.43,y:.15,width:.31,height:.28});
+ assert.equal(c.candidate('identical-cleaned-preview',first),true);
+ assert.equal(c.candidate('identical-cleaned-preview',second),true,
+  'physical pieces at different locations are not duplicate display images');
+ await done(c);
+ assert.equal(stored.length,0,'ambiguous matching display images must not auto-save');
+ assert.equal(c.items.length,0);
+ assert.equal(c.batch.length,2,'both physical candidates remain in review');
+ assert.ok(c.batch.every(x=>x.possibleDuplicate===true));
+ assert.ok(c.batch.every(x=>x.originalPhoto.image===original));
+ assert.notEqual(c.batch[0].cropBounds.x,c.batch[1].cropBounds.x);
+});
+test('a repeat of the exact original source region is suppressed, but another original photo is retained',async()=>{
+ const {c,stored}=setup({quality:async()=>({blank:false,signature:[22,22,22],aspect:1})});
+ const base={outfitSourceId:'group',originalPhoto:{image:'data:image/jpeg;base64,SCENEA'},
+  recognitionPhoto:{image:'data:image/jpeg;base64,REGIONA'},
+  cropBounds:{x:.2,y:.3,width:.25,height:.3},
+  segmentHint:{categories:['Bottoms'],types:['Skirt'],clipped:false}};
+ assert.equal(c.candidate('identical-preview',base),true);
+ assert.equal(c.candidate('identical-preview',{...base}),false,
+  'same source region is a genuine repeated worker result');
+ assert.equal(c.candidate('identical-preview',{...base,
+  outfitSourceId:'group-2'}),false,
+  'recapturing the identical full original under a new capture ID is still a repeat');
+ assert.equal(c.candidate('identical-preview',{...base,outfitSourceId:'new-photo',
+  originalPhoto:{image:'data:image/jpeg;base64,SCENEB'}}),true,
+  'identical cleaned preview from independently captured originals must not erase an article');
+ await done(c);
+ assert.equal(stored.length,0);
+ assert.equal(c.batch.length,2);
+ assert.ok(c.batch.every(x=>x.possibleDuplicate));
+ assert.notEqual(c.batch[0].originalPhoto.image,c.batch[1].originalPhoto.image);
+});
+test('same-looking standalone photo remains an exact duplicate, but original-backed outfit comparison is not lost',async()=>{
+ const {c,stored}=setup({quality:async()=>({blank:false,signature:[56,57,58],aspect:1})});
+ assert.equal(c.candidate('one-shot-display'),true);
+ assert.equal(c.candidate('one-shot-display'),false,'single original still uses exact duplicate suppression');
+ const other={outfitSourceId:'genuine-outfit',originalPhoto:{image:'data:image/jpeg;base64,ORIGINALSCENE'},
+  recognitionPhoto:{image:'data:image/jpeg;base64,ORIGINALCROP'},
+  cropBounds:{x:.1,y:.1,width:.22,height:.3},
+  segmentHint:{categories:['Tops'],types:[],clipped:false}};
+ assert.equal(c.candidate('one-shot-display',other),true,
+  'a whole-scene source is independently reviewable beside a same-looking standalone item');
+ await done(c);
+ assert.equal(stored.length,0);
+ assert.equal(c.batch.length,2);
+ assert.ok(c.batch.some(x=>x.outfitSourceId==='genuine-outfit'));
+});
 test('lookalikes are flagged and retained rather than silently discarded',async()=>{
  const {c}=setup({quality:async()=>({blank:false,signature:[100,200,50],aspect:1})});c.candidate('one');await done(c);c.candidate('two');await done(c);
  assert.equal(c.items.length,1);assert.equal(c.batch.length,1);assert.equal(c.batch[0].possibleDuplicate,true);assert.match(c.batch[0].localStatus,/Possible duplicate/);
