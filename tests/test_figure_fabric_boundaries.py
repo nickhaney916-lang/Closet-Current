@@ -86,7 +86,7 @@ class DecorativeBindingTests(unittest.TestCase):
         for upper in [False,True]:
             for n in range(64):
                 angle=2*math.pi*n/64
-                coords.append([.22*math.cos(angle),-.12,
+                coords.append([.22*math.cos(angle),-.12+.16*(1-math.cos(angle)),
                                1.47+.008*math.sin(3*angle) if upper else .90])
         faces=[[n,(n+1)%64,64+(n+1)%64,64+n] for n in range(64)]
         return coords,faces
