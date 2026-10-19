@@ -20,7 +20,7 @@
    if(i<0)return null;
    const [hit]=entries.splice(i,1);entries.push(hit);
    return Object.freeze({image:hit.result,width:hit.width,height:hit.height,
-    silhouetteCenter:hit.silhouetteCenter});
+    ...(hit.silhouetteCenter!==null?{silhouetteCenter:hit.silhouetteCenter}:{})});
   }
   function put(query,result){
    if(!query||!result||!forOwner(query.owner))return false;
