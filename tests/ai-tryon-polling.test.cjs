@@ -6,6 +6,7 @@ function setup(responses){
  const calls=[],decoded=[];
  const c={window:{AiTryOnPlan:{validImage:()=>true}},setTimeout:fn=>{fn();return 1;},decodeTryOnImage:async x=>decoded.push(x),
   tryOnRequest:async(_,body)=>{calls.push(body);return responses.shift();}};
+ c.tryOnPollDelay=()=>new Promise(resolve=>c.setTimeout(resolve));
  vm.createContext(c);vm.runInContext(one,c);return {c,calls,decoded};
 }
 test('every status poll uses the original signed token even when processing replies omit or substitute it',async()=>{

@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "status": "not-run",
+  "testKind": "actual-provider",
+  "branchSha": null,
+  "stagingOrigin": null,
+  "testedAtWithOffset": null,
+  "liveInferenceAuthorized": false,
+  "ownerApprovalReferences": [],
+  "actualProviderCalls": 0,
+  "prerequisites": {
+    "licensedModelAssetsVerified": null,
+    "durableQuotasAndIdempotencyVerified": null,
+    "providerSpendCapVerified": null,
+    "consentAndRetentionApproved": null
+  },
+  "cases": [],
+  "privateEvidenceReferences": [],
+  "failures": [],
+  "notes": "Unperformed. After separate owner authorization, record at least three contrasting owned pairs, both figures, two poses each. Each case requires pairId, figure, pose, four source/output SHA-256 digests, topPreservedAfterSecondPass, finalGarmentChecks for top/bottom category/color/pattern/fabric/seams/shapeAndLength, distinct operatorAlias/reviewerAlias, independentReviewerVerdict and private qa: evidence references. Never upload photos, names, account IDs or tokens in a shared record."
+}

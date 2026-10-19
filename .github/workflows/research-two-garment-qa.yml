@@ -1,7 +1,7 @@
 name: Research two-garment AI + device-emulated quality gates
 on:
   push:
-    branches: [research/true-multigarment-ai-tryon-20261018, work/multigarment-integrity-phone-qa-20261019]
+    branches: [research/true-multigarment-ai-tryon-20261018, work/multigarment-integrity-phone-qa-20261019, fix/tryon-ledger-recovery-compatibility-20261019]
     paths:
       - 'public/ai-tryon.js'
       - 'public/ai-tryon-plan.js'
@@ -10,8 +10,13 @@ on:
       - 'scripts/test-tryon-ledger-postgres.mjs'
       - 'scripts/test-local-supabase-tryon-http.mjs'
       - 'tests/ai-tryon-*.test.*'
+      - 'tests/deno/ai-tryon-runtime.test.mjs'
+      - 'benchmark/tryon-acceptance-evidence.mjs'
+      - 'benchmark/MULTIGARMENT-*-TEMPLATE.json'
+      - 'scripts/audit-tryon-acceptance-evidence.mjs'
       - 'scripts/test-multigarment-device-emulation.mjs'
       - 'scripts/test-ai-tryon-pilot.mjs'
+      - 'scripts/test-style-my-new-item-mobile.mjs'
       - '.github/workflows/research-two-garment-qa.yml'
   workflow_dispatch:
 permissions:
@@ -29,11 +34,18 @@ jobs:
         run: node scripts/build.mjs
       - name: Full application and multi-pass provider protocol regression suite
         run: node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Record unperformed hardware/live-AI evidence without granting release approval
+        run: |
+          mkdir -p test-results/two-garment
+          node scripts/audit-tryon-acceptance-evidence.mjs --branch-sha "$GITHUB_SHA" > test-results/two-garment/acceptance-evidence.json
+          node --input-type=module -e "import fs from 'node:fs';const r=JSON.parse(fs.readFileSync('test-results/two-garment/acceptance-evidence.json'));if(r.status!=='blocked'||r.providerActivationAllowed!==false||r.productionReleaseApproved!==false||r.actualGarmentAccuracy!==null)throw Error('Unperformed evidence must remain blocked')"
       - uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
       - name: Type check real Edge Function and signed predecessor protocol without deploying
         run: deno check supabase/functions/ai-try-on/index.ts
+      - name: Actual Deno loopback HTTP and disabled source entrypoint; external network forbidden
+        run: deno test --allow-net=127.0.0.1 --allow-env tests/deno/ai-tryon-runtime.test.mjs
       - name: Static build and device-emulated browser prerequisites
         run: |
           node scripts/build.mjs
@@ -42,9 +54,22 @@ jobs:
       - name: Existing paid-provider-mocked single garment flow
         run: node scripts/test-ai-tryon-pilot.mjs
       - name: Multi-garment synthetic provider sequencing on Pixel Chromium and iPhone WebKit emulation
+        env:
+          TRYON_QA_OUTPUT: test-results/two-garment
         run: node scripts/test-multigarment-device-emulation.mjs
       - name: Existing Style this mobile viewport and closet-owned changes
         run: node scripts/test-style-my-new-item-mobile.mjs
+      - name: Full-app Style this in WebKit touch viewport
+        env:
+          STYLE_BROWSER: webkit
+        run: node scripts/test-style-my-new-item-mobile.mjs
+      - name: Upload synthetic browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ledger-recovery-emulated-qa
+          path: test-results/two-garment
+          if-no-files-found: ignore
 
   disposable-submission-ledger:
     runs-on: ubuntu-latest

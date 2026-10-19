@@ -1,5 +1,36 @@
 # Closet Current master development checkpoint
 
+## Compatible prepaid ledger and client recovery — October 19, 2026 Pacific
+
+- [Draft PR #17](https://github.com/nickhaney916-lang/Closet-Current/pull/17)
+  is an isolated follow-up to PR #13, adapting PR #14's client recovery without
+  merging branches. Code `ac423d8e98f35e6845fff7e0d55da46d3bc70f87`.
+- PR #13 already stages durable quotas and duplicate/parent replay protection;
+  these are not absent everywhere. PR #17 preserves the prepaid pair and
+  selected second-photo digest, stable request UUIDs and account-bound source
+  checks while adding abortable/bounded client work and status-only retries.
+- Local build/full suite: **857 total, 854 passed, 0 failed, 3 skipped**.
+  [CI 39275497224](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39275497224)
+  **passed all three jobs**: build/854 Node passes/0 failures/3 skips/Deno,
+  actual disposable PostgreSQL race/replay/quota checks, actual built-app Pixel
+  Chromium/iPhone WebKit emulation and full Style this in both engines, plus
+  actual local Supabase CLI/SDK/Auth/RPC and loopback HTTP. Both emulated
+  profiles confirmed prepaid pair/stable request IDs, status recovery without
+  new generation, cancellation, unchanged photos and zero page errors.
+- Local HTTP/SQL checks verified global cap, second-photo binding, accepted
+  replay, changed-ID continuation replay, foreign-token denial and held unknown
+  outcomes. Temporary services/identities cleaned up. Hosted Supabase=false,
+  actual provider calls=0, physical phones=0. The HTTP host is Node, not a
+  deployed Deno gateway. Browser evidence artifact: `12196524200`.
+- Handoff: `docs/TRYON-CONSOLIDATED-HANDOFF-20261019.md`. PR #7/#11 are included
+  ancestors; PR #10 remains separate. Existing PR source branches were not
+  modified. Server/SQL files are unchanged from PR #13.
+- Both paid approval constants remain false and quota defaults disabled/zero.
+  Hosted provisioning, reconciliation/retention and explicit new-generation
+  operations, privacy/assets/financial approval, actual AI fidelity and physical
+  phones remain release gates. No merge/deploy, costs, hosted SQL, source-photo
+  edits, customer uploads or Drive Duel changes.
+
 ## Prepaid two-pass HTTP integration and actual local Supabase — October 19, 2026, Pacific
 
 - Isolated PR #13 continues from `26da08cc`. Runtime integration commit
