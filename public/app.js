@@ -375,6 +375,10 @@ function exactlyRepeatedCapturedItem(existing,proposed){
  if(existing?.image!==proposed?.image)return false;
  const validPhoto=x=>typeof x==='string'&&x.startsWith('data:image/jpeg;base64,');
  const newSource=proposed.originalPhoto?.image;
+ // A standalone original and an outfit-derived display may look pixel-for-
+ // pixel identical. Neither direction proves the same physical item. Keep
+ // both and let the duplicate-review gate decide; never depend on queue order.
+ if(!proposed.outfitSourceId&&existing?.outfitSourceId)return false;
  if(!proposed.outfitSourceId||!validPhoto(newSource)||
     !validPhoto(proposed.recognitionPhoto?.image))return true;
  // Old single-item or incomplete records can't prove that the new garment
