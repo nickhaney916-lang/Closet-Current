@@ -107,6 +107,14 @@ async function check(engine,device,label){
   assert.match(await page.locator('#tryOnStatus').innerText(),/could not be decoded/);
   assert.equal(await page.locator('#tryOnImage').isHidden(),true);
   corruptStage=null;
+  // Invalid stored crop bytes must be rejected before a billable start.
+  const startsBefore=calls.filter(x=>x.action==='start').length;
+  await page.evaluate(()=>{items[0].image='data:image/jpeg;base64,'+'A'.repeat(160);onTryOnBoardChanged();});
+  await page.locator('#tryOnGenerate').click();
+  await page.waitForFunction(()=>!tryOnBusy,null,{timeout:5000});
+  assert.match(await page.locator('#tryOnStatus').innerText(),/Selected garment image could not be decoded/);
+  assert.equal(calls.filter(x=>x.action==='start').length,startsBefore);
+  await page.evaluate(x=>{items[0].image=x.top;onTryOnBoardChanged();},images);
   const before=calls.length;
   await page.evaluate(()=>{items[1].image=items[0].image;onTryOnBoardChanged()});
   assert.equal(await page.locator('#tryOnImage').isHidden(),true,
@@ -128,7 +136,7 @@ async function check(engine,device,label){
    syntheticStarts:calls.filter(x=>x.action==='start').length,
    syntheticContinues:calls.filter(x=>x.action==='continue').length,
    staleResultBlocked:true,stablePollingTokens:true,corruptIntermediateBlocked:true,
-   corruptFinalBlocked:true,failedRegenerationCleared:true,pageErrors:errors.length};
+   corruptFinalBlocked:true,corruptSourceBlocked:true,failedRegenerationCleared:true,pageErrors:errors.length};
  }finally{await browser.close();}
 }
 const results=[];

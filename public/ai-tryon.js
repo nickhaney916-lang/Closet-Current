@@ -44,14 +44,14 @@ function onTryOnBoardChanged(){
  $('tryOnGenerate').disabled=tryOnBusy||!tryOnReady||!window.AiTryOnPlan?.plan(currentBoard,items).steps.length;
 }
 async function tryOnRequest(token,body){
- const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),25000);
+ const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),55000);
  try{return await fetch('https://hlkgymugtfbirlpunsra.supabase.co/functions/v1/ai-try-on',{
   method:'POST',headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},
   body:JSON.stringify(body),cache:'no-store',signal:controller.signal
  }).then(async response=>{
   const result=await response.json().catch(()=>({}));
-  if(!response.ok)throw Error(result.error||'AI try-on is unavailable');
   if(!result||typeof result!=='object'||Array.isArray(result))throw Error('Invalid try-on response');
+  if(!response.ok)throw Error(result.error||'AI try-on is unavailable');
   return result;
  });}catch(error){
   if(controller.signal.aborted)throw Error('AI request timed out. No automatic retry was made; a submitted job may still finish.');
@@ -60,16 +60,17 @@ async function tryOnRequest(token,body){
 }
 // Validate actual browser decoding before a second paid pass or visible output.
 // A base64-shaped string alone does not prove usable image bytes.
-async function decodeTryOnImage(value){
- if(!window.AiTryOnPlan.validImage(value))throw Error('Generated try-on image is invalid');
+async function decodeTryOnImage(value,label='Generated try-on'){
+ const message=label+' image could not be decoded';
+ if(!window.AiTryOnPlan.validImage(value))throw Error(label+' image is invalid');
  const probe=new Image();probe.src=value;
  let timer;
  try{
   await Promise.race([probe.decode(),new Promise((_,reject)=>{
-   timer=setTimeout(()=>reject(Error('Generated try-on image could not be decoded')),10000);
+   timer=setTimeout(()=>reject(Error(message)),10000);
   })]);
   if(!probe.naturalWidth||!probe.naturalHeight)throw Error('Empty generated image');
- }catch{throw Error('Generated try-on image could not be decoded');}
+ }catch{throw Error(message);}
  finally{clearTimeout(timer);probe.removeAttribute('src');}
 }
 // A status check never starts an AI generation or uploads a clothing photo.
@@ -140,6 +141,8 @@ async function generateTryOn(){
   for(let i=0;i<enabledSteps.length;i++){
    if(!isCurrent())return;
    const step=enabledSteps[i];
+   await decodeTryOnImage(step.image,'Selected garment');
+   if(!isCurrent())return;
    $('tryOnStatus').textContent='Generating AI try-on · '+(i+1)+' of '+enabledSteps.length+'…';
    // "continue" is allowed only when the server verifies a completed,
    // same-user/same-figure prior job and is independently approved for

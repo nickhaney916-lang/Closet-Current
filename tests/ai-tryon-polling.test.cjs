@@ -41,3 +41,33 @@ test('poll limit stops without resubmitting a billable start',async()=>{
  assert.equal(calls.filter(x=>x.action==='start').length,1);
  assert.equal(calls.length,33);
 });
+
+const requestSource=source.slice(source.indexOf('async function tryOnRequest('),source.indexOf('// Validate actual browser decoding'));
+function requestEnvironment(fetch){
+ const timers=new Map();let id=0;
+ const c={fetch,AbortController,setTimeout:fn=>{timers.set(++id,fn);return id;},clearTimeout:n=>timers.delete(n)};
+ vm.createContext(c);vm.runInContext(requestSource,c);return {c,timers};
+}
+test('request timeout aborts once, explains uncertain job outcome and never retries',async()=>{
+ let calls=0;
+ const {c,timers}=requestEnvironment(async(_,options)=>{
+  calls++;return new Promise((_,reject)=>options.signal.addEventListener('abort',()=>reject(Error('aborted'))));
+ });
+ const pending=c.tryOnRequest('synthetic-auth',{action:'start'});
+ for(const fn of timers.values())fn();
+ await assert.rejects(pending,/No automatic retry.*may still finish/);
+ assert.equal(calls,1);assert.equal(timers.size,0);
+});
+test('malformed service replies fail safely and release the timeout',async()=>{
+ for(const value of [null,[],false,'unexpected']){
+  const {c,timers}=requestEnvironment(async()=>({ok:true,json:async()=>value}));
+  await assert.rejects(c.tryOnRequest('synthetic-auth',{action:'status'}),/Invalid try-on response/);
+  assert.equal(timers.size,0);
+ }
+});
+test('non-success response is surfaced without automatic resubmission',async()=>{
+ let calls=0;
+ const {c,timers}=requestEnvironment(async()=>{calls++;return {ok:false,json:async()=>({error:'Synthetic unavailable'})};});
+ await assert.rejects(c.tryOnRequest('synthetic-auth',{action:'continue'}),/Synthetic unavailable/);
+ assert.equal(calls,1);assert.equal(timers.size,0);
+});
