@@ -104,6 +104,29 @@ try{
     return defects;
    });
    assert.equal(alphaProbe,0,'no triangle cracks, doubled alpha or dark interpolation halos');
+   const warpFidelity=await page.evaluate(()=>{
+    const w=100,h=150,source=new Uint8ClampedArray(w*h*4);
+    for(let y=12;y<138;y++)for(let x=12;x<88;x++)
+     source.set([46,70,185,255],(y*w+x)*4);
+    for(let y=45;y<75;y++)for(let x=42;x<58;x++)
+     source.set([235,165,50,255],(y*w+x)*4);
+    const original=new Uint8ClampedArray(source);
+    const valid=ClosetGarmentWarp.rasterize(source,ClosetGarmentWarp.makeMesh(w,h,'Tops'));
+    const good=ClosetGarmentWarp.validateWarp(source,valid,w,h);
+    const damaged=new Uint8ClampedArray(valid);
+    for(let y=45;y<75;y++)for(let x=42;x<58;x++)
+     damaged.set([50,230,80,255],(y*w+x)*4);
+    const bad=ClosetGarmentWarp.validateWarp(source,damaged,w,h);
+    let unchanged=0;for(let i=0;i<source.length;i++)if(source[i]===original[i])unchanged++;
+    return {good:good.accepted,bad:bad.accepted,reason:bad.reason,
+     unchanged,bytes:source.length,realismVerified:good.fabricFitOrRealismVerified};
+   });
+   assert.equal(warpFidelity.good,true,'normal local mesh remains available');
+   assert.equal(warpFidelity.bad,false,'damaged central prints must not pass for display');
+   assert.equal(warpFidelity.reason,'central-texture-or-seam-corrupted');
+   assert.equal(warpFidelity.unchanged,warpFidelity.bytes,'input pixels remain untouched');
+   assert.equal(warpFidelity.realismVerified,false,'synthetic guard is not realism proof');
+
    assert.equal(warpedState.output.length,2);
    const proportions=await page.evaluate(async()=>{
     const images=[...document.querySelectorAll('#reusableFigureGarments img')];

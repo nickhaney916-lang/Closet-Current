@@ -113,6 +113,46 @@
   }
   return out;
  }
+ // Do not render a stretched output if the deterministic mesh unexpectedly
+ // deletes visible garment material or changes central prints/buttons/seams.
+ // This is a *conservative display safety check*, never an image quality score.
+ // A rejected warp falls back to the unchanged transparent cutout upstream.
+ function validateWarp(source,output,width,height){
+  const hold=reason=>Object.freeze({accepted:false,reason,sourcePixelsChanged:false,
+   fabricFitOrRealismVerified:false});
+  if(!Number.isInteger(width)||!Number.isInteger(height)||width<24||height<24||
+    width*height>MESH_LIMIT||
+    !(source instanceof Uint8Array||source instanceof Uint8ClampedArray)||
+    !(output instanceof Uint8Array||output instanceof Uint8ClampedArray)||
+    source.length!==width*height*4||output.length!==source.length)
+   return hold('invalid-warp-pixels');
+  let inputAlpha=0,outputAlpha=0,centerCompared=0,centerCorrupted=0,visibleSource=0;
+  const minX=Math.floor(width*.28),maxX=Math.ceil(width*.72);
+  const minY=Math.floor(height*.08),maxY=Math.ceil(height*.92);
+  for(let y=0;y<height;y++)for(let x=0;x<width;x++){
+   const k=(y*width+x)*4,sa=source[k+3],da=output[k+3];
+   inputAlpha+=sa;outputAlpha+=da;
+   if(sa>=24)visibleSource++;
+   if(x<minX||x>=maxX||y<minY||y>=maxY||sa<200)continue;
+   centerCompared++;
+   // Central half of every supported mesh has identity geometry. A large
+   // change here is a rasterizer issue, not improved drape.
+   if(da<sa-16||Math.max(
+      Math.abs(output[k]-source[k]),
+      Math.abs(output[k+1]-source[k+1]),
+      Math.abs(output[k+2]-source[k+2]))>20)centerCorrupted++;
+  }
+  if(visibleSource<width*height*.015||inputAlpha===0)
+   return hold('no-trustworthy-transparent-garment');
+  const ratio=outputAlpha/inputAlpha;
+  if(!Number.isFinite(ratio)||ratio<.64||ratio>1.08)
+   return hold('implausible-visible-fabric-change');
+  if(centerCompared>=12&&centerCorrupted/centerCompared>.015)
+   return hold('central-texture-or-seam-corrupted');
+  return Object.freeze({accepted:true,reason:'conservative-local-warp-integrity',
+   visibleAlphaRatio:ratio,centerCompared,centerCorrupted,
+   sourcePixelsChanged:false,fabricFitOrRealismVerified:false});
+ }
  function warpTransparentImage(image,category,canvas){
   if(!image||!canvas||!image.naturalWidth||!image.naturalHeight||
      typeof canvas.getContext!=='function')return null;
@@ -126,10 +166,12 @@
    ctx.drawImage(image,0,0);
    const pixels=ctx.getImageData(0,0,mesh.width,mesh.height);
    const output=rasterize(pixels.data,mesh);if(!output)return null;
+   const quality=validateWarp(pixels.data,output,mesh.width,mesh.height);
+   if(!quality.accepted)return null; // Caller retains intact original cutout.
    pixels.data.set(output);ctx.putImageData(pixels,0,0);
    return canvas.toDataURL('image/png');
   }catch{return null;}
  }
- root.ClosetGarmentWarp=Object.freeze({profiles,alphaBounds,hasAmbiguousNeck,makeMesh,affine,rasterize,warpTransparentImage});
+ root.ClosetGarmentWarp=Object.freeze({profiles,alphaBounds,hasAmbiguousNeck,makeMesh,affine,rasterize,validateWarp,warpTransparentImage});
  if(typeof module!=='undefined')module.exports=root.ClosetGarmentWarp;
 })(typeof window!=='undefined'?window:globalThis);
