@@ -1,0 +1,44 @@
+name: Research two-garment AI + device-emulated quality gates
+on:
+  push:
+    branches: [research/true-multigarment-ai-tryon-20261018]
+    paths:
+      - 'public/ai-tryon.js'
+      - 'public/ai-tryon-plan.js'
+      - 'supabase/functions/ai-try-on/**'
+      - 'tests/ai-tryon-*.test.*'
+      - 'scripts/test-multigarment-device-emulation.mjs'
+      - 'scripts/test-ai-tryon-pilot.mjs'
+      - '.github/workflows/research-two-garment-qa.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  multi-garment-flow:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build app artifacts before tests (PWA checks require dist)
+        run: node scripts/build.mjs
+      - name: Full application and multi-pass provider protocol regression suite
+        run: node --test tests/*.test.cjs tests/*.test.mjs
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Type check real Edge Function and signed predecessor protocol without deploying
+        run: deno check supabase/functions/ai-try-on/index.ts
+      - name: Static build and device-emulated browser prerequisites
+        run: |
+          node scripts/build.mjs
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium webkit
+      - name: Existing paid-provider-mocked single garment flow
+        run: node scripts/test-ai-tryon-pilot.mjs
+      - name: Multi-garment synthetic provider sequencing on Pixel Chromium and iPhone WebKit emulation
+        run: node scripts/test-multigarment-device-emulation.mjs
+      - name: Existing Style this mobile viewport and closet-owned changes
+        run: node scripts/test-style-my-new-item-mobile.mjs

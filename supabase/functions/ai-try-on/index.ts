@@ -1,7 +1,7 @@
 // INTERNAL PILOT ONLY. Never publish FASHN_API_KEY to the static app.
 // Production must add durable per-user rate limits and a provider spending cap
 // before admitting the general public. This function defaults to disabled.
-import {validateStart,providerRequest,safeJobId,normalizeStatus} from './protocol.mjs';
+import {validateStart,validateContinuation,completedIntermediateImage,providerRequest,safeJobId,normalizeStatus} from './protocol.mjs';
 
 const text=(value:string)=>new TextEncoder().encode(value);
 const b64url=(bytes:Uint8Array)=>btoa(String.fromCharCode(...bytes)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
@@ -15,8 +15,8 @@ async function signer(){
  if(raw.length<32)throw Error('Pilot signing secret missing');
  return await crypto.subtle.importKey('raw',text(raw),{name:'HMAC',hash:'SHA-256'},false,['sign','verify']);
 }
-async function signPrediction(id:string,uid:string){
- const payload=b64url(text(JSON.stringify({id,uid,time:Date.now()})));
+async function signPrediction(id:string,uid:string,figure:string,category:string,step:1|2){
+ const payload=b64url(text(JSON.stringify({id,uid,figure,category,step,time:Date.now()})));
  const signature=await crypto.subtle.sign('HMAC',await signer(),text(payload));
  return payload+'.'+b64url(new Uint8Array(signature));
 }
@@ -25,9 +25,16 @@ async function readPrediction(token:string,uid:string){
  const [payload,signature]=token.split('.');
  if(!await crypto.subtle.verify('HMAC',await signer(),fromB64url(signature),text(payload)))throw Error('Invalid prediction token');
  const value=JSON.parse(new TextDecoder().decode(fromB64url(payload)));
- if(value.uid!==uid||!safeJobId(value.id)||!Number.isFinite(value.time)||Date.now()-value.time<0||Date.now()-value.time>10*60000)throw Error('Prediction no longer available');
- return value.id as string;
+ if(value.uid!==uid||!safeJobId(value.id)||!['female','male'].includes(value.figure)||
+  !['tops','bottoms','one-pieces'].includes(value.category)||![1,2].includes(value.step)||
+  !Number.isFinite(value.time)||Date.now()-value.time<0||Date.now()-value.time>10*60000)
+  throw Error('Prediction no longer available');
+ return value as {id:string,figure:'female'|'male',category:'tops'|'bottoms'|'one-pieces',step:1|2};
 }
+// Hard stop: setting an environment flag alone must NEVER activate a second
+// paid inference. Persistent idempotency/quota, consent and held-out fidelity
+// approval are still missing. An owner-reviewed code change is required.
+const CHAINED_PAID_INFERENCE_APPROVED=false;
 const allowedOrigin=()=>Deno.env.get('TRYON_ALLOWED_ORIGIN')||'https://nickhaney916-lang.github.io';
 async function userFromToken(jwt:string){
  const url=Deno.env.get('SUPABASE_URL');
@@ -78,8 +85,10 @@ Deno.serve(async request=>{
    (Deno.env.get('TRYON_JOB_SIGNING_KEY')||'').length>=32&&
    !!Deno.env.get('TRYON_FEMALE_MODEL_IMAGE_URL')&&
    !!Deno.env.get('TRYON_MALE_MODEL_IMAGE_URL');
+  const multiReady=enabled&&allowedAccount&&CHAINED_PAID_INFERENCE_APPROVED&&
+   Deno.env.get('TRYON_MULTI_ENABLED')==='true';
   if(body.action==='availability')
-   return json({status:enabled&&allowedAccount?'ready':'unavailable'},200,allowed);
+   return json({status:enabled&&allowedAccount?'ready':'unavailable',multiGarmentReady:multiReady},200,allowed);
   if(!enabled||!allowedAccount)
    return json({error:'AI try-on is not enabled for this account'},403,allowed);
   const secret=Deno.env.get('FASHN_API_KEY')!;
@@ -88,11 +97,27 @@ Deno.serve(async request=>{
    const modelImage=Deno.env.get(input.figure==='female'?'TRYON_FEMALE_MODEL_IMAGE_URL':'TRYON_MALE_MODEL_IMAGE_URL')||'';
    const response=await provider('/v1/run','POST',providerRequest({...input,modelImage}),secret);
    if(!safeJobId(response?.id))throw Error('Provider rejected try-on');
-   return json({status:'processing',token:await signPrediction(response.id,user)},200,allowed);
+   return json({status:'processing',token:await signPrediction(response.id,user,input.figure,input.category,1)},200,allowed);
+  }
+  if(body.action==='continue'){
+   if(!multiReady)return json({error:'Multi-garment rendering is not approved'},403,allowed);
+   const prior=await readPrediction(body.previousToken,user);
+   const input=validateContinuation(body,prior);
+   // Proof of predecessor completion comes from the provider, never a client
+   // supplied model photo. One top + one bottom max; chained outfit fidelity
+   // remains unverified and MUST pass manual visual review before activation.
+   const priorImage=completedIntermediateImage(
+    await provider('/v1/status/'+prior.id,'GET',null,secret));
+   const response=await provider('/v1/run','POST',
+    providerRequest({modelImage:priorImage,garmentImage:input.garmentImage,
+     category:input.category}),secret);
+   if(!safeJobId(response?.id))throw Error('Provider rejected second garment');
+   return json({status:'processing',token:await signPrediction(
+    response.id,user,input.figure,input.category,2)},200,allowed);
   }
   if(body.action==='status'){
-   const id=await readPrediction(body.token,user);
-   const status=normalizeStatus(await provider('/v1/status/'+id,'GET',null,secret));
+   const job=await readPrediction(body.token,user);
+   const status=normalizeStatus(await provider('/v1/status/'+job.id,'GET',null,secret));
    return json(status,200,allowed);
   }
   return json({error:'Invalid action'},400,allowed);
