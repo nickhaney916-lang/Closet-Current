@@ -20,6 +20,12 @@ jobs:
         run: |
           node scripts/build.mjs
           node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Install isolated browser emulation (not physical phones)
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium webkit
+      - name: Verify local reusable figures and temporary selfie in Android and iPhone browser emulation
+        run: node scripts/test-reusable-figure-phone-browsers.mjs
       - name: Paid backend approvals must stay disabled
         run: |
           node --input-type=module -e "
