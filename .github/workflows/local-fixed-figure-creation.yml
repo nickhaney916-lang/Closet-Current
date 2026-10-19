@@ -1,0 +1,58 @@
+name: Local fixed figure creation evidence
+on:
+  push:
+    branches: [feature/local-fixed-figure-creation-20261019]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  two-local-adult-candidates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install Pillow==11.3.0
+      - name: Build and run full automated suite
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Acquire pinned official free tool and explicitly CC0 source assets
+        run: python scripts/prepare-local-figure-tools.py --acquire
+      - name: Render exactly two adult candidates locally at native preferred resolution
+        run: |
+          artifacts/figure-creation/tools/blender-4.3.0-linux-x64/blender --background --factory-startup --python-exit-code 1 --threads 6 --python scripts/create-local-figures.py -- artifacts/figure-creation/vendor artifacts/figure-creation/native
+      - name: Verify native scene and derivative evidence; reproduce measurement packet
+        run: |
+          python scripts/benchmark-created-figures.py
+          node scripts/assert-created-figures.mjs
+          cp artifacts/figure-creation/results.json /tmp/first-created-results.json
+          python scripts/benchmark-created-figures.py
+          cmp /tmp/first-created-results.json artifacts/figure-creation/results.json
+      - name: Install Android/iPhone browser emulation only
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium webkit
+      - name: Check 24 newly rendered figure cases and existing fitting regressions
+        run: |
+          node scripts/test-created-figure-browsers.mjs
+          node scripts/test-reusable-figure-phone-browsers.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: locally-created-two-figure-candidates
+          path: |
+            artifacts/figure-creation/native/
+            artifacts/figure-creation/delivery/
+            artifacts/figure-creation/browser/
+            artifacts/figure-creation/results.json
+            artifacts/figure-creation/render-records.json
+            artifacts/figure-creation/toolchain.json
+            artifacts/figure-creation/index.html
+            artifacts/figure-creation/*-review.png
+            artifacts/local-fitting/

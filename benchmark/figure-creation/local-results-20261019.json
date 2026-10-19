@@ -1,0 +1,342 @@
+{
+  "schemaVersion": 1,
+  "status": "two-created-candidates-held-for-review",
+  "blenderVersion": "4.3.0",
+  "blenderBuildHash": "2b18cad88b13",
+  "decoder": "Pillow 11.3.0",
+  "pipelineFiles": {
+    "scripts/create-local-figures.py": "f75d6600b3b250570ced1d94dad50124f7b24f7e5ac8cd3e810fc601efa49877",
+    "scripts/benchmark-created-figures.py": "7397db1f7b1b9fb59f4412df79f97b6a8fbbc19b9aca257699ff1fd11f6690d5",
+    "benchmark/figure-creation/recipe.json": "5a538b34d7432d7fd96371eb351fe33c978fc33006895f121ddf1ef43c9dfce5",
+    "benchmark/figure-creation/source-lock.json": "bc7060f38d5adcfe31473604100510a34b1d82b8b92cade09e3931eb0877619f",
+    "scripts/prepare-local-figure-tools.py": "7ad4372a6d765c42cbcc5cbc523f6b457d87a12525b85548c4111666ec0939c5",
+    "benchmark/figure-creation/srgb-profile.json": "d34b72f6e4fb78ea6e09789b05a2ea0b2227ea4aae92b78ab65a92793f70ae4e"
+  },
+  "sourceRevision": "a8bc2d54ff0ac92e78ff71431b1023eda42bf482",
+  "summary": {
+    "fixedCharacters": 2,
+    "native1941x3597Renders": 2,
+    "minimum1294x2398Derivatives": 2,
+    "productionApproved": 0,
+    "independentVisualApprovals": 0,
+    "physicalPhones": 0,
+    "customerImagesUsed": 0,
+    "externalInferenceCalls": 0
+  },
+  "pairDiagnostics": {
+    "projectedSourceJointDeltas": {
+      "headTop": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "soleCenter": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "headBaseJoint": {
+        "x": 0.0,
+        "y": 0.0012655258178710938
+      },
+      "shoulderCenter": {
+        "x": 0.0,
+        "y": 0.0030428171157836914
+      },
+      "hipCenter": {
+        "x": 0.0,
+        "y": 0.01685100793838501
+      },
+      "ankleCenter": {
+        "x": 0.0,
+        "y": 0.0013907551765441895
+      },
+      "lowerSpineJoint": {
+        "x": 0.0,
+        "y": 0.017722249031066895
+      }
+    },
+    "maxCoordinateDelta": 0.017722249031066895,
+    "headAndSoleNormalization": "Both scene body heights 1.75m at the same camera, not actual equal anatomy",
+    "independentlyReviewedAnatomy": false,
+    "runtimePlacementChanged": false
+  },
+  "blockers": [
+    "simplified synthetic skin/eyes/hair not photorealistic",
+    "procedural base clothing has jagged collar/cuffs/hem and is not production art",
+    "neutral block footwear is a prototype",
+    "hands, face and proportions need independent full-size review",
+    "source-joint projections are not approved chin/waist/body landmarks",
+    "commercial product and optional face-replacement use not approved",
+    "physical-phone performance and visual quality untested"
+  ],
+  "upstreamRightsEvidence": "Pinned CC0 headers/metadata plus LICENSE.md and LICENSE.ASSETS.md; no exclusive ownership or warranty; final product approval remains separate",
+  "figures": [
+    {
+      "id": "female",
+      "sourceRevision": "a8bc2d54ff0ac92e78ff71431b1023eda42bf482",
+      "ageTarget": "young-adult-approximately-25",
+      "bodyScale": 0.11007766200144373,
+      "sourceBodyVertices": 13380,
+      "bodyFaces": 13378,
+      "legPoseMaxMotion": 0.0,
+      "renderWidth": 1941,
+      "renderHeight": 3597,
+      "samples": 24,
+      "nativeSceneRender": true,
+      "resizedFromPreview": false,
+      "projectedSourceJoints": {
+        "headTop": {
+          "x": 0.5,
+          "y": 0.06250011920928955
+        },
+        "soleCenter": {
+          "x": 0.5,
+          "y": 0.9375000894069672
+        },
+        "headBaseJoint": {
+          "x": 0.5,
+          "y": 0.13947272300720215
+        },
+        "shoulderCenter": {
+          "x": 0.5,
+          "y": 0.24301815032958984
+        },
+        "hipCenter": {
+          "x": 0.5,
+          "y": 0.4896371364593506
+        },
+        "ankleCenter": {
+          "x": 0.5,
+          "y": 0.8999493420124054
+        },
+        "lowerSpineJoint": {
+          "x": 0.5,
+          "y": 0.44378340244293213
+        }
+      },
+      "jointApproval": false,
+      "visualApproved": false,
+      "commercialProductApproval": false,
+      "sourceBounds": [
+        -8.182900428771973,
+        7.714966297149658
+      ],
+      "sceneSha256": "691e41c0a98279ced86065e4e9bbd3a78650e46660bf1d1225e17fa8c0e4ed1e",
+      "pngSha256": "79f3c8a8578e2fc17f83cc619f82cdcbb5e7e60465c3ee265b437344ab85352a",
+      "nativeSceneRenderEvidence": "Pinned Blender scene + script/source/recipe/output hashes; not authenticated visual approval",
+      "variants": {
+        "master": {
+          "sha256": "3945c96d51cac86b9485930f63a0403dd2756befb5bd42977803ef6001ce917a",
+          "bytes": 3360773,
+          "width": 1941,
+          "height": 3597,
+          "mode": "RGBA",
+          "frames": 1,
+          "decodedRgbaSha256": "5da3f61b26148f85006f525821e09917d3c6a7b569c74764e1fb048f068f868e",
+          "iccProfilePresent": true,
+          "alphaBounds": [
+            357,
+            226,
+            1585,
+            3383
+          ],
+          "borderClear": true,
+          "transparentPixels": 5246415,
+          "softAlphaPixels": 24717,
+          "opaquePixels": 1710645,
+          "normalizedBodyBounds": [
+            0.1839258114374034,
+            0.06283013622463164,
+            0.8165893869139619,
+            0.9405059772032249
+          ]
+        },
+        "minimum": {
+          "sha256": "4584b07e6d469039d1c651cc9b59b2dc1e597436f00be47c464b7c49b36a2115",
+          "bytes": 808242,
+          "width": 1294,
+          "height": 2398,
+          "mode": "RGBA",
+          "frames": 1,
+          "decodedRgbaSha256": "6b9a1e8c9c96bc028559729026a89546c6a08a822fc0b444e965d6071a88dc63",
+          "iccProfilePresent": true,
+          "alphaBounds": [
+            236,
+            149,
+            1058,
+            2257
+          ],
+          "borderClear": true,
+          "transparentPixels": 2319892,
+          "softAlphaPixels": 34755,
+          "opaquePixels": 748365,
+          "normalizedBodyBounds": [
+            0.18238021638330756,
+            0.06213511259382819,
+            0.8176197836166924,
+            0.9412010008340284
+          ]
+        },
+        "mobile": {
+          "sha256": "d354939e86579526d1a5fd5d8c68a4eefa203559a6fafd13a5e2bf77cec791c5",
+          "bytes": 273226,
+          "width": 970,
+          "height": 1798,
+          "mode": "RGBA",
+          "frames": 1,
+          "decodedRgbaSha256": "9898bc5753e433ccf93306826c7904bf3b411b06c2fc7c8f9f7c8975d4e345bb",
+          "iccProfilePresent": true,
+          "alphaBounds": [
+            176,
+            111,
+            794,
+            1693
+          ],
+          "borderClear": true,
+          "transparentPixels": 1301018,
+          "softAlphaPixels": 25081,
+          "opaquePixels": 417961,
+          "normalizedBodyBounds": [
+            0.18144329896907216,
+            0.06173526140155729,
+            0.8185567010309278,
+            0.9416017797552837
+          ]
+        }
+      }
+    },
+    {
+      "id": "male",
+      "sourceRevision": "a8bc2d54ff0ac92e78ff71431b1023eda42bf482",
+      "ageTarget": "young-adult-approximately-25",
+      "bodyScale": 0.10113268666380924,
+      "sourceBodyVertices": 13380,
+      "bodyFaces": 13378,
+      "legPoseMaxMotion": 0.0,
+      "renderWidth": 1941,
+      "renderHeight": 3597,
+      "samples": 24,
+      "nativeSceneRender": true,
+      "resizedFromPreview": false,
+      "projectedSourceJoints": {
+        "headTop": {
+          "x": 0.5,
+          "y": 0.06250011920928955
+        },
+        "soleCenter": {
+          "x": 0.5,
+          "y": 0.9375000894069672
+        },
+        "headBaseJoint": {
+          "x": 0.5,
+          "y": 0.13820719718933105
+        },
+        "shoulderCenter": {
+          "x": 0.5,
+          "y": 0.23997533321380615
+        },
+        "hipCenter": {
+          "x": 0.5,
+          "y": 0.4727861285209656
+        },
+        "ankleCenter": {
+          "x": 0.5,
+          "y": 0.9013400971889496
+        },
+        "lowerSpineJoint": {
+          "x": 0.5,
+          "y": 0.42606115341186523
+        }
+      },
+      "jointApproval": false,
+      "visualApproved": false,
+      "commercialProductApproval": false,
+      "sourceBounds": [
+        -8.186699867248535,
+        9.117300033569336
+      ],
+      "sceneSha256": "2c13e8f0472d72ea517ee7eff51579f29898dd9940c03bc0ce3e3ee91714f75a",
+      "pngSha256": "fc0a7bcd17d85e0f2802b525c27558d5569ab9930e60fd1a63888cfb7836a7cd",
+      "nativeSceneRenderEvidence": "Pinned Blender scene + script/source/recipe/output hashes; not authenticated visual approval",
+      "variants": {
+        "master": {
+          "sha256": "3a633b322cfef3af2583b223f0fcf952d435fd97bfd493a757f6da688d482de5",
+          "bytes": 3359663,
+          "width": 1941,
+          "height": 3597,
+          "mode": "RGBA",
+          "frames": 1,
+          "decodedRgbaSha256": "1a91c1986466d631f5981741e44fde6713af8e349c3f519deee77cba09d401da",
+          "iccProfilePresent": true,
+          "alphaBounds": [
+            296,
+            226,
+            1645,
+            3383
+          ],
+          "borderClear": true,
+          "transparentPixels": 5230745,
+          "softAlphaPixels": 25008,
+          "opaquePixels": 1726024,
+          "normalizedBodyBounds": [
+            0.1524987120041216,
+            0.06283013622463164,
+            0.8475012879958784,
+            0.9405059772032249
+          ]
+        },
+        "minimum": {
+          "sha256": "8c52326544b89ffe23d5d956ed9010280895ce4e4053ef9209097d5716643112",
+          "bytes": 810838,
+          "width": 1294,
+          "height": 2398,
+          "mode": "RGBA",
+          "frames": 1,
+          "decodedRgbaSha256": "9d954c45a75eaddb60ed6080acfe1d1bf74bff35c17e068b09fa4b3d4402af56",
+          "iccProfilePresent": true,
+          "alphaBounds": [
+            195,
+            148,
+            1099,
+            2257
+          ],
+          "borderClear": true,
+          "transparentPixels": 2312782,
+          "softAlphaPixels": 35177,
+          "opaquePixels": 755053,
+          "normalizedBodyBounds": [
+            0.15069551777434312,
+            0.061718098415346125,
+            0.8493044822256569,
+            0.9412010008340284
+          ]
+        },
+        "mobile": {
+          "sha256": "3c253d3d5197a584d7e437ffb62b9c26ee40403b65d91e1d7ffd40a6bceb1ffa",
+          "bytes": 274482,
+          "width": 970,
+          "height": 1798,
+          "mode": "RGBA",
+          "frames": 1,
+          "decodedRgbaSha256": "88ac894bb018d260bd2c198311f8fce2f8f682d214f5f591764c4497667cc6a4",
+          "iccProfilePresent": true,
+          "alphaBounds": [
+            146,
+            111,
+            824,
+            1693
+          ],
+          "borderClear": true,
+          "transparentPixels": 1297135,
+          "softAlphaPixels": 24960,
+          "opaquePixels": 421965,
+          "normalizedBodyBounds": [
+            0.15051546391752577,
+            0.06173526140155729,
+            0.8494845360824742,
+            0.9416017797552837
+          ]
+        }
+      }
+    }
+  ]
+}

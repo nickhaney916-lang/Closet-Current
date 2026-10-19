@@ -1,0 +1,101 @@
+{
+  "schemaVersion": 1,
+  "status": "diagnostic-candidates-not-production-approved",
+  "figures": [
+    "female",
+    "male"
+  ],
+  "adultAgeBasis": "MakeHuman young macro target is approximately 25 years; upstream human.py _setAgeVals describes 1/10/25/90-year anchors. No child/baby target is used.",
+  "macroTargetWeights": {
+    "african": 0.3333333333333333,
+    "asian": 0.3333333333333333,
+    "caucasian": 0.3333333333333333
+  },
+  "render": {
+    "width": 1941,
+    "height": 3597,
+    "engine": "CYCLES",
+    "samples": 24,
+    "seed": 916,
+    "device": "CPU",
+    "transparent": true,
+    "viewTransform": "Standard",
+    "exposure": 0,
+    "gamma": 1
+  },
+  "camera": {
+    "type": "ORTHO",
+    "location": [
+      0,
+      -4,
+      0.9
+    ],
+    "target": [
+      0,
+      0,
+      0.9
+    ],
+    "orthoScale": 2.0
+  },
+  "lights": [
+    {
+      "name": "key",
+      "position": [
+        -2.5,
+        -3,
+        3.5
+      ],
+      "energy": 130,
+      "size": 4
+    },
+    {
+      "name": "fill",
+      "position": [
+        2.5,
+        -2,
+        2.8
+      ],
+      "energy": 90,
+      "size": 4
+    },
+    {
+      "name": "rim",
+      "position": [
+        0,
+        2,
+        3
+      ],
+      "energy": 75,
+      "size": 3
+    }
+  ],
+  "normalizedBodyHeight": 1.75,
+  "soleHeight": 0.025,
+  "materials": {
+    "skin": [
+      0.46,
+      0.29,
+      0.2,
+      1
+    ],
+    "baseClothing": [
+      0.24,
+      0.27,
+      0.29,
+      1
+    ],
+    "hair": [
+      0.055,
+      0.032,
+      0.022,
+      1
+    ],
+    "eyeWhite": [
+      0.75,
+      0.75,
+      0.72,
+      1
+    ]
+  },
+  "note": "Fixed source-derived diagnostic characters with procedural materials; no photo textures, customer photos, old preview images, image generation or randomized bodies. Cloth surfaces and hair are prototypes requiring art direction."
+}
