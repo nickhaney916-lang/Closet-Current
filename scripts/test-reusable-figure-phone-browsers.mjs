@@ -285,6 +285,41 @@ try{
     layeredResults.push({figure,layeredGarments:layered.count,dressGarments:dress.count,
      transparentOpenJacketCenter:true,actualRealPhotoFidelityMeasured:false});
    }
+   // New display-only silhouette centerline uses the approved transparent
+   // pixels instead of stretching or hallucinating asymmetric sleeves.
+   await page.evaluate(()=>{
+    const c=document.createElement('canvas');c.width=100;c.height=150;
+    const g=c.getContext('2d');g.fillStyle='#3174ac';
+    g.fillRect(10,10,62,65);g.fillRect(8,75,84,63);
+    items.push({id:'test-asymmetric-sleeves',category:'Tops',itemType:'T-shirt',
+     color:'Blue',name:'Synthetic asymmetric silhouette',image:c.toDataURL('image/png')});
+   });
+   const silhouetteResults=[];
+   for(const figure of ['female','male']){
+    await page.locator('#reusableFigureChoice').selectOption(figure);
+    await page.evaluate(()=>{
+     currentBoard.slots={top:'test-asymmetric-sleeves'};currentBoard.layerCount=0;
+     renderOutfitBoard();
+    });
+    await page.waitForFunction(()=>document.querySelector('#reusableFigureStatus')
+     .textContent.startsWith('1 owned clothing layer displayed')&&
+     document.querySelectorAll('#reusableFigureGarments img').length===1);
+    const offset=await page.evaluate(()=>{
+     const img=document.querySelector('#reusableFigureGarments img');
+     const figure=document.getElementById('reusableFigureChoice').value;
+     const calibrated=ClosetReusableFigure.placementRect('top',{category:'Tops'},figure);
+     const old=ClosetGarmentFitGeometry.fitPlacement(calibrated,img.naturalWidth,img.naturalHeight,
+      {slot:'top',category:'Tops'});
+     return {offset:parseFloat(img.style.left)-old.left,
+      top:parseFloat(img.style.top),expectedTop:calibrated.top,
+      width:parseFloat(img.style.width),oldWidth:old.width};
+    });
+    assert.ok(offset.offset>0&&offset.offset<3.5,
+     'approved upper silhouette is conservatively recentered for '+figure);
+    assert.equal(offset.top,offset.expectedTop);
+    assert.ok(Math.abs(offset.width-offset.oldWidth)<1e-9);
+    silhouetteResults.push({figure,correctionPercent:offset.offset,sourceUnchanged:true});
+   }
    // A corrupted/display-uncodable transparent garment is held rather than
    // counting it as a complete outfit or displaying an image placeholder.
    await page.evaluate(()=>{
@@ -440,7 +475,7 @@ try{
    assert.deepEqual(remoteWrites,[]);
    assert.deepEqual(errors,[]);
    results.push({engine:title,ownedLayers:2,reusedFigures:2,optionalSelfieLocalOnly:true,
-    remotePostCount:remoteWrites.length,layering:layeredResults,licensedPhotoChecks:photoResults,extractionProposals:extractionProbes.filter(x=>x.proposalAvailable).length,realPhoneHardwareTested:false});
+    remotePostCount:remoteWrites.length,layering:layeredResults,silhouetteChecks:silhouetteResults,licensedPhotoChecks:photoResults,extractionProposals:extractionProbes.filter(x=>x.proposalAvailable).length,realPhoneHardwareTested:false});
    await ctx.close();
   }finally{await browser.close();}
  }
