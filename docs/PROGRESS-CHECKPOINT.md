@@ -1,5 +1,35 @@
 # Closet Current master development checkpoint
 
+## PR #12 two-garment reliability and phone preparation — October 19, 2026 Pacific
+
+- Isolated follow-up [draft PR #14](https://github.com/nickhaney916-lang/Closet-Current/pull/14)
+  targets PR #12's research branch. Verified application code
+  `5106fd44987b66998415361f9e6006fc1fe4a41e`; final built-app test harness
+  `3074a1ce5c010fc06bfcb60e2aeef9f9a79782c3`.
+- Fixed signed-job token loss after repeated processing polls, bounded
+  requests/overall attempts, aborted stale client fetches and polling delays,
+  hid old output before rerendering, and decoded intermediate/final images
+  before continuing or displaying. Uncertain generation POSTs never retry
+  automatically. Original classification/capture/clipping code is unchanged.
+- [Final run 39273055299](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39273055299)
+  passed every step: build, **819 Node tests: 816 passed, 0 failed, 3 skipped**,
+  Deno type check, single-item preview, actual built-app two-garment flow in
+  Pixel Chromium/iPhone WebKit emulation, and full Style this owned-closet
+  flow separately in Chromium and WebKit. Zero browser page errors.
+- Reproduced four regressions before fixing them. Actual staged server handler
+  also tested with synthetic Auth/provider transport: signed-token tampering,
+  user isolation, safe failure replies and paid-chain hard stop passed.
+- PR #11 and current PR #7 are included ancestors. PR #10 remains divergent,
+  with conflicts in app source-selection code and two recognition test files;
+  combined PR #10 integration is not verified. No other PR branch was changed.
+- Handoff: `docs/MULTIGARMENT-HANDOFF-20261019.md`; physical test template:
+  `benchmark/TWO-GARMENT-PHONE-VALIDATION-RECORD.template.json`.
+- **Release remains blocked:** actual provider calls 0, physical phone runs 0,
+  actual garment fidelity null. Durable quota/idempotency, budget cap,
+  consent/assets and separate paid-test approval remain missing. Signed first
+  jobs are not inherently one-use. Paid second pass stays hard-disabled.
+  No merge/deploy, real user uploads, paid activation or Drive Duel changes.
+
 ## Original-source protection for restored outfit records — October 18, 2026, Pacific
 
 - Continued from `422999cc1656910e76cceca55f315a4a74028da5` on draft PR #7.
