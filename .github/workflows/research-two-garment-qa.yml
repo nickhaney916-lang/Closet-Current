@@ -26,6 +26,11 @@ jobs:
         run: node scripts/build.mjs
       - name: Full application and multi-pass provider protocol regression suite
         run: node --test tests/*.test.cjs tests/*.test.mjs
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Type check real Edge Function and signed predecessor protocol without deploying
+        run: deno check supabase/functions/ai-try-on/index.ts
       - name: Static build and device-emulated browser prerequisites
         run: |
           node scripts/build.mjs
