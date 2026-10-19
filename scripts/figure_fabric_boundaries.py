@@ -103,3 +103,33 @@ def smooth_upper_shell_rim(coords, faces, *, low=1.36, high=1.54,
                 frontDerivedShellOnly=True,sourceBodyChanged=False,
                 sleeveCuffsModified=False,neckOpeningReconstructed=False,
                 independentAppearanceApproval=False)
+
+
+def approved_front_binding_segments(coords, faces, *, low=1.36, high=1.54,
+                                    max_abs_x=.30, front_limit=-.04,
+                                    max_segment=.045):
+    """Select *existing* short front upper-shell boundary edges for a tiny
+    original decorative collar binding. Never connect holes or invent loops.
+    Diagnostic art only. No source body vertices/UV/photos are modified.
+    """
+    if not 0<max_segment<=.05:raise ValueError("Invalid binding step limit")
+    counts=Counter()
+    for face in faces:
+        if len(face)<3:raise ValueError("Invalid face")
+        for a,b in zip(face,face[1:]+face[:1]):
+            if a==b or min(a,b)<0 or max(a,b)>=len(coords):raise ValueError("Invalid indices")
+            counts[tuple(sorted((a,b)))]+=1
+    selected=[]
+    for (a,b),n in counts.items():
+        if n!=1:continue
+        pa,pb=coords[a],coords[b]
+        if not all(low<=p[2]<=high and abs(p[0])<=max_abs_x and p[1]<front_limit
+                   for p in [pa,pb]):continue
+        length=sum((x-y)**2 for x,y in zip(pa,pb))**.5
+        if length>max_segment or length<.001:continue
+        selected.append((a,b))
+    selected.sort()
+    if len(selected)<6:raise ValueError("Insufficient safe shirt front seam edges")
+    total=sum(sum((x-y)**2 for x,y in zip(coords[a],coords[b]))**.5 for a,b in selected)
+    if not .07<=total<=.85:raise ValueError("Untrusted shirt front seam length")
+    return selected
