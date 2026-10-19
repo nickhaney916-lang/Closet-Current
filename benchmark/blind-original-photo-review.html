@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Closet Current — blind original photo review</title>
+<style>
+:root{font-family:system-ui,Arial,sans-serif;color:#1e2130;background:#f8f9fc}
+*{box-sizing:border-box}body{max-width:900px;margin:auto;padding:20px;line-height:1.45}
+h1{font-size:1.6rem;margin:.2rem 0}.intro{font-size:.94rem;color:#475168}
+.panel{background:white;border:1px solid #c8ccda;border-radius:14px;padding:16px;margin:14px 0}
+label{display:block;font-weight:600;margin:12px 0 6px}input,select,textarea,button{font:inherit}
+input:not([type=checkbox]),select,textarea{width:100%;border:1px solid #9aa5b9;border-radius:8px;padding:10px;background:white}
+button{border:0;background:#373066;color:white;padding:12px 17px;border-radius:10px;min-height:44px;font-weight:600;margin:7px 7px 7px 0;cursor:pointer}
+button:disabled{background:#c2c6d4;color:#595d69;cursor:not-allowed}.secondary{background:#e9e9f2;color:#24234a}
+#photo{max-width:100%;max-height:580px;object-fit:contain;background:#eee;display:block;margin:auto}
+.item{border-top:1px solid #d3d9e4;padding:12px 0}.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+small,.muted{color:#545c70}#status{white-space:pre-wrap;margin:12px 0;min-height:25px}
+.status-ok{color:#116348}.status-warning{color:#9c3e18}.checkbox{display:flex;align-items:flex-start;gap:10px}.checkbox input{margin-top:6px}
+#progress{font-weight:700}.metadata{font-family:monospace;font-size:12px;overflow-wrap:anywhere}
+</style></head>
+<body>
+<h1>Blind original-photo clothing review</h1>
+<p class="intro">Internal Closet Current benchmark. Examine each <strong>unchanged original JPEG</strong> to inventory every separately visible garment, including layered clothing and footwear. Never guess concealed items. Model predictions and old reference labels are intentionally hidden. Everything stays in this browser; no cloud upload or AI calls.</p>
+<div class="panel">
+<label for="packet">Reviewer-specific blind packet (.json)</label><input id="packet" type="file" accept=".json,application/json">
+<label for="jpegFiles">Original JPEGs (select all 16, in any order)</label><input id="jpegFiles" type="file" accept=".jpg,.jpeg,image/jpeg" multiple>
+<label for="reviewer">Independent reviewer's name/alias</label><input id="reviewer" autocomplete="off" maxlength="80" placeholder="Your unique reviewer ID">
+<label class="checkbox"><input type="checkbox" id="blind"> I have <strong>not</strong> viewed AI predictions, existing reference labels or another reviewer's answers.</label>
+<p id="status" role="status">Load your first/second reviewer packet and the exact original JPEGs.</p>
+<p id="progress" role="status"></p>
+</div>
+<div class="panel" id="workspace" hidden>
+<label for="source">Original photograph</label><select id="source"></select>
+<p class="metadata" id="hash"></p>
+<img id="photo" alt="Unmodified original photograph for independent review">
+<p class="muted">Record each separately visible piece. One pair of shoes can be described as one paired wardrobe item; write that in your evidence. If no clothing is visible, leave items empty and explain why.</p>
+<div id="items"></div>
+<button type="button" id="add">+ Record visible garment</button>
+<label for="uncertainty">Notes about uncertainty, occlusion, or negative controls</label>
+<textarea id="uncertainty" rows="2" maxlength="500" placeholder="What is visible? What is obscured or uncertain?"></textarea>
+<label class="checkbox"><input id="inspected" type="checkbox"> I inspected the <strong>entire original scene</strong>, not only the suggested area.</label>
+<label class="checkbox"><input id="allRecorded" type="checkbox"> I recorded all distinctly visible physical items, including garments the AI may have missed. Unknown forms are explicitly marked uncertain.</label>
+<button type="button" id="save" class="secondary">Save this photo's inventory</button>
+</div>
+<div class="panel">
+<button type="button" id="export" disabled>Export independent review JSON</button>
+<p class="muted">Export requires every photograph's original JPEG to match its SHA-256 and all 16 scene inventories to be completed. This is one human observation, not a validated segmentation mask or AI accuracy result. A second independent reviewer must perform their own blind pass.</p>
+</div>
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+let packet=null,photoMap=new Map(),reviewMap=new Map(),activeId=null,objectUrl=null,busy=false;
+const ID=/^(?:commons|validation)-\d{4}$/,SHA=/^[a-f0-9]{64}$/;
+const categories=['Tops','Bottoms','Dresses','Outerwear','Shoes','Hosiery','Accessories','Uncertain'];
+const option=(value,label)=>{const o=document.createElement('option');o.value=value;o.textContent=label;return o;};
+const say=(message,warning=false)=>{$('status').textContent=message;$('status').className=warning?'status-warning':'status-ok';};
+function sourceSafe(p){
+ return p&&p.schemaVersion===1&&p.reviewType==='independent-blind-original-photo-inventory'&&
+  ['first','second'].includes(p.reviewerSlot)&&p.modelPredictionsIncluded===false&&
+  p.manifestCategoryLabelsIncluded===false&&p.originalPhotosCopiedOrReencoded===false&&
+  p.independentlyReviewed===false&&p.allGarmentFormsVerified===false&&
+  p.photoCount===p.originals?.length&&p.photoCount>=1&&p.photoCount<=80&&
+  p.originals.every(x=>ID.test(x.sourceId)&&x.image===x.sourceId+'.jpg'&&SHA.test(x.sourceSha256)&&x.license);
+}
+function refreshProgress(){
+ const total=packet?.photoCount||0,complete=[...reviewMap.values()].filter(x=>x.inspected&&x.allRecorded&&x.hashVerified).length;
+ $('progress').textContent=packet?complete+' of '+total+' source photos reviewed.':'';
+ $('export').disabled=!packet||busy||complete!==total||!$('blind').checked||
+  $('reviewer').value.trim().length<2;
+}
+function validateVisibleItems(items){
+ if(items.length>20)throw Error('Too many proposed garments. Separate a scene by physical pieces.');
+ for(const it of items){
+  if(!categories.includes(it.category)||!it.form.trim()||!it.evidence.trim()||
+    !['visible','partially-visible','uncertain'].includes(it.visibility))
+   throw Error('Every visible item needs a category, form, visibility and original-image evidence.');
+ }
+}
+function renderRows(items=[]){
+ $('items').replaceChildren();
+ items.forEach(it=>appendItem(it));
+}
+function appendItem(item={}){
+ if($('items').children.length>=20){say('Maximum 20 visible item observations per photo.',true);return;}
+ const d=document.createElement('div');d.className='item';
+ const fields=document.createElement('div');fields.className='row';
+ const category=document.createElement('select');category.className='category';
+ category.append(option('','Select category'),...categories.map(x=>option(x,x)));category.value=item.category||'';
+ const type=document.createElement('input');type.className='form';type.maxLength=80;
+ type.placeholder='Specific garment form, or Unknown';type.value=item.form||'';
+ const visibility=document.createElement('select');visibility.className='visibility';
+ for(const x of ['visible','partially-visible','uncertain'])visibility.append(option(x,x));
+ visibility.value=item.visibility||'visible';
+ const evidence=document.createElement('textarea');evidence.className='evidence';evidence.rows=2;evidence.maxLength=500;
+ evidence.placeholder='Visible construction/details; never infer covered layers';evidence.value=item.evidence||'';
+ for(const [caption,control] of [['Category',category],['Form / Unknown',type],['Visible evidence',evidence],['Visibility',visibility]]){
+  const l=document.createElement('label');l.textContent=caption;l.append(control);fields.append(l);
+ }
+ const remove=document.createElement('button');remove.type='button';remove.className='secondary';remove.textContent='Remove garment';
+ remove.onclick=()=>d.remove();d.append(fields,remove);$('items').append(d);
+}
+function currentItems(){
+ const items=[];
+ for(const el of $('items').children)items.push({
+  localItemId:'g'+String(items.length+1).padStart(2,'0'),
+  category:el.querySelector('.category').value,
+  form:el.querySelector('.form').value.trim(),
+  visibility:el.querySelector('.visibility').value,
+  evidence:el.querySelector('.evidence').value.trim()
+ });
+ return items;
+}
+function resetView(){
+ if(objectUrl){URL.revokeObjectURL(objectUrl);objectUrl=null;}
+ $('photo').removeAttribute('src');$('hash').textContent='';
+}
+function activate(id){
+ if(!packet||!photoMap.has(id))return;
+ if(activeId!==id&&activeId&&reviewMap.get(activeId)?.saved!==true){
+  // Do not silently accept unfinished draft from another source.
+  say('Unsubmitted edits from the previous photo are not retained. Save each photo before switching.',true);
+ }
+ activeId=id;resetView();
+ const p=photoMap.get(id),record=reviewMap.get(id);
+ if(!p?.verified){say('JPEG missing or SHA-256 mismatch for '+id,true);return;}
+ objectUrl=URL.createObjectURL(p.file);$('photo').src=objectUrl;
+ $('hash').textContent='Verified original '+id+' · SHA-256 '+p.hash;
+ renderRows(record?.items||[]);
+ $('uncertainty').value=record?.notes||'';
+ $('inspected').checked=record?.inspected||false;
+ $('allRecorded').checked=record?.allRecorded||false;
+}
+$('packet').addEventListener('change',async()=>{
+ const f=$('packet').files?.[0];if(!f)return;
+ try{const p=JSON.parse(await f.text());
+  if(!sourceSafe(p)||new Set(p.originals.map(x=>x.sourceId)).size!==p.photoCount)
+   throw Error('Invalid reviewer-blind packet; no model answers or labels may appear.');
+  packet=p;photoMap.clear();reviewMap.clear();activeId=null;resetView();
+  $('source').replaceChildren(...p.originals.map(x=>option(x.sourceId,x.sourceId)));
+  $('workspace').hidden=false;
+  say('Loaded '+p.photoCount+' source IDs. Select original JPEGs for hash verification.');
+ }catch(e){packet=null;$('workspace').hidden=true;say(String(e.message||e),true);}
+ refreshProgress();
+});
+$('jpegFiles').addEventListener('change',async()=>{
+ if(!packet){say('Load your reviewer-specific blind packet first.',true);return;}
+ busy=true;refreshProgress();
+ try{
+  let verified=0;photoMap.clear();resetView();activeId=null;reviewMap.clear();
+  const expected=new Map(packet.originals.map(x=>[x.image,x]));
+  for(const file of [...$('jpegFiles').files]){
+   const e=expected.get(file.name);
+   if(!e||photoMap.has(e.sourceId))continue;
+   const data=await file.arrayBuffer();
+   if(!crypto?.subtle)throw Error('Cryptographic verification unavailable. Open this page on localhost.');
+   const digest=new Uint8Array(await crypto.subtle.digest('SHA-256',data));
+   const hash=Array.from(digest,x=>x.toString(16).padStart(2,'0')).join('');
+   const ok=hash===e.sourceSha256;
+   photoMap.set(e.sourceId,{file,hash,verified:ok});if(ok)verified++;
+  }
+  say(verified+' of '+packet.photoCount+' original JPEG hashes verified. '+(verified===packet.photoCount?'Ready to review.':'Missing/mismatched originals must be replaced.'),verified!==packet.photoCount);
+  for(const id of packet.originals.map(x=>x.sourceId))if(photoMap.get(id)?.verified){$('source').value=id;activate(id);break;}
+ }catch(e){say(String(e.message||e),true);}
+ finally{busy=false;refreshProgress();}
+});
+$('source').addEventListener('change',()=>activate($('source').value));
+$('add').addEventListener('click',()=>appendItem());
+$('save').addEventListener('click',()=>{
+ try{
+  if(!activeId||!photoMap.get(activeId)?.verified)throw Error('Upload the exact SHA-verified original JPEG.');
+  if(!$('inspected').checked||!$('allRecorded').checked)
+   throw Error('Inspect the entire image and record every visible garment before saving.');
+  const items=currentItems();validateVisibleItems(items);
+  if(!items.length&&!$('uncertainty').value.trim())
+   throw Error('No visible garments: explain the negative-control scene.');
+  reviewMap.set(activeId,{items,notes:$('uncertainty').value.trim(),inspected:true,
+   allRecorded:true,hashVerified:true,saved:true});
+  say('Saved independent inventory for '+activeId+'.');
+  refreshProgress();
+ }catch(e){say(String(e.message||e),true);}
+});
+$('blind').addEventListener('change',refreshProgress);
+$('reviewer').addEventListener('input',refreshProgress);
+$('export').addEventListener('click',()=>{
+ try{
+  if($('export').disabled||!packet)throw Error('All source inventories are required before export.');
+  const inventories=packet.originals.map(x=>{
+   const record=reviewMap.get(x.sourceId),verified=photoMap.get(x.sourceId);
+   if(!record?.saved||!verified?.verified||verified.hash!==x.sourceSha256)
+    throw Error('Unreviewed or changed original source: '+x.sourceId);
+   validateVisibleItems(record.items);
+   return {sourceId:x.sourceId,sourceSha256:x.sourceSha256,
+    originalJpegShaVerified:true,fullSourceInspected:true,allVisibleItemsRecorded:true,
+    items:record.items,uncertaintyNotes:record.notes};
+  });
+  const result={schemaVersion:1,reviewType:'independent-blind-source-submission',
+   reviewerSlot:packet.reviewerSlot,reviewerAlias:$('reviewer').value.trim(),
+   reviewedAt:new Date().toISOString(),originalJpegsVerified:true,
+   modelAnswersNotShown:$('blind').checked,sourceInventories:inventories};
+  const file=new Blob([JSON.stringify(result,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(file),a=document.createElement('a');
+  a.href=url;a.download='blind-'+packet.reviewerSlot+'-completed-original-review.json';
+  document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);
+  say('Exported independent original-photo inventory. Keep it separate from the other reviewer.');
+ }catch(e){say(String(e.message||e),true);}
+});
+</script>
+</body></html>
