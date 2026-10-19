@@ -98,3 +98,28 @@ input[type="checkbox"]{min-height:20px;width:20px;height:20px;vertical-align:mid
 .pilot-acknowledgment a,.auth-card .fine a{color:#55359d;text-underline-offset:3px}
 .account-menu .account-data-link{display:block;text-align:center;
  padding:12px;min-height:48px;text-decoration:none}
+
+/* Local, two-figure display-only styling collage. Unlike generative try-on,
+   this never promises fabric drape, body fit or fully recovered outlines. */
+.reusable-figure-panel{padding:18px;margin:18px 0;background:#f8f8f4;
+ border:1px solid var(--line);border-radius:16px}
+.reusable-figure-panel h3{font-size:20px;margin:0 0 8px}
+.reusable-figure-panel .fine{line-height:1.5}
+.reusable-figure-stage{position:relative;aspect-ratio:647 / 1199;
+ width:min(100%,290px);margin:12px auto;border-radius:12px;overflow:hidden;
+ background:#edece9;isolation:isolate}
+#reusableFigureBase{position:absolute;inset:0;width:100%;height:100%;object-fit:fill}
+#reusableFigureGarments{position:absolute;inset:0;pointer-events:none}
+.reusable-figure-layer{position:absolute;object-fit:fill;pointer-events:none}
+#reusableFigureSelfie{position:absolute;top:4.4%;left:42%;width:16%;
+ height:9%;object-fit:cover;object-position:center center;
+ border-radius:48%;pointer-events:none}
+.reusable-figure-controls{display:grid;gap:10px}
+.reusable-figure-controls label{display:grid;gap:5px;font-weight:600;font-size:14px}
+.reusable-figure-controls input,.reusable-figure-controls select{
+ width:100%;max-width:100%;min-height:48px;padding:10px;border:1px solid var(--line);
+ border-radius:9px;background:#fff;color:var(--ink)}
+.reusable-figure-controls button{min-height:48px}
+.reusable-figure-panel [hidden],.ai-tryon-panel[hidden]{display:none!important}
+@media(max-width:480px){.reusable-figure-panel{padding:14px}
+ .reusable-figure-stage{width:min(100%,270px)}}
