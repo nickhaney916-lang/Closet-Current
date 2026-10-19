@@ -115,3 +115,20 @@ test('a temporary HTTP error on a billable start or continuation is never retrie
   assert.deepEqual(c.calls.map(x=>x.action),[previous?'continue':'start']);
  }
 });
+test('overall deadline releases a hung second-photo digest before any submission',async()=>{
+ const c=client();
+ await new Promise(resolve=>setImmediate(resolve));
+ c.window.closetAuth={user:{id:'synthetic-owner'},getAccessToken:async()=>'local-token'};
+ c.items.push({id:'top',category:'Tops',image:img},{id:'bottom',category:'Bottoms',image:img});
+ c.currentBoard.slots={top:'top',bottom:'bottom'};
+ c.tryOnAttemptFor=async()=>({ids:['first-id','second-id']});
+ c.tryOnDigest=()=>new Promise(()=>{});
+ c.setTimeout=(fn,ms)=>setTimeout(fn,ms===180000?0:ms);
+ c.fetch=async()=>{c.calls.push('unexpected request');throw Error('No submission permitted');};
+ vm.runInContext('tryOnReady=true;tryOnMultiReady=true;',c);
+ const finished=await Promise.race([c.generateTryOn().then(()=>true),new Promise(resolve=>setTimeout(()=>resolve(false),100))]);
+ assert.equal(finished,true,'the deadline must cover the final digest wait');
+ assert.equal(vm.runInContext('tryOnBusy',c),false);
+ assert.match(c.$('tryOnStatus').textContent,/time limit/);
+ assert.equal(c.calls.length,0);
+});

@@ -7,7 +7,7 @@
   "stagingOrigin": null,
   "testedAtWithOffset": null,
   "testerAlias": null,
-  "device": {"makeModel": null, "osBuild": null, "browserVersion": null, "viewport": null, "network": null},
+  "device": {"platform": null, "makeModel": null, "osBuild": null, "browserVersion": null, "viewport": null, "network": null},
   "billingEnabled": false,
   "liveInferenceAuthorized": false,
   "actualProviderCalls": 0,

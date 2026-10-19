@@ -10,6 +10,10 @@ on:
       - 'scripts/test-tryon-ledger-postgres.mjs'
       - 'scripts/test-local-supabase-tryon-http.mjs'
       - 'tests/ai-tryon-*.test.*'
+      - 'tests/deno/ai-tryon-runtime.test.mjs'
+      - 'benchmark/tryon-acceptance-evidence.mjs'
+      - 'benchmark/MULTIGARMENT-*-TEMPLATE.json'
+      - 'scripts/audit-tryon-acceptance-evidence.mjs'
       - 'scripts/test-multigarment-device-emulation.mjs'
       - 'scripts/test-ai-tryon-pilot.mjs'
       - 'scripts/test-style-my-new-item-mobile.mjs'
@@ -30,11 +34,18 @@ jobs:
         run: node scripts/build.mjs
       - name: Full application and multi-pass provider protocol regression suite
         run: node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Record unperformed hardware/live-AI evidence without granting release approval
+        run: |
+          mkdir -p test-results/two-garment
+          node scripts/audit-tryon-acceptance-evidence.mjs --branch-sha "$GITHUB_SHA" > test-results/two-garment/acceptance-evidence.json
+          node --input-type=module -e "import fs from 'node:fs';const r=JSON.parse(fs.readFileSync('test-results/two-garment/acceptance-evidence.json'));if(r.status!=='blocked'||r.providerActivationAllowed!==false||r.productionReleaseApproved!==false||r.actualGarmentAccuracy!==null)throw Error('Unperformed evidence must remain blocked')"
       - uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
       - name: Type check real Edge Function and signed predecessor protocol without deploying
         run: deno check supabase/functions/ai-try-on/index.ts
+      - name: Actual Deno loopback HTTP and disabled source entrypoint; external network forbidden
+        run: deno test --allow-net=127.0.0.1 --allow-env tests/deno/ai-tryon-runtime.test.mjs
       - name: Static build and device-emulated browser prerequisites
         run: |
           node scripts/build.mjs

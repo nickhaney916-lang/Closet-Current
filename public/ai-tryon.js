@@ -215,7 +215,7 @@ async function generateTryOn(){
    await decodeTryOnImage(step.image,'Selected garment',controller.signal);if(!isCurrent())return;
   }
   const attempt=await tryOnAbortable(tryOnAttemptFor(signature,enabledSteps),controller.signal);
-  const nextDigest=enabledSteps.length===2?await tryOnDigest(enabledSteps[1].image):null;
+  const nextDigest=enabledSteps.length===2?await tryOnAbortable(tryOnDigest(enabledSteps[1].image),controller.signal):null;
   for(let i=0;i<enabledSteps.length;i++){
    if(!isCurrent())return;
    const step=enabledSteps[i];
