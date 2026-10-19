@@ -10,6 +10,7 @@
  const upload=byId('reusableSelfieUpload'),remove=byId('reusableSelfieRemove');
  if(!engine||!stage||!base||!garmentContainer||!selfie||!status||!selector||!upload||!remove)return;
  let renderRevision=0,localFaceURL=null,lastOwner=root.closetAuth?.user?.id||null;
+ const previewCache=root.ClosetFigurePreviewCache?.create();
  const faceControls=byId('reusableSelfiePosition');
  const faceInputs=['X','Y','Zoom'].map(axis=>byId('reusableSelfie'+axis));
  function positionFace(){
@@ -87,43 +88,57 @@
   const revision=++renderRevision;
   const owner=root.closetAuth?.user?.id||null;
   if(owner!==lastOwner){removeFace();lastOwner=owner;}
+  previewCache?.forOwner(owner); // Ownership changes clear every prior image.
   const plan=engine.plan(typeof currentBoard==='undefined'?null:currentBoard,
    typeof items==='undefined'?[]:items,selector.value);
   base.src=plan.figureImage;
   positionFace();
+  // Never show the previous outfit with the newly selected figure, nor
+  // expose half an outfit while async decoding/compositing is in flight.
   garmentContainer.replaceChildren();
   status.textContent='Preparing local clothing preview…';
   const counts={shown:0,skipped:plan.skipped.length};
+  const nextLayers=document.createDocumentFragment();
+  const cancelled=()=>revision!==renderRevision||
+   (root.closetAuth?.user?.id||null)!==owner;
   for(const placement of plan.placements){
-   const prepared=await imagePixels(placement.image,placement.category,placement.primaryColor);
-   if(revision!==renderRevision)return;
-   if(!prepared){counts.skipped++;continue;}
-   // Use separate male/female top, waist and jacket anchors from PR #33,
-   // but preserve the photographed garment's natural cropped aspect ratio.
-   const fittedRect=root.ClosetGarmentFitGeometry?.fitPlacement(
+   const query={owner,id:String(placement.itemId),source:placement.image,
+    category:placement.category,primaryColor:placement.primaryColor||''};
+   let prepared=previewCache?.get(query);
+   if(!prepared){
+    const cutout=await imagePixels(placement.image,placement.category,placement.primaryColor);
+    if(cancelled())return;
+    if(!cutout){counts.skipped++;continue;}
+    let image=cutout.image;
+    if(placement.slot!=='shoes'&&root.ClosetGarmentWarp){
+     const garment=new Image();garment.src=cutout.image;
+     try{
+      await garment.decode();
+      if(cancelled())return;
+      const warped=root.ClosetGarmentWarp.warpTransparentImage(
+       garment,placement.category,document.createElement('canvas'));
+      if(warped)image=warped;
+     }catch{/* Keep existing transparent cutout, never invent pixels. */}
+    }
+    if(cancelled())return;
+    prepared={image,width:cutout.width,height:cutout.height};
+    previewCache?.put(query,prepared);
+   }
+   // Preserve the calibrated female/male shoulder, waist and sole anchors,
+   // without stretching garment prints or white/transparent empty margins.
+   const rect=root.ClosetGarmentFitGeometry?.fitPlacement(
     placement.rect,prepared.width,prepared.height,
     {slot:placement.slot,category:placement.category});
-   if(!fittedRect){counts.skipped++;continue;}
-   // Mesh warping affects only this display copy. The PR #33 alpha-sensitive
-   // inverse rasterizer protects central buttons, prints and soft details.
-   let fitted=prepared.image;
-   if(placement.slot!=='shoes'&&root.ClosetGarmentWarp){
-    const garment=new Image();garment.src=prepared.image;
-    try{
-     await garment.decode();
-     if(revision!==renderRevision)return;
-     const warped=root.ClosetGarmentWarp.warpTransparentImage(
-       garment,placement.category,document.createElement('canvas'));
-     if(warped)fitted=warped;
-    }catch{/* Fall back to intact transparent cutout, never invent pixels. */}
-   }
+   if(!rect){counts.skipped++;continue;}
    const img=document.createElement('img');
-   img.src=fitted;
+   img.src=prepared.image;
    img.alt='';
    img.className='reusable-figure-layer';
-   for(const key of ['left','top','width','height'])img.style[key]=fittedRect[key]+'%';
-   garmentContainer.append(img);counts.shown++;
+   for(const key of ['left','top','width','height'])img.style[key]=rect[key]+'%';
+   nextLayers.append(img);counts.shown++;
   }
+  if(cancelled())return;
+  garmentContainer.replaceChildren(nextLayers);
   status.textContent=counts.shown+' owned clothing layer'+(counts.shown===1?'':'s')+
    ' displayed; '+counts.skipped+' held for transparent-cutout review. '+
    'This is a local styling collage, not a fit or fabric simulation.'+
@@ -133,5 +148,6 @@
  // This page is already tied to its existing signed-in local closet database.
  Promise.resolve(typeof outfitBoardReady==='undefined'?null:outfitBoardReady)
   .then(()=>{void render();}).catch(()=>{status.textContent='Preview unavailable; your saved closet is unchanged.';});
- root.addEventListener('pagehide',()=>{removeFace();});
+ root.addEventListener('pagehide',()=>{++renderRevision;previewCache?.dispose();
+  garmentContainer.replaceChildren();removeFace();});
 })(window);
