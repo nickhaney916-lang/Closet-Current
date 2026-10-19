@@ -56,4 +56,4 @@ function deviceCheckReport(state,release='',platform='Other'){
   sendAutomatically:false
  };
 }
-if(typeof module!=='undefined')module.exports={deviceCheckSteps,cleanDeviceEvent,cleanDeviceCheck,deviceCheckReport};
+if(typeof module!=='undefined')module.exports={deviceCheckSteps,deviceEventTypes,deviceErrorCodes,deviceStages,cleanDeviceEvent,cleanDeviceCheck,deviceCheckReport};
