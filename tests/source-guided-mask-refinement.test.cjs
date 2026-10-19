@@ -71,3 +71,24 @@ test('relative chroma recovers dark red boundary fabric that absolute RGB neutra
  assert.ok(recovered>0);assert.ok(p.restoredDarkChromaPixels>=recovered);
  assert.equal(p.displayEligible,false);
 });
+
+
+test('integration keeps unreviewed high-res masks out of default display and leaves retake path available',()=>{
+ const fs=require('node:fs');
+ const html=fs.readFileSync('public/index.html','utf8');
+ const preview=fs.readFileSync('public/reusable-figure-preview.js','utf8');
+ const ui=fs.readFileSync('public/reusable-figure-preview.js','utf8');
+ const i=html.indexOf('src="source-guided-mask-refinement.js"'),
+  j=html.indexOf('src="reusable-figure-preview.js"');
+ assert.ok(i>0&&j>i);
+ assert.ok(!preview.includes('ClosetSourceGuidedMask'),
+  'unreviewed boundary proposals must not auto-render as real clothes');
+ assert.match(html,/id="reusableFigurePhotoHelp"[^>]*hidden/);
+ assert.match(ui,/updatePhotoHelp\(counts\.skipped>0\)/);
+ assert.match(ui,/switchView\('scan'\)/);
+ const {d,w,h}=source();
+ const p=refine.propose(d,w,h,{category:'Tops',primaryColor:'Red'});
+ assert.equal(p.proposalAvailable,true);
+ assert.equal(p.eligible,false);assert.equal(p.displayEligible,false);
+ assert.equal(p.requiresIndependentMaskReview,true);
+});
