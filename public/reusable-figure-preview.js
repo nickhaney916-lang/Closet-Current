@@ -139,6 +139,7 @@
   status.textContent='Preparing local clothing preview…';
   const counts={shown:0,skipped:plan.skipped.length};
   const nextLayers=document.createDocumentFragment();
+  const displayedSlots=new Set();
   const cancelled=()=>revision!==renderRevision||
    (root.closetAuth?.user?.id||null)!==owner;
   for(const placement of plan.placements){
@@ -187,7 +188,10 @@
     counts.skipped++;continue;
    }
    if(preparedNow)previewCache?.put(query,prepared); // Cache only proven images.
-   nextLayers.append(img);counts.shown++;
+   img.dataset.slot=placement.slot;
+   if(root.ClosetLocalLayerDepth?.depthFor(placement,displayedSlots).enabled)
+    img.classList.add('reusable-figure-layer--contact-depth');
+   nextLayers.append(img);displayedSlots.add(placement.slot);counts.shown++;
   }
   if(cancelled())return;
   garmentContainer.replaceChildren(nextLayers);
