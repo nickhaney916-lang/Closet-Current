@@ -6,7 +6,7 @@ test('deletion HTTP entrypoint is disabled and cannot load service credentials',
  const executable=source.split('\n').filter(line=>!line.trimStart().startsWith('//')).join('\n');
  assert.match(source,/status:503/);
  assert.match(source,/deletionCompleted:false/);
- assert.doesNotMatch(source,/SUPABASE_SERVICE_ROLE_KEY|Deno\.env\.get|createClient|import\(/);
+ assert.doesNotMatch(executable,/SUPABASE_SERVICE_ROLE_KEY|Deno\.env\.get|createClient|import\(/);
  assert.doesNotMatch(source,/deleteAccount\(|deleteUser\(|removePhotos\(/);
 });
 test('all deletion SDK adapters remain in server-only paths and uncalled until approved',async()=>{
