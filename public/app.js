@@ -43,7 +43,7 @@ function recognitionSourcePhoto(item){
  // An old/restored record without that crop must never silently fall back
  // to its clipped or generated display preview.
  const unmasked=item?.recognitionPhoto?.image;
- if(typeof unmasked==='string'&&unmasked.startsWith('data:image/jpeg;base64,')&&unmasked.length>24)return unmasked;
+ if(typeof unmasked==='string'&&unmasked.length)return unmasked;
  if(item?.outfitSourceId)return null;
  return typeof item?.image==='string'?item.image:null;
 }
