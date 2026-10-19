@@ -4,6 +4,7 @@ on:
     branches: [research/blind-review-to-mask-inventory-gate-20261019]
     paths:
       - 'benchmark/blind-inventory-mask-gate.mjs'
+      - 'benchmark/BLIND-TO-PHYSICAL-MASK-SCORING-20261019.md'
       - 'tests/blind-inventory-mask-gate.test.mjs'
       - 'tests/blind-inventory-mask-cli.test.mjs'
       - 'scripts/audit-blind-physical-inventory.mjs'
