@@ -59,7 +59,7 @@ test('cross-cohort duplicate photos, missing model results and tampered original
  const f=fixtures();
  assert.throws(()=>evaluateFootwearLayerTradeoffs(
   [{...f.sets[0],manifest:[...f.sets[0].manifest,f.sets[0].manifest[0]]},...f.sets.slice(1)],
-  f.locked,f.framing,f.cross),/Duplicate|Incomplete/);
+  f.locked,f.framing,f.cross),/duplicate|Incomplete/i);
  assert.throws(()=>evaluateFootwearLayerTradeoffs(
   [{...f.sets[0],results:f.sets[0].results.slice(1)},...f.sets.slice(1)],
   f.locked,f.framing,f.cross),/Incomplete/);
