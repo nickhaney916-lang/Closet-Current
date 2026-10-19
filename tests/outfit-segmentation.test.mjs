@@ -264,3 +264,31 @@ test('mixed-class missing panels preserve originals for sleeves bottoms skirts a
   assert.equal(review.useOriginalCrop,true);
  }
 });
+
+test('two substantial disconnected upper regions become review-only separate source crops, not proven clothes',()=>{
+ const l=logits(48,40);
+ l.paint(4,4,8,13,15);l.paint(4,30,7,12,17);
+ const map=clothingLabelMap(l.data,l.dims),pieces=clothingMaskGroups(map);
+ assert.equal(pieces.length,2);
+ assert.ok(pieces.every(p=>p.id===4&&p.reviewOnlyReason==='disconnected-upper-regions'));
+ assert.equal(pieces.reduce((n,p)=>n+p.count,0),13*15+12*17);
+ assert.ok(pieces[0].bounds.right<pieces[1].bounds.left);
+ assert.equal(pieces[0].selected.some((v,i)=>v&&pieces[1].selected[i]),false);
+ const data=new Uint8ClampedArray(48*40*3).fill(78),image={data,width:48,height:40,channels:3};
+ for(const piece of pieces){
+  const original=cropClothingPhotoPixels(image,map,piece);
+  assert.ok(original.width<image.width&&original.height<image.height);
+  assert.ok(original.data.every(x=>x===78),'review input retains untouched original pixels');
+ }
+});
+test('a small detached sleeve, two trouser legs and a pair of shoes never create extra automatic entries',()=>{
+ const l=logits(48,40);
+ l.paint(4,4,4,14,14);l.paint(4,27,4,3,4);
+ l.paint(6,6,23,8,12);l.paint(6,18,23,8,12);
+ l.paint(9,9,36,5,3);l.paint(10,23,36,5,3);
+ const groups=clothingMaskGroups(clothingLabelMap(l.data,l.dims));
+ assert.deepEqual(groups.map(p=>p.label),['Upper garment','Bottoms','Shoes']);
+ assert.equal(groups[0].reviewOnlyReason,undefined,'minor fragment is not a second garment');
+ assert.equal(groups[1].reviewOnlyReason,undefined,'trouser legs are not independent pants');
+ assert.equal(groups[2].reviewOnlyReason,undefined,'a shoe pair remains one closet item');
+});
