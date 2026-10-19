@@ -701,11 +701,11 @@ async function reviewRecognitionMemory(){
  memoryReviewRunning=true;let completed=0;
  try{if(!localReady)await enableLocal();for(const target of targets){
   if(busy||automaticRunning||localPending.size||document.hidden||document.querySelector('dialog[open]'))break;
-  const before=JSON.stringify(target),image=target.recognitionPhoto?.image||target.image;let result;
+  const before=JSON.stringify(target),image=recognitionSourcePhoto(target);if(!image)continue;let result;
   try{result=await localRequest(target.itemType==='Unknown'||!target.color?'classify':'features',image,null,target.segmentHint);}catch{break;}
   const current=items.find(x=>x.id===target.id);if(!current||JSON.stringify(current)!==before)continue;
   if(!ClothingMemory.valid(result.recognitionMemory))continue;
-  const value={...current,recognitionMemory:result.recognitionMemory,learningReviewedWeek:week};delete value.weeklySuggestion;const choice=result.choices?.[0];if(result.strong&&choice&&segmentationAllows(current,choice)&&current.category===choice.category){const fields={itemType:choice.itemType,...ClothingDetails.recognizedFields(choice,result.details)};delete fields.color;value.weeklySuggestion={fields,requiresConfirmation:true,week};}const saved=await saveMemoryReview(value);if(saved&&(current.recognitionPhoto?.image||current.image)===image){completed++;current.recognitionMemory=saved.recognitionMemory;current.learningReviewedWeek=saved.learningReviewedWeek;if(saved.weeklySuggestion)current.weeklySuggestion=saved.weeklySuggestion;else delete current.weeklySuggestion;}
+  const value={...current,recognitionMemory:result.recognitionMemory,learningReviewedWeek:week};delete value.weeklySuggestion;const choice=result.choices?.[0];if(result.strong&&choice&&segmentationAllows(current,choice)&&current.category===choice.category){const fields={itemType:choice.itemType,...ClothingDetails.recognizedFields(choice,result.details)};delete fields.color;value.weeklySuggestion={fields,requiresConfirmation:true,week};}const saved=await saveMemoryReview(value);if(saved&&recognitionSourcePhoto(current)===image){completed++;current.recognitionMemory=saved.recognitionMemory;current.learningReviewedWeek=saved.learningReviewedWeek;if(saved.weeklySuggestion)current.weeklySuggestion=saved.weeklySuggestion;else delete current.weeklySuggestion;}
  }
  }finally{memoryReviewRunning=false;render();if(completed===8&&!memoryReviewTimer)memoryReviewTimer=setTimeout(()=>{memoryReviewTimer=null;reviewRecognitionMemory().catch(()=>{});},20000);}
 }
@@ -714,7 +714,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)scheduleMe
 
 function saveMemoryReview(value){return queued(()=>new Promise((resolve,reject)=>{
  let saved=null;const tx=db.transaction('items','readwrite'),store=tx.objectStore('items'),read=store.get(value.id);
- read.onsuccess=()=>{const current=read.result;if(!current||(current.recognitionPhoto?.image||current.image)!==(value.recognitionPhoto?.image||value.image))return;
+ read.onsuccess=()=>{const current=read.result;if(!current||!recognitionSourcePhoto(current)||recognitionSourcePhoto(current)!==recognitionSourcePhoto(value))return;
  saved={...current,recognitionMemory:value.recognitionMemory,learningReviewedWeek:value.learningReviewedWeek};delete saved.weeklySuggestion;
  if(current.category===value.category&&value.weeklySuggestion)saved.weeklySuggestion=value.weeklySuggestion;store.put(saved);
  };tx.oncomplete=()=>resolve(saved);tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);
