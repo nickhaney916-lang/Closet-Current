@@ -37,7 +37,7 @@ export function clothingMaskGroups(map){
  const {labels,confidence,width,height}=map;if(labels.length!==width*height||confidence.length!==labels.length)throw Error('Invalid outfit mask.');
  const output=[];
  for(const region of clothingRegions){
-  const selected=new Uint8Array(labels.length),seen=new Uint8Array(labels.length),minimum=Math.max(4,Math.ceil(labels.length*.0007));let count=0,sum=0,minX=width,minY=height,maxX=-1,maxY=-1;
+  const selected=new Uint8Array(labels.length),seen=new Uint8Array(labels.length),minimum=Math.max(4,Math.ceil(labels.length*.0007));let count=0,sum=0,minX=width,minY=height,maxX=-1,maxY=-1;const islands=[];
   for(let start=0;start<labels.length;start++){
    if(seen[start]||labels[start]!==region.id)continue;
    const queue=[start],component=[];seen[start]=1;
@@ -46,9 +46,29 @@ export function clothingMaskGroups(map){
     for(const n of [x>0?i-1:-1,x+1<width?i+1:-1,y>0?i-width:-1,y+1<height?i+width:-1])if(n>=0&&!seen[n]&&labels[n]===region.id){seen[n]=1;queue.push(n);}
    }
    if(component.length<minimum)continue;
-   for(const i of component){selected[i]=1;count++;sum+=confidence[i];minX=Math.min(minX,i%width);maxX=Math.max(maxX,i%width);minY=Math.min(minY,Math.floor(i/width));maxY=Math.max(maxY,Math.floor(i/width));}
+   let islandSum=0,islandLeft=width,islandTop=height,islandRight=-1,islandBottom=-1;
+   for(const i of component){selected[i]=1;count++;sum+=confidence[i];islandSum+=confidence[i];const x=i%width,y=Math.floor(i/width);minX=Math.min(minX,x);maxX=Math.max(maxX,x);minY=Math.min(minY,y);maxY=Math.max(maxY,y);islandLeft=Math.min(islandLeft,x);islandRight=Math.max(islandRight,x);islandTop=Math.min(islandTop,y);islandBottom=Math.max(islandBottom,y);}
+   islands.push({pixels:component,count:component.length,score:islandSum,bounds:{left:islandLeft,top:islandTop,right:islandRight+1,bottom:islandBottom+1}});
   }
   if(count<Math.max(12,Math.ceil(labels.length*.001))||sum/count<.8)continue;
+  // When TWO substantial, disconnected upper-clothing regions appear, a
+  // single union box can mix unrelated clothing or people. Produce separate
+  // REVIEW-ONLY source crops instead. Disconnection is NOT proof that either
+  // region is a separate garment; a sleeve can be split from its own shirt.
+  // Keep shoes paired and avoid splitting the legs of trousers or dresses.
+  if(region.id===4&&islands.length===2&&
+     islands.every(island=>island.count>=Math.max(12,Math.ceil(count*.25)))){
+   for(const island of islands){
+    const mask=new Uint8Array(labels.length);
+    for(const i of island.pixels)mask[i]=1;
+    const b=island.bounds;
+    output.push({...region,selected:mask,count:island.count,
+     confidence:island.score/island.count,bounds:b,
+     clipped:b.left===0||b.top===0||b.right===width||b.bottom===height,
+     reviewOnlyReason:'disconnected-upper-regions'});
+   }
+   continue;
+  }
   output.push({...region,selected,count,confidence:sum/count,bounds:{left:minX,top:minY,right:maxX+1,bottom:maxY+1},clipped:minX===0||minY===0||maxX===width-1||maxY===height-1});
  }
  return output;
