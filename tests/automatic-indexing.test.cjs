@@ -86,9 +86,10 @@ test('same-looking standalone photo remains an exact duplicate, but original-bac
  assert.equal(c.candidate('one-shot-display',other),true,
   'a whole-scene source is independently reviewable beside a same-looking standalone item');
  await done(c);
- assert.equal(stored.length,0);
- assert.equal(c.batch.length,2);
- assert.ok(c.batch.some(x=>x.outfitSourceId==='genuine-outfit'));
+ assert.equal(stored.length,1,'first legitimate standalone photo may finish saving');
+ assert.equal(c.batch.length,1,'the second sourced garment must survive for review');
+ assert.equal(c.batch[0].outfitSourceId,'genuine-outfit');
+ assert.equal(c.batch[0].possibleDuplicate,true,'no automatic second save on an identical-looking crop');
 });
 test('lookalikes are flagged and retained rather than silently discarded',async()=>{
  const {c}=setup({quality:async()=>({blank:false,signature:[100,200,50],aspect:1})});c.candidate('one');await done(c);c.candidate('two');await done(c);
