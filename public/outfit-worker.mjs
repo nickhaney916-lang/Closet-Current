@@ -35,7 +35,8 @@ self.onmessage=event=>{const request=event.data;chain=chain.then(async()=>{
    // When a mask is structurally unreliable, DISPLAY a wider 12% source
    // crop so missing hems/soles just beyond coarse model bounds survive.
    // The enlarged display crop is NEVER sent to recognition or color inference.
-   const raw=cropClothingPhotoPixels(image,map,group),display=garmentDisplayMaskReliability(map,group),
+   const raw=cropClothingPhotoPixels(image,map,group),maskReview=garmentDisplayMaskReliability(map,group),
+    display=group.reviewOnlyReason?{...maskReview,useOriginalCrop:true,reason:group.reviewOnlyReason}:maskReview,
     isolated=display.useOriginalCrop?cropClothingPhotoPixels(image,map,group,{marginFraction:.12}):isolateClothingPixels(image,map,group),
     sample=display.useOriginalCrop?null:clothingColorSample(image,map,group),
     core=display.useOriginalCrop?null:clothingInteriorColorSample(image,map,group),b=raw.bounds;
