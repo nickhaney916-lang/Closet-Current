@@ -86,6 +86,9 @@
   $('authGate').hidden=true;$('appShell').hidden=false;
   $('accountLabel').textContent=data.user.user_metadata?.username||data.user.email||'My account';
   resolveReady(data.user);
+  // A refreshed or newly authenticated identity must invalidate any try-on
+  // availability/preview left from the previous user on this page.
+  if(typeof window.onTryOnBoardChanged==='function')window.onTryOnBoardChanged();
  }
  function setMode(on){
   setPasswordVisible(false);
