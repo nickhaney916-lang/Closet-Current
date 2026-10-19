@@ -221,7 +221,9 @@ function renderPhotoResults(grid,results){
   const label=pending?(recognitionState.activeId===item.id&&localReady?'Checking…':'Waiting…'):saved?(item.itemType==='Unknown'&&item.color?'Saved · refine type':'Saved'):item.saveFailed?'Not saved':item.scanFailed?'Scanner unavailable':item.possibleDuplicate?'Check duplicate':state==='ready'?'Ready to add':canConfirmReviewedColor(item)?'Choose color to save':known?'Needs review':item.color?'Color found · confirm garment':'Needs a clearer photo';
   body.append(node('span',label,'photo-status '+state),node('h3',title));
   if(item.outfitSourceId&&item.segmentHint?.displayFallback==='original-crop')
-   body.append(node('p',item.segmentHint.displayFallbackReason==='disconnected-upper-regions'?
+   body.append(node('p',item.segmentHint.displayFallbackReason==='dress-layer-conflict-review-only'?
+     'Photo region needs review: this may be a top or jacket over a skirt, not one dress. Check the pieces or photograph each separately before saving.':
+     item.segmentHint.displayFallbackReason==='disconnected-upper-regions'?
      'Photo region needs review: two upper-clothing areas were found, but they may be parts of ONE garment. Compare both photos in Adjust before saving.':
      'Photo region needs review: this cutout may contain other clothes, skin or background. Check with Adjust or photograph the item alone before saving.','fine'));
   if(known)body.append(node('p',[item.category,item.itemType,item.color].filter(x=>x&&x!=='Unknown').join(' · '),'photo-category'));
