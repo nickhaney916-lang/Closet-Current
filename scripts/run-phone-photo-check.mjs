@@ -1,10 +1,16 @@
-import {chromium} from 'playwright';
+import {chromium,webkit,devices} from 'playwright';
 import {createServer} from 'node:http';
 import {readFile,mkdir,writeFile} from 'node:fs/promises';
 import {resolve,extname,join} from 'node:path';
 import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
 
-const root=resolve('dist'),output=resolve(process.argv[2]||'benchmark/phone-photo-flow');
+// Both are desktop browser *emulations*: they do not establish physical
+// Android camera or iPhone performance. No paid provider or private account.
+const browserName=process.env.PHONE_BROWSER||'chromium';
+if(!['chromium','webkit'].includes(browserName))throw Error('Only Chromium or WebKit browser emulation is supported');
+const engine=browserName==='webkit'?webkit:chromium;
+const root=resolve('dist'),output=resolve(process.argv[2]||'benchmark/phone-photo-flow/'+browserName);
 const types={'.html':'text/html','.mjs':'text/javascript','.js':'text/javascript','.json':'application/json','.css':'text/css','.bin':'application/octet-stream'};
 const server=createServer(async(req,res)=>{try{
  const path=new URL(req.url,'http://localhost').pathname,file=resolve(root,'.'+decodeURIComponent(path==='/'?'/index.html':path));
@@ -13,13 +19,39 @@ const server=createServer(async(req,res)=>{try{
 }catch{if(!res.headersSent)res.writeHead(404);res.end();}});
 await new Promise(r=>server.listen(0,'127.0.0.1',r));let browser;
 try{
- await mkdir(output,{recursive:true});browser=await chromium.launch({headless:true,args:['--no-sandbox','--enable-unsafe-swiftshader']});
- const page=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true,acceptDownloads:true}),pageErrors=[];page.on('pageerror',e=>pageErrors.push(e.message));
+ await mkdir(output,{recursive:true});
+ const fixtures=[
+  {id:'commons-0001',file:'benchmark/photos/commons-0001.jpg'},
+  {id:'commons-0090',file:'benchmark/photos/commons-0090.jpg'}
+ ];
+ const locked=JSON.parse(await readFile('benchmark/locked-photo-sources.json','utf8'));
+ for(const fixture of fixtures){
+  const bytes=await readFile(fixture.file);
+  const source=locked.find(x=>x.id===fixture.id);
+  const checksum=createHash('sha256').update(bytes).digest('hex');
+  assert.ok(source?.verified&&source.sha256===checksum,
+   'Only the unchanged SHA-locked licensed original can enter '+browserName+' model benchmarking');
+  fixture.bytes=bytes;
+ }
+ browser=await engine.launch({headless:true,
+  ...(browserName==='chromium'?{args:['--no-sandbox','--enable-unsafe-swiftshader']}: {})});
+ const page=await browser.newPage({
+  ...(browserName==='webkit'?{
+    viewport:devices['iPhone 13'].viewport,deviceScaleFactor:3
+  }:{viewport:{width:390,height:844},deviceScaleFactor:2}),
+  isMobile:true,hasTouch:true,acceptDownloads:true,
+  serviceWorkers:'block'
+ }),pageErrors=[],networkRequests=[];
+ page.on('request',req=>{
+  if(!req.url().startsWith('http://127.0.0.1:')&&
+     !req.url().startsWith('blob:')&&!req.url().startsWith('data:'))
+   networkRequests.push(req.url().replace(/\?.*/,'')); // never emit token query params
+ });page.on('pageerror',e=>pageErrors.push(e.message));
  await page.goto('http://127.0.0.1:'+server.address().port+'/phone-photo-check.html');
  assert.equal(await page.locator('#run').isDisabled(),true);
  await page.locator('#photos').setInputFiles([
-  {name:'PRIVATE_PHONE_GARMENT.jpg',mimeType:'image/jpeg',buffer:await readFile('benchmark/photos/commons-0001.jpg')},
-  {name:'PRIVATE_PHONE_NEGATIVE.jpg',mimeType:'image/jpeg',buffer:await readFile('benchmark/photos/commons-0090.jpg')}
+  {name:'PRIVATE_PHONE_GARMENT.jpg',mimeType:'image/jpeg',buffer:fixtures[0].bytes},
+  {name:'PRIVATE_PHONE_NEGATIVE.jpg',mimeType:'image/jpeg',buffer:fixtures[1].bytes}
  ]);
  await page.locator('#category-0').selectOption('Tops');await page.locator('#type-0').selectOption('T-shirt');assert.equal(await page.locator('#run').isDisabled(),true);
  await page.locator('#category-1').selectOption('Uncategorized');await page.locator('#run').click();
@@ -28,11 +60,34 @@ try{
  const downloadPromise=page.waitForEvent('download');await page.locator('#download').click();const download=await downloadPromise;const reportPath=join(output,'results.json');await download.saveAs(reportPath);
  const raw=await readFile(reportPath,'utf8'),report=JSON.parse(raw);assert.ok(!raw.includes('PRIVATE_PHONE'));assert.ok(!raw.includes('data:image'));assert.equal(report.summary.photos,2);assert.equal(report.summary.errors,0);assert.equal(report.summary.categoryMatches,1);assert.equal(report.summary.typeMatches,1);assert.equal(report.summary.negativeRejected,1);assert.match(report.release,/^[a-f0-9]{12}$/);assert.equal(report.recognitionIndex,JSON.parse(await readFile('public/recognition-vectors.json','utf8')).sha256);
  assert.equal(await page.locator('#category-0').isDisabled(),true);
- assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=390&&innerWidth<=390),true);
+ const layout=await page.evaluate(()=>({
+  width:innerWidth,scrollWidth:document.documentElement.scrollWidth,
+  photoCount:document.querySelectorAll('.photo').length
+ }));
+ assert.equal(layout.scrollWidth<=layout.width+1,true,
+  browserName+' phone photo test must have no horizontal overflow');
+ assert.equal(layout.photoCount,2);
+ assert.deepEqual(networkRequests,[],
+  'Phone photo checker cannot send photographs or identifiers to external domains');
  await page.screenshot({path:join(output,'phone-photo-flow.png'),fullPage:true});
  await page.locator('#restart').click();assert.equal(await page.locator('.photo').count(),0);assert.equal(await page.locator('#photos').isDisabled(),false);assert.equal(await page.locator('#download').isVisible(),false);
- await page.locator('#photos').setInputFiles({name:'PRIVATE_PHONE_RETRY.jpg',mimeType:'image/jpeg',buffer:await readFile('benchmark/photos/commons-0001.jpg')});await page.locator('#category-0').selectOption('Tops');await page.locator('#run').click();await page.locator('#restart').click();
+ await page.locator('#photos').setInputFiles({name:'PRIVATE_PHONE_RETRY.jpg',mimeType:'image/jpeg',buffer:fixtures[0].bytes});await page.locator('#category-0').selectOption('Tops');await page.locator('#run').click();await page.locator('#restart').click();
  await page.waitForTimeout(150);assert.equal(await page.locator('.photo').count(),0);assert.equal(await page.locator('#status').innerText(),'Choose your photos to begin.');assert.deepEqual(pageErrors,[]);
- await writeFile(join(output,'summary.json'),JSON.stringify({passed:true,realWorker:true,fixturePhotos:2,viewport:{width:390,height:844},lockedLabels:true,reportPrivacy:true,cancellation:true,pageErrors},null,2));
- console.log('Phone photo-check flow passed with real recognition; private filenames excluded.');
+ await writeFile(join(output,'summary.json'),JSON.stringify({
+  passed:true,realWorker:true,browser:browserName,
+  phoneProfile:browserName==='webkit'?'iPhone 13 WebKit emulation':'Android Chromium emulation',
+  physicallyTested:false,liveCameraTested:false,providerBills:0,
+  originalSourceShaVerified:2,fixturePhotos:2,
+  recognitionOriginalFirst:true,categoryMatches:report.summary.categoryMatches,
+  negativeRejected:report.summary.negativeRejected,
+  viewport:layout,lockedLabels:true,reportPrivacy:true,cancellation:true,
+  externalRequests:networkRequests.length,pageErrors
+ },null,2));
+ console.log('CROSS_ENGINE_REAL_PHOTO_PILOT '+JSON.stringify({
+   browser:browserName,originalShaVerified:2,realLocalModel:true,
+   garmentCategoryCorrect:report.summary.categoryMatches,
+   negativePhotosRejected:report.summary.negativeRejected,
+   physicalPhoneTested:false,actualCameraTested:false,paidProviderCalls:0,
+   privatePhotoBytesExported:false
+  }));
 }finally{await browser?.close();await new Promise(r=>server.close(r));}
