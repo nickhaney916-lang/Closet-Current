@@ -49,7 +49,7 @@ try{
    const originals=photos.map((p,i)=>({
     sourceId:ids[i],image:ids[i]+'.jpg',
     sourceSha256:createHash('sha256').update(Buffer.from(p.base64,'base64')).digest('hex'),
-    originalSourceUrl:'https://commons.wikimedia.org/wiki/File:'+ids[i],license:'CC0'
+    license:'CC0'
    }));
    const packet={schemaVersion:1,reviewType:'independent-blind-original-photo-inventory',
     reviewerSlot:'first',modelPredictionsIncluded:false,manifestCategoryLabelsIncluded:false,
