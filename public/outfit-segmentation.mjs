@@ -56,8 +56,14 @@ export function clothingMaskGroups(map){
   // never infer a shirt/jacket identity, trust its mask, sample a color or
   // automatically index it. Ignore tiny/ambiguous speckles as before.
   const average=count?sum/count:0;
+  // A high enough mask pixel count can still be just a thin sleeve
+  // (actual validation-0031 review crop showed only blazer sleeve fabric).
+  // Require a plausible upper-garment *extent* in BOTH dimensions before
+  // adding a low-confidence review card. It is still NOT an approved item.
+  // The evidence remains accessible through aggregate worker diagnostics.
+  const broadUpperExtent=(maxX-minX+1)/width>=.12&&(maxY-minY+1)/height>=.12;
   const weakUpper=region.id===4&&count>=Math.max(24,Math.ceil(labels.length*.002))&&
-    average>=.7&&average<.8;
+    average>=.7&&average<.8&&broadUpperExtent;
   if(count<Math.max(12,Math.ceil(labels.length*.001))||(average<.8&&!weakUpper))continue;
   if(weakUpper){
    output.push({...region,selected,count,confidence:average,
