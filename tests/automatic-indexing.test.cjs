@@ -434,7 +434,7 @@ test('a late model response must not classify newly replaced original RGB, scene
   await done(c);
   assert.equal(stored.length,0,'stale model reply cannot auto-save a different source');
   assert.equal(c.items.length,0);
-  assert.equal(item.localAnalyzed,false);
+  assert.equal(Boolean(item.localAnalyzed),false,'stale response must not mark the source classified');
   assert.match(item.localStatus,/Photo or category changed during recognition/);
  }
 });
