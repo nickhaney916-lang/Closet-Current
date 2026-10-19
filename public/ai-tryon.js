@@ -2,7 +2,7 @@
 // Pilot UI: one click starts REAL provider inference. No pasted-garment
 // mockups, hidden paid calls, or automatic selfie uploads.
 let tryOnFigure='female',tryOnBusy=false,tryOnRevision=0,tryOnImage=null,tryOnFingerprint=null,tryOnPendingInputs=null;
-let tryOnReady=false,tryOnReadinessPending=true;
+let tryOnReady=false,tryOnMultiReady=false,tryOnReadinessPending=true;
 // These are lightweight local previews of the two fixed AI figures, not
 // generated try-on results. They make selecting a model possible offline.
 function updateStandardModelPreview(){
@@ -61,22 +61,28 @@ async function checkTryOnReadiness(){
   const token=await window.closetAuth.getAccessToken();
   const response=await tryOnRequest(token,{action:'availability'});
   tryOnReady=response?.status==='ready';
- }catch{tryOnReady=false;}
+  tryOnMultiReady=tryOnReady&&response?.multiGarmentReady===true;
+ }catch{tryOnReady=false;tryOnMultiReady=false;}
  finally{
   tryOnReadinessPending=false;
   if(!tryOnReady){
    $('tryOnStatus').textContent='AI virtual try-on is not available yet. Your closet and outfit builder still work normally; no paid AI call will run.';
    $('tryOnGenerate').textContent='AI try-on coming soon';
   }else{
-   $('tryOnGenerate').textContent='Generate AI try-on';
-   $('tryOnStatus').textContent='Ready for pilot accounts. Generate sends only the selected clothing crop to our AI provider.';
+   $('tryOnGenerate').textContent=tryOnMultiReady?'Generate two-garment AI try-on':'Generate AI try-on';
+   $('tryOnStatus').textContent=tryOnMultiReady?
+    'Two-garment AI research is available for this pilot. Each garment uses a separate provider pass. Results must be checked for fabric and identity fidelity.':
+    'Ready for the single-garment pilot. Generate sends only your selected clothing crop to our AI provider.';
   }
   onTryOnBoardChanged();
  }
 }
-async function tryOnOne(token,image,category,figure,isCurrent){
- let result=await tryOnRequest(token,{action:'start',figure,category,garmentImage:image});
+async function tryOnOne(token,image,category,figure,isCurrent,previousToken=null){
+ let result=await tryOnRequest(token,previousToken?
+  {action:'continue',previousToken,figure,category,garmentImage:image}:
+  {action:'start',figure,category,garmentImage:image});
  if(typeof result.token!=='string')throw Error('AI try-on did not start');
+ const jobToken=result.token;
  // One provider call per step. Status requests never submit extra billable jobs.
  for(let i=0;i<32;i++){
   if(!isCurrent())throw Error('Outfit changed; the old preview was discarded');
@@ -84,7 +90,8 @@ async function tryOnOne(token,image,category,figure,isCurrent){
   result=await tryOnRequest(token,{action:'status',token:result.token});
   if(result.status==='completed'){
    if(!window.AiTryOnPlan.validImage(result.image))throw Error('Generated try-on image is invalid');
-   return result.image;
+   if(!isCurrent())throw Error('Outfit changed; stale result discarded');
+   return {image:result.image,jobToken:jobToken};
   }
   if(result.status==='failed')throw Error('AI try-on could not render this garment');
   if(result.status!=='processing')throw Error('Unexpected try-on response');
@@ -106,33 +113,32 @@ async function generateTryOn(){
   const auth=window.closetAuth;
   if(typeof auth?.getAccessToken!=='function')throw Error('Sign in to try on clothing');
   const token=await auth.getAccessToken();
-  let modelImage=null;
-  for(let i=0;i<plan.steps.length;i++){
+  let modelImage=null,priorJob=null;
+  const enabledSteps=tryOnMultiReady?plan.steps:plan.steps.slice(0,1);
+  for(let i=0;i<enabledSteps.length;i++){
    if(!isCurrent())return;
-   const step=plan.steps[i];
-   $('tryOnStatus').textContent='Generating AI try-on · '+(i+1)+' of '+plan.steps.length+'…';
-   // Follow-up garments use the previous AI-generated figure as the
-   // model input only after the server supports a signed chained image.
-   // First pilot deliberately handles just ONE garment to avoid presenting
-   // unrendered bottoms, shoes, or coats as if they were worn.
-   if(i>0)break;
-   modelImage=await tryOnOne(token,step.image,step.category,figure,isCurrent);
+   const step=enabledSteps[i];
+   $('tryOnStatus').textContent='Generating AI try-on · '+(i+1)+' of '+enabledSteps.length+'…';
+   // "continue" is allowed only when the server verifies a completed,
+   // same-user/same-figure prior job and is independently approved for
+   // multi-pass paid inference. Never submit a client-picked model photo.
+   const current=await tryOnOne(token,step.image,step.category,figure,isCurrent,priorJob);
+   modelImage=current.image;priorJob=current.jobToken;
   }
   if(!isCurrent()||!modelImage)return;
   tryOnImage=modelImage;tryOnFingerprint=signature;tryOnPendingInputs=null;
   const image=$('tryOnImage');image.src=modelImage;image.hidden=false;
   $('outfitFigure')?.classList.add('ai-tryon-active');
-  // The first pilot generates ONE garment, not the assembled whole outfit.
-  // A dress + shoes has only one supported plan step, but the shoes were
-  // never rendered; relying on plan.steps.length would falsely imply a
-  // complete-look preview. State every unrendered selected slot explicitly.
-  const rendered=plan.steps[0].slot,
-   unrendered=Object.keys(currentBoard?.slots||{}).filter(slot=>slot!==rendered);
-  const onlyGarment=plan.steps[0].category==='one-pieces'?'dress':rendered;
-  $('tryOnStatus').textContent=unrendered.length?
-   'AI try-on shows only your '+onlyGarment+'. Not rendered: '+unrendered.join(', ')+
-   '. Exact fit, colors and drape are not guaranteed.':
-   'AI-generated '+onlyGarment+' preview. Exact sizing and fabric drape are not guaranteed.';
+  // Even when two provider passes completed, it is NOT proof that both
+  // clothing identities were preserved in the final output. Full outfit
+  // footwear/outer layers remain unsupported by v1.6.
+  const rendered=enabledSteps.map(x=>x.slot),
+   unrendered=Object.keys(currentBoard?.slots||{}).filter(slot=>!rendered.includes(slot)),
+   summary=rendered.map(x=>x==='top'&&plan.dress?'dress':x).join(' + ');
+  $('tryOnStatus').textContent='AI-generated '+summary+' preview ('+rendered.length+
+   ' pass'+(rendered.length===1?'':'es')+').'+
+   (unrendered.length?' Not rendered: '+unrendered.join(', ')+'.':'')+
+   ' Check both original garments against the preview; fabric details, drape and earlier garments may change between AI passes.';
  }catch(error){
   if(!isCurrent())return;
   $('tryOnStatus').textContent=error instanceof Error?error.message:'Try-on unavailable';
