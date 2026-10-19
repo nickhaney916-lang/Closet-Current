@@ -62,34 +62,74 @@
   if(![a,b,c,d,e,f].every(Number.isFinite))return null;
   return [a,b,c,d,e,f];
  }
+ // An attached pale mannequin neck can survive exterior white matting.
+ // Hold ambiguous upper-center protrusions; never erase guessed body pixels.
+ function hasAmbiguousNeck(data,width,height,bounds){
+  if(!bounds||!data||data.length!==width*height*4)return true;
+  const x0=Math.floor(bounds.left+bounds.width*.44),x1=Math.ceil(bounds.left+bounds.width*.56);
+  const y0=bounds.top,y1=Math.ceil(bounds.top+bounds.height*.12);
+  let total=0,bright=0;
+  for(let y=y0;y<y1;y++)for(let x=x0;x<x1;x++){
+   const i=(y*width+x)*4;if(data[i+3]<128)continue;
+   total++;
+   const lo=Math.min(data[i],data[i+1],data[i+2]),hi=Math.max(data[i],data[i+1],data[i+2]);
+   if(lo>=120&&hi-lo<=28)bright++;
+  }
+  return total>0&&bright/total>.65;
+ }
+ // Inverse triangle sampling writes each output pixel once. Canvas triangle
+ // clips otherwise leave antialiased cracks and darken overlapping soft alpha.
+ function rasterize(data,mesh){
+  if(!mesh||!data||data.length!==mesh.width*mesh.height*4)return null;
+  const {width,height}=mesh,out=new Uint8ClampedArray(data.length);
+  for(const indices of mesh.triangles){
+   const [p,q,r]=indices.map(i=>mesh.vertices[i]);
+   const det=(q.y-r.y)*(p.x-r.x)+(r.x-q.x)*(p.y-r.y);
+   if(!Number.isFinite(det)||Math.abs(det)<1e-7)return null;
+   const left=Math.max(0,Math.floor(Math.min(p.x,q.x,r.x)));
+   const right=Math.min(width,Math.ceil(Math.max(p.x,q.x,r.x)));
+   const top=Math.max(0,Math.floor(Math.min(p.y,q.y,r.y)));
+   const bottom=Math.min(height,Math.ceil(Math.max(p.y,q.y,r.y)));
+   for(let y=top;y<bottom;y++)for(let x=left;x<right;x++){
+    const px=x+.5,py=y+.5;
+    const u=((q.y-r.y)*(px-r.x)+(r.x-q.x)*(py-r.y))/det;
+    const v=((r.y-p.y)*(px-r.x)+(p.x-r.x)*(py-r.y))/det,w=1-u-v;
+    if(u< -1e-8||v< -1e-8||w< -1e-8)continue;
+    const sx=Math.max(0,Math.min(width-1,u*p.sourceX+v*q.sourceX+w*r.sourceX-.5));
+    const sy=Math.max(0,Math.min(height-1,u*p.sourceY+v*q.sourceY+w*r.sourceY-.5));
+    const x0=Math.floor(sx),y0=Math.floor(sy),fx=sx-x0,fy=sy-y0;
+    const x2=Math.min(x0+1,width-1),y2=Math.min(y0+1,height-1);
+    let alpha=0,red=0,green=0,blue=0;
+    for(let k=0;k<4;k++){
+     const at=((k<2?y0:y2)*width+(k%2===0?x0:x2))*4;
+     const weight=(k%2===0?1-fx:fx)*(k<2?1-fy:fy);
+     const a=data[at+3]*weight;alpha+=a;
+     red+=data[at]*a;green+=data[at+1]*a;blue+=data[at+2]*a;
+    }
+    const at=(y*width+x)*4;
+    if(alpha>0){out[at]=red/alpha;out[at+1]=green/alpha;out[at+2]=blue/alpha;}
+    out[at+3]=alpha;
+   }
+  }
+  return out;
+ }
  function warpTransparentImage(image,category,canvas){
   if(!image||!canvas||!image.naturalWidth||!image.naturalHeight||
      typeof canvas.getContext!=='function')return null;
   const mesh=makeMesh(image.naturalWidth,image.naturalHeight,category);
   if(!mesh)return null;
   canvas.width=mesh.width;canvas.height=mesh.height;
-  const ctx=canvas.getContext('2d');
+  const ctx=canvas.getContext('2d',{willReadFrequently:true});
   if(!ctx)return null;
-  ctx.clearRect(0,0,mesh.width,mesh.height);
-  ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
   try{
-   for(const indices of mesh.triangles){
-    const points=indices.map(i=>mesh.vertices[i]),m=affine(points);
-    if(!m)return null;
-    ctx.save();
-    try{
-     ctx.beginPath();ctx.moveTo(points[0].x,points[0].y);
-     ctx.lineTo(points[1].x,points[1].y);
-     ctx.lineTo(points[2].x,points[2].y);
-     ctx.closePath();ctx.clip();
-     ctx.setTransform(...m);
-     ctx.drawImage(image,0,0);
-    }finally{ctx.restore();}
-   }
-   // Display-only, not a substitute for the item image/source bytes.
+   ctx.clearRect(0,0,mesh.width,mesh.height);
+   ctx.drawImage(image,0,0);
+   const pixels=ctx.getImageData(0,0,mesh.width,mesh.height);
+   const output=rasterize(pixels.data,mesh);if(!output)return null;
+   pixels.data.set(output);ctx.putImageData(pixels,0,0);
    return canvas.toDataURL('image/png');
   }catch{return null;}
  }
- root.ClosetGarmentWarp=Object.freeze({profiles,alphaBounds,makeMesh,affine,warpTransparentImage});
+ root.ClosetGarmentWarp=Object.freeze({profiles,alphaBounds,hasAmbiguousNeck,makeMesh,affine,rasterize,warpTransparentImage});
  if(typeof module!=='undefined')module.exports=root.ClosetGarmentWarp;
 })(typeof window!=='undefined'?window:globalThis);

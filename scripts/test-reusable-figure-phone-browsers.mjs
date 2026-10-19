@@ -22,7 +22,7 @@ const url='http://127.0.0.1:'+server.address().port+'/';
 const sources=JSON.parse(await readFile('benchmark/locked-photo-sources.json','utf8'));
 const licensed=[];
 for(const [id,category,color,expectedLayers] of [
- ['commons-0053','Dresses','Black',1],['commons-0002','Tops','Red',0],['commons-0003','Tops','Black',0]
+ ['commons-0053','Dresses','Black',0],['commons-0002','Tops','Red',0],['commons-0003','Tops','Black',0]
 ]){
  const source=sources.find(x=>x.id===id),bytes=await readFile('benchmark/fixtures/'+source.image);
  assert.equal(createHash('sha256').update(bytes).digest('hex'),source.sha256);
@@ -82,6 +82,18 @@ try{
     geometry:ClosetGarmentWarp.makeMesh(100,150,'Tops')?.triangles.length
    }));
    assert.equal(warpedState.geometry,32);
+   const alphaProbe=await page.evaluate(()=>{
+    const data=new Uint8ClampedArray(80*100*4);
+    for(let i=0;i<80*100;i++)data.set([190,50,20,128],i*4);
+    const output=ClosetGarmentWarp.rasterize(data,ClosetGarmentWarp.makeMesh(80,100,'Tops'));
+    let defects=0;
+    for(let y=0;y<100;y++)for(let x=10;x<70;x++){
+     const i=(y*80+x)*4;
+     if(output[i]!==190||output[i+1]!==50||output[i+2]!==20||output[i+3]!==128)defects++;
+    }
+    return defects;
+   });
+   assert.equal(alphaProbe,0,'no triangle cracks, doubled alpha or dark interpolation halos');
    assert.equal(warpedState.output.length,2);
    for(let i=0;i<2;i++){
     assert.match(warpedState.output[i],/^data:image\/png;base64,/);

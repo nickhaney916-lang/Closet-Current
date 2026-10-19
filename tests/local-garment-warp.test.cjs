@@ -71,13 +71,15 @@ test('renderer does not alter input garment pixels',()=>{
      clearRect(){calls.push('clear');},save(){calls.push('save');},
      restore(){calls.push('restore');},beginPath(){},moveTo(){},lineTo(){},
      closePath(){},clip(){},setTransform(...args){assert.equal(args.length,6);},
-     drawImage(img){assert.equal(img,image);calls.push('draw');}
+     drawImage(img){assert.equal(img,image);calls.push('draw');},
+     getImageData(){return {data:new Uint8ClampedArray(100*150*4)};},
+     putImageData(pixels){assert.equal(pixels.data.length,100*150*4);calls.push('put');}
    };},toDataURL(t){assert.equal(t,'image/png');return 'data:image/png;base64,LOCAL';}
  };
  const original=JSON.stringify(image),result=warp.warpTransparentImage(image,'Outerwear',fakeCanvas);
  assert.equal(result,'data:image/png;base64,LOCAL');
- assert.equal(calls.filter(c=>c==='draw').length,32);
- assert.equal(calls.filter(c=>c==='restore').length,32);
+ assert.equal(calls.filter(c=>c==='draw').length,1);
+ assert.equal(calls.filter(c=>c==='put').length,1);
  assert.equal(JSON.stringify(image),original);
  assert.equal(fakeCanvas.width,100);assert.equal(fakeCanvas.height,150);
 });
@@ -103,4 +105,28 @@ test('central fabric, collar and seam geometry has no horizontal or vertical str
    assert.ok((b.x-a.x)*(c.y-a.y)-(c.x-a.x)*(b.y-a.y)>0);
   }
  }
+});
+
+test('inverse rasterization preserves central texture and soft alpha without mesh cracks',()=>{
+ const width=80,height=100,data=new Uint8ClampedArray(width*height*4);
+ for(let y=0;y<height;y++)for(let x=0;x<width;x++){
+  const i=(y*width+x)*4;data.set([x*3,y*2,70,128],i);
+ }
+ const before=Buffer.from(data),out=warp.rasterize(data,warp.makeMesh(width,height,'Tops'));
+ for(let y=0;y<height;y++)for(let x=20;x<60;x++){
+  const i=(y*width+x)*4;
+  assert.deepEqual([...out.slice(i,i+4)],[...data.slice(i,i+4)]);
+ }
+ assert.deepEqual(Buffer.from(data),before);
+ for(let y=0;y<height;y++)for(let x=10;x<70;x++)assert.equal(out[(y*width+x)*4+3],128);
+});
+test('pale attached neck ambiguity is held without guessing missing fabric',()=>{
+ const width=100,height=160,bounds={left:10,top:0,width:80,height:160};
+ const data=new Uint8ClampedArray(width*height*4);
+ for(let i=0;i<width*height;i++)data.set([30,20,25,255],i*4);
+ assert.equal(warp.hasAmbiguousNeck(data,width,height,bounds),false);
+ for(let y=0;y<20;y++)for(let x=42;x<58;x++)data.set([180,180,180,255],(y*width+x)*4);
+ const before=Buffer.from(data);
+ assert.equal(warp.hasAmbiguousNeck(data,width,height,bounds),true);
+ assert.deepEqual(Buffer.from(data),before);
 });

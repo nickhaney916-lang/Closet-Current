@@ -74,6 +74,9 @@
    const matte=white?.analyze(pixels.data,c.width,c.height,{category,primaryColor});
    if(matte?.eligible===true&&matte.alpha?.length===c.width*c.height){
     for(let i=0;i<matte.alpha.length;i++)pixels.data[i*4+3]=matte.alpha[i];
+    const bounds=root.ClosetGarmentWarp?.alphaBounds(pixels.data,c.width,c.height);
+    if(['Tops','Outerwear','Dresses'].includes(category)&&
+      root.ClosetGarmentWarp?.hasAmbiguousNeck(pixels.data,c.width,c.height,bounds))return null;
     ctx.putImageData(pixels,0,0);
     return trimmed(c,pixels);
    }

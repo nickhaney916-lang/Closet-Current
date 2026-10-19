@@ -11,11 +11,16 @@
   expansion that could clip against the output canvas.
 - Optional bounded selfie position/zoom controls remain ephemeral/local and
   reset on removal. Existing layer ordering and dress exclusions preserved.
-- Local build and full suite: **977 passed, 0 failed, 3 skipped**. Focused suite:
-  **16 passed**. Local browser executables unavailable; attempted download was
+- Local build and full suite: **979 passed, 0 failed, 3 skipped**. Focused suite:
+  **18 passed**. Local browser executables unavailable; attempted download was
   truncated. Browser results must be read from exact-head CI before claiming
   emulation passed. CI includes Android Chromium/iPhone WebKit and 3 licensed,
   SHA-verified photo acceptance/hold cases with screenshot/JSON artifacts.
+- Screenshot review of the first CI run exposed triangle cracks and a retained
+  mannequin neck. Replaced clip-based rasterization with inverse premultiplied
+  alpha sampling and added a conservative ambiguous-neck hold. All 3 licensed
+  raw photo cases now test holds, not successful real-garment fit. Final-head CI
+  must validate the revised implementation.
 - No physical phones or fabric-fidelity score. Existing low-resolution figure
   rights, gray base clothing, occlusion and realistic drape remain unresolved.
   See `docs/LOCAL-FITTING-ALIGNMENT-20261019.md` for evidence and limits.
