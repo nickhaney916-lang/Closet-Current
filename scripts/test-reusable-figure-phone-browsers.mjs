@@ -95,6 +95,26 @@ try{
    });
    assert.equal(alphaProbe,0,'no triangle cracks, doubled alpha or dark interpolation halos');
    assert.equal(warpedState.output.length,2);
+   const proportions=await page.evaluate(async()=>{
+    const images=[...document.querySelectorAll('#reusableFigureGarments img')];
+    return Promise.all(images.map(async img=>{
+     await img.decode();
+     const bounds=document.getElementById('reusableFigureStage').getBoundingClientRect();
+     return {naturalWidth:img.naturalWidth,naturalHeight:img.naturalHeight,
+      width:Number.parseFloat(img.style.width),height:Number.parseFloat(img.style.height),
+      left:Number.parseFloat(img.style.left),top:Number.parseFloat(img.style.top),
+      stageAspect:bounds.width/bounds.height};
+    }));
+   });
+   assert.equal(proportions.length,2);
+   for(const [i,p] of proportions.entries()){
+    assert.ok(p.naturalWidth<100&&p.naturalHeight<150,
+     'transparent white margins should be trimmed without source changes');
+    assert.ok(Math.abs((p.width/p.height)*p.stageAspect-p.naturalWidth/p.naturalHeight)<.01,
+     'owned garment '+i+' retains original cropped aspect ratio');
+   }
+   assert.equal(proportions[0].top,44,'female jeans align with waist anchor');
+   assert.equal(proportions[1].top,19,'female shirt aligns with shoulder anchor');
    for(let i=0;i<2;i++){
     assert.match(warpedState.output[i],/^data:image\/png;base64,/);
     assert.notEqual(warpedState.output[i],warpedState.original[i],

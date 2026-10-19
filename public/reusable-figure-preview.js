@@ -57,7 +57,7 @@
    const out=document.createElement('canvas');out.width=bounds.width;out.height=bounds.height;
    const output=out.getContext('2d');if(!output)return null;
    output.drawImage(source,bounds.left,bounds.top,bounds.width,bounds.height,0,0,bounds.width,bounds.height);
-   return out.toDataURL('image/png');
+   return {image:out.toDataURL('image/png'),width:bounds.width,height:bounds.height};
   }
   try{ctx.drawImage(photo,0,0,c.width,c.height);
    const pixels=ctx.getImageData(0,0,c.width,c.height);
@@ -95,28 +95,33 @@
   status.textContent='Preparing local clothing preview…';
   const counts={shown:0,skipped:plan.skipped.length};
   for(const placement of plan.placements){
-   const imgSource=await imagePixels(placement.image,placement.category,placement.primaryColor);
+   const prepared=await imagePixels(placement.image,placement.category,placement.primaryColor);
    if(revision!==renderRevision)return;
-   if(!imgSource){counts.skipped++;continue;}
-   // Deform display-only transparent cutout using a deterministic local mesh.
-   // The unmasked saved original and item pixels remain untouched.
-   let fitted=imgSource;
+   if(!prepared){counts.skipped++;continue;}
+   // Use separate male/female top, waist and jacket anchors from PR #33,
+   // but preserve the photographed garment's natural cropped aspect ratio.
+   const fittedRect=root.ClosetGarmentFitGeometry?.fitPlacement(
+    placement.rect,prepared.width,prepared.height,
+    {slot:placement.slot,category:placement.category});
+   if(!fittedRect){counts.skipped++;continue;}
+   // Mesh warping affects only this display copy. The PR #33 alpha-sensitive
+   // inverse rasterizer protects central buttons, prints and soft details.
+   let fitted=prepared.image;
    if(placement.slot!=='shoes'&&root.ClosetGarmentWarp){
-    const garment=new Image();garment.src=imgSource;
+    const garment=new Image();garment.src=prepared.image;
     try{
      await garment.decode();
      if(revision!==renderRevision)return;
      const warped=root.ClosetGarmentWarp.warpTransparentImage(
        garment,placement.category,document.createElement('canvas'));
      if(warped)fitted=warped;
-    }catch{/* Fall back to the intact transparent cutout, never invent pixels. */}
+    }catch{/* Fall back to intact transparent cutout, never invent pixels. */}
    }
    const img=document.createElement('img');
    img.src=fitted;
    img.alt='';
    img.className='reusable-figure-layer';
-   for(const [key,value] of Object.entries(placement.rect))
-    img.style[key]=value+'%';
+   for(const key of ['left','top','width','height'])img.style[key]=fittedRect[key]+'%';
    garmentContainer.append(img);counts.shown++;
   }
   status.textContent=counts.shown+' owned clothing layer'+(counts.shown===1?'':'s')+
