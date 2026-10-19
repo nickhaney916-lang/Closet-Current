@@ -99,5 +99,18 @@ revoke all on function closet_internal.begin_account_deletion(uuid)
 grant execute on function closet_internal.begin_account_deletion(uuid)
  to service_role;
 
+-- Public PostgREST can call this *only* with server-held service_role.
+-- SECURITY INVOKER: the caller must itself have USAGE/EXECUTE on private
+-- internal function; no user-controlled browser role can cross this boundary.
+-- This is deliberately a non-destructive lock acquisition only.
+create or replace function public.begin_closet_account_deletion(p_owner uuid)
+returns boolean language sql security invoker set search_path = ''
+as $
+ select closet_internal.begin_account_deletion(p_owner)
+$;
+revoke all on function public.begin_closet_account_deletion(uuid)
+ from public, anon, authenticated;
+grant execute on function public.begin_closet_account_deletion(uuid) to service_role;
+
 -- No release_account_deletion() RPC exists. Tombstones require a reviewed
 -- retention/recovery strategy, not silent reactivation by session refresh.

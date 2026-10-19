@@ -25,6 +25,16 @@ begin
       'closet_internal.begin_account_deletion(uuid)','EXECUTE') then
    raise exception 'Deletion lock leaked to browser role';
  end if;
+ if has_function_privilege('authenticated',
+   'public.begin_closet_account_deletion(uuid)','EXECUTE') or
+    has_function_privilege('anon',
+   'public.begin_closet_account_deletion(uuid)','EXECUTE') then
+   raise exception 'Exposed RPC granted to browser role';
+ end if;
+ if not has_function_privilege('service_role',
+   'public.begin_closet_account_deletion(uuid)','EXECUTE') then
+   raise exception 'Server lacks safe public-schema lock RPC';
+ end if;
  if not has_function_privilege('service_role',
    'closet_internal.begin_account_deletion(uuid)','EXECUTE') then
    raise exception 'Server cannot acquire lock';
@@ -39,8 +49,8 @@ insert into storage.objects(bucket_id,name)
 values ('closet-private','a1111111-1111-4111-8111-111111111111/photo-before-lock.jpg'),
        ('closet-private','b2222222-2222-4222-8222-222222222222/photo-before-lock.jpg');
 set role service_role;
-select closet_internal.begin_account_deletion('a1111111-1111-4111-8111-111111111111'::uuid);
-select closet_internal.begin_account_deletion('a1111111-1111-4111-8111-111111111111'::uuid);
+select public.begin_closet_account_deletion('a1111111-1111-4111-8111-111111111111'::uuid);
+select public.begin_closet_account_deletion('a1111111-1111-4111-8111-111111111111'::uuid);
 reset role;
 
 do $$

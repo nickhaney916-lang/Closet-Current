@@ -41,7 +41,7 @@ select 'UPLOAD_TRANSACTION_HAS_LOCK';
   };
   poll();
  }),7000);
- const deleting=psql(`set role service_role;select closet_internal.begin_account_deletion('${B}'::uuid)`);
+ const deleting=psql(`set role service_role;select public.begin_closet_account_deletion('${B}'::uuid)`);
  let ended=false;
  deleting.done.then(()=>ended=true);
  await new Promise(r=>setTimeout(r,350));
