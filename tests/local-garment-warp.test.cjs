@@ -1,0 +1,82 @@
+'use strict';
+const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs');
+const warp=require('../public/local-garment-warp.js');
+
+test('mesh offers finite local geometry for approved clothing classes only',()=>{
+ for(const category of ['Tops','Bottoms','Dresses','Outerwear']){
+  const m=warp.makeMesh(300,600,category);
+  assert.equal(m.category,category);assert.equal(m.vertices.length,25);
+  assert.equal(m.triangles.length,32);
+  assert.equal(m.sourcePhotoChanged,false);
+  assert.equal(m.photorealisticFitVerified,false);
+  for(const t of m.triangles){
+   const transform=warp.affine(t.map(i=>m.vertices[i]));
+   assert.ok(transform&&transform.every(Number.isFinite));
+  }
+ }
+ for(const category of ['Shoes','Other',undefined,null,'__proto__'])
+  assert.equal(warp.makeMesh(300,600,category),null);
+});
+
+test('mesh resizes torso silhouette conservatively without changing source vertices',()=>{
+ const m=warp.makeMesh(400,600,'Tops');
+ assert.equal(m.vertices[0].sourceX,0);
+ assert.equal(m.vertices[0].sourceY,0);
+ assert.equal(m.vertices[24].sourceX,400);
+ assert.equal(m.vertices[24].sourceY,600);
+ assert.ok(m.vertices[20].x>0,'lower left corner pinched inward');
+ assert.ok(m.vertices[24].x<400,'lower right corner pinched inward');
+ assert.equal(m.vertices[12].x,200,'center column must remain at body center');
+ assert.equal(m.vertices[24].y,600,'hem stays on bottom');
+});
+
+test('each affine triangle maps its exact three source coordinates to warped vertices',()=>{
+ const m=warp.makeMesh(220,440,'Dresses');
+ for(const ids of m.triangles){
+  const points=ids.map(i=>m.vertices[i]),mat=warp.affine(points);
+  assert.ok(mat);
+  for(const p of points){
+   assert.ok(Math.abs((mat[0]*p.sourceX+mat[2]*p.sourceY+mat[4])-p.x)<1e-6);
+   assert.ok(Math.abs((mat[1]*p.sourceX+mat[3]*p.sourceY+mat[5])-p.y)<1e-6);
+  }
+ }
+ assert.equal(warp.affine([{sourceX:0,sourceY:0},{sourceX:1,sourceY:1},{sourceX:2,sourceY:2}]),null);
+ assert.equal(warp.affine([]),null);
+});
+
+test('reject invalid, oversized or corrupt image geometry before canvas allocation',()=>{
+ for(const pair of [[0,200],[23,200],[200,23],[10000,10000],[500,NaN],[500.2,600],[-5,600]])
+  assert.equal(warp.makeMesh(...pair,'Tops'),null);
+ assert.equal(warp.warpTransparentImage(null,'Tops',{}),null);
+ assert.equal(warp.warpTransparentImage({naturalWidth:120,naturalHeight:240},'Shoes',{getContext:()=>({})}),null);
+});
+
+test('mesh compositing is local and display-only: no provider API or source replacement',()=>{
+ const src=fs.readFileSync('public/local-garment-warp.js','utf8');
+ const preview=fs.readFileSync('public/reusable-figure-preview.js','utf8');
+ const html=fs.readFileSync('public/index.html','utf8');
+ assert.match(html,/script src="local-garment-warp\.js"/);
+ assert.ok(html.indexOf('src="local-garment-warp.js"')<html.indexOf('src="reusable-figure-preview.js"'));
+ assert.match(preview,/ClosetGarmentWarp\.warpTransparentImage/);
+ assert.match(preview,/if\(revision!==renderRevision\)return/);
+ assert.ok(!/fetch\(|localStorage|sessionStorage|\.setItem\(|\.postMessage\(/.test(src));
+ assert.ok(!/FASHN|OPENAI_API_KEY|https:\/\//.test(src));
+ assert.match(src,/photorealisticFitVerified:false/);
+});
+
+test('renderer does not alter input garment pixels',()=>{
+ const calls=[],image={naturalWidth:100,naturalHeight:150},fakeCanvas={
+   width:0,height:0,getContext(){return {
+     clearRect(){calls.push('clear');},save(){calls.push('save');},
+     restore(){calls.push('restore');},beginPath(){},moveTo(){},lineTo(){},
+     closePath(){},clip(){},setTransform(...args){assert.equal(args.length,6);},
+     drawImage(img){assert.equal(img,image);calls.push('draw');}
+   };},toDataURL(t){assert.equal(t,'image/png');return 'data:image/png;base64,LOCAL';}
+ };
+ const original=JSON.stringify(image),result=warp.warpTransparentImage(image,'Outerwear',fakeCanvas);
+ assert.equal(result,'data:image/png;base64,LOCAL');
+ assert.equal(calls.filter(c=>c==='draw').length,32);
+ assert.equal(calls.filter(c=>c==='restore').length,32);
+ assert.equal(JSON.stringify(image),original);
+ assert.equal(fakeCanvas.width,100);assert.equal(fakeCanvas.height,150);
+});
