@@ -1,0 +1,222 @@
+{
+  "schemaVersion": 1,
+  "status": "blocked",
+  "assetCount": 2,
+  "figures": [
+    {
+      "id": "female",
+      "preview": {
+        "sha256": "acb973c4a8084424197c26e389ea8819d3ec7765c0cf15a461a74d6c53b9eab4",
+        "bytes": 1430,
+        "format": "WEBP",
+        "mode": "RGB",
+        "width": 160,
+        "height": 297,
+        "frames": 1,
+        "orientation": 1,
+        "iccProfilePresent": false,
+        "srgbNormalized": false,
+        "lossless": false,
+        "decodedRgbaSha256": "99a3569101affd108aff79e88fa8f0810ba9609df97c6b8c395a1decffa93ed0",
+        "alphaMin": 255,
+        "alphaMax": 255,
+        "transparentPixels": 0,
+        "softAlphaPixels": 0,
+        "note": "No ICC profile is not evidence of sRGB; native detail, anatomy and rights cannot be inferred from pixels."
+      },
+      "master": null,
+      "canvasAspectRelativeError": 0.0016600835766215072,
+      "previewSampling": [
+        {
+          "cssWidth": 270,
+          "dpr": 1,
+          "cssZoom": 1,
+          "neededWidth": 270,
+          "neededHeight": 501,
+          "linearUpscale": 1.6875,
+          "nativeSamplingSufficient": false
+        },
+        {
+          "cssWidth": 270,
+          "dpr": 2,
+          "cssZoom": 1,
+          "neededWidth": 540,
+          "neededHeight": 1001,
+          "linearUpscale": 3.375,
+          "nativeSamplingSufficient": false
+        },
+        {
+          "cssWidth": 270,
+          "dpr": 3,
+          "cssZoom": 1,
+          "neededWidth": 810,
+          "neededHeight": 1502,
+          "linearUpscale": 5.0625,
+          "nativeSamplingSufficient": false
+        },
+        {
+          "cssWidth": 290,
+          "dpr": 3,
+          "cssZoom": 2,
+          "neededWidth": 1740,
+          "neededHeight": 3225,
+          "linearUpscale": 10.875,
+          "nativeSamplingSufficient": false
+        },
+        {
+          "cssWidth": 647,
+          "dpr": 2,
+          "cssZoom": 1,
+          "neededWidth": 1294,
+          "neededHeight": 2398,
+          "linearUpscale": 8.0875,
+          "nativeSamplingSufficient": false
+        }
+      ],
+      "masterSampling": null,
+      "blockers": [
+        "full-resolution-master-missing",
+        "minimum-native-dimensions-unmet",
+        "master-integrity-color-or-format-unverified",
+        "native-detail-provenance-unverified",
+        "exact-asset-rights-evidence-missing",
+        "rights-commercialUse-unverified",
+        "rights-modificationAndClothingOverlays-unverified",
+        "rights-appDistributionAndCaching-unverified",
+        "rights-userCompositeExport-unverified",
+        "rights-optionalFaceReplacement-unverified",
+        "rights-recognizablePersonReleaseOrFictionalEvidence-unverified",
+        "exact-asset-visual-review-missing",
+        "visual-neutralBaseClothing-unverified",
+        "visual-frontPoseWithSeparateArms-unverified",
+        "visual-completeHandsFeetAndHead-unverified",
+        "visual-consistentLightAndScale-unverified",
+        "visual-landmarksReviewed-unverified",
+        "visual-occlusionLayersReviewed-unverified",
+        "reviewed-anchors-missing"
+      ],
+      "ready": false
+    },
+    {
+      "id": "male",
+      "preview": {
+        "sha256": "92993d2a3a33a7d6ee7c504e308df0325632c424ce6202c72c3737e7c2562c29",
+        "bytes": 1422,
+        "format": "WEBP",
+        "mode": "RGB",
+        "width": 160,
+        "height": 297,
+        "frames": 1,
+        "orientation": 1,
+        "iccProfilePresent": false,
+        "srgbNormalized": false,
+        "lossless": false,
+        "decodedRgbaSha256": "f30abec34a4c688f3bf0b6e2f7b2993c55dbde3b83b78b77171c78128d600701",
+        "alphaMin": 255,
+        "alphaMax": 255,
+        "transparentPixels": 0,
+        "softAlphaPixels": 0,
+        "note": "No ICC profile is not evidence of sRGB; native detail, anatomy and rights cannot be inferred from pixels."
+      },
+      "master": null,
+      "canvasAspectRelativeError": 0.0016600835766215072,
+      "previewSampling": [
+        {
+          "cssWidth": 270,
+          "dpr": 1,
+          "cssZoom": 1,
+          "neededWidth": 270,
+          "neededHeight": 501,
+          "linearUpscale": 1.6875,
+          "nativeSamplingSufficient": false
+        },
+        {
+          "cssWidth": 270,
+          "dpr": 2,
+          "cssZoom": 1,
+          "neededWidth": 540,
+          "neededHeight": 1001,
+          "linearUpscale": 3.375,
+          "nativeSamplingSufficient": false
+        },
+        {
+          "cssWidth": 270,
+          "dpr": 3,
+          "cssZoom": 1,
+          "neededWidth": 810,
+          "neededHeight": 1502,
+          "linearUpscale": 5.0625,
+          "nativeSamplingSufficient": false
+        },
+        {
+          "cssWidth": 290,
+          "dpr": 3,
+          "cssZoom": 2,
+          "neededWidth": 1740,
+          "neededHeight": 3225,
+          "linearUpscale": 10.875,
+          "nativeSamplingSufficient": false
+        },
+        {
+          "cssWidth": 647,
+          "dpr": 2,
+          "cssZoom": 1,
+          "neededWidth": 1294,
+          "neededHeight": 2398,
+          "linearUpscale": 8.0875,
+          "nativeSamplingSufficient": false
+        }
+      ],
+      "masterSampling": null,
+      "blockers": [
+        "full-resolution-master-missing",
+        "minimum-native-dimensions-unmet",
+        "master-integrity-color-or-format-unverified",
+        "native-detail-provenance-unverified",
+        "exact-asset-rights-evidence-missing",
+        "rights-commercialUse-unverified",
+        "rights-modificationAndClothingOverlays-unverified",
+        "rights-appDistributionAndCaching-unverified",
+        "rights-userCompositeExport-unverified",
+        "rights-optionalFaceReplacement-unverified",
+        "rights-recognizablePersonReleaseOrFictionalEvidence-unverified",
+        "exact-asset-visual-review-missing",
+        "visual-neutralBaseClothing-unverified",
+        "visual-frontPoseWithSeparateArms-unverified",
+        "visual-completeHandsFeetAndHead-unverified",
+        "visual-consistentLightAndScale-unverified",
+        "visual-landmarksReviewed-unverified",
+        "visual-occlusionLayersReviewed-unverified",
+        "reviewed-anchors-missing"
+      ],
+      "ready": false
+    }
+  ],
+  "pairAlignment": null,
+  "pairBlockers": [
+    "pair-alignment-unmeasured",
+    "production-policy-unapproved"
+  ],
+  "productionAuthorized": false,
+  "licensingApprovedByAutomation": false,
+  "visualQualityScored": false,
+  "physicalPhoneEvidence": false,
+  "reviewerIdentityAuthenticated": false,
+  "decoder": "Pillow 11.3.0",
+  "policyStatus": "proposed-not-production-approved",
+  "pipelineFiles": {
+    "benchmark/figure-readiness/production-evidence.json": "2407cb846c956fd848872c9a6d16bf166bf37aa07add874188650c2751b2eb2e",
+    "benchmark/figure-readiness/production-policy.json": "1b159039b89b8b68c337f2964a813e26f9a3aa5b321b233e734c64adbf5f8d3b",
+    "benchmark/figure-readiness/production-figure-metrics.mjs": "fe7759f693389d8da22a0c0a5f07f4187a2327a507e952d2d8392f1a25e7f79d",
+    "scripts/benchmark-production-figures.py": "4e3ae8aba6948acf093562c0fbfe1f53fa6fc2bbdf73686c833d5cfa0f8ffbe7",
+    "scripts/report-production-figures.mjs": "e8991810648c1876e6b9c3da2637c020aba6cafdd49aaf156acc93866f9ce5f1"
+  },
+  "summary": {
+    "assets": 2,
+    "mastersPresent": 0,
+    "approvedLicenses": 0,
+    "reviewedAnchorPairs": 0,
+    "productionReady": 0
+  },
+  "existingPr37AuditSha256": "9d255f955950108dbac04b60a59814371a282fec808614d30785ddd1bb69b8c8"
+}
