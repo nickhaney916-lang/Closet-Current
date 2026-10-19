@@ -125,10 +125,59 @@ test('overall deadline releases a hung second-photo digest before any submission
  c.tryOnDigest=()=>new Promise(()=>{});
  c.setTimeout=(fn,ms)=>setTimeout(fn,ms===180000?0:ms);
  c.fetch=async()=>{c.calls.push('unexpected request');throw Error('No submission permitted');};
- vm.runInContext('tryOnReady=true;tryOnMultiReady=true;',c);
+ vm.runInContext("tryOnReady=true;tryOnMultiReady=true;tryOnReadinessOwner='synthetic-owner';",c);
  const finished=await Promise.race([c.generateTryOn().then(()=>true),new Promise(resolve=>setTimeout(()=>resolve(false),100))]);
  assert.equal(finished,true,'the deadline must cover the final digest wait');
  assert.equal(vm.runInContext('tryOnBusy',c),false);
  assert.match(c.$('tryOnStatus').textContent,/time limit/);
  assert.equal(c.calls.length,0);
+});
+
+test('old account availability response never unlocks AI requests for a newly signed-in account',async()=>{
+ const c=client();await new Promise(resolve=>setImmediate(resolve));
+ let releaseOld,oldRequested=false;
+ const requests=[];
+ c.window.closetAuth={user:{id:'owner-one'},ready:Promise.resolve(),
+  getAccessToken:async()=> 'synthetic-token'};
+ c.tryOnRequest=async(token,body)=>{
+  requests.push({owner:c.window.closetAuth.user.id,action:body.action});
+  if(body.action!=='availability')throw Error('Billable request forbidden');
+  if(c.window.closetAuth.user.id==='owner-one'){
+   oldRequested=true;return new Promise(resolve=>{releaseOld=resolve;});
+  }
+  return {status:'unavailable',multiGarmentReady:false};
+ };
+ const old=c.checkTryOnReadiness();
+ for(let i=0;i<10&&!oldRequested;i++)await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(oldRequested,true);
+ c.window.closetAuth.user={id:'owner-two'};
+ c.onTryOnBoardChanged(); // Starts owner-two check and discards owner-one epoch.
+ releaseOld({status:'ready',multiGarmentReady:true});
+ await old;
+ for(let i=0;i<10;i++)await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(vm.runInContext('tryOnReady',c),false,'an old positive reply cannot override new account');
+ assert.equal(vm.runInContext('tryOnMultiReady',c),false);
+ assert.equal(vm.runInContext('tryOnReadinessOwner',c),'owner-two');
+ assert.equal(c.$('tryOnGenerate').disabled,true);
+ assert.deepEqual(requests.map(x=>x.action),['availability','availability']);
+ await c.generateTryOn();
+ assert.deepEqual(requests.map(x=>x.action),['availability','availability']);
+});
+test('generation cannot start after account switch until availability has been checked for that owner',async()=>{
+ const c=client();await new Promise(resolve=>setImmediate(resolve));
+ c.window.closetAuth={user:{id:'owner-before'},ready:Promise.resolve(),
+  getAccessToken:async()=> 'synthetic-token'};
+ c.items.push({id:'top',category:'Tops',image:img});
+ c.currentBoard.slots.top='top';
+ vm.runInContext("tryOnReady=true;tryOnMultiReady=true;tryOnReadinessOwner='owner-before';",c);
+ c.window.closetAuth.user={id:'owner-after'};
+ await c.generateTryOn();
+ assert.match(c.$('tryOnStatus').textContent,/access must be checked/);
+ assert.equal(c.calls.length,0);
+});
+
+test('verified login and refresh notify the try-on owner eligibility gate',()=>{
+ const auth=fs.readFileSync('public/auth.js','utf8');
+ assert.match(auth,/resolveReady\(data\.user\);\s*\/\/ A refreshed or newly authenticated identity/);
+ assert.match(auth,/if\(typeof window\.onTryOnBoardChanged==='function'\)window\.onTryOnBoardChanged\(\)/);
 });

@@ -3,6 +3,9 @@
 // mockups, hidden paid calls, or automatic selfie uploads.
 let tryOnFigure='female',tryOnBusy=false,tryOnRevision=0,tryOnImage=null,tryOnFingerprint=null,tryOnPendingInputs=null;
 let tryOnReady=false,tryOnMultiReady=false,tryOnReadinessPending=true;
+// Availability belongs to the authenticated account that was checked.
+// A late reply for account A must never unlock generation for account B.
+let tryOnReadinessOwner=null,tryOnReadinessEpoch=0;
 let tryOnController=null;
 // These are lightweight local previews of the two fixed AI figures, not
 // generated try-on results. They make selecting a model possible offline.
@@ -40,10 +43,19 @@ function resetTryOnPreview(){
 }
 function onTryOnBoardChanged(){
  const now=tryOnInputs();
+ if(tryOnReadinessOwner&&now.owner!==tryOnReadinessOwner){
+  // Abort any active render and invalidate outstanding availability replies.
+  ++tryOnReadinessEpoch;
+  tryOnReadinessOwner=null;tryOnReady=false;tryOnMultiReady=false;
+  resetTryOnPreview();
+  $('tryOnStatus').textContent='Checking AI try-on access for this account…';
+  if(now.owner&&typeof window.closetAuth?.getAccessToken==='function')
+   void checkTryOnReadiness();
+ }
  if((tryOnImage&&!sameTryOnInputs(tryOnFingerprint,now))||
     (tryOnBusy&&tryOnPendingInputs&&!sameTryOnInputs(tryOnPendingInputs,now)))
   resetTryOnPreview();
- $('tryOnGenerate').disabled=tryOnBusy||!tryOnReady||!window.AiTryOnPlan?.plan(currentBoard,items).steps.length;
+ $('tryOnGenerate').disabled=tryOnBusy||!tryOnReady||tryOnReadinessOwner!==now.owner||!window.AiTryOnPlan?.plan(currentBoard,items).steps.length;
 }
 async function tryOnRequest(token,body,signal){
  const controller=new AbortController(),cancel=()=>controller.abort(signal.reason);
@@ -107,15 +119,26 @@ async function decodeTryOnImage(value,label='Generated try-on',signal){
 }
 // A status check never starts an AI generation or uploads a clothing photo.
 async function checkTryOnReadiness(){
+ const epoch=++tryOnReadinessEpoch;
+ tryOnReady=false;tryOnMultiReady=false;
  try{
   await (window.closetAuth?.ready||Promise.resolve());
-  if(typeof window.closetAuth?.getAccessToken!=='function')throw Error('Sign in required');
+  if(epoch!==tryOnReadinessEpoch)return;
+  const owner=window.closetAuth?.user?.id||null;
+  if(!owner||typeof window.closetAuth?.getAccessToken!=='function')throw Error('Sign in required');
+  tryOnReadinessOwner=owner;
   const token=await window.closetAuth.getAccessToken();
+  if(epoch!==tryOnReadinessEpoch||window.closetAuth?.user?.id!==owner)return;
   const response=await tryOnRequest(token,{action:'availability'});
+  if(epoch!==tryOnReadinessEpoch||window.closetAuth?.user?.id!==owner)return;
   tryOnReady=response?.status==='ready';
   tryOnMultiReady=tryOnReady&&response?.multiGarmentReady===true;
- }catch{tryOnReady=false;tryOnMultiReady=false;}
+ }catch{
+  if(epoch!==tryOnReadinessEpoch)return;
+  tryOnReady=false;tryOnMultiReady=false;
+ }
  finally{
+  if(epoch!==tryOnReadinessEpoch)return;
   tryOnReadinessPending=false;
   if(!tryOnReady){
    $('tryOnStatus').textContent='AI virtual try-on is not available yet. Your closet and outfit builder still work normally; no paid AI call will run.';
@@ -191,7 +214,7 @@ async function tryOnOne(token,image,category,figure,isCurrent,previousToken=null
 }
 async function generateTryOn(){
  if(tryOnBusy)return;
- if(!tryOnReady){$('tryOnStatus').textContent='AI try-on is not enabled for this account. No generation started.';return;}
+ if(!tryOnReady||tryOnReadinessOwner!==tryOnInputs().owner){$('tryOnStatus').textContent='AI try-on access must be checked for the current account. No generation started.';return;}
  const plan=window.AiTryOnPlan.plan(currentBoard,items);
  if(!plan.steps.length){$('tryOnStatus').textContent='Choose a shirt, dress, or bottoms first.';return;}
  // A failed regeneration must not leave the previous successful image visible.
