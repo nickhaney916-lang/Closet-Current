@@ -6,6 +6,9 @@ on:
       - 'benchmark/real-outfit-cross-model-evidence.mjs'
       - 'scripts/audit-real-outfit-model-disagreement.mjs'
       - 'tests/real-outfit-cross-model-evidence.test.mjs'
+      - 'benchmark/real-outfit-suite-disagreement.mjs'
+      - 'scripts/audit-real-outfit-suite-disagreement.mjs'
+      - 'tests/real-outfit-suite-disagreement.test.mjs'
       - '.github/workflows/research-cross-model-evidence.yml'
   workflow_dispatch:
 permissions:
@@ -21,7 +24,7 @@ jobs:
         with:
           node-version: '22'
       - name: Run cross-model safety tests
-        run: node --test tests/real-outfit-cross-model-evidence.test.mjs
+        run: node --test tests/real-outfit-cross-model-evidence.test.mjs tests/real-outfit-suite-disagreement.test.mjs
       - name: Retrieve previously completed, source-verified research artifacts
         env:
           GH_TOKEN: ${{ github.token }}
@@ -30,6 +33,8 @@ jobs:
           mkdir -p benchmark/cross-model-actual/instance benchmark/cross-model-actual/semantic
           gh run download 39194870053 --repo "$GH_REPO" -n pinned-deepfashion-instance-feasibility -D benchmark/cross-model-actual/instance
           gh run download 39196872104 --repo "$GH_REPO" -n mobile-flow-results -D benchmark/cross-model-actual/semantic
+          mkdir -p benchmark/cross-model-actual/semantic-nine
+          gh run download 39194870115 --repo "$GH_REPO" -n experimental-nine-photo-instance-evidence -D benchmark/cross-model-actual/semantic-nine
       - name: Compare actual instance and semantic outputs on the same licensed original
         run: |
           node scripts/audit-real-outfit-model-disagreement.mjs \
@@ -46,9 +51,25 @@ jobs:
               throw Error('Unexpected or unverified cross-model research evidence');
             console.log('Actual licensed-photo skirt class disagreement is review-only, not accuracy');
           "
+      - name: Cross-check real multi-photo model gaps and flat-lay person gating
+        run: |
+          node scripts/audit-real-outfit-suite-disagreement.mjs \
+            benchmark/cross-model-actual/instance/summary.json \
+            benchmark/cross-model-actual/semantic-nine/summary.json \
+            benchmark/cross-model-actual/multi-photo-evidence.json
+          node --input-type=module -e "
+            import fs from 'node:fs';
+            const r=JSON.parse(fs.readFileSync('benchmark/cross-model-actual/multi-photo-evidence.json','utf8'));
+            if(r.sharedSources!==2||r.categoryAccuracy!==null||r.canPromoteModel!==false||
+               !r.sourceRows.some(p=>p.id==='validation-0031'&&p.modelDisagreementTypes.includes('skirt'))||
+               !r.sourceRows.some(p=>p.id==='commons-0059'&&p.flatLayOrNonPersonRoutingRisk))
+              throw Error('Real multi-photo model evidence changed or is incomplete');
+          "
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: licensed-cross-model-review-evidence
-          path: benchmark/cross-model-actual/cross-model-evidence.json
+          path: |
+            benchmark/cross-model-actual/cross-model-evidence.json
+            benchmark/cross-model-actual/multi-photo-evidence.json
           retention-days: 14
