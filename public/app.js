@@ -385,8 +385,9 @@ function exactlyRepeatedCapturedItem(existing,proposed){
  // is the same physical article. The review queue handles possible matches.
  if(!existing.outfitSourceId||!validPhoto(existing.originalPhoto?.image))return false;
  if(existing.originalPhoto.image!==newSource)return false;
- // Re-scanning the same source in a different group is a true repeat.
- if(existing.outfitSourceId!==proposed.outfitSourceId)return true;
+ // A changed capture-group ID is NOT proof of a repeated physical item.
+ // Retry/import may split additional layers from the SAME original scene;
+ // compare original source, role and location before dropping a candidate.
  // Different underlayer/outerlayer labels may share nearly the same outer
  // rectangle. The segmentation worker can identify distinct source hints even
  // when the display fallback JPEG is identical. Keep both for review.
@@ -402,7 +403,10 @@ function exactlyRepeatedCapturedItem(existing,proposed){
   typeof x[k]==='number'&&Number.isFinite(x[k])&&
   x[k]>=0&&x[k]<=1)&&x.width>0&&x.height>0&&
   x.x+x.width<=1.001&&x.y+x.height<=1.001;
- if(!valid(a)||!valid(b))return true;
+ if(!valid(a)||!valid(b))
+  return existing.outfitSourceId===proposed.outfitSourceId;
+ // Across independent group IDs, missing geometry would make the identity
+ // unprovable. Keep such records for human duplicate review instead.
  const overlap=Math.max(0,Math.min(a.x+a.width,b.x+b.width)-Math.max(a.x,b.x))*
   Math.max(0,Math.min(a.y+a.height,b.y+b.height)-Math.max(a.y,b.y));
  const union=a.width*a.height+b.width*b.height-overlap;
