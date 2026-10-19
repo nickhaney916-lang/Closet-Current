@@ -1,0 +1,521 @@
+{
+  "schemaVersion": 1,
+  "evidenceClass": "real-licensed-photos-without-independent-full-mask-truth",
+  "pipelineFiles": {
+    "benchmark/verified-mask-quality.mjs": "c4cba9e03a4cd3c46f1886249e5bd14115c21e00ee6fa35c36a32e0738aa1f8a",
+    "benchmark/dark-edge-diagnostic.cjs": "9f41f7639722f97045a2213a63ec8e3dcf336665b4fce114d7902b90bd5e8126",
+    "benchmark/reference-mask-evidence/registry.json": "09ca27abaeb4a88b2876c476310a7d4c67817a1fe64f267a8cee04f4dbc4e79f",
+    "benchmark/local-fitting-real-photo-manifest.json": "9c3d0f663d6c9161e246c5e2afdf6bde95769ddff23d689469dbcd62e9594af9",
+    "scripts/report-verified-mask-evidence.mjs": "1ab969f0f6f4aee4bfee326db3df78cb817a8e60e38df00202d7b299551e8018",
+    "scripts/measure-source-guided-boundaries.cjs": "75d1e0228ddded6f771cfcdf239ae8e3de3525744dfac897923dd012600e6d66",
+    "scripts/benchmark-source-guided-boundaries.py": "35acfbbd9127fb2e74d960adb5d6acfb44916b6e5b63427a5395c2e6809c3a86"
+  },
+  "inputBoundaryReportSha256": "d92351593e633f3888fb642b5e052abcde5a97f0eaf27ea8a6a7600e185b2b62",
+  "policy": {
+    "status": "proposed-unapproved",
+    "falseRemovalRateMax": 0.005,
+    "backgroundInclusionRateMax": 0.005,
+    "boundaryRecallMin": 0.99,
+    "featureRetentionMin": 0.995,
+    "boundaryTolerancePixels": 1,
+    "alphaThreshold": 128
+  },
+  "summary": {
+    "licensedRealPhotos": 12,
+    "proposals": 1,
+    "independentlyVerifiedFullMasks": 0,
+    "measuredFalseRemovalCases": 0,
+    "measuredFalseInclusionCases": 0,
+    "qualityPasses": 0,
+    "blocked": 12,
+    "realPhoneRuns": 0
+  },
+  "cases": [
+    {
+      "id": "commons-0001",
+      "image": "commons-0001.jpg",
+      "sourceSha256": "d20d66d4173f56c47e35540f081ecdfcee6e019df665ee245d967d126e117684",
+      "attribution": {
+        "id": "commons-0001",
+        "title": "File:T-shirt, oversized, maat XL, Merk Ecko Unlimited, blauw, wit en grijs met opdruk, objectnr 86904-3.JPG",
+        "source": "https://commons.wikimedia.org/wiki/File:T-shirt,_oversized,_maat_XL,_Merk_Ecko_Unlimited,_blauw,_wit_en_grijs_met_opdruk,_objectnr_86904-3.JPG",
+        "license": "CC BY-SA 3.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+        "author": "Ecko Unlimited",
+        "credit": "https://museumrotterdam.nl/collectie/item/86904-3"
+      },
+      "proposalAvailable": false,
+      "candidateRgbaSha256": null,
+      "maskQuality": {
+        "status": "blocked",
+        "passed": false,
+        "productionAuthorized": false,
+        "reviewerIdentitiesAuthenticated": false,
+        "metrics": null,
+        "reasons": [
+          "missing-independent-full-garment-reference"
+        ]
+      },
+      "featureEvidence": {
+        "collars": "unmeasured-no-independent-reference",
+        "sleeves": "unmeasured-no-independent-reference",
+        "hems": "unmeasured-no-independent-reference",
+        "logos": "unmeasured-no-independent-reference",
+        "seams": "unmeasured-no-independent-reference",
+        "buttons": "unmeasured-no-independent-reference",
+        "darkTrim": "unmeasured-no-independent-reference",
+        "fabricDetail": "unmeasured-no-independent-reference",
+        "transparency": "unmeasured-no-independent-reference",
+        "layering": "unmeasured-no-independent-reference"
+      },
+      "partialWitnessesAreFullTruth": false,
+      "darkEdgeDiagnostic": null
+    },
+    {
+      "id": "commons-0002",
+      "image": "commons-0002.jpg",
+      "sourceSha256": "fef606d6ed7354a2238f1bcc2584942747ca6fa4a2b16b2e9eec21f639d10667",
+      "attribution": {
+        "id": "commons-0002",
+        "title": "File:Rood t-shirt, merk Diesel, maat M, objectnr 86503.JPG",
+        "source": "https://commons.wikimedia.org/wiki/File:Rood_t-shirt,_merk_Diesel,_maat_M,_objectnr_86503.JPG",
+        "license": "CC BY-SA 3.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+        "author": "Diesel",
+        "credit": "https://museumrotterdam.nl/collectie/item/86503"
+      },
+      "proposalAvailable": true,
+      "candidateRgbaSha256": "6ac88d3889631f78956f158554c01bf06d63dd7f151796ae3e5158d9f47c55f1",
+      "maskQuality": {
+        "status": "blocked",
+        "passed": false,
+        "productionAuthorized": false,
+        "reviewerIdentitiesAuthenticated": false,
+        "metrics": null,
+        "reasons": [
+          "missing-independent-full-garment-reference"
+        ]
+      },
+      "featureEvidence": {
+        "collars": "unmeasured-no-independent-reference",
+        "sleeves": "unmeasured-no-independent-reference",
+        "hems": "unmeasured-no-independent-reference",
+        "logos": "unmeasured-no-independent-reference",
+        "seams": "unmeasured-no-independent-reference",
+        "buttons": "unmeasured-no-independent-reference",
+        "darkTrim": "unmeasured-no-independent-reference",
+        "fabricDetail": "unmeasured-no-independent-reference",
+        "transparency": "unmeasured-no-independent-reference",
+        "layering": "unmeasured-no-independent-reference"
+      },
+      "partialWitnessesAreFullTruth": false,
+      "darkEdgeDiagnostic": {
+        "removedDarkPixelsNearRetainedEdge": 6129,
+        "radiusPixels": 2,
+        "independentErrorCount": null,
+        "maskAltered": false,
+        "meaning": "Unlabelled risk: indistinguishable dark background or garment trim; manual reference required"
+      }
+    },
+    {
+      "id": "commons-0003",
+      "image": "commons-0003.jpg",
+      "sourceSha256": "cb909d7ad9c3940bfa4db0cc50b2ea7025faebe3dcec8fe80067f900760bba64",
+      "attribution": {
+        "id": "commons-0003",
+        "title": "File:Zwart shirt met lange mouwen van merk Armani Jeans, opdruk letters “AJ” op voorkant, maat M, objectnr 86975-3.JPG",
+        "source": "https://commons.wikimedia.org/wiki/File:Zwart_shirt_met_lange_mouwen_van_merk_Armani_Jeans,_opdruk_letters_%E2%80%9CAJ%E2%80%9D_op_voorkant,_maat_M,_objectnr_86975-3.JPG",
+        "license": "CC BY-SA 3.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+        "author": "Armani?",
+        "credit": "https://museumrotterdam.nl/collectie/item/86975-3"
+      },
+      "proposalAvailable": false,
+      "candidateRgbaSha256": null,
+      "maskQuality": {
+        "status": "blocked",
+        "passed": false,
+        "productionAuthorized": false,
+        "reviewerIdentitiesAuthenticated": false,
+        "metrics": null,
+        "reasons": [
+          "missing-independent-full-garment-reference"
+        ]
+      },
+      "featureEvidence": {
+        "collars": "unmeasured-no-independent-reference",
+        "sleeves": "unmeasured-no-independent-reference",
+        "hems": "unmeasured-no-independent-reference",
+        "logos": "unmeasured-no-independent-reference",
+        "seams": "unmeasured-no-independent-reference",
+        "buttons": "unmeasured-no-independent-reference",
+        "darkTrim": "unmeasured-no-independent-reference",
+        "fabricDetail": "unmeasured-no-independent-reference",
+        "transparency": "unmeasured-no-independent-reference",
+        "layering": "unmeasured-no-independent-reference"
+      },
+      "partialWitnessesAreFullTruth": false,
+      "darkEdgeDiagnostic": null
+    },
+    {
+      "id": "commons-0023",
+      "image": "commons-0023.jpg",
+      "sourceSha256": "5be4cb0d7017987d8625caf53ac979f0c78245617dc5828aec5f77ae8f4ea8ef",
+      "attribution": {
+        "id": "commons-0023",
+        "title": "File:Blauwe jeans, merk Artful Dodger, maat 32, zakken achterzijde met opvallende witte print, objectnr 86905-3(1).JPG",
+        "source": "https://commons.wikimedia.org/wiki/File:Blauwe_jeans,_merk_Artful_Dodger,_maat_32,_zakken_achterzijde_met_opvallende_witte_print,_objectnr_86905-3(1).JPG",
+        "license": "CC BY-SA 3.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+        "author": "Artful Dodger",
+        "credit": "https://museumrotterdam.nl/collectie/item/86905-3"
+      },
+      "proposalAvailable": false,
+      "candidateRgbaSha256": null,
+      "maskQuality": {
+        "status": "blocked",
+        "passed": false,
+        "productionAuthorized": false,
+        "reviewerIdentitiesAuthenticated": false,
+        "metrics": null,
+        "reasons": [
+          "missing-independent-full-garment-reference"
+        ]
+      },
+      "featureEvidence": {
+        "collars": "unmeasured-no-independent-reference",
+        "sleeves": "unmeasured-no-independent-reference",
+        "hems": "unmeasured-no-independent-reference",
+        "logos": "unmeasured-no-independent-reference",
+        "seams": "unmeasured-no-independent-reference",
+        "buttons": "unmeasured-no-independent-reference",
+        "darkTrim": "unmeasured-no-independent-reference",
+        "fabricDetail": "unmeasured-no-independent-reference",
+        "transparency": "unmeasured-no-independent-reference",
+        "layering": "unmeasured-no-independent-reference"
+      },
+      "partialWitnessesAreFullTruth": false,
+      "darkEdgeDiagnostic": null
+    },
+    {
+      "id": "commons-0024",
+      "image": "commons-0024.jpg",
+      "sourceSha256": "8e28473b101c70a5e4b7daae819a0342405bfcb7abbf4850dbbb4e801dd7ac4f",
+      "attribution": {
+        "id": "commons-0024",
+        "title": "File:Blauwe jeans, skinny jeans model, merk Revers Jeans, maat S36, objectnr 86974-3(1).JPG",
+        "source": "https://commons.wikimedia.org/wiki/File:Blauwe_jeans,_skinny_jeans_model,_merk_Revers_Jeans,_maat_S36,_objectnr_86974-3(1).JPG",
+        "license": "CC BY-SA 3.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+        "author": "Revers Jeans",
+        "credit": "https://museumrotterdam.nl/collectie/item/86974-3"
+      },
+      "proposalAvailable": false,
+      "candidateRgbaSha256": null,
+      "maskQuality": {
+        "status": "blocked",
+        "passed": false,
+        "productionAuthorized": false,
+        "reviewerIdentitiesAuthenticated": false,
+        "metrics": null,
+        "reasons": [
+          "missing-independent-full-garment-reference"
+        ]
+      },
+      "featureEvidence": {
+        "collars": "unmeasured-no-independent-reference",
+        "sleeves": "unmeasured-no-independent-reference",
+        "hems": "unmeasured-no-independent-reference",
+        "logos": "unmeasured-no-independent-reference",
+        "seams": "unmeasured-no-independent-reference",
+        "buttons": "unmeasured-no-independent-reference",
+        "darkTrim": "unmeasured-no-independent-reference",
+        "fabricDetail": "unmeasured-no-independent-reference",
+        "transparency": "unmeasured-no-independent-reference",
+        "layering": "unmeasured-no-independent-reference"
+      },
+      "partialWitnessesAreFullTruth": false,
+      "darkEdgeDiagnostic": null
+    },
+    {
+      "id": "commons-0035",
+      "image": "commons-0035.jpg",
+      "sourceSha256": "9fd067b0919d519eb7924ebd5c4ddf0bc0f3956cfd229fe1ab12c16cccb085ca",
+      "attribution": {
+        "id": "commons-0035",
+        "title": "File:Orange men's shorts for sale at Target.jpg",
+        "source": "https://commons.wikimedia.org/wiki/File:Orange_men%27s_shorts_for_sale_at_Target.jpg",
+        "license": "CC BY-SA 4.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+        "author": "Ser Amantio di Nicolao",
+        "credit": "Own work"
+      },
+      "proposalAvailable": false,
+      "candidateRgbaSha256": null,
+      "maskQuality": {
+        "status": "blocked",
+        "passed": false,
+        "productionAuthorized": false,
+        "reviewerIdentitiesAuthenticated": false,
+        "metrics": null,
+        "reasons": [
+          "missing-independent-full-garment-reference"
+        ]
+      },
+      "featureEvidence": {
+        "collars": "unmeasured-no-independent-reference",
+        "sleeves": "unmeasured-no-independent-reference",
+        "hems": "unmeasured-no-independent-reference",
+        "logos": "unmeasured-no-independent-reference",
+        "seams": "unmeasured-no-independent-reference",
+        "buttons": "unmeasured-no-independent-reference",
+        "darkTrim": "unmeasured-no-independent-reference",
+        "fabricDetail": "unmeasured-no-independent-reference",
+        "transparency": "unmeasured-no-independent-reference",
+        "layering": "unmeasured-no-independent-reference"
+      },
+      "partialWitnessesAreFullTruth": false,
+      "darkEdgeDiagnostic": null
+    },
+    {
+      "id": "commons-0043",
+      "image": "commons-0043.jpg",
+      "sourceSha256": "c8d0812ab69d698f5bf8dc5a14ace6b8034e4c74152471acf4f079fdd6d0c344",
+      "attribution": {
+        "id": "commons-0043",
+        "title": "File:Woman's summer skirt from China, Honolulu Museum of Art 5152.1.JPG",
+        "source": "https://commons.wikimedia.org/wiki/File:Woman%27s_summer_skirt_from_China,_Honolulu_Museum_of_Art_5152.1.JPG",
+        "license": "CC0",
+        "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+        "author": "Hiart",
+        "credit": "Own work"
+      },
+      "proposalAvailable": false,
+      "candidateRgbaSha256": null,
+      "maskQuality": {
+        "status": "blocked",
+        "passed": false,
+        "productionAuthorized": false,
+        "reviewerIdentitiesAuthenticated": false,
+        "metrics": null,
+        "reasons": [
+          "missing-independent-full-garment-reference"
+        ]
+      },
+      "featureEvidence": {
+        "collars": "unmeasured-no-independent-reference",
+        "sleeves": "unmeasured-no-independent-reference",
+        "hems": "unmeasured-no-independent-reference",
+        "logos": "unmeasured-no-independent-reference",
+        "seams": "unmeasured-no-independent-reference",
+        "buttons": "unmeasured-no-independent-reference",
+        "darkTrim": "unmeasured-no-independent-reference",
+        "fabricDetail": "unmeasured-no-independent-reference",
+        "transparency": "unmeasured-no-independent-reference",
+        "layering": "unmeasured-no-independent-reference"
+      },
+      "partialWitnessesAreFullTruth": false,
+      "darkEdgeDiagnostic": null
+    },
+    {
+      "id": "commons-0053",
+      "image": "commons-0053.jpg",
+      "sourceSha256": "e7a617cd23a159864f619e8397d5f37d48b684e47dddc4ad6b46b14481042019",
+      "attribution": {
+        "id": "commons-0053",
+        "title": "File:Dress, match (AM 2017.66.33-1).jpg",
+        "source": "https://commons.wikimedia.org/wiki/File:Dress,_match_(AM_2017.66.33-1).jpg",
+        "license": "CC BY 4.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
+        "author": "",
+        "credit": "API data Catalogue record Photo"
+      },
+      "proposalAvailable": false,
+      "candidateRgbaSha256": null,
+      "maskQuality": {
+        "status": "blocked",
+        "passed": false,
+        "productionAuthorized": false,
+        "reviewerIdentitiesAuthenticated": false,
+        "metrics": null,
+        "reasons": [
+          "missing-independent-full-garment-reference"
+        ]
+      },
+      "featureEvidence": {
+        "collars": "unmeasured-no-independent-reference",
+        "sleeves": "unmeasured-no-independent-reference",
+        "hems": "unmeasured-no-independent-reference",
+        "logos": "unmeasured-no-independent-reference",
+        "seams": "unmeasured-no-independent-reference",
+        "buttons": "unmeasured-no-independent-reference",
+        "darkTrim": "unmeasured-no-independent-reference",
+        "fabricDetail": "unmeasured-no-independent-reference",
+        "transparency": "unmeasured-no-independent-reference",
+        "layering": "unmeasured-no-independent-reference"
+      },
+      "partialWitnessesAreFullTruth": false,
+      "darkEdgeDiagnostic": null
+    },
+    {
+      "id": "commons-0064",
+      "image": "commons-0064.jpg",
+      "sourceSha256": "bb68b22a7fdaff20e71eb969bb5d857598a5ca6f4b47f172dc7a8623b7bd6b83",
+      "attribution": {
+        "id": "commons-0064",
+        "title": "File:Jacket (AM 740158-3).jpg",
+        "source": "https://commons.wikimedia.org/wiki/File:Jacket_(AM_740158-3).jpg",
+        "license": "CC BY 4.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
+        "author": "",
+        "credit": "API data Catalogue record Photo"
+      },
+      "proposalAvailable": false,
+      "candidateRgbaSha256": null,
+      "maskQuality": {
+        "status": "blocked",
+        "passed": false,
+        "productionAuthorized": false,
+        "reviewerIdentitiesAuthenticated": false,
+        "metrics": null,
+        "reasons": [
+          "missing-independent-full-garment-reference"
+        ]
+      },
+      "featureEvidence": {
+        "collars": "unmeasured-no-independent-reference",
+        "sleeves": "unmeasured-no-independent-reference",
+        "hems": "unmeasured-no-independent-reference",
+        "logos": "unmeasured-no-independent-reference",
+        "seams": "unmeasured-no-independent-reference",
+        "buttons": "unmeasured-no-independent-reference",
+        "darkTrim": "unmeasured-no-independent-reference",
+        "fabricDetail": "unmeasured-no-independent-reference",
+        "transparency": "unmeasured-no-independent-reference",
+        "layering": "unmeasured-no-independent-reference"
+      },
+      "partialWitnessesAreFullTruth": false,
+      "darkEdgeDiagnostic": null
+    },
+    {
+      "id": "commons-0068",
+      "image": "commons-0068.jpg",
+      "sourceSha256": "5d372824e1054c4c392969bed227784cd30d7011e95db769218b20a28302633f",
+      "attribution": {
+        "id": "commons-0068",
+        "title": "File:Sapphire mink fur coat 1980.jpg",
+        "source": "https://commons.wikimedia.org/wiki/File:Sapphire_mink_fur_coat_1980.jpg",
+        "license": "Public domain",
+        "licenseUrl": "",
+        "author": "Libricool ( talk ) 19:57, 14 October 2010 (UTC)",
+        "credit": "Own work"
+      },
+      "proposalAvailable": false,
+      "candidateRgbaSha256": null,
+      "maskQuality": {
+        "status": "blocked",
+        "passed": false,
+        "productionAuthorized": false,
+        "reviewerIdentitiesAuthenticated": false,
+        "metrics": null,
+        "reasons": [
+          "missing-independent-full-garment-reference"
+        ]
+      },
+      "featureEvidence": {
+        "collars": "unmeasured-no-independent-reference",
+        "sleeves": "unmeasured-no-independent-reference",
+        "hems": "unmeasured-no-independent-reference",
+        "logos": "unmeasured-no-independent-reference",
+        "seams": "unmeasured-no-independent-reference",
+        "buttons": "unmeasured-no-independent-reference",
+        "darkTrim": "unmeasured-no-independent-reference",
+        "fabricDetail": "unmeasured-no-independent-reference",
+        "transparency": "unmeasured-no-independent-reference",
+        "layering": "unmeasured-no-independent-reference"
+      },
+      "partialWitnessesAreFullTruth": false,
+      "darkEdgeDiagnostic": null
+    },
+    {
+      "id": "commons-0079",
+      "image": "commons-0079.jpg",
+      "sourceSha256": "b577483e5244dfb53e60cc8a0b54a4130e695cf388e5534e38a2b04580727ec6",
+      "attribution": {
+        "id": "commons-0079",
+        "title": "File:Nike SB Dunk High MF Doom.jpg",
+        "source": "https://commons.wikimedia.org/wiki/File:Nike_SB_Dunk_High_MF_Doom.jpg",
+        "license": "CC BY 2.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+        "author": "TanSenpai from Philadelphia, United States",
+        "credit": "MF Doom's"
+      },
+      "proposalAvailable": false,
+      "candidateRgbaSha256": null,
+      "maskQuality": {
+        "status": "blocked",
+        "passed": false,
+        "productionAuthorized": false,
+        "reviewerIdentitiesAuthenticated": false,
+        "metrics": null,
+        "reasons": [
+          "missing-independent-full-garment-reference"
+        ]
+      },
+      "featureEvidence": {
+        "collars": "unmeasured-no-independent-reference",
+        "sleeves": "unmeasured-no-independent-reference",
+        "hems": "unmeasured-no-independent-reference",
+        "logos": "unmeasured-no-independent-reference",
+        "seams": "unmeasured-no-independent-reference",
+        "buttons": "unmeasured-no-independent-reference",
+        "darkTrim": "unmeasured-no-independent-reference",
+        "fabricDetail": "unmeasured-no-independent-reference",
+        "transparency": "unmeasured-no-independent-reference",
+        "layering": "unmeasured-no-independent-reference"
+      },
+      "partialWitnessesAreFullTruth": false,
+      "darkEdgeDiagnostic": null
+    },
+    {
+      "id": "commons-0016",
+      "image": "commons-0016.jpg",
+      "sourceSha256": "e0510f06c475fa048585e6ff437359cb4255ce3a425e40a69dc54cc337f5ab24",
+      "attribution": {
+        "id": "commons-0016",
+        "title": "File:Blouse MET 41.64 F.jpg",
+        "source": "https://commons.wikimedia.org/wiki/File:Blouse_MET_41.64_F.jpg",
+        "license": "CC0",
+        "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+        "author": "",
+        "credit": "This file was donated to Wikimedia Commons as part of a project by the Metropolitan Museum of Art . See the Image and Data Resources Open Access Policy"
+      },
+      "proposalAvailable": false,
+      "candidateRgbaSha256": null,
+      "maskQuality": {
+        "status": "blocked",
+        "passed": false,
+        "productionAuthorized": false,
+        "reviewerIdentitiesAuthenticated": false,
+        "metrics": null,
+        "reasons": [
+          "missing-independent-full-garment-reference"
+        ]
+      },
+      "featureEvidence": {
+        "collars": "unmeasured-no-independent-reference",
+        "sleeves": "unmeasured-no-independent-reference",
+        "hems": "unmeasured-no-independent-reference",
+        "logos": "unmeasured-no-independent-reference",
+        "seams": "unmeasured-no-independent-reference",
+        "buttons": "unmeasured-no-independent-reference",
+        "darkTrim": "unmeasured-no-independent-reference",
+        "fabricDetail": "unmeasured-no-independent-reference",
+        "transparency": "unmeasured-no-independent-reference",
+        "layering": "unmeasured-no-independent-reference"
+      },
+      "partialWitnessesAreFullTruth": false,
+      "darkEdgeDiagnostic": null
+    }
+  ]
+}
