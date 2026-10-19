@@ -1,5 +1,27 @@
 # Closet Current master development checkpoint
 
+## Local fitting follow-up to PR #32 — October 19, 2026 Pacific
+
+- Isolated branch `feature/local-fitting-landmarks-20261019`, based exactly on
+  PR #32 head `1b36749f`; central integration branch left untouched.
+- Trim clear padding while retaining every nonzero alpha edge; native-alpha
+  previews retain up to 600k pixels; conservative white matting stays at 150k.
+- Separate fixed female/male shoulder, waist and hip placement; short hems;
+  central mesh identity geometry preserves prints/seams; remove outward hip
+  expansion that could clip against the output canvas.
+- Optional bounded selfie position/zoom controls remain ephemeral/local and
+  reset on removal. Existing layer ordering and dress exclusions preserved.
+- Local build and full suite: **977 passed, 0 failed, 3 skipped**. Focused suite:
+  **16 passed**. Local browser executables unavailable; attempted download was
+  truncated. Browser results must be read from exact-head CI before claiming
+  emulation passed. CI includes Android Chromium/iPhone WebKit and 3 licensed,
+  SHA-verified photo acceptance/hold cases with screenshot/JSON artifacts.
+- No physical phones or fabric-fidelity score. Existing low-resolution figure
+  rights, gray base clothing, occlusion and realistic drape remain unresolved.
+  See `docs/LOCAL-FITTING-ALIGNMENT-20261019.md` for evidence and limits.
+- No merge/deploy, external inference, paid calls, private-photo uploads or
+  Drive Duel changes. Original recognition/indexing sources preserved.
+
 ## Compatible prepaid ledger and client recovery — October 19, 2026 Pacific
 
 - [Draft PR #17](https://github.com/nickhaney916-lang/Closet-Current/pull/17)

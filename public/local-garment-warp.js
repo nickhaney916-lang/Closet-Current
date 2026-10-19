@@ -5,13 +5,24 @@
 (function(root){
  const profiles=Object.freeze({
   Tops:Object.freeze([.95,1,.96,.86,.82]),
-  Bottoms:Object.freeze([.9,.94,1,1.02,1]),
+  Bottoms:Object.freeze([.9,.94,1,1,1]),
   Dresses:Object.freeze([.93,.98,.94,.96,1]),
   Outerwear:Object.freeze([.98,1,.99,.94,.9])
  });
  const Y=Object.freeze([0,.2,.45,.72,1]);
  const X=Object.freeze([0,.25,.5,.75,1]);
  const MESH_LIMIT=1024*1024;
+ // Bounds include every nonzero alpha pixel: soft cuffs and hems survive.
+ function alphaBounds(data,width,height){
+  if(!Number.isInteger(width)||!Number.isInteger(height)||width<1||height<1||
+    width*height>MESH_LIMIT||!(data instanceof Uint8ClampedArray||data instanceof Uint8Array)||
+    data.length!==width*height*4)return null;
+  let left=width,top=height,right=-1,bottom=-1;
+  for(let y=0;y<height;y++)for(let x=0;x<width;x++)if(data[(y*width+x)*4+3]>0){
+   left=Math.min(left,x);right=Math.max(right,x);top=Math.min(top,y);bottom=Math.max(bottom,y);
+  }
+  return right<left?null:{left,top,width:right-left+1,height:bottom-top+1};
+ }
  function makeMesh(width,height,category){
   if(!Number.isInteger(width)||!Number.isInteger(height)||width<24||height<24||
    width*height>MESH_LIMIT||!Object.hasOwn(profiles,category))return null;
@@ -23,7 +34,10 @@
    const x=X[col],y=Y[row];
    vertices.push(Object.freeze({
     sourceX:width*x,sourceY:height*y,
-    x:width*(.5+(x-.5)*scales[row]),y:height*y
+    // Preserve the central half at its original scale (prints, buttons,
+    // seams). Move only the outside quarters around shoulders/hips/hem.
+    x:width*(x<=.25?x+(1-scales[row])*(.25-x):
+      x>=.75?x-(1-scales[row])*(x-.75):x),y:height*y
    }));
   }
   const triangles=[];
@@ -57,6 +71,7 @@
   const ctx=canvas.getContext('2d');
   if(!ctx)return null;
   ctx.clearRect(0,0,mesh.width,mesh.height);
+  ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
   try{
    for(const indices of mesh.triangles){
     const points=indices.map(i=>mesh.vertices[i]),m=affine(points);
@@ -75,6 +90,6 @@
    return canvas.toDataURL('image/png');
   }catch{return null;}
  }
- root.ClosetGarmentWarp=Object.freeze({profiles,makeMesh,affine,warpTransparentImage});
+ root.ClosetGarmentWarp=Object.freeze({profiles,alphaBounds,makeMesh,affine,warpTransparentImage});
  if(typeof module!=='undefined')module.exports=root.ClosetGarmentWarp;
 })(typeof window!=='undefined'?window:globalThis);

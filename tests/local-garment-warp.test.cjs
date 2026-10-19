@@ -80,3 +80,26 @@ test('renderer does not alter input garment pixels',()=>{
  assert.equal(JSON.stringify(image),original);
  assert.equal(fakeCanvas.width,100);assert.equal(fakeCanvas.height,150);
 });
+
+test('alpha bounds retain low-opacity cuffs and ignore only fully clear padding',()=>{
+ const data=new Uint8ClampedArray(40*50*4);
+ data[(5*40+8)*4+3]=1;data[(46*40+32)*4+3]=255;
+ const old=Buffer.from(data);
+ assert.deepEqual(warp.alphaBounds(data,40,50),{left:8,top:5,width:25,height:42});
+ assert.deepEqual(Buffer.from(data),old);
+ assert.equal(warp.alphaBounds(new Uint8ClampedArray(40*50*4),40,50),null);
+ assert.equal(warp.alphaBounds(data,40,51),null);
+});
+test('central fabric, collar and seam geometry has no horizontal or vertical strain',()=>{
+ for(const category of Object.keys(warp.profiles)){
+  const m=warp.makeMesh(400,600,category);
+  for(const v of m.vertices.filter(v=>v.sourceX>=100&&v.sourceX<=300)){
+   assert.equal(v.x,v.sourceX);assert.equal(v.y,v.sourceY);
+  }
+  // Positive orientation: no folded-over or inverted triangles.
+  for(const ids of m.triangles){
+   const [a,b,c]=ids.map(i=>m.vertices[i]);
+   assert.ok((b.x-a.x)*(c.y-a.y)-(c.x-a.x)*(b.y-a.y)>0);
+  }
+ }
+});

@@ -1,7 +1,7 @@
 name: Reusable figure local-only preview QA
 on:
   push:
-    branches: [feature/reusable-figure-local-closet-preview-20261019, feature/local-garment-mesh-warp-20261019]
+    branches: [feature/reusable-figure-local-closet-preview-20261019, feature/local-garment-mesh-warp-20261019, feature/local-fitting-landmarks-20261019]
   workflow_dispatch:
 permissions:
   contents: read
@@ -26,6 +26,11 @@ jobs:
           npx playwright install --with-deps chromium webkit
       - name: Verify local reusable figures and temporary selfie in Android and iPhone browser emulation
         run: node scripts/test-reusable-figure-phone-browsers.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: local-fitting-licensed-photo-browser-evidence
+          path: artifacts/local-fitting/
       - name: Paid backend approvals must stay disabled
         run: |
           node --input-type=module -e "

@@ -26,6 +26,11 @@
     <label for="reusableSelfieUpload">Optional selfie (stays on this device, not saved)
       <input id="reusableSelfieUpload" type="file" accept="image/jpeg,image/png,image/webp">
     </label>
+    <fieldset id="reusableSelfiePosition" hidden><legend>Position your selfie</legend>
+      <label>Left / right<input id="reusableSelfieX" type="range" min="-12" max="12" value="0" step="0.5"></label>
+      <label>Up / down<input id="reusableSelfieY" type="range" min="-8" max="8" value="0" step="0.5"></label>
+      <label>Zoom<input id="reusableSelfieZoom" type="range" min="-25" max="50" value="0"></label>
+    </fieldset>
     <button id="reusableSelfieRemove" class="secondary" type="button" hidden>Remove selfie</button>
   </div>
   <p id="reusableFigureStatus" class="fine" role="status" aria-live="polite">Preparing local clothing preview…</p>
