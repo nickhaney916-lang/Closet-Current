@@ -33,7 +33,7 @@ export function prepareIndependentAdjudication(firstPacket,first,secondPacket,se
   const reasons=[
    ...(row.countAgreement?[]:['different-visible-physical-item-count']),
    ...(row.categoryAndFormMultisetAgreement?[]:['different-category-or-specific-form']),
-   ...(row.visibilityMultisetAgreement?[]:['different-occlusion-or-visibility']),
+   ...(!row.countAgreement||row.visibilityMultisetAgreement?[]:['different-occlusion-or-visibility']),
    ...(row.unresolvedFormOrVisibility?['unknown-or-partially-visible-item']:[])
   ];
   const maskStatus='independent-per-item-human-outlines-not-approved';
