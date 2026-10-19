@@ -88,6 +88,19 @@ test('all unreliable outfit original-crop reasons have a human review label',()=
  }
 });
 
+
+test('disconnected upper regions require review and warn against double-saving a single shirt',()=>{
+ const {c,grid}=setup();
+ const item={id:'left-region',image:'source-photo',category:'Tops',itemType:'T-shirt',
+  color:'',localAnalyzed:true,outfitSourceId:'outfit-1',
+  segmentHint:{clipped:false,categories:['Tops'],types:[],
+   displayFallback:'original-crop',displayFallbackReason:'disconnected-upper-regions'}};
+ c.batch=[item];c.renderPhotoResults(grid,[item]);
+ const nodes=descendants(grid);
+ assert.ok(nodes.some(x=>/may be parts of ONE garment/.test(x.text)));
+ assert.equal(nodes.filter(x=>x.tag==='select').length,0,'color picker must not bypass review');
+ assert.ok(nodes.some(x=>x.tag==='button'&&x.text==='Adjust'));
+});
 test('automatic save revalidates a changed garment draft before opening storage',async()=>{
  const js=source.slice(source.indexOf('function segmentationAllows('),source.indexOf('function applyLocalChoice('))+'\n'+source.slice(source.indexOf('async function saveIndexed('),source.indexOf('async function recognizeItem('));
  const c={batch:[],items:[],ClothingDetails:{validColor:v=>v==='Blue'},normalizeClothing:x=>x,queued:fn=>fn(),db:{transaction(){throw Error('Unsafe item reached database');}},structuredClone,Date,persistDraft(){},render(){}};
