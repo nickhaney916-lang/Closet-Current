@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "status": "no-independent-reference-evidence-imported",
+  "references": [],
+  "policy": {
+    "status": "proposed-unapproved",
+    "falseRemovalRateMax": 0.005,
+    "backgroundInclusionRateMax": 0.005,
+    "boundaryRecallMin": 0.99,
+    "featureRetentionMin": 0.995,
+    "boundaryTolerancePixels": 1,
+    "alphaThreshold": 128
+  }
+}

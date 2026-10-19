@@ -20,7 +20,7 @@ def main():
  rows_=json.loads((ROOT/'benchmark/local-fitting-real-photo-manifest.json').read_text())['cases']
  sources={r['id']:r for r in json.loads((ROOT/'benchmark/locked-photo-sources.json').read_text())}
  hashes={p:sha((ROOT/p).read_bytes())for p in ['public/dark-studio-garment-mask.js','public/source-guided-mask-refinement.js',
-  'public/local-garment-warp.js','scripts/measure-source-guided-boundaries.cjs','scripts/benchmark-source-guided-boundaries.py',
+  'public/local-garment-warp.js','benchmark/dark-edge-diagnostic.cjs','scripts/measure-source-guided-boundaries.cjs','scripts/benchmark-source-guided-boundaries.py',
   'benchmark/local-fitting-real-photo-manifest.json','benchmark/dark-studio-source-witnesses.json']}
  sections=[]
  with tempfile.TemporaryDirectory(prefix='closet-boundaries-')as tmp:
@@ -42,10 +42,10 @@ def main():
    tags='<figure><img src="'+row['id']+'/source.png"><figcaption>Original thumbnail</figcaption></figure>'
    if record['proposalAvailable']:
     previews={}
-    for kind in ['projection','candidate','uncertainty','warp']:
+    for kind in ['projection','candidate','uncertainty','dark-risk','warp']:
      size=(row['width'],row['height'])if kind!='warp'else(record['bounds']['width'],record['bounds']['height'])
      im=Image.frombytes('RGBA',size,Path(row['rgbaPath']+'.'+kind).read_bytes());im.save(case/(kind+'.png'))
-     view=checker(im)if kind!='uncertainty'else im.convert('RGB');view.save(case/(kind+'-view.png'));previews[kind]=view
+     view=checker(im)if kind not in ['uncertainty','dark-risk']else im.convert('RGB');view.save(case/(kind+'-view.png'));previews[kind]=view
      tags+='<figure><img src="'+row['id']+'/'+kind+'-view.png"><figcaption>'+kind+' — UNREVIEWED</figcaption></figure>'
     for region in record['boundaryRegions']:
      l,t,r,b=region['box'];w,h=previews['projection'].size
@@ -58,6 +58,6 @@ def main():
   'pipelineFiles':hashes,'summary':{'realPhotos':len(records),'automaticProposals':sum(x['proposalAvailable']for x in records),
   'newDisplayApprovals':0,'independentlyScoredFullMasks':0,'realPhoneRuns':0},'cases':records}
  (output/'results.json').write_text(json.dumps(report,indent=2)+'\n')
- (output/'index.html').write_text('<!doctype html><html lang="en"><meta charset="utf-8"><title>Source-guided boundaries</title><style>body{font:16px system-ui;margin:24px}section{border:1px solid #bbb;padding:18px;margin:20px 0}figure{display:inline-block;margin:6px;max-width:28%;vertical-align:top}img{max-width:100%;max-height:520px}</style><h1>Source-guided boundary proposals — held for review</h1><p>Compare the internally derived guide projected to the same larger source grid with the refined candidate. Orange marks uncertainty, not errors or approved labels. Changes and partial witnesses do not establish complete mask correctness. No RGB editing, independent full-mask score, automatic display approval or real-phone evidence.</p>'+''.join(sections)+'</html>')
+ (output/'index.html').write_text('<!doctype html><html lang="en"><meta charset="utf-8"><title>Source-guided boundaries</title><style>body{font:16px system-ui;margin:24px}section{border:1px solid #bbb;padding:18px;margin:20px 0}figure{display:inline-block;margin:6px;max-width:28%;vertical-align:top}img{max-width:100%;max-height:520px}</style><h1>Source-guided boundary proposals — held for review</h1><p>Compare the internally derived guide projected to the same larger source grid with the refined candidate. Orange marks uncertainty; magenta marks removed dark pixels near retained edges. Both are unlabelled risks, not errors or approved labels. Changes and partial witnesses do not establish complete mask correctness. No RGB editing, independent full-mask score, automatic display approval or real-phone evidence.</p>'+''.join(sections)+'</html>')
  print(json.dumps(report['summary']))
 if __name__=='__main__':main()

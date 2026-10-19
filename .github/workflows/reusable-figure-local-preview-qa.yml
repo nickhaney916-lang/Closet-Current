@@ -1,7 +1,7 @@
 name: Reusable figure local-only preview QA
 on:
   push:
-    branches: [feature/reusable-figure-local-closet-preview-20261019, feature/local-garment-mesh-warp-20261019, feature/local-fitting-landmarks-20261019, integration/local-fit-alpha-and-landmarks-20261019, fix/atomic-private-preview-cache-20261019, feature/conservative-dark-garment-extraction-20261019, feature/source-guided-mask-boundaries-20261019]
+    branches: [feature/reusable-figure-local-closet-preview-20261019, feature/local-garment-mesh-warp-20261019, feature/local-fitting-landmarks-20261019, integration/local-fit-alpha-and-landmarks-20261019, fix/atomic-private-preview-cache-20261019, feature/conservative-dark-garment-extraction-20261019, feature/source-guided-mask-boundaries-20261019, benchmark/verified-mask-evidence-20261019]
   workflow_dispatch:
 permissions:
   contents: read

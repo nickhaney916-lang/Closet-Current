@@ -1,6 +1,7 @@
 'use strict';
 const fs=require('node:fs'),crypto=require('node:crypto');
 const refine=require('../public/source-guided-mask-refinement.js'),engine=require('../public/dark-studio-garment-mask.js'),warp=require('../public/local-garment-warp.js');
+const darkEdgeRisk=require('../benchmark/dark-edge-diagnostic.cjs');
 const hash=b=>crypto.createHash('sha256').update(b).digest('hex');
 const [input,output]=process.argv.slice(2),rows=JSON.parse(fs.readFileSync(input));
 const witnesses=JSON.parse(fs.readFileSync('benchmark/dark-studio-source-witnesses.json'));
@@ -13,6 +14,11 @@ for(const row of rows){
   reason:p.reason,sourceUnchanged:hash(data)===before,completeBoundaryQualityVerified:false};
  if(p.proposalAvailable){
   const originalProjection=engine.applyAlpha(data,p.projectedAlpha),candidate=engine.applyAlpha(data,p.alpha),uncertaintyRgba=new Uint8ClampedArray(data);
+  const {overlay,...darkEdgeDiagnostic}=darkEdgeRisk(data,p.alpha,row.width,row.height);
+  record.darkEdgeDiagnostic=darkEdgeDiagnostic;
+  const riskRgba=new Uint8ClampedArray(data);
+  for(let i=0;i<overlay.length;i++)if(overlay[i])riskRgba.set([255,0,220,255],i*4);
+  fs.writeFileSync(row.rgbaPath+'.dark-risk',riskRgba);
   let rgbChanges=0,outsideBandChanges=0;
   for(let i=0;i<data.length;i++)if(i%4!==3&&data[i]!==candidate[i])rgbChanges++;
   for(let i=0;i<p.alpha.length;i++){

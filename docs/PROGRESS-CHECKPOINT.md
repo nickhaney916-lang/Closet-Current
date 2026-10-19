@@ -1,5 +1,28 @@
 # Closet Current master development checkpoint
 
+## Independent mask-quality evidence — October 19, 2026
+
+- Isolated branch `benchmark/verified-mask-evidence-20261019` based on PR #41
+  `28a666d3`; no edits to PR #40/#41/#42 branches.
+- 12 exact licensed originals reproduced: 1 held proposal, 0 independently
+  verified full masks, 0 measured real-photo false-removal/inclusion cases,
+  0 quality passes. All 12 quality gates blocked; no fabricated approvals.
+- Added source/reference/review/rights-byte-bound offline evaluator, exact-grid
+  confusion/alpha/boundary/feature metrics, unapproved threshold proposals and
+  explicit transparency/layering blocks. Empty registry; no external dataset
+  or annotations imported. Fashionpedia conditional, rights per image unresolved;
+  ModaNet/DeepFashion2 commercial permission not established.
+- Unlabelled dark-edge overlay identifies 6,129 removed dark pixels near retained
+  edges on the sole candidate, without altering masks; count is NOT an error
+  rate. Original RGB, source JPEGs, mesh, recognition and default display unchanged.
+- Local full suite: 1013 passed, 0 failed, 3 skipped. Repeated pinned-decoder
+  reports identical; existing partial witness checks pass. CI adds exact-head
+  report integrity and existing Android/iPhone browser emulation, not real phones.
+- Guide: `docs/VERIFIED-MASK-EVIDENCE-20261019.md`; actual report:
+  `benchmark/verified-mask-results-20261019.json`. No merge/deploy, paid service,
+  purchases, customer upload or Drive Duel changes. Independent annotation and
+  review of legally cleared originals remains necessary for real quality scores.
+
 ## Source-guided higher-resolution boundary proposals — October 19, 2026 Pacific
 
 - Separate branch `feature/source-guided-mask-boundaries-20261019`, based on

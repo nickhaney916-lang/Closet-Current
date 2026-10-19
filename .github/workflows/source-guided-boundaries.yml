@@ -1,7 +1,7 @@
-name: Source-guided real-photo boundary evidence
+name: Verified real-photo mask evidence
 on:
   push:
-    branches: [feature/source-guided-mask-boundaries-20261019]
+    branches: [feature/source-guided-mask-boundaries-20261019, benchmark/verified-mask-evidence-20261019]
   workflow_dispatch:
 permissions:
   contents: read
@@ -26,11 +26,18 @@ jobs:
         run: |
           python scripts/benchmark-source-guided-boundaries.py
           node scripts/assert-source-guided-boundaries.cjs
+          node scripts/report-verified-mask-evidence.mjs
+          node scripts/assert-verified-mask-evidence.mjs
+          cp artifacts/verified-mask-evidence/results.json /tmp/first-mask-results.json
           cp artifacts/source-guided-boundaries/results.json /tmp/first-boundary-results.json
           python scripts/benchmark-source-guided-boundaries.py
+          node scripts/report-verified-mask-evidence.mjs
+          cmp /tmp/first-mask-results.json artifacts/verified-mask-evidence/results.json
           cmp /tmp/first-boundary-results.json artifacts/source-guided-boundaries/results.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: source-guided-boundary-diagnostics
-          path: artifacts/source-guided-boundaries/
+          path: |
+            artifacts/source-guided-boundaries/
+            artifacts/verified-mask-evidence/
