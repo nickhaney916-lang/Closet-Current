@@ -274,7 +274,7 @@ test('distinct top and trousers in the same original outfit are not blocked by b
  const top={label:'a T-shirt',category:'Tops',itemType:'T-shirt',sleeveLength:'Unknown'};
  const pants={label:'trousers',category:'Bottoms',itemType:'Trousers',sleeveLength:'Unknown'};
  const {c,stored}=setup({quality:same,request:async(type,image)=>({
-  strong:true,choices:[image==='whole-top'?top:pants],details:{color:'Blue'}
+  strong:true,choices:[image.endsWith('whole-top')?top:pants],details:{color:'Blue'}
  })});
  const originalPhoto={image:'data:image/jpeg;base64,SAMEUNTOUCHED'};
  c.candidate('whole-top',{outfitSourceId:'outfit-original-1',originalPhoto,
@@ -305,7 +305,7 @@ test('same-photo same-category, overlapping, unmasked or unverifiable regions ke
   {cropBounds:undefined,segmentHint:{categories:['Bottoms'],types:[]}}
  ]){
   const {c,stored}=setup({quality:async()=>({blank:false,signature:[10,20,30],aspect:1}),
-   request:async(type,image)=>({strong:true,choices:[image==='first'?
+   request:async(type,image)=>({strong:true,choices:[image.endsWith('first')?
      {label:'shirt',category:'Tops',itemType:'T-shirt',sleeveLength:'Unknown'}:
      {label:'trousers',category:'Bottoms',itemType:'Trousers',sleeveLength:'Unknown'}],
      details:{color:'Blue'}})});
