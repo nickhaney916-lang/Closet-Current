@@ -4,7 +4,7 @@ import pathlib
 import sys
 import unittest
 sys.path.insert(0,str(pathlib.Path(__file__).resolve().parents[1]/'scripts'))
-from figure_fabric_boundaries import flatten_lower_hem
+from figure_fabric_boundaries import flatten_lower_hem,smooth_upper_shell_rim
 
 def shell():
     coords=[]
@@ -43,6 +43,41 @@ class HemBoundaryTests(unittest.TestCase):
         a,faces=shell();b=copy.deepcopy(a)
         x=flatten_lower_hem(a,faces);y=flatten_lower_hem(b,faces)
         self.assertEqual(x,y);self.assertEqual(a,b)
+
+
+class UpperRimTests(unittest.TestCase):
+    def upper_shell(self):
+        vertices,faces=shell()
+        for i in range(16,32):
+            n=i-16
+            vertices[i][1]=-.12
+            vertices[i][2]=1.47+(.018 if n%2 else -.018)
+        return vertices,faces
+
+    def test_front_upper_boundary_is_smoothed_without_editing_body_or_other_shell(self):
+        vertices,faces=self.upper_shell()
+        before=copy.deepcopy(vertices)
+        metrics=smooth_upper_shell_rim(vertices,faces)
+        self.assertGreaterEqual(metrics['upperRimVertices'],8)
+        self.assertGreaterEqual(metrics['upperRimMoved'],8)
+        self.assertLess(metrics['upperRimRoughnessAfter'],metrics['upperRimRoughnessBefore'])
+        self.assertLessEqual(metrics['upperRimMaxMove'],.015)
+        self.assertEqual(vertices[:16],before[:16])
+        self.assertEqual([v[:2]for v in vertices],[v[:2]for v in before])
+        self.assertFalse(metrics['sourceBodyChanged'])
+        self.assertFalse(metrics['sleeveCuffsModified'])
+        self.assertFalse(metrics['neckOpeningReconstructed'])
+        self.assertFalse(metrics['independentAppearanceApproval'])
+
+    def test_repeatable_and_fails_closed_on_invalid_missing_or_unsupported_edges(self):
+        a,faces=self.upper_shell();b=copy.deepcopy(a)
+        self.assertEqual(smooth_upper_shell_rim(a,faces),smooth_upper_shell_rim(b,faces))
+        self.assertEqual(a,b)
+        for kwargs in [{'strength':1.5},{'max_move':.025},{'low':.6,'high':.8},
+                       {'front_limit':-.5}]:
+            coords,f=self.upper_shell()
+            with self.assertRaises(ValueError):smooth_upper_shell_rim(coords,f,**kwargs)
+
 
 if __name__=='__main__':
     unittest.main()
