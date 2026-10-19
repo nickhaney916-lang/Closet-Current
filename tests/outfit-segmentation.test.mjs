@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {clothingLabelMap,clothingMaskGroups,reviewOnlyUnwornOutfitGroups,isolateClothingPixels,cropClothingPhotoPixels,garmentDisplayMaskReliability} from '../public/outfit-segmentation.mjs';
+import {clothingLabelMap,clothingMaskGroups,reviewOnlyUnwornOutfitGroups,reviewOnlyOverlappingGarmentGroups,isolateClothingPixels,cropClothingPhotoPixels,garmentDisplayMaskReliability} from '../public/outfit-segmentation.mjs';
 function logits(width=20,height=20){const data=new Float32Array(18*width*height);data.fill(-10);for(let i=0;i<width*height;i++)data[i]=10;return {data,dims:[1,18,height,width],paint(label,left,top,w,h){for(let y=top;y<top+h;y++)for(let x=left;x<left+w;x++){const i=y*width+x;for(let c=0;c<18;c++)data[c*width*height+i]=c===label?10:-10;}}};}
 test('small and narrow source photos retain original pixels without failing display isolation',()=>{
  const l=logits(32,32);l.paint(4,6,6,20,20);
@@ -367,4 +367,49 @@ test('flat-lay noise, tiny garment fragments and real wearer routing remain guar
  const map2=clothingLabelMap(full.data,full.dims);
  map2.personDetected=true;
  assert.equal(reviewOnlyUnwornOutfitGroups(map2).length,0,'wearer flow uses its existing worker route');
+});
+
+test('overlapping dress and upper proposals are BOTH original-source review only without deleting masks',()=>{
+ const box=(left,top,right,bottom)=>({left,top,right,bottom});
+ const groups=[
+  {id:4,label:'Upper garment',bounds:box(8,8,18,19)},
+  {id:7,label:'Dress',bounds:box(6,5,24,27)},
+  {id:9,label:'Shoes',bounds:box(7,28,25,31)}
+ ];
+ const original=structuredClone(groups),review=reviewOnlyOverlappingGarmentGroups(groups);
+ assert.equal(review.length,3,'do not invent separate physical items');
+ assert.equal(review[0].reviewOnlyReason,'overlapping-garment-classes');
+ assert.equal(review[1].reviewOnlyReason,'overlapping-garment-classes');
+ assert.equal(review[2].reviewOnlyReason,undefined,'shoes are not equivalent to dress fabric');
+ assert.deepEqual(groups,original,'original model masks and class proposals unchanged');
+ assert.deepEqual(review.map(x=>x.bounds),groups.map(x=>x.bounds));
+});
+
+test('skirt and trousers assigned to overlapping scene regions need form review',()=>{
+ const input=[
+  {id:5,bounds:{left:12,top:12,right:22,bottom:23}},
+  {id:6,bounds:{left:11,top:14,right:24,bottom:30}},
+  {id:4,bounds:{left:10,top:1,right:24,bottom:12}}
+ ];
+ const review=reviewOnlyOverlappingGarmentGroups(input);
+ assert.ok(review[0].reviewOnlyReason);
+ assert.ok(review[1].reviewOnlyReason);
+ assert.equal(review[2].reviewOnlyReason,undefined);
+});
+
+test('ordinary distinct top, trousers and shoes stay eligible for existing safeguards',()=>{
+ const input=[
+  {id:4,bounds:{left:5,top:3,right:15,bottom:11}},
+  {id:6,bounds:{left:5,top:12,right:15,bottom:23}},
+  {id:9,bounds:{left:5,top:25,right:15,bottom:30}}
+ ];
+ assert.deepEqual(reviewOnlyOverlappingGarmentGroups(input),input);
+ const borderline=[
+  {id:5,bounds:{left:5,top:10,right:15,bottom:20}},
+  {id:6,bounds:{left:7,top:19,right:17,bottom:29}}
+ ];
+ assert.deepEqual(reviewOnlyOverlappingGarmentGroups(borderline),borderline,
+  'minor border contact is not meaningful shape competition');
+ assert.throws(()=>reviewOnlyOverlappingGarmentGroups(input,{minimumSmallerBoxOverlap:0}),/Invalid/);
+ assert.throws(()=>reviewOnlyOverlappingGarmentGroups({}),/Invalid/);
 });
