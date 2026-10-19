@@ -140,6 +140,7 @@
   const counts={shown:0,skipped:plan.skipped.length};
   const nextLayers=document.createDocumentFragment();
   const displayedSlots=new Set();
+  const renderedLayers=[];
   const cancelled=()=>revision!==renderRevision||
    (root.closetAuth?.user?.id||null)!==owner;
   for(const placement of plan.placements){
@@ -192,11 +193,21 @@
    if(root.ClosetLocalLayerDepth?.depthFor(placement,displayedSlots).enabled)
     img.classList.add('reusable-figure-layer--contact-depth');
    nextLayers.append(img);displayedSlots.add(placement.slot);counts.shown++;
+   renderedLayers.push({image:img,rect,slot:placement.slot});
   }
+  // Only report when a piece is genuinely concealed by an APPROVED higher
+  // layer. Do not count occlusion by the human figure or guess body physics.
+  const visibility=renderedLayers.length>1
+   ?root.ClosetLayerVisibility?.auditPlacedLayers(
+      renderedLayers,()=>document.createElement('canvas')):null;
   if(cancelled())return;
+  const covered=Array.isArray(visibility)
+   ?visibility.filter(x=>x.mostlyConcealed).length:0;
   garmentContainer.replaceChildren(nextLayers);
   status.textContent=counts.shown+' owned clothing layer'+(counts.shown===1?'':'s')+
    ' displayed; '+counts.skipped+' held for transparent-cutout review. '+
+   (covered>0?covered+' selected '+(covered===1?'piece is':'pieces are')+
+    ' mostly hidden behind other clothing. ':'')+
    'This is a local styling collage, not a fit or fabric simulation.'+
    (localFaceURL?' Your selfie is on-device only.':'');
   updatePhotoHelp(counts.skipped>0);
