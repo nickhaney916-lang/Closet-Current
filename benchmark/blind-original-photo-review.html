@@ -121,7 +121,9 @@ function activate(id){
  activeId=id;resetView();
  const p=photoMap.get(id),record=reviewMap.get(id);
  if(!p?.verified){say('JPEG missing or SHA-256 mismatch for '+id,true);return;}
- objectUrl=URL.createObjectURL(p.file);$('photo').src=objectUrl;
+ objectUrl=URL.createObjectURL(p.file);
+ $('photo').onerror=()=>{if(activeId===id)say('The original SHA is valid but the image cannot be displayed by this browser. Review and save are disabled for '+id+'.',true);};
+ $('photo').src=objectUrl;
  $('hash').textContent='Verified original '+id+' · SHA-256 '+p.hash;
  renderRows(record?.items||[]);
  $('uncertainty').value=record?.notes||'';
@@ -166,6 +168,10 @@ $('add').addEventListener('click',()=>appendItem());
 $('save').addEventListener('click',()=>{
  try{
   if(!activeId||!photoMap.get(activeId)?.verified)throw Error('Upload the exact SHA-verified original JPEG.');
+  // Correct bytes are NOT proof that WebKit/Chromium can display the image.
+  // An invisible/corrupt preview must not produce a fake human review.
+  if(!$('photo').complete||$('photo').naturalWidth<1||$('photo').naturalHeight<1)
+   throw Error('The original photograph did not display. Do not certify unseen clothing.');
   if(!$('inspected').checked||!$('allRecorded').checked)
    throw Error('Inspect the entire image and record every visible garment before saving.');
   const items=currentItems();validateVisibleItems(items);
