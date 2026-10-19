@@ -1,8 +1,9 @@
 import test from 'node:test';import assert from 'node:assert/strict';import vm from 'node:vm';import fs from 'node:fs';import {createRequire} from 'node:module';const require=createRequire(import.meta.url),PhotoColor=require('../public/photo-color.js');
 import * as segmentation from '../public/outfit-segmentation.mjs';
 import {diagnoseOutfitRegions} from '../public/outfit-diagnostics.mjs';
+import {dressClassCompetition} from '../public/dress-layer-review.mjs';
 const source=fs.readFileSync('public/outfit-worker.mjs','utf8');
-function setup({failLoad=false,failSecondCrop=false,noPerson=false,completeShoePair=false,twoUpper=false,weakUpper=false,flatLay=false}={}){
+function setup({failLoad=false,failSecondCrop=false,noPerson=false,completeShoePair=false,twoUpper=false,weakUpper=false,flatLay=false,mixedDress=false,strongDress=false}={}){
  const sent=[],width=20,height=20,data=new Float32Array(18*width*height);data.fill(-10);for(let i=0;i<400;i++)data[i]=10;
  const shoeRegions=completeShoePair?[[9,5,15,4,4],[10,11,15,4,4]]:[[9,6,16,3,3],[10,10,16,3,3]];
  for(const [id,left,top,w,h]of [[4,5,4,8,5],[6,6,10,6,5],...shoeRegions,[11,7,1,4,3]])for(let y=top;y<top+h;y++)for(let x=left;x<left+w;x++){const i=y*width+x;data[i]=-10;data[id*400+i]=10;}
@@ -13,12 +14,22 @@ function setup({failLoad=false,failSecondCrop=false,noPerson=false,completeShoeP
    const i=y*width+x;data[i]=-10;data[7*400+i]=10;
   }
  }
+ if(mixedDress||strongDress){
+  data.fill(-10);for(let i=0;i<400;i++)data[i]=10;
+  for(let y=4;y<16;y++)for(let x=5;x<15;x++){
+   const i=y*20+x;data[i]=-10;data[7*400+i]=10;
+   if(mixedDress)data[(y<10?4:5)*400+i]=8.5;
+  }
+  for(let y=1;y<4;y++)for(let x=8;x<12;x++){
+   const i=y*20+x;data[i]=-10;data[11*400+i]=10;
+  }
+ }
  let crops=0;class Image{constructor(data,width,height,channels){Object.assign(this,{data,width,height,channels});}static async read(){return new Image(new Uint8ClampedArray(1200).fill(40),20,20,3);}async toBlob(){if(failSecondCrop&&++crops===3)throw Error('private decode error');return {arrayBuffer:async()=>new Uint8Array([255,216,255]).buffer};}}
  if(noPerson)for(let y=1;y<4;y++)for(let x=7;x<11;x++){data[11*400+y*20+x]=-10;data[y*20+x]=10;}
  const runtime={AutoModelForSemanticSegmentation:{from_pretrained:async()=>{if(failLoad)throw Error('private error');return async()=>({logits:{data,dims:[1,18,20,20]}});}},AutoProcessor:{from_pretrained:async()=>async()=>({})},RawImage:Image,env:{backends:{onnx:{wasm:{}}}}};
  const safeDiagnostic=(...args)=>{try{return diagnoseOutfitRegions(...args);}catch(error){sent.push({type:'diagnostic-test-error',text:String(error.message)});throw error;}};
- const c={runtime,segmentation,diagnosticFn:safeDiagnostic,PhotoColor,self:{postMessage:value=>sent.push(value)},Uint8Array,Uint8ClampedArray,btoa:text=>Buffer.from(text,'binary').toString('base64')};vm.createContext(c);
- vm.runInContext(source.replace(/await import\('https:[^']+'\)/,'await Promise.resolve(runtime)').replace("await import('./outfit-segmentation.mjs'+new URL(import.meta.url).search)",'await Promise.resolve(segmentation)').replace("await import('./photo-color.js'+new URL(import.meta.url).search)",'await Promise.resolve()').replace("await import('./outfit-diagnostics.mjs'+new URL(import.meta.url).search)",'await Promise.resolve({diagnoseOutfitRegions:diagnosticFn})'),c);
+ const c={runtime,segmentation,diagnosticFn:safeDiagnostic,dressClassCompetition,PhotoColor,self:{postMessage:value=>sent.push(value)},Uint8Array,Uint8ClampedArray,btoa:text=>Buffer.from(text,'binary').toString('base64')};vm.createContext(c);
+ vm.runInContext(source.replace(/await import\('https:[^']+'\)/,'await Promise.resolve(runtime)').replace("await import('./outfit-segmentation.mjs'+new URL(import.meta.url).search)",'await Promise.resolve(segmentation)').replace("await import('./photo-color.js'+new URL(import.meta.url).search)",'await Promise.resolve()').replace("await import('./outfit-diagnostics.mjs'+new URL(import.meta.url).search)",'await Promise.resolve({diagnoseOutfitRegions:diagnosticFn})').replace("await import('./dress-layer-review.mjs'+new URL(import.meta.url).search)",'await Promise.resolve({dressClassCompetition})'),c);
  return {sent,async run(diagnostics=false){c.self.onmessage({data:{id:'outfit',image:'data:image/jpeg;base64,AAAA',diagnostics}});await vm.runInContext('chain',c);}};
 }
 test('full-outfit worker emits three separate garment images and excludes body labels',async()=>{
@@ -106,4 +117,28 @@ test('whole-outfit worker routes strong no-person garment only to source-pixel r
  const diagnostic=h.sent.find(x=>x.type==='diagnostics').summary;
  assert.equal(diagnostic.personGatePassed,false);
  assert.equal(diagnostic.regions.find(x=>x.id===7).emitted,true);
+});
+
+test('mixed dress-versus-top/skirt logits block auto-approval without splitting physical items',async()=>{
+ const h=setup({mixedDress:true});await h.run(true);
+ const pieces=h.sent.filter(x=>x.type==='piece').map(x=>x.piece);
+ assert.equal(pieces.length,1,'the model cannot infer two physical garments from logits');
+ const dress=pieces[0];
+ assert.equal(dress.label,'Dress');
+ assert.equal(dress.hint.displayFallback,'original-crop');
+ assert.equal(dress.hint.displayFallbackReason,'dress-layer-conflict-review-only');
+ assert.equal(dress.colorEstimate,null,'ambiguous layered pixels cannot approve fabric color');
+ assert.ok(dress.recognitionPhoto.image.startsWith('data:image/jpeg;base64,'));
+ assert.ok(dress.image.startsWith('data:image/jpeg;base64,'));
+ assert.equal(h.sent.find(x=>x.type==='done')?.count,1);
+ const summary=h.sent.find(x=>x.type==='diagnostics').summary;
+ assert.equal(summary.personGatePassed,true);
+ assert.equal(summary.realPhotoAccuracy,null);
+});
+test('ordinary strong dress without class alternatives is not falsely marked as layered conflict',async()=>{
+ const h=setup({strongDress:true});await h.run();
+ const dress=h.sent.find(x=>x.type==='piece'&&x.piece.label==='Dress')?.piece;
+ assert.ok(dress);
+ assert.notEqual(dress.hint.displayFallbackReason,'dress-layer-conflict-review-only');
+ assert.equal(h.sent.find(x=>x.type==='done')?.count,1);
 });
