@@ -90,14 +90,55 @@ for kind in recipe['figures']:
   if .84<p[2]<1.54 and p[1]<-.04 and abs(p[0])<.28:p[1]=min(p[1]-.012,-.145-.065*math.exp(-((p[2]-1.3)/.17)**2))
  cloth=mesh(kind+'-neutral-base-shell',cloth_coords,cloth_faces,[mats[1]])
  solid=cloth.modifiers.new('modest cloth offset','SOLIDIFY');solid.thickness=.008;solid.offset=1
- # Simple original footwear covers the base mesh's exposed toe geometry.
+ # Original, low-profile shoes: smooth toe/instep/heel sections with a
+ # separately defined outsole and subdued laces. These are procedural meshes,
+ # not purchased 3D products, image textures, or upscaled old preview blocks.
+ shoe_upper=material('neutral-shoe-upper',(.205,.23,.245,1),.89)
+ shoe_sole=material('neutral-shoe-outsole',(.135,.145,.15,1),.91)
+ shoe_lace=material('neutral-shoe-laces',(.34,.36,.365,1),.88)
+ # Longitudinal contour: the front-facing view shows a rounded toe rather
+ # than the former primitive cube. Values are in normalized scene units.
+ foot_profile=[
+  (-.185,.026,.060,.020),(-.166,.056,.063,.028),
+  (-.132,.070,.069,.034),(-.065,.079,.075,.039),
+  (.005,.078,.078,.037),(.067,.060,.071,.029),(.113,.025,.058,.017)
+ ]
+ def shoe_surface(name,center,profile,mat,level=2):
+  steps=16;points=[];quads=[]
+  for y,halfwidth,mid,height in profile:
+   for j in range(steps):
+    t=2*math.pi*j/steps
+    points.append((center.x+halfwidth*math.cos(t),
+     center.y+y,mid+height*math.sin(t)))
+  for k in range(len(profile)-1):
+   for j in range(steps):
+    a=k*steps+j;b=k*steps+(j+1)%steps
+    quads.append((a,b,b+steps,a+steps))
+  # Seamless-looking rounded toe/heel caps, with every quad/subdivision
+  # part of the original scene and no imported footwear asset.
+  quads.extend([tuple(reversed(tuple(range(steps)))),
+   tuple((len(profile)-1)*steps+j for j in range(steps))])
+  ob=mesh(name,points,quads,[mat])
+  ob.modifiers[0].levels=level;ob.modifiers[0].render_levels=level
+  return ob
+ shoe_count=0;lace_count=0
  for side in [-1,1]:
-  foot_key='foot.'+('L'if side==1 else'R')+'____tail'
-  fc=sum((Vector(coords[i])for i in rig['joints'][foot_key]),Vector())/len(rig['joints'][foot_key])
-  bpy.ops.mesh.primitive_cube_add(size=1,location=(fc.x,fc.y-.01,.065))
-  shoe=bpy.context.object;shoe.name='neutral-shoe';shoe.dimensions=(.14,.27,.09);bpy.ops.object.transform_apply(location=False,rotation=False,scale=True)
-  bevel=shoe.modifiers.new('rounded original shoe','BEVEL');bevel.width=.025;bevel.segments=4;shoe.data.materials.append(mats[1])
-  for p in shoe.data.polygons:p.use_smooth=True
+  suffix='L'if side==1 else'R'
+  fc=sum((Vector(coords[i])for i in rig['joints']['foot.'+suffix+'____tail']),Vector())/len(rig['joints']['foot.'+suffix+'____tail'])
+  shoe_surface(kind+'-'+suffix+'-rounded-upper',fc,foot_profile,shoe_upper)
+  # Mid/sole is a smooth outsole, rather than a floating cuboid beneath toes.
+  sole=[(y,w+.004,.029,.013) for y,w,mid,height in foot_profile]
+  shoe_surface(kind+'-'+suffix+'-contoured-outsole',fc,sole,shoe_sole,1)
+  shoe_count+=1
+  for offset in [-.035,-.012,.011]:
+   bpy.ops.mesh.primitive_cylinder_add(vertices=12,radius=.0027,depth=.070,
+    location=(fc.x,fc.y+offset,.115),rotation=(0,math.pi/2,0))
+   lace=bpy.context.object
+   lace.name=kind+'-'+suffix+'-subtle-lace'
+   lace.data.materials.append(shoe_lace)
+   for poly in lace.data.polygons:poly.use_smooth=True
+   lace_count+=1
+ if shoe_count!=2 or lace_count!=6:raise ValueError('Exactly two model shoes and six lace strokes expected')
  eyes=mesh(kind+'-eyes',[coords[i]for i in eye_indices],eye_f,[mats[3]])
  # Procedural iris/pupil disks on each supplied eye, using mapped source geometry.
  for side in [-1,1]:
@@ -125,7 +166,7 @@ for kind in recipe['figures']:
  # Waist diagnostic source joint, not an approved placement anchor.
  anchors['lowerSpineJoint']=joints['spine04____head']
  record={'id':kind,'sourceRevision':lock['revision'],'ageTarget':'young-adult-approximately-25','bodyScale':scale,'sourceBodyVertices':len(ids),'bodyFaces':len(faces),
-  'legPoseMaxMotion':leg_motion,'renderWidth':scene.render.resolution_x,'renderHeight':scene.render.resolution_y,'samples':scene.cycles.samples,'nativeSceneRender':True,'resizedFromPreview':False,
+  'legPoseMaxMotion':leg_motion,'footwearGeometry':'procedural-rounded-upper-contoured-outsole-three-laces-per-shoe','shoeUpperCount':shoe_count,'shoeOutsoleCount':shoe_count,'shoeLaceStrokeCount':lace_count,'blockPrimitiveFootwear':False,'renderWidth':scene.render.resolution_x,'renderHeight':scene.render.resolution_y,'samples':scene.cycles.samples,'nativeSceneRender':True,'resizedFromPreview':False,
   'projectedSourceJoints':{k:project(p)for k,p in anchors.items()},'jointApproval':False,'visualApproved':False,'commercialProductApproval':False,'sourceBounds':[low,high]}
  scene.render.filepath=str(output/(kind+'-master.png'));bpy.ops.wm.save_as_mainfile(filepath=str(output/(kind+'.blend')),compress=True);bpy.ops.render.render(write_still=True)
  record['sceneSha256']=hashlib.sha256((output/(kind+'.blend')).read_bytes()).hexdigest()
