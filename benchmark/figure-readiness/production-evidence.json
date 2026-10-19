@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "reviewerIdentityAuthenticated": false,
+  "figures": [
+    {
+      "id": "female",
+      "previewPath": "public/ai-models/female-preview.webp",
+      "previewSha256": "acb973c4a8084424197c26e389ea8819d3ec7765c0cf15a461a74d6c53b9eab4",
+      "masterPath": null,
+      "masterSha256": null,
+      "nativeResolutionEvidence": null,
+      "rightsReview": null,
+      "visualReview": null,
+      "alignmentReview": null,
+      "rights": null,
+      "technical": null,
+      "anchors": null
+    },
+    {
+      "id": "male",
+      "previewPath": "public/ai-models/male-preview.webp",
+      "previewSha256": "92993d2a3a33a7d6ee7c504e308df0325632c424ce6202c72c3737e7c2562c29",
+      "masterPath": null,
+      "masterSha256": null,
+      "nativeResolutionEvidence": null,
+      "rightsReview": null,
+      "visualReview": null,
+      "alignmentReview": null,
+      "rights": null,
+      "technical": null,
+      "anchors": null
+    }
+  ]
+}
