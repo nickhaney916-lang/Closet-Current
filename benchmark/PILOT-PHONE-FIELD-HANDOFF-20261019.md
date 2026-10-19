@@ -31,7 +31,7 @@ node scripts/compare-private-phone-pilot-reports.mjs \
   local-private-summary.json
 ```
 
-The script checks both reports use the same app build, have all 17 manual steps answered, no Needs help, no scanner error codes, and use the strict sanitized format. It saves only a **derived review summary**. The raw reports never leave the local computer.
+The script checks both reports use the same app build, have all 17 manual steps answered, no Needs help, no scanner error codes, and use the strict sanitized format. It saves only a **derived review summary**. The raw reports never leave the local computer.\n\n**Protect original reports:** Choose a brand-new path for `local-private-summary.json`. The comparator now refuses to overwrite either tester export, an existing previous summary, or a symlink target. On POSIX it creates the derived summary with owner-only permissions. Keep both originals unchanged for independent manual review; use a new summary filename for each comparison.
 
 ### Interpreting results
 
