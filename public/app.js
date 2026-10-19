@@ -50,6 +50,17 @@ function recognitionSourcePhoto(item){
 function clothingFields(body,item,onChange=()=>{}){
  Object.assign(item,normalizeClothing(item));
  if(item.image){const reference=node('figure',null,'clothing-reference'),photo=node('img'),caption=node('figcaption',item.name||'Garment photo');photo.src=item.image;photo.alt=item.name||'Garment being edited';caption.title=item.name||'Garment photo';reference.append(photo,caption);body.append(reference);}
+ // The untouched source scene is useful for recognizing layers and shape,
+ // even when a derived display cutout shows only part of a garment. Keep
+ // this optional and collapsed; never classify the whole multi-item scene
+ // as one garment or overwrite original-linked recognition metadata.
+ if(item.outfitSourceId&&typeof item.originalPhoto?.image==='string'&&item.originalPhoto.image){
+  const scene=node('details',null,'original-outfit-context');
+  const photo=node('img');photo.src=item.originalPhoto.image;photo.alt='Original full outfit photograph before garment separation';
+  scene.append(node('summary','View original outfit'),photo,
+   node('p','Check the original outfit for sleeves, layers, shape and color before confirming this garment.','fine'));
+  body.append(scene);
+ }
  const completion=node('p',null,'fine'),fillPhoto=node('button','Fill missing details from photo','secondary');fillPhoto.type='button';
  const refreshCompletion=()=>{const missing=ClothingDetails.missing(item);completion.textContent=(item.colorSource==='photo-estimate'?'Color estimated from photo · confirm '+item.color+'. ':'')+(missing.length?'Details to confirm: '+missing.join(', ')+'.':'Core details complete. Brand, size and fabric can be added from the label.');};refreshCompletion();body.append(completion);
  if(item.image){body.append(fillPhoto,node('p','Confirm seasons for how you wear it. Enter brand, size and fabric from the label.','fine'));}
