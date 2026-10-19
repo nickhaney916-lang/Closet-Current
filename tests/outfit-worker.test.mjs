@@ -2,11 +2,12 @@ import test from 'node:test';import assert from 'node:assert/strict';import vm f
 import * as segmentation from '../public/outfit-segmentation.mjs';
 import {diagnoseOutfitRegions} from '../public/outfit-diagnostics.mjs';
 const source=fs.readFileSync('public/outfit-worker.mjs','utf8');
-function setup({failLoad=false,failSecondCrop=false,noPerson=false,completeShoePair=false,twoUpper=false}={}){
+function setup({failLoad=false,failSecondCrop=false,noPerson=false,completeShoePair=false,twoUpper=false,weakUpper=false}={}){
  const sent=[],width=20,height=20,data=new Float32Array(18*width*height);data.fill(-10);for(let i=0;i<400;i++)data[i]=10;
  const shoeRegions=completeShoePair?[[9,5,15,4,4],[10,11,15,4,4]]:[[9,6,16,3,3],[10,10,16,3,3]];
  for(const [id,left,top,w,h]of [[4,5,4,8,5],[6,6,10,6,5],...shoeRegions,[11,7,1,4,3]])for(let y=top;y<top+h;y++)for(let x=left;x<left+w;x++){const i=y*width+x;data[i]=-10;data[id*400+i]=10;}
  if(twoUpper)for(let y=4;y<9;y++)for(let x=15;x<19;x++){const i=y*width+x;data[i]=-10;data[4*400+i]=10;}
+ if(weakUpper)for(let y=4;y<9;y++)for(let x=5;x<13;x++)data[y*width+x]=9.1;
  let crops=0;class Image{constructor(data,width,height,channels){Object.assign(this,{data,width,height,channels});}static async read(){return new Image(new Uint8ClampedArray(1200).fill(40),20,20,3);}async toBlob(){if(failSecondCrop&&++crops===3)throw Error('private decode error');return {arrayBuffer:async()=>new Uint8Array([255,216,255]).buffer};}}
  if(noPerson)for(let y=1;y<4;y++)for(let x=7;x<11;x++){data[11*400+y*20+x]=-10;data[y*20+x]=10;}
  const runtime={AutoModelForSemanticSegmentation:{from_pretrained:async()=>{if(failLoad)throw Error('private error');return async()=>({logits:{data,dims:[1,18,20,20]}});}},AutoProcessor:{from_pretrained:async()=>async()=>({})},RawImage:Image,env:{backends:{onnx:{wasm:{}}}}};
@@ -74,4 +75,15 @@ test('worker sends disconnected upper regions as two unapproved original crops',
  assert.ok(upper.every(p=>p.colorEstimate===null),'no automatic fabric color approval on ambiguous regions');
  assert.ok(upper.every(p=>p.recognitionPhoto.image.startsWith('data:image/jpeg;base64,')));
  assert.equal(h.sent.find(x=>x.type==='done').count,4);
+});
+
+test('uncertain but substantial upper region is surfaced only as original-pixel review, not approved color',async()=>{
+ const h=setup({weakUpper:true});await h.run();
+ const upper=h.sent.filter(x=>x.type==='piece'&&x.piece.label==='Upper garment').map(x=>x.piece);
+ assert.equal(upper.length,1);
+ assert.equal(upper[0].hint.displayFallback,'original-crop');
+ assert.equal(upper[0].hint.displayFallbackReason,'low-confidence-upper-mask');
+ assert.equal(upper[0].colorEstimate,null,'unreliable mask can never approve a color');
+ assert.ok(upper[0].recognitionPhoto.image.startsWith('data:image/jpeg;base64,'));
+ assert.equal(h.sent.find(x=>x.type==='done').count,3);
 });
