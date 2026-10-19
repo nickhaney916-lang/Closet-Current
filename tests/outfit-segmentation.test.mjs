@@ -334,3 +334,15 @@ test('weak upper speckles remain suppressed, and strong upper garment still perm
  const piece=clothingMaskGroups(clothingLabelMap(strong.data,strong.dims))[0];
  assert.equal(piece.id,4);assert.equal(piece.reviewOnlyReason,undefined);
 });
+
+test('narrow low-confidence sleeve-shaped evidence does not become an extra closet review card',()=>{
+ const l=logits(64,64);
+ l.paint(4,37,15,4,21);
+ for(let y=15;y<36;y++)for(let x=37;x<41;x++)l.data[y*64+x]=9.1;
+ const map=clothingLabelMap(l.data,l.dims),groups=clothingMaskGroups(map);
+ assert.equal(groups.length,0,'skinny upper sleeve does not produce a new garment review card');
+ assert.ok(map.labels.some(x=>x===4),'low-confidence evidence remains visible to diagnostics');
+ const strong=logits(64,64);strong.paint(4,37,15,4,21);
+ const strongPiece=clothingMaskGroups(clothingLabelMap(strong.data,strong.dims));
+ assert.equal(strongPiece.length,1,'trusted region handling remains unchanged');
+});
