@@ -4,6 +4,7 @@ import bpy,json,hashlib,sys,math
 from pathlib import Path
 from mathutils import Vector
 from bpy_extras.object_utils import world_to_camera_view
+from figure_fabric_boundaries import flatten_lower_hem
 ROOT=Path(__file__).resolve().parents[1]
 args=sys.argv[sys.argv.index('--')+1:];source=Path(args[0]).resolve();output=Path(args[1]).resolve();quick='--quick'in args
 if not output.is_relative_to(ROOT/'artifacts'):raise ValueError('Only artifacts/ output allowed')
@@ -88,6 +89,9 @@ for kind in recipe['figures']:
  cloth_coords=[list(p)for p in coords]
  for p in cloth_coords:
   if .84<p[2]<1.54 and p[1]<-.04 and abs(p[0])<.28:p[1]=min(p[1]-.012,-.145-.065*math.exp(-((p[2]-1.3)/.17)**2))
+ # Clean only the derived shell's LOWER boundary. Leave anatomy, waist
+ # source joints and original user clothing/source pixels untouched.
+ hem_diagnostics=flatten_lower_hem(cloth_coords,cloth_faces)
  cloth=mesh(kind+'-neutral-base-shell',cloth_coords,cloth_faces,[mats[1]])
  solid=cloth.modifiers.new('modest cloth offset','SOLIDIFY');solid.thickness=.008;solid.offset=1
  # Original, low-profile shoes: smooth toe/instep/heel sections with a
@@ -171,7 +175,7 @@ for kind in recipe['figures']:
  # Waist diagnostic source joint, not an approved placement anchor.
  anchors['lowerSpineJoint']=joints['spine04____head']
  record={'id':kind,'sourceRevision':lock['revision'],'ageTarget':'young-adult-approximately-25','bodyScale':scale,'sourceBodyVertices':len(ids),'bodyFaces':len(faces),
-  'legPoseMaxMotion':leg_motion,'footwearGeometry':'procedural-rounded-upper-contoured-outsole-three-laces-per-shoe','shoeUpperCount':shoe_count,'shoeOutsoleCount':shoe_count,'shoeLaceStrokeCount':lace_count,'blockPrimitiveFootwear':False,'renderWidth':scene.render.resolution_x,'renderHeight':scene.render.resolution_y,'samples':scene.cycles.samples,'nativeSceneRender':True,'resizedFromPreview':False,
+  'legPoseMaxMotion':leg_motion,'derivedClothingHem':hem_diagnostics,'footwearGeometry':'procedural-rounded-upper-contoured-outsole-three-laces-per-shoe','shoeUpperCount':shoe_count,'shoeOutsoleCount':shoe_count,'shoeLaceStrokeCount':lace_count,'blockPrimitiveFootwear':False,'renderWidth':scene.render.resolution_x,'renderHeight':scene.render.resolution_y,'samples':scene.cycles.samples,'nativeSceneRender':True,'resizedFromPreview':False,
   'projectedSourceJoints':{k:project(p)for k,p in anchors.items()},'jointApproval':False,'visualApproved':False,'commercialProductApproval':False,'sourceBounds':[low,high]}
  scene.render.filepath=str(output/(kind+'-master.png'));bpy.ops.wm.save_as_mainfile(filepath=str(output/(kind+'.blend')),compress=True);bpy.ops.render.render(write_still=True)
  record['sceneSha256']=hashlib.sha256((output/(kind+'.blend')).read_bytes()).hexdigest()
