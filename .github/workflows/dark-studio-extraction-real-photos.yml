@@ -1,7 +1,7 @@
 name: Dark-studio real-photo extraction evidence
 on:
   push:
-    branches: [feature/conservative-dark-garment-extraction-20261019]
+    branches: [feature/conservative-dark-garment-extraction-20261019, integration/dark-studio-with-four-layer-qa-20261019]
   workflow_dispatch:
 permissions:
   contents: read
