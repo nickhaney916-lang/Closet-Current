@@ -1,0 +1,1071 @@
+{
+  "schemaVersion": 1,
+  "pipelineSha256": "eff0fb5b42fa65532b0b5cedac887f94b815b8f12ac46771876338e45f88ce3d",
+  "pipelineFiles": {
+    "public/local-garment-warp.js": "e4cb75ccad29b15d60eea723a7611c4ed5d0c2845d8f5c2c59402fd49088a697",
+    "public/closet-white-matte.js": "dac1c5800a095ce80e5c8433bd9337a6b9fe24872e0dfcc701bb3133e8e43d63",
+    "public/reusable-figure-engine.js": "da649ade36cfc45263020006f3bfda4b9b743d731233c67da481f52f7fad25b1",
+    "scripts/benchmark-local-fitting-bridge.cjs": "aba5ff526c77ce02345f3ba868eba5d31d350806ef73c1485a9eb2591c6929d8",
+    "scripts/benchmark-local-fitting-quality.py": "785645503ec71e58188483455ecc24470227ecebc467d011b574a718fbaab205",
+    "benchmark/local-fitting-real-photo-manifest.json": "9c3d0f663d6c9161e246c5e2afdf6bde95769ddff23d689469dbcd62e9594af9",
+    "benchmark/figure-readiness/asset-evidence.json": "9d255f955950108dbac04b60a59814371a282fec808614d30785ddd1bb69b8c8",
+    "benchmark/local-fitting-fidelity.mjs": "ac9a296c94bd96d6accb0cc36ba9a7f3553bc89651d78ce3fbf0f5bafa032467"
+  },
+  "decoder": {
+    "engine": "Pillow",
+    "version": "11.3.0",
+    "python": "3.12.14",
+    "resize": "BILINEAR",
+    "maxDecodeCopyPixels": 150000,
+    "browserPixelEquivalenceVerified": false
+  },
+  "summary": {
+    "realPhotosScreened": 12,
+    "pixelGateEligible": 0,
+    "heldForIndependentReview": 12,
+    "independentlyApprovedComposites": 0,
+    "fidelityPercent": null,
+    "actualPhoneRuns": 0,
+    "browserRunsInThisBenchmark": 0
+  },
+  "figureReadiness": {
+    "figures": [
+      {
+        "id": "female",
+        "previewSha256": "acb973c4a8084424197c26e389ea8819d3ec7765c0cf15a461a74d6c53b9eab4",
+        "previewWidth": 160,
+        "previewHeight": 297,
+        "masterPresent": false,
+        "masterSha256": null,
+        "masterWidth": null,
+        "masterHeight": null,
+        "blockers": [
+          "full-resolution-master-missing",
+          "native-resolution-target-unmet",
+          "native-resolution-provenance-unverified",
+          "source-provenance-unverified",
+          "rights-commercialUse-unverified",
+          "rights-modificationAndClothingOverlays-unverified",
+          "rights-appDistributionAndCaching-unverified",
+          "rights-userCompositeExport-unverified",
+          "rights-optionalFaceReplacement-unverified",
+          "rights-recognizablePersonReleaseOrFictionalEvidence-unverified",
+          "rights-documentation-missing",
+          "technical-neutralBaseClothing-unverified",
+          "technical-frontPoseWithSeparateArms-unverified",
+          "technical-completeHandsFeetAndHead-unverified",
+          "technical-consistentLightAndScale-unverified",
+          "technical-landmarksReviewed-unverified",
+          "technical-occlusionLayersReviewed-unverified",
+          "visual-approval-missing"
+        ],
+        "ready": false,
+        "previewUpscaleAtCanonicalWidth": 4.04375
+      },
+      {
+        "id": "male",
+        "previewSha256": "92993d2a3a33a7d6ee7c504e308df0325632c424ce6202c72c3737e7c2562c29",
+        "previewWidth": 160,
+        "previewHeight": 297,
+        "masterPresent": false,
+        "masterSha256": null,
+        "masterWidth": null,
+        "masterHeight": null,
+        "blockers": [
+          "full-resolution-master-missing",
+          "native-resolution-target-unmet",
+          "native-resolution-provenance-unverified",
+          "source-provenance-unverified",
+          "rights-commercialUse-unverified",
+          "rights-modificationAndClothingOverlays-unverified",
+          "rights-appDistributionAndCaching-unverified",
+          "rights-userCompositeExport-unverified",
+          "rights-optionalFaceReplacement-unverified",
+          "rights-recognizablePersonReleaseOrFictionalEvidence-unverified",
+          "rights-documentation-missing",
+          "technical-neutralBaseClothing-unverified",
+          "technical-frontPoseWithSeparateArms-unverified",
+          "technical-completeHandsFeetAndHead-unverified",
+          "technical-consistentLightAndScale-unverified",
+          "technical-landmarksReviewed-unverified",
+          "technical-occlusionLayersReviewed-unverified",
+          "visual-approval-missing"
+        ],
+        "ready": false,
+        "previewUpscaleAtCanonicalWidth": 4.04375
+      }
+    ],
+    "pairReady": false,
+    "productionAuthorized": false,
+    "legalAdviceOrLicenseGrant": false,
+    "assetCount": 2
+  },
+  "cases": [
+    {
+      "id": "commons-0001",
+      "eligible": false,
+      "reason": "nonwhite-or-translucent-photo-border",
+      "bounds": {
+        "left": 0,
+        "top": 0,
+        "width": 316,
+        "height": 473
+      },
+      "fittedWidth": 316,
+      "fittedHeight": 473,
+      "candidateRgbaSha256": "c5a039132df74472d696501647b8d07e44e97f8e156b56a289f927e2bf236e7d",
+      "decodedSourceSha256": "7f09dc9453a8306b470e58ca423b8dabaed685f8f7ca4ab4bc2f1d7ddae5af12",
+      "originalUnchanged": true,
+      "compositingDecision": "hold-until-independent-mask-and-composite-review",
+      "placements": {
+        "female": {
+          "left": 29,
+          "top": 19,
+          "width": 44,
+          "height": 29
+        },
+        "male": {
+          "left": 22,
+          "top": 17,
+          "width": 56,
+          "height": 32
+        }
+      },
+      "fidelityPercent": null,
+      "realPhoneTested": false,
+      "sourceSha256": "d20d66d4173f56c47e35540f081ecdfcee6e019df665ee245d967d126e117684",
+      "originalDimensions": [
+        1920,
+        2868
+      ],
+      "decodedDimensions": [
+        316,
+        473
+      ],
+      "pipelineSha256": "eff0fb5b42fa65532b0b5cedac887f94b815b8f12ac46771876338e45f88ce3d",
+      "attribution": {
+        "id": "commons-0001",
+        "title": "File:T-shirt, oversized, maat XL, Merk Ecko Unlimited, blauw, wit en grijs met opdruk, objectnr 86904-3.JPG",
+        "source": "https://commons.wikimedia.org/wiki/File:T-shirt,_oversized,_maat_XL,_Merk_Ecko_Unlimited,_blauw,_wit_en_grijs_met_opdruk,_objectnr_86904-3.JPG",
+        "license": "CC BY-SA 3.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+        "author": "Ecko Unlimited",
+        "credit": "https://museumrotterdam.nl/collectie/item/86904-3"
+      },
+      "visibleFeatures": [
+        "collars",
+        "sleeves",
+        "seams",
+        "logos",
+        "colors",
+        "transparency",
+        "fabricDetail"
+      ],
+      "sourceInspection": "Pale printed shirt on dark mannequin; preserve pale sleeve edges and printed lettering.",
+      "independentReferenceMask": null,
+      "featureScores": {
+        "collars": null,
+        "sleeves": null,
+        "seams": null,
+        "logos": null,
+        "colors": null,
+        "transparency": null,
+        "fabricDetail": null,
+        "layering": null
+      },
+      "sourceBytesUnchanged": true,
+      "candidateFileSha256": "27321f548a32cf24c5778b85bc4ca3693ffff1f9ddeeed22a6d4ea47c668dc19",
+      "compositeFileSha256": {
+        "female": "dd3bae9b02999ee9f9327f943c4a751cf0ccd9187d65a24fb2538b65da261f5b",
+        "male": "24a21625d8fb0a5498cb6fd8a2dea61a5be700475cda807973f3f4b3ae72500b"
+      },
+      "compositeMode": "offline-PR33-fill-box-diagnostic-not-browser-or-PR34",
+      "review": null,
+      "artifactChanges": "decoded/resized/white-matte-diagnostic/mesh/figure-composite; source untouched"
+    },
+    {
+      "id": "commons-0002",
+      "eligible": false,
+      "reason": "nonwhite-or-translucent-photo-border",
+      "bounds": {
+        "left": 0,
+        "top": 0,
+        "width": 316,
+        "height": 473
+      },
+      "fittedWidth": 316,
+      "fittedHeight": 473,
+      "candidateRgbaSha256": "fa3bdb7d10d5186b735356b34a20cc5c97f74adf54a022e5b46b6c36ab4ed643",
+      "decodedSourceSha256": "c6acf5f5447f6858da7976130508321f33fa4c7b63caca1432436de16f456b43",
+      "originalUnchanged": true,
+      "compositingDecision": "hold-until-independent-mask-and-composite-review",
+      "placements": {
+        "female": {
+          "left": 29,
+          "top": 19,
+          "width": 44,
+          "height": 29
+        },
+        "male": {
+          "left": 22,
+          "top": 17,
+          "width": 56,
+          "height": 32
+        }
+      },
+      "fidelityPercent": null,
+      "realPhoneTested": false,
+      "sourceSha256": "fef606d6ed7354a2238f1bcc2584942747ca6fa4a2b16b2e9eec21f639d10667",
+      "originalDimensions": [
+        1920,
+        2868
+      ],
+      "decodedDimensions": [
+        316,
+        473
+      ],
+      "pipelineSha256": "eff0fb5b42fa65532b0b5cedac887f94b815b8f12ac46771876338e45f88ce3d",
+      "attribution": {
+        "id": "commons-0002",
+        "title": "File:Rood t-shirt, merk Diesel, maat M, objectnr 86503.JPG",
+        "source": "https://commons.wikimedia.org/wiki/File:Rood_t-shirt,_merk_Diesel,_maat_M,_objectnr_86503.JPG",
+        "license": "CC BY-SA 3.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+        "author": "Diesel",
+        "credit": "https://museumrotterdam.nl/collectie/item/86503"
+      },
+      "visibleFeatures": [
+        "collars",
+        "sleeves",
+        "seams",
+        "logos",
+        "colors",
+        "transparency",
+        "fabricDetail"
+      ],
+      "sourceInspection": "Dark mannequin and background; no garment-only alpha reference.",
+      "independentReferenceMask": null,
+      "featureScores": {
+        "collars": null,
+        "sleeves": null,
+        "seams": null,
+        "logos": null,
+        "colors": null,
+        "transparency": null,
+        "fabricDetail": null,
+        "layering": null
+      },
+      "sourceBytesUnchanged": true,
+      "candidateFileSha256": "a0342ebfa0471361010a4a98835e9f5c6791fabfff5d5eff78c594eac6a1422c",
+      "compositeFileSha256": {
+        "female": "f7e94f685c251c37a63641f5a0eb7870cca8de506cea64612740a1a3f42a3ba4",
+        "male": "99c93f895f9e273451a20e999bf0c606a268888da4defff9b58066c219a4a44b"
+      },
+      "compositeMode": "offline-PR33-fill-box-diagnostic-not-browser-or-PR34",
+      "review": null,
+      "artifactChanges": "decoded/resized/white-matte-diagnostic/mesh/figure-composite; source untouched"
+    },
+    {
+      "id": "commons-0003",
+      "eligible": false,
+      "reason": "nonwhite-or-translucent-photo-border",
+      "bounds": {
+        "left": 0,
+        "top": 0,
+        "width": 316,
+        "height": 473
+      },
+      "fittedWidth": 316,
+      "fittedHeight": 473,
+      "candidateRgbaSha256": "55b84d83782e6793f71cdad720077c19dde0b21a1d2533211eea528269885114",
+      "decodedSourceSha256": "527ffd7a754435fa46c893fd26ed007ccb6985c8d580d3ff8d52be13c44d210b",
+      "originalUnchanged": true,
+      "compositingDecision": "hold-until-independent-mask-and-composite-review",
+      "placements": {
+        "female": {
+          "left": 29,
+          "top": 19,
+          "width": 44,
+          "height": 29
+        },
+        "male": {
+          "left": 22,
+          "top": 17,
+          "width": 56,
+          "height": 32
+        }
+      },
+      "fidelityPercent": null,
+      "realPhoneTested": false,
+      "sourceSha256": "cb909d7ad9c3940bfa4db0cc50b2ea7025faebe3dcec8fe80067f900760bba64",
+      "originalDimensions": [
+        1920,
+        2868
+      ],
+      "decodedDimensions": [
+        316,
+        473
+      ],
+      "pipelineSha256": "eff0fb5b42fa65532b0b5cedac887f94b815b8f12ac46771876338e45f88ce3d",
+      "attribution": {
+        "id": "commons-0003",
+        "title": "File:Zwart shirt met lange mouwen van merk Armani Jeans, opdruk letters \u201cAJ\u201d op voorkant, maat M, objectnr 86975-3.JPG",
+        "source": "https://commons.wikimedia.org/wiki/File:Zwart_shirt_met_lange_mouwen_van_merk_Armani_Jeans,_opdruk_letters_%E2%80%9CAJ%E2%80%9D_op_voorkant,_maat_M,_objectnr_86975-3.JPG",
+        "license": "CC BY-SA 3.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+        "author": "Armani?",
+        "credit": "https://museumrotterdam.nl/collectie/item/86975-3"
+      },
+      "visibleFeatures": [
+        "collars",
+        "sleeves",
+        "seams",
+        "logos",
+        "colors",
+        "transparency",
+        "fabricDetail"
+      ],
+      "sourceInspection": "Mannequin neck, jeans and gray background; large AJ graphic.",
+      "independentReferenceMask": null,
+      "featureScores": {
+        "collars": null,
+        "sleeves": null,
+        "seams": null,
+        "logos": null,
+        "colors": null,
+        "transparency": null,
+        "fabricDetail": null,
+        "layering": null
+      },
+      "sourceBytesUnchanged": true,
+      "candidateFileSha256": "050cf68ed5191cdd0eb84f3a7eb0701de10cfa3b9263492c6cc0f56115e0fdfe",
+      "compositeFileSha256": {
+        "female": "51a828de34c2cd781c0165f5563d962a4b4d731615bbf45b302740014e8ccb61",
+        "male": "2bc7b880780e17b3caa3c546973cd2cf6fc7ea2050c775c2be9ca838fa0c1d37"
+      },
+      "compositeMode": "offline-PR33-fill-box-diagnostic-not-browser-or-PR34",
+      "review": null,
+      "artifactChanges": "decoded/resized/white-matte-diagnostic/mesh/figure-composite; source untouched"
+    },
+    {
+      "id": "commons-0023",
+      "eligible": false,
+      "reason": "nonwhite-or-translucent-photo-border",
+      "bounds": {
+        "left": 0,
+        "top": 0,
+        "width": 316,
+        "height": 473
+      },
+      "fittedWidth": 316,
+      "fittedHeight": 473,
+      "candidateRgbaSha256": "c72afd09ad58497d1188bc19bd39870e88d6015c1c33b3c0e16ba4d71547e433",
+      "decodedSourceSha256": "81db84a0ddc0f120ddceed5092dc0488774f72d58c788ada679c1f311568cfae",
+      "originalUnchanged": true,
+      "compositingDecision": "hold-until-independent-mask-and-composite-review",
+      "placements": {
+        "female": {
+          "left": 34,
+          "top": 44,
+          "width": 34,
+          "height": 51
+        },
+        "male": {
+          "left": 28,
+          "top": 47,
+          "width": 44,
+          "height": 47
+        }
+      },
+      "fidelityPercent": null,
+      "realPhoneTested": false,
+      "sourceSha256": "5be4cb0d7017987d8625caf53ac979f0c78245617dc5828aec5f77ae8f4ea8ef",
+      "originalDimensions": [
+        1920,
+        2868
+      ],
+      "decodedDimensions": [
+        316,
+        473
+      ],
+      "pipelineSha256": "eff0fb5b42fa65532b0b5cedac887f94b815b8f12ac46771876338e45f88ce3d",
+      "attribution": {
+        "id": "commons-0023",
+        "title": "File:Blauwe jeans, merk Artful Dodger, maat 32, zakken achterzijde met opvallende witte print, objectnr 86905-3(1).JPG",
+        "source": "https://commons.wikimedia.org/wiki/File:Blauwe_jeans,_merk_Artful_Dodger,_maat_32,_zakken_achterzijde_met_opvallende_witte_print,_objectnr_86905-3(1).JPG",
+        "license": "CC BY-SA 3.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+        "author": "Artful Dodger",
+        "credit": "https://museumrotterdam.nl/collectie/item/86905-3"
+      },
+      "visibleFeatures": [
+        "seams",
+        "colors",
+        "transparency",
+        "fabricDetail"
+      ],
+      "sourceInspection": "Mannequin waist and shoes; preserve waistband, pockets, leg gap and hems.",
+      "independentReferenceMask": null,
+      "featureScores": {
+        "collars": null,
+        "sleeves": null,
+        "seams": null,
+        "logos": null,
+        "colors": null,
+        "transparency": null,
+        "fabricDetail": null,
+        "layering": null
+      },
+      "sourceBytesUnchanged": true,
+      "candidateFileSha256": "4aa830a5b32b1d50730f62a74263ba9c0154767df41dd6268dab654a0a16e89e",
+      "compositeFileSha256": {
+        "female": "2c5176c7bca6c47bcd6dd519d4f07cf4e706f7fe8e6ae7fce671fc6f408116af",
+        "male": "ecbe26a218b247f27c0a6e80366f832a07b547eb2606b66834e49a49bdad0337"
+      },
+      "compositeMode": "offline-PR33-fill-box-diagnostic-not-browser-or-PR34",
+      "review": null,
+      "artifactChanges": "decoded/resized/white-matte-diagnostic/mesh/figure-composite; source untouched"
+    },
+    {
+      "id": "commons-0024",
+      "eligible": false,
+      "reason": "nonwhite-or-translucent-photo-border",
+      "bounds": {
+        "left": 0,
+        "top": 0,
+        "width": 316,
+        "height": 473
+      },
+      "fittedWidth": 316,
+      "fittedHeight": 473,
+      "candidateRgbaSha256": "1bd890f62547d59ce78ec3e70ad2b6ad934e9c58cfa0f985a901b7991e470204",
+      "decodedSourceSha256": "f4595412083595b81aff5523de48a2b26ddbd2126aee16323918e051652c4c53",
+      "originalUnchanged": true,
+      "compositingDecision": "hold-until-independent-mask-and-composite-review",
+      "placements": {
+        "female": {
+          "left": 34,
+          "top": 44,
+          "width": 34,
+          "height": 51
+        },
+        "male": {
+          "left": 28,
+          "top": 47,
+          "width": 44,
+          "height": 47
+        }
+      },
+      "fidelityPercent": null,
+      "realPhoneTested": false,
+      "sourceSha256": "8e28473b101c70a5e4b7daae819a0342405bfcb7abbf4850dbbb4e801dd7ac4f",
+      "originalDimensions": [
+        1920,
+        2868
+      ],
+      "decodedDimensions": [
+        316,
+        473
+      ],
+      "pipelineSha256": "eff0fb5b42fa65532b0b5cedac887f94b815b8f12ac46771876338e45f88ce3d",
+      "attribution": {
+        "id": "commons-0024",
+        "title": "File:Blauwe jeans, skinny jeans model, merk Revers Jeans, maat S36, objectnr 86974-3(1).JPG",
+        "source": "https://commons.wikimedia.org/wiki/File:Blauwe_jeans,_skinny_jeans_model,_merk_Revers_Jeans,_maat_S36,_objectnr_86974-3(1).JPG",
+        "license": "CC BY-SA 3.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+        "author": "Revers Jeans",
+        "credit": "https://museumrotterdam.nl/collectie/item/86974-3"
+      },
+      "visibleFeatures": [
+        "seams",
+        "colors",
+        "transparency",
+        "fabricDetail"
+      ],
+      "sourceInspection": "Mannequin waist, belt and gray scene; preserve pockets and jean hems.",
+      "independentReferenceMask": null,
+      "featureScores": {
+        "collars": null,
+        "sleeves": null,
+        "seams": null,
+        "logos": null,
+        "colors": null,
+        "transparency": null,
+        "fabricDetail": null,
+        "layering": null
+      },
+      "sourceBytesUnchanged": true,
+      "candidateFileSha256": "df8db084b5552a6c824758353e5cb441c23d72d1c0542cfb4f927b119cba513f",
+      "compositeFileSha256": {
+        "female": "4d34cef80e19696f2f89f946a0de9ad30292b54199e05a0629343dff87355533",
+        "male": "e02cba40f9ca54feb5b649b2daf38ca686db4028f88c77bd49f7d71757a64eca"
+      },
+      "compositeMode": "offline-PR33-fill-box-diagnostic-not-browser-or-PR34",
+      "review": null,
+      "artifactChanges": "decoded/resized/white-matte-diagnostic/mesh/figure-composite; source untouched"
+    },
+    {
+      "id": "commons-0035",
+      "eligible": false,
+      "reason": "nonwhite-or-translucent-photo-border",
+      "bounds": {
+        "left": 0,
+        "top": 0,
+        "width": 335,
+        "height": 447
+      },
+      "fittedWidth": 335,
+      "fittedHeight": 447,
+      "candidateRgbaSha256": "f7f67c5240636dc4ebf13670262e290a6f543770637d6ab9883b06745e8af999",
+      "decodedSourceSha256": "b87f909383eca018d534edd0f260f7dccb1f7e29b258a5e5ab888345d9408bc4",
+      "originalUnchanged": true,
+      "compositingDecision": "hold-until-independent-mask-and-composite-review",
+      "placements": {
+        "female": {
+          "left": 34,
+          "top": 44,
+          "width": 34,
+          "height": 51
+        },
+        "male": {
+          "left": 28,
+          "top": 47,
+          "width": 44,
+          "height": 47
+        }
+      },
+      "fidelityPercent": null,
+      "realPhoneTested": false,
+      "sourceSha256": "9fd067b0919d519eb7924ebd5c4ddf0bc0f3956cfd229fe1ab12c16cccb085ca",
+      "originalDimensions": [
+        1920,
+        2560
+      ],
+      "decodedDimensions": [
+        335,
+        447
+      ],
+      "pipelineSha256": "eff0fb5b42fa65532b0b5cedac887f94b815b8f12ac46771876338e45f88ce3d",
+      "attribution": {
+        "id": "commons-0035",
+        "title": "File:Orange men's shorts for sale at Target.jpg",
+        "source": "https://commons.wikimedia.org/wiki/File:Orange_men%27s_shorts_for_sale_at_Target.jpg",
+        "license": "CC BY-SA 4.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+        "author": "Ser Amantio di Nicolao",
+        "credit": "Own work"
+      },
+      "visibleFeatures": [
+        "seams",
+        "colors",
+        "transparency",
+        "fabricDetail"
+      ],
+      "sourceInspection": "Retail scene, hangers and background clothing; preserve separate short legs.",
+      "independentReferenceMask": null,
+      "featureScores": {
+        "collars": null,
+        "sleeves": null,
+        "seams": null,
+        "logos": null,
+        "colors": null,
+        "transparency": null,
+        "fabricDetail": null,
+        "layering": null
+      },
+      "sourceBytesUnchanged": true,
+      "candidateFileSha256": "a6897a0399381e38bac18cea20175be1d3f8c7269234d164f92a4b1c712ac768",
+      "compositeFileSha256": {
+        "female": "34fab054c541a3a2d277ed0efcfa2c4c0b637ab31eb69c9efa89c5aac96cb5aa",
+        "male": "9dc9d497a0746a1d3509c740e4135b07e23c53860b8b448c19fa5c3c45e37e11"
+      },
+      "compositeMode": "offline-PR33-fill-box-diagnostic-not-browser-or-PR34",
+      "review": null,
+      "artifactChanges": "decoded/resized/white-matte-diagnostic/mesh/figure-composite; source untouched"
+    },
+    {
+      "id": "commons-0043",
+      "eligible": false,
+      "reason": "nonwhite-or-translucent-photo-border",
+      "bounds": {
+        "left": 0,
+        "top": 0,
+        "width": 389,
+        "height": 385
+      },
+      "fittedWidth": 389,
+      "fittedHeight": 385,
+      "candidateRgbaSha256": "2461131f03eb3be46e9f5be95169b2f948acb67d559cc84bf6da8e564ba7b0b5",
+      "decodedSourceSha256": "d4ae2ff8af00742978aa047f5ab31e6dd429634551655f25b2eb6bbdd5441600",
+      "originalUnchanged": true,
+      "compositingDecision": "hold-until-independent-mask-and-composite-review",
+      "placements": {
+        "female": {
+          "left": 34,
+          "top": 44,
+          "width": 34,
+          "height": 51
+        },
+        "male": {
+          "left": 28,
+          "top": 47,
+          "width": 44,
+          "height": 47
+        }
+      },
+      "fidelityPercent": null,
+      "realPhoneTested": false,
+      "sourceSha256": "c8d0812ab69d698f5bf8dc5a14ace6b8034e4c74152471acf4f079fdd6d0c344",
+      "originalDimensions": [
+        1920,
+        1903
+      ],
+      "decodedDimensions": [
+        389,
+        385
+      ],
+      "pipelineSha256": "eff0fb5b42fa65532b0b5cedac887f94b815b8f12ac46771876338e45f88ce3d",
+      "attribution": {
+        "id": "commons-0043",
+        "title": "File:Woman's summer skirt from China, Honolulu Museum of Art 5152.1.JPG",
+        "source": "https://commons.wikimedia.org/wiki/File:Woman%27s_summer_skirt_from_China,_Honolulu_Museum_of_Art_5152.1.JPG",
+        "license": "CC0",
+        "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+        "author": "Hiart",
+        "credit": "Own work"
+      },
+      "visibleFeatures": [
+        "seams",
+        "colors",
+        "transparency",
+        "fabricDetail"
+      ],
+      "sourceInspection": "Patterned skirt and mannequin waist; preserve pattern and wide hem.",
+      "independentReferenceMask": null,
+      "featureScores": {
+        "collars": null,
+        "sleeves": null,
+        "seams": null,
+        "logos": null,
+        "colors": null,
+        "transparency": null,
+        "fabricDetail": null,
+        "layering": null
+      },
+      "sourceBytesUnchanged": true,
+      "candidateFileSha256": "0c9430671b6cc5924f35c5fd8ed0063ff69b834d467df264dc554c903ffa10b2",
+      "compositeFileSha256": {
+        "female": "85b252ab69ed2659d6d0d7a307d87952f75c3e91f14336adfbf60633c27cd405",
+        "male": "3a81ced0af9eff02e5c6744bbc83001d2f3d903d34c610e299772d83d00e8fc8"
+      },
+      "compositeMode": "offline-PR33-fill-box-diagnostic-not-browser-or-PR34",
+      "review": null,
+      "artifactChanges": "decoded/resized/white-matte-diagnostic/mesh/figure-composite; source untouched"
+    },
+    {
+      "id": "commons-0053",
+      "eligible": false,
+      "reason": "ambiguous-neck-or-pale-collar",
+      "bounds": {
+        "left": 48,
+        "top": 30,
+        "width": 196,
+        "height": 421
+      },
+      "fittedWidth": 196,
+      "fittedHeight": 421,
+      "candidateRgbaSha256": "c42df32600d71a4fd8792b336ff1045ad70cc77cf0e12856e5bcb45ce1b576b7",
+      "decodedSourceSha256": "86701b1c947d0b87a6808eca57d31966493cfbe90bdb588b65ea99e159000434",
+      "originalUnchanged": true,
+      "compositingDecision": "hold-until-independent-mask-and-composite-review",
+      "placements": {
+        "female": {
+          "left": 27,
+          "top": 18,
+          "width": 48,
+          "height": 67
+        },
+        "male": {
+          "left": 27,
+          "top": 18,
+          "width": 48,
+          "height": 67
+        }
+      },
+      "fidelityPercent": null,
+      "realPhoneTested": false,
+      "sourceSha256": "e7a617cd23a159864f619e8397d5f37d48b684e47dddc4ad6b46b14481042019",
+      "originalDimensions": [
+        1920,
+        2880
+      ],
+      "decodedDimensions": [
+        316,
+        474
+      ],
+      "pipelineSha256": "eff0fb5b42fa65532b0b5cedac887f94b815b8f12ac46771876338e45f88ce3d",
+      "attribution": {
+        "id": "commons-0053",
+        "title": "File:Dress, match (AM 2017.66.33-1).jpg",
+        "source": "https://commons.wikimedia.org/wiki/File:Dress,_match_(AM_2017.66.33-1).jpg",
+        "license": "CC BY 4.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
+        "author": "",
+        "credit": "API data Catalogue record Photo"
+      },
+      "visibleFeatures": [
+        "collars",
+        "seams",
+        "logos",
+        "colors",
+        "transparency",
+        "fabricDetail"
+      ],
+      "sourceInspection": "White exterior is not sufficient: attached pale mannequin neck contaminates cutout.",
+      "independentReferenceMask": null,
+      "featureScores": {
+        "collars": null,
+        "sleeves": null,
+        "seams": null,
+        "logos": null,
+        "colors": null,
+        "transparency": null,
+        "fabricDetail": null,
+        "layering": null
+      },
+      "sourceBytesUnchanged": true,
+      "candidateFileSha256": "a47e595d9c14ca113d1e3492e59642a7924d7ee910e45ab9aabe8bcdf30a69e3",
+      "compositeFileSha256": {
+        "female": "392d2a270f44dc6b5530dd31b7c7ffd126adc7e6c871ecc7f7b908e968e3c0b2",
+        "male": "b6a8083fe7d3e965f28d3bc5d7c7e57373fbdc11ace319017fbbdfd57fe2e075"
+      },
+      "compositeMode": "offline-PR33-fill-box-diagnostic-not-browser-or-PR34",
+      "review": null,
+      "artifactChanges": "decoded/resized/white-matte-diagnostic/mesh/figure-composite; source untouched"
+    },
+    {
+      "id": "commons-0064",
+      "eligible": false,
+      "reason": "nonwhite-or-translucent-photo-border",
+      "bounds": {
+        "left": 0,
+        "top": 0,
+        "width": 335,
+        "height": 447
+      },
+      "fittedWidth": 335,
+      "fittedHeight": 447,
+      "candidateRgbaSha256": "439567b9b78d3478e5014b55996eba8dc23654b3393da141d65db8c64ec54b6c",
+      "decodedSourceSha256": "bd29042d3d50fe665f0476b54017115e7c3067aa6c0958044c29792ff94f1d26",
+      "originalUnchanged": true,
+      "compositingDecision": "hold-until-independent-mask-and-composite-review",
+      "placements": {
+        "female": {
+          "left": 27,
+          "top": 18,
+          "width": 48,
+          "height": 34
+        },
+        "male": {
+          "left": 20,
+          "top": 16,
+          "width": 60,
+          "height": 37
+        }
+      },
+      "fidelityPercent": null,
+      "realPhoneTested": false,
+      "sourceSha256": "bb68b22a7fdaff20e71eb969bb5d857598a5ca6f4b47f172dc7a8623b7bd6b83",
+      "originalDimensions": [
+        1920,
+        2560
+      ],
+      "decodedDimensions": [
+        335,
+        447
+      ],
+      "pipelineSha256": "eff0fb5b42fa65532b0b5cedac887f94b815b8f12ac46771876338e45f88ce3d",
+      "attribution": {
+        "id": "commons-0064",
+        "title": "File:Jacket (AM 740158-3).jpg",
+        "source": "https://commons.wikimedia.org/wiki/File:Jacket_(AM_740158-3).jpg",
+        "license": "CC BY 4.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
+        "author": "",
+        "credit": "API data Catalogue record Photo"
+      },
+      "visibleFeatures": [
+        "collars",
+        "sleeves",
+        "seams",
+        "colors",
+        "transparency",
+        "fabricDetail"
+      ],
+      "sourceInspection": "Lapel, yellow patterned lining and gray backdrop; neckline/body distinction is uncertain.",
+      "independentReferenceMask": null,
+      "featureScores": {
+        "collars": null,
+        "sleeves": null,
+        "seams": null,
+        "logos": null,
+        "colors": null,
+        "transparency": null,
+        "fabricDetail": null,
+        "layering": null
+      },
+      "sourceBytesUnchanged": true,
+      "candidateFileSha256": "93b4080e9beb31c9173d37aaef5918224c65c9d5a2427888ab171df369e4e0dd",
+      "compositeFileSha256": {
+        "female": "fdda3276511fa06fe3c0b787c9a2ac8ac5d989b68b83f76047ae51526e46867d",
+        "male": "496a843d01490780d973bb0c117351d56f150f808da0fc0833b2e62ffbe447a6"
+      },
+      "compositeMode": "offline-PR33-fill-box-diagnostic-not-browser-or-PR34",
+      "review": null,
+      "artifactChanges": "decoded/resized/white-matte-diagnostic/mesh/figure-composite; source untouched"
+    },
+    {
+      "id": "commons-0068",
+      "eligible": false,
+      "reason": "nonwhite-or-translucent-photo-border",
+      "bounds": {
+        "left": 0,
+        "top": 0,
+        "width": 291,
+        "height": 514
+      },
+      "fittedWidth": 291,
+      "fittedHeight": 514,
+      "candidateRgbaSha256": "e22f6e50c78c774f0c6940fa54743631050426f1b3ba8f22430e30c4a973c0e7",
+      "decodedSourceSha256": "46148ad16e6fb39676dd6c3d67ef5328a80abe20a1f5987a0ee0da6477264e29",
+      "originalUnchanged": true,
+      "compositingDecision": "hold-until-independent-mask-and-composite-review",
+      "placements": {
+        "female": {
+          "left": 27,
+          "top": 18,
+          "width": 48,
+          "height": 34
+        },
+        "male": {
+          "left": 20,
+          "top": 16,
+          "width": 60,
+          "height": 37
+        }
+      },
+      "fidelityPercent": null,
+      "realPhoneTested": false,
+      "sourceSha256": "5d372824e1054c4c392969bed227784cd30d7011e95db769218b20a28302633f",
+      "originalDimensions": [
+        1920,
+        3394
+      ],
+      "decodedDimensions": [
+        291,
+        514
+      ],
+      "pipelineSha256": "eff0fb5b42fa65532b0b5cedac887f94b815b8f12ac46771876338e45f88ce3d",
+      "attribution": {
+        "id": "commons-0068",
+        "title": "File:Sapphire mink fur coat 1980.jpg",
+        "source": "https://commons.wikimedia.org/wiki/File:Sapphire_mink_fur_coat_1980.jpg",
+        "license": "Public domain",
+        "licenseUrl": "",
+        "author": "Libricool ( talk ) 19:57, 14 October 2010 (UTC)",
+        "credit": "Own work"
+      },
+      "visibleFeatures": [
+        "collars",
+        "sleeves",
+        "seams",
+        "colors",
+        "transparency",
+        "fabricDetail"
+      ],
+      "sourceInspection": "Rear-view fur coat outdoors; front figure alignment is unsupported.",
+      "independentReferenceMask": null,
+      "featureScores": {
+        "collars": null,
+        "sleeves": null,
+        "seams": null,
+        "logos": null,
+        "colors": null,
+        "transparency": null,
+        "fabricDetail": null,
+        "layering": null
+      },
+      "sourceBytesUnchanged": true,
+      "candidateFileSha256": "468f94c5d38bc36e234b2c5e8c0444573e0625ac06807e2166b62b7c9f66979b",
+      "compositeFileSha256": {
+        "female": "2028bea1da3996257d599cd63476949d65d825b42ce895e59df1255edfcbd56d",
+        "male": "e39be0e83475eef4720d81cfbad7e7fea398612b097161d05ebd332f06ce3c4d"
+      },
+      "compositeMode": "offline-PR33-fill-box-diagnostic-not-browser-or-PR34",
+      "review": null,
+      "artifactChanges": "decoded/resized/white-matte-diagnostic/mesh/figure-composite; source untouched"
+    },
+    {
+      "id": "commons-0079",
+      "eligible": false,
+      "reason": "nonwhite-or-translucent-photo-border",
+      "bounds": {
+        "left": 0,
+        "top": 0,
+        "width": 475,
+        "height": 315
+      },
+      "fittedWidth": 475,
+      "fittedHeight": 315,
+      "candidateRgbaSha256": "3aee025cf7c871dcba88e2d05f2c8f62474f51db537b24cb9a4f4da6bd56d159",
+      "decodedSourceSha256": "3aee025cf7c871dcba88e2d05f2c8f62474f51db537b24cb9a4f4da6bd56d159",
+      "originalUnchanged": true,
+      "compositingDecision": "hold-until-independent-mask-and-composite-review",
+      "placements": {
+        "female": {
+          "left": 18,
+          "top": 86,
+          "width": 64,
+          "height": 12
+        },
+        "male": {
+          "left": 18,
+          "top": 86,
+          "width": 64,
+          "height": 12
+        }
+      },
+      "fidelityPercent": null,
+      "realPhoneTested": false,
+      "sourceSha256": "b577483e5244dfb53e60cc8a0b54a4130e695cf388e5534e38a2b04580727ec6",
+      "originalDimensions": [
+        1920,
+        1275
+      ],
+      "decodedDimensions": [
+        475,
+        315
+      ],
+      "pipelineSha256": "eff0fb5b42fa65532b0b5cedac887f94b815b8f12ac46771876338e45f88ce3d",
+      "attribution": {
+        "id": "commons-0079",
+        "title": "File:Nike SB Dunk High MF Doom.jpg",
+        "source": "https://commons.wikimedia.org/wiki/File:Nike_SB_Dunk_High_MF_Doom.jpg",
+        "license": "CC BY 2.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+        "author": "TanSenpai from Philadelphia, United States",
+        "credit": "MF Doom's"
+      },
+      "visibleFeatures": [
+        "seams",
+        "logos",
+        "colors",
+        "transparency",
+        "fabricDetail"
+      ],
+      "sourceInspection": "Shoe, laces and outdoor surface; preserve sole and detached lace details.",
+      "independentReferenceMask": null,
+      "featureScores": {
+        "collars": null,
+        "sleeves": null,
+        "seams": null,
+        "logos": null,
+        "colors": null,
+        "transparency": null,
+        "fabricDetail": null,
+        "layering": null
+      },
+      "sourceBytesUnchanged": true,
+      "candidateFileSha256": "78492f7043ec395585612968de15b6ebc4c995338af3d30658f3ca0d4c645fff",
+      "compositeFileSha256": {
+        "female": "a60ad814da5d0015e2c7efe60925c3cac1679153bd17b4c3cbfb793cff138fd2",
+        "male": "7966b0db30db7760ee061462a44cfa5d4d94d9c5bd20cd8a04b288c39aceef23"
+      },
+      "compositeMode": "offline-PR33-fill-box-diagnostic-not-browser-or-PR34",
+      "review": null,
+      "artifactChanges": "decoded/resized/white-matte-diagnostic/mesh/figure-composite; source untouched"
+    },
+    {
+      "id": "commons-0016",
+      "eligible": false,
+      "reason": "nonwhite-or-translucent-photo-border",
+      "bounds": {
+        "left": 0,
+        "top": 0,
+        "width": 358,
+        "height": 418
+      },
+      "fittedWidth": 358,
+      "fittedHeight": 418,
+      "candidateRgbaSha256": "0433907307a50931ef6da58b354cdd73c10cb295ceb1b00ca66aff313db87b92",
+      "decodedSourceSha256": "6947781d579d46b5079275097faf706aa7256879bffcf5baf6317e6b8d01c999",
+      "originalUnchanged": true,
+      "compositingDecision": "hold-until-independent-mask-and-composite-review",
+      "placements": {
+        "female": {
+          "left": 27,
+          "top": 18,
+          "width": 48,
+          "height": 34
+        },
+        "male": {
+          "left": 20,
+          "top": 16,
+          "width": 60,
+          "height": 37
+        }
+      },
+      "fidelityPercent": null,
+      "realPhoneTested": false,
+      "sourceSha256": "e0510f06c475fa048585e6ff437359cb4255ce3a425e40a69dc54cc337f5ab24",
+      "originalDimensions": [
+        1920,
+        2238
+      ],
+      "decodedDimensions": [
+        358,
+        418
+      ],
+      "pipelineSha256": "eff0fb5b42fa65532b0b5cedac887f94b815b8f12ac46771876338e45f88ce3d",
+      "attribution": {
+        "id": "commons-0016",
+        "title": "File:Blouse MET 41.64 F.jpg",
+        "source": "https://commons.wikimedia.org/wiki/File:Blouse_MET_41.64_F.jpg",
+        "license": "CC0",
+        "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+        "author": "",
+        "credit": "This file was donated to Wikimedia Commons as part of a project by the Metropolitan Museum of Art . See the Image and Data Resources Open Access Policy"
+      },
+      "visibleFeatures": [
+        "collars",
+        "sleeves",
+        "seams",
+        "colors",
+        "transparency",
+        "fabricDetail"
+      ],
+      "sourceInspection": "Pale embroidered coat and non-white backdrop; preserve embroidery and sleeves.",
+      "independentReferenceMask": null,
+      "featureScores": {
+        "collars": null,
+        "sleeves": null,
+        "seams": null,
+        "logos": null,
+        "colors": null,
+        "transparency": null,
+        "fabricDetail": null,
+        "layering": null
+      },
+      "sourceBytesUnchanged": true,
+      "candidateFileSha256": "9243655d07df9959748a9030d61aa5169454ee4d31b65817a87074f0a6c35bad",
+      "compositeFileSha256": {
+        "female": "5f5fdcd7bfc630a452409f245bb1daaf08f48a3fac39a43faf691d627af9d02f",
+        "male": "cd614c86c425795b3832ba9671cc87e9114908a74f740cf127452b9a21a71a05"
+      },
+      "compositeMode": "offline-PR33-fill-box-diagnostic-not-browser-or-PR34",
+      "review": null,
+      "artifactChanges": "decoded/resized/white-matte-diagnostic/mesh/figure-composite; source untouched"
+    }
+  ]
+}

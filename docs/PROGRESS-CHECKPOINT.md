@@ -1,5 +1,34 @@
 # Closet Current master development checkpoint
 
+## Independent real-photo fidelity benchmark and figure readiness — October 19, 2026 Pacific
+
+- Separate branch `benchmark/real-photo-figure-readiness-20261019`, based on
+  PR #33 `ec32f777`. No runtime file or PR #33/#34 branch edited; main thread
+  coordinates integration. PR #34 aspect-preserving renderer is not tested here.
+- Added reproducible offline Pillow 11.3.0/Node diagnostics for 12 original
+  licensed photos, original/pipeline/candidate/composite hashes, source-detail
+  crops, mask/warp/two-figure diagnostics and empty feature-review templates.
+- Actual results: 12 held, 0 pixel-gate eligible, 0 independently approved
+  composites; 11 nonwhite/uncertain exteriors and 1 mannequin-neck ambiguity.
+  No real fidelity percentage. All 59 fixture source hashes/metadata verified.
+- Both current figure previews decode to 160x297. No full-resolution masters,
+  commercial-rights evidence or technical approvals present in checkout.
+  Proposed native master target 1294x2398 and exact-two-asset readiness ledger
+  hold unknown provenance/permissions/neutral-base/occlusion/anchor approvals.
+- Comparative feature receipts bind exact original, cutout, pipeline and
+  composite; missing, stale or duplicated records cannot become approvals.
+  Same-source-grid RGB/alpha/contrast metrics require independently approved
+  reference masks/alignment; only synthetic metric probes run until available.
+- Local build and full suite: **989 passed, 0 failed, 3 skipped**; 10 new
+  benchmark tests pass. Two repeated pinned-decoder reports are byte-identical.
+  Packet integrity checks reject duplicate receipts, stale pipelines and
+  candidate changes. CI configured to regenerate/check/upload diagnostic packet.
+- No customer photos/selfies, external inference, cost, merge/deploy or Drive
+  Duel changes. This is offline real-photo diagnostic/rejection evidence, not
+  successful cloth fitting, browser simulation or physical-phone validation.
+- Guide: `benchmark/LOCAL-FITTING-REAL-PHOTO-BENCHMARK.md`; retained actual JSON:
+  `benchmark/figure-readiness/baseline-results-20261019.json`.
+
 ## Local fitting follow-up to PR #32 — October 19, 2026 Pacific
 
 - Isolated branch `feature/local-fitting-landmarks-20261019`, based exactly on
