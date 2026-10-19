@@ -1,7 +1,8 @@
 name: Mobile capture and closet persistence flow
 on:
+  # Temporary licensed-photo research trigger; remove after verification.
   push:
-    branches: [main]
+    branches: [main, research/whole-outfit-readiness-evidence-20261018]
     paths:
       - 'public/**'
       - 'scripts/run-mobile-flow.mjs'
