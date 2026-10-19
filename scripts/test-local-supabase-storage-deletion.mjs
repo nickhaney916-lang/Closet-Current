@@ -135,13 +135,13 @@ try{
  // The durable lock must survive the interruption and a retry, while any
  // remaining private photo must still be removable via Storage HTTP.
  const interrupted=await user();
- must(await upload(interrupted),'interrupted owner's first photo');
+ must(await upload(interrupted),'interrupted first photo');
  const secondImage=Buffer.from('ffd8ffe000104a46494600010100000100010000fffe0005616263ffd9','hex');
  const secondName=createHash('sha256').update(secondImage).digest('hex')+'.jpg';
  must(await api('/storage/v1/object/closet-private/'+interrupted.id+'/'+secondName,{
   method:'POST',key:interrupted.access,body:secondImage,contentType:'image/jpeg'
- }),'interrupted owner's second photo');
- must(await backup(interrupted),'interrupted owner's backup');
+ }),'interrupted second photo');
+ must(await backup(interrupted),'interrupted backup');
  assert.equal((await list(interrupted)).length,2);
  const firstLock=await api('/rest/v1/rpc/begin_closet_account_deletion',{
   method:'POST',body:{p_owner:interrupted.id}});
