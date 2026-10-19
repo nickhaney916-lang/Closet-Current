@@ -89,6 +89,7 @@
   base.src=plan.figureImage;
   positionFace();
   garmentContainer.replaceChildren();
+  status.textContent='Preparing local clothing preview…';
   const counts={shown:0,skipped:plan.skipped.length};
   for(const placement of plan.placements){
    const imgSource=await imagePixels(placement.image,placement.category,placement.primaryColor);

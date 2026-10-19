@@ -9,6 +9,7 @@ test('mesh offers finite local geometry for approved clothing classes only',()=>
   assert.equal(m.triangles.length,32);
   assert.equal(m.sourcePhotoChanged,false);
   assert.equal(m.photorealisticFitVerified,false);
+  for(const v of m.vertices)assert.ok(v.x>=0&&v.x<=m.width&&v.y>=0&&v.y<=m.height,'no clipped boundary vertices');
   for(const t of m.triangles){
    const transform=warp.affine(t.map(i=>m.vertices[i]));
    assert.ok(transform&&transform.every(Number.isFinite));
