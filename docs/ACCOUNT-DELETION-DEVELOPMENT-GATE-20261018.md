@@ -99,3 +99,30 @@ compatibility with the actual Storage API on a disposable project before
 approving schema changes. The deployed deletion entrypoint is still
 disabled with HTTP 503. No real data or account was changed.
 
+
+
+## Server-adapter and RPC permission checkpoint — October 18, 2026
+
+The undeployed draft SQL includes a `SECURITY INVOKER`
+`public.begin_closet_account_deletion(uuid)` wrapper with EXECUTE
+only for `service_role`. Disposable PostgreSQL tests verify
+authenticated and anon cannot execute it and service-role execution
+serializes with photo and backup metadata writes. The server-only
+`supabase/functions/account-delete/supabase-adapters.mjs` now supplies
+mock-tested Auth.getUser, independent password proof, Storage .list/.remove,
+backup deletion/verification and Auth.admin.deleteUser/getUserById
+operations. The password client **must** be a separate server-only client
+with `persistSession:false`. Do not put administrative credentials into
+public bundles; the adapter stores none.
+
+[Verification run 39182636169](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39182636169):
+22 focused tests passed. These tests simulate Supabase SDK responses and
+use disposable bare PostgreSQL for locking; they are **not proof of real
+Supabase Storage API upload/cleanup compatibility**. The real Deno
+entrypoint still responds 503 and imports nothing privileged.
+No account deletion can run in production. Before activation, use a
+disposable complete Supabase environment and independent security
+review, including verified active-session behavior and final irreversible
+confirmation. Passwordless members need an approved recent-authentication
+alternative; currently only password verification is modeled.
+

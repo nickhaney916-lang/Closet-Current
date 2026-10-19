@@ -1,6 +1,66 @@
 # Closet Current master development checkpoint
 
 
+## Staged Supabase deletion server adapters + restricted RPC — October 18, 2026 (Pacific)
+
+- **Next development priority implemented and verified** on the draft
+  Closet Current PR #7 integration branch, no merge/deploy. Added a
+  **service-role-only SQL invoker wrapper**
+  `public.begin_closet_account_deletion(uuid)` to the *undeployed*
+  `supabase/design/account-deletion-write-barrier.DRAFT.sql`. It uses
+  an explicit privilege revoke from PUBLIC/anon/authenticated and
+  requires `service_role` permissions for underlying private lock
+  function. The PostgreSQL smoke suite checks both ordinary-user
+  denial and privileged invocation, preserves write isolation and
+  tests a concurrent photo-upload / account-deletion transaction.
+  This is NOT a live Supabase migration or a publicly callable
+  deletion endpoint.
+- Added `supabase/functions/account-delete/supabase-adapters.mjs`,
+  a server-only, injected-client adapter for the *existing disabled*
+  deletion coordinator: online `auth.getUser(bearer)` identity
+  verification, trusted-account-email password reauthentication using
+  a **separate non-persisting password client**, restricted
+  `begin_closet_account_deletion` lock RPC, page-one owner-prefix
+  Storage list/remove APIs, private backup deletion/verification, and
+  privileged Auth deletion with an explicit 404 check. The adapter
+  refuses missing/malformed account IDs, wrong-account password
+  proof, unsafe file paths, failed server operations or unverifiable
+  deletion. No secrets, initialized SDK clients, HTTP entrypoint
+  integration or real destructive calls were added to client assets.
+- Added `tests/account-deletion-supabase-adapters.test.mjs` with
+  synthetic SDK doubles for >200 photo objects, wrong password or
+  owner, absent lock, Storage errors and fake-success removal,
+  malformed/foreign paths, and failed Auth verification. Also added
+  `tests/account-deletion-entrypoint-disabled.test.mjs` to assert the
+  actual `supabase/functions/account-delete/index.ts` stays
+  unconditionally HTTP **503** with no privileged code or secrets,
+  and the browser does not import the server adapters.
+- Verified [disposable PostgreSQL + coordinator/adapter run
+  39182636169](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39182636169):
+  **22 focused tests passed, 0 failed**, SQL permission and tombstone
+  gates passed, `ACCOUNT_DELETION_WRITE_RACE` in-flight upload
+  serialization/late-write denial/unrelated-owner isolation all passed.
+  Verified [full Node CI run
+  39182636121](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39182636121):
+  **794 total, 791 passed, 0 failed, 3 skipped**; app build passed.
+  Tested implementation head:
+  `a9c5aaa155b92560612898ec631e87ed5d3e78a3`.
+  Other non-deletion experimental checks are separate.
+- **Critical release blockers remain:** These SDK adapters are only
+  *mock-tested* and are not instantiated in a deployable endpoint.
+  SQL was tested against isolated PG16, **not** the actual Supabase
+  Storage API or a disposable full Supabase project. Before activation,
+  validate client/policy/trigger compatibility, in-flight object
+  byte/orphan cleanup, reauthentication limitations for passwordless
+  accounts, private admin credentials, expired JWT/session liveness,
+  interruption/retry recovery, final deletion/retention terms, and a
+  safe deletion-request/support route. User-facing account deletion
+  stays unavailable; the Deno entrypoint always returns HTTP 503.
+- No paid services, no live database write, no real account/photo
+  deletion, no production deploy/merge, no Drive Duel changes.
+
+
+
 ## Disposable-database deletion lock design and concurrency validation — October 18, 2026 (Pacific)
 
 - **Next engineering priority completed as a staged, undeployed design.**
