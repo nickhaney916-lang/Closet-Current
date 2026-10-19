@@ -92,11 +92,25 @@ test('empty optional raw crop uses only source photo, not optional generated pre
 });
 test('scanner and background review never read display cutout as their inference source',()=>{
  const scanner=source.slice(source.indexOf('async function recognizeItem('),source.indexOf('async function recognizeBatch('));
- assert.match(scanner,/checkPhoto\(item\.recognitionPhoto\?\.image\|\|item\.image\)/);
- assert.match(scanner,/localRequest\('classify',item\.recognitionPhoto\?\.image\|\|item\.image/);
- const background=source.slice(source.indexOf('async function',source.indexOf('function applyLocalChoice(')),source.length);
- assert.match(background,/target\.recognitionPhoto\?\.image\|\|target\.image/);
- assert.match(background,/current\.recognitionPhoto\?\.image\|\|current\.image/);
- assert.match(background,/value\.recognitionPhoto\?\.image\|\|value\.image/);
+ assert.match(scanner,/const image=recognitionSourcePhoto\(item\)/);
+ assert.match(scanner,/checkPhoto\(image\)/);
+ assert.match(scanner,/localRequest\('classify',image/);
+ const background=source.slice(source.indexOf('async function reviewRecognitionMemory('));
+ assert.match(background,/image=recognitionSourcePhoto\(target\);if\(!image\)continue/);
+ assert.match(background,/recognitionSourcePhoto\(current\)/);
+ assert.match(background,/!recognitionSourcePhoto\(value\)/);
  assert.doesNotMatch(scanner,/(?:normalizedPreview|tryOnImage)/);
+});
+
+test('restored outfit without its raw crop cannot infer details from a display tile or whole scene',async()=>{
+ for(const recognitionPhoto of [undefined,{image:''},{image:'   '},{image:42}]){
+  const h=make({id:'restored',outfitSourceId:'outfit',image:'white-matted-display',
+   recognitionPhoto,originalPhoto:{image:'whole-scene'},category:'Tops',
+   itemType:'Unknown',color:'',seasons:[]});
+  await flush();await h.btn.onclick();
+  assert.deepEqual(h.checked,[]);assert.deepEqual(h.classified,[]);
+  assert.equal(h.item.color,'');assert.equal(h.item.itemType,'Unknown');
+  assert.equal(h.item.image,'white-matted-display');
+  assert.equal(h.item.originalPhoto.image,'whole-scene');
+ }
 });

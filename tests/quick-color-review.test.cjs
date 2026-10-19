@@ -14,7 +14,7 @@ function setup(overrides={}){
  persistDraft:()=>persistCount++,render:()=>renderCount++,scheduleMemoryReview:()=>notifyCount++,
  message:t=>messages.push(t)
  };
- vm.createContext(state);vm.runInContext(code.slice(begin,end),state);
+ vm.createContext(state);vm.runInContext(code.slice(code.indexOf('function recognitionSourcePhoto('),code.indexOf('function clothingFields(')),state);vm.runInContext(code.slice(begin,end),state);
  return {state,item,saves,drafts,messages,counts:()=>({renderCount,persistCount,notifyCount}),block:()=>blocked=true};
 }
 test('one selected color saves a recognized item and removes its draft',async()=>{
@@ -92,7 +92,7 @@ test('quick color save cannot bypass a clipped or category-conflicting outfit se
   assert.equal(await h.state.confirmReviewedColor(h.item,'Blue'),false);
   assert.equal(h.saves.length,0);
  }
- const safe=setup({segmentHint:{categories:['Tops'],types:['Polo'],clipped:false},itemType:'Unknown'});
+ const safe=setup({recognitionPhoto:{image:'raw-crop'},segmentHint:{categories:['Tops'],types:['Polo'],clipped:false},itemType:'Unknown'});
  assert.equal(safe.state.canConfirmReviewedColor(safe.item),true,'verified broad category may save without subtype');
  assert.equal(await safe.state.confirmReviewedColor(safe.item,'Blue'),true);
 });
@@ -110,7 +110,7 @@ test('fragmented whole-outfit region cannot be quick-saved merely by choosing co
  assert.equal(await h.state.confirmReviewedColor(h.item,'Blue'),false);
  assert.equal(h.saves.length,0);
  assert.equal(h.state.batch.length,1);
- const other=setup({outfitSourceId:'outfit-photo',
+ const other=setup({outfitSourceId:'outfit-photo',recognitionPhoto:{image:'raw-crop'},
   segmentHint:{categories:['Tops'],types:[],clipped:false}});
  assert.equal(other.state.canConfirmReviewedColor(other.item),true,
   'reliable masks keep the normal one-choice color flow');
@@ -124,4 +124,12 @@ test('all untrusted whole-outfit original-crop fallbacks require review, not col
   assert.equal(await h.state.confirmReviewedColor(h.item,'Blue'),false,reason);
   assert.equal(h.saves.length,0);
  }
+});
+
+test('a restored classified outfit cannot bypass missing source protection with a color-only save',async()=>{
+ const h=setup({outfitSourceId:'restored',originalPhoto:{image:'whole-scene'},
+  segmentHint:{categories:['Tops'],types:[],clipped:false}});
+ assert.equal(h.state.canConfirmReviewedColor(h.item),false);
+ assert.equal(await h.state.confirmReviewedColor(h.item,'Blue'),false);
+ assert.equal(h.saves.length,0);assert.equal(h.state.batch.length,1);
 });

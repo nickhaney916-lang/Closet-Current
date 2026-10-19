@@ -3,7 +3,7 @@ const source=fs.readFileSync('public/app.js','utf8');
 function setup(){
  function node(tag,text){return {tag,text:text||'',children:[],setAttribute(){},append(...children){this.children.push(...children);},replaceChildren(...children){this.children=children;}};}
  const c={recognitionState:{phase:'idle',percent:null,activeId:null},node,items:[],batch:[],categories:['Tops','Dresses'],ClothingDetails:{colors:['Black','Blue','Red'],validColor:v=>['Black','Blue','Red'].includes(v)},localPending:new Set(),localReady:true,adjustPhoto(item){c.adjusted=item;},cropClothingPhoto(item){c.cropped=item;}};
- vm.createContext(c);vm.runInContext(source.slice(source.indexOf('function cropButton('),source.indexOf('function adjustPhoto(')),c);vm.runInContext(source.slice(source.indexOf('function canConfirmReviewedColor('),source.indexOf('function renderPhotoResults(')),c);vm.runInContext(source.slice(source.indexOf('function renderPhotoResults('),source.indexOf('function render(){')),c);
+ vm.createContext(c);vm.runInContext(source.slice(source.indexOf('function recognitionSourcePhoto('),source.indexOf('function clothingFields(')),c);vm.runInContext(source.slice(source.indexOf('function cropButton('),source.indexOf('function adjustPhoto(')),c);vm.runInContext(source.slice(source.indexOf('function canConfirmReviewedColor('),source.indexOf('function renderPhotoResults(')),c);vm.runInContext(source.slice(source.indexOf('function renderPhotoResults('),source.indexOf('function render(){')),c);
  return {c,grid:node('div')};
 }
 function descendants(x){return [x,...x.children.flatMap(descendants)];}
@@ -18,7 +18,7 @@ test('processing displays its category as soon as the worker identifies it',()=>
  const {c,grid}=setup();c.localPending.add('shirt');c.renderPhotoResults(grid,[{id:'shirt',category:'Tops',itemType:'T-shirt'}]);const nodes=descendants(grid);assert.ok(nodes.some(x=>x.text==='T-shirt'));assert.ok(nodes.some(x=>x.text==='Tops · T-shirt'));assert.equal(nodes.filter(x=>x.tag==='button').length,2);assert.equal(nodes.find(x=>x.tag==='button').text,'Adjust');
 });
 test('recognition errors release the job instead of leaving a perpetual spinner',()=>{
- const nodes=new Map();const c={recognitionState:{phase:'idle',percent:null,activeId:null},renderRecognitionNotice(){},recognitionUnavailable:false,localWorker:null,localReady:true,localJobs:new Map(),crypto:{randomUUID:()=> 'job'},recognitionAssetVersion:'',clearTimeout(){},setTimeout(){return 1;},$:id=>{if(!nodes.has(id))nodes.set(id,{});return nodes.get(id);},Worker:class{postMessage(){} terminate(){this.stopped=true;}}};vm.createContext(c);vm.runInContext(source.slice(source.indexOf('function stopRecognitionWorker('),source.indexOf('async function enableLocal(')),c);
+ const nodes=new Map();const c={recognitionState:{phase:'idle',percent:null,activeId:null},renderRecognitionNotice(){},recognitionUnavailable:false,localWorker:null,localReady:true,localJobs:new Map(),crypto:{randomUUID:()=> 'job'},recognitionAssetVersion:'',clearTimeout(){},setTimeout(){return 1;},$:id=>{if(!nodes.has(id))nodes.set(id,{});return nodes.get(id);},Worker:class{postMessage(){} terminate(){this.stopped=true;}}};vm.createContext(c);vm.runInContext(source.slice(source.indexOf('function recognitionSourcePhoto('),source.indexOf('function clothingFields(')),c);vm.runInContext(source.slice(source.indexOf('function stopRecognitionWorker('),source.indexOf('async function enableLocal(')),c);
  const result=c.localRequest('classify','photo').catch(e=>e);c.localWorker.onerror();assert.equal(c.localReady,false);assert.equal(c.localJobs.size,0);assert.equal(c.localWorker,null);return result.then(e=>assert.match(e.message,/unavailable/));
 });
 test('queued photos stay compact and offer Adjust during model setup',()=>{
@@ -104,10 +104,11 @@ test('disconnected upper regions require review and warn against double-saving a
 test('automatic save revalidates a changed garment draft before opening storage',async()=>{
  const js=source.slice(source.indexOf('function segmentationAllows('),source.indexOf('function applyLocalChoice('))+'\n'+source.slice(source.indexOf('async function saveIndexed('),source.indexOf('async function recognizeItem('));
  const c={batch:[],items:[],ClothingDetails:{validColor:v=>v==='Blue'},normalizeClothing:x=>x,queued:fn=>fn(),db:{transaction(){throw Error('Unsafe item reached database');}},structuredClone,Date,persistDraft(){},render(){}};
- vm.createContext(c);vm.runInContext(js,c);
- const base={id:'one',outfitSourceId:'outfit-1',name:'Blue shirt',category:'Tops',itemType:'T-shirt',color:'Blue',segmentHint:{clipped:false,categories:['Tops'],types:['T-shirt']}};
+ vm.createContext(c);vm.runInContext(source.slice(source.indexOf('function recognitionSourcePhoto('),source.indexOf('function clothingFields(')),c);vm.runInContext(js,c);
+ const base={id:'one',outfitSourceId:'outfit-1',recognitionPhoto:{image:'raw-crop'},name:'Blue shirt',category:'Tops',itemType:'T-shirt',color:'Blue',segmentHint:{clipped:false,categories:['Tops'],types:['T-shirt']}};
  const stale=structuredClone(base);c.batch=[structuredClone(base)];assert.equal(await c.saveIndexed(stale),false,'superseded draft with same id must not save');
  for(const mutate of [
+  x=>delete x.recognitionPhoto,
   x=>x.segmentHint.clipped=true,
   x=>x.segmentHint.displayFallback='original-crop',
   x=>x.segmentHint.categories=['Bottoms'],

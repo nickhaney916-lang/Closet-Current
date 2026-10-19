@@ -38,7 +38,11 @@ function choice(body,title,value,options){const label=node('label',title),select
 // For ordinary single-item captures, item.image itself is the original photo.
 function recognitionSourcePhoto(item){
  const unmasked=item?.recognitionPhoto?.image;
- return typeof unmasked==='string'&&unmasked.length?unmasked:item?.image;
+ if(typeof unmasked==='string'&&unmasked.trim())return unmasked;
+ // Restored/legacy outfit records may lack the source crop. A cleaned tile
+ // or the full multi-garment scene cannot stand in for that garment's RGB.
+ if(item?.outfitSourceId||item?.segmentHint)return null;
+ return item?.image;
 }
 function clothingFields(body,item,onChange=()=>{}){
  Object.assign(item,normalizeClothing(item));
@@ -60,8 +64,8 @@ function clothingFields(body,item,onChange=()=>{}){
  for(const [key,title]of [['brand','Brand'],['size','Size'],['material','Material'],['occasion','Occasion']])fields[key]=field(extra,title,item[key]);
  fields.notes=field(extra,'Notes',item.notes,'textarea');
  for(const [key,el]of Object.entries(fields))el.oninput=()=>{item[key]=el.value;if(key==='color')item.colorSource='user';if(key==='category'){const types=['Unknown',...(clothingSchema.types[item.category]||[])];fields.itemType.replaceChildren(...types.map(x=>node('option',x)));item.itemType='Unknown';fields.itemType.value='Unknown';if(['Shoes','Accessories','Bottoms'].includes(item.category)){item.sleeveLength='Not applicable';fields.sleeveLength.value='Not applicable';}else if(item.sleeveLength==='Not applicable'){item.sleeveLength='Unknown';fields.sleeveLength.value='Unknown';}}refreshCompletion();onChange();};
- fillPhoto.onclick=async()=>{fillPhoto.disabled=true;completion.textContent='Checking color, then garment identity…';try{const quality=await checkPhoto(recognitionSourcePhoto(item));if(!fillPhoto.isConnected)return;Object.assign(item,ClothingDetails.fillColor(item,trustedAutomaticPhotoColor(item,quality)));fields.color.value=item.color||'';refreshCompletion();if(!localReady)await enableLocal();const result=await localRequest('classify',recognitionSourcePhoto(item),null,item.segmentHint),choice=result.choices?.[0];if(!fillPhoto.isConnected)return;if((!result.strong&&!result.categoryConfirmed)||!choice||!segmentationAllows(item,choice)){completion.textContent=(item.color?'Color kept. ':'')+'Garment identity needs confirmation. Optional details can stay blank.';return;}if(item.category!=='Uncategorized'&&item.category!==choice.category){completion.textContent='Photo suggests '+choice.category+' · '+choice.itemType+'. Use Crop photo to review and change the category.';return;}applyLocalChoice(item,choice);Object.assign(item,ClothingDetails.fill(item,choice,result.details));fields.category.value=item.category;fields.itemType.replaceChildren(...['Unknown',...(clothingSchema.types[item.category]||[])].map(x=>node('option',x)));for(const [key,input]of Object.entries(fields))input.value=item[key]||'';refreshCompletion();onChange();}catch{if(fillPhoto.isConnected)completion.textContent=(item.color?'Color kept. ':'')+'Garment recognition is unavailable. Your details are kept; optional fields can stay blank.';}finally{fillPhoto.disabled=false;}};
- if(item.image&&(!item.color||item.color==='Unknown'))checkPhoto(recognitionSourcePhoto(item)).then(quality=>{if(!fields.color.isConnected||item.colorSource==='user')return;const updated=ClothingDetails.fillColor(item,trustedAutomaticPhotoColor(item,quality));if(updated!==item){Object.assign(item,updated);fields.color.value=item.color||'';if(!fillPhoto.disabled)refreshCompletion();onChange();}}).catch(()=>{});
+ fillPhoto.onclick=async()=>{if(!recognitionSourcePhoto(item)){completion.textContent='The original garment crop is missing. Retake this piece or enter its details; your saved photo is kept.';return;}fillPhoto.disabled=true;completion.textContent='Checking color, then garment identity…';try{const quality=await checkPhoto(recognitionSourcePhoto(item));if(!fillPhoto.isConnected)return;Object.assign(item,ClothingDetails.fillColor(item,trustedAutomaticPhotoColor(item,quality)));fields.color.value=item.color||'';refreshCompletion();if(!localReady)await enableLocal();const result=await localRequest('classify',recognitionSourcePhoto(item),null,item.segmentHint),choice=result.choices?.[0];if(!fillPhoto.isConnected)return;if((!result.strong&&!result.categoryConfirmed)||!choice||!segmentationAllows(item,choice)){completion.textContent=(item.color?'Color kept. ':'')+'Garment identity needs confirmation. Optional details can stay blank.';return;}if(item.category!=='Uncategorized'&&item.category!==choice.category){completion.textContent='Photo suggests '+choice.category+' · '+choice.itemType+'. Use Crop photo to review and change the category.';return;}applyLocalChoice(item,choice);Object.assign(item,ClothingDetails.fill(item,choice,result.details));fields.category.value=item.category;fields.itemType.replaceChildren(...['Unknown',...(clothingSchema.types[item.category]||[])].map(x=>node('option',x)));for(const [key,input]of Object.entries(fields))input.value=item[key]||'';refreshCompletion();onChange();}catch{if(fillPhoto.isConnected)completion.textContent=(item.color?'Color kept. ':'')+'Garment recognition is unavailable. Your details are kept; optional fields can stay blank.';}finally{fillPhoto.disabled=false;}};
+ if(recognitionSourcePhoto(item)&&(!item.color||item.color==='Unknown'))checkPhoto(recognitionSourcePhoto(item)).then(quality=>{if(!fields.color.isConnected||item.colorSource==='user')return;const updated=ClothingDetails.fillColor(item,trustedAutomaticPhotoColor(item,quality));if(updated!==item){Object.assign(item,updated);fields.color.value=item.color||'';if(!fillPhoto.disabled)refreshCompletion();onChange();}}).catch(()=>{});
  return ()=>normalizeClothing(item);
 }
 function cropClothingPhoto(item){
@@ -172,6 +176,7 @@ function canConfirmReviewedColor(item){
   !localPending.has(item.id)&&item.localAnalyzed&&!item.userAdjusted&&
   !item.possibleDuplicate&&!item.requiresOwnershipConfirmation&&
   !item.scanFailed&&!item.saveFailed&&
+  (!(item.outfitSourceId||item.segmentHint)||!!recognitionSourcePhoto(item))&&
   // A fragmented outline often includes the person's skin or a second
   // garment. Color-only confirmation is not sufficient to approve it.
   item.segmentHint?.displayFallback!=='original-crop'&&
@@ -576,6 +581,7 @@ async function saveIndexed(item){
  const value={...normalizeClothing(item),name:item.name.trim()||'Closet piece',savedAt:new Date().toISOString(),indexedAt:new Date().toISOString()};
  const saved=await queued(()=>new Promise((resolve,reject)=>{
   if(!db)return reject(Error('Browser storage is unavailable.'));
+  if((item.outfitSourceId||item.segmentHint)&&!recognitionSourcePhoto(item))return resolve(false);
   if(!batch.includes(item)||items.some(x=>x.id===item.id)||item.userAdjusted||item.requiresOwnershipConfirmation||item.possibleDuplicate||item.scanFailed||item.saveFailed||!segmentationAllows(item,{category:item.category,itemType:item.itemType})||item.category==='Uncategorized'||!ClothingDetails.validColor(item.color))return resolve(false);
   const tx=db.transaction(['items','state'],'readwrite');
   tx.objectStore('items').put(value);
@@ -589,7 +595,9 @@ async function saveIndexed(item){
 async function recognizeItem(item){
  const scanStarted=Date.now();let savingIndexed=false;recognitionState.activeId=item.id;item.scanFailed=false;item.saveFailed=false;item.localStatus='Checking photo quality…';render();
  try{
-  const quality=await checkPhoto(item.recognitionPhoto?.image||item.image);
+  const image=recognitionSourcePhoto(item);
+  if(!image){item.localAnalyzed=false;item.scanFailed=true;item.localStatus='The original garment crop is missing. Retake this piece or enter its details; your photo is kept.';return false;}
+  const quality=await checkPhoto(image);
   if(!batch.some(x=>x.id===item.id))return;
   if(quality.blank){if(typeof recordDeviceEvent==='function')recordDeviceEvent('blank_skipped');batch=batch.filter(x=>x.id!==item.id);message('Blank or featureless photo skipped. Frame one garment and try again.');return true;}
   if(!item.userAdjusted)Object.assign(item,ClothingDetails.fillColor(item,trustedAutomaticPhotoColor(item,quality)));item.visualSignature=quality.signature;item.visualAspect=quality.aspect;
@@ -599,7 +607,7 @@ async function recognizeItem(item){
   if(recognitionUnavailable)throw Error('Recognition is unavailable. Try again or use Adjust.');
   item.localStatus='Identifying this garment…';render();
   let result;
-  try{if(!localReady)await enableLocal();result=await localRequest('classify',item.recognitionPhoto?.image||item.image,item.id,item.segmentHint);}
+  try{if(!localReady)await enableLocal();result=await localRequest('classify',image,item.id,item.segmentHint);}
   catch(error){recognitionUnavailable=true;throw error;}
   if(!batch.some(x=>x.id===item.id))return;
   if(typeof ClothingMemory!=='undefined'&&ClothingMemory.valid(result.recognitionMemory))item.recognitionMemory=result.recognitionMemory;
@@ -674,16 +682,16 @@ function scheduleMemoryReview(){
 }
 async function reviewRecognitionMemory(){
  if(typeof ClothingMemory==='undefined'||!db||memoryReviewRunning||busy||automaticRunning||localPending.size||document.hidden||document.querySelector('dialog[open]'))return;
- const week=ClothingMemory.week(),targets=items.filter(x=>(x.confirmedDetails||ClothingMemory.valid(x.recognitionMemory))&&(x.learningReviewedWeek!==week||!ClothingMemory.valid(x.recognitionMemory))).slice(0,8);
+ const week=ClothingMemory.week(),targets=items.filter(x=>recognitionSourcePhoto(x)&&(x.confirmedDetails||ClothingMemory.valid(x.recognitionMemory))&&(x.learningReviewedWeek!==week||!ClothingMemory.valid(x.recognitionMemory))).slice(0,8);
  if(!targets.length)return;
  memoryReviewRunning=true;let completed=0;
  try{if(!localReady)await enableLocal();for(const target of targets){
   if(busy||automaticRunning||localPending.size||document.hidden||document.querySelector('dialog[open]'))break;
-  const before=JSON.stringify(target),image=target.recognitionPhoto?.image||target.image;let result;
+  const before=JSON.stringify(target),image=recognitionSourcePhoto(target);if(!image)continue;let result;
   try{result=await localRequest(target.itemType==='Unknown'||!target.color?'classify':'features',image,null,target.segmentHint);}catch{break;}
   const current=items.find(x=>x.id===target.id);if(!current||JSON.stringify(current)!==before)continue;
   if(!ClothingMemory.valid(result.recognitionMemory))continue;
-  const value={...current,recognitionMemory:result.recognitionMemory,learningReviewedWeek:week};delete value.weeklySuggestion;const choice=result.choices?.[0];if(result.strong&&choice&&segmentationAllows(current,choice)&&current.category===choice.category){const fields={itemType:choice.itemType,...ClothingDetails.recognizedFields(choice,result.details)};delete fields.color;value.weeklySuggestion={fields,requiresConfirmation:true,week};}const saved=await saveMemoryReview(value);if(saved&&(current.recognitionPhoto?.image||current.image)===image){completed++;current.recognitionMemory=saved.recognitionMemory;current.learningReviewedWeek=saved.learningReviewedWeek;if(saved.weeklySuggestion)current.weeklySuggestion=saved.weeklySuggestion;else delete current.weeklySuggestion;}
+  const value={...current,recognitionMemory:result.recognitionMemory,learningReviewedWeek:week};delete value.weeklySuggestion;const choice=result.choices?.[0];if(result.strong&&choice&&segmentationAllows(current,choice)&&current.category===choice.category){const fields={itemType:choice.itemType,...ClothingDetails.recognizedFields(choice,result.details)};delete fields.color;value.weeklySuggestion={fields,requiresConfirmation:true,week};}const saved=await saveMemoryReview(value);if(saved&&recognitionSourcePhoto(current)===image){completed++;current.recognitionMemory=saved.recognitionMemory;current.learningReviewedWeek=saved.learningReviewedWeek;if(saved.weeklySuggestion)current.weeklySuggestion=saved.weeklySuggestion;else delete current.weeklySuggestion;}
  }
  }finally{memoryReviewRunning=false;render();if(completed===8&&!memoryReviewTimer)memoryReviewTimer=setTimeout(()=>{memoryReviewTimer=null;reviewRecognitionMemory().catch(()=>{});},20000);}
 }
@@ -692,7 +700,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)scheduleMe
 
 function saveMemoryReview(value){return queued(()=>new Promise((resolve,reject)=>{
  let saved=null;const tx=db.transaction('items','readwrite'),store=tx.objectStore('items'),read=store.get(value.id);
- read.onsuccess=()=>{const current=read.result;if(!current||(current.recognitionPhoto?.image||current.image)!==(value.recognitionPhoto?.image||value.image))return;
+ read.onsuccess=()=>{const current=read.result;if(!current||!recognitionSourcePhoto(value)||recognitionSourcePhoto(current)!==recognitionSourcePhoto(value))return;
  saved={...current,recognitionMemory:value.recognitionMemory,learningReviewedWeek:value.learningReviewedWeek};delete saved.weeklySuggestion;
  if(current.category===value.category&&value.weeklySuggestion)saved.weeklySuggestion=value.weeklySuggestion;store.put(saved);
  };tx.oncomplete=()=>resolve(saved);tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);

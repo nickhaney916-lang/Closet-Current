@@ -1,5 +1,33 @@
 # Closet Current master development checkpoint
 
+## Original-source protection for restored outfit records — October 18, 2026, Pacific
+
+- Continued from `422999cc1656910e76cceca55f315a4a74028da5` on draft PR #7.
+  Found that capture validated new worker crops but older/restored records could
+  still classify a cleaned display tile when their unmasked recognition crop
+  was missing. Shared source selection now refuses that fallback for outfit
+  records or segmentation hints, including empty/non-string crop values.
+- Automatic indexing, editor color preview/Fill missing details, background
+  feature review, and its storage callback use the original-source selector.
+  Missing source records retain their photos and details with a recovery message;
+  they cannot auto-save or bypass the gate through color-only confirmation.
+  A valid single-item source and existing valid outfit crop continue normally.
+- Background review filters missing-source records BEFORE its eight-item limit,
+  so eight incomplete records cannot indefinitely starve later valid garments.
+  Save-time checks reject source loss while a draft/storage operation is queued.
+- Reproduced failures before fixes: automatic source fallback, editor display
+  inference and background queue starvation. Added behavioral checks for no
+  inference calls, unchanged source/display photos, continued valid-item
+  processing, background skip and storage rejection. Existing synthetic outfit
+  fixtures now explicitly provide the raw crops the real worker requires.
+- Local build passed; full Node suite **807 total, 804 passed, 0 failed,
+  3 skipped**. These verify software behavior, not real-photo mask accuracy.
+  Exact-code GitHub mobile and real-photo workflows remain to be inspected
+  after publication. Layered-photo benchmark was last 2 uncertain regions,
+  0 automatic saves; no new accuracy or completed AI try-on claim.
+- No production merge/deploy, paid services, Drive Duel changes, original-photo
+  replacement, model changes, threshold relaxation or manual-crop requirement.
+
 ## Small-source separation recovery and complete owned-piece swap cycling — October 18, 2026, Pacific
 
 - Resumed PR #7 at `ec2103484b2e7e33655ed25183fa03fcc5af6e35`;
