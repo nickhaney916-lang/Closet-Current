@@ -34,6 +34,11 @@ test('different third frame surfaces garment form risk but does not silently app
  assert.equal(r.canPromoteThresholds,false);
  assert.equal(r.autoSavedGarments,0);
  assert.equal(r.frameSubtypeAgreementPercent,50);
+ assert.equal(r.simulatedUnanimityGate.onlyCounterfactual,true);
+ assert.equal(r.simulatedUnanimityGate.productionPolicyChanged,false);
+ assert.deepEqual(r.simulatedUnanimityGate.retainedWrongTypeIds,['sneaker'],
+  'agreement across three framings can still preserve a confidently wrong subtype');
+ assert.deepEqual(r.simulatedUnanimityGate.deferredWrongTypeIds,['shirt']);
 });
 test('malformed or missing third-framing model evidence cannot be counted as proof',()=>{
  assert.throws(()=>auditSubtypeFraming(truth,[shirt,sneaker]),/Missing source result/);
