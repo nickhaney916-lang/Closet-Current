@@ -77,3 +77,25 @@ application CI tests the module on the development branch.
 https://supabase.com/docs/guides/auth/managing-user-data
 and Storage deletion:
 https://supabase.com/docs/guides/storage/management/delete-objects .
+
+
+## October 18 verified DB lock candidate — still unapplied
+
+A staged candidate lives in
+`supabase/design/account-deletion-write-barrier.DRAFT.sql`.
+It has **not** been made into an approved migration or executed on the
+live Supabase project. Its internal server-only tombstone and
+transaction-scoped owner locks protect backup and Storage metadata
+INSERT/UPDATE, and keep a lock after Auth deletion so old JWTs do not
+recreate a closet.
+
+A disposable PostgreSQL 16 CI runner executes a real SQL smoke test and
+a concurrent two-session upload/deletion race. [Run 39180835112](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39180835112)
+passed: 12 coordinator tests, schema policy test, and live disposable-PG
+race all green. This is **not** sufficient to claim end-to-end deletion
+or real Supabase Storage compatibility. Supabase Storage may perform
+multi-stage object uploads; verify object-byte orphan behavior and trigger
+compatibility with the actual Storage API on a disposable project before
+approving schema changes. The deployed deletion entrypoint is still
+disabled with HTTP 503. No real data or account was changed.
+

@@ -1,6 +1,62 @@
 # Closet Current master development checkpoint
 
 
+## Disposable-database deletion lock design and concurrency validation — October 18, 2026 (Pacific)
+
+- **Next engineering priority completed as a staged, undeployed design.**
+  Added `supabase/design/account-deletion-write-barrier.DRAFT.sql`:
+  server-only `closet_internal.deletion_locks` owner-UUID tombstone
+  table **without an Auth FK** (so the lock survives Auth deletion
+  and unexpired JWTs); privileged
+  `closet_internal.begin_account_deletion(uuid)` grants execute **only to
+  service_role**; and PostgreSQL transactional advisory-lock guards on
+  both `public.closet_backups` INSERT/UPDATE and
+  `storage.objects` INSERT/UPDATE for `closet-private` owner prefixes.
+  Existing Storage DELETE and backup DELETE remain available for
+  ordered cleanup. Server-wide migration not generated, applied or deployed.
+- The guards serialize a deletion lock with in-flight backup writes and
+  Storage metadata uploads; new uploads/backup changes are blocked after
+  the tombstone commits. Storage renames between buckets/owners check both
+  OLD and NEW paths; caller-selected account IDs do not authorize deletion.
+  Tombstones must **not** be automatically cleared when Auth users disappear.
+  Note: metadata transaction serialization is verified; separate
+  Storage object-byte orphan handling, real upload service behavior,
+  older signed-JWT endpoint authorization and operational tombstone
+  retention have NOT been independently validated.
+- Added actual disposable PG16 smoke test
+  `tests/account-deletion-lock-postgres.sql` and coordinated
+  two-process PG transaction race
+  `scripts/test-account-deletion-lock-race.mjs`.
+  CI `.github/workflows/account-deletion-lock.yml` starts an isolated
+  postgres:16 service, applies only the DRAFT SQL to this isolated database,
+  tests private lock grants, per-owner isolation, blocking late writes,
+  allowing cleanup deletes, guarding cross-bucket moves and surviving
+  simulated Auth deletion; then starts an upload transaction that holds
+  the advisory lock, verifies deletion waits for COMMIT, prevents the
+  next upload and permits an unrelated owner's write.
+- Verified [disposable Postgres run 39180835112](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39180835112)
+  at code commit `be454dbaff236f71a0362928211de5b61fac27b3`:
+  `ACCOUNT_DELETION_DATABASE_GUARD: passed`;
+  `ACCOUNT_DELETION_WRITE_RACE`:
+  `inFlightUploadSerialized=true`,
+  `lateWriteRejected=true`,
+  `otherOwnerUnaffected=true`;
+  all **12 account-deletion coordinator synthetic tests passed, 0 failed**.
+  The full application `simulate` GitHub check at this commit also
+  passed. Other unrelated experiment checks may complete separately.
+- The real `supabase/functions/account-delete/index.ts` still returns
+  HTTP **503**, and no live server adapter is wired up. It cannot read,
+  export, delete or wipe any real account. **Do not promote to a live
+  migration or enable UI:** a disposable-project Supabase Storage upload/
+  RPC compatibility test, secure verified-bearer/fresh-password server
+  adapters, server-enforced lock activation from verified identity,
+  complete storage byte cleanup/orphan inspection, irreversible-confirm
+  UX, support process, final legal/guardian policy and actual device
+  acceptance are still required before account deletion can be offered.
+- No change to production, paid services, real user data or Drive Duel.
+
+
+
 ## Server-only safe account deletion coordinator — October 18, 2026, Pacific
 
 - **Completed the server algorithm and synthetic regression priority** on
