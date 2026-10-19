@@ -1,5 +1,143 @@
 # Closet Current master development checkpoint
 
+## Prepaid two-pass HTTP integration and actual local Supabase — October 19, 2026, Pacific
+
+- Isolated PR #13 continues from `26da08cc`. Runtime integration commit
+  `5914d8143c313a6a0508ee894113c2ccd65e15f9`; complete Deno options typing
+  at `b7e4524be0622ad4b593037bc0ed53a20f1199e0`. Other PR branches untouched.
+- The actual Deno entrypoint now constructs the shared HTTP handler, real
+  HMAC job signer/verifier, server-only REST RPC transport and coordinator.
+  BOTH `RESERVED_PAID_INFERENCE_APPROVED=false` and
+  `CHAINED_PAID_INFERENCE_APPROVED=false` remain in source. Environment/body
+  flags cannot approve paid calls. No endpoint or hosted SQL was deployed.
+- A two-pass root atomically reserves TWO quota units before the first POST;
+  continuation uses its prepaid slot without an extra quota unit. A SHA-256
+  of the second selected crop binds its slot. Tests reject a one-unit budget,
+  changed second image, owner/figure/category changes and reused predecessor.
+  Reserved/unknown slots retain quota without automatic expiry/refund.
+- Client preflights BOTH source crops before any submission. Stable request
+  IDs and rendered-input digests support identical retry/reload while the last
+  session record survives; no source pixels stored in sessionStorage. Image
+  hashes are computed individually to avoid constructing a giant photo JSON.
+  Unsupported shoe/layer changes reuse the provider request identity. Recovery
+  after cleared/denied storage or switching attempts is NOT guaranteed.
+- HTTP checks online authenticated owner, origin/method, actual 8 MB body
+  limit independent of Content-Length, user-bound signed predecessor completion
+  and server-chosen model input. Transport/provider errors are sanitized.
+- Full local build/suite: **846 total, 843 passed, 0 failed, 3 skipped**.
+  Eleven HTTP integration tests and two new budget checks pass. Initial CI
+  exposed incomplete inferred JavaScript option types; final explicit handler
+  interface resolves Deno check without weakening runtime checks.
+- Actual local Supabase integration PASSED in jobs `118115407134` and
+  `118116536993`: pinned CLI 2.121.0 stack, actual SDK 2.75.0 Auth sign-in/RPC,
+  real Auth verification and REST RPC, real loopback HTTP, prepaid continuation
+  at global cap, different-ID continuation replay, foreign-account rejection,
+  and unknown-outcome retry hold. Synthetic identities/containers destroyed.
+  Hosted Supabase=false, actual provider calls=0, actual phone=false.
+- [Final CI run 39269418763](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39269418763)
+  at `b7e4524b` passed ALL THREE jobs: build, 843 Node tests passed/0 failed/
+  3 skipped, Deno check, actual PostgreSQL races, actual local Supabase Auth/
+  SDK/RPC plus loopback HTTP, single-garment mock, Pixel Chromium/iPhone WebKit
+  emulation and owned-only Style this save/reload. Both emulated devices report
+  stable request IDs, both sources preflighted, whole-outfit budget requested,
+  corrupt/stale results blocked and zero page errors. Temporary services were
+  destroyed. This is local software/emulation evidence, not real model fidelity.
+- Updated ledger integration guide and phone packet. Remaining: approved
+  hosted migration/configuration/privilege review, operator reconciliation,
+  idempotency-preserving retention, pilot limits and deliberate new-generation
+  consent/recovery UX, provider currency cap, licensed assets and privacy terms,
+  protected staging, approved actual model fidelity and physical Android/iPhone.
+  The shared handler runs through Node loopback HTTP locally; this does not
+  prove a deployed Deno gateway or physical device behavior.
+- Validation tracks remain **2/4 (50%)**, not overall product/accuracy progress.
+  Live inference=0; real phones=0/2. No merge/deployment/costs/customer photos/
+  Drive Duel change. Original-photo recognition/storage/indexing untouched.
+
+
+## Staged durable try-on submission ledger — October 19, 2026, Pacific
+
+- Continued isolated PR #13 from `8206c500`; code commit
+  `2936c61ef604163ee112fbd0558136dbbc8e4f58`. No other PR branch modified.
+- Added a default-disabled server-only coordinator, injected RPC adapter and
+  UNDEPLOYED SQL draft. Atomic global transaction locking protects per-owner
+  and global rolling 24-hour job quotas. Request UUID plus payload digest
+  binds starts; unique owner/predecessor protects continuations even with new
+  request UUIDs. Accepted replays reuse the provider job; reserved/unknown
+  outcomes never automatically retry/refund. Lost database acknowledgments
+  cannot erase accepted state. No images or signing/provider tokens stored.
+- Local full build/suite: **833 total, 830 passed, 0 failed, 3 skipped**.
+  Eleven focused coordinator/adapter checks pass; no real inference.
+- CI run `39266063180`, disposable PostgreSQL job `118105823401` passed:
+  actual PostgreSQL 16 reservations under concurrent workers, per-owner/global
+  limits, different-ID continuation replay, owner isolation, denied browser
+  roles, unknown provider timeout, and committed-but-lost acceptance response.
+  Defaults disabled/zero. Actual SDK=false, hosted Supabase=false, actual
+  provider calls=0. No real customer data or hosted SQL changes.
+- [CI run 39266063180](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39266063180)
+  passed BOTH jobs: 830 Node checks passed, 0 failed, 3 skipped; build and
+  Deno check; single-garment mock, Pixel Chromium + iPhone WebKit emulation
+  with zero page errors, and owned-only Style this save/reload. Code SHA
+  `2936c61e` verified; subsequent documentation commits do not change runtime.
+- Read `docs/TRYON-SUBMISSION-LEDGER-DRAFT.md` before integration. This module is
+  NOT imported by the live HTTP entrypoint; no hosted ledger exists and paid
+  second-pass inference remains hard-disabled. It is not production protection.
+  HTTP/SDK integration, reviewed quotas and whole-outfit budget policy, operator
+  reconciliation, metadata retention, provider currency cap, assets/consent,
+  protected staging, actual provider fidelity and physical phones remain open.
+- Four-track validation remains **2/4 (50%)**, not overall product completion:
+  software and emulation passed previously; live AI and actual phones untested.
+  No merge/deployment/costs/Drive Duel change. Original photos and indexing
+  untouched. Regular ChatGPT conversation remains the main coordination thread.
+
+
+## Parallel multi-garment rendering safeguards — October 19, 2026, Pacific
+
+- Isolated draft PR #13 (`work/multigarment-integrity-phone-qa-20261019`)
+  targets draft PR #12, parent `5e9cb665054b022a7ccfeced79ecdcef957b8b1b`.
+  PRs #7/#10/#11/#12 and their branches were not modified. The regular
+  ChatGPT conversation remains the owner's main coordination thread.
+- Published code commits: `43ecc9aede6cdbb856fbca9ce053340d0ed6c299`
+  and `f033a0a65d0a7c18757b0613ae1ff98d6e02e148`.
+  Fixed signed-job token loss after a processing reply, malformed start
+  handling, polling after stale-input changes, and prior successful images
+  lingering during failed regeneration. Input snapshots now include owner
+  identity. Source crops and each stage output must decode before submission,
+  continuation or display. Requests time out without automatic resubmission;
+  an HTTP abort does not cancel an already accepted provider job.
+- Four behavioral regressions fail against the PR #12 parent and pass with
+  the fix. Latest local build/full Node suite: **822 total, 819 passed,
+  0 failed, 3 skipped**. Skips are licensed-photo cases that require the
+  dedicated pilot fixture, not successful image-quality measurements.
+- CI code run `39264519514` at `43ecc9ae` passed full Node suite (816 passed,
+  0 failed, 3 skipped), Deno check, mocked single-garment flow, both multi-poll
+  Pixel 7 Chromium/iPhone 13 WebKit emulations, and owned-only Style this
+  mobile save/reload. Both engines reported zero page errors, corrupt
+  intermediate/final images blocked and previous failed previews cleared.
+- Follow-up [code run 39264859926](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39264859926)
+  at `f033a0a6` **passed every step**: 819 Node tests passed, 0 failed,
+  3 skipped; Deno check; single-garment mock; Pixel Chromium/iPhone WebKit
+  emulation, including corrupt SOURCE rejection before any start; owned-only
+  Style this mobile save/reload. Both engines reported zero page errors.
+  Validation-track completion is **2/4 (50%)** using equal weighting for
+  software regression, browser emulation, live AI fidelity and actual hardware.
+  This is not an overall product-completion or image-accuracy percentage.
+  Real provider calls: 0. Physical Android/iPhone runs: 0/2.
+- Added `benchmark/MULTIGARMENT-PHONE-PREPARATION-20261019.md` and
+  `benchmark/MULTIGARMENT-PHONE-EVIDENCE-TEMPLATE.json` with null/unexecuted
+  hardware fields, billing-disabled checks, separate live fidelity phase,
+  private evidence requirements and SHA-256 identity comparisons. No
+  protected staging deployment, test account or physical phone was provisioned.
+- Release blockers remain: approved live provider inference preserving BOTH
+  garments, physical Android AND iPhone reports, protected staging, licensed
+  model assets, disclosure/retention approval, durable per-user quotas and
+  atomic start/continuation idempotency plus provider spend cap. A signed
+  stage-one token alone does NOT prevent duplicate continuation submission.
+  `CHAINED_PAID_INFERENCE_APPROVED=false` remains unchanged.
+- No live inference, billed generations, customer-photo upload, merge,
+  production deployment or Drive Duel change. Original-photo storage,
+  original-photo-first recognition and wardrobe indexing were untouched.
+
+
 ## Original-source protection for restored outfit records — October 18, 2026, Pacific
 
 - Continued from `422999cc1656910e76cceca55f315a4a74028da5` on draft PR #7.

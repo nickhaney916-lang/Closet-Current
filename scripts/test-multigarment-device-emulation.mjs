@@ -8,6 +8,8 @@ async function check(engine,device,label){
  const browser=await engine.launch({headless:true});
  try{
   const page=await browser.newPage({...device});
+  await page.route('https://closet-current.test/**',r=>r.fulfill({body:'<!doctype html>'}));
+  await page.goto('https://closet-current.test/');
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.setContent('<!doctype html><html><body>'+
     '<select id="tryOnFigure"><option value="female">Female</option><option value="male">Male</option></select>'+
@@ -32,7 +34,8 @@ async function check(engine,device,label){
    window.closetAuth={getAccessToken:async()=>'fake-local-jwt'};
   },images);
   const calls=[];
-  let delaySecond=false;
+  let delaySecond=false,corruptStage=null,rejectStage=null;
+  const polls=new Map();
   await page.route('https://hlkgymugtfbirlpunsra.supabase.co/functions/v1/ai-try-on',async route=>{
    const request=route.request();
    const headers={'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'authorization,content-type',
@@ -41,10 +44,15 @@ async function check(engine,device,label){
    const body=request.postDataJSON();calls.push(body);
    let answer;
    if(body.action==='availability')answer={status:'ready',multiGarmentReady:true};
-   else if(body.action==='start')answer={status:'processing',token:'signed-stage-one'};
+   else if(body.action==='start'){polls.clear();answer={status:'processing',token:'signed-stage-one'};}
    else if(body.action==='continue')answer={status:'processing',token:'signed-stage-two'};
    else if(body.action==='status'){
-    if(body.token==='signed-stage-one')answer={status:'completed',image:images.first};
+    assert.ok(['signed-stage-one','signed-stage-two'].includes(body.token),'every poll retains a valid signed job token');
+    const count=(polls.get(body.token)||0)+1;polls.set(body.token,count);
+    if(rejectStage===body.token)return route.fulfill({status:503,headers,contentType:'application/json',body:JSON.stringify({error:'Synthetic provider unavailable'})});
+    if(count===1)answer={status:'processing'};
+    else if(corruptStage===body.token)answer={status:'completed',image:'data:image/jpeg;base64,'+'A'.repeat(160)};
+    else if(body.token==='signed-stage-one')answer={status:'completed',image:images.first};
     else{
      if(delaySecond)await new Promise(done=>setTimeout(done,900));
      answer={status:'completed',image:images.final};
@@ -67,6 +75,18 @@ async function check(engine,device,label){
   const start=calls.find(x=>x.action==='start'),second=calls.find(x=>x.action==='continue');
   assert.equal(start.garmentImage,images.top);
   assert.equal(start.category,'tops');
+  assert.equal(start.plannedPasses,2,'both passes must be budgeted before first submission');
+  assert.match(start.nextGarmentDigest,/^[a-f0-9]{64}$/);
+  assert.match(start.requestId,/^[a-f0-9-]{36}$/);
+  assert.match(second.requestId,/^[a-f0-9-]{36}$/);
+  assert.notEqual(start.requestId,second.requestId);
+  const retryIdentity=await page.evaluate(async()=>{
+   const a=await tryOnAttemptFor(tryOnInputs());tryOnAttempt=null;
+   const b=await tryOnAttemptFor(tryOnInputs());
+   return {a,b,stored:JSON.parse(sessionStorage.getItem('closet-tryon-attempt-v1'))};
+  });
+  assert.deepEqual(retryIdentity.a,retryIdentity.b,'reload recovery must preserve request IDs');
+  assert.deepEqual(Object.keys(retryIdentity.stored).sort(),['digest','ids']);
   assert.equal(second.garmentImage,images.bottom);
   assert.equal(second.category,'bottoms');
   assert.equal(second.previousToken,'signed-stage-one');
@@ -76,6 +96,46 @@ async function check(engine,device,label){
   assert.match(await page.locator('#tryOnStatus').innerText(),/top \+ bottom/i);
   assert.match(await page.locator('#tryOnStatus').innerText(),/Not rendered: shoes/);
   assert.match(await page.locator('#tryOnStatus').innerText(),/earlier garments may change/);
+  assert.equal(calls.filter(x=>x.action==='status'&&x.token==='signed-stage-one').length,2);
+  assert.equal(calls.filter(x=>x.action==='status'&&x.token==='signed-stage-two').length,2);
+  // A failed second pass after regeneration cannot leave the previous result visible.
+  rejectStage='signed-stage-two';
+  await page.locator('#tryOnGenerate').click();
+  assert.equal(await page.locator('#tryOnImage').isHidden(),true);
+  await page.waitForFunction(()=>!tryOnBusy,null,{timeout:15000});
+  assert.match(await page.locator('#tryOnStatus').innerText(),/Synthetic provider unavailable/);
+  assert.equal(await page.locator('#tryOnImage').getAttribute('src'),null);
+  rejectStage=null;
+  // Valid base64 syntax with corrupt pixels cannot launch stage two.
+  corruptStage='signed-stage-one';
+  const continuesBefore=calls.filter(x=>x.action==='continue').length;
+  await page.locator('#tryOnGenerate').click();
+  await page.waitForFunction(()=>!tryOnBusy,null,{timeout:15000});
+  assert.match(await page.locator('#tryOnStatus').innerText(),/could not be decoded/);
+  assert.equal(calls.filter(x=>x.action==='continue').length,continuesBefore);
+  assert.equal(await page.locator('#tryOnImage').isHidden(),true);
+  // Corrupt final bytes are also never displayed.
+  corruptStage='signed-stage-two';
+  await page.locator('#tryOnGenerate').click();
+  await page.waitForFunction(()=>!tryOnBusy,null,{timeout:15000});
+  assert.match(await page.locator('#tryOnStatus').innerText(),/could not be decoded/);
+  assert.equal(await page.locator('#tryOnImage').isHidden(),true);
+  corruptStage=null;
+  // Invalid stored crop bytes must be rejected before a billable start.
+  const startsBefore=calls.filter(x=>x.action==='start').length;
+  await page.evaluate(()=>{items[0].image='data:image/jpeg;base64,'+'A'.repeat(160);onTryOnBoardChanged();});
+  await page.locator('#tryOnGenerate').click();
+  await page.waitForFunction(()=>!tryOnBusy,null,{timeout:5000});
+  assert.match(await page.locator('#tryOnStatus').innerText(),/Selected garment image could not be decoded/);
+  assert.equal(calls.filter(x=>x.action==='start').length,startsBefore);
+  await page.evaluate(x=>{items[0].image=x.top;onTryOnBoardChanged();},images);
+  // Bad second source must fail before even the first provider submission.
+  await page.evaluate(()=>{items[1].image='data:image/jpeg;base64,'+'A'.repeat(160);onTryOnBoardChanged();});
+  await page.locator('#tryOnGenerate').click();
+  await page.waitForFunction(()=>!tryOnBusy,null,{timeout:5000});
+  assert.match(await page.locator('#tryOnStatus').innerText(),/Selected garment image could not be decoded/);
+  assert.equal(calls.filter(x=>x.action==='start').length,startsBefore);
+  await page.evaluate(x=>{items[1].image=x.bottom;onTryOnBoardChanged();},images);
   const before=calls.length;
   await page.evaluate(()=>{items[1].image=items[0].image;onTryOnBoardChanged()});
   assert.equal(await page.locator('#tryOnImage').isHidden(),true,
@@ -96,7 +156,8 @@ async function check(engine,device,label){
    viewport:device.viewport,actualDevice:false,providerCalls:0,
    syntheticStarts:calls.filter(x=>x.action==='start').length,
    syntheticContinues:calls.filter(x=>x.action==='continue').length,
-   staleResultBlocked:true,sourcePhotosUnmodifiedByServer:true,pageErrors:errors.length};
+   staleResultBlocked:true,stablePollingTokens:true,corruptIntermediateBlocked:true,
+   corruptFinalBlocked:true,corruptSourceBlocked:true,bothSourcesPreflighted:true,stableRequestIds:true,wholeOutfitBudgetRequested:true,failedRegenerationCleared:true,pageErrors:errors.length};
  }finally{await browser.close();}
 }
 const results=[];

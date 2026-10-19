@@ -6,7 +6,7 @@ const definitions=source.slice(source.indexOf('function tryOnInputs(){'),source.
 if(!definitions.includes('function sameTryOnInputs('))throw Error('Missing exact photo identity comparator');
 const uri='data:image/jpeg;base64,'+'B'.repeat(150)+'STABLETRAILINGTWENTYFOUR';
 function environment(){
- const c={tryOnFigure:'female',currentBoard:{slots:{top:'piece',bottom:'pants'}},
+ const c={window:{closetAuth:{user:{id:'synthetic-owner-a'}}},tryOnFigure:'female',currentBoard:{slots:{top:'piece',bottom:'pants'}},
   items:[{id:'piece',category:'Tops',itemType:'T-shirt',image:uri},
    {id:'pants',category:'Bottoms',itemType:'Jeans',image:uri}]};
  vm.createContext(c);vm.runInContext(definitions,c);
@@ -45,4 +45,12 @@ test('snapshot retains source strings without cloning or expanding embedded garm
  assert.equal(c.sameTryOnInputs(snapshot,c.tryOnInputs()),true);
  assert.equal(c.sameTryOnInputs(null,c.tryOnInputs()),false);
  assert.ok(!source.includes('item?.image?.slice(-24)'), 'no lossy preview image signature');
+});
+
+test('an account change invalidates identical clothing inputs',()=>{
+ const c=environment(),before=c.tryOnInputs();
+ c.window.closetAuth.user={id:'synthetic-owner-b'};
+ assert.equal(c.sameTryOnInputs(before,c.tryOnInputs()),false);
+ c.window.closetAuth.user=null;
+ assert.equal(c.sameTryOnInputs(before,c.tryOnInputs()),false);
 });

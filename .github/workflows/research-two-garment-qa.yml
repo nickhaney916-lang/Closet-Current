@@ -1,11 +1,14 @@
 name: Research two-garment AI + device-emulated quality gates
 on:
   push:
-    branches: [research/true-multigarment-ai-tryon-20261018]
+    branches: [research/true-multigarment-ai-tryon-20261018, work/multigarment-integrity-phone-qa-20261019]
     paths:
       - 'public/ai-tryon.js'
       - 'public/ai-tryon-plan.js'
       - 'supabase/functions/ai-try-on/**'
+      - 'supabase/design/tryon-submission-ledger.DRAFT.sql'
+      - 'scripts/test-tryon-ledger-postgres.mjs'
+      - 'scripts/test-local-supabase-tryon-http.mjs'
       - 'tests/ai-tryon-*.test.*'
       - 'scripts/test-multigarment-device-emulation.mjs'
       - 'scripts/test-ai-tryon-pilot.mjs'
@@ -42,3 +45,86 @@ jobs:
         run: node scripts/test-multigarment-device-emulation.mjs
       - name: Existing Style this mobile viewport and closet-owned changes
         run: node scripts/test-style-my-new-item-mobile.mjs
+
+  disposable-submission-ledger:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: closet_tryon_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d closet_tryon_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate staged ledger script
+        run: node --check scripts/test-tryon-ledger-postgres.mjs
+      - name: Actual disposable PostgreSQL quota and replay concurrency tests
+        env:
+          PGHOST: 127.0.0.1
+          PGPORT: '5432'
+          PGUSER: postgres
+          PGPASSWORD: postgres
+          PGDATABASE: closet_tryon_test
+        run: |
+          command -v psql || (sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client)
+          node scripts/test-tryon-ledger-postgres.mjs
+
+  actual-local-supabase-http:
+    runs-on: ubuntu-latest
+    timeout-minutes: 22
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate local HTTP test before container startup
+        run: node --check scripts/test-local-supabase-tryon-http.mjs
+      - name: Start entirely local Supabase stack without hosted login
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/closet-tryon-supabase"
+          cd "$RUNNER_TEMP/closet-tryon-supabase"
+          npx --yes supabase@2.121.0 init --yes > "$RUNNER_TEMP/tryon-init.log" 2>&1
+          if ! npx --yes supabase@2.121.0 start --exclude studio,realtime,functions,mail,analytics,pooler > "$RUNNER_TEMP/tryon-start.log" 2>&1; then
+            echo "Local Supabase initialization failed; private logs withheld."
+            exit 1
+          fi
+          npx --yes supabase@2.121.0 status --output env > "$RUNNER_TEMP/tryon-local.env" 2>/dev/null
+      - name: Apply draft only to disposable local database
+        shell: bash
+        run: |
+          set -euo pipefail
+          command -v psql || (sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client)
+          set -a
+          source "$RUNNER_TEMP/tryon-local.env"
+          set +a
+          test "$API_URL" = "http://127.0.0.1:54321" || test "$API_URL" = "http://localhost:54321"
+          psql "$DB_URL" -X -v ON_ERROR_STOP=1 -q -f "$GITHUB_WORKSPACE/supabase/design/tryon-submission-ledger.DRAFT.sql"
+          psql "$DB_URL" -X -v ON_ERROR_STOP=1 -q -c "notify pgrst, 'reload schema';"
+      - name: Install pinned actual SDK into disposable runner
+        run: npm install --prefix "$RUNNER_TEMP/tryon-sdk" --no-save --no-package-lock --no-audit --no-fund @supabase/supabase-js@2.75.0
+      - name: Actual SDK, Auth, RPC and local HTTP integration; no live provider calls
+        shell: bash
+        run: |
+          set -euo pipefail
+          set -a
+          source "$RUNNER_TEMP/tryon-local.env"
+          set +a
+          export LOCAL_SDK_ROOT="$RUNNER_TEMP/tryon-sdk"
+          node scripts/test-local-supabase-tryon-http.mjs
+      - name: Destroy temporary local services
+        if: always()
+        shell: bash
+        run: |
+          cd "$RUNNER_TEMP/closet-tryon-supabase" 2>/dev/null || exit 0
+          npx --yes supabase@2.121.0 stop --no-backup > /dev/null 2>&1 || true

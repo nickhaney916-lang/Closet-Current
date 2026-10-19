@@ -20,13 +20,13 @@ function updateStandardModelPreview(){
 // equality compares the complete original selected input without lossy hashes.
 function tryOnInputs(){
  const selected=currentBoard?.slots||{};
- return {figure:tryOnFigure,slots:['top','bottom','layer','layer2','layer3','shoes'].map(slot=>{
+ return {owner:typeof window==='undefined'?null:window.closetAuth?.user?.id||null,figure:tryOnFigure,slots:['top','bottom','layer','layer2','layer3','shoes'].map(slot=>{
   const id=selected[slot]||null,item=items.find(x=>x.id===id);
   return {slot,id,category:item?.category||null,itemType:item?.itemType||null,image:item?.image||null};
  })};
 }
 function sameTryOnInputs(a,b){
- return !!a&&!!b&&a.figure===b.figure&&a.slots.length===b.slots.length&&
+ return !!a&&!!b&&a.owner===b.owner&&a.figure===b.figure&&a.slots.length===b.slots.length&&
   a.slots.every((x,i)=>{const y=b.slots[i];return x.slot===y.slot&&x.id===y.id&&
    x.category===y.category&&x.itemType===y.itemType&&x.image===y.image;});
 }
@@ -43,15 +43,35 @@ function onTryOnBoardChanged(){
   resetTryOnPreview();
  $('tryOnGenerate').disabled=tryOnBusy||!tryOnReady||!window.AiTryOnPlan?.plan(currentBoard,items).steps.length;
 }
-function tryOnRequest(token,body){
- return fetch('https://hlkgymugtfbirlpunsra.supabase.co/functions/v1/ai-try-on',{
+async function tryOnRequest(token,body){
+ const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),85000);
+ try{return await fetch('https://hlkgymugtfbirlpunsra.supabase.co/functions/v1/ai-try-on',{
   method:'POST',headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},
-  body:JSON.stringify(body),cache:'no-store'
+  body:JSON.stringify(body),cache:'no-store',signal:controller.signal
  }).then(async response=>{
   const result=await response.json().catch(()=>({}));
+  if(!result||typeof result!=='object'||Array.isArray(result))throw Error('Invalid try-on response');
   if(!response.ok)throw Error(result.error||'AI try-on is unavailable');
   return result;
- });
+ });}catch(error){
+  if(controller.signal.aborted)throw Error('AI request timed out. No automatic retry was made; a submitted job may still finish.');
+  throw error;
+ }finally{clearTimeout(timer);}
+}
+// Validate actual browser decoding before a second paid pass or visible output.
+// A base64-shaped string alone does not prove usable image bytes.
+async function decodeTryOnImage(value,label='Generated try-on'){
+ const message=label+' image could not be decoded';
+ if(!window.AiTryOnPlan.validImage(value))throw Error(label+' image is invalid');
+ const probe=new Image();probe.src=value;
+ let timer;
+ try{
+  await Promise.race([probe.decode(),new Promise((_,reject)=>{
+   timer=setTimeout(()=>reject(Error(message)),10000);
+  })]);
+  if(!probe.naturalWidth||!probe.naturalHeight)throw Error('Empty generated image');
+ }catch{throw Error(message);}
+ finally{clearTimeout(timer);probe.removeAttribute('src');}
 }
 // A status check never starts an AI generation or uploads a clothing photo.
 async function checkTryOnReadiness(){
@@ -77,19 +97,50 @@ async function checkTryOnReadiness(){
   onTryOnBoardChanged();
  }
 }
-async function tryOnOne(token,image,category,figure,isCurrent,previousToken=null){
+// Keep the same request IDs after an uncertain HTTP outcome, including reload.
+// Only a digest and random IDs enter sessionStorage; garment pixels stay out.
+async function tryOnDigest(value){
+ const bytes=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(value));
+ return Array.from(new Uint8Array(bytes),x=>x.toString(16).padStart(2,'0')).join('');
+}
+let tryOnAttempt=null;
+async function tryOnAttemptFor(signature,steps){
+ steps=steps||window.AiTryOnPlan.plan(currentBoard,items).steps.slice(0,tryOnMultiReady?2:1);
+ // Hash sources individually: avoid expanding a whole closet of base64 photos
+ // into one large JSON string. Unsupported shoe/layer changes reuse the job.
+ const inputs=[];
+ for(const step of steps)inputs.push({slot:step.slot,id:step.itemId,category:step.category,image:await tryOnDigest(step.image)});
+ const digest=await tryOnDigest(JSON.stringify({owner:signature.owner,figure:signature.figure,inputs}));
+ if(tryOnAttempt?.digest===digest)return tryOnAttempt;
+ try{
+  const saved=JSON.parse(sessionStorage.getItem('closet-tryon-attempt-v1'));
+  if(saved?.digest===digest&&Array.isArray(saved.ids)&&saved.ids.length===2&&
+   saved.ids.every(x=>typeof x==='string'&&/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(x)))
+   return tryOnAttempt=saved;
+ }catch{}
+ const uuid=()=>{
+  const bytes=crypto.getRandomValues(new Uint8Array(16));bytes[6]=(bytes[6]&15)|64;bytes[8]=(bytes[8]&63)|128;
+  const h=Array.from(bytes,x=>x.toString(16).padStart(2,'0')).join('');
+  return h.slice(0,8)+'-'+h.slice(8,12)+'-'+h.slice(12,16)+'-'+h.slice(16,20)+'-'+h.slice(20);
+ };
+ tryOnAttempt={digest,ids:[uuid(),uuid()]};
+ try{sessionStorage.setItem('closet-tryon-attempt-v1',JSON.stringify(tryOnAttempt));}catch{}
+ return tryOnAttempt;
+}
+async function tryOnOne(token,image,category,figure,isCurrent,previousToken=null,requestId,plannedPasses=1,nextGarmentDigest=null){
  let result=await tryOnRequest(token,previousToken?
-  {action:'continue',previousToken,figure,category,garmentImage:image}:
-  {action:'start',figure,category,garmentImage:image});
- if(typeof result.token!=='string')throw Error('AI try-on did not start');
+  {action:'continue',previousToken,figure,category,garmentImage:image,requestId}:
+  {action:'start',figure,category,garmentImage:image,requestId,plannedPasses,nextGarmentDigest});
+ if(result.status!=='processing'||typeof result.token!=='string'||!result.token)throw Error('AI try-on did not start');
  const jobToken=result.token;
  // One provider call per step. Status requests never submit extra billable jobs.
  for(let i=0;i<32;i++){
   if(!isCurrent())throw Error('Outfit changed; the old preview was discarded');
   await new Promise(resolve=>setTimeout(resolve,1500));
-  result=await tryOnRequest(token,{action:'status',token:result.token});
+  if(!isCurrent())throw Error('Outfit changed; the old preview was discarded');
+  result=await tryOnRequest(token,{action:'status',token:jobToken});
   if(result.status==='completed'){
-   if(!window.AiTryOnPlan.validImage(result.image))throw Error('Generated try-on image is invalid');
+   await decodeTryOnImage(result.image);
    if(!isCurrent())throw Error('Outfit changed; stale result discarded');
    return {image:result.image,jobToken:jobToken};
   }
@@ -103,6 +154,8 @@ async function generateTryOn(){
  if(!tryOnReady){$('tryOnStatus').textContent='AI try-on is not enabled for this account. No generation started.';return;}
  const plan=window.AiTryOnPlan.plan(currentBoard,items);
  if(!plan.steps.length){$('tryOnStatus').textContent='Choose a shirt, dress, or bottoms first.';return;}
+ // A failed regeneration must not leave the previous successful image visible.
+ resetTryOnPreview();
  const signature=tryOnInputs(),revision=++tryOnRevision,figure=tryOnFigure;
  const isCurrent=()=>revision===tryOnRevision&&sameTryOnInputs(signature,tryOnInputs());
  tryOnPendingInputs=signature;
@@ -115,6 +168,12 @@ async function generateTryOn(){
   const token=await auth.getAccessToken();
   let modelImage=null,priorJob=null;
   const enabledSteps=tryOnMultiReady?plan.steps:plan.steps.slice(0,1);
+  // Validate BOTH source photos before any paid submission or budget use.
+  for(const step of enabledSteps){
+   await decodeTryOnImage(step.image,'Selected garment');if(!isCurrent())return;
+  }
+  const attempt=await tryOnAttemptFor(signature,enabledSteps);
+  const nextDigest=enabledSteps.length===2?await tryOnDigest(enabledSteps[1].image):null;
   for(let i=0;i<enabledSteps.length;i++){
    if(!isCurrent())return;
    const step=enabledSteps[i];
@@ -122,7 +181,7 @@ async function generateTryOn(){
    // "continue" is allowed only when the server verifies a completed,
    // same-user/same-figure prior job and is independently approved for
    // multi-pass paid inference. Never submit a client-picked model photo.
-   const current=await tryOnOne(token,step.image,step.category,figure,isCurrent,priorJob);
+   const current=await tryOnOne(token,step.image,step.category,figure,isCurrent,priorJob,attempt.ids[i],i===0?enabledSteps.length:1,i===0?nextDigest:null);
    modelImage=current.image;priorJob=current.jobToken;
   }
   if(!isCurrent()||!modelImage)return;

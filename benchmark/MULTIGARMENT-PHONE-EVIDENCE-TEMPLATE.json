@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "status": "not-run",
+  "testKind": "physical-device",
+  "actualDevice": null,
+  "branchSha": null,
+  "stagingOrigin": null,
+  "testedAtWithOffset": null,
+  "testerAlias": null,
+  "device": {"makeModel": null, "osBuild": null, "browserVersion": null, "viewport": null, "network": null},
+  "billingEnabled": false,
+  "liveInferenceAuthorized": false,
+  "actualProviderCalls": 0,
+  "checks": {
+    "cameraDeniedThenGranted": null,
+    "originalPhotoDigestUnchangedAfterReload": null,
+    "originalPhotoFirstRecognition": null,
+    "ownedTopPinnedAndOwnedBottomSwap": null,
+    "disabledGenerationMakesZeroPaidCalls": null,
+    "lateResultHiddenAfterGarmentOrFigureChange": null,
+    "lateResultHiddenAfterAccountChange": null,
+    "backgroundLockRotationAndNetworkRecovery": null,
+    "screenReaderAndTextZoom": null,
+    "memoryAndResponsiveness": null
+  },
+  "liveAiFidelity": {
+    "status": "blocked-no-authorization",
+    "licensedModelAssetsVerified": null,
+    "durableQuotasAndIdempotencyVerified": null,
+    "providerSpendCapVerified": null,
+    "consentAndRetentionApproved": null,
+    "topOriginalDigest": null,
+    "bottomOriginalDigest": null,
+    "firstPassOutputDigest": null,
+    "secondPassOutputDigest": null,
+    "topPreservedAfterSecondPass": null,
+    "bottomIdentityPreserved": null,
+    "independentReviewerVerdict": null
+  },
+  "privateEvidenceReferences": [],
+  "failures": [],
+  "notes": "Template only. Null means untested, never passed. Do not include photos, tokens, account IDs, names or precise location in a shared report."
+}
