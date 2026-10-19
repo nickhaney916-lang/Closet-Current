@@ -134,3 +134,32 @@ test('wrong locked source SHA, mismatched blind packet or missing blind review c
   a=>{a.lockedSource.verified=false;}
  ]){const a=data();mutation(a);assert.throws(()=>score(a));}
 });
+
+test('blind-reviewed negative scene has no garment recall denominator or invented background false-positive claim',()=>{
+ const a=data();
+ for(const submission of [a.firstSubmission,a.secondSubmission]){
+  submission.sourceInventories[0].items=[];
+  submission.sourceInventories[0].uncertaintyNotes='Full original inspected; no visible wardrobe items.';
+ }
+ a.physicalInventory=null;a.approvedMasks=new Map();
+ const r=score(a);
+ assert.equal(r.status,'blind-observed-no-visible-garments');
+ assert.equal(r.observedPhysicalGarments,0);
+ assert.equal(r.unverifiedModelProposals,1);
+ assert.equal(r.classificationSpecificity,null);
+ assert.equal(r.predictedBackgroundFalsePositiveCount,null);
+ assert.equal(r.detectionRecall,null);
+ assert.equal(r.canRelease,false);
+});
+test('negative scene cannot accept a fabricated mask or unsafe AI proposal as reference',()=>{
+ const a=data();
+ for(const submission of [a.firstSubmission,a.secondSubmission]){
+  submission.sourceInventories[0].items=[];
+  submission.sourceInventories[0].uncertaintyNotes='No clothing in the verified original scene.';
+ }
+ a.physicalInventory=null;
+ assert.throws(()=>score(a),/Negative-control/);
+ a.approvedMasks=new Map();
+ a.modelProposals.get(id+'-candidate-01').reviewStatus='approved';
+ assert.throws(()=>score(a),/Unsafe prediction/);
+});
