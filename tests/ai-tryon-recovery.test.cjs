@@ -175,3 +175,9 @@ test('generation cannot start after account switch until availability has been c
  assert.match(c.$('tryOnStatus').textContent,/access must be checked/);
  assert.equal(c.calls.length,0);
 });
+
+test('verified login and refresh notify the try-on owner eligibility gate',()=>{
+ const auth=fs.readFileSync('public/auth.js','utf8');
+ assert.match(auth,/resolveReady\(data\.user\);\s*\/\/ A refreshed or newly authenticated identity/);
+ assert.match(auth,/if\(typeof window\.onTryOnBoardChanged==='function'\)window\.onTryOnBoardChanged\(\)/);
+});
