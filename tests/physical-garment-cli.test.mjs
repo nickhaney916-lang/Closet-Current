@@ -54,13 +54,14 @@ test('CLI blocks false complete-ten-photo scores and independently constrains sy
    sourceSha256:sources[9].sourceSha256,candidateSeeds:[]
   };await save();
   const setReviewed=async(i,actualCategory,modelClass)=>{
+   const form={Tops:'top',Bottoms:'shorts',Dresses:'dress',Outerwear:'outerwear',Shoes:'shoes'}[actualCategory];
    const scene=sources[i],target=scene.id+'-item-01',
          candidate=scene.id+'-candidate-01';
    await writeFile(join(originals,scene.image),scene.originalBytes);
    const anno={schemaVersion:1,image:scene.image,
     sourceSha256:scene.sourceSha256,reviewStatus:'approved',
     reviewer:'Synthetic Fixture A',approvedBy:'Synthetic Fixture B',
-    physicalTargetId:target,humanCategory:actualCategory,humanTargetLabel:'synthetic garment',
+    physicalTargetId:target,humanCategory:actualCategory,humanForm:form,humanTargetLabel:'synthetic garment',
     targetIndependentlyIdentifiedBy:'Synthetic Fixture A',seedModel:null,
     modelProposalId:null,...mask};
    const inventory={schemaVersion:1,status:'human-inventory-complete',
@@ -68,7 +69,7 @@ test('CLI blocks false complete-ten-photo scores and independently constrains sy
     originalPhotoVerified:true,allVisibleGarmentsAccountedFor:true,
     reviewedBy:'Synthetic Fixture A',approvedBy:'Synthetic Fixture B',
     reviewedAt:'2026-10-18T10:00:00Z',
-    targets:[{id:target,category:actualCategory,label:'synthetic garment'}]};
+    targets:[{id:target,category:actualCategory,form,label:'synthetic garment'}]};
    await writeFile(join(approved,target+'.mask.approved.json'),JSON.stringify(anno));
    await writeFile(join(approved,scene.id+'.inventory.json'),JSON.stringify(inventory));
    const seed={schemaVersion:1,image:scene.image,sourceSha256:scene.sourceSha256,
@@ -97,6 +98,8 @@ test('CLI blocks false complete-ten-photo scores and independently constrains sy
   assert.equal(output.completeTenPhotoAccuracy.physicalGarmentDetectionRecall,1);
   assert.equal(output.completeTenPhotoAccuracy.correctlyCategorizedGarmentRecall,.9);
   assert.equal(output.completeTenPhotoAccuracy.supportedCategoryCorrectRecall,.9);
+  assert.equal(output.completeTenPhotoAccuracy.correctlyIdentifiedFormRecall,.9);
+  assert.equal(output.completeTenPhotoAccuracy.missingReviewedFormLabels,0);
   assert.equal(output.completeTenPhotoAccuracy.predictionPrecision,1);
   assert.equal(output.canPromoteModel,false,'Even synthetic perfect masks cannot promote a model');
   assert.equal(output.sourceRgbChanged,false);
