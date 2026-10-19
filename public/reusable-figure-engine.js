@@ -37,7 +37,7 @@
     skipped.push(slot);continue;
    }
    used.add(item.id);
-   placements.push({slot,itemId:item.id,image:item.image,
+   placements.push({slot,itemId:item.id,image:item.image,category:item.category,primaryColor:item.color||null,
     rect:dress&&slot==='top'?{left:19,top:16,width:62,height:67}:RECTS[slot]});
   }
   return {figure:choice,figureImage:FIGURES[choice],placements,skipped,
