@@ -3,6 +3,7 @@
 // mockups, hidden paid calls, or automatic selfie uploads.
 let tryOnFigure='female',tryOnBusy=false,tryOnRevision=0,tryOnImage=null,tryOnFingerprint=null,tryOnPendingInputs=null;
 let tryOnReady=false,tryOnMultiReady=false,tryOnReadinessPending=true;
+let tryOnController=null;
 // These are lightweight local previews of the two fixed AI figures, not
 // generated try-on results. They make selecting a model possible offline.
 function updateStandardModelPreview(){
@@ -31,6 +32,7 @@ function sameTryOnInputs(a,b){
    x.category===y.category&&x.itemType===y.itemType&&x.image===y.image;});
 }
 function resetTryOnPreview(){
+ tryOnController?.abort(Error('Outfit changed; the old preview was discarded'));
  tryOnRevision++;tryOnImage=null;tryOnFingerprint=null;tryOnPendingInputs=null;
  const image=$('tryOnImage');if(image){image.hidden=true;image.removeAttribute('src');}
  $('outfitFigure')?.classList.remove('ai-tryon-active');
@@ -43,15 +45,63 @@ function onTryOnBoardChanged(){
   resetTryOnPreview();
  $('tryOnGenerate').disabled=tryOnBusy||!tryOnReady||!window.AiTryOnPlan?.plan(currentBoard,items).steps.length;
 }
-function tryOnRequest(token,body){
- return fetch('https://hlkgymugtfbirlpunsra.supabase.co/functions/v1/ai-try-on',{
+async function tryOnRequest(token,body,signal){
+ const controller=new AbortController(),cancel=()=>controller.abort(signal.reason);
+ if(signal?.aborted)cancel();else signal?.addEventListener('abort',cancel,{once:true});
+ const timer=setTimeout(()=>controller.abort(Error('AI try-on request timed out. No generation was retried. Check your connection before generating again.')),25000);
+ try{
+  if(controller.signal.aborted)throw controller.signal.reason;
+  const response=await fetch('https://hlkgymugtfbirlpunsra.supabase.co/functions/v1/ai-try-on',{
   method:'POST',headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},
-  body:JSON.stringify(body),cache:'no-store'
- }).then(async response=>{
-  const result=await response.json().catch(()=>({}));
-  if(!response.ok)throw Error(result.error||'AI try-on is unavailable');
+  body:JSON.stringify(body),cache:'no-store',signal:controller.signal
+  });
+  const result=await response.json().catch(()=>null);
+  if(!response.ok){
+   const error=Error(typeof result?.error==='string'?result.error:'AI try-on is unavailable');
+   error.retryable=body.action==='status'&&[408,429,500,502,503,504].includes(response.status);
+   throw error;
+  }
+  if(!result||typeof result!=='object'||Array.isArray(result))throw Error('AI try-on returned an unreadable response');
   return result;
+ }catch(error){
+  // Only read-only status polls can recover automatically. A start/continue
+  // POST might already have been accepted and must never be resubmitted.
+  if(signal?.aborted)throw signal.reason;
+  if(controller.signal.aborted){
+   const timeout=controller.signal.reason;timeout.retryable=body.action==='status';throw timeout;
+  }
+  if(body.action==='status'&&error?.name==='TypeError')error.retryable=true;
+  throw error;
+ }finally{clearTimeout(timer);signal?.removeEventListener('abort',cancel);}
+}
+function tryOnAbortable(promise,signal){
+ if(!signal)return promise;
+ return new Promise((resolve,reject)=>{
+  const cancel=()=>reject(signal.reason);
+  if(signal.aborted)reject(signal.reason);
+  else signal.addEventListener('abort',cancel,{once:true});
+  Promise.resolve(promise).then(resolve,reject).finally(()=>signal.removeEventListener('abort',cancel));
  });
+}
+function tryOnPollDelay(signal){
+ return new Promise((resolve,reject)=>{
+  const cancel=()=>{clearTimeout(timer);reject(signal.reason);};
+  const timer=setTimeout(()=>{signal?.removeEventListener('abort',cancel);resolve();},1500);
+  if(signal?.aborted)cancel();else signal?.addEventListener('abort',cancel,{once:true});
+ });
+}
+async function decodeTryOnImage(source,signal){
+ if(!window.AiTryOnPlan.validOutputImage(source))throw Error('Generated try-on image is invalid');
+ const image=new Image();
+ try{
+  image.src=source;
+  await tryOnAbortable(image.decode(),signal);
+  if(!image.naturalWidth||!image.naturalHeight||image.naturalWidth*image.naturalHeight>16_000_000)
+   throw Error('Unsupported image dimensions');
+ }catch(error){
+  if(signal?.aborted)throw signal.reason;
+  throw Error('Generated try-on image could not be decoded safely');
+ }finally{image.removeAttribute('src');}
 }
 // A status check never starts an AI generation or uploads a clothing photo.
 async function checkTryOnReadiness(){
@@ -77,19 +127,28 @@ async function checkTryOnReadiness(){
   onTryOnBoardChanged();
  }
 }
-async function tryOnOne(token,image,category,figure,isCurrent,previousToken=null){
+async function tryOnOne(token,image,category,figure,isCurrent,previousToken=null,signal){
  let result=await tryOnRequest(token,previousToken?
   {action:'continue',previousToken,figure,category,garmentImage:image}:
-  {action:'start',figure,category,garmentImage:image});
- if(typeof result.token!=='string')throw Error('AI try-on did not start');
+  {action:'start',figure,category,garmentImage:image},signal);
+ if(result.status!=='processing'||typeof result.token!=='string'||!result.token||result.token.length>1024)throw Error('AI try-on did not start');
  const jobToken=result.token;
+ let statusFailures=0;
  // One provider call per step. Status requests never submit extra billable jobs.
  for(let i=0;i<32;i++){
   if(!isCurrent())throw Error('Outfit changed; the old preview was discarded');
-  await new Promise(resolve=>setTimeout(resolve,1500));
-  result=await tryOnRequest(token,{action:'status',token:result.token});
+  await tryOnPollDelay(signal);
+  if(!isCurrent())throw Error('Outfit changed; the old preview was discarded');
+  try{
+   result=await tryOnRequest(token,{action:'status',token:jobToken},signal);
+   statusFailures=0;
+  }catch(error){
+   if(signal?.aborted||!error.retryable||++statusFailures>2)throw error;
+   $('tryOnStatus').textContent='Connection interrupted. Checking the same AI render…';
+   continue;
+  }
   if(result.status==='completed'){
-   if(!window.AiTryOnPlan.validImage(result.image))throw Error('Generated try-on image is invalid');
+   if(!window.AiTryOnPlan.validOutputImage(result.image))throw Error('Generated try-on image is invalid');
    if(!isCurrent())throw Error('Outfit changed; stale result discarded');
    return {image:result.image,jobToken:jobToken};
   }
@@ -103,8 +162,12 @@ async function generateTryOn(){
  if(!tryOnReady){$('tryOnStatus').textContent='AI try-on is not enabled for this account. No generation started.';return;}
  const plan=window.AiTryOnPlan.plan(currentBoard,items);
  if(!plan.steps.length){$('tryOnStatus').textContent='Choose a shirt, dress, or bottoms first.';return;}
+ // A fresh attempt must hide the previous image even if this attempt fails.
+ resetTryOnPreview();
  const signature=tryOnInputs(),revision=++tryOnRevision,figure=tryOnFigure;
  const isCurrent=()=>revision===tryOnRevision&&sameTryOnInputs(signature,tryOnInputs());
+ const controller=new AbortController();tryOnController=controller;
+ const deadline=setTimeout(()=>controller.abort(Error('AI try-on exceeded the preview time limit. No generation was retried.')),120000);
  tryOnPendingInputs=signature;
  tryOnBusy=true;$('tryOnGenerate').disabled=true;
  $('tryOnStatus').textContent='Generating a realistic AI try-on…';
@@ -112,7 +175,7 @@ async function generateTryOn(){
   // Preserve the user's real source photo; this is transient generated output.
   const auth=window.closetAuth;
   if(typeof auth?.getAccessToken!=='function')throw Error('Sign in to try on clothing');
-  const token=await auth.getAccessToken();
+  const token=await tryOnAbortable(auth.getAccessToken(),controller.signal);
   let modelImage=null,priorJob=null;
   const enabledSteps=tryOnMultiReady?plan.steps:plan.steps.slice(0,1);
   for(let i=0;i<enabledSteps.length;i++){
@@ -122,7 +185,10 @@ async function generateTryOn(){
    // "continue" is allowed only when the server verifies a completed,
    // same-user/same-figure prior job and is independently approved for
    // multi-pass paid inference. Never submit a client-picked model photo.
-   const current=await tryOnOne(token,step.image,step.category,figure,isCurrent,priorJob);
+   const current=await tryOnOne(token,step.image,step.category,figure,isCurrent,priorJob,controller.signal);
+   // Never continue from corrupt bytes or show a broken image as success.
+   await decodeTryOnImage(current.image,controller.signal);
+   if(!isCurrent())return;
    modelImage=current.image;priorJob=current.jobToken;
   }
   if(!isCurrent()||!modelImage)return;
@@ -133,7 +199,7 @@ async function generateTryOn(){
   // clothing identities were preserved in the final output. Full outfit
   // footwear/outer layers remain unsupported by v1.6.
   const rendered=enabledSteps.map(x=>x.slot),
-   unrendered=Object.keys(currentBoard?.slots||{}).filter(slot=>!rendered.includes(slot)),
+   unrendered=Object.keys(currentBoard?.slots||{}).filter(slot=>currentBoard.slots[slot]&&!rendered.includes(slot)),
    summary=rendered.map(x=>x==='top'&&plan.dress?'dress':x).join(' + ');
   $('tryOnStatus').textContent='AI-generated '+summary+' preview ('+rendered.length+
    ' pass'+(rendered.length===1?'':'es')+').'+
@@ -143,6 +209,7 @@ async function generateTryOn(){
   if(!isCurrent())return;
   $('tryOnStatus').textContent=error instanceof Error?error.message:'Try-on unavailable';
  }finally{
+  clearTimeout(deadline);tryOnController=null;
   tryOnBusy=false;tryOnPendingInputs=null;onTryOnBoardChanged();
  }
 }
