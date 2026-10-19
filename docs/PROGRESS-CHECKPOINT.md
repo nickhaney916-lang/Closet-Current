@@ -11,9 +11,12 @@
   automatic display approvals. New module remains diagnostic/held and is
   exercised with the existing inverse mesh, not default customer display.
 - Red shirt: 633x946 source copy / 316x473 guide; 11,680 uncertain boundary
-  pixels, 798 cleared neutral / 364 restored non-neutral pixels, 0 RGB edits,
+  pixels, 0 cleared foreground / 364 restored non-neutral pixels, 0 RGB edits,
   0 outside-band changes. All 23,808 garment-core and 32,483 background witness
   pixels retain their expected partial labels; no independent full-mask score.
+- Initial neutral-edge clearing failed browser validation (2 collar-patch
+  pixels erased). Removed that clearing stage: every projected foreground
+  pixel is now preserved. Failed experimental JSON is retained separately.
 - Comparison is same larger-grid internal projection vs refinement, not a
   pixel-identical PR #39 A/B. Original JPEG digests stay unchanged; repeated
   pinned-decoder reports match. Black-trim loss remains explicitly demonstrated

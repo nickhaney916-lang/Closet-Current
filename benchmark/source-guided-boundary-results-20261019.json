@@ -5,9 +5,9 @@
   "comparisonMode": "same-higher-resolution-source-grid internal guide projection versus refinement; not pixel-identical PR39 A/B",
   "pipelineFiles": {
     "public/dark-studio-garment-mask.js": "8e1de55f753c6ac9cb69c3e921f0b516eb54c7d133a4bf58d1625be3cf9f566e",
-    "public/source-guided-mask-refinement.js": "3bf714621611ae6e827b9c94502f309d928ab4d798a8bfb09788e97c2582bdce",
+    "public/source-guided-mask-refinement.js": "26df4ddb68fbe71d4a77ca1e3f75cbcc085cf6d963438a0165e596d361e83531",
     "public/local-garment-warp.js": "e4cb75ccad29b15d60eea723a7611c4ed5d0c2845d8f5c2c59402fd49088a697",
-    "scripts/measure-source-guided-boundaries.cjs": "67b867b15ec395a82ab99e8bb4522b77b1618fcaa1afb6774b308f08c9bb4f31",
+    "scripts/measure-source-guided-boundaries.cjs": "47c7a6b79f4e9e672c6e92e9afc464d8bd7c25b2201a885ca428484857463d36",
     "scripts/benchmark-source-guided-boundaries.py": "2c5073963ee1dcd3cf8ec547f6227a8277e3bc55887d077019dc02c241afdca0",
     "benchmark/local-fitting-real-photo-manifest.json": "9c3d0f663d6c9161e246c5e2afdf6bde95769ddff23d689469dbcd62e9594af9",
     "benchmark/dark-studio-source-witnesses.json": "97ff44c2a3db35d263877d9bc6fd206ece95984118e6ab963ce0714d626e289c"
@@ -55,11 +55,13 @@
       "completeBoundaryQualityVerified": false,
       "guideWidth": 316,
       "guideHeight": 473,
-      "clearedBoundaryPixels": 798,
+      "clearedBoundaryPixels": 0,
       "restoredBoundaryPixels": 364,
       "uncertainBoundaryPixels": 11680,
       "rgbBytesChanged": 0,
       "outsideBandChanges": 0,
+      "safetyMode": "preserve-projected-foreground",
+      "neutralForegroundPixelsRetained": 798,
       "partialWitnesses": [
         {
           "name": "logo",
@@ -86,22 +88,22 @@
           "name": "right-sleeve",
           "role": "boundary-ambiguous",
           "pixels": 868,
-          "opaque": 751,
-          "clear": 117
+          "opaque": 762,
+          "clear": 106
         },
         {
           "name": "left-shoulder",
           "role": "boundary-ambiguous",
           "pixels": 837,
-          "opaque": 829,
-          "clear": 8
+          "opaque": 832,
+          "clear": 5
         },
         {
           "name": "right-shoulder",
           "role": "boundary-ambiguous",
           "pixels": 648,
-          "opaque": 594,
-          "clear": 54
+          "opaque": 604,
+          "clear": 44
         },
         {
           "name": "hem",
@@ -177,7 +179,7 @@
             0.29
           ],
           "uncertain": 1718,
-          "clearedSourceNeutralPixels": 110,
+          "clearedSourceNeutralPixels": 0,
           "restoredSourceNonNeutralPixels": 50,
           "correctnessIndependentlyScored": false
         },
@@ -190,7 +192,7 @@
             0.53
           ],
           "uncertain": 972,
-          "clearedSourceNeutralPixels": 62,
+          "clearedSourceNeutralPixels": 0,
           "restoredSourceNonNeutralPixels": 33,
           "correctnessIndependentlyScored": false
         },
@@ -203,7 +205,7 @@
             0.51
           ],
           "uncertain": 774,
-          "clearedSourceNeutralPixels": 46,
+          "clearedSourceNeutralPixels": 0,
           "restoredSourceNonNeutralPixels": 24,
           "correctnessIndependentlyScored": false
         },
@@ -216,19 +218,19 @@
             0.93
           ],
           "uncertain": 1808,
-          "clearedSourceNeutralPixels": 106,
+          "clearedSourceNeutralPixels": 0,
           "restoredSourceNonNeutralPixels": 57,
           "correctnessIndependentlyScored": false
         }
       ],
       "bounds": {
         "left": 16,
-        "top": 173,
+        "top": 172,
         "width": 570,
-        "height": 687
+        "height": 688
       },
-      "candidateRgbaSha256": "3e74eb0ce6827013eb55d3ddabfb748b23a5f9de83c5076d63ead838116f2ebb",
-      "warpRgbaSha256": "49fb859dc8429b6823f58c9508bb12393f5a796a4b527a85439e3aedaea9a00a",
+      "candidateRgbaSha256": "4b5dc2bb0410c88a640381ffe0e4cfcbd76e31dac02a6917b2525825920bd81b",
+      "warpRgbaSha256": "4f57a0d1c377191de88c8d0039c6a5e661da22ebafc416c00048c89598230f5f",
       "maskRgbMeasurementsBeforeWarp": true,
       "independentFullMaskReference": null,
       "sourceFileUnchanged": true,

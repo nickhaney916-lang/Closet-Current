@@ -6,8 +6,9 @@ Isolated follow-up to PR #39 `8d009ec0`; existing PR branches are untouched. The
 
 `public/source-guided-mask-refinement.js` accepts a bounded original-pixel preview copy up to **600,000 pixels**. It derives an area-averaged guide up to 150,000 pixels internally from that exact buffer, then invokes PR #39's conservative dark-studio proposal. No externally supplied mask can be substituted from another photo or old outfit.
 
-The guide's one-cell inner/outer boundary becomes an explicit uncertainty band. Inside that band only, original higher-resolution RGB decides which dark-neutral pixels can join an exterior-connected four-neighbor flood and which non-neutral pixels remain opaque. Outside the band, the projected guide alpha is preserved exactly. No RGB paint, interior smoothing, morphological erosion, fabricated material or recovery of unseen fabric occurs. Existing source alpha is refused for this path and stays on its unchanged native-alpha route.
+The guide's one-cell inner/outer boundary becomes an explicit uncertainty band. Inside that band only, original higher-resolution RGB can restore non-neutral pixels that the projected guide omitted. **Every projected foreground pixel is preserved**, including dark material that resembles the backdrop. Outside the band, projected alpha is preserved exactly. No RGB paint, interior smoothing, erosion, invented material or recovery of unseen fabric occurs. Existing source alpha is refused for this path and stays on its unchanged native-alpha route.
 
+An earlier experiment cleared 798 source-neutral boundary pixels. Its Pillow witnesses passed, but browser emulation found **2 of 696 collar-patch pixels cleared**. That clearing stage was rejected; the retained experimental JSON is `benchmark/source-guided-clearing-experiment-20261019.json`. The current algorithm restores source-supported pixels only and clears **zero** projected foreground pixels.
 The final alpha is applied to a fresh copy of the same source RGB and the candidate is trimmed/passed into the existing local inverse mesh. Resampling by the mesh is separate from zero RGB edits during extraction. Every proposal remains `eligible:false`, `displayEligible:false` and `requiresIndependentMaskReview:true`. The customer page merely makes the module available for local diagnostics; normal outfit display/cache behavior remains held for these scenes.
 
 ## Actual evidence
@@ -16,14 +17,14 @@ Pillow 11.3.0, Python 3.12 / Node 22 runner:
 
 - 12 real original photos: **1 refined proposal (`commons-0002`), 11 without proposals; 0 automatic display approvals**.
 - Red-shirt source copy **633×946 (598,818 pixels)**; internally derived guide **316×473 (149,468 pixels)**. These are bounded preview copies, not a claim of full native-resolution extraction from the 1920×2868 original.
-- **11,680 uncertain boundary pixels** remain unverified. Compared with the internally projected guide on the SAME larger source grid, **798 source-neutral pixels become clear** and **364 source-non-neutral pixels become opaque**.
-- Region diagnostics: collar 110 clear / 50 opaque; left cuff 62 / 33; right cuff 46 / 24; hem 106 / 57. These are observed alpha changes, not true-positive/false-positive classifications.
+- **11,680 uncertain boundary pixels** remain unverified. Compared with the internally projected guide on the SAME larger source grid, **0 projected foreground pixels are cleared** and **364 source-non-neutral pixels become opaque**.
+- Region diagnostics: collar 0 clear / 50 restored; left cuff 0 / 33; right cuff 0 / 24; hem 0 / 57. These are observed alpha changes, not true-positive/false-positive classifications.
 - **23,808/23,808 pixels in 8 assistant-inspected garment-core patches stay opaque**; **32,483/32,483 pixels in 4 sampled background/neck/stand patches remain clear**. Three boundary-straddling patches remain explicitly ambiguous, not counted as pure fabric.
 - **0 RGB-byte edits before warp**, **0 alpha changes outside the band**, unchanged original JPEG hashes and deterministic repeat reports.
 
 This compares a guide derived from the larger source buffer against refinement of that same guide. It is not a pixel-identical A/B against PR #39's independently Pillow-resized 150k mask; decode/resampling methods differ. Partial source witnesses are assistant inspection, not independent full garment masks. No full-mask precision/recall, realistic fit, perfect collars/cuffs or competitor-quality claim is justified.
 
-Visual comparisons show source-guided boundary adjustments but retain some dark outlining and hard-alpha edges. The module cannot distinguish true black garment trim from an identical black backdrop. An explicit synthetic counterexample documents omitted black trim while requiring the result to remain held. Enclosed dark-logo preservation, thin colored boundary recovery, alpha/source immutability, band invariance and invalid/oversized refusal are software tests; those passes do not mean the counterexample has been solved.
+The current restoration-only proposal retains dark outlining and hard-alpha edges. The module cannot distinguish true black garment trim from an identical black backdrop. An explicit synthetic counterexample documents omitted black trim while requiring the result to remain held. Enclosed dark-logo preservation, thin colored boundary preservation, alpha/source immutability, band invariance and invalid/oversized refusal are software tests; those passes do not mean the counterexample has been solved.
 
 ## Reproduce
 

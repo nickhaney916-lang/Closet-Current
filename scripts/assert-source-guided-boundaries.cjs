@@ -10,7 +10,7 @@ for(const row of report.cases){
 const c=report.cases.find(x=>x.proposalAvailable);
 assert.equal(c.width,633);assert.equal(c.height,946);assert.equal(c.guideWidth,316);assert.equal(c.guideHeight,473);
 assert.equal(c.rgbBytesChanged,0);assert.equal(c.outsideBandChanges,0);assert.equal(c.independentFullMaskReference,null);
-assert.ok(c.clearedBoundaryPixels>0);assert.ok(c.restoredBoundaryPixels>0);
+assert.equal(c.clearedBoundaryPixels,0);assert.ok(c.restoredBoundaryPixels>0);
 assert.ok(c.uncertainBoundaryPixels>c.clearedBoundaryPixels+c.restoredBoundaryPixels);
 for(const p of c.partialWitnesses){
  if(p.role==='garment')assert.equal(p.opaque,p.pixels,p.name);

@@ -21,15 +21,16 @@ test('refinement changes only its declared uncertain boundary band',()=>{
  assert.ok(p.uncertainBoundaryPixels>0);assert.equal(p.outsideBandChanges,0);
  let cleared=0,restored=0;
  for(let i=0;i<p.alpha.length;i++){
+  assert.ok(p.alpha[i]>=p.projectedAlpha[i],'projected foreground cannot be erased');
   if(!p.uncertainty[i])assert.equal(p.alpha[i],p.projectedAlpha[i]);
   if(p.alpha[i]<p.projectedAlpha[i])cleared++;
   if(p.alpha[i]>p.projectedAlpha[i])restored++;
  }
- assert.equal(cleared,p.clearedBoundaryPixels);assert.equal(restored,p.restoredBoundaryPixels);
+ assert.equal(cleared,0);assert.equal(p.safetyMode,'preserve-projected-foreground');assert.equal(cleared,p.clearedBoundaryPixels);assert.equal(restored,p.restoredBoundaryPixels);
  const rgba=apply(d,p.alpha);
  for(let i=0;i<d.length;i++)if(i%4!==3)assert.equal(rgba[i],d[i]);
 });
-test('source-color boundary decisions can recover thin visible red fabric without inventing RGB',()=>{
+test('thin source-colored boundary pixels stay present without invented RGB',()=>{
  const {d,w,h}=source();
  for(let y=200;y<650;y++)d.set([210,35,40,255],(y*w+159)*4);
  const p=refine.propose(d,w,h,{category:'Tops',primaryColor:'Red'});

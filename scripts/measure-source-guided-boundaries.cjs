@@ -43,7 +43,7 @@ for(const row of rows){
   for(const [label,pixels]of [['projection',originalProjection],['candidate',candidate],['uncertainty',uncertaintyRgba],['warp',fitted]])fs.writeFileSync(row.rgbaPath+'.'+label,pixels);
   Object.assign(record,{guideWidth:p.guideWidth,guideHeight:p.guideHeight,clearedBoundaryPixels:p.clearedBoundaryPixels,
    restoredBoundaryPixels:p.restoredBoundaryPixels,uncertainBoundaryPixels:p.uncertainBoundaryPixels,rgbBytesChanged:rgbChanges,
-   outsideBandChanges,partialWitnesses:patches,boundaryRegions,bounds,candidateRgbaSha256:hash(candidate),warpRgbaSha256:hash(fitted),
+   outsideBandChanges,safetyMode:p.safetyMode,neutralForegroundPixelsRetained:p.experimentalNeutralForegroundPixels,partialWitnesses:patches,boundaryRegions,bounds,candidateRgbaSha256:hash(candidate),warpRgbaSha256:hash(fitted),
    maskRgbMeasurementsBeforeWarp:true,independentFullMaskReference:null});
  }
  records.push(record);

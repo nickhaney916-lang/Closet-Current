@@ -35,37 +35,27 @@
     if(xx>=0&&xx<gw&&yy>=0&&yy<gh&&guide.alpha[yy*gw+xx]!==value)band[y*gw+x]=1;
    }
   }
-  const n=width*height,baseline=new Uint8ClampedArray(n),uncertainty=new Uint8Array(n),
-   canClear=new Uint8Array(n),seen=new Uint8Array(n),queue=new Int32Array(n);
+  const n=width*height,baseline=new Uint8ClampedArray(n),uncertainty=new Uint8Array(n),alpha=new Uint8ClampedArray(n);
+  let uncertainPixels=0,restoredBoundary=0,experimentalClearable=0;
   for(let y=0;y<height;y++)for(let x=0;x<width;x++){
    const gx=Math.min(gw-1,Math.ceil((x+1)*gw/width)-1),gy=Math.min(gh-1,Math.ceil((y+1)*gh/height)-1),
     j=gy*gw+gx,i=y*width+x,at=i*4;
-   baseline[i]=guide.alpha[j];uncertainty[i]=band[j];
-   if(!band[j])canClear[i]=baseline[i]===0?1:0;
-   else{
-    const hi=Math.max(data[at],data[at+1],data[at+2]),lo=Math.min(data[at],data[at+1],data[at+2]);
-    canClear[i]=hi<=85&&hi-lo<=16?1:0;
-   }
-  }
-  let begin=0,end=0;
-  const push=i=>{if(canClear[i]&&!seen[i]){seen[i]=1;queue[end++]=i;}};
-  for(let x=0;x<width;x++){push(x);push((height-1)*width+x);}
-  for(let y=1;y<height-1;y++){push(y*width);push(y*width+width-1);}
-  while(begin<end){
-   const i=queue[begin++],x=i%width,y=(i-x)/width;
-   if(x>0)push(i-1);if(x+1<width)push(i+1);if(y>0)push(i-width);if(y+1<height)push(i+width);
-  }
-  const alpha=new Uint8ClampedArray(n);let clearedBoundary=0,restoredBoundary=0,uncertainPixels=0;
-  for(let i=0;i<n;i++){
-   alpha[i]=uncertainty[i]?(seen[i]?0:255):baseline[i];
-   if(uncertainty[i]){
-    uncertainPixels++;if(alpha[i]<baseline[i])clearedBoundary++;
-    if(alpha[i]>baseline[i])restoredBoundary++;
-   }
+   baseline[i]=guide.alpha[j];uncertainty[i]=band[j];alpha[i]=baseline[i];
+   if(!band[j])continue;
+   uncertainPixels++;
+   const hi=Math.max(data[at],data[at+1],data[at+2]),lo=Math.min(data[at],data[at+1],data[at+2]),
+    neutral=hi<=85&&hi-lo<=16;
+   // Browser evidence showed that deleting dark boundary pixels can erase
+   // collar material. Preserve EVERY projected foreground pixel, even if it
+   // resembles the background. Only restore source-supported non-neutral
+   // pixels in the uncertain band; keep the entire result held for review.
+   if(baseline[i]===255&&neutral)experimentalClearable++;
+   if(baseline[i]===0&&!neutral){alpha[i]=255;restoredBoundary++;}
   }
   return {proposalAvailable:true,eligible:false,displayEligible:false,requiresIndependentMaskReview:true,
    reason:'source-guided-boundary-proposal',alpha,projectedAlpha:baseline,uncertainty,
-   width,height,guideWidth:gw,guideHeight:gh,clearedBoundaryPixels:clearedBoundary,
+   width,height,guideWidth:gw,guideHeight:gh,clearedBoundaryPixels:0,experimentalNeutralForegroundPixels:experimentalClearable,
+   safetyMode:'preserve-projected-foreground',
    restoredBoundaryPixels:restoredBoundary,uncertainBoundaryPixels:uncertainPixels,
    outsideBandChanges:0,sourceAltered:false,garmentReconstructed:false,
    completeBoundaryQualityVerified:false};
