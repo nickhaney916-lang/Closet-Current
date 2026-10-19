@@ -1,0 +1,73 @@
+name: Research independently verifiable original-photo garment forms
+on:
+  push:
+    branches: [research/original-photo-form-ground-truth-20261019]
+    paths:
+      - 'benchmark/original-photo-form-review.mjs'
+      - 'benchmark/blind-original-form-review.mjs'
+      - 'scripts/audit-original-photo-form-ground-truth.mjs'
+      - 'scripts/stage-blind-original-form-review.mjs'
+      - 'tests/original-photo-form-review.test.mjs'
+      - 'tests/blind-original-form-review.test.mjs'
+      - '.github/workflows/research-original-form-ground-truth.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  original-photo-source-and-form-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify source-hash and never-invent-garment-truth regressions
+        run: node --test tests/original-photo-form-review.test.mjs tests/blind-original-form-review.test.mjs tests/recognition-benchmark.test.mjs tests/physical-garment-inventory.test.mjs
+      - name: Reuse actual completed browser inference from pinned reviewed photos
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          mkdir -p benchmark/original-source-form-audit
+          gh run download 39278360491 --repo "$GH_REPO" -n original-photo-third-framing-research -D benchmark/original-source-form-audit
+          test -s benchmark/original-source-form-audit/results.json
+      - name: Identify questionable subtype references without changing model or manifest
+        run: |
+          node scripts/audit-original-photo-form-ground-truth.mjs benchmark/manifest-holdout-16.json benchmark/locked-photo-sources.json benchmark/original-source-form-audit/results.json benchmark/original-source-form-audit/review-queue.json
+          node --input-type=module -e "
+            import fs from 'node:fs';
+            const q=JSON.parse(fs.readFileSync('benchmark/original-source-form-audit/review-queue.json','utf8'));
+            if(q.originalSourcePhotos!==16||q.clothingManifestPhotos!==13||
+               q.categoryAccuracyAfterIndependentReview!==null||
+               q.physicalItemRecall!==null||q.productionReady!==false||
+               q.customerAutoSaves!==0||
+               !['commons-0003','commons-0014','commons-0078'].every(id=>q.strongWrongTypeVsManifestIds.includes(id))||
+               !q.multipleItemTitleCueIds.includes('commons-0059'))
+              throw Error('Review-only original evidence is incomplete or misrepresented');
+            console.log('Confirmed actual source-audited subtype conflicts; human clothing forms remain unverified.');
+          "
+      - name: Create two source-only independent review packets without leaking manifest or AI answers
+        run: |
+          node scripts/stage-blind-original-form-review.mjs benchmark/original-source-form-audit/review-queue.json benchmark/original-source-form-audit/
+          node --input-type=module -e "
+            import fs from 'node:fs';
+            const p=JSON.parse(fs.readFileSync('benchmark/original-source-form-audit/blind-first-reviewer.json','utf8'));
+            const q=JSON.parse(fs.readFileSync('benchmark/original-source-form-audit/blind-second-reviewer.json','utf8'));
+            if(p.photoCount!==16||q.photoCount!==16||p.independentlyReviewed||q.independentlyReviewed||
+               p.modelPredictionsIncluded||q.modelPredictionsIncluded||
+               p.manifestCategoryLabelsIncluded||q.manifestCategoryLabelsIncluded||
+               p.originals.some(x=>x.sourceVisiblePhysicalGarments.length>0))
+              throw Error('Blind packets improperly contain invented garment truth');
+          "
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: original-form-review-queue-real-photo
+          path: |
+            benchmark/original-source-form-audit/review-queue.json
+            benchmark/original-source-form-audit/blind-first-reviewer.json
+            benchmark/original-source-form-audit/blind-second-reviewer.json
+          if-no-files-found: ignore
+          retention-days: 14
