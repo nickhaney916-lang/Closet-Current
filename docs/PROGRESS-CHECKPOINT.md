@@ -1,6 +1,71 @@
 # Closet Current master development checkpoint
 
 
+## Local Supabase deletion end-to-end + interruption recovery — October 18, 2026 (Pacific)
+
+- **Completed the previous red development test priority on draft PR #7.**
+  The actual local Supabase CLI 2.121.0 stack (Auth, Storage and
+  PostgREST) was started in a temporary GitHub Actions runner, using
+  **synthetic users only**. Existing `supabase/cloud-backup.sql`
+  and `supabase/design/account-deletion-write-barrier.DRAFT.sql` were
+  applied to that local stack, **not** to either hosted project.
+- The first real Storage run revealed a legitimate RLS behavior:
+  a foreign-account Storage DELETE request can produce **HTTP 200
+  with an empty array** while deleting nothing. Updated
+  `scripts/test-local-supabase-storage-deletion.mjs` to accept
+  that no-op result **only if it is empty**, then independently
+  list the target owner's private objects and assert their photo still
+  exists. An HTTP status alone never establishes deletion.
+- A second synthetic account workflow confirms real owner-scoped
+  private-photo reads and uploads, service-role-only lock RPC access,
+  locked owner's photo INSERT/UPDATE and backup RPC rejection,
+  normal writes for a different user, Storage API removal with
+  two separate empty-list verifications, backup removal,
+  final Auth deletion, and continued lock protection against an
+  expired/reused Auth identity's still-valid access token.
+- **Interrupted cleanup recovery was independently verified**: a
+  third synthetic user's two photos and backup were created;
+  the lock was acquired; only the first photo was removed
+  (simulated interruption); a fresh RPC request reacquired the
+  idempotent lock; attempted new uploads remained blocked;
+  the remaining photo was removed, the backup and Auth identity
+  were deleted, and unrelated user objects remained intact.
+- Added an early `node --check` to
+  `.github/workflows/account-deletion-storage-local.yml` so
+  malformed test scripts fail before expensive container startup.
+  An initial recovery-test run failed only because of a syntax error
+  in a test label; it was corrected before final verification.
+- **Verified** [local Supabase integration run
+  39186780893](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39186780893)
+  at code commit `d70708e9e05ee4de387af867bfcf379205837d14`:
+  `LOCAL_SUPABASE_STORAGE_ACCOUNT_DELETION`:
+  `realSupabaseStorageHttp=true`,
+  `realSupabaseAuthHttp=true`,
+  `userScopedStorage=true`,
+  `lockStopsUploads=true`,
+  `lockStopsBackupRpc=true`,
+  `otherOwnerPreserved=true`,
+  `privatePhotoRemoved=true`,
+  `postAuthTombstonePreserved=true`,
+  `interruptedCleanupRecovered=true`,
+  `localOnly=true`; no page/console error was reported by the
+  integration script. At review, 25/26 code-commit checks were
+  successful, with only an unrelated experimental model check running.
+- **Boundary:** This verifies real Supabase services **locally**,
+  not a hosted disposable Supabase project or actual production
+  configuration, service key rotation, operator-approved deletion UX,
+  passwordless reauthentication, full audit/retention policy, or
+  a permanent background recovery worker. It does NOT mean real
+  user self-service deletion can be enabled. The actual Deno
+  `supabase/functions/account-delete/index.ts` still unconditionally
+  responds HTTP **503** and has no admin client or deletion action.
+  Additional security/privacy review and owner's explicit approval
+  are still required before any hosted migration/deployment.
+- No real accounts/photos altered, no hosted SQL changes, no costs
+  approved, no production merge/deploy, and no Drive Duel changes.
+
+
+
 ## Local actual-Supabase Storage deletion validation — October 18, 2026 (Pacific)
 
 - **Partially completed, not verified end-to-end.** Existing connected
