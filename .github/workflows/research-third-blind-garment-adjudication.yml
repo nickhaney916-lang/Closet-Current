@@ -1,0 +1,45 @@
+name: Research independent third-blind garment adjudication
+on:
+  push:
+    branches: [research/independent-photo-adjudication-handoff-20261019]
+    paths:
+      - 'benchmark/independent-photo-adjudication.mjs'
+      - 'benchmark/blind-original-review-submissions.mjs'
+      - 'benchmark/blind-original-photo-review.html'
+      - 'scripts/prepare-independent-photo-adjudication.mjs'
+      - 'scripts/test-third-blind-photo-browser.mjs'
+      - 'tests/independent-photo-adjudication.test.mjs'
+      - '.github/workflows/research-third-blind-garment-adjudication.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  original-photo-adjudication-safe-handoff:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate exact original photo, incomplete/unknown forms and two independent reviewer records
+        run: |
+          node --test tests/independent-photo-adjudication.test.mjs tests/blind-original-review-submissions.test.mjs tests/blind-original-form-review.test.mjs tests/original-photo-form-review.test.mjs tests/physical-garment-inventory.test.mjs
+      - name: Install standalone Chromium and WebKit
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium webkit
+      - name: Third reviewer gets only hash-locked original; no two-reviewer answers or customer updates
+        run: node scripts/test-third-blind-photo-browser.mjs
+      - name: Ensure no manufactured human truth or paid model activation
+        run: |
+          node --input-type=module -e "
+            import fs from 'node:fs';
+            const c=fs.readFileSync('benchmark/independent-photo-adjudication.mjs','utf8');
+            if(!c.includes('specificFootwearSubtypeAccuracy:null')||
+               !c.includes('layeredPhysicalGarmentRecall:null')||
+               !c.includes('modelWeightsOrThresholdsModified:false')||
+               !c.includes('canRelease:false')||
+               !c.includes('approvedPixelMasks:0'))
+              throw Error('Unapproved model/physical-item accuracy must remain unmeasured');
+          "
