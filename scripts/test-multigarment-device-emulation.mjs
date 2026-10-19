@@ -87,7 +87,7 @@ async function check(engine,device,label){
   await page.evaluate(x=>{items[1].image=x.bottom;onTryOnBoardChanged();},images);
   delaySecond=true;
   await page.locator('#tryOnGenerate').click();
-  await page.waitForFunction(()=>tryOnBusy&&tryOnPendingInputs!==null,{timeout:3000});
+  await page.waitForFunction(()=>document.getElementById('tryOnStatus').textContent.includes('2 of 2'),null,{timeout:9000});
   await page.evaluate(()=>{items[0].itemType='Blouse';onTryOnBoardChanged()});
   await page.waitForFunction(()=>!tryOnBusy,null,{timeout:12000});
   assert.equal(await page.locator('#tryOnImage').isHidden(),true);
