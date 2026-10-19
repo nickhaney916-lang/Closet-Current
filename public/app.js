@@ -699,6 +699,7 @@ async function recognizeItem(item){
   const quality=await checkPhoto(sourcePhoto);
   if(!batch.some(x=>x.id===item.id))return;
   if(!categoryStillCurrent()){
+   item.localAnalyzed=false;item.scanFailed=true;
    item.localStatus='Photo or category changed while scanning. Retry to identify the new original photo.';
    return true;
   }
@@ -718,6 +719,7 @@ async function recognizeItem(item){
   catch(error){recognitionUnavailable=true;throw error;}
   if(!batch.some(x=>x.id===item.id))return;
   if(!categoryStillCurrent()){
+   item.localAnalyzed=false;item.scanFailed=true;
    item.localStatus='Photo or category changed during recognition. Retry to identify the new original photo.';
    return true;
   }
