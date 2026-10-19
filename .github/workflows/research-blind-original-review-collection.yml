@@ -1,0 +1,45 @@
+name: Research original-photo blind reviewer collection and reconciliation
+on:
+  push:
+    branches: [research/blind-original-photo-review-collection-20261019]
+    paths:
+      - 'benchmark/blind-original-photo-review.html'
+      - 'benchmark/blind-original-review-submissions.mjs'
+      - 'scripts/test-blind-original-photo-review-browser.mjs'
+      - 'scripts/reconcile-blind-original-reviews.mjs'
+      - 'tests/blind-original-review-submissions.test.mjs'
+      - '.github/workflows/research-blind-original-review-collection.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  original-photo-blind-review-validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate two-reviewer submissions, original source ids and no model promotion
+        run: |
+          node --test tests/blind-original-review-submissions.test.mjs tests/blind-original-form-review.test.mjs tests/original-photo-form-review.test.mjs tests/physical-garment-inventory.test.mjs
+      - name: Install isolated Chromium and WebKit browser emulation
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium webkit
+      - name: Open the real offline review page and verify SHA-hashed JPEG selection, source inventory and export
+        run: node scripts/test-blind-original-photo-review-browser.mjs
+      - name: Prove review collection never authorizes new customer garment indexing
+        run: |
+          node --input-type=module -e "
+            import fs from 'node:fs';
+            const code=fs.readFileSync('benchmark/blind-original-review-submissions.mjs','utf8');
+            const ui=fs.readFileSync('benchmark/blind-original-photo-review.html','utf8');
+            if(!code.includes('physicalGarmentRecall:null')||
+               !code.includes('independentMaskIoU:null')||
+               !code.includes('mayTrainOrAdjustModel:false')||
+               !ui.includes('crypto.subtle.digest')||
+               /https?:\/\/[^'\\x22]*\\.(?:js|css)/.test(ui))
+              throw Error('Blind reviewer research must remain provider-free, source-verified and non-releasing');
+          "
