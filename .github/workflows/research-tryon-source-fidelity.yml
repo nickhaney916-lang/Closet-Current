@@ -1,0 +1,29 @@
+name: Research AI try-on original-photo fidelity safeguards
+on:
+  push:
+    branches: [research/style-this-tryon-source-fidelity-20261018]
+    paths:
+      - 'public/ai-tryon.js'
+      - 'scripts/test-ai-tryon-pilot.mjs'
+      - 'tests/ai-tryon-source-identity.test.cjs'
+      - '.github/workflows/research-tryon-source-fidelity.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  preview-source-integrity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate original-photo identity, changes and in-flight cancellation
+        run: node --test tests/ai-tryon-source-identity.test.cjs tests/ai-tryon-plan.test.cjs
+      - name: Install offline browser test dependencies
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium
+      - name: Intercept every simulated try-on request and verify stale preview removal
+        run: node scripts/test-ai-tryon-pilot.mjs
