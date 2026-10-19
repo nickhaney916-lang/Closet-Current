@@ -94,6 +94,30 @@ export function clothingMaskGroups(map){
  }
  return output;
 }
+// Different semantic labels can refer to the SAME physical garment on a
+// layered outfit. For example a dress region can surround a class-4 shirt
+// proposal, or a skirt can overlap class-6 bottoms. A strong model confidence
+// for EACH pixel is not evidence of two separate physical wardrobe pieces.
+// Keep both original-source crops but block automatic color/category/save.
+// Bounding boxes are triage evidence only, not validated instance outlines.
+export function reviewOnlyOverlappingGarmentGroups(groups,{minimumSmallerBoxOverlap=.2}={}){
+ if(!Array.isArray(groups)||!Number.isFinite(minimumSmallerBoxOverlap)||
+    minimumSmallerBoxOverlap<.1||minimumSmallerBoxOverlap>.75)
+  throw Error('Invalid overlapping garment review inputs');
+ const ambiguousPairs=new Set(['4:7','5:6','5:7','6:7']),marked=new Set();
+ const boxArea=b=>(b.right-b.left)*(b.bottom-b.top);
+ for(let i=0;i<groups.length;i++)for(let j=i+1;j<groups.length;j++){
+  const a=groups[i],b=groups[j],pair=[a.id,b.id].sort((x,y)=>x-y).join(':');
+  if(!ambiguousPairs.has(pair))continue;
+  if(!a.bounds||!b.bounds||boxArea(a.bounds)<=0||boxArea(b.bounds)<=0)continue;
+  const overlapWidth=Math.max(0,Math.min(a.bounds.right,b.bounds.right)-Math.max(a.bounds.left,b.bounds.left));
+  const overlapHeight=Math.max(0,Math.min(a.bounds.bottom,b.bounds.bottom)-Math.max(a.bounds.top,b.bounds.top));
+  const fraction=overlapWidth*overlapHeight/Math.min(boxArea(a.bounds),boxArea(b.bounds));
+  if(fraction>=minimumSmallerBoxOverlap){marked.add(i);marked.add(j);}
+ }
+ return groups.map((group,i)=>marked.has(i)?
+  {...group,reviewOnlyReason:group.reviewOnlyReason||'overlapping-garment-classes'}:group);
+}
 // Research-only conservative route for clothing photographed without a
 // visible wearer. A large semantic region is NOT evidence of a clean garment:
 // explicitly block automatic saving and show original pixels for review.

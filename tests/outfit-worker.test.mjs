@@ -3,7 +3,7 @@ import * as segmentation from '../public/outfit-segmentation.mjs';
 import {diagnoseOutfitRegions} from '../public/outfit-diagnostics.mjs';
 import {dressClassCompetition} from '../public/dress-layer-review.mjs';
 const source=fs.readFileSync('public/outfit-worker.mjs','utf8');
-function setup({failLoad=false,failSecondCrop=false,noPerson=false,completeShoePair=false,twoUpper=false,weakUpper=false,flatLay=false,mixedDress=false,strongDress=false}={}){
+function setup({failLoad=false,failSecondCrop=false,noPerson=false,completeShoePair=false,twoUpper=false,weakUpper=false,flatLay=false,mixedDress=false,strongDress=false,overlapDress=false}={}){
  const sent=[],width=20,height=20,data=new Float32Array(18*width*height);data.fill(-10);for(let i=0;i<400;i++)data[i]=10;
  const shoeRegions=completeShoePair?[[9,5,15,4,4],[10,11,15,4,4]]:[[9,6,16,3,3],[10,10,16,3,3]];
  for(const [id,left,top,w,h]of [[4,5,4,8,5],[6,6,10,6,5],...shoeRegions,[11,7,1,4,3]])for(let y=top;y<top+h;y++)for(let x=left;x<left+w;x++){const i=y*width+x;data[i]=-10;data[id*400+i]=10;}
@@ -14,11 +14,14 @@ function setup({failLoad=false,failSecondCrop=false,noPerson=false,completeShoeP
    const i=y*width+x;data[i]=-10;data[7*400+i]=10;
   }
  }
- if(mixedDress||strongDress){
+ if(mixedDress||strongDress||overlapDress){
   data.fill(-10);for(let i=0;i<400;i++)data[i]=10;
   for(let y=4;y<16;y++)for(let x=5;x<15;x++){
    const i=y*20+x;data[i]=-10;data[7*400+i]=10;
    if(mixedDress)data[(y<10?4:5)*400+i]=8.5;
+  }
+  if(overlapDress)for(let y=6;y<10;y++)for(let x=7;x<11;x++){
+   const i=y*20+x;data[7*400+i]=-10;data[4*400+i]=10;
   }
   for(let y=1;y<4;y++)for(let x=8;x<12;x++){
    const i=y*20+x;data[i]=-10;data[11*400+i]=10;
@@ -141,4 +144,17 @@ test('ordinary strong dress without class alternatives is not falsely marked as 
  assert.ok(dress);
  assert.notEqual(dress.hint.displayFallbackReason,'dress-layer-conflict-review-only');
  assert.equal(h.sent.find(x=>x.type==='done')?.count,1);
+});
+
+test('layer-like overlapping dress and top class masks both require human source review',async()=>{
+ const h=setup({overlapDress:true});await h.run();
+ const pieces=h.sent.filter(x=>x.type==='piece').map(x=>x.piece);
+ assert.deepEqual(pieces.map(x=>x.label),['Upper garment','Dress']);
+ assert.ok(pieces.every(p=>p.hint.displayFallback==='original-crop'));
+ assert.ok(pieces.every(p=>p.hint.displayFallbackReason==='overlapping-garment-classes'));
+ assert.ok(pieces.every(p=>p.colorEstimate===null));
+ assert.ok(pieces.every(p=>p.recognitionPhoto.image.startsWith('data:image/jpeg;base64,')));
+ assert.equal(h.sent.find(x=>x.type==='done')?.count,2);
+ // The worker does not claim these semantic regions are two independent
+ // physical articles, manufacture fabric colors or silently save either.
 });

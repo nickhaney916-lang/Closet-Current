@@ -20,9 +20,11 @@ self.onmessage=event=>{const request=event.data;chain=chain.then(async()=>{
   if(typeof request.image!=='string'||!/^data:image\/jpeg;base64,/.test(request.image)||request.image.length>12000000)throw Error('Invalid outfit photo.');
   const {model,processor,RawImage}=await load(request.id);self.postMessage({type:'progress',id:request.id,phase:'separating'});
   const image=await RawImage.read(request.image);if(!image.width||!image.height||Math.max(image.width,image.height)>3072)throw Error('Invalid outfit photo dimensions.');
-  const output=await model(await processor(image)),{clothingLabelMap,clothingMaskGroups,reviewOnlyUnwornOutfitGroups,cropClothingPhotoPixels,isolateClothingPixels,clothingColorSample,clothingInteriorColorSample,garmentDisplayMaskReliability}=await import('./outfit-segmentation.mjs'+new URL(import.meta.url).search);
+  const output=await model(await processor(image)),{clothingLabelMap,clothingMaskGroups,reviewOnlyUnwornOutfitGroups,reviewOnlyOverlappingGarmentGroups,cropClothingPhotoPixels,isolateClothingPixels,clothingColorSample,clothingInteriorColorSample,garmentDisplayMaskReliability}=await import('./outfit-segmentation.mjs'+new URL(import.meta.url).search);
   await import('./photo-color.js'+new URL(import.meta.url).search);
-  const map=clothingLabelMap(output.logits.data,output.logits.dims),groups=map.personDetected?clothingMaskGroups(map):reviewOnlyUnwornOutfitGroups(map);
+  const map=clothingLabelMap(output.logits.data,output.logits.dims),
+   groups=reviewOnlyOverlappingGarmentGroups(map.personDetected?
+    clothingMaskGroups(map):reviewOnlyUnwornOutfitGroups(map));
   // When a presumed dress also contains substantial competing shirt
   // evidence above and skirt evidence below, the single dress mask may combine
   // separate worn garments. Keep the ORIGINAL source crop for user review and
