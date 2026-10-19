@@ -84,12 +84,34 @@ try{
  assert.equal(await page.locator('#tryOnImage').isHidden(),true,'provider failure cannot display a pretend result');
  assert.equal(await page.locator('#tryOnGenerate').isDisabled(),false,'pilot failure is retryable');
  const charges=calls.filter(x=>x.action==='start').length;
+ // Simulate a provider result already in flight when the user replaces their
+ // photo. Even if the server later returns a valid generated image, it must
+ // never appear over the newer garment. All calls remain locally intercepted.
+ reject=false;
+ await page.locator('#tryOnGenerate').click();
+ await page.waitForFunction(()=>tryOnBusy&&tryOnPendingInputs!==null,{timeout:3000});
+ const changedWhilePending=await page.evaluate(()=>{
+  const original=items[0].image,pos=original.indexOf(',')+29;
+  const modified=original.slice(0,pos)+(original[pos]==='A'?'B':'A')+original.slice(pos+1);
+  items[0].image=modified;onTryOnBoardChanged();
+  return {original,modified,sameLength:original.length===modified.length,
+   sameEnding:original.slice(-24)===modified.slice(-24)};
+ });
+ assert.equal(changedWhilePending.sameLength,true);
+ assert.equal(changedWhilePending.sameEnding,true);
+ await page.waitForFunction(()=>!tryOnBusy,null,{timeout:7500});
+ assert.equal(await page.locator('#tryOnImage').isHidden(),true,
+  'completion of a stale mocked provider job must not reappear after a changed photo');
+ assert.equal(await page.locator('#outfitFigure').evaluate(el=>el.classList.contains('ai-tryon-active')),false);
+ assert.equal(calls.filter(x=>x.action==='start').length,charges+1);
+ await page.evaluate(original=>{items[0].image=original;onTryOnBoardChanged();},changedWhilePending.original);
+ const latestCharges=calls.filter(x=>x.action==='start').length;
  await page.evaluate(()=>{tryOnReady=false;onTryOnBoardChanged();document.querySelector('#tryOnGenerate').click();});
  assert.equal(await page.locator('#tryOnGenerate').isDisabled(),true,'disabled pilot blocks generation');
- assert.equal(calls.filter(x=>x.action==='start').length,charges,'disabled pilot must never launch paid inference');
+ assert.equal(calls.filter(x=>x.action==='start').length,latestCharges,'disabled pilot must never launch paid inference');
  assert.equal(errors.length,0,'client JS should not crash');
 
  console.log('REAL_AI_TRYON_PILOT_SMOKE '+JSON.stringify({
-  result:'passed',figures:['female','male'],paidCallsSimulated:3,
+  result:'passed',figures:['female','male'],paidCallsSimulated:4,
   actualProviderCalls:0,savedOrUploadedSelfies:0,pageErrors:errors.length}));
 }finally{await browser.close();}
