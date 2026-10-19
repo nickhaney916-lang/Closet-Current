@@ -1,0 +1,69 @@
+name: Disposable local Supabase Storage deletion integration
+on:
+  push:
+    branches: ['fix/photo-clarity-high-quality-downsampling-20261016']
+    paths:
+      - 'scripts/test-local-supabase-storage-deletion.mjs'
+      - 'supabase/cloud-backup.sql'
+      - 'supabase/design/account-deletion-write-barrier.DRAFT.sql'
+      - '.github/workflows/account-deletion-storage-local.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  local-storage-auth-integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 22
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install PostgreSQL command-line client if absent
+        run: |
+          if ! command -v psql >/dev/null 2>&1; then
+            sudo apt-get update -qq
+            sudo apt-get install -y -qq postgresql-client
+          fi
+      - name: Start isolated local Supabase Auth, PostgREST and Storage
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/closet-disposable-supabase"
+          cd "$RUNNER_TEMP/closet-disposable-supabase"
+          # Pin the CLI; never login, link, push, use project secrets or
+          # create a hosted Supabase project. Only the local Docker stack.
+          npx --yes supabase@2.121.0 init --yes > "$RUNNER_TEMP/cc-local-init.log" 2>&1
+          if ! npx --yes supabase@2.121.0 start --exclude studio,realtime,functions,mail,analytics,pooler \
+            > "$RUNNER_TEMP/cc-local-start.log" 2>&1; then
+            echo "Local disposable Supabase stack failed to initialize (details withheld; logs can include ephemeral keys)."
+            exit 1
+          fi
+          npx --yes supabase@2.121.0 status --output env \
+            > "$RUNNER_TEMP/closet-disposable-supabase.env" 2> /dev/null
+          echo "Local Supabase stack started without hosted project access."
+      - name: Apply Closet Current backup schema and undeployed write barrier to local stack
+        shell: bash
+        run: |
+          set -euo pipefail
+          set -a
+          source "$RUNNER_TEMP/closet-disposable-supabase.env"
+          set +a
+          test "$API_URL" = "http://127.0.0.1:54321" || test "$API_URL" = "http://localhost:54321"
+          psql "$DB_URL" -X -v ON_ERROR_STOP=1 -q -f "$GITHUB_WORKSPACE/supabase/cloud-backup.sql"
+          psql "$DB_URL" -X -v ON_ERROR_STOP=1 -q -f "$GITHUB_WORKSPACE/supabase/design/account-deletion-write-barrier.DRAFT.sql"
+          echo "Only the disposable local database was modified."
+      - name: Test true local Auth, private Storage upload/delete and owner tombstone
+        shell: bash
+        run: |
+          set -euo pipefail
+          set -a
+          source "$RUNNER_TEMP/closet-disposable-supabase.env"
+          set +a
+          node "$GITHUB_WORKSPACE/scripts/test-local-supabase-storage-deletion.mjs"
+      - name: Shut down and destroy temporary containers
+        if: always()
+        shell: bash
+        run: |
+          cd "$RUNNER_TEMP/closet-disposable-supabase" 2>/dev/null || exit 0
+          npx --yes supabase@2.121.0 stop --no-backup > /dev/null 2>&1 || true
