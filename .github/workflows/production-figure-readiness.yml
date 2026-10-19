@@ -1,0 +1,47 @@
+name: Production figure asset readiness evidence
+on:
+  push:
+    branches: [integration/production-figure-evidence-plus-local-edge-20261019]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  two-fixed-figures:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install Pillow==11.3.0
+      - name: Build and run the full automated suite
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Decode both exact figures and reproduce blocked readiness evidence
+        run: |
+          python scripts/benchmark-production-figures.py
+          node scripts/assert-production-figure-evidence.mjs
+          cp artifacts/production-figures/results.json /tmp/first-figure-results.json
+          python scripts/benchmark-production-figures.py
+          cmp /tmp/first-figure-results.json artifacts/production-figures/results.json
+      - name: Install browser emulation without paid inference
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium webkit
+      - name: Verify 24 figure decode/geometry/sampling cases (not visual quality)
+        run: node scripts/test-production-figure-browsers.mjs
+      - name: Run existing full local-fitting Android/iPhone regression harness
+        run: node scripts/test-reusable-figure-phone-browsers.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: production-figure-readiness-evidence
+          path: |
+            artifacts/production-figures/
+            artifacts/production-figure-browsers/
+            artifacts/local-fitting/
