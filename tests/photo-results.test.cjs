@@ -93,6 +93,7 @@ test('automatic save revalidates a changed garment draft before opening storage'
  const c={batch:[],items:[],ClothingDetails:{validColor:v=>v==='Blue'},normalizeClothing:x=>x,queued:fn=>fn(),db:{transaction(){throw Error('Unsafe item reached database');}},structuredClone,Date,persistDraft(){},render(){}};
  vm.createContext(c);vm.runInContext(js,c);
  const base={id:'one',outfitSourceId:'outfit-1',name:'Blue shirt',category:'Tops',itemType:'T-shirt',color:'Blue',segmentHint:{clipped:false,categories:['Tops'],types:['T-shirt']}};
+ const stale=structuredClone(base);c.batch=[structuredClone(base)];assert.equal(await c.saveIndexed(stale),false,'superseded draft with same id must not save');
  for(const mutate of [
   x=>x.segmentHint.clipped=true,
   x=>x.segmentHint.displayFallback='original-crop',
