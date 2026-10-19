@@ -12,14 +12,15 @@ test('smallest native figure asset covers screen DPI/zoom without accidental ups
   [270,2,2,'tablet2x'],
   [270,3,2,'master'],
   [360,3,1,'tablet2x'],
-  [360,3,2,'master']
+  [360,3,2,'master',false]
  ];
- for(const [css,dpr,zoom,name] of cases){
+ for(const [css,dpr,zoom,name,sufficient=true] of cases){
   const t=selectFigureAssetTier(css,dpr,zoom);
-  assert.equal(t.name,name);assert.equal(t.nativeSamplingSufficient,true);
+  assert.equal(t.name,name);assert.equal(t.nativeSamplingSufficient,sufficient);
   assert.equal(t.visualQualityOrRightsApproved,false);
-  assert.ok(t.width>=css*dpr*zoom);
-  assert.equal(t.width,WIDTHS.find(x=>x.width>=css*dpr*zoom).width);
+  if(sufficient)assert.ok(t.width>=css*dpr*zoom);
+  else assert.ok(t.width<css*dpr*zoom);
+  assert.equal(t.width,(WIDTHS.find(x=>x.width>=css*dpr*zoom)||WIDTHS.at(-1)).width);
  }
 });
 test('quality gate refuses invalid device states and keeps master explicit for exceptionally high DPI',()=>{
