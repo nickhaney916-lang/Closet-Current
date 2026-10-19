@@ -87,3 +87,23 @@ test('all unreliable outfit original-crop reasons have a human review label',()=
   assert.equal(descendants(grid).filter(x=>x.tag==='select').length,0);
  }
 });
+
+test('automatic save revalidates a changed garment draft before opening storage',async()=>{
+ const js=source.slice(source.indexOf('function segmentationAllows('),source.indexOf('function applyLocalChoice('))+'\n'+source.slice(source.indexOf('async function saveIndexed('),source.indexOf('async function recognizeItem('));
+ const c={batch:[],items:[],ClothingDetails:{validColor:v=>v==='Blue'},normalizeClothing:x=>x,queued:fn=>fn(),db:{transaction(){throw Error('Unsafe item reached database');}},structuredClone,Date,persistDraft(){},render(){}};
+ vm.createContext(c);vm.runInContext(js,c);
+ const base={id:'one',name:'Blue shirt',category:'Tops',itemType:'T-shirt',color:'Blue',segmentHint:{clipped:false,categories:['Tops'],types:['T-shirt']}};
+ for(const mutate of [
+  x=>x.segmentHint.clipped=true,
+  x=>x.segmentHint.displayFallback='original-crop',
+  x=>x.segmentHint.categories=['Bottoms'],
+  x=>x.segmentHint.types=['Sweater'],
+  x=>x.possibleDuplicate=true,
+  x=>x.category='Uncategorized',
+  x=>x.color='',
+  x=>x.scanFailed=true
+ ]){
+  const item=structuredClone(base);mutate(item);c.batch=[item];
+  assert.equal(await c.saveIndexed(item),false,'invalid changed draft must not write');
+ }
+});
