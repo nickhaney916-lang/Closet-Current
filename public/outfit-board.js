@@ -38,7 +38,7 @@ function renderOutfitBoard(){
   b.onclick=()=>openBoardPicker(slot.id);slots.append(b);
  }
  const count=Object.keys(currentBoard.slots).length,gaps=boardGaps(currentBoard,items);$('boardSummary').textContent=count+' of your own pieces selected · '+gaps.length+' open spaces'+(dress?' · dress covers top and bottoms':'');
- renderBoardSuggestions();renderSavedOutfitBoards();if(typeof onTryOnBoardChanged==='function')onTryOnBoardChanged();if(typeof renderClosetBrowser==='function')renderClosetBrowser();
+ renderBoardSuggestions();renderSavedOutfitBoards();if(typeof renderReusableFigurePreview==='function')renderReusableFigurePreview();if(typeof onTryOnBoardChanged==='function')onTryOnBoardChanged();if(typeof renderClosetBrowser==='function')renderClosetBrowser();
 }
 function renderBoardSuggestions(){
  const target=$('boardTarget').value||'shoes',slot=outfitSlots.find(s=>s.id===target),owned=closetGapOptions(target,currentBoard,items).slice(0,3);
