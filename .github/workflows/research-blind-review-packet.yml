@@ -5,6 +5,17 @@ on:
     paths:
       - 'scripts/build-blind-physical-review-packet.mjs'
       - 'tests/blind-physical-review-packet.test.mjs'
+      - 'benchmark/physical-garment-inventory.mjs'
+      - 'benchmark/garment-form-evidence.mjs'
+      - 'benchmark/annotate-garment.html'
+      - 'benchmark/approve-garment-mask.html'
+      - 'benchmark/assemble-physical-inventory.html'
+      - 'scripts/score-physical-garment-inventory.mjs'
+      - 'tests/physical-garment-inventory.test.mjs'
+      - 'tests/physical-garment-cli.test.mjs'
+      - 'scripts/test-garment-annotation-editor.mjs'
+      - 'scripts/test-independent-mask-approval.mjs'
+      - 'scripts/test-physical-inventory-review.mjs'
       - '.github/workflows/research-blind-review-packet.yml'
   workflow_dispatch:
 permissions:
@@ -19,8 +30,15 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Check independent human-review packet safeguards
-        run: node --test tests/blind-physical-review-packet.test.mjs
+      - name: Check independent source, garment forms and category-constrained scoring
+        run: node --test tests/blind-physical-review-packet.test.mjs tests/physical-garment-inventory.test.mjs tests/physical-garment-cli.test.mjs
+      - name: Run the real local browser annotation, approval and inventory flow
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium
+          node scripts/test-garment-annotation-editor.mjs
+          node scripts/test-independent-mask-approval.mjs
+          node scripts/test-physical-inventory-review.mjs
       - name: Retrieve unchanged ten-source research originals from existing successful run
         env:
           GH_TOKEN: ${{ github.token }}
