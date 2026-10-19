@@ -56,6 +56,28 @@ try{
  assert.equal(await page.locator('#outfitFigure').evaluate(el=>el.classList.contains('ai-tryon-active')),false);
  assert.equal(calls.filter(x=>x.action==='start').length,1,'switching figure must not trigger paid inference');
 
+ // Re-create one mocked preview, then change ONLY interior image bytes while
+ // preserving length and final 24 chars. Old lossy tryOnSignature missed this.
+ // Every provider route remains intercepted; no actual billable request.
+ await page.locator('#tryOnGenerate').click();
+ await page.waitForFunction(()=>!document.querySelector('#tryOnImage').hidden,null,{timeout:7000});
+ assert.equal(calls.filter(x=>x.action==='start').length,2);
+ const photoIdentity=await page.evaluate(()=>{
+  const original=items[0].image,pos=original.indexOf(',')+13;
+  const modified=original.slice(0,pos)+(original[pos]==='A'?'B':'A')+original.slice(pos+1);
+  items[0].image=modified;onTryOnBoardChanged();
+  return {original,modified,sameLength:modified.length===original.length,
+   sameEnding:modified.slice(-24)===original.slice(-24)};
+ });
+ assert.equal(photoIdentity.sameLength,true);
+ assert.equal(photoIdentity.sameEnding,true);
+ assert.equal(await page.locator('#tryOnImage').isHidden(),true,
+  'changing original garment pixels must hide the old AI try-on even for colliding short signatures');
+ assert.equal(await page.locator('#outfitFigure').evaluate(el=>el.classList.contains('ai-tryon-active')),false);
+ assert.equal(calls.filter(x=>x.action==='start').length,2,
+  'replacing the clothing photograph cannot request generation automatically');
+ await page.evaluate(original=>{items[0].image=original;onTryOnBoardChanged();},photoIdentity.original);
+
  reject=true;
  await page.locator('#tryOnGenerate').click();
  await page.waitForFunction(()=>document.querySelector('#tryOnStatus').textContent.includes('Pilot not configured'));
@@ -68,6 +90,6 @@ try{
  assert.equal(errors.length,0,'client JS should not crash');
 
  console.log('REAL_AI_TRYON_PILOT_SMOKE '+JSON.stringify({
-  result:'passed',figures:['female','male'],paidCallsSimulated:2,
+  result:'passed',figures:['female','male'],paidCallsSimulated:3,
   actualProviderCalls:0,savedOrUploadedSelfies:0,pageErrors:errors.length}));
 }finally{await browser.close();}
