@@ -655,10 +655,14 @@ function applyLocalChoice(item,choice,overwrite=false){
  Object.assign(item,normalizeClothing(item));item.localStatus='Local suggestion applied. Confirm the category, sleeves, and seasons before saving.';
 }
 async function saveIndexed(item,sourceStillCurrent){
+ // Model-derived category and type are legitimate changes before this call.
+ // Pin them at submission so a later draft edit cannot inherit that result.
+ const acceptedCategory=item.category,acceptedType=item.itemType;
  let value;
  const saved=await queued(()=>new Promise((resolve,reject)=>{
   if(!db)return reject(Error('Browser storage is unavailable.'));
-  if(typeof sourceStillCurrent!=='function'||!sourceStillCurrent()||!batch.includes(item)||items.some(x=>x.id===item.id)||item.userAdjusted||item.requiresOwnershipConfirmation||item.possibleDuplicate||item.scanFailed||item.saveFailed||!segmentationAllows(item,{category:item.category,itemType:item.itemType})||item.category==='Uncategorized'||!ClothingDetails.validColor(item.color))return resolve(false);
+  if(typeof sourceStillCurrent!=='function'||!sourceStillCurrent()||
+     item.category!==acceptedCategory||item.itemType!==acceptedType||!batch.includes(item)||items.some(x=>x.id===item.id)||item.userAdjusted||item.requiresOwnershipConfirmation||item.possibleDuplicate||item.scanFailed||item.saveFailed||!segmentationAllows(item,{category:item.category,itemType:item.itemType})||item.category==='Uncategorized'||!ClothingDetails.validColor(item.color))return resolve(false);
   // The queue can wait while recognition or a user edit changes the draft.
   // Snapshot ONLY after the last safety validation, so the IndexedDB item
   // reflects the exact original-derived category/color that was approved.
@@ -684,8 +688,9 @@ async function recognizeItem(item){
    originalHint=item.segmentHint?JSON.stringify(item.segmentHint):null;
   const sourceStillCurrent=()=>recognitionSourcePhoto(item)===sourcePhoto&&
    item.image===originalDisplay&&(item.originalPhoto?.image??null)===originalFull&&
-   item.category===originalCategory&&item.itemType===originalType&&
    (item.segmentHint?JSON.stringify(item.segmentHint):null)===originalHint;
+  const categoryStillCurrent=()=>sourceStillCurrent()&&
+   item.category===originalCategory&&item.itemType===originalType;
   if(!sourcePhoto){
    item.scanFailed=true;
    item.localStatus='Original source crop unavailable. Photograph this garment again or use Adjust; a cleaned cutout cannot identify it.';
@@ -693,8 +698,8 @@ async function recognizeItem(item){
   }
   const quality=await checkPhoto(sourcePhoto);
   if(!batch.some(x=>x.id===item.id))return;
-  if(!sourceStillCurrent()){
-   item.localStatus='Photo changed while scanning. Retry to identify the new original photo.';
+  if(!categoryStillCurrent()){
+   item.localStatus='Photo or category changed while scanning. Retry to identify the new original photo.';
    return true;
   }
   if(quality.blank){if(typeof recordDeviceEvent==='function')recordDeviceEvent('blank_skipped');batch=batch.filter(x=>x.id!==item.id);message('Blank or featureless photo skipped. Frame one garment and try again.');return true;}
@@ -712,8 +717,8 @@ async function recognizeItem(item){
   try{if(!localReady)await enableLocal();result=await localRequest('classify',sourcePhoto,item.id,item.segmentHint);}
   catch(error){recognitionUnavailable=true;throw error;}
   if(!batch.some(x=>x.id===item.id))return;
-  if(!sourceStillCurrent()){
-   item.localStatus='Photo changed during recognition. Retry to identify the new original photo.';
+  if(!categoryStillCurrent()){
+   item.localStatus='Photo or category changed during recognition. Retry to identify the new original photo.';
    return true;
   }
   if(typeof ClothingMemory!=='undefined'&&ClothingMemory.valid(result.recognitionMemory))item.recognitionMemory=result.recognitionMemory;
