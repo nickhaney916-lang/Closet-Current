@@ -279,4 +279,11 @@ $('tryOnFigure').onchange=event=>{
 $('tryOnGenerate').onclick=generateTryOn;
 updateStandardModelPreview();
 onTryOnBoardChanged();
-checkTryOnReadiness();
+// Under the reusable-figure pilot we deliberately do not contact a hosted
+// AI provider (even for availability) or offer a button that can submit jobs.
+// The older provider prototype remains in source for review, not active UI.
+if(window.ClosetReusableFigure?.FIGURES){
+ tryOnReady=false;tryOnMultiReady=false;
+ $('tryOnGenerate').disabled=true;
+ $('tryOnStatus').textContent='Reused local figures are active; paid AI generation is disabled.';
+}else checkTryOnReadiness();
