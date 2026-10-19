@@ -8,7 +8,8 @@ import {resolve,extname,join} from 'node:path';
 import {createHash} from 'node:crypto';
 import assert from 'node:assert/strict';
 const out=resolve(process.argv[2]||'benchmark/mobile-flow');
-const source=JSON.parse(await readFile('benchmark/manifest-visible-legwear-2.json','utf8')).find(x=>x.id==='validation-0031');
+const flatLay=process.argv[3]==='commons-0059';
+const source=JSON.parse(await readFile(flatLay?'benchmark/locked-photo-sources.json':'benchmark/manifest-visible-legwear-2.json','utf8')).find(x=>x.id===(flatLay?'commons-0059':'validation-0031'));
 const photo=await readFile(join('benchmark/photos',source.image));
 assert.equal(createHash('sha256').update(photo).digest('hex'),source.sha256);
 assert.ok(source.verified&&source.attribution.license);
@@ -16,7 +17,7 @@ await mkdir(out,{recursive:true});
 const report={status:'running',sourceId:source.id,sourceSha256:source.sha256,attribution:source.attribution,
  actualSegmentationWorker:true,actualRecognitionWorker:true,manualConfirmations:0,syntheticClosetItems:0,
  localTestIdentity:true,cloudBackupTested:false,physicalPhoneTested:false,
- expectedVisibleGarments:source.expectedVisibleGarments,expectedLabelsFromSourceDescription:true,
+ expectedVisibleGarments:source.expectedVisibleGarments||[],expectedLabelsFromSourceDescription:true,
  independentlyApprovedMasks:false,segmentationPixelAccuracy:null,colorAccuracy:null,
  automaticSaved:[],pendingReview:[],styleChecks:[],pageErrors:[],productionAuthorized:false};
 const save=()=>writeFile(join(out,'real-whole-outfit-flow.json'),JSON.stringify(report,null,2));
@@ -103,13 +104,18 @@ try{
  // Report visible-category coverage only. An emitted class is NOT proof of a
  // correctly isolated garment, and tights are unsupported in this taxonomy.
  const actual=new Set(observed.saved.map(x=>x.category));
- report.expectedSupportedCategories=['Tops','Outerwear','Bottoms','Shoes'];
+ report.expectedSupportedCategories=flatLay?['Dresses']:['Tops','Outerwear','Bottoms','Shoes'];
  report.missingAutomaticCategories=report.expectedSupportedCategories.filter(x=>!actual.has(x));
  report.unexpectedAutomaticCategories=[...actual].filter(x=>!report.expectedSupportedCategories.includes(x));
- report.unsupportedVisibleGarments=['Tights'];
+ report.unsupportedVisibleGarments=flatLay?[]:['Tights'];
  await save();
  assert.deepEqual(report.unexpectedAutomaticCategories,[],
-  'This blazer/shirt/skirt/shoes source must not automatically save a fabricated dress');
+  'Unexpected or unsupported garment must not be saved');
+ if(flatLay){
+  assert.equal(observed.saved.length,0,'unworn research candidates must never auto-save');
+  assert.ok(observed.pending.some(x=>x.segmentHint?.displayFallbackReason==='no-person-evidence-review-only'),
+   'licensed flat-lay photo must yield an explicitly unapproved source review candidate');
+ }
  for(const item of observed.saved){
   await page.locator('.tab[data-view="closet"]').click();
   await page.locator('#closetAllPieces').click();

@@ -4,8 +4,16 @@ const choice={label:'a T-shirt',category:'Tops',itemType:'T-shirt',sleeveLength:
 function setup({result={strong:true,choices:[choice],details:{color:'Blue',pattern:'Solid'}},quality,request}={}){
  const stored=[],elements=new Map();const el=id=>{if(!elements.has(id))elements.set(id,{});return elements.get(id);};
  const c={scheduleMemoryReview(){},recognitionState:{phase:'idle',percent:null,activeId:null},renderRecognitionNotice(){},sessionCapturedIds:new Set(),items:[],batch:[],session:0,localPending:new Set(),automaticQueue:[],automaticRunning:false,localReady:true,localLoadPromise:null,recognitionUnavailable:false,localBatch:false,crypto:{randomUUID},Date,structuredClone,$:el,render(){},persistDraft(){},message(text){c.messageText=text;},checkPhoto:quality||(async(image)=>({blank:false,signature:[image.charCodeAt(0),100,200],aspect:1})),similarPhotos:(a,b)=>Array.isArray(a)&&Array.isArray(b)&&a.join()===b.join(),localRequest:request||(async()=>result),queued:work=>work(),db:{transaction(){const tx={objectStore:name=>({put(value){if(name==='items')stored.push(value);}})};setImmediate(()=>tx.oncomplete?.());return tx;}}};
- vm.createContext(c);vm.runInContext(source.slice(source.indexOf('function recognitionSourcePhoto('),source.indexOf('function clothingFields(')),c);vm.runInContext(fs.readFileSync('public/taxonomy.js','utf8'),c);vm.runInContext(fs.readFileSync('public/clothing-details.js','utf8'),c);
- vm.runInContext(source.slice(source.indexOf('function candidate('),source.indexOf('function stopCamera(')),c);
+ vm.createContext(c);vm.runInContext(fs.readFileSync('public/taxonomy.js','utf8'),c);vm.runInContext(fs.readFileSync('public/clothing-details.js','utf8'),c);
+ vm.runInContext(source.slice(source.indexOf('function exactlyRepeatedCapturedItem('),source.indexOf('function stopCamera(')),c);
+ // The actual outfit worker always attaches an unmasked original-RGB crop.
+ // Older simulated tests omitted it, then accidentally relied on using the
+ // display cutout for recognition. Model the real worker contract explicitly.
+ const originalCandidate=c.candidate;
+ c.candidate=(image,options={})=>originalCandidate(image,
+   options.outfitSourceId&&!options.recognitionPhoto?
+     {...options,recognitionPhoto:{image:'data:image/jpeg;base64,ORIGINALRGB'+image}}:options);
+ vm.runInContext(source.slice(source.indexOf('function recognitionSourcePhoto('),source.indexOf('function clothingFields(')),c);
  vm.runInContext(source.slice(source.indexOf('async function enableLocal('),source.indexOf('async function importClothingPhotos(')),c);
  return {c,stored,el};
 }
@@ -24,6 +32,103 @@ test('flat frame is removed before contacting the model',async()=>{
 });
 test('an exact duplicate of a saved or queued photo is skipped',async()=>{
  const {c}=setup();c.candidate('one');assert.equal(c.candidate('one'),false);await done(c);assert.equal(c.candidate('one'),false);assert.equal(c.items.length,1);
+});
+
+test('identical cleaned previews from two original-photo regions are retained for review, not silently dropped',async()=>{
+ const {c,stored}=setup({quality:async()=>({blank:false,signature:[40,40,40],aspect:1})});
+ const original='data:image/jpeg;base64,ORIGINALSAMEHIGHRES';
+ const options=box=>({outfitSourceId:'photo-1',
+  recognitionPhoto:{image:'data:image/jpeg;base64,ORIGINALREGION'+box.x},
+  originalPhoto:{image:original},cropBounds:box,
+  segmentHint:{categories:['Tops','Outerwear'],types:[],clipped:false}});
+ const first=options({x:.08,y:.15,width:.32,height:.26});
+ const second=options({x:.43,y:.15,width:.31,height:.28});
+ assert.equal(c.candidate('identical-cleaned-preview',first),true);
+ assert.equal(c.candidate('identical-cleaned-preview',second),true,
+  'physical pieces at different locations are not duplicate display images');
+ await done(c);
+ assert.equal(stored.length,0,'ambiguous matching display images must not auto-save');
+ assert.equal(c.items.length,0);
+ assert.equal(c.batch.length,2,'both physical candidates remain in review');
+ assert.ok(c.batch.every(x=>x.possibleDuplicate===true));
+ assert.ok(c.batch.every(x=>x.originalPhoto.image===original));
+ assert.notEqual(c.batch[0].cropBounds.x,c.batch[1].cropBounds.x);
+});
+test('a repeat of the exact original source region is suppressed, but another original photo is retained',async()=>{
+ const {c,stored}=setup({quality:async()=>({blank:false,signature:[22,22,22],aspect:1})});
+ const base={outfitSourceId:'group',originalPhoto:{image:'data:image/jpeg;base64,SCENEA'},
+  recognitionPhoto:{image:'data:image/jpeg;base64,REGIONA'},
+  cropBounds:{x:.2,y:.3,width:.25,height:.3},
+  segmentHint:{categories:['Bottoms'],types:['Skirt'],clipped:false}};
+ assert.equal(c.candidate('identical-preview',base),true);
+ assert.equal(c.candidate('identical-preview',{...base}),false,
+  'same source region is a genuine repeated worker result');
+ assert.equal(c.candidate('identical-preview',{...base,
+  outfitSourceId:'group-2'}),false,
+  'recapturing the identical full original under a new capture ID is still a repeat');
+ assert.equal(c.candidate('identical-preview',{...base,outfitSourceId:'new-photo',
+  originalPhoto:{image:'data:image/jpeg;base64,SCENEB'}}),true,
+  'identical cleaned preview from independently captured originals must not erase an article');
+ await done(c);
+ assert.equal(stored.length,0);
+ assert.equal(c.batch.length,2);
+ assert.ok(c.batch.every(x=>x.possibleDuplicate));
+ assert.notEqual(c.batch[0].originalPhoto.image,c.batch[1].originalPhoto.image);
+});
+test('reprocessing one original scene under another group keeps distinct top/jacket layers and separate locations',async()=>{
+ const {c,stored}=setup({quality:async()=>({blank:false,signature:[33,34,35],aspect:1})});
+ const scene='data:image/jpeg;base64,SAMEORIGINALPHOTO';
+ const source={image:'same-cleaned-preview',outfitSourceId:'session-1',
+  originalPhoto:{image:scene},recognitionPhoto:{image:'data:image/jpeg;base64,TOPSOURCE'},
+  cropBounds:{x:.12,y:.19,width:.43,height:.5},
+  segmentHint:{categories:['Tops'],types:[],sourceLabel:'Upper garment',
+   layerRole:'base',clipped:false}};
+ const jacket={...source,outfitSourceId:'session-2',
+  recognitionPhoto:{image:'data:image/jpeg;base64,JACKETSOURCE'},
+  segmentHint:{categories:['Outerwear'],types:[],sourceLabel:'Upper garment',
+   layerRole:'outer',clipped:false}};
+ const far={...source,outfitSourceId:'session-3',
+  recognitionPhoto:{image:'data:image/jpeg;base64,FARSOURCE'},
+  cropBounds:{x:.6,y:.1,width:.3,height:.35}};
+ assert.equal(c.candidate(source.image,source),true);
+ assert.equal(c.candidate(jacket.image,jacket),true,
+  'new source ID must not discard a distinct overlapping outer layer');
+ assert.equal(c.candidate(far.image,far),true,
+  'different original-photo location must not be deduped across group IDs');
+ assert.equal(c.candidate(far.image,{...far,outfitSourceId:'session-4'}),false,
+  'same source, role and position remains a verified repeat across session IDs');
+ await done(c);
+ assert.equal(stored.length,0,'same-looking items cannot be automatically saved');
+ assert.equal(c.batch.length,3);
+ assert.ok(c.batch.every(x=>x.possibleDuplicate));
+ assert.deepEqual(new Set(c.batch.map(x=>x.recognitionPhoto.image)).size,3);
+});
+test('different group with unavailable geometry cannot be silently deduped as one physical garment',()=>{
+ const {c}=setup({request:()=>new Promise(()=>{})});
+ const first={outfitSourceId:'one',originalPhoto:{image:'data:image/jpeg;base64,ORIGINAL'},
+  recognitionPhoto:{image:'data:image/jpeg;base64,CROPA'},
+  segmentHint:{categories:['Tops'],types:[],clipped:false}};
+ const second={...first,outfitSourceId:'two',
+  recognitionPhoto:{image:'data:image/jpeg;base64,CROPB'}};
+ assert.equal(c.exactlyRepeatedCapturedItem({image:'same-preview',...first},
+  {image:'same-preview',...second}),false,
+  'without source rectangle evidence, independently imported groups require review');
+});
+test('same-looking standalone photo remains an exact duplicate, but original-backed outfit comparison is not lost',async()=>{
+ const {c,stored}=setup({quality:async()=>({blank:false,signature:[56,57,58],aspect:1})});
+ assert.equal(c.candidate('one-shot-display'),true);
+ assert.equal(c.candidate('one-shot-display'),false,'single original still uses exact duplicate suppression');
+ const other={outfitSourceId:'genuine-outfit',originalPhoto:{image:'data:image/jpeg;base64,ORIGINALSCENE'},
+  recognitionPhoto:{image:'data:image/jpeg;base64,ORIGINALCROP'},
+  cropBounds:{x:.1,y:.1,width:.22,height:.3},
+  segmentHint:{categories:['Tops'],types:[],clipped:false}};
+ assert.equal(c.candidate('one-shot-display',other),true,
+  'a whole-scene source is independently reviewable beside a same-looking standalone item');
+ await done(c);
+ assert.equal(stored.length,0,'neither same-looking source is silently approved');
+ assert.equal(c.batch.length,2,'the standalone and sourced garment both survive for review');
+ assert.ok(c.batch.some(x=>x.outfitSourceId==='genuine-outfit'));
+ assert.ok(c.batch.every(x=>x.possibleDuplicate===true),'identical displays trigger explicit duplicate review instead of deletion');
 });
 test('lookalikes are flagged and retained rather than silently discarded',async()=>{
  const {c}=setup({quality:async()=>({blank:false,signature:[100,200,50],aspect:1})});c.candidate('one');await done(c);c.candidate('two');await done(c);
@@ -94,12 +199,12 @@ test('unreadable photo does not block the next garment or fabricate labels',asyn
 });
 
 test('recognized outfit cutouts automatically save as individual closet items',async()=>{
- const {c,stored}=setup();c.candidate('outfit-top',{outfitSourceId:'capture',recognitionPhoto:{image:'outfit-top'},segmentHint:{categories:['Tops','Outerwear'],types:[],clipped:false}});await done(c);
+ const {c,stored}=setup();c.candidate('outfit-top',{outfitSourceId:'capture',segmentHint:{categories:['Tops','Outerwear'],types:[],clipped:false}});await done(c);
  assert.equal(stored.length,1);assert.equal(c.items.length,1);assert.equal(c.batch.length,0);assert.equal(c.items[0].itemType,'T-shirt');assert.equal(c.items[0].requiresOwnershipConfirmation,false);assert.equal(c.items[0].outfitSourceId,'capture');
 });
 test('clipped cutouts and segmentation/category disagreements do not get guessed labels',async()=>{
  for(const hint of [{categories:['Bottoms'],types:[],clipped:false},{categories:['Tops'],types:[],clipped:true},{categories:['Tops'],types:['Polo'],clipped:false}]){
-  const {c,stored}=setup();c.candidate('outfit-top',{outfitSourceId:'capture',recognitionPhoto:{image:'outfit-top'},segmentHint:hint});await done(c);assert.equal(stored.length,0);assert.equal(c.batch[0].category,'Uncategorized');assert.equal(c.batch[0].itemType,'Unknown');
+  const {c,stored}=setup();c.candidate('outfit-top',{outfitSourceId:'capture',segmentHint:hint});await done(c);assert.equal(stored.length,0);assert.equal(c.batch[0].category,'Uncategorized');assert.equal(c.batch[0].itemType,'Unknown');
  }
 });
 
@@ -110,12 +215,12 @@ test('confirmed dress category fills review without subtype, attributes or autos
 });
 test('category-only review preserves user corrections and clipped mask restrictions',async()=>{
  const result={strong:false,categoryConfirmed:true,categoryOnly:true,choices:[{category:'Dresses',itemType:'Unknown',sleeveLength:'Unknown'}]};
- const h=setup({result});h.c.candidate('dress',{outfitSourceId:'outfit',recognitionPhoto:{image:'dress'},segmentHint:{categories:['Dresses'],types:[],clipped:true}});await done(h.c);assert.equal(h.c.batch[0].category,'Uncategorized');assert.equal(h.stored.length,0);
+ const h=setup({result});h.c.candidate('dress',{outfitSourceId:'outfit',segmentHint:{categories:['Dresses'],types:[],clipped:true}});await done(h.c);assert.equal(h.c.batch[0].category,'Uncategorized');assert.equal(h.stored.length,0);
  let finish;const {c,stored}=setup({request:()=>new Promise(resolve=>finish=resolve)});c.candidate('dress');await new Promise(setImmediate);c.batch[0].userAdjusted=true;c.batch[0].category='Tops';c.batch[0].itemType='Tunic';finish(result);await done(c);assert.equal(c.batch[0].category,'Tops');assert.equal(c.batch[0].itemType,'Tunic');assert.equal(stored.length,0);
 });
 test('type recognition failure retains a color estimate and keeps the photo for category confirmation',async()=>{const {c,stored}=setup({quality:async()=>({blank:false,signature:[10,20,100],aspect:1,colorEstimate:{color:'Blue'}}),result:{strong:false,choices:[],details:{}}});c.candidate('one');await done(c);assert.equal(stored.length,0);assert.equal(c.batch[0].color,'Blue');assert.equal(c.batch[0].colorSource,'photo-estimate');assert.match(c.batch[0].localStatus,/Color kept/);});
 test('confirmed broad shirt category and color are saved without inventing a subtype',async()=>{const {c,stored}=setup({quality:async()=>({blank:false,signature:[10,20,100],aspect:1,colorEstimate:{color:'Blue'}}),result:{strong:false,categoryConfirmed:true,categoryOnly:true,choices:[{category:'Tops',itemType:'Unknown',label:'Tops',sleeveLength:'Unknown'}],details:{}}});c.candidate('one');await done(c);assert.equal(stored.length,1);assert.equal(c.items[0].category,'Tops');assert.equal(c.items[0].color,'Blue');assert.equal(c.items[0].itemType,'Unknown');assert.equal(c.items[0].indexingLevel,'category-color');assert.equal(c.batch.length,0);});
-test('confirmed category and color automatically save separated outfit pieces',async()=>{const {c,stored}=setup({quality:async()=>({blank:false,signature:[10,20,100],aspect:1,colorEstimate:{color:'Blue'}}),result:{strong:false,categoryConfirmed:true,categoryOnly:true,choices:[{category:'Tops',itemType:'Unknown',label:'Tops',sleeveLength:'Unknown'}],details:{}}});c.candidate('one',{outfitSourceId:'outfit',recognitionPhoto:{image:'one'},colorEstimate:{color:'Blue',source:'photo-estimate'},segmentHint:{categories:['Tops'],types:[],clipped:false}});await done(c);assert.equal(stored.length,1);assert.equal(c.batch.length,0);assert.equal(c.items[0].color,'Blue');assert.equal(c.items[0].colorMethod,'garment-mask');assert.equal(c.items[0].indexingLevel,'category-color');});
+test('confirmed category and color automatically save separated outfit pieces',async()=>{const {c,stored}=setup({quality:async()=>({blank:false,signature:[10,20,100],aspect:1,colorEstimate:{color:'Blue'}}),result:{strong:false,categoryConfirmed:true,categoryOnly:true,choices:[{category:'Tops',itemType:'Unknown',label:'Tops',sleeveLength:'Unknown'}],details:{}}});c.candidate('one',{outfitSourceId:'outfit',colorEstimate:{color:'Blue',source:'photo-estimate'},segmentHint:{categories:['Tops'],types:[],clipped:false}});await done(c);assert.equal(stored.length,1);assert.equal(c.batch.length,0);assert.equal(c.items[0].color,'Blue');assert.equal(c.items[0].colorMethod,'garment-mask');assert.equal(c.items[0].indexingLevel,'category-color');});
 
 test('outfit recognition uses original crop texture while masked garment color wins over scene color',async()=>{
  let modelImage,qualityImage;const {c,stored}=setup({quality:async image=>{qualityImage=image;return {blank:false,signature:[1,2,3],aspect:1,colorEstimate:{color:'White'}};},request:async(type,image)=>{modelImage=image;return {strong:true,choices:[choice],details:{color:'Red',pattern:'Solid'}};}});
@@ -125,7 +230,7 @@ test('outfit recognition uses original crop texture while masked garment color w
 
 test('accidentally visible clothing beneath a garment is not guessed as a Top',async()=>{
  const {c,stored}=setup({result:{strong:false,categoryConfirmed:false,choices:[],details:{}}});
- c.candidate('partial-underlayer',{outfitSourceId:'outfit1',recognitionPhoto:{image:'partial-underlayer'},
+ c.candidate('partial-underlayer',{outfitSourceId:'outfit1',
   segmentHint:{categories:['Tops','Outerwear'],types:[],clipped:false,layerRole:'underlayer'},
   colorEstimate:{color:'Blue',source:'photo-estimate',support:.9}});
  await done(c);
@@ -140,7 +245,7 @@ test('accidentally visible clothing beneath a garment is not guessed as a Top',a
 test('single visible jacket keeps correct identity instead of prompting for underneath clothing',async()=>{
  const jacket={category:'Outerwear',itemType:'Jacket',label:'a jacket',sleeveLength:'Long sleeve'};
  const {c,stored}=setup({result:{strong:true,choices:[jacket],details:{color:'Blue'}}});
- c.candidate('one-visible-jacket',{outfitSourceId:'outfit1',recognitionPhoto:{image:'one-visible-jacket'},
+ c.candidate('one-visible-jacket',{outfitSourceId:'outfit1',
   segmentHint:{categories:['Tops','Outerwear'],types:[],clipped:false}});
  await done(c);
  assert.equal(stored.length,1);
@@ -245,7 +350,7 @@ test('real-photo-style fragmented outfit proposals stay review-only despite stro
 });
 
 test('all unreliable source-only fallback reasons block strong recognition and proposed color',async()=>{
- for(const reason of ['fragmented-mask','unexplained-enclosed-gap','clipped-frame','insufficient-mask']){
+ for(const reason of ['fragmented-mask','unexplained-enclosed-gap','clipped-frame','insufficient-mask','overlapping-garment-classes']){
   const {c,stored}=setup({quality:async()=>({blank:false,signature:[1,2,3],aspect:1,
    colorEstimate:{color:'White'}}),result:{strong:true,choices:[choice],details:{color:'Red'}}});
   c.candidate('unmasked-'+reason,{outfitSourceId:'outfit',
@@ -266,13 +371,13 @@ test('distinct top and trousers in the same original outfit are not blocked by b
  const top={label:'a T-shirt',category:'Tops',itemType:'T-shirt',sleeveLength:'Unknown'};
  const pants={label:'trousers',category:'Bottoms',itemType:'Trousers',sleeveLength:'Unknown'};
  const {c,stored}=setup({quality:same,request:async(type,image)=>({
-  strong:true,choices:[image==='whole-top'?top:pants],details:{color:'Blue'}
+  strong:true,choices:[image.endsWith('whole-top')?top:pants],details:{color:'Blue'}
  })});
  const originalPhoto={image:'data:image/jpeg;base64,SAMEUNTOUCHED'};
- c.candidate('whole-top',{outfitSourceId:'outfit-original-1',recognitionPhoto:{image:'whole-top'},originalPhoto,
+ c.candidate('whole-top',{outfitSourceId:'outfit-original-1',originalPhoto,
   cropBounds:{x:.2,y:.08,width:.48,height:.32},
   segmentHint:{categories:['Tops'],types:[],clipped:false}});
- c.candidate('whole-bottom',{outfitSourceId:'outfit-original-1',recognitionPhoto:{image:'whole-bottom'},originalPhoto,
+ c.candidate('whole-bottom',{outfitSourceId:'outfit-original-1',originalPhoto,
   cropBounds:{x:.23,y:.48,width:.40,height:.38},
   segmentHint:{categories:['Bottoms'],types:[],clipped:false}});
  await done(c);
@@ -281,7 +386,7 @@ test('distinct top and trousers in the same original outfit are not blocked by b
  assert.deepEqual(c.items.map(i=>i.category),['Tops','Bottoms']);
 });
 test('same-photo same-category, overlapping, unmasked or unverifiable regions keep duplicate review',async()=>{
- const base={outfitSourceId:'outfit-one',recognitionPhoto:{image:'first'},
+ const base={outfitSourceId:'outfit-one',
   originalPhoto:{image:'data:image/jpeg;base64,ORIGINAL'},
   cropBounds:{x:.1,y:.1,width:.3,height:.3},
   segmentHint:{categories:['Tops'],types:[],clipped:false}};
@@ -297,31 +402,73 @@ test('same-photo same-category, overlapping, unmasked or unverifiable regions ke
   {cropBounds:undefined,segmentHint:{categories:['Bottoms'],types:[]}}
  ]){
   const {c,stored}=setup({quality:async()=>({blank:false,signature:[10,20,30],aspect:1}),
-   request:async(type,image)=>({strong:true,choices:[image==='first'?
+   request:async(type,image)=>({strong:true,choices:[image.endsWith('first')?
      {label:'shirt',category:'Tops',itemType:'T-shirt',sleeveLength:'Unknown'}:
      {label:'trousers',category:'Bottoms',itemType:'Trousers',sleeveLength:'Unknown'}],
      details:{color:'Blue'}})});
   c.candidate('first',base);await done(c);
-  c.candidate('second',{...base,...variant,recognitionPhoto:{image:'second'}});await done(c);
+  c.candidate('second',{...base,...variant});await done(c);
   assert.equal(stored.length,1,'uncertain lookalikes must not silently auto-save');
   assert.equal(c.batch.length,1);
   assert.equal(c.batch[0].possibleDuplicate,true);
  }
 });
 
-test('restored outfit missing an original crop stays retryable and never classifies its display tile',async()=>{
- let checks=0,calls=0;
- const {c,stored}=setup({quality:async()=>{checks++;return {blank:false,signature:[1,2,3],aspect:1};},
-  request:async()=>{calls++;return {strong:true,choices:[choice],details:{color:'Blue'}};}});
- c.candidate('cleaned-display',{outfitSourceId:'restored-outfit',
-  originalPhoto:{image:'full-original'},segmentHint:{categories:['Tops'],types:[],clipped:false}});
+test('a late model response must not classify newly replaced original RGB, scene or category',async()=>{
+ for(const change of [
+  item=>{item.recognitionPhoto.image='NEW_SOURCE_RGB';},
+  item=>{item.originalPhoto.image='NEW_FULL_SCENE';},
+  item=>{item.image='NEW_DISPLAY';},
+  item=>{item.segmentHint.categories=['Shoes'];},
+  item=>{item.category='Outerwear';}
+ ]){
+  let resolveModel;
+  const {c,stored}=setup({request:()=>new Promise(resolve=>{resolveModel=resolve;})});
+  c.candidate('outfit-preview',{outfitSourceId:'outfit',
+   recognitionPhoto:{image:'ORIGINAL_SOURCE_RGB'},originalPhoto:{image:'ORIGINAL_FULL_SCENE'},
+   segmentHint:{categories:['Tops'],types:[],clipped:false}});
+  for(let i=0;i<12&&!resolveModel;i++)await new Promise(setImmediate);
+  assert.equal(typeof resolveModel,'function');
+  const item=c.batch[0];change(item);
+  resolveModel({strong:true,choices:[choice],details:{color:'Blue'}});
+  await done(c);
+  assert.equal(stored.length,0,'stale model reply cannot auto-save a different source');
+  assert.equal(c.items.length,0);
+  assert.equal(Boolean(item.localAnalyzed),false,'stale response must not mark the source classified');
+  assert.equal(item.scanFailed,true,'stale recognition cannot expose a quick color-save shortcut');
+  assert.match(item.localStatus,/Photo or category changed during recognition/);
+ }
+});
+test('a photo changed during async quality check never reaches classification',async()=>{
+ let finishQuality,modelCalls=0;
+ const {c,stored}=setup({quality:()=>new Promise(resolve=>{finishQuality=resolve;}),
+  request:async()=>{modelCalls++;return {strong:true,choices:[choice],details:{color:'Blue'}};}});
+ c.candidate('camera-photo');
+ for(let i=0;i<12&&!finishQuality;i++)await new Promise(setImmediate);
+ assert.equal(typeof finishQuality,'function');
+ c.batch[0].image='different-camera-photo';
+ finishQuality({blank:false,signature:[1,2,3],aspect:1});
  await done(c);
- assert.equal(checks,0);assert.equal(calls,0);assert.equal(stored.length,0);
- assert.equal(c.batch.length,1);assert.equal(c.batch[0].image,'cleaned-display');
- assert.equal(c.batch[0].originalPhoto.image,'full-original');
- assert.match(c.batch[0].localStatus,/original.*crop/i);
- // Missing one item's source must not disable the model or block later photos.
- c.candidate('valid-single');await done(c);
- assert.equal(c.items.length,1);assert.equal(c.items[0].image,'valid-single');
- assert.equal(c.recognitionUnavailable,false);
+ assert.equal(modelCalls,0);assert.equal(stored.length,0);
+ assert.equal(c.batch[0].scanFailed,true,'changed original photo must not offer quick save');
+ assert.equal(c.batch[0].category,'Uncategorized');
+});
+test('queued automatic save fails closed when original source or accepted type changes',async()=>{
+ for(const change of [
+  item=>{item.recognitionPhoto.image='NEW_RGB';},
+  item=>{item.originalPhoto.image='NEW_SCENE';},
+  item=>{item.image='NEW_DISPLAY';},
+  item=>{item.itemType='Sweatshirt';},
+  item=>{item.category='Bottoms';}
+ ]){
+  const {c,stored}=setup();
+  c.queued=work=>{change(c.batch[0]);return work();};
+  c.candidate('outfit-display',{outfitSourceId:'scene',
+   recognitionPhoto:{image:'ORIGINAL_RGB'},originalPhoto:{image:'ORIGINAL_SCENE'},
+   segmentHint:{categories:['Tops'],types:[],clipped:false}});
+  await done(c);
+  assert.equal(stored.length,0);
+  assert.equal(c.items.length,0);
+  assert.equal(c.batch.length,1);
+ }
 });

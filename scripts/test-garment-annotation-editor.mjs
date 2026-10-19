@@ -174,6 +174,8 @@ try{
  assert.equal(await page.locator('#download').isDisabled(),true);
  await page.locator('#inventoryId').fill('validation-0031-item-02');
  await page.locator('#inventoryCategory').selectOption('Bottoms');
+ assert.equal(await page.locator('#inventoryForm').inputValue(),'','Bottoms need an independently selected actual garment form');
+ await page.locator('#inventoryForm').selectOption('skirt');
  await page.locator('#targetGarment').fill('black skirt');
  assert.equal(await page.locator('#download').isDisabled(),true);
  await page.locator('#canvas').scrollIntoViewIfNeeded();
@@ -189,6 +191,7 @@ try{
  assert.equal(physicalDraft.seedModel,null);
  assert.equal(physicalDraft.physicalTargetId,'validation-0031-item-02');
  assert.equal(physicalDraft.humanCategory,'Bottoms');
+ assert.equal(physicalDraft.humanForm,'skirt');
  assert.equal(physicalDraft.targetIndependentlyIdentifiedBy,'First Reviewer');
  await page.locator('#prediction').setInputFiles({name:'seed.json',mimeType:'application/json',
   buffer:Buffer.from(JSON.stringify({...seed,image:physicalDraft.image,sourceSha256:physicalDraft.sourceSha256}))});

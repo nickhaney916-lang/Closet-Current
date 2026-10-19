@@ -1,0 +1,32 @@
+name: Research original-source dedupe on touch browser
+on:
+  push:
+    branches: [research/whole-outfit-readiness-evidence-20261018]
+    paths:
+      - 'scripts/test-original-source-duplicate-mobile.mjs'
+      - 'public/app.js'
+      - 'tests/automatic-indexing.test.cjs'
+      - '.github/workflows/research-original-source-duplicate-mobile.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  original-source-dedupe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify source-location and separate-layer regressions
+        run: node --test tests/automatic-indexing.test.cjs tests/outfit-capture.test.cjs
+      - name: Build current app and install browser emulation
+        run: |
+          node scripts/build.mjs
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium
+      - name: Preserve separate captured clothes on phone-sized touch UI
+        run: node scripts/test-original-source-duplicate-mobile.mjs
+      - name: Existing captured-outfit manual save and reload flow
+        run: node scripts/test-whole-outfit-save-mobile.mjs

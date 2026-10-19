@@ -2,6 +2,7 @@
 // Only separately, independently identified and two-reviewer approved physical
 // garment masks can establish a false negative (including a garment the model missed).
 import {approvedReferenceMask,scoreApprovedPredictionAtReferenceResolution} from './garment-mask-metrics.mjs';
+import {MODEL_FORM,validReviewedForm} from './garment-form-evidence.mjs';
 
 const SHA=/^[0-9a-f]{64}$/;
 const PHOTO=/^(?:commons|validation)-[0-9]{4}$/;
@@ -53,6 +54,7 @@ export function evaluateCompletePhysicalInventory(scene,inventory,annotations,se
   throw Error('Full-photo garment inventory is not independently attested');
  if(annotations.size!==inventory.targets.length)throw Error('Missing or extra approved physical garment outlines');
  const refs=[],ids=new Set();
+ let missingReviewedForms=0;
  for(const target of inventory.targets){
   const id=target?.id;
   if(!targetId(id,scene.id)||ids.has(id)||!CATEGORIES.has(target.category)||!name(target.label))
@@ -66,16 +68,20 @@ export function evaluateCompletePhysicalInventory(scene,inventory,annotations,se
     annotation.reviewer!==inventory.reviewedBy||
     annotation.approvedBy!==inventory.approvedBy)
    throw Error('Independent target identity, role or human provenance mismatch');
+  if(target.form!==undefined||annotation.humanForm!==undefined){
+   if(!validReviewedForm(target.category,target.form)||annotation.humanForm!==target.form)
+    throw Error('Independent garment form missing, invalid, or different from approved outline');
+  }else missingReviewedForms++;
   // The existing standard validator also requires two different reviewers,
   // binary pixel data, source identity and nontrivial garment/background.
   approvedReferenceMask(annotation,scene);
-  refs.push({id,category:target.category,label:target.label,annotation});
+  refs.push({id,category:target.category,label:target.label,form:target.form,annotation});
  }
  const scores=proposals.map(([,seed])=>refs.map(r=>
   scoreApprovedPredictionAtReferenceResolution(r.annotation,scene,seed)));
  // Exact maximum-cardinality, maximum-IoU matching. Each AI prediction may
  // match at most ONE actual garment; duplicates never improve recall.
- function maximumOneToOneMatch(requireCorrectCategory){
+ function maximumOneToOneMatch(requireCorrectCategory,requireCorrectForm=false){
   const memo=new Map();
   function optimize(i,used){
    if(i===proposals.length)return {matches:0,sum:0,pairs:[]};
@@ -84,6 +90,7 @@ export function evaluateCompletePhysicalInventory(scene,inventory,annotations,se
    for(let j=0;j<refs.length;j++){
     if(requireCorrectCategory &&
       MODEL_CATEGORY[proposals[i][1].modelGarmentLabel]!==refs[j].category)continue;
+    if(requireCorrectForm&&MODEL_FORM[proposals[i][1].modelGarmentLabel]!==refs[j].form)continue;
     const overlap=scores[i][j].intersectionOverUnion;
     if((used&(1<<j))||overlap===null||overlap<minimumIoU)continue;
     const remaining=optimize(i+1,used|(1<<j));
@@ -103,6 +110,8 @@ export function evaluateCompletePhysicalInventory(scene,inventory,annotations,se
  // predictions consumed by higher-IoU but wrongly labeled proposals.
  const matched=maximumOneToOneMatch(false);
  const categoryMatched=maximumOneToOneMatch(true);
+ const formComplete=missingReviewedForms===0;
+ const formMatched=formComplete?maximumOneToOneMatch(true,true):null;
  const usedRefs=new Set(matched.pairs.map(pair=>pair[1]));
  const usedProposals=new Set(matched.pairs.map(pair=>pair[0]));
  const matches=matched.pairs.map(([i,j])=>({
@@ -148,6 +157,17 @@ export function evaluateCompletePhysicalInventory(scene,inventory,annotations,se
   // whether the model correctly identified the article and its category.
   correctCategoryRecall:categoryCorrect/refs.length,
   categoryConstrainedMatchedGarments:independentlyCategoryMatched.length,
+  // Specific form is explicitly human-confirmed, not guessed from labels.
+  // Broad Bottoms match never implies correct shorts/skirt/trousers subtype.
+  completeReviewedGarmentForms:formComplete,
+  unreviewedGarmentFormCount:missingReviewedForms,
+  formConstrainedMatchedGarments:formMatched?.matches??null,
+  formConstrainedRecall:formMatched?formMatched.matches/refs.length:null,
+  formConstrainedMatches:formMatched?formMatched.pairs.map(([i,j])=>({
+   physicalTargetId:refs[j].id,modelProposalId:proposals[i][0],
+   reviewedForm:refs[j].form,modelForm:MODEL_FORM[proposals[i][1].modelGarmentLabel],
+   intersectionOverUnion:scores[i][j].intersectionOverUnion
+  })):null,
   categoryConstrainedRecall:independentlyCategoryMatched.length/refs.length,
   supportedCategoryConstrainedRecall:supported.length?
    supportedCategoryMatches/supported.length:null,

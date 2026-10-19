@@ -26,7 +26,7 @@ fieldset{border:1px solid #aca0bb;border-radius:12px;margin:15px 0;padding:12px}
 <legend>Independent human approval</legend>
 <p id="instanceTargetReview" hidden>Actual garment to verify: <strong id="instanceTargetText"></strong>. Independently inspect only this physical item, excluding other garments and scenery.</p>
 <label>Second reviewer name <input id="approver" type="text" maxlength="80" autocomplete="off" placeholder="Different from the first reviewer"></label>
-<label><input id="verified" type="checkbox"> I inspected the original photo and the entire garment boundary; the outline includes fabric, excludes scenery, and is accurate enough to serve as an independent reference.</label>
+<label><input id="verified" type="checkbox"> I independently checked the original photograph, the physical garment's category and exact form (for example shorts versus skirt), and its entire boundary. The outline contains the correct visible fabric, excludes other garments and scenery, and is suitable as a reviewed reference.</label>
 </fieldset>
 <button id="approve" disabled>Approve reviewed mask JSON</button>
 <button id="reject" type="button">Needs correction</button>
@@ -92,6 +92,8 @@ function decode(data){
    !['Tops','Bottoms','Dresses','Outerwear','Shoes','Hosiery','Accessories'].includes(data.humanCategory)||
    typeof data.humanTargetLabel!=='string'||!data.humanTargetLabel.trim()||
    data.humanTargetLabel.trim().length>100||
+   (data.humanForm!==undefined&&
+    !({Tops:['top'],Bottoms:['shorts','trousers','skirt'],Dresses:['dress'],Outerwear:['outerwear'],Shoes:['shoes'],Hosiery:['hosiery'],Accessories:['accessory']}[data.humanCategory]||[]).includes(data.humanForm))||
    data.targetIndependentlyIdentifiedBy!==data.reviewer)
    throw Error('Independent physical garment identity missing or mismatched');
  }
@@ -136,7 +138,7 @@ async function load(){
   source={base,name:p.name,sha256:hex,photo:picture};draft=annotation;mask=decoded;accepted=true;
   instanceTargetReview.hidden=!(draft.modelProposalId||draft.physicalTargetId);
   instanceTargetText.textContent=draft.physicalTargetId?
-   draft.humanTargetLabel+' — '+draft.humanCategory+' ('+draft.physicalTargetId+')':
+   draft.humanTargetLabel+' — '+draft.humanCategory+(draft.humanForm?' / '+draft.humanForm:'')+' ('+draft.physicalTargetId+')':
    draft.modelProposalId?draft.humanTargetLabel+' ('+draft.modelProposalId+')':'';
   detailPoint={x:Math.floor(w/2),y:Math.floor(h/2)};
   redraw();refresh();

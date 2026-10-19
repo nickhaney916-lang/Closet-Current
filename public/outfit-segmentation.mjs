@@ -50,7 +50,28 @@ export function clothingMaskGroups(map){
    for(const i of component){selected[i]=1;count++;sum+=confidence[i];islandSum+=confidence[i];const x=i%width,y=Math.floor(i/width);minX=Math.min(minX,x);maxX=Math.max(maxX,x);minY=Math.min(minY,y);maxY=Math.max(maxY,y);islandLeft=Math.min(islandLeft,x);islandRight=Math.max(islandRight,x);islandTop=Math.min(islandTop,y);islandBottom=Math.max(islandBottom,y);}
    islands.push({pixels:component,count:component.length,score:islandSum,bounds:{left:islandLeft,top:islandTop,right:islandRight+1,bottom:islandBottom+1}});
   }
-  if(count<Math.max(12,Math.ceil(labels.length*.001))||sum/count<.8)continue;
+  // A marginal-but-coherent upper-clothes prediction on a layered photo
+  // previously vanished entirely at the 0.80 average-confidence gate.
+  // Preserve its ORIGINAL-PHOTO crop only as one review-only candidate:
+  // never infer a shirt/jacket identity, trust its mask, sample a color or
+  // automatically index it. Ignore tiny/ambiguous speckles as before.
+  const average=count?sum/count:0;
+  // A high enough mask pixel count can still be just a thin sleeve
+  // (actual validation-0031 review crop showed only blazer sleeve fabric).
+  // Require a plausible upper-garment *extent* in BOTH dimensions before
+  // adding a low-confidence review card. It is still NOT an approved item.
+  // The evidence remains accessible through aggregate worker diagnostics.
+  const broadUpperExtent=(maxX-minX+1)/width>=.12&&(maxY-minY+1)/height>=.12;
+  const weakUpper=region.id===4&&count>=Math.max(24,Math.ceil(labels.length*.002))&&
+    average>=.7&&average<.8&&broadUpperExtent;
+  if(count<Math.max(12,Math.ceil(labels.length*.001))||(average<.8&&!weakUpper))continue;
+  if(weakUpper){
+   output.push({...region,selected,count,confidence:average,
+    bounds:{left:minX,top:minY,right:maxX+1,bottom:maxY+1},
+    clipped:minX===0||minY===0||maxX===width-1||maxY===height-1,
+    reviewOnlyReason:'low-confidence-upper-mask'});
+   continue;
+  }
   // When TWO substantial, disconnected upper-clothing regions appear, a
   // single union box can mix unrelated clothing or people. Produce separate
   // REVIEW-ONLY source crops instead. Disconnection is NOT proof that either
@@ -72,6 +93,47 @@ export function clothingMaskGroups(map){
   output.push({...region,selected,count,confidence:sum/count,bounds:{left:minX,top:minY,right:maxX+1,bottom:maxY+1},clipped:minX===0||minY===0||maxX===width-1||maxY===height-1});
  }
  return output;
+}
+// Different semantic labels can refer to the SAME physical garment on a
+// layered outfit. For example a dress region can surround a class-4 shirt
+// proposal, or a skirt can overlap class-6 bottoms. A strong model confidence
+// for EACH pixel is not evidence of two separate physical wardrobe pieces.
+// Keep both original-source crops but block automatic color/category/save.
+// Bounding boxes are triage evidence only, not validated instance outlines.
+export function reviewOnlyOverlappingGarmentGroups(groups,{minimumSmallerBoxOverlap=.2}={}){
+ if(!Array.isArray(groups)||!Number.isFinite(minimumSmallerBoxOverlap)||
+    minimumSmallerBoxOverlap<.1||minimumSmallerBoxOverlap>.75)
+  throw Error('Invalid overlapping garment review inputs');
+ const ambiguousPairs=new Set(['4:7','5:6','5:7','6:7']),marked=new Set();
+ const boxArea=b=>(b.right-b.left)*(b.bottom-b.top);
+ for(let i=0;i<groups.length;i++)for(let j=i+1;j<groups.length;j++){
+  const a=groups[i],b=groups[j],pair=[a.id,b.id].sort((x,y)=>x-y).join(':');
+  if(!ambiguousPairs.has(pair))continue;
+  if(!a.bounds||!b.bounds||boxArea(a.bounds)<=0||boxArea(b.bounds)<=0)continue;
+  const overlapWidth=Math.max(0,Math.min(a.bounds.right,b.bounds.right)-Math.max(a.bounds.left,b.bounds.left));
+  const overlapHeight=Math.max(0,Math.min(a.bounds.bottom,b.bounds.bottom)-Math.max(a.bounds.top,b.bounds.top));
+  const fraction=overlapWidth*overlapHeight/Math.min(boxArea(a.bounds),boxArea(b.bounds));
+  if(fraction>=minimumSmallerBoxOverlap){marked.add(i);marked.add(j);}
+ }
+ return groups.map((group,i)=>marked.has(i)?
+  {...group,reviewOnlyReason:group.reviewOnlyReason||'overlapping-garment-classes'}:group);
+}
+// Research-only conservative route for clothing photographed without a
+// visible wearer. A large semantic region is NOT evidence of a clean garment:
+// explicitly block automatic saving and show original pixels for review.
+// Small background-like predictions stay suppressed; no user-uploaded data
+// or model predictions are classified as reliable by this helper.
+export function reviewOnlyUnwornOutfitGroups(map){
+ if(map?.personDetected!==false)return [];
+ const area=map.width*map.height;
+ return clothingMaskGroups(map).filter(group=>{
+  const b=group.bounds;
+  return [4,5,6,7,9].includes(group.id)&&
+   group.count>=Math.max(96,Math.ceil(area*.04))&&
+   group.confidence>=.85&&
+   (b.right-b.left)/map.width>=.25&&
+   (b.bottom-b.top)/map.height>=.25;
+ }).map(group=>({...group,reviewOnlyReason:'no-person-evidence-review-only'}));
 }
 export function clothingCropBounds(image,map,group,{marginFraction=.05}={}){
  if(![3,4].includes(image.channels)||image.data.length!==image.width*image.height*image.channels)throw Error('Invalid outfit image pixels.');

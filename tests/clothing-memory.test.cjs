@@ -16,23 +16,4 @@ test('background feature refresh merges into the latest saved row without overwr
  const c={queued:work=>work(),db:{transaction(){const tx={objectStore:()=>({get(){const r={};setImmediate(()=>{r.result=record;r.onsuccess();setImmediate(()=>tx.oncomplete());});return r;},put:value=>record=value})};return tx;}}};vm.createContext(c);vm.runInContext(source.slice(source.indexOf('function recognitionSourcePhoto('),source.indexOf('function clothingFields(')),c);vm.runInContext(source.slice(source.indexOf('function saveMemoryReview('),source.indexOf('setInterval(scheduleMemoryReview')),c);
  const updated=await c.saveMemoryReview({id:'one',image:'photo',category:'Tops',itemType:'T-shirt',color:'Blue',recognitionMemory:memory(),learningReviewedWeek:'2026-10-19'});assert.equal(updated.itemType,'Polo');assert.equal(updated.color,'Green');assert.equal(updated.notes,'Latest correction');assert.equal(M.valid(record.recognitionMemory),true);
  assert.equal(await c.saveMemoryReview({id:'one',image:'old-crop',recognitionMemory:memory()}),null);assert.equal(record.image,'photo');
- record.outfitSourceId='legacy-outfit';
- assert.equal(await c.saveMemoryReview({...record,recognitionMemory:memory()}),null,'missing raw crop cannot refresh stored features');
-});
-
-test('background recognition skips a restored outfit missing its crop but reviews the next valid piece',async()=>{
- const fs=require('node:fs'),vm=require('node:vm'),source=fs.readFileSync('public/app.js','utf8');
- const calls=[],saved=[];
- const c={ClothingMemory:M,db:{},memoryReviewRunning:false,busy:false,automaticRunning:false,
-  localPending:new Set(),localReady:true,document:{hidden:false,querySelector:()=>null},render(){},
-  items:[...Array.from({length:8},(_,i)=>({id:'legacy-'+i,outfitSourceId:'outfit',image:'display-tile',confirmedDetails:true})),
-   {id:'valid',image:'original',confirmedDetails:true}],
-  async localRequest(action,image){calls.push(image);return {recognitionMemory:memory()};},
-  async saveMemoryReview(value){saved.push(value);return value;}};
- vm.createContext(c);
- vm.runInContext(source.slice(source.indexOf('function recognitionSourcePhoto('),source.indexOf('function clothingFields(')),c);
- vm.runInContext(source.slice(source.indexOf('async function reviewRecognitionMemory('),source.indexOf('closetReady.then(scheduleMemoryReview)')),c);
- await c.reviewRecognitionMemory();
- assert.deepEqual(calls,['original']);assert.deepEqual(saved.map(x=>x.id),['valid']);
- assert.equal(c.items[0].recognitionMemory,undefined);assert.equal(c.memoryReviewRunning,false);
 });

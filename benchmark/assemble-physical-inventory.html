@@ -80,6 +80,8 @@ function validatedMasks(photo,loaded){
    typeof a.humanTargetLabel!=='string'||!a.humanTargetLabel.trim()||
    a.humanTargetLabel.trim().length>100||
    !a.reviewer?.trim()||!a.approvedBy?.trim()||
+   (a.humanForm!==undefined&&
+    !({Tops:['top'],Bottoms:['shorts','trousers','skirt'],Dresses:['dress'],Outerwear:['outerwear'],Shoes:['shoes'],Hosiery:['hosiery'],Accessories:['accessory']}[a.humanCategory]||[]).includes(a.humanForm))||
    a.targetIndependentlyIdentifiedBy!==a.reviewer||
    a.reviewer.trim().toLowerCase()===a.approvedBy.trim().toLowerCase()||
    a.width!==expectedWidth||a.height!==expectedHeight)
@@ -90,7 +92,7 @@ function validatedMasks(photo,loaded){
   if(labels.has(label))throw Error('Repeated physical target label; distinguish actual items before export');
   const mask=binaryMask(a);
   ids.add(a.physicalTargetId);labels.add(label);reviewer=a.reviewer;approver=a.approvedBy;
-  items.push({id:a.physicalTargetId,category:a.humanCategory,label:a.humanTargetLabel,
+  items.push({id:a.physicalTargetId,category:a.humanCategory,label:a.humanTargetLabel,form:a.humanForm,
    reviewer:a.reviewer,approvedBy:a.approvedBy,mask});
  }
  return items.sort((x,y)=>x.id.localeCompare(y.id));
@@ -169,7 +171,7 @@ $('export').onclick=()=>{
   allVisibleGarmentsAccountedFor:true,
   reviewedBy:masks[0].reviewer,approvedBy:masks[0].approvedBy,
   reviewedAt:new Date().toISOString(),
-  targets:masks.map(({id,category,label})=>({id,category,label}))
+  targets:masks.map(({id,category,label,form})=>({id,category,label,...(form?{form}:{})}))
  };
  const blob=new Blob([JSON.stringify(doc,null,2)+'\n'],{type:'application/json'});
  const url=URL.createObjectURL(blob),a=document.createElement('a');
