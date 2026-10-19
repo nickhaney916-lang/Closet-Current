@@ -8,6 +8,7 @@ on:
       - 'tests/account-deletion-lock-postgres.sql'
       - 'scripts/test-account-deletion-lock-race.mjs'
       - 'tests/account-deletion-coordinator.test.mjs'
+      - 'tests/account-deletion-supabase-adapters.test.mjs'
       - '.github/workflows/account-deletion-lock.yml'
   workflow_dispatch:
 permissions:
@@ -44,4 +45,4 @@ jobs:
           psql -X -v ON_ERROR_STOP=1 -f tests/account-deletion-lock-postgres.sql
           node scripts/test-account-deletion-lock-race.mjs
       - name: Verify coordinator cannot delete without owner, password and durable lock
-        run: node --test tests/account-deletion-coordinator.test.mjs
+        run: node --test tests/account-deletion-coordinator.test.mjs tests/account-deletion-supabase-adapters.test.mjs
