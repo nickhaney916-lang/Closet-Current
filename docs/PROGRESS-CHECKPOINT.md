@@ -24,9 +24,20 @@
   **803 total, 800 passed, 0 failed, 3 skipped**. Extended actual touch-browser
   UI test to tap through two cycles of four shoes and assert pinned top,
   unchanged garment records, and no implicit outfit saves.
-- Local browser execution is blocked by missing Chromium; the new browser
-  assertion awaits the existing GitHub mobile workflow after publication.
-  No paid inference, production deployment/merge or Drive Duel changes.
+- Published code checkpoint: `cd594d682d76a5482192d467f5e70fd1ec7232fc`.
+  Local Chromium was unavailable, but GitHub mobile run
+  [39194138916](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39194138916)
+  passed every step. `NEW_ITEM_STYLE_MOBILE` confirmed
+  `allOwnedSwapChoicesReachable=true`, `anchorPersisted=true`,
+  `previewNotAutoSaved=true`, `reloadVerified=true`, and `pageErrors=0`.
+  This uses a synthetic wardrobe in a 390x844 touch browser, not a physical phone.
+- The same code's actual model run retained 14/14 broad single-item categories,
+  8 automatic saves and 6 review holds. The layered-photo result remains
+  2 uncertain candidates, 0 automatic saves and 2 pending review, with no page
+  errors. This verifies baseline behavior, not improved segmentation accuracy.
+  At inspection 24/25 reported workflows had succeeded; the experimental
+  MODNet comparison was still running. No paid inference, production
+  deployment/merge or Drive Duel changes.
 - Remaining: actual layered-photo segmentation/automatic indexing accuracy,
   independent reference masks, physical-phone validation, and real AI try-on
   are not completed by these software fixes. No paid provider run authorized.
