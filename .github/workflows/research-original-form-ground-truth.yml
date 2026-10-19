@@ -4,8 +4,11 @@ on:
     branches: [research/original-photo-form-ground-truth-20261019]
     paths:
       - 'benchmark/original-photo-form-review.mjs'
+      - 'benchmark/blind-original-form-review.mjs'
       - 'scripts/audit-original-photo-form-ground-truth.mjs'
+      - 'scripts/stage-blind-original-form-review.mjs'
       - 'tests/original-photo-form-review.test.mjs'
+      - 'tests/blind-original-form-review.test.mjs'
       - '.github/workflows/research-original-form-ground-truth.yml'
   workflow_dispatch:
 permissions:
@@ -21,7 +24,7 @@ jobs:
         with:
           node-version: '22'
       - name: Verify source-hash and never-invent-garment-truth regressions
-        run: node --test tests/original-photo-form-review.test.mjs tests/recognition-benchmark.test.mjs tests/physical-garment-inventory.test.mjs
+        run: node --test tests/original-photo-form-review.test.mjs tests/blind-original-form-review.test.mjs tests/recognition-benchmark.test.mjs tests/physical-garment-inventory.test.mjs
       - name: Reuse actual completed browser inference from pinned reviewed photos
         env:
           GH_TOKEN: ${{ github.token }}
@@ -45,10 +48,26 @@ jobs:
               throw Error('Review-only original evidence is incomplete or misrepresented');
             console.log('Confirmed actual source-audited subtype conflicts; human clothing forms remain unverified.');
           "
+      - name: Create two source-only independent review packets without leaking manifest or AI answers
+        run: |
+          node scripts/stage-blind-original-form-review.mjs benchmark/original-source-form-audit/review-queue.json benchmark/original-source-form-audit/
+          node --input-type=module -e "
+            import fs from 'node:fs';
+            const p=JSON.parse(fs.readFileSync('benchmark/original-source-form-audit/blind-first-reviewer.json','utf8'));
+            const q=JSON.parse(fs.readFileSync('benchmark/original-source-form-audit/blind-second-reviewer.json','utf8'));
+            if(p.photoCount!==16||q.photoCount!==16||p.independentlyReviewed||q.independentlyReviewed||
+               p.modelPredictionsIncluded||q.modelPredictionsIncluded||
+               p.manifestCategoryLabelsIncluded||q.manifestCategoryLabelsIncluded||
+               p.originals.some(x=>x.sourceVisiblePhysicalGarments.length>0))
+              throw Error('Blind packets improperly contain invented garment truth');
+          "
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: original-form-review-queue-real-photo
-          path: benchmark/original-source-form-audit/review-queue.json
+          path: |
+            benchmark/original-source-form-audit/review-queue.json
+            benchmark/original-source-form-audit/blind-first-reviewer.json
+            benchmark/original-source-form-audit/blind-second-reviewer.json
           if-no-files-found: ignore
           retention-days: 14
