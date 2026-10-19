@@ -350,7 +350,7 @@ test('real-photo-style fragmented outfit proposals stay review-only despite stro
 });
 
 test('all unreliable source-only fallback reasons block strong recognition and proposed color',async()=>{
- for(const reason of ['fragmented-mask','unexplained-enclosed-gap','clipped-frame','insufficient-mask']){
+ for(const reason of ['fragmented-mask','unexplained-enclosed-gap','clipped-frame','insufficient-mask','overlapping-garment-classes']){
   const {c,stored}=setup({quality:async()=>({blank:false,signature:[1,2,3],aspect:1,
    colorEstimate:{color:'White'}}),result:{strong:true,choices:[choice],details:{color:'Red'}}});
   c.candidate('unmasked-'+reason,{outfitSourceId:'outfit',
