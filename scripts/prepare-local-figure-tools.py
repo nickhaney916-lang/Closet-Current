@@ -10,7 +10,11 @@ def main():
  if not args.acquire:p.error('Explicit --acquire required; this preparation downloads public files')
  out=ROOT/'artifacts/figure-creation/tools';out.mkdir(parents=True,exist_ok=True)
  archive=out/'blender-4.3.0-linux-x64.tar.xz'
- if not archive.exists():urllib.request.urlretrieve(BLENDER_URL,archive)
+ if not archive.exists():
+  partial=archive.with_suffix('.partial')
+  subprocess.run(['curl','--fail','--location','--retry','3','--max-time','180','--output',str(partial),BLENDER_URL],check=True)
+  if hashlib.sha256(partial.read_bytes()).hexdigest()!=BLENDER_SHA:raise ValueError('Downloaded archive SHA-256 mismatch')
+  partial.replace(archive)
  if hashlib.sha256(archive.read_bytes()).hexdigest()!=BLENDER_SHA:raise ValueError('Official Blender archive SHA-256 mismatch')
  binary=out/'blender-4.3.0-linux-x64/blender'
  if not binary.exists():

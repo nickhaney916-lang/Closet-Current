@@ -9,7 +9,7 @@
     "scripts/benchmark-created-figures.py": "7397db1f7b1b9fb59f4412df79f97b6a8fbbc19b9aca257699ff1fd11f6690d5",
     "benchmark/figure-creation/recipe.json": "5a538b34d7432d7fd96371eb351fe33c978fc33006895f121ddf1ef43c9dfce5",
     "benchmark/figure-creation/source-lock.json": "bc7060f38d5adcfe31473604100510a34b1d82b8b92cade09e3931eb0877619f",
-    "scripts/prepare-local-figure-tools.py": "c741dfbfd7e7df1211ec8534ab86da6e18c545b085f0ed42d574bb18741e92be",
+    "scripts/prepare-local-figure-tools.py": "7ad4372a6d765c42cbcc5cbc523f6b457d87a12525b85548c4111666ec0939c5",
     "benchmark/figure-creation/srgb-profile.json": "d34b72f6e4fb78ea6e09789b05a2ea0b2227ea4aae92b78ab65a92793f70ae4e"
   },
   "sourceRevision": "a8bc2d54ff0ac92e78ff71431b1023eda42bf482",
