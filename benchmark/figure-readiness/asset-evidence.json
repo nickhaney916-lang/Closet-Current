@@ -1,0 +1,67 @@
+{
+  "schemaVersion": 1,
+  "policy": "exactly-two-fixed-assets",
+  "target": {
+    "width": 1294,
+    "height": 2398,
+    "reason": "proposed 2x sampling of 647x1199 canonical stage; product requirement, not legal standard"
+  },
+  "figures": [
+    {
+      "id": "female",
+      "previewPath": "public/ai-models/female-preview.webp",
+      "masterPath": null,
+      "masterSha256": null,
+      "nativeResolutionVerified": null,
+      "sourceKind": "unknown",
+      "rights": {
+        "commercialUse": null,
+        "modificationAndClothingOverlays": null,
+        "appDistributionAndCaching": null,
+        "userCompositeExport": null,
+        "optionalFaceReplacement": null,
+        "recognizablePersonReleaseOrFictionalEvidence": null,
+        "evidenceReference": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      },
+      "technical": {
+        "neutralBaseClothing": null,
+        "frontPoseWithSeparateArms": null,
+        "completeHandsFeetAndHead": null,
+        "consistentLightAndScale": null,
+        "landmarksReviewed": null,
+        "occlusionLayersReviewed": null,
+        "visualApprovedBy": null
+      }
+    },
+    {
+      "id": "male",
+      "previewPath": "public/ai-models/male-preview.webp",
+      "masterPath": null,
+      "masterSha256": null,
+      "nativeResolutionVerified": null,
+      "sourceKind": "unknown",
+      "rights": {
+        "commercialUse": null,
+        "modificationAndClothingOverlays": null,
+        "appDistributionAndCaching": null,
+        "userCompositeExport": null,
+        "optionalFaceReplacement": null,
+        "recognizablePersonReleaseOrFictionalEvidence": null,
+        "evidenceReference": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      },
+      "technical": {
+        "neutralBaseClothing": null,
+        "frontPoseWithSeparateArms": null,
+        "completeHandsFeetAndHead": null,
+        "consistentLightAndScale": null,
+        "landmarksReviewed": null,
+        "occlusionLayersReviewed": null,
+        "visualApprovedBy": null
+      }
+    }
+  ]
+}
