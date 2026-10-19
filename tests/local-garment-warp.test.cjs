@@ -59,7 +59,8 @@ test('mesh compositing is local and display-only: no provider API or source repl
  assert.match(html,/script src="local-garment-warp\.js"/);
  assert.ok(html.indexOf('src="local-garment-warp.js"')<html.indexOf('src="reusable-figure-preview.js"'));
  assert.match(preview,/ClosetGarmentWarp\.warpTransparentImage/);
- assert.match(preview,/if\(revision!==renderRevision\)return/);
+ assert.match(preview,/const cancelled=\(\)=>revision!==renderRevision/);
+ assert.match(preview,/if\(cancelled\(\)\)return/);
  assert.ok(!/fetch\(|localStorage|sessionStorage|\.setItem\(|\.postMessage\(/.test(src));
  assert.ok(!/FASHN|OPENAI_API_KEY|https:\/\//.test(src));
  assert.match(src,/photorealisticFitVerified:false/);
