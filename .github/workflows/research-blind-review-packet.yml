@@ -1,0 +1,58 @@
+name: Blind ten-photo human garment review packet
+on:
+  push:
+    branches: [research/whole-outfit-readiness-evidence-20261018]
+    paths:
+      - 'scripts/build-blind-physical-review-packet.mjs'
+      - 'tests/blind-physical-review-packet.test.mjs'
+      - '.github/workflows/research-blind-review-packet.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  package-independent-sources:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check independent human-review packet safeguards
+        run: node --test tests/blind-physical-review-packet.test.mjs
+      - name: Retrieve unchanged ten-source research originals from existing successful run
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          mkdir -p benchmark/deepfashion-instance-review
+          gh run download 39194870053 --repo "$GH_REPO" -n pinned-deepfashion-instance-feasibility -D benchmark/deepfashion-instance-review
+      - name: Build model-blind first-reviewer packet (no AI proposal seed)
+        run: |
+          node scripts/build-blind-physical-review-packet.mjs \
+            benchmark/deepfashion-instance-review/independent-outline-review \
+            benchmark/blind-ten-photo-review
+      - name: Verify packet cannot assert human approvals, masks or real accuracy
+        run: |
+          node --input-type=module -e "
+            import fs from 'node:fs';
+            const p='benchmark/blind-ten-photo-review/';
+            const d=JSON.parse(fs.readFileSync(p+'BLIND-REVIEW-STATUS.json','utf8'));
+            const html=fs.readFileSync(p+'REVIEW-FIRST.html','utf8');
+            if(d.sourcePhotoCount!==10||d.originalSourceHashesVerified!==true||
+               d.modelMasksIncluded!==0||d.sourceDescriptionLabelsIncluded!==0||
+               d.independentlyApprovedMasks!==0||d.independentPhysicalInventoriesCompleted!==0||
+               d.physicalGarmentRecall!==null||d.categoryCorrectRecall!==null||
+               d.canPromoteModel!==false||d.canSaveCustomerItems!==false)
+              throw Error('Unreviewed photos cannot be certified as physical garment truth');
+            if((html.match(/<article>/g)||[]).length!==10||html.includes('candidate-01'))
+              throw Error('Reviewer dashboard incomplete or contains model seed hints');
+            if(fs.readdirSync(p+'original-photos').length!==10)
+              throw Error('Incomplete original photograph pack');
+          "
+      - uses: actions/upload-artifact@v4
+        with:
+          name: blind-ten-photo-human-review-packet
+          path: benchmark/blind-ten-photo-review/
+          retention-days: 14
