@@ -11,6 +11,7 @@ These two workflows formerly had **no direct gate** between the blind human item
 `benchmark/blind-inventory-mask-gate.mjs` now compares the **exact original source SHA**, the first and second completed blind source reviews, and the proposed approved per-piece mask inventory. It:
 - **Blocks** any count, category, specific-form or visibility disagreement, unknown type or partly visible garment until independent adjudication.
 - **Blocks** physical inventory counts/categories that differ from the two prior blind inventories, including leaving out shoes, socks or other categories the instance model does not support.
+- **Blocks** a blind **skirt** observation from being silently accepted as a final **shorts** outline merely because both are `Bottoms`. It compares the human-reviewed skirt/shorts/trousers form counts against the approved target forms. Unknown Bottoms forms stay blocked rather than being guessed; other categories may still have only broad mask forms, so exact shoe subtypes are never certified.
 - Uses the existing independent-mask validator and one-to-one IoU scorer; original RGB and approved human masks remain unchanged.
 - Reports conditionally measured localization only if the independent original-photo inventories, mask review, and SHA identities are all present and agree.
 - For truly empty licensed negative-control scenes, **does not invent a garment-recall denominator or claim a model proposal is a background false positive**.
