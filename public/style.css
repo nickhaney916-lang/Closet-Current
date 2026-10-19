@@ -125,3 +125,11 @@ input[type="checkbox"]{min-height:20px;width:20px;height:20px;vertical-align:mid
 .reusable-figure-panel [hidden],.ai-tryon-panel[hidden]{display:none!important}
 @media(max-width:480px){.reusable-figure-panel{padding:14px}
  .reusable-figure-stage{width:min(100%,270px)}}
+
+
+/* Only appears for a held local cutout. No manual crop or cloud retry. */
+.reusable-figure-photo-help{border-top:1px solid var(--line);padding-top:12px;margin-top:12px;
+ display:grid;gap:10px}
+.reusable-figure-photo-help[hidden]{display:none!important}
+.reusable-figure-photo-help .fine{margin:0;line-height:1.55}
+#reusableFigureRetake{width:100%;min-height:52px;white-space:normal}
