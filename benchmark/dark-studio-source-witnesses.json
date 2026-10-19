@@ -1,0 +1,162 @@
+{
+  "schemaVersion": 1,
+  "id": "commons-0002",
+  "sourceSha256": "fef606d6ed7354a2238f1bcc2584942747ca6fa4a2b16b2e9eec21f639d10667",
+  "status": "assistant-inspected-partial-source-patches-not-independent-full-mask",
+  "witnesses": [
+    {
+      "name": "logo",
+      "role": "garment",
+      "box": [
+        0.34,
+        0.3,
+        0.65,
+        0.35
+      ]
+    },
+    {
+      "name": "pocket",
+      "role": "garment",
+      "box": [
+        0.43,
+        0.43,
+        0.59,
+        0.52
+      ]
+    },
+    {
+      "name": "left-sleeve",
+      "role": "garment",
+      "box": [
+        0.07,
+        0.43,
+        0.12,
+        0.46
+      ]
+    },
+    {
+      "name": "right-sleeve",
+      "role": "boundary-ambiguous",
+      "box": [
+        0.86,
+        0.43,
+        0.91,
+        0.46
+      ],
+      "note": "Original rectangle straddles visible source garment/background boundary; not scored as pure fabric."
+    },
+    {
+      "name": "left-shoulder",
+      "role": "boundary-ambiguous",
+      "box": [
+        0.21,
+        0.23,
+        0.26,
+        0.26
+      ],
+      "note": "Original rectangle straddles visible source garment/background boundary; not scored as pure fabric."
+    },
+    {
+      "name": "right-shoulder",
+      "role": "boundary-ambiguous",
+      "box": [
+        0.76,
+        0.23,
+        0.8,
+        0.26
+      ],
+      "note": "Original rectangle straddles visible source garment/background boundary; not scored as pure fabric."
+    },
+    {
+      "name": "hem",
+      "role": "garment",
+      "box": [
+        0.35,
+        0.87,
+        0.65,
+        0.89
+      ]
+    },
+    {
+      "name": "collar-band",
+      "role": "garment",
+      "box": [
+        0.43,
+        0.25,
+        0.57,
+        0.26
+      ]
+    },
+    {
+      "name": "neck",
+      "role": "background",
+      "box": [
+        0.45,
+        0.16,
+        0.55,
+        0.19
+      ]
+    },
+    {
+      "name": "left-exterior",
+      "role": "background",
+      "box": [
+        0.03,
+        0.6,
+        0.13,
+        0.8
+      ]
+    },
+    {
+      "name": "right-exterior",
+      "role": "background",
+      "box": [
+        0.85,
+        0.62,
+        0.96,
+        0.83
+      ]
+    },
+    {
+      "name": "stand",
+      "role": "background",
+      "box": [
+        0.43,
+        0.94,
+        0.62,
+        0.99
+      ]
+    },
+    {
+      "name": "right-sleeve-core",
+      "role": "garment",
+      "box": [
+        0.84,
+        0.43,
+        0.87,
+        0.46
+      ]
+    },
+    {
+      "name": "left-shoulder-core",
+      "role": "garment",
+      "box": [
+        0.23,
+        0.25,
+        0.26,
+        0.28
+      ]
+    },
+    {
+      "name": "right-shoulder-core",
+      "role": "garment",
+      "box": [
+        0.75,
+        0.26,
+        0.78,
+        0.29
+      ]
+    }
+  ],
+  "revisionNote": "Three initial rectangles visibly included exterior background. Retained unchanged as ambiguous boundary probes; separate source-inspected interior cores added. No independent full-mask labels exist."
+}

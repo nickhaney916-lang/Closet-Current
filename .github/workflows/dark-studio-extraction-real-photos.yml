@@ -1,0 +1,36 @@
+name: Dark-studio real-photo extraction evidence
+on:
+  push:
+    branches: [feature/conservative-dark-garment-extraction-20261019]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  real-photo-proposals:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install Pillow==11.3.0
+      - name: Build and verify all Node tests
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Measure licensed real-photo extraction without approving display
+        run: |
+          python scripts/benchmark-dark-studio-extraction.py
+          node scripts/assert-dark-studio-evidence.cjs
+          cp artifacts/dark-studio-extraction/results.json /tmp/first-extraction-results.json
+          python scripts/benchmark-dark-studio-extraction.py
+          cmp /tmp/first-extraction-results.json artifacts/dark-studio-extraction/results.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: licensed-dark-studio-extraction-diagnostics
+          path: artifacts/dark-studio-extraction/
