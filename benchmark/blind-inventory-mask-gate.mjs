@@ -52,6 +52,20 @@ export function evaluateBlindLinkedPhysicalInventory({
  const first=firstSubmission.sourceInventories.find(x=>x.sourceId===scene.id);
  const second=secondSubmission.sourceInventories.find(x=>x.sourceId===scene.id);
  if(!first||!second)throw Error('Missing full scene inventories');
+ // Licensed negative-control originals must not be forced into a fake mask
+ // or counted as a missing clothing item. Existing seed validation still
+ // forbids an unreviewed proposal from becoming a human reference.
+ if(first.items.length===0&&second.items.length===0){
+  if(physicalInventory||approvedMasks.size)
+   throw Error('Negative-control original cannot claim physical garment masks');
+  const empty=evaluateCompletePhysicalInventory(scene,null,new Map(),
+   modelProposals,{minimumIoU});
+  return {...blankResult('blind-observed-no-visible-garments',[
+   'negative-control-no-positive-garment-recall-denominator'
+  ]),observedPhysicalGarments:0,unverifiedModelProposals:empty.modelProposals,
+   predictedBackgroundFalsePositiveCount:null,
+   classificationSpecificity:null};
+ }
  if(!physicalInventory)
   return blankResult('awaiting-independent-per-item-masks',['physical-inventory-not-supplied']);
  if(physicalInventory.image!==scene.image||
