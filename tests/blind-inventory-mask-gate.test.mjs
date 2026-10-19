@@ -164,3 +164,40 @@ test('negative scene cannot accept a fabricated mask or unsafe AI proposal as re
  a.modelProposals.get(id+'-candidate-01').reviewStatus='approved';
  assert.throws(()=>score(a),/Unsafe prediction/);
 });
+
+test('two blind reviewers agreeing on skirt cannot be scored against a physically approved shorts mask',()=>{
+ const a=data();
+ for(const review of [a.firstSubmission,a.secondSubmission]){
+  review.sourceInventories[0].items[0].category='Bottoms';
+  review.sourceInventories[0].items[0].form='Skirt';
+ }
+ a.physicalInventory.targets[0].category='Bottoms';
+ a.physicalInventory.targets[0].form='shorts';
+ let r=score(a);
+ assert.equal(r.status,'blocked-bottoms-specific-form-mismatch');
+ assert.equal(r.detectionRecall,null);
+ assert.equal(r.canPromoteModel,false);
+ // Human approvers correct the inventory target AND the separately approved
+ // outline form: only then can the independent mask scorer evaluate it.
+ a.physicalInventory.targets[0].form='skirt';
+ const annotation=a.approvedMasks.get(id+'-item-01');
+ annotation.humanCategory='Bottoms';
+ annotation.humanForm='skirt';
+ r=score(a);
+ assert.equal(r.status,'conditionally-scored-sha-locked-blind-linked-physical-inventory');
+ assert.equal(r.observedBottomsCompatibleWithApprovedMaskForms,true);
+ assert.equal(r.categoryConstrainedRecall,0,'wrong model outerwear class cannot win a skirt category');
+ assert.equal(r.specificFootwearSubtypeAccuracy,null);
+});
+test('unrecognized Bottoms form must not quietly become verified skirt/shorts evidence',()=>{
+ const a=data();
+ for(const review of [a.firstSubmission,a.secondSubmission]){
+  review.sourceInventories[0].items[0].category='Bottoms';
+  review.sourceInventories[0].items[0].form='leggings';
+ }
+ a.physicalInventory.targets[0].category='Bottoms';
+ a.physicalInventory.targets[0].form='trousers';
+ const r=score(a);
+ assert.equal(r.status,'blocked-bottoms-specific-form-mismatch');
+ assert.equal(r.formConstrainedRecall,null);
+});
