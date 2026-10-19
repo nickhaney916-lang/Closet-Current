@@ -20,13 +20,13 @@ function updateStandardModelPreview(){
 // equality compares the complete original selected input without lossy hashes.
 function tryOnInputs(){
  const selected=currentBoard?.slots||{};
- return {figure:tryOnFigure,slots:['top','bottom','layer','layer2','layer3','shoes'].map(slot=>{
+ return {owner:typeof window==='undefined'?null:window.closetAuth?.user?.id||null,figure:tryOnFigure,slots:['top','bottom','layer','layer2','layer3','shoes'].map(slot=>{
   const id=selected[slot]||null,item=items.find(x=>x.id===id);
   return {slot,id,category:item?.category||null,itemType:item?.itemType||null,image:item?.image||null};
  })};
 }
 function sameTryOnInputs(a,b){
- return !!a&&!!b&&a.figure===b.figure&&a.slots.length===b.slots.length&&
+ return !!a&&!!b&&a.owner===b.owner&&a.figure===b.figure&&a.slots.length===b.slots.length&&
   a.slots.every((x,i)=>{const y=b.slots[i];return x.slot===y.slot&&x.id===y.id&&
    x.category===y.category&&x.itemType===y.itemType&&x.image===y.image;});
 }
@@ -43,15 +43,34 @@ function onTryOnBoardChanged(){
   resetTryOnPreview();
  $('tryOnGenerate').disabled=tryOnBusy||!tryOnReady||!window.AiTryOnPlan?.plan(currentBoard,items).steps.length;
 }
-function tryOnRequest(token,body){
- return fetch('https://hlkgymugtfbirlpunsra.supabase.co/functions/v1/ai-try-on',{
+async function tryOnRequest(token,body){
+ const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),25000);
+ try{return await fetch('https://hlkgymugtfbirlpunsra.supabase.co/functions/v1/ai-try-on',{
   method:'POST',headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},
-  body:JSON.stringify(body),cache:'no-store'
+  body:JSON.stringify(body),cache:'no-store',signal:controller.signal
  }).then(async response=>{
   const result=await response.json().catch(()=>({}));
   if(!response.ok)throw Error(result.error||'AI try-on is unavailable');
+  if(!result||typeof result!=='object'||Array.isArray(result))throw Error('Invalid try-on response');
   return result;
- });
+ });}catch(error){
+  if(controller.signal.aborted)throw Error('AI request timed out. No automatic retry was made; a submitted job may still finish.');
+  throw error;
+ }finally{clearTimeout(timer);}
+}
+// Validate actual browser decoding before a second paid pass or visible output.
+// A base64-shaped string alone does not prove usable image bytes.
+async function decodeTryOnImage(value){
+ if(!window.AiTryOnPlan.validImage(value))throw Error('Generated try-on image is invalid');
+ const probe=new Image();probe.src=value;
+ let timer;
+ try{
+  await Promise.race([probe.decode(),new Promise((_,reject)=>{
+   timer=setTimeout(()=>reject(Error('Generated try-on image could not be decoded')),10000);
+  })]);
+  if(!probe.naturalWidth||!probe.naturalHeight)throw Error('Empty generated image');
+ }catch{throw Error('Generated try-on image could not be decoded');}
+ finally{clearTimeout(timer);probe.removeAttribute('src');}
 }
 // A status check never starts an AI generation or uploads a clothing photo.
 async function checkTryOnReadiness(){
@@ -81,15 +100,16 @@ async function tryOnOne(token,image,category,figure,isCurrent,previousToken=null
  let result=await tryOnRequest(token,previousToken?
   {action:'continue',previousToken,figure,category,garmentImage:image}:
   {action:'start',figure,category,garmentImage:image});
- if(typeof result.token!=='string')throw Error('AI try-on did not start');
+ if(result.status!=='processing'||typeof result.token!=='string'||!result.token)throw Error('AI try-on did not start');
  const jobToken=result.token;
  // One provider call per step. Status requests never submit extra billable jobs.
  for(let i=0;i<32;i++){
   if(!isCurrent())throw Error('Outfit changed; the old preview was discarded');
   await new Promise(resolve=>setTimeout(resolve,1500));
-  result=await tryOnRequest(token,{action:'status',token:result.token});
+  if(!isCurrent())throw Error('Outfit changed; the old preview was discarded');
+  result=await tryOnRequest(token,{action:'status',token:jobToken});
   if(result.status==='completed'){
-   if(!window.AiTryOnPlan.validImage(result.image))throw Error('Generated try-on image is invalid');
+   await decodeTryOnImage(result.image);
    if(!isCurrent())throw Error('Outfit changed; stale result discarded');
    return {image:result.image,jobToken:jobToken};
   }
@@ -103,6 +123,8 @@ async function generateTryOn(){
  if(!tryOnReady){$('tryOnStatus').textContent='AI try-on is not enabled for this account. No generation started.';return;}
  const plan=window.AiTryOnPlan.plan(currentBoard,items);
  if(!plan.steps.length){$('tryOnStatus').textContent='Choose a shirt, dress, or bottoms first.';return;}
+ // A failed regeneration must not leave the previous successful image visible.
+ resetTryOnPreview();
  const signature=tryOnInputs(),revision=++tryOnRevision,figure=tryOnFigure;
  const isCurrent=()=>revision===tryOnRevision&&sameTryOnInputs(signature,tryOnInputs());
  tryOnPendingInputs=signature;

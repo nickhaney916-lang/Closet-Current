@@ -1,7 +1,7 @@
 name: Research two-garment AI + device-emulated quality gates
 on:
   push:
-    branches: [research/true-multigarment-ai-tryon-20261018]
+    branches: [research/true-multigarment-ai-tryon-20261018, work/multigarment-integrity-phone-qa-20261019]
     paths:
       - 'public/ai-tryon.js'
       - 'public/ai-tryon-plan.js'
