@@ -2,19 +2,35 @@
 // Every provider request is intercepted, so no credits or personal data flow.
 import {chromium,webkit,devices} from 'playwright';
 import assert from 'node:assert/strict';
-import {resolve} from 'node:path';
-import {mkdir,writeFile} from 'node:fs/promises';
+import {resolve,extname} from 'node:path';
+import {mkdir,writeFile,readFile} from 'node:fs/promises';
+import {createServer} from 'node:http';
+
+// Serve the actual built application, including its board and stylesheet.
+// All external traffic is intercepted; synthetic accounts exist only in RAM.
+const root=resolve('dist'),types={'.html':'text/html','.js':'text/javascript',
+ '.mjs':'text/javascript','.css':'text/css','.json':'application/json','.svg':'image/svg+xml',
+ '.webp':'image/webp','.png':'image/png'};
+const server=createServer(async(req,res)=>{
+ try{
+  const url=new URL(req.url,'http://localhost');
+  const path=resolve(root,'.'+decodeURIComponent(url.pathname==='/'?'/index.html':url.pathname));
+  if(!path.startsWith(root+'/'))throw Error('Invalid asset path');
+  const data=await readFile(path);
+  res.writeHead(200,{'Content-Type':types[extname(path)]||'application/octet-stream'});res.end(data);
+ }catch{res.writeHead(404);res.end('Not found');}
+});
+await new Promise(done=>server.listen(0,'127.0.0.1',done));
+const appUrl='http://127.0.0.1:'+server.address().port+'/';
 
 async function check(engine,device,label){
  const browser=await engine.launch({headless:true});
  try{
-  const page=await browser.newPage({...device});
+  const page=await browser.newPage({...device,serviceWorkers:'block'});
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
-  await page.setContent('<!doctype html><html><body>'+
-    '<select id="tryOnFigure"><option value="female">Female</option><option value="male">Male</option></select>'+
-    '<img id="tryOnModelPreview"><p id="tryOnModelCaption"></p>'+
-    '<button id="tryOnGenerate" disabled>Generate</button><p id="tryOnStatus"></p>'+
-    '<div id="outfitFigure"><img id="tryOnImage" hidden></div></body></html>');
+  await page.route('**/*',route=>route.request().url().startsWith(appUrl)?route.continue():route.abort('internetdisconnected'));
+  await page.route('**/auth.js*',route=>route.fulfill({contentType:'text/javascript',body:
+   "window.closetAuth={user:{id:'synthetic-tryon-device-test'},ready:Promise.resolve(),getAccessToken:async()=>'fake-local-jwt'};document.getElementById('authGate').hidden=true;document.getElementById('appShell').hidden=false;"}));
   const images=await page.evaluate(()=>{
    const make=color=>{const canvas=document.createElement('canvas');
     canvas.width=72;canvas.height=108;canvas.getContext('2d').fillStyle=color;
@@ -22,16 +38,6 @@ async function check(engine,device,label){
    return {top:make('#378ae2'),bottom:make('#553077'),shoe:make('#161616'),
     first:make('#cb5e40'),final:make('#8ce44b')};
   });
-  await page.evaluate(x=>{
-   window.$=id=>document.getElementById(id);
-   window.items=[
-    {id:'own-top',category:'Tops',itemType:'T-shirt',image:x.top},
-    {id:'own-bottom',category:'Bottoms',itemType:'Jeans',image:x.bottom},
-    {id:'own-shoes',category:'Shoes',itemType:'Sneakers',image:x.shoe}
-   ];
-   window.currentBoard={slots:{top:'own-top',bottom:'own-bottom',shoes:'own-shoes'}};
-   window.closetAuth={getAccessToken:async()=>'fake-local-jwt'};
-  },images);
   const calls=[];
   let delaySecond=false,mode='success',releaseSecondStatus;
   const polls=new Map();
@@ -66,8 +72,17 @@ async function check(engine,device,label){
    } else throw Error('Unexpected request action');
    return route.fulfill({status:200,headers,contentType:'application/json',body:JSON.stringify(answer)});
   });
-  await page.addScriptTag({path:resolve('public/ai-tryon-plan.js')});
-  await page.addScriptTag({path:resolve('public/ai-tryon.js')});
+  await page.goto(appUrl);
+  await page.evaluate(()=>Promise.all([closetReady,outfitBoardReady]));
+  await page.evaluate(x=>{
+   items.splice(0,items.length,...[
+    {id:'own-top',category:'Tops',itemType:'T-shirt',image:x.top,color:'Blue'},
+    {id:'own-bottom',category:'Bottoms',itemType:'Jeans',image:x.bottom,color:'Purple'},
+    {id:'own-shoes',category:'Shoes',itemType:'Sneakers',image:x.shoe,color:'Black'}
+   ].map(item=>normalizeClothing({...item,name:item.id,localAnalyzed:true})));
+   currentBoard=cleanOutfitBoard({slots:{top:'own-top',bottom:'own-bottom',shoes:'own-shoes'}},items);
+   switchView('builder');renderOutfitBoard();
+  },images);
   await page.waitForFunction(()=>!document.getElementById('tryOnGenerate').disabled);
   assert.equal(await page.locator('#tryOnGenerate').innerText(),'Generate two-garment AI try-on');
   assert.equal(calls.filter(x=>x.action==='start'||x.action==='continue').length,0,
@@ -156,7 +171,7 @@ async function check(engine,device,label){
   assert.equal(await page.locator('#tryOnImage').isHidden(),true);
   assert.equal(errors.length,0,'no runtime exceptions on emulated device');
   return {device:label,engine:engine===webkit?'WebKit':'Chromium',
-   viewport:device.viewport,actualDevice:false,providerCalls:0,
+   viewport:device.viewport,actualDevice:false,providerCalls:0,actualBuiltApp:true,
    syntheticStarts:calls.filter(x=>x.action==='start').length,
    syntheticContinues:calls.filter(x=>x.action==='continue').length,
    repeatedProcessingPolls:true,corruptFirstAndSecondBlocked:true,
@@ -165,8 +180,10 @@ async function check(engine,device,label){
  }finally{await browser.close();}
 }
 const results=[];
+try{
 results.push(await check(chromium,devices['Pixel 7'],'Pixel 7 emulation'));
 results.push(await check(webkit,devices['iPhone 13'],'iPhone 13 emulation'));
 console.log('TWO_GARMENT_DEVICE_EMULATION '+JSON.stringify(results));
 if(process.env.TRYON_QA_OUTPUT)await writeFile(resolve(process.env.TRYON_QA_OUTPUT,'device-emulation-results.json'),JSON.stringify({
  actualProviderCalls:0,physicalDeviceRuns:0,actualImageFidelity:null,results},null,2)+'\n');
+}finally{await new Promise(done=>server.close(done));}
