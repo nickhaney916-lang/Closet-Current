@@ -133,3 +133,51 @@ test('a restored classified outfit cannot bypass missing source protection with 
  assert.equal(await h.state.confirmReviewedColor(h.item,'Blue'),false);
  assert.equal(h.saves.length,0);assert.equal(h.state.batch.length,1);
 });
+
+test('quick color save rejects restored outfit with no original RGB crop even when cleaned preview has a strong cached category',async()=>{
+ for(const crop of [undefined,{image:''},{image:null}]){
+  const h=setup({outfitSourceId:'restored',recognitionPhoto:crop,
+   originalPhoto:{image:'original-full-scene'},image:'display-cleaned-garment',
+   normalizedPreview:{image:'ai-corrected-garment'},
+   segmentHint:{categories:['Tops'],types:[],clipped:false}});
+  assert.equal(h.state.canConfirmReviewedColor(h.item),false);
+  assert.equal(await h.state.confirmReviewedColor(h.item,'Blue'),false);
+  assert.equal(h.saves.length,0);
+  assert.equal(h.state.batch.length,1);
+ }
+});
+
+test('queued color save fails closed if the original crop, full outfit, display image or classification changed',async()=>{
+ const mutations=[
+  item=>{delete item.recognitionPhoto;},
+  item=>{item.recognitionPhoto.image='different-source-region';},
+  item=>{item.originalPhoto.image='new-scene';},
+  item=>{item.image='new-display-cutout';},
+  item=>{item.itemType='Polo';},
+  item=>{item.category='Bottoms';}
+ ];
+ for(const mutate of mutations){
+  const h=setup({outfitSourceId:'full-scene',image:'display-garment',
+   recognitionPhoto:{image:'raw-unmasked-garment-rgb'},
+   originalPhoto:{image:'full-original-scene'},
+   segmentHint:{categories:['Tops'],types:[],clipped:false}});
+  assert.equal(h.state.canConfirmReviewedColor(h.item),true);
+  h.state.queued=work=>{mutate(h.item);return work();};
+  assert.equal(await h.state.confirmReviewedColor(h.item,'Blue'),false);
+  assert.equal(h.saves.length,0,'stale color never saves onto a different source');
+  assert.equal(h.state.items.length,0);
+  assert.equal(h.state.batch.length,1);
+  assert.equal(h.counts().persistCount,0);
+ }
+});
+
+test('queued save snapshots current safe photo metadata only after the queued recheck',async()=>{
+ const h=setup({outfitSourceId:'full-scene',image:'display-garment',
+  recognitionPhoto:{image:'raw-original-garment'},originalPhoto:{image:'full-scene'},
+  segmentHint:{categories:['Tops'],types:[],clipped:false}});
+ h.state.queued=work=>{h.item.brand='new-label';return work();};
+ assert.equal(await h.state.confirmReviewedColor(h.item,'Blue'),true);
+ assert.equal(h.saves[0].brand,'new-label',
+  'write snapshot is captured after queue when original and category stay identical');
+ assert.equal(h.saves[0].recognitionPhoto.image,'raw-original-garment');
+});
