@@ -1,0 +1,52 @@
+name: Pilot real-phone evidence capture and private comparison guardrails
+on:
+  push:
+    branches: [pilot/real-phone-evidence-hardening-20261019]
+    paths:
+      - 'public/device-check-engine.js'
+      - 'public/device-check.js'
+      - 'public/index.html'
+      - 'benchmark/review-phone-pilot-reports.mjs'
+      - 'tests/review-phone-pilot-reports.test.mjs'
+      - 'tests/compare-private-phone-pilot-cli.test.mjs'
+      - 'tests/device-check.test.cjs'
+      - 'tests/device-check-ui.test.cjs'
+      - 'scripts/compare-private-phone-pilot-reports.mjs'
+      - 'scripts/test-device-check-phone-browsers.mjs'
+      - '.github/workflows/pilot-real-phone-evidence-hardening.yml'
+      - 'benchmark/PILOT-PHONE-FIELD-HANDOFF-20261019.md'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify-private-report-and-app:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Fail closed on spoofed physical-phone claim and leaked photo data
+        run: node --test tests/device-check.test.cjs tests/device-check-ui.test.cjs tests/review-phone-pilot-reports.test.mjs tests/compare-private-phone-pilot-cli.test.mjs
+      - name: Run full integrated Node regressions on same build
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Install isolated browser emulation (not actual phone hardware)
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium webkit
+      - name: Verify field-test screen and sanitized export on both mobile browsers
+        run: node scripts/test-device-check-phone-browsers.mjs
+      - name: Never authorize deployment or paid AI from a checkmarked report
+        run: |
+          node --input-type=module -e "
+            import fs from 'node:fs';
+            const s=fs.readFileSync('benchmark/review-phone-pilot-reports.mjs','utf8');
+            if(!s.includes('independentPhysicalDevicesConfirmed:false')||
+               !s.includes('actualHardwareCameraVerified:null')||
+               !s.includes('productionReleaseApproved:false')||
+               !s.includes('paidProviderUsed:false'))
+              throw Error('Real-device attestations require independent human evaluation and approval');
+          "
