@@ -77,7 +77,17 @@
    const out=document.createElement('canvas');out.width=bounds.width;out.height=bounds.height;
    const output=out.getContext('2d');if(!output)return null;
    output.drawImage(source,bounds.left,bounds.top,bounds.width,bounds.height,0,0,bounds.width,bounds.height);
-   return {image:out.toDataURL('image/png'),width:bounds.width,height:bounds.height};
+   // Use the already-approved transparent image, not its raw photo or
+   // unreviewed high-resolution mask diagnostic. Metadata only; no uploads.
+   const croppedPixels=new Uint8ClampedArray(bounds.width*bounds.height*4);
+   for(let y=0;y<bounds.height;y++)
+    croppedPixels.set(pixels.data.subarray(
+     ((bounds.top+y)*source.width+bounds.left)*4,
+     ((bounds.top+y)*source.width+bounds.left+bounds.width)*4),y*bounds.width*4);
+   const anchor=root.ClosetGarmentFitGeometry?.silhouetteAnchor(
+    croppedPixels,bounds.width,bounds.height,category);
+   return {image:out.toDataURL('image/png'),width:bounds.width,height:bounds.height,
+    silhouetteCenter:anchor?.center??null};
   }
   try{ctx.drawImage(photo,0,0,c.width,c.height);
    const pixels=ctx.getImageData(0,0,c.width,c.height);
@@ -142,14 +152,16 @@
      }catch{/* Keep existing transparent cutout, never invent pixels. */}
     }
     if(cancelled())return;
-    prepared={image,width:cutout.width,height:cutout.height};
+    prepared={image,width:cutout.width,height:cutout.height,
+     silhouetteCenter:cutout.silhouetteCenter};
     preparedNow=true;
    }
    // Preserve the calibrated female/male shoulder, waist and sole anchors,
    // without stretching garment prints or white/transparent empty margins.
    const rect=root.ClosetGarmentFitGeometry?.fitPlacement(
     placement.rect,prepared.width,prepared.height,
-    {slot:placement.slot,category:placement.category});
+    {slot:placement.slot,category:placement.category,
+     silhouetteCenter:prepared.silhouetteCenter});
    if(!rect){counts.skipped++;continue;}
    const img=document.createElement('img');
    img.src=prepared.image;
