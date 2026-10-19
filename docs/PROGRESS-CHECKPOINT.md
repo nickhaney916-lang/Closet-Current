@@ -1,5 +1,30 @@
 # Closet Current master development checkpoint
 
+## Source-guided higher-resolution boundary proposals — October 19, 2026 Pacific
+
+- Separate branch `feature/source-guided-mask-boundaries-20261019`, based on
+  PR #39 `8d009ec0`. Existing PRs/integration branches untouched.
+- New original-pixel refinement accepts <=600k pixels, derives its own <=150k
+  guide from that exact buffer, and changes alpha only within an explicit
+  boundary uncertainty band. Source RGB and outside-band alpha are unchanged.
+- Same 12 licensed originals: 1 refined proposal, 11 without proposals, 0 new
+  automatic display approvals. New module remains diagnostic/held and is
+  exercised with the existing inverse mesh, not default customer display.
+- Red shirt: 633x946 source copy / 316x473 guide; 11,680 uncertain boundary
+  pixels, 798 cleared neutral / 364 restored non-neutral pixels, 0 RGB edits,
+  0 outside-band changes. All 23,808 garment-core and 32,483 background witness
+  pixels retain their expected partial labels; no independent full-mask score.
+- Comparison is same larger-grid internal projection vs refinement, not a
+  pixel-identical PR #39 A/B. Original JPEG digests stay unchanged; repeated
+  pinned-decoder reports match. Black-trim loss remains explicitly demonstrated
+  in a synthetic counterexample, and dark fringes/hard alpha remain unresolved.
+- Local build and full suite: **1004 passed, 0 failed, 3 skipped**; 6 new focused
+  tests. CI configured for exact-source real-photo reports/artifacts and
+  Android Chromium/iPhone WebKit refinement execution plus prior regressions.
+- Guide: `docs/SOURCE-GUIDED-MASK-BOUNDARIES-20261019.md`; actual JSON:
+  `benchmark/source-guided-boundary-results-20261019.json`. No paid service,
+  merge/deploy, customer upload, new inference or Drive Duel changes.
+
 ## Conservative real-photo extraction proposals — October 19, 2026 Pacific
 
 - Isolated branch `feature/conservative-dark-garment-extraction-20261019`, based

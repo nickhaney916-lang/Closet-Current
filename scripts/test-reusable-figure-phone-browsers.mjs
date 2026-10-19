@@ -238,6 +238,31 @@ try{
         }
        patches.push({name:patch.name,role:patch.role,total,correct:patch.role==='boundary-ambiguous'?null:correct});
       }
+      const high=document.createElement('canvas');
+      const highScale=Math.min(1,Math.sqrt(600000/(photo.naturalWidth*photo.naturalHeight)));
+      high.width=Math.floor(photo.naturalWidth*highScale);high.height=Math.floor(photo.naturalHeight*highScale);
+      const highContext=high.getContext('2d',{willReadFrequently:true});highContext.drawImage(photo,0,0,high.width,high.height);
+      const highSource=highContext.getImageData(0,0,high.width,high.height).data;
+      const refined=ClosetSourceGuidedMask.propose(highSource,high.width,high.height,row);
+      const highOutput=ClosetDarkStudioMask.applyAlpha(highSource,refined.alpha);
+      let outsideBandChanges=0,highRgbChanged=0;
+      for(let i=0;i<refined.alpha.length;i++){
+       if(!refined.uncertainty[i]&&refined.alpha[i]!==refined.projectedAlpha[i])outsideBandChanges++;
+       for(let c=0;c<3;c++)if(highOutput[i*4+c]!==highSource[i*4+c])highRgbChanged++;
+      }
+      const refinedPatches=[];
+      for(const patch of witnesses.witnesses){
+       const [l,t,r,b]=patch.box;let total=0,correct=0;
+       for(let y=Math.ceil(t*high.height);y<Math.floor(b*high.height);y++)
+        for(let x=Math.ceil(l*high.width);x<Math.floor(r*high.width);x++){
+         total++;if(highOutput[(y*high.width+x)*4+3]===(patch.role==='garment'?255:0))correct++;
+        }
+       refinedPatches.push({name:patch.name,role:patch.role,total,correct:patch.role==='boundary-ambiguous'?null:correct});
+      }
+      result.refinement={proposalAvailable:refined.proposalAvailable,displayEligible:refined.displayEligible,
+       width:high.width,height:high.height,uncertainBoundaryPixels:refined.uncertainBoundaryPixels,
+       clearedBoundaryPixels:refined.clearedBoundaryPixels,restoredBoundaryPixels:refined.restoredBoundaryPixels,
+       outsideBandChanges,highRgbChanged,patches:refinedPatches};
       const bounds=ClosetGarmentWarp.alphaBounds(output,canvas.width,canvas.height);
       const trimmed=new Uint8ClampedArray(bounds.width*bounds.height*4);
       for(let y=0;y<bounds.height;y++)trimmed.set(output.subarray(((bounds.top+y)*canvas.width+bounds.left)*4,
@@ -251,6 +276,11 @@ try{
     assert.equal(measured.displayEligible,false,'unreviewed new candidates must not auto-display');
     if(measured.proposalAvailable){
      assert.equal(measured.rgbChanged,0);assert.ok(measured.meshPixelBytes>0);
+     assert.equal(measured.refinement.proposalAvailable,true);assert.equal(measured.refinement.displayEligible,false);
+     assert.equal(measured.refinement.outsideBandChanges,0);assert.equal(measured.refinement.highRgbChanged,0);
+     assert.ok(measured.refinement.width*measured.refinement.height<=600000);
+     assert.ok(measured.refinement.uncertainBoundaryPixels>0);
+     for(const patch of measured.refinement.patches)if(patch.role!=='boundary-ambiguous')assert.equal(patch.correct,patch.total,patch.name);
      for(const patch of measured.patches)if(patch.role!=='boundary-ambiguous')assert.equal(patch.correct,patch.total,patch.name);
     }
     extractionProbes.push(measured);

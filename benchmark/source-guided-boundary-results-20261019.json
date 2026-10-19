@@ -1,0 +1,466 @@
+{
+  "schemaVersion": 1,
+  "baselineCommit": "8d009ec056f8b7178185efb422beb94cd085a07c",
+  "decoder": "Pillow 11.3.0",
+  "comparisonMode": "same-higher-resolution-source-grid internal guide projection versus refinement; not pixel-identical PR39 A/B",
+  "pipelineFiles": {
+    "public/dark-studio-garment-mask.js": "8e1de55f753c6ac9cb69c3e921f0b516eb54c7d133a4bf58d1625be3cf9f566e",
+    "public/source-guided-mask-refinement.js": "3bf714621611ae6e827b9c94502f309d928ab4d798a8bfb09788e97c2582bdce",
+    "public/local-garment-warp.js": "e4cb75ccad29b15d60eea723a7611c4ed5d0c2845d8f5c2c59402fd49088a697",
+    "scripts/measure-source-guided-boundaries.cjs": "67b867b15ec395a82ab99e8bb4522b77b1618fcaa1afb6774b308f08c9bb4f31",
+    "scripts/benchmark-source-guided-boundaries.py": "2c5073963ee1dcd3cf8ec547f6227a8277e3bc55887d077019dc02c241afdca0",
+    "benchmark/local-fitting-real-photo-manifest.json": "9c3d0f663d6c9161e246c5e2afdf6bde95769ddff23d689469dbcd62e9594af9",
+    "benchmark/dark-studio-source-witnesses.json": "97ff44c2a3db35d263877d9bc6fd206ece95984118e6ab963ce0714d626e289c"
+  },
+  "summary": {
+    "realPhotos": 12,
+    "automaticProposals": 1,
+    "newDisplayApprovals": 0,
+    "independentlyScoredFullMasks": 0,
+    "realPhoneRuns": 0
+  },
+  "cases": [
+    {
+      "id": "commons-0001",
+      "sourceSha256": "d20d66d4173f56c47e35540f081ecdfcee6e019df665ee245d967d126e117684",
+      "width": 633,
+      "height": 946,
+      "decodedSourceSha256": "b5be5c4d93e3fbc789699484ecb9b79d33ba1721f6ddecd5129fac5e46a642f7",
+      "proposalAvailable": false,
+      "displayEligible": false,
+      "reason": "ambiguous-dark-or-neutral-fabric",
+      "sourceUnchanged": true,
+      "completeBoundaryQualityVerified": false,
+      "sourceFileUnchanged": true,
+      "attribution": {
+        "id": "commons-0001",
+        "title": "File:T-shirt, oversized, maat XL, Merk Ecko Unlimited, blauw, wit en grijs met opdruk, objectnr 86904-3.JPG",
+        "source": "https://commons.wikimedia.org/wiki/File:T-shirt,_oversized,_maat_XL,_Merk_Ecko_Unlimited,_blauw,_wit_en_grijs_met_opdruk,_objectnr_86904-3.JPG",
+        "license": "CC BY-SA 3.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+        "author": "Ecko Unlimited",
+        "credit": "https://museumrotterdam.nl/collectie/item/86904-3"
+      }
+    },
+    {
+      "id": "commons-0002",
+      "sourceSha256": "fef606d6ed7354a2238f1bcc2584942747ca6fa4a2b16b2e9eec21f639d10667",
+      "width": 633,
+      "height": 946,
+      "decodedSourceSha256": "f27ec98d91b3d17f47f8504cec96040a7a6dc9f6ac845b0d26c1be3fe23ddf9f",
+      "proposalAvailable": true,
+      "displayEligible": false,
+      "reason": "source-guided-boundary-proposal",
+      "sourceUnchanged": true,
+      "completeBoundaryQualityVerified": false,
+      "guideWidth": 316,
+      "guideHeight": 473,
+      "clearedBoundaryPixels": 798,
+      "restoredBoundaryPixels": 364,
+      "uncertainBoundaryPixels": 11680,
+      "rgbBytesChanged": 0,
+      "outsideBandChanges": 0,
+      "partialWitnesses": [
+        {
+          "name": "logo",
+          "role": "garment",
+          "pixels": 9165,
+          "opaque": 9165,
+          "clear": 0
+        },
+        {
+          "name": "pocket",
+          "role": "garment",
+          "pixels": 8400,
+          "opaque": 8400,
+          "clear": 0
+        },
+        {
+          "name": "left-sleeve",
+          "role": "garment",
+          "pixels": 840,
+          "opaque": 840,
+          "clear": 0
+        },
+        {
+          "name": "right-sleeve",
+          "role": "boundary-ambiguous",
+          "pixels": 868,
+          "opaque": 751,
+          "clear": 117
+        },
+        {
+          "name": "left-shoulder",
+          "role": "boundary-ambiguous",
+          "pixels": 837,
+          "opaque": 829,
+          "clear": 8
+        },
+        {
+          "name": "right-shoulder",
+          "role": "boundary-ambiguous",
+          "pixels": 648,
+          "opaque": 594,
+          "clear": 54
+        },
+        {
+          "name": "hem",
+          "role": "garment",
+          "pixels": 3213,
+          "opaque": 3213,
+          "clear": 0
+        },
+        {
+          "name": "collar-band",
+          "role": "garment",
+          "pixels": 696,
+          "opaque": 696,
+          "clear": 0
+        },
+        {
+          "name": "neck",
+          "role": "background",
+          "pixels": 1701,
+          "opaque": 0,
+          "clear": 1701
+        },
+        {
+          "name": "left-exterior",
+          "role": "background",
+          "pixels": 11844,
+          "opaque": 0,
+          "clear": 11844
+        },
+        {
+          "name": "right-exterior",
+          "role": "background",
+          "pixels": 13464,
+          "opaque": 0,
+          "clear": 13464
+        },
+        {
+          "name": "stand",
+          "role": "background",
+          "pixels": 5474,
+          "opaque": 0,
+          "clear": 5474
+        },
+        {
+          "name": "right-sleeve-core",
+          "role": "garment",
+          "pixels": 504,
+          "opaque": 504,
+          "clear": 0
+        },
+        {
+          "name": "left-shoulder-core",
+          "role": "garment",
+          "pixels": 486,
+          "opaque": 486,
+          "clear": 0
+        },
+        {
+          "name": "right-shoulder-core",
+          "role": "garment",
+          "pixels": 504,
+          "opaque": 504,
+          "clear": 0
+        }
+      ],
+      "boundaryRegions": [
+        {
+          "name": "collar",
+          "box": [
+            0.34,
+            0.17,
+            0.66,
+            0.29
+          ],
+          "uncertain": 1718,
+          "clearedSourceNeutralPixels": 110,
+          "restoredSourceNonNeutralPixels": 50,
+          "correctnessIndependentlyScored": false
+        },
+        {
+          "name": "left-cuff",
+          "box": [
+            0.02,
+            0.41,
+            0.19,
+            0.53
+          ],
+          "uncertain": 972,
+          "clearedSourceNeutralPixels": 62,
+          "restoredSourceNonNeutralPixels": 33,
+          "correctnessIndependentlyScored": false
+        },
+        {
+          "name": "right-cuff",
+          "box": [
+            0.81,
+            0.41,
+            0.95,
+            0.51
+          ],
+          "uncertain": 774,
+          "clearedSourceNeutralPixels": 46,
+          "restoredSourceNonNeutralPixels": 24,
+          "correctnessIndependentlyScored": false
+        },
+        {
+          "name": "hem",
+          "box": [
+            0.23,
+            0.85,
+            0.81,
+            0.93
+          ],
+          "uncertain": 1808,
+          "clearedSourceNeutralPixels": 106,
+          "restoredSourceNonNeutralPixels": 57,
+          "correctnessIndependentlyScored": false
+        }
+      ],
+      "bounds": {
+        "left": 16,
+        "top": 173,
+        "width": 570,
+        "height": 687
+      },
+      "candidateRgbaSha256": "3e74eb0ce6827013eb55d3ddabfb748b23a5f9de83c5076d63ead838116f2ebb",
+      "warpRgbaSha256": "49fb859dc8429b6823f58c9508bb12393f5a796a4b527a85439e3aedaea9a00a",
+      "maskRgbMeasurementsBeforeWarp": true,
+      "independentFullMaskReference": null,
+      "sourceFileUnchanged": true,
+      "attribution": {
+        "id": "commons-0002",
+        "title": "File:Rood t-shirt, merk Diesel, maat M, objectnr 86503.JPG",
+        "source": "https://commons.wikimedia.org/wiki/File:Rood_t-shirt,_merk_Diesel,_maat_M,_objectnr_86503.JPG",
+        "license": "CC BY-SA 3.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+        "author": "Diesel",
+        "credit": "https://museumrotterdam.nl/collectie/item/86503"
+      }
+    },
+    {
+      "id": "commons-0003",
+      "sourceSha256": "cb909d7ad9c3940bfa4db0cc50b2ea7025faebe3dcec8fe80067f900760bba64",
+      "width": 633,
+      "height": 946,
+      "decodedSourceSha256": "523cd993a6d43cc8fc013507a637f5e1d53f25337fd5a0cf3601c867b735feda",
+      "proposalAvailable": false,
+      "displayEligible": false,
+      "reason": "ambiguous-dark-or-neutral-fabric",
+      "sourceUnchanged": true,
+      "completeBoundaryQualityVerified": false,
+      "sourceFileUnchanged": true,
+      "attribution": {
+        "id": "commons-0003",
+        "title": "File:Zwart shirt met lange mouwen van merk Armani Jeans, opdruk letters \u201cAJ\u201d op voorkant, maat M, objectnr 86975-3.JPG",
+        "source": "https://commons.wikimedia.org/wiki/File:Zwart_shirt_met_lange_mouwen_van_merk_Armani_Jeans,_opdruk_letters_%E2%80%9CAJ%E2%80%9D_op_voorkant,_maat_M,_objectnr_86975-3.JPG",
+        "license": "CC BY-SA 3.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+        "author": "Armani?",
+        "credit": "https://museumrotterdam.nl/collectie/item/86975-3"
+      }
+    },
+    {
+      "id": "commons-0023",
+      "sourceSha256": "5be4cb0d7017987d8625caf53ac979f0c78245617dc5828aec5f77ae8f4ea8ef",
+      "width": 633,
+      "height": 946,
+      "decodedSourceSha256": "631e96074baf5e10ed34ec885a81d09d934d126daceaee17a9ea44e2bc7f7ae8",
+      "proposalAvailable": false,
+      "displayEligible": false,
+      "reason": "unsupported-garment-category",
+      "sourceUnchanged": true,
+      "completeBoundaryQualityVerified": false,
+      "sourceFileUnchanged": true,
+      "attribution": {
+        "id": "commons-0023",
+        "title": "File:Blauwe jeans, merk Artful Dodger, maat 32, zakken achterzijde met opvallende witte print, objectnr 86905-3(1).JPG",
+        "source": "https://commons.wikimedia.org/wiki/File:Blauwe_jeans,_merk_Artful_Dodger,_maat_32,_zakken_achterzijde_met_opvallende_witte_print,_objectnr_86905-3(1).JPG",
+        "license": "CC BY-SA 3.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+        "author": "Artful Dodger",
+        "credit": "https://museumrotterdam.nl/collectie/item/86905-3"
+      }
+    },
+    {
+      "id": "commons-0024",
+      "sourceSha256": "8e28473b101c70a5e4b7daae819a0342405bfcb7abbf4850dbbb4e801dd7ac4f",
+      "width": 633,
+      "height": 946,
+      "decodedSourceSha256": "97b9f3e3e7489974685ed63c8e1ecbea5044364bc57c59e0c6cacdf292058bfe",
+      "proposalAvailable": false,
+      "displayEligible": false,
+      "reason": "unsupported-garment-category",
+      "sourceUnchanged": true,
+      "completeBoundaryQualityVerified": false,
+      "sourceFileUnchanged": true,
+      "attribution": {
+        "id": "commons-0024",
+        "title": "File:Blauwe jeans, skinny jeans model, merk Revers Jeans, maat S36, objectnr 86974-3(1).JPG",
+        "source": "https://commons.wikimedia.org/wiki/File:Blauwe_jeans,_skinny_jeans_model,_merk_Revers_Jeans,_maat_S36,_objectnr_86974-3(1).JPG",
+        "license": "CC BY-SA 3.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+        "author": "Revers Jeans",
+        "credit": "https://museumrotterdam.nl/collectie/item/86974-3"
+      }
+    },
+    {
+      "id": "commons-0035",
+      "sourceSha256": "9fd067b0919d519eb7924ebd5c4ddf0bc0f3956cfd229fe1ab12c16cccb085ca",
+      "width": 670,
+      "height": 894,
+      "decodedSourceSha256": "76c6959f14f0a5671ba7c4043d4d2d6aa50706c25d40da5815b0a84b6ed43326",
+      "proposalAvailable": false,
+      "displayEligible": false,
+      "reason": "unsupported-garment-category",
+      "sourceUnchanged": true,
+      "completeBoundaryQualityVerified": false,
+      "sourceFileUnchanged": true,
+      "attribution": {
+        "id": "commons-0035",
+        "title": "File:Orange men's shorts for sale at Target.jpg",
+        "source": "https://commons.wikimedia.org/wiki/File:Orange_men%27s_shorts_for_sale_at_Target.jpg",
+        "license": "CC BY-SA 4.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+        "author": "Ser Amantio di Nicolao",
+        "credit": "Own work"
+      }
+    },
+    {
+      "id": "commons-0043",
+      "sourceSha256": "c8d0812ab69d698f5bf8dc5a14ace6b8034e4c74152471acf4f079fdd6d0c344",
+      "width": 778,
+      "height": 771,
+      "decodedSourceSha256": "a907d7f2928a1877a4b869dda4e50f342fc750079ad791cc29bea0426b4cbbf8",
+      "proposalAvailable": false,
+      "displayEligible": false,
+      "reason": "unsupported-garment-category",
+      "sourceUnchanged": true,
+      "completeBoundaryQualityVerified": false,
+      "sourceFileUnchanged": true,
+      "attribution": {
+        "id": "commons-0043",
+        "title": "File:Woman's summer skirt from China, Honolulu Museum of Art 5152.1.JPG",
+        "source": "https://commons.wikimedia.org/wiki/File:Woman%27s_summer_skirt_from_China,_Honolulu_Museum_of_Art_5152.1.JPG",
+        "license": "CC0",
+        "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+        "author": "Hiart",
+        "credit": "Own work"
+      }
+    },
+    {
+      "id": "commons-0053",
+      "sourceSha256": "e7a617cd23a159864f619e8397d5f37d48b684e47dddc4ad6b46b14481042019",
+      "width": 632,
+      "height": 948,
+      "decodedSourceSha256": "4e24467aa944a76e817d7c6278da8ec6848df30c4bb410506ec98a5cac787bab",
+      "proposalAvailable": false,
+      "displayEligible": false,
+      "reason": "ambiguous-dark-or-neutral-fabric",
+      "sourceUnchanged": true,
+      "completeBoundaryQualityVerified": false,
+      "sourceFileUnchanged": true,
+      "attribution": {
+        "id": "commons-0053",
+        "title": "File:Dress, match (AM 2017.66.33-1).jpg",
+        "source": "https://commons.wikimedia.org/wiki/File:Dress,_match_(AM_2017.66.33-1).jpg",
+        "license": "CC BY 4.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
+        "author": "",
+        "credit": "API data Catalogue record Photo"
+      }
+    },
+    {
+      "id": "commons-0064",
+      "sourceSha256": "bb68b22a7fdaff20e71eb969bb5d857598a5ca6f4b47f172dc7a8623b7bd6b83",
+      "width": 670,
+      "height": 894,
+      "decodedSourceSha256": "bb96c6089ccd4a06f78a6a398563dadcbb31975161902f56eb30bda19f2b194b",
+      "proposalAvailable": false,
+      "displayEligible": false,
+      "reason": "ambiguous-dark-or-neutral-fabric",
+      "sourceUnchanged": true,
+      "completeBoundaryQualityVerified": false,
+      "sourceFileUnchanged": true,
+      "attribution": {
+        "id": "commons-0064",
+        "title": "File:Jacket (AM 740158-3).jpg",
+        "source": "https://commons.wikimedia.org/wiki/File:Jacket_(AM_740158-3).jpg",
+        "license": "CC BY 4.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
+        "author": "",
+        "credit": "API data Catalogue record Photo"
+      }
+    },
+    {
+      "id": "commons-0068",
+      "sourceSha256": "5d372824e1054c4c392969bed227784cd30d7011e95db769218b20a28302633f",
+      "width": 582,
+      "height": 1029,
+      "decodedSourceSha256": "2a1c4240f9075dce445bedb6036fd8b6a9e0ba04068a98933a07ecd859e41e53",
+      "proposalAvailable": false,
+      "displayEligible": false,
+      "reason": "ambiguous-dark-or-neutral-fabric",
+      "sourceUnchanged": true,
+      "completeBoundaryQualityVerified": false,
+      "sourceFileUnchanged": true,
+      "attribution": {
+        "id": "commons-0068",
+        "title": "File:Sapphire mink fur coat 1980.jpg",
+        "source": "https://commons.wikimedia.org/wiki/File:Sapphire_mink_fur_coat_1980.jpg",
+        "license": "Public domain",
+        "licenseUrl": "",
+        "author": "Libricool ( talk ) 19:57, 14 October 2010 (UTC)",
+        "credit": "Own work"
+      }
+    },
+    {
+      "id": "commons-0079",
+      "sourceSha256": "b577483e5244dfb53e60cc8a0b54a4130e695cf388e5534e38a2b04580727ec6",
+      "width": 950,
+      "height": 631,
+      "decodedSourceSha256": "8ac8443e494e9dfefaa80d2f071875101a58b33e8dfaffdc03d621106742977d",
+      "proposalAvailable": false,
+      "displayEligible": false,
+      "reason": "unsupported-garment-category",
+      "sourceUnchanged": true,
+      "completeBoundaryQualityVerified": false,
+      "sourceFileUnchanged": true,
+      "attribution": {
+        "id": "commons-0079",
+        "title": "File:Nike SB Dunk High MF Doom.jpg",
+        "source": "https://commons.wikimedia.org/wiki/File:Nike_SB_Dunk_High_MF_Doom.jpg",
+        "license": "CC BY 2.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+        "author": "TanSenpai from Philadelphia, United States",
+        "credit": "MF Doom's"
+      }
+    },
+    {
+      "id": "commons-0016",
+      "sourceSha256": "e0510f06c475fa048585e6ff437359cb4255ce3a425e40a69dc54cc337f5ab24",
+      "width": 717,
+      "height": 836,
+      "decodedSourceSha256": "01f16a6ecffbefd9dac1f5f9c1c3a2c0c3a313f564ddedeb676477a152c85f37",
+      "proposalAvailable": false,
+      "displayEligible": false,
+      "reason": "ambiguous-dark-or-neutral-fabric",
+      "sourceUnchanged": true,
+      "completeBoundaryQualityVerified": false,
+      "sourceFileUnchanged": true,
+      "attribution": {
+        "id": "commons-0016",
+        "title": "File:Blouse MET 41.64 F.jpg",
+        "source": "https://commons.wikimedia.org/wiki/File:Blouse_MET_41.64_F.jpg",
+        "license": "CC0",
+        "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+        "author": "",
+        "credit": "This file was donated to Wikimedia Commons as part of a project by the Metropolitan Museum of Art . See the Image and Data Resources Open Access Policy"
+      }
+    }
+  ]
+}
