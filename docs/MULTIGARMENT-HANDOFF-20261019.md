@@ -5,6 +5,35 @@ branch `fix/multigarment-reliability-phone-gates-20261019`, targeting
 [PR #12](https://github.com/nickhaney916-lang/Closet-Current/pull/12)'s research
 branch. No branch was merged and no deployment was performed.
 
+## Continuation: bounded recovery of the existing status job
+
+Implementation checkpoint `6d5d603ba26820483899d63ca5086ede56afd7ff`
+adds at most **two consecutive retries of read-only status checks** after
+network failures, per-request timeouts, or HTTP 408/429/500/502/503/504. Polls
+reuse the same signed token. A successful processing response resets the
+consecutive-failure counter; the existing 32-poll and 120-second overall
+limits still apply. No start/continue POST is automatically retried, including
+an ambiguous network failure where the provider might have accepted the job.
+HTTP 400/401/403/404, an actual failed render, and stale/cancelled attempts
+stop immediately. This can recover an existing render without uploading the
+garment again or starting another generation.
+
+New behavioral cases reproduced the original immediate failure after a
+temporary status outage before the fix. All **27 focused checks passed**;
+the local full suite passed **825 total / 822 passed / 0 failed / 3 skipped**.
+The built-app device test now injects a 503 during **both** stages, confirms
+recovery with one start and one continuation, and exercises three consecutive
+503s to verify the retry cap and unlocked UI. Final continuation workflow:
+[39274213011](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39274213011).
+**Every step passed**, including the full 822-pass / 0-failure / 3-skip Node
+suite, Deno type check, the single-item flow, and full-app Style this in both
+engines. Actual built-app Pixel Chromium and iPhone WebKit emulation both
+reported `transientStatusRecoveredWithoutNewJob=true`,
+`statusRetryLimitEnforced=true`, unchanged source records and zero page
+errors. Each profile executed eight synthetic starts and five continuations
+across the success/failure scenarios, with zero real provider calls.
+Earlier verification below documents the previous implementation separately.
+
 ## Fixed behavior
 
 - A provider can report `processing` repeatedly without returning another

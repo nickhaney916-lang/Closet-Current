@@ -1,5 +1,27 @@
 # Closet Current master development checkpoint
 
+## PR #14 continuation: safe status recovery — October 19, 2026 Pacific
+
+- Code checkpoint `6d5d603ba26820483899d63ca5086ede56afd7ff` on the isolated
+  PR #14 branch. Read-only status polls recover after transient network,
+  timeout and selected HTTP failures, with at most two consecutive retries
+  and the same signed job token. Start/continue POSTs never retry themselves;
+  authentication errors, invalid jobs, failed renders and cancellation stop.
+- Reproduced immediate outage failure before the fix. Focused suite **27
+  passed**; full local suite **825 total, 822 passed, 0 failed, 3 skipped**.
+- Expanded actual built-app emulation injects a temporary status 503 in each
+  stage and checks recovery without resubmitting a garment, plus repeated
+  failure exhaustion and explicit retry controls. Workflow
+  [39274213011](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39274213011)
+  **passed every step**, including 822 Node passes / 0 failures / 3 skips,
+  Deno, single-item flow, actual built-app Pixel Chromium/iPhone WebKit
+  emulation and full Style this in both engines. Both profiles confirmed
+  same-job status recovery, enforced retry limits, unchanged source records
+  and zero page errors. See the handoff for exact evidence.
+- Paid second pass remains hard-disabled; zero actual provider calls,
+  physical phone tests or new live-quality evidence. No merge/deploy,
+  original-photo changes, other PR branch modifications or Drive Duel changes.
+
 ## PR #12 two-garment reliability and phone preparation — October 19, 2026 Pacific
 
 - Isolated follow-up [draft PR #14](https://github.com/nickhaney916-lang/Closet-Current/pull/14)
