@@ -57,8 +57,9 @@ function data(){
   reviewStatus:'prediction-unreviewed',independentReference:false,
   canSaveToCustomerCloset:false,...mask([1,1,5,5])
  }]]);
- return {scene,lockedSource,firstPacket,firstSubmission,secondPacket,
-  secondSubmission,physicalInventory,approvedMasks,modelProposals};
+ return {scene:structuredClone(scene),lockedSource:structuredClone(lockedSource),
+  firstPacket,firstSubmission,secondPacket,secondSubmission,physicalInventory,
+  approvedMasks,modelProposals};
 }
 test('no human mask source means no garment recall or automatic release',()=>{
  const args=data();args.physicalInventory=null;
