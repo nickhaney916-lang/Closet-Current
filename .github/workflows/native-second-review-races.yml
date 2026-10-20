@@ -1,0 +1,38 @@
+name: Second human review original-photo and consent QA
+on:
+  push:
+    branches: [benchmark/native-second-review-source-races-20261020]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  independent-second-review-safety:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify all application Node tests and build
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Install isolated Chromium for local HTML reviewers
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium
+      - name: Validate both first and second offline review race gates
+        run: |
+          node scripts/test-native-human-editor-file-races.mjs
+          node scripts/test-native-second-review-file-races.mjs
+      - name: Preserve independent human review blocking policy
+        run: |
+          node --input-type=module -e "
+            import fs from 'node:fs';
+            const r=JSON.parse(fs.readFileSync('benchmark/reference-mask-evidence/registry.json','utf8'));
+            const m=JSON.parse(fs.readFileSync('benchmark/local-fitting-real-photo-manifest.json','utf8'));
+            if(r.references.length!==0||m.independentlyApprovedMasks!==0||r.policy.status==='approved')
+              throw Error('Native editor must not register synthetic reference truth');
+            console.log('All twelve photo masks remain unapproved; review authenticity and quality unmeasured');
+          "
