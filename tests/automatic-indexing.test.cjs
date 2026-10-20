@@ -472,3 +472,45 @@ test('queued automatic save fails closed when original source or accepted type c
   assert.equal(c.batch.length,1);
  }
 });
+
+
+test('obsolete photo-quality rejection cannot mark a newer source as failed',async()=>{
+ let rejectPhoto;
+ const {c,stored}=setup({quality:()=>new Promise((_,reject)=>{rejectPhoto=reject;})});
+ c.candidate('FIRST_PHOTO');
+ for(let i=0;i<20&&!rejectPhoto;i++)await new Promise(setImmediate);
+ assert.equal(typeof rejectPhoto,'function');
+ const item=c.batch[0];
+ item.image='NEW_PHOTO';
+ item.localStatus='New high-resolution photo selected for review.';
+ rejectPhoto(Error('The earlier JPEG timed out'));
+ await done(c);
+ assert.equal(stored.length,0);
+ assert.equal(item.scanFailed,false);
+ assert.equal(item.localStatus,'New high-resolution photo selected for review.');
+ assert.equal(c.recognitionUnavailable,false);
+});
+test('obsolete recognition failure cannot overwrite replacement garment or disable new scans',async()=>{
+ for(const change of [
+  item=>{item.image='NEW_SOURCE_PHOTO';item.localStatus='Waiting for the new photo';},
+  item=>{item.category='Bottoms';item.itemType='Shorts';item.userAdjusted=true;
+   item.localStatus='User selected shorts manually';}
+ ]){
+  let rejectModel;
+  const {c,stored}=setup({request:()=>new Promise((_,reject)=>{rejectModel=reject;})});
+  c.candidate('ORIGINAL_RGB_IMAGE');
+  for(let i=0;i<20&&!rejectModel;i++)await new Promise(setImmediate);
+  assert.equal(typeof rejectModel,'function');
+  const item=c.batch[0];
+  change(item);
+  const status=item.localStatus,category=item.category,itemType=item.itemType;
+  rejectModel(Error('Old recognition request rejected'));
+  await done(c);
+  assert.equal(stored.length,0);
+  assert.equal(item.scanFailed,false,'obsolete failure cannot label a new photo as broken');
+  assert.equal(item.localStatus,status);
+  assert.equal(item.category,category);
+  assert.equal(item.itemType,itemType);
+  assert.equal(c.recognitionUnavailable,false,'obsolete item errors cannot disable later recognition');
+ }
+});
