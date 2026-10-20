@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "checkedDate": "2026-10-19",
+  "admittedReferenceMasks": 0,
+  "downloadedDatasetImages": 0,
+  "candidates": [
+    {
+      "name": "Existing PR37 / PR39 / PR41 licensed fixture set",
+      "status": "no-independent-full-reference-masks",
+      "evidence": ["benchmark/local-fitting-real-photo-manifest.json", "benchmark/dark-studio-source-witnesses.json"],
+      "limitation": "12 licensed original photographs have no approved full outlines. Partial assistant-selected core/background witness rectangles are not independent truth. No published dataset match established."
+    },
+    {
+      "name": "Fashionpedia",
+      "status": "conditional-candidate-not-admitted",
+      "sources": ["https://fashionpedia.github.io/home/data_license.html", "https://github.com/cvdfoundation/fashionpedia"],
+      "finding": "Publisher licenses annotations under CC BY 4.0; image copyrights and host terms are separate. Published segmentation annotations are a potential external source, not evidence of local independent approval.",
+      "requiredBeforeImport": ["exact image and annotation pair with checksums", "per-image source, creator, license and redistribution permission evidence", "annotation attribution and terms evidence", "independent inspection of full visible garment and feature coverage", "recorded reviewer sign-off and ambiguity policy"]
+    },
+    {
+      "name": "ModaNet",
+      "status": "not-admitted-commercial-permission-not-established",
+      "sources": ["https://github.com/eBay/modanet", "https://github.com/eBay/modanet/blob/master/LICENSE"],
+      "finding": "Publisher releases annotation data under CC BY-NC 4.0. This is not sufficient permission for inclusion in this commercial project's reusable test corpus. Image rights are also separate."
+    },
+    {
+      "name": "DeepFashion2",
+      "status": "not-admitted-commercial-permission-not-established",
+      "sources": ["https://github.com/switchablenorms/DeepFashion2", "https://github.com/switchablenorms/DeepFashion2/issues/3"],
+      "finding": "Official download requires a request form. Maintainer's commercial-use answer states commercial license is not available. Mirrors and permissive model-code licenses do not establish dataset image or annotation rights."
+    }
+  ],
+  "conclusion": "No legally cleared independently verified full-garment masks obtained in this assignment. Fashionpedia remains a conditional route requiring per-image verification; alternatively independently annotate and review already licensed originals without inventing reviewers. No automatic approvals."
+}

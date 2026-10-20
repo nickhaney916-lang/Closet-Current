@@ -1,0 +1,42 @@
+name: Native garment mask multi-pointer safety QA
+on:
+  push:
+    branches: [benchmark/native-pointer-ownership-20261020]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  pointer-ownership:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build customer app and run regression suite
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Install local Chromium for independent reviewer UI
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium
+      - name: Verify gestures, fine photo tracing and earlier review safeguards
+        run: |
+          node scripts/test-native-mask-pointer-ownership.mjs
+          node scripts/test-native-magnifier-precision-edit.mjs
+          node scripts/test-native-sparse-undo-browser.mjs
+          node scripts/test-native-brush-dirty-regions.mjs
+          node scripts/test-native-human-editor-file-races.mjs
+          node scripts/test-native-second-review-file-races.mjs
+      - name: Keep all synthetic masks blocked from approved real-photo evidence
+        run: |
+          node --input-type=module -e "
+            import fs from 'node:fs';
+            const r=JSON.parse(fs.readFileSync('benchmark/reference-mask-evidence/registry.json','utf8'));
+            const m=JSON.parse(fs.readFileSync('benchmark/local-fitting-real-photo-manifest.json','utf8'));
+            if(r.references.length!==0||m.independentlyApprovedMasks!==0||r.policy.status==='approved')
+              throw Error('Browser-simulated pointer tests cannot approve masks');
+            console.log('12 original photos; zero independently approved real garment masks');
+          "

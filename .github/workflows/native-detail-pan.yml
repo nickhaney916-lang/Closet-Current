@@ -1,0 +1,43 @@
+name: Native garment original-photo detail navigation QA
+on:
+  push:
+    branches: [benchmark/native-detail-pan-navigation-20261020]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  detail-navigate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build and run Node regression suite
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Install isolated Chromium for local-only reviewer QA
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium
+      - name: Validate original-pixel panning, touch, fidelity and reviewer gates
+        run: |
+          node scripts/test-native-detail-pan-browser.mjs
+          node scripts/test-native-mask-pointer-ownership.mjs
+          node scripts/test-native-magnifier-precision-edit.mjs
+          node scripts/test-native-sparse-undo-browser.mjs
+          node scripts/test-native-brush-dirty-regions.mjs
+          node scripts/test-native-human-editor-file-races.mjs
+          node scripts/test-native-second-review-file-races.mjs
+      - name: Keep genuine real-photo mask acceptance blocked
+        run: |
+          node --input-type=module -e "
+            import fs from 'node:fs';
+            const r=JSON.parse(fs.readFileSync('benchmark/reference-mask-evidence/registry.json','utf8'));
+            const m=JSON.parse(fs.readFileSync('benchmark/local-fitting-real-photo-manifest.json','utf8'));
+            if(r.references.length!==0||m.independentlyApprovedMasks!==0||r.policy.status==='approved')
+              throw Error('Navigation test cannot promote synthetic human truth');
+            console.log('Original photos stay unchanged and zero authentic independently approved full masks');
+          "

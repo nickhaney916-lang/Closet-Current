@@ -1,0 +1,40 @@
+name: Native garment sparse undo and redo QA
+on:
+  push:
+    branches: [benchmark/native-mask-sparse-undo-20261020]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  native-sparse-history:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build and run application regressions
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Install Chromium for offline editor browser tests
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium
+      - name: Exercise exact-grid brush, sparse memory undo, reviewer source races
+        run: |
+          node scripts/test-native-brush-dirty-regions.mjs
+          node scripts/test-native-sparse-undo-browser.mjs
+          node scripts/test-native-human-editor-file-races.mjs
+          node scripts/test-native-second-review-file-races.mjs
+      - name: Confirm real original mask references remain independently unapproved
+        run: |
+          node --input-type=module -e "
+            import fs from 'node:fs';
+            const r=JSON.parse(fs.readFileSync('benchmark/reference-mask-evidence/registry.json','utf8'));
+            const m=JSON.parse(fs.readFileSync('benchmark/local-fitting-real-photo-manifest.json','utf8'));
+            if(r.references.length!==0||m.independentlyApprovedMasks!==0||r.policy.status==='approved')
+              throw Error('Synthetic user interaction cannot approve real garment masks');
+            console.log('12 original licensed photos remain without independent full garment references');
+          "

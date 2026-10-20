@@ -1,0 +1,75 @@
+name: Consolidated human original-mask review plus customer pilot QA
+on:
+  push:
+    branches: [integration/human-masks-customer-release-gates-20261020]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  integrated-review-without-fake-quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify true two-parent merge and 50 unchanged human-review artifacts
+        run: node scripts/check-dual-parent-review-integration.mjs
+      - name: Build intact customer application
+        run: node scripts/build.mjs
+      - name: Run all recognition, masks, human-evidence, account and figure tests
+        run: node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Generate SHA-verified twelve-photo read-only accuracy readiness and private reviewer page
+        run: |
+          mkdir -p artifacts/private-human-review/incoming
+          node scripts/check-integrated-real-photo-readiness.mjs --reviews artifacts/private-human-review/incoming --out artifacts/private-human-review/integrated-status.json
+          node scripts/check-customer-pilot-release-gates.mjs
+      - name: Build independent first and second human annotation packet
+        run: |
+          python -m pip install Pillow==11.3.0
+          python scripts/stage-independent-twelve-mask-review.py
+          python -m unittest discover -s tests -p 'test_independent_twelve_review_packet.py'
+      - name: Install Chromium and WebKit browser engines
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium webkit
+      - name: Exercise both independent offline human review editors and gesture safety
+        run: |
+          node scripts/test-native-garment-annotation-browsers.mjs
+          node scripts/test-native-detail-pan-browser.mjs
+          node scripts/test-native-human-editor-file-races.mjs
+          node scripts/test-native-second-review-file-races.mjs
+          node scripts/test-native-mask-pointer-ownership.mjs
+          node scripts/test-native-magnifier-precision-edit.mjs
+          node scripts/test-native-sparse-undo-browser.mjs
+          node scripts/test-native-brush-dirty-regions.mjs
+      - name: Recheck licensed source holds and source-aligned fitting on both figure genders
+        run: |
+          node scripts/test-reusable-figure-phone-browsers.mjs
+          node scripts/test-transparent-neck-figure-browsers.mjs
+      - name: Recheck original-photo owned-styling in both mobile browsers
+        run: |
+          node scripts/test-style-my-new-item-mobile.mjs
+          STYLE_BROWSER=webkit node scripts/test-style-my-new-item-mobile.mjs
+      - name: Recheck no paid providers, false mask accuracy claims or production approval
+        run: |
+          node scripts/check-customer-pilot-release-gates.mjs
+          node scripts/check-dual-parent-review-integration.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: private-independent-mask-review-packet-and-technical-customer-evidence
+          path: |
+            artifacts/private-human-review/integrated-status.json
+            artifacts/private-human-review/integrated-status.html
+            artifacts/independent-mask-review/
+            artifacts/local-fitting/
+            artifacts/style-new-clothes/
+          if-no-files-found: warn
+          retention-days: 7
