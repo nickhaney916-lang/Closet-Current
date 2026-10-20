@@ -8,6 +8,7 @@ from bpy_extras.object_utils import world_to_camera_view
 sys.path.insert(0,str(Path(__file__).resolve().parent))
 from figure_fabric_boundaries import flatten_lower_hem, smooth_upper_shell_rim, approved_front_binding_segments, cut_source_derived_sleeves
 from figure_material_regions import should_restore_exposed_arm_skin
+from figure_face_hair_geometry import plan_original_face_hair
 ROOT=Path(__file__).resolve().parents[1]
 args=sys.argv[sys.argv.index('--')+1:];source=Path(args[0]).resolve();output=Path(args[1]).resolve();quick='--quick'in args
 if not output.is_relative_to(ROOT/'artifacts'):raise ValueError('Only artifacts/ output allowed')
@@ -230,6 +231,26 @@ for kind in recipe['figures']:
    bpy.ops.mesh.primitive_uv_sphere_add(segments=24,ring_count=12,radius=1,location=(center.x,front-.001+depth,center.z))
    ob=bpy.context.object;ob.name=side.__str__()+name;ob.scale=(radius,.002,radius);ob.data.materials.append(material(name,color,.4))
    for p in ob.data.polygons:p.use_smooth=True
+ # Source-aligned in-house eyebrow, eyelid and scalp fibers. This only
+ # ADDS a bounded procedural curve overlay to the unchanged adult head/eyes.
+ # Original photo, third-party hair/face source, source mesh are untouched.
+ eye_world=[coords[i] for i in eye_indices]
+ detail_plan,head_detail_evidence=plan_original_face_hair(coords,eye_world,kind)
+ face_curve_materials={
+  'brow':material('subtle-procedural-brow',(.075,.049,.034,1),.92),
+  'lid':material('subtle-upper-eyelid',(.17,.10,.08,1),.88),
+  'strand':material('subtle-hair-fiber',(.085,.050,.035,1),.82)
+ }
+ for detail in detail_plan:
+  curve=bpy.data.curves.new(kind+'-'+detail['name'],'CURVE')
+  curve.dimensions='3D';curve.bevel_depth=detail['radius']
+  curve.resolution_u=3;curve.bevel_resolution=2
+  spline=curve.splines.new('POLY');spline.points.add(len(detail['points'])-1)
+  for pnt,xyz in zip(spline.points,detail['points']):
+   pnt.co=(*xyz,1)
+  hair_piece=bpy.data.objects.new(kind+'-'+detail['name'],curve)
+  bpy.context.collection.objects.link(hair_piece)
+  curve.materials.append(face_curve_materials[detail['material']])
  scene=bpy.context.scene;r=recipe['render'];scene.render.engine=r['engine'];scene.cycles.device='CPU';scene.cycles.samples=8 if quick else r['samples'];scene.cycles.seed=r['seed'];scene.cycles.use_denoising=True
  scene.render.resolution_x=486 if quick else r['width'];scene.render.resolution_y=900 if quick else r['height'];scene.render.resolution_percentage=100
  scene.render.image_settings.file_format='PNG';scene.render.image_settings.color_mode='RGBA';scene.render.image_settings.color_depth='8';scene.render.film_transparent=True
@@ -248,7 +269,7 @@ for kind in recipe['figures']:
  # Waist diagnostic source joint, not an approved placement anchor.
  anchors['lowerSpineJoint']=joints['spine04____head']
  record={'id':kind,'sourceRevision':lock['revision'],'ageTarget':'young-adult-approximately-25','bodyScale':scale,'sourceBodyVertices':len(ids),'bodyFaces':len(faces),
-  'legPoseMaxMotion':leg_motion,'derivedClothingHem':hem_diagnostics,'derivedClothingUpperRim':upper_rim_diagnostics,'derivedClothingBinding':binding_evidence,'derivedShortSleeveCut':sleeve_evidence,'skinMaterialCorrection':{'restoredFaces':restored_skin_material_faces,'restoredArmMajorityFaces':arm_majority_restored,'clothFacesSelectedBeforeBodyMaterialRepair':True,'onlyDistalRigApprovedSkin':True,'upstreamBodyTopologyChanged':False},'footwearGeometry':'procedural-rounded-upper-contoured-outsole-three-laces-per-shoe','shoeUpperCount':shoe_count,'shoeOutsoleCount':shoe_count,'shoeLaceStrokeCount':lace_count,'blockPrimitiveFootwear':False,'renderWidth':scene.render.resolution_x,'renderHeight':scene.render.resolution_y,'samples':scene.cycles.samples,'nativeSceneRender':True,'resizedFromPreview':False,
+  'legPoseMaxMotion':leg_motion,'derivedClothingHem':hem_diagnostics,'derivedClothingUpperRim':upper_rim_diagnostics,'derivedClothingBinding':binding_evidence,'derivedShortSleeveCut':sleeve_evidence,'originalFaceHairDetail':head_detail_evidence,'skinMaterialCorrection':{'restoredFaces':restored_skin_material_faces,'restoredArmMajorityFaces':arm_majority_restored,'clothFacesSelectedBeforeBodyMaterialRepair':True,'onlyDistalRigApprovedSkin':True,'upstreamBodyTopologyChanged':False},'footwearGeometry':'procedural-rounded-upper-contoured-outsole-three-laces-per-shoe','shoeUpperCount':shoe_count,'shoeOutsoleCount':shoe_count,'shoeLaceStrokeCount':lace_count,'blockPrimitiveFootwear':False,'renderWidth':scene.render.resolution_x,'renderHeight':scene.render.resolution_y,'samples':scene.cycles.samples,'nativeSceneRender':True,'resizedFromPreview':False,
   'projectedSourceJoints':{k:project(p)for k,p in anchors.items()},'jointApproval':False,'visualApproved':False,'commercialProductApproval':False,'sourceBounds':[low,high]}
  scene.render.filepath=str(output/(kind+'-master.png'));bpy.ops.wm.save_as_mainfile(filepath=str(output/(kind+'.blend')),compress=True);bpy.ops.render.render(write_still=True)
  record['sceneSha256']=hashlib.sha256((output/(kind+'.blend')).read_bytes()).hexdigest()
