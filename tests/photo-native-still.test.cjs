@@ -18,6 +18,7 @@ function harness({still=true,reject=false}={}){
   stream,cameraMode:'manual',cameraRequest:1,manualStillShot:null,session:0,
   canvas,window:still?{ImageCapture}:{},createImageBitmap:async()=>bitmap,
   cameraFrameQuality:()=>({usable:true}),cameraStability:()=>({stable:true}),
+  cameraPreviewHealth:()=>({live:true}),
   snap:()=> 'preview-jpeg',candidate:image=>{saved.push(image);c.session++;},
   beep(){},finishScan(){},$:id=>buttons[id]||(buttons[id]={}),message:msg=>messages.push(msg),
   setTimeout:fn=>{const id=++nextTimer;timers.set(id,fn);return id;},

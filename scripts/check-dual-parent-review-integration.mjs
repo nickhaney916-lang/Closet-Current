@@ -37,7 +37,7 @@ function assertCustomerPreserved(p){
  }
  if(p==='public/app.js'){
   const normalize=s=>{
-   for(const [begin,end] of [['function snap(','function beep('],['function takePhoto(){','async function startCamera(']]){
+   for(const [begin,end] of [['function snap(','function beep('],['let manualStillShot=null;','function controls('],['function finishScan(', 'function takePhoto('],['function takePhoto(){','function waitEvent(']]){
     const a=s.indexOf(begin),b=s.indexOf(end,a);
     assert.ok(a>=0&&b>a,'Missing camera section boundary');
     s=s.slice(0,a)+'/* bounded native camera section */\n'+s.slice(b);

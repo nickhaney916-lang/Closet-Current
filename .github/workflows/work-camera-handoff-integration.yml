@@ -1,0 +1,59 @@
+name: Work camera handoff and frozen preview integration QA
+on:
+  push:
+    branches: [integration/work-camera-recovery-frozen-preview-20261020]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  work-camera-handoff:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build entire customer app and run all Node regressions
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Verify Work two-parent handoff, original recognition and reviewer provenance
+        run: |
+          node scripts/verify-camera-cloud-integration.mjs
+          node scripts/check-dual-parent-review-integration.mjs
+          node scripts/check-customer-pilot-release-gates.mjs
+      - name: Install free browser engines for simulated Android and iPhone
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium webkit
+      - name: Verify Work startup timeout/retry lifecycle in both phone-size browsers
+        run: node scripts/test-camera-startup-recovery-mobile.mjs
+      - name: Verify continuous video frame delivery, frozen previews and muted tracks
+        run: node scripts/test-camera-frozen-preview-mobile.mjs
+      - name: Recheck native still detail, EXIF and original-before-mask photo import
+        run: |
+          node scripts/test-native-camera-fidelity-mobile.mjs
+          node scripts/test-untyped-photo-import-mobile.mjs
+          node scripts/test-original-crop-source-mobile.mjs
+          node scripts/test-original-source-duplicate-mobile.mjs
+      - name: Verify saved-closet phone audit and cloud account isolation
+        run: |
+          node scripts/test-saved-closet-phone-browsers.mjs
+          node scripts/test-cloud-session-generation-browsers.mjs
+      - name: Recheck full cloud recovery and owned-outfit flows across mobile engines
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos commons-0002
+          mkdir -p benchmark/cloud-backup
+          cp benchmark/locked-photo-sources.json benchmark/cloud-backup/
+          node scripts/run-cloud-backup-flow.mjs benchmark/cloud-backup
+          node scripts/test-style-my-new-item-mobile.mjs
+          STYLE_BROWSER=webkit node scripts/test-style-my-new-item-mobile.mjs
+      - name: Repeat hard production veto after complete recovery suite
+        run: |
+          node scripts/verify-camera-cloud-integration.mjs
+          node scripts/check-customer-pilot-release-gates.mjs

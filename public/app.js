@@ -505,7 +505,84 @@ async function drainAutomatic(){
  finally{automaticRunning=false;render();scheduleMemoryReview();}
 }
 let manualStillShot=null;
+let cameraStartAttempt=null;
+let cameraPreviewWatch=null;
+function stopCameraPreviewWatch(){
+ const watch=cameraPreviewWatch;cameraPreviewWatch=null;
+ if(!watch)return;
+ clearInterval(watch.timer);
+ if(watch.visibilityListener&&typeof document!=='undefined')document.removeEventListener?.('visibilitychange',watch.visibilityListener);
+ if(watch.frameId!=null&&typeof video.cancelVideoFrameCallback==='function'){
+  try{video.cancelVideoFrameCallback(watch.frameId);}catch{}
+ }
+}
+function cameraPreviewHealth(now=Date.now()){
+ const track=stream?.getVideoTracks?.()[0]||stream?.getTracks?.()[0];
+ if(!stream||track?.readyState==='ended'||track?.muted===true)
+  return {live:false,reason:'Camera preview stopped delivering video. Your saved photos are safe. Restart the camera or choose an imported photo.'};
+ const watch=cameraPreviewWatch;
+ if(!watch||watch.request!==cameraRequest||watch.stream!==stream)return {live:true};
+ if(typeof document!=='undefined'&&document.visibilityState==='hidden')return {live:true};
+ if(watch.mode==='playback-clock'&&Number.isFinite(video.currentTime)){
+  if(video.currentTime>watch.lastMediaTime+.001){
+   watch.lastMediaTime=video.currentTime;watch.lastFrame=now;
+  }else if(video.currentTime<watch.lastMediaTime-.05){
+   // Camera tracks can reset playback clock during brief browser resume.
+   watch.lastMediaTime=video.currentTime;watch.lastFrame=now;
+  }
+ }
+ // Only a genuine frame callback or advancing playback clock proves new
+ // frames: unchanged fabric pixels are not evidence of a frozen camera.
+ if(watch.mode!=='unobservable'&&now-watch.lastFrame>4500)
+  return {live:false,reason:'Camera preview froze. Your photos are still saved. Restart the camera or import a photo.'};
+ return {live:true};
+}
+function monitorCameraPreview(acquired,request){
+ stopCameraPreviewWatch();
+ const watch={stream:acquired,request,lastFrame:Date.now(),frameId:null,timer:null,
+  lastMediaTime:Number.isFinite(video.currentTime)?video.currentTime:null,
+  mode:typeof video.requestVideoFrameCallback==='function'?'video-frame':
+   Number.isFinite(video.currentTime)?'playback-clock':'unobservable'};
+ cameraPreviewWatch=watch;
+ if(typeof document!=='undefined'&&document.addEventListener){
+  watch.visibilityListener=()=>{
+   if(cameraPreviewWatch!==watch)return;
+   // Backgrounding suspends callback/timer delivery; reset the live-frame
+   // deadline on both visibility transitions before polling resumes.
+   watch.lastFrame=Date.now();
+   if(Number.isFinite(video.currentTime))watch.lastMediaTime=video.currentTime;
+  };
+  document.addEventListener('visibilitychange',watch.visibilityListener);
+ }
+ if(watch.mode==='video-frame'){
+  const onFrame=()=>{
+   if(cameraPreviewWatch!==watch||cameraRequest!==request||stream!==acquired)return;
+   watch.lastFrame=Date.now();
+   watch.frameId=video.requestVideoFrameCallback(onFrame);
+  };
+  try{watch.frameId=video.requestVideoFrameCallback(onFrame);}
+  catch{watch.mode=Number.isFinite(video.currentTime)?'playback-clock':'unobservable';}
+ }
+ // Older engines without frame-delivery or playback timing APIs cannot
+ // reliably prove a freeze; do not falsely reject a static garment image.
+ if(watch.mode==='unobservable')return;
+ watch.timer=setInterval(()=>{
+  if(cameraPreviewWatch!==watch||cameraRequest!==request||stream!==acquired)return;
+  if(typeof document!=='undefined'&&document.visibilityState==='hidden'){
+   // Backgrounded phone tabs frequently suspend video and callback delivery.
+   watch.lastFrame=Date.now();
+   if(Number.isFinite(video.currentTime))watch.lastMediaTime=video.currentTime;
+   return;
+  }
+  const health=cameraPreviewHealth();
+  if(health.live)return;
+  stopCamera();message(health.reason);
+ },1000);
+}
 function stopCamera(){
+ stopCameraPreviewWatch();
+ const opening=cameraStartAttempt;cameraStartAttempt=null;
+ if(opening){opening.cancel();busy=false;}
  cameraRequest++;cameraOpening=false;manualStillShot=null;$('takePhoto').disabled=false;$('stop').disabled=false;clearInterval(timer);timer=null;
  if(stream)stream.getTracks().forEach(t=>t.stop());
  stream=null;cameraMode=null;previousQualityFrame=null;video.srcObject=null;video.classList.remove('visible');
@@ -515,7 +592,7 @@ function stopCamera(){
 function controls(disabled){for(const id of ['start','startAuto','upload','interval','clothingPhotos','outfitCamera','outfitUpload','outfitRetry','captureSingle','captureOutfit'])$(id).disabled=disabled;}
 function finishScan(){
  const wasManual=cameraMode==='manual';
- if(!wasManual&&stream&&session===0&&video.readyState>=2&&video.videoWidth){try{if(cameraFrameQuality().usable)candidate(snap());}catch{}}
+ if(!wasManual&&stream&&session===0&&video.readyState>=2&&video.videoWidth&&cameraPreviewHealth().live){try{if(cameraFrameQuality().usable)candidate(snap());}catch{}}
  stopCamera();
  if(batch.length){message('');switchView('review');}
  else if(session>0){message('');switchView('review');}
@@ -523,6 +600,8 @@ function finishScan(){
 }
 function captureTick(now=Date.now()){
  if(!stream||cameraMode!=='auto')return;
+ const health=cameraPreviewHealth(now);
+ if(!health.live){$('captureState').textContent='Camera preview unavailable · restart to continue';return;}
  const ready=video.readyState>=2&&video.videoWidth>0;
  if(!cadence.due(now,ready)){
   if(!ready)$('captureState').textContent='Waiting for camera images…';
@@ -535,15 +614,19 @@ function captureTick(now=Date.now()){
 }
 function takePhoto(){
  if(!stream||cameraMode!=='manual'||manualStillShot)return;
+ const health=cameraPreviewHealth();
+ if(!health.live){message(health.reason);$('captureState').textContent='Camera preview unavailable · restart to continue';return;}
  const activeStream=stream,activeRequest=cameraRequest;
  const active=()=>stream===activeStream&&cameraRequest===activeRequest&&cameraMode==='manual';
  const saveCaptured=image=>{
   if(!active())return;
+  if(!cameraPreviewHealth().live)return;
   candidate(image);beep();$('captureState').textContent=`${session} photos taken · ready for the next piece`;
   if(session>=60){finishScan();message('60 photos collected. Review this batch before continuing.');}
  };
  const fallback=()=>{
   if(!active())return;
+  if(!cameraPreviewHealth().live){message('Camera preview is unavailable. Restart the camera before taking more photos.');return;}
   try{saveCaptured(snap());}
   catch{message(video.readyState<2||!video.videoWidth?'The camera is still getting ready. Wait a moment, then tap Take photo again.':'Could not prepare this camera photo. Try brighter light, take another photo, or choose a saved photo.');}
  };
@@ -582,16 +665,49 @@ async function startCamera(mode){
  if(busy||stream)return;
  const request=++cameraRequest;cameraOpening=true;busy=true;controls(true);
  $('captureState').textContent='Opening camera…';
- try{audio=new(window.AudioContext||window.webkitAudioContext)();await audio.resume();}catch{}
+ let deadline,rejectOpening;
+ const interrupted=new Promise((_,reject)=>{rejectOpening=reject;});
+ // A synchronous browser error can precede the first race; cancellation must
+ // still be handled without an unhandled rejection.
+ interrupted.catch(()=>{});
+ const attempt={expired:false,acquired:null,cancel(){
+  clearTimeout(deadline);
+  if(attempt.acquired){attempt.acquired.getTracks().forEach(track=>track.stop());attempt.acquired=null;}
+  rejectOpening(Error('Camera opening cancelled.'));
+ }};
+ cameraStartAttempt=attempt;
+ const current=()=>cameraStartAttempt===attempt&&request===cameraRequest&&!attempt.expired;
+ const bounded=work=>Promise.race([work,interrupted]);
+ deadline=setTimeout(()=>{
+  attempt.expired=true;
+  rejectOpening(Error('Camera opening timed out. Try again, check camera permission, or choose saved photos.'));
+ },15000);
+ // Sound is optional. A suspended AudioContext must never hold the camera
+ // permission prompt or preview hostage, and retries reuse the context.
+ try{audio=audio||new(window.AudioContext||window.webkitAudioContext)();Promise.resolve(audio.resume()).catch(()=>{});}catch{}
  try{
   if(!navigator.mediaDevices?.getUserMedia)throw Error('Camera access unavailable. Choose saved photos or a closet video instead.');
-  const acquired=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}},audio:false});
-  if(request!==cameraRequest){acquired.getTracks().forEach(track=>track.stop());return;}
-  stream=acquired;cameraMode=mode;
+  const acquisition=navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}},audio:false});
+  const acquired=await bounded(acquisition.then(value=>{
+   // getUserMedia cannot be aborted. Release a grant arriving after timeout,
+   // navigation or retry, without attaching it to the current preview.
+   if(!current()){value.getTracks().forEach(track=>track.stop());return null;}
+   attempt.acquired=value;return value;
+  }));
+  if(!current()||!acquired)return;
+  stream=acquired;attempt.acquired=null;cameraMode=mode;
+  for(const track of acquired.getTracks())track.addEventListener?.('ended',()=>{
+   if(request!==cameraRequest||stream!==acquired)return;
+   stopCamera();message('Camera was interrupted. Your photos are kept. Tap Take photos to restart.');
+  },{once:true});
   video.removeAttribute('src');video.srcObject=stream;video.classList.add('visible');$('placeholder').hidden=true;
-  await video.play();session=0;$('sessionCount').textContent='0';$('lastCaptureImage').hidden=true;
-  if(request!==cameraRequest)return;
+  await bounded(video.play());
+  // Check identity before any counters/UI change, including an old play()
+  // finishing while a newer camera already has captured photos.
+  if(!current())return;
+  session=0;$('sessionCount').textContent='0';$('lastCaptureImage').hidden=true;
   cameraOpening=false;$('cameraChoices').hidden=true;$('cameraActions').hidden=false;$('takePhoto').hidden=mode!=='manual';
+  monitorCameraPreview(acquired,request);
   if(mode==='auto'){
    cadence=new CaptureCadence(Number($('interval').value)*1000,Date.now());
    timer=setInterval(()=>captureTick(),250);captureTick();
@@ -601,9 +717,12 @@ async function startCamera(mode){
    message('Take each photo at your own pace. Tap Done when you are finished.');
   }
  }catch(e){
-  if(request===cameraRequest){stopCamera();message(e.name==='NotAllowedError'?'Camera permission was denied. Allow camera access in your browser, or choose saved photos.':(e.message||'Camera could not start. Choose saved photos or a closet video.'));}
+  if(cameraStartAttempt===attempt&&request===cameraRequest){stopCamera();message(e.name==='NotAllowedError'?'Camera permission was denied. Allow camera access in your browser, or choose saved photos.':(e.message||'Camera could not start. Choose saved photos or a closet video.'));}
+ }finally{
+  clearTimeout(deadline);
+  // Old completion must not enable controls owned by a newer camera/import.
+  if(cameraStartAttempt===attempt){cameraStartAttempt=null;cameraOpening=false;busy=false;if(!stream)controls(false);}
  }
- finally{busy=false;if(!stream)controls(false);}
 }
 $('start').onclick=()=>startCamera('manual');
 $('startAuto').onclick=()=>startCamera('auto');
