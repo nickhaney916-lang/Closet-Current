@@ -46,6 +46,10 @@
    // Changing the photo, model figure or account can still initiate a new
    // request; only this exact stalled board is temporarily held for retry.
    if(!sameRequest(watchdogState,state))return;
+   // Also clear the explicit timer handle for deterministic cleanup in
+   // test clocks and for paths that may inspect outstanding work.
+   const fired=renderWatchdog;
+   if(fired!==null)clearTimeout(fired);
    stalledState=state;renderWatchdog=null;watchdogState=null;
    ++renderRevision;activeRender=null;lastPlan=null;
    // A stalled cached PNG must not be immediately re-used by explicit Retry.
