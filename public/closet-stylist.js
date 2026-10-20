@@ -16,7 +16,16 @@ function renderStylistAnchor(){
   $('stylistAnchorName').textContent=piece.name||piece.itemType||piece.category;
  }else $('stylistAnchorPhoto').removeAttribute('src');
 }
+function stylistOwnsCloset(){
+ return typeof boardWriteContext==='function'&&boardWriteContext().current();
+}
+function refuseStylistAccount(){
+ ++stylistRequestRevision;stylistAnchorItemId=null;styledCollectionResults=[];
+ $('createCollectionOutfits').disabled=false;renderStyledCollection();
+ $('stylistStatus').textContent='Your closet account changed. Reload this page and sign in again before styling.';
+}
 function styleNewClosetItem(id){
+ if(!stylistOwnsCloset()){refuseStylistAccount();return false;}
  const piece=items.find(x=>x.id===id);
  if(!stylistSupportsPiece(piece))return false;
  stylistAnchorItemId=piece.id;styledCollectionResults=[];
@@ -81,7 +90,9 @@ function renderStyledCollection(){
   // One tap replaces exactly ONE non-pinned piece inside the current option.
   // These are reversible previews; no board or garment is stored until Save.
   const swapControls=node('div',null,'styled-swap-actions');
-  for(const [slot,label] of [['top','Swap top'],['bottom','Swap bottoms'],
+  const topPiece=items.find(x=>x.id===board.slots.top);
+  const topSwapLabel=topPiece?.category==='Dresses'?(['Jumpsuit','Romper'].includes(topPiece.itemType)?'Swap one-piece':'Swap dress'):'Swap top';
+  for(const [slot,label] of [['top',topSwapLabel],['bottom','Swap bottoms'],
     ['shoes','Swap shoes'],['layer','Swap layer']]){
    if(changed||!stylistSwapChoices(result,slot,items,stylistAnchorItemId).length)continue;
    const swap=node('button',label,'secondary styled-swap-button');
@@ -144,6 +155,7 @@ $('styleCollectionForm').onsubmit=async event=>{
  // update independently; an offline device still knows what clothes it owns.
  try{await closetReady;
   if(!isCurrent())return;
+  if(!stylistOwnsCloset()){refuseStylistAccount();return;}
   styledCollectionResults=styleOwnedCollection(items,{request:$('stylistOccasion').value,audience:$('stylistAudience').value,season:$('stylistSeason').value,anchorItemId:stylistAnchorItemId||undefined},activeTrendLibrary);
   renderStyledCollection();
   // The scorer intentionally returns partial outfits for sparse closets.

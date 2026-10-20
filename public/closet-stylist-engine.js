@@ -1,8 +1,8 @@
 'use strict';
 const stylistProfiles={
  School:{occasion:'Casual',top:['Polo','T-shirt','Sweater','Button-down shirt','Blouse','Hoodie'],bottom:['Jeans','Trousers','Shorts','Skirt'],shoes:['Sneakers','Loafers','Flats']},
- Casual:{occasion:'Casual',top:['T-shirt','Polo','Button-down shirt','Blouse','Sweater','Tank top','Hoodie','Casual dress','Shirt dress'],bottom:['Jeans','Trousers','Shorts','Skirt','Joggers'],shoes:['Sneakers','Loafers','Flats','Sandals','Ankle boots']},
- 'Casual date night':{occasion:'Dinner',top:['Polo','Button-down shirt','Blouse','Sweater','Casual dress','Shirt dress','T-shirt'],bottom:['Jeans','Trousers','Skirt'],shoes:['Loafers','Ankle boots','Flats','Sneakers','Heels','Sandals']},
+ Casual:{occasion:'Casual',top:['T-shirt','Polo','Button-down shirt','Blouse','Sweater','Tank top','Hoodie','Casual dress','Shirt dress','Sweater dress','Jumpsuit','Romper'],bottom:['Jeans','Trousers','Shorts','Skirt','Joggers'],shoes:['Sneakers','Loafers','Flats','Sandals','Ankle boots']},
+ 'Casual date night':{occasion:'Dinner',top:['Polo','Button-down shirt','Blouse','Sweater','Casual dress','Shirt dress','Sweater dress','Jumpsuit','T-shirt'],bottom:['Jeans','Trousers','Skirt'],shoes:['Loafers','Ankle boots','Flats','Sneakers','Heels','Sandals']},
  'Dressy dinner':{occasion:'Dinner',top:['Button-down shirt','Blouse','Formal dress','Casual dress','Sweater'],bottom:['Trousers','Skirt'],shoes:['Loafers','Heels','Flats','Ankle boots']},
  Work:{occasion:'Work',top:['Button-down shirt','Blouse','Polo','Sweater','Shirt dress','Casual dress'],bottom:['Trousers','Skirt','Jeans'],shoes:['Loafers','Flats','Ankle boots','Heels']},
  Activewear:{occasion:'Active',top:['Tank top','T-shirt','Sweatshirt','Hoodie'],bottom:['Leggings','Joggers','Shorts'],shoes:['Sneakers']}
@@ -58,7 +58,7 @@ function styleOwnedCollection(closet,request={},library=null){
   anchor?.category==='Bottoms'?'bottom':anchor?.category==='Shoes'?'shoes':
   anchor?.category==='Outerwear'?'layer':null;
  if(anchorId&&(!anchor||!anchorSlot))return [];
- const ranked=slot=>{
+ const rankSlot=slot=>{
   if(slot===anchorSlot){
    if(!slotAllows(outfitSlots.find(s=>s.id===slot),anchor))return [];
    return [{item:anchor,score:stylistItemScore(anchor,slot,context,library)??0}];
@@ -66,7 +66,20 @@ function styleOwnedCollection(closet,request={},library=null){
   return unique.filter(item=>item.id!==anchorId&&slotAllows(outfitSlots.find(s=>s.id===slot),item))
    .map(item=>({item,score:stylistItemScore(item,slot,context,library)}))
    .filter(x=>x.score!==null)
-   .sort((a,b)=>b.score-a.score||a.item.id.localeCompare(b.item.id)).slice(0,8);
+   .map(x=>({...x,rank:x.score+(anchor?stylistHarmony([anchor,x.item])-stylistHarmony([anchor]):0)}))
+   .sort((a,b)=>b.rank-a.rank||a.item.id.localeCompare(b.item.id));
+ };
+ const rankedCache=new Map();
+ const ranked=slot=>{
+  if(!rankedCache.has(slot)){
+   const scored=rankSlot(slot);
+   // Preserve dress and separate structures, each with a bounded shortlist.
+   // Contextual anchor harmony is considered BEFORE discarding candidates.
+   rankedCache.set(slot,slot==='top'&&slot!==anchorSlot?
+    [...scored.filter(x=>x.item.category!=='Dresses').slice(0,8),
+     ...scored.filter(x=>x.item.category==='Dresses').slice(0,8)]:scored.slice(0,8));
+  }
+  return rankedCache.get(slot);
  };
  const availableTops=ranked('top');
  const tops=(anchorSlot==='bottom'||anchorSlot==='layer')?availableTops.filter(x=>x.item.category!=='Dresses'):availableTops;
@@ -90,20 +103,43 @@ function styleOwnedCollection(closet,request={},library=null){
   const notices=[];
   if(selected.some(x=>!x.item.itemType||['Unknown','Other'].includes(x.item.itemType)))notices.push('Some garment types are unconfirmed; these are category and color matches.');
   if(selected.some(x=>x.item.colorSource==='photo-estimate'))notices.push('Some colors are estimated from photos; confirm the colors together.');
-  if(selected.some(x=>!x.item.color))notices.push('Some colors are unknown; check the photos together.');
+  if(selected.some(x=>!x.item.color||colorFamily(x.item.color)==='unknown'))notices.push('Some colors are unknown; check the photos together.');
   if(selected.some(x=>!x.item.seasons?.length))notices.push('Some seasonal details are unknown; check the weather and comfort.');
   if(anchor&&stylistItemScore(anchor,anchorSlot,context,library)===null)notices.push('Your chosen piece is included, but its recorded style or season may differ from this occasion.');
+  if(top?.item.category==='Dresses')notices.push('This one-piece covers your top and bottoms; no separate bottoms or layers are added.');
   if(intent==='School')notices.push('Check your school’s dress code before choosing this outfit.');
   if(intent==='Activewear')notices.push('Check that these garments and sneakers are suitable for your actual activity.');
   if(selected.length)candidates.push({board,score,missing:required,references,notices,context,trendUpdatedAt:library?.updatedAt||null});
  }
  candidates.sort((a,b)=>a.missing.length-b.missing.length||b.score-a.score);
- const results=[];
+ const uniqueCandidates=[],seen=new Set();
+ // Do not pad complete looks with outfits that ask the customer to add clothes.
+ const fewestMissing=candidates[0]?.missing.length;
  for(const candidate of candidates){
+  if(candidate.missing.length!==fewestMissing)continue;
   const signature=Object.entries(candidate.board.slots).sort().map(([k,v])=>k+':'+v).join('|');
-  if(results.some(x=>x.signature===signature))continue;
-  results.push({...candidate,signature});if(results.length===3)break;
+  if(seen.has(signature))continue;
+  seen.add(signature);uniqueCandidates.push({...candidate,signature});
  }
+ const results=[],chosen=new Set();
+ const take=candidate=>{
+  if(results.length>=3||chosen.has(candidate.signature))return;
+  results.push(candidate);chosen.add(candidate.signature);
+ };
+ const structure=candidate=>unique.find(x=>x.id===candidate.board.slots.top)?.category==='Dresses'?'dress':'separates';
+ const core=candidate=>['top','bottom'].map(slot=>candidate.board.slots[slot]||'').join('|');
+ const structures=new Set(),cores=new Set();
+ // First preserve a compatible dress/separates choice, then vary the main
+ // clothing before returning near-identical looks with only different shoes.
+ for(const candidate of uniqueCandidates){
+  const key=structure(candidate);if(structures.has(key))continue;
+  take(candidate);structures.add(key);cores.add(core(candidate));
+ }
+ for(const candidate of uniqueCandidates){
+  const key=core(candidate);if(cores.has(key))continue;
+  take(candidate);cores.add(key);
+ }
+ for(const candidate of uniqueCandidates)take(candidate);
  return results;
 }
 

@@ -418,9 +418,11 @@ try{
   const before=savedOutfitBoards.length;
   try{
    const result=await Promise.allSettled([saveOwnedOutfitBoard(currentBoard),persistBoardState()]);
+   const stylingStarted=styleNewClosetItem('new-green-top');
    renderReusableFigurePreview();
    await new Promise(ok=>requestAnimationFrame(()=>requestAnimationFrame(ok)));
    return {outcomes:result.map(x=>x.status),writes,saved:savedOutfitBoards.length-before,
+    stylingStarted,suggestions:styledCollectionResults.length,styleAccountMessage:$('stylistStatus').textContent,
     layers:document.querySelectorAll('#reusableFigureGarments img').length,
     message:document.querySelector('#reusableFigureStatus').textContent,
     busy:document.querySelector('#reusableFigureStage').getAttribute('aria-busy')};
@@ -429,15 +431,29 @@ try{
  assert.deepEqual(wrongDatabase.outcomes,['rejected','rejected']);
  assert.equal(wrongDatabase.writes,0);assert.equal(wrongDatabase.saved,0);
  assert.equal(wrongDatabase.layers,0);assert.equal(wrongDatabase.busy,'false');
+ assert.equal(wrongDatabase.stylingStarted,false);assert.equal(wrongDatabase.suggestions,0);
+ assert.match(wrongDatabase.styleAccountMessage,/account/);
  assert.match(wrongDatabase.message,/account/);
  await page.evaluate(()=>{window.closetAuth.user.id=window.__priorPreviewOwner;renderOutfitBoard();});
  await page.waitForFunction(()=>document.querySelectorAll('#reusableFigureGarments img').length===1);
  // A stalled browser decoder must become a retryable hold, never spin forever.
  await page.evaluate(()=>{
-  HTMLImageElement.prototype.decode=function(){return new Promise(()=>{});};
+  window.__stallRenderRequests=[];window.__stallDecodes=0;
+  window.__restoreRenderRequest=renderReusableFigurePreview;
+  window.renderReusableFigurePreview=()=>{window.__stallRenderRequests.push(performance.now());window.__restoreRenderRequest();};
+  HTMLImageElement.prototype.decode=function(){window.__stallDecodes++;return new Promise(()=>{});};
   document.querySelector('#reusableFigureRetry').click();
+  window.__stallRefresh=setInterval(()=>renderReusableFigurePreview(),200);
  });
- await page.waitForFunction(()=>document.querySelector('#reusableFigureStage').getAttribute('aria-busy')==='false',null,{timeout:10000});
+ try{await page.waitForFunction(()=>document.querySelector('#reusableFigureStage').getAttribute('aria-busy')==='false',null,{timeout:10000});}
+ catch(error){console.log('STALL_DIAGNOSTIC',await page.evaluate(()=>({
+  status:$('reusableFigureStatus').textContent,busy:$('reusableFigureStage').getAttribute('aria-busy'),
+  requests:window.__stallRenderRequests,decodes:window.__stallDecodes,hidden:document.hidden,
+  view:[...document.querySelectorAll('.view')].filter(x=>!x.hidden).map(x=>x.id),
+  owner:window.closetAuth?.user?.id,database:db?.name,
+  layers:$('reusableFigureGarments').children.length
+ })));throw error;}
+ await page.evaluate(()=>{clearInterval(window.__stallRefresh);window.renderReusableFigurePreview=window.__restoreRenderRequest;});
  assert.equal(await page.locator('#reusableFigureRetry').isVisible(),true);
  await page.evaluate(()=>HTMLImageElement.prototype.decode=window.__nativeDecode);
  await page.locator('#reusableFigureRetry').click();
@@ -469,6 +485,49 @@ try{
   boundedDecodeRetry:true,horizontalOverflow:false,reuseMeasurement,pageErrors:errors
  },null,2));
 
+ // Recommendation quality: owned dress and separates choices, a structure-safe
+ // dress swap, actual outfit persistence/reload and varied pinned-shirt bottoms.
+ // Fixture records are synthetic; no recognition or visual-fitting score is claimed.
+ const qualityOriginal=await page.evaluate(async()=>{
+  const original=JSON.stringify(items),image=items.find(x=>x.id==='new-green-top').image;
+  const make=(id,category,itemType,color='Black')=>normalizeClothing({
+   id:'rq-'+id,name:id,category,itemType,color,image,pattern:'Solid',seasons:[]});
+  const records=[...Array.from({length:12},(_,i)=>make('top-'+i,'Tops','T-shirt')),
+   make('dress-a','Dresses','Casual dress'),make('dress-b','Dresses','Sweater dress'),
+   make('jeans-a','Bottoms','Jeans'),make('jeans-b','Bottoms','Jeans'),
+   make('footwear','Shoes','Sneakers')];
+  await writeAll(records);items.push(...records);
+  $('stylistOccasion').value='Casual';$('stylistAudience').value='All';$('stylistSeason').value='Winter';
+  styleNewClosetItem('rq-footwear');return original;
+ });
+ await page.waitForFunction(()=>styledCollectionResults.length>0&&styledCollectionResults.every(r=>r.board.slots.shoes==='rq-footwear'));
+ const dressIndex=await page.evaluate(()=>styledCollectionResults.findIndex(r=>
+  items.find(x=>x.id===r.board.slots.top)?.category==='Dresses'));
+ assert.ok(dressIndex>=0,'large shirt collection retains an owned dress choice');
+ const dressCard=page.locator('#styledCollectionResults .styled-outfit').nth(dressIndex);
+ await dressCard.getByRole('button',{name:'Swap dress in option '+(dressIndex+1)}).click();
+ const dressSnapshot=await page.evaluate(index=>{
+  const result=styledCollectionResults[index];return {slots:{...result.board.slots},
+   missing:result.missing,owned:Object.values(result.board.slots).every(id=>items.some(x=>x.id===id))};
+ },dressIndex);
+ assert.equal(dressSnapshot.owned,true);assert.deepEqual(dressSnapshot.missing,[]);
+ assert.equal(dressSnapshot.slots.shoes,'rq-footwear');
+ assert.equal(dressSnapshot.slots.bottom,undefined);assert.equal(dressSnapshot.slots.layer,undefined);
+ await dressCard.getByRole('button',{name:'Save outfit',exact:true}).click();
+ await dressCard.getByRole('button',{name:'Saved',exact:true}).waitFor();
+ await page.evaluate(()=>styleNewClosetItem('rq-top-0'));
+ await page.waitForFunction(()=>styledCollectionResults.length>0&&styledCollectionResults.every(r=>r.board.slots.top==='rq-top-0'));
+ const variety=await page.evaluate(()=>new Set(styledCollectionResults.map(r=>r.board.slots.bottom)).size);
+ assert.ok(variety>=2,'options vary owned bottoms before repeating just shoes');
+ assert.equal(await page.evaluate(()=>JSON.stringify(items.filter(x=>!x.id.startsWith('rq-')))),qualityOriginal);
+ await page.reload();await page.evaluate(()=>Promise.all([closetReady,outfitBoardReady]));
+ assert.equal(await page.evaluate(snapshot=>savedOutfitBoards.some(x=>
+  JSON.stringify(x.slots)===JSON.stringify(snapshot.slots)),dressSnapshot),true,'dress outfit survives actual IndexedDB reload');
+ await writeFile('artifacts/style-new-clothes/recommendations-'+evidenceName+'.json',JSON.stringify({
+  actualPhysicalPhone:false,syntheticFixtures:true,ownedDressPreserved:true,
+  dressSwapKeepsStructure:true,dressSaveReload:true,variedOwnedBottoms:variety,
+  originalOwnedRecordsUnchanged:true,pageErrors:errors
+ },null,2));
  assert.deepEqual(errors,[]);
  console.log('NEW_ITEM_STYLE_MOBILE '+JSON.stringify({
   result:'passed',viewport:'390x844 touch',outfitOptions:outfits.length,

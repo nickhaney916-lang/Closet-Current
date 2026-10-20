@@ -29,7 +29,7 @@
  }
 
  if(!engine||!stage||!base||!garmentContainer||!selfie||!status||!selector||!upload||!remove)return;
- let lastPlan=null,lastPlanOwner=null;
+ let lastPlan=null,lastPlanOwner=null,activeRender=null;
  let renderRevision=0,localFaceURL=null,lastOwner=root.closetAuth?.user?.id||null;
  const previewCache=root.ClosetFigurePreviewCache?.create();
  const faceControls=byId('reusableSelfiePosition');
@@ -158,6 +158,7 @@
    !engine.samePlan(plan,engine.plan(board(),closet(),selector.value));
   if(lastPlanOwner===owner&&engine.samePlan(lastPlan,plan))return;
   lastPlan=null; // A prior success cannot satisfy a request while another plan is rendering.
+  activeRender={revision,owner,database,plan,boardState};
   stage.setAttribute('aria-busy','true');
   if(retry)retry.hidden=true;
   base.style.visibility='hidden';
@@ -269,17 +270,31 @@
    base.style.visibility='hidden';stage.setAttribute('aria-busy','false');
    status.textContent='Preview unavailable. Your clothes are saved; try again.';
    if(retry)retry.hidden=false;
-  }
+  }finally{if(activeRender?.revision===attempt)activeRender=null;}
  }
  function requestRender(){
   if(pageHidden||scheduled)return;
   scheduled=true;
-  Promise.resolve().then(()=>{scheduled=false;if(!pageHidden)return safeRender();});
+  Promise.resolve().then(()=>{
+   scheduled=false;if(pageHidden)return;
+   // Background UI refreshes must not restart the same pending image work or
+   // postpone its timeout. New photos/board/account/database still replace it.
+   try{
+    const board=typeof currentBoard==='undefined'?null:currentBoard;
+    if(activeRender?.revision===renderRevision&&
+      activeRender.owner===(root.closetAuth?.user?.id||null)&&
+      activeRender.database===(typeof db==='undefined'?null:db)&&
+      activeRender.boardState===JSON.stringify(board)&&
+      engine.samePlan(activeRender.plan,engine.plan(board,
+       typeof items==='undefined'?[]:items,selector.value)))return;
+   }catch{/* The guarded render reports unavailable planning/canvas state. */}
+   return safeRender();
+  });
  }
  root.renderReusableFigurePreview=requestRender;
  Promise.resolve(typeof outfitBoardReady==='undefined'?null:outfitBoardReady)
   .then(requestRender).catch(()=>{status.textContent='Preview unavailable; your saved closet is unchanged.';});
  root.addEventListener('pageshow',()=>{if(pageHidden){pageHidden=false;requestRender();}});
- root.addEventListener('pagehide',()=>{pageHidden=true;++renderRevision;lastPlan=null;lastPlanOwner=null;previewCache?.dispose();
+ root.addEventListener('pagehide',()=>{pageHidden=true;++renderRevision;activeRender=null;lastPlan=null;lastPlanOwner=null;previewCache?.dispose();
   garmentContainer.replaceChildren();removeFace();stage.setAttribute('aria-busy','false');});
 })(window);

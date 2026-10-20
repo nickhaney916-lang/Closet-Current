@@ -89,3 +89,13 @@ test('replacing the database during final garment decode cancels that old databa
  await h.finish();assert.equal(h.el('reusableFigureGarments').children.length,0);
  assert.match(h.el('reusableFigureStatus').textContent,/selection changed/);
 });
+
+test('identical requests across event-loop turns do not restart an in-flight decode or its timeout',async()=>{
+ const h=setup();await h.start();
+ for(let i=0;i<4;i++)await h.start();
+ assert.equal(h.decodes.length,1,'background refreshes must share the pending decode');
+ assert.equal(h.timers.size,1,'one bounded timeout remains in force');
+ for(const timeout of [...h.timers])timeout();await turn();
+ assert.equal(h.el('reusableFigureStage').attributes['aria-busy'],'false');
+ assert.equal(h.el('reusableFigureRetry').hidden,false);
+});

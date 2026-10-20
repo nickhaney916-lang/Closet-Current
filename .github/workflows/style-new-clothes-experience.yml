@@ -1,7 +1,7 @@
 name: Style new clothes customer flow and local preview
 on:
   push:
-    branches: [integration/style-new-clothes-64-65-20261020]
+    branches: [integration/style-new-clothes-64-65-20261020, work/owned-recommendation-quality-20261020]
   workflow_dispatch:
 permissions:
   contents: read

@@ -91,7 +91,7 @@ test('one-tap Style this opens the existing stylist and submits the chosen owned
  assert.ok(source.includes('function styleNewClosetItem('));
  const elements=new Map(),pieces=[piece('fresh-shirt','Tops','T-shirt'),piece('dress','Dresses','Casual dress'),piece('unknown','Uncategorized','Unknown')];
  let submitted=0,rendered=0,navigated='';
- const c={items:pieces,renderStyledCollection(){rendered++;},switchView(v){navigated=v;},
+ const c={items:pieces,boardWriteContext:()=>({current:()=>true}),renderStyledCollection(){rendered++;},switchView(v){navigated=v;},
   $:id=>{if(!elements.has(id))elements.set(id,{textContent:'',requestSubmit(){submitted++;}});return elements.get(id);}};
  vm.createContext(c);vm.runInContext(source,c);
  assert.equal(c.styleNewClosetItem('fresh-shirt'),true);
@@ -186,4 +186,46 @@ test('new touch swap UI does not overwrite the garment or navigate into outfit b
  assert.match(script,/result\.references=\[\]/,'stale trend citations must be cleared after a swap');
  assert.match(script,/tap Save outfit when you like it/);
  assert.match(style,/\.styled-swap-button\{min-height:50px/);
+});
+
+test('winter sweater dresses remain usable without adding bottoms or hidden layers',()=>{
+ const c=setup(),owned=[piece('dress','Dresses','Sweater dress','Cream',{seasons:['Winter']}),
+  piece('boots','Shoes','Ankle boots'),piece('pants','Bottoms','Jeans'),piece('coat','Outerwear','Coat')];
+ const results=c.styleOwnedCollection(owned,{request:'Casual',season:'Winter'});
+ assert.ok(results.length&&results.every(r=>r.board.slots.top==='dress'&&!r.board.slots.bottom&&!r.board.slots.layer));
+ assert.equal(results[0].missing.length,0);
+});
+test('many owned shirts do not crowd every dress out of the candidate shortlist',()=>{
+ const c=setup(),owned=[...Array.from({length:12},(_,i)=>piece('tee-'+i,'Tops','T-shirt')),
+  piece('dress','Dresses','Casual dress'),piece('jeans','Bottoms','Jeans'),piece('shoes','Shoes','Sneakers')];
+ const results=c.styleOwnedCollection(owned,{anchorItemId:'shoes'});
+ assert.ok(results.some(r=>r.board.slots.top==='dress'));
+ assert.ok(results.every(r=>r.board.slots.shoes==='shoes'&&r.missing.length===0));
+});
+test('anchor coordination is considered before the eight-shoe cutoff',()=>{
+ const c=setup(),owned=[piece('new','Tops','T-shirt','Red',{pattern:'Striped'}),piece('jeans','Bottoms','Jeans'),
+  ...Array.from({length:9},(_,i)=>piece('a-'+i,'Shoes','Sneakers','Red',{pattern:'Striped'})),
+  piece('z-simple','Shoes','Sneakers','Black')];
+ const results=c.styleOwnedCollection(owned,{anchorItemId:'new'});
+ assert.equal(results[0].board.slots.shoes,'z-simple');
+ assert.ok(results.every(r=>r.board.slots.top==='new'));
+});
+test('three options explore different owned bottoms before repeating just footwear',()=>{
+ const c=setup(),owned=[piece('new','Tops','T-shirt'),piece('a-jeans','Bottoms','Jeans'),
+  piece('z-jeans','Bottoms','Jeans'),...['a','b','c','d'].map(id=>piece(id,'Shoes','Sneakers'))];
+ const before=JSON.stringify(owned),results=c.styleOwnedCollection(owned,{anchorItemId:'new'});
+ assert.equal(results.length,3);assert.equal(new Set(results.map(r=>r.board.slots.bottom)).size,2);
+ assert.ok(results.every(r=>Object.values(r.board.slots).every(id=>owned.some(x=>x.id===id))));
+ assert.equal(JSON.stringify(owned),before);
+});
+test('complete owned dress looks are not padded with incomplete separates',()=>{
+ const c=setup(),owned=[piece('dress','Dresses','Casual dress'),piece('tee','Tops','T-shirt'),
+  piece('shoe-a','Shoes','Sneakers'),piece('shoe-b','Shoes','Sneakers')];
+ const results=c.styleOwnedCollection(owned);
+ assert.ok(results.length&&results.every(r=>r.missing.length===0));
+});
+test('unknown color labels are disclosed instead of treated as confirmed coordination',()=>{
+ const c=setup(),results=c.styleOwnedCollection([piece('top','Tops','T-shirt','Unknown'),
+  piece('bottom','Bottoms','Jeans'),piece('shoes','Shoes','Sneakers')]);
+ assert.ok(results[0].notices.some(x=>x.includes('colors are unknown')));
 });

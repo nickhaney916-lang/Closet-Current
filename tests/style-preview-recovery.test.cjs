@@ -19,7 +19,7 @@ function stylist(){
  const el=new Map();const get=id=>{if(!el.has(id))el.set(id,{value:'',disabled:false,textContent:'',hidden:true,removeAttribute(){}});return el.get(id);};
  let release;const ready=new Promise(r=>release=r);let matches=0;
  const c={window:{closetAuth:{user:{id:'owner'}}},items:[{id:'new',category:'Tops',image}],
-  closetReady:ready,$:get,Date,styleOwnedCollection(){matches++;return [];},trendFreshnessText(){return '';},
+  closetReady:ready,boardWriteContext:()=>({current:()=>true}),$:get,Date,styleOwnedCollection(){matches++;return [];},trendFreshnessText(){return '';},
   activeTrendLibrary:null,switchView(){}};
  vm.createContext(c);
  vm.runInContext(fs.readFileSync('public/closet-stylist.js','utf8'),c);
@@ -56,4 +56,18 @@ test('decoding timeout settles even if browser decoder hangs and always clears t
  const pending=c.decodeImage({decode:()=>new Promise(()=>{})});callback();
  await assert.rejects(pending,/timed out/);assert.equal(cleared,1);
  await c.decodeImage({decode:()=>Promise.resolve()});assert.equal(cleared,2);
+});
+
+test('recommendations refuse a wardrobe database already bound to another account',async()=>{
+ const s=stylist();s.c.boardWriteContext=()=>({current:()=>false});
+ const pending=s.submit();s.release();await pending;
+ assert.equal(s.matches(),0);assert.match(s.get('stylistStatus').textContent,/account/);
+ assert.equal(s.get('createCollectionOutfits').disabled,false);
+});
+test('Style this cannot briefly expose a previous-account anchor before generating suggestions',()=>{
+ const s=stylist();s.c.boardWriteContext=()=>({current:()=>false});
+ s.get('styleCollectionForm').requestSubmit=()=>{};
+ assert.equal(s.c.styleNewClosetItem('new'),false);
+ assert.equal(vm.runInContext('stylistAnchorItemId',s.c),null);
+ assert.match(s.get('stylistStatus').textContent,/account/);
 });
