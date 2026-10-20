@@ -2,6 +2,7 @@
 // independent reviewed feature branches without silently modifying user photos.
 import {execFileSync} from 'node:child_process';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 const root='31c9931536f2b79f7586abac1ea14d0a303cfa86';
 const cloud='e61a7c9f6ee0fe1f7d11d18c83483aa5c675c872';
 const camera='7fe867fdd392759e0b5106d529e60a37c6438ef7';
@@ -27,13 +28,51 @@ for(const p of new Set([...a.keys(),...b.keys()])){
  assert.equal(m.get(p),want,'Merged blob differs from verified source: '+p);
 }
 for(const p of m.keys())assert.ok(a.has(p)||b.has(p),'Unexpected extra source in integration');
-const allowed=new Set([
+// Follow-on saved-garment audit introduces only a manual, no-cloud worksheet.
+// Historically verify every older app/source byte remains identical; the
+// existing customer app may gain only its precisely defined help-page link.
+const oldFile=path=>execFileSync('git',['show',root+':'+path],{encoding:'utf8',maxBuffer:15_000_000});
+const originalIndex=oldFile('public/index.html'),currentIndex=fs.readFileSync('public/index.html','utf8');
+const insertedLink='<p><a href="saved-closet-audit.html" target="_blank" rel="noopener">Check what was actually saved in My closet</a> (optional private phone audit)</p>';
+assert.ok(currentIndex.includes(insertedLink),'Missing operator-only saved-closet help entry');
+assert.equal(currentIndex.replace(insertedLink,''),originalIndex,
+ 'Non-help app HTML changed after approved integration');
+const originalBuilder=oldFile('scripts/build.mjs'),currentBuilder=fs.readFileSync('scripts/build.mjs','utf8');
+const start='// Pin the private, self-reported saved-closet worksheet to this exact build.';
+const end="await writeFile('dist/saved-closet-audit.html',";
+const indexStart=currentBuilder.indexOf(start),indexEnd=currentBuilder.indexOf('\n',currentBuilder.indexOf(end,indexStart));
+assert.ok(indexStart>=0&&indexEnd>indexStart,'Missing exact-version audit build declaration');
+assert.equal(currentBuilder.slice(0,indexStart)+currentBuilder.slice(indexEnd+1),originalBuilder,
+ 'Non-audit build logic changed after approved integration');
+const reviewScript='scripts/check-dual-parent-review-integration.mjs';
+const originalReviewScript=oldFile(reviewScript);
+const currentReviewScript=fs.readFileSync(reviewScript,'utf8');
+const reviewAddedBegin=" if(p==='public/index.html'){";
+const reviewAddedEnd=" if(p==='public/app.js'){";
+const reviewStart=currentReviewScript.indexOf(reviewAddedBegin),reviewEnd=currentReviewScript.indexOf(reviewAddedEnd,reviewStart);
+assert.ok(reviewStart>=0&&reviewEnd>reviewStart,'Missing independently bounded original-review link gate');
+assert.equal(currentReviewScript.slice(0,reviewStart)+currentReviewScript.slice(reviewEnd),originalReviewScript,
+ 'Original two-human review gate changed outside one byte-exact page-link exception');
+const allowedNew=new Set([
  'scripts/verify-camera-cloud-integration.mjs',
  '.github/workflows/integrated-camera-cloud-release-qa.yml',
- 'docs/INTEGRATED-CAMERA-CLOUD-PILOT-20261020.md'
+ 'docs/INTEGRATED-CAMERA-CLOUD-PILOT-20261020.md',
+ '.github/workflows/private-saved-closet-phone-audit.yml',
+ 'docs/PRIVATE-SAVED-CLOSET-REAL-PHONE-AUDIT-20261020.md',
+ 'public/saved-closet-audit-engine.js',
+ 'public/saved-closet-audit.html',
+ 'public/saved-closet-audit.js',
+ 'benchmark/private-saved-closet-review.mjs',
+ 'scripts/review-private-saved-closet.mjs',
+ 'scripts/test-saved-closet-phone-browsers.mjs',
+ 'tests/saved-closet-audit.test.cjs',
+ 'tests/saved-closet-audit-cli.test.mjs'
 ]);
 for(const p of new Set([...m.keys(),...head.keys()])){
- if(m.get(p)!==head.get(p))assert.ok(allowed.has(p)&&!m.has(p),'Unreviewed change after merge: '+p);
+ if(m.get(p)!==head.get(p)){
+  if(p==='public/index.html'||p==='scripts/build.mjs'||p===reviewScript)continue;
+  assert.ok(allowedNew.has(p)&&!m.has(p),'Unreviewed change after merge: '+p);
+ }
 }
 for(const p of ['public/recognition-photo.mjs','public/photo-color.js',
  'public/reusable-figure-preview.js','benchmark/reference-mask-evidence/registry.json']){
