@@ -90,6 +90,7 @@ try{
  assert.equal(redone,after8.sha);
  // Erase a known original 4x pixel and prove undo reverts exactly.
  await page.locator('#detailZoom').selectOption('4');
+ await page.evaluate(()=>{detailPoint={x:700,y:500};redrawDetail();});
  await page.locator('#mode').selectOption('0');
  await page.locator('#detailMask').scrollIntoViewIfNeeded();
  const eb=await page.locator('#detailMask').boundingBox();
