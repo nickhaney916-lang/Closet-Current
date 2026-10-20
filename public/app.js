@@ -552,6 +552,9 @@ function monitorCameraPreview(acquired,request){
   try{watch.frameId=video.requestVideoFrameCallback(onFrame);}
   catch{watch.mode=Number.isFinite(video.currentTime)?'playback-clock':'unobservable';}
  }
+ // Older engines without frame-delivery or playback timing APIs cannot
+ // reliably prove a freeze; do not falsely reject a static garment image.
+ if(watch.mode==='unobservable')return;
  watch.timer=setInterval(()=>{
   if(cameraPreviewWatch!==watch||cameraRequest!==request||stream!==acquired)return;
   if(typeof document!=='undefined'&&document.visibilityState==='hidden'){
