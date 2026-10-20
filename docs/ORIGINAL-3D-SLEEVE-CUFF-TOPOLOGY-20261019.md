@@ -27,3 +27,14 @@ No merge, deploy, paid model activation, purchased source assets, customer photo
 The first new native renders showed much cleaner short-sleeve endings for both figures, **but gray jagged patches remained on the exposed forearms**. These are a real visual defect and were not ignored just because the native mesh tests passed. Follow-up changes classify clothing versus skin on the existing original body mesh using pinned MakeHuman arm/leg rig-weight evidence rather than position alone; a forearm at the same vertical height as trousers must be skin, not mistakenly assigned neutral trouser cloth. This changes only derived figure presentation *materials* and no original source body geometry. Rebuild and inspect both characters; the first render is not the final proof.
 
 The qualified prototype will remain unapproved if residual arm patches or the neckline still look wrong. Camera/indexing/source-privacy and pixel-lossless responsive WebP delivery gates remain mandatory.
+
+## Required staged fix after visual regression
+
+The first distal-rig material attempt incorrectly applied arm skin **before** generating the neutral shirt shell. Because that shell is selected from the original gray body material faces, both characters lost their sleeves and developed a tank-top outline. This candidate was **visually rejected** despite its software tests passing. The final staged workflow now:
+
+1. Reproduce the original body gray clothing-face selection exactly, preserving shoulder/sleeve source polygons.
+2. Copy those original faces to the **separate derived neutral shirt shell**.
+3. Reassign only genuine exposed distal original-body forearm faces, **below the newly calculated 76% shoulder–elbow cuff**, to skin using the pinned rig weights. Leave shoulders, upper arms and the derived shirt's own materials intact.
+4. Rebuild both full-resolution figures. Inspect the native output and reject again if jagged gray forearms or missing upper sleeves remain.
+
+New regression tests explicitly forbid restoring proximal upperarm fabric to skin, and the scene packet must record `clothFacesSelectedBeforeBodyMaterialRepair:true`, `onlyDistalRigApprovedSkin:true`, plus actual restored regions. These safeguard source appearance, not a real-world anatomical or photorealism approval.
