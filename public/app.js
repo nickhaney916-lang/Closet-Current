@@ -352,30 +352,58 @@ function cameraStability(){
   return {stable:!hadPrevious||motion<24,motion:Math.round(motion*10)/10,lowTexture:variance/values.length<100};
  }catch{return {stable:true};}
 }
-function snap(){if(!video.videoWidth||video.readyState<2)throw Error('The camera has not provided a usable frame yet.');const scale=Math.min(1,2048/Math.max(video.videoWidth,video.videoHeight));canvas.width=Math.max(1,Math.round(video.videoWidth*scale));canvas.height=Math.max(1,Math.round(video.videoHeight*scale));const context=canvas.getContext('2d');context.imageSmoothingEnabled=true;context.imageSmoothingQuality='high';context.drawImage(video,0,0,canvas.width,canvas.height);return canvas.toDataURL('image/jpeg',.94);}
+function snap(){
+ if(!video.videoWidth||video.readyState<2)throw Error('The camera has not provided a usable frame yet.');
+ // Video frames remain capped at 2048px for repeated automatic captures.
+ // Bound encoded size as well: noisy frames can exceed backup limits.
+ for(const target of [2048,1536,1024]){
+  const scale=Math.min(1,target/Math.max(video.videoWidth,video.videoHeight));
+  canvas.width=Math.max(1,Math.round(video.videoWidth*scale));
+  canvas.height=Math.max(1,Math.round(video.videoHeight*scale));
+  const context=canvas.getContext('2d');
+  if(!context)throw Error('Unable to prepare camera frame.');
+  context.imageSmoothingEnabled=true;context.imageSmoothingQuality='high';
+  context.drawImage(video,0,0,canvas.width,canvas.height);
+  const jpeg=canvas.toDataURL('image/jpeg',.94);
+  if(!jpeg||jpeg==='data:,')throw Error('Unable to encode camera frame.');
+  if(jpeg.length<=2850000)return jpeg;
+ }
+ throw Error('Photo exceeds storage limits. Try brighter light or a closer photo.');
+}
 
-// Prefer a genuine sensor still over freezing the preview when the browser
-// supports ImageCapture. Preserve full aspect ratio, without artificial upscaling.
+// Prefer a genuine sensor still over freezing the preview. Recognition receives
+// this full-scene JPEG before any clipping/masking; this is not a raw sensor file.
 async function captureCameraStill(track,StillCapture,isCurrent=()=>true){
  const blob=await new StillCapture(track).takePhoto();
  if(!isCurrent())throw Error('Camera session ended before photo arrived.');
- if(!blob||!blob.size||(blob.type&&!blob.type.startsWith('image/')))
-   throw Error('Camera did not supply an image.');
- const bitmap=await createImageBitmap(blob);
+ if(!blob||!blob.size||blob.size>32*1024*1024||(blob.type&&!blob.type.startsWith('image/')))
+   throw Error('Camera did not supply a usable image.');
+ // Honor EXIF orientation once in the decoder. Keep browser color conversion;
+ // never disable color management, recolor fabric, sharpen or mirror the photo.
+ const bitmap=await createImageBitmap(blob,{imageOrientation:'from-image',colorSpaceConversion:'default'});
  try{
   if(!isCurrent())throw Error('Camera session ended before photo decoded.');
   const width=bitmap.width,height=bitmap.height;
-  if(!Number.isInteger(width)||!Number.isInteger(height)||width<320||height<240)
+  if(!Number.isInteger(width)||!Number.isInteger(height)||Math.min(width,height)<240||Math.max(width,height)<320)
     throw Error('Still image was too small.');
-  const scale=Math.min(1,2048/Math.max(width,height));
-  canvas.width=Math.max(1,Math.round(width*scale));
-  canvas.height=Math.max(1,Math.round(height*scale));
-  const context=canvas.getContext('2d');
-  if(!context)throw Error('Unable to prepare camera photo.');
-  context.imageSmoothingEnabled=true;
-  context.imageSmoothingQuality='high';
-  context.drawImage(bitmap,0,0,canvas.width,canvas.height);
-  return canvas.toDataURL('image/jpeg',.94);
+  let previousWidth=0,previousHeight=0;
+  for(const target of [3072,2560,2048,1536,1024]){
+   if(!isCurrent())throw Error('Camera session ended while preparing photo.');
+   const scale=Math.min(1,target/Math.max(width,height));
+   const outputWidth=Math.max(1,Math.round(width*scale)),outputHeight=Math.max(1,Math.round(height*scale));
+   if(outputWidth===previousWidth&&outputHeight===previousHeight)continue;
+   previousWidth=outputWidth;previousHeight=outputHeight;
+   canvas.width=outputWidth;canvas.height=outputHeight;
+   const context=canvas.getContext('2d');
+   if(!context)throw Error('Unable to prepare camera photo.');
+   context.imageSmoothingEnabled=true;context.imageSmoothingQuality='high';
+   // Every retry draws from original decoded RGB, never a previous JPEG.
+   context.drawImage(bitmap,0,0,canvas.width,canvas.height);
+   const jpeg=canvas.toDataURL('image/jpeg',.94);
+   if(!jpeg||jpeg==='data:,')throw Error('Unable to encode camera photo.');
+   if(jpeg.length<=2850000)return jpeg;
+  }
+  throw Error('Photo exceeds storage limits. Try a closer photo.');
  }finally{bitmap.close?.();}
 }
 function beep(){if(!$('sound').checked||!audio)return;try{const o=audio.createOscillator(),g=audio.createGain();o.frequency.value=740;g.gain.value=.04;o.connect(g);g.connect(audio.destination);o.start();o.stop(audio.currentTime+.12);}catch{}}
@@ -527,15 +555,15 @@ function takePhoto(){
   if(typeof StillCapture!=='function'||!track||typeof createImageBitmap!=='function'){
    fallback();return;
   }
-  const shot={stream:activeStream,request:activeRequest};
+  const shot={stream:activeStream,request:activeRequest,expired:false};
   manualStillShot=shot;$('takePhoto').disabled=true;$('stop').disabled=true;
   $('captureState').textContent='Taking high-quality photo…';
   // Some Android camera drivers never settle takePhoto(). Fall back rather
   // than locking the shutter. A late resolution cannot modify our canvas.
   let timer;
   const bounded=Promise.race([
-   captureCameraStill(track,StillCapture,()=>active()&&manualStillShot===shot),
-   new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('Still photo timed out')),4000);})
+   captureCameraStill(track,StillCapture,()=>active()&&manualStillShot===shot&&!shot.expired),
+   new Promise((_,reject)=>{timer=setTimeout(()=>{shot.expired=true;reject(Error('Still photo timed out'));},4000);})
   ]);
   bounded.then(image=>{
    if(manualStillShot===shot){

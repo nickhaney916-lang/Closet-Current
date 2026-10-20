@@ -1,3 +1,28 @@
+# Native camera continuation — October 20, 2026 Pacific
+
+- Isolated branch `fix/native-camera-fidelity-20261020` from PR #88 exact
+  `ccf308b3807bc5f2b321699a306d7157daf4a845`. Source branch is untouched.
+- Native stills attempt 3072/2560/2048/1536/1024px at JPEG .94, capped at
+  2,850,000 data-URL characters. No enlargement, crop, recoloring or sharpening.
+  Each attempt draws from the original oriented decoded bitmap.
+- Keep 2048px video-frame ceiling for automatic capture/mobile cost; add the
+  same encoded-size ceiling with 1536/1024 fallback. Reject invalid encodes.
+- Four-second native timeout invalidates the capture synchronously. Late blobs
+  cannot decode; late decoded bitmaps close without touching shared canvas.
+  Existing active-session checks and retry remain in place.
+- Explicit EXIF-from-image decoding and default browser color conversion.
+  Portrait/landscape minimum dimensions are symmetric. Reject blobs over 32MiB.
+- Recognition still receives full-scene original-derived JPEG before clipping;
+  this does not preserve raw sensor bytes or establish garment color accuracy.
+- Validation pending GitHub Actions: local execution environment unavailable.
+  New behavioral tests cover size fallback, invalid encodes, portrait decode,
+  timeout/decode races, retry and small-image duplicate encode avoidance.
+  Real browser synthetic JPEG/EXIF/color-patch checks cover both mobile engines.
+- Physical Android/iPhone tests remain required: autofocus, low light/motion,
+  native sensor resolution/EXIF/wide-gamut behavior, permission/lifecycle recovery,
+  sustained capture memory/latency and saved garment detail/color fidelity.
+- No merge, deployment, paid inference or Drive Duel changes.
+
 # Closet Current master development checkpoint
 
 ## Owned recommendation quality branch — October 20, 2026 Pacific

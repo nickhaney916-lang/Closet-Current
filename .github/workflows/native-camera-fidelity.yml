@@ -1,0 +1,40 @@
+name: Native phone camera fidelity QA
+on:
+  push:
+    branches: [fix/native-camera-fidelity-20261020]
+  pull_request:
+    branches: [fix/adaptive-import-resolution-budget-20261020]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  native-camera-fidelity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build public Closet Current without paid providers
+        run: node scripts/build.mjs
+      - name: Full Node regressions for camera, indexing, account, and outfit preview
+        run: node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Block unverified customer release and preserve original review evidence
+        run: |
+          node scripts/check-customer-pilot-release-gates.mjs
+          node scripts/check-dual-parent-review-integration.mjs
+      - name: Install emulated Android Chromium and iPhone WebKit
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium webkit
+      - name: Decode real source JPEG and PNG, keep blank-MIME support, validate 3072px fallback
+        run: node scripts/test-untyped-photo-import-mobile.mjs
+      - name: Ensure original source and duplicate guards still hold in both browsers
+        run: |
+          node scripts/test-original-crop-source-mobile.mjs
+          node scripts/test-original-source-duplicate-mobile.mjs
+      - name: Native still resolution, EXIF orientation and color in both mobile engines
+        run: node scripts/test-native-camera-fidelity-mobile.mjs
