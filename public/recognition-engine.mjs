@@ -94,7 +94,12 @@ export async function recognizeWithRecovery(model,image,settings={}){
    const a=clothingChoices(first),b=clothingChoices(second);
    const safe=v=>v[0]?.category==='Bottoms'&&v[0].score>=.7&&
     v[0].score-(v[1]?.score||0)>=.25;
-   if(a[0]?.category==='Bottoms'&&b[0]?.category==='Bottoms'&&a[0].itemType===b[0].itemType&&safe(b)&&a[0].score>=.45&&a[0].score-(a[1]?.score||0)>=.07){
+   // A Bottoms-only vocabulary has NO Dresses choice. It may support a
+   // short/trouser/jean decision against other bottoms, but cannot distinguish
+   // a skirt from a SHORT DRESS. Defer Skirt to the dress-inclusive recovery
+   // comparisons below, with genuinely separate full-frame image views.
+   const requiresDressComparison=a[0]?.itemType==='Skirt'||b[0]?.itemType==='Skirt';
+   if(!requiresDressComparison&&a[0]?.category==='Bottoms'&&b[0]?.category==='Bottoms'&&a[0].itemType===b[0].itemType&&safe(b)&&a[0].score>=.45&&a[0].score-(a[1]?.score||0)>=.07){
     settings.onIdentified?.(a[0]);
     return {strong:true,choices:[a[0]],details:{},reason:'bottoms_independent_agreement',preprocessingRecovery:true};
    }
@@ -105,9 +110,10 @@ export async function recognizeWithRecovery(model,image,settings={}){
   }catch{/* A failed optional recheck never overrides the original result. */}
  }
  // Skirt/dress conflicts need a balanced comparison, not a Bottoms-only
- // vocabulary that would force every dress into a skirt. Keep uncertain
- // results unchanged unless both independent views select the same garment.
- if(!result.strong&&['checks_disagree','views_disagree'].includes(result.reason)&&
+ // vocabulary that would force every dress into a skirt. This also applies
+ // when the FIRST branch is type-uncertain, not just two later contradictions.
+ // Keep uncertain results unchanged unless both views select the same garment.
+ if(!result.strong&&['type_uncertain','checks_disagree','views_disagree'].includes(result.reason)&&
     settings.recoveryModel&&settings.recoveryConfirmationModel&&
     (category?.[0]?.category==='Dresses'||category?.[0]?.category==='Bottoms'||
      (result.diagnostics?.dressEvidence?.primary?.totals?.[0]?.category==='Dresses'&&
