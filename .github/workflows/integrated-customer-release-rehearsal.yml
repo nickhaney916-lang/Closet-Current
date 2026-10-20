@@ -1,0 +1,54 @@
+name: Integrated Closet Current customer release rehearsal
+on:
+  push:
+    branches: [integration/customer-original-photo-style-qa-20261020]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  combined-owned-closet:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build all bundled customer files
+        run: node scripts/build.mjs
+      - name: All garment recognition styling storage and avatar regressions
+        run: |
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Verify full chain from original RGB to owned outfit and local preview
+        run: |
+          node --test tests/customer-original-styling-integration.test.cjs tests/recognition-provisional-worker.test.cjs tests/skirt-dress-recovery-gate.test.mjs tests/closet-stylist.test.cjs tests/recognition-tryon-integration.test.cjs
+      - name: Enforce non-production approval and no live paid provider
+        run: node scripts/check-customer-pilot-release-gates.mjs
+      - name: Install Chromium and WebKit for synthetic mobile integrations
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium webkit
+      - name: Style photographed new clothing and persist owned garments in Android Chromium
+        run: node scripts/test-style-my-new-item-mobile.mjs
+      - name: Style new clothing and save/reload in iPhone WebKit emulation
+        run: STYLE_BROWSER=webkit node scripts/test-style-my-new-item-mobile.mjs
+      - name: Run integrated local-only human figure and fitting/retry QA in both engines
+        run: node scripts/test-reusable-figure-phone-browsers.mjs
+      - name: Run original-first RGB crop and duplicate provenance on mobile viewport
+        run: |
+          node scripts/test-original-crop-source-mobile.mjs
+          node scripts/test-original-source-duplicate-mobile.mjs
+          node scripts/test-whole-outfit-save-mobile.mjs
+      - name: Verify actual original synthetic JPEG white-background color behavior
+        run: node scripts/test-original-photo-color-evidence-browser.mjs
+      - name: Recheck approval gate after all emulated browser tests
+        run: node scripts/check-customer-pilot-release-gates.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: integrated-customer-offline-browser-evidence
+          path: |
+            artifacts/style-new-clothes/
+            artifacts/local-fitting/
+          if-no-files-found: warn
+          retention-days: 14
