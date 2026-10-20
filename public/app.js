@@ -758,7 +758,15 @@ async function recognizeItem(item){
   if(!segmentationAllows(item,result.choices[0])){item.localStatus=item.segmentHint?.clipped?'This piece is partly outside the photo. Retake the whole garment or use Adjust.':item.outfitSourceId&&item.segmentHint?.displayFallback==='original-crop'?'This photo region may include multiple garments or background. Verify with Adjust or photograph the item alone.':'The clothing mask and garment checks disagree. Use Adjust or take a clearer photo.';return true;}
   if(item.userAdjusted){item.localStatus='Your adjustments are preserved. Save this piece when ready.';return true;}
   applyLocalChoice(item,result.choices[0]);
-  Object.assign(item,ClothingDetails.fill(item,result.choices[0],result.details));
+  // If the original photo's central white pixels could just be its backdrop,
+  // a model-suggested White detail from those same pixels is not independent
+  // evidence of a white garment. Keep the category but ask for color review.
+  // Other model-approved colors and actual mask-verified outfit colors retain
+  // their existing gates. Never classify using the clipped display image.
+  const details=item.outfitSourceId||quality.colorEstimate?.reason!=='white-foreground-unverified'||
+   result.details?.color!=='White'?result.details:
+   {...result.details,color:null};
+  Object.assign(item,ClothingDetails.fill(item,result.choices[0],details));
   item.name=[item.color,item.itemType&&item.itemType!=='Unknown'?item.itemType:item.category].filter(Boolean).join(' ');item.indexingLevel=item.itemType==='Unknown'?'category-color':'specific-type';
   if(item.outfitSourceId&&item.segmentHint?.displayFallback==='original-crop'){
    item.localStatus='This photo region may include multiple garments or background. Verify it with Adjust or photograph the item alone before saving.';return true;
