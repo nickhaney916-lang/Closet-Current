@@ -545,7 +545,7 @@ function takePhoto(){
  const fallback=()=>{
   if(!active())return;
   try{saveCaptured(snap());}
-  catch{message('The camera is still getting ready. Wait a moment, then tap Take photo again.');}
+  catch{message(video.readyState<2||!video.videoWidth?'The camera is still getting ready. Wait a moment, then tap Take photo again.':'Could not prepare this camera photo. Try brighter light, take another photo, or choose a saved photo.');}
  };
  try{
   const quality=cameraFrameQuality();
