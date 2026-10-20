@@ -15,6 +15,21 @@
 'use strict';
 const detailZoom=document.querySelector('#detailZoom'),detailSource=document.querySelector('#detailSource'),detailMask=document.querySelector('#detailMask'),detailHint=document.querySelector('#detailHint'),precisionEdit=document.querySelector('#precisionEdit');
 let precisionPainting=false,precisionLastPoint=null,precisionWindow=null;
+let brushPointerId=null,precisionPointerId=null;
+// One independent physical input device owns each stroke. Additional touches
+// must never move a brush or shift the magnified source-pixel target.
+function endMainStroke(){
+ painting=false;lastPoint=null;
+ if(brushPointerId!==null&&canvas.hasPointerCapture(brushPointerId))
+  canvas.releasePointerCapture(brushPointerId);
+ brushPointerId=null;
+}
+function endPrecisionStroke(){
+ precisionPainting=false;precisionLastPoint=null;precisionWindow=null;
+ if(precisionPointerId!==null&&detailMask.hasPointerCapture(precisionPointerId))
+  detailMask.releasePointerCapture(precisionPointerId);
+ precisionPointerId=null;
+}
 const garmentTarget=document.querySelector('#targetGarment'),targetLabel=document.querySelector('#targetLabel');
 const inventoryMode=document.querySelector('#inventoryMode'),inventoryFields=document.querySelector('#inventoryFields'),
  inventoryId=document.querySelector('#inventoryId'),inventoryCategory=document.querySelector('#inventoryCategory'),inventoryForm=document.querySelector('#inventoryForm');
@@ -55,8 +70,8 @@ photo.onchange=async()=>{
  // Invalidate the previous source immediately, including its export button,
  // rather than allowing edits while the newly chosen JPEG is decoding.
  source=null;mask=null;detailPoint=null;seedModel=null;reviewedDraft=false;seedMask=null;
- precisionPainting=false;precisionLastPoint=null;precisionWindow=null;
- polygon=[];strokes=0;painting=false;lastPoint=null;resetTarget();
+ endMainStroke();endPrecisionStroke();
+ polygon=[];strokes=0;resetTarget();
  undoStack.length=redoStack.length=0;resume.value='';
  ctx.clearRect(0,0,canvas.width,canvas.height);refreshEditButtons();
  if(!file){status.textContent='Select the original source image before editing.';return;}
@@ -263,14 +278,20 @@ function redrawDetail(){
   (precisionEdit.checked?' · precise brush editing on original pixels (unapproved DRAFT)':
   ' · enlarged detail is a preview, not an approval');
 }
-detailZoom.onchange=redrawDetail;
+detailZoom.onchange=()=>{
+ if(precisionPainting){
+  endPrecisionStroke();
+  status.textContent='Zoom changed. The previous brush gesture was ended; start a fresh stroke.';
+ }
+ redrawDetail();
+};
 precisionEdit.onchange=()=>{
  if(precisionEdit.checked&&tool.value!=='brush'){
   precisionEdit.checked=false;
   status.textContent='Select the brush tool before editing in the enlarged outline.';
  }
  detailMask.classList.toggle('precision-active',precisionEdit.checked);
- precisionPainting=false;precisionLastPoint=null;precisionWindow=null;
+ endPrecisionStroke();
  redrawDetail();
 };
 // Keep magnifier centered on the main image selection for the WHOLE precision
@@ -283,24 +304,31 @@ function detailPaintPoint(e,win){
   y:Math.max(0,Math.min(canvas.height-1,Math.floor(win.sy+normY*win.extent)))};
 }
 detailMask.onpointerdown=e=>{
- if(!precisionEdit.checked||tool.value!=='brush'||!source||!mask||!e.isPrimary)return;
+ if(!precisionEdit.checked||tool.value!=='brush'||!source||!mask||!e.isPrimary||precisionPointerId!==null)return;
  const win=detailWindow();
  if(!win)return;
  e.preventDefault();
- precisionPainting=true;precisionWindow=win;
+ precisionPainting=true;precisionPointerId=e.pointerId;precisionWindow=win;
  precisionLastPoint=detailPaintPoint(e,win);
  startEdit();detailMask.setPointerCapture(e.pointerId);
  paintLine(precisionLastPoint,precisionLastPoint);
 };
 detailMask.onpointermove=e=>{
- if(!precisionPainting||!precisionWindow||!mask)return;
+ if(!precisionPainting||!precisionWindow||!mask||e.pointerId!==precisionPointerId)return;
  e.preventDefault();
  const next=detailPaintPoint(e,precisionWindow);
  paintLine(precisionLastPoint,next);precisionLastPoint=next;
 };
-detailMask.onpointerup=detailMask.onpointercancel=()=>{
- precisionPainting=false;precisionLastPoint=null;precisionWindow=null;
+detailMask.onpointerup=detailMask.onpointercancel=e=>{
+ if(e.pointerId!==precisionPointerId)return;
+ endPrecisionStroke();
  refreshEditButtons();
+};
+detailMask.onlostpointercapture=e=>{
+ if(e.pointerId!==precisionPointerId)return;
+ // Interrupted gestures remain undoable. A stray following finger cannot
+ // continue painting on top of an unrelated source/detail region.
+ endPrecisionStroke();refreshEditButtons();
 };
 function redraw(){
  if(!source)return;ctx.drawImage(source.base,0,0);
@@ -383,12 +411,12 @@ applyPolygon.onclick=()=>{
 };
 cancelPolygon.onclick=()=>{++editingRevision;polygon=[];redraw();refreshEditButtons();};
 tool.onchange=()=>{
- ++editingRevision;painting=false;precisionPainting=false;precisionLastPoint=null;precisionWindow=null;
+ ++editingRevision;endMainStroke();endPrecisionStroke();
  precisionEdit.checked=false;detailMask.classList.remove('precision-active');
  polygon=[];redraw();refreshEditButtons();
 };
 canvas.onpointerdown=e=>{
- if(!mask)return;
+ if(!mask||!e.isPrimary||brushPointerId!==null||precisionPointerId!==null)return;
  e.preventDefault();
  const p=point(e);detailPoint=p;
  if(tool.value==='polygon'){
@@ -397,16 +425,27 @@ canvas.onpointerdown=e=>{
   ++editingRevision;polygon.push(p);redraw();refreshEditButtons();
   return;
  }
- painting=true;lastPoint=p;startEdit();
+ painting=true;brushPointerId=e.pointerId;lastPoint=p;startEdit();
  canvas.setPointerCapture(e.pointerId);paintLine(p,p);
 };
 canvas.onpointermove=e=>{
- if(!mask)return;
+ if(!mask||precisionPointerId!==null)return;
+ // While painting, all movement from other fingers/styluses is ignored.
+ if(painting&&e.pointerId!==brushPointerId)return;
+ if(!painting&&!e.isPrimary)return;
  const p=point(e);detailPoint=p;
  if(!painting||tool.value!=='brush'){redrawDetail();return;}
+ e.preventDefault();
  paintLine(lastPoint,p);lastPoint=p;
 };
-canvas.onpointerup=canvas.onpointercancel=()=>{painting=false;lastPoint=null;refreshEditButtons();};
+canvas.onpointerup=canvas.onpointercancel=e=>{
+ if(e.pointerId!==brushPointerId)return;
+ endMainStroke();refreshEditButtons();
+};
+canvas.onlostpointercapture=e=>{
+ if(e.pointerId!==brushPointerId)return;
+ endMainStroke();refreshEditButtons();
+};
 download.onclick=()=>{
  if(!source||!canExport()){status.textContent='Mark or correct the garment boundary before exporting. Untouched AI masks cannot become a draft.';return;}
  if(!reviewer.value.trim()){status.textContent='Enter the first reviewer name before exporting a draft.';return;}
