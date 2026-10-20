@@ -3,7 +3,7 @@
 // commercial figure rights or realistic fit certification.
 import assert from 'node:assert/strict';
 import {createServer} from 'node:http';
-import {readFile} from 'node:fs/promises';
+import {readFile,mkdir} from 'node:fs/promises';
 import {resolve,extname} from 'node:path';
 import {chromium,webkit} from 'playwright';
 const root=resolve('dist');
@@ -65,6 +65,7 @@ try{
      const original=JSON.stringify(entry);
      items.splice(0,items.length,entry);
      currentBoard.slots={top:'retina-shirt'};currentBoard.layerCount=0;
+     switchView('builder'); // Inspect a genuinely visible phone-width stage.
      renderOutfitBoard();
      renderReusableFigurePreview();
      return original;
@@ -74,6 +75,7 @@ try{
      return status.includes('1 owned clothing layer displayed; 0 held')&&
       document.querySelectorAll('#reusableFigureGarments img').length===1;
     },{timeout:35000});
+    await page.locator('#reusableFigureStage').scrollIntoViewIfNeeded();
     const evidence=await page.evaluate(async()=>{
      const im=document.querySelector('#reusableFigureGarments img');
      await im.decode();
@@ -98,6 +100,12 @@ try{
       stageWidth:rect.width,garmentWidthPct:parseFloat(im.style.width),
       fitNotValidated:!ClosetReusableFigure.plan(currentBoard,items,'female').fitAndImageQualityVerified
      };
+    });
+    assert.ok(evidence.stageWidth>180,
+     'render evidence must measure the visible phone-width figure, not a hidden builder');
+    await mkdir('artifacts/local-fitting',{recursive:true});
+    await page.locator('#reusableFigureStage').screenshot({
+     path:'artifacts/local-fitting/retina-'+label.toLowerCase()+'-'+dpr+'x.png'
     });
     assert.ok(evidence.expected,'sampling must resolve for existing native transparent input');
     assert.ok(evidence.width<=evidence.expected.width&&evidence.height<=evidence.expected.height,
