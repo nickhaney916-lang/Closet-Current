@@ -617,7 +617,15 @@ function localRequest(type,image,itemId,hint){
       renderRecognitionNotice();return;
      }
      const job=localJobs.get(data.id);if(!job)return;
-     if(data.type==='identified'){const item=batch.find(x=>x.id===job.itemId);if(item&&!item.userAdjusted&&segmentationAllows(item,data.choice)){applyLocalChoice(item,data.choice);render();}return;}
+     if(data.type==='identified'){
+      // This is an intermediate, unverified candidate. Applying it to the
+      // draft here changes category/type BEFORE recognizeItem checks that
+      // the original high-resolution source and the final model result are
+      // still current. That can invalidate a normal scan or overwrite a
+      // newer user selection. Only the final 'result' may classify/save.
+      // Keep the in-progress status without modifying garment attributes.
+      return;
+     }
      clearTimeout(job.timer);localJobs.delete(data.id);
      if(data.type==='error'){localReady=false;if(typeof recordDeviceEvent==='function')recordDeviceEvent('scanner_error',{stage:data.stage,code:data.code,durationMs:Date.now()-job.started});job.reject(Error(data.text));}else job.resolve(data);
     };
