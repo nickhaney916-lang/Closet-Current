@@ -1,0 +1,59 @@
+name: Integrated native camera and private cloud release candidate QA
+on:
+  push:
+    branches: [integration/native-camera-cloud-owner-20261020]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  integrated-customer-pilot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify independent camera and cloud parents plus exact bytes and safe source lineage
+        run: node scripts/verify-camera-cloud-integration.mjs
+      - name: Build and execute complete customer Node regression suite
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Reject any unapproved customer release or independent human-review substitution
+        run: |
+          node scripts/check-dual-parent-review-integration.mjs
+          node scripts/check-customer-pilot-release-gates.mjs
+      - name: Install Android Chromium and iPhone WebKit browser emulation
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium webkit
+      - name: Native full-resolution still, storage budget, EXIF and color regression
+        run: node scripts/test-native-camera-fidelity-mobile.mjs
+      - name: Imported original source and duplicate protection
+        run: |
+          node scripts/test-untyped-photo-import-mobile.mjs
+          node scripts/test-original-crop-source-mobile.mjs
+          node scripts/test-original-source-duplicate-mobile.mjs
+      - name: Cross-account cloud response and IndexedDB owner isolation on both engines
+        run: node scripts/test-cloud-session-generation-browsers.mjs
+      - name: Prepare licensed synthetic fixture for private multidevice recovery QA
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos commons-0002
+          mkdir -p benchmark/cloud-backup
+          cp benchmark/locked-photo-sources.json benchmark/cloud-backup/
+      - name: Complete private multidevice cloud backup, conflict and full garment recovery QA
+        run: node scripts/run-cloud-backup-flow.mjs benchmark/cloud-backup
+      - name: Auth recovery and new-garment owned-clothes styling on emulated phones
+        run: |
+          node scripts/test-auth-pilot-mobile.mjs
+          node scripts/test-style-my-new-item-mobile.mjs
+          STYLE_BROWSER=webkit node scripts/test-style-my-new-item-mobile.mjs
+      - name: Verify integrated pilot stays non-production
+        run: |
+          node scripts/verify-camera-cloud-integration.mjs
+          node scripts/check-customer-pilot-release-gates.mjs
