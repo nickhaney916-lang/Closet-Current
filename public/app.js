@@ -774,6 +774,12 @@ async function recognizeItem(item){
   if(item.requiresOwnershipConfirmation){item.localStatus='Identified. Add this piece only if it belongs in your closet.';return true;}
   item.localStatus='Recognized. Saving to your closet…';
   savingIndexed=true;
+  // Applying the FINAL verified classifier legitimately changed category/type.
+  // A storage failure for these accepted fields remains actionable, while
+  // a later user edit/replaced original must not inherit that failed status.
+  const acceptedCategory=item.category,acceptedType=item.itemType;
+  scanInputsCurrent=()=>sourceStillCurrent()&&
+   item.category===acceptedCategory&&item.itemType===acceptedType;
   if(await saveIndexed(item,sourceStillCurrent))if(typeof recordDeviceEvent==='function')recordDeviceEvent('recognized_saved',{durationMs:Date.now()-scanStarted});
   if(recognitionState.phase==='save-failed')recognitionState.phase='ready';
   return true;
