@@ -6,7 +6,7 @@ import {reviewSavedClosetReports} from '../benchmark/private-saved-closet-review
 const args=process.argv.slice(2),split=args.indexOf('--out');
 if(args[0]!=='--reports'||split<3||split!==args.length-2||split>41)
  throw Error('Usage: node scripts/review-private-saved-closet.mjs --reports android.json iphone.json [...cohort.json] --out artifacts/private-phone-pilot/new-saved-summary.json');
-const paths=args.slice(1,split).map(resolve),destination=resolve(args[split+1]);
+const paths=args.slice(1,split).map(path=>resolve(path)),destination=resolve(args[split+1]);
 const allowedRoot=resolve('artifacts/private-phone-pilot');
 if(!destination.startsWith(allowedRoot+'/')||!destination.endsWith('.json')||
  new Set(paths).size!==paths.length||paths.includes(destination))
