@@ -1,3 +1,31 @@
+# Camera startup and recovery — October 20, 2026 Pacific
+
+- Isolated `fix/camera-startup-recovery-20261020` based on PR #89 exact
+  `7fe867fdd392759e0b5106d529e60a37c6438ef7`; source branch unchanged.
+- Reproduced six failing lifecycle regressions before implementation: hung
+  permission, hung optional audio, blocked retry/obsolete cleanup, hung playback,
+  late playback resetting new counters, and missing track-ended recovery.
+- Bound permission + preview startup to 15 seconds, cancel old attempts when
+  leaving, release late grants and already granted-but-unattached streams, and
+  isolate old promise cleanup from the next camera/import operation.
+- Optional audio resumes asynchronously and reuses its context. Ended tracks
+  restore camera choices with restart guidance and preserve captured photos.
+- Seventh regression covers cancellation between grant and preview attachment.
+- Local build and complete Node suite: **1,186 passed / 0 failed / 3 skipped**
+  (1,189 total). Browser executables unavailable locally.
+- Runtime `d7af43aec8e70599f4eb9a944bb93af029985f9d` verified by
+  [CI 39503733913](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39503733913):
+  SUCCESS, full Node suite plus Android Chromium and iPhone WebKit recovery,
+  native JPEG size/EXIF/color checks and source-preservation checks passed.
+- New browser harness exercises simulated permission/media/playback faults in
+  Android Chromium/iPhone WebKit; this is not physical sensor validation.
+- Retain PR #89 native resolution/budget/orientation behavior and original RGB
+  recognition before clipping. Integrity check permits camera lifecycle changes
+  only; non-camera app bytes and independent review evidence remain protected.
+- Physical phones still required: permission sheets, background/foreground,
+  camera interruptions, autofocus, actual garment color/detail and memory/latency.
+- No merge/deploy, paid calls, Drive Duel changes or updates to PR #88/#89.
+
 # Native camera continuation — October 20, 2026 Pacific
 
 - Isolated branch `fix/native-camera-fidelity-20261020` from PR #88 exact
