@@ -211,6 +211,8 @@ function canExport(){
  return true;
 }
 function refreshEditButtons(){
+ const navDisabled=!source||!mask;
+ for(const button of [detailPanLeft,detailPanUp,detailPanDown,detailPanRight])button.disabled=navDisabled;
  download.disabled=!canExport();
  undo.disabled=!undoStack.length;redo.disabled=!redoStack.length;
  applyPolygon.disabled=!mask||polygon.length<3;
