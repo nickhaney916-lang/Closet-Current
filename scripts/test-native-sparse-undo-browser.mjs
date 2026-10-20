@@ -71,7 +71,7 @@ try{
  await page.locator('#applyPolygon').click();
  const filled=await describe();
  assert.notEqual(filled.sha256,prePolygon.sha256);
- assert.equal(filled.undo,2);
+ assert.equal(filled.undo,3);
  await page.locator('#undo').click();
  assert.equal((await describe()).sha256,prePolygon.sha256);
  await page.locator('#redo').click();
