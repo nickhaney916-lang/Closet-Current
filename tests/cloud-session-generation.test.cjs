@@ -98,3 +98,23 @@ test('sign-out before response and bfcache pagehide stop stale restore and dirty
  assert.deepEqual([...dbA.content.items.keys()],['private-a']);
  assert.equal(dbA.content.state.has('cloud-sync'),false);
 });
+
+test('a second manual cloud sync during an active request is replayed rather than silently skipped',async()=>{
+ const first=defer();let reads=0;
+ const h=setup({request:async(url)=>{
+  if(url.includes('/rest/v1/closet_backups')){
+   reads++;if(reads===1)return first.promise;
+  }
+  return {ok:true,status:200,json:async()=>[]};
+ }});
+ const db=database();
+ const pending=h.cloud.start(db,h.callbacks);
+ for(let i=0;i<8&&!reads;i++)await tick();
+ assert.equal(reads,1);
+ await h.cloud.sync(); // Collides with an already-running getRemote.
+ first.resolve({ok:true,status:200,json:async()=>[]});
+ await pending;
+ for(let i=0;i<20&&reads<2;i++)await new Promise(resolve=>setTimeout(resolve,5));
+ assert.equal(reads,2,'Lost an explicitly requested second cloud pass');
+ assert.equal(h.elements.get('cloudStatus').textContent,'Your closet will back up automatically');
+});
