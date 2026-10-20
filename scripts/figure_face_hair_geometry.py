@@ -64,20 +64,10 @@ def plan_original_face_hair(body_vertices,eye_vertices,kind):
         details.append(dict(name='source-scalp-fiber-%02d'%i,material='strand',
                             points=strand,radius=.00085 if i%2 else .0012))
         top_count+=1
+    # Avoid decorative side locks that look detached from the skull and
+    # can obscure future dress/jacket try-on. Both fixed characters retain
+    # unobstructed neutral cropped hair until actual hairstyle art approval.
     side_count=0
-    if kind=='female':
-        # Short, modest sculpted side framing; roots remain source-aligned.
-        # Not a borrowed wig/hair scan, nor individualized facial geometry.
-        for side in (-1,1):
-            for n in range(4):
-                hair=[]
-                for k,z in enumerate((1.732,1.706,1.679,1.650)):
-                    px=side*(.080+n*.003+(.008 if k>=2 else .004))
-                    y=_closest_front(head,px,z,xy_limit=.055,z_limit=.04)
-                    hair.append((px,y-.004,z))
-                details.append(dict(name='source-side-framing-%s-%02d'%(side,n),
-                                    material='strand',points=hair,radius=.0017))
-                side_count+=1
     if len(details)!=4+top_count+side_count or top_count<20:
         raise ValueError('Invalid original two-figure scalp detailing')
     for d in details:
