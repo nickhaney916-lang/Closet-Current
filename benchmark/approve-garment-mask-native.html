@@ -82,7 +82,7 @@ function redraw(){
 }
 function decode(data){
  const n=data.width*data.height;
- if(data.schemaVersion!==1||data.reviewStatus!=='draft'||data.nativeSourceGrid!==true||data.annotationGrid!=='exact-original-pixels'||data.seedModel!=null||data.modelProposalId!=null||!Number.isInteger(data.width)||!Number.isInteger(data.height)||data.width<1||data.height<1||n>12000000||!Array.isArray(data.runs)||data.runs.length>n+1)throw Error('Invalid or non-draft outline');
+ if(data.schemaVersion!==1||data.reviewStatus!=='draft'||data.nativeSourceGrid!==true||data.annotationGrid!=='exact-original-pixels'||data.physicalTargetId==null||data.seedModel!=null||data.modelProposalId!=null||!Number.isInteger(data.width)||!Number.isInteger(data.height)||data.width<1||data.height<1||n>12000000||!Array.isArray(data.runs)||data.runs.length>n+1)throw Error('Invalid or non-draft outline');
  if(typeof data.reviewer!=='string'||!data.reviewer.trim()||data.reviewer.trim().length>80)throw Error('First reviewer is missing');
  if(data.physicalTargetId!=null){
   const base=data.image.replace(/\.[^.]+$/,'');
