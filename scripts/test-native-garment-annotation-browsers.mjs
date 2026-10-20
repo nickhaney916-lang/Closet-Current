@@ -42,6 +42,7 @@ try{
  await first.locator('#inventoryId').fill('validation-0001-item-01');
  await first.locator('#inventoryCategory').selectOption('Tops');
  await first.locator('#targetGarment').fill('Visible magenta synthetic top');
+ await first.locator('#canvas').scrollIntoViewIfNeeded();
  const bound=await first.locator('#canvas').boundingBox();
  assert.ok(bound);
  await first.mouse.click(bound.x+bound.width*.50,bound.y+bound.height*.42);
