@@ -94,7 +94,8 @@ test('identical requests across event-loop turns do not restart an in-flight dec
  const h=setup();await h.start();
  for(let i=0;i<4;i++)await h.start();
  assert.equal(h.decodes.length,1,'background refreshes must share the pending decode');
- assert.equal(h.timers.size,1,'one bounded timeout remains in force');
+ assert.equal(h.timers.size,2,
+  'one bounded decoder timeout AND one non-resetting overall UI watchdog remain in force');
  for(const timeout of [...h.timers])timeout();await turn();
  assert.equal(h.el('reusableFigureStage').attributes['aria-busy'],'false');
  assert.equal(h.el('reusableFigureRetry').hidden,false);
