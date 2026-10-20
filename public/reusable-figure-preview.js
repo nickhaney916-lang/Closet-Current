@@ -124,7 +124,15 @@
     const hi=high.getContext('2d',{willReadFrequently:true});if(!hi)return null;
     hi.imageSmoothingEnabled=true;hi.imageSmoothingQuality='high';
     hi.drawImage(photo,0,0,high.width,high.height);
-    return trimmed(high,hi.getImageData(0,0,high.width,high.height));
+    const nativeCutout=hi.getImageData(0,0,high.width,high.height);
+    // Transparency is NOT evidence the silhouette contains only fabric.
+    // A mannequin neck or hanger can survive a third-party alpha cutout.
+    // Hold suspicious upper-center attachments rather than placing their
+    // pixels over an unrelated customer's face on either reusable figure.
+    const contamination=root.ClosetTransparentForegroundSafety?.inspect(
+     nativeCutout.data,high.width,high.height,category);
+    if(contamination?.hold)return null; // Original saved photo remains intact.
+    return trimmed(high,nativeCutout);
    }
    // Safe white-paper removal is optional and cannot reconstruct a garment.
    const matte=white?.analyze(pixels.data,c.width,c.height,{category,primaryColor});
