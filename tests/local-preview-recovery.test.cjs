@@ -10,7 +10,7 @@ function setup(){
  const c={Promise,Error,JSON,Set,Number,Uint8ClampedArray,URL,
   setTimeout(fn){timers.add(fn);return fn;},clearTimeout(fn){timers.delete(fn);},
   document:{getElementById:el,createElement:()=>el('image-'+Math.random()),createDocumentFragment:()=>({children:[],append(v){this.children.push(v);}})},
-  currentBoard:{slots:{top:'shirt'}},items:[{id:'shirt',image:'source',category:'Tops',color:'Blue'}],
+  db:{name:'closet-current-user-owner'},currentBoard:{slots:{top:'shirt'}},items:[{id:'shirt',image:'source',category:'Tops',color:'Blue'}],
   outfitBoardReady:new Promise(()=>{}),closetAuth:{user:{id:'owner'}},addEventListener(k,v){listeners[k]=v;},
   ClosetFigurePreviewCache:{create:()=>cache},ClosetGarmentFitGeometry:{fitPlacement:()=>({left:1,top:1,width:50,height:50})},
   ClosetReusableFigure:{samePlan:(a,b)=>!!a&&!!b&&JSON.stringify(a)===JSON.stringify(b),selfieRect:()=>({}),plan(board,items,figure){plans++;const item=items.find(x=>x.id===board.slots.top);return {figure,figureImage:'base',skipped:[],placements:item?[{itemId:item.id,image:item.image,category:item.category,primaryColor:item.color,slot:'top',rect:{}}]:[]};}}
@@ -72,4 +72,20 @@ test('returning to a previous outfit during an unfinished replacement must rebui
  const before=h.el('reusableFigureGarments').children[0];
  stale.ok();await turn();assert.equal(h.el('reusableFigureGarments').children[0],before);
  assert.match(h.el('reusableFigureStatus').textContent,/1 owned clothing layer/);
+});
+
+test('a preview requested after an account change cannot relabel old closet photos for the new owner',async()=>{
+ const h=setup();await h.start();await h.finish();
+ h.c.closetAuth.user.id='other';await h.start();
+ assert.equal(h.el('reusableFigureGarments').children.length,0);
+ assert.equal(h.decodes.length,1,'no prior-account photos are decoded for the new owner');
+ assert.match(h.el('reusableFigureStatus').textContent,/account/);
+ assert.equal(h.el('reusableFigureStage').attributes['aria-busy'],'false');
+ h.c.closetAuth.user.id='owner';await h.start();await h.finish();
+ assert.match(h.el('reusableFigureStatus').textContent,/1 owned clothing layer/);
+});
+test('replacing the database during final garment decode cancels that old database render',async()=>{
+ const h=setup();await h.start();h.c.db={name:'closet-current-user-owner'};
+ await h.finish();assert.equal(h.el('reusableFigureGarments').children.length,0);
+ assert.match(h.el('reusableFigureStatus').textContent,/selection changed/);
 });

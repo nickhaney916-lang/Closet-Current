@@ -89,3 +89,24 @@ completed **SUCCESS** at that exact SHA. The runtime also passed the earlier
 
 This documentation-only follow-up does not change tested runtime or browser
 harness code. Draft integration PR: #69. No merge or deployment.
+
+## Continuation: requests started with an already mismatched account/database
+
+The previous final-decode tests covered an identity change during asynchronous
+work. Four further behavioral regressions exposed a separate starting state:
+Auth can already identify B while the live database still belongs to A. Capturing
+B and checking only that B stays unchanged does not establish database ownership.
+
+The save/persistence context now requires an authenticated owner matching the
+native account-specific database name, before entering the write queue and again
+before transaction creation. The local renderer checks that binding before any
+plan/cache reuse or source decoding, and includes the captured database identity
+in asynchronous cancellation. Invalid bindings clear garment/selfie output and
+show reload/sign-in guidance. No account database is opened or migrated here.
+
+Build and full local Node suite passed: **1078 / 0 / 3 (1081 total)**; local Python
+suite **37 passed**. Four new Node tests failed before the runtime fix. Browser
+coverage adds an already-mismatched-owner probe using the actual open IndexedDB,
+expecting two rejected writes, zero readwrite transactions, no saved additions,
+no published layers and recovery after restoring the valid fixture account.
+Exact follow-up CI must be inspected before reporting mobile emulation success.

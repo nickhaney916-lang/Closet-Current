@@ -411,8 +411,26 @@ try{
  await page.waitForFunction(()=>document.querySelector('#reusableFigureStatus').textContent.includes('selection changed'));
  assert.equal(await page.locator('#reusableFigureGarments img').count(),0);
  assert.equal(await page.locator('#reusableFigureSelfie').isVisible(),false);
- await page.evaluate(()=>window.closetAuth.user.id=window.__priorPreviewOwner);
- await page.locator('#reusableFigureRetry').click();
+ // A newly started operation must also refuse the still-open previous DB.
+ const wrongDatabase=await page.evaluate(async()=>{
+  const native=db.transaction.bind(db);let writes=0;
+  db.transaction=function(stores,mode,...rest){if(mode==='readwrite')writes++;return native(stores,mode,...rest);};
+  const before=savedOutfitBoards.length;
+  try{
+   const result=await Promise.allSettled([saveOwnedOutfitBoard(currentBoard),persistBoardState()]);
+   renderReusableFigurePreview();
+   await new Promise(ok=>requestAnimationFrame(()=>requestAnimationFrame(ok)));
+   return {outcomes:result.map(x=>x.status),writes,saved:savedOutfitBoards.length-before,
+    layers:document.querySelectorAll('#reusableFigureGarments img').length,
+    message:document.querySelector('#reusableFigureStatus').textContent,
+    busy:document.querySelector('#reusableFigureStage').getAttribute('aria-busy')};
+  }finally{db.transaction=native;}
+ });
+ assert.deepEqual(wrongDatabase.outcomes,['rejected','rejected']);
+ assert.equal(wrongDatabase.writes,0);assert.equal(wrongDatabase.saved,0);
+ assert.equal(wrongDatabase.layers,0);assert.equal(wrongDatabase.busy,'false');
+ assert.match(wrongDatabase.message,/account/);
+ await page.evaluate(()=>{window.closetAuth.user.id=window.__priorPreviewOwner;renderOutfitBoard();});
  await page.waitForFunction(()=>document.querySelectorAll('#reusableFigureGarments img').length===1);
  // A stalled browser decoder must become a retryable hold, never spin forever.
  await page.evaluate(()=>{
@@ -447,7 +465,7 @@ try{
  await page.screenshot({path:'artifacts/style-new-clothes/'+evidenceName+'.png',fullPage:true});
  await writeFile('artifacts/style-new-clothes/'+evidenceName+'.json',JSON.stringify({
   engine:evidenceName,actualPhysicalPhone:false,syntheticDisplayFixture:true,
-  newClothesShortcut:true,ownedOutfitModelHandoff:true,sourceEditRaceBlocked:true,crossAccountRenderBlocked:true,
+  newClothesShortcut:true,ownedOutfitModelHandoff:true,sourceEditRaceBlocked:true,crossAccountRenderBlocked:true,priorAccountDatabaseBlocked:true,
   boundedDecodeRetry:true,horizontalOverflow:false,reuseMeasurement,pageErrors:errors
  },null,2));
 

@@ -1,5 +1,27 @@
 # Closet Current master development checkpoint
 
+## PR #69 account/database ownership continuation — October 20, 2026 Pacific
+
+- Continues isolated integration PR #69 from exact verified head `c49b8891`;
+  PR #64/#65 source branches and all protected mask/figure work unchanged.
+- Reproduced four failing regressions: requests begun after an identity change
+  could reuse the previous account's open IndexedDB; a same-identity database
+  replacement during final decode was also missing from cancellation checks.
+- Outfit persistence and saves require a signed-in owner matching the native
+  `closet-current-user-<owner>` database name, before enqueueing and again inside
+  the write. The renderer validates the same binding before decoding/reusing
+  images and rechecks the captured database after asynchronous work.
+- Wrong-account requests leave no garment layers or selfie and show reload /
+  sign-in guidance; same-account recovery remains possible after valid reload.
+- Build passed; full local Node suite **1078 passed / 0 failed / 3 skipped**
+  (1081 total); Python **37 passed**. Four new behavioral tests failed before
+  the fix. Exact-head Android Chromium/iPhone WebKit CI pending this follow-up.
+- Browser journey now also attempts new saves and previews while the previous
+  database is open under a changed identity, asserting both writes reject,
+  zero readwrite transactions, no saved additions and no garment publication.
+- No production merge/deploy, paid calls, customer upload, recognition/source
+  photo changes, mask-evidence scripts, figure artwork or Drive Duel changes.
+
 ## Isolated styling workflow integration — October 20, 2026 Pacific
 
 - Integrates #64 `da7138ac` and #65 `6bf0364c` on their independently verified

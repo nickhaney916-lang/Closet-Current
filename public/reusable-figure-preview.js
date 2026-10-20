@@ -140,6 +140,16 @@
   const owner=root.closetAuth?.user?.id||null;
   if(owner!==lastOwner){removeFace();lastOwner=owner;}
   previewCache?.forOwner(owner); // Ownership changes clear every prior image.
+  const database=typeof db==='undefined'?null:db;
+  const databaseCurrent=()=>!!owner&&database?.name==='closet-current-user-'+owner&&
+   database===(typeof db==='undefined'?null:db);
+  if(!databaseCurrent()){
+   lastPlan=null;previewCache?.dispose();garmentContainer.replaceChildren();
+   removeFace();updatePhotoHelp(false);base.style.visibility='hidden';
+   stage.setAttribute('aria-busy','false');if(retry)retry.hidden=true;
+   status.textContent='Your closet is unavailable for this account. Reload this page and sign in again.';
+   return;
+  }
   const board=()=>typeof currentBoard==='undefined'?null:currentBoard;
   const closet=()=>typeof items==='undefined'?[]:items;
   const plan=engine.plan(board(),closet(),selector.value);
@@ -164,7 +174,7 @@
   const renderedLayers=[];
   const cancelled=()=>{
    if(revision!==renderRevision)return true;
-   if((root.closetAuth?.user?.id||null)!==owner||sourceChanged()){
+   if((root.closetAuth?.user?.id||null)!==owner||!databaseCurrent()||sourceChanged()){
     lastPlan=null;previewCache?.forOwner(root.closetAuth?.user?.id||null);
     garmentContainer.replaceChildren();removeFace();updatePhotoHelp(false);
     stage.setAttribute('aria-busy','false');

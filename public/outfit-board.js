@@ -4,11 +4,15 @@ function boardLink(text,url,className='textlink'){const a=node('a',text,classNam
 function boardBackup(){return {current:structuredClone(currentBoard),saved:structuredClone(savedOutfitBoards)};}
 function boardWriteContext(){
  const database=db,owner=window.closetAuth?.user?.id||null;
- return {database,current:()=>db===database&&(window.closetAuth?.user?.id||null)===owner};
+ // The request may start after Auth changed but before the old local DB closed.
+ // Equality with a captured identity alone would relabel that DB for a new user.
+ return {database,current:()=>!!owner&&database?.name==='closet-current-user-'+owner&&
+  db===database&&(window.closetAuth?.user?.id||null)===owner};
 }
 async function persistBoardState(){
  const context=boardWriteContext();
  if(!context.database)throw Error('Browser storage is unavailable.');
+ if(!context.current())throw Error('Your account changed. Reload this page before saving outfits.');
  await queued(()=>new Promise((resolve,reject)=>{
   if(!context.current())return reject(Error('Your account changed. Try again.'));
   // Snapshot after earlier queued saves have committed, not before waiting.
@@ -22,6 +26,7 @@ async function persistBoardState(){
 async function saveOwnedOutfitBoard(value){
  const requested=structuredClone(value),context=boardWriteContext();
  if(!context.database)throw Error('Browser storage is unavailable.');
+ if(!context.current())throw Error('Your account changed. Reload this page before saving outfits.');
  return queued(()=>new Promise((resolve,reject)=>{
   if(!context.current())return reject(Error('Your account changed. Try again.'));
   const saved=cleanOutfitBoard(requested,items),slots=Object.keys(requested.slots||{});

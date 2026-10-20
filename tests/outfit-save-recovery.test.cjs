@@ -3,10 +3,10 @@ const test=require('node:test'),assert=require('node:assert/strict'),vm=require(
 const tick=()=>new Promise(resolve=>setImmediate(resolve));
 function storage(){
  const pending=[],disk={value:null};let tail=Promise.resolve();
- const database={transaction(){const tx={error:null,objectStore:()=>({put(value){pending.push({tx,value:structuredClone(value)});}})};return tx;}};
+ const database={name:'closet-current-user-one',transaction(){const tx={error:null,objectStore:()=>({put(value){pending.push({tx,value:structuredClone(value)});}})};return tx;}};
  const c={window:{closetAuth:{user:{id:'one'}}},db:database,structuredClone,
   items:[{id:'shirt',category:'Tops',image:'original-photo'},{id:'pants',category:'Bottoms',image:'original-pants'}],
-  queued(work){const p=tail.then(work);tail=p.catch(()=>{});return p;},URL,encodeURIComponent};
+  queueCalls:0,queued(work){c.queueCalls++;const p=tail.then(work);tail=p.catch(()=>{});return p;},URL,encodeURIComponent};
  vm.createContext(c);vm.runInContext(fs.readFileSync('public/outfit-board-engine.js','utf8'),c);
  const source=fs.readFileSync('public/outfit-board.js','utf8');
  vm.runInContext(source.slice(0,source.indexOf('async function storeBoard(')),c);
@@ -95,4 +95,21 @@ test('explicit transaction abort with a null IDB error still gives retryable fee
 test('an empty outfit cannot consume a saved slot or issue a database write',async()=>{
  const s=storage();await assert.rejects(s.c.saveOwnedOutfitBoard({slots:{}}),/at least one piece/);
  assert.equal(s.pending.length,0);assert.equal(s.saved().length,0);
+});
+
+test('a save begun after an account change refuses the previous account database',async()=>{
+ const s=storage();s.c.window.closetAuth.user.id='other';
+ const outcome=s.c.saveOwnedOutfitBoard(board()).then(()=>null,error=>error);
+ await tick();assert.equal(s.pending.length,0,'no transaction for the prior account');
+ assert.match((await outcome)?.message||'',/account changed/);assert.equal(s.saved().length,0);
+ assert.equal(s.c.queueCalls,0,'no global write/cloud hook for the previous account database');
+});
+test('ordinary board persistence refuses a signed-out or mismatched database owner',async()=>{
+ for(const owner of [null,'other']){
+  const s=storage();s.c.window.closetAuth.user=owner?{id:owner}:null;
+  const outcome=s.c.persistBoardState().then(()=>null,error=>error);
+  await tick();assert.equal(s.pending.length,0,'no transaction for the wrong or absent owner');
+  assert.match((await outcome)?.message||'',/account changed/);
+  assert.equal(s.c.queueCalls,0);
+ }
 });
