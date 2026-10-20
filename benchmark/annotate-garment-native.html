@@ -295,8 +295,8 @@ function panOriginalDetail(dx,dy){
  // reviewer state, image digest or undo history is modified.
  endPrecisionStroke();
  const step=Math.max(1,Math.round(window.extent*.25));
- const x=window.sx+window.extent/2+dx*step,
-  y=window.sy+window.extent/2+dy*step;
+ const x=detailPoint.x+dx*step,
+  y=detailPoint.y+dy*step;
  detailPoint={
   x:Math.max(0,Math.min(canvas.width-1,Math.round(x))),
   y:Math.max(0,Math.min(canvas.height-1,Math.round(y)))
