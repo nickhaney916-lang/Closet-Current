@@ -516,8 +516,8 @@ function stopCameraPreviewWatch(){
  }
 }
 function cameraPreviewHealth(now=Date.now()){
- const track=stream?.getVideoTracks?.()[0];
- if(!track||track.readyState==='ended'||track.muted===true)
+ const track=stream?.getVideoTracks?.()[0]||stream?.getTracks?.()[0];
+ if(!stream||track?.readyState==='ended'||track?.muted===true)
   return {live:false,reason:'Camera preview stopped delivering video. Your saved photos are safe. Restart the camera or choose an imported photo.'};
  const watch=cameraPreviewWatch;
  if(!watch||watch.request!==cameraRequest||watch.stream!==stream)return {live:true};
