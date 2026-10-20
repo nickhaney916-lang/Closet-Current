@@ -3,12 +3,12 @@
 // vendor calls, paid inference, or unreviewed test photos are used.
 import {chromium,webkit} from 'playwright';
 import {createServer} from 'node:http';
-import {readFile} from 'node:fs/promises';
+import {readFile,mkdir,writeFile} from 'node:fs/promises';
 import {resolve,extname} from 'node:path';
 import assert from 'node:assert/strict';
 
 const root=resolve('dist');
-const types={'.html':'text/html','.js':'text/javascript','.css':'text/css','.json':'application/json','.svg':'image/svg+xml','.webp':'image/webp','.png':'image/png'};
+const types={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.json':'application/json','.svg':'image/svg+xml','.webp':'image/webp','.png':'image/png'};
 const server=createServer(async(req,res)=>{
  try{
   const url=new URL(req.url,'http://localhost');
@@ -93,7 +93,7 @@ try{
  assert.equal(directSaved.length,1,'directly swapped outfit must save only on tap');
  assert.equal(directSaved[0].shoes,directSwap.selected);
  assert.equal(directSaved[0].top,'new-green-top');
- await page.locator('#styledCollectionResults .styled-outfit').first().getByRole('button',{name:'Adjust on outfit board'}).click();
+ await page.locator('#styledCollectionResults .styled-outfit').first().getByRole('button',{name:'Preview on model'}).click();
  await page.locator('#builder:not([hidden])').waitFor();
  const initialShoes=await page.evaluate(()=>currentBoard.slots.shoes);
  assert.ok(['owned-black-sneakers','owned-white-sneakers'].includes(initialShoes));
@@ -260,6 +260,215 @@ try{
  }
  assert.equal(new Set(cycle.slice(0,4)).size,4,'all four owned shoes are reachable');
  assert.equal(new Set(cycle.slice(4,8)).size,4,'repeat cycle reaches every shoe again');
+ // A failed preview write must not block local viewing or create an
+ // unhandled rejection. The real UI action and rendering path still run.
+ await page.evaluate(()=>{
+  window.__restorePreviewPersistence=persistBoardState;
+  persistBoardState=async()=>{throw Error('Synthetic preview storage failure');};
+ });
+ await page.locator('#styledCollectionResults .styled-outfit').first()
+  .getByRole('button',{name:'Preview on model'}).click();
+ await page.locator('#builder:not([hidden])').waitFor();
+ await page.waitForFunction(()=>document.getElementById('boardSaveStatus').textContent.includes('preview is available'));
+ assert.equal(await page.evaluate(()=>currentBoard.slots.top),'new-green-top');
+ await page.evaluate(()=>{persistBoardState=window.__restorePreviewPersistence;switchView('stylist');});
+ // Rebuilding recommendations during an in-flight save must preserve the
+ // disabled state, otherwise a second tap would create a duplicate outfit.
+ await page.evaluate(()=>{
+  const original=saveOwnedOutfitBoard;let release;
+  const gate=new Promise(ok=>release=ok);window.__saveRelease=release;
+  window.__saveCalls=0;window.__restoreOutfitSave=original;
+  saveOwnedOutfitBoard=async value=>{window.__saveCalls++;await gate;return original(value);};
+ });
+ await page.locator('#styledCollectionResults .styled-outfit').first()
+  .getByRole('button',{name:'Save outfit',exact:true}).click();
+ await page.evaluate(()=>renderStyledCollection());
+ assert.equal(await page.locator('#styledCollectionResults .styled-outfit').first()
+  .getByRole('button',{name:'Saving outfit…',exact:true}).isDisabled(),true);
+ await page.evaluate(()=>window.__saveRelease());
+ await page.locator('#styledCollectionResults .styled-outfit').first()
+  .getByRole('button',{name:'Saved',exact:true}).waitFor();
+ assert.equal(await page.evaluate(()=>window.__saveCalls),1);
+ await page.evaluate(()=>{saveOwnedOutfitBoard=window.__restoreOutfitSave;});
+ // Actual IndexedDB abort followed by an overlapping successful save.
+ // Neither the in-memory wardrobe nor a later write may retain the failed one.
+ const failedSaveProbe=await page.evaluate(async()=>{
+  await queued(()=>Promise.resolve());
+  const baseline=savedOutfitBoards.length,original=JSON.stringify(items);
+  const native=db.transaction.bind(db);let abortNext=true;
+  db.transaction=function(stores,mode,...rest){
+   const tx=native(stores,mode,...rest);
+   if(abortNext&&stores==='state'&&mode==='readwrite'){
+    abortNext=false;queueMicrotask(()=>tx.abort());
+   }
+   return tx;
+  };
+  let outcomes;
+  try{
+   const slots={...styledCollectionResults[0].board.slots};
+   outcomes=await Promise.allSettled([
+    saveOwnedOutfitBoard({name:'Synthetic failed save',slots}),
+    saveOwnedOutfitBoard({name:'Synthetic successful save',slots})
+   ]);
+  }finally{db.transaction=native;}
+  const stored=await new Promise((ok,no)=>{
+   const req=native('state','readonly').objectStore('state').get('outfit-board');
+   req.onsuccess=()=>ok(req.result);req.onerror=()=>no(req.error);
+  });
+  return {outcomes:outcomes.map(x=>x.status),count:savedOutfitBoards.length-baseline,
+   memoryFailed:savedOutfitBoards.some(x=>x.name==='Synthetic failed save'),
+   diskFailed:stored.saved.some(x=>x.name==='Synthetic failed save'),
+   diskSuccess:stored.saved.some(x=>x.name==='Synthetic successful save'),
+   unchanged:JSON.stringify(items)===original};
+ });
+ assert.deepEqual(failedSaveProbe,{outcomes:['rejected','fulfilled'],count:1,
+  memoryFailed:false,diskFailed:false,diskSuccess:true,unchanged:true});
+ // Long wardrobe labels and model-preview actions must fit narrow phones.
+ await page.evaluate(()=>{
+  items.find(x=>x.id==='new-green-top').name='LongGarmentName'.repeat(9);
+  styleNewClosetItem('new-green-top');
+ });
+ await page.locator('#styledCollectionResults .styled-outfit').first().waitFor();
+ const responsive=[];
+ for(const width of [320,390,430]){
+  await page.setViewportSize({width,height:844});
+  const bounds=await page.locator('#styledCollectionResults .styled-outfit').first().evaluate(card=>{
+   const rect=card.getBoundingClientRect();
+   const overflow=[...card.querySelectorAll('figure,figcaption,button')].some(el=>{
+    const box=el.getBoundingClientRect();return box.left<rect.left-1||box.right>rect.right+1;
+   });
+   return {overflow,width:rect.width,tapHeights:[...card.querySelectorAll('.actions button')]
+    .map(b=>b.getBoundingClientRect().height)};
+  });
+  assert.equal(bounds.overflow,false,'long garment labels/actions fit '+width+'px');
+  assert.ok(bounds.width<=width);
+  assert.ok(bounds.tapHeights.every(height=>height>=48),'comfortable preview/save buttons');
+  responsive.push({width,overflow:false});
+ }
+ await page.setViewportSize({width:390,height:844});
+ await mkdir('artifacts/local-fitting',{recursive:true});
+ await page.screenshot({path:'artifacts/local-fitting/style-'+(process.env.STYLE_BROWSER||'chromium')+'.png',fullPage:true});
+ // Customer handoff: the home shortcut always selects single-item mode.
+ await page.evaluate(()=>{switchView('home');setCaptureMode('outfit');});
+ await page.locator('#styleNewClothes').click();
+ assert.equal(await page.locator('#captureSingle').getAttribute('aria-pressed'),'true');
+ // Existing recognition/source-before-crop tests cover acquisition and indexing.
+ // These synthetic display assets test UI/render lifecycle, not photo accuracy.
+ await page.evaluate(()=>{
+  const c=document.createElement('canvas');c.width=120;c.height=180;
+  const x=c.getContext('2d');x.fillStyle='#245cd1';x.fillRect(24,20,72,140);
+  items.find(x=>x.id==='new-green-top').image=c.toDataURL('image/png');
+  styleNewClosetItem('new-green-top');
+ });
+ await page.locator('#styledCollectionResults .styled-outfit').first().getByRole('button',{name:'Preview on model'}).click();
+ await page.locator('#reusableFigureStage').waitFor({state:'visible'});
+ assert.equal(await page.evaluate(()=>document.activeElement.id),'reusableFigureStage');
+ assert.equal(await page.evaluate(()=>currentBoard.slots.top),'new-green-top');
+ await page.waitForFunction(()=>document.querySelector('#reusableFigureStage').getAttribute('aria-busy')==='false');
+ // A direct source edit during final PNG decode must not publish the old photo.
+ await page.evaluate(()=>{
+  currentBoard.slots={top:'new-green-top'};
+  window.__nativeDecode=HTMLImageElement.prototype.decode;
+  window.__gateSeen=false;
+  HTMLImageElement.prototype.decode=function(){
+   const native=window.__nativeDecode.call(this);
+   if(!this.classList.contains('reusable-figure-layer')||window.__gateSeen)return native;
+   window.__gateSeen=true;
+   return Promise.all([native,new Promise(ok=>window.__releaseDecode=ok)]);
+  };
+  document.querySelector('#reusableFigureRetry').click();
+ });
+ await page.waitForFunction(()=>window.__releaseDecode);
+ await page.evaluate(()=>{
+  items.find(x=>x.id==='new-green-top').color='Red';
+  window.__releaseDecode();HTMLImageElement.prototype.decode=window.__nativeDecode;
+ });
+ await page.waitForFunction(()=>document.querySelector('#reusableFigureStatus').textContent.includes('selection changed'));
+ assert.equal(await page.locator('#reusableFigureGarments img').count(),0);
+ await page.locator('#reusableFigureRetry').click();
+ try{await page.waitForFunction(()=>document.querySelectorAll('#reusableFigureGarments img').length===1);}catch(error){
+  console.log('RECOVERY_DIAGNOSTIC',await page.evaluate(()=>({status:document.querySelector('#reusableFigureStatus').textContent,
+   board:currentBoard.slots,selected:items.filter(x=>Object.values(currentBoard.slots).includes(x.id)).map(x=>({id:x.id,category:x.category,color:x.color,sourceLength:x.image.length})),
+   busy:document.querySelector('#reusableFigureStage').getAttribute('aria-busy')})));throw error;
+ }
+ // The old account cannot publish a final decoded garment after sign-in changes.
+ await page.evaluate(()=>{
+  window.__priorPreviewOwner=window.closetAuth.user.id;
+  window.__accountGateSeen=false;
+  HTMLImageElement.prototype.decode=function(){
+   const native=window.__nativeDecode.call(this);
+   if(!this.classList.contains('reusable-figure-layer')||window.__accountGateSeen)return native;
+   window.__accountGateSeen=true;
+   return Promise.all([native,new Promise(ok=>window.__releaseAccountDecode=ok)]);
+  };
+  document.querySelector('#reusableFigureRetry').click();
+ });
+ await page.waitForFunction(()=>window.__releaseAccountDecode);
+ await page.evaluate(()=>{
+  window.closetAuth.user.id='synthetic-different-preview-owner';
+  window.__releaseAccountDecode();HTMLImageElement.prototype.decode=window.__nativeDecode;
+ });
+ await page.waitForFunction(()=>document.querySelector('#reusableFigureStatus').textContent.includes('selection changed'));
+ assert.equal(await page.locator('#reusableFigureGarments img').count(),0);
+ assert.equal(await page.locator('#reusableFigureSelfie').isVisible(),false);
+ // A newly started operation must also refuse the still-open previous DB.
+ const wrongDatabase=await page.evaluate(async()=>{
+  const native=db.transaction.bind(db);let writes=0;
+  db.transaction=function(stores,mode,...rest){if(mode==='readwrite')writes++;return native(stores,mode,...rest);};
+  const before=savedOutfitBoards.length;
+  try{
+   const result=await Promise.allSettled([saveOwnedOutfitBoard(currentBoard),persistBoardState()]);
+   renderReusableFigurePreview();
+   await new Promise(ok=>requestAnimationFrame(()=>requestAnimationFrame(ok)));
+   return {outcomes:result.map(x=>x.status),writes,saved:savedOutfitBoards.length-before,
+    layers:document.querySelectorAll('#reusableFigureGarments img').length,
+    message:document.querySelector('#reusableFigureStatus').textContent,
+    busy:document.querySelector('#reusableFigureStage').getAttribute('aria-busy')};
+  }finally{db.transaction=native;}
+ });
+ assert.deepEqual(wrongDatabase.outcomes,['rejected','rejected']);
+ assert.equal(wrongDatabase.writes,0);assert.equal(wrongDatabase.saved,0);
+ assert.equal(wrongDatabase.layers,0);assert.equal(wrongDatabase.busy,'false');
+ assert.match(wrongDatabase.message,/account/);
+ await page.evaluate(()=>{window.closetAuth.user.id=window.__priorPreviewOwner;renderOutfitBoard();});
+ await page.waitForFunction(()=>document.querySelectorAll('#reusableFigureGarments img').length===1);
+ // A stalled browser decoder must become a retryable hold, never spin forever.
+ await page.evaluate(()=>{
+  HTMLImageElement.prototype.decode=function(){return new Promise(()=>{});};
+  document.querySelector('#reusableFigureRetry').click();
+ });
+ await page.waitForFunction(()=>document.querySelector('#reusableFigureStage').getAttribute('aria-busy')==='false',null,{timeout:10000});
+ assert.equal(await page.locator('#reusableFigureRetry').isVisible(),true);
+ await page.evaluate(()=>HTMLImageElement.prototype.decode=window.__nativeDecode);
+ await page.locator('#reusableFigureRetry').click();
+ try{await page.waitForFunction(()=>document.querySelectorAll('#reusableFigureGarments img').length===1);}catch(error){
+  console.log('RECOVERY_DIAGNOSTIC',await page.evaluate(()=>({status:document.querySelector('#reusableFigureStatus').textContent,
+   board:currentBoard.slots,selected:items.filter(x=>Object.values(currentBoard.slots).includes(x.id)).map(x=>({id:x.id,category:x.category,color:x.color,sourceLength:x.image.length})),
+   busy:document.querySelector('#reusableFigureStage').getAttribute('aria-busy')})));throw error;
+ }
+ assert.equal(await page.locator('#reusableFigureRetry').isVisible(),false);
+ const reuseMeasurement=await page.evaluate(async()=>{
+  const box=document.querySelector('#reusableFigureGarments'),before=[...box.children];
+  const start=performance.now();let mutations=0;
+  const observer=new MutationObserver(rows=>mutations+=rows.length);
+  observer.observe(box,{childList:true});
+  for(let i=0;i<12;i++)renderReusableFigurePreview();
+  await new Promise(ok=>requestAnimationFrame(()=>requestAnimationFrame(ok)));
+  observer.disconnect();
+  return {requests:12,elapsedMs:performance.now()-start,mutations,
+   sameNodes:before.every((item,i)=>box.children[i]===item)};
+ });
+ assert.equal(reuseMeasurement.mutations,0);assert.equal(reuseMeasurement.sameNodes,true);
+ assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'no horizontal phone overflow');
+ await mkdir('artifacts/style-new-clothes',{recursive:true});
+ const evidenceName=process.env.STYLE_BROWSER==='webkit'?'iphone-webkit':'android-chromium';
+ await page.screenshot({path:'artifacts/style-new-clothes/'+evidenceName+'.png',fullPage:true});
+ await writeFile('artifacts/style-new-clothes/'+evidenceName+'.json',JSON.stringify({
+  engine:evidenceName,actualPhysicalPhone:false,syntheticDisplayFixture:true,
+  newClothesShortcut:true,ownedOutfitModelHandoff:true,sourceEditRaceBlocked:true,crossAccountRenderBlocked:true,priorAccountDatabaseBlocked:true,
+  boundedDecodeRetry:true,horizontalOverflow:false,reuseMeasurement,pageErrors:errors
+ },null,2));
+
  assert.deepEqual(errors,[]);
  console.log('NEW_ITEM_STYLE_MOBILE '+JSON.stringify({
   result:'passed',viewport:'390x844 touch',outfitOptions:outfits.length,
@@ -268,7 +477,7 @@ try{
   recentGarmentExactOpen:true,duplicateNameSafe:true,oldFiltersCleared:true,
   unsortedCategoryColorSaved:true,unsortedQueueSkipResumes:true,
   originalUnsortedPhotoPreserved:true,offlineTrendSafe:true,
-  allOwnedSwapChoicesReachable:true,actualPhoneVerified:false,pageErrors:errors.length
+  allOwnedSwapChoicesReachable:true,previewStorageFailureRecoverable:true,pendingSaveRerenderProtected:true,concurrentSaveAbortIsolated:true,responsiveWidths:responsive,actualPhoneVerified:false,pageErrors:errors.length
  }));
  await context.close();
 }finally{await browser?.close();await new Promise(done=>server.close(done));}

@@ -1,7 +1,7 @@
 name: Reusable figure local-only preview QA
 on:
   push:
-    branches: [feature/reusable-figure-local-closet-preview-20261019, feature/local-garment-mesh-warp-20261019, feature/local-fitting-landmarks-20261019, integration/local-fit-alpha-and-landmarks-20261019, fix/atomic-private-preview-cache-20261019, feature/conservative-dark-garment-extraction-20261019, integration/dark-studio-with-four-layer-qa-20261019, ux/local-figure-held-photo-recapture-20261019, integration/source-guided-mask-and-held-photo-ux-20261019, fix/local-warp-fidelity-fallback-20261019, feature/verified-silhouette-anchor-alignment-20261019, feature/local-cutout-edge-quality-20261019, integration/production-figure-evidence-plus-local-edge-20261019, feature/local-alpha-contour-layer-depth-20261019, feature/local-layer-visibility-audit-20261019]
+    branches: [work/style-new-clothes-preview-20261020, feature/reusable-figure-local-closet-preview-20261019, feature/local-garment-mesh-warp-20261019, feature/local-fitting-landmarks-20261019, integration/local-fit-alpha-and-landmarks-20261019, fix/atomic-private-preview-cache-20261019, feature/conservative-dark-garment-extraction-20261019, integration/dark-studio-with-four-layer-qa-20261019, ux/local-figure-held-photo-recapture-20261019, integration/source-guided-mask-and-held-photo-ux-20261019, fix/local-warp-fidelity-fallback-20261019, feature/verified-silhouette-anchor-alignment-20261019, feature/local-cutout-edge-quality-20261019, integration/production-figure-evidence-plus-local-edge-20261019, feature/local-alpha-contour-layer-depth-20261019, feature/local-layer-visibility-audit-20261019]
   workflow_dispatch:
 permissions:
   contents: read
@@ -26,11 +26,19 @@ jobs:
           npx playwright install --with-deps chromium webkit
       - name: Verify local reusable figures and temporary selfie in Android and iPhone browser emulation
         run: node scripts/test-reusable-figure-phone-browsers.mjs
+      - name: Original crop is recognized before display clipping
+        run: node scripts/test-original-crop-source-mobile.mjs
+      - name: New garment owned-outfit handoff and recovery on Android Chromium
+        run: node scripts/test-style-my-new-item-mobile.mjs
+      - name: New garment owned-outfit handoff and recovery on iPhone WebKit
+        run: STYLE_BROWSER=webkit node scripts/test-style-my-new-item-mobile.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: local-fitting-licensed-photo-browser-evidence
-          path: artifacts/local-fitting/
+          path: |
+            artifacts/local-fitting/
+            artifacts/style-new-clothes/
       - name: Paid backend approvals must stay disabled
         run: |
           node --input-type=module -e "

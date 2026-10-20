@@ -60,7 +60,7 @@ test('pixel sampling uses only transient browser canvas and never changes origin
  assert.match(ui,/renderedLayers\.push\(\{image:img,rect,slot:placement\.slot\}\)/);
  assert.match(ui,/ClosetLayerVisibility\?\.auditPlacedLayers/);
  assert.match(ui,/mostly hidden behind other clothing/);
- assert.match(ui,/const cancelled=\(\)=>revision!==renderRevision/);
+ assert.match(ui,/if\(revision!==renderRevision\)return true/);
  assert.match(html,/src="local-layer-visibility\.js"/);
  assert.ok(html.indexOf('src="local-layer-visibility.js"')<
   html.indexOf('src="reusable-figure-preview.js"'));

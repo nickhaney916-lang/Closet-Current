@@ -140,3 +140,13 @@ input[type="checkbox"]{min-height:20px;width:20px;height:20px;vertical-align:mid
 .reusable-figure-layer--contact-depth{
  filter:drop-shadow(0px 1px 1.25px rgba(30,28,26,.16));
 }
+
+/* Owned-outfit cards stay readable with long garment names on narrow phones. */
+.styled-outfit,.styled-outfit-photos figure,.stylist-form>label{min-width:0}
+.styled-outfit-photos figcaption,.styled-outfit h3{overflow-wrap:anywhere}
+.styled-outfit .actions>button{max-width:100%;white-space:normal;min-height:48px}
+.stylist-form select{min-width:0;max-width:100%}
+#reusableFigureRetry{width:100%;min-height:52px;white-space:normal}
+
+.styled-outfit-photos img{display:block;max-width:100%}
+#reusableFigureRetry{width:100%;min-height:48px;white-space:normal}
