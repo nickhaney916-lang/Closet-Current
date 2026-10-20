@@ -6,7 +6,7 @@ from mathutils import Vector
 from bpy_extras.object_utils import world_to_camera_view
 # Blender factory-startup does not always include the script directory.
 sys.path.insert(0,str(Path(__file__).resolve().parent))
-from figure_fabric_boundaries import flatten_lower_hem, smooth_upper_shell_rim, approved_front_binding_segments
+from figure_fabric_boundaries import flatten_lower_hem, smooth_upper_shell_rim, approved_front_binding_segments, cut_source_derived_sleeves
 ROOT=Path(__file__).resolve().parents[1]
 args=sys.argv[sys.argv.index('--')+1:];source=Path(args[0]).resolve();output=Path(args[1]).resolve();quick='--quick'in args
 if not output.is_relative_to(ROOT/'artifacts'):raise ValueError('Only artifacts/ output allowed')
@@ -115,6 +115,32 @@ for kind in recipe['figures']:
  trim_data.materials.append(trim_mat)
  binding_evidence={'frontSegments':len(binding_segments),'bevelRadius':trim_data.bevel_depth,
    'unreviewedOriginalArt':True,'bodySourceVerticesChanged':False,'sourcePhotoChanged':False}
+ # Replace the unsightly jagged polygon-selection sleeve ends with two
+ # independent, true geometric cuff boundaries along the source-derived arm
+ # axes. Only the DERIVED gray shell is cut, never the original adult body.
+ def mean_joint(key):
+  ids=rig['joints'][key]
+  return tuple(sum((Vector(coords[i]) for i in ids),Vector())/len(ids))
+ arm_joints={
+  side:(mean_joint('upperarm01.'+side+'____head'),
+        mean_joint('lowerarm01.'+side+'____head'))
+  for side in ['L','R']
+ }
+ cloth_faces,cuff_edges,sleeve_evidence=cut_source_derived_sleeves(
+  cloth_coords,cloth_faces,arm_joints)
+ cuff_curve=bpy.data.curves.new(kind+'-genuine-sleeve-cut-edges','CURVE')
+ cuff_curve.dimensions='3D';cuff_curve.bevel_depth=.0021;cuff_curve.bevel_resolution=3
+ cuff_curve.resolution_u=2
+ for a,b in cuff_edges:
+  spline=cuff_curve.splines.new('POLY');spline.points.add(1)
+  for p,idx in zip(spline.points,(a,b)):
+   v=cloth_coords[idx]
+   p.co=(v[0],v[1]+(-.0025 if v[1]<0 else .0025),v[2],1)
+ cuff_object=bpy.data.objects.new(kind+'-actual-short-sleeve-cuff-seam',cuff_curve)
+ bpy.context.collection.objects.link(cuff_object)
+ cuff_curve.materials.append(material('neutral-sleeve-cuff-binding',(.285,.305,.325,1),.94))
+ sleeve_evidence['cuffBevelRadius']=cuff_curve.bevel_depth
+ sleeve_evidence['cuffCurveOriginalArt']=True
  cloth=mesh(kind+'-neutral-base-shell',cloth_coords,cloth_faces,[mats[1]])
  solid=cloth.modifiers.new('modest cloth offset','SOLIDIFY');solid.thickness=.008;solid.offset=1
  # Original, low-profile shoes: smooth toe/instep/heel sections with a
@@ -198,7 +224,7 @@ for kind in recipe['figures']:
  # Waist diagnostic source joint, not an approved placement anchor.
  anchors['lowerSpineJoint']=joints['spine04____head']
  record={'id':kind,'sourceRevision':lock['revision'],'ageTarget':'young-adult-approximately-25','bodyScale':scale,'sourceBodyVertices':len(ids),'bodyFaces':len(faces),
-  'legPoseMaxMotion':leg_motion,'derivedClothingHem':hem_diagnostics,'derivedClothingUpperRim':upper_rim_diagnostics,'derivedClothingBinding':binding_evidence,'footwearGeometry':'procedural-rounded-upper-contoured-outsole-three-laces-per-shoe','shoeUpperCount':shoe_count,'shoeOutsoleCount':shoe_count,'shoeLaceStrokeCount':lace_count,'blockPrimitiveFootwear':False,'renderWidth':scene.render.resolution_x,'renderHeight':scene.render.resolution_y,'samples':scene.cycles.samples,'nativeSceneRender':True,'resizedFromPreview':False,
+  'legPoseMaxMotion':leg_motion,'derivedClothingHem':hem_diagnostics,'derivedClothingUpperRim':upper_rim_diagnostics,'derivedClothingBinding':binding_evidence,'derivedShortSleeveCut':sleeve_evidence,'footwearGeometry':'procedural-rounded-upper-contoured-outsole-three-laces-per-shoe','shoeUpperCount':shoe_count,'shoeOutsoleCount':shoe_count,'shoeLaceStrokeCount':lace_count,'blockPrimitiveFootwear':False,'renderWidth':scene.render.resolution_x,'renderHeight':scene.render.resolution_y,'samples':scene.cycles.samples,'nativeSceneRender':True,'resizedFromPreview':False,
   'projectedSourceJoints':{k:project(p)for k,p in anchors.items()},'jointApproval':False,'visualApproved':False,'commercialProductApproval':False,'sourceBounds':[low,high]}
  scene.render.filepath=str(output/(kind+'-master.png'));bpy.ops.wm.save_as_mainfile(filepath=str(output/(kind+'.blend')),compress=True);bpy.ops.render.render(write_still=True)
  record['sceneSha256']=hashlib.sha256((output/(kind+'.blend')).read_bytes()).hexdigest()
