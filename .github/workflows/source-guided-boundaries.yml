@@ -1,7 +1,7 @@
 name: Verified real-photo mask evidence
 on:
   push:
-    branches: [feature/source-guided-mask-boundaries-20261019, benchmark/verified-mask-evidence-20261019, benchmark/twelve-photo-independent-outline-packet-20261020]
+    branches: [feature/source-guided-mask-boundaries-20261019, benchmark/verified-mask-evidence-20261019, benchmark/twelve-photo-independent-outline-packet-20261020, benchmark/native-pixel-mask-review-20261020]
   workflow_dispatch:
 permissions:
   contents: read
@@ -51,13 +51,19 @@ jobs:
                report.humanReviewerOneCompleted!==0 ||
                report.humanReviewerTwoApproved!==0 ||
                report.productionAuthorized!==false ||
-               report.currentEditorOutputsExactOriginalGrid!==false ||
+               report.currentEditorOutputsExactOriginalGrid!==true ||
                blind.sourceOriginals.length!==12 ||
                blind.modelPredictionsIncluded!==0 ||
                blind.manifestCategoryLabelsIncluded!==0)
               throw Error('Offline review packet is not genuinely blind or incorrectly approved');
             console.log('Verified 12 original-source human review work items, 0 independent approvals');
           "
+      - name: Install local browser for native-grid independent annotation quality gate
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium
+      - name: Verify native source-grid drawing and separate independent review in Chromium
+        run: node scripts/test-native-garment-annotation-browsers.mjs
       - uses: actions/upload-artifact@v4
         if: success()
         with:
