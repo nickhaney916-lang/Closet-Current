@@ -260,6 +260,69 @@ try{
  }
  assert.equal(new Set(cycle.slice(0,4)).size,4,'all four owned shoes are reachable');
  assert.equal(new Set(cycle.slice(4,8)).size,4,'repeat cycle reaches every shoe again');
+ // A failed preview write must not block local viewing or create an
+ // unhandled rejection. The real UI action and rendering path still run.
+ await page.evaluate(()=>{
+  window.__restorePreviewPersistence=persistBoardState;
+  persistBoardState=async()=>{throw Error('Synthetic preview storage failure');};
+ });
+ await page.locator('#styledCollectionResults .styled-outfit').first()
+  .getByRole('button',{name:'Preview on model'}).click();
+ await page.locator('#builder:not([hidden])').waitFor();
+ await page.waitForFunction(()=>document.getElementById('boardSaveStatus').textContent.includes('preview is available'));
+ assert.equal(await page.evaluate(()=>currentBoard.slots.top),'new-green-top');
+ await page.evaluate(()=>{persistBoardState=window.__restorePreviewPersistence;switchView('stylist');});
+ // Rebuilding recommendations during an in-flight save must preserve the
+ // disabled state, otherwise a second tap would create a duplicate outfit.
+ await page.evaluate(()=>{
+  const original=saveOwnedOutfitBoard;let release;
+  const gate=new Promise(ok=>release=ok);window.__saveRelease=release;
+  window.__saveCalls=0;window.__restoreOutfitSave=original;
+  saveOwnedOutfitBoard=async value=>{window.__saveCalls++;await gate;return original(value);};
+ });
+ await page.locator('#styledCollectionResults .styled-outfit').first()
+  .getByRole('button',{name:'Save outfit',exact:true}).click();
+ await page.evaluate(()=>renderStyledCollection());
+ assert.equal(await page.locator('#styledCollectionResults .styled-outfit').first()
+  .getByRole('button',{name:'Saving outfit…',exact:true}).isDisabled(),true);
+ await page.evaluate(()=>window.__saveRelease());
+ await page.locator('#styledCollectionResults .styled-outfit').first()
+  .getByRole('button',{name:'Saved',exact:true}).waitFor();
+ assert.equal(await page.evaluate(()=>window.__saveCalls),1);
+ await page.evaluate(()=>{saveOwnedOutfitBoard=window.__restoreOutfitSave;});
+ // Actual IndexedDB abort followed by an overlapping successful save.
+ // Neither the in-memory wardrobe nor a later write may retain the failed one.
+ const failedSaveProbe=await page.evaluate(async()=>{
+  await queued(()=>Promise.resolve());
+  const baseline=savedOutfitBoards.length,original=JSON.stringify(items);
+  const native=db.transaction.bind(db);let abortNext=true;
+  db.transaction=function(stores,mode,...rest){
+   const tx=native(stores,mode,...rest);
+   if(abortNext&&stores==='state'&&mode==='readwrite'){
+    abortNext=false;queueMicrotask(()=>tx.abort());
+   }
+   return tx;
+  };
+  let outcomes;
+  try{
+   const slots={...styledCollectionResults[0].board.slots};
+   outcomes=await Promise.allSettled([
+    saveOwnedOutfitBoard({name:'Synthetic failed save',slots}),
+    saveOwnedOutfitBoard({name:'Synthetic successful save',slots})
+   ]);
+  }finally{db.transaction=native;}
+  const stored=await new Promise((ok,no)=>{
+   const req=native('state','readonly').objectStore('state').get('outfit-board');
+   req.onsuccess=()=>ok(req.result);req.onerror=()=>no(req.error);
+  });
+  return {outcomes:outcomes.map(x=>x.status),count:savedOutfitBoards.length-baseline,
+   memoryFailed:savedOutfitBoards.some(x=>x.name==='Synthetic failed save'),
+   diskFailed:stored.saved.some(x=>x.name==='Synthetic failed save'),
+   diskSuccess:stored.saved.some(x=>x.name==='Synthetic successful save'),
+   unchanged:JSON.stringify(items)===original};
+ });
+ assert.deepEqual(failedSaveProbe,{outcomes:['rejected','fulfilled'],count:1,
+  memoryFailed:false,diskFailed:false,diskSuccess:true,unchanged:true});
  // Long wardrobe labels and model-preview actions must fit narrow phones.
  await page.evaluate(()=>{
   items.find(x=>x.id==='new-green-top').name='LongGarmentName'.repeat(9);
@@ -293,7 +356,7 @@ try{
   recentGarmentExactOpen:true,duplicateNameSafe:true,oldFiltersCleared:true,
   unsortedCategoryColorSaved:true,unsortedQueueSkipResumes:true,
   originalUnsortedPhotoPreserved:true,offlineTrendSafe:true,
-  allOwnedSwapChoicesReachable:true,responsiveWidths:responsive,actualPhoneVerified:false,pageErrors:errors.length
+  allOwnedSwapChoicesReachable:true,previewStorageFailureRecoverable:true,pendingSaveRerenderProtected:true,concurrentSaveAbortIsolated:true,responsiveWidths:responsive,actualPhoneVerified:false,pageErrors:errors.length
  }));
  await context.close();
 }finally{await browser?.close();await new Promise(done=>server.close(done));}

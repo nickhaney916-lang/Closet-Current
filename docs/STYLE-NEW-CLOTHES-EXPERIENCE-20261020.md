@@ -61,3 +61,35 @@ size prediction or reconstruct indistinguishable dark fabric/background pixels.
 Independent real-photo mask approval and final model-art approval remain separate
 blockers. No accepted fitting-quality score or actual physical-phone run exists.
 No paid service, provider inference, customer upload, merge or deployment occurs.
+
+
+## Follow-up: durable outfit saving and immediate model handoff
+
+The prior local preview work was verified at `1ac35ff0` by customer-flow CI
+39441102467 and camera/indexing CI 39441102354 (both SUCCESS). This continuation
+keeps PR #64's capture/render-scheduling work separate; its branch is not edited.
+
+Previously, a card's Preview action awaited a storage operation before navigating,
+with no catch. Slow writes could delay viewing or navigate back after the customer
+left. It now opens the local model immediately, reports a failed background save,
+and checks the current selected option, original image identity, account and
+request after board readiness. A late write never navigates the app. Pending
+card saves and completion/error messages survive recommendation re-renders.
+
+All local saved-outfit additions now use the same queued helper, for both the
+styling card and outfit board. It validates owner/database, selected owned slots
+and the 50-outfit limit when the queue actually runs. Memory changes only after
+transaction completion. Failure requires no pop/rollback and cannot contaminate
+the next queued save. Ordinary board snapshots also wait until their queue turn.
+Null IndexedDB abort errors receive an actionable fallback. These are guarantees
+for the existing same-session write queue, not a new multi-browser sync protocol.
+
+Local full suite: **1064 passed, 0 failed, 3 skipped (1067 total)**. Twelve new
+behavioral tests exercise failed-first/successful-second saves, subsequent snapshot
+integrity, concurrent limit enforcement, removal/reclassification, account/database
+changes, null abort errors, empty outfits, preview failures and stale handoffs.
+The browser journey additionally injects a real IndexedDB transaction abort,
+checks both disk and memory, blocks repeated taps after a pending-save re-render,
+and proves that a failed preview write still opens the selected model. Both
+Chromium and WebKit must pass exact-head CI before this follow-up is called
+browser-verified. No photo recognition, clipping, model artwork or paid AI changes.

@@ -1,5 +1,5 @@
 'use strict';
-let styledCollectionResults=[],stylistAnchorItemId=null,stylistRequestRevision=0;
+let styledCollectionResults=[],stylistAnchorItemId=null,stylistRequestRevision=0,stylistPreviewRevision=0;
 function stylistSupportsPiece(piece){
  return !!piece&&typeof piece.id==='string'&&
   ['Tops','Bottoms','Dresses','Outerwear','Shoes'].includes(piece.category);
@@ -24,6 +24,38 @@ function styleNewClosetItem(id){
  $('stylistStatus').textContent='Finding outfits for '+(piece.name||piece.itemType||'this piece')+'…';
  $('styleCollectionForm').requestSubmit();
  return true;
+}
+async function previewStyledOutfit(result,board,index,button,status){
+ if(button.disabled)return;
+ const revision=++stylistPreviewRevision,request=stylistRequestRevision;
+ const owner=window.closetAuth?.user?.id||null,selection=result.board;
+ const sources=Object.values(board.slots).map(id=>{
+  const p=items.find(item=>item.id===id);
+  return {id,image:p?.image,category:p?.category,itemType:p?.itemType};
+ });
+ const current=()=>revision===stylistPreviewRevision&&request===stylistRequestRevision&&
+  owner===(window.closetAuth?.user?.id||null)&&result.board===selection&&
+  styledCollectionResults.includes(result)&&sources.every(source=>{
+   const p=items.find(item=>item.id===source.id);
+   return p&&p.image===source.image&&p.category===source.category&&p.itemType===source.itemType;
+  });
+ button.disabled=true;status.textContent='Opening preview…';let displayed=null;
+ try{
+  await outfitBoardReady;
+  if(!current()){status.textContent='This outfit changed. Choose the current option again.';return;}
+  const next=cleanOutfitBoard({...board,name:result.context.request+' · option '+(index+1)},items);
+  if(Object.keys(next.slots).length!==Object.keys(board.slots).length)
+   throw Error('This outfit changed. Create outfits again.');
+  currentBoard=next;syncBoardInputs();renderOutfitBoard();
+  // Navigation is immediate; a slow/failed storage write cannot later steal
+  // focus back from the customer's next screen or prevent a local preview.
+  $('boardSaveStatus').textContent='';switchView('builder');displayed=currentBoard;
+  await persistBoardState();
+ }catch(error){
+  if(displayed&&currentBoard===displayed&&owner===(window.closetAuth?.user?.id||null))
+   $('boardSaveStatus').textContent='Your preview is available, but changes could not be saved. Keep this page open and try saving again.';
+  else if(!displayed)status.textContent=error?.message||'Could not open this preview. Try again.';
+ }finally{button.disabled=false;}
 }
 function renderStyledCollection(){
  renderStylistAnchor();
@@ -54,7 +86,7 @@ function renderStyledCollection(){
    swap.onclick=()=>{
     const selected=stylistSwapOne(result,slot,items,stylistAnchorItemId);
     if(!selected)return;
-    result.board=selected.board;
+    result.board=selected.board;result.saveMessage='';
     result.swapHistory={...result.swapHistory,[slot]:selected.history};
     result.signature=Object.entries(result.board.slots).sort()
      .map(([k,v])=>k+':'+v).join('|');
@@ -73,11 +105,26 @@ function renderStyledCollection(){
    const title=node('p','Change one piece without leaving this outfit','fine');
    card.append(title,swapControls);
   }
-  const actions=node('div',null,'actions'),edit=node('button','Preview on model','secondary'),save=node('button','Save outfit','primary');edit.type=save.type='button';save.disabled=changed;
+  const actions=node('div',null,'actions'),edit=node('button','Preview on model','secondary'),save=node('button','Save outfit','primary');edit.type=save.type='button';edit.disabled=changed;
+  save.disabled=changed||!!result.savePending||result.savedBoard===result.board;
+  if(result.savePending)save.textContent='Saving outfit…';
+  else if(result.savedBoard===result.board)save.textContent='Saved';
   if(changed)card.append(node('p','A selected garment was removed or recategorized. Create outfits again.','fine'));
-  edit.onclick=async()=>{await outfitBoardReady;currentBoard=cleanOutfitBoard({...board,name:result.context.request+' · option '+(index+1)},items);syncBoardInputs();renderOutfitBoard();await storeBoard();switchView('builder');};
-  save.onclick=async()=>{save.disabled=true;const status=node('p',null,'fine');card.append(status);try{await outfitBoardReady;if(savedOutfitBoards.length>=50)throw Error('You can save up to 50 outfits.');const saved=cleanOutfitBoard({...board,name:result.context.request+' · option '+(index+1)},items);savedOutfitBoards.push(saved);try{await persistBoardState();}catch(error){savedOutfitBoards.pop();throw error;}status.textContent='Saved. Find it in Outfit builder → Saved outfits.';save.textContent='Saved';renderSavedOutfitBoards();}catch(error){status.textContent=error.message||'Could not save this outfit.';save.disabled=false;}};
-  actions.append(edit,save);card.append(actions);grid.append(card);
+  const actionStatus=node('p',result.saveMessage||null,'fine');
+  edit.onclick=()=>previewStyledOutfit(result,board,index,edit,actionStatus);
+  save.onclick=async()=>{
+   if(save.disabled||result.savePending)return;result.savePending=true;save.disabled=true;actionStatus.textContent='Saving outfit…';
+   const owner=window.closetAuth?.user?.id||null,selection=result.board;
+   try{await outfitBoardReady;
+    if(owner!==(window.closetAuth?.user?.id||null)||result.board!==selection||!styledCollectionResults.includes(result))
+     throw Error('This outfit changed. Choose the current option again.');
+    await saveOwnedOutfitBoard({...board,name:result.context.request+' · option '+(index+1)});
+    if(result.board===selection){result.savedBoard=selection;result.saveMessage='Saved. Find it in Outfit builder → Saved outfits.';}
+    save.textContent='Saved';renderSavedOutfitBoards();
+   }catch(error){if(result.board===selection)result.saveMessage=error?.message||'Could not save this outfit.';}
+   finally{result.savePending=false;if(styledCollectionResults.includes(result))renderStyledCollection();}
+  };
+  actions.append(edit,save);card.append(actions,actionStatus);grid.append(card);
  }
 }
 $('styleCollectionForm').onsubmit=async event=>{
