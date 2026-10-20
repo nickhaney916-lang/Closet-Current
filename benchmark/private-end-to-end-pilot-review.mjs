@@ -80,6 +80,11 @@ export function reviewPrivatePilotEvidence(android,iphone,colorReports){
  assert.ok(Array.isArray(colorReports)&&colorReports.length>0&&colorReports.length<=40,
   'Supply 1–40 private color-report JSON files');
  const safe=colorReports.map(verifyColorDiagnostic);
+ // Exported diagnostics carry no photo hash by design. We cannot prove
+ // different people or source originals, but exact duplicate reports must
+ // not be replayed to inflate the preliminary sample size.
+ assert.equal(new Set(colorReports.map(r=>JSON.stringify(r))).size,colorReports.length,
+  'Duplicate private photo audit report replay; count each exported file once');
  const builds=new Set(safe.map(r=>r.release)),models=new Set(safe.map(r=>r.indexHash));
  assert.equal(builds.size,1,'Different app builds in the diagnostic cohort');
  assert.equal(models.size,1,'Different recognition index versions in the cohort');
