@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Closet Current — native-grid independent garment annotation</title>
+<style>body{font:16px system-ui;max-width:920px;margin:auto;padding:16px;background:#f8f7fb;color:#231e2d}button,select,input{font:inherit;padding:10px;margin:4px}canvas{width:100%;max-width:720px;touch-action:none;background:#ddd}#status{white-space:pre-wrap} .controls{display:flex;flex-wrap:wrap;gap:8px} .native-detail{border:1px solid #cbc0dc;border-radius:12px;padding:10px;margin:12px 0;background:white}.native-detail .windows{display:flex;flex-wrap:wrap;gap:12px}.native-detail figure{margin:0;flex:1 1 180px;max-width:240px}.native-detail canvas{width:100%;max-width:220px;aspect-ratio:1/1;height:auto;image-rendering:auto;border:1px solid #999;background:#e7e4eb;touch-action:auto}.native-detail figcaption{font-size:13px;font-weight:600}.native-detail p{font-size:13px}</style>
+<h1>Reference garment outline review</h1>
+<p>Internal standalone benchmark tool, not part of the customer app. Draw directly on the ORIGINAL source pixel grid; no 768px downsampling or AI masks. Native-grid annotations are still unapproved DRAFTS until a distinct person independently reviews the entire garment. Source files remain on your device.</p>
+<div class="controls"><input id="photo" type="file" accept="image/*"><label>Resume previous draft <input id="resume" type="file" accept=".json,application/json"></label><label hidden>AI masks prohibited in independent reference review <input id="prediction" type="file" disabled accept=".json,application/json"></label><label>Tool <select id="tool"><option value="brush">Paint brush</option><option value="polygon">Outline polygon (tap corners)</option></select></label><select id="mode" aria-label="Mask edit mode"><option value="1">Mark garment</option><option value="0">Erase / background</option></select><label>First reviewer <input id="reviewer" type="text" maxlength="80" autocomplete="off" placeholder="Your reviewer name"></label><label>Independent physical garment <input id="inventoryMode" type="checkbox"> (no AI seed, internal review only)</label><label id="inventoryFields" hidden>Garment ID <input id="inventoryId" type="text" maxlength="30" placeholder="validation-0031-item-01"> Category <select id="inventoryCategory"><option value="">Select…</option><option value="Tops">Tops</option><option value="Bottoms">Bottoms</option><option value="Dresses">Dresses</option><option value="Outerwear">Outerwear</option><option value="Shoes">Shoes</option><option value="Hosiery">Hosiery / tights</option><option value="Accessories">Accessories</option></select> Exact garment form <select id="inventoryForm"><option value="">Select category first</option></select></label><label id="targetLabel" hidden>Identify the actual garment independently of the model prediction <input id="targetGarment" type="text" maxlength="100" placeholder="e.g. black skirt worn by the person"></label><label>Brush radius <input type="range" id="radius" min="1" max="30" value="7"></label><button id="applyPolygon" type="button" disabled>Fill outline</button><button id="cancelPolygon" type="button" disabled>Cancel outline</button><button id="undo" type="button" disabled>Undo</button><button id="redo" type="button" disabled>Redo</button><button id="download" disabled>Export annotation JSON</button></div>
+<canvas id="canvas" width="256" height="256" aria-label="Image and reference mask editor"></canvas><section class="native-detail" aria-label="High resolution outline detail">
+<label>Inspect detail at <select id="detailZoom" aria-label="Detail magnification"><option value="4">4×</option><option value="8">8×</option></select></label>
+<p id="detailHint">Move or tap the large photo to inspect its original-resolution clothing edges. Magnification never changes the annotation.</p>
+<div class="windows"><figure><figcaption>Native source photo (unaltered)</figcaption><canvas id="detailSource" width="220" height="220"></canvas></figure>
+<figure><figcaption>Current outline overlay (review pixels)</figcaption><canvas id="detailMask" width="220" height="220"></canvas></figure></div></section><p id="status" role="status">Choose a source image. Paint all of the garment before export.</p>
+<script>
+'use strict';
+const detailZoom=document.querySelector('#detailZoom'),detailSource=document.querySelector('#detailSource'),detailMask=document.querySelector('#detailMask'),detailHint=document.querySelector('#detailHint');
+const garmentTarget=document.querySelector('#targetGarment'),targetLabel=document.querySelector('#targetLabel');
+const inventoryMode=document.querySelector('#inventoryMode'),inventoryFields=document.querySelector('#inventoryFields'),
+ inventoryId=document.querySelector('#inventoryId'),inventoryCategory=document.querySelector('#inventoryCategory'),inventoryForm=document.querySelector('#inventoryForm');
+const prediction=document.querySelector('#prediction'),resume=document.querySelector('#resume'),photo=document.querySelector('#photo'),canvas=document.querySelector('#canvas'),ctx=canvas.getContext('2d'),status=document.querySelector('#status'),download=document.querySelector('#download'),mode=document.querySelector('#mode'),radius=document.querySelector('#radius'),reviewer=document.querySelector('#reviewer'),tool=document.querySelector('#tool'),applyPolygon=document.querySelector('#applyPolygon'),cancelPolygon=document.querySelector('#cancelPolygon'),undo=document.querySelector('#undo'),redo=document.querySelector('#redo');
+const MAX_NATIVE_GRID_PIXELS=12000000,MAX_NATIVE_SIDE=6000;
+let source=null,mask=null,painting=false,strokes=0,seedModel=null,reviewedDraft=false,seedMask=null,polygon=[],lastPoint=null,detailPoint=null;
+let modelProposalId=null,modelGarmentLabel=null;
+function isProposalId(id,name){
+ if(typeof id!=='string'||typeof name!=='string')return false;
+ const base=name.replace(/\.[^.]+$/,'')+'-candidate-';
+ return id.startsWith(base)&&/^[0-9]{2}$/.test(id.slice(base.length));
+}
+function resetTarget(){modelProposalId=null;modelGarmentLabel=null;garmentTarget.value='';targetLabel.hidden=true;
+ inventoryMode.checked=false;inventoryFields.hidden=true;inventoryId.value='';inventoryCategory.value='';chooseForm('');}
+inventoryMode.onchange=()=>{
+ if(inventoryMode.checked&&(!source||seedModel!==null||modelProposalId)){
+  inventoryMode.checked=false;status.textContent='An independent physical item needs a fresh blank human-drawn mask, not an AI seed.';
+ }
+ inventoryFields.hidden=!inventoryMode.checked;targetLabel.hidden=!(inventoryMode.checked||modelProposalId);
+ refreshEditButtons();
+};
+const forms={Tops:['top'],Bottoms:['shorts','trousers','skirt'],Dresses:['dress'],Outerwear:['outerwear'],Shoes:['shoes'],Hosiery:['hosiery'],Accessories:['accessory']};
+function chooseForm(existing=''){
+ inventoryForm.replaceChildren(new Option('Choose the visible garment form',''));
+ for(const name of forms[inventoryCategory.value]||[])inventoryForm.add(new Option(name,name));
+ inventoryForm.value=(forms[inventoryCategory.value]||[]).includes(existing)?existing:'';
+ if((forms[inventoryCategory.value]||[]).length===1&&!existing)inventoryForm.value=forms[inventoryCategory.value][0];
+}
+inventoryId.oninput=refreshEditButtons;
+inventoryCategory.onchange=()=>{chooseForm();refreshEditButtons();};
+inventoryForm.onchange=refreshEditButtons;const undoStack=[],redoStack=[];
+photo.onchange=async()=>{
+ const file=photo.files[0];if(!file)return;
+ // Archival photos have identical bytes but a filename rejected by the
+ // benchmark's canonical annotation identity. Fail before human painting.
+ if(/^commons-[0-9]{4}[.]original[.]jpg$/i.test(file.name)){
+  // A wrong photo selection also invalidates any earlier editable mask.
+  // Never let the previous verified photo's draft be exported under a
+  // new archival filename.
+  source=null;mask=null;detailPoint=null;seedMask=null;reviewedDraft=false;resetTarget();
+  polygon=[];strokes=0;undoStack.length=redoStack.length=0;
+  ctx.clearRect(0,0,canvas.width,canvas.height);refreshEditButtons();
+  status.textContent='Choose '+file.name.replace('.original.jpg','.jpg')+
+   ' instead. The .original.jpg copy is archival and cannot be staged.';
+  return;
+ }
+ if(file.size>16000000){source=null;mask=null;refreshEditButtons();status.textContent='Image too large. No draft was created.';return;}
+ const url=URL.createObjectURL(file);
+ try{const image=new Image();image.src=url;await image.decode();
+  // Annotation must be bound to the exact original source pixel lattice.
+  // Never silently downscale large images into misleading reference truth.
+  const w=image.naturalWidth,h=image.naturalHeight;
+  if(!Number.isSafeInteger(w*h)||w<1||h<1||w>MAX_NATIVE_SIDE||h>MAX_NATIVE_SIDE||w*h>MAX_NATIVE_GRID_PIXELS)
+   throw Error('Original exceeds the local native-grid safety limit. No resized mask was generated.');
+  canvas.width=w;canvas.height=h;
+  const base=document.createElement('canvas');base.width=w;base.height=h;
+  base.getContext('2d').drawImage(image,0,0,w,h);
+  const digest=await crypto.subtle.digest('SHA-256',await file.arrayBuffer());
+  const sourceSha256=Array.from(new Uint8Array(digest),b=>b.toString(16).padStart(2,'0')).join('');
+  resetTarget();source={fileName:file.name,sourceSha256,base,photo:image};detailPoint={x:Math.floor(canvas.width/2),y:Math.floor(canvas.height/2)};mask=new Uint8Array(canvas.width*canvas.height);strokes=0;seedModel=null;reviewedDraft=false;seedMask=null;polygon=[];undoStack.length=redoStack.length=0;refreshEditButtons();redraw();status.textContent='Paint or outline the actual garment carefully; the initial mask is blank.';
+ }catch(e){source=null;mask=null;polygon=[];strokes=0;undoStack.length=redoStack.length=0;refreshEditButtons();status.textContent='Cannot annotate at original resolution: '+e.message;}finally{URL.revokeObjectURL(url);}
+};
+resume.onchange=async()=>{
+ if(!source||!mask){status.textContent='Load the matching original photograph first.';return;}
+ const file=resume.files?.[0];if(!file)return;
+ try {
+  if(file.size>16000000)throw Error('Draft too large');
+  const draft=JSON.parse(await file.text()),n=canvas.width*canvas.height;
+  if(draft.schemaVersion!==1||draft.reviewStatus!=='draft'||draft.nativeSourceGrid!==true||draft.annotationGrid!=='exact-original-pixels'||draft.physicalTargetId==null||draft.seedModel!=null||draft.modelProposalId!=null||draft.image!==source.fileName||draft.sourceSha256!==source.sourceSha256||draft.width!==canvas.width||draft.height!==canvas.height||!Array.isArray(draft.runs)||draft.runs.length>n)throw Error('Draft image or dimensions mismatch');
+  if(draft.physicalTargetId!=null&&(
+   draft.modelProposalId!=null||draft.seedModel!=null||
+   !/^(?:commons|validation)-[0-9]{4}-item-[0-9]{2}$/.test(draft.physicalTargetId)||
+   draft.physicalTargetId.slice(0,-8)!==source.fileName.replace(/\.[^.]+$/,'')||
+   !['Tops','Bottoms','Dresses','Outerwear','Shoes','Hosiery','Accessories'].includes(draft.humanCategory)||
+   typeof draft.humanTargetLabel!=='string'||!draft.humanTargetLabel.trim()||
+   draft.targetIndependentlyIdentifiedBy!==draft.reviewer))
+   throw Error('Invalid independent physical garment draft');
+  if(draft.modelProposalId!=null&&(!isProposalId(draft.modelProposalId,source.fileName)||
+   typeof draft.humanTargetLabel!=='string'||!draft.humanTargetLabel.trim()||
+   draft.humanTargetLabel.trim().length>100))throw Error('Invalid independent garment target');
+  const restored=new Uint8Array(n);let offset=0,foreground=false;
+  for(const count of draft.runs){if(!Number.isInteger(count)||count<0||offset+count>n)throw Error('Invalid run encoding');if(foreground)restored.fill(1,offset,offset+count);offset+=count;foreground=!foreground;}
+  if(offset!==n)throw Error('Incomplete mask');
+  resetTarget();modelProposalId=draft.modelProposalId||null;
+  modelGarmentLabel=draft.modelGarmentLabel||null;
+  inventoryMode.checked=Boolean(draft.physicalTargetId);
+  inventoryFields.hidden=!inventoryMode.checked;inventoryId.value=draft.physicalTargetId||'';
+  inventoryCategory.value=draft.humanCategory||'';chooseForm(draft.humanForm||'');
+  targetLabel.hidden=!(modelProposalId||inventoryMode.checked);garmentTarget.value=draft.humanTargetLabel||'';
+  mask=restored;seedModel=draft.seedModel||null;reviewer.value=draft.reviewer||'';strokes=0;reviewedDraft=true;seedMask=null;polygon=[];undoStack.length=redoStack.length=0;refreshEditButtons();redraw();
+  status.textContent='Draft restored for editing. Independent review is still required.';
+ }catch(e){status.textContent='Could not restore draft: '+e.message;}
+};
+prediction.onchange=async()=>{
+ status.textContent='AI mask seeds are forbidden in this independent native-grid reference editor.';prediction.value='';return;
+ if(inventoryMode.checked){status.textContent='Independent physical garment outlines must start blank, not from an AI seed.';return;}
+ if(!source||!mask){status.textContent='Load the matching original photograph first.';return;}
+ const file=prediction.files?.[0];if(!file)return;
+ try{
+  if(file.size>16000000)throw Error('Prediction too large');
+  const data=JSON.parse(await file.text()),w=data.width,h=data.height,n=w*h;
+  if(data.image!==source.fileName||data.sourceSha256!==source.sourceSha256||!Number.isInteger(w)||!Number.isInteger(h)||w<1||h<1||n>12000000||!Array.isArray(data.runs)||data.runs.length>n)throw Error('Prediction image or dimensions mismatch');
+  if(data.modelProposalId!==undefined&&
+   (!isProposalId(data.modelProposalId,source.fileName)||
+    !Number.isInteger(data.candidateOrdinal)||
+    Number(data.modelProposalId.slice(-2))!==data.candidateOrdinal||
+    typeof data.modelGarmentLabel!=='string'||!data.modelGarmentLabel.trim()))
+   throw Error('Invalid model proposal identity');
+  if(Math.abs(w/h-canvas.width/canvas.height)>.005)throw Error('Prediction aspect ratio mismatch');
+  const decoded=new Uint8Array(n);let offset=0,foreground=false;
+  for(const count of data.runs){if(!Number.isInteger(count)||count<0||offset+count>n)throw Error('Invalid prediction runs');if(foreground)decoded.fill(1,offset,offset+count);offset+=count;foreground=!foreground;}
+  if(offset!==n)throw Error('Incomplete prediction');
+  const reduced=new Uint8Array(canvas.width*canvas.height);
+  for(let y=0;y<canvas.height;y++)for(let x=0;x<canvas.width;x++)reduced[y*canvas.width+x]=decoded[Math.min(h-1,Math.floor((y+.5)*h/canvas.height))*w+Math.min(w-1,Math.floor((x+.5)*w/canvas.width))];
+  resetTarget();modelProposalId=data.modelProposalId||null;modelGarmentLabel=data.modelGarmentLabel||null;
+  targetLabel.hidden=!modelProposalId;
+  mask=reduced;seedModel=data.model||data.modelId||'AI prediction';strokes=0;reviewedDraft=false;seedMask=new Uint8Array(reduced);polygon=[];undoStack.length=redoStack.length=0;refreshEditButtons();redraw();
+  status.textContent='AI starting mask loaded. Correct all edges manually before exporting a draft. Independent review is required.';
+ }catch(e){status.textContent='Could not load prediction: '+e.message;}
+};
+garmentTarget.oninput=refreshEditButtons;
+function canExport(){
+ // A blind reference must identify an independently observed physical item;
+ // a generic unnamed source-wide mask can hide multiple garment instances.
+ if(!inventoryMode.checked)return false;
+ if(modelProposalId&&!garmentTarget.value.trim())return false;
+ if(inventoryMode.checked){
+  const base=source?.fileName?.replace(/\.[^.]+$/,'');
+  if(!/^(?:commons|validation)-[0-9]{4}$/.test(base)||
+   !/^(?:commons|validation)-[0-9]{4}-item-[0-9]{2}$/.test(inventoryId.value)||
+   inventoryId.value.slice(0,-8)!==base||
+   !['Tops','Bottoms','Dresses','Outerwear','Shoes','Hosiery','Accessories'].includes(inventoryCategory.value)||
+   !(forms[inventoryCategory.value]||[]).includes(inventoryForm.value)||
+   !garmentTarget.value.trim()||seedModel!==null||modelProposalId)return false;
+ }
+ if(!mask||!mask.some(Boolean)||!mask.some(value=>value===0))return false;
+ if(reviewedDraft)return true;
+ if(!strokes)return false;
+ // Undoing an AI-assisted edit back to the original suggestion isn't review.
+ if(seedMask&&mask.every((value,i)=>value===seedMask[i]))return false;
+ return true;
+}
+function refreshEditButtons(){
+ download.disabled=!canExport();
+ undo.disabled=!undoStack.length;redo.disabled=!redoStack.length;
+ applyPolygon.disabled=!mask||polygon.length<3;
+ cancelPolygon.disabled=!polygon.length;
+}
+function startEdit(){
+ if(!mask)return;
+ undoStack.push(new Uint8Array(mask));if(undoStack.length>3)undoStack.shift();
+ redoStack.length=0;strokes++;refreshEditButtons();
+}
+function restore(history,other){
+ if(!history.length||!mask)return;
+ other.push(new Uint8Array(mask));if(other.length>3)other.shift();
+ mask=history.pop();polygon=[];redraw();refreshEditButtons();
+}
+undo.onclick=()=>restore(undoStack,redoStack);
+redo.onclick=()=>restore(redoStack,undoStack);
+// Working mask and magnifier use the same exact original native photo pixel grid.
+// This does not constitute first or second-person approval.
+function redrawDetail(){
+ if(!source?.photo||!mask||!detailPoint)return;
+ const z=Number(detailZoom.value),extent=Math.min(canvas.width,canvas.height,220/z);
+ if(!Number.isFinite(z)||z<2||z>12||extent<=0)return;
+ const sx=Math.max(0,Math.min(canvas.width-extent,detailPoint.x-extent/2)),
+  sy=Math.max(0,Math.min(canvas.height-extent,detailPoint.y-extent/2));
+ const fx=source.photo.naturalWidth/canvas.width,fy=source.photo.naturalHeight/canvas.height;
+ const original=detailSource.getContext('2d'),marked=detailMask.getContext('2d');
+ original.clearRect(0,0,220,220);marked.clearRect(0,0,220,220);
+ original.imageSmoothingEnabled=true;original.imageSmoothingQuality='high';
+ marked.imageSmoothingEnabled=false;
+ original.drawImage(source.photo,sx*fx,sy*fy,extent*fx,extent*fy,0,0,220,220);
+ marked.drawImage(canvas,sx,sy,extent,extent,0,0,220,220);
+ detailHint.textContent='Original '+source.photo.naturalWidth+' × '+source.photo.naturalHeight+
+  ' pixels · review mask '+canvas.width+' × '+canvas.height+
+  ' · detail is preview only, not an approval';
+}
+detailZoom.onchange=redrawDetail;
+function redraw(){
+ if(!source)return;ctx.drawImage(source.base,0,0);
+ const image=ctx.getImageData(0,0,canvas.width,canvas.height);
+ for(let i=0;i<mask.length;i++)if(mask[i]){image.data[4*i]=Math.round(image.data[4*i]*.6+130);image.data[4*i+1]=Math.round(image.data[4*i+1]*.6+35);image.data[4*i+2]=Math.round(image.data[4*i+2]*.6+170);}
+ ctx.putImageData(image,0,0);
+ if(polygon.length){
+  ctx.save();ctx.lineWidth=2;ctx.strokeStyle='#00f2a8';ctx.fillStyle='#00f2a8';
+  ctx.beginPath();ctx.moveTo(polygon[0].x,polygon[0].y);
+  for(const point of polygon.slice(1))ctx.lineTo(point.x,point.y);
+  ctx.stroke();
+  for(const point of polygon){ctx.beginPath();ctx.arc(point.x,point.y,3,0,Math.PI*2);ctx.fill();}
+  ctx.restore();
+ }
+ redrawDetail();
+}
+function point(e){
+ const box=canvas.getBoundingClientRect();
+ return {x:Math.max(0,Math.min(canvas.width-1,Math.floor((e.clientX-box.left)*canvas.width/box.width))),
+ y:Math.max(0,Math.min(canvas.height-1,Math.floor((e.clientY-box.top)*canvas.height/box.height)))};
+}
+function dot(x,y){
+ const r=Number(radius.value),value=Number(mode.value);
+ for(let yy=Math.max(0,y-r);yy<Math.min(canvas.height,y+r+1);yy++)
+  for(let xx=Math.max(0,x-r);xx<Math.min(canvas.width,x+r+1);xx++)
+   if((xx-x)**2+(yy-y)**2<=r*r)mask[yy*canvas.width+xx]=value;
+}
+function paintLine(from,to){
+ const steps=Math.max(1,Math.ceil(Math.hypot(to.x-from.x,to.y-from.y)));
+ for(let i=0;i<=steps;i++)dot(Math.round(from.x+(to.x-from.x)*i/steps),Math.round(from.y+(to.y-from.y)*i/steps));
+ redraw();refreshEditButtons();
+}
+function pointInPolygon(x,y,vertices){
+ let inside=false;
+ for(let i=0,j=vertices.length-1;i<vertices.length;j=i++){
+  const a=vertices[i],b=vertices[j];
+  if((a.y>y)!==(b.y>y)&&x<(b.x-a.x)*(y-a.y)/(b.y-a.y)+a.x)inside=!inside;
+ }
+ return inside;
+}
+applyPolygon.onclick=()=>{
+ if(!mask||polygon.length<3)return;
+ startEdit();
+ const xs=polygon.map(p=>p.x),ys=polygon.map(p=>p.y),
+  left=Math.max(0,Math.floor(Math.min(...xs))),right=Math.min(canvas.width,Math.ceil(Math.max(...xs))+1),
+  top=Math.max(0,Math.floor(Math.min(...ys))),bottom=Math.min(canvas.height,Math.ceil(Math.max(...ys))+1);
+ const bit=Number(mode.value);
+ for(let y=top;y<bottom;y++)for(let x=left;x<right;x++)
+  if(pointInPolygon(x+.5,y+.5,polygon))mask[y*canvas.width+x]=bit;
+ polygon=[];redraw();refreshEditButtons();
+ status.textContent='Outline filled. Refine edges with the brush, then export a draft for independent review.';
+};
+cancelPolygon.onclick=()=>{polygon=[];redraw();refreshEditButtons();};
+tool.onchange=()=>{painting=false;polygon=[];redraw();refreshEditButtons();};
+canvas.onpointerdown=e=>{
+ if(!mask)return;
+ e.preventDefault();
+ const p=point(e);detailPoint=p;redrawDetail();
+ if(tool.value==='polygon'){
+  if(polygon.length>=2000){status.textContent='Too many outline points. Apply or cancel this outline.';return;}
+  polygon.push(p);redraw();refreshEditButtons();
+  return;
+ }
+ painting=true;lastPoint=p;startEdit();
+ canvas.setPointerCapture(e.pointerId);paintLine(p,p);
+};
+canvas.onpointermove=e=>{
+ if(!mask)return;
+ const p=point(e);detailPoint=p;redrawDetail();
+ if(!painting||tool.value!=='brush')return;
+ paintLine(lastPoint,p);lastPoint=p;
+};
+canvas.onpointerup=canvas.onpointercancel=()=>{painting=false;lastPoint=null;refreshEditButtons();};
+download.onclick=()=>{
+ if(!source||!canExport()){status.textContent='Mark or correct the garment boundary before exporting. Untouched AI masks cannot become a draft.';return;}
+ if(!reviewer.value.trim()){status.textContent='Enter the first reviewer name before exporting a draft.';return;}
+ const runs=[];let previous=0,count=0;
+ for(const value of mask){if(value!==previous){runs.push(count);count=0;previous=value;}count++;}
+ runs.push(count);
+ const annotation={schemaVersion:1,nativeSourceGrid:true,annotationGrid:'exact-original-pixels',image:source.fileName,sourceSha256:source.sourceSha256,width:canvas.width,height:canvas.height,runs,reviewStatus:'draft',reviewer:reviewer.value.trim(),seedModel:null,
+  ...(modelProposalId?{modelProposalId,modelGarmentLabel,humanTargetLabel:garmentTarget.value.trim(),
+   targetIndependentlyIdentifiedBy:reviewer.value.trim()}:{}),
+  ...(inventoryMode.checked?{physicalTargetId:inventoryId.value,humanCategory:inventoryCategory.value,humanForm:inventoryForm.value,
+   humanTargetLabel:garmentTarget.value.trim(),targetIndependentlyIdentifiedBy:reviewer.value.trim()}:{}),
+  note:'Exact source-grid human DRAFT only. Requires separate human approval, rights proof, and reviewed importer before benchmark scoring'};
+ const blob=new Blob([JSON.stringify(annotation,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');
+ a.href=url;a.download=(inventoryMode.checked?inventoryId.value:(modelProposalId||source.fileName.replace(/\.[^.]+$/,'')))+'.mask.draft.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+ status.textContent='Native-grid, physically identified garment DRAFT exported. Separate human approval and rights evidence remain necessary.';
+};
+</script></html>

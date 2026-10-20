@@ -28,7 +28,9 @@ class IndependentTwelvePacketTests(unittest.TestCase):
         self.assertEqual(self.status['evaluatedRealMaskQualityPasses'],0)
         self.assertFalse(self.status['productionAuthorized'])
         self.assertFalse(self.status['independentRightsApproval'])
-        self.assertFalse(self.status['currentEditorOutputsExactOriginalGrid'])
+        self.assertTrue(self.status['currentEditorOutputsExactOriginalGrid'])
+        self.assertEqual(self.status['annotationEditorNativePixelLimit'],12000000)
+        self.assertEqual(self.status['annotationEditorNativeSideLimit'],6000)
         self.assertEqual(self.blind['modelPredictionsIncluded'],0)
         self.assertEqual(self.blind['manifestCategoryLabelsIncluded'],0)
         for photo in self.blind['sourceOriginals']:
@@ -45,7 +47,7 @@ class IndependentTwelvePacketTests(unittest.TestCase):
         self.assertEqual(second.count('<article>'),12)
         self.assertIn('FIRST-ANNOTATE.html',first)
         self.assertIn('SECOND-APPROVE.html',second)
-        self.assertIn('768 px',first)
+        self.assertIn('full photo pixel lattice',first)
         self.assertNotIn('candidate.png',first)
         for row in json.loads((ROOT/'benchmark/local-fitting-real-photo-manifest.json').read_text())['cases']:
             self.assertNotIn(row['sourceInspection'],first)
@@ -54,9 +56,29 @@ class IndependentTwelvePacketTests(unittest.TestCase):
         self.assertNotIn('expectedDisposition',first)
         self.assertIn('originals/',first)
         self.assertIn('independent',second.lower())
-        for path,original in [('FIRST-ANNOTATE.html','benchmark/annotate-garment.html'),
-                               ('SECOND-APPROVE.html','benchmark/approve-garment-mask.html')]:
+        for path,original in [('FIRST-ANNOTATE.html','benchmark/annotate-garment-native.html'),
+                               ('SECOND-APPROVE.html','benchmark/approve-garment-mask-native.html')]:
             self.assertEqual((self.path/path).read_bytes(),(ROOT/original).read_bytes())
+
+    def test_native_pixel_review_supported_flags_match_full_original_dimensions(self):
+        originals=self.blind['sourceOriginals']
+        supported=sum(x['nativeGridReviewSupported'] for x in originals)
+        self.assertEqual(self.status['nativeGridSupportedOriginals'],supported)
+        self.assertEqual(self.status['nativeGridUnsupportedOriginals'],12-supported)
+        for x in originals:
+            should=(x['width']<=6000 and x['height']<=6000 and x['width']*x['height']<=12000000)
+            self.assertEqual(x['nativeGridReviewSupported'],should)
+            self.assertIsNone(x['approvedReferenceMask'])
+        first=(self.path/'FIRST-ANNOTATE.html').read_text()
+        second=(self.path/'SECOND-APPROVE.html').read_text()
+        for code in [first,second]:
+            self.assertIn('nativeSourceGrid',code)
+            self.assertIn('MAX_NATIVE_GRID_PIXELS=12000000',code)
+            self.assertIn("annotationGrid",code)
+            self.assertNotIn('Math.min(1,768/',code)
+            self.assertNotIn('Math.round(picture.naturalWidth*scale)',code)
+        self.assertIn('if(!inventoryMode.checked)return false',first)
+        self.assertIn('data.physicalTargetId==null',second)
 
     def test_no_untracked_or_outside_artifacts_staging(self):
         with self.assertRaises(ValueError):
