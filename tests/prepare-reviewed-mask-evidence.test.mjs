@@ -41,6 +41,10 @@ test('proposal validates native-grid metadata but NEVER registers or authorizes 
  assert.equal(p.reviewerIdentitiesAuthenticated,false);
  assert.equal(p.record.reviewStatus,'approved');
  assert.equal(p.record.scope,'full-visible-garment');
+ assert.equal(p.humanMaskTopologyAdvisory.kind,'UNVERIFIED-HUMAN-REVIEW-ADVISORY');
+ assert.equal(p.humanMaskTopologyAdvisory.referenceCorrectnessMeasured,false);
+ assert.equal(p.humanMaskTopologyAdvisory.productionAuthorized,false);
+ assert.equal(p.humanMaskTopologyAdvisory.originalGrid.pixels,80);
  assert.equal(p.record.referenceSha256,sha(Buffer.from(JSON.stringify(p.reference))));
  assert.equal(p.firstDraftSha256,sha(fixture().firstDraftBytes));
 });

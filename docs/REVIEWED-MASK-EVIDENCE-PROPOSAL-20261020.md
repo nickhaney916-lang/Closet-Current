@@ -25,6 +25,12 @@ PR #62 additionally enforces the exact byte hash of the first-human draft in the
 
 This metadata is not self-authenticating. Human/legal rights checks and actual first/second-person review are indispensable. Do not create fake approvals, invent reference masks, put customer files or sensitive reviewer identity evidence in GitHub, or confuse synthetic tests with actual masks.
 
+## Native human-outline review advisories (next checkpoint)
+
+After the original first draft and second-review masks match exactly, `scripts/human-mask-outline-advisories.mjs` analyzes the accepted **native original-pixel RLE** without changing either photo or mask. The proposed audit artifact now reports marked garment area, 4-neighbor connected-region counts, detached-foreground pixels, background gaps completely enclosed by the human mask, frame-touch pixels, source-grid bounding coordinates, and bounded top-three component/gap boxes. It raises read-only inspection flags for islands, interior gaps, crop/frame contacts and unusually small or large coverage.
+
+**None of these flags proves an error or correctness.** Independent legitimate skirt panels, straps, disconnected shoe silhouettes, buttonholes, fabric gaps and clipped retail images can trigger them. An absence of warnings is NOT proof of clean extraction. A human must check source pixels, category, holes, mannequin/background contamination, and final fitted appearance. Human approval and source/annotation legal rights remain independent. The quality registry remains unchanged.
+
 ## Remains blocked
 - 0/12 original photographs have independently accepted human full-grid masks.
 - Real-photo error/precision/recall remain unmeasured, not zero.
