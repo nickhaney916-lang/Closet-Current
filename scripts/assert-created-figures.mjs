@@ -55,6 +55,10 @@ for(const figure of report.figures){
  assert.ok(Number.isInteger(cloth.restoredArmMajorityFaces)&&cloth.restoredArmMajorityFaces>=0);
  assert.ok(cloth.restoredArmMajorityFaces<=cloth.restoredFaces);
  assert.equal(cloth.upstreamBodyTopologyChanged,false);
+ assert.equal(cloth.clothFacesSelectedBeforeBodyMaterialRepair,true);
+ assert.equal(cloth.onlyDistalRigApprovedSkin,true);
+ assert.ok(cloth.restoredFaces>0,
+   'both models must restore exposed distal-arm color without deleting the proximal shirt sleeve');
  const sleeve=figure.derivedShortSleeveCut;
  assert.ok(sleeve&&sleeve.sleeveCutFraction>=.6&&sleeve.sleeveCutFraction<=.9,
    'each original adult scene needs real shoulder-to-elbow-length derived sleeve cuts');
