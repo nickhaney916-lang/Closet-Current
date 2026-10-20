@@ -61,8 +61,8 @@ test('valid photo decodes and yields high-quality JPEG with bounded original-fir
  });
  const photo=await c.photoToJPEG(upload('original.PNG','image/png'));
  assert.equal(photo,'data:image/jpeg;base64,SYNTHETIC');
- assert.equal(outCanvas.width,2048);
- assert.equal(outCanvas.height,1536);
+ assert.equal(outCanvas.width,3072);
+ assert.equal(outCanvas.height,2304);
  assert.equal(painted,1);
  assert.equal(released,1);
 });
