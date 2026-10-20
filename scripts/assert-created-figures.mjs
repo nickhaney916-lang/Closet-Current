@@ -49,6 +49,12 @@ for(const candidate of report.figures){
  assert.equal(candidate.responsiveClarityVerified,true);
 }
 for(const figure of report.figures){
+ const cloth=figure.skinMaterialCorrection;
+ assert.ok(cloth&&Number.isInteger(cloth.restoredFaces)&&cloth.restoredFaces>=0,
+  'the native body must record corrected wrongly-gray region candidates');
+ assert.ok(Number.isInteger(cloth.restoredArmMajorityFaces)&&cloth.restoredArmMajorityFaces>=0);
+ assert.ok(cloth.restoredArmMajorityFaces<=cloth.restoredFaces);
+ assert.equal(cloth.upstreamBodyTopologyChanged,false);
  const sleeve=figure.derivedShortSleeveCut;
  assert.ok(sleeve&&sleeve.sleeveCutFraction>=.6&&sleeve.sleeveCutFraction<=.9,
    'each original adult scene needs real shoulder-to-elbow-length derived sleeve cuts');
