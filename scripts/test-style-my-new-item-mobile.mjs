@@ -3,7 +3,7 @@
 // vendor calls, paid inference, or unreviewed test photos are used.
 import {chromium,webkit} from 'playwright';
 import {createServer} from 'node:http';
-import {readFile} from 'node:fs/promises';
+import {readFile,mkdir,writeFile} from 'node:fs/promises';
 import {resolve,extname} from 'node:path';
 import assert from 'node:assert/strict';
 
@@ -260,6 +260,65 @@ try{
  }
  assert.equal(new Set(cycle.slice(0,4)).size,4,'all four owned shoes are reachable');
  assert.equal(new Set(cycle.slice(4,8)).size,4,'repeat cycle reaches every shoe again');
+ // Customer handoff: the home shortcut always selects single-item mode.
+ await page.evaluate(()=>{switchView('home');setCaptureMode('outfit');});
+ await page.locator('#styleNewClothes').click();
+ assert.equal(await page.locator('#captureSingle').getAttribute('aria-pressed'),'true');
+ // Existing recognition/source-before-crop tests cover acquisition and indexing.
+ // These synthetic display assets test UI/render lifecycle, not photo accuracy.
+ await page.evaluate(()=>{
+  const c=document.createElement('canvas');c.width=120;c.height=180;
+  const x=c.getContext('2d');x.fillStyle='#245cd1';x.fillRect(24,20,72,140);
+  items.find(x=>x.id==='new-green-top').image=c.toDataURL('image/png');
+  styleNewClosetItem('new-green-top');
+ });
+ await page.locator('#styledCollectionResults .styled-outfit').first().getByRole('button',{name:'See on model'}).click();
+ await page.locator('#reusableFigureStage').waitFor({state:'visible'});
+ assert.equal(await page.evaluate(()=>document.activeElement.id),'reusableFigureStage');
+ assert.equal(await page.evaluate(()=>currentBoard.slots.top),'new-green-top');
+ await page.waitForFunction(()=>document.querySelector('#reusableFigureStage').getAttribute('aria-busy')==='false');
+ // A direct source edit during final PNG decode must not publish the old photo.
+ await page.evaluate(()=>{
+  currentBoard.slots={top:'new-green-top'};
+  window.__nativeDecode=HTMLImageElement.prototype.decode;
+  window.__gateSeen=false;
+  HTMLImageElement.prototype.decode=function(){
+   const native=window.__nativeDecode.call(this);
+   if(window.__gateSeen)return native;
+   window.__gateSeen=true;
+   return Promise.all([native,new Promise(ok=>window.__releaseDecode=ok)]);
+  };
+  renderReusableFigurePreview();
+ });
+ await page.waitForFunction(()=>window.__releaseDecode);
+ await page.evaluate(()=>{
+  items.find(x=>x.id==='new-green-top').color='Red';
+  window.__releaseDecode();HTMLImageElement.prototype.decode=window.__nativeDecode;
+ });
+ await page.waitForFunction(()=>document.querySelector('#reusableFigureStatus').textContent.includes('selection changed'));
+ assert.equal(await page.locator('#reusableFigureGarments img').count(),0);
+ await page.locator('#reusableFigureRetry').click();
+ await page.waitForFunction(()=>document.querySelector('#reusableFigureGarments img').length===1);
+ // A stalled browser decoder must become a retryable hold, never spin forever.
+ await page.evaluate(()=>{
+  HTMLImageElement.prototype.decode=function(){return new Promise(()=>{});};
+  renderReusableFigurePreview();
+ });
+ await page.waitForFunction(()=>document.querySelector('#reusableFigureStage').getAttribute('aria-busy')==='false',null,{timeout:10000});
+ assert.equal(await page.locator('#reusableFigureRetry').isVisible(),true);
+ await page.evaluate(()=>HTMLImageElement.prototype.decode=window.__nativeDecode);
+ await page.locator('#reusableFigureRetry').click();
+ await page.waitForFunction(()=>document.querySelector('#reusableFigureGarments img').length===1);
+ assert.equal(await page.locator('#reusableFigureRetry').isVisible(),false);
+ assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'no horizontal phone overflow');
+ await mkdir('artifacts/style-new-clothes',{recursive:true});
+ const evidenceName=process.env.STYLE_BROWSER==='webkit'?'iphone-webkit':'android-chromium';
+ await page.screenshot({path:'artifacts/style-new-clothes/'+evidenceName+'.png',fullPage:true});
+ await writeFile('artifacts/style-new-clothes/'+evidenceName+'.json',JSON.stringify({
+  engine:evidenceName,actualPhysicalPhone:false,syntheticDisplayFixture:true,
+  newClothesShortcut:true,ownedOutfitModelHandoff:true,sourceEditRaceBlocked:true,
+  boundedDecodeRetry:true,horizontalOverflow:false,pageErrors:errors
+ },null,2));
  assert.deepEqual(errors,[]);
  console.log('NEW_ITEM_STYLE_MOBILE '+JSON.stringify({
   result:'passed',viewport:'390x844 touch',outfitOptions:outfits.length,

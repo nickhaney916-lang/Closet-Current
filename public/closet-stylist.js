@@ -33,7 +33,7 @@ function renderStyledCollection(){
   const board=cleanOutfitBoard(result.board,items),changed=Object.keys(board.slots).length!==Object.keys(result.board.slots).length;
   const card=node('article',null,'styled-outfit');card.append(node('p','FROM YOUR COLLECTION','eyebrow'),node('h3',result.context.request+' · option '+(index+1)));
   const photos=node('div',null,'styled-outfit-photos');
-  for(const slot of outfitSlots){const item=items.find(x=>x.id===board.slots[slot.id]);if(!item)continue;const piece=node('figure'),img=node('img');img.src=item.image;img.alt=item.name||item.itemType;piece.append(img,node('figcaption',item.name||item.itemType));photos.append(piece);}card.append(photos);
+  for(const slot of outfitSlots){const item=items.find(x=>x.id===board.slots[slot.id]);if(!item)continue;const piece=node('figure'),img=node('img');img.decoding='async';img.loading=index===0?'eager':'lazy';img.src=item.image;img.alt=item.name||item.itemType;img.onerror=()=>{img.hidden=true;piece.append(node('p','Photo unavailable. Your saved garment is unchanged.','fine'));};piece.append(img,node('figcaption',item.name||item.itemType));photos.append(piece);}card.append(photos);
   const missing=boardGaps(board,items).filter(s=>!s.optional);
   card.append(node('p',missing.length?'Still needed from your closet: '+missing.map(s=>s.label).join(', '):'A complete outfit using clothes you own.'));
   card.append(node('p','Chosen for '+result.context.request.toLowerCase()+', with coordinating colors and fewer competing patterns. Unknown details are not assumed.','fine'));
@@ -77,7 +77,17 @@ function renderStyledCollection(){
   if(changed)card.append(node('p','A selected garment was removed or recategorized. Create outfits again.','fine'));
   edit.onclick=async()=>{await outfitBoardReady;currentBoard=cleanOutfitBoard({...board,name:result.context.request+' · option '+(index+1)},items);syncBoardInputs();renderOutfitBoard();await storeBoard();switchView('builder');};
   save.onclick=async()=>{save.disabled=true;const status=node('p',null,'fine');card.append(status);try{await outfitBoardReady;if(savedOutfitBoards.length>=50)throw Error('You can save up to 50 outfits.');const saved=cleanOutfitBoard({...board,name:result.context.request+' · option '+(index+1)},items);savedOutfitBoards.push(saved);try{await persistBoardState();}catch(error){savedOutfitBoards.pop();throw error;}status.textContent='Saved. Find it in Outfit builder → Saved outfits.';save.textContent='Saved';renderSavedOutfitBoards();}catch(error){status.textContent=error.message||'Could not save this outfit.';save.disabled=false;}};
-  actions.append(edit,save);card.append(actions);grid.append(card);
+  const preview=node('button','See on model','secondary');preview.type='button';
+  preview.disabled=changed;
+  preview.onclick=async()=>{
+   try{await edit.onclick();}catch{
+    card.append(node('p','Could not open this preview. Your clothing is saved; try again.','fine'));return;
+   }
+   const panel=$('reusableFigureStage');
+   panel?.scrollIntoView({block:'center',behavior:'instant'});
+   if(panel){panel.tabIndex=-1;panel.focus({preventScroll:true});}
+  };
+  actions.append(preview,edit,save);card.append(actions);grid.append(card);
  }
 }
 $('styleCollectionForm').onsubmit=async event=>{

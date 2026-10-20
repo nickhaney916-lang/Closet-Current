@@ -1,5 +1,39 @@
 # Closet Current master development checkpoint
 
+## Parallel customer styling and preview recovery — October 20, 2026 Pacific
+
+- Isolated `work/style-new-clothes-preview-20261020` from verified PR #51
+  `9d1dd7d4898dff7697f43eeecafdcfa1c10fe588` (CI run 39331647063 SUCCESS).
+  Targets PR #51's branch for a small reviewable delta. Mask PRs #60–#62,
+  their scripts/branches, and figure-art PR #58 remain untouched.
+- Home “Style new clothes” selects single-item capture without starting the
+  camera. Existing original-source recognition, safe category/color indexing,
+  saved-photo “Style this”, owned-only suggestions and swaps remain intact.
+  “See on model” opens the existing local board preview with the pinned item.
+- Local render coalesces synchronous requests; final PNG decode stays atomic.
+  All image decodes have a 5-second deadline. Decode/dimension failures evict
+  the relevant cache entry; held/failed output offers explicit refresh.
+  Direct board, source, category, color and owner changes block stale output,
+  even without a new render event. Page hide cancels queued work; page show
+  can rebuild. Canvas errors have a safe retry. No automatic paid fallback.
+- High-quality bounded display downsampling requested, deferred secondary
+  outfit images, missing-photo text and narrow-card overflow protection.
+  Existing 600k native-alpha / 150k matte caps and original sources unchanged.
+  This is not a resolution/segmentation/photorealistic fit quality claim.
+- Local build and Node suite: **1,054 passed, 0 failed, 3 skipped** (1,057
+  total), including 8 behavioral render lifecycle regressions. In a controlled
+  mock, twelve synchronous requests start one render/decode, not twelve.
+  This is a work-count check, not actual phone speed, FPS or network timing.
+- Local browser install attempted, but download was truncated; emulation
+  pending exact-head GitHub CI. Workflow includes original-source crop/save,
+  existing local-fitting dual-engine coverage, and full owned-item style/save/
+  reload plus model handoff, stalled decoder recovery, source-race rejection,
+  and horizontal-overflow checks in Android Chromium / iPhone WebKit.
+- No costs, provider inference, customer photo uploads, deployment, merge or
+  Drive Duel changes. Human-approved real garment masks, realistic drape,
+  final figure artwork/rights approval and physical phone QA remain open.
+
+
 ## Conservative real-photo extraction proposals — October 19, 2026 Pacific
 
 - Isolated branch `feature/conservative-dark-garment-extraction-20261019`, based
