@@ -1,14 +1,16 @@
-"""Pure, rig-supported material mapping for nonpublic 3D figure prototypes.
+"""Post-shell body-material correction using actual source arm rig evidence.
 
-No body mesh topology or customer photos are changed. Material regions must
-not be assigned solely by height/x, which miscolors forearms near pant-height.
+The shirt shell MUST be selected before running this policy. Otherwise a
+material-only repair strips legitimate sleeve faces from the derived shirt.
+The original MakeHuman adult body topology never changes.
 """
-def body_face_region(z, x, leg_count, arm_count, polygon_count):
-    if polygon_count<3 or min(leg_count,arm_count)<0 or max(leg_count,arm_count)>polygon_count:
-        raise ValueError('Invalid rig influence evidence')
-    leg_majority=leg_count*2>=polygon_count
-    arm_majority=arm_count*2>=polygon_count
-    if z>1.685:return 'hair'
-    if z<.92 and abs(x)<.26 and leg_majority:return 'neutral-clothing'
-    if .88<z<1.50 and abs(x)<.26 and not arm_majority:return 'neutral-clothing'
-    return 'skin'
+def should_restore_exposed_arm_skin(original_gray, arm_votes, polygon_count,
+                                    arm_axis_progress, sleeve_end=.76):
+    if polygon_count<3 or arm_votes<0 or arm_votes>polygon_count or (
+        not isinstance(arm_axis_progress,(float,int))) or (
+        not 0.6<=sleeve_end<=.9):
+        raise ValueError('Invalid arm material evidence')
+    if arm_axis_progress!=arm_axis_progress:raise ValueError('Nonfinite arm projection')
+    # Keep existing proximal shoulder and sleeve underlay intact.
+    return bool(original_gray and 2*arm_votes>=polygon_count and
+                arm_axis_progress>sleeve_end)
