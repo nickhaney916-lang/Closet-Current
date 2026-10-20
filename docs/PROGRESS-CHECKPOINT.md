@@ -12,7 +12,11 @@
   restore camera choices with restart guidance and preserve captured photos.
 - Seventh regression covers cancellation between grant and preview attachment.
 - Local build and complete Node suite: **1,186 passed / 0 failed / 3 skipped**
-  (1,189 total). Browser executables unavailable locally; GitHub browser CI pending.
+  (1,189 total). Browser executables unavailable locally.
+- Runtime `d7af43aec8e70599f4eb9a944bb93af029985f9d` verified by
+  [CI 39503733913](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39503733913):
+  SUCCESS, full Node suite plus Android Chromium and iPhone WebKit recovery,
+  native JPEG size/EXIF/color checks and source-preservation checks passed.
 - New browser harness exercises simulated permission/media/playback faults in
   Android Chromium/iPhone WebKit; this is not physical sensor validation.
 - Retain PR #89 native resolution/budget/orientation behavior and original RGB
