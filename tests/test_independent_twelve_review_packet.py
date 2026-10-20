@@ -2,7 +2,6 @@ import hashlib
 import importlib.util
 import json
 import pathlib
-import shutil
 import unittest
 
 ROOT=pathlib.Path(__file__).resolve().parents[1]
@@ -20,7 +19,7 @@ class IndependentTwelvePacketTests(unittest.TestCase):
         cls.blind=json.loads((cls.path/'BLIND-FIRST-SOURCES.json').read_text())
         cls.status=json.loads((cls.path/'REVIEW-STATUS.json').read_text())
 
-    def test_exact_source_bytes_and_no invented reviewer_or_reference(self):
+    def test_exact_source_bytes_and_no_invented_reviewer_or_reference(self):
         self.assertEqual(len(self.blind['sourceOriginals']),12)
         self.assertEqual(self.status['actualLicensedOriginalHashesVerified'],12)
         self.assertEqual(self.status['humanReviewerOneCompleted'],0)
