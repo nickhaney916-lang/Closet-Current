@@ -58,15 +58,29 @@ try{
   {name:'PRIVATE_PHONE_GARMENT.jpg',mimeType:'image/jpeg',buffer:fixtures[0].bytes},
   {name:'PRIVATE_PHONE_NEGATIVE.jpg',mimeType:'image/jpeg',buffer:fixtures[1].bytes}
  ]);
- await page.locator('#category-0').selectOption('Tops');await page.locator('#type-0').selectOption('T-shirt');assert.equal(await page.locator('#run').isDisabled(),true);
+ await page.locator('#category-0').selectOption('Tops');
+ await page.locator('#type-0').selectOption('T-shirt');
+ await page.locator('#color-0').selectOption('Multicolor'); // Independent label for blue, white and gray shirt.
+ assert.equal(await page.locator('#run').isDisabled(),true);
  await page.locator('#category-1').selectOption('Uncategorized');await page.locator('#run').click();
- assert.equal(await page.locator('#category-0').isDisabled(),true);assert.equal(await page.locator('#photos').isDisabled(),true);
+ assert.equal(await page.locator('#category-0').isDisabled(),true);
+ assert.equal(await page.locator('#color-0').isDisabled(),true,
+  'source-color expectation must be locked before model inference');
+ assert.equal(await page.locator('#photos').isDisabled(),true);
  await page.locator('#download').waitFor({state:'visible',timeout:480000});
  const downloadPromise=page.waitForEvent('download');await page.locator('#download').click();const download=await downloadPromise;const reportPath=join(output,'results.json');await download.saveAs(reportPath);
  const raw=await readFile(reportPath,'utf8'),report=JSON.parse(raw);assert.ok(!raw.includes('PRIVATE_PHONE'));assert.ok(!raw.includes('data:image'));assert.equal(report.summary.photos,2);assert.equal(report.summary.errors,0);assert.equal(report.summary.categoryMatches,1);
  // Native browser decode + re-encode can produce subtly different RGB.
  // A category-confirmed Unknown subtype is a safe review, not an error.
  assert.equal(report.summary.negativeRejected,1);
+ assert.equal(report.summary.colorsLabeled,1,'independent garment color included in private test');
+ assert.equal(report.photos[0].expectedColor,'Multicolor');
+ assert.equal(report.photos[1].expectedColor,null);
+ assert.equal(report.summary.modelColorMatches+report.summary.modelColorWrong+
+  report.summary.modelColorMissing,1,'honestly account for unavailable model color predictions');
+ assert.ok(report.photos[0].prediction.color===null||
+  ['Black','White','Gray','Beige','Brown','Blue','Green','Red','Pink','Purple',
+   'Yellow','Orange','Multicolor'].includes(report.photos[0].prediction.color));
  assert.equal(report.summary.incorrectAutomaticCategories,0);
  assert.equal(report.summary.incorrectAutomaticTypes,0);
  const garment=report.photos[0],negative=report.photos[1];
@@ -107,6 +121,10 @@ try{
   exactGarmentTypeAccepted:report.summary.typeMatches===1,
   garmentTypeReviewRequired:report.summary.typeMatches===0,
   noIncorrectAutomaticTypes:report.summary.incorrectAutomaticTypes===0,
+  modelColorDiagnosticLabeledPhotos:report.summary.colorsLabeled,
+  modelColorSuggestionsMatched:report.summary.modelColorMatches,
+  modelColorUnavailable:report.summary.modelColorMissing,
+  productionColorSaveOrRealCameraValidated:false,
   viewport:layout,lockedLabels:true,reportPrivacy:true,cancellation:true,
   externalWriteRequests:networkRequests.length,pageErrors
  },null,2));

@@ -1,4 +1,4 @@
-import {photoCategories,photoTypes,lockPhotoLabels,phonePhotoResult,photoFailure,scorePhonePhotos} from './phone-photo-benchmark.mjs';
+import {photoCategories,photoTypes,photoColors,lockPhotoLabels,phonePhotoResult,photoFailure,scorePhonePhotos} from './phone-photo-benchmark.mjs';
 import {photoTestSession} from './photo-test-session.mjs';
 const $=id=>document.getElementById(id);let rows=[],report=null,session=null,generation=0,locked=false;
 function option(select,text,value){const item=document.createElement('option');item.textContent=text;item.value=value;select.append(item);}
@@ -14,18 +14,31 @@ $('photos').onchange=()=>{
  for(const [i,file] of files.entries()){
   const card=document.createElement('section');card.className='photo';const url=URL.createObjectURL(file),image=document.createElement('img');image.src=url;image.alt='Photo '+(i+1);card.append(image);
   const fields=document.createElement('div'),title=document.createElement('strong');title.textContent='Photo '+(i+1);fields.append(title);
-  const category=document.createElement('select'),type=document.createElement('select');category.id='category-'+i;type.id='type-'+i;
+  const category=document.createElement('select'),type=document.createElement('select'),color=document.createElement('select');
+  category.id='category-'+i;type.id='type-'+i;color.id='color-'+i;
   const a=document.createElement('label');a.textContent='What is it?';a.append(category);option(category,'Choose a category','');for(const value of photoCategories)option(category,value,value);option(category,'Not clothing','Uncategorized');
   const b=document.createElement('label');b.textContent='Clothing type (optional)';b.append(type);option(type,'Check category only','');type.disabled=true;
-  category.onchange=()=>{type.replaceChildren();option(type,'Check category only','');for(const value of photoTypes(category.value))option(type,value,value);type.disabled=!category.value||category.value==='Uncategorized';readiness();};
-  const result=document.createElement('p');result.className='result';result.id='result-'+i;fields.append(a,b,result);card.append(fields);$('photoRows').append(card);rows.push({file,url,category,type,result});
+  const d=document.createElement('label');d.textContent='Primary fabric color (optional)';d.append(color);
+  option(color,'Skip color comparison','');for(const value of photoColors)option(color,value,value);
+  color.disabled=true;
+  category.onchange=()=>{
+   type.replaceChildren();option(type,'Check category only','');
+   for(const value of photoTypes(category.value))option(type,value,value);
+   type.disabled=!category.value||category.value==='Uncategorized';
+   color.disabled=type.disabled;
+   if(color.disabled)color.value='';
+   readiness();
+  };
+  const result=document.createElement('p');result.className='result';result.id='result-'+i;
+  fields.append(a,b,d,result);card.append(fields);$('photoRows').append(card);
+  rows.push({file,url,category,type,color,result});
  }
  $('restart').hidden=false;$('status').textContent='Choose the labels yourself. They will stay locked while recognition runs.';readiness();
 };
 $('run').onclick=async()=>{
  const mine=generation;let labels;
- try{labels=lockPhotoLabels(rows.map(r=>({category:r.category.value,type:r.type.value})));}catch(e){$('status').textContent=e.message;return;}
- locked=true;report=null;$('download').hidden=true;$('summary').hidden=true;$('run').disabled=true;$('photos').disabled=true;for(const row of rows){row.category.disabled=true;row.type.disabled=true;row.result.textContent='Waiting…';}
+ try{labels=lockPhotoLabels(rows.map(r=>({category:r.category.value,type:r.type.value,color:r.color.value})));}catch(e){$('status').textContent=e.message;return;}
+ locked=true;report=null;$('download').hidden=true;$('summary').hidden=true;$('run').disabled=true;$('photos').disabled=true;for(const row of rows){row.category.disabled=true;row.type.disabled=true;row.color.disabled=true;row.result.textContent='Waiting…';}
  const results=[];
  try{
   $('status').textContent='Preparing recognition…';
@@ -42,7 +55,14 @@ $('run').onclick=async()=>{
    row.result.textContent=result.error?'Could not finish this photo.':!result.strong&&!result.categoryConfirmed?(labels[i].expectedCategory==='Uncategorized'?'No clothing label accepted':'Needs review'):result.prediction.category+' · '+(result.prediction.type||'Unknown')+(result.categoryConfirmed&&!result.strong?' · Review type':'');
   }
   report=scorePhonePhotos(labels,results,{release:document.querySelector('meta[name="closet-release"]').content,indexHash:document.querySelector('meta[name="recognition-index"]').content});
-  const s=report.summary;$('summary').textContent=s.categoryMatches+' of '+s.garments+' garment categories matched. '+s.typeMatches+' of '+s.typesChecked+' labeled types matched. '+s.errors+' photos could not finish.'+(s.negativePhotos?' '+s.negativeRejected+' of '+s.negativePhotos+' nonclothing photos rejected.':'');$('summary').hidden=false;$('download').hidden=false;$('status').textContent='Finished. Download the results, or start over with different photos.';
+  const s=report.summary;
+  $('summary').textContent=s.categoryMatches+' of '+s.garments+' garment categories matched. '+
+   s.typeMatches+' of '+s.typesChecked+' labeled types matched. '+
+   (s.colorsLabeled?'Model suggested '+s.modelColorMatches+' matching colors out of '+
+    s.colorsLabeled+' independently labeled photos ('+s.modelColorMissing+
+    ' unavailable). These are model suggestions, NOT the final saved closet colors. ':'')+
+   s.errors+' photos could not finish.'+
+   (s.negativePhotos?' '+s.negativeRejected+' of '+s.negativePhotos+' nonclothing photos rejected.':'');$('summary').hidden=false;$('download').hidden=false;$('status').textContent='Finished. Download the results, or start over with different photos.';
  }catch(e){if(mine===generation){$('status').textContent='Recognition could not start. Try again, or start over with different photos.';$('run').textContent='Try again';$('run').disabled=false;}}
  finally{if(mine===generation){session?.close();session=null;}}
 };
