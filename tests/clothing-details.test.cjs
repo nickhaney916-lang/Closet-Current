@@ -19,3 +19,30 @@ test('automatically stored colors must be supported categories',()=>{
  for(const color of ['Orange','Brown','Blue','Multicolor'])assert.equal(E.validColor(color),true);
  for(const value of ['',undefined,'Unknown','Uncategorized','NeonUnicorn'])assert.equal(E.validColor(value),false);
 });
+
+
+test('white-backdrop foreground confirmation survives contradictory model White without forgery of mask provenance',()=>{
+ const item={category:'Tops',itemType:'T-shirt',color:''};
+ const informed=E.fillColor(item,{color:'Black',source:'photo-estimate',support:.98,method:'uniform-light-background'});
+ assert.equal(informed.color,'Black');
+ assert.equal(informed.colorSource,'photo-estimate');
+ assert.equal(informed.colorMethod,'uniform-light-background','this is NOT an actual human garment mask');
+ const guessed=E.fill(informed,shirt,{color:'White',pattern:'Solid'});
+ assert.equal(guessed.color,'Black','verified foreground beats the model prediction of backdrop white');
+ assert.equal(guessed.pattern,'Solid');
+ assert.equal(guessed.colorMethod,'uniform-light-background');
+ assert.equal(informed.color,'Black','source record remains unchanged');
+});
+test('uncertain white background cannot become a confirmed wardrobe color via photo-only update',()=>{
+ const item={category:'Tops',color:''};
+ const result=E.fillColor(item,{color:'White',needsConfirmation:true,reason:'white-foreground-unverified'});
+ assert.equal(result,item);
+});
+test('ordinary unverified centered-photo estimate is still corrigible by final confident model details',()=>{
+ const item=E.fillColor({category:'Tops',color:''},{color:'Gray',source:'photo-estimate',support:.8});
+ assert.equal(item.colorMethod,undefined);
+ assert.equal(E.fill(item,shirt,{color:'Blue'}).color,'Blue');
+ const verified=E.fillColor({category:'Tops',color:''},{color:'Black',method:'uniform-light-background'});
+ assert.equal(E.fill(verified,shirt,{color:'Red'},true).color,'Red',
+  'explicit user-approved overwrite remains supported');
+});
