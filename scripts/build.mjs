@@ -32,5 +32,8 @@ await writeFile('dist/index.html',builtIndex);
 const photoCheck=await readFile('public/phone-photo-check.html','utf8');
 const recognitionIndex=JSON.parse(await readFile('public/recognition-vectors.json','utf8')).sha256;
 await writeFile('dist/phone-photo-check.html',photoCheck.replace('__RELEASE__',version).replace('__RECOGNITION_INDEX__',recognitionIndex).replace(/(src|href)="([^"]+\.(?:js|mjs|css))"/g,(match,attribute,asset)=>assets.includes(asset)?attribute+'="'+asset+'?v='+version+'"':match));
+// Pin the private, self-reported saved-closet worksheet to this exact build.
+const closetAudit=await readFile('public/saved-closet-audit.html','utf8');
+await writeFile('dist/saved-closet-audit.html',closetAudit.replace('__RELEASE__',version).replace(/(src|href)="([^"]+\.(?:js|mjs|css))"/g,(match,attribute,asset)=>assets.includes(asset)?attribute+'="'+asset+'?v='+version+'"':match));
 await writeFile('dist/sw.js',template.replace('__VERSION__',version).replace('__ASSETS__',JSON.stringify([...assets,...versionedAssets])));
 console.log('Built closet inventory without paid AI services.');
