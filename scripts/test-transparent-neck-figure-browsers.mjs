@@ -43,6 +43,9 @@ try{
     return {bad:make(true),good:make(false)};
    });
    assert.notEqual(fixtures.bad,fixtures.good);
+   // The figure selector lives in a hidden builder view by default. Exercise
+   // the visible customer UI, not a hidden DOM control.
+   await page.evaluate(()=>switchView('builder'));
    for(const figure of ['female','male']){
     await page.locator('#reusableFigureChoice').selectOption(figure);
     for(const mode of ['bad','good']){
