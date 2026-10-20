@@ -1,0 +1,75 @@
+name: Role-isolated real original photo reviewer handoff QA
+on:
+  push:
+    branches: [benchmark/role-isolated-original-review-handoff-20261020]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  portable-offline-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Build all current customer-facing Closet Current assets
+        run: node scripts/build.mjs
+      - name: Verify all customer, native review, style and original-source tests
+        run: node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Preserve exact customer plus reviewer branch merge and blocked pilot gates
+        run: |
+          node scripts/check-dual-parent-review-integration.mjs
+          node scripts/check-customer-pilot-release-gates.mjs
+      - name: Stage original licensed twelve-photo offline review source packet
+        run: |
+          python -m pip install Pillow==11.3.0
+          python scripts/stage-independent-twelve-mask-review.py
+      - name: Build separate, reproducible first and second human ZIP archives
+        run: |
+          python scripts/build-role-isolated-review-packets.py
+          python -m unittest discover -s tests -p 'test_role_isolated_review_packets.py'
+          python -m unittest discover -s tests -p 'test_independent_twelve_review_packet.py'
+      - name: Extract to fresh isolated role folders
+        run: |
+          mkdir -p artifacts/private-human-review/offline-browser-packets/first
+          mkdir -p artifacts/private-human-review/offline-browser-packets/second
+          python -m zipfile -e artifacts/private-human-review/role-packets/first-human-originals.zip artifacts/private-human-review/offline-browser-packets/first
+          python -m zipfile -e artifacts/private-human-review/role-packets/second-human-originals.zip artifacts/private-human-review/offline-browser-packets/second
+      - name: Install mobile-browser engines for offline file validation
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium webkit
+      - name: Verify each role can independently open exact original photos and offline editor
+        run: node scripts/test-role-isolated-packets-mobile.mjs
+      - name: Recheck source-original model-blind first and second reviewer browser behavior
+        run: |
+          node scripts/test-native-garment-annotation-browsers.mjs
+          node scripts/test-native-detail-pan-browser.mjs
+          node scripts/test-native-mask-pointer-ownership.mjs
+          node scripts/test-native-second-review-file-races.mjs
+      - name: Recheck complete owned wardrobe outfit flow in Chromium and WebKit
+        run: |
+          node scripts/test-style-my-new-item-mobile.mjs
+          STYLE_BROWSER=webkit node scripts/test-style-my-new-item-mobile.mjs
+      - name: Assert original evidence unavailable and technical checks not production approval
+        run: |
+          node scripts/check-customer-pilot-release-gates.mjs
+          node scripts/check-dual-parent-review-integration.mjs
+      - name: Archive role-separated packet files ONLY (no combined unblinded packet)
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: offline-original-photo-reviewer-role-isolated-zips
+          path: |
+            artifacts/private-human-review/role-packets/first-human-originals.zip
+            artifacts/private-human-review/role-packets/second-human-originals.zip
+            artifacts/private-human-review/role-packets/ROLE-DELIVERY-MANIFEST.json
+          if-no-files-found: warn
+          retention-days: 7
