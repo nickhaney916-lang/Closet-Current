@@ -469,6 +469,49 @@ try{
   boundedDecodeRetry:true,horizontalOverflow:false,reuseMeasurement,pageErrors:errors
  },null,2));
 
+ // Recommendation quality: owned dress and separates choices, a structure-safe
+ // dress swap, actual outfit persistence/reload and varied pinned-shirt bottoms.
+ // Fixture records are synthetic; no recognition or visual-fitting score is claimed.
+ const qualityOriginal=await page.evaluate(async()=>{
+  const original=JSON.stringify(items),image=items.find(x=>x.id==='new-green-top').image;
+  const make=(id,category,itemType,color='Black')=>normalizeClothing({
+   id:'rq-'+id,name:id,category,itemType,color,image,pattern:'Solid',seasons:[]});
+  const records=[...Array.from({length:12},(_,i)=>make('top-'+i,'Tops','T-shirt')),
+   make('dress-a','Dresses','Casual dress'),make('dress-b','Dresses','Sweater dress'),
+   make('jeans-a','Bottoms','Jeans'),make('jeans-b','Bottoms','Jeans'),
+   make('footwear','Shoes','Sneakers')];
+  await writeAll(records);items.push(...records);
+  $('stylistOccasion').value='Casual';$('stylistAudience').value='All';$('stylistSeason').value='Winter';
+  styleNewClosetItem('rq-footwear');return original;
+ });
+ await page.waitForFunction(()=>styledCollectionResults.length>0&&styledCollectionResults.every(r=>r.board.slots.shoes==='rq-footwear'));
+ const dressIndex=await page.evaluate(()=>styledCollectionResults.findIndex(r=>
+  items.find(x=>x.id===r.board.slots.top)?.category==='Dresses'));
+ assert.ok(dressIndex>=0,'large shirt collection retains an owned dress choice');
+ const dressCard=page.locator('#styledCollectionResults .styled-outfit').nth(dressIndex);
+ await dressCard.getByRole('button',{name:'Swap dress in option '+(dressIndex+1)}).click();
+ const dressSnapshot=await page.evaluate(index=>{
+  const result=styledCollectionResults[index];return {slots:{...result.board.slots},
+   missing:result.missing,owned:Object.values(result.board.slots).every(id=>items.some(x=>x.id===id))};
+ },dressIndex);
+ assert.equal(dressSnapshot.owned,true);assert.deepEqual(dressSnapshot.missing,[]);
+ assert.equal(dressSnapshot.slots.shoes,'rq-footwear');
+ assert.equal(dressSnapshot.slots.bottom,undefined);assert.equal(dressSnapshot.slots.layer,undefined);
+ await dressCard.getByRole('button',{name:'Save outfit',exact:true}).click();
+ await dressCard.getByRole('button',{name:'Saved',exact:true}).waitFor();
+ await page.evaluate(()=>styleNewClosetItem('rq-top-0'));
+ await page.waitForFunction(()=>styledCollectionResults.length>0&&styledCollectionResults.every(r=>r.board.slots.top==='rq-top-0'));
+ const variety=await page.evaluate(()=>new Set(styledCollectionResults.map(r=>r.board.slots.bottom)).size);
+ assert.ok(variety>=2,'options vary owned bottoms before repeating just shoes');
+ assert.equal(await page.evaluate(()=>JSON.stringify(items.filter(x=>!x.id.startsWith('rq-')))),qualityOriginal);
+ await page.reload();await page.evaluate(()=>Promise.all([closetReady,outfitBoardReady]));
+ assert.equal(await page.evaluate(snapshot=>savedOutfitBoards.some(x=>
+  JSON.stringify(x.slots)===JSON.stringify(snapshot.slots)),dressSnapshot),true,'dress outfit survives actual IndexedDB reload');
+ await writeFile('artifacts/style-new-clothes/recommendations-'+evidenceName+'.json',JSON.stringify({
+  actualPhysicalPhone:false,syntheticFixtures:true,ownedDressPreserved:true,
+  dressSwapKeepsStructure:true,dressSaveReload:true,variedOwnedBottoms:variety,
+  originalOwnedRecordsUnchanged:true,pageErrors:errors
+ },null,2));
  assert.deepEqual(errors,[]);
  console.log('NEW_ITEM_STYLE_MOBILE '+JSON.stringify({
   result:'passed',viewport:'390x844 touch',outfitOptions:outfits.length,

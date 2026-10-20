@@ -1,5 +1,33 @@
 # Closet Current master development checkpoint
 
+## Owned recommendation quality branch — October 20, 2026 Pacific
+
+- Isolated `work/owned-recommendation-quality-20261020`, based on PR #69 exact
+  verified `d6d2f713`; source #69, annotation #72 and figure #58 untouched.
+- Six failing recommendation regressions reproduced and fixed: winter sweater
+  dresses excluded, dresses crowded out by many shirts, anchor coordination
+  ignored before shortlist cutoff, options repeating only footwear, partial
+  separates padding complete dress looks, and unknown color labels undisclosed.
+- Preserve eight tops and eight dresses independently; score anchor harmony
+  before shortlisting. Choose compatible dress/separates structures, then vary
+  main clothes, then footwear. Return the best available required-slot coverage
+  only, with explicit missing pieces when the closet cannot form a complete look.
+- Casual now supports sweater dresses, jumpsuits and rompers; casual date night
+  supports sweater dresses and jumpsuits. Existing dress/no-bottom/no-layer rules,
+  owned-only IDs, pinned new piece and season/occasion checks remain unchanged.
+- Dress swaps are labeled Swap dress; jumpsuit/romper swaps say Swap one-piece.
+  Unknown colors and one-piece structure are explicitly disclosed on cards.
+- Local build and Node suite **1084 passed / 0 failed / 3 skipped (1087 total)**;
+  Python **37 passed**. Mobile CI pending this new branch. Harness adds actual
+  dress-swap/save/reload, owned-only structure and varied-bottoms checks in both
+  Chromium and WebKit; synthetic fixture identity/images, no real-photo score.
+- Per-request slot-ranking cache reduces a synthetic 100-item local profile
+  from 24,668 garment-score evaluations to 140; warmed medians 145.8ms vs 141.5ms
+  are noisy and do not establish a physical-phone speed improvement.
+- Details: OWNED-RECOMMENDATION-QUALITY-20261020.md. No merge/deploy, paid calls,
+  source-photo/recognition changes, annotation scripts or original art edits,
+  customer-photo uploads or Drive Duel changes.
+
 ## PR #69 account/database ownership continuation — October 20, 2026 Pacific
 
 - Continues isolated integration PR #69 from exact verified head `c49b8891`;

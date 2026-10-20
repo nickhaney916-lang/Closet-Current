@@ -81,7 +81,9 @@ function renderStyledCollection(){
   // One tap replaces exactly ONE non-pinned piece inside the current option.
   // These are reversible previews; no board or garment is stored until Save.
   const swapControls=node('div',null,'styled-swap-actions');
-  for(const [slot,label] of [['top','Swap top'],['bottom','Swap bottoms'],
+  const topPiece=items.find(x=>x.id===board.slots.top);
+  const topSwapLabel=topPiece?.category==='Dresses'?(['Jumpsuit','Romper'].includes(topPiece.itemType)?'Swap one-piece':'Swap dress'):'Swap top';
+  for(const [slot,label] of [['top',topSwapLabel],['bottom','Swap bottoms'],
     ['shoes','Swap shoes'],['layer','Swap layer']]){
    if(changed||!stylistSwapChoices(result,slot,items,stylistAnchorItemId).length)continue;
    const swap=node('button',label,'secondary styled-swap-button');
