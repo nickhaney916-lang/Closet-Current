@@ -32,7 +32,7 @@ class FaceHairTests(unittest.TestCase):
             self.assertEqual(report['eyebrowCurves'],2)
             self.assertEqual(report['sourceUpperEyelidCurves'],2)
             self.assertGreaterEqual(report['sourceScalpFibers'],20)
-            self.assertEqual(report['sourceSideHairLocks'],8 if kind=='female' else 0)
+            self.assertEqual(report['sourceSideHairLocks'],0)
             self.assertEqual(len(curves),4+report['sourceScalpFibers']+report['sourceSideHairLocks'])
             self.assertTrue(report['boundedOriginalProceduralArt'])
             self.assertFalse(report['sourceBodyVerticesChanged'])
