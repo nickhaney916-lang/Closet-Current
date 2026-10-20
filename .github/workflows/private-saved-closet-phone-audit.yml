@@ -1,0 +1,52 @@
+name: Phone saved-closet audit and independent pilot no-go
+on:
+  push:
+    branches: [pilot/saved-closet-real-phone-audit-20261020]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  saved-closet-pilot-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build no-paid-provider customer app and exact-versioned saved-closet audit
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Prove pilot release veto, original-classification and independent reviewer lineage
+        run: |
+          node scripts/verify-camera-cloud-integration.mjs
+          node scripts/check-dual-parent-review-integration.mjs
+          node scripts/check-customer-pilot-release-gates.mjs
+      - name: Install Chromium and WebKit only for simulated mobile phone UI QA
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium webkit
+      - name: Audit operator locked original labels, actual saved photos and private no-upload reports
+        run: node scripts/test-saved-closet-phone-browsers.mjs
+      - name: Verify original camera, photo source and account cloud integrity after audit addition
+        run: |
+          node scripts/test-native-camera-fidelity-mobile.mjs
+          node scripts/test-untyped-photo-import-mobile.mjs
+          node scripts/test-cloud-session-generation-browsers.mjs
+      - name: Recheck full two-device private wardrobe recovery and owned-only styling
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos commons-0002
+          mkdir -p benchmark/cloud-backup
+          cp benchmark/locked-photo-sources.json benchmark/cloud-backup/
+          node scripts/run-cloud-backup-flow.mjs benchmark/cloud-backup
+          node scripts/test-style-my-new-item-mobile.mjs
+          STYLE_BROWSER=webkit node scripts/test-style-my-new-item-mobile.mjs
+      - name: Audit gate remains unapproved despite synthetic perfect reports
+        run: |
+          node --test tests/saved-closet-audit.test.cjs tests/saved-closet-audit-cli.test.mjs
+          node scripts/check-customer-pilot-release-gates.mjs
