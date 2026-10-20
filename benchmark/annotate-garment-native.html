@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Closet Current — native-grid independent garment annotation</title>
-<style>body{font:16px system-ui;max-width:920px;margin:auto;padding:16px;background:#f8f7fb;color:#231e2d}button,select,input{font:inherit;padding:10px;margin:4px}canvas{width:100%;max-width:720px;touch-action:none;background:#ddd}#status{white-space:pre-wrap} .controls{display:flex;flex-wrap:wrap;gap:8px} .native-detail{border:1px solid #cbc0dc;border-radius:12px;padding:10px;margin:12px 0;background:white}.native-detail .windows{display:flex;flex-wrap:wrap;gap:12px}.native-detail figure{margin:0;flex:1 1 180px;max-width:240px}.native-detail canvas{width:100%;max-width:220px;aspect-ratio:1/1;height:auto;image-rendering:auto;border:1px solid #999;background:#e7e4eb;touch-action:auto}.native-detail figcaption{font-size:13px;font-weight:600}.native-detail p{font-size:13px}.native-detail .precision-toggle{display:block;padding:8px 0}.native-detail #detailMask.precision-active{touch-action:none;cursor:crosshair;outline:2px solid #513182;outline-offset:2px}</style>
+<style>body{font:16px system-ui;max-width:920px;margin:auto;padding:16px;background:#f8f7fb;color:#231e2d}button,select,input{font:inherit;padding:10px;margin:4px}canvas{width:100%;max-width:720px;touch-action:none;background:#ddd}#status{white-space:pre-wrap} .controls{display:flex;flex-wrap:wrap;gap:8px} .native-detail{border:1px solid #cbc0dc;border-radius:12px;padding:10px;margin:12px 0;background:white}.native-detail .windows{display:flex;flex-wrap:wrap;gap:12px}.native-detail figure{margin:0;flex:1 1 180px;max-width:240px}.native-detail canvas{width:100%;max-width:220px;aspect-ratio:1/1;height:auto;image-rendering:auto;border:1px solid #999;background:#e7e4eb;touch-action:auto}.native-detail figcaption{font-size:13px;font-weight:600}.native-detail p{font-size:13px}.native-detail .precision-toggle{display:block;padding:8px 0}.native-detail #detailMask.precision-active{touch-action:none;cursor:crosshair;outline:2px solid #513182;outline-offset:2px}.detail-pan-controls{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}.detail-pan-controls button{font:inherit;font-weight:650;min-width:72px;min-height:48px;padding:8px 14px;border-radius:8px;border:1px solid #6b5184;background:#f1ebf9;color:#24162d;touch-action:manipulation}.detail-pan-controls button:disabled{opacity:.45}</style>
 <h1>Reference garment outline review</h1>
 <p>Internal standalone benchmark tool, not part of the customer app. Draw directly on the ORIGINAL source pixel grid; no 768px downsampling or AI masks. Native-grid annotations are still unapproved DRAFTS until a distinct person independently reviews the entire garment. Source files remain on your device.</p>
 <div class="controls"><input id="photo" type="file" accept="image/*"><label>Resume previous draft <input id="resume" type="file" accept=".json,application/json"></label><label hidden>AI masks prohibited in independent reference review <input id="prediction" type="file" disabled accept=".json,application/json"></label><label>Tool <select id="tool"><option value="brush">Paint brush</option><option value="polygon">Outline polygon (tap corners)</option></select></label><select id="mode" aria-label="Mask edit mode"><option value="1">Mark garment</option><option value="0">Erase / background</option></select><label>First reviewer <input id="reviewer" type="text" maxlength="80" autocomplete="off" placeholder="Your reviewer name"></label><label>Independent physical garment <input id="inventoryMode" type="checkbox"> (no AI seed, internal review only)</label><label id="inventoryFields" hidden>Garment ID <input id="inventoryId" type="text" maxlength="30" placeholder="validation-0031-item-01"> Category <select id="inventoryCategory"><option value="">Select…</option><option value="Tops">Tops</option><option value="Bottoms">Bottoms</option><option value="Dresses">Dresses</option><option value="Outerwear">Outerwear</option><option value="Shoes">Shoes</option><option value="Hosiery">Hosiery / tights</option><option value="Accessories">Accessories</option></select> Exact garment form <select id="inventoryForm"><option value="">Select category first</option></select></label><label id="targetLabel" hidden>Identify the actual garment independently of the model prediction <input id="targetGarment" type="text" maxlength="100" placeholder="e.g. black skirt worn by the person"></label><label>Brush radius <input type="range" id="radius" min="1" max="30" value="7"></label><button id="applyPolygon" type="button" disabled>Fill outline</button><button id="cancelPolygon" type="button" disabled>Cancel outline</button><button id="undo" type="button" disabled>Undo</button><button id="redo" type="button" disabled>Redo</button><button id="download" disabled>Export annotation JSON</button></div>
@@ -9,11 +9,18 @@
 <label>Inspect detail at <select id="detailZoom" aria-label="Detail magnification"><option value="4">4×</option><option value="8">8×</option></select></label>
 <label class="precision-toggle"><input id="precisionEdit" type="checkbox"> Paint or erase directly in the enlarged outline (brush only)</label>
 <p id="detailHint">Move or tap the large photo to inspect its original-resolution clothing edges. Turn on enlarged brush editing to correct individual original-grid pixels; no AI prediction is used.</p>
+<div class="detail-pan-controls" role="group" aria-label="Move source-pixel detail window">
+<button id="detailPanLeft" type="button" disabled aria-label="Move garment detail left">← Left</button>
+<button id="detailPanUp" type="button" disabled aria-label="Move garment detail up">↑ Up</button>
+<button id="detailPanDown" type="button" disabled aria-label="Move garment detail down">↓ Down</button>
+<button id="detailPanRight" type="button" disabled aria-label="Move garment detail right">→ Right</button>
+</div>
 <div class="windows"><figure><figcaption>Native source photo (unaltered)</figcaption><canvas id="detailSource" width="220" height="220"></canvas></figure>
 <figure><figcaption>Current outline overlay (review pixels)</figcaption><canvas id="detailMask" width="220" height="220"></canvas></figure></div></section><p id="status" role="status">Choose a source image. Paint all of the garment before export.</p>
 <script>
 'use strict';
 const detailZoom=document.querySelector('#detailZoom'),detailSource=document.querySelector('#detailSource'),detailMask=document.querySelector('#detailMask'),detailHint=document.querySelector('#detailHint'),precisionEdit=document.querySelector('#precisionEdit');
+const detailPanLeft=document.querySelector('#detailPanLeft'),detailPanUp=document.querySelector('#detailPanUp'),detailPanDown=document.querySelector('#detailPanDown'),detailPanRight=document.querySelector('#detailPanRight');
 let precisionPainting=false,precisionLastPoint=null,precisionWindow=null;
 let brushPointerId=null,precisionPointerId=null;
 // One independent physical input device owns each stroke. Additional touches
@@ -264,6 +271,7 @@ function detailWindow(){
 }
 function redrawDetail(){
  const window=detailWindow();
+ for(const button of [detailPanLeft,detailPanUp,detailPanDown,detailPanRight])button.disabled=!window;
  if(!window)return;
  const {sx,sy,extent}=window;
  const fx=source.photo.naturalWidth/canvas.width,fy=source.photo.naturalHeight/canvas.height;
@@ -278,6 +286,25 @@ function redrawDetail(){
   (precisionEdit.checked?' · precise brush editing on original pixels (unapproved DRAFT)':
   ' · enlarged detail is a preview, not an approval');
 }
+function panOriginalDetail(dx,dy){
+ const window=detailWindow();
+ if(!window)return;
+ // Pan by one-quarter of the *source native pixel* view. No annotation,
+ // reviewer state, image digest or undo history is modified.
+ endPrecisionStroke();
+ const step=Math.max(1,Math.round(window.extent*.25));
+ const x=window.sx+window.extent/2+dx*step,
+  y=window.sy+window.extent/2+dy*step;
+ detailPoint={
+  x:Math.max(0,Math.min(canvas.width-1,Math.round(x))),
+  y:Math.max(0,Math.min(canvas.height-1,Math.round(y)))
+ };
+ redrawDetail();
+}
+detailPanLeft.onclick=()=>panOriginalDetail(-1,0);
+detailPanRight.onclick=()=>panOriginalDetail(1,0);
+detailPanUp.onclick=()=>panOriginalDetail(0,-1);
+detailPanDown.onclick=()=>panOriginalDetail(0,1);
 detailZoom.onchange=()=>{
  if(precisionPainting){
   endPrecisionStroke();
