@@ -1,6 +1,7 @@
 // Synthetic in-browser workflow proof ONLY: no real garment approvals.
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
+import {createHash} from 'node:crypto';
 import {resolve} from 'node:path';
 import {chromium} from 'playwright';
 
@@ -8,7 +9,8 @@ const browser=await chromium.launch({headless:true});
 const metrics={sourceWidth:960,sourceHeight:1100,
   firstReviewerDrafts:0,secondReviewerSyntheticApprovals:0,
   realHumanApprovals:0,physicalPhones:0,customerPhotos:0,
-  aiMaskSeeds:0,realPhotoMaskQualityPasses:0};
+  aiMaskSeeds:0,realPhotoMaskQualityPasses:0,realOriginalDecodeChecks:0,
+  originalGridsSupported:0,originalGridsHeldForSize:0};
 try{
  const first=await browser.newPage({viewport:{width:1180,height:800},acceptDownloads:true});
  const jsErrors=[];
@@ -103,6 +105,48 @@ try{
  });
  await second.locator('#status').getByText(/checksum mismatch/).waitFor();
  assert.equal(await second.locator('#approve').isDisabled(),true);
+ // The 12 existing licensed originals (never any customer uploads) must
+ // load at their ACTUAL source grid, or be explicitly held for a size cap.
+ // This is source-loading QA, not human annotation or quality scoring.
+ const originals=JSON.parse(await fs.readFile('artifacts/independent-mask-review/BLIND-FIRST-SOURCES.json','utf8'));
+ assert.equal(originals.sourceOriginals.length,12);
+ const originalPage=await browser.newPage({viewport:{width:1080,height:800}});
+ originalPage.on('pageerror',e=>jsErrors.push(e.message));
+ await originalPage.goto('file://'+resolve('benchmark/annotate-garment-native.html'));
+ for(const record of originals.sourceOriginals){
+  const raw=await fs.readFile(resolve('benchmark/fixtures',record.image));
+  assert.equal(createHash('sha256').update(raw).digest('hex'),record.sourceSha256);
+  await originalPage.locator('#photo').setInputFiles({
+   name:record.image,mimeType:'image/jpeg',buffer:raw
+  });
+  // File and SHA are checked at load; no AI mask and no export is possible.
+  await originalPage.waitForFunction((photoName)=>
+   document.querySelector('#status').textContent.includes('initial mask is blank')||
+   document.querySelector('#status').textContent.includes('Cannot annotate at original resolution'),
+   record.image,{timeout:30000});
+  const observed=await originalPage.evaluate(()=>({
+   decodedWidth:source?.photo?.naturalWidth||null,
+   decodedHeight:source?.photo?.naturalHeight||null,
+   workingWidth:source?canvas.width:null,workingHeight:source?canvas.height:null,
+   maskPixels:mask?.length??0,seed:seedModel,
+   enabled:!download.disabled,status:status.textContent
+  }));
+  if(record.nativeGridReviewSupported){
+   assert.equal(observed.workingWidth,record.width,record.id);
+   assert.equal(observed.workingHeight,record.height,record.id);
+   assert.equal(observed.decodedWidth,record.width,record.id);
+   assert.equal(observed.decodedHeight,record.height,record.id);
+   assert.equal(observed.maskPixels,record.width*record.height,record.id);
+   assert.equal(observed.seed,null,record.id);
+   metrics.originalGridsSupported++;
+  }else{
+   assert.equal(observed.workingWidth,null,record.id);
+   assert.match(observed.status,/safety limit/i,record.id);
+   metrics.originalGridsHeldForSize++;
+  }
+  assert.equal(observed.enabled,false,record.id);
+  metrics.realOriginalDecodeChecks++;
+ }
  assert.deepEqual(jsErrors,[]);
  console.log('NATIVE_PIXEL_MASK_BROWSER_QA '+JSON.stringify(metrics));
 }finally{
