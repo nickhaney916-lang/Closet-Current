@@ -511,6 +511,7 @@ function stopCameraPreviewWatch(){
  const watch=cameraPreviewWatch;cameraPreviewWatch=null;
  if(!watch)return;
  clearInterval(watch.timer);
+ if(watch.visibilityListener&&typeof document!=='undefined')document.removeEventListener?.('visibilitychange',watch.visibilityListener);
  if(watch.frameId!=null&&typeof video.cancelVideoFrameCallback==='function'){
   try{video.cancelVideoFrameCallback(watch.frameId);}catch{}
  }
@@ -543,6 +544,16 @@ function monitorCameraPreview(acquired,request){
   mode:typeof video.requestVideoFrameCallback==='function'?'video-frame':
    Number.isFinite(video.currentTime)?'playback-clock':'unobservable'};
  cameraPreviewWatch=watch;
+ if(typeof document!=='undefined'&&document.addEventListener){
+  watch.visibilityListener=()=>{
+   if(cameraPreviewWatch!==watch)return;
+   // Backgrounding suspends callback/timer delivery; reset the live-frame
+   // deadline on both visibility transitions before polling resumes.
+   watch.lastFrame=Date.now();
+   if(Number.isFinite(video.currentTime))watch.lastMediaTime=video.currentTime;
+  };
+  document.addEventListener('visibilitychange',watch.visibilityListener);
+ }
  if(watch.mode==='video-frame'){
   const onFrame=()=>{
    if(cameraPreviewWatch!==watch||cameraRequest!==request||stream!==acquired)return;
