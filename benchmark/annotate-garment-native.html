@@ -20,6 +20,8 @@ const prediction=document.querySelector('#prediction'),resume=document.querySele
 const MAX_NATIVE_GRID_PIXELS=12000000,MAX_NATIVE_SIDE=6000;
 let source=null,mask=null,painting=false,strokes=0,seedModel=null,reviewedDraft=false,seedMask=null,polygon=[],lastPoint=null,detailPoint=null;
 let modelProposalId=null,modelGarmentLabel=null;
+// Async file selections are not allowed to publish obsolete photos/drafts.
+let photoLoadVersion=0,draftLoadVersion=0,editingRevision=0;
 function isProposalId(id,name){
  if(typeof id!=='string'||typeof name!=='string')return false;
  const base=name.replace(/\.[^.]+$/,'')+'-candidate-';
@@ -45,42 +47,64 @@ inventoryId.oninput=refreshEditButtons;
 inventoryCategory.onchange=()=>{chooseForm();refreshEditButtons();};
 inventoryForm.onchange=refreshEditButtons;const undoStack=[],redoStack=[];
 photo.onchange=async()=>{
- const file=photo.files[0];if(!file)return;
+ const request=++photoLoadVersion;
+ ++draftLoadVersion;++editingRevision;
+ const file=photo.files[0];
+ // Invalidate the previous source immediately, including its export button,
+ // rather than allowing edits while the newly chosen JPEG is decoding.
+ source=null;mask=null;detailPoint=null;seedModel=null;reviewedDraft=false;seedMask=null;
+ polygon=[];strokes=0;painting=false;lastPoint=null;resetTarget();
+ undoStack.length=redoStack.length=0;resume.value='';
+ ctx.clearRect(0,0,canvas.width,canvas.height);refreshEditButtons();
+ if(!file){status.textContent='Select the original source image before editing.';return;}
+ status.textContent='Loading and verifying exact original image pixels…';
  // Archival photos have identical bytes but a filename rejected by the
  // benchmark's canonical annotation identity. Fail before human painting.
  if(/^commons-[0-9]{4}[.]original[.]jpg$/i.test(file.name)){
   // A wrong photo selection also invalidates any earlier editable mask.
   // Never let the previous verified photo's draft be exported under a
   // new archival filename.
-  source=null;mask=null;detailPoint=null;seedMask=null;reviewedDraft=false;resetTarget();
-  polygon=[];strokes=0;undoStack.length=redoStack.length=0;
-  ctx.clearRect(0,0,canvas.width,canvas.height);refreshEditButtons();
   status.textContent='Choose '+file.name.replace('.original.jpg','.jpg')+
    ' instead. The .original.jpg copy is archival and cannot be staged.';
   return;
  }
- if(file.size>16000000){source=null;mask=null;refreshEditButtons();status.textContent='Image too large. No draft was created.';return;}
+ if(file.size>16000000){status.textContent='Image too large. No draft was created.';return;}
  const url=URL.createObjectURL(file);
  try{const image=new Image();image.src=url;await image.decode();
+  if(request!==photoLoadVersion)return;
   // Annotation must be bound to the exact original source pixel lattice.
   // Never silently downscale large images into misleading reference truth.
   const w=image.naturalWidth,h=image.naturalHeight;
   if(!Number.isSafeInteger(w*h)||w<1||h<1||w>MAX_NATIVE_SIDE||h>MAX_NATIVE_SIDE||w*h>MAX_NATIVE_GRID_PIXELS)
    throw Error('Original exceeds the local native-grid safety limit. No resized mask was generated.');
-  canvas.width=w;canvas.height=h;
+  const imageBytes=await file.arrayBuffer();
+  if(request!==photoLoadVersion)return;
+  const digest=await crypto.subtle.digest('SHA-256',imageBytes);
+  if(request!==photoLoadVersion)return;
+  const sourceSha256=Array.from(new Uint8Array(digest),b=>b.toString(16).padStart(2,'0')).join('');
   const base=document.createElement('canvas');base.width=w;base.height=h;
   base.getContext('2d').drawImage(image,0,0,w,h);
-  const digest=await crypto.subtle.digest('SHA-256',await file.arrayBuffer());
-  const sourceSha256=Array.from(new Uint8Array(digest),b=>b.toString(16).padStart(2,'0')).join('');
+  if(request!==photoLoadVersion)return;
+  canvas.width=w;canvas.height=h;
   resetTarget();source={fileName:file.name,sourceSha256,base,photo:image};detailPoint={x:Math.floor(canvas.width/2),y:Math.floor(canvas.height/2)};mask=new Uint8Array(canvas.width*canvas.height);strokes=0;seedModel=null;reviewedDraft=false;seedMask=null;polygon=[];undoStack.length=redoStack.length=0;refreshEditButtons();redraw();status.textContent='Paint or outline the actual garment carefully; the initial mask is blank.';
- }catch(e){source=null;mask=null;polygon=[];strokes=0;undoStack.length=redoStack.length=0;refreshEditButtons();status.textContent='Cannot annotate at original resolution: '+e.message;}finally{URL.revokeObjectURL(url);}
+ }catch(e){
+  if(request===photoLoadVersion){
+   source=null;mask=null;polygon=[];strokes=0;undoStack.length=redoStack.length=0;
+   refreshEditButtons();status.textContent='Cannot annotate at original resolution: '+e.message;
+  }
+ }finally{URL.revokeObjectURL(url);}
 };
 resume.onchange=async()=>{
+ const request=++draftLoadVersion;
  if(!source||!mask){status.textContent='Load the matching original photograph first.';return;}
  const file=resume.files?.[0];if(!file)return;
+ const originalSource=source,originalPhotoVersion=photoLoadVersion,originalRevision=editingRevision;
  try {
   if(file.size>16000000)throw Error('Draft too large');
-  const draft=JSON.parse(await file.text()),n=canvas.width*canvas.height;
+  const draft=JSON.parse(await file.text());
+  if(request!==draftLoadVersion||originalPhotoVersion!==photoLoadVersion||
+   source!==originalSource||originalRevision!==editingRevision)return;
+  const n=canvas.width*canvas.height;
   if(draft.schemaVersion!==1||draft.reviewStatus!=='draft'||draft.nativeSourceGrid!==true||draft.annotationGrid!=='exact-original-pixels'||draft.physicalTargetId==null||draft.seedModel!=null||draft.modelProposalId!=null||draft.image!==source.fileName||draft.sourceSha256!==source.sourceSha256||draft.width!==canvas.width||draft.height!==canvas.height||!Array.isArray(draft.runs)||draft.runs.length>n)throw Error('Draft image or dimensions mismatch');
   if(draft.physicalTargetId!=null&&(
    draft.modelProposalId!=null||draft.seedModel!=null||
@@ -96,6 +120,9 @@ resume.onchange=async()=>{
   const restored=new Uint8Array(n);let offset=0,foreground=false;
   for(const count of draft.runs){if(!Number.isInteger(count)||count<0||offset+count>n)throw Error('Invalid run encoding');if(foreground)restored.fill(1,offset,offset+count);offset+=count;foreground=!foreground;}
   if(offset!==n)throw Error('Incomplete mask');
+  if(request!==draftLoadVersion||originalPhotoVersion!==photoLoadVersion||
+   source!==originalSource||originalRevision!==editingRevision)return;
+  ++editingRevision;
   resetTarget();modelProposalId=draft.modelProposalId||null;
   modelGarmentLabel=draft.modelGarmentLabel||null;
   inventoryMode.checked=Boolean(draft.physicalTargetId);
@@ -104,7 +131,10 @@ resume.onchange=async()=>{
   targetLabel.hidden=!(modelProposalId||inventoryMode.checked);garmentTarget.value=draft.humanTargetLabel||'';
   mask=restored;seedModel=draft.seedModel||null;reviewer.value=draft.reviewer||'';strokes=0;reviewedDraft=true;seedMask=null;polygon=[];undoStack.length=redoStack.length=0;refreshEditButtons();redraw();
   status.textContent='Draft restored for editing. Independent review is still required.';
- }catch(e){status.textContent='Could not restore draft: '+e.message;}
+ }catch(e){
+  if(request===draftLoadVersion&&originalPhotoVersion===photoLoadVersion&&source===originalSource)
+   status.textContent='Could not restore draft: '+e.message;
+ }
 };
 prediction.onchange=async()=>{
  status.textContent='AI mask seeds are forbidden in this independent native-grid reference editor.';prediction.value='';return;
@@ -163,11 +193,13 @@ function refreshEditButtons(){
 }
 function startEdit(){
  if(!mask)return;
+ ++editingRevision;
  undoStack.push(new Uint8Array(mask));if(undoStack.length>3)undoStack.shift();
  redoStack.length=0;strokes++;refreshEditButtons();
 }
 function restore(history,other){
  if(!history.length||!mask)return;
+ ++editingRevision;
  other.push(new Uint8Array(mask));if(other.length>3)other.shift();
  mask=history.pop();polygon=[];redraw();refreshEditButtons();
 }
@@ -244,15 +276,15 @@ applyPolygon.onclick=()=>{
  polygon=[];redraw();refreshEditButtons();
  status.textContent='Outline filled. Refine edges with the brush, then export a draft for independent review.';
 };
-cancelPolygon.onclick=()=>{polygon=[];redraw();refreshEditButtons();};
-tool.onchange=()=>{painting=false;polygon=[];redraw();refreshEditButtons();};
+cancelPolygon.onclick=()=>{++editingRevision;polygon=[];redraw();refreshEditButtons();};
+tool.onchange=()=>{++editingRevision;painting=false;polygon=[];redraw();refreshEditButtons();};
 canvas.onpointerdown=e=>{
  if(!mask)return;
  e.preventDefault();
  const p=point(e);detailPoint=p;redrawDetail();
  if(tool.value==='polygon'){
   if(polygon.length>=2000){status.textContent='Too many outline points. Apply or cancel this outline.';return;}
-  polygon.push(p);redraw();refreshEditButtons();
+  ++editingRevision;polygon.push(p);redraw();refreshEditButtons();
   return;
  }
  painting=true;lastPoint=p;startEdit();
