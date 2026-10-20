@@ -28,7 +28,9 @@ class IndependentTwelvePacketTests(unittest.TestCase):
         self.assertEqual(self.status['evaluatedRealMaskQualityPasses'],0)
         self.assertFalse(self.status['productionAuthorized'])
         self.assertFalse(self.status['independentRightsApproval'])
-        self.assertFalse(self.status['currentEditorOutputsExactOriginalGrid'])
+        self.assertTrue(self.status['currentEditorOutputsExactOriginalGrid'])
+        self.assertEqual(self.status['annotationEditorNativePixelLimit'],12000000)
+        self.assertEqual(self.status['annotationEditorNativeSideLimit'],6000)
         self.assertEqual(self.blind['modelPredictionsIncluded'],0)
         self.assertEqual(self.blind['manifestCategoryLabelsIncluded'],0)
         for photo in self.blind['sourceOriginals']:
@@ -45,7 +47,7 @@ class IndependentTwelvePacketTests(unittest.TestCase):
         self.assertEqual(second.count('<article>'),12)
         self.assertIn('FIRST-ANNOTATE.html',first)
         self.assertIn('SECOND-APPROVE.html',second)
-        self.assertIn('768 px',first)
+        self.assertIn('full photo pixel lattice',first)
         self.assertNotIn('candidate.png',first)
         for row in json.loads((ROOT/'benchmark/local-fitting-real-photo-manifest.json').read_text())['cases']:
             self.assertNotIn(row['sourceInspection'],first)
@@ -54,8 +56,8 @@ class IndependentTwelvePacketTests(unittest.TestCase):
         self.assertNotIn('expectedDisposition',first)
         self.assertIn('originals/',first)
         self.assertIn('independent',second.lower())
-        for path,original in [('FIRST-ANNOTATE.html','benchmark/annotate-garment.html'),
-                               ('SECOND-APPROVE.html','benchmark/approve-garment-mask.html')]:
+        for path,original in [('FIRST-ANNOTATE.html','benchmark/annotate-garment-native.html'),
+                               ('SECOND-APPROVE.html','benchmark/approve-garment-mask-native.html')]:
             self.assertEqual((self.path/path).read_bytes(),(ROOT/original).read_bytes())
 
     def test_no_untracked_or_outside_artifacts_staging(self):
