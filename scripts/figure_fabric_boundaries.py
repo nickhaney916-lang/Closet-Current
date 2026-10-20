@@ -133,3 +133,84 @@ def approved_front_binding_segments(coords, faces, *, low=1.36, high=1.54,
     total=sum(sum((x-y)**2 for x,y in zip(coords[a],coords[b]))**.5 for a,b in selected)
     if not .07<=total<=.85:raise ValueError("Untrusted shirt front seam length")
     return selected
+
+
+def cut_source_derived_sleeves(coords, faces, arm_joints, *, fraction=.76):
+    """Cut genuinely consistent sleeve cuffs on a derived neutral shirt shell.
+
+    Split existing faces at two arm-axis cross sections by interpolation,
+    sharing edge vertices across neighbors. Never move source shell vertices,
+    body mesh, joints or original customer clothing image pixels.
+    """
+    if not .6<=fraction<=.9 or len(arm_joints)!=2:
+        raise ValueError('Invalid sleeve cutoff configuration')
+    segments={}
+    for side in ('L','R'):
+        if side not in arm_joints:raise ValueError('Missing shoulder/elbow reference')
+        shoulder,elbow=arm_joints[side]
+        if len(shoulder)!=3 or len(elbow)!=3:raise ValueError('Invalid arm reference')
+        axis=[elbow[i]-shoulder[i] for i in range(3)]
+        denom=sum(v*v for v in axis)
+        if not .02<denom<1.0:raise ValueError('Untrusted shoulder-elbow span')
+        if side=='L' and shoulder[0]<.12:raise ValueError('Incorrect left arm sign')
+        if side=='R' and shoulder[0]>-.12:raise ValueError('Incorrect right arm sign')
+        segments[side]=(shoulder,axis,denom)
+    original_len=len(coords)
+    originals=[tuple(p)for p in coords]
+    def signed(p):
+        side='L' if p[0]>=0 else 'R'
+        shoulder,axis,denom=segments[side]
+        if abs(p[0])<abs(shoulder[0])-.035:return 1.0
+        t=sum((p[i]-shoulder[i])*axis[i] for i in range(3))/denom
+        return fraction-t
+    distance=[signed(p)for p in originals]
+    cache={}
+    clipped=[]
+    changed=0
+    by_side={'L':0,'R':0}
+    for face in faces:
+        if len(face)<3 or any(i<0 or i>=original_len for i in face):
+            raise ValueError('Invalid source garment face')
+        ds=[distance[i]for i in face]
+        if all(d>=0 for d in ds):
+            clipped.append(list(face));continue
+        if all(d<=0 for d in ds):
+            changed+=1;continue
+        polygon=[]
+        for k,a in enumerate(face):
+            b=face[(k+1)%len(face)]
+            da,db=distance[a],distance[b]
+            if da>=0:polygon.append(a)
+            if (da<0 and db>0) or (da>0 and db<0):
+                key=tuple(sorted((a,b)))
+                idx=cache.get(key)
+                if idx is None:
+                    alpha=da/(da-db)
+                    if not 0<alpha<1:raise ValueError('Invalid edge intersection')
+                    pos=[originals[a][j]+alpha*(originals[b][j]-originals[a][j])for j in range(3)]
+                    idx=len(coords);coords.append(pos);cache[key]=idx
+                    by_side['L' if pos[0]>=0 else 'R']+=1
+                polygon.append(idx)
+        clean=[]
+        for i in polygon:
+            if not clean or clean[-1]!=i:clean.append(i)
+        if len(clean)>1 and clean[0]==clean[-1]:clean.pop()
+        if len(set(clean))>=3:clipped.append(clean)
+        changed+=1
+    if any(by_side[s]<8 for s in ('L','R')):
+        raise ValueError('Insufficient new sleeve vertices for both arms')
+    edges=Counter()
+    for face in clipped:
+        for a,b in zip(face,face[1:]+face[:1]):
+            edges[tuple(sorted((a,b)))]+=1
+    cuffs=sorted((a,b)for (a,b),count in edges.items()
+                 if count==1 and a>=original_len and b>=original_len)
+    if len(cuffs)<12:raise ValueError('No connected source-derived sleeve cuff edges')
+    if any(tuple(coords[i])!=p for i,p in enumerate(originals)):
+        raise ValueError('Existing derived clothing shell vertices changed')
+    return clipped,cuffs,dict(
+        sleeveCutFraction=fraction,derivedFacesBefore=len(faces),
+        derivedFacesAfter=len(clipped),removedOrSplitFaces=changed,
+        newCuffVerticesBySide=by_side,newCuffBoundarySegments=len(cuffs),
+        originalShellVerticesUnchanged=True,upstreamBodyChanged=False,
+        independentFigureArtApproved=False)

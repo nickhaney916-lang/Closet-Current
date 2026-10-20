@@ -6,7 +6,8 @@ from mathutils import Vector
 from bpy_extras.object_utils import world_to_camera_view
 # Blender factory-startup does not always include the script directory.
 sys.path.insert(0,str(Path(__file__).resolve().parent))
-from figure_fabric_boundaries import flatten_lower_hem, smooth_upper_shell_rim, approved_front_binding_segments
+from figure_fabric_boundaries import flatten_lower_hem, smooth_upper_shell_rim, approved_front_binding_segments, cut_source_derived_sleeves
+from figure_material_regions import should_restore_exposed_arm_skin
 ROOT=Path(__file__).resolve().parents[1]
 args=sys.argv[sys.argv.index('--')+1:];source=Path(args[0]).resolve();output=Path(args[1]).resolve();quick='--quick'in args
 if not output.is_relative_to(ROOT/'artifacts'):raise ValueError('Only artifacts/ output allowed')
@@ -81,11 +82,16 @@ for kind in recipe['figures']:
  coords=[(p.x*scale,-p.z*scale,(p.y-low)*scale+recipe['soleHeight'])for p in v]
  mats=[material('skin',tuple(recipe['materials']['skin'])),material('neutral-base',tuple(recipe['materials']['baseClothing']),.95),material('hair-cap',tuple(recipe['materials']['hair'])),material('eye-white',tuple(recipe['materials']['eyeWhite']))]
  body=mesh(kind+'-adult-body',coords,faces,mats)
- # Modest procedural base garment surfaces; no textures copied or exposed nude renders.
+ # Preserve the ORIGINAL base clothing material selection first, because
+ # the derived sleeve shell relies on these selected body polygons. Removing
+ # arm material here would accidentally destroy the proper short sleeves.
  for polygon,face in zip(body.data.polygons,faces):
   c=sum((Vector(coords[i])for i in face),Vector())/len(face)
-  if(c.z<.92 and abs(c.x)<.26)or(.88<c.z<1.50 and abs(c.x)<.26):polygon.material_index=1
+  if(c.z<.92 and abs(c.x)<.26)or(.88<c.z<1.50 and abs(c.x)<.26):
+   polygon.material_index=1
   elif c.z>1.685:polygon.material_index=2
+ restored_skin_material_faces=0
+ arm_majority_restored=0
  # Original loose-front shirt shell suppresses source anatomical protrusions.
  cloth_faces=[face for p,face in zip(body.data.polygons,faces)if p.material_index==1 and .88<sum(coords[i][2]for i in face)/len(face)<1.5]
  cloth_coords=[list(p)for p in coords]
@@ -115,6 +121,50 @@ for kind in recipe['figures']:
  trim_data.materials.append(trim_mat)
  binding_evidence={'frontSegments':len(binding_segments),'bevelRadius':trim_data.bevel_depth,
    'unreviewedOriginalArt':True,'bodySourceVerticesChanged':False,'sourcePhotoChanged':False}
+ # Replace the unsightly jagged polygon-selection sleeve ends with two
+ # independent, true geometric cuff boundaries along the source-derived arm
+ # axes. Only the DERIVED gray shell is cut, never the original adult body.
+ def mean_joint(key):
+  ids=rig['joints'][key]
+  return tuple(sum((Vector(coords[i]) for i in ids),Vector())/len(ids))
+ arm_joints={
+  side:(mean_joint('upperarm01.'+side+'____head'),
+        mean_joint('lowerarm01.'+side+'____head'))
+  for side in ['L','R']
+ }
+ # The source-derived shirt faces are now captured above. Repair only
+ # exposed original body material BEYOND the new 76%-upper-arm cuff plane.
+ # Never restore shoulder/upper-sleeve skin under the generated clothing.
+ arm_ids={i for bone,entries in weights.items()
+          if bone.startswith(('upperarm','lowerarm','wrist','finger','metacarpal'))
+          for i,w in entries if w>.35}
+ for polygon,face in zip(body.data.polygons,faces):
+  if polygon.material_index!=1:continue
+  face_center=sum((Vector(coords[i])for i in face),Vector())/len(face)
+  side='L' if face_center.x>=0 else 'R'
+  shoulder,elbow=arm_joints[side]
+  axis=Vector(elbow)-Vector(shoulder)
+  progress=(face_center-Vector(shoulder)).dot(axis)/axis.length_squared
+  arm_votes=sum(i in arm_ids for i in face)
+  if should_restore_exposed_arm_skin(True,arm_votes,len(face),progress):
+   polygon.material_index=0
+   restored_skin_material_faces+=1
+   arm_majority_restored+=1
+ cloth_faces,cuff_edges,sleeve_evidence=cut_source_derived_sleeves(
+  cloth_coords,cloth_faces,arm_joints)
+ cuff_curve=bpy.data.curves.new(kind+'-genuine-sleeve-cut-edges','CURVE')
+ cuff_curve.dimensions='3D';cuff_curve.bevel_depth=.0021;cuff_curve.bevel_resolution=3
+ cuff_curve.resolution_u=2
+ for a,b in cuff_edges:
+  spline=cuff_curve.splines.new('POLY');spline.points.add(1)
+  for p,idx in zip(spline.points,(a,b)):
+   v=cloth_coords[idx]
+   p.co=(v[0],v[1]+(-.0025 if v[1]<0 else .0025),v[2],1)
+ cuff_object=bpy.data.objects.new(kind+'-actual-short-sleeve-cuff-seam',cuff_curve)
+ bpy.context.collection.objects.link(cuff_object)
+ cuff_curve.materials.append(material('neutral-sleeve-cuff-binding',(.285,.305,.325,1),.94))
+ sleeve_evidence['cuffBevelRadius']=cuff_curve.bevel_depth
+ sleeve_evidence['cuffCurveOriginalArt']=True
  cloth=mesh(kind+'-neutral-base-shell',cloth_coords,cloth_faces,[mats[1]])
  solid=cloth.modifiers.new('modest cloth offset','SOLIDIFY');solid.thickness=.008;solid.offset=1
  # Original, low-profile shoes: smooth toe/instep/heel sections with a
@@ -198,7 +248,7 @@ for kind in recipe['figures']:
  # Waist diagnostic source joint, not an approved placement anchor.
  anchors['lowerSpineJoint']=joints['spine04____head']
  record={'id':kind,'sourceRevision':lock['revision'],'ageTarget':'young-adult-approximately-25','bodyScale':scale,'sourceBodyVertices':len(ids),'bodyFaces':len(faces),
-  'legPoseMaxMotion':leg_motion,'derivedClothingHem':hem_diagnostics,'derivedClothingUpperRim':upper_rim_diagnostics,'derivedClothingBinding':binding_evidence,'footwearGeometry':'procedural-rounded-upper-contoured-outsole-three-laces-per-shoe','shoeUpperCount':shoe_count,'shoeOutsoleCount':shoe_count,'shoeLaceStrokeCount':lace_count,'blockPrimitiveFootwear':False,'renderWidth':scene.render.resolution_x,'renderHeight':scene.render.resolution_y,'samples':scene.cycles.samples,'nativeSceneRender':True,'resizedFromPreview':False,
+  'legPoseMaxMotion':leg_motion,'derivedClothingHem':hem_diagnostics,'derivedClothingUpperRim':upper_rim_diagnostics,'derivedClothingBinding':binding_evidence,'derivedShortSleeveCut':sleeve_evidence,'skinMaterialCorrection':{'restoredFaces':restored_skin_material_faces,'restoredArmMajorityFaces':arm_majority_restored,'clothFacesSelectedBeforeBodyMaterialRepair':True,'onlyDistalRigApprovedSkin':True,'upstreamBodyTopologyChanged':False},'footwearGeometry':'procedural-rounded-upper-contoured-outsole-three-laces-per-shoe','shoeUpperCount':shoe_count,'shoeOutsoleCount':shoe_count,'shoeLaceStrokeCount':lace_count,'blockPrimitiveFootwear':False,'renderWidth':scene.render.resolution_x,'renderHeight':scene.render.resolution_y,'samples':scene.cycles.samples,'nativeSceneRender':True,'resizedFromPreview':False,
   'projectedSourceJoints':{k:project(p)for k,p in anchors.items()},'jointApproval':False,'visualApproved':False,'commercialProductApproval':False,'sourceBounds':[low,high]}
  scene.render.filepath=str(output/(kind+'-master.png'));bpy.ops.wm.save_as_mainfile(filepath=str(output/(kind+'.blend')),compress=True);bpy.ops.render.render(write_still=True)
  record['sceneSha256']=hashlib.sha256((output/(kind+'.blend')).read_bytes()).hexdigest()

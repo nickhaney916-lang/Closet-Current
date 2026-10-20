@@ -1,7 +1,7 @@
 name: Local fixed figure creation evidence
 on:
   push:
-    branches: [feature/local-fixed-figure-creation-20261019, feature/rounded-original-figure-footwear-20261019, feature/smooth-original-figure-garment-hems-20261019, feature/neutral-figure-upper-rim-smoothing-20261019, feature/figure-collar-binding-responsive-assets-20261019]
+    branches: [feature/local-fixed-figure-creation-20261019, feature/rounded-original-figure-footwear-20261019, feature/smooth-original-figure-garment-hems-20261019, feature/neutral-figure-upper-rim-smoothing-20261019, feature/figure-collar-binding-responsive-assets-20261019, feature/derived-sleeve-topology-cuffs-20261019]
   workflow_dispatch:
 permissions:
   contents: read
@@ -47,7 +47,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: locally-created-two-figure-responsive-collar-candidates
+          name: locally-created-two-figure-true-sleeve-cuffs
           path: |
             artifacts/figure-creation/native/
             artifacts/figure-creation/delivery/
