@@ -1,7 +1,7 @@
 name: Verified real-photo mask evidence
 on:
   push:
-    branches: [feature/source-guided-mask-boundaries-20261019, benchmark/verified-mask-evidence-20261019]
+    branches: [feature/source-guided-mask-boundaries-20261019, benchmark/verified-mask-evidence-20261019, benchmark/twelve-photo-independent-outline-packet-20261020]
   workflow_dispatch:
 permissions:
   contents: read
@@ -34,6 +34,36 @@ jobs:
           node scripts/report-verified-mask-evidence.mjs
           cmp /tmp/first-mask-results.json artifacts/verified-mask-evidence/results.json
           cmp /tmp/first-boundary-results.json artifacts/source-guided-boundaries/results.json
+      - name: Stage human model-blind twelve-photo review materials (no approvals)
+        run: |
+          python scripts/stage-independent-twelve-mask-review.py
+          python -m unittest discover -s tests -p 'test_independent_twelve_review_packet.py' -v
+          cp artifacts/independent-mask-review/REVIEW-STATUS.json /tmp/mask-review-packet-first.json
+          python scripts/stage-independent-twelve-mask-review.py
+          cmp /tmp/mask-review-packet-first.json artifacts/independent-mask-review/REVIEW-STATUS.json
+          node --input-type=module -e "
+            import fs from 'node:fs';
+            const p='artifacts/independent-mask-review/';
+            const report=JSON.parse(fs.readFileSync(p+'REVIEW-STATUS.json','utf8'));
+            const blind=JSON.parse(fs.readFileSync(p+'BLIND-FIRST-SOURCES.json','utf8'));
+            if(report.actualLicensedOriginalHashesVerified!==12 ||
+               report.independentlyReviewedFullSizeReferenceMasks!==0 ||
+               report.humanReviewerOneCompleted!==0 ||
+               report.humanReviewerTwoApproved!==0 ||
+               report.productionAuthorized!==false ||
+               report.currentEditorOutputsExactOriginalGrid!==false ||
+               blind.sourceOriginals.length!==12 ||
+               blind.modelPredictionsIncluded!==0 ||
+               blind.manifestCategoryLabelsIncluded!==0)
+              throw Error('Offline review packet is not genuinely blind or incorrectly approved');
+            console.log('Verified 12 original-source human review work items, 0 independent approvals');
+          "
+      - uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: twelve-source-original-mask-human-review-packet
+          path: artifacts/independent-mask-review/
+          retention-days: 90
       - uses: actions/upload-artifact@v4
         if: always()
         with:
