@@ -93,4 +93,4 @@
  window.addEventListener('pageshow',event=>{if(event.persisted&&db&&window.closetAuth?.user?.id===user){generation++;activeSync=null;enabled=true;sync();}});
  window.addEventListener('online',()=>sync());window.addEventListener('focus',()=>sync());setInterval(()=>sync(),60000);
  window.addEventListener('pagehide',()=>{generation++;clearTimeout(timer);activeSync=null;enabled=false;});
-})()
+})();
