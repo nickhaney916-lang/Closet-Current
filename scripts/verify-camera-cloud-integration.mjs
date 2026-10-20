@@ -44,6 +44,15 @@ const indexStart=currentBuilder.indexOf(start),indexEnd=currentBuilder.indexOf('
 assert.ok(indexStart>=0&&indexEnd>indexStart,'Missing exact-version audit build declaration');
 assert.equal(currentBuilder.slice(0,indexStart)+currentBuilder.slice(indexEnd+1),originalBuilder,
  'Non-audit build logic changed after approved integration');
+const reviewScript='scripts/check-dual-parent-review-integration.mjs';
+const originalReviewScript=oldFile(reviewScript);
+const currentReviewScript=fs.readFileSync(reviewScript,'utf8');
+const reviewAddedBegin=" if(p==='public/index.html'){";
+const reviewAddedEnd=" if(p==='public/app.js'){";
+const reviewStart=currentReviewScript.indexOf(reviewAddedBegin),reviewEnd=currentReviewScript.indexOf(reviewAddedEnd,reviewStart);
+assert.ok(reviewStart>=0&&reviewEnd>reviewStart,'Missing independently bounded original-review link gate');
+assert.equal(currentReviewScript.slice(0,reviewStart)+currentReviewScript.slice(reviewEnd),originalReviewScript,
+ 'Original two-human review gate changed outside one byte-exact page-link exception');
 const allowedNew=new Set([
  'scripts/verify-camera-cloud-integration.mjs',
  '.github/workflows/integrated-camera-cloud-release-qa.yml',
@@ -61,7 +70,7 @@ const allowedNew=new Set([
 ]);
 for(const p of new Set([...m.keys(),...head.keys()])){
  if(m.get(p)!==head.get(p)){
-  if(p==='public/index.html'||p==='scripts/build.mjs')continue;
+  if(p==='public/index.html'||p==='scripts/build.mjs'||p===reviewScript)continue;
   assert.ok(allowedNew.has(p)&&!m.has(p),'Unreviewed change after merge: '+p);
  }
 }
