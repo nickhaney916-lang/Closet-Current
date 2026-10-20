@@ -73,5 +73,17 @@ for(const figure of report.figures){
  assert.equal(sleeve.cuffCurveOriginalArt,true);
  assert.ok(sleeve.cuffBevelRadius>0&&sleeve.cuffBevelRadius<=.003);
 }
+for(const figure of report.figures){
+ const head=figure.originalFaceHairDetail;
+ assert.ok(head&&head.eyebrowCurves===2&&head.sourceUpperEyelidCurves===2,
+  'exactly two source-aligned eyebrows and eyelids per adult');
+ assert.ok(head.sourceScalpFibers>=20&&head.sourceScalpFibers<=30);
+ assert.equal(head.sourceSideHairLocks,figure.id==='female'?16:0);
+ assert.equal(head.boundedOriginalProceduralArt,true);
+ for(const field of ['sourceBodyVerticesChanged','eyeSourceGeometryChanged',
+  'externalHairOrFaceAssetsUsed','independentVisualApproval','photorealismProven']){
+  assert.equal(head[field],false,'no production/art/asset inference permitted: '+field);
+ }
+}
 assert.deepEqual(report.summary,{fixedCharacters:2,native1941x3597Renders:2,minimum1294x2398Derivatives:2,productionApproved:0,independentVisualApprovals:0,physicalPhones:0,customerImagesUsed:0,externalInferenceCalls:0});
 console.log('CREATED_FIGURE_GATE '+JSON.stringify(checkCreatedPacket(report)));
