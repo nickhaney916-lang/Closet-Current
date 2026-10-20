@@ -20,8 +20,8 @@ button.secondary{background:white;color:#3448aa}button:disabled{opacity:.55;curs
 <p><a href="./">← Back to Closet Current</a></p><h1>Check what was actually saved</h1>
 <p>This optional pilot worksheet measures a clothing result <strong>after it reaches My closet</strong>, not just an AI suggestion. Test only garments you own and have permission to photograph. Never enter names, emails, filenames, face photos or account IDs.</p>
 <div class="panel"><h2>Start a private phone session</h2>
-<p class="hint">Get the 12-character app build from your downloaded Device help report. Use the same build for both devices. These are your reported observations; a checked result does not certify actual hardware.</p>
-<div class="columns"><div class="field"><label for="build">App build (12 hex characters)</label><input id="build" required pattern="[a-f0-9]{12}" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="abc123abc123" maxlength="12"></div>
+<p class="hint">This worksheet automatically uses the app build that served this page. Compare it to your Device help report; both devices must run the same build. These are your reported observations; a checked result does not certify actual hardware.</p>
+<div class="columns"><div class="field"><label for="build">App build (12 hex characters)</label><input id="build" required pattern="[a-f0-9]{12}" autocomplete="off" autocapitalize="off" spellcheck="false" value="__RELEASE__" maxlength="12" readonly aria-readonly="true"></div>
 <div class="field"><label for="platform">Phone type</label><select id="platform"><option value="Android">Android</option><option value="iPhone/iPad">iPhone / iPad</option></select></div></div>
 <p class="hint">One report covers up to 20 garments. Export each session before leaving this page; entries exist only in this tab and are not sent to Closet Current.</p></div>
 <div class="panel"><h2>1. Label the actual garment first</h2>
