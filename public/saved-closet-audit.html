@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Closet Current · Saved closet phone audit</title>
+<style>
+:root{font-family:system-ui,-apple-system,Segoe UI,sans-serif;color-scheme:light;color:#202638;background:#f7f8fc}
+*{box-sizing:border-box}body{margin:0}main{width:min(780px,100%);margin:0 auto;padding:18px 16px 48px}
+h1{font-size:clamp(1.55rem,5vw,2.1rem);margin:12px 0 6px}h2{font-size:1.15rem}p{line-height:1.5}
+a{color:#3448aa}.hint{color:#526078;font-size:.92rem}.panel{background:white;border:1px solid #d9dfe9;border-radius:18px;padding:18px;margin:14px 0;box-shadow:0 4px 18px #161f350a}
+label{display:block;font-weight:650;margin:12px 0 6px}select,input,button{font:inherit;min-height:48px;border-radius:12px}
+select,input{display:block;width:100%;padding:10px;border:1px solid #8794ae;background:#fff;color:#202638}
+button{border:1px solid #3448aa;padding:10px 17px;cursor:pointer;background:#3448aa;color:white;font-weight:650}
+button.secondary{background:white;color:#3448aa}button:disabled{opacity:.55;cursor:not-allowed}
+.columns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.field{min-width:0}fieldset{padding:0;margin:10px 0;border:0}legend{font-size:1.06rem;font-weight:700}
+#notice{font-weight:600;min-height:1.5rem}#log{padding-left:22px}#log li{padding:8px 0;border-bottom:1px solid #e0e4ec}#count{font-weight:700}
+.small{font-size:.85rem}button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid #fcbb58;outline-offset:2px}
+@media(max-width:380px){.columns{grid-template-columns:1fr}}
+</style></head>
+<body><main>
+<p><a href="./">← Back to Closet Current</a></p><h1>Check what was actually saved</h1>
+<p>This optional pilot worksheet measures a clothing result <strong>after it reaches My closet</strong>, not just an AI suggestion. Test only garments you own and have permission to photograph. Never enter names, emails, filenames, face photos or account IDs.</p>
+<div class="panel"><h2>Start a private phone session</h2>
+<p class="hint">Get the 12-character app build from your downloaded Device help report. Use the same build for both devices. These are your reported observations; a checked result does not certify actual hardware.</p>
+<div class="columns"><div class="field"><label for="build">App build (12 hex characters)</label><input id="build" required pattern="[a-f0-9]{12}" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="abc123abc123" maxlength="12"></div>
+<div class="field"><label for="platform">Phone type</label><select id="platform"><option value="Android">Android</option><option value="iPhone/iPad">iPhone / iPad</option></select></div></div>
+<p class="hint">One report covers up to 20 garments. Export each session before leaving this page; entries exist only in this tab and are not sent to Closet Current.</p></div>
+<div class="panel"><h2>1. Label the actual garment first</h2>
+<p class="hint">Look at the original clothing before using recognition. Lock the expected details before examining the app suggestion.</p>
+<div id="expectedInputs"><div class="columns"><div class="field"><label for="expectedCategory">Actual category</label><select id="expectedCategory"></select></div><div class="field"><label for="expectedType">Actual type</label><select id="expectedType"></select></div></div>
+<label for="expectedColor">Actual primary fabric color</label><select id="expectedColor"></select>
+<label for="source">Photo source</label><select id="source"><option value="camera">Camera</option><option value="import">Imported photo</option></select></div>
+<p><button id="lockExpected" type="button">Lock original labels</button></p>
+<p id="lockedSummary" class="hint" aria-live="polite"></p></div>
+<div id="resultsPanel" class="panel" hidden><h2>2. Check recognition and final saved item</h2>
+<p class="hint">Record the first automatic suggestion, even if it was wrong. Then check My closet after saving or correction. Choose Held or Failed if nothing was saved.</p>
+<fieldset><legend>Initial proposed classification</legend><div class="columns"><div class="field"><label for="proposedCategory">Proposed category</label><select id="proposedCategory"></select></div><div class="field"><label for="proposedType">Proposed type</label><select id="proposedType"></select></div></div>
+<label for="proposedColor">Proposed color</label><select id="proposedColor"></select></fieldset>
+<label for="disposition">What happened?</label><select id="disposition"><option value="saved-auto">Saved automatically, without correction</option><option value="saved-corrected">Saved after correcting details</option><option value="held">Held for review; not saved</option><option value="failed">Processing or save failed; not saved</option></select>
+<fieldset id="savedFields"><legend>Actual details in My closet</legend><div class="columns"><div class="field"><label for="savedCategory">Saved category</label><select id="savedCategory"></select></div><div class="field"><label for="savedType">Saved type</label><select id="savedType"></select></div></div>
+<label for="savedColor">Saved color</label><select id="savedColor"></select>
+<label for="quality">Saved photo clarity</label><select id="quality"><option value="clear">Clear</option><option value="soft">Soft / blurry</option><option value="pixelated">Pixelated</option></select>
+<label for="backup">Restored after closing/reopening or changing device?</label><select id="backup"><option value="not-tested">Not tested</option><option value="restored">Yes, confirmed restored</option><option value="pending">Still pending</option><option value="failed">Failed or missing after restore</option></select></fieldset>
+<p><button id="saveRow" type="button">Add checked garment</button> <button id="unlockExpected" class="secondary" type="button">Cancel entry</button></p>
+</div>
+<div class="panel"><h2>3. Export your private findings</h2><p id="count" aria-live="polite">0 garments recorded</p>
+<ol id="log"></ol>
+<button id="downloadReport" type="button">Download anonymous report</button>
+<button id="clearSession" class="secondary" type="button">Clear this session</button>
+<p id="notice" role="status" aria-live="polite"></p>
+<p class="hint small">Your report contains only standardized clothing categories, fabric-color labels and outcome counts. No image data or wardrobe identifiers. Do not upload raw customer photos or device exports to GitHub. A complete report cannot authorize production.</p></div>
+</main><script src="saved-closet-audit-engine.js"></script><script src="saved-closet-audit.js"></script></body></html>
