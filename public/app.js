@@ -506,7 +506,67 @@ async function drainAutomatic(){
 }
 let manualStillShot=null;
 let cameraStartAttempt=null;
+let cameraPreviewWatch=null;
+function stopCameraPreviewWatch(){
+ const watch=cameraPreviewWatch;cameraPreviewWatch=null;
+ if(!watch)return;
+ clearInterval(watch.timer);
+ if(watch.frameId!=null&&typeof video.cancelVideoFrameCallback==='function'){
+  try{video.cancelVideoFrameCallback(watch.frameId);}catch{}
+ }
+}
+function cameraPreviewHealth(now=Date.now()){
+ const track=stream?.getVideoTracks?.()[0];
+ if(!track||track.readyState==='ended'||track.muted===true)
+  return {live:false,reason:'Camera preview stopped delivering video. Your saved photos are safe. Restart the camera or choose an imported photo.'};
+ const watch=cameraPreviewWatch;
+ if(!watch||watch.request!==cameraRequest||watch.stream!==stream)return {live:true};
+ if(typeof document!=='undefined'&&document.visibilityState==='hidden')return {live:true};
+ if(watch.mode==='playback-clock'&&Number.isFinite(video.currentTime)){
+  if(video.currentTime>watch.lastMediaTime+.001){
+   watch.lastMediaTime=video.currentTime;watch.lastFrame=now;
+  }else if(video.currentTime<watch.lastMediaTime-.05){
+   // Camera tracks can reset playback clock during brief browser resume.
+   watch.lastMediaTime=video.currentTime;watch.lastFrame=now;
+  }
+ }
+ // Only a genuine frame callback or advancing playback clock proves new
+ // frames: unchanged fabric pixels are not evidence of a frozen camera.
+ if(watch.mode!=='unobservable'&&now-watch.lastFrame>4500)
+  return {live:false,reason:'Camera preview froze. Your photos are still saved. Restart the camera or import a photo.'};
+ return {live:true};
+}
+function monitorCameraPreview(acquired,request){
+ stopCameraPreviewWatch();
+ const watch={stream:acquired,request,lastFrame:Date.now(),frameId:null,timer:null,
+  lastMediaTime:Number.isFinite(video.currentTime)?video.currentTime:null,
+  mode:typeof video.requestVideoFrameCallback==='function'?'video-frame':
+   Number.isFinite(video.currentTime)?'playback-clock':'unobservable'};
+ cameraPreviewWatch=watch;
+ if(watch.mode==='video-frame'){
+  const onFrame=()=>{
+   if(cameraPreviewWatch!==watch||cameraRequest!==request||stream!==acquired)return;
+   watch.lastFrame=Date.now();
+   watch.frameId=video.requestVideoFrameCallback(onFrame);
+  };
+  try{watch.frameId=video.requestVideoFrameCallback(onFrame);}
+  catch{watch.mode=Number.isFinite(video.currentTime)?'playback-clock':'unobservable';}
+ }
+ watch.timer=setInterval(()=>{
+  if(cameraPreviewWatch!==watch||cameraRequest!==request||stream!==acquired)return;
+  if(typeof document!=='undefined'&&document.visibilityState==='hidden'){
+   // Backgrounded phone tabs frequently suspend video and callback delivery.
+   watch.lastFrame=Date.now();
+   if(Number.isFinite(video.currentTime))watch.lastMediaTime=video.currentTime;
+   return;
+  }
+  const health=cameraPreviewHealth();
+  if(health.live)return;
+  stopCamera();message(health.reason);
+ },1000);
+}
 function stopCamera(){
+ stopCameraPreviewWatch();
  const opening=cameraStartAttempt;cameraStartAttempt=null;
  if(opening){opening.cancel();busy=false;}
  cameraRequest++;cameraOpening=false;manualStillShot=null;$('takePhoto').disabled=false;$('stop').disabled=false;clearInterval(timer);timer=null;
@@ -518,7 +578,7 @@ function stopCamera(){
 function controls(disabled){for(const id of ['start','startAuto','upload','interval','clothingPhotos','outfitCamera','outfitUpload','outfitRetry','captureSingle','captureOutfit'])$(id).disabled=disabled;}
 function finishScan(){
  const wasManual=cameraMode==='manual';
- if(!wasManual&&stream&&session===0&&video.readyState>=2&&video.videoWidth){try{if(cameraFrameQuality().usable)candidate(snap());}catch{}}
+ if(!wasManual&&stream&&session===0&&video.readyState>=2&&video.videoWidth&&cameraPreviewHealth().live){try{if(cameraFrameQuality().usable)candidate(snap());}catch{}}
  stopCamera();
  if(batch.length){message('');switchView('review');}
  else if(session>0){message('');switchView('review');}
@@ -526,6 +586,8 @@ function finishScan(){
 }
 function captureTick(now=Date.now()){
  if(!stream||cameraMode!=='auto')return;
+ const health=cameraPreviewHealth(now);
+ if(!health.live){$('captureState').textContent='Camera preview unavailable · restart to continue';return;}
  const ready=video.readyState>=2&&video.videoWidth>0;
  if(!cadence.due(now,ready)){
   if(!ready)$('captureState').textContent='Waiting for camera images…';
@@ -538,15 +600,19 @@ function captureTick(now=Date.now()){
 }
 function takePhoto(){
  if(!stream||cameraMode!=='manual'||manualStillShot)return;
+ const health=cameraPreviewHealth();
+ if(!health.live){message(health.reason);$('captureState').textContent='Camera preview unavailable · restart to continue';return;}
  const activeStream=stream,activeRequest=cameraRequest;
  const active=()=>stream===activeStream&&cameraRequest===activeRequest&&cameraMode==='manual';
  const saveCaptured=image=>{
   if(!active())return;
+  if(!cameraPreviewHealth().live)return;
   candidate(image);beep();$('captureState').textContent=`${session} photos taken · ready for the next piece`;
   if(session>=60){finishScan();message('60 photos collected. Review this batch before continuing.');}
  };
  const fallback=()=>{
   if(!active())return;
+  if(!cameraPreviewHealth().live){message('Camera preview is unavailable. Restart the camera before taking more photos.');return;}
   try{saveCaptured(snap());}
   catch{message(video.readyState<2||!video.videoWidth?'The camera is still getting ready. Wait a moment, then tap Take photo again.':'Could not prepare this camera photo. Try brighter light, take another photo, or choose a saved photo.');}
  };
@@ -627,6 +693,7 @@ async function startCamera(mode){
   if(!current())return;
   session=0;$('sessionCount').textContent='0';$('lastCaptureImage').hidden=true;
   cameraOpening=false;$('cameraChoices').hidden=true;$('cameraActions').hidden=false;$('takePhoto').hidden=mode!=='manual';
+  monitorCameraPreview(acquired,request);
   if(mode==='auto'){
    cadence=new CaptureCadence(Number($('interval').value)*1000,Date.now());
    timer=setInterval(()=>captureTick(),250);captureTick();
