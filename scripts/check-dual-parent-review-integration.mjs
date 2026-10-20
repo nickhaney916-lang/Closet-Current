@@ -17,6 +17,31 @@ const tree=(sha)=>new Map(execFileSync('git',['ls-tree','-r','-z',sha])
  return [path,{mode,type,sha:object}];
  }));
 const c=tree(customer),h=tree(human),a=tree(ancestor),now=tree('HEAD');
+// Follow-on camera work may change capture/encoding only, while every other
+// app byte (including recognition, indexing and source selection) remains bound
+// to the customer parent. Checkpoint additions must retain all prior history.
+function assertCustomerPreserved(p){
+ if(p==='docs/PROGRESS-CHECKPOINT.md'){
+  assert.ok(fs.readFileSync(p,'utf8').endsWith(execFileSync('git',['show',customer+':'+p],{encoding:'utf8',maxBuffer:5_000_000})),
+   'Checkpoint history must remain intact');
+  return;
+ }
+ if(p==='public/app.js'){
+  const normalize=s=>{
+   for(const [begin,end] of [['function snap(','function beep('],['function takePhoto(){','async function startCamera(']]){
+    const a=s.indexOf(begin),b=s.indexOf(end,a);
+    assert.ok(a>=0&&b>a,'Missing camera section boundary');
+    s=s.slice(0,a)+'/* bounded native camera section */\n'+s.slice(b);
+   }
+   return s;
+  };
+  assert.equal(normalize(fs.readFileSync(p,'utf8')),
+   normalize(execFileSync('git',['show',customer+':'+p],{encoding:'utf8',maxBuffer:5_000_000})),
+   'Non-camera app bytes changed, including original-photo recognition/indexing');
+  return;
+ }
+ assert.equal(now.get(p)?.sha,c.get(p)?.sha,'Customer file accidentally replaced with older review version: '+p);
+}
 const transplanted=[],conflicts=[],identical=[];
 for(const [p,hv] of h){
  if(hv.sha===a.get(p)?.sha)continue;
@@ -28,7 +53,7 @@ for(const [p,hv] of h){
   assert.equal(now.get(p)?.sha,hv.sha,'Already matching shared file was rewritten: '+p);
   identical.push(p);
  }else{
-  assert.equal(now.get(p)?.sha,cv?.sha,'Customer file accidentally replaced with older review version: '+p);
+  assertCustomerPreserved(p);
   conflicts.push(p);
  }
 }
@@ -44,7 +69,8 @@ for(const file of ['benchmark/annotate-garment-native.html',
  'benchmark/verified-mask-quality.mjs','scripts/preflight-human-review-handoff.mjs']){
  assert.ok(transplanted.includes(file));
 }
-assert.equal(now.get('public/app.js')?.sha,c.get('public/app.js')?.sha);
+assert.equal(tree(merge).get('public/app.js')?.sha,c.get('public/app.js')?.sha);
+assertCustomerPreserved('public/app.js');
 const originalMerge=tree(merge);
 // Check the byte-exact original human/customer integration BEFORE approved
 // follow-on feature commits. A later isolated local fitting safety fix is
