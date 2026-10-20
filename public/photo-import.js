@@ -2,11 +2,19 @@
 async function photoToJPEG(file,{maxDimension=2048,quality=.94}={}){
  const url=URL.createObjectURL(file);
  try{
-  const image=new Image();image.src=url;await image.decode();
+  const image=new Image();image.src=url;
+  // HEIC or damaged device imports can have an unresolved decoder promise.
+  // Bound each file independently so later photos in the batch still run.
+  let timer;
+  try{await Promise.race([image.decode(),new Promise((_,reject)=>{
+   timer=setTimeout(()=>reject(Error('Photo decoding timed out.')),15000);
+  })]);}finally{clearTimeout(timer);}
   if(!image.width||!image.height)throw Error('No image content');
   const scale=Math.min(1,maxDimension/Math.max(image.width,image.height)),canvas=document.createElement('canvas');
   canvas.width=Math.max(1,Math.round(image.width*scale));canvas.height=Math.max(1,Math.round(image.height*scale));
-  const context=canvas.getContext('2d');context.fillStyle='#ffffff';context.fillRect(0,0,canvas.width,canvas.height);context.drawImage(image,0,0,canvas.width,canvas.height);
+  const context=canvas.getContext('2d');
+  if(!context)throw Error('Unable to prepare this image.');
+  context.fillStyle='#ffffff';context.fillRect(0,0,canvas.width,canvas.height);context.drawImage(image,0,0,canvas.width,canvas.height);
   return canvas.toDataURL('image/jpeg',quality);
  }finally{URL.revokeObjectURL(url);}
 }
@@ -15,7 +23,14 @@ async function readPhotoBatch(files,decode,onPhoto){
  for(const file of files){
   let reason=null;
   if(file.size>10*1024*1024)reason='larger than 10 MB';
-  else if(!file.type.startsWith('image/')&&!/\\.(jpe?g|png|webp|avif|heic|heif)$/i.test(file.name))reason='not an image';
+  else{
+   // iOS share sheets and exported pictures sometimes supply an empty MIME.
+   // Decode is still authoritative: a renamed non-image must not be added.
+   const mime=typeof file.type==='string'?file.type.toLowerCase():'';
+   const extension=/\.(?:jpe?g|png|webp|avif|heic|heif)$/i.test(file.name||'');
+   if(!mime.startsWith('image/')&&!(extension&&(!mime||mime==='application/octet-stream')))
+    reason='not an image';
+  }
   if(reason){errors.push(file.name+': '+reason);results.push({name:file.name,status:'rejected',reason});continue;}
   try{
    const image=await decode(file),accepted=await onPhoto(image,file);
