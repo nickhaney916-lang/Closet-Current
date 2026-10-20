@@ -1,0 +1,47 @@
+name: Real-source garment contamination and figure alignment QA
+on:
+  push:
+    branches: [fix/local-transparent-mannequin-contamination-20261020]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-fidelity-gates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build offline Closet Current and verify no real-photo originals change
+        run: node scripts/build.mjs
+      - name: Run all application and preview/unit suites
+        run: node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Refuse fabricated human-mask and production-figure approvals
+        run: node scripts/check-customer-pilot-release-gates.mjs
+      - name: Install Chromium and WebKit
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium webkit
+      - name: Verify neutral mannequin attachments are held before both figure previews
+        run: node scripts/test-transparent-neck-figure-browsers.mjs
+      - name: Repeat existing native transparent resolution, figure and actual licensed-photo hold checks
+        run: |
+          node scripts/test-local-retina-cutout-browsers.mjs
+          node scripts/test-reusable-figure-phone-browsers.mjs
+      - name: Repeat original first Style My New Clothes Android and iPhone journeys
+        run: |
+          node scripts/test-style-my-new-item-mobile.mjs
+          STYLE_BROWSER=webkit node scripts/test-style-my-new-item-mobile.mjs
+      - name: Confirm real-photo human mask quality is still unverified
+        run: node scripts/check-customer-pilot-release-gates.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: garment-source-figures-and-manikin-qa
+          path: |
+            artifacts/local-fitting/
+            artifacts/style-new-clothes/
+          if-no-files-found: warn
+          retention-days: 14
