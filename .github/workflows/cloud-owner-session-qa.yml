@@ -30,6 +30,15 @@ jobs:
           npx playwright install --with-deps chromium webkit
       - name: Verify cross-account stalled cloud response in real browser IndexedDB
         run: node scripts/test-cloud-session-generation-browsers.mjs
+      - name: Prepare approved licensed photo used by existing private cloud recovery simulation
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos commons-0002
+          mkdir -p benchmark/cloud-backup
+          cp benchmark/locked-photo-sources.json benchmark/cloud-backup/
+      - name: Run full multi-device private closet migration, conflict and image-integrity flow
+        run: node scripts/run-cloud-backup-flow.mjs benchmark/cloud-backup
       - name: Recheck private auth and owned-outfit customer flow
         run: |
           node scripts/test-auth-pilot-mobile.mjs
