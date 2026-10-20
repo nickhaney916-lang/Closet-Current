@@ -1,0 +1,51 @@
+name: Private end-to-end phone pilot release evidence rehearsal
+on:
+  push:
+    branches: [pilot/private-end-to-end-release-evidence-20261020]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  private-pilot-no-go:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build customer camera, offline recognition and owned-clothing styling
+        run: node scripts/build.mjs
+      - name: Run complete suite including actual report consistency and no-go evidence
+        run: node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Prove first and second mask reviewers plus customer branch stay intact
+        run: |
+          node scripts/check-dual-parent-review-integration.mjs
+          node scripts/check-customer-pilot-release-gates.mjs
+      - name: Install free Chromium and WebKit emulators
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium webkit
+      - name: Verify privately pre-labeled color testing and no photo export
+        run: node scripts/test-phone-color-audit-browsers.mjs
+      - name: Verify all 17 owner-operated device checklist controls on both simulated phones
+        run: node scripts/test-device-check-phone-browsers.mjs
+      - name: Verify login session expiry, retry, account isolation and privacy notice
+        run: node scripts/test-auth-pilot-mobile.mjs
+      - name: Verify full owned-clothing new-garment outfits saved and restored on both engines
+        run: |
+          node scripts/test-style-my-new-item-mobile.mjs
+          STYLE_BROWSER=webkit node scripts/test-style-my-new-item-mobile.mjs
+      - name: Prove staged reports never authorize real hardware or production
+        run: |
+          node --test tests/private-end-to-end-pilot-review.test.mjs tests/private-end-to-end-pilot-cli.test.mjs
+          node scripts/check-customer-pilot-release-gates.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: synthetic-phone-pilot-rehearsal-no-customer-photos
+          path: artifacts/phone-color-audit/
+          if-no-files-found: warn
+          retention-days: 7

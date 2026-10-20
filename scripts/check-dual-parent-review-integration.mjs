@@ -2,6 +2,7 @@
 // Verify the actual dual-parent merge, not a PR description claiming files merged.
 import {execFileSync} from 'node:child_process';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 const git=(...a)=>execFileSync('git',a,{encoding:'utf8',maxBuffer:5_000_000}).trim();
 const merge='b8adbe5beb1a31593b61af8a4fdd5d0028b3665b';
 const customer='36d55cccb782d012885d7fd970804826b9262208';
@@ -44,8 +45,23 @@ for(const file of ['benchmark/annotate-garment-native.html',
  assert.ok(transplanted.includes(file));
 }
 assert.equal(now.get('public/app.js')?.sha,c.get('public/app.js')?.sha);
-assert.equal(now.get('public/reusable-figure-preview.js')?.sha,c.get('public/reusable-figure-preview.js')?.sha);
+const originalMerge=tree(merge);
+// Check the byte-exact original human/customer integration BEFORE approved
+// follow-on feature commits. A later isolated local fitting safety fix is
+// permitted, but not allowed to rewrite the PR #83 merge history or humans.
+assert.equal(originalMerge.get('public/reusable-figure-preview.js')?.sha,
+ c.get('public/reusable-figure-preview.js')?.sha);
+const localPreviewSource=fs.readFileSync('public/reusable-figure-preview.js','utf8');
+const previewModified=now.get('public/reusable-figure-preview.js')?.sha!==
+ c.get('public/reusable-figure-preview.js')?.sha;
+if(previewModified){
+ assert.match(localPreviewSource,/function guardWatchdog\(state\)/);
+ assert.match(localPreviewSource,/sameRequest\(stalledState/);
+ assert.match(localPreviewSource,/Preview took too long/);
+ assert.match(localPreviewSource,/clearWatchdog\(\);stalledState=null/);
+}
 console.log(JSON.stringify({actualDualParentMerge:true,transplantedReviewFiles:transplanted.length,
  preservedCustomerConflictFiles:conflicts.length,identicalSharedFiles:identical.length,
- allReviewBlobsByteIdentical:true,customerProductionLogicUnchanged:true,
+ allReviewBlobsByteIdentical:true,customerPhotoClassificationUnchanged:true,
+ originalMergedFittingBlobIntact:true,subsequentPreviewWatchdogAudited:previewModified,
  mergedMain:false,productionAuthorized:false}));
