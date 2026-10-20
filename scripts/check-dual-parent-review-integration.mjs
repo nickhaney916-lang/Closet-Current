@@ -26,6 +26,15 @@ function assertCustomerPreserved(p){
    'Checkpoint history must remain intact');
   return;
  }
+ if(p==='public/index.html'){
+  const original=execFileSync('git',['show',customer+':'+p],{encoding:'utf8',maxBuffer:5_000_000});
+  const current=fs.readFileSync(p,'utf8');
+  const auditLink='<p><a href="saved-closet-audit.html" target="_blank" rel="noopener">Check what was actually saved in My closet</a> (optional private phone audit)</p>';
+  assert.ok(current.includes(auditLink),'Missing optional manual saved-closet audit entry');
+  assert.equal(current.replace(auditLink,''),original,
+   'Prior customer HTML changed outside the single operator-only audit link');
+  return;
+ }
  if(p==='public/app.js'){
   const normalize=s=>{
    for(const [begin,end] of [['function snap(','function beep('],['function takePhoto(){','async function startCamera(']]){
