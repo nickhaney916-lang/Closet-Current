@@ -50,24 +50,24 @@ test('token resolving after another account logs in cannot send a stale owner cl
  const first=defer(),seen=[];
  const h=setup({
   token:()=>h.window.closetAuth.user.id===A?first.promise:Promise.resolve(B),
-  request:async(url,opt)=>{seen.push({url,token:opt.headers.Authorization});return {ok:true,status:200,json:async()=>[]};}
+  request:async(url,opt)=>{seen.push({url,token:opt.headers.Authorization});return {ok:true,status:200,json:async()=>url.includes('/rpc/save_closet_backup')?1:[]};}
  });
  const dbA=database([{id:'a-local'}]),dbB=database([{id:'b-local'}]);
  const pending=h.cloud.start(dbA,h.callbacks);await tick();
  h.window.closetAuth.user={id:B};const fresh=h.cloud.start(dbB,h.callbacks);
  first.resolve(A);await Promise.all([pending,fresh]);
  assert.equal(seen.some(x=>x.token==='Bearer '+A),false);
- assert.equal(seen.length,1);
+ assert.equal(seen.filter(x=>x.url.includes('closet_backups?')).length,1);
  assert.match(seen[0].url,/owner_id=eq\.b222/);
  assert.deepEqual([...dbA.content.items.keys()],['a-local']);
  assert.deepEqual([...dbB.content.items.keys()],['b-local']);
- assert.equal(h.elements.get('cloudStatus').textContent,'Cloud backup up to date'==='nonsense'?'wrong':'Your closet will back up automatically');
+ assert.equal(h.elements.get('cloudStatus').textContent,'Cloud backup up to date');
 });
 test('late response from old account cannot restore or overwrite new account closet',async()=>{
  const old=defer();let firstRequest=false;
  const h=setup({request:async(url)=>{
   if(url.includes('owner_id=eq.'+A)){firstRequest=true;return old.promise;}
-  return {ok:true,status:200,json:async()=>[{revision:1,document:doc('remote-b')}]};
+  return {ok:true,status:200,json:async()=>url.includes('/rpc/save_closet_backup')?2:[{revision:1,document:doc('remote-b')}]};
  }});
  const dbA=database([{id:'private-a'}]),dbB=database([{id:'private-b'}]);
  const pending=h.cloud.start(dbA,h.callbacks);
