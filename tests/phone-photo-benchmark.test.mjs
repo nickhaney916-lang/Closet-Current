@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {lockPhotoLabels,phonePhotoResult,photoFailure,scorePhonePhotos} from '../public/phone-photo-benchmark.mjs';
+import {photoColors,lockPhotoLabels,phonePhotoResult,photoFailure,scorePhonePhotos} from '../public/phone-photo-benchmark.mjs';
 import {photoTestSession} from '../public/photo-test-session.mjs';
 
 test('phone labels are independently supplied, category-consistent and copied before inference',()=>{
@@ -45,4 +45,63 @@ test('photo test ignores stale replies, respects bounded model/classification ti
 test('reset cancels in-flight calls and worker errors never export their raw messages',async()=>{
  const {session,worker}=sessionFixture();const p=session.call({type:'load'}),rejected=assert.rejects(p,e=>e.code==='cancelled');session.close();await rejected;assert.equal(worker.stopped,true);
  const b=sessionFixture(),q=b.session.call({type:'load'}),failure=assert.rejects(q,e=>e.code==='runtime'&&!e.message.includes('PRIVATE_SECRET'));b.worker.onerror({message:'PRIVATE_SECRET'});await failure;
+});
+
+test('independently pre-labeled source color stays immutable and arbitrary colors are rejected',()=>{
+ const input=[{category:'Tops',type:'T-shirt',color:'Blue',filename:'PRIVATE_SOURCE.jpg'},
+  {category:'Dresses',color:'Red'},{category:'Uncategorized'}];
+ const labels=lockPhotoLabels(input);
+ input[0].color='White';
+ assert.equal(labels[0].expectedColor,'Blue');
+ assert.equal(labels[1].expectedColor,'Red');
+ assert.equal(labels[2].expectedColor,null);
+ assert.equal(labels[0].filename,undefined);
+ assert.equal(photoColors.includes('Blue'),true);
+ assert.throws(()=>lockPhotoLabels([{category:'Tops',color:'PRIVATE_COLOR'}]),/color/);
+ assert.throws(()=>lockPhotoLabels([{category:'Uncategorized',color:'White'}]),/color/);
+});
+test('color suggestions score separately from subtype and category and never certify saved closet colors',()=>{
+ const labels=lockPhotoLabels([
+  {category:'Tops',type:'T-shirt',color:'Blue'},
+  {category:'Dresses',type:'Casual dress',color:'Red'},
+  {category:'Shoes',type:'Sneakers',color:'Black'},
+  {category:'Bottoms',color:'White'},
+  {category:'Tops',color:'Green'},
+  {category:'Uncategorized'}
+ ]);
+ const create=(id,choice,details,strong=true,categoryConfirmed=false)=>
+  phonePhotoResult(id,{choices:choice?[choice]:[],details,strong,categoryConfirmed},10);
+ const results=[
+  create('photo-001',{category:'Tops',itemType:'T-shirt'},{color:'Blue'}),
+  create('photo-002',{category:'Dresses',itemType:'Casual dress'},{color:'White'}),
+  create('photo-003',{category:'Shoes',itemType:'Unknown'},{color:'Black'},false,true),
+  create('photo-004',{category:'Bottoms',itemType:'Jeans'},{color:'UNKNOWN_UNSAFE'}),
+  photoFailure('photo-005','timeout'),
+  create('photo-006',null,{color:'Red'},false,false)
+ ];
+ const report=scorePhonePhotos(labels,results);
+ assert.equal(report.version,1,'keep legacy phone fixture comparison compatible');
+ assert.equal(report.summary.colorsLabeled,5);
+ assert.equal(report.summary.modelColorMatches,2);
+ assert.equal(report.summary.modelColorWrong,1);
+ assert.equal(report.summary.modelColorMissing,2);
+ assert.equal(report.summary.strongCategoryColorMatches,1);
+ assert.equal(report.summary.strongCategoryColorMismatches,2);
+ assert.equal(report.photos[0].modelColorMatch,true);
+ assert.equal(report.photos[1].modelColorMatch,false);
+ assert.equal(report.photos[3].modelColorMatch,null);
+ assert.equal(report.photos[4].error,'timeout');
+ assert.equal(report.photos[5].prediction.color,'Red','model suggestions are diagnostic even for negative controls');
+ assert.equal(report.summary.incorrectAutomaticCategories,0);
+ assert.equal(report.productionSavedColorValidated,undefined,'must not claim final saved color accuracy');
+});
+test('untrusted private model color text cannot leak to downloadable reports',()=>{
+ const labels=lockPhotoLabels([{category:'Tops',color:'Black'}]);
+ const x=phonePhotoResult('photo-001',{strong:true,choices:[{
+  category:'Tops',itemType:'T-shirt'
+ }],details:{color:'person@example.test',body:'data:image/jpeg;base64,SECRETS'}},20);
+ assert.equal(x.prediction.color,null);
+ const report=scorePhonePhotos(labels,[x]);
+ assert.equal(report.summary.modelColorMissing,1);
+ for(const token of ['person@example','base64','SECRETS'])assert.ok(!JSON.stringify(report).includes(token));
 });
