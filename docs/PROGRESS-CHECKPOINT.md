@@ -15,7 +15,12 @@
   sign-in guidance; same-account recovery remains possible after valid reload.
 - Build passed; full local Node suite **1078 passed / 0 failed / 3 skipped**
   (1081 total); Python **37 passed**. Four new behavioral tests failed before
-  the fix. Exact-head Android Chromium/iPhone WebKit CI pending this follow-up.
+  the fix. Exact runtime `875bd61fc3102c90ef4579bb377623a7ec9823b9` verified:
+  customer/fitting CI 39450202771 and camera/indexing CI 39450202746 SUCCESS.
+  Both mobile engines passed the mismatched-database checks with two rejected
+  writes, zero readwrite transactions and zero published garment layers.
+  Both fitting profiles passed; zero page errors/remote POSTs there. Screenshot
+  and JSON artifact 12278895682 records the actual emulation evidence.
 - Browser journey now also attempts new saves and previews while the previous
   database is open under a changed identity, asserting both writes reject,
   zero readwrite transactions, no saved additions and no garment publication.

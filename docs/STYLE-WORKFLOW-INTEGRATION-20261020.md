@@ -109,4 +109,19 @@ suite **37 passed**. Four new Node tests failed before the runtime fix. Browser
 coverage adds an already-mismatched-owner probe using the actual open IndexedDB,
 expecting two rejected writes, zero readwrite transactions, no saved additions,
 no published layers and recovery after restoring the valid fixture account.
-Exact follow-up CI must be inspected before reporting mobile emulation success.
+Exact follow-up runtime CI is now verified at
+`875bd61fc3102c90ef4579bb377623a7ec9823b9`:
+[customer/fitting 39450202771](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39450202771)
+and [camera/indexing 39450202746](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39450202746)
+both **SUCCESS**. Full CI Node counts: **1078 passed, 0 failed, 3 skipped**.
+Android Chromium and iPhone WebKit customer journeys and fitting profiles all
+passed. The new already-mismatched database probes rejected both attempted writes,
+opened zero readwrite transactions, added no saved outfits and published zero
+garment layers. Restoring the valid fixture account and rerendering recovered.
+Both customer profiles report zero page errors; fitting profiles report zero
+remote POSTs. Existing 12-request unchanged-preview reuse assertions still pass.
+[Evidence artifact 12278895682](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39450202771/artifacts/12278895682)
+contains screenshots and JSON (3,425,574 bytes; expires January 18, 2027).
+These are browser emulations with synthetic identities/photos, not real accounts,
+physical phones, model inference or real-photo accuracy proof. The documentation
+follow-up changes no runtime or test-harness code.
