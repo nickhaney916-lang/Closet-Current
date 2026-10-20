@@ -48,6 +48,12 @@
    if(!sameRequest(watchdogState,state))return;
    stalledState=state;renderWatchdog=null;watchdogState=null;
    ++renderRevision;activeRender=null;lastPlan=null;
+   // A stalled cached PNG must not be immediately re-used by explicit Retry.
+   for(const placement of state.plan.placements||[]){
+    previewCache?.remove({owner:state.owner,id:String(placement.itemId),
+     source:placement.image,category:placement.category,
+     primaryColor:placement.primaryColor||''});
+   }
    garmentContainer.replaceChildren();removeFace();updatePhotoHelp(false);
    base.style.visibility='hidden';stage.setAttribute('aria-busy','false');
    status.textContent='Preview took too long. Your photos are saved; tap Retry clothing preview.';
