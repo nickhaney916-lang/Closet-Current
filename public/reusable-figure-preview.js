@@ -181,6 +181,7 @@
   const databaseCurrent=()=>!!owner&&database?.name==='closet-current-user-'+owner&&
    database===(typeof db==='undefined'?null:db);
   if(!databaseCurrent()){
+   clearWatchdog();stalledState=null;
    lastPlan=null;previewCache?.dispose();garmentContainer.replaceChildren();
    removeFace();updatePhotoHelp(false);base.style.visibility='hidden';
    stage.setAttribute('aria-busy','false');if(retry)retry.hidden=true;
@@ -196,10 +197,10 @@
    if(sameRequest(stalledState,watchdogInput))return;
    stalledState=null;
   }
-  guardWatchdog(watchdogInput);
   const sourceChanged=()=>JSON.stringify(board())!==boardState||
    !engine.samePlan(plan,engine.plan(board(),closet(),selector.value));
   if(lastPlanOwner===owner&&engine.samePlan(lastPlan,plan))return;
+  guardWatchdog(watchdogInput);
   lastPlan=null; // A prior success cannot satisfy a request while another plan is rendering.
   activeRender={revision,owner,database,plan,boardState};
   stage.setAttribute('aria-busy','true');
