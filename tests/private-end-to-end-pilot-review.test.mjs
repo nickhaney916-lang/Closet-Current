@@ -66,7 +66,9 @@ test('color errors, missing labels, runtime failures and high abstention fail di
  bad[0].summary.strongCategoryColorMatches--;
  bad[0].summary.strongCategoryColorMismatches++;
  const result=reviewPrivatePilotEvidence(a,i,bad);
- assert.equal(result.proposedDiagnosticThresholdsMet,false);
+ assert.equal(result.proposedDiagnosticThresholdsMet,true,
+  'one incorrect out of 50 accepted meets the *diagnostic* 95% target, but still never unlocks launch');
+ assert.equal(result.productionReleaseApproved,false);
  assert.ok(result.studyBlockers.includes('model-category-and-color-proposal-precision-below-95-percent')===false,
   'one incorrect out of 50 accepted is 98%, not below 95%');
  assert.equal(result.modelSuggestionStudy.acceptedModelColorsIncorrect,1);
