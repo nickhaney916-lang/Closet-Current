@@ -505,7 +505,10 @@ async function drainAutomatic(){
  finally{automaticRunning=false;render();scheduleMemoryReview();}
 }
 let manualStillShot=null;
+let cameraStartAttempt=null;
 function stopCamera(){
+ const opening=cameraStartAttempt;cameraStartAttempt=null;
+ if(opening){opening.cancel();busy=false;}
  cameraRequest++;cameraOpening=false;manualStillShot=null;$('takePhoto').disabled=false;$('stop').disabled=false;clearInterval(timer);timer=null;
  if(stream)stream.getTracks().forEach(t=>t.stop());
  stream=null;cameraMode=null;previousQualityFrame=null;video.srcObject=null;video.classList.remove('visible');
@@ -582,15 +585,47 @@ async function startCamera(mode){
  if(busy||stream)return;
  const request=++cameraRequest;cameraOpening=true;busy=true;controls(true);
  $('captureState').textContent='Opening camera…';
- try{audio=new(window.AudioContext||window.webkitAudioContext)();await audio.resume();}catch{}
+ let deadline,rejectOpening;
+ const interrupted=new Promise((_,reject)=>{rejectOpening=reject;});
+ // A synchronous browser error can precede the first race; cancellation must
+ // still be handled without an unhandled rejection.
+ interrupted.catch(()=>{});
+ const attempt={expired:false,acquired:null,cancel(){
+  clearTimeout(deadline);
+  if(attempt.acquired){attempt.acquired.getTracks().forEach(track=>track.stop());attempt.acquired=null;}
+  rejectOpening(Error('Camera opening cancelled.'));
+ }};
+ cameraStartAttempt=attempt;
+ const current=()=>cameraStartAttempt===attempt&&request===cameraRequest&&!attempt.expired;
+ const bounded=work=>Promise.race([work,interrupted]);
+ deadline=setTimeout(()=>{
+  attempt.expired=true;
+  rejectOpening(Error('Camera opening timed out. Try again, check camera permission, or choose saved photos.'));
+ },15000);
+ // Sound is optional. A suspended AudioContext must never hold the camera
+ // permission prompt or preview hostage, and retries reuse the context.
+ try{audio=audio||new(window.AudioContext||window.webkitAudioContext)();Promise.resolve(audio.resume()).catch(()=>{});}catch{}
  try{
   if(!navigator.mediaDevices?.getUserMedia)throw Error('Camera access unavailable. Choose saved photos or a closet video instead.');
-  const acquired=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}},audio:false});
-  if(request!==cameraRequest){acquired.getTracks().forEach(track=>track.stop());return;}
-  stream=acquired;cameraMode=mode;
+  const acquisition=navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}},audio:false});
+  const acquired=await bounded(acquisition.then(value=>{
+   // getUserMedia cannot be aborted. Release a grant arriving after timeout,
+   // navigation or retry, without attaching it to the current preview.
+   if(!current()){value.getTracks().forEach(track=>track.stop());return null;}
+   attempt.acquired=value;return value;
+  }));
+  if(!current()||!acquired)return;
+  stream=acquired;attempt.acquired=null;cameraMode=mode;
+  for(const track of acquired.getTracks())track.addEventListener?.('ended',()=>{
+   if(request!==cameraRequest||stream!==acquired)return;
+   stopCamera();message('Camera was interrupted. Your photos are kept. Tap Take photos to restart.');
+  },{once:true});
   video.removeAttribute('src');video.srcObject=stream;video.classList.add('visible');$('placeholder').hidden=true;
-  await video.play();session=0;$('sessionCount').textContent='0';$('lastCaptureImage').hidden=true;
-  if(request!==cameraRequest)return;
+  await bounded(video.play());
+  // Check identity before any counters/UI change, including an old play()
+  // finishing while a newer camera already has captured photos.
+  if(!current())return;
+  session=0;$('sessionCount').textContent='0';$('lastCaptureImage').hidden=true;
   cameraOpening=false;$('cameraChoices').hidden=true;$('cameraActions').hidden=false;$('takePhoto').hidden=mode!=='manual';
   if(mode==='auto'){
    cadence=new CaptureCadence(Number($('interval').value)*1000,Date.now());
@@ -601,9 +636,12 @@ async function startCamera(mode){
    message('Take each photo at your own pace. Tap Done when you are finished.');
   }
  }catch(e){
-  if(request===cameraRequest){stopCamera();message(e.name==='NotAllowedError'?'Camera permission was denied. Allow camera access in your browser, or choose saved photos.':(e.message||'Camera could not start. Choose saved photos or a closet video.'));}
+  if(cameraStartAttempt===attempt&&request===cameraRequest){stopCamera();message(e.name==='NotAllowedError'?'Camera permission was denied. Allow camera access in your browser, or choose saved photos.':(e.message||'Camera could not start. Choose saved photos or a closet video.'));}
+ }finally{
+  clearTimeout(deadline);
+  // Old completion must not enable controls owned by a newer camera/import.
+  if(cameraStartAttempt===attempt){cameraStartAttempt=null;cameraOpening=false;busy=false;if(!stream)controls(false);}
  }
- finally{busy=false;if(!stream)controls(false);}
 }
 $('start').onclick=()=>startCamera('manual');
 $('startAuto').onclick=()=>startCamera('auto');
