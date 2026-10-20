@@ -1,0 +1,36 @@
+name: Native human-editor photo and draft race QA
+on:
+  push:
+    branches: [benchmark/native-human-editor-stale-load-20261020]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  native-review-source-integrity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check app build and regression tests
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Install isolated Chromium browser emulation
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium
+      - name: Verify stale high-resolution photo/draft uploads never override current work
+        run: node scripts/test-native-human-editor-file-races.mjs
+      - name: Verify human masks still have zero independent quality approvals
+        run: |
+          node --input-type=module -e "
+            import fs from 'node:fs';
+            const r=JSON.parse(fs.readFileSync('benchmark/reference-mask-evidence/registry.json','utf8'));
+            const m=JSON.parse(fs.readFileSync('benchmark/local-fitting-real-photo-manifest.json','utf8'));
+            if(r.references.length!==0||m.independentlyApprovedMasks!==0||r.policy.status==='approved')
+              throw Error('Unreviewed mask cannot be promoted');
+            console.log('All 12 human-reference cases remain blocked and unmeasured');
+          "
