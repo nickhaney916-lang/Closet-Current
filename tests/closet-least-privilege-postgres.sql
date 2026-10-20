@@ -90,7 +90,7 @@ END $$;
 -- Owner can insert and read a new private immutable photo.
 INSERT INTO storage.objects(bucket_id,name) VALUES
  ('closet-private','a1111111-1111-4111-8111-111111111111/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.jpg');
-DO $
+DO $$
 DECLARE row_count bigint:=0; permission_blocked boolean:=false;
 BEGIN
  IF (SELECT count(*) FROM storage.objects)<>1
@@ -108,7 +108,7 @@ BEGIN
  IF (SELECT count(*) FROM storage.objects WHERE name=
    'a1111111-1111-4111-8111-111111111111/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.jpg')<>1
  THEN RAISE EXCEPTION 'Original SHA-addressed photo was changed'; END IF;
-END $;
+END $$;
 
 -- Non-owner still cannot read another account or insert under its prefix.
 SELECT set_config('request.jwt.claim.sub','b2222222-2222-4222-8222-222222222222',false);
