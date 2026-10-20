@@ -121,8 +121,8 @@ try{
   });
   // File and SHA are checked at load; no AI mask and no export is possible.
   await originalPage.waitForFunction((photoName)=>
-   document.querySelector('#status').textContent.includes('initial mask is blank')||
-   document.querySelector('#status').textContent.includes('Cannot annotate at original resolution'),
+   (source?.fileName===photoName&&mask?.length===source.photo.naturalWidth*source.photo.naturalHeight)||
+   (source===null&&document.querySelector('#status').textContent.includes('Cannot annotate at original resolution')),
    record.image,{timeout:30000});
   const observed=await originalPage.evaluate(()=>({
    decodedWidth:source?.photo?.naturalWidth||null,
