@@ -1,0 +1,36 @@
+name: Style new clothes customer flow and local preview
+on:
+  push:
+    branches: [work/style-new-clothes-performance-20261020]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  owned-style-and-preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build and verify original-first recognition and app regressions
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Install browser emulation
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium webkit
+      - name: Android and iPhone emulated owned-clothes journey
+        run: |
+          node scripts/test-style-my-new-item-mobile.mjs
+          STYLE_BROWSER=webkit node scripts/test-style-my-new-item-mobile.mjs
+          node scripts/test-whole-outfit-save-mobile.mjs
+      - name: Android and iPhone emulated fitting, races, reuse and retry
+        run: node scripts/test-reusable-figure-phone-browsers.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: style-new-clothes-preview-emulation
+          path: artifacts/local-fitting/

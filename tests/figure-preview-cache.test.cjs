@@ -83,7 +83,7 @@ test('full module stays display-only without IO, network, storage or provider ca
 
 test('decoded image integrity is checked before counting or caching a fitted garment',()=>{
  const ui=fs.readFileSync('public/reusable-figure-preview.js','utf8');
- const index=ui.indexOf('try{await img.decode();}');
+ const index=ui.indexOf('try{await decodeImage(img);}');
  const dimensionCheck=ui.indexOf('img.naturalWidth!==prepared.width');
  const cacheWrite=ui.indexOf('if(preparedNow)previewCache?.put(query,prepared)');
  const append=ui.indexOf('nextLayers.append(img);displayedSlots.add(placement.slot);counts.shown++');

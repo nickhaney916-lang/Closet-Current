@@ -2,10 +2,46 @@
 let currentBoard=cleanOutfitBoard({},[]),savedOutfitBoards=[],boardInitialized=false,choosingSlot='shoes';
 function boardLink(text,url,className='textlink'){const a=node('a',text,className);a.href=url;a.target='_blank';a.rel='noopener noreferrer';return a;}
 function boardBackup(){return {current:structuredClone(currentBoard),saved:structuredClone(savedOutfitBoards)};}
+function boardWriteContext(){
+ const database=db,owner=window.closetAuth?.user?.id||null;
+ return {database,current:()=>db===database&&(window.closetAuth?.user?.id||null)===owner};
+}
 async function persistBoardState(){
- if(!db){$('boardSaveStatus').textContent='Browser storage is unavailable. Keep this page open.';throw Error('Browser storage is unavailable.');}
- const snapshot=boardBackup();
- await queued(()=>new Promise((resolve,reject)=>{const tx=db.transaction('state','readwrite');tx.objectStore('state').put({id:'outfit-board',...snapshot});tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);}));
+ const context=boardWriteContext();
+ if(!context.database)throw Error('Browser storage is unavailable.');
+ await queued(()=>new Promise((resolve,reject)=>{
+  if(!context.current())return reject(Error('Your account changed. Try again.'));
+  // Snapshot after earlier queued saves have committed, not before waiting.
+  const snapshot=boardBackup();
+  const tx=context.database.transaction('state','readwrite');
+  tx.objectStore('state').put({id:'outfit-board',...snapshot});
+  tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error||Error('Could not save this outfit. Please try again.'));
+  tx.onabort=()=>reject(tx.error||Error('Could not save this outfit. Please try again.'));
+ }));
+}
+async function saveOwnedOutfitBoard(value){
+ const requested=structuredClone(value),context=boardWriteContext();
+ if(!context.database)throw Error('Browser storage is unavailable.');
+ return queued(()=>new Promise((resolve,reject)=>{
+  if(!context.current())return reject(Error('Your account changed. Try again.'));
+  const saved=cleanOutfitBoard(requested,items),slots=Object.keys(requested.slots||{});
+  if(!slots.length)return reject(Error('Choose at least one piece from your own closet first.'));
+  if(slots.length!==Object.keys(saved.slots).length||
+    slots.some(slot=>requested.slots[slot]!==saved.slots[slot]))
+   return reject(Error('This outfit changed. Create outfits again before saving.'));
+  if(savedOutfitBoards.length>=50)return reject(Error('You can save up to 50 outfits.'));
+  const next=[...savedOutfitBoards,saved];
+  const tx=context.database.transaction('state','readwrite');
+  tx.objectStore('state').put({id:'outfit-board',current:structuredClone(currentBoard),saved:structuredClone(next)});
+  tx.oncomplete=()=>{
+   if(!context.current())return reject(Error('Your account changed. Try again.'));
+   // Publish only a durable addition. A failed write never needs pop/rollback
+   // and cannot leak an unsaved outfit into another queued snapshot.
+   savedOutfitBoards=next;resolve(saved);
+  };
+  tx.onerror=()=>reject(tx.error||Error('Could not save this outfit. Please try again.'));
+  tx.onabort=()=>reject(tx.error||Error('Could not save this outfit. Please try again.'));
+ }));
 }
 async function storeBoard(){try{await persistBoardState();return true;}catch{$('boardSaveStatus').textContent='This outfit could not be saved. Please try again.';return false;}}
 function syncBoardInputs(){for(const [id,key]of Object.entries({boardName:'name',boardOccasion:'occasion',boardSeason:'season',boardAudience:'audience',boardSize:'size',boardBudget:'budget'}))$(id).value=currentBoard[key]||'';}
@@ -72,7 +108,15 @@ $('closeBoardPicker').onclick=()=>$('boardPicker').close();
 $('emptyBoardSlot').onclick=()=>{selectBoardPiece(choosingSlot,'');$('boardPicker').close();};
 $('shopBoardSlot').onclick=()=>{$('boardTarget').value=choosingSlot;$('boardPicker').close();renderBoardSuggestions();$('boardGapStatus').scrollIntoView({behavior:'smooth',block:'start'});};
 $('clearBoard').onclick=()=>{currentBoard=cleanOutfitBoard({},items);syncBoardInputs();renderOutfitBoard();storeBoard();};
-$('saveBoard').onclick=async()=>{if(!Object.keys(currentBoard.slots).length)return $('boardSaveStatus').textContent='Choose at least one piece from your own closet first.';if(savedOutfitBoards.length>=50)return $('boardSaveStatus').textContent='You can save up to 50 outfits.';$('saveBoard').disabled=true;try{savedOutfitBoards.push(structuredClone(currentBoard));await persistBoardState();$('boardSaveStatus').textContent='Outfit saved with references to your clothing photos.';renderSavedOutfitBoards();}catch{savedOutfitBoards.pop();$('boardSaveStatus').textContent='Could not save this outfit. Please try again.';}finally{$('saveBoard').disabled=false;}};
+$('saveBoard').onclick=async()=>{
+ const button=$('saveBoard');if(button.disabled)return;
+ button.disabled=true;
+ try{await saveOwnedOutfitBoard(currentBoard);
+  $('boardSaveStatus').textContent='Outfit saved with references to your clothing photos.';
+  renderSavedOutfitBoards();
+ }catch(error){$('boardSaveStatus').textContent=error?.message||'Could not save this outfit. Please try again.';}
+ finally{button.disabled=false;}
+};
 function renderTrendReferences(){const grid=$('boardTrendSources');grid.replaceChildren();for(const source of outfitTrendSources)grid.append(boardLink(source.title,source.url));}
 renderTrendReferences();
 const outfitBoardReady=(async()=>{await closetReady;if(db){try{const state=await new Promise((resolve,reject)=>{const r=db.transaction('state').objectStore('state').get('outfit-board');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});if(state){currentBoard=cleanOutfitBoard(state.current,items);savedOutfitBoards=(state.saved||[]).slice(0,50).map(x=>cleanOutfitBoard(x,items));}}catch{$('boardSaveStatus').textContent='Saved outfits could not be loaded.';}}boardInitialized=true;syncBoardInputs();renderOutfitBoard();})();

@@ -72,6 +72,16 @@
    excludesAccessories:true,usesOwnedGarmentsOnly:true,usesRemoteAI:false,
    needsTransparentCutouts:true,fitAndImageQualityVerified:false};
  }
- root.ClosetReusableFigure=Object.freeze({FIGURES,RECTS,FIGURE_RECTS,placementRect,selfieRect,isLocalGarmentImage,plan});
+ // Compare full source strings by equality without hashing or copying large photos.
+ function samePlan(a,b){
+  return !!a&&!!b&&a.figure===b.figure&&a.figureImage===b.figureImage&&
+   a.skipped.length===b.skipped.length&&a.skipped.every((v,i)=>v===b.skipped[i])&&
+   a.placements.length===b.placements.length&&a.placements.every((v,i)=>{
+    const q=b.placements[i];
+    return ['slot','itemId','image','category','primaryColor'].every(k=>v[k]===q[k])&&
+     ['left','top','width','height'].every(k=>v.rect[k]===q.rect[k]);
+   });
+ }
+ root.ClosetReusableFigure=Object.freeze({FIGURES,RECTS,FIGURE_RECTS,placementRect,selfieRect,isLocalGarmentImage,plan,samePlan});
  if(typeof module!=='undefined')module.exports=root.ClosetReusableFigure;
 })(typeof window!=='undefined'?window:globalThis);
