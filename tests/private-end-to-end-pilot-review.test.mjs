@@ -118,3 +118,9 @@ test('phone reports with private strings, fabricated summaries and source bytes 
  assert.throws(()=>reviewPrivatePilotEvidence(broken,i,base));
  assert.throws(()=>reviewPrivatePilotEvidence(a,i,[]));
 });
+
+test('replaying a private color report cannot inflate nominal photo cohort size',()=>{
+ const [a,i]=phones(),sessions=cohort();
+ assert.throws(()=>reviewPrivatePilotEvidence(a,i,[sessions[0],structuredClone(sessions[0])]),
+  /Duplicate private photo audit report replay/);
+});
