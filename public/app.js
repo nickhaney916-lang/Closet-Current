@@ -729,7 +729,12 @@ async function recognizeItem(item){
   item.localStatus='Identifying this garment…';render();
   let result;
   try{if(!localReady)await enableLocal();result=await localRequest('classify',sourcePhoto,item.id,item.segmentHint);}
-  catch(error){recognitionUnavailable=true;throw error;}
+  catch(error){
+   // A delayed rejected request for a discarded/replaced source must not
+   // block recognition of the next newly photographed article.
+   if(categoryStillCurrent()&&!item.userAdjusted)recognitionUnavailable=true;
+   throw error;
+  }
   if(!batch.some(x=>x.id===item.id))return;
   if(!categoryStillCurrent()){
    item.localAnalyzed=false;item.scanFailed=true;
