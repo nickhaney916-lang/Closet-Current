@@ -21,14 +21,19 @@
   account/database binding, clear prior-account anchors/results and show reload
   guidance. Two additional failing regressions reproduced this ownership gap.
 - Initial recommendation runtime `e91aa30a` passed CI 39454476209 and 39454476112,
-  including both browser engines. Exact-head CI pending the ownership follow-up.
+  including both browser engines; the later final runtime CI below validates the ownership follow-up.
 - An independently reproduced preview regression restarted identical pending
   image work across browser events. Same-input active renders now share the
   pending decode and its original bound, while changed sources/accounts/boards/
   databases still replace it. Browser stress requests the preview every 200ms
   while decode is stalled. One new behavioral regression failed before this fix.
 - Local build and Node suite **1087 passed / 0 failed / 3 skipped (1090 total)**;
-  Python **37 passed**. Mobile CI pending this new branch. Harness adds actual
+  Python **37 passed**. Exact runtime `0b80791559c6628a110d7112b094607ce31bb434`
+  verified: CI 39455937393 (customer/fitting) and 39455937495 (camera/indexing)
+  SUCCESS. Both Android Chromium and iPhone WebKit passed recommendation quality,
+  dress swap/save/reload, account isolation and 200ms stalled-decoder stress.
+  Screenshot/JSON artifact 12280102669; zero customer page errors and zero remote
+  POSTs in both fitting profiles. Draft recommendation PR #74. Harness adds actual
   dress-swap/save/reload, owned-only structure and varied-bottoms checks in both
   Chromium and WebKit; synthetic fixture identity/images, no real-photo score.
 - Per-request slot-ranking cache reduces a synthetic 100-item local profile

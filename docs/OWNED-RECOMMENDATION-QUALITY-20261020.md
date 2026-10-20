@@ -99,3 +99,28 @@ changes, pagehide, errors and explicit retry retain their cancellation/recovery
 paths. Per-attempt state clears on settlement. There are now nine new Node
 regressions in total. Browser stress sends identical requests every 200ms while
 decoding is deliberately stalled; exact final-head CI must verify that path.
+
+## Verified final runtime checkpoint
+
+Exact runtime/browser-harness head:
+`0b80791559c6628a110d7112b094607ce31bb434`.
+[Customer/fitting CI 39455937393](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39455937393)
+and [camera/indexing CI 39455937495](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39455937495)
+completed **SUCCESS**. Full CI Node suite: **1087 passed, 0 failed, 3 skipped
+(1090 total)**. Local Python: **37 passed**. All nine added Node regressions have
+an observed failure before their corresponding implementation fix.
+
+Android Chromium and iPhone WebKit customer journeys passed dress retention with
+a large shirt wardrobe, structure-safe dress swapping, actual outfit IndexedDB
+save/reload, variation of owned bottoms, unchanged prior wardrobe records and the
+new account-bound Style this handoff. Both passed the deliberately stalled decoder
+while identical preview requests continued every 200ms; the existing retry and
+12-request completed-preview reuse checks also passed. Both report zero page
+errors. Both fitting profiles passed existing source/account races, figure/layer/
+dress rules, decode/base retry and licensed-photo hold cases, with zero remote
+POSTs. No real-photo acceptance or realism score changed.
+
+[Screenshots and JSON artifact 12280102669](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39455937393/artifacts/12280102669)
+contains the new recommendation reports for both profiles (3,436,251 bytes,
+expires January 18, 2027). PR #74 remains draft and stacked on unchanged #69.
+The final documentation follow-up changes no runtime or browser-harness code.
