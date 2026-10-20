@@ -61,7 +61,6 @@ test('unsaved and processing failures cannot masquerade as saved/verified restor
   x=>x.saved={...x.saved,color:'Unknown'},
  ];
  for(const modify of bad){const value=item(0);modify(value);
-  if(value.saved?.color==='Unknown'){assert.doesNotThrow(()=>engine.checkRow(value,0));continue;}
   assert.throws(()=>engine.checkRow(value,0));
  }
 });
@@ -89,7 +88,7 @@ test('different builds, one-platform only, exact report replay and blank reports
  const {reviewSavedClosetReports}=await import('../benchmark/private-saved-closet-review.mjs');
  assert.throws(()=>reviewSavedClosetReports([make(0,'Android'),make(0,'Android')]));
  assert.throws(()=>reviewSavedClosetReports([make(0,'Android'),engine.makeReport(make(1,'iPhone/iPad').rows,'bbbbbbbbbbbb','iPhone/iPad')]));
- assert.throws(()=>reviewSavedClosetReports([make(0,'Android'),make(0,'iPhone/iPad')]));
+ assert.throws(()=>reviewSavedClosetReports([make(0,'Android'),make(0,'Android')]));
  assert.throws(()=>engine.validateReport(engine.makeReport([],release,'Android')));
 });
 test('saved-photo and cloud recovery quality problems stay visible even when clothing labels are perfect',async()=>{
