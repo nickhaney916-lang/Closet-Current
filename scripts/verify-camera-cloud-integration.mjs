@@ -51,8 +51,39 @@ const reviewAddedBegin=" if(p==='public/index.html'){";
 const reviewAddedEnd=" if(p==='public/app.js'){";
 const reviewStart=currentReviewScript.indexOf(reviewAddedBegin),reviewEnd=currentReviewScript.indexOf(reviewAddedEnd,reviewStart);
 assert.ok(reviewStart>=0&&reviewEnd>reviewStart,'Missing independently bounded original-review link gate');
-assert.equal(currentReviewScript.slice(0,reviewStart)+currentReviewScript.slice(reviewEnd),originalReviewScript,
- 'Original two-human review gate changed outside one byte-exact page-link exception');
+const expectedReview=originalReviewScript.replace(
+ "['function snap(','function beep('],['function takePhoto(){','async function startCamera(']",
+ "['function snap(','function beep('],['let manualStillShot=null;','function controls('],['function takePhoto(){','function waitEvent(']");
+assert.notEqual(expectedReview,originalReviewScript,'Camera lifecycle review extension not found');
+assert.equal(currentReviewScript.slice(0,reviewStart)+currentReviewScript.slice(reviewEnd),expectedReview,
+ 'Original human review gate changed outside approved Work camera bounds and byte-exact pilot link');
+const work='2d364a8537dc0e5be8ac7495d64bb78abad9b208';
+const handoff='6b85dfd61428f5bfd656dd6a4b702ad1c791ac7b';
+assert.deepEqual(git('rev-list','--parents','-n','1',handoff).split(' '),
+ [handoff,'cd99b47dce2ccd3fc2efa5c25c51d8b4f8837458',work],
+ 'Work handoff must preserve original main audit and Work camera histories');
+git('merge-base','--is-ancestor',handoff,'HEAD');
+const workApp=execFileSync('git',['show',work+':public/app.js'],{encoding:'utf8',maxBuffer:15_000_000});
+const normalizedCamera=s=>{
+ const start=s.indexOf('let manualStillShot=null;'),finish=s.indexOf('function waitEvent(',start);
+ assert.ok(start>=0&&finish>start,'Camera reliability boundary changed');
+ return s.slice(0,start)+'/* isolated camera lifecycle and frame-delivery fixes */'+s.slice(finish);
+};
+assert.equal(normalizedCamera(fs.readFileSync('public/app.js','utf8')),normalizedCamera(workApp),
+ 'Noncamera code diverged from the completed Work PR #91 after handoff');
+assert.equal(git('rev-parse',handoff+':public/app.js'),git('rev-parse',work+':public/app.js'),
+ 'Merged startup recovery must have original Work app bytes before frozen-preview extension');
+const allowedWork=new Set([
+ 'public/app.js',
+ 'docs/PROGRESS-CHECKPOINT.md',
+ '.github/workflows/camera-startup-recovery.yml',
+ 'scripts/test-camera-startup-recovery-mobile.mjs',
+ 'tests/capture.test.cjs',
+ 'tests/photo-native-still.test.cjs',
+ '.github/workflows/work-camera-handoff-integration.yml',
+ 'scripts/test-camera-frozen-preview-mobile.mjs',
+ 'docs/WORK-CAMERA-HANDOFF-20261020.md'
+]);
 const allowedNew=new Set([
  'scripts/verify-camera-cloud-integration.mjs',
  '.github/workflows/integrated-camera-cloud-release-qa.yml',
@@ -71,7 +102,7 @@ const allowedNew=new Set([
 for(const p of new Set([...m.keys(),...head.keys()])){
  if(m.get(p)!==head.get(p)){
   if(p==='public/index.html'||p==='scripts/build.mjs'||p===reviewScript)continue;
-  assert.ok(allowedNew.has(p)&&!m.has(p),'Unreviewed change after merge: '+p);
+  assert.ok(allowedWork.has(p)||(allowedNew.has(p)&&!m.has(p)),'Unreviewed change after merge: '+p);
  }
 }
 for(const p of ['public/recognition-photo.mjs','public/photo-color.js',
