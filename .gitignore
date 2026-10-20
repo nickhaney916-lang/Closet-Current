@@ -3,3 +3,6 @@
 dist/
 .openai/
 node_modules/
+
+# Local human review audit outputs; may reveal review progress and must remain private.
+artifacts/private-human-review/
