@@ -5,6 +5,7 @@ import sys
 import unittest
 sys.path.insert(0,str(pathlib.Path(__file__).resolve().parents[1]/'scripts'))
 from figure_fabric_boundaries import flatten_lower_hem,smooth_upper_shell_rim,approved_front_binding_segments,cut_source_derived_sleeves
+from figure_material_regions import body_face_region
 
 def shell():
     coords=[]
@@ -160,6 +161,23 @@ class ProperSleeveCuffTests(unittest.TestCase):
             cut_source_derived_sleeves(copy.deepcopy(coords),faces,joints,fraction=.4)
         with self.assertRaises(ValueError):
             cut_source_derived_sleeves(copy.deepcopy(coords),[[999999,3,4]],joints)
+
+class RigSupportedClothingMaterialTests(unittest.TestCase):
+    def test_forearms_at_pant_height_remain_skin_when_real_arm_weights_win(self):
+        self.assertEqual(body_face_region(.86,.18,0,4,4),'skin')
+        self.assertEqual(body_face_region(1.20,.18,0,4,4),'skin')
+        self.assertEqual(body_face_region(.86,.55,0,4,4),'skin')
+        self.assertEqual(body_face_region(.88,.01,0,0,4),'skin')
+
+    def test_leg_and_non_arm_torso_still_keep_neutral_clothing(self):
+        self.assertEqual(body_face_region(.78,.14,4,0,4),'neutral-clothing')
+        self.assertEqual(body_face_region(1.15,.14,0,0,4),'neutral-clothing')
+        self.assertEqual(body_face_region(1.75,.05,0,0,4),'hair')
+        self.assertEqual(body_face_region(.80,.14,0,0,4),'skin')
+
+    def test_incomplete_rig_evidence_rejected(self):
+        with self.assertRaises(ValueError):body_face_region(.8,.1,-1,2,4)
+        with self.assertRaises(ValueError):body_face_region(.8,.1,0,4,2)
 
 if __name__=='__main__':
     unittest.main()
