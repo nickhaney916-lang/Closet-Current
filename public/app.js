@@ -685,7 +685,11 @@ async function saveIndexed(item,sourceStillCurrent){
  batch=batch.filter(x=>x.id!==item.id);persistDraft();return true;
 }
 async function recognizeItem(item){
- const scanStarted=Date.now();let savingIndexed=false;recognitionState.activeId=item.id;item.scanFailed=false;item.saveFailed=false;item.localStatus='Checking photo quality…';render();
+ const scanStarted=Date.now();let savingIndexed=false;
+ // A slow or failing decode/classifier must not change the status of a newer
+ // photo, updated category, or manually adjusted garment on the same card.
+ let scanInputsCurrent=()=>true;
+ recognitionState.activeId=item.id;item.scanFailed=false;item.saveFailed=false;item.localStatus='Checking photo quality…';render();
  try{
   const sourcePhoto=recognitionSourcePhoto(item);
   // Pin the entire source identity at scan start, not just the cropped JPEG.
@@ -699,6 +703,7 @@ async function recognizeItem(item){
    (item.segmentHint?JSON.stringify(item.segmentHint):null)===originalHint;
   const categoryStillCurrent=()=>sourceStillCurrent()&&
    item.category===originalCategory&&item.itemType===originalType;
+  scanInputsCurrent=categoryStillCurrent;
   if(!sourcePhoto){
    item.scanFailed=true;
    item.localStatus='Original source crop unavailable. Photograph this garment again or use Adjust; a cleaned cutout cannot identify it.';
@@ -768,6 +773,10 @@ async function recognizeItem(item){
   if(recognitionState.phase==='save-failed')recognitionState.phase='ready';
   return true;
  }catch(error){
+  // Old failures are as stale as old successes. Leave the user's replacement
+  // original image and manual category alone; do not surface an obsolete
+  // timeout as if it belonged to the new garment.
+  if(!batch.includes(item)||!scanInputsCurrent()||item.userAdjusted)return false;
   item.localAnalyzed=false;item.scanFailed=true;item.saveFailed=savingIndexed;if(!item.visualSignature&&typeof recordDeviceEvent==='function')recordDeviceEvent('photo_check_failed',{stage:'photo_check',durationMs:Date.now()-scanStarted});if(recognitionUnavailable)recognitionState.phase='failed';
   if(savingIndexed){recognitionState.phase='save-failed';item.localStatus='Could not save this piece. Keep this page open, check device storage, then try again or use Adjust.';}
   else if(!item.visualSignature)item.localStatus='Could not read this photo. Retake it or adjust details.';
