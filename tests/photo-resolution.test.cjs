@@ -2,7 +2,9 @@ const test=require('node:test'),assert=require('node:assert/strict'),fs=require(
 const source=fs.readFileSync('public/photo-import.js','utf8');
 function setup(width,height){
  const calls=[],canvas={getContext:()=>({fillRect(){},drawImage(...args){calls.push(args.slice(1));}}),toDataURL(type,quality){calls.push({type,quality});return 'jpeg';}};
- const c={URL:{createObjectURL:()=> 'photo',revokeObjectURL(){}},Image:class{constructor(){Object.assign(this,{width,height});}async decode(){}},document:{createElement:()=>canvas}};
+ const c={setTimeout,clearTimeout,URL:{createObjectURL:()=> 'photo',revokeObjectURL(){}},
+  Image:class{constructor(){Object.assign(this,{width,height});}async decode(){}},
+  document:{createElement:()=>canvas}};
  vm.createContext(c);vm.runInContext(source,c);return {c,canvas,calls};
 }
 test('whole-outfit conversion retains detail before isolating smaller garments',async()=>{

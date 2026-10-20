@@ -1,0 +1,38 @@
+name: Mobile original photo import MIME and recovery QA
+on:
+  push:
+    branches: [fix/blank-mime-photo-import-timeout-20261020]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  mobile-photo-import:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build full Closet Current app
+        run: node scripts/build.mjs
+      - name: Run all garment, camera, account, renderer and acceptance Node tests
+        run: node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Confirm independent reviewed originals and no paid inference remain locked
+        run: |
+          node scripts/check-customer-pilot-release-gates.mjs
+          node scripts/check-dual-parent-review-integration.mjs
+      - name: Install Chromium and iPhone WebKit emulation
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium webkit
+      - name: Import real decoded blank-MIME JPEG and PNG with invalid HEIC in both engines
+        run: node scripts/test-untyped-photo-import-mobile.mjs
+      - name: Verify camera original-crop source and same-photo duplicates remain protected
+        run: |
+          node scripts/test-original-crop-source-mobile.mjs
+          node scripts/test-original-source-duplicate-mobile.mjs
+      - name: Recheck non-production camera and account report gates
+        run: node scripts/check-customer-pilot-release-gates.mjs
