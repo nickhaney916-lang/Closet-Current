@@ -1,0 +1,142 @@
+-- DEVELOPMENT DESIGN ONLY: do not apply on hosted Supabase without approval.
+-- Requires the predecessor closet-backup-least-privilege.DRAFT.sql applied.
+-- Keep original browser RPC signature and JSON document format unchanged.
+--
+-- SECURITY DEFINER EXCEPTION REVIEW:
+-- This PRIVILEGED function is NOT in public/exposed schemas. It runs as a
+-- dedicated NOLOGIN NOBYPASSRLS role, NOT postgres/service_role; that role is
+-- NOT the table owner and has only SELECT/INSERT/UPDATE grants. RLS still
+-- applies to all its writes, with a separate auth.uid() owner policy.
+-- The public entrypoint remains SECURITY INVOKER and passes no owner ID.
+BEGIN;
+
+DO $guard$
+BEGIN
+ IF NOT EXISTS (
+  SELECT 1 FROM pg_class c JOIN pg_namespace n ON c.relnamespace=n.oid
+  WHERE n.nspname='public' AND c.relname='closet_backups' AND c.relrowsecurity
+ ) THEN RAISE EXCEPTION 'Owner RLS table not enabled'; END IF;
+ IF NOT EXISTS (
+  SELECT 1 FROM pg_policies WHERE schemaname='public'
+   AND tablename='closet_backups' AND policyname='closet_backup_owner'
+   AND cmd='ALL' AND roles='{authenticated}'
+   AND qual LIKE '%auth.uid()%owner_id%'
+   AND with_check LIKE '%auth.uid()%owner_id%'
+ ) THEN RAISE EXCEPTION 'Owner policy drift requires review'; END IF;
+ IF NOT has_table_privilege('authenticated','public.closet_backups','INSERT')
+ OR NOT has_table_privilege('authenticated','public.closet_backups','UPDATE')
+ OR NOT has_table_privilege('authenticated','public.closet_backups','SELECT')
+ OR has_table_privilege('authenticated','public.closet_backups','DELETE')
+ OR has_table_privilege('authenticated','public.closet_backups','TRUNCATE')
+ THEN RAISE EXCEPTION 'Prior least-privilege migration not applied'; END IF;
+ IF NOT EXISTS (
+  SELECT 1 FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
+  WHERE n.nspname='public' AND p.proname='save_closet_backup'
+   AND p.pronargs=2 AND NOT p.prosecdef
+ ) THEN RAISE EXCEPTION 'Public backup RPC signature or privilege changed'; END IF;
+ IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname='closet_backup_writer')
+ OR EXISTS (SELECT 1 FROM pg_namespace WHERE nspname='closet_rpc_private')
+ THEN RAISE EXCEPTION 'Private RPC identity already exists: manual review required'; END IF;
+END $guard$;
+
+-- Run as project administrator during an approved deployment only. The
+-- explicit NOLOGIN/NOBYPASSRLS role is NEVER granted to browser roles.
+CREATE ROLE closet_backup_writer NOLOGIN NOINHERIT NOBYPASSRLS;
+GRANT USAGE ON SCHEMA public, auth TO closet_backup_writer;
+GRANT EXECUTE ON FUNCTION auth.uid() TO closet_backup_writer;
+GRANT SELECT, INSERT, UPDATE ON TABLE public.closet_backups TO closet_backup_writer;
+CREATE POLICY closet_backup_writer_owner
+ ON public.closet_backups FOR ALL TO closet_backup_writer
+ USING ((SELECT auth.uid()) = owner_id)
+ WITH CHECK ((SELECT auth.uid()) = owner_id);
+
+CREATE SCHEMA closet_rpc_private AUTHORIZATION closet_backup_writer;
+-- This schema must NOT be exposed through Supabase PostgREST Data API.
+GRANT USAGE ON SCHEMA closet_rpc_private TO authenticated;
+
+-- All relation/function names are schema-qualified and search_path is empty.
+-- No trust is placed in user_metadata, user-supplied owner IDs or search_path.
+CREATE FUNCTION closet_rpc_private.save_checked(
+ p_expected_revision bigint,p_document jsonb
+) RETURNS bigint
+LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = ''
+AS $body$
+DECLARE saved_revision bigint;
+BEGIN
+ IF auth.uid() IS NULL THEN
+  RAISE EXCEPTION 'Authentication required' USING errcode='42501';
+ END IF;
+ IF p_expected_revision IS NULL OR p_expected_revision<0
+ OR p_document IS NULL
+ OR p_document->>'schemaVersion' IS DISTINCT FROM '1'
+ OR jsonb_typeof(p_document->'items') IS DISTINCT FROM 'array'
+ OR jsonb_typeof(p_document->'state') IS DISTINCT FROM 'object'
+ OR octet_length(p_document::text)>5242880 THEN
+  RAISE EXCEPTION 'Invalid backup';
+ END IF;
+ IF p_expected_revision=0 THEN
+  INSERT INTO public.closet_backups(owner_id,revision,document)
+   VALUES (auth.uid(),1,p_document)
+   ON CONFLICT(owner_id) DO NOTHING RETURNING revision INTO saved_revision;
+ ELSE
+  UPDATE public.closet_backups
+   SET document=p_document,revision=revision+1,updated_at=now()
+   WHERE owner_id=auth.uid() AND revision=p_expected_revision
+   RETURNING revision INTO saved_revision;
+ END IF;
+ RETURN saved_revision;
+END $body$;
+ALTER FUNCTION closet_rpc_private.save_checked(bigint,jsonb) OWNER TO closet_backup_writer;
+REVOKE ALL ON FUNCTION closet_rpc_private.save_checked(bigint,jsonb)
+ FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION closet_rpc_private.save_checked(bigint,jsonb)
+ TO authenticated;
+
+-- Retain exact original PostgREST RPC path, argument names and JSON return.
+-- A private function could also be called directly by an authenticated SQL
+-- session, but performs exactly the same owned, revision-checked operation.
+CREATE OR REPLACE FUNCTION public.save_closet_backup(
+ p_expected_revision bigint,p_document jsonb
+) RETURNS bigint
+LANGUAGE sql SECURITY INVOKER SET search_path=''
+AS $wrapper$
+ SELECT closet_rpc_private.save_checked(p_expected_revision,p_document);
+$wrapper$;
+REVOKE ALL ON FUNCTION public.save_closet_backup(bigint,jsonb)
+ FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.save_closet_backup(bigint,jsonb)
+ TO authenticated;
+
+-- Clients can now READ only their owned rows through the RLS policy.
+-- They cannot POST/PATCH/DELETE the backup table directly.
+REVOKE INSERT, UPDATE ON TABLE public.closet_backups FROM authenticated;
+REVOKE ALL PRIVILEGES ON TABLE public.closet_backups FROM anon, PUBLIC;
+
+DO $check$
+BEGIN
+ IF has_table_privilege('authenticated','public.closet_backups','INSERT')
+ OR has_table_privilege('authenticated','public.closet_backups','UPDATE')
+ OR has_table_privilege('authenticated','public.closet_backups','DELETE')
+ OR has_table_privilege('authenticated','public.closet_backups','TRUNCATE')
+ OR NOT has_table_privilege('authenticated','public.closet_backups','SELECT')
+ OR has_table_privilege('anon','public.closet_backups','SELECT')
+ OR has_function_privilege('anon','public.save_closet_backup(bigint,jsonb)','EXECUTE')
+ OR NOT has_function_privilege('authenticated','public.save_closet_backup(bigint,jsonb)','EXECUTE')
+ OR NOT has_function_privilege('authenticated','closet_rpc_private.save_checked(bigint,jsonb)','EXECUTE')
+ OR has_function_privilege('anon','closet_rpc_private.save_checked(bigint,jsonb)','EXECUTE')
+ OR pg_has_role('authenticated','closet_backup_writer','MEMBER')
+ OR pg_has_role('anon','closet_backup_writer','MEMBER')
+ OR (SELECT rolcanlogin OR rolbypassrls FROM pg_roles
+     WHERE rolname='closet_backup_writer')
+ OR (SELECT p.prosecdef FROM pg_proc p
+     WHERE p.oid='public.save_closet_backup(bigint,jsonb)'::regprocedure)
+ OR NOT (SELECT p.prosecdef FROM pg_proc p
+     WHERE p.oid='closet_rpc_private.save_checked(bigint,jsonb)'::regprocedure)
+ OR (SELECT p.proowner <> 'closet_backup_writer'::regrole FROM pg_proc p
+     WHERE p.oid='closet_rpc_private.save_checked(bigint,jsonb)'::regprocedure)
+ OR (SELECT c.relowner = 'closet_backup_writer'::regrole FROM pg_class c
+     WHERE c.oid='public.closet_backups'::regclass)
+ THEN RAISE EXCEPTION 'Backup trusted-writer permissions do not match contract'; END IF;
+END $check$;
+COMMIT;
