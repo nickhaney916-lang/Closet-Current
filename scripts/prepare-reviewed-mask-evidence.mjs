@@ -55,11 +55,38 @@ export function decodeNativeMask(annotation) {
  return pixels;
 }
 
-export function prepareReviewedMaskEvidence({sourceBytes,annotationBytes,manifest,locked,receipt,
+export function prepareReviewedMaskEvidence({sourceBytes,firstDraftBytes,annotationBytes,manifest,locked,receipt,
  reviewEvidenceBytes,imageRightsEvidenceBytes,annotationRightsEvidenceBytes}) {
- const source=bytes(sourceBytes),approved=bytes(annotationBytes);
- assert(source.length && source.length <= maxBytes && approved.length && approved.length <= maxBytes, 'Source or annotation exceeds limits');
+ const source=bytes(sourceBytes),firstDraft=bytes(firstDraftBytes),approved=bytes(annotationBytes);
+ assert(source.length && source.length <= maxBytes && firstDraft.length && firstDraft.length <= maxBytes &&
+  approved.length && approved.length <= maxBytes, 'Source, original first draft, or annotation exceeds limits');
+ const draft=JSON.parse(firstDraft.toString('utf8'));
  const annotation=JSON.parse(approved.toString('utf8'));
+ // The second editor approves a FIRST human's unchanged original-pixel RLE.
+ // Require those original draft bytes to actually exist, rather than trusting
+ // a second-reviewer field in a stand-alone approved JSON.
+ assert(draft && typeof draft==='object' && !Array.isArray(draft) &&
+  draft.schemaVersion===1 && draft.reviewStatus==='draft' && draft.nativeSourceGrid===true &&
+  draft.annotationGrid==='exact-original-pixels' && draft.seedModel==null && draft.modelProposalId==null &&
+  !Object.hasOwn(draft,'approvedBy') && !Object.hasOwn(draft,'reviewedAt'),
+  'Original first-human draft is absent, model-seeded or already approved');
+ const secondReviewerOnly=new Set(['reviewStatus','approvedBy','reviewedAt','verifiedSourceWidth','verifiedSourceHeight','note']);
+ // A legitimate second reviewer cannot silently redraw a garment. Edits
+ // require a corrected first-human draft and a fresh independent review.
+ for(const key of Object.keys(draft)){
+  if(secondReviewerOnly.has(key))continue;
+  assert(Object.hasOwn(annotation,key) && JSON.stringify(annotation[key])===JSON.stringify(draft[key]),
+   'Second review changed first-human draft content: '+key);
+ }
+ for(const key of Object.keys(annotation)){
+  assert(Object.hasOwn(draft,key) || secondReviewerOnly.has(key),
+   'Unrecognized injected approval field: '+key);
+ }
+ assert(decodeNativeMask(draft)>0, 'Invalid independent first-human draft mask');
+ assert(draft.image===annotation.image && draft.sourceSha256===annotation.sourceSha256 &&
+  draft.width===annotation.width && draft.height===annotation.height &&
+  JSON.stringify(draft.runs)===JSON.stringify(annotation.runs),
+  'Review changed the original human source-grid mask');
  assert(annotation.schemaVersion===1 && annotation.reviewStatus==='approved' && annotation.nativeSourceGrid===true &&
   annotation.annotationGrid==='exact-original-pixels' && annotation.seedModel==null && annotation.modelProposalId==null,
   'Only first-human, model-blind, source-native approved references can be proposed');
@@ -87,6 +114,7 @@ export function prepareReviewedMaskEvidence({sourceBytes,annotationBytes,manifes
  assert(validText(annotation.reviewedAt) && !Number.isNaN(Date.parse(annotation.reviewedAt)),
   'Reviewed-at timestamp missing');
  assert(receipt?.schemaVersion===1 && receipt.sourceId===row.id && receipt.sourceSha256===sourceHash &&
+  receipt.firstDraftSha256===sha(firstDraft) &&
   receipt.approvedAnnotationSha256===annotationHash && receipt.physicalTargetId===annotation.physicalTargetId &&
   receipt.firstReviewer===first && receipt.secondReviewer===second &&
   /^\d{4}-\d{2}-\d{2}$/.test(receipt.reviewDate||''), 'Independent evidence receipt does not bind to reviewed bytes');
@@ -117,7 +145,8 @@ export function prepareReviewedMaskEvidence({sourceBytes,annotationBytes,manifes
    sourceUrl:receipt.imageRights.sourceUrl,evidencePath:paths.imageRights,evidenceSha256:checked.imageRights.sha256},
   annotationRights:{status:'verified-for-test-redistribution',license:receipt.annotationRights.license,
    sourceUrl:receipt.annotationRights.sourceUrl,evidencePath:paths.annotationRights,evidenceSha256:checked.annotationRights.sha256}};
- return {schemaVersion:1,status:'MANUAL-REVIEW-REQUIRED-NOT-REGISTERED',productionAuthorized:false,
+ return {schemaVersion:1,status:'MANUAL-REVIEW-REQUIRED-NOT-REGISTERED',firstDraftSha256:sha(firstDraft),
+  approvedAnnotationByteSha256:annotationHash,productionAuthorized:false,
   reviewerIdentitiesAuthenticated:false,rightsIndependentlyAuthenticatedByTool:false,
   requiresHumanEvidenceAudit:true,reference:annotation,record,
   evidenceSha256:Object.fromEntries(Object.entries(checked).map(([k,v])=>[paths[k],v.sha256])),
@@ -128,17 +157,18 @@ if(process.argv[1] && path.resolve(process.argv[1])===path.resolve(new URL(impor
  const args=process.argv.slice(2);
  const options={};
  for(let i=0;i<args.length;i+=2) {
-  assert(args[i]?.startsWith('--') && args[i+1], 'Provide --source --annotation --receipt --review-evidence --image-rights-evidence --annotation-rights-evidence --out');
+  assert(args[i]?.startsWith('--') && args[i+1], 'Provide --source --first-draft --annotation --receipt --review-evidence --image-rights-evidence --annotation-rights-evidence --out');
   options[args[i].slice(2)]=args[i+1];
  }
- for(const key of ['source','annotation','receipt','review-evidence','image-rights-evidence','annotation-rights-evidence','out'])
+ for(const key of ['source','first-draft','annotation','receipt','review-evidence','image-rights-evidence','annotation-rights-evidence','out'])
   assert(options[key], 'Missing required --'+key);
  const root=path.resolve(process.cwd());
  const out=path.resolve(options.out);
  assert(out.startsWith(root+path.sep+'artifacts'+path.sep) && out.endsWith('.proposal.json'),
   'Write proposals only within artifacts/; canonical approval registry cannot be changed by this tool');
  const r=p=>fs.readFileSync(p);
- const proposal=prepareReviewedMaskEvidence({sourceBytes:r(options.source),annotationBytes:r(options.annotation),
+ const proposal=prepareReviewedMaskEvidence({sourceBytes:r(options.source),firstDraftBytes:r(options['first-draft']),
+  annotationBytes:r(options.annotation),
   manifest:JSON.parse(r('benchmark/local-fitting-real-photo-manifest.json')),
   locked:JSON.parse(r('benchmark/locked-photo-sources.json')),
   receipt:JSON.parse(r(options.receipt)),reviewEvidenceBytes:r(options['review-evidence']),
