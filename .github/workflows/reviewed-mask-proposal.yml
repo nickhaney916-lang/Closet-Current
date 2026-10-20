@@ -1,7 +1,7 @@
 name: Reviewed original-pixel mask proposal QA
 on:
   push:
-    branches: [benchmark/reviewed-mask-proposal-validator-20261020, benchmark/first-draft-proof-chain-20261020, benchmark/native-human-mask-topology-advisories-20261020, benchmark/human-review-handoff-preflight-20261020]
+    branches: [benchmark/reviewed-mask-proposal-validator-20261020, benchmark/first-draft-proof-chain-20261020, benchmark/native-human-mask-topology-advisories-20261020, benchmark/human-review-handoff-preflight-20261020, benchmark/private-human-review-progress-page-20261020]
   workflow_dispatch:
 permissions:
   contents: read
