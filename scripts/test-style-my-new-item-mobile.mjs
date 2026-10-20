@@ -3,7 +3,7 @@
 // vendor calls, paid inference, or unreviewed test photos are used.
 import {chromium,webkit} from 'playwright';
 import {createServer} from 'node:http';
-import {readFile} from 'node:fs/promises';
+import {readFile,mkdir,writeFile} from 'node:fs/promises';
 import {resolve,extname} from 'node:path';
 import assert from 'node:assert/strict';
 
@@ -93,7 +93,7 @@ try{
  assert.equal(directSaved.length,1,'directly swapped outfit must save only on tap');
  assert.equal(directSaved[0].shoes,directSwap.selected);
  assert.equal(directSaved[0].top,'new-green-top');
- await page.locator('#styledCollectionResults .styled-outfit').first().getByRole('button',{name:'Adjust on outfit board'}).click();
+ await page.locator('#styledCollectionResults .styled-outfit').first().getByRole('button',{name:'Preview on model'}).click();
  await page.locator('#builder:not([hidden])').waitFor();
  const initialShoes=await page.evaluate(()=>currentBoard.slots.shoes);
  assert.ok(['owned-black-sneakers','owned-white-sneakers'].includes(initialShoes));
@@ -260,6 +260,8 @@ try{
  }
  assert.equal(new Set(cycle.slice(0,4)).size,4,'all four owned shoes are reachable');
  assert.equal(new Set(cycle.slice(4,8)).size,4,'repeat cycle reaches every shoe again');
+ await mkdir('artifacts/local-fitting',{recursive:true});
+ await page.screenshot({path:'artifacts/local-fitting/style-'+(process.env.STYLE_BROWSER||'chromium')+'.png',fullPage:true});
  assert.deepEqual(errors,[]);
  console.log('NEW_ITEM_STYLE_MOBILE '+JSON.stringify({
   result:'passed',viewport:'390x844 touch',outfitOptions:outfits.length,

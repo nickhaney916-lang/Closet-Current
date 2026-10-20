@@ -195,6 +195,19 @@ try{
     finally{CanvasRenderingContext2D.prototype.getImageData=original;}
    });
    assert.equal(cached,0,'repeat outfit uses private cached display copies');
+   const reused=await page.evaluate(async()=>{
+    const target=document.getElementById('reusableFigureGarments');
+    const before=[...target.children];let mutations=0;
+    const watch=new MutationObserver(rows=>mutations+=rows.length);
+    watch.observe(target,{childList:true});
+    for(let i=0;i<8;i++)renderReusableFigurePreview();
+    await new Promise(ok=>requestAnimationFrame(()=>requestAnimationFrame(ok)));
+    watch.disconnect();
+    return {mutations,same:before.every((n,i)=>target.children[i]===n),
+     busy:document.getElementById('reusableFigureStage').getAttribute('aria-busy')};
+   });
+   assert.deepEqual(reused,{mutations:0,same:true,busy:'false'},
+    'unchanged outfit keeps sharp decoded layers without blanking or rebuilding DOM');
    // Explicit stale async decoding race: a partially decoded old shirt must
    // never appear after the user has already selected a newer outfit.
    await page.evaluate(()=>{
@@ -443,11 +456,34 @@ try{
     .startsWith('0 owned clothing layers displayed; 1 held'));
    assert.equal(await page.locator('#reusableFigureGarments img').count(),0,
     'uncodable displayed layer must never be published');
-   await page.evaluate(()=>{window.__restoreDisplayDecode();renderOutfitBoard();});
+   assert.equal(await page.locator('#reusableFigureRetry').isVisible(),true);
+   await page.evaluate(()=>window.__restoreDisplayDecode());
+   await page.locator('#reusableFigureRetry').click();
    await page.waitForFunction(()=>document.querySelector('#reusableFigureStatus').textContent
     .startsWith('1 owned clothing layer displayed'));
    assert.equal(await page.locator('#reusableFigureGarments img').count(),1,
     'the valid garment can recover after a transient display decode failure');
+   assert.equal(await page.locator('#reusableFigureRetry').isVisible(),false);
+   assert.equal(await page.locator('#reusableFigureStage').getAttribute('aria-busy'),'false');
+   // A base-model load refusal must be visible and retryable, never an
+   // old model wearing a newly selected outfit. Only synthetic decoder fault.
+   await page.evaluate(()=>{
+    const original=HTMLImageElement.prototype.decode;
+    HTMLImageElement.prototype.decode=function(){
+     if(this.id==='reusableFigureBase')return Promise.reject(Error('Synthetic base load failure'));
+     return original.call(this);
+    };
+    window.__restoreBaseDecode=()=>HTMLImageElement.prototype.decode=original;
+    document.getElementById('reusableFigureChoice').value='male';
+    document.getElementById('reusableFigureChoice').dispatchEvent(new Event('change'));
+   });
+   await page.waitForFunction(()=>document.getElementById('reusableFigureStatus').textContent.startsWith('Preview unavailable.'));
+   assert.equal(await page.locator('#reusableFigureGarments img').count(),0);
+   assert.equal(await page.locator('#reusableFigureStage').getAttribute('aria-busy'),'false');
+   await page.evaluate(()=>window.__restoreBaseDecode());
+   await page.locator('#reusableFigureRetry').click();
+   await page.waitForFunction(()=>document.getElementById('reusableFigureStatus').textContent.startsWith('1 owned clothing layer displayed'));
+   assert.equal(await page.locator('#reusableFigureRetry').isVisible(),false);
    assert.deepEqual(remoteWrites,[]);
    const photoResults=[];
    for(const fixture of licensed){
@@ -575,7 +611,7 @@ try{
    assert.deepEqual(remoteWrites,[]);
    assert.deepEqual(errors,[]);
    results.push({engine:title,ownedLayers:2,reusedFigures:2,optionalSelfieLocalOnly:true,
-    remotePostCount:remoteWrites.length,layering:layeredResults,silhouetteChecks:silhouetteResults,licensedPhotoChecks:photoResults,extractionProposals:extractionProbes.filter(x=>x.proposalAvailable).length,realPhoneHardwareTested:false});
+    unchangedPreviewReused:true,transientDecodeRetry:true,baseModelRetry:true,remotePostCount:remoteWrites.length,layering:layeredResults,silhouetteChecks:silhouetteResults,licensedPhotoChecks:photoResults,extractionProposals:extractionProbes.filter(x=>x.proposalAvailable).length,realPhoneHardwareTested:false});
    await ctx.close();
   }finally{await browser.close();}
  }

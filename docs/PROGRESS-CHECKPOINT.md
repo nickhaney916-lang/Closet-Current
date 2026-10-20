@@ -1,5 +1,22 @@
 # Closet Current master development checkpoint
 
+## Parallel customer styling / local preview — October 20, 2026 Pacific
+
+- Isolated branch `work/style-new-clothes-performance-20261020`, stacked on PR #51
+  `9d1dd7d4`. No PR #58 art or PR #61/#62 evidence scripts/branches edited.
+- Snapshot/cancel obsolete Style this requests; clearly labeled Preview on model;
+  lazy/async recommendation photos and graceful image fallback. Original-first
+  high-resolution recognition, indexing and atomic Save & style handoff preserved.
+- Same-account, exact-image/geometry local preview reuse avoids repeated blanking,
+  decode and pixel diagnostics. Eight-second image decoding bound, base-image
+  integrity handling, accessible busy state and a single retry action.
+- Local build/full suite: **1052 passed, 0 failed, 3 skipped** (1055 total).
+  Focused suite: **40 passed**. Local browser download failed (truncated archive);
+  exact-head CI browser evidence must be checked before claiming emulation pass.
+- See `docs/STYLE-NEW-CLOTHES-EXPERIENCE-20261020.md`. No speed/accuracy percentage,
+  accepted real-photo fit, model-art approval, live AI or actual-phone evidence.
+  No merge, deploy, costs, customer upload or Drive Duel changes.
+
 ## Conservative real-photo extraction proposals — October 19, 2026 Pacific
 
 - Isolated branch `feature/conservative-dark-garment-extraction-20261019`, based

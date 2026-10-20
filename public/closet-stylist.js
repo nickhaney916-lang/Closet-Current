@@ -1,5 +1,5 @@
 'use strict';
-let styledCollectionResults=[],stylistAnchorItemId=null;
+let styledCollectionResults=[],stylistAnchorItemId=null,stylistRequestRevision=0;
 function stylistSupportsPiece(piece){
  return !!piece&&typeof piece.id==='string'&&
   ['Tops','Bottoms','Dresses','Outerwear','Shoes'].includes(piece.category);
@@ -33,7 +33,7 @@ function renderStyledCollection(){
   const board=cleanOutfitBoard(result.board,items),changed=Object.keys(board.slots).length!==Object.keys(result.board.slots).length;
   const card=node('article',null,'styled-outfit');card.append(node('p','FROM YOUR COLLECTION','eyebrow'),node('h3',result.context.request+' · option '+(index+1)));
   const photos=node('div',null,'styled-outfit-photos');
-  for(const slot of outfitSlots){const item=items.find(x=>x.id===board.slots[slot.id]);if(!item)continue;const piece=node('figure'),img=node('img');img.src=item.image;img.alt=item.name||item.itemType;piece.append(img,node('figcaption',item.name||item.itemType));photos.append(piece);}card.append(photos);
+  for(const slot of outfitSlots){const item=items.find(x=>x.id===board.slots[slot.id]);if(!item)continue;const piece=node('figure'),img=node('img');img.src=item.image;img.alt=item.name||item.itemType;img.decoding='async';img.loading='lazy';img.width=240;img.height=260;img.onerror=()=>{img.hidden=true;piece.append(node('p','Photo unavailable. Open this piece in My closet to check its photo.','fine'));};piece.append(img,node('figcaption',item.name||item.itemType));photos.append(piece);}card.append(photos);
   const missing=boardGaps(board,items).filter(s=>!s.optional);
   card.append(node('p',missing.length?'Still needed from your closet: '+missing.map(s=>s.label).join(', '):'A complete outfit using clothes you own.'));
   card.append(node('p','Chosen for '+result.context.request.toLowerCase()+', with coordinating colors and fewer competing patterns. Unknown details are not assumed.','fine'));
@@ -73,7 +73,7 @@ function renderStyledCollection(){
    const title=node('p','Change one piece without leaving this outfit','fine');
    card.append(title,swapControls);
   }
-  const actions=node('div',null,'actions'),edit=node('button','Adjust on outfit board','secondary'),save=node('button','Save outfit','primary');edit.type=save.type='button';save.disabled=changed;
+  const actions=node('div',null,'actions'),edit=node('button','Preview on model','secondary'),save=node('button','Save outfit','primary');edit.type=save.type='button';save.disabled=changed;
   if(changed)card.append(node('p','A selected garment was removed or recategorized. Create outfits again.','fine'));
   edit.onclick=async()=>{await outfitBoardReady;currentBoard=cleanOutfitBoard({...board,name:result.context.request+' · option '+(index+1)},items);syncBoardInputs();renderOutfitBoard();await storeBoard();switchView('builder');};
   save.onclick=async()=>{save.disabled=true;const status=node('p',null,'fine');card.append(status);try{await outfitBoardReady;if(savedOutfitBoards.length>=50)throw Error('You can save up to 50 outfits.');const saved=cleanOutfitBoard({...board,name:result.context.request+' · option '+(index+1)},items);savedOutfitBoards.push(saved);try{await persistBoardState();}catch(error){savedOutfitBoards.pop();throw error;}status.textContent='Saved. Find it in Outfit builder → Saved outfits.';save.textContent='Saved';renderSavedOutfitBoards();}catch(error){status.textContent=error.message||'Could not save this outfit.';save.disabled=false;}};
@@ -81,11 +81,19 @@ function renderStyledCollection(){
  }
 }
 $('styleCollectionForm').onsubmit=async event=>{
- event.preventDefault();const button=$('createCollectionOutfits');button.disabled=true;$('stylistStatus').textContent='Matching your clothes with the latest verified trends…';
+ event.preventDefault();const revision=++stylistRequestRevision;
+ const owner=window.closetAuth?.user?.id||null;
+ const anchor=stylistAnchorItemId;
+ const preferences={request:$('stylistOccasion').value,audience:$('stylistAudience').value,season:$('stylistSeason').value,anchorItemId:anchor||undefined};
+ const isCurrent=()=>revision===stylistRequestRevision&&anchor===stylistAnchorItemId&&
+  owner===(window.closetAuth?.user?.id||null)&&
+  preferences.request===$('stylistOccasion').value&&preferences.audience===$('stylistAudience').value&&preferences.season===$('stylistSeason').value;
+ const button=$('createCollectionOutfits');button.disabled=true;$('stylistStatus').textContent='Matching your clothes with the latest verified trends…';
  // Owned-outfit suggestions must work immediately without waiting for a
  // weekly magazine-data request. The trend cache and normal refresh process
  // update independently; an offline device still knows what clothes it owns.
  try{await closetReady;
+  if(!isCurrent())return;
   styledCollectionResults=styleOwnedCollection(items,{request:$('stylistOccasion').value,audience:$('stylistAudience').value,season:$('stylistSeason').value,anchorItemId:stylistAnchorItemId||undefined},activeTrendLibrary);
   renderStyledCollection();
   // The scorer intentionally returns partial outfits for sparse closets.
@@ -103,11 +111,12 @@ $('styleCollectionForm').onsubmit=async event=>{
     stylistAnchorItemId?'No compatible outfit for that piece yet. Try Casual or adjust its details.':
     items.length?'No suitable combination for this occasion yet. Add or adjust the clothing categories in My closet.':
     'Add clothing photos to My closet first, then create an outfit.';
- }catch{$('stylistStatus').textContent='Could not create outfits. Your closet is unchanged; try again.';}finally{button.disabled=false;}
+ }catch{if(isCurrent())$('stylistStatus').textContent='Could not create outfits. Your closet is unchanged; try again.';}finally{if(revision===stylistRequestRevision)button.disabled=false;}
 };
-for(const id of ['stylistOccasion','stylistAudience','stylistSeason'])$(id).onchange=()=>{styledCollectionResults=[];renderStyledCollection();$('stylistStatus').textContent='Create outfits for your new preferences.';};
+for(const id of ['stylistOccasion','stylistAudience','stylistSeason'])$(id).onchange=()=>{styledCollectionResults=[];++stylistRequestRevision;$('createCollectionOutfits').disabled=false;renderStyledCollection();$('stylistStatus').textContent='Create outfits for your new preferences.';};
 $('stylistSeason').value=['Winter','Winter','Spring','Spring','Spring','Summer','Summer','Summer','Fall','Fall','Fall','Winter'][new Date().getMonth()];
 $('stylistClearAnchor').onclick=()=>{
+ ++stylistRequestRevision;$('createCollectionOutfits').disabled=false;
  stylistAnchorItemId=null;styledCollectionResults=[];
  renderStyledCollection();
  $('stylistStatus').textContent='Style my whole closet. Choose an occasion and create outfits.';

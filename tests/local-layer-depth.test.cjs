@@ -28,7 +28,7 @@ test('only verified outerwear over an actually rendered underlayer receives cont
 });
 test('contact depth is applied only after decoding valid garment layers and never through unreviewed photo masks',()=>{
  const ui=fs.readFileSync('public/reusable-figure-preview.js','utf8');
- const imgDecode=ui.indexOf('try{await img.decode();}');
+ const imgDecode=ui.indexOf('try{await decodeImage(img);}');
  const gate=ui.indexOf('ClosetLocalLayerDepth?.depthFor');
  const add=ui.indexOf('nextLayers.append(img);displayedSlots.add(placement.slot)');
  assert.ok(imgDecode>=0&&imgDecode<gate&&gate<add);
