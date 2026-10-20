@@ -140,3 +140,9 @@ input[type="checkbox"]{min-height:20px;width:20px;height:20px;vertical-align:mid
 .reusable-figure-layer--contact-depth{
  filter:drop-shadow(0px 1px 1.25px rgba(30,28,26,.16));
 }
+
+/* Keep long garment names and actions within narrow phone cards. */
+.styled-outfit,.styled-outfit-photos figure{min-width:0;overflow-wrap:anywhere}
+.styled-outfit-photos img{display:block;max-width:100%}
+.styled-outfit .actions button{min-height:48px;white-space:normal}
+#reusableFigureRetry{width:100%;min-height:48px;white-space:normal}

@@ -11,6 +11,7 @@
  const photoHelp=byId('reusableFigurePhotoHelp');
  const photoHelpText=byId('reusableFigurePhotoHelpText');
  const retake=byId('reusableFigureRetake');
+ const retry=byId('reusableFigureRetry');
  if(retake)retake.addEventListener('click',()=>{
   // Reuse the existing Add/Single-item workflow. Never edit/delete the
   // previously saved original, auto-activate the camera or upload anything.
@@ -57,11 +58,19 @@
   if(faceControls)faceControls.hidden=false;positionFace();
   status.textContent='Selfie face overlay is on this device only. Preview placement is approximate; nothing was uploaded or saved.';
  });
- remove.addEventListener('click',()=>{removeFace();render();});
- selector.addEventListener('change',()=>{positionFace();render();});
+ remove.addEventListener('click',()=>{removeFace();requestRender();});
+ selector.addEventListener('change',()=>{positionFace();requestRender();});
+ // Every decode is bounded, including cached output; failed images never
+ // poison the cache or leave a permanent loading message.
+ async function decodeImage(image){
+  let timer;
+  try{await Promise.race([image.decode(),new Promise((_,reject)=>{
+   timer=setTimeout(()=>reject(Error('Image decode timed out')),5000);
+  })]);}finally{clearTimeout(timer);}
+ }
  async function imagePixels(value,category,primaryColor){
   const photo=new Image();photo.src=value;
-  try{await photo.decode();}catch{return null;}
+  try{await decodeImage(photo);}catch{return null;}
   const w=photo.naturalWidth,h=photo.naturalHeight;
   if(w<24||h<24||w*h>20_000_000)return null;
   const scale=Math.min(1,Math.sqrt(150000/(w*h)));
@@ -71,6 +80,7 @@
   if(!ctx)return null;
   // Analyze only a bounded copy; after approval, use the higher-resolution
   // source for native alpha. Matting stays conservative at its tested limit.
+  ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
   function trimmed(source,pixels){
    const bounds=root.ClosetGarmentWarp?.alphaBounds(pixels.data,source.width,source.height);
    if(!bounds)return null;
@@ -107,6 +117,7 @@
     const high=document.createElement('canvas');
     high.width=Math.floor(w*highScale);high.height=Math.floor(h*highScale);
     const hi=high.getContext('2d',{willReadFrequently:true});if(!hi)return null;
+    hi.imageSmoothingEnabled=true;hi.imageSmoothingQuality='high';
     hi.drawImage(photo,0,0,high.width,high.height);
     return trimmed(high,hi.getImageData(0,0,high.width,high.height));
    }
@@ -128,8 +139,25 @@
   const owner=root.closetAuth?.user?.id||null;
   if(owner!==lastOwner){removeFace();lastOwner=owner;}
   previewCache?.forOwner(owner); // Ownership changes clear every prior image.
-  const plan=engine.plan(typeof currentBoard==='undefined'?null:currentBoard,
-   typeof items==='undefined'?[]:items,selector.value);
+  const board=()=>typeof currentBoard==='undefined'?null:currentBoard;
+  const closet=()=>typeof items==='undefined'?[]:items;
+  const plan=engine.plan(board(),closet(),selector.value);
+  const boardState=JSON.stringify(board());
+  // Source URLs are compared by identity, never hashed or downsampled for
+  // recognition. Recheck direct edits even if no new render was requested.
+  function sourceChanged(){
+   if(JSON.stringify(board())!==boardState||selector.value!==plan.figure)return true;
+   const next=engine.plan(board(),closet(),selector.value);
+   return next.placements.length!==plan.placements.length||
+    next.skipped.join('|')!==plan.skipped.join('|')||
+    next.placements.some((p,i)=>{
+     const old=plan.placements[i];
+     return ['itemId','image','category','primaryColor','slot'].some(k=>p[k]!==old[k])||
+      JSON.stringify(p.rect)!==JSON.stringify(old.rect);
+    });
+  }
+  stage.setAttribute('aria-busy','true');
+  if(retry)retry.hidden=true;
   base.src=plan.figureImage;
   positionFace();
   // Never show the previous outfit with the newly selected figure, nor
@@ -141,8 +169,18 @@
   const nextLayers=document.createDocumentFragment();
   const displayedSlots=new Set();
   const renderedLayers=[];
-  const cancelled=()=>revision!==renderRevision||
-   (root.closetAuth?.user?.id||null)!==owner;
+  const cancelled=()=>{
+   if(revision!==renderRevision)return true;
+   if((root.closetAuth?.user?.id||null)!==owner||sourceChanged()){
+    previewCache?.forOwner(root.closetAuth?.user?.id||null);
+    garmentContainer.replaceChildren();removeFace();updatePhotoHelp(false);
+    stage.setAttribute('aria-busy','false');
+    status.textContent='Your selection changed. Refresh the clothing preview.';
+    if(retry)retry.hidden=false;
+    return true;
+   }
+   return false;
+  };
   for(const placement of plan.placements){
    const query={owner,id:String(placement.itemId),source:placement.image,
     category:placement.category,primaryColor:placement.primaryColor||''};
@@ -156,7 +194,7 @@
     if(placement.slot!=='shoes'&&root.ClosetGarmentWarp){
      const garment=new Image();garment.src=cutout.image;
      try{
-      await garment.decode();
+      await decodeImage(garment);
       if(cancelled())return;
       const warped=root.ClosetGarmentWarp.warpTransparentImage(
        garment,placement.category,document.createElement('canvas'));
@@ -183,10 +221,10 @@
    // Do not advertise a garment as displayed until the final transformed
    // PNG has actually decoded to the dimensions used for aspect fitting.
    // A corrupt cached/display URL should be held, never a broken-image tile.
-   try{await img.decode();}catch{if(cancelled())return;counts.skipped++;continue;}
+   try{await decodeImage(img);}catch{if(cancelled())return;previewCache?.remove(query);counts.skipped++;continue;}
    if(cancelled())return;
    if(img.naturalWidth!==prepared.width||img.naturalHeight!==prepared.height){
-    counts.skipped++;continue;
+    previewCache?.remove(query);counts.skipped++;continue;
    }
    if(preparedNow)previewCache?.put(query,prepared); // Cache only proven images.
    img.dataset.slot=placement.slot;
@@ -204,6 +242,8 @@
   const covered=Array.isArray(visibility)
    ?visibility.filter(x=>x.mostlyConcealed).length:0;
   garmentContainer.replaceChildren(nextLayers);
+  stage.setAttribute('aria-busy','false');
+  if(retry)retry.hidden=counts.skipped===0;
   status.textContent=counts.shown+' owned clothing layer'+(counts.shown===1?'':'s')+
    ' displayed; '+counts.skipped+' held for transparent-cutout review. '+
    (covered>0?covered+' selected '+(covered===1?'piece is':'pieces are')+
@@ -212,10 +252,32 @@
    (localFaceURL?' Your selfie is on-device only.':'');
   updatePhotoHelp(counts.skipped>0);
  }
- root.renderReusableFigurePreview=()=>{void render();};
+ // Coalesce synchronous board updates before doing expensive pixel work.
+ let scheduled=false,pageHidden=false;
+ function requestRender(){
+  if(pageHidden)return;
+  ++renderRevision;garmentContainer.replaceChildren();
+  if(scheduled)return;
+  scheduled=true;
+  Promise.resolve().then(()=>{
+   scheduled=false;
+   if(pageHidden)return;
+   const expected=renderRevision+1;
+   return render().catch(()=>{
+    if(renderRevision!==expected)return;
+    garmentContainer.replaceChildren();stage.setAttribute('aria-busy','false');
+    updatePhotoHelp(false);
+    status.textContent='Preview unavailable. Your clothing is saved; try again.';
+    if(retry)retry.hidden=false;
+   });
+  });
+ }
+ root.renderReusableFigurePreview=requestRender;
+ if(retry)retry.addEventListener('click',requestRender);
  // This page is already tied to its existing signed-in local closet database.
  Promise.resolve(typeof outfitBoardReady==='undefined'?null:outfitBoardReady)
-  .then(()=>{void render();}).catch(()=>{status.textContent='Preview unavailable; your saved closet is unchanged.';});
- root.addEventListener('pagehide',()=>{++renderRevision;previewCache?.dispose();
+  .then(requestRender).catch(()=>{status.textContent='Preview unavailable; your saved closet is unchanged.';});
+ root.addEventListener('pageshow',()=>{if(pageHidden){pageHidden=false;requestRender();}});
+ root.addEventListener('pagehide',()=>{pageHidden=true;++renderRevision;previewCache?.dispose();
   garmentContainer.replaceChildren();removeFace();});
 })(window);
