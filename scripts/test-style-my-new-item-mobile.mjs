@@ -260,6 +260,29 @@ try{
  }
  assert.equal(new Set(cycle.slice(0,4)).size,4,'all four owned shoes are reachable');
  assert.equal(new Set(cycle.slice(4,8)).size,4,'repeat cycle reaches every shoe again');
+ // Long wardrobe labels and model-preview actions must fit narrow phones.
+ await page.evaluate(()=>{
+  items.find(x=>x.id==='new-green-top').name='LongGarmentName'.repeat(9);
+  styleNewClosetItem('new-green-top');
+ });
+ await page.locator('#styledCollectionResults .styled-outfit').first().waitFor();
+ const responsive=[];
+ for(const width of [320,390,430]){
+  await page.setViewportSize({width,height:844});
+  const bounds=await page.locator('#styledCollectionResults .styled-outfit').first().evaluate(card=>{
+   const rect=card.getBoundingClientRect();
+   const overflow=[...card.querySelectorAll('figure,figcaption,button')].some(el=>{
+    const box=el.getBoundingClientRect();return box.left<rect.left-1||box.right>rect.right+1;
+   });
+   return {overflow,width:rect.width,tapHeights:[...card.querySelectorAll('.actions button')]
+    .map(b=>b.getBoundingClientRect().height)};
+  });
+  assert.equal(bounds.overflow,false,'long garment labels/actions fit '+width+'px');
+  assert.ok(bounds.width<=width);
+  assert.ok(bounds.tapHeights.every(height=>height>=48),'comfortable preview/save buttons');
+  responsive.push({width,overflow:false});
+ }
+ await page.setViewportSize({width:390,height:844});
  await mkdir('artifacts/local-fitting',{recursive:true});
  await page.screenshot({path:'artifacts/local-fitting/style-'+(process.env.STYLE_BROWSER||'chromium')+'.png',fullPage:true});
  assert.deepEqual(errors,[]);
@@ -270,7 +293,7 @@ try{
   recentGarmentExactOpen:true,duplicateNameSafe:true,oldFiltersCleared:true,
   unsortedCategoryColorSaved:true,unsortedQueueSkipResumes:true,
   originalUnsortedPhotoPreserved:true,offlineTrendSafe:true,
-  allOwnedSwapChoicesReachable:true,actualPhoneVerified:false,pageErrors:errors.length
+  allOwnedSwapChoicesReachable:true,responsiveWidths:responsive,actualPhoneVerified:false,pageErrors:errors.length
  }));
  await context.close();
 }finally{await browser?.close();await new Promise(done=>server.close(done));}

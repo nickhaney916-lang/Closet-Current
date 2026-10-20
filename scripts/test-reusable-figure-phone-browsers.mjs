@@ -474,7 +474,8 @@ try{
      return original.call(this);
     };
     window.__restoreBaseDecode=()=>HTMLImageElement.prototype.decode=original;
-    document.getElementById('reusableFigureChoice').value='male';
+    const choice=document.getElementById('reusableFigureChoice');
+    choice.value=choice.value==='male'?'female':'male';
     document.getElementById('reusableFigureChoice').dispatchEvent(new Event('change'));
    });
    await page.waitForFunction(()=>document.getElementById('reusableFigureStatus').textContent.startsWith('Preview unavailable.'));

@@ -26,6 +26,9 @@ Sparse wardrobes retain explicit missing-piece messages instead of invented item
   programmatic; stale async work cannot clear the current job's status/layers.
 - Recommendation photos decode asynchronously, reserve dimensions and load lazily;
   an unreadable photo shows a recovery explanation instead of a broken image.
+  Long garment names wrap inside narrow cards; preview/save taps are at least
+  48px high, retry is 52px, and controls shrink within their available width.
+  Browser tests probe 320/390/430px layouts in both engines.
   Full-resolution original images, conservative extraction gates, aspect ratio,
   lossless PNG display copies and the existing 600k native-alpha budget are kept.
 
@@ -37,6 +40,10 @@ completion and hung decoder timeout/cleanup. Synthetic tests are not image-quali
 or real-garment accuracy measurements.
 
 Local Chromium/WebKit installation was attempted and failed (truncated download).
+Initial CI exposed a missing JavaScript MIME mapping in the customer-journey
+test server; fixed without suppressing page errors. A later base-load fault test
+selected an already-selected figure; corrected to actually toggle models so the
+new identical-plan optimization does not correctly skip that injected failure.
 The branch workflow runs full Node checks, the existing owned-clothes journey in
 Android-like Chromium and iPhone-like WebKit, synthetic whole-outfit Save & style
 handoff, and both existing fitting browser profiles. Added browser assertions cover
