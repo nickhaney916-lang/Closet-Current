@@ -9,9 +9,10 @@ const sha=x=>createHash('sha256').update(x).digest('hex');
 const browser=await chromium.launch({headless:true});
 const pageErrors=[];
 try{
- const page=await browser.newPage({viewport:{width:390,height:844},deviceScaleFactor:2,acceptDownloads:true});
+ const context=await browser.newContext({viewport:{width:390,height:844},deviceScaleFactor:2,acceptDownloads:true});
+ const page=await context.newPage();
  page.on('pageerror',error=>pageErrors.push(error.message));
- await page.addInitScript(()=>{
+ await context.addInitScript(()=>{
   const text=File.prototype.text;
   File.prototype.text=function(...args){
    const promise=text.apply(this,args);
@@ -90,7 +91,8 @@ try{
  assert.equal(wrong.accepted,false);assert.equal(wrong.verified,false);
  assert.equal(wrong.disabled,true);assert.equal(wrong.source,null);assert.equal(wrong.draft,null);
  // Delayed image.decode from B is released AFTER C has been accepted.
- const second=await browser.newPage({viewport:{width:430,height:932},deviceScaleFactor:2});
+ const second=await context.newPage();
+ await second.setViewportSize({width:430,height:932});
  second.on('pageerror',error=>pageErrors.push(error.message));
  await second.goto('file://'+resolve('benchmark/approve-garment-mask-native.html'));
  await second.locator('#photo').setInputFiles(photos[1]);
