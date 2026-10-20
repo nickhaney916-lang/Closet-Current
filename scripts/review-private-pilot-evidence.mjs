@@ -7,8 +7,8 @@ import {reviewPrivatePilotEvidence} from '../benchmark/private-end-to-end-pilot-
 
 const args=process.argv.slice(2);
 const sep=args.indexOf('--color-reports'),outIndex=args.indexOf('--out');
-if(args.length<9||args[0]!=='--android'||args[2]!=='--iphone'||
- sep!==4||outIndex<7||outIndex!==args.length-2||outIndex-sep<3)
+if(args.length<8||args[0]!=='--android'||args[2]!=='--iphone'||
+ sep!==4||outIndex<6||outIndex!==args.length-2||outIndex-sep<2)
  throw Error('Usage: node scripts/review-private-pilot-evidence.mjs --android android.json --iphone iphone.json --color-reports phone-colors-1.json [phone-colors-2.json ...] --out artifacts/private-phone-pilot/new-review.json');
 const output=resolve(args[outIndex+1]);
 const privateRoot=resolve('artifacts/private-phone-pilot');
