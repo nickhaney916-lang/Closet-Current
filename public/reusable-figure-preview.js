@@ -31,6 +31,29 @@
  if(!engine||!stage||!base||!garmentContainer||!selfie||!status||!selector||!upload||!remove)return;
  let lastPlan=null,lastPlanOwner=null,activeRender=null;
  let renderRevision=0,localFaceURL=null,lastOwner=root.closetAuth?.user?.id||null;
+ // Independent UI watchdog: frequent background refreshes must never keep a
+ // stalled Image.decode() spinner alive by resetting each attempt's deadline.
+ let renderWatchdog=null,watchdogState=null,stalledState=null;
+ const sameRequest=(a,b)=>!!a&&!!b&&a.owner===b.owner&&
+  a.database===b.database&&a.boardState===b.boardState&&
+  engine.samePlan(a.plan,b.plan);
+ function clearWatchdog(){if(renderWatchdog!==null)clearTimeout(renderWatchdog);
+  renderWatchdog=null;watchdogState=null;}
+ function guardWatchdog(state){
+  if(sameRequest(watchdogState,state))return;
+  clearWatchdog();watchdogState=state;
+  renderWatchdog=setTimeout(()=>{
+   // Changing the photo, model figure or account can still initiate a new
+   // request; only this exact stalled board is temporarily held for retry.
+   if(!sameRequest(watchdogState,state))return;
+   stalledState=state;renderWatchdog=null;watchdogState=null;
+   ++renderRevision;activeRender=null;lastPlan=null;
+   garmentContainer.replaceChildren();removeFace();updatePhotoHelp(false);
+   base.style.visibility='hidden';stage.setAttribute('aria-busy','false');
+   status.textContent='Preview took too long. Your photos are saved; tap Retry clothing preview.';
+   if(retry)retry.hidden=false;
+  },7000);
+ }
  const previewCache=root.ClosetFigurePreviewCache?.create();
  const faceControls=byId('reusableSelfiePosition');
  const faceInputs=['X','Y','Zoom'].map(axis=>byId('reusableSelfie'+axis));
@@ -68,7 +91,9 @@
    timer=setTimeout(()=>reject(Error('Image preparation timed out')),5000);
   })]);}finally{clearTimeout(timer);}
  }
- if(retry)retry.addEventListener('click',()=>{lastPlan=null;requestRender();});
+ if(retry)retry.addEventListener('click',()=>{
+  stalledState=null;clearWatchdog();lastPlan=null;requestRender();
+ });
  async function imagePixels(value,category,primaryColor){
   const photo=new Image();photo.src=value;
   try{await decodeImage(photo);}catch{return null;}
@@ -166,6 +191,12 @@
   const closet=()=>typeof items==='undefined'?[]:items;
   const plan=engine.plan(board(),closet(),selector.value);
   const boardState=JSON.stringify(board());
+  const watchdogInput={owner,database,boardState,plan};
+  if(stalledState){
+   if(sameRequest(stalledState,watchdogInput))return;
+   stalledState=null;
+  }
+  guardWatchdog(watchdogInput);
   const sourceChanged=()=>JSON.stringify(board())!==boardState||
    !engine.samePlan(plan,engine.plan(board(),closet(),selector.value));
   if(lastPlanOwner===owner&&engine.samePlan(lastPlan,plan))return;
@@ -270,6 +301,7 @@
   stage.setAttribute('aria-busy','false');
   if(retry)retry.hidden=counts.skipped===0;
   updatePhotoHelp(counts.skipped>0);
+  if(revision===renderRevision)clearWatchdog();
   lastPlan=counts.skipped===0?plan:null;lastPlanOwner=owner;
  }
  // Coalesce same-turn board updates; only completed identical previews are reused.
@@ -282,7 +314,7 @@
    base.style.visibility='hidden';stage.setAttribute('aria-busy','false');
    status.textContent='Preview unavailable. Your clothes are saved; try again.';
    if(retry)retry.hidden=false;
-  }finally{if(activeRender?.revision===attempt)activeRender=null;}
+  }finally{if(activeRender?.revision===attempt){activeRender=null;clearWatchdog();}}
  }
  function requestRender(){
   if(pageHidden||scheduled)return;
@@ -300,6 +332,15 @@
       engine.samePlan(activeRender.plan,engine.plan(board,
        typeof items==='undefined'?[]:items,selector.value)))return;
    }catch{/* The guarded render reports unavailable planning/canvas state. */}
+   // A timed-out identical request stays visibly retryable until an actual
+   // user retry or an input change; background repaint cannot clear the hold.
+   const owner=root.closetAuth?.user?.id||null;
+   const dbNow=typeof db==='undefined'?null:db;
+   const board=typeof currentBoard==='undefined'?null:currentBoard;
+   if(stalledState&&sameRequest(stalledState,{
+    owner,database:dbNow,boardState:JSON.stringify(board),
+    plan:engine.plan(board,typeof items==='undefined'?[]:items,selector.value)
+   }))return;
    return safeRender();
   });
  }
@@ -307,6 +348,6 @@
  Promise.resolve(typeof outfitBoardReady==='undefined'?null:outfitBoardReady)
   .then(requestRender).catch(()=>{status.textContent='Preview unavailable; your saved closet is unchanged.';});
  root.addEventListener('pageshow',()=>{if(pageHidden){pageHidden=false;requestRender();}});
- root.addEventListener('pagehide',()=>{pageHidden=true;++renderRevision;activeRender=null;lastPlan=null;lastPlanOwner=null;previewCache?.dispose();
+ root.addEventListener('pagehide',()=>{pageHidden=true;++renderRevision;clearWatchdog();stalledState=null;activeRender=null;lastPlan=null;lastPlanOwner=null;previewCache?.dispose();
   garmentContainer.replaceChildren();removeFace();stage.setAttribute('aria-busy','false');});
 })(window);
