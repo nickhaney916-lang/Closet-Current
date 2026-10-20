@@ -5,6 +5,7 @@ import path from 'node:path';
 import {createHash} from 'node:crypto';
 import {jpegDimensions,decodeNativeMask} from './prepare-reviewed-mask-evidence.mjs';
 import {inspectHumanOutline} from './human-mask-outline-advisories.mjs';
+import {renderPrivateReviewProgress} from './render-private-review-progress.mjs';
 
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
 const forms = {Tops:['top'],Bottoms:['shorts','trousers','skirt'],Dresses:['dress'],
@@ -141,7 +142,17 @@ if(process.argv[1]&&path.resolve(process.argv[1])===path.resolve(new URL(import.
  const manifest=JSON.parse(fs.readFileSync('benchmark/local-fitting-real-photo-manifest.json'));
  const locked=JSON.parse(fs.readFileSync('benchmark/locked-photo-sources.json'));
  const report=auditReviewHandoff({manifest,locked,readSource:image=>fs.readFileSync('benchmark/fixtures/'+image),reviewFiles});
+ const htmlOut=out.replace(/\.json$/,'.html');
+ ensure(out!==htmlOut&&!fs.existsSync(out)&&!fs.existsSync(htmlOut),'Review reports already exist; choose another private output name');
+ const rootPath=path.resolve(root);
+ const rel=to=>path.relative(path.dirname(out),path.join(rootPath,to)).split(path.sep).join('/');
+ const page=renderPrivateReviewProgress(report,{
+  imagePrefix:rel('benchmark/fixtures')+'/',
+  firstEditor:rel('benchmark/annotate-garment-native.html'),
+  secondEditor:rel('benchmark/approve-garment-mask-native.html')
+ });
  fs.mkdirSync(path.dirname(out),{recursive:true});
  fs.writeFileSync(out,JSON.stringify(report,null,2)+'\n',{flag:'wx'});
- console.log(JSON.stringify(report.summary));
+ fs.writeFileSync(htmlOut,page,{flag:'wx'});
+ console.log(JSON.stringify({...report.summary,localHumanReviewChecklist:htmlOut}));
 }
