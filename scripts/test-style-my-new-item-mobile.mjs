@@ -372,7 +372,7 @@ try{
   window.__gateSeen=false;
   HTMLImageElement.prototype.decode=function(){
    const native=window.__nativeDecode.call(this);
-   if(window.__gateSeen)return native;
+   if(!this.classList.contains('reusable-figure-layer')||window.__gateSeen)return native;
    window.__gateSeen=true;
    return Promise.all([native,new Promise(ok=>window.__releaseDecode=ok)]);
   };
@@ -391,6 +391,29 @@ try{
    board:currentBoard.slots,selected:items.filter(x=>Object.values(currentBoard.slots).includes(x.id)).map(x=>({id:x.id,category:x.category,color:x.color,sourceLength:x.image.length})),
    busy:document.querySelector('#reusableFigureStage').getAttribute('aria-busy')})));throw error;
  }
+ // The old account cannot publish a final decoded garment after sign-in changes.
+ await page.evaluate(()=>{
+  window.__priorPreviewOwner=window.closetAuth.user.id;
+  window.__accountGateSeen=false;
+  HTMLImageElement.prototype.decode=function(){
+   const native=window.__nativeDecode.call(this);
+   if(!this.classList.contains('reusable-figure-layer')||window.__accountGateSeen)return native;
+   window.__accountGateSeen=true;
+   return Promise.all([native,new Promise(ok=>window.__releaseAccountDecode=ok)]);
+  };
+  document.querySelector('#reusableFigureRetry').click();
+ });
+ await page.waitForFunction(()=>window.__releaseAccountDecode);
+ await page.evaluate(()=>{
+  window.closetAuth.user.id='synthetic-different-preview-owner';
+  window.__releaseAccountDecode();HTMLImageElement.prototype.decode=window.__nativeDecode;
+ });
+ await page.waitForFunction(()=>document.querySelector('#reusableFigureStatus').textContent.includes('selection changed'));
+ assert.equal(await page.locator('#reusableFigureGarments img').count(),0);
+ assert.equal(await page.locator('#reusableFigureSelfie').isVisible(),false);
+ await page.evaluate(()=>window.closetAuth.user.id=window.__priorPreviewOwner);
+ await page.locator('#reusableFigureRetry').click();
+ await page.waitForFunction(()=>document.querySelectorAll('#reusableFigureGarments img').length===1);
  // A stalled browser decoder must become a retryable hold, never spin forever.
  await page.evaluate(()=>{
   HTMLImageElement.prototype.decode=function(){return new Promise(()=>{});};
@@ -424,7 +447,7 @@ try{
  await page.screenshot({path:'artifacts/style-new-clothes/'+evidenceName+'.png',fullPage:true});
  await writeFile('artifacts/style-new-clothes/'+evidenceName+'.json',JSON.stringify({
   engine:evidenceName,actualPhysicalPhone:false,syntheticDisplayFixture:true,
-  newClothesShortcut:true,ownedOutfitModelHandoff:true,sourceEditRaceBlocked:true,
+  newClothesShortcut:true,ownedOutfitModelHandoff:true,sourceEditRaceBlocked:true,crossAccountRenderBlocked:true,
   boundedDecodeRetry:true,horizontalOverflow:false,reuseMeasurement,pageErrors:errors
  },null,2));
 
