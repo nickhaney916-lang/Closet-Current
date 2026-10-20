@@ -1,17 +1,22 @@
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict'),test=require('node:test');
 const source=fs.readFileSync('public/app.js','utf8');
-function setup({ready=true,getUserMedia}={}){
+function setup({ready=true,getUserMedia,frameCallbacks=false}={}){
  const els=new Map(),clock={now:0},intervals=new Map();let intervalId=0,stopped=0;const timeouts=new Map();
  const element=id=>{if(!els.has(id))els.set(id,{hidden:false,disabled:false,value:id==='interval'?'5':'',checked:false,classList:{add(){},remove(){}}});return els.get(id);};
  const track={stop(){stopped++;},addEventListener(type,fn){this[type]=fn;}},media={getTracks:()=>[track]};
  const context={stream:null,cameraMode:null,cameraOpening:false,cameraRequest:0,timer:null,busy:false,audio:null,video:{readyState:ready?2:0,videoWidth:ready?1280:0,srcObject:null,removeAttribute(){},classList:{add(){},remove(){}},play:async()=>{}},session:0,batch:[],localReady:false,view:'scan',messageText:'',Date:{now:()=>clock.now},$:element,window:{},navigator:{mediaDevices:{getUserMedia:getUserMedia||(async()=>media)}},setTimeout:fn=>{const id=++intervalId;timeouts.set(id,fn);return id;},clearTimeout:id=>timeouts.delete(id),setInterval:fn=>{intervals.set(++intervalId,fn);return intervalId;},clearInterval:id=>intervals.delete(id),beep(){},snap(){if(!context.video.videoWidth||context.video.readyState<2)throw Error('not ready');return 'same garment frame';}};
+ let nextFrame=null,frameId=0;
+ if(frameCallbacks){
+  context.video.requestVideoFrameCallback=fn=>{nextFrame=fn;return ++frameId;};
+  context.video.cancelVideoFrameCallback=id=>{if(id===frameId)nextFrame=null;};
+ }
  context.candidate=image=>{context.batch.push({image});context.session++;};
  context.message=text=>context.messageText=text;
  context.switchView=view=>context.view=view;
  vm.createContext(context);vm.runInContext(fs.readFileSync('public/capture.js','utf8')+'\nlet cadence;',context);
  vm.runInContext('function cameraFrameQuality(){return {usable:true};} function cameraStability(){return {stable:true,lowTexture:false};} let previousQualityFrame=null;',context);
  vm.runInContext(source.slice(source.indexOf('let manualStillShot=null'),source.indexOf('function waitEvent')),context);
- return {context,element,clock,intervals,media,track,timeouts,expire(){for(const [id,fn] of timeouts){timeouts.delete(id);fn();}},stopped:()=>stopped};
+ return {context,element,clock,intervals,media,track,timeouts,deliverFrame(){if(!nextFrame)throw Error('No pending browser video-frame callback');const frame=nextFrame;nextFrame=null;frame();},poll(){for(const tick of [...intervals.values()])tick();},expire(){for(const [id,fn] of timeouts){timeouts.delete(id);fn();}},stopped:()=>stopped};
 }
 test('manual camera takes photos only on shutter taps',async()=>{
  const {context:c,clock,intervals}=setup();await c.startCamera('manual');
@@ -111,4 +116,50 @@ test('cancelling between grant fulfillment and preview attachment releases the a
  let grant;const h=setup({getUserMedia:()=>new Promise(resolve=>grant=resolve)}),c=h.context;
  const opening=c.startCamera('manual');grant(h.media);queueMicrotask(()=>c.stopCamera());await opening;
  assert.equal(c.stream,null);assert.equal(h.stopped(),1);assert.equal(c.busy,false);
+});
+
+test('muted video track blocks both manual and automatic captures without touching saved photos',async()=>{
+ const h=setup(),c=h.context;await c.startCamera('manual');
+ h.track.muted=true;c.takePhoto();assert.equal(c.session,0);
+ assert.match(c.messageText,/stopped delivering video/i);
+ h.track.muted=false;c.takePhoto();assert.equal(c.session,1);
+ c.stopCamera();assert.equal(c.batch.length,1);
+ await c.startCamera('auto');h.clock.now=5000;h.track.muted=true;
+ c.captureTick();assert.equal(c.session,0);
+ h.track.muted=false;c.captureTick();assert.equal(c.session,1);c.stopCamera();
+});
+test('real delivered video frames may remain visually identical yet not count as frozen',async()=>{
+ const h=setup({frameCallbacks:true}),c=h.context;
+ await c.startCamera('auto');assert.equal(h.intervals.size,2);
+ for(const time of [1000,2500,5000]){
+  h.clock.now=time;h.deliverFrame();
+ }
+ c.captureTick();assert.equal(c.session,1);
+ assert.equal(c.cameraPreviewHealth().live,true);
+ c.stopCamera();assert.equal(h.intervals.size,0);
+});
+test('frozen preview cannot silently accumulate photos; watchdog preserves collected garments and frees retry',async()=>{
+ const h=setup({frameCallbacks:true}),c=h.context;
+ await c.startCamera('auto');
+ h.clock.now=5000;h.deliverFrame();c.captureTick();assert.equal(c.session,1);
+ h.clock.now=10000;h.poll();
+ assert.equal(c.stream,null);assert.equal(c.cameraMode,null);
+ assert.equal(c.batch.length,1);assert.equal(c.session,1);
+ assert.equal(h.element('start').disabled,false);
+ assert.match(c.messageText,/preview froze/i);
+ await c.startCamera('manual');assert.equal(c.cameraMode,'manual');
+ h.deliverFrame();c.takePhoto();assert.equal(c.session,1);c.stopCamera();
+});
+test('preview frame callbacks owned by a stopped session cannot disturb the next camera',async()=>{
+ const h=setup({frameCallbacks:true}),c=h.context;await c.startCamera('manual');
+ const first=c.cameraPreviewWatch,oldCallback=c.video.requestVideoFrameCallback;
+ h.clock.now=2000;h.deliverFrame();c.stopCamera();
+ await c.startCamera('manual');const current=c.cameraPreviewWatch;
+ assert.notEqual(current,first);
+ h.clock.now=3000;
+ // Simulate an already-queued old browser callback even though canceled.
+ oldCallback(()=>{if(c.cameraPreviewWatch===first)c.stopCamera();});
+ h.deliverFrame();
+ assert.equal(c.cameraPreviewWatch,current);assert.ok(c.stream);
+ c.stopCamera();
 });
