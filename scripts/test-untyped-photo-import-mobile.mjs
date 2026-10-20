@@ -52,11 +52,13 @@ for(const [label,engine] of [['Chromium',chromium],['WebKit',webkit]]){
   assert.deepEqual(evidence.decoderCalls,['source.JPG','source.PNG','unsupported.HEIC']);
   assert.equal(evidence.firstError?.length>0,true);
   assert.deepEqual(errors,[]);
-  assert.deepEqual(requests,[]);
+  // Object URLs are local browser-owned decode resources, not network
+  // uploads; Chrome surfaces blob:null/... as requests from about:blank.
+  assert.deepEqual(requests.filter(url=>!url.startsWith('blob:')),[]);
   checks.push({browser:label,imported:2,rejectedDisguisedText:true,
    unsupportedHEICShowsRecoverableError:true,keptLaterImages:true,
    outputJPEG:true,sourcePixelsClassifiedBeforeAnyCutout:true,
-   userPhotosUploaded:false,remoteRequests:requests.length,
+   userPhotosUploaded:false,remoteRequests:requests.filter(url=>!url.startsWith('blob:')).length,
    realPhoneHardwareTested:false});
   await context.close();
  }finally{await browser.close();}
