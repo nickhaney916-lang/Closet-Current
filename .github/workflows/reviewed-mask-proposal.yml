@@ -1,0 +1,34 @@
+name: Reviewed original-pixel mask proposal QA
+on:
+  push:
+    branches: [benchmark/reviewed-mask-proposal-validator-20261020, benchmark/first-draft-proof-chain-20261020, benchmark/native-human-mask-topology-advisories-20261020, benchmark/human-review-handoff-preflight-20261020, benchmark/private-human-review-progress-page-20261020]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify-offline-proposal:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate proposal code and synthetic rejection tests
+        run: |
+          node --check scripts/prepare-reviewed-mask-evidence.mjs
+          node --test tests/prepare-reviewed-mask-evidence.test.mjs tests/prepare-reviewed-mask-originals.test.mjs
+      - name: Verify application regressions and preserved original-first camera flow
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Ensure no real mask or production authorization is fabricated
+        run: |
+          node --input-type=module -e "
+            import fs from 'node:fs';
+            const r=JSON.parse(fs.readFileSync('benchmark/reference-mask-evidence/registry.json','utf8'));
+            const m=JSON.parse(fs.readFileSync('benchmark/local-fitting-real-photo-manifest.json','utf8'));
+            if(r.references.length!==0||r.policy.status==='approved'||m.independentlyApprovedMasks!==0)
+              throw Error('Human evidence gate bypassed');
+            console.log('12 unchanged original JPEGs; zero human references, zero approvals');
+          "

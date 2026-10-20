@@ -1,0 +1,41 @@
+name: Native original-photo precision brush QA
+on:
+  push:
+    branches: [benchmark/native-detail-precision-paint-20261020]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-native-precision:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build and run all app Node regressions
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Install Chromium browser for source-native annotation proof
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium
+      - name: Validate magnified pixel editing, sparse history, and both human reviewers
+        run: |
+          node scripts/test-native-magnifier-precision-edit.mjs
+          node scripts/test-native-sparse-undo-browser.mjs
+          node scripts/test-native-brush-dirty-regions.mjs
+          node scripts/test-native-human-editor-file-races.mjs
+          node scripts/test-native-second-review-file-races.mjs
+      - name: Preserve zero independently verified real masks and exact native sources
+        run: |
+          node --input-type=module -e "
+            import fs from 'node:fs';
+            const r=JSON.parse(fs.readFileSync('benchmark/reference-mask-evidence/registry.json','utf8'));
+            const m=JSON.parse(fs.readFileSync('benchmark/local-fitting-real-photo-manifest.json','utf8'));
+            if(r.references.length!==0||m.independentlyApprovedMasks!==0||r.policy.status==='approved')
+              throw Error('Synthetic magnifier edits cannot count as reviewed real masks');
+            console.log('All 12 original source images remain unapproved for real-photo mask scoring');
+          "
