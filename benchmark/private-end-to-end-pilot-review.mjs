@@ -126,7 +126,7 @@ export function reviewPrivatePilotEvidence(android,iphone,colorReports){
  const studyBlockers=[
   ...(garments.length<50?['less-than-50-garment-photo-entries']:[]),
   ...(negatives.length<5?['less-than-5-nonclothing-controls']:[]),
-  ...(CATEGORIES.filter(k=>categories[k].labeled<10).map(k=>'under-ten-'+k.toLowerCase()):[]),
+  ...CATEGORIES.filter(k=>categories[k].labeled<10).map(k=>'under-ten-'+k.toLowerCase()),
   ...(proposals.labelCoverage!==garments.length?['missing-expected-primary-colors']:[]),
   ...(automatic.length/Math.max(1,garments.length)<.7?['model-proposal-coverage-below-70-percent']:[]),
   ...(automatic.length&&combinedCorrect/automatic.length<.95?
