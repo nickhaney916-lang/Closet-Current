@@ -1,21 +1,39 @@
 'use strict';
-async function photoToJPEG(file,{maxDimension=2048,quality=.94}={}){
+// Keep more fabric, sole and seam detail in ordinary imports when the source
+// and available storage permit. These are bounded JPEG derivatives, NOT
+// unchanged native sensor/EXIF files; recognition still precedes any masking.
+async function photoToJPEG(file,{maxDimension=3072,quality=.94,maxDataURLLength=2850000}={}){
+ if(!Number.isInteger(maxDimension)||maxDimension<1||maxDimension>4096||
+    !Number.isInteger(maxDataURLLength)||maxDataURLLength<1024||
+    maxDataURLLength>10000000)throw Error('Invalid photo conversion limits.');
  const url=URL.createObjectURL(file);
  try{
   const image=new Image();image.src=url;
-  // HEIC or damaged device imports can have an unresolved decoder promise.
-  // Bound each file independently so later photos in the batch still run.
+  // Unsupported phone codecs and damaged images cannot stall a photo batch.
   let timer;
   try{await Promise.race([image.decode(),new Promise((_,reject)=>{
    timer=setTimeout(()=>reject(Error('Photo decoding timed out.')),15000);
   })]);}finally{clearTimeout(timer);}
   if(!image.width||!image.height)throw Error('No image content');
-  const scale=Math.min(1,maxDimension/Math.max(image.width,image.height)),canvas=document.createElement('canvas');
-  canvas.width=Math.max(1,Math.round(image.width*scale));canvas.height=Math.max(1,Math.round(image.height*scale));
-  const context=canvas.getContext('2d');
-  if(!context)throw Error('Unable to prepare this image.');
-  context.fillStyle='#ffffff';context.fillRect(0,0,canvas.width,canvas.height);context.drawImage(image,0,0,canvas.width,canvas.height);
-  return canvas.toDataURL('image/jpeg',quality);
+  const canvas=document.createElement('canvas'),longest=Math.max(image.width,image.height);
+  const targets=[maxDimension,...[2560,2048,1536,1024].filter(n=>n<maxDimension)];
+  for(const target of targets){
+   const scale=Math.min(1,target/longest);
+   canvas.width=Math.max(1,Math.round(image.width*scale));
+   canvas.height=Math.max(1,Math.round(image.height*scale));
+   const context=canvas.getContext('2d');
+   if(!context)throw Error('Unable to prepare this image.');
+   context.imageSmoothingEnabled=true;context.imageSmoothingQuality='high';
+   context.fillStyle='#ffffff';context.fillRect(0,0,canvas.width,canvas.height);
+   context.drawImage(image,0,0,canvas.width,canvas.height);
+   const jpeg=canvas.toDataURL('image/jpeg',quality);
+   if(jpeg==='data:,')throw Error('Unable to encode this image.');
+   if(jpeg.length<=maxDataURLLength)return jpeg;
+   // A busy 12 MP scene may produce a very large JPEG. Keep the photo
+   // within the existing backup/image-string budget rather than silently
+   // making a closet record that cannot be exported.
+  }
+  throw Error('Photo is too large after conversion. Try a closer photo.');
  }finally{URL.revokeObjectURL(url);}
 }
 async function readPhotoBatch(files,decode,onPhoto){

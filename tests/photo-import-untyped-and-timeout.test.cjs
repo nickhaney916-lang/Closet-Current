@@ -61,8 +61,8 @@ test('valid photo decodes and yields high-quality JPEG with bounded original-fir
  });
  const photo=await c.photoToJPEG(upload('original.PNG','image/png'));
  assert.equal(photo,'data:image/jpeg;base64,SYNTHETIC');
- assert.equal(outCanvas.width,2048);
- assert.equal(outCanvas.height,1536);
+ assert.equal(outCanvas.width,3072);
+ assert.equal(outCanvas.height,2304);
  assert.equal(painted,1);
  assert.equal(released,1);
 });
@@ -75,4 +75,37 @@ test('one explicitly rejected duplicate and one corrupt photo do not halt remain
  async (_,f)=>f.name!=='duplicate.jpg');
  assert.equal(out.added,2);
  assert.deepEqual(Array.from(out.results.map(x=>x.status)),['added','duplicate','error','added']);
+});
+
+test('adaptive import retries a smaller pixel frame instead of storing an oversized JPEG',async()=>{
+ const widths=[],heights=[];let revoked=0;
+ const canvas={width:0,height:0,getContext(){return {
+  fillRect(){},drawImage(){widths.push(canvas.width);heights.push(canvas.height);}
+ }},toDataURL(){
+  return canvas.width>2048?'X'.repeat(2850001):'data:image/jpeg;base64,SAFE';
+ }};
+ const c=runIn({
+  URL:{createObjectURL:()=> 'blob:source',revokeObjectURL:()=>{revoked++;}},
+  Image:class{constructor(){this.width=4032;this.height=3024;}async decode(){}},
+  document:{createElement:()=>canvas}
+ });
+ const output=await c.photoToJPEG(upload('detailed.jpg','image/jpeg'));
+ assert.equal(output,'data:image/jpeg;base64,SAFE');
+ assert.deepEqual(widths,[3072,2560,2048]);
+ assert.deepEqual(heights,[2304,1920,1536]);
+ assert.equal(revoked,1);
+});
+test('small imports retain native dimensions, and impossible JPEG budgets fail without saving',async()=>{
+ let released=0,draws=0;
+ const canvas={width:0,height:0,getContext(){return {fillRect(){},drawImage(){draws++;}}},toDataURL(){return 'X'.repeat(2850001);}};
+ const c=runIn({
+  URL:{createObjectURL:()=> 'blob:source',revokeObjectURL:()=>{released++;}},
+  Image:class{constructor(){this.width=800;this.height=600;}async decode(){}},
+  document:{createElement:()=>canvas}
+ });
+ await assert.rejects(c.photoToJPEG(upload('too-detailed.jpg','image/jpeg')), /too large after conversion/);
+ assert.equal(canvas.width,800);
+ assert.equal(canvas.height,600);
+ assert.ok(draws>=1);
+ assert.equal(released,1);
 });

@@ -40,14 +40,30 @@ for(const [label,engine] of [['Chromium',chromium],['WebKit',webkit]]){
     jpegResults.push(uri.startsWith('data:image/jpeg;base64,'));
     return uri;
    },async()=>true);
+   // Decode a real near-12MP photo, then verify the source JPEG is
+   // sharper than the previous 2048px cap without exceeding storage limits.
+   const large=document.createElement('canvas');
+   large.width=3600;large.height=2700;
+   const largeCtx=large.getContext('2d');
+   largeCtx.fillStyle='#fff';largeCtx.fillRect(0,0,large.width,large.height);
+   largeCtx.fillStyle='#174a9c';largeCtx.fillRect(300,200,3000,2250);
+   const largeBlob=await new Promise(resolve=>large.toBlob(resolve,'image/jpeg',.94));
+   const largeFile=new File([largeBlob],'original-12mp.JPG',{type:''});
+   const biggerJPEG=await photoToJPEG(largeFile);
+   const biggerPreview=new Image();
+   biggerPreview.src=biggerJPEG;await biggerPreview.decode();
+   const adaptiveSize=[biggerPreview.naturalWidth,biggerPreview.naturalHeight];
+   const adaptiveStringSize=biggerJPEG.length;
    return {statuses:out.results.map(r=>r.status),added:out.added,
     decoderCalls:names,convertedSizes:inputOriginalSizes,
-    correctFormat:jpegResults.every(Boolean),errors:out.errors.length,
+    correctFormat:jpegResults.every(Boolean),adaptiveSize,adaptiveStringSize,errors:out.errors.length,
     firstError:out.results.find(x=>x.name==='unsupported.HEIC')?.reason};
   });
   assert.deepEqual(evidence.statuses,['added','added','error','rejected']);
   assert.equal(evidence.added,2);
   assert.equal(evidence.correctFormat,true);
+  assert.deepEqual(evidence.adaptiveSize,[3072,2304]);
+  assert.ok(evidence.adaptiveStringSize<=2850000);
   assert.deepEqual(evidence.convertedSizes,[[640,480],[640,480]]);
   assert.deepEqual(evidence.decoderCalls,['source.JPG','source.PNG','unsupported.HEIC']);
   assert.equal(evidence.firstError?.length>0,true);
