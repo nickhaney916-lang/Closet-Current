@@ -21,7 +21,9 @@ Example command (replace each local file path with reviewed actual evidence):
 
     node scripts/prepare-reviewed-mask-evidence.mjs --source /local/commons-0001.jpg --first-draft /local/commons-0001-item-01.mask.draft.json --annotation /local/commons-0001-item-01.mask.approved.json --receipt /local/review-receipt.json --review-evidence /local/review-proof.bin --image-rights-evidence /local/image-rights-proof.bin --annotation-rights-evidence /local/annotation-rights-proof.bin --out artifacts/independent-mask-review/commons-0001-item-01.proposal.json
 
-PR #62 additionally enforces the exact byte hash of the first-human draft in the receipt, checks every inherited field and the full original-pixel RLE across review, and rejects any second-review mutation to the garment boundary. Corrections must be made by the first person and submitted for a fresh second review. The offline proposal records BOTH draft and approved JSON hashes but still does not authenticate either person.\n\nThis metadata is not self-authenticating. Human/legal rights checks and actual first/second-person review are indispensable. Do not create fake approvals, invent reference masks, put customer files or sensitive reviewer identity evidence in GitHub, or confuse synthetic tests with actual masks.
+PR #62 additionally enforces the exact byte hash of the first-human draft in the receipt, checks every inherited field and the full original-pixel RLE across review, and rejects any second-review mutation to the garment boundary. Corrections must be made by the first person and submitted for a fresh second review. The offline proposal records BOTH draft and approved JSON hashes but still does not authenticate either person.
+
+This metadata is not self-authenticating. Human/legal rights checks and actual first/second-person review are indispensable. Do not create fake approvals, invent reference masks, put customer files or sensitive reviewer identity evidence in GitHub, or confuse synthetic tests with actual masks.
 
 ## Remains blocked
 - 0/12 original photographs have independently accepted human full-grid masks.
