@@ -127,8 +127,8 @@ if(process.argv[1]&&path.resolve(process.argv[1])===path.resolve(new URL(import.
  ensure(argv.length===4&&argv[0]==='--reviews'&&argv[2]==='--out',
   'Usage: node scripts/preflight-human-review-handoff.mjs --reviews <local-json-folder> --out <artifacts/.../status.json>');
  const root=process.cwd(),dir=path.resolve(argv[1]),out=path.resolve(argv[3]);
- ensure(out.startsWith(path.resolve(root,'artifacts')+path.sep)&&out.endsWith('.json'),
-  'Status file must be within artifacts/ and must be JSON');
+ ensure(out.startsWith(path.resolve(root,'artifacts/private-human-review')+path.sep)&&out.endsWith('.json'),
+  'Human review status must be under gitignored artifacts/private-human-review/ as JSON');
  const entries=fs.readdirSync(dir,{withFileTypes:true});
  ensure(entries.length<=120,'Too many review files');
  const reviewFiles=new Map();
