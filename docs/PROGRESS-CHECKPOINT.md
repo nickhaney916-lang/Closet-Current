@@ -10,8 +10,13 @@
   model handoff and queued durable owned-outfit saves with failure recovery.
 - Fixes returning to an earlier outfit while a different render is unfinished.
 - Build passed; local full Node suite **1074 passed / 0 failed / 3 skipped**.
-  Local browser downloads truncated; integrated exact-head CI must be inspected
-  before claiming Android Chromium/iPhone WebKit emulation success.
+  Local Python suite: **37 passed**. Exact runtime head `d47eccb8` verified:
+  CI 39447656592 (customer workflow/fitting) and 39447656752 (camera/indexing)
+  both SUCCESS. Android Chromium and iPhone WebKit styling, IndexedDB abort,
+  320/390/430px layout, final-decode source/account race, retry and fitting checks
+  passed. Zero page errors; fitting profiles reported zero remote POSTs.
+  Twelve identical-preview requests retained decoded nodes with zero DOM mutations.
+  Browser artifact: 12277457392. Local browser downloads remained truncated.
 - Source PR #64 CI 39441202514/39441202669 and #65 CI
   39442878586/39442878896 verified SUCCESS at their actual heads.
 - Details/conflict decisions: STYLE-WORKFLOW-INTEGRATION-20261020.md.

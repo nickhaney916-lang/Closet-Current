@@ -8,10 +8,10 @@ independently checked and equals PR #51. Source branches stay unchanged.
 ## Source evidence verified from GitHub Actions
 
 - #64: runs 39441202514 (preview/browser QA) and 39441202669 (camera/indexing)
-  completed successfully at its exact head. Browser job steps include both
+  completed successfully at its exact head; 1,054 Node passes, 0 failures, 3 skips. Browser job steps include both
   Android Chromium and iPhone WebKit and original-source-before-clipping checks.
 - #65: runs 39442878586 (styling/browser QA) and 39442878896 (camera/indexing)
-  completed successfully at its exact head. Browser job steps include both
+  completed successfully at its exact head; 1,064 Node passes, 0 failures, 3 skips. Browser job steps include both
   engines, saved-outfit persistence and fitting reuse/retry scenarios.
 - These results validate the source PRs only, not the new integrated branch.
 
@@ -58,3 +58,34 @@ final production figure/art rights. No paid provider calls, production merge,
 deployment, customer-photo upload, human-review script changes, original PR #58
 artwork changes or Drive Duel changes. Same-page queued saves do not establish
 cross-tab/cross-browser synchronization.
+
+## Verified integrated runtime checkpoint
+
+Runtime/browser-test head: `d47eccb8011c89ecc622f6384adc90c3daa5dba6`.
+Both [customer/fitting run 39447656592](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39447656592)
+and [camera/indexing run 39447656752](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39447656752)
+completed **SUCCESS** at that exact SHA. The runtime also passed the earlier
+6c326481 run before the additional final-layer source/account race coverage.
+
+- GitHub full Node suite: **1,074 passed, 0 failed, 3 skipped (1,077 total)**.
+- Local Python discovery with `PYTHONPATH=benchmark`: **37 passed, 0 failed**.
+- Android Chromium and iPhone WebKit customer journeys passed save/swap/reload,
+  actual local IndexedDB abort isolation, pending-save rerender protection,
+  preview after failed storage, long labels at 320/390/430px, single-item entry,
+  direct-source and account changes during final garment decode and stalled
+  decoder recovery. Both report zero page errors.
+- Existing fitting browser scenarios passed in both engines: both figures,
+  layers/dress exclusions, completed-plan reuse, delayed stale-image refusal,
+  transient garment/base retry, original-photo integrity and conservative real
+  licensed-photo holds. Both fitting profiles report **zero remote POSTs**.
+- Reuse measurement: **12 synchronous requests, zero child-list DOM mutations,
+  same decoded garment nodes retained** in both customer-browser profiles.
+  Elapsed two-frame timings are recorded in the JSON; no latency/FPS speedup is
+  inferred from these synthetic CI checks.
+- [Screenshots and JSON artifact 12277457392](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39447656592/artifacts/12277457392)
+  is 3,425,551 bytes and expires January 18, 2027. The connector's local ZIP
+  export failed, so no additional visual screenshot inspection or extracted
+  elapsed-time value is claimed.
+
+This documentation-only follow-up does not change tested runtime or browser
+harness code. Draft integration PR: #69. No merge or deployment.
