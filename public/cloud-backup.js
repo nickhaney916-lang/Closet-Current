@@ -54,8 +54,11 @@
  }
  function schedule(delay=1500,op=ownerSession()){if(!current(op))return;clearTimeout(timer);timer=setTimeout(()=>{if(current(op))sync();},delay);}
  async function sync({keepBoth=false}={}){
-  const op=ownerSession();if(!current(op)||activeSync&&activeSync.generation===op.generation)return;
-  const run={generation:op.generation};activeSync=run;const cb=callbacks;let dirtyAtStart=false;
+  const op=ownerSession();if(!current(op))return;
+  // A manual sync or local edit arriving during an active pass still needs
+  // a follow-up pass; never discard it just because the request overlapped.
+  if(activeSync&&activeSync.generation===op.generation){activeSync.needsAnotherPass=true;return;}
+  const run={generation:op.generation,needsAnotherPass:false};activeSync=run;const cb=callbacks;let dirtyAtStart=false;
   try{
    let {local,m}=await cb.capture(snapshot);guard(op);dirtyAtStart=m.dirty;status('Checking cloud backup…');const remote=await getRemote(op);guard(op);
    if(!m.baseVersion&&!m.dirty&&(local.items.length||Object.values(local.state).some(x=>x.batch?.length||x.looks?.length||x.saved?.length||Object.keys(x.current?.slots||{}).length))){await markDirty(op);({local,m}=await cb.capture(snapshot));guard(op);dirtyAtStart=true;}
@@ -81,7 +84,7 @@
    else status('Cloud backup up to date');retryDelay=2000;
   }catch(e){
    if(current(op)){const resolveButton=document.getElementById('resolveCloudConflict');if(resolveButton)resolveButton.hidden=e.code!=='conflict';status(e.code==='conflict'?'Changes differ on another device. Both copies are kept; choose Keep both versions in My account.':dirtyAtStart?'Saved on this device · cloud backup pending. Retrying when connected.':'Cloud connection unavailable. Local items are kept; retrying.');if(e.code!=='conflict'){schedule(retryDelay,op);retryDelay=Math.min(retryDelay*2,60000);}}
-  }finally{if(activeSync===run)activeSync=null;}
+  }finally{if(activeSync===run){activeSync=null;if(run.needsAnotherPass&&current(op))schedule(0,op);}}
  }
  window.closetCloud={
   async start(database,settings){generation++;clearTimeout(timer);activeSync=null;enabled=false;db=database;callbacks=settings||{};user=window.closetAuth?.user?.id;enabled=!!db&&typeof window.closetAuth?.getAccessToken==='function'&&/^[a-f0-9-]{36}$/i.test(user||'');if(!enabled)return;
