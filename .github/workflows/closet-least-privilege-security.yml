@@ -1,0 +1,53 @@
+name: Closet private storage least-privilege design - NO HOSTED CHANGES
+on:
+  push:
+    branches: [security/closet-least-privilege-20261020]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  disposable-pg-security:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: closet_security_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d closet_security_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify real PostgreSQL 17 client roles cannot bypass closet RLS
+        env:
+          PGHOST: 127.0.0.1
+          PGPORT: '5432'
+          PGUSER: postgres
+          PGPASSWORD: postgres
+          PGDATABASE: closet_security_test
+        run: |
+          command -v psql || (sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client)
+          psql -X -v ON_ERROR_STOP=1 -f tests/closet-least-privilege-postgres.sql
+      - name: Check no live project, service keys or activated deletion are used
+        run: |
+          node --test tests/account-deletion-entrypoint-disabled.test.mjs tests/cloud-session-generation.test.cjs
+          node scripts/check-customer-pilot-release-gates.mjs
+      - name: Build and check all customer regressions without deploy
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Preserve original camera+Work history and independent review provenance
+        run: |
+          node scripts/verify-camera-cloud-integration.mjs
+          node scripts/check-dual-parent-review-integration.mjs
