@@ -73,6 +73,14 @@ assert.equal(normalizedCamera(fs.readFileSync('public/app.js','utf8')),normalize
  'Noncamera code diverged from the completed Work PR #91 after handoff');
 assert.equal(git('rev-parse',handoff+':public/app.js'),git('rev-parse',work+':public/app.js'),
  'Merged startup recovery must have original Work app bytes before frozen-preview extension');
+// Security hardening adds design-only SQL, an isolated local Postgres test,
+ // a review document and its dedicated no-hosted-writes CI. No app files.
+const allowedSecurity=new Set([
+ '.github/workflows/closet-least-privilege-security.yml',
+ 'supabase/design/closet-backup-least-privilege.DRAFT.sql',
+ 'tests/closet-least-privilege-postgres.sql',
+ 'docs/LIVE-CLOSET-SUPABASE-SECURITY-20261020.md'
+]);
 const allowedWork=new Set([
  'public/app.js',
  'docs/PROGRESS-CHECKPOINT.md',
@@ -102,7 +110,8 @@ const allowedNew=new Set([
 for(const p of new Set([...m.keys(),...head.keys()])){
  if(m.get(p)!==head.get(p)){
   if(p==='public/index.html'||p==='scripts/build.mjs'||p===reviewScript)continue;
-  assert.ok(allowedWork.has(p)||(allowedNew.has(p)&&!m.has(p)),'Unreviewed change after merge: '+p);
+  assert.ok(allowedWork.has(p)||(allowedNew.has(p)&&!m.has(p))||(allowedSecurity.has(p)&&!m.has(p)),
+   'Unreviewed change after merge: '+p);
  }
 }
 for(const p of ['public/recognition-photo.mjs','public/photo-color.js',
