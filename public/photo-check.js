@@ -35,6 +35,12 @@ async function checkPhoto(image){
   colorCtx.drawImage(decoded,0,0,64,64);
   const separated=window.PhotoColor?.uniformLightBackgroundPalette?.(colorCtx.getImageData(0,0,64,64).data,64,64);
   if(separated)colorEstimate=separated;
+  else if(mayBeWhiteBackdrop){
+   // White in a central crop may be the product-photo background, not the
+   // article. With no independently confirmed foreground pixels it cannot
+   // be treated as a trustworthy garment color for automatic indexing.
+   colorEstimate={...primary,needsConfirmation:true,reason:'white-foreground-unverified'};
+  }
  }
  return {...photoQuality(pixels),colorEstimate,aspect:decoded.width/decoded.height};
 }
