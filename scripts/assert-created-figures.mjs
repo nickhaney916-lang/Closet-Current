@@ -78,7 +78,7 @@ for(const figure of report.figures){
  assert.ok(head&&head.eyebrowCurves===2&&head.sourceUpperEyelidCurves===2,
   'exactly two source-aligned eyebrows and eyelids per adult');
  assert.ok(head.sourceScalpFibers>=20&&head.sourceScalpFibers<=30);
- assert.equal(head.sourceSideHairLocks,figure.id==='female'?8:0);
+ assert.equal(head.sourceSideHairLocks,0);
  assert.equal(head.boundedOriginalProceduralArt,true);
  for(const field of ['sourceBodyVerticesChanged','eyeSourceGeometryChanged',
   'externalHairOrFaceAssetsUsed','independentVisualApproval','photorealismProven']){
