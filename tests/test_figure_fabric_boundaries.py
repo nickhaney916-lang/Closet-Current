@@ -4,7 +4,7 @@ import pathlib
 import sys
 import unittest
 sys.path.insert(0,str(pathlib.Path(__file__).resolve().parents[1]/'scripts'))
-from figure_fabric_boundaries import flatten_lower_hem,smooth_upper_shell_rim,approved_front_binding_segments
+from figure_fabric_boundaries import flatten_lower_hem,smooth_upper_shell_rim,approved_front_binding_segments,cut_source_derived_sleeves
 
 def shell():
     coords=[]
@@ -109,6 +109,57 @@ class DecorativeBindingTests(unittest.TestCase):
         with self.assertRaises(ValueError):approved_front_binding_segments(coords,faces,low=.35,high=.55)
         with self.assertRaises(ValueError):approved_front_binding_segments(coords,[[0,0,1]])
         with self.assertRaises(ValueError):approved_front_binding_segments(coords,[[0,1000,2]])
+
+class ProperSleeveCuffTests(unittest.TestCase):
+    def source_derived_sleeves(self):
+        coords=[];faces=[];arm_joints={}
+        for side,sign in [('L',1),('R',-1)]:
+            shoulder=(sign*.37,-.02,1.43)
+            elbow=(sign*.65,-.02,1.02)
+            arm_joints[side]=(shoulder,elbow)
+            u=(sign*.28,0,-.41)
+            d=math.hypot(u[0],u[2])
+            transverse=(-u[2]/d,0,u[0]/d)
+            start=len(coords)
+            for t in [0,.25,.5,.75,1]:
+                for j in range(16):
+                    phi=2*math.pi*j/16
+                    coords.append([shoulder[0]+u[0]*t+.067*transverse[0]*math.cos(phi),
+                                   -.02+.067*math.sin(phi),
+                                   shoulder[2]+u[2]*t+.067*transverse[2]*math.cos(phi)])
+            for k in range(4):
+                for j in range(16):
+                    a=start+k*16+j
+                    b=start+k*16+(j+1)%16
+                    faces.append([a,b,b+16,a+16])
+        return coords,faces,arm_joints
+
+    def test_cuts_two_well_formed_local_sleeve_sections_without_touching_body_vertices(self):
+        coords,faces,joints=self.source_derived_sleeves()
+        original=copy.deepcopy(coords);original_faces=copy.deepcopy(faces)
+        cut,cuff_edges,evidence=cut_source_derived_sleeves(coords,faces,joints,fraction=.73)
+        self.assertEqual(coords[:len(original)],original)
+        self.assertEqual(faces,original_faces)
+        self.assertEqual(evidence['upstreamBodyChanged'],False)
+        self.assertEqual(evidence['independentFigureArtApproved'],False)
+        self.assertGreaterEqual(evidence['newCuffVerticesBySide']['L'],16)
+        self.assertGreaterEqual(evidence['newCuffVerticesBySide']['R'],16)
+        self.assertGreaterEqual(len(cuff_edges),32)
+        self.assertTrue(all(a>=len(original) and b>=len(original) for a,b in cuff_edges))
+        self.assertLess(len(cut),len(faces))
+        self.assertTrue(evidence['originalShellVerticesUnchanged'])
+
+    def test_fail_closed_for_wrong_arm_joint_signs_or_missing_actual_cut_section(self):
+        coords,faces,joints=self.source_derived_sleeves()
+        with self.assertRaises(ValueError):
+            cut_source_derived_sleeves(copy.deepcopy(coords),faces,joints,fraction=.95)
+        with self.assertRaises(ValueError):
+            cut_source_derived_sleeves(copy.deepcopy(coords),faces,
+                {'L':joints['R'],'R':joints['L']})
+        with self.assertRaises(ValueError):
+            cut_source_derived_sleeves(copy.deepcopy(coords),faces,joints,fraction=.4)
+        with self.assertRaises(ValueError):
+            cut_source_derived_sleeves(copy.deepcopy(coords),[[999999,3,4]],joints)
 
 if __name__=='__main__':
     unittest.main()
