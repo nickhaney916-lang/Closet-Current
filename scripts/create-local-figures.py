@@ -7,6 +7,7 @@ from bpy_extras.object_utils import world_to_camera_view
 # Blender factory-startup does not always include the script directory.
 sys.path.insert(0,str(Path(__file__).resolve().parent))
 from figure_fabric_boundaries import flatten_lower_hem, smooth_upper_shell_rim, approved_front_binding_segments, cut_source_derived_sleeves
+from figure_material_regions import body_face_region
 ROOT=Path(__file__).resolve().parents[1]
 args=sys.argv[sys.argv.index('--')+1:];source=Path(args[0]).resolve();output=Path(args[1]).resolve();quick='--quick'in args
 if not output.is_relative_to(ROOT/'artifacts'):raise ValueError('Only artifacts/ output allowed')
@@ -81,11 +82,26 @@ for kind in recipe['figures']:
  coords=[(p.x*scale,-p.z*scale,(p.y-low)*scale+recipe['soleHeight'])for p in v]
  mats=[material('skin',tuple(recipe['materials']['skin'])),material('neutral-base',tuple(recipe['materials']['baseClothing']),.95),material('hair-cap',tuple(recipe['materials']['hair'])),material('eye-white',tuple(recipe['materials']['eyeWhite']))]
  body=mesh(kind+'-adult-body',coords,faces,mats)
- # Modest procedural base garment surfaces; no textures copied or exposed nude renders.
+ # Use RIG influence, not merely the body's x-height bounding rectangle,
+ # when deciding what receives neutral base-shirt/pants fabric. Otherwise
+ # nearby forearm faces can be accidentally painted clothing gray below a
+ # newly cut proper sleeve cuff. Original adult skin geometry is untouched.
+ arm_ids={i for bone,entries in weights.items()
+          if bone.startswith(('upperarm','lowerarm','wrist','finger','metacarpal'))
+          for i,w in entries if w>.35}
+ restored_skin_material_faces=0
+ arm_majority_restored=0
  for polygon,face in zip(body.data.polygons,faces):
   c=sum((Vector(coords[i])for i in face),Vector())/len(face)
-  if(c.z<.92 and abs(c.x)<.26)or(.88<c.z<1.50 and abs(c.x)<.26):polygon.material_index=1
-  elif c.z>1.685:polygon.material_index=2
+  old_gray=(c.z<.92 and abs(c.x)<.26)or(.88<c.z<1.50 and abs(c.x)<.26)
+  arm_count=sum(i in arm_ids for i in face)
+  leg_count=sum(i in leg_ids for i in face)
+  region=body_face_region(c.z,c.x,leg_count,arm_count,len(face))
+  if region=='neutral-clothing':polygon.material_index=1
+  elif region=='hair':polygon.material_index=2
+  if old_gray and region=='skin':
+   restored_skin_material_faces+=1
+   if arm_count*2>=len(face):arm_majority_restored+=1
  # Original loose-front shirt shell suppresses source anatomical protrusions.
  cloth_faces=[face for p,face in zip(body.data.polygons,faces)if p.material_index==1 and .88<sum(coords[i][2]for i in face)/len(face)<1.5]
  cloth_coords=[list(p)for p in coords]
@@ -224,7 +240,7 @@ for kind in recipe['figures']:
  # Waist diagnostic source joint, not an approved placement anchor.
  anchors['lowerSpineJoint']=joints['spine04____head']
  record={'id':kind,'sourceRevision':lock['revision'],'ageTarget':'young-adult-approximately-25','bodyScale':scale,'sourceBodyVertices':len(ids),'bodyFaces':len(faces),
-  'legPoseMaxMotion':leg_motion,'derivedClothingHem':hem_diagnostics,'derivedClothingUpperRim':upper_rim_diagnostics,'derivedClothingBinding':binding_evidence,'derivedShortSleeveCut':sleeve_evidence,'footwearGeometry':'procedural-rounded-upper-contoured-outsole-three-laces-per-shoe','shoeUpperCount':shoe_count,'shoeOutsoleCount':shoe_count,'shoeLaceStrokeCount':lace_count,'blockPrimitiveFootwear':False,'renderWidth':scene.render.resolution_x,'renderHeight':scene.render.resolution_y,'samples':scene.cycles.samples,'nativeSceneRender':True,'resizedFromPreview':False,
+  'legPoseMaxMotion':leg_motion,'derivedClothingHem':hem_diagnostics,'derivedClothingUpperRim':upper_rim_diagnostics,'derivedClothingBinding':binding_evidence,'derivedShortSleeveCut':sleeve_evidence,'skinMaterialCorrection':{'restoredFaces':restored_skin_material_faces,'restoredArmMajorityFaces':arm_majority_restored,'upstreamBodyTopologyChanged':False},'footwearGeometry':'procedural-rounded-upper-contoured-outsole-three-laces-per-shoe','shoeUpperCount':shoe_count,'shoeOutsoleCount':shoe_count,'shoeLaceStrokeCount':lace_count,'blockPrimitiveFootwear':False,'renderWidth':scene.render.resolution_x,'renderHeight':scene.render.resolution_y,'samples':scene.cycles.samples,'nativeSceneRender':True,'resizedFromPreview':False,
   'projectedSourceJoints':{k:project(p)for k,p in anchors.items()},'jointApproval':False,'visualApproved':False,'commercialProductApproval':False,'sourceBounds':[low,high]}
  scene.render.filepath=str(output/(kind+'-master.png'));bpy.ops.wm.save_as_mainfile(filepath=str(output/(kind+'.blend')),compress=True);bpy.ops.render.render(write_still=True)
  record['sceneSha256']=hashlib.sha256((output/(kind+'.blend')).read_bytes()).hexdigest()
