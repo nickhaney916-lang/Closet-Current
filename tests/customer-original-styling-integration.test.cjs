@@ -97,8 +97,8 @@ test('restored whole-scene preview with missing unclipped RGB cannot masquerade 
   outfitSourceId:'restored-scene',originalPhoto:{image:image('A')},
   normalizedPreview:{image:image('Z')},image:image('C')});
  assert.equal(sandbox.recognitionSourcePhoto(item),null);
- assert.deepEqual(sandbox.styleOwnedCollection([item],{
-  anchorItemId:item.id,request:'Casual'}),[],'unverified candidate cannot be styled as known item');
+ assert.equal(sandbox.styleOwnedCollection([item],{
+  anchorItemId:item.id,request:'Casual'}).length,0,'unverified candidate cannot be styled as known item');
 });
 test('account-specific figure cache cannot reuse a preview after owner/source switches',()=>{
  const cache=Cache.create(),q={id:'new-dress',owner:'account-A',
