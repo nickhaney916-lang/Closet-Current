@@ -16,7 +16,16 @@ function renderStylistAnchor(){
   $('stylistAnchorName').textContent=piece.name||piece.itemType||piece.category;
  }else $('stylistAnchorPhoto').removeAttribute('src');
 }
+function stylistOwnsCloset(){
+ return typeof boardWriteContext==='function'&&boardWriteContext().current();
+}
+function refuseStylistAccount(){
+ ++stylistRequestRevision;stylistAnchorItemId=null;styledCollectionResults=[];
+ $('createCollectionOutfits').disabled=false;renderStyledCollection();
+ $('stylistStatus').textContent='Your closet account changed. Reload this page and sign in again before styling.';
+}
 function styleNewClosetItem(id){
+ if(!stylistOwnsCloset()){refuseStylistAccount();return false;}
  const piece=items.find(x=>x.id===id);
  if(!stylistSupportsPiece(piece))return false;
  stylistAnchorItemId=piece.id;styledCollectionResults=[];
@@ -146,6 +155,7 @@ $('styleCollectionForm').onsubmit=async event=>{
  // update independently; an offline device still knows what clothes it owns.
  try{await closetReady;
   if(!isCurrent())return;
+  if(!stylistOwnsCloset()){refuseStylistAccount();return;}
   styledCollectionResults=styleOwnedCollection(items,{request:$('stylistOccasion').value,audience:$('stylistAudience').value,season:$('stylistSeason').value,anchorItemId:stylistAnchorItemId||undefined},activeTrendLibrary);
   renderStyledCollection();
   // The scorer intentionally returns partial outfits for sparse closets.

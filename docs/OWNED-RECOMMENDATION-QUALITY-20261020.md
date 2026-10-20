@@ -39,7 +39,7 @@ nine competing shoes; variation of owned bottoms; complete-vs-partial looks;
 and disclosure of a literal Unknown color. Existing anchor, season, trend,
 swap-cycle, dress-structure and owned-ID tests also pass.
 
-Local build passed. Full Node suite: **1084 passed, 0 failed, 3 skipped; 1087 total**.
+Local build passed. Full Node suite: **1086 passed, 0 failed, 3 skipped; 1089 total**.
 Local Python regression suite with `PYTHONPATH=benchmark`: **37 passed**.
 The browser harness adds a synthetic large-shirt/dress wardrobe, an owned footwear
 anchor, a real dress-swap button, actual IndexedDB outfit save/reload, varied
@@ -73,3 +73,15 @@ realistic drape, physical-phone performance or approved figure art/rights.
 Actual customer preference testing is still needed. No production merge or
 deployment, paid inference, customer-photo upload, annotation changes, original
 figure artwork changes or Drive Duel changes.
+
+## Account-bound new-item handoff
+
+The recommendation UI now checks PR #69's real account/database write context
+before displaying a newly selected anchor and after closet readiness before
+matching. A mismatched or signed-out context clears prior anchors/results and
+shows reload/sign-in guidance rather than interpreting old database records as
+the new account's wardrobe. Two further behavioral regressions failed before this
+fix; total new Node regressions are eight. The actual-browser mismatched-database
+probe now also asserts Style this refuses to start and publishes zero suggestions.
+Initial recommendation commit `e91aa30a` passed customer/fitting CI 39454476209 and
+camera/indexing CI 39454476112; exact updated-head CI is required for this guard.

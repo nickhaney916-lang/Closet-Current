@@ -17,7 +17,12 @@
   owned-only IDs, pinned new piece and season/occasion checks remain unchanged.
 - Dress swaps are labeled Swap dress; jumpsuit/romper swaps say Swap one-piece.
   Unknown colors and one-piece structure are explicitly disclosed on cards.
-- Local build and Node suite **1084 passed / 0 failed / 3 skipped (1087 total)**;
+- Style this and fresh recommendation requests also validate the current
+  account/database binding, clear prior-account anchors/results and show reload
+  guidance. Two additional failing regressions reproduced this ownership gap.
+- Initial recommendation runtime `e91aa30a` passed CI 39454476209 and 39454476112,
+  including both browser engines. Exact-head CI pending the ownership follow-up.
+- Local build and Node suite **1086 passed / 0 failed / 3 skipped (1089 total)**;
   Python **37 passed**. Mobile CI pending this new branch. Harness adds actual
   dress-swap/save/reload, owned-only structure and varied-bottoms checks in both
   Chromium and WebKit; synthetic fixture identity/images, no real-photo score.

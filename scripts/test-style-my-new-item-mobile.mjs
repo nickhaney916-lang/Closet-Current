@@ -418,9 +418,11 @@ try{
   const before=savedOutfitBoards.length;
   try{
    const result=await Promise.allSettled([saveOwnedOutfitBoard(currentBoard),persistBoardState()]);
+   const stylingStarted=styleNewClosetItem('new-green-top');
    renderReusableFigurePreview();
    await new Promise(ok=>requestAnimationFrame(()=>requestAnimationFrame(ok)));
    return {outcomes:result.map(x=>x.status),writes,saved:savedOutfitBoards.length-before,
+    stylingStarted,suggestions:styledCollectionResults.length,styleAccountMessage:$('stylistStatus').textContent,
     layers:document.querySelectorAll('#reusableFigureGarments img').length,
     message:document.querySelector('#reusableFigureStatus').textContent,
     busy:document.querySelector('#reusableFigureStage').getAttribute('aria-busy')};
@@ -429,6 +431,8 @@ try{
  assert.deepEqual(wrongDatabase.outcomes,['rejected','rejected']);
  assert.equal(wrongDatabase.writes,0);assert.equal(wrongDatabase.saved,0);
  assert.equal(wrongDatabase.layers,0);assert.equal(wrongDatabase.busy,'false');
+ assert.equal(wrongDatabase.stylingStarted,false);assert.equal(wrongDatabase.suggestions,0);
+ assert.match(wrongDatabase.styleAccountMessage,/account/);
  assert.match(wrongDatabase.message,/account/);
  await page.evaluate(()=>{window.closetAuth.user.id=window.__priorPreviewOwner;renderOutfitBoard();});
  await page.waitForFunction(()=>document.querySelectorAll('#reusableFigureGarments img').length===1);

@@ -91,7 +91,7 @@ test('one-tap Style this opens the existing stylist and submits the chosen owned
  assert.ok(source.includes('function styleNewClosetItem('));
  const elements=new Map(),pieces=[piece('fresh-shirt','Tops','T-shirt'),piece('dress','Dresses','Casual dress'),piece('unknown','Uncategorized','Unknown')];
  let submitted=0,rendered=0,navigated='';
- const c={items:pieces,renderStyledCollection(){rendered++;},switchView(v){navigated=v;},
+ const c={items:pieces,boardWriteContext:()=>({current:()=>true}),renderStyledCollection(){rendered++;},switchView(v){navigated=v;},
   $:id=>{if(!elements.has(id))elements.set(id,{textContent:'',requestSubmit(){submitted++;}});return elements.get(id);}};
  vm.createContext(c);vm.runInContext(source,c);
  assert.equal(c.styleNewClosetItem('fresh-shirt'),true);
