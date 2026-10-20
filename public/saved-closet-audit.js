@@ -10,7 +10,7 @@
  for(const id of ['expectedColor','proposedColor','savedColor'])addOptions(id,E.colors.concat(id==='expectedColor'?[]:['Unknown']));
  const show=(text,error=false)=>{$('notice').textContent=text;$('notice').style.color=error?'#ab2736':'#245d3a';};
  const label=prefix=>({category:$(prefix+'Category').value,type:$(prefix+'Type').value,color:$(prefix+'Color').value});
- const setLabel=(prefix,value)=>{for(const [key,field] of Object.entries({category:'Category',type:'Type',color:'Color'}))$(prefix+field).value=value[key];};
+ const setLabel=(prefix,value)=>{$(prefix+'Category').value=value.category;refreshType(prefix,prefix!=='expected');$(prefix+'Type').value=value.type;$(prefix+'Color').value=value.color;};
  const typesFor=(category,allowUnknown)=>E.types.filter(t=>category==='Unknown'&&t==='Other'||E.typeCategory[t]===category||t==='Other').concat(allowUnknown?['Unknown']:[]);
  function refreshType(prefix,allowUnknown){const type=$(prefix+'Type').value;addOptions(prefix+'Type',typesFor($(prefix+'Category').value,allowUnknown));if(typesFor($(prefix+'Category').value,allowUnknown).includes(type))$(prefix+'Type').value=type;}
  for(const prefix of ['expected','proposed','saved']){
