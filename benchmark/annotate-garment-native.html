@@ -419,6 +419,11 @@ canvas.onpointerdown=e=>{
  if(!mask||!e.isPrimary||brushPointerId!==null||precisionPointerId!==null)return;
  e.preventDefault();
  const p=point(e);detailPoint=p;
+ // When enlarged precision edit is enabled, the big photo is a NAVIGATION
+ // surface. A tap to reposition magnification must never mark garment pixels.
+ if(precisionEdit.checked){
+  redrawDetail();return;
+ }
  if(tool.value==='polygon'){
   redrawDetail();
   if(polygon.length>=2000){status.textContent='Too many outline points. Apply or cancel this outline.';return;}
