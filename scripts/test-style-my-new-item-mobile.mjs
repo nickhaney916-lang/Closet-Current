@@ -298,7 +298,7 @@ try{
  await page.waitForFunction(()=>document.querySelector('#reusableFigureStatus').textContent.includes('selection changed'));
  assert.equal(await page.locator('#reusableFigureGarments img').count(),0);
  await page.locator('#reusableFigureRetry').click();
- try{await page.waitForFunction(()=>document.querySelector('#reusableFigureGarments img').length===1);}catch(error){
+ try{await page.waitForFunction(()=>document.querySelectorAll('#reusableFigureGarments img').length===1);}catch(error){
   console.log('RECOVERY_DIAGNOSTIC',await page.evaluate(()=>({status:document.querySelector('#reusableFigureStatus').textContent,
    board:currentBoard.slots,selected:items.filter(x=>Object.values(currentBoard.slots).includes(x.id)).map(x=>({id:x.id,category:x.category,color:x.color,sourceLength:x.image.length})),
    busy:document.querySelector('#reusableFigureStage').getAttribute('aria-busy')})));throw error;
@@ -312,7 +312,7 @@ try{
  assert.equal(await page.locator('#reusableFigureRetry').isVisible(),true);
  await page.evaluate(()=>HTMLImageElement.prototype.decode=window.__nativeDecode);
  await page.locator('#reusableFigureRetry').click();
- try{await page.waitForFunction(()=>document.querySelector('#reusableFigureGarments img').length===1);}catch(error){
+ try{await page.waitForFunction(()=>document.querySelectorAll('#reusableFigureGarments img').length===1);}catch(error){
   console.log('RECOVERY_DIAGNOSTIC',await page.evaluate(()=>({status:document.querySelector('#reusableFigureStatus').textContent,
    board:currentBoard.slots,selected:items.filter(x=>Object.values(currentBoard.slots).includes(x.id)).map(x=>({id:x.id,category:x.category,color:x.color,sourceLength:x.image.length})),
    busy:document.querySelector('#reusableFigureStage').getAttribute('aria-busy')})));throw error;
