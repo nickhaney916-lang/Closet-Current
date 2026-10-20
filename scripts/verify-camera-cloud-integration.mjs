@@ -53,7 +53,7 @@ const reviewStart=currentReviewScript.indexOf(reviewAddedBegin),reviewEnd=curren
 assert.ok(reviewStart>=0&&reviewEnd>reviewStart,'Missing independently bounded original-review link gate');
 const expectedReview=originalReviewScript.replace(
  "['function snap(','function beep('],['function takePhoto(){','async function startCamera(']",
- "['function snap(','function beep('],['let manualStillShot=null;','function controls('],['function takePhoto(){','function waitEvent(']");
+ "['function snap(','function beep('],['let manualStillShot=null;','function controls('],['function finishScan(', 'function takePhoto('],['function takePhoto(){','function waitEvent(']");
 assert.notEqual(expectedReview,originalReviewScript,'Camera lifecycle review extension not found');
 assert.equal(currentReviewScript.slice(0,reviewStart)+currentReviewScript.slice(reviewEnd),expectedReview,
  'Original human review gate changed outside approved Work camera bounds and byte-exact pilot link');
