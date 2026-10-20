@@ -14,13 +14,17 @@ function fixture(){
   physicalTargetId:'commons-0001-item-01',humanCategory:'Bottoms',humanForm:'skirt',humanTargetLabel:'test skirt',
   reviewer:'Synthetic-A',approvedBy:'Synthetic-B',targetIndependentlyIdentifiedBy:'Synthetic-A',
   reviewedAt:'2026-10-20T12:00:00.000Z',seedModel:null,runs:[0,6,74]};
+ const first={...annotation,reviewStatus:'draft'};
+ delete first.approvedBy;delete first.reviewedAt;delete first.verifiedSourceWidth;delete first.verifiedSourceHeight;
+ const firstDraftBytes=Buffer.from(JSON.stringify(first));
  const raw=Buffer.from(JSON.stringify(annotation));
- const receipt={schemaVersion:1,sourceId:'commons-0001',sourceSha256:digest,approvedAnnotationSha256:sha(raw),
+ const receipt={schemaVersion:1,sourceId:'commons-0001',sourceSha256:digest,
+  firstDraftSha256:sha(firstDraftBytes),approvedAnnotationSha256:sha(raw),
   physicalTargetId:annotation.physicalTargetId,firstReviewer:'Synthetic-A',secondReviewer:'Synthetic-B',reviewDate:'2026-10-20',
   review:{sha256:sha(review)},
   imageRights:{sha256:sha(ir),status:'verified-for-test-redistribution',license:'SYNTHETIC',sourceUrl:'https://invalid.example/test'},
   annotationRights:{sha256:sha(ar),status:'verified-for-test-redistribution',license:'SYNTHETIC',sourceUrl:'https://invalid.example/test'}};
- return {sourceBytes:source,annotationBytes:raw,
+ return {sourceBytes:source,firstDraftBytes,annotationBytes:raw,
   manifest:{cases:[{id:'commons-0001',image:'commons-0001.jpg',sourceSha256:digest}]},
   locked:[{id:'commons-0001',image:'commons-0001.jpg',sha256:digest}],
   receipt,reviewEvidenceBytes:review,imageRightsEvidenceBytes:ir,annotationRightsEvidenceBytes:ar};
@@ -38,6 +42,7 @@ test('proposal validates native-grid metadata but NEVER registers or authorizes 
  assert.equal(p.record.reviewStatus,'approved');
  assert.equal(p.record.scope,'full-visible-garment');
  assert.equal(p.record.referenceSha256,sha(Buffer.from(JSON.stringify(p.reference))));
+ assert.equal(p.firstDraftSha256,sha(fixture().firstDraftBytes));
 });
 test('photo must match TWO independent locked hashes',()=>{
  assert.throws(()=>prepareReviewedMaskEvidence(mutate(f=>f.sourceBytes=Buffer.concat([f.sourceBytes,Buffer.from([0])]))),/digest/);
@@ -62,4 +67,29 @@ test('missing human/rights evidence and changed rights hashes blocked',()=>{
  assert.throws(()=>prepareReviewedMaskEvidence(mutate(f=>f.receipt.imageRights.status='unreviewed')),/Rights proof/);
  assert.throws(()=>prepareReviewedMaskEvidence(mutate(f=>f.reviewEvidenceBytes=Buffer.from('torn evidence'))),/evidence/);
  assert.throws(()=>prepareReviewedMaskEvidence(mutate(f=>f.receipt.annotationRights.sha256='0'.repeat(64))),/evidence/);
+});
+
+function changeFirstDraft(change){
+ return mutate(f=>{
+  const first=JSON.parse(f.firstDraftBytes);
+  change(first);
+  f.firstDraftBytes=Buffer.from(JSON.stringify(first));
+  f.receipt.firstDraftSha256=sha(f.firstDraftBytes);
+ });
+}
+test('second approval MUST have original first-human draft with locked bytes',()=>{
+ assert.throws(()=>prepareReviewedMaskEvidence(mutate(f=>f.firstDraftBytes=undefined)),/first draft/);
+ assert.throws(()=>prepareReviewedMaskEvidence(mutate(f=>f.receipt.firstDraftSha256='0'.repeat(64))),/receipt/);
+ for(const change of [a=>a.reviewStatus='approved',a=>a.seedModel='AI mask',a=>a.modelProposalId='commons-0001-candidate-01'])
+  assert.throws(()=>prepareReviewedMaskEvidence(changeFirstDraft(change)),/first-human draft/);
+});
+test('second approval cannot alter drawn RLE even if its own checksum is refreshed',()=>{
+ const revised=changeAnnotation(a=>a.runs=[0,7,73]);
+ assert.throws(()=>prepareReviewedMaskEvidence(revised),/changed first-human draft content|Review changed/);
+ assert.throws(()=>prepareReviewedMaskEvidence(changeFirstDraft(a=>a.runs=[0,7,73])),/changed first-human draft content|Review changed/);
+ assert.throws(()=>prepareReviewedMaskEvidence(changeFirstDraft(a=>a.humanForm='shorts')),/changed first-human draft content/);
+});
+test('second reviewer cannot silently change first reviewer identity or invent new fields',()=>{
+ assert.throws(()=>prepareReviewedMaskEvidence(changeAnnotation(a=>a.reviewer='Synthetic-C')),/changed first-human draft content/);
+ assert.throws(()=>prepareReviewedMaskEvidence(changeAnnotation(a=>a.unreviewedInjectedLabel='skirt')),/Unrecognized injected approval field/);
 });
