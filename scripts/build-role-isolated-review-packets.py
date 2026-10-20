@@ -104,10 +104,19 @@ def build(source: str = "artifacts/independent-mask-review",
     blind = json.loads(entry_bytes(src, "BLIND-FIRST-SOURCES.json"))
     state = json.loads(entry_bytes(src, "REVIEW-STATUS.json"))
     locked = json.loads((ROOT / "benchmark/locked-photo-sources.json").read_text())
-    expected = {r["image"]: r["sha256"] for r in locked}
+    # The repository's locked inventory has MORE than twelve source JPEGs.
+    # The human benchmark is a particular twelve-image subset: require an
+    # exact match for those twelve, not an artificially truncated registry.
+    cases = json.loads((ROOT / "benchmark/local-fitting-real-photo-manifest.json").read_text())["cases"]
+    selected = {r["image"] for r in cases}
+    ensure(len(selected) == PHOTO_COUNT and len(cases) == PHOTO_COUNT,
+           "Need twelve distinct review-selected originals")
+    expected = {r["image"]: r["sha256"] for r in locked if r["image"] in selected}
     originals = blind.get("sourceOriginals")
     ensure(isinstance(originals, list) and len(originals) == PHOTO_COUNT
-           and len(expected) == PHOTO_COUNT, "Need twelve locked originals")
+           and len(expected) == PHOTO_COUNT, "Need twelve review-selected locked originals")
+    ensure({r.get("image") for r in originals} == selected,
+           "First-review source roster cannot substitute a different locked photo")
     ensure(blind.get("modelPredictionsIncluded") == 0
            and blind.get("manifestCategoryLabelsIncluded") == 0
            and blind.get("approvedMasks") == 0
