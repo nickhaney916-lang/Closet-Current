@@ -81,7 +81,7 @@ resume.onchange=async()=>{
  try {
   if(file.size>16000000)throw Error('Draft too large');
   const draft=JSON.parse(await file.text()),n=canvas.width*canvas.height;
-  if(draft.schemaVersion!==1||draft.reviewStatus!=='draft'||draft.nativeSourceGrid!==true||draft.annotationGrid!=='exact-original-pixels'||draft.seedModel!=null||draft.modelProposalId!=null||draft.image!==source.fileName||draft.sourceSha256!==source.sourceSha256||draft.width!==canvas.width||draft.height!==canvas.height||!Array.isArray(draft.runs)||draft.runs.length>n)throw Error('Draft image or dimensions mismatch');
+  if(draft.schemaVersion!==1||draft.reviewStatus!=='draft'||draft.nativeSourceGrid!==true||draft.annotationGrid!=='exact-original-pixels'||draft.physicalTargetId==null||draft.seedModel!=null||draft.modelProposalId!=null||draft.image!==source.fileName||draft.sourceSha256!==source.sourceSha256||draft.width!==canvas.width||draft.height!==canvas.height||!Array.isArray(draft.runs)||draft.runs.length>n)throw Error('Draft image or dimensions mismatch');
   if(draft.physicalTargetId!=null&&(
    draft.modelProposalId!=null||draft.seedModel!=null||
    !/^(?:commons|validation)-[0-9]{4}-item-[0-9]{2}$/.test(draft.physicalTargetId)||
@@ -135,6 +135,9 @@ prediction.onchange=async()=>{
 };
 garmentTarget.oninput=refreshEditButtons;
 function canExport(){
+ // A blind reference must identify an independently observed physical item;
+ // a generic unnamed source-wide mask can hide multiple garment instances.
+ if(!inventoryMode.checked)return false;
  if(modelProposalId&&!garmentTarget.value.trim())return false;
  if(inventoryMode.checked){
   const base=source?.fileName?.replace(/\.[^.]+$/,'');
@@ -276,6 +279,6 @@ download.onclick=()=>{
   note:'Exact source-grid human DRAFT only. Requires separate human approval, rights proof, and reviewed importer before benchmark scoring'};
  const blob=new Blob([JSON.stringify(annotation,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');
  a.href=url;a.download=(inventoryMode.checked?inventoryId.value:(modelProposalId||source.fileName.replace(/\.[^.]+$/,'')))+'.mask.draft.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
- status.textContent='Native-grid DRAFT exported. A separate reviewer must inspect source-visible garment edges and all holes; no automatic benchmark approvals.';
+ status.textContent='Native-grid, physically identified garment DRAFT exported. Separate human approval and rights evidence remain necessary.';
 };
 </script></html>
