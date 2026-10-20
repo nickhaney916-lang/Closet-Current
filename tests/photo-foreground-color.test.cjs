@@ -82,6 +82,15 @@ test('single-item camera color check keeps confident legacy readings and only us
  assert.equal(backdrop.value.colorEstimate.color,'Blue','verified garment foreground must beat a misleading white backdrop');
  assert.deepEqual(backdrop.sizes,[16,64]);
  const whiteGarment=await classify({color:'White',support:.9},null);
- assert.equal(whiteGarment.value.colorEstimate.color,'White','do not invent a new color without reliable foreground evidence');
+ assert.equal(whiteGarment.value.colorEstimate.color,'White','keep the visible candidate label for review');
+ assert.equal(whiteGarment.value.colorEstimate.needsConfirmation,true,
+  'without verified foreground, white pixels could be the photo backdrop');
+ assert.equal(whiteGarment.value.colorEstimate.reason,'white-foreground-unverified');
  assert.deepEqual(whiteGarment.sizes,[16,64]);
+ const untrustedBackground=await classify({color:'White',support:.98},null);
+ assert.equal(untrustedBackground.value.colorEstimate.needsConfirmation,true);
+ const verifiedLightBackdrop=await classify({color:'White',support:.98},{
+  color:'Black',source:'photo-estimate',support:.91,method:'uniform-light-background'});
+ assert.equal(verifiedLightBackdrop.value.colorEstimate.color,'Black');
+ assert.notEqual(verifiedLightBackdrop.value.colorEstimate.needsConfirmation,true);
 });
