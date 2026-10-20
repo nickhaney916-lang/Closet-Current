@@ -1,0 +1,49 @@
+name: Private mobile garment type and color pilot acceptance QA
+on:
+  push:
+    branches: [pilot/independent-original-photo-color-audit-20261020]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  mobile-color-pilot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build original-source-protected phone app
+        run: node scripts/build.mjs
+      - name: All regression tests including privacy, colors and source switching
+        run: node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Confirm isolated human reviewer line and blocked release permission
+        run: |
+          node scripts/check-dual-parent-review-integration.mjs
+          node scripts/check-customer-pilot-release-gates.mjs
+      - name: Install mobile Chromium and WebKit emulators
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium webkit
+      - name: Test independent color labeling on actual original-JPEG browser imports in both engines
+        run: node scripts/test-phone-color-audit-browsers.mjs
+      - name: Test customer device checklist on mobile emulation
+        run: node scripts/test-device-check-phone-browsers.mjs
+      - name: Test account login and recovery under synthetic Supabase errors
+        run: node scripts/test-auth-pilot-mobile.mjs
+      - name: Recheck new-item recognition and owned-only outfit save/reload in both engines
+        run: |
+          node scripts/test-style-my-new-item-mobile.mjs
+          STYLE_BROWSER=webkit node scripts/test-style-my-new-item-mobile.mjs
+      - name: Confirm no paid inference, physical phone approval or fabricated human masks
+        run: node scripts/check-customer-pilot-release-gates.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: synthetic-private-color-audit-browser-reports
+          path: artifacts/phone-color-audit/
+          if-no-files-found: warn
+          retention-days: 7
