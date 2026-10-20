@@ -24,10 +24,20 @@ for(const [browserName,engine] of [['Chromium',chromium],['WebKit',webkit]]){
   await page.goto('file://'+resolve(first,'FIRST-REVIEW.html'));
   const originals=await page.locator('article img').count();
   assert.equal(originals,12,'offline original-photo roster must include all twelve');
-  const images=await page.locator('article img').evaluateAll(async els=>await Promise.all(els.map(async im=>{
-   try{await im.decode();}catch{}
-   return {complete:im.complete,w:im.naturalWidth,h:im.naturalHeight,src:im.getAttribute('src')};
-  })));
+  // The offline source page lazily loads full-resolution JPEGs. Decoding all
+  // twelve offscreen images at once can hang or spike memory in WebKit.
+  // Navigate exactly like a human, loading each original individually.
+  const images=[];
+  for(let i=0;i<originals;i++){
+   const img=page.locator('article img').nth(i);
+   await img.scrollIntoViewIfNeeded();
+   const data=await img.evaluate(async el=>{
+    const bounded=new Promise((_,reject)=>setTimeout(()=>reject(Error('Offline original JPEG did not decode')),12000));
+    await Promise.race([el.decode(),bounded]);
+    return {complete:el.complete,w:el.naturalWidth,h:el.naturalHeight,src:el.getAttribute('src')};
+   });
+   images.push(data);
+  }
   assert.ok(images.every(im=>im.complete&&im.w>0&&im.h>0&&im.src.startsWith('originals/')),
    'offline archive must contain every same-directory original source');
   assert.equal(await page.locator('a[href="FIRST-ANNOTATE.html"]').count(),1);
