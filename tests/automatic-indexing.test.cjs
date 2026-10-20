@@ -514,3 +514,48 @@ test('obsolete recognition failure cannot overwrite replacement garment or disab
   assert.equal(c.recognitionUnavailable,false,'obsolete item errors cannot disable later recognition');
  }
 });
+
+
+test('unverified white photo background cannot auto-save a white garment from a matching model guess',async()=>{
+ const {c,stored}=setup({
+  quality:async()=>({blank:false,signature:[242,244,245],aspect:1,
+   colorEstimate:{color:'White',source:'photo-estimate',support:.91,
+    needsConfirmation:true,reason:'white-foreground-unverified'}}),
+  result:{strong:true,choices:[choice],details:{color:'White',pattern:'Solid'}}
+ });
+ c.candidate('data:image/jpeg;base64,ORIGINALWHITEBACKGROUND');
+ await done(c);
+ assert.equal(stored.length,0,'white scene does not establish white fabric');
+ assert.equal(c.items.length,0);
+ assert.equal(c.batch.length,1,'retain the original photo for human color confirmation');
+ assert.equal(c.batch[0].category,'Tops','a valid garment-type classification is still useful');
+ assert.equal(c.batch[0].color,'','color must remain unset rather than White');
+ assert.equal(c.batch[0].scanFailed,false);
+ assert.match(c.batch[0].localStatus,/Choose a color/);
+});
+test('verified dark garment on a uniform white backdrop still indexes automatically',async()=>{
+ const {c,stored}=setup({
+  quality:async()=>({blank:false,signature:[238,239,240],aspect:1,
+   colorEstimate:{color:'Black',source:'photo-estimate',support:.96,
+    method:'uniform-light-background',foregroundCoverage:.4}}),
+  result:{strong:true,choices:[choice],details:{color:'White'}}
+ });
+ c.candidate('data:image/jpeg;base64,ORIGINALBLACKGARMENT');
+ await done(c);
+ assert.equal(stored.length,1,'the foreground-verified color must remain eligible');
+ assert.equal(stored[0].category,'Tops');
+ assert.equal(stored[0].color,'Black');
+ assert.equal(stored[0].colorSource,'photo-estimate');
+ assert.equal(c.batch.length,0);
+});
+test('white model label stays eligible if source image has no contradictory white-background hold',async()=>{
+ const {c,stored}=setup({
+  quality:async()=>({blank:false,signature:[253,250,247],aspect:1,
+   colorEstimate:{color:'White',source:'photo-estimate',support:.87}}),
+  result:{strong:true,choices:[choice],details:{color:'White'}}
+ });
+ c.candidate('data:image/jpeg;base64,WHITEAPPARELPHOTO');
+ await done(c);
+ assert.equal(stored.length,1,'do not globally prohibit legitimate white garments');
+ assert.equal(stored[0].color,'White');
+});

@@ -1,0 +1,44 @@
+name: Original-photo color evidence confidence QA
+on:
+  push:
+    branches: [fix/white-backdrop-original-color-evidence-20261020]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  color-evidence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build full application and run all Node tests
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Install Chromium for actual image-decode color check
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium
+      - name: Validate original JPEG color evidence on browser pixel data
+        run: node scripts/test-original-photo-color-evidence-browser.mjs
+      - name: Preserve real-photo approval gates
+        run: |
+          node --input-type=module -e "
+            import fs from 'node:fs';
+            const m=JSON.parse(fs.readFileSync('benchmark/local-fitting-real-photo-manifest.json','utf8'));
+            if(m.independentlyApprovedMasks!==0||
+               m.cases.some(c=>c.independentReferenceMask||c.review))
+              throw Error('Synthetic color proof cannot become real human-reviewed mask acceptance');
+            const registry='benchmark/reference-mask-evidence/registry.json';
+            // This branch is stacked on the CUSTOMER styling lineage, not the
+            // separately owned first/second human-mask evidence branch.
+            if(fs.existsSync(registry)){
+              const r=JSON.parse(fs.readFileSync(registry,'utf8'));
+              if(r.references?.length!==0||r.policy?.status==='approved')
+                throw Error('Unexpected approved human mask evidence');
+            }else console.log('Separate human-review registry is intentionally absent in customer branch');
+            console.log('Original-photo quality remains unmeasured against independently human-approved full garment masks');
+          "
