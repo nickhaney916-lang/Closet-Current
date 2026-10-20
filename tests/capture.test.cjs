@@ -152,14 +152,14 @@ test('frozen preview cannot silently accumulate photos; watchdog preserves colle
 });
 test('preview frame callbacks owned by a stopped session cannot disturb the next camera',async()=>{
  const h=setup({frameCallbacks:true}),c=h.context;await c.startCamera('manual');
- const first=c.cameraPreviewWatch,oldCallback=c.video.requestVideoFrameCallback;
+ const first=vm.runInContext('cameraPreviewWatch',c),oldCallback=c.video.requestVideoFrameCallback;
  h.clock.now=2000;h.deliverFrame();c.stopCamera();
- await c.startCamera('manual');const current=c.cameraPreviewWatch;
+ await c.startCamera('manual');const current=vm.runInContext('cameraPreviewWatch',c);
  assert.notEqual(current,first);
  h.clock.now=3000;
  // Simulate an already-queued old browser callback even though canceled.
  oldCallback(()=>{if(c.cameraPreviewWatch===first)c.stopCamera();});
  h.deliverFrame();
- assert.equal(c.cameraPreviewWatch,current);assert.ok(c.stream);
+ assert.equal(vm.runInContext('cameraPreviewWatch',c),current);assert.ok(c.stream);
  c.stopCamera();
 });
