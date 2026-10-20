@@ -48,5 +48,20 @@ for(const candidate of report.figures){
  assert.ok(candidate.variants.tablet2x.smallerThanPngBytes);
  assert.equal(candidate.responsiveClarityVerified,true);
 }
+for(const figure of report.figures){
+ const sleeve=figure.derivedShortSleeveCut;
+ assert.ok(sleeve&&sleeve.sleeveCutFraction>=.6&&sleeve.sleeveCutFraction<=.9,
+   'each original adult scene needs real shoulder-to-elbow-length derived sleeve cuts');
+ assert.ok(sleeve.newCuffVerticesBySide.L>=8&&sleeve.newCuffVerticesBySide.R>=8,
+   'both arms require native interpolated 3D cuff vertices');
+ assert.ok(sleeve.newCuffBoundarySegments>=12);
+ assert.ok(sleeve.derivedFacesAfter>0&&sleeve.removedOrSplitFaces>12);
+ assert.ok(sleeve.derivedFacesAfter<=sleeve.derivedFacesBefore);
+ assert.equal(sleeve.originalShellVerticesUnchanged,true);
+ assert.equal(sleeve.upstreamBodyChanged,false);
+ assert.equal(sleeve.independentFigureArtApproved,false);
+ assert.equal(sleeve.cuffCurveOriginalArt,true);
+ assert.ok(sleeve.cuffBevelRadius>0&&sleeve.cuffBevelRadius<=.003);
+}
 assert.deepEqual(report.summary,{fixedCharacters:2,native1941x3597Renders:2,minimum1294x2398Derivatives:2,productionApproved:0,independentVisualApprovals:0,physicalPhones:0,customerImagesUsed:0,externalInferenceCalls:0});
 console.log('CREATED_FIGURE_GATE '+JSON.stringify(checkCreatedPacket(report)));
