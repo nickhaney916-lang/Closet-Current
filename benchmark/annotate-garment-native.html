@@ -240,6 +240,32 @@ function redraw(){
  }
  redrawDetail();
 }
+
+ // Original pixels stay in source.base; brush work repaints only the touched
+ // source-grid rectangle. Large original canvases must not be read/written
+ // in full on every pointer movement (e.g. 12 MP × every brush sample).
+function redrawBrushRegion(from,to){
+ if(!source||!mask)return;
+ const r=Number(radius.value),left=Math.max(0,Math.min(from.x,to.x)-r-2),
+  top=Math.max(0,Math.min(from.y,to.y)-r-2),
+  right=Math.min(canvas.width,Math.max(from.x,to.x)+r+3),
+  bottom=Math.min(canvas.height,Math.max(from.y,to.y)+r+3);
+ const width=right-left,height=bottom-top;
+ if(width<=0||height<=0)return;
+ // Reset source RGB within the dirty area so erasing restores exact original
+ // pixels and the overlay matches an uninterrupted full redraw.
+ ctx.drawImage(source.base,left,top,width,height,left,top,width,height);
+ const patch=ctx.getImageData(left,top,width,height);
+ for(let y=0;y<height;y++)for(let x=0;x<width;x++){
+  if(!mask[(top+y)*canvas.width+left+x])continue;
+  const at=(y*width+x)*4;
+  patch.data[at]=Math.round(patch.data[at]*.6+130);
+  patch.data[at+1]=Math.round(patch.data[at+1]*.6+35);
+  patch.data[at+2]=Math.round(patch.data[at+2]*.6+170);
+ }
+ ctx.putImageData(patch,left,top);
+ redrawDetail();
+}
 function point(e){
  const box=canvas.getBoundingClientRect();
  return {x:Math.max(0,Math.min(canvas.width-1,Math.floor((e.clientX-box.left)*canvas.width/box.width))),
@@ -254,7 +280,7 @@ function dot(x,y){
 function paintLine(from,to){
  const steps=Math.max(1,Math.ceil(Math.hypot(to.x-from.x,to.y-from.y)));
  for(let i=0;i<=steps;i++)dot(Math.round(from.x+(to.x-from.x)*i/steps),Math.round(from.y+(to.y-from.y)*i/steps));
- redraw();refreshEditButtons();
+ redrawBrushRegion(from,to);refreshEditButtons();
 }
 function pointInPolygon(x,y,vertices){
  let inside=false;
@@ -281,8 +307,9 @@ tool.onchange=()=>{++editingRevision;painting=false;polygon=[];redraw();refreshE
 canvas.onpointerdown=e=>{
  if(!mask)return;
  e.preventDefault();
- const p=point(e);detailPoint=p;redrawDetail();
+ const p=point(e);detailPoint=p;
  if(tool.value==='polygon'){
+  redrawDetail();
   if(polygon.length>=2000){status.textContent='Too many outline points. Apply or cancel this outline.';return;}
   ++editingRevision;polygon.push(p);redraw();refreshEditButtons();
   return;
@@ -292,8 +319,8 @@ canvas.onpointerdown=e=>{
 };
 canvas.onpointermove=e=>{
  if(!mask)return;
- const p=point(e);detailPoint=p;redrawDetail();
- if(!painting||tool.value!=='brush')return;
+ const p=point(e);detailPoint=p;
+ if(!painting||tool.value!=='brush'){redrawDetail();return;}
  paintLine(lastPoint,p);lastPoint=p;
 };
 canvas.onpointerup=canvas.onpointercancel=()=>{painting=false;lastPoint=null;refreshEditButtons();};
