@@ -44,10 +44,15 @@
    }
    return true;
   }
+  function remove(query){
+   if(!query||!forOwner(query.owner))return;
+   entries=entries.filter(e=>!same(e,query));
+   bytes=entries.reduce((n,e)=>n+e.size,0);
+  }
   function dispose(){clear();owner=null;}
   function info(){return Object.freeze({entryCount:entries.length,bytes,
    maxEntries:MAX_ENTRIES,maxBytes:MAX_BYTES,hasOwner:owner!==null});}
-  return Object.freeze({forOwner,get,put,dispose,info});
+  return Object.freeze({forOwner,get,put,remove,dispose,info});
  }
  root.ClosetFigurePreviewCache=Object.freeze({create,MAX_ENTRIES,MAX_BYTES});
  if(typeof module!=='undefined')module.exports=root.ClosetFigurePreviewCache;

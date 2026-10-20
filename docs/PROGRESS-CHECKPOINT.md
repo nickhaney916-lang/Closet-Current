@@ -1,5 +1,60 @@
 # Closet Current master development checkpoint
 
+## Isolated styling workflow integration — October 20, 2026 Pacific
+
+- Integrates #64 `da7138ac` and #65 `6bf0364c` on their independently verified
+  common foundation #51 `9d1dd7d4`; source branches and protected work unchanged.
+- New branch: `integration/style-new-clothes-64-65-20261020`.
+- Combines single-item entry and source/account stale-render checks, successful
+  preview reuse, five-second bounded decode/cache eviction, immediate focused
+  model handoff and queued durable owned-outfit saves with failure recovery.
+- Fixes returning to an earlier outfit while a different render is unfinished.
+- Build passed; local full Node suite **1074 passed / 0 failed / 3 skipped**.
+  Local browser downloads truncated; integrated exact-head CI must be inspected
+  before claiming Android Chromium/iPhone WebKit emulation success.
+- Source PR #64 CI 39441202514/39441202669 and #65 CI
+  39442878586/39442878896 verified SUCCESS at their actual heads.
+- Details/conflict decisions: STYLE-WORKFLOW-INTEGRATION-20261020.md.
+  Physical phones, accepted real-photo accuracy, realistic fitting and final
+  art/rights remain open. No merge/deploy, costs, evidence-script/art changes,
+  customer uploads or Drive Duel changes.
+
+## Parallel outfit saving / preview handoff continuation — October 20, 2026 Pacific
+
+- Continues isolated draft PR #65, after verified `1ac35ff0` (customer browser CI
+  39441102467 and camera/indexing 39441102354 both SUCCESS). PR #64 capture and
+  renderer scheduling branch left separate; no art/mask-evidence branch edited.
+- Preview opens before saving; persistence failure is visible and cannot navigate
+  back from a later screen. Original photo identity, selected option and account
+  are rechecked after board initialization. Pending save state survives rerenders.
+- Card and board saves publish only after their queued database commit; failures
+  cannot pop another outfit or leak an unsaved addition into subsequent snapshots.
+  Capacity, owner/database and current owned selections are checked inside queue.
+- Local full suite: **1064 passed / 0 failed / 3 skipped (1067 total)**; twelve
+  focused behavioral save/handoff checks pass. Exact-head browser CI pending;
+  prior 1052-pass browser result does not validate this changed persistence code.
+- Browser harness now checks actual IndexedDB abort isolation, pending-save button
+  protection and usable preview after storage failure in Chromium and WebKit.
+  See STYLE-NEW-CLOTHES-EXPERIENCE-20261020.md. No merge/deploy, costs, original
+  photo edits, accepted fitting-quality score, actual phones or Drive Duel change.
+
+## Parallel customer styling / local preview — October 20, 2026 Pacific
+
+- Isolated branch `work/style-new-clothes-performance-20261020`, stacked on PR #51
+  `9d1dd7d4`. No PR #58 art or PR #61/#62 evidence scripts/branches edited.
+- Snapshot/cancel obsolete Style this requests; clearly labeled Preview on model;
+  lazy/async recommendation photos and graceful image fallback. Original-first
+  high-resolution recognition, indexing and atomic Save & style handoff preserved.
+- Same-account, exact-image/geometry local preview reuse avoids repeated blanking,
+  decode and pixel diagnostics. Eight-second image decoding bound, base-image
+  integrity handling, accessible busy state and a single retry action.
+- Local build/full suite: **1052 passed, 0 failed, 3 skipped** (1055 total).
+  Focused suite: **40 passed**. Local browser download failed (truncated archive);
+  exact-head CI browser evidence must be checked before claiming emulation pass.
+- See `docs/STYLE-NEW-CLOTHES-EXPERIENCE-20261020.md`. No speed/accuracy percentage,
+  accepted real-photo fit, model-art approval, live AI or actual-phone evidence.
+  No merge, deploy, costs, customer upload or Drive Duel changes.
+
 ## Conservative real-photo extraction proposals — October 19, 2026 Pacific
 
 - Isolated branch `feature/conservative-dark-garment-extraction-20261019`, based

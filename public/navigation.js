@@ -1,5 +1,5 @@
 'use strict';
-document.querySelectorAll('[data-go-view]').forEach(button=>button.onclick=event=>{event.preventDefault();switchView(button.dataset.goView);});
+document.querySelectorAll('[data-go-view]').forEach(button=>button.onclick=event=>{event.preventDefault();switchView(button.dataset.goView);if(button.id==='styleNewClothes'&&typeof setCaptureMode==='function')setCaptureMode('single');});
 const occasionChips=[...document.querySelectorAll('[data-occasion]')];
 function syncOccasionChips(){for(const chip of occasionChips)chip.setAttribute('aria-pressed',String(chip.dataset.occasion===$('stylistOccasion').value));}
 for(const chip of occasionChips)chip.onclick=()=>{const select=$('stylistOccasion');select.value=chip.dataset.occasion;select.onchange?.();syncOccasionChips();};
