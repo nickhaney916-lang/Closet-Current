@@ -191,17 +191,47 @@ function refreshEditButtons(){
  applyPolygon.disabled=!mask||polygon.length<3;
  cancelPolygon.disabled=!polygon.length;
 }
+// Store only native-pixel mask tiles touched by each stroke, not a copy of
+// the ENTIRE (up to 12M pixel) mask for every small brush edit.
+const HISTORY_TILE=128;
+function captureTile(tx,ty){
+ const left=tx*HISTORY_TILE,top=ty*HISTORY_TILE,
+  width=Math.min(HISTORY_TILE,canvas.width-left),height=Math.min(HISTORY_TILE,canvas.height-top);
+ const pixels=new Uint8Array(width*height);
+ for(let y=0;y<height;y++)
+  pixels.set(mask.subarray((top+y)*canvas.width+left,(top+y)*canvas.width+left+width),y*width);
+ return {tx,ty,width,height,pixels};
+}
+function rememberMaskRect(left,top,right,bottom){
+ if(!mask||!undoStack.length)return;
+ const edit=undoStack[undoStack.length-1];
+ const minX=Math.max(0,Math.floor(left/HISTORY_TILE)),minY=Math.max(0,Math.floor(top/HISTORY_TILE));
+ const maxX=Math.min(Math.ceil(canvas.width/HISTORY_TILE)-1,Math.floor((right-1)/HISTORY_TILE)),
+  maxY=Math.min(Math.ceil(canvas.height/HISTORY_TILE)-1,Math.floor((bottom-1)/HISTORY_TILE));
+ for(let ty=minY;ty<=maxY;ty++)for(let tx=minX;tx<=maxX;tx++){
+  const key=ty*Math.ceil(canvas.width/HISTORY_TILE)+tx;
+  if(!edit.has(key))edit.set(key,captureTile(tx,ty));
+ }
+}
 function startEdit(){
  if(!mask)return;
  ++editingRevision;
- undoStack.push(new Uint8Array(mask));if(undoStack.length>3)undoStack.shift();
+ undoStack.push(new Map());if(undoStack.length>3)undoStack.shift();
  redoStack.length=0;strokes++;refreshEditButtons();
 }
 function restore(history,other){
  if(!history.length||!mask)return;
  ++editingRevision;
- other.push(new Uint8Array(mask));if(other.length>3)other.shift();
- mask=history.pop();polygon=[];redraw();refreshEditButtons();
+ const edit=history.pop(),reverse=new Map();
+ for(const [key,tile]of edit){
+  const {tx,ty,width,height,pixels}=tile;
+  reverse.set(key,captureTile(tx,ty));
+  const left=tx*HISTORY_TILE,top=ty*HISTORY_TILE;
+  for(let y=0;y<height;y++)
+   mask.set(pixels.subarray(y*width,(y+1)*width),(top+y)*canvas.width+left);
+ }
+ other.push(reverse);if(other.length>3)other.shift();
+ polygon=[];redraw();refreshEditButtons();
 }
 undo.onclick=()=>restore(undoStack,redoStack);
 redo.onclick=()=>restore(redoStack,undoStack);
@@ -273,6 +303,7 @@ function point(e){
 }
 function dot(x,y){
  const r=Number(radius.value),value=Number(mode.value);
+ rememberMaskRect(x-r,y-r,x+r+1,y+r+1);
  for(let yy=Math.max(0,y-r);yy<Math.min(canvas.height,y+r+1);yy++)
   for(let xx=Math.max(0,x-r);xx<Math.min(canvas.width,x+r+1);xx++)
    if((xx-x)**2+(yy-y)**2<=r*r)mask[yy*canvas.width+xx]=value;
@@ -297,6 +328,7 @@ applyPolygon.onclick=()=>{
   left=Math.max(0,Math.floor(Math.min(...xs))),right=Math.min(canvas.width,Math.ceil(Math.max(...xs))+1),
   top=Math.max(0,Math.floor(Math.min(...ys))),bottom=Math.min(canvas.height,Math.ceil(Math.max(...ys))+1);
  const bit=Number(mode.value);
+ rememberMaskRect(left,top,right,bottom);
  for(let y=top;y<bottom;y++)for(let x=left;x<right;x++)
   if(pointInPolygon(x+.5,y+.5,polygon))mask[y*canvas.width+x]=bit;
  polygon=[];redraw();refreshEditButtons();
