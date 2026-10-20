@@ -39,7 +39,7 @@ nine competing shoes; variation of owned bottoms; complete-vs-partial looks;
 and disclosure of a literal Unknown color. Existing anchor, season, trend,
 swap-cycle, dress-structure and owned-ID tests also pass.
 
-Local build passed. Full Node suite: **1086 passed, 0 failed, 3 skipped; 1089 total**.
+Local build passed. Full Node suite: **1087 passed, 0 failed, 3 skipped; 1090 total**.
 Local Python regression suite with `PYTHONPATH=benchmark`: **37 passed**.
 The browser harness adds a synthetic large-shirt/dress wardrobe, an owned footwear
 anchor, a real dress-swap button, actual IndexedDB outfit save/reload, varied
@@ -85,3 +85,17 @@ fix; total new Node regressions are eight. The actual-browser mismatched-databas
 probe now also asserts Style this refuses to start and publishes zero suggestions.
 Initial recommendation commit `e91aa30a` passed customer/fitting CI 39454476209 and
 camera/indexing CI 39454476112; exact updated-head CI is required for this guard.
+
+## Pending-preview stability
+
+Ownership-follow-up CI 39454837486 passed Node checks but failed the stalled-decode
+browser wait once. Diagnostic-only rerun 39455409269 passed both customer and
+fitting profiles, so that rerun alone did not identify the failure's cause.
+A separate deterministic behavioral regression then reproduced repeated identical
+preview requests across event-loop turns restarting pending decoding and its
+bounded timeout. The renderer now shares an in-flight render only when full plan,
+board, owner, database and render revision still match. Source/account/database
+changes, pagehide, errors and explicit retry retain their cancellation/recovery
+paths. Per-attempt state clears on settlement. There are now nine new Node
+regressions in total. Browser stress sends identical requests every 200ms while
+decoding is deliberately stalled; exact final-head CI must verify that path.

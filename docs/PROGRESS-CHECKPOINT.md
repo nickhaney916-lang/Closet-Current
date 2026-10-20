@@ -22,7 +22,12 @@
   guidance. Two additional failing regressions reproduced this ownership gap.
 - Initial recommendation runtime `e91aa30a` passed CI 39454476209 and 39454476112,
   including both browser engines. Exact-head CI pending the ownership follow-up.
-- Local build and Node suite **1086 passed / 0 failed / 3 skipped (1089 total)**;
+- An independently reproduced preview regression restarted identical pending
+  image work across browser events. Same-input active renders now share the
+  pending decode and its original bound, while changed sources/accounts/boards/
+  databases still replace it. Browser stress requests the preview every 200ms
+  while decode is stalled. One new behavioral regression failed before this fix.
+- Local build and Node suite **1087 passed / 0 failed / 3 skipped (1090 total)**;
   Python **37 passed**. Mobile CI pending this new branch. Harness adds actual
   dress-swap/save/reload, owned-only structure and varied-bottoms checks in both
   Chromium and WebKit; synthetic fixture identity/images, no real-photo score.

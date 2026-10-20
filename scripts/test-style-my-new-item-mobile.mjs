@@ -443,6 +443,7 @@ try{
   window.renderReusableFigurePreview=()=>{window.__stallRenderRequests.push(performance.now());window.__restoreRenderRequest();};
   HTMLImageElement.prototype.decode=function(){window.__stallDecodes++;return new Promise(()=>{});};
   document.querySelector('#reusableFigureRetry').click();
+  window.__stallRefresh=setInterval(()=>renderReusableFigurePreview(),200);
  });
  try{await page.waitForFunction(()=>document.querySelector('#reusableFigureStage').getAttribute('aria-busy')==='false',null,{timeout:10000});}
  catch(error){console.log('STALL_DIAGNOSTIC',await page.evaluate(()=>({
@@ -452,7 +453,7 @@ try{
   owner:window.closetAuth?.user?.id,database:db?.name,
   layers:$('reusableFigureGarments').children.length
  })));throw error;}
- await page.evaluate(()=>{window.renderReusableFigurePreview=window.__restoreRenderRequest;});
+ await page.evaluate(()=>{clearInterval(window.__stallRefresh);window.renderReusableFigurePreview=window.__restoreRenderRequest;});
  assert.equal(await page.locator('#reusableFigureRetry').isVisible(),true);
  await page.evaluate(()=>HTMLImageElement.prototype.decode=window.__nativeDecode);
  await page.locator('#reusableFigureRetry').click();
