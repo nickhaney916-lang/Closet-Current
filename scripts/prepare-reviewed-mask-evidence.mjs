@@ -3,6 +3,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {createHash} from 'node:crypto';
+import {inspectHumanOutline} from './human-mask-outline-advisories.mjs';
 
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
 const jsonSha = value => sha(Buffer.from(JSON.stringify(value)));
@@ -101,6 +102,7 @@ export function prepareReviewedMaskEvidence({sourceBytes,firstDraftBytes,annotat
   annotation.verifiedSourceWidth===actual.width && annotation.verifiedSourceHeight===actual.height,
   'Approved mask does not match original JPEG pixels');
  decodeNativeMask(annotation);
+ const humanMaskTopologyAdvisory=inspectHumanOutline(annotation);
  assert(typeof annotation.physicalTargetId==='string' &&
   new RegExp('^'+row.id+'-item-[0-9]{2}$').test(annotation.physicalTargetId) &&
   Array.isArray(FORMS[annotation.humanCategory]) &&
@@ -149,6 +151,7 @@ export function prepareReviewedMaskEvidence({sourceBytes,firstDraftBytes,annotat
   approvedAnnotationByteSha256:annotationHash,productionAuthorized:false,
   reviewerIdentitiesAuthenticated:false,rightsIndependentlyAuthenticatedByTool:false,
   requiresHumanEvidenceAudit:true,reference:annotation,record,
+  humanMaskTopologyAdvisory,
   evidenceSha256:Object.fromEntries(Object.entries(checked).map(([k,v])=>[paths[k],v.sha256])),
   verifiedOriginalDimensions:actual};
 }
