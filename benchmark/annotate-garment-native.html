@@ -1,18 +1,20 @@
 <!doctype html>
 <html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Closet Current — native-grid independent garment annotation</title>
-<style>body{font:16px system-ui;max-width:920px;margin:auto;padding:16px;background:#f8f7fb;color:#231e2d}button,select,input{font:inherit;padding:10px;margin:4px}canvas{width:100%;max-width:720px;touch-action:none;background:#ddd}#status{white-space:pre-wrap} .controls{display:flex;flex-wrap:wrap;gap:8px} .native-detail{border:1px solid #cbc0dc;border-radius:12px;padding:10px;margin:12px 0;background:white}.native-detail .windows{display:flex;flex-wrap:wrap;gap:12px}.native-detail figure{margin:0;flex:1 1 180px;max-width:240px}.native-detail canvas{width:100%;max-width:220px;aspect-ratio:1/1;height:auto;image-rendering:auto;border:1px solid #999;background:#e7e4eb;touch-action:auto}.native-detail figcaption{font-size:13px;font-weight:600}.native-detail p{font-size:13px}</style>
+<style>body{font:16px system-ui;max-width:920px;margin:auto;padding:16px;background:#f8f7fb;color:#231e2d}button,select,input{font:inherit;padding:10px;margin:4px}canvas{width:100%;max-width:720px;touch-action:none;background:#ddd}#status{white-space:pre-wrap} .controls{display:flex;flex-wrap:wrap;gap:8px} .native-detail{border:1px solid #cbc0dc;border-radius:12px;padding:10px;margin:12px 0;background:white}.native-detail .windows{display:flex;flex-wrap:wrap;gap:12px}.native-detail figure{margin:0;flex:1 1 180px;max-width:240px}.native-detail canvas{width:100%;max-width:220px;aspect-ratio:1/1;height:auto;image-rendering:auto;border:1px solid #999;background:#e7e4eb;touch-action:auto}.native-detail figcaption{font-size:13px;font-weight:600}.native-detail p{font-size:13px}.native-detail .precision-toggle{display:block;padding:8px 0}.native-detail #detailMask.precision-active{touch-action:none;cursor:crosshair;outline:2px solid #513182;outline-offset:2px}</style>
 <h1>Reference garment outline review</h1>
 <p>Internal standalone benchmark tool, not part of the customer app. Draw directly on the ORIGINAL source pixel grid; no 768px downsampling or AI masks. Native-grid annotations are still unapproved DRAFTS until a distinct person independently reviews the entire garment. Source files remain on your device.</p>
 <div class="controls"><input id="photo" type="file" accept="image/*"><label>Resume previous draft <input id="resume" type="file" accept=".json,application/json"></label><label hidden>AI masks prohibited in independent reference review <input id="prediction" type="file" disabled accept=".json,application/json"></label><label>Tool <select id="tool"><option value="brush">Paint brush</option><option value="polygon">Outline polygon (tap corners)</option></select></label><select id="mode" aria-label="Mask edit mode"><option value="1">Mark garment</option><option value="0">Erase / background</option></select><label>First reviewer <input id="reviewer" type="text" maxlength="80" autocomplete="off" placeholder="Your reviewer name"></label><label>Independent physical garment <input id="inventoryMode" type="checkbox"> (no AI seed, internal review only)</label><label id="inventoryFields" hidden>Garment ID <input id="inventoryId" type="text" maxlength="30" placeholder="validation-0031-item-01"> Category <select id="inventoryCategory"><option value="">Select…</option><option value="Tops">Tops</option><option value="Bottoms">Bottoms</option><option value="Dresses">Dresses</option><option value="Outerwear">Outerwear</option><option value="Shoes">Shoes</option><option value="Hosiery">Hosiery / tights</option><option value="Accessories">Accessories</option></select> Exact garment form <select id="inventoryForm"><option value="">Select category first</option></select></label><label id="targetLabel" hidden>Identify the actual garment independently of the model prediction <input id="targetGarment" type="text" maxlength="100" placeholder="e.g. black skirt worn by the person"></label><label>Brush radius <input type="range" id="radius" min="1" max="30" value="7"></label><button id="applyPolygon" type="button" disabled>Fill outline</button><button id="cancelPolygon" type="button" disabled>Cancel outline</button><button id="undo" type="button" disabled>Undo</button><button id="redo" type="button" disabled>Redo</button><button id="download" disabled>Export annotation JSON</button></div>
 <canvas id="canvas" width="256" height="256" aria-label="Image and reference mask editor"></canvas><section class="native-detail" aria-label="High resolution outline detail">
 <label>Inspect detail at <select id="detailZoom" aria-label="Detail magnification"><option value="4">4×</option><option value="8">8×</option></select></label>
-<p id="detailHint">Move or tap the large photo to inspect its original-resolution clothing edges. Magnification never changes the annotation.</p>
+<label class="precision-toggle"><input id="precisionEdit" type="checkbox"> Paint or erase directly in the enlarged outline (brush only)</label>
+<p id="detailHint">Move or tap the large photo to inspect its original-resolution clothing edges. Turn on enlarged brush editing to correct individual original-grid pixels; no AI prediction is used.</p>
 <div class="windows"><figure><figcaption>Native source photo (unaltered)</figcaption><canvas id="detailSource" width="220" height="220"></canvas></figure>
 <figure><figcaption>Current outline overlay (review pixels)</figcaption><canvas id="detailMask" width="220" height="220"></canvas></figure></div></section><p id="status" role="status">Choose a source image. Paint all of the garment before export.</p>
 <script>
 'use strict';
-const detailZoom=document.querySelector('#detailZoom'),detailSource=document.querySelector('#detailSource'),detailMask=document.querySelector('#detailMask'),detailHint=document.querySelector('#detailHint');
+const detailZoom=document.querySelector('#detailZoom'),detailSource=document.querySelector('#detailSource'),detailMask=document.querySelector('#detailMask'),detailHint=document.querySelector('#detailHint'),precisionEdit=document.querySelector('#precisionEdit');
+let precisionPainting=false,precisionLastPoint=null,precisionWindow=null;
 const garmentTarget=document.querySelector('#targetGarment'),targetLabel=document.querySelector('#targetLabel');
 const inventoryMode=document.querySelector('#inventoryMode'),inventoryFields=document.querySelector('#inventoryFields'),
  inventoryId=document.querySelector('#inventoryId'),inventoryCategory=document.querySelector('#inventoryCategory'),inventoryForm=document.querySelector('#inventoryForm');
@@ -53,6 +55,7 @@ photo.onchange=async()=>{
  // Invalidate the previous source immediately, including its export button,
  // rather than allowing edits while the newly chosen JPEG is decoding.
  source=null;mask=null;detailPoint=null;seedModel=null;reviewedDraft=false;seedMask=null;
+ precisionPainting=false;precisionLastPoint=null;precisionWindow=null;
  polygon=[];strokes=0;painting=false;lastPoint=null;resetTarget();
  undoStack.length=redoStack.length=0;resume.value='';
  ctx.clearRect(0,0,canvas.width,canvas.height);refreshEditButtons();
@@ -237,12 +240,17 @@ undo.onclick=()=>restore(undoStack,redoStack);
 redo.onclick=()=>restore(redoStack,undoStack);
 // Working mask and magnifier use the same exact original native photo pixel grid.
 // This does not constitute first or second-person approval.
-function redrawDetail(){
- if(!source?.photo||!mask||!detailPoint)return;
+function detailWindow(){
+ if(!source?.photo||!mask||!detailPoint)return null;
  const z=Number(detailZoom.value),extent=Math.min(canvas.width,canvas.height,220/z);
- if(!Number.isFinite(z)||z<2||z>12||extent<=0)return;
- const sx=Math.max(0,Math.min(canvas.width-extent,detailPoint.x-extent/2)),
-  sy=Math.max(0,Math.min(canvas.height-extent,detailPoint.y-extent/2));
+ if(!Number.isFinite(z)||z<2||z>12||extent<=0)return null;
+ return {sx:Math.max(0,Math.min(canvas.width-extent,detailPoint.x-extent/2)),
+  sy:Math.max(0,Math.min(canvas.height-extent,detailPoint.y-extent/2)),extent};
+}
+function redrawDetail(){
+ const window=detailWindow();
+ if(!window)return;
+ const {sx,sy,extent}=window;
  const fx=source.photo.naturalWidth/canvas.width,fy=source.photo.naturalHeight/canvas.height;
  const original=detailSource.getContext('2d'),marked=detailMask.getContext('2d');
  original.clearRect(0,0,220,220);marked.clearRect(0,0,220,220);
@@ -252,9 +260,48 @@ function redrawDetail(){
  marked.drawImage(canvas,sx,sy,extent,extent,0,0,220,220);
  detailHint.textContent='Original '+source.photo.naturalWidth+' × '+source.photo.naturalHeight+
   ' pixels · review mask '+canvas.width+' × '+canvas.height+
-  ' · detail is preview only, not an approval';
+  (precisionEdit.checked?' · precise brush editing on original pixels (unapproved DRAFT)':
+  ' · enlarged detail is a preview, not an approval');
 }
 detailZoom.onchange=redrawDetail;
+precisionEdit.onchange=()=>{
+ if(precisionEdit.checked&&tool.value!=='brush'){
+  precisionEdit.checked=false;
+  status.textContent='Select the brush tool before editing in the enlarged outline.';
+ }
+ detailMask.classList.toggle('precision-active',precisionEdit.checked);
+ precisionPainting=false;precisionLastPoint=null;precisionWindow=null;
+ redrawDetail();
+};
+// Keep magnifier centered on the main image selection for the WHOLE precision
+// gesture. Pointer coordinates map to original pixels, not resized model masks.
+function detailPaintPoint(e,win){
+ const box=detailMask.getBoundingClientRect();
+ const normX=Math.max(0,Math.min(1,(e.clientX-box.left)/box.width)),
+  normY=Math.max(0,Math.min(1,(e.clientY-box.top)/box.height));
+ return {x:Math.max(0,Math.min(canvas.width-1,Math.floor(win.sx+normX*win.extent))),
+  y:Math.max(0,Math.min(canvas.height-1,Math.floor(win.sy+normY*win.extent)))};
+}
+detailMask.onpointerdown=e=>{
+ if(!precisionEdit.checked||tool.value!=='brush'||!source||!mask||!e.isPrimary)return;
+ const win=detailWindow();
+ if(!win)return;
+ e.preventDefault();
+ precisionPainting=true;precisionWindow=win;
+ precisionLastPoint=detailPaintPoint(e,win);
+ startEdit();detailMask.setPointerCapture(e.pointerId);
+ paintLine(precisionLastPoint,precisionLastPoint);
+};
+detailMask.onpointermove=e=>{
+ if(!precisionPainting||!precisionWindow||!mask)return;
+ e.preventDefault();
+ const next=detailPaintPoint(e,precisionWindow);
+ paintLine(precisionLastPoint,next);precisionLastPoint=next;
+};
+detailMask.onpointerup=detailMask.onpointercancel=()=>{
+ precisionPainting=false;precisionLastPoint=null;precisionWindow=null;
+ refreshEditButtons();
+};
 function redraw(){
  if(!source)return;ctx.drawImage(source.base,0,0);
  const image=ctx.getImageData(0,0,canvas.width,canvas.height);
@@ -335,7 +382,11 @@ applyPolygon.onclick=()=>{
  status.textContent='Outline filled. Refine edges with the brush, then export a draft for independent review.';
 };
 cancelPolygon.onclick=()=>{++editingRevision;polygon=[];redraw();refreshEditButtons();};
-tool.onchange=()=>{++editingRevision;painting=false;polygon=[];redraw();refreshEditButtons();};
+tool.onchange=()=>{
+ ++editingRevision;painting=false;precisionPainting=false;precisionLastPoint=null;precisionWindow=null;
+ precisionEdit.checked=false;detailMask.classList.remove('precision-active');
+ polygon=[];redraw();refreshEditButtons();
+};
 canvas.onpointerdown=e=>{
  if(!mask)return;
  e.preventDefault();
