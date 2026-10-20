@@ -14,10 +14,22 @@
   Portrait/landscape minimum dimensions are symmetric. Reject blobs over 32MiB.
 - Recognition still receives full-scene original-derived JPEG before clipping;
   this does not preserve raw sensor bytes or establish garment color accuracy.
-- Validation pending GitHub Actions: local execution environment unavailable.
-  New behavioral tests cover size fallback, invalid encodes, portrait decode,
-  timeout/decode races, retry and small-image duplicate encode avoidance.
-  Real browser synthetic JPEG/EXIF/color-patch checks cover both mobile engines.
+- Verified runtime `7a31514870da1f5145e68e0a929e29f7af58db4d`:
+  [CI 39500714377](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39500714377)
+  SUCCESS. Build, full Node suite **1,179 passed / 0 failed / 3 skipped**,
+  source/duplicate protection and history/source integrity gates passed.
+- Android Chromium and iPhone WebKit both decoded a synthetic 4000x3000
+  sensor JPEG to 3072x2304 within budget (509,323 / 547,091 characters).
+  EXIF orientation 6 became 300x400 with correct red/blue patch placement;
+  measured RGB [224,31,32] / [32,64,224] in both engines. This tests decoder
+  behavior, not native hardware or independently measured garment fidelity.
+- Ten new Node regressions cover native/video size fallback, invalid encodes,
+  portrait dimensions, timeout/decode races, retry and small-source behavior.
+- Initial CI failed because the historical integration gate froze app and
+  checkpoint bytes. The amended gate binds all non-camera app bytes to its
+  original customer parent and preserves the complete prior checkpoint suffix;
+  independent review blobs and original merge ancestry remain protected.
+- Local execution environment unavailable; all reported execution is GitHub CI.
 - Physical Android/iPhone tests remain required: autofocus, low light/motion,
   native sensor resolution/EXIF/wide-gamut behavior, permission/lifecycle recovery,
   sustained capture memory/latency and saved garment detail/color fidelity.
