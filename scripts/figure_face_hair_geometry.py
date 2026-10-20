@@ -53,34 +53,36 @@ def plan_original_face_hair(body_vertices,eye_vertices,kind):
     scalp=[p for p in head if 1.685<=p[2]<=1.8]
     if len(scalp)<40:raise ValueError('Missing source scalp area')
     top_count=0
-    for i in range(25):
-        x=(i-12)*.007
+    for i in range(21):
+        x=(i-10)*.007
         if abs(x)>.095:continue
         strand=[]
-        for k,z in enumerate((1.766,1.744,1.724,1.701)):
+        for k,z in enumerate((1.742,1.728,1.716,1.702)):
             px=x+.004*math.sin(i*.9+k*.8)
             y=_closest_front(scalp,px,z,xy_limit=.045,z_limit=.03)
-            strand.append((px,y-.005-k*.0008,z))
+            strand.append((px,y-.003-k*.0004,z))
         details.append(dict(name='source-scalp-fiber-%02d'%i,material='strand',
-                            points=strand,radius=.0016 if i%2 else .0021))
+                            points=strand,radius=.00085 if i%2 else .0012))
         top_count+=1
     side_count=0
     if kind=='female':
         # Short, modest sculpted side framing; roots remain source-aligned.
         # Not a borrowed wig/hair scan, nor individualized facial geometry.
         for side in (-1,1):
-            for n in range(8):
+            for n in range(4):
                 hair=[]
-                for k,z in enumerate((1.741,1.708,1.665,1.622)):
-                    px=side*(.072+n*.003+(.011 if k>=2 else .005))
+                for k,z in enumerate((1.732,1.706,1.679,1.650)):
+                    px=side*(.080+n*.003+(.008 if k>=2 else .004))
                     y=_closest_front(head,px,z,xy_limit=.055,z_limit=.04)
-                    hair.append((px,y-.012,z))
+                    hair.append((px,y-.004,z))
                 details.append(dict(name='source-side-framing-%s-%02d'%(side,n),
-                                    material='strand',points=hair,radius=.003))
+                                    material='strand',points=hair,radius=.0017))
                 side_count+=1
     if len(details)!=4+top_count+side_count or top_count<20:
         raise ValueError('Invalid original two-figure scalp detailing')
     for d in details:
+        if d['name'].startswith('source-scalp-fiber') and max(p[2] for p in d['points'])>1.746:
+            raise ValueError('Hair fibers extend above bounded crown surface')
         if len(d['points'])<4 or d['radius']<=0 or d['radius']>.004:
             raise ValueError('Unsafe generated detail geometry')
         if any(not all(math.isfinite(v) for v in p) for p in d['points']):
