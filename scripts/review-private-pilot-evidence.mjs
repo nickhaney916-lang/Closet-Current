@@ -15,7 +15,7 @@ const privateRoot=resolve('artifacts/private-phone-pilot');
 if(!(output.startsWith(privateRoot+'/')&&output.endsWith('.json')))
  throw Error('Output must be a private local artifacts/private-phone-pilot/*.json file');
 const inputs=[args[1],args[3],...args.slice(sep+1,outIndex)];
-if(inputs.length>42||new Set(inputs.map(resolve)).size!==inputs.length||
+if(inputs.length>42||new Set(inputs.map(x=>resolve(x))).size!==inputs.length||
  inputs.some(x=>resolve(x)===output))
  throw Error('Duplicate/reused private report paths are not allowed');
 const load=async file=>{
