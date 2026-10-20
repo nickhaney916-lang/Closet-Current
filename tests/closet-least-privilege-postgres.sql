@@ -90,8 +90,8 @@ END $$;
 -- Owner can insert and read a new private immutable photo.
 INSERT INTO storage.objects(bucket_id,name) VALUES
  ('closet-private','a1111111-1111-4111-8111-111111111111/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.jpg');
-DO $$
-DECLARE was_blocked boolean:=false;
+DO $
+DECLARE row_count bigint:=0; permission_blocked boolean:=false;
 BEGIN
  IF (SELECT count(*) FROM storage.objects)<>1
  THEN RAISE EXCEPTION 'Private Storage owner read failed'; END IF;
@@ -99,9 +99,16 @@ BEGIN
   UPDATE storage.objects SET name=
     'a1111111-1111-4111-8111-111111111111/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.jpg'
    WHERE bucket_id='closet-private';
- EXCEPTION WHEN insufficient_privilege THEN was_blocked:=true; END;
- IF NOT was_blocked THEN RAISE EXCEPTION 'Immutable photo overwrite allowed'; END IF;
-END $$;
+  GET DIAGNOSTICS row_count=ROW_COUNT;
+ EXCEPTION WHEN insufficient_privilege THEN permission_blocked:=true; END;
+ -- PostgreSQL UPDATE RLS often silently affects zero rows rather than
+ -- throwing an error. Check both the result and the original object.
+ IF NOT permission_blocked AND row_count<>0 THEN
+  RAISE EXCEPTION 'Immutable photo overwrite affected rows'; END IF;
+ IF (SELECT count(*) FROM storage.objects WHERE name=
+   'a1111111-1111-4111-8111-111111111111/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.jpg')<>1
+ THEN RAISE EXCEPTION 'Original SHA-addressed photo was changed'; END IF;
+END $;
 
 -- Non-owner still cannot read another account or insert under its prefix.
 SELECT set_config('request.jwt.claim.sub','b2222222-2222-4222-8222-222222222222',false);
