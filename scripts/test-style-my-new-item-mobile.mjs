@@ -298,7 +298,11 @@ try{
  await page.waitForFunction(()=>document.querySelector('#reusableFigureStatus').textContent.includes('selection changed'));
  assert.equal(await page.locator('#reusableFigureGarments img').count(),0);
  await page.locator('#reusableFigureRetry').click();
- await page.waitForFunction(()=>document.querySelector('#reusableFigureGarments img').length===1);
+ try{await page.waitForFunction(()=>document.querySelector('#reusableFigureGarments img').length===1);}catch(error){
+  console.log('RECOVERY_DIAGNOSTIC',await page.evaluate(()=>({status:document.querySelector('#reusableFigureStatus').textContent,
+   board:currentBoard.slots,selected:items.filter(x=>Object.values(currentBoard.slots).includes(x.id)).map(x=>({id:x.id,category:x.category,color:x.color,sourceLength:x.image.length})),
+   busy:document.querySelector('#reusableFigureStage').getAttribute('aria-busy')})));throw error;
+ }
  // A stalled browser decoder must become a retryable hold, never spin forever.
  await page.evaluate(()=>{
   HTMLImageElement.prototype.decode=function(){return new Promise(()=>{});};
@@ -308,7 +312,11 @@ try{
  assert.equal(await page.locator('#reusableFigureRetry').isVisible(),true);
  await page.evaluate(()=>HTMLImageElement.prototype.decode=window.__nativeDecode);
  await page.locator('#reusableFigureRetry').click();
- await page.waitForFunction(()=>document.querySelector('#reusableFigureGarments img').length===1);
+ try{await page.waitForFunction(()=>document.querySelector('#reusableFigureGarments img').length===1);}catch(error){
+  console.log('RECOVERY_DIAGNOSTIC',await page.evaluate(()=>({status:document.querySelector('#reusableFigureStatus').textContent,
+   board:currentBoard.slots,selected:items.filter(x=>Object.values(currentBoard.slots).includes(x.id)).map(x=>({id:x.id,category:x.category,color:x.color,sourceLength:x.image.length})),
+   busy:document.querySelector('#reusableFigureStage').getAttribute('aria-busy')})));throw error;
+ }
  assert.equal(await page.locator('#reusableFigureRetry').isVisible(),false);
  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'no horizontal phone overflow');
  await mkdir('artifacts/style-new-clothes',{recursive:true});
