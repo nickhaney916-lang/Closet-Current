@@ -58,6 +58,7 @@ def stage(destination=DEFAULT):
    width,height=picture.size
   if min(width,height)<200 or max(width,height)>12000:
    raise ValueError('Unexpected dimensions: '+id)
+  native_supported=width<=6000 and height<=6000 and width*height<=12000000
   (originals/filename).write_bytes(data)
   a=locked_record['attribution']
   if not all(k in a for k in ('title','source','license','author')):
@@ -65,7 +66,7 @@ def stage(destination=DEFAULT):
   # This blind roster MUST NOT include manifest's category, visibleFeatures,
   # risk summary, prediction, mask proposal or expectedDisposition.
   public={'id':id,'image':filename,'sourceSha256':expected,'width':width,'height':height,
-          'sourceRelativePath':'originals/'+filename,'firstReviewState':'not-started',
+          'sourceRelativePath':'originals/'+filename,'nativeGridReviewSupported':native_supported,'firstReviewState':'not-started',
           'approvedReferenceMask':None}
   originals_info.append(public)
   rights.append({'id':id,'sourceSha256':expected,'attribution':a,
@@ -75,7 +76,7 @@ def stage(destination=DEFAULT):
    '" alt="Original clothing photograph '+text(id)+'"></figure><div><h2>'+text(id)+
    '</h2><p>Original '+str(width)+' × '+str(height)+' · <strong>NOT ANNOTATED</strong></p>'+
    '<a href="'+text(public['sourceRelativePath'])+'" download="'+text(filename)+'">Use exact original JPG</a>'+
-   '<p>Open FIRST-ANNOTATE.html, load this JPG, select independent physical garment (blank first mask), draw the original-pixel outline for each visible item separately, and export a DRAFT JSON. No AI proposal is supplied.</p></div></article>')
+   '<p>'+('Open FIRST-ANNOTATE.html, load this JPG, select independent physical garment (blank first mask), draw the original-pixel outline for each visible item separately, and export a DRAFT JSON. No AI proposal is supplied.' if native_supported else 'HOLD: original raster exceeds the native-grid review editor safety limits. Do NOT downsample, upscale or score this source.')+'</p></div></article>')
   second_cards.append('<article><h2>'+text(id)+' — HOLD</h2>'+
    '<p>'+text(row['sourceInspection'])+'</p>'+
    '<p>Independent reviewer checks garment ID/category/form, cuffs, seams, hems, trim, body and mannequin contamination, and any ambiguity. Re-check full-resolution original.</p>'+
@@ -90,6 +91,8 @@ def stage(destination=DEFAULT):
  (out/'REVIEW-STATUS.json').write_text(stable({'schemaVersion':1,
   'label':'HOLD — no independent human outline approvals',
   'actualLicensedOriginalHashesVerified':len(rows),'originalsInPacket':len(rows),
+  'nativeGridSupportedOriginals':sum(p['nativeGridReviewSupported'] for p in originals_info),
+  'nativeGridUnsupportedOriginals':sum(not p['nativeGridReviewSupported'] for p in originals_info),
   'annotationEditorNativePixelLimit':12000000,
   'annotationEditorNativeSideLimit':6000,
   'annotationEditorNativeDetailViewOnly':False,
@@ -112,7 +115,10 @@ def stage(destination=DEFAULT):
  second='<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Second independent review — twelve source images</title><style>'+style+'</style><header><h1>Second independent reviewer · quality checklist</h1><p class="hold">All 12 remain HOLD. Do not mark model predictions as truth.</p><p>Only open this page after reviewer one has independently annotated the original source without predictions. Use <a href="SECOND-APPROVE.html">the separate second-review editor</a> with the original photo and their draft. A human sign-off is NOT authenticated reviewer identity, independent annotation and image redistribution rights proof, evaluator registration, production authorization or photorealism proof. Reference importer still requires explicitly reviewed implementation and provenance.</p></header>'+''.join(second_cards)+'</html>'
  (out/'FIRST-REVIEW.html').write_text(first)
  (out/'SECOND-REVIEW.html').write_text(second)
- print(stable({'originals':len(rows),'sourceHashesVerified':len(rows),'independentFullMasks':0,
+ print(stable({'originals':len(rows),'sourceHashesVerified':len(rows),
+  'nativeGridSupported':sum(p['nativeGridReviewSupported'] for p in originals_info),
+  'nativeGridUnsupported':sum(not p['nativeGridReviewSupported'] for p in originals_info),
+  'independentFullMasks':0,
   'maskQualityPasses':0,'reviewerOneFinished':0,'reviewerTwoApproved':0,
   'sourcePhotoPixelsModified':False,'modelMasksSeeded':0,'productionAuthorized':False}))
 
