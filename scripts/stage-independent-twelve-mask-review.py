@@ -3,7 +3,7 @@
 
 All source photos are exact previously licensed benchmark originals. The existing
 human annotation and distinct-person approval editors are bundled unchanged;
-their ~768px working-grid limitation is explicitly flagged. Only this separate,
+their strict original-pixel review grid is bounded; draft human reviews are not approvals. Only this separate,
 read-only packet is emitted. No user images or network requests are involved.
 """
 import argparse
@@ -16,8 +16,8 @@ from PIL import Image
 
 ROOT=Path(__file__).resolve().parents[1]
 DEFAULT='artifacts/independent-mask-review'
-ANNOTATOR='benchmark/annotate-garment.html'
-APPROVER='benchmark/approve-garment-mask.html'
+ANNOTATOR='benchmark/annotate-garment-native.html'
+APPROVER='benchmark/approve-garment-mask-native.html'
 
 def sha(data):return hashlib.sha256(data).hexdigest()
 def stable(data):return json.dumps(data,indent=2,ensure_ascii=False)+'\n'
@@ -75,7 +75,7 @@ def stage(destination=DEFAULT):
    '" alt="Original clothing photograph '+text(id)+'"></figure><div><h2>'+text(id)+
    '</h2><p>Original '+str(width)+' × '+str(height)+' · <strong>NOT ANNOTATED</strong></p>'+
    '<a href="'+text(public['sourceRelativePath'])+'" download="'+text(filename)+'">Use exact original JPG</a>'+
-   '<p>Open FIRST-ANNOTATE.html, load this JPG, select independent physical garment (blank first mask), draw each visible item separately, and export a DRAFT JSON. No AI proposal is supplied.</p></div></article>')
+   '<p>Open FIRST-ANNOTATE.html, load this JPG, select independent physical garment (blank first mask), draw the original-pixel outline for each visible item separately, and export a DRAFT JSON. No AI proposal is supplied.</p></div></article>')
   second_cards.append('<article><h2>'+text(id)+' — HOLD</h2>'+
    '<p>'+text(row['sourceInspection'])+'</p>'+
    '<p>Independent reviewer checks garment ID/category/form, cuffs, seams, hems, trim, body and mannequin contamination, and any ambiguity. Re-check full-resolution original.</p>'+
@@ -90,9 +90,10 @@ def stage(destination=DEFAULT):
  (out/'REVIEW-STATUS.json').write_text(stable({'schemaVersion':1,
   'label':'HOLD — no independent human outline approvals',
   'actualLicensedOriginalHashesVerified':len(rows),'originalsInPacket':len(rows),
-  'annotationEditorWorkingGridMaxSide':768,
-  'annotationEditorNativeDetailViewOnly':True,
-  'currentEditorOutputsExactOriginalGrid':False,
+  'annotationEditorNativePixelLimit':12000000,
+  'annotationEditorNativeSideLimit':6000,
+  'annotationEditorNativeDetailViewOnly':False,
+  'currentEditorOutputsExactOriginalGrid':True,
   'independentlyReviewedFullSizeReferenceMasks':0,
   'referenceImporterImplemented':False,'humanReviewerOneCompleted':0,
   'humanReviewerTwoApproved':0,'evaluatedRealMaskQualityPasses':0,
@@ -104,11 +105,11 @@ def stage(destination=DEFAULT):
   'remainingBlockers':['first human must independently label the garment on exact original raster for evaluator',
    'second unrelated reviewer must inspect full visible fabric and all holes',
    'human-supplied rights/review evidence and reference importer are still absent',
-   '768px current editor annotations are draft reviews, not full-resolution reference masks',
+   'native-grid human drafts are unapproved; reviewer provenance, rights evidence and importer remain absent',
    'binary masks cannot certify transparency, skin occlusion or realistic fit']}))
  style='body{font:16px system-ui;margin:0 auto;padding:24px;max-width:1100px;background:#f8f7fa;color:#24212b}a{color:#4c3279}article{display:flex;gap:16px;align-items:start;padding:16px;background:white;margin:16px 0;border:1px solid #ddd;border-radius:12px}img{max-width:220px;max-height:300px;object-fit:contain}figure{margin:0;flex:0 0 230px}p{line-height:1.5}header{background:#e8e5eb;padding:15px;border-radius:10px}.hold{font-weight:700;color:#7d420b}'
- first='<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>First review — 12 original garment photographs</title><style>'+style+'</style><header><h1>First human review · 12 original photos</h1><p class="hold">HOLD: no human garment masks have been approved.</p><p>Model-blind sources only: source pixels are copied without modification. Use the <a href="FIRST-ANNOTATE.html">human drawing editor</a> starting from a blank mask for each independently identified garment. Export drafts and arrange a DIFFERENT second reviewer. Do not infer category from a model or file title.</p><p><strong>Resolution limitation:</strong> the existing editor draws on a raster with maximum dimension 768 px, while its detail loupe samples native photo pixels. These draft masks do not qualify as exact-grid full-resolution benchmark truth. Up-scaling drafts would not establish accurate native boundaries.</p></header>'+''.join(first_cards)+'</html>'
- second='<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Second independent review — twelve source images</title><style>'+style+'</style><header><h1>Second independent reviewer · quality checklist</h1><p class="hold">All 12 remain HOLD. Do not mark model predictions as truth.</p><p>Only open this page after reviewer one has independently annotated the original source without predictions. Use <a href="SECOND-APPROVE.html">the separate second-review editor</a> with the original photo and their draft. A human sign-off here is NOT the source-grid evaluator approval, legal authorization or photorealism proof. Reference importer still requires explicitly reviewed implementation and provenance.</p></header>'+''.join(second_cards)+'</html>'
+ first='<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>First review — 12 original garment photographs</title><style>'+style+'</style><header><h1>First human review · 12 original photos</h1><p class="hold">HOLD: no human garment masks have been approved.</p><p>Model-blind sources only: source pixels are copied without modification. Use the <a href="FIRST-ANNOTATE.html">human drawing editor</a> starting from a blank mask for each independently identified garment. Export drafts and arrange a DIFFERENT second reviewer. Do not infer category from a model or file title.</p><p><strong>Original-resolution review:</strong> the new offline editor draws on the full photo pixel lattice (limit 12 million pixels / 6000 pixels per side) and refuses larger sources rather than upscaling. These are human DRAFTS until a distinct independent reviewer checks the whole garment and legally reviewed evidence is imported.</p></header>'+''.join(first_cards)+'</html>'
+ second='<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Second independent review — twelve source images</title><style>'+style+'</style><header><h1>Second independent reviewer · quality checklist</h1><p class="hold">All 12 remain HOLD. Do not mark model predictions as truth.</p><p>Only open this page after reviewer one has independently annotated the original source without predictions. Use <a href="SECOND-APPROVE.html">the separate second-review editor</a> with the original photo and their draft. A human sign-off is NOT authenticated reviewer identity, independent annotation and image redistribution rights proof, evaluator registration, production authorization or photorealism proof. Reference importer still requires explicitly reviewed implementation and provenance.</p></header>'+''.join(second_cards)+'</html>'
  (out/'FIRST-REVIEW.html').write_text(first)
  (out/'SECOND-REVIEW.html').write_text(second)
  print(stable({'originals':len(rows),'sourceHashesVerified':len(rows),'independentFullMasks':0,
