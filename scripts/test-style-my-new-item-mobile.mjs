@@ -438,10 +438,21 @@ try{
  await page.waitForFunction(()=>document.querySelectorAll('#reusableFigureGarments img').length===1);
  // A stalled browser decoder must become a retryable hold, never spin forever.
  await page.evaluate(()=>{
-  HTMLImageElement.prototype.decode=function(){return new Promise(()=>{});};
+  window.__stallRenderRequests=[];window.__stallDecodes=0;
+  window.__restoreRenderRequest=renderReusableFigurePreview;
+  window.renderReusableFigurePreview=()=>{window.__stallRenderRequests.push(performance.now());window.__restoreRenderRequest();};
+  HTMLImageElement.prototype.decode=function(){window.__stallDecodes++;return new Promise(()=>{});};
   document.querySelector('#reusableFigureRetry').click();
  });
- await page.waitForFunction(()=>document.querySelector('#reusableFigureStage').getAttribute('aria-busy')==='false',null,{timeout:10000});
+ try{await page.waitForFunction(()=>document.querySelector('#reusableFigureStage').getAttribute('aria-busy')==='false',null,{timeout:10000});}
+ catch(error){console.log('STALL_DIAGNOSTIC',await page.evaluate(()=>({
+  status:$('reusableFigureStatus').textContent,busy:$('reusableFigureStage').getAttribute('aria-busy'),
+  requests:window.__stallRenderRequests,decodes:window.__stallDecodes,hidden:document.hidden,
+  view:[...document.querySelectorAll('.view')].filter(x=>!x.hidden).map(x=>x.id),
+  owner:window.closetAuth?.user?.id,database:db?.name,
+  layers:$('reusableFigureGarments').children.length
+ })));throw error;}
+ await page.evaluate(()=>{window.renderReusableFigurePreview=window.__restoreRenderRequest;});
  assert.equal(await page.locator('#reusableFigureRetry').isVisible(),true);
  await page.evaluate(()=>HTMLImageElement.prototype.decode=window.__nativeDecode);
  await page.locator('#reusableFigureRetry').click();
