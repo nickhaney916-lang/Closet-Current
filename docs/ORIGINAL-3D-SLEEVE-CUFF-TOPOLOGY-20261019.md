@@ -21,3 +21,9 @@ The target is more intentional T-shirt sleeve edges. A passing topological cut *
 **No commercial art approval** (still 0/2), no independent full-real-photo garment mask acceptance, no actual hardware performance validation or claim to match or beat paid commercial virtual try-on. Both original production figures remain their older low-resolution placeholders until the complete high-resolution new-art pipeline is approved and deployed separately.
 
 No merge, deploy, paid model activation, purchased source assets, customer photo uploads or changes to Drive Duel.
+
+## Reviewed initial visual output and material follow-up
+
+The first new native renders showed much cleaner short-sleeve endings for both figures, **but gray jagged patches remained on the exposed forearms**. These are a real visual defect and were not ignored just because the native mesh tests passed. Follow-up changes classify clothing versus skin on the existing original body mesh using pinned MakeHuman arm/leg rig-weight evidence rather than position alone; a forearm at the same vertical height as trousers must be skin, not mistakenly assigned neutral trouser cloth. This changes only derived figure presentation *materials* and no original source body geometry. Rebuild and inspect both characters; the first render is not the final proof.
+
+The qualified prototype will remain unapproved if residual arm patches or the neckline still look wrong. Camera/indexing/source-privacy and pixel-lossless responsive WebP delivery gates remain mandatory.
