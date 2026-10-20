@@ -16,7 +16,7 @@ function item(n,changes={}){
  return {...base,...changes};
 }
 const release='abc123abc123';
-const make=(session,platform)=>engine.makeReport(Array.from({length:20},(_,i)=>item(session*20+i)),release,platform);
+const make=(session,platform)=>{const rows=Array.from({length:20},(_,i)=>item(session*20+i));if(session===2)for(const key of ['expected','proposed','saved'])rows[0][key].color='Red';return engine.makeReport(rows,release,platform);};
 test('independently operator-reported perfect 60-garment set is STILL blocked for release',async()=>{
  const {reviewSavedClosetReports}=await import('../benchmark/private-saved-closet-review.mjs');
  const reports=[make(0,'Android'),make(1,'iPhone/iPad'),make(2,'Android')];
