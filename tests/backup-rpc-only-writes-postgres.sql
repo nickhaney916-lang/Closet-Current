@@ -2,6 +2,9 @@
 -- Entire test runs on GitHub disposable PostgreSQL 17 only.
 -- First prove the previous least-privilege design, then harden direct writes.
 \i tests/closet-least-privilege-postgres.sql
+-- Real Supabase service_role has BYPASSRLS. Set it only in this disposable
+-- test harness; the prior lightweight schema created it without that flag.
+ALTER ROLE service_role BYPASSRLS;
 \i supabase/design/backup-rpc-only-writes.DRAFT.sql
 
 DO $pre$
