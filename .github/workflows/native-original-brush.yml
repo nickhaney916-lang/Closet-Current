@@ -1,0 +1,39 @@
+name: Original-grid brush trace rendering QA
+on:
+  push:
+    branches: [benchmark/native-brush-dirty-region-20261020]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  original-grid-dirty-paint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build and run project regressions
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Install Chromium browser for local-only drawing proof
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium
+      - name: Verify original-grid brush pixels and early/late photo safety
+        run: |
+          node scripts/test-native-human-editor-file-races.mjs
+          node scripts/test-native-second-review-file-races.mjs
+          node scripts/test-native-brush-dirty-regions.mjs
+      - name: Confirm all twelve real-photo references remain unapproved
+        run: |
+          node --input-type=module -e "
+            import fs from 'node:fs';
+            const r=JSON.parse(fs.readFileSync('benchmark/reference-mask-evidence/registry.json','utf8'));
+            const m=JSON.parse(fs.readFileSync('benchmark/local-fitting-real-photo-manifest.json','utf8'));
+            if(r.references.length!==0||m.independentlyApprovedMasks!==0||r.policy.status==='approved')
+              throw Error('Synthetic drawing tests may not approve masks');
+            console.log('12 verified originals; zero independently reviewed full masks or quality approvals');
+          "
