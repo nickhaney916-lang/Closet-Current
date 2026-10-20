@@ -35,6 +35,11 @@ for(const [browserName,engine] of [['Android Chromium',chromium],['iPhone WebKit
     driver.stream=s;return s;
    }
    Object.defineProperty(navigator,'mediaDevices',{configurable:true,value:{getUserMedia:async()=>newMedia()}});
+   // Fake media drivers do not attach a real sensor stream, so explicitly
+   // model the HAVE_CURRENT_DATA and nonzero dimensions supplied by hardware.
+   Object.defineProperty(video,'readyState',{configurable:true,get:()=>2});
+   Object.defineProperty(video,'videoWidth',{configurable:true,get:()=>1280});
+   Object.defineProperty(video,'videoHeight',{configurable:true,get:()=>720});
    Object.defineProperty(video,'srcObject',{configurable:true,writable:true,value:null});
    Object.defineProperty(video,'requestVideoFrameCallback',{configurable:true,value:fn=>{driver.frame=fn;return 1;}});
    Object.defineProperty(video,'cancelVideoFrameCallback',{configurable:true,value:()=>{driver.frame=null;}});
