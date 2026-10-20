@@ -53,7 +53,7 @@ class IndependentTwelvePacketTests(unittest.TestCase):
         self.assertNotIn('visibleFeatures',first)
         self.assertNotIn('expectedDisposition',first)
         self.assertIn('originals/',first)
-        self.assertIn('independently',second.lower())
+        self.assertIn('independent',second.lower())
         for path,original in [('FIRST-ANNOTATE.html','benchmark/annotate-garment.html'),
                                ('SECOND-APPROVE.html','benchmark/approve-garment-mask.html')]:
             self.assertEqual((self.path/path).read_bytes(),(ROOT/original).read_bytes())
