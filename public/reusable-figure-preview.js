@@ -114,9 +114,13 @@
    const pixels=ctx.getImageData(0,0,c.width,c.height);
    const white=root.ClosetWhiteMatte;
    if(white?.hasTransparentBackground(pixels.data,c.width,c.height)){
-    const highScale=Math.min(1,Math.sqrt(600000/(w*h)));
+    // Existing transparent cutouts have already been separated. Increase
+    // ONLY their display sampling on high-density devices, bounded to 1MP;
+    // keep uncertain matte creation at its established conservative scale.
+    const highSize=root.ClosetPreviewSampling?.size(w,h,root.devicePixelRatio);
+    if(!highSize)return null;
     const high=document.createElement('canvas');
-    high.width=Math.floor(w*highScale);high.height=Math.floor(h*highScale);
+    high.width=highSize.width;high.height=highSize.height;
     const hi=high.getContext('2d',{willReadFrequently:true});if(!hi)return null;
     hi.imageSmoothingEnabled=true;hi.imageSmoothingQuality='high';
     hi.drawImage(photo,0,0,high.width,high.height);

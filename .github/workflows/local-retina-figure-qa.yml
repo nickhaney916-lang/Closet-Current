@@ -1,0 +1,45 @@
+name: Local transparent outfit preview retina fidelity QA
+on:
+  push:
+    branches: [feature/local-figure-retina-clarity-20261020]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  retina-local-figure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build original-source protected customer application
+        run: node scripts/build.mjs
+      - name: Run entire clothing, rendering, account and indexing suite
+        run: node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Assert original-photo provenance and no new paid rendering access
+        run: node scripts/check-customer-pilot-release-gates.mjs
+      - name: Install free isolated Chromium and WebKit
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium webkit
+      - name: Verify actual original-alpha garment detail at 1x and 3x in both browser engines
+        run: node scripts/test-local-retina-cutout-browsers.mjs
+      - name: Recheck full Style My New Clothes flow in emulated Android
+        run: node scripts/test-style-my-new-item-mobile.mjs
+      - name: Recheck full Style My New Clothes flow in emulated iPhone
+        run: STYLE_BROWSER=webkit node scripts/test-style-my-new-item-mobile.mjs
+      - name: Check figure layering, photo integrity and local-only preview in both engines
+        run: node scripts/test-reusable-figure-phone-browsers.mjs
+      - name: Confirm pilot evidence remains blocked without actual phones and visual approval
+        run: node scripts/check-customer-pilot-release-gates.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: local-retina-and-owned-outfit-browser-emulation
+          path: |
+            artifacts/style-new-clothes/
+            artifacts/local-fitting/
+          if-no-files-found: warn
+          retention-days: 14
