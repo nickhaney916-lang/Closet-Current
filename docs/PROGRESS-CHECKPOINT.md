@@ -1,3 +1,12 @@
+# Independent integration audit and frozen development candidate — October 20, 2026 Pacific
+
+- Isolated `integration/branch-audit-rc-20261021` from PR #106 exact source `55bd2fac37d45409473485b84e555ebab07d9630`; no source PR modified.
+- Inspected all 100 observed open PR heads: 84 already ancestors, 16 separate heads, 15 with actual non-mutating Git dry-merge conflicts. Main's sole unique commit is patch-equivalent; its trend blob is already present byte-for-byte. No runtime integrations or conflict resolutions were forced.
+- Added full pinned PR/source snapshot, exact-head Actions metadata for 27 key PRs, reproducible source/working-tree guard, dry-merge inventory and detailed dependency/disposition/rollback plan in `docs/INTEGRATION-CANDIDATE-AUDIT-20261020.md`.
+- Eight adversarial audit regressions passed. Complete local build and Node suite: **1,254 passed / 0 failed / 3 skipped**. Original #106 camera/cloud and independent-human provenance guards passed in a detached historical checkout; new guard independently requires current application, models/vectors, benchmark files and all prior source bytes unchanged.
+- New read-only dedicated Actions workflow reruns complete tests and Android Chromium/iPhone WebKit camera, import, Auth callback, cloud owner, saved-closet and owned-outfit QA, with exact-SHA/checksum development artifact. Local browser downloads failed with invalid archives; no local browser success claimed. Final exact-head Actions outcome must be read before claiming cross-engine completion.
+- Recognition #107 remains separate; both research policies rejected. Four unsafe accepted source-photo subtypes, physical phones, independent masks/figure rights, hosted SMTP/allowlist/cloud security and actual prior deployment rollback artifacts remain production blockers. No merge/deployment, live Supabase/security/customer-data change, paid AI or Drive Duel edits.
+
 # Independent real-photo recognition safety admission — October 20, 2026 Pacific
 
 - Based on draft PR #105 verified exact head `cebbdab60eb85af914d8ce39ac6f62fdb00e8f0a`, new isolated branch `qa/real-photo-recognition-admission-20261020`.

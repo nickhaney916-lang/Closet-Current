@@ -1,0 +1,1487 @@
+{
+  "schemaVersion": 1,
+  "repository": "nickhaney916-lang/Closet-Current",
+  "observedAt": "2026-10-21T02:48:43Z",
+  "candidateBase": "55bd2fac37d45409473485b84e555ebab07d9630",
+  "main": "54c9e29ede069a05d1268e003f80cbda043c7d6a",
+  "pulls": [
+    {
+      "number": 4,
+      "title": "Diagnose mobile recognition timeout safely",
+      "base": "main",
+      "baseSha": "5e04925571aa22e9a7e6079d81efe0714a4efac4",
+      "head": "fix/mobile-recognition-timeout-diagnostics",
+      "headSha": "0a6bf4d070f13c43a6f237269c725dff8a646053",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/4",
+      "ci": null
+    },
+    {
+      "number": 7,
+      "title": "Improve captured photo downsampling clarity",
+      "base": "main",
+      "baseSha": "22d978976a1bf8e00daf717f255ee058048c2c87",
+      "head": "fix/photo-clarity-high-quality-downsampling-20261016",
+      "headSha": "510ee14d437bbe266e2f7aa463504998ef7a75cb",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/7",
+      "ci": null
+    },
+    {
+      "number": 10,
+      "title": "Validate worn and flat-lay garment recovery without unsafe automatic saves",
+      "base": "fix/photo-clarity-high-quality-downsampling-20261016",
+      "baseSha": "510ee14d437bbe266e2f7aa463504998ef7a75cb",
+      "head": "research/whole-outfit-readiness-evidence-20261018",
+      "headSha": "b28708dcaf9221e99b36a8c84ca02e5e2eecbc66",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/10",
+      "ci": null
+    },
+    {
+      "number": 11,
+      "title": "Invalidate AI try-on previews when original owned garment photos change",
+      "base": "fix/photo-clarity-high-quality-downsampling-20261016",
+      "baseSha": "510ee14d437bbe266e2f7aa463504998ef7a75cb",
+      "head": "research/style-this-tryon-source-fidelity-20261018",
+      "headSha": "5d214c9b557bce6a12e3bd71692b98e7393c4912",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/11",
+      "ci": null
+    },
+    {
+      "number": 12,
+      "title": "Stage signed two-garment AI pipeline and emulated Android/iPhone gates",
+      "base": "research/style-this-tryon-source-fidelity-20261018",
+      "baseSha": "5d214c9b557bce6a12e3bd71692b98e7393c4912",
+      "head": "research/true-multigarment-ai-tryon-20261018",
+      "headSha": "5e9cb665054b022a7ccfeced79ecdcef957b8b1b",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/12",
+      "ci": null
+    },
+    {
+      "number": 13,
+      "title": "Reserve two-pass try-on budgets and verify authenticated HTTP recovery",
+      "base": "research/true-multigarment-ai-tryon-20261018",
+      "baseSha": "5e9cb665054b022a7ccfeced79ecdcef957b8b1b",
+      "head": "work/multigarment-integrity-phone-qa-20261019",
+      "headSha": "fe1f5c985740c8bc51884cc24622e88df63d6fc6",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/13",
+      "ci": null
+    },
+    {
+      "number": 14,
+      "title": "Fix two-garment polling, stale fetch cancellation and corrupt preview recovery",
+      "base": "research/true-multigarment-ai-tryon-20261018",
+      "baseSha": "5e9cb665054b022a7ccfeced79ecdcef957b8b1b",
+      "head": "fix/multigarment-reliability-phone-gates-20261019",
+      "headSha": "e758f2098b300887e35a3da1b0afe3f4733b09fa",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/14",
+      "ci": null
+    },
+    {
+      "number": 15,
+      "title": "Preserve original-source recognition after plain outfit crop",
+      "base": "research/whole-outfit-readiness-evidence-20261018",
+      "baseSha": "b28708dcaf9221e99b36a8c84ca02e5e2eecbc66",
+      "head": "fix/manual-outfit-crop-original-rgb-20261019",
+      "headSha": "819d0eadf1728c257dc8e029b4ca3bb5d74751c9",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/15",
+      "ci": null
+    },
+    {
+      "number": 16,
+      "title": "Review overlapping dress and layer proposals before automatic indexing",
+      "base": "fix/manual-outfit-crop-original-rgb-20261019",
+      "baseSha": "819d0eadf1728c257dc8e029b4ca3bb5d74751c9",
+      "head": "fix/overlapping-outfit-regions-review-20261019",
+      "headSha": "d88b8e635d5be10d07f8a68af776be228146d839",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/16",
+      "ci": null
+    },
+    {
+      "number": 17,
+      "title": "Keep prepaid try-on identity intact through cancellation and status recovery",
+      "base": "work/multigarment-integrity-phone-qa-20261019",
+      "baseSha": "fe1f5c985740c8bc51884cc24622e88df63d6fc6",
+      "head": "fix/tryon-ledger-recovery-compatibility-20261019",
+      "headSha": "20a241b63bf074a6a2d9bd513b622512b7d589db",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/17",
+      "ci": null
+    },
+    {
+      "number": 18,
+      "title": "Audit real-photo recognition abstentions and incorrect auto-indexed subtypes",
+      "base": "fix/overlapping-outfit-regions-review-20261019",
+      "baseSha": "d88b8e635d5be10d07f8a68af776be228146d839",
+      "head": "research/holdout-coverage-and-abstention-audit-20261019",
+      "headSha": "a1da967ac3a6f2fea3fbe44b06bf70f3273fcf67",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/18",
+      "ci": null
+    },
+    {
+      "number": 19,
+      "title": "Research original-photo third-view checks for wrong garment subtypes",
+      "base": "research/holdout-coverage-and-abstention-audit-20261019",
+      "baseSha": "a1da967ac3a6f2fea3fbe44b06bf70f3273fcf67",
+      "head": "research/third-view-subtype-validation-20261019",
+      "headSha": "9c02c9519efda72b7283d852da3d77bdc5f86640",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/19",
+      "ci": null
+    },
+    {
+      "number": 20,
+      "title": "Bind try-on availability to authenticated account and reject late owner responses",
+      "base": "fix/tryon-ledger-recovery-compatibility-20261019",
+      "baseSha": "20a241b63bf074a6a2d9bd513b622512b7d589db",
+      "head": "fix/tryon-account-bound-availability-20261019",
+      "headSha": "1afcd9a5d96230eb786b90d2c251bf03effff391",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/20",
+      "ci": null
+    },
+    {
+      "number": 21,
+      "title": "Integrate original-source garment recognition with safe prepaid two-pass AI try-on",
+      "base": "fix/tryon-account-bound-availability-20261019",
+      "baseSha": "1afcd9a5d96230eb786b90d2c251bf03effff391",
+      "head": "integration/original-photo-recognition-plus-tryon-20261019",
+      "headSha": "de783286cd4b5eb7e2bbda2a7bd6361dca5e87ea",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/21",
+      "ci": [
+        {
+          "id": 39287434641,
+          "headSha": "de783286cd4b5eb7e2bbda2a7bd6361dca5e87ea",
+          "path": ".github/workflows/integration-recognition-tryon-qa.yml",
+          "event": "push",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39287434641"
+        },
+        {
+          "id": 39287434756,
+          "headSha": "de783286cd4b5eb7e2bbda2a7bd6361dca5e87ea",
+          "path": ".github/workflows/camera-scenarios.yml",
+          "event": "push",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39287434756"
+        }
+      ]
+    },
+    {
+      "number": 22,
+      "title": "Audit original-photo garment forms before model tuning; expose multi-item holdout cues",
+      "base": "integration/original-photo-recognition-plus-tryon-20261019",
+      "baseSha": "de783286cd4b5eb7e2bbda2a7bd6361dca5e87ea",
+      "head": "research/original-photo-form-ground-truth-20261019",
+      "headSha": "a02dab2299ade4f5f1692978d47c7dbcc6453b4c",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/22",
+      "ci": null
+    },
+    {
+      "number": 23,
+      "title": "Measure real-photo ankle-boot false-review costs and layered model disagreements",
+      "base": "research/original-photo-form-ground-truth-20261019",
+      "baseSha": "a02dab2299ade4f5f1692978d47c7dbcc6453b4c",
+      "head": "research/footwear-layer-recovery-tradeoffs-20261019",
+      "headSha": "40d2b63897dcc4730df3faf04e36b8d32fca9590",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/23",
+      "ci": null
+    },
+    {
+      "number": 24,
+      "title": "Collect SHA-verified blind human original-photo garment inventories offline",
+      "base": "research/footwear-layer-recovery-tradeoffs-20261019",
+      "baseSha": "40d2b63897dcc4730df3faf04e36b8d32fca9590",
+      "head": "research/blind-original-photo-review-collection-20261019",
+      "headSha": "def28830f0d4f9ccc3550f4d816325669e315cc9",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/24",
+      "ci": null
+    },
+    {
+      "number": 25,
+      "title": "Escalate unknown/occluded garment forms to source-verified blind third review",
+      "base": "research/blind-original-photo-review-collection-20261019",
+      "baseSha": "def28830f0d4f9ccc3550f4d816325669e315cc9",
+      "head": "research/independent-photo-adjudication-handoff-20261019",
+      "headSha": "ead2d89e2e81b5e5c53ad07b14c198fe3d66ee46",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/25",
+      "ci": null
+    },
+    {
+      "number": 26,
+      "title": "Gate original-photo recognition metrics on two blind inventories and approved per-garment masks",
+      "base": "research/independent-photo-adjudication-handoff-20261019",
+      "baseSha": "ead2d89e2e81b5e5c53ad07b14c198fe3d66ee46",
+      "head": "research/blind-review-to-mask-inventory-gate-20261019",
+      "headSha": "00094ee56220c299e4b417cb1edf53298f0cc1d3",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/26",
+      "ci": null
+    },
+    {
+      "number": 27,
+      "title": "Verify original-photo recognition on Chromium and WebKit; expose safe iPhone subtype review",
+      "base": "research/blind-review-to-mask-inventory-gate-20261019",
+      "baseSha": "00094ee56220c299e4b417cb1edf53298f0cc1d3",
+      "head": "validation/cross-engine-original-photo-pilot-20261019",
+      "headSha": "effc0c40856b0d087470308e2337f656b86cdfd3",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/27",
+      "ci": null
+    },
+    {
+      "number": 28,
+      "title": "Prepare one no-deploy Closet Current pilot candidate with current trends and full safety QA",
+      "base": "validation/cross-engine-original-photo-pilot-20261019",
+      "baseSha": "effc0c40856b0d087470308e2337f656b86cdfd3",
+      "head": "pilot/consolidated-readiness-no-deploy-20261019",
+      "headSha": "29be79c8998ddd6c378979954304086992363d3a",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/28",
+      "ci": null
+    },
+    {
+      "number": 29,
+      "title": "Harden real-phone pilot checklist, private exports and two-device evidence gates",
+      "base": "pilot/consolidated-readiness-no-deploy-20261019",
+      "baseSha": "29be79c8998ddd6c378979954304086992363d3a",
+      "head": "pilot/real-phone-evidence-hardening-20261019",
+      "headSha": "339592f9e0e56a68c388cef306b528e15f22f84f",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/29",
+      "ci": null
+    },
+    {
+      "number": 30,
+      "title": "Protect private phone pilot exports from accidental overwrite",
+      "base": "pilot/real-phone-evidence-hardening-20261019",
+      "baseSha": "339592f9e0e56a68c388cef306b528e15f22f84f",
+      "head": "fix/private-phone-report-output-no-clobber-20261019",
+      "headSha": "102cde1c1b131cdf1bd0a4e8927bbc6de3ae1576",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/30",
+      "ci": null
+    },
+    {
+      "number": 31,
+      "title": "Restore reusable two-figure local wardrobe collage and optional on-device selfie",
+      "base": "fix/private-phone-report-output-no-clobber-20261019",
+      "baseSha": "102cde1c1b131cdf1bd0a4e8927bbc6de3ae1576",
+      "head": "feature/reusable-figure-local-closet-preview-20261019",
+      "headSha": "6ad90b5a9549f17e3a75ff45b20e52a798162740",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/31",
+      "ci": null
+    },
+    {
+      "number": 32,
+      "title": "Add in-house browser garment mesh warp for reusable two-figure previews",
+      "base": "feature/reusable-figure-local-closet-preview-20261019",
+      "baseSha": "6ad90b5a9549f17e3a75ff45b20e52a798162740",
+      "head": "feature/local-garment-mesh-warp-20261019",
+      "headSha": "1b36749fc6a3a7c2b46d9a85d72cbda470e23897",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/32",
+      "ci": null
+    },
+    {
+      "number": 33,
+      "title": "Improve local garment alignment, alpha detail and private selfie positioning",
+      "base": "feature/local-garment-mesh-warp-20261019",
+      "baseSha": "1b36749fc6a3a7c2b46d9a85d72cbda470e23897",
+      "head": "feature/local-fitting-landmarks-20261019",
+      "headSha": "ec32f7773451dcd3001ecea5c5747c71bd09e0b6",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/33",
+      "ci": null
+    },
+    {
+      "number": 34,
+      "title": "Align local wardrobe cutouts to reusable figures with alpha-safe cropping and aspect preservation",
+      "base": "feature/local-garment-mesh-warp-20261019",
+      "baseSha": "1b36749fc6a3a7c2b46d9a85d72cbda470e23897",
+      "head": "feature/alpha-bounds-avatar-alignment-20261019",
+      "headSha": "c7f0b0d9ef2d3c867ffd0a21ce569a0b6477a8fd",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/34",
+      "ci": null
+    },
+    {
+      "number": 35,
+      "title": "Integrate PR #33's detail-preserving local fit with PR #34's non-stretching garment placement",
+      "base": "feature/local-fitting-landmarks-20261019",
+      "baseSha": "ec32f7773451dcd3001ecea5c5747c71bd09e0b6",
+      "head": "integration/local-fit-alpha-and-landmarks-20261019",
+      "headSha": "654ddfc636ab36fae8204b2c2ba7d04eff9dede8",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/35",
+      "ci": [
+        {
+          "id": 39318365162,
+          "headSha": "654ddfc636ab36fae8204b2c2ba7d04eff9dede8",
+          "path": ".github/workflows/reusable-figure-local-preview-qa.yml",
+          "event": "push",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39318365162"
+        }
+      ]
+    },
+    {
+      "number": 36,
+      "title": "Atomically publish in-house fitted outfits and cache local garment previews per account",
+      "base": "integration/local-fit-alpha-and-landmarks-20261019",
+      "baseSha": "654ddfc636ab36fae8204b2c2ba7d04eff9dede8",
+      "head": "fix/atomic-private-preview-cache-20261019",
+      "headSha": "9943f7e232cc793a06df4100b3ebaa139dfee2cd",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/36",
+      "ci": null
+    },
+    {
+      "number": 37,
+      "title": "Benchmark real-photo garment fidelity and audit two reusable figure assets",
+      "base": "feature/local-fitting-landmarks-20261019",
+      "baseSha": "ec32f7773451dcd3001ecea5c5747c71bd09e0b6",
+      "head": "benchmark/real-photo-figure-readiness-20261019",
+      "headSha": "7f0378d6656bf6a4086385f1f889390691153b61",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/37",
+      "ci": null
+    },
+    {
+      "number": 38,
+      "title": "Validate multi-layer local outfits on both fixed figures and reject corrupt previews",
+      "base": "fix/atomic-private-preview-cache-20261019",
+      "baseSha": "9943f7e232cc793a06df4100b3ebaa139dfee2cd",
+      "head": "test/atomic-multilayer-figure-quality-20261019",
+      "headSha": "cb60e2aa55a20c6920496bf25f2967f5dc4efe7a",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/38",
+      "ci": null
+    },
+    {
+      "number": 39,
+      "title": "Propose local dark-studio garment extraction with measured real-photo retention",
+      "base": "fix/atomic-private-preview-cache-20261019",
+      "baseSha": "9943f7e232cc793a06df4100b3ebaa139dfee2cd",
+      "head": "feature/conservative-dark-garment-extraction-20261019",
+      "headSha": "8d009ec056f8b7178185efb422beb94cd085a07c",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/39",
+      "ci": null
+    },
+    {
+      "number": 40,
+      "title": "Integrate real-photo mask proposals with validated four-layer local previews",
+      "base": "feature/conservative-dark-garment-extraction-20261019",
+      "baseSha": "8d009ec056f8b7178185efb422beb94cd085a07c",
+      "head": "integration/dark-studio-with-four-layer-qa-20261019",
+      "headSha": "80c40d466fd0e56b297e6dcca2343595c4191865",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/40",
+      "ci": null
+    },
+    {
+      "number": 41,
+      "title": "Add source-guided higher-resolution garment boundary diagnostics",
+      "base": "feature/conservative-dark-garment-extraction-20261019",
+      "baseSha": "8d009ec056f8b7178185efb422beb94cd085a07c",
+      "head": "feature/source-guided-mask-boundaries-20261019",
+      "headSha": "28a666d37b2c93599d34b32d0f7796d11fdab278",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/41",
+      "ci": null
+    },
+    {
+      "number": 42,
+      "title": "Explain held local garment photos and offer a safe one-tap recapture path",
+      "base": "integration/dark-studio-with-four-layer-qa-20261019",
+      "baseSha": "80c40d466fd0e56b297e6dcca2343595c4191865",
+      "head": "ux/local-figure-held-photo-recapture-20261019",
+      "headSha": "07f96197c1d5dd27dff5f89f904b732e26838d68",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/42",
+      "ci": null
+    },
+    {
+      "number": 43,
+      "title": "Integrate Work's source-guided garment masks with safe held-photo recovery",
+      "base": "ux/local-figure-held-photo-recapture-20261019",
+      "baseSha": "07f96197c1d5dd27dff5f89f904b732e26838d68",
+      "head": "integration/source-guided-mask-and-held-photo-ux-20261019",
+      "headSha": "81e36f9a3cc0914a653057e6082d3176ebee5f6e",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/43",
+      "ci": null
+    },
+    {
+      "number": 44,
+      "title": "Fail safely when local mesh warp damages owned fabric, alpha or printed details",
+      "base": "integration/source-guided-mask-and-held-photo-ux-20261019",
+      "baseSha": "81e36f9a3cc0914a653057e6082d3176ebee5f6e",
+      "head": "fix/local-warp-fidelity-fallback-20261019",
+      "headSha": "6dee7851288cac57b1394a8082c1daba769b7b16",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/44",
+      "ci": null
+    },
+    {
+      "number": 45,
+      "title": "Gate real-photo garment mask quality on independent evidence",
+      "base": "feature/source-guided-mask-boundaries-20261019",
+      "baseSha": "28a666d37b2c93599d34b32d0f7796d11fdab278",
+      "head": "benchmark/verified-mask-evidence-20261019",
+      "headSha": "1a96a63cc5c099353b2678cd6f895abf01c01b4e",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/45",
+      "ci": null
+    },
+    {
+      "number": 46,
+      "title": "Conservatively center approved transparent garment silhouettes on reusable figures",
+      "base": "fix/local-warp-fidelity-fallback-20261019",
+      "baseSha": "6dee7851288cac57b1394a8082c1daba769b7b16",
+      "head": "feature/verified-silhouette-anchor-alignment-20261019",
+      "headSha": "4b0e6ac35aeec92c43d51437e0981f6ba9446e0c",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/46",
+      "ci": null
+    },
+    {
+      "number": 47,
+      "title": "Polish approved garment cutout edges locally without altering fabric or source photos",
+      "base": "feature/verified-silhouette-anchor-alignment-20261019",
+      "baseSha": "4b0e6ac35aeec92c43d51437e0981f6ba9446e0c",
+      "head": "feature/local-cutout-edge-quality-20261019",
+      "headSha": "29e5406119733eacbdb0f4892329fe0824a7cdaf",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/47",
+      "ci": null
+    },
+    {
+      "number": 48,
+      "title": "Benchmark production figure asset readiness and commercial sourcing evidence",
+      "base": "fix/local-warp-fidelity-fallback-20261019",
+      "baseSha": "6dee7851288cac57b1394a8082c1daba769b7b16",
+      "head": "benchmark/production-figure-readiness-20261019",
+      "headSha": "874fcfef2a4570d94e4a957ba238fbd893ecf93d",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/48",
+      "ci": null
+    },
+    {
+      "number": 49,
+      "title": "Integrate production figure rights/resolution evidence with in-house garment fitting QA",
+      "base": "feature/local-cutout-edge-quality-20261019",
+      "baseSha": "29e5406119733eacbdb0f4892329fe0824a7cdaf",
+      "head": "integration/production-figure-evidence-plus-local-edge-20261019",
+      "headSha": "15c7d16a27ab338d193e6f001e8f38cb77e919d5",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/49",
+      "ci": [
+        {
+          "id": 39329253661,
+          "headSha": "15c7d16a27ab338d193e6f001e8f38cb77e919d5",
+          "path": ".github/workflows/reusable-figure-local-preview-qa.yml",
+          "event": "push",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39329253661"
+        },
+        {
+          "id": 39329253510,
+          "headSha": "15c7d16a27ab338d193e6f001e8f38cb77e919d5",
+          "path": ".github/workflows/production-figure-readiness.yml",
+          "event": "push",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39329253510"
+        }
+      ]
+    },
+    {
+      "number": 50,
+      "title": "Add restrained local alpha-contour depth to layered outerwear without altering owned photos",
+      "base": "integration/production-figure-evidence-plus-local-edge-20261019",
+      "baseSha": "15c7d16a27ab338d193e6f001e8f38cb77e919d5",
+      "head": "feature/local-alpha-contour-layer-depth-20261019",
+      "headSha": "faaaaed814e434e274d928838e692f003fcc8d15",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/50",
+      "ci": null
+    },
+    {
+      "number": 51,
+      "title": "Identify mostly concealed clothing layers in local two-figure outfit previews",
+      "base": "feature/local-alpha-contour-layer-depth-20261019",
+      "baseSha": "faaaaed814e434e274d928838e692f003fcc8d15",
+      "head": "feature/local-layer-visibility-audit-20261019",
+      "headSha": "9d1dd7d4898dff7697f43eeecafdcfa1c10fe588",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/51",
+      "ci": null
+    },
+    {
+      "number": 52,
+      "title": "Create and evaluate two local high-resolution figure candidates",
+      "base": "integration/production-figure-evidence-plus-local-edge-20261019",
+      "baseSha": "15c7d16a27ab338d193e6f001e8f38cb77e919d5",
+      "head": "feature/local-fixed-figure-creation-20261019",
+      "headSha": "4cc75cfe827cafab7bd1c72048ee52b2493c6238",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/52",
+      "ci": null
+    },
+    {
+      "number": 53,
+      "title": "Refine both original high-resolution 3D figures with rounded, contoured procedural footwear",
+      "base": "feature/local-fixed-figure-creation-20261019",
+      "baseSha": "4cc75cfe827cafab7bd1c72048ee52b2493c6238",
+      "head": "feature/rounded-original-figure-footwear-20261019",
+      "headSha": "d155cd40655f19ee45c363487c56d00e26359f3f",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/53",
+      "ci": null
+    },
+    {
+      "number": 54,
+      "title": "Smooth jagged neutral-shirt hems on both original high-resolution figure candidates",
+      "base": "feature/rounded-original-figure-footwear-20261019",
+      "baseSha": "d155cd40655f19ee45c363487c56d00e26359f3f",
+      "head": "feature/smooth-original-figure-garment-hems-20261019",
+      "headSha": "0eb820a34cc65b37ff6c2b042a7cb96413738739",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/54",
+      "ci": null
+    },
+    {
+      "number": 55,
+      "title": "Refine front upper shirt rim on both original Blender figure candidates",
+      "base": "feature/smooth-original-figure-garment-hems-20261019",
+      "baseSha": "0eb820a34cc65b37ff6c2b042a7cb96413738739",
+      "head": "feature/neutral-figure-upper-rim-smoothing-20261019",
+      "headSha": "18fbea842303b438754d1eac11c5a6064926bfa7",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/55",
+      "ci": null
+    },
+    {
+      "number": 56,
+      "title": "Improve original figure collar detail and lossless high-DPI loading performance",
+      "base": "feature/neutral-figure-upper-rim-smoothing-20261019",
+      "baseSha": "18fbea842303b438754d1eac11c5a6064926bfa7",
+      "head": "feature/figure-collar-binding-responsive-assets-20261019",
+      "headSha": "00b9b76ff85cbf549e8f5c85fb892eeec477f1c6",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/56",
+      "ci": null
+    },
+    {
+      "number": 57,
+      "title": "Replace jagged prototype sleeve ends with real source-derived 3D cuff topology",
+      "base": "feature/figure-collar-binding-responsive-assets-20261019",
+      "baseSha": "00b9b76ff85cbf549e8f5c85fb892eeec477f1c6",
+      "head": "feature/derived-sleeve-topology-cuffs-20261019",
+      "headSha": "e8d01f9ceb54fa98941321dd3c79217b66549739",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/57",
+      "ci": null
+    },
+    {
+      "number": 58,
+      "title": "Model original source-aligned eyebrow, eyelid and hair detail on both reusable figures",
+      "base": "feature/derived-sleeve-topology-cuffs-20261019",
+      "baseSha": "e8d01f9ceb54fa98941321dd3c79217b66549739",
+      "head": "feature/source-aligned-face-hair-detail-20261019",
+      "headSha": "ccf9610c7a0f575b79e8d0133b61cdba86425ae0",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/58",
+      "ci": null
+    },
+    {
+      "number": 59,
+      "title": "Stage hash-verified, model-blind 12-photo independent garment mask review packet",
+      "base": "benchmark/verified-mask-evidence-20261019",
+      "baseSha": "1a96a63cc5c099353b2678cd6f895abf01c01b4e",
+      "head": "benchmark/twelve-photo-independent-outline-packet-20261020",
+      "headSha": "ff996906727ad7c577e304033e15d914a6d3cc61",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/59",
+      "ci": null
+    },
+    {
+      "number": 60,
+      "title": "Add source-native pixel garment-mask annotation and independent review gates",
+      "base": "benchmark/twelve-photo-independent-outline-packet-20261020",
+      "baseSha": "ff996906727ad7c577e304033e15d914a6d3cc61",
+      "head": "benchmark/native-pixel-mask-review-20261020",
+      "headSha": "4c3d9cfa666e690763a6664ad9233ec13e02db93",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/60",
+      "ci": null
+    },
+    {
+      "number": 61,
+      "title": "Gate original-grid garment reference proposals on independent source and rights evidence",
+      "base": "benchmark/native-pixel-mask-review-20261020",
+      "baseSha": "4c3d9cfa666e690763a6664ad9233ec13e02db93",
+      "head": "benchmark/reviewed-mask-proposal-validator-20261020",
+      "headSha": "a2177793edd947598c1deb4d0bbf4c65d26905cf",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/61",
+      "ci": null
+    },
+    {
+      "number": 62,
+      "title": "Bind human mask evidence to immutable original first-review draft",
+      "base": "benchmark/reviewed-mask-proposal-validator-20261020",
+      "baseSha": "a2177793edd947598c1deb4d0bbf4c65d26905cf",
+      "head": "benchmark/first-draft-proof-chain-20261020",
+      "headSha": "971b7ce23fab83f6fd48838b3032de1951b86ec9",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/62",
+      "ci": null
+    },
+    {
+      "number": 63,
+      "title": "Add source-pixel human garment outline inspection diagnostics",
+      "base": "benchmark/first-draft-proof-chain-20261020",
+      "baseSha": "971b7ce23fab83f6fd48838b3032de1951b86ec9",
+      "head": "benchmark/native-human-mask-topology-advisories-20261020",
+      "headSha": "b3d5085dcef4eadc061bff24a84ea12757a66fc4",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/63",
+      "ci": null
+    },
+    {
+      "number": 64,
+      "title": "Improve new-clothes styling handoff and local outfit preview recovery",
+      "base": "feature/local-layer-visibility-audit-20261019",
+      "baseSha": "9d1dd7d4898dff7697f43eeecafdcfa1c10fe588",
+      "head": "work/style-new-clothes-preview-20261020",
+      "headSha": "da7138acec65fffe45e3c53beef9eadee99607cb",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/64",
+      "ci": null
+    },
+    {
+      "number": 65,
+      "title": "Improve new-clothes styling, durable outfit saves and local preview recovery",
+      "base": "feature/local-layer-visibility-audit-20261019",
+      "baseSha": "9d1dd7d4898dff7697f43eeecafdcfa1c10fe588",
+      "head": "work/style-new-clothes-performance-20261020",
+      "headSha": "6bf0364c1fd9d838e432a3a7e02eb60bc17602fd",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/65",
+      "ci": null
+    },
+    {
+      "number": 66,
+      "title": "Preflight real-photo human mask review handoffs without inventing approvals",
+      "base": "benchmark/native-human-mask-topology-advisories-20261020",
+      "baseSha": "b3d5085dcef4eadc061bff24a84ea12757a66fc4",
+      "head": "benchmark/human-review-handoff-preflight-20261020",
+      "headSha": "c7cec342dd84224fc9f5745939b1f95829bf3cc2",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/66",
+      "ci": null
+    },
+    {
+      "number": 67,
+      "title": "Add private visual worklist for independent source-photo mask reviews",
+      "base": "benchmark/human-review-handoff-preflight-20261020",
+      "baseSha": "c7cec342dd84224fc9f5745939b1f95829bf3cc2",
+      "head": "benchmark/private-human-review-progress-page-20261020",
+      "headSha": "6ce984b747cabf606509113608c850463e847ad3",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/67",
+      "ci": null
+    },
+    {
+      "number": 68,
+      "title": "Prevent stale original-photo and draft loads in native human-mask editor",
+      "base": "benchmark/private-human-review-progress-page-20261020",
+      "baseSha": "6ce984b747cabf606509113608c850463e847ad3",
+      "head": "benchmark/native-human-editor-stale-load-20261020",
+      "headSha": "ff07971bfc88868f0446c9282d228b3204c90e38",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/68",
+      "ci": null
+    },
+    {
+      "number": 69,
+      "title": "Integrate new-clothes styling with durable saves and account-bound model previews",
+      "base": "feature/local-layer-visibility-audit-20261019",
+      "baseSha": "9d1dd7d4898dff7697f43eeecafdcfa1c10fe588",
+      "head": "integration/style-new-clothes-64-65-20261020",
+      "headSha": "d6d2f7130e05e4643eb1c9e050d9f1ad744335a7",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/69",
+      "ci": [
+        {
+          "id": 39450574991,
+          "headSha": "d6d2f7130e05e4643eb1c9e050d9f1ad744335a7",
+          "path": ".github/workflows/style-new-clothes-experience.yml",
+          "event": "push",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39450574991"
+        }
+      ]
+    },
+    {
+      "number": 70,
+      "title": "Lock independent second-review mask approvals to the latest verified photo",
+      "base": "benchmark/native-human-editor-stale-load-20261020",
+      "baseSha": "ff07971bfc88868f0446c9282d228b3204c90e38",
+      "head": "benchmark/native-second-review-source-races-20261020",
+      "headSha": "95426572be608152acf32b61811b2eaa77f01a53",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/70",
+      "ci": null
+    },
+    {
+      "number": 71,
+      "title": "Speed up full-resolution manual garment edge tracing with dirty-region paint",
+      "base": "benchmark/native-second-review-source-races-20261020",
+      "baseSha": "95426572be608152acf32b61811b2eaa77f01a53",
+      "head": "benchmark/native-brush-dirty-region-20261020",
+      "headSha": "f158b5f117937b66a30262f59c6cb22b84082408",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/71",
+      "ci": null
+    },
+    {
+      "number": 72,
+      "title": "Reduce original-grid human garment mask undo memory with sparse tile history",
+      "base": "benchmark/native-brush-dirty-region-20261020",
+      "baseSha": "f158b5f117937b66a30262f59c6cb22b84082408",
+      "head": "benchmark/native-mask-sparse-undo-20261020",
+      "headSha": "75b4b9d5eb8d34367aef07cf6a35fc8f71191e83",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/72",
+      "ci": null
+    },
+    {
+      "number": 73,
+      "title": "Enable precise native-pixel garment-mask editing within 4\u00d7/8\u00d7 magnifier",
+      "base": "benchmark/native-mask-sparse-undo-20261020",
+      "baseSha": "75b4b9d5eb8d34367aef07cf6a35fc8f71191e83",
+      "head": "benchmark/native-detail-precision-paint-20261020",
+      "headSha": "d24432457c46a4720300c010dbaef31c00d846e9",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/73",
+      "ci": null
+    },
+    {
+      "number": 74,
+      "title": "Improve owned outfit variety, dress handling and reliable new-clothes previews",
+      "base": "integration/style-new-clothes-64-65-20261020",
+      "baseSha": "d6d2f7130e05e4643eb1c9e050d9f1ad744335a7",
+      "head": "work/owned-recommendation-quality-20261020",
+      "headSha": "c01a66845729b02afbbc6b56151984565284816f",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/74",
+      "ci": [
+        {
+          "id": 39456324538,
+          "headSha": "c01a66845729b02afbbc6b56151984565284816f",
+          "path": ".github/workflows/style-new-clothes-experience.yml",
+          "event": "push",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39456324538"
+        }
+      ]
+    },
+    {
+      "number": 75,
+      "title": "Guard native garment edge tracing from multi-touch and canceled gestures",
+      "base": "benchmark/native-detail-precision-paint-20261020",
+      "baseSha": "d24432457c46a4720300c010dbaef31c00d846e9",
+      "head": "benchmark/native-pointer-ownership-20261020",
+      "headSha": "bb81ce4d1223b954e742af756cbf19c205b542e9",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/75",
+      "ci": null
+    },
+    {
+      "number": 76,
+      "title": "Add reliable original-pixel detail navigation for garment mask reviewers",
+      "base": "benchmark/native-pointer-ownership-20261020",
+      "baseSha": "bb81ce4d1223b954e742af756cbf19c205b542e9",
+      "head": "benchmark/native-detail-pan-navigation-20261020",
+      "headSha": "4acc449a5292f8254fdc1d4edf90520ca053c079",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/76",
+      "ci": null
+    },
+    {
+      "number": 77,
+      "title": "Fix provisional and stale garment recognition before original-photo indexing",
+      "base": "work/owned-recommendation-quality-20261020",
+      "baseSha": "c01a66845729b02afbbc6b56151984565284816f",
+      "head": "fix/recognition-worker-provisional-category-20261020",
+      "headSha": "582b9e65ad0e80246e868d7cf484c908c391a08b",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/77",
+      "ci": null
+    },
+    {
+      "number": 78,
+      "title": "Protect original-photo garment color from white-background and model mislabels",
+      "base": "fix/recognition-worker-provisional-category-20261020",
+      "baseSha": "582b9e65ad0e80246e868d7cf484c908c391a08b",
+      "head": "fix/white-backdrop-original-color-evidence-20261020",
+      "headSha": "386c1dbf967753184b4b70fd48b4ecea8636b612",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/78",
+      "ci": null
+    },
+    {
+      "number": 79,
+      "title": "Require dress-inclusive original-photo evidence before recovered skirt indexing",
+      "base": "fix/white-backdrop-original-color-evidence-20261020",
+      "baseSha": "386c1dbf967753184b4b70fd48b4ecea8636b612",
+      "head": "fix/skirt-dress-recovery-balanced-evidence-20261020",
+      "headSha": "305cca508040bfbe865eec66061dd1ba55614a9b",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/79",
+      "ci": null
+    },
+    {
+      "number": 80,
+      "title": "Integrate original-photo recognition and owned-outfit styling for cross-browser pilot QA",
+      "base": "fix/skirt-dress-recovery-balanced-evidence-20261020",
+      "baseSha": "305cca508040bfbe865eec66061dd1ba55614a9b",
+      "head": "integration/customer-original-photo-style-qa-20261020",
+      "headSha": "c65e91810f260413cce8ed9adfd03359b68a48c6",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/80",
+      "ci": [
+        {
+          "id": 39466219846,
+          "headSha": "c65e91810f260413cce8ed9adfd03359b68a48c6",
+          "path": ".github/workflows/integrated-customer-release-rehearsal.yml",
+          "event": "push",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39466219846"
+        }
+      ]
+    },
+    {
+      "number": 81,
+      "title": "Preserve more original transparent garment detail in retina local outfit previews",
+      "base": "integration/customer-original-photo-style-qa-20261020",
+      "baseSha": "c65e91810f260413cce8ed9adfd03359b68a48c6",
+      "head": "feature/local-figure-retina-clarity-20261020",
+      "headSha": "0ac469cbf091dd6ec7a0d68e262b3b1534c24685",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/81",
+      "ci": null
+    },
+    {
+      "number": 82,
+      "title": "Hold mannequin-contaminated transparent garment cutouts before figure alignment",
+      "base": "feature/local-figure-retina-clarity-20261020",
+      "baseSha": "0ac469cbf091dd6ec7a0d68e262b3b1534c24685",
+      "head": "fix/local-transparent-mannequin-contamination-20261020",
+      "headSha": "36d55cccb782d012885d7fd970804826b9262208",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/82",
+      "ci": null
+    },
+    {
+      "number": 83,
+      "title": "Integrate independent native human garment review with complete customer fitting lineage",
+      "base": "fix/local-transparent-mannequin-contamination-20261020",
+      "baseSha": "36d55cccb782d012885d7fd970804826b9262208",
+      "head": "integration/human-masks-customer-release-gates-20261020",
+      "headSha": "4c0542bd50f9de216f6806157f7b29efc9fcbb76",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/83",
+      "ci": [
+        {
+          "id": 39472336347,
+          "headSha": "4c0542bd50f9de216f6806157f7b29efc9fcbb76",
+          "path": ".github/workflows/integrated-human-mask-review-qa.yml",
+          "event": "push",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39472336347"
+        }
+      ]
+    },
+    {
+      "number": 84,
+      "title": "Separate first- and second-human original-photo review into verifiable offline packages",
+      "base": "integration/human-masks-customer-release-gates-20261020",
+      "baseSha": "4c0542bd50f9de216f6806157f7b29efc9fcbb76",
+      "head": "benchmark/role-isolated-original-review-handoff-20261020",
+      "headSha": "a10adface2a2e8be62b834b2cd13ec3d85806162",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/84",
+      "ci": null
+    },
+    {
+      "number": 85,
+      "title": "Add independently labeled private phone-photo color audit and acceptance QA",
+      "base": "benchmark/role-isolated-original-review-handoff-20261020",
+      "baseSha": "a10adface2a2e8be62b834b2cd13ec3d85806162",
+      "head": "pilot/independent-original-photo-color-audit-20261020",
+      "headSha": "d20ed6157b368f082f9e2ed72f69e73dcdc4c7e4",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/85",
+      "ci": null
+    },
+    {
+      "number": 86,
+      "title": "Add private end-to-end real-phone pilot evidence review and release veto",
+      "base": "pilot/independent-original-photo-color-audit-20261020",
+      "baseSha": "d20ed6157b368f082f9e2ed72f69e73dcdc4c7e4",
+      "head": "pilot/private-end-to-end-release-evidence-20261020",
+      "headSha": "b931c10e766274c440862691090229c808978c38",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/86",
+      "ci": null
+    },
+    {
+      "number": 87,
+      "title": "Fix blank-MIME iPhone/Android photo imports and recover stalled image decoding",
+      "base": "pilot/private-end-to-end-release-evidence-20261020",
+      "baseSha": "b931c10e766274c440862691090229c808978c38",
+      "head": "fix/blank-mime-photo-import-timeout-20261020",
+      "headSha": "6451d8a61e1ca6897f762ca55800796450622406",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/87",
+      "ci": null
+    },
+    {
+      "number": 88,
+      "title": "Increase imported garment-photo detail with bounded storage-safe resolution",
+      "base": "fix/blank-mime-photo-import-timeout-20261020",
+      "baseSha": "6451d8a61e1ca6897f762ca55800796450622406",
+      "head": "fix/adaptive-import-resolution-budget-20261020",
+      "headSha": "ccf308b3807bc5f2b321699a306d7157daf4a845",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/88",
+      "ci": [
+        {
+          "id": 39499384479,
+          "headSha": "ccf308b3807bc5f2b321699a306d7157daf4a845",
+          "path": ".github/workflows/adaptive-import-fidelity.yml",
+          "event": "push",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39499384479"
+        }
+      ]
+    },
+    {
+      "number": 89,
+      "title": "Improve native camera detail, storage bounds and timeout recovery",
+      "base": "fix/adaptive-import-resolution-budget-20261020",
+      "baseSha": "ccf308b3807bc5f2b321699a306d7157daf4a845",
+      "head": "fix/native-camera-fidelity-20261020",
+      "headSha": "7fe867fdd392759e0b5106d529e60a37c6438ef7",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/89",
+      "ci": [
+        {
+          "id": 39500996563,
+          "headSha": "7fe867fdd392759e0b5106d529e60a37c6438ef7",
+          "path": ".github/workflows/native-camera-fidelity.yml",
+          "event": "pull_request",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39500996563"
+        },
+        {
+          "id": 39500986621,
+          "headSha": "7fe867fdd392759e0b5106d529e60a37c6438ef7",
+          "path": ".github/workflows/native-camera-fidelity.yml",
+          "event": "push",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39500986621"
+        }
+      ]
+    },
+    {
+      "number": 90,
+      "title": "Prevent stale cloud backup responses from crossing wardrobe account sessions",
+      "base": "fix/adaptive-import-resolution-budget-20261020",
+      "baseSha": "ccf308b3807bc5f2b321699a306d7157daf4a845",
+      "head": "fix/cloud-sync-owner-generation-20261020",
+      "headSha": "e61a7c9f6ee0fe1f7d11d18c83483aa5c675c872",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/90",
+      "ci": [
+        {
+          "id": 39502225312,
+          "headSha": "e61a7c9f6ee0fe1f7d11d18c83483aa5c675c872",
+          "path": ".github/workflows/camera-scenarios.yml",
+          "event": "push",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39502225312"
+        },
+        {
+          "id": 39502225286,
+          "headSha": "e61a7c9f6ee0fe1f7d11d18c83483aa5c675c872",
+          "path": ".github/workflows/cloud-owner-session-qa.yml",
+          "event": "push",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39502225286"
+        }
+      ]
+    },
+    {
+      "number": 91,
+      "title": "Recover stalled phone camera startup and isolate retries",
+      "base": "fix/native-camera-fidelity-20261020",
+      "baseSha": "7fe867fdd392759e0b5106d529e60a37c6438ef7",
+      "head": "fix/camera-startup-recovery-20261020",
+      "headSha": "2d364a8537dc0e5be8ac7495d64bb78abad9b208",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/91",
+      "ci": [
+        {
+          "id": 39503986925,
+          "headSha": "2d364a8537dc0e5be8ac7495d64bb78abad9b208",
+          "path": ".github/workflows/camera-startup-recovery.yml",
+          "event": "pull_request",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39503986925"
+        },
+        {
+          "id": 39503980942,
+          "headSha": "2d364a8537dc0e5be8ac7495d64bb78abad9b208",
+          "path": ".github/workflows/camera-startup-recovery.yml",
+          "event": "push",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39503980942"
+        }
+      ]
+    },
+    {
+      "number": 92,
+      "title": "Integrate verified native camera fidelity and private cloud account safety",
+      "base": "fix/adaptive-import-resolution-budget-20261020",
+      "baseSha": "ccf308b3807bc5f2b321699a306d7157daf4a845",
+      "head": "integration/native-camera-cloud-owner-20261020",
+      "headSha": "52e448b4b23eea1628e3cfb1e449c208d96a10cf",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/92",
+      "ci": [
+        {
+          "id": 39504086717,
+          "headSha": "52e448b4b23eea1628e3cfb1e449c208d96a10cf",
+          "path": ".github/workflows/native-camera-fidelity.yml",
+          "event": "pull_request",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39504086717"
+        },
+        {
+          "id": 39503978498,
+          "headSha": "52e448b4b23eea1628e3cfb1e449c208d96a10cf",
+          "path": ".github/workflows/integrated-camera-cloud-release-qa.yml",
+          "event": "push",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39503978498"
+        }
+      ]
+    },
+    {
+      "number": 93,
+      "title": "Add private real-phone audit for category, color and photo actually saved to My closet",
+      "base": "integration/native-camera-cloud-owner-20261020",
+      "baseSha": "52e448b4b23eea1628e3cfb1e449c208d96a10cf",
+      "head": "pilot/saved-closet-real-phone-audit-20261020",
+      "headSha": "cd99b47dce2ccd3fc2efa5c25c51d8b4f8837458",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/93",
+      "ci": [
+        {
+          "id": 39506881915,
+          "headSha": "cd99b47dce2ccd3fc2efa5c25c51d8b4f8837458",
+          "path": ".github/workflows/private-saved-closet-phone-audit.yml",
+          "event": "push",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39506881915"
+        },
+        {
+          "id": 39506881949,
+          "headSha": "cd99b47dce2ccd3fc2efa5c25c51d8b4f8837458",
+          "path": ".github/workflows/camera-scenarios.yml",
+          "event": "push",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39506881949"
+        }
+      ]
+    },
+    {
+      "number": 94,
+      "title": "Complete Work camera recovery handoff and prevent frozen or muted captures",
+      "base": "pilot/saved-closet-real-phone-audit-20261020",
+      "baseSha": "cd99b47dce2ccd3fc2efa5c25c51d8b4f8837458",
+      "head": "integration/work-camera-recovery-frozen-preview-20261020",
+      "headSha": "31475b165dce56432a289484c481a62a787ae20b",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/94",
+      "ci": [
+        {
+          "id": 39513310135,
+          "headSha": "31475b165dce56432a289484c481a62a787ae20b",
+          "path": ".github/workflows/camera-scenarios.yml",
+          "event": "push",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39513310135"
+        },
+        {
+          "id": 39513310099,
+          "headSha": "31475b165dce56432a289484c481a62a787ae20b",
+          "path": ".github/workflows/work-camera-handoff-integration.yml",
+          "event": "push",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39513310099"
+        }
+      ]
+    },
+    {
+      "number": 95,
+      "title": "Audit real closet RLS privileges and stage immutable private photo permissions",
+      "base": "integration/work-camera-recovery-frozen-preview-20261020",
+      "baseSha": "31475b165dce56432a289484c481a62a787ae20b",
+      "head": "security/closet-least-privilege-20261020",
+      "headSha": "37625f7fa7ff134cd9626d336d522650b696c992",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/95",
+      "ci": [
+        {
+          "id": 39515706562,
+          "headSha": "37625f7fa7ff134cd9626d336d522650b696c992",
+          "path": ".github/workflows/camera-scenarios.yml",
+          "event": "push",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39515706562"
+        },
+        {
+          "id": 39515706575,
+          "headSha": "37625f7fa7ff134cd9626d336d522650b696c992",
+          "path": ".github/workflows/closet-least-privilege-security.yml",
+          "event": "push",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39515706575"
+        }
+      ]
+    },
+    {
+      "number": 96,
+      "title": "Stage RLS-constrained private backup writer to enforce owner revision checks",
+      "base": "security/closet-least-privilege-20261020",
+      "baseSha": "37625f7fa7ff134cd9626d336d522650b696c992",
+      "head": "security/backup-rpc-only-writes-20261020",
+      "headSha": "de817c28ac495cf32643e80ed223edca2ee00e73",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/96",
+      "ci": [
+        {
+          "id": 39518565219,
+          "headSha": "de817c28ac495cf32643e80ed223edca2ee00e73",
+          "path": ".github/workflows/camera-scenarios.yml",
+          "event": "push",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39518565219"
+        },
+        {
+          "id": 39518565193,
+          "headSha": "de817c28ac495cf32643e80ed223edca2ee00e73",
+          "path": ".github/workflows/backup-rpc-only-writes-security.yml",
+          "event": "push",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39518565193"
+        }
+      ]
+    },
+    {
+      "number": 97,
+      "title": "Verify owner-only cloud backup RPC against disposable Supabase Auth, REST and Storage",
+      "base": "security/backup-rpc-only-writes-20261020",
+      "baseSha": "de817c28ac495cf32643e80ed223edca2ee00e73",
+      "head": "security/backup-rpc-local-supabase-http-20261020",
+      "headSha": "ce48891500b6c2afa1e35cdda427ec5ef4413af5",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/97",
+      "ci": [
+        {
+          "id": 39521961146,
+          "headSha": "ce48891500b6c2afa1e35cdda427ec5ef4413af5",
+          "path": ".github/workflows/camera-scenarios.yml",
+          "event": "push",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39521961146"
+        },
+        {
+          "id": 39521961219,
+          "headSha": "ce48891500b6c2afa1e35cdda427ec5ef4413af5",
+          "path": ".github/workflows/local-supabase-backup-rpc-security.yml",
+          "event": "push",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39521961219"
+        }
+      ]
+    },
+    {
+      "number": 98,
+      "title": "Prevent stale Auth refresh reopening a signed-out private wardrobe",
+      "base": "security/backup-rpc-local-supabase-http-20261020",
+      "baseSha": "ce48891500b6c2afa1e35cdda427ec5ef4413af5",
+      "head": "fix/auth-refresh-logout-session-race-20261020",
+      "headSha": "53e0d12e32f44e6b54f594a1d53547cefb441e78",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/98",
+      "ci": [
+        {
+          "id": 39523493819,
+          "headSha": "53e0d12e32f44e6b54f594a1d53547cefb441e78",
+          "path": ".github/workflows/auth-session-race-qa.yml",
+          "event": "push",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39523493819"
+        }
+      ]
+    },
+    {
+      "number": 99,
+      "title": "Verify email confirmation and recovery links before unlocking private wardrobes",
+      "base": "fix/auth-refresh-logout-session-race-20261020",
+      "baseSha": "53e0d12e32f44e6b54f594a1d53547cefb441e78",
+      "head": "fix/auth-email-link-callback-20261020",
+      "headSha": "4b87db357fcf29d08979983c4a2b8415e77c1fbc",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/99",
+      "ci": [
+        {
+          "id": 39524120275,
+          "headSha": "4b87db357fcf29d08979983c4a2b8415e77c1fbc",
+          "path": ".github/workflows/auth-email-callback-qa.yml",
+          "event": "push",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39524120275"
+        }
+      ]
+    },
+    {
+      "number": 100,
+      "title": "Audit both live app origins and public email settings without altering Auth",
+      "base": "fix/auth-email-link-callback-20261020",
+      "baseSha": "4b87db357fcf29d08979983c4a2b8415e77c1fbc",
+      "head": "qa/live-auth-domain-readiness-20261020",
+      "headSha": "fefdd165cb1ec66bb935a516598829e435a8f128",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/100",
+      "ci": [
+        {
+          "id": 39525067736,
+          "headSha": "fefdd165cb1ec66bb935a516598829e435a8f128",
+          "path": ".github/workflows/live-auth-domain-readiness-qa.yml",
+          "event": "push",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39525067736"
+        }
+      ]
+    },
+    {
+      "number": 101,
+      "title": "Verify local confirmation emails and recovery through real disposable Supabase Auth and Mailpit",
+      "base": "qa/live-auth-domain-readiness-20261020",
+      "baseSha": "fefdd165cb1ec66bb935a516598829e435a8f128",
+      "head": "qa/disposable-auth-email-link-20261020",
+      "headSha": "7a30d1e8c57c4f596acd4619e57005446537703b",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/101",
+      "ci": [
+        {
+          "id": 39526379314,
+          "headSha": "7a30d1e8c57c4f596acd4619e57005446537703b",
+          "path": ".github/workflows/camera-scenarios.yml",
+          "event": "push",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39526379314"
+        },
+        {
+          "id": 39526379376,
+          "headSha": "7a30d1e8c57c4f596acd4619e57005446537703b",
+          "path": ".github/workflows/disposable-auth-email-integration.yml",
+          "event": "push",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39526379376"
+        }
+      ]
+    },
+    {
+      "number": 102,
+      "title": "Verify email sign-in and password-reset UI in Android Chromium and iPhone WebKit",
+      "base": "qa/disposable-auth-email-link-20261020",
+      "baseSha": "7a30d1e8c57c4f596acd4619e57005446537703b",
+      "head": "qa/auth-email-mobile-browser-20261020",
+      "headSha": "7537b1eb4e73adfcf764cf03dc63851706cd89b7",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/102",
+      "ci": [
+        {
+          "id": 39527508029,
+          "headSha": "7537b1eb4e73adfcf764cf03dc63851706cd89b7",
+          "path": ".github/workflows/auth-email-mobile-browser-qa.yml",
+          "event": "push",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39527508029"
+        }
+      ]
+    },
+    {
+      "number": 103,
+      "title": "Guard canonical Auth email redirect cutover and explain cross-origin return",
+      "base": "qa/auth-email-mobile-browser-20261020",
+      "baseSha": "7537b1eb4e73adfcf764cf03dc63851706cd89b7",
+      "head": "fix/auth-redirect-origin-cutover-guard-20261020",
+      "headSha": "a441f791283596bdc7bc08fe3446c41fd64f1bce",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/103",
+      "ci": [
+        {
+          "id": 39528715002,
+          "headSha": "a441f791283596bdc7bc08fe3446c41fd64f1bce",
+          "path": ".github/workflows/auth-email-cutover-guard-qa.yml",
+          "event": "push",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39528715002"
+        }
+      ]
+    },
+    {
+      "number": 104,
+      "title": "Preserve verified garment pixel color through indexing and clear stale color evidence",
+      "base": "fix/auth-redirect-origin-cutover-guard-20261020",
+      "baseSha": "a441f791283596bdc7bc08fe3446c41fd64f1bce",
+      "head": "fix/verified-garment-color-provenance-20261020",
+      "headSha": "844ccd64c90d5b31664b422b07bf301b5071bf60",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/104",
+      "ci": [
+        {
+          "id": 39529726203,
+          "headSha": "844ccd64c90d5b31664b422b07bf301b5071bf60",
+          "path": ".github/workflows/verified-color-provenance-qa.yml",
+          "event": "push",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39529726203"
+        }
+      ]
+    },
+    {
+      "number": 105,
+      "title": "Prevent incomplete outfit photos disappearing and reject late duplicate closet saves",
+      "base": "fix/verified-garment-color-provenance-20261020",
+      "baseSha": "844ccd64c90d5b31664b422b07bf301b5071bf60",
+      "head": "fix/duplicate-indexing-commit-guard-20261020",
+      "headSha": "cebbdab60eb85af914d8ce39ac6f62fdb00e8f0a",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/105",
+      "ci": [
+        {
+          "id": 39530829469,
+          "headSha": "cebbdab60eb85af914d8ce39ac6f62fdb00e8f0a",
+          "path": ".github/workflows/duplicate-indexing-commit-qa.yml",
+          "event": "push",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39530829469"
+        }
+      ]
+    },
+    {
+      "number": 106,
+      "title": "Measure 59 real garment photos and block unsafe automatic recognition subtype promotion",
+      "base": "fix/duplicate-indexing-commit-guard-20261020",
+      "baseSha": "cebbdab60eb85af914d8ce39ac6f62fdb00e8f0a",
+      "head": "qa/real-photo-recognition-admission-20261020",
+      "headSha": "55bd2fac37d45409473485b84e555ebab07d9630",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/106",
+      "ci": [
+        {
+          "id": 39532287957,
+          "headSha": "55bd2fac37d45409473485b84e555ebab07d9630",
+          "path": ".github/workflows/real-photo-recognition-admission-qa.yml",
+          "event": "push",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39532287957"
+        }
+      ]
+    },
+    {
+      "number": 107,
+      "title": "Measure independent photo-framing subtype votes and reject inaccurate auto-indexing policy",
+      "base": "qa/real-photo-recognition-admission-20261020",
+      "baseSha": "55bd2fac37d45409473485b84e555ebab07d9630",
+      "head": "research/original-photo-subtype-consensus-20261021",
+      "headSha": "9b2cfa722cee058ab5de22d569ded02ffec23134",
+      "draft": true,
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/pull/107",
+      "ci": [
+        {
+          "id": 39534184672,
+          "headSha": "9b2cfa722cee058ab5de22d569ded02ffec23134",
+          "path": ".github/workflows/original-subtype-consensus-trial.yml",
+          "event": "push",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39534184672"
+        }
+      ]
+    }
+  ]
+}

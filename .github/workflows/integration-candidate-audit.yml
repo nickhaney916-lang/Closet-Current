@@ -1,0 +1,62 @@
+name: Frozen integration candidate source and cross-browser audit
+on:
+  push:
+    branches: [integration/branch-audit-rc-20261021]
+  workflow_dispatch:
+permissions:
+  contents: read
+env:
+  PYTHONDONTWRITEBYTECODE: '1'
+jobs:
+  frozen-candidate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify exact candidate scope, branch graph, dry-merge conflicts and historical guards
+        run: node scripts/audit-integration-candidate.mjs --historical
+      - name: Full application suite and production release veto
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+          node scripts/check-customer-pilot-release-gates.mjs
+      - name: Install pinned free browser tooling
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install --with-deps chromium webkit
+      - name: Native camera startup, frozen frames, high-resolution JPEG, EXIF and imports
+        run: |
+          node scripts/test-camera-startup-recovery-mobile.mjs
+          node scripts/test-camera-frozen-preview-mobile.mjs
+          node scripts/test-native-camera-fidelity-mobile.mjs
+          node scripts/test-untyped-photo-import-mobile.mjs
+          node scripts/test-original-crop-source-mobile.mjs
+          node scripts/test-original-source-duplicate-mobile.mjs
+      - name: Auth callbacks, cloud owner isolation, saved indexing and owned-clothes preview
+        run: |
+          node scripts/test-auth-email-mobile-browsers.mjs
+          node scripts/test-cloud-session-generation-browsers.mjs
+          node scripts/test-saved-closet-phone-browsers.mjs
+          node scripts/test-style-my-new-item-mobile.mjs
+          STYLE_BROWSER=webkit node scripts/test-style-my-new-item-mobile.mjs
+      - name: Freeze candidate provenance and output checksums without deployment
+        run: |
+          node scripts/audit-integration-candidate.mjs > "$RUNNER_TEMP/integration-audit.json"
+          node scripts/check-customer-pilot-release-gates.mjs
+          git rev-parse HEAD > "$RUNNER_TEMP/candidate-commit.txt"
+          find dist -type f -print0 | sort -z | xargs -0 sha256sum > "$RUNNER_TEMP/candidate-sha256.txt"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: development-only-candidate-${{ github.sha }}
+          path: |
+            dist/
+            ${{ runner.temp }}/integration-audit.json
+            ${{ runner.temp }}/candidate-commit.txt
+            ${{ runner.temp }}/candidate-sha256.txt
+          retention-days: 14
+          if-no-files-found: error
