@@ -107,7 +107,12 @@ const allowedAuthSession=new Set([
  'scripts/audit-live-auth-email-domains.mjs',
  'tests/live-auth-domain-readiness.test.mjs',
  '.github/workflows/live-auth-domain-readiness-qa.yml',
- 'docs/LIVE-EMAIL-DOMAIN-READINESS-20261020.md'
+ 'docs/LIVE-EMAIL-DOMAIN-READINESS-20261020.md',
+ 'scripts/configure-disposable-auth-email.mjs',
+ 'scripts/test-disposable-auth-mailpit.mjs',
+ 'tests/disposable-auth-email-config.test.mjs',
+ '.github/workflows/disposable-auth-email-integration.yml',
+ 'docs/DISPOSABLE-AUTH-EMAIL-REAL-SERVICE-20261020.md'
 ]);
 const allowedWork=new Set([
  'public/app.js',
