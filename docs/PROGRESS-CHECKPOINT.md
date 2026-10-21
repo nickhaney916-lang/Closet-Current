@@ -1,3 +1,9 @@
+# Weekly source-verified trend research reminder and safe editorial handoff — October 21, 2026
+
+- Independent maintenance priority: audit the existing curated recommendation library's `updated_at`, `next_refresh_at`, research source/retailer diversity, source checked dates, HTTPS link safety and direction-to-publication support.
+- Monday scheduled GitHub Actions check opens or updates **one maintainer issue** when catalog verification is overdue/invalid, providing independent research, rotating magazines, retailer link and price rechecks, and human editorial signoff tasks. Schedule remains **inactive until an explicitly approved merge to default main**; development branch runs only a read-only audit/CI.
+- No new catalog or source claims invented. No real live retailer availability checks, no automatic fashion research, no customer-facing recommendation updates, no purchased services, cloud/account/model/garment photo changes or deployments. See `docs/WEEKLY-TREND-EDITORIAL-WATCH-20261021.md`.
+
 # Customer garment editor accessibility and screen-reader form naming — October 21, 2026
 
 - Scoped, isolated from Work's recognition, integration, onboarding, styling, wardrobe backup and storage tasks: the dynamically created photo review and saved-garment editor now have distinct native accessible dialog names. The static outfit picker now references its visible title, and the bulk review category selector has an explicit accessible name.
