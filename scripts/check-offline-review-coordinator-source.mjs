@@ -12,6 +12,12 @@ const allowed=new Set([
  '.github/workflows/offline-review-coordinator-qa.yml','docs/OFFLINE-TWO-REVIEWER-INTAKE-20261021.md',
  'docs/PROGRESS-CHECKPOINT.md','scripts/check-one-click-review-source.mjs',
  'scripts/check-human-review-cloud-bridge.mjs','scripts/check-blind-photo-cloud-integration.mjs',
+ 'public/photo-import.js',
+ 'tests/photo-import-untyped-and-timeout.test.cjs',
+ 'scripts/test-import-detail-budget-browsers.mjs',
+ 'scripts/check-import-detail-budget-scope.mjs',
+ '.github/workflows/import-detail-budget-qa.yml',
+ 'docs/IMPORTED-PHOTO-DETAIL-FIRST-20261021.md',
  'scripts/verify-camera-cloud-integration.mjs']);
 for(const p of git('diff','--name-only',BASE,'HEAD').split('\n').filter(Boolean))
  assert.ok(allowed.has(p),'Unexpected customer/reviewer/recognition change: '+p);
@@ -31,5 +37,5 @@ assert.equal(unreviewed.suppliedSubmissions,0);
 assert.equal(unreviewed.approvedModelAccuracy,null);
 assert.equal(unreviewed.productionPromotion,'BLOCKED');
 console.log(JSON.stringify({scope:'SOURCE_LOCKED_COORDINATOR_ONLY',originalPhotos:13,
- frozenReviewerAndCustomerApp:true,realIndependentSubmissions:0,humanAccuracy:null,
+ frozenReviewerAndCoreCustomerApp:true,intentionalPhotoImportQualityException:true,realIndependentSubmissions:0,humanAccuracy:null,
  productionPromotion:'BLOCKED',merged:false,deployed:false}));
