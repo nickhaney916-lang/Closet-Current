@@ -1,3 +1,9 @@
+# Camera-roll import account switch after asynchronous decode — October 21, 2026
+
+- Independent of Work #126 recognition, #128 branch integration, #130 Auth, #132 outfit visualization and #134 backup: capture importing customer's identity before multi-photo processing and verify it before each original-photo candidate can enter the review queue after asynchronous decoding.
+- A changed account cancels pending files, refuses unsaved/old-account review navigation and clears stale private file diagnostics; errors, duplicates and normal 3-argument photo import callers remain compatible. The prior high-resolution photo conversion remains byte-identical. No hosted Auth/cloud settings modified.
+- Strict source scope freezes everything except photo batch helper, its customer import handler, existing harness owner fixture, new tests/workflow/docs. Full Node and Android/iPhone synthetic mobile tests required before completion; real phone and true cross-user Supabase testing outstanding. See `docs/PHOTO-BATCH-ACCOUNT-SWITCH-20261021.md`.
+
 # Bounded mobile video frame intake — October 21, 2026
 
 - Scoped to the existing video upload loop: clips up to 180 seconds now contribute at most 20 source-frame attempts distributed across their full duration, preserving the configured 5/8/10-second cadence for shorter clips. This reduces potential memory/storage churn on Android/iPhone and avoids announcing a successful import if no new frames are accepted.
