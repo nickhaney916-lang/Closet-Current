@@ -10,7 +10,7 @@ function setup(){
   const tx={objectStore:()=>({put(row){if(c.quota)throw Object.assign(Error('full'),{name:'QuotaExceededError'});rows.push(row);}})};
   setImmediate(()=>c.abort?tx.onabort?.():tx.oncomplete?.());return tx;
  }};
- vm.createContext(c);vm.runInContext(app.slice(app.indexOf('let pendingDraftWrite='),app.indexOf('function readDraft()')),c);
+ vm.createContext(c);vm.runInContext(app.slice(app.indexOf('// Copy mutable metadata now,'),app.indexOf('function readDraft()')),c);
  return {c,rows,release,stats:()=>({cloneCalls,cloneChars})};
 }
 const photo=i=>({id:'photo-'+i,image:'x'.repeat(262144),localAnalyzed:true});
@@ -25,9 +25,9 @@ test('an intervening write is an ordering barrier for draft coalescing',async()=
  h.c.writes=h.c.writes.then(()=>h.rows.push({id:'barrier'}));const second=h.c.persistDraft();
  assert.notEqual(first,second);h.release();await Promise.all([first,second]);assert.deepEqual(h.rows.map(x=>x.id),['draft','barrier','draft']);
 });
-test('draft snapshot includes current corrected details and is isolated after write starts',async()=>{
+test('draft snapshot preserves requested corrections across queued metadata changes',async()=>{
  const h=setup();h.c.batch.push({...photo(0),color:'Blue'});const p=h.c.persistDraft();h.c.batch[0].color='Red';h.release();await p;
- h.c.batch[0].color='Green';assert.equal(h.rows[0].batch[0].color,'Red');
+ h.c.batch[0].color='Green';assert.equal(h.rows[0].batch[0].color,'Blue');
 });
 test('storage quota failure keeps all in-memory photos, gives no success and exposes safe retry',async()=>{
  const h=setup();h.c.batch.push(photo(0));h.c.quota=true;const p=h.c.persistDraft();h.release();assert.equal(await p,false);
@@ -48,4 +48,8 @@ test('a new database and a signed-out account cannot persist the old draft',asyn
  for(const change of [h=>h.c.db={name:'closet-current-user-bob'},h=>h.c.window.closetAuth.user=null]){
   const h=setup();h.c.batch.push(photo(0));const p=h.c.persistDraft();change(h);h.release();assert.equal(await p,false);assert.equal(h.rows.length,0);
  }
+});
+
+test('a cloud reload replacing the global batch cannot discard photos requested before the queue runs',async()=>{
+ const h=setup();h.c.batch=[photo(0)];const p=h.c.persistDraft();h.c.batch=[];h.release();assert.equal(await p,true);assert.equal(h.rows[0].batch.length,1);assert.equal(h.rows[0].batch[0].id,'photo-0');
 });

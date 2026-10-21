@@ -25,6 +25,16 @@ function openDB(){return new Promise((resolve,reject)=>{const r=indexedDB.open('
 function readAll(){return new Promise((resolve,reject)=>{const r=db.transaction('items').objectStore('items').getAll();r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});}
 function writeAll(values){return queued(()=>new Promise((resolve,reject)=>{const tx=db.transaction('items','readwrite');for(const v of values)tx.objectStore('items').put(v);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);}));}
 function removeItem(id){return queued(()=>new Promise((resolve,reject)=>{const tx=db.transaction('items','readwrite');tx.objectStore('items').delete(id);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);}));}
+// Copy mutable metadata now, sharing immutable photo strings until the write.
+// Cloud restoration/editor changes must not replace the requested photo batch.
+function draftMetadataSnapshot(value){
+ if(Array.isArray(value))return value.map(draftMetadataSnapshot);
+ if(ArrayBuffer.isView(value))return typeof value.slice==='function'?value.slice():new DataView(value.buffer.slice(value.byteOffset,value.byteOffset+value.byteLength));
+ if(value instanceof ArrayBuffer)return value.slice(0);
+ if(value instanceof Date)return new Date(value.getTime());
+ if(value&&typeof value==='object')return Object.fromEntries(Object.entries(value).map(([key,child])=>[key,draftMetadataSnapshot(child)]));
+ return value;
+}
 let pendingDraftWrite=null;
 function persistDraft(){
  if(!db)return Promise.resolve(false);
@@ -33,16 +43,17 @@ function persistDraft(){
  if(!current())return Promise.resolve(false);
  // Coalesce only adjacent draft requests. An intervening garment/state write
  // is an ordering barrier; never move a draft update across that transaction.
- if(pendingDraftWrite&&!pendingDraftWrite.started&&pendingDraftWrite.tail===writes&&pendingDraftWrite.database===database&&pendingDraftWrite.owner===owner)return pendingDraftWrite.promise;
- const request={owner,database,started:false};
+ const metadata=draftMetadataSnapshot(batch);
+ if(pendingDraftWrite&&!pendingDraftWrite.started&&pendingDraftWrite.tail===writes&&pendingDraftWrite.database===database&&pendingDraftWrite.owner===owner){pendingDraftWrite.snapshot=metadata;return pendingDraftWrite.promise;}
+ const request={owner,database,started:false,snapshot:metadata};
  const result=writes.then(async()=>{
   if(!current())throw Error('Draft account changed');
   await window.closetCloud?.beforeWrite(database);
   if(!current())throw Error('Draft account changed');
   request.started=true;
-  // Capture once when this slot runs, not N full high-resolution copies while
-  // cloud preflight/storage is blocked. Keep the latest unfinished photos.
-  const snapshot=structuredClone(batch);
+  // Clone photo bytes once from the latest requested snapshot, not mutable
+  // global batch state that a concurrent cloud reload may have replaced.
+  const snapshot=structuredClone(request.snapshot);request.snapshot=null;
   return new Promise((resolve,reject)=>{
    const tx=database.transaction('state','readwrite');
    tx.objectStore('state').put({id:'draft',batch:snapshot});
@@ -61,7 +72,7 @@ function persistDraft(){
    $('draftSaveStatus').textContent=text;$('retryDraftSave').hidden=false;message(text);
   }
   return false;
- }).finally(()=>{if(pendingDraftWrite===request)pendingDraftWrite=null;});
+ }).finally(()=>{request.snapshot=null;if(pendingDraftWrite===request)pendingDraftWrite=null;});
  pendingDraftWrite=request;return request.promise;
 }
 function readDraft(){return new Promise((resolve,reject)=>{const r=db.transaction('state').objectStore('state').get('draft');r.onsuccess=()=>resolve(r.result?.batch||[]);r.onerror=()=>reject(r.error);});}

@@ -91,13 +91,17 @@ try{
    assert.equal(quota.succeeded,false);assert.equal(quota.priorDraftPreserved,true);assert.equal(quota.wardrobeUnchanged,true);assert.equal(quota.pending,1);assert.match(quota.status,/storage is full/);
    await page.locator('#retryDraftSave').tap();await page.waitForFunction(()=>document.getElementById('retryDraftSave').hidden);
    assert.equal(await page.evaluate(async()=>(await readDraft())[0].id),'quota-pending');
+   const requestPinned=await page.evaluate(async()=>{
+    const pending=structuredClone(batch);let release;writes=new Promise(r=>release=r);const saved=persistDraft();batch=[];release();await saved;
+    const row=await readDraft();batch=pending;return row[0]?.id==='quota-pending';
+   });assert.equal(requestPinned,true);
    // Pending draft work cannot even call the cloud preflight after account switch.
    const ownership=await page.evaluate(async()=>{let release;writes=new Promise(r=>release=r);let preflights=0;window.closetCloud.beforeWrite=async()=>preflights++;const p=persistDraft();window.closetAuth.user.id='different-owner';release();const result=await p;window.closetAuth.user.id='mobile-storage-local';return {result,preflights};});
    assert.deepEqual(ownership,{result:false,preflights:0});
    await page.reload();await page.evaluate(()=>Promise.all([closetReady,outfitBoardReady,inspirationReady]));assert.equal(await page.evaluate(()=>items.length),500);assert.equal(await page.evaluate(()=>batch[0].id),'quota-pending');
    await page.evaluate(()=>switchView('review'));
    await mkdir('artifacts/mobile-memory-storage',{recursive:true});await page.screenshot({path:'artifacts/mobile-memory-storage/'+(engine===chromium?'android':'iphone')+'.png',fullPage:true});
-   assert.deepEqual(errors,[]);results.push({browser:label,resources,measurements,quotaFailureSafe:true,explicitRetryAndReopen:true,accountSwitchBeforePreflightBlocked:true,physicalPhone:false,residentHeapMeasured:false,pageErrors:0});await context.close();
+   assert.deepEqual(errors,[]);results.push({browser:label,resources,measurements,quotaFailureSafe:true,explicitRetryAndReopen:true,accountSwitchBeforePreflightBlocked:true,requestedPhotosSurviveBatchReplacement:true,physicalPhone:false,residentHeapMeasured:false,pageErrors:0});await context.close();
   }finally{await browser.close();}
  }
  console.log('MOBILE_MEMORY_STORAGE '+JSON.stringify(results));
