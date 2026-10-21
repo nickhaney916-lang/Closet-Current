@@ -13,7 +13,11 @@ test('single-file review preserves blank independent form and all 13 neutral ori
  assert.match(html,/id="previous"/);assert.match(html,/id="next"/);
  assert.match(html,/original JPEG hashes verified/);
  assert.doesNotMatch(html,/photographer\/source description|labelBasis|visualReview|expectedCategory|acceptedTypes|sourceNote/);
- assert.equal((html.match(/<script/g)||[]).length,4);
+ assert.equal((html.match(/<script/g)||[]).length,5);
+ assert.match(html,/id="saveDraft"/);assert.match(html,/id="draftImport"/);
+ assert.match(html,/DRAFT_UNREVIEWED/);
+ assert.match(html,/not a completed review|NOT a completed review/);
+ assert.doesNotMatch(html,/localStorage\.setItem|indexedDB\.open/);
  assert.throws(()=>oneClickHTML(p,rows.slice(1)),/Missing originals/);
  assert.throws(()=>oneClickHTML(p,[{...rows[0],sha256:'0'.repeat(64)},...rows.slice(1)]),/Expected values to be strictly equal/);
 });
@@ -28,4 +32,14 @@ test('tampered or non-JPEG originals prevent creation; no substitute photograph 
   const all=readVerifiedOriginals(fake,folder);assert.equal(all.length,13);
   assert.throws(()=>readVerifiedOriginals({...fake,photos:fake.photos.map((x,i)=>i===5?{...x,sha256:'bad'}:x)},folder),/Original JPEG was modified/);
  }finally{fs.rmSync(folder,{recursive:true,force:true});}
+});
+
+test('one-file reviewer exposes only explicit local draft export and refuses prior review authentication',()=>{
+ const p=packet(),sources=p.photos.map(x=>({id:x.id,sha256:x.sha256,base64:'/9j/2Q=='}));
+ const html=oneClickHTML(p,sources);
+ for(const required of ['readDraftData','packetSha256','observedFamily','uncertain','evidence',
+  "$(k).checked=false",'Duplicate','Draft not loaded','review-draft.json'])
+  assert.ok(html.includes(required),required+' draft guard missing');
+ assert.ok(!html.includes('modelPrediction:'));
+ assert.ok(html.indexOf('DRAFT_UNREVIEWED')>html.indexOf('const requiredDraftFields'));
 });
