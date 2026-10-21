@@ -58,6 +58,8 @@ try{
    await page.locator('#import').setInputFiles({name:'safe.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(data))});
    await page.waitForFunction(()=>document.getElementById('message').textContent.includes('Validated private report loaded'));
    assert.match(await page.locator('#message').innerText(),/Validated private report loaded/);
+   // Imports always open Android first; reselect the tested platform before checking its locked label.
+   await page.locator('#phone').selectOption(platform);
    assert.equal(await page.locator('#truthCategory').isDisabled(),true);
    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Horizontal overflow');
    assert.deepEqual(errors,[],'Runtime errors');
