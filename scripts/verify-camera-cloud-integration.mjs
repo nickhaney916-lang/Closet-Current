@@ -235,6 +235,39 @@ const allowedOwnedStyle=new Set([
  '.github/workflows/owned-style-source-commit-qa.yml',
  'docs/OWNED-STYLING-SOURCE-COMMIT-20261020.md'
 ]);
+// Cross-owner private-cloud safeguard: reconstruct exact approved owner
+// binding changes against the verified PR #112 client. No hosted RPC, RLS,
+// storage bucket settings, authentication token behavior or secrets change.
+const cloudBindingBase='af8738abead9419ef8fc66717233975487c87cc3';
+const previousCloud=execFileSync('git',['show',cloudBindingBase+':public/cloud-backup.js'],{encoding:'utf8',maxBuffer:15_000_000});
+const cloudBindingEdits=[
+ [
+  " const current=op=>!!op&&enabled&&generation===op.generation&&\\n  user===op.user&&db===op.db&&window.closetAuth?.user?.id===op.user;",
+  " const ownsDatabase=(database,owner)=>typeof owner==='string'&&\\n  database?.name==='closet-current-user-'+owner;\\n const current=op=>!!op&&enabled&&generation===op.generation&&\\n  user===op.user&&db===op.db&&ownsDatabase(op.db,op.user)&&\\n  window.closetAuth?.user?.id===op.user;"
+ ],
+ [
+  "enabled=!!db&&typeof window.closetAuth?.getAccessToken==='function'&&/^[a-f0-9-]{36}$/i.test(user||'');if(!enabled)return;",
+  "enabled=ownsDatabase(db,user)&&typeof window.closetAuth?.getAccessToken==='function'&&/^[a-f0-9-]{36}$/i.test(user||'');if(!enabled){if(db&&user&&!ownsDatabase(db,user))status('This browser closet belongs to another account. Reload and sign in again before cloud backup.');return;}"
+ ],
+ [
+  "window.addEventListener('pageshow',event=>{if(event.persisted&&db&&window.closetAuth?.user?.id===user){generation++;activeSync=null;enabled=true;sync();}});",
+  "window.addEventListener('pageshow',event=>{if(!event.persisted)return;if(ownsDatabase(db,user)&&window.closetAuth?.user?.id===user){generation++;activeSync=null;enabled=true;sync();}else if(db&&user){enabled=false;status('This browser closet belongs to another account. Reload and sign in again before cloud backup.');}});"
+]
+];
+let verifiedCloud=previousCloud;
+for(const [oldText,newText]of cloudBindingEdits){
+ assert.ok(verifiedCloud.includes(oldText),'Verified private-cloud owner-check baseline changed');
+ verifiedCloud=verifiedCloud.replace(oldText,newText);
+}
+assert.equal(fs.readFileSync('public/cloud-backup.js','utf8'),verifiedCloud,
+ 'Unreviewed private cloud client changes beyond exactly 3 cross-owner DB safeguards');
+const allowedCloudBinding=new Set([
+ 'public/cloud-backup.js',
+ 'tests/cloud-session-generation.test.cjs',
+ 'scripts/test-cloud-session-generation-browsers.mjs',
+ '.github/workflows/private-cloud-owner-db-binding-qa.yml',
+ 'docs/PRIVATE-CLOUD-DB-OWNER-BINDING-20261020.md'
+]);
 const allowedWork=new Set([
  'public/app.js',
  'docs/PROGRESS-CHECKPOINT.md',
@@ -264,7 +297,7 @@ const allowedNew=new Set([
 for(const p of new Set([...m.keys(),...head.keys()])){
  if(m.get(p)!==head.get(p)){
   if(p==='public/index.html'||p==='scripts/build.mjs'||p===reviewScript)continue;
-  assert.ok(allowedWork.has(p)||(allowedNew.has(p)&&!m.has(p))||(allowedSecurity.has(p)&&!m.has(p))||(allowedBackupRpc.has(p)&&!m.has(p))||(allowedLocalSupabaseEvidence.has(p)&&!m.has(p))||allowedAuthSession.has(p)||allowedColorEvidence.has(p)||allowedDuplicateQA.has(p)||allowedRecognitionAdmission.has(p)||allowedSubtypeTrial.has(p)||allowedIndependentClip.has(p)||allowedMaskedColorReview.has(p)||allowedOwnedStyle.has(p),
+  assert.ok(allowedWork.has(p)||(allowedNew.has(p)&&!m.has(p))||(allowedSecurity.has(p)&&!m.has(p))||(allowedBackupRpc.has(p)&&!m.has(p))||(allowedLocalSupabaseEvidence.has(p)&&!m.has(p))||allowedAuthSession.has(p)||allowedColorEvidence.has(p)||allowedDuplicateQA.has(p)||allowedRecognitionAdmission.has(p)||allowedSubtypeTrial.has(p)||allowedIndependentClip.has(p)||allowedMaskedColorReview.has(p)||allowedOwnedStyle.has(p)||allowedCloudBinding.has(p),
    'Unreviewed change after merge: '+p);
  }
 }
