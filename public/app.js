@@ -420,8 +420,11 @@ function exactlyRepeatedCapturedItem(existing,proposed){
  // pixel identical. Neither direction proves the same physical item. Keep
  // both and let the duplicate-review gate decide; never depend on queue order.
  if(!proposed.outfitSourceId&&existing?.outfitSourceId)return false;
- if(!proposed.outfitSourceId||!validPhoto(newSource)||
-    !validPhoto(proposed.recognitionPhoto?.image))return true;
+ if(!proposed.outfitSourceId)return true;
+ // A matching cleaned preview is never enough to discard an outfit region
+ // when its original RGB or full-scene provenance is missing. Preserve it
+ // in review instead: two different garments can share one display cutout.
+ if(!validPhoto(newSource)||!validPhoto(proposed.recognitionPhoto?.image))return false;
  // Old single-item or incomplete records can't prove that the new garment
  // is the same physical article. The review queue handles possible matches.
  if(!existing.outfitSourceId||!validPhoto(existing.originalPhoto?.image))return false;
@@ -818,6 +821,20 @@ async function saveIndexed(item,sourceStillCurrent){
   if(!db)return reject(Error('Browser storage is unavailable.'));
   if(typeof sourceStillCurrent!=='function'||!sourceStillCurrent()||
      item.category!==acceptedCategory||item.itemType!==acceptedType||!batch.includes(item)||items.some(x=>x.id===item.id)||item.userAdjusted||item.requiresOwnershipConfirmation||item.possibleDuplicate||item.scanFailed||item.saveFailed||!segmentationAllows(item,{category:item.category,itemType:item.itemType})||item.category==='Uncategorized'||!ClothingDetails.validColor(item.color))return resolve(false);
+  // Another capture, cloud restore or manual save can add a matching item
+  // while this classifier waits in the write queue. Recheck immediately
+  // before opening the transaction, without silently deleting the photo.
+  const latest=[...items,...batch].filter(x=>x.id!==item.id);
+  const conflicts=latest.some(x=>x.image===item.image||
+   (!independentlyDistinctOutfitRegions(item,x)&&
+    Number.isFinite(item.visualAspect)&&Number.isFinite(x.visualAspect)&&
+    Math.abs(x.visualAspect-item.visualAspect)<.02&&
+    similarPhotos(item.visualSignature,x.visualSignature)));
+  if(conflicts){
+   item.possibleDuplicate=true;
+   item.localStatus='Possible duplicate: compare this photo with your closet before saving.';
+   return resolve(false);
+  }
   // The queue can wait while recognition or a user edit changes the draft.
   // Snapshot ONLY after the last safety validation, so the IndexedDB item
   // reflects the exact original-derived category/color that was approved.
