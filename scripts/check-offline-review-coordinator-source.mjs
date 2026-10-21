@@ -5,6 +5,8 @@ import {execFileSync} from 'node:child_process';
 import {packetFromLock,reconcile,LOCK} from './source-holdout-human-review.mjs';
 const BASE='62eb7bf4775adbb016091914daffc8d3c9a74e1a';
 const git=(...args)=>execFileSync('git',args,{encoding:'utf8',maxBuffer:15_000_000}).trim();
+assert.equal(git('rev-parse','HEAD:public/app.js'),'2bac7dae8c9d13f7b8ed1baf9d41750bb0878b48',
+ 'Native still exception must match exact independently reviewed camera app blob');
 assert.equal(git('merge-base','HEAD',BASE),BASE,'Not descended from tested PR121 draft');
 const allowed=new Set([
  'scripts/offline-review-coordinator.mjs','tests/offline-review-coordinator.test.mjs',
@@ -18,6 +20,12 @@ const allowed=new Set([
  'scripts/check-import-detail-budget-scope.mjs',
  '.github/workflows/import-detail-budget-qa.yml',
  'docs/IMPORTED-PHOTO-DETAIL-FIRST-20261021.md',
+ 'public/app.js',
+ 'tests/photo-native-still.test.cjs',
+ 'scripts/test-native-still-detail-budget-browsers.mjs',
+ 'scripts/check-native-still-detail-budget-scope.mjs',
+ '.github/workflows/native-still-detail-budget-qa.yml',
+ 'docs/NATIVE-STILL-DETAIL-FIRST-20261021.md',
  'scripts/verify-camera-cloud-integration.mjs']);
 for(const p of git('diff','--name-only',BASE,'HEAD').split('\n').filter(Boolean))
  assert.ok(allowed.has(p),'Unexpected customer/reviewer/recognition change: '+p);
@@ -25,7 +33,7 @@ for(const p of [
  'scripts/one-click-human-review.mjs','scripts/source-holdout-human-review.mjs',
  'scripts/test-one-click-human-review-browsers.mjs','scripts/human-original-review-readiness.mjs',
  'tests/one-click-human-review.test.mjs','benchmark/independent-source-holdout/locked.json',
- 'public/app.js','public/cloud-backup.js','public/auth.js','public/recognition-engine.mjs',
+ 'public/cloud-backup.js','public/auth.js','public/recognition-engine.mjs',
  'public/recognition-photo.mjs','public/photo-color.js','public/closet-stylist.js','public/outfit-board.js',
  'supabase/cloud-backup.sql'])
  assert.equal(git('rev-parse','HEAD:'+p),git('rev-parse',BASE+':'+p),'Frozen original/customer source changed: '+p);
