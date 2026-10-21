@@ -1,0 +1,1425 @@
+{
+  "schemaVersion": 1,
+  "kind": "actual-original-representation-stability",
+  "run": 39542114849,
+  "sourceCommit": "dc2684b290e7526c79e83209a7135f587bd2ca92",
+  "artifactId": 12320196606,
+  "artifactDigest": "sha256:c08b4668da195519d4d074bb526456bed315a1a1f4024492d8732cfa4404fa08",
+  "rawResultsFileSha256": "c3029f0ce02e8f6849cbfb34a964a2bafc3ff0ceaa713b336c3b5c2aac955aef",
+  "reportFileSha256": "dcd8ba6d105483862ba4058253095b6a8a86d8672d6753cb15d979089e38b68b",
+  "lineageFileSha256": "5255a84d823768784efb1948d779dd5f663ab83e9ff4fbc56cd057d13f418032",
+  "decisionProjectionSha256": "33a30e2e8a45aabbb0f0118f548febcdba38fbd3b57fd7cb1f2db88dbb55f8be",
+  "lineage": {
+    "schemaVersion": 1,
+    "lockedManifestSha256": "0ba1fae03ac1021d6ae58ccf17cd32026aabaa73364cf78618ce1cf7212581d9",
+    "modelPins": {
+      "public/local-worker.mjs": "7516776a218b22d3b691059b9973205c2ac43d5933c21eb096f66cbabecffcf3",
+      "public/local-catalog.mjs": "6b3e1d9a51936a05d1667b3c683104daef2d43d4407a9c576ef0e2b72d9acce9",
+      "public/recognition-engine.mjs": "af97e12ea8561fcc9845a1c5df94c82c92b7b754bad13c57fae85ff5b7e1bcd2",
+      "public/recognition-photo.mjs": "ecfe8d4f678633cde8114f5968d5a26614375329ad5c71fe3a9939b54cbfbdc3",
+      "public/recognition-vectors.bin": "e1e0415f2272e81c0f3ce2f08fd5fd5c2a9eb6481437d696936c723e8e1abb2f",
+      "public/recognition-vectors.json": "3408987cb30b4eeb7c646bdac52e7ea1e5fc5203ef75b2695e7bafd2cf4401de",
+      "public/benchmark-runner.mjs": "8154bcb55bff5ee76732c833bfbe3a8d2413b901e50f43a22569f20f988677fb"
+    },
+    "rows": [
+      {
+        "id": "repr-newholdout-0001-original",
+        "image": "repr-newholdout-0001-original.jpg",
+        "sourceId": "newholdout-0001",
+        "variant": "original",
+        "sourceSha256": "d33be987a83104e7604ec5c6053060bb18ea6051f0e186b4f2bc7e9d94c0ae4f",
+        "sha256": "d33be987a83104e7604ec5c6053060bb18ea6051f0e186b4f2bc7e9d94c0ae4f",
+        "byteLength": 2294106,
+        "width": 4032,
+        "height": 3024,
+        "decodedPixelSha256": "4787e7d15ea35c6fe36ffcf4ee597a74523b7c8f29bd745edee95aaabb707309"
+      },
+      {
+        "id": "repr-newholdout-0002-original",
+        "image": "repr-newholdout-0002-original.jpg",
+        "sourceId": "newholdout-0002",
+        "variant": "original",
+        "sourceSha256": "924b6311cdcad4c804920827d998ffd5b11e98cbdf280e96d52d0e0d5f3857ca",
+        "sha256": "924b6311cdcad4c804920827d998ffd5b11e98cbdf280e96d52d0e0d5f3857ca",
+        "byteLength": 1581734,
+        "width": 2296,
+        "height": 2175,
+        "decodedPixelSha256": "b429dfbc8b334802dc2eff86841b0e5adf261a13a7ad6966eb82e448a6a06ccd"
+      },
+      {
+        "id": "repr-newholdout-0003-original",
+        "image": "repr-newholdout-0003-original.jpg",
+        "sourceId": "newholdout-0003",
+        "variant": "original",
+        "sourceSha256": "8fbbcd054171f38adae5df7b53358e34bacdff327ff74aba241138d89df6dfb8",
+        "sha256": "8fbbcd054171f38adae5df7b53358e34bacdff327ff74aba241138d89df6dfb8",
+        "byteLength": 1743054,
+        "width": 3072,
+        "height": 2304,
+        "decodedPixelSha256": "e0a42f88419c5bf648309e2736c2b74d062d25658d13c9a06064052cfdb4a316"
+      },
+      {
+        "id": "repr-newholdout-0004-original",
+        "image": "repr-newholdout-0004-original.jpg",
+        "sourceId": "newholdout-0004",
+        "variant": "original",
+        "sourceSha256": "4796d3b98f6dbeec6009701ae98d0c5dd536f81b947807a769c81f6c82757075",
+        "sha256": "4796d3b98f6dbeec6009701ae98d0c5dd536f81b947807a769c81f6c82757075",
+        "byteLength": 2209298,
+        "width": 2884,
+        "height": 3437,
+        "decodedPixelSha256": "40e87fa2038d9a900be8fe71083bbd5a92e3a774d3b244b751b41d168d652633"
+      },
+      {
+        "id": "repr-newholdout-0005-original",
+        "image": "repr-newholdout-0005-original.jpg",
+        "sourceId": "newholdout-0005",
+        "variant": "original",
+        "sourceSha256": "d334c28414f769a690f86111075e83b960d299ac767abdf66570c42a58e6c9aa",
+        "sha256": "d334c28414f769a690f86111075e83b960d299ac767abdf66570c42a58e6c9aa",
+        "byteLength": 3069091,
+        "width": 1458,
+        "height": 2311,
+        "decodedPixelSha256": "8c3384b3445dc1ee197d0da0a029b389f1fb5b68bdbf9cde0f24a656a9107cb8"
+      },
+      {
+        "id": "repr-newholdout-0006-original",
+        "image": "repr-newholdout-0006-original.jpg",
+        "sourceId": "newholdout-0006",
+        "variant": "original",
+        "sourceSha256": "1ff3cb60cae85700f6734627dcda17cb26131294d69f303642878c18b6e66ea7",
+        "sha256": "1ff3cb60cae85700f6734627dcda17cb26131294d69f303642878c18b6e66ea7",
+        "byteLength": 9702262,
+        "width": 2630,
+        "height": 4238,
+        "decodedPixelSha256": "67eb6851412c2cf0ae4813189831c8481db00aceff69be70d8ac243d6fb63f6c"
+      },
+      {
+        "id": "repr-newholdout-0007-original",
+        "image": "repr-newholdout-0007-original.jpg",
+        "sourceId": "newholdout-0007",
+        "variant": "original",
+        "sourceSha256": "e648e877911a4062e2b8fdcfb5102ed5481014d2a4e5006e2a4553743c86cf4f",
+        "sha256": "e648e877911a4062e2b8fdcfb5102ed5481014d2a4e5006e2a4553743c86cf4f",
+        "byteLength": 213014,
+        "width": 668,
+        "height": 990,
+        "decodedPixelSha256": "b18b09f73c74bf9214f4f48670c7901c63a95beec968451d8f308c6ededff50d"
+      },
+      {
+        "id": "repr-newholdout-0008-original",
+        "image": "repr-newholdout-0008-original.jpg",
+        "sourceId": "newholdout-0008",
+        "variant": "original",
+        "sourceSha256": "12962f0834a8e340ab329c90d7a15a43447496c6f8547fccdb74e5b8731b3ffd",
+        "sha256": "12962f0834a8e340ab329c90d7a15a43447496c6f8547fccdb74e5b8731b3ffd",
+        "byteLength": 4830231,
+        "width": 3456,
+        "height": 4608,
+        "decodedPixelSha256": "d8804c9f572500b5fb5e2201dd9774c38b216841003a55b0de9c0458ec99da01"
+      },
+      {
+        "id": "repr-newholdout-0009-original",
+        "image": "repr-newholdout-0009-original.jpg",
+        "sourceId": "newholdout-0009",
+        "variant": "original",
+        "sourceSha256": "d7787502550dc5f831f6cda678f0df4f9e36d45a921e6bda614ddf81a52f789d",
+        "sha256": "d7787502550dc5f831f6cda678f0df4f9e36d45a921e6bda614ddf81a52f789d",
+        "byteLength": 156088,
+        "width": 1630,
+        "height": 696,
+        "decodedPixelSha256": "c21fe33e7041793d2d8b7292ba7a1211667a5d853b389fa778496bc889b693c9"
+      },
+      {
+        "id": "repr-newholdout-0010-original",
+        "image": "repr-newholdout-0010-original.jpg",
+        "sourceId": "newholdout-0010",
+        "variant": "original",
+        "sourceSha256": "bf4e731275ecb70ad470f36d1dae947c3e016dfacffdd9164d7509d2c9be54a9",
+        "sha256": "bf4e731275ecb70ad470f36d1dae947c3e016dfacffdd9164d7509d2c9be54a9",
+        "byteLength": 169151,
+        "width": 960,
+        "height": 1280,
+        "decodedPixelSha256": "82b81f1da36f3a3b031eb41ef8772b46282563f2b25978be3b184fb002633b37"
+      },
+      {
+        "id": "repr-newholdout-0011-original",
+        "image": "repr-newholdout-0011-original.jpg",
+        "sourceId": "newholdout-0011",
+        "variant": "original",
+        "sourceSha256": "385b99a6ffb474cb9a523723cb3a7d51054b66e965fc582b2ce54b7ae9c20157",
+        "sha256": "385b99a6ffb474cb9a523723cb3a7d51054b66e965fc582b2ce54b7ae9c20157",
+        "byteLength": 2371439,
+        "width": 3024,
+        "height": 4032,
+        "decodedPixelSha256": "6990fe3f3510b84a344843e2805fde6985ed24adca6890707a9e01f149967fe7"
+      },
+      {
+        "id": "repr-newholdout-0012-original",
+        "image": "repr-newholdout-0012-original.jpg",
+        "sourceId": "newholdout-0012",
+        "variant": "original",
+        "sourceSha256": "497e659b1209724dc3f5918d46065aaef70cd9d3ff817f8b52cf5ab483e0f622",
+        "sha256": "497e659b1209724dc3f5918d46065aaef70cd9d3ff817f8b52cf5ab483e0f622",
+        "byteLength": 1171196,
+        "width": 2382,
+        "height": 2382,
+        "decodedPixelSha256": "c00dd519bbaffff09ea90f49bfedf5bce8cb7edb85bcc70fdf04c104b30db969"
+      },
+      {
+        "id": "repr-newholdout-0013-original",
+        "image": "repr-newholdout-0013-original.jpg",
+        "sourceId": "newholdout-0013",
+        "variant": "original",
+        "sourceSha256": "0fc023e455e977264555384fdde9a7d560251b2c6dfa207e3a45189d1897366e",
+        "sha256": "0fc023e455e977264555384fdde9a7d560251b2c6dfa207e3a45189d1897366e",
+        "byteLength": 804851,
+        "width": 1891,
+        "height": 2600,
+        "decodedPixelSha256": "fa9f11a36639f3993ea2296790dd322b24833383eb67c932a0bbd504f5ebec48"
+      },
+      {
+        "id": "repr-newholdout-0001-png-full",
+        "image": "repr-newholdout-0001-png-full.png",
+        "sourceId": "newholdout-0001",
+        "variant": "png-full",
+        "sourceSha256": "d33be987a83104e7604ec5c6053060bb18ea6051f0e186b4f2bc7e9d94c0ae4f",
+        "sha256": "1fd4597716881c4f315b67a685675ebb9fa49addd9722dbcef706a118ce74d92",
+        "byteLength": 15944796,
+        "width": 4032,
+        "height": 3024,
+        "decodedPixelSha256": "4787e7d15ea35c6fe36ffcf4ee597a74523b7c8f29bd745edee95aaabb707309"
+      },
+      {
+        "id": "repr-newholdout-0002-png-full",
+        "image": "repr-newholdout-0002-png-full.png",
+        "sourceId": "newholdout-0002",
+        "variant": "png-full",
+        "sourceSha256": "924b6311cdcad4c804920827d998ffd5b11e98cbdf280e96d52d0e0d5f3857ca",
+        "sha256": "421c7ddaf8d06fd25b421c7c6119ffb8bfc4b73bbeb92baab9985f269052e43f",
+        "byteLength": 10518717,
+        "width": 2296,
+        "height": 2175,
+        "decodedPixelSha256": "b429dfbc8b334802dc2eff86841b0e5adf261a13a7ad6966eb82e448a6a06ccd"
+      },
+      {
+        "id": "repr-newholdout-0003-png-full",
+        "image": "repr-newholdout-0003-png-full.png",
+        "sourceId": "newholdout-0003",
+        "variant": "png-full",
+        "sourceSha256": "8fbbcd054171f38adae5df7b53358e34bacdff327ff74aba241138d89df6dfb8",
+        "sha256": "443dedef90470768d4ea34d9b1473f4493b2c20d649e7476ecc99e918366fcee",
+        "byteLength": 17018474,
+        "width": 3072,
+        "height": 2304,
+        "decodedPixelSha256": "e0a42f88419c5bf648309e2736c2b74d062d25658d13c9a06064052cfdb4a316"
+      },
+      {
+        "id": "repr-newholdout-0004-png-full",
+        "image": "repr-newholdout-0004-png-full.png",
+        "sourceId": "newholdout-0004",
+        "variant": "png-full",
+        "sourceSha256": "4796d3b98f6dbeec6009701ae98d0c5dd536f81b947807a769c81f6c82757075",
+        "sha256": "892df30956af069925954ebee02696fca7e461e3c81255b7a4830bf05057af34",
+        "byteLength": 17565873,
+        "width": 2884,
+        "height": 3437,
+        "decodedPixelSha256": "40e87fa2038d9a900be8fe71083bbd5a92e3a774d3b244b751b41d168d652633"
+      },
+      {
+        "id": "repr-newholdout-0005-png-full",
+        "image": "repr-newholdout-0005-png-full.png",
+        "sourceId": "newholdout-0005",
+        "variant": "png-full",
+        "sourceSha256": "d334c28414f769a690f86111075e83b960d299ac767abdf66570c42a58e6c9aa",
+        "sha256": "65217f5e70fbf1cd0e72076376fa7546bc98125adc95d222dd0830ba8999d97d",
+        "byteLength": 8371356,
+        "width": 1458,
+        "height": 2311,
+        "decodedPixelSha256": "8c3384b3445dc1ee197d0da0a029b389f1fb5b68bdbf9cde0f24a656a9107cb8"
+      },
+      {
+        "id": "repr-newholdout-0006-png-full",
+        "image": "repr-newholdout-0006-png-full.png",
+        "sourceId": "newholdout-0006",
+        "variant": "png-full",
+        "sourceSha256": "1ff3cb60cae85700f6734627dcda17cb26131294d69f303642878c18b6e66ea7",
+        "sha256": "413103f1ef658956796dfa0d4bfbc9e55e343cdd70b487323866aa3da624e8c8",
+        "byteLength": 22959946,
+        "width": 2630,
+        "height": 4238,
+        "decodedPixelSha256": "67eb6851412c2cf0ae4813189831c8481db00aceff69be70d8ac243d6fb63f6c"
+      },
+      {
+        "id": "repr-newholdout-0007-png-full",
+        "image": "repr-newholdout-0007-png-full.png",
+        "sourceId": "newholdout-0007",
+        "variant": "png-full",
+        "sourceSha256": "e648e877911a4062e2b8fdcfb5102ed5481014d2a4e5006e2a4553743c86cf4f",
+        "sha256": "60e69b470977d8a1f449c19045ecf439a1faaca92f0f3df644604be8670d842f",
+        "byteLength": 1164176,
+        "width": 668,
+        "height": 990,
+        "decodedPixelSha256": "b18b09f73c74bf9214f4f48670c7901c63a95beec968451d8f308c6ededff50d"
+      },
+      {
+        "id": "repr-newholdout-0008-png-full",
+        "image": "repr-newholdout-0008-png-full.png",
+        "sourceId": "newholdout-0008",
+        "variant": "png-full",
+        "sourceSha256": "12962f0834a8e340ab329c90d7a15a43447496c6f8547fccdb74e5b8731b3ffd",
+        "sha256": "81a3f82553dc73d8720b6ea249b233fb3c0014ff508eae4e89fcfc130d76af75",
+        "byteLength": 28030973,
+        "width": 3456,
+        "height": 4608,
+        "decodedPixelSha256": "d8804c9f572500b5fb5e2201dd9774c38b216841003a55b0de9c0458ec99da01"
+      },
+      {
+        "id": "repr-newholdout-0009-png-full",
+        "image": "repr-newholdout-0009-png-full.png",
+        "sourceId": "newholdout-0009",
+        "variant": "png-full",
+        "sourceSha256": "d7787502550dc5f831f6cda678f0df4f9e36d45a921e6bda614ddf81a52f789d",
+        "sha256": "6c0ab9fd63f1c9f687851d5f132fb26fd4d4b676495e56107a6fc9de092c7470",
+        "byteLength": 1666765,
+        "width": 1630,
+        "height": 696,
+        "decodedPixelSha256": "c21fe33e7041793d2d8b7292ba7a1211667a5d853b389fa778496bc889b693c9"
+      },
+      {
+        "id": "repr-newholdout-0010-png-full",
+        "image": "repr-newholdout-0010-png-full.png",
+        "sourceId": "newholdout-0010",
+        "variant": "png-full",
+        "sourceSha256": "bf4e731275ecb70ad470f36d1dae947c3e016dfacffdd9164d7509d2c9be54a9",
+        "sha256": "270d9a401469c73fb3b75a6f58fc9b329603acfa575d4428495bd1b4758407c8",
+        "byteLength": 1331024,
+        "width": 960,
+        "height": 1280,
+        "decodedPixelSha256": "82b81f1da36f3a3b031eb41ef8772b46282563f2b25978be3b184fb002633b37"
+      },
+      {
+        "id": "repr-newholdout-0011-png-full",
+        "image": "repr-newholdout-0011-png-full.png",
+        "sourceId": "newholdout-0011",
+        "variant": "png-full",
+        "sourceSha256": "385b99a6ffb474cb9a523723cb3a7d51054b66e965fc582b2ce54b7ae9c20157",
+        "sha256": "afa6e3404acb6742bb97c593cddc5d3ef276274f7a596ee5ec609dd67f5d27b0",
+        "byteLength": 17413675,
+        "width": 3024,
+        "height": 4032,
+        "decodedPixelSha256": "6990fe3f3510b84a344843e2805fde6985ed24adca6890707a9e01f149967fe7"
+      },
+      {
+        "id": "repr-newholdout-0012-png-full",
+        "image": "repr-newholdout-0012-png-full.png",
+        "sourceId": "newholdout-0012",
+        "variant": "png-full",
+        "sourceSha256": "497e659b1209724dc3f5918d46065aaef70cd9d3ff817f8b52cf5ab483e0f622",
+        "sha256": "369090f955ab21a458e709ecdc7fca23f9b8d89e7ffc579a704d03c70a44b65c",
+        "byteLength": 11057297,
+        "width": 2382,
+        "height": 2382,
+        "decodedPixelSha256": "c00dd519bbaffff09ea90f49bfedf5bce8cb7edb85bcc70fdf04c104b30db969"
+      },
+      {
+        "id": "repr-newholdout-0013-png-full",
+        "image": "repr-newholdout-0013-png-full.png",
+        "sourceId": "newholdout-0013",
+        "variant": "png-full",
+        "sourceSha256": "0fc023e455e977264555384fdde9a7d560251b2c6dfa207e3a45189d1897366e",
+        "sha256": "ebacf829dacd396a515ccdc3839ac7c6f4161d6f8aac1cedc9d48e65a59b71fa",
+        "byteLength": 4353613,
+        "width": 1891,
+        "height": 2600,
+        "decodedPixelSha256": "fa9f11a36639f3993ea2296790dd322b24833383eb67c932a0bbd504f5ebec48"
+      },
+      {
+        "id": "repr-newholdout-0001-jpeg-2048-q94",
+        "image": "repr-newholdout-0001-jpeg-2048-q94.jpg",
+        "sourceId": "newholdout-0001",
+        "variant": "jpeg-2048-q94",
+        "sourceSha256": "d33be987a83104e7604ec5c6053060bb18ea6051f0e186b4f2bc7e9d94c0ae4f",
+        "sha256": "51166adbd8dca9f56f63d7a2fc070a9bbc11e6d0cb58a9d046b6cf5791aea26b",
+        "byteLength": 927886,
+        "width": 2048,
+        "height": 1536,
+        "decodedPixelSha256": "d2e0d136c49fd1c506cac4faa6fa3a540d239859f84c64a7762653f7cd4a90cb"
+      },
+      {
+        "id": "repr-newholdout-0002-jpeg-2048-q94",
+        "image": "repr-newholdout-0002-jpeg-2048-q94.jpg",
+        "sourceId": "newholdout-0002",
+        "variant": "jpeg-2048-q94",
+        "sourceSha256": "924b6311cdcad4c804920827d998ffd5b11e98cbdf280e96d52d0e0d5f3857ca",
+        "sha256": "b961bd0d9bf1c3c098fdcf2f7cf6b875a9333d2125f00f657ade1f781431a4db",
+        "byteLength": 1243202,
+        "width": 2048,
+        "height": 1940,
+        "decodedPixelSha256": "088539ce85143437eb2db01e5be52fac8881ce7ddd7a3e6bd9cfb40696e7deea"
+      },
+      {
+        "id": "repr-newholdout-0003-jpeg-2048-q94",
+        "image": "repr-newholdout-0003-jpeg-2048-q94.jpg",
+        "sourceId": "newholdout-0003",
+        "variant": "jpeg-2048-q94",
+        "sourceSha256": "8fbbcd054171f38adae5df7b53358e34bacdff327ff74aba241138d89df6dfb8",
+        "sha256": "70d4a7f4d666dc831e7dfcdba525dd3cdbe5a751566efbefdd02b26064abe097",
+        "byteLength": 879551,
+        "width": 2048,
+        "height": 1536,
+        "decodedPixelSha256": "e7b4b2788f69812379e950893869366da283823d8a17e00f002a9b8b0ae1bb09"
+      },
+      {
+        "id": "repr-newholdout-0004-jpeg-2048-q94",
+        "image": "repr-newholdout-0004-jpeg-2048-q94.jpg",
+        "sourceId": "newholdout-0004",
+        "variant": "jpeg-2048-q94",
+        "sourceSha256": "4796d3b98f6dbeec6009701ae98d0c5dd536f81b947807a769c81f6c82757075",
+        "sha256": "4ee0cde8774074bad2323a060b05f0d3e2a5a55f64c0eebe382bb7bb3c048bc3",
+        "byteLength": 885623,
+        "width": 1718,
+        "height": 2048,
+        "decodedPixelSha256": "b8461a159adb6562c97420c1c0736d25025f148579906cbc84e01572291f4a74"
+      },
+      {
+        "id": "repr-newholdout-0005-jpeg-2048-q94",
+        "image": "repr-newholdout-0005-jpeg-2048-q94.jpg",
+        "sourceId": "newholdout-0005",
+        "variant": "jpeg-2048-q94",
+        "sourceSha256": "d334c28414f769a690f86111075e83b960d299ac767abdf66570c42a58e6c9aa",
+        "sha256": "049fd236e3fabde52c249e2ca8a5de103b5e26d3909dce4c4c7dcac483734ff6",
+        "byteLength": 944485,
+        "width": 1292,
+        "height": 2048,
+        "decodedPixelSha256": "fb107e1944a3377024bebf6735f8dbb7a9a340c8a4b115dda8134d5125941f5d"
+      },
+      {
+        "id": "repr-newholdout-0006-jpeg-2048-q94",
+        "image": "repr-newholdout-0006-jpeg-2048-q94.jpg",
+        "sourceId": "newholdout-0006",
+        "variant": "jpeg-2048-q94",
+        "sourceSha256": "1ff3cb60cae85700f6734627dcda17cb26131294d69f303642878c18b6e66ea7",
+        "sha256": "1a49fc1709eb138066baf8a6be4abe403aaa49a1801328e8a446c28cb1cf6b06",
+        "byteLength": 492889,
+        "width": 1271,
+        "height": 2048,
+        "decodedPixelSha256": "5ec1579d67616d93cd88ea749db94e5bc042c1914dcc9dcf4e5c46f5b32eea62"
+      },
+      {
+        "id": "repr-newholdout-0007-jpeg-2048-q94",
+        "image": "repr-newholdout-0007-jpeg-2048-q94.jpg",
+        "sourceId": "newholdout-0007",
+        "variant": "jpeg-2048-q94",
+        "sourceSha256": "e648e877911a4062e2b8fdcfb5102ed5481014d2a4e5006e2a4553743c86cf4f",
+        "sha256": "cc5f6c8530606049a950c80a2b8b7b7f479a9690b7d9d48380c1cb8f9dc6a772",
+        "byteLength": 192369,
+        "width": 668,
+        "height": 990,
+        "decodedPixelSha256": "5f26f744f2131a8fe77100a1ed06e51fb55217b10f17407be7012c9099d5b68b"
+      },
+      {
+        "id": "repr-newholdout-0008-jpeg-2048-q94",
+        "image": "repr-newholdout-0008-jpeg-2048-q94.jpg",
+        "sourceId": "newholdout-0008",
+        "variant": "jpeg-2048-q94",
+        "sourceSha256": "12962f0834a8e340ab329c90d7a15a43447496c6f8547fccdb74e5b8731b3ffd",
+        "sha256": "3d8df72f579ffa99e9f697ebd6b13c535f1feb2485e5cbd12f4103e670eeaf07",
+        "byteLength": 973557,
+        "width": 1536,
+        "height": 2048,
+        "decodedPixelSha256": "291e5424f0a81be78a9a0699d53c53c4065cf157f9ec14f049a387e88eecf1c8"
+      },
+      {
+        "id": "repr-newholdout-0009-jpeg-2048-q94",
+        "image": "repr-newholdout-0009-jpeg-2048-q94.jpg",
+        "sourceId": "newholdout-0009",
+        "variant": "jpeg-2048-q94",
+        "sourceSha256": "d7787502550dc5f831f6cda678f0df4f9e36d45a921e6bda614ddf81a52f789d",
+        "sha256": "0b68651cf4e96be15e34b131728790674708cb3a85294b04a4a39e0217a1418a",
+        "byteLength": 183070,
+        "width": 1630,
+        "height": 696,
+        "decodedPixelSha256": "604b922f6de2445190564a36e1c99f871fbf2cd4d769217f326971e203097dbb"
+      },
+      {
+        "id": "repr-newholdout-0010-jpeg-2048-q94",
+        "image": "repr-newholdout-0010-jpeg-2048-q94.jpg",
+        "sourceId": "newholdout-0010",
+        "variant": "jpeg-2048-q94",
+        "sourceSha256": "bf4e731275ecb70ad470f36d1dae947c3e016dfacffdd9164d7509d2c9be54a9",
+        "sha256": "778256fdad791dcc534784867b9b46d79b26503c01c38f1e6c8328ed211991de",
+        "byteLength": 135740,
+        "width": 960,
+        "height": 1280,
+        "decodedPixelSha256": "439e3b85aaf935929b951911e77bed2ee14288b31daf18225c2afc063c3493f6"
+      },
+      {
+        "id": "repr-newholdout-0011-jpeg-2048-q94",
+        "image": "repr-newholdout-0011-jpeg-2048-q94.jpg",
+        "sourceId": "newholdout-0011",
+        "variant": "jpeg-2048-q94",
+        "sourceSha256": "385b99a6ffb474cb9a523723cb3a7d51054b66e965fc582b2ce54b7ae9c20157",
+        "sha256": "6cc56ca62f2d7d552bebf99daa8dd74fceaaee25901557d20e14e9ec45551ae2",
+        "byteLength": 913812,
+        "width": 1536,
+        "height": 2048,
+        "decodedPixelSha256": "c5941b34dd128674f2d62e2ca8fff7151c948d1bb9b6a42e1c95f3de761ea5d0"
+      },
+      {
+        "id": "repr-newholdout-0012-jpeg-2048-q94",
+        "image": "repr-newholdout-0012-jpeg-2048-q94.jpg",
+        "sourceId": "newholdout-0012",
+        "variant": "jpeg-2048-q94",
+        "sourceSha256": "497e659b1209724dc3f5918d46065aaef70cd9d3ff817f8b52cf5ab483e0f622",
+        "sha256": "65b4e92cfadbc97e8d8b132843dccaf5c0a349d4feb057ac027985adbcf7241a",
+        "byteLength": 1081450,
+        "width": 2048,
+        "height": 2048,
+        "decodedPixelSha256": "cc3289110926fd6c14129cd96f0e3bc763fe1175ac2ec613f714e0b2dd2dc66a"
+      },
+      {
+        "id": "repr-newholdout-0013-jpeg-2048-q94",
+        "image": "repr-newholdout-0013-jpeg-2048-q94.jpg",
+        "sourceId": "newholdout-0013",
+        "variant": "jpeg-2048-q94",
+        "sourceSha256": "0fc023e455e977264555384fdde9a7d560251b2c6dfa207e3a45189d1897366e",
+        "sha256": "ec7d3e2e1e7816ce5031c1abffb529264c8d3f72767c7e4825c8d87cefdc7b57",
+        "byteLength": 385463,
+        "width": 1490,
+        "height": 2048,
+        "decodedPixelSha256": "869522f863f0d0992d724df120589b400986e8d54acae4a57c2dd0a1c4c23f22"
+      }
+    ]
+  },
+  "decisions": [
+    {
+      "id": "repr-newholdout-0001-original",
+      "prediction": {
+        "category": "Shoes",
+        "type": "Sneakers"
+      },
+      "strong": true,
+      "categoryConfirmed": false
+    },
+    {
+      "id": "repr-newholdout-0002-original",
+      "prediction": {
+        "category": "Shoes",
+        "type": "Sneakers"
+      },
+      "strong": true,
+      "categoryConfirmed": false
+    },
+    {
+      "id": "repr-newholdout-0003-original",
+      "prediction": {
+        "category": "Shoes",
+        "type": "Ankle boots"
+      },
+      "strong": true,
+      "categoryConfirmed": false
+    },
+    {
+      "id": "repr-newholdout-0004-original",
+      "prediction": {
+        "category": "Shoes",
+        "type": "Ankle boots"
+      },
+      "strong": true,
+      "categoryConfirmed": false
+    },
+    {
+      "id": "repr-newholdout-0005-original",
+      "prediction": {
+        "category": "Dresses",
+        "type": "Unknown"
+      },
+      "strong": false,
+      "categoryConfirmed": true
+    },
+    {
+      "id": "repr-newholdout-0006-original",
+      "prediction": {
+        "category": "Dresses",
+        "type": "Sweater dress"
+      },
+      "strong": true,
+      "categoryConfirmed": false
+    },
+    {
+      "id": "repr-newholdout-0007-original",
+      "prediction": {
+        "category": "Bottoms",
+        "type": "Skirt"
+      },
+      "strong": true,
+      "categoryConfirmed": false
+    },
+    {
+      "id": "repr-newholdout-0008-original",
+      "prediction": {
+        "category": null,
+        "type": null
+      },
+      "strong": false,
+      "categoryConfirmed": false
+    },
+    {
+      "id": "repr-newholdout-0009-original",
+      "prediction": {
+        "category": "Bottoms",
+        "type": "Shorts"
+      },
+      "strong": true,
+      "categoryConfirmed": false
+    },
+    {
+      "id": "repr-newholdout-0010-original",
+      "prediction": {
+        "category": "Bottoms",
+        "type": "Shorts"
+      },
+      "strong": true,
+      "categoryConfirmed": false
+    },
+    {
+      "id": "repr-newholdout-0011-original",
+      "prediction": {
+        "category": "Tops",
+        "type": "Unknown"
+      },
+      "strong": false,
+      "categoryConfirmed": true
+    },
+    {
+      "id": "repr-newholdout-0012-original",
+      "prediction": {
+        "category": "Outerwear",
+        "type": "Jacket"
+      },
+      "strong": true,
+      "categoryConfirmed": false
+    },
+    {
+      "id": "repr-newholdout-0013-original",
+      "prediction": {
+        "category": null,
+        "type": null
+      },
+      "strong": false,
+      "categoryConfirmed": false
+    },
+    {
+      "id": "repr-newholdout-0001-png-full",
+      "prediction": {
+        "category": "Shoes",
+        "type": "Sneakers"
+      },
+      "strong": true,
+      "categoryConfirmed": false
+    },
+    {
+      "id": "repr-newholdout-0002-png-full",
+      "prediction": {
+        "category": "Shoes",
+        "type": "Sneakers"
+      },
+      "strong": true,
+      "categoryConfirmed": false
+    },
+    {
+      "id": "repr-newholdout-0003-png-full",
+      "prediction": {
+        "category": "Shoes",
+        "type": "Ankle boots"
+      },
+      "strong": true,
+      "categoryConfirmed": false
+    },
+    {
+      "id": "repr-newholdout-0004-png-full",
+      "prediction": {
+        "category": "Shoes",
+        "type": "Ankle boots"
+      },
+      "strong": true,
+      "categoryConfirmed": false
+    },
+    {
+      "id": "repr-newholdout-0005-png-full",
+      "prediction": {
+        "category": "Dresses",
+        "type": "Unknown"
+      },
+      "strong": false,
+      "categoryConfirmed": true
+    },
+    {
+      "id": "repr-newholdout-0006-png-full",
+      "prediction": {
+        "category": "Dresses",
+        "type": "Sweater dress"
+      },
+      "strong": true,
+      "categoryConfirmed": false
+    },
+    {
+      "id": "repr-newholdout-0007-png-full",
+      "prediction": {
+        "category": "Bottoms",
+        "type": "Skirt"
+      },
+      "strong": true,
+      "categoryConfirmed": false
+    },
+    {
+      "id": "repr-newholdout-0008-png-full",
+      "prediction": {
+        "category": null,
+        "type": null
+      },
+      "strong": false,
+      "categoryConfirmed": false
+    },
+    {
+      "id": "repr-newholdout-0009-png-full",
+      "prediction": {
+        "category": "Bottoms",
+        "type": "Shorts"
+      },
+      "strong": true,
+      "categoryConfirmed": false
+    },
+    {
+      "id": "repr-newholdout-0010-png-full",
+      "prediction": {
+        "category": "Bottoms",
+        "type": "Shorts"
+      },
+      "strong": true,
+      "categoryConfirmed": false
+    },
+    {
+      "id": "repr-newholdout-0011-png-full",
+      "prediction": {
+        "category": "Tops",
+        "type": "Unknown"
+      },
+      "strong": false,
+      "categoryConfirmed": true
+    },
+    {
+      "id": "repr-newholdout-0012-png-full",
+      "prediction": {
+        "category": "Outerwear",
+        "type": "Jacket"
+      },
+      "strong": true,
+      "categoryConfirmed": false
+    },
+    {
+      "id": "repr-newholdout-0013-png-full",
+      "prediction": {
+        "category": null,
+        "type": null
+      },
+      "strong": false,
+      "categoryConfirmed": false
+    },
+    {
+      "id": "repr-newholdout-0001-jpeg-2048-q94",
+      "prediction": {
+        "category": "Shoes",
+        "type": "Sneakers"
+      },
+      "strong": true,
+      "categoryConfirmed": false
+    },
+    {
+      "id": "repr-newholdout-0002-jpeg-2048-q94",
+      "prediction": {
+        "category": "Shoes",
+        "type": "Sneakers"
+      },
+      "strong": true,
+      "categoryConfirmed": false
+    },
+    {
+      "id": "repr-newholdout-0003-jpeg-2048-q94",
+      "prediction": {
+        "category": "Shoes",
+        "type": "Ankle boots"
+      },
+      "strong": true,
+      "categoryConfirmed": false
+    },
+    {
+      "id": "repr-newholdout-0004-jpeg-2048-q94",
+      "prediction": {
+        "category": "Shoes",
+        "type": "Ankle boots"
+      },
+      "strong": true,
+      "categoryConfirmed": false
+    },
+    {
+      "id": "repr-newholdout-0005-jpeg-2048-q94",
+      "prediction": {
+        "category": "Dresses",
+        "type": "Unknown"
+      },
+      "strong": false,
+      "categoryConfirmed": true
+    },
+    {
+      "id": "repr-newholdout-0006-jpeg-2048-q94",
+      "prediction": {
+        "category": "Dresses",
+        "type": "Sweater dress"
+      },
+      "strong": true,
+      "categoryConfirmed": false
+    },
+    {
+      "id": "repr-newholdout-0007-jpeg-2048-q94",
+      "prediction": {
+        "category": "Bottoms",
+        "type": "Skirt"
+      },
+      "strong": true,
+      "categoryConfirmed": false
+    },
+    {
+      "id": "repr-newholdout-0008-jpeg-2048-q94",
+      "prediction": {
+        "category": null,
+        "type": null
+      },
+      "strong": false,
+      "categoryConfirmed": false
+    },
+    {
+      "id": "repr-newholdout-0009-jpeg-2048-q94",
+      "prediction": {
+        "category": "Bottoms",
+        "type": "Shorts"
+      },
+      "strong": true,
+      "categoryConfirmed": false
+    },
+    {
+      "id": "repr-newholdout-0010-jpeg-2048-q94",
+      "prediction": {
+        "category": "Bottoms",
+        "type": "Shorts"
+      },
+      "strong": true,
+      "categoryConfirmed": false
+    },
+    {
+      "id": "repr-newholdout-0011-jpeg-2048-q94",
+      "prediction": {
+        "category": "Tops",
+        "type": "Unknown"
+      },
+      "strong": false,
+      "categoryConfirmed": true
+    },
+    {
+      "id": "repr-newholdout-0012-jpeg-2048-q94",
+      "prediction": {
+        "category": "Outerwear",
+        "type": "Jacket"
+      },
+      "strong": true,
+      "categoryConfirmed": false
+    },
+    {
+      "id": "repr-newholdout-0013-jpeg-2048-q94",
+      "prediction": {
+        "category": null,
+        "type": null
+      },
+      "strong": false,
+      "categoryConfirmed": false
+    }
+  ],
+  "report": {
+    "schemaVersion": 1,
+    "sourceBase": "71053247402d2e428044ef38b359057011335823",
+    "lockedManifestSha256": "0ba1fae03ac1021d6ae58ccf17cd32026aabaa73364cf78618ce1cf7212581d9",
+    "lineageSha256": "faed08093da803ffe7d5610f79756ba613fde6fe03f5a595cfa39b1f9e3edeb7",
+    "rawResultsSha256": "fbdab9825ace8c578610bddf4f8b4db8796eac845f8675ab2f01da37f216e1b9",
+    "sourceCount": 13,
+    "inferenceCount": 39,
+    "historicalOriginalDecisionsMatched": 13,
+    "summary": {
+      "png-full": {
+        "pairedSources": 13,
+        "sameDecision": 13,
+        "typeOrCategoryChanged": 0,
+        "strongToDifferentStrong": 0,
+        "strongDeferred": 0,
+        "newStrong": 0
+      },
+      "jpeg-2048-q94": {
+        "pairedSources": 13,
+        "sameDecision": 13,
+        "typeOrCategoryChanged": 0,
+        "strongToDifferentStrong": 0,
+        "strongDeferred": 0,
+        "newStrong": 0
+      }
+    },
+    "cases": [
+      {
+        "sourceId": "newholdout-0001",
+        "sourceSha256": "d33be987a83104e7604ec5c6053060bb18ea6051f0e186b4f2bc7e9d94c0ae4f",
+        "original": {
+          "category": "Shoes",
+          "type": "Sneakers",
+          "strong": true,
+          "categoryConfirmed": false
+        },
+        "originalMatchesHistoricalDecision": true,
+        "comparisons": [
+          {
+            "variant": "png-full",
+            "decision": {
+              "category": "Shoes",
+              "type": "Sneakers",
+              "strong": true,
+              "categoryConfirmed": false
+            },
+            "sameDecision": true,
+            "typeOrCategoryChanged": false,
+            "strongToDifferentStrong": false,
+            "strongDeferred": false,
+            "newStrong": false
+          },
+          {
+            "variant": "jpeg-2048-q94",
+            "decision": {
+              "category": "Shoes",
+              "type": "Sneakers",
+              "strong": true,
+              "categoryConfirmed": false
+            },
+            "sameDecision": true,
+            "typeOrCategoryChanged": false,
+            "strongToDifferentStrong": false,
+            "strongDeferred": false,
+            "newStrong": false
+          }
+        ]
+      },
+      {
+        "sourceId": "newholdout-0002",
+        "sourceSha256": "924b6311cdcad4c804920827d998ffd5b11e98cbdf280e96d52d0e0d5f3857ca",
+        "original": {
+          "category": "Shoes",
+          "type": "Sneakers",
+          "strong": true,
+          "categoryConfirmed": false
+        },
+        "originalMatchesHistoricalDecision": true,
+        "comparisons": [
+          {
+            "variant": "png-full",
+            "decision": {
+              "category": "Shoes",
+              "type": "Sneakers",
+              "strong": true,
+              "categoryConfirmed": false
+            },
+            "sameDecision": true,
+            "typeOrCategoryChanged": false,
+            "strongToDifferentStrong": false,
+            "strongDeferred": false,
+            "newStrong": false
+          },
+          {
+            "variant": "jpeg-2048-q94",
+            "decision": {
+              "category": "Shoes",
+              "type": "Sneakers",
+              "strong": true,
+              "categoryConfirmed": false
+            },
+            "sameDecision": true,
+            "typeOrCategoryChanged": false,
+            "strongToDifferentStrong": false,
+            "strongDeferred": false,
+            "newStrong": false
+          }
+        ]
+      },
+      {
+        "sourceId": "newholdout-0003",
+        "sourceSha256": "8fbbcd054171f38adae5df7b53358e34bacdff327ff74aba241138d89df6dfb8",
+        "original": {
+          "category": "Shoes",
+          "type": "Ankle boots",
+          "strong": true,
+          "categoryConfirmed": false
+        },
+        "originalMatchesHistoricalDecision": true,
+        "comparisons": [
+          {
+            "variant": "png-full",
+            "decision": {
+              "category": "Shoes",
+              "type": "Ankle boots",
+              "strong": true,
+              "categoryConfirmed": false
+            },
+            "sameDecision": true,
+            "typeOrCategoryChanged": false,
+            "strongToDifferentStrong": false,
+            "strongDeferred": false,
+            "newStrong": false
+          },
+          {
+            "variant": "jpeg-2048-q94",
+            "decision": {
+              "category": "Shoes",
+              "type": "Ankle boots",
+              "strong": true,
+              "categoryConfirmed": false
+            },
+            "sameDecision": true,
+            "typeOrCategoryChanged": false,
+            "strongToDifferentStrong": false,
+            "strongDeferred": false,
+            "newStrong": false
+          }
+        ]
+      },
+      {
+        "sourceId": "newholdout-0004",
+        "sourceSha256": "4796d3b98f6dbeec6009701ae98d0c5dd536f81b947807a769c81f6c82757075",
+        "original": {
+          "category": "Shoes",
+          "type": "Ankle boots",
+          "strong": true,
+          "categoryConfirmed": false
+        },
+        "originalMatchesHistoricalDecision": true,
+        "comparisons": [
+          {
+            "variant": "png-full",
+            "decision": {
+              "category": "Shoes",
+              "type": "Ankle boots",
+              "strong": true,
+              "categoryConfirmed": false
+            },
+            "sameDecision": true,
+            "typeOrCategoryChanged": false,
+            "strongToDifferentStrong": false,
+            "strongDeferred": false,
+            "newStrong": false
+          },
+          {
+            "variant": "jpeg-2048-q94",
+            "decision": {
+              "category": "Shoes",
+              "type": "Ankle boots",
+              "strong": true,
+              "categoryConfirmed": false
+            },
+            "sameDecision": true,
+            "typeOrCategoryChanged": false,
+            "strongToDifferentStrong": false,
+            "strongDeferred": false,
+            "newStrong": false
+          }
+        ]
+      },
+      {
+        "sourceId": "newholdout-0005",
+        "sourceSha256": "d334c28414f769a690f86111075e83b960d299ac767abdf66570c42a58e6c9aa",
+        "original": {
+          "category": "Dresses",
+          "type": "Unknown",
+          "strong": false,
+          "categoryConfirmed": true
+        },
+        "originalMatchesHistoricalDecision": true,
+        "comparisons": [
+          {
+            "variant": "png-full",
+            "decision": {
+              "category": "Dresses",
+              "type": "Unknown",
+              "strong": false,
+              "categoryConfirmed": true
+            },
+            "sameDecision": true,
+            "typeOrCategoryChanged": false,
+            "strongToDifferentStrong": false,
+            "strongDeferred": false,
+            "newStrong": false
+          },
+          {
+            "variant": "jpeg-2048-q94",
+            "decision": {
+              "category": "Dresses",
+              "type": "Unknown",
+              "strong": false,
+              "categoryConfirmed": true
+            },
+            "sameDecision": true,
+            "typeOrCategoryChanged": false,
+            "strongToDifferentStrong": false,
+            "strongDeferred": false,
+            "newStrong": false
+          }
+        ]
+      },
+      {
+        "sourceId": "newholdout-0006",
+        "sourceSha256": "1ff3cb60cae85700f6734627dcda17cb26131294d69f303642878c18b6e66ea7",
+        "original": {
+          "category": "Dresses",
+          "type": "Sweater dress",
+          "strong": true,
+          "categoryConfirmed": false
+        },
+        "originalMatchesHistoricalDecision": true,
+        "comparisons": [
+          {
+            "variant": "png-full",
+            "decision": {
+              "category": "Dresses",
+              "type": "Sweater dress",
+              "strong": true,
+              "categoryConfirmed": false
+            },
+            "sameDecision": true,
+            "typeOrCategoryChanged": false,
+            "strongToDifferentStrong": false,
+            "strongDeferred": false,
+            "newStrong": false
+          },
+          {
+            "variant": "jpeg-2048-q94",
+            "decision": {
+              "category": "Dresses",
+              "type": "Sweater dress",
+              "strong": true,
+              "categoryConfirmed": false
+            },
+            "sameDecision": true,
+            "typeOrCategoryChanged": false,
+            "strongToDifferentStrong": false,
+            "strongDeferred": false,
+            "newStrong": false
+          }
+        ]
+      },
+      {
+        "sourceId": "newholdout-0007",
+        "sourceSha256": "e648e877911a4062e2b8fdcfb5102ed5481014d2a4e5006e2a4553743c86cf4f",
+        "original": {
+          "category": "Bottoms",
+          "type": "Skirt",
+          "strong": true,
+          "categoryConfirmed": false
+        },
+        "originalMatchesHistoricalDecision": true,
+        "comparisons": [
+          {
+            "variant": "png-full",
+            "decision": {
+              "category": "Bottoms",
+              "type": "Skirt",
+              "strong": true,
+              "categoryConfirmed": false
+            },
+            "sameDecision": true,
+            "typeOrCategoryChanged": false,
+            "strongToDifferentStrong": false,
+            "strongDeferred": false,
+            "newStrong": false
+          },
+          {
+            "variant": "jpeg-2048-q94",
+            "decision": {
+              "category": "Bottoms",
+              "type": "Skirt",
+              "strong": true,
+              "categoryConfirmed": false
+            },
+            "sameDecision": true,
+            "typeOrCategoryChanged": false,
+            "strongToDifferentStrong": false,
+            "strongDeferred": false,
+            "newStrong": false
+          }
+        ]
+      },
+      {
+        "sourceId": "newholdout-0008",
+        "sourceSha256": "12962f0834a8e340ab329c90d7a15a43447496c6f8547fccdb74e5b8731b3ffd",
+        "original": {
+          "category": null,
+          "type": null,
+          "strong": false,
+          "categoryConfirmed": false
+        },
+        "originalMatchesHistoricalDecision": true,
+        "comparisons": [
+          {
+            "variant": "png-full",
+            "decision": {
+              "category": null,
+              "type": null,
+              "strong": false,
+              "categoryConfirmed": false
+            },
+            "sameDecision": true,
+            "typeOrCategoryChanged": false,
+            "strongToDifferentStrong": false,
+            "strongDeferred": false,
+            "newStrong": false
+          },
+          {
+            "variant": "jpeg-2048-q94",
+            "decision": {
+              "category": null,
+              "type": null,
+              "strong": false,
+              "categoryConfirmed": false
+            },
+            "sameDecision": true,
+            "typeOrCategoryChanged": false,
+            "strongToDifferentStrong": false,
+            "strongDeferred": false,
+            "newStrong": false
+          }
+        ]
+      },
+      {
+        "sourceId": "newholdout-0009",
+        "sourceSha256": "d7787502550dc5f831f6cda678f0df4f9e36d45a921e6bda614ddf81a52f789d",
+        "original": {
+          "category": "Bottoms",
+          "type": "Shorts",
+          "strong": true,
+          "categoryConfirmed": false
+        },
+        "originalMatchesHistoricalDecision": true,
+        "comparisons": [
+          {
+            "variant": "png-full",
+            "decision": {
+              "category": "Bottoms",
+              "type": "Shorts",
+              "strong": true,
+              "categoryConfirmed": false
+            },
+            "sameDecision": true,
+            "typeOrCategoryChanged": false,
+            "strongToDifferentStrong": false,
+            "strongDeferred": false,
+            "newStrong": false
+          },
+          {
+            "variant": "jpeg-2048-q94",
+            "decision": {
+              "category": "Bottoms",
+              "type": "Shorts",
+              "strong": true,
+              "categoryConfirmed": false
+            },
+            "sameDecision": true,
+            "typeOrCategoryChanged": false,
+            "strongToDifferentStrong": false,
+            "strongDeferred": false,
+            "newStrong": false
+          }
+        ]
+      },
+      {
+        "sourceId": "newholdout-0010",
+        "sourceSha256": "bf4e731275ecb70ad470f36d1dae947c3e016dfacffdd9164d7509d2c9be54a9",
+        "original": {
+          "category": "Bottoms",
+          "type": "Shorts",
+          "strong": true,
+          "categoryConfirmed": false
+        },
+        "originalMatchesHistoricalDecision": true,
+        "comparisons": [
+          {
+            "variant": "png-full",
+            "decision": {
+              "category": "Bottoms",
+              "type": "Shorts",
+              "strong": true,
+              "categoryConfirmed": false
+            },
+            "sameDecision": true,
+            "typeOrCategoryChanged": false,
+            "strongToDifferentStrong": false,
+            "strongDeferred": false,
+            "newStrong": false
+          },
+          {
+            "variant": "jpeg-2048-q94",
+            "decision": {
+              "category": "Bottoms",
+              "type": "Shorts",
+              "strong": true,
+              "categoryConfirmed": false
+            },
+            "sameDecision": true,
+            "typeOrCategoryChanged": false,
+            "strongToDifferentStrong": false,
+            "strongDeferred": false,
+            "newStrong": false
+          }
+        ]
+      },
+      {
+        "sourceId": "newholdout-0011",
+        "sourceSha256": "385b99a6ffb474cb9a523723cb3a7d51054b66e965fc582b2ce54b7ae9c20157",
+        "original": {
+          "category": "Tops",
+          "type": "Unknown",
+          "strong": false,
+          "categoryConfirmed": true
+        },
+        "originalMatchesHistoricalDecision": true,
+        "comparisons": [
+          {
+            "variant": "png-full",
+            "decision": {
+              "category": "Tops",
+              "type": "Unknown",
+              "strong": false,
+              "categoryConfirmed": true
+            },
+            "sameDecision": true,
+            "typeOrCategoryChanged": false,
+            "strongToDifferentStrong": false,
+            "strongDeferred": false,
+            "newStrong": false
+          },
+          {
+            "variant": "jpeg-2048-q94",
+            "decision": {
+              "category": "Tops",
+              "type": "Unknown",
+              "strong": false,
+              "categoryConfirmed": true
+            },
+            "sameDecision": true,
+            "typeOrCategoryChanged": false,
+            "strongToDifferentStrong": false,
+            "strongDeferred": false,
+            "newStrong": false
+          }
+        ]
+      },
+      {
+        "sourceId": "newholdout-0012",
+        "sourceSha256": "497e659b1209724dc3f5918d46065aaef70cd9d3ff817f8b52cf5ab483e0f622",
+        "original": {
+          "category": "Outerwear",
+          "type": "Jacket",
+          "strong": true,
+          "categoryConfirmed": false
+        },
+        "originalMatchesHistoricalDecision": true,
+        "comparisons": [
+          {
+            "variant": "png-full",
+            "decision": {
+              "category": "Outerwear",
+              "type": "Jacket",
+              "strong": true,
+              "categoryConfirmed": false
+            },
+            "sameDecision": true,
+            "typeOrCategoryChanged": false,
+            "strongToDifferentStrong": false,
+            "strongDeferred": false,
+            "newStrong": false
+          },
+          {
+            "variant": "jpeg-2048-q94",
+            "decision": {
+              "category": "Outerwear",
+              "type": "Jacket",
+              "strong": true,
+              "categoryConfirmed": false
+            },
+            "sameDecision": true,
+            "typeOrCategoryChanged": false,
+            "strongToDifferentStrong": false,
+            "strongDeferred": false,
+            "newStrong": false
+          }
+        ]
+      },
+      {
+        "sourceId": "newholdout-0013",
+        "sourceSha256": "0fc023e455e977264555384fdde9a7d560251b2c6dfa207e3a45189d1897366e",
+        "original": {
+          "category": null,
+          "type": null,
+          "strong": false,
+          "categoryConfirmed": false
+        },
+        "originalMatchesHistoricalDecision": true,
+        "comparisons": [
+          {
+            "variant": "png-full",
+            "decision": {
+              "category": null,
+              "type": null,
+              "strong": false,
+              "categoryConfirmed": false
+            },
+            "sameDecision": true,
+            "typeOrCategoryChanged": false,
+            "strongToDifferentStrong": false,
+            "strongDeferred": false,
+            "newStrong": false
+          },
+          {
+            "variant": "jpeg-2048-q94",
+            "decision": {
+              "category": null,
+              "type": null,
+              "strong": false,
+              "categoryConfirmed": false
+            },
+            "sameDecision": true,
+            "typeOrCategoryChanged": false,
+            "strongToDifferentStrong": false,
+            "strongDeferred": false,
+            "newStrong": false
+          }
+        ]
+      }
+    ],
+    "modelPins": {
+      "public/local-worker.mjs": "7516776a218b22d3b691059b9973205c2ac43d5933c21eb096f66cbabecffcf3",
+      "public/local-catalog.mjs": "6b3e1d9a51936a05d1667b3c683104daef2d43d4407a9c576ef0e2b72d9acce9",
+      "public/recognition-engine.mjs": "af97e12ea8561fcc9845a1c5df94c82c92b7b754bad13c57fae85ff5b7e1bcd2",
+      "public/recognition-photo.mjs": "ecfe8d4f678633cde8114f5968d5a26614375329ad5c71fe3a9939b54cbfbdc3",
+      "public/recognition-vectors.bin": "e1e0415f2272e81c0f3ce2f08fd5fd5c2a9eb6481437d696936c723e8e1abb2f",
+      "public/recognition-vectors.json": "3408987cb30b4eeb7c646bdac52e7ea1e5fc5203ef75b2695e7bafd2cf4401de",
+      "public/benchmark-runner.mjs": "8154bcb55bff5ee76732c833bfbe3a8d2413b901e50f43a22569f20f988677fb"
+    },
+    "independentHumanGoldLabels": false,
+    "measuredAccuracy": null,
+    "productionPromotion": "BLOCKED",
+    "customerModelChanged": false,
+    "limitation": "Representation sensitivity only: a changed or stable decision does not prove correctness. Same 13 exposed discovery originals, not 39 independent sources. No physical phone or customer save tested. No tuning or policy promotion."
+  }
+}

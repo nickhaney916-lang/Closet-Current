@@ -1,3 +1,18 @@
+# Measured real-photo representation stability — October 21, 2026 UTC
+
+- Draft PR #116 inference source `dc2684b290e7526c79e83209a7135f587bd2ca92`, Actions **39542114849 SUCCESS**: **39 actual unchanged FashionCLIP inferences / 0 errors** across **13 distinct original sources**, not 39 new photos. Original-byte baseline matched all 13 historical #111 decisions; PNG and 2048-pixel JPEG each matched original decisions on **13/13**, with zero changed strong decisions, strong deferrals or new strong decisions.
+- All full-resolution PNGs matched oriented Sharp sRGB pixel hashes; source/derived bytes, dimensions and model/runner source hashes validated, inputs rehashed after inference. Chromium/WebKit JPEG/EXIF/import and original-before-mask crop checks passed. Source-run full Node **1,292 passed / 0 failed / 3 skipped**.
+- Downloaded artifact **12320196606**, archive SHA-256 `c08b4668da195519d4d074bb526456bed315a1a1f4024492d8732cfa4404fa08`; recomputed complete report from raw results and matched exactly with stricter type/category parsing. Stored report/lineage/actual compact decisions and raw-file hash receipts in `benchmark/representation-stability/measurement.json`.
+- Final local suite including ninth actual-measurement provenance/replay regression: **1,293 passed / 0 failed / 3 skipped**. Final provenance/documentation head still requires its exact-head CI actual-model/browser reproduction; read PR #116 for final SHA/run.
+- Tested representation changes did not explain or fix the known classification disagreements. **No classifier/encoder/threshold/policy change is justified by this bounded diagnostic.** Accuracy remains null without independent human gold. Real human reviews and untouched physical-phone confirmation remain external. Earlier source labels, model vectors, customer app, parallel integration/cloud/styling branches, live hosted data/settings and Drive Duel untouched; no paid AI, merge or deployment.
+
+# Original-frame representation sensitivity experiment — October 21, 2026 UTC
+
+- Isolated from PR #113 `71053247402d2e428044ef38b359057011335823`; no earlier branches, original photos, source labels, stored measurements, models, thresholds, vectors or customer runtime modified. Parallel integration/cloud/styling work remains separate.
+- Frozen diagnostic: 13 unchanged original sources, three full-frame representations each (original JPEG first, full-resolution oriented sRGB PNG with exact Sharp-decoded pixel equality, and 2048-pixel quality-94 JPEG). **13 sources / 39 inference inputs**, never 39 independent photos. Neutral no-label model manifest; full byte/pixel/model-source lineage; post-inference input rehashing.
+- Measure paired decision changes and original-baseline reproducibility, not accuracy. Independent human gold remains absent; accuracy null, promotion BLOCKED. No threshold adjustment or automatic-save policy selected from discovery results.
+- Local full build/Node: **1,292 passed / 0 failed / 3 skipped**, including 8 new coverage/provenance/decision-drift regressions. Actual model inference and Chromium/WebKit source/fidelity checks are pending exact-head Actions. No physical phones, paid AI, live cloud/Auth/customer data, Drive Duel, merge or deployment.
+
 # Verified human family review software and artifact — October 21, 2026 UTC
 
 - Draft PR #113 implementation SHA `621891c532faf5a1c32a2443e9e4e06704008969`, Actions **39541190603 SUCCESS at that exact commit**: **1,284 passed / 0 failed / 3 skipped**, full build/source guards, offline original-hash form on actual Chromium/WebKit engines and original-camera JPEG/EXIF/import/before-mask crop checks passed. Browser fixtures are synthetic; no physical phone or new model inference claimed.
