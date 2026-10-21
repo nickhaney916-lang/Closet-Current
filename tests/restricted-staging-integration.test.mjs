@@ -97,3 +97,24 @@ test('bundle verifier refuses build lock, incomplete file and live reference eve
  await rm(tampered);
  const final=verify();assert.equal(final.status,0,final.stderr);
 }));
+
+test('generated staging verifier rejects changed binary image and changed unrelated JS after build',async()=>sandbox(async root=>{
+ const r=build(root);assert.equal(r.status,0,r.stderr);
+ const verify=()=>spawnSync(process.execPath,['scripts/verify-restricted-staging-bundle.mjs'],
+  {cwd:root,encoding:'utf8',timeout:25000});
+ assert.equal(verify().status,0);
+ const binary=join(root,'staging-dist/icons/apple-touch-icon.png');
+ const bytes=await readFile(binary);
+ await writeFile(binary,Buffer.concat([bytes,Buffer.from([0x01])]));
+ const corrupted=verify();assert.notEqual(corrupted.status,0);
+ assert.match(corrupted.stderr,/STAGING_SEAL_REFUSED: changed asset/);
+ await writeFile(binary,bytes);
+ assert.equal(verify().status,0);
+ const asset=join(root,'staging-dist','app.js');
+ const original=await readFile(asset);
+ await writeFile(asset,Buffer.concat([original,Buffer.from('\\n// accidental unseen change')]));
+ const changed=verify();assert.notEqual(changed.status,0);
+ assert.match(changed.stderr,/STAGING_SEAL_REFUSED: changed asset/);
+ await writeFile(asset,original);
+ assert.equal(verify().status,0);
+}));
