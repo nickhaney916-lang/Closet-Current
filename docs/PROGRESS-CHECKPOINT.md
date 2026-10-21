@@ -1,3 +1,13 @@
+# Independent real-photo recognition safety admission — October 20, 2026 Pacific
+
+- Based on draft PR #105 verified exact head `cebbdab60eb85af914d8ce39ac6f62fdb00e8f0a`, new isolated branch `qa/real-photo-recognition-admission-20261020`.
+- Introduced `scripts/audit-recognition-admission.mjs`, `tests/real-photo-recognition-admission.test.mjs`, dedicated fresh inference GitHub Actions and `docs/REAL-PHOTO-RECOGNITION-ADMISSION-20261020.md`. Existing model/weights, source RGB recognition, garment taxonomy, camera, storage, AI rendering and customer-data paths unmodified.
+- Frozen historical baseline (not a new run): reviewed-32 **25 strong / 1 wrong subtype**, holdout-16 **6 strong / 3 wrong subtypes**, fresh-11 **9 strong / 0 wrong subtype**; baseline source IDs and observation SHA provenance preserved.
+- **Actual new inference** in [GitHub Actions #39531944295](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39531944295): SHA-256 verified 48 distinct licensed Commons photos plus 11 validation photos (59 total) with original pinned browser FashionCLIP; reviewed-32 **31 strong / 1 wrong subtype**, holdout-16 **7 strong / 3 wrong subtypes**, fresh-11 **9 strong / 0 wrong subtype**. Holdout broad-category full-set accuracy **8/13 (61.54%)**, all three non-garment controls rejected. Four actual wrong subtypes: `commons-0064`, `commons-0003`, `commons-0014`, `commons-0078`.
+- The audit rejects missing/duplicate/unverified sources, incorrect automatic categories, wrong strong subtypes, false-positive nonclothing and malformed category-only reviews. **Recognition promotion remains BLOCKED** on actual source-matched results; false claims of 100% recognition forbidden.
+- Previous code+full-suite run [#39531944295](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39531944295): **1,246 passed / 0 failed / 3 skipped**, original camera/review provenance gates passed. Exact final-head CI must still be checked after final document/checkpoint commit.
+- This is completion of **independent evidence collection and recognition promotion safety QA**, not a model accuracy fix or production launch; new independent physical-garment labels and untouched holdout required before future classifier changes. No merges, deployments, real customer data, hosted Supabase changes, paid AI or Drive Duel edits.
+
 # Duplicate-safe review and final closet indexing — October 20, 2026 Pacific
 
 - Branched `fix/duplicate-indexing-commit-guard-20261020` from verified draft PR #104 exact SHA `844ccd64c90d5b31664b422b07bf301b5071bf60`.
