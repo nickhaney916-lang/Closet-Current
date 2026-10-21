@@ -21,6 +21,20 @@ Known archived subtype disagreements: `commons-0064` (Outerwear Jacket versus Bl
 
 Note: An October 19 research note documented **7** strong automatic decisions on a separate actual holdout inference. The immutable older `regression-holdout-16.json` supplied with this branch has **6**. This audit intentionally reports **6** for that historical source and separately labels any new inference.
 
+## Newly rerun real model, source-verified on October 20 (separate evidence)
+
+The actual existing pinned browser recognizer was run again in GitHub Actions [#39531944295](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39531944295) with 48 verified Commons photos (the overlapping reviewed/holdout sources) plus 11 independently locked validation photos. The downloader confirmed each SHA-256 before inference. **No model, prompts, threshold, vectors, mask or app behavior changed** during this measurement.
+
+| Fixed set | Positive garment photos | Non-clothing controls | Emitted correct categories / all positives | Strong automatic decisions | Correct accepted automatic subtypes | Wrong accepted automatic subtypes |
+|---|---:|---:|---:|---:|---:|---:|
+| Reviewed-32 | 32 | 0 | 32/32 | 31 | 30 | **1** |
+| Holdout-16 | 13 | 3 | 8/13 | 7 | 4 | **3** |
+| Fresh-11 | 11 | 0 | 11/11 | 9 | 9 | **0** |
+
+**Four actual wrong automatic subtype decisions in the rerun:** `commons-0064` (jacket/outerwear subtype), `commons-0003` (T-shirt/Sweatshirt), `commons-0014` (Blouse/Tunic), and `commons-0078` (Sneakers/Ankle boots). Their broad categories were correct. A right category does **not** excuse an incorrect saved type. Holdout category coverage/whole-set accuracy was **61.54%**; precision *among the eight emitted categories* was 100%, which is explicitly **not** 100% recognition accuracy. All three non-garment controls were rejected. Five holdout garments received no category rather than a false classification.
+
+The actual model run emitted more category predictions than the older archived baseline, which is why its strong-counts (31/7/9) differ from the archived (25/6/9). This is **a different observation**, not an improvement we have caused in this PR. The model remains blocked for release-quality recognition promotion, and the fully verified 59-photo evaluation is not a representative physical-phone sample or a measure of independent clothing instances in layered photographs. Because the sets have already been observed multiple times, any future threshold tuned to these examples requires **new untouched** independent photos for credible validation.
+
 ## Promotion policy
 
 The audit reports per-set: photo coverage, emitted-category precision versus **whole-set** category accuracy, abstentions, exact incorrect broad-category IDs, exact wrong automatic subtype IDs, non-garment false positives, category-only review, and class-specific breakdowns. The 16-photo holdout has 13 positive photos plus 3 negative controls; the fresh set includes a headwear/accessory class as a documented positive source.
