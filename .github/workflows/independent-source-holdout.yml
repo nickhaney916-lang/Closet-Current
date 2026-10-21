@@ -108,6 +108,19 @@ jobs:
           node scripts/test-untyped-photo-import-mobile.mjs
           node scripts/test-original-crop-source-mobile.mjs
           node scripts/check-customer-pilot-release-gates.mjs
+      - name: Package a complete independent review without proposed labels or predictions
+        run: |
+          mkdir -p "$RUNNER_TEMP/blind-human-review"
+          cp "$HOLDOUT_OUTPUT"/newholdout-????.jpg "$RUNNER_TEMP/blind-human-review/"
+          cp "$HOLDOUT_OUTPUT/review.html" "$HOLDOUT_OUTPUT/review-template.json" "$RUNNER_TEMP/blind-human-review/"
+          cp "$HOLDOUT_RESULTS/source-lock.json" "$RUNNER_TEMP/blind-human-review/source-hashes.json"
+          test "$(find "$RUNNER_TEMP/blind-human-review" -name 'newholdout-????.jpg' | wc -l)" -eq 13
+      - uses: actions/upload-artifact@v4
+        with:
+          name: independent-human-review-unlabeled
+          path: ${{ runner.temp }}/blind-human-review/
+          retention-days: 14
+          if-no-files-found: error
       - uses: actions/upload-artifact@v4
         if: always()
         with:

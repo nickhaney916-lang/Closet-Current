@@ -1,3 +1,9 @@
+# Reproduced new-photo evidence and complete blind-review handoff — October 20, 2026 Pacific
+
+- Actions **39539181308 SUCCESS** at `d08eadfd64344bbf324837d5398556809dadd196`: **1,272 passed / 0 failed / 3 skipped**, actual FashionCLIP + independent CLIP and Chromium/WebKit checks passed. The scored report was identical to the first run; sample size remains **13 distinct sources**, not 26.
+- Added complete separate `independent-human-review-unlabeled` artifact packaging: 13 original neutral-ID JPEGs, offline review HTML, blank review JSON and hashes, with no proposed-label manifest or predictions. This makes independent human adjudication possible; it does not invent or complete it.
+- No source labels, photos, model, runtime or old benchmark changed after seeing predictions. Final packaging-only exact-head CI must pass before crediting that new head. PR #111 remains draft; model promotion, physical-phone and independent gold validation remain blocked.
+
 # Final new-source benchmark provenance regression — October 20, 2026 Pacific
 
 - Added a twelfth focused regression binding the stored actual measurement to the unchanged pre-inference label manifest and every original source hash. Complete local final build/Node suite: **1,272 passed / 0 failed / 3 skipped**. The earlier real-model CI measurement remains separately pinned to source commit `1a1c76c12ab37ab080fd71de1fdda1df4963ebbe` and run 39538590277.

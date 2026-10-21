@@ -219,3 +219,23 @@ passed. The source-lock file hash remains
 `0ba1fae03ac1021d6ae58ccf17cd32026aabaa73364cf78618ce1cf7212581d9`.
 Final exact-head workflow must verify this documentation/provenance checkpoint;
 its result and full commit are recorded in draft PR #111.
+
+## Complete blind human handoff
+
+The final workflow additionally exports `independent-human-review-unlabeled` as
+its own complete archive: the same 13 byte-identical original JPEGs with neutral
+IDs, `review.html`, a blank `review-template.json` and a source-hash list. It
+contains **no proposed label JSON, source-description manifest or model results**.
+Give an independent reviewer only that archive, extract all files into one
+folder, open `review.html`, and record observed families, uncertainty and visual
+evidence in the blank JSON. Do not consult model outputs or the source archive's
+label-bearing metadata while reviewing. This is a ready offline handoff; no human
+review has occurred merely because the file exists. Keep original embedded EXIF
+intact for byte verification and inspect the images, not metadata hints.
+
+A second real-inference run at documentation/provenance commit
+`d08eadfd64344bbf324837d5398556809dadd196`, Actions 39539181308, completed with
+**1,272 Node passes / 0 failed / 3 skipped**, both actual model runs and browser
+checks passed. Its complete scored report matched the first run exactly. This
+is still **13 distinct source images**, not 26 new images or a new untouched
+confirmation cohort. The final packaging-only head must also pass its own CI.
