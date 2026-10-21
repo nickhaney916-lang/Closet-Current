@@ -33,7 +33,7 @@ for(const p of ['public/cloud-backup.js','public/app.js','public/auth.js','publi
  'public/recognition-photo.mjs','public/photo-color.js','public/closet-stylist.js','public/outfit-board.js',
  'public/cloud-backup-engine.js','supabase/cloud-backup.sql'])
  assert.equal(git('rev-parse','HEAD:'+p),git('rev-parse',CLOUD+':'+p),'Reviewed customer runtime changed: '+p);
-const old=git('show',CLOUD+':docs/PROGRESS-CHECKPOINT.md');
+const old=execFileSync('git',['show',CLOUD+':docs/PROGRESS-CHECKPOINT.md'],{encoding:'utf8'});
 assert.ok(fs.readFileSync('docs/PROGRESS-CHECKPOINT.md','utf8').endsWith(old),'Historic development checkpoint altered');
 const packet=packetFromLock(fs.readFileSync(LOCK)),review=reconcile(packet,[]);
 assert.equal(packet.photos.length,13);
