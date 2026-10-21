@@ -112,7 +112,10 @@ const allowedAuthSession=new Set([
  'scripts/test-disposable-auth-mailpit.mjs',
  'tests/disposable-auth-email-config.test.mjs',
  '.github/workflows/disposable-auth-email-integration.yml',
- 'docs/DISPOSABLE-AUTH-EMAIL-REAL-SERVICE-20261020.md'
+ 'docs/DISPOSABLE-AUTH-EMAIL-REAL-SERVICE-20261020.md',
+ 'scripts/test-auth-email-mobile-browsers.mjs',
+ '.github/workflows/auth-email-mobile-browser-qa.yml',
+ 'docs/AUTH-EMAIL-MOBILE-BROWSER-20261020.md'
 ]);
 const allowedWork=new Set([
  'public/app.js',

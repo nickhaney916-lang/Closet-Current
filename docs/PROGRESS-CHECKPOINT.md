@@ -1,3 +1,12 @@
+# Mobile email confirmation/recovery browser QA — October 20, 2026 Pacific
+
+- Branch `qa/auth-email-mobile-browser-20261020` built on verified draft PR #101 `7a30d1e8c57c4f596acd4619e57005446537703b`; newly isolated draft PR #102.
+- Real browser DOM/touch rehearsal runs unchanged `public/auth.js` + pilot notice in Android-style Chromium root path and iPhone-style WebKit nested path, with all network Auth calls intercepted in-browser (zero actual hosted Supabase requests).
+- 8 fresh isolated scenarios per engine: expired/error link, invalid hash, unsupported PKCE code, token-hash signup + refresh after reload, substituted user, existing implicit callback, recovery touch/password toggle requiring verified update and recovery user mismatch.
+- Pre-check [CI #39527326220](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39527326220) SUCCESS on script/checks `2366a5d96f7ec3c6724104c0dd5d9f7d2b22a7a6`: both engines **8/8**, full Node **1,220 passed / 0 failed / 3 skipped**, original-photo/camera/human review and release-veto checks passed.
+- A final exact-head CI run must also be verified after checkpoint/doc commits; **this is browser emulation only**, not physical Android/iPhone, mail-client, real external inbox or hosted dashboard Auth SMTP/allowlist validation.
+- No launch authorization, hosted Auth or production modifications, merge/deployment, paid AI or Drive Duel change.
+
 # Disposable local Auth email verification — October 20, 2026 Pacific
 
 - From draft PR #100 `fefdd165cb1ec66bb935a516598829e435a8f128`, isolated `qa/disposable-auth-email-link-20261020`.
