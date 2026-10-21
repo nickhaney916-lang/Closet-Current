@@ -81,6 +81,14 @@ const allowedSecurity=new Set([
  'tests/closet-least-privilege-postgres.sql',
  'docs/LIVE-CLOSET-SUPABASE-SECURITY-20261020.md'
 ]);
+// Follow-on SQL architecture remains strictly design-only; never expose a
+// private privileged writer in public code or alter customer recognition.
+const allowedBackupRpc=new Set([
+ 'supabase/design/backup-rpc-only-writes.DRAFT.sql',
+ 'tests/backup-rpc-only-writes-postgres.sql',
+ '.github/workflows/backup-rpc-only-writes-security.yml',
+ 'docs/PRIVATE-CLOUD-RPC-CAS-20261020.md'
+]);
 const allowedWork=new Set([
  'public/app.js',
  'docs/PROGRESS-CHECKPOINT.md',
@@ -110,7 +118,7 @@ const allowedNew=new Set([
 for(const p of new Set([...m.keys(),...head.keys()])){
  if(m.get(p)!==head.get(p)){
   if(p==='public/index.html'||p==='scripts/build.mjs'||p===reviewScript)continue;
-  assert.ok(allowedWork.has(p)||(allowedNew.has(p)&&!m.has(p))||(allowedSecurity.has(p)&&!m.has(p)),
+  assert.ok(allowedWork.has(p)||(allowedNew.has(p)&&!m.has(p))||(allowedSecurity.has(p)&&!m.has(p))||(allowedBackupRpc.has(p)&&!m.has(p)),
    'Unreviewed change after merge: '+p);
  }
 }
