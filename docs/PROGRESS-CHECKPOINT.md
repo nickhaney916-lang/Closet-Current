@@ -1,3 +1,17 @@
+# Work Assignment #162 — private-pilot validation kit (development only)
+
+Base: verified PR #161 `6ed5c170f7fa2a6492f67e4d5f609b2f197c9c9d`.
+Isolated branch: `validation/private-pilot-phone-kit-20261021`. All original branches preserved.
+
+Delivered an offline START-HERE phone/staging/independent-garment walkthrough, strict anonymous fixed-status session JSON, canonical evidence-review handoff and blank-kit artifact workflow. Customer app, camera/original-before-mask recognition, styling, wardrobe, Supabase and production workflows remain byte-identical to PR #161. The scope bridge retains the entire prior source guard and pins every existing file except this checkpoint and the exact additive bridge.
+
+See `docs/PRIVATE-PILOT-START-HERE-20261021.md` for explicit evidence denominators, original-first independent protocol and fail-closed prerequisites. Current task evidence: 0/2 physical platforms, 0/24 independently reviewed scenes, 0/8 hosted controls. Recognition accuracy unmeasured; production promotion BLOCKED. No deployment, paid resources, live database/customer access or Drive Duel changes.
+
+Repository review found parallel draft PR #162 (staging binary/script byte integrity); this assignment number is not that PR. Its separate branch is preserved and not integrated. Review it as an additional deployment-candidate blocker.
+
+Verification in progress; final exact-head CI evidence will be appended after checks complete. No physical-device or hosted-staging pass is claimed.
+
+---
 # Verified integrated staging-artifact security candidate — October 21, 2026
 
 - **Draft PR #161, verified integration SHA `691c4ed638b79cf9585e24cfca57187ecc832861`**, has Git merge parents Work #159 `55ac1688cac4dd277ee82ee9c73c4df9cefcb77c` and PR #160 `3e594a5714b7822ada852cd74d8bc5dc2d51c6ad`. Original branches remain unchanged. Six verified artifact-source blobs are byte-identical to PR #160; integrated source guard independently asserts both parents and preserves Work #159's original high-resolution recognition, camera, clothing catalog, Auth, wardrobe, local Supabase/RLS and atomic staging build locking.
