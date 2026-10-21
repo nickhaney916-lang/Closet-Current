@@ -1,0 +1,68 @@
+name: Independent pretrained CLIP versus existing FashionCLIP real garments
+on:
+  push:
+    branches: [research/independent-clip-garment-subtypes-20261021]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  strict-research-source-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Pure model-comparison unit and data integrity tests
+        run: |
+          node --check scripts/independent-clip-subtype-trial.mjs
+          node --test tests/independent-clip-subtype-trial.test.mjs tests/original-subtype-consensus-trial.test.mjs tests/recognition-regression.test.mjs
+      - name: Full regression build and independent source-review protections
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+          node scripts/verify-camera-cloud-integration.mjs
+          node scripts/check-dual-parent-review-integration.mjs
+          node scripts/check-customer-pilot-release-gates.mjs
+  independent-real-model:
+    needs: strict-research-source-regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Download exact existing 59-photo model inference from verified PR 107
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh run download 39534184672 -n original-photo-subtype-consensus-trial -D benchmark/independent-clip-baseline
+          test -s benchmark/independent-clip-baseline/reviewed-32/results.json
+          test -s benchmark/independent-clip-baseline/holdout-16/results.json
+          test -s benchmark/independent-clip-baseline/fresh-11/results.json
+      - name: Verify same 59 real original photos by expected SHA-256
+        shell: bash
+        run: |
+          set -euo pipefail
+          ids="$(node --input-type=module -e "import fs from 'node:fs';const a=['benchmark/manifest-reviewed-32.json','benchmark/manifest-holdout-16.json'].flatMap(f=>JSON.parse(fs.readFileSync(f,'utf8')).map(x=>x.id));console.log([...new Set(a)].join(','))")"
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos "$ids"
+          node scripts/download-reviewed-photos.mjs benchmark/manifest-fresh-11.json benchmark/photos
+      - name: Install pinned Transformers.js and image loader for offline local inference
+        run: npm install --no-save --no-package-lock @huggingface/transformers@3.8.1 sharp@0.34.4
+      - name: Run independent encoder on 59 original RGB photographs
+        run: node scripts/independent-clip-subtype-trial.mjs
+      - name: Confirm report disallows model promotion or silent customer saves
+        run: |
+          node --input-type=module -e "import fs from 'node:fs';const r=JSON.parse(fs.readFileSync('benchmark/independent-clip-trial/report.json'));if(r.productionReleaseApproved||!r.noAutomaticReplacementMade||r.sets.length!==3||r.sets.reduce((n,x)=>n+x.photos,0)!==59)throw Error('Incomplete or unsafe comparison')"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: independent-clip-59-photo-subtype-evidence
+          path: benchmark/independent-clip-trial/
+          retention-days: 14
+          if-no-files-found: warn
