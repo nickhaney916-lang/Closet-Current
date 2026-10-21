@@ -1,3 +1,12 @@
+# Keep both versions across interrupted cloud sync — October 20, 2026 Pacific
+
+- Stacked isolated branch `fix/cloud-conflict-keep-both-retry-20261020` onto previously verified combined draft PR #115 `6ebcf6d9dcfd18611c3248242b62208eb9923385`. No modifications to PR #113, Work-owned human-label collection, independent model, original/source-locked photos, or `main`.
+- Identified genuine customer-facing conflict recovery race: the `Keep both versions` selection was lost when it overlapped an active cloud request or encountered a network/RPC reply failure. A subsequent automatic sync defaulted to a conflict again, requiring duplicate user input.
+- Added owner-session-scoped `pendingKeepBoth` flag, set only by an explicit user resolution. The flag survives overlapping requests, failed photo upload and failed/lost server responses; clears on confirmed commit, clean sync, new account session, pagehide and BFCache resume. Server CAS revision, deterministic duplicated garment IDs, local storage and cloud owner privacy checks remain unchanged.
+- Five new actual-client cloud conflict/failure/owner-isolation regression tests, an independent real Chromium Android/WebKit iPhone mobile simulated-cloud flow using actual IndexedDB, and a dedicated full suite and source-locked proof gate in `.github/workflows/cloud-conflict-retry-qa.yml`.
+- Historical PR #115 photo/human source gate and camera/tenant review remain active. Exact Git-reviewed new cloud client at `9137b448d24b4904c0477b2f854171c546b25a16`; customer model/photo masks and hosted cloud settings unchanged.
+- First focused/full successful CI on working branch reported **1,311 pass, 0 fail, 3 skip** and 26 focused pass. Confirm final exact-commit suite and mobile engines before completion report. Synthetic remote fixtures only, no real physical phone, hosted Supabase changes, paid services, production deployment or customer wardrobe access.
+
 # Isolated verified customer + blind-photo-source integration — October 20, 2026 Pacific
 
 - **Integration candidate, not production:** `integration/cloud-styling-blind-photo-rc-20261020`, built from PR #114 exact code SHA `05f1bdf071a75e2bac2eaf9ecb66c2f1e63d7132`, with **12 original Git blobs** from PR #113 head `71053247402d2e428044ef38b359057011335823`. Imported as one additive, one-parent commit `45765b19b8db2976ebd66907daa16856f680ac35`. Neither source branch, Work-owned PR #108, nor `main` was merged or edited.
