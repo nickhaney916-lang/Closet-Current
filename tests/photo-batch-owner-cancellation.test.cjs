@@ -76,7 +76,7 @@ test('a decoder exception after account change is cancelled rather than leaking 
  reject(Error('private_image_data'));
  await running;
  assert.equal(h.state.window.__lastPhotoImportResult.cancelled,true);
- assert.deepEqual(h.state.window.__lastPhotoImportResult.errors,[]);
+ assert.deepEqual(Array.from(h.state.window.__lastPhotoImportResult.errors),[]);
  assert.equal(h.messages.join(' ').includes('private_filename_person_one'),false);
 });
 test('unsigned users are refused before file conversion and there is no new batch',async()=>{
