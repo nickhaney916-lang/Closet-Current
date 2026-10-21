@@ -1,3 +1,12 @@
+# Integrated pilot candidate and release preflight — October 21, 2026
+
+- **Latest verified integrated source:** draft PR #140, SHA `c921cfc4ec72ccf5f333df99e6c4d6a20719541d`, GitHub Actions #39642692606 SUCCESS (1,456 Node pass, 0 fail, 3 skip; combined Android Chromium and iPhone WebKit synthetic workflow tests pass). Integrates the separate verified camera/import, original-before-mask recognition, saved outfit, two-account safety, backup, storage and atomic PWA branches with manual conflict resolution. Unmerged, undeployed.
+- **Next engineering priority:** isolated draft PR #141 on top of PR #140, a fail-closed preflight that rechecks both main-only automatic deployment triggers, source-only changes, the unchanged human-original-review lock and real-world blockers. The audit intentionally permits `technicalPreflight: PASS` but always reports `productionPromotion: BLOCKED`. Manual deployment workflow_dispatch is still available to authorized users and cannot be prevented by a source-only audit.
+- **No real physical-phone or independent human acceptance:** Android/iPhone installed hardware tests 0, independent human garment source submissions 0, gold accuracy null; live disposable two-account Supabase isolation, external email, privacy/terms/deletion and figure-art rights remain pending. No production release or human pilot approval; do not merge/deploy or activate paid services without explicit user signoff. No Drive Duel changes or new separate ChatGPT Work assignment.
+- Exact latest head, workflow/test evidence and next steps: `docs/PILOT-RELEASE-PREFLIGHT-20261021.md` and draft PR #141. All previous milestones below are historical source notes, not newer live-release results.
+
+---
+
 # Atomic installed phone-app release consistency — October 21, 2026
 
 - User canceled drafted Work Assignment #139 to conserve Work capacity; all new implementation happens in this primary Closet Current chat. PR #137 mobile photo-memory/storage and earlier Work draft changes are left alone. Source checkpoint PR #138 remains independently verified and isolated.
