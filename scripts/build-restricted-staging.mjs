@@ -101,6 +101,15 @@ async function main(){
    .split('closet-current-'+previous).join('closet-current-'+version)
    .split('"'+previous+'"').join('"'+version+'"'));
  }
+ // A preview must never own or evict a production-named installed cache,
+ // even if an operator later reconfigures hosting. Keep actual app assets
+ // and the staging-only fingerprint unchanged.
+ await applyFile(stageDir,'sw.js',source=>{
+  let next=replaceExactly(source,"const CACHE='closet-current-"+version+"';",
+    "const CACHE='closet-current-staging-"+version+"';",1,'isolated staging worker cache name');
+  return replaceExactly(next,"key.startsWith('closet-current-')",
+    "key.startsWith('closet-current-staging-')",1,'isolated staging cache cleanup');
+ });
  // These headers are NOT access control; Cloudflare Access policy must
  // be independently enabled and tested before serving ANY staging bundle.
  await writeFile(stageDir+'/_headers',
