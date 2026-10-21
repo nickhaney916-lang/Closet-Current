@@ -1,3 +1,12 @@
+# Photo-bearing staging backup recovery — October 21, 2026
+
+- Isolated continuation from verified draft PR #150 SHA `0dbcab844ea5e0d48aa0cacbf08d22ff1ff5c33d` adds generated-JPEG save/restore, offline reload/retry, lost RPC response and corrupt-photo recovery scenarios to actual generated staging app browser QA. No customer runtime, original-photo recognition, wardrobe source, Supabase schema, production hosting or Drive Duel changes.
+- Local full regression: **1,490 passed, 0 failed, 3 skipped**. Browser binaries unavailable locally; exact-head pinned Chromium/WebKit CI must pass before declaring this extension verified. See draft PR for exact SHA and final CI results.
+- Owner authorized publication with Continue after the explicit feature-branch/draft-PR approval request. Publication and exact-head browser CI are in progress; no browser results are claimed until confirmed. Local browser downloads returned an invalid archive.
+- All backend replies are intercepted synthetic mocks. No hosted Auth/RLS/email/cloud permissions, physical phone or garment recognition accuracy is established; real private staging remains blocked by free-project capacity and protected-hosting setup. No paid resources or deployment.
+
+---
+
 # Generated staging mobile browser runtime verification — October 21, 2026
 
 - New isolated `test/staging-runtime-isolation-20261021` from verified PR #148 `de3a93d7e86231d950cbc152d5ffcecd63db0aac` adds real Chromium/WebKit execution of the synthetic generated staging app, with all external traffic intercepted before navigation.
