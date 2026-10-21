@@ -82,5 +82,5 @@ console.log('BLIND_PHOTO_CLOUD_INTEGRATION '+JSON.stringify({
  exactImportedBlobs:approvedImported.size,protectedRuntimeFiles:protectedRuntime.length,
  untouchedDiscoveryLabels:true,photos:packet.photos.length,humanReviewSubmissions:0,
  regressionGuarded:true,modelPromotion:'BLOCKED',
- authAndCloudRuntimeIdentical:true,mergedMain:false,deployed:false,productionAuthorized:false
+ authRuntimeIdentical:true,otherCloudRuntimeIdentical:true,conflictRetryBlobReviewed:true,mergedMain:false,deployed:false,productionAuthorized:false
 }));
