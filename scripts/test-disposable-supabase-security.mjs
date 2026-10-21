@@ -95,6 +95,7 @@ await isolation('limited-direct-writes');
 
 await apply('supabase/design/backup-rpc-only-writes.DRAFT.sql');sql("NOTIFY pgrst, 'reload schema';");await state('RPC_ONLY_EXPECTED_CATALOG');
 assert.equal(sql("SELECT NOT pg_has_role(current_user,'closet_backup_writer','SET') AND NOT pg_has_role('authenticated','closet_backup_writer','SET') AND NOT pg_has_role('anon','closet_backup_writer','SET');"),'t','Execution membership remained after ownership handoff');
+assert.equal(sql("SELECT EXISTS(SELECT 1 FROM pg_auth_members m JOIN pg_roles r ON r.oid=m.roleid JOIN pg_roles u ON u.oid=m.member WHERE r.rolname='closet_backup_writer' AND u.rolname=current_user AND m.admin_option);"),'t','Creator administrative recovery authority was removed');
 await isolation('rpc-only-hardened');
 for(const a of accounts){
  const initial=await own(a);

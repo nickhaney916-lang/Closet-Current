@@ -113,8 +113,10 @@ BEGIN
  RETURN saved_revision;
 END $body$;
 -- As the private writer, create/grant the function without relying on
--- database superuser privileges. Revoke temporary migration membership
--- immediately afterward. No browser role is ever granted writer membership.
+-- database superuser privileges. Disable temporary execution/inheritance
+-- immediately afterward. Retain the creator ADMIN grant without regranting
+-- ADMIN to itself (PostgreSQL rejects that grantor cycle). No browser role
+-- is ever granted writer membership.
 REVOKE ALL ON FUNCTION closet_rpc_private.save_checked(bigint,jsonb)
  FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION closet_rpc_private.save_checked(bigint,jsonb)
@@ -123,7 +125,7 @@ RESET ROLE;
 -- Retain administration only, not execution or inherited table privileges.
 -- Revoking the entire membership also revokes the creator's ADMIN option on
 -- PostgreSQL 16+, leaving non-superuser Supabase postgres unable to recover.
-GRANT closet_backup_writer TO CURRENT_USER WITH ADMIN TRUE, SET FALSE, INHERIT FALSE;
+GRANT closet_backup_writer TO CURRENT_USER WITH SET FALSE, INHERIT FALSE;
 -- PostgreSQL administrative executors (especially SUPERUSER) inherently
 -- retain privileged role-management abilities. The security contract is
 -- that NO browser-role may become or inherit the private writer.
