@@ -1,13 +1,13 @@
-name: Staging runtime browser isolation (synthetic only)
+name: Staging photo backup recovery (synthetic only)
 on:
   push:
-    branches: [test/staging-runtime-isolation-20261021]
+    branches: [test/staging-photo-backup-recovery-20261021]
 permissions:
   contents: read
 jobs:
   browser-isolation:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
         with:
@@ -17,7 +17,7 @@ jobs:
           node-version: '22'
       - name: Guard source and run complete regressions
         run: |
-          git diff --exit-code de3a93d7e86231d950cbc152d5ffcecd63db0aac HEAD -- public supabase .github/workflows/pages.yml .github/workflows/cloudflare-pages.yml
+          git diff --exit-code 0dbcab844ea5e0d48aa0cacbf08d22ff1ff5c33d HEAD -- public supabase .github/workflows/pages.yml .github/workflows/cloudflare-pages.yml
           node scripts/check-staging-preflight-scope.mjs
           node scripts/check-integrated-pilot-rc.mjs
           node scripts/build.mjs
