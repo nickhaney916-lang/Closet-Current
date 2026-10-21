@@ -580,7 +580,7 @@ test('an outfit preview with missing original full-scene or RGB evidence is neve
   assert.equal(c.batch[0].outfitSourceId,'another-physical-garment');
   if(missing==='recognitionPhoto')
    assert.match(c.batch[0].localStatus,/Original source crop unavailable/);
-  else assert.equal(c.batch[0].scanFailed!==false,true);
+  else assert.equal(c.batch[0].possibleDuplicate,true,'the matching preview requires human review');
  }
 });
 test('two incomplete outfit regions sharing one preview remain independently reviewable',async()=>{
