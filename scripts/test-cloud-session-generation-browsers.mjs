@@ -44,7 +44,7 @@ try{
      getAccessToken:async()=>window.closetAuth.user.id};
     window.TEST_OWNERS={A,B};window.TEST_DBS={};
     window.newDB=async owner=>new Promise((resolve,reject)=>{
-     const request=indexedDB.open('test-private-'+owner,1);
+     const request=indexedDB.open('closet-current-user-'+owner,1);
      request.onupgradeneeded=()=>{const db=request.result;
       db.createObjectStore('items',{keyPath:'id'});db.createObjectStore('state',{keyPath:'id'});};
      request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);
@@ -56,7 +56,12 @@ try{
    await page.addScriptTag({content:sync});
    await page.evaluate(async()=>{window.TEST_DBS.A=await newDB(window.TEST_OWNERS.A);window.TEST_DBS.B=await newDB(window.TEST_OWNERS.B);void window.closetCloud.start(window.TEST_DBS.A,window.callbacks);});
    await onA;
-   await page.evaluate(()=>{window.closetAuth.user={id:window.TEST_OWNERS.B};void window.closetCloud.start(window.TEST_DBS.B,window.callbacks);});
+   // Simulate an account switch that retains the previous IndexedDB handle.
+   // The sync client must refuse to pair B's token with A's local database.
+   await page.evaluate(()=>{window.closetAuth.user={id:window.TEST_OWNERS.B};void window.closetCloud.start(window.TEST_DBS.A,window.callbacks);});
+   await page.waitForFunction(()=>document.getElementById('cloudStatus').textContent.includes('belongs to another account'));
+   assert.equal(remoteRequests.length,1,'stale database must never produce a B cloud call');
+   await page.evaluate(()=>{void window.closetCloud.start(window.TEST_DBS.B,window.callbacks);});
    await page.waitForFunction(()=>document.getElementById('cloudStatus').textContent==='Cloud backup up to date');
    releaseA();await page.evaluate(async()=>{await new Promise(resolve=>setTimeout(resolve,100));});
    const check=await page.evaluate(async()=>{
@@ -74,7 +79,7 @@ try{
    assert.equal(remoteRequests.length,2);
    assert.equal(remoteRequests[0].token,'Bearer '+A);
    assert.equal(remoteRequests[1].token,'Bearer '+B);
-   results.push({browser:label,newAccountRestored:true,previousAccountUntouched:true,
+   results.push({browser:label,staleDatabaseRejectedBeforeNetwork:true,newAccountRestored:true,previousAccountUntouched:true,
     staleResponseIgnored:true,realDeviceHardware:false,networkUploads:0});
    await ctx.close();
   }finally{await browser.close();}
