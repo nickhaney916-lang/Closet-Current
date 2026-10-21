@@ -259,8 +259,11 @@ for(const [oldText,newText]of cloudBindingEdits){
  assert.ok(verifiedCloud.includes(oldText),'Verified private-cloud owner-check baseline changed');
  verifiedCloud=verifiedCloud.replace(oldText,newText);
 }
-assert.equal(fs.readFileSync('public/cloud-backup.js','utf8'),verifiedCloud,
- 'Unreviewed private cloud client changes beyond exactly 3 cross-owner DB safeguards');
+assert.equal(execFileSync('git',['show','6ebcf6d9dcfd18611c3248242b62208eb9923385:public/cloud-backup.js'],{encoding:'utf8',maxBuffer:15_000_000}),verifiedCloud,
+ 'Historical cross-owner cloud privacy guard was altered');
+assert.equal(git('rev-parse','HEAD:public/cloud-backup.js'),
+ git('rev-parse','9137b448d24b4904c0477b2f854171c546b25a16:public/cloud-backup.js'),
+ 'Cloud retry changed beyond the exact separately reviewed conflict-recovery source commit');
 const allowedCloudBinding=new Set([
  'public/cloud-backup.js',
  'tests/cloud-session-generation.test.cjs',
@@ -287,6 +290,14 @@ const allowedBlindReviewIntegration=new Set([
  'scripts/check-blind-photo-cloud-integration.mjs',
  '.github/workflows/cloud-blind-photo-integration-qa.yml',
  'docs/CLOUD-BLIND-PHOTO-RELEASE-CANDIDATE-20261020.md'
+]);
+// Exact reviewed cloud retry fix and independent read-only QA; all customer
+// runtime blobs except the pinned cloud backup client remain unchanged.
+const allowedCloudConflictRetry=new Set([
+ 'tests/cloud-conflict-retry.test.cjs',
+ '.github/workflows/cloud-conflict-retry-qa.yml',
+ 'docs/CLOUD-CONFLICT-RETRY-RECOVERY-20261020.md',
+ 'scripts/check-blind-photo-cloud-integration.mjs'
 ]);
 const allowedWork=new Set([
  'public/app.js',
@@ -317,7 +328,7 @@ const allowedNew=new Set([
 for(const p of new Set([...m.keys(),...head.keys()])){
  if(m.get(p)!==head.get(p)){
   if(p==='public/index.html'||p==='scripts/build.mjs'||p===reviewScript)continue;
-  assert.ok(allowedWork.has(p)||(allowedNew.has(p)&&!m.has(p))||(allowedSecurity.has(p)&&!m.has(p))||(allowedBackupRpc.has(p)&&!m.has(p))||(allowedLocalSupabaseEvidence.has(p)&&!m.has(p))||allowedAuthSession.has(p)||allowedColorEvidence.has(p)||allowedDuplicateQA.has(p)||allowedRecognitionAdmission.has(p)||allowedSubtypeTrial.has(p)||allowedIndependentClip.has(p)||allowedMaskedColorReview.has(p)||allowedOwnedStyle.has(p)||allowedCloudBinding.has(p)||allowedBlindReviewIntegration.has(p),
+  assert.ok(allowedWork.has(p)||(allowedNew.has(p)&&!m.has(p))||(allowedSecurity.has(p)&&!m.has(p))||(allowedBackupRpc.has(p)&&!m.has(p))||(allowedLocalSupabaseEvidence.has(p)&&!m.has(p))||allowedAuthSession.has(p)||allowedColorEvidence.has(p)||allowedDuplicateQA.has(p)||allowedRecognitionAdmission.has(p)||allowedSubtypeTrial.has(p)||allowedIndependentClip.has(p)||allowedMaskedColorReview.has(p)||allowedOwnedStyle.has(p)||allowedCloudBinding.has(p)||allowedBlindReviewIntegration.has(p)||allowedCloudConflictRetry.has(p),
    'Unreviewed change after merge: '+p);
  }
 }
