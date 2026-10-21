@@ -1,0 +1,73 @@
+name: Source-locked human family review intake (no model promotion)
+on:
+  push:
+    branches: [benchmark/source-holdout-human-intake-20261021]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+env:
+  PYTHONDONTWRITEBYTECODE: '1'
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check isolated changes, frozen original labels and full regression
+        run: |
+          node scripts/source-holdout-human-review.mjs verify
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+          node scripts/check-customer-pilot-release-gates.mjs
+      - name: Run unchanged source guards at their historical reviewed commits
+        run: |
+          git worktree add --detach "$RUNNER_TEMP/benchmark-source" 47da6d3e854d2cf6cbb79d7a8fd0ef83e7faa7a2
+          (cd "$RUNNER_TEMP/benchmark-source" && node scripts/independent-source-holdout.mjs verify)
+          git worktree add --detach "$RUNNER_TEMP/customer-source" a6ee34a676030cff2a4fcf3b31185275c78371a7
+          (cd "$RUNNER_TEMP/customer-source" && node scripts/verify-camera-cloud-integration.mjs && node scripts/check-dual-parent-review-integration.mjs)
+  offline-review-browser:
+    needs: regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install --with-deps chromium webkit
+      - name: Real Chromium and WebKit offline form regression (synthetic fixtures only)
+        run: node scripts/test-source-holdout-human-review-browser.mjs
+      - name: Preserve original-photo fidelity and before-mask source path in browser emulation
+        run: |
+          node scripts/build.mjs
+          node scripts/test-native-camera-fidelity-mobile.mjs
+          node scripts/test-untyped-photo-import-mobile.mjs
+          node scripts/test-original-crop-source-mobile.mjs
+      - name: Fetch unchanged original collection; do not acquire or relabel new sources
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh run download 39538230372 -n new-source-originals-before-inference -D "$RUNNER_TEMP/originals"
+      - name: Prepare original-hash-checked blank packet and honest zero-submission audit
+        run: |
+          node scripts/source-holdout-human-review.mjs prepare "$RUNNER_TEMP/originals" "$RUNNER_TEMP/family-review"
+          node scripts/source-holdout-human-review.mjs audit "$RUNNER_TEMP/review-readiness.json"
+          node scripts/source-holdout-human-review.mjs verify
+          node scripts/check-customer-pilot-release-gates.mjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: original-photo-family-review-no-human-submissions
+          path: |
+            ${{ runner.temp }}/family-review/
+            ${{ runner.temp }}/review-readiness.json
+          if-no-files-found: error
+          retention-days: 14

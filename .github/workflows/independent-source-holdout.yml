@@ -1,0 +1,134 @@
+name: New independent source collection before blind review and model inference
+on:
+  push:
+    branches: [benchmark/independent-source-holdout-20261021]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+env:
+  PYTHONDONTWRITEBYTECODE: '1'
+jobs:
+  collect-before-inference:
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[collect]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save --no-package-lock sharp@0.34.4
+      - name: Recover already acquired source bytes from the initial partial collection
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh run download 39537145147 -n new-source-originals-before-inference -D "$RUNNER_TEMP/new-originals"
+      - name: Acquire new original JPEG photographs and record immutable hashes; no model run
+        env:
+          HOLDOUT_OUTPUT: ${{ runner.temp }}/new-originals
+        run: node scripts/independent-source-holdout.mjs collect
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: new-source-originals-before-inference
+          path: ${{ runner.temp }}/new-originals/
+          retention-days: 14
+          if-no-files-found: error
+  regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    outputs:
+      locked: ${{ steps.lock.outputs.locked }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Strict isolated source scope and complete regression suite
+        run: |
+          node scripts/independent-source-holdout.mjs verify
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+          node scripts/check-customer-pilot-release-gates.mjs
+      - name: Run unchanged historical independent camera and human source protections
+        run: |
+          git worktree add --detach "$RUNNER_TEMP/historical-source" a6ee34a676030cff2a4fcf3b31185275c78371a7
+          cd "$RUNNER_TEMP/historical-source"
+          node scripts/verify-camera-cloud-integration.mjs
+          node scripts/check-dual-parent-review-integration.mjs
+      - id: lock
+        name: Inference requires committed source hashes and pre-inference visual review
+        run: |
+          if test -s benchmark/independent-source-holdout/locked.json; then
+            echo 'locked=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'locked=false' >> "$GITHUB_OUTPUT"
+          fi
+  real-inference:
+    needs: regression
+    if: needs.regression.outputs.locked == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      HOLDOUT_OUTPUT: /tmp/closet-new-originals
+      HOLDOUT_RESULTS: /tmp/closet-new-results
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Fetch the pre-inference original-photo collection
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          node -e "const r=require('./benchmark/independent-source-holdout/locked.json');if(!Number.isSafeInteger(r.collectionRun))throw Error('Missing source collection provenance');console.log(r.collectionRun)" > "$RUNNER_TEMP/collection-run"
+          gh run download "$(cat "$RUNNER_TEMP/collection-run")" -n new-source-originals-before-inference -D "$HOLDOUT_OUTPUT"
+      - name: Install pinned free model and browser tools
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1 @huggingface/transformers@3.8.1 sharp@0.34.4
+          npx playwright install --with-deps chromium webkit
+      - name: Verify source hashes and build a label-free model manifest
+        run: |
+          node scripts/independent-source-holdout.mjs verify
+          node scripts/independent-source-holdout.mjs prepare
+          node scripts/build.mjs
+      - name: Actual unchanged FashionCLIP on full original-derived RGB, before garment clipping
+        run: node scripts/run-browser-photo-benchmark.mjs "$HOLDOUT_RESULTS/blind-manifest.json" "$HOLDOUT_RESULTS/fashionclip"
+      - name: Actual independent generic CLIP on the identical original bytes and fixed vocabulary
+        run: node scripts/independent-source-holdout.mjs independent
+      - name: Score only after inference; count wrong strong types, missed coverage and agreement costs
+        run: node scripts/independent-source-holdout.mjs evaluate "$HOLDOUT_RESULTS/fashionclip/results.json" "$HOLDOUT_RESULTS/independent-clip.json" > "$HOLDOUT_RESULTS/report.json"
+      - name: Browser validation of original-photo preservation and image fidelity, not phone hardware proof
+        run: |
+          node scripts/test-native-camera-fidelity-mobile.mjs
+          node scripts/test-untyped-photo-import-mobile.mjs
+          node scripts/test-original-crop-source-mobile.mjs
+          node scripts/check-customer-pilot-release-gates.mjs
+      - name: Package a complete independent review without proposed labels or predictions
+        run: |
+          mkdir -p "$RUNNER_TEMP/blind-human-review"
+          cp "$HOLDOUT_OUTPUT"/newholdout-????.jpg "$RUNNER_TEMP/blind-human-review/"
+          cp "$HOLDOUT_OUTPUT/review.html" "$HOLDOUT_OUTPUT/review-template.json" "$RUNNER_TEMP/blind-human-review/"
+          cp "$HOLDOUT_RESULTS/source-lock.json" "$RUNNER_TEMP/blind-human-review/source-hashes.json"
+          node -e "const fs=require('node:fs');const r=require('./benchmark/independent-source-holdout/locked.json');fs.writeFileSync(process.env.RUNNER_TEMP+'/blind-human-review/CREDITS-after-review.txt','Read after independently recording your labels. Source URLs can reveal garment names. Original photographs unchanged; visual review derivatives are separate.\n\n'+r.photos.map(p=>[p.id,p.attribution.author,p.attribution.license,p.attribution.licenseUrl,p.source].join('\n')).join('\n\n'))"
+          test "$(find "$RUNNER_TEMP/blind-human-review" -name 'newholdout-????.jpg' | wc -l)" -eq 13
+      - uses: actions/upload-artifact@v4
+        with:
+          name: independent-human-review-unlabeled
+          path: ${{ runner.temp }}/blind-human-review/
+          retention-days: 14
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: independent-new-source-real-model-results
+          path: |
+            /tmp/closet-new-results/
+            /tmp/closet-new-originals/review-template.json
+            /tmp/closet-new-originals/review.html
+          retention-days: 14
+          if-no-files-found: error
