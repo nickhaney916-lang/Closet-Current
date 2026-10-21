@@ -24,6 +24,8 @@ await new Promise((yes,no)=>{server.once('error',no);server.listen(0,'127.0.0.1'
 const origin='http://127.0.0.1:'+server.address().port;
 const owner='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 const results=[];
+const deadline=setTimeout(()=>{throw Error('Staging browser QA exceeded its 180-second deadline');},180000);
+deadline.unref();
 try{
  for(const [name,engine]of [['Android Chromium',chromium],['iPhone WebKit',webkit]]){
   const browser=await engine.launch({headless:true,...(name.startsWith('Android')?{args:['--no-sandbox']}: {})});
@@ -125,9 +127,17 @@ try{
    offline=true;
    await restored.evaluate(async()=>{const item={...items[0],name:'Offline synthetic edit'};await writeAll([item]);items=[item];await closetCloud.sync();});
    assert.match(await restored.locator('#cloudStatus').textContent(),/pending/);
-   await restored.reload();await restored.evaluate(()=>closetReady);
-   assert.equal(await restored.evaluate(()=>items[0].name),'Offline synthetic edit');
-   offline=false;await restored.evaluate(()=>closetCloud.sync());
+   await restored.reload();
+   await restored.waitForFunction(()=>!document.getElementById('authRetry').hidden&&!document.getElementById('authRetry').disabled);
+   assert.equal(await restored.locator('#appShell').isVisible(),false);
+   const offlineName=await restored.evaluate(owner=>new Promise((resolve,reject)=>{
+    const request=indexedDB.open('closet-current-user-'+owner);
+    request.onerror=()=>reject(request.error);
+    request.onsuccess=()=>{const database=request.result,tx=database.transaction('items'),r=tx.objectStore('items').get('synthetic-photo-item');r.onsuccess=()=>resolve(r.result?.name);r.onerror=()=>reject(r.error);tx.oncomplete=()=>database.close();};
+   }),owner);
+   assert.equal(offlineName,'Offline synthetic edit');
+   offline=false;await restored.locator('#authRetry').click();
+   await restored.evaluate(()=>closetReady);await restored.evaluate(()=>closetCloud.sync());
    await restored.waitForFunction(()=>document.getElementById('cloudStatus').textContent==='Cloud backup up to date');
    assert.equal(record.document.items[0].name,'Offline synthetic edit');assert.equal(photos.size,1);
    // Simulate a committed RPC whose reply is lost. Retry must not duplicate items.
@@ -151,4 +161,4 @@ try{
   }catch(error){console.error(JSON.stringify({engine:name,syntheticCalls:calls,liveRequestCount:live.length,blockedExternalOrigins:[...new Set(blocked)],pageErrors:errors}));throw error;}finally{for(const ctx of contexts)await ctx.close();await browser.close();}
  }
  console.log('STAGING_RUNTIME_BROWSER_QA '+JSON.stringify({results,realHostedIsolationVerified:false,productionPromotion:'BLOCKED'}));
-}finally{await new Promise(resolve=>server.close(resolve));}
+}finally{clearTimeout(deadline);await new Promise(resolve=>server.close(resolve));}
