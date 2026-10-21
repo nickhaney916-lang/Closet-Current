@@ -6,6 +6,7 @@ const standard=()=>({
  parentPresent:true,integratedAlreadyInMain:false,changedFiles:[
   '.github/workflows/pilot-release-preflight-qa.yml',
   'docs/PILOT-RELEASE-PREFLIGHT-20261021.md',
+  'docs/PROGRESS-CHECKPOINT.md',
   'scripts/audit-pilot-release-preflight.mjs',
   'tests/pilot-release-preflight.test.mjs'
  ],
