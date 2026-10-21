@@ -36,10 +36,12 @@ for(const [name,engine] of [['Android Chromium',chromium],['iPhone WebKit',webki
    const jpg=batch.at(-1).image;
    const decoded=await createImageBitmap(await (await fetch(jpg)).blob());
    const dims=[decoded.width,decoded.height];decoded.close();
-   let finish;
-   photoToJPEG=()=>new Promise(resolve=>finish=resolve);
+   let finish,enteredDecode;
+   const decodeStarted=new Promise(resolve=>enteredDecode=resolve);
+   photoToJPEG=()=>new Promise(resolve=>{finish=resolve;enteredDecode();});
    const oldTotal=batch.length;
    const stale=importClothingPhotos([new File([blob],'old-person-shirt.jpg',{type:'image/jpeg'})]);
+   await decodeStarted; // The importer now yields before starting each decode.
    window.closetAuth.user.id='test-owner-b';
    finish('data:image/jpeg;base64,OLD_PHOTO');await stale;
    const switched=window.__photoBatchSnapshot();

@@ -6,47 +6,67 @@ async function photoToJPEG(file,{maxDimension=3072,quality=.94,maxDataURLLength=
  if(!Number.isInteger(maxDimension)||maxDimension<1||maxDimension>4096||
     !Number.isInteger(maxDataURLLength)||maxDataURLLength<1024||
     maxDataURLLength>10000000||!Number.isFinite(quality)||quality<.5||quality>1)throw Error('Invalid photo conversion limits.');
- const url=URL.createObjectURL(file);
+ const url=URL.createObjectURL(file);let image,canvas;
  try{
-  const image=new Image();image.src=url;
+  image=new Image();image.src=url;
   // Unsupported phone codecs and damaged images cannot stall a photo batch.
   let timer;
   try{await Promise.race([image.decode(),new Promise((_,reject)=>{
    timer=setTimeout(()=>reject(Error('Photo decoding timed out.')),15000);
   })]);}finally{clearTimeout(timer);}
   if(!image.width||!image.height)throw Error('No image content');
-  const canvas=document.createElement('canvas'),longest=Math.max(image.width,image.height);
+  canvas=document.createElement('canvas');const longest=Math.max(image.width,image.height);
   // Prefer a slightly lower JPEG quality at the SAME pixels over losing
   // shoe stitching, fabric texture, and prints by reducing both dimensions.
   // Three bounded attempts per frame preserve the existing encoded backup cap.
   const qualities=[quality,...[.88,.82].filter(q=>q<quality)];
   const targets=[maxDimension,...[2560,2048,1536,1024].filter(n=>n<maxDimension)];
+  const frames=new Set();let attempted=false;
   for(const target of targets){
    const scale=Math.min(1,target/longest);
-   canvas.width=Math.max(1,Math.round(image.width*scale));
-   canvas.height=Math.max(1,Math.round(image.height*scale));
+   const width=Math.max(1,Math.round(image.width*scale)),height=Math.max(1,Math.round(image.height*scale));
+   const frame=width+'x'+height;
+   // Small originals can map several limits to the same frame. Encode once.
+   if(frames.has(frame))continue;
+   frames.add(frame);canvas.width=width;canvas.height=height;
    const context=canvas.getContext('2d');
    if(!context)throw Error('Unable to prepare this image.');
    context.imageSmoothingEnabled=true;context.imageSmoothingQuality='high';
    context.fillStyle='#ffffff';context.fillRect(0,0,canvas.width,canvas.height);
    context.drawImage(image,0,0,canvas.width,canvas.height);
    for(const jpegQuality of qualities){
+    // Let input, progress rendering and account lifecycle events run between
+    // expensive synchronous encodes. A single encode remains synchronous.
+    if(attempted)await new Promise(resolve=>setTimeout(resolve,0));
+    attempted=true;
     const jpeg=canvas.toDataURL('image/jpeg',jpegQuality);
     if(jpeg==='data:,')throw Error('Unable to encode this image.');
     if(jpeg.length<=maxDataURLLength)return jpeg;
+    // Let touch/paint run between expensive JPEG retries.
+    if(typeof setTimeout==='function')await new Promise(resolve=>setTimeout(resolve,0));
    }
    // Only reduce pixel dimensions after bounded quality attempts fail.
    // Every output still stays inside the existing backup/image-string budget.
   }
   throw Error('Photo is too large after conversion. Try a closer photo.');
- }finally{URL.revokeObjectURL(url);}
+ }finally{
+  // Release the native pixel buffers now, including decode/encode failures.
+  // The returned original-frame JPEG string is independent of these buffers.
+  if(canvas){canvas.width=0;canvas.height=0;}
+  image?.removeAttribute?.('src');URL.revokeObjectURL(url);
+ }
 }
 async function readPhotoBatch(files,decode,onPhoto,{isCurrent=()=>true}={}){
- const errors=[],results=[];let added=0,cancelled=false;
+ const errors=[],results=[],acceptedFiles=new WeakSet();let added=0,cancelled=false;
  for(const file of files){
   // Decoding is async on phones and the selected customer may sign out before
   // a queued photo finishes. Never feed that older owner's photo to a newer
   // signed-in closet, even if a browser tab remains open during the switch.
+  if(!isCurrent()){cancelled=true;break;}
+  // Only exact File object identity is safe here; names/sizes/timestamps can
+  // match for different photos. Never guess duplicates from those fields.
+  if(acceptedFiles.has(file)){results.push({name:file.name,status:'duplicate',reason:'same selected file'});continue;}
+  if(typeof setTimeout==='function')await new Promise(resolve=>setTimeout(resolve,0));
   if(!isCurrent()){cancelled=true;break;}
   let reason=null;
   if(file.size>10*1024*1024)reason='larger than 10 MB';
@@ -67,7 +87,7 @@ async function readPhotoBatch(files,decode,onPhoto,{isCurrent=()=>true}={}){
    const accepted=await onPhoto(image,file);
    if(!isCurrent()){cancelled=true;break;}
    if(accepted===false){results.push({name:file.name,status:'duplicate',reason:'exact duplicate image'});}
-   else{added++;results.push({name:file.name,status:'added'});}
+   else{acceptedFiles.add(file);added++;results.push({name:file.name,status:'added'});}
   }catch(error){
    if(!isCurrent()){cancelled=true;break;}
    reason=error instanceof Error?error.message:'unknown error';
