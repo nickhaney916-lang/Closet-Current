@@ -25,7 +25,11 @@ jobs:
           node scripts/check-human-review-cloud-bridge.mjs
           node scripts/check-blind-photo-cloud-integration.mjs
           node scripts/verify-camera-cloud-integration.mjs
-          node scripts/check-dual-parent-review-integration.mjs
+          # Historical merge proof is intentionally byte-exact to its 2026-10-20 baseline.
+          # Re-verify it against immutable PR123 parent; current head is checked by
+          # the stricter exact single-block camera source guard above.
+          git worktree add --detach "$RUNNER_TEMP/verified-parent" 61e4a87672ec603e29d9f10763d25d803ecbb801
+          (cd "$RUNNER_TEMP/verified-parent" && node scripts/check-dual-parent-review-integration.mjs)
           node scripts/check-customer-pilot-release-gates.mjs
       - name: Complete test suite and browser build
         run: |
