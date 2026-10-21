@@ -6,6 +6,13 @@ const BASE='fd70faa88fb6245e4b065aae3158531b715498e9';
 const git=(...a)=>execFileSync('git',a,{encoding:'utf8'}).trim();
 execFileSync('git',['merge-base','--is-ancestor',BASE,'HEAD']);
 const allow=new Set([
+ 'scripts/check-staging-anonymous-access.mjs',
+ 'tests/staging-anonymous-access.test.mjs',
+ 'docs/STAGING-ANONYMOUS-ACCESS-20261021.md',
+ '.github/workflows/staging-anonymous-access-qa.yml',
+ 'tests/restricted-staging-integration.test.mjs',
+ '.github/workflows/restricted-staging-integration-qa.yml',
+ 'docs/RESTRICTED-STAGING-INTEGRATION-20261021.md',
  'scripts/build-restricted-staging.mjs',
  'scripts/atomic-staging-output.mjs',
  'tests/atomic-staging-output.test.mjs',
