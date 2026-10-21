@@ -24,6 +24,27 @@ This PR implements only `scripts/trial-original-subtype-consensus.mjs`: a read-o
 
 Report **both** avoided wrong autosaves and good autosaves unnecessarily delayed for review, separately for reviewed-32, holdout-16 and fresh-11. Accurate final comparisons are required before selecting or rejecting the experiment.
 
+## Actual independent original-photo experiment: candidate rejected
+
+[GitHub Actions run #39533805104](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39533805104) completed **SUCCESS** with the original pinned browser model and checksum-verified **59 unique photographed sources**. The benchmark-only three alternate original RGB frame sizes were 288/320/336 pixels; no identity came from a masked/clipped preview.
+
+| Trial rule | Previously correct strong subtype decisions retained / 43 | Wrong subtype decisions prevented / 4 | Correct decisions unnecessarily routed to review |
+|---|---:|---:|---:|
+| Conservative: 3/3 frames, ≥.55 top score and ≥.20 margin | **30 / 43** | **1 / 4** | **13** |
+| Balanced: 2/3 frames, ≥.45 score and ≥.15 margin | **39 / 43** | **0 / 4** | **4** |
+
+Per set, conservative policy: reviewed-32 retained 19 correct strong results, blocked **none** of its one wrong results and deferred 11 correct items; holdout-16 retained three correct, prevented one of three wrong and deferred one correct; fresh-11 retained eight correct and deferred one correct. Balanced: reviewed-32 retained 27 correct and deferred three, holdout-16 retained three correct and deferred one without preventing any of three errors, fresh-11 retained all nine correct. All source inputs and baseline classifications stayed unchanged.
+
+The four observed incorrect accepted subtypes under alternate original-photo framing were:
+- `commons-0064`, labeled Jacket, called Blazer: **Blazer** won all three framings with ~.92 top score.
+- `commons-0003`, labeled T-shirt, called Sweatshirt: **Sweatshirt** won all three, with top scores ~.546/.733/.629; the strict policy rejected one low-scoring view.
+- `commons-0014`, labeled Blouse, called Tunic: **Tunic** won all three, scores ~.882/.796/.883.
+- `commons-0078`, labeled Sneakers, called Ankle boots: **Ankle boots** won all three, scores ~.831/.852/.850.
+
+**Decision: Reject BOTH candidate rules for customer implementation.** They do not justify slowing dozens of correct saves while leaving most wrong labels uncorrected. Same-model frame consensus is correlated evidence, not a genuinely independent garment-form check. Recognition promotion remains **BLOCKED**, and this PR introduces only nonproduction measurement tools.
+
+**Next evidence-based research direction:** Independently label untouched photographs and physical garment form features (shoe shaft/sole, neckline/cuff and top silhouette, dress/skirt separated seams, outerwear lapel and structure). Evaluate a genuinely distinct garment-form cue or vision model *against untouched examples* rather than tuning more thresholds on these already observed images. Preserve user review for category/type uncertainty. Owner consent is required before any paid AI, production model change or real-data submission.
+
 ## Quality, provenance and release rules
 
 Focused synthetic controls in `tests/original-subtype-consensus-trial.test.mjs` verify category-only fallback, disagreement, incomplete photo framings, trusted specific shoes and positive/negative effect accounting. Dedicated GitHub Actions `.github/workflows/original-subtype-consensus-trial.yml` runs the complete 1,000+ app suite, both historical source-integrity gates and an exact-head real-browser original-photo trial.
