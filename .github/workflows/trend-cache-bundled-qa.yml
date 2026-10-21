@@ -1,0 +1,44 @@
+name: Local trend bundle and cached research offline fallback QA
+on:
+  push:
+    branches: [fix/trend-cache-bundled-fallback-20261021]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-and-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify one exact trend fallback edit and all frozen customer sources
+        run: |
+          node scripts/check-trend-cache-bundled-scope.mjs
+          git worktree add --detach "$RUNNER_TEMP/verified-pr127" 46f9c521466976b4ec238d24b1eb1d7871e3bffb
+          (cd "$RUNNER_TEMP/verified-pr127" && node scripts/check-offline-private-phone-scope.mjs && node scripts/check-customer-pilot-release-gates.mjs)
+      - name: Build complete closet product and run all available Node tests
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+  mobile-trend-cache:
+    needs: source-and-regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Chromium and WebKit emulation
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install --with-deps chromium webkit
+      - name: Verify real trend runtime cache rules in simulated phones
+        run: node scripts/test-trend-cache-fallback-browsers.mjs
