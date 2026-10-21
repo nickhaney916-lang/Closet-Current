@@ -4,6 +4,19 @@ import fs from 'node:fs';
 import {validateRows,evaluate,blindManifest,digest,compareAgreement} from '../scripts/independent-source-holdout.mjs';
 const rows=()=>JSON.parse(fs.readFileSync('benchmark/independent-source-holdout/candidates.json')).photos.map((r,i)=>({...r,verified:true,sha256:digest(String(i)),visualReview:{reviewer:'assistant',beforeInference:true,note:'Synthetic test evidence, not a real photo approval'}}));
 const results=rows=>rows.map(r=>({id:r.id,prediction:{category:r.expectedCategory,type:r.acceptedTypes[0]||'Unknown'},strong:r.family!=='negative',categoryConfirmed:false}));
+test('actual measurement remains bound to pre-inference labels and every original source hash',()=>{
+ const dir='benchmark/independent-source-holdout/';
+ const measurement=JSON.parse(fs.readFileSync(dir+'measurement-39538590277.json'));
+ const original=fs.readFileSync(dir+'locked.json');
+ assert.equal(digest(original),measurement.lockedManifestSha256,'Labels changed after inference');
+ assert.equal(digest(JSON.stringify(measurement.report,null,2)+'\n'),measurement.rawReportSha256,'Stored report differs from original measured output');
+ const locked=JSON.parse(original),source=new Map(locked.photos.map(r=>[r.id,r.sha256]));
+ assert.equal(measurement.report.perPhoto.length,source.size);
+ assert.equal(new Set(measurement.report.perPhoto.map(r=>r.id)).size,source.size);
+ for(const r of measurement.report.perPhoto)assert.equal(r.sourceSha256,source.get(r.id));
+ assert.equal(measurement.report.independentHumanGoldLabels,false);
+ assert.equal(measurement.report.productionPromotion,'BLOCKED');
+});
 test('neutral inference manifest contains no labels or source-title hints',()=>{
  const blind=blindManifest(rows());assert.deepEqual(Object.keys(blind[0]),['id','image','mode']);assert.ok(!JSON.stringify(blind).includes('expectedCategory'));
 });

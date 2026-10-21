@@ -94,7 +94,7 @@ substitute a failed photo or a different revision without a new source lock.
 Workflow artifacts last 14 days; retain a verified archive for longer research.
 Source disappearance must fail a future rerun rather than silently change images.
 
-## Current acquisition checkpoint
+## Initial acquisition checkpoint (historical)
 
 Initial collection run 39537027701 retrieved two new sneaker originals, then
 failed explicitly with HTTP 429 for the third source. Those two images were
@@ -139,3 +139,83 @@ creating a misleading model disagreement. It performs no garment clipping.
 The original source lock is committed before either new inference run. Model
 promotion is still blocked even if discovery results appear perfect. New real
 measurements must be read from final CI; no synthetic scores are used as accuracy.
+
+## Actual new-source model results — discovery evidence, not gold accuracy
+
+[Run 39538590277](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39538590277)
+**SUCCESS** on exact source-lock/inference commit
+`1a1c76c12ab37ab080fd71de1fdda1df4963ebbe`. Both real encoders completed on all
+13 original source files. FashionCLIP reported **13 results, zero inference
+errors**. Full app build/Node suite passed **1,271 / 0 failed / 3 skipped**.
+Chromium and WebKit native JPEG/EXIF/color and untyped-import tests passed;
+original-before-mask source/crop regression passed. These browser fixtures do
+not establish physical-phone capture or customer wardrobe outcomes.
+
+| Measured output against predeclared source/assistant labels | Result |
+|---|---:|
+| Positive garment source images | 12 |
+| Correct broad category across all 12 garments | 10/12 |
+| Specific allowed garment-family output across all 12 | 8/12 |
+| Strong prediction candidates (not actual wardrobe saves) | 9 |
+| Strong candidates matching declared family | 8 |
+| Strong category/family disagreement | 1 |
+| Category-only review outputs | 2 |
+| Full garment abstention | 1 |
+| Non-garment sculpture rejected | 1/1 |
+| Exact two-model agreement would block disagreement | 1 |
+| Exact agreement would also defer correct family matches | 5 |
+
+Sneakers 2/2, boots 2/2, dresses 1/2, skirts 1/2, shorts 2/2 and shirts 0/2
+produced an explicit matching family. Dress #5 and T-shirt #11 were held at a
+correct category with unknown subtype. Skirt #8 abstained. Flannel #12 produced
+strong Outerwear/Jacket instead of the locked source's Tops/Button-down shirt.
+That is a **disagreement with a provisional source label**, not independently
+adjudicated proof of a wrong real customer save: its shirt/jacket material
+boundary was explicitly flagged *before* inference. Do not relabel it after
+seeing the predictions to inflate results.
+
+Raw generic CLIP top-1 labels matched 11/12 broad categories and 9/12 allowed
+families, but have **no calibrated automatic admission policy**. It labeled the
+sculpture a formal dress, one sneaker pair flats, and compression shorts leggings.
+These unfiltered top-1 numbers cannot be compared directly to FashionCLIP's
+abstaining/review-aware outputs as a proof of superior customer accuracy.
+The exact subtype-agreement filter removes the flannel disagreement but loses
+five otherwise matching family decisions (including ankle-versus-tall boots and
+sweater-versus-formal dress differences that this set does not adjudicate).
+**REJECT promotion or replacement on this evidence.** No model/threshold changed.
+
+The immutable measurement wrapper
+`benchmark/independent-source-holdout/measurement-39538590277.json` records the
+actual report, source commit, source-manifest hash and original artifact digest.
+Labels and image hashes remain exactly as committed before inference. The final
+documentation/provenance commit must also pass exact-head regression and real
+inference; read the final draft PR result rather than assuming it is green.
+
+## What the evidence supports next
+
+- Obtain blind independent human labels for the shirt/overshirt boundary,
+  compression shorts/underwear boundary, dress family and boot heights. The
+  exported neutral review HTML/template provides a handoff, not fake approvals.
+- Collect genuinely untouched independent physical-phone examples, including
+  black graphic tees, checker-pattern skirts, worn/flat-laid shirts and jackets,
+  prior failure classes and several non-garment controls. Two samples per family
+  cannot characterize real-world accuracy; public-photo pretraining overlap is
+  unknown. Keep a new confirmation set separate from this now-exposed discovery set.
+- Investigate category-only versus exact-subtype corroboration and better form
+  evidence on *new* confirmation data; do not tune to these 13 or promote unknown
+  subtypes using uncalibrated generic CLIP top-1 scores. Existing original-photo,
+  confirmation, duplicate and review safeguards remain intact.
+- Retain the original source archive and attribution. Review derivatives inherit
+  their source image licenses; this work grants no new blanket asset license.
+
+This assignment delivers source-verified original photos, locked provisional
+labels, reusable scoring/inference and real measured failure evidence. A fully
+independently human-verified gold benchmark and verified classification accuracy
+improvement remain outstanding. No production readiness or 100% claim follows.
+
+Final local regression after adding the measurement/label/hash binding test:
+**1,272 passed, zero failed, three skipped**; 12 focused benchmark-integrity tests
+passed. The source-lock file hash remains
+`0ba1fae03ac1021d6ae58ccf17cd32026aabaa73364cf78618ce1cf7212581d9`.
+Final exact-head workflow must verify this documentation/provenance checkpoint;
+its result and full commit are recorded in draft PR #111.
