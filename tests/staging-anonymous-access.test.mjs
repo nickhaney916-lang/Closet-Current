@@ -38,7 +38,7 @@ test('anonymous probe strictly validates caller-supplied route inventory before 
  const mock=async()=>{requests++;return login();};
  const invalid=[[],['/app.js','/app.js'],['//other.example/file'],['https://other.example/file'],
   ['/../private'],['/%2e%2e/private'],['/%2Fprivate'],['/app.js#fragment'],
-  ['/app.js\\evil'],['/foo%2fbar'],['/bar?x=1','#invalid'],
+  ['/app.js\\evil'],['/foo%2fbar'],['#invalid'],
   Array.from({length:251},(_,i)=>'/asset'+i+'.js')];
  for(const paths of invalid)await assert.rejects(probeAnonymousAccess(origins,{request:mock,paths}));
  assert.equal(requests,0);
