@@ -36,7 +36,7 @@ try{
  for(const [name,engine]of [['chromium',chromium],['webkit',webkit]]){
   const browser=await engine.launch({headless:true});
   try{
-   const context=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true,serviceWorkers:'block'});
+   const context=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true,acceptDownloads:true,serviceWorkers:'block'});
    const page=await context.newPage(),errors=[],external=[];
    page.on('pageerror',e=>errors.push(e.message));
    await context.route('**/*',route=>{
@@ -60,9 +60,10 @@ try{
     document.querySelector('#status').textContent.startsWith('Reports were not accepted.'));
    assert.match(await page.locator('#status').innerText(),/Private files validated/);
    assert.match(await page.locator('#resultsSummary').innerText(),/Release BLOCKED/);
+   const downloadPromise=page.waitForEvent('download');
    await page.locator('#save').click();
-   await page.waitForFunction(()=>document.querySelector('#download').href.startsWith('blob:'));
-   const data=await page.evaluate(async()=>JSON.parse(await(await fetch(document.querySelector('#download').href)).text()));
+   const privateDownload=await downloadPromise;
+   const data=JSON.parse(fs.readFileSync(await privateDownload.path(),'utf8'));
    assert.deepEqual(data,expected,'Offline browser must have byte-equivalent aggregate to canonical Node source');
    assert.equal(data.originalPhotosLinkedAcrossReportFamilies,false);
    assert.equal(data.productionReleaseApproved,false);
