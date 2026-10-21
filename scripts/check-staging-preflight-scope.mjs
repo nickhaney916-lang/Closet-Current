@@ -43,6 +43,8 @@ if(integrated){
  execFileSync(process.execPath,['scripts/check-integrated-security-mobile-staging.mjs'],{stdio:'inherit'});
  if(spawnSync('git',['merge-base','--is-ancestor','3e594a5714b7822ada852cd74d8bc5dc2d51c6ad','HEAD']).status===0)
   execFileSync(process.execPath,['scripts/check-final-integrated-artifact-review.mjs'],{stdio:'inherit'});
+ if(spawnSync('git',['merge-base','--is-ancestor','a62f12448671eaa5a85bd2d45bd1382d1fd699f4','HEAD']).status===0)
+  execFileSync(process.execPath,['scripts/check-integrated-asset-seal.mjs'],{stdio:'inherit'});
 }
 else for(const path of git('diff','--name-only',BASE,'HEAD').split('\n').filter(Boolean)){
  assert.ok(allow.has(path),'Unapproved production or hosted service edit '+path);
