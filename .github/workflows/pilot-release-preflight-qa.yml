@@ -1,0 +1,28 @@
+name: Closet Current pilot release preflight (no deploy)
+on:
+  push:
+    branches: [audit/pilot-release-preflight-20261021]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  safe-preflight-and-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify integrated source and full release safety boundaries
+        run: |
+          git fetch origin main
+          node scripts/check-integrated-pilot-rc.mjs
+          node --test tests/pilot-release-preflight.test.mjs
+          node scripts/audit-pilot-release-preflight.mjs
+      - name: Build and run all Closet Current Node regressions
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
