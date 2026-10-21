@@ -29,6 +29,7 @@ if(spawnSync('git',['merge-base','--is-ancestor','1572145211fbeef582f4286dd3bcb7
 for(const path of ['docs/FINAL-INTEGRATED-PILOT-VALIDATION-20261021.md',
  '.github/workflows/final-integrated-pilot-validation-qa.yml',
  'scripts/check-final-integrated-pilot-validation.mjs'])own.add(path);
+for(const path of ["scripts/linked-phone-garment-evidence.mjs","scripts/build-linked-phone-evidence.mjs","scripts/test-linked-phone-evidence-browsers.mjs","scripts/check-linked-phone-trial-scope.mjs","tests/linked-phone-garment-evidence.test.mjs","tests/build-linked-phone-evidence.test.mjs","docs/LINKED-PHONE-EVIDENCE-20261021.md",".github/workflows/linked-phone-evidence-qa.yml"])own.add(path);
 const pinnedLock=path=>withLock&&lockFiles.has(path)&&!own.has(path);
 const checkLock=path=>assert.equal(git('rev-parse','HEAD:'+path),git('rev-parse',LOCKING+':'+path),'Verified build locking source overwritten: '+path);
 if(withLock)for(const path of git('diff','--name-only',PRIOR_INTEGRATION,'HEAD').split('\n').filter(Boolean)){
