@@ -46,6 +46,9 @@ jobs:
           STYLE_BROWSER=webkit node scripts/test-style-my-new-item-mobile.mjs
       - name: Freeze candidate provenance and output checksums without deployment
         run: |
+          test -z "$(git ls-files artifacts/local-fitting artifacts/style-new-clothes)"
+          mv artifacts/local-fitting "$RUNNER_TEMP/local-fitting"
+          mv artifacts/style-new-clothes "$RUNNER_TEMP/style-new-clothes"
           node scripts/audit-integration-candidate.mjs > "$RUNNER_TEMP/integration-audit.json"
           node scripts/check-customer-pilot-release-gates.mjs
           git rev-parse HEAD > "$RUNNER_TEMP/candidate-commit.txt"
@@ -58,5 +61,7 @@ jobs:
             ${{ runner.temp }}/integration-audit.json
             ${{ runner.temp }}/candidate-commit.txt
             ${{ runner.temp }}/candidate-sha256.txt
+            ${{ runner.temp }}/local-fitting/
+            ${{ runner.temp }}/style-new-clothes/
           retention-days: 14
           if-no-files-found: error
