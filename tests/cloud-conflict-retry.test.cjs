@@ -31,10 +31,12 @@ function database(owner,local,base){
   }
  };
 }
-function setup({remote=doc('Remote'),pauseFirst=false,failFirstRPC=false,loseFirstRPCReply=false}={}){
- const base=doc('Base'),local=doc('Local'),db=database(A,local,base);
+function setup({remote=doc('Remote'),pauseFirst=false,failFirstRPC=false,loseFirstRPCReply=false,losePhotoUploadReply=false}={}){
+ const base=doc('Base'),local=doc('Local');
+ if(losePhotoUploadReply)local.items[0].image='data:image/jpeg;base64,'+Buffer.from([255,216,255,217]).toString('base64');
+ const db=database(A,local,base);
  const initial=defer(),calls=[],timeoutJobs=new Map();
- let timeoutId=0,remoteCalls=0,saves=0,server={revision:2,document:structuredClone(remote)};
+ let timeoutId=0,remoteCalls=0,saves=0,photoPosts=0,photoGets=0,storedPhoto=null,server={revision:2,document:structuredClone(remote)};
  const elements=new Map(['cloudStatus','cloudBanner','syncCloset','resolveCloudConflict'].map(id=>[id,{hidden:false,textContent:'',onclick:null}]));
  const listeners={};
  const auth={user:{id:A},getAccessToken:async()=>auth.user.id};
@@ -44,6 +46,19 @@ function setup({remote=doc('Remote'),pauseFirst=false,failFirstRPC=false,loseFir
   if(u.pathname==='/rest/v1/closet_backups'){
    remoteCalls++;if(pauseFirst&&remoteCalls===1)await initial.promise;
    return {ok:true,status:200,json:async()=>[structuredClone(server)]};
+  }
+  if(u.pathname.startsWith('/storage/v1/object/closet-private/')){
+   assert.ok(u.pathname.includes('/'+A+'/'),'No photo upload for another account');
+   if(options.method==='POST'){
+    photoPosts++;
+    if(storedPhoto)return {ok:false,status:409};
+    storedPhoto=Uint8Array.from(options.body);
+    if(losePhotoUploadReply&&photoPosts===1)throw Error('Network response lost after immutable photo was stored');
+    return {ok:true,status:200};
+   }
+   photoGets++;
+   if(!storedPhoto)return {ok:false,status:404};
+   return {ok:true,status:200,arrayBuffer:async()=>Uint8Array.from(storedPhoto).buffer};
   }
   if(u.pathname==='/rest/v1/rpc/save_closet_backup'){
    saves++;const body=JSON.parse(options.body);
@@ -71,7 +86,7 @@ function setup({remote=doc('Remote'),pauseFirst=false,failFirstRPC=false,loseFir
  };
  const until=async check=>{for(let i=0;i<75&&!check();i++)await tick();assert.ok(check(),'Expected async cloud state');};
  return {cloud:window.closetCloud,window,db,base,local,callbacks,elements,calls,initial,
-  get remoteCalls(){return remoteCalls},get saves(){return saves},get server(){return server},
+  get remoteCalls(){return remoteCalls},get saves(){return saves},get photoPosts(){return photoPosts},get photoGets(){return photoGets},get server(){return server},
   flush,until,listeners};
 }
 test('overlapping Keep both click is not downgraded to an ordinary sync',async()=>{
@@ -136,5 +151,23 @@ test('user-approved conflict resolution does not cross accounts or local databas
  assert.equal(h.saves,0,'Keep both from A cannot be reused by B');
  assert.equal(newDb.content.items.get('shirt').name,'Other owner local');
  assert.equal(h.db.content.items.get('shirt').name,'Local');
+ h.listeners.pagehide[0]();
+});
+
+test('photo upload committed before its reply was lost is hash-checked on retry before preserving both garments',async()=>{
+ const h=setup({losePhotoUploadReply:true});
+ await h.cloud.start(h.db,h.callbacks); // Original conflict still requires explicit selection.
+ await h.cloud.sync({keepBoth:true});
+ assert.equal(h.photoPosts,1);
+ assert.equal(h.saves,0,'Do not commit backup JSON until photo upload succeeds');
+ assert.match(h.elements.get('cloudStatus').textContent,/pending/);
+ await h.flush();await h.until(()=>h.saves===1);
+ assert.equal(h.photoPosts,2,'Retry POST must detect immutable upload already exists');
+ assert.ok(h.photoGets>=2,'Check stored hash on HTTP 409, then restore matching photo');
+ assert.equal(h.server.document.items.length,2);
+ const copied=h.server.document.items.find(x=>x.name==='Local (saved copy)');
+ assert.match(copied.image,/^closet-photo:a1111111-1111-4111-8111-111111111111\/[a-f0-9]{64}\.jpg$/);
+ assert.match(h.db.content.items.get(copied.id).image,/^data:image\/jpeg;base64,/);
+ assert.equal(h.db.content.items.size,2);
  h.listeners.pagehide[0]();
 });
