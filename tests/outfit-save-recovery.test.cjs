@@ -60,6 +60,7 @@ function preview(){
  const c={window:{closetAuth:{user:{id:'one'}}},items:[{id:'shirt',category:'Tops',image:'original-photo',itemType:'T-shirt'}],
   outfitBoardReady:ready,currentBoard:{slots:{}},URL,encodeURIComponent,Date,structuredClone,
   $:id=>{if(!elements.has(id))elements.set(id,{textContent:''});return elements.get(id);},
+  boardWriteContext:()=>({current:()=>c.window.closetAuth?.user?.id==='one'}),
   syncBoardInputs(){},renderOutfitBoard(){},switchView(view){c.view=view;},persistBoardState:()=>persist};
  vm.createContext(c);vm.runInContext(fs.readFileSync('public/outfit-board-engine.js','utf8'),c);
  const source=fs.readFileSync('public/closet-stylist.js','utf8');vm.runInContext(source.slice(0,source.indexOf('function renderStyledCollection(){')),c);
@@ -74,7 +75,7 @@ test('preview opens before persistence finishes, storage failure leaves it usabl
  assert.match(s.c.$('boardSaveStatus').textContent,/preview is available/);assert.equal(s.button.disabled,false);
 });
 test('changed source, swapped option or new request during board readiness cannot hijack current preview',async()=>{
- for(const mutate of [s=>s.c.items[0].image='replaced-photo',s=>s.result.board=board('swapped'),
+ for(const mutate of [s=>s.c.items[0].image='replaced-photo',s=>s.c.items[0].color='Red',s=>s.c.items[0].category='Dresses',s=>s.result.board=board('swapped'),
   s=>vm.runInContext('++stylistRequestRevision',s.c),s=>s.c.window.closetAuth.user.id='other']){
   const s=preview(),p=s.start();mutate(s);s.release();await p;
   assert.equal(s.c.view,undefined);assert.deepEqual(s.c.currentBoard.slots,{});assert.equal(s.button.disabled,false);
