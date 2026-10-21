@@ -1,0 +1,58 @@
+name: Live closet grants read-only review + disposable SQL validation
+on:
+  push:
+    branches: [audit/live-closet-backup-grants-20261021]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  security-catalog:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: closet_privilege_audit
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres -d closet_privilege_audit"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Guard production, database schemas and other work branches
+        run: |
+          set -euo pipefail
+          git diff --name-only 7c5584526bcad0439876aabe1f30889e817806c7 HEAD | while read -r path; do
+            case "$path" in
+              scripts/review-live-backup-catalog.mjs|supabase/audits/read-only-live-backup-grants.sql|tests/live-backup-catalog.test.mjs|.github/workflows/live-closet-grants-audit-qa.yml|docs/LIVE-BACKUP-GRANTS-AUDIT-20261021.md|docs/PROGRESS-CHECKPOINT.md) ;;
+              *) echo "Unexpected production or branch change: $path"; exit 1 ;;
+            esac
+          done
+      - name: Read-only catalog unit tests and full app regression suite
+        run: |
+          node --test tests/live-backup-catalog.test.mjs
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Test existing corrective SQL on disposable local PostgreSQL ONLY
+        env:
+          PGHOST: 127.0.0.1
+          PGPORT: '5432'
+          PGUSER: postgres
+          PGPASSWORD: postgres
+          PGDATABASE: closet_privilege_audit
+        run: |
+          set -euo pipefail
+          command -v psql || (sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client)
+          psql -X -v ON_ERROR_STOP=1 -f tests/backup-rpc-only-writes-postgres.sql
+      - name: Assert no hosted writes or production deployment
+        run: |
+          test -f supabase/audits/read-only-live-backup-grants.sql
+          test ! -f supabase/migrations/20261021_live_backup_privilege_change.sql
+          echo "No hosted database modification or application deployment executed."
