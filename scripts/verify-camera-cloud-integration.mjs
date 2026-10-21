@@ -176,6 +176,14 @@ const allowedSubtypeTrial=new Set([
  '.github/workflows/original-subtype-consensus-trial.yml',
  'docs/ORIGINAL-SUBTYPE-CONSENSUS-TRIAL-20261021.md'
 ]);
+// Research-only second pretrained encoder experiment. Customer classifier,
+// source photo hierarchy, garments and production vector index are immutable.
+const allowedIndependentClip=new Set([
+ 'scripts/independent-clip-subtype-trial.mjs',
+ 'tests/independent-clip-subtype-trial.test.mjs',
+ '.github/workflows/independent-clip-subtype-trial.yml',
+ 'docs/INDEPENDENT-CLIP-SUBTYPE-TRIAL-20261021.md'
+]);
 const allowedWork=new Set([
  'public/app.js',
  'docs/PROGRESS-CHECKPOINT.md',
@@ -205,7 +213,7 @@ const allowedNew=new Set([
 for(const p of new Set([...m.keys(),...head.keys()])){
  if(m.get(p)!==head.get(p)){
   if(p==='public/index.html'||p==='scripts/build.mjs'||p===reviewScript)continue;
-  assert.ok(allowedWork.has(p)||(allowedNew.has(p)&&!m.has(p))||(allowedSecurity.has(p)&&!m.has(p))||(allowedBackupRpc.has(p)&&!m.has(p))||(allowedLocalSupabaseEvidence.has(p)&&!m.has(p))||allowedAuthSession.has(p)||allowedColorEvidence.has(p)||allowedDuplicateQA.has(p)||allowedRecognitionAdmission.has(p)||allowedSubtypeTrial.has(p),
+  assert.ok(allowedWork.has(p)||(allowedNew.has(p)&&!m.has(p))||(allowedSecurity.has(p)&&!m.has(p))||(allowedBackupRpc.has(p)&&!m.has(p))||(allowedLocalSupabaseEvidence.has(p)&&!m.has(p))||allowedAuthSession.has(p)||allowedColorEvidence.has(p)||allowedDuplicateQA.has(p)||allowedRecognitionAdmission.has(p)||allowedSubtypeTrial.has(p)||allowedIndependentClip.has(p),
    'Unreviewed change after merge: '+p);
  }
 }
