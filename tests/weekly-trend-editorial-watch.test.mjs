@@ -7,7 +7,7 @@ const time=s=>new Date(s);
 test('Oct 19 reviewed public catalog is valid and not yet due on Oct 21',()=>{
  const r=auditTrendResearch(seed,time('2026-10-21T18:00:00Z'));
  assert.equal(r.errors.length,0);assert.equal(r.overdue,false);
- assert.equal(r.needsAttention,false);assert.equal(r.updatedAt,seed.updated_at.replace('941252Z','941Z').replace('941Z','941Z')?new Date(seed.updated_at).toISOString():null);
+ assert.equal(r.needsAttention,false);assert.equal(r.updatedAt,new Date(seed.updated_at).toISOString());
  assert.ok(r.counts.publicationSites>=6);assert.ok(r.counts.retailerSites>=6);
  assert.equal(r.automaticPublication,false);assert.equal(r.linksLiveChecked,false);
  assert.equal(r.sourceRotationVerifiedAgainstPriorWeeks,false);
