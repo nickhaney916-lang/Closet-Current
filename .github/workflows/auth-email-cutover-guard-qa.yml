@@ -1,0 +1,33 @@
+name: Canonical Auth email redirect cutover guard QA
+on:
+  push:
+    branches: [fix/auth-redirect-origin-cutover-guard-20261020]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  email-cutover-guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate source and exact email return-route safety
+        run: |
+          node --check public/auth.js
+          node --check scripts/check-auth-email-cutover.mjs
+          node scripts/check-auth-email-cutover.mjs
+          node --test tests/auth-email-cutover.test.mjs tests/auth.test.cjs
+      - name: Full Closet Current regression suite and build
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Guard immutable original-photo classification and block unapproved release
+        run: |
+          node scripts/verify-camera-cloud-integration.mjs
+          node scripts/check-dual-parent-review-integration.mjs
+          node scripts/check-customer-pilot-release-gates.mjs
