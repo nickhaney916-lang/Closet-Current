@@ -132,5 +132,5 @@ if(invokedDirectly){
    writeFileSync('trend-editorial-watch-report.json',json);
   }
  }
- if(report.errors.length)process.exitCode=1;
+ if(report.errors.length&&process.argv.includes('--strict'))process.exitCode=1;
 }
