@@ -1,3 +1,13 @@
+# Restricted staging owner authorization — October 21, 2026
+
+- Owner explicitly APPROVED preparing private staging only, without any production changes or paid services. A public preview, billable Supabase project, production merge, and real customer database access remain **unauthorized**.
+- New isolated **draft PR #145** on top of fully verified PR #143 SHA `fd70faa88fb6245e4b065aae3158531b715498e9`: a fail-closed staging-specific builder rewrites Auth, backup, callback and try-on references to an *independent* Supabase staging project, adds a visible disposable-account staging label and new immutable release fingerprint, turns paid AI hard-OFF and rejects both existing Closet Current/Drive Duel project refs. Production app source, original photos, project schemas and deployment workflows remain byte-identical. The build tool and test evidence are in `docs/RESTRICTED-STAGING-SETUP-20261021.md`.
+- Initial isolated source guard/full Node regression and synthetic staging bundle QA GitHub Actions **#39654764676 COMPLETED SUCCESS**, 1,476 passed, 0 failed, 3 skipped. This proves only staging *preparation* and isolation, NOT a hosted environment or real hardware. Final source SHA and CI must be rechecked after this checkpoint update.
+- **BLOCKING real staging:** the account lists only the existing Closet Current and Drive Duel Supabase projects, not an empty staging project. Creation requires selection of the specific Supabase organization and cost checks; no paid resources may be started without separate approval. The existing Cloudflare Pages project is production; Cloudflare Access for a NEW staging Pages project must be applied and independently verified before any upload (Pages previews are PUBLIC by default). Staging Auth redirect allowlist/email and two-account isolation must also be verified.
+- No staging site was deployed. Real Android/iPhone tests = 0; independent human-gold recognition accuracy = null; production promotion **BLOCKED**. See issue #144 and draft PR #145. Drive Duel unchanged.
+
+---
+
 # Easier no-install private full phone pilot results review — October 21, 2026
 
 - **New engineering priority:** draft PR #143, stacked on verified PR #142 source `214b5ef9ac6ace22dcb81b25e7761bc4439eca61`. It creates a standalone offline `OPEN-PRIVATE-PILOT-REVIEW.html` and a short setup guide from the unchanged canonical 17-step Android/iPhone, model-proposal and actual saved-closet validators. No Node, terminal, online account or upload is needed to compare all three report families.

@@ -1,0 +1,40 @@
+name: Restricted staging preparation - safe build QA only
+on:
+  push:
+    branches: [staging/restricted-preview-preflight-20261021]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  fail-closed-bundle-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prove all live files and previous integrated source untouched
+        run: |
+          node scripts/check-integrated-pilot-rc.mjs
+          node scripts/check-staging-preflight-scope.mjs
+      - name: Full Node regression suite and production-source app build
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Build synthetic isolated staging fixture (no real credentials or network writes)
+        env:
+          CLOSET_STAGING_APP_ORIGIN: https://preview.closet-current-staging.pages.dev/
+          CLOSET_STAGING_SUPABASE_URL: https://abcdefghijklmnopqrst.supabase.co
+          CLOSET_STAGING_SUPABASE_PUBLISHABLE_KEY: sb_publishable_STAGING_TEST_FIXTURE_XYZ001
+        run: |
+          node scripts/build-restricted-staging.mjs
+          node scripts/verify-restricted-staging-bundle.mjs
+      - name: Confirm no staging/production deployment action exists
+        run: |
+          test ! -d .github/workflows/private-deploy
+          grep -q "restrictedStagingDeployed:false" scripts/build-restricted-staging.mjs
+          grep -q "privateCloudflareAccessPolicyVerified:false" scripts/build-restricted-staging.mjs
+          echo "NO DEPLOYMENT WAS EXECUTED. Synthetic build is discarded."
