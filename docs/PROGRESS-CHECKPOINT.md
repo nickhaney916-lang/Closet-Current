@@ -1,3 +1,12 @@
+# Generated staging mobile browser runtime verification — October 21, 2026
+
+- New isolated `test/staging-runtime-isolation-20261021` from verified PR #148 `de3a93d7e86231d950cbc152d5ffcecd63db0aac` adds real Chromium/WebKit execution of the synthetic generated staging app, with all external traffic intercepted before navigation.
+- Tests signed-out gating, staging-only login/reset callbacks, automatic/manual empty-closet backup reads and paid try-on refusal before fetch. No customer data or hosted database requests; service workers blocked for interception, so installed PWA behavior is outside this test.
+- Customer runtime/photo recognition/wardrobe, schema and production workflows unchanged. Local full regression and exact-head browser CI results will be recorded in the draft PR; no hosted/device/email/RLS validation is claimed.
+- Real private staging remains blocked by the free-project cap and unverified Cloudflare Access setup. No paid resource, merge/deployment or Drive Duel changes; production promotion BLOCKED.
+
+---
+
 # Integrated restricted staging safeguards — assignment #148, October 21, 2026
 
 - New isolated integration from PR #147 `7c5584526bcad0439876aabe1f30889e817806c7` plus PR #146 `2b2423b1fae5af5f9f9d7def94162a3b5e166b38`; original branches untouched. Both historical checkpoint entries preserved below.

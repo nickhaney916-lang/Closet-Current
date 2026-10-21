@@ -6,6 +6,9 @@ const BASE='fd70faa88fb6245e4b065aae3158531b715498e9';
 const git=(...a)=>execFileSync('git',a,{encoding:'utf8'}).trim();
 execFileSync('git',['merge-base','--is-ancestor',BASE,'HEAD']);
 const allow=new Set([
+ 'scripts/test-staging-runtime-browsers.mjs',
+ '.github/workflows/staging-runtime-browser-qa.yml',
+ 'docs/STAGING-RUNTIME-BROWSERS-20261021.md',
  'scripts/check-staging-anonymous-access.mjs',
  'tests/staging-anonymous-access.test.mjs',
  'docs/STAGING-ANONYMOUS-ACCESS-20261021.md',
