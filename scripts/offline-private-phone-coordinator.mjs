@@ -19,7 +19,8 @@ export function privatePhonePilotHTML(){
  })+';\n'+original.replace(expected,'').replace(
   'export function comparePrivatePhonePilotReports(',
   'function comparePrivatePhonePilotReports(');
- const script=(injected+'\n'+PAGE_SCRIPT).replace(/<\\/script/gi,'<\\/script');
+ const script=injected+'\n'+PAGE_SCRIPT;
+ assert.ok(!script.toLowerCase().includes('</script'),'Unsafe raw embedded comparison script');
  return HTML.replace('__COMPARE_AND_UI__',script);
 }
 export function writePrivatePhonePilotCoordinator(directory){
