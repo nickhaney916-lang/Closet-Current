@@ -1,3 +1,11 @@
+# Easier no-install private full phone pilot results review — October 21, 2026
+
+- **New engineering priority:** draft PR #143, stacked on verified PR #142 source `214b5ef9ac6ace22dcb81b25e7761bc4439eca61`. It creates a standalone offline `OPEN-PRIVATE-PILOT-REVIEW.html` and a short setup guide from the unchanged canonical 17-step Android/iPhone, model-proposal and actual saved-closet validators. No Node, terminal, online account or upload is needed to compare all three report families.
+- The page validates app fingerprint consistency, strictly enumerated labels, private/forged report rejection, summaries and replays; shows model versus actually saved outcomes **separately** and invalidates stale output when any file changes. It can export only privacy-redacted aggregate JSON. CI publishes **only source-generated blank HTML/instructions**, never customer data. Its source-bundle/parity test and the existing whole-app/Chromium/WebKit workflows must pass at final SHA.
+- This addition changes no production runtime, camera/recognizer, saved wardrobe, Supabase/Auth, original-photo evidence, hosting, license policy or Drive Duel. The reviewer cannot authenticate physical phones, humans or same originals across forms. Real physical phone evidence = 0 supplied, independent human originals = 0; actual saved accuracy = null; promotion `BLOCKED`. See `docs/OFFLINE-PILOT-COHORT-REVIEW-20261021.md` and PR #143.
+
+---
+
 # Cross-check owner-run phone evidence against the actual saved closet — October 21, 2026
 
 - **Next isolated development priority:** draft PR #142 on top of verified PR #141, adding a redacted local-only audit that reconciles three existing independently validated report families: Android/iPhone 17-step device checklist, original-photo model recognition proposals, and final actual My Closet category/type/color outcomes.
