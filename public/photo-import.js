@@ -42,8 +42,6 @@ async function photoToJPEG(file,{maxDimension=3072,quality=.94,maxDataURLLength=
     const jpeg=canvas.toDataURL('image/jpeg',jpegQuality);
     if(jpeg==='data:,')throw Error('Unable to encode this image.');
     if(jpeg.length<=maxDataURLLength)return jpeg;
-    // Let touch/paint run between expensive JPEG retries.
-    if(typeof setTimeout==='function')await new Promise(resolve=>setTimeout(resolve,0));
    }
    // Only reduce pixel dimensions after bounded quality attempts fail.
    // Every output still stays inside the existing backup/image-string budget.
