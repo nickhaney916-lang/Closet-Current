@@ -1,3 +1,9 @@
+# Private real-phone pilot evidence coordinator — October 21, 2026
+
+- Separate from Work mode's recognition tasks and the existing camera/import PRs. Reuses the exact frozen Node 17-check Android/iPhone validator in an offline operator page with two local file uploads and a redacted download; no photos, names, cloud writes or credentials.
+- Source/runtime and authentication/recognition/figure/closet files are byte-identical to verified PR125. Retain original human recognition accuracy null and real-phone validation false until privately supplied authentic physical-device evidence has been independently checked.
+- Full source/regression/Chromium/WebKit suite must pass on final head; no merge/deploy, paid AI, production approval. See `docs/OFFLINE-PRIVATE-PHONE-PILOT-20261021.md`.
+
 # Native camera still bounded high-detail JPEG fallback — October 21, 2026 Pacific
 
 - Builds on validated draft PR #123: original ImageCapture sensor still now tries JPEG quality .94/.88/.82 at the same 3072/2560/2048/1536/1024 pixel frame before dropping resolution. This changes no model, detection/classification order, user wardrobe, original review packet, cloud SQL or paid inference.
