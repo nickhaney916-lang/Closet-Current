@@ -33,12 +33,16 @@ try{
     if(init)await ctx.addInitScript(init);
     await ctx.route('**/cloud-backup.js*',route=>route.fulfill({contentType:'text/javascript',body:
      'window.closetCloud={beforeWrite:async()=>{},changed(){},start(){}};'}));
-    await ctx.route('https://**',async route=>{
+    await ctx.route('https://**',route=>route.abort('internetdisconnected'));
+    await ctx.route(endpoint+'**',async route=>{
      const req=route.request(),url=req.url();
      if(!url.startsWith(endpoint))return route.abort('internetdisconnected');
      let body={};try{body=req.postDataJSON()||{};}catch{}
-     const path=url.slice(endpoint.length);calls.push({path,method:req.method(),type:body.type||null});
-     const reply=(data,status=200)=>route.fulfill({status,contentType:'application/json',body:JSON.stringify(data)});
+     const path=new URL(url).pathname.replace('/auth/v1/','');
+     const headers={'Access-Control-Allow-Origin':'*','Access-Control-Allow-Methods':'GET,POST,PUT,OPTIONS','Access-Control-Allow-Headers':'apikey,content-type,authorization'};
+     if(req.method()==='OPTIONS')return route.fulfill({status:204,headers});
+     calls.push({path,method:req.method(),type:body.type||null});
+     const reply=(data,status=200)=>route.fulfill({status,headers,contentType:'application/json',body:JSON.stringify(data)});
      if(path.startsWith('resend')||path.startsWith('recover'))return reply({});
      if(path.startsWith('signup'))return reply({user:{id:A,email:'a@example.invalid'}});
      if(path==='verify')return reply(session(body.type==='recovery'?B:A));
@@ -73,7 +77,7 @@ try{
     await page.locator('#authPasswordToggle').click();assert.equal(await page.locator('#authPassword').getAttribute('type'),'password');
     await page.locator('#authEmail').fill('a@example.invalid');
     await page.locator('#authResend').click();await page.getByText(/fresh confirmation link has been requested/).waitFor();
-    assert.equal(calls.filter(x=>x.path.startsWith('resend')).length,1);assert.equal(calls[0].type,'signup');
+    assert.equal(calls.filter(x=>x.path.startsWith('resend')).length,1,JSON.stringify(calls));assert.equal(calls[0].type,'signup');
     await page.locator('#authReset').click();await page.getByText(/If the address is registered/).waitFor();
     assert.equal(calls.filter(x=>x.path.startsWith('recover')).length,1);
     assert.equal(await page.locator('#appShell').isHidden(),true);
