@@ -1,3 +1,11 @@
+# Disposable local Auth email verification — October 20, 2026 Pacific
+
+- From draft PR #100 `fefdd165cb1ec66bb935a516598829e435a8f128`, isolated `qa/disposable-auth-email-link-20261020`.
+- Dedicated synthetic-local acceptance uses Supabase CLI 2.121.0 Auth plus Mailpit, **not hosted SMTP**. Config is modified only in `RUNNER_TEMP`; tests real confirmation email, explicitly allowlisted GitHub Pages + Cloudflare redirect destinations, rejected unconfirmed/reused links, valid local user session, password recovery and old-password invalidation.
+- Tests never contact hosted Auth, follow a one-time link into a deployed site, send external messages, log actual tokens/identity, or touch real users/photos. Real hosted dashboard allowlist, sender/domain and external inbox receipts remain unverified.
+- Add dedicated workflow, refusal-of-hosted-execution tests, historical provenance gates, and `docs/DISPOSABLE-AUTH-EMAIL-REAL-SERVICE-20261020.md`.
+- Exact-head real local mail acceptance result must be read from GitHub Actions before declaring this discrete task verified; **not** production pilot approval. No hosted migration, merge, paid services, or Drive Duel modifications.
+
 # Read-only live Auth email/domain preflight — October 20, 2026 Pacific
 
 - Based on verified draft PR #99, exact source commit `4b87db357fcf29d08979983c4a2b8415e77c1fbc`, isolated branch `qa/live-auth-domain-readiness-20261020`.
