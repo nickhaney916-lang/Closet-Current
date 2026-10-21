@@ -10,7 +10,7 @@ env:
   PYTHONDONTWRITEBYTECODE: '1'
 jobs:
   collect-before-inference:
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[collect]')
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -22,7 +22,7 @@ jobs:
       - name: Recover already acquired source bytes from the initial partial collection
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh run download 39537027701 -n new-source-originals-before-inference -D "$RUNNER_TEMP/new-originals"
+        run: gh run download 39537145147 -n new-source-originals-before-inference -D "$RUNNER_TEMP/new-originals"
       - name: Acquire new original JPEG photographs and record immutable hashes; no model run
         env:
           HOLDOUT_OUTPUT: ${{ runner.temp }}/new-originals

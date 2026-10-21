@@ -130,6 +130,9 @@ async function collect(){
  const input=JSON.parse(fs.readFileSync(DIRECTORY+(fs.existsSync(DIRECTORY+'/locked.json')?'/locked.json':'/candidates.json')));
  validateRows(input.photos);const out=process.env.HOLDOUT_OUTPUT||'/tmp/closet-independent-holdout';fs.mkdirSync(out,{recursive:true});
  const sharp=(await import('sharp')).default,rows=[];
+ const cooldown=path.join(out,'retry-after.json');
+ if(fs.existsSync(cooldown))assert.ok(Date.now()>=JSON.parse(fs.readFileSync(cooldown)).resumeAfter,
+  'Source server cooldown has not expired; do not send another request');
  for(const r of input.photos){
   let bytes,last;
   const cached=path.join(out,r.image);
@@ -141,8 +144,12 @@ async function collect(){
    if(attempt)await new Promise(ok=>setTimeout(ok,10000*attempt));
    const response=await fetch(r.downloadUrl,{headers:{'User-Agent':'ClosetCurrentResearch/1.0 (source provenance; github.com/nickhaney916-lang/Closet-Current)'},signal:AbortSignal.timeout(45000)});
    if(response.status===429){
-    const seconds=Number(response.headers.get('retry-after'));
-    if(Number.isFinite(seconds)&&seconds>0)await new Promise(ok=>setTimeout(ok,Math.min(seconds,120)*1000));
+    const header=response.headers.get('retry-after');
+    const seconds=header&&Number.isFinite(Number(header))?Number(header):Math.max(0,(Date.parse(header)-Date.now())/1000)||60;
+    fs.writeFileSync(cooldown,JSON.stringify({id:r.id,resumeAfter:Date.now()+seconds*1000}));
+    console.log('SOURCE_RATE_LIMIT '+r.id+' waitSeconds='+Math.ceil(seconds));
+    if(seconds>120){last='Source requires a longer cooldown; recorded retry-after.json';break;}
+    if(seconds>0)await new Promise(ok=>setTimeout(ok,seconds*1000));
    }
    assert.ok(response.ok,'HTTP '+response.status);assert.equal(new URL(response.url).hostname,'upload.wikimedia.org');
    const b=Buffer.from(await response.arrayBuffer());assert.ok(b.length>1000&&b.length<16*1024*1024);
