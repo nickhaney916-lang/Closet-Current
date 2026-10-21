@@ -11,7 +11,7 @@ export const PATHS=['/','/index.html','/app.js','/auth.js','/cloud-backup.js',
  '/saved-closet-audit.html','/app.js?v=anonymous-access-probe'];
 const MAX_PATHS=250,WORKERS=12;
 function checkedPath(path){
- if(typeof path!=='string'||path.length<2||path.length>1024||
+ if(typeof path!=='string'||path.length<1||path.length>1024||
   !path.startsWith('/')||path.startsWith('//')||
   path.includes('\\')||/[\u0000-\u001f\u007f#]/.test(path))
   throw Error('Invalid staging route to probe.');
