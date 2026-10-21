@@ -8,7 +8,7 @@ const source=p=>execFileSync('git',['show',BASE+':'+p],{encoding:'utf8'});
 assert.equal(git('merge-base','HEAD',BASE),BASE);
 const pins={"public/app.js": "298f97788067dec698df88257f556775e9b1fb37", "public/index.html": "106316b96ac4e93e984a78e94dfc940dee40e053", "public/photo-import.js": "b82a641d6a232dd7644fb1237a5f9862e6ca704e"};
 for(const [p,sha]of Object.entries(pins))assert.equal(git('rev-parse','HEAD:'+p),sha,'Unexpected source: '+p);
-const allowed=new Set(["public/app.js", "public/index.html", "public/photo-import.js", "tests/mobile-draft-storage.test.cjs", "tests/mobile-photo-resource-release.test.cjs", "tests/photo-resolution.test.cjs", "tests/photo-import-untyped-and-timeout.test.cjs", "scripts/test-mobile-memory-storage-browsers.mjs", "scripts/check-mobile-memory-storage-scope.mjs", ".github/workflows/mobile-memory-storage-qa.yml", "docs/MOBILE-MEMORY-STORAGE-20261021.md", "docs/PROGRESS-CHECKPOINT.md"]);
+const allowed=new Set(["public/app.js", "public/index.html", "public/photo-import.js", "scripts/test-photo-batch-owner-mobile.mjs", "tests/mobile-draft-storage.test.cjs", "tests/mobile-photo-resource-release.test.cjs", "tests/photo-resolution.test.cjs", "tests/photo-import-untyped-and-timeout.test.cjs", "scripts/test-mobile-memory-storage-browsers.mjs", "scripts/check-mobile-memory-storage-scope.mjs", ".github/workflows/mobile-memory-storage-qa.yml", "docs/MOBILE-MEMORY-STORAGE-20261021.md", "docs/PROGRESS-CHECKPOINT.md"]);
 for(const p of git('diff','--name-only',BASE,'HEAD').split('\n').filter(Boolean))assert.ok(allowed.has(p),'Unrelated source/evidence changed: '+p);
 let current=fs.readFileSync('public/app.js','utf8'),old=source('public/app.js');
 const start=current.indexOf('let pendingDraftWrite='),end=current.indexOf('function readDraft()',start);
@@ -17,6 +17,11 @@ const oldStart=old.indexOf('function persistDraft()'),oldEnd=old.indexOf('functi
 current=current.slice(0,start)+old.slice(oldStart,oldEnd)+current.slice(end);
 current=current.split('\n').filter(line=>!line.startsWith("$('retryDraftSave').onclick=")).join('\n');
 assert.equal(current,old,'App outside draft persistence/retry must remain byte-identical, including classifier/save/video/account import logic');
+const oldHarness=source('scripts/test-photo-batch-owner-mobile.mjs').replace(
+ "   let finish;\n   photoToJPEG=()=>new Promise(resolve=>finish=resolve);",
+ "   let finish,enteredDecode;\n   const decodeStarted=new Promise(resolve=>enteredDecode=resolve);\n   photoToJPEG=()=>new Promise(resolve=>{finish=resolve;enteredDecode();});"
+).replace("   window.closetAuth.user.id='test-owner-b';", "   await decodeStarted; // The importer now yields before starting each decode.\n   window.closetAuth.user.id='test-owner-b';");
+assert.equal(fs.readFileSync('scripts/test-photo-batch-owner-mobile.mjs','utf8'),oldHarness,'Keep every account switch assertion; only await actual decode entry');
 for(const p of ['public/auth.js','public/cloud-backup.js','public/cloud-backup-engine.js','public/cloud-backup-bridge.js','public/trends.js','public/photo-color.js','public/recognition-engine.mjs','public/recognition-photo.mjs','public/outfit-board.js','public/closet-stylist.js','public/outfit-board-engine.js','public/reusable-figure-preview.js'])assert.equal(git('rev-parse','HEAD:'+p),git('rev-parse',BASE+':'+p),'Protected source changed: '+p);
 assert.equal(git('rev-parse','HEAD:benchmark'),git('rev-parse',BASE+':benchmark'));
 assert.equal(git('rev-parse','HEAD:supabase'),git('rev-parse',BASE+':supabase'));
