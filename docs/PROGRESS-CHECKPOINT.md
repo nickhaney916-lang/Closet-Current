@@ -1,3 +1,11 @@
+# Verified staging photo backup recovery — October 21, 2026
+
+- Draft PR #152 implementation source `414c44508b4af70ea8e81e3750c14e181d738c1c`, tree `9414fd478cfdaf99eb3618d6d9d7f6cf212a4562`, verified in GitHub Actions browser isolation #39675138532 and camera/indexing #39675138533, both SUCCESS. Full suite: **1,490 passed, 0 failed, 3 skipped**; source guards and synthetic bundle verification PASS.
+- Android Chromium and iPhone WebKit both PASS: generated JPEG upload/reference-only metadata, identical-byte restoration in a fresh browser partition, offline edit retention through reload and explicit saved-login retry, lost committed RPC response retry without duplication, corrupt downloaded photo rejected before IndexedDB restore then recovered. Zero attempted live database requests and browser exceptions; paid inference blocked.
+- Synthetic intercepted replies only. No real hosted Auth/RLS/Storage/email/Cloudflare Access, physical phone, installed PWA or human garment accuracy claimed. No customer runtime, original-photo recognition, schema, production workflow, Drive Duel, paid resource, merge or deployment changed. Production promotion remains BLOCKED. Next: genuinely free separate staging and protected hostname setup, then disposable-account and physical-device validation.
+
+---
+
 # Photo-bearing staging backup recovery — October 21, 2026
 
 - Isolated continuation from verified draft PR #150 SHA `0dbcab844ea5e0d48aa0cacbf08d22ff1ff5c33d` adds generated-JPEG save/restore, offline reload/retry, lost RPC response and corrupt-photo recovery scenarios to actual generated staging app browser QA. No customer runtime, original-photo recognition, wardrobe source, Supabase schema, production hosting or Drive Duel changes.
