@@ -86,9 +86,9 @@ try{
     IDBDatabase.prototype.transaction=function(...args){const tx=window.nativeTransaction.apply(this,args);if(args[1]!=='readwrite')return tx;const store=tx.objectStore.bind(tx);tx.objectStore=name=>{const s=store(name),put=s.put.bind(s);s.put=row=>{if(name==='state'&&row.id==='draft')throw new DOMException('Synthetic full storage','QuotaExceededError');return put(row);};return s;};return tx;};
     batch=[normalizeClothing({id:'quota-pending',name:'Not yet saved',category:'Uncategorized',image:window.testOriginalPhoto,localAnalyzed:true})];
     const succeeded=await persistDraft();IDBDatabase.prototype.transaction=window.nativeTransaction;
-    switchView('review');return {succeeded,priorDraftPreserved:JSON.stringify(await readDraft())===JSON.stringify(previous),wardrobeUnchanged:JSON.stringify(await readAll())===saved,pending:batch.length,status:$('draftSaveStatus').textContent};
+    switchView('review');return {succeeded,priorDraftPreserved:JSON.stringify(await readDraft())===JSON.stringify(previous),wardrobeUnchanged:JSON.stringify(await readAll())===saved,pending:batch.length,cloudRestoreHeld:window.closetUnsavedDraftOwner===window.closetAuth.user.id,status:$('draftSaveStatus').textContent};
    });
-   assert.equal(quota.succeeded,false);assert.equal(quota.priorDraftPreserved,true);assert.equal(quota.wardrobeUnchanged,true);assert.equal(quota.pending,1);assert.match(quota.status,/storage is full/);
+   assert.equal(quota.succeeded,false);assert.equal(quota.priorDraftPreserved,true);assert.equal(quota.wardrobeUnchanged,true);assert.equal(quota.pending,1);assert.equal(quota.cloudRestoreHeld,true);assert.match(quota.status,/storage is full/);
    await page.locator('#retryDraftSave').tap();await page.waitForFunction(()=>document.getElementById('retryDraftSave').hidden);
    assert.equal(await page.evaluate(async()=>(await readDraft())[0].id),'quota-pending');
    const requestPinned=await page.evaluate(async()=>{

@@ -43,6 +43,7 @@ function persistDraft(){
  if(!current())return Promise.resolve(false);
  // Coalesce only adjacent draft requests. An intervening garment/state write
  // is an ordering barrier; never move a draft update across that transaction.
+ window.closetUnsavedDraftOwner=owner;
  const metadata=draftMetadataSnapshot(batch);
  if(pendingDraftWrite&&!pendingDraftWrite.started&&pendingDraftWrite.tail===writes&&pendingDraftWrite.database===database&&pendingDraftWrite.owner===owner){pendingDraftWrite.snapshot=metadata;return pendingDraftWrite.promise;}
  const request={owner,database,started:false,snapshot:metadata};
@@ -64,7 +65,7 @@ function persistDraft(){
  });
  writes=result.catch(()=>{});request.tail=writes;
  request.promise=result.then(()=>{
-  if(current()){$('draftSaveStatus').textContent='';$('retryDraftSave').hidden=true;window.closetCloud?.changed();}
+  if(current()){if(pendingDraftWrite===request)window.closetUnsavedDraftOwner=null;$('draftSaveStatus').textContent='';$('retryDraftSave').hidden=true;window.closetCloud?.changed();}
   return true;
  },error=>{
   if(current()){

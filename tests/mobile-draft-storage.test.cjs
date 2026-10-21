@@ -53,3 +53,11 @@ test('a new database and a signed-out account cannot persist the old draft',asyn
 test('a cloud reload replacing the global batch cannot discard photos requested before the queue runs',async()=>{
  const h=setup();h.c.batch=[photo(0)];const p=h.c.persistDraft();h.c.batch=[];h.release();assert.equal(await p,true);assert.equal(h.rows[0].batch.length,1);assert.equal(h.rows[0].batch[0].id,'photo-0');
 });
+
+test('cloud restore defers while this account has pending/failed drafts and resumes after durable retry',async()=>{
+ const h=setup();h.c.batch.push(photo(0));h.c.quota=true;const p=h.c.persistDraft();h.release();assert.equal(await p,false);assert.equal(h.c.window.closetUnsavedDraftOwner,'alice');
+ let callbacks;Object.assign(h.c,{closetReady:Promise.resolve(),outfitBoardReady:Promise.resolve(),inspirationReady:Promise.resolve(),busy:false,automaticRunning:false,memoryReviewRunning:false,document:{querySelector:()=>null}});h.c.window.closetCloud.start=async(_,cb)=>{callbacks=cb;};
+ vm.runInContext(fs.readFileSync('public/cloud-backup-bridge.js','utf8'),h.c);await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(callbacks.canRestore(),false);h.c.window.closetAuth.user.id='bob';assert.equal(callbacks.canRestore(),true,'old owner draft does not block another owner');h.c.window.closetAuth.user.id='alice';
+ h.c.quota=false;assert.equal(await h.c.persistDraft(),true);assert.equal(callbacks.canRestore(),true);assert.equal(h.c.window.closetUnsavedDraftOwner,null);
+});
