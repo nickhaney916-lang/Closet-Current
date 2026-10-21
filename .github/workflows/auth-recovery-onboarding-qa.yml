@@ -1,0 +1,57 @@
+name: Pilot login recovery onboarding and account separation
+on:
+  push:
+    branches: [fix/pilot-auth-recovery-onboarding-20261021]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-and-all-node:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Scope Auth changes and preserve original trend and pilot proofs
+        run: |
+          node scripts/check-auth-recovery-onboarding-scope.mjs
+          git worktree add --detach "$RUNNER_TEMP/pr129" df6dfa071838c054ac8f3f26a64985252e1050e0
+          (cd "$RUNNER_TEMP/pr129" && node scripts/check-trend-cache-bundled-scope.mjs)
+          git worktree add --detach "$RUNNER_TEMP/pr127" 46f9c521466976b4ec238d24b1eb1d7871e3bffb
+          (cd "$RUNNER_TEMP/pr127" && node scripts/check-offline-private-phone-scope.mjs)
+          git worktree add --detach "$RUNNER_TEMP/pr125" 623eb4af070b6caece11247e79eb3494d8450f98
+          (cd "$RUNNER_TEMP/pr125" && node scripts/check-native-still-detail-budget-scope.mjs && node scripts/verify-camera-cloud-integration.mjs)
+          node scripts/check-customer-pilot-release-gates.mjs
+      - name: Build and every regression including disabled deletion safeguards
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+  mobile-auth-and-owner-recovery:
+    needs: source-and-all-node
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned Android Chromium and iPhone WebKit
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install --with-deps chromium webkit
+      - name: Actual Auth UI, interrupted recovery and shared-device IndexedDB
+        run: |
+          node scripts/build.mjs
+          node scripts/test-auth-recovery-onboarding-mobile.mjs
+          node scripts/test-auth-email-mobile-browsers.mjs
+          node scripts/test-cloud-session-generation-browsers.mjs
+          node scripts/test-cloud-conflict-retry-browsers.mjs
+          node scripts/test-trend-cache-fallback-browsers.mjs
+          STYLE_BROWSER=chromium node scripts/test-style-my-new-item-mobile.mjs
+          STYLE_BROWSER=webkit node scripts/test-style-my-new-item-mobile.mjs
