@@ -69,5 +69,38 @@ node scripts/original-representation-stability.mjs score /tmp/repr-results /tmp/
 Use a clean checkout and fresh output directory. The preparation command refuses
 to overwrite prior generated inputs. No customer photo/wardrobe saves, physical
 phones, paid AI, live Supabase/Auth/customer data, deployment or Drive Duel access.
-Actual measurements are pending their Actions run; software fixture tests are
-not model evidence.
+## Actual result
+
+Actions **39542114849 SUCCESS** at source commit
+`dc2684b290e7526c79e83209a7135f587bd2ca92`: all **39 actual FashionCLIP
+inferences completed with zero errors**, on the same **13** original sources.
+All 13 PNG derivations passed exact oriented Sharp RGB equality and every
+prepared file hash was rechecked after inference.
+
+| Comparison | Matching decisions | Changed strong decisions | Strong deferred / newly strong |
+|---|---:|---:|---:|
+| Full-frame PNG versus original JPEG | 13/13 | 0 | 0 / 0 |
+| 2048-pixel JPEG versus original JPEG | 13/13 | 0 | 0 / 0 |
+| Original-byte decisions versus historical #111 | 13/13 | — | — |
+
+The tested re-encodings did not explain the previously observed classification
+disagreements in these 13 sources, and they did not fix them. Do not change the
+customer encoder, thresholds or model from this diagnostic. This is bounded
+repeatability evidence, not independently verified accuracy or universal file
+format/phone robustness. All original provisional-label limitations persist.
+
+The downloaded artifact **12320196606**, 205,090 bytes, archive SHA-256
+`c08b4668da195519d4d074bb526456bed315a1a1f4024492d8732cfa4404fa08`,
+contains full raw inference/diagnostics, lineage, neutral manifest and report;
+expires November 4 UTC. Recomputed its complete report locally from downloaded
+raw inference with the stricter category/type validator; it matched exactly.
+`benchmark/representation-stability/measurement.json` retains the report,
+complete derivation/model lineage and compact actual decision projection, plus
+raw-file/report/lineage/projection hash receipts and exact source run/commit.
+Projection is not a second model run; full diagnostic bytes stay in the artifact.
+
+Source-run full Node suite: **1,292 passed / zero failed / three skipped**;
+Chromium/WebKit original JPEG/EXIF/import and Chromium original-crop checks passed.
+The final measurement-binding regression and documentation commit require their
+own exact-head full suite and actual-model/browser reproduction; read draft
+PR #116 for final verified SHA/run. Software fixtures are never model evidence.

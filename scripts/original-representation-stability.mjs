@@ -5,11 +5,13 @@ import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import {packetFromLock,LOCK,LOCK_SHA,hash} from './source-holdout-human-review.mjs';
+import {localCandidates} from '../public/local-catalog.mjs';
 export const BASE='71053247402d2e428044ef38b359057011335823';
 export const variants=['original','png-full','jpeg-2048-q94'];
 export const modelFiles=['public/local-worker.mjs','public/local-catalog.mjs','public/recognition-engine.mjs','public/recognition-photo.mjs','public/recognition-vectors.bin','public/recognition-vectors.json','public/benchmark-runner.mjs'];
 export const modelPins=()=>Object.fromEntries(modelFiles.map(p=>[p,hash(fs.readFileSync(p))]));
 export function validateLineage(lineage){
+ assert.equal(lineage.schemaVersion,1,'Unsupported lineage schema');
  const packet=packetFromLock(fs.readFileSync(LOCK));
  assert.equal(lineage.lockedManifestSha256,LOCK_SHA,'Source lock mismatch');
  assert.deepEqual(lineage.modelPins,modelPins(),'Recognition/runner source changed');
@@ -41,7 +43,9 @@ export function decision(p){
  assert.ok((category===null||typeof category==='string')&&(type===null||typeof type==='string'));
  assert.equal(typeof p.strong,'boolean');assert.equal(typeof p.categoryConfirmed,'boolean');
  assert.ok(!p.strong||!p.categoryConfirmed&&category&&category!=='Uncategorized'&&type&&type!=='Unknown','Malformed strong decision');
+ assert.ok(!p.strong||localCandidates.some(c=>c.category===category&&c.itemType===type),'Unknown strong category/type');
  assert.ok(!p.categoryConfirmed||!p.strong&&category&&category!=='Uncategorized'&&type==='Unknown','Malformed category review');
+ assert.ok(!p.categoryConfirmed||localCandidates.some(c=>c.category===category),'Unknown category review');
  return {category,type,strong:p.strong,categoryConfirmed:p.categoryConfirmed};
 }
 export function score(lineage,predictions){

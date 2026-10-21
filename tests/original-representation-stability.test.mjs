@@ -11,6 +11,18 @@ const lineage=()=>({schemaVersion:1,lockedManifestSha256:LOCK_SHA,modelPins:mode
 })))});
 const historical=JSON.parse(fs.readFileSync('benchmark/independent-source-holdout/measurement-39538590277.json')).report.perPhoto;
 const predictions=l=>l.rows.map(r=>{const h=historical.find(p=>p.id===r.sourceId);return {id:r.id,prediction:h.prediction,strong:h.strong,categoryConfirmed:h.categoryConfirmed};});
+test('stored actual measurement replays every compact decision against the frozen source/model lineage',()=>{
+ const m=JSON.parse(fs.readFileSync('benchmark/representation-stability/measurement.json'));
+ assert.equal(hash(JSON.stringify(m.report,null,2)+'\n'),m.reportFileSha256);
+ assert.equal(hash(JSON.stringify(m.lineage,null,2)+'\n'),m.lineageFileSha256);
+ assert.equal(hash(JSON.stringify(m.decisions)),m.decisionProjectionSha256);
+ const replay=score(m.lineage,m.decisions);
+ // Projection deliberately omits raw per-inference diagnostics/timing; raw file
+ // and complete-report hashes remain pinned to the downloaded Actions artifact.
+ assert.deepEqual({...replay,rawResultsSha256:m.report.rawResultsSha256},m.report);
+ assert.equal(m.report.measuredAccuracy,null);assert.equal(m.report.productionPromotion,'BLOCKED');
+ assert.equal(m.run,39542114849);assert.equal(m.sourceCommit,'dc2684b290e7526c79e83209a7135f587bd2ca92');
+});
 test('complete stable diagnostic counts 13 sources separately from 39 inferences and never reports accuracy',()=>{
  const l=lineage(),r=score(l,predictions(l));assert.equal(r.sourceCount,13);assert.equal(r.inferenceCount,39);
  assert.equal(r.historicalOriginalDecisionsMatched,13);assert.equal(r.summary['png-full'].sameDecision,13);
@@ -46,7 +58,7 @@ test('missing, duplicate, unsupported and over-resized representations cannot be
  }
 });
 test('malformed flags and missing prediction fields fail closed',()=>{
- for(const mutate of [p=>p[0].strong='true',p=>p[0].categoryConfirmed=true,p=>delete p[0].prediction,p=>p[0].prediction={category:'Shoes',type:'Unknown'}]){
+ for(const mutate of [p=>p[0].strong='true',p=>p[0].categoryConfirmed=true,p=>delete p[0].prediction,p=>p[0].prediction={category:'Shoes',type:'Unknown'},p=>p[0].prediction={category:'Shoes',type:'Made-up type'},p=>Object.assign(p[0],{prediction:{category:'Fake category',type:'Unknown'},strong:false,categoryConfirmed:true})]){
   const l=lineage(),p=predictions(l);mutate(p);assert.throws(()=>score(l,p));
  }
 });
