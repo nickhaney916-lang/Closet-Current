@@ -1,3 +1,11 @@
+# Auth session race closure — October 20, 2026 Pacific
+
+- Based on PR #97's verified local Supabase stack commit `ce48891500b6c2afa1e35cdda427ec5ef4413af5`, isolated branch `fix/auth-refresh-logout-session-race-20261020`.
+- Prevent an in-flight Auth token refresh from writing old credentials or reopening a wardrobe after logout: retire session and clear token locally before remote logout, guard delayed refresh against exact source session/user/auth version, serialize concurrent refresh and duplicate logout.
+- Add three concrete deferred-response and successful refresh regression tests, a full-suite CI workflow, source-lineage gate allowlist, and `docs/AUTH-SESSION-LIFECYCLE-20261020.md`.
+- Verified predecessor code head `dacd19f38cebc80b63fc9723c8829a49ee8afb9c`: [GitHub Actions #39523352012](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39523352012) **SUCCESS**; full Node suite **1,205 passed / 0 failed / 3 skipped**, targeted Auth/cloud session checks **39 passed**, source parent lineage and customer release veto both passed. This checkpoint-only update changes no application code.
+- Do not merge/deploy or change hosted Auth/SMTP redirects, paid services, customer data, Drive Duel or original photo/mask sources. External inbox and physical-device verification remain release blockers.
+
 # Camera startup and recovery — October 20, 2026 Pacific
 
 - Isolated `fix/camera-startup-recovery-20261020` based on PR #89 exact

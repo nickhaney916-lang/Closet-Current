@@ -297,3 +297,71 @@ test('pilot notice metadata rejects false acknowledgement and invalid times',()=
  assert.match(html,/not final Terms of Service/);
  assert.match(fs.readFileSync('public/index.html','utf8'),/href="pilot-data-notice.html"/);
 });
+
+
+test('pending refresh cannot resurrect wardrobe after logout begins',async()=>{
+ let releaseRefresh,releaseLogout;
+ const a=app(url=>{
+  if(url.includes('grant_type=password'))
+   return Promise.resolve(response({access_token:'old-access',refresh_token:'old-refresh',user:{id:'owner-A'}}));
+  if(url.includes('grant_type=refresh_token'))
+   return new Promise(resolve=>{releaseRefresh=resolve;});
+  if(url.endsWith('/logout'))
+   return new Promise(resolve=>{releaseLogout=resolve;});
+  throw Error('Unexpected authentication request');
+ });
+ await a.submit();
+ const refreshing=a.window.closetAuth.getAccessToken({force:true});
+ const loggingOut=a.get('logout').onclick();
+ assert.equal(a.window.closetAuth.user,null,'logout locks the old account synchronously');
+ assert.equal(a.get('appShell').hidden,true);
+ assert.equal(a.get('authGate').hidden,false);
+ assert.equal(a.saved.has('closet-current-auth-v1'),false);
+ assert.match(a.get('authStatus').textContent,/Signing out/);
+ assert.equal(a.get('authSubmit').disabled,true,'cannot begin a new login during remote logout');
+ releaseRefresh(response({access_token:'late-access',refresh_token:'late-refresh',user:{id:'owner-A'}}));
+ await assert.rejects(refreshing,/Session account changed/);
+ assert.equal(a.window.closetAuth.user,null);
+ assert.equal(a.saved.has('closet-current-auth-v1'),false,'late refresh never stores old credentials');
+ await assert.rejects(a.window.closetAuth.getAccessToken(),/Sign in required/);
+ releaseLogout(response({}));
+ await loggingOut;
+ assert.equal(a.reloaded(),true);
+ assert.equal(a.saved.has('closet-current-auth-v1'),false);
+});
+test('repeated signout does not send repeated server calls and locks on network error',async()=>{
+ const a=app(async url=>{
+  if(url.includes('grant_type=password'))
+   return response({access_token:'old-access',refresh_token:'old-refresh',user:{id:'owner-A'}});
+  if(url.endsWith('/logout'))throw new TypeError('offline');
+  throw Error('Unexpected authentication request');
+ });
+ await a.submit();
+ const first=a.get('logout').onclick(),second=a.get('logout').onclick();
+ await Promise.all([first,second]);
+ assert.equal(a.requests.filter(([url])=>url.endsWith('/logout')).length,1);
+ assert.equal(a.window.closetAuth.user,null);
+ assert.equal(a.saved.has('closet-current-auth-v1'),false);
+ assert.equal(a.reloaded(),true);
+});
+test('normal refresh rotates credentials once and preserves original account',async()=>{
+ let requests=0;
+ const a=app(async url=>{
+  if(url.includes('grant_type=password'))
+   return response({access_token:'original',refresh_token:'original-refresh',user:{id:'owner-A'}});
+  if(url.includes('grant_type=refresh_token')){
+   requests++;
+   return response({access_token:'rotated',refresh_token:'rotated-refresh',user:{id:'owner-A'}});
+  }
+  throw Error('Unexpected authentication request');
+ });
+ await a.submit();
+ const tokens=await Promise.all([
+  a.window.closetAuth.getAccessToken({force:true}),
+  a.window.closetAuth.getAccessToken({force:true})
+ ]);
+ assert.equal(requests,1);
+ assert.deepEqual(tokens,['rotated','rotated']);
+ assert.equal(a.window.closetAuth.user.id,'owner-A');
+ assert.equal(JSON.parse(a.saved.get('closet-current-auth-v1')).refresh_token,'rotated-refresh');
+});

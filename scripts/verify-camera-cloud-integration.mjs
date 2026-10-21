@@ -95,6 +95,14 @@ const allowedLocalSupabaseEvidence=new Set([
  '.github/workflows/local-supabase-backup-rpc-security.yml',
  'docs/LOCAL-SUPABASE-BACKUP-RPC-EVIDENCE-20261020.md'
 ]);
+// Post-security continuation: only Auth session closure and its isolated tests.
+// This grants no change to camera, original-photo recognition, Storage or masks.
+const allowedAuthSession=new Set([
+ 'public/auth.js',
+ 'tests/auth.test.cjs',
+ '.github/workflows/auth-session-race-qa.yml',
+ 'docs/AUTH-SESSION-LIFECYCLE-20261020.md'
+]);
 const allowedWork=new Set([
  'public/app.js',
  'docs/PROGRESS-CHECKPOINT.md',
@@ -124,7 +132,7 @@ const allowedNew=new Set([
 for(const p of new Set([...m.keys(),...head.keys()])){
  if(m.get(p)!==head.get(p)){
   if(p==='public/index.html'||p==='scripts/build.mjs'||p===reviewScript)continue;
-  assert.ok(allowedWork.has(p)||(allowedNew.has(p)&&!m.has(p))||(allowedSecurity.has(p)&&!m.has(p))||(allowedBackupRpc.has(p)&&!m.has(p))||(allowedLocalSupabaseEvidence.has(p)&&!m.has(p)),
+  assert.ok(allowedWork.has(p)||(allowedNew.has(p)&&!m.has(p))||(allowedSecurity.has(p)&&!m.has(p))||(allowedBackupRpc.has(p)&&!m.has(p))||(allowedLocalSupabaseEvidence.has(p)&&!m.has(p))||allowedAuthSession.has(p),
    'Unreviewed change after merge: '+p);
  }
 }

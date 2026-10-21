@@ -1,0 +1,31 @@
+name: Auth logout and refresh lifecycle safety
+on:
+  push:
+    branches: [fix/auth-refresh-logout-session-race-20261020]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  auth-session-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check Auth JavaScript syntax and targeted regressions
+        run: |
+          node --check public/auth.js
+          node --test tests/auth.test.cjs tests/cloud-session-generation.test.cjs
+      - name: Build and run full app regression suite
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Verify independent source lineage and release veto
+        run: |
+          node scripts/verify-camera-cloud-integration.mjs
+          node scripts/check-dual-parent-review-integration.mjs
+          node scripts/check-customer-pilot-release-gates.mjs
