@@ -109,6 +109,9 @@ GRANT EXECUTE ON FUNCTION closet_rpc_private.save_checked(bigint,jsonb)
  TO authenticated;
 RESET ROLE;
 REVOKE closet_backup_writer FROM CURRENT_USER;
+-- PostgreSQL 16+ may retain an implicit ADMIN membership for CREATEROLE
+-- creators; this does NOT imply SET ROLE permission. Verify that the
+-- migration executor cannot assume the private writer after this step.
 
 -- Retain exact original PostgREST RPC path, argument names and JSON return.
 -- A private function could also be called directly by an authenticated SQL
@@ -141,12 +144,12 @@ BEGIN
   has_table_privilege('authenticated','public.closet_backups','TRUNCATE'),
   has_table_privilege('authenticated','public.closet_backups','SELECT'),
   has_table_privilege('anon','public.closet_backups','SELECT');
- RAISE NOTICE 'BACKUP_RPC_ROLE_FLAGS functions: anon_public=% auth_public=% anon_private=% auth_private=% writer_member_admin=% writer_member_auth=%',
+ RAISE NOTICE 'BACKUP_RPC_ROLE_FLAGS functions: anon_public=% auth_public=% anon_private=% auth_private=% writer_can_set_admin=% writer_member_auth=%',
   has_function_privilege('anon','public.save_closet_backup(bigint,jsonb)','EXECUTE'),
   has_function_privilege('authenticated','public.save_closet_backup(bigint,jsonb)','EXECUTE'),
   has_function_privilege('anon','closet_rpc_private.save_checked(bigint,jsonb)','EXECUTE'),
   has_function_privilege('authenticated','closet_rpc_private.save_checked(bigint,jsonb)','EXECUTE'),
-  pg_has_role(CURRENT_USER,'closet_backup_writer','MEMBER'),
+  pg_has_role(CURRENT_USER,'closet_backup_writer','SET'),
   pg_has_role('authenticated','closet_backup_writer','MEMBER');
  RAISE NOTICE 'BACKUP_RPC_ROLE_FLAGS ownership: table_writer=% private_definer=% private_writer=% public_definer=%',
   (SELECT c.relowner = 'closet_backup_writer'::regrole FROM pg_class c WHERE c.oid='public.closet_backups'::regclass),
@@ -163,7 +166,7 @@ BEGIN
  OR NOT has_function_privilege('authenticated','public.save_closet_backup(bigint,jsonb)','EXECUTE')
  OR NOT has_function_privilege('authenticated','closet_rpc_private.save_checked(bigint,jsonb)','EXECUTE')
  OR has_function_privilege('anon','closet_rpc_private.save_checked(bigint,jsonb)','EXECUTE')
- OR pg_has_role(CURRENT_USER,'closet_backup_writer','MEMBER')
+ OR pg_has_role(CURRENT_USER,'closet_backup_writer','SET')
  OR pg_has_role('authenticated','closet_backup_writer','MEMBER')
  OR pg_has_role('anon','closet_backup_writer','MEMBER')
  OR (SELECT rolcanlogin OR rolbypassrls FROM pg_roles
