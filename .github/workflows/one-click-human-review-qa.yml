@@ -57,6 +57,7 @@ jobs:
         run: |
           mkdir -p "$RUNNER_TEMP/one-click-evidence"
           node scripts/test-one-click-human-review-browsers.mjs "$RUNNER_TEMP/one-click-review" "$RUNNER_TEMP/one-click-evidence/browsers.json"
+          node scripts/build.mjs
           node scripts/test-original-crop-source-mobile.mjs
           node scripts/test-native-camera-fidelity-mobile.mjs
       - uses: actions/upload-artifact@v4
