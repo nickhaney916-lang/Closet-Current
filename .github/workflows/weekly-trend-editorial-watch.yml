@@ -1,0 +1,76 @@
+name: Weekly Closet Current fashion research freshness watch
+
+on:
+  schedule:
+    - cron: '17 17 * * 1'
+  workflow_dispatch:
+  push:
+    branches:
+      - feature/weekly-trend-editorial-watch-20261021
+
+permissions:
+  contents: read
+
+jobs:
+  audit-and-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    outputs:
+      needs_attention: ${{ steps.audit.outputs.needs_attention }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Guarantee no editor bypass, catalogue rewrite or customer code change
+        run: node scripts/check-weekly-trend-watch-scope.mjs
+      - name: Audit current recorded editorial date without live-price claims
+        id: audit
+        run: node scripts/audit-weekly-trend-readiness.mjs
+      - name: Full Closet Current build and existing regression suite
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Preserve non-personal editorial audit evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: trend-editorial-watch-report
+          path: trend-editorial-watch-report.json
+          retention-days: 14
+  maintainer-alert:
+    needs: audit-and-regression
+    if: ${{ github.ref == 'refs/heads/main' && needs.audit-and-regression.outputs.needs_attention == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: trend-editorial-watch-report
+      - name: Create or update exactly one open fashion editorial issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const packet = JSON.parse(fs.readFileSync('trend-editorial-watch-report.json','utf8'));
+            if (!packet.report?.needsAttention || !packet.issue) return;
+            const marker = '<!-- closet-current-weekly-trend-editorial-watch -->';
+            if (!packet.issue.body.includes(marker)) throw Error('Expected editorial issue marker missing.');
+            const {owner,repo} = context.repo;
+            const issues = await github.paginate(github.rest.issues.listForRepo,
+              {owner,repo,state:'open',per_page:100});
+            const existing = issues.find(item => !item.pull_request && item.body?.includes(marker));
+            if (existing) {
+              if (existing.body !== packet.issue.body)
+                await github.rest.issues.update({owner,repo,issue_number:existing.number,body:packet.issue.body});
+              core.info('Existing fashion research issue retained: #' + existing.number);
+            } else {
+              const created = await github.rest.issues.create({
+                owner,repo,title:packet.issue.title,body:packet.issue.body
+              });
+              core.info('One fashion research issue created: #' + created.data.number);
+            }
