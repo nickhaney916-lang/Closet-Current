@@ -1,0 +1,76 @@
+name: Original RGB multi-framing subtype review research
+on:
+  push:
+    branches: [research/original-photo-subtype-consensus-20261021]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  candidate-safety-and-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Synthetic ambiguity and cross-frame subtype review tests
+        run: |
+          node --check scripts/trial-original-subtype-consensus.mjs
+          node --test tests/original-subtype-consensus-trial.test.mjs tests/skirt-dress-recovery-gate.test.mjs tests/recognition-regression.test.mjs
+      - name: Complete application regression plus immutable photo/figure provenance
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+          node scripts/verify-camera-cloud-integration.mjs
+          node scripts/check-dual-parent-review-integration.mjs
+          node scripts/check-customer-pilot-release-gates.mjs
+  model-original-photo-frame-trial:
+    needs: candidate-safety-and-regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify original SHA-256 licensed images before any model inference
+        shell: bash
+        run: |
+          set -euo pipefail
+          ids="$(node --input-type=module -e "import fs from 'node:fs';const a=['benchmark/manifest-reviewed-32.json','benchmark/manifest-holdout-16.json'].flatMap(f=>JSON.parse(fs.readFileSync(f,'utf8')).map(x=>x.id));console.log([...new Set(a)].join(','))")"
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos "$ids"
+          node scripts/download-reviewed-photos.mjs benchmark/manifest-fresh-11.json benchmark/photos
+      - name: Install Chromium to exercise pinned local FashionCLIP
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium
+      - name: Build unchanged wardrobe/recognition code
+        run: node scripts/build.mjs
+      - name: Measure original-photo subtype decisions with three extra independent framings
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/run-browser-photo-benchmark.mjs benchmark/manifest-reviewed-32.json benchmark/original-frame-trial/reviewed-32 --subtype-audit
+          node scripts/run-browser-photo-benchmark.mjs benchmark/manifest-holdout-16.json benchmark/original-frame-trial/holdout-16 --subtype-audit
+          node scripts/run-browser-photo-benchmark.mjs benchmark/manifest-fresh-11.json benchmark/original-frame-trial/fresh-11 --subtype-audit
+      - name: Compare hypothetical strict/balanced review policies without saving clothes
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/trial-original-subtype-consensus.mjs benchmark/manifest-reviewed-32.json benchmark/original-frame-trial/reviewed-32/results.json benchmark/manifest-holdout-16.json benchmark/original-frame-trial/holdout-16/results.json benchmark/manifest-fresh-11.json benchmark/original-frame-trial/fresh-11/results.json | tee benchmark/original-frame-trial/policy-report.jsonl
+          node scripts/audit-recognition-admission.mjs --fresh benchmark/manifest-reviewed-32.json benchmark/original-frame-trial/reviewed-32/results.json benchmark/manifest-holdout-16.json benchmark/original-frame-trial/holdout-16/results.json benchmark/manifest-fresh-11.json benchmark/original-frame-trial/fresh-11/results.json | tee benchmark/original-frame-trial/original-model-admission.jsonl
+          node scripts/check-customer-pilot-release-gates.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: original-photo-subtype-consensus-trial
+          path: |
+            benchmark/original-frame-trial/*/results.json
+            benchmark/original-frame-trial/policy-report.jsonl
+            benchmark/original-frame-trial/original-model-admission.jsonl
+          if-no-files-found: warn
+          retention-days: 14
