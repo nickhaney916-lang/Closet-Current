@@ -1,0 +1,24 @@
+// Assignment 136: bounded temporary resources/draft persistence, no recognition/backup integration.
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+import {execFileSync} from 'node:child_process';
+const BASE='8fbe7096e655f06dd9d414521f32d1a11182c322';
+const git=(...args)=>execFileSync('git',args,{encoding:'utf8',maxBuffer:20000000}).trim();
+const source=p=>execFileSync('git',['show',BASE+':'+p],{encoding:'utf8'});
+assert.equal(git('merge-base','HEAD',BASE),BASE);
+const pins={"public/app.js": "298f97788067dec698df88257f556775e9b1fb37", "public/index.html": "106316b96ac4e93e984a78e94dfc940dee40e053", "public/photo-import.js": "b82a641d6a232dd7644fb1237a5f9862e6ca704e"};
+for(const [p,sha]of Object.entries(pins))assert.equal(git('rev-parse','HEAD:'+p),sha,'Unexpected source: '+p);
+const allowed=new Set(["public/app.js", "public/index.html", "public/photo-import.js", "tests/mobile-draft-storage.test.cjs", "tests/mobile-photo-resource-release.test.cjs", "tests/photo-resolution.test.cjs", "tests/photo-import-untyped-and-timeout.test.cjs", "scripts/test-mobile-memory-storage-browsers.mjs", "scripts/check-mobile-memory-storage-scope.mjs", ".github/workflows/mobile-memory-storage-qa.yml", "docs/MOBILE-MEMORY-STORAGE-20261021.md", "docs/PROGRESS-CHECKPOINT.md"]);
+for(const p of git('diff','--name-only',BASE,'HEAD').split('\n').filter(Boolean))assert.ok(allowed.has(p),'Unrelated source/evidence changed: '+p);
+let current=fs.readFileSync('public/app.js','utf8'),old=source('public/app.js');
+const start=current.indexOf('let pendingDraftWrite='),end=current.indexOf('function readDraft()',start);
+assert.ok(start>0&&end>start);
+const oldStart=old.indexOf('function persistDraft()'),oldEnd=old.indexOf('function readDraft()',oldStart);
+current=current.slice(0,start)+old.slice(oldStart,oldEnd)+current.slice(end);
+current=current.split('\n').filter(line=>!line.startsWith("$('retryDraftSave').onclick=")).join('\n');
+assert.equal(current,old,'App outside draft persistence/retry must remain byte-identical, including classifier/save/video/account import logic');
+for(const p of ['public/auth.js','public/cloud-backup.js','public/cloud-backup-engine.js','public/cloud-backup-bridge.js','public/trends.js','public/photo-color.js','public/recognition-engine.mjs','public/recognition-photo.mjs','public/outfit-board.js','public/closet-stylist.js','public/outfit-board-engine.js','public/reusable-figure-preview.js'])assert.equal(git('rev-parse','HEAD:'+p),git('rev-parse',BASE+':'+p),'Protected source changed: '+p);
+assert.equal(git('rev-parse','HEAD:benchmark'),git('rev-parse',BASE+':benchmark'));
+assert.equal(git('rev-parse','HEAD:supabase'),git('rev-parse',BASE+':supabase'));
+assert.ok(fs.readFileSync('docs/PROGRESS-CHECKPOINT.md','utf8').endsWith(source('docs/PROGRESS-CHECKPOINT.md')));
+console.log(JSON.stringify({scope:'TEMPORARY_PHOTO_BUFFERS_AND_DRAFT_STORAGE_ONLY',photoAdmission135Unchanged:true,video133Unchanged:true,recognitionSaveAndAccountLogicUnchanged:true,backup134NotIntegrated:true,reviewEvidenceUnchanged:true,physicalPhone:false,paidCalls:false,merged:false,deployed:false}));

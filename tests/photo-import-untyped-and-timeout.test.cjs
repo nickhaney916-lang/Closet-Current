@@ -50,7 +50,7 @@ test('a never-settling decoder becomes a recoverable timeout and its object URL 
 test('valid photo decodes and yields high-quality JPEG with bounded original-first source dimensions',async()=>{
  let released=0,painted=0,reported=null,dimensions;
  const outCanvas={width:0,height:0,getContext:()=>({
-  fillRect:()=>{},drawImage(...args){painted++;reported=args;}
+  fillRect:()=>{},drawImage(...args){painted++;reported=args;dimensions=[outCanvas.width,outCanvas.height];}
  }),toDataURL:(mime,quality)=>{
   assert.equal(mime,'image/jpeg');assert.equal(quality,.94);return 'data:image/jpeg;base64,SYNTHETIC';
  }};
@@ -61,8 +61,8 @@ test('valid photo decodes and yields high-quality JPEG with bounded original-fir
  });
  const photo=await c.photoToJPEG(upload('original.PNG','image/png'));
  assert.equal(photo,'data:image/jpeg;base64,SYNTHETIC');
- assert.equal(outCanvas.width,3072);
- assert.equal(outCanvas.height,2304);
+ assert.deepEqual(dimensions,[3072,2304]);
+ assert.equal(outCanvas.width,0);assert.equal(outCanvas.height,0);
  assert.equal(painted,1);
  assert.equal(released,1);
 });
@@ -96,16 +96,16 @@ test('adaptive import retries a smaller pixel frame instead of storing an oversi
  assert.equal(revoked,1);
 });
 test('small imports retain native dimensions, and impossible JPEG budgets fail without saving',async()=>{
- let released=0,draws=0;
- const canvas={width:0,height:0,getContext(){return {fillRect(){},drawImage(){draws++;}}},toDataURL(){return 'X'.repeat(2850001);}};
+ let released=0,draws=0,drawnSize;
+ const canvas={width:0,height:0,getContext(){return {fillRect(){},drawImage(){draws++;drawnSize=[canvas.width,canvas.height];}}},toDataURL(){return 'X'.repeat(2850001);}};
  const c=runIn({
   URL:{createObjectURL:()=> 'blob:source',revokeObjectURL:()=>{released++;}},
   Image:class{constructor(){this.width=800;this.height=600;}async decode(){}},
   document:{createElement:()=>canvas}
  });
  await assert.rejects(c.photoToJPEG(upload('too-detailed.jpg','image/jpeg')), /too large after conversion/);
- assert.equal(canvas.width,800);
- assert.equal(canvas.height,600);
+ assert.deepEqual(drawnSize,[800,600]);
+ assert.equal(canvas.width,0);assert.equal(canvas.height,0);
  assert.ok(draws>=1);
  assert.equal(released,1);
 });

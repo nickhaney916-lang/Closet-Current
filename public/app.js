@@ -25,7 +25,45 @@ function openDB(){return new Promise((resolve,reject)=>{const r=indexedDB.open('
 function readAll(){return new Promise((resolve,reject)=>{const r=db.transaction('items').objectStore('items').getAll();r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});}
 function writeAll(values){return queued(()=>new Promise((resolve,reject)=>{const tx=db.transaction('items','readwrite');for(const v of values)tx.objectStore('items').put(v);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);}));}
 function removeItem(id){return queued(()=>new Promise((resolve,reject)=>{const tx=db.transaction('items','readwrite');tx.objectStore('items').delete(id);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);}));}
-function persistDraft(){if(!db)return;const snapshot=structuredClone(batch);return queued(()=>new Promise((resolve,reject)=>{const tx=db.transaction('state','readwrite');tx.objectStore('state').put({id:'draft',batch:snapshot});tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);})).catch(()=>message('Your unfinished scan could not be backed up. Keep this page open and save or export your pieces.'));}
+let pendingDraftWrite=null;
+function persistDraft(){
+ if(!db)return Promise.resolve(false);
+ const owner=window.closetAuth?.user?.id,database=db;
+ const current=()=>!!owner&&window.closetAuth?.user?.id===owner&&db===database&&database.name==='closet-current-user-'+owner;
+ if(!current())return Promise.resolve(false);
+ // Coalesce only adjacent draft requests. An intervening garment/state write
+ // is an ordering barrier; never move a draft update across that transaction.
+ if(pendingDraftWrite&&!pendingDraftWrite.started&&pendingDraftWrite.tail===writes&&pendingDraftWrite.database===database&&pendingDraftWrite.owner===owner)return pendingDraftWrite.promise;
+ const request={owner,database,started:false};
+ const result=writes.then(async()=>{
+  if(!current())throw Error('Draft account changed');
+  await window.closetCloud?.beforeWrite(database);
+  if(!current())throw Error('Draft account changed');
+  request.started=true;
+  // Capture once when this slot runs, not N full high-resolution copies while
+  // cloud preflight/storage is blocked. Keep the latest unfinished photos.
+  const snapshot=structuredClone(batch);
+  return new Promise((resolve,reject)=>{
+   const tx=database.transaction('state','readwrite');
+   tx.objectStore('state').put({id:'draft',batch:snapshot});
+   tx.oncomplete=()=>current()?resolve():reject(Error('Draft account changed'));
+   tx.onerror=()=>reject(tx.error||Error('Draft storage failed'));
+   tx.onabort=()=>reject(tx.error||Error('Draft storage stopped'));
+  });
+ });
+ writes=result.catch(()=>{});request.tail=writes;
+ request.promise=result.then(()=>{
+  if(current()){$('draftSaveStatus').textContent='';$('retryDraftSave').hidden=true;window.closetCloud?.changed();}
+  return true;
+ },error=>{
+  if(current()){
+   const text=error?.name==='QuotaExceededError'?'Device storage is full. Unfinished photos are only in this open page. Keep it open, make space, then tap Retry saving photos. Your saved closet has not been deleted.':'Unfinished photos could not be saved on this device. Keep this page open and tap Retry saving photos. Your saved closet is kept.';
+   $('draftSaveStatus').textContent=text;$('retryDraftSave').hidden=false;message(text);
+  }
+  return false;
+ }).finally(()=>{if(pendingDraftWrite===request)pendingDraftWrite=null;});
+ pendingDraftWrite=request;return request.promise;
+}
 function readDraft(){return new Promise((resolve,reject)=>{const r=db.transaction('state').objectStore('state').get('draft');r.onsuccess=()=>resolve(r.result?.batch||[]);r.onerror=()=>reject(r.error);});}
 function savePiece(value,nextBatch){return queued(()=>new Promise((resolve,reject)=>{const tx=db.transaction(['items','state'],'readwrite');tx.objectStore('items').put(value);tx.objectStore('state').put({id:'draft',batch:structuredClone(nextBatch)});tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);}));}
 function node(tag,text,className){const n=document.createElement(tag);if(text)n.textContent=text;if(className)n.className=className;return n;}
@@ -793,6 +831,7 @@ async function upload(file){
  }
 }
 $('upload').onchange=e=>{upload(e.target.files[0]);e.target.value='';};
+$('retryDraftSave').onclick=async()=>{const button=$('retryDraftSave');button.disabled=true;try{if(await persistDraft())message('Unfinished photos saved on this device. Check Photo results before closing; they are not yet confirmed closet pieces.');}finally{button.disabled=false;}};
 $('discard').onclick=()=>{if(batch.length&&confirm('Discard all unsaved images in this batch?')){batch=[];persistDraft();session=0;render();}};
 $('export').onclick=async()=>{if(typeof outfitBoardReady!=='undefined')await outfitBoardReady;if(!items.length&&(typeof inspirationLooks==='undefined'||!inspirationLooks.length))return message('Save a closet piece or inspiration look before exporting.');const blob=new Blob([JSON.stringify({format:'closet-current',version:3,items,looks:typeof inspirationLooks!=='undefined'?inspirationLooks:[],outfitBoard:typeof boardBackup==='function'?boardBackup():undefined})],{type:'application/json'}),url=URL.createObjectURL(blob),a=node('a');a.href=url;a.download='closet-current-backup.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);message('Backup downloaded. Keep it somewhere you can find again.');};
 $('import').onchange=async e=>{const file=e.target.files[0];e.target.value='';if(!file)return;if(!db)return message('Browser storage is unavailable.');if(file.size>100*1024*1024)return message('Backup must be smaller than 100 MB.');try{const data=JSON.parse(await file.text());if(data.format!=='closet-current'||![1,2,3].includes(data.version)||!Array.isArray(data.items)||data.items.length>1000)throw Error('Choose a Closet Current backup.');const valid=data.items.map(x=>{if(typeof x.id!=='string'||!x.id||typeof x.image!=='string'||!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(x.image)||x.image.length>3000000)throw Error('Backup contains an invalid image.');return normalizeClothing({...x,id:x.id.slice(0,100),image:x.image,name:String(x.name||'Closet piece').slice(0,120),category:categories.includes(x.category)?x.category:'Uncategorized',color:String(x.color||'').slice(0,120),notes:String(x.notes||'').slice(0,500),savedAt:String(x.savedAt||'')});});if(data.looks){if(!Array.isArray(data.looks)||data.looks.length>100)throw Error('Invalid inspiration backup.');data.looks=data.looks.map(validLook);}if(!confirm(`Import ${valid.length} pieces? Matching IDs will update existing pieces.`))return;await writeAll(valid);items=(await readAll()).map(normalizeClothing);if(data.looks)await importLooks(data.looks);if(data.outfitBoard&&typeof importBoardBackup==='function')await importBoardBackup(data.outfitBoard);render();message('Backup imported.');}catch(err){message(err.message||'Import failed.');}};
