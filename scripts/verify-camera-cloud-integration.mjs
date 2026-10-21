@@ -160,6 +160,14 @@ const allowedDuplicateQA=new Set([
  '.github/workflows/duplicate-indexing-commit-qa.yml',
  'docs/DUPLICATE-SAFE-INDEXING-20261020.md'
 ]);
+// The recognition admission continuation is evaluation-only. It cannot
+// modify real recognizer code, vectors, customer photos or original-photo masks.
+const allowedRecognitionAdmission=new Set([
+ 'scripts/audit-recognition-admission.mjs',
+ 'tests/real-photo-recognition-admission.test.mjs',
+ '.github/workflows/real-photo-recognition-admission-qa.yml',
+ 'docs/REAL-PHOTO-RECOGNITION-ADMISSION-20261020.md'
+]);
 const allowedWork=new Set([
  'public/app.js',
  'docs/PROGRESS-CHECKPOINT.md',
@@ -189,7 +197,7 @@ const allowedNew=new Set([
 for(const p of new Set([...m.keys(),...head.keys()])){
  if(m.get(p)!==head.get(p)){
   if(p==='public/index.html'||p==='scripts/build.mjs'||p===reviewScript)continue;
-  assert.ok(allowedWork.has(p)||(allowedNew.has(p)&&!m.has(p))||(allowedSecurity.has(p)&&!m.has(p))||(allowedBackupRpc.has(p)&&!m.has(p))||(allowedLocalSupabaseEvidence.has(p)&&!m.has(p))||allowedAuthSession.has(p)||allowedColorEvidence.has(p)||allowedDuplicateQA.has(p),
+  assert.ok(allowedWork.has(p)||(allowedNew.has(p)&&!m.has(p))||(allowedSecurity.has(p)&&!m.has(p))||(allowedBackupRpc.has(p)&&!m.has(p))||(allowedLocalSupabaseEvidence.has(p)&&!m.has(p))||allowedAuthSession.has(p)||allowedColorEvidence.has(p)||allowedDuplicateQA.has(p)||allowedRecognitionAdmission.has(p),
    'Unreviewed change after merge: '+p);
  }
 }

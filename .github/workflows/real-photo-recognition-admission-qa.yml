@@ -1,0 +1,74 @@
+name: Measured real-photo recognition admission and unsafe auto-save audit
+on:
+  push:
+    branches: [qa/real-photo-recognition-admission-20261020]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  source-and-historical-accuracy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify all locked historical inference outputs before fresh comparisons
+        run: |
+          node --check scripts/audit-recognition-admission.mjs
+          node --test tests/real-photo-recognition-admission.test.mjs tests/recognition-regression.test.mjs
+          node scripts/audit-recognition-admission.mjs --historical benchmark/manifest-reviewed-32.json benchmark/regression-reviewed-32.json benchmark/manifest-holdout-16.json benchmark/regression-holdout-16.json benchmark/manifest-fresh-11.json benchmark/regression-fresh-11.json
+      - name: Full application tests and immutable original-camera and human-review gates
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+          node scripts/verify-camera-cloud-integration.mjs
+          node scripts/check-dual-parent-review-integration.mjs
+          node scripts/check-customer-pilot-release-gates.mjs
+  independent-real-photo-inference:
+    needs: source-and-historical-accuracy
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Download immutable licensed source photos with SHA-256 validation
+        shell: bash
+        run: |
+          set -euo pipefail
+          ids="$(node --input-type=module -e "import fs from 'node:fs';const a=['benchmark/manifest-reviewed-32.json','benchmark/manifest-holdout-16.json'].flatMap(f=>JSON.parse(fs.readFileSync(f,'utf8')).map(x=>x.id));console.log([...new Set(a)].join(','))")"
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos "$ids"
+          node scripts/download-reviewed-photos.mjs benchmark/manifest-fresh-11.json benchmark/photos
+      - name: Install actual headless Chromium for same-source pinned-model inference
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium
+      - name: Build unchanged production recognizer for independent measurement
+        run: node scripts/build.mjs
+      - name: Infer all source-verified sets using the existing actual browser recognizer
+        run: |
+          node scripts/run-browser-photo-benchmark.mjs benchmark/manifest-reviewed-32.json benchmark/real-admission/reviewed-32
+          node scripts/run-browser-photo-benchmark.mjs benchmark/manifest-holdout-16.json benchmark/real-admission/holdout-16
+          node scripts/run-browser-photo-benchmark.mjs benchmark/manifest-fresh-11.json benchmark/real-admission/fresh-11
+      - name: Release-veto report for real unsafe auto-category and subtype predictions
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/audit-recognition-admission.mjs --fresh benchmark/manifest-reviewed-32.json benchmark/real-admission/reviewed-32/results.json benchmark/manifest-holdout-16.json benchmark/real-admission/holdout-16/results.json benchmark/manifest-fresh-11.json benchmark/real-admission/fresh-11/results.json | tee benchmark/real-admission/admission-report.log
+          node scripts/check-customer-pilot-release-gates.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: independent-real-photo-recognition-admission
+          path: |
+            benchmark/real-admission/*/results.json
+            benchmark/real-admission/*/framing-stability.json
+            benchmark/real-admission/admission-report.log
+          if-no-files-found: warn
+          retention-days: 14
