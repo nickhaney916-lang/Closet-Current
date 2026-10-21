@@ -1,0 +1,38 @@
+name: Owned wardrobe item through stylist preview and queued save identity QA
+on:
+  push:
+    branches: [fix/stylist-owned-source-commit-guard-20261020]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  owner-safe-styling:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Test original photo and category identity at final outfit save
+        run: |
+          node --check public/closet-stylist.js
+          node --check public/outfit-board.js
+          node --test tests/stylist-owned-source-commit.test.cjs tests/style-preview-recovery.test.cjs tests/customer-original-styling-integration.test.cjs tests/closet-stylist.test.cjs
+      - name: Build actual full app and run all Node regressions
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Guard original recognition and owned-closet source provenance
+        run: |
+          node scripts/verify-camera-cloud-integration.mjs
+          node scripts/check-dual-parent-review-integration.mjs
+          node scripts/check-customer-pilot-release-gates.mjs
+      - name: Run real Chromium and WebKit mobile emulation through Style My New Clothes
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium webkit
+          node scripts/test-style-my-new-item-mobile.mjs
+          STYLE_BROWSER=webkit node scripts/test-style-my-new-item-mobile.mjs
