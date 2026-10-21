@@ -1,3 +1,12 @@
+# Original RGB multi-view subtype agreement trial — October 21, 2026 Pacific
+
+- Began from draft PR #106 exact verified commit `55bd2fac37d45409473485b84e555ebab07d9630`. Isolated experiment branch `research/original-photo-subtype-consensus-20261021`. Work-mode branch integration audit assigned separately, with no file overlap or production merges.
+- Implemented only experimental `scripts/trial-original-subtype-consensus.mjs`, independent 9-test review/abstention unit checks, and `.github/workflows/original-subtype-consensus-trial.yml`. Original clothes classifier, recognizer vectors, photo cropping/masks and wardrobe files remain byte-identical. Full app and historical human/Camera provenance gates unchanged.
+- Real source-hash-pinned Chromium inference under [Actions #39533805104](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39533805104) completed SUCCESS across 59 source photographs with 288/320/336 alternate original-photo framings. Full Node **1,255 passed / 0 failed / 3 skipped**; focused 19 passed.
+- Real measured automatic-subtype trial: a conservative 3/3 original-photo view consensus policy prevented **only 1 of 4** known incorrect accepted types while diverting **13 correct** autosaves to review; balanced 2/3 prevented **0 of 4** wrong types while diverting **4 correct**. Jacket mislabeled Blazer, Blouse mislabeled Tunic and sneakers mislabeled ankle boots remained highly stable under all three view sizes. These are still model errors despite confidence.
+- **Both policies REJECTED for customer deployment**. Recognition promotion remains **BLOCKED**. No claim of 100% recognition or net accuracy gain; next research must obtain fresh independent physical garment-form evidence instead of relying on correlated views of the same model.
+- Full trial evidence and per-set results: `docs/ORIGINAL-SUBTYPE-CONSENSUS-TRIAL-20261021.md`. Exact final-head CI must be checked after this checkpoint/documentation commit. No deployment, hosted changes, customer photos, paid AI or Drive Duel modifications.
+
 # Independent real-photo recognition safety admission — October 20, 2026 Pacific
 
 - Based on draft PR #105 verified exact head `cebbdab60eb85af914d8ce39ac6f62fdb00e8f0a`, new isolated branch `qa/real-photo-recognition-admission-20261020`.

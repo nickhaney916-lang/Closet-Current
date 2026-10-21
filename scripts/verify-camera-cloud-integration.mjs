@@ -168,6 +168,14 @@ const allowedRecognitionAdmission=new Set([
  '.github/workflows/real-photo-recognition-admission-qa.yml',
  'docs/REAL-PHOTO-RECOGNITION-ADMISSION-20261020.md'
 ]);
+// Model-evidence-only subtype cross-frame trial; never modify the actual
+// classifier or customer closet, and keep the original audited policy intact.
+const allowedSubtypeTrial=new Set([
+ 'scripts/trial-original-subtype-consensus.mjs',
+ 'tests/original-subtype-consensus-trial.test.mjs',
+ '.github/workflows/original-subtype-consensus-trial.yml',
+ 'docs/ORIGINAL-SUBTYPE-CONSENSUS-TRIAL-20261021.md'
+]);
 const allowedWork=new Set([
  'public/app.js',
  'docs/PROGRESS-CHECKPOINT.md',
@@ -197,7 +205,7 @@ const allowedNew=new Set([
 for(const p of new Set([...m.keys(),...head.keys()])){
  if(m.get(p)!==head.get(p)){
   if(p==='public/index.html'||p==='scripts/build.mjs'||p===reviewScript)continue;
-  assert.ok(allowedWork.has(p)||(allowedNew.has(p)&&!m.has(p))||(allowedSecurity.has(p)&&!m.has(p))||(allowedBackupRpc.has(p)&&!m.has(p))||(allowedLocalSupabaseEvidence.has(p)&&!m.has(p))||allowedAuthSession.has(p)||allowedColorEvidence.has(p)||allowedDuplicateQA.has(p)||allowedRecognitionAdmission.has(p),
+  assert.ok(allowedWork.has(p)||(allowedNew.has(p)&&!m.has(p))||(allowedSecurity.has(p)&&!m.has(p))||(allowedBackupRpc.has(p)&&!m.has(p))||(allowedLocalSupabaseEvidence.has(p)&&!m.has(p))||allowedAuthSession.has(p)||allowedColorEvidence.has(p)||allowedDuplicateQA.has(p)||allowedRecognitionAdmission.has(p)||allowedSubtypeTrial.has(p),
    'Unreviewed change after merge: '+p);
  }
 }
