@@ -33,7 +33,7 @@ jobs:
           git diff --name-only 6ffa2e4ccc55ee66a000cdd0122864d76b37c982 HEAD |
           while IFS= read -r f; do
             case "$f" in
-              supabase/design/backup-rpc-only-writes-safe-recovery.DRAFT.sql|tests/backup-rpc-safe-recovery-postgres.sql|docs/BACKUP-RPC-SAFE-RECOVERY-20261021.md|.github/workflows/backup-rpc-safe-recovery-qa.yml|docs/PROGRESS-CHECKPOINT.md) ;;
+              supabase/design/backup-rpc-only-writes-safe-recovery.DRAFT.sql|tests/backup-rpc-safe-recovery-postgres.sql|tests/backup-rpc-safe-recovery-drift-postgres.sql|docs/BACKUP-RPC-SAFE-RECOVERY-20261021.md|.github/workflows/backup-rpc-safe-recovery-qa.yml|docs/PROGRESS-CHECKPOINT.md) ;;
               *) echo "Unexpected customer/runtime source edit: $f"; exit 1;;
             esac
           done
@@ -53,6 +53,32 @@ jobs:
           set -euo pipefail
           command -v psql || (sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client)
           psql -X -v ON_ERROR_STOP=1 -f tests/backup-rpc-safe-recovery-postgres.sql
+      - name: Deliberately altered private-writer wrapper must block recovery atomically
+        env:
+          PGHOST: 127.0.0.1
+          PGPORT: '5432'
+          PGUSER: postgres
+          PGPASSWORD: postgres
+          PGDATABASE: closet_safe_recovery
+        shell: bash
+        run: |
+          set -euo pipefail
+          psql -X -v ON_ERROR_STOP=1 -f tests/backup-rpc-safe-recovery-drift-postgres.sql
+          if psql -X -v ON_ERROR_STOP=1             -f supabase/design/backup-rpc-only-writes-safe-recovery.DRAFT.sql             > "$RUNNER_TEMP/cc-drift-recovery.log" 2>&1; then
+            echo "ERROR: Unexpectedly accepted unknown RPC schema"
+            exit 1
+          fi
+          grep -Fq 'Public wrapper drift: recovery refused' "$RUNNER_TEMP/cc-drift-recovery.log"
+          psql -X -t -A -v ON_ERROR_STOP=1 -c "
+            SELECT
+              (SELECT count(*)=1 FROM pg_roles WHERE rolname='closet_backup_writer')
+              AND (SELECT count(*)=1 FROM pg_namespace WHERE nspname='closet_rpc_private')
+              AND (SELECT revision=3 FROM public.closet_backups WHERE
+                owner_id='b2222222-2222-4222-8222-222222222222')
+              AND NOT has_table_privilege('authenticated','public.closet_backups','TRUNCATE')
+              AND NOT has_table_privilege('authenticated','public.closet_backups','DELETE')
+          " | grep -qx 't'
+          echo "DRIFT_RECOVERY_BLOCKED_NO_PARTIAL_PRIVILEGE_CHANGE"
       - name: Confirm no hosted migration or deployment was executed
         run: |
           test -f supabase/design/backup-rpc-only-writes-safe-recovery.DRAFT.sql
