@@ -108,3 +108,34 @@ passed: **1,271 passed, zero failed, three skipped**. This is software validatio
 not new-photo recognition accuracy. Final exact-head CI, acquired counts and real
 inference metrics will be recorded in the draft PR after the evidence is available.
 Production promotion remains BLOCKED, including if this small set scores perfectly.
+
+## Complete original acquisition and pre-inference source lock
+
+[Collection run 39538230372](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39538230372)
+completed successfully at `38415cc345132aa7502108298b767bc8cdf97301`.
+All 13 original JPEGs are in artifact 12318218952 (30,310,293 bytes; archive
+SHA-256 `0a79dfeb6f2e341b4a995bddfcdec21038f3a017a9782f933922a6ae6f65ee4e`).
+The earlier delayed run actually recovered nine originals before source #10
+remained rate-limited; the final acquisition reused those nine exact files.
+The collector now records long Retry-After deferrals instead of truncating a
+server's required cooldown and making premature retries.
+
+Every source's original-frame image was visually inspected before model output
+was available. `locked.json` records full original SHA-256, encoded dimensions,
+byte size, license attribution, source description and assistant visual evidence.
+No source URL/filename or byte hash matches the old locked source records or
+fresh-11. These are 12 real garment images plus one sculpture photograph, not
+13 independent garment instances or 13 human-adjudicated gold labels.
+
+Specific limits: #9 is a front/back two-view composite in one original source
+file and counts once; #7 includes part of an upper garment; #10's compression
+shorts/underwear boundary and #12's flannel shirt/jacket material boundary need
+independent human adjudication. The two boot cases and two dress cases are
+scored at coarse family granularity, deliberately not exact fine subtype.
+The independent encoder explicitly applies EXIF display orientation and standard
+sRGB decoding to the entire original frame, preventing a sideways source from
+creating a misleading model disagreement. It performs no garment clipping.
+
+The original source lock is committed before either new inference run. Model
+promotion is still blocked even if discovery results appear perfect. New real
+measurements must be read from final CI; no synthetic scores are used as accuracy.

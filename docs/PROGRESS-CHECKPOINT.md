@@ -1,3 +1,10 @@
+# New-source original-photo lock completed before model inference — October 20, 2026 Pacific
+
+- Collection run **39538230372 SUCCESS** at `38415cc345132aa7502108298b767bc8cdf97301`: all 13 original JPEGs acquired; source artifact 12318218952. Nine-photo partial run recovered after HTTP 429; four remaining sources acquired without substituting photos.
+- All original-frame images visually inspected before any model output. New `benchmark/independent-source-holdout/locked.json` binds actual hashes/dimensions/bytes, source metadata/licenses and assistant evidence; zero prior filename/URL/hash matches. **Independent human gold labels are NOT available.** Ambiguous garment boundaries and coarse boot/dress family scoring remain explicit.
+- Final acquisition commit's full source/regression job passed: **1,271 Node passes / 0 failed / 3 skipped**. Original model, thresholds/vectors, old manifests and all customer code unchanged. #108/#109/#110 branches untouched.
+- Dedicated pipeline now permits unchanged FashionCLIP and independent CLIP real inference only on the locked bytes with a neutral no-label manifest. Original-frame EXIF/sRGB preparation retained; no garment clipping or synthetic prediction substitution. Fresh inference and exact final-head QA are pending their runs, not claimed complete here.
+
 # New-source independent garment benchmark preparation — October 20, 2026 Pacific
 
 - Isolated `benchmark/independent-source-holdout-20261021` from PR #109 exact `a6ee34a676030cff2a4fcf3b31185275c78371a7`; #108/#109 branches and customer/recognition source remain untouched.

@@ -85,6 +85,7 @@ async function prepare(){
 async function independent(){
  const {MODEL,MODEL_REVISION,classifyIndependent}=await import('./independent-clip-subtype-trial.mjs');
  const {pipeline,RawImage}=await import('@huggingface/transformers');
+ const sharp=(await import('sharp')).default;
  const model=await pipeline('zero-shot-image-classification',MODEL,{revision:MODEL_REVISION,device:'cpu',dtype:'q8'});
  const out=process.env.HOLDOUT_RESULTS||'/tmp/closet-holdout-results';
  // Deliberately read only the neutral ID/image manifest during inference.
@@ -92,7 +93,11 @@ async function independent(){
  const predictions=[];
  for(const row of blind){
   const file='benchmark/photos/'+row.image;assert.equal(digest(fs.readFileSync(file)),lock.photos.find(r=>r.id===row.id)?.sha256);
-  const image=await RawImage.read(file),ranked=await model(image,localCandidates.map(c=>c.label),{hypothesis_template:'A photo of {}.'});
+  // Match browser display orientation; preserve the entire original frame.
+  // A sideways EXIF file must not become a spurious second-model disagreement.
+  const {data,info}=await sharp(file).rotate().toColourspace('srgb').removeAlpha().raw().toBuffer({resolveWithObject:true});
+  const image=new RawImage(new Uint8Array(data),info.width,info.height,info.channels);
+  const ranked=await model(image,localCandidates.map(c=>c.label),{hypothesis_template:'A photo of {}.'});
   const result=classifyIndependent(ranked);predictions.push({id:row.id,prediction:{category:result.category,type:result.type},score:result.score,margin:result.margin});
  }
  fs.writeFileSync(out+'/independent-clip.json',JSON.stringify({MODEL,MODEL_REVISION,predictions},null,2));
