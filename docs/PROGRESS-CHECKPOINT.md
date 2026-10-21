@@ -1,3 +1,7 @@
+## Assignment 132 — isolated owned outfit reliability (2026-10-21)
+
+Based on verified PR #131 (`7566b59e7377d77d8503c7c599aabe32fd3959dc`). Fixed missing layer alternatives, hidden tall photographic cutouts, high-resolution display-cache misses, repeated identical outfit saves and partial stylist save controls. Full local production build/Node suite: 1,357 passed, 0 failed, 3 skipped. Three focused regressions independently fail on #131 and pass here. Exact final CI head and Android Chromium/iPhone WebKit results are recorded in the draft PR; see docs/MOBILE-OWNED-OUTFIT-AUDIT-20261021.md. No physical-phone/customer/human review, fit realism, paid AI, merge or deployment claims. Parallel recognition/integration/auth branches, original photo pipeline and independent review evidence are preserved.
+
 # Inspiration photo full-source handoff to My Closet — October 21, 2026
 
 - Found a high-impact cross-workflow inconsistency: Inspiration generated a 900px JPEG for look preview but sent that same low-resolution image to the clothing recognizer. New isolated branch keeps preview lightweight while holding the chosen original File in temporary memory and converting through the existing 3072px bounded original-photo import only after explicit Add-to-Closet click.

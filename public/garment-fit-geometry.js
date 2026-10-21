@@ -4,7 +4,9 @@
 // Do not infer fit, sizing, fabric behavior, original-photo type or color.
 (function(root){
  const FIGURE_WIDTH=647,FIGURE_HEIGHT=1199;
- const safePositiveInt=x=>Number.isSafeInteger(x)&&x>=12&&x<=1600;
+ // The total pixel budget bounds memory; a 1MP tall cutout can legitimately
+ // exceed 1600px on one edge. Rejecting it hid long pants and dresses on retina.
+ const safePositiveInt=x=>Number.isSafeInteger(x)&&x>=12;
  const validRect=rect=>!!rect&&['left','top','width','height'].every(k=>Number.isFinite(rect[k]))&&
   rect.left>=0&&rect.top>=0&&rect.width>0&&rect.height>0&&
   rect.left+rect.width<=100&&rect.top+rect.height<=100;

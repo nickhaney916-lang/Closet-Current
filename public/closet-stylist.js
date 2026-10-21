@@ -133,9 +133,10 @@ function renderStyledCollection(){
    card.append(title,swapControls);
   }
   const actions=node('div',null,'actions'),edit=node('button','Preview on model','secondary'),save=node('button','Save outfit','primary');edit.type=save.type='button';edit.disabled=changed;
-  save.disabled=changed||!!result.savePending||result.savedBoard===result.board;
+  save.disabled=changed||missing.length>0||!!result.savePending||result.savedBoard===result.board;
   if(result.savePending)save.textContent='Saving outfit…';
   else if(result.savedBoard===result.board)save.textContent='Saved';
+  if(missing.length)card.append(node('p','Preview this starting combination, then add the missing clothes before saving a complete styled outfit.','fine'));
   if(changed)card.append(node('p','A selected garment was removed or recategorized. Create outfits again.','fine'));
   const actionStatus=node('p',result.saveMessage||null,'fine');
   edit.onclick=()=>previewStyledOutfit(result,board,index,edit,actionStatus);
