@@ -24,3 +24,10 @@ Nonzero (code 2) means catalog privileges do not meet the intended hardened targ
 
 ## Testing and separation
 The dedicated GitHub Actions job uses invented fixtures and a temporary PostgreSQL 17 container only, verifying the existing two draft SQL designs. It never connects to hosted Supabase or publishes a website. This work does not modify customer source, live tables, hosted projects, Drive Duel, Work #148 integration, or staging branches.
+
+## Final verified evidence from this read-only audit
+
+- The exact new catalog-only SQL was executed against the connected live Closet Current project, without reading user rows or making any database changes. **25 booleans checked; 12 discrepancies** against the intended RPC-only hardened state: excess direct INSERT, UPDATE, DELETE, TRUNCATE, TRIGGER, REFERENCES and MAINTAIN permissions; Storage object UPDATE policy; absent private writer role and protected private RPC machinery.
+- GitHub Actions [#39667340848](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39667340848) on source commit `3546e26596efa3598d825bc443f6a0a460835e28` completed SUCCESS. **1,486 Node tests passed, 0 failed, 3 skipped**, including five new strict metadata-audit unit tests. Disposable PostgreSQL verified both `CLOSET_LEAST_PRIVILEGE_DISPOSABLE_POSTGRES_PASS` and `CLOSET_RPC_ONLY_WRITES_DISPOSABLE_PG_PASS`. The standard camera/indexing workflow also passed at the same source SHA.
+- **Completion scope:** independent metadata-only live audit + verified no-cost local corrective design. **Not completed:** production privilege migration, hosted JWT/RLS/Storage cross-account verification, physical phones, SMTP and owner release sign-off. No customer rows were inspected and no hosted writes were performed. Production promotion remains BLOCKED.
+

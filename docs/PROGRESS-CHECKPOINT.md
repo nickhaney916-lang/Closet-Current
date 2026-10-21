@@ -1,3 +1,12 @@
+# Live Closet Current backup permission review — October 21, 2026
+
+- **Draft PR #149** independently audited live Closet Current `pg_catalog`, `pg_policies`, function and role permissions WITHOUT querying customer rows or writing a database. The repeatable SQL has a 25-boolean-only output; 12 discrepancies from the intended RPC-only locked-down model were found, including authenticated table TRUNCATE/direct writes and Storage UPDATE policy. Auth owner RLS, private photo bucket and owner SELECT/INSERT policy were present; no exploitation is alleged.
+- **Exact engineering SHA:** `3546e26596efa3598d825bc443f6a0a460835e28`. GitHub Actions [read-only audit + disposable PostgreSQL #39667340848](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39667340848) **SUCCESS**: **1,486 passed, 0 failed, 3 skipped**. PostgreSQL 17 passed existing two-stage least-privilege and private RPC-only corrective designs. Camera/indexing workflow also succeeded. Final checkpoint-only commit needs its own exact-head CI verification.
+- **No hosted remediation performed:** Do not apply draft SQL to customer production without explicit owner approval, confirmed rollback and disposable multi-account HTTP validation. No Supabase resources or paid providers, app/runtime modifications, Drive Duel changes, production merge or deployment. Work Assignment #148 remains separate. Real hardware/human clothing accuracy cannot be certified; production release BLOCKED.
+- Report and usage: `docs/LIVE-BACKUP-GRANTS-AUDIT-20261021.md`.
+
+---
+
 # Restricted staging atomic output safeguard — October 21, 2026
 
 - **Verified engineering work (draft PR #147):** the staging builder now generates `staging-dist.incomplete-*`, validates all live-backend removal checks on that private work directory and atomically renames it to deployable `staging-dist/` only after success. Stale prior output and incomplete directories are removed on failed rebuilds; no success message precedes publication of the complete local folder.
