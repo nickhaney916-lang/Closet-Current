@@ -1,0 +1,50 @@
+name: Source-backed inspiration photo transfer, privacy and mobile QA
+on:
+  push:
+    branches: [fix/inspiration-original-photo-to-closet-20261021]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-and-full-node:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prove only inspiration source handoff changed
+        run: |
+          node scripts/check-inspiration-original-photo-scope.mjs
+          git worktree add --detach "$RUNNER_TEMP/verified-pr129" df6dfa071838c054ac8f3f26a64985252e1050e0
+          (cd "$RUNNER_TEMP/verified-pr129" && node scripts/check-trend-cache-bundled-scope.mjs && node scripts/check-customer-pilot-release-gates.mjs)
+      - name: Full production build and complete Node regression suite
+        run: |
+          node --check public/trends.js
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+  mobile-original-transfer:
+    needs: source-and-full-node
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned mobile Chromium and WebKit
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install --with-deps chromium webkit
+      - name: Verify high-resolution source, tiny preview, and account cancellation in emulated phones
+        run: node scripts/test-inspiration-original-photo-browsers.mjs
+      - name: Check original before crop and native camera regression on synthetic browser data
+        run: |
+          node scripts/test-native-camera-fidelity-mobile.mjs
+          node scripts/build.mjs
+          node scripts/test-original-crop-source-mobile.mjs
