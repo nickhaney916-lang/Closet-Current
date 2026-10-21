@@ -1,3 +1,11 @@
+# Account-safe styling source identity at final outfit commit — October 20, 2026 Pacific
+
+- Started isolated branch `fix/stylist-owned-source-commit-guard-20261020` from verified draft PR #110, SHA `ba4e2155fed86174a4043b0f8bf08334bda42ecf`. Work owns independently photographed garment benchmark and PR #108 integration audit; no overlap.
+- Fixed stale Style My New Clothes **Preview** and **Save outfit** across same-ID garment re-photographing, category/color/pattern/season corrections and pending account changes. Source snapshot + active owner-owned database must match when preview becomes visible and at **final queued IndexedDB save transaction**. On mismatch no outfit write is allowed; user is directed to recreate current options. Previous cross-tenant storage guard remains.
+- Added 7 focused saved-garment/account mutation tests; updated the existing realistic preview/recovery fixture to bind the simulated user to their database. Existing customer-original-photo styling tests continue to assert owned-only three outfits, pinned anchor and no invented shopping pieces.
+- `scripts/verify-camera-cloud-integration.mjs` pins the two modified customer source files by exact Git-reviewed blobs and preserves all upstream original-camera/human asset lineage. Dedicated GitHub Actions runs full regression/build and actual Android Chromium/iPhone WebKit simulated mobile `Style this` flow, without live customer accounts, deployed Auth or paid AI.
+- This is an **unmerged development safety fix**, not complete end-to-end live cloud backup or physical-phone proof. No production cloud/Auth modification, deployment, Drive Duel edit or paid service activation.
+
 # Manual masked-crop and outfit palette provenance safeguard — October 20, 2026 Pacific
 
 - Isolated customer-facing development branch `fix/masked-photo-color-evidence-20261021` based on verified draft PR #109 head `a6ee34a676030cff2a4fcf3b31185275c78371a7`. Parallel Work session owns new independent ground-truth photographic benchmarks; this branch never touches models, photo manifests, or recognition vectors.
