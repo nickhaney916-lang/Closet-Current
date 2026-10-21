@@ -1,0 +1,44 @@
+name: Private pilot cohort join - offline evidence only
+on:
+  push:
+    branches: [validation/private-pilot-cross-report-cohort-20261021]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-and-all-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prove prior integrated source and all customer/hosting files unmodified
+        run: |
+          node scripts/check-integrated-pilot-rc.mjs
+          node scripts/check-private-pilot-cohort-scope.mjs
+      - name: Build app and execute all Node regressions
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+  mobile-existing-forms:
+    needs: source-and-all-tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Set up Chromium and WebKit
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install --with-deps chromium webkit
+      - name: Recheck unchanged Android/iPhone manual-report collection interfaces
+        run: |
+          node scripts/build.mjs
+          node scripts/test-device-check-phone-browsers.mjs
+          node scripts/test-saved-closet-phone-browsers.mjs

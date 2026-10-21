@@ -1,3 +1,12 @@
+# Cross-check owner-run phone evidence against the actual saved closet — October 21, 2026
+
+- **Next isolated development priority:** draft PR #142 on top of verified PR #141, adding a redacted local-only audit that reconciles three existing independently validated report families: Android/iPhone 17-step device checklist, original-photo model recognition proposals, and final actual My Closet category/type/color outcomes.
+- The new cohort audit refuses different app build fingerprints across all three report families, forged private data, inconsistent summaries, duplicate evidence, and output overwrite. It compares *separate* model-proposal and final-saved aggregates, including incorrect automatic saves, blurry photos and reported restoration failures. Anonymous original photos cannot be linked across forms: never calculate combined model-to-saved accuracy or claim genuine physical-phone testing.
+- Customer app, accounts, hosted Supabase, recognition, original image/mask, cloud backup and deployment workflows remain byte-identical to PR #141. Exact source guard, full app build, all Node tests and existing Chromium/WebKit mobile browser-form checks are required at the final PR head before declaring this engineering change verified.
+- **Launch gates unchanged:** no real physical-device evidence supplied; independent human-original labels 0; verified original category/color and production saved-closet accuracy null; live two-account Auth/RLS/cloud restore and email/legal/figure signoff pending. No merge, production deployment, paid services or Drive Duel changes. See `docs/PRIVATE-PILOT-COHORT-20261021.md`.
+
+---
+
 # Integrated pilot candidate and release preflight — October 21, 2026
 
 - **Latest verified integrated source:** draft PR #140, SHA `c921cfc4ec72ccf5f333df99e6c4d6a20719541d`, GitHub Actions #39642692606 SUCCESS (1,456 Node pass, 0 fail, 3 skip; combined Android Chromium and iPhone WebKit synthetic workflow tests pass). Integrates the separate verified camera/import, original-before-mask recognition, saved outfit, two-account safety, backup, storage and atomic PWA branches with manual conflict resolution. Unmerged, undeployed.
