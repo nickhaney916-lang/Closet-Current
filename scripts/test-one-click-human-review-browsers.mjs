@@ -8,9 +8,9 @@ import sharp from 'sharp';
 import {packetFromLock,LOCK} from './source-holdout-human-review.mjs';
 const [folder,reportPath]=process.argv.slice(2);
 assert.ok(folder&&reportPath,'Usage: ... DIRECTORY REPORT.json');
-const packet=packetFromLock(fs.readFileSync(LOCK)),photos=[];
+const packet=packetFromLock(fs.readFileSync(LOCK)),photos=[],originals=process.env.ORIGINALS||folder;
 for(const p of packet.photos){
- const meta=await sharp(fs.readFileSync(path.join(folder,p.image))).metadata();
+ const meta=await sharp(fs.readFileSync(path.join(originals,p.image))).metadata();
  const rotated=[5,6,7,8].includes(meta.orientation);
  photos.push({id:p.id,sha256:p.sha256,width:rotated?meta.height:meta.width,height:rotated?meta.width:meta.height});
 }
