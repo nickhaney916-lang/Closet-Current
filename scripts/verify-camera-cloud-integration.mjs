@@ -215,6 +215,25 @@ const allowedMaskedColorReview=new Set([
  '.github/workflows/masked-photo-color-evidence-qa.yml',
  'docs/MASKED-PHOTO-COLOR-EVIDENCE-20261021.md'
 ]);
+// Isolated post-PR #110 owner-safe styling transaction. Existing source
+// reviewers protect camera and app; these two customer source blobs are pinned
+// to the exact reviewed development commits, not a permissive path-only gate.
+const ownedStyleBase='ba4e2155fed86174a4043b0f8bf08334bda42ecf';
+for(const [path,reviewed] of [
+ ['public/closet-stylist.js','5e2b55126c7cc48dd2ea9439b22b84a363059d68'],
+ ['public/outfit-board.js','1685174029a07ab102df626ceef75d11702b0bd8']]){
+ assert.notEqual(git('rev-parse',ownedStyleBase+':'+path),git('rev-parse',reviewed+':'+path),
+  'Source safety fix absent: '+path);
+ assert.equal(git('rev-parse','HEAD:'+path),git('rev-parse',reviewed+':'+path),
+  'Unreviewed owner/stylist source change: '+path);
+}
+const allowedOwnedStyle=new Set([
+ 'public/closet-stylist.js',
+ 'public/outfit-board.js',
+ 'tests/stylist-owned-source-commit.test.cjs',
+ '.github/workflows/owned-style-source-commit-qa.yml',
+ 'docs/OWNED-STYLING-SOURCE-COMMIT-20261020.md'
+]);
 const allowedWork=new Set([
  'public/app.js',
  'docs/PROGRESS-CHECKPOINT.md',
@@ -244,7 +263,7 @@ const allowedNew=new Set([
 for(const p of new Set([...m.keys(),...head.keys()])){
  if(m.get(p)!==head.get(p)){
   if(p==='public/index.html'||p==='scripts/build.mjs'||p===reviewScript)continue;
-  assert.ok(allowedWork.has(p)||(allowedNew.has(p)&&!m.has(p))||(allowedSecurity.has(p)&&!m.has(p))||(allowedBackupRpc.has(p)&&!m.has(p))||(allowedLocalSupabaseEvidence.has(p)&&!m.has(p))||allowedAuthSession.has(p)||allowedColorEvidence.has(p)||allowedDuplicateQA.has(p)||allowedRecognitionAdmission.has(p)||allowedSubtypeTrial.has(p)||allowedIndependentClip.has(p)||allowedMaskedColorReview.has(p),
+  assert.ok(allowedWork.has(p)||(allowedNew.has(p)&&!m.has(p))||(allowedSecurity.has(p)&&!m.has(p))||(allowedBackupRpc.has(p)&&!m.has(p))||(allowedLocalSupabaseEvidence.has(p)&&!m.has(p))||allowedAuthSession.has(p)||allowedColorEvidence.has(p)||allowedDuplicateQA.has(p)||allowedRecognitionAdmission.has(p)||allowedSubtypeTrial.has(p)||allowedIndependentClip.has(p)||allowedMaskedColorReview.has(p)||allowedOwnedStyle.has(p),
    'Unreviewed change after merge: '+p);
  }
 }
