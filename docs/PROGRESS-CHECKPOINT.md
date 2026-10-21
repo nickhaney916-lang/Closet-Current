@@ -1,3 +1,12 @@
+# Isolated verified customer + blind-photo-source integration — October 20, 2026 Pacific
+
+- **Integration candidate, not production:** `integration/cloud-styling-blind-photo-rc-20261020`, built from PR #114 exact code SHA `05f1bdf071a75e2bac2eaf9ecb66c2f1e63d7132`, with **12 original Git blobs** from PR #113 head `71053247402d2e428044ef38b359057011335823`. Imported as one additive, one-parent commit `45765b19b8db2976ebd66907daa16856f680ac35`. Neither source branch, Work-owned PR #108, nor `main` was merged or edited.
+- Proof: `scripts/check-blind-photo-cloud-integration.mjs` requires byte-identical customer cloud/Auth/recognition/photo/styling code, 12 exact imported photo evidence blobs, locked pre-inference source hash, and no fabricated human label. Production model promotion remains `BLOCKED` because **zero authenticated independent human reviews** exist.
+- Three integration CI jobs verify full Node/build and source guards; Chromium Android and WebKit iPhone **browser emulation** for owned-wardrobe styling and safe cross-account cloud; original 13-photo source SHA-256 download and **empty** family-review packet. CI exact final SHA needs to be confirmed after this checkpoint.
+- App photo capture, catalog colors, subtype models, customer identities, private cloud backup, Supabase migration/hosted configuration, registered domains and Drive Duel runtime remain untouched by this integration commit. This candidate is unmerged, undeployed, no paid service or actual customer data used.
+- Remaining launch gaps: independently verified human original-garment labels, real physical-phone camera/closet QA, live cloud restore and SMTP/canonical URL verification, and controlled integration/approval for outstanding PR chain.
+- Detail in `docs/CLOUD-BLIND-PHOTO-RELEASE-CANDIDATE-20261020.md`; retain all historical verified development checkpoints below.
+
 # Cross-account cloud IndexedDB owner binding — October 20, 2026 Pacific
 
 - Isolated `fix/cloud-db-owner-binding-20261020` from fully tested draft PR #112 `af8738abead9419ef8fc66717233975487c87cc3`. No changes to main, Drive Duel, published production app or Supabase configuration.

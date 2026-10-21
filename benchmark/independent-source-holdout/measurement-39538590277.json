@@ -1,0 +1,286 @@
+{
+  "schemaVersion": 1,
+  "kind": "historical-actual-new-source-model-inference",
+  "run": 39538590277,
+  "sourceCommit": "1a1c76c12ab37ab080fd71de1fdda1df4963ebbe",
+  "artifact": 12317698983,
+  "artifactDigest": "sha256:c143791be3dbc9b8df39158196d9a30b9589e92a6dfaaa14276e3de4a59758fd",
+  "lockedManifestSha256": "0ba1fae03ac1021d6ae58ccf17cd32026aabaa73364cf78618ce1cf7212581d9",
+  "rawReportSha256": "824ebeba8c137d2ee5ba9d031aed88d423fed9e3d5cdaaf0a73a90e2065a27c1",
+  "report": {
+    "photoCount": 13,
+    "positiveCount": 12,
+    "categoryCorrect": 10,
+    "familyCorrect": 8,
+    "strongAutos": 9,
+    "unsafeAutos": 1,
+    "correctStrongAutos": 8,
+    "negativeFalseAutos": 0,
+    "negativeEmittedClothing": 0,
+    "groups": {
+      "sneakers": {
+        "photos": 2,
+        "familyCorrect": 2,
+        "strongAutos": 2,
+        "unsafeAutos": 0
+      },
+      "boots": {
+        "photos": 2,
+        "familyCorrect": 2,
+        "strongAutos": 2,
+        "unsafeAutos": 0
+      },
+      "dress": {
+        "photos": 2,
+        "familyCorrect": 1,
+        "strongAutos": 1,
+        "unsafeAutos": 0
+      },
+      "skirt": {
+        "photos": 2,
+        "familyCorrect": 1,
+        "strongAutos": 1,
+        "unsafeAutos": 0
+      },
+      "shorts": {
+        "photos": 2,
+        "familyCorrect": 2,
+        "strongAutos": 2,
+        "unsafeAutos": 0
+      },
+      "shirt": {
+        "photos": 2,
+        "familyCorrect": 0,
+        "strongAutos": 1,
+        "unsafeAutos": 1
+      },
+      "negative": {
+        "photos": 1,
+        "familyCorrect": 0,
+        "strongAutos": 0,
+        "unsafeAutos": 0
+      }
+    },
+    "perPhoto": [
+      {
+        "id": "newholdout-0001",
+        "family": "sneakers",
+        "prediction": {
+          "category": "Shoes",
+          "type": "Sneakers"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "categoryCorrect": true,
+        "familyCorrect": true,
+        "unsafeAutomatic": false,
+        "abstained": false,
+        "sourceSha256": "d33be987a83104e7604ec5c6053060bb18ea6051f0e186b4f2bc7e9d94c0ae4f",
+        "labelEvidence": "source + assistant visual; not independent human gold"
+      },
+      {
+        "id": "newholdout-0002",
+        "family": "sneakers",
+        "prediction": {
+          "category": "Shoes",
+          "type": "Sneakers"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "categoryCorrect": true,
+        "familyCorrect": true,
+        "unsafeAutomatic": false,
+        "abstained": false,
+        "sourceSha256": "924b6311cdcad4c804920827d998ffd5b11e98cbdf280e96d52d0e0d5f3857ca",
+        "labelEvidence": "source + assistant visual; not independent human gold"
+      },
+      {
+        "id": "newholdout-0003",
+        "family": "boots",
+        "prediction": {
+          "category": "Shoes",
+          "type": "Ankle boots"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "categoryCorrect": true,
+        "familyCorrect": true,
+        "unsafeAutomatic": false,
+        "abstained": false,
+        "sourceSha256": "8fbbcd054171f38adae5df7b53358e34bacdff327ff74aba241138d89df6dfb8",
+        "labelEvidence": "source + assistant visual; not independent human gold"
+      },
+      {
+        "id": "newholdout-0004",
+        "family": "boots",
+        "prediction": {
+          "category": "Shoes",
+          "type": "Ankle boots"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "categoryCorrect": true,
+        "familyCorrect": true,
+        "unsafeAutomatic": false,
+        "abstained": false,
+        "sourceSha256": "4796d3b98f6dbeec6009701ae98d0c5dd536f81b947807a769c81f6c82757075",
+        "labelEvidence": "source + assistant visual; not independent human gold"
+      },
+      {
+        "id": "newholdout-0005",
+        "family": "dress",
+        "prediction": {
+          "category": "Dresses",
+          "type": "Unknown"
+        },
+        "strong": false,
+        "categoryConfirmed": true,
+        "categoryCorrect": true,
+        "familyCorrect": false,
+        "unsafeAutomatic": false,
+        "abstained": false,
+        "sourceSha256": "d334c28414f769a690f86111075e83b960d299ac767abdf66570c42a58e6c9aa",
+        "labelEvidence": "source + assistant visual; not independent human gold"
+      },
+      {
+        "id": "newholdout-0006",
+        "family": "dress",
+        "prediction": {
+          "category": "Dresses",
+          "type": "Sweater dress"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "categoryCorrect": true,
+        "familyCorrect": true,
+        "unsafeAutomatic": false,
+        "abstained": false,
+        "sourceSha256": "1ff3cb60cae85700f6734627dcda17cb26131294d69f303642878c18b6e66ea7",
+        "labelEvidence": "source + assistant visual; not independent human gold"
+      },
+      {
+        "id": "newholdout-0007",
+        "family": "skirt",
+        "prediction": {
+          "category": "Bottoms",
+          "type": "Skirt"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "categoryCorrect": true,
+        "familyCorrect": true,
+        "unsafeAutomatic": false,
+        "abstained": false,
+        "sourceSha256": "e648e877911a4062e2b8fdcfb5102ed5481014d2a4e5006e2a4553743c86cf4f",
+        "labelEvidence": "source + assistant visual; not independent human gold"
+      },
+      {
+        "id": "newholdout-0008",
+        "family": "skirt",
+        "prediction": {
+          "category": null,
+          "type": null
+        },
+        "strong": false,
+        "categoryConfirmed": false,
+        "categoryCorrect": false,
+        "familyCorrect": false,
+        "unsafeAutomatic": false,
+        "abstained": true,
+        "sourceSha256": "12962f0834a8e340ab329c90d7a15a43447496c6f8547fccdb74e5b8731b3ffd",
+        "labelEvidence": "source + assistant visual; not independent human gold"
+      },
+      {
+        "id": "newholdout-0009",
+        "family": "shorts",
+        "prediction": {
+          "category": "Bottoms",
+          "type": "Shorts"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "categoryCorrect": true,
+        "familyCorrect": true,
+        "unsafeAutomatic": false,
+        "abstained": false,
+        "sourceSha256": "d7787502550dc5f831f6cda678f0df4f9e36d45a921e6bda614ddf81a52f789d",
+        "labelEvidence": "source + assistant visual; not independent human gold"
+      },
+      {
+        "id": "newholdout-0010",
+        "family": "shorts",
+        "prediction": {
+          "category": "Bottoms",
+          "type": "Shorts"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "categoryCorrect": true,
+        "familyCorrect": true,
+        "unsafeAutomatic": false,
+        "abstained": false,
+        "sourceSha256": "bf4e731275ecb70ad470f36d1dae947c3e016dfacffdd9164d7509d2c9be54a9",
+        "labelEvidence": "source + assistant visual; not independent human gold"
+      },
+      {
+        "id": "newholdout-0011",
+        "family": "shirt",
+        "prediction": {
+          "category": "Tops",
+          "type": "Unknown"
+        },
+        "strong": false,
+        "categoryConfirmed": true,
+        "categoryCorrect": true,
+        "familyCorrect": false,
+        "unsafeAutomatic": false,
+        "abstained": false,
+        "sourceSha256": "385b99a6ffb474cb9a523723cb3a7d51054b66e965fc582b2ce54b7ae9c20157",
+        "labelEvidence": "source + assistant visual; not independent human gold"
+      },
+      {
+        "id": "newholdout-0012",
+        "family": "shirt",
+        "prediction": {
+          "category": "Outerwear",
+          "type": "Jacket"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "categoryCorrect": false,
+        "familyCorrect": false,
+        "unsafeAutomatic": true,
+        "abstained": false,
+        "sourceSha256": "497e659b1209724dc3f5918d46065aaef70cd9d3ff817f8b52cf5ab483e0f622",
+        "labelEvidence": "source + assistant visual; not independent human gold"
+      },
+      {
+        "id": "newholdout-0013",
+        "family": "negative",
+        "prediction": {
+          "category": null,
+          "type": null
+        },
+        "strong": false,
+        "categoryConfirmed": false,
+        "categoryCorrect": false,
+        "familyCorrect": false,
+        "unsafeAutomatic": false,
+        "abstained": true,
+        "sourceSha256": "0fc023e455e977264555384fdde9a7d560251b2c6dfa207e3a45189d1897366e",
+        "labelEvidence": "source + assistant visual; not independent human gold"
+      }
+    ],
+    "productionPromotion": "BLOCKED",
+    "independentHumanGoldLabels": false,
+    "reason": "Small source/assistant-labeled discovery set; independent blind humans and untouched evaluation required. Never tune on these results.",
+    "agreementExperiment": {
+      "blockedWrong": 1,
+      "blockedCorrect": 5,
+      "remainingWrong": 0,
+      "decision": "NOT_PROMOTABLE",
+      "reason": "Discovery set only; no independent human gold or untouched confirmation set"
+    },
+    "customerModelChanged": false
+  }
+}

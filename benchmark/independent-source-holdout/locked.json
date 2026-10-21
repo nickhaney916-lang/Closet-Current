@@ -1,0 +1,411 @@
+{
+  "schemaVersion": 1,
+  "status": "source-hash-locked-assistant-reviewed-discovery-only",
+  "sourceBase": "a6ee34a676030cff2a4fcf3b31185275c78371a7",
+  "independentHumanGoldLabels": false,
+  "photos": [
+    {
+      "id": "newholdout-0001",
+      "image": "newholdout-0001.jpg",
+      "fileTitle": "Sneakers .jpg",
+      "family": "sneakers",
+      "expectedCategory": "Shoes",
+      "acceptedTypes": [
+        "Sneakers"
+      ],
+      "labelBasis": "photographer/source description corroborated by assistant visual review; NOT independent human gold",
+      "source": "https://commons.wikimedia.org/wiki/File:Sneakers_.jpg",
+      "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/f/ff/Sneakers_.jpg",
+      "attribution": {
+        "author": "Kid Keen 47",
+        "license": "CC BY-SA 4.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/"
+      },
+      "sourceNote": "Converse sneaker pair",
+      "verified": true,
+      "humanReviews": [],
+      "sha256": "d33be987a83104e7604ec5c6053060bb18ea6051f0e186b4f2bc7e9d94c0ae4f",
+      "byteLength": 2294106,
+      "width": 4032,
+      "height": 3024,
+      "visualReview": {
+        "reviewer": "assistant",
+        "beforeInference": true,
+        "note": "Black canvas Converse high-top sneaker pair with rubber toe caps and soles on a dark surface; not leather boots."
+      }
+    },
+    {
+      "id": "newholdout-0002",
+      "image": "newholdout-0002.jpg",
+      "fileTitle": "Sneakers 2.jpg",
+      "family": "sneakers",
+      "expectedCategory": "Shoes",
+      "acceptedTypes": [
+        "Sneakers"
+      ],
+      "labelBasis": "photographer/source description corroborated by assistant visual review; NOT independent human gold",
+      "source": "https://commons.wikimedia.org/wiki/File:Sneakers_2.jpg",
+      "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/3/3a/Sneakers_2.jpg",
+      "attribution": {
+        "author": "Saffrondattal",
+        "license": "CC BY-SA 4.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/"
+      },
+      "sourceNote": "Caption identifies sneakers; designer shoes",
+      "verified": true,
+      "humanReviews": [],
+      "sha256": "924b6311cdcad4c804920827d998ffd5b11e98cbdf280e96d52d0e0d5f3857ca",
+      "byteLength": 1581734,
+      "width": 2296,
+      "height": 2175,
+      "visualReview": {
+        "reviewer": "assistant",
+        "beforeInference": true,
+        "note": "Pair of colorful patterned lace-up high-top sneakers with sneaker sole shape. No model predictions consulted."
+      }
+    },
+    {
+      "id": "newholdout-0003",
+      "image": "newholdout-0003.jpg",
+      "fileTitle": "Timberland 6 inch boots.jpg",
+      "family": "boots",
+      "expectedCategory": "Shoes",
+      "acceptedTypes": [
+        "Ankle boots",
+        "Tall boots"
+      ],
+      "labelBasis": "photographer/source description corroborated by assistant visual review; NOT independent human gold",
+      "source": "https://commons.wikimedia.org/wiki/File:Timberland_6_inch_boots.jpg",
+      "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/f/f7/Timberland_6_inch_boots.jpg",
+      "attribution": {
+        "author": "Dough4872",
+        "license": "Public domain",
+        "licenseUrl": "https://commons.wikimedia.org/wiki/Template:PD-self"
+      },
+      "sourceNote": "Timberland six-inch boots; exact height subtype not presumed",
+      "verified": true,
+      "humanReviews": [],
+      "sha256": "8fbbcd054171f38adae5df7b53358e34bacdff327ff74aba241138d89df6dfb8",
+      "byteLength": 1743054,
+      "width": 3072,
+      "height": 2304,
+      "visualReview": {
+        "reviewer": "assistant",
+        "beforeInference": true,
+        "note": "Tan lace-up work boots with padded collars, thick lug soles and boot uppers; shaft-height subtype intentionally unresolved."
+      }
+    },
+    {
+      "id": "newholdout-0004",
+      "image": "newholdout-0004.jpg",
+      "fileTitle": "New boots.jpg",
+      "family": "boots",
+      "expectedCategory": "Shoes",
+      "acceptedTypes": [
+        "Ankle boots",
+        "Tall boots"
+      ],
+      "labelBasis": "photographer/source description corroborated by assistant visual review; NOT independent human gold",
+      "source": "https://commons.wikimedia.org/wiki/File:New_boots.jpg",
+      "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/9/90/New_boots.jpg",
+      "attribution": {
+        "author": "ProjectManhattan",
+        "license": "CC BY-SA 3.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/"
+      },
+      "sourceNote": "Magnum Stealth Force boots; exact height subtype not presumed",
+      "verified": true,
+      "humanReviews": [],
+      "sha256": "4796d3b98f6dbeec6009701ae98d0c5dd536f81b947807a769c81f6c82757075",
+      "byteLength": 2209298,
+      "width": 2884,
+      "height": 3437,
+      "visualReview": {
+        "reviewer": "assistant",
+        "beforeInference": true,
+        "note": "Black Magnum lace-up work/combat boots with high padded tongues and boot shafts; shaft-height subtype intentionally unresolved."
+      }
+    },
+    {
+      "id": "newholdout-0005",
+      "image": "newholdout-0005.jpg",
+      "fileTitle": "Gucci, Holt Renfrew.jpg",
+      "family": "dress",
+      "expectedCategory": "Dresses",
+      "acceptedTypes": [
+        "Casual dress",
+        "Formal dress",
+        "Shirt dress",
+        "Sweater dress"
+      ],
+      "labelBasis": "photographer/source description corroborated by assistant visual review; NOT independent human gold",
+      "source": "https://commons.wikimedia.org/wiki/File:Gucci%2C_Holt_Renfrew.jpg",
+      "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/a/a3/Gucci%2C_Holt_Renfrew.jpg",
+      "attribution": {
+        "author": "Colin Rose",
+        "license": "CC BY 2.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by/2.0/"
+      },
+      "sourceNote": "Dress displayed on a mannequin in a shop",
+      "verified": true,
+      "humanReviews": [],
+      "sha256": "d334c28414f769a690f86111075e83b960d299ac767abdf66570c42a58e6c9aa",
+      "byteLength": 3069091,
+      "width": 1458,
+      "height": 2311,
+      "visualReview": {
+        "reviewer": "assistant",
+        "beforeInference": true,
+        "note": "Red/black floral one-piece dress on a shop mannequin, fitted upper body and skirt joined at the waist; occasion subtype unresolved."
+      }
+    },
+    {
+      "id": "newholdout-0006",
+      "image": "newholdout-0006.jpg",
+      "fileTitle": "Tom Ford dress at the Met (52708).jpg",
+      "family": "dress",
+      "expectedCategory": "Dresses",
+      "acceptedTypes": [
+        "Casual dress",
+        "Formal dress",
+        "Shirt dress",
+        "Sweater dress"
+      ],
+      "labelBasis": "photographer/source description corroborated by assistant visual review; NOT independent human gold",
+      "source": "https://commons.wikimedia.org/wiki/File:Tom_Ford_dress_at_the_Met_%2852708%29.jpg",
+      "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/9/9b/Tom_Ford_dress_at_the_Met_%2852708%29.jpg",
+      "attribution": {
+        "author": "Rhododendrites",
+        "license": "CC BY-SA 4.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/"
+      },
+      "sourceNote": "2018 Tom Ford dress displayed in an exhibition",
+      "verified": true,
+      "humanReviews": [],
+      "sha256": "1ff3cb60cae85700f6734627dcda17cb26131294d69f303642878c18b6e66ea7",
+      "byteLength": 9702262,
+      "width": 2630,
+      "height": 4238,
+      "visualReview": {
+        "reviewer": "assistant",
+        "beforeInference": true,
+        "note": "Black one-piece long dress on an exhibition mannequin; continuous upper body and long skirt. Occasion subtype unresolved."
+      }
+    },
+    {
+      "id": "newholdout-0007",
+      "image": "newholdout-0007.jpg",
+      "fileTitle": "Skirt wiki.jpg",
+      "family": "skirt",
+      "expectedCategory": "Bottoms",
+      "acceptedTypes": [
+        "Skirt"
+      ],
+      "labelBasis": "photographer/source description corroborated by assistant visual review; NOT independent human gold",
+      "source": "https://commons.wikimedia.org/wiki/File:Skirt_wiki.jpg",
+      "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/9/9b/Skirt_wiki.jpg",
+      "attribution": {
+        "author": "Janmad",
+        "license": "CC BY-SA 2.5",
+        "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.5/"
+      },
+      "sourceNote": "Source explicitly identifies a skirt",
+      "verified": true,
+      "humanReviews": [],
+      "sha256": "e648e877911a4062e2b8fdcfb5102ed5481014d2a4e5006e2a4553743c86cf4f",
+      "byteLength": 213014,
+      "width": 668,
+      "height": 990,
+      "visualReview": {
+        "reviewer": "assistant",
+        "beforeInference": true,
+        "note": "Striped skirt below a visible waistband; part of a gray upper garment is also in frame. Target garment is the skirt."
+      }
+    },
+    {
+      "id": "newholdout-0008",
+      "image": "newholdout-0008.jpg",
+      "fileTitle": "Kristian Leigh pencil skirt.jpg",
+      "family": "skirt",
+      "expectedCategory": "Bottoms",
+      "acceptedTypes": [
+        "Skirt"
+      ],
+      "labelBasis": "photographer/source description corroborated by assistant visual review; NOT independent human gold",
+      "source": "https://commons.wikimedia.org/wiki/File:Kristian_Leigh_pencil_skirt.jpg",
+      "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/3/3e/Kristian_Leigh_pencil_skirt.jpg",
+      "attribution": {
+        "author": "Marek Koudelka",
+        "license": "CC BY-SA 4.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/"
+      },
+      "sourceNote": "1980s pencil skirt identified by source",
+      "verified": true,
+      "humanReviews": [],
+      "sha256": "12962f0834a8e340ab329c90d7a15a43447496c6f8547fccdb74e5b8731b3ffd",
+      "byteLength": 4830231,
+      "width": 4608,
+      "height": 3456,
+      "visualReview": {
+        "reviewer": "assistant",
+        "beforeInference": true,
+        "note": "Checker-pattern pencil skirt held by its waistband; visible continuous skirt panel, no divided legs. EXIF display orientation required."
+      }
+    },
+    {
+      "id": "newholdout-0009",
+      "image": "newholdout-0009.jpg",
+      "fileTitle": "Sports shorts.jpg",
+      "family": "shorts",
+      "expectedCategory": "Bottoms",
+      "acceptedTypes": [
+        "Shorts"
+      ],
+      "labelBasis": "photographer/source description corroborated by assistant visual review; NOT independent human gold",
+      "source": "https://commons.wikimedia.org/wiki/File:Sports_shorts.jpg",
+      "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/0/09/Sports_shorts.jpg",
+      "attribution": {
+        "author": "Jasonz (source attribution assumed by Commons)",
+        "license": "CC BY-SA 3.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/"
+      },
+      "sourceNote": "Sports shorts worn by a man; Commons inferred author recorded explicitly",
+      "verified": true,
+      "humanReviews": [],
+      "sha256": "d7787502550dc5f831f6cda678f0df4f9e36d45a921e6bda614ddf81a52f789d",
+      "byteLength": 156088,
+      "width": 1630,
+      "height": 696,
+      "visualReview": {
+        "reviewer": "assistant",
+        "beforeInference": true,
+        "note": "White sports shorts front/back views joined in a single original source image; divided short legs, not a skirt. One image, not two samples."
+      }
+    },
+    {
+      "id": "newholdout-0010",
+      "image": "newholdout-0010.jpg",
+      "fileTitle": "Compression shorts.jpg",
+      "family": "shorts",
+      "expectedCategory": "Bottoms",
+      "acceptedTypes": [
+        "Shorts"
+      ],
+      "labelBasis": "photographer/source description corroborated by assistant visual review; NOT independent human gold",
+      "source": "https://commons.wikimedia.org/wiki/File:Compression_shorts.jpg",
+      "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/1/1c/Compression_shorts.jpg",
+      "attribution": {
+        "author": "Buckeye333",
+        "license": "CC BY-SA 3.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/"
+      },
+      "sourceNote": "Under Armour compression shorts",
+      "verified": true,
+      "humanReviews": [],
+      "sha256": "bf4e731275ecb70ad470f36d1dae947c3e016dfacffdd9164d7509d2c9be54a9",
+      "byteLength": 169151,
+      "width": 1280,
+      "height": 960,
+      "visualReview": {
+        "reviewer": "assistant",
+        "beforeInference": true,
+        "note": "Black fitted compression shorts worn by an adult, visible separate short legs. Source calls these compression shorts; underwear boundary requires human adjudication."
+      }
+    },
+    {
+      "id": "newholdout-0011",
+      "image": "newholdout-0011.jpg",
+      "fileTitle": "Niksun T-shirt.jpg",
+      "family": "shirt",
+      "expectedCategory": "Tops",
+      "acceptedTypes": [
+        "T-shirt"
+      ],
+      "labelBasis": "photographer/source description corroborated by assistant visual review; NOT independent human gold",
+      "source": "https://commons.wikimedia.org/wiki/File:Niksun_T-shirt.jpg",
+      "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/a/a1/Niksun_T-shirt.jpg",
+      "attribution": {
+        "author": "Jonathan Schilling",
+        "license": "CC BY-SA 4.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/"
+      },
+      "sourceNote": "Cotton NIKSUN T-shirt described by photographer",
+      "verified": true,
+      "humanReviews": [],
+      "sha256": "385b99a6ffb474cb9a523723cb3a7d51054b66e965fc582b2ce54b7ae9c20157",
+      "byteLength": 2371439,
+      "width": 4032,
+      "height": 3024,
+      "visualReview": {
+        "reviewer": "assistant",
+        "beforeInference": true,
+        "note": "Black short-sleeve NIKSUN T-shirt displayed flat/draped; short sleeves, crew neckline and no front closure."
+      }
+    },
+    {
+      "id": "newholdout-0012",
+      "image": "newholdout-0012.jpg",
+      "fileTitle": "Flannel Shirt For Abi.jpg",
+      "family": "shirt",
+      "expectedCategory": "Tops",
+      "acceptedTypes": [
+        "Button-down shirt"
+      ],
+      "labelBasis": "photographer/source description corroborated by assistant visual review; NOT independent human gold",
+      "source": "https://commons.wikimedia.org/wiki/File:Flannel_Shirt_For_Abi.jpg",
+      "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/1/1c/Flannel_Shirt_For_Abi.jpg",
+      "attribution": {
+        "author": "kelly",
+        "license": "CC BY-SA 2.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0/"
+      },
+      "sourceNote": "Flannel shirt identified by source; verify buttons visually",
+      "verified": true,
+      "humanReviews": [],
+      "sha256": "497e659b1209724dc3f5918d46065aaef70cd9d3ff817f8b52cf5ab483e0f622",
+      "byteLength": 1171196,
+      "width": 2382,
+      "height": 2382,
+      "visualReview": {
+        "reviewer": "assistant",
+        "beforeInference": true,
+        "note": "Long-sleeve collared plaid flannel shirt on a dress form, front placket and chest pocket. Source labels it a shirt; shirt/jacket material boundary remains provisional."
+      }
+    },
+    {
+      "id": "newholdout-0013",
+      "image": "newholdout-0013.jpg",
+      "fileTitle": "\"Summer Dress\".jpg",
+      "family": "negative",
+      "expectedCategory": "Uncategorized",
+      "acceptedTypes": [],
+      "labelBasis": "photographer/source description corroborated by assistant visual review; NOT independent human gold",
+      "source": "https://commons.wikimedia.org/wiki/File:%22Summer_Dress%22.jpg",
+      "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/d/d9/%22Summer_Dress%22.jpg",
+      "attribution": {
+        "author": "Barbara Segal",
+        "license": "CC BY-SA 4.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/"
+      },
+      "sourceNote": "Alabaster dress sculpture, not wearable fabric; hard negative",
+      "verified": true,
+      "humanReviews": [],
+      "sha256": "0fc023e455e977264555384fdde9a7d560251b2c6dfa207e3a45189d1897366e",
+      "byteLength": 804851,
+      "width": 1891,
+      "height": 2600,
+      "visualReview": {
+        "reviewer": "assistant",
+        "beforeInference": true,
+        "note": "Rigid dress-shaped sculpture mounted on a plinth, consistent with source description of carved alabaster; not an actual wearable dress. Decorative waist bow is not evidence of a fabric dress."
+      }
+    }
+  ],
+  "collectionRun": 39538230372,
+  "collectionCommit": "38415cc345132aa7502108298b767bc8cdf97301",
+  "collectionArtifact": 12318218952,
+  "collectionArtifactDigest": "sha256:0a79dfeb6f2e341b4a995bddfcdec21038f3a017a9782f933922a6ae6f65ee4e",
+  "labelsFrozenBeforeInference": true,
+  "productionPromotion": "BLOCKED",
+  "lockedAt": "2026-10-21T03:25:19.978275+00:00"
+}
