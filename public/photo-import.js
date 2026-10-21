@@ -21,16 +21,24 @@ async function photoToJPEG(file,{maxDimension=3072,quality=.94,maxDataURLLength=
   // Three bounded attempts per frame preserve the existing encoded backup cap.
   const qualities=[quality,...[.88,.82].filter(q=>q<quality)];
   const targets=[maxDimension,...[2560,2048,1536,1024].filter(n=>n<maxDimension)];
+  const frames=new Set();let attempted=false;
   for(const target of targets){
    const scale=Math.min(1,target/longest);
-   canvas.width=Math.max(1,Math.round(image.width*scale));
-   canvas.height=Math.max(1,Math.round(image.height*scale));
+   const width=Math.max(1,Math.round(image.width*scale)),height=Math.max(1,Math.round(image.height*scale));
+   const frame=width+'x'+height;
+   // Small originals can map several limits to the same frame. Encode once.
+   if(frames.has(frame))continue;
+   frames.add(frame);canvas.width=width;canvas.height=height;
    const context=canvas.getContext('2d');
    if(!context)throw Error('Unable to prepare this image.');
    context.imageSmoothingEnabled=true;context.imageSmoothingQuality='high';
    context.fillStyle='#ffffff';context.fillRect(0,0,canvas.width,canvas.height);
    context.drawImage(image,0,0,canvas.width,canvas.height);
    for(const jpegQuality of qualities){
+    // Let input, progress rendering and account lifecycle events run between
+    // expensive synchronous encodes. A single encode remains synchronous.
+    if(attempted)await new Promise(resolve=>setTimeout(resolve,0));
+    attempted=true;
     const jpeg=canvas.toDataURL('image/jpeg',jpegQuality);
     if(jpeg==='data:,')throw Error('Unable to encode this image.');
     if(jpeg.length<=maxDataURLLength)return jpeg;
