@@ -72,8 +72,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
-      HOLDOUT_OUTPUT: ${{ runner.temp }}/new-originals
-      HOLDOUT_RESULTS: ${{ runner.temp }}/new-results
+      HOLDOUT_OUTPUT: /tmp/closet-new-originals
+      HOLDOUT_RESULTS: /tmp/closet-new-results
     steps:
       - uses: actions/checkout@v4
         with:
@@ -113,8 +113,8 @@ jobs:
         with:
           name: independent-new-source-real-model-results
           path: |
-            ${{ runner.temp }}/new-results/
-            ${{ runner.temp }}/new-originals/review-template.json
-            ${{ runner.temp }}/new-originals/review.html
+            /tmp/closet-new-results/
+            /tmp/closet-new-originals/review-template.json
+            /tmp/closet-new-originals/review.html
           retention-days: 14
           if-no-files-found: error
