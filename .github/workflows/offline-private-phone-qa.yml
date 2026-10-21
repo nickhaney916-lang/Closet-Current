@@ -1,0 +1,64 @@
+name: Offline private two-phone pilot coordinator QA
+on:
+  push:
+    branches: [feature/offline-real-phone-pilot-intake-20261021]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-and-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Block any customer/photo/cloud modifications
+        run: |
+          node scripts/check-offline-private-phone-scope.mjs
+          node scripts/check-native-still-detail-budget-scope.mjs
+          node scripts/check-import-detail-budget-scope.mjs
+          node scripts/check-customer-pilot-release-gates.mjs
+      - name: Build app and run full test suite
+        run: |
+          node --check scripts/offline-private-phone-coordinator.mjs
+          node --check scripts/test-offline-private-phone-coordinator-browsers.mjs
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+  mobile-offline-qa:
+    needs: source-and-regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned Chromium and WebKit
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install --with-deps chromium webkit
+      - name: Generate an OFFLINE organizer with zero private inputs
+        run: node scripts/offline-private-phone-coordinator.mjs prepare "$RUNNER_TEMP/phone-organizer"
+      - name: Validate source-reused JSON comparison in both mobile browser emulators
+        run: |
+          mkdir -p "$RUNNER_TEMP/offline-phone-evidence"
+          node scripts/test-offline-private-phone-coordinator-browsers.mjs "$RUNNER_TEMP/phone-organizer" "$RUNNER_TEMP/offline-phone-evidence/phone-browser-qa.json"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: offline-private-phone-pilot-organizer-no-customer-data
+          path: ${{ runner.temp }}/phone-organizer/
+          retention-days: 14
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: offline-private-phone-synthetic-qa-not-hardware-proof
+          path: ${{ runner.temp }}/offline-phone-evidence/
+          retention-days: 14
+          if-no-files-found: warn
