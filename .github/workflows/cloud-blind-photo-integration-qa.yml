@@ -1,0 +1,85 @@
+name: Isolated cloud styling plus blind-photo evidence release-candidate QA
+on:
+  push:
+    branches: [integration/cloud-styling-blind-photo-rc-20261020]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  exact-source-and-full-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify precise PR114 customer source and PR113 evidence transplants
+        run: |
+          node scripts/check-blind-photo-cloud-integration.mjs
+          node scripts/verify-camera-cloud-integration.mjs
+          node scripts/check-dual-parent-review-integration.mjs
+          node scripts/check-customer-pilot-release-gates.mjs
+      - name: Cross-branch source, photo and account ownership regression
+        run: |
+          node --test tests/cloud-session-generation.test.cjs tests/stylist-owned-source-commit.test.cjs tests/independent-source-holdout.test.mjs tests/source-holdout-human-review.test.mjs
+      - name: Build the combined complete customer app and run all Node regressions
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+  mobile-browser-integrated:
+    needs: exact-source-and-full-regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install supported Chromium and WebKit mobile emulation tools
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install --with-deps chromium webkit
+      - name: Reproduce account A to B cloud recovery with real IndexedDB both engines
+        run: node scripts/test-cloud-session-generation-browsers.mjs
+      - name: Style new owned garment, save and reload in Android Chromium
+        run: |
+          node scripts/build.mjs
+          node scripts/test-style-my-new-item-mobile.mjs
+      - name: Style new owned garment, save and reload in iPhone WebKit
+        run: STYLE_BROWSER=webkit node scripts/test-style-my-new-item-mobile.mjs
+      - name: Verify offline blind original-photo intake in both browser engines
+        run: node scripts/test-source-holdout-human-review-browser.mjs
+  original-byte-review-handoff:
+    needs: exact-source-and-full-regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Download existing exact original source archive; no new sources or unlabeled inference
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh run download 39538230372 -n new-source-originals-before-inference -D "$RUNNER_TEMP/originals"
+      - name: Confirm unchanged SHA-256 original photos, keep all human labels pending
+        run: |
+          node scripts/source-holdout-human-review.mjs prepare "$RUNNER_TEMP/originals" "$RUNNER_TEMP/family-review"
+          node scripts/source-holdout-human-review.mjs audit "$RUNNER_TEMP/pending-review.json"
+          node --input-type=module -e "import fs from 'node:fs';const r=JSON.parse(fs.readFileSync(process.env.RUNNER_TEMP+'/pending-review.json'));if(r.sourcePhotos!==13||r.suppliedSubmissions!==0||r.productionPromotion!=='BLOCKED'||r.independentHumanGoldLabels!==false)throw Error('Invented labels or unsafe promotion')"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: integrated-rc-original-family-review-unlabeled
+          path: |
+            ${{ runner.temp }}/family-review/
+            ${{ runner.temp }}/pending-review.json
+          retention-days: 14
+          if-no-files-found: error
