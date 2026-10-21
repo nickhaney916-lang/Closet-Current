@@ -1,0 +1,76 @@
+name: Disposable Supabase Auth email and password recovery acceptance
+on:
+  push:
+    branches: [qa/disposable-auth-email-link-20261020]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  app-and-history:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax, isolated safety regressions, app build and full Node suite
+        run: |
+          node --check scripts/configure-disposable-auth-email.mjs
+          node --check scripts/test-disposable-auth-mailpit.mjs
+          node --test tests/disposable-auth-email-config.test.mjs
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Protect original camera and clothing source and deny broad release
+        run: |
+          node scripts/verify-camera-cloud-integration.mjs
+          node scripts/check-dual-parent-review-integration.mjs
+          node scripts/check-customer-pilot-release-gates.mjs
+  real-local-auth-email:
+    needs: app-and-history
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Create disposable Supabase, Mailpit and exact local redirect allowlist
+        shell: bash
+        env:
+          CI: 'true'
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/cc-auth-mail"
+          cd "$RUNNER_TEMP/cc-auth-mail"
+          npx --yes supabase@2.121.0 init --yes > "$RUNNER_TEMP/cc-mail-init.log" 2>&1
+          node "$GITHUB_WORKSPACE/scripts/configure-disposable-auth-email.mjs" "$RUNNER_TEMP/cc-auth-mail/supabase/config.toml"
+          # Mailpit is deliberately NOT excluded. Never run login, link, push
+          # or any Supabase management command against a hosted project.
+          if ! npx --yes supabase@2.121.0 start --exclude studio,realtime,functions,analytics,pooler \
+            > "$RUNNER_TEMP/cc-mail-start.log" 2>&1; then
+            echo 'Isolated local Auth/Mailpit startup failed; remote not contacted'
+            exit 1
+          fi
+          npx --yes supabase@2.121.0 status --output env \
+            > "$RUNNER_TEMP/cc-auth-mail.env" 2>/dev/null
+          echo 'Disposable local Auth and mail catcher started'
+      - name: Verify genuine confirmation, consumed link, two permitted origins, and password reset
+        shell: bash
+        env:
+          CI: 'true'
+        run: |
+          set -euo pipefail
+          set -a
+          source "$RUNNER_TEMP/cc-auth-mail.env"
+          set +a
+          test "$API_URL" = 'http://127.0.0.1:54321' || test "$API_URL" = 'http://localhost:54321'
+          node "$GITHUB_WORKSPACE/scripts/test-disposable-auth-mailpit.mjs"
+      - name: Dispose all synthetic users, messages and Docker volumes
+        if: always()
+        shell: bash
+        run: |
+          cd "$RUNNER_TEMP/cc-auth-mail" 2>/dev/null || exit 0
+          npx --yes supabase@2.121.0 stop --no-backup >/dev/null 2>&1 || true
