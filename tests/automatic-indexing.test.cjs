@@ -640,3 +640,50 @@ test('new distinct original sources are still indexed when their images and sign
  assert.equal(c.items.length,2);
  assert.equal(c.batch.length,0);
 });
+
+test('outfit candidate stores mask color only when two-region support and original RGB sources are present',()=>{
+ const {c}=setup({request:()=>new Promise(()=>{})});
+ const original={image:'data:image/jpeg;base64,WHOLEORIGINAL'},
+  recognition={image:'data:image/jpeg;base64,RAWREGION'},
+  options={outfitSourceId:'original-shot',originalPhoto:original,recognitionPhoto:recognition,
+   segmentHint:{categories:['Shoes'],types:['Sneakers'],clipped:false}};
+ assert.equal(c.candidate('masked-output',{...options,
+  colorEstimate:{color:'Blue',source:'photo-estimate',support:.92}}),true);
+ assert.equal(c.batch[0].color,'Blue');
+ assert.equal(c.batch[0].colorMethod,'garment-mask');
+ assert.equal(c.batch[0].colorSource,'photo-estimate');
+});
+test('outfit candidate never upgrades a single-view or uncertain photo color to trusted garment mask',()=>{
+ for(const estimate of [
+  {color:'Red',source:'photo-estimate'},
+  {color:'Red',source:'photo-estimate',support:.2},
+  {color:'Red',source:'photo-estimate',support:2},
+  {color:'Red',source:'photo-estimate',support:.95,needsConfirmation:true},
+  {color:'Red',source:'untrusted',support:.95},
+  {color:'Red',method:'garment-mask',source:'photo-estimate'}
+ ]){
+  const {c}=setup({request:()=>new Promise(()=>{})});
+  const opts={outfitSourceId:'original-shot',
+   originalPhoto:{image:'data:image/jpeg;base64,WHOLEORIGINAL'},
+   recognitionPhoto:{image:'data:image/jpeg;base64,RAWREGION'},
+   segmentHint:{categories:['Shoes'],types:['Sneakers'],clipped:false},
+   colorEstimate:estimate};
+  assert.equal(c.candidate('display-preview',opts),true);
+  assert.equal(c.batch[0].color,'',JSON.stringify(estimate));
+  assert.equal(c.batch[0].colorMethod,undefined);
+ }
+});
+test('trusted mask color requires both whole scene and original unmasked recognition crop',()=>{
+ for(const missing of ['originalPhoto','recognitionPhoto']){
+  const {c}=setup({request:()=>new Promise(()=>{})});
+  const opts={outfitSourceId:'original-shot',
+   originalPhoto:{image:'data:image/jpeg;base64,WHOLEORIGINAL'},
+   recognitionPhoto:{image:'data:image/jpeg;base64,RAWREGION'},
+   colorEstimate:{color:'Blue',source:'photo-estimate',support:.92}};
+  if(missing==='originalPhoto')delete opts.originalPhoto;
+  if(missing==='recognitionPhoto')opts.recognitionPhoto={image:''};
+  assert.equal(c.candidate('masked-output',opts),true);
+  assert.equal(c.batch[0].color,'');
+  assert.equal(c.batch[0].colorMethod,undefined);
+ }
+});
