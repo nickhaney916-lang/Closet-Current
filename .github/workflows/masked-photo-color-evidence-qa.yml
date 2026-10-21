@@ -25,6 +25,12 @@ jobs:
         run: |
           node scripts/build.mjs
           node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Install Chromium and WebKit mobile-browser test engines
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium webkit
+      - name: Run real browser engines in mobile viewports for garment mask color evidence
+        run: node scripts/test-masked-crop-color-browsers.mjs
       - name: Reject all unreviewed original RGB source / human figure / hosted release changes
         run: |
           node scripts/verify-camera-cloud-integration.mjs
