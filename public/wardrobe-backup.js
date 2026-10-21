@@ -56,7 +56,9 @@
   try{ctx=context();say('Preparing your saved photos and outfits…');await ready();ctx.guard();
    const data=await serial(ctx,()=>transact(ctx));ctx.guard();
    if(!data.items.length&&!data.looks.length&&!data.outfitBoard.saved.length&&!Object.keys(data.outfitBoard.current.slots).length)throw Error('Save clothing, inspiration or an outfit before making a backup.');
-   const url=URL.createObjectURL(new Blob([JSON.stringify(data)],{type:'application/json'})),a=node('a');
+   const blob=new Blob([JSON.stringify(data)],{type:'application/json'});
+   if(blob.size>E.MAX_FILE_BYTES)throw Error('This wardrobe exceeds the 100 MB file limit. No file was prepared. Keep your cloud backup up to date.');
+   const url=URL.createObjectURL(blob),a=node('a');
    a.href=url;a.download='closet-current-backup.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
    say('Backup file prepared. Save it somewhere private; it includes your photos and saved outfits.');
   }catch(error){say(error.message||'Could not prepare the backup. Try again.');}finally{controls(false);}
@@ -66,7 +68,7 @@
   controls(true);let committed=false;
   try{
    const ctx=context();say('Reading your backup…');
-   if(file.size>100*1024*1024)throw Error('Choose a backup smaller than 100 MB.');
+   if(file.size>E.MAX_FILE_BYTES)throw Error('Choose a backup smaller than 100 MB.');
    const data=JSON.parse(await file.text());ctx.guard();await ready();ctx.guard();
    const incoming=E.validate(data,ctx.owner,{normalizeItem:normalizeClothing,normalizeLook:validLook,cleanBoard:cleanOutfitBoard});
    await checkPhotos(incoming,ctx);ctx.guard();

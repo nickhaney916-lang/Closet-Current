@@ -89,3 +89,15 @@ test('legacy restore explicitly asks the intended account and keeps cancellation
 test('malformed JSON is retryable and never enters the cloud write queue',async()=>{
  const h=ui();await h.restore(null,async()=>'{broken');assert.equal(h.c.$('import').disabled,false);assert.deepEqual(h.cloud,[]);assert.equal(h.disk.items.length,0);await h.restore();assert.equal(h.disk.items.length,1);
 });
+
+
+test('an inspiration normalizer may never silently discard a valid photo',()=>{
+ const c=setup();assert.throws(()=>E.validate(backup({looks:[{id:'look',image:photo,pieces:[]}]}),'alice',{normalizeItem:c.normalizeClothing,normalizeLook:x=>({...x,image:''}),cleanBoard:c.cleanOutfitBoard}),/losing detail/);
+});
+test('an invalid clothing category rejects instead of silently changing a correction',()=>{
+ const c=setup();assert.throws(()=>normalized(c,backup({items:[piece('shirt',{category:'Corrupted category'})]})),/category/);
+});
+test('export never prepares a file above the same budget enforced by restore',async()=>{
+ const h=ui();h.disk.items=[piece()];h.c.Blob=class{size=E.MAX_FILE_BYTES+1;};
+ await h.c.$('export').onclick();assert.match(h.status(),/100 MB file limit/);assert.equal(h.c.$('export').disabled,false);
+});

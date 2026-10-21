@@ -6,7 +6,7 @@ const BASE='801b70926283ffe920cbfa2d05560288b3afaaf4';
 const git=(...args)=>execFileSync('git',args,{encoding:'utf8',maxBuffer:20000000}).trim();
 const source=p=>execFileSync('git',['show',BASE+':'+p],{encoding:'utf8'});
 assert.equal(git('merge-base','HEAD',BASE),BASE);
-const pins={"public/app.js": "36cf8ec598d6a75bec0b05c1255c3aedbd0e9f72", "public/index.html": "f178fd3ae9f2835b637df3c531080c6cf3f7f892", "public/wardrobe-backup-engine.js": "45bfcbe142aea183fd2212441d543fffb0290f3b", "public/wardrobe-backup.js": "ba417b387b201bc18212555e7a61466b5253c6bc"};
+const pins={"public/app.js": "36cf8ec598d6a75bec0b05c1255c3aedbd0e9f72", "public/index.html": "f178fd3ae9f2835b637df3c531080c6cf3f7f892", "public/wardrobe-backup-engine.js": "7ad27f2732bc9da6fff5d6289c9dcd40f898c30b", "public/wardrobe-backup.js": "e95ca5ae45a76ba0feef3baebb124d1f285daa81"};
 for(const [p,sha] of Object.entries(pins))assert.equal(git('rev-parse','HEAD:'+p),sha,'Unexpected source: '+p);
 const allowed=new Set(["public/app.js", "public/index.html", "public/wardrobe-backup-engine.js", "public/wardrobe-backup.js", "tests/wardrobe-file-backup.test.cjs", "scripts/test-wardrobe-file-backup-browsers.mjs", "scripts/check-wardrobe-file-backup-scope.mjs", ".github/workflows/wardrobe-file-backup-qa.yml", "docs/WARDROBE-FILE-RESTORE-20261021.md", "docs/PROGRESS-CHECKPOINT.md"]);
 for(const p of git('diff','--name-only',BASE,'HEAD').split('\n').filter(Boolean))assert.ok(allowed.has(p),'Unrelated source/evidence: '+p);

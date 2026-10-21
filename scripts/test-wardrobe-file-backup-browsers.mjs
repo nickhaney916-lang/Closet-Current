@@ -81,7 +81,7 @@ try{
      };return tx;
     };
    });
-   const third=structuredClone(fixture);third.items[0].id='third';third.outfitBoard.current.slots.top='third';third.outfitBoard.saved[0].slots.top='third';
+   const third=structuredClone(fixture);third.items[0].id='third';third.items[0].name='Third distinct garment';third.items[0].color='Green';third.outfitBoard.current.slots.top='third';third.outfitBoard.saved[0].slots.top='third';
    assert.doesNotMatch(await restore(third),/^Restored/);await page.evaluate(()=>{IDBDatabase.prototype.transaction=window.nativeTransaction;});assert.deepEqual(await disk(),once);
    assert.match(await restore(third),/^Restored 1/);const beforeSwitch=await disk();
    // Switch accounts while File.text() is pending. The UI must neither ask

@@ -1,6 +1,7 @@
 'use strict';
 // File backups are additive recovery, never a replacement or authorization token.
 (function(root){
+ const MAX_FILE_BYTES=100*1024*1024;
  const plain=x=>!!x&&typeof x==='object'&&!Array.isArray(x);
  function safe(value,depth=0){
   if(depth>40)throw Error('Backup is too deeply nested.');
@@ -37,7 +38,7 @@
   if(data.version===4&&(typeof data.ownerId!=='string'||data.ownerId!==owner))throw Error('This backup belongs to another account. Sign in to the account that created it.');
   if(data.ownerId!==undefined&&data.ownerId!==owner)throw Error('This backup belongs to another account.');
   const items=rows(data.items,1000,'clothing',x=>{image(x.image);const item=normalizeItem(structuredClone(x));if(item.category!==x.category)throw Error('Backup contains an invalid clothing category.');return item;});
-  const looks=rows(data.looks===undefined?[]:data.looks,100,'inspiration',x=>{if(x.image!==undefined)image(x.image,true);return normalizeLook(structuredClone(x));});
+  const looks=rows(data.looks===undefined?[]:data.looks,100,'inspiration',x=>{if(x.image!==undefined)image(x.image,true);const look=normalizeLook(structuredClone(x));if(x.image&&look.image!==x.image)throw Error('An inspiration photo cannot be restored without losing detail. Nothing was restored.');return look;});
   function board(x){
    if(!plain(x)||!plain(x.slots)||x.ideas!==undefined&&!plain(x.ideas))throw Error('Invalid outfit backup.');
    const clean=cleanBoard(x,items),keys=Object.keys(x.slots);
@@ -87,6 +88,6 @@
   if(items.length>1000||looks.length>100||outfitBoard.saved.length>50)throw Error('Restoring would exceed your saved clothing, inspiration or outfit limit. Nothing was restored.');
   return {items,looks,outfitBoard,copies,added:items.length-local.items.length};
  }
- const api=Object.freeze({validate,merge,images,canonical});root.ClosetWardrobeBackup=api;
+ const api=Object.freeze({validate,merge,images,canonical,MAX_FILE_BYTES});root.ClosetWardrobeBackup=api;
  if(typeof module!=='undefined')module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);
