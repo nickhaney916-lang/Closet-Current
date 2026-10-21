@@ -122,6 +122,28 @@ BEGIN
 END $anon$;
 RESET ROLE;
 
+-- Modern Supabase PostgREST may supply only request.jwt.claims JSON.
+-- The private writer must recognize the same verified sub that auth.uid()
+-- reads, even when the legacy individual JWT GUC is empty.
+SET ROLE authenticated;
+SELECT set_config('request.jwt.claim.sub','',false);
+SELECT set_config('request.jwt.claims',
+ '{"sub":"b2222222-2222-4222-8222-222222222222","role":"authenticated"}',false);
+DO $modern$
+DECLARE rev bigint;
+BEGIN
+ rev:=public.save_closet_backup(1,
+  '{"schemaVersion":1,"items":[{"id":"json-jwt-owner"}],"state":{}}'::jsonb);
+ IF rev<>2 THEN RAISE EXCEPTION 'Modern JSON-only JWT owner backup failed'; END IF;
+END $modern$;
+RESET ROLE;
+DO $modern_verify$
+BEGIN
+ IF (SELECT revision FROM public.closet_backups
+    WHERE owner_id='b2222222-2222-4222-8222-222222222222')<>2
+ THEN RAISE EXCEPTION 'Modern JWT format did not preserve revision CAS'; END IF;
+END $modern_verify$;
+
 -- Privileged administrator still has server-side ability to delete an
 -- individual account backup as part of separate disabled deletion program.
 SET ROLE service_role;
