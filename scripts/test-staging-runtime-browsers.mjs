@@ -70,7 +70,7 @@ try{
    assert.deepEqual(live,[],'Attempted to access a live database');
    assert.deepEqual(errors,[],'Generated app threw browser exceptions');
    results.push({engine:name,login:true,stagingEmailCallback:true,stagingBackup:true,paidTryOnBlocked:true,liveDatabaseRequests:0,externalRequestsIntercepted:true,otherExternalOriginsBlocked:[...new Set(blocked)],physicalPhoneValidated:false});
-  }finally{await context.close();await browser.close();}
+  }catch(error){console.error(JSON.stringify({engine:name,syntheticCalls:calls,liveRequestCount:live.length,blockedExternalOrigins:[...new Set(blocked)],pageErrors:errors}));throw error;}finally{await context.close();await browser.close();}
  }
  console.log('STAGING_RUNTIME_BROWSER_QA '+JSON.stringify({results,realHostedIsolationVerified:false,productionPromotion:'BLOCKED'}));
 }finally{await new Promise(resolve=>server.close(resolve));}
