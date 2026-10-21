@@ -58,13 +58,23 @@ export function evaluate(rows,predictions){
   reason:'Small source/assistant-labeled discovery set; independent blind humans and untouched evaluation required. Never tune on these results.'};
 }
 async function collect(){
- const input=JSON.parse(fs.readFileSync(DIRECTORY+'/candidates.json'));
+ const input=JSON.parse(fs.readFileSync(DIRECTORY+(fs.existsSync(DIRECTORY+'/locked.json')?'/locked.json':'/candidates.json')));
  validateRows(input.photos);const out=process.env.HOLDOUT_OUTPUT||'/tmp/closet-independent-holdout';fs.mkdirSync(out,{recursive:true});
  const sharp=(await import('sharp')).default,rows=[];
  for(const r of input.photos){
   let bytes,last;
-  for(let attempt=0;attempt<3&&!bytes;attempt++)try{
+  const cached=path.join(out,r.image);
+  if(fs.existsSync(cached)){
+   const b=fs.readFileSync(cached);const meta=await sharp(b).metadata();
+   if(meta.format==='jpeg'&&(!r.sha256||digest(b)===r.sha256))bytes=b;
+  }
+  for(let attempt=0;attempt<4&&!bytes;attempt++)try{
+   if(attempt)await new Promise(ok=>setTimeout(ok,10000*attempt));
    const response=await fetch(r.downloadUrl,{headers:{'User-Agent':'ClosetCurrentResearch/1.0 (source provenance; github.com/nickhaney916-lang/Closet-Current)'},signal:AbortSignal.timeout(45000)});
+   if(response.status===429){
+    const seconds=Number(response.headers.get('retry-after'));
+    if(Number.isFinite(seconds)&&seconds>0)await new Promise(ok=>setTimeout(ok,Math.min(seconds,120)*1000));
+   }
    assert.ok(response.ok,'HTTP '+response.status);assert.equal(new URL(response.url).hostname,'upload.wikimedia.org');
    const b=Buffer.from(await response.arrayBuffer());assert.ok(b.length>1000&&b.length<16*1024*1024);
    const meta=await sharp(b).metadata();assert.equal(meta.format,'jpeg');assert.ok(meta.width>=300&&meta.height>=300);
@@ -75,6 +85,9 @@ async function collect(){
   const meta=await sharp(bytes).metadata();
   rows.push({...r,sha256:digest(bytes),byteLength:bytes.length,width:meta.width,height:meta.height});
   await sharp(bytes).rotate().resize(260,320,{fit:'inside'}).jpeg({quality:85}).toFile(path.join(out,r.id+'-review.jpg'));
+  fs.writeFileSync(path.join(out,'source-bytes.json'),JSON.stringify({...input,photos:rows},null,2));
+  console.log('SOURCE_COLLECTED '+r.id+' '+digest(bytes));
+  await new Promise(ok=>setTimeout(ok,1500));
  }
  fs.writeFileSync(path.join(out,'source-bytes.json'),JSON.stringify({...input,photos:rows},null,2));
  console.log('Collected original JPEG bytes without model inference: '+rows.length);

@@ -5,6 +5,7 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+  actions: read
 env:
   PYTHONDONTWRITEBYTECODE: '1'
 jobs:
@@ -17,6 +18,10 @@ jobs:
         with:
           node-version: '22'
       - run: npm install --no-save --no-package-lock sharp@0.34.4
+      - name: Recover already acquired source bytes from the initial partial collection
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh run download 39537027701 -n new-source-originals-before-inference -D "$RUNNER_TEMP/new-originals"
       - name: Acquire new original JPEG photographs and record immutable hashes; no model run
         env:
           HOLDOUT_OUTPUT: ${{ runner.temp }}/new-originals
