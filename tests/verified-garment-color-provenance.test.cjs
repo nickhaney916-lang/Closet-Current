@@ -60,3 +60,14 @@ test('clothing category mismatch does not import unrelated color detail',()=>{
  assert.equal(unexpected.color,'Blue');
  assert.equal(unexpected.colorMethod,'garment-mask');
 });
+
+test('fresh ordinary color evidence cannot inherit a stale previous mask authorization',()=>{
+ const previous={category:'Shoes',color:'',colorMethod:'garment-mask',colorSource:'photo-estimate'};
+ const fresh=ClothingDetails.fillColor(previous,{color:'Gray',method:'scene-unverified'});
+ assert.equal(fresh.color,'Gray');
+ assert.equal(fresh.colorMethod,undefined,'old mask evidence no longer belongs to new RGB');
+ const corrected=ClothingDetails.fill(fresh,choice,{color:'Black'});
+ assert.equal(corrected.color,'Black','the model can correct an ordinary unverified photo estimate');
+ assert.equal(corrected.colorSource,'recognition');
+ assert.equal(previous.colorMethod,'garment-mask','caller-owned record remains untouched');
+});
