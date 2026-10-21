@@ -231,6 +231,7 @@ const allowedOwnedStyle=new Set([
  'public/closet-stylist.js',
  'public/outfit-board.js',
  'tests/stylist-owned-source-commit.test.cjs',
+ 'tests/outfit-save-recovery.test.cjs',
  '.github/workflows/owned-style-source-commit-qa.yml',
  'docs/OWNED-STYLING-SOURCE-COMMIT-20261020.md'
 ]);
