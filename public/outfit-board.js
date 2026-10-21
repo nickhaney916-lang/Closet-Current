@@ -23,12 +23,14 @@ async function persistBoardState(){
   tx.onabort=()=>reject(tx.error||Error('Could not save this outfit. Please try again.'));
  }));
 }
-async function saveOwnedOutfitBoard(value){
+async function saveOwnedOutfitBoard(value,sourceStillCurrent=null){
  const requested=structuredClone(value),context=boardWriteContext();
  if(!context.database)throw Error('Browser storage is unavailable.');
  if(!context.current())throw Error('Your account changed. Reload this page before saving outfits.');
  return queued(()=>new Promise((resolve,reject)=>{
   if(!context.current())return reject(Error('Your account changed. Try again.'));
+  if(typeof sourceStillCurrent==='function'&&!sourceStillCurrent())
+   return reject(Error('This outfit or closet changed. Create outfits again before saving.'));
   const saved=cleanOutfitBoard(requested,items),slots=Object.keys(requested.slots||{});
   if(!slots.length)return reject(Error('Choose at least one piece from your own closet first.'));
   if(slots.length!==Object.keys(saved.slots).length||
