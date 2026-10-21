@@ -5,8 +5,11 @@
  // A single page can outlive an auth refresh, logout, BFCache restore or
  // another account's login. Bind every async sync pass to its owner/database
  // and generation so late responses can never touch the next user's closet.
+ const ownsDatabase=(database,owner)=>typeof owner==='string'&&
+  database?.name==='closet-current-user-'+owner;
  const current=op=>!!op&&enabled&&generation===op.generation&&
-  user===op.user&&db===op.db&&window.closetAuth?.user?.id===op.user;
+  user===op.user&&db===op.db&&ownsDatabase(op.db,op.user)&&
+  window.closetAuth?.user?.id===op.user;
  const guard=op=>{if(!current(op))throw Error('Cloud account session changed');};
  const ownerSession=()=>({user,db,generation});
  const empty=()=>({schemaVersion:1,items:[],state:{}}),markerDefault=()=>({id:'cloud-sync',baseVersion:0,baseDocument:null,localRevision:0,dirty:false});
@@ -87,13 +90,13 @@
   }finally{if(activeSync===run){activeSync=null;if(run.needsAnotherPass&&current(op))schedule(0,op);}}
  }
  window.closetCloud={
-  async start(database,settings){generation++;clearTimeout(timer);activeSync=null;enabled=false;db=database;callbacks=settings||{};user=window.closetAuth?.user?.id;enabled=!!db&&typeof window.closetAuth?.getAccessToken==='function'&&/^[a-f0-9-]{36}$/i.test(user||'');if(!enabled)return;
+  async start(database,settings){generation++;clearTimeout(timer);activeSync=null;enabled=false;db=database;callbacks=settings||{};user=window.closetAuth?.user?.id;enabled=ownsDatabase(db,user)&&typeof window.closetAuth?.getAccessToken==='function'&&/^[a-f0-9-]{36}$/i.test(user||'');if(!enabled){if(db&&user&&!ownsDatabase(db,user))status('This browser closet belongs to another account. Reload and sign in again before cloud backup.');return;}
    navigator.storage?.persist?.().catch(()=>{});const button=document.getElementById('syncCloset');if(button){button.hidden=false;button.onclick=()=>sync();}const resolveButton=document.getElementById('resolveCloudConflict');if(resolveButton)resolveButton.onclick=()=>sync({keepBoth:true});await sync();
   },
   async beforeWrite(database){const op=ownerSession();if(current(op)&&database===op.db)await markDirty(op);},
   changed(){const op=ownerSession();if(current(op)){status('Saved on this device · cloud backup pending');schedule(1500,op);}},sync
  };
- window.addEventListener('pageshow',event=>{if(event.persisted&&db&&window.closetAuth?.user?.id===user){generation++;activeSync=null;enabled=true;sync();}});
+ window.addEventListener('pageshow',event=>{if(!event.persisted)return;if(ownsDatabase(db,user)&&window.closetAuth?.user?.id===user){generation++;activeSync=null;enabled=true;sync();}else if(db&&user){enabled=false;status('This browser closet belongs to another account. Reload and sign in again before cloud backup.');}});
  window.addEventListener('online',()=>sync());window.addEventListener('focus',()=>sync());setInterval(()=>sync(),60000);
  window.addEventListener('pagehide',()=>{generation++;clearTimeout(timer);activeSync=null;enabled=false;});
 })();
