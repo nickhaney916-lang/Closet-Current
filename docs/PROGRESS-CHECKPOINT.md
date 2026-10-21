@@ -1,3 +1,9 @@
+# Responsive bounded photo-import retries — October 21, 2026 Pacific
+
+- Isolated from draft PR #123 `61e4a87672ec603e29d9f10763d25d803ecbb801`; original branch unchanged. Deduplicate effective pixel frames, reducing an impossible-budget 800×600 import from 15 JPEG attempts to 3. Yield to queued UI work before retries while preserving the existing quality order and storage cap.
+- Full local build/regressions: **1,329 passed, zero failed, three skipped**. Dedicated exact-head CI must verify source gates and Android Chromium/iPhone WebKit synthetic-image, import recovery, original-source/camera, account isolation and owned-styling emulation before completion.
+- Only customer runtime change is `public/photo-import.js`. App recognition before masking, cloud owner binding, auth, model, human review inputs/results and historical documentation remain unchanged. Null human-gold accuracy, physical-phone and real-account testing outstanding; no merge/deploy/paid service. See `docs/IMPORTED-PHOTO-DETAIL-FIRST-20261021.md` and follow-up draft PR for final CI evidence.
+
 # High-detail camera-roll import within existing JPEG budget — October 21, 2026 Pacific
 
 - Additive draft on verified PR #122: when 3072px JPEG quality .94 cannot fit existing 2,850,000-character limit, try quality .88 and .82 at **same pixel frame** before reducing pixels. Keep source before segmentation/mask, bounded retries, photo count/storage limits, account isolation, and unchanged original human photo review artifacts.

@@ -1,7 +1,7 @@
-name: Preserve imported garment resolution under bounded JPEG budget
+name: Mobile import responsiveness and bounded photo detail
 on:
   push:
-    branches: [fix/import-photo-detail-first-budget-20261021]
+    branches: [fix/import-photo-detail-first-budget-20261021, fix/import-retry-mobile-responsiveness-20261021]
   workflow_dispatch:
 permissions:
   contents: read
@@ -55,6 +55,9 @@ jobs:
           node scripts/test-original-crop-source-mobile.mjs
           node scripts/test-original-source-duplicate-mobile.mjs
           node scripts/test-native-camera-fidelity-mobile.mjs
+          node scripts/test-cloud-session-generation-browsers.mjs
+          STYLE_BROWSER=chromium node scripts/test-style-my-new-item-mobile.mjs
+          STYLE_BROWSER=webkit node scripts/test-style-my-new-item-mobile.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
