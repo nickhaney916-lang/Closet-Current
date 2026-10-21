@@ -1,3 +1,10 @@
+# Pilot Auth recovery and onboarding reliability — October 21, 2026 Pacific
+
+- Isolated on verified PR129 `df6dfa071838c054ac8f3f26a64985252e1050e0`; trend fallback, camera/recognition, account cloud bindings, deletion source and human evidence unchanged. #126/#128 branches remain separate.
+- Resume interrupted reset as an owner-bound pending recovery while wardrobe remains locked; provide Back to log in and clear expired reset email controls. Expand/distinguish confirmation/reset help; persist credentials before publishing identity; refuse wrong-owner restores. Auth-only mobile targets are at least 48px with 16px inputs.
+- Local full build **1,350 passed / zero failed / three skipped**. Ten new Auth regressions, nine fail on parent129. Exact-head CI must confirm Android Chromium/iPhone WebKit actual UI, local account/photo isolation, recovery, callback/privacy, cloud, trend129 and styling fixtures before completion.
+- Deletion audited but hard-coded 503 remains: no real deletion or hosted Auth changes. Real email/canonical URL/SMTP, consented hosted accounts, physical phones and removal fulfillment remain pilot blockers. See `docs/AUTH-RECOVERY-ONBOARDING-AUDIT-20261021.md` and final draft PR for exact CI evidence. No merge/deploy/paid service.
+
 # Offline-safe verified trend recommendations — October 21, 2026
 
 - Independent of Work #126 garment recognition and Work #128 integration, the Trend Suggestions loader now always compares app-bundled magazine/product library metadata with a potentially older saved phone library; adopts only strictly more-recent source-verified data and keeps the best local cache if GitHub weekly fetch fails.

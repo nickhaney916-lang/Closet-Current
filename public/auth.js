@@ -43,6 +43,7 @@
   return session.access_token;
  };
  const status=t=>$('authStatus').textContent=t;
+ function showLinkHelp(){const help=$('authHelp');if(help)help.open=true;}
  function setPasswordVisible(visible){
   $('authPassword').type=visible?'text':'password';
   const label=visible?'Hide password':'Show password';
@@ -66,7 +67,8 @@
   if(err.code==='email_provider_disabled')return 'Email signup is temporarily unavailable. Please try again later.';
   if(err.code==='email_address_invalid')return 'Use a valid email address that can receive messages.';
   if(err.code==='invalid_response')return 'The login service returned an unreadable response. Please try again.';
-  if(err.code==='email_not_confirmed')return 'Confirm your email using the link in your inbox, then log in.';
+  if(err.code==='email_not_confirmed'){showLinkHelp();return 'Confirm your email using the newest link in your inbox, then log in. Enter your email and choose Resend confirmation email if the link expired.';}
+  if(err.code==='storage_unavailable')return 'This browser could not save your login. Allow site storage or use a regular browser window, then try again.';
   if(err.name==='AbortError')return 'The request timed out. Check your connection and try again.';
   if(err instanceof TypeError)return 'Could not connect to the login service. Check your connection and try again.';
   return err.message||'Something went wrong. Please try again.';
@@ -97,16 +99,43 @@
    return data;
   }finally{clearTimeout(timer);}
  }
+ function storeSession(data,pendingRecovery=false){
+  const expires_at=Math.floor(Date.now()/1000)+(data.expires_in||3600);
+  try{localStorage.setItem(STORE,JSON.stringify({access_token:data.access_token,
+   refresh_token:data.refresh_token,expires_at,owner_id:data.user.id,
+   ...(pendingRecovery?{recovery:true,recovery_user_id:data.user.id}:{})}));}
+  catch{const error=Error('Browser session storage unavailable');error.code='storage_unavailable';throw error;}
+  return {...data,expires_at};
+ }
+ function beginRecovery(data){
+  if(typeof data?.user?.id!=='string'||!data.user.id||typeof data.access_token!=='string'||!data.access_token||typeof data.refresh_token!=='string'||!data.refresh_token)
+   {const error=Error('No verified user session');error.code='invalid_response';throw error;}
+  const next=storeSession(data,true);
+  setMode(false);session=next;recovery=true;authVersion++;
+  window.closetAuth.user=null;$('appShell').hidden=true;$('authGate').hidden=false;
+  $('authEmail').value=data.user.email||'';$('authEmail').disabled=true;
+  $('authPassword').value='';$('authPassword').minLength=8;$('authPassword').autocomplete='new-password';
+  $('authMode').hidden=false;$('authMode').textContent='Back to log in';
+  $('authReset').hidden=true;$('authResend').hidden=true;$('authRetry').hidden=true;
+  $('authSubmit').textContent='Save new password';status('Choose a new password of at least 8 characters.');
+ }
+ function leaveRecovery(){
+  recovery=false;session=null;authVersion++;window.closetAuth.user=null;
+  localStorage.removeItem(STORE);$('authEmail').disabled=false;$('authPassword').value='';
+  $('authReset').hidden=false;$('authResend').hidden=false;$('authMode').hidden=false;
+  $('appShell').hidden=true;$('authGate').hidden=false;setMode(false);
+ }
  function showUser(data,{refreshed=false}={}){
   // A successful HTTP response is not necessarily a usable login. Never
   // expose the wardrobe until Auth supplies both an identity AND a token.
   if(typeof data?.user?.id!=='string'||!data.user.id||
      typeof data.access_token!=='string'||!data.access_token)
-   throw Error('No verified user session');
+   {const error=Error('No verified user session');error.code='invalid_response';throw error;}
   if(loggingOut)throw Error('Session closed');
   if(!refreshed)authVersion++;
-  session={...data,expires_at:Math.floor(Date.now()/1000)+(data.expires_in||3600)};window.closetAuth.user=data.user;
-  localStorage.setItem(STORE,JSON.stringify({access_token:data.access_token,refresh_token:data.refresh_token,expires_at:Math.floor(Date.now()/1000)+(data.expires_in||3600)}));
+  // Persist before publishing identity or resolving wardrobe access.
+  const next=storeSession(data);session=next;window.closetAuth.user=data.user;
+  $('authPassword').value='';
   $('authGate').hidden=true;$('appShell').hidden=false;
   $('accountLabel').textContent=data.user.user_metadata?.username||data.user.email||'My account';
   resolveReady(data.user);
@@ -127,7 +156,7 @@
   $('authSubmit').textContent=on?'Create account':'Log in';$('authMode').textContent=on?'Already have an account? Log in':'Create an account';
   status(modeHint());
  }
- $('authMode').onclick=()=>setMode(!signup);
+ $('authMode').onclick=()=>{if(busy)return;if(recovery){leaveRecovery();status('Enter your email to log in or request a fresh password reset email.');showLinkHelp();}else setMode(!signup);};
  $('authForm').onsubmit=async e=>{
   e.preventDefault();if(busy)return;setBusy(true);status(signup?'Creating your account…':'Checking your email and password…');
   const email=$('authEmail').value.trim(),password=$('authPassword').value;
@@ -136,7 +165,7 @@
     if(password.length<8)throw Error('Your password must have at least 8 characters.');
     const user=await request('user',{password},session.access_token,'PUT');
     if(user?.id!==session.user?.id)throw Error('Session account changed');
-    recovery=false;showUser({...session,user});
+    showUser({...session,user});recovery=false;
    }else if(signup){
     const username=$('authUsername').value.trim();
     if(!/^[A-Za-z0-9_]{3,32}$/.test(username))throw Error('Username must be 3–32 letters, numbers or underscores.');
@@ -145,7 +174,11 @@
     if(data.access_token&&data.user)showUser(data);
     else status('Check your email to confirm your account, then log in.'+emailOriginNotice());
    }else showUser(await request('token?grant_type=password',{email,password}));
-  }catch(err){status(errorMessage(err));}finally{setBusy(false);}
+  }catch(err){
+   if(recovery&&([401,403].includes(err.status)||['otp_expired','session_not_found','refresh_token_not_found'].includes(err.code))){
+    leaveRecovery();showLinkHelp();status('Your password reset session expired. Enter your email and choose Reset password for a fresh link. Open the newest email.');
+   }else status(errorMessage(err));
+  }finally{setBusy(false);}
  };
  $('authReset').onclick=async()=>{
   const email=$('authEmail').value.trim();
@@ -182,7 +215,7 @@
  // Network outages and transient server errors do NOT revoke a saved
  // refresh token. Only a verified rejection of that token does. No user
  // data or local closet becomes accessible until Auth returns a new token.
- const temporaryRestoreFailure=error=>error instanceof TypeError||
+ const temporaryRestoreFailure=error=>error.code==='invalid_response'||error.code==='storage_unavailable'||error instanceof TypeError||
   error.name==='AbortError'||[408,429].includes(error.status)||
   (Number.isInteger(error.status)&&error.status>=500);
  async function restoreSavedLogin(){
@@ -199,11 +232,15 @@
   try{
    const data=await request('token?grant_type=refresh_token',
     {refresh_token:saved.refresh_token});
-   showUser(data);
+   if(saved.owner_id&&data.user?.id!==saved.owner_id)throw Error('Session account changed');
+   if(saved.recovery===true){
+    if(!saved.recovery_user_id||data.user?.id!==saved.recovery_user_id)throw Error('Session account changed');
+    beginRecovery(data);
+   }else showUser(data);
   }catch(error){
    if(temporaryRestoreFailure(error)){
     $('authRetry').hidden=false;
-    status('Could not restore your saved login. Your session is still saved on this device. Check your connection and choose Retry saved login.');
+    status(error.code==='storage_unavailable'?errorMessage(error)+' Then choose Retry saved login.':'Could not restore your saved login. Your session is still saved on this device. Check your connection and choose Retry saved login.');
    }else{
     localStorage.removeItem(STORE);
     $('authRetry').hidden=true;
@@ -226,13 +263,13 @@
     // including when verification subsequently fails or the app is reloaded.
     history.replaceState(null,'',location.pathname);
     if(error){
-     status('This email link has expired or was already used. Log in below. If your email still needs confirmation, enter it and choose Resend confirmation email.');
+     showLinkHelp();status('This email link has expired or was already used. Enter your email below: choose Resend confirmation email for signup, or Reset password for password recovery. Open only the newest email.');
      return;
     }
     if(authorizationCode&&!access&&!tokenHash){
      // This password-based, implicit-flow client has no PKCE code verifier.
      // Never pretend an unmatched code is an authenticated session.
-     status('This sign-in link uses an unsupported code callback. Request a fresh confirmation or password reset email, or log in again.');
+     showLinkHelp();status('This sign-in link uses an unsupported code callback. Request a fresh confirmation or password reset email, or log in again.');
      return;
     }
     setBusy(true);status('Verifying your email link…');
@@ -258,18 +295,11 @@
      data={user,access_token:access,refresh_token:refresh,
       expires_in:Number(callback.get('expires_in'))||3600};
     }
-    if(linkType==='recovery'){
-     if(typeof data.user?.id!=='string'||!data.user.id||!data.refresh_token)
-      throw Error('No verified user session');
-     session=data;recovery=true;$('authEmail').value=data.user.email||'';$('authEmail').disabled=true;
-     $('authPassword').value='';$('authPassword').minLength=8;$('authPassword').autocomplete='new-password';
-     $('authMode').hidden=true;$('authReset').hidden=true;$('authResend').hidden=true;
-     $('authSubmit').textContent='Save new password';status('Choose a new password of at least 8 characters.');return;
-    }
+    if(linkType==='recovery'){beginRecovery(data);return;}
     showUser(data);return;
    }
   }catch(error){
-   status('This sign-in link could not be verified. Log in with your email and password, or request a fresh email link.');
+   showLinkHelp();status(error.code==='storage_unavailable'?errorMessage(error):'This sign-in link could not be verified. Log in with your email and password, or request a fresh email link. Open only the newest email.');
    return;
   }finally{setBusy(false);}
   const saved=localStorage.getItem(STORE);
