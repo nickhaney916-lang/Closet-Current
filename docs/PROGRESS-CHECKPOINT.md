@@ -1,3 +1,9 @@
+# Inspiration photo full-source handoff to My Closet — October 21, 2026
+
+- Found a high-impact cross-workflow inconsistency: Inspiration generated a 900px JPEG for look preview but sent that same low-resolution image to the clothing recognizer. New isolated branch keeps preview lightweight while holding the chosen original File in temporary memory and converting through the existing 3072px bounded original-photo import only after explicit Add-to-Closet click.
+- Saved looks never persist source File; opening a saved look/new example clears its source, and stale decodes, account switches, duplicate taps and unsupported image retries cannot silently queue old images. No change to PR #129 trends, garment classifier, Supabase owner/cloud, photo-import or human review packet.
+- Exact scoped source QA, full Node and Android/iPhone emulation are required for completion. Physical photos/human recognition accuracy cannot be claimed. See `docs/INSPIRATION-ORIGINAL-PHOTO-TRANSFER-20261021.md`.
+
 # Offline-safe verified trend recommendations — October 21, 2026
 
 - Independent of Work #126 garment recognition and Work #128 integration, the Trend Suggestions loader now always compares app-bundled magazine/product library metadata with a potentially older saved phone library; adopts only strictly more-recent source-verified data and keeps the best local cache if GitHub weekly fetch fails.
