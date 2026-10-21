@@ -10,6 +10,12 @@ const changedAllowed=new Set([
  'scripts/one-click-human-review.mjs','tests/one-click-human-review.test.mjs',
  'scripts/test-one-click-human-review-browsers.mjs','.github/workflows/one-click-human-review-qa.yml',
  'docs/ONE-CLICK-HUMAN-REVIEW-20261021.md','scripts/check-one-click-review-source.mjs',
+ 'scripts/offline-review-coordinator.mjs',
+ 'tests/offline-review-coordinator.test.mjs',
+ 'scripts/test-offline-review-coordinator-browsers.mjs',
+ 'scripts/check-offline-review-coordinator-source.mjs',
+ '.github/workflows/offline-review-coordinator-qa.yml',
+ 'docs/OFFLINE-TWO-REVIEWER-INTAKE-20261021.md',
  'docs/PROGRESS-CHECKPOINT.md','scripts/check-human-review-cloud-bridge.mjs',
  'scripts/check-blind-photo-cloud-integration.mjs','scripts/verify-camera-cloud-integration.mjs']);
 const changed=git('diff','--name-only',BASE,'HEAD').split('\n').filter(Boolean);

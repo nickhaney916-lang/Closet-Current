@@ -1,0 +1,67 @@
+name: Offline two-human review coordinator QA (zero human submissions)
+on:
+  push:
+    branches: [feature/offline-two-reviewer-intake-20261021]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-and-full-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Frozen app, cloud, human review source and no-production guard
+        run: |
+          node scripts/check-offline-review-coordinator-source.mjs
+          node scripts/check-one-click-review-source.mjs
+          node scripts/check-human-review-cloud-bridge.mjs
+          node scripts/check-blind-photo-cloud-integration.mjs
+          node scripts/verify-camera-cloud-integration.mjs
+          node scripts/check-dual-parent-review-integration.mjs
+          node scripts/check-customer-pilot-release-gates.mjs
+      - name: Node build and complete test suite
+        run: |
+          node --check scripts/offline-review-coordinator.mjs
+          node --check scripts/test-offline-review-coordinator-browsers.mjs
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+  real-browsers-offline-intake:
+    needs: source-and-full-regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned Chromium and WebKit for offline coordinator
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install --with-deps chromium webkit
+      - name: Build packet containing ZERO simulated reviewer labels
+        run: node scripts/offline-review-coordinator.mjs prepare "$RUNNER_TEMP/coordinator"
+      - name: Compare offline Chromium and WebKit reconciliation to canonical Node audit
+        run: |
+          mkdir -p "$RUNNER_TEMP/evidence"
+          node scripts/test-offline-review-coordinator-browsers.mjs "$RUNNER_TEMP/coordinator" "$RUNNER_TEMP/evidence/coordinator-browser-qa.json"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: offline-two-reviewer-coordinator-no-reviewer-data
+          path: ${{ runner.temp }}/coordinator/
+          retention-days: 14
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: two-reviewer-qa-synthetic-only-no-human-gold
+          path: ${{ runner.temp }}/evidence/
+          retention-days: 14
+          if-no-files-found: warn

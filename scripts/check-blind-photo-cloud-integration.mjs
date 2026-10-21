@@ -73,6 +73,12 @@ const permittedExtra=new Set([
  '.github/workflows/one-click-human-review-qa.yml',
  'docs/ONE-CLICK-HUMAN-REVIEW-20261021.md',
  'scripts/check-one-click-review-source.mjs',
+ 'scripts/offline-review-coordinator.mjs',
+ 'tests/offline-review-coordinator.test.mjs',
+ 'scripts/test-offline-review-coordinator-browsers.mjs',
+ 'scripts/check-offline-review-coordinator-source.mjs',
+ '.github/workflows/offline-review-coordinator-qa.yml',
+ 'docs/OFFLINE-TWO-REVIEWER-INTAKE-20261021.md',
  'docs/INTEGRATED-CLOUD-HUMAN-REVIEW-20261020.md'
 ]);
 const integratedHumanFiles={

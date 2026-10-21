@@ -1,3 +1,9 @@
+# Two-reviewer offline family evidence coordinator — October 21, 2026 Pacific
+
+- Independent coordinator page generated without attaching any reviewer identity or observations to GitHub. Organizers choose two completed final JSONs locally; drafts are refused, per-source original IDs/hashes checked and disagreements/uncertainties shown as *self-attested only*.
+- Browser implementation compared against untouched authoritative `source-holdout-human-review.mjs reconcile()` with explicitly synthetic fixtures, never real human submissions. Keeps raw-submission checksum receipts and manually downloadable report; no backend upload or release promotion.
+- Previous PR121 single-file review, source lock, camera, owner cloud, actual recognizer and styling files frozen in isolated PR branch. **0 real independent humans; null gold accuracy; promotion blocked**. Physical phone and genuine adjudication not claimed. See `docs/OFFLINE-TWO-REVIEWER-INTAKE-20261021.md`.
+
 # Offline original-photo review draft recovery — October 21, 2026 Pacific
 
 - Isolated on PR #120 verified source `5b14998f32979e685c932af8fc7d8c986e1e4e58`: explicit user-triggered Save partial draft / Resume saved draft controls, exact original-locked packet and row validation, and unchanged offline reviewer source images.
