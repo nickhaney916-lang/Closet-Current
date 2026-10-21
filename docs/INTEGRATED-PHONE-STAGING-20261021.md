@@ -7,3 +7,7 @@ The full asset security check is `node scripts/check-staging-anonymous-access.mj
 Original-first 24-scene/30 garment-slot worksheet is available in the offline artifact from passing phone/mobile CI, but no physical Android or iPhone, real customer photo, human-gold benchmark, live Auth/email or separate Cloudflare/Supabase staging has been tested by this integration. The pilot and production promotion remain **BLOCKED**. No customer changes, paid Supabase or AI, production deployment, main merge or Drive Duel changes.
 
 CI contract: run all regressions, 207 local disposable Supabase HTTP security checks, both synthetic phone browser engines, installed Chromium PWA, fully sealed staging inventory and 12 dedicated anonymous-route checks. Check latest exact-head GitHub Actions conclusions before calling integration complete.
+
+## CI harness stabilization
+
+The first CI replay exposed a transient `Checking cloud backup…` status before the synthetic lost-save response settled. The browser **test only** now waits for the existing `pending` signal; no customer app or Supabase behavior changed. The final commit must rerun all security, browser and original-first phone checks.

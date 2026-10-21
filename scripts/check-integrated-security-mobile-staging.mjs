@@ -31,6 +31,7 @@ for(const path of ['docs/FINAL-INTEGRATED-PILOT-VALIDATION-20261021.md',
  'scripts/check-final-integrated-pilot-validation.mjs'])own.add(path);
 for(const path of ["scripts/linked-phone-garment-evidence.mjs","scripts/build-linked-phone-evidence.mjs","scripts/test-linked-phone-evidence-browsers.mjs","scripts/check-linked-phone-trial-scope.mjs","tests/linked-phone-garment-evidence.test.mjs","tests/build-linked-phone-evidence.test.mjs","docs/LINKED-PHONE-EVIDENCE-20261021.md",".github/workflows/linked-phone-evidence-qa.yml"])own.add(path);
 for(const path of [".github/workflows/staging-all-assets-access-qa.yml","docs/STAGING-ALL-ASSETS-ACCESS-20261021.md","scripts/check-staging-anonymous-access.mjs","tests/staging-anonymous-access.test.mjs","tests/staging-anonymous-full-bundle.test.mjs","docs/INTEGRATED-PHONE-STAGING-20261021.md",".github/workflows/integrated-phone-staging-all-assets-qa.yml","scripts/check-integrated-phone-staging-scope.mjs"])own.add(path);
+own.add('scripts/test-staging-runtime-browsers.mjs');
 const pinnedLock=path=>withLock&&lockFiles.has(path)&&!own.has(path);
 const checkLock=path=>assert.equal(git('rev-parse','HEAD:'+path),git('rev-parse',LOCKING+':'+path),'Verified build locking source overwritten: '+path);
 if(withLock)for(const path of git('diff','--name-only',PRIOR_INTEGRATION,'HEAD').split('\n').filter(Boolean)){

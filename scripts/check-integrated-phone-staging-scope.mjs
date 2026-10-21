@@ -16,6 +16,7 @@ const imported=[
 for(const p of imported)assert.equal(git('rev-parse','HEAD:'+p),git('rev-parse',ACCESS+':'+p),
  'Staging security file differs from audited PR #165: '+p);
 const permitted=new Set([...imported,
+ 'scripts/test-staging-runtime-browsers.mjs',
  'scripts/check-integrated-security-mobile-staging.mjs',
  'scripts/check-linked-phone-trial-scope.mjs',
  'scripts/check-integrated-phone-staging-scope.mjs',

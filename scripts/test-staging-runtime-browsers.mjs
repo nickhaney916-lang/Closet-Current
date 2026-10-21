@@ -143,7 +143,8 @@ try{
    // Simulate a committed RPC whose reply is lost. Retry must not duplicate items.
    dropSaveReply=true;
    await restored.evaluate(async()=>{const item={...items[0],notes:'Lost reply retained'};await writeAll([item]);items=[item];await closetCloud.sync();});
-   assert.match(await restored.locator('#cloudStatus').textContent(),/pending/);
+   // Async status can briefly be 'Checking cloud backup…' before the lost reply settles.
+   await restored.waitForFunction(()=>/pending/.test(document.getElementById('cloudStatus').textContent));
    await restored.evaluate(()=>closetCloud.sync());
    await restored.waitForFunction(()=>document.getElementById('cloudStatus').textContent==='Cloud backup up to date');
    assert.equal(record.document.items.length,1);assert.equal(record.document.items[0].notes,'Lost reply retained');
