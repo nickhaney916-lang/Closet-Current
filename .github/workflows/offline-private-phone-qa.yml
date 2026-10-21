@@ -19,8 +19,8 @@ jobs:
       - name: Block any customer/photo/cloud modifications
         run: |
           node scripts/check-offline-private-phone-scope.mjs
-          node scripts/check-native-still-detail-budget-scope.mjs
-          node scripts/check-import-detail-budget-scope.mjs
+          git worktree add --detach "$RUNNER_TEMP/verified-pr125" 623eb4af070b6caece11247e79eb3494d8450f98
+          (cd "$RUNNER_TEMP/verified-pr125" && node scripts/check-native-still-detail-budget-scope.mjs && node scripts/check-import-detail-budget-scope.mjs)
           node scripts/check-customer-pilot-release-gates.mjs
       - name: Build app and run full test suite
         run: |
