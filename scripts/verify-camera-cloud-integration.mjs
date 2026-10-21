@@ -101,7 +101,9 @@ const allowedAuthSession=new Set([
  'public/auth.js',
  'tests/auth.test.cjs',
  '.github/workflows/auth-session-race-qa.yml',
- 'docs/AUTH-SESSION-LIFECYCLE-20261020.md'
+ 'docs/AUTH-SESSION-LIFECYCLE-20261020.md',
+ '.github/workflows/auth-email-callback-qa.yml',
+ 'docs/AUTH-EMAIL-LINK-CALLBACK-20261020.md'
 ]);
 const allowedWork=new Set([
  'public/app.js',

@@ -1,3 +1,12 @@
+# Email confirmation and recovery callback hardening — October 20, 2026 Pacific
+
+- New isolated branch `fix/auth-email-link-callback-20261020`, based on PR #98. Keeps existing GitHub Pages Auth redirect while canonical Cloudflare origin and hosted Auth allowlist remain unverified.
+- Explicit app-return `token_hash` signup/recovery/email callbacks now call Supabase Auth verification and compare the returned signed-in user against an independently fetched user before showing a wardrobe. Existing implicit fragment callbacks remain intact.
+- Recovery remains locked until verified password change; unsupported PKCE code, invalid/expired hash, identity disagreement or ambiguous URL fails closed. Removes one-time credentials from browser history before requests.
+- Six new callback regression tests, dedicated GitHub Actions full Node/build regression and review provenance checks, and `docs/AUTH-EMAIL-LINK-CALLBACK-20261020.md`.
+- CI exact-head verification pending; do not treat simulated Auth replies as external inbox delivery proof.
+- No paid AI, customer data access, Drive Duel changes, hosted Auth/SMTP modifications, main merge or deploy. Pilot is still blocked on real email/redirect approval, physical phones, security schema authorization and independent garment masks.
+
 # Auth session race closure — October 20, 2026 Pacific
 
 - Based on PR #97's verified local Supabase stack commit `ce48891500b6c2afa1e35cdda427ec5ef4413af5`, isolated branch `fix/auth-refresh-logout-session-race-20261020`.
