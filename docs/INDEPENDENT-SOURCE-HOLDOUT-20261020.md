@@ -239,3 +239,10 @@ A second real-inference run at documentation/provenance commit
 checks passed. Its complete scored report matched the first run exactly. This
 is still **13 distinct source images**, not 26 new images or a new untouched
 confirmation cohort. The final packaging-only head must also pass its own CI.
+
+The standalone archive also preserves per-image author, license and source
+credits in `CREDITS-after-review.txt`. For independent labeling, record the
+review before opening that file: original source URLs can contain garment-name
+hints. No proposed category/type JSON or predictions are packaged with the
+reviewer images. This preserves attribution without claiming that source hints
+or embedded image metadata are cryptographically hidden from a reviewer.

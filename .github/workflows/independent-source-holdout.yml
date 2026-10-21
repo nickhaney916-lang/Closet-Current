@@ -114,6 +114,7 @@ jobs:
           cp "$HOLDOUT_OUTPUT"/newholdout-????.jpg "$RUNNER_TEMP/blind-human-review/"
           cp "$HOLDOUT_OUTPUT/review.html" "$HOLDOUT_OUTPUT/review-template.json" "$RUNNER_TEMP/blind-human-review/"
           cp "$HOLDOUT_RESULTS/source-lock.json" "$RUNNER_TEMP/blind-human-review/source-hashes.json"
+          node -e "const fs=require('node:fs');const r=require('./benchmark/independent-source-holdout/locked.json');fs.writeFileSync(process.env.RUNNER_TEMP+'/blind-human-review/CREDITS-after-review.txt','Read after independently recording your labels. Source URLs can reveal garment names. Original photographs unchanged; visual review derivatives are separate.\n\n'+r.photos.map(p=>[p.id,p.attribution.author,p.attribution.license,p.attribution.licenseUrl,p.source].join('\n')).join('\n\n'))"
           test "$(find "$RUNNER_TEMP/blind-human-review" -name 'newholdout-????.jpg' | wc -l)" -eq 13
       - uses: actions/upload-artifact@v4
         with:
