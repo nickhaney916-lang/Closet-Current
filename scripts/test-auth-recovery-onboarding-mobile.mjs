@@ -38,7 +38,7 @@ try{
      const req=route.request(),url=req.url();
      if(!url.startsWith(endpoint))return route.abort('internetdisconnected');
      let body={};try{body=req.postDataJSON()||{};}catch{}
-     const path=new URL(url).pathname.replace('/auth/v1/','');
+     const parsed=new URL(url),path=parsed.pathname.replace('/auth/v1/','')+parsed.search;
      const headers={'Access-Control-Allow-Origin':'*','Access-Control-Allow-Methods':'GET,POST,PUT,OPTIONS','Access-Control-Allow-Headers':'apikey,content-type,authorization'};
      if(req.method()==='OPTIONS')return route.fulfill({status:204,headers});
      calls.push({path,method:req.method(),type:body.type||null});
@@ -57,7 +57,8 @@ try{
      return reply({error_code:'invalid_credentials'},400);
     });
     const page=await ctx.newPage();page.on('pageerror',e=>errors.push(e.message));
-    try{await fn(page,calls,ctx);assert.deepEqual(errors,[]);scenarios++;}
+    try{await fn(page,calls,ctx);assert.deepEqual(errors,[]);scenarios++;console.log('AUTH_SCENARIO_PASS '+JSON.stringify({browser:label,scenario:mode}));}
+    catch(error){console.log('AUTH_SCENARIO_FAILURE '+JSON.stringify({browser:label,scenario:mode,status:await page.locator('#authStatus').textContent().catch(()=>''),calls}));throw error;}
     finally{await ctx.close();}
    }
    await run('expired',async(page,calls)=>{
