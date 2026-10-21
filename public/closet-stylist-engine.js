@@ -85,12 +85,12 @@ function styleOwnedCollection(closet,request={},library=null){
  const tops=(anchorSlot==='bottom'||anchorSlot==='layer')?availableTops.filter(x=>x.item.category!=='Dresses'):availableTops;
  const bottoms=ranked('bottom'),shoes=ranked('shoes'),candidates=[];
  // Keep partial outfits useful and label their missing required slots explicitly.
- for(const top of tops.length?tops:[null])for(const bottom of top?.item.category==='Dresses'?[null]:bottoms.length?bottoms:[null])for(const shoe of shoes.length?shoes:[null]){
+ for(const top of tops.length?tops:[null])for(const bottom of top?.item.category==='Dresses'?[null]:bottoms.length?bottoms:[null])for(const shoe of shoes.length?shoes:[null])for(const layer of top?.item.category==='Dresses'?[null]:ranked('layer').length?ranked('layer'):[null]){
   const selected=[top,bottom,shoe].filter(Boolean),slots={};if(top)slots.top=top.item.id;if(bottom)slots.bottom=bottom.item.id;if(shoe)slots.shoes=shoe.item.id;
   let score=(top?.item.category==='Dresses'?16:0)+selected.reduce((sum,x)=>sum+x.score,0)+stylistHarmony(selected.map(x=>x.item));
   for(const slot of ['layer','bag','accessory','finish']){
    if(slot==='layer'&&top?.item.category==='Dresses')continue;
-   const extra=ranked(slot).filter(x=>!Object.values(slots).includes(x.item.id)).map(x=>({...x,harmony:stylistHarmony([...selected.map(x=>x.item),x.item])-stylistHarmony(selected.map(x=>x.item))})).sort((a,b)=>(b.score+b.harmony)-(a.score+a.harmony))[0];
+   const extra=(slot==='layer'?(layer?[layer]:[]):ranked(slot)).filter(x=>!Object.values(slots).includes(x.item.id)).map(x=>({...x,harmony:stylistHarmony([...selected.map(x=>x.item),x.item])-stylistHarmony(selected.map(x=>x.item))})).sort((a,b)=>(b.score+b.harmony)-(a.score+a.harmony))[0];
    if(extra&&(slot===anchorSlot||extra.score+extra.harmony>0)){
     slots[slot]=extra.item.id;selected.push(extra);score+=extra.score+extra.harmony;
    }
