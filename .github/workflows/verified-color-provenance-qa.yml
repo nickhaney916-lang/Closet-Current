@@ -1,0 +1,31 @@
+name: Verified garment mask color provenance QA
+on:
+  push:
+    branches: [fix/verified-garment-color-provenance-20261020]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  garment-color-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Source correctness and targeted garment indexing
+        run: |
+          node --check public/clothing-details.js
+          node --test tests/verified-garment-color-provenance.test.cjs tests/automatic-indexing.test.cjs tests/photo-color.test.cjs
+      - name: Build and entire Closet Current regression suite
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Preserve original-photo recognition, unrelated source and launch veto
+        run: |
+          node scripts/verify-camera-cloud-integration.mjs
+          node scripts/check-dual-parent-review-integration.mjs
+          node scripts/check-customer-pilot-release-gates.mjs
