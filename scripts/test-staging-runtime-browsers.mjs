@@ -52,6 +52,7 @@ try{
    assert.equal(await page.locator('#appShell').isVisible(),false);
    assert.equal(calls.length,0,'Signed-out app made a staging backend request');
    await page.locator('#authEmail').fill('synthetic@example.invalid');
+   await page.locator('#authHelp > summary').click();
    await page.locator('#authReset').click();
    await page.waitForFunction(()=>document.getElementById('authStatus').textContent.includes('will arrive'));
    const recovery=calls.find(c=>c.path==='/auth/v1/recover');assert.ok(recovery);
