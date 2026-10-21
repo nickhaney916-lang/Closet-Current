@@ -32,6 +32,7 @@ for(const [engineName,engine]of [['chromium',chromium],['webkit',webkit]]){
   await load('first',a);await page.locator('#verify').click();
   assert.equal(await page.locator('#results').isHidden(),true,'One reviewer cannot complete validation');
   await load('second',b);await page.locator('#verify').click();
+  await page.waitForFunction(()=>document.querySelector('#status').textContent.startsWith('Both JSON structures')||document.querySelector('#status').textContent.startsWith('Not accepted:'),null,{timeout:15000});
   assert.equal(await page.locator('#export').isDisabled(),false,'Browser intake status: '+await page.locator('#status').innerText());
   assert.equal(await page.locator('#rows tr').count(),13);
   const dlEvent=page.waitForEvent('download');await page.locator('#export').click();
@@ -44,6 +45,12 @@ for(const [engineName,engine]of [['chromium',chromium],['webkit',webkit]]){
   assert.equal(report.approvedModelAccuracy,null);
   assert.equal(report.reviewerIdentityAuthenticated,false);
   assert.equal(await page.locator('#rows tr').count(),13);
+  // Change an input while digest verification is still in flight; stale results are forbidden.
+  await load('second',b);await page.locator('#verify').click();
+  await load('second',{...b,status:'DRAFT_UNREVIEWED'});
+  await page.waitForTimeout(50);
+  assert.equal(await page.locator('#export').isDisabled(),true,'Cancelled check cannot restore old export');
+  assert.equal(await page.locator('#results').isHidden(),true,'Cancelled check cannot show an old report');
   const invalid=[
    {...b,status:'DRAFT_UNREVIEWED'},
    {...b,packetSha256:'0'.repeat(64)},
@@ -56,6 +63,7 @@ for(const [engineName,engine]of [['chromium',chromium],['webkit',webkit]]){
   ];
   for(const x of invalid){
    await load('second',x);await page.locator('#verify').click();
+   await page.waitForFunction(()=>document.querySelector('#status').textContent.startsWith('Not accepted:'),null,{timeout:15000});
    assert.match(await page.locator('#status').innerText(),/Not accepted/);
    assert.equal(await page.locator('#export').isDisabled(),true);
    assert.equal(await page.locator('#results').isHidden(),true);
