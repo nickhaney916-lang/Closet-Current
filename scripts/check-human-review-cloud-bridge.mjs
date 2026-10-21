@@ -32,6 +32,12 @@ const allowed=new Set([...Object.keys(originals),
  'scripts/check-offline-review-coordinator-source.mjs',
  '.github/workflows/offline-review-coordinator-qa.yml',
  'docs/OFFLINE-TWO-REVIEWER-INTAKE-20261021.md',
+ 'public/photo-import.js',
+ 'tests/photo-import-untyped-and-timeout.test.cjs',
+ 'scripts/test-import-detail-budget-browsers.mjs',
+ 'scripts/check-import-detail-budget-scope.mjs',
+ '.github/workflows/import-detail-budget-qa.yml',
+ 'docs/IMPORTED-PHOTO-DETAIL-FIRST-20261021.md',
  'docs/PROGRESS-CHECKPOINT.md']);
 for(const path of Object.keys(originals)){
  assert.equal(git('rev-parse','HEAD:'+path),originals[path],'Altered reviewed readiness file: '+path);
@@ -55,5 +61,5 @@ assert.equal(review.approvedModelAccuracy,null);
 assert.equal(review.productionPromotion,'BLOCKED');
 console.log(JSON.stringify({status:'VERIFIED_ISOLATED_INTEGRATION',cloudBase:CLOUD,humanSource:HUMAN,
  exactHumanFiles:Object.keys(originals).length,originalPhotos:13,humanReviews:0,
- measurableHumanAccuracy:null,customerRuntimeUnchanged:true,productionPromotion:'BLOCKED',
+ measurableHumanAccuracy:null,protectedCustomerRuntimeUnchanged:true,intentionalImportCompressionException:true,productionPromotion:'BLOCKED',
  physicalPhoneValidated:false,merged:false,deployed:false,paidAI:false}));

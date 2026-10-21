@@ -1,3 +1,9 @@
+# High-detail camera-roll import within existing JPEG budget — October 21, 2026 Pacific
+
+- Additive draft on verified PR #122: when 3072px JPEG quality .94 cannot fit existing 2,850,000-character limit, try quality .88 and .82 at **same pixel frame** before reducing pixels. Keep source before segmentation/mask, bounded retries, photo count/storage limits, account isolation, and unchanged original human photo review artifacts.
+- Full Node source, UI and camera/cloud guard regressions plus mobile synthetic-image Chromium/WebKit tests required before calling complete. No assumption of improved garment recognition accuracy, phone hardware validation, released production improvement, merge or paid services. Independent human-gold accuracy remains null; production model promotion BLOCKED.
+- See `docs/IMPORTED-PHOTO-DETAIL-FIRST-20261021.md`.
+
 # Two-reviewer offline family evidence coordinator — October 21, 2026 Pacific
 
 - Independent coordinator page generated without attaching any reviewer identity or observations to GitHub. Organizers choose two completed final JSONs locally; drafts are refused, per-source original IDs/hashes checked and disagreements/uncertainties shown as *self-attested only*.

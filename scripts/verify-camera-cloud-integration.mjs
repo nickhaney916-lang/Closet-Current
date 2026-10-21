@@ -320,6 +320,12 @@ const allowedHumanCloudBridge=new Set([
  'scripts/check-offline-review-coordinator-source.mjs',
  '.github/workflows/offline-review-coordinator-qa.yml',
  'docs/OFFLINE-TWO-REVIEWER-INTAKE-20261021.md',
+ 'public/photo-import.js',
+ 'tests/photo-import-untyped-and-timeout.test.cjs',
+ 'scripts/test-import-detail-budget-browsers.mjs',
+ 'scripts/check-import-detail-budget-scope.mjs',
+ '.github/workflows/import-detail-budget-qa.yml',
+ 'docs/IMPORTED-PHOTO-DETAIL-FIRST-20261021.md',
  'docs/INTEGRATED-CLOUD-HUMAN-REVIEW-20261020.md'
 ]);
 const allowedWork=new Set([

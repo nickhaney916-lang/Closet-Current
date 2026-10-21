@@ -5,7 +5,7 @@
 async function photoToJPEG(file,{maxDimension=3072,quality=.94,maxDataURLLength=2850000}={}){
  if(!Number.isInteger(maxDimension)||maxDimension<1||maxDimension>4096||
     !Number.isInteger(maxDataURLLength)||maxDataURLLength<1024||
-    maxDataURLLength>10000000)throw Error('Invalid photo conversion limits.');
+    maxDataURLLength>10000000||!Number.isFinite(quality)||quality<.5||quality>1)throw Error('Invalid photo conversion limits.');
  const url=URL.createObjectURL(file);
  try{
   const image=new Image();image.src=url;
@@ -16,6 +16,10 @@ async function photoToJPEG(file,{maxDimension=3072,quality=.94,maxDataURLLength=
   })]);}finally{clearTimeout(timer);}
   if(!image.width||!image.height)throw Error('No image content');
   const canvas=document.createElement('canvas'),longest=Math.max(image.width,image.height);
+  // Prefer a slightly lower JPEG quality at the SAME pixels over losing
+  // shoe stitching, fabric texture, and prints by reducing both dimensions.
+  // Three bounded attempts per frame preserve the existing encoded backup cap.
+  const qualities=[quality,...[.88,.82].filter(q=>q<quality)];
   const targets=[maxDimension,...[2560,2048,1536,1024].filter(n=>n<maxDimension)];
   for(const target of targets){
    const scale=Math.min(1,target/longest);
@@ -26,12 +30,13 @@ async function photoToJPEG(file,{maxDimension=3072,quality=.94,maxDataURLLength=
    context.imageSmoothingEnabled=true;context.imageSmoothingQuality='high';
    context.fillStyle='#ffffff';context.fillRect(0,0,canvas.width,canvas.height);
    context.drawImage(image,0,0,canvas.width,canvas.height);
-   const jpeg=canvas.toDataURL('image/jpeg',quality);
-   if(jpeg==='data:,')throw Error('Unable to encode this image.');
-   if(jpeg.length<=maxDataURLLength)return jpeg;
-   // A busy 12 MP scene may produce a very large JPEG. Keep the photo
-   // within the existing backup/image-string budget rather than silently
-   // making a closet record that cannot be exported.
+   for(const jpegQuality of qualities){
+    const jpeg=canvas.toDataURL('image/jpeg',jpegQuality);
+    if(jpeg==='data:,')throw Error('Unable to encode this image.');
+    if(jpeg.length<=maxDataURLLength)return jpeg;
+   }
+   // Only reduce pixel dimensions after bounded quality attempts fail.
+   // Every output still stays inside the existing backup/image-string budget.
   }
   throw Error('Photo is too large after conversion. Try a closer photo.');
  }finally{URL.revokeObjectURL(url);}

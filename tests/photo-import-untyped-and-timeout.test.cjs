@@ -109,3 +109,32 @@ test('small imports retain native dimensions, and impossible JPEG budgets fail w
  assert.ok(draws>=1);
  assert.equal(released,1);
 });
+
+test('detail-first budget preserves 3072px pixels using acceptable JPEG quality before downscaling',async()=>{
+ const tries=[];let disposed=0,painted=0;
+ const canvas={width:0,height:0,getContext:()=>({fillRect(){},drawImage(){painted++;}}),
+  toDataURL(mime,q){tries.push([canvas.width,canvas.height,q]);
+   return q>.88?'X'.repeat(2850001):'data:image/jpeg;base64,FITS_WHILE_HIGH_RES';
+  }};
+ const c=runIn({URL:{createObjectURL:()=> 'blob:original',revokeObjectURL:()=>disposed++},
+  Image:class{constructor(){this.width=4032;this.height=3024;}async decode(){}},
+  document:{createElement:()=>canvas}});
+ const result=await c.photoToJPEG(upload('fabric-pattern.jpg','image/jpeg'));
+ assert.equal(result,'data:image/jpeg;base64,FITS_WHILE_HIGH_RES');
+ assert.deepEqual(tries,[[3072,2304,.94],[3072,2304,.88]]);
+ assert.equal(painted,1,'Do not resize or redraw between quality attempts');
+ assert.equal(disposed,1);
+});
+test('all bounded quality trials fail closed; max image budget and native-size limits stay enforced',async()=>{
+ const tries=[];let disposed=0;
+ const canvas={width:0,height:0,getContext:()=>({fillRect(){},drawImage(){}}),
+  toDataURL(_,q){tries.push([canvas.width,q]);return 'X'.repeat(2850001);}};
+ const c=runIn({URL:{createObjectURL:()=> 'blob:original',revokeObjectURL:()=>disposed++},
+  Image:class{constructor(){this.width=800;this.height=600;}async decode(){}},
+  document:{createElement:()=>canvas}});
+ await assert.rejects(c.photoToJPEG(upload('dense-artifact.png','image/png')),/too large after conversion/);
+ assert.deepEqual(tries,[[800,.94],[800,.88],[800,.82],[800,.94],[800,.88],[800,.82],
+ [800,.94],[800,.88],[800,.82],[800,.94],[800,.88],[800,.82],[800,.94],[800,.88],[800,.82]]);
+ assert.equal(disposed,1);
+ await assert.rejects(c.photoToJPEG(upload('bad.jpg','image/jpeg'),{quality:1.01}),/Invalid photo conversion limits/);
+});
