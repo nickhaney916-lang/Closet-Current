@@ -35,13 +35,17 @@ table{width:100%;border-collapse:collapse}th,td{padding:8px;text-align:left;bord
 <h2>Observation reconciliation (not accuracy)</h2>
 <p id="summary"></p><table><thead><tr><th>Original photo</th><th>Review status</th><th>Recorded families</th></tr></thead><tbody id="rows"></tbody></table>
 <p><strong>Identity and independence have not been authenticated.</strong> Matching self-attested answers do not establish gold labels, shoe subtypes, masks, recognition accuracy, or permission to ship.</p>
-<button id="export" type="button" disabled>Download offline review audit JSON</button>
+<button id="export" type="button" disabled>Download offline review audit JSON</button><p><a id="auditDownload" hidden download="self-attested-review-audit.json">Save the checked audit JSON manually</a></p>
 </section>
 <script>
 const sourceData=__LOCKED_REVIEW_PACKET__;
 const {packet,packetSha256,families,attestations}=sourceData;
 const $=id=>document.getElementById(id);
 let verifiedAudit=null,auditVersion=0;
+function clearDownload(){
+ const a=$('auditDownload');if(a.dataset.objectUrl)URL.revokeObjectURL(a.dataset.objectUrl);
+ a.hidden=true;a.removeAttribute('href');delete a.dataset.objectUrl;
+}
 const exact=(o,fields)=>o!==null&&typeof o==='object'&&!Array.isArray(o)&&
  Object.keys(o).length===fields.length&&fields.every(f=>Object.hasOwn(o,f));
 const validText=(v,min,max)=>typeof v==='string'&&v.trim().length>=min&&v.length<=max&&
@@ -110,7 +114,7 @@ async function fileInput(id){
 }
 $('verify').onclick=async()=>{
  const version=++auditVersion;
- verifiedAudit=null;$('export').disabled=true;$('results').hidden=true;
+ clearDownload();verifiedAudit=null;$('export').disabled=true;$('results').hidden=true;
  $('rows').replaceChildren();$('status').textContent='Checking original identity and completed review fields locally…';
  try{
   if(!crypto.subtle)throw Error('This browser cannot verify review hashes.');
@@ -139,14 +143,14 @@ $('verify').onclick=async()=>{
 };
 for(const id of ['first','second'])$(id).addEventListener('change',()=>{
  auditVersion++;
- verifiedAudit=null;$('export').disabled=true;$('results').hidden=true;
+ clearDownload();verifiedAudit=null;$('export').disabled=true;$('results').hidden=true;
  $('status').textContent='Files changed. Check both reviews again.';
 });
 $('export').onclick=()=>{
  if(!verifiedAudit)return;
  const url=URL.createObjectURL(new Blob([JSON.stringify(verifiedAudit,null,2)+'\n'],{type:'application/json'}));
- const a=document.createElement('a');a.href=url;a.download='self-attested-review-audit.json';a.click();
- setTimeout(()=>URL.revokeObjectURL(url),5000);
+ const a=$('auditDownload');clearDownload();
+ a.href=url;a.dataset.objectUrl=url;a.hidden=false;a.click();
 };
 </script></html>`;
  assert.ok(html.includes('__LOCKED_REVIEW_PACKET__'));
