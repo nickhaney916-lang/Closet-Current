@@ -1,3 +1,11 @@
+# Verified real-original presentation and honest human-review handoff — October 21, 2026 UTC
+
+- Draft PR #117 implementation `fb74253cc9707cd08dc509deb2a040e21aed9ebc`, Actions **39543569447 SUCCESS at exactly that head**: **1,313 passed / 0 failed / 3 skipped**, seven new readiness regressions, full build/historical PR115 source guards and supported original-photo fidelity/import/crop checks.
+- All **13 actual unchanged originals** displayed at exact EXIF-oriented dimensions in both Chromium and WebKit (**26 automated display checks**); injected incomplete/failed display blocked observations. Zero family labels, reviewer identities or attestations filled by automation. **Zero actual human submissions / human accuracy null / promotion BLOCKED.**
+- Actual original-first FashionCLIP: **13 inferences / 0 errors**, provisional source/assistant-label agreement unchanged at 10/12 categories and 8/12 families; one strong shirt/Jacket label disagreement remains independently unadjudicated. No recognition improvement or human-gold accuracy claimed.
+- Downloaded and verified complete blank packet artifact 12320965792 (18 files/13 original hashes/browser-tested HTML), archive SHA-256 `cc48751375609130f8da8346c3c2b0533ce2da8c0c2585cf1dc209375091e43d`; separate model/readiness artifact 12320780899 SHA-256 `e2eb193ef7a6bd4924adbeb6ad9f56d89affca689b5b0d87ed03fa92888c64ef`. Do not send model evidence to blind reviewers. Concrete START-HERE instructions require two actual separate people and raw JSON returns, not further software-generated review claims.
+- Final documentation-only head still requires its exact-head CI repetition; read PR #117 for final SHA/run. Real human reviews, ambiguous boundaries and untouched physical-phone confirmation remain external dependencies. All PR115 source files/branch and earlier evidence unchanged; no model/threshold/vector/customer-save, paid AI, live hosted settings/data, Drive Duel, merge or deployment changes.
+
 # Actual-original human-review handoff readiness — October 21, 2026 UTC
 
 - Isolated from verified PR #115 `6ebcf6d9dcfd18611c3248242b62208eb9923385`; all original customer/model/review-tool bytes unchanged and PR #115 branch untouched. Reviewed #111/#113/#115 evidence and comment threads: **zero supplied actual independent human submissions**. Human-reviewed accuracy cannot be computed.

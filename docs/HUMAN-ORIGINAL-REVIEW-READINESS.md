@@ -73,6 +73,36 @@ production release. No messages or invitations are sent by this work.
 
 Actual independent reviews and untouched physical-phone confirmation data remain
 external dependencies. No merge/deployment, paid AI, live Supabase/Auth/customer
-data, Drive Duel or physical-phone validation is included. Exact final CI results
-and artifact receipts belong in the draft PR after the run; pending runs are not
-credited as passing here.
+data, Drive Duel or physical-phone validation is included. Exact final-head CI
+results belong in draft PR #117; pending runs are not credited as passing here.
+
+## Verified implementation evidence
+
+Actions **39543569447 SUCCESS** at implementation source
+`fb74253cc9707cd08dc509deb2a040e21aed9ebc`: **1,313 Node passed / zero failed /
+three skipped**, full integrated build, historical PR115 source guards, original
+JPEG/EXIF/import and before-mask crop checks. Every actual original displayed at
+its exact EXIF-oriented intrinsic size in Chromium and WebKit: **26 automated
+display checks, zero human observations**. Incomplete/failed-display fault injection
+blocked recording. This is browser emulation and presentation readiness only.
+
+Actual unchanged FashionCLIP ran on all 13 original-derived inputs with zero
+errors. Against unchanged **provisional source/assistant labels**: 10/12 broad
+categories, 8/12 allowed families and one strong shirt/Jacket label disagreement;
+the sculpture control remained rejected. These repeat historical measurements,
+not a classification improvement or independently reviewed human accuracy.
+
+The original-review packet artifact **12320965792** was downloaded and verified:
+18 files, all 13 original JPEG hashes, blank observations/attestations and exact
+browser-tested HTML. Archive SHA-256
+`cc48751375609130f8da8346c3c2b0533ce2da8c0c2585cf1dc209375091e43d`.
+Separate model/readiness artifact **12320780899**, archive SHA-256
+`e2eb193ef7a6bd4924adbeb6ad9f56d89affca689b5b0d87ed03fa92888c64ef`,
+was also downloaded and checked: 26 display checks, zero actual human submissions,
+null human accuracy, promotion BLOCKED, and the provisional counts above.
+GitHub archives expire November 4 UTC. Keep the complete photo/credit packet
+and raw returned files. Do not give reviewers the separate model evidence.
+
+The final documentation-only commit must pass its own full exact-head CI/model
+and browser repetition. Read PR #117 for that final commit/run. Real independent
+human-reviewed validation remains **uncompleted until people return evidence**.
