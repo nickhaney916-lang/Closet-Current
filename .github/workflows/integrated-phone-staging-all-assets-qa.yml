@@ -1,0 +1,141 @@
+name: Integrated phone evidence, full staging access and local security QA
+on:
+  push:
+    branches: [integration/phone-evidence-staging-all-assets-20261021]
+permissions:
+  contents: read
+jobs:
+  local-two-account-security:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Integrated source boundaries and complete regressions
+        run: |
+          node scripts/check-integrated-phone-staging-scope.mjs
+          node scripts/check-linked-phone-trial-scope.mjs
+          node scripts/check-private-pilot-kit-scope.mjs
+          node scripts/check-final-integrated-pilot-validation.mjs
+          node scripts/check-integrated-asset-seal.mjs
+          node scripts/check-final-integrated-artifact-review.mjs
+          node scripts/check-integrated-security-mobile-staging.mjs
+          node scripts/check-staging-preflight-scope.mjs
+          node scripts/check-integrated-pilot-rc.mjs
+          node scripts/build.mjs
+          node --test tests/staging-asset-seal.test.mjs tests/staging-artifact-integrity.test.mjs tests/restricted-staging-integration.test.mjs
+          node --test tests/private-pilot-kit.test.mjs tests/staging-asset-seal.test.mjs tests/staging-artifact-integrity.test.mjs tests/restricted-staging-integration.test.mjs
+          node --test tests/staging-anonymous-access.test.mjs tests/staging-anonymous-full-bundle.test.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.121.0
+      - name: Discover CLI flags and initialize an unrelated empty local stack
+        shell: bash
+        run: |
+          set -euo pipefail
+          supabase --help
+          supabase init --help
+          supabase start --help
+          supabase status --help
+          supabase stop --help
+          mkdir -p "$RUNNER_TEMP/closet-disposable-stack"
+          supabase init --workdir "$RUNNER_TEMP/closet-disposable-stack"
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          p=Path(os.environ['RUNNER_TEMP'])/'closet-disposable-stack/supabase/config.toml'
+          s=p.read_text()
+          # No SMTP delivery; only synthetic local Auth signup and password login.
+          s=s.replace('enable_confirmations = true','enable_confirmations = false')
+          p.write_text(s)
+          PY
+          supabase start --workdir "$RUNNER_TEMP/closet-disposable-stack" --exclude studio,imgproxy,realtime,edge-runtime,logflare,vector,supavisor > "$RUNNER_TEMP/closet-local-start.log" 2>&1
+          supabase status --workdir "$RUNNER_TEMP/closet-disposable-stack" -o json > "$RUNNER_TEMP/closet-local-status.json"
+      - name: Real local Auth REST Storage two-account and migration recovery
+        shell: bash
+        env:
+          CLOSET_DISPOSABLE_SUPABASE: LOCAL_DISPOSABLE_ONLY
+        run: |
+          set -euo pipefail
+          command -v psql || (sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client)
+          node scripts/test-disposable-supabase-security.mjs "$RUNNER_TEMP/closet-local-status.json"
+      - name: Destroy disposable stack and local-only credential files
+        if: always()
+        shell: bash
+        run: |
+          if command -v supabase >/dev/null 2>&1 && test -f "$RUNNER_TEMP/closet-disposable-stack/supabase/config.toml"; then
+            supabase stop --workdir "$RUNNER_TEMP/closet-disposable-stack" --no-backup
+          fi
+          rm -f "$RUNNER_TEMP/closet-local-status.json" "$RUNNER_TEMP/closet-local-start.log"
+          echo 'No hosted project linked; no deployment; disposable runner data destroyed.'
+  mobile-and-installed-staging:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prove app, production workflow and hosted schemas untouched
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/check-integrated-phone-staging-scope.mjs
+          node scripts/check-linked-phone-trial-scope.mjs
+          node scripts/check-private-pilot-kit-scope.mjs
+          node scripts/check-final-integrated-pilot-validation.mjs
+          node scripts/check-integrated-asset-seal.mjs
+          node scripts/check-final-integrated-artifact-review.mjs
+          node scripts/check-integrated-security-mobile-staging.mjs
+          node scripts/check-staging-preflight-scope.mjs
+          node scripts/check-integrated-pilot-rc.mjs
+          node scripts/check-customer-pilot-release-gates.mjs
+      - name: Complete app Node suite
+        run: |
+          node scripts/build.mjs
+          node --test tests/staging-asset-seal.test.mjs tests/staging-artifact-integrity.test.mjs tests/restricted-staging-integration.test.mjs
+          node --test tests/private-pilot-kit.test.mjs tests/staging-asset-seal.test.mjs tests/staging-artifact-integrity.test.mjs tests/restricted-staging-integration.test.mjs
+          node --test tests/staging-anonymous-access.test.mjs tests/staging-anonymous-full-bundle.test.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Generate invented staging bundle and run offline simulation
+        env:
+          CLOSET_STAGING_APP_ORIGIN: https://preview.closet-current-staging.pages.dev/
+          CLOSET_STAGING_SUPABASE_URL: https://abcdefghijklmnopqrst.supabase.co
+          CLOSET_STAGING_SUPABASE_PUBLISHABLE_KEY: sb_publishable_STAGING_TEST_FIXTURE_XYZ001
+        run: |
+          node scripts/build-restricted-staging.mjs
+          node scripts/verify-restricted-staging-bundle.mjs
+          node scripts/test-staging-sw-cache.mjs
+          node --input-type=module -e "import {pathsFromVerifiedStaging} from './scripts/check-staging-anonymous-access.mjs'; import assert from 'node:assert/strict'; const paths=await pathsFromVerifiedStaging(); assert.ok(paths.length>90); assert.ok(paths.includes('/staging-asset-seal.json')); assert.ok(paths.includes('/icons/icon-192.png')); console.log('SYNTHETIC_COMPLETE_ANONYMOUS_INVENTORY',paths.length,'NO HOSTED REQUESTS');"
+      - name: Install pinned Chromium browser harness
+        run: |
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps chromium webkit
+      - name: Exercise actual installed staging worker on local Chromium
+        run: |
+          node scripts/test-staging-runtime-browsers.mjs
+          node scripts/test-staging-installed-pwa-chromium.mjs
+      - name: Exercise offline private-pilot kit in Android Chromium and iPhone WebKit
+        run: |
+          node scripts/test-linked-phone-evidence-browsers.mjs
+          node scripts/test-private-pilot-kit-browsers.mjs
+          node scripts/test-offline-pilot-cohort-browser.mjs
+          node scripts/build-private-pilot-kit.mjs "$RUNNER_TEMP/closet-current-private-pilot-kit"
+          node scripts/build-linked-phone-evidence.mjs "$RUNNER_TEMP/closet-current-private-pilot-kit/PHONE-ORIGINALS.html"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Closet-Current-Consolidated-Private-Pilot-Kit
+          path: ${{ runner.temp }}/closet-current-private-pilot-kit/
+          if-no-files-found: error
+          retention-days: 14
+      - name: No cloud service or production deployment authorized
+        run: |
+          echo 'REAL LOOPBACK CHROMIUM PWA QA ONLY. NO HOSTED ENVIRONMENT, CUSTOMER DATA OR DEPLOYMENT.'
