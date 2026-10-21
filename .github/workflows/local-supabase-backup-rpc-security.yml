@@ -1,0 +1,106 @@
+name: Disposable real Supabase Auth/REST/Storage backup RPC security
+on:
+  push:
+    branches: [security/backup-rpc-local-supabase-http-20261020]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  disposable-local-supabase:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: closet_rpc_review
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres -d closet_rpc_review"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check isolated SDK test syntax and app build
+        run: |
+          node --check scripts/test-local-supabase-backup-rpc-privacy.mjs
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Verify review provenance and deny production release
+        run: |
+          node scripts/verify-camera-cloud-integration.mjs
+          node scripts/check-dual-parent-review-integration.mjs
+          node scripts/check-customer-pilot-release-gates.mjs
+      - name: Install SQL client
+        run: |
+          if ! command -v psql >/dev/null 2>&1; then
+            sudo apt-get update -qq
+            sudo apt-get install -y -qq postgresql-client
+          fi
+      - name: Verify updated private writer SQL first on disposable PostgreSQL
+        env:
+          PGHOST: 127.0.0.1
+          PGPORT: '5432'
+          PGUSER: postgres
+          PGPASSWORD: postgres
+          PGDATABASE: closet_rpc_review
+        run: psql -X -v ON_ERROR_STOP=1 -f tests/backup-rpc-only-writes-postgres.sql
+      - name: Initialize disposable loopback-only Supabase Auth/REST/Storage
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/cc-local-rpc-security"
+          cd "$RUNNER_TEMP/cc-local-rpc-security"
+          # No supabase login/link/project remote commands or hosted credentials.
+          npx --yes supabase@2.121.0 init --yes > "$RUNNER_TEMP/cc-rpc-init.log" 2>&1
+          if ! npx --yes supabase@2.121.0 start --exclude studio,realtime,functions,mail,analytics,pooler \
+            > "$RUNNER_TEMP/cc-rpc-start.log" 2>&1; then
+            echo "Disposable local stack startup failed; avoid logging ephemeral API tokens."
+            exit 1
+          fi
+          npx --yes supabase@2.121.0 status --output env \
+            > "$RUNNER_TEMP/cc-local-rpc-security.env" 2> /dev/null
+          echo "Disposable Supabase stack started. No hosted project was contacted."
+      - name: Apply historical and TWO draft security designs to local DB only
+        shell: bash
+        run: |
+          set -euo pipefail
+          set -a
+          source "$RUNNER_TEMP/cc-local-rpc-security.env"
+          set +a
+          test "$API_URL" = "http://127.0.0.1:54321" || test "$API_URL" = "http://localhost:54321"
+          case "$DB_URL" in
+            *127.0.0.1:54322/*|*localhost:54322/*) ;;
+            *) echo "Rejecting non-local Supabase DB_URL"; exit 1 ;;
+          esac
+          psql "$DB_URL" -X -v ON_ERROR_STOP=1 -q -f "$GITHUB_WORKSPACE/supabase/cloud-backup.sql"
+          psql "$DB_URL" -X -v ON_ERROR_STOP=1 -q -f "$GITHUB_WORKSPACE/supabase/design/closet-backup-least-privilege.DRAFT.sql"
+          psql "$DB_URL" -X -v ON_ERROR_STOP=1 -q -f "$GITHUB_WORKSPACE/supabase/design/backup-rpc-only-writes.DRAFT.sql"
+          echo "Draft SQL applied only to ephemeral local containers."
+      - name: Install pinned local JS SDK in temporary runner folder
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/cc-rpc-sdk"
+          npm install --prefix "$RUNNER_TEMP/cc-rpc-sdk" \
+            --no-save --no-package-lock --no-audit --no-fund @supabase/supabase-js@2.75.0
+      - name: Verify real HTTP two-account isolation, optimistic CAS and private photo immutability
+        shell: bash
+        run: |
+          set -euo pipefail
+          set -a
+          source "$RUNNER_TEMP/cc-local-rpc-security.env"
+          set +a
+          export LOCAL_SDK_ROOT="$RUNNER_TEMP/cc-rpc-sdk"
+          node "$GITHUB_WORKSPACE/scripts/test-local-supabase-backup-rpc-privacy.mjs"
+      - name: Destroy local containers without backup
+        if: always()
+        shell: bash
+        run: |
+          cd "$RUNNER_TEMP/cc-local-rpc-security" 2>/dev/null || exit 0
+          npx --yes supabase@2.121.0 stop --no-backup > /dev/null 2>&1 || true

@@ -42,16 +42,34 @@ END $guard$;
 -- Run as project administrator during an approved deployment only. The
 -- explicit NOLOGIN/NOBYPASSRLS role is NEVER granted to browser roles.
 CREATE ROLE closet_backup_writer NOLOGIN NOINHERIT NOBYPASSRLS;
-GRANT USAGE ON SCHEMA public, auth TO closet_backup_writer;
-GRANT EXECUTE ON FUNCTION auth.uid() TO closet_backup_writer;
+-- The protected auth schema is owned by supabase_auth_admin and hosted
+-- migration executors cannot GRANT it to arbitrary roles. Mirror BOTH
+-- verified PostgREST JWT subject formats used by the deployed auth.uid()
+-- function: legacy request.jwt.claim.sub and JSON request.jwt.claims->sub.
+-- No custom/unsigned account identifier is accepted as a function argument.
+GRANT USAGE ON SCHEMA public TO closet_backup_writer;
 GRANT SELECT, INSERT, UPDATE ON TABLE public.closet_backups TO closet_backup_writer;
 CREATE POLICY closet_backup_writer_owner
  ON public.closet_backups FOR ALL TO closet_backup_writer
- USING ((SELECT auth.uid()) = owner_id)
- WITH CHECK ((SELECT auth.uid()) = owner_id);
+ USING ((SELECT COALESCE(
+  NULLIF(current_setting('request.jwt.claim.sub',true),''),
+  (NULLIF(current_setting('request.jwt.claims',true),'')::jsonb ->> 'sub')
+ )::uuid)=owner_id)
+ WITH CHECK ((SELECT COALESCE(
+  NULLIF(current_setting('request.jwt.claim.sub',true),''),
+  (NULLIF(current_setting('request.jwt.claims',true),'')::jsonb ->> 'sub')
+ )::uuid)=owner_id);
 
+-- Supabase migration executor needs temporary SET ROLE not only to
+-- transfer the function owner, but also to CREATE SCHEMA AUTHORIZATION.
+-- The transactional role membership is removed immediately after ownership
+-- handoff. Its grants never include authenticated or anon.
+GRANT closet_backup_writer TO CURRENT_USER WITH SET TRUE, INHERIT FALSE;
 CREATE SCHEMA closet_rpc_private AUTHORIZATION closet_backup_writer;
--- This schema must NOT be exposed through Supabase PostgREST Data API.
+-- Migration administrator is not a superuser; become the private schema
+-- owner only while creating this narrowly scoped function and its grants.
+SET ROLE closet_backup_writer;
+-- The schema is NOT in the configured PostgREST exposed schemas.
 GRANT USAGE ON SCHEMA closet_rpc_private TO authenticated;
 
 -- All relation/function names are schema-qualified and search_path is empty.
@@ -63,8 +81,13 @@ LANGUAGE plpgsql SECURITY DEFINER
 SET search_path = ''
 AS $body$
 DECLARE saved_revision bigint;
+ request_owner uuid;
 BEGIN
- IF auth.uid() IS NULL THEN
+ request_owner := COALESCE(
+  NULLIF(current_setting('request.jwt.claim.sub',true),''),
+  (NULLIF(current_setting('request.jwt.claims',true),'')::jsonb ->> 'sub')
+ )::uuid;
+ IF request_owner IS NULL THEN
   RAISE EXCEPTION 'Authentication required' USING errcode='42501';
  END IF;
  IF p_expected_revision IS NULL OR p_expected_revision<0
@@ -77,21 +100,28 @@ BEGIN
  END IF;
  IF p_expected_revision=0 THEN
   INSERT INTO public.closet_backups(owner_id,revision,document)
-   VALUES (auth.uid(),1,p_document)
+   VALUES (request_owner,1,p_document)
    ON CONFLICT(owner_id) DO NOTHING RETURNING revision INTO saved_revision;
  ELSE
   UPDATE public.closet_backups
    SET document=p_document,revision=revision+1,updated_at=now()
-   WHERE owner_id=auth.uid() AND revision=p_expected_revision
+   WHERE owner_id=request_owner AND revision=p_expected_revision
    RETURNING revision INTO saved_revision;
  END IF;
  RETURN saved_revision;
 END $body$;
-ALTER FUNCTION closet_rpc_private.save_checked(bigint,jsonb) OWNER TO closet_backup_writer;
+-- As the private writer, create/grant the function without relying on
+-- database superuser privileges. Revoke temporary migration membership
+-- immediately afterward. No browser role is ever granted writer membership.
 REVOKE ALL ON FUNCTION closet_rpc_private.save_checked(bigint,jsonb)
  FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION closet_rpc_private.save_checked(bigint,jsonb)
  TO authenticated;
+RESET ROLE;
+REVOKE closet_backup_writer FROM CURRENT_USER;
+-- PostgreSQL administrative executors (especially SUPERUSER) inherently
+-- retain privileged role-management abilities. The security contract is
+-- that NO browser-role may become or inherit the private writer.
 
 -- Retain exact original PostgREST RPC path, argument names and JSON return.
 -- A private function could also be called directly by an authenticated SQL
@@ -115,6 +145,27 @@ REVOKE ALL PRIVILEGES ON TABLE public.closet_backups FROM anon, PUBLIC;
 
 DO $check$
 BEGIN
+ -- Narrow, non-PII diagnostics for privilege drift. These checks only
+ -- disclose boolean grants and role identities, never customer records.
+ RAISE NOTICE 'BACKUP_RPC_ROLE_FLAGS table: insert=% update=% delete=% truncate=% select=% anon_select=%',
+  has_table_privilege('authenticated','public.closet_backups','INSERT'),
+  has_table_privilege('authenticated','public.closet_backups','UPDATE'),
+  has_table_privilege('authenticated','public.closet_backups','DELETE'),
+  has_table_privilege('authenticated','public.closet_backups','TRUNCATE'),
+  has_table_privilege('authenticated','public.closet_backups','SELECT'),
+  has_table_privilege('anon','public.closet_backups','SELECT');
+ RAISE NOTICE 'BACKUP_RPC_ROLE_FLAGS functions: anon_public=% auth_public=% anon_private=% auth_private=% writer_can_set_admin=% writer_member_auth=%',
+  has_function_privilege('anon','public.save_closet_backup(bigint,jsonb)','EXECUTE'),
+  has_function_privilege('authenticated','public.save_closet_backup(bigint,jsonb)','EXECUTE'),
+  has_function_privilege('anon','closet_rpc_private.save_checked(bigint,jsonb)','EXECUTE'),
+  has_function_privilege('authenticated','closet_rpc_private.save_checked(bigint,jsonb)','EXECUTE'),
+  pg_has_role(CURRENT_USER,'closet_backup_writer','SET'),
+  pg_has_role('authenticated','closet_backup_writer','MEMBER');
+ RAISE NOTICE 'BACKUP_RPC_ROLE_FLAGS ownership: table_writer=% private_definer=% private_writer=% public_definer=%',
+  (SELECT c.relowner = 'closet_backup_writer'::regrole FROM pg_class c WHERE c.oid='public.closet_backups'::regclass),
+  (SELECT p.prosecdef FROM pg_proc p WHERE p.oid='closet_rpc_private.save_checked(bigint,jsonb)'::regprocedure),
+  (SELECT p.proowner='closet_backup_writer'::regrole FROM pg_proc p WHERE p.oid='closet_rpc_private.save_checked(bigint,jsonb)'::regprocedure),
+  (SELECT p.prosecdef FROM pg_proc p WHERE p.oid='public.save_closet_backup(bigint,jsonb)'::regprocedure);
  IF has_table_privilege('authenticated','public.closet_backups','INSERT')
  OR has_table_privilege('authenticated','public.closet_backups','UPDATE')
  OR has_table_privilege('authenticated','public.closet_backups','DELETE')
@@ -125,8 +176,12 @@ BEGIN
  OR NOT has_function_privilege('authenticated','public.save_closet_backup(bigint,jsonb)','EXECUTE')
  OR NOT has_function_privilege('authenticated','closet_rpc_private.save_checked(bigint,jsonb)','EXECUTE')
  OR has_function_privilege('anon','closet_rpc_private.save_checked(bigint,jsonb)','EXECUTE')
+ -- Migration superusers can SET ROLE regardless of ordinary membership.
+ -- Safety invariant is instead that no client role can SET or inherit writer.
  OR pg_has_role('authenticated','closet_backup_writer','MEMBER')
+ OR pg_has_role('authenticated','closet_backup_writer','SET')
  OR pg_has_role('anon','closet_backup_writer','MEMBER')
+ OR pg_has_role('anon','closet_backup_writer','SET')
  OR (SELECT rolcanlogin OR rolbypassrls FROM pg_roles
      WHERE rolname='closet_backup_writer')
  OR (SELECT p.prosecdef FROM pg_proc p
