@@ -385,7 +385,13 @@ try{
  });
  await page.waitForFunction(()=>document.querySelector('#reusableFigureStatus').textContent.includes('selection changed'));
  assert.equal(await page.locator('#reusableFigureGarments img').count(),0);
- await page.locator('#reusableFigureRetry').click();
+ // A background board refresh may already have started the current preview.
+ // Observe and activate Retry in one browser turn instead of waiting forever
+ // for a control that correctly becomes hidden during/successful recovery.
+ await page.evaluate(()=>{
+  const retry=document.querySelector('#reusableFigureRetry');
+  if(!retry.hidden)retry.click();
+ });
  try{await page.waitForFunction(()=>document.querySelectorAll('#reusableFigureGarments img').length===1);}catch(error){
   console.log('RECOVERY_DIAGNOSTIC',await page.evaluate(()=>({status:document.querySelector('#reusableFigureStatus').textContent,
    board:currentBoard.slots,selected:items.filter(x=>Object.values(currentBoard.slots).includes(x.id)).map(x=>({id:x.id,category:x.category,color:x.color,sourceLength:x.image.length})),
