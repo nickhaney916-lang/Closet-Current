@@ -104,9 +104,14 @@ GRANT SELECT, INSERT, UPDATE ON TABLE public.closet_backups TO authenticated;
 REVOKE ALL ON FUNCTION public.save_closet_backup(bigint,jsonb) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.save_closet_backup(bigint,jsonb) TO authenticated;
 
--- Remove the private writer only when no unknown routines or grants exist.
+-- Remove owned objects as their actual owner. Supabase postgres is not a
+-- superuser; its retained ADMIN-only membership allows temporary SET ROLE.
+-- Transaction rollback removes this temporary SET option on any failure.
+GRANT closet_backup_writer TO CURRENT_USER WITH SET TRUE, INHERIT FALSE;
+SET ROLE closet_backup_writer;
 DROP FUNCTION closet_rpc_private.save_checked(bigint,jsonb);
 DROP SCHEMA closet_rpc_private;
+RESET ROLE;
 DROP POLICY closet_backup_writer_owner ON public.closet_backups;
 REVOKE SELECT, INSERT, UPDATE ON public.closet_backups FROM closet_backup_writer;
 REVOKE USAGE ON SCHEMA public FROM closet_backup_writer;

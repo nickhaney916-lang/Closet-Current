@@ -1,3 +1,21 @@
+# Work Assignment #154 verified — real local Supabase two-account security
+
+- Draft PR #154 implementation `1042cd622277c4298af849af682f8478a3869b74`, real local Supabase CI [#39677977928](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39677977928) and camera/indexing [#39677977772](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39677977772) both SUCCESS. Full build/regression: **1,494 passed, 0 failed, 3 skipped**. Four new local-only guard tests pass.
+- CLI 2.121.0 ran actual Auth signup/password login/JWT user verification, PostgREST and private Storage on a disposable runner-local Docker stack. **207 real HTTP requests**, two independent generated accounts, four permission states: limited → RPC-only → safe recovered limited → re-hardened. Symmetric cross-owner wardrobe/photo attacks denied; victim JSON and exact generated-JPEG bytes preserved. Anonymous/forged-token denial and editable metadata isolation passed.
+- Real concurrent revision CAS, invalid save, injected database-trigger failure/atomic retry, disregarded committed-response/stale retry, drifted-wrapper recovery rejection with unchanged grants, preservation through recovery and final re-hardening all PASS. Non-superuser migration executor and no writer SET for browser roles explicitly checked. Teardown destroyed disposable volumes/status files.
+- **Security/reliability finding fixed in DRAFT SQL only:** earlier superuser PostgreSQL rehearsal hid inability of real Supabase postgres to drop private-writer-owned functions. Hardening retains creator ADMIN-only authority with SET/INHERIT disabled; recovery temporarily assumes the object owner, drops its function/schema, resets and removes the role. No browser writer membership. Already-hardened databases with revoked administrator authority require separate reviewed administrative repair; this is not hosted migration approval.
+- Existing public app, original/full-resolution photo recognition, wardrobe, production SQL/migrations, audits, hosting workflows and all original Work branches untouched. Only the two explicit DRAFT SQL designs and new local QA/docs changed. No hosted DB writes, paid resources/AI, deployment, merge or Drive Duel changes. Hosted staging/Access/email, real phones and independent garment acceptance remain release blockers. Production promotion BLOCKED. Final exact-head evidence is maintained in PR #154.
+
+---
+
+# Work Assignment #154 — local Supabase two-account integration
+
+- New isolated development branch `test/disposable-supabase-two-account-20261021` from verified PR #153 `7740438f2d196b1ccd98ea6ff47afc2f41de58bf`. Adds actual local GoTrue/PostgREST/Storage two-account integration and fail-closed localhost guards; no existing app/SQL/production workflow changed.
+- Tests symmetric wardrobe/photo attacks, anonymous/forged tokens, user metadata, concurrent revision CAS, actual database-trigger save failure/retry, recovery-draft drift rejection, preservation through fallback and re-hardening. Uses only synthetic accounts and a generated JPEG.
+- The authoring workspace lacks Docker/CLI; dedicated GitHub runner starts its own disposable local Supabase stack with CLI 2.121.0 and no hosted link. Local static guards pass; final complete regression and real HTTP results must be verified at the published source SHA. No hosted account-security claim, production deployment, paid resource or Drive Duel change. Production release BLOCKED. See `docs/DISPOSABLE-SUPABASE-SECURITY-20261021.md` and the draft PR for final test evidence.
+
+---
+
 # Closet Current backup migration catalog state gate — October 21, 2026
 
 - **Draft PR #153:** added a single read-only 27-flag catalog query at `supabase/audits/backup-migration-state.sql` that reports `OVERBROAD_CLIENT_GRANTS`, `LIMITED_DIRECT_WRITES`, `RPC_ONLY_EXPECTED_CATALOG` or `UNKNOWN_OR_UNSAFE`. Every result explicitly sets `hosted_migration_authorized=false` and `production_release_approved=false`.
