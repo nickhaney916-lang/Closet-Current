@@ -11,13 +11,26 @@
  const ready=new Promise((resolve,reject)=>{resolveReady=resolve;rejectReady=reject;});
  window.closetAuth={ready,user:null};
  let signup=false,session=null,busy=false,recovery=false,restoringSession=false,refreshing=null;
+ let authVersion=0,loggingOut=false;
  window.closetAuth.getAccessToken=async({force=false}={})=>{
-  if(!session?.access_token||!window.closetAuth.user?.id)throw Error('Sign in required');
+  if(loggingOut||!session?.access_token||!window.closetAuth.user?.id)throw Error('Sign in required');
   if(force||session.expires_at<Date.now()/1000+60){
    if(!session.refresh_token)throw Error('Sign in again');
-   if(!refreshing){const expected=window.closetAuth.user.id;refreshing=request('token?grant_type=refresh_token',{refresh_token:session.refresh_token}).then(data=>{if(data.user?.id!==expected||!data.access_token)throw Error('Session account changed');showUser(data);}).finally(()=>{refreshing=null;});}
+   if(!refreshing){
+    const expected=window.closetAuth.user.id,originalSession=session,version=authVersion;
+    let pending;
+    pending=request('token?grant_type=refresh_token',{refresh_token:session.refresh_token}).then(data=>{
+     // A late refresh must not restore a logged-out or replaced session.
+     if(loggingOut||version!==authVersion||session!==originalSession||
+        window.closetAuth.user?.id!==expected||
+        data.user?.id!==expected||!data.access_token)throw Error('Session account changed');
+     showUser(data,{refreshed:true});
+    }).finally(()=>{if(refreshing===pending)refreshing=null;});
+    refreshing=pending;
+   }
    await refreshing;
   }
+  if(loggingOut||!session?.access_token||!window.closetAuth.user?.id)throw Error('Sign in required');
   return session.access_token;
  };
  const status=t=>$('authStatus').textContent=t;
@@ -75,12 +88,14 @@
    return data;
   }finally{clearTimeout(timer);}
  }
- function showUser(data){
+ function showUser(data,{refreshed=false}={}){
   // A successful HTTP response is not necessarily a usable login. Never
   // expose the wardrobe until Auth supplies both an identity AND a token.
   if(typeof data?.user?.id!=='string'||!data.user.id||
      typeof data.access_token!=='string'||!data.access_token)
    throw Error('No verified user session');
+  if(loggingOut)throw Error('Session closed');
+  if(!refreshed)authVersion++;
   session={...data,expires_at:Math.floor(Date.now()/1000)+(data.expires_in||3600)};window.closetAuth.user=data.user;
   localStorage.setItem(STORE,JSON.stringify({access_token:data.access_token,refresh_token:data.refresh_token,expires_at:Math.floor(Date.now()/1000)+(data.expires_in||3600)}));
   $('authGate').hidden=true;$('appShell').hidden=false;
@@ -139,10 +154,20 @@
   catch(err){status(errorMessage(err));}finally{setBusy(false);}
  };
  $('logout').onclick=async()=>{
-  try{if(session?.access_token)await request('logout',{},session.access_token);}catch{}
+  if(loggingOut)return;
+  loggingOut=true;authVersion++;
+  const token=session?.access_token;
+  // Invalidate locally before awaiting a remote logout or a pending refresh.
+  session=null;window.closetAuth.user=null;
   localStorage.removeItem(STORE);
-  // Reload closes the current account's IndexedDB connection and clears in-memory images.
-  location.reload();
+  $('appShell').hidden=true;$('authGate').hidden=false;
+  status('Signing out…');setBusy(true);
+  try{if(token)await request('logout',{},token);}catch{}
+  finally{
+   localStorage.removeItem(STORE);
+   // Reload closes the old IndexedDB connection and in-memory images.
+   location.reload();
+  }
  };
  setMode(false);
  // Network outages and transient server errors do NOT revoke a saved
