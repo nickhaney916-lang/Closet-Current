@@ -147,6 +147,11 @@ const newFillColor="function fillColor(item,estimate){if(!estimate||estimate.nee
 assert.ok(priorColor.includes(oldFillColor),'Color provenance review baseline changed');
 assert.equal(fs.readFileSync('public/clothing-details.js','utf8'),priorColor.replace(oldFillColor,newFillColor),
  'Unreviewed clothing-detail change beyond verified mask color provenance');
+const allowedDuplicateQA=new Set([
+ 'tests/automatic-indexing.test.cjs',
+ '.github/workflows/duplicate-indexing-commit-qa.yml',
+ 'docs/DUPLICATE-SAFE-INDEXING-20261020.md'
+]);
 const allowedWork=new Set([
  'public/app.js',
  'docs/PROGRESS-CHECKPOINT.md',
@@ -176,7 +181,7 @@ const allowedNew=new Set([
 for(const p of new Set([...m.keys(),...head.keys()])){
  if(m.get(p)!==head.get(p)){
   if(p==='public/index.html'||p==='scripts/build.mjs'||p===reviewScript)continue;
-  assert.ok(allowedWork.has(p)||(allowedNew.has(p)&&!m.has(p))||(allowedSecurity.has(p)&&!m.has(p))||(allowedBackupRpc.has(p)&&!m.has(p))||(allowedLocalSupabaseEvidence.has(p)&&!m.has(p))||allowedAuthSession.has(p)||allowedColorEvidence.has(p),
+  assert.ok(allowedWork.has(p)||(allowedNew.has(p)&&!m.has(p))||(allowedSecurity.has(p)&&!m.has(p))||(allowedBackupRpc.has(p)&&!m.has(p))||(allowedLocalSupabaseEvidence.has(p)&&!m.has(p))||allowedAuthSession.has(p)||allowedColorEvidence.has(p)||allowedDuplicateQA.has(p),
    'Unreviewed change after merge: '+p);
  }
 }
