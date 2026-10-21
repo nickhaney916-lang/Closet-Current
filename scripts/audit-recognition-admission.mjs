@@ -5,7 +5,7 @@ import {pathToFileURL} from 'node:url';
 
 export const REQUIRED_SETS=Object.freeze(['reviewed-32','holdout-16','fresh-11']);
 const requiredCounts={'reviewed-32':32,'holdout-16':16,'fresh-11':11};
-const wantedCategories=new Set(['Tops','Bottoms','Dresses','Outerwear','Shoes']);
+const wantedCategories=new Set(['Tops','Bottoms','Dresses','Outerwear','Shoes','Accessories']);
 const pct=(a,b)=>b?+(100*a/b).toFixed(2):null;
 const idValid=s=>typeof s==='string'&&/^(?:commons|validation)-\d{4}$/.test(s);
 function index(rows,kind){
