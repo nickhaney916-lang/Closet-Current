@@ -1,3 +1,9 @@
+# Offline-safe verified trend recommendations — October 21, 2026
+
+- Independent of Work #126 garment recognition and Work #128 integration, the Trend Suggestions loader now always compares app-bundled magazine/product library metadata with a potentially older saved phone library; adopts only strictly more-recent source-verified data and keeps the best local cache if GitHub weekly fetch fails.
+- Prevents same-time conflicting remote content from replacing verified bundled suggestions without a later check timestamp. No new third-party sources, paid providers or product purchases; no claim of a newly researched weekly fashion library. Current published data source as of 2026-10-19 remains unchanged.
+- Exact source lock of `public/outfit-board.js` only, complete Node regressions and browser emulation required. Physical-phone and independently human-labeled garment tests still unperformed, production promotion BLOCKED. See `docs/TREND-OFFLINE-BUNDLED-FALLBACK-20261021.md`.
+
 # Private real-phone pilot evidence coordinator — October 21, 2026
 
 - Separate from Work mode's recognition tasks and the existing camera/import PRs. Reuses the exact frozen Node 17-check Android/iPhone validator in an offline operator page with two local file uploads and a redacted download; no photos, names, cloud writes or credentials.
