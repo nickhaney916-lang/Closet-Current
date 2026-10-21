@@ -17,3 +17,14 @@ Download the exact-head Actions artifact named `one-click-blind-original-photo-r
 
 ## Boundaries
 All deployed runtime, Supabase SQL/Auth/RLS, original images, FashionCLIP, taxonomy, masks and segmentation, style generator, private cloud account isolation, saved customer closets, paid services and Drive Duel remain untouched. Development-only branch; do not merge or deploy without approval. Final exact-head verification must be checked in the new draft PR.
+
+## Partial draft recovery (October 21 follow-up)
+
+The original single-page reviewer lost unfinished answers when closed. The new **Save partial draft (JSON)** control saves the currently recorded rows and optional alias to a file on the reviewer's device. **Resume saved draft (JSON)** reads that file in the same offline page after all 13 original JPEGs have again passed SHA-256 verification. Reviewers can resume without repeating their completed family observations, while retaining access to the full original images.
+
+- The draft has a dedicated `DRAFT_UNREVIEWED` status and exact packet SHA-256. It is **not** a final reviewer submission; it cannot be passed as a `REVIEWED` file to the existing human-intake audit.
+- Import is all-or-nothing. It rejects unexpected/missing fields, wrong source packet or JPEG identity, missing/duplicate source IDs, invented family names, invalid uncertainty, malformed timestamps, oversized files, and missing visible evidence. Failed imports do not erase existing observations.
+- The app **does not** store or restore human attestations: reviewers must check them truthfully again before the final export, even after a valid draft loads. No automatic storage, account transfer, upload, tracking, final answer or claimed human accuracy is added.
+- Use **Save partial draft** before closing the browser, and preserve the downloaded `review-draft.json` privately. Choose **Resume saved draft** to restore it. Only the separate **Download reviewed observations** button produces final human-review JSON after full coverage and fresh attestations.
+
+Automated browser QA uses deliberately synthetic sample observations to exercise the round-trip, tamper refusal and reset of attestations. These are not independent human judgments. Physical-device confirmation remains outstanding. The software review priority may be considered complete only after the exact final branch SHA passes source/Node and both-browser CI.

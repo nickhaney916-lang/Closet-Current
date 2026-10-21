@@ -1,3 +1,10 @@
+# Offline original-photo review draft recovery — October 21, 2026 Pacific
+
+- Isolated on PR #120 verified source `5b14998f32979e685c932af8fc7d8c986e1e4e58`: explicit user-triggered Save partial draft / Resume saved draft controls, exact original-locked packet and row validation, and unchanged offline reviewer source images.
+- Every import verifies original 13 JPEGs first, rejects malformed/duplicate/wrong-hash/unapproved-category rows atomically, and resets all five human attestations; final export still requires complete observations, genuine reviewers and truthful statements.
+- New chromium/webkit fixtures exercise interrupted-session round-trip without counting synthetic rows as human review; all customer production/auth/cloud/model/mask/recognition files unchanged. Human-reviewed accuracy **null**, promotion **BLOCKED**. No merge/deployment, hosted state changes, physical-phone proof or paid AI.
+- Exact-head CI evidence is recorded in PR description after verification; see `docs/ONE-CLICK-HUMAN-REVIEW-20261021.md`.
+
 # Easier single-file independent original-photo review — October 21, 2026 Pacific
 
 - Generated offline one-file HTML from 13 unchanged SHA-256 locked original JPEGs. A blind reviewer no longer has to select files; original-byte checksum and full-image display must pass before observations can be recorded.
