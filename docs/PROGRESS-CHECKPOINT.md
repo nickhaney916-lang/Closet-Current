@@ -1,3 +1,13 @@
+# Cross-account cloud IndexedDB owner binding — October 20, 2026 Pacific
+
+- Isolated `fix/cloud-db-owner-binding-20261020` from fully tested draft PR #112 `af8738abead9419ef8fc66717233975487c87cc3`. No changes to main, Drive Duel, published production app or Supabase configuration.
+- Reproduced a cross-account privacy-risk in `public/cloud-backup.js`: a valid newly signed-in Supabase Auth user might receive an old user's local IndexedDB object because the cloud client checked generation/auth owner but **not the actual IndexedDB database name**. A mismatch could cause the stale local user's photos/outfits to be read or backed up with the new owner's token.
+- Client checks exact `closet-current-user-<auth UUID>` name at `start`, every async `current()` operation, and BFCache page-resume. If stale DB is presented, **no cloud request, local modification or dirty flag occurs**; user sees reload/sign-in guidance. Recovery works by opening the actual new owner's DB and calling start again. No silent relabeling of previous user data.
+- Updated complete mocked owner-bound database fixtures and added 4 additional tests covering stale cross-account start, valid new-account recovery, BFCache leakage refusal and pending token-binding race. Existing cloud merge/conflict and photo checksum source intact.
+- Chromium Android/WebKit iPhone browser experiment uses actual named IndexedDB and synthetic intercepted cloud replies, explicitly attempts wrong-A database under B and confirms correct new B restore with late A response ignored.
+- The immutable source verifier reconstructs only **three exact changes** to cloud client against PR #112 and preserves all prior camera, source RGB recognition, reusable human assets, tenant-owned wardrobe styling and pilot-release gates. Dedicated CI in `.github/workflows/private-cloud-owner-db-binding-qa.yml`.
+- Final exact-head CI status must be checked after this checkpoint. No real hosted RLS/storage validation, physical phones, deployed backend writes or independent real-photo model improvement has been claimed.
+
 # Account-safe styling source identity at final outfit commit — October 20, 2026 Pacific
 
 - Started isolated branch `fix/stylist-owned-source-commit-guard-20261020` from verified draft PR #110, SHA `ba4e2155fed86174a4043b0f8bf08334bda42ecf`. Work owns independently photographed garment benchmark and PR #108 integration audit; no overlap.
