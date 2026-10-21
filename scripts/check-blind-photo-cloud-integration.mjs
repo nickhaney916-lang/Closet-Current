@@ -57,6 +57,7 @@ const permittedExtra=new Set([
  'scripts/verify-camera-cloud-integration.mjs',
  'public/cloud-backup.js',
  'tests/cloud-conflict-retry.test.cjs',
+ 'scripts/test-cloud-conflict-retry-browsers.mjs',
  '.github/workflows/cloud-conflict-retry-qa.yml',
  'docs/CLOUD-CONFLICT-RETRY-RECOVERY-20261020.md'
 ]);
