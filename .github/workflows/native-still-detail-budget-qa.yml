@@ -56,6 +56,7 @@ jobs:
           mkdir -p "$RUNNER_TEMP/native-still-evidence"
           node scripts/test-native-still-detail-budget-browsers.mjs "$RUNNER_TEMP/native-still-evidence/qa.json"
           node scripts/test-native-camera-fidelity-mobile.mjs
+          node scripts/build.mjs
           node scripts/test-original-crop-source-mobile.mjs
           node scripts/test-original-source-duplicate-mobile.mjs
           node scripts/test-untyped-photo-import-mobile.mjs
