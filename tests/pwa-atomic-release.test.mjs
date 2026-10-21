@@ -17,7 +17,7 @@ function worker({installFails=false,openFails=false}={}){
    for(const url of urls)
     cacheMap.set(url,new Response(url.endsWith('/index.html')?'<!doctype html>PINNED_OLD':'PINNED_OLD:'+url,{status:200}));
   },
-  async match(key){return cacheMap.get(typeof key==='string'?key:key.url);},
+  async match(key){return cacheMap.get(typeof key==='string'?key:key.url)?.clone();},
   async put(key,value){throw Error('An installed release must NEVER be mutated by fetch.');}
  };
  const self={
