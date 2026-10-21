@@ -24,7 +24,7 @@ for(const p of ['public/photo-import.js','public/auth.js','public/recognition-en
 const previous=execFileSync('git',['show',BASE+':public/app.js'],{encoding:'utf8'});
 const current=fs.readFileSync('public/app.js','utf8');
 function strip(source){
- const a=source.indexOf('async function upload(file){');
+ const a=source.indexOf('function waitEvent(');
  const b=source.indexOf("$('upload').onchange=",a);
  assert.ok(a>=0&&b>a,'Expected uploader boundaries not found');
  return source.slice(0,a)+'/* audited bounded owner-safe video import */\n'+source.slice(b);
