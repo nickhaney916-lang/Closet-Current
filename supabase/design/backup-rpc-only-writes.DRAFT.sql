@@ -59,7 +59,10 @@ CREATE POLICY closet_backup_writer_owner
 -- handoff. Its grants never include authenticated or anon.
 GRANT closet_backup_writer TO CURRENT_USER WITH SET TRUE, INHERIT FALSE;
 CREATE SCHEMA closet_rpc_private AUTHORIZATION closet_backup_writer;
--- This schema must NOT be exposed through Supabase PostgREST Data API.
+-- Migration administrator is not a superuser; become the private schema
+-- owner only while creating this narrowly scoped function and its grants.
+SET ROLE closet_backup_writer;
+-- The schema is NOT in the configured PostgREST exposed schemas.
 GRANT USAGE ON SCHEMA closet_rpc_private TO authenticated;
 
 -- All relation/function names are schema-qualified and search_path is empty.
@@ -97,14 +100,15 @@ BEGIN
  END IF;
  RETURN saved_revision;
 END $body$;
--- The permission was granted before private schema creation and is
--- revoked after function ownership transfer within this same transaction.
-ALTER FUNCTION closet_rpc_private.save_checked(bigint,jsonb) OWNER TO closet_backup_writer;
-REVOKE closet_backup_writer FROM CURRENT_USER;
+-- As the private writer, create/grant the function without relying on
+-- database superuser privileges. Revoke temporary migration membership
+-- immediately afterward. No browser role is ever granted writer membership.
 REVOKE ALL ON FUNCTION closet_rpc_private.save_checked(bigint,jsonb)
  FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION closet_rpc_private.save_checked(bigint,jsonb)
  TO authenticated;
+RESET ROLE;
+REVOKE closet_backup_writer FROM CURRENT_USER;
 
 -- Retain exact original PostgREST RPC path, argument names and JSON return.
 -- A private function could also be called directly by an authenticated SQL
