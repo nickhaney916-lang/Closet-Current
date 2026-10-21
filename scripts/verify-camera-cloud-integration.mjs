@@ -268,6 +268,26 @@ const allowedCloudBinding=new Set([
  '.github/workflows/private-cloud-owner-db-binding-qa.yml',
  'docs/PRIVATE-CLOUD-DB-OWNER-BINDING-20261020.md'
 ]);
+// Provenance-frozen imported research-only blobs from independent PR #113.
+// This is a release-candidate audit, not a deployment or model promotion.
+// The dedicated checker pins exact source Git blobs and the pre-inference lock.
+const allowedBlindReviewIntegration=new Set([
+ '.github/workflows/independent-source-holdout.yml',
+ '.github/workflows/source-holdout-human-review.yml',
+ 'benchmark/independent-source-holdout/candidates.json',
+ 'benchmark/independent-source-holdout/locked.json',
+ 'benchmark/independent-source-holdout/measurement-39538590277.json',
+ 'docs/INDEPENDENT-SOURCE-HOLDOUT-20261020.md',
+ 'docs/SOURCE-HOLDOUT-HUMAN-REVIEW.md',
+ 'scripts/independent-source-holdout.mjs',
+ 'scripts/source-holdout-human-review.mjs',
+ 'scripts/test-source-holdout-human-review-browser.mjs',
+ 'tests/independent-source-holdout.test.mjs',
+ 'tests/source-holdout-human-review.test.mjs',
+ 'scripts/check-blind-photo-cloud-integration.mjs',
+ '.github/workflows/cloud-blind-photo-integration-qa.yml',
+ 'docs/CLOUD-BLIND-PHOTO-RELEASE-CANDIDATE-20261020.md'
+]);
 const allowedWork=new Set([
  'public/app.js',
  'docs/PROGRESS-CHECKPOINT.md',
@@ -297,7 +317,7 @@ const allowedNew=new Set([
 for(const p of new Set([...m.keys(),...head.keys()])){
  if(m.get(p)!==head.get(p)){
   if(p==='public/index.html'||p==='scripts/build.mjs'||p===reviewScript)continue;
-  assert.ok(allowedWork.has(p)||(allowedNew.has(p)&&!m.has(p))||(allowedSecurity.has(p)&&!m.has(p))||(allowedBackupRpc.has(p)&&!m.has(p))||(allowedLocalSupabaseEvidence.has(p)&&!m.has(p))||allowedAuthSession.has(p)||allowedColorEvidence.has(p)||allowedDuplicateQA.has(p)||allowedRecognitionAdmission.has(p)||allowedSubtypeTrial.has(p)||allowedIndependentClip.has(p)||allowedMaskedColorReview.has(p)||allowedOwnedStyle.has(p)||allowedCloudBinding.has(p),
+  assert.ok(allowedWork.has(p)||(allowedNew.has(p)&&!m.has(p))||(allowedSecurity.has(p)&&!m.has(p))||(allowedBackupRpc.has(p)&&!m.has(p))||(allowedLocalSupabaseEvidence.has(p)&&!m.has(p))||allowedAuthSession.has(p)||allowedColorEvidence.has(p)||allowedDuplicateQA.has(p)||allowedRecognitionAdmission.has(p)||allowedSubtypeTrial.has(p)||allowedIndependentClip.has(p)||allowedMaskedColorReview.has(p)||allowedOwnedStyle.has(p)||allowedCloudBinding.has(p)||allowedBlindReviewIntegration.has(p),
    'Unreviewed change after merge: '+p);
  }
 }
