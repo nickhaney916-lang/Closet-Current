@@ -104,9 +104,13 @@ export async function run() {
   const result=await jsonFetch(api+'/auth/v1/signup?redirect_to='+
    encodeURIComponent(redirect),{method:'POST',body:{email,password}});
   const data=requireOk(result,'local signup');
-  assert.ok(data.user?.id,'real Auth user missing');
+  // Raw GoTrue /signup returns a user directly when email confirmation is
+  // required; SDK wrappers can nest it under `user`. Accept either shape.
+  const ownerId=data.user?.id||data.id;
+  assert.ok(typeof ownerId==='string'&&ownerId.length>10,
+   'real Auth user missing');
   assert.ok(!data.access_token,'unconfirmed account received active session');
-  return data.user.id;
+  return ownerId;
  };
  const alice=await signup(a,firstPassword,github);
  const blocked=await login(a,firstPassword);
