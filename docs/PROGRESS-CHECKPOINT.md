@@ -1,3 +1,12 @@
+# Restricted staging atomic output safeguard — October 21, 2026
+
+- **Verified engineering work (draft PR #147):** the staging builder now generates `staging-dist.incomplete-*`, validates all live-backend removal checks on that private work directory and atomically renames it to deployable `staging-dist/` only after success. Stale prior output and incomplete directories are removed on failed rebuilds; no success message precedes publication of the complete local folder.
+- **Exact verified source:** `4952f048407887822b8a8f6893354ae4f72e3048`, GitHub Actions [restricted staging QA #39665328379](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39665328379) and [full camera/indexing regression #39665328295](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39665328295) both completed SUCCESS: **1,481 passed, 0 failed, 3 skipped** in the full suite. Five dedicated atomic staging tests passed. Synthetic staging bundle check and source-boundary guard passed. These are automated synthetic results, not physical-device or hosted staging results.
+- **Scope:** no customer runtime, original image, garment recognition, account data, Supabase database/schema, Drive Duel, production workflow, or paid AI service was changed. PR #146 anonymous-host probe remains independently isolated. No merge or deployment.
+- **Hard blocks remain:** the free project cap prevents creating a distinct hosted Supabase staging project; Cloudflare staging Access policy is not yet configured/verified; human review, real phone camera tests, actual two-account cloud/email and privacy approvals are pending. Actual verified human category/color accuracy remains null and production promotion BLOCKED. Staging bundle generation does not imply permission to deploy.
+
+---
+
 # Restricted staging owner authorization — October 21, 2026
 
 - Owner explicitly APPROVED preparing private staging only, without any production changes or paid services. A public preview, billable Supabase project, production merge, and real customer database access remain **unauthorized**.
