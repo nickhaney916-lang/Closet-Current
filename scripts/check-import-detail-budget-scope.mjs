@@ -4,6 +4,8 @@ import fs from 'node:fs';
 import {execFileSync} from 'node:child_process';
 import {packetFromLock,reconcile,LOCK} from './source-holdout-human-review.mjs';
 const git=(...args)=>execFileSync('git',args,{encoding:'utf8',maxBuffer:16000000}).trim();
+assert.equal(git('rev-parse','HEAD:public/app.js'),'2bac7dae8c9d13f7b8ed1baf9d41750bb0878b48',
+ 'Native still exception must match exact independently reviewed camera app blob');
 const BASE='b174a50695ac958f6bc5ae0b705bd7064c094afd';
 const IMPORT_BLOB='65f99345804558e14986c4c6f41cfe144d5c075a';
 assert.equal(git('merge-base','HEAD',BASE),BASE,'Must branch from fully checked PR #122');
@@ -13,12 +15,18 @@ const permitted=new Set([
  'public/photo-import.js','tests/photo-import-untyped-and-timeout.test.cjs',
  'scripts/test-import-detail-budget-browsers.mjs','scripts/check-import-detail-budget-scope.mjs',
  '.github/workflows/import-detail-budget-qa.yml','docs/IMPORTED-PHOTO-DETAIL-FIRST-20261021.md',
+ 'public/app.js',
+ 'tests/photo-native-still.test.cjs',
+ 'scripts/test-native-still-detail-budget-browsers.mjs',
+ 'scripts/check-native-still-detail-budget-scope.mjs',
+ '.github/workflows/native-still-detail-budget-qa.yml',
+ 'docs/NATIVE-STILL-DETAIL-FIRST-20261021.md',
  'docs/PROGRESS-CHECKPOINT.md','scripts/check-offline-review-coordinator-source.mjs',
  'scripts/check-one-click-review-source.mjs','scripts/check-human-review-cloud-bridge.mjs',
  'scripts/check-blind-photo-cloud-integration.mjs','scripts/verify-camera-cloud-integration.mjs']);
 for(const p of git('diff','--name-only',BASE,'HEAD').split('\n').filter(Boolean))
  assert.ok(permitted.has(p),'Unrelated customer/security/recognition change: '+p);
-for(const p of ['public/app.js','public/auth.js','public/recognition-engine.mjs','public/recognition-photo.mjs',
+for(const p of ['public/auth.js','public/recognition-engine.mjs','public/recognition-photo.mjs',
  'public/photo-color.js','public/photo-crop-editor.js','public/photo-check.js',
  'public/cloud-backup.js','public/closet-stylist.js','public/outfit-board.js',
  'supabase/cloud-backup.sql','benchmark/independent-source-holdout/locked.json',
