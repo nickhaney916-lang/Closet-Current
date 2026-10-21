@@ -21,7 +21,7 @@ function database(owner,local,base){
      if(!awaiting)queueMicrotask(()=>tx.oncomplete?.());});return q;};
    tx.objectStore=name=>({
     get:key=>request(()=>structuredClone(content[name].get(key))),
-    getAll:()=>request(()=>[...content[name].values()].map(structuredClone)),
+    getAll:()=>request(()=>[...content[name].values()].map(x=>structuredClone(x))),
     put:item=>content[name].set(item.id,structuredClone(item)),
     delete:key=>content[name].delete(key),
     clear:()=>content[name].clear()
