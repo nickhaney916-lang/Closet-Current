@@ -1,3 +1,13 @@
+# Work Assignment #159 verified — final integrated staging-build recovery
+
+- Draft PR #159 combines #157 `232a735f99af0da73df2e7095508c2a99e8df6da` and #158 `e67edcaa34e6c4ed9f93cc8edd6c204a7b15db80` as actual merge parents on a new isolated branch. Original PR branches preserved. Only checkpoint prose conflicted; both histories retained. #158 locking source/tests/instructions remain byte-identical; #157 public/Supabase/mobile/security sources preserved.
+- Verified implementation `36809ec24da8c45502677f73ad502bb3dce59505`: [combined lock/security/mobile CI #39681327015](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39681327015) and [camera/indexing #39681327011](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39681327011) both SUCCESS. Full build/Node suite **1,508 passed, 0 failed, 3 skipped**, including nine atomic lock/crash tests and five actual-builder regressions. Concurrency, orphan/lock refusal, actual SIGKILL, no deployable partial output and deliberate disposable cleanup/rebuild all passed.
+- Real disposable local Supabase Auth/REST/private Storage: **207 HTTP requests**, two synthetic accounts, four permission states; owner isolation/photo-byte integrity, anonymous/forged token denial, metadata isolation, revision races, actual failed-save retry, atomic drift rejection, safe recovery and re-hardening PASS. Stack teardown PASS. No hosted database contacted.
+- Android Chromium/iPhone WebKit generated app/photo/offline recovery PASS with **zero attempted live database requests** and paid inference refused. Actual Chromium installed staging worker/offline and VM lifecycle PASS, preserving production-named caches and failing missing assets closed. No physical-device or installed iPhone PWA claim.
+- Candidate is technically ready for development review and future private-pilot verification, not production/hosted-pilot approval. Protected hosted staging/Access/email, approved migration/recovery, physical phones and independent original-garment acceptance remain unverified release gates. No live/customer database access/change, customer data, paid resources/AI, production merge/deployment or Drive Duel changes. Final exact-head CI/SHA maintained in PR #159.
+
+---
+
 # Work Assignment #159 — final staging-build/security integration
 
 - New isolated candidate from verified #157 `232a735f99af0da73df2e7095508c2a99e8df6da`, merged verified #158 `e67edcaa34e6c4ed9f93cc8edd6c204a7b15db80`. Both source final CI runs confirmed SUCCESS; neither original branch modified. Only checkpoint prose conflicted; both complete branch histories preserved.

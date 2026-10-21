@@ -20,3 +20,9 @@ New combined CI evidence and exact final SHA must be checked before claiming com
 ## Readiness limits
 
 Even a technically green candidate is not hosted-pilot or production approval. Separate protected staging, Cloudflare Access, approved live migration/recovery, actual external email, real Android/iPhone acceptance and independent original-garment validation remain outstanding. Existing live permission findings are unchanged. No customer accounts/data/photos, paid resources or AI calls, Drive Duel changes, production merge or deployment. Production promotion remains BLOCKED.
+
+## Verified combined implementation
+
+Source `36809ec24da8c45502677f73ad502bb3dce59505` passed [combined CI #39681327015](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39681327015) and [camera/indexing #39681327011](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39681327011). Both combined jobs completed SUCCESS, including cleanup. Full build/Node suite: **1,508 passed, 0 failed, 3 skipped**. All nine atomic-helper and five actual-builder cases passed, including SIGKILL and the operator-controlled disposable cleanup/rebuild path. Actual local Supabase completed **207 HTTP requests** across two accounts/four permission states with all security/recovery assertions passing. Chromium and WebKit app/photo recovery and actual Chromium installed worker/offline tests passed; live database attempts and external worker requests were zero. Original full-resolution before-mask recognition, public app and Supabase source checks passed unchanged.
+
+No new runtime defect required modification; only checkpoint prose needed conflict resolution, plus source-guard adaptation for the verified locking parent. The final checkpoint-only commit records this proof; the draft PR records the final exact-head rerun. Candidate is ready for development review and future private-pilot verification; the release gates above remain blocked.
