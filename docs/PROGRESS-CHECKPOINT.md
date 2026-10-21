@@ -1,3 +1,11 @@
+# Staging installed-app cache isolation (draft PR #155) — October 21, 2026
+
+- On an independent branch stacked from Work's verified PR #152 source `4456016f6fed91e07cde08d71fcc17f2c7ff4300`, the staging-only generated service worker cache is now named `closet-current-staging-<fingerprint>`, and its activation cleanup selects only staging-named caches. The customer production `public/sw.js` and all original photo recognition, saved wardrobe, Auth, cloud, and deployment code remain byte-identical.
+- **Verified implementation SHA:** `2a20e848bc02ef23aa2cd81e936665ef7e149c96`. GitHub Actions [staging-only cache QA #39677256998](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39677256998) **COMPLETED SUCCESS**: **1,490 Node pass, 0 fail, 3 skip**. Staging bundle verifier, original-source guard and the actual generated service worker's synthetic VM test all passed: staging-only cache deletion, preservation of production-named cache, pinned app shell/Auth script, missing-asset 503, private/external Supabase bypass, POST bypass, quota and Cache Storage error refusal. [Camera/indexing CI #39677256898](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39677256898) SUCCESS on the same implementation SHA. No real network requests, actual hardware or installed-browser PWA proof.
+- Synthetic browser context confirms code behavior only; **no hosted staging site**, Cloudflare Access enforcement, hosted Auth/RLS, independent actual garment accuracy or real Android/iPhone installation has been verified. No production merge/deployment, no paid Supabase resources or AI services, no Drive Duel edits. Production promotion BLOCKED.
+
+---
+
 # Verified staging photo backup recovery — October 21, 2026
 
 - Draft PR #152 implementation source `414c44508b4af70ea8e81e3750c14e181d738c1c`, tree `9414fd478cfdaf99eb3618d6d9d7f6cf212a4562`, verified in GitHub Actions browser isolation #39675138532 and camera/indexing #39675138533, both SUCCESS. Full suite: **1,490 passed, 0 failed, 3 skipped**; source guards and synthetic bundle verification PASS.
