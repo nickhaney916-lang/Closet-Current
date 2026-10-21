@@ -1,0 +1,51 @@
+name: Offline private pilot three-report reviewer QA (never deploy)
+on:
+  push:
+    branches: [feature/offline-three-report-pilot-review-20261021]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-and-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Recheck original source and strictly additive offline reviewer
+        run: |
+          node scripts/check-integrated-pilot-rc.mjs
+          node scripts/check-offline-pilot-organizer-scope.mjs
+      - name: Build current app and test all Node modules
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+  offline-android-iphone:
+    needs: source-and-regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned browser engines
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install --with-deps chromium webkit
+      - name: Browser parity, malformed evidence, no uploads or third-party calls
+        run: |
+          node scripts/test-offline-pilot-cohort-browser.mjs
+      - name: Produce private-review organizer with NO customer files
+        run: |
+          node scripts/offline-pilot-cohort-organizer.mjs prepare offline-pilot-organizer
+      - name: Share the standalone offline HTML as a QA artifact, not a deployment
+        uses: actions/upload-artifact@v4
+        with:
+          name: OPEN-PRIVATE-CLOSET-PILOT-REVIEW-no-customer-data
+          path: offline-pilot-organizer/
+          retention-days: 7
