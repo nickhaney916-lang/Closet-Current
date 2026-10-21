@@ -1,3 +1,11 @@
+# Work Assignment #154 — local Supabase two-account integration
+
+- New isolated development branch `test/disposable-supabase-two-account-20261021` from verified PR #153 `7740438f2d196b1ccd98ea6ff47afc2f41de58bf`. Adds actual local GoTrue/PostgREST/Storage two-account integration and fail-closed localhost guards; no existing app/SQL/production workflow changed.
+- Tests symmetric wardrobe/photo attacks, anonymous/forged tokens, user metadata, concurrent revision CAS, actual database-trigger save failure/retry, recovery-draft drift rejection, preservation through fallback and re-hardening. Uses only synthetic accounts and a generated JPEG.
+- The authoring workspace lacks Docker/CLI; dedicated GitHub runner starts its own disposable local Supabase stack with CLI 2.121.0 and no hosted link. Local static guards pass; final complete regression and real HTTP results must be verified at the published source SHA. No hosted account-security claim, production deployment, paid resource or Drive Duel change. Production release BLOCKED. See `docs/DISPOSABLE-SUPABASE-SECURITY-20261021.md` and the draft PR for final test evidence.
+
+---
+
 # Closet Current backup migration catalog state gate — October 21, 2026
 
 - **Draft PR #153:** added a single read-only 27-flag catalog query at `supabase/audits/backup-migration-state.sql` that reports `OVERBROAD_CLIENT_GRANTS`, `LIMITED_DIRECT_WRITES`, `RPC_ONLY_EXPECTED_CATALOG` or `UNKNOWN_OR_UNSAFE`. Every result explicitly sets `hosted_migration_authorized=false` and `production_release_approved=false`.

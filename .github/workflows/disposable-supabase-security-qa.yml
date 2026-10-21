@@ -1,0 +1,74 @@
+name: Disposable local Supabase account and recovery security
+on:
+  push:
+    branches: [test/disposable-supabase-two-account-20261021]
+permissions:
+  contents: read
+jobs:
+  local-two-account-security:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Confirm isolated source boundaries and complete regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --name-only 7740438f2d196b1ccd98ea6ff47afc2f41de58bf HEAD |
+          while IFS= read -r path; do
+            case "$path" in
+              scripts/disposable-supabase-guard.mjs|scripts/test-disposable-supabase-security.mjs|tests/disposable-supabase-guard.test.mjs|.github/workflows/disposable-supabase-security-qa.yml|docs/DISPOSABLE-SUPABASE-SECURITY-20261021.md|docs/PROGRESS-CHECKPOINT.md) ;;
+              *) echo "Unapproved source change: $path"; exit 1 ;;
+            esac
+          done
+          git diff --exit-code 7740438f2d196b1ccd98ea6ff47afc2f41de58bf HEAD -- public supabase .github/workflows/cloudflare-pages.yml .github/workflows/pages.yml
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.121.0
+      - name: Discover CLI flags and initialize an unrelated empty local stack
+        shell: bash
+        run: |
+          set -euo pipefail
+          supabase --help
+          supabase init --help
+          supabase start --help
+          supabase status --help
+          supabase stop --help
+          mkdir -p "$RUNNER_TEMP/closet-disposable-stack"
+          supabase init --workdir "$RUNNER_TEMP/closet-disposable-stack"
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          p=Path(os.environ['RUNNER_TEMP'])/'closet-disposable-stack/supabase/config.toml'
+          s=p.read_text()
+          # No SMTP delivery; only synthetic local Auth signup and password login.
+          s=s.replace('enable_confirmations = true','enable_confirmations = false')
+          p.write_text(s)
+          PY
+          supabase start --workdir "$RUNNER_TEMP/closet-disposable-stack" --exclude studio,imgproxy,realtime,edge-runtime,logflare,vector,supavisor > "$RUNNER_TEMP/closet-local-start.log" 2>&1
+          supabase status --workdir "$RUNNER_TEMP/closet-disposable-stack" -o json > "$RUNNER_TEMP/closet-local-status.json"
+      - name: Real local Auth REST Storage two-account and migration recovery
+        shell: bash
+        env:
+          CLOSET_DISPOSABLE_SUPABASE: LOCAL_DISPOSABLE_ONLY
+        run: |
+          set -euo pipefail
+          command -v psql || (sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client)
+          node scripts/test-disposable-supabase-security.mjs "$RUNNER_TEMP/closet-local-status.json"
+      - name: Destroy disposable stack and local-only credential files
+        if: always()
+        shell: bash
+        run: |
+          if command -v supabase >/dev/null 2>&1 && test -f "$RUNNER_TEMP/closet-disposable-stack/supabase/config.toml"; then
+            supabase stop --workdir "$RUNNER_TEMP/closet-disposable-stack" --no-backup
+          fi
+          rm -f "$RUNNER_TEMP/closet-local-status.json" "$RUNNER_TEMP/closet-local-start.log"
+          echo 'No hosted project linked; no deployment; disposable runner data destroyed.'
