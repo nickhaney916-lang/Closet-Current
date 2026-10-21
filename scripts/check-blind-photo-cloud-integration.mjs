@@ -59,8 +59,25 @@ const permittedExtra=new Set([
  'tests/cloud-conflict-retry.test.cjs',
  'scripts/test-cloud-conflict-retry-browsers.mjs',
  '.github/workflows/cloud-conflict-retry-qa.yml',
- 'docs/CLOUD-CONFLICT-RETRY-RECOVERY-20261020.md'
+ 'docs/CLOUD-CONFLICT-RETRY-RECOVERY-20261020.md',
+ '.github/workflows/human-original-review-readiness.yml',
+ 'docs/HUMAN-ORIGINAL-REVIEW-READINESS.md',
+ 'scripts/human-original-review-readiness.mjs',
+ 'scripts/test-human-original-review-readiness.mjs',
+ 'tests/human-original-review-readiness.test.mjs',
+ 'scripts/check-human-review-cloud-bridge.mjs',
+ '.github/workflows/integrated-cloud-human-review-qa.yml',
+ 'docs/INTEGRATED-CLOUD-HUMAN-REVIEW-20261020.md'
 ]);
+const integratedHumanFiles={
+  ".github/workflows/human-original-review-readiness.yml": "04acdb3cbf2a4a769a0656186cf92621dd7f6151",
+  "docs/HUMAN-ORIGINAL-REVIEW-READINESS.md": "ba7c2ff8e25d4ee5db5612867ca2a4666add743d",
+  "scripts/human-original-review-readiness.mjs": "d079cdafde4298c18f27afc3074eda5201a25265",
+  "scripts/test-human-original-review-readiness.mjs": "e216538640ceeaf149e61ffa5d1e2c1e2b07b5d1",
+  "tests/human-original-review-readiness.test.mjs": "5035b08879425d2ea3be3eb03aaccf484892eba5"
+};
+for(const [path,expected] of Object.entries(integratedHumanFiles))
+ assert.equal(git('rev-parse','HEAD:'+path),expected,'Human-review file differs from exact PR #117: '+path);
 const changed=git('diff','--name-only',CUSTOMER,'HEAD').split('\n').filter(Boolean);
 for(const path of changed)
  assert.ok(permittedExtra.has(path),'Unreviewed file in integration branch: '+path);

@@ -300,6 +300,16 @@ const allowedCloudConflictRetry=new Set([
  'docs/CLOUD-CONFLICT-RETRY-RECOVERY-20261020.md',
  'scripts/check-blind-photo-cloud-integration.mjs'
 ]);
+const allowedHumanCloudBridge=new Set([
+ '.github/workflows/human-original-review-readiness.yml',
+ 'docs/HUMAN-ORIGINAL-REVIEW-READINESS.md',
+ 'scripts/human-original-review-readiness.mjs',
+ 'scripts/test-human-original-review-readiness.mjs',
+ 'tests/human-original-review-readiness.test.mjs',
+ 'scripts/check-human-review-cloud-bridge.mjs',
+ '.github/workflows/integrated-cloud-human-review-qa.yml',
+ 'docs/INTEGRATED-CLOUD-HUMAN-REVIEW-20261020.md'
+]);
 const allowedWork=new Set([
  'public/app.js',
  'docs/PROGRESS-CHECKPOINT.md',
@@ -329,7 +339,7 @@ const allowedNew=new Set([
 for(const p of new Set([...m.keys(),...head.keys()])){
  if(m.get(p)!==head.get(p)){
   if(p==='public/index.html'||p==='scripts/build.mjs'||p===reviewScript)continue;
-  assert.ok(allowedWork.has(p)||(allowedNew.has(p)&&!m.has(p))||(allowedSecurity.has(p)&&!m.has(p))||(allowedBackupRpc.has(p)&&!m.has(p))||(allowedLocalSupabaseEvidence.has(p)&&!m.has(p))||allowedAuthSession.has(p)||allowedColorEvidence.has(p)||allowedDuplicateQA.has(p)||allowedRecognitionAdmission.has(p)||allowedSubtypeTrial.has(p)||allowedIndependentClip.has(p)||allowedMaskedColorReview.has(p)||allowedOwnedStyle.has(p)||allowedCloudBinding.has(p)||allowedBlindReviewIntegration.has(p)||allowedCloudConflictRetry.has(p),
+  assert.ok(allowedWork.has(p)||(allowedNew.has(p)&&!m.has(p))||(allowedSecurity.has(p)&&!m.has(p))||(allowedBackupRpc.has(p)&&!m.has(p))||(allowedLocalSupabaseEvidence.has(p)&&!m.has(p))||allowedAuthSession.has(p)||allowedColorEvidence.has(p)||allowedDuplicateQA.has(p)||allowedRecognitionAdmission.has(p)||allowedSubtypeTrial.has(p)||allowedIndependentClip.has(p)||allowedMaskedColorReview.has(p)||allowedOwnedStyle.has(p)||allowedCloudBinding.has(p)||allowedBlindReviewIntegration.has(p)||allowedCloudConflictRetry.has(p)||allowedHumanCloudBridge.has(p),
    'Unreviewed change after merge: '+p);
  }
 }

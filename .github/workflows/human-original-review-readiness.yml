@@ -1,0 +1,90 @@
+name: Actual original-photo human-review handoff readiness
+on:
+  push:
+    branches: [validation/human-original-review-readiness-20261021]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+env:
+  PYTHONDONTWRITEBYTECODE: '1'
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Isolated changes and full integrated regression
+        run: |
+          node scripts/human-original-review-readiness.mjs verify
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+          node scripts/check-customer-pilot-release-gates.mjs
+      - name: Exact original PR115 guards at the untouched historical source
+        run: |
+          git worktree add --detach "$RUNNER_TEMP/verified-integration" 6ebcf6d9dcfd18611c3248242b62208eb9923385
+          cd "$RUNNER_TEMP/verified-integration"
+          node scripts/check-blind-photo-cloud-integration.mjs
+          node scripts/verify-camera-cloud-integration.mjs
+          node scripts/check-dual-parent-review-integration.mjs
+  real-photo-readiness:
+    needs: regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      HOLDOUT_OUTPUT: /tmp/review-source-originals
+      HOLDOUT_RESULTS: /tmp/review-inference
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: |
+          npm install --no-save --no-package-lock playwright@1.56.1 sharp@0.34.4
+          npx playwright install --with-deps chromium webkit
+      - name: Fetch the existing 13 original photographs, no new acquisition or relabeling
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh run download 39538230372 -n new-source-originals-before-inference -D "$HOLDOUT_OUTPUT"
+      - name: Blank handoff with an additional selected-image presentation gate
+        run: node scripts/human-original-review-readiness.mjs prepare "$HOLDOUT_OUTPUT" "$RUNNER_TEMP/human-review"
+      - name: All 13 REAL originals in Chromium and WebKit; no observations filled
+        run: |
+          mkdir -p "$RUNNER_TEMP/readiness-evidence"
+          node scripts/test-human-original-review-readiness.mjs "$RUNNER_TEMP/human-review" "$RUNNER_TEMP/readiness-evidence/browser-checks.json"
+          node scripts/human-original-review-readiness.mjs report "$RUNNER_TEMP/readiness-evidence/browser-checks.json" "$RUNNER_TEMP/readiness-evidence/readiness.json"
+      - name: Unchanged original-first actual FashionCLIP, provisional reference scoring only
+        run: |
+          node scripts/independent-source-holdout.mjs prepare
+          node scripts/build.mjs
+          node scripts/run-browser-photo-benchmark.mjs "$HOLDOUT_RESULTS/blind-manifest.json" "$HOLDOUT_RESULTS/actual"
+          node scripts/independent-source-holdout.mjs evaluate "$HOLDOUT_RESULTS/actual/results.json" > "$RUNNER_TEMP/readiness-evidence/provisional-inference.json"
+      - name: Mobile original-photo fidelity and source-preservation checks
+        run: |
+          node scripts/test-native-camera-fidelity-mobile.mjs
+          node scripts/test-untyped-photo-import-mobile.mjs
+          node scripts/test-original-crop-source-mobile.mjs
+          node scripts/human-original-review-readiness.mjs verify
+          node scripts/check-customer-pilot-release-gates.mjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: independent-humans-blank-original-review-packet
+          path: ${{ runner.temp }}/human-review/
+          retention-days: 14
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: original-display-and-provisional-model-evidence-not-human-reviews
+          path: |
+            ${{ runner.temp }}/readiness-evidence/
+            /tmp/review-inference/
+          retention-days: 14
+          if-no-files-found: error
