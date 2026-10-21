@@ -2,8 +2,8 @@
 let inspirationLooks=[],lookPieces=[],lookImage='',activeLookId=null;
 // Preview JPEG belongs to inspiration; original File exists in memory only for
 // explicit single-item Add to Closet. Never persist original private bytes as a look.
-let lookOriginalFile=null,lookPhotoSelection=0,lookTransferBusy=false;
-function clearLookOriginal(){lookPhotoSelection++;lookOriginalFile=null;$('referenceToCloset').hidden=true;}
+let lookOriginalFile=null,lookOriginalOwner=null,lookPhotoSelection=0,lookTransferBusy=false;
+function clearLookOriginal(){lookPhotoSelection++;lookOriginalFile=null;lookOriginalOwner=null;$('referenceToCloset').hidden=true;}
 
 function trendSelect(body,label,value,options,change){const wrapper=node('label',label),select=node('select');for(const option of options)select.append(node('option',option));select.value=options.includes(value)?value:options[0];select.onchange=()=>change(select.value);wrapper.append(select);body.append(wrapper);return select;}
 function renderLookPieces(){
@@ -58,7 +58,7 @@ $('newLook').onclick=()=>{clearLookOriginal();activeLookId=null;lookImage='';loo
 $('exampleLook').onclick=()=>{clearLookOriginal();activeLookId=null;lookImage='';$('inspirationPreview').hidden=true;$('referenceToCloset').hidden=true;$('lookTitle').value='Casual layers — example';$('lookUrl').value='';$('lookDescription').value='Cream long sleeve sweater\nBlue jeans\nBrown ankle boots';lookPieces=parseOutfit($('lookDescription').value);renderLookPieces();renderTrendMatches();};
 $('lookImage').onchange=async event=>{
  const file=event.target.files[0];event.target.value='';
- clearLookOriginal();const selected=lookPhotoSelection;
+ clearLookOriginal();const selected=lookPhotoSelection,selectedOwner=window.closetAuth?.user?.id;
  if(!file)return;
  lookImage='';$('inspirationPreview').hidden=true;
  if(file.size>10*1024*1024)return message('Choose an inspiration image smaller than 10 MB.');
@@ -75,8 +75,8 @@ $('lookImage').onchange=async event=>{
   canvas.getContext('2d').drawImage(image,0,0,canvas.width,canvas.height);
   const preview=canvas.toDataURL('image/jpeg',.8);
   if(!preview||preview==='data:,')throw Error('Cannot encode inspiration preview');
-  if(selected!==lookPhotoSelection)return;
-  lookImage=preview;lookOriginalFile=file;
+  if(selected!==lookPhotoSelection||selectedOwner!==window.closetAuth?.user?.id)return;
+  lookImage=preview;lookOriginalFile=file;lookOriginalOwner=selectedOwner;
   $('inspirationPreview').src=lookImage;$('inspirationPreview').hidden=false;
   $('referenceToCloset').hidden=false;
   if(!lookPieces.length){lookPieces.push({id:crypto.randomUUID(),label:'Piece from inspiration image',category:'Uncategorized',itemType:'Unknown',color:'',sleeveLength:'Unknown',pattern:'Unknown',fit:'Unknown'});renderLookPieces();}
@@ -93,7 +93,7 @@ $('referenceToCloset').onclick=async()=>{
  if(lookTransferBusy||busy)return;
  if(!lookOriginalFile){message('Choose the original clothing photo again to add it to My closet. A saved inspiration preview is not suitable for recognition.');return;}
  const selected=lookPhotoSelection,file=lookOriginalFile,owner=window.closetAuth?.user?.id;
- if(!owner){message('Sign in before adding a garment to your closet.');return;}
+ if(!owner||owner!==lookOriginalOwner){clearLookOriginal();message('Select your clothing photo again after signing in to this account.');return;}
  lookTransferBusy=true;$('referenceToCloset').disabled=true;
  try{
   // Use the standard original-first import encoder, not the 900px inspiration
