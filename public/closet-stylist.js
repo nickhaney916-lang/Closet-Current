@@ -4,6 +4,25 @@ function stylistSupportsPiece(piece){
  return !!piece&&typeof piece.id==='string'&&
   ['Tops','Bottoms','Dresses','Outerwear','Shoes'].includes(piece.category);
 }
+// Pin what the customer actually saw, not just garment IDs. A new crop,
+// edited category/color or replacement photo with the same ID is a new item
+// for a previously prepared outfit. Check again inside the queued DB write.
+function stylistSelectedSources(board){
+ return Object.entries(board.slots||{}).map(([slot,id])=>{
+  const item=items.find(piece=>piece.id===id);
+  return {slot,id,image:item?.image,category:item?.category,itemType:item?.itemType,
+   color:item?.color,pattern:item?.pattern,
+   seasons:JSON.stringify(item?.seasons||[])};
+ });
+}
+function stylistSourcesCurrent(sources){
+ return stylistOwnsCloset()&&sources.length>0&&sources.every(source=>{
+  const item=items.find(piece=>piece.id===source.id);
+  return !!item&&item.image===source.image&&item.category===source.category&&
+   item.itemType===source.itemType&&item.color===source.color&&
+   item.pattern===source.pattern&&JSON.stringify(item.seasons||[])===source.seasons;
+ });
+}
 function renderStylistAnchor(){
  let piece=items.find(x=>x.id===stylistAnchorItemId);
  if(stylistAnchorItemId&&!stylistSupportsPiece(piece)){
@@ -38,16 +57,10 @@ async function previewStyledOutfit(result,board,index,button,status){
  if(button.disabled)return;
  const revision=++stylistPreviewRevision,request=stylistRequestRevision;
  const owner=window.closetAuth?.user?.id||null,selection=result.board;
- const sources=Object.values(board.slots).map(id=>{
-  const p=items.find(item=>item.id===id);
-  return {id,image:p?.image,category:p?.category,itemType:p?.itemType};
- });
+ const sources=stylistSelectedSources(board);
  const current=()=>revision===stylistPreviewRevision&&request===stylistRequestRevision&&
   owner===(window.closetAuth?.user?.id||null)&&result.board===selection&&
-  styledCollectionResults.includes(result)&&sources.every(source=>{
-   const p=items.find(item=>item.id===source.id);
-   return p&&p.image===source.image&&p.category===source.category&&p.itemType===source.itemType;
-  });
+  styledCollectionResults.includes(result)&&stylistSourcesCurrent(sources);
  button.disabled=true;status.textContent='Opening preview…';let displayed=null;
  try{
   await outfitBoardReady;
@@ -128,12 +141,17 @@ function renderStyledCollection(){
   edit.onclick=()=>previewStyledOutfit(result,board,index,edit,actionStatus);
   save.onclick=async()=>{
    if(save.disabled||result.savePending)return;result.savePending=true;save.disabled=true;actionStatus.textContent='Saving outfit…';
-   const owner=window.closetAuth?.user?.id||null,selection=result.board;
+   const owner=window.closetAuth?.user?.id||null,selection=result.board,
+    request=stylistRequestRevision,sources=stylistSelectedSources(board);
+   const current=()=>owner===(window.closetAuth?.user?.id||null)&&
+    request===stylistRequestRevision&&result.board===selection&&
+    styledCollectionResults.includes(result)&&stylistSourcesCurrent(sources);
    try{await outfitBoardReady;
-    if(owner!==(window.closetAuth?.user?.id||null)||result.board!==selection||!styledCollectionResults.includes(result))
-     throw Error('This outfit changed. Choose the current option again.');
-    await saveOwnedOutfitBoard({...board,name:result.context.request+' · option '+(index+1)});
-    if(result.board===selection){result.savedBoard=selection;result.saveMessage='Saved. Find it in Outfit builder → Saved outfits.';}
+    if(!current())throw Error('This outfit or closet changed. Create outfits again before saving.');
+    // The account, photo and garment details must STILL match when this
+    // queued storage operation finally begins. A matching ID is insufficient.
+    await saveOwnedOutfitBoard({...board,name:result.context.request+' · option '+(index+1)},current);
+    if(current()){result.savedBoard=selection;result.saveMessage='Saved. Find it in Outfit builder → Saved outfits.';}
     save.textContent='Saved';renderSavedOutfitBoards();
    }catch(error){if(result.board===selection)result.saveMessage=error?.message||'Could not save this outfit.';}
    finally{result.savePending=false;if(styledCollectionResults.includes(result))renderStyledCollection();}
