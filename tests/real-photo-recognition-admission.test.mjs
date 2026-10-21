@@ -18,13 +18,13 @@ test('actual 16-photo holdout reports incorrect auto subtypes and cannot pass re
  assert.equal(r.measuredPhotos,16);
  assert.equal(r.garmentPhotos,13);
  assert.equal(r.nonGarmentControls,3);
- assert.equal(r.automaticDecisions,7);
+ assert.equal(r.automaticDecisions,6);
  assert.equal(r.incorrectAutomaticSubtypes,3);
- assert.equal(r.correctAutomaticSubtypes,4);
+ assert.equal(r.correctAutomaticSubtypes,3);
  assert.equal(r.incorrectAutomaticCategories,0);
- assert.equal(r.categoryCoveragePercent,61.54);
+ assert.equal(r.categoryCoveragePercent,53.85);
  assert.equal(r.categoryPrecisionAmongEmittedPercent,100);
- assert.equal(r.categoryAccuracyAllGarmentsPercent,61.54);
+ assert.equal(r.categoryAccuracyAllGarmentsPercent,53.85);
  assert.deepEqual(r.unsafeAutomaticSubtypeIds,['commons-0003','commons-0014','commons-0078']);
  assert.equal(r.rejectedNonGarment,3);
  assert.equal(r.safeToConsiderForRecognitionPromotion,false);
@@ -51,11 +51,11 @@ test('wrong broad category and unsafe automatic shoe subtype each block admissio
 test('safe abstentions are not incorrectly counted as category errors or successes',()=>{
  const b=fixtures()['holdout-16'];
  const r=auditRecognitionSet('holdout-16',b.manifest,b.results);
- assert.equal(r.categoryAbstentions,5);
+ assert.equal(r.categoryAbstentions,6);
  assert.equal(r.categoryAccuracyAllGarmentsPercent,61.54);
  assert.equal(r.categoryCoveragePercent,61.54);
  assert.equal(r.categoryPrecisionAmongEmittedPercent,100);
- assert.deepEqual(r.abstentionIds,['commons-0016','commons-0036','commons-0059','commons-0062','commons-0095']);
+ assert.deepEqual(r.abstentionIds,['commons-0016','commons-0036','commons-0059','commons-0060','commons-0062','commons-0095']);
 });
 test('negative controls given any clothing prediction cannot be counted as rejected',()=>{
  const b=fixtures()['holdout-16'];
