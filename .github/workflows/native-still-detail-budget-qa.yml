@@ -1,0 +1,64 @@
+name: Native phone still quality-first JPEG budget QA
+on:
+  push:
+    branches: [fix/native-still-detail-budget-20261021]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  native-source-and-full-node:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prove isolated native encoder and preserved historical sources
+        run: |
+          node scripts/check-native-still-detail-budget-scope.mjs
+          node scripts/check-import-detail-budget-scope.mjs
+          node scripts/check-offline-review-coordinator-source.mjs
+          node scripts/check-one-click-review-source.mjs
+          node scripts/check-human-review-cloud-bridge.mjs
+          node scripts/check-blind-photo-cloud-integration.mjs
+          node scripts/verify-camera-cloud-integration.mjs
+          node scripts/check-dual-parent-review-integration.mjs
+          node scripts/check-customer-pilot-release-gates.mjs
+      - name: Complete test suite and browser build
+        run: |
+          node --check public/app.js
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+  mobile-capture-fidelity:
+    needs: native-source-and-full-node
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned Chromium and WebKit emulation
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install --with-deps chromium webkit
+      - name: Validate synthetic sensor JPEG capture under forced compression budget
+        run: |
+          mkdir -p "$RUNNER_TEMP/native-still-evidence"
+          node scripts/test-native-still-detail-budget-browsers.mjs "$RUNNER_TEMP/native-still-evidence/qa.json"
+          node scripts/test-native-camera-fidelity-mobile.mjs
+          node scripts/test-original-crop-source-mobile.mjs
+          node scripts/test-original-source-duplicate-mobile.mjs
+          node scripts/test-untyped-photo-import-mobile.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: native-camera-still-jpeg-technical-only-no-human-review
+          path: ${{ runner.temp }}/native-still-evidence/
+          retention-days: 14
+          if-no-files-found: warn
