@@ -52,9 +52,11 @@ try{
    assert.equal(await page.locator('#download').isVisible(),false,'Stale export not revoked after scene change');
    const privatePayload=JSON.stringify({...data,email:'private@example.invalid',photo:'data:image/jpeg;base64,SECRET'});
    await page.locator('#import').setInputFiles({name:'unsafe.json',mimeType:'application/json',buffer:Buffer.from(privatePayload)});
+   await page.waitForFunction(()=>document.getElementById('message').textContent.includes('rejected'));
    assert.match(await page.locator('#message').innerText(),/rejected/i);
    assert.doesNotMatch(await page.locator('body').innerText(),/private@example|data:image/);
    await page.locator('#import').setInputFiles({name:'safe.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(data))});
+   await page.waitForFunction(()=>document.getElementById('message').textContent.includes('Validated private report loaded'));
    assert.match(await page.locator('#message').innerText(),/Validated private report loaded/);
    assert.equal(await page.locator('#truthCategory').isDisabled(),true);
    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Horizontal overflow');
