@@ -209,18 +209,50 @@
    const query=new URLSearchParams(location.search||'');
    const error=callback.get('error_code')||query.get('error_code')||callback.get('error')||query.get('error');
    const access=callback.get('access_token'),refresh=callback.get('refresh_token');
-   if(error||access){
-    // Keep tokens out of browser history once processed or rejected.
+   const tokenHash=query.get('token_hash')||callback.get('token_hash');
+   const linkType=query.get('type')||callback.get('type')||'';
+   const authorizationCode=query.get('code')||callback.get('code');
+   if(error||access||tokenHash||authorizationCode){
+    // Strip one-time credentials and provider errors before ANY network call,
+    // including when verification subsequently fails or the app is reloaded.
     history.replaceState(null,'',location.pathname);
-    if(error){status('This email link has expired or was already used. Log in below. If your email still needs confirmation, enter it and choose Resend confirmation email.');return;}
+    if(error){
+     status('This email link has expired or was already used. Log in below. If your email still needs confirmation, enter it and choose Resend confirmation email.');
+     return;
+    }
+    if(authorizationCode&&!access&&!tokenHash){
+     // This password-based, implicit-flow client has no PKCE code verifier.
+     // Never pretend an unmatched code is an authenticated session.
+     status('This sign-in link uses an unsupported code callback. Request a fresh confirmation or password reset email, or log in again.');
+     return;
+    }
     setBusy(true);status('Verifying your email link…');
-    // Do not trust URL claims: verify the token with Supabase before unlocking any wardrobe.
-    const user=await request('user',null,access,'GET');
-    const data={user,access_token:access,refresh_token:refresh,expires_in:Number(callback.get('expires_in'))||3600};
-    if(callback.get('type')==='recovery'){
-     if(typeof user?.id!=='string'||!user.id||!refresh)
+    let data;
+    if(tokenHash){
+     // A supported custom template may link directly to the app with
+     // token_hash and type; prove it with GoTrue before opening the closet.
+     if(access||authorizationCode||!/^[a-zA-Z0-9_-]{8,512}$/.test(tokenHash)||
+        !['signup','email','recovery'].includes(linkType))
+      throw Error('Invalid email link');
+     const verified=await request('verify',{token_hash:tokenHash,type:linkType});
+     if(typeof verified?.access_token!=='string'||!verified.access_token||
+        typeof verified?.refresh_token!=='string'||!verified.refresh_token||
+        typeof verified?.user?.id!=='string'||!verified.user.id)
       throw Error('No verified user session');
-     session=data;recovery=true;$('authEmail').value=user.email||'';$('authEmail').disabled=true;
+     const user=await request('user',null,verified.access_token,'GET');
+     if(user?.id!==verified.user.id)throw Error('Session account changed');
+     data={...verified,user};
+    }else{
+     // Existing Supabase-hosted implicit email callbacks remain supported.
+     // Tokens in the URL are NOT trusted without a fresh authenticated user read.
+     const user=await request('user',null,access,'GET');
+     data={user,access_token:access,refresh_token:refresh,
+      expires_in:Number(callback.get('expires_in'))||3600};
+    }
+    if(linkType==='recovery'){
+     if(typeof data.user?.id!=='string'||!data.user.id||!data.refresh_token)
+      throw Error('No verified user session');
+     session=data;recovery=true;$('authEmail').value=data.user.email||'';$('authEmail').disabled=true;
      $('authPassword').value='';$('authPassword').minLength=8;$('authPassword').autocomplete='new-password';
      $('authMode').hidden=true;$('authReset').hidden=true;$('authResend').hidden=true;
      $('authSubmit').textContent='Save new password';status('Choose a new password of at least 8 characters.');return;
