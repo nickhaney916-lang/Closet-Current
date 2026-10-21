@@ -1,3 +1,17 @@
+# Follow-up: responsive import retries — October 21, 2026 Pacific
+
+Isolated from verified PR #123 head `61e4a87672ec603e29d9f10763d25d803ecbb801`.
+
+Small originals previously revisited the same effective pixel frame for each of the five size limits. An 800×600 source exceeding the budget incurred 15 synchronous JPEG encodes. Deduplicate actual width/height frames: now only .94/.88/.82 are tried once (3 attempts). An 1800px source now tries 1800 then 1536, without revisiting 1800 at the 2560 and 2048 limits. Preserve all quality ordering, full-frame dimensions, no upscaling, timeout, object URL revocation and 2,850,000-character budget.
+
+Yield with a zero-delay task before every retry encode so queued input, UI and account lifecycle tasks can run. The first encode remains immediate. A single canvas JPEG encode still runs synchronously; this is no guarantee of a frame-time ceiling or physical-phone speed. Recognition uses the existing full-frame source before masking. No app/auth/cloud/schema/recognizer/reviewer/evidence file changed.
+
+Validation: local build and all Node regressions **1,329 passed / 0 failed / 3 skipped**. Focused tests cover native-size deduplication, queued UI before second encode, and recovery after encoding failure with URL cleanup and the next batch image accepted. Dedicated CI verifies these cases with actual synthetic JPEGs under forced budget pressure in Chromium Android / WebKit iPhone emulation, plus historical import, duplicate, original-before-crop, camera, owner-isolated cloud and styling regressions. CI status must be checked at the final commit before claiming browser completion.
+
+No real garments/human labels are introduced; source-locked review files and all prior checkpoints preserved. Independent human accuracy remains null and promotion blocked. No physical phone, live customer account or hosted backend validation, paid services, merge or deploy.
+
+---
+
 # Imported-photo detail-first JPEG budget — October 21, 2026
 
 **Scope:** Isolated draft PR stacked on source-verified PR #122; never an authorized production release.
