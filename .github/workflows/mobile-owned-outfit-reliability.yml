@@ -1,0 +1,58 @@
+name: Owned outfit styling and tall photographic preview mobile QA
+on:
+  push:
+    branches: [fix/mobile-owned-outfit-preview-20261021]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-and-full-node:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify isolated styling scope and preserved source evidence
+        run: |
+          node scripts/check-mobile-owned-outfit-scope.mjs
+          node scripts/check-customer-pilot-release-gates.mjs
+          git worktree add --detach "$RUNNER_TEMP/verified-pr131" 7566b59e7377d77d8503c7c599aabe32fd3959dc
+          (cd "$RUNNER_TEMP/verified-pr131" && node scripts/check-inspiration-original-photo-scope.mjs)
+      - name: Production build and complete regression suite
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+  mobile-styling:
+    needs: source-and-full-node
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned browser emulation
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install --with-deps chromium webkit
+          node scripts/build.mjs
+      - name: New owned options, partial-save control, idempotent save and tall preview in both engines
+        run: node scripts/test-mobile-owned-outfit-reliability.mjs
+      - name: Full styling, swaps, save-reopen and stale-account regressions
+        run: |
+          STYLE_BROWSER=chromium node scripts/test-style-my-new-item-mobile.mjs
+          STYLE_BROWSER=webkit node scripts/test-style-my-new-item-mobile.mjs
+      - name: Actual retina canvas, cloud ownership and preserved original transfer
+        run: |
+          node scripts/test-local-retina-cutout-browsers.mjs
+          node scripts/test-cloud-session-generation-browsers.mjs
+          node scripts/test-inspiration-original-photo-browsers.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mobile-outfit-synthetic-browser-evidence
+          path: artifacts/

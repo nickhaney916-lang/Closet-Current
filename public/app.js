@@ -5,7 +5,20 @@ let saving=false;const sessionCapturedIds=new Set();
 let localWorker,localReady=false,localBatch=false,localLoadPromise=null,recognitionUnavailable=false;const automaticQueue=[];let automaticRunning=false;const localJobs=new Map(),localPending=new Set();
 const recognitionState={phase:'idle',percent:null,activeId:null};
 let writes=Promise.resolve();
-function queued(work){const result=writes.then(async()=>{await window.closetCloud?.beforeWrite(db);return work();});writes=result.catch(()=>{});result.then(()=>window.closetCloud?.changed()).catch(()=>{});return result;}
+function queued(work){
+ const database=db,owner=window.closetAuth?.user?.id;
+ const current=()=>!!owner&&db===database&&window.closetAuth?.user?.id===owner&&database?.name==='closet-current-user-'+owner;
+ const result=writes.then(async()=>{
+  if(!current())throw Error('Your account changed. Reload your closet before saving.');
+  await window.closetCloud?.beforeWrite(database);
+  if(!current())throw Error('Your account changed. Reload your closet before saving.');
+  const value=await work();
+  // A committed old-owner transaction must not populate a newly opened closet.
+  if(!current())throw Error('Your account changed. Reload your closet before saving.');
+  return value;
+ });
+ writes=result.catch(()=>{});result.then(()=>{if(current())window.closetCloud?.changed();}).catch(()=>{});return result;
+}
 let db,items=[],batch=[],stream,timer,busy=false,lastPixels=null,lastSaved=null,stable=0,lastCapture=0,session=0,audio,cadence;
 let cameraMode=null,cameraOpening=false,cameraRequest=0;
 const video=$('video'),canvas=document.createElement('canvas'),tiny=document.createElement('canvas');tiny.width=32;tiny.height=32;
@@ -25,9 +38,59 @@ function openDB(){return new Promise((resolve,reject)=>{const r=indexedDB.open('
 function readAll(){return new Promise((resolve,reject)=>{const r=db.transaction('items').objectStore('items').getAll();r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});}
 function writeAll(values){return queued(()=>new Promise((resolve,reject)=>{const tx=db.transaction('items','readwrite');for(const v of values)tx.objectStore('items').put(v);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);}));}
 function removeItem(id){return queued(()=>new Promise((resolve,reject)=>{const tx=db.transaction('items','readwrite');tx.objectStore('items').delete(id);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);}));}
-function persistDraft(){if(!db)return;const snapshot=structuredClone(batch);return queued(()=>new Promise((resolve,reject)=>{const tx=db.transaction('state','readwrite');tx.objectStore('state').put({id:'draft',batch:snapshot});tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);})).catch(()=>message('Your unfinished scan could not be backed up. Keep this page open and save or export your pieces.'));}
+// Copy mutable metadata now, sharing immutable photo strings until the write.
+// Cloud restoration/editor changes must not replace the requested photo batch.
+function draftMetadataSnapshot(value){
+ if(Array.isArray(value))return value.map(draftMetadataSnapshot);
+ if(ArrayBuffer.isView(value))return typeof value.slice==='function'?value.slice():new DataView(value.buffer.slice(value.byteOffset,value.byteOffset+value.byteLength));
+ if(value instanceof ArrayBuffer)return value.slice(0);
+ if(value instanceof Date)return new Date(value.getTime());
+ if(value&&typeof value==='object')return Object.fromEntries(Object.entries(value).map(([key,child])=>[key,draftMetadataSnapshot(child)]));
+ return value;
+}
+let pendingDraftWrite=null;
+function persistDraft(){
+ if(!db)return Promise.resolve(false);
+ const owner=window.closetAuth?.user?.id,database=db;
+ const current=()=>!!owner&&window.closetAuth?.user?.id===owner&&db===database&&database.name==='closet-current-user-'+owner;
+ if(!current())return Promise.resolve(false);
+ // Coalesce only adjacent draft requests. An intervening garment/state write
+ // is an ordering barrier; never move a draft update across that transaction.
+ window.closetUnsavedDraftOwner=owner;
+ const metadata=draftMetadataSnapshot(batch);
+ if(pendingDraftWrite&&!pendingDraftWrite.started&&pendingDraftWrite.tail===writes&&pendingDraftWrite.database===database&&pendingDraftWrite.owner===owner){pendingDraftWrite.snapshot=metadata;return pendingDraftWrite.promise;}
+ const request={owner,database,started:false,snapshot:metadata};
+ const result=writes.then(async()=>{
+  if(!current())throw Error('Draft account changed');
+  await window.closetCloud?.beforeWrite(database);
+  if(!current())throw Error('Draft account changed');
+  request.started=true;
+  // Clone photo bytes once from the latest requested snapshot, not mutable
+  // global batch state that a concurrent cloud reload may have replaced.
+  const snapshot=structuredClone(request.snapshot);request.snapshot=null;
+  return new Promise((resolve,reject)=>{
+   const tx=database.transaction('state','readwrite');
+   tx.objectStore('state').put({id:'draft',batch:snapshot});
+   tx.oncomplete=()=>current()?resolve():reject(Error('Draft account changed'));
+   tx.onerror=()=>reject(tx.error||Error('Draft storage failed'));
+   tx.onabort=()=>reject(tx.error||Error('Draft storage stopped'));
+  });
+ });
+ writes=result.catch(()=>{});request.tail=writes;
+ request.promise=result.then(()=>{
+  if(current()){if(pendingDraftWrite===request)window.closetUnsavedDraftOwner=null;$('draftSaveStatus').textContent='';$('retryDraftSave').hidden=true;window.closetCloud?.changed();}
+  return true;
+ },error=>{
+  if(current()){
+   const text=error?.name==='QuotaExceededError'?'Device storage is full. Unfinished photos are only in this open page. Keep it open, make space, then tap Retry saving photos. Your saved closet has not been deleted.':'Unfinished photos could not be saved on this device. Keep this page open and tap Retry saving photos. Your saved closet is kept.';
+   $('draftSaveStatus').textContent=text;$('retryDraftSave').hidden=false;message(text);
+  }
+  return false;
+ }).finally(()=>{request.snapshot=null;if(pendingDraftWrite===request)pendingDraftWrite=null;});
+ pendingDraftWrite=request;return request.promise;
+}
 function readDraft(){return new Promise((resolve,reject)=>{const r=db.transaction('state').objectStore('state').get('draft');r.onsuccess=()=>resolve(r.result?.batch||[]);r.onerror=()=>reject(r.error);});}
-function savePiece(value,nextBatch){return queued(()=>new Promise((resolve,reject)=>{const tx=db.transaction(['items','state'],'readwrite');tx.objectStore('items').put(value);tx.objectStore('state').put({id:'draft',batch:structuredClone(nextBatch)});tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);}));}
+function savePiece(value,nextBatch,stillCurrent){return queued(()=>new Promise((resolve,reject)=>{if(typeof stillCurrent==='function'&&!stillCurrent())return reject(Error('The photo or account changed. Reopen Adjust before saving.'));const tx=db.transaction(['items','state'],'readwrite');tx.objectStore('items').put(value);tx.objectStore('state').put({id:'draft',batch:structuredClone(nextBatch)});tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);}));}
 function node(tag,text,className){const n=document.createElement(tag);if(text)n.textContent=text;if(className)n.className=className;return n;}
 function empty(grid,title,subtitle){const n=node('div',null,'empty');n.append(node('h3',title),node('p',subtitle));grid.append(n);}
 function field(body,title,value,type='input'){const label=node('label',title),input=node(type);input.setAttribute('aria-label',title);if(type==='select'){for(const c of categories){const o=node('option',c);o.value=c;input.append(o);}}input.value=value||'';if(type==='input')input.maxLength=120;if(type==='textarea')input.maxLength=500;label.append(input);body.append(label);return input;}
@@ -105,6 +168,8 @@ function adjustPhoto(item){
  if(stream||cameraOpening)stopCamera();
  const dialog=document.createElement('dialog');dialog.className='photo-adjust clothing-editor';
  dialog.setAttribute('aria-label','Review clothing photo details');
+ const editorDB=db,editorOwner=window.closetAuth?.user?.id,editorSource=recognitionSourcePhoto(item);
+ const editorCurrent=()=>db===editorDB&&window.closetAuth?.user?.id===editorOwner&&recognitionSourcePhoto(item)===editorSource&&(batch.includes(item)||items.includes(item));
  const form=node('form'),draft=structuredClone(item),collect=clothingFields(form,draft);
  const evidence=item.recognitionDiagnostics?.outerwearRecovery;
  if(evidence?.outerwearReviewSuggested&&draft.category!=='Outerwear'){
@@ -138,6 +203,7 @@ function adjustPhoto(item){
  remove.onclick=async()=>{try{if(items.some(x=>x.id===item.id))await removeItem(item.id);items=items.filter(x=>x.id!==item.id);batch=batch.filter(x=>x.id!==item.id);sessionCapturedIds.delete(item.id);await persistDraft();dialog.close();render();}catch{message('Could not remove this photo. Try again.');}};
  form.onsubmit=async event=>{
   event.preventDefault();
+  if(!editorCurrent()){message('Your photo or account changed. Reopen Adjust before saving.');return;}
   const withStyling=event.submitter===style&&reviewingNewPiece;
   const value={...collect(),name:draft.name.trim()||
    (draft.itemType&&draft.itemType!=='Unknown'?draft.itemType:'Closet piece'),
@@ -155,7 +221,8 @@ function adjustPhoto(item){
    // savePiece atomically writes the garment AND removes it from the draft.
    // A second persistDraft here could fail after a successful transaction and
    // incorrectly tell the customer that their wardrobe save failed.
-   await savePiece(value,batch.filter(x=>x.id!==item.id));
+   value.recognitionReviewRequired=false;
+   await savePiece(value,batch.filter(x=>x.id!==item.id),editorCurrent);
    const existing=items.find(x=>x.id===item.id);if(existing)Object.assign(existing,value);else items.push(value);
    batch=batch.filter(x=>x.id!==item.id);dialog.close();render();scheduleMemoryReview();
    if(withStyling){
@@ -193,7 +260,7 @@ function canConfirmReviewedColor(item){
  return !!item&&batch.some(x=>x.id===item.id)&&!items.some(x=>x.id===item.id)&&
   !localPending.has(item.id)&&item.localAnalyzed&&!item.userAdjusted&&
   !item.possibleDuplicate&&!item.requiresOwnershipConfirmation&&
-  !item.scanFailed&&!item.saveFailed&&
+  !item.scanFailed&&!item.saveFailed&&!item.recognitionReviewRequired&&
   // A restored outfit lacking its unmasked ORIGINAL RGB crop must not
   // become a closet item through the quick-color path. The display mask,
   // repaired cutout or AI derivative is never a valid recognition source.
@@ -793,10 +860,10 @@ async function upload(file){
   $('captureState').textContent='Ready for another batch';
  }
 }
+$('retryDraftSave').onclick=async()=>{const button=$('retryDraftSave');button.disabled=true;try{if(await persistDraft())message('Unfinished photos saved on this device. Check Photo results before closing; they are not yet confirmed closet pieces.');}finally{button.disabled=false;}};
 $('upload').onchange=e=>{upload(e.target.files[0]);e.target.value='';};
 $('discard').onclick=()=>{if(batch.length&&confirm('Discard all unsaved images in this batch?')){batch=[];persistDraft();session=0;render();}};
-$('export').onclick=async()=>{if(typeof outfitBoardReady!=='undefined')await outfitBoardReady;if(!items.length&&(typeof inspirationLooks==='undefined'||!inspirationLooks.length))return message('Save a closet piece or inspiration look before exporting.');const blob=new Blob([JSON.stringify({format:'closet-current',version:3,items,looks:typeof inspirationLooks!=='undefined'?inspirationLooks:[],outfitBoard:typeof boardBackup==='function'?boardBackup():undefined})],{type:'application/json'}),url=URL.createObjectURL(blob),a=node('a');a.href=url;a.download='closet-current-backup.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);message('Backup downloaded. Keep it somewhere you can find again.');};
-$('import').onchange=async e=>{const file=e.target.files[0];e.target.value='';if(!file)return;if(!db)return message('Browser storage is unavailable.');if(file.size>100*1024*1024)return message('Backup must be smaller than 100 MB.');try{const data=JSON.parse(await file.text());if(data.format!=='closet-current'||![1,2,3].includes(data.version)||!Array.isArray(data.items)||data.items.length>1000)throw Error('Choose a Closet Current backup.');const valid=data.items.map(x=>{if(typeof x.id!=='string'||!x.id||typeof x.image!=='string'||!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(x.image)||x.image.length>3000000)throw Error('Backup contains an invalid image.');return normalizeClothing({...x,id:x.id.slice(0,100),image:x.image,name:String(x.name||'Closet piece').slice(0,120),category:categories.includes(x.category)?x.category:'Uncategorized',color:String(x.color||'').slice(0,120),notes:String(x.notes||'').slice(0,500),savedAt:String(x.savedAt||'')});});if(data.looks){if(!Array.isArray(data.looks)||data.looks.length>100)throw Error('Invalid inspiration backup.');data.looks=data.looks.map(validLook);}if(!confirm(`Import ${valid.length} pieces? Matching IDs will update existing pieces.`))return;await writeAll(valid);items=(await readAll()).map(normalizeClothing);if(data.looks)await importLooks(data.looks);if(data.outfitBoard&&typeof importBoardBackup==='function')await importBoardBackup(data.outfitBoard);render();message('Backup imported.');}catch(err){message(err.message||'Import failed.');}};
+// Account-bound file backup and atomic restore are initialized in wardrobe-backup.js.
 window.addEventListener('pagehide',stopCamera);window.addEventListener('beforeunload',e=>{if(batch.length||busy){e.preventDefault();e.returnValue='';}});document.addEventListener('visibilitychange',()=>{if(document.hidden&&(stream||cameraOpening)){stopCamera();message('Camera stopped while the app was in the background. Your photos are ready to review.');}});
 const closetReady=(async()=>{await window.closetAuth.ready;try{db=await openDB();items=(await readAll()).map(normalizeClothing);batch=(await readDraft()).map(normalizeClothing);for(const item of batch)if(item.outfitSourceId&&item.requiresOwnershipConfirmation){item.requiresOwnershipConfirmation=false;item.localAnalyzed=false;}if(batch.length)message(`${batch.length} unfinished photos are waiting in More → Photo results.`);}catch{message('Browser storage is unavailable. Use a regular browser to save your closet.');}render();for(const item of batch)if(!item.localAnalyzed)queueAutomatic(item);})();
 
@@ -880,7 +947,7 @@ async function saveIndexed(item,sourceStillCurrent){
  const saved=await queued(()=>new Promise((resolve,reject)=>{
   if(!db)return reject(Error('Browser storage is unavailable.'));
   if(typeof sourceStillCurrent!=='function'||!sourceStillCurrent()||
-     item.category!==acceptedCategory||item.itemType!==acceptedType||!batch.includes(item)||items.some(x=>x.id===item.id)||item.userAdjusted||item.requiresOwnershipConfirmation||item.possibleDuplicate||item.scanFailed||item.saveFailed||!segmentationAllows(item,{category:item.category,itemType:item.itemType})||item.category==='Uncategorized'||!ClothingDetails.validColor(item.color))return resolve(false);
+     item.category!==acceptedCategory||item.itemType!==acceptedType||!batch.includes(item)||items.some(x=>x.id===item.id)||item.userAdjusted||item.requiresOwnershipConfirmation||item.possibleDuplicate||item.scanFailed||item.saveFailed||item.recognitionReviewRequired||!segmentationAllows(item,{category:item.category,itemType:item.itemType})||item.category==='Uncategorized'||!ClothingDetails.validColor(item.color))return resolve(false);
   // Another capture, cloud restore or manual save can add a matching item
   // while this classifier waits in the write queue. Recheck immediately
   // before opening the transaction, without silently deleting the photo.
@@ -910,6 +977,8 @@ async function saveIndexed(item,sourceStillCurrent){
 }
 async function recognizeItem(item){
  const scanStarted=Date.now();let savingIndexed=false;
+ const scanDB=db,scanOwner=globalThis.window?.closetAuth?.user?.id;
+ item.recognitionReviewRequired=true;
  // A slow or failing decode/classifier must not change the status of a newer
  // photo, updated category, or manually adjusted garment on the same card.
  let scanInputsCurrent=()=>true;
@@ -922,7 +991,7 @@ async function recognizeItem(item){
   const originalDisplay=item.image,originalFull=item.originalPhoto?.image??null,
    originalCategory=item.category,originalType=item.itemType,
    originalHint=item.segmentHint?JSON.stringify(item.segmentHint):null;
-  const sourceStillCurrent=()=>recognitionSourcePhoto(item)===sourcePhoto&&
+  const sourceStillCurrent=()=>db===scanDB&&globalThis.window?.closetAuth?.user?.id===scanOwner&&recognitionSourcePhoto(item)===sourcePhoto&&
    item.image===originalDisplay&&(item.originalPhoto?.image??null)===originalFull&&
    (item.segmentHint?JSON.stringify(item.segmentHint):null)===originalHint;
   const categoryStillCurrent=()=>sourceStillCurrent()&&
@@ -970,6 +1039,18 @@ async function recognizeItem(item){
   // Diagnostic evidence contains category/type scores only, never wardrobe images.
   if(result.diagnostics)item.recognitionDiagnostics={reason:result.reason||null,...result.diagnostics};
   const corePartial=!result.strong&&result.categoryConfirmed&&result.categoryOnly&&result.choices?.[0]&&result.choices[0].itemType==='Unknown';
+  const acceptedChoice=result.choices?.[0];
+  if(result.strong||corePartial){
+   const supported=acceptedChoice&&Object.hasOwn(clothingSchema.types,acceptedChoice.category)&&
+    (acceptedChoice.itemType==='Unknown'?corePartial:clothingSchema.types[acceptedChoice.category].includes(acceptedChoice.itemType));
+   const conflicts=supported&&((item.category!=='Uncategorized'&&item.category!==acceptedChoice.category)||
+    (item.itemType&&item.itemType!=='Unknown'&&item.itemType!==acceptedChoice.itemType));
+   if(!supported||conflicts){
+    item.localStatus='Garment checks disagree with the current category or type. Confirm the garment in Adjust before saving.';
+    return true;
+   }
+   item.recognitionReviewRequired=false;
+  }
   if(corePartial){
    if(item.userAdjusted||!segmentationAllows(item,result.choices[0])){item.localStatus=item.userAdjusted?'Your adjustments are preserved. Save this piece when ready.':item.outfitSourceId&&item.segmentHint?.displayFallback==='original-crop'?'This photo region may include multiple garments or background. Verify with Adjust or photograph the item alone.':'The clothing checks disagree. Use Adjust or take a clearer photo.';return true;}
    applyLocalChoice(item,result.choices[0]);item.name=[item.color,result.choices[0].category].filter(Boolean).join(' ');

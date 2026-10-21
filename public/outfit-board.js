@@ -36,6 +36,11 @@ async function saveOwnedOutfitBoard(value,sourceStillCurrent=null){
   if(slots.length!==Object.keys(saved.slots).length||
     slots.some(slot=>requested.slots[slot]!==saved.slots[slot]))
    return reject(Error('This outfit changed. Create outfits again before saving.'));
+  // Repeated taps, regenerated options and interrupted acknowledgements are
+  // idempotent inside the same account-bound write queue. Distinct names and
+  // preferences still permit intentional separate saved looks.
+  const existing=savedOutfitBoards.find(board=>JSON.stringify(cleanOutfitBoard(board,items))===JSON.stringify(saved));
+  if(existing)return resolve(existing);
   if(savedOutfitBoards.length>=50)return reject(Error('You can save up to 50 outfits.'));
   const next=[...savedOutfitBoards,saved];
   const tx=context.database.transaction('state','readwrite');

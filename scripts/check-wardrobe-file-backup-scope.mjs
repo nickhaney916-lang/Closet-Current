@@ -1,0 +1,22 @@
+// Assignment 134: only local file export/restore, no recognition/Auth/cloud changes.
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import {execFileSync} from 'node:child_process';
+const BASE='801b70926283ffe920cbfa2d05560288b3afaaf4';
+const git=(...args)=>execFileSync('git',args,{encoding:'utf8',maxBuffer:20000000}).trim();
+const source=p=>execFileSync('git',['show',BASE+':'+p],{encoding:'utf8'});
+assert.equal(git('merge-base','HEAD',BASE),BASE);
+const pins={"public/app.js": "36cf8ec598d6a75bec0b05c1255c3aedbd0e9f72", "public/index.html": "f178fd3ae9f2835b637df3c531080c6cf3f7f892", "public/wardrobe-backup-engine.js": "7ad27f2732bc9da6fff5d6289c9dcd40f898c30b", "public/wardrobe-backup.js": "e95ca5ae45a76ba0feef3baebb124d1f285daa81"};
+for(const [p,sha] of Object.entries(pins))assert.equal(git('rev-parse','HEAD:'+p),sha,'Unexpected source: '+p);
+const allowed=new Set(["public/app.js", "public/index.html", "public/wardrobe-backup-engine.js", "public/wardrobe-backup.js", "tests/wardrobe-file-backup.test.cjs", "scripts/test-wardrobe-file-backup-browsers.mjs", "scripts/check-wardrobe-file-backup-scope.mjs", ".github/workflows/wardrobe-file-backup-qa.yml", "docs/WARDROBE-FILE-RESTORE-20261021.md", "docs/PROGRESS-CHECKPOINT.md"]);
+for(const p of git('diff','--name-only',BASE,'HEAD').split('\n').filter(Boolean))assert.ok(allowed.has(p),'Unrelated source/evidence: '+p);
+let before=source('public/app.js');
+const start=before.indexOf("$('export').onclick="),end=before.indexOf("window.addEventListener('pagehide',stopCamera)",start);
+assert.ok(start>0&&end>start);
+before=before.slice(0,start)+'// Account-bound file backup and atomic restore are initialized in wardrobe-backup.js.\n'+before.slice(end);
+assert.equal(fs.readFileSync('public/app.js','utf8'),before,'App outside old backup handlers must remain exact, including original-photo/video behavior');
+for(const p of ['public/auth.js','public/cloud-backup.js','public/cloud-backup-engine.js','public/cloud-backup-bridge.js','public/trends.js','public/photo-import.js','public/photo-color.js','public/recognition-engine.mjs','public/recognition-photo.mjs','public/outfit-board.js','public/outfit-board-engine.js','public/closet-stylist.js','public/closet-stylist-engine.js','public/garment-fit-geometry.js','public/reusable-figure-preview.js'])assert.equal(git('rev-parse','HEAD:'+p),git('rev-parse',BASE+':'+p),'Protected source changed: '+p);
+assert.equal(git('rev-parse','HEAD:benchmark'),git('rev-parse',BASE+':benchmark'),'Human evidence changed');
+assert.equal(git('rev-parse','HEAD:supabase'),git('rev-parse',BASE+':supabase'),'Hosted policies/functions changed');
+assert.ok(fs.readFileSync('docs/PROGRESS-CHECKPOINT.md','utf8').endsWith(source('docs/PROGRESS-CHECKPOINT.md')),'Historical checkpoint rewritten');
+console.log(JSON.stringify({scope:'ATOMIC_ADDITIVE_FILE_BACKUP_ONLY',originalPhotoBeforeMaskPreserved:true,video133Unchanged:true,cloudAuthAndRecognitionUnchanged:true,humanEvidenceUnchanged:true,physicalPhoneValidated:false,liveCustomerDataAccessed:false,merged:false,deployed:false}));

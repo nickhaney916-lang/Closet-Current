@@ -56,7 +56,7 @@ test('LRU has fixed entry limit even during repeated outfit changes',()=>{
 });
 test('oversized inputs and malformed results are not retained in browser memory',()=>{
  const c=create();
- assert.equal(c.put(q('huge','one','X'.repeat(2_000_001)),result()),false);
+ assert.equal(c.put(q('huge','one','X'.repeat(2_850_001)),result()),false);
  assert.equal(c.put(q(),{image:'x',width:0,height:42}),false);
  assert.equal(c.put(q(),{image:'x',width:42.5,height:42}),false);
  assert.equal(c.put({...q(),id:42},result()),false);

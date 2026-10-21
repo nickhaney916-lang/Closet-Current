@@ -114,3 +114,14 @@ test('ordinary board persistence refuses a signed-out or mismatched database own
   assert.equal(s.c.queueCalls,0);
  }
 });
+
+test('overlapping identical outfit saves are idempotent after the first durable commit',async()=>{
+ const s=storage(),a=s.c.saveOwnedOutfitBoard(board()),b=s.c.saveOwnedOutfitBoard(board());
+ await tick();assert.equal(s.pending.length,1);s.finish();await Promise.all([a,b]);
+ assert.equal(s.saved().length,1);assert.equal(s.disk.value.saved.length,1);assert.equal(s.pending.length,0);
+});
+test('a regenerated identical option is reused even at the saved outfit limit',async()=>{
+ const s=storage();const first=s.c.saveOwnedOutfitBoard(board());await tick();s.finish();await first;
+ vm.runInContext('savedOutfitBoards.push(...Array.from({length:49},(_,i)=>({...savedOutfitBoards[0],name:"other"+i})))',s.c);
+ const result=await s.c.saveOwnedOutfitBoard(board());assert.equal(result.name,'A');assert.equal(s.saved().length,50);assert.equal(s.pending.length,0);
+});

@@ -150,3 +150,11 @@ input[type="checkbox"]{min-height:20px;width:20px;height:20px;vertical-align:mid
 
 .styled-outfit-photos img{display:block;max-width:100%}
 #reusableFigureRetry{width:100%;min-height:48px;white-space:normal}
+
+/* Auth controls stay readable and comfortably tappable on small phones. */
+.auth-card button,.auth-card .login-help>summary{min-height:48px}
+.auth-card .login-help>summary{display:flex;align-items:center;cursor:pointer}
+.auth-card input:not([type="checkbox"]){font-size:16px;min-height:52px}
+.auth-card .password-field input{padding-right:60px}
+.auth-card .password-toggle{width:48px;height:48px;min-height:48px;right:2px;top:2px}
+@media(max-width:360px){.auth-gate{padding:16px}.auth-card{padding:20px}}

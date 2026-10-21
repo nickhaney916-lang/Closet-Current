@@ -2,7 +2,7 @@
 // Private, memory-bounded cache for already-approved display-only garments.
 // Never writes to disk, transmits photos, stores selfies or changes indexing.
 (function(root){
- const MAX_ENTRIES=6,MAX_BYTES=8_000_000,MAX_SOURCE_BYTES=2_000_000;
+ const MAX_ENTRIES=6,MAX_BYTES=8_000_000,MAX_SOURCE_BYTES=2_850_000;
  function create(){
   let owner=null,entries=[],bytes=0;
   function clear(){entries=[];bytes=0;}
