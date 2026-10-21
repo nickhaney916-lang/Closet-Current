@@ -3,7 +3,8 @@
 // to Supabase or Cloudflare; no paid inference is possible in this bundle.
 // All input values are PUBLIC browser configuration, never API secrets.
 import assert from 'node:assert/strict';
-import {readFile,writeFile,cp,rm,readdir,mkdir} from 'node:fs/promises';
+import {readFile,writeFile,cp,readdir} from 'node:fs/promises';
+import {writeAtomicStagingBundle} from './atomic-staging-output.mjs';
 import {createHash} from 'node:crypto';
 import {execFileSync} from 'node:child_process';
 
@@ -41,8 +42,8 @@ function replaceExactly(source,oldValue,newValue,count,label){
  assert.equal(n,count,'Unexpected '+label+' source signature: '+n);
  return source.split(oldValue).join(newValue);
 }
-async function applyFile(file,transform){
- const full=OUTPUT+'/'+file,source=await readFile(full,'utf8');
+async function applyFile(dir,file,transform){
+ const full=dir+'/'+file,source=await readFile(full,'utf8');
  await writeFile(full,transform(source));
 }
 async function walk(dir,prefix=''){
@@ -56,11 +57,11 @@ async function walk(dir,prefix=''){
 }
 async function main(){
  assert.equal(process.argv.length,2,'Usage: staging env variables then node scripts/build-restricted-staging.mjs');
- const config=configFromEnv(process.env); // Before generating ANY output.
- execFileSync(process.execPath,['scripts/build.mjs'],{stdio:'inherit'});
- await rm(OUTPUT,{force:true,recursive:true});
- await cp(BASE,OUTPUT,{recursive:true});
- await applyFile('auth.js',source=>{
+ const proof=await writeAtomicStagingBundle(OUTPUT,async stageDir=>{
+  const config=configFromEnv(process.env);
+  execFileSync(process.execPath,['scripts/build.mjs'],{stdio:'inherit'});
+  await cp(BASE,stageDir,{recursive:true});
+ await applyFile(stageDir,'auth.js',source=>{
   // Remove legacy cross-origin advice: staging callbacks never use GitHub Pages.
   const start=source.indexOf(' function emailOriginNotice(){');
   const end=source.indexOf(' const STORE=',start);
@@ -72,42 +73,42 @@ async function main(){
     "const APP_URL='"+config.appOrigin+"';",1,'auth callback');
   return next;
  });
- await applyFile('cloud-backup.js',source=>{
+ await applyFile(stageDir,'cloud-backup.js',source=>{
   let x=replaceExactly(source,"BASE='"+PROD_URL+"'","BASE='"+config.backendURL+"'",1,'backup backend');
   return replaceExactly(x,"KEY='"+PROD_KEY+"'","KEY='"+config.publicKey+"'",1,'backup public key');
  });
- await applyFile('ai-tryon.js',source=>{
+ await applyFile(stageDir,'ai-tryon.js',source=>{
   let x=replaceExactly(source,PROD_URL+'/functions/v1/ai-try-on',
     config.backendURL+'/functions/v1/ai-try-on',1,'try-on backend');
   return replaceExactly(x,'async function tryOnRequest(token,body,signal){',
    "async function tryOnRequest(token,body,signal){\n  throw Error('Paid AI is disabled for the restricted staging pilot.');",
    1,'paid inference block');
  });
- await applyFile('index.html',source=>{
+ await applyFile(stageDir,'index.html',source=>{
   assert.ok(source.includes('<body>'),'Expected source app body');
   return replaceExactly(source,'<body>',
    '<body><div role="status" id="stagingBanner" style="background:#38215f;color:white;padding:12px 16px;text-align:center;font:700 15px system-ui">PRIVATE STAGING — DISPOSABLE TEST ACCOUNTS ONLY. NO PAID AI.</div>',
    1,'staging watermark');
  });
- const index=await readFile(OUTPUT+'/index.html','utf8');
+ const index=await readFile(stageDir+'/index.html','utf8');
  const match=index.match(/\?v=([a-f0-9]{12})/);
  assert.ok(match,'App build must have a versioned release');
  const previous=match[1];
  const version=createHash('sha256').update('restricted-staging\0'+previous+'\0'+
   config.backendURL+'\0'+config.publicKey+'\0'+config.appOrigin).digest('hex').slice(0,12);
  for(const filename of ['index.html','sw.js','phone-photo-check.html','saved-closet-audit.html']){
-  await applyFile(filename,text=>text.split('?v='+previous).join('?v='+version)
+  await applyFile(stageDir,filename,text=>text.split('?v='+previous).join('?v='+version)
    .split('closet-current-'+previous).join('closet-current-'+version)
    .split('"'+previous+'"').join('"'+version+'"'));
  }
  // These headers are NOT access control; Cloudflare Access policy must
  // be independently enabled and tested before serving ANY staging bundle.
- await writeFile(OUTPUT+'/_headers',
+ await writeFile(stageDir+'/_headers',
   '/*\n  X-Robots-Tag: noindex, nofollow, noarchive\n  X-Content-Type-Options: nosniff\n');
- await writeFile(OUTPUT+'/robots.txt','User-agent: *\nDisallow: /\n');
- const paths=await walk(OUTPUT);
+ await writeFile(stageDir+'/robots.txt','User-agent: *\nDisallow: /\n');
+ const paths=await walk(stageDir);
  for(const name of paths.filter(x=>/\.(?:html|js|mjs|json|css|webmanifest|txt)$/.test(x))){
-  const text=await readFile(OUTPUT+'/'+name,'utf8');
+  const text=await readFile(stageDir+'/'+name,'utf8');
   for(const forbidden of [PROD,OTHER_APP,PROD_KEY,OLD_CALLBACK,'closet-current.pages.dev']){
    assert.ok(!text.includes(forbidden),'Existing live service or legacy origin detected in staging file '+name);
   }
@@ -127,7 +128,9 @@ async function main(){
   restrictedStagingDeployed:false,
   productionReleaseApproved:false,
   releasePromotion:'BLOCKED'};
- await writeFile(OUTPUT+'/staging-preflight.json',JSON.stringify(result,null,2)+'\n');
- console.log('RESTRICTED_STAGING_PREFLIGHT '+JSON.stringify(result));
+ await writeFile(stageDir+'/staging-preflight.json',JSON.stringify(result,null,2)+'\n');
+ return result;
+ });
+ console.log('RESTRICTED_STAGING_PREFLIGHT '+JSON.stringify(proof));
 }
 main().catch(e=>{console.error('STAGING_CONFIG_REJECTED '+e.message);process.exitCode=1;});

@@ -1,7 +1,7 @@
 name: Restricted staging preparation - safe build QA only
 on:
   push:
-    branches: [staging/restricted-preview-preflight-20261021]
+    branches: [staging/restricted-preview-preflight-20261021, fix/atomic-restricted-staging-output-20261021]
   workflow_dispatch:
 permissions:
   contents: read
