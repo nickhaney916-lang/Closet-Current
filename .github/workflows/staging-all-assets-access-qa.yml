@@ -1,0 +1,44 @@
+name: Anonymous staging access every static asset (synthetic QA)
+on:
+  push:
+    branches: [audit/staging-all-assets-anonymous-access-20261021]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  full-static-access-rehearsal:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Confirm original camera and hosted production unchanged
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --exit-code 734941ae2997b74e705eb3b1d8f17d78417262cf HEAD -- public supabase .github/workflows/pages.yml .github/workflows/cloudflare-pages.yml
+          node scripts/check-staging-preflight-scope.mjs
+          node scripts/check-integrated-asset-seal.mjs
+          node scripts/check-customer-pilot-release-gates.mjs
+      - name: Probe every staged file in synthetic HTTP coverage
+        run: |
+          node --test tests/staging-anonymous-access.test.mjs tests/staging-anonymous-full-bundle.test.mjs
+      - name: Complete app build and Node regression suite
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Generate invented staging bundle and inventory full route list
+        env:
+          CLOSET_STAGING_APP_ORIGIN: https://preview.closet-current-staging.pages.dev/
+          CLOSET_STAGING_SUPABASE_URL: https://abcdefghijklmnopqrst.supabase.co
+          CLOSET_STAGING_SUPABASE_PUBLISHABLE_KEY: sb_publishable_STAGING_TEST_FIXTURE_XYZ001
+        run: |
+          node scripts/build-restricted-staging.mjs
+          node scripts/verify-restricted-staging-bundle.mjs
+          node --input-type=module -e "import {pathsFromVerifiedStaging} from './scripts/check-staging-anonymous-access.mjs'; import assert from 'node:assert/strict'; const routes=await pathsFromVerifiedStaging(); assert.ok(routes.length>90); assert.ok(routes.includes('/staging-asset-seal.json')); assert.ok(routes.includes('/icons/icon-192.png')); console.log('STAGING_COMPLETE_ACCESS_ROUTES_SYNTHETIC_PASS',routes.length,'NO NETWORK REQUESTS');"
+      - name: No production or hosted staging access
+        run: echo 'SYNTHETIC HTTP ONLY. NO HOSTED PROBE, DEPLOYMENT, CUSTOMER DATA OR PAID SERVICES.'
