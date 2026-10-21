@@ -57,7 +57,7 @@ test('all three report families match the exact app build without claiming same 
 });
 test('saved-closet and model build mismatches across device reports are fatal, not warnings',()=>{
  const a=cohort();a.saved[1]=makeSaved('iPhone/iPad',white,'cccccccccccc');
- assert.throws(()=>verify(a),/Different app builds/);
+ assert.throws(()=>verify(a),/Different app builds|Phone sessions must use the same exact app release/);
  const b=cohort();b.model[0]=makeModel('dddddddddddd');
  assert.throws(()=>verify(b),/checklist\/diagnostic app build mismatch/i);
  const c=cohort();c.android=device.deviceCheckReport({steps:checks},'eeeeeeeeeeee','Android');
