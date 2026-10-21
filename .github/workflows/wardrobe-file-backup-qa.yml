@@ -1,0 +1,61 @@
+name: Atomic private wardrobe file restore and mobile recovery QA
+on:
+  push:
+    branches: [fix/atomic-private-wardrobe-restore-20261021]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-and-full-node:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Preserve original photos, video importer, cloud/Auth and human evidence
+        run: |
+          node scripts/check-wardrobe-file-backup-scope.mjs
+          node scripts/check-customer-pilot-release-gates.mjs
+          git worktree add --detach "$RUNNER_TEMP/verified-pr133" 801b70926283ffe920cbfa2d05560288b3afaaf4
+          (cd "$RUNNER_TEMP/verified-pr133" && node scripts/check-video-import-bounded-scope.mjs)
+      - name: Build customer app and run complete regression suite
+        run: |
+          node --check public/wardrobe-backup-engine.js
+          node --check public/wardrobe-backup.js
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+  mobile-file-and-cloud-recovery:
+    needs: source-and-full-node
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned Chromium and WebKit emulation
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install --with-deps chromium webkit
+          node scripts/build.mjs
+      - name: Actual file restore, atomic rollback, original bytes, download, retry and reopen in both engines
+        run: node scripts/test-wardrobe-file-backup-browsers.mjs
+      - name: Cloud owner isolation and interrupted conflict retries with synthetic backend
+        run: |
+          node scripts/test-cloud-session-generation-browsers.mjs
+          node scripts/test-cloud-conflict-retry-browsers.mjs
+      - name: Preserve video uploader, inspiration original source and outfit save/reopen
+        run: |
+          node scripts/test-video-import-bounded-mobile.mjs
+          node scripts/test-inspiration-original-photo-browsers.mjs
+          STYLE_BROWSER=chromium node scripts/test-style-my-new-item-mobile.mjs
+          STYLE_BROWSER=webkit node scripts/test-style-my-new-item-mobile.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: wardrobe-file-restore-synthetic-browser-evidence
+          path: artifacts/
