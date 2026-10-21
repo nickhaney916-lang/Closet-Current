@@ -101,6 +101,7 @@ try{
    });
    assert.deepEqual(isolation,{rejected:true,oldColorKept:true});
    await editor.getByRole('button',{name:'Cancel',exact:true}).click();
+   await editor.waitFor({state:'detached'});
    await page.evaluate(()=>adjustPhoto(items.find(x=>x.id==='uncertain')));
    editor=page.locator('dialog.clothing-editor');await editor.getByLabel('Color',{exact:true}).fill('Blue');
    await editor.getByRole('button',{name:'Save changes',exact:true}).click();await editor.waitFor({state:'detached'});

@@ -80,3 +80,12 @@ test('manual correction write rechecks editor identity after waiting in queue',a
  await assert.rejects(h.state.savePiece({...h.item,itemType:'Ankle boots',color:'Brown'},[],()=>current),/photo or account changed/);
  assert.equal(h.stored.length,0);
 });
+
+test('account change while transaction completes cannot publish old results or notify new owner',async()=>{
+ let notifications=0,published=0;
+ const c={writes:Promise.resolve(),db:{name:'closet-current-user-a'},window:{closetAuth:{user:{id:'a'}},closetCloud:{beforeWrite:async()=>{},changed(){notifications++;}}}};
+ vm.createContext(c);vm.runInContext(source.slice(source.indexOf('function queued('),source.indexOf('let db,items=')),c);
+ await assert.rejects(c.queued(async()=>{await Promise.resolve();c.window.closetAuth.user.id='b';return 'old-owner-result';}).then(()=>published++),/account changed/);
+ assert.equal(published,0);assert.equal(notifications,0);
+ c.window.closetAuth.user.id='a';assert.equal(await c.queued(async()=> 'recovered'),'recovered');
+});

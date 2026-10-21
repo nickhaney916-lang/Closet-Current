@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
 import {packetFromLock,reconcile,LOCK} from './source-holdout-human-review.mjs';
 const BASE='623eb4af070b6caece11247e79eb3494d8450f98';
-const APP='0bde8c464dbda746d521a9a7b095d2d87e8bdbd2';
+const APP='ee2bd1796ecf3e851a834bdd850646086f17e622';
 const git=(...args)=>execFileSync('git',args,{encoding:'utf8',maxBuffer:20000000}).trim();
 assert.equal(git('merge-base',BASE,'HEAD'),BASE);
 assert.equal(git('rev-parse','HEAD:public/app.js'),APP,'Unreviewed app source');

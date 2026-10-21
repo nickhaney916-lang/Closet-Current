@@ -2,7 +2,7 @@
 
 - Isolated from PR #125 `623eb4af070b6caece11247e79eb3494d8450f98`. Stop contradictory stale garment types from autosaving and uncertain retries from using the color-only save shortcut. Keep original full-frame RGB, camera quality, model/thresholds and all human evidence unchanged.
 - Pin recognition/editor and queued local writes to their opened owner/database/photo, rechecking after cloud preflight and before storage. Manual corrected garment types/colors remain atomic with draft removal.
-- New independent state tests reproduce 13 failures against parent125; all 14 pass with fix. Full local build: **1,344 passed, zero failed, three skipped**. Exact-head CI/mobile emulation evidence must be confirmed in the draft PR. Actual model accuracy/human gold remains null; physical phones and live hosted customer testing outstanding. No paid services, merge/deploy or Drive Duel edits. See `docs/RECOGNITION-CONFIRMATION-RELIABILITY-20261021.md`.
+- New independent state tests reproduce 14 failures against parent125; all 15 pass with fix. Full local build: **1,345 passed, zero failed, three skipped**. Exact-head CI/mobile emulation evidence must be confirmed in the draft PR. Actual model accuracy/human gold remains null; physical phones and live hosted customer testing outstanding. No paid services, merge/deploy or Drive Duel edits. See `docs/RECOGNITION-CONFIRMATION-RELIABILITY-20261021.md`.
 
 # Native camera still bounded high-detail JPEG fallback — October 21, 2026 Pacific
 

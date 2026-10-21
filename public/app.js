@@ -12,7 +12,10 @@ function queued(work){
   if(!current())throw Error('Your account changed. Reload your closet before saving.');
   await window.closetCloud?.beforeWrite(database);
   if(!current())throw Error('Your account changed. Reload your closet before saving.');
-  return work();
+  const value=await work();
+  // A committed old-owner transaction must not populate a newly opened closet.
+  if(!current())throw Error('Your account changed. Reload your closet before saving.');
+  return value;
  });
  writes=result.catch(()=>{});result.then(()=>{if(current())window.closetCloud?.changed();}).catch(()=>{});return result;
 }
