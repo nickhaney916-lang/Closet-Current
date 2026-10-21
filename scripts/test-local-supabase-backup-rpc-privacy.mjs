@@ -27,7 +27,15 @@ const users=[];
 const image=Buffer.from('ffd8ffe000104a46494600010100000100010000ffd9','hex');
 const name=createHash('sha256').update(image).digest('hex')+'.jpg';
 function ok(result,label){
- if(result.error)throw Error(label+' failed with Supabase error code '+(result.error.code||result.error.status||'unknown'));
+ if(result.error){
+  // This CI connects to synthetic local users only; redact UUIDs, any
+  // identifier resembling an email or token, and truncate the PG message.
+  const detail=String(result.error.message||'unknown').replace(
+    /[0-9a-f]{8}-[0-9a-f-]{27,}/gi,'[local-uuid]').replace(
+    /[A-Z0-9._%+-]+@[A-Z0-9.-]+/gi,'[local-email]').slice(0,170);
+  throw Error(label+' failed with Supabase error code '+
+    (result.error.code||result.error.status||'unknown')+': '+detail);
+ }
  return result.data;
 }
 async function newOwner(){
