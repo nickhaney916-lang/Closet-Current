@@ -34,12 +34,18 @@ for(const [path,expected] of Object.entries(imported)){
 const protectedRuntime=[
  'public/app.js','public/photo-crop-editor.js','public/recognition-photo.mjs',
  'public/photo-color.js','public/recognition-engine.mjs','public/clothing-details.js',
- 'public/outfit-board.js','public/closet-stylist.js','public/cloud-backup.js',
+ 'public/outfit-board.js','public/closet-stylist.js',
  'public/cloud-backup-engine.js','public/cloud-backup-bridge.js','public/index.html',
  'public/auth.js','public/reusable-figure-preview.js',
  'scripts/check-dual-parent-review-integration.mjs','scripts/check-customer-pilot-release-gates.mjs',
  'supabase/cloud-backup.sql','supabase/design/backup-rpc-only-writes.DRAFT.sql'
 ];
+// Exactly one intentionally modified customer source: conflict-retry state.
+// Cloud auth, private bucket paths, source capture, owner binding, and the
+// historical photo/model evidence remain frozen in the reviewed source.
+assert.equal(git('rev-parse','HEAD:public/cloud-backup.js'),
+ git('rev-parse','9137b448d24b4904c0477b2f854171c546b25a16:public/cloud-backup.js'),
+ 'Unreviewed cloud conflict recovery runtime change');
 for(const path of protectedRuntime)
  assert.equal(git('rev-parse','HEAD:'+path),git('rev-parse',CUSTOMER+':'+path),
   'Customer or cloud security source changed during isolated integration: '+path);
@@ -48,7 +54,12 @@ const permittedExtra=new Set([
  '.github/workflows/cloud-blind-photo-integration-qa.yml',
  'docs/CLOUD-BLIND-PHOTO-RELEASE-CANDIDATE-20261020.md',
  'docs/PROGRESS-CHECKPOINT.md',
- 'scripts/verify-camera-cloud-integration.mjs'
+ 'scripts/verify-camera-cloud-integration.mjs',
+ 'public/cloud-backup.js',
+ 'tests/cloud-conflict-retry.test.cjs',
+ 'scripts/test-cloud-conflict-retry-browsers.mjs',
+ '.github/workflows/cloud-conflict-retry-qa.yml',
+ 'docs/CLOUD-CONFLICT-RETRY-RECOVERY-20261020.md'
 ]);
 const changed=git('diff','--name-only',CUSTOMER,'HEAD').split('\n').filter(Boolean);
 for(const path of changed)
@@ -71,5 +82,5 @@ console.log('BLIND_PHOTO_CLOUD_INTEGRATION '+JSON.stringify({
  exactImportedBlobs:approvedImported.size,protectedRuntimeFiles:protectedRuntime.length,
  untouchedDiscoveryLabels:true,photos:packet.photos.length,humanReviewSubmissions:0,
  regressionGuarded:true,modelPromotion:'BLOCKED',
- authAndCloudRuntimeIdentical:true,mergedMain:false,deployed:false,productionAuthorized:false
+ authRuntimeIdentical:true,otherCloudRuntimeIdentical:true,conflictRetryBlobReviewed:true,mergedMain:false,deployed:false,productionAuthorized:false
 }));

@@ -1,0 +1,57 @@
+name: Cloud conflict recovery and Keep both retry integration QA
+on:
+  push:
+    branches: [fix/cloud-conflict-keep-both-retry-20261020]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  integration-and-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Reproduce overlapping Keep both intent and two-device upload failure
+        run: |
+          node --check public/cloud-backup.js
+          node --test tests/cloud-conflict-retry.test.cjs tests/cloud-session-generation.test.cjs tests/cloud-backup.test.cjs
+      - name: Preserve original source, private owner and human review evidence
+        run: |
+          node scripts/verify-camera-cloud-integration.mjs
+          node scripts/check-dual-parent-review-integration.mjs
+          node scripts/check-blind-photo-cloud-integration.mjs
+          node scripts/check-customer-pilot-release-gates.mjs
+      - name: Build customer application and run all regression tests
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+  real-browser-recovery:
+    needs: integration-and-regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned Chromium and WebKit mobile browser engines
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install --with-deps chromium webkit
+      - name: Both browser engines preserve the intentionally concurrent Keep both decision
+        run: node scripts/test-cloud-conflict-retry-browsers.mjs
+      - name: Both mobile browsers reject old-account IndexedDB during cloud restore
+        run: node scripts/test-cloud-session-generation-browsers.mjs
+      - name: Original photo and owned wardrobe styling still behave correctly
+        run: |
+          node scripts/build.mjs
+          node scripts/test-style-my-new-item-mobile.mjs
+          STYLE_BROWSER=webkit node scripts/test-style-my-new-item-mobile.mjs
