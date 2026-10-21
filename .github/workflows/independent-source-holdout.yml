@@ -1,0 +1,30 @@
+name: New independent source collection before blind review and model inference
+on:
+  push:
+    branches: [benchmark/independent-source-holdout-20261021]
+  workflow_dispatch:
+permissions:
+  contents: read
+env:
+  PYTHONDONTWRITEBYTECODE: '1'
+jobs:
+  collect-before-inference:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save --no-package-lock sharp@0.34.4
+      - name: Acquire new original JPEG photographs and record immutable hashes; no model run
+        env:
+          HOLDOUT_OUTPUT: ${{ runner.temp }}/new-originals
+        run: node scripts/independent-source-holdout.mjs collect
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: new-source-originals-before-inference
+          path: ${{ runner.temp }}/new-originals/
+          retention-days: 14
+          if-no-files-found: error
