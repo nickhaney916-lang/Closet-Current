@@ -1,3 +1,10 @@
+# Pilot import/camera/private-phone integration audit — October 21, 2026 Pacific
+
+- Isolated base PR #127 `46f9c521466976b4ec238d24b1eb1d7871e3bffb`, inheriting native camera #125 and imported-photo detail #123. Four exact #124 files add unique-frame responsive import retries; only runtime change from #127 is its verified importer. PR #126 recognition work remains separate/excluded; all predecessor branches untouched.
+- Preserve original RGB source, account/cloud/SQL/styling, offline phone coordinator and human packets byte-for-byte. Historical conflicting pins replay on original source commits; new exact combined scope guard validates current inheritance without weakening prior evidence.
+- Full local build: **1,335 passed / zero failed / three skipped**. New integrated real-browser journey plus camera/import/cloud/styling/retina/coordinator emulation require final exact-head CI confirmation in the draft PR. Candidate build fingerprint `5491ea5da913`.
+- Pilot release remains blocked on separate #126 reconciliation, genuine garment/human evidence, actual same-build Android/iPhone checks and hosted account/login/cloud restore verification. No merge/deploy/paid service/Drive Duel changes. Prioritized launch checklist and dependency/CI ledger: `docs/PILOT-INTEGRATION-AUDIT-20261021.md`.
+
 # Private real-phone pilot evidence coordinator — October 21, 2026
 
 - Separate from Work mode's recognition tasks and the existing camera/import PRs. Reuses the exact frozen Node 17-check Android/iPhone validator in an offline operator page with two local file uploads and a redacted download; no photos, names, cloud writes or credentials.

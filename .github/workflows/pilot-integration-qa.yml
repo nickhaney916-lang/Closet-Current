@@ -1,0 +1,87 @@
+name: Integrated pilot import camera and private phone readiness
+on:
+  push:
+    branches: [integration/pilot-import-camera-phone-20261021]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-and-full-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify exact combined sources and immutable branch proofs
+        run: |
+          node scripts/check-pilot-integration-scope.mjs
+          git worktree add --detach "$RUNNER_TEMP/pr124" 5bc60e05dea12d62b97bbcdaf55b4999a3ba695a
+          (cd "$RUNNER_TEMP/pr124" && node scripts/check-import-detail-budget-scope.mjs)
+          git worktree add --detach "$RUNNER_TEMP/pr125" 623eb4af070b6caece11247e79eb3494d8450f98
+          (cd "$RUNNER_TEMP/pr125" && node scripts/check-native-still-detail-budget-scope.mjs && node scripts/check-import-detail-budget-scope.mjs && node scripts/check-offline-review-coordinator-source.mjs && node scripts/check-one-click-review-source.mjs && node scripts/check-human-review-cloud-bridge.mjs && node scripts/check-blind-photo-cloud-integration.mjs && node scripts/verify-camera-cloud-integration.mjs)
+          git worktree add --detach "$RUNNER_TEMP/pr127" 46f9c521466976b4ec238d24b1eb1d7871e3bffb
+          (cd "$RUNNER_TEMP/pr127" && node scripts/check-offline-private-phone-scope.mjs)
+          git worktree add --detach "$RUNNER_TEMP/pr123" 61e4a87672ec603e29d9f10763d25d803ecbb801
+          (cd "$RUNNER_TEMP/pr123" && node scripts/check-dual-parent-review-integration.mjs)
+          node scripts/check-customer-pilot-release-gates.mjs
+      - name: Build and all Node regressions
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+  integrated-mobile-journeys:
+    needs: source-and-full-regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned Chromium and WebKit
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install --with-deps chromium webkit
+      - name: Combined photo-to-owned-outfit journey and mobile recovery
+        run: |
+          node scripts/build.mjs
+          node scripts/test-integrated-pilot-journeys-mobile.mjs
+          node scripts/test-import-detail-budget-browsers.mjs
+          node scripts/test-native-still-detail-budget-browsers.mjs
+          node scripts/test-native-camera-fidelity-mobile.mjs
+          node scripts/test-camera-startup-recovery-mobile.mjs
+          node scripts/test-untyped-photo-import-mobile.mjs
+          node scripts/test-original-crop-source-mobile.mjs
+          node scripts/test-original-source-duplicate-mobile.mjs
+          node scripts/test-cloud-session-generation-browsers.mjs
+          node scripts/test-cloud-conflict-retry-browsers.mjs
+          STYLE_BROWSER=chromium node scripts/test-style-my-new-item-mobile.mjs
+          STYLE_BROWSER=webkit node scripts/test-style-my-new-item-mobile.mjs
+          node scripts/test-local-retina-cutout-browsers.mjs
+      - name: Preserve exact offline phone coordinator and synthetic parity checks
+        run: |
+          mkdir -p "$RUNNER_TEMP/phone-evidence"
+          node scripts/offline-private-phone-coordinator.mjs prepare "$RUNNER_TEMP/phone-organizer"
+          node scripts/test-offline-private-phone-coordinator-browsers.mjs "$RUNNER_TEMP/phone-organizer" "$RUNNER_TEMP/phone-evidence/qa.json"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: integrated-pilot-offline-phone-organizer-no-customer-data
+          path: ${{ runner.temp }}/phone-organizer/
+          retention-days: 14
+          if-no-files-found: warn
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: integrated-pilot-synthetic-preview-and-phone-qa-not-device-proof
+          path: |
+            artifacts/local-fitting/
+            artifacts/style-new-clothes/
+            ${{ runner.temp }}/phone-evidence/
+          retention-days: 14
+          if-no-files-found: warn

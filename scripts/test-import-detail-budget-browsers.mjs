@@ -41,11 +41,41 @@ for(const [label,engine] of [['chromium',chromium],['webkit',webkit]]){
   assert.deepEqual([result.width,result.height],[3072,2304]);
   assert.ok(result.length<=2850000);
   assert.equal(result.jpeg,true);
+  const recovery=await page.evaluate(async()=>{
+   const small=document.createElement('canvas');small.width=800;small.height=600;
+   small.getContext('2d').fillRect(0,0,800,600);
+   const blob=await new Promise(resolve=>small.toBlob(resolve,'image/jpeg',.94));
+   const file=new File([blob],'synthetic-small.jpg',{type:'image/jpeg'});
+   const native=HTMLCanvasElement.prototype.toDataURL,events=[],attempts=[];
+   const revoke=URL.revokeObjectURL;let revoked=0,force=true;
+   URL.revokeObjectURL=function(url){revoked++;return revoke.call(this,url);};
+   HTMLCanvasElement.prototype.toDataURL=function(format,q){
+    if(force){
+     attempts.push({width:this.width,height:this.height,quality:q});events.push('encode');
+     if(attempts.length===1)setTimeout(()=>events.push('ui'),0);
+     return 'X'.repeat(2850001);
+    }
+    return native.call(this,format,q);
+   };
+   try{
+    let error='';try{await photoToJPEG(file);}catch(e){error=e.message;}
+    force=false;
+    const later=await photoToJPEG(file),image=new Image();image.src=later;await image.decode();
+    return {attempts,events,error,revoked,width:image.naturalWidth,height:image.naturalHeight};
+   }finally{HTMLCanvasElement.prototype.toDataURL=native;URL.revokeObjectURL=revoke;}
+  });
+  assert.deepEqual(recovery.attempts,[.94,.88,.82].map(quality=>({width:800,height:600,quality})));
+  assert.deepEqual(recovery.events,['encode','ui','encode','encode'],'UI task runs before retry JPEG encoding');
+  assert.match(recovery.error,/too large after conversion/);
+  assert.equal(recovery.revoked,2);assert.deepEqual([recovery.width,recovery.height],[800,600]);
   assert.deepEqual(errors,[]);assert.deepEqual(requests,[]);
   checks.push({engine:label,sourceFormat:'synthetic-original-jpeg',fullFrame:true,sameSizeQualityFallback:true,
-   outputDimensions:[result.width,result.height],boundedExport:true,remoteRequests:0,realPhoneTested:false});
+   outputDimensions:[result.width,result.height],boundedExport:true,uniqueSmallFrameAttempts:3,
+   uiTaskBetweenRetries:true,failedConversionRecovery:true,objectURLsRevoked:true,remoteRequests:0,realPhoneTested:false});
   console.log(label+': quality .94 exceeded budget, .88 retained native-limit 3072px JPEG; no network, no garment labels.');
  }finally{await browser.close();}
 }
-if(process.argv[2])fs.writeFileSync(process.argv[2],JSON.stringify({state:'TECHNICAL_ONLY',humanAccuracy:null,
+const outIndex=process.argv.indexOf('--out');
+const outputPath=outIndex>=0?process.argv[outIndex+1]:process.argv[2];
+if(outputPath)fs.writeFileSync(outputPath,JSON.stringify({state:'TECHNICAL_ONLY',humanAccuracy:null,
  productionPromotion:'BLOCKED',browsers:checks},null,2)+'\n');
