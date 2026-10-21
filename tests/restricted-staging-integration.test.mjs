@@ -61,3 +61,16 @@ test('actual auth source mismatch after copying removes stale and incomplete bun
  const path=join(root,'public/auth.js');await writeFile(path,(await readFile(path,'utf8')).replace('const URL=','const CHANGED_URL='));
  const r=build(root);assert.notEqual(r.status,0);assert.match(r.stderr,/Unexpected auth backend/);await absent(root);
 }));
+
+test('builder refuses abandoned staging source until its manual inspection and cleanup',async()=>sandbox(async root=>{
+ const initial=build(root);assert.equal(initial.status,0,initial.stderr);
+ const oldProof=await readFile(join(root,'staging-dist/staging-preflight.json'),'utf8');
+ const orphan=join(root,'staging-dist.incomplete-999999-interrupted');
+ await writeFile(orphan,'unverified synthetic bytes');
+ const refused=build(root);
+ assert.notEqual(refused.status,0);
+ assert.match(refused.stderr,/Interrupted staging candidate found/);
+ assert.equal(await readFile(join(root,'staging-dist/staging-preflight.json'),'utf8'),oldProof);
+ await rm(orphan,{force:true});
+ const retry=build(root);assert.equal(retry.status,0,retry.stderr);
+}));
