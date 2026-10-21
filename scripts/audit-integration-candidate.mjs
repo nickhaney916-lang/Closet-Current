@@ -13,6 +13,13 @@ export const ADDITIONS=new Set([SNAPSHOT,'docs/INTEGRATION-CANDIDATE-AUDIT-20261
  'scripts/audit-integration-candidate.mjs','tests/integration-candidate-audit.test.mjs',
  '.github/workflows/integration-candidate-audit.yml']);
 const CHECKPOINT='docs/PROGRESS-CHECKPOINT.md';
+const HARNESS='scripts/test-style-my-new-item-mobile.mjs';
+export function expectedHarness(prior){
+ const old=" assert.equal(await page.locator('#reusableFigureGarments img').count(),0);\n await page.locator('#reusableFigureRetry').click();\n try{await page.waitForFunction";
+ const next=" assert.equal(await page.locator('#reusableFigureGarments img').count(),0);\n // A background board refresh may already have started the current preview.\n // Observe and activate Retry in one browser turn instead of waiting forever\n // for a control that correctly becomes hidden during/successful recovery.\n await page.evaluate(()=>{\n  const retry=document.querySelector('#reusableFigureRetry');\n  if(!retry.hidden)retry.click();\n });\n try{await page.waitForFunction";
+ assert.equal(prior.split(old).length,2,'Missing/ambiguous historical race assertion');
+ return prior.replace(old,next);
+}
 function git(root,...args){return execFileSync('git',args,{cwd:root,encoding:'utf8',maxBuffer:30_000_000}).trim();}
 function ancestor(root,a,b){
  const r=spawnSync('git',['merge-base','--is-ancestor',a,b],{cwd:root});
@@ -44,7 +51,11 @@ export function verifyScope(root,base=BASE,revision='HEAD',additions=ADDITIONS){
  const prior=tree(root,base),now=tree(root,revision);
  for(const p of new Set([...prior.keys(),...now.keys()])){
   if(prior.get(p)===now.get(p))continue;
-  if(p===CHECKPOINT){assert.ok(now.has(p),'Checkpoint deleted');continue;}
+  if(p===CHECKPOINT||p===HARNESS){
+   assert.ok(now.has(p),'Reviewed existing file deleted');
+   assert.equal(now.get(p).split(' ')[0],prior.get(p).split(' ')[0],'Existing file mode changed');
+   continue;
+  }
   assert.ok(!prior.has(p)&&additions.has(p),'Unreviewed candidate tree change: '+p);
   assert.ok(now.get(p)?.startsWith('100644 blob '),'Audit additions must be regular files');
  }
@@ -52,13 +63,21 @@ export function verifyScope(root,base=BASE,revision='HEAD',additions=ADDITIONS){
  const frozenCheckpoint=execFileSync('git',['show',revision+':'+CHECKPOINT],{cwd:root,encoding:'utf8'});
  assert.ok(frozenCheckpoint.endsWith(original),'Committed checkpoint rewrites historical evidence');
  assert.ok(fs.readFileSync(path.join(root,CHECKPOINT),'utf8').endsWith(original),'Working checkpoint rewrites history');
+ if(prior.has(HARNESS)){
+  const oldHarness=execFileSync('git',['show',base+':'+HARNESS],{cwd:root,encoding:'utf8'});
+  const committed=execFileSync('git',['show',revision+':'+HARNESS],{cwd:root,encoding:'utf8'});
+  const expected=expectedHarness(oldHarness);
+  assert.ok(committed===oldHarness||committed===expected,'Unreviewed committed browser harness change');
+  assert.equal(fs.readFileSync(path.join(root,HARNESS),'utf8'),expected,'Browser harness differs outside exact recovery-race adjustment');
+ }
  // Check working bytes and mode as well as committed trees; uncommitted model
  // edits must not pass merely because HEAD still names the approved version.
  const dirty=git(root,'diff','--name-only',base,'--').split('\n').filter(Boolean);
- for(const p of dirty)assert.ok(p===CHECKPOINT||(!prior.has(p)&&additions.has(p)),'Unreviewed working change: '+p);
+ for(const p of dirty)assert.ok(p===CHECKPOINT||p===HARNESS||(!prior.has(p)&&additions.has(p)),'Unreviewed working change: '+p);
  const extra=git(root,'ls-files','--others','--exclude-standard').split('\n').filter(Boolean);
  for(const p of extra)assert.ok(additions.has(p),'Unreviewed untracked file: '+p);
- return {existingSourceFilesUnchanged:prior.size-1,checkpointHistoryPreserved:true};
+ return {existingSourceFilesUnchanged:prior.size-1-(prior.has(HARNESS)?1:0),
+  checkpointHistoryPreserved:true,browserHarnessScope:'exact retry scheduling adjustment only'};
 }
 export function inventory(root,snapshot){
  validateSnapshot(snapshot);

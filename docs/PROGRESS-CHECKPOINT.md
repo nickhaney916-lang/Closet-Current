@@ -1,3 +1,9 @@
+# Integration audit browser rehearsal correction — October 20, 2026 Pacific
+
+- Added exact-byte, SHA-256-bound correction to the inherited style browser harness: observe/click a visible Retry in one browser turn when automatic recovery may already have hidden the control. Preserved stale-image absence and eventual recovery assertions; no runtime, recognition or benchmark bytes changed.
+- Initial candidate CI passed all browser scenarios but correctly rejected generated screenshots as untracked source. Workflow now preserves only known synthetic output directories outside checkout after asserting they have no tracked files. A later WebKit harness timing failure prompted the correction above rather than ignoring the failure.
+- Full corrected local Node suite: **1,255 passed / 0 failed / 3 skipped**, including 9 focused audit regressions. Exact final-head CI/browser and development-artifact completion must be checked on draft PR #108. Production and physical-phone blockers remain unchanged.
+
 # Independent integration audit and frozen development candidate — October 20, 2026 Pacific
 
 - Isolated `integration/branch-audit-rc-20261021` from PR #106 exact source `55bd2fac37d45409473485b84e555ebab07d9630`; no source PR modified.

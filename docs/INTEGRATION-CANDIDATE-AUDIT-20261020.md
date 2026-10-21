@@ -78,7 +78,9 @@ behavior. Exact matching/divergent paths are exported in the audit artifact.
    intentionally reject additional files outside their old scope. Historical
    results are labeled as historical. The new scope guard independently checks
    the current candidate and requires **every existing source file unchanged**,
-   except prepending the checkpoint; only five named audit additions are allowed.
+   except prepending the checkpoint and one byte-exact browser-test scheduling
+   adjustment; only five named audit additions are allowed. Application and
+   benchmark bytes remain unchanged.
 3. Run the complete current Node suite/build and the camera, import, duplicate,
    Auth callback, cloud-owner, saved-closet and owned-outfit browser checks on
    this candidate. Keep hardware, live cloud/email and actual model accuracy
@@ -95,7 +97,8 @@ behavior. Exact matching/divergent paths are exported in the audit artifact.
 
 The candidate commit is the draft audit PR's full head SHA. Its application
 bytes are locked to #106; candidate changes consist only of this audit tooling,
-source snapshot, workflow, regression tests and prepended checkpoint.
+source snapshot, workflow, regression tests, prepended checkpoint and one
+precisely checked existing browser-test scheduling adjustment.
 
 ```sh
 git clone https://github.com/nickhaney916-lang/Closet-Current.git
@@ -149,12 +152,33 @@ present. Do not execute security SQL or attempt schema downgrade as rollback.
 ## Verification during this audit
 
 Initial local frozen-source run: build passed; **1,246 passed, zero failed,
-three skipped**. Eight added adversarial integration-audit regressions passed. The final local
-full candidate suite passed **1,254 tests, zero failed, three skipped**; the
+three skipped**. Nine added adversarial integration-audit regressions passed. The final local
+full candidate suite passed **1,255 tests, zero failed, three skipped**; the
 build and original historical provenance guards also passed.
 Local Chromium/WebKit installation returned invalid download archives; no local
 browser success is claimed. Final candidate full-suite and cross-engine results
 are reported in the draft PR after its exact-head Actions run completes.
+
+### Integration QA findings and exact harness correction
+
+The first candidate run passed all browser flows but its final source guard
+correctly rejected the generated screenshot `artifacts/local-fitting/style-chromium.png`.
+The workflow now archives known synthetic screenshot/report directories outside
+the checkout before the final guard; it first asserts they contain no tracked
+source files. The source guard was not weakened to ignore unexpected files.
+
+A second run passed camera/import, Auth (8 scenarios per engine), cloud-owner,
+saved-closet and Chromium styling, but WebKit's stale-selection recovery test
+waited for a Retry button that became hidden. The inherited harness observed the
+required empty stale preview, then performed a separate driver-level click;
+background board recovery can change button visibility between those steps.
+The isolated correction observes and clicks a visible Retry in **one browser
+turn**, allowing an already-started automatic recovery to finish. It preserves
+the empty stale-image assertion and mandatory eventual one-layer recovery.
+No application behavior was changed or retry assertion removed. A SHA-256-bound
+regression and candidate scope gate require every other harness byte unchanged.
+Final exact-head cross-engine acceptance must pass before claiming completion;
+a successful rerun does not establish a physical-phone timing guarantee.
 
 ## Complete observed PR inventory
 
