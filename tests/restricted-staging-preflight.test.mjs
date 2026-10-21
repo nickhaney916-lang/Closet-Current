@@ -58,7 +58,8 @@ test('code enables no public deployment triggers, no paid inference and stage on
  assert.match(scriptCode,/authorizationToDeployProduction:false/);
  assert.match(scriptCode,/privateCloudflareAccessPolicyVerified:false/);
  assert.match(scriptCode,/restrictedStagingDeployed:false/);
- assert.match(scriptCode,/await cp\(BASE,OUTPUT/);
+ assert.match(scriptCode,/await writeAtomicStagingBundle\(OUTPUT,async stageDir/);
+ assert.match(scriptCode,/await cp\(BASE,stageDir/);
  assert.match(scriptCode,/staging-dist/);
  assert.ok(!scriptCode.includes('wrangler pages deploy'));
  assert.ok(!scriptCode.includes('cloudflare/wrangler-action'));

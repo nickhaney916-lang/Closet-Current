@@ -7,6 +7,9 @@ const git=(...a)=>execFileSync('git',a,{encoding:'utf8'}).trim();
 execFileSync('git',['merge-base','--is-ancestor',BASE,'HEAD']);
 const allow=new Set([
  'scripts/build-restricted-staging.mjs',
+ 'scripts/atomic-staging-output.mjs',
+ 'tests/atomic-staging-output.test.mjs',
+ 'docs/ATOMIC-RESTRICTED-STAGING-OUTPUT-20261021.md',
  'scripts/verify-restricted-staging-bundle.mjs',
  'scripts/check-staging-preflight-scope.mjs',
  'tests/restricted-staging-preflight.test.mjs',
