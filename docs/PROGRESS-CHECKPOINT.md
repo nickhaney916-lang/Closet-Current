@@ -1,3 +1,12 @@
+# Independent second encoder real-photo subtype trial — October 20, 2026 Pacific
+
+- Based on verified draft PR #107 exact head `9b2cfa722cee058ab5de22d569ded02ffec23134`, isolated branch `research/independent-clip-garment-subtypes-20261021`. No overlap with parallel Work-owned branch integration.
+- Evaluated genuinely **independently trained** generic CLIP model `Xenova/clip-vit-base-patch32` revision `d15189d` against exact immutable FashionCLIP outputs from PR #107 on **59 SHA-256 verified original RGB garment/control source photos**. All model execution stayed in GitHub Actions; no customer device model or photos were modified.
+- Experimental rule requiring both models to agree on an automatic subtype would catch **1 of 4** existing wrong automatic clothing subtypes but incorrectly defer **12** correct automatic saves; **3** wrong subtypes still pass the agreement rule. **REJECT candidate** and retain production recognizer completely unchanged.
+- Initial source and real inference [Actions #39536012914](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39536012914) SUCCESS: **1,260 full Node tests passed / 0 failed / 3 skipped**, **20 focused** passed; build, high-resolution original-photo provenance, source-reviewed human figures and release veto passed.
+- Research scripts/tests/workflow/results rationale documented in `docs/INDEPENDENT-CLIP-SUBTYPE-TRIAL-20261021.md`. Final exact-head CI will be validated after documents/checkpoint.
+- Model accuracy remains an unresolved production pilot blocker. Future improvement requires **new untouched independent original-photo sources and physical garment-form evidence**, not tuning to the four observed error IDs. No merge/deploy, paid AI, Supabase live writes, customer data access or Drive Duel edits.
+
 # Original RGB multi-view subtype agreement trial — October 21, 2026 Pacific
 
 - Began from draft PR #106 exact verified commit `55bd2fac37d45409473485b84e555ebab07d9630`. Isolated experiment branch `research/original-photo-subtype-consensus-20261021`. Work-mode branch integration audit assigned separately, with no file overlap or production merges.
