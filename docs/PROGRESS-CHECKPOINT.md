@@ -1,3 +1,10 @@
+# Independent source-family human review intake — October 21, 2026 UTC
+
+- Isolated follow-up to verified PR #111 `47da6d3e854d2cf6cbb79d7a8fd0ef83e7faa7a2`; original 13 JPEGs, pre-inference reference manifest and stored actual model measurements are unchanged. PR #108/#109/#110/#111/#112 branches untouched.
+- Added an offline original-hash-verifying family form, blank source-only packet, strict submission validator and two-submission comparison. Missing reviews, uncertainty and disagreements stay explicit; aliases/check-boxes cannot prove human independence. Even matching confident observations cannot become gold labels, measured accuracy or permission to modify models.
+- Local full build/Node suite: **1,284 passed / 0 failed / 3 skipped**, including **12** new intake regressions. Prepared packet preserves all 13 original source hashes. Customer release veto remains BLOCKED. Local browser launch lacks Playwright binaries; dedicated exact-head Actions must verify actual Chromium/WebKit offline form and original-photo browser checks before crediting browser completion.
+- **Zero actual independent human submissions supplied.** New tests use synthetic software fixtures only, not people or real garment evidence. No new model inference or classification improvement claimed. Independent human adjudication, untouched physical-phone photos and production readiness remain outstanding. New branch/draft only; no merge/deploy, paid services, live cloud/Auth/customer data or Drive Duel changes.
+
 # Reproduced new-photo evidence and complete blind-review handoff — October 20, 2026 Pacific
 
 - Actions **39539181308 SUCCESS** at `d08eadfd64344bbf324837d5398556809dadd196`: **1,272 passed / 0 failed / 3 skipped**, actual FashionCLIP + independent CLIP and Chromium/WebKit checks passed. The scored report was identical to the first run; sample size remains **13 distinct sources**, not 26.
