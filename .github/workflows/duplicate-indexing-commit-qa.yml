@@ -1,0 +1,31 @@
+name: Exact duplicate and final indexing commit QA
+on:
+  push:
+    branches: [fix/duplicate-indexing-commit-guard-20261020]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  duplicate-indexing-safety:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run full regression of original-scene duplicate review and category indexing
+        run: |
+          node --check public/app.js
+          node --test tests/automatic-indexing.test.cjs tests/recognition-runtime.test.cjs tests/verified-garment-color-provenance.test.cjs
+      - name: Verify complete app build and Node regression suite
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Prove only approved duplicate gates changed and preserve original first recognition
+        run: |
+          node scripts/verify-camera-cloud-integration.mjs
+          node scripts/check-dual-parent-review-integration.mjs
+          node scripts/check-customer-pilot-release-gates.mjs
