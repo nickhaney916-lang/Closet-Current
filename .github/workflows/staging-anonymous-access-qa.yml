@@ -1,0 +1,24 @@
+name: Anonymous staging probe QA (no hosting or network probe)
+on:
+  push:
+    branches: [audit/staging-anonymous-access-20261021]
+permissions:
+  contents: read
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build and full regression (synthetic probe only)
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Confirm customer runtime and deployment configuration unchanged
+        run: |
+          git diff --exit-code 87ac40be151f14ca6924c36abb9772677bcf779b HEAD -- public supabase .github/workflows/cloudflare-pages.yml .github/workflows/pages.yml

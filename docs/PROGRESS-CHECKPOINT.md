@@ -1,3 +1,13 @@
+# Anonymous staging access safeguard — October 21, 2026
+
+- Continued from PR #145 exact SHA `87ac40be151f14ca6924c36abb9772677bcf779b` on isolated `audit/staging-anonymous-access-20261021`; no production merge/deploy or paid services.
+- Supabase connector read-only verification now succeeds for the existing Closet Current project `hlkgymugtfbirlpunsra` in organization `afsdfxyupfbtjrsgiwar`. The existing project is NOT a new empty staging project. Drive Duel remains separate and unchanged.
+- Added read-only anonymous pre-upload probe across ten critical page/script/data routes on the staging project origin and supplied deployment previews. No credentials or redirect following. Public 2xx fails; generic denial/network errors are inconclusive. Only expected Cloudflare Access login redirects pass the observed-route check. This cannot prove policy correctness or complete route/hostname coverage; release stays BLOCKED.
+- Local app build and full Node suite: **1,481 passed, 0 failed, 3 skipped**; five new synthetic probe tests. Customer public source, Supabase schemas and production hosting workflows unchanged. No actual hosted URL probe, physical phones, real email or two-account cloud tests performed.
+- Next: owner-approved $0 independent Supabase staging project and separately protected Cloudflare Pages staging site; inspect actual deny-by-default policy and hostname inventory, then run signed-out hosted checks before upload approval. See `docs/STAGING-ANONYMOUS-ACCESS-20261021.md`.
+
+---
+
 # Restricted staging owner authorization — October 21, 2026
 
 - Owner explicitly APPROVED preparing private staging only, without any production changes or paid services. A public preview, billable Supabase project, production merge, and real customer database access remain **unauthorized**.
