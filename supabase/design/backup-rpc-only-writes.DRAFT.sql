@@ -132,6 +132,27 @@ REVOKE ALL PRIVILEGES ON TABLE public.closet_backups FROM anon, PUBLIC;
 
 DO $check$
 BEGIN
+ -- Narrow, non-PII diagnostics for privilege drift. These checks only
+ -- disclose boolean grants and role identities, never customer records.
+ RAISE NOTICE 'BACKUP_RPC_ROLE_FLAGS table: insert=% update=% delete=% truncate=% select=% anon_select=%',
+  has_table_privilege('authenticated','public.closet_backups','INSERT'),
+  has_table_privilege('authenticated','public.closet_backups','UPDATE'),
+  has_table_privilege('authenticated','public.closet_backups','DELETE'),
+  has_table_privilege('authenticated','public.closet_backups','TRUNCATE'),
+  has_table_privilege('authenticated','public.closet_backups','SELECT'),
+  has_table_privilege('anon','public.closet_backups','SELECT');
+ RAISE NOTICE 'BACKUP_RPC_ROLE_FLAGS functions: anon_public=% auth_public=% anon_private=% auth_private=% writer_member_admin=% writer_member_auth=%',
+  has_function_privilege('anon','public.save_closet_backup(bigint,jsonb)','EXECUTE'),
+  has_function_privilege('authenticated','public.save_closet_backup(bigint,jsonb)','EXECUTE'),
+  has_function_privilege('anon','closet_rpc_private.save_checked(bigint,jsonb)','EXECUTE'),
+  has_function_privilege('authenticated','closet_rpc_private.save_checked(bigint,jsonb)','EXECUTE'),
+  pg_has_role(CURRENT_USER,'closet_backup_writer','MEMBER'),
+  pg_has_role('authenticated','closet_backup_writer','MEMBER');
+ RAISE NOTICE 'BACKUP_RPC_ROLE_FLAGS ownership: table_writer=% private_definer=% private_writer=% public_definer=%',
+  (SELECT c.relowner = 'closet_backup_writer'::regrole FROM pg_class c WHERE c.oid='public.closet_backups'::regclass),
+  (SELECT p.prosecdef FROM pg_proc p WHERE p.oid='closet_rpc_private.save_checked(bigint,jsonb)'::regprocedure),
+  (SELECT p.proowner='closet_backup_writer'::regrole FROM pg_proc p WHERE p.oid='closet_rpc_private.save_checked(bigint,jsonb)'::regprocedure),
+  (SELECT p.prosecdef FROM pg_proc p WHERE p.oid='public.save_closet_backup(bigint,jsonb)'::regprocedure);
  IF has_table_privilege('authenticated','public.closet_backups','INSERT')
  OR has_table_privilege('authenticated','public.closet_backups','UPDATE')
  OR has_table_privilege('authenticated','public.closet_backups','DELETE')
