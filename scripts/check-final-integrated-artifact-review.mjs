@@ -1,16 +1,22 @@
 import assert from 'node:assert/strict';
-import {execFileSync} from 'node:child_process';
+import {execFileSync,spawnSync} from 'node:child_process';
 import {readFileSync} from 'node:fs';
 const WORK='55ac1688cac4dd277ee82ee9c73c4df9cefcb77c',ARTIFACT='3e594a5714b7822ada852cd74d8bc5dc2d51c6ad',LOCK='e67edcaa34e6c4ed9f93cc8edd6c204a7b15db80';
 const git=(...args)=>execFileSync('git',args,{encoding:'utf8',maxBuffer:5000000}).trim();
 for(const sha of [WORK,ARTIFACT,LOCK])execFileSync('git',['merge-base','--is-ancestor',sha,'HEAD']);
 const changes=git('diff','--name-only',LOCK,ARTIFACT).split('\n').filter(Boolean);
+const SEAL='a62f12448671eaa5a85bd2d45bd1382d1fd699f4';
+const withSeal=spawnSync('git',['merge-base','--is-ancestor',SEAL,'HEAD']).status===0;
+const enhanced=new Set(['scripts/verify-restricted-staging-bundle.mjs','tests/restricted-staging-integration.test.mjs']);
 const special=new Set(['docs/PROGRESS-CHECKPOINT.md','scripts/check-staging-preflight-scope.mjs']);
 const exact=changes.filter(path=>!special.has(path));
 for(const path of ['scripts/check-staging-artifact-integrity.mjs','tests/staging-artifact-integrity.test.mjs','scripts/verify-restricted-staging-bundle.mjs','tests/restricted-staging-integration.test.mjs'])
  assert.ok(exact.includes(path),'Missing required artifact verifier provenance: '+path);
-for(const path of exact)assert.equal(git('rev-parse','HEAD:'+path),git('rev-parse',ARTIFACT+':'+path),
- 'Verified PR #160 source changed: '+path);
+for(const path of exact){
+ const verified=withSeal&&enhanced.has(path)?SEAL:ARTIFACT;
+ assert.equal(git('rev-parse','HEAD:'+path),git('rev-parse',verified+':'+path),
+ 'Verified PR #160 or #162 artifact source changed: '+path);
+}
 for(const path of ['public','supabase','.github/workflows/pages.yml',
  '.github/workflows/cloudflare-pages.yml','scripts/atomic-staging-output.mjs',
  'tests/atomic-staging-output.test.mjs'])
