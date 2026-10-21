@@ -11,7 +11,8 @@ const ALLOWED=new Set([
  'scripts/audit-pilot-release-preflight.mjs',
  'tests/pilot-release-preflight.test.mjs',
  '.github/workflows/pilot-release-preflight-qa.yml',
- 'docs/PILOT-RELEASE-PREFLIGHT-20261021.md'
+ 'docs/PILOT-RELEASE-PREFLIGHT-20261021.md',
+ 'docs/PROGRESS-CHECKPOINT.md'
 ]);
 export const DEPLOY_FILES=['.github/workflows/pages.yml','.github/workflows/cloudflare-pages.yml'];
 
