@@ -1,0 +1,44 @@
+name: Restricted staging atomic build lock and interrupted build safety
+on:
+  push:
+    branches: [fix/staging-build-lock-crash-recovery-20261021]
+permissions:
+  contents: read
+jobs:
+  locked-staging-builder:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Confirm production scripts, cloud and deployment unchanged
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --exit-code c0fecc398ea927418c5e083607bdc1cf6ea77527 HEAD -- public supabase .github/workflows/pages.yml .github/workflows/cloudflare-pages.yml
+          node scripts/check-staging-preflight-scope.mjs
+          node scripts/check-integrated-pilot-rc.mjs
+          node scripts/check-customer-pilot-release-gates.mjs
+      - name: Run targeted lock, SIGKILL and actual builder tests
+        run: |
+          node --test tests/atomic-staging-output.test.mjs
+          node --test tests/restricted-staging-integration.test.mjs
+      - name: Full build and complete Node regression
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Generate and verify synthetic staging bundle
+        env:
+          CLOSET_STAGING_APP_ORIGIN: https://preview.closet-current-staging.pages.dev/
+          CLOSET_STAGING_SUPABASE_URL: https://abcdefghijklmnopqrst.supabase.co
+          CLOSET_STAGING_SUPABASE_PUBLISHABLE_KEY: sb_publishable_STAGING_TEST_FIXTURE_XYZ001
+        run: |
+          node scripts/build-restricted-staging.mjs
+          node scripts/verify-restricted-staging-bundle.mjs
+          node scripts/test-staging-sw-cache.mjs
+      - name: No hosted deploy or billing
+        run: echo 'NO PRODUCTION DEPLOYMENT, LIVE SUPABASE, DRIVE DUEL OR PAID SERVICE'

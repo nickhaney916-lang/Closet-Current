@@ -24,6 +24,8 @@ const allow=new Set([
  'scripts/test-staging-sw-cache.mjs',
  'scripts/test-staging-installed-pwa-chromium.mjs',
  '.github/workflows/staging-installed-pwa-browser-qa.yml',
+ '.github/workflows/staging-build-lock-qa.yml',
+ 'docs/STAGING-BUILD-LOCK-RECOVERY-20261021.md',
  'docs/STAGING-INSTALLED-PWA-BROWSER-20261021.md',
  '.github/workflows/staging-pwa-cache-qa.yml',
  'docs/STAGING-PWA-CACHE-20261021.md',
