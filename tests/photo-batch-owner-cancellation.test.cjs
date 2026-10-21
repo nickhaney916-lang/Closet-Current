@@ -45,7 +45,7 @@ test('first photo decoding completion after signout cannot enqueue garment under
  assert.equal(h.queued.length,0);
  assert.deepEqual(h.views,[]);
  assert.equal(h.state.window.__lastPhotoImportResult.cancelled,true);
- assert.deepEqual(h.state.window.__lastPhotoImportResult.results,[]);
+ assert.deepEqual(Array.from(h.state.window.__lastPhotoImportResult.results),[]);
  assert.ok(h.messages.at(-1).includes('account changed'));
  assert.equal(h.state.busy,false);
 });
