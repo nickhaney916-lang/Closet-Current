@@ -1,0 +1,45 @@
+name: Video import bounded and signed-in owner recovery QA
+on:
+  push:
+    branches: [fix/video-import-bounded-owner-recovery-20261021]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-and-node:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Freeze all customer sources except one bounded video import path
+        run: |
+          node scripts/check-video-import-bounded-scope.mjs
+          git worktree add --detach "$RUNNER_TEMP/verified-pr131" 7566b59e7377d77d8503c7c599aabe32fd3959dc
+          (cd "$RUNNER_TEMP/verified-pr131" && node scripts/check-inspiration-original-photo-scope.mjs && node scripts/check-customer-pilot-release-gates.mjs)
+      - name: Build customer app and run complete Node suite
+        run: |
+          node --check public/app.js
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+  phone-browser:
+    needs: source-and-node
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned mobile Chromium and WebKit
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install --with-deps chromium webkit
+      - name: Browser-execute real video planner and synthetic bounded 180-second seek event chain
+        run: node scripts/test-video-import-bounded-mobile.mjs
