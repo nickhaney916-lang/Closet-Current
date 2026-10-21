@@ -50,6 +50,11 @@ CREATE POLICY closet_backup_writer_owner
  USING ((SELECT auth.uid()) = owner_id)
  WITH CHECK ((SELECT auth.uid()) = owner_id);
 
+-- Supabase migration executor needs temporary SET ROLE not only to
+-- transfer the function owner, but also to CREATE SCHEMA AUTHORIZATION.
+-- The transactional role membership is removed immediately after ownership
+-- handoff. Its grants never include authenticated or anon.
+GRANT closet_backup_writer TO CURRENT_USER WITH SET TRUE, INHERIT FALSE;
 CREATE SCHEMA closet_rpc_private AUTHORIZATION closet_backup_writer;
 -- This schema must NOT be exposed through Supabase PostgREST Data API.
 GRANT USAGE ON SCHEMA closet_rpc_private TO authenticated;
@@ -87,11 +92,8 @@ BEGIN
  END IF;
  RETURN saved_revision;
 END $body$;
--- Supabase's 'postgres' migration role is not SUPERUSER. PostgreSQL
--- requires ability to SET ROLE to the target owner for ALTER FUNCTION.
--- Grant membership only to the migration executor, then revoke it inside
--- this same transaction. A failed step rolls back every privilege change.
-GRANT closet_backup_writer TO CURRENT_USER WITH SET TRUE, INHERIT FALSE;
+-- The permission was granted before private schema creation and is
+-- revoked after function ownership transfer within this same transaction.
 ALTER FUNCTION closet_rpc_private.save_checked(bigint,jsonb) OWNER TO closet_backup_writer;
 REVOKE closet_backup_writer FROM CURRENT_USER;
 REVOKE ALL ON FUNCTION closet_rpc_private.save_checked(bigint,jsonb)
