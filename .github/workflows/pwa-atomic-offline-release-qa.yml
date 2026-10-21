@@ -1,0 +1,47 @@
+name: Atomic PWA release and offline phone update QA
+on:
+  push:
+    branches: [fix/pwa-atomic-offline-release-20261021]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-and-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Ensure only service worker caching policy changed
+        run: |
+          node scripts/check-pwa-atomic-release-scope.mjs
+          git worktree add --detach "$RUNNER_TEMP/verified-pr138" 4474eb70890b53b4f48342bade5283fab131d93b
+          (cd "$RUNNER_TEMP/verified-pr138" && node scripts/check-weekly-trend-watch-scope.mjs && node scripts/check-customer-pilot-release-gates.mjs)
+      - name: Complete customer app build and full Node regression tests
+        run: |
+          node --check public/sw.js
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+  phone-service-worker:
+    needs: source-and-regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned Android Chromium and iPhone WebKit browser engines
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install --with-deps chromium webkit
+      - name: Build and verify actual registered service workers against a simulated interrupted update
+        run: |
+          node scripts/build.mjs
+          node scripts/test-pwa-atomic-release-mobile.mjs
