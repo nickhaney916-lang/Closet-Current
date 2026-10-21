@@ -3,8 +3,10 @@
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {checkStagingArtifactIntegrity} from './check-staging-artifact-integrity.mjs';
+import {verifyStagingAssetSeal} from './staging-asset-seal.mjs';
 const dir='staging-dist';
 const artifactReview=await checkStagingArtifactIntegrity(dir);
+const assetSeal=await verifyStagingAssetSeal(dir);
 const get=path=>readFile(dir+'/'+path,'utf8');
 const proof=JSON.parse(await get('staging-preflight.json'));
 assert.equal(proof.privateCloudflareAccessPolicyVerified,false);
@@ -40,5 +42,6 @@ console.log('RESTRICTED_STAGING_BUNDLE_QA '+JSON.stringify({
  manualCloudflareAccessApprovalRequired:true,
  realStagingSupabaseProjectConfirmationRequired:true,
  productionReleaseApproved:false,
- artifactReview
+ artifactReview,
+ assetSeal
 }));

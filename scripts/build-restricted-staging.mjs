@@ -5,6 +5,7 @@
 import assert from 'node:assert/strict';
 import {readFile,writeFile,cp,readdir} from 'node:fs/promises';
 import {writeAtomicStagingBundle} from './atomic-staging-output.mjs';
+import {createStagingAssetSeal,verifyStagingAssetSeal} from './staging-asset-seal.mjs';
 import {createHash} from 'node:crypto';
 import {execFileSync} from 'node:child_process';
 
@@ -138,6 +139,9 @@ async function main(){
   productionReleaseApproved:false,
   releasePromotion:'BLOCKED'};
  await writeFile(stageDir+'/staging-preflight.json',JSON.stringify(result,null,2)+'\n');
+ // Hash all final bytes, including binary icons/images, before atomic rename.
+ await createStagingAssetSeal(stageDir);
+ await verifyStagingAssetSeal(stageDir);
  return result;
  });
  console.log('RESTRICTED_STAGING_PREFLIGHT '+JSON.stringify(proof));
