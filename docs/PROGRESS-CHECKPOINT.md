@@ -1,3 +1,12 @@
+# Read-only live Auth email/domain preflight — October 20, 2026 Pacific
+
+- Based on verified draft PR #99, exact source commit `4b87db357fcf29d08979983c4a2b8415e77c1fbc`, isolated branch `qa/live-auth-domain-readiness-20261020`.
+- Found static mismatch: shared Cloudflare origin `https://closet-current.pages.dev/` vs signup/resend/recovery redirect `https://nickhaney916-lang.github.io/Closet-Current/` currently hardcoded in `public/auth.js`. Preserved live redirect until owner-approved allowlist/sender review.
+- Supabase project management metadata remains healthy; private Auth redirect allowlist, SMTP sender and inbox delivery are *not available* from read-only project status. Model-hosted HTTP probes of the two public hosts did not return pages; this is an inability to verify, not a confirmed outage.
+- Add GET-only externally executed dual-host and public Supabase settings audit, constrained flags/no body/secret printing, explicit `releaseDecision=BLOCKED`; six synthetic safety/fail-closed tests and full-scope CI with original source/human review gates.
+- Workflow `.github/workflows/live-auth-domain-readiness-qa.yml`; specific live network and full suite results must be checked at exact commit before treating **the audit development** as verified.
+- No hosted SMTP or Auth edits, actual emails or test accounts, main merge/deploy, paid AI, Drive Duel or garment camera/indexing changes. Physical Android/iPhone, admin allowlist and SMTP/email receipt plus approved security rollouts remain release blockers.
+
 # Email confirmation and recovery callback hardening — October 20, 2026 Pacific
 
 - New isolated branch `fix/auth-email-link-callback-20261020`, based on PR #98. Keeps existing GitHub Pages Auth redirect while canonical Cloudflare origin and hosted Auth allowlist remain unverified.
