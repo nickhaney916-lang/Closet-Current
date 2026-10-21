@@ -121,6 +121,19 @@ const allowedAuthSession=new Set([
  '.github/workflows/auth-email-cutover-guard-qa.yml',
  'docs/AUTH-EMAIL-CANONICAL-CUTOVER-PREPARATION-20261020.md'
 ]);
+// Independent, original-pixel color provenance fix: one helper and its QA.
+const allowedColorEvidence=new Set([
+ 'public/clothing-details.js',
+ 'tests/verified-garment-color-provenance.test.cjs',
+ '.github/workflows/verified-color-provenance-qa.yml',
+ 'docs/VERIFIED-GARMENT-COLOR-20261020.md'
+]);
+const priorColor=execFileSync('git',['show','a441f791283596bdc7bc08fe3446c41fd64f1bce:public/clothing-details.js'],{encoding:'utf8'});
+const oldFillColor="function fillColor(item,estimate){if(!estimate||estimate.needsConfirmation===true||!values.color.includes(estimate.color)||item.color&&item.color!=='Unknown')return item;return {...item,color:estimate.color,colorSource:'photo-estimate',...(estimate.method==='uniform-light-background'?{colorMethod:'uniform-light-background'}:{})};}";
+const newFillColor="function fillColor(item,estimate){if(!estimate||estimate.needsConfirmation===true||!values.color.includes(estimate.color)||item.color&&item.color!=='Unknown')return item;const method=['garment-mask','uniform-light-background'].includes(estimate.method)?estimate.method:null;const out={...item,color:estimate.color,colorSource:'photo-estimate'};if(method)out.colorMethod=method;else delete out.colorMethod;return out;}";
+assert.ok(priorColor.includes(oldFillColor),'Color provenance review baseline changed');
+assert.equal(fs.readFileSync('public/clothing-details.js','utf8'),priorColor.replace(oldFillColor,newFillColor),
+ 'Unreviewed clothing-detail change beyond verified mask color provenance');
 const allowedWork=new Set([
  'public/app.js',
  'docs/PROGRESS-CHECKPOINT.md',
@@ -150,7 +163,7 @@ const allowedNew=new Set([
 for(const p of new Set([...m.keys(),...head.keys()])){
  if(m.get(p)!==head.get(p)){
   if(p==='public/index.html'||p==='scripts/build.mjs'||p===reviewScript)continue;
-  assert.ok(allowedWork.has(p)||(allowedNew.has(p)&&!m.has(p))||(allowedSecurity.has(p)&&!m.has(p))||(allowedBackupRpc.has(p)&&!m.has(p))||(allowedLocalSupabaseEvidence.has(p)&&!m.has(p))||allowedAuthSession.has(p),
+  assert.ok(allowedWork.has(p)||(allowedNew.has(p)&&!m.has(p))||(allowedSecurity.has(p)&&!m.has(p))||(allowedBackupRpc.has(p)&&!m.has(p))||(allowedLocalSupabaseEvidence.has(p)&&!m.has(p))||allowedAuthSession.has(p)||allowedColorEvidence.has(p),
    'Unreviewed change after merge: '+p);
  }
 }

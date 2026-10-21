@@ -1,3 +1,12 @@
+# Verified original-pixel garment color indexing — October 20, 2026 Pacific
+
+- Development branch `fix/verified-garment-color-provenance-20261020`, based on draft PR #103 exact SHA `a441f791283596bdc7bc08fe3446c41fd64f1bce`.
+- Found that `ClothingDetails.fillColor` dropped `garment-mask` verification provenance. This allowed later model color predictions to overwrite a previously trusted original-pixel garment color. Fixed method retention for trusted garment-mask and verified uniform-light-background observations. A later ordinary photo-estimate explicitly clears stale mask provenance to prevent inheriting old verification.
+- Strict regression covers blue shoe versus red model guess, verified-background foreground, uncertain masks, user edits, ordinary photo colors, spoofed methods, mismatched categories and changed-source stale evidence (8 focused new tests).
+- Source-integrity audit verifies `public/clothing-details.js` differs from PR #103 only in the exact approved helper replacement. Original RGB recognition, segmentation, camera, human fitting and all model assets unchanged.
+- Verified pre-doc CI [#39529654775](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39529654775) SUCCESS on commit `dbd97f5092ba7ede50c5676554a96488d5f9417a`: 69 focused tests passed, full Node **1,233 passed / 0 failed / 3 skipped**, build and provenance release veto passed. Final exact-head workflow must be verified after this checkpoint.
+- This is a narrow correctness fix, not production deployment, proof of 100% real-photo recognition or pilot launch approval. Still pending: independent real masks and phone color measurements, SMTP/redirect allowlist, staged private cloud permissions and actual physical phones.
+
 # Hosted email canonical-origin transition guard — October 20, 2026 Pacific
 
 - Based on PR #102 exact verified commit `7537b1eb4e73adfcf764cf03dc63851706cd89b7`; isolated `fix/auth-redirect-origin-cutover-guard-20261020`.
