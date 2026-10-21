@@ -65,6 +65,7 @@ async function isolation(phase){
 
 // Refuse a pre-existing app database even if pointed at localhost by mistake.
 assert.equal(sql("SELECT to_regclass('public.closet_backups') IS NULL AND (SELECT count(*)=0 FROM auth.users);"),'t','Disposable stack is not empty');
+assert.equal(sql('SELECT rolsuper FROM pg_roles WHERE rolname=current_user;'),'f','Integration must use the real non-superuser Supabase migration executor');
 await apply('supabase/cloud-backup.sql');
 await apply('supabase/design/closet-backup-least-privilege.DRAFT.sql');
 sql("NOTIFY pgrst, 'reload schema';");
@@ -93,6 +94,7 @@ assert.notEqual(accounts[0].id,accounts[1].id);
 await isolation('limited-direct-writes');
 
 await apply('supabase/design/backup-rpc-only-writes.DRAFT.sql');sql("NOTIFY pgrst, 'reload schema';");await state('RPC_ONLY_EXPECTED_CATALOG');
+assert.equal(sql("SELECT NOT pg_has_role(current_user,'closet_backup_writer','SET') AND NOT pg_has_role('authenticated','closet_backup_writer','SET') AND NOT pg_has_role('anon','closet_backup_writer','SET');"),'t','Execution membership remained after ownership handoff');
 await isolation('rpc-only-hardened');
 for(const a of accounts){
  const initial=await own(a);

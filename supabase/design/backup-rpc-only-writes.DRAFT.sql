@@ -62,8 +62,10 @@ CREATE POLICY closet_backup_writer_owner
 
 -- Supabase migration executor needs temporary SET ROLE not only to
 -- transfer the function owner, but also to CREATE SCHEMA AUTHORIZATION.
--- The transactional role membership is removed immediately after ownership
--- handoff. Its grants never include authenticated or anon.
+-- Only the migration administrator receives role-management rights. After
+-- ownership handoff, SET/INHERIT are disabled while ADMIN is retained so a
+-- non-superuser migration executor can safely recover its own created role.
+-- Browser roles never receive any membership.
 GRANT closet_backup_writer TO CURRENT_USER WITH SET TRUE, INHERIT FALSE;
 CREATE SCHEMA closet_rpc_private AUTHORIZATION closet_backup_writer;
 -- Migration administrator is not a superuser; become the private schema
@@ -118,7 +120,10 @@ REVOKE ALL ON FUNCTION closet_rpc_private.save_checked(bigint,jsonb)
 GRANT EXECUTE ON FUNCTION closet_rpc_private.save_checked(bigint,jsonb)
  TO authenticated;
 RESET ROLE;
-REVOKE closet_backup_writer FROM CURRENT_USER;
+-- Retain administration only, not execution or inherited table privileges.
+-- Revoking the entire membership also revokes the creator's ADMIN option on
+-- PostgreSQL 16+, leaving non-superuser Supabase postgres unable to recover.
+GRANT closet_backup_writer TO CURRENT_USER WITH ADMIN TRUE, SET FALSE, INHERIT FALSE;
 -- PostgreSQL administrative executors (especially SUPERUSER) inherently
 -- retain privileged role-management abilities. The security contract is
 -- that NO browser-role may become or inherit the private writer.

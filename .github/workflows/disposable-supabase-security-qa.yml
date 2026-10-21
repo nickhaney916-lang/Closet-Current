@@ -23,11 +23,11 @@ jobs:
           git diff --name-only 7740438f2d196b1ccd98ea6ff47afc2f41de58bf HEAD |
           while IFS= read -r path; do
             case "$path" in
-              scripts/disposable-supabase-guard.mjs|scripts/test-disposable-supabase-security.mjs|tests/disposable-supabase-guard.test.mjs|.github/workflows/disposable-supabase-security-qa.yml|docs/DISPOSABLE-SUPABASE-SECURITY-20261021.md|docs/PROGRESS-CHECKPOINT.md) ;;
+              scripts/disposable-supabase-guard.mjs|scripts/test-disposable-supabase-security.mjs|tests/disposable-supabase-guard.test.mjs|.github/workflows/disposable-supabase-security-qa.yml|docs/DISPOSABLE-SUPABASE-SECURITY-20261021.md|docs/PROGRESS-CHECKPOINT.md|supabase/design/backup-rpc-only-writes.DRAFT.sql|supabase/design/backup-rpc-only-writes-safe-recovery.DRAFT.sql) ;;
               *) echo "Unapproved source change: $path"; exit 1 ;;
             esac
           done
-          git diff --exit-code 7740438f2d196b1ccd98ea6ff47afc2f41de58bf HEAD -- public supabase .github/workflows/cloudflare-pages.yml .github/workflows/pages.yml
+          git diff --exit-code 7740438f2d196b1ccd98ea6ff47afc2f41de58bf HEAD -- public supabase/cloud-backup.sql supabase/audits supabase/migrations supabase/functions .github/workflows/cloudflare-pages.yml .github/workflows/pages.yml
           node scripts/build.mjs
           node --test tests/*.test.cjs tests/*.test.mjs
       - uses: supabase/setup-cli@v1
