@@ -1,3 +1,11 @@
+# Actual-original human-review handoff readiness — October 21, 2026 UTC
+
+- Isolated from verified PR #115 `6ebcf6d9dcfd18611c3248242b62208eb9923385`; all original customer/model/review-tool bytes unchanged and PR #115 branch untouched. Reviewed #111/#113/#115 evidence and comment threads: **zero supplied actual independent human submissions**. Human-reviewed accuracy cannot be computed.
+- Identified a bounded review-form gap: hash verification alone did not require the selected original to finish displaying before recording an observation. New handoff appends a selected verified-blob/complete/positive-dimensions gate plus capture-phase click check; existing HTML generator stays unchanged. This does not prove human inspection or accurate labels.
+- Added real-original readiness harness for all 13 originals in Chromium and WebKit, EXIF-oriented dimensions, injected incomplete/failed display and zero observations/blank export. Exact-head browser and actual unchanged 13-source FashionCLIP run are pending Actions; do not count software fixtures as human reviews.
+- Local full build/Node **1,313 passed / 0 failed / 3 skipped**, including 7 display/provenance/no-fabricated-review regressions. Prepared same original byte hashes with blank form and concrete START-HERE instructions for two actual blind reviewers.
+- Independent human identities/blinding, returned observations and ambiguous shirt/jacket and shorts/underwear adjudication remain external dependencies. Provisional source/assistant-label 10/12 category and 8/12 family agreement are not human-gold accuracy. No classification, threshold, vector, source-label, customer save, paid AI, hosted Supabase/Auth/customer data, Drive Duel, merge or deployment changes.
+
 # Isolated verified customer + blind-photo-source integration — October 20, 2026 Pacific
 
 - **Integration candidate, not production:** `integration/cloud-styling-blind-photo-rc-20261020`, built from PR #114 exact code SHA `05f1bdf071a75e2bac2eaf9ecb66c2f1e63d7132`, with **12 original Git blobs** from PR #113 head `71053247402d2e428044ef38b359057011335823`. Imported as one additive, one-parent commit `45765b19b8db2976ebd66907daa16856f680ac35`. Neither source branch, Work-owned PR #108, nor `main` was merged or edited.
