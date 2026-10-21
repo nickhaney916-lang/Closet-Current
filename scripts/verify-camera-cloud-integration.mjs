@@ -130,7 +130,7 @@ const allowedColorEvidence=new Set([
 ]);
 const priorColor=execFileSync('git',['show','a441f791283596bdc7bc08fe3446c41fd64f1bce:public/clothing-details.js'],{encoding:'utf8'});
 const oldFillColor="function fillColor(item,estimate){if(!estimate||estimate.needsConfirmation===true||!values.color.includes(estimate.color)||item.color&&item.color!=='Unknown')return item;return {...item,color:estimate.color,colorSource:'photo-estimate',...(estimate.method==='uniform-light-background'?{colorMethod:'uniform-light-background'}:{})};}";
-const newFillColor="function fillColor(item,estimate){if(!estimate||estimate.needsConfirmation===true||!values.color.includes(estimate.color)||item.color&&item.color!=='Unknown')return item;const method=['garment-mask','uniform-light-background'].includes(estimate.method)?estimate.method:null;return {...item,color:estimate.color,colorSource:'photo-estimate',...(method?{colorMethod:method}:{})};}";
+const newFillColor="function fillColor(item,estimate){if(!estimate||estimate.needsConfirmation===true||!values.color.includes(estimate.color)||item.color&&item.color!=='Unknown')return item;const method=['garment-mask','uniform-light-background'].includes(estimate.method)?estimate.method:null;const out={...item,color:estimate.color,colorSource:'photo-estimate'};if(method)out.colorMethod=method;else delete out.colorMethod;return out;}";
 assert.ok(priorColor.includes(oldFillColor),'Color provenance review baseline changed');
 assert.equal(fs.readFileSync('public/clothing-details.js','utf8'),priorColor.replace(oldFillColor,newFillColor),
  'Unreviewed clothing-detail change beyond verified mask color provenance');
