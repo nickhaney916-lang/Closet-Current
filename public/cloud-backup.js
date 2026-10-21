@@ -1,7 +1,7 @@
 'use strict';
 (function(){
  const E=window.ClosetBackupEngine,BASE='https://hlkgymugtfbirlpunsra.supabase.co',KEY='sb_publishable_5bw6Gkrw3Qx73dZYGNzmIw_x_OoauDO',BUCKET='closet-private';
- let db=null,user=null,enabled=false,activeSync=null,timer=null,retryDelay=2000,callbacks={},generation=0;
+ let db=null,user=null,enabled=false,activeSync=null,timer=null,retryDelay=2000,callbacks={},generation=0,pendingKeepBoth=false;
  // A single page can outlive an auth refresh, logout, BFCache restore or
  // another account's login. Bind every async sync pass to its owner/database
  // and generation so late responses can never touch the next user's closet.
@@ -58,6 +58,9 @@
  function schedule(delay=1500,op=ownerSession()){if(!current(op))return;clearTimeout(timer);timer=setTimeout(()=>{if(current(op))sync();},delay);}
  async function sync({keepBoth=false}={}){
   const op=ownerSession();if(!current(op))return;
+  // Keep an explicitly chosen conflict resolution through overlapping syncs,
+  // interrupted photo uploads and lost RPC replies until a save succeeds.
+  if(keepBoth)pendingKeepBoth=true;
   // A manual sync or local edit arriving during an active pass still needs
   // a follow-up pass; never discard it just because the request overlapped.
   if(activeSync&&activeSync.generation===op.generation){activeSync.needsAnotherPass=true;return;}
@@ -67,11 +70,11 @@
    if(!m.baseVersion&&!m.dirty&&(local.items.length||Object.values(local.state).some(x=>x.batch?.length||x.looks?.length||x.saved?.length||Object.keys(x.current?.slots||{}).length))){await markDirty(op);({local,m}=await cb.capture(snapshot));guard(op);dirtyAtStart=true;}
    if(!m.dirty){
     if(remote&&(remote.revision!==m.baseVersion||m.needsRestore)){status('Restoring your cloud closet…');if(!await apply(remote.document,remote.revision,m.localRevision,op,cb)){schedule();return;}}
-    status(remote?'Cloud backup up to date':'Your closet will back up automatically');retryDelay=2000;return;
+    pendingKeepBoth=false;status(remote?'Cloud backup up to date':'Your closet will back up automatically');retryDelay=2000;return;
    }
    status('Backing up your closet…');const encoded=await encode(local,op);guard(op);let document=encoded.document;
    if(remote&&(remote.revision!==m.baseVersion||m.needsRestore)){
-    if(keepBoth){
+    if(pendingKeepBoth){
      const ids=new Map(m.resolutionIds||[]);document=E.keepBothDocuments(m.baseDocument,document,remote.document,row=>{const key=E.canonical(row);if(!ids.has(key))ids.set(key,crypto.randomUUID());return ids.get(key);});
      // Persist copy identities before the request so retries cannot create duplicate copies.
      await transact(['state'],'readwrite',tx=>{const store=tx.objectStore('state'),r=store.get('cloud-sync');r.onsuccess=()=>{if(current(op))store.put({...r.result,resolutionIds:[...ids]});};},op.db);guard(op);
@@ -82,6 +85,9 @@
    if(revision===null){schedule(1500,op);return;}if(!Number.isSafeInteger(revision)||revision<1)throw Error('Invalid cloud save');
    // If another local save happened during upload, keep its durable pending flag.
    await transact(['state'],'readwrite',tx=>{const store=tx.objectStore('state'),r=store.get('cloud-sync');r.onsuccess=()=>{if(!current(op))return;const record=r.result||markerDefault();store.put({...record,baseVersion:revision,baseDocument:E.equal(document,encoded.document)?document:encoded.document,needsRestore:!E.equal(document,encoded.document),dirty:record.localRevision!==m.localRevision});};},op.db);guard(op);
+   // A cloud write acknowledged by the server completes this manual conflict
+   // resolution. Later local edits are handled by the normal dirty retry path.
+   pendingKeepBoth=false;
    const record=await marker();guard(op);if(record.dirty){status('Saved on this device · cloud backup pending');schedule(1500,op);}
    else if(!E.equal(document,encoded.document)){if(!await apply(document,revision,record.localRevision,op,cb))schedule(1500,op);else status('Cloud backup up to date');}
    else status('Cloud backup up to date');retryDelay=2000;
@@ -90,13 +96,13 @@
   }finally{if(activeSync===run){activeSync=null;if(run.needsAnotherPass&&current(op))schedule(0,op);}}
  }
  window.closetCloud={
-  async start(database,settings){generation++;clearTimeout(timer);activeSync=null;enabled=false;db=database;callbacks=settings||{};user=window.closetAuth?.user?.id;enabled=ownsDatabase(db,user)&&typeof window.closetAuth?.getAccessToken==='function'&&/^[a-f0-9-]{36}$/i.test(user||'');if(!enabled){if(db&&user&&!ownsDatabase(db,user))status('This browser closet belongs to another account. Reload and sign in again before cloud backup.');return;}
+  async start(database,settings){generation++;clearTimeout(timer);activeSync=null;pendingKeepBoth=false;enabled=false;db=database;callbacks=settings||{};user=window.closetAuth?.user?.id;enabled=ownsDatabase(db,user)&&typeof window.closetAuth?.getAccessToken==='function'&&/^[a-f0-9-]{36}$/i.test(user||'');if(!enabled){if(db&&user&&!ownsDatabase(db,user))status('This browser closet belongs to another account. Reload and sign in again before cloud backup.');return;}
    navigator.storage?.persist?.().catch(()=>{});const button=document.getElementById('syncCloset');if(button){button.hidden=false;button.onclick=()=>sync();}const resolveButton=document.getElementById('resolveCloudConflict');if(resolveButton)resolveButton.onclick=()=>sync({keepBoth:true});await sync();
   },
   async beforeWrite(database){const op=ownerSession();if(current(op)&&database===op.db)await markDirty(op);},
   changed(){const op=ownerSession();if(current(op)){status('Saved on this device · cloud backup pending');schedule(1500,op);}},sync
  };
- window.addEventListener('pageshow',event=>{if(!event.persisted)return;if(ownsDatabase(db,user)&&window.closetAuth?.user?.id===user){generation++;activeSync=null;enabled=true;sync();}else if(db&&user){enabled=false;status('This browser closet belongs to another account. Reload and sign in again before cloud backup.');}});
+ window.addEventListener('pageshow',event=>{if(!event.persisted)return;if(ownsDatabase(db,user)&&window.closetAuth?.user?.id===user){generation++;activeSync=null;pendingKeepBoth=false;enabled=true;sync();}else if(db&&user){enabled=false;status('This browser closet belongs to another account. Reload and sign in again before cloud backup.');}});
  window.addEventListener('online',()=>sync());window.addEventListener('focus',()=>sync());setInterval(()=>sync(),60000);
- window.addEventListener('pagehide',()=>{generation++;clearTimeout(timer);activeSync=null;enabled=false;});
+ window.addEventListener('pagehide',()=>{generation++;clearTimeout(timer);activeSync=null;pendingKeepBoth=false;enabled=false;});
 })();
