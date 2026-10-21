@@ -10,9 +10,10 @@ const B='b2222222-2222-4222-8222-222222222222';
 const defer=()=>{let resolve,reject;const promise=new Promise((r,j)=>{resolve=r;reject=j;});return {promise,resolve,reject};};
 const tick=()=>new Promise(resolve=>setImmediate(resolve));
 const doc=id=>({schemaVersion:1,items:[{id,category:'Tops',name:id}],state:{}});
-function database(initial=[]){
+function database(initial=[],owner=A){
  const content={items:new Map(initial.map(x=>[x.id,structuredClone(x)])),state:new Map()};
  return {
+  name:'closet-current-user-'+owner,
   content,
   transaction(names,mode){
    const tx={oncomplete:null,onerror:null,onabort:null,error:null};
@@ -52,7 +53,7 @@ test('token resolving after another account logs in cannot send a stale owner cl
   token:()=>h.window.closetAuth.user.id===A?first.promise:Promise.resolve(B),
   request:async(url,opt)=>{seen.push({url,token:opt.headers.Authorization});return {ok:true,status:200,json:async()=>url.includes('/rpc/save_closet_backup')?1:[]};}
  });
- const dbA=database([{id:'a-local'}]),dbB=database([{id:'b-local'}]);
+ const dbA=database([{id:'a-local'}]),dbB=database([{id:'b-local'}],B);
  const pending=h.cloud.start(dbA,h.callbacks);await tick();
  h.window.closetAuth.user={id:B};const fresh=h.cloud.start(dbB,h.callbacks);
  first.resolve(A);await Promise.all([pending,fresh]);
@@ -69,7 +70,7 @@ test('late response from old account cannot restore or overwrite new account clo
   if(url.includes('owner_id=eq.'+A)){firstRequest=true;return old.promise;}
   return {ok:true,status:200,json:async()=>url.includes('/rpc/save_closet_backup')?2:[{revision:1,document:doc('remote-b')}]};
  }});
- const dbA=database([{id:'private-a'}]),dbB=database([{id:'private-b'}]);
+ const dbA=database([{id:'private-a'}]),dbB=database([{id:'private-b'}],B);
  const pending=h.cloud.start(dbA,h.callbacks);
  for(let i=0;i<8&&!firstRequest;i++)await tick();
  assert.equal(firstRequest,true);
@@ -117,4 +118,63 @@ test('a second manual cloud sync during an active request is replayed rather tha
  for(let i=0;i<20&&reads<2;i++)await new Promise(resolve=>setTimeout(resolve,5));
  assert.equal(reads,2,'Lost an explicitly requested second cloud pass');
  assert.equal(h.elements.get('cloudStatus').textContent,'Your closet will back up automatically');
+});
+
+test('cloud start cannot pair account B access token with old account A IndexedDB',async()=>{
+ const requests=[];
+ const h=setup({request:async(url,opts)=>{
+  requests.push({url,auth:opts.headers.Authorization});
+  return {ok:true,status:200,json:async()=>[]};
+ }});
+ const oldDatabase=database([{id:'private-a'}],A);
+ h.window.closetAuth.user={id:B};
+ await h.cloud.start(oldDatabase,h.callbacks);
+ await h.cloud.sync();
+ await h.cloud.beforeWrite(oldDatabase);
+ h.cloud.changed();
+ assert.equal(requests.length,0,'never upload or read another account local wardrobe');
+ assert.deepEqual([...oldDatabase.content.items.keys()],['private-a']);
+ assert.equal(oldDatabase.content.state.has('cloud-sync'),false);
+ assert.match(h.elements.get('cloudStatus').textContent,/belongs to another account/);
+});
+test('a blocked stale database can recover safely with the new owner database',async()=>{
+ const remote=[];
+ const h=setup({token:()=>Promise.resolve(h.window.closetAuth.user.id),request:async(url,opts)=>{
+  remote.push({url,auth:opts.headers.Authorization});
+  return {ok:true,status:200,json:async()=>[]};
+ }});
+ const oldDB=database([{id:'private-a'}],A),newDB=database([],B);
+ h.window.closetAuth.user={id:B};
+ await h.cloud.start(oldDB,h.callbacks);
+ assert.equal(remote.length,0);
+ await h.cloud.start(newDB,h.callbacks);
+ assert.equal(remote.length,1);
+ assert.match(remote[0].url,/owner_id=eq\.b222/);
+ assert.equal(remote[0].auth,'Bearer '+B);
+ assert.deepEqual([...oldDB.content.items.keys()],['private-a']);
+ assert.equal(h.elements.get('cloudStatus').textContent,'Your closet will back up automatically');
+});
+test('BFCache resume does not reactivate an old database under a new signed-in identity',async()=>{
+ const queries=[];
+ const h=setup({request:async(url)=>{queries.push(url);return {ok:true,status:200,json:async()=>[]};}});
+ const oldDB=database([],A);
+ await h.cloud.start(oldDB,h.callbacks);
+ assert.equal(queries.length,1);
+ h.listeners.pagehide[0]();
+ h.window.closetAuth.user={id:B};
+ h.listeners.pageshow[0]({persisted:true});
+ await h.cloud.sync();
+ await h.cloud.beforeWrite(oldDB);
+ assert.equal(queries.length,1);
+ assert.equal(oldDB.content.state.has('cloud-sync'),false);
+ assert.match(h.elements.get('cloudStatus').textContent,/belongs to another account/);
+});
+test('cloud operation remains owner-bound if database binding changes mid-token refresh',async()=>{
+ const delayed=defer(),requests=[];
+ const h=setup({token:async()=>delayed.promise,request:async(...args)=>{requests.push(args);return {ok:true,status:200,json:async()=>[]};}});
+ const dbA=database([],A);
+ const pending=h.cloud.start(dbA,h.callbacks);await tick();
+ dbA.name='closet-current-user-'+B;
+ delayed.resolve(A);await pending;
+ assert.equal(requests.length,0,'no stale cloud request may follow mismatched DB binding');
 });

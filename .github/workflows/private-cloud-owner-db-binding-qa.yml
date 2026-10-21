@@ -1,0 +1,37 @@
+name: Private closet cloud identity binding and account-switch recovery QA
+on:
+  push:
+    branches: [fix/cloud-db-owner-binding-20261020]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  cross-account-data-isolation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Test genuine owner-bound IndexedDB cloud state and BFCache recovery
+        run: |
+          node --check public/cloud-backup.js
+          node --test tests/cloud-session-generation.test.cjs tests/cloud-backup.test.cjs tests/stylist-owned-source-commit.test.cjs
+      - name: Full Node regression suite and build
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Verify byte-exact original camera, human assets and private cloud owner proof
+        run: |
+          node scripts/verify-camera-cloud-integration.mjs
+          node scripts/check-dual-parent-review-integration.mjs
+          node scripts/check-customer-pilot-release-gates.mjs
+      - name: Install Android Chromium and iPhone WebKit browser engines
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium webkit
+      - name: Simulate account-switch, forbidden A database binding and safe B restore
+        run: node scripts/test-cloud-session-generation-browsers.mjs
