@@ -1,5 +1,10 @@
 'use strict';
 let inspirationLooks=[],lookPieces=[],lookImage='',activeLookId=null;
+// Preview JPEG belongs to inspiration; original File exists in memory only for
+// explicit single-item Add to Closet. Never persist original private bytes as a look.
+let lookOriginalFile=null,lookOriginalOwner=null,lookPhotoSelection=0,lookTransferBusy=false;
+function clearLookOriginal(){lookPhotoSelection++;lookOriginalFile=null;lookOriginalOwner=null;$('referenceToCloset').hidden=true;}
+
 function trendSelect(body,label,value,options,change){const wrapper=node('label',label),select=node('select');for(const option of options)select.append(node('option',option));select.value=options.includes(value)?value:options[0];select.onchange=()=>change(select.value);wrapper.append(select);body.append(wrapper);return select;}
 function renderLookPieces(){
  const grid=$('lookPieces');grid.replaceChildren();
@@ -22,7 +27,7 @@ function validLook(value){
 }
 function storeLooks(looks){if(!db)return Promise.reject(Error('Browser storage is unavailable.'));return queued(()=>new Promise((resolve,reject)=>{const tx=db.transaction('state','readwrite');tx.objectStore('state').put({id:'looks',looks});tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);}));}
 async function importLooks(values){if(!Array.isArray(values)||values.length>100)throw Error('Invalid inspiration backup.');const merged=new Map(inspirationLooks.map(x=>[x.id,x]));for(const value of values){const look=validLook(value);merged.set(look.id,look);}const looks=[...merged.values()];await storeLooks(looks);inspirationLooks=looks;renderSavedLooks();}
-function loadLook(look){activeLookId=look.id;$('lookTitle').value=look.title;$('lookUrl').value=look.sourceUrl;$('lookDescription').value=look.description;$('lookSeason').value=look.season;$('shopSize').value=look.size;$('shopBudget').value=look.budget||'';lookPieces=structuredClone(look.pieces);lookImage=look.image;$('inspirationPreview').src=lookImage;$('inspirationPreview').hidden=!lookImage;$('referenceToCloset').hidden=!lookImage;renderLookPieces();renderTrendMatches();}
+function loadLook(look){clearLookOriginal();activeLookId=look.id;$('lookTitle').value=look.title;$('lookUrl').value=look.sourceUrl;$('lookDescription').value=look.description;$('lookSeason').value=look.season;$('shopSize').value=look.size;$('shopBudget').value=look.budget||'';lookPieces=structuredClone(look.pieces);lookImage=look.image;$('inspirationPreview').src=lookImage;$('inspirationPreview').hidden=!lookImage;$('referenceToCloset').hidden=true;renderLookPieces();renderTrendMatches();}
 function renderSavedLooks(){
  const grid=$('savedLooks');grid.replaceChildren();
  if(!inspirationLooks.length){grid.append(node('p','Save a look to build your inspiration collection.'));return;}
@@ -49,13 +54,56 @@ $('parseLook').onclick=()=>{const parsed=parseOutfit($('lookDescription').value)
 $('addLookPiece').onclick=()=>{if(lookPieces.length>=12)return message('A look can contain up to 12 pieces.');lookPieces.push({id:crypto.randomUUID(),label:'Clothing piece',category:'Uncategorized',itemType:'Unknown',color:'',sleeveLength:'Unknown',pattern:'Unknown',fit:'Unknown'});renderLookPieces();};
 $('matchLook').onclick=renderTrendMatches;
 $('saveLook').onclick=async()=>{if(!lookPieces.length)return message('Add at least one clothing piece before saving.');if(inspirationLooks.length>=100&&!activeLookId)return message('You can save up to 100 inspiration looks.');if($('lookUrl').value&&!safeInspirationUrl($('lookUrl').value))return message('Use a valid http or https inspiration link.');$('saveLook').disabled=true;try{const look=currentLook();const next=inspirationLooks.filter(x=>x.id!==look.id);next.push(look);await storeLooks(next);inspirationLooks=next;activeLookId=look.id;renderSavedLooks();renderTrendMatches();message('Inspiration look saved.');}catch{message('Could not save this look.');}finally{$('saveLook').disabled=false;}};
-$('newLook').onclick=()=>{activeLookId=null;lookImage='';lookPieces=[];for(const id of ['lookTitle','lookUrl','lookDescription','shopSize','shopBudget'])$(id).value='';$('lookSeason').value='';$('inspirationPreview').hidden=true;$('referenceToCloset').hidden=true;renderLookPieces();renderTrendMatches();};
-$('exampleLook').onclick=()=>{activeLookId=null;lookImage='';$('inspirationPreview').hidden=true;$('referenceToCloset').hidden=true;$('lookTitle').value='Casual layers — example';$('lookUrl').value='';$('lookDescription').value='Cream long sleeve sweater\nBlue jeans\nBrown ankle boots';lookPieces=parseOutfit($('lookDescription').value);renderLookPieces();renderTrendMatches();};
-$('lookImage').onchange=async event=>{const file=event.target.files[0];event.target.value='';if(!file)return;if(file.size>10*1024*1024)return message('Choose an inspiration image smaller than 10 MB.');let url;try{url=URL.createObjectURL(file);const image=new Image();image.src=url;await image.decode();const canvas=document.createElement('canvas'),scale=Math.min(1,900/Math.max(image.width,image.height));canvas.width=Math.round(image.width*scale);canvas.height=Math.round(image.height*scale);canvas.getContext('2d').drawImage(image,0,0,canvas.width,canvas.height);lookImage=canvas.toDataURL('image/jpeg',.8);$('inspirationPreview').src=lookImage;$('inspirationPreview').hidden=false;$('referenceToCloset').hidden=false;if(!lookPieces.length){lookPieces.push({id:crypto.randomUUID(),label:'Piece from inspiration image',category:'Uncategorized',itemType:'Unknown',color:'',sleeveLength:'Unknown',pattern:'Unknown',fit:'Unknown'});renderLookPieces();}message('Reference image added. Category fields are under The pieces in this look. For your own clothing, tap Add this single-item photo to Review.');}catch{message('Could not open that image. Try a JPEG or PNG screenshot.');}finally{if(url)URL.revokeObjectURL(url);}};
+$('newLook').onclick=()=>{clearLookOriginal();activeLookId=null;lookImage='';lookPieces=[];for(const id of ['lookTitle','lookUrl','lookDescription','shopSize','shopBudget'])$(id).value='';$('lookSeason').value='';$('inspirationPreview').hidden=true;$('referenceToCloset').hidden=true;renderLookPieces();renderTrendMatches();};
+$('exampleLook').onclick=()=>{clearLookOriginal();activeLookId=null;lookImage='';$('inspirationPreview').hidden=true;$('referenceToCloset').hidden=true;$('lookTitle').value='Casual layers — example';$('lookUrl').value='';$('lookDescription').value='Cream long sleeve sweater\nBlue jeans\nBrown ankle boots';lookPieces=parseOutfit($('lookDescription').value);renderLookPieces();renderTrendMatches();};
+$('lookImage').onchange=async event=>{
+ const file=event.target.files[0];event.target.value='';
+ clearLookOriginal();const selected=lookPhotoSelection,selectedOwner=window.closetAuth?.user?.id;
+ if(!file)return;
+ lookImage='';$('inspirationPreview').hidden=true;
+ if(file.size>10*1024*1024)return message('Choose an inspiration image smaller than 10 MB.');
+ let url,timeout;
+ try{
+  url=URL.createObjectURL(file);const image=new Image();image.src=url;
+  await Promise.race([image.decode(),new Promise((_,reject)=>{
+   timeout=setTimeout(()=>reject(Error('Image decode timed out')),15000);
+  })]);
+  if(selected!==lookPhotoSelection)return;
+  if(!image.width||!image.height)throw Error('Empty inspiration image');
+  const canvas=document.createElement('canvas'),scale=Math.min(1,900/Math.max(image.width,image.height));
+  canvas.width=Math.round(image.width*scale);canvas.height=Math.round(image.height*scale);
+  canvas.getContext('2d').drawImage(image,0,0,canvas.width,canvas.height);
+  const preview=canvas.toDataURL('image/jpeg',.8);
+  if(!preview||preview==='data:,')throw Error('Cannot encode inspiration preview');
+  if(selected!==lookPhotoSelection||selectedOwner!==window.closetAuth?.user?.id)return;
+  lookImage=preview;lookOriginalFile=file;lookOriginalOwner=selectedOwner;
+  $('inspirationPreview').src=lookImage;$('inspirationPreview').hidden=false;
+  $('referenceToCloset').hidden=false;
+  if(!lookPieces.length){lookPieces.push({id:crypto.randomUUID(),label:'Piece from inspiration image',category:'Uncategorized',itemType:'Unknown',color:'',sleeveLength:'Unknown',pattern:'Unknown',fit:'Unknown'});renderLookPieces();}
+  message('Reference preview added. For clothing you own, Add this single-item photo uses the higher-resolution original for recognition.');
+ }catch{
+  if(selected===lookPhotoSelection)message('Could not open that image. Try a JPEG or PNG screenshot.');
+ }finally{clearTimeout(timeout);if(url)URL.revokeObjectURL(url);}
+};
 for(const season of clothingSchema.seasons.slice(0,4))$('lookSeason').append(node('option',season));
 for(const id of ['lookSeason','shopSize','shopBudget'])$(id).onchange=renderTrendMatches;
 const inspirationReady=(async()=>{await closetReady;if(db){try{const state=await new Promise((resolve,reject)=>{const r=db.transaction('state').objectStore('state').get('looks');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});inspirationLooks=(state?.looks||[]).map(validLook);}catch{message('Saved inspiration could not be loaded.');}}renderLookPieces();renderSavedLooks();renderTrendMatches();})();
 
-$('referenceToCloset').onclick=()=>{if(!lookImage)return;candidate(lookImage);switchView('review');message('Image added as a separate clothing entry. Its category fields are below the photo.');};
+$('referenceToCloset').onclick=async()=>{
+ if(lookTransferBusy||busy)return;
+ if(!lookOriginalFile){message('Choose the original clothing photo again to add it to My closet. A saved inspiration preview is not suitable for recognition.');return;}
+ const selected=lookPhotoSelection,file=lookOriginalFile,owner=window.closetAuth?.user?.id;
+ if(!owner||owner!==lookOriginalOwner){clearLookOriginal();message('Select your clothing photo again after signing in to this account.');return;}
+ lookTransferBusy=true;$('referenceToCloset').disabled=true;
+ try{
+  // Use the standard original-first import encoder, not the 900px inspiration
+  // thumbnail. The queued garment is then classified before masking/cropping.
+  const image=await photoToJPEG(file);
+  if(selected!==lookPhotoSelection||owner!==window.closetAuth?.user?.id||busy)return;
+  if(candidate(image)){switchView('review');message('Original-resolution garment photo added to Review. Check its type and color.');}
+ }catch{
+  if(selected===lookPhotoSelection)message('Could not open the original photo for clothing recognition. Choose a JPEG or PNG and try again.');
+ }finally{lookTransferBusy=false;$('referenceToCloset').disabled=false;}
+};
 
 async function reloadCloudLooks(){const state=await new Promise((resolve,reject)=>{const r=db.transaction('state').objectStore('state').get('looks');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});inspirationLooks=(state?.looks||[]).map(validLook);renderSavedLooks();}
