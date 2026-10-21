@@ -95,7 +95,7 @@ export async function run() {
  const changedPassword='SyntheticOnly!2026-Recovered-Secret';
  const flags={realAuth:false,localMailCaptured:false,
   githubConfirmation:false,cloudflareConfirmation:false,
-  unconfirmedLoginRejected:false,confirmedLogin:true,
+  unconfirmedLoginRejected:false,confirmedLogin:false,
   ownerIdentityVerified:false,usedLinkRejected:false,
   recoveryMailCaptured:false,recoveryCallback:false,
   passwordUpdated:false,oldPasswordRejected:false,
