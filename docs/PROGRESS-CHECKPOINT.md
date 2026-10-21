@@ -1,3 +1,11 @@
+# New-source independent garment benchmark preparation — October 20, 2026 Pacific
+
+- Isolated `benchmark/independent-source-holdout-20261021` from PR #109 exact `a6ee34a676030cff2a4fcf3b31185275c78371a7`; #108/#109 branches and customer/recognition source remain untouched.
+- Selected 13 original-photo source candidates before inference: two each sneakers/boots/dresses/skirts/shorts/shirts and a photographed non-garment sculpture. Actual source hashes, licenses, assistant visual evidence and label-free inference are required; independent human gold labels are explicitly unavailable, never invented.
+- Initial collection 39537027701 acquired two sneaker originals and then failed honestly on HTTP 429. Retry 39537145147 respects source-server waits and preserves partial bytes. Do not call unacquired photographs verified or report synthetic unit cases as real accuracy.
+- Added fail-closed source/duplicate/label/scoring protections, unchanged original-first model harness, independent CLIP comparison, blank human-review packet generation and eleven focused regressions. Local full suite: **1,271 passed / 0 failed / 3 skipped**, build and current source scope checked. New real-inference and final CI evidence are pending acquisition and the pre-inference source lock.
+- `docs/INDEPENDENT-SOURCE-HOLDOUT-20261020.md` documents the source protocol and limitations. No model promotion, paid AI, live cloud/Auth/customer data changes, Drive Duel, production merge or deploy.
+
 # Independent second encoder real-photo subtype trial — October 20, 2026 Pacific
 
 - Based on verified draft PR #107 exact head `9b2cfa722cee058ab5de22d569ded02ffec23134`, isolated branch `research/independent-clip-garment-subtypes-20261021`. No overlap with parallel Work-owned branch integration.
