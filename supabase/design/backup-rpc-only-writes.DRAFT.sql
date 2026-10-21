@@ -43,15 +43,22 @@ END $guard$;
 -- explicit NOLOGIN/NOBYPASSRLS role is NEVER granted to browser roles.
 CREATE ROLE closet_backup_writer NOLOGIN NOINHERIT NOBYPASSRLS;
 -- The protected auth schema is owned by supabase_auth_admin and hosted
--- migration executors cannot GRANT it to arbitrary roles. Read the same
--- verified, PostgREST-populated JWT subject GUC used by auth.uid() instead.
+-- migration executors cannot GRANT it to arbitrary roles. Mirror BOTH
+-- verified PostgREST JWT subject formats used by the deployed auth.uid()
+-- function: legacy request.jwt.claim.sub and JSON request.jwt.claims->sub.
 -- No custom/unsigned account identifier is accepted as a function argument.
 GRANT USAGE ON SCHEMA public TO closet_backup_writer;
 GRANT SELECT, INSERT, UPDATE ON TABLE public.closet_backups TO closet_backup_writer;
 CREATE POLICY closet_backup_writer_owner
  ON public.closet_backups FOR ALL TO closet_backup_writer
- USING ((SELECT NULLIF(current_setting('request.jwt.claim.sub',true),'')::uuid)=owner_id)
- WITH CHECK ((SELECT NULLIF(current_setting('request.jwt.claim.sub',true),'')::uuid)=owner_id);
+ USING ((SELECT COALESCE(
+  NULLIF(current_setting('request.jwt.claim.sub',true),''),
+  (NULLIF(current_setting('request.jwt.claims',true),'')::jsonb ->> 'sub')
+ )::uuid)=owner_id)
+ WITH CHECK ((SELECT COALESCE(
+  NULLIF(current_setting('request.jwt.claim.sub',true),''),
+  (NULLIF(current_setting('request.jwt.claims',true),'')::jsonb ->> 'sub')
+ )::uuid)=owner_id);
 
 -- Supabase migration executor needs temporary SET ROLE not only to
 -- transfer the function owner, but also to CREATE SCHEMA AUTHORIZATION.
@@ -76,7 +83,10 @@ AS $body$
 DECLARE saved_revision bigint;
  request_owner uuid;
 BEGIN
- request_owner := NULLIF(current_setting('request.jwt.claim.sub',true),'')::uuid;
+ request_owner := COALESCE(
+  NULLIF(current_setting('request.jwt.claim.sub',true),''),
+  (NULLIF(current_setting('request.jwt.claims',true),'')::jsonb ->> 'sub')
+ )::uuid;
  IF request_owner IS NULL THEN
   RAISE EXCEPTION 'Authentication required' USING errcode='42501';
  END IF;
