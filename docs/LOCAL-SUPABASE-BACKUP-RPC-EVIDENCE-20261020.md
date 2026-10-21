@@ -28,6 +28,12 @@ Workflow `.github/workflows/local-supabase-backup-rpc-security.yml`:
 - Both owner backups, photos and immutable paths stay intact after simulated attack requests; service-role cleanup only affects disposable local test data.
 - A successful run prints one anonymous JSON diagnostics line: `LOCAL_SUPABASE_BACKUP_RPC_PRIVACY`. No credentials, emails, customer photos, JWTs or actual account IDs are printed.
 
+## Compatibility findings from actual local Supabase
+
+The first local-stack attempt reproduced two differences from a superuser-only PostgreSQL test. Supabase's migration executor requires a temporary, **transaction-scoped** `SET ROLE` membership before creating a private schema or transferring function ownership to a new nonlogin writer role; that membership is explicitly revoked and tested before COMMIT. Supabase's internal `auth` schema is separately owned, so blindly granting its USAGE to the newly created writer is unreliable. The private writer instead reads `request.jwt.claim.sub` from PostgreSQL's **PostgREST-authenticated JWT request context**, the same session subject used by `auth.uid()`. It never accepts owner IDs in a function argument. The public wrapper and existing authenticated owner's RLS policy remain intact.
+
+This is a *draft compatibility design*, not evidence that a signed JWT has been verified until the true Auth/HTTP test reaches and passes that stage. Any future production migration needs DBA review of role membership, JWT context, exposure settings and rollback.
+
 ## Security boundaries
 
 The source intentionally refuses any API URL other than `http://localhost:54321` or `http://127.0.0.1:54321`, rejects database hosts other than loopback on 54322/5432, and requires `CI=true` plus local SDK directory. The workflow does not authenticate to the hosted project and does not include Supabase hosted access tokens. Only generic per-case pass/fail flags are logged.
