@@ -1,3 +1,11 @@
+# Real Chromium installed staging PWA QA — October 21, 2026
+
+- Draft **PR #156**, isolated from Work Assignment #154 and based on PR #155 `2651f4e4567b8ee1717ef869df2fa33ed6cb4ac8`, adds an **actual Chromium browser service worker install / activate / offline regression** for the generated, synthetic `staging-dist/sw.js`, rather than only a VM mock. A temporary loopback HTTP origin supplies all code and a synthetic registration page. The new test never loads a customer account or contacts hosted services.
+- **Verified code SHA:** `185ba69a11870f6a337f9265b1a0c942c58348e9`. GitHub Actions [real Chromium service worker #39678257624](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39678257624) COMPLETED SUCCESS: full Node suite **1,490 pass, 0 fail, 3 skip** and genuine Chromium activation, staging cache namespace, production-named cache preservation, old stage cache removal, immutable installed HTML/JS, offline shell, missing cached Auth 503, private route / POST bypass and **zero external network requests**. [Camera/indexing CI #39678257500](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39678257500) SUCCESS. Final document-only commit requires its exact-head CI check.
+- Playwright service worker tooling is supported for Chromium, **not WebKit**, so no installed iPhone PWA claim; the emulated 390px Android Chromium is not a physical device. Hosted Cloudflare Access, separate hosted Supabase and real-account tests still blocked. Production customer source untouched, no merging, deployment, paid services, Drive Duel changes or customer files. Human garment accuracy remains unverified; production promotion BLOCKED.
+
+---
+
 # Staging installed-app cache isolation (draft PR #155) — October 21, 2026
 
 - On an independent branch stacked from Work's verified PR #152 source `4456016f6fed91e07cde08d71fcc17f2c7ff4300`, the staging-only generated service worker cache is now named `closet-current-staging-<fingerprint>`, and its activation cleanup selects only staging-named caches. The customer production `public/sw.js` and all original photo recognition, saved wardrobe, Auth, cloud, and deployment code remain byte-identical.
