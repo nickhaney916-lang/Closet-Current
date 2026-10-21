@@ -1,3 +1,12 @@
+# Hosted email canonical-origin transition guard — October 20, 2026 Pacific
+
+- Based on PR #102 exact verified commit `7537b1eb4e73adfcf764cf03dc63851706cd89b7`; isolated `fix/auth-redirect-origin-cutover-guard-20261020`.
+- Customer-facing authentication messages now explain the existing cross-origin email return **only on the shared Cloudflare site**, with a separate-device-storage warning; unchanged on GitHub Pages. Signup, resend and reset still all use the **same existing GitHub Pages callback**, with no unauthorized hosted destination switch.
+- Added `scripts/check-auth-email-cutover.mjs` to reject unknown/HTTP/query/fragment/unreviewed redirect targets, prohibit Cloudflare cutover without explicit signoff and require one fixed encoded URL for signup, resend and reset. Mocked alternate Cloudflare path is tested but **not enabled**.
+- Initial successful CI [#39528590574](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39528590574) on pre-doc head `354430f5d40db8f06b07ae9662d064d42c76ee59`: **1,225 pass, 0 fail, 3 skipped** full Node; 46 focused Auth + redirect tests pass; integrity/provenance and no-release gates pass. Exact final-head CI must be rechecked after documentation/checkpoint updates.
+- Full details and staged admin approval checklist: `docs/AUTH-EMAIL-CANONICAL-CUTOVER-PREPARATION-20261020.md`. Public Auth settings cannot verify private Redirect URLs allowlist, SMTP credentials/domain, real external inbox deliverability or physical phone account restoration. **Those are still hosted pilot blockers, not completed release conditions.**
+- No current app production merge, hosted settings changes, external email, real customer access, Drive Duel change or paid service.
+
 # Mobile email confirmation/recovery browser QA — October 20, 2026 Pacific
 
 - Branch `qa/auth-email-mobile-browser-20261020` built on verified draft PR #101 `7a30d1e8c57c4f596acd4619e57005446537703b`; newly isolated draft PR #102.

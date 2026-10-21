@@ -5,6 +5,15 @@
  const KEY='sb_publishable_5bw6Gkrw3Qx73dZYGNzmIw_x_OoauDO';
  const APP_URL='https://nickhaney916-lang.github.io/Closet-Current/';
  const EMAIL_REDIRECT='?redirect_to='+encodeURIComponent(APP_URL);
+ // Avoid quietly switching between browser-local closets when email callbacks
+ // still return to the legacy GitHub Pages origin from the shared Cloudflare app.
+ // This is informational only; redirect changes require approved Auth allowlists.
+ function emailOriginNotice(){
+  if(location.origin==='https://closet-current.pages.dev'&&
+     APP_URL==='https://nickhaney916-lang.github.io/Closet-Current/')
+   return ' This email link will open Closet Current on GitHub Pages. That website has separate device storage; confirm your cloud backup before switching websites.';
+  return '';
+ }
  const STORE='closet-current-auth-v1';
  const $=id=>document.getElementById(id);
  let resolveReady,rejectReady;
@@ -134,7 +143,7 @@
     const data=await request('signup'+EMAIL_REDIRECT,{email,password,
      data:window.ClosetPilotNotice.signupMetadata(username,$('pilotNoticeAck').checked)});
     if(data.access_token&&data.user)showUser(data);
-    else status('Check your email to confirm your account, then log in.');
+    else status('Check your email to confirm your account, then log in.'+emailOriginNotice());
    }else showUser(await request('token?grant_type=password',{email,password}));
   }catch(err){status(errorMessage(err));}finally{setBusy(false);}
  };
@@ -143,14 +152,14 @@
   if(busy)return;
   if(!email||!$('authEmail').checkValidity())return status('Enter a valid email address first.');
   setBusy(true);status('Requesting a password reset email…');
-  try{await request('recover'+EMAIL_REDIRECT,{email});status('If the address is registered, a password reset email will arrive.');}catch(err){status(errorMessage(err));}finally{setBusy(false);}
+  try{await request('recover'+EMAIL_REDIRECT,{email});status('If the address is registered, a password reset email will arrive.'+emailOriginNotice());}catch(err){status(errorMessage(err));}finally{setBusy(false);}
  };
  $('authResend').onclick=async()=>{
   const email=$('authEmail').value.trim();
   if(busy)return;
   if(!email||!$('authEmail').checkValidity())return status('Enter your email address first.');
   setBusy(true);
-  try{await request('resend'+EMAIL_REDIRECT,{email,type:'signup'});status('A fresh confirmation link has been requested. Open the newest email. If you can already log in, no confirmation is needed.');}
+  try{await request('resend'+EMAIL_REDIRECT,{email,type:'signup'});status('A fresh confirmation link has been requested. Open the newest email. If you can already log in, no confirmation is needed.'+emailOriginNotice());}
   catch(err){status(errorMessage(err));}finally{setBusy(false);}
  };
  $('logout').onclick=async()=>{

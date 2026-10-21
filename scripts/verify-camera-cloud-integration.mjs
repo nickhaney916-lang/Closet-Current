@@ -115,7 +115,11 @@ const allowedAuthSession=new Set([
  'docs/DISPOSABLE-AUTH-EMAIL-REAL-SERVICE-20261020.md',
  'scripts/test-auth-email-mobile-browsers.mjs',
  '.github/workflows/auth-email-mobile-browser-qa.yml',
- 'docs/AUTH-EMAIL-MOBILE-BROWSER-20261020.md'
+ 'docs/AUTH-EMAIL-MOBILE-BROWSER-20261020.md',
+ 'scripts/check-auth-email-cutover.mjs',
+ 'tests/auth-email-cutover.test.mjs',
+ '.github/workflows/auth-email-cutover-guard-qa.yml',
+ 'docs/AUTH-EMAIL-CANONICAL-CUTOVER-PREPARATION-20261020.md'
 ]);
 const allowedWork=new Set([
  'public/app.js',
