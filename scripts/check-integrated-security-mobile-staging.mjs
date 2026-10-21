@@ -21,6 +21,14 @@ if(withLock)for(const path of ['docs/FINAL-INTEGRATED-STAGING-BUILD-20261021.md'
  '.github/workflows/final-integrated-staging-build-qa.yml'])own.add(path);
 for(const path of [".github/workflows/staging-artifact-integrity-qa.yml","docs/STAGING-ARTIFACT-REVIEW-20261021.md","scripts/check-staging-artifact-integrity.mjs","scripts/verify-restricted-staging-bundle.mjs","tests/staging-artifact-integrity.test.mjs","tests/restricted-staging-integration.test.mjs","scripts/check-staging-preflight-scope.mjs","docs/PROGRESS-CHECKPOINT.md","scripts/check-final-integrated-artifact-review.mjs",".github/workflows/final-integrated-artifact-review-qa.yml","docs/FINAL-INTEGRATED-ARTIFACT-REVIEW-20261021.md"])own.add(path);
 for(const path of [".github/workflows/staging-asset-seal-qa.yml","docs/STAGING-ASSET-SEAL-20261021.md","scripts/build-restricted-staging.mjs","scripts/staging-asset-seal.mjs","scripts/verify-restricted-staging-bundle.mjs","tests/restricted-staging-integration.test.mjs","tests/staging-asset-seal.test.mjs","scripts/check-integrated-security-mobile-staging.mjs","scripts/check-final-integrated-artifact-review.mjs","scripts/check-integrated-asset-seal.mjs","scripts/check-staging-preflight-scope.mjs","docs/PROGRESS-CHECKPOINT.md","docs/FINAL-INTEGRATED-ASSET-SEAL-20261021.md",".github/workflows/final-integrated-asset-seal-qa.yml"])own.add(path);
+if(spawnSync('git',['merge-base','--is-ancestor','1572145211fbeef582f4286dd3bcb796e7ccc191','HEAD']).status===0){
+ const pilot=await import('./check-private-pilot-kit-scope.mjs');
+ pilot.checkPilotScope();
+ for(const path of pilot.pilotFiles)own.add(path);
+}
+for(const path of ['docs/FINAL-INTEGRATED-PILOT-VALIDATION-20261021.md',
+ '.github/workflows/final-integrated-pilot-validation-qa.yml',
+ 'scripts/check-final-integrated-pilot-validation.mjs'])own.add(path);
 const pinnedLock=path=>withLock&&lockFiles.has(path)&&!own.has(path);
 const checkLock=path=>assert.equal(git('rev-parse','HEAD:'+path),git('rev-parse',LOCKING+':'+path),'Verified build locking source overwritten: '+path);
 if(withLock)for(const path of git('diff','--name-only',PRIOR_INTEGRATION,'HEAD').split('\n').filter(Boolean)){
