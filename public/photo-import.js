@@ -41,14 +41,18 @@ async function photoToJPEG(file,{maxDimension=3072,quality=.94,maxDataURLLength=
   throw Error('Photo is too large after conversion. Try a closer photo.');
  }finally{URL.revokeObjectURL(url);}
 }
-async function readPhotoBatch(files,decode,onPhoto){
- const errors=[],results=[];let added=0;
+async function readPhotoBatch(files,decode,onPhoto,{isCurrent=()=>true}={}){
+ const errors=[],results=[];let added=0,cancelled=false;
  for(const file of files){
+  // Decoding is async on phones and the selected customer may sign out before
+  // a queued photo finishes. Never feed that older owner's photo to a newer
+  // signed-in closet, even if a browser tab remains open during the switch.
+  if(!isCurrent()){cancelled=true;break;}
   let reason=null;
   if(file.size>10*1024*1024)reason='larger than 10 MB';
   else{
    // iOS share sheets and exported pictures sometimes supply an empty MIME.
-   // Decode is still authoritative: a renamed non-image must not be added.
+   // Decode remains authoritative; a renamed nonimage never gets indexed.
    const mime=typeof file.type==='string'?file.type.toLowerCase():'';
    const extension=/\.(?:jpe?g|png|webp|avif|heic|heif)$/i.test(file.name||'');
    if(!mime.startsWith('image/')&&!(extension&&(!mime||mime==='application/octet-stream')))
@@ -56,14 +60,20 @@ async function readPhotoBatch(files,decode,onPhoto){
   }
   if(reason){errors.push(file.name+': '+reason);results.push({name:file.name,status:'rejected',reason});continue;}
   try{
-   const image=await decode(file),accepted=await onPhoto(image,file);
+   const image=await decode(file);
+   // This guard runs AFTER every async decode, immediately before the only
+   // callback that can queue a garment in the app. Fail closed without a save.
+   if(!isCurrent()){cancelled=true;break;}
+   const accepted=await onPhoto(image,file);
+   if(!isCurrent()){cancelled=true;break;}
    if(accepted===false){results.push({name:file.name,status:'duplicate',reason:'exact duplicate image'});}
    else{added++;results.push({name:file.name,status:'added'});}
   }catch(error){
+   if(!isCurrent()){cancelled=true;break;}
    reason=error instanceof Error?error.message:'unknown error';
    errors.push(file.name+': could not open; try JPEG or PNG');
    results.push({name:file.name,status:'error',reason});
   }
  }
- return {added,errors,results};
+ return {added,errors,results,cancelled};
 }

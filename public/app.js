@@ -1037,9 +1037,25 @@ $('retryRecognition').onclick=recognizeBatch;
 async function importClothingPhotos(files){
  if(busy||!files.length)return;
  if(files.length>20)return message('Choose up to 20 clothing photos per batch.');
+ const owner=window.closetAuth?.user?.id;
+ if(!owner)return message('Sign in before adding clothing photos to My closet.');
+ const isCurrent=()=>owner===window.closetAuth?.user?.id;
  stopCamera();busy=true;controls(true);session=0;
+ // Do not let a prior batch's filenames/results look like a new import after
+ // the customer changes accounts on this browser.
+ if(typeof window!=='undefined')window.__lastPhotoImportResult=null;
  try{
-  const result=await readPhotoBatch(files,photoToJPEG,(image,file)=>{const accepted=candidate(image);if(accepted){const item=batch.at(-1);if(item)item.importFilename=file.name;}return accepted;});
+  const result=await readPhotoBatch(files,photoToJPEG,(image,file)=>{
+   if(!isCurrent())return false;
+   const accepted=candidate(image);
+   if(accepted){const item=batch.at(-1);if(item)item.importFilename=file.name;}
+   return accepted;
+  },{isCurrent});
+  if(!isCurrent()||result.cancelled){
+   if(typeof window!=='undefined')window.__lastPhotoImportResult={added:0,errors:[],results:[],cancelled:true};
+   message('Photo import stopped because the signed-in account changed. Sign in again before importing.');
+   return;
+  }
   if(typeof window!=='undefined')window.__lastPhotoImportResult=result;
   if(result.added){switchView('review');message(result.errors.length?result.errors.join('; '):'');}
   else message(result.errors.length?'No photos could be imported. '+result.errors.join('; '):'Exact duplicate photos were skipped; they are already in your closet or review batch.');
