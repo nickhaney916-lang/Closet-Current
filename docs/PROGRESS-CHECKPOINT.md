@@ -1,3 +1,9 @@
+# Integrated human-review readiness with cloud conflict recovery — October 20, 2026 Pacific
+
+- Isolated branch `integration/cloud-retry-human-review-safe-20261020` pins unmodified five PR #117 readiness source blobs to exact reviewed head `218ac1ea98333e72b7ccc090a13a46f581015dc3` on verified PR #118 cloud base `f16fce2956688e576edde6ecfdc390d3f46158a3`.
+- Complete existing real-closet/customer runtime unchanged; reviewed Keep both cloud retries and source-locked original-photo human review coexist without production authorization. Exact-blob audit and both historical cloud/pilot guards remain active.
+- Dedicated real Chromium/WebKit and original JPEG presentation verification workflow added; real human submissions remain **zero**, accuracy **null**, promotion **BLOCKED**. Branch is development-only, not merged or deployed. See `docs/INTEGRATED-CLOUD-HUMAN-REVIEW-20261020.md`.
+
 # Keep both versions across interrupted cloud sync — October 20, 2026 Pacific
 
 - Stacked isolated branch `fix/cloud-conflict-keep-both-retry-20261020` onto previously verified combined draft PR #115 `6ebcf6d9dcfd18611c3248242b62208eb9923385`. No modifications to PR #113, Work-owned human-label collection, independent model, original/source-locked photos, or `main`.

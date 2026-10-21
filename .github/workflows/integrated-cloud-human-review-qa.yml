@@ -1,0 +1,80 @@
+name: Cloud recovery plus exact human-original review integration QA
+on:
+  push:
+    branches: [integration/cloud-retry-human-review-safe-20261020]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  source-and-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Pin cloud and human sources, retain pilot veto
+        run: |
+          node scripts/check-human-review-cloud-bridge.mjs
+          node scripts/check-blind-photo-cloud-integration.mjs
+          node scripts/verify-camera-cloud-integration.mjs
+          node scripts/check-dual-parent-review-integration.mjs
+          node scripts/check-customer-pilot-release-gates.mjs
+      - name: Build and run every Node regression including the 13-original readiness tests
+        run: |
+          node --check public/cloud-backup.js
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+  browser-and-originals:
+    needs: source-and-regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      GH_TOKEN: ${{ github.token }}
+      HOLDOUT_OUTPUT: /tmp/review-source-originals
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned mobile browser engines
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1 sharp@0.34.4
+          npx playwright install --with-deps chromium webkit
+      - name: Confirm Keep both, owner isolation and owned wardrobe styling on both browser engines
+        run: |
+          node scripts/test-cloud-conflict-retry-browsers.mjs
+          node scripts/test-cloud-session-generation-browsers.mjs
+          node scripts/build.mjs
+          node scripts/test-style-my-new-item-mobile.mjs
+          STYLE_BROWSER=webkit node scripts/test-style-my-new-item-mobile.mjs
+      - name: Fetch previously source-locked 13 originals (never replacement thumbnails)
+        run: |
+          gh run download 39538230372 -n new-source-originals-before-inference -D "$HOLDOUT_OUTPUT"
+          node scripts/human-original-review-readiness.mjs prepare "$HOLDOUT_OUTPUT" "$RUNNER_TEMP/human-review"
+      - name: Actual original display and incomplete-image denial in both browsers; no human responses
+        run: |
+          mkdir -p "$RUNNER_TEMP/readiness-evidence"
+          node scripts/test-human-original-review-readiness.mjs "$RUNNER_TEMP/human-review" "$RUNNER_TEMP/readiness-evidence/browser-checks.json"
+          node scripts/human-original-review-readiness.mjs report "$RUNNER_TEMP/readiness-evidence/browser-checks.json" "$RUNNER_TEMP/readiness-evidence/readiness.json"
+          node scripts/test-original-crop-source-mobile.mjs
+          node scripts/test-native-camera-fidelity-mobile.mjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: integrated-cloud-independent-humans-blank-review-packet
+          path: ${{ runner.temp }}/human-review/
+          retention-days: 14
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: combined-original-display-evidence-no-human-reviews
+          path: ${{ runner.temp }}/readiness-evidence/
+          retention-days: 14
+          if-no-files-found: warn
