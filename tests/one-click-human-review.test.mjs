@@ -38,7 +38,7 @@ test('one-file reviewer exposes only explicit local draft export and refuses pri
  const p=packet(),sources=p.photos.map(x=>({id:x.id,sha256:x.sha256,base64:'/9j/2Q=='}));
  const html=oneClickHTML(p,sources);
  for(const required of ['readDraftData','packetSha256','observedFamily','uncertain','evidence',
-  "$(k).checked=false",'Duplicate','Draft not loaded','review-draft.json'])
+  "$(k).checked=false",'duplicate','Draft not loaded','review-draft.json'])
   assert.ok(html.includes(required),required+' draft guard missing');
  assert.ok(!html.includes('modelPrediction:'));
  assert.ok(html.indexOf('DRAFT_UNREVIEWED')>html.indexOf('const requiredDraftFields'));
