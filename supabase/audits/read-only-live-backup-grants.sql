@@ -1,0 +1,32 @@
+-- READ ONLY; paste into Supabase SQL editor if authorized. No customer rows,
+-- email, UUID, token, password, project keys, stored photos or account access.
+-- One JSON object of boolean permissions only. Never add write operations.
+select jsonb_build_object(
+ 'format','closet-current-security-catalog',
+ 'version',1,
+ 'backupRls',(select relrowsecurity from pg_class where oid='public.closet_backups'::regclass),
+ 'backupOwnerPolicy',(select count(*)=1 from pg_policies where schemaname='public' and tablename='closet_backups' and policyname='closet_backup_owner' and cmd='ALL' and roles='{authenticated}' and qual like '%auth.uid()%owner_id%' and with_check like '%auth.uid()%owner_id%'),
+ 'anonCanSelect',has_table_privilege('anon','public.closet_backups','SELECT'),
+ 'authCanSelect',has_table_privilege('authenticated','public.closet_backups','SELECT'),
+ 'authCanInsert',has_table_privilege('authenticated','public.closet_backups','INSERT'),
+ 'authCanUpdate',has_table_privilege('authenticated','public.closet_backups','UPDATE'),
+ 'authCanDelete',has_table_privilege('authenticated','public.closet_backups','DELETE'),
+ 'authCanTruncate',has_table_privilege('authenticated','public.closet_backups','TRUNCATE'),
+ 'authCanTrigger',has_table_privilege('authenticated','public.closet_backups','TRIGGER'),
+ 'authCanReferences',has_table_privilege('authenticated','public.closet_backups','REFERENCES'),
+ 'authCanMaintain',has_table_privilege('authenticated','public.closet_backups','MAINTAIN'),
+ 'backupRpcInvoker',(select NOT prosecdef from pg_proc where oid='public.save_closet_backup(bigint,jsonb)'::regprocedure),
+ 'authCanCallBackupRpc',has_function_privilege('authenticated','public.save_closet_backup(bigint,jsonb)','EXECUTE'),
+ 'anonCanCallBackupRpc',has_function_privilege('anon','public.save_closet_backup(bigint,jsonb)','EXECUTE'),
+ 'photoBucketPrivate',(select NOT public from storage.buckets where id='closet-private'),
+ 'photoStorageRls',(select relrowsecurity from pg_class where oid='storage.objects'::regclass),
+ 'photoSelectOwnerPolicy',(select count(*)=1 from pg_policies where schemaname='storage' and tablename='objects' and policyname='closet_photos_read' and cmd='SELECT' and roles='{authenticated}' and qual like '%closet-private%' and qual like '%auth.uid()%'),
+ 'photoInsertOwnerPolicy',(select count(*)=1 from pg_policies where schemaname='storage' and tablename='objects' and policyname='closet_photos_insert' and cmd='INSERT' and roles='{authenticated}' and with_check like '%closet-private%' and with_check like '%auth.uid()%'),
+ 'photoUpdatePolicyPresent',(select count(*)>0 from pg_policies where schemaname='storage' and tablename='objects' and policyname='closet_photos_update' and cmd='UPDATE'),
+ 'privateWriterPresent',(select count(*)=1 from pg_roles where rolname='closet_backup_writer'),
+ 'privateWriterSafe',(select count(*)=1 from pg_roles where rolname='closet_backup_writer' and rolcanlogin=false and rolbypassrls=false),
+ 'privateRpcDefinerOwned',(select count(*)=1 from pg_proc p join pg_namespace n on p.pronamespace=n.oid join pg_roles r on p.proowner=r.oid where n.nspname='closet_rpc_private' and p.proname='save_checked' and p.pronargs=2 and p.prosecdef and r.rolname='closet_backup_writer'),
+ 'authCanCallPrivateRpc',coalesce((select has_function_privilege('authenticated',p.oid,'EXECUTE') from pg_proc p join pg_namespace n on p.pronamespace=n.oid where n.nspname='closet_rpc_private' and p.proname='save_checked' and p.pronargs=2),false),
+ 'anonCanCallPrivateRpc',coalesce((select has_function_privilege('anon',p.oid,'EXECUTE') from pg_proc p join pg_namespace n on p.pronamespace=n.oid where n.nspname='closet_rpc_private' and p.proname='save_checked' and p.pronargs=2),false),
+ 'authHasWriterMembership',coalesce((select pg_has_role('authenticated',r.oid,'MEMBER') from pg_roles r where r.rolname='closet_backup_writer'),false)
+) as snapshot;
