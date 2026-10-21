@@ -63,8 +63,14 @@ assert.equal(priorReviewScript.slice(0,priorReviewStart)+priorReviewScript.slice
 const baselineReviewAssertion="assert.equal(normalize(fs.readFileSync(p,'utf8')),\n   normalize(execFileSync('git',['show',customer+':'+p],{encoding:'utf8',maxBuffer:5_000_000})),\n   'Non-camera app bytes changed, including original-photo recognition/indexing";
 const extendedDuplicateAssertion="// Only the two narrowly approved duplicate guards may change customer\n  // code after the historically verified camera/human merge.\n  const prior=execFileSync('git',['show','844ccd64c90d5b31664b422b07bf301b5071bf60:public/app.js'],{encoding:'utf8',maxBuffer:15_000_000});\n  const oldDup=\" if(!proposed.outfitSourceId||!validPhoto(newSource)||\\n    !validPhoto(proposed.recognitionPhoto?.image))return true;\";\n  const newDup=\" if(!proposed.outfitSourceId)return true;\\n // A matching cleaned preview is never enough to discard an outfit region\\n // when its original RGB or full-scene provenance is missing. Preserve it\\n // in review instead: two different garments can share one display cutout.\\n if(!validPhoto(newSource)||!validPhoto(proposed.recognitionPhoto?.image))return false;\";\n  const oldSave=\"  // The queue can wait while recognition or a user edit changes the draft.\\n  // Snapshot ONLY after the last safety validation, so the IndexedDB item\";\n  const newSave=\"  // Another capture, cloud restore or manual save can add a matching item\\n  // while this classifier waits in the write queue. Recheck immediately\\n  // before opening the transaction, without silently deleting the photo.\\n  const latest=[...items,...batch].filter(x=>x.id!==item.id);\\n  const conflicts=latest.some(x=>x.image===item.image||\\n   (!independentlyDistinctOutfitRegions(item,x)&&\\n    Number.isFinite(item.visualAspect)&&Number.isFinite(x.visualAspect)&&\\n    Math.abs(x.visualAspect-item.visualAspect)<.02&&\\n    similarPhotos(item.visualSignature,x.visualSignature)));\\n  if(conflicts){\\n   item.possibleDuplicate=true;\\n   item.localStatus='Possible duplicate: compare this photo with your closet before saving.';\\n   return resolve(false);\\n  }\\n  // The queue can wait while recognition or a user edit changes the draft.\\n  // Snapshot ONLY after the last safety validation, so the IndexedDB item\";\n  assert.ok(prior.includes(oldDup)&&prior.includes(oldSave),'Reviewed duplicate baseline changed');\n  assert.equal(fs.readFileSync(p,'utf8'),prior.replace(oldDup,newDup).replace(oldSave,newSave),\n   'Unreviewed app change outside two duplicate gates');\n  assert.equal(normalize(prior),\n   normalize(execFileSync('git',['show',customer+':'+p],{encoding:'utf8',maxBuffer:5_000_000})),\n   'Original-photo recognition/indexing differs from reviewed customer branch";
 assert.ok(priorReviewScript.includes(baselineReviewAssertion),'Expected human review block absent');
-assert.equal(currentReviewScript,priorReviewScript.replace(baselineReviewAssertion,extendedDuplicateAssertion),
- 'Human review gate changed outside exact two duplicate source comparison');
+const previousColorReview=execFileSync('git',['show','a6ee34a676030cff2a4fcf3b31185275c78371a7:'+reviewScript],{encoding:'utf8',maxBuffer:15_000_000});
+assert.equal(previousColorReview,priorReviewScript.replace(baselineReviewAssertion,extendedDuplicateAssertion),
+ 'Reviewed prior human-source integration differs from color-review parent');
+const maskReviewBefore="assert.equal(fs.readFileSync(p,'utf8'),prior.replace(oldDup,newDup).replace(oldSave,newSave),\n   'Unreviewed app change outside two duplicate gat";
+const maskReviewAfter="const priorTrustedApp=execFileSync('git',['show','a6ee34a676030cff2a4fcf3b31185275c78371a7:public/app.js'],{encoding:'utf8',maxBuffer:15_000_000});\n  assert.equal(priorTrustedApp,prior.replace(oldDup,newDup).replace(oldSave,newSave),\n   'Customer app before masked-color fix differs from exact duplicate-reviewed parent');\n  const singleMaskAutoTrust=\"if(photo.maskedColorEstimate&&value.colorSource==='photo-estimate')value.colorMethod='garment-mask';\";\n  const properManualReview=\"// Only the editor's two-view verified foreground method is trusted.\";\n  const unverifiedOutfitAutoTrust=\"if(options.colorEstimate){Object.assign(item,ClothingDetails.fillColor(item,options.colorEstimate));if(item.colorSource==='photo-estimate')item.colorMethod='garment-mask';}\";\n  const originalBackedPalette=\"if(options.colorEstimate&&options.colorEstimate.source==='photo-estimate'&&Number.isFinite(options.colorEstimate.support)&&options.colorEstimate.support>=.6&&options.colorEstimate.support<=1&&!options.colorEstimate.needsConfirmation&&typeof options.recognitionPhoto?.image==='string'&&options.recognitionPhoto.image.startsWith('data:image/jpeg;base64,')&&typeof options.originalPhoto?.image==='string'&&options.originalPhoto.image.startsWith('data:image/jpeg;base64,')){Object.assign(item,ClothingDetails.fillColor(item,{...options.colorEstimate,method:'garment-mask'}));}\";\n  assert.ok(priorTrustedApp.includes(singleMaskAutoTrust)&&priorTrustedApp.includes(unverifiedOutfitAutoTrust),\n   'Pre-fix masked color provenance bypass changed');\n  assert.equal(fs.readFileSync(p,'utf8'),\n   priorTrustedApp.replace(singleMaskAutoTrust,properManualReview)\n    .replace(unverifiedOutfitAutoTrust,originalBackedPalette),\n   'Unreviewed app changes outside exactly two verified masked-color trust boundari";
+assert.ok(previousColorReview.includes(maskReviewBefore),'Color-review extension boundary changed');
+assert.equal(currentReviewScript,previousColorReview.replace(maskReviewBefore,maskReviewAfter),
+ 'Unapproved modification to historical human-source review beyond mask trust verification');
 const work='2d364a8537dc0e5be8ac7495d64bb78abad9b208';
 const handoff='6b85dfd61428f5bfd656dd6a4b702ad1c791ac7b';
 assert.deepEqual(git('rev-list','--parents','-n','1',handoff).split(' '),
@@ -88,8 +94,25 @@ const saveNew="  // Another capture, cloud restore or manual save can add a matc
 assert.ok(parentApp.includes(duplicateOld)&&parentApp.includes(saveOld),
  'Reviewed duplicate gates do not match parent app');
 const exactDuplicateApp=parentApp.replace(duplicateOld,duplicateNew).replace(saveOld,saveNew);
-assert.equal(fs.readFileSync('public/app.js','utf8'),exactDuplicateApp,
- 'Unreviewed change to customer app outside two duplicate/review checks');
+const reviewedBeforeMask=execFileSync('git',['show','a6ee34a676030cff2a4fcf3b31185275c78371a7:public/app.js'],{encoding:'utf8',maxBuffer:15_000_000});
+assert.equal(reviewedBeforeMask,exactDuplicateApp,'Original reviewed duplicate gates differ from exact parent');
+const oldMaskedCrop="if(photo.maskedColorEstimate&&value.colorSource==='photo-estimate')value.colorMethod='garment-mask';";
+const newMaskedCrop="// Only the editor's two-view verified foreground method is trusted.";
+const oldOutfitMask="if(options.colorEstimate){Object.assign(item,ClothingDetails.fillColor(item,options.colorEstimate));if(item.colorSource==='photo-estimate')item.colorMethod='garment-mask';}";
+const newOutfitMask="if(options.colorEstimate&&options.colorEstimate.source==='photo-estimate'&&Number.isFinite(options.colorEstimate.support)&&options.colorEstimate.support>=.6&&options.colorEstimate.support<=1&&!options.colorEstimate.needsConfirmation&&typeof options.recognitionPhoto?.image==='string'&&options.recognitionPhoto.image.startsWith('data:image/jpeg;base64,')&&typeof options.originalPhoto?.image==='string'&&options.originalPhoto.image.startsWith('data:image/jpeg;base64,')){Object.assign(item,ClothingDetails.fillColor(item,{...options.colorEstimate,method:'garment-mask'}));}";
+assert.ok(reviewedBeforeMask.includes(oldMaskedCrop)&&reviewedBeforeMask.includes(oldOutfitMask),
+ 'Expected previous unproven mask provenance promotion missing');
+assert.equal(fs.readFileSync('public/app.js','utf8'),
+ reviewedBeforeMask.replace(oldMaskedCrop,newMaskedCrop).replace(oldOutfitMask,newOutfitMask),
+ 'Customer application changed beyond exactly two verified mask-color provenance checks');
+const olderEditor=execFileSync('git',['show','a6ee34a676030cff2a4fcf3b31185275c78371a7:public/photo-crop-editor.js'],{encoding:'utf8',maxBuffer:15_000_000});
+const beforeEditorPalette="const palette=window.PhotoColor?.maskedPalette(pixels.data,canvas.width,canvas.height);if(palette&&!palette.needsConfirmation)photo.maskedColorEstimate={color:palette.primary,source:'photo-estimate',secondaryColor:palette.secondary};";
+const afterEditorPalette="const confirmed=cropMaskColorEvidence(pixels.data,canvas.width,canvas.height,window.PhotoColor);if(confirmed)photo.maskedColorEstimate=confirmed;";
+const approvedEvidenceFunction="// A hand-painted mask can contain clothing, a wall or a shadow. A single\n// masked pixel histogram is not evidence of an independent garment color.\n// Compare the full painted foreground with a safely eroded interior; require\n// enough excluded background to distinguish a mask from an opaque crop.\nfunction cropMaskColorEvidence(bytes,width,height,paletteEngine){\n if(!Number.isInteger(width)||!Number.isInteger(height)||width<32||height<32||\n    !bytes||bytes.length!==width*height*4||!paletteEngine?.maskedPalette||\n    !paletteEngine?.confirmedGarmentPalette)return null;\n let excluded=0;\n for(let i=3;i<bytes.length;i+=4)if(bytes[i]<224)excluded++;\n if(excluded<width*height*.05)return null;\n const raw=paletteEngine.maskedPalette(bytes,width,height);\n if(!raw||raw.needsConfirmation||raw.coverage>.93)return null;\n const interior=new Uint8ClampedArray(bytes),radius=Math.max(2,Math.min(16,Math.round(Math.min(width,height)*.014)));\n for(let y=0;y<height;y++)for(let x=0;x<width;x++){\n  const a=(y*width+x)*4+3;\n  if(x<radius||y<radius||x+radius>=width||y+radius>=height||\n   bytes[a]<224||\n   bytes[(y*width+x-radius)*4+3]<224||\n   bytes[(y*width+x+radius)*4+3]<224||\n   bytes[((y-radius)*width+x)*4+3]<224||\n   bytes[((y+radius)*width+x)*4+3]<224)interior[a]=0;\n }\n const core=paletteEngine.maskedPalette(interior,width,height);\n const result=paletteEngine.confirmedGarmentPalette(raw,core);\n return result&&result.source==='photo-estimate'&&\n  Number.isFinite(result.support)&&result.support>=.6&&result.support<=1?\n  {...result,method:'garment-mask',needsConfirmation:false}:null;\n}\n";
+assert.ok(olderEditor.includes(beforeEditorPalette),'Original masked crop palette region missing');
+assert.equal(fs.readFileSync('public/photo-crop-editor.js','utf8'),
+ approvedEvidenceFunction+olderEditor.replace(beforeEditorPalette,afterEditorPalette),
+ 'Unreviewed manually edited mask palette change');
 assert.equal(normalizedCamera(parentApp),normalizedCamera(workApp),
  'Parent noncamera code diverged from the completed Work PR #91 after handoff');
 assert.equal(git('rev-parse',handoff+':public/app.js'),git('rev-parse',work+':public/app.js'),
@@ -184,6 +207,13 @@ const allowedIndependentClip=new Set([
  '.github/workflows/independent-clip-subtype-trial.yml',
  'docs/INDEPENDENT-CLIP-SUBTYPE-TRIAL-20261021.md'
 ]);
+// Only the verified customer crop color evidence fix and its isolated tests.
+const allowedMaskedColorReview=new Set([
+ 'public/photo-crop-editor.js',
+ 'tests/masked-crop-color-evidence.test.cjs',
+ '.github/workflows/masked-photo-color-evidence-qa.yml',
+ 'docs/MASKED-PHOTO-COLOR-EVIDENCE-20261021.md'
+]);
 const allowedWork=new Set([
  'public/app.js',
  'docs/PROGRESS-CHECKPOINT.md',
@@ -213,7 +243,7 @@ const allowedNew=new Set([
 for(const p of new Set([...m.keys(),...head.keys()])){
  if(m.get(p)!==head.get(p)){
   if(p==='public/index.html'||p==='scripts/build.mjs'||p===reviewScript)continue;
-  assert.ok(allowedWork.has(p)||(allowedNew.has(p)&&!m.has(p))||(allowedSecurity.has(p)&&!m.has(p))||(allowedBackupRpc.has(p)&&!m.has(p))||(allowedLocalSupabaseEvidence.has(p)&&!m.has(p))||allowedAuthSession.has(p)||allowedColorEvidence.has(p)||allowedDuplicateQA.has(p)||allowedRecognitionAdmission.has(p)||allowedSubtypeTrial.has(p)||allowedIndependentClip.has(p),
+  assert.ok(allowedWork.has(p)||(allowedNew.has(p)&&!m.has(p))||(allowedSecurity.has(p)&&!m.has(p))||(allowedBackupRpc.has(p)&&!m.has(p))||(allowedLocalSupabaseEvidence.has(p)&&!m.has(p))||allowedAuthSession.has(p)||allowedColorEvidence.has(p)||allowedDuplicateQA.has(p)||allowedRecognitionAdmission.has(p)||allowedSubtypeTrial.has(p)||allowedIndependentClip.has(p)||allowedMaskedColorReview.has(p),
    'Unreviewed change after merge: '+p);
  }
 }
