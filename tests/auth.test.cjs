@@ -15,9 +15,9 @@ function app(fetchImpl=async()=>{throw new TypeError('network unavailable');},ca
  elements.get('authEmail').value='test@example.invalid';
  elements.get('authPassword').value='test-password-only';
  elements.get('authUsername').value='test_user';
- const saved=new Map(),window={ClosetPilotNotice:require('../public/pilot-notice.js')};if(initialSession)saved.set('closet-current-auth-v1',JSON.stringify(initialSession));let timerId=0,reloaded=false;
- vm.runInNewContext(source,{window,document:{getElementById:id=>elements.get(id)},localStorage:{getItem:key=>saved.get(key)||null,setItem:(key,value)=>saved.set(key,value),removeItem:key=>saved.delete(key)},location:{reload(){reloaded=true;},pathname:'/Closet-Current/',...callback},history:{replaceState(){}},URLSearchParams,AbortController,TypeError,setTimeout:fn=>{timers.set(++timerId,fn);return timerId;},clearTimeout:id=>timers.delete(id),fetch:async(...args)=>{requests.push(args);return fetchImpl(...args);}});
- return {get:id=>elements.get(id),listeners,timers,requests,window,saved,reloaded:()=>reloaded,submit:()=>elements.get('authForm').onsubmit({preventDefault(){}})};
+ const saved=new Map(),window={ClosetPilotNotice:require('../public/pilot-notice.js')};if(initialSession)saved.set('closet-current-auth-v1',JSON.stringify(initialSession));let timerId=0,reloaded=false,sanitized=null;
+ vm.runInNewContext(source,{window,document:{getElementById:id=>elements.get(id)},localStorage:{getItem:key=>saved.get(key)||null,setItem:(key,value)=>saved.set(key,value),removeItem:key=>saved.delete(key)},location:{reload(){reloaded=true;},pathname:'/Closet-Current/',...callback},history:{replaceState(...args){sanitized=args;}},URLSearchParams,AbortController,TypeError,setTimeout:fn=>{timers.set(++timerId,fn);return timerId;},clearTimeout:id=>timers.delete(id),fetch:async(...args)=>{requests.push(args);return fetchImpl(...args);}});
+ return {get:id=>elements.get(id),listeners,timers,requests,window,saved,reloaded:()=>reloaded,sanitized:()=>sanitized,submit:()=>elements.get('authForm').onsubmit({preventDefault(){}})};
 }
 const response=(data,ok=true)=>({ok,json:async()=>data});
 test('new visitors get signup guidance and hidden username cannot block login',()=>{
@@ -364,4 +364,101 @@ test('normal refresh rotates credentials once and preserves original account',as
  assert.deepEqual(tokens,['rotated','rotated']);
  assert.equal(a.window.closetAuth.user.id,'owner-A');
  assert.equal(JSON.parse(a.saved.get('closet-current-auth-v1')).refresh_token,'rotated-refresh');
+});
+
+
+test('custom signup email token hash verifies through Supabase before unlocking wardrobe',async()=>{
+ const a=app(async(url,options)=>{
+  if(url.endsWith('/auth/v1/verify')){
+   assert.equal(options.method,'POST');
+   assert.deepEqual(JSON.parse(options.body),{token_hash:'abc12345deadbeef',type:'signup'});
+   return response({access_token:'verified',refresh_token:'rotated',user:{id:'owner-otp'}});
+  }
+  if(url.endsWith('/auth/v1/user')){
+   assert.equal(options.method,'GET');
+   assert.equal(options.headers.Authorization,'Bearer verified');
+   return response({id:'owner-otp',email:'owner@example.invalid'});
+  }
+  throw Error('Unexpected Auth endpoint');
+ },{search:'?token_hash=abc12345deadbeef&type=signup'});
+ await new Promise(setImmediate);
+ assert.equal(a.requests.length,2);
+ assert.equal(a.window.closetAuth.user?.id,'owner-otp');
+ assert.equal(a.get('appShell').hidden,false);
+ assert.equal(a.sanitized()?.[2],'/Closet-Current/','one-time hash removed from history before network access');
+});
+test('direct recovery token hash requires password change and same verified account',async()=>{
+ const a=app(async(url,options)=>{
+  if(url.endsWith('/verify'))return response({
+   access_token:'valid-recovery',refresh_token:'valid-refresh',user:{id:'recovery-owner',email:'owner@example.invalid'}
+  });
+  if(url.endsWith('/user')&&options.method==='GET')return response({id:'recovery-owner',email:'owner@example.invalid'});
+  if(url.endsWith('/user')&&options.method==='PUT'){
+   assert.equal(JSON.parse(options.body).password,'new-secret-password');
+   return response({id:'recovery-owner',email:'owner@example.invalid'});
+  }
+  throw Error('Unexpected Auth endpoint');
+ },{search:'?type=recovery&token_hash=recoveryhash123'});
+ await new Promise(setImmediate);
+ assert.equal(a.window.closetAuth.user,null,'recovery link alone cannot expose the closet');
+ assert.equal(a.get('appShell').hidden,true);
+ assert.match(a.get('authSubmit').textContent,/Save new password/);
+ assert.equal(a.sanitized()?.[2],'/Closet-Current/');
+ a.get('authPassword').value='new-secret-password';
+ await a.submit();
+ assert.equal(a.requests.length,3);
+ assert.equal(a.window.closetAuth.user.id,'recovery-owner');
+});
+test('malformed hash or unknown email link type never reaches verification API',async()=>{
+ for(const search of [
+  '?token_hash=short&type=signup',
+  '?token_hash=abc12345deadbeef&type=garbage',
+  '?token_hash=abc12345deadbeef',
+  '?token_hash=abc12345deadbeef&type=signup&code=conflict'
+ ]){
+  const a=app(async()=>{throw Error('Must not make a request');},{search});
+  await new Promise(setImmediate);
+  assert.equal(a.requests.length,0,search);
+  assert.equal(a.window.closetAuth.user,null);
+  assert.equal(a.get('appShell').hidden,true);
+  assert.match(a.get('authStatus').textContent,/could not be verified/);
+  assert.equal(a.sanitized()?.[2],'/Closet-Current/');
+ }
+});
+test('mismatched verified user and missing usable session never unlock email link',async()=>{
+ for(const verifyResponse of [
+  {access_token:'verified',refresh_token:'refresh',user:{id:'first'}},
+  {access_token:'verified',user:{id:'first'}},
+  {access_token:'',refresh_token:'refresh',user:{id:'first'}}
+ ]){
+  const a=app(async(url)=>{
+   if(url.endsWith('/verify'))return response(verifyResponse);
+   if(url.endsWith('/user'))return response({id:'another-owner'});
+   throw Error('Unexpected Auth endpoint');
+  },{search:'?token_hash=abc12345deadbeef&type=email'});
+  await new Promise(setImmediate);
+  assert.equal(a.window.closetAuth.user,null);
+  assert.equal(a.saved.has('closet-current-auth-v1'),false);
+  assert.equal(a.get('appShell').hidden,true);
+  assert.match(a.get('authStatus').textContent,/could not be verified/);
+ }
+});
+test('expired or rejected one-time email hash does not expose another account',async()=>{
+ const a=app(async()=>response({error_code:'otp_expired',msg:'expired'},false),
+  {search:'?token_hash=abc12345deadbeef&type=signup'});
+ await new Promise(setImmediate);
+ assert.equal(a.requests.length,1,'no automatic resend or repeated use of expired hash');
+ assert.equal(a.window.closetAuth.user,null);
+ assert.equal(a.get('authSubmit').disabled,false);
+ assert.equal(a.get('appShell').hidden,true);
+ assert.equal(a.sanitized()?.[2],'/Closet-Current/');
+});
+test('PKCE code without matching verifier is rejected with recovery guidance, never exchanged',async()=>{
+ const a=app(async()=>{throw Error('Must not exchange code');},{search:'?code=unmatched-one-time-auth-code'});
+ await new Promise(setImmediate);
+ assert.equal(a.requests.length,0);
+ assert.equal(a.window.closetAuth.user,null);
+ assert.match(a.get('authStatus').textContent,/unsupported code callback/);
+ assert.match(a.get('authStatus').textContent,/Request a fresh/);
+ assert.equal(a.sanitized()?.[2],'/Closet-Current/');
 });
