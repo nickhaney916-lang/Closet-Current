@@ -295,6 +295,7 @@ const allowedBlindReviewIntegration=new Set([
 // runtime blobs except the pinned cloud backup client remain unchanged.
 const allowedCloudConflictRetry=new Set([
  'tests/cloud-conflict-retry.test.cjs',
+ 'scripts/test-cloud-conflict-retry-browsers.mjs',
  '.github/workflows/cloud-conflict-retry-qa.yml',
  'docs/CLOUD-CONFLICT-RETRY-RECOVERY-20261020.md',
  'scripts/check-blind-photo-cloud-integration.mjs'
