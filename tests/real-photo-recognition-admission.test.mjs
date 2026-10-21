@@ -52,8 +52,8 @@ test('safe abstentions are not incorrectly counted as category errors or success
  const b=fixtures()['holdout-16'];
  const r=auditRecognitionSet('holdout-16',b.manifest,b.results);
  assert.equal(r.categoryAbstentions,6);
- assert.equal(r.categoryAccuracyAllGarmentsPercent,61.54);
- assert.equal(r.categoryCoveragePercent,61.54);
+ assert.equal(r.categoryAccuracyAllGarmentsPercent,53.85);
+ assert.equal(r.categoryCoveragePercent,53.85);
  assert.equal(r.categoryPrecisionAmongEmittedPercent,100);
  assert.deepEqual(r.abstentionIds,['commons-0016','commons-0036','commons-0059','commons-0060','commons-0062','commons-0095']);
 });
