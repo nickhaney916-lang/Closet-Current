@@ -25,7 +25,9 @@ assert.ok(index.includes('PRIVATE STAGING — DISPOSABLE TEST ACCOUNTS ONLY'));
 assert.ok(headers.includes('noindex'));
 for(const [label,source]of [['index',index],['sw',sw],['photo',photo],['saved',saved]])
  assert.ok(source.includes(proof.bundleFingerprint),label+' did not use the staging-specific release');
-assert.ok(sw.includes('closet-current-'+proof.bundleFingerprint));
+assert.ok(sw.includes('closet-current-staging-'+proof.bundleFingerprint));
+assert.ok(sw.includes("key.startsWith('closet-current-staging-')"));
+assert.ok(!sw.includes("key.startsWith('closet-current-')"));
 assert.ok(photo.includes('content="'+proof.bundleFingerprint+'"'));
 assert.ok(saved.includes('value="'+proof.bundleFingerprint+'"'));
 console.log('RESTRICTED_STAGING_BUNDLE_QA '+JSON.stringify({

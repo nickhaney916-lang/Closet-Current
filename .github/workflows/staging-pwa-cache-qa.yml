@@ -1,0 +1,41 @@
+name: Staging-only service worker cache isolation QA
+on:
+  push:
+    branches: [test/staging-pwa-cache-isolation-20261021]
+permissions:
+  contents: read
+jobs:
+  isolated-stage-worker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prove production and customer photo/wardrobe source unchanged
+        run: |
+          set -euo pipefail
+          git diff --exit-code 4456016f6fed91e07cde08d71fcc17f2c7ff4300 HEAD -- public supabase .github/workflows/pages.yml .github/workflows/cloudflare-pages.yml
+          node scripts/check-staging-preflight-scope.mjs
+          node scripts/check-integrated-pilot-rc.mjs
+          node scripts/check-customer-pilot-release-gates.mjs
+      - name: Full app build and Node regression tests
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Produce and validate generated synthetic restricted staging bundle
+        env:
+          CLOSET_STAGING_APP_ORIGIN: https://preview.closet-current-staging.pages.dev/
+          CLOSET_STAGING_SUPABASE_URL: https://abcdefghijklmnopqrst.supabase.co
+          CLOSET_STAGING_SUPABASE_PUBLISHABLE_KEY: sb_publishable_STAGING_TEST_FIXTURE_XYZ001
+        run: |
+          node scripts/build-restricted-staging.mjs
+          node scripts/verify-restricted-staging-bundle.mjs
+          node scripts/test-staging-sw-cache.mjs
+      - name: No staging or production deployment executed
+        run: |
+          test ! -f supabase/migrations/20261021_staging_sw_cache.sql
+          echo 'SYNTHETIC STAGING SERVICE WORKER QA ONLY. NO DEPLOYMENT OR PAID PROVIDER.'
