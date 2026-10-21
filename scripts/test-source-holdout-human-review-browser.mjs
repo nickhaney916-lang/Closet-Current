@@ -13,7 +13,9 @@ try{
   const browser=await engine.launch({headless:true});
   try{
    const context=await browser.newContext({viewport:{width:390,height:844},hasTouch:true,isMobile:true,acceptDownloads:true,serviceWorkers:'block'});
-   await context.route('**/*',route=>route.request().url().startsWith('file:')?route.continue():route.abort());
+   // WebKit routes in-memory blob image requests as well as file navigation.
+   // Permit local image bytes while continuing to reject every network URL.
+   await context.route('**/*',route=>/^(file:|blob:|data:)/.test(route.request().url())?route.continue():route.abort());
    const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
    const encoded=await page.evaluate(()=>['red','blue'].map(color=>{const c=document.createElement('canvas');c.width=64;c.height=96;c.getContext('2d').fillStyle=color;c.getContext('2d').fillRect(0,0,64,96);return c.toDataURL('image/jpeg').split(',')[1];}));
    const buffers=encoded.map(s=>Buffer.from(s,'base64')),packet=packetFromLock(fs.readFileSync(LOCK));
@@ -30,7 +32,9 @@ try{
    await page.getByRole('status').filter({hasText:'2 original JPEG hashes verified'}).waitFor();
    for(const p of packet.photos){
     await page.locator('#source').selectOption(p.id);
-    await page.waitForFunction(()=>document.querySelector('#photo').naturalWidth===64);
+    await page.waitForFunction(()=>document.querySelector('#photo').naturalWidth===64).catch(async e=>{
+     console.error(name+' image failure',await page.locator('#photo').evaluate(p=>({src:p.currentSrc,complete:p.complete,width:p.naturalWidth})),errors);throw e;
+    });
     await page.locator('#family').selectOption('uncertain');await page.locator('#uncertainty').selectOption('false');
     await page.locator('#evidence').fill('Synthetic colored pixels, no real garment evidence.');await page.locator('#record').click();
     await page.getByRole('status').filter({hasText:'unknown must be uncertain'}).waitFor();
