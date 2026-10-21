@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import {execFileSync} from 'node:child_process';
 import {packetFromLock,reconcile,LOCK} from './source-holdout-human-review.mjs';
 const git=(...args)=>execFileSync('git',args,{encoding:'utf8',maxBuffer:20000000}).trim();
-const BASE='df6dfa071838c054ac8f3f26a64985252e1050e0',APPROVED='5c152461570b5c3488e2db0724ac0ded49eab67c';
+const BASE='df6dfa071838c054ac8f3f26a64985252e1050e0',APPROVED='865e820ab8dafd69407fd1b8edf25aeb869e8e24';
 assert.equal(git('merge-base','HEAD',BASE),BASE,'Must descend from verified trend cache PR129');
 assert.equal(git('rev-parse','HEAD:public/trends.js'),APPROVED,'Unexpected inspiration source changes');
 const allowed=new Set([
@@ -36,7 +36,8 @@ for(const part of [
  "if(candidate(image)){switchView('review')",
  "canvas.toDataURL('image/jpeg',.8)",
  "lookImage=preview",
- "clearLookOriginal();activeLookId=look.id;"
+ "clearLookOriginal();activeLookId=look.id;",
+ "$('referenceToCloset').hidden=true;renderLookPieces();renderTrendMatches();"
 ])assert.ok(s.includes(part),'Source transfer/preview provenance guard missing: '+part);
 const prior=execFileSync('git',['show',BASE+':docs/PROGRESS-CHECKPOINT.md'],{encoding:'utf8'});
 assert.ok(fs.readFileSync('docs/PROGRESS-CHECKPOINT.md','utf8').endsWith(prior),'Historical checkpoint rewritten');
