@@ -21,7 +21,7 @@ for(const [label,sha] of Object.entries(ancestors)){
 const pinned={
  'public/app.js':'fafa9b27b2325fd4c89be64af188e265ff2cd700',
  'public/index.html':'c8c8910a7283c06f2b925248f41bf289a7711aaa',
- 'public/photo-import.js':'7c8388de88d2d8193fbd270a9af4462403a583df',
+ 'public/photo-import.js':'f4eb21d3ca8d9dea13915caf59e534e2b8f7cde4',
  'public/sw.js':'708907d2688242f7eb80eb363f85b437ab2bd712',
  'public/wardrobe-backup-engine.js':'7ad27f2732bc9da6fff5d6289c9dcd40f898c30b',
  'public/wardrobe-backup.js':'e95ca5ae45a76ba0feef3baebb124d1f285daa81',
