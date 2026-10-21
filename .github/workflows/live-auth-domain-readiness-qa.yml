@@ -1,0 +1,45 @@
+name: Read-only live email and domain readiness audit
+on:
+  push:
+    branches: [qa/live-auth-domain-readiness-20261020]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-and-safety:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate isolated read-only probe and no-credential unit tests
+        run: |
+          node --check scripts/audit-live-auth-email-domains.mjs
+          node --check tests/live-auth-domain-readiness.test.mjs
+          node --test tests/live-auth-domain-readiness.test.mjs tests/auth.test.cjs
+      - name: Full customer app regression suite and build
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Preserve customer photo source and enforce release veto
+        run: |
+          node scripts/verify-camera-cloud-integration.mjs
+          node scripts/check-dual-parent-review-integration.mjs
+          node scripts/check-customer-pilot-release-gates.mjs
+  read-only-live-http:
+    needs: source-and-safety
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: GET only both public deployments and public Supabase Auth settings
+        env:
+          CI: 'true'
+        run: node scripts/audit-live-auth-email-domains.mjs --live-readonly

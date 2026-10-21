@@ -103,7 +103,11 @@ const allowedAuthSession=new Set([
  '.github/workflows/auth-session-race-qa.yml',
  'docs/AUTH-SESSION-LIFECYCLE-20261020.md',
  '.github/workflows/auth-email-callback-qa.yml',
- 'docs/AUTH-EMAIL-LINK-CALLBACK-20261020.md'
+ 'docs/AUTH-EMAIL-LINK-CALLBACK-20261020.md',
+ 'scripts/audit-live-auth-email-domains.mjs',
+ 'tests/live-auth-domain-readiness.test.mjs',
+ '.github/workflows/live-auth-domain-readiness-qa.yml',
+ 'docs/LIVE-EMAIL-DOMAIN-READINESS-20261020.md'
 ]);
 const allowedWork=new Set([
  'public/app.js',
