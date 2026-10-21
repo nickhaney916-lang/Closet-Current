@@ -1,9 +1,28 @@
+# Integrated restricted staging safeguards — assignment #148, October 21, 2026
+
+- New isolated integration from PR #147 `7c5584526bcad0439876aabe1f30889e817806c7` plus PR #146 `2b2423b1fae5af5f9f9d7def94162a3b5e166b38`; original branches untouched. Both historical checkpoint entries preserved below.
+- Atomic incomplete-directory publication and anonymous preview/script access probe combined. Added real-builder synthetic integration tests for safe output, forbidden live targets, stale-output removal, late forbidden-reference scan and Auth rewrite failure. Scope guard explicitly permits only staging additions; customer runtime, original recognition/photos, wardrobe, schema and production deployment configuration unchanged.
+- Local complete app build and Node suite: **1,490 passed, 0 failed, 3 skipped** (1,493 total). Integrated source guard and staging scope guard PASS. Synthetic atomic staging bundle and bundle verifier PASS, fingerprint `0ece7abfff4c`. All 13 staging-specific tests pass (four config, five atomic, four integration), plus five anonymous-probe tests. No hosted staging, paid resource, database access or production changes; production promotion BLOCKED.
+- Next external prerequisites remain a genuinely free separate empty staging database, deny-by-default Cloudflare Access on separate staging hosting, and actual disposable-account/device/human validation. See `docs/RESTRICTED-STAGING-INTEGRATION-20261021.md`.
+
+---
+
 # Restricted staging atomic output safeguard — October 21, 2026
 
 - **Verified engineering work (draft PR #147):** the staging builder now generates `staging-dist.incomplete-*`, validates all live-backend removal checks on that private work directory and atomically renames it to deployable `staging-dist/` only after success. Stale prior output and incomplete directories are removed on failed rebuilds; no success message precedes publication of the complete local folder.
 - **Exact verified source:** `4952f048407887822b8a8f6893354ae4f72e3048`, GitHub Actions [restricted staging QA #39665328379](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39665328379) and [full camera/indexing regression #39665328295](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39665328295) both completed SUCCESS: **1,481 passed, 0 failed, 3 skipped** in the full suite. Five dedicated atomic staging tests passed. Synthetic staging bundle check and source-boundary guard passed. These are automated synthetic results, not physical-device or hosted staging results.
 - **Scope:** no customer runtime, original image, garment recognition, account data, Supabase database/schema, Drive Duel, production workflow, or paid AI service was changed. PR #146 anonymous-host probe remains independently isolated. No merge or deployment.
 - **Hard blocks remain:** the free project cap prevents creating a distinct hosted Supabase staging project; Cloudflare staging Access policy is not yet configured/verified; human review, real phone camera tests, actual two-account cloud/email and privacy approvals are pending. Actual verified human category/color accuracy remains null and production promotion BLOCKED. Staging bundle generation does not imply permission to deploy.
+
+---
+
+# Anonymous staging access safeguard — October 21, 2026
+
+- Continued from PR #145 exact SHA `87ac40be151f14ca6924c36abb9772677bcf779b` on isolated `audit/staging-anonymous-access-20261021`; no production merge/deploy or paid services.
+- Supabase connector read-only verification now succeeds for the existing Closet Current project `hlkgymugtfbirlpunsra` in organization `afsdfxyupfbtjrsgiwar`. The existing project is NOT a new empty staging project. Drive Duel remains separate and unchanged.
+- Added read-only anonymous pre-upload probe across ten critical page/script/data routes on the staging project origin and supplied deployment previews. No credentials or redirect following. Public 2xx fails; generic denial/network errors are inconclusive. Only expected Cloudflare Access login redirects pass the observed-route check. This cannot prove policy correctness or complete route/hostname coverage; release stays BLOCKED.
+- Local app build and full Node suite: **1,481 passed, 0 failed, 3 skipped**; five new synthetic probe tests. Customer public source, Supabase schemas and production hosting workflows unchanged. No actual hosted URL probe, physical phones, real email or two-account cloud tests performed.
+- Next: owner-approved $0 independent Supabase staging project and separately protected Cloudflare Pages staging site; inspect actual deny-by-default policy and hostname inventory, then run signed-out hosted checks before upload approval. See `docs/STAGING-ANONYMOUS-ACCESS-20261021.md`.
 
 ---
 
