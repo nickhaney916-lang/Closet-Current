@@ -1,3 +1,9 @@
+# Customer garment editor accessibility and screen-reader form naming — October 21, 2026
+
+- Scoped, isolated from Work's recognition, integration, onboarding, styling, wardrobe backup and storage tasks: the dynamically created photo review and saved-garment editor now have distinct native accessible dialog names. The static outfit picker now references its visible title, and the bulk review category selector has an explicit accessible name.
+- Native keyboard Escape, focus and return-to-button behavior retained. Only two exact code insertions in `public/app.js` plus two attribute-only edits in `public/index.html`. No change to source photo, data, styling, recognition, account, cloud, backup, API or human gold evidence.
+- Complete regression/Android Chromium/iPhone WebKit emulator verification required before claiming completion. VoiceOver/TalkBack on real physical phones and independent original-photo human reviews remain unverified. See `docs/ACCESSIBLE-GARMENT-DIALOGS-20261021.md`.
+
 # Camera-roll import account switch after asynchronous decode — October 21, 2026
 
 - Independent of Work #126 recognition, #128 branch integration, #130 Auth, #132 outfit visualization and #134 backup: capture importing customer's identity before multi-photo processing and verify it before each original-photo candidate can enter the review queue after asynchronous decoding.

@@ -1,0 +1,45 @@
+name: Garment edit dialog naming and keyboard QA
+on:
+  push:
+    branches: [fix/accessible-garment-edit-dialogs-20261021]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-and-node:
+    runs-on: ubuntu-latest
+    timeout-minutes: 32
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify unchanged customer application apart from exactly 4 accessible names
+        run: |
+          node scripts/check-accessible-garment-dialog-scope.mjs
+          git worktree add --detach "$RUNNER_TEMP/verified-pr135" 8fbe7096e655f06dd9d414521f32d1a11182c322
+          (cd "$RUNNER_TEMP/verified-pr135" && node scripts/check-photo-batch-owner-scope.mjs && node scripts/check-customer-pilot-release-gates.mjs)
+      - name: Build complete Closet Current application and run full Node regression suite
+        run: |
+          node --check public/app.js
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+  mobile-accessibility:
+    needs: source-and-node
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Chromium Android and WebKit iPhone emulation
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install --with-deps chromium webkit
+      - name: Verify actual native dialog accessible role/name and keyboard focus
+        run: node scripts/test-accessible-garment-dialogs-mobile.mjs
