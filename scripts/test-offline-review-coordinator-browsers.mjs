@@ -35,9 +35,13 @@ for(const [engineName,engine]of [['chromium',chromium],['webkit',webkit]]){
   await page.waitForFunction(()=>document.querySelector('#status').textContent.startsWith('Both JSON structures')||document.querySelector('#status').textContent.startsWith('Not accepted:'),null,{timeout:15000});
   assert.equal(await page.locator('#export').isDisabled(),false,'Browser intake status: '+await page.locator('#status').innerText());
   assert.equal(await page.locator('#rows tr').count(),13);
-  const dlEvent=page.waitForEvent('download');await page.locator('#export').click();
-  const downloaded=await dlEvent;assert.equal(downloaded.suggestedFilename(),'self-attested-review-audit.json');
-  const report=JSON.parse(fs.readFileSync(await downloaded.path(),'utf8'));
+  await page.locator('#export').click();
+  await page.waitForFunction(()=>document.getElementById('auditDownload')?.href.startsWith('blob:'));
+  assert.equal(await page.locator('#auditDownload').isVisible(),true,'Manual download link remains available when browsers block automatic downloads');
+  const report=await page.evaluate(async()=>{
+   const a=document.getElementById('auditDownload');
+   return JSON.parse(await (await fetch(a.href)).text());
+  });
   for(const field of ['status','packetSha256','sourcePhotos','selfAttestedAgreements','unresolved','photos','submissionSha256','productionPromotion','independentHumanGoldLabels','approvedModelAccuracy','reviewerIdentityAuthenticated'])
    assert.deepEqual(report[field],expected[field],'Browser/Node core parity: '+field);
   assert.equal(report.selfAttestedAgreements,11);
@@ -51,6 +55,7 @@ for(const [engineName,engine]of [['chromium',chromium],['webkit',webkit]]){
   await page.waitForTimeout(50);
   assert.equal(await page.locator('#export').isDisabled(),true,'Cancelled check cannot restore old export');
   assert.equal(await page.locator('#results').isHidden(),true,'Cancelled check cannot show an old report');
+  assert.equal(await page.locator('#auditDownload').isHidden(),true,'Cancelled check cannot expose old audit JSON');
   const invalid=[
    {...b,status:'DRAFT_UNREVIEWED'},
    {...b,packetSha256:'0'.repeat(64)},
@@ -68,6 +73,7 @@ for(const [engineName,engine]of [['chromium',chromium],['webkit',webkit]]){
    assert.equal(await page.locator('#export').isDisabled(),true);
    assert.equal(await page.locator('#results').isHidden(),true);
    assert.equal(await page.locator('#rows tr').count(),0,'Failed audit cannot expose prior pair');
+    assert.equal(await page.locator('#auditDownload').isHidden(),true,'Rejected file must revoke prior audit URL');
   }
   assert.deepEqual(errors,[]);
   assert.deepEqual(blocked,[]);
