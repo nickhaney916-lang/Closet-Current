@@ -1,0 +1,62 @@
+name: Recognition confirmation and customer indexing reliability
+on:
+  push:
+    branches: [fix/recognition-confirmation-reliability-20261021]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  regression-and-source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Scope current changes and preserve reviewed parent evidence
+        run: |
+          node scripts/check-recognition-confirmation-scope.mjs
+          git worktree add --detach "$RUNNER_TEMP/verified-parent125" 623eb4af070b6caece11247e79eb3494d8450f98
+          cd "$RUNNER_TEMP/verified-parent125"
+          node scripts/check-native-still-detail-budget-scope.mjs
+          node scripts/check-import-detail-budget-scope.mjs
+          node scripts/check-offline-review-coordinator-source.mjs
+          node scripts/check-one-click-review-source.mjs
+          node scripts/check-human-review-cloud-bridge.mjs
+          node scripts/check-blind-photo-cloud-integration.mjs
+          node scripts/verify-camera-cloud-integration.mjs
+          node scripts/check-customer-pilot-release-gates.mjs
+      - name: Build and every Node regression
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+  mobile-recognition-correction:
+    needs: regression-and-source
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned mobile browser engines
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install --with-deps chromium webkit
+      - name: Correct uncertain garment types and colors with real local IndexedDB
+        run: |
+          node scripts/build.mjs
+          node scripts/test-recognition-confirmation-mobile.mjs
+          node scripts/test-cloud-session-generation-browsers.mjs
+          node scripts/test-native-still-detail-budget-browsers.mjs
+          node scripts/test-native-camera-fidelity-mobile.mjs
+          node scripts/test-original-crop-source-mobile.mjs
+          node scripts/test-original-source-duplicate-mobile.mjs
+          node scripts/test-untyped-photo-import-mobile.mjs
+          STYLE_BROWSER=chromium node scripts/test-style-my-new-item-mobile.mjs
+          STYLE_BROWSER=webkit node scripts/test-style-my-new-item-mobile.mjs

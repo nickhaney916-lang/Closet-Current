@@ -136,7 +136,7 @@ test('missing original outfit crop is blocked before scanner reads cleaned image
  const read=[],classifications=[],draft={id:'old-piece',outfitSourceId:'outfit-source',
   image:'matted AI display fragment',color:'',category:'Uncategorized',
   originalPhoto:{image:'data:image/jpeg;base64,ORIGINALWHOLESCENE'}};
- const c={
+ const c={db:null,
   batch:[draft],items:[],Date:{now:()=>0},recognitionState:{activeId:null},
   render(){},recognitionSourcePhoto:null,
   checkPhoto:async x=>{read.push(x);return {blank:false};},
