@@ -29,7 +29,7 @@ assert.equal(approvedImported.size,12,'Unexpected independent source file count'
 for(const [path,expected] of Object.entries(imported)){
  assert.equal(git('rev-parse','HEAD:'+path),expected,'Imported benchmark source modified: '+path);
  assert.equal(git('rev-parse',BENCHMARK+':'+path),expected,'Source branch changed from pinned audit: '+path);
- assert.notEqual(git('rev-parse',CUSTOMER+':'+path),expected,'Source was not independently new: '+path);
+ assert.equal(git('ls-tree','-r','--name-only',CUSTOMER,'--',path),'','Independent source unexpectedly existed in customer branch: '+path);
 }
 const protectedRuntime=[
  'public/app.js','public/photo-crop-editor.js','public/recognition-photo.mjs',
