@@ -1,7 +1,7 @@
 name: Integrated phone evidence, full staging access and local security QA
 on:
   push:
-    branches: [integration/phone-evidence-staging-all-assets-20261021]
+    branches: [validation/offline-phone-recognition-failure-triage-20261021]
 permissions:
   contents: read
 jobs:
@@ -18,6 +18,7 @@ jobs:
           node-version: '22'
       - name: Integrated source boundaries and complete regressions
         run: |
+          node scripts/check-phone-triage-scope.mjs
           node scripts/check-integrated-phone-staging-scope.mjs
           node scripts/check-linked-phone-trial-scope.mjs
           node scripts/check-private-pilot-kit-scope.mjs
@@ -88,6 +89,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          node scripts/check-phone-triage-scope.mjs
           node scripts/check-integrated-phone-staging-scope.mjs
           node scripts/check-linked-phone-trial-scope.mjs
           node scripts/check-private-pilot-kit-scope.mjs
@@ -126,10 +128,12 @@ jobs:
       - name: Exercise offline private-pilot kit in Android Chromium and iPhone WebKit
         run: |
           node scripts/test-linked-phone-evidence-browsers.mjs
+          node scripts/test-phone-recognition-triage-browsers.mjs
           node scripts/test-private-pilot-kit-browsers.mjs
           node scripts/test-offline-pilot-cohort-browser.mjs
           node scripts/build-private-pilot-kit.mjs "$RUNNER_TEMP/closet-current-private-pilot-kit"
           node scripts/build-linked-phone-evidence.mjs "$RUNNER_TEMP/closet-current-private-pilot-kit/PHONE-ORIGINALS.html"
+          node scripts/build-phone-recognition-triage.mjs "$RUNNER_TEMP/closet-current-private-pilot-kit/PHONE-TRIAGE.html"
       - uses: actions/upload-artifact@v4
         with:
           name: Closet-Current-Consolidated-Private-Pilot-Kit

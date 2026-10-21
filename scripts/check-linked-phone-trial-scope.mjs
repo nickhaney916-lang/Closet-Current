@@ -23,6 +23,9 @@ const ACCESS_SWEEP='53c2f49517d89ef6074cdfa0eee99c4fb5fbba2d';
 if(git('merge-base','--is-ancestor',ACCESS_SWEEP,'HEAD')===''){
  for(const path of ["scripts/test-staging-runtime-browsers.mjs",".github/workflows/staging-all-assets-access-qa.yml","docs/STAGING-ALL-ASSETS-ACCESS-20261021.md","scripts/check-staging-anonymous-access.mjs","tests/staging-anonymous-access.test.mjs","tests/staging-anonymous-full-bundle.test.mjs","docs/INTEGRATED-PHONE-STAGING-20261021.md",".github/workflows/integrated-phone-staging-all-assets-qa.yml","scripts/check-integrated-phone-staging-scope.mjs"])allow.add(path);
 }
+// Only in this successor branch, explicitly allow private aggregate diagnostics.
+if(git('merge-base','--is-ancestor','15b84821c8ecd3c7ce76baf2c5835ab5742ca6ac','HEAD')==='')
+ for(const p of ["scripts/phone-recognition-triage.mjs","scripts/build-phone-recognition-triage.mjs","scripts/test-phone-recognition-triage-browsers.mjs","tests/phone-recognition-triage.test.mjs","docs/PHONE-RECOGNITION-TRIAGE-20261021.md","scripts/check-phone-triage-scope.mjs"])allow.add(p);
 for(const path of git('diff','--name-only',BASE,'HEAD').split('\n').filter(Boolean))
  assert.ok(allow.has(path),'Unauthorized existing product or hosted data edit: '+path);
 for(const path of ['public','supabase','scripts/build-restricted-staging.mjs',
