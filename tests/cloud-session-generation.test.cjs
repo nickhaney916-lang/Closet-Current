@@ -139,7 +139,7 @@ test('cloud start cannot pair account B access token with old account A IndexedD
 });
 test('a blocked stale database can recover safely with the new owner database',async()=>{
  const remote=[];
- const h=setup({request:async(url,opts)=>{
+ const h=setup({token:()=>Promise.resolve(h.window.closetAuth.user.id),request:async(url,opts)=>{
   remote.push({url,auth:opts.headers.Authorization});
   return {ok:true,status:200,json:async()=>[]};
  }});
