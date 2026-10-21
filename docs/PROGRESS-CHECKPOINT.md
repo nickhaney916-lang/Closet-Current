@@ -1,3 +1,12 @@
+# Work Assignment #159 — final staging-build/security integration
+
+- New isolated candidate from verified #157 `232a735f99af0da73df2e7095508c2a99e8df6da`, merged verified #158 `e67edcaa34e6c4ed9f93cc8edd6c204a7b15db80`. Both source final CI runs confirmed SUCCESS; neither original branch modified. Only checkpoint prose conflicted; both complete branch histories preserved.
+- #158 atomic locking, concurrent-build refusal, interrupted output protection, SIGKILL tests and operator recovery instructions retained exactly. Source guard now additionally pins build-lock files to #158 while retaining all #157 security/public/Supabase/source checks.
+- Dedicated candidate CI repeats complete regressions (including actual crash/concurrency tests), disposable local Supabase two-account/migration recovery, staging bundle/worker simulation, Android Chromium and iPhone WebKit app/photo recovery, and actual installed Chromium offline checks. New candidate results pending; no combined pass claimed yet.
+- Public app/full-resolution original-before-mask recognition, camera, wardrobe/styling, production migrations/hosting and Drive Duel unchanged. No live database/customer access, paid resources/AI, production merge/deployment, physical-device or hosted-staging claim.
+
+---
+
 # Work Assignment #157 verified — integrated development candidate
 
 - Draft PR #157 combines verified #156 `c0fecc398ea927418c5e083607bdc1cf6ea77527` and #154 `cca2f7c98f69d5aad416e6174182ac3f66b9b951` as actual merge parents, with required security/staging dependencies. Original branches preserved; only checkpoint prose conflicted, and both histories were retained.
@@ -133,7 +142,81 @@
 - **Verified engineering work (draft PR #147):** the staging builder now generates `staging-dist.incomplete-*`, validates all live-backend removal checks on that private work directory and atomically renames it to deployable `staging-dist/` only after success. Stale prior output and incomplete directories are removed on failed rebuilds; no success message precedes publication of the complete local folder.
 - **Exact verified source:** `4952f048407887822b8a8f6893354ae4f72e3048`, GitHub Actions [restricted staging QA #39665328379](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39665328379) and [full camera/indexing regression #39665328295](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39665328295) both completed SUCCESS: **1,481 passed, 0 failed, 3 skipped** in the full suite. Five dedicated atomic staging tests passed. Synthetic staging bundle check and source-boundary guard passed. These are automated synthetic results, not physical-device or hosted staging results.
 - **Scope:** no customer runtime, original image, garment recognition, account data, Supabase database/schema, Drive Duel, production workflow, or paid AI service was changed. PR #146 anonymous-host probe remains independently isolated. No merge or deployment.
+- **Hard blocks remain:** the free project cap prevents creating a distinct hosted Supabase staging project; Cloudflare staging Access policy is not yet configured/verified; human review, real phone camera tests, actual two-account cloud/email and privacy approvals are pending. Actual verified human category/color accuracy remains null and production promotion BLOCKED. Staging bundle generation does not imply permission to deploy# Restricted staging atomic build lock and crash refusal — October 21, 2026
+
+- **Draft PR #158** adds exclusive local `staging-dist.build.lock` protection, blocks concurrent staging builders before they can remove or publish artifacts, and refuses automatic reuse when orphaned `staging-dist.incomplete-*` files remain after a terminated process. Normal successful or failed builds remove locks; a SIGKILL leaves a lock and partial source for manual inspection. This is intentionally fail-closed and may require an operator to clean up interrupted local staging files.
+- **Exact tested implementation commit:** `459e04b326e570d2cf5789f407a6eb61aa5f87bc`. [GitHub Actions staging builder concurrency and interrupted-build QA #39680346386](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39680346386) **COMPLETED SUCCESS**: targeted **9 lock tests passed, 0 failed** (including real SIGKILL), **5 actual staging builder integration tests passed, 0 failed**, complete Node suite **1,495 passed, 0 failed, 3 skipped**, synthetic stage backend bundle verification and cache isolation guards passed. [Camera/indexing CI #39680346225](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39680346225) SUCCESS on the same implementation commit. Final documentation-only commit should have independent exact-head CI verification.
+- Distinct from Work Assignment #157 integration (no PR #157 found before beginning) and all original Work branch heads remain untouched. No changes to public/customer app runtime, original-resolution photo recognition, Supabase cloud schema, hosting or production workflows, Drive Duel, customer data, paid AI or staging deployment. Work's planned integration and release blockers (hosted protected staging, actual physical phones, independent human garment accuracy) remain unchanged; production release BLOCKED.
+
+---
+
+# Real Chromium installed staging PWA QA — October 21, 2026
+
+- Draft **PR #156**, isolated from Work Assignment #154 and based on PR #155 `2651f4e4567b8ee1717ef869df2fa33ed6cb4ac8`, adds an **actual Chromium browser service worker install / activate / offline regression** for the generated, synthetic `staging-dist/sw.js`, rather than only a VM mock. A temporary loopback HTTP origin supplies all code and a synthetic registration page. The new test never loads a customer account or contacts hosted services.
+- **Verified code SHA:** `185ba69a11870f6a337f9265b1a0c942c58348e9`. GitHub Actions [real Chromium service worker #39678257624](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39678257624) COMPLETED SUCCESS: full Node suite **1,490 pass, 0 fail, 3 skip** and genuine Chromium activation, staging cache namespace, production-named cache preservation, old stage cache removal, immutable installed HTML/JS, offline shell, missing cached Auth 503, private route / POST bypass and **zero external network requests**. [Camera/indexing CI #39678257500](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39678257500) SUCCESS. Final document-only commit requires its exact-head CI check.
+- Playwright service worker tooling is supported for Chromium, **not WebKit**, so no installed iPhone PWA claim; the emulated 390px Android Chromium is not a physical device. Hosted Cloudflare Access, separate hosted Supabase and real-account tests still blocked. Production customer source untouched, no merging, deployment, paid services, Drive Duel changes or customer files. Human garment accuracy remains unverified; production promotion BLOCKED.
+
+---
+
+# Staging installed-app cache isolation (draft PR #155) — October 21, 2026
+
+- On an independent branch stacked from Work's verified PR #152 source `4456016f6fed91e07cde08d71fcc17f2c7ff4300`, the staging-only generated service worker cache is now named `closet-current-staging-<fingerprint>`, and its activation cleanup selects only staging-named caches. The customer production `public/sw.js` and all original photo recognition, saved wardrobe, Auth, cloud, and deployment code remain byte-identical.
+- **Verified implementation SHA:** `2a20e848bc02ef23aa2cd81e936665ef7e149c96`. GitHub Actions [staging-only cache QA #39677256998](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39677256998) **COMPLETED SUCCESS**: **1,490 Node pass, 0 fail, 3 skip**. Staging bundle verifier, original-source guard and the actual generated service worker's synthetic VM test all passed: staging-only cache deletion, preservation of production-named cache, pinned app shell/Auth script, missing-asset 503, private/external Supabase bypass, POST bypass, quota and Cache Storage error refusal. [Camera/indexing CI #39677256898](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39677256898) SUCCESS on the same implementation SHA. No real network requests, actual hardware or installed-browser PWA proof.
+- Synthetic browser context confirms code behavior only; **no hosted staging site**, Cloudflare Access enforcement, hosted Auth/RLS, independent actual garment accuracy or real Android/iPhone installation has been verified. No production merge/deployment, no paid Supabase resources or AI services, no Drive Duel edits. Production promotion BLOCKED.
+
+---
+
+# Verified staging photo backup recovery — October 21, 2026
+
+- Draft PR #152 implementation source `414c44508b4af70ea8e81e3750c14e181d738c1c`, tree `9414fd478cfdaf99eb3618d6d9d7f6cf212a4562`, verified in GitHub Actions browser isolation #39675138532 and camera/indexing #39675138533, both SUCCESS. Full suite: **1,490 passed, 0 failed, 3 skipped**; source guards and synthetic bundle verification PASS.
+- Android Chromium and iPhone WebKit both PASS: generated JPEG upload/reference-only metadata, identical-byte restoration in a fresh browser partition, offline edit retention through reload and explicit saved-login retry, lost committed RPC response retry without duplication, corrupt downloaded photo rejected before IndexedDB restore then recovered. Zero attempted live database requests and browser exceptions; paid inference blocked.
+- Synthetic intercepted replies only. No real hosted Auth/RLS/Storage/email/Cloudflare Access, physical phone, installed PWA or human garment accuracy claimed. No customer runtime, original-photo recognition, schema, production workflow, Drive Duel, paid resource, merge or deployment changed. Production promotion remains BLOCKED. Next: genuinely free separate staging and protected hostname setup, then disposable-account and physical-device validation.
+
+---
+
+# Photo-bearing staging backup recovery — October 21, 2026
+
+- Isolated continuation from verified draft PR #150 SHA `0dbcab844ea5e0d48aa0cacbf08d22ff1ff5c33d` adds generated-JPEG save/restore, offline reload/retry, lost RPC response and corrupt-photo recovery scenarios to actual generated staging app browser QA. No customer runtime, original-photo recognition, wardrobe source, Supabase schema, production hosting or Drive Duel changes.
+- Local full regression: **1,490 passed, 0 failed, 3 skipped**. Browser binaries unavailable locally; exact-head pinned Chromium/WebKit CI must pass before declaring this extension verified. See draft PR for exact SHA and final CI results.
+- Owner authorized publication with Continue after the explicit feature-branch/draft-PR approval request. Publication and exact-head browser CI are in progress; no browser results are claimed until confirmed. Local browser downloads returned an invalid archive.
+- All backend replies are intercepted synthetic mocks. No hosted Auth/RLS/email/cloud permissions, physical phone or garment recognition accuracy is established; real private staging remains blocked by free-project capacity and protected-hosting setup. No paid resources or deployment.
+
+---
+
+# Generated staging mobile browser runtime verification — October 21, 2026
+
+- New isolated `test/staging-runtime-isolation-20261021` from verified PR #148 `de3a93d7e86231d950cbc152d5ffcecd63db0aac` adds real Chromium/WebKit execution of the synthetic generated staging app, with all external traffic intercepted before navigation.
+- Tests signed-out gating, staging-only login/reset callbacks, automatic/manual empty-closet backup reads and paid try-on refusal before fetch. No customer data or hosted database requests; service workers blocked for interception, so installed PWA behavior is outside this test.
+- Customer runtime/photo recognition/wardrobe, schema and production workflows unchanged. Local full regression and exact-head browser CI results will be recorded in the draft PR; no hosted/device/email/RLS validation is claimed.
+- Real private staging remains blocked by the free-project cap and unverified Cloudflare Access setup. No paid resource, merge/deployment or Drive Duel changes; production promotion BLOCKED.
+
+---
+
+# Integrated restricted staging safeguards — assignment #148, October 21, 2026
+
+- New isolated integration from PR #147 `7c5584526bcad0439876aabe1f30889e817806c7` plus PR #146 `2b2423b1fae5af5f9f9d7def94162a3b5e166b38`; original branches untouched. Both historical checkpoint entries preserved below.
+- Atomic incomplete-directory publication and anonymous preview/script access probe combined. Added real-builder synthetic integration tests for safe output, forbidden live targets, stale-output removal, late forbidden-reference scan and Auth rewrite failure. Scope guard explicitly permits only staging additions; customer runtime, original recognition/photos, wardrobe, schema and production deployment configuration unchanged.
+- Local complete app build and Node suite: **1,490 passed, 0 failed, 3 skipped** (1,493 total). Integrated source guard and staging scope guard PASS. Synthetic atomic staging bundle and bundle verifier PASS, fingerprint `0ece7abfff4c`. All 13 staging-specific tests pass (four config, five atomic, four integration), plus five anonymous-probe tests. No hosted staging, paid resource, database access or production changes; production promotion BLOCKED.
+- Next external prerequisites remain a genuinely free separate empty staging database, deny-by-default Cloudflare Access on separate staging hosting, and actual disposable-account/device/human validation. See `docs/RESTRICTED-STAGING-INTEGRATION-20261021.md`.
+
+---
+
+# Restricted staging atomic output safeguard — October 21, 2026
+
+- **Verified engineering work (draft PR #147):** the staging builder now generates `staging-dist.incomplete-*`, validates all live-backend removal checks on that private work directory and atomically renames it to deployable `staging-dist/` only after success. Stale prior output and incomplete directories are removed on failed rebuilds; no success message precedes publication of the complete local folder.
+- **Exact verified source:** `4952f048407887822b8a8f6893354ae4f72e3048`, GitHub Actions [restricted staging QA #39665328379](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39665328379) and [full camera/indexing regression #39665328295](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39665328295) both completed SUCCESS: **1,481 passed, 0 failed, 3 skipped** in the full suite. Five dedicated atomic staging tests passed. Synthetic staging bundle check and source-boundary guard passed. These are automated synthetic results, not physical-device or hosted staging results.
+- **Scope:** no customer runtime, original image, garment recognition, account data, Supabase database/schema, Drive Duel, production workflow, or paid AI service was changed. PR #146 anonymous-host probe remains independently isolated. No merge or deployment.
 - **Hard blocks remain:** the free project cap prevents creating a distinct hosted Supabase staging project; Cloudflare staging Access policy is not yet configured/verified; human review, real phone camera tests, actual two-account cloud/email and privacy approvals are pending. Actual verified human category/color accuracy remains null and production promotion BLOCKED. Staging bundle generation does not imply permission to deploy.
+
+---
+
+# Anonymous staging access safeguard — October 21, 2026
+
+- Continued from PR #145 exact SHA `87ac40be151f14ca6924c36abb9772677bcf779b` on isolated `audit/staging-anonymous-access-20261021`; no production merge/deploy or paid services.
+- Supabase connector read-only verification now succeeds for the existing Closet Current project `hlkgymugtfbirlpunsra` in organization `afsdfxyupfbtjrsgiwar`. The existing project is NOT a new empty staging project. Drive Duel remains separate and unchanged.
+- Added read-only anonymous pre-upload probe across ten critical page/script/data routes on the staging project origin and supplied deployment previews. No credentials or redirect following. Public 2xx fails; generic denial/network errors are inconclusive. Only expected Cloudflare Access login redirects pass the observed-route check. This cannot prove policy correctness or complete route/hostname coverage; release stays BLOCKED.
+- Local app build and full Node suite: **1,481 passed, 0 failed, 3 skipped**; five new synthetic probe tests. Customer public source, Supabase schemas and production hosting workflows unchanged. No actual hosted URL probe, physical phones, real email or two-account cloud tests performed.
+- Next: owner-approved $0 independent Supabase staging project and separately protected Cloudflare Pages staging site; inspect actual deny-by-default policy and hostname inventory, then run signed-out hosted checks before upload approval. See `docs/STAGING-ANONYMOUS-ACCESS-20261021.md`.
 
 ---
 
