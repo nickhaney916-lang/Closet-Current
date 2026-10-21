@@ -220,12 +220,12 @@ test('category-only review preserves user corrections and clipped mask restricti
 });
 test('type recognition failure retains a color estimate and keeps the photo for category confirmation',async()=>{const {c,stored}=setup({quality:async()=>({blank:false,signature:[10,20,100],aspect:1,colorEstimate:{color:'Blue'}}),result:{strong:false,choices:[],details:{}}});c.candidate('one');await done(c);assert.equal(stored.length,0);assert.equal(c.batch[0].color,'Blue');assert.equal(c.batch[0].colorSource,'photo-estimate');assert.match(c.batch[0].localStatus,/Color kept/);});
 test('confirmed broad shirt category and color are saved without inventing a subtype',async()=>{const {c,stored}=setup({quality:async()=>({blank:false,signature:[10,20,100],aspect:1,colorEstimate:{color:'Blue'}}),result:{strong:false,categoryConfirmed:true,categoryOnly:true,choices:[{category:'Tops',itemType:'Unknown',label:'Tops',sleeveLength:'Unknown'}],details:{}}});c.candidate('one');await done(c);assert.equal(stored.length,1);assert.equal(c.items[0].category,'Tops');assert.equal(c.items[0].color,'Blue');assert.equal(c.items[0].itemType,'Unknown');assert.equal(c.items[0].indexingLevel,'category-color');assert.equal(c.batch.length,0);});
-test('confirmed category and color automatically save separated outfit pieces',async()=>{const {c,stored}=setup({quality:async()=>({blank:false,signature:[10,20,100],aspect:1,colorEstimate:{color:'Blue'}}),result:{strong:false,categoryConfirmed:true,categoryOnly:true,choices:[{category:'Tops',itemType:'Unknown',label:'Tops',sleeveLength:'Unknown'}],details:{}}});c.candidate('one',{outfitSourceId:'outfit',colorEstimate:{color:'Blue',source:'photo-estimate'},segmentHint:{categories:['Tops'],types:[],clipped:false}});await done(c);assert.equal(stored.length,1);assert.equal(c.batch.length,0);assert.equal(c.items[0].color,'Blue');assert.equal(c.items[0].colorMethod,'garment-mask');assert.equal(c.items[0].indexingLevel,'category-color');});
+test('confirmed category and color automatically save separated outfit pieces',async()=>{const {c,stored}=setup({quality:async()=>({blank:false,signature:[10,20,100],aspect:1,colorEstimate:{color:'Blue'}}),result:{strong:false,categoryConfirmed:true,categoryOnly:true,choices:[{category:'Tops',itemType:'Unknown',label:'Tops',sleeveLength:'Unknown'}],details:{}}});c.candidate('one',{outfitSourceId:'outfit',originalPhoto:{image:'data:image/jpeg;base64,WHOLEREALSCENE'},colorEstimate:{color:'Blue',source:'photo-estimate',support:.91},segmentHint:{categories:['Tops'],types:[],clipped:false}});await done(c);assert.equal(stored.length,1);assert.equal(c.batch.length,0);assert.equal(c.items[0].color,'Blue');assert.equal(c.items[0].colorMethod,'garment-mask');assert.equal(c.items[0].indexingLevel,'category-color');});
 
 test('outfit recognition uses original crop texture while masked garment color wins over scene color',async()=>{
  let modelImage,qualityImage;const {c,stored}=setup({quality:async image=>{qualityImage=image;return {blank:false,signature:[1,2,3],aspect:1,colorEstimate:{color:'White'}};},request:async(type,image)=>{modelImage=image;return {strong:true,choices:[choice],details:{color:'Red',pattern:'Solid'}};}});
- c.candidate('isolated-display',{outfitSourceId:'capture',recognitionPhoto:{image:'raw-textured-crop'},originalPhoto:{image:'whole-outfit'},cropBounds:{x:.1,y:.2,width:.3,height:.4},colorEstimate:{color:'Blue'},segmentHint:{categories:['Tops'],types:[],clipped:false}});await done(c);
- assert.equal(modelImage,'raw-textured-crop');assert.equal(qualityImage,'raw-textured-crop');assert.equal(stored.length,1);assert.equal(stored[0].image,'isolated-display');assert.equal(stored[0].color,'Blue');assert.equal(stored[0].name,'Blue T-shirt');assert.equal(stored[0].colorMethod,'garment-mask');assert.equal(stored[0].originalPhoto.image,'whole-outfit');assert.equal(stored[0].recognitionPhoto.image,'raw-textured-crop');
+ c.candidate('isolated-display',{outfitSourceId:'capture',recognitionPhoto:{image:'data:image/jpeg;base64,RAWTEXTUREDCROP'},originalPhoto:{image:'data:image/jpeg;base64,WHOLEOUTFIT'},cropBounds:{x:.1,y:.2,width:.3,height:.4},colorEstimate:{color:'Blue',source:'photo-estimate',support:.9},segmentHint:{categories:['Tops'],types:[],clipped:false}});await done(c);
+ assert.equal(modelImage,'data:image/jpeg;base64,RAWTEXTUREDCROP');assert.equal(qualityImage,'data:image/jpeg;base64,RAWTEXTUREDCROP');assert.equal(stored.length,1);assert.equal(stored[0].image,'isolated-display');assert.equal(stored[0].color,'Blue');assert.equal(stored[0].name,'Blue T-shirt');assert.equal(stored[0].colorMethod,'garment-mask');assert.equal(stored[0].originalPhoto.image,'data:image/jpeg;base64,WHOLEOUTFIT');assert.equal(stored[0].recognitionPhoto.image,'data:image/jpeg;base64,RAWTEXTUREDCROP');
 });
 
 test('accidentally visible clothing beneath a garment is not guessed as a Top',async()=>{
@@ -240,7 +240,7 @@ test('accidentally visible clothing beneath a garment is not guessed as a Top',a
  assert.equal(c.batch[0].category,'Uncategorized');
  assert.equal(c.batch[0].itemType,'Unknown');
  assert.equal(c.batch[0].underlayerReview,undefined);
- assert.match(c.batch[0].localStatus,/Confirm the garment category/);
+ assert.match(c.batch[0].localStatus,/Garment identity needs confirmation/);
 });
 test('single visible jacket keeps correct identity instead of prompting for underneath clothing',async()=>{
  const jacket={category:'Outerwear',itemType:'Jacket',label:'a jacket',sleeveLength:'Long sleeve'};
@@ -322,14 +322,14 @@ test('a verified mask color retains priority over both scene color and model det
  const {c,stored}=setup({quality:async()=>({blank:false,signature:[10,20,30],aspect:1,
   colorEstimate:{color:'White'}}),result:{strong:true,choices:[choice],details:{color:'Red'}}});
  c.candidate('outfit-display',{outfitSourceId:'outfit',
-  recognitionPhoto:{image:'original-crop'},segmentHint:{categories:['Tops'],types:[],
+  recognitionPhoto:{image:'data:image/jpeg;base64,ORIGINALCROP'},originalPhoto:{image:'data:image/jpeg;base64,WHOLEORIGINAL'},segmentHint:{categories:['Tops'],types:[],
    clipped:false},
-  colorEstimate:{color:'Blue',source:'photo-estimate'}});
+  colorEstimate:{color:'Blue',source:'photo-estimate',support:.92}});
  await done(c);
  assert.equal(stored.length,1);
  assert.equal(stored[0].color,'Blue');
  assert.equal(stored[0].colorMethod,'garment-mask');
- assert.equal(stored[0].recognitionPhoto.image,'original-crop');
+ assert.equal(stored[0].recognitionPhoto.image,'data:image/jpeg;base64,ORIGINALCROP');
 });
 
 test('real-photo-style fragmented outfit proposals stay review-only despite strong labels and color',async()=>{
@@ -639,4 +639,51 @@ test('new distinct original sources are still indexed when their images and sign
  assert.equal(stored.length,1,'unrelated garment must not be blocked');
  assert.equal(c.items.length,2);
  assert.equal(c.batch.length,0);
+});
+
+test('outfit candidate stores mask color only when two-region support and original RGB sources are present',()=>{
+ const {c}=setup({request:()=>new Promise(()=>{})});
+ const original={image:'data:image/jpeg;base64,WHOLEORIGINAL'},
+  recognition={image:'data:image/jpeg;base64,RAWREGION'},
+  options={outfitSourceId:'original-shot',originalPhoto:original,recognitionPhoto:recognition,
+   segmentHint:{categories:['Shoes'],types:['Sneakers'],clipped:false}};
+ assert.equal(c.candidate('masked-output',{...options,
+  colorEstimate:{color:'Blue',source:'photo-estimate',support:.92}}),true);
+ assert.equal(c.batch[0].color,'Blue');
+ assert.equal(c.batch[0].colorMethod,'garment-mask');
+ assert.equal(c.batch[0].colorSource,'photo-estimate');
+});
+test('outfit candidate never upgrades a single-view or uncertain photo color to trusted garment mask',()=>{
+ for(const estimate of [
+  {color:'Red',source:'photo-estimate'},
+  {color:'Red',source:'photo-estimate',support:.2},
+  {color:'Red',source:'photo-estimate',support:2},
+  {color:'Red',source:'photo-estimate',support:.95,needsConfirmation:true},
+  {color:'Red',source:'untrusted',support:.95},
+  {color:'Red',method:'garment-mask',source:'photo-estimate'}
+ ]){
+  const {c}=setup({request:()=>new Promise(()=>{})});
+  const opts={outfitSourceId:'original-shot',
+   originalPhoto:{image:'data:image/jpeg;base64,WHOLEORIGINAL'},
+   recognitionPhoto:{image:'data:image/jpeg;base64,RAWREGION'},
+   segmentHint:{categories:['Shoes'],types:['Sneakers'],clipped:false},
+   colorEstimate:estimate};
+  assert.equal(c.candidate('display-preview',opts),true);
+  assert.equal(c.batch[0].color,'',JSON.stringify(estimate));
+  assert.equal(c.batch[0].colorMethod,undefined);
+ }
+});
+test('trusted mask color requires both whole scene and original unmasked recognition crop',()=>{
+ for(const missing of ['originalPhoto','recognitionPhoto']){
+  const {c}=setup({request:()=>new Promise(()=>{})});
+  const opts={outfitSourceId:'original-shot',
+   originalPhoto:{image:'data:image/jpeg;base64,WHOLEORIGINAL'},
+   recognitionPhoto:{image:'data:image/jpeg;base64,RAWREGION'},
+   colorEstimate:{color:'Blue',source:'photo-estimate',support:.92}};
+  if(missing==='originalPhoto')delete opts.originalPhoto;
+  if(missing==='recognitionPhoto')opts.recognitionPhoto={image:''};
+  assert.equal(c.candidate('masked-output',opts),true);
+  assert.equal(c.batch[0].color,'');
+  assert.equal(c.batch[0].colorMethod,undefined);
+ }
 });

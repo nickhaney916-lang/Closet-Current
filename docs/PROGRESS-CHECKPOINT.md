@@ -1,3 +1,12 @@
+# Manual masked-crop and outfit palette provenance safeguard — October 20, 2026 Pacific
+
+- Isolated customer-facing development branch `fix/masked-photo-color-evidence-20261021` based on verified draft PR #109 head `a6ee34a676030cff2a4fcf3b31185275c78371a7`. Parallel Work session owns new independent ground-truth photographic benchmarks; this branch never touches models, photo manifests, or recognition vectors.
+- Found 2 trust bypasses: hand-edited mask received `colorMethod='garment-mask'` after just one alpha-color histogram; outfit proposals with missing original/JPEG crop provenance or unverified estimates were also force-labeled mask-verified.
+- Fixed manual crop using a conservatively eroded foreground interior and existing two-view confirmation before granting verified color; fixed outfit capture consumer to require SHA-style original JPEG data URLs, two-view numeric support and explicit source, otherwise keep color in review. The unchanged original RGB still drives recognition. Existing owner edits and automatic outfit proof colors preserved.
+- Added **8 new targeted pixel/evidence unit tests**, **3 new in-flow candidate source regression tests**, updated old simulation fixtures to include actual worker-supplied original image and confidence contract, and new Chromium Android / WebKit iPhone mobile-emulation tests. Release provenance verifier strictly reconstructs only the two approved public app changes, reviewed photo crop editor and independent human/camera source review extension.
+- Initial completed pre-browser full-suite [Actions #39537717176](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39537717176) SUCCESS, **1,271 passed / 0 failed / 3 skipped**, 89 focused passes, full build and historical source/pilot gates. Final exact-head browser and suite run requires confirmation.
+- No customer photos or storage modified remotely, no paid AI, production merge or deployment, no private Supabase writes and no Drive Duel edits. Physical phones and independent garment masks not yet validated.
+
 # Independent second encoder real-photo subtype trial — October 20, 2026 Pacific
 
 - Based on verified draft PR #107 exact head `9b2cfa722cee058ab5de22d569ded02ffec23134`, isolated branch `research/independent-clip-garment-subtypes-20261021`. No overlap with parallel Work-owned branch integration.

@@ -1,3 +1,32 @@
+// A hand-painted mask can contain clothing, a wall or a shadow. A single
+// masked pixel histogram is not evidence of an independent garment color.
+// Compare the full painted foreground with a safely eroded interior; require
+// enough excluded background to distinguish a mask from an opaque crop.
+function cropMaskColorEvidence(bytes,width,height,paletteEngine){
+ if(!Number.isInteger(width)||!Number.isInteger(height)||width<32||height<32||
+    !bytes||bytes.length!==width*height*4||!paletteEngine?.maskedPalette||
+    !paletteEngine?.confirmedGarmentPalette)return null;
+ let excluded=0;
+ for(let i=3;i<bytes.length;i+=4)if(bytes[i]<224)excluded++;
+ if(excluded<width*height*.05)return null;
+ const raw=paletteEngine.maskedPalette(bytes,width,height);
+ if(!raw||raw.needsConfirmation||raw.coverage>.93)return null;
+ const interior=new Uint8ClampedArray(bytes),radius=Math.max(2,Math.min(16,Math.round(Math.min(width,height)*.014)));
+ for(let y=0;y<height;y++)for(let x=0;x<width;x++){
+  const a=(y*width+x)*4+3;
+  if(x<radius||y<radius||x+radius>=width||y+radius>=height||
+   bytes[a]<224||
+   bytes[(y*width+x-radius)*4+3]<224||
+   bytes[(y*width+x+radius)*4+3]<224||
+   bytes[((y-radius)*width+x)*4+3]<224||
+   bytes[((y+radius)*width+x)*4+3]<224)interior[a]=0;
+ }
+ const core=paletteEngine.maskedPalette(interior,width,height);
+ const result=paletteEngine.confirmedGarmentPalette(raw,core);
+ return result&&result.source==='photo-estimate'&&
+  Number.isFinite(result.support)&&result.support>=.6&&result.support<=1?
+  {...result,method:'garment-mask',needsConfirmation:false}:null;
+}
 'use strict';
 window.openPhotoCrop=async function(item,{analyze,save}){
  const E=window.PhotoCropEngine,dialog=document.createElement('dialog');dialog.className='photo-crop-editor';
@@ -25,7 +54,7 @@ window.openPhotoCrop=async function(item,{analyze,save}){
  // saving the crop removes recognitionPhoto and blocks future indexing.
  // Keep optional standalone-photo storage unchanged unless a mask exists.
  if(item.outfitSourceId||mask)photo.recognitionPhoto={image:rawCrop};
- if(mask){photo.maskApplied=true;const p=E.pixels(crop,img.naturalWidth,img.naturalHeight),canvas=document.createElement('canvas');canvas.width=p.outputWidth;canvas.height=p.outputHeight;const ctx=canvas.getContext('2d',{willReadFrequently:true});ctx.drawImage(img,p.x,p.y,p.width,p.height,0,0,canvas.width,canvas.height);const pixels=ctx.getImageData(0,0,canvas.width,canvas.height);pixels.data.set(window.GarmentMaskEngine.apply(pixels.data,mask,{transparent:true}));const palette=window.PhotoColor?.maskedPalette(pixels.data,canvas.width,canvas.height);if(palette&&!palette.needsConfirmation)photo.maskedColorEstimate={color:palette.primary,source:'photo-estimate',secondaryColor:palette.secondary};}await save(photo,use.checked?choice:null);dialog.close();}catch{status.textContent='Crop could not be saved. Your previous photo is kept. Try again.';savingCrop=false;setBusy(false);}});commit.className='primary';
+ if(mask){photo.maskApplied=true;const p=E.pixels(crop,img.naturalWidth,img.naturalHeight),canvas=document.createElement('canvas');canvas.width=p.outputWidth;canvas.height=p.outputHeight;const ctx=canvas.getContext('2d',{willReadFrequently:true});ctx.drawImage(img,p.x,p.y,p.width,p.height,0,0,canvas.width,canvas.height);const pixels=ctx.getImageData(0,0,canvas.width,canvas.height);pixels.data.set(window.GarmentMaskEngine.apply(pixels.data,mask,{transparent:true}));const confirmed=cropMaskColorEvidence(pixels.data,canvas.width,canvas.height,window.PhotoColor);if(confirmed)photo.maskedColorEstimate=confirmed;}await save(photo,use.checked?choice:null);dialog.close();}catch{status.textContent='Crop could not be saved. Your previous photo is kept. Try again.';savingCrop=false;setBusy(false);}});commit.className='primary';
  function setBusy(value){busy=value;for(const b of [reset,check,cancel,commit,...frame.querySelectorAll('button')])b.disabled=value;cancel.disabled=value&&savingCrop;use.disabled=value;}
  function exportPhoto(useMask=true){const p=E.pixels(crop,img.naturalWidth,img.naturalHeight),c=document.createElement('canvas');c.width=p.outputWidth;c.height=p.outputHeight;const outputContext=c.getContext('2d');outputContext.imageSmoothingEnabled=true;outputContext.imageSmoothingQuality='high';outputContext.drawImage(img,p.x,p.y,p.width,p.height,0,0,c.width,c.height);if(mask&&useMask){const ctx=c.getContext('2d'),pixels=ctx.getImageData(0,0,c.width,c.height);pixels.data.set(window.GarmentMaskEngine.apply(pixels.data,mask));ctx.putImageData(pixels,0,0);}return c.toDataURL('image/jpeg',.94);}
  function update(){if(mask&&(mask.width!==E.pixels(crop,img.naturalWidth,img.naturalHeight).outputWidth||mask.height!==E.pixels(crop,img.naturalWidth,img.naturalHeight).outputHeight))mask=null;for(const b of [moveCrop,erase,restore])b.setAttribute('aria-pressed',String(maskMode==='crop'?b===moveCrop:b===(brushMode==='erase'?erase:restore)));frame.style.touchAction=maskMode==='brush'?'none':'';choice=null;use.checked=false;useLabel.hidden=true;status.textContent='';Object.assign(frame.style,{left:crop.x*100+'%',top:crop.y*100+'%',width:crop.width*100+'%',height:crop.height*100+'%'});const p=E.pixels(crop,img.naturalWidth,img.naturalHeight),scale=Math.min(1,360/Math.max(p.width,p.height));preview.width=Math.max(1,Math.round(p.width*scale));preview.height=Math.max(1,Math.round(p.height*scale));preview.getContext('2d').drawImage(img,p.x,p.y,p.width,p.height,0,0,preview.width,preview.height);if(mask){const output=exportPhoto(),temporary=new Image();temporary.onload=()=>{if(mask&&preview.isConnected){preview.getContext('2d').clearRect(0,0,preview.width,preview.height);preview.getContext('2d').drawImage(temporary,0,0,preview.width,preview.height);}};temporary.src=output;}dimensions.textContent='Saved crop: '+p.outputWidth+' × '+p.outputHeight+' pixels'+(Math.min(p.width,p.height)<224?' · Small crop: include more of the garment for clearer recognition.':'');}

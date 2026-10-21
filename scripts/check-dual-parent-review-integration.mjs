@@ -52,8 +52,19 @@ function assertCustomerPreserved(p){
   const oldSave="  // The queue can wait while recognition or a user edit changes the draft.\n  // Snapshot ONLY after the last safety validation, so the IndexedDB item";
   const newSave="  // Another capture, cloud restore or manual save can add a matching item\n  // while this classifier waits in the write queue. Recheck immediately\n  // before opening the transaction, without silently deleting the photo.\n  const latest=[...items,...batch].filter(x=>x.id!==item.id);\n  const conflicts=latest.some(x=>x.image===item.image||\n   (!independentlyDistinctOutfitRegions(item,x)&&\n    Number.isFinite(item.visualAspect)&&Number.isFinite(x.visualAspect)&&\n    Math.abs(x.visualAspect-item.visualAspect)<.02&&\n    similarPhotos(item.visualSignature,x.visualSignature)));\n  if(conflicts){\n   item.possibleDuplicate=true;\n   item.localStatus='Possible duplicate: compare this photo with your closet before saving.';\n   return resolve(false);\n  }\n  // The queue can wait while recognition or a user edit changes the draft.\n  // Snapshot ONLY after the last safety validation, so the IndexedDB item";
   assert.ok(prior.includes(oldDup)&&prior.includes(oldSave),'Reviewed duplicate baseline changed');
-  assert.equal(fs.readFileSync(p,'utf8'),prior.replace(oldDup,newDup).replace(oldSave,newSave),
-   'Unreviewed app change outside two duplicate gates');
+  const priorTrustedApp=execFileSync('git',['show','a6ee34a676030cff2a4fcf3b31185275c78371a7:public/app.js'],{encoding:'utf8',maxBuffer:15_000_000});
+  assert.equal(priorTrustedApp,prior.replace(oldDup,newDup).replace(oldSave,newSave),
+   'Customer app before masked-color fix differs from exact duplicate-reviewed parent');
+  const singleMaskAutoTrust="if(photo.maskedColorEstimate&&value.colorSource==='photo-estimate')value.colorMethod='garment-mask';";
+  const properManualReview="// Only the editor's two-view verified foreground method is trusted.";
+  const unverifiedOutfitAutoTrust="if(options.colorEstimate){Object.assign(item,ClothingDetails.fillColor(item,options.colorEstimate));if(item.colorSource==='photo-estimate')item.colorMethod='garment-mask';}";
+  const originalBackedPalette="if(options.colorEstimate&&options.colorEstimate.source==='photo-estimate'&&Number.isFinite(options.colorEstimate.support)&&options.colorEstimate.support>=.6&&options.colorEstimate.support<=1&&!options.colorEstimate.needsConfirmation&&typeof options.recognitionPhoto?.image==='string'&&options.recognitionPhoto.image.startsWith('data:image/jpeg;base64,')&&typeof options.originalPhoto?.image==='string'&&options.originalPhoto.image.startsWith('data:image/jpeg;base64,')){Object.assign(item,ClothingDetails.fillColor(item,{...options.colorEstimate,method:'garment-mask'}));}";
+  assert.ok(priorTrustedApp.includes(singleMaskAutoTrust)&&priorTrustedApp.includes(unverifiedOutfitAutoTrust),
+   'Pre-fix masked color provenance bypass changed');
+  assert.equal(fs.readFileSync(p,'utf8'),
+   priorTrustedApp.replace(singleMaskAutoTrust,properManualReview)
+    .replace(unverifiedOutfitAutoTrust,originalBackedPalette),
+   'Unreviewed app changes outside exactly two verified masked-color trust boundaries');
   assert.equal(normalize(prior),
    normalize(execFileSync('git',['show',customer+':'+p],{encoding:'utf8',maxBuffer:5_000_000})),
    'Original-photo recognition/indexing differs from reviewed customer branch');
