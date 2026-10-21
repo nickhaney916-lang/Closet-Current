@@ -737,7 +737,61 @@ $('startAuto').onclick=()=>startCamera('auto');
 $('takePhoto').onclick=takePhoto;
 $('stop').onclick=finishScan;
 function waitEvent(target,event,timeout=15000){return new Promise((resolve,reject)=>{let t;const clean=()=>{clearTimeout(t);target.removeEventListener(event,ok);target.removeEventListener('error',fail);};const ok=()=>{clean();resolve();},fail=()=>{clean();reject(Error('This video could not be read. Try an MP4 recorded by your phone.'));};target.addEventListener(event,ok,{once:true});target.addEventListener('error',fail,{once:true});t=setTimeout(fail,timeout);});}
-async function upload(file){if(!file||busy)return;if(file.size>150*1024*1024)return message('Choose a video smaller than 150 MB. Short batches work best.');stopCamera();busy=true;controls(true);let url;const startLength=batch.length;try{url=URL.createObjectURL(file);video.src=url;video.classList.add('visible');$('placeholder').hidden=true;const loaded=waitEvent(video,'loadedmetadata');video.load();await loaded;if(!Number.isFinite(video.duration)||video.duration<=0)throw Error('Video duration could not be read. Try a regular MP4.');if(video.duration>180)throw Error('Please trim this video to 3 minutes or less.');session=0;const interval=Number($('interval').value);for(let t=Math.min(.1,video.duration/2);t<video.duration;t+=interval){const seek=waitEvent(video,'seeked');video.currentTime=t;await seek;candidate(snap());const progress=Math.round(t/video.duration*100);$('captureState').textContent=`Collecting images · ${progress}%`;}message('');switchView('review');}catch(e){render();if(batch.length>startLength){message(`${session} images recovered before processing stopped. ${e.message}`);switchView('review');}else message(e.message);}finally{busy=false;controls(false);video.removeAttribute('src');video.load();if(url)URL.revokeObjectURL(url);$('captureState').textContent='Ready for another batch';}}
+// Keep video capture bounded even for the maximum three-minute upload.
+// Distribute up to twenty original video frames across long clips rather
+// than exhausting mobile memory and disk with thirty-six 2.85MB candidates.
+function videoSampleTimes(duration,requestedSeconds){
+ if(!Number.isFinite(duration)||duration<=0||duration>180)
+  throw Error('Please choose a video between 1 second and 3 minutes.');
+ const cadence=[5,8,10].includes(Number(requestedSeconds))?Number(requestedSeconds):5;
+ const step=Math.max(cadence,duration/20),times=[];
+ for(let t=Math.min(.1,duration/2);t<duration&&times.length<20;t+=step)
+  times.push(Math.round(t*1000)/1000);
+ return times;
+}
+async function upload(file){
+ if(!file||busy)return;
+ if(file.size>150*1024*1024)return message('Choose a video smaller than 150 MB. Short batches work best.');
+ const owner=window.closetAuth?.user?.id;
+ if(!owner)return message('Sign in before importing a video into your closet.');
+ const sameOwner=()=>owner===window.closetAuth?.user?.id;
+ stopCamera();busy=true;controls(true);
+ let url;const startLength=batch.length;
+ try{
+  url=URL.createObjectURL(file);video.src=url;
+  video.classList.add('visible');$('placeholder').hidden=true;
+  const loaded=waitEvent(video,'loadedmetadata');video.load();await loaded;
+  if(!sameOwner())throw Error('Video import stopped because the signed-in account changed.');
+  if(!Number.isFinite(video.duration)||video.duration<=0)
+   throw Error('Video duration could not be read. Try a regular MP4.');
+  const times=videoSampleTimes(video.duration,$('interval').value);
+  session=0;
+  for(let n=0;n<times.length;n++){
+   if(!sameOwner())throw Error('Video import stopped because the signed-in account changed.');
+   const seek=waitEvent(video,'seeked');video.currentTime=times[n];await seek;
+   if(!sameOwner())throw Error('Video import stopped because the signed-in account changed.');
+   candidate(snap());
+   $('captureState').textContent='Collecting images · '+Math.round((n+1)/times.length*100)+'%';
+  }
+  const added=batch.length-startLength;
+  if(added){message('');switchView('review');}
+  else message('No new video frames were added. Existing photos are still in your closet or review list.');
+ }catch(e){
+  if(!sameOwner()){message('Video import stopped after an account change. Sign in again before importing.');}
+  else{
+   render();
+   const recovered=batch.length-startLength;
+   if(recovered){
+    message(recovered+' images recovered before video processing stopped. '+e.message);
+    switchView('review');
+   }else message(e.message);
+  }
+ }finally{
+  busy=false;controls(false);video.pause?.();video.removeAttribute('src');video.load();
+  if(url)URL.revokeObjectURL(url);
+  $('captureState').textContent='Ready for another batch';
+ }
+}
 $('upload').onchange=e=>{upload(e.target.files[0]);e.target.value='';};
 $('discard').onclick=()=>{if(batch.length&&confirm('Discard all unsaved images in this batch?')){batch=[];persistDraft();session=0;render();}};
 $('export').onclick=async()=>{if(typeof outfitBoardReady!=='undefined')await outfitBoardReady;if(!items.length&&(typeof inspirationLooks==='undefined'||!inspirationLooks.length))return message('Save a closet piece or inspiration look before exporting.');const blob=new Blob([JSON.stringify({format:'closet-current',version:3,items,looks:typeof inspirationLooks!=='undefined'?inspirationLooks:[],outfitBoard:typeof boardBackup==='function'?boardBackup():undefined})],{type:'application/json'}),url=URL.createObjectURL(blob),a=node('a');a.href=url;a.download='closet-current-backup.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);message('Backup downloaded. Keep it somewhere you can find again.');};

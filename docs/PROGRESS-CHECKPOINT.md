@@ -1,3 +1,9 @@
+# Bounded mobile video frame intake — October 21, 2026
+
+- Scoped to the existing video upload loop: clips up to 180 seconds now contribute at most 20 source-frame attempts distributed across their full duration, preserving the configured 5/8/10-second cadence for shorter clips. This reduces potential memory/storage churn on Android/iPhone and avoids announcing a successful import if no new frames are accepted.
+- Video metadata/seek callbacks now verify the original signed-in customer before queuing each frame, and cleanup always pauses, releases media URL and restores controls; recover earlier accepted frames after later media error. Existing recognition original-photo order, Cloud RLS/auth/wardrobe, inspiration styling and parallel Work assignments unaffected.
+- Exact previous app tree and updated app blob pinned by source guard; complete Node regressions and mobile Chromium/WebKit synthetic event tests mandatory, not physical camera/evidence. See `docs/VIDEO-IMPORT-BOUNDED-20261021.md`. No deploy/merge, accuracy claims, paid AI or Drive Duel changes.
+
 # Inspiration photo full-source handoff to My Closet — October 21, 2026
 
 - Found a high-impact cross-workflow inconsistency: Inspiration generated a 900px JPEG for look preview but sent that same low-resolution image to the clothing recognizer. New isolated branch keeps preview lightweight while holding the chosen original File in temporary memory and converting through the existing 3072px bounded original-photo import only after explicit Add-to-Closet click.
