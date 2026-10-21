@@ -4,6 +4,8 @@ import fs from 'node:fs';
 import {execFileSync} from 'node:child_process';
 import {packetFromLock,reconcile,LOCK} from './source-holdout-human-review.mjs';
 const git=(...args)=>execFileSync('git',args,{encoding:'utf8',maxBuffer:15_000_000}).trim();
+assert.equal(git('rev-parse','HEAD:public/app.js'),'2bac7dae8c9d13f7b8ed1baf9d41750bb0878b48',
+ 'Native still exception must match exact independently reviewed camera app blob');
 const CLOUD='f16fce2956688e576edde6ecfdc390d3f46158a3',HUMAN='218ac1ea98333e72b7ccc090a13a46f581015dc3',CUSTOMER='6ebcf6d9dcfd18611c3248242b62208eb9923385';
 const originals={
   ".github/workflows/human-original-review-readiness.yml": "04acdb3cbf2a4a769a0656186cf92621dd7f6151",
@@ -38,6 +40,12 @@ const allowed=new Set([...Object.keys(originals),
  'scripts/check-import-detail-budget-scope.mjs',
  '.github/workflows/import-detail-budget-qa.yml',
  'docs/IMPORTED-PHOTO-DETAIL-FIRST-20261021.md',
+ 'public/app.js',
+ 'tests/photo-native-still.test.cjs',
+ 'scripts/test-native-still-detail-budget-browsers.mjs',
+ 'scripts/check-native-still-detail-budget-scope.mjs',
+ '.github/workflows/native-still-detail-budget-qa.yml',
+ 'docs/NATIVE-STILL-DETAIL-FIRST-20261021.md',
  'docs/PROGRESS-CHECKPOINT.md']);
 for(const path of Object.keys(originals)){
  assert.equal(git('rev-parse','HEAD:'+path),originals[path],'Altered reviewed readiness file: '+path);
@@ -47,7 +55,7 @@ for(const path of Object.keys(originals)){
 const changed=git('diff','--name-only',CLOUD,'HEAD').split('\n').filter(Boolean);
 for(const p of changed)assert.ok(allowed.has(p),'Unexpected combined-branch file: '+p);
 for(const p of Object.keys(originals))assert.ok(changed.includes(p),'Missing original human readiness file: '+p);
-for(const p of ['public/cloud-backup.js','public/app.js','public/auth.js','public/recognition-engine.mjs',
+for(const p of ['public/cloud-backup.js','public/auth.js','public/recognition-engine.mjs',
  'public/recognition-photo.mjs','public/photo-color.js','public/closet-stylist.js','public/outfit-board.js',
  'public/cloud-backup-engine.js','supabase/cloud-backup.sql'])
  assert.equal(git('rev-parse','HEAD:'+p),git('rev-parse',CLOUD+':'+p),'Reviewed customer runtime changed: '+p);
