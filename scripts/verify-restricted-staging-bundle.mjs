@@ -1,8 +1,10 @@
 // QA of the generated STATIC preview candidate. Never claim Cloudflare
 // Access or a real staging Supabase project exists from static source.
 import assert from 'node:assert/strict';
-import {readFile,readdir} from 'node:fs/promises';
+import {readFile} from 'node:fs/promises';
+import {checkStagingArtifactIntegrity} from './check-staging-artifact-integrity.mjs';
 const dir='staging-dist';
+const artifactReview=await checkStagingArtifactIntegrity(dir);
 const get=path=>readFile(dir+'/'+path,'utf8');
 const proof=JSON.parse(await get('staging-preflight.json'));
 assert.equal(proof.privateCloudflareAccessPolicyVerified,false);
@@ -37,5 +39,6 @@ console.log('RESTRICTED_STAGING_BUNDLE_QA '+JSON.stringify({
  existingCloudBackupNotUsed:true,
  manualCloudflareAccessApprovalRequired:true,
  realStagingSupabaseProjectConfirmationRequired:true,
- productionReleaseApproved:false
+ productionReleaseApproved:false,
+ artifactReview
 }));

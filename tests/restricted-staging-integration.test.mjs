@@ -74,3 +74,26 @@ test('builder refuses abandoned staging source until its manual inspection and c
  await rm(orphan,{force:true});
  const retry=build(root);assert.equal(retry.status,0,retry.stderr);
 }));
+
+test('bundle verifier refuses build lock, incomplete file and live reference even after a valid build',async()=>sandbox(async root=>{
+ const built=build(root);assert.equal(built.status,0,built.stderr);
+ const verify=()=>spawnSync(process.execPath,['scripts/verify-restricted-staging-bundle.mjs'],
+  {cwd:root,encoding:'utf8',timeout:15000});
+ const valid=verify();assert.equal(valid.status,0,valid.stderr);
+ const lock=join(root,'staging-dist.build.lock');
+ await writeFile(lock,'fake interrupted process');
+ const blockedLock=verify();assert.notEqual(blockedLock.status,0);
+ assert.match(blockedLock.stderr,/staging build lock exists/);
+ await rm(lock);
+ const abandoned=join(root,'staging-dist.incomplete-interrupted');
+ await writeFile(abandoned,'not verified');
+ const blockedOrphan=verify();assert.notEqual(blockedOrphan.status,0);
+ assert.match(blockedOrphan.stderr,/unfinished staging candidate/);
+ await rm(abandoned);
+ const tampered=join(root,'staging-dist','unrelated-artifact.json');
+ await writeFile(tampered,JSON.stringify({api:'https://'+live[1]+'.supabase.co'}));
+ const blockedLive=verify();assert.notEqual(blockedLive.status,0);
+ assert.match(blockedLive.stderr,/live-service reference/);
+ await rm(tampered);
+ const final=verify();assert.equal(final.status,0,final.stderr);
+}));

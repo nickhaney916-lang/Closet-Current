@@ -19,6 +19,7 @@ const own=new Set(['scripts/check-integrated-security-mobile-staging.mjs',
  '.github/workflows/integrated-security-mobile-staging-qa.yml']);
 if(withLock)for(const path of ['docs/FINAL-INTEGRATED-STAGING-BUILD-20261021.md',
  '.github/workflows/final-integrated-staging-build-qa.yml'])own.add(path);
+for(const path of [".github/workflows/staging-artifact-integrity-qa.yml","docs/STAGING-ARTIFACT-REVIEW-20261021.md","scripts/check-staging-artifact-integrity.mjs","scripts/verify-restricted-staging-bundle.mjs","tests/staging-artifact-integrity.test.mjs","tests/restricted-staging-integration.test.mjs","scripts/check-staging-preflight-scope.mjs","docs/PROGRESS-CHECKPOINT.md","scripts/check-final-integrated-artifact-review.mjs",".github/workflows/final-integrated-artifact-review-qa.yml","docs/FINAL-INTEGRATED-ARTIFACT-REVIEW-20261021.md"])own.add(path);
 const pinnedLock=path=>withLock&&lockFiles.has(path)&&!own.has(path);
 const checkLock=path=>assert.equal(git('rev-parse','HEAD:'+path),git('rev-parse',LOCKING+':'+path),'Verified build locking source overwritten: '+path);
 if(withLock)for(const path of git('diff','--name-only',PRIOR_INTEGRATION,'HEAD').split('\n').filter(Boolean)){

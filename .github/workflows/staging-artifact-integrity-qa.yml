@@ -1,0 +1,44 @@
+name: Restricted staging artifact review and fail-closed verifier QA
+on:
+  push:
+    branches: [fix/staging-artifact-verification-20261021]
+permissions:
+  contents: read
+jobs:
+  artifact-review-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Guard customer runtime and hosted config
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --exit-code e67edcaa34e6c4ed9f93cc8edd6c204a7b15db80 HEAD -- public supabase .github/workflows/pages.yml .github/workflows/cloudflare-pages.yml
+          node scripts/check-staging-preflight-scope.mjs
+          node scripts/check-integrated-pilot-rc.mjs
+          node scripts/check-customer-pilot-release-gates.mjs
+      - name: Test lock, interrupted staging and artifact review gates
+        run: |
+          node --test tests/staging-artifact-integrity.test.mjs tests/atomic-staging-output.test.mjs
+          node --test tests/restricted-staging-integration.test.mjs
+      - name: Full app build and entire Node test suite
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Build invented staging candidate and validate only local files
+        env:
+          CLOSET_STAGING_APP_ORIGIN: https://preview.closet-current-staging.pages.dev/
+          CLOSET_STAGING_SUPABASE_URL: https://abcdefghijklmnopqrst.supabase.co
+          CLOSET_STAGING_SUPABASE_PUBLISHABLE_KEY: sb_publishable_STAGING_TEST_FIXTURE_XYZ001
+        run: |
+          node scripts/build-restricted-staging.mjs
+          node scripts/verify-restricted-staging-bundle.mjs
+          node scripts/test-staging-sw-cache.mjs
+      - name: No hosted project, paid service or production deployment
+        run: echo 'LOCAL STATIC BUNDLE REVIEW ONLY; NO HOSTED STAGING, PAYMENT, DRIVE DUEL OR PRODUCTION UPDATE'

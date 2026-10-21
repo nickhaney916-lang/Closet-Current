@@ -1,3 +1,18 @@
+# Closet Current integrated artifact review — October 21, 2026
+
+- Separate two-parent candidate joining verified Work #159 `55ac1688cac4dd277ee82ee9c73c4df9cefcb77c` with PR #160 `3e594a5714b7822ada852cd74d8bc5dc2d51c6ad`; neither parent branch is changed. PR #160 files exactly pinned and Work #159 customer Auth, Supabase, camera, original-resolution recognition and atomic build locking preserved. The two-parent CI requires all security/mobile/staging checks and refusal-gate tests to pass.
+- This is still a local no-deployment integration. Hosted private staging, physical Android/iPhone, independent human garment accuracy and separate owner-approved live security migration remain release blockers. No paid services, Drive Duel changes or customer files; production promotion BLOCKED.
+
+---
+
+# Restricted staging artifact acceptance refusal gate — October 21, 2026
+
+- **Draft PR #160** closes the gap between PR #158's exclusive staging builder lock and final artifact verification: the static `verify-restricted-staging-bundle.mjs` now rejects `staging-dist.build.lock`, orphaned `staging-dist.incomplete-*` siblings, symlinks/special files in the staged tree, and live Closet Current / Drive Duel backend references in any generated text file. The additional read-only scan checks lock/orphan state both before and after the file walk. It **does not approve any hosted deployment**; the manifest and verifier continue to mark promotion BLOCKED.
+- **Exact implementation commit:** `36f52679bc15b076213742360aea6800b27ff900`. [GitHub Actions artifact review #39681449365](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39681449365) **COMPLETED SUCCESS**: 7 new artifact unit tests, 9 staging-lock tests, 6 real builder integration tests passed; complete Node regression **1,503 pass / 0 fail / 3 skipped**. Synthetic staging bundle verification checked 92 files, 94 entries, no live refs or linked entries, with `permittedToDeploy:false`. Staging PWA cache QA and source-immutability guard also passed. Final checkpoint commit must get its own exact-head check.
+- The source is stacked on PR #158 `e67edcaa34e6c4ed9f93cc8edd6c204a7b15db80` in a new isolated branch; PR #158 and Work's separate assignment #159 not modified. No changes to the customer app, original high-res before-mask clothing recognition, wardrobe source, Supabase database, hosted production workflows, Drive Duel, paid AI or user information. No merge, staging deployment or physical-phone testing. Protected hosting, separate staging database, human-gold recognition and actual device validation remain release blockers.
+
+---
+
 # Work Assignment #159 verified — final integrated staging-build recovery
 
 - Draft PR #159 combines #157 `232a735f99af0da73df2e7095508c2a99e8df6da` and #158 `e67edcaa34e6c4ed9f93cc8edd6c204a7b15db80` as actual merge parents on a new isolated branch. Original PR branches preserved. Only checkpoint prose conflicted; both histories retained. #158 locking source/tests/instructions remain byte-identical; #157 public/Supabase/mobile/security sources preserved.
