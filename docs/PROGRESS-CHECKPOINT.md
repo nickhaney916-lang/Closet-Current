@@ -1,3 +1,37 @@
+# Reproduced new-photo evidence and complete blind-review handoff — October 20, 2026 Pacific
+
+- Actions **39539181308 SUCCESS** at `d08eadfd64344bbf324837d5398556809dadd196`: **1,272 passed / 0 failed / 3 skipped**, actual FashionCLIP + independent CLIP and Chromium/WebKit checks passed. The scored report was identical to the first run; sample size remains **13 distinct sources**, not 26.
+- Added complete separate `independent-human-review-unlabeled` artifact packaging: 13 original neutral-ID JPEGs, offline review HTML, blank review JSON and hashes, with no proposed-label manifest or predictions. This makes independent human adjudication possible; it does not invent or complete it.
+- No source labels, photos, model, runtime or old benchmark changed after seeing predictions. Final packaging-only exact-head CI must pass before crediting that new head. PR #111 remains draft; model promotion, physical-phone and independent gold validation remain blocked.
+
+# Final new-source benchmark provenance regression — October 20, 2026 Pacific
+
+- Added a twelfth focused regression binding the stored actual measurement to the unchanged pre-inference label manifest and every original source hash. Complete local final build/Node suite: **1,272 passed / 0 failed / 3 skipped**. The earlier real-model CI measurement remains separately pinned to source commit `1a1c76c12ab37ab080fd71de1fdda1df4963ebbe` and run 39538590277.
+- Final draft PR #111 head must rerun full source/Node, both real encoders and supported browser checks. Read final exact-head CI in the PR before declaring that checkpoint verified; original labels and image hashes are unchanged. Independent human gold adjudication and physical-phone/untouched confirmation evidence remain uncompleted.
+
+# New original-photo real-model measurement — October 20, 2026 Pacific
+
+- Draft PR #111 source-lock/inference SHA `1a1c76c12ab37ab080fd71de1fdda1df4963ebbe`; **Actions 39538590277 SUCCESS**, real unchanged FashionCLIP + separate pretrained CLIP on all **13 new SHA-256 locked originals**, labels frozen before inference. #108/#109/#110 untouched; all customer model/threshold/vector/prior benchmark bytes unchanged.
+- Against **provisional source + assistant visual labels**, FashionCLIP: **10/12 broad categories**, **8/12 explicit allowed families**, **9 strong candidates = 8 matching + 1 flannel shirt/Jacket disagreement**, 2 category-only reviews, 1 skirt abstention; sculpture control rejected. The flannel shirt/jacket boundary was flagged before inference and still requires independent human adjudication; this is not proof of an actual wrong customer save.
+- Exact two-model subtype agreement would block that one disagreement but unnecessarily defer **5 correct coarse-family candidates**; do not promote. Generic raw top-1 also mislabels the sculpture, a sneaker and compression shorts; uncalibrated top-1 is not automatic-save quality.
+- Full source/inference commit CI: **1,271 Node passed / 0 failed / 3 skipped**; Chromium + WebKit JPEG/EXIF/color/import and original-source crop regression passed. Actual physical phones, independent blind human gold labels and untouched confirmation set remain absent. No classifier accuracy improvement or production approval claimed.
+- New measurement provenance file binds source lock, original report and CI artifact 12317698983. Final documentation/provenance commit must pass exact-head CI before declaring the research development checkpoint complete. No merge/deploy, paid AI, live Supabase/customer data or Drive Duel edits.
+
+# New-source original-photo lock completed before model inference — October 20, 2026 Pacific
+
+- Collection run **39538230372 SUCCESS** at `38415cc345132aa7502108298b767bc8cdf97301`: all 13 original JPEGs acquired; source artifact 12318218952. Nine-photo partial run recovered after HTTP 429; four remaining sources acquired without substituting photos.
+- All original-frame images visually inspected before any model output. New `benchmark/independent-source-holdout/locked.json` binds actual hashes/dimensions/bytes, source metadata/licenses and assistant evidence; zero prior filename/URL/hash matches. **Independent human gold labels are NOT available.** Ambiguous garment boundaries and coarse boot/dress family scoring remain explicit.
+- Final acquisition commit's full source/regression job passed: **1,271 Node passes / 0 failed / 3 skipped**. Original model, thresholds/vectors, old manifests and all customer code unchanged. #108/#109/#110 branches untouched.
+- Dedicated pipeline now permits unchanged FashionCLIP and independent CLIP real inference only on the locked bytes with a neutral no-label manifest. Original-frame EXIF/sRGB preparation retained; no garment clipping or synthetic prediction substitution. Fresh inference and exact final-head QA are pending their runs, not claimed complete here.
+
+# New-source independent garment benchmark preparation — October 20, 2026 Pacific
+
+- Isolated `benchmark/independent-source-holdout-20261021` from PR #109 exact `a6ee34a676030cff2a4fcf3b31185275c78371a7`; #108/#109 branches and customer/recognition source remain untouched.
+- Selected 13 original-photo source candidates before inference: two each sneakers/boots/dresses/skirts/shorts/shirts and a photographed non-garment sculpture. Actual source hashes, licenses, assistant visual evidence and label-free inference are required; independent human gold labels are explicitly unavailable, never invented.
+- Initial collection 39537027701 acquired two sneaker originals and then failed honestly on HTTP 429. Retry 39537145147 respects source-server waits and preserves partial bytes. Do not call unacquired photographs verified or report synthetic unit cases as real accuracy.
+- Added fail-closed source/duplicate/label/scoring protections, unchanged original-first model harness, independent CLIP comparison, blank human-review packet generation and eleven focused regressions. Local full suite: **1,271 passed / 0 failed / 3 skipped**, build and current source scope checked. New real-inference and final CI evidence are pending acquisition and the pre-inference source lock.
+- `docs/INDEPENDENT-SOURCE-HOLDOUT-20261020.md` documents the source protocol and limitations. No model promotion, paid AI, live cloud/Auth/customer data changes, Drive Duel, production merge or deploy.
+
 # Independent second encoder real-photo subtype trial — October 20, 2026 Pacific
 
 - Based on verified draft PR #107 exact head `9b2cfa722cee058ab5de22d569ded02ffec23134`, isolated branch `research/independent-clip-garment-subtypes-20261021`. No overlap with parallel Work-owned branch integration.
