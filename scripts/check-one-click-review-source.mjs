@@ -17,6 +17,12 @@ const changedAllowed=new Set([
  '.github/workflows/offline-review-coordinator-qa.yml',
  'docs/OFFLINE-TWO-REVIEWER-INTAKE-20261021.md',
  'docs/PROGRESS-CHECKPOINT.md','scripts/check-human-review-cloud-bridge.mjs',
+ 'public/photo-import.js',
+ 'tests/photo-import-untyped-and-timeout.test.cjs',
+ 'scripts/test-import-detail-budget-browsers.mjs',
+ 'scripts/check-import-detail-budget-scope.mjs',
+ '.github/workflows/import-detail-budget-qa.yml',
+ 'docs/IMPORTED-PHOTO-DETAIL-FIRST-20261021.md',
  'scripts/check-blind-photo-cloud-integration.mjs','scripts/verify-camera-cloud-integration.mjs']);
 const changed=git('diff','--name-only',BASE,'HEAD').split('\n').filter(Boolean);
 for(const p of changed)assert.ok(changedAllowed.has(p),'Unexpected file modification: '+p);
@@ -34,4 +40,4 @@ assert.equal(report.suppliedSubmissions,0);
 assert.equal(report.approvedModelAccuracy,null);
 assert.equal(report.productionPromotion,'BLOCKED');
 console.log(JSON.stringify({sourceScope:'ONE_CLICK_REVIEW_ONLY',sourcePhotos:13,actualHumanReviews:0,
- humanAccuracy:null,productionPromotion:'BLOCKED',appRuntimeUntouched:true,merged:false,deployed:false}));
+ humanAccuracy:null,productionPromotion:'BLOCKED',protectedAppRuntimeUntouched:true,intentionalImportCompressionException:true,merged:false,deployed:false}));
