@@ -1,7 +1,7 @@
 name: One-click source-verified independent original review
 on:
   push:
-    branches: [feature/one-click-original-review-20261021]
+    branches: [feature/one-click-original-review-20261021, fix/offline-review-draft-recovery-20261021]
   workflow_dispatch:
 permissions:
   contents: read
@@ -53,7 +53,7 @@ jobs:
         run: gh run download 39538230372 -n new-source-originals-before-inference -D "$ORIGINALS"
       - name: Generate no-upload stand-alone offline original-photo reviewer
         run: node scripts/one-click-human-review.mjs prepare "$ORIGINALS" "$RUNNER_TEMP/one-click-review"
-      - name: Verify all 13 real original frames in both mobile browsers
+      - name: Verify original frames and tamper-safe offline draft recovery in both mobile browsers
         run: |
           mkdir -p "$RUNNER_TEMP/one-click-evidence"
           node scripts/test-one-click-human-review-browsers.mjs "$RUNNER_TEMP/one-click-review" "$RUNNER_TEMP/one-click-evidence/browsers.json"
