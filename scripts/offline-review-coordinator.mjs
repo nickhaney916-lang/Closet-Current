@@ -41,7 +41,7 @@ table{width:100%;border-collapse:collapse}th,td{padding:8px;text-align:left;bord
 const sourceData=__LOCKED_REVIEW_PACKET__;
 const {packet,packetSha256,families,attestations}=sourceData;
 const $=id=>document.getElementById(id);
-let verifiedAudit=null;
+let verifiedAudit=null,auditVersion=0;
 const exact=(o,fields)=>o!==null&&typeof o==='object'&&!Array.isArray(o)&&
  Object.keys(o).length===fields.length&&fields.every(f=>Object.hasOwn(o,f));
 const validText=(v,min,max)=>typeof v==='string'&&v.trim().length>=min&&v.length<=max&&
@@ -109,11 +109,14 @@ async function fileInput(id){
  return {value,hash:await digest(utf8.encode(JSON.stringify(value)))};
 }
 $('verify').onclick=async()=>{
+ const version=++auditVersion;
  verifiedAudit=null;$('export').disabled=true;$('results').hidden=true;
  $('rows').replaceChildren();$('status').textContent='Checking original identity and completed review fields locally…';
  try{
   if(!crypto.subtle)throw Error('This browser cannot verify review hashes.');
   const [a,b]=await Promise.all([fileInput('first'),fileInput('second')]);
+  // Ignore any verification whose inputs changed while async hashing was pending.
+  if(version!==auditVersion)return;
   // Check both, then publish; failed or partial work can never remain accepted.
   const report=reconcile(a.value,b.value,[a.hash,b.hash]);
   verifiedAudit=report;
@@ -131,10 +134,11 @@ $('verify').onclick=async()=>{
   $('status').textContent='Both JSON structures are valid against the frozen source packet. Human identities and blinding remain unverified.';
   $('results').hidden=false;$('export').disabled=false;
  }catch(e){
-  $('status').textContent='Not accepted: '+e.message;
+  if(version===auditVersion)$('status').textContent='Not accepted: '+e.message;
  }
 };
 for(const id of ['first','second'])$(id).addEventListener('change',()=>{
+ auditVersion++;
  verifiedAudit=null;$('export').disabled=true;$('results').hidden=true;
  $('status').textContent='Files changed. Check both reviews again.';
 });
