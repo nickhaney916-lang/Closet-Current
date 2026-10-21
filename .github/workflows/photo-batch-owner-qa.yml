@@ -1,0 +1,51 @@
+name: Photo batch importer account-switch and mobile regression QA
+on:
+  push:
+    branches: [fix/photo-batch-owner-cancel-20261021]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  full-suite:
+    runs-on: ubuntu-latest
+    timeout-minutes: 32
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Freeze trusted full-frame photo processing and auth/cloud sources
+        run: |
+          node scripts/check-photo-batch-owner-scope.mjs
+          git worktree add --detach "$RUNNER_TEMP/verified-pr133" 801b70926283ffe920cbfa2d05560288b3afaaf4
+          (cd "$RUNNER_TEMP/verified-pr133" && node scripts/check-video-import-bounded-scope.mjs && node scripts/check-customer-pilot-release-gates.mjs)
+      - name: Full customer product build and Node suite
+        run: |
+          node --check public/app.js
+          node --check public/photo-import.js
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+  mobile-import:
+    needs: full-suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Android Chromium and iPhone WebKit emulation
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install --with-deps chromium webkit
+      - name: Test original-frame JPEG and account-switch cancellation on both emulated phones
+        run: node scripts/test-photo-batch-owner-mobile.mjs
+      - name: Retest existing phone photo MIME fallback and original-source crop safety
+        run: |
+          node scripts/test-untyped-photo-import-mobile.mjs
+          node scripts/build.mjs
+          node scripts/test-original-crop-source-mobile.mjs
