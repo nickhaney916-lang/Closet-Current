@@ -1,3 +1,10 @@
+# Atomic installed phone-app release consistency — October 21, 2026
+
+- User canceled drafted Work Assignment #139 to conserve Work capacity; all new implementation happens in this primary Closet Current chat. PR #137 mobile photo-memory/storage and earlier Work draft changes are left alone. Source checkpoint PR #138 remains independently verified and isolated.
+- Found real PWA update-version risk: old service worker installed a complete versioned release but fetched the online page/scripts first at runtime and **overwrote cached files** with whatever latest server code was served, potentially mixing old/new HTML and JS after deployment.
+- One-file worker change makes every complete precached release immutable until a replacement service worker can install. No forced activation. Missing known files return recoverable HTTP 503 instead of silently swapping incompatible code. Private API, Auth, wardrobe IndexedDB, cloud, recognition/photos, styling and deployment files are unchanged.
+- Exact scope/source audit, full product build/Node and actual registered Service Worker browser emulation in Android Chromium and iPhone WebKit required for signoff. No claims of physical phone, customer login or human original photo validation. See `docs/PWA-ATOMIC-OFFLINE-RELEASE-20261021.md`.
+
 # Weekly source-verified trend research reminder and safe editorial handoff — October 21, 2026
 
 - Independent maintenance priority: audit the existing curated recommendation library's `updated_at`, `next_refresh_at`, research source/retailer diversity, source checked dates, HTTPS link safety and direction-to-publication support.
