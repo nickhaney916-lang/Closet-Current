@@ -1,3 +1,12 @@
+# Work Assignment #157 — combined security/mobile/staging development candidate
+
+- Confirmed no published #157 integration PR/branch at start. New isolated `integration/security-mobile-staging-20261021` from verified PR #156 `c0fecc398ea927418c5e083607bdc1cf6ea77527`, merged verified PR #154 `cca2f7c98f69d5aad416e6174182ac3f66b9b951` with its #149/#151/#153 dependencies. Original branches untouched. Both source exact-head CI runs were SUCCESS.
+- Sole merge conflict was shared checkpoint prose. Both branch-specific histories and common suffix preserved. Customer runtime, original/full-resolution recognition, wardrobe/styling and production hosting remain byte-identical; Supabase sources match verified #154 exactly, including the two DRAFT recovery corrections.
+- New two-parent scope guard pins every inherited file to its verified branch, allows only explicit integration QA/docs/guard changes and keeps production promotion BLOCKED. Dedicated CI runs full regression, real local Supabase two-account recovery, generated staging VM + actual Chromium installed worker, and Android Chromium/iPhone WebKit app/photo-recovery emulation. Results pending at new candidate SHA; no combined verification claimed until CI passes.
+- No hosted DB access/change, customer data, paid resources/AI, merge/deployment, Drive Duel changes or physical-phone/hosted-staging claims.
+
+---
+
 # Real Chromium installed staging PWA QA — October 21, 2026
 
 - Draft **PR #156**, isolated from Work Assignment #154 and based on PR #155 `2651f4e4567b8ee1717ef869df2fa33ed6cb4ac8`, adds an **actual Chromium browser service worker install / activate / offline regression** for the generated, synthetic `staging-dist/sw.js`, rather than only a VM mock. A temporary loopback HTTP origin supplies all code and a synthetic registration page. The new test never loads a customer account or contacts hosted services.
@@ -64,7 +73,57 @@
 - Supabase connector read-only verification now succeeds for the existing Closet Current project `hlkgymugtfbirlpunsra` in organization `afsdfxyupfbtjrsgiwar`. The existing project is NOT a new empty staging project. Drive Duel remains separate and unchanged.
 - Added read-only anonymous pre-upload probe across ten critical page/script/data routes on the staging project origin and supplied deployment previews. No credentials or redirect following. Public 2xx fails; generic denial/network errors are inconclusive. Only expected Cloudflare Access login redirects pass the observed-route check. This cannot prove policy correctness or complete route/hostname coverage; release stays BLOCKED.
 - Local app build and full Node suite: **1,481 passed, 0 failed, 3 skipped**; five new synthetic probe tests. Customer public source, Supabase schemas and production hosting workflows unchanged. No actual hosted URL probe, physical phones, real email or two-account cloud tests performed.
-- Next: owner-approved $0 independent Supabase staging project and separately protected Cloudflare Pages staging site; inspect actual deny-by-default policy and hostname inventory, then run signed-out hosted checks before upload approval. See `docs/STAGING-ANONYMOUS-ACCESS-20261021.md`.
+- Next: owner-approved $0 independent Supabase staging project and separately protected Cloudflare Pages staging site; inspect actual deny-by-default policy and hostname inventory, then run signed-out hosted checks before upload approval. See `docs/STAGING-ANONYMOUS-ACCESS-20261021.md`# Work Assignment #154 verified — real local Supabase two-account security
+
+- Draft PR #154 implementation `1042cd622277c4298af849af682f8478a3869b74`, real local Supabase CI [#39677977928](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39677977928) and camera/indexing [#39677977772](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39677977772) both SUCCESS. Full build/regression: **1,494 passed, 0 failed, 3 skipped**. Four new local-only guard tests pass.
+- CLI 2.121.0 ran actual Auth signup/password login/JWT user verification, PostgREST and private Storage on a disposable runner-local Docker stack. **207 real HTTP requests**, two independent generated accounts, four permission states: limited → RPC-only → safe recovered limited → re-hardened. Symmetric cross-owner wardrobe/photo attacks denied; victim JSON and exact generated-JPEG bytes preserved. Anonymous/forged-token denial and editable metadata isolation passed.
+- Real concurrent revision CAS, invalid save, injected database-trigger failure/atomic retry, disregarded committed-response/stale retry, drifted-wrapper recovery rejection with unchanged grants, preservation through recovery and final re-hardening all PASS. Non-superuser migration executor and no writer SET for browser roles explicitly checked. Teardown destroyed disposable volumes/status files.
+- **Security/reliability finding fixed in DRAFT SQL only:** earlier superuser PostgreSQL rehearsal hid inability of real Supabase postgres to drop private-writer-owned functions. Hardening retains creator ADMIN-only authority with SET/INHERIT disabled; recovery temporarily assumes the object owner, drops its function/schema, resets and removes the role. No browser writer membership. Already-hardened databases with revoked administrator authority require separate reviewed administrative repair; this is not hosted migration approval.
+- Existing public app, original/full-resolution photo recognition, wardrobe, production SQL/migrations, audits, hosting workflows and all original Work branches untouched. Only the two explicit DRAFT SQL designs and new local QA/docs changed. No hosted DB writes, paid resources/AI, deployment, merge or Drive Duel changes. Hosted staging/Access/email, real phones and independent garment acceptance remain release blockers. Production promotion BLOCKED. Final exact-head evidence is maintained in PR #154.
+
+---
+
+# Work Assignment #154 — local Supabase two-account integration
+
+- New isolated development branch `test/disposable-supabase-two-account-20261021` from verified PR #153 `7740438f2d196b1ccd98ea6ff47afc2f41de58bf`. Adds actual local GoTrue/PostgREST/Storage two-account integration and fail-closed localhost guards; no existing app/SQL/production workflow changed.
+- Tests symmetric wardrobe/photo attacks, anonymous/forged tokens, user metadata, concurrent revision CAS, actual database-trigger save failure/retry, recovery-draft drift rejection, preservation through fallback and re-hardening. Uses only synthetic accounts and a generated JPEG.
+- The authoring workspace lacks Docker/CLI; dedicated GitHub runner starts its own disposable local Supabase stack with CLI 2.121.0 and no hosted link. Local static guards pass; final complete regression and real HTTP results must be verified at the published source SHA. No hosted account-security claim, production deployment, paid resource or Drive Duel change. Production release BLOCKED. See `docs/DISPOSABLE-SUPABASE-SECURITY-20261021.md` and the draft PR for final test evidence.
+
+---
+
+# Closet Current backup migration catalog state gate — October 21, 2026
+
+- **Draft PR #153:** added a single read-only 27-flag catalog query at `supabase/audits/backup-migration-state.sql` that reports `OVERBROAD_CLIENT_GRANTS`, `LIMITED_DIRECT_WRITES`, `RPC_ONLY_EXPECTED_CATALOG` or `UNKNOWN_OR_UNSAFE`. Every result explicitly sets `hosted_migration_authorized=false` and `production_release_approved=false`.
+- The exact source was run **READ ONLY against live Closet Current**: `OVERBROAD_CLIENT_GRANTS`, host migration/release false. No user records, photos, backup documents, passwords, account IDs or payment data were queried or modified. Confirms PR #149's known overbroad client grants remain uncorrected in production.
+- **Verified source commit:** `bdec6c2c6338751ad0558ab550f92ea7e7cdbbf9`. GitHub Actions [migration state / disposable PostgreSQL #39675538407](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39675538407) COMPLETED SUCCESS with **1,490 Node tests passed, 0 failed, 3 skipped** (including four static SQL gate unit tests). Disposable PostgreSQL matched limited→RPC-only→recovered limited; injecting TRUNCATE and disabling RLS both forced UNKNOWN. [Camera/indexing CI #39675538153](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39675538153) SUCCESS. Final checkpoint commit needs exact-head recheck.
+- **No production database schema/grants change**, no new Supabase resource, paid provider, production merge/deployment or Drive Duel change. Parallel Work's PR #152 staging photo backup tests were not modified. Owner-approved isolated staging and two-account real HTTP RLS verification remain prerequisites to any hosted migration. Production release BLOCKED.
+
+---
+
+# Closet Current backup RPC safe recovery rehearsal — October 21, 2026
+
+- **Draft PR #151**, independent of Work staging PRs #148/#150 and backup audit PR #149, added a guarded transactional **DRAFT ONLY** recovery from a hardened private RPC writer to the original owner-bound SECURITY INVOKER revision-checked backup method. It never restores dangerous client DELETE/TRUNCATE/TRIGGER/REFERENCES/MAINTAIN privileges or mutable photo UPDATE policy; no CASCADE drops and unknown schema drift aborts.
+- **Exact implementation SHA:** `0d2e251bbc50f3e48629d76a47d622aed93e90e0`. GitHub Actions [disposable PostgreSQL recovery #39669010617](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39669010617) **COMPLETED SUCCESS** with **1,486 Node tests passed, 0 failed, 3 skipped**; verified successful backup recovery, revision CAS, unrelated-account isolation, anonymous denial, TRUNCATE/DELETE denial, and an injected changed-wrapper rollback rejection **without partial privilege changes**. [Camera/indexing CI #39669010619](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39669010619) SUCCESS. Final checkpoint commit requires exact-head CI status check.
+- The live Closet Current database still has the 12 overly broad catalog differences identified in PR #149; **no hosted database rights have been changed**. These SQL files are not in `supabase/migrations/`. Do not execute them on hosted Supabase without explicit owner authorization, reviewed backup, a separately isolated staging backend, real disposable two-account Auth/Storage checks and rollback operator rehearsal.
+- No new Supabase resource, paid AI, production merge/deployment, Drive Duel change or physical-device/independent-photo accuracy claim. Production release remains **BLOCKED**.
+
+---
+
+# Live Closet Current backup permission review — October 21, 2026
+
+- **Draft PR #149** independently audited live Closet Current `pg_catalog`, `pg_policies`, function and role permissions WITHOUT querying customer rows or writing a database. The repeatable SQL has a 25-boolean-only output; 12 discrepancies from the intended RPC-only locked-down model were found, including authenticated table TRUNCATE/direct writes and Storage UPDATE policy. Auth owner RLS, private photo bucket and owner SELECT/INSERT policy were present; no exploitation is alleged.
+- **Exact engineering SHA:** `3546e26596efa3598d825bc443f6a0a460835e28`. GitHub Actions [read-only audit + disposable PostgreSQL #39667340848](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39667340848) **SUCCESS**: **1,486 passed, 0 failed, 3 skipped**. PostgreSQL 17 passed existing two-stage least-privilege and private RPC-only corrective designs. Camera/indexing workflow also succeeded. Final checkpoint-only commit needs its own exact-head CI verification.
+- **No hosted remediation performed:** Do not apply draft SQL to customer production without explicit owner approval, confirmed rollback and disposable multi-account HTTP validation. No Supabase resources or paid providers, app/runtime modifications, Drive Duel changes, production merge or deployment. Work Assignment #148 remains separate. Real hardware/human clothing accuracy cannot be certified; production release BLOCKED.
+- Report and usage: `docs/LIVE-BACKUP-GRANTS-AUDIT-20261021.md`.
+
+---
+
+# Restricted staging atomic output safeguard — October 21, 2026
+
+- **Verified engineering work (draft PR #147):** the staging builder now generates `staging-dist.incomplete-*`, validates all live-backend removal checks on that private work directory and atomically renames it to deployable `staging-dist/` only after success. Stale prior output and incomplete directories are removed on failed rebuilds; no success message precedes publication of the complete local folder.
+- **Exact verified source:** `4952f048407887822b8a8f6893354ae4f72e3048`, GitHub Actions [restricted staging QA #39665328379](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39665328379) and [full camera/indexing regression #39665328295](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39665328295) both completed SUCCESS: **1,481 passed, 0 failed, 3 skipped** in the full suite. Five dedicated atomic staging tests passed. Synthetic staging bundle check and source-boundary guard passed. These are automated synthetic results, not physical-device or hosted staging results.
+- **Scope:** no customer runtime, original image, garment recognition, account data, Supabase database/schema, Drive Duel, production workflow, or paid AI service was changed. PR #146 anonymous-host probe remains independently isolated. No merge or deployment.
+- **Hard blocks remain:** the free project cap prevents creating a distinct hosted Supabase staging project; Cloudflare staging Access policy is not yet configured/verified; human review, real phone camera tests, actual two-account cloud/email and privacy approvals are pending. Actual verified human category/color accuracy remains null and production promotion BLOCKED. Staging bundle generation does not imply permission to deploy.
 
 ---
 

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {execFileSync} from 'node:child_process';
+import {execFileSync,spawnSync} from 'node:child_process';
 import {packetFromLock,reconcile,LOCK} from './source-holdout-human-review.mjs';
 const BASE='fd70faa88fb6245e4b065aae3158531b715498e9';
 const git=(...a)=>execFileSync('git',a,{encoding:'utf8'}).trim();
@@ -33,7 +33,12 @@ const allow=new Set([
  'docs/RESTRICTED-STAGING-SETUP-20261021.md',
  'docs/PROGRESS-CHECKPOINT.md'
 ]);
-for(const path of git('diff','--name-only',BASE,'HEAD').split('\n').filter(Boolean)){
+// A combined candidate uses a stricter two-parent source pin instead of
+// treating verified security dependencies as unreviewed staging-only edits.
+const integrated=['c0fecc398ea927418c5e083607bdc1cf6ea77527','cca2f7c98f69d5aad416e6174182ac3f66b9b951']
+ .every(sha=>spawnSync('git',['merge-base','--is-ancestor',sha,'HEAD']).status===0);
+if(integrated)execFileSync(process.execPath,['scripts/check-integrated-security-mobile-staging.mjs'],{stdio:'inherit'});
+else for(const path of git('diff','--name-only',BASE,'HEAD').split('\n').filter(Boolean)){
  assert.ok(allow.has(path),'Unapproved production or hosted service edit '+path);
  if(path==='docs/PROGRESS-CHECKPOINT.md')
   assert.ok(readFileSync(path,'utf8').endsWith(git('show',BASE+':'+path)+'\n'),

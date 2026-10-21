@@ -1,0 +1,72 @@
+name: Backup migration state gate - disposable read only
+on:
+  push:
+    branches: [audit/backup-migration-state-gate-20261021]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  state-transitions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: closet_state_gate
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres -d closet_state_gate"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Confirm no existing customer runtime or migrations were changed
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --name-only c4a962ed0514e4a4c2b04b691f843454063c1e5a HEAD |
+          while IFS= read -r path; do
+            case "$path" in
+              supabase/audits/backup-migration-state.sql|tests/backup-migration-state.test.mjs|docs/BACKUP-MIGRATION-STATE-GATE-20261021.md|.github/workflows/backup-migration-state-gate-qa.yml|docs/PROGRESS-CHECKPOINT.md) ;;
+              *) echo "Unapproved application or database change: $path"; exit 1 ;;
+            esac
+          done
+      - name: Full app build and Node regression tests
+        run: |
+          node --test tests/backup-migration-state.test.mjs
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Verify staged/recovered schema states on disposable PostgreSQL 17
+        shell: bash
+        env:
+          PGHOST: 127.0.0.1
+          PGPORT: '5432'
+          PGUSER: postgres
+          PGPASSWORD: postgres
+          PGDATABASE: closet_state_gate
+        run: |
+          set -euo pipefail
+          command -v psql || (sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client)
+          stage(){ psql -X -v ON_ERROR_STOP=1 -A -t -f supabase/audits/backup-migration-state.sql; }
+          psql -X -v ON_ERROR_STOP=1 -f tests/closet-least-privilege-postgres.sql > /dev/null
+          test "$(stage)" = 'LIMITED_DIRECT_WRITES|f|f'
+          psql -X -v ON_ERROR_STOP=1 -f supabase/design/backup-rpc-only-writes.DRAFT.sql > /dev/null
+          test "$(stage)" = 'RPC_ONLY_EXPECTED_CATALOG|f|f'
+          psql -X -v ON_ERROR_STOP=1 -f supabase/design/backup-rpc-only-writes-safe-recovery.DRAFT.sql > /dev/null
+          test "$(stage)" = 'LIMITED_DIRECT_WRITES|f|f'
+          psql -X -v ON_ERROR_STOP=1 -c 'GRANT TRUNCATE ON public.closet_backups TO authenticated'
+          test "$(stage)" = 'UNKNOWN_OR_UNSAFE|f|f'
+          psql -X -v ON_ERROR_STOP=1 -c 'REVOKE TRUNCATE ON public.closet_backups FROM authenticated'
+          psql -X -v ON_ERROR_STOP=1 -c 'ALTER TABLE public.closet_backups DISABLE ROW LEVEL SECURITY'
+          test "$(stage)" = 'UNKNOWN_OR_UNSAFE|f|f'
+          echo 'MIGRATION_STATE_GATE_DISPOSABLE_PASS'
+      - name: No hosted Supabase or application deployment
+        run: |
+          test ! -f supabase/migrations/20261021_backup_migration_state_gate.sql
+          echo 'READ ONLY CATALOG AUDIT. NO HOSTED MIGRATION OR DEPLOYMENT.'
