@@ -19,7 +19,7 @@ body{font:17px system-ui;line-height:1.45;max-width:830px;margin:auto;padding:20
 input,button{font:inherit;max-width:100%;box-sizing:border-box}
 input{display:block;margin:10px 0 20px;width:100%}button{min-height:52px;padding:10px}
 section{border:1px solid #888;padding:15px;border-radius:12px;margin:15px 0}
-table{width:100%;border-collapse:collapse}th,td{padding:8px;text-align:left;border-bottom:1px solid #aaa}
+table{width:100%;table-layout:fixed;border-collapse:collapse}th,td{padding:7px;text-align:left;border-bottom:1px solid #aaa;overflow-wrap:anywhere;word-break:break-word;font-size:14px}#export{display:block;position:relative;z-index:1;margin-top:16px}#auditDownload{overflow-wrap:anywhere}
 #status{white-space:pre-wrap}small{display:block}
 </style>
 <h1>Independent garment review — coordinator only</h1>
