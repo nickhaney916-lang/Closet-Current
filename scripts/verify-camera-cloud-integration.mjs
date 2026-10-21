@@ -69,8 +69,21 @@ const normalizedCamera=s=>{
  assert.ok(start>=0&&finish>start,'Camera reliability boundary changed');
  return s.slice(0,start)+'/* isolated camera lifecycle and frame-delivery fixes */'+s.slice(finish);
 };
-assert.equal(normalizedCamera(fs.readFileSync('public/app.js','utf8')),normalizedCamera(workApp),
- 'Noncamera code diverged from the completed Work PR #91 after handoff');
+// Only two narrowly reviewed duplicate-indexing changes are allowed. Exact
+// original app bytes must remain otherwise intact, including original RGB
+// recognition, segmentation, camera lifecycle and clothing preview.
+const parentApp=execFileSync('git',['show','844ccd64c90d5b31664b422b07bf301b5071bf60:public/app.js'],{encoding:'utf8',maxBuffer:15_000_000});
+const duplicateOld=" if(!proposed.outfitSourceId||!validPhoto(newSource)||\\n    !validPhoto(proposed.recognitionPhoto?.image))return true;";
+const duplicateNew=" if(!proposed.outfitSourceId)return true;\\n // A matching cleaned preview is never enough to discard an outfit region\\n // when its original RGB or full-scene provenance is missing. Preserve it\\n // in review instead: two different garments can share one display cutout.\\n if(!validPhoto(newSource)||!validPhoto(proposed.recognitionPhoto?.image))return false;";
+const saveOld="  // The queue can wait while recognition or a user edit changes the draft.\\n  // Snapshot ONLY after the last safety validation, so the IndexedDB item";
+const saveNew="  // Another capture, cloud restore or manual save can add a matching item\\n  // while this classifier waits in the write queue. Recheck immediately\\n  // before opening the transaction, without silently deleting the photo.\\n  const latest=[...items,...batch].filter(x=>x.id!==item.id);\\n  const conflicts=latest.some(x=>x.image===item.image||\\n   (!independentlyDistinctOutfitRegions(item,x)&&\\n    Number.isFinite(item.visualAspect)&&Number.isFinite(x.visualAspect)&&\\n    Math.abs(x.visualAspect-item.visualAspect)<.02&&\\n    similarPhotos(item.visualSignature,x.visualSignature)));\\n  if(conflicts){\\n   item.possibleDuplicate=true;\\n   item.localStatus='Possible duplicate: compare this photo with your closet before saving.';\\n   return resolve(false);\\n  }\\n"+saveOld;
+assert.ok(parentApp.includes(duplicateOld)&&parentApp.includes(saveOld),
+ 'Reviewed duplicate gates do not match parent app');
+const exactDuplicateApp=parentApp.replace(duplicateOld,duplicateNew).replace(saveOld,saveNew);
+assert.equal(fs.readFileSync('public/app.js','utf8'),exactDuplicateApp,
+ 'Unreviewed change to customer app outside two duplicate/review checks');
+assert.equal(normalizedCamera(parentApp),normalizedCamera(workApp),
+ 'Parent noncamera code diverged from the completed Work PR #91 after handoff');
 assert.equal(git('rev-parse',handoff+':public/app.js'),git('rev-parse',work+':public/app.js'),
  'Merged startup recovery must have original Work app bytes before frozen-preview extension');
 // Security hardening adds design-only SQL, an isolated local Postgres test,
