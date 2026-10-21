@@ -4,7 +4,7 @@
 
 A mask-derived foreground color can arrive through `ClothingDetails.fillColor` with `estimate.method='garment-mask'`, but the helper formerly **did not retain that method**. The later `ClothingDetails.fill` stage treats anonymous `photo-estimate` colors as replaceable by a conflicting recognition model color. That can misindex a correctly sampled blue shoe as a red shoe despite confirmed garment-pixel evidence.
 
-The helper now records `colorMethod='garment-mask'` for recognized, **already verified** mask color estimates, exactly as it already records `uniform-light-background`. Since the existing fill step requires that trusted method to protect independently verified photo color, the original category, color and type index remain consistent. No new model outputs are fabricated; only the original confirmed evidence is carried forward.
+The helper now records `colorMethod='garment-mask'` for recognized, **already verified** mask color estimates, exactly as it already records `uniform-light-background`. For an ordinary later re-scan without independently verified evidence, it explicitly clears any previous mask method so stale provenance cannot give a new color unearned trust. Since the existing fill step requires that trusted method to protect independently verified photo color, the original category, color and type index remain consistent. No new model outputs are fabricated; only the original confirmed evidence is carried forward.
 
 The fix preserves conservative behavior:
 - `needsConfirmation=true` returns the input unchanged; uncertain masks cannot fill a color.
@@ -16,7 +16,7 @@ The fix preserves conservative behavior:
 
 ## Test coverage and exact source integrity
 
-New `tests/verified-garment-color-provenance.test.cjs` exercises seven concrete decisions, including conflict between a verified garment mask blue color and a model's red label, preservation of white-background evidence, user corrections and disputed/unsupported masks. Full existing automatic-indexing and photo-color tests must also pass.
+New `tests/verified-garment-color-provenance.test.cjs` exercises eight concrete decisions, including conflict between a verified garment mask blue color and a model's red label, preservation of white-background evidence, user corrections and disputed/unsupported masks. Full existing automatic-indexing and photo-color tests must also pass.
 
 The source provenance gate compares `public/clothing-details.js` with the exact prior PR #103 revision **after applying only the approved one-function replacement**. Changes elsewhere in that helper or elsewhere in original recognition, segmentation, physical masks and photos fail CI. Relevant original-photo and integrated review gates remain active.
 
