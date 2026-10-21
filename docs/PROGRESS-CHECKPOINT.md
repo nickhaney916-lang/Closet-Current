@@ -1,3 +1,9 @@
+# Native camera still bounded high-detail JPEG fallback — October 21, 2026 Pacific
+
+- Builds on validated draft PR #123: original ImageCapture sensor still now tries JPEG quality .94/.88/.82 at the same 3072/2560/2048/1536/1024 pixel frame before dropping resolution. This changes no model, detection/classification order, user wardrobe, original review packet, cloud SQL or paid inference.
+- Source-verified exact one-block code change, with cancellation between encode attempts, bounds and non-upscaled source preserved. **No improved true recognition accuracy or physical phone fidelity proven** by synthetic tests; 13-photo independent humans 0, accuracy null, gold promotion BLOCKED.
+- Draft-only branch, no merge/deploy/real device access. See `docs/NATIVE-STILL-DETAIL-FIRST-20261021.md`.
+
 # High-detail camera-roll import within existing JPEG budget — October 21, 2026 Pacific
 
 - Additive draft on verified PR #122: when 3072px JPEG quality .94 cannot fit existing 2,850,000-character limit, try quality .88 and .82 at **same pixel frame** before reducing pixels. Keep source before segmentation/mask, bounded retries, photo count/storage limits, account isolation, and unchanged original human photo review artifacts.
