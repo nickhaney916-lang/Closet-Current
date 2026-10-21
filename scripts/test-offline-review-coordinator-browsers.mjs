@@ -32,7 +32,7 @@ for(const [engineName,engine]of [['chromium',chromium],['webkit',webkit]]){
   await load('first',a);await page.locator('#verify').click();
   assert.equal(await page.locator('#results').isHidden(),true,'One reviewer cannot complete validation');
   await load('second',b);await page.locator('#verify').click();
-  assert.equal(await page.locator('#export').isDisabled(),false);
+  assert.equal(await page.locator('#export').isDisabled(),false,'Browser intake status: '+await page.locator('#status').innerText());
   assert.equal(await page.locator('#rows tr').count(),13);
   const dlEvent=page.waitForEvent('download');await page.locator('#export').click();
   const downloaded=await dlEvent;assert.equal(downloaded.suggestedFilename(),'self-attested-review-audit.json');
