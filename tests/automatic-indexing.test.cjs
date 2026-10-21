@@ -559,3 +559,84 @@ test('white model label stays eligible if source image has no contradictory whit
  assert.equal(stored.length,1,'do not globally prohibit legitimate white garments');
  assert.equal(stored[0].color,'White');
 });
+
+test('an outfit preview with missing original full-scene or RGB evidence is never silently discarded as an exact duplicate',async()=>{
+ for(const missing of ['originalPhoto','recognitionPhoto']){
+  const {c,stored}=setup();
+  c.candidate('same-display');await done(c);
+  assert.equal(stored.length,1);
+  const options={outfitSourceId:'another-physical-garment',
+   originalPhoto:{image:'data:image/jpeg;base64,SECONDORIGINALSCENE'},
+   recognitionPhoto:{image:'data:image/jpeg;base64,SECONDORIGINALCROP'},
+   cropBounds:{x:.2,y:.2,width:.3,height:.4},
+   segmentHint:{categories:['Shoes'],types:['Sneakers'],clipped:false}};
+  if(missing==='originalPhoto')delete options.originalPhoto;
+  else options.recognitionPhoto={image:''}; // preserve the explicitly missing input
+  assert.equal(c.candidate('same-display',options),true,
+   'an incomplete source cannot prove the outfit region is an exact duplicate');
+  await done(c);
+  assert.equal(stored.length,1,'unverified original cannot become another automatic save');
+  assert.equal(c.batch.length,1,'the original-backed candidate must remain for review');
+  assert.equal(c.batch[0].outfitSourceId,'another-physical-garment');
+  if(missing==='recognitionPhoto')
+   assert.match(c.batch[0].localStatus,/Original source crop unavailable/);
+  else assert.equal(c.batch[0].possibleDuplicate,true,'the matching preview requires human review');
+ }
+});
+test('two incomplete outfit regions sharing one preview remain independently reviewable',async()=>{
+ const {c,stored}=setup({quality:async()=>({blank:false,signature:[30,40,50],aspect:1})});
+ const photo={image:'data:image/jpeg;base64,FULLSCENE'};
+ const first={outfitSourceId:'scan-1',originalPhoto:photo,recognitionPhoto:{image:''},
+  segmentHint:{categories:['Tops'],clipped:false}};
+ const second={outfitSourceId:'scan-2',originalPhoto:photo,recognitionPhoto:{image:''},
+  segmentHint:{categories:['Outerwear'],clipped:false}};
+ assert.equal(c.candidate('shared-preview',first),true);
+ assert.equal(c.candidate('shared-preview',second),true,'missing source crops cannot establish repeated clothes');
+ await done(c);
+ assert.equal(stored.length,0,'neither incomplete garment may be automatically indexed');
+ assert.equal(c.batch.length,2,'both potentially distinct layers survive review');
+});
+test('a new saved garment appearing during the IndexedDB write queue stops duplicate autosave',async()=>{
+ const {c,stored}=setup();
+ let injected=false;
+ c.queued=work=>{
+  if(!injected){
+   injected=true;
+   c.items.push({id:randomUUID(),image:'new-item',category:'Shoes',itemType:'Sneakers',color:'Blue'});
+  }
+  return work();
+ };
+ c.candidate('new-item');await done(c);
+ assert.equal(injected,true);
+ assert.equal(stored.length,0,'commit must reject a concurrent identical photo');
+ assert.equal(c.items.length,1,'the existing closet photo must not be overwritten');
+ assert.equal(c.batch.length,1,'keep the proposed photo for review');
+ assert.equal(c.batch[0].possibleDuplicate,true);
+ assert.match(c.batch[0].localStatus,/Possible duplicate/);
+});
+test('a lookalike committed while recognition was in flight is reviewed, not indexed a second time',async()=>{
+ const {c,stored}=setup({quality:async()=>({blank:false,signature:[12,13,14],aspect:1})});
+ c.queued=work=>{
+  c.items.push({id:randomUUID(),image:'previous-item',visualSignature:[12,13,14],
+   visualAspect:1,category:'Bottoms',itemType:'Skirt',color:'Black'});
+  return work();
+ };
+ c.candidate('new-item');await done(c);
+ assert.equal(stored.length,0);
+ assert.equal(c.batch.length,1);
+ assert.equal(c.batch[0].possibleDuplicate,true);
+ assert.match(c.batch[0].localStatus,/Possible duplicate/);
+});
+test('new distinct original sources are still indexed when their images and signatures do not match',async()=>{
+ const {c,stored}=setup({quality:async image=>({blank:false,signature:[image.length,30,40],aspect:1})});
+ c.queued=work=>{
+  if(!c.items.length)c.items.push({id:randomUUID(),image:'existing-other-piece',
+   visualSignature:[99,99,99],visualAspect:1,category:'Shoes',
+   itemType:'Sneakers',color:'White'});
+  return work();
+ };
+ c.candidate('new-shirt');await done(c);
+ assert.equal(stored.length,1,'unrelated garment must not be blocked');
+ assert.equal(c.items.length,2);
+ assert.equal(c.batch.length,0);
+});

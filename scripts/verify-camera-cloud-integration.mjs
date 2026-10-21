@@ -55,8 +55,16 @@ const expectedReview=originalReviewScript.replace(
  "['function snap(','function beep('],['function takePhoto(){','async function startCamera(']",
  "['function snap(','function beep('],['let manualStillShot=null;','function controls('],['function finishScan(', 'function takePhoto('],['function takePhoto(){','function waitEvent(']");
 assert.notEqual(expectedReview,originalReviewScript,'Camera lifecycle review extension not found');
-assert.equal(currentReviewScript.slice(0,reviewStart)+currentReviewScript.slice(reviewEnd),expectedReview,
- 'Original human review gate changed outside approved Work camera bounds and byte-exact pilot link');
+const priorReviewScript=execFileSync('git',['show','844ccd64c90d5b31664b422b07bf301b5071bf60:'+reviewScript],{encoding:'utf8',maxBuffer:15_000_000});
+const priorReviewStart=priorReviewScript.indexOf(reviewAddedBegin),priorReviewEnd=priorReviewScript.indexOf(reviewAddedEnd,priorReviewStart);
+assert.ok(priorReviewStart>=0&&priorReviewEnd>priorReviewStart,'Original human review audit boundaries changed');
+assert.equal(priorReviewScript.slice(0,priorReviewStart)+priorReviewScript.slice(priorReviewEnd),expectedReview,
+ 'Historical human review gate differs from approved camera review scope');
+const baselineReviewAssertion="assert.equal(normalize(fs.readFileSync(p,'utf8')),\n   normalize(execFileSync('git',['show',customer+':'+p],{encoding:'utf8',maxBuffer:5_000_000})),\n   'Non-camera app bytes changed, including original-photo recognition/indexing";
+const extendedDuplicateAssertion="// Only the two narrowly approved duplicate guards may change customer\n  // code after the historically verified camera/human merge.\n  const prior=execFileSync('git',['show','844ccd64c90d5b31664b422b07bf301b5071bf60:public/app.js'],{encoding:'utf8',maxBuffer:15_000_000});\n  const oldDup=\" if(!proposed.outfitSourceId||!validPhoto(newSource)||\\n    !validPhoto(proposed.recognitionPhoto?.image))return true;\";\n  const newDup=\" if(!proposed.outfitSourceId)return true;\\n // A matching cleaned preview is never enough to discard an outfit region\\n // when its original RGB or full-scene provenance is missing. Preserve it\\n // in review instead: two different garments can share one display cutout.\\n if(!validPhoto(newSource)||!validPhoto(proposed.recognitionPhoto?.image))return false;\";\n  const oldSave=\"  // The queue can wait while recognition or a user edit changes the draft.\\n  // Snapshot ONLY after the last safety validation, so the IndexedDB item\";\n  const newSave=\"  // Another capture, cloud restore or manual save can add a matching item\\n  // while this classifier waits in the write queue. Recheck immediately\\n  // before opening the transaction, without silently deleting the photo.\\n  const latest=[...items,...batch].filter(x=>x.id!==item.id);\\n  const conflicts=latest.some(x=>x.image===item.image||\\n   (!independentlyDistinctOutfitRegions(item,x)&&\\n    Number.isFinite(item.visualAspect)&&Number.isFinite(x.visualAspect)&&\\n    Math.abs(x.visualAspect-item.visualAspect)<.02&&\\n    similarPhotos(item.visualSignature,x.visualSignature)));\\n  if(conflicts){\\n   item.possibleDuplicate=true;\\n   item.localStatus='Possible duplicate: compare this photo with your closet before saving.';\\n   return resolve(false);\\n  }\\n  // The queue can wait while recognition or a user edit changes the draft.\\n  // Snapshot ONLY after the last safety validation, so the IndexedDB item\";\n  assert.ok(prior.includes(oldDup)&&prior.includes(oldSave),'Reviewed duplicate baseline changed');\n  assert.equal(fs.readFileSync(p,'utf8'),prior.replace(oldDup,newDup).replace(oldSave,newSave),\n   'Unreviewed app change outside two duplicate gates');\n  assert.equal(normalize(prior),\n   normalize(execFileSync('git',['show',customer+':'+p],{encoding:'utf8',maxBuffer:5_000_000})),\n   'Original-photo recognition/indexing differs from reviewed customer branch";
+assert.ok(priorReviewScript.includes(baselineReviewAssertion),'Expected human review block absent');
+assert.equal(currentReviewScript,priorReviewScript.replace(baselineReviewAssertion,extendedDuplicateAssertion),
+ 'Human review gate changed outside exact two duplicate source comparison');
 const work='2d364a8537dc0e5be8ac7495d64bb78abad9b208';
 const handoff='6b85dfd61428f5bfd656dd6a4b702ad1c791ac7b';
 assert.deepEqual(git('rev-list','--parents','-n','1',handoff).split(' '),
@@ -69,8 +77,21 @@ const normalizedCamera=s=>{
  assert.ok(start>=0&&finish>start,'Camera reliability boundary changed');
  return s.slice(0,start)+'/* isolated camera lifecycle and frame-delivery fixes */'+s.slice(finish);
 };
-assert.equal(normalizedCamera(fs.readFileSync('public/app.js','utf8')),normalizedCamera(workApp),
- 'Noncamera code diverged from the completed Work PR #91 after handoff');
+// Only two narrowly reviewed duplicate-indexing changes are allowed. Exact
+// original app bytes must remain otherwise intact, including original RGB
+// recognition, segmentation, camera lifecycle and clothing preview.
+const parentApp=execFileSync('git',['show','844ccd64c90d5b31664b422b07bf301b5071bf60:public/app.js'],{encoding:'utf8',maxBuffer:15_000_000});
+const duplicateOld=" if(!proposed.outfitSourceId||!validPhoto(newSource)||\n    !validPhoto(proposed.recognitionPhoto?.image))return true;";
+const duplicateNew=" if(!proposed.outfitSourceId)return true;\n // A matching cleaned preview is never enough to discard an outfit region\n // when its original RGB or full-scene provenance is missing. Preserve it\n // in review instead: two different garments can share one display cutout.\n if(!validPhoto(newSource)||!validPhoto(proposed.recognitionPhoto?.image))return false;";
+const saveOld="  // The queue can wait while recognition or a user edit changes the draft.\n  // Snapshot ONLY after the last safety validation, so the IndexedDB item";
+const saveNew="  // Another capture, cloud restore or manual save can add a matching item\n  // while this classifier waits in the write queue. Recheck immediately\n  // before opening the transaction, without silently deleting the photo.\n  const latest=[...items,...batch].filter(x=>x.id!==item.id);\n  const conflicts=latest.some(x=>x.image===item.image||\n   (!independentlyDistinctOutfitRegions(item,x)&&\n    Number.isFinite(item.visualAspect)&&Number.isFinite(x.visualAspect)&&\n    Math.abs(x.visualAspect-item.visualAspect)<.02&&\n    similarPhotos(item.visualSignature,x.visualSignature)));\n  if(conflicts){\n   item.possibleDuplicate=true;\n   item.localStatus='Possible duplicate: compare this photo with your closet before saving.';\n   return resolve(false);\n  }\n"+saveOld;
+assert.ok(parentApp.includes(duplicateOld)&&parentApp.includes(saveOld),
+ 'Reviewed duplicate gates do not match parent app');
+const exactDuplicateApp=parentApp.replace(duplicateOld,duplicateNew).replace(saveOld,saveNew);
+assert.equal(fs.readFileSync('public/app.js','utf8'),exactDuplicateApp,
+ 'Unreviewed change to customer app outside two duplicate/review checks');
+assert.equal(normalizedCamera(parentApp),normalizedCamera(workApp),
+ 'Parent noncamera code diverged from the completed Work PR #91 after handoff');
 assert.equal(git('rev-parse',handoff+':public/app.js'),git('rev-parse',work+':public/app.js'),
  'Merged startup recovery must have original Work app bytes before frozen-preview extension');
 // Security hardening adds design-only SQL, an isolated local Postgres test,
@@ -134,6 +155,11 @@ const newFillColor="function fillColor(item,estimate){if(!estimate||estimate.nee
 assert.ok(priorColor.includes(oldFillColor),'Color provenance review baseline changed');
 assert.equal(fs.readFileSync('public/clothing-details.js','utf8'),priorColor.replace(oldFillColor,newFillColor),
  'Unreviewed clothing-detail change beyond verified mask color provenance');
+const allowedDuplicateQA=new Set([
+ 'tests/automatic-indexing.test.cjs',
+ '.github/workflows/duplicate-indexing-commit-qa.yml',
+ 'docs/DUPLICATE-SAFE-INDEXING-20261020.md'
+]);
 const allowedWork=new Set([
  'public/app.js',
  'docs/PROGRESS-CHECKPOINT.md',
@@ -163,7 +189,7 @@ const allowedNew=new Set([
 for(const p of new Set([...m.keys(),...head.keys()])){
  if(m.get(p)!==head.get(p)){
   if(p==='public/index.html'||p==='scripts/build.mjs'||p===reviewScript)continue;
-  assert.ok(allowedWork.has(p)||(allowedNew.has(p)&&!m.has(p))||(allowedSecurity.has(p)&&!m.has(p))||(allowedBackupRpc.has(p)&&!m.has(p))||(allowedLocalSupabaseEvidence.has(p)&&!m.has(p))||allowedAuthSession.has(p)||allowedColorEvidence.has(p),
+  assert.ok(allowedWork.has(p)||(allowedNew.has(p)&&!m.has(p))||(allowedSecurity.has(p)&&!m.has(p))||(allowedBackupRpc.has(p)&&!m.has(p))||(allowedLocalSupabaseEvidence.has(p)&&!m.has(p))||allowedAuthSession.has(p)||allowedColorEvidence.has(p)||allowedDuplicateQA.has(p),
    'Unreviewed change after merge: '+p);
  }
 }

@@ -44,9 +44,19 @@ function assertCustomerPreserved(p){
    }
    return s;
   };
-  assert.equal(normalize(fs.readFileSync(p,'utf8')),
+  // Only the two narrowly approved duplicate guards may change customer
+  // code after the historically verified camera/human merge.
+  const prior=execFileSync('git',['show','844ccd64c90d5b31664b422b07bf301b5071bf60:public/app.js'],{encoding:'utf8',maxBuffer:15_000_000});
+  const oldDup=" if(!proposed.outfitSourceId||!validPhoto(newSource)||\n    !validPhoto(proposed.recognitionPhoto?.image))return true;";
+  const newDup=" if(!proposed.outfitSourceId)return true;\n // A matching cleaned preview is never enough to discard an outfit region\n // when its original RGB or full-scene provenance is missing. Preserve it\n // in review instead: two different garments can share one display cutout.\n if(!validPhoto(newSource)||!validPhoto(proposed.recognitionPhoto?.image))return false;";
+  const oldSave="  // The queue can wait while recognition or a user edit changes the draft.\n  // Snapshot ONLY after the last safety validation, so the IndexedDB item";
+  const newSave="  // Another capture, cloud restore or manual save can add a matching item\n  // while this classifier waits in the write queue. Recheck immediately\n  // before opening the transaction, without silently deleting the photo.\n  const latest=[...items,...batch].filter(x=>x.id!==item.id);\n  const conflicts=latest.some(x=>x.image===item.image||\n   (!independentlyDistinctOutfitRegions(item,x)&&\n    Number.isFinite(item.visualAspect)&&Number.isFinite(x.visualAspect)&&\n    Math.abs(x.visualAspect-item.visualAspect)<.02&&\n    similarPhotos(item.visualSignature,x.visualSignature)));\n  if(conflicts){\n   item.possibleDuplicate=true;\n   item.localStatus='Possible duplicate: compare this photo with your closet before saving.';\n   return resolve(false);\n  }\n  // The queue can wait while recognition or a user edit changes the draft.\n  // Snapshot ONLY after the last safety validation, so the IndexedDB item";
+  assert.ok(prior.includes(oldDup)&&prior.includes(oldSave),'Reviewed duplicate baseline changed');
+  assert.equal(fs.readFileSync(p,'utf8'),prior.replace(oldDup,newDup).replace(oldSave,newSave),
+   'Unreviewed app change outside two duplicate gates');
+  assert.equal(normalize(prior),
    normalize(execFileSync('git',['show',customer+':'+p],{encoding:'utf8',maxBuffer:5_000_000})),
-   'Non-camera app bytes changed, including original-photo recognition/indexing');
+   'Original-photo recognition/indexing differs from reviewed customer branch');
   return;
  }
  assert.equal(now.get(p)?.sha,c.get(p)?.sha,'Customer file accidentally replaced with older review version: '+p);

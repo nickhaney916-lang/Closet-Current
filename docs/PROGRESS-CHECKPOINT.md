@@ -1,3 +1,12 @@
+# Duplicate-safe review and final closet indexing — October 20, 2026 Pacific
+
+- Branched `fix/duplicate-indexing-commit-guard-20261020` from verified draft PR #104 exact SHA `844ccd64c90d5b31664b422b07bf301b5071bf60`.
+- Fixed two independent customer-facing failure paths: an outfit-derived article with a repeated display preview and incomplete original RGB provenance is **retained for review instead of silently discarded**; a duplicate/lookalike arriving after recognition but before final IndexedDB storage is **blocked from automatic save** and flagged for review. Preserved standalone exact duplicates, full original photo capture, distinct garment regions and manual category edits.
+- Added five new `tests/automatic-indexing.test.cjs` regressions: missing RGB/full scene, two incomplete layered garments, concurrent identical image save, concurrent visual lookalike, and distinct nonmatching photo allowed. Total focused regression suite: 67 passed / 0 failed.
+- Strict `scripts/verify-camera-cloud-integration.mjs` and independent `scripts/check-dual-parent-review-integration.mjs` both require **byte-exact comparison to the PR #104 application with only these two reviewed changes**, while retaining original reviewed camera, classification, photos, human-source assets and no-release veto.
+- Verified working-code commit `74e47bb9e3ea77fa90d8406fae7fd3b664e64089`, [CI #39530698177](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39530698177): SUCCESS, **1,238 full Node passes / 0 failed / 3 skipped**, plus 67 focused passes, build and independent provenance. Final post-documentation exact-head CI must also pass.
+- This discrete duplicate-indexing development scope is not real-photo accuracy proof or production authorization. Hosted SMTP/redirect and private-cloud permissions, physical phones, independent mask evaluation and licensing remain open. No paid AI, production deployment, hosted data changes or Drive Duel edits.
+
 # Verified original-pixel garment color indexing — October 20, 2026 Pacific
 
 - Development branch `fix/verified-garment-color-provenance-20261020`, based on draft PR #103 exact SHA `a441f791283596bdc7bc08fe3446c41fd64f1bce`.
