@@ -1,0 +1,32 @@
+name: Masked garment original-color provenance and review QA
+on:
+  push:
+    branches: [fix/masked-photo-color-evidence-20261021]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  original-mask-color-safety:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Test verified masked color from manual crop and original-backed outfit capture
+        run: |
+          node --check public/photo-crop-editor.js
+          node --check public/app.js
+          node --test tests/masked-crop-color-evidence.test.cjs tests/automatic-indexing.test.cjs tests/verified-garment-color-provenance.test.cjs tests/quick-color-review.test.cjs
+      - name: Full app build, customer browser-safe recognition and indexing regression
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Reject all unreviewed original RGB source / human figure / hosted release changes
+        run: |
+          node scripts/verify-camera-cloud-integration.mjs
+          node scripts/check-dual-parent-review-integration.mjs
+          node scripts/check-customer-pilot-release-gates.mjs
