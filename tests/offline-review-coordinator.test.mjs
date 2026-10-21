@@ -9,7 +9,7 @@ const packet=()=>packetFromLock(fs.readFileSync(LOCK));
 test('coordinator uses same source-locked original identities with no model answers',()=>{
  const p=packet(),html=coordinatorHTML(p);
  assert.equal(p.photos.length,13);
- for(const name of ['OPEN-COORDINATOR','first','second','SELF_ATTESTED_OBSERVATIONS_ONLY','DRAFT','sourceData','reviewerIdentityAuthenticated:false','approvedModelAccuracy:null','productionPromotion:\x27BLOCKED\x27'])
+ for(const name of ['coordinator only','first','second','SELF_ATTESTED_OBSERVATIONS_ONLY','Only final REVIEWED','sourceData','reviewerIdentityAuthenticated:false','approvedModelAccuracy:null','productionPromotion:\x27BLOCKED\x27'])
   assert.ok(html.includes(name),name);
  for(const label of ['acceptedTypes','expectedCategory','sourceNote','visualReview','sourceBase','modelPredictions','downloadUrl'])
   assert.ok(!html.includes(label),label+' leaked into coordinator HTML');
