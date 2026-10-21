@@ -32,3 +32,29 @@ test('validates entire origin inventory before making any request',async()=>{
   for(const list of [[],[origins[0]],[origins[0],origins[0]],[origins[1],'https://evil.test'],[origins[1],'https://other.closet-current-staging.pages.dev']])await assert.rejects(probeAnonymousAccess(list,{request}));
   assert.equal(calls,0);
 });
+
+test('anonymous probe strictly validates caller-supplied route inventory before requests',async()=>{
+ let requests=0;
+ const mock=async()=>{requests++;return login();};
+ const invalid=[[],['/app.js','/app.js'],['//other.example/file'],['https://other.example/file'],
+  ['/../private'],['/%2e%2e/private'],['/%2Fprivate'],['/app.js#fragment'],
+  ['/app.js\\evil'],['/foo%2fbar'],['#invalid'],
+  Array.from({length:251},(_,i)=>'/asset'+i+'.js')];
+ for(const paths of invalid)await assert.rejects(probeAnonymousAccess(origins,{request:mock,paths}));
+ assert.equal(requests,0);
+});
+test('custom asset paths find a public binary/icon and preserve release blocks',async()=>{
+ const all=['/','/index.html','/icons/icon-192.png','/ai-models/female-preview.webp'];
+ const calls=[];
+ const result=await probeAnonymousAccess(origins,{paths:all,request:async(url,options)=>{
+  calls.push(url);
+  assert.equal(options.credentials,'omit');assert.equal(options.redirect,'manual');
+  return url.endsWith('/icons/icon-192.png')&&url.startsWith(origins[1])?
+   new Response('public icon',{status:200}):login();
+ }});
+ assert.equal(calls.length,origins.length*all.length);
+ assert.equal(result.totalRoutes,all.length);
+ assert.equal(result.anonymousProbePassed,false);
+ assert.equal(result.results.find(x=>x.path==='/icons/icon-192.png'&&x.origin===origins[1]).outcome,'PUBLIC_RESPONSE');
+ assert.equal(result.privateCloudflareAccessPolicyVerified,false);
+});
