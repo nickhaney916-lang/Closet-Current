@@ -91,8 +91,8 @@ test('adaptive import retries a smaller pixel frame instead of storing an oversi
  });
  const output=await c.photoToJPEG(upload('detailed.jpg','image/jpeg'));
  assert.equal(output,'data:image/jpeg;base64,SAFE');
- assert.deepEqual(widths,[3072,3072,3072,2560,2560,2560,2048]);
- assert.deepEqual(heights,[2304,2304,2304,1920,1920,1920,1536]);
+ assert.deepEqual(widths,[3072,2560,2048]);
+ assert.deepEqual(heights,[2304,1920,1536]);
  assert.equal(revoked,1);
 });
 test('small imports retain native dimensions, and impossible JPEG budgets fail without saving',async()=>{
