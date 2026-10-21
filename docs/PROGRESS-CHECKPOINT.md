@@ -1710,3 +1710,11 @@ The owner chose to polish the existing display rather than redesign the app. Com
 ## Private cloud backup continuation
 
 The owner requested automatic saving without individual phone-gallery files after nine items were captured. Added private account-owned photo storage and revision-protected metadata, durable pending changes, offline retry, existing-local migration and independent-browser recovery. 181 checks, live Supabase account-isolation tests and the browser recovery flow passed. No real user wardrobe was inspected; actual items migrate when the updated signed-in app runs. See docs/CLOUD-BACKUP.md for limits and verification.
+
+# Auth session race closure — October 20, 2026 Pacific
+
+- Based on PR #97's verified local Supabase stack commit `ce48891500b6c2afa1e35cdda427ec5ef4413af5`, isolated branch `fix/auth-refresh-logout-session-race-20261020`.
+- Prevent an in-flight Auth token refresh from writing old credentials or reopening a wardrobe after logout: retire session and clear token locally before remote logout, guard delayed refresh against exact source session/user/auth version, serialize concurrent refresh and duplicate logout.
+- Add three concrete deferred-response and successful refresh regression tests, a full-suite CI workflow, source-lineage gate allowlist, and `docs/AUTH-SESSION-LIFECYCLE-20261020.md`.
+- Exact-head CI results: pending at source checkpoint; see draft PR and workflow for final evidence.
+- Do not merge/deploy or change hosted Auth/SMTP redirects, paid services, customer data, Drive Duel or original photo/mask sources. External inbox and physical-device verification remain release blockers.
