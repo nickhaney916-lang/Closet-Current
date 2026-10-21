@@ -35,6 +35,7 @@ for(const [engineName,engine]of [['chromium',chromium],['webkit',webkit]]){
   await page.waitForFunction(()=>document.querySelector('#status').textContent.startsWith('Both JSON structures')||document.querySelector('#status').textContent.startsWith('Not accepted:'),null,{timeout:15000});
   assert.equal(await page.locator('#export').isDisabled(),false,'Browser intake status: '+await page.locator('#status').innerText());
   assert.equal(await page.locator('#rows tr').count(),13);
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2),true,'Coordinator table must not overflow 390px touch screen');
   await page.locator('#export').click();
   await page.waitForFunction(()=>document.getElementById('auditDownload')?.href.startsWith('blob:'));
   assert.equal(await page.locator('#auditDownload').isVisible(),true,'Manual download link remains available when browsers block automatic downloads');
