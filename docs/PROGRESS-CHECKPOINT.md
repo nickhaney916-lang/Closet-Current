@@ -1,3 +1,12 @@
+# Closet Current backup migration catalog state gate — October 21, 2026
+
+- **Draft PR #153:** added a single read-only 27-flag catalog query at `supabase/audits/backup-migration-state.sql` that reports `OVERBROAD_CLIENT_GRANTS`, `LIMITED_DIRECT_WRITES`, `RPC_ONLY_EXPECTED_CATALOG` or `UNKNOWN_OR_UNSAFE`. Every result explicitly sets `hosted_migration_authorized=false` and `production_release_approved=false`.
+- The exact source was run **READ ONLY against live Closet Current**: `OVERBROAD_CLIENT_GRANTS`, host migration/release false. No user records, photos, backup documents, passwords, account IDs or payment data were queried or modified. Confirms PR #149's known overbroad client grants remain uncorrected in production.
+- **Verified source commit:** `bdec6c2c6338751ad0558ab550f92ea7e7cdbbf9`. GitHub Actions [migration state / disposable PostgreSQL #39675538407](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39675538407) COMPLETED SUCCESS with **1,490 Node tests passed, 0 failed, 3 skipped** (including four static SQL gate unit tests). Disposable PostgreSQL matched limited→RPC-only→recovered limited; injecting TRUNCATE and disabling RLS both forced UNKNOWN. [Camera/indexing CI #39675538153](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39675538153) SUCCESS. Final checkpoint commit needs exact-head recheck.
+- **No production database schema/grants change**, no new Supabase resource, paid provider, production merge/deployment or Drive Duel change. Parallel Work's PR #152 staging photo backup tests were not modified. Owner-approved isolated staging and two-account real HTTP RLS verification remain prerequisites to any hosted migration. Production release BLOCKED.
+
+---
+
 # Closet Current backup RPC safe recovery rehearsal — October 21, 2026
 
 - **Draft PR #151**, independent of Work staging PRs #148/#150 and backup audit PR #149, added a guarded transactional **DRAFT ONLY** recovery from a hardened private RPC writer to the original owner-bound SECURITY INVOKER revision-checked backup method. It never restores dangerous client DELETE/TRUNCATE/TRIGGER/REFERENCES/MAINTAIN privileges or mutable photo UPDATE policy; no CASCADE drops and unknown schema drift aborts.
