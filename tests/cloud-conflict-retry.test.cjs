@@ -84,7 +84,7 @@ function setup({remote=doc('Remote'),pauseFirst=false,failFirstRPC=false,loseFir
   for(const [id,job]of scheduled){timeoutJobs.delete(id);job.fn();}
   for(let i=0;i<30;i++)await tick();
  };
- const until=async check=>{for(let i=0;i<75&&!check();i++)await tick();assert.ok(check(),'Expected async cloud state');};
+ const until=async check=>{for(let i=0;i<100&&!check();i++)await new Promise(resolve=>setTimeout(resolve,5));assert.ok(check(),'Expected async cloud state');};
  return {cloud:window.closetCloud,window,db,base,local,callbacks,elements,calls,initial,
   get remoteCalls(){return remoteCalls},get saves(){return saves},get photoPosts(){return photoPosts},get photoGets(){return photoGets},get server(){return server},
   flush,until,listeners};
@@ -165,6 +165,9 @@ test('photo upload committed before its reply was lost is hash-checked on retry 
  assert.equal(h.photoPosts,2,'Retry POST must detect immutable upload already exists');
  assert.ok(h.photoGets>=2,'Check stored hash on HTTP 409, then restore matching photo');
  assert.equal(h.server.document.items.length,2);
+ // A successful RPC begins asynchronous SHA-256 photo download/restore. Do not
+ // mistake the RPC request for transaction completion in a deterministic test.
+ await h.until(()=>h.db.content.items.size===2);
  const copied=h.server.document.items.find(x=>x.name==='Local (saved copy)');
  assert.match(copied.image,/^closet-photo:a1111111-1111-4111-8111-111111111111\/[a-f0-9]{64}\.jpg$/);
  assert.match(h.db.content.items.get(copied.id).image,/^data:image\/jpeg;base64,/);
