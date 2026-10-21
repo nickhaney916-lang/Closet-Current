@@ -42,13 +42,16 @@ END $guard$;
 -- Run as project administrator during an approved deployment only. The
 -- explicit NOLOGIN/NOBYPASSRLS role is NEVER granted to browser roles.
 CREATE ROLE closet_backup_writer NOLOGIN NOINHERIT NOBYPASSRLS;
-GRANT USAGE ON SCHEMA public, auth TO closet_backup_writer;
-GRANT EXECUTE ON FUNCTION auth.uid() TO closet_backup_writer;
+-- The protected auth schema is owned by supabase_auth_admin and hosted
+-- migration executors cannot GRANT it to arbitrary roles. Read the same
+-- verified, PostgREST-populated JWT subject GUC used by auth.uid() instead.
+-- No custom/unsigned account identifier is accepted as a function argument.
+GRANT USAGE ON SCHEMA public TO closet_backup_writer;
 GRANT SELECT, INSERT, UPDATE ON TABLE public.closet_backups TO closet_backup_writer;
 CREATE POLICY closet_backup_writer_owner
  ON public.closet_backups FOR ALL TO closet_backup_writer
- USING ((SELECT auth.uid()) = owner_id)
- WITH CHECK ((SELECT auth.uid()) = owner_id);
+ USING ((SELECT NULLIF(current_setting('request.jwt.claim.sub',true),'')::uuid)=owner_id)
+ WITH CHECK ((SELECT NULLIF(current_setting('request.jwt.claim.sub',true),'')::uuid)=owner_id);
 
 -- Supabase migration executor needs temporary SET ROLE not only to
 -- transfer the function owner, but also to CREATE SCHEMA AUTHORIZATION.
@@ -68,8 +71,10 @@ LANGUAGE plpgsql SECURITY DEFINER
 SET search_path = ''
 AS $body$
 DECLARE saved_revision bigint;
+ request_owner uuid;
 BEGIN
- IF auth.uid() IS NULL THEN
+ request_owner := NULLIF(current_setting('request.jwt.claim.sub',true),'')::uuid;
+ IF request_owner IS NULL THEN
   RAISE EXCEPTION 'Authentication required' USING errcode='42501';
  END IF;
  IF p_expected_revision IS NULL OR p_expected_revision<0
@@ -82,12 +87,12 @@ BEGIN
  END IF;
  IF p_expected_revision=0 THEN
   INSERT INTO public.closet_backups(owner_id,revision,document)
-   VALUES (auth.uid(),1,p_document)
+   VALUES (request_owner,1,p_document)
    ON CONFLICT(owner_id) DO NOTHING RETURNING revision INTO saved_revision;
  ELSE
   UPDATE public.closet_backups
    SET document=p_document,revision=revision+1,updated_at=now()
-   WHERE owner_id=auth.uid() AND revision=p_expected_revision
+   WHERE owner_id=request_owner AND revision=p_expected_revision
    RETURNING revision INTO saved_revision;
  END IF;
  RETURN saved_revision;
