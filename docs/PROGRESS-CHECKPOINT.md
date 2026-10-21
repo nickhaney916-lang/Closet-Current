@@ -1,3 +1,10 @@
+# Verified human family review software and artifact — October 21, 2026 UTC
+
+- Draft PR #113 implementation SHA `621891c532faf5a1c32a2443e9e4e06704008969`, Actions **39541190603 SUCCESS at that exact commit**: **1,284 passed / 0 failed / 3 skipped**, full build/source guards, offline original-hash form on actual Chromium/WebKit engines and original-camera JPEG/EXIF/import/before-mask crop checks passed. Browser fixtures are synthetic; no physical phone or new model inference claimed.
+- Artifact **12319493497** contains all 13 original JPEGs plus neutral packet, blank form/template, credits and zero-submission audit (18 files). Archive SHA-256 `75ad207619ab9a17110d38b1e7f2eb791f3e0f6a7635b339c8882898d3c78d06`; expires November 4 UTC. Every original byte hash remains bound to the unchanged pre-inference source lock.
+- Initial Actions 39540962650 passed full regression and Chromium but failed WebKit image loading because the test blocked local blob requests. The bounded harness fix permits local file/blob/data URLs while still rejecting all network URLs; the succeeding exact-head run passed both engines without weakening assertions.
+- **No actual independent human submissions or gold labels exist in this work.** Tooling is verified; real independent identity/blinding verification, ambiguous shirt/jacket and shorts/underwear adjudication, untouched phone confirmation data and demonstrated classifier improvement remain outstanding. Even confident matching submissions cannot automatically establish gold or approve model changes. No merge/deploy, paid services, hosted Auth/cloud/customer data or Drive Duel changes. Final documentation-only head must pass its own CI; read PR #113 for exact final head/run.
+
 # Independent source-family human review intake — October 21, 2026 UTC
 
 - Isolated follow-up to verified PR #111 `47da6d3e854d2cf6cbb79d7a8fd0ef83e7faa7a2`; original 13 JPEGs, pre-inference reference manifest and stored actual model measurements are unchanged. PR #108/#109/#110/#111/#112 branches untouched.
