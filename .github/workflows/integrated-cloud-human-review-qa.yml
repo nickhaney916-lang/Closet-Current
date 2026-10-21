@@ -45,7 +45,7 @@ jobs:
           node-version: '22'
       - name: Install pinned mobile browser engines
         run: |
-          npm install --no-save --no-package-lock playwright@1.56.1
+          npm install --no-save --no-package-lock playwright@1.56.1 sharp@0.34.4
           npx playwright install --with-deps chromium webkit
       - name: Confirm Keep both, owner isolation and owned wardrobe styling on both browser engines
         run: |
