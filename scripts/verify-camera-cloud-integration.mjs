@@ -211,6 +211,7 @@ const allowedIndependentClip=new Set([
 const allowedMaskedColorReview=new Set([
  'public/photo-crop-editor.js',
  'tests/masked-crop-color-evidence.test.cjs',
+ 'scripts/test-masked-crop-color-browsers.mjs',
  '.github/workflows/masked-photo-color-evidence-qa.yml',
  'docs/MASKED-PHOTO-COLOR-EVIDENCE-20261021.md'
 ]);
