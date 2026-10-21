@@ -87,7 +87,13 @@ BEGIN
  END IF;
  RETURN saved_revision;
 END $body$;
+-- Supabase's 'postgres' migration role is not SUPERUSER. PostgreSQL
+-- requires ability to SET ROLE to the target owner for ALTER FUNCTION.
+-- Grant membership only to the migration executor, then revoke it inside
+-- this same transaction. A failed step rolls back every privilege change.
+GRANT closet_backup_writer TO CURRENT_USER WITH SET TRUE, INHERIT FALSE;
 ALTER FUNCTION closet_rpc_private.save_checked(bigint,jsonb) OWNER TO closet_backup_writer;
+REVOKE closet_backup_writer FROM CURRENT_USER;
 REVOKE ALL ON FUNCTION closet_rpc_private.save_checked(bigint,jsonb)
  FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION closet_rpc_private.save_checked(bigint,jsonb)
@@ -125,6 +131,7 @@ BEGIN
  OR NOT has_function_privilege('authenticated','public.save_closet_backup(bigint,jsonb)','EXECUTE')
  OR NOT has_function_privilege('authenticated','closet_rpc_private.save_checked(bigint,jsonb)','EXECUTE')
  OR has_function_privilege('anon','closet_rpc_private.save_checked(bigint,jsonb)','EXECUTE')
+ OR pg_has_role(CURRENT_USER,'closet_backup_writer','MEMBER')
  OR pg_has_role('authenticated','closet_backup_writer','MEMBER')
  OR pg_has_role('anon','closet_backup_writer','MEMBER')
  OR (SELECT rolcanlogin OR rolbypassrls FROM pg_roles
