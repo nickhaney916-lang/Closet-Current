@@ -1,3 +1,9 @@
+# Easier single-file independent original-photo review — October 21, 2026 Pacific
+
+- Generated offline one-file HTML from 13 unchanged SHA-256 locked original JPEGs. A blind reviewer no longer has to select files; original-byte checksum and full-image display must pass before observations can be recorded.
+- Includes large Previous/Next controls, unchanged family uncertainty/evidence intake, blank export gate, and no network upload/automatic submission. Human review submissions remain 0; measured human accuracy null; customer recognition promotion BLOCKED.
+- Source-only additive changes, exact prior customer runtime and cloud/photo lock. Real phone and genuine independent human observations are still outstanding. See `docs/ONE-CLICK-HUMAN-REVIEW-20261021.md`.
+
 # Integrated human-review readiness with cloud conflict recovery — October 20, 2026 Pacific
 
 - Isolated branch `integration/cloud-retry-human-review-safe-20261020` pins unmodified five PR #117 readiness source blobs to exact reviewed head `218ac1ea98333e72b7ccc090a13a46f581015dc3` on verified PR #118 cloud base `f16fce2956688e576edde6ecfdc390d3f46158a3`.

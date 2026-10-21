@@ -1,0 +1,75 @@
+name: One-click source-verified independent original review
+on:
+  push:
+    branches: [feature/one-click-original-review-20261021]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  source-and-all-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify frozen customer and photo source evidence
+        run: |
+          node scripts/check-one-click-review-source.mjs
+          node scripts/check-human-review-cloud-bridge.mjs
+          node scripts/check-blind-photo-cloud-integration.mjs
+          node scripts/verify-camera-cloud-integration.mjs
+          node scripts/check-dual-parent-review-integration.mjs
+          node scripts/check-customer-pilot-release-gates.mjs
+      - name: Complete Node suite and built application
+        run: |
+          node --check scripts/one-click-human-review.mjs
+          node --check scripts/test-one-click-human-review-browsers.mjs
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+  actual-original-mobile-presentation:
+    needs: source-and-all-tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      GH_TOKEN: ${{ github.token }}
+      ORIGINALS: /tmp/source-locked-originals
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned browser EXIF tools
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1 sharp@0.34.4
+          npx playwright install --with-deps chromium webkit
+      - name: Download existing hash-locked original JPEG bytes
+        run: gh run download 39538230372 -n new-source-originals-before-inference -D "$ORIGINALS"
+      - name: Generate no-upload stand-alone offline original-photo reviewer
+        run: node scripts/one-click-human-review.mjs prepare "$ORIGINALS" "$RUNNER_TEMP/one-click-review"
+      - name: Verify all 13 real original frames in both mobile browsers
+        run: |
+          mkdir -p "$RUNNER_TEMP/one-click-evidence"
+          node scripts/test-one-click-human-review-browsers.mjs "$RUNNER_TEMP/one-click-review" "$RUNNER_TEMP/one-click-evidence/browsers.json"
+          node scripts/build.mjs
+          node scripts/test-original-crop-source-mobile.mjs
+          node scripts/test-native-camera-fidelity-mobile.mjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: one-click-blind-original-photo-reviewer-no-labels
+          path: ${{ runner.temp }}/one-click-review/
+          retention-days: 14
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: one-click-original-browser-evidence-not-human-review
+          path: ${{ runner.temp }}/one-click-evidence/
+          retention-days: 14
+          if-no-files-found: warn
