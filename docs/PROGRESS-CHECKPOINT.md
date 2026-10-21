@@ -1,3 +1,27 @@
+# Verified integrated staging-artifact security candidate — October 21, 2026
+
+- **Draft PR #161, verified integration SHA `691c4ed638b79cf9585e24cfca57187ecc832861`**, has Git merge parents Work #159 `55ac1688cac4dd277ee82ee9c73c4df9cefcb77c` and PR #160 `3e594a5714b7822ada852cd74d8bc5dc2d51c6ad`. Original branches remain unchanged. Six verified artifact-source blobs are byte-identical to PR #160; integrated source guard independently asserts both parents and preserves Work #159's original high-resolution recognition, camera, clothing catalog, Auth, wardrobe, local Supabase/RLS and atomic staging build locking.
+- **GitHub Actions integrated #39682671883**: https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39682671883 — **COMPLETED SUCCESS in both jobs**: full app build and Node suite **1,516 passed, 0 failed, 3 skipped**; 13 targeted staging-artifact/builder tests passed; actual disposable local Supabase Auth/PostgREST/private Storage **207 successful HTTP security checks**, two generated users, four permission states, revision recovery and restored hardening. Disposable stack was destroyed afterward.
+- Android Chromium and iPhone WebKit generated-app isolation, synthetic photos, offline edits, lost-save responses, corrupted-photo refusal/recovery all PASS with **0 attempted live database requests**; actual installed Chromium service worker offline release tests PASS. Static synthetic artifact verifier checked 92 files/94 entries, found no lock/orphan/link/live refs and retained `permittedToDeploy:false`. [Camera and indexing #39682671738](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39682671738) SUCCESS on the exact integration implementation SHA.
+- **Not hosted or production:** The live Closet Current database retains previously documented permission gaps. No customer files, Drive Duel changes, live Supabase writes, paid AI or Supabase project creation, main merge or deployment. Physical iPhone/Android camera tests, independent human-gold recognition, separate protected hosted staging/Cloudflare Access, email and owner-approved migration remain unverified; production promotion BLOCKED. Final checkpoint-only SHA CI must be independently verified.
+
+---
+
+# Closet Current integrated artifact review — October 21, 2026
+
+- Separate two-parent candidate joining verified Work #159 `55ac1688cac4dd277ee82ee9c73c4df9cefcb77c` with PR #160 `3e594a5714b7822ada852cd74d8bc5dc2d51c6ad`; neither parent branch is changed. PR #160 files exactly pinned and Work #159 customer Auth, Supabase, camera, original-resolution recognition and atomic build locking preserved. The two-parent CI requires all security/mobile/staging checks and refusal-gate tests to pass.
+- This is still a local no-deployment integration. Hosted private staging, physical Android/iPhone, independent human garment accuracy and separate owner-approved live security migration remain release blockers. No paid services, Drive Duel changes or customer files; production promotion BLOCKED.
+
+---
+
+# Restricted staging artifact acceptance refusal gate — October 21, 2026
+
+- **Draft PR #160** closes the gap between PR #158's exclusive staging builder lock and final artifact verification: the static `verify-restricted-staging-bundle.mjs` now rejects `staging-dist.build.lock`, orphaned `staging-dist.incomplete-*` siblings, symlinks/special files in the staged tree, and live Closet Current / Drive Duel backend references in any generated text file. The additional read-only scan checks lock/orphan state both before and after the file walk. It **does not approve any hosted deployment**; the manifest and verifier continue to mark promotion BLOCKED.
+- **Exact implementation commit:** `36f52679bc15b076213742360aea6800b27ff900`. [GitHub Actions artifact review #39681449365](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39681449365) **COMPLETED SUCCESS**: 7 new artifact unit tests, 9 staging-lock tests, 6 real builder integration tests passed; complete Node regression **1,503 pass / 0 fail / 3 skipped**. Synthetic staging bundle verification checked 92 files, 94 entries, no live refs or linked entries, with `permittedToDeploy:false`. Staging PWA cache QA and source-immutability guard also passed. Final checkpoint commit must get its own exact-head check.
+- The source is stacked on PR #158 `e67edcaa34e6c4ed9f93cc8edd6c204a7b15db80` in a new isolated branch; PR #158 and Work's separate assignment #159 not modified. No changes to the customer app, original high-res before-mask clothing recognition, wardrobe source, Supabase database, hosted production workflows, Drive Duel, paid AI or user information. No merge, staging deployment or physical-phone testing. Protected hosting, separate staging database, human-gold recognition and actual device validation remain release blockers.
+
+---
+
 # Work Assignment #159 verified — final integrated staging-build recovery
 
 - Draft PR #159 combines #157 `232a735f99af0da73df2e7095508c2a99e8df6da` and #158 `e67edcaa34e6c4ed9f93cc8edd6c204a7b15db80` as actual merge parents on a new isolated branch. Original PR branches preserved. Only checkpoint prose conflicted; both histories retained. #158 locking source/tests/instructions remain byte-identical; #157 public/Supabase/mobile/security sources preserved.

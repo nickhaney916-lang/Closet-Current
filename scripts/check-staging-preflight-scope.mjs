@@ -39,7 +39,11 @@ const allow=new Set([
 // treating verified security dependencies as unreviewed staging-only edits.
 const integrated=['c0fecc398ea927418c5e083607bdc1cf6ea77527','cca2f7c98f69d5aad416e6174182ac3f66b9b951']
  .every(sha=>spawnSync('git',['merge-base','--is-ancestor',sha,'HEAD']).status===0);
-if(integrated)execFileSync(process.execPath,['scripts/check-integrated-security-mobile-staging.mjs'],{stdio:'inherit'});
+if(integrated){
+ execFileSync(process.execPath,['scripts/check-integrated-security-mobile-staging.mjs'],{stdio:'inherit'});
+ if(spawnSync('git',['merge-base','--is-ancestor','3e594a5714b7822ada852cd74d8bc5dc2d51c6ad','HEAD']).status===0)
+  execFileSync(process.execPath,['scripts/check-final-integrated-artifact-review.mjs'],{stdio:'inherit'});
+}
 else for(const path of git('diff','--name-only',BASE,'HEAD').split('\n').filter(Boolean)){
  assert.ok(allow.has(path),'Unapproved production or hosted service edit '+path);
  if(path==='docs/PROGRESS-CHECKPOINT.md')
