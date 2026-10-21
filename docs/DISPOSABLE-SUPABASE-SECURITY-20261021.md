@@ -21,7 +21,7 @@ The recovery fallback intentionally restores owner-bound SELECT/INSERT/UPDATE, s
 
 ## Status and remaining gates
 
-Local static guard tests passed. Full regressions and the real local HTTP integration require the exact-head dedicated CI result before completion is claimed. Existing SQL drafts are applied only to the disposable runner database, never copied to automatic hosted migrations. All results and final SHA will be recorded in the draft PR and central checkpoint.
+Implementation source `1042cd622277c4298af849af682f8478a3869b74` passed the full regression and real local HTTP integration in GitHub CI. Existing SQL drafts are applied only to the disposable runner database, never copied to automatic hosted migrations. All results and final SHA will be recorded in the draft PR and central checkpoint.
 
 Even a successful local integration leaves hosted Supabase configuration, email delivery, protected Cloudflare Access, real devices, original-garment recognition accuracy, release approval and a separately authorized hosted migration unverified. Production promotion remains BLOCKED. The owner's no-paid-resource/no-production-change restriction remains in force.
 
@@ -30,3 +30,9 @@ References: [Supabase local development](https://supabase.com/docs/guides/local-
 ## Real-stack defect and bounded draft repair
 
 The first real Supabase run passed the initial HTTP isolation and revision/failure scenarios but exposed recovery failure: `postgres` is not a superuser and cannot drop a function owned by the private writer after the hardening draft revoked its entire membership. Plain PostgreSQL superuser rehearsals had hidden this defect. The hardening draft now retains only administrator ADMIN authority, with SET and INHERIT explicitly false; browser roles receive no membership. Recovery temporarily enables administrator SET, becomes the private owner only to drop its own function/schema, resets role and drops the writer role. The transaction rolls back temporary authority on failure. This does not recover previously hardened databases whose administrative grant was already revoked; those require separate reviewed role-administration repair. No such change was applied to a hosted database. The integration explicitly requires a non-superuser executor and checks SET is disabled for both the executor and browser roles after hardening.
+
+## Verified evidence
+
+[Local Supabase #39677977928](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39677977928) and [camera/indexing #39677977772](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39677977772) both completed SUCCESS at implementation SHA `1042cd622277c4298af849af682f8478a3869b74`. Full app build and **1,494 Node tests passed, 0 failed, 3 skipped**. The aggregate `DISPOSABLE_SUPABASE_SECURITY_PASS` confirms **207 HTTP requests** across both accounts and all four permission states, two-way owner isolation, private photo integrity, anonymous/forged JWT denial, editable metadata isolation, revision races, actual failed-save recovery, atomic drift rejection, safe recovery and re-hardening. Cleanup completed successfully. These requests include positive controls, Auth and setup probes; they are not 207 independently named test cases.
+
+The initial real-stack run failed on the private-function ownership defect; a subsequent draft grant attempt exposed PostgreSQL's prohibited administrator self-grant cycle. Both are resolved by preserving the creator's existing ADMIN grant while disabling SET/INHERIT, then temporarily re-enabling SET for transactional object-owner cleanup. Neither issue was bypassed by using a superuser or weakening browser grants. The final integration explicitly requires a non-superuser Supabase executor.
