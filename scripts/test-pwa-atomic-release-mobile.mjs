@@ -103,9 +103,11 @@ try{
    assert.equal(requestCount.get('index.html'),indexNetworkBefore,'Stale SW cannot re-download changed index');
    assert.equal(requestCount.get('auth.js'),scriptNetworkBefore,'Stale SW cannot re-download changed scripts');
    await context.setOffline(true);
+   console.log('Hard-offline test engine: '+name);
    const offline=await page.evaluate(async()=>{
-    const html=await (await fetch('./')).text();
-    const js=await (await fetch('./auth.js?v='+globalThis.__versionForTest)).text();
+    let html=null,js=null,loadFailure=null;
+    try{html=await (await fetch('./')).text();js=await (await fetch('./auth.js?v='+globalThis.__versionForTest)).text();}
+    catch(error){loadFailure=String(error?.message||error);}
     const db=await new Promise((resolve,reject)=>{
      const q=indexedDB.open('closet-current-user-fake-local-fixture',1);
      q.onsuccess=()=>resolve(q.result);q.onerror=()=>reject(q.error);
@@ -117,8 +119,10 @@ try{
     db.close();
     let apiUnavailable=false;
     try{await fetch('./api/private');}catch{apiUnavailable=true;}
-    return {html,js,retained,apiUnavailable};
+    return {html,js,retained,apiUnavailable,loadFailure,controllerActive:!!navigator.serviceWorker.controller};
    });
+   console.log(JSON.stringify({browser:name,hardOffline:offline.loadFailure,hasController:offline.controllerActive,htmlMatches:offline.html===builtIndex,authMatches:offline.js===baseline.js,idbPresent:offline.retained==='PRIVATE_LOCAL_PHOTO_MUST_SURVIVE'}));
+   assert.equal(offline.loadFailure,null);
    assert.equal(offline.html,builtIndex);
    assert.equal(offline.js,baseline.js);
    assert.equal(offline.retained,'PRIVATE_LOCAL_PHOTO_MUST_SURVIVE');
