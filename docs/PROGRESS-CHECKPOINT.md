@@ -1,3 +1,12 @@
+# Closet Current backup RPC safe recovery rehearsal — October 21, 2026
+
+- **Draft PR #151**, independent of Work staging PRs #148/#150 and backup audit PR #149, added a guarded transactional **DRAFT ONLY** recovery from a hardened private RPC writer to the original owner-bound SECURITY INVOKER revision-checked backup method. It never restores dangerous client DELETE/TRUNCATE/TRIGGER/REFERENCES/MAINTAIN privileges or mutable photo UPDATE policy; no CASCADE drops and unknown schema drift aborts.
+- **Exact implementation SHA:** `0d2e251bbc50f3e48629d76a47d622aed93e90e0`. GitHub Actions [disposable PostgreSQL recovery #39669010617](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39669010617) **COMPLETED SUCCESS** with **1,486 Node tests passed, 0 failed, 3 skipped**; verified successful backup recovery, revision CAS, unrelated-account isolation, anonymous denial, TRUNCATE/DELETE denial, and an injected changed-wrapper rollback rejection **without partial privilege changes**. [Camera/indexing CI #39669010619](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39669010619) SUCCESS. Final checkpoint commit requires exact-head CI status check.
+- The live Closet Current database still has the 12 overly broad catalog differences identified in PR #149; **no hosted database rights have been changed**. These SQL files are not in `supabase/migrations/`. Do not execute them on hosted Supabase without explicit owner authorization, reviewed backup, a separately isolated staging backend, real disposable two-account Auth/Storage checks and rollback operator rehearsal.
+- No new Supabase resource, paid AI, production merge/deployment, Drive Duel change or physical-device/independent-photo accuracy claim. Production release remains **BLOCKED**.
+
+---
+
 # Live Closet Current backup permission review — October 21, 2026
 
 - **Draft PR #149** independently audited live Closet Current `pg_catalog`, `pg_policies`, function and role permissions WITHOUT querying customer rows or writing a database. The repeatable SQL has a 25-boolean-only output; 12 discrepancies from the intended RPC-only locked-down model were found, including authenticated table TRUNCATE/direct writes and Storage UPDATE policy. Auth owner RLS, private photo bucket and owner SELECT/INSERT policy were present; no exploitation is alleged.
