@@ -48,15 +48,24 @@ async function newOwner(){
  const client=createClient(base,process.env.ANON_KEY,options);
  const logged=ok(await client.auth.signInWithPassword({email,password}),'local sign-in');
  assert.equal(logged.user?.id,id);
- return {client,id};
+ return {client,id,token:logged.session.access_token};
 }
 const document=tag=>({schemaVersion:1,items:[{id:tag,category:'Tops',color:'Blue'}],state:{}});
 const rpc=(user,revision,tag)=>user.client.rpc('save_closet_backup',{
  p_expected_revision:revision,p_document:document(tag)});
 async function rejected(result,label){
  assert.ok(result.error,label+' unexpectedly succeeded');
- assert.ok([400,401,403,404,405,406,409,422].includes(Number(result.status||result.error.status)),
-  label+' returned unexpected error status '+String(result.status||result.error.status));
+ const status=Number(result.status||result.error.status||result.error.statusCode);
+ if(Number.isFinite(status)&&status!==0){
+  assert.ok([400,401,403,404,405,406,409,422].includes(status),
+   label+' returned unexpected error status '+status);
+ }else{
+  // Storage JS SDK can omit HTTP status on a denied binary download.
+  // Keep the expected SDK rejection, then independently verify the raw
+  // Storage HTTP endpoint returns 4xx under the *same real JWT* below.
+  assert.ok(result.error instanceof Error||typeof result.error.message==='string',
+   label+' must contain a genuine SDK error when status metadata is absent');
+ }
 }
 let stats={actualAuth:false,actualPostgrest:false,actualStorage:false,
  ownerCas:false,staleCASRejected:false,directOwnerInsertDenied:false,
@@ -127,6 +136,12 @@ try{
  stats.actualStorage=true;stats.photoUpsertDenied=true;
  await rejected(await bob.client.storage.from('closet-private').download(aa),
   'foreign private photo read');
+ const foreignHTTP=await fetch(base+'/storage/v1/object/closet-private/'+aa,{
+  headers:{apikey:process.env.ANON_KEY,Authorization:'Bearer '+bob.token},
+  signal:AbortSignal.timeout(12000)
+ });
+ assert.ok([400,401,403,404].includes(foreignHTTP.status),
+  'Actual cross-account private Storage HTTP read unexpectedly returned '+foreignHTTP.status);
  stats.foreignPhotoDenied=true;
  // Some Storage APIs return 200 [] for unauthorized delete due to filtered
  // rows; inspect the REAL owner's file after the foreign request.
