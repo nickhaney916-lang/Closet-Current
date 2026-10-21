@@ -20,6 +20,12 @@ const allowed=new Set([...Object.keys(originals),
  'scripts/check-human-review-cloud-bridge.mjs',
  '.github/workflows/integrated-cloud-human-review-qa.yml',
  'docs/INTEGRATED-CLOUD-HUMAN-REVIEW-20261020.md',
+ 'scripts/one-click-human-review.mjs',
+ 'tests/one-click-human-review.test.mjs',
+ 'scripts/test-one-click-human-review-browsers.mjs',
+ '.github/workflows/one-click-human-review-qa.yml',
+ 'docs/ONE-CLICK-HUMAN-REVIEW-20261021.md',
+ 'scripts/check-one-click-review-source.mjs',
  'docs/PROGRESS-CHECKPOINT.md']);
 for(const path of Object.keys(originals)){
  assert.equal(git('rev-parse','HEAD:'+path),originals[path],'Altered reviewed readiness file: '+path);
