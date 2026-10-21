@@ -102,9 +102,17 @@ const oldOutfitMask="if(options.colorEstimate){Object.assign(item,ClothingDetail
 const newOutfitMask="if(options.colorEstimate&&options.colorEstimate.source==='photo-estimate'&&Number.isFinite(options.colorEstimate.support)&&options.colorEstimate.support>=.6&&options.colorEstimate.support<=1&&!options.colorEstimate.needsConfirmation&&typeof options.recognitionPhoto?.image==='string'&&options.recognitionPhoto.image.startsWith('data:image/jpeg;base64,')&&typeof options.originalPhoto?.image==='string'&&options.originalPhoto.image.startsWith('data:image/jpeg;base64,')){Object.assign(item,ClothingDetails.fillColor(item,{...options.colorEstimate,method:'garment-mask'}));}";
 assert.ok(reviewedBeforeMask.includes(oldMaskedCrop)&&reviewedBeforeMask.includes(oldOutfitMask),
  'Expected previous unproven mask provenance promotion missing');
-assert.equal(fs.readFileSync('public/app.js','utf8'),
- reviewedBeforeMask.replace(oldMaskedCrop,newMaskedCrop).replace(oldOutfitMask,newOutfitMask),
- 'Customer application changed beyond exactly two verified mask-color provenance checks');
+const expectedMaskApp=reviewedBeforeMask.replace(oldMaskedCrop,newMaskedCrop).replace(oldOutfitMask,newOutfitMask);
+const stripApprovedStill=(source)=>{
+ const from=source.indexOf('async function captureCameraStill('),to=source.indexOf('function beep()',from);
+ assert.ok(from>=0&&to>from,'Native still source boundaries must remain intact');
+ return source.slice(0,from)+'/* controlled native still encoder */\n'+source.slice(to);
+};
+assert.equal(stripApprovedStill(fs.readFileSync('public/app.js','utf8')),
+ stripApprovedStill(expectedMaskApp),
+ 'Unreviewed application change outside approved native still encoder and two color gates');
+assert.equal(git('rev-parse','HEAD:public/app.js'),'2bac7dae8c9d13f7b8ed1baf9d41750bb0878b48',
+ 'Native still bytes differ from independently pinned customer source exception');
 const olderEditor=execFileSync('git',['show','a6ee34a676030cff2a4fcf3b31185275c78371a7:public/photo-crop-editor.js'],{encoding:'utf8',maxBuffer:15_000_000});
 const beforeEditorPalette="const palette=window.PhotoColor?.maskedPalette(pixels.data,canvas.width,canvas.height);if(palette&&!palette.needsConfirmation)photo.maskedColorEstimate={color:palette.primary,source:'photo-estimate',secondaryColor:palette.secondary};";
 const afterEditorPalette="const confirmed=cropMaskColorEvidence(pixels.data,canvas.width,canvas.height,window.PhotoColor);if(confirmed)photo.maskedColorEstimate=confirmed;";
@@ -326,6 +334,12 @@ const allowedHumanCloudBridge=new Set([
  'scripts/check-import-detail-budget-scope.mjs',
  '.github/workflows/import-detail-budget-qa.yml',
  'docs/IMPORTED-PHOTO-DETAIL-FIRST-20261021.md',
+ 'public/app.js',
+ 'tests/photo-native-still.test.cjs',
+ 'scripts/test-native-still-detail-budget-browsers.mjs',
+ 'scripts/check-native-still-detail-budget-scope.mjs',
+ '.github/workflows/native-still-detail-budget-qa.yml',
+ 'docs/NATIVE-STILL-DETAIL-FIRST-20261021.md',
  'docs/INTEGRATED-CLOUD-HUMAN-REVIEW-20261020.md'
 ]);
 const allowedWork=new Set([

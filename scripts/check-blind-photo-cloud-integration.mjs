@@ -32,7 +32,7 @@ for(const [path,expected] of Object.entries(imported)){
  assert.equal(git('ls-tree','-r','--name-only',CUSTOMER,'--',path),'','Independent source unexpectedly existed in customer branch: '+path);
 }
 const protectedRuntime=[
- 'public/app.js','public/photo-crop-editor.js','public/recognition-photo.mjs',
+ 'public/photo-crop-editor.js','public/recognition-photo.mjs',
  'public/photo-color.js','public/recognition-engine.mjs','public/clothing-details.js',
  'public/outfit-board.js','public/closet-stylist.js',
  'public/cloud-backup-engine.js','public/cloud-backup-bridge.js','public/index.html',
@@ -46,6 +46,8 @@ const protectedRuntime=[
 assert.equal(git('rev-parse','HEAD:public/cloud-backup.js'),
  git('rev-parse','9137b448d24b4904c0477b2f854171c546b25a16:public/cloud-backup.js'),
  'Unreviewed cloud conflict recovery runtime change');
+assert.equal(git('rev-parse','HEAD:public/app.js'),'2bac7dae8c9d13f7b8ed1baf9d41750bb0878b48',
+ 'App can only contain the exact audited native still JPEG budget exception');
 for(const path of protectedRuntime)
  assert.equal(git('rev-parse','HEAD:'+path),git('rev-parse',CUSTOMER+':'+path),
   'Customer or cloud security source changed during isolated integration: '+path);
@@ -85,6 +87,12 @@ const permittedExtra=new Set([
  'scripts/check-import-detail-budget-scope.mjs',
  '.github/workflows/import-detail-budget-qa.yml',
  'docs/IMPORTED-PHOTO-DETAIL-FIRST-20261021.md',
+ 'public/app.js',
+ 'tests/photo-native-still.test.cjs',
+ 'scripts/test-native-still-detail-budget-browsers.mjs',
+ 'scripts/check-native-still-detail-budget-scope.mjs',
+ '.github/workflows/native-still-detail-budget-qa.yml',
+ 'docs/NATIVE-STILL-DETAIL-FIRST-20261021.md',
  'docs/INTEGRATED-CLOUD-HUMAN-REVIEW-20261020.md'
 ]);
 const integratedHumanFiles={

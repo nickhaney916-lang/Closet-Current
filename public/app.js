@@ -397,11 +397,16 @@ async function captureCameraStill(track,StillCapture,isCurrent=()=>true){
    const context=canvas.getContext('2d');
    if(!context)throw Error('Unable to prepare camera photo.');
    context.imageSmoothingEnabled=true;context.imageSmoothingQuality='high';
-   // Every retry draws from original decoded RGB, never a previous JPEG.
+   // Every pixel-size retry draws from original decoded RGB, never a previous JPEG.
    context.drawImage(bitmap,0,0,canvas.width,canvas.height);
-   const jpeg=canvas.toDataURL('image/jpeg',.94);
-   if(!jpeg||jpeg==='data:,')throw Error('Unable to encode camera photo.');
-   if(jpeg.length<=2850000)return jpeg;
+   // Preserve cuff, sole and seam resolution when slight JPEG compression fits.
+   // Do not redraw or downscale until all bounded same-size encodings fail.
+   for(const quality of [.94,.88,.82]){
+    if(!isCurrent())throw Error('Camera session ended while preparing photo.');
+    const jpeg=canvas.toDataURL('image/jpeg',quality);
+    if(!jpeg||jpeg==='data:,')throw Error('Unable to encode camera photo.');
+    if(jpeg.length<=2850000)return jpeg;
+   }
   }
   throw Error('Photo exceeds storage limits. Try a closer photo.');
  }finally{bitmap.close?.();}

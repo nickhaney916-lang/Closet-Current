@@ -109,7 +109,7 @@ test('detailed native photo reduces dimensions until it fits the encoded budget'
  const h=harness(),sizes=[];
  h.canvas.toDataURL=()=>{sizes.push([h.canvas.width,h.canvas.height]);return h.canvas.width>2048?'x'.repeat(2850001):'bounded-jpeg';};
  h.c.takePhoto();h.settle();await flush();
- assert.deepEqual(sizes,[[3072,2304],[2560,1920],[2048,1536]]);
+ assert.deepEqual(sizes,[[3072,2304],[3072,2304],[3072,2304],[2560,1920],[2560,1920],[2560,1920],[2048,1536]]);
  assert.deepEqual(h.saved,['bounded-jpeg']);assert.equal(h.closed(),1);
 });
 test('unencodable native still safely falls back and releases its bitmap',async()=>{
@@ -150,4 +150,40 @@ test('native encoder does not retry identical sizes for a small source',async()=
  h.canvas.toDataURL=()=> 'x'.repeat(2850001);
  h.c.takePhoto();h.settle();await flush();
  assert.equal(h.draws.length,1);assert.deepEqual(h.saved,['preview-jpeg']);
+});
+
+test('native still retains 3072px garment details at JPEG quality .88 instead of downsampling',async()=>{
+ const h=harness(),encoded=[];
+ h.canvas.toDataURL=(mime,quality)=>{
+  encoded.push({width:h.canvas.width,height:h.canvas.height,quality});
+  return quality>.88?'x'.repeat(2850001):'full-resolution-still';
+ };
+ h.c.takePhoto();h.settle();await flush();
+ assert.deepEqual(encoded,[{width:3072,height:2304,quality:.94},{width:3072,height:2304,quality:.88}]);
+ assert.equal(h.draws.length,1,'Changing JPEG compression does not redraw or lose source pixels');
+ assert.deepEqual(h.saved,['full-resolution-still']);
+ assert.equal(h.closed(),1);
+});
+test('native still retries only bounded qualities before dropping the pixel count',async()=>{
+ const h=harness(),encoded=[];
+ h.canvas.toDataURL=(_,quality)=>{
+  encoded.push([h.canvas.width,quality]);
+  return h.canvas.width>2560||quality>.82?'x'.repeat(2850001):'native-still-safe';
+ };
+ h.c.takePhoto();h.settle();await flush();
+ assert.deepEqual(encoded,[[3072,.94],[3072,.88],[3072,.82],[2560,.94],[2560,.88],[2560,.82]]);
+ assert.deepEqual(h.saved,['native-still-safe']);
+ assert.equal(h.draws.length,2);
+});
+test('native still quality retry abandons stale camera sessions without encoding or queueing stale items',async()=>{
+ const h=harness(),encoded=[];
+ h.canvas.toDataURL=(_,quality)=>{
+  encoded.push(quality);
+  if(quality===.94){h.c.cameraRequest++;return 'x'.repeat(2850001);}
+  return 'should-not-save';
+ };
+ h.c.takePhoto();h.settle();await flush();
+ assert.deepEqual(encoded,[.94]);
+ assert.deepEqual(h.saved,[]);
+ assert.equal(h.closed(),1);
 });
