@@ -142,14 +142,25 @@ async function refreshTrendLibrary(force=false){
  try{
   const response=await fetch(TREND_DATA_URL+'?checked='+Math.floor(Date.now()/300000),{cache:'no-store',signal:controller.signal});if(!response.ok)throw Error('Recommendation data unavailable');
   const data=await response.json(),library=normalizeTrendLibrary(data);
-  if(!activeTrendLibrary||Date.parse(library.updatedAt)>=Date.parse(activeTrendLibrary.updatedAt)){applyLoadedTrendLibrary(data);try{localStorage.setItem(TREND_CACHE,JSON.stringify(data));}catch{}}
+  if(!activeTrendLibrary||Date.parse(library.updatedAt)>Date.parse(activeTrendLibrary.updatedAt)){applyLoadedTrendLibrary(data);try{localStorage.setItem(TREND_CACHE,JSON.stringify(data));}catch{}}
   $('trendFreshness').textContent=trendFreshnessText();renderTrendReferences();if(boardInitialized)renderBoardSuggestions();if(typeof renderStyledCollection==='function')renderStyledCollection();
  }catch{$('trendFreshness').textContent=trendFreshnessText(true);}
  finally{clearTimeout(timeout);trendLoading=false;}
 }
 (async()=>{
  try{const cached=JSON.parse(localStorage.getItem(TREND_CACHE)||'null');if(cached)applyLoadedTrendLibrary(cached);}catch{}
- if(!activeTrendLibrary){try{const response=await fetch('./trend-data.json');if(response.ok)applyLoadedTrendLibrary(await response.json());}catch{}}
+ // An older but valid phone cache must not hide a newer library shipped with this build.
+ // Always inspect the bundled library, including when the phone is offline or the
+ // GitHub background refresh cannot be reached. Never replace newer cache data.
+ try{
+  const response=await fetch('./trend-data.json');
+  if(response.ok){const data=await response.json(),library=normalizeTrendLibrary(data);
+   if(!activeTrendLibrary||Date.parse(library.updatedAt)>Date.parse(activeTrendLibrary.updatedAt)){
+    applyLoadedTrendLibrary(data);
+    try{localStorage.setItem(TREND_CACHE,JSON.stringify(data));}catch{}
+   }
+  }
+ }catch{}
  renderTrendReferences();$('trendFreshness').textContent=trendFreshnessText();if(boardInitialized)renderBoardSuggestions();refreshTrendLibrary(true);
 })();
 window.addEventListener('focus',()=>refreshTrendLibrary());document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshTrendLibrary();});setInterval(()=>refreshTrendLibrary(),3600000);
