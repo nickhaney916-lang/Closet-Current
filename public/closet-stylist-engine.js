@@ -54,9 +54,13 @@ function styleOwnedCollection(closet,request={},library=null){
  // another owner's item or choose a different top in place of the anchor.
  const anchorId=typeof request.anchorItemId==='string'?request.anchorItemId:null;
  const anchor=anchorId?unique.find(x=>x.id===anchorId):null;
+ // Align pinned garments with the same four torso layers as My Closet and
+ // the outfit board. A jacket must never masquerade as a sweater layer.
  const anchorSlot=anchor?.category==='Tops'||anchor?.category==='Dresses'?'top':
   anchor?.category==='Bottoms'?'bottom':anchor?.category==='Shoes'?'shoes':
-  anchor?.category==='Outerwear'?'layer':null;
+  anchor?.category==='Outerwear'?
+   (['Coat','Raincoat'].includes(anchor.itemType)?'layer3':
+    ['Cardigan','Vest'].includes(anchor.itemType)?'layer':'layer2'):null;
  if(anchorId&&(!anchor||!anchorSlot))return [];
  const rankSlot=slot=>{
   if(slot===anchorSlot){
@@ -82,12 +86,27 @@ function styleOwnedCollection(closet,request={},library=null){
   return rankedCache.get(slot);
  };
  const availableTops=ranked('top');
- const tops=(anchorSlot==='bottom'||anchorSlot==='layer')?availableTops.filter(x=>x.item.category!=='Dresses'):availableTops;
+ const tops=(anchorSlot==='bottom'||['layer','layer2','layer3'].includes(anchorSlot))?
+  availableTops.filter(x=>x.item.category!=='Dresses'):availableTops;
  const bottoms=ranked('bottom'),shoes=ranked('shoes'),candidates=[];
+ // When the chosen new piece is an outer jacket or coat, keep lighter
+ // optional layers separate. Do not silently place another jacket in layer 1.
+ const lightLayers=['layer2','layer3'].includes(anchorSlot)?
+  ranked('layer').filter(x=>x.item.category==='Tops'||
+   ['Cardigan','Vest'].includes(x.item.itemType)):ranked('layer');
  // Keep partial outfits useful and label their missing required slots explicitly.
- for(const top of tops.length?tops:[null])for(const bottom of top?.item.category==='Dresses'?[null]:bottoms.length?bottoms:[null])for(const shoe of shoes.length?shoes:[null])for(const layer of top?.item.category==='Dresses'?[null]:ranked('layer').length?ranked('layer'):[null]){
+ for(const top of tops.length?tops:[null])for(const bottom of top?.item.category==='Dresses'?[null]:bottoms.length?bottoms:[null])for(const shoe of shoes.length?shoes:[null])for(const layer of top?.item.category==='Dresses'?[null]:lightLayers.length?lightLayers:[null]){
   const selected=[top,bottom,shoe].filter(Boolean),slots={};if(top)slots.top=top.item.id;if(bottom)slots.bottom=bottom.item.id;if(shoe)slots.shoes=shoe.item.id;
   let score=(top?.item.category==='Dresses'?16:0)+selected.reduce((sum,x)=>sum+x.score,0)+stylistHarmony(selected.map(x=>x.item));
+  if(anchor&&['layer2','layer3'].includes(anchorSlot)){
+   // This is the specific owned piece selected through Style this. The
+   // board understands jacket and outer-coat layers independently.
+   const earlier=stylistHarmony(selected.map(x=>x.item));
+   slots[anchorSlot]=anchor.id;
+   const anchorScore=stylistItemScore(anchor,'layer',context,library)??0;
+   selected.push({item:anchor,score:anchorScore});
+   score+=anchorScore+stylistHarmony(selected.map(x=>x.item))-earlier;
+  }
   for(const slot of ['layer','bag','accessory','finish']){
    if(slot==='layer'&&top?.item.category==='Dresses')continue;
    const extra=(slot==='layer'?(layer?[layer]:[]):ranked(slot)).filter(x=>!Object.values(slots).includes(x.item.id)).map(x=>({...x,harmony:stylistHarmony([...selected.map(x=>x.item),x.item])-stylistHarmony(selected.map(x=>x.item))})).sort((a,b)=>(b.score+b.harmony)-(a.score+a.harmony))[0];
@@ -105,7 +124,7 @@ function styleOwnedCollection(closet,request={},library=null){
   if(selected.some(x=>x.item.colorSource==='photo-estimate'))notices.push('Some colors are estimated from photos; confirm the colors together.');
   if(selected.some(x=>!x.item.color||colorFamily(x.item.color)==='unknown'))notices.push('Some colors are unknown; check the photos together.');
   if(selected.some(x=>!x.item.seasons?.length))notices.push('Some seasonal details are unknown; check the weather and comfort.');
-  if(anchor&&stylistItemScore(anchor,anchorSlot,context,library)===null)notices.push('Your chosen piece is included, but its recorded style or season may differ from this occasion.');
+  if(anchor&&stylistItemScore(anchor,['layer2','layer3'].includes(anchorSlot)?'layer':anchorSlot,context,library)===null)notices.push('Your chosen piece is included, but its recorded style or season may differ from this occasion.');
   if(top?.item.category==='Dresses')notices.push('This one-piece covers your top and bottoms; no separate bottoms or layers are added.');
   if(intent==='School')notices.push('Check your school’s dress code before choosing this outfit.');
   if(intent==='Activewear')notices.push('Check that these garments and sneakers are suitable for your actual activity.');
