@@ -125,7 +125,7 @@ end $$;
 
 -- A durable tombstone is intentionally idempotent, but destructive cleanup
 -- requires a distinct one-time exclusive claim per owner.
-do $
+do $$
 begin
  if has_function_privilege('authenticated',
     'public.claim_closet_account_cleanup(uuid)','EXECUTE')
@@ -141,8 +141,8 @@ begin
     'public.claim_closet_account_cleanup(uuid)','EXECUTE') then
   raise exception 'Service role cannot acquire exclusive cleanup claim';
  end if;
-end $;
-do $
+end $$;
+do $$
 begin
  -- The first caller for the locked owner receives the ONLY claim.
  if not public.claim_closet_account_cleanup('a1111111-1111-4111-8111-111111111111') then
@@ -159,7 +159,7 @@ begin
   perform public.claim_closet_account_cleanup('b2222222-2222-4222-8222-222222222222');
   raise exception 'Unlocked account unexpectedly obtained cleanup claim';
  exception when sqlstate '42501' then null; end;
-end $;
+end $$;
 
 -- No privilege escalation via fake service role: role permissions are tested,
 -- and the SQL draft is NOT deployed in any Supabase project.
