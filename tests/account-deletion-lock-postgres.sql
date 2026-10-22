@@ -161,6 +161,40 @@ begin
  exception when sqlstate '42501' then null; end;
 end $$;
 
+-- Recovery triage can inspect two tombstone/claim booleans in one read-only
+-- statement only using a privileged service connection, never browser roles.
+do $
+begin
+ if has_function_privilege('anon',
+   'closet_internal.inspect_deletion_claim_status(uuid)','EXECUTE')
+  or has_function_privilege('authenticated',
+   'closet_internal.inspect_deletion_claim_status(uuid)','EXECUTE') then
+  raise exception 'Read-only incident state exposed to browser role';
+ end if;
+ if not has_function_privilege('service_role',
+   'closet_internal.inspect_deletion_claim_status(uuid)','EXECUTE') then
+  raise exception 'Server cannot inspect deletion incident state';
+ end if;
+end $;
+set role service_role;
+do $
+declare locked boolean; claimed boolean;
+begin
+ select write_locked,cleanup_claimed into locked,claimed
+ from closet_internal.inspect_deletion_claim_status(
+  'a1111111-1111-4111-8111-111111111111'::uuid);
+ if locked is distinct from true or claimed is distinct from true then
+  raise exception 'Existing deletion lock and claim not visible to privileged inspector';
+ end if;
+ select write_locked,cleanup_claimed into locked,claimed
+ from closet_internal.inspect_deletion_claim_status(
+  'b2222222-2222-4222-8222-222222222222'::uuid);
+ if locked is distinct from false or claimed is distinct from false then
+  raise exception 'Unrelated account incorrectly shown as in deletion';
+ end if;
+end $;
+reset role;
+
 -- No privilege escalation via fake service role: role permissions are tested,
 -- and the SQL draft is NOT deployed in any Supabase project.
 select 'ACCOUNT_DELETION_DATABASE_GUARD: passed' as result;
