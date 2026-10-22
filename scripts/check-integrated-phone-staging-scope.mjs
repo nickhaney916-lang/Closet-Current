@@ -15,7 +15,7 @@ const imported=[
 ];
 for(const p of imported)assert.equal(git('rev-parse','HEAD:'+p),git('rev-parse',ACCESS+':'+p),
  'Staging security file differs from audited PR #165: '+p);
-const permitted=new Set([...imported,...["scripts/phone-recognition-triage.mjs","scripts/build-phone-recognition-triage.mjs","scripts/test-phone-recognition-triage-browsers.mjs","tests/phone-recognition-triage.test.mjs","docs/PHONE-RECOGNITION-TRIAGE-20261021.md","scripts/check-phone-triage-scope.mjs"],
+const permitted=new Set([...imported,...["docs/RESTRICTED-STAGING-SETUP-20261021.md","tests/staging-root-preview-access-coverage.test.mjs"],...["scripts/phone-recognition-triage.mjs","scripts/build-phone-recognition-triage.mjs","scripts/test-phone-recognition-triage-browsers.mjs","tests/phone-recognition-triage.test.mjs","docs/PHONE-RECOGNITION-TRIAGE-20261021.md","scripts/check-phone-triage-scope.mjs"],
  'scripts/test-staging-runtime-browsers.mjs',
  'scripts/check-integrated-security-mobile-staging.mjs',
  'scripts/check-linked-phone-trial-scope.mjs',

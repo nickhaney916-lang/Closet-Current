@@ -2,6 +2,25 @@
 
 **Authorized 2026-10-21 for PREPARING private staging, but NOT public publishing, merging production, accessing live customer wardrobes, creating billable resources or enabling paid AI.**
 
+## October 21 security correction — Cloudflare Pages root host is NOT protected by preview-only Access
+
+**STOP: do not upload any Closet Current staging bundle until both the Pages project root and preview deployment aliases are independently protected.** Official Cloudflare Pages documentation makes an important distinction: `Settings → General → Enable access policy` initially protects **preview deployments** only (`*.<project>.pages.dev`), not the project's root `<project>.pages.dev` nor any custom domain. A successful preview login challenge is insufficient. See:
+- https://developers.cloudflare.com/pages/configuration/preview-deployments/
+- https://developers.cloudflare.com/pages/platform/known-issues/#enable-access-on-your-pagesdev-domain
+
+For a **new** isolated `closet-current-staging` Pages project, a separately authorized Cloudflare administrator must follow Cloudflare's documented root-host sequence **before serving any app or credentials**:
+
+1. Create the separate Pages project with **no staging app deployed**; do not deploy `staging-dist` as its first/default production release.
+2. Under that project's Settings enable the preview Access policy. Open **Manage** for the generated Access application. In Zero Trust / Access / Applications configure its **Public hostname** by removing the leading wildcard (`*`) from the Subdomain. Save to protect the root `closet-current-staging.pages.dev`. Follow Cloudflare's current known-issues instructions rather than assuming an ordinary wildcard covers both host classes.
+3. Return to the same Pages project Settings → General and **enable an Access policy again** for `*.closet-current-staging.pages.dev`. Confirm there are **two** distinct, appropriately restrictive Access applications: one for the project root and one for preview aliases. Cloudflare requires this separate application for previews after the root hostname configuration change.
+4. If any custom staging domain is attached, create an independently protective **self-hosted Cloudflare Access application** for that exact host. Cloudflare's preview policy does not cover custom hostnames. Avoid custom domains entirely until every hostname and bypass route has a verified policy.
+5. Enumerate ALL preview aliases (including old hash-based deployment URLs), project root, and custom hostnames using the Cloudflare dashboard. Verify Access application inventory from the authorized account, test signed-out access for all static assets **and** test a specifically allowed and disallowed account. The existing no-credentials `check-staging-anonymous-access.mjs --bundle=staging-dist` can check the Pages root and supplied preview origins only; **it does not enumerate previews or validate custom domains**. A synthetic HTTP 302 is not proof of a real configured Access application.
+6. If ANY root/preview/custom host is publicly accessible, do not upload or connect test Auth/photos. Keep staged assets offline, correct configuration, and repeat the independent review. There is no authorized production/main deployment in this process.
+
+**Cost/provisioning warning:** Read-only connected Supabase inspection found one active Closet Current project and one active Drive Duel project across the user's organizations, not an isolated staging project. On Oct 21, 2026 the existing Closet Current organization returned a **$0/month new-project price quote**; this is *not permission or assurance of capacity*. Supabase's current Free plan normally allows **two active free projects across organizations where the user is an Owner or Admin**: https://supabase.com/docs/guides/platform/billing-on-supabase . A third active Free project may be refused even if its price quote shows $0. **Do not pause or alter Drive Duel or spend on Pro without explicit owner authorization.**
+
+**Never represent local fixtures, workflow tests, read-only cost quotes, screenshots, Access-login redirects or operator-reported checkboxes as verified hosted Access, provisioned free staging, real physical-phone evidence or pilot release approval.**
+
 ## Verified hard blockers identified
 
 1. The latest integrated development source still hardcodes the existing live Closet Current Supabase URL and publishable key in `public/auth.js`, `public/cloud-backup.js` and `public/ai-tryon.js`. Auth callback is the legacy GitHub Pages location.
@@ -26,7 +45,7 @@ The CI job uses **invented synthetic staging values** solely to test the bundler
 ## Steps required to unlock restricted real-phone staging
 
 1. Confirm which Supabase organization should hold a separate `Closet Current Staging` project, verify the price is **$0 before agreeing**; if a new project would incur any charge, pause for explicit separate cost approval. Once created, configure only empty/disposable schemas, RLS, Storage and Auth, using the existing version-controlled schema after a separate security review. Never import production users, photos, tokens, storage, or data.
-2. In the Cloudflare dashboard, **create a distinct Pages project**, e.g. `closet-current-staging`, not `closet-current`. In **Workers & Pages → [new staging project] → Settings → General → Enable access policy**, permit only specifically approved pilot testers. Cloudflare explicitly says that preview URLs are PUBLIC by default; `robots.txt` and guessing a random URL do not make them private.
+2. In Cloudflare create a distinct Pages project, e.g. `closet-current-staging`, not production `closet-current`; **before any deployment, establish separate Access coverage for both the project-root hostname and every preview alias** following the October 21 correction above. The ordinary Pages Enable access policy initially protects previews only. `robots.txt` and guessed URLs do not confer privacy.
 3. Verify the Access policy from a signed-out browser: unapproved users must be denied on the exact staging URL **AND all deployment previews**. Do not connect any public custom hostname without independent Access protection.
 4. Configure the new staging Supabase Auth URL Configuration with an **exact HTTPS staging callback** and allowed redirects; don't change production callbacks or the existing Cloudflare/GitHub Pages site. Use only disposable accounts and test emails. See https://supabase.com/docs/guides/auth/redirect-urls.
 5. Build the separate candidate on a trusted machine with **PUBLIC** staging values only (never a service role key or SMTP password):
