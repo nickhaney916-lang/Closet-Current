@@ -35,7 +35,7 @@ try{
    await page.locator('#savedColor').selectOption('black');
    await page.locator('#savedPhoto').selectOption('clear');
    await page.locator('#record').click();
-   assert.match(await page.locator('#progress').innerText(),/1\/30 garment entries/);
+   assert.match(await page.locator('#progress').innerText(),new RegExp(platform+': 1/15 garments recorded'));
    const trigger=page.waitForEvent('download');
    await page.locator('#export').click();await page.locator('#download').click();
    const download=await trigger;
@@ -48,8 +48,8 @@ try{
    assert.equal(metrics.modelCategoryColorExact,0);
    assert.equal(metrics.savedCategoryColorExact,1);
    assert.equal(metrics.verifiedRecognitionAccuracy,null);
-   await page.locator('#scene').selectOption('boots');
-   assert.equal(await page.locator('#download').isVisible(),false,'Stale export not revoked after scene change');
+   await page.locator('#scene').selectOption('sandals');
+   assert.equal(await page.locator('#download').isVisible(),false,'Stale export not revoked after an actual scene change');
    const privatePayload=JSON.stringify({...data,email:'private@example.invalid',photo:'data:image/jpeg;base64,SECRET'});
    await page.locator('#import').setInputFiles({name:'unsafe.json',mimeType:'application/json',buffer:Buffer.from(privatePayload)});
    await page.waitForFunction(()=>document.getElementById('message').textContent.includes('rejected'));
