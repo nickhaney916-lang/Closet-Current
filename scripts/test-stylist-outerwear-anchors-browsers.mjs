@@ -72,10 +72,18 @@ try{
     await page.evaluate(()=>switchView('stylist'));
    }
    assert.deepEqual(errors,[],'Unexpected page exceptions');
-   assert.deepEqual(external,[],'Browser made an unexpected external request');
+   // Fonts and weekly trend refresh are normal app requests. All were
+   // intercepted and blocked; never mistake an attempted request for
+   // a successful external connection or a customer-data transfer.
+   const knownBlocked=[/^https:\/\/fonts\.googleapis\.com\/css2\?/,
+    /^https:\/\/raw\.githubusercontent\.com\/nickhaney916-lang\/Closet-Current\/main\/public\/trend-data\.json\?checked=\d+$/];
+   assert.ok(external.every(url=>knownBlocked.some(re=>re.test(url))),
+    'Unexpected external URL (especially hosted Auth, AI, Storage, or tracking)');
+   assert.equal(external.some(url=>/supabase\.co|api\.openai\.com|cloudflare\.com/.test(url)),false,
+    'Real backend traffic must never be attempted');
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
    console.log('OWNED_OUTERWEAR_REAL_UI_EMULATION '+JSON.stringify({engine:label,result:'PASS',
-    truePhysicalHardware:false,sourcePhotoModified:false,externalRequests:0}));
+    truePhysicalHardware:false,sourcePhotoModified:false,externalRequestsBlocked:external.length,allowedExternalNetworkRequests:0}));
    await context.close();
   }finally{await browser.close();}
  }
