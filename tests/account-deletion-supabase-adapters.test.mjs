@@ -21,9 +21,17 @@ function mock(cfg={}){
     async deleteUser(uid){calls.push('deleteUser');assert.equal(uid,A);deleted=true;return {data:{user:identity},error:null};}
    }
   },
-  async rpc(name,arg){calls.push('rpc');assert.equal(name,'begin_closet_account_deletion');
-   assert.equal(arg.p_owner,A);locked=cfg.lock!==false;
-   return {data:locked,error:null};},
+  async rpc(name,arg){calls.push(name==='begin_closet_account_deletion'?'rpc':'claimCleanup');
+   assert.equal(arg.p_owner,A);
+   if(name==='begin_closet_account_deletion'){
+    locked=cfg.lock!==false;return {data:locked,error:null};
+   }
+   if(name==='claim_closet_account_cleanup'){
+    assert.equal(locked,true,'Cleanup claim must be after tombstone');
+    return {data:cfg.claim!==false,error:null};
+   }
+   throw Error('Unexpected privileged RPC');
+  },
   storage:{from(bucket){assert.equal(bucket,'closet-private');return {
    async list(prefix,{limit,offset,sortBy}){calls.push('list');
     assert.equal(prefix,A);assert.equal(offset,0);assert.equal(sortBy.column,'name');
@@ -77,6 +85,8 @@ test('server Supabase adapter safely deletes >2 pages in correct order and prese
  assert.equal(m.photos.get(A).length,0);
  assert.deepEqual(m.photos.get(B),[jpeg(900)]);
  assert.deepEqual(m.calls.slice(0,4),['getUser','getUserById','password','rpc']);
+ assert.ok(m.calls.indexOf('claimCleanup')>m.calls.indexOf('rpc'));
+ assert.ok(m.calls.lastIndexOf('claimCleanup')<m.calls.indexOf('remove'));
  assert.ok(m.calls.lastIndexOf('remove')<m.calls.lastIndexOf('deleteBackup'));
  assert.ok(m.calls.lastIndexOf('deleteBackup')<m.calls.lastIndexOf('deleteUser'));
 });
@@ -94,6 +104,14 @@ test('missing real server lock denies destructive operations',async()=>{
  await assert.rejects(createAccountDeletionCoordinator({enabled:true,...m.adapters}).deleteAccount(request),
   /write lock unavailable/);
  assert.ok(!m.calls.includes('list'));
+});
+test('another deletion cleanup claim cannot execute Storage or backup deletion',async()=>{
+ const m=mock({claim:false,count:3});
+ await assert.rejects(createAccountDeletionCoordinator({enabled:true,...m.adapters}).deleteAccount(request),/already claimed/);
+ assert.ok(m.calls.includes('rpc'));
+ assert.ok(m.calls.includes('claimCleanup'));
+ assert.ok(!m.calls.includes('list'));
+ assert.ok(!m.calls.includes('deleteUser'));
 });
 test('Storage error and fake success cannot reach Auth deletion',async()=>{
  for(const cfg of [{removeError:true},{noopRemove:true}]){

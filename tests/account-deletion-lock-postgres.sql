@@ -123,6 +123,44 @@ begin
  end if;
 end $$;
 
+-- A durable tombstone is intentionally idempotent, but destructive cleanup
+-- requires a distinct one-time exclusive claim per owner.
+do $
+begin
+ if has_function_privilege('authenticated',
+    'public.claim_closet_account_cleanup(uuid)','EXECUTE')
+  or has_function_privilege('anon',
+    'public.claim_closet_account_cleanup(uuid)','EXECUTE')
+  or has_function_privilege('authenticated',
+    'closet_internal.claim_account_cleanup(uuid)','EXECUTE')
+  or has_table_privilege('authenticated',
+    'closet_internal.deletion_cleanup_claims','SELECT') then
+  raise exception 'Account cleanup claim exposed to a browser role';
+ end if;
+ if not has_function_privilege('service_role',
+    'public.claim_closet_account_cleanup(uuid)','EXECUTE') then
+  raise exception 'Service role cannot acquire exclusive cleanup claim';
+ end if;
+end $;
+do $
+begin
+ -- The first caller for the locked owner receives the ONLY claim.
+ if not public.claim_closet_account_cleanup('a1111111-1111-4111-8111-111111111111') then
+  raise exception 'First account cleanup claim denied';
+ end if;
+ if public.claim_closet_account_cleanup('a1111111-1111-4111-8111-111111111111') then
+  raise exception 'Second account cleanup claim erroneously acquired';
+ end if;
+ if exists (select 1 from closet_internal.deletion_cleanup_claims
+   where owner_id = 'b2222222-2222-4222-8222-222222222222') then
+  raise exception 'Unrelated account claim created';
+ end if;
+ begin
+  perform public.claim_closet_account_cleanup('b2222222-2222-4222-8222-222222222222');
+  raise exception 'Unlocked account unexpectedly obtained cleanup claim';
+ exception when sqlstate '42501' then null; end;
+end $;
+
 -- No privilege escalation via fake service role: role permissions are tested,
 -- and the SQL draft is NOT deployed in any Supabase project.
 select 'ACCOUNT_DELETION_DATABASE_GUARD: passed' as result;

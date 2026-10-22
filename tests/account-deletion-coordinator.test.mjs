@@ -16,6 +16,7 @@ function harness(options={}){
   async verifySession(){calls.push('auth');return options.tokenId??A;},
   async verifyPassword(uid){calls.push('password');return options.passwordId??uid;},
   async lockWrites(uid){calls.push('lock');return options.lock===false?false:true;},
+  async claimCleanup(uid){calls.push('claim');return options.claim===false?false:true;},
   async listPhotos(uid,limit){calls.push('list');return (files.get(uid)||[]).slice(0,limit);},
   async removePhotos(uid,paths){calls.push('remove');
    if(options.failAtRemove!==undefined&&paths[0]===A+'/'+f(options.failAtRemove))throw Error('injected storage error');
@@ -72,6 +73,20 @@ test('missing durable lock blocks all destructive operations',async()=>{
  await assert.rejects(createAccountDeletionCoordinator(h.api).deleteAccount(req),/write lock/);
  assert.ok(!h.calls.includes('remove'));
  assert.ok(!h.calls.includes('deleteAuth'));
+});
+test('an existing cleanup worker claim blocks all destructive operations',async()=>{
+ const h=harness({claim:false,files:2});
+ await assert.rejects(createAccountDeletionCoordinator(h.api).deleteAccount(req),/already claimed/);
+ assert.ok(h.calls.includes('lock'));
+ assert.ok(h.calls.includes('claim'));
+ assert.ok(!h.calls.includes('list'));
+ assert.ok(!h.calls.includes('remove'));
+ assert.ok(!h.calls.includes('deleteAuth'));
+});
+test('a missing exclusive cleanup dependency fails closed before authentication',()=>{
+ const h=harness({files:2});delete h.api.claimCleanup;
+ assert.throws(()=>createAccountDeletionCoordinator(h.api),/Missing server-only/);
+ assert.deepEqual(h.calls,[]);
 });
 test('unexpected object name prevents all deletion and flags manual handling',async()=>{
  const h=harness();h.files.get(A).unshift('not-a-valid-path.jpg');

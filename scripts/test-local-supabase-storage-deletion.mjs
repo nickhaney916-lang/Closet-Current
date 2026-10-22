@@ -90,6 +90,19 @@ try{
  const lock=await api('/rest/v1/rpc/begin_closet_account_deletion',{
   method:'POST',body:{p_owner:alice.id}});
  assert.equal(must(lock,'server-only deletion lock'),true);
+ const untrustedClaim=await api('/rest/v1/rpc/claim_closet_account_cleanup',{
+  method:'POST',key:alice.access,body:{p_owner:alice.id}});
+ acceptableReject(untrustedClaim,'browser cannot claim privileged cleanup worker');
+ const claim=await api('/rest/v1/rpc/claim_closet_account_cleanup',{
+  method:'POST',body:{p_owner:alice.id}});
+ assert.equal(must(claim,'first server-only exclusive cleanup claim'),true);
+ const duplicate=await api('/rest/v1/rpc/claim_closet_account_cleanup',{
+  method:'POST',body:{p_owner:alice.id}});
+ assert.equal(must(duplicate,'second cleanup worker claim must be rejected'),false);
+ const noLock=await api('/rest/v1/rpc/claim_closet_account_cleanup',{
+  method:'POST',body:{p_owner:bob.id}});
+ acceptableReject(noLock,'cleanup worker cannot claim an unlocked account');
+ info.exclusiveCleanupClaim=true;
  const tooLate=await upload(alice);
  acceptableReject(tooLate,'upload after deletion lock');
  const overwrite=await upload(alice,{overwrite:true});

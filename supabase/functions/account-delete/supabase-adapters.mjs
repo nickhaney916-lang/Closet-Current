@@ -65,6 +65,14 @@ export function createSupabaseDeletionAdapters({adminClient,passwordClient}={}){
     p_owner:uid
    }),'durable-write-lock')===true;
   },
+  async claimCleanup(uid){
+   uid=checkUser(uid);
+   // Separate service-role only RPC: a returning true from the durable
+   // tombstone RPC is NOT proof of sole-writer deletion ownership.
+   return successful(await adminClient.rpc('claim_closet_account_cleanup',{
+    p_owner:uid
+   }),'exclusive-cleanup-claim')===true;
+  },
   async listPhotos(uid,limit){
    uid=checkUser(uid);
    if(!Number.isInteger(limit)||limit<1||limit>100)
