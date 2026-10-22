@@ -75,7 +75,7 @@ test('pinned sneaker and jacket still appear when the chosen occasion usually re
  assert.ok(shoe.length>0&&shoe.every(x=>x.board.slots.shoes==='shoes'));
  assert.ok(shoe[0].notices.some(x=>x.includes('chosen piece')));
  const jacket=c.styleOwnedCollection(owned,{request:'Casual',season:'Summer',anchorItemId:'jacket'});
- assert.ok(jacket.length>0&&jacket.every(x=>x.board.slots.layer==='jacket'));
+ assert.ok(jacket.length>0&&jacket.every(x=>x.board.slots.layer2==='jacket'&&x.board.slots.layer!=='jacket'));
  assert.ok(jacket[0].notices.some(x=>x.includes('chosen piece')));
 });
 test('missing, deleted and uncategorized new pieces cannot be silently substituted',()=>{
@@ -228,4 +228,66 @@ test('unknown color labels are disclosed instead of treated as confirmed coordin
  const c=setup(),results=c.styleOwnedCollection([piece('top','Tops','T-shirt','Unknown'),
   piece('bottom','Bottoms','Jeans'),piece('shoes','Shoes','Sneakers')]);
  assert.ok(results[0].notices.some(x=>x.includes('colors are unknown')));
+});
+
+test('Style this assigns newly added outerwear to the correct independently rendered clothing layer',()=>{
+ const c=setup(),base=[piece('new-tee','Tops','T-shirt','White'),
+  piece('pants','Bottoms','Jeans','Blue'),piece('sneakers','Shoes','Sneakers','White')];
+ const categories=[
+  ['Cardigan','layer'],['Vest','layer'],['Jacket','layer2'],['Blazer','layer2'],
+  ['Coat','layer3'],['Raincoat','layer3']
+ ];
+ for(const [itemType,slot] of categories){
+  const fresh=piece('new-outer','Outerwear',itemType,'Brown');
+  const original=JSON.stringify([...base,fresh]);
+  const results=c.styleOwnedCollection([...base,fresh],{request:'Casual',season:'Winter',anchorItemId:fresh.id});
+  assert.ok(results.length>0,itemType+' must produce owned outfit options');
+  for(const result of results){
+   assert.equal(result.board.slots[slot],fresh.id,itemType+' must use '+slot);
+   assert.equal(Object.values(result.board.slots).filter(id=>id===fresh.id).length,1,'Anchor cannot fill two layers');
+   assert.equal(result.board.slots.top,'new-tee');
+   assert.equal(result.board.slots.bottom,'pants');
+   assert.equal(result.board.slots.shoes,'sneakers');
+   assert.equal(result.missing.length,0);
+   if(slot==='layer3')assert.equal(result.board.layerCount,3);
+   if(slot==='layer2')assert.ok(result.board.layerCount>=2);
+   assert.ok(result.board.slots.top!=='new-outer');
+   assert.ok(!result.board.slots.layer||slot==='layer'||result.board.slots.layer!==fresh.id);
+  }
+  assert.equal(JSON.stringify([...base,fresh]),original,'Owned garment photos are not mutated');
+ }
+});
+test('pinned jacket or coat cannot pair with a dress that silently erases it',()=>{
+ const c=setup(),common=[piece('dress','Dresses','Casual dress','Blue'),piece('heels','Shoes','Flats','White'),
+  piece('shirt','Tops','T-shirt','White'),piece('jeans','Bottoms','Jeans','Blue')];
+ for(const itemType of ['Jacket','Coat']){
+  const pinned=piece('new-outer','Outerwear',itemType),slot=itemType==='Jacket'?'layer2':'layer3';
+  const outfits=c.styleOwnedCollection([...common,pinned],{request:'Casual',season:'Fall',anchorItemId:pinned.id});
+  assert.ok(outfits.length);
+  assert.ok(outfits.every(x=>x.board.slots[slot]===pinned.id&&x.board.slots.top!=='dress'));
+  assert.ok(outfits.every(x=>Object.values(x.board.slots).filter(x=>x===pinned.id).length===1));
+ }
+});
+test('anchored new coat survives Summer styling with explicit season caution and no invented other owner',()=>{
+ const c=setup(),owned=[piece('summer-shirt','Tops','T-shirt'),piece('shorts','Bottoms','Shorts'),
+  piece('sneakers','Shoes','Sneakers'),piece('new-coat','Outerwear','Coat','Black',{seasons:['Winter']})];
+ const recommendations=c.styleOwnedCollection(owned,{request:'Casual',season:'Summer',anchorItemId:'new-coat'});
+ assert.ok(recommendations.length);
+ for(const result of recommendations){
+  assert.equal(result.board.slots.layer3,'new-coat');
+  assert.ok(result.notices.some(x=>x.includes('chosen piece')));
+  assert.ok(Object.values(result.board.slots).every(id=>owned.some(item=>item.id===id)));
+  assert.equal(result.board.slots.top,'summer-shirt');
+ }
+ const noAnchor=c.styleOwnedCollection(owned.slice(0,-1),{anchorItemId:'new-coat'});
+ assert.equal(noAnchor.length,0,'Missing owned pinned jacket cannot be substituted');
+});
+test('cardigan pins as a sweater layer without inventing a jacket or discarding bottoms',()=>{
+ const c=setup(),owned=[piece('shirt','Tops','T-shirt'),piece('jeans','Bottoms','Jeans'),
+  piece('shoe','Shoes','Sneakers'),piece('new-cardigan','Outerwear','Cardigan')];
+ const r=c.styleOwnedCollection(owned,{anchorItemId:'new-cardigan'})[0];
+ assert.equal(r.board.slots.layer,'new-cardigan');
+ assert.equal(r.board.slots.layer2,undefined);
+ assert.equal(r.board.slots.layer3,undefined);
+ assert.equal(r.board.slots.bottom,'jeans');
 });
