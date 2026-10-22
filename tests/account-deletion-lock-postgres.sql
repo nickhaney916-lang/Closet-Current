@@ -163,7 +163,7 @@ end $$;
 
 -- Recovery triage can inspect two tombstone/claim booleans in one read-only
 -- statement only using a privileged service connection, never browser roles.
-do $
+do $$
 begin
  if has_function_privilege('anon',
    'closet_internal.inspect_deletion_claim_status(uuid)','EXECUTE')
@@ -175,9 +175,9 @@ begin
    'closet_internal.inspect_deletion_claim_status(uuid)','EXECUTE') then
   raise exception 'Server cannot inspect deletion incident state';
  end if;
-end $;
+end $$;
 set role service_role;
-do $
+do $$
 declare locked boolean; claimed boolean;
 begin
  select write_locked,cleanup_claimed into locked,claimed
@@ -192,7 +192,7 @@ begin
  if locked is distinct from false or claimed is distinct from false then
   raise exception 'Unrelated account incorrectly shown as in deletion';
  end if;
-end $;
+end $$;
 reset role;
 
 -- No privilege escalation via fake service role: role permissions are tested,
