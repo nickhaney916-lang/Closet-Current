@@ -12,6 +12,7 @@ function stylistTrendMatches(item,slot,context,library){return (library?.directi
 // Match the clothing figure's three independent optional layers. Use the
 // known catalog category/type rather than fabric color, season or trend data.
 function stylistLayerSlot(item){
+ if(!item||typeof item!=='object')return null;
  if(item.category==='Tops')return 'layer';
  if(item.category!=='Outerwear')return null;
  if(['Coat','Raincoat'].includes(item.itemType))return 'layer3';
