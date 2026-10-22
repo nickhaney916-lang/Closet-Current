@@ -26,6 +26,8 @@ if(git('merge-base','--is-ancestor',ACCESS_SWEEP,'HEAD')===''){
 // Only in this successor branch, explicitly allow private aggregate diagnostics.
 if(git('merge-base','--is-ancestor','15b84821c8ecd3c7ce76baf2c5835ab5742ca6ac','HEAD')==='')
  for(const p of ["scripts/phone-recognition-triage.mjs","scripts/build-phone-recognition-triage.mjs","scripts/test-phone-recognition-triage-browsers.mjs","tests/phone-recognition-triage.test.mjs","docs/PHONE-RECOGNITION-TRIAGE-20261021.md","scripts/check-phone-triage-scope.mjs"])allow.add(p);
+if(git('merge-base','--is-ancestor','3b6cdcdd5b5f19887e872000009256f503112359','HEAD')==='')
+ for(const p of ["docs/RESTRICTED-STAGING-SETUP-20261021.md","tests/staging-root-preview-access-coverage.test.mjs"])allow.add(p);
 for(const path of git('diff','--name-only',BASE,'HEAD').split('\n').filter(Boolean))
  assert.ok(allow.has(path),'Unauthorized existing product or hosted data edit: '+path);
 for(const path of ['public','supabase','scripts/build-restricted-staging.mjs',

@@ -1,7 +1,7 @@
 name: Integrated phone evidence, full staging access and local security QA
 on:
   push:
-    branches: [validation/offline-phone-recognition-failure-triage-20261021]
+    branches: [audit/staging-project-identity-owner-approval-20261021]
 permissions:
   contents: read
 jobs:
@@ -31,7 +31,7 @@ jobs:
           node scripts/build.mjs
           node --test tests/staging-asset-seal.test.mjs tests/staging-artifact-integrity.test.mjs tests/restricted-staging-integration.test.mjs
           node --test tests/private-pilot-kit.test.mjs tests/staging-asset-seal.test.mjs tests/staging-artifact-integrity.test.mjs tests/restricted-staging-integration.test.mjs
-          node --test tests/staging-anonymous-access.test.mjs tests/staging-anonymous-full-bundle.test.mjs
+          node --test tests/staging-anonymous-access.test.mjs tests/staging-anonymous-full-bundle.test.mjs tests/staging-root-preview-access-coverage.test.mjs
           node --test tests/*.test.cjs tests/*.test.mjs
       - uses: supabase/setup-cli@v1
         with:
@@ -105,7 +105,7 @@ jobs:
           node scripts/build.mjs
           node --test tests/staging-asset-seal.test.mjs tests/staging-artifact-integrity.test.mjs tests/restricted-staging-integration.test.mjs
           node --test tests/private-pilot-kit.test.mjs tests/staging-asset-seal.test.mjs tests/staging-artifact-integrity.test.mjs tests/restricted-staging-integration.test.mjs
-          node --test tests/staging-anonymous-access.test.mjs tests/staging-anonymous-full-bundle.test.mjs
+          node --test tests/staging-anonymous-access.test.mjs tests/staging-anonymous-full-bundle.test.mjs tests/staging-root-preview-access-coverage.test.mjs
           node --test tests/*.test.cjs tests/*.test.mjs
       - name: Generate invented staging bundle and run offline simulation
         env:

@@ -5,7 +5,7 @@ import {readFileSync} from 'node:fs';
 const BASE='15b84821c8ecd3c7ce76baf2c5835ab5742ca6ac';
 const git=(...args)=>execFileSync('git',args,{encoding:'utf8',maxBuffer:9000000}).trim();
 execFileSync('git',['merge-base','--is-ancestor',BASE,'HEAD']);
-const allowed=new Set([
+const allowed=new Set([...["docs/RESTRICTED-STAGING-SETUP-20261021.md","tests/staging-root-preview-access-coverage.test.mjs"],
  'scripts/phone-recognition-triage.mjs',
  'scripts/build-phone-recognition-triage.mjs',
  'scripts/test-phone-recognition-triage-browsers.mjs',
