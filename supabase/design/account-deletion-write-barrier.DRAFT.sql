@@ -162,3 +162,22 @@ revoke all on function public.claim_closet_account_cleanup(uuid)
  from public, anon, authenticated;
 grant execute on function public.claim_closet_account_cleanup(uuid)
  to service_role;
+
+
+-- READ-ONLY PRIVILEGED INCIDENT INSPECTION (DRAFT / NEVER DEPLOYED).
+-- Operators must obtain snapshots through an approved server-only database
+-- connection, never an exposed public Data API route or browser key.
+-- Even if both booleans are true, the worker might STILL BE RUNNING.
+create or replace function closet_internal.inspect_deletion_claim_status(p_owner uuid)
+returns table(write_locked boolean, cleanup_claimed boolean)
+language sql security invoker set search_path = '' as $$
+ select exists (
+  select 1 from closet_internal.deletion_locks where owner_id = p_owner
+ ), exists (
+  select 1 from closet_internal.deletion_cleanup_claims where owner_id = p_owner
+ );
+$$;
+revoke all on function closet_internal.inspect_deletion_claim_status(uuid)
+ from public, anon, authenticated;
+grant execute on function closet_internal.inspect_deletion_claim_status(uuid)
+ to service_role;

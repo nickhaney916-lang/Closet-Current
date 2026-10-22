@@ -1,0 +1,50 @@
+name: Read-only account deletion recovery and privileged Postgres triage
+on:
+  push:
+    branches: [security/account-deletion-readonly-recovery-assessment-20261022]
+    paths:
+      - 'supabase/design/account-deletion-write-barrier.DRAFT.sql'
+      - 'supabase/functions/account-delete/**'
+      - 'tests/account-deletion-lock-postgres.sql'
+      - 'scripts/test-account-deletion-lock-race.mjs'
+      - 'tests/account-deletion-coordinator.test.mjs'
+      - 'tests/account-deletion-supabase-adapters.test.mjs'
+      - 'tests/account-deletion-entrypoint-disabled.test.mjs'
+      - 'tests/account-deletion-recovery-assessor.test.mjs'
+      - '.github/workflows/account-recovery-triage-postgres-qa.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  disposable-postgres-guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: closet_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d closet_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check staged SQL under an entirely disposable PostgreSQL service
+        env:
+          PGHOST: 127.0.0.1
+          PGPORT: '5432'
+          PGUSER: postgres
+          PGPASSWORD: postgres
+          PGDATABASE: closet_test
+        run: |
+          command -v psql || (sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client)
+          psql -X -v ON_ERROR_STOP=1 -f tests/account-deletion-lock-postgres.sql
+          node scripts/test-account-deletion-lock-race.mjs
+      - name: Verify coordinator cannot delete without owner, password and durable lock
+        run: node --test tests/account-deletion-coordinator.test.mjs tests/account-deletion-supabase-adapters.test.mjs tests/account-deletion-entrypoint-disabled.test.mjs tests/account-deletion-recovery-assessor.test.mjs
