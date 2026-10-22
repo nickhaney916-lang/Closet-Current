@@ -7,9 +7,9 @@ const FILE=/^[a-f0-9]{64}\.jpg$/;
 const PHRASE='DELETE MY ACCOUNT';
 const PAGE_SIZE=100;
 export function createAccountDeletionCoordinator(deps){
- const {enabled=false,verifySession,verifyPassword,lockWrites,
+ const {enabled=false,verifySession,verifyPassword,lockWrites,claimCleanup,
   listPhotos,removePhotos,deleteBackup,hasBackup,deleteUser,verifyUserDeleted}=deps||{};
- const fn=[verifySession,verifyPassword,lockWrites,listPhotos,removePhotos,
+ const fn=[verifySession,verifyPassword,lockWrites,claimCleanup,listPhotos,removePhotos,
   deleteBackup,hasBackup,deleteUser,verifyUserDeleted];
  if(fn.some(x=>typeof x!=='function'))throw Error('Missing server-only deletion dependency');
  const deletion=async({bearer,confirmation,password}={})=>{
@@ -26,6 +26,13 @@ export function createAccountDeletionCoordinator(deps){
   // not merely an in-process mutex.
   const locked=await lockWrites(uid);
   if(locked!==true)throw Error('Verified durable account write lock unavailable');
+  // A durable write tombstone can be acquired repeatedly for recovery, but
+  // that must not permit two workers to remove the SAME photos and Auth user.
+  // An exclusive claim is independently granted once per account. Its lifetime
+  // is permanent until an audited manual recovery/takeover mechanism exists.
+  // Fail closed rather than racing or automatically expiring a cleanup lease.
+  if(await claimCleanup(uid)!==true)
+   throw Error('Another account deletion cleanup is already claimed; manual recovery required');
   let photosDeleted=0,rounds=0;
   while(true){
    if(++rounds>10000)throw Error('Photo cleanup page limit reached');

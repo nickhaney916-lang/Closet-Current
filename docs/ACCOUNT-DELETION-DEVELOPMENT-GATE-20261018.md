@@ -178,3 +178,13 @@ privacy/deletion commitments, supervised recovery/retry, signed-off
 production migration/RLS/key isolation, mobile validation, and owner
 approval before any hosted changes.
 
+
+## October 22 draft security improvement — durable *exclusive* cleanup claim (undeployed)
+
+**New discovery:** `begin_closet_account_deletion` was designed to be idempotent and returned `true` for multiple requests for one account. This was correct for the durable *write tombstone*, but not proof that only one destructive cleanup worker was active. Two servers could simultaneously enumerate/remove a user's same Storage objects and issue competing Auth deletions. A mere process-level lock is not sufficient across server instances.
+
+The updated **still-undeployed** `supabase/design/account-deletion-write-barrier.DRAFT.sql` adds a private `closet_internal.deletion_cleanup_claims` table with one owner UUID primary key, and a separate `public.claim_closet_account_cleanup(p_owner uuid)` service-role-only RPC. The RPC requires an existing committed deletion tombstone; only its first unique claim succeeds (`true`), later claims receive `false`, and anonymous/authenticated callers have no EXECUTE grant. The server-side coordinator now requires **both** `lockWrites` and `claimCleanup` after reauthentication before listing or removing any private photo. The new Supabase SDK adapter uses the separate RPC; a second claimant aborts before destructive operations.
+
+**Recovery tradeoff:** The claim has NO TTL and is never silently released. If a worker dies after claiming, the account remains write-locked and cleanup cannot automatically resume; an authorized support/operations process must inspect the partial Storage, backup and Auth state and deliberately resume with an audited owner-specific recovery transaction. This is an intentional fail-closed safeguard, **not a complete recovery system**. Until that procedure, passwordless recent-authentication, live-hosted migrations and other release gates are approved and independently verified, the real HTTP deletion entrypoint remains **unchanged and disabled with 503**. This branch is a draft security design and must never be applied to live Supabase or deployed automatically.
+
+Dedicated scope tests, coordinator and SDK mock tests, PostgreSQL role/isolation checks, live but **disposable local** Supabase Storage/Auth HTTP tests, actual supabase-js local SDK integration and two-client write-lock race tests are used as preconditions for further development. No hosted Supabase project, real photo or actual customer is accessed.

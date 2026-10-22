@@ -74,6 +74,12 @@ try{
  assert.equal(outcome.deletedPhotoObjects,1);
  assert.equal(outcome.backupRemoved,true);
  assert.equal(outcome.authUserRemoved,true);
+ // Once one server-only worker has claimed this owner, a second worker
+ // cannot accidentally begin a duplicate destructive cleanup.
+ const secondClaim=data(await admin.rpc('claim_closet_account_cleanup',{
+  p_owner:alice.id
+ }),'verify duplicate claim rejected');
+ assert.equal(secondClaim,false,'Duplicate deletion worker must remain excluded');
  assert.equal(data(await admin.storage.from('closet-private').list(alice.id,{limit:100}),
   'list after successful account deletion').length,0);
  const rows=data(await admin.from('closet_backups').select('owner_id').eq('owner_id',alice.id),
@@ -92,7 +98,7 @@ try{
  console.log('LOCAL_SUPABASE_SDK_ACCOUNT_DELETE '+JSON.stringify({
   actualSdkAuth:true,actualSdkStorage:true,
   secureFreshPassword:true,privatePhotoRemoved:true,backupRemoved:true,
-  authUserRemoved:true,otherOwnerIntact:true,staleTokenBlocked:true,
+  authUserRemoved:true,otherOwnerIntact:true,staleTokenBlocked:true,duplicateWorkerExcluded:true,
   clientSideDeletionAvailable:false,hostedSupabaseAccess:false
  }));
 }finally{

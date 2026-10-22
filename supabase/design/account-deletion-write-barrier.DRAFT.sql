@@ -112,3 +112,53 @@ grant execute on function public.begin_closet_account_deletion(uuid) to service_
 
 -- No release_account_deletion() RPC exists. Tombstones require a reviewed
 -- retention/recovery strategy, not silent reactivation by session refresh.
+
+
+-- SERVER-ONLY EXCLUSIVE DELETION WORKER CLAIM (UNDEPLOYED).
+-- The write tombstone above is idempotent by design, so by itself two
+-- simultaneous cleanup workers could both receive 'true' and concurrently
+-- delete the same photo / Auth objects. One durable one-time claim prevents
+-- multiple active workers without trusting an in-memory mutex.
+--
+-- Deliberately NO TTL, unlock RPC or automatic takeover. A crash can strand
+-- an account in 'deletion in progress'; recovery requires a separately
+-- approved, operator-audited process. That is safer than a stale worker
+-- regaining control and deleting objects after a time-based lease expires.
+create table if not exists closet_internal.deletion_cleanup_claims (
+ owner_id uuid primary key,
+ claimed_at timestamptz not null default now()
+);
+revoke all on closet_internal.deletion_cleanup_claims from public, anon, authenticated;
+grant select, insert on closet_internal.deletion_cleanup_claims to service_role;
+
+create or replace function closet_internal.claim_account_cleanup(p_owner uuid)
+returns boolean language plpgsql security definer set search_path = '' as $$
+declare acquired uuid;
+begin
+ if p_owner is null then
+  raise exception 'Verified account required' using errcode = '42501';
+ end if;
+ -- No claim is valid until the write barrier has committed. The
+ -- tombstone survives Auth deletion and cannot be removed by a stale JWT.
+ if not exists (select 1 from closet_internal.deletion_locks
+  where owner_id = p_owner) then
+  raise exception 'Durable deletion write lock required' using errcode = '42501';
+ end if;
+ insert into closet_internal.deletion_cleanup_claims(owner_id)
+ values (p_owner) on conflict(owner_id) do nothing
+ returning owner_id into acquired;
+ return acquired is not null;
+end $$;
+revoke all on function closet_internal.claim_account_cleanup(uuid)
+ from public, anon, authenticated;
+grant execute on function closet_internal.claim_account_cleanup(uuid)
+ to service_role;
+
+-- Invoker privilege must be service-role only, mirroring the tombstone RPC.
+create or replace function public.claim_closet_account_cleanup(p_owner uuid)
+returns boolean language sql security invoker set search_path = ''
+as 'select closet_internal.claim_account_cleanup(p_owner)';
+revoke all on function public.claim_closet_account_cleanup(uuid)
+ from public, anon, authenticated;
+grant execute on function public.claim_closet_account_cleanup(uuid)
+ to service_role;
