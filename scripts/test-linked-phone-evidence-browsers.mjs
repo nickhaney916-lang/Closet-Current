@@ -35,7 +35,7 @@ try{
    await page.locator('#savedColor').selectOption('black');
    await page.locator('#savedPhoto').selectOption('clear');
    await page.locator('#record').click();
-   assert.match(await page.locator('#progress').innerText(),/Android: 1\/15 garments recorded/);
+   assert.match(await page.locator('#progress').innerText(),new RegExp(platform+': 1/15 garments recorded'));
    const trigger=page.waitForEvent('download');
    await page.locator('#export').click();await page.locator('#download').click();
    const download=await trigger;
