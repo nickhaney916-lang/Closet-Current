@@ -15,7 +15,7 @@ test('three owned layers produce three unique complete options around one newly 
 test('layer alternatives never duplicate the pinned item or add seasonal conflicts',()=>{
  const c=engine(),closet=[...base,piece('a','Outerwear','Jacket'),{...piece('summer','Outerwear','Jacket'),seasons:['Summer']}];
  const r=c.styleOwnedCollection(closet,{anchorItemId:'a',season:'Winter'});
- assert.equal(r.length,1);assert.equal(r[0].board.slots.layer,'a');assert.equal(new Set(Object.values(r[0].board.slots)).size,Object.values(r[0].board.slots).length);
+ assert.equal(r.length,1);assert.equal(r[0].board.slots.layer2,'a');assert.notEqual(r[0].board.slots.layer,'summer');assert.equal(new Set(Object.values(r[0].board.slots)).size,Object.values(r[0].board.slots).length);
 });
 test('sparse closet is never padded with imaginary clothes or duplicate combinations',()=>{
  const c=engine();const r=c.styleOwnedCollection([base[0]],{anchorItemId:'new'});

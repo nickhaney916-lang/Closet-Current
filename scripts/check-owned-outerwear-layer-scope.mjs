@@ -8,6 +8,7 @@ execFileSync('git',['merge-base','--is-ancestor',BASE,'HEAD']);
 const allowed=new Set([
  'public/closet-stylist-engine.js',
  'tests/closet-stylist.test.cjs',
+ 'tests/mobile-owned-outfit-reliability.test.cjs',
  'scripts/test-stylist-outerwear-anchors-browsers.mjs',
  'scripts/check-owned-outerwear-layer-scope.mjs',
  'docs/OWNED-OUTERWEAR-LAYER-FIX-20261021.md',
