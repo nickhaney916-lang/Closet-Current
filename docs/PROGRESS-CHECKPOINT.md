@@ -1,3 +1,32 @@
+# Issue #182 independent staging Auth and privacy QA — October 22, 2026
+
+Isolated branch `audit/issue-182-staging-auth-qa` is based exactly on PR #180
+`083f9c234a0a0829476df25287ccf8ff638af937`; draft targets that development branch.
+Added `docs/ISSUE-182-STAGING-AUTH-QA.md`, five offline tests executing generated
+exact-preview staging Auth, and an additive source scope guard. App runtime,
+Supabase, all workflows and PR #181 packaging are unchanged.
+
+Read-only staging catalog verified owner backup RLS, authenticated SELECT-only
+backup grants, anonymous RPC denial, invoker public RPC/private checked definer,
+and private JPEG owner-folder storage. Auth Site URL, redirect allowlist, email
+confirmation and anonymous sign-in provider settings remain unobserved: report
+includes mobile read-only dashboard checklist. Anonymous signed-in users are
+not explicitly excluded by owner policies; verify provider OFF before pilot.
+No defect justified broadening storage writes: photos are immutable hash objects.
+
+Local build passed. Full Node suite: **1,625 passed, 0 failed, 3 skipped** (1,628
+total). New exact-preview VM tests: **5 passed, 0 failed**; all HTTP intercepted.
+Real disposable 207-check Supabase integration NOT RUN here (Docker/psql absent).
+Hosted account signup/email delivery/two-account isolation NOT RUN; requires
+separate owner approval and protected deployed app. Physical-phone results and
+recognition accuracy unchanged/unverified. No paid calls, deployment, schema or
+Auth settings writes, production edits or merge. Promotion remains BLOCKED.
+This additive task uses `scripts/check-issue-182-scope.mjs`; historical #180 scope
+guard intentionally accepts only its own five-file diff and is not a gate for
+this additive audit branch. No original scope guard was weakened.
+
+---
+
 # Consolidated phone diagnostics and full-asset staging access — October 21, 2026
 
 - Integrated the independently verified **PR #167** offline original-photo phone-trial worksheet and **PR #165** complete SHA-256-sealed staging static asset access sweep in a new draft-only true two-parent development branch; original PRs remain unmodified. A source guard pins the five security implementation/workflow/test/document blobs exactly to #165, preserves the PR #167 phone tool, customer app, Supabase, production workflows, original-full-frame recognition-before-crop behavior, and existing release blockers.
