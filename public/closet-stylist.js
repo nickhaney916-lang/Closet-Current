@@ -106,11 +106,20 @@ function renderStyledCollection(){
   const topPiece=items.find(x=>x.id===board.slots.top);
   const topSwapLabel=topPiece?.category==='Dresses'?(['Jumpsuit','Romper'].includes(topPiece.itemType)?'Swap one-piece':'Swap dress'):'Swap top';
   for(const [slot,label] of [['top',topSwapLabel],['bottom','Swap bottoms'],
-    ['shoes','Swap shoes'],['layer','Swap layer']]){
+    ['shoes','Swap shoes'],['layer','Swap layer'],
+    ['layer2','Swap jacket'],['layer3','Swap coat']]){
    if(changed||!stylistSwapChoices(result,slot,items,stylistAnchorItemId).length)continue;
    const swap=node('button',label,'secondary styled-swap-button');
    swap.type='button';swap.setAttribute('aria-label',label+' in option '+(index+1));
    swap.onclick=()=>{
+    if(!stylistOwnsCloset()){refuseStylistAccount();return;}
+    // Recheck the actual selected photo and category, not just an item ID.
+    // A changed account, deleted garment or edited jacket must not be swapped.
+    if(!stylistSourcesCurrent(stylistSelectedSources(board))){
+     ++stylistRequestRevision;styledCollectionResults=[];renderStyledCollection();
+     $('stylistStatus').textContent='Your clothes changed. Create outfits again before swapping.';
+     return;
+    }
     const selected=stylistSwapOne(result,slot,items,stylistAnchorItemId);
     if(!selected)return;
     result.board=selected.board;result.saveMessage='';
