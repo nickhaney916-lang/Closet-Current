@@ -48,8 +48,8 @@ try{
    assert.equal(metrics.modelCategoryColorExact,0);
    assert.equal(metrics.savedCategoryColorExact,1);
    assert.equal(metrics.verifiedRecognitionAccuracy,null);
-   await page.locator('#scene').selectOption('boots');
-   assert.equal(await page.locator('#download').isVisible(),false,'Stale export not revoked after scene change');
+   await page.locator('#scene').selectOption('sandals');
+   assert.equal(await page.locator('#download').isVisible(),false,'Stale export not revoked after an actual scene change');
    const privatePayload=JSON.stringify({...data,email:'private@example.invalid',photo:'data:image/jpeg;base64,SECRET'});
    await page.locator('#import').setInputFiles({name:'unsafe.json',mimeType:'application/json',buffer:Buffer.from(privatePayload)});
    await page.waitForFunction(()=>document.getElementById('message').textContent.includes('rejected'));

@@ -63,6 +63,34 @@ export function parseTrial(text){
  let value;try{value=JSON.parse(text);}catch{reject();}
  return validateTrial(value);
 }
+// Navigation is purely local, ordered and platform-scoped. It cannot
+// turn a checkbox into physical-hardware or independent-review evidence.
+export function trialPlatformProgress(value){
+ const trial=validateTrial(value);
+ return platforms.map(platform=>{
+  const rows=trial.rows.filter(row=>row.id.startsWith(platform+'/'));
+  const recorded=rows.filter(row=>row.phase==='recorded').length;
+  const locked=rows.filter(row=>row.phase==='locked').length;
+  const originalScenes=scenes.filter(scene=>
+   scene.garments.every((_,i)=>
+    rows.find(row=>row.id===platform+'/'+scene.id+'/'+(i+1))?.phase==='recorded')).length;
+  return {platform,recorded,locked,unlabeled:rows.length-recorded-locked,
+   total:rows.length,originalScenes,requiredOriginalScenes:scenes.length,
+   physicallyVerified:false,independentAccuracyVerified:false};
+ });
+}
+export function nextUnfinishedTrialSlot(value,platform,afterId=null){
+ const trial=validateTrial(value);
+ if(!platforms.includes(platform))throw Error('Unknown phone platform');
+ const rows=trial.rows.filter(row=>row.id.startsWith(platform+'/'));
+ const start=afterId===null?-1:rows.findIndex(row=>row.id===afterId);
+ if(afterId!==null&&start<0)throw Error('Unknown row for current platform');
+ for(let offset=1;offset<=rows.length;offset++){
+  const candidate=rows[(start+offset)%rows.length];
+  if(candidate.phase!=='recorded')return candidate.id;
+ }
+ return null;
+}
 export function summarizeTrial(value){
  const record=validateTrial(value);
  const reviewed=record.rows.filter(r=>r.phase==='recorded'),total=reviewed.length;

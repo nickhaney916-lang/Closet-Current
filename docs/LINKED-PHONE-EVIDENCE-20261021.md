@@ -20,6 +20,16 @@ This report deliberately stores no filenames, hashes or persistent original IDs.
 
 The existing canonical reviewer, phone Device help and saved-closet audit exports remain separately required. They do not automatically merge with this worksheet. Discrepancies between reports must be reconciled privately using original evidence by the owner.
 
+## Guided phone test navigation — validation priority #175
+
+The offline PHONE-ORIGINALS.html file now has **Next unfinished garment on this phone**. This advances strictly within the selected Android or iPhone set and skips garments already recorded; locked originals without a recorded outcome are still counted as unfinished. After a valid initial-model and saved-result entry, **Record garment and next unfinished** records the observation and advances automatically. For a whole-outfit original, each of its four garment entries must be recorded before that one original scene counts as complete.
+
+A live progress line shows **Android 0/15 and iPhone 0/15 separately** and completed original scenes out of 12 per phone. An untested row remains visibly untested, a label locked before seeing the model cannot be altered unless the row is reset, and the anonymous report never claims verified hardware or independent accuracy.
+
+**Critical save-and-resume rule:** The offline worksheet intentionally has no browser storage, autosave, network, uploads or photograph access. Before closing or changing devices, choose **Prepare private report** and download the fixed-choice JSON to a private device. On reopening PHONE-ORIGINALS.html, **Resume previous worksheet** and select **Next unfinished** on the appropriate phone. The JSON contains both platforms' partial results. Do not rely on the browser to preserve unexported entries or forward personal wardrobe photos. Verify the same app build on both real devices before accepting a comparison.
+
+This easier worksheet does **not** constitute performed physical tests. Continue to require separately authorized isolated, Access-protected staging and a consenting independent adult reviewer inspecting untouched originals before model output. Do not use customer accounts, public hosting or production as substitutes.
+
 ## How to build locally
 \`\`\`sh
 node scripts/build-linked-phone-evidence.mjs /private/new/PHONE-ORIGINALS.html
