@@ -8,7 +8,7 @@ const base=[piece('new','Tops','T-shirt'),piece('pants','Bottoms','Jeans'),piece
 test('three owned layers produce three unique complete options around one newly photographed shirt',()=>{
  const c=engine(),closet=[...base,...['a','b','c'].map(id=>piece(id,'Outerwear','Jacket'))],before=JSON.stringify(closet);
  const r=c.styleOwnedCollection(closet,{anchorItemId:'new',season:'Fall'});
- assert.equal(r.length,3);assert.equal(new Set(r.map(x=>x.board.slots.layer)).size,3);
+ assert.equal(r.length,3);assert.equal(new Set(r.map(x=>x.board.slots.layer2)).size,3);assert.ok(r.every(x=>x.board.slots.layer===undefined));
  for(const x of r){assert.equal(x.missing.length,0);assert.equal(x.board.slots.top,'new');assert.ok(Object.values(x.board.slots).every(id=>closet.some(p=>p.id===id)));}
  assert.equal(JSON.stringify(closet),before);
 });
