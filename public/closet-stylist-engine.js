@@ -194,21 +194,29 @@ function styleOwnedCollection(closet,request={},library=null){
 // pieces; never invent garments, silently remove layers, or replace the pinned
 // newly scanned item. A swap is an in-memory preview until Save outfit.
 function stylistSwapChoices(result,slot,closet,anchorId=null){
- if(!['top','bottom','shoes','layer'].includes(slot)||
+ if(!['top','bottom','shoes','layer','layer2','layer3'].includes(slot)||
     !result?.board||!Array.isArray(closet))return [];
  const owned=[...new Map(closet.filter(x=>x&&typeof x.id==='string')
   .map(x=>[x.id,x])).values()];
  const board=cleanOutfitBoard(result.board,owned),current=board.slots[slot];
  if(!current||current===anchorId||anchorId&&!Object.values(board.slots).includes(anchorId))return [];
+ // Never offer a swap when the rendered selection no longer corresponds
+ // to a valid, complete set of this closet's owned garments.
+ if(Object.keys(board.slots).length!==Object.keys(result.board.slots).length||
+   Object.entries(result.board.slots).some(([key,id])=>board.slots[key]!==id))return [];
  const allowed=outfitSlots.find(s=>s.id===slot);
  if(!allowed)return [];
  const currentPiece=owned.find(x=>x.id===current);
  if(!currentPiece)return [];
+ if(['layer','layer2','layer3'].includes(slot)&&stylistLayerSlot(currentPiece)!==slot)return [];
  const occupied=new Set(Object.values(board.slots));
  const context=result.context||{request:'Casual',occasion:'Casual',audience:'All',season:'Fall'};
  const alternatives=[];
  for(const item of owned){
   if(occupied.has(item.id)||item.category==='Uncategorized'||!slotAllows(allowed,item))continue;
+  // A different jacket must remain a jacket. Never replace a coat with
+  // a cardigan, use a jacket as the sweater layer, or silently shift slots.
+  if(['layer','layer2','layer3'].includes(slot)&&stylistLayerSlot(item)!==slot)continue;
   // Dresses and separates are different outfit structures. A single-piece
   // button never silently changes that structure or creates unlisted gaps.
   if(slot==='top'&&item.category!==currentPiece.category)continue;
