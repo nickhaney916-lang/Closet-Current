@@ -41,9 +41,13 @@ test('jacket button never substitutes raincoat, cardigan, blazer in the coat slo
  const c=setup(),owned=[...main(),p('j1','Outerwear','Jacket'),p('j2','Outerwear','Blazer'),
  p('coat','Outerwear','Coat'),p('rain','Outerwear','Raincoat'),p('cardigan','Outerwear','Cardigan'),
  p('bad','Uncategorized','Unknown')];
- const jacket=c.styleOwnedCollection(owned,{anchorItemId:'top'})[0];
- assert.ok(jacket.board.slots.layer2);
- assert.deepEqual(c.stylistSwapChoices(jacket,'layer2',owned,'top').map(x=>x.id),['j2']);
+ const jacket=c.styleOwnedCollection(owned,{anchorItemId:'top'})
+  .find(x=>x.board.slots.layer2);
+ assert.ok(jacket,'Find the jacket outfit, rather than assuming it ranks ahead of the cardigan');
+ const jacketChoices=c.stylistSwapChoices(jacket,'layer2',owned,'top');
+ assert.equal(jacketChoices.length,1);
+ assert.ok(['j1','j2'].includes(jacketChoices[0].id));
+ assert.notEqual(jacketChoices[0].id,jacket.board.slots.layer2);
  const coat=c.styleOwnedCollection(owned,{anchorItemId:'coat',season:'Winter'})[0];
  assert.deepEqual(Array.from(c.stylistSwapChoices(coat,'layer3',owned,'coat')),[],
   'a pinned coat must not be replaced');
