@@ -1,0 +1,97 @@
+name: Dual-review deletion recovery handoff full regression and disposable security
+on:
+  push:
+    branches: [security/dual-review-recovery-handoff-20261022]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  local-two-account-security:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verified customer-only layer fix and complete regression suite
+        run: |
+
+
+
+
+
+
+
+
+
+
+          node scripts/check-dual-review-handoff-scope.mjs
+          node scripts/build.mjs
+          node --test tests/staging-asset-seal.test.mjs tests/staging-artifact-integrity.test.mjs tests/restricted-staging-integration.test.mjs
+          node --test tests/private-pilot-kit.test.mjs tests/staging-asset-seal.test.mjs tests/staging-artifact-integrity.test.mjs tests/restricted-staging-integration.test.mjs
+          node --test tests/staging-anonymous-access.test.mjs tests/staging-anonymous-full-bundle.test.mjs tests/staging-root-preview-access-coverage.test.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.121.0
+      - name: Discover CLI flags and initialize an unrelated empty local stack
+        shell: bash
+        run: |
+          set -euo pipefail
+          supabase --help
+          supabase init --help
+          supabase start --help
+          supabase status --help
+          supabase stop --help
+          mkdir -p "$RUNNER_TEMP/closet-disposable-stack"
+          supabase init --workdir "$RUNNER_TEMP/closet-disposable-stack"
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          p=Path(os.environ['RUNNER_TEMP'])/'closet-disposable-stack/supabase/config.toml'
+          s=p.read_text()
+          # No SMTP delivery; only synthetic local Auth signup and password login.
+          s=s.replace('enable_confirmations = true','enable_confirmations = false')
+          p.write_text(s)
+          PY
+          supabase start --workdir "$RUNNER_TEMP/closet-disposable-stack" --exclude studio,imgproxy,realtime,edge-runtime,logflare,vector,supavisor > "$RUNNER_TEMP/closet-local-start.log" 2>&1
+          supabase status --workdir "$RUNNER_TEMP/closet-disposable-stack" -o json > "$RUNNER_TEMP/closet-local-status.json"
+      - name: Real local Auth REST Storage two-account and migration recovery
+        shell: bash
+        env:
+          CLOSET_DISPOSABLE_SUPABASE: LOCAL_DISPOSABLE_ONLY
+        run: |
+          set -euo pipefail
+          command -v psql || (sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client)
+          node scripts/test-disposable-supabase-security.mjs "$RUNNER_TEMP/closet-local-status.json"
+      - name: Destroy disposable stack and local-only credential files
+        if: always()
+        shell: bash
+        run: |
+          if command -v supabase >/dev/null 2>&1 && test -f "$RUNNER_TEMP/closet-disposable-stack/supabase/config.toml"; then
+            supabase stop --workdir "$RUNNER_TEMP/closet-disposable-stack" --no-backup
+          fi
+          rm -f "$RUNNER_TEMP/closet-local-status.json" "$RUNNER_TEMP/closet-local-start.log"
+          echo 'No hosted project linked; no deployment; disposable runner data destroyed.'
+  static-feature-and-preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Complete account recovery handoff unit and source checks
+        run: |
+          node scripts/check-dual-review-handoff-scope.mjs
+          node --test tests/account-deletion-recovery-handoff.test.mjs tests/account-deletion-recovery-assessor.test.mjs
+          node scripts/build.mjs
+          node --test tests/staging-anonymous-access.test.mjs tests/staging-root-preview-access-coverage.test.mjs
+          echo 'No mobile product files changed. Prior browser emulation remains inherited evidence, not physical phone validation.'
