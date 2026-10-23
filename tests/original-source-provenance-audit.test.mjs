@@ -94,6 +94,19 @@ test('optional stored hash must match original bytes even if visual crop unchang
  const d=doc();d.items[0].cloudSourceSha256='0'.repeat(64);
  await assert.rejects(auditRetainedPhotoProvenance(d,ctx(),webcrypto),/Stale/);
 });
+test('missing full outfit original or missing verified cloud/session owner is never replaced by a crop',async()=>{
+ const d=doc();d.items[0]={...shirt(),outfitSourceId:'shared',originalPhoto:{image:jpeg(50).data}};
+ const full=await auditRetainedPhotoProvenance(d,ctx(),webcrypto);
+ assert.equal(full.garments.get('shirt').sourceKind,'reencoded-outfit-full-frame');
+ delete d.items[0].originalPhoto;
+ await assert.rejects(auditRetainedPhotoProvenance(d,ctx(),webcrypto),/Shared outfit source missing/);
+ d.items[0].originalPhoto={};
+ await assert.rejects(auditRetainedPhotoProvenance(d,ctx(),webcrypto),/Missing retained/);
+ const plain=doc();
+ await assert.rejects(auditRetainedPhotoProvenance(plain,{authenticatedUserId:ownerA,indexedDbName:'closet-current-user-'+ownerA},webcrypto),/owner|session/i);
+ await assert.rejects(auditRetainedPhotoProvenance(plain,{...ctx(),cloudOwnerId:undefined},webcrypto),/cloud backup owner/);
+});
+
 test('cloud object SHA-256 proves one stored JPEG payload only, not native-file source',async()=>{
  const raw=jpeg(97).bytes,sha=createHash('sha256').update(raw).digest('hex'),path=ownerA+'/'+sha+'.jpg';
  const result=await verifyStoredCloudJPEG(path,raw,ctx(),webcrypto);
