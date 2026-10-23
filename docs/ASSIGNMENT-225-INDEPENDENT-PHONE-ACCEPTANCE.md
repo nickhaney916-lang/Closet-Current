@@ -1,11 +1,11 @@
 # Assignment #225 — independent protected physical-phone pilot acceptance
 
-**Status: BLOCKED for hosting/distribution and public release.** This branch contains isolated test infrastructure, evidence, and one minimal Auth safety fix. It is not a staging build approval.
+**Status: BLOCKED for hosting/distribution and public release.** This branch contains offline acceptance tests and documentation only. It is not a staging build approval.
 
 ## Immutable ancestry and non-overlap
 
-- This branch starts at **draft PR #225** head b185e6901b0fb4b8c8aecfa3a0b1cacff2a43af3; #225 owns its offline sealed-package repair and protected-pilot handoff. This branch does not modify its package script, outfit/recognition source or checked licensed photo inputs. It contains one separate draft-only public/auth.js cleanup.
-- #225 is stacked on #222, which is stacked on **draft PR #220** source 0f62e253c1fd0024a939cd401710dcd3784a9e77. Our workflow vetoes all customer public/backend drift relative to #220 except the specifically reviewed public/auth.js recovery-token cleanup; all locked recognition/outfit inputs are unchanged.
+- This branch starts at **draft PR #225** head b185e6901b0fb4b8c8aecfa3a0b1cacff2a43af3; #225 owns its offline sealed-package repair and protected-pilot handoff. This branch does not modify its package script, app/backend source, or checked licensed-photo inputs.
+- #225 is stacked on #222, which is stacked on **draft PR #220** source 0f62e253c1fd0024a939cd401710dcd3784a9e77. Our workflow vetoes ALL public/backend drift relative to #220; locked recognition/outfit inputs are unchanged.
 - **Draft PR #224**, from issue #223, is a *parallel recognition research branch*. It is not silently incorporated into this physical-phone pilot candidate. Its active recognition/subtype model and any changed classifier must be independently evaluated and selected by the main integration conversation. Workflow #39988629487 is a recognition-only exact-head test, not evidence for the separate pilot candidate.
 - PR #225's artifact integrity report is the source for the historical seal defect; previous "success" on a synthetic ZIP alone does not constitute a deployable package.
 
@@ -23,11 +23,13 @@ The assignment225 no-deploy workflow produces exact-head provenance and explicit
 | Account boundaries | Synthetic Auth/restore, local proxy request interception and protected output browser tests | Cannot replace two actual staging accounts/RLS private Storage tests |
 | Device interaction | Chromium Android and WebKit iPhone-size touch simulation, device-check UI, installed PWA Chromium | Does not test either physical camera, Safari/PWA memory, or native permissions |
 
-**Do not merge the recognition PR into this branch merely to make the pilot appear current.** All #220 app source other than the narrowly scoped public/auth.js mismatch recovery fix is byte-for-byte frozen; other drift blocks the pipeline.
+**Do not merge the recognition PR into this branch merely to make the pilot appear current.** All #220 app/backend source is byte-for-byte frozen; any drift blocks the sealed packaging pipeline.
 
-## Verified account-recovery defect and isolated safety fix
+## Independently reproduced Auth recovery blocker — separate draft #229
 
-During the independent synthetic mobile Auth test, a verified recovery session received an account identity mismatch on its password-change response. Production code correctly kept the private app locked but retained the pending recovery access/refresh tokens in browser localStorage (red: the locked-account test failed while private access stayed denied). This branch changes only public/auth.js to call leaveRecovery() BEFORE reporting "Session account changed", clearing pending tokens and reverting to ordinary sign-in without exposing another closet. The existing synthetic Auth regression verifies localStorage is empty and no wardrobe unlock occurs. No live account, session, customer photo or hosted policy was touched. Run exact-head CI and do not merge/deploy without main-conversation review.
+The synthetic account-isolation browser gate reproduced a pending recovery-session mismatch: the wardrobe stayed locked, but the original app left temporary recovery access/refresh tokens in localStorage. This acceptance gate remains **FAILED** on the exactly pinned protected candidate, intentionally blocking pilot approval.
+
+The minimal cleanup fix and focused browser regression live **only** in [draft PR #229](https://github.com/nickhaney916-lang/Closet-Current/pull/229), not this immutable pilot branch. Its patch calls leaveRecovery() before showing "Session account changed" to remove pending tokens and retain the locked state. Its independent CI must pass. The main Closet Current development thread must decide if/when to integrate, rebuild and independently seal a future candidate. Never weaken the source-integrity veto or claim that the current protected package contains the fix.
 
 ## Read-only infrastructure findings and hard stop
 
