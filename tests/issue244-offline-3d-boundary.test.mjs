@@ -170,3 +170,28 @@ test('never put a source image, account secret, customer value or external URL i
  assert.ok(!rendererJSON.includes('data:'));assert.ok(!rendererJSON.includes('ownerId'));assert.ok(!rendererJSON.includes('http'));
  assert.ok(!rendererJSON.includes('reference'));assert.equal(view.renderer.solidColorOnly,true);
 });
+
+test('partial owned boards stay safely 2D rather than showing phantom default-colored trousers/shoes',async()=>{
+ const {qa}=setup();
+ for(const slots of [{top:'top-1',shoes:'shoes-1'},{bottom:'bottom-1',shoes:'shoes-1'},{top:'dress-1'}]){
+  const view=await qa.present(board(slots));
+  assert.equal(view.mode,'2d',JSON.stringify(view));
+  assert.deepEqual(view.board.slots,slots);noLeak(view);
+ }
+});
+test('actual 2D long-sleeve top layer is not silently omitted by PR231 narrow 3D layer contract',async()=>{
+ const {store,qa,a}=setup();
+ const longer=makeSyntheticPiece('sweater','Tops','Sweater');
+ store.update('account-A',[...a,longer]);
+ const slots={...basic().slots,layer:'sweater'};
+ const view=await qa.present(board(slots));
+ assert.equal(view.mode,'2d');assert.deepEqual(view.board.slots,slots);noLeak(view);
+});
+test('two garments using the same full frame must carry distinct crop identities or downgrade safely',async()=>{
+ const {store,qa,a}=setup();
+ const conflicted=structuredClone(a);
+ conflicted[1].cropIdentity=conflicted[0].cropIdentity;
+ store.update('account-A',conflicted);
+ const view=await qa.present(basic());
+ assert.equal(view.mode,'2d');noLeak(view);
+});
