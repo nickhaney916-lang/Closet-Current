@@ -139,6 +139,9 @@
   const departingToken=session?.access_token;
   sessionGeneration++;session=null;window.closetAuth.user=null;
   localStorage.removeItem(STORE);
+  // Hide private photos and prevent late cloud restores before awaiting provider logout.
+  $('appShell').hidden=true;$('authGate').hidden=false;
+  window.closetCloud?.invalidateSession?.();
   try{if(departingToken)await request('logout',{},departingToken);}catch{}
   // Reload closes the current account's IndexedDB connection and clears in-memory images.
   location.reload();
