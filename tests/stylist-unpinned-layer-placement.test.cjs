@@ -1,9 +1,10 @@
 'use strict';
+const syntheticPhoto=require('./helpers/issue204-photo.cjs');
 const test=require('node:test'),assert=require('node:assert/strict'),vm=require('node:vm'),fs=require('node:fs');
 function setup(){const c={URL,encodeURIComponent,Date};vm.createContext(c);
  for(const f of ['outfit-matcher.js','trend-library.js','outfit-board-engine.js','closet-stylist-engine.js'])
   vm.runInContext(fs.readFileSync('public/'+f,'utf8'),c);return c;}
-const p=(id,category,itemType,opts={})=>({id,category,itemType,name:id,image:'photo-'+id,
+const p=(id,category,itemType,opts={})=>({id,category,itemType,name:id,image:syntheticPhoto(id),
  color:'Black',pattern:'Solid',sleeveLength:'Unknown',seasons:[],...opts});
 const separates=()=>[p('shirt','Tops','T-shirt'),p('pants','Bottoms','Jeans'),p('shoes','Shoes','Sneakers')];
 test('without Style this, owned jackets and blazers belong to jacket slot, never sweater layer',()=>{

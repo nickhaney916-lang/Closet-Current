@@ -118,7 +118,7 @@ export function runBenchmark(){
    const f=wardrobe();change(f);assert.throws(()=>validateSynthetic(f));
   }
  });
- // Required acceptance checks intentionally expose current product gaps.
+ // Preserve the independent original-change and no-photo rejection assertions.
  check('original-only-change-invalidates-prepared-source',()=>{
   const g=sourceGuard(fixture.items),sources=g.stylistSelectedSources(rich[0].board);
   g.items[0].originalPhoto.image=wardrobe('synthetic-b').items[0].originalPhoto.image;
@@ -126,6 +126,9 @@ export function runBenchmark(){
  });
  check('raw-engine-refuses-blank-photo-record',()=>{
   const f=wardrobe();f.items[0].image='';
+  // #204 contract: valid local originals are legitimate fallbacks. Keep the
+  // original zero-recommendation oracle, but make this a NO-PHOTO fixture.
+  delete f.items[0].originalPhoto;delete f.items[0].recognitionPhoto;
   assert.equal(style(f,'new-top').length,0,'raw scorer assumes validated records and can select a blank-photo anchor');
  });
  return {format:'closet-current-issue201-offline-benchmark',version:1,applicationBase:BASE,
@@ -134,7 +137,7 @@ export function runBenchmark(){
   productAcceptance:checks.every(x=>x.status==='PASS'),physicalPhones:0,recognitionAccuracyMeasured:false,
   realisticRenderingEvaluated:false,paidInferenceActivated:false,hostedIsolationVerified:false,
   notes:['Engine ownership is supplied by caller-scoped closet; UI/database tenant checks are separately tested.',
-   'Expected failures are reported as FAIL, never counted as product passes. Node QA tests pin these known baseline gaps.']};
+   'Valid local original-photo fallbacks are tested separately; the blank rejection fixture has no usable source.']};
 }
 if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){
  const report=runBenchmark();const output=process.argv[2];

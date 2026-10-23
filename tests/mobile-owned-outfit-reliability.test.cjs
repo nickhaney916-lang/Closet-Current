@@ -1,9 +1,10 @@
 'use strict';
+const syntheticPhoto=require('./helpers/issue204-photo.cjs');
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
 const geometry=require('../public/garment-fit-geometry.js');
 const {create,MAX_BYTES}=require('../public/figure-preview-cache.js');
 function engine(){const c={URL,encodeURIComponent,Date};vm.createContext(c);for(const f of ['outfit-matcher.js','trend-library.js','outfit-board-engine.js','closet-stylist-engine.js'])vm.runInContext(fs.readFileSync('public/'+f,'utf8'),c);return c;}
-const piece=(id,category,itemType)=>({id,category,itemType,color:'Blue',pattern:'Solid',seasons:[],image:'photo-'+id});
+const piece=(id,category,itemType)=>({id,category,itemType,color:'Blue',pattern:'Solid',seasons:[],image:syntheticPhoto(id)});
 const base=[piece('new','Tops','T-shirt'),piece('pants','Bottoms','Jeans'),piece('shoes','Shoes','Sneakers')];
 test('three owned layers produce three unique complete options around one newly photographed shirt',()=>{
  const c=engine(),closet=[...base,...['a','b','c'].map(id=>piece(id,'Outerwear','Jacket'))],before=JSON.stringify(closet);

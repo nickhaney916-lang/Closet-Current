@@ -1,3 +1,9 @@
+> Updated by issue #204: the current product benchmark is 22 PASS / 0 FAIL.
+> Use `docs/ISSUE-204-OUTFIT-SOURCE-GUARDS.md` and its workflow/scope check for
+> current input/fallback semantics and exact CI evidence. The original-photo
+> oracle is unchanged; the no-photo fixture excludes valid fallback sources.
+> The #201 characterization report below is historical, before the two fixes.
+
 # Issue #201 — independent offline outfit benchmark
 
 This QA-only branch starts from PR #184 exact head

@@ -53,6 +53,7 @@ try{
    assert.ok(options.every(x=>x.board.slots.top==='new-top'&&x.board.anchorItemId==='new-top'&&x.missing.length===0));
    const before=options[0].board;
    await page.locator('#styledCollectionResults .styled-outfit').first().getByRole('button',{name:'Swap shoes in option 1'}).click();
+   await page.waitForFunction(previous=>styledCollectionResults[0].board.slots.shoes!==previous,before.slots.shoes);
    const swapped=await page.evaluate(()=>JSON.parse(JSON.stringify(styledCollectionResults[0].board)));
    assert.equal(Object.keys(before.slots).filter(k=>before.slots[k]!==swapped.slots[k]).length,1);assert.equal(swapped.anchorItemId,'new-top');
    assert.equal(hash(await page.evaluate(()=>JSON.stringify([...items].sort((a,b)=>a.id.localeCompare(b.id))))),hash(originalA),'swapping may not mutate source records');
@@ -99,8 +100,48 @@ try{
    await page.evaluate(()=>localStorage.setItem('issue201-owner','synthetic-a'));await page.reload();await ready();
    assert.equal(await page.evaluate(()=>savedOutfitBoards.length),restored.saved);
    assert.equal(await page.evaluate(id=>items.find(x=>x.id===id)?.originalPhoto.image,restored.item.id),expected.originalPhoto.image);
+   // #204: original-only replacement must invalidate an already rendered card.
+   await style();const savedCount=await page.evaluate(()=>savedOutfitBoards.length);
+   await page.evaluate(async image=>{const item=items.find(x=>x.id==='new-top');item.originalPhoto.image=image;await writeAll([item]);},photo('original-only-replacement'));
+   await page.locator('#styledCollectionResults .styled-outfit').first().getByRole('button',{name:'Save outfit'}).click();
+   await page.waitForFunction(()=>styledCollectionResults[0].saveMessage?.includes('changed'));
+   assert.equal(await page.evaluate(()=>savedOutfitBoards.length),savedCount);
+   await style();await page.evaluate(()=>{items.find(x=>x.id==='new-top').originalPhoto.sha256='changed-hash-only';});
+   await page.locator('#styledCollectionResults .styled-outfit').first().getByRole('button',{name:'Preview on model'}).click();
+   await page.getByText('This outfit changed. Choose the current option again.').first().waitFor();
+   assert.equal(await page.locator('#builder').isVisible(),false);
+   // Queue a real board save behind a synthetic delayed write, then replace source.
+   await style();await page.evaluate(()=>{writes=new Promise(resolve=>{window.issue204Release=resolve;});});
+   await page.locator('#styledCollectionResults .styled-outfit').first().getByRole('button',{name:'Save outfit'}).click();
+   await page.waitForFunction(()=>styledCollectionResults[0].savePending===true);
+   await page.evaluate(()=>{items.find(x=>x.id==='new-top').outfitSourceId='queued-replacement-source';window.issue204Release();});
+   await page.waitForFunction(()=>styledCollectionResults[0].savePending===false);
+   assert.equal(await page.evaluate(()=>savedOutfitBoards.length),savedCount);
+   // Valid original-only fallback remains visible and never overwrites stored image.
+   await page.evaluate(async()=>{const item=items.find(x=>x.id==='new-top');item.image='';delete item.recognitionPhoto;await writeAll([item]);render();});
+   await style();assert.ok((await page.locator('#styledCollectionResults').innerText()).includes('original photo fallback'));
+   assert.equal(await page.evaluate(()=>items.find(x=>x.id==='new-top').image),'');
+   const fallback=await page.evaluate(()=>items.find(x=>x.id==='new-top').originalPhoto.image);
+   assert.equal(await page.locator('#stylistAnchorPhoto').getAttribute('src'),fallback);
+   // No original or crop: metadata is retained, but no outfits may be fabricated.
+   await page.evaluate(async()=>{const item=items.find(x=>x.id==='new-top');delete item.originalPhoto;await writeAll([item]);render();switchView('closet');});
+   await page.locator('#closetAllPieces').click();await page.locator('#closetGrid article[data-item-id="new-top"]').getByRole('button',{name:'Style this'}).click();
+   assert.equal(await page.evaluate(()=>styledCollectionResults.length),0);
+   assert.match(await page.locator('#stylistStatus').innerText(),/readable local photo/);
+   assert.equal(await page.evaluate(()=>items.find(x=>x.id==='new-top').color),'Red');
+   // Plausible PNG headers without IDAT pixels: decoders must reject it.
+   // Truncated JPEGs are unsuitable negatives because Chromium can repair them.
+   const png=Buffer.alloc(45);Buffer.from([137,80,78,71,13,10,26,10]).copy(png);
+   png.writeUInt32BE(13,8);png.write('IHDR',12);png.writeUInt32BE(2,16);png.writeUInt32BE(2,20);png[24]=8;png[25]=2;png.write('IEND',37);
+   const corrupt='data:image/png;base64,'+png.toString('base64');
+   await page.evaluate(async image=>{const item=items.find(x=>x.id==='new-top');item.image=image;await writeAll([item]);render();},corrupt);
+   await page.locator('#closetGrid article[data-item-id="new-top"]').getByRole('button',{name:'Style this'}).click();
+   await page.waitForFunction(()=>!$('createCollectionOutfits').disabled);
+   assert.equal(await page.evaluate(()=>styledCollectionResults.length),0);
+   assert.match(await page.locator('#stylistStatus').innerText(),/readable local photo/);
+
    assert.equal(forbiddenWrites,0);assert.deepEqual(pageErrors,[]);
-   results.push({engine:name,threeDistinctCoreOutfits:true,pinAndOnePieceSwap:true,sourceHash:hash(expected.originalPhoto.image),saveReload:true,realIndexedDB:true,actualFileConflictRestore:true,sameIdAccountIsolation:true,externalRequestsAllowed:0,externalGETsBlocked:blockedExternal,forbiddenWrites,physicalPhone:false,realisticRenderingEvaluated:false});
+   results.push({engine:name,threeDistinctCoreOutfits:true,pinAndOnePieceSwap:true,sourceHash:hash(expected.originalPhoto.image),saveReload:true,realIndexedDB:true,actualFileConflictRestore:true,sameIdAccountIsolation:true,originalReplacementDenied:true,hashChangePreviewDenied:true,queuedSourceChangeDenied:true,originalOnlyFallback:true,noPhotoKeptButNotRecommended:true,corruptPixelDecodeDenied:true,externalRequestsAllowed:0,externalGETsBlocked:blockedExternal,forbiddenWrites,physicalPhone:false,realisticRenderingEvaluated:false});
    await context.close();
   }finally{await browser.close();}
  }

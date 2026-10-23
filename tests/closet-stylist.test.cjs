@@ -1,6 +1,7 @@
+const syntheticPhoto=require('./helpers/issue204-photo.cjs');
 const test=require('node:test'),assert=require('node:assert/strict'),vm=require('node:vm'),fs=require('node:fs');
 function setup(){const c={URL,encodeURIComponent,Date};vm.createContext(c);for(const file of ['outfit-matcher.js','trend-library.js','outfit-board-engine.js','closet-stylist-engine.js'])vm.runInContext(fs.readFileSync('public/'+file,'utf8'),c);return c;}
-const piece=(id,category,itemType,color='Black',extra={})=>({id,category,itemType,color,pattern:'Solid',sleeveLength:'Unknown',seasons:[],name:itemType,image:'photo-'+id,...extra});
+const piece=(id,category,itemType,color='Black',extra={})=>({id,category,itemType,color,pattern:'Solid',sleeveLength:'Unknown',seasons:[],name:itemType,image:syntheticPhoto(id),...extra});
 const closet=[piece('polo','Tops','Polo','White'),piece('tee','Tops','T-shirt','Blue'),piece('jeans','Bottoms','Jeans','Blue'),piece('trousers','Bottoms','Trousers'),piece('loafers','Shoes','Loafers','Brown'),piece('sneakers','Shoes','Sneakers','White'),piece('layer','Outerwear','Blazer'),piece('bag','Accessories','Bag','Brown')];
 test('repeated swaps visit every eligible owned shoe before repeating and preserve the pinned top',()=>{
  const c=setup(),owned=[piece('top','Tops','T-shirt'),piece('bottom','Bottoms','Jeans'),
@@ -91,7 +92,7 @@ test('one-tap Style this opens the existing stylist and submits the chosen owned
  assert.ok(source.includes('function styleNewClosetItem('));
  const elements=new Map(),pieces=[piece('fresh-shirt','Tops','T-shirt'),piece('dress','Dresses','Casual dress'),piece('unknown','Uncategorized','Unknown')];
  let submitted=0,rendered=0,navigated='';
- const c={items:pieces,boardWriteContext:()=>({current:()=>true}),renderStyledCollection(){rendered++;},switchView(v){navigated=v;},
+ const c={window:{closetAuth:{user:{id:'synthetic-ui'}}},stylistPhotoForItem:setup().stylistPhotoForItem,items:pieces,boardWriteContext:()=>({current:()=>true}),renderStyledCollection(){rendered++;},switchView(v){navigated=v;},
   $:id=>{if(!elements.has(id))elements.set(id,{textContent:'',requestSubmit(){submitted++;}});return elements.get(id);}};
  vm.createContext(c);vm.runInContext(source,c);
  assert.equal(c.styleNewClosetItem('fresh-shirt'),true);

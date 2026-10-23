@@ -1,3 +1,27 @@
+# Issue #204 — original source identity and valid photo fixes (October 22, 2026)
+
+Isolated `fix/issue204-outfit-source-guards` from QA PR #203 exact
+`ad16d788e386e1e52d02aae3b94aa02791cc4cda`; original #184/#203 and staging,
+Clear, deletion/security/mobile branches unchanged. Prepared recommendations now
+bind immutable original/hash/source/recognition/crop metadata plus owner/DB handle
+across decoding, previews, queued saves and swaps. Embedded raster input is
+screened, browser decoded before UI use, with non-destructive original/crop
+fallbacks. Missing/remote/invalid photos keep metadata but cannot fabricate looks.
+
+Independent product benchmark **22 PASS / 0 FAIL** (prior exact #203: 20/2).
+The oracle and source-replacement gate are unchanged. The no-photo fixture now
+removes all image sources, retaining its same rejection assertion; #204 requires
+valid original-only fallbacks, which have separate positive/negative tests.
+Local full suite **1,688 PASS / 0 FAIL / 3 SKIP**. Exact final CI/browser results
+must be checked in issue #204 / its draft PR. See
+`ISSUE-204-OUTFIT-SOURCE-GUARDS.md` for the full contract and acceptance matrix.
+No source RGB rewritten, destructive migration, customer photo, settings change,
+paid inference, production/Drive Duel edits, merge or deployment. Main conversation
+retains integration/release decisions; physical/hosted/realistic fidelity gates
+remain unresolved.
+
+---
+
 # Issue #201 — independent synthetic outfit benchmark (October 22, 2026)
 
 QA branch `qa/issue201-owned-outfit-benchmark` starts from PR #184 exact head

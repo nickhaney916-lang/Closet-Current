@@ -88,18 +88,16 @@
     },
     {
       "name": "original-only-change-invalidates-prepared-source",
-      "status": "FAIL",
-      "reason": "original-only change is not captured by current source guard"
+      "status": "PASS"
     },
     {
       "name": "raw-engine-refuses-blank-photo-record",
-      "status": "FAIL",
-      "reason": "raw scorer assumes validated records and can select a blank-photo anchor"
+      "status": "PASS"
     }
   ],
-  "passed": 20,
-  "failed": 2,
-  "productAcceptance": false,
+  "passed": 22,
+  "failed": 0,
+  "productAcceptance": true,
   "physicalPhones": 0,
   "recognitionAccuracyMeasured": false,
   "realisticRenderingEvaluated": false,
@@ -107,6 +105,6 @@
   "hostedIsolationVerified": false,
   "notes": [
     "Engine ownership is supplied by caller-scoped closet; UI/database tenant checks are separately tested.",
-    "Expected failures are reported as FAIL, never counted as product passes. Node QA tests pin these known baseline gaps."
+    "Valid local original-photo fallbacks are tested separately; the blank rejection fixture has no usable source."
   ]
 }
