@@ -128,7 +128,10 @@ try {
    assert.match(restored.image,/^data:image\/jpeg;base64,/);
    assert.equal(restored.db,'closet-current-user-'+ids.a);
    assert.deepEqual(dialogs,[],'Unexpected browser unsaved changes warning');
-   assert.deepEqual(outside,[],'Live/unsupported network request attempted');
+   // Existing stylesheet requests an optional Google Font; block it as well.
+   // No external request ever leaves this synthetic browser harness.
+   const unexpected=outside.filter(url=>!/^https:\/\/fonts\.(?:googleapis|gstatic)\.com\//.test(url));
+   assert.deepEqual(unexpected,[],'Unexpected production or external browser requests');
    assert.deepEqual(pageErrors,[],'Application threw in browser');
    results.push({engine:engineName,syntheticOnly:true,
     blockedBusyLogout:true,blockedFailedDraftSave:true,
