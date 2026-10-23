@@ -1,0 +1,115 @@
+# Isolated, staging-only download package. Never deploy or change Cloudflare/Supabase.
+name: Verified Outfit Builder staging download package
+on:
+  push:
+    branches: [release/staging-outfit-verified-20261022]
+permissions:
+  contents: read
+jobs:
+  sealed-staging-download:
+    runs-on: ubuntu-latest
+    timeout-minutes: 23
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Prove exact CI-green integrated PR209 application source
+        shell: bash
+        run: |
+          set -euo pipefail
+          baseline=972a50c8065ac4e5478c1e7fefdf740b2a654001
+          test "$(git merge-base "$baseline" HEAD)" = "$baseline"
+          test "$(git diff --name-only "$baseline" HEAD)" = ".github/workflows/staging-outfit-verified-package.yml"
+          git diff --exit-code "$baseline" HEAD -- public scripts supabase tests benchmark package.json
+          node --version
+      - name: Re-run full Node regression suite on the exact package source
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Require original source and outfit independent benchmark PASS
+        run: |
+          node scripts/issue201-outfit-benchmark.mjs artifacts/staging-outfit-product-check.json
+          cmp benchmark/issue201-results.json artifacts/staging-outfit-product-check.json
+      - name: Verify safe draft-clear implementation is actually included
+        run: |
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const app=readFileSync('public/app.js','utf8');
+          assert.ok(app.includes('async function clearUnfinishedPhotosSafely()'));
+          assert.ok(app.includes("$('discard').onclick=clearUnfinishedPhotosSafely;"));
+          assert.ok(!app.includes("batch=[];persistDraft();session=0;render();"));
+          const stylist=readFileSync('public/closet-stylist.js','utf8');
+          const engine=readFileSync('public/closet-stylist-engine.js','utf8');
+          assert.ok(stylist.includes('stylistSelectedSources'));
+          assert.ok(engine.includes('styleOwnedCollection'));
+          const endpoint=readFileSync('supabase/functions/account-delete/index.ts','utf8');
+          assert.ok(endpoint.includes('status:503'));
+          assert.ok(endpoint.includes('deletionCompleted:false'));
+          console.log('SAFE_CLEAR_SOURCE_PRESENT_AND_OLD_HANDLER_ABSENT');
+          JS
+      - name: Read only the already-reviewed PUBLIC staging configuration from PR181
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'JS'
+          import {execFileSync} from 'node:child_process';
+          import {appendFileSync} from 'node:fs';
+          const original=execFileSync('git',['show','a42894cd2c7bf3ebc0019f69ba7112888e8fb04c:.github/workflows/staging-protected-preview-bundle.yml'],{encoding:'utf8'});
+          const expectedOrigin='https://pilot-access-check.closet-current-staging.pages.dev/';
+          const expectedBackend='https://fbnplztkbsteuzrmbgib.supabase.co';
+          const names=['CLOSET_STAGING_SUPABASE_URL','CLOSET_STAGING_APP_ORIGIN','CLOSET_STAGING_SUPABASE_PUBLISHABLE_KEY'];
+          for(const name of names){
+            const value=original.match(new RegExp('^      '+name+': ([^\r\n]+)$','m'))?.[1];
+            if(!value||/[\r\n]/.test(value))throw Error('Missing original reviewed staging public config: '+name);
+            if(name==='CLOSET_STAGING_SUPABASE_URL'&&value!==expectedBackend)throw Error('Staging backend changed');
+            if(name==='CLOSET_STAGING_APP_ORIGIN'&&value!==expectedOrigin)throw Error('Protected preview origin changed');
+            if(name==='CLOSET_STAGING_SUPABASE_PUBLISHABLE_KEY'&&!/^sb_publishable_[A-Za-z0-9_-]{16,}$/.test(value))throw Error('Not a public publishable key');
+            // Do not print the key. These values were already in the original public PR181 workflow.
+            appendFileSync(process.env.GITHUB_ENV,name+'='+value+'\n');
+          }
+          JS
+      - name: Build one sealed offline connected staging download
+        run: node scripts/build-connected-staging-candidate.mjs
+      - name: Recheck sealed hashes, staging-only backend and required support routes
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/verify-restricted-staging-bundle.mjs
+          node scripts/audit-staging-support-routes.mjs staging-dist
+          test -f staging-dist/pilot-data-notice.html
+          test -f staging-dist/saved-closet-audit.html
+          test -f staging-dist/phone-photo-check.html
+          test -f staging-dist/sw.js
+          test -f staging-dist/staging-asset-seal.json
+          test -f staging-dist/staging-preflight.json
+          node --input-type=module <<'JS'
+          import {readFileSync,readdirSync} from 'node:fs';
+          import assert from 'node:assert/strict';
+          const proof=JSON.parse(readFileSync('staging-dist/staging-preflight.json','utf8'));
+          const seal=JSON.parse(readFileSync('staging-dist/staging-asset-seal.json','utf8'));
+          assert.equal(proof.backendProjectRef,'fbnplztkbsteuzrmbgib');
+          assert.equal(proof.stagingOrigin,'https://pilot-access-check.closet-current-staging.pages.dev/');
+          assert.equal(proof.paidAIHardBlocked,true);
+          assert.equal(proof.productionReleaseApproved,false);
+          assert.equal(proof.restrictedStagingDeployed,false);
+          assert.ok(seal.files.length>=90);
+          const paths=new Set(seal.files.map(x=>x.path));
+          for(const file of ['index.html','auth.js','app.js','sw.js','pilot-data-notice.html','saved-closet-audit.html','phone-photo-check.html'])
+            assert.ok(paths.has(file),'Missing sealed release asset '+file);
+          console.log('STAGING_DOWNLOAD_READY_FOR_OWNER_REVIEW '+JSON.stringify({
+            source:'972a50c8065ac4e5478c1e7fefdf740b2a654001',
+            stagingProject:'fbnplztkbsteuzrmbgib',
+            sealedAssets:seal.files.length,
+            topLevelEntries:readdirSync('staging-dist').length,
+            protectedHostingDeployed:false,paidAI:false,productionReleaseApproved:false
+          }));
+          JS
+      - name: Upload staging files for OWNER REVIEW ONLY — never deploy
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: Closet-Current-PR209-Owned-Outfits-Staging-Review-Only
+          path: staging-dist/
+          retention-days: 7
+          if-no-files-found: error
