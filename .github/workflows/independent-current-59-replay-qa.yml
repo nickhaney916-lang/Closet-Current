@@ -1,0 +1,43 @@
+name: Independent 59-source current inference replay (strictly no model calls)
+on:
+  push:
+    branches: [qa/recognition-independent-current-rescore-20261022]
+permissions:
+  contents: read
+jobs:
+  source-locked-replay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Freeze scope and prevent app, manifest or model modifications
+        run: |
+          set -euo pipefail
+          base=d499d0583cf989e6af5d34a4992526895425e1f9
+          test "$(git merge-base "$base" HEAD)" = "$base"
+          git diff --name-only "$base" HEAD | while IFS= read -r path; do
+            case "$path" in
+              benchmark/ISSUE-211-FROZEN-CURRENT-59.json|scripts/independent-rescore-current-59.mjs|tests/independent-rescore-current-59.test.mjs|.github/workflows/independent-current-59-replay-qa.yml) ;;
+              *) echo "Out-of-scope change $path"; exit 1 ;;
+            esac
+          done
+          git diff --check
+          node --check scripts/independent-rescore-current-59.mjs
+      - name: Offline independent re-score and tampering tests
+        run: node --test tests/independent-rescore-current-59.test.mjs
+      - name: Generate JSON-only report and enforce recognition promotion veto
+        run: node scripts/independent-rescore-current-59.mjs
+      - name: Upload source-label and candidate prediction metrics only
+        uses: actions/upload-artifact@v4
+        with:
+          name: Recognition-59-Independent-Replay-Metadata-Only
+          path: artifacts/recognition-guard/independent-current-rescore.json
+          retention-days: 7
+      - name: No network model access, no customer images or production actions
+        run: echo 'REPLAY OF PRIOR WORK OUTPUTS ONLY; no inference or source photo access.'
