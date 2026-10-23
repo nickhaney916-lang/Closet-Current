@@ -1,0 +1,33 @@
+name: Token-free 3D humanoid prototype QA
+on:
+  push:
+    branches:
+      - research/token-free-avatar-spike-20261023
+  pull_request:
+    paths:
+      - public/humanoid-3d-prototype.mjs
+      - tests/humanoid-3d-prototype.test.mjs
+      - tests/humanoid-3d-preview.test.mjs
+      - public/humanoid-3d-preview.html
+      - public/humanoid-3d-outfit-adapter.mjs
+      - tests/humanoid-3d-outfit-adapter.test.mjs
+      - .github/workflows/token-free-humanoid-prototype-qa.yml
+permissions:
+  contents: read
+jobs:
+  offline-avatar-unit-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Run offline WebGL avatar tests
+        run: node --test tests/humanoid-3d-prototype.test.mjs tests/humanoid-3d-preview.test.mjs tests/humanoid-3d-outfit-adapter.test.mjs
+      - name: Confirm no remote AI API usage
+        run: |
+          if grep -nE 'fetch\(|XMLHttpRequest|https?://|openai|replicate|fal\.ai' public/humanoid-3d-prototype.mjs; then
+            echo "Unexpected external API reference in token-free prototype"
+            exit 1
+          fi
