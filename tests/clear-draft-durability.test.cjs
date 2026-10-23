@@ -133,5 +133,5 @@ test('persistDraft refuses to resurrect old photo metadata during explicit clear
  assert.equal(await ctx.probe(),false);
 });
 test('candidate refuses new photos during the explicit clear barrier',()=>{
- assert.match(source,/function candidate\(image,options=\{\}\)\{\s*if\(clearingDraft\)/);
+ assert.match(source,/function candidate\(image,options=\{\}\)\{\s*if\(typeof clearingDraft!=='undefined'&&clearingDraft\)/);
 });
