@@ -60,12 +60,20 @@ try{
  // Synthetic owned wardrobe provides matching options; neither the garments
  // nor the simulated segmentation worker demonstrate real-photo accuracy.
  const ownedIds=await page.evaluate(async()=>{
-  const svg='data:image/svg+xml,'+encodeURIComponent(
-   '<svg xmlns="http://www.w3.org/2000/svg" width="60" height="80"><rect width="60" height="80" fill="#596b77"/></svg>');
+  // Saved originals must be real raster image data; SVG is intentionally held
+  // by current source-integrity guards. Use deterministic synthetic canvas PNGs.
+  const makeImage=color=>{
+   const canvas=document.createElement('canvas');canvas.width=180;canvas.height=240;
+   const ctx=canvas.getContext('2d');
+   ctx.fillStyle='#e6e1d8';ctx.fillRect(0,0,180,240);
+   ctx.fillStyle=color;ctx.fillRect(30,24,120,186);
+   ctx.fillStyle='#485362';ctx.fillRect(65,40,8,155);
+   return canvas.toDataURL('image/png');
+  };
   const records=[
-   normalizeClothing({id:'already-owned-jeans',name:'My blue jeans',image:svg,
+   normalizeClothing({id:'already-owned-jeans',name:'My blue jeans',image:makeImage('#596b9e'),
     category:'Bottoms',itemType:'Jeans',color:'Blue',seasons:[]}),
-   normalizeClothing({id:'already-owned-shoes',name:'My white sneakers',image:svg,
+   normalizeClothing({id:'already-owned-shoes',name:'My white sneakers',image:makeImage('#f1f1eb'),
     category:'Shoes',itemType:'Sneakers',color:'White',seasons:[]})
   ];
   await writeAll(records);items.push(...records);render();

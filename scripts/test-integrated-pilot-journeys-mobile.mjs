@@ -35,8 +35,17 @@ try{
    await page.evaluate(()=>Promise.all([closetReady,outfitBoardReady]));
    const importCheck=await page.evaluate(async()=>{
     scheduleMemoryReview=()=>{};localReady=true;
-    const make=(id,category,itemType,color)=>normalizeClothing({id,category,itemType,color,name:id,seasons:[],pattern:'Solid',
-     image:'data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="100" height="150"><rect width="100" height="150" fill="'+color.toLowerCase()+'"/></svg>')});
+    // The guarded Outfit Builder accepts raster original photos, not SVG data
+    // URIs. Keep synthetic fixture-only colors, and preserve all assertions.
+    const make=(id,category,itemType,color)=>{
+     const swatch=document.createElement('canvas');swatch.width=180;swatch.height=240;
+     const ctx=swatch.getContext('2d');
+     ctx.fillStyle='#e7e2dc';ctx.fillRect(0,0,180,240);
+     ctx.fillStyle=color.toLowerCase();ctx.fillRect(30,24,120,186);
+     ctx.fillStyle='#4c4651';ctx.fillRect(70,35,10,165);
+     return normalizeClothing({id,category,itemType,color,name:id,seasons:[],pattern:'Solid',
+      image:swatch.toDataURL('image/png')});
+    };
     const owned=[make('owned-jeans','Bottoms','Jeans','Blue'),make('owned-shoes','Shoes','Sneakers','White')];
     await writeAll(owned);items.push(...owned);
     window.classifierInputs=[];checkPhoto=async image=>({blank:false,signature:[image.length,81,151],aspect:4/3});

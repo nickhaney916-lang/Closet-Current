@@ -1,0 +1,125 @@
+name: Assignment 225 independent device acceptance rehearsal - NO DEPLOY
+on:
+  push:
+    branches: [qa/assignment225-device-acceptance-20261023]
+permissions:
+  contents: read
+
+# This runs only local/offline test servers, emulated browsers, synthetic
+# identities and approved licensed fixture photos. It never deploys or changes
+# Cloudflare/Supabase settings. A green run is NOT a physical-phone approval.
+jobs:
+  immutable-source-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+      - name: Reject app, security and recognition source drift from reviewed PR 220
+        run: |
+          git diff --exit-code 0f62e253c1fd0024a939cd401710dcd3784a9e77 HEAD -- public supabase benchmark/manifest-*.json benchmark/locked-photo-sources.json benchmark/issue201-results.json
+      - name: Build and run full Node and nested avatar suite
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs tests/avatar/*.test.mjs
+      - name: Verify deterministic outfit benchmark and unchanged release veto
+        run: |
+          node scripts/issue201-outfit-benchmark.mjs /tmp/assignment225-outfits.json
+          cmp benchmark/issue201-results.json /tmp/assignment225-outfits.json
+          node scripts/check-customer-pilot-release-gates.mjs
+          node --test tests/protected-pilot-package.test.mjs
+
+  deno-edge-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.9.8
+      - name: Type-check and test disabled-paid-inference Edge runtime
+        run: |
+          deno check supabase/functions/ai-try-on/index.ts
+          deno test --allow-net=127.0.0.1 --allow-env tests/deno/ai-tryon-runtime.test.mjs
+
+  browser-device-rehearsal:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    container:
+      # Pinned official Playwright Ubuntu Noble image (same tested image as PR 225).
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      CLOSET_STAGING_APP_ORIGIN: https://preview.closet-current-staging.pages.dev/
+      CLOSET_STAGING_SUPABASE_URL: https://abcdefghijklmnopqrst.supabase.co
+      CLOSET_STAGING_SUPABASE_PUBLISHABLE_KEY: sb_publishable_STAGING_TEST_FIXTURE_XYZ001
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+      - name: Prepare original fixtures and local app only
+        run: |
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json
+          node scripts/build.mjs
+          node scripts/build-restricted-staging.mjs
+          node scripts/verify-restricted-staging-bundle.mjs
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+          mkdir -p artifacts/assignment225
+      - name: Complete offline Android Chromium and iPhone WebKit acceptance matrix
+        shell: bash
+        run: |
+          mkdir -p artifacts/assignment225
+          failed=0
+          : > artifacts/assignment225/case-results.txt
+          run_case() {
+            local case_name="$1"; shift
+            echo "::group::$case_name"
+            set +e
+            "$@" 2>&1 | tee "artifacts/assignment225/$case_name.txt"
+            local code=${PIPESTATUS[0]}
+            set -e
+            printf '%s exit=%s\n' "$case_name" "$code" >> artifacts/assignment225/case-results.txt
+            if [[ "$code" != 0 ]]; then failed=$((failed+1)); fi
+            echo "::endgroup::"
+          }
+          # Continue across independent test failures; fail the overall gate
+          # unless EVERY CASE passes. Avoid losing downstream failure evidence.
+          run_case original-capture-import node scripts/test-integrated-pilot-journeys-mobile.mjs
+          run_case source-crop node scripts/test-original-crop-source-mobile.mjs
+          run_case source-duplicate node scripts/test-original-source-duplicate-mobile.mjs
+          run_case original-color-labeling node scripts/test-phone-color-audit-browsers.mjs
+          run_case multigarment node scripts/test-whole-outfit-save-mobile.mjs
+          run_case owned-outfits node scripts/test-issue201-outfit-browsers.mjs
+          run_case figure-layers node scripts/test-reusable-figure-phone-browsers.mjs
+          run_case original-figure node scripts/test-saved-figure-originals-browsers.mjs
+          run_case save-restore node scripts/test-mobile-owned-outfit-reliability.mjs
+          run_case new-item-chromium node scripts/test-style-my-new-item-mobile.mjs
+          run_case new-item-webkit env STYLE_BROWSER=webkit node scripts/test-style-my-new-item-mobile.mjs
+          run_case auth node scripts/test-auth-pilot-mobile.mjs artifacts/assignment225/auth-pilot
+          run_case staging-runtime node scripts/test-staging-runtime-browsers.mjs
+          run_case pwa node scripts/test-staging-installed-pwa-chromium.mjs
+          run_case device-check node scripts/test-device-check-phone-browsers.mjs
+          run_case recognition-triage node scripts/test-phone-recognition-triage-browsers.mjs
+          echo "Failed offline acceptance cases: $failed"
+          test "$failed" -eq 0
+      - name: Record actual CI evidence (never physical-device approval)
+        if: always()
+        run: |
+          mkdir -p artifacts/assignment225
+          printf '%s\n' 'Emulated Chromium/WebKit and synthetic accounts only.' 'Physical Android: NOT TESTED' 'Physical iPhone: NOT TESTED' 'Hosted Cloudflare Access tester policy: NOT VERIFIED' 'Hosted staging RLS/account isolation: NOT VERIFIED' 'Production deployment: NOT AUTHORIZED' > artifacts/assignment225/READ-ME-FIRST.txt
+          printf '%s\n' "$GITHUB_SHA" > artifacts/assignment225/source-commit.txt
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: assignment225-SYNTHETIC-BROWSER-NO-DEPLOY
+          path: artifacts/assignment225/
+          retention-days: 7
+          if-no-files-found: error
