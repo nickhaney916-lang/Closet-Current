@@ -45,7 +45,14 @@ export function prepareSavedOutfitItem({accountId,record,original,reviewedMask})
  };
 }
 export function renderSavedOutfitPreview({accountId,pose,canvasWidth,canvasHeight,savedItems}) {
- if(!Array.isArray(savedItems))throw new Error('Missing saved items');
+ if(!Array.isArray(savedItems)||savedItems.length>6)throw new Error('Invalid saved items');
+ const ids=new Set();
+ for(const item of savedItems){
+  const id=item?.record?.id;
+  if(typeof id!=='string'||!id.trim()||ids.has(id))
+   throw new Error('Duplicate or missing saved item identity');
+  ids.add(id);
+ }
  const items=savedItems.map(item=>prepareSavedOutfitItem({accountId,...item}));
  return composeOutfitPreview({accountId,pose,canvasWidth,canvasHeight,items});
 }
