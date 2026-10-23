@@ -156,10 +156,16 @@ try{
     await sessions[0].page.waitForFunction(()=>currentBoard?.slots?.top==='synthetic-A',null,{timeout:20000});
     // A compromised/misrouted backend response with B's owner_id cannot overwrite A.
     forgeWrongOwnerOnce=true;
-    await sessions[0].page.evaluate(()=>closetCloud.sync());
+    // The real cloud client coalesces overlapping syncs. An initial restore
+    // may still own its generation lock and a single sync() can be a no-op.
+    // Retry until the backend ACTUALLY delivers the forged owner_id.
+    for(let attempt=0;attempt<30&&forgeWrongOwnerOnce;attempt++){
+     await sessions[0].page.evaluate(()=>closetCloud.sync());
+     if(forgeWrongOwnerOnce)await new Promise(done=>setTimeout(done,150));
+    }
+    assert.equal(forgeWrongOwnerOnce,false,'Expected forged response was actually exercised');
     assert.equal(await sessions[0].page.evaluate(()=>items[0].id),'synthetic-A');
     assert.equal(await sessions[0].page.evaluate(()=>currentBoard.slots.top),'synthetic-A');
-    assert.equal(forgeWrongOwnerOnce,false,'Expected forged response was actually exercised');
     // A delayed former-owner cloud response cannot restore after logout.
     const previous=records.get(owners[3]),doc=structuredClone(previous.document);
     doc.items.push({...doc.items[0],id:'late-foreign-item'});
