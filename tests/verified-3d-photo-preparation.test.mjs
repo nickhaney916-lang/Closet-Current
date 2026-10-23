@@ -41,3 +41,19 @@ test('two distinct garments may share a verified original outfit photograph',asy
  assert.equal(result.selected[0].sourceIdentity,result.selected[1].sourceIdentity);
  assert.notEqual(result.selected[0].itemId,result.selected[1].itemId);
 });
+
+test('replaced shared source invalidates all dependent garments even with unchanged crops',async()=>{
+ const item=await fixture();
+ const bottom={...item,id:'pants',category:'Bottoms',colorHex:'#443322'};
+ const board={slots:{top:'shirt',bottom:'pants'}};
+ const verified=await prepareVerified3DItems([item,bottom],'a',async()=>bytes,webcrypto);
+ assert.equal(mapBoardSlotsTo3D(board,verified.items,'a',verified.sourceIdentity).selected.length,2);
+ const replaced=new TextEncoder().encode('replacement-original-photo');
+ await assert.rejects(prepareVerified3DItems([item,bottom],'a',async()=>replaced,webcrypto),/Stale/);
+});
+
+test('deleted shared source fails closed for all dependent garments',async()=>{
+ const item=await fixture();
+ const bottom={...item,id:'pants',category:'Bottoms',colorHex:'#443322'};
+ await assert.rejects(prepareVerified3DItems([item,bottom],'a',async()=>undefined,webcrypto),/bytes|photo|Uint8Array|required|input/i);
+});
