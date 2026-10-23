@@ -163,6 +163,57 @@ try{
     });
     if(!authPreflight.serverIdentityGate||!authPreflight.foreignSessionCleared)
      throw Error('Authenticated preview gate failed');
+
+    const actualSavedDb=await page.evaluate(async()=>{
+     const {renderAlphaLiveSnapshot}=await import('/public/family-alpha-2d-account-snapshot.mjs');
+     const {fingerprintAlphaRetainedOriginal,identityForSavedGarment}=await import('/public/family-alpha-2d-saved-board.mjs');
+     const owner='a1111111-1111-4111-8111-111111111111',other='b2222222-2222-4222-8222-222222222222';
+     const canvas=document.createElement('canvas');canvas.width=180;canvas.height=260;
+     const g=canvas.getContext('2d');g.fillStyle='#b8c9a5';g.fillRect(0,0,180,260);
+     const original=canvas.toDataURL('image/jpeg',.93);
+     const item={id:'saved-shirt',category:'Tops',image:original,originalPhoto:{image:original}};
+     const name='closet-current-user-'+owner;
+     const database=await new Promise((resolve,reject)=>{
+      const r=indexedDB.open(name,2);
+      r.onupgradeneeded=()=>{for(const store of ['items','state'])if(!r.result.objectStoreNames.contains(store))r.result.createObjectStore(store,{keyPath:'id'});};
+      r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);
+     });
+     try{
+      await new Promise((resolve,reject)=>{
+       const tx=database.transaction(['items','state'],'readwrite');
+       tx.objectStore('items').put(item);
+       tx.objectStore('state').put({id:'outfit-board',current:{name:'Synthetic wardrobe outfit',slots:{top:'saved-shirt'}},saved:[]});
+       tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);
+      });
+      const image=new Image();
+      const svg='<svg xmlns="http://www.w3.org/2000/svg" width="160" height="240"><path d="M5 5L155 5L155 235L5 235Z" fill="#b8c9a5"/></svg>';
+      image.src='data:image/svg+xml,'+encodeURIComponent(svg);await image.decode();
+      let ownerId=owner,epoch=1,cloudOwner=owner,remoteId=owner,serverCalls=0;
+      const auth={user:{id:owner},getSessionGeneration:()=>epoch,getAccessToken:async()=> 'synthetic-token'};
+      const cloud={getOwnerId:db=>db===database&&ownerId===auth.user.id?cloudOwner:null};
+      const config={auth,cloud,database,publicKey:'synthetic-pub',fetchFn:async()=>{
+       serverCalls++;return {ok:true,status:200,json:async()=>({id:remoteId})};
+      },preparePresentations:async({items,ownerId})=>({
+       [items[0].id]:{itemId:items[0].id,ownerId,sourceIdentity:identityForSavedGarment(items[0]),
+       sourceVersion:await fingerprintAlphaRetainedOriginal(original),approved:true,image}
+      })};
+      const stage=document.getElementById('stage');
+      const result=await renderAlphaLiveSnapshot(stage,config);
+      if(result.renderedLayers!==1||serverCalls!==1||stage.querySelectorAll('img').length!==1)
+       throw Error('Real IndexedDB saved-board-to-avatar failed');
+      auth.user.id=other;epoch++;ownerId=other;
+      let rejected=false;
+      try{await renderAlphaLiveSnapshot(stage,config);}catch{rejected=true;}
+      if(!rejected||stage.children.length)throw Error('Account switch retained old private avatar');
+      auth.user.id=owner;ownerId=owner;epoch++;remoteId=other;
+      let wrongServer=false;
+      try{await renderAlphaLiveSnapshot(stage,config);}catch{wrongServer=true;}
+      if(!wrongServer||stage.children.length)throw Error('Mismatched server owner displayed avatar');
+      return {indexedDbRead:true,existingBoard:true,sessionSwitchRefused:true,serverMismatchBlocked:true};
+     }finally{database.close();}
+    });
+    if(!actualSavedDb.indexedDbRead||!actualSavedDb.sessionSwitchRefused)
+     throw Error('Real browser IndexedDB account scope fixture failed');
     assert.deepEqual(errors,[]);assert.deepEqual(external,[]);
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+1),true);
     results.push({browser:browserName,width,...data});

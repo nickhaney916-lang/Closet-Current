@@ -9,15 +9,26 @@
  const $=id=>document.getElementById(id);
  let resolveReady,rejectReady;
  const ready=new Promise((resolve,reject)=>{resolveReady=resolve;rejectReady=reject;});
- window.closetAuth={ready,user:null};
+ let sessionGeneration=0;
+ // In-memory generation invalidates avatar work on account changes, sign-out and page restoration.
+ // A refreshed token for the SAME account must not invalidate a healthy wardrobe read.
+ window.closetAuth={ready,user:null,getSessionGeneration:()=>sessionGeneration};
  let signup=false,session=null,busy=false,recovery=false,restoringSession=false,refreshing=null;
  window.closetAuth.getAccessToken=async({force=false}={})=>{
   if(!session?.access_token||!window.closetAuth.user?.id)throw Error('Sign in required');
+  const requestedOwner=window.closetAuth.user.id,requestedGeneration=sessionGeneration;
   if(force||session.expires_at<Date.now()/1000+60){
    if(!session.refresh_token)throw Error('Sign in again');
-   if(!refreshing){const expected=window.closetAuth.user.id;refreshing=request('token?grant_type=refresh_token',{refresh_token:session.refresh_token}).then(data=>{if(data.user?.id!==expected||!data.access_token)throw Error('Session account changed');showUser(data);}).finally(()=>{refreshing=null;});}
+   if(!refreshing){const expected=requestedOwner,epoch=requestedGeneration;
+    refreshing=request('token?grant_type=refresh_token',{refresh_token:session.refresh_token}).then(data=>{
+     if(sessionGeneration!==epoch||window.closetAuth.user?.id!==expected||data.user?.id!==expected||!data.access_token)
+      throw Error('Session account changed');
+     showUser(data);
+    }).finally(()=>{refreshing=null;});}
    await refreshing;
   }
+  if(!session||sessionGeneration!==requestedGeneration||window.closetAuth.user?.id!==requestedOwner)
+   throw Error('Session account changed');
   return session.access_token;
  };
  const status=t=>$('authStatus').textContent=t;
@@ -74,6 +85,7 @@
  }
  function showUser(data){
   if(!data?.user?.id)throw Error('No verified user session');
+  if(window.closetAuth.user?.id!==data.user.id)sessionGeneration++;
   session={...data,expires_at:Math.floor(Date.now()/1000)+(data.expires_in||3600)};window.closetAuth.user=data.user;
   localStorage.setItem(STORE,JSON.stringify({access_token:data.access_token,refresh_token:data.refresh_token,expires_at:Math.floor(Date.now()/1000)+(data.expires_in||3600)}));
   $('authGate').hidden=true;$('appShell').hidden=false;
@@ -122,11 +134,17 @@
   catch(err){status(errorMessage(err));}finally{setBusy(false);}
  };
  $('logout').onclick=async()=>{
-  try{if(session?.access_token)await request('logout',{},session.access_token);}catch{}
+  // Revoke the local account scope BEFORE awaiting network logout. The outgoing
+  // token is used only to ask the provider to revoke it, never to reopen UI.
+  const departingToken=session?.access_token;
+  sessionGeneration++;session=null;window.closetAuth.user=null;
   localStorage.removeItem(STORE);
+  try{if(departingToken)await request('logout',{},departingToken);}catch{}
   // Reload closes the current account's IndexedDB connection and clears in-memory images.
   location.reload();
  };
+ window.addEventListener?.('pagehide',()=>{sessionGeneration++;});
+ window.addEventListener?.('pageshow',event=>{if(event.persisted)sessionGeneration++;});
  setMode(false);
  (async()=>{
   try{
