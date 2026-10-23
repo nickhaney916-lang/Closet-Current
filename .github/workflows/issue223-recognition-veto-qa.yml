@@ -1,0 +1,69 @@
+name: Issue 223 source-locked recognition veto QA
+on:
+  push:
+    branches: [qa/issue-223-recognition-gate-20261023]
+  pull_request:
+    branches: [qa/2d-outfit-readiness-20261023]
+permissions:
+  contents: read
+jobs:
+  recognition-veto:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+      - name: Verify immutable measured inference evidence and unsafe subtype veto
+        run: |
+          node --test tests/issue223-source-locked-veto.test.mjs tests/real-photo-recognition-admission.test.mjs
+      - name: Build application and run full repository regression suite
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+          node scripts/check-customer-pilot-release-gates.mjs
+      - name: Use official Ubuntu mirror for ephemeral browser dependencies
+        run: |
+          if test -f /etc/apt/sources.list.d/ubuntu.sources; then
+            sudo sed -i 's|http://azure.archive.ubuntu.com/ubuntu|http://archive.ubuntu.com/ubuntu|g' /etc/apt/sources.list.d/ubuntu.sources
+          fi
+      - name: Install isolated browser test engines
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium webkit
+      - name: Validate original-photo and phone review journeys in Chromium and WebKit
+        run: |
+          node scripts/test-original-crop-source-mobile.mjs
+          node scripts/test-original-source-duplicate-mobile.mjs
+          node scripts/test-phone-recognition-triage-browsers.mjs
+      - name: Download licensed original photos and verify locked SHA-256 hashes
+        run: node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/fixtures
+      - name: Re-run actual pinned-model inference on all 59 original photographs
+        run: node scripts/run-source-locked-recognition.mjs benchmark/source-locked-output
+      - name: Score fresh inference and enforce release veto
+        run: |
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          import {auditRecognitionAdmission} from './scripts/audit-recognition-admission.mjs';
+          const cohorts=['reviewed-32','holdout-16','fresh-11'];
+          const sets=Object.fromEntries(cohorts.map(k=>[k,{
+            manifest:JSON.parse(fs.readFileSync('benchmark/manifest-'+k+'.json')),
+            results:JSON.parse(fs.readFileSync('benchmark/source-locked-output/candidate-'+k+'.json'))
+          }]));
+          const report=auditRecognitionAdmission(sets,{historical:false});
+          fs.writeFileSync('benchmark/source-locked-output/admission.json',JSON.stringify(report,null,2));
+          console.log(JSON.stringify({measured:report.sets.map(s=>s.measuredPhotos),unsafeSubtypes:report.wrongAutoSubtypesTotal,decision:report.recognitionPromotionDecision}));
+          if(report.productionReleaseApproved||report.recognitionPromotionDecision==='APPROVED')throw Error('Unverified source-locked benchmark must never authorize production');
+          JS
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: issue223-source-locked-59-photo-results
+          path: benchmark/source-locked-output/*.json
+          retention-days: 14
+      - name: Confirm source and staging configuration untouched
+        run: |
+          git diff --exit-code 33744dc0900fcb0cc2d014510e22fa03c2a96637 HEAD -- supabase public/auth.js public/app.js public/recognition-photo.mjs public/recognition-vectors.json public/recognition-vectors.bin
