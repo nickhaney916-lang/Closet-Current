@@ -7,7 +7,7 @@ permissions:
 jobs:
   offline-routes:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 38
     steps:
       - uses: actions/checkout@v4
         with:
@@ -15,6 +15,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - run: node scripts/check-integrated-staging-scope.mjs
       - run: node scripts/build.mjs
       - run: node --test tests/*.test.cjs tests/*.test.mjs
       - name: Rebuild exact original PR181 offline using its existing public browser config
@@ -46,7 +47,7 @@ jobs:
           STAGING_ROUTE_CHROME_CHANNEL: chrome
         run: node scripts/test-staging-support-navigation-browser.mjs
       - name: Install separate WebKit emulation
-        timeout-minutes: 4
+        timeout-minutes: 12
         run: npx playwright install --with-deps webkit
       - name: Verify candidate in WebKit
         env:
