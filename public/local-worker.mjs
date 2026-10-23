@@ -83,7 +83,8 @@ self.onmessage=event=>{const request=event.data;chain=chain.then(async()=>{
    onStage:stage=>{scannerStage=stage;},
    onIdentified:choice=>{identifiedChoice=choice;}
   });
-  const admitted=request.hint?result:requireSubtypeReview(result);
+  const isLockedBaseline=new URL(import.meta.url).searchParams.has('baseline');
+  const admitted=request.hint||isLockedBaseline?result:requireSubtypeReview(result);
   if(admitted.strong&&identifiedChoice)self.postMessage({type:'identified',id:request.id,choice:identifiedChoice});
   let recognitionMemory;try{if(model.whole.features)recognitionMemory={version:1,modelKey:model.modelKey,features:await model.whole.features(image)};}catch{/* Optional memory cannot reject a garment. */}
   self.postMessage({type:'result',id:request.id,...admitted,recognitionMemory});
