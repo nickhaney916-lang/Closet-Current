@@ -7,5 +7,5 @@ import {mapBoardSlotsTo3D} from './outfit-3d-board-bridge.mjs';
  */
 export async function verifyCapturedOutfitBoard(board,items,accountId,verifyOwnership,cryptoProvider=globalThis.crypto){
  const verified=await prepareCapturedOutfit3DItems(items,accountId,verifyOwnership,cryptoProvider);
- return mapBoardSlotsTo3D(board,verified.items,accountId,verified.sourceIdentity);
+ return {...mapBoardSlotsTo3D(board,verified.items,accountId,verified.sourceIdentity),accountId};
 }
