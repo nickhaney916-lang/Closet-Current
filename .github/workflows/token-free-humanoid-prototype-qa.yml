@@ -7,6 +7,8 @@ on:
     paths:
       - public/humanoid-3d-prototype.mjs
       - tests/humanoid-3d-prototype.test.mjs
+      - tests/humanoid-3d-preview.test.mjs
+      - public/humanoid-3d-preview.html
       - .github/workflows/token-free-humanoid-prototype-qa.yml
 permissions:
   contents: read
@@ -20,7 +22,7 @@ jobs:
         with:
           node-version: '22'
       - name: Run offline WebGL avatar tests
-        run: node --test tests/humanoid-3d-prototype.test.mjs
+        run: node --test tests/humanoid-3d-prototype.test.mjs tests/humanoid-3d-preview.test.mjs
       - name: Confirm no remote AI API usage
         run: |
           if grep -nE 'fetch\(|XMLHttpRequest|https?://|openai|replicate|fal\.ai' public/humanoid-3d-prototype.mjs; then
