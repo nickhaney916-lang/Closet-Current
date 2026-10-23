@@ -20,7 +20,7 @@ export function mapBoardSlotsTo3D(board,ownedItems,scope,sourceIdentity){
   if(byId.has(item.id))throw Error('Duplicate wardrobe item ID');
   byId.set(item.id,item);
  }
- const selected=[],sources=new Set(),ids=new Set(),colors={};
+ const selected=[],ids=new Set(),colors={};
  const top=byId.get(board.slots.top);
  const isDress=top?.category==='Dresses';
  if(isDress&&(board.slots.bottom||board.slots.layer))throw Error('Dress outfit has conflicting bottom or layer');
@@ -37,8 +37,6 @@ export function mapBoardSlotsTo3D(board,ownedItems,scope,sourceIdentity){
   if(!provenance||typeof provenance!=='object'||typeof provenance.id!=='string'||!provenance.id.trim()||typeof provenance.version!=='string'||!provenance.version.trim())throw Error('Original-photo provenance and version unresolved');
   if(typeof item.originalSourceVersion!=='string'||item.originalSourceVersion!==provenance.version)throw Error('Original-photo source version mismatch');
   const identity=provenance.id;
-  if(sources.has(identity))throw Error('Duplicate original-photo source');
-  sources.add(identity);
   const region=SLOT_REGION[slot],color=hexColor(item.colorHex);
   if(!color)throw Error('Color requires explicit verified hex metadata');
   if(slot==='top'&&!['Tops','Dresses'].includes(item.category))throw Error('Top slot category mismatch');
