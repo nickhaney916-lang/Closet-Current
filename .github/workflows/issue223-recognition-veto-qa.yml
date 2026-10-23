@@ -25,6 +25,15 @@ jobs:
           node scripts/build.mjs
           node --test tests/*.test.cjs tests/*.test.mjs
           node scripts/check-customer-pilot-release-gates.mjs
+      - name: Install isolated browser test engines
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium webkit
+      - name: Validate original-photo and phone review journeys in Chromium and WebKit
+        run: |
+          node scripts/test-original-crop-source-mobile.mjs
+          node scripts/test-original-source-duplicate-mobile.mjs
+          node scripts/test-phone-recognition-triage-browsers.mjs
       - name: Confirm source and staging configuration untouched
         run: |
           git diff --exit-code HEAD^ HEAD -- public supabase scripts/recognition-engine.mjs
