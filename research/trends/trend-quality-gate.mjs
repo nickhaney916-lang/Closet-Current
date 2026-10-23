@@ -35,9 +35,9 @@ export function safeExternalLink(raw){
  for(const [key,value] of url.searchParams){
   if(!badRedirectFields.has(key.toLowerCase()))continue;
   if(!value)continue;
-  // No implicit redirect to another location, even HTTPS; only direct links
-  // are trusted as a selectable source. An absolute nested URI is forbidden.
-  if(/^(?:[a-z][a-z0-9+.-]*:|\/\/|\\)/i.test(value)||value.includes('@'))return null;
+  // Any redirect parameter has unknown server behavior; disallow it rather
+  // than trying to predict single/double URL decoding or destination safety.
+  return null;
  }
  url.hash='';
  return url.href;
@@ -88,6 +88,7 @@ export function normalizeQualityLibrary(payload,{now=Date.now(),maxAgeDays=8,min
   }
   let checkedAt;
   try{checkedAt=iso(x.checked_at,now);}catch{diagnostics.excluded.products.push({url,reason:'missing-or-invalid-checked-date'});continue;}
+  if(now-Date.parse(checkedAt)>maxAgeDays*DAY){diagnostics.excluded.products.push({url,reason:'price-and-availability-verification-overdue'});continue;}
   productUrls.add(url);
   products.push({url,type,name:safeText(x.name,150),retailer:safeText(x.retailer,80),audience:['All','Women','Men'].includes(x.audience)?x.audience:'All',
    checkedAt,priceAtCheck:Number.isFinite(x.price_at_check)&&x.price_at_check>=0?x.price_at_check:null});
@@ -172,6 +173,6 @@ export function ownedOnlyOutfitView(candidate,ownedItems,shoppingIdeas=[]){
  const own=new Set(Object.values(slots));
  if(own.size!==Object.keys(slots).length)throw Error('Duplicate slot garment');
  return {ownedSlots:slots,ownedGarments:Object.values(slots).map(id=>ownedById.get(id)),
-  shoppingInspiration:shoppingIdeas.map(x=>({name:safeText(x.name),type:safeText(x.type),url:safeExternalLink(x.url)})).filter(x=>x.name&&x.url&&!own.has(x.name)),
+  shoppingInspiration:shoppingIdeas.map(x=>({name:safeText(x.name),type:safeText(x.type),url:safeExternalLink(x.url)})) .filter(x=>x.name&&x.url),
   shoppingItemsCountAsOwned:false};
 }
