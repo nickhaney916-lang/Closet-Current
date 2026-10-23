@@ -32,6 +32,19 @@ export async function resolveSavedOutfitPresentation(record,items,accountId,veri
   return {mode:'3d-placeholder',board:classified.board,verified};
  }catch(error){
   if(/ownership|Foreign wardrobe item|account scope/i.test(String(error?.message||error)))return {mode:'unavailable',reason:'Outfit ownership verification failed'};
+  // A 2D fallback may only use garments that still exist and pass ownership checks.
+  if(!Array.isArray(items))return {mode:'unavailable',reason:'Account-scoped wardrobe unavailable'};
+  const ids=Object.values(classified.board.slots).filter(id=>id!==null&&id!==undefined&&id!=='');
+  const byId=new Map();
+  for(const item of items){
+   if(!item||typeof item.id!=='string'||!item.id.trim()||byId.has(item.id))return {mode:'unavailable',reason:'Ambiguous account-scoped wardrobe'};
+   byId.set(item.id,item);
+  }
+  for(const id of ids){
+   if(typeof id!=='string'||!id.trim()||!byId.has(id))return {mode:'unavailable',reason:'Saved outfit garment unavailable'};
+   try{if(await verifyOwnership(byId.get(id),accountId)!==true)return {mode:'unavailable',reason:'Saved outfit ownership unverified'};}
+   catch{return {mode:'unavailable',reason:'Saved outfit ownership unverified'};}
+  }
   return {mode:'2d',board:classified.board,reason:'Verified 3D source unavailable; use existing 2D outfit',verificationFailed:true};
  }
 }
