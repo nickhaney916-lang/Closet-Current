@@ -26,7 +26,7 @@ Historic source: `docs/CLOUD-BACKUP.md` records prior *two disposable synthetic 
 ## Concrete development-level fixes
 
 1. `public/cloud-backup.js` captures an owner + exact DB handle + Auth session epoch + cloud generation for each sync. Immediately before a restoring IndexedDB transaction, and again inside its asynchronous `cloud-sync` read handler, it checks this scope; on mismatch aborts without clearing or writing items, photos, outfits or other private state. Prevents pending restored data being installed after signout/account change/pagehide.
-2. Auth scope rechecked after token refresh, HTTP response, image decode and RPC save. A changed owner cannot accept a stale callback or schedule retry/status for a new user's UI. New account `start` bumps cloud generation; per-generation sync ownership prevents old operations clearing a new account's lock.
+2. Auth scope rechecked after token refresh, HTTP response, image decode and RPC save. A changed owner cannot accept a stale callback or schedule retry/status for a new user's UI. An additional browser probe injects a wrong-owner response from the simulated backend and requires the client to refuse it without replacing the wardrobe. New account `start` bumps cloud generation; per-generation sync ownership prevents old operations clearing a new account's lock.
 3. Server backup SELECT now requests `owner_id` and rejects a missing or foreign owner in JSON even where a hypothetical broken server returned wrong data. This is **defense in depth**, never a replacement for DB RLS. Mock cloud-flow protocol updated to reflect real table contract.
 4. `public/auth.js` hides `appShell` and exposes login gate *before* awaiting network logout. Increments its session epoch, clears local Auth, calls cloud `invalidateSession()`, then attempts revoke and reload. Old photos are hidden immediately; browser memory is cleared by eventual reload. **It does not promise instantaneous revocation of already-issued server JWTs**.
 
@@ -38,7 +38,7 @@ Use four fictional UUID owners: A (Adult 1), B (Adult 2), C (Minor 1), D (Minor 
 | --- | --- |
 | Same-owner clothes/original/derivative storage | Allowed per synthetic account; exact owner folder and SHA integrity |
 | Same-owner save/download/restore | Own records and `outfit-board` recovered |
-| Each other owner's DB, cloud row and photo | Deny (4×3 account pairs); no other IDs in restored view |
+| Each other owner's DB, cloud row and photo | Deny all 12 ordered cross-account pairs on both cloud row and JPEG path; no other IDs in restored view |
 | Sign out while HTTP request is pending | Cancel and hide private UI; never apply completed old response |
 | Rapid Account A → B → A | Correct per-user IndexedDB handle and private garment/board on refresh |
 | Refresh/reopen | Recovered correct own saved item/board |
