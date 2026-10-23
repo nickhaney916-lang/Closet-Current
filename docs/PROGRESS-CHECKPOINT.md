@@ -10,9 +10,10 @@ category/slot matching and synthetic HTTP failures/redirects, without making liv
 verification claims. Inspiration URL boundary rejects credentials/local/IP hosts.
 Current recorded data: 7 sources /6 publication hosts; 11 products /8 merchant
 hosts; all 11 retailer rows lack own checked_at; no timestamps fabricated.
-Initial full local suite 314 PASS; final exact-head counts/browser results in
-draft PR/issue #238. Customer runtime stale filtering remains the other branch's
-scope; live stock/prices/article meaning and physical devices unverified.
+Full local/CI suite 315 PASS, zero fail/skip; six Chromium/WebKit configurations
+PASS at source 87d186e in run 40007626020. Companion #239 is also research-only;
+customer runtime stale/category filtering remains future main-approved work.
+Live stock/prices/article meaning and physical devices remain unverified.
 No merge/deploy, customer data, paid AI, settings changes, spending or Drive Duel.
 See docs/ISSUE238-INDEPENDENT-TREND-AUDIT.md. Main owns integration/release.
 

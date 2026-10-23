@@ -23,7 +23,10 @@ recognition, storage, Auth, cloud or configuration changes. Main owns release.
 * All eleven retailer rows lack `checked_at`. A fresh payload date cannot prove
   that every linked retailer/product was rechecked. Main's normalizer also
   inherits missing source/product checks from the payload; the independent gate
-  deliberately flags that missing evidence instead.
+  deliberately flags that missing evidence instead. Retailer URLs also appear
+  in dated product rows: a future integration may explicitly bind those exact
+  URL checks rather than require duplicate date fields. Missing retailer fields
+  alone do not prove that the merchant URLs were never reviewed.
 * Main's refresh code warns after eight days and retains prior data on errors;
   it does not block stale suggestions. `next_refresh_at` is not enforced there.
   Main has no weekly editorial research workflow. PR #220 includes the existing
@@ -59,9 +62,10 @@ approval; inspect `structuralPassed` and issue codes.
 
 The audit reports eleven missing retailer timestamps on the fixed current
 snapshot; it does not falsify/rewrite timestamps or remove products from the
-customer app. Runtime stale-source/category filtering belongs to the separately
-coordinated normalizer work, pending main review. This gate can independently
-evaluate that candidate. A historical data fixture pins findings without
+customer app. Companion PR #239 also supplies research-only audit logic; neither
+gate is wired into the customer normalizer. Runtime stale-source/category
+filtering remains future main-approved integration. Main can compare these
+independent gates instead of integrating duplicate policies. A historical data fixture pins findings without
 freezing future weekly updates to `public/trend-data.json`.
 
 `public/outfit-matcher.js` is the sole runtime change. Existing owned garment
@@ -76,9 +80,11 @@ never become owned items. All external requests are blocked.
 
 Baseline inspiration URL tests: 20 total, 13 fail / 7 pass before the fix; the
 fixed boundary passes all 20. Independent gate tests cover synthetic source and
-transport evidence. Initial complete local suite 314 pass; subsequent prototype-
-slot input check adds one test. Exact final counts, CI URLs, commit SHA and
-Chromium/WebKit results are reported in the draft PR and issue #238.
+transport evidence. Final local suite **315 pass, zero fail/skip**. Source commit
+`87d186e2e3fde98f9a24a99a596d1e63705947a2`, Actions run 40007626020: **315/315
+Node tests and six Chromium/WebKit configurations PASS**, no page errors/outside
+requests allowed. This documentation follow-up changes no runtime/test code;
+exact final head and CI are reported in the draft PR and issue #238.
 
 Pinned October 19 data SHA-256:
 `63703736affd1feb0d78211f44b724b286fd461c5e8b73202a8f3e93818a1182`.
