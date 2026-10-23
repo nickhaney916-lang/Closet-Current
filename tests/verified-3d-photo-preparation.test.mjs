@@ -31,3 +31,13 @@ test('duplicate IDs and unverified copied records cannot reuse source identity',
  assert.equal(verified.sourceIdentity({...verified.items[0]}),undefined);
  assert.deepEqual(verified.sourceIdentity(verified.items[0]),{id:'photo-1',version:item.originalSourceVersion});
 });
+
+test('two distinct garments may share a verified original outfit photograph',async()=>{
+ const item=await fixture();
+ const bottom={...item,id:'pants',category:'Bottoms',colorHex:'#443322'};
+ const prepared=await prepareVerified3DItems([item,bottom],'a',async()=>bytes,webcrypto);
+ const result=mapBoardSlotsTo3D({slots:{top:'shirt',bottom:'pants'}},prepared.items,'a',prepared.sourceIdentity);
+ assert.equal(result.selected.length,2);
+ assert.equal(result.selected[0].sourceIdentity,result.selected[1].sourceIdentity);
+ assert.notEqual(result.selected[0].itemId,result.selected[1].itemId);
+});
