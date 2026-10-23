@@ -20,6 +20,11 @@ jobs:
       - name: Verify immutable measured inference evidence and unsafe subtype veto
         run: |
           node --test tests/issue223-source-locked-veto.test.mjs tests/real-photo-recognition-admission.test.mjs
+      - name: Build application and run full repository regression suite
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+          node scripts/check-customer-pilot-release-gates.mjs
       - name: Confirm source and staging configuration untouched
         run: |
           git diff --exit-code HEAD^ HEAD -- public supabase scripts/recognition-engine.mjs
