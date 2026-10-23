@@ -24,6 +24,7 @@ const server=createServer(async(req,res)=>{
    return;
   }
   if(pathname==='/issue235-local-fixtures.js'){res.writeHead(200,{'Content-Type':'text/javascript'});res.end('window.cleanSavedOutfitBoard=(b,i)=>cleanOutfitBoard(b,i)');return;}
+  if(pathname==='/issue235-photo-memo.mjs'){res.writeHead(200,{'Content-Type':'text/javascript','Cache-Control':'no-store'});res.end(await readFile('scripts/issue235/photo-digest-memo.mjs'));return;}
   const file=resolve(root,'.'+decodeURIComponent(pathname));if(!file.startsWith(root+sep))throw Error('Path escape');
   res.writeHead(200,{'Content-Type':mime[extname(file)]||'text/plain','Cache-Control':'no-store'});
   res.end(await readFile(file));
@@ -155,6 +156,14 @@ try{
      });
      const memoCloudEncodeMs=tick()-start;
      if(JSON.stringify(memoDoc)!==JSON.stringify(baselineDocument))throw Error('Memoized encoding changed source/owner/path');
+     // Bounded candidate (max 64 photo references), independent of the app.
+     const {memoizeExactImageEncodes}=await import('/issue235-photo-memo.mjs');
+     const boundedMemo=memoizeExactImageEncodes(makePath,{maxEntries:64});
+     start=tick();const boundedDocument=await ClosetBackupEngine.mapImages(cloudSnapshot,boundedMemo.mapImage);
+     const boundedCloudEncodeMs=tick()-start,boundedStats=boundedMemo.stats();
+     if(JSON.stringify(boundedDocument)!==JSON.stringify(baselineDocument))throw Error('Bounded cache changed photo provenance or cloud JSON');
+     if(boundedStats.retainedEntries>64)throw Error('Memo retained too many photo references');
+     boundedMemo.clear();
      // Large JPEG within the 8 MiB bucket limit, using synthetic canvas bytes.
      const largeStart=tick();
      const large=document.createElement('canvas');large.width=2048;large.height=3072;
@@ -172,7 +181,7 @@ try{
      return {garments:size,setupMs,idbWriteMs,idbReadMs,closetDomBuildMs,closetCardCount,
       savedOutfitRestoreMs,savedOutfitCount:restored.length,deletionRestoreMs,encodedChars,
       retainedJpegBytesApprox:decodedJpegBytes,estimatedAllImagesDecodedRGBABytes:estimateDecodedRGBABytes,
-      exactDistinctImages:uniqueUrls.size,cloudEncodeMs,memoCloudEncodeMs,shaOperations:visits,memoShaOperations:memoHashes,
+      exactDistinctImages:uniqueUrls.size,cloudEncodeMs,memoCloudEncodeMs,boundedCloudEncodeMs,boundedShaOperations:boundedStats.uniqueCalls,boundedCacheHits:boundedStats.hits,boundedRetainedEntries:boundedStats.retainedEntries,shaOperations:visits,memoShaOperations:memoHashes,
       cloudSerializedBytes,largeJpegBytes,largePhotoGenerationMs,transactionAbortPreserved:true,
       quotaInjectedRecovered:true,deletedSourcePruned:true,duplicateSourcesPresent:uniqueUrls.size<visits,
       heapBefore,heapAfter,storageEstimate:await navigator.storage?.estimate?.().catch(()=>null)||null,
@@ -188,7 +197,7 @@ try{
     process.stdout.write('STORAGE_BENCH '+JSON.stringify({browser:browserName,garments:size,
       idbWriteMs:+measures.idbWriteMs.toFixed(2),idbReadMs:+measures.idbReadMs.toFixed(2),
       closetDomBuildMs:+measures.closetDomBuildMs.toFixed(2),savedOutfitRestoreMs:+measures.savedOutfitRestoreMs.toFixed(2),
-      cloudEncodeMs:+measures.cloudEncodeMs.toFixed(2),memoCloudEncodeMs:+measures.memoCloudEncodeMs.toFixed(2),
+      cloudEncodeMs:+measures.cloudEncodeMs.toFixed(2),memoCloudEncodeMs:+measures.memoCloudEncodeMs.toFixed(2),boundedCloudEncodeMs:+measures.boundedCloudEncodeMs.toFixed(2),boundedShaOperations:measures.boundedShaOperations,boundedCacheHits:measures.boundedCacheHits,
       retainedJpegBytesApprox:measures.retainedJpegBytesApprox,cloudSerializedBytes:measures.cloudSerializedBytes,
       distinctImages:measures.exactDistinctImages,shaOperations:measures.shaOperations,memoHashes:measures.memoShaOperations,
       largeJpegBytes:measures.largeJpegBytes})+'\n');
