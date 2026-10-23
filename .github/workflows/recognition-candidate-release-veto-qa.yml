@@ -1,0 +1,53 @@
+name: Recognition candidate comparison and unsafe auto-index veto (no inference)
+on:
+  push:
+    branches: [qa/recognition-candidate-release-veto-20261022]
+permissions:
+  contents: read
+jobs:
+  pure-offline-candidate-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 26
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Pin model, app, source manifest and core acceptance truth unchanged
+        shell: bash
+        run: |
+          set -euo pipefail
+          base=e0b8fba417c31000378b8e02f3ecb7f5af8e2423
+          test "$(git merge-base "$base" HEAD)" = "$base"
+          git diff --name-only "$base" HEAD |
+          while IFS= read -r path; do
+            case "$path" in
+              scripts/compare-recognition-candidate-59.mjs|tests/recognition-candidate-release-veto.test.mjs|.github/workflows/recognition-candidate-release-veto-qa.yml) ;;
+              *) echo "Out of scope: $path"; exit 1 ;;
+            esac
+          done
+          git diff --exit-code "$base" HEAD -- public supabase benchmark scripts/audit-recognition-admission.mjs scripts/check-recognition-regressions.mjs .github/workflows/ai-recognition-repair.yml
+          node --check scripts/compare-recognition-candidate-59.mjs
+          node --check tests/recognition-candidate-release-veto.test.mjs
+          git diff --check
+      - name: Synthetic counterfactual tests: catch subtype, missing photos, unknown inventory and false promotion
+        run: node --test tests/recognition-candidate-release-veto.test.mjs
+      - name: Require actual recorded historical 59-photo baseline remains blocked
+        run: node scripts/compare-recognition-candidate-59.mjs --historical-smoke
+      - name: Full Node, original-photo, recognition and account safety regression
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Upload metadata-only safety veto diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Recognition-59-Unsafe-Autosave-Veto-Report-Only
+          path: artifacts/recognition-guard/historical-negative-control.json
+          retention-days: 7
+          if-no-files-found: warn
+      - name: No paid repair, inference, private photos or release
+        run: echo 'LOCAL REPORTS ONLY; HUMAN MASK ANNOTATIONS ABSENT; NO API KEY, MODEL DOWNLOAD, DEPLOY OR CUSTOMER DATA.'
