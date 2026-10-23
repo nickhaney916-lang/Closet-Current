@@ -1,0 +1,67 @@
+name: Issue 244 offline 3D integration ownership and 2D fallback QA - NO DEPLOY
+on:
+  push:
+    branches: [qa/issue244-offline-3d-integration-qa-20261023]
+permissions:
+  contents: read
+jobs:
+  node-source-locked:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with: {fetch-depth: 0}
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with: {node-version: '22'}
+      - name: Verify all actual runtime/auth/cloud/outfit files untouched
+        run: |
+          git diff --exit-code 54c9e29ede069a05d1268e003f80cbda043c7d6a HEAD -- public supabase
+          if grep -nE '(fetch|XMLHttpRequest)[[:space:]]*\(|api[.]openai|replicate[.]com' research/issue244/offline-3d-integration-qa.mjs; then exit 1; fi
+      - name: Exact upstream read-only source pin SHA check
+        run: |
+          set -eu
+          check(){ test "$(git hash-object "research/issue244/reference/$1/$2")" = "$3"; }
+          check pr231 original-photo-fingerprint.mjs 6f9dabd2b505578e2aa609b71fc16df3b749e114
+          check pr231 original-jpeg-source.mjs a1909aaa8d730ad02bcaa6542c1894df5bd19beb
+          check pr231 verified-3d-photo-preparation.mjs 45e28f0f5a4ba795367dbe87d6b6c048a2e2e90e
+          check pr231 captured-outfit-3d-adapter.mjs c2bfecd2ad5becc0543f968edb23afb95b593b92
+          check pr231 verified-captured-outfit-board.mjs fff47e99e01f32be634c585f1f9af1f7864cb5f1
+          check pr231 outfit-3d-board-bridge.mjs ba9feeacd39db564eefef9d1dc2cfad51aecce9c
+          check pr231 restore-verified-captured-outfit-board.mjs 24e64c9a1ba880fe24a5b6239db677a8150d5987
+          check pr231 saved-outfit-3d-compatibility.mjs 4ae4fde39f20160c440c8afe1aadfced426efb9f
+          check pr231 resolve-saved-outfit-presentation.mjs 1407d15f629555708d8b109f458ad77fd2ec1bab
+          check pr232 humanoid-3d-saved-bridge.mjs 984d763d6cb41fa9bc5e7e651270c3458bf235aa
+          check pr232 humanoid-3d-body-geometry.mjs f74909ee2d836a3ab2b9628929851e52db692e9e
+          check pr232 humanoid-3d-detailed-renderer.mjs fa2f5e5d21b45f73cf9f1ef0ddda7ac6d7461829
+      - name: Build unchanged application and run full Node regression
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+  chromium-webkit-mobile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with: {node-version: '22'}
+      - name: Install runner-local Playwright only
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+      - name: Test pinned dual contract and real IndexedDB/WebGL or 2D fallback offline
+        run: node scripts/test-issue244-3d-integration-mobile.mjs
+      - name: Label evidence nonproduction
+        if: always()
+        run: |
+          mkdir -p artifacts/issue244
+          echo "$GITHUB_SHA" > artifacts/issue244/source-commit.txt
+          echo 'SYNTHETIC JPEG QA ONLY. NO LIVE AUTH, CUSTOMER PHOTO, PAID INFERENCE, DEPLOYMENT OR MERGE.' > artifacts/issue244/NO-DEPLOY.txt
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: issue244-synthetic-3d-bridge-QA-NO-DEPLOY
+          path: artifacts/issue244/
+          retention-days: 7
