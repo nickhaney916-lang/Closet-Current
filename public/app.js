@@ -176,7 +176,6 @@ async function drainAutomatic(){
  try{while(automaticQueue.length){const item=automaticQueue.shift();if(batch.some(x=>x.id===item.id))await recognizeItem(item);else localPending.delete(item.id);}}
  finally{automaticRunning=false;render();scheduleMemoryReview();}
 }
-function announceCapture(text){const status=$('captureAnnouncement');if(status)status.textContent=text;}
 function stopCamera(){
  cameraRequest++;cameraOpening=false;clearInterval(timer);timer=null;
  if(stream)stream.getTracks().forEach(t=>t.stop());
@@ -184,6 +183,7 @@ function stopCamera(){
  $('placeholder').hidden=false;$('cameraChoices').hidden=false;$('cameraActions').hidden=true;
  controls(false);$('captureState').textContent='Camera stopped · your photos are ready to review';announceCapture('Camera stopped. Photos are ready to review.');
 }
+function announceCapture(text){const status=$('captureAnnouncement');if(status)status.textContent=text;}
 function controls(disabled){for(const id of ['start','startAuto','upload','interval','clothingPhotos','outfitCamera','outfitUpload','outfitRetry','captureSingle','captureOutfit'])$(id).disabled=disabled;}
 function finishScan(){
  const wasManual=cameraMode==='manual';
