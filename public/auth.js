@@ -12,7 +12,7 @@
  let sessionGeneration=0;
  // In-memory generation invalidates avatar work on account changes, sign-out and page restoration.
  // A refreshed token for the SAME account must not invalidate a healthy wardrobe read.
- window.closetAuth={ready,user:null,getSessionGeneration:()=>sessionGeneration};
+ window.closetAuth={ready,user:null,getSessionGeneration:()=>sessionGeneration,getPublicKey:()=>KEY};
  let signup=false,session=null,busy=false,recovery=false,restoringSession=false,refreshing=null;
  window.closetAuth.getAccessToken=async({force=false}={})=>{
   if(!session?.access_token||!window.closetAuth.user?.id)throw Error('Sign in required');
@@ -85,7 +85,12 @@
  }
  function showUser(data){
   if(!data?.user?.id)throw Error('No verified user session');
-  if(window.closetAuth.user?.id!==data.user.id)sessionGeneration++;
+  if(window.closetAuth.user?.id!==data.user.id){
+   sessionGeneration++;
+   // Invalidate any rendered account-scoped photo immediately on identity change.
+   if(typeof window.dispatchEvent==='function'&&typeof window.Event==='function')
+    window.dispatchEvent(new window.Event('closet:alpha-session-changed'));
+  }
   session={...data,expires_at:Math.floor(Date.now()/1000)+(data.expires_in||3600)};window.closetAuth.user=data.user;
   localStorage.setItem(STORE,JSON.stringify({access_token:data.access_token,refresh_token:data.refresh_token,expires_at:Math.floor(Date.now()/1000)+(data.expires_in||3600)}));
   $('authGate').hidden=true;$('appShell').hidden=false;
@@ -138,6 +143,8 @@
   // token is used only to ask the provider to revoke it, never to reopen UI.
   const departingToken=session?.access_token;
   sessionGeneration++;session=null;window.closetAuth.user=null;
+  if(typeof window.dispatchEvent==='function'&&typeof window.Event==='function')
+   window.dispatchEvent(new window.Event('closet:alpha-session-changed'));
   localStorage.removeItem(STORE);
   try{if(departingToken)await request('logout',{},departingToken);}catch{}
   // Reload closes the current account's IndexedDB connection and clears in-memory images.

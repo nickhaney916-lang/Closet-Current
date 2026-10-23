@@ -24,6 +24,8 @@ function openBoardPicker(slotId){
 }
 function renderOutfitBoard(){
  if(!boardInitialized)return;
+ // Any saved-board edit must immediately revoke an earlier photo avatar preview.
+ window.dispatchEvent?.(new Event('closet:alpha-board-changed'));
  currentBoard=cleanOutfitBoard(currentBoard,items);const top=items.find(x=>x.id===currentBoard.slots.top),dress=top?.category==='Dresses';
  $('outfitFigure').classList.toggle('has-outer-coat',currentBoard.layerCount>=3);const slots=$('boardSlots');slots.replaceChildren();
  for(const slot of outfitSlots){

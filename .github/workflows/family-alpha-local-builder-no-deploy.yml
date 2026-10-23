@@ -1,0 +1,49 @@
+name: Family Alpha Local Builder Integration - NO DEPLOY
+on:
+  pull_request:
+    paths:
+      - 'public/family-alpha-preview-*'
+      - 'public/index.html'
+      - 'public/auth.js'
+      - 'public/outfit-board.js'
+      - 'tests/family-alpha-builder-local-entry.test.mjs'
+      - 'scripts/test-family-alpha-local-builder-browser.mjs'
+      - 'docs/FAMILY-ALPHA-LOCAL-OUTFIT-ENTRY.md'
+      - '.github/workflows/family-alpha-local-builder-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  node:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Build only, no preview activation or deployment
+        run: node scripts/build.mjs
+      - name: Full Node regression including default-off gate
+        run: node --test tests/*.test.cjs tests/*.test.mjs
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Install isolated browser dependencies without package changes
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+      - name: Real Outfit Builder source markup, off-by-default then 3 reviewed synthetic garments
+        run: node scripts/test-family-alpha-local-builder-browser.mjs
+      - name: Reviewed JPEG 2D avatar, 6 browser viewports
+        run: node scripts/test-family-alpha-real-photo-review-browser.mjs
+      - name: Original JPEG to mask quality, 6 browser viewports
+        run: node scripts/test-family-alpha-16-mobile.mjs
+      - name: Three outfits and swaps, 6 browser viewports
+        run: node scripts/test-family-alpha-15-browser.mjs
