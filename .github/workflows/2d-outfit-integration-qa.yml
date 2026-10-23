@@ -40,6 +40,10 @@ jobs:
           npx playwright install --with-deps chromium webkit
       - name: Independent recommendations, pins, swaps, backups and account isolation
         run: node scripts/test-issue201-outfit-browsers.mjs
+      - name: Existing licensed-photo figure, recovery and layering browser suite
+        run: |
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json
+          node scripts/test-reusable-figure-phone-browsers.mjs
       - name: Original RGB, invalid images, stale cached source, mobile layout
         run: node scripts/test-saved-figure-originals-browsers.mjs
       - uses: actions/upload-artifact@v4
@@ -49,4 +53,5 @@ jobs:
           path: |
             artifacts/2d-outfit/
             artifacts/issue201/
+            artifacts/local-fitting/
           retention-days: 7

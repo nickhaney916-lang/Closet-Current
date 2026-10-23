@@ -56,7 +56,9 @@ fixtures: 1842 passed, zero failed/skipped (before final report-only changes).
 Independent existing product benchmark: 22/22 PASS, byte-identical to its locked
 expected JSON. New five source/owner/crop tests include original-only fallback,
 changed original/crop/provenance, stale display mask, explicit foreign aliases,
-invalid geometry, missing scene source, and no source mutations.
+invalid geometry, missing scene source, and no source mutations. All five new
+checks fail against the unchanged cfd722e baseline engine and pass against the
+candidate (separate baseline-module execution, no acceptance criteria changed).
 
 Final exact-head repeated regression and Chromium/WebKit evidence are recorded
 in the draft PR. A workflow installs ephemeral browser dependencies, blocks
