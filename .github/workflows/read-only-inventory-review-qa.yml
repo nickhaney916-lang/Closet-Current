@@ -1,0 +1,49 @@
+name: Owner photo inventory drift fail-closed recovery review
+on:
+  push:
+    branches: [security/fenced-recovery-inventory-review-20261022]
+permissions:
+  contents: read
+jobs:
+  read-only-inventory-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify branch isolation and disabled live account deletion
+        shell: bash
+        run: |
+          set -euo pipefail
+          base=8b53b217fbe0cf3bf0566448285ed377f4294639
+          test "$(git merge-base "$base" HEAD)" = "$base"
+          git diff --name-only "$base" HEAD |
+          while IFS= read -r file; do
+            case "$file" in
+              supabase/functions/account-delete/recovery-handoff.mjs|supabase/functions/account-delete/recovery-photo-inventory.mjs|tests/account-deletion-recovery-handoff.test.mjs|tests/account-deletion-recovery-photo-inventory.test.mjs|tests/issue196-offline-deletion-lifecycle.test.mjs|docs/READ-ONLY-INVENTORY-REVIEW-20261022.md|.github/workflows/read-only-inventory-review-qa.yml) ;;
+              *) echo "Unexpected security scope: $file"; exit 1 ;;
+            esac
+          done
+          git diff --exit-code "$base" HEAD -- public supabase/design supabase/cloud-backup.sql supabase/functions/account-delete/index.ts supabase/functions/account-delete/deletion-coordinator.mjs supabase/functions/account-delete/supabase-adapters.mjs
+          node --check supabase/functions/account-delete/recovery-handoff.mjs
+          node --check supabase/functions/account-delete/recovery-photo-inventory.mjs
+          node --check tests/account-deletion-recovery-photo-inventory.test.mjs
+          git diff --check
+      - name: Entire app Node regression suite and build
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Focused recovery incident / synthetic deletion tests with zero network
+        run: |
+          node --require ./tests/helpers/issue196-no-network.cjs --test tests/account-deletion-recovery-*.test.mjs tests/issue196-*.test.mjs
+          git diff --exit-code
+      - name: Confirm disabled live endpoint and no deployment
+        run: |
+          grep -q 'status:503' supabase/functions/account-delete/index.ts
+          grep -q 'deletionCompleted:false' supabase/functions/account-delete/index.ts
+          echo 'UNDEPLOYED READ-ONLY REVIEW ONLY. NO LIVE DATA, CUSTOMER PHOTOS, AUTH CHANGES, OR DELETES.'
