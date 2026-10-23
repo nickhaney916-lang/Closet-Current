@@ -1,0 +1,60 @@
+name: Family Alpha Isolated Staging Artifact QA - NO DEPLOY
+on:
+  pull_request:
+    paths:
+      - 'scripts/build-family-alpha-staging.mjs'
+      - 'scripts/test-family-alpha-staging-artifact-browser.mjs'
+      - 'tests/family-alpha-staging-artifact.test.mjs'
+      - 'docs/FAMILY-ALPHA-STAGING-ARTIFACT-HOLD.md'
+      - '.github/workflows/family-alpha-staging-artifact-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  node:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Prepare separate NO-DEPLOY candidate and byte-check normal dist
+        run: node scripts/build-family-alpha-staging.mjs
+      - name: Full existing Node regression including packaging and guardrail tests
+        run: node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Confirm candidate is release HOLD and production artifact intact
+        run: |
+          node --input-type=module -e "import {assertCandidate} from './scripts/build-family-alpha-staging.mjs'; const m=await assertCandidate(); if(m.releaseGate!=='HOLD'||!m.noCloudOrPrivateData)process.exit(1); console.log('Non-deploy candidate verified, four pinned runtime modules present')"
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Build both isolated candidate and ordinary app without deployment
+        run: node scripts/build-family-alpha-staging.mjs
+      - name: Test-only Playwright install, lockfile unchanged
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+      - name: Artifact-only Chromium/WebKit original-photo import and 2D render
+        run: node scripts/test-family-alpha-staging-artifact-browser.mjs
+      - name: Main Family Alpha Builder mobile regression
+        run: node scripts/test-family-alpha-local-builder-browser.mjs
+      - name: Source JPEG review and retake mobile regression
+        run: node scripts/test-family-alpha-real-photo-review-browser.mjs
+      - name: Original JPEG transparency fidelity regression
+        run: node scripts/test-family-alpha-16-mobile.mjs
+      - name: Saved outfits and one-piece swaps regression
+        run: node scripts/test-family-alpha-15-browser.mjs
+      - name: Upload synthetic-only candidate for OFFLINE review, NOT deploy
+        uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: family-alpha-hold-candidate-no-deploy
+          path: dist-family-alpha-candidate/
+          retention-days: 7
