@@ -3,7 +3,7 @@ on:
   push:
     branches: [qa/issue-223-recognition-gate-20261023]
   pull_request:
-    branches: [qa/2d-outfit-readiness-20261023]
+    branches: [qa/2d-outfit-readiness-20261023, qa/issue-223-recognition-gate-20261023]
 permissions:
   contents: read
 jobs:
@@ -39,6 +39,20 @@ jobs:
           node scripts/test-original-crop-source-mobile.mjs
           node scripts/test-original-source-duplicate-mobile.mjs
           node scripts/test-phone-recognition-triage-browsers.mjs
+      - name: Confirm source and staging configuration untouched
+        run: |
+          git diff --exit-code 33744dc0900fcb0cc2d014510e22fa03c2a96637 HEAD -- supabase public/auth.js public/app.js public/recognition-photo.mjs public/recognition-vectors.json public/recognition-vectors.bin
+
+  source-locked-photo-inference:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
       - name: Download licensed original photos and verify locked SHA-256 hashes
         run: node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/fixtures
       - name: Re-run actual pinned-model inference on all 59 original photographs
