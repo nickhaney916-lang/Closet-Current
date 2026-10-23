@@ -9,6 +9,8 @@ on:
       - tests/outfit-3d-board-bridge.test.mjs
       - public/original-photo-fingerprint.mjs
       - tests/original-photo-fingerprint.test.mjs
+      - public/saved-outfit-3d-compatibility.mjs
+      - tests/saved-outfit-3d-compatibility.test.mjs
       - public/restore-verified-captured-outfit-board.mjs
       - tests/restore-verified-captured-outfit-board.test.mjs
       - public/verified-captured-outfit-board.mjs
