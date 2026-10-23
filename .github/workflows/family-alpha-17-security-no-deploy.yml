@@ -1,37 +1,35 @@
-name: Family Alpha 17 Four-Account Security (NO DEPLOY)
+name: Family Alpha Combined Security and Staging QA - NO DEPLOY
 on:
-  push:
-    branches: [qa/family-alpha-17-four-account-security-20261023]
   pull_request:
     paths:
       - 'public/auth.js'
       - 'public/cloud-backup.js'
-      - 'tests/family-alpha-17-security.test.cjs'
-      - 'scripts/test-family-alpha-17-four-account-browser.mjs'
       - 'scripts/run-cloud-backup-flow.mjs'
+      - 'tests/family-alpha-17-security.test.cjs'
+      - 'tests/family-alpha-security-avatar-convergence.test.mjs'
+      - 'scripts/test-family-alpha-17-four-account-browser.mjs'
       - 'docs/FAMILY-ALPHA-17-FOUR-ACCOUNT-SECURITY.md'
+      - 'docs/FAMILY-ALPHA-SECURITY-STAGING-INTEGRATION.md'
       - '.github/workflows/family-alpha-17-security-no-deploy.yml'
   workflow_dispatch:
 permissions:
   contents: read
 jobs:
-  security-node:
+  integrated-node:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
-      - name: Build offline test candidate (no deploy)
-        run: node scripts/build.mjs
-      - name: Run entire application security and regression suite
+      - name: Build ordinary dist and separate release-HOLD artifact, NEVER DEPLOY
+        run: node scripts/build-family-alpha-staging.mjs
+      - name: Run all current app, four-account and avatar security tests
         run: node --test tests/*.test.cjs tests/*.test.mjs
-      - name: Enforce isolated Assignment 17 changes only
+      - name: Verify package content provenance and release HOLD
         run: |
-          git fetch origin integration/family-alpha-reviewed-photo-provider-20261023 --depth=1
-          git diff --name-only "origin/integration/family-alpha-reviewed-photo-provider-20261023...HEAD" | tee /tmp/alpha17-changed.txt
-          if grep -Ev '^(public/auth.js$|public/cloud-backup.js$|tests/family-alpha-17-security.test.cjs$|scripts/test-family-alpha-17-four-account-browser.mjs$|scripts/run-cloud-backup-flow.mjs$|docs/FAMILY-ALPHA-17-FOUR-ACCOUNT-SECURITY.md$|\.github/workflows/family-alpha-17-security-no-deploy.yml$)' /tmp/alpha17-changed.txt; then exit 1; fi
-  four-account-browser:
+          node --input-type=module -e "import {assertCandidate} from './scripts/build-family-alpha-staging.mjs'; const m=await assertCandidate(); if(m.releaseGate!=='HOLD'||m.runtimeActivation!=='OFF on all non-localhost hosts')process.exit(1); console.log('Staging artifact stays hard-off, integrated Auth and cloud backup packaged')"
+  integrated-mobile:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     container:
@@ -43,15 +41,27 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
-      - name: Install test-only pinned browser automation
+      - name: Build ordinary app and isolated non-deploy candidate
+        run: node scripts/build-family-alpha-staging.mjs
+      - name: Pinned test-only Playwright, no lockfile changes
         run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
-      - name: Build isolated app assets
-        run: node scripts/build.mjs
-      - name: Four account privacy and browser revoke on Chromium and WebKit
+      - name: Four-account A-B-C-D mock backend privacy and stale cloud restore
         run: node scripts/test-family-alpha-17-four-account-browser.mjs
+      - name: Packaged artifact exact original JPEG and 2D avatar image
+        run: node scripts/test-family-alpha-staging-artifact-browser.mjs
+      - name: Real Outfit Builder source with three reviewed actual JPEGs
+        run: node scripts/test-family-alpha-local-builder-browser.mjs
+      - name: Side-by-side mask review, retake and account switch
+        run: node scripts/test-family-alpha-real-photo-review-browser.mjs
+      - name: Original JPEG and transparent garment fidelity
+        run: node scripts/test-family-alpha-16-mobile.mjs
+      - name: Three outfits and one-item swapping
+        run: node scripts/test-family-alpha-15-browser.mjs
       - uses: actions/upload-artifact@v4
-        if: always()
+        if: success()
         with:
-          name: family-alpha-17-four-owner-synthetic-evidence
-          path: benchmark/family-alpha-17/four-owner-browser.json
-          retention-days: 14
+          name: family-alpha-security-integrated-hold-artifacts-not-for-deploy
+          path: |
+            dist-family-alpha-candidate/
+            benchmark/family-alpha-17/four-owner-browser.json
+          retention-days: 7
