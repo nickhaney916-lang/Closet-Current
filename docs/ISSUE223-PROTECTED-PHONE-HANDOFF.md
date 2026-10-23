@@ -39,7 +39,10 @@ missing baseline object. No test assertion was bypassed. The inventories are
 unsigned integrity records,
 not authenticated approval or proof of hosted protection.
 
-CI uploads only a distinctly labeled SYNTHETIC-NEVER-DEPLOY tar plus checksum.
+The original #222 workflow is also repaired to use this final envelope, so a
+future separately authorized run cannot repeat its post-seal mutation. The
+independent assignment workflow uploads only a distinctly labeled
+SYNTHETIC-NEVER-DEPLOY tar plus checksum.
 It has invented credentials, is not a phone-test deployment, and must never be
 hosted. Exact-head CI/artifact digest belongs in the draft PR and issue #221.
 
