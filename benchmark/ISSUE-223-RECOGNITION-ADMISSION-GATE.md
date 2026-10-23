@@ -45,3 +45,21 @@ The source-locked record `benchmark/SOURCE-LOCKED-RESULTS-20261023.json` identif
 The record reports zero incorrect automatically emitted **categories**, three incorrect automatic **subtypes**, and three rejected non-garment controls. It explicitly sets `recognitionPromotionDecision: BLOCKED` and `independentPhysicalGarmentLabelsVerified: false`. Thus neither the 100% fresh-set category coverage nor the zero unsafe category count justifies unattended autosave or production promotion.
 
 **Disposition:** Existing paired offline inference evidence is sufficient to conclude **NO-GO for recognition promotion today**. A claim that a new external catalog/model is superior remains **NOT EVALUATED**; do not fabricate paired third-party measurements. The next experiment must first identify a candidate with separately verified commercial model weights and source-image rights, then run the locked 59-photo comparison with independent subtype review and mobile performance evidence.
+
+## Targeted subtype failure triage (same-source paired results)
+All three observed incorrect auto-subtypes occur in **both** baseline and candidate, so the candidate did not repair them. The manifest's accepted type is the comparator; there is no basis to silently relabel source truth or count these as correct.
+
+| Fixture | Locked expected type | Baseline and candidate emitted | Safe disposition |
+| --- | --- | --- | --- |
+| `commons-0064` | Jacket | Blazer (strong) | Require subtype review; preserve Outerwear category |
+| `commons-0014` | Blouse | Tunic (strong) | Require subtype review; preserve Tops category |
+| `commons-0078` | Sneakers | Ankle boots (strong) | Require subtype review; preserve Shoes category |
+
+A targeted uncertainty guard must be based on **real classifier evidence**, not on fixture IDs, exact photo hashes, or fabricated type conversions. It must also retain a valid, visible category and request review when the subtype is not reliable. A blanket change of all jackets/blouses/high-top shoes to `Unknown` is not an acceptable proven improvement without an independently measured false-abstention and mobile impact analysis. Therefore **no production subtype heuristic is changed in this milestone**.
+
+### Reproduction requirements for the next code change
+1. Reproduce all three failures in the pinned browser inference harness (`scripts/run-source-locked-recognition.mjs`), with original SHA-256 verification.
+2. Inspect top-k logits and agreement/confidence for competing subtypes on these photos **and matched correctly classified garments**, so the guard does not over-abstain.
+3. Implement a narrowly evidenced review fallback, without replacing correct type labels or weakening category/non-garment rejection.
+4. Rerun all 59 source-locked photos plus browser/mobile regression; compare false-autosave count, abstention count, latency and original-photo immutability.
+5. Keep promotion blocked unless zero unsafe autosaves and independent review are established.
