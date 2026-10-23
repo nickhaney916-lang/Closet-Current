@@ -10,6 +10,14 @@ const dress={placeholderOnly:true,originalPixelsRenderedAs3D:false,selected:[sel
 function show(label,ok){setFallback(!ok||renderer?.getState?.()?.lost===true);status.textContent=JSON.stringify({case:label,success:ok,state:renderer?.getState?.()??null,warning:'Synthetic metadata only; NOT authenticated original-photo verification or real garment textures'},null,2);}
 if(renderer)show('initialize',renderer.supported);else setFallback(true);
 canvas.addEventListener('webglcontextlost',()=>setFallback(true));
+canvas.addEventListener('webglcontextrestored',()=>{
+ if(renderer?.getState?.()?.lost!==true)return;
+ try{
+  renderer.dispose();
+  renderer=createDetailedHumanoid3D(canvas);
+  show('restored-empty',renderer.supported===true&&clearVerifiedHumanoidOutfit(renderer));
+ }catch(error){renderer=null;setFallback(true);status.textContent='3D restoration failed; 2D fallback required: '+error.message;}
+});
 document.querySelector('#outfit').onclick=()=>show('shirt-pants',applyVerifiedHumanoidOutfit(renderer,shirt));
 document.querySelector('#dress').onclick=()=>show('dress',applyVerifiedHumanoidOutfit(renderer,dress));
 document.querySelector('#rotate').onclick=()=>show('rotate',renderer?.rotate?.(Math.PI/2)===true);
