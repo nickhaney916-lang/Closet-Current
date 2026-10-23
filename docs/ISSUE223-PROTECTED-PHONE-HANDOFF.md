@@ -33,7 +33,10 @@ pins public/backend source to #220, then copies the sealed directory into a
 fresh outer envelope. Provenance and NEVER-DEPLOY labeling live OUTSIDE it.
 The final envelope inventory, provenance and inner asset seal are verified
 again. Added/changed files, linked/special entries, source drift and overwriting
-prior evidence are refused. The inventories are unsigned integrity records,
+prior evidence are refused. Camera CI now fetches full history so source-provenance tests can resolve the
+pinned ancestor; its previous shallow checkout correctly failed closed on a
+missing baseline object. No test assertion was bypassed. The inventories are
+unsigned integrity records,
 not authenticated approval or proof of hosted protection.
 
 CI uploads only a distinctly labeled SYNTHETIC-NEVER-DEPLOY tar plus checksum.
