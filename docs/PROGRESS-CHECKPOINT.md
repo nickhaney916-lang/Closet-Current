@@ -1,3 +1,41 @@
+# Restricted staging integration — October 22, 2026 (PR #189)
+
+**Current development candidate:** `integration/staging-security-reliability-20261022`. This branch selectively integrates PR #186's output-only Cloudflare support-page routing, PR #183's staging Auth QA evidence, and PR #187's Android logout fix. It targets staging packaging PR #181, never production `main`. Unlike the standalone route PR #186, **the combined branch intentionally changes `public/app.js` and `public/auth.js`**.
+
+**Independent review:** [issue #188](https://github.com/nickhaney916-lang/Closet-Current/issues/188) identified two P1 blockers. The first, risk of dropping unfinished photos when logout bypasses the browser unload warning, is addressed on this integration branch by a pre-signout app guard: when photo capture or recognition is busy, signout is blocked; with a draft, the latest account-bound IndexedDB write must succeed before the owner can be cleared, and rejected or quota-limited saves leave the account and photos open for Retry. Login remains locked after signout until the old document unloads. New source and regression tests need final exact-head validation. This guarantees only device-local draft persistence at the time of signout, **not** successful cloud/photo restoration or durability of Incognito storage after the tab is closed.
+
+The second issue was **CI infrastructure timeout** installing WebKit on the prior integrated head. The WebKit installation timeout was extended; final new-head browser CI pass is REQUIRED. Historical combined SHA `26ecdde7834b78b8b6ae264a95bb2c4142ebfbbb`: **1,641 Node passed, 0 failed, 3 skipped**, Chromium local route simulation passed; WebKit was **not run** because installation timed out. These counts **DO NOT describe the new commits**.
+
+An integration-only scope guard permits reviewed Auth/App and routing changes while pinning Supabase, original PR181 packaging, production-sensitive paths and paid-inference controls against baseline. The original single-issue scope guards are intentionally retained but are not valid when applied to a combined branch.
+
+**Still blocked before pilot promotion:** exact-head full Node/browser/scope CI success; real local disposable two-account test; separate hosted Cloudflare root/all-route protection, staging Auth anonymous-provider/callback audit and A/B isolation; Samsung logout/draft retest; independent iPhone and real garment/photo accuracy; no production or user deployment approval. No merges, Cloudflare uploads, database writes, paid services, or Drive Duel edits.
+
+---
+
+# Issue #185 staging support-route diagnosis — October 22, 2026
+
+Separate `fix/issue-185-staging-support-routes-20261022` from exact PR181
+`a42894cd2c7bf3ebc0019f69ba7112888e8fb04c`; original #181/#183/#184 branches and
+all customer `public/`, Supabase and deployment sources unchanged. The original
+PR181 ZIP has 93 correctly rooted files / 92 valid SHA-sealed assets and 77 valid
+local HTML asset/link targets. Exact-source rebuild reproduces its seal hash.
+Seven anonymous root/support .html/clean routes return Access 302; no hosted
+404/network failure or authenticated page contents verified here.
+
+Staging-output-only candidate handles cached canonical HTML redirects with
+strict same-origin/path/type checks, maps only existing release HTML clean URLs,
+keeps support links in the same tab and binds transform source to the immutable
+cache fingerprint. No Access/Auth policy, routing settings or production change.
+Full local Node **1,631 pass / 0 fail / 3 skipped**; 11 new route/seal/privacy unit
+checks pass. Branch-only real-worker Chromium baseline-negative / Chromium and
+WebKit candidate browser QA must be checked at final SHA in the issue/PR; unit
+passes do not prove browser behavior. No physical phone run or authenticated
+hosted restoration claimed. See `docs/ISSUE-185-STAGING-SUPPORT-ROUTES.md` for
+actual artifact hashes, confidence limits and read-only owner smoke checklist.
+No deployment, merge, hosted writes, paid use, customer data or Drive Duel work.
+
+---
+
 # Consolidated phone diagnostics and full-asset staging access — October 21, 2026
 
 - Integrated the independently verified **PR #167** offline original-photo phone-trial worksheet and **PR #165** complete SHA-256-sealed staging static asset access sweep in a new draft-only true two-parent development branch; original PRs remain unmodified. A source guard pins the five security implementation/workflow/test/document blobs exactly to #165, preserves the PR #167 phone tool, customer app, Supabase, production workflows, original-full-frame recognition-before-crop behavior, and existing release blockers.

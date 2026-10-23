@@ -1,0 +1,450 @@
+{
+  "format": "closet-current-staging-support-route-audit",
+  "version": 1,
+  "bundleFingerprint": "9473c14af19b",
+  "backendProjectRef": "fbnplztkbsteuzrmbgib",
+  "stagingOrigin": "https://pilot-access-check.closet-current-staging.pages.dev/",
+  "sealSha256": "6b482e98100196119d3002c283cbb1afe6ec4737a2b07a7fc2ad264f11099338",
+  "rootIndexPresent": true,
+  "requiredPages": [
+    {
+      "path": "index.html",
+      "bytes": 36805,
+      "sha256": "3d1079cef4094098fc2e343c6314f507b7c12489b68c88946143da7fb0f6e86d"
+    },
+    {
+      "path": "phone-photo-check.html",
+      "bytes": 3423,
+      "sha256": "22636234858a74096c2c39f3286ba03e135ca097062403bfa1baefd75b547b47"
+    },
+    {
+      "path": "pilot-data-notice.html",
+      "bytes": 4118,
+      "sha256": "4b910b04c4c717de0dbe17d0dd0c63eef481d98e63fc27d927bb929839f1582f"
+    },
+    {
+      "path": "saved-closet-audit.html",
+      "bytes": 6756,
+      "sha256": "3446288321ee3f503a19f96da604d41d99f919da762b2c540e374446678823a0"
+    }
+  ],
+  "htmlPages": [
+    "benchmark.html",
+    "index.html",
+    "phone-photo-check.html",
+    "pilot-data-notice.html",
+    "saved-closet-audit.html"
+  ],
+  "links": [
+    {
+      "from": "benchmark.html",
+      "target": "/benchmark-runner.mjs",
+      "resolvesTo": "benchmark-runner.mjs"
+    },
+    {
+      "from": "benchmark.html",
+      "target": "/photo-color.js",
+      "resolvesTo": "photo-color.js"
+    },
+    {
+      "from": "index.html",
+      "target": "/ai-models/female-preview.webp",
+      "resolvesTo": "ai-models/female-preview.webp"
+    },
+    {
+      "from": "index.html",
+      "target": "/ai-models/female-preview.webp",
+      "resolvesTo": "ai-models/female-preview.webp"
+    },
+    {
+      "from": "index.html",
+      "target": "/ai-tryon-plan.js?v=9473c14af19b",
+      "resolvesTo": "ai-tryon-plan.js"
+    },
+    {
+      "from": "index.html",
+      "target": "/ai-tryon.js?v=9473c14af19b",
+      "resolvesTo": "ai-tryon.js"
+    },
+    {
+      "from": "index.html",
+      "target": "/app-theme.css?v=9473c14af19b",
+      "resolvesTo": "app-theme.css"
+    },
+    {
+      "from": "index.html",
+      "target": "/app.js?v=9473c14af19b",
+      "resolvesTo": "app.js"
+    },
+    {
+      "from": "index.html",
+      "target": "/auth.js?v=9473c14af19b",
+      "resolvesTo": "auth.js"
+    },
+    {
+      "from": "index.html",
+      "target": "/capture-navigation.js?v=9473c14af19b",
+      "resolvesTo": "capture-navigation.js"
+    },
+    {
+      "from": "index.html",
+      "target": "/capture.js?v=9473c14af19b",
+      "resolvesTo": "capture.js"
+    },
+    {
+      "from": "index.html",
+      "target": "/closet-browser.js?v=9473c14af19b",
+      "resolvesTo": "closet-browser.js"
+    },
+    {
+      "from": "index.html",
+      "target": "/closet-neutral-matte.js?v=9473c14af19b",
+      "resolvesTo": "closet-neutral-matte.js"
+    },
+    {
+      "from": "index.html",
+      "target": "/closet-rack-engine.js?v=9473c14af19b",
+      "resolvesTo": "closet-rack-engine.js"
+    },
+    {
+      "from": "index.html",
+      "target": "/closet-review-engine.js?v=9473c14af19b",
+      "resolvesTo": "closet-review-engine.js"
+    },
+    {
+      "from": "index.html",
+      "target": "/closet-stylist-engine.js?v=9473c14af19b",
+      "resolvesTo": "closet-stylist-engine.js"
+    },
+    {
+      "from": "index.html",
+      "target": "/closet-stylist.js?v=9473c14af19b",
+      "resolvesTo": "closet-stylist.js"
+    },
+    {
+      "from": "index.html",
+      "target": "/closet-tile-engine.js?v=9473c14af19b",
+      "resolvesTo": "closet-tile-engine.js"
+    },
+    {
+      "from": "index.html",
+      "target": "/closet-white-matte.js?v=9473c14af19b",
+      "resolvesTo": "closet-white-matte.js"
+    },
+    {
+      "from": "index.html",
+      "target": "/clothing-details.js?v=9473c14af19b",
+      "resolvesTo": "clothing-details.js"
+    },
+    {
+      "from": "index.html",
+      "target": "/clothing-memory.js?v=9473c14af19b",
+      "resolvesTo": "clothing-memory.js"
+    },
+    {
+      "from": "index.html",
+      "target": "/cloud-backup-bridge.js?v=9473c14af19b",
+      "resolvesTo": "cloud-backup-bridge.js"
+    },
+    {
+      "from": "index.html",
+      "target": "/cloud-backup-engine.js?v=9473c14af19b",
+      "resolvesTo": "cloud-backup-engine.js"
+    },
+    {
+      "from": "index.html",
+      "target": "/cloud-backup.js?v=9473c14af19b",
+      "resolvesTo": "cloud-backup.js"
+    },
+    {
+      "from": "index.html",
+      "target": "/dark-studio-garment-mask.js?v=9473c14af19b",
+      "resolvesTo": "dark-studio-garment-mask.js"
+    },
+    {
+      "from": "index.html",
+      "target": "/device-check-engine.js?v=9473c14af19b",
+      "resolvesTo": "device-check-engine.js"
+    },
+    {
+      "from": "index.html",
+      "target": "/device-check.js?v=9473c14af19b",
+      "resolvesTo": "device-check.js"
+    },
+    {
+      "from": "index.html",
+      "target": "/figure-preview-cache.js?v=9473c14af19b",
+      "resolvesTo": "figure-preview-cache.js"
+    },
+    {
+      "from": "index.html",
+      "target": "/garment-display-preview.js?v=9473c14af19b",
+      "resolvesTo": "garment-display-preview.js"
+    },
+    {
+      "from": "index.html",
+      "target": "/garment-fidelity-review.js?v=9473c14af19b",
+      "resolvesTo": "garment-fidelity-review.js"
+    },
+    {
+      "from": "index.html",
+      "target": "/garment-fit-geometry.js?v=9473c14af19b",
+      "resolvesTo": "garment-fit-geometry.js"
+    },
+    {
+      "from": "index.html",
+      "target": "/garment-mask-engine.js?v=9473c14af19b",
+      "resolvesTo": "garment-mask-engine.js"
+    },
+    {
+      "from": "index.html",
+      "target": "/garment-pose-normalizer.js?v=9473c14af19b",
+      "resolvesTo": "garment-pose-normalizer.js"
+    },
+    {
+      "from": "index.html",
+      "target": "/icons/apple-touch-icon.png",
+      "resolvesTo": "icons/apple-touch-icon.png"
+    },
+    {
+      "from": "index.html",
+      "target": "/icons/icon-192.png",
+      "resolvesTo": "icons/icon-192.png"
+    },
+    {
+      "from": "index.html",
+      "target": "/local-garment-edge-finish.js?v=9473c14af19b",
+      "resolvesTo": "local-garment-edge-finish.js"
+    },
+    {
+      "from": "index.html",
+      "target": "/local-garment-warp.js?v=9473c14af19b",
+      "resolvesTo": "local-garment-warp.js"
+    },
+    {
+      "from": "index.html",
+      "target": "/local-layer-depth.js?v=9473c14af19b",
+      "resolvesTo": "local-layer-depth.js"
+    },
+    {
+      "from": "index.html",
+      "target": "/local-layer-visibility.js?v=9473c14af19b",
+      "resolvesTo": "local-layer-visibility.js"
+    },
+    {
+      "from": "index.html",
+      "target": "/local-preview-sampling.js?v=9473c14af19b",
+      "resolvesTo": "local-preview-sampling.js"
+    },
+    {
+      "from": "index.html",
+      "target": "/local-transparent-foreground-safety.js?v=9473c14af19b",
+      "resolvesTo": "local-transparent-foreground-safety.js"
+    },
+    {
+      "from": "index.html",
+      "target": "/manifest.webmanifest",
+      "resolvesTo": "manifest.webmanifest"
+    },
+    {
+      "from": "index.html",
+      "target": "/navigation.js?v=9473c14af19b",
+      "resolvesTo": "navigation.js"
+    },
+    {
+      "from": "index.html",
+      "target": "/outfit-board-engine.js?v=9473c14af19b",
+      "resolvesTo": "outfit-board-engine.js"
+    },
+    {
+      "from": "index.html",
+      "target": "/outfit-board.js?v=9473c14af19b",
+      "resolvesTo": "outfit-board.js"
+    },
+    {
+      "from": "index.html",
+      "target": "/outfit-capture.js?v=9473c14af19b",
+      "resolvesTo": "outfit-capture.js"
+    },
+    {
+      "from": "index.html",
+      "target": "/outfit-matcher.js?v=9473c14af19b",
+      "resolvesTo": "outfit-matcher.js"
+    },
+    {
+      "from": "index.html",
+      "target": "/phone-photo-check.html",
+      "resolvesTo": "phone-photo-check.html"
+    },
+    {
+      "from": "index.html",
+      "target": "/photo-check.js?v=9473c14af19b",
+      "resolvesTo": "photo-check.js"
+    },
+    {
+      "from": "index.html",
+      "target": "/photo-color.js?v=9473c14af19b",
+      "resolvesTo": "photo-color.js"
+    },
+    {
+      "from": "index.html",
+      "target": "/photo-crop-editor.js?v=9473c14af19b",
+      "resolvesTo": "photo-crop-editor.js"
+    },
+    {
+      "from": "index.html",
+      "target": "/photo-crop-engine.js?v=9473c14af19b",
+      "resolvesTo": "photo-crop-engine.js"
+    },
+    {
+      "from": "index.html",
+      "target": "/photo-import.js?v=9473c14af19b",
+      "resolvesTo": "photo-import.js"
+    },
+    {
+      "from": "index.html",
+      "target": "/pilot-data-notice.html",
+      "resolvesTo": "pilot-data-notice.html"
+    },
+    {
+      "from": "index.html",
+      "target": "/pilot-data-notice.html",
+      "resolvesTo": "pilot-data-notice.html"
+    },
+    {
+      "from": "index.html",
+      "target": "/pilot-data-notice.html",
+      "resolvesTo": "pilot-data-notice.html"
+    },
+    {
+      "from": "index.html",
+      "target": "/pilot-notice.js?v=9473c14af19b",
+      "resolvesTo": "pilot-notice.js"
+    },
+    {
+      "from": "index.html",
+      "target": "/pwa.js?v=9473c14af19b",
+      "resolvesTo": "pwa.js"
+    },
+    {
+      "from": "index.html",
+      "target": "/reusable-figure-engine.js?v=9473c14af19b",
+      "resolvesTo": "reusable-figure-engine.js"
+    },
+    {
+      "from": "index.html",
+      "target": "/reusable-figure-preview.js?v=9473c14af19b",
+      "resolvesTo": "reusable-figure-preview.js"
+    },
+    {
+      "from": "index.html",
+      "target": "/saved-closet-audit.html",
+      "resolvesTo": "saved-closet-audit.html"
+    },
+    {
+      "from": "index.html",
+      "target": "/source-guided-mask-refinement.js?v=9473c14af19b",
+      "resolvesTo": "source-guided-mask-refinement.js"
+    },
+    {
+      "from": "index.html",
+      "target": "/style.css?v=9473c14af19b",
+      "resolvesTo": "style.css"
+    },
+    {
+      "from": "index.html",
+      "target": "/taxonomy.js?v=9473c14af19b",
+      "resolvesTo": "taxonomy.js"
+    },
+    {
+      "from": "index.html",
+      "target": "/trend-library.js?v=9473c14af19b",
+      "resolvesTo": "trend-library.js"
+    },
+    {
+      "from": "index.html",
+      "target": "/trends.js?v=9473c14af19b",
+      "resolvesTo": "trends.js"
+    },
+    {
+      "from": "index.html",
+      "target": "/wardrobe-backup-engine.js?v=9473c14af19b",
+      "resolvesTo": "wardrobe-backup-engine.js"
+    },
+    {
+      "from": "index.html",
+      "target": "/wardrobe-backup.js?v=9473c14af19b",
+      "resolvesTo": "wardrobe-backup.js"
+    },
+    {
+      "from": "phone-photo-check.html",
+      "target": "/",
+      "resolvesTo": "index.html"
+    },
+    {
+      "from": "phone-photo-check.html",
+      "target": "/phone-photo-check.mjs?v=9473c14af19b",
+      "resolvesTo": "phone-photo-check.mjs"
+    },
+    {
+      "from": "phone-photo-check.html",
+      "target": "/photo-import.js?v=9473c14af19b",
+      "resolvesTo": "photo-import.js"
+    },
+    {
+      "from": "pilot-data-notice.html",
+      "target": "/",
+      "resolvesTo": "index.html"
+    },
+    {
+      "from": "pilot-data-notice.html",
+      "target": "/",
+      "resolvesTo": "index.html"
+    },
+    {
+      "from": "pilot-data-notice.html",
+      "target": "/style.css",
+      "resolvesTo": "style.css"
+    },
+    {
+      "from": "saved-closet-audit.html",
+      "target": "/",
+      "resolvesTo": "index.html"
+    },
+    {
+      "from": "saved-closet-audit.html",
+      "target": "/saved-closet-audit-engine.js?v=9473c14af19b",
+      "resolvesTo": "saved-closet-audit-engine.js"
+    },
+    {
+      "from": "saved-closet-audit.html",
+      "target": "/saved-closet-audit.js?v=9473c14af19b",
+      "resolvesTo": "saved-closet-audit.js"
+    }
+  ],
+  "integrity": {
+    "format": "closet-current-static-artifact-review",
+    "fileCount": 93,
+    "entriesChecked": 95,
+    "buildLockAbsent": true,
+    "abandonedCandidateAbsent": true,
+    "linkedFilesAbsent": true,
+    "knownLiveServiceRefsAbsent": true,
+    "permittedToDeploy": false,
+    "productionPromotion": "BLOCKED"
+  },
+  "seal": {
+    "format": "closet-current-staging-asset-sha256",
+    "assetCount": 92,
+    "totalBytes": 3121074,
+    "allAssetBytesVerified": true,
+    "manifestSelfContained": true,
+    "signed": false,
+    "hostedStagingVerified": false,
+    "permittedToDeploy": false,
+    "productionPromotion": "BLOCKED"
+  },
+  "paidAIHardBlocked": true,
+  "hostedRoutesVerified": false,
+  "deployAuthorized": false
+}

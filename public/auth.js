@@ -20,7 +20,10 @@
  const ready=new Promise((resolve,reject)=>{resolveReady=resolve;rejectReady=reject;});
  window.closetAuth={ready,user:null};
  let signup=false,session=null,busy=false,recovery=false,restoringSession=false,refreshing=null;
- let authVersion=0,loggingOut=false;
+ let authVersion=0,loggingOut=false,preparingLogout=false;
+ // An intentional sign-out already locks the private account. Do not
+ // interrupt its cleanup reload with the unfinished-photo unload warning.
+ window.closetAuth.isSigningOut=()=>loggingOut;
  window.closetAuth.getAccessToken=async({force=false}={})=>{
   if(loggingOut||!session?.access_token||!window.closetAuth.user?.id)throw Error('Sign in required');
   if(force||session.expires_at<Date.now()/1000+60){
@@ -196,7 +199,22 @@
   catch(err){status(errorMessage(err));}finally{setBusy(false);}
  };
  $('logout').onclick=async()=>{
-  if(loggingOut)return;
+  if(loggingOut||preparingLogout)return;
+  // Persist unfinished account-bound photo drafts BEFORE clearing the owner,
+  // otherwise a queued IndexedDB transaction can be rejected as a stale user.
+  if(typeof window.closetAuth.beforeSignOut==='function'){
+   preparingLogout=true;$('logout').disabled=true;
+   try{
+    const safe=await window.closetAuth.beforeSignOut();
+    if(safe!==true)return; // Keep account and in-memory photos available.
+   }catch{
+    status('Could not safely save unfinished photos. Keep the app open and try again.');
+    return;
+   }finally{
+    preparingLogout=false;
+    if(!loggingOut)$('logout').disabled=false;
+   }
+  }
   loggingOut=true;authVersion++;
   const token=session?.access_token;
   // Invalidate locally before awaiting a remote logout or a pending refresh.
@@ -209,6 +227,16 @@
    localStorage.removeItem(STORE);
    // Reload closes the old IndexedDB connection and in-memory images.
    location.reload();
+   // If navigation is canceled, keep the old account locked and offer
+   // only a reload, never a new login in a stale document.
+   setTimeout(()=>{
+    if(!loggingOut)return;
+    status('Signed out. Reload to finish clearing the previous account before signing in.');
+    const retry=$('authRetry');
+    retry.textContent='Finish signing out';
+    retry.hidden=false;retry.disabled=false;
+    retry.onclick=()=>location.reload();
+   },500);
   }
  };
  setMode(false);
