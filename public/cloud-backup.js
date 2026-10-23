@@ -65,6 +65,9 @@
   }finally{syncing=false;}
  }
  window.closetCloud={
+  // Read-only source for the authenticated avatar preflight. Do not expose a
+  // cloud owner after pagehide, before start, or when the Auth user changes.
+  getOwnerId(database){return enabled&&db===database&&window.closetAuth?.user?.id===user?user:null;},
   async start(database,settings){db=database;callbacks=settings||{};user=window.closetAuth?.user?.id;enabled=!!db&&typeof window.closetAuth?.getAccessToken==='function'&&/^[a-f0-9-]{36}$/i.test(user||'');if(!enabled)return;
    navigator.storage?.persist?.().catch(()=>{});const button=document.getElementById('syncCloset');if(button){button.hidden=false;button.onclick=()=>sync();}const resolveButton=document.getElementById('resolveCloudConflict');if(resolveButton)resolveButton.onclick=()=>sync({keepBoth:true});await sync();
   },
