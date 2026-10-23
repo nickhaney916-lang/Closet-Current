@@ -18,3 +18,10 @@ test('unverified, duplicate, incomplete and missing color selections fail closed
   assert.throws(()=>toVerifiedHumanoidColors(bad));
  }
 });
+
+test('unselected renderer layers and conflicting dress outerwear are rejected',()=>{
+ const top=source('top','a');
+ assert.throws(()=>toVerifiedHumanoidColors({placeholderOnly:true,selected:[top],colors:{top:red,layer:blue},hasDress:false}),/Unselected/);
+ assert.throws(()=>toVerifiedHumanoidColors({placeholderOnly:true,selected:[top,source('layer2','coat')],colors:{top:red,layer2:blue},hasDress:true}),/Invalid dress/);
+ assert.throws(()=>toVerifiedHumanoidColors({placeholderOnly:true,selected:[{...top,slot:'unknown'}],colors:{top:red},hasDress:false}));
+});
