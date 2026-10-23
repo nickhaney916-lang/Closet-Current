@@ -1,0 +1,51 @@
+name: Family Alpha #15 three outfits and one-piece swaps (NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'research/family-alpha-15/**'
+      - 'tests/family-alpha-15-three-outfits.test.mjs'
+      - 'scripts/test-family-alpha-15-browser.mjs'
+      - 'docs/FAMILY-ALPHA-15-THREE-OUTFITS-SWAP.md'
+      - '.github/workflows/family-alpha-15-swap-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  node:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Build local test output only; never deploy
+        run: node scripts/build.mjs
+      - name: Run full available Node regression suite, including source and security tests
+        run: node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Fence changes to Assignment 15 only
+        run: |
+          git fetch origin "${{ github.base_ref }}" --depth=1
+          git diff --name-only "origin/${{ github.base_ref }}...HEAD" | tee /tmp/alpha15-files
+          if grep -Ev '^(research/family-alpha-15/|tests/family-alpha-15-three-outfits.test.mjs$|scripts/test-family-alpha-15-browser.mjs$|docs/FAMILY-ALPHA-15-THREE-OUTFITS-SWAP.md$|\.github/workflows/family-alpha-15-swap-no-deploy.yml$)' /tmp/alpha15-files; then exit 1; fi
+  mobile-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Install test-only Playwright without changing lockfile
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+      - name: Run Chromium and WebKit, 320 390 430 px, synthetic saved photo layers
+        run: node scripts/test-family-alpha-15-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: family-alpha-15-synthetic-swap-matrix
+          path: benchmark/family-alpha-15/results.json
+          retention-days: 14
