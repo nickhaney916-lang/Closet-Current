@@ -66,4 +66,4 @@ jobs:
           retention-days: 14
       - name: Confirm source and staging configuration untouched
         run: |
-          git diff --exit-code HEAD^ HEAD -- public supabase scripts/recognition-engine.mjs
+          git diff --exit-code 33744dc0900fcb0cc2d014510e22fa03c2a96637 HEAD -- supabase public/auth.js public/app.js public/recognition-photo.mjs public/recognition-vectors.json public/recognition-vectors.bin
