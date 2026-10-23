@@ -8,10 +8,11 @@ function engines(){
  const c={URL,Date,encodeURIComponent};
  vm.createContext(c);
  for(const path of ['outfit-matcher.js','outfit-board-engine.js','closet-stylist-engine.js'])vm.runInContext(readFileSync('public/'+path,'utf8'),c);
+ vm.runInContext('this.findSlot=id=>outfitSlots.find(x=>x.id===id)',c);
  return {
   generate:(items,request)=>c.styleOwnedCollection(items,request,null),
   cleanBoard:(board,items)=>c.cleanOutfitBoard(board,items),
-  slotAllows:(slot,item)=>Boolean(c.outfitSlots.find(s=>s.id===slot&&c.slotAllows(s,item)))
+  slotAllows:(slot,item)=>Boolean(c.findSlot(slot)&&c.slotAllows(c.findSlot(slot),item))
  };
 }
 function photo(value){return 'data:image/jpeg;base64,'+Buffer.from([255,216,255,224,...Buffer.from(value),255,217]).toString('base64');}
