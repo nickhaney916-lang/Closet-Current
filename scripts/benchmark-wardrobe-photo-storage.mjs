@@ -157,13 +157,19 @@ try{
      const memoCloudEncodeMs=tick()-start;
      if(JSON.stringify(memoDoc)!==JSON.stringify(baselineDocument))throw Error('Memoized encoding changed source/owner/path');
      // Bounded candidate (max 64 photo references), independent of the app.
-     const {memoizeExactImageEncodes}=await import('/issue235-photo-memo.mjs');
+     const {memoizeExactImageEncodes,memoizeRepeatedImageEncodes}=await import('/issue235-photo-memo.mjs');
      const boundedMemo=memoizeExactImageEncodes(makePath,{maxEntries:64});
      start=tick();const boundedDocument=await ClosetBackupEngine.mapImages(cloudSnapshot,boundedMemo.mapImage);
      const boundedCloudEncodeMs=tick()-start,boundedStats=boundedMemo.stats();
      if(JSON.stringify(boundedDocument)!==JSON.stringify(baselineDocument))throw Error('Bounded cache changed photo provenance or cloud JSON');
      if(boundedStats.retainedEntries>64)throw Error('Memo retained too many photo references');
      boundedMemo.clear();
+     const repeated=memoizeRepeatedImageEncodes(cloudSnapshot,makePath);
+     start=tick();const repeatedDocument=await ClosetBackupEngine.mapImages(cloudSnapshot,repeated.mapImage);
+     const repeatedOnlyCloudEncodeMs=tick()-start,repeatedStats=repeated.stats();
+     if(JSON.stringify(repeatedDocument)!==JSON.stringify(baselineDocument))throw Error('Repeated-only SHA optimization changed source bytes/path');
+     if(repeatedStats.pending!==0)throw Error('Repeated-only SHA cache retained photo references');
+     repeated.clear();
      // Large JPEG within the 8 MiB bucket limit, using synthetic canvas bytes.
      const largeStart=tick();
      const large=document.createElement('canvas');large.width=2048;large.height=3072;
@@ -181,7 +187,7 @@ try{
      return {garments:size,setupMs,idbWriteMs,idbReadMs,closetDomBuildMs,closetCardCount,
       savedOutfitRestoreMs,savedOutfitCount:restored.length,deletionRestoreMs,encodedChars,
       retainedJpegBytesApprox:decodedJpegBytes,estimatedAllImagesDecodedRGBABytes:estimateDecodedRGBABytes,
-      exactDistinctImages:uniqueUrls.size,cloudEncodeMs,memoCloudEncodeMs,boundedCloudEncodeMs,boundedShaOperations:boundedStats.uniqueCalls,boundedCacheHits:boundedStats.hits,boundedRetainedEntries:boundedStats.retainedEntries,shaOperations:visits,memoShaOperations:memoHashes,
+      exactDistinctImages:uniqueUrls.size,cloudEncodeMs,memoCloudEncodeMs,boundedCloudEncodeMs,boundedShaOperations:boundedStats.uniqueCalls,boundedCacheHits:boundedStats.hits,boundedRetainedEntries:boundedStats.retainedEntries,repeatedOnlyCloudEncodeMs,repeatedOnlyShaOperations:repeatedStats.hashes,repeatedOnlyCacheHits:repeatedStats.hits,repeatedOnlyPeakPending:repeatedStats.peakPending,shaOperations:visits,memoShaOperations:memoHashes,
       cloudSerializedBytes,largeJpegBytes,largePhotoGenerationMs,transactionAbortPreserved:true,
       quotaInjectedRecovered:true,deletedSourcePruned:true,duplicateSourcesPresent:uniqueUrls.size<visits,
       heapBefore,heapAfter,storageEstimate:await navigator.storage?.estimate?.().catch(()=>null)||null,
@@ -197,7 +203,7 @@ try{
     process.stdout.write('STORAGE_BENCH '+JSON.stringify({browser:browserName,garments:size,
       idbWriteMs:+measures.idbWriteMs.toFixed(2),idbReadMs:+measures.idbReadMs.toFixed(2),
       closetDomBuildMs:+measures.closetDomBuildMs.toFixed(2),savedOutfitRestoreMs:+measures.savedOutfitRestoreMs.toFixed(2),
-      cloudEncodeMs:+measures.cloudEncodeMs.toFixed(2),memoCloudEncodeMs:+measures.memoCloudEncodeMs.toFixed(2),boundedCloudEncodeMs:+measures.boundedCloudEncodeMs.toFixed(2),boundedShaOperations:measures.boundedShaOperations,boundedCacheHits:measures.boundedCacheHits,
+      cloudEncodeMs:+measures.cloudEncodeMs.toFixed(2),memoCloudEncodeMs:+measures.memoCloudEncodeMs.toFixed(2),boundedCloudEncodeMs:+measures.boundedCloudEncodeMs.toFixed(2),boundedShaOperations:measures.boundedShaOperations,boundedCacheHits:measures.boundedCacheHits,repeatedOnlyCloudEncodeMs:+measures.repeatedOnlyCloudEncodeMs.toFixed(2),repeatedOnlyShaOperations:measures.repeatedOnlyShaOperations,repeatedOnlyPeakPending:measures.repeatedOnlyPeakPending,
       retainedJpegBytesApprox:measures.retainedJpegBytesApprox,cloudSerializedBytes:measures.cloudSerializedBytes,
       distinctImages:measures.exactDistinctImages,shaOperations:measures.shaOperations,memoHashes:measures.memoShaOperations,
       largeJpegBytes:measures.largeJpegBytes})+'\n');
