@@ -25,6 +25,11 @@ jobs:
           node scripts/build.mjs
           node --test tests/*.test.cjs tests/*.test.mjs
           node scripts/check-customer-pilot-release-gates.mjs
+      - name: Use official Ubuntu mirror for ephemeral browser dependencies
+        run: |
+          if test -f /etc/apt/sources.list.d/ubuntu.sources; then
+            sudo sed -i 's|http://azure.archive.ubuntu.com/ubuntu|http://archive.ubuntu.com/ubuntu|g' /etc/apt/sources.list.d/ubuntu.sources
+          fi
       - name: Install isolated browser test engines
         run: |
           npm install --no-save --no-package-lock playwright
