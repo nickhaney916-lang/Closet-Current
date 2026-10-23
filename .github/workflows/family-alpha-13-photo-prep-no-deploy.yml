@@ -16,7 +16,7 @@ jobs:
       - name: Safety source fence and pinned read-only PR256 source contract
         run: |
           git diff --exit-code 54c9e29ede069a05d1268e003f80cbda043c7d6a HEAD -- public supabase benchmark
-          git diff --name-only 54c9e29ede069a05d1268e003f80cbda043c7d6a HEAD | grep -vE '^(research/family-alpha-13/|tests/family-alpha-13-garment-prep.test.mjs|scripts/test-family-alpha-13-mobile.mjs|docs/FAMILY-ALPHA-13-PHOTO-PREP-AUDIT.md|\.github/workflows/family-alpha-13-photo-prep-no-deploy.yml)$' && exit 1 || test "$?" -eq 1
+          git diff --name-only 54c9e29ede069a05d1268e003f80cbda043c7d6a HEAD | grep -vE '^(research/family-alpha-13/.*|tests/family-alpha-13-garment-prep.test.mjs|scripts/test-family-alpha-13-mobile.mjs|docs/FAMILY-ALPHA-13-PHOTO-PREP-AUDIT.md|\.github/workflows/family-alpha-13-photo-prep-no-deploy.yml)$' && exit 1 || test "$?" -eq 1
           test "$(git hash-object research/family-alpha-13/reference/family-alpha-2d-layer-plan.mjs)" = "85781889229b325a70ac60e4c85e0b9ced6119b9"
           test "$(git hash-object research/family-alpha-13/reference/family-alpha-2d-photo-renderer.mjs)" = "837d45cc8970f71830df991e8feec437918a457a"
       - name: Build unchanged main app without deploying
