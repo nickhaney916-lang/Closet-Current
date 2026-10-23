@@ -58,7 +58,12 @@ jobs:
   browsers:
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    container:
+      # Official Playwright 1.56.1 Noble image, registry digest independently checked.
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
     env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
       CLOSET_STAGING_APP_ORIGIN: https://preview.closet-current-staging.pages.dev/
       CLOSET_STAGING_SUPABASE_URL: https://abcdefghijklmnopqrst.supabase.co
       CLOSET_STAGING_SUPABASE_PUBLISHABLE_KEY: sb_publishable_STAGING_TEST_FIXTURE_XYZ001
@@ -70,9 +75,7 @@ jobs:
       - run: |
           node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json
           node scripts/build-restricted-staging.mjs
-          sudo sed -i 's|http://azure.archive.ubuntu.com/ubuntu|http://archive.ubuntu.com/ubuntu|g' /etc/apt/sources.list.d/ubuntu.sources
           npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
-          npx playwright install --with-deps chromium webkit
       - name: Generated protected-output runtime and installed Chromium worker
         run: |
           node scripts/test-staging-runtime-browsers.mjs

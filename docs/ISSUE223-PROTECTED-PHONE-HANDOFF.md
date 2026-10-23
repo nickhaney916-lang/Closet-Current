@@ -35,8 +35,9 @@ The final envelope inventory, provenance and inner asset seal are verified
 again. Added/changed files, linked/special entries, source drift and overwriting
 prior evidence are refused. Camera CI now fetches full history so source-provenance tests can resolve the
 pinned ancestor; its previous shallow checkout correctly failed closed on a
-missing baseline object. No test assertion was bypassed. The inventories are
-unsigned integrity records,
+missing baseline object. No test assertion was bypassed. Browser CI uses the official Playwright 1.56.1 Noble image pinned by registry
+digest to avoid a long hosted apt/dependency setup stall. The npm version and
+all browser assertions remain unchanged. The inventories are unsigned integrity records,
 not authenticated approval or proof of hosted protection.
 
 The original #222 workflow is also repaired to use this final envelope, so a
