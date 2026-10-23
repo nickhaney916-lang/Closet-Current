@@ -77,3 +77,11 @@ test('empty and duplicate saved garment selections never bypass fallback validat
  const result=await resolveSavedOutfitPresentation({...envelope,board:{slots:{top:'shirt',bottom:'shirt'}}},[item(2)],'owner',owns,webcrypto);
  assert.equal(result.mode,'unavailable');
 });
+
+test('unexpected verifier exceptions fail closed rather than exposing a 2D board',async()=>{
+ const saved=await verifyCapturedOutfitBoard(board,[item(1)],'owner',owns,webcrypto);
+ const envelope=createVerifiedOutfitEnvelope(board,saved);
+ const result=await resolveSavedOutfitPresentation(envelope,[item(1)],'owner',()=>{throw Error('Unexpected storage failure')},webcrypto);
+ assert.equal(result.mode,'unavailable');
+ assert.equal(result.board,undefined);
+});
