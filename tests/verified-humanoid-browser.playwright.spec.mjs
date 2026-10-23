@@ -109,3 +109,25 @@ test('WebGL context loss fails closed without stale garment geometry',async({pag
  expect(JSON.parse(await status.textContent()).success).toBe(false);
  expect(errors).toEqual([]);
 });
+
+test('restoring synthetic WebGL context recreates empty renderer without old account garments',async({page})=>{
+ const errors=[];page.on('pageerror',error=>errors.push(error.message));
+ await page.goto(base+'/verified-humanoid-browser-fixture.html');
+ expect(JSON.parse(await page.locator('#status').textContent()).success).toBe(true);
+ await page.locator('#outfit').click();
+ await page.locator('#avatar').evaluate(canvas=>canvas.dispatchEvent(new Event('webglcontextlost',{cancelable:true})));
+ await expect(page.locator('#fallback')).toBeVisible();
+ await page.locator('#avatar').evaluate(canvas=>canvas.dispatchEvent(new Event('webglcontextrestored')));
+ const recovered=JSON.parse(await page.locator('#status').textContent());
+ expect(recovered.case).toBe('restored-empty');
+ expect(recovered.success).toBe(true);
+ expect(recovered.state.lost).toBe(false);
+ expect(recovered.state.layers).toEqual([]);
+ await expect(page.locator('#fallback')).toBeHidden();
+ await page.locator('#dress').click();
+ const next=JSON.parse(await page.locator('#status').textContent());
+ expect(next.success).toBe(true);
+ expect(next.state.layers).toContain('dress');
+ expect(next.state.layers).not.toContain('top');
+ expect(errors).toEqual([]);
+});
