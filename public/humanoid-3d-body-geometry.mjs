@@ -32,7 +32,7 @@ export function taperedLimb({x=0,z=0,top,bottom,rTop,rBottom,depth=0.82,lean=0,s
   circle.push(ring);
  }
  for(let k=0;k<rings;k++)for(let i=0;i<segments;i++){
-  const a=circle[k][i],b=circle[k][(i+1)%segments.length],c=circle[k+1][i],d=circle[k+1][(i+1)%segments.length];
+  const a=circle[k][i],b=circle[k][(i+1)%segments],c=circle[k+1][i],d=circle[k+1][(i+1)%segments];
   pushTriangle(a,b,c,out);pushTriangle(b,d,c,out);
  }
  cap(out,circle[0],[x,top,z],true);
