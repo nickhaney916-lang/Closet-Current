@@ -49,3 +49,9 @@ test('reject zero, fractional, and oversized original dimensions before processi
   assert.throws(()=>prepareSavedOutfitItem({accountId,...item,original:{...original,width,height}}),/Invalid original photo dimensions/);
  }
 });
+
+test('missing and malformed matching hashes cannot bypass original photo identity validation',()=>{
+ for(const bad of [undefined,'', 'not-a-sha256']){
+  assert.throws(()=>prepareSavedOutfitItem({accountId,...item,record:{...record,originalSha256:bad},original:{...original,originalSha256:bad},reviewedMask:{...reviewedMask,originalSha256:bad}}),/Missing valid original integrity hash/);
+ }
+});
