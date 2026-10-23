@@ -76,7 +76,12 @@ function adjustPhoto(item){
  if(stream||cameraOpening)stopCamera();
  const dialog=document.createElement('dialog');dialog.className='photo-adjust clothing-editor';
  const form=node('form'),draft=structuredClone(item),collect=clothingFields(form,draft);
- const evidence=item.recognitionDiagnostics?.outerwearRecovery;
+  const photoReference=node('figure',null,'mobile-adjust-reference'),referenceImage=node('img');
+  referenceImage.src=item.image;referenceImage.alt='Clothing photo being reviewed';
+  referenceImage.loading='eager';
+  photoReference.append(referenceImage,node('figcaption','Review the original clothing appearance while adjusting its details.'));
+  form.prepend(photoReference);
+  const evidence=item.recognitionDiagnostics?.outerwearRecovery;
  if(evidence?.outerwearReviewSuggested&&draft.category!=='Outerwear'){
   const suggestion=node('div',null,'recognition-review-suggestion');
   const proposedType=evidence.fullCatalogEvidence?.whole?.top?.[0]?.type;
@@ -176,8 +181,9 @@ function stopCamera(){
  if(stream)stream.getTracks().forEach(t=>t.stop());
  stream=null;cameraMode=null;video.srcObject=null;video.classList.remove('visible');
  $('placeholder').hidden=false;$('cameraChoices').hidden=false;$('cameraActions').hidden=true;
- controls(false);$('captureState').textContent='Camera stopped · your photos are ready to review';
+ controls(false);$('captureState').textContent='Camera stopped · your photos are ready to review';announceCapture('Camera stopped. Photos are ready to review.');
 }
+function announceCapture(text){const status=$('captureAnnouncement');if(status)status.textContent=text;}
 function controls(disabled){for(const id of ['start','startAuto','upload','interval','clothingPhotos','outfitCamera','outfitUpload','outfitRetry','captureSingle','captureOutfit'])$(id).disabled=disabled;}
 function finishScan(){
  const wasManual=cameraMode==='manual';
@@ -195,19 +201,19 @@ function captureTick(now=Date.now()){
   else $('captureState').textContent=`Next photo in ${Math.max(1,Math.ceil((cadence.intervalMs-(now-cadence.last))/1000))} seconds · hold the garment still`;
   return;
  }
- try{candidate(snap());cadence.captured(now);beep();$('captureState').textContent=`${session} images captured · show the next piece`;
+ try{candidate(snap());cadence.captured(now);beep();$('captureState').textContent=`${session} images captured · show the next piece`;announceCapture(session+' automatic photos captured. Place the next garment.');
  if(session>=60){finishScan();message('60 images collected. Review this batch before continuing.');}}
  catch(e){$('captureState').textContent='Waiting for a usable camera frame…';}
 }
 function takePhoto(){
  if(!stream||cameraMode!=='manual')return;
- try{candidate(snap());beep();$('captureState').textContent=`${session} photos taken · ready for the next piece`;if(session>=60){finishScan();message('60 photos collected. Review this batch before continuing.');}}
+ try{candidate(snap());beep();$('captureState').textContent=`${session} photos taken · ready for the next piece`;announceCapture(session+' manual photos captured. Ready for the next item.');if(session>=60){finishScan();message('60 photos collected. Review this batch before continuing.');}}
  catch{message('The camera is still getting ready. Wait a moment, then tap Take photo again.');}
 }
 async function startCamera(mode){
  if(busy||stream)return;
  const request=++cameraRequest;cameraOpening=true;busy=true;controls(true);
- $('captureState').textContent='Opening camera…';
+ $('captureState').textContent='Opening camera…';announceCapture('Opening camera.');
  try{audio=new(window.AudioContext||window.webkitAudioContext)();await audio.resume();}catch{}
  try{
   if(!navigator.mediaDevices?.getUserMedia)throw Error('Camera access unavailable. Choose saved photos or a closet video instead.');
@@ -221,10 +227,10 @@ async function startCamera(mode){
   if(mode==='auto'){
    cadence=new CaptureCadence(Number($('interval').value)*1000,Date.now());
    timer=setInterval(()=>captureTick(),250);captureTick();
-   message(`Automatic scan: one photo every ${$('interval').value} seconds. Watch the countdown and hold each garment still. Tap Done to stop the camera.`);
+   message(`Automatic scan: one photo every ${$('interval').value} seconds. Watch the countdown and hold each garment still. Tap Done to stop the camera.`);announceCapture('Automatic capture started. First photo in '+$('interval').value+' seconds.');
   }else{
    $('captureState').textContent='Frame a garment · tap Take photo when ready';
-   message('Take each photo at your own pace. Tap Done when you are finished.');
+   message('Take each photo at your own pace. Tap Done when you are finished.');announceCapture('Manual capture started. Tap Take photo when ready.');
   }
  }catch(e){
   if(request===cameraRequest){stopCamera();message(e.name==='NotAllowedError'?'Camera permission was denied. Allow camera access in your browser, or choose saved photos.':(e.message||'Camera could not start. Choose saved photos or a closet video.'));}

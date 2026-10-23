@@ -1,0 +1,56 @@
+name: Assignment 11 mobile closet and camera UX regression - NO DEPLOY
+on:
+  push:
+    branches: [qa/assignment11-mobile-quick-closet-camera-20261023]
+permissions:
+  contents: read
+jobs:
+  source-locked-node:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with: {fetch-depth: 0}
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with: {node-version: '22'}
+      - name: Restrict changes to selected UI, QA and docs only
+        run: |
+          git diff --name-only 54c9e29ede069a05d1268e003f80cbda043c7d6a HEAD > changed-assignment11.txt
+          if grep -vE '^(public/(index.html|app.js|app-theme.css|closet-browser.js|mobile-closet-quick.js)|tests/mobile-closet-quick.test.cjs|scripts/test-assignment11-mobile-ux.mjs|docs/ASSIGNMENT11-MOBILE-UX-20261023.md|\.github/workflows/assignment11-mobile-ux-no-deploy.yml)$' changed-assignment11.txt; then
+            echo 'Unexpected files changed';exit 1
+          fi
+          git diff --exit-code 54c9e29ede069a05d1268e003f80cbda043c7d6a HEAD -- supabase benchmark public/auth.js public/cloud-backup.js public/cloud-backup-engine.js public/recognition-engine.mjs public/photo-crop-engine.js public/outfit-board.js public/closet-stylist-engine.js
+      - name: Build isolated app, do not deploy
+        run: node scripts/build.mjs
+      - name: Full available Node regression including manual/auto camera timing
+        run: node --test tests/*.test.cjs tests/*.test.mjs
+  mobile-chromium-webkit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with: {node-version: '22'}
+      - name: Build app locally only
+        run: node scripts/build.mjs
+      - name: Install pinned test runner without modifying lockfile
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+      - name: Test 320 375 390 430 touch-sized Chromium and WebKit layouts
+        run: node scripts/test-assignment11-mobile-ux.mjs
+      - name: Mark QA artifact as no deployment
+        if: always()
+        run: |
+          mkdir -p artifacts/assignment11
+          echo "$GITHUB_SHA" > artifacts/assignment11/source-commit.txt
+          echo 'SYNTHETIC GARMENTS AND TEST AUTH ONLY. NO CUSTOMER PHOTO, DEPLOYMENT, PAID API, CLOUD WRITE, OR PHYSICAL-PHONE CLAIM.' > artifacts/assignment11/NO-DEPLOY.txt
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: assignment11-mobile-ux-browser-NO-DEPLOY
+          path: artifacts/assignment11/
+          retention-days: 7
