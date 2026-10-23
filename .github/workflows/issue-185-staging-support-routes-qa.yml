@@ -41,8 +41,17 @@ jobs:
           node scripts/audit-staging-support-routes.mjs "$STAGING_ROUTE_BASELINE_DIR" > artifacts/issue185/original-inventory.json
           node scripts/audit-staging-support-routes.mjs staging-dist > artifacts/issue185/candidate-inventory.json
       - run: npm install --no-save --no-package-lock playwright@1.56.1
-      - run: npx playwright install --with-deps chromium webkit
-      - name: Reproduce original failure and verify patched real local workers
+      - name: Reproduce original failure and verify candidate in preinstalled runner Chrome
+        env:
+          STAGING_ROUTE_ENGINE: chromium
+          STAGING_ROUTE_CHROME_CHANNEL: chrome
+        run: node scripts/test-staging-support-navigation-browser.mjs
+      - name: Install separate WebKit emulation
+        timeout-minutes: 4
+        run: npx playwright install --with-deps webkit
+      - name: Verify candidate in WebKit
+        env:
+          STAGING_ROUTE_ENGINE: webkit
         run: node scripts/test-staging-support-navigation-browser.mjs
       - uses: actions/upload-artifact@v4
         if: always()

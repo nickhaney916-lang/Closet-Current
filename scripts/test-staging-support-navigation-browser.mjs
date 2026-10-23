@@ -16,6 +16,10 @@ assert.notEqual(candidate.bundleFingerprint,original.bundleFingerprint,'Fixed st
 const pages=['pilot-data-notice','saved-closet-audit','phone-photo-check'];
 const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.json':'application/json','.bin':'application/octet-stream','.webp':'image/webp','.png':'image/png','.svg':'image/svg+xml','.webmanifest':'application/manifest+json'};
 const results=[];
+const selection=process.env.STAGING_ROUTE_ENGINE||'both';
+assert.ok(['both','chromium','webkit'].includes(selection));
+const chromeChannel=process.env.STAGING_ROUTE_CHROME_CHANNEL;
+assert.ok(!chromeChannel||chromeChannel==='chrome');
 async function check(directory,label,engine,engineName){
  const root=resolve(directory),report=await auditStagingSupportRoutes(root);
  const files=new Set(JSON.parse(await readFile(resolve(root,'staging-asset-seal.json'),'utf8')).files.map(x=>x.path));
@@ -40,7 +44,7 @@ async function check(directory,label,engine,engineName){
  });
  await new Promise(ok=>server.listen(0,'127.0.0.1',ok));const origin='http://127.0.0.1:'+server.address().port;
  try{
-  browser=await engine.launch({headless:true,...(engine===chromium?{args:['--no-sandbox']}: {})});
+  browser=await engine.launch({headless:true,...(engine===chromium?{args:['--no-sandbox'],...(chromeChannel?{channel:chromeChannel}:{})}: {})});
   const context=await browser.newContext({viewport:{width:390,height:844},hasTouch:true,isMobile:true,serviceWorkers:'allow'});
   await context.route('**/*',route=>{
    if(new URL(route.request().url()).origin===origin)return route.continue();
@@ -106,9 +110,11 @@ async function check(directory,label,engine,engineName){
  }finally{await browser?.close();await new Promise(ok=>server.close(ok));}
 }
 // Chromium enforces redirect=manual on navigation; baseline is a negative control.
-await check(baseline,'baseline',chromium,'Android Chromium emulation');
-await check('staging-dist','candidate',chromium,'Android Chromium emulation');
-await check('staging-dist','candidate',webkit,'iPhone WebKit emulation');
+if(selection!=='webkit'){
+ await check(baseline,'baseline',chromium,'Android Chromium emulation');
+ await check('staging-dist','candidate',chromium,'Android Chromium emulation');
+}
+if(selection!=='chromium')await check('staging-dist','candidate',webkit,'iPhone WebKit emulation');
 await mkdir('artifacts/issue185',{recursive:true});
-await writeFile('artifacts/issue185/browser-routes.json',JSON.stringify(results,null,2)+'\n');
+await writeFile('artifacts/issue185/browser-routes-'+selection+'.json',JSON.stringify(results,null,2)+'\n');
 console.log('ISSUE185_LOCAL_SERVICE_WORKER_ROUTES '+JSON.stringify(results));
