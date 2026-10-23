@@ -23,6 +23,9 @@ let activeTrendLibrary=null;
 function applyLoadedTrendLibrary(value){const library=normalizeTrendLibrary(value);activeTrendLibrary=library;outfitTrendSources=library.sources;outfitProductExamples=library.products;return library;}
 function slotAllows(slot,item){return slot.categories.includes(item.category)&&(!slot.types||slot.types.includes(item.itemType)||item.itemType==='Unknown'||item.itemType==='Other');}
 function cleanOutfitBoard(value,closet){
+ const source=Array.isArray(closet)?closet:[],counts=new Map();
+ for(const item of source)if(item&&typeof item.id==='string')counts.set(item.id,(counts.get(item.id)||0)+1);
+ closet=source.filter(item=>item&&typeof item.id==='string'&&counts.get(item.id)===1);
  const result={name:String(value?.name||'My outfit').slice(0,80),slots:{},ideas:{},occasion:['Casual','Work','Dinner','Active'].includes(value?.occasion)?value.occasion:'Casual',season:['Spring','Summer','Fall','Winter'].includes(value?.season)?value.season:'Fall',audience:['Women','Men','All'].includes(value?.audience)?value.audience:'Women',size:String(value?.size||'').slice(0,30),budget:Math.max(0,Math.min(10000,Number(value?.budget)||0))};
  const used=new Set();
  for(const slot of outfitSlots){const item=closet.find(x=>x.id===value?.slots?.[slot.id]);if(item&&slotAllows(slot,item)&&!used.has(item.id)){result.slots[slot.id]=item.id;used.add(item.id);}const idea=value?.ideas?.[slot.id];if(idea&&typeof idea.type==='string')result.ideas[slot.id]={type:idea.type.slice(0,50),color:String(idea.color||'').slice(0,40)};}

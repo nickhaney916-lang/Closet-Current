@@ -101,10 +101,17 @@ function stylistHarmony(selected){
  if(patterned.length>1)score-=5*(patterned.length-1);
  return score;
 }
+// An ID must name exactly one saved record, even when one duplicate carries
+// foreign metadata. Never select a different source by first/last array order.
+function stylistUnambiguousOwned(closet,ownerId){
+ const source=Array.isArray(closet)?closet:[],counts=new Map();
+ for(const item of source)if(item&&typeof item.id==='string')counts.set(item.id,(counts.get(item.id)||0)+1);
+ return source.filter(item=>item&&typeof item.id==='string'&&counts.get(item.id)===1&&stylistPhotoForItem(item,ownerId));
+}
 function styleOwnedCollection(closet,request={},library=null){
  const intent=Object.hasOwn(stylistProfiles,request.request)?request.request:'Casual';
  const context={request:intent,occasion:stylistProfiles[intent].occasion,audience:['Women','Men','All'].includes(request.audience)?request.audience:'All',season:['Spring','Summer','Fall','Winter'].includes(request.season)?request.season:'Fall',ownerId:typeof request.ownerId==='string'?request.ownerId:null};
- const unique=[...new Map(closet.filter(x=>x&&typeof x.id==='string'&&stylistPhotoForItem(x,context.ownerId)).map(x=>[x.id,x])).values()];
+ const unique=stylistUnambiguousOwned(closet,context.ownerId);
  // Explicitly selected garment must appear in every option. Never substitute
  // another owner's item or choose a different top in place of the anchor.
  const anchorId=typeof request.anchorItemId==='string'?request.anchorItemId:null;
@@ -243,8 +250,7 @@ function stylistSwapChoices(result,slot,closet,anchorId=null){
     !result?.board||!Array.isArray(closet))return [];
  // Persisted pins remain protected even after a save/reload or lost UI state.
  anchorId=result.board.anchorItemId||anchorId;
- const owned=[...new Map(closet.filter(x=>x&&typeof x.id==='string'&&stylistPhotoForItem(x,result.context?.ownerId??null))
-  .map(x=>[x.id,x])).values()];
+ const owned=stylistUnambiguousOwned(closet,result.context?.ownerId??null);
  const board=cleanOutfitBoard(result.board,owned),current=board.slots[slot];
  if(!current||current===anchorId||anchorId&&!Object.values(board.slots).includes(anchorId))return [];
  // Never offer a swap when the rendered selection no longer corresponds

@@ -40,8 +40,11 @@ try{
  await page.locator('#builderAddClothes').click();
  assert.equal(await page.locator('#scan').isVisible(),true);
  const original=await page.evaluate(async()=>{
+  // The production security gate deliberately rejects SVG. Supply real local
+  // raster bytes; do not relax that gate to accommodate this old fixture.
+  const raster=color=>{const c=document.createElement('canvas');c.width=100;c.height=150;const x=c.getContext('2d');x.fillStyle=color.toLowerCase();x.fillRect(0,0,c.width,c.height);return c.toDataURL('image/png');};
   const make=(id,category,itemType,color)=>({
-   id,category,itemType,color,name:id.replaceAll('-',' '),image:'data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="100" height="150"><rect width="100" height="150" fill="'+color.toLowerCase()+'"/></svg>'),
+   id,category,itemType,color,name:id.replaceAll('-',' '),image:raster(color),
    seasons:[],pattern:'Solid',sleeveLength:'Unknown',fit:'Regular',brand:'',size:'',material:'',occasion:'',notes:''
   });
   const pieces=[make('new-green-top','Tops','T-shirt','Green'),
