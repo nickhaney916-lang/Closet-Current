@@ -47,14 +47,18 @@ function checkPixels(prepared,original,truth){
   throw Error('Transparent derivative bounds inconsistent');
  if(truth&&(!(truth instanceof Uint8Array)||truth.length!==original.width*original.height||
   truth.some(v=>v!==0&&v!==1)))throw Error('Invalid synthetic ground truth');
- let visible=0,sourceMismatches=0,backgroundLeaks=0,missing=0,TP=0,union=0,exact=0,alphaHalo=0,maskFilled=0;
+ let visible=0,sourceMismatches=0,backgroundLeaks=0,missing=0,TP=0,union=0,exact=0,alphaHalo=0,alphaHaloOutsideTruth=0,partialAlphaRGBMismatch=0;
  let squaredError=0, maxColorError=0;
  for(let i=0;i<w*h;i++){
   const x=i%w,y=Math.floor(i/w),src=(y+bounds.top)*original.width+x+bounds.left;
   const p=4*i,q=4*src,alpha=rgba[p+3],on=alpha>=128;
-  if(alpha>0&&alpha<255)alphaHalo++;
+  if(alpha>0&&alpha<255){
+   alphaHalo++;
+   if(truth&&truth[src]!==1)alphaHaloOutsideTruth++;
+   for(let channel=0;channel<3;channel++)if(rgba[p+channel]!==original.data[q+channel]){partialAlphaRGBMismatch++;break;}
+  }
   if(on){
-   visible++;maskFilled++;
+   visible++;
    let mismatch=false;
    for(let channel=0;channel<3;channel++){
     const d=Math.abs(rgba[p+channel]-original.data[q+channel]);
@@ -83,10 +87,12 @@ function checkPixels(prepared,original,truth){
   exactSourceRGBRate:visible?exact/visible:0,
   rgbRMSE:visible?Math.sqrt(squaredError/(visible*3)):null,maxRGBError:maxColorError,
   transparentFraction:1-visible/(w*h),partialAlphaEdgePixels:alphaHalo,
+  partialAlphaRGBMismatchPixels:partialAlphaRGBMismatch,
+  transparentBackgroundHaloPixels:truth?alphaHaloOutsideTruth:null,
   expectedGarmentPixels:truthCount,
   foregroundRecall:truthCount?TP/truthCount:null,
   foregroundPrecision:truth?(visible?TP/visible:0):null,
-  maskIoU:truth?(union?TP/union:0):null,
+  maskIoU:truth?(union+falseNegOutside?TP/(union+falseNegOutside):0):null,
   backgroundLeakPixels:truth?backgroundLeaks:null,
   missingFabricPixels:truth?falseNeg:null,
   aspectRatio:w/h
@@ -130,10 +136,11 @@ export async function auditMask({item,prepared,ownerId,getScope,getItem,decodeOr
   const metrics=checkPixels(prepared,decoded,groundTruth);
   if(metrics.visiblePixels<64||metrics.transparentFraction<.01||metrics.transparentFraction>.98)
    return safeResult('review','empty-or-background-dominant',metrics);
-  if(metrics.sourceMismatchPixels)
+  if(metrics.sourceMismatchPixels||metrics.partialAlphaRGBMismatchPixels)
    return safeResult('reject','pixels-do-not-match-retained-original',metrics);
   if(groundTruth){
-   if(metrics.maskIoU<.98||metrics.foregroundRecall<.98||metrics.foregroundPrecision<.98)
+   if(metrics.maskIoU<.98||metrics.foregroundRecall<.98||metrics.foregroundPrecision<.98||
+      metrics.transparentBackgroundHaloPixels>Math.max(1,Math.floor(metrics.expectedGarmentPixels*.002)))
     return safeResult('review','segmentation-fidelity-below-synthetic-gate',metrics);
    return Object.freeze({status:'pass',reason:'synthetic-ground-truth-matched',
     metrics,canDisplay:false,independentSourceAndMaskVerifiedInFixture:true});
