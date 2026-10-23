@@ -1,0 +1,148 @@
+{
+  "schemaVersion": 1,
+  "auditDate": "2026-10-23",
+  "method": "Read-only Supabase SQL system catalogs + storage bucket metadata + Supabase security advisors; no user tables, Auth users, Storage objects, account tokens or photos read",
+  "releaseStatus": "HOLD",
+  "captureIsHistorical": true,
+  "projects": [
+    {
+      "label": "Closet Current",
+      "ref": "hlkgymugtfbirlpunsra",
+      "environment": "production",
+      "status": "ACTIVE_HEALTHY",
+      "table": {
+        "name": "public.closet_backups",
+        "rlsEnabled": true,
+        "forceRls": false,
+        "anonSelect": false,
+        "authenticatedGrants": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE",
+          "TRUNCATE",
+          "REFERENCES",
+          "TRIGGER"
+        ],
+        "policies": [
+          {
+            "name": "closet_backup_owner",
+            "roles": [
+              "authenticated"
+            ],
+            "command": "ALL",
+            "ownerUsing": true,
+            "ownerWithCheck": true
+          }
+        ]
+      },
+      "backupRpc": {
+        "name": "public.save_closet_backup",
+        "publicInvoker": true,
+        "authenticatedExecute": true,
+        "anonExecute": false,
+        "usePrivateWriter": false,
+        "ownerScopedInFunction": true
+      },
+      "bucket": {
+        "name": "closet-private",
+        "public": false,
+        "maxSizeBytes": 8388608,
+        "allowedMimeTypes": [
+          "image/jpeg"
+        ],
+        "policies": [
+          "closet_photos_read",
+          "closet_photos_insert",
+          "closet_photos_update",
+          "closet_photos_delete"
+        ],
+        "ownerPathPredicateOnAll": true
+      },
+      "advisorWarnings": [
+        "auth_leaked_password_protection"
+      ],
+      "verifiedLiveUserDenyAllow": false
+    },
+    {
+      "label": "Closet Current Staging",
+      "ref": "fbnplztkbsteuzrmbgib",
+      "environment": "staging",
+      "status": "ACTIVE_HEALTHY",
+      "table": {
+        "name": "public.closet_backups",
+        "rlsEnabled": true,
+        "forceRls": false,
+        "anonSelect": false,
+        "authenticatedGrants": [
+          "SELECT"
+        ],
+        "policies": [
+          {
+            "name": "closet_backup_owner",
+            "roles": [
+              "authenticated"
+            ],
+            "command": "ALL",
+            "ownerUsing": true,
+            "ownerWithCheck": true
+          },
+          {
+            "name": "closet_backup_writer_owner",
+            "roles": [
+              "closet_backup_writer"
+            ],
+            "command": "ALL",
+            "ownerUsing": true,
+            "ownerWithCheck": true
+          }
+        ]
+      },
+      "backupRpc": {
+        "name": "public.save_closet_backup",
+        "publicInvoker": true,
+        "authenticatedExecute": true,
+        "anonExecute": false,
+        "usePrivateWriter": true,
+        "privateFunction": "closet_rpc_private.save_checked",
+        "privateFunctionSecurityDefiner": true,
+        "privateFunctionOwner": "closet_backup_writer",
+        "restrictedWriterBypassRls": false,
+        "privateSchemaAuthenticatedUsage": true,
+        "privateFunctionAuthenticatedExecute": true,
+        "authenticatedRoleMemberOfWriter": false,
+        "writerInsertUpdateSelect": true,
+        "functionValidatesRequestJwtOwner": true
+      },
+      "bucket": {
+        "name": "closet-private",
+        "public": false,
+        "maxSizeBytes": 8388608,
+        "allowedMimeTypes": [
+          "image/jpeg"
+        ],
+        "policies": [
+          "closet_photos_read",
+          "closet_photos_insert",
+          "closet_photos_delete"
+        ],
+        "ownerPathPredicateOnAll": true
+      },
+      "advisorWarnings": [
+        "auth_leaked_password_protection"
+      ],
+      "verifiedLiveUserDenyAllow": false
+    }
+  ],
+  "appRouting": {
+    "productionSupabaseRefInPublicAuthJs": "hlkgymugtfbirlpunsra",
+    "productionRedirect": "https://nickhaney916-lang.github.io/Closet-Current/",
+    "stagingConfiguredInCurrentApp": false
+  },
+  "limitations": [
+    "Live policy metadata does not prove REST/JWT client impersonation or access denial.",
+    "No real account or customer photo used; no cross-owner data query executed.",
+    "Storage signed-URL lifetimes, Cloudflare Access, SMTP, staged Auth callback and four family phone flows unverified.",
+    "CI fixture rechecks this dated snapshot offline, not actual live backend."
+  ]
+}
