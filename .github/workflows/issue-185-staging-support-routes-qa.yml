@@ -16,6 +16,7 @@ jobs:
         with:
           node-version: '22'
       - run: node scripts/check-issue185-route-scope.mjs
+      - run: node scripts/build.mjs
       - run: node --test tests/*.test.cjs tests/*.test.mjs
       - name: Rebuild exact original PR181 offline using its existing public browser config
         shell: bash
