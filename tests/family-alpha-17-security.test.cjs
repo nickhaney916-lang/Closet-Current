@@ -72,9 +72,9 @@ test('backend cannot safely mix two independently scoped cloud backups',()=>{
  assert.equal(validateDocument(a),a);assert.equal(validateDocument(b),b);
  // The generic merge primitive is not an authorization barrier: wrong-account
  // inputs would be combined, so validation MUST occur before merge/restore.
- const mixed=mergeDocuments(null,a,b);
- assert.equal(mixed.items.length,2);
- assert.equal(mixed.state['outfit-board'].current.slots.top,undefined);
+ assert.throws(()=>mergeDocuments(null,a,b),e=>e.code==='conflict');
+ // Even a fail-closed merge conflict isn't an ownership check: only the
+ // authenticated owner gate decides which document may enter this function.
 });
 test('cloud client checks explicit owner_id from response and rechecks auth after async work',()=>{
  assert.match(cloudCode,/select=owner_id,revision,document&owner_id=eq\./);
