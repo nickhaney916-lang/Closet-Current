@@ -8,7 +8,7 @@ import {decodeOriginalJpegDataUrl} from './reference/pr231/original-jpeg-source.
 import {verifyCapturedOutfitBoard} from './reference/pr231/verified-captured-outfit-board.mjs';
 import {createVerifiedOutfitEnvelope,classifySavedOutfitFor3D} from './reference/pr231/saved-outfit-3d-compatibility.mjs';
 import {restoreVerifiedCapturedOutfitBoard} from './reference/pr231/restore-verified-captured-outfit-board.mjs';
-import {bridgeSavedOutfit} from './reference/pr232/humanoid-3d-saved-bridge.mjs';
+import {bridgeSavedOutfit,prepareWardrobeFor3D} from './reference/pr232/humanoid-3d-saved-bridge.mjs';
 
 const SLOTS=['top','bottom','shoes','layer','layer2','layer3','bag','accessory','finish'];
 const VISUAL=['top','bottom','shoes','layer','layer2','layer3'];
@@ -128,6 +128,8 @@ export function createOfflineIntegrationQA(source){
     ?await restoreVerifiedCapturedOutfitBoard(record.verifiedSnapshot,board,prepared,scope.owner,ownerCheck)
     :await verifyCapturedOutfitBoard(board,prepared,scope.owner,ownerCheck);
    still(scope);
+   const accepted=prepareWardrobeFor3D(prepared,scope.owner);
+   if(accepted.size!==prepared.length)throw Error('PR232 photo admission rejected '+(prepared.length-accepted.size)+' synthetic JPEG garments');
    const proxy=bridgeSavedOutfit(board,prepared,scope.owner);still(scope);
    if(!verified.placeholderOnly||!proxy.syntheticGeometryOnly)throw Error('Not research-only placeholder');
    // proxy.references contains originals: never serialize/publish or send to WebGL.
