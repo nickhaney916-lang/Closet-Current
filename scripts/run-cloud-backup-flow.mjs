@@ -12,7 +12,7 @@ try{
   await context.route('https://hlkgymugtfbirlpunsra.supabase.co/**',async route=>{
    if(offline)return route.abort('failed');const request=route.request(),url=new URL(request.url()),actor=request.headers().authorization?.slice(7),json=(data,status=200)=>route.fulfill({status,contentType:'application/json',body:JSON.stringify(data)});
    if(!owners.includes(actor))return json({error:'unauthorized'},401);
-   if(url.pathname==='/rest/v1/closet_backups'){const requested=url.searchParams.get('owner_id')?.slice(3);return json(requested!==actor?[]:records.has(actor)?[clone(records.get(actor))]:[]);}
+   if(url.pathname==='/rest/v1/closet_backups'){const requested=url.searchParams.get('owner_id')?.slice(3);return json(requested!==actor?[]:records.has(actor)?[clone({...records.get(actor),owner_id:actor})]:[]);}
    if(url.pathname==='/rest/v1/rpc/save_closet_backup'){
     const data=request.postDataJSON();if(blockSave){blockSave=false;await new Promise(r=>releaseSave=r);}
     const previous=records.get(actor);if((previous?.revision||0)!==data.p_expected_revision)return json(null);
