@@ -39,7 +39,7 @@ try{
     });
     const page=await context.newPage();page.on('pageerror',error=>errors.push(error.message));
     await page.goto(base);
-    await page.locator('#lookSelect option').first().waitFor();
+    await page.locator('#lookSelect option').first().waitFor({state:'attached'});
     assert.equal(await page.locator('#lookSelect option').count(),3);
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
     const first=await page.evaluate(()=>({
