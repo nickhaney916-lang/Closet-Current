@@ -1,0 +1,42 @@
+name: Safe-clear plus independent offline deletion acceptance
+on:
+  push:
+    branches: [integration/safe-clear-deletion-qa-20261022]
+permissions:
+  contents: read
+jobs:
+  combined-synthetic-security:
+    runs-on: ubuntu-latest
+    timeout-minutes: 21
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Assert exact source isolation and disabled account-erasure endpoint
+        run: |
+          node scripts/check-safe-clear-deletion-qa-scope.mjs
+          node --check tests/issue196-offline-deletion-lifecycle.test.mjs
+          node --check tests/issue196-network-denial.test.mjs
+          git diff --check
+      - name: Build app from unchanged reviewed source
+        run: node scripts/build.mjs
+      - name: Full combined safe-clear, Auth, recognition and deletion Node regression
+        run: node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Focus on deletion and recovery with a hard network deny preload
+        run: |
+          node --require ./tests/helpers/issue196-no-network.cjs --test tests/issue196-*.test.mjs tests/account-deletion-*.test.mjs
+          git diff --exit-code
+      - name: Verify staging-only bundle with synthetic inputs
+        env:
+          CLOSET_STAGING_SUPABASE_URL: https://abcdefghijklmnopqrst.supabase.co
+          CLOSET_STAGING_APP_ORIGIN: https://pilot-access-check.closet-current-staging.pages.dev/
+          CLOSET_STAGING_SUPABASE_PUBLISHABLE_KEY: sb_publishable_SYNTHETIC_ONLY_DELETION_20261022
+        run: |
+          node scripts/build-restricted-staging.mjs
+          node scripts/verify-restricted-staging-bundle.mjs
+      - name: Explicitly forbid live erasure or hosted release
+        run: echo 'NO HOSTED SERVICE CALLS OR CUSTOMER DATA. ACCOUNT DELETION DISABLED. OFFLINE ACCEPTANCE ONLY.'
