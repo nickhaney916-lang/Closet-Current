@@ -1,0 +1,69 @@
+name: Family Alpha Combined Candidate QA - NO DEPLOY
+on:
+  pull_request:
+    paths:
+      - 'public/family-alpha-2d-**'
+      - 'research/family-alpha-13/**'
+      - 'research/family-alpha-15/**'
+      - 'research/family-alpha-16/**'
+      - 'research/family-alpha-integrated/**'
+      - 'tests/family-alpha-combined-candidate.test.mjs'
+      - 'tests/family-alpha-15-three-outfits.test.mjs'
+      - 'tests/family-alpha-16-fidelity-integrated.test.mjs'
+      - 'scripts/test-family-alpha-15-browser.mjs'
+      - 'scripts/test-family-alpha-16-mobile.mjs'
+      - '.github/workflows/family-alpha-combined-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  node-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build local candidate, never deploy
+        run: node scripts/build.mjs
+      - name: Full Node regression, outfit and independent original-photo audit
+        run: node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Generate combined source-fidelity benchmark from pinned PR257 code
+        run: node research/family-alpha-16/run-matrix.mjs
+      - name: Check pinned original-preparation blob was preserved
+        run: |
+          test "$(git hash-object research/family-alpha-13/garment-photo-preparation.mjs)" = "12ad1234b44d1257a1f1e697e61468f91595148c"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: family-alpha-combined-source-fidelity
+          path: benchmark/family-alpha-16/node-matrix.json
+          retention-days: 14
+  browser-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install isolated browser dependencies; no lockfile modification
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+      - name: Synthetic 3 outfits and one-piece swaps on Chromium and WebKit
+        run: node scripts/test-family-alpha-15-browser.mjs
+      - name: Synthetic JPEG to transparent mask pixel fidelity in Chromium and WebKit
+        run: node scripts/test-family-alpha-16-mobile.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: family-alpha-combined-browser-fixtures
+          path: |
+            benchmark/family-alpha-15/results.json
+            benchmark/family-alpha-16/browser-matrix.json
+          retention-days: 14
