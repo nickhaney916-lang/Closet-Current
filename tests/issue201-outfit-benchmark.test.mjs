@@ -16,6 +16,8 @@ test('issue201: independent oracle detects invented, duplicate-slot and wrong-so
  const c=engine(),f=wardrobe(),r=JSON.parse(JSON.stringify(c.styleOwnedCollection(f.items,{anchorItemId:'new-top'})[0]));
  assert.throws(()=>oracle({...r,board:{...r.board,slots:{...r.board.slots,shoes:'not-owned'}}},f,'new-top'),/only fixture-owned/);
  assert.throws(()=>oracle({...r,board:{...r.board,slots:{...r.board.slots,shoes:'new-top'}}},f,'new-top'),/multiple slots/);
+ const missing=structuredClone(r);delete missing.board.slots.shoes;
+ assert.throws(()=>oracle(missing,f,'new-top'),/missing required slots/);
  const altered=structuredClone(f);altered.items[0].originalPhoto.image=wardrobe('synthetic-b').items[0].originalPhoto.image;
  assert.throws(()=>oracle(r,altered,'new-top'),/original unchanged/);
 });

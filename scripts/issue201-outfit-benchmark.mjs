@@ -30,9 +30,15 @@ export function oracle(result,fixture,anchor=null){
  assert.equal(Object.keys(result.board.ideas).length,0,'no shopping placeholders');
  if(anchor){assert.ok(ids.includes(anchor),'selected item remains pinned');assert.equal(result.board.anchorItemId,anchor);}
  const top=fixture.items.find(x=>x.id===result.board.slots.top);
+ const expectedMissing=[];
+ if(!result.board.slots.top)expectedMissing.push('top');
+ if(top?.category!=='Dresses'&&!result.board.slots.bottom)expectedMissing.push('bottom');
+ if(!result.board.slots.shoes)expectedMissing.push('shoes');
+ assert.deepEqual(Array.from(result.missing).sort(),expectedMissing.sort(),'missing required slots must match independent inventory oracle');
  if(top?.category==='Dresses')assert.ok(!entries.some(([s])=>s==='bottom'||s.startsWith('layer')),'dress cannot carry incompatible bottoms/layers');
  for(const [slot,id]of entries){
   const item=fixture.items.find(x=>x.id===id);
+  if(slot==='top')assert.ok(['Tops','Dresses'].includes(item.category));
   if(slot==='bottom')assert.equal(item.category,'Bottoms');
   if(slot==='shoes')assert.equal(item.category,'Shoes');
   if(slot==='layer2')assert.ok(item.category==='Outerwear'&&['Jacket','Blazer','Unknown'].includes(item.itemType));

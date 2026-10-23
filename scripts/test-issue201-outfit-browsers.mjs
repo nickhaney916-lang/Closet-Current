@@ -38,7 +38,7 @@ try{
     const f=wardrobe(owner);validateSynthetic(f);
     const selected=f.items.filter(x=>['new-top','pants','shorts','skirt','shoe-1','shoe-2','shoe-3'].includes(x.id));
     return page.evaluate(async records=>{
-     const normalized=records.map(normalizeClothing);await writeAll(normalized);items.splice(0,items.length,...normalized);activeTrendLibrary=null;render();return JSON.stringify(items);
+     const normalized=records.map(normalizeClothing);await writeAll(normalized);items.splice(0,items.length,...normalized);activeTrendLibrary=null;render();return JSON.stringify([...items].sort((a,b)=>a.id.localeCompare(b.id)));
     },selected);
    }
    async function style(){
@@ -55,13 +55,14 @@ try{
    await page.locator('#styledCollectionResults .styled-outfit').first().getByRole('button',{name:'Swap shoes in option 1'}).click();
    const swapped=await page.evaluate(()=>JSON.parse(JSON.stringify(styledCollectionResults[0].board)));
    assert.equal(Object.keys(before.slots).filter(k=>before.slots[k]!==swapped.slots[k]).length,1);assert.equal(swapped.anchorItemId,'new-top');
-   assert.equal(await page.evaluate(()=>JSON.stringify(items)),originalA,'swapping may not mutate source records');
+   assert.equal(hash(await page.evaluate(()=>JSON.stringify([...items].sort((a,b)=>a.id.localeCompare(b.id))))),hash(originalA),'swapping may not mutate source records');
    await page.locator('#styledCollectionResults .styled-outfit').first().getByRole('button',{name:'Save outfit'}).click();
    await page.waitForFunction(()=>savedOutfitBoards.length===1);
    await page.reload();await ready();
    const recovered=await page.evaluate(()=>JSON.parse(JSON.stringify(savedOutfitBoards[0])));
    assert.deepEqual(recovered.slots,swapped.slots);assert.equal(recovered.anchorItemId,'new-top');
-   assert.equal(await page.evaluate(()=>JSON.stringify(items)),originalA);
+   // IndexedDB getAll uses primary-key order, not the initial insertion order.
+   assert.equal(hash(await page.evaluate(()=>JSON.stringify([...items].sort((a,b)=>a.id.localeCompare(b.id))))),hash(originalA),'reload preserves source bytes independent of record ordering');
    // Actual export/import handlers and real IndexedDB, not an invented restore.
    await page.evaluate(()=>switchView('closet'));await page.locator('.closet-backup summary').click();
    const downloadEvent=page.waitForEvent('download');await page.locator('#export').click();
