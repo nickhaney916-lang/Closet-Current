@@ -863,6 +863,32 @@ async function upload(file){
 $('retryDraftSave').onclick=async()=>{const button=$('retryDraftSave');button.disabled=true;try{if(await persistDraft())message('Unfinished photos saved on this device. Check Photo results before closing; they are not yet confirmed closet pieces.');}finally{button.disabled=false;}};
 $('upload').onchange=e=>{upload(e.target.files[0]);e.target.value='';};
 $('discard').onclick=()=>{if(batch.length&&confirm('Discard all unsaved images in this batch?')){batch=[];persistDraft();session=0;render();}};
+// A sign-out must never silently discard unfinished photos held in memory.
+// The owning account remains active until its latest draft transaction completes.
+// In-progress captures/recognition are blocked rather than discarded.
+window.closetAuth.beforeSignOut=async()=>{
+ const owner=window.closetAuth?.user?.id;
+ if(!owner)return false;
+ if(busy||cameraOpening||stream||saving||automaticRunning||automaticQueue.length||localPending.size||localJobs.size){
+  message('Finish or stop photo capture and processing before signing out, so unfinished photos are not lost.');
+  return false;
+ }
+ if(batch.length){
+  if(!db||db.name!=='closet-current-user-'+owner){
+   message('Your unfinished photos are not safely saved. Keep this page open and use Retry saving photos.');
+   return false;
+  }
+  let saved=false;
+  try{saved=await persistDraft();}catch{}
+  if(!saved||window.closetAuth?.user?.id!==owner){
+   message('Unable to save unfinished photos. Keep this page open and use Retry saving photos before logging out.');
+   return false;
+  }
+ }
+ await writes;
+ return window.closetAuth?.user?.id===owner&&!busy&&!cameraOpening&&!stream&&!saving&&
+  !automaticRunning&&!automaticQueue.length&&!localPending.size&&!localJobs.size;
+};
 // Account-bound file backup and atomic restore are initialized in wardrobe-backup.js.
 window.addEventListener('pagehide',stopCamera);window.addEventListener('beforeunload',e=>{if((batch.length||busy)&&!window.closetAuth?.isSigningOut?.()){e.preventDefault();e.returnValue='';}});document.addEventListener('visibilitychange',()=>{if(document.hidden&&(stream||cameraOpening)){stopCamera();message('Camera stopped while the app was in the background. Your photos are ready to review.');}});
 const closetReady=(async()=>{await window.closetAuth.ready;try{db=await openDB();items=(await readAll()).map(normalizeClothing);batch=(await readDraft()).map(normalizeClothing);for(const item of batch)if(item.outfitSourceId&&item.requiresOwnershipConfirmation){item.requiresOwnershipConfirmation=false;item.localAnalyzed=false;}if(batch.length)message(`${batch.length} unfinished photos are waiting in More → Photo results.`);}catch{message('Browser storage is unavailable. Use a regular browser to save your closet.');}render();for(const item of batch)if(!item.localAnalyzed)queueAutomatic(item);})();
