@@ -1,3 +1,7 @@
+## 2026-10-23 — Assignment 9 garment UV detail coverage
+
+Separate `research/assignment9-garment-uv-20261023`, based on #248 e5a6d7b. Corrects narrow shoe-source sampling and full-pants UVs on shorts; reuses existing geometry/source authority. Local build plus full root suite: 302 pass, zero failures/skips (five new tests). Independent asymmetric synthetic source fixtures compare pinned prior geometry in Chromium/WebKit; final exact-head evidence belongs in the new draft PR/issue #243. #250 browser integration files and 2D untouched. See `docs/ASSIGNMENT9-GARMENT-UV-FIDELITY.md`. No paid inference/deploy/customer data; fit and physical-phone performance unverified.
+
 ## 2026-10-23 — 3D shoulder and indexed-buffer follow-up
 
 Separate `research/3d-shoulder-indexed-mesh-20261023`, based on verified #246 head 07fa4a8. Rounded estimated shoulder joins and exact indexed drawing; persistent renderer triangle arrays removed. Local full suite: 297 pass, zero failures/skips; six new tests. Short-sleeve mesh buffers 937728 to 237552 bytes including indices. Source authority/session, #245/#247 and 2D unchanged. Exact browser/head evidence belongs in the new draft PR and issue #243. See `docs/3D-INDEXED-SHOULDER-VALIDATION.md`. Research only; no phone or fit claims, no deployment.

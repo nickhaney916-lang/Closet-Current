@@ -23,6 +23,11 @@ export function contourMesh(profile,{x=0,z=0,lean=0,segments=32,gap=0,uvTop=prof
  }
  return new Float32Array(out);
 }
+export function projectFrontUV(vertices,{left,right,top,bottom}={}){
+ if(!(vertices instanceof Float32Array)||vertices.length%24||!vertices.every(Number.isFinite)||![left,right,top,bottom].every(Number.isFinite)||left>=right||bottom>=top)throw Error('Invalid front projection envelope');
+ const result=vertices.slice();for(let i=0;i<result.length;i+=8){result[i+6]=(result[i]-left)/(right-left);result[i+7]=(top-result[i+1])/(top-bottom);}
+ return result;
+}
 function oval(p){
  const input=ellipsoid(p),out=[];
  for(let i=0;i<input.length;i+=6){const [x,y,z]=input.subarray(i,i+3),n=unit([(x-(p.x||0))/p.rx**2,(y-(p.y||0))/p.ry**2,(z-(p.z||0))/p.rz**2]);out.push(x,y,z,...n,.5+x/.8,.5-y/3);}
@@ -70,12 +75,12 @@ export function createPhotoHumanoidGeometry(garments=[]){
   }else if(key==='bottom'){
    if(g.itemType==='Skirt')add('separate-skirt',key,contourMesh([[.04,.27,.17],[-.35,.33,.21],[-.77,.405,.26]],{uvTop:.04,uvBottom:-.77,uvWidth:.85}),true);
    else{
-    add('trouser-waist',key,contourMesh([[.05,.267,.17],[-.20,.30,.197],[-.30,.273,.18]],{uvTop:.05,uvBottom:-1.14,uvWidth:.68}),true);
-    for(const s of [-1,1])add(s<0?'left-trouser':'right-trouser',key,contourMesh([[-.25,.142,.144],[-.56,.115,.12],...(g.itemType==='Shorts'?[]:[[-.75,.112,.115],[-1.14,.088,.095]])],{x:s*.15,lean:s*.045,uvTop:.05,uvBottom:-1.14,uvWidth:.68}),true);
+    add('trouser-waist',key,contourMesh([[.05,.267,.17],[-.20,.30,.197],[-.30,.273,.18]],{uvTop:.05,uvBottom:g.itemType==='Shorts'?-.56:-1.14,uvWidth:.68}),true);
+    for(const s of [-1,1])add(s<0?'left-trouser':'right-trouser',key,contourMesh([[-.25,.142,.144],[-.56,.115,.12],...(g.itemType==='Shorts'?[]:[[-.75,.112,.115],[-1.14,.088,.095]])],{x:s*.15,lean:s*.045,uvTop:.05,uvBottom:g.itemType==='Shorts'?-.56:-1.14,uvWidth:.68}),true);
    }
   }else if(key==='shoes'){
    for(const s of [-1,1]){
-    add(s<0?'left-shoe':'right-shoe',key,oval({x:s*.195,y:-1.20,z:.09,rx:.12,ry:.09,rz:.235}),true);
+    add(s<0?'left-shoe':'right-shoe',key,projectFrontUV(oval({x:s*.195,y:-1.20,z:.09,rx:.12,ry:.09,rz:.235}),{left:-.315,right:.315,top:-1.11,bottom:-1.29}),true);
     add(s<0?'left-sole':'right-sole',key,oval({x:s*.195,y:-1.267,z:.08,rx:.122,ry:.024,rz:.24}));
     if(/boots/i.test(g.itemType||''))add(s<0?'left-boot-upper':'right-boot-upper',key,contourMesh([[-.88,.104,.11],[-1.17,.105,.105]],{x:s*.195}));
    }
