@@ -101,8 +101,8 @@
     r.onsuccess=()=>{if(!current(gate)){tx.abort();return;}
      const marker=r.result||markerDefault();store.put({...marker,baseVersion:revision,baseDocument:E.equal(document,encoded.document)?document:encoded.document,needsRestore:!E.equal(document,encoded.document),dirty:marker.localRevision!==m.localRevision});};
    });requireScope(gate);
-   const current=await marker();if(current.dirty){status('Saved on this device · cloud backup pending');schedule();}
-   else if(!E.equal(document,encoded.document)){if(!await apply(document,revision,current.localRevision,gate))schedule();else status('Cloud backup up to date');}
+   const latestMarker=await marker();if(latestMarker.dirty){status('Saved on this device · cloud backup pending');schedule();}
+   else if(!E.equal(document,encoded.document)){if(!await apply(document,revision,latestMarker.localRevision,gate))schedule();else status('Cloud backup up to date');}
    else status('Cloud backup up to date');retryDelay=2000;
   }catch(e){
    if(current(gate)){const resolveButton=document.getElementById('resolveCloudConflict');if(resolveButton)resolveButton.hidden=e.code!=='conflict';status(e.code==='conflict'?'Changes differ on another device. Both copies are kept; choose Keep both versions in My account.':dirtyAtStart?'Saved on this device · cloud backup pending. Retrying when connected.':'Cloud connection unavailable. Local items are kept; retrying.');if(e.code!=='conflict'){schedule(retryDelay);retryDelay=Math.min(retryDelay*2,60000);}}
