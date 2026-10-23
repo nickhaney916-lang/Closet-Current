@@ -2,8 +2,8 @@
 import {chromium,webkit} from 'playwright';import {createServer} from 'node:http';import fs from 'node:fs';import {resolve,extname} from 'node:path';import {execFileSync} from 'node:child_process';import assert from 'node:assert/strict';
 const root=resolve('dist'),out='artifacts/3d-indexed-shoulders',base='07fa4a8a5a61589c68d60a7f6b80fb560b4e229f';fs.mkdirSync(out,{recursive:true});
 const previous={
- '/__base/renderer.mjs':execFileSync('git',['show',base+':public/humanoid-3d-photo-renderer.mjs'],{encoding:'utf8'}).replace("'./humanoid-3d-photo-geometry.mjs'","'/__base/geometry.mjs'").replace("'./humanoid-3d-photo-session.mjs'","'/humanoid-3d-photo-session.mjs'"),
- '/__base/geometry.mjs':execFileSync('git',['show',base+':public/humanoid-3d-photo-geometry.mjs'],{encoding:'utf8'}).replace("'./humanoid-3d-body-geometry.mjs'","'/humanoid-3d-body-geometry.mjs'")
+ '/__base/renderer.mjs':execFileSync('git',['-c','safe.directory='+process.cwd(),'show',base+':public/humanoid-3d-photo-renderer.mjs'],{encoding:'utf8'}).replace("'./humanoid-3d-photo-geometry.mjs'","'/__base/geometry.mjs'").replace("'./humanoid-3d-photo-session.mjs'","'/humanoid-3d-photo-session.mjs'"),
+ '/__base/geometry.mjs':execFileSync('git',['-c','safe.directory='+process.cwd(),'show',base+':public/humanoid-3d-photo-geometry.mjs'],{encoding:'utf8'}).replace("'./humanoid-3d-body-geometry.mjs'","'/humanoid-3d-body-geometry.mjs'")
 };
 const server=createServer((req,res)=>{try{const p=new URL(req.url,'http://localhost').pathname;if(previous[p]){res.setHeader('Content-Type','text/javascript');return res.end(previous[p]);}const file=resolve(root,'.'+p);if(!file.startsWith(root+'/'))throw Error('path');res.setHeader('Content-Type',({'.html':'text/html','.mjs':'text/javascript','.js':'text/javascript','.css':'text/css'})[extname(file)]||'application/octet-stream');res.end(fs.readFileSync(file));}catch{res.writeHead(404);res.end();}});
 await new Promise(r=>server.listen(0,'127.0.0.1',r));const origin='http://127.0.0.1:'+server.address().port,report=[];
