@@ -43,5 +43,18 @@ function matchOutfit(components,closet,season=''){
  }
  return result;
 }
-function safeInspirationUrl(value){try{const url=new URL(value);return ['https:','http:'].includes(url.protocol)?url.href:'';}catch{return '';}}
+function safeInspirationUrl(value){
+ if(typeof value!=='string'||value.length>2048||/[\u0000-\u001f\u007f\\]/.test(value))return '';
+ try{
+  const url=new URL(value),host=url.hostname;
+  // Inspiration references are public links, never credentials, local devices,
+  // numeric/IPv6 hosts or alternate service ports. URL canonicalization catches
+  // decimal, hexadecimal and shortened IPv4 spellings before this check.
+  if(!['https:','http:'].includes(url.protocol)||url.username||url.password||url.port||
+     host.endsWith('.')||!host.includes('.')||/^\[|^\d+(?:\.\d+){3}$/.test(host)||
+     /(?:^|\.)(?:localhost|local|internal|lan|home)$/.test(host)||
+     !host.split('.').every(part=>/^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/i.test(part)))return '';
+  return url.href;
+ }catch{return '';}
+}
 function shopSearch(component,size,budget){return 'https://www.google.com/search?tbm=shop&q='+encodeURIComponent([component.color,component.itemType!=='Unknown'?component.itemType:component.label,component.sleeveLength!=='Unknown'&&component.sleeveLength!=='Not applicable'?component.sleeveLength:'',size?'size '+size:'',budget>0?'under $'+budget:''].filter(Boolean).join(' '));}
