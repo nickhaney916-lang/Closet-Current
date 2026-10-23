@@ -18,4 +18,4 @@ jobs:
         with:
           node-version: '22'
       - name: Run standalone offline avatar tests
-        run: node --test tests/avatar/offline-avatar-flow-demo.test.mjs tests/avatar/licensed-garment-transfer.test.mjs tests/avatar/garment-preview-warp.test.mjs
+        run: node --test tests/avatar/offline-avatar-flow-demo.test.mjs tests/avatar/licensed-garment-transfer.test.mjs tests/avatar/garment-preview-warp.test.mjs tests/avatar/pose-placement.test.mjs
