@@ -97,6 +97,7 @@ The above numbers repeat across six browser viewports for these deterministic sy
 # A READ-ONLY copy of PR #257 exact commit must exist at ./reference-pr257
 node scripts/build.mjs
 node --test tests/*.test.cjs tests/*.test.mjs
+node --test research/family-alpha-16/tests/*.test.mjs
 node research/family-alpha-16/run-matrix.mjs
 # With Playwright 1.56.1 browser binaries installed:
 node scripts/test-family-alpha-16-mobile.mjs
