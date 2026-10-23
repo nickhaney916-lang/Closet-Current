@@ -1,0 +1,53 @@
+name: Family Alpha 13 isolated garment-photo preparation QA - NO DEPLOY
+on:
+  push:
+    branches: [qa/family-alpha-photo-isolation-assignment13-20261023]
+permissions:
+  contents: read
+jobs:
+  node:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with: {fetch-depth: 0}
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with: {node-version: '22'}
+      - name: Safety source fence and pinned read-only PR256 source contract
+        run: |
+          git diff --exit-code 54c9e29ede069a05d1268e003f80cbda043c7d6a HEAD -- public supabase benchmark
+          git diff --name-only 54c9e29ede069a05d1268e003f80cbda043c7d6a HEAD | grep -vE '^(research/family-alpha-13/|tests/family-alpha-13-garment-prep.test.mjs|scripts/test-family-alpha-13-mobile.mjs|docs/FAMILY-ALPHA-13-PHOTO-PREP-AUDIT.md|\.github/workflows/family-alpha-13-photo-prep-no-deploy.yml)$' && exit 1 || test "$?" -eq 1
+          test "$(git hash-object research/family-alpha-13/reference/family-alpha-2d-layer-plan.mjs)" = "85781889229b325a70ac60e4c85e0b9ced6119b9"
+          test "$(git hash-object research/family-alpha-13/reference/family-alpha-2d-photo-renderer.mjs)" = "837d45cc8970f71830df991e8feec437918a457a"
+      - name: Build unchanged main app without deploying
+        run: node scripts/build.mjs
+      - name: All Node regression tests plus synthetic garment preparation
+        run: node --test tests/*.test.cjs tests/*.test.mjs
+  chromium-webkit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with: {node-version: '22'}
+      - name: Install browser test library only, no app dependency changes
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+      - name: Exercise synthetic captured JPEG, transparent PNG and read-only pinned PR256 layer renderer
+        run: node scripts/test-family-alpha-13-mobile.mjs
+      - name: Mark synthetic evidence and unreleased status
+        if: always()
+        run: |
+          mkdir -p artifacts/alpha13
+          echo "$GITHUB_SHA" > artifacts/alpha13/commit.txt
+          echo 'NO DEPLOY. SYNTHETIC GENERATED JPG/PNG ONLY. NO REAL CUSTOMERS, AUTH, PAID AI OR PHYSICAL PHONE. PR256 stretch remains.' > artifacts/alpha13/READ-ME.txt
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: family-alpha13-synthetic-2d-photo-QA-NO-DEPLOY
+          path: artifacts/alpha13/
+          retention-days: 7
