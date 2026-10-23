@@ -84,3 +84,54 @@ legacy recompressed stream): reviewed 29/32 categories, holdout 7/13 garments,
 fresh 11/11; nine category abstentions and three wrong automatic subtypes.
 This difference is a source-pipeline measurement, NOT a model improvement or a
 promotion recommendation. Source-locked and legacy results must not be pooled.
+
+## Verified final application behavior
+
+[Application-head CI 39958489407](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39958489407)
+SUCCESS at `c30d402babf8dd62b0b0282dba9579ae6e0da24e`: two full Node runs each
+1791 PASS / 0 FAIL / 0 SKIP; updated synthetic Chromium/WebKit mask contracts,
+masked-original color and native-resolution import/account-switch tests PASS.
+All 59 original JPEG byte streams hash-match; zero re-encodes, zero post-warmup
+remote requests. All 59 ordinary baseline/candidate prediction rows match
+exactly. All three intentionally false shoe hints (0046,0086,0090) changed from
+strong Shoes/Unknown under baseline to rejected under candidate. This is an
+adversarial hint test, NOT a physical mask accuracy metric. Artifact 12503668083
+ZIP SHA-256 `1ee1dcc83a3a6f89abfc945dddf8db2703e782efe9983a8c06c5ee3af863555d`.
+Complete JSON evidence is preserved in `SOURCE-LOCKED-RESULTS-20261023.json`.
+
+| Same reused source cohort | Direct original bytes: correct broad category | Legacy recompressed stream: correct broad category |
+|---|---:|---:|
+| Reviewed | 29/32 | 32/32 |
+| Existing holdout clothing | 7/13 | 8/13 |
+| Existing fresh | 11/11 | 11/11 |
+| Total clothing | 47/56 (83.93%) | 51/56 (91.07%) |
+
+Direct-original stream: nine category abstentions; 43 automatic decisions with
+three incorrect subtypes (6.98%): 0064 Jacket→Blazer, 0014 Blouse→Tunic,
+0078 Sneakers→Ankle boots. Three nonclothing controls rejected in ordinary mode.
+The T-shirt 0003 now needs subtype review on direct originals; this is NOT a
+corrected T-shirt prediction. Legacy stream still has all four previously known
+subtype errors, independently reproduced in run 39956298733. Different input
+preprocessing must not be pooled or described as a gain caused by this patch.
+PR214's unchanged comparator finds zero regressions versus its locked historical
+observations, but independently measured unsafe subtypes keep admission BLOCKED.
+
+Padding diagnostics, top labels at 288/320/336 respectively:
+- 0078: Ankle boots / Ankle boots / Ankle boots (wrong sneaker subtype persists).
+- 0064: Blazer / Blazer / Blazer (wrong jacket subtype persists).
+- 0014: Tunic / Tunic / Tunic (wrong blouse subtype persists).
+- 0003: Sweatshirt / Sweatshirt / Sweatshirt (ordinary decision stays review).
+- 0036: Blouse / Hat / Skirt (unstable skirt; abstain).
+- 0059: Tunic / Blouse / Formal dress (unstable dress; abstain).
+- 0095: Sneakers / nonclothing hand / nonclothing hand (unstable boots; abstain).
+No frame was selected or threshold tuned to make the reviewed answer win.
+No new untouched validation set was created; these reused-source diagnostics
+cannot establish general accuracy, true multi-item recall, pixel mask quality,
+independent color correctness or physical-phone fidelity.
+
+Avatar research additionally identifies a commercial blocker in FASHN's standard
+human-parser dependency: its documented inherited SegFormer license restricts
+non-NVIDIA use to noncommercial research/evaluation. See the source-backed
+license addendum; no unlicensed weights were downloaded or service activated.
+Final report-only / CI setup commits, if present, must be distinguished from the
+exact application head above; current branch app pixels and rules remain pinned.

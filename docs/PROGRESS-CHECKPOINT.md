@@ -4,7 +4,11 @@ Separate `work/recognition-subtype-safety-20261023` from exact PR #213
 `33744dc0900fcb0cc2d014510e22fa03c2a96637`; original branches preserved. A
 high-confidence mask could override negative-only/absent classifier evidence;
 candidate rejects that contradiction before fallback. Two local full Node runs:
-1788 PASS / 0 FAIL / 0 SKIP each. New source-locked QA avoids the legacy benchmark's
+1791 PASS / 0 FAIL / 0 SKIP each on final application; source-locked CI
+39958489407 SUCCESS with Chromium/WebKit PASS, 59 original hashes, zero remote
+requests after warm-up and 3/3 false mask hints rejected. All ordinary
+baseline/candidate predictions unchanged. Admission remains BLOCKED (3 wrong
+subtypes on direct originals, 4 on legacy recompressed stream). New QA avoids the legacy benchmark's
 2048px JPEG re-encoding and compares baseline/candidate on all 59 licensed
 original fixture byte streams. Final exact-head results belong in issue #211/PR.
 See `benchmark/SOURCE-LOCKED-RECOGNITION-SAFETY-20261023.md` and avatar license

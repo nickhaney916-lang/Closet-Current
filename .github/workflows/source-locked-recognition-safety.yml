@@ -21,6 +21,8 @@ jobs:
           node scripts/build.mjs
           node --test tests/*.test.cjs tests/*.test.mjs
           node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Use official Ubuntu mirror for ephemeral inference dependencies
+        run: sudo sed -i 's|http://azure.archive.ubuntu.com/ubuntu|http://archive.ubuntu.com/ubuntu|g' /etc/apt/sources.list.d/ubuntu.sources
       - name: Browser engines only, no AI API or credentials
         run: |
           npm install --no-save --no-package-lock playwright
