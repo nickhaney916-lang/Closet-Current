@@ -28,7 +28,7 @@ try{
    for(const width of [320,390,430]){
     const records=new Map(),photos=new Map(),errors=[],denials=[];
     const context=await browser.newContext({viewport:{width,height:840},deviceScaleFactor:2,isMobile:true,hasTouch:true,serviceWorkers:'block'});
-    let holdOwner=null,releaseHeld,signalHeld;
+    let holdOwner=null,releaseHeld,signalHeld,forgeWrongOwnerOnce=false;
     await context.route('**/*',route=>{
      const url=route.request().url();
      if(!url.startsWith(origin+'/')&&!url.startsWith('https://hlkgymugtfbirlpunsra.supabase.co/')){
@@ -47,6 +47,10 @@ try{
      if(url.pathname==='/rest/v1/closet_backups'){
       const target=url.searchParams.get('owner_id')?.replace(/^eq\./,'');
       if(actor!==target){denials.push('row');return send([]);}
+      if(forgeWrongOwnerOnce&&actor===owners[0]){
+       forgeWrongOwnerOnce=false;return send([{owner_id:owners[1],revision:999,
+        document:structuredClone(records.get(owners[1]).document)}]);
+      }
       if(holdOwner===actor){holdOwner=null;signalHeld?.();await new Promise(done=>releaseHeld=done);}
       return send(records.has(actor)?[{owner_id:actor,...structuredClone(records.get(actor))}]:[]);
      }
@@ -148,6 +152,12 @@ try{
     await sessions[0].page.waitForFunction(()=>items.length===1&&items[0].id==='synthetic-B',null,{timeout:30000});
     sessions[0].set(owners[0]);await sessions[0].page.reload();
     await sessions[0].page.waitForFunction(()=>items.length===1&&items[0].id==='synthetic-A',null,{timeout:30000});
+    // A compromised/misrouted backend response with B's owner_id cannot overwrite A.
+    forgeWrongOwnerOnce=true;
+    await sessions[0].page.evaluate(()=>closetCloud.sync());
+    assert.equal(await sessions[0].page.evaluate(()=>items[0].id),'synthetic-A');
+    assert.equal(await sessions[0].page.evaluate(()=>currentBoard.slots.top),'synthetic-A');
+    assert.equal(forgeWrongOwnerOnce,false,'Expected forged response was actually exercised');
     // A delayed former-owner cloud response cannot restore after logout.
     const previous=records.get(owners[3]),doc=structuredClone(previous.document);
     doc.items.push({...doc.items[0],id:'late-foreign-item'});
@@ -165,7 +175,7 @@ try{
     assert.equal(await sessions[3].page.evaluate(()=>document.querySelector('#appShell').hidden),true);
     assert.ok(denials.filter(x=>x==='row').length===12&&denials.filter(x=>x==='photo').length===12);
     assert.deepEqual(errors,[]);
-    results.push({engine,width,accounts:4,rowDenials:12,photoDenials:12,delayedRestoreRejected:true,
+    results.push({engine,width,accounts:4,rowDenials:12,photoDenials:12,delayedRestoreRejected:true,foreignRemoteOwnerRejected:true,
      accountSwitchPrivate:true,errors:errors.length});
     for(const session of sessions)await session.page.close();
     await context.close();
