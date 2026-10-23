@@ -59,7 +59,7 @@ try{
      for(let i=0;i<drawn.length;i++){
       const img=drawn[i],rect=img.getBoundingClientRect(),slot=planned[i];
       if(getComputedStyle(img).objectFit!=='contain')throw Error('Aspect containment disabled');
-      if(Math.abs(rect.width/rect.height-img.naturalWidth/img.naturalHeight)>.008)throw Error('Stretched '+slot.slot+' rect='+rect.width.toFixed(3)+'x'+rect.height.toFixed(3)+' natural='+img.naturalWidth+'x'+img.naturalHeight+' frame='+frameBox.width.toFixed(3)+'x'+frameBox.height.toFixed(3)+' css='+img.style.width+'/'+img.style.height);
+      if(Math.abs(rect.width/rect.height-images[slot.itemId].naturalWidth/images[slot.itemId].naturalHeight)>.008)throw Error('Stretched '+slot.slot+' rect='+rect.width.toFixed(3)+'x'+rect.height.toFixed(3)+' source='+images[slot.itemId].naturalWidth+'x'+images[slot.itemId].naturalHeight);
       if(rect.width>slot.width*frameBox.width+.2||rect.height>slot.height*frameBox.height+.2)throw Error('Slot overflow '+slot.slot);
       if(img.src!==sourceURLs[slot.itemId])throw Error('Synthetic original image reference changed');
      }
@@ -70,7 +70,8 @@ try{
      if(renderPhotoLayers(stage,[garment('dress','dress'),garment('shoes','shoes')],images)!==2)throw Error('Dress render failed');
      for(const img of stage.querySelectorAll('img')){
       const rect=img.getBoundingClientRect();
-      if(Math.abs(rect.width/rect.height-img.naturalWidth/img.naturalHeight)>.008)throw Error('Dress outfit stretched '+img.dataset.slot);
+      const original=images[img.dataset.slot==='dress'?'dress':'shoes'];
+      if(Math.abs(rect.width/rect.height-original.naturalWidth/original.naturalHeight)>.008)throw Error('Dress outfit stretched '+img.dataset.slot);
      }
      let conflict=false;
      try{planPhotoLayers([garment('dress','dress'),garment('top','shirt')]);}catch{conflict=true;}
