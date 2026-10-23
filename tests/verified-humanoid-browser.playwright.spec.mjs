@@ -65,3 +65,26 @@ test('mobile viewport keeps avatar controls usable and supports outfit switching
  expect(errors).toEqual([]);
  await page.screenshot({path:'test-results/'+browserName+'-mobile-avatar.png',fullPage:true});
 });
+
+test('synthetic account switch clears old clothing before applying new outfit',async({page})=>{
+ const errors=[];page.on('pageerror',error=>errors.push(error.message));
+ await page.goto(base+'/verified-humanoid-browser-fixture.html');
+ const status=page.locator('#status');
+ await expect(status).toContainText('initialize');
+ expect(JSON.parse(await status.textContent()).success).toBe(true);
+ await page.locator('#outfit').click();
+ let current=JSON.parse(await status.textContent());
+ expect(current.state.layers).toContain('top');
+ await page.locator('#clear').click();
+ current=JSON.parse(await status.textContent());
+ expect(current.success).toBe(true);
+ expect(current.state.layers).toEqual([]);
+ expect(current.state.drawn.some(part=>['top','bottom','shoes','layer','layer2','layer3','dress'].includes(part.key))).toBe(false);
+ await page.locator('#dress').click();
+ current=JSON.parse(await status.textContent());
+ expect(current.success).toBe(true);
+ expect(current.state.layers).toContain('dress');
+ expect(current.state.layers).not.toContain('top');
+ expect(current.state.layers).not.toContain('bottom');
+ expect(errors).toEqual([]);
+});
