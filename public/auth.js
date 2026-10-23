@@ -167,12 +167,7 @@
    if(recovery){
     if(password.length<8)throw Error('Your password must have at least 8 characters.');
     const user=await request('user',{password},session.access_token,'PUT');
-    if(user?.id!==session.user?.id){
-     // A recovery response for another account must not leave a privileged
-     // recovery token cached for a later visit. Keep the wardrobe locked.
-     leaveRecovery();
-     throw Error('Session account changed');
-    }
+    if(user?.id!==session.user?.id)throw Error('Session account changed');
     showUser({...session,user});recovery=false;
    }else if(signup){
     const username=$('authUsername').value.trim();
