@@ -22,7 +22,7 @@ const server=createServer(async(req,res)=>{
   res.writeHead(200,{'Content-Type':types[extname(filepath)],'Cache-Control':'no-store'});res.end(raw);
  }catch{res.writeHead(404);res.end('Not found');}
 });
-await new Promise(ok=>server.listen(0,'127.0.0.1',server));
+await new Promise(ok=>server.listen(0,'127.0.0.1',ok));
 const origin='http://127.0.0.1:'+server.address().port;
 const cases=[];
 try{
