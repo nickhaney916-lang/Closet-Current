@@ -21,3 +21,13 @@ test('rejects extra colors and incomplete selection before renderer call',()=>{
  assert.throws(()=>applyVerifiedHumanoidOutfit(renderer,{placeholderOnly:true,originalPixelsRenderedAs3D:false,selected:[top],colors:{top:rgba,layer2:rgba}}),/match selected/);
  assert.equal(called,false);
 });
+
+test('renderer boundary rejects spoofed source identity, duplicate garments, invalid colors and dress conflicts',()=>{
+ let calls=0;const renderer={supported:true,setOutfit:()=>{calls++;return true;}};
+ const base={placeholderOnly:true,originalPixelsRenderedAs3D:false,selected:[top],colors:{top:rgba}};
+ assert.throws(()=>applyVerifiedHumanoidOutfit(renderer,{...base,selected:[{...top,sourceVersion:''}]}),/Incomplete/);
+ assert.throws(()=>applyVerifiedHumanoidOutfit(renderer,{...base,selected:[top,{...top,slot:'bottom'}],colors:{top:rgba,bottom:rgba}}),/Duplicate/);
+ assert.throws(()=>applyVerifiedHumanoidOutfit(renderer,{...base,colors:{top:[1,2,3,4]}}),/RGBA/);
+ assert.throws(()=>applyVerifiedHumanoidOutfit(renderer,{...base,selected:[top,bottom],colors:{dress:rgba,bottom:rgba}}),/Invalid dress/);
+ assert.equal(calls,0);
+});
