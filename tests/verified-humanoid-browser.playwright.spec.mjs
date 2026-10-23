@@ -26,6 +26,7 @@ test('real browser renders synthetic outfits, rotates, replaces dress, and clear
  const outfit=JSON.parse(await status.textContent());
  expect(outfit.success).toBe(true);
  expect(outfit.state.layers).toEqual(expect.arrayContaining(['top','bottom']));
+ expect(outfit.state.drawn.length).toBeGreaterThan(0);
  await page.locator('#rotate').click();
  const rotated=JSON.parse(await status.textContent());
  expect(rotated.success).toBe(true);
@@ -35,10 +36,12 @@ test('real browser renders synthetic outfits, rotates, replaces dress, and clear
  expect(dress.success).toBe(true);
  expect(dress.state.layers).toContain('dress');
  expect(dress.state.layers).not.toContain('bottom');
+ expect(dress.state.drawn.length).toBeGreaterThan(0);
  await page.locator('#clear').click();
  const cleared=JSON.parse(await status.textContent());
  expect(cleared.success).toBe(true);
  expect(cleared.state.layers).toEqual([]);
+ expect(cleared.state.drawn.some(part=>['top','bottom','shoes','layer','layer2','layer3','dress'].includes(part.key))).toBe(false);
  expect(errors).toEqual([]);
  await page.screenshot({path:'test-results/'+browserName+'-synthetic-avatar.png'});
 });
