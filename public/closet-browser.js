@@ -40,6 +40,24 @@ async function placeClosetPiece(item,slotId){
  const saved=await selectBoardPiece(slotId,item.id);if(['Tops','Dresses'].includes(item.category))window.closetDressPreview=false;render();$('closetLookStatus').textContent=saved?(item.name||'Your piece')+' added to your look.':'This look could not save. Your clothing photos are kept.';return saved;
 }
 function renderClosetBrowser(){
+ if(window.MobileClosetQuick){
+  window.MobileClosetQuick.render($('closetQuickCategories'),items,category=>{
+   if(!['Tops','Bottoms','Shoes','Dresses'].includes(category))return;
+   window.closetBrowseAll=false;
+   window.closetTargetSlot=null;
+   window.closetSlotFilter=null;
+   window.closetItemType='';
+   window.closetSleeves=null;
+   for(const id of ['search','seasonFilter','sleeveFilter'])$(id).value='';
+   $('filter').value=category;
+   render();
+   const collection=$('closetCollection');
+   if(!collection.hidden){
+    $('closetBack').focus({preventScroll:true});
+    collection.scrollIntoView({block:'start',behavior:'auto'});
+   }
+  });
+ }
  const grid=$('closetCategories');if(!grid)return;grid.replaceChildren();grid.classList.remove('split-layers');grid.dataset.layers=closetLayerCount();
  const ready=typeof boardInitialized!=='undefined'&&boardInitialized;
  const top=ready?items.find(x=>x.id===currentBoard.slots.top):null;const dressMode=closetDressMode();grid.classList.toggle('wearing-dress',dressMode);grid.classList.toggle('dress-mode',dressMode);delete grid.dataset.audience;
