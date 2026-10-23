@@ -39,12 +39,13 @@ function revoke(){generation++;session.invalidate();after.clear();before.setOutf
 async function show(name=currentScenario){
  currentScenario=name;revoke();const token=await session.prepare({scenario:name});lastToken=token;
  const data=getVerifiedPhotoFrame(token),colors={top:null,bottom:null,shoes:null,layer:null,layer2:null,layer3:null,dress:null,...data.colors};if(name==='dress'){colors.dress=colors.top;colors.top=null;}
- before.setOutfit(colors);after.setFrame(token);selected=data.selected;
+ before.setOutfit(colors);const rendered=after.setFrame(token);selected=data.selected;
  for(const r of selected){const source=sources.get(r.itemId.replace(/:sweater$/,'')),url=URL.createObjectURL(new Blob([source.bytes],{type:'image/png'}));urls.push(url);const figure=document.createElement('figure'),im=document.createElement('img'),caption=document.createElement('figcaption');im.src=url;im.alt='Unmodified synthetic '+r.itemType;caption.textContent=r.slot+' · '+r.itemType+' · original';figure.append(im,caption);$('references').append(figure);}
- $('fallback').hidden=after.supported;$('status').textContent=after.supported?'Verified synthetic source pixels loaded locally. Front projection only.':'2D original-reference fallback; GPU unavailable.';return after.getState();
+ $('fallback').hidden=rendered;$('status').textContent=rendered?'Verified synthetic source pixels loaded locally. Front projection only.':'2D original-reference fallback; GPU unavailable.';return after.getState();
 }
 function rotate(degrees){const desired=Number(degrees)*Math.PI/180,current=after.getState().yaw||0;after.rotate(desired-current);before.rotate(desired-(before.angle()||0));$('yaw').value=String(degrees);$('surface').textContent=Math.cos(desired)>.55?'FRONT: original-derived planar projection; stretching and fit unverified.':'ESTIMATED SIDE / BACK: no corresponding photo supplied; hatching is a proxy.';}
 const guarded=fn=>async()=>{try{await fn();}catch{after.clear();clearReferences();$('fallback').hidden=false;$('status').textContent='Could not verify this source. Original-reference fallback required.';}};
+$('after').addEventListener('webglcontextlost',()=>{session.invalidate();lastToken=null;$('fallback').hidden=false;$('status').textContent='Graphics context lost. Showing the original-reference fallback.';});
 $('scenario').onchange=guarded(()=>show($('scenario').value));$('retry').onclick=guarded(()=>show());
 $('yaw').oninput=()=>rotate($('yaw').value);
 $('account').onclick=()=>{revoke();account=1-account;};
