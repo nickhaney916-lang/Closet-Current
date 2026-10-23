@@ -8,7 +8,9 @@ on:
       - public/outfit-3d-board-bridge.mjs
       - tests/outfit-3d-board-bridge.test.mjs
       - public/original-photo-fingerprint.mjs
-      - tests/original-photo-fingerprint.test.mjs
+      - tests/original-photo-fingerprint.test.mjs tests/verified-3d-photo-preparation.test.mjs
+      - public/verified-3d-photo-preparation.mjs
+      - tests/verified-3d-photo-preparation.test.mjs
       - .github/workflows/issue-230-board-schema-qa.yml
 permissions:
   contents: read
