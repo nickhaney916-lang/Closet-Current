@@ -1,3 +1,19 @@
+# Assignment #219 — independent 2D readiness (October 23)
+
+Separate `qa/2d-outfit-readiness-20261023` from verified PR #219 883c8ed.
+Latest prototype #217 f76f7df adds three adapter checks, selectively retained
+with prior account-binding safeguards. Reproduced first/last duplicate-ID source
+ambiguity: four new tests fail on baseline and pass after recommendation/swap/
+figure fail-closed identity handling. No stored garments or photos changed.
+Local full suite 1849 PASS / 0 FAIL / 0 SKIP; avatar 49/49; locked independent
+outfit benchmark 22/22 unchanged; 59 licensed originals SHA-verified. Final
+exact-head repeated CI and Chromium/WebKit results belong in the new draft PR.
+See `docs/2D-READINESS-ASSIGNMENT-219-20261023.md`. Real fabric/segmentation quality
+and physical devices remain unverified. Main conversation owns integration and
+release. 3D/marketing separate; no paid AI, deployment or cloud setting changes.
+
+---
+
 # Assignment #218 — original-source 2D Outfit Builder QA (October 23)
 
 Isolated `work/2d-outfit-integration-20261023` from cfd722e; PR #217 refreshed

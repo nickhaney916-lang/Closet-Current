@@ -84,7 +84,8 @@
   const selections=dress?['top','shoes']:ORDER;
   for(const slot of selections){
    if(!slots[slot])continue;
-   const item=source.find(x=>x.id===slots[slot]);
+   const matches=source.filter(x=>x&&x.id===slots[slot]);
+   const item=matches.length===1?matches[0]:null;
    const saved=savedSource(item,ownerId);
    if(!item||!saved||!allowed[slot].includes(item.category)||used.has(item.id)){
     skipped.push(slot);continue;
