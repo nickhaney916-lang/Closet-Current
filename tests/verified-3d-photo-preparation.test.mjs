@@ -23,3 +23,11 @@ test('missing original identity and foreign account fail closed',async()=>{
  await assert.rejects(prepareVerified3DItems([{...item,originalPhotoId:''}],'a',async()=>bytes,webcrypto),/original-photo ID/);
  await assert.rejects(prepareVerified3DItems([{...item,accountId:'b'}],'a',async()=>bytes,webcrypto),/ownership/);
 });
+
+test('duplicate IDs and unverified copied records cannot reuse source identity',async()=>{
+ const item=await fixture();
+ await assert.rejects(prepareVerified3DItems([item,{...item}],'a',async()=>bytes,webcrypto),/Duplicate wardrobe item ID/);
+ const verified=await prepareVerified3DItems([item],'a',async()=>bytes,webcrypto);
+ assert.equal(verified.sourceIdentity({...verified.items[0]}),undefined);
+ assert.deepEqual(verified.sourceIdentity(verified.items[0]),{id:'photo-1',version:item.originalSourceVersion});
+});
