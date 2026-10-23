@@ -15,6 +15,18 @@ export function prepareSavedOutfitItem({accountId,record,original,reviewedMask})
  throw new Error('Reviewed mask is missing or stale');
  if(!(reviewedMask.pixels instanceof Uint8Array)||reviewedMask.pixels.length!==original.width*original.height)
  throw new Error('Invalid original-resolution mask');
+ if(!(original.pixels instanceof Uint8ClampedArray) ||
+ original.pixels.length!==original.width*original.height*4)
+ throw new Error('Missing or invalid original RGBA photo');
+ let visible=false,nonblank=false;
+ for(let i=0;i<reviewedMask.pixels.length;i++){
+  if(reviewedMask.pixels[i]===0)continue;
+  const j=i*4;
+  if(original.pixels[j+3]===0)continue;
+  visible=true;
+  if(original.pixels[j]!==0||original.pixels[j+1]!==0||original.pixels[j+2]!==0)nonblank=true;
+ }
+ if(!visible||!nonblank)throw new Error('Blank or invisible original photo');
  if(!['top','bottom','dress','jacket','coat','shoes'].includes(record.slot))
  throw new Error('Unsupported saved clothing category');
  return {
