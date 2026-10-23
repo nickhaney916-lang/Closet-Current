@@ -21,3 +21,9 @@ export function applyVerifiedHumanoidOutfit(renderer,prepared){
  const payload=Object.fromEntries(SLOTS.map(key=>[key,Object.hasOwn(colors,key)?[...colors[key]]:null]));
  return renderer.setOutfit(payload);
 }
+
+/** Call synchronously when an account is signed out or switched, before any async re-verification. */
+export function clearVerifiedHumanoidOutfit(renderer){
+ if(!renderer||renderer.supported!==true||typeof renderer.setOutfit!=='function')return false;
+ return renderer.setOutfit(Object.fromEntries(SLOTS.map(key=>[key,null])));
+}
