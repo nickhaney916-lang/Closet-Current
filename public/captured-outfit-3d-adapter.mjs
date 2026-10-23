@@ -3,14 +3,15 @@ import {prepareVerified3DItems} from './verified-3d-photo-preparation.mjs';
 
 /**
  * Offline mapping for a known, authenticated account. Does not establish ownership:
- * caller must have verified the items belong to the authenticated user.
+ * caller must verify each item's ownership against an authoritative account-scoped source.
  * Never infer a source from the garment crop or recognition preview.
  */
-export async function prepareCapturedOutfit3DItems(items,verifiedAccountId,cryptoProvider=globalThis.crypto){
- if(!Array.isArray(items)||typeof verifiedAccountId!=='string'||!verifiedAccountId.trim())throw Error('Verified account required');
+export async function prepareCapturedOutfit3DItems(items,verifiedAccountId,verifyItemOwnership,cryptoProvider=globalThis.crypto){
+ if(!Array.isArray(items)||typeof verifiedAccountId!=='string'||!verifiedAccountId.trim()||typeof verifyItemOwnership!=='function')throw Error('Verified account required');
  const normalized=[];
  for(const item of items){
   if(!item||typeof item.id!=='string'||!item.id.trim()||typeof item.outfitSourceId!=='string'||!item.outfitSourceId.trim())throw Error('Captured outfit source required');
+  if(await verifyItemOwnership(item,verifiedAccountId)!==true)throw Error('Unverified captured garment ownership');
   const url=item.originalPhoto?.image;
   const fingerprint=await fingerprintOriginalJpegDataUrl(url,cryptoProvider);
   normalized.push({...item,accountId:verifiedAccountId,originalPhotoId:item.outfitSourceId,originalSourceVersion:fingerprint.version});
