@@ -48,6 +48,27 @@ The normal existing cloud backup re-hashes repeated JPEG data URI fields even wh
 
 A reusable **bounded 64-entry cache** is provided only in scripts/issue235/photo-digest-memo.mjs, with owner/session scope supplied by the caller, no stored transformed photo, in-flight dedupe, eviction, clear and failure cleanup. Its performance is separately measured in the final CI; it is NOT imported by production cloud backup and does not alter SHA/storage paths. The existing backend already deduplicates *uploaded object paths* by content hash, so memoization reduces duplicate hash work only, **not uploaded photo bytes for distinct sources or cloud storage quota**.
 
+## Final exact-branch validation and duplicate-only experiment
+
+[Completed CI #40002761092](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/40002761092) on implementation SHA 91646172b2e3d3c3bf0d9dcc3c99ea3c49cfe962: **262/262 Node tests PASS, 0 failures, 0 skips; 8/8 Chromium/WebKit wardrobe scenarios PASS** with exact JSON equality and source-frozen production modules. [Full JSON measurement artifact](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/40002761092/artifacts/12523360480).
+
+The new per-snapshot "cache only photographs actually repeated" algorithm does one prescan, memoizes the asynchronous SHA only while references to that exact image remain, and evicts it at the final use. It never changes photo data or hashed cloud paths; the helper and tests live solely under scripts/issue235, never in production code. At 500 items, **584 references were hashed 458 times** instead of 584, with at most **64 concurrent cached repeated-photo promises** (not 64 predecoded image surfaces).
+
+| Engine | Garments | Fresh baseline SHA+serialize (ms) | Unbounded memo (ms) | 64-entry LRU (ms) | Repeated-only (ms) | SHA ops repeated-only |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Chromium | 25 | 125.7 | 89.4 | 92.7 | 90.6 | 22 |
+| Chromium | 100 | 510.3 | 375.4 | 406.6 | 384.7 | 92 |
+| Chromium | 250 | 1211.2 | 947.9 | 1095.5 | 965.2 | 229 |
+| Chromium | 500 | 2432.7 | 1915.3 | 2221.5 | 1944.4 | 458 |
+| WebKit | 25 | 69 | 23 | 23 | 23 | 22 |
+| WebKit | 100 | 126 | 81 | 104 | 97 | 92 |
+| WebKit | 250 | 275 | 204 | 261 | 242 | 229 |
+| WebKit | 500 | 502 | 450 | 526 | 473 | 458 |
+
+At 500 items, repeated-only timing was ~20.1% faster than uncached hashing in this particular Chromium CI run, ~5.8% faster in WebKit. The 64-entry LRU variant was **slower** than baseline for WebKit 500 (526 vs 502 ms), highlighting why no global cache is justified. The repeated-only prescan has its own temporary memory and CPU overhead and the results are *single-run synthetic benchmarks*. They are not an app release gate or statistically robust speedup estimate. Real phone memory, Android/iOS platform behavior and cold-start p95 latency still need validation.
+
+The later-run timings are higher than the earlier baseline in Chromium despite identical item quantities, demonstrating substantial shared-runner variability. Compare a candidate to its **own same-run baseline**; do not combine timing numerators/denominators across separate runs.
+
 ## Resilience results and remaining failure gates
 
 The test harness checks full item count for each size and preserves the original unmodified data URI after write/read. A **real explicit IndexedDB abort** after staging both a photo edit and board edit rolls back both. The **injected** quota error leaves the preexisting data intact. Deleted garment cleanOutfitBoard drops only its source reference; the other selected items persist. Exact duplicate JPEG references share cloud SHA path without merging distinct item IDs. Hashing is byte exact; no lossy image changes were introduced.
