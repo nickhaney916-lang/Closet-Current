@@ -1,4 +1,5 @@
 import {buildAlpha2DSelections} from './family-alpha-2d-outfit-bridge.mjs';
+import {planPhotoLayers} from './family-alpha-2d-layer-plan.mjs';
 import {renderVerifiedOutfit2D} from './family-alpha-2d-render-outfit.mjs';
 
 /**
@@ -138,7 +139,7 @@ export async function prepareSavedBoard2D({
   sourceVersion:sourceHashes[selections.find(x=>x.item.id===item.id).slot]
  };
  const outfit=Object.freeze({...refs});
- const layerRefs=buildAlpha2DSelections(outfit,verifiedGarments);
+ const layerRefs=planPhotoLayers(buildAlpha2DSelections(outfit,verifiedGarments));
  return Object.freeze({
   ownerId:initial.ownerId,sessionGeneration:initial.sessionGeneration,
   outfit,layerRefs,verifiedGarments,images,sourceHashes,
