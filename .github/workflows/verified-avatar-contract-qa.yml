@@ -22,4 +22,5 @@ jobs:
           node --test tests/verified-humanoid-color-contract.test.mjs
           node --test tests/prepare-verified-humanoid-outfit.test.mjs
           node --test tests/apply-verified-humanoid-outfit.test.mjs
+          node --test tests/verified-humanoid-handoff.test.mjs
           node --test tests/resolve-saved-outfit-presentation.test.mjs
