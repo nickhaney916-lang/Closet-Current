@@ -1,3 +1,35 @@
+# Issue #196 — isolated offline deletion safety QA (October 22, 2026)
+
+Separate branch `qa/issue196-offline-deletion-safety` starts at PR #189
+`50223902df0ae54ff15bb89bd9100ddc76bb3581`. It adds a synthetic two-owner,
+237-photo / three-batch deletion contract-model suite and operator handoff;
+all public app, Supabase/backend/draft SQL and existing workflows stay unchanged.
+PR #195's local draft-clear work remains separate and untouched.
+
+Actual deletion coordinator, adapters, read-only assessor/handoff, cloud image
+mapping and file backup validation/merge are exercised against generated JPEGs
+and an instrumented in-memory SDK-shaped fake. Failure injection before/after
+all ten adapter stages, orphan uploads, shared originals/derivatives/drafts,
+owner isolation, competing workers, partial cleanup, modeled stale writes,
+local/export residuals and non-authorizing recovery are covered. The focused
+suite has an active fetch/TCP/DNS/UDP denial preload. Local build and full suite:
+**1,691 passed / 0 failed / 3 skipped**; focused network-denied deletion/recovery:
+**86 passed / 0 failed**, including 40 new checks. Final exact-head CI results
+must be read from issue #196 / its draft PR; no hosted or physical-device result
+is inferred here.
+
+**Evidence limits:** no Docker/psql locally; fake lock/JWT/write serialization is
+an explicit model assumption, not real SQL/service proof. Presence-only recovery
+snapshots cannot prove stable complete photo inventory. No operational recovery
+executor or hosted erasure exists; the HTTP endpoint still returns 503. Real-data
+pilot invitations remain BLOCKED pending staffed request fulfillment, retention
+and consent decisions, passwordless recent-auth/fencing/recovery and separately
+approved lifecycle tests. See `ISSUE-196-OFFLINE-DELETION-PROOF.md`.
+No merge, deployment, settings change, paid service or customer-data access.
+The central conversation retains integration and release ownership.
+
+---
+
 # Restricted staging integration — October 22, 2026 (PR #189)
 
 **Current development candidate:** `integration/staging-security-reliability-20261022`. This branch selectively integrates PR #186's output-only Cloudflare support-page routing, PR #183's staging Auth QA evidence, and PR #187's Android logout fix. It targets staging packaging PR #181, never production `main`. Unlike the standalone route PR #186, **the combined branch intentionally changes `public/app.js` and `public/auth.js`**.
