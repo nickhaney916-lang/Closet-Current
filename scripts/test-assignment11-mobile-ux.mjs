@@ -37,6 +37,8 @@ try{
      // Mock missing external font calls with an empty style sheet so QA
      // cannot access unrelated websites and remains deterministic offline.
      external.push(link);
+     if(link.startsWith('https://raw.githubusercontent.com/nickhaney916-lang/Closet-Current/main/public/trend-data.json'))
+      return route.fulfill({status:503,contentType:'application/json',body:'{}'});
      return route.fulfill({status:200,contentType:'text/css',body:''});
     });
     await context.route('**/auth.js*',route=>route.fulfill({contentType:'text/javascript',body:"window.closetAuth={user:{id:'assignment11-test-user'},ready:Promise.resolve()};document.getElementById('authGate').hidden=true;document.getElementById('appShell').hidden=false;"}));
@@ -102,10 +104,10 @@ try{
     const overflow=await page.evaluate(()=>({scrollWidth:document.documentElement.scrollWidth,innerWidth:innerWidth}));
     assert.ok(overflow.scrollWidth<=overflow.innerWidth+1,JSON.stringify({browserName,width,overflow}));
     assert.deepEqual(pageErrors,[]);
-    assert.ok(external.every(x=>x.includes('fonts.googleapis.com')||x.includes('fonts.gstatic.com')),'Unexpected network request '+external.join(','));
+    assert.ok(external.every(x=>x.includes('fonts.googleapis.com')||x.includes('fonts.gstatic.com')||x.startsWith('https://raw.githubusercontent.com/nickhaney916-lang/Closet-Current/main/public/trend-data.json')),'Unexpected network request '+external.join(','));
     results.push({browser:browserName,width,categoryButtons:4,categoryCountsValid:true,touchTargetsValid:true,photoUnchanged:true,
       reviewedSourcePixels:refPixelSize,manualAndFiveSecondModes:true,quietAccessibleCountdown:true,
-      pageErrors:pageErrors.length,blockedExternalFonts:external.length,layoutOverflow:0});
+      pageErrors:pageErrors.length,locallyMockedExternalLookups:external.length,layoutOverflow:0});
     await context.close();
    }
   }finally{await browser.close();}
