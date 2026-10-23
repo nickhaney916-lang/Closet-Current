@@ -1,5 +1,24 @@
 # Closet Current progress checkpoint
 
+## Issue #238 independent trend audit — October 23, 2026
+
+Isolated `work/issue238-trend-link-reliability-20261023` from main 54c9e29.
+Reviewed active PRs and split scope with separate qa/issue238 trend branch in
+issue #238. Trend library/board/data, photos, recognition, Auth and cloud source
+unchanged. Independent offline quality gate checks dates, duplicate identities,
+category/slot matching and synthetic HTTP failures/redirects, without making live
+verification claims. Inspiration URL boundary rejects credentials/local/IP hosts.
+Current recorded data: 7 sources /6 publication hosts; 11 products /8 merchant
+hosts; all 11 retailer rows lack own checked_at; no timestamps fabricated.
+Full local/CI suite 315 PASS, zero fail/skip; six Chromium/WebKit configurations
+PASS at source 87d186e in run 40007626020. Companion #239 is also research-only;
+customer runtime stale/category filtering remains future main-approved work.
+Live stock/prices/article meaning and physical devices remain unverified.
+No merge/deploy, customer data, paid AI, settings changes, spending or Drive Duel.
+See docs/ISSUE238-INDEPENDENT-TREND-AUDIT.md. Main owns integration/release.
+
+---
+
 ## Current checkpoint — October 14, 2026, evening Pacific
 
 Saved at the owner's request before further personal testing. Stable application source: `b6490e8af2eabefb370fac7b5bf0a7d375dd9922` on `main`. Live app: https://closet-current.pages.dev/

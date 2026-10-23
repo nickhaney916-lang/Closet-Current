@@ -1,0 +1,52 @@
+name: Issue 238 independent offline trend audit
+on:
+  push:
+    branches: [work/issue238-trend-link-reliability-20261023]
+permissions:
+  contents: read
+jobs:
+  regressions:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - run: node scripts/build.mjs
+      - run: node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Reproducible current and stale-date offline audits; zero requests
+        run: |
+          mkdir -p artifacts/issue238-independent
+          node scripts/issue238-independent-trend-gate.mjs public/trend-data.json 2026-10-23T19:00:00Z artifacts/issue238-independent/current-audit.json
+          node scripts/issue238-independent-trend-gate.mjs public/trend-data.json 2026-10-30T19:00:00Z artifacts/issue238-independent/stale-audit.json
+      - name: Preserve other assignments and production/cloud configuration
+        run: git diff --exit-code 54c9e29ede069a05d1268e003f80cbda043c7d6a HEAD -- public/app.js public/auth.js public/cloud-backup.js public/recognition-engine.mjs public/trend-data.json public/trend-library.js public/outfit-board.js public/outfit-board-engine.js supabase
+      - uses: actions/upload-artifact@v4
+        with:
+          name: issue238-independent-audits
+          path: artifacts/issue238-independent/
+          retention-days: 14
+  browsers:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - run: npm install --no-save --no-package-lock playwright@1.56.1
+      - run: node scripts/build.mjs
+      - run: node scripts/test-issue238-independent-browsers.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: issue238-independent-browser-evidence
+          path: artifacts/issue238-independent/
+          retention-days: 14
