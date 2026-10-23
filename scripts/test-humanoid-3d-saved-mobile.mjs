@@ -3,7 +3,7 @@
  * accesses wardrobe customers, launches paid inference, or deploys.
  */
 import {createServer} from 'node:http';
-import {readFile} from 'node:fs/promises';
+import {readFile,mkdir} from 'node:fs/promises';
 import {resolve,extname,sep} from 'node:path';
 import assert from 'node:assert/strict';
 import {chromium,webkit} from 'playwright';
@@ -82,7 +82,18 @@ try{
     assert.match(await page.locator('#status').textContent(),/No saved synthetic outfit/);
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
     assert.deepEqual(errors,[]);assert.deepEqual(external,[]);
-    output.push({engine:name,width,syntheticOnly:true,outfits:3,sourcePixelsUnchanged:true,
+    // GPU timing is only a synthetic CI proxy; do not extrapolate to phones.
+    const sixtyRotationsMs=await page.evaluate(()=>{
+     if(!__humanoidLab.renderer.supported)return null;
+     const start=performance.now();
+     for(let i=0;i<60;i++)__humanoidLab.renderer.rotate(Math.PI/30);
+     return Math.round((performance.now()-start)*100)/100;
+    });
+    if(width===390){
+     await mkdir('artifacts/assignment229',{recursive:true});
+     await page.screenshot({path:'artifacts/assignment229/'+name.toLowerCase()+'-390-synthetic.png',fullPage:true});
+    }
+    output.push({engine:name,width,sixtyRotationsMs,syntheticOnly:true,outfits:3,sourcePixelsUnchanged:true,
      ownedPinSwapSaveRestore:true,crossAccountRestoreDenied:true,
      pageErrors:0,externalRequests:0,webgl:first.supported,physicalPhoneTested:false,fitVerified:false});
     await context.close();
