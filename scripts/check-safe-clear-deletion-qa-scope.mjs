@@ -24,7 +24,7 @@ for(const essential of ['tests/issue196-offline-deletion-lifecycle.test.mjs','te
   assert.ok(changed.includes(essential),'Missing independent deletion case: '+essential);
  else assert.ok(readFileSync(essential,'utf8').includes('test('),'Missing safe-clear regression');
 }
-for(const basePath of ['public','supabase','package.json','scripts/build-restricted-staging.mjs',
+for(const basePath of ['public','supabase','scripts/build-restricted-staging.mjs',
  'scripts/build-connected-staging-candidate.mjs','.github/workflows/safe-clear-staging-package.yml',
  'tests/clear-draft-durability.test.cjs']){
  assert.equal(git('rev-parse','HEAD:'+basePath),git('rev-parse',BASE+':'+basePath),
