@@ -1,0 +1,59 @@
+name: Issue 238 offline trends freshness and shopping link QA - NO DEPLOY
+on:
+  push:
+    branches: [qa/issue238-offline-trend-link-quality-20261023]
+permissions:
+  contents: read
+jobs:
+  source-locked-node-trend-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with: {fetch-depth: 0}
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with: {node-version: '22'}
+      - name: Verify no customer application security recognition storage or trend source modifications
+        run: |
+          git diff --exit-code 54c9e29ede069a05d1268e003f80cbda043c7d6a HEAD -- public supabase
+          if grep -nE 'fetch[[:space:]]*\(|XMLHttpRequest|https?://api[.]openai|replicate[.]com' research/trends/trend-quality-gate.mjs; then exit 1; fi
+      - name: Build current app unchanged
+        run: node scripts/build.mjs
+      - name: Full available Node regression
+        run: node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Generate fixed-time offline trend/source/category report
+        run: node scripts/audit-issue238-trends.mjs
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: issue238-offline-trend-source-audit-NO-DEPLOY
+          path: artifacts/issue238/
+          retention-days: 7
+  chromium-webkit-trend-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with: {node-version: '22'}
+      - name: Install pinned browser harness only
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+      - name: Test freshness fallback, redirects, category matching and owned-outfit separation in 6 mobile emulations
+        run: node scripts/test-issue238-trends-mobile.mjs
+      - name: Mark research-only result
+        if: always()
+        run: |
+          mkdir -p artifacts/issue238
+          printf '%s\n' "$GITHUB_SHA" > artifacts/issue238/source-sha.txt
+          printf '%s\n' 'OFFLINE FAKE LINKS; NO REAL NETWORK AVAILABILITY, SCRAPING, CUSTOMER PHOTOS, MERGE OR DEPLOY' > artifacts/issue238/READ-ME-FIRST.txt
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: issue238-offline-browser-evidence-NO-DEPLOY
+          path: artifacts/issue238/
+          retention-days: 7
