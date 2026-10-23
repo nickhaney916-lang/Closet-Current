@@ -76,5 +76,10 @@ export function createBodyGeometry(){
  // Dresses deliberately replace trousers and outer layers in this prototype.
  tube('dress','dress-bodice',{top:.81,bottom:.045,rTop:.35,rBottom:.26,depth:.77});
  tube('dress','dress-skirt',{top:.045,bottom:-.77,rTop:.25,rBottom:.445,depth:.85});
+ // Keep exposed lower legs visible when a dress hides the trousers.
+ for(const sign of [-1,1]){
+  tube('dressLeg',sign<0?'left-exposed-leg':'right-exposed-leg',
+   {x:sign*.19,top:-.74,bottom:-1.13,rTop:.105,rBottom:.078,lean:sign*.02,depth:.85});
+ }
  return shapes;
 }
