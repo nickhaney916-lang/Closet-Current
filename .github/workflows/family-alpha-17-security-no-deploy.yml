@@ -1,0 +1,67 @@
+name: Family Alpha Combined Security and Staging QA - NO DEPLOY
+on:
+  pull_request:
+    paths:
+      - 'public/auth.js'
+      - 'public/cloud-backup.js'
+      - 'scripts/run-cloud-backup-flow.mjs'
+      - 'tests/family-alpha-17-security.test.cjs'
+      - 'tests/family-alpha-security-avatar-convergence.test.mjs'
+      - 'scripts/test-family-alpha-17-four-account-browser.mjs'
+      - 'docs/FAMILY-ALPHA-17-FOUR-ACCOUNT-SECURITY.md'
+      - 'docs/FAMILY-ALPHA-SECURITY-STAGING-INTEGRATION.md'
+      - '.github/workflows/family-alpha-17-security-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  integrated-node:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Build ordinary dist and separate release-HOLD artifact, NEVER DEPLOY
+        run: node scripts/build-family-alpha-staging.mjs
+      - name: Run all current app, four-account and avatar security tests
+        run: node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Verify package content provenance and release HOLD
+        run: |
+          node --input-type=module -e "import {assertCandidate} from './scripts/build-family-alpha-staging.mjs'; const m=await assertCandidate(); if(m.releaseGate!=='HOLD'||m.runtimeActivation!=='OFF on all non-localhost hosts')process.exit(1); console.log('Staging artifact stays hard-off, integrated Auth and cloud backup packaged')"
+  integrated-mobile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Build ordinary app and isolated non-deploy candidate
+        run: node scripts/build-family-alpha-staging.mjs
+      - name: Pinned test-only Playwright, no lockfile changes
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+      - name: Four-account A-B-C-D mock backend privacy and stale cloud restore
+        run: node scripts/test-family-alpha-17-four-account-browser.mjs
+      - name: Packaged artifact exact original JPEG and 2D avatar image
+        run: node scripts/test-family-alpha-staging-artifact-browser.mjs
+      - name: Real Outfit Builder source with three reviewed actual JPEGs
+        run: node scripts/test-family-alpha-local-builder-browser.mjs
+      - name: Side-by-side mask review, retake and account switch
+        run: node scripts/test-family-alpha-real-photo-review-browser.mjs
+      - name: Original JPEG and transparent garment fidelity
+        run: node scripts/test-family-alpha-16-mobile.mjs
+      - name: Three outfits and one-item swapping
+        run: node scripts/test-family-alpha-15-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: family-alpha-security-integrated-hold-artifacts-not-for-deploy
+          path: |
+            dist-family-alpha-candidate/
+            benchmark/family-alpha-17/four-owner-browser.json
+          retention-days: 7
