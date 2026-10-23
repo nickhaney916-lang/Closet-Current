@@ -63,7 +63,7 @@ try {
        bearer.includes('synthetic-b-access')?'b':null;
      assert.ok(actor,'Mock storage must use signed-in synthetic identity');
      assert.equal(owner,ids[actor],'Cross-owner synthetic storage access');
-     assert.match(filename,/^[a-f0-9]{64}\\.jpg$/);
+     assert.match(filename,/^[a-f0-9]{64}\.jpg$/);
      if(route.request().method()==='POST'||route.request().method()==='PUT'){
       syntheticPhotoStorage.set(photoPath,route.request().postDataBuffer());
       return route.fulfill({status:200,contentType:'application/json',
