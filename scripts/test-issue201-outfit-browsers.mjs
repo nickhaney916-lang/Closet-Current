@@ -129,9 +129,11 @@ try{
    assert.equal(await page.evaluate(()=>styledCollectionResults.length),0);
    assert.match(await page.locator('#stylistStatus').innerText(),/readable local photo/);
    assert.equal(await page.evaluate(()=>items.find(x=>x.id==='new-top').color),'Red');
-   // Structurally plausible JPEG with no scan data must fail actual Image.decode.
-   const sourceBytes=Buffer.from(photo('undecodable').split(',')[1],'base64'),scan=sourceBytes.indexOf(Buffer.from([255,218])),endHeader=scan+2+sourceBytes.readUInt16BE(scan+2);
-   const corrupt='data:image/jpeg;base64,'+Buffer.concat([sourceBytes.subarray(0,endHeader),Buffer.from([255,217])]).toString('base64');
+   // Plausible PNG headers without IDAT pixels: decoders must reject it.
+   // Truncated JPEGs are unsuitable negatives because Chromium can repair them.
+   const png=Buffer.alloc(45);Buffer.from([137,80,78,71,13,10,26,10]).copy(png);
+   png.writeUInt32BE(13,8);png.write('IHDR',12);png.writeUInt32BE(2,16);png.writeUInt32BE(2,20);png[24]=8;png[25]=2;png.write('IEND',37);
+   const corrupt='data:image/png;base64,'+png.toString('base64');
    await page.evaluate(async image=>{const item=items.find(x=>x.id==='new-top');item.image=image;await writeAll([item]);render();},corrupt);
    await page.locator('#closetGrid article[data-item-id="new-top"]').getByRole('button',{name:'Style this'}).click();
    await page.waitForFunction(()=>!$('createCollectionOutfits').disabled);

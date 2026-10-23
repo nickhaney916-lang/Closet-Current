@@ -62,7 +62,7 @@ Fallback notices tell the user to check the garment/background together.
 The synchronous scorer checks byte-container structure; it cannot prove pixel
 decodability or garment content. Before UI recommendations/swaps, actual browser
 `Image.decode()` with bounded concurrency/timeout validates pixels/dimensions and
-releases decoder resources. A corrupt but plausible JPEG is therefore rejected
+releases decoder resources. A corrupt but plausible PNG is therefore rejected
 by the UI. Generated swatches test that layered contract; no garment recognition
 is required merely to keep a legitimate known-category/color record usable.
 
@@ -82,7 +82,7 @@ image is used to repair malformed data.
 | Account/DB change | Snapshot retains owner + handle; changing both Auth/DB cannot adopt an old same-ID suggestion |
 | No usable photo | Raw anchor excluded, invalid swap choices excluded, UI clears suggestions and preserves metadata |
 | Valid original fallback | Original-only and unmasked-only positive tests; browser thumbnail uses original while stored display remains empty |
-| Corrupt raster | Header/path/malformed negatives plus browser structurally plausible JPEG with missing scan bytes; no UI outfit |
+| Corrupt raster | Header/path/malformed negatives plus browser structurally plausible PNG without IDAT pixel data; no UI outfit |
 | Three options/pins/sparse | Independent 22 checks retain three distinct owned combinations, pin/swap, dress/layer rules, truthful 0/1/2/partial cases |
 | Save/reload/backup conflict | Existing real Chromium/WebKit app/IndexedDB/export/import path retained; conflicting IDs remap pin and preserve source RGB/identity |
 | RGB preservation | Before/after saved-record strings and source ledger unchanged; no automatic source overwrite or destructive migration |
