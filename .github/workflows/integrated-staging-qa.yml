@@ -1,0 +1,60 @@
+name: Integrated staging security and navigation QA
+on:
+  push:
+    branches: [integration/staging-security-reliability-20261022]
+permissions:
+  contents: read
+jobs:
+  offline-routes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node scripts/build.mjs
+      - run: node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Rebuild exact original PR181 offline using its existing public browser config
+        shell: bash
+        run: |
+          git worktree add --detach "$RUNNER_TEMP/issue185-pr181" a42894cd2c7bf3ebc0019f69ba7112888e8fb04c
+          node --input-type=module <<'JS'
+          import {readFileSync,appendFileSync} from 'node:fs';
+          appendFileSync(process.env.GITHUB_ENV,'STAGING_ROUTE_BASELINE_DIR='+process.env.RUNNER_TEMP+'/issue185-pr181/staging-dist\n');
+          const source=readFileSync(process.env.RUNNER_TEMP+'/issue185-pr181/.github/workflows/staging-protected-preview-bundle.yml','utf8');
+          for(const name of ['CLOSET_STAGING_SUPABASE_URL','CLOSET_STAGING_APP_ORIGIN','CLOSET_STAGING_SUPABASE_PUBLISHABLE_KEY']){
+            const value=source.match(new RegExp('^      '+name+': ([^\\n]+)$','m'))?.[1];
+            if(!value||/[\r\n]/.test(value))throw Error('Missing reviewed public build configuration');
+            appendFileSync(process.env.GITHUB_ENV,name+'='+value+'\n');
+          }
+          JS
+      - run: node scripts/build-connected-staging-candidate.mjs
+        working-directory: ${{ runner.temp }}/issue185-pr181
+      - run: node scripts/build-connected-staging-candidate.mjs
+      - name: Inventory actual root pages, static links and seals
+        run: |
+          mkdir -p artifacts/issue185
+          node scripts/audit-staging-support-routes.mjs "$STAGING_ROUTE_BASELINE_DIR" > artifacts/issue185/original-inventory.json
+          node scripts/audit-staging-support-routes.mjs staging-dist > artifacts/issue185/candidate-inventory.json
+      - run: npm install --no-save --no-package-lock playwright@1.56.1
+      - name: Reproduce original failure and verify candidate in preinstalled runner Chrome
+        env:
+          STAGING_ROUTE_ENGINE: chromium
+          STAGING_ROUTE_CHROME_CHANNEL: chrome
+        run: node scripts/test-staging-support-navigation-browser.mjs
+      - name: Install separate WebKit emulation
+        timeout-minutes: 4
+        run: npx playwright install --with-deps webkit
+      - name: Verify candidate in WebKit
+        env:
+          STAGING_ROUTE_ENGINE: webkit
+        run: node scripts/test-staging-support-navigation-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: issue-185-routing-evidence-only
+          path: artifacts/issue185/
+          retention-days: 7
