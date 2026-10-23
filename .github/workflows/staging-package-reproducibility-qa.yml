@@ -1,0 +1,75 @@
+name: Reproducible protected staging package and rollback hold points
+on:
+  push:
+    branches: [qa/staging-package-reproducibility-20261022]
+permissions:
+  contents: read
+jobs:
+  independent-package-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Pin original PR197 application source, unmodified staging builder and synthetic guard
+        shell: bash
+        run: |
+          set -euo pipefail
+          baseline=e29aaad4b604b7b451cf4535309012082016c279
+          test "$(git merge-base "$baseline" HEAD)" = "$baseline"
+          git diff --name-only "$baseline" HEAD |
+          while IFS= read -r path; do
+            case "$path" in
+              scripts/test-staging-release-provenance.mjs|docs/STAGING-CUTOVER-ROLLBACK-HOLDPOINTS-20261022.md|.github/workflows/staging-package-reproducibility-qa.yml) ;;
+              *) echo "Unapproved source changed: $path"; exit 1 ;;
+            esac
+          done
+          git diff --exit-code "$baseline" HEAD -- public supabase tests scripts/build-connected-staging-candidate.mjs scripts/build-restricted-staging.mjs
+          node --check scripts/test-staging-release-provenance.mjs
+      - name: Execute existing full Node regression suite
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Read reviewed PUBLIC staging build configuration only
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'JS'
+          import {execFileSync} from 'node:child_process';
+          import {appendFileSync} from 'node:fs';
+          const file=execFileSync('git',['show','a42894cd2c7bf3ebc0019f69ba7112888e8fb04c:.github/workflows/staging-protected-preview-bundle.yml'],{encoding:'utf8'});
+          const expected={
+            CLOSET_STAGING_SUPABASE_URL:'https://fbnplztkbsteuzrmbgib.supabase.co',
+            CLOSET_STAGING_APP_ORIGIN:'https://pilot-access-check.closet-current-staging.pages.dev/'
+          };
+          for(const name of [...Object.keys(expected),'CLOSET_STAGING_SUPABASE_PUBLISHABLE_KEY']){
+            const value=file.match(new RegExp('^      '+name+': ([^\r\n]+)$','m'))?.[1];
+            if(!value||/[\r\n]/.test(value))throw Error('Missing reviewed public staging configuration');
+            if(name in expected&&value!==expected[name])throw Error('Staging origin or backend changed');
+            if(name.endsWith('_KEY')&&!/^sb_publishable_[A-Za-z0-9_-]{16,}$/.test(value))throw Error('Invalid publishable key type');
+            appendFileSync(process.env.GITHUB_ENV,name+'='+value+'\n');
+          }
+          JS
+      - name: Build first exact staging candidate (offline only)
+        run: |
+          node scripts/build-connected-staging-candidate.mjs
+          mkdir -p "$RUNNER_TEMP/staging-first"
+          cp -a staging-dist/. "$RUNNER_TEMP/staging-first/"
+      - name: Build second candidate from same sources and verify immutable bytes
+        run: |
+          node scripts/build-connected-staging-candidate.mjs
+          node scripts/test-staging-release-provenance.mjs "$RUNNER_TEMP/staging-first" staging-dist
+      - name: Upload identical owner-review staging bundle only; never deploy
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: Closet-Current-Safe-Clear-Reproducible-Staging-Owner-Review
+          path: staging-dist/
+          retention-days: 7
+          if-no-files-found: error
+      - name: Explicitly block any staging and production deployment
+        run: echo 'PACKAGE FOR OWNER REVIEW ONLY. CLOUDFLARE ACCESS / HOSTED AUTH / ROLLBACK ID UNVERIFIED. NO UPLOAD OR DEPLOY.'
