@@ -1,0 +1,56 @@
+name: Safe Clear photo draft durability regression
+on:
+  push:
+    branches: [fix/clear-draft-durability-20261022]
+permissions:
+  contents: read
+jobs:
+  offline-clear-draft:
+    runs-on: ubuntu-latest
+    timeout-minutes: 38
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify targeted branch scope and untouched release safeguards
+        shell: bash
+        run: |
+          set -euo pipefail
+          baseline=50223902df0ae54ff15bb89bd9100ddc76bb3581
+          test "$(git merge-base "$baseline" HEAD)" = "$baseline"
+          git diff --name-only "$baseline" HEAD |
+          while IFS= read -r file; do
+            case "$file" in
+              public/app.js|tests/clear-draft-durability.test.cjs|scripts/test-clear-draft-real-browser.mjs|.github/workflows/clear-draft-durability-qa.yml) ;;
+              *) echo "Out-of-scope modification: $file"; exit 1 ;;
+            esac
+          done
+          git diff --exit-code "$baseline" HEAD -- supabase public/auth.js public/cloud-backup.js public/sw.js scripts/build-connected-staging-candidate.mjs
+          node --check public/app.js
+          node --check tests/clear-draft-durability.test.cjs
+      - name: Full production app offline build
+        run: node scripts/build.mjs
+      - name: Complete Node regression suite, including draft clear
+        run: node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Restricted staging safety build (SYNTHETIC BACKEND ONLY)
+        env:
+          CLOSET_STAGING_SUPABASE_URL: https://abcdefghijklmnopqrst.supabase.co
+          CLOSET_STAGING_APP_ORIGIN: https://preview.closet-current-staging.pages.dev/
+          CLOSET_STAGING_SUPABASE_PUBLISHABLE_KEY: sb_publishable_SYNTHETIC_CLEAR_DRAFT_20261022
+        run: |
+          node scripts/build-restricted-staging.mjs
+          node scripts/verify-restricted-staging-bundle.mjs
+      - name: Install offline browser testing tools
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+      - name: Install iPhone WebKit emulation
+        timeout-minutes: 12
+        run: npx playwright install --with-deps webkit
+      - name: Run committed Clear logic against real local IndexedDB (Chromium and WebKit)
+        timeout-minutes: 8
+        run: node scripts/test-clear-draft-real-browser.mjs
+      - name: Confirm no staging deploy, paid model, or production change
+        run: echo 'OFFLINE ONLY. NO CLOUDFLARE, NO HOSTED DATA, NO NEW SERVICE OR PRODUCTION RELEASE.'
