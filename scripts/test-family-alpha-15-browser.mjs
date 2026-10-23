@@ -193,7 +193,8 @@ try{
       await renderBoard(baseline,4);
       console.log('ALPHA15 account-switch checks complete');
       let releaseDigest;
-      const delayed={subtle:{digest:async(...args)=>{await new Promise(resolve=>releaseDigest=resolve);return crypto.subtle.digest(...args)}}};
+      let digestCalls=0;
+      const delayed={subtle:{digest:async(...args)=>{if(++digestCalls===1)await new Promise(resolve=>releaseDigest=resolve);return crypto.subtle.digest(...args)}}};
       const oldRender=renderSavedBoard2D(avatar,{board:baseline,items,presentations,getContext,cryptoProvider:delayed});
       for(let trial=0;trial<200&&!releaseDigest;trial++)await new Promise(resolve=>setTimeout(resolve,5));
       if(!releaseDigest)throw Error('Synthetic delayed digest never started');
