@@ -1,3 +1,7 @@
+## 2026-10-23 — 3D shoulder and indexed-buffer follow-up
+
+Separate `research/3d-shoulder-indexed-mesh-20261023`, based on verified #246 head 07fa4a8. Rounded estimated shoulder joins and exact indexed drawing; persistent renderer triangle arrays removed. Local full suite: 297 pass, zero failures/skips; six new tests. Short-sleeve mesh buffers 937728 to 237552 bytes including indices. Source authority/session, #245/#247 and 2D unchanged. Exact browser/head evidence belongs in the new draft PR and issue #243. See `docs/3D-INDEXED-SHOULDER-VALIDATION.md`. Research only; no phone or fit claims, no deployment.
+
 ## 2026-10-23 — Issue #243 isolated photo-textured 3D research
 
 Separate branch `research/issue243-photo-textured-humanoid-20261023` builds on PR #232 (6025b13), preserving 2D and existing adapters. Added contoured procedural garments, original-byte SHA-256 texture sessions with caller authority/current-generation guards, front-only RGB projection, estimated hidden surfaces and synthetic comparisons. Local full suite: 291 pass, 0 fail, 0 skip; initial Chromium/WebKit six viewport journeys and existing avatar baseline passed CI 40011002477. No physical-phone or realistic-fit claims. See `docs/ISSUE243-PHOTO-HUMANOID-RESEARCH.md`; final exact-head results belong in the draft PR and issue #243. No deployment, paid AI, customer data or cloud changes.
