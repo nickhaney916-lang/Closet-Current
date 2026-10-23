@@ -51,6 +51,10 @@ are the same physical object.
   identity holding, foreign/corrupt originals, source immutability and 390×844
   mobile overflow. Existing figure suite uses Android viewport and iPhone 13
   device emulation; these are browser engines, **not physical devices**.
+- The unchanged Deno entrypoint is type-checked and its two existing synthetic
+  runtime tests run with network permission restricted to 127.0.0.1. This is
+  loopback HTTP and fake Auth/provider/ledger dependencies, not hosted access
+  or paid AI. The existing Style this UI test also runs in both engines.
 
 ## Integration and launch limits
 

@@ -24,6 +24,18 @@ jobs:
           node scripts/issue201-outfit-benchmark.mjs /tmp/benchmark.json
           cmp benchmark/issue201-results.json /tmp/benchmark.json
           git diff --exit-code cfd722e4f242234afc5629afc34b6a0b71fc64a9 -- public/app.js public/auth.js public/cloud-backup.js supabase public/recognition-engine.mjs benchmark/manifest-*.json benchmark/locked-photo-sources.json
+  offline-deno:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Unchanged entrypoint type check and loopback-only synthetic tests
+        run: |
+          deno check supabase/functions/ai-try-on/index.ts
+          deno test --allow-net=127.0.0.1 --allow-env tests/deno/ai-tryon-runtime.test.mjs
   browsers:
     runs-on: ubuntu-latest
     timeout-minutes: 25
@@ -44,6 +56,10 @@ jobs:
         run: |
           node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json
           node scripts/test-reusable-figure-phone-browsers.mjs
+      - name: Existing Style this mobile interaction in both browser engines
+        run: |
+          node scripts/test-style-my-new-item-mobile.mjs
+          STYLE_BROWSER=webkit node scripts/test-style-my-new-item-mobile.mjs
       - name: Original RGB, invalid images, stale cached source, mobile layout
         run: node scripts/test-saved-figure-originals-browsers.mjs
       - uses: actions/upload-artifact@v4
