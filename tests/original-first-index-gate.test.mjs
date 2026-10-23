@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {webcrypto} from 'node:crypto';
-import {examineOriginalFirst,originalRegionPixels,sourceFingerprint,readStoredJpegBytes} from '../research/original-context/original-first-index-gate.mjs';
+import {examineOriginalFirst,originalRegionPixels,sourceFingerprint,readStoredJpegBytes,auditOriginalOutfitRegions} from '../research/original-context/original-first-index-gate.mjs';
 
 const jpeg=(tag='original')=>'data:image/jpeg;base64,'+Buffer.from([255,216,...new Array(100).fill(0).map((_,i)=>tag.charCodeAt(i%tag.length)),255,217]).toString('base64');
 const frame=(width=64,height=96,regions=false)=>{
@@ -196,4 +196,48 @@ test('source decoder rejects forged image envelope and oversized base64',()=>{
  for(const x of ['',null,'https://example.org/item.jpg','data:image/png;base64,abcd','data:image/jpeg;base64,%%%%'])
   assert.throws(()=>readStoredJpegBytes(x),/Invalid/);
  assert.throws(()=>readStoredJpegBytes(jpeg('okay').slice(0,-8)),/Invalid/);
+});
+
+test('multi-garment capture admits distinct regions with identical full original photos',async()=>{
+ const original=jpeg('one-full-frame');
+ const a=candidate({id:'shirt',outfitSourceId:'same-shot',originalPhoto:{image:original},recognitionPhoto:{image:jpeg('shirt-view')},
+  cropBounds:{x:.05,y:.05,width:.45,height:.75}});
+ const b=candidate({id:'shoes',outfitSourceId:'same-shot',originalPhoto:{image:original},recognitionPhoto:{image:jpeg('shoe-view')},
+  cropBounds:{x:.55,y:.68,width:.4,height:.27}});
+ const result=await auditOriginalOutfitRegions([a,b],{cryptoProvider:webcrypto});
+ assert.equal(result.status,'safe');assert.equal(result.verifiedSharedOriginal,true);
+ assert.equal(result.originalSourceSha,await sourceFingerprint(original,webcrypto));
+ assert.equal(result.issues.length,0);
+ assert.ok(!JSON.stringify(result).includes('data:image/'));
+});
+test('duplicate source region or one garment with two IDs triggers review without deleting any record',async()=>{
+ const original=jpeg('shared-shot');
+ const part=candidate({id:'one',outfitSourceId:'one-shot',originalPhoto:{image:original},recognitionPhoto:{image:jpeg('piece')},
+   cropBounds:{x:.2,y:.2,width:.5,height:.65}});
+ const other={...structuredClone(part),id:'two'};
+ const result=await auditOriginalOutfitRegions([part,other],{cryptoProvider:webcrypto});
+ assert.equal(result.status,'review');
+ assert.ok(result.issues.some(x=>x.reason==='overlapping-instance-review'));
+ assert.equal(result.garmentCount,2);
+});
+test('independent outfit frames, duplicate IDs and bad crop bounds never appear source-verified',async()=>{
+ const original=jpeg('shared-shot');
+ const a=candidate({id:'one',outfitSourceId:'shot',originalPhoto:{image:original},recognitionPhoto:{image:jpeg('piece-a')},
+  cropBounds:{x:0,y:0,width:.4,height:.8}});
+ const b=candidate({id:'one',outfitSourceId:'shot',originalPhoto:{image:jpeg('different-parent')},recognitionPhoto:{image:jpeg('piece-b')},
+  cropBounds:{x:.7,y:0,width:.5,height:.9}});
+ const r=await auditOriginalOutfitRegions([a,b],{cryptoProvider:webcrypto});
+ assert.equal(r.status,'review');assert.ok(r.issues.some(x=>x.reason==='duplicate-or-invalid-garment-id'));
+ assert.ok(r.issues.some(x=>x.reason==='different-original-frames'));
+ assert.ok(r.issues.some(x=>x.reason==='unverified-region-bounds'));
+});
+test('valid shirt-over-coat overlap is kept for human review rather than silently excluded',async()=>{
+ const original=jpeg('shared-shot');
+ const a=candidate({id:'jacket',outfitSourceId:'shot',originalPhoto:{image:original},recognitionPhoto:{image:jpeg('outer')},
+  cropBounds:{x:.2,y:.1,width:.7,height:.8}});
+ const b=candidate({id:'shirt',outfitSourceId:'shot',originalPhoto:{image:original},recognitionPhoto:{image:jpeg('inner')},
+  cropBounds:{x:.35,y:.25,width:.3,height:.35}});
+ const v=await auditOriginalOutfitRegions([a,b],{cryptoProvider:webcrypto});
+ assert.equal(v.status,'review');assert.equal(v.garmentCount,2);
+ assert.ok(v.issues.some(x=>x.reason==='overlapping-instance-review'));
 });
