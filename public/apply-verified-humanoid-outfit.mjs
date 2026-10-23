@@ -20,7 +20,8 @@ export function applyVerifiedHumanoidOutfit(renderer,prepared){
  for(const color of Object.values(colors))if(!Array.isArray(color)||color.length!==4||color.some(n=>!Number.isFinite(n)||n<0||n>1))throw Error('Invalid verified RGBA');
  const payload=Object.fromEntries(SLOTS.map(key=>[key,Object.hasOwn(colors,key)?[...colors[key]]:null]));
  if(typeof renderer.getState==='function'){const state=renderer.getState();if(state?.lost||state?.disposed)return false;}
- const applied=renderer.setOutfit(payload);
+ let applied;
+ try{applied=renderer.setOutfit(payload);}catch{return false;}
  if(applied!==true)return false;
  if(typeof renderer.getState==='function'){const state=renderer.getState();if(state?.lost||state?.disposed)return false;}
  return true;
@@ -29,5 +30,5 @@ export function applyVerifiedHumanoidOutfit(renderer,prepared){
 /** Call synchronously when an account is signed out or switched, before any async re-verification. */
 export function clearVerifiedHumanoidOutfit(renderer){
  if(!renderer||renderer.supported!==true||typeof renderer.setOutfit!=='function')return false;
- return renderer.setOutfit(Object.fromEntries(SLOTS.map(key=>[key,null])));
+ try{return renderer.setOutfit(Object.fromEntries(SLOTS.map(key=>[key,null])))===true;}catch{return false;}
 }
