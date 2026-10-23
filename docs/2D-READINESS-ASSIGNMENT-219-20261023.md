@@ -27,7 +27,10 @@ clothing remaining visible while the ambiguous record is held.
 
 The stylist now excludes every record with an ambiguous ID before recommendation
 or swapping; the figure holds that identity rather than choosing either source.
-No stored data is deleted, renumbered, recolored or rewritten. This is identity
+Board cleanup and queued save source checks also reject a duplicate arriving
+after recommendation. A fifth regression reproduces that queued-write failure
+and proves zero writes after the fix. No stored data is deleted, renumbered,
+recolored or rewritten. This is identity
 validation, not a claim that visually identical garments with different IDs
 are the same physical object.
 
@@ -36,7 +39,7 @@ are the same physical object.
 - Latest prototype adapter tests are included without weakening assertions:
   avatar/garment-transfer suite **49 passed / 0 failed / 0 skipped**.
 - Full local repository regression with all original licensed fixtures:
-  **1849 passed / 0 failed / 0 skipped**. Exact-head repeated CI is recorded in PR.
+  **1850 passed / 0 failed / 0 skipped**. Exact-head repeated CI is recorded in PR.
 - Independent locked outfit acceptance remains **22/22 PASS**, and result JSON
   is byte-identical to the existing benchmark. No accuracy labels, thresholds,
   recognition model or expected benchmark results changed.

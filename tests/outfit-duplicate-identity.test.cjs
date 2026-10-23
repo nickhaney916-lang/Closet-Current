@@ -10,6 +10,7 @@ test('duplicate pinned identity cannot produce outfits under either record order
 });
 test('ambiguous figure source is held while independent owned garments remain visible',()=>{
  const duplicate={...closet[0],image:photo('different')},records=[...closet,duplicate],before=JSON.stringify(records);
+ assert.equal(setup().cleanOutfitBoard({slots:{top:'top',bottom:'pants'}},records).slots.top,undefined);
  const p=E.plan({slots:{top:'top',bottom:'pants',shoes:'shoe'}},records);
  assert.deepEqual(p.skipped,['top']);assert.deepEqual(p.placements.map(x=>x.itemId),['pants','shoe']);assert.equal(JSON.stringify(records),before);
 });

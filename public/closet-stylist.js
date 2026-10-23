@@ -17,7 +17,8 @@ function stylistSelectedSources(board){
 }
 function stylistSourcesCurrent(sources){
  return stylistOwnsCloset()&&sources.length>0&&sources.every(source=>{
-  const item=items.find(piece=>piece.id===source.id);
+  const matches=items.filter(piece=>piece&&piece.id===source.id);
+  const item=matches.length===1?matches[0]:null;
   return source.ownerId===(window.closetAuth?.user?.id||null)&&source.database===db&&
    !!item&&item.image===source.image&&item.category===source.category&&
    item.itemType===source.itemType&&item.color===source.color&&

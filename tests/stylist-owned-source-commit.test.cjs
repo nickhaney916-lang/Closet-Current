@@ -85,3 +85,9 @@ test('new selection guards are used by both preview and save in actual customer 
  assert.match(script,/saveOwnedOutfitBoard\(\{\.\.\.board,name:result\.context\.request\+' · option '\+\(index\+1\)\},current\)/);
  assert.match(boardScript,/if\(typeof sourceStillCurrent==='function'&&!sourceStillCurrent\(\)\)/);
 });
+test('a duplicate identity arriving inside the save queue invalidates the captured source',async()=>{
+ const h=setup(),s=h.state;
+ s.queued=fn=>{h.items.push({...h.items[0],image:'different-source'});return fn();};
+ await assert.rejects(()=>s.saveOwnedOutfitBoard(h.board,()=>s.stylistSourcesCurrent(h.original)),/outfit or closet changed/);
+ assert.equal(h.writes.length,0);
+});
