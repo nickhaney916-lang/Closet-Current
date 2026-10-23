@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import {createHash} from 'node:crypto';
-import {memoizeExactImageEncodes} from '../scripts/issue235/photo-digest-memo.mjs';
+import {memoizeExactImageEncodes,memoizeRepeatedImageEncodes} from '../scripts/issue235/photo-digest-memo.mjs';
 import BackupEngine from '../public/cloud-backup-engine.js';
 const photo=txt=>'data:image/jpeg;base64,'+Buffer.from([255,216,...Buffer.from(txt),255,217]).toString('base64');
 const digest=x=>createHash('sha256').update(Buffer.from(x.split(',')[1],'base64')).digest('hex');
@@ -57,4 +57,28 @@ test('never processes foreign URLs, empty data, or non-JPEG images',async()=>{
   await assert.rejects(memo.mapImage(invalid),/JPEG/);
  assert.throws(()=>memoizeExactImageEncodes(null),/callback/);
  assert.throws(()=>memoizeExactImageEncodes(x=>x,{maxEntries:1000}),/bounded/);
+});
+
+test('repeated-only memo hashes every distinct photo once and releases after last use',async()=>{
+ const x=photo('x'),y=photo('y'),z=photo('z'),a=photo('one-off');
+ const snapshot={schemaVersion:1,items:[
+  {id:'1',image:x,originalPhoto:{image:y}},
+  {id:'2',image:z,originalPhoto:{image:x}},
+  {id:'3',image:y,recognitionPhoto:{image:a}},
+  {id:'4',image:z,originalPhoto:{image:x}}
+ ],state:{'outfit-board':{id:'outfit-board',current:{slots:{top:'1'}},saved:[]}}};
+ const memo=memoizeRepeatedImageEncodes(snapshot,async img=>'cloud:'+digest(img));
+ const target=await BackupEngine.mapImages(snapshot,img=>'cloud:'+digest(img));
+ const actual=await BackupEngine.mapImages(snapshot,memo.mapImage);
+ assert.deepEqual(actual,target);
+ const stats=memo.stats();
+ assert.equal(stats.totalReferences,8);
+ assert.equal(stats.hashes,4);
+ assert.equal(stats.hits,4);
+ assert.ok(stats.peakPending<=3);
+ assert.equal(stats.pending,0);
+});
+test('repeated-photo prescan rejects unsafe schema keys before making hashes',()=>{
+ assert.throws(()=>memoizeRepeatedImageEncodes(JSON.parse('{"__proto__":{"image":"data:image/jpeg;base64,AA=="}}'),x=>x),/Unsafe/);
+ assert.throws(()=>memoizeRepeatedImageEncodes({image:'https://example.com'},x=>x),/Invalid JPEG/);
 });
