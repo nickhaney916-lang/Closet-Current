@@ -1,0 +1,48 @@
+name: Family Alpha #14 offline feedback and recovery (NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'research/family-alpha-14/**'
+      - 'tests/family-alpha-14-feedback-recovery.test.mjs'
+      - 'scripts/test-family-alpha-14-browser.mjs'
+      - '.github/workflows/family-alpha-14-feedback-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  offline-node:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build local static test output (no deploy)
+        run: node scripts/build.mjs
+      - name: Full existing Node regression suite plus Family Alpha 14 tests
+        run: node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Confirm isolated source files only
+        run: |
+          git diff --name-only origin/${{ github.base_ref || 'main' }}...HEAD | tee /tmp/alpha14-changes.txt
+          if grep -Ev '^(research/family-alpha-14/|tests/family-alpha-14-feedback-recovery.test.mjs$|scripts/test-family-alpha-14-browser.mjs$|docs/FAMILY-ALPHA-14-FEEDBACK-RECOVERY.md$|\.github/workflows/family-alpha-14-feedback-no-deploy.yml$)' /tmp/alpha14-changes.txt; then exit 1; fi
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install browser test runner and supported browser engines
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium webkit
+      - name: Synthetic mobile feedback and failure recovery
+        run: node scripts/test-family-alpha-14-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: family-alpha-14-offline-results
+          path: benchmark/family-alpha-14/results.json
+          retention-days: 14
