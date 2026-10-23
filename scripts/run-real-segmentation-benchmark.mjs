@@ -40,8 +40,25 @@ try{
    const {model,processor,RawImage}=await window.__closetSegModel;
    const image=await RawImage.read('data:image/jpeg;base64,'+base64);
    const result=await model(await processor(image));
-   const {clothingLabelMap}=await import('./outfit-segmentation.mjs');
+   const {clothingLabelMap,clothingMaskGroups,cropClothingPhotoPixels,isolateClothingPixels,clothingColorSample,clothingInteriorColorSample}=await import('./outfit-segmentation.mjs');
    const map=clothingLabelMap(result.logits.data,result.logits.dims);
+   // Exercise production crop/mask/color consumers on real model proposals.
+   // Exact RGB equality is a source-integrity invariant, not mask accuracy:
+   // the semantic proposal may still omit fabric or include background.
+   const originalPixels=image.data.slice(),cropIntegrity=[];
+   for(const group of clothingMaskGroups(map)){
+    const raw=cropClothingPhotoPixels(image,map,group),display=isolateClothingPixels(image,map,group);
+    const sample=clothingColorSample(image,map,group),interior=clothingInteriorColorSample(image,map,group);
+    for(let y=0;y<raw.height;y++)for(let x=0;x<raw.width;x++)for(let c=0;c<3;c++){
+     const from=((y+raw.bounds.top)*image.width+x+raw.bounds.left)*image.channels+c;
+     if(raw.data[(y*raw.width+x)*3+c]!==originalPixels[from])throw Error('Original crop RGB changed');
+    }
+    cropIntegrity.push({semanticClass:group.id,cropBounds:raw.bounds,
+     recognitionPixelsExact:true,displayDimensions:[display.width,display.height],
+     distinctColorPixels:sample.distinctSourcePixels,interiorColorPixels:interior?.distinctSourcePixels||0,
+     approvedGarmentInstance:false,maskAccuracyMeasured:false});
+   }
+   if(image.data.some((v,i)=>v!==originalPixels[i]))throw Error('Original source pixels mutated');
    const garmentClasses=[4,5,6,7,9],width=image.width,height=image.height,mask=new Uint8Array(width*height);
    for(let y=0;y<height;y++)for(let x=0;x<width;x++){
     const i=Math.min(map.height-1,Math.floor(y*map.height/height))*map.width+Math.min(map.width-1,Math.floor(x*map.width/width));
@@ -55,7 +72,7 @@ try{
    const cc=comparison.getContext('2d');cc.drawImage(original,0,0,panelWidth,panelHeight);
    cc.drawImage(original,panelWidth,0,panelWidth,panelHeight);
    cc.drawImage(overlay,panelWidth,0,panelWidth,panelHeight);
-   return {comparisonPng:comparison.toDataURL('image/png').split(',')[1],overlayPng:overlay.toDataURL('image/png').split(',')[1],image:imageName,sourceSha256,width,height,runs,modelId:'Xenova/segformer_b0_clothes',revision:'a2489ea8e7ec1ee912190546bad31a4906ccca76',personDetected:map.personDetected,foregroundPixels:mask.reduce((a,b)=>a+b,0)};
+   return {comparisonPng:comparison.toDataURL('image/png').split(',')[1],overlayPng:overlay.toDataURL('image/png').split(',')[1],image:imageName,sourceSha256,width,height,runs,modelId:'Xenova/segformer_b0_clothes',revision:'a2489ea8e7ec1ee912190546bad31a4906ccca76',personDetected:map.personDetected,foregroundPixels:mask.reduce((a,b)=>a+b,0),cropIntegrity,sourcePixelsUnchanged:true};
   },{base64,imageName:entry.image,sourceSha256:entry.sourceSha256});
   const {overlayPng,comparisonPng,...maskPrediction}=predicted;
   await writeFile(join(outDir,entry.id+'.side-by-side.png'),Buffer.from(comparisonPng,'base64'));
@@ -71,7 +88,7 @@ try{
    colorSampling=scoreApprovedColorSampling(annotation,entry,maskPrediction);
    edgeRetention=scoreApprovedGarmentEdgeRetention(annotation,entry,maskPrediction);status='scored';
   }
-  report.push({id:entry.id,status,foregroundPixels:predicted.foregroundPixels,personDetected:predicted.personDetected,fragments,metrics,colorSampling,edgeRetention});
+  report.push({id:entry.id,status,foregroundPixels:predicted.foregroundPixels,personDetected:predicted.personDetected,fragments,metrics,colorSampling,edgeRetention,cropIntegrity:predicted.cropIntegrity,sourcePixelsUnchanged:predicted.sourcePixelsUnchanged});
   console.log('SEGMENTATION_CASE '+JSON.stringify(report.at(-1)));
  }
 }finally{await browser.close();await new Promise(resolve=>server.close(resolve));}
