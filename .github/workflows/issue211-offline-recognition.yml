@@ -21,6 +21,7 @@ jobs:
       - run: python -m pip install Pillow==12.0.0
       - name: Repeated full regression and source diagnostics, no inference
         run: |
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json
           node scripts/build.mjs
           node --test tests/*.test.cjs tests/*.test.mjs
           node --test tests/*.test.cjs tests/*.test.mjs

@@ -5,9 +5,11 @@ New branch `work/issue-211-offline-recognition` from PR #209 exact application
 59 licensed source files SHA-verified and full stored pixels diagnosed. Narrow
 odd-size diagnostic framing fix with baseline-negative RGB oracle. See
 `benchmark/ISSUE-211-OFFLINE-RECOGNITION.md` and per-source JSON; avatar design
-in `docs/ISSUE-211-AVATAR-FEASIBILITY.md`. No fresh neural inference, independent
-physical masks, physical phones or customer accuracy claimed. Final exact-head
-CI and repeat counts belong in issue #211/PR. Production promotion BLOCKED.
+in `docs/ISSUE-211-AVATAR-FEASIBILITY.md`. Application-head offline CI 39904215150 and fresh inference 39904215239 PASS;
+236 exact baseline/candidate browser frame comparisons PASS. Current reused-set
+broad labels 51/56 garments, four wrong automatic subtypes persist. No new
+independent physical masks, phones or customer accuracy. See issue #211/PR for
+final exact-head references. Production promotion BLOCKED.
 No deployment, cloud writes, paid AI, customer photos or Drive Duel changes.
 
 ---

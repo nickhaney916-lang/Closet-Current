@@ -57,8 +57,8 @@ browser status must be taken from exact-head CI, never assumed from unit tests.
 ## Repeated validation and independent truth
 
 Baseline local full Node: 1,779 pass, 0 fail, 3 skip (1,782 total).
-Candidate first full Node: 1,783 pass, 0 fail, 0 skip (1,783 total); Pillow is
-available here, allowing the previously skipped Python-backed checks to execute.
+Candidate first full Node: 1,783 pass, 0 fail, 0 skip (1,783 total); licensed fixtures were copied to `benchmark/photos`, enabling three previously
+skipped simulated licensed-pilot request checks. No provider calls occur.
 See issue/PR for final repeat and exact-head CI. The negative test failed against
 baseline before the one-line fix and passed afterward. Two pixel-diagnostic
 passes must be byte-identical. CI repeats the complete Node suite twice.
@@ -71,7 +71,7 @@ Four historical wrong automatic subtypes remain; promotion stays BLOCKED.
 These historical outputs are NOT current model inference or new validation.
 
 No local FashionCLIP neural ONNX model/runtime cache is present; existing workers
-fetch Transformers.js/model assets remotely. No fresh neural inference was run.
+fetch Transformers.js/model assets remotely. No fresh neural inference was run locally. Subsequent CI evidence is recorded below.
 Missing two-reviewer whole-scene garment inventory/pixel masks prevents honest
 physical object recall, mask IoU, false-positive segmentation or crop-fidelity
 promotion. No speculative shoe/dress/skirt/shorts rule change is justified.
@@ -90,3 +90,41 @@ inference offline. Inspect four trim cases without tuning on held-out labels.
 
 No customer photographs, hosted writes, settings changes, AI API activation,
 paid repair workflow, merge, deployment, Drive Duel edits or spending.
+
+## Final application-head CI and new inference
+
+Exact application/test head `b824e2ef9d70b006e27c12063847e72f97463299`:
+- [Offline QA 39904215150](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39904215150): SUCCESS; two full Node passes (1,780 PASS / 0 FAIL / 3 SKIP each; three licensed-pilot mock tests lacked copied photos), repeated source diagnostics, Chromium and WebKit 118/118 exact baseline/candidate default frame comparisons EACH (236 total), zero external requests in that comparison. Existing synthetic mask/color, native original-import/account-switch and inspiration transfer tests pass on both engines.
+- [Camera/indexing 39904214748](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39904214748): SUCCESS.
+- [Fresh real-photo inference 39904215239](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39904215239): SUCCESS. Artifact 12480171310, ZIP SHA-256 `0417135c961f84241db823cf9a5c6a5a79e8dea9cbcf38c7cd24c57eada506b0`.
+
+The existing real-photo workflow auto-started for this source change. It downloaded
+runtime/model assets remotely, then inferred all 59 licensed fixtures with zero
+runtime errors. This is real current CI inference, NOT a network-denied offline
+inference result. Downloaded JSON was independently scored with the unchanged
+admission scorer. Reproduce from the extracted artifact using
+`node scripts/issue211-compare-inference.mjs <artifact-directory> <output.json>`.
+Per-source current/historical predictions, expected labels, original source SHA,
+abstentions and unsafe automatic subtypes are in `ISSUE-211-CURRENT-INFERENCE.json`.
+
+| Cohort | Current correct broad category | Category abstentions | Wrong automatic subtype |
+|---|---:|---:|---:|
+| Reviewed | 32/32 | 0 | 1/31 automatic decisions |
+| Existing holdout | 8/13 clothing; controls rejected 3/3 | 5 | 3/7 automatic decisions |
+| Existing fresh | 11/11 | 0 | 0/9 automatic decisions |
+| All | 51/56 clothing (91.07%) | 5 | 4/47 automatic decisions (8.51%) |
+
+All 51 emitted categories match manifest labels, but precision among emitted
+categories cannot hide five missed/abstained clothing sources. Four unsafe
+subtypes persist: commons-0064 Blazer; 0003 Sweatshirt; 0014 Tunic; 0078 Ankle boots.
+Their accepted labels are preserved in the JSON. Five category abstentions:
+0016,0036,0059,0062,0095. Broad category counts across all cohorts: Shoes 19/20,
+Dresses 8/9, Bottoms 12/13, Outerwear 7/8, Tops 4/5, Accessories 1/1.
+
+These are reused historical cohorts, NOT a newly untouched validation set. Their
+labels remain untouched in this assignment. Historical broad coverage differences
+(26→32,7→8,10→11) reflect the latest integrated recognizer versus older stored
+observations, NOT an improvement caused by this patch: browser comparison proves
+the default model inputs unchanged. No causal before/after classifier gain is
+claimed. Independent physical masks, color correctness and real multi-garment
+recall remain unmeasured. Recognition promotion stays BLOCKED.
