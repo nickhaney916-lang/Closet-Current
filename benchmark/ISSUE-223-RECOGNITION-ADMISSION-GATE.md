@@ -32,3 +32,16 @@ Current fixtures, contracts and tests support an independent offline experiment 
 
 ## Completion criteria for this audit milestone
 The existing evidence is inventoried, misleading pass interpretations are excluded, and the admission decision is explicit. A subsequent experimental milestone must produce independently reproducible candidate comparisons before integration.
+
+## Verified existing paired-model inference evidence (2026-10-23)
+The source-locked record `benchmark/SOURCE-LOCKED-RESULTS-20261023.json` identifies CI run `39958489407`, artifact `12503668083`, and 59 original-source hash matches. It contains baseline and candidate output records for the **same** reviewed-32, holdout-16 and fresh-11 cohorts. It is not a new third-party model experiment or independently adjudicated physical-phone validation.
+
+| Cohort | Garments | Candidate category coverage | Unsafe automatic subtypes |
+| --- | ---: | ---: | ---: |
+| reviewed-32 | 32 | 90.63% | 1 (`commons-0064`) |
+| holdout-16 | 13 (plus 3 negatives) | 53.85% | 2 (`commons-0014`, `commons-0078`) |
+| fresh-11 | 11 | 100% | 0 |
+
+The record reports zero incorrect automatically emitted **categories**, three incorrect automatic **subtypes**, and three rejected non-garment controls. It explicitly sets `recognitionPromotionDecision: BLOCKED` and `independentPhysicalGarmentLabelsVerified: false`. Thus neither the 100% fresh-set category coverage nor the zero unsafe category count justifies unattended autosave or production promotion.
+
+**Disposition:** Existing paired offline inference evidence is sufficient to conclude **NO-GO for recognition promotion today**. A claim that a new external catalog/model is superior remains **NOT EVALUATED**; do not fabricate paired third-party measurements. The next experiment must first identify a candidate with separately verified commercial model weights and source-image rights, then run the locked 59-photo comparison with independent subtype review and mobile performance evidence.
