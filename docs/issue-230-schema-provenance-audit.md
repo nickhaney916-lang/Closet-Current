@@ -78,3 +78,16 @@ The live app's existing `item.color` text, original-photo storage fields, and au
 - Existing live saved boards **do not contain these verification snapshots**. A production integration needs an opt-in migration or new versioned saved-board envelope, with an explicit fallback for legacy boards. Never assume that existing records already have `accountId`, `colorHex`, or `originalSourceVersion`.
 - The prototype renderer must consume only the verified output, preserve the 2D Outfit Builder as fallback, and invalidate its cached render whenever source identity, source bytes, selected items, or account changes. This PR does not prove realistic garment geometry, commercial try-on, or device performance.
 - Verification is limited to synthetic fixture tests in the isolated branch; CI success does not establish production end-to-end or physical-phone behavior. Parallel #229 owns 3D rendering, #232 owns authenticated cloud provenance, #233 owns recognition, #235 owns offline performance, #237 owns mobile UX, and #238 owns trend quality.
+
+## Live integration acceptance checklist (not yet implemented)
+
+1. Resolve account identity from the authenticated session (`window.closetAuth.user.id`), not from a garment or localStorage field. Revalidate identity after session refresh/account switch.
+2. Obtain the wardrobe from authenticated, account-scoped persistence. The ownership verifier must check each garment against authoritative records and fail closed when the account is missing or switched; a callback that always returns true is not an authorization boundary.
+3. For multi-garment capture, hash the bytes of `item.originalPhoto.image` (the normalized JPEG shared by pieces) rather than the cropped `item.image`. Never describe that normalized JPEG as untouched camera sensor data.
+4. Keep legacy saved boards on the verified 2D path; only opt-in versioned envelopes with source snapshots can request 3D placeholder verification. Empty, duplicated, missing, or unauthorized selected IDs must not be rendered.
+5. Invalidate any rendered outfit on account change, garment deletion, original-source change, or saved-board slot change. Restore should never silently accept a changed original photo merely because a crop looks identical.
+6. Treat source mismatch as a candidate for 2D fallback only after fresh per-garment ownership checks. Treat unexpected verification exceptions as unavailable, not a fallback.
+7. Verify cloud backup/restore with synthetic accounts and normalized JPEG fixtures, then independently validate Chromium, WebKit, and physical phone before considering production integration.
+8. Preserve current 2D UI and feature behavior; do not turn on the research 3D placeholder as a production feature. Parallel #229 owns renderer implementation, #232 cloud ownership/provenance, and #240 recommendation cache lifecycle.
+
+**Verified scope:** offline schema adapters, snapshot checks, and isolated Node CI only. **Not verified:** real authenticated ownership wiring, live end-to-end restoration, production 3D geometry, or phone performance.
