@@ -19,9 +19,11 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: '22'
-      - name: Reject app, security and recognition source drift from reviewed PR 220
+      - name: Reject all unapproved source drift (only scoped Auth mismatch cleanup allowed)
         run: |
-          git diff --exit-code 0f62e253c1fd0024a939cd401710dcd3784a9e77 HEAD -- public supabase benchmark/manifest-*.json benchmark/locked-photo-sources.json benchmark/issue201-results.json
+          git diff --exit-code 0f62e253c1fd0024a939cd401710dcd3784a9e77 HEAD -- public ':(exclude)public/auth.js' supabase benchmark/manifest-*.json benchmark/locked-photo-sources.json benchmark/issue201-results.json
+          test "$(git diff --name-only 0f62e253c1fd0024a939cd401710dcd3784a9e77 HEAD -- public)" = 'public/auth.js'
+          grep -F "leaveRecovery();" public/auth.js
       - name: Build and run full Node and nested avatar suite
         run: |
           node scripts/build.mjs
