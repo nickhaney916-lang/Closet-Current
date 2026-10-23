@@ -33,7 +33,7 @@ jobs:
           node --check scripts/compare-recognition-candidate-59.mjs
           node --check tests/recognition-candidate-release-veto.test.mjs
           git diff --check
-      - name: Synthetic counterfactual tests: catch subtype, missing photos, unknown inventory and false promotion
+      - name: Synthetic counterfactual tests for subtype, missing photos, unknown inventory and false promotion
         run: node --test tests/recognition-candidate-release-veto.test.mjs
       - name: Require actual recorded historical 59-photo baseline remains blocked
         run: node scripts/compare-recognition-candidate-59.mjs --historical-smoke
