@@ -1,0 +1,50 @@
+name: PR189 real browser logout, draft durability and account isolation
+on:
+  push:
+    branches: [qa/pr189-logout-browser-20261022]
+permissions:
+  contents: read
+jobs:
+  chromium-and-webkit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 28
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prove application source identical to green PR189
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git merge-base 50223902df0ae54ff15bb89bd9100ddc76bb3581 HEAD)" = 50223902df0ae54ff15bb89bd9100ddc76bb3581
+          git diff --name-only 50223902df0ae54ff15bb89bd9100ddc76bb3581 HEAD |
+          while IFS= read -r path; do
+            case "$path" in
+              scripts/test-pr189-browser-logout-draft.mjs|.github/workflows/pr189-browser-logout-qa.yml) ;;
+              *) echo "Unreviewed app change: $path"; exit 1 ;;
+            esac
+          done
+          git diff --exit-code 50223902df0ae54ff15bb89bd9100ddc76bb3581 HEAD -- public supabase tests scripts/build-restricted-staging.mjs
+          node --check scripts/test-pr189-browser-logout-draft.mjs
+      - name: Build offline synthetic restricted staging app (never real hosted project)
+        env:
+          CLOSET_STAGING_APP_ORIGIN: https://preview.closet-current-staging.pages.dev/
+          CLOSET_STAGING_SUPABASE_URL: https://abcdefghijklmnopqrst.supabase.co
+          CLOSET_STAGING_SUPABASE_PUBLISHABLE_KEY: sb_publishable_SYNTHETIC_PR189_BROWSERQA_20261022
+        run: |
+          node scripts/build-restricted-staging.mjs
+          node scripts/verify-restricted-staging-bundle.mjs
+      - name: Install isolated browser test dependency
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+      - name: Install isolated WebKit browser emulation
+        timeout-minutes: 12
+        run: npx playwright install --with-deps webkit
+      - name: Run actual browser login, logout, failed draft and account switch
+        timeout-minutes: 7
+        run: node scripts/test-pr189-browser-logout-draft.mjs
+      - name: Explicitly forbid hosted release
+        run: echo 'SYNTHETIC LOOPBACK BROWSER ONLY. NO SUPABASE HOSTED PROJECT, CLOUDFLARE UPLOAD OR PRODUCTION CHANGE.'
