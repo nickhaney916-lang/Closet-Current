@@ -41,3 +41,13 @@ test('cross-account verified saved outfit is unavailable, not downgraded to 2D',
  assert.equal(result.mode,'unavailable');
  assert.equal(result.board,undefined);
 });
+
+test('missing account context and failed item ownership never expose saved board',async()=>{
+ const saved=await verifyCapturedOutfitBoard(board,[item(1)],'owner',owns,webcrypto);
+ const envelope=createVerifiedOutfitEnvelope(board,saved);
+ for(const [scope,verifier] of [['',owns],['owner',undefined],['owner',()=>false]]){
+  const result=await resolveSavedOutfitPresentation(envelope,[item(1)],scope,verifier,webcrypto);
+  assert.equal(result.mode,'unavailable');
+  assert.equal(result.board,undefined);
+ }
+});
