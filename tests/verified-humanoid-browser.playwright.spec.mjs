@@ -21,6 +21,7 @@ test('real browser renders synthetic outfits, rotates, replaces dress, and clear
  await expect(status).toContainText('initialize');
  const initial=JSON.parse(await status.textContent());
  expect(initial.success, browserName+' must initialize WebGL rather than skip rendering').toBe(true);
+ await expect(page.locator('#fallback')).toBeHidden();
  await page.locator('#outfit').click();
  await expect(status).toContainText('shirt-pants');
  const outfit=JSON.parse(await status.textContent());
@@ -102,6 +103,8 @@ test('WebGL context loss fails closed without stale garment geometry',async({pag
  expect(lost.success).toBe(false);
  expect(lost.state.lost).toBe(true);
  expect(lost.state.drawn).toEqual([]);
+ await expect(page.locator('#fallback')).toBeVisible();
+ await expect(page.locator('#avatar')).toBeHidden();
  await page.locator('#rotate').click();
  expect(JSON.parse(await status.textContent()).success).toBe(false);
  expect(errors).toEqual([]);
