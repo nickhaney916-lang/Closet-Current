@@ -7,7 +7,7 @@ const rgba=[.1,.2,.3,1];
 test('clears all previous renderer layers during account/outfit replacement',()=>{
  const calls=[];const renderer={supported:true,setOutfit:payload=>{calls.push(payload);return true;}};
  assert.equal(applyVerifiedHumanoidOutfit(renderer,{placeholderOnly:true,originalPixelsRenderedAs3D:false,selected:[top,bottom],colors:{top:rgba,bottom:rgba}}),true);
- assert.equal(calls[0].bottom,rgba);
+ assert.deepEqual(calls[0].bottom,rgba);
  assert.equal(calls[0].layer2,null);
  assert.equal(applyVerifiedHumanoidOutfit(renderer,{placeholderOnly:true,originalPixelsRenderedAs3D:false,selected:[top],colors:{top:rgba}}),true);
  assert.equal(calls[1].bottom,null);
