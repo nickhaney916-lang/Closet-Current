@@ -1,0 +1,21 @@
+name: Synthetic humanoid browser fixture QA
+on:
+  push:
+    branches:
+      - qa/verified-humanoid-browser-fixture-20261023
+  pull_request:
+    paths:
+      - 'public/verified-humanoid-browser-fixture*'
+      - 'public/humanoid-3d-*'
+      - 'tests/verified-humanoid-browser-fixture.test.mjs'
+      - '.github/workflows/verified-humanoid-browser-fixture-qa.yml'
+jobs:
+  node-fixture:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test tests/verified-humanoid-browser-fixture.test.mjs
+      - run: node --test tests/apply-verified-humanoid-outfit.test.mjs
