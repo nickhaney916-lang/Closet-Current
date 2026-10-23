@@ -40,6 +40,9 @@ try{
     await context.route('https://hlkgymugtfbirlpunsra.supabase.co/**',async route=>{
      const request=route.request(),url=new URL(request.url()),actor=request.headers().authorization?.replace(/^Bearer /i,'');
      const send=(value,status=200)=>route.fulfill({status,contentType:'application/json',headers:{'Access-Control-Allow-Origin':'*'},body:JSON.stringify(value)});
+     if(request.method()==='OPTIONS')return route.fulfill({status:204,headers:{
+      'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'authorization, apikey, content-type',
+      'Access-Control-Allow-Methods':'GET, POST, OPTIONS','Access-Control-Max-Age':'600'}});
      if(!owners.includes(actor))return send({},401);
      if(url.pathname==='/rest/v1/closet_backups'){
       const target=url.searchParams.get('owner_id')?.replace(/^eq\./,'');
