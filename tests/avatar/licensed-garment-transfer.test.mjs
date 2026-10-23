@@ -28,3 +28,7 @@ test('preview is explicitly not a fit simulation',()=>{
  const out=transferPreviewFrame({accountId:'test-account',garment,mask:new Uint8Array([255,255])});
  assert.equal(out.fitSimulation,false);assert.equal(out.placement,'preview-only');
 });
+
+test('reject oversized original photos before transfer allocation',()=>{
+ assert.throws(()=>isolateLicensedGarment({accountId:'test-account',garment:{...garment,width:10000,height:10000},mask:new Uint8Array([255,255])}),/Invalid original dimensions/);
+});
