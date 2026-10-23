@@ -18,7 +18,7 @@ test('reuse only an identical owned outfit, preserving full image identity and p
 function stylist(){
  const el=new Map();const get=id=>{if(!el.has(id))el.set(id,{value:'',disabled:false,textContent:'',hidden:true,removeAttribute(){}});return el.get(id);};
  let release;const ready=new Promise(r=>release=r);let matches=0;
- const c={window:{closetAuth:{user:{id:'owner'}}},items:[{id:'new',category:'Tops',image}],
+ const c={db:{name:'closet-current-user-owner'},setTimeout,clearTimeout,Image:class{constructor(){this.naturalWidth=2;this.naturalHeight=2;}decode(){return Promise.resolve();}removeAttribute(){}},stylistPhotoForItem:item=>({source:'display',image:item.image}),window:{closetAuth:{user:{id:'owner'}}},items:[{id:'new',category:'Tops',image}],
   closetReady:ready,boardWriteContext:()=>({current:()=>true}),$:get,Date,styleOwnedCollection(){matches++;return [];},trendFreshnessText(){return '';},
   activeTrendLibrary:null,switchView(){}};
  vm.createContext(c);

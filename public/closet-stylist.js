@@ -10,18 +10,48 @@ function stylistSupportsPiece(piece){
 function stylistSelectedSources(board){
  return Object.entries(board.slots||{}).map(([slot,id])=>{
   const item=items.find(piece=>piece.id===id);
-  return {slot,id,image:item?.image,category:item?.category,itemType:item?.itemType,
+  return {slot,id,ownerId:window.closetAuth?.user?.id||null,database:db,image:item?.image,category:item?.category,itemType:item?.itemType,
    color:item?.color,pattern:item?.pattern,
-   seasons:JSON.stringify(item?.seasons||[])};
+   seasons:JSON.stringify(item?.seasons||[]),photoIdentity:stylistSourceIdentity(item)};
  });
 }
 function stylistSourcesCurrent(sources){
  return stylistOwnsCloset()&&sources.length>0&&sources.every(source=>{
   const item=items.find(piece=>piece.id===source.id);
-  return !!item&&item.image===source.image&&item.category===source.category&&
+  return source.ownerId===(window.closetAuth?.user?.id||null)&&source.database===db&&
+   !!item&&item.image===source.image&&item.category===source.category&&
    item.itemType===source.itemType&&item.color===source.color&&
-   item.pattern===source.pattern&&JSON.stringify(item.seasons||[])===source.seasons;
+   item.pattern===source.pattern&&JSON.stringify(item.seasons||[])===source.seasons&&
+   stylistSourceEqual(stylistSourceIdentity(item),source.photoIdentity);
  });
+}
+function stylistSourceIdentity(item){
+ // Copy metadata now: a later in-place import/crop edit must not mutate the
+ // captured snapshot. Immutable image strings remain exact, never re-encoded.
+ const copy=value=>Array.isArray(value)?value.map(copy):value&&typeof value==='object'?
+  Object.fromEntries(Object.entries(value).map(([k,v])=>[k,copy(v)])):value;
+ return Object.fromEntries(Object.entries(item||{}).filter(([key])=>
+  /original|source|recognition|crop|hash|owner|photoVersion/i.test(key)).map(([k,v])=>[k,copy(v)]));
+}
+function stylistSourceEqual(a,b){
+ if(a===b)return true;
+ if(!a||!b||typeof a!=='object'||typeof b!=='object'||Array.isArray(a)!==Array.isArray(b))return false;
+ const keys=Object.keys(a);return keys.length===Object.keys(b).length&&keys.every(k=>Object.hasOwn(b,k)&&stylistSourceEqual(a[k],b[k]));
+}
+async function stylistDecodedItems(closet,owner){
+ const valid=[];
+ // Bounded concurrency and timeout; decoder buffers are released immediately.
+ let next=0;
+ await Promise.all(Array.from({length:Math.min(4,closet.length)},async()=>{
+  while(next<closet.length){const item=closet[next++],photo=stylistPhotoForItem(item,owner);if(!photo)continue;
+   const image=new Image();let timer;
+   try{image.src=photo.image;await Promise.race([image.decode(),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('Photo decode timed out')),5000);})]);
+    if(image.naturalWidth>0&&image.naturalHeight>0&&image.naturalWidth*image.naturalHeight<=24000000)valid.push(item);
+   }catch{}finally{clearTimeout(timer);image.removeAttribute('src');}
+  }
+ }));
+ // Decoder completion order must not change ranking/tie-breaking input order.
+ return closet.filter(item=>valid.includes(item));
 }
 function renderStylistAnchor(){
  let piece=items.find(x=>x.id===stylistAnchorItemId);
@@ -30,7 +60,8 @@ function renderStylistAnchor(){
  }
  $('stylistAnchor').hidden=!piece;
  if(piece){
-  $('stylistAnchorPhoto').src=piece.image;
+  const photo=stylistPhotoForItem(piece,window.closetAuth?.user?.id||null);
+  $('stylistAnchorPhoto').src=photo?.image||'';
   $('stylistAnchorPhoto').alt=piece.name||piece.itemType||'Selected piece';
   $('stylistAnchorName').textContent=piece.name||piece.itemType||piece.category;
  }else $('stylistAnchorPhoto').removeAttribute('src');
@@ -47,6 +78,11 @@ function styleNewClosetItem(id){
  if(!stylistOwnsCloset()){refuseStylistAccount();return false;}
  const piece=items.find(x=>x.id===id);
  if(!stylistSupportsPiece(piece))return false;
+ if(!stylistPhotoForItem(piece,window.closetAuth?.user?.id||null)){
+  styledCollectionResults=[];renderStyledCollection();
+  $('stylistStatus').textContent='This saved piece needs a readable local photo before styling. Add its clothing photo again; your saved details are kept.';
+  return false;
+ }
  stylistAnchorItemId=piece.id;styledCollectionResults=[];
  renderStyledCollection();switchView('stylist');
  $('stylistStatus').textContent='Finding outfits for '+(piece.name||piece.itemType||'this piece')+'…';
@@ -57,7 +93,7 @@ async function previewStyledOutfit(result,board,index,button,status){
  if(button.disabled)return;
  const revision=++stylistPreviewRevision,request=stylistRequestRevision;
  const owner=window.closetAuth?.user?.id||null,selection=result.board;
- const sources=stylistSelectedSources(board);
+ const sources=result.preparedSources||stylistSelectedSources(board);
  const current=()=>revision===stylistPreviewRevision&&request===stylistRequestRevision&&
   owner===(window.closetAuth?.user?.id||null)&&result.board===selection&&
   styledCollectionResults.includes(result)&&stylistSourcesCurrent(sources);
@@ -87,10 +123,14 @@ function renderStyledCollection(){
  const grid=$('styledCollectionResults');grid.replaceChildren();
  $('stylistFreshness').textContent=trendFreshnessText();
  for(const [index,result]of styledCollectionResults.entries()){
-  const board=cleanOutfitBoard(result.board,items),changed=Object.keys(board.slots).length!==Object.keys(result.board.slots).length;
+  const board=cleanOutfitBoard(result.board,items);
+  // Bind at recommendation/render time, never take a fresh snapshot only
+  // after a later Save/Preview click has already lost the original identity.
+  if(!result.preparedSources)result.preparedSources=stylistSelectedSources(board);
+  const changed=Object.keys(board.slots).length!==Object.keys(result.board.slots).length||!stylistSourcesCurrent(result.preparedSources);
   const card=node('article',null,'styled-outfit');card.append(node('p','FROM YOUR COLLECTION','eyebrow'),node('h3',result.context.request+' · option '+(index+1)));
   const photos=node('div',null,'styled-outfit-photos');
-  for(const slot of outfitSlots){const item=items.find(x=>x.id===board.slots[slot.id]);if(!item)continue;const piece=node('figure'),img=node('img');img.src=item.image;img.alt=item.name||item.itemType;img.decoding='async';img.loading=index===0?'eager':'lazy';img.width=240;img.height=260;img.onerror=()=>{img.hidden=true;piece.append(node('p','Photo unavailable. Open this piece in My closet to check its photo.','fine'));};piece.append(img,node('figcaption',item.name||item.itemType));photos.append(piece);}card.append(photos);
+  for(const slot of outfitSlots){const item=items.find(x=>x.id===board.slots[slot.id]);if(!item)continue;const piece=node('figure'),img=node('img');img.src=stylistPhotoForItem(item,window.closetAuth?.user?.id||null)?.image||'';img.alt=item.name||item.itemType;img.decoding='async';img.loading=index===0?'eager':'lazy';img.width=240;img.height=260;img.onerror=()=>{img.hidden=true;piece.append(node('p','Photo unavailable. Open this piece in My closet to check its photo.','fine'));};piece.append(img,node('figcaption',item.name||item.itemType));photos.append(piece);}card.append(photos);
   const missing=boardGaps(board,items).filter(s=>!s.optional);
   card.append(node('p',missing.length?'Still needed from your closet: '+missing.map(s=>s.label).join(', '):'A complete outfit using clothes you own.'));
   card.append(node('p','Chosen for '+result.context.request.toLowerCase()+', with coordinating colors and fewer competing patterns. Unknown details are not assumed.','fine'));
@@ -111,18 +151,25 @@ function renderStyledCollection(){
    if(changed||!stylistSwapChoices(result,slot,items,stylistAnchorItemId).length)continue;
    const swap=node('button',label,'secondary styled-swap-button');
    swap.type='button';swap.setAttribute('aria-label',label+' in option '+(index+1));
-   swap.onclick=()=>{
+   swap.onclick=async()=>{
     if(!stylistOwnsCloset()){refuseStylistAccount();return;}
     // Recheck the actual selected photo and category, not just an item ID.
     // A changed account, deleted garment or edited jacket must not be swapped.
-    if(!stylistSourcesCurrent(stylistSelectedSources(board))){
+    if(!stylistSourcesCurrent(result.preparedSources)){
      ++stylistRequestRevision;styledCollectionResults=[];renderStyledCollection();
      $('stylistStatus').textContent='Your clothes changed. Create outfits again before swapping.';
      return;
     }
     const selected=stylistSwapOne(result,slot,items,stylistAnchorItemId);
     if(!selected)return;
+    const selection=result.board,owner=window.closetAuth?.user?.id||null,
+     swapSources=stylistSelectedSources({slots:{[slot]:selected.id}});
+    const valid=await stylistDecodedItems(items.filter(x=>x.id===selected.id),owner);
+    if(owner!==(window.closetAuth?.user?.id||null)||result.board!==selection||
+     !stylistSourcesCurrent(result.preparedSources)||!stylistSourcesCurrent(swapSources))return;
+    if(!valid.length){$('stylistStatus').textContent='That saved piece needs a readable local photo. Add its photo again before swapping.';return;}
     result.board=selected.board;result.saveMessage='';
+    result.preparedSources=stylistSelectedSources(result.board);
     result.swapHistory={...result.swapHistory,[slot]:selected.history};
     result.signature=Object.entries(result.board.slots).sort()
      .map(([k,v])=>k+':'+v).join('|');
@@ -146,13 +193,13 @@ function renderStyledCollection(){
   if(result.savePending)save.textContent='Saving outfit…';
   else if(result.savedBoard===result.board)save.textContent='Saved';
   if(missing.length)card.append(node('p','Preview this starting combination, then add the missing clothes before saving a complete styled outfit.','fine'));
-  if(changed)card.append(node('p','A selected garment was removed or recategorized. Create outfits again.','fine'));
+  if(changed)card.append(node('p','A selected garment or its source photo changed. Create outfits again.','fine'));
   const actionStatus=node('p',result.saveMessage||null,'fine');
   edit.onclick=()=>previewStyledOutfit(result,board,index,edit,actionStatus);
   save.onclick=async()=>{
    if(save.disabled||result.savePending)return;result.savePending=true;save.disabled=true;actionStatus.textContent='Saving outfit…';
    const owner=window.closetAuth?.user?.id||null,selection=result.board,
-    request=stylistRequestRevision,sources=stylistSelectedSources(board);
+    request=stylistRequestRevision,sources=result.preparedSources;
    const current=()=>owner===(window.closetAuth?.user?.id||null)&&
     request===stylistRequestRevision&&result.board===selection&&
     styledCollectionResults.includes(result)&&stylistSourcesCurrent(sources);
@@ -184,7 +231,12 @@ $('styleCollectionForm').onsubmit=async event=>{
  try{await closetReady;
   if(!isCurrent())return;
   if(!stylistOwnsCloset()){refuseStylistAccount();return;}
-  styledCollectionResults=styleOwnedCollection(items,{request:$('stylistOccasion').value,audience:$('stylistAudience').value,season:$('stylistSeason').value,anchorItemId:stylistAnchorItemId||undefined},activeTrendLibrary);
+  const sources=stylistSelectedSources({slots:Object.fromEntries(items.map(x=>[x.id,x.id]))});
+  const displayable=await stylistDecodedItems(items,owner);
+  if(!isCurrent())return;
+  if(!stylistSourcesCurrent(sources)&&items.length){styledCollectionResults=[];renderStyledCollection();$('stylistStatus').textContent='Your clothing photos changed. Create outfits again before saving or previewing.';return;}
+  styledCollectionResults=styleOwnedCollection(displayable,{...preferences,ownerId:owner},activeTrendLibrary);
+  for(const result of styledCollectionResults)result.preparedSources=stylistSelectedSources(result.board);
   renderStyledCollection();
   // The scorer intentionally returns partial outfits for sparse closets.
   // Describe them as starting combinations rather than completed outfits.
@@ -198,8 +250,8 @@ $('styleCollectionForm').onsubmit=async event=>{
    styledCollectionResults.length?
     'Here are '+styledCollectionResults.length+' outfit option'+(styledCollectionResults.length===1?'':'s')+
     (stylistAnchorItemId?' using your chosen piece and clothes you own.':' from your collection.'):
-    stylistAnchorItemId?'No compatible outfit for that piece yet. Try Casual or adjust its details.':
-    items.length?'No suitable combination for this occasion yet. Add or adjust the clothing categories in My closet.':
+    stylistAnchorItemId?'No compatible outfit with a readable local photo for that piece yet. Add its photo again or try Casual; your saved details are kept.':
+    items.length?'No suitable combination with readable local photos yet. Add missing photos or adjust categories in My closet; saved details are kept.':
     'Add clothing photos to My closet first, then create an outfit.';
  }catch{if(isCurrent())$('stylistStatus').textContent='Could not create outfits. Your closet is unchanged; try again.';}finally{if(revision===stylistRequestRevision)button.disabled=false;}
 };

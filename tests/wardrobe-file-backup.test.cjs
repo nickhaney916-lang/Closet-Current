@@ -101,3 +101,13 @@ test('export never prepares a file above the same budget enforced by restore',as
  const h=ui();h.disk.items=[piece()];h.c.Blob=class{size=E.MAX_FILE_BYTES+1;};
  await h.c.$('export').onclick();assert.match(h.status(),/100 MB file limit/);assert.equal(h.c.$('export').disabled,false);
 });
+
+test('conflicting restored garment ID remaps its outfit pin with the selected source',()=>{
+ const c=setup(),data=backup();
+ data.outfitBoard.current.anchorItemId='shirt';data.outfitBoard.saved[0].anchorItemId='shirt';
+ const incoming=normalized(c,data),r=merge(c,local(c,[piece('shirt',{color:'Red'})]),incoming);
+ assert.equal(r.outfitBoard.current.anchorItemId,'copy-1');
+ assert.equal(r.outfitBoard.current.slots.top,'copy-1');
+ assert.equal(r.outfitBoard.saved[0].anchorItemId,'copy-1');
+ assert.equal(incoming.outfitBoard.current.anchorItemId,'shirt','incoming backup is unchanged');
+});

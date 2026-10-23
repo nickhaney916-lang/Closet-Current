@@ -1,0 +1,81 @@
+name: Integrated staging security plus original-source outfit acceptance
+on:
+  push:
+    branches: [integration/safe-clear-deletion-outfits-20261022]
+permissions:
+  contents: read
+jobs:
+  integrated-outfit-source-security:
+    runs-on: ubuntu-latest
+    timeout-minutes: 42
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Enforce unchanged staging Auth, local draft durability, SQL and account-deletion endpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+          baseline=f84854192b5c4409929468da43bca1d1d7630939
+          test "$(git merge-base "$baseline" HEAD)" = "$baseline"
+          git diff --name-only "$baseline" HEAD |
+          while IFS= read -r file; do
+            case "$file" in
+              public/closet-stylist.js|public/closet-stylist-engine.js|public/outfit-board.js|public/outfit-board-engine.js|public/reusable-figure-preview.js|public/wardrobe-backup-engine.js|public/index.html|public/style.css|\
+              tests/closet-stylist.test.cjs|tests/customer-original-styling-integration.test.cjs|tests/mobile-owned-outfit-reliability.test.cjs|tests/outfit-save-recovery.test.cjs|tests/style-preview-recovery.test.cjs|tests/stylist-jacket-coat-swap.test.cjs|tests/stylist-owned-source-commit.test.cjs|tests/stylist-unpinned-layer-placement.test.cjs|\
+              tests/builder-owned-entry.test.cjs|tests/local-preview-recovery.test.cjs|tests/wardrobe-file-backup.test.cjs|tests/issue201-outfit-benchmark.test.mjs|tests/issue204-outfit-source-guards.test.mjs|tests/helpers/issue204-photo.cjs|\
+              benchmark/issue201-synthetic-wardrobes.mjs|benchmark/issue201-results.json|scripts/issue201-outfit-benchmark.mjs|scripts/test-issue201-outfit-browsers.mjs|docs/ISSUE-201-OUTFIT-BENCHMARK.md|docs/ISSUE-204-OUTFIT-SOURCE-GUARDS.md|\
+              scripts/test-reusable-figure-phone-browsers.mjs|scripts/test-style-my-new-item-mobile.mjs|docs/INTEGRATED-OUTFIT-SOURCE-SECURITY-20261022.md|.github/workflows/integrated-outfit-source-qa.yml) ;;
+              *) echo "Forbidden integration change: $file"; exit 1 ;;
+            esac
+          done
+          git diff --exit-code "$baseline" HEAD -- public/app.js public/auth.js public/cloud-backup.js public/pilot-data-notice.html supabase/ .github/workflows/safe-clear-staging-package.yml
+          node --check public/closet-stylist.js
+          node --check public/closet-stylist-engine.js
+          node --check scripts/issue201-outfit-benchmark.mjs
+          grep -q 'status:503' supabase/functions/account-delete/index.ts
+          grep -q 'deletionCompleted:false' supabase/functions/account-delete/index.ts
+          grep -q 'clearUnfinishedPhotosSafely' public/app.js
+          git diff --check
+      - name: Offline app build and full security plus outfit regression
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Enforce independent product acceptance benchmark, not just characterization CI
+        run: |
+          node scripts/issue201-outfit-benchmark.mjs artifacts/combined-outfit/benchmark.json
+          cmp benchmark/issue201-results.json artifacts/combined-outfit/benchmark.json
+      - name: Re-test network-denied account deletion/recovery QA
+        run: node --require ./tests/helpers/issue196-no-network.cjs --test tests/issue196-*.test.mjs tests/account-deletion-*.test.mjs
+      - name: Build restricted staging assets with fictional Supabase endpoint and no hosted calls
+        env:
+          CLOSET_STAGING_SUPABASE_URL: https://abcdefghijklmnopqrst.supabase.co
+          CLOSET_STAGING_APP_ORIGIN: https://pilot-access-check.closet-current-staging.pages.dev/
+          CLOSET_STAGING_SUPABASE_PUBLISHABLE_KEY: sb_publishable_SYNTHETIC_INTEGRATION_OUTFIT_20261022
+        run: |
+          node scripts/build-restricted-staging.mjs
+          node scripts/verify-restricted-staging-bundle.mjs
+      - name: Install isolated browser test tooling
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+      - name: Install Chromium and WebKit browser emulation
+        timeout-minutes: 14
+        run: npx playwright install --with-deps chromium webkit
+      - name: Verify actual original photo, saved board and swaps with offline Chromium/WebKit
+        timeout-minutes: 10
+        run: node scripts/test-issue201-outfit-browsers.mjs
+      - name: Upload synthetic-only acceptance evidence; never deploy
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Closet-Current-Synthetic-Integrated-Outfit-Evidence
+          path: |
+            artifacts/combined-outfit/
+            artifacts/issue201/browser-results.json
+          retention-days: 7
+          if-no-files-found: ignore
+      - name: Never enable paid AI, deletion or deploy to any cloud account
+        run: echo 'DRAFT QA ONLY. NO DEPLOY, MERGE, CLOUD AUTH CHANGES, PAID AI OR CUSTOMER PHOTOS.'

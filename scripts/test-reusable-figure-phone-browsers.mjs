@@ -253,6 +253,9 @@ try{
    assert.match(await page.locator('#reusableFigureBase').getAttribute('src'),/male-preview\.webp/);
    // Simulated optional local-only selfie: never persisted, never sent.
    const redPng=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jq0kAAAAASUVORK5CYII=','base64');
+   await page.locator('.local-selfie-experiment summary').click();
+   assert.equal(await page.locator('#reusableSelfieUpload').isDisabled(),true);
+   await page.locator('#reusableSelfieConsent').check();
    await page.locator('#reusableSelfieUpload').setInputFiles({
     name:'local-selfie.png',mimeType:'image/png',buffer:redPng
    });

@@ -1,6 +1,7 @@
+const syntheticPhoto=require('./helpers/issue204-photo.cjs');
 const test=require('node:test'),assert=require('node:assert/strict'),vm=require('node:vm'),fs=require('node:fs');
 function setup(){const c={URL,encodeURIComponent,Date};vm.createContext(c);for(const file of ['outfit-matcher.js','trend-library.js','outfit-board-engine.js','closet-stylist-engine.js'])vm.runInContext(fs.readFileSync('public/'+file,'utf8'),c);return c;}
-const piece=(id,category,itemType,color='Black',extra={})=>({id,category,itemType,color,pattern:'Solid',sleeveLength:'Unknown',seasons:[],name:itemType,image:'photo-'+id,...extra});
+const piece=(id,category,itemType,color='Black',extra={})=>({id,category,itemType,color,pattern:'Solid',sleeveLength:'Unknown',seasons:[],name:itemType,image:syntheticPhoto(id),...extra});
 const closet=[piece('polo','Tops','Polo','White'),piece('tee','Tops','T-shirt','Blue'),piece('jeans','Bottoms','Jeans','Blue'),piece('trousers','Bottoms','Trousers'),piece('loafers','Shoes','Loafers','Brown'),piece('sneakers','Shoes','Sneakers','White'),piece('layer','Outerwear','Blazer'),piece('bag','Accessories','Bag','Brown')];
 test('repeated swaps visit every eligible owned shoe before repeating and preserve the pinned top',()=>{
  const c=setup(),owned=[piece('top','Tops','T-shirt'),piece('bottom','Bottoms','Jeans'),
@@ -91,7 +92,7 @@ test('one-tap Style this opens the existing stylist and submits the chosen owned
  assert.ok(source.includes('function styleNewClosetItem('));
  const elements=new Map(),pieces=[piece('fresh-shirt','Tops','T-shirt'),piece('dress','Dresses','Casual dress'),piece('unknown','Uncategorized','Unknown')];
  let submitted=0,rendered=0,navigated='';
- const c={items:pieces,boardWriteContext:()=>({current:()=>true}),renderStyledCollection(){rendered++;},switchView(v){navigated=v;},
+ const c={window:{closetAuth:{user:{id:'synthetic-ui'}}},stylistPhotoForItem:setup().stylistPhotoForItem,items:pieces,boardWriteContext:()=>({current:()=>true}),renderStyledCollection(){rendered++;},switchView(v){navigated=v;},
   $:id=>{if(!elements.has(id))elements.set(id,{textContent:'',requestSubmit(){submitted++;}});return elements.get(id);}};
  vm.createContext(c);vm.runInContext(source,c);
  assert.equal(c.styleNewClosetItem('fresh-shirt'),true);
@@ -290,4 +291,27 @@ test('cardigan pins as a sweater layer without inventing a jacket or discarding 
  assert.equal(r.board.slots.layer2,undefined);
  assert.equal(r.board.slots.layer3,undefined);
  assert.equal(r.board.slots.bottom,'jeans');
+});
+
+test('three owned options retain a pinned shoe after serialized board reload and reject swapping it',()=>{
+ const c=setup(),owned=[piece('new-shoe','Shoes','Sneakers'),piece('other-shoe','Shoes','Sneakers'),
+  piece('shirt','Tops','T-shirt'),...['a','b','c'].map(id=>piece(id,'Bottoms','Jeans'))];
+ const original=JSON.stringify(owned),results=c.styleOwnedCollection(owned,{anchorItemId:'new-shoe'});
+ assert.equal(results.length,3);
+ assert.equal(new Set(results.map(r=>r.signature)).size,3);
+ for(const result of results){
+  result.board=c.cleanOutfitBoard(JSON.parse(JSON.stringify(result.board)),owned);
+  assert.equal(result.board.anchorItemId,'new-shoe');assert.equal(result.board.slots.shoes,'new-shoe');
+  assert.equal(c.stylistSwapChoices(result,'shoes',owned).length,0);
+  assert.equal(c.stylistSwapChoices(result,'shoes',owned,'other-shoe').length,0);
+  assert.ok(Object.values(result.board.slots).every(id=>owned.some(item=>item.id===id)));
+ }
+ assert.equal(JSON.stringify(owned),original);
+});
+
+test('board cleanup discards a pin when its owned item is missing or no longer selected',()=>{
+ const c=setup();
+ assert.equal(c.cleanOutfitBoard({slots:{top:'tee'},anchorItemId:'foreign'},closet).anchorItemId,undefined);
+ assert.equal(c.cleanOutfitBoard({slots:{top:'tee'},anchorItemId:'jeans'},closet).anchorItemId,undefined);
+ assert.equal(c.cleanOutfitBoard({slots:{top:'tee'},anchorItemId:'tee'},closet).anchorItemId,'tee');
 });

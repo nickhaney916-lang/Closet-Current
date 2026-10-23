@@ -1,9 +1,10 @@
 'use strict';
+const syntheticPhoto=require('./helpers/issue204-photo.cjs');
 const test=require('node:test'),assert=require('node:assert/strict'),vm=require('node:vm'),fs=require('node:fs');
 function setup(){const c={URL,encodeURIComponent,Date};vm.createContext(c);
  for(const file of ['outfit-matcher.js','trend-library.js','outfit-board-engine.js','closet-stylist-engine.js'])
   vm.runInContext(fs.readFileSync('public/'+file,'utf8'),c);return c;}
-const p=(id,category,itemType,extra={})=>({id,category,itemType,name:id,image:'owned-photo-'+id,color:'Black',
+const p=(id,category,itemType,extra={})=>({id,category,itemType,name:id,image:syntheticPhoto(id),color:'Black',
  pattern:'Solid',sleeveLength:'Unknown',seasons:[],...extra});
 const main=()=>[p('top','Tops','T-shirt'),p('jeans','Bottoms','Jeans'),p('shoes','Shoes','Sneakers')];
 
@@ -100,7 +101,7 @@ test('UI includes independent 50px jacket/coat buttons, source/account guard and
  const css=fs.readFileSync('public/style.css','utf8');
  assert.match(source,/\['layer2','Swap jacket'\]/);
  assert.match(source,/\['layer3','Swap coat'\]/);
- assert.match(source,/stylistSourcesCurrent\(stylistSelectedSources\(board\)\)/);
+ assert.match(source,/stylistSourcesCurrent\(result\.preparedSources\)/);
  assert.match(source,/stylistOwnsCloset\(\)/);
  assert.match(source,/result\.references=\[\]/);
  assert.match(source,/Preview only — tap Save outfit when you like it/);
