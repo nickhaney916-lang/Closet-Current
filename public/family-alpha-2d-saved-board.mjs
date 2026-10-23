@@ -147,12 +147,25 @@ export async function prepareSavedBoard2D({
   realImageMaskVerificationRequired:true
  });
 }
+/**
+ * Invalidate a pending saved-board render when a higher-level authenticated
+ * request starts. The old SHA digest may still finish, but it cannot place
+ * the previous account's garment pixels back into this avatar container.
+ *
+ * This is intentionally synchronous and scoped to this one avatar surface.
+ */
+export function invalidateSavedBoard2D(container){
+ if(!container||typeof container.replaceChildren!=='function')
+  throw new TypeError('Container required');
+ activeRenders.set(container,(activeRenders.get(container)||0)+1);
+ container.replaceChildren();
+}
+
 /** Atomic fail-closed avatar rendering, with a new render superseding stale calls. */
 export async function renderSavedBoard2D(container,options={}){
  if(!container||typeof container.replaceChildren!=='function')throw new TypeError('Container required');
- const request=(activeRenders.get(container)||0)+1;
- activeRenders.set(container,request);
- container.replaceChildren(); // clear any previous account/wardrobe immediately
+ invalidateSavedBoard2D(container);
+ const request=activeRenders.get(container);
  try{
   const prepared=await prepareSavedBoard2D(options);
   if(activeRenders.get(container)!==request)throw new Error('Superseded avatar request');
