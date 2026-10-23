@@ -120,3 +120,37 @@ header{padding-top:22px;padding-bottom:18px}.brand-mark{background:#7043ba;color
 .closet-layer-help{margin:6px 0 14px;color:var(--muted);font-size:12px}.closet-category-base{border-radius:16px 0 0 16px!important}.closet-categories[data-layers="0"] .closet-category-base{border-radius:16px!important}.closet-categories.wearing-dress .closet-category-base{height:58%;z-index:3}.closet-category-layer3{z-index:4}.outfit-figure.has-outer-coat{height:710px}.board-slot-layer3{left:18px;top:490px}@media(max-width:480px){.board-slot-layer3{left:8px;top:478px}}
 /* Dress browsing replaces the separates figure and its layering controls. */
 .closet-view-controls{justify-content:flex-end}.closet-view-controls:has(#closetSeparates:not([hidden])){justify-content:flex-start}.closet-view-controls #closetSeparates{margin:0;min-height:44px}.closet-categories.dress-mode .closet-category-base{height:58%;border-radius:18px!important}.closet-categories.dress-mode::before{clip-path:polygon(29% 0,71% 0,100% 29%,87% 35%,74% 17%,64% 42%,88% 100%,12% 100%,36% 42%,26% 17%,13% 35%,0 29%)}
+
+
+/* Assignment #11: simple mobile closet shortcuts and uncluttered camera. */
+.closet-quick-section{margin:20px 0 24px}
+.closet-quick-section h3{margin:0 0 12px;font-size:clamp(19px,2.5vw,25px);letter-spacing:-.02em}
+.closet-quick-categories{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.closet-quick-tile{display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:5px;text-align:left;min-width:0;min-height:108px;padding:16px;border:2px solid #d9cae8;background:#faf6ff;color:#322242;border-radius:19px}
+.closet-quick-tile:nth-child(2){background:#f9eff2}.closet-quick-tile:nth-child(3){background:#f1f8f5}.closet-quick-tile:nth-child(4){background:#fff3eb}
+.closet-quick-tile .closet-quick-emoji{font-size:25px;line-height:1.2}
+.closet-quick-tile strong{font-size:20px;line-height:1.15;letter-spacing:0}
+.closet-quick-tile .closet-quick-count{font-weight:700;font-size:14px;color:#593e6e}
+.closet-quick-tile small{font-size:12px;color:#51475c;font-weight:500;line-height:1.3}
+.closet-quick-tile:hover{border-color:#8056b2}
+.closet-quick-tile:focus-visible{outline:3px solid #643899;outline-offset:2px}
+.camera-choices{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:stretch}
+.camera-choices>button{min-height:86px;font-size:18px;padding:16px 12px;white-space:normal;line-height:1.3}
+.camera-choices .camera-help{grid-column:1/-1;margin:0 0 8px;font-size:14px;line-height:1.45;color:#564862}
+.mobile-adjust-reference{margin:0 0 16px;display:flex;align-items:center;gap:16px;border-radius:16px;background:#f6f1fb;border:1px solid #dccfe9;padding:12px}
+.mobile-adjust-reference img{display:block;width:100px;height:126px;object-fit:contain;flex:none;border-radius:12px;background:#fff;image-rendering:auto}
+.mobile-adjust-reference figcaption{font-size:15px;font-weight:600;line-height:1.5;color:#42304e}
+@media(max-width:760px){
+ .closet-quick-categories{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+ .closet-quick-tile{min-height:98px;padding:13px 15px;border-radius:16px}
+ .closet-quick-tile strong{font-size:19px}
+ .closet-quick-tile small{font-size:12px}
+ .camera-choices>button{font-size:16px;min-height:80px}
+}
+@media(max-width:359px){
+ .closet-quick-tile{min-height:108px;padding:12px}
+ .closet-quick-tile strong{font-size:18px}
+ .mobile-adjust-reference img{width:86px;height:106px}
+ .mobile-adjust-reference figcaption{font-size:13px}
+}
+@media(prefers-reduced-motion:reduce){.closet-quick-tile{transition:none}}
