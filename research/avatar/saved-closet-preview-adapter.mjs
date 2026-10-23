@@ -9,6 +9,9 @@ export function prepareSavedOutfitItem({accountId,record,original,reviewedMask})
  if(typeof accountId!=='string'||!accountId.trim())throw new Error('Missing account');
  if(!record||record.accountId!==accountId||!record.id)throw new Error('Unauthorized or missing saved item');
  if(!original||original.accountId!==accountId||original.itemId!==record.id)throw new Error('Original photo identity mismatch');
+ if(!/^[a-f0-9]{64}$/i.test(record.originalSha256||'')||
+ !/^[a-f0-9]{64}$/i.test(original.originalSha256||''))
+ throw new Error('Missing valid original integrity hash');
  if(record.originalSha256!==original.originalSha256)throw new Error('Saved original photo has changed');
  if(!reviewedMask||reviewedMask.accountId!==accountId||reviewedMask.itemId!==record.id||
  reviewedMask.originalSha256!==original.originalSha256||reviewedMask.reviewed!==true)
