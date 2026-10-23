@@ -10,7 +10,11 @@ export function validateGarmentTransfer({accountId, garment, mask}) {
  if (!Number.isInteger(garment.width)||!Number.isInteger(garment.height)||garment.width<1||garment.height<1||garment.width*garment.height>16000000) throw new Error('Invalid original dimensions');
  if (!(garment.pixels instanceof Uint8ClampedArray)||garment.pixels.length!==garment.width*garment.height*4) throw new Error('Invalid RGBA source');
  if (!(mask instanceof Uint8Array)||mask.length!==garment.width*garment.height) throw new Error('Mask must match original pixels');
- if (!mask.some(value=>value>0)) throw new Error('Empty mask');
+ let visible=false;
+ for(let i=0;i<mask.length;i++){
+  if(mask[i]>0&&garment.pixels[i*4+3]>0){visible=true;break;}
+ }
+ if(!visible)throw new Error('Mask has no visible source pixels');
  return true;
 }
 export function isolateLicensedGarment({accountId,garment,mask}) {
