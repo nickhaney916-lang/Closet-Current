@@ -34,7 +34,14 @@
    // An existing immutable object is safe only after verifying its contents.
    const existing=await api('/storage/v1/object/'+BUCKET+'/'+path),stored=new Uint8Array(await existing.arrayBuffer());if(await hash(stored)!==path.split('/')[1].slice(0,-4))throw Error('Stored photo differs');
   }}}
- async function getRemote(){const response=await api('/rest/v1/closet_backups?select=revision,document&owner_id=eq.'+user);const rows=await response.json();if(!Array.isArray(rows)||rows.length>1)throw Error('Invalid cloud response');if(!rows.length)return null;const r=rows[0];if(!Number.isSafeInteger(r.revision)||r.revision<1)throw Error('Invalid cloud revision');E.validateDocument(r.document);return r;}
+ async function getRemote(){const gate=scope();requireScope(gate);
+  const response=await api('/rest/v1/closet_backups?select=owner_id,revision,document&owner_id=eq.'+user);
+  const rows=await response.json();requireScope(gate);
+  if(!Array.isArray(rows)||rows.length>1)throw Error('Invalid cloud response');
+  if(!rows.length)return null;const r=rows[0];
+  if(r.owner_id!==gate.user)throw Error('Foreign cloud backup owner');
+  if(!Number.isSafeInteger(r.revision)||r.revision<1)throw Error('Invalid cloud revision');
+  E.validateDocument(r.document);return r;}
  async function apply(document,revision,expectedRevision,gate){
   requireScope(gate);
   if(callbacks.canRestore&&!callbacks.canRestore())return false;
