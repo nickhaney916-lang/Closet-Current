@@ -1,4 +1,5 @@
 import {localCandidates,clothingChoices,strongMatch,garmentDetailGroups,groupedGarmentDetails,verifiedGarmentDetails,detailPhotoUsable} from './local-catalog.mjs';
+import {requireSubtypeReview} from './recognition-subtype-review.mjs';
 
 export const categoryCandidates=[
  {label:'a shirt, blouse, sweater, or other top',category:'Tops'},
@@ -417,6 +418,11 @@ export async function classifyIsolatedGarment(model,image,{hint,confirmationMode
   return {strong:false,choices:[],details:{},reason:'mask_category_disagrees'};
  const first=clothingChoices(whole)[0],confirmation=clothingChoices(close),sameType=agreed&&strongMatch(clothingChoices(whole))&&confirmation[0]?.category===first.category&&confirmation[0]?.itemType===first.itemType&&confirmation[0].score>=.35&&confirmation[0].score-(confirmation[1]?.score||0)>=.1&&(!hint.types.length||hint.types.includes(first.itemType));
  const choice=sameType?{...first}:{label:category,category,itemType:'Unknown',sleeveLength:['Bottoms','Shoes','Accessories'].includes(category)?'Not applicable':'Unknown',score:Math.min(a[0]?.score??0,b[0]?.score??0)};
+ // A semantic mask is not independent subtype ground truth. Apply the same
+ // admission veto as ordinary recognition before emitting provisional identity
+ // or reading attributes; mask confidence must not bypass a review family.
+ const admitted=requireSubtypeReview({strong:true,categoryOnly:!sameType,choices:[choice],details:{}});
+ if(!admitted.strong)return admitted;
  onIdentified(choice);const details=sameType?await readVerifiedDetails(model,confirmationModel,image,choice,onStage):{};
  return {strong:true,categoryOnly:!sameType,choices:[{...choice,sleeveLength:details.sleeveLength||choice.sleeveLength}],details};
 }
