@@ -44,7 +44,7 @@ function validateFrame(frame){
 async function jpegDecodedFrame(value){
  if(typeof value!=='string'||!/^data:image\/jpeg;base64,/.test(value)||value.length>11_000_000)
   throw Error('Retained JPEG unavailable');
- if(typeof Image!=='function'||typeof document?.createElement!=='function')
+ if(typeof Image!=='function'||(typeof document==='undefined'||typeof document.createElement!=='function'))
   throw Error('Browser JPEG decoder unavailable');
  const image=new Image();
  image.src=value;
@@ -62,7 +62,7 @@ async function jpegDecodedFrame(value){
  return frame;
 }
 async function pngImageFromPrepared(prepared){
- if(typeof Image!=='function'||typeof document?.createElement!=='function')
+ if(typeof Image!=='function'||(typeof document==='undefined'||typeof document.createElement!=='function'))
   throw Error('Transparent preview decoder unavailable');
  const {width:w,height:h,rgba}=prepared;
  if(!Number.isInteger(w)||!Number.isInteger(h)||w<1||h<1||w*h>MAX_PIXELS||
