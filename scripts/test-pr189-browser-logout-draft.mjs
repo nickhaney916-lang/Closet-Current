@@ -73,7 +73,8 @@ try {
     await page.waitForFunction(()=>db&&db.name==='closet-current-user-'+window.closetAuth.user.id);
    };
    const clickLogout=async()=>{
-    await page.locator('.account-menu > summary').click();
+    const menu=page.locator('.account-menu');
+    if(!(await menu.evaluate(el=>el.open)))await menu.locator('summary').click();
     await page.locator('#logout').click();
    };
    await login('a');
