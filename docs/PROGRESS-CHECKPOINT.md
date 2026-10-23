@@ -1,3 +1,19 @@
+# Issue #211 isolated offline recognition QA — October 22, 2026
+
+New branch `work/issue-211-offline-recognition` from PR #209 exact application
+`972a50c8065ac4e5478c1e7fefdf740b2a654001`; no integration/release authority.
+59 licensed source files SHA-verified and full stored pixels diagnosed. Narrow
+odd-size diagnostic framing fix with baseline-negative RGB oracle. See
+`benchmark/ISSUE-211-OFFLINE-RECOGNITION.md` and per-source JSON; avatar design
+in `docs/ISSUE-211-AVATAR-FEASIBILITY.md`. Application-head offline CI 39904215150 and fresh inference 39904215239 PASS;
+236 exact baseline/candidate browser frame comparisons PASS. Current reused-set
+broad labels 51/56 garments, four wrong automatic subtypes persist. No new
+independent physical masks, phones or customer accuracy. See issue #211/PR for
+final exact-head references. Production promotion BLOCKED.
+No deployment, cloud writes, paid AI, customer photos or Drive Duel changes.
+
+---
+
 # Restricted staging integration — October 22, 2026 (PR #189)
 
 **Current development candidate:** `integration/staging-security-reliability-20261022`. This branch selectively integrates PR #186's output-only Cloudflare support-page routing, PR #183's staging Auth QA evidence, and PR #187's Android logout fix. It targets staging packaging PR #181, never production `main`. Unlike the standalone route PR #186, **the combined branch intentionally changes `public/app.js` and `public/auth.js`**.

@@ -79,7 +79,7 @@ export async function prepareRecognitionPhoto(image,RawImageClass,{confirmation=
  if(!Number.isInteger(contentSize)||contentSize<128||contentSize>size)throw Error('Invalid recognition content size.');
  const fit=fitPhotoDimensions(cropped.width,cropped.height,contentSize);
  // The second view changes scale slightly, but retains cuffs, soles and hems.
- const positioned={...fit,size,left:fit.left+(size-contentSize)/2,top:fit.top+(size-contentSize)/2};
+ const positioned={...fit,size,left:fit.left+Math.floor((size-contentSize)/2),top:fit.top+Math.floor((size-contentSize)/2)};
  const resized=await cropped.resize(fit.width,fit.height);
  return new RawImageClass(padPhotoPixels(resized.data,resized.channels,positioned),size,size,3);
 }

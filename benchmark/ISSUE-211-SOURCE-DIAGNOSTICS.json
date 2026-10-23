@@ -1,0 +1,2894 @@
+{
+  "schema": 1,
+  "applicationBase": "972a50c8065ac4e5478c1e7fefdf740b2a654001",
+  "measurement": "NEW_OFFLINE_SOURCE_PIXEL_DIAGNOSTICS_NOT_MODEL_INFERENCE",
+  "sourceCount": 59,
+  "originalHashMatches": 59,
+  "note": "Full stored fixture resolution, not proven camera-native originals: Commons URLs may be resized. No new model predictions or human annotations.",
+  "modelMetadata": "0f99955d944c39bfd9d035a02ac273c7a44a406b",
+  "modelVectorSHA256": "e1e0415f2272e81c0f3ce2f08fd5fd5c2a9eb6481437d696936c723e8e1abb2f",
+  "categoryCounts": {
+    "Tops": 5,
+    "Bottoms": 13,
+    "Uncategorized": 3,
+    "Dresses": 9,
+    "Outerwear": 8,
+    "Shoes": 20,
+    "Accessories": 1
+  },
+  "colorNeedsReview": 43,
+  "trimmedSources": [
+    "commons-0053",
+    "commons-0062",
+    "commons-0086",
+    "commons-0087"
+  ],
+  "newInferenceCount": 0,
+  "independentHumanMasks": 0,
+  "customerAccuracy": null,
+  "physicalPhones": 0,
+  "rows": [
+    {
+      "id": "commons-0001",
+      "cohort": "reviewed-32",
+      "expectedCategory": "Tops",
+      "acceptedTypes": [
+        "T-shirt"
+      ],
+      "sha256": "d20d66d4173f56c47e35540f081ecdfcee6e019df665ee245d967d126e117684",
+      "hashMatches": true,
+      "width": 1920,
+      "height": 2868,
+      "exifOrientation": 1,
+      "license": "CC BY-SA 3.0",
+      "source": "https://commons.wikimedia.org/wiki/File:T-shirt,_oversized,_maat_XL,_Merk_Ecko_Unlimited,_blauw,_wit_en_grijs_met_opdruk,_objectnr_86904-3.JPG",
+      "framing": {
+        "originalWidth": 1920,
+        "originalHeight": 2868,
+        "trimmedBounds": {
+          "left": 0,
+          "top": 0,
+          "right": 1920,
+          "bottom": 2868
+        },
+        "trimmedFraction": 0,
+        "garmentAspectRatio": 0.6694560669456067,
+        "contentWidth": 225,
+        "contentHeight": 336,
+        "topAndBottomPadding": 0,
+        "leftAndRightPadding": 111
+      },
+      "bounds": {
+        "left": 0,
+        "top": 0,
+        "right": 1920,
+        "bottom": 2868
+      },
+      "colorEstimate": {
+        "color": "Multicolor",
+        "source": "photo-estimate",
+        "support": 0.326,
+        "needsConfirmation": true
+      },
+      "colorGroundTruth": null,
+      "colorCorrectness": "NOT_MEASURED",
+      "cropMaskIoU": null,
+      "disposition": "REVIEW",
+      "reason": "Pixel diagnostics do not establish physical garment boundaries or color truth"
+    },
+    {
+      "id": "commons-0002",
+      "cohort": "reviewed-32",
+      "expectedCategory": "Tops",
+      "acceptedTypes": [
+        "T-shirt"
+      ],
+      "sha256": "fef606d6ed7354a2238f1bcc2584942747ca6fa4a2b16b2e9eec21f639d10667",
+      "hashMatches": true,
+      "width": 1920,
+      "height": 2868,
+      "exifOrientation": 1,
+      "license": "CC BY-SA 3.0",
+      "source": "https://commons.wikimedia.org/wiki/File:Rood_t-shirt,_merk_Diesel,_maat_M,_objectnr_86503.JPG",
+      "framing": {
+        "originalWidth": 1920,
+        "originalHeight": 2868,
+        "trimmedBounds": {
+          "left": 0,
+          "top": 0,
+          "right": 1920,
+          "bottom": 2868
+        },
+        "trimmedFraction": 0,
+        "garmentAspectRatio": 0.6694560669456067,
+        "contentWidth": 225,
+        "contentHeight": 336,
+        "topAndBottomPadding": 0,
+        "leftAndRightPadding": 111
+      },
+      "bounds": {
+        "left": 0,
+        "top": 0,
+        "right": 1920,
+        "bottom": 2868
+      },
+      "colorEstimate": {
+        "color": "Red",
+        "source": "photo-estimate",
+        "support": 0.87
+      },
+      "colorGroundTruth": null,
+      "colorCorrectness": "NOT_MEASURED",
+      "cropMaskIoU": null,
+      "disposition": "REVIEW",
+      "reason": "Pixel diagnostics do not establish physical garment boundaries or color truth"
+    },
+    {
+      "id": "commons-0003",
+      "cohort": "holdout-16",
+      "expectedCategory": "Tops",
+      "acceptedTypes": [
+        "T-shirt"
+      ],
+      "sha256": "cb909d7ad9c3940bfa4db0cc50b2ea7025faebe3dcec8fe80067f900760bba64",
+      "hashMatches": true,
+      "width": 1920,
+      "height": 2868,
+      "exifOrientation": 1,
+      "license": "CC BY-SA 3.0",
+      "source": "https://commons.wikimedia.org/wiki/File:Zwart_shirt_met_lange_mouwen_van_merk_Armani_Jeans,_opdruk_letters_%E2%80%9CAJ%E2%80%9D_op_voorkant,_maat_M,_objectnr_86975-3.JPG",
+      "framing": {
+        "originalWidth": 1920,
+        "originalHeight": 2868,
+        "trimmedBounds": {
+          "left": 0,
+          "top": 0,
+          "right": 1920,
+          "bottom": 2868
+        },
+        "trimmedFraction": 0,
+        "garmentAspectRatio": 0.6694560669456067,
+        "contentWidth": 225,
+        "contentHeight": 336,
+        "topAndBottomPadding": 0,
+        "leftAndRightPadding": 111
+      },
+      "bounds": {
+        "left": 0,
+        "top": 0,
+        "right": 1920,
+        "bottom": 2868
+      },
+      "colorEstimate": {
+        "color": "Black",
+        "source": "photo-estimate",
+        "support": 0.602
+      },
+      "colorGroundTruth": null,
+      "colorCorrectness": "NOT_MEASURED",
+      "cropMaskIoU": null,
+      "disposition": "REVIEW",
+      "reason": "Pixel diagnostics do not establish physical garment boundaries or color truth"
+    },
+    {
+      "id": "commons-0014",
+      "cohort": "holdout-16",
+      "expectedCategory": "Tops",
+      "acceptedTypes": [
+        "Blouse"
+      ],
+      "sha256": "d1074e4375b5e60f1bc43996c41b168dcb67425c9d0fac376e43719ecf9fe35f",
+      "hashMatches": true,
+      "width": 1920,
+      "height": 1632,
+      "exifOrientation": 1,
+      "license": "CC0",
+      "source": "https://commons.wikimedia.org/wiki/File:Blouse_MET_CI44.111_F.jpg",
+      "framing": {
+        "originalWidth": 1920,
+        "originalHeight": 1632,
+        "trimmedBounds": {
+          "left": 0,
+          "top": 0,
+          "right": 1920,
+          "bottom": 1632
+        },
+        "trimmedFraction": 0,
+        "garmentAspectRatio": 1.1764705882352942,
+        "contentWidth": 336,
+        "contentHeight": 286,
+        "topAndBottomPadding": 50,
+        "leftAndRightPadding": 0
+      },
+      "bounds": {
+        "left": 0,
+        "top": 0,
+        "right": 1920,
+        "bottom": 1632
+      },
+      "colorEstimate": {
+        "color": "Multicolor",
+        "source": "photo-estimate",
+        "support": 0.337,
+        "needsConfirmation": true
+      },
+      "colorGroundTruth": null,
+      "colorCorrectness": "NOT_MEASURED",
+      "cropMaskIoU": null,
+      "disposition": "REVIEW",
+      "reason": "Pixel diagnostics do not establish physical garment boundaries or color truth"
+    },
+    {
+      "id": "commons-0016",
+      "cohort": "holdout-16",
+      "expectedCategory": "Tops",
+      "acceptedTypes": [
+        "Blouse"
+      ],
+      "sha256": "e0510f06c475fa048585e6ff437359cb4255ce3a425e40a69dc54cc337f5ab24",
+      "hashMatches": true,
+      "width": 1920,
+      "height": 2238,
+      "exifOrientation": 1,
+      "license": "CC0",
+      "source": "https://commons.wikimedia.org/wiki/File:Blouse_MET_41.64_F.jpg",
+      "framing": {
+        "originalWidth": 1920,
+        "originalHeight": 2238,
+        "trimmedBounds": {
+          "left": 0,
+          "top": 0,
+          "right": 1920,
+          "bottom": 2238
+        },
+        "trimmedFraction": 0,
+        "garmentAspectRatio": 0.8579088471849866,
+        "contentWidth": 288,
+        "contentHeight": 336,
+        "topAndBottomPadding": 0,
+        "leftAndRightPadding": 48
+      },
+      "bounds": {
+        "left": 0,
+        "top": 0,
+        "right": 1920,
+        "bottom": 2238
+      },
+      "colorEstimate": {
+        "color": "Beige",
+        "source": "photo-estimate",
+        "support": 0.862
+      },
+      "colorGroundTruth": null,
+      "colorCorrectness": "NOT_MEASURED",
+      "cropMaskIoU": null,
+      "disposition": "REVIEW",
+      "reason": "Pixel diagnostics do not establish physical garment boundaries or color truth"
+    },
+    {
+      "id": "commons-0021",
+      "cohort": "reviewed-32",
+      "expectedCategory": "Bottoms",
+      "acceptedTypes": [
+        "Jeans"
+      ],
+      "sha256": "04c0ca5bed1bee26e83be98b9a992619b0777811a7fb8a99fe955939334bbd8c",
+      "hashMatches": true,
+      "width": 564,
+      "height": 628,
+      "exifOrientation": 1,
+      "license": "Public domain",
+      "source": "https://commons.wikimedia.org/wiki/File:Jeans_for_men.jpg",
+      "framing": {
+        "originalWidth": 564,
+        "originalHeight": 628,
+        "trimmedBounds": {
+          "left": 0,
+          "top": 0,
+          "right": 564,
+          "bottom": 628
+        },
+        "trimmedFraction": 0,
+        "garmentAspectRatio": 0.8980891719745223,
+        "contentWidth": 302,
+        "contentHeight": 336,
+        "topAndBottomPadding": 0,
+        "leftAndRightPadding": 34
+      },
+      "bounds": {
+        "left": 0,
+        "top": 0,
+        "right": 564,
+        "bottom": 628
+      },
+      "colorEstimate": {
+        "color": "Multicolor",
+        "source": "photo-estimate",
+        "support": 0.49,
+        "needsConfirmation": true
+      },
+      "colorGroundTruth": null,
+      "colorCorrectness": "NOT_MEASURED",
+      "cropMaskIoU": null,
+      "disposition": "REVIEW",
+      "reason": "Pixel diagnostics do not establish physical garment boundaries or color truth"
+    },
+    {
+      "id": "commons-0023",
+      "cohort": "reviewed-32",
+      "expectedCategory": "Bottoms",
+      "acceptedTypes": [
+        "Jeans"
+      ],
+      "sha256": "5be4cb0d7017987d8625caf53ac979f0c78245617dc5828aec5f77ae8f4ea8ef",
+      "hashMatches": true,
+      "width": 1920,
+      "height": 2868,
+      "exifOrientation": 1,
+      "license": "CC BY-SA 3.0",
+      "source": "https://commons.wikimedia.org/wiki/File:Blauwe_jeans,_merk_Artful_Dodger,_maat_32,_zakken_achterzijde_met_opvallende_witte_print,_objectnr_86905-3(1).JPG",
+      "framing": {
+        "originalWidth": 1920,
+        "originalHeight": 2868,
+        "trimmedBounds": {
+          "left": 0,
+          "top": 0,
+          "right": 1920,
+          "bottom": 2868
+        },
+        "trimmedFraction": 0,
+        "garmentAspectRatio": 0.6694560669456067,
+        "contentWidth": 225,
+        "contentHeight": 336,
+        "topAndBottomPadding": 0,
+        "leftAndRightPadding": 111
+      },
+      "bounds": {
+        "left": 0,
+        "top": 0,
+        "right": 1920,
+        "bottom": 2868
+      },
+      "colorEstimate": {
+        "color": "Multicolor",
+        "source": "photo-estimate",
+        "support": 0.363,
+        "needsConfirmation": true
+      },
+      "colorGroundTruth": null,
+      "colorCorrectness": "NOT_MEASURED",
+      "cropMaskIoU": null,
+      "disposition": "REVIEW",
+      "reason": "Pixel diagnostics do not establish physical garment boundaries or color truth"
+    },
+    {
+      "id": "commons-0024",
+      "cohort": "reviewed-32",
+      "expectedCategory": "Bottoms",
+      "acceptedTypes": [
+        "Jeans"
+      ],
+      "sha256": "8e28473b101c70a5e4b7daae819a0342405bfcb7abbf4850dbbb4e801dd7ac4f",
+      "hashMatches": true,
+      "width": 1920,
+      "height": 2868,
+      "exifOrientation": 1,
+      "license": "CC BY-SA 3.0",
+      "source": "https://commons.wikimedia.org/wiki/File:Blauwe_jeans,_skinny_jeans_model,_merk_Revers_Jeans,_maat_S36,_objectnr_86974-3(1).JPG",
+      "framing": {
+        "originalWidth": 1920,
+        "originalHeight": 2868,
+        "trimmedBounds": {
+          "left": 0,
+          "top": 0,
+          "right": 1920,
+          "bottom": 2868
+        },
+        "trimmedFraction": 0,
+        "garmentAspectRatio": 0.6694560669456067,
+        "contentWidth": 225,
+        "contentHeight": 336,
+        "topAndBottomPadding": 0,
+        "leftAndRightPadding": 111
+      },
+      "bounds": {
+        "left": 0,
+        "top": 0,
+        "right": 1920,
+        "bottom": 2868
+      },
+      "colorEstimate": {
+        "color": "Multicolor",
+        "source": "photo-estimate",
+        "support": 0.441,
+        "needsConfirmation": true
+      },
+      "colorGroundTruth": null,
+      "colorCorrectness": "NOT_MEASURED",
+      "cropMaskIoU": null,
+      "disposition": "REVIEW",
+      "reason": "Pixel diagnostics do not establish physical garment boundaries or color truth"
+    },
+    {
+      "id": "commons-0025",
+      "cohort": "holdout-16",
+      "expectedCategory": "Bottoms",
+      "acceptedTypes": [
+        "Jeans"
+      ],
+      "sha256": "54de15a268c8cbdd767b9247da91abd22efa546004623eec23da1b2492625f9d",
+      "hashMatches": true,
+      "width": 1920,
+      "height": 1440,
+      "exifOrientation": 1,
+      "license": "CC BY-SA 4.0",
+      "source": "https://commons.wikimedia.org/wiki/File:Wisent_Blue_Jeans_(6).JPG",
+      "framing": {
+        "originalWidth": 1920,
+        "originalHeight": 1440,
+        "trimmedBounds": {
+          "left": 0,
+          "top": 0,
+          "right": 1920,
+          "bottom": 1440
+        },
+        "trimmedFraction": 0,
+        "garmentAspectRatio": 1.3333333333333333,
+        "contentWidth": 336,
+        "contentHeight": 252,
+        "topAndBottomPadding": 84,
+        "leftAndRightPadding": 0
+      },
+      "bounds": {
+        "left": 0,
+        "top": 0,
+        "right": 1920,
+        "bottom": 1440
+      },
+      "colorEstimate": {
+        "color": "Blue",
+        "source": "photo-estimate",
+        "support": 0.72
+      },
+      "colorGroundTruth": null,
+      "colorCorrectness": "NOT_MEASURED",
+      "cropMaskIoU": null,
+      "disposition": "REVIEW",
+      "reason": "Pixel diagnostics do not establish physical garment boundaries or color truth"
+    },
+    {
+      "id": "commons-0033",
+      "cohort": "reviewed-32",
+      "expectedCategory": "Bottoms",
+      "acceptedTypes": [
+        "Shorts"
+      ],
+      "sha256": "7e31adee6fabca386faabd8ca6f0f1f4d93291f74cb84a6ab10cb4bd724cd2f7",
+      "hashMatches": true,
+      "width": 1920,
+      "height": 2400,
+      "exifOrientation": 1,
+      "license": "CC BY-SA 3.0",
+      "source": "https://commons.wikimedia.org/wiki/File:Men%27s_Shorts_-_Old_Bull_Lee_-_Orange.jpg",
+      "framing": {
+        "originalWidth": 1920,
+        "originalHeight": 2400,
+        "trimmedBounds": {
+          "left": 0,
+          "top": 0,
+          "right": 1920,
+          "bottom": 2400
+        },
+        "trimmedFraction": 0,
+        "garmentAspectRatio": 0.8,
+        "contentWidth": 269,
+        "contentHeight": 336,
+        "topAndBottomPadding": 0,
+        "leftAndRightPadding": 67
+      },
+      "bounds": {
+        "left": 0,
+        "top": 0,
+        "right": 1920,
+        "bottom": 2400
+      },
+      "colorEstimate": {
+        "color": "Brown",
+        "source": "photo-estimate",
+        "support": 0.489,
+        "needsConfirmation": true,
+        "reason": "warm-tone-lighting-ambiguity"
+      },
+      "colorGroundTruth": null,
+      "colorCorrectness": "NOT_MEASURED",
+      "cropMaskIoU": null,
+      "disposition": "REVIEW",
+      "reason": "Pixel diagnostics do not establish physical garment boundaries or color truth"
+    },
+    {
+      "id": "commons-0035",
+      "cohort": "reviewed-32",
+      "expectedCategory": "Bottoms",
+      "acceptedTypes": [
+        "Shorts"
+      ],
+      "sha256": "9fd067b0919d519eb7924ebd5c4ddf0bc0f3956cfd229fe1ab12c16cccb085ca",
+      "hashMatches": true,
+      "width": 1920,
+      "height": 2560,
+      "exifOrientation": 1,
+      "license": "CC BY-SA 4.0",
+      "source": "https://commons.wikimedia.org/wiki/File:Orange_men%27s_shorts_for_sale_at_Target.jpg",
+      "framing": {
+        "originalWidth": 1920,
+        "originalHeight": 2560,
+        "trimmedBounds": {
+          "left": 0,
+          "top": 0,
+          "right": 1920,
+          "bottom": 2560
+        },
+        "trimmedFraction": 0,
+        "garmentAspectRatio": 0.75,
+        "contentWidth": 252,
+        "contentHeight": 336,
+        "topAndBottomPadding": 0,
+        "leftAndRightPadding": 84
+      },
+      "bounds": {
+        "left": 0,
+        "top": 0,
+        "right": 1920,
+        "bottom": 2560
+      },
+      "colorEstimate": {
+        "color": "Brown",
+        "source": "photo-estimate",
+        "support": 0.486,
+        "needsConfirmation": true,
+        "reason": "warm-tone-lighting-ambiguity"
+      },
+      "colorGroundTruth": null,
+      "colorCorrectness": "NOT_MEASURED",
+      "cropMaskIoU": null,
+      "disposition": "REVIEW",
+      "reason": "Pixel diagnostics do not establish physical garment boundaries or color truth"
+    },
+    {
+      "id": "commons-0036",
+      "cohort": "holdout-16",
+      "expectedCategory": "Bottoms",
+      "acceptedTypes": [
+        "Skirt"
+      ],
+      "sha256": "5668ffc3c84aaecd8c25854e3da13c62a06a04cf9d294411b33d42e40d5e6386",
+      "hashMatches": true,
+      "width": 1920,
+      "height": 902,
+      "exifOrientation": 1,
+      "license": "CC BY 2.0",
+      "source": "https://commons.wikimedia.org/wiki/File:Iraqw_initiation_skirt.jpg",
+      "framing": {
+        "originalWidth": 1920,
+        "originalHeight": 902,
+        "trimmedBounds": {
+          "left": 0,
+          "top": 0,
+          "right": 1920,
+          "bottom": 902
+        },
+        "trimmedFraction": 0,
+        "garmentAspectRatio": 2.12860310421286,
+        "contentWidth": 336,
+        "contentHeight": 158,
+        "topAndBottomPadding": 178,
+        "leftAndRightPadding": 0
+      },
+      "bounds": {
+        "left": 0,
+        "top": 0,
+        "right": 1920,
+        "bottom": 902
+      },
+      "colorEstimate": {
+        "color": "Multicolor",
+        "source": "photo-estimate",
+        "support": 0.361,
+        "needsConfirmation": true
+      },
+      "colorGroundTruth": null,
+      "colorCorrectness": "NOT_MEASURED",
+      "cropMaskIoU": null,
+      "disposition": "REVIEW",
+      "reason": "Pixel diagnostics do not establish physical garment boundaries or color truth"
+    },
+    {
+      "id": "commons-0040",
+      "cohort": "holdout-16",
+      "expectedCategory": "Bottoms",
+      "acceptedTypes": [
+        "Skirt"
+      ],
+      "sha256": "b681dc1dbc32dde043fbf9e208437f60e83fa37365ad8023012b2df866cb637e",
+      "hashMatches": true,
+      "width": 1920,
+      "height": 4258,
+      "exifOrientation": 1,
+      "license": "CC0",
+      "source": "https://commons.wikimedia.org/wiki/File:Malong_(tube_skirt)_from_Mindanao,_Honolulu_Museum_of_Art_9178.1.JPG",
+      "framing": {
+        "originalWidth": 1920,
+        "originalHeight": 4258,
+        "trimmedBounds": {
+          "left": 0,
+          "top": 0,
+          "right": 1920,
+          "bottom": 4258
+        },
+        "trimmedFraction": 0,
+        "garmentAspectRatio": 0.45091592296852984,
+        "contentWidth": 152,
+        "contentHeight": 336,
+        "topAndBottomPadding": 0,
+        "leftAndRightPadding": 184
+      },
+      "bounds": {
+        "left": 0,
+        "top": 0,
+        "right": 1920,
+        "bottom": 4258
+      },
+      "colorEstimate": {
+        "color": "Pink",
+        "source": "photo-estimate",
+        "support": 0.644
+      },
+      "colorGroundTruth": null,
+      "colorCorrectness": "NOT_MEASURED",
+      "cropMaskIoU": null,
+      "disposition": "REVIEW",
+      "reason": "Pixel diagnostics do not establish physical garment boundaries or color truth"
+    },
+    {
+      "id": "commons-0041",
+      "cohort": "reviewed-32",
+      "expectedCategory": "Bottoms",
+      "acceptedTypes": [
+        "Skirt"
+      ],
+      "sha256": "0e4d278fe02d2e527a5b73a08407dda8a57e5597260dc08461bc83e720cf2278",
+      "hashMatches": true,
+      "width": 1920,
+      "height": 2560,
+      "exifOrientation": 1,
+      "license": "CC BY 4.0",
+      "source": "https://commons.wikimedia.org/wiki/File:Skirt_(AM_1968.105-2).jpg",
+      "framing": {
+        "originalWidth": 1920,
+        "originalHeight": 2560,
+        "trimmedBounds": {
+          "left": 0,
+          "top": 0,
+          "right": 1920,
+          "bottom": 2560
+        },
+        "trimmedFraction": 0,
+        "garmentAspectRatio": 0.75,
+        "contentWidth": 252,
+        "contentHeight": 336,
+        "topAndBottomPadding": 0,
+        "leftAndRightPadding": 84
+      },
+      "bounds": {
+        "left": 0,
+        "top": 0,
+        "right": 1920,
+        "bottom": 2560
+      },
+      "colorEstimate": {
+        "color": "Gray",
+        "source": "photo-estimate",
+        "support": 0.556
+      },
+      "colorGroundTruth": null,
+      "colorCorrectness": "NOT_MEASURED",
+      "cropMaskIoU": null,
+      "disposition": "REVIEW",
+      "reason": "Pixel diagnostics do not establish physical garment boundaries or color truth"
+    },
+    {
+      "id": "commons-0043",
+      "cohort": "reviewed-32",
+      "expectedCategory": "Bottoms",
+      "acceptedTypes": [
+        "Skirt"
+      ],
+      "sha256": "c8d0812ab69d698f5bf8dc5a14ace6b8034e4c74152471acf4f079fdd6d0c344",
+      "hashMatches": true,
+      "width": 1920,
+      "height": 1903,
+      "exifOrientation": 1,
+      "license": "CC0",
+      "source": "https://commons.wikimedia.org/wiki/File:Woman%27s_summer_skirt_from_China,_Honolulu_Museum_of_Art_5152.1.JPG",
+      "framing": {
+        "originalWidth": 1920,
+        "originalHeight": 1903,
+        "trimmedBounds": {
+          "left": 0,
+          "top": 0,
+          "right": 1920,
+          "bottom": 1903
+        },
+        "trimmedFraction": 0,
+        "garmentAspectRatio": 1.0089332632685233,
+        "contentWidth": 336,
+        "contentHeight": 333,
+        "topAndBottomPadding": 3,
+        "leftAndRightPadding": 0
+      },
+      "bounds": {
+        "left": 0,
+        "top": 0,
+        "right": 1920,
+        "bottom": 1903
+      },
+      "colorEstimate": {
+        "color": "Multicolor",
+        "source": "photo-estimate",
+        "support": 0.376,
+        "needsConfirmation": true
+      },
+      "colorGroundTruth": null,
+      "colorCorrectness": "NOT_MEASURED",
+      "cropMaskIoU": null,
+      "disposition": "REVIEW",
+      "reason": "Pixel diagnostics do not establish physical garment boundaries or color truth"
+    },
+    {
+      "id": "commons-0044",
+      "cohort": "reviewed-32",
+      "expectedCategory": "Bottoms",
+      "acceptedTypes": [
+        "Skirt"
+      ],
+      "sha256": "b3fb8eac5815d1e1cdfde4eb766fc71d6a3640cb0e80c0c82560c45f0b65e501",
+      "hashMatches": true,
+      "width": 1920,
+      "height": 3307,
+      "exifOrientation": 1,
+      "license": "CC0",
+      "source": "https://commons.wikimedia.org/wiki/File:Ho_(woman%27s_tube_skirt)_from_Vietnam,_Honolulu_Museum_of_Art_12632.1.JPG",
+      "framing": {
+        "originalWidth": 1920,
+        "originalHeight": 3307,
+        "trimmedBounds": {
+          "left": 0,
+          "top": 0,
+          "right": 1920,
+          "bottom": 3307
+        },
+        "trimmedFraction": 0,
+        "garmentAspectRatio": 0.5805866344118537,
+        "contentWidth": 195,
+        "contentHeight": 336,
+        "topAndBottomPadding": 0,
+        "leftAndRightPadding": 141
+      },
+      "bounds": {
+        "left": 0,
+        "top": 0,
+        "right": 1920,
+        "bottom": 3307
+      },
+      "colorEstimate": {
+        "color": "Multicolor",
+        "source": "photo-estimate",
+        "support": 0.542,
+        "needsConfirmation": true
+      },
+      "colorGroundTruth": null,
+      "colorCorrectness": "NOT_MEASURED",
+      "cropMaskIoU": null,
+      "disposition": "REVIEW",
+      "reason": "Pixel diagnostics do not establish physical garment boundaries or color truth"
+    },
+    {
+      "id": "commons-0045",
+      "cohort": "reviewed-32",
+      "expectedCategory": "Bottoms",
+      "acceptedTypes": [
+        "Skirt"
+      ],
+      "sha256": "eada8b18770db3c5099b664432ad6423e43b120e37d4c4031b6ada718fde2d7d",
+      "hashMatches": true,
+      "width": 1920,
+      "height": 4060,
+      "exifOrientation": 1,
+      "license": "CC0",
+      "source": "https://commons.wikimedia.org/wiki/File:Chaofu_(formal_court_skirt)_from_China,_Honolulu_Museum_of_Art_1076.JPG",
+      "framing": {
+        "originalWidth": 1920,
+        "originalHeight": 4060,
+        "trimmedBounds": {
+          "left": 0,
+          "top": 0,
+          "right": 1920,
+          "bottom": 4060
+        },
+        "trimmedFraction": 0,
+        "garmentAspectRatio": 0.4729064039408867,
+        "contentWidth": 159,
+        "contentHeight": 336,
+        "topAndBottomPadding": 0,
+        "leftAndRightPadding": 177
+      },
+      "bounds": {
+        "left": 0,
+        "top": 0,
+        "right": 1920,
+        "bottom": 4060
+      },
+      "colorEstimate": {
+        "color": "Multicolor",
+        "source": "photo-estimate",
+        "support": 0.483,
+        "needsConfirmation": true
+      },
+      "colorGroundTruth": null,
+      "colorCorrectness": "NOT_MEASURED",
+      "cropMaskIoU": null,
+      "disposition": "REVIEW",
+      "reason": "Pixel diagnostics do not establish physical garment boundaries or color truth"
+    },
+    {
+      "id": "commons-0046",
+      "cohort": "holdout-16",
+      "expectedCategory": "Uncategorized",
+      "acceptedTypes": [
+        "Unknown"
+      ],
+      "sha256": "7f94b8bc8edc340200f0353968f54868dc72e3180bc191530e19f2a82ce91ead",
+      "hashMatches": true,
+      "width": 1920,
+      "height": 789,
+      "exifOrientation": 1,
+      "license": "CC BY-SA 4.0",
+      "source": "https://commons.wikimedia.org/wiki/File:2015_Garb_Goli%C5%84ca.jpg",
+      "framing": {
+        "originalWidth": 1920,
+        "originalHeight": 789,
+        "trimmedBounds": {
+          "left": 0,
+          "top": 0,
+          "right": 1920,
+          "bottom": 789
+        },
+        "trimmedFraction": 0,
+        "garmentAspectRatio": 2.4334600760456273,
+        "contentWidth": 336,
+        "contentHeight": 138,
+        "topAndBottomPadding": 198,
+        "leftAndRightPadding": 0
+      },
+      "bounds": {
+        "left": 0,
+        "top": 0,
+        "right": 1920,
+        "bottom": 789
+      },
+      "colorEstimate": {
+        "color": "Multicolor",
+        "source": "photo-estimate",
+        "support": 0.433,
+        "needsConfirmation": true
+      },
+      "colorGroundTruth": null,
+      "colorCorrectness": "NOT_MEASURED",
+      "cropMaskIoU": null,
+      "disposition": "REVIEW",
+      "reason": "Pixel diagnostics do not establish physical garment boundaries or color truth"
+    },
+    {
+      "id": "commons-0049",
+      "cohort": "holdout-16",
+      "expectedCategory": "Dresses",
+      "acceptedTypes": [
+        "Dress",
+        "Casual dress",
+        "Shirt dress",
+        "Sweater dress",
+        "Formal dress"
+      ],
+      "sha256": "819ff96e55abf6f79cb99b5abca1870bc0bccfc669681bbc755562be9dbab547",
+      "hashMatches": true,
+      "width": 1920,
+      "height": 2880,
+      "exifOrientation": 1,
+      "license": "CC BY 4.0",
+      "source": "https://commons.wikimedia.org/wiki/File:Dress_(AM_17186-5).jpg",
+      "framing": {
+        "originalWidth": 1920,
+        "originalHeight": 2880,
+        "trimmedBounds": {
+          "left": 0,
+          "top": 0,
+          "right": 1920,
+          "bottom": 2880
+        },
+        "trimmedFraction": 0,
+        "garmentAspectRatio": 0.6666666666666666,
+        "contentWidth": 224,
+        "contentHeight": 336,
+        "topAndBottomPadding": 0,
+        "leftAndRightPadding": 112
+      },
+      "bounds": {
+        "left": 0,
+        "top": 0,
+        "right": 1920,
+        "bottom": 2880
+      },
+      "colorEstimate": {
+        "color": "Multicolor",
+        "source": "photo-estimate",
+        "support": 0.403,
+        "needsConfirmation": true
+      },
+      "colorGroundTruth": null,
+      "colorCorrectness": "NOT_MEASURED",
+      "cropMaskIoU": null,
+      "disposition": "REVIEW",
+      "reason": "Pixel diagnostics do not establish physical garment boundaries or color truth"
+    },
+    {
+      "id": "commons-0052",
+      "cohort": "reviewed-32",
+      "expectedCategory": "Dresses",
+      "acceptedTypes": [
+        "Dress",
+        "Casual dress",
+        "Shirt dress",
+        "Sweater dress",
+        "Formal dress"
+      ],
+      "sha256": "a6efd0e1d007ba63c0afd2afe9697f336336944d949d57c67e3aedbfe68e9824",
+      "hashMatches": true,
+      "width": 1920,
+      "height": 2560,
+      "exifOrientation": 1,
+      "license": "CC BY 4.0",
+      "source": "https://commons.wikimedia.org/wiki/File:Costume,_swimming,_child%27s_(AM_1994.201-1).jpg",
+      "framing": {
+        "originalWidth": 1920,
+        "originalHeight": 2560,
+        "trimmedBounds": {
+          "left": 0,
+          "top": 0,
+          "right": 1920,
+          "bottom": 2560
+        },
+        "trimmedFraction": 0,
+        "garmentAspectRatio": 0.75,
+        "contentWidth": 252,
+        "contentHeight": 336,
+        "topAndBottomPadding": 0,
+        "leftAndRightPadding": 84
+      },
+      "bounds": {
+        "left": 0,
+        "top": 0,
+        "right": 1920,
+        "bottom": 2560
+      },
+      "colorEstimate": {
+        "color": "Gray",
+        "source": "photo-estimate",
+        "support": 0.734
+      },
+      "colorGroundTruth": null,
+      "colorCorrectness": "NOT_MEASURED",
+      "cropMaskIoU": null,
+      "disposition": "REVIEW",
+      "reason": "Pixel diagnostics do not establish physical garment boundaries or color truth"
+    },
+    {
+      "id": "commons-0053",
+      "cohort": "reviewed-32",
+      "expectedCategory": "Dresses",
+      "acceptedTypes": [
+        "Dress",
+        "Casual dress",
+        "Shirt dress",
+        "Sweater dress",
+        "Formal dress"
+      ],
+      "sha256": "e7a617cd23a159864f619e8397d5f37d48b684e47dddc4ad6b46b14481042019",
+      "hashMatches": true,
+      "width": 1920,
+      "height": 2880,
+      "exifOrientation": 1,
+      "license": "CC BY 4.0",
+      "source": "https://commons.wikimedia.org/wiki/File:Dress,_match_(AM_2017.66.33-1).jpg",
+      "framing": {
+        "originalWidth": 1920,
+        "originalHeight": 2880,
+        "trimmedBounds": {
+          "left": 190,
+          "top": 86,
+          "right": 1580,
+          "bottom": 2838
+        },
+        "trimmedFraction": 0.3082175925925926,
+        "garmentAspectRatio": 0.5050872093023255,
+        "contentWidth": 170,
+        "contentHeight": 336,
+        "topAndBottomPadding": 0,
+        "leftAndRightPadding": 166
+      },
+      "bounds": {
+        "left": 190,
+        "top": 86,
+        "right": 1580,
+        "bottom": 2838
+      },
+      "colorEstimate": {
+        "color": "Black",
+        "source": "photo-estimate",
+        "support": 0.68
+      },
+      "colorGroundTruth": null,
+      "colorCorrectness": "NOT_MEASURED",
+      "cropMaskIoU": null,
+      "disposition": "REVIEW",
+      "reason": "Pixel diagnostics do not establish physical garment boundaries or color truth"
+    },
+    {
+      "id": "commons-0059",
+      "cohort": "holdout-16",
+      "expectedCategory": "Dresses",
+      "acceptedTypes": [
+        "Dress",
+        "Casual dress",
+        "Shirt dress",
+        "Sweater dress",
+        "Formal dress"
+      ],
+      "sha256": "f7b8eea8f6d741a5f685119cc5c92f69300a5f294940162429e3febd1482f44c",
+      "hashMatches": true,
+      "width": 1920,
+      "height": 1440,
+      "exifOrientation": 1,
+      "license": "CC BY 4.0",
+      "source": "https://commons.wikimedia.org/wiki/File:Dress_and_jacket_(AM_1970.236-4).jpg",
+      "framing": {
+        "originalWidth": 1920,
+        "originalHeight": 1440,
+        "trimmedBounds": {
+          "left": 0,
+          "top": 0,
+          "right": 1920,
+          "bottom": 1440
+        },
+        "trimmedFraction": 0,
+        "garmentAspectRatio": 1.3333333333333333,
+        "contentWidth": 336,
+        "contentHeight": 252,
+        "topAndBottomPadding": 84,
+        "leftAndRightPadding": 0
+      },
+      "bounds": {
+        "left": 0,
+        "top": 0,
+        "right": 1920,
+        "bottom": 1440
+      },
+      "colorEstimate": {
+        "color": "Gray",
+        "source": "photo-estimate",
+        "support": 0.943
+      },
+      "colorGroundTruth": null,
+      "colorCorrectness": "NOT_MEASURED",
+      "cropMaskIoU": null,
+      "disposition": "REVIEW",
+      "reason": "Pixel diagnostics do not establish physical garment boundaries or color truth"
+    },
+    {
+      "id": "commons-0060",
+      "cohort": "holdout-16",
+      "expectedCategory": "Outerwear",
+      "acceptedTypes": [
+        "Jacket"
+      ],
+      "sha256": "198cd0d18fc3d2b9e2ff7d30ca024e860ee4b90dac3165890ed4e3721e5f153f",
+      "hashMatches": true,
+      "width": 1920,
+      "height": 2560,
+      "exifOrientation": 1,
+      "license": "CC BY 4.0",
+      "source": "https://commons.wikimedia.org/wiki/File:Jacket_(AM_1969.193-1).jpg",
+      "framing": {
+        "originalWidth": 1920,
+        "originalHeight": 2560,
+        "trimmedBounds": {
+          "left": 0,
+          "top": 0,
+          "right": 1920,
+          "bottom": 2560
+        },
+        "trimmedFraction": 0,
+        "garmentAspectRatio": 0.75,
+        "contentWidth": 252,
+        "contentHeight": 336,
+        "topAndBottomPadding": 0,
+        "leftAndRightPadding": 84
+      },
+      "bounds": {
+        "left": 0,
+        "top": 0,
+        "right": 1920,
+        "bottom": 2560
+      },
+      "colorEstimate": {
+        "color": "Gray",
+        "source": "photo-estimate",
+        "support": 0.8
+      },
+      "colorGroundTruth": null,
+      "colorCorrectness": "NOT_MEASURED",
+      "cropMaskIoU": null,
+      "disposition": "REVIEW",
+      "reason": "Pixel diagnostics do not establish physical garment boundaries or color truth"
+    },
+    {
+      "id": "commons-0062",
+      "cohort": "holdout-16",
+      "expectedCategory": "Outerwear",
+      "acceptedTypes": [
+        "Jacket"
+      ],
+      "sha256": "ed42247af077518ac3532d851a4330ae7cd69bee9969ab3f784431cfbc61f350",
+      "hashMatches": true,
+      "width": 1920,
+      "height": 1440,
+      "exifOrientation": 1,
+      "license": "CC BY 4.0",
+      "source": "https://commons.wikimedia.org/wiki/File:Jacket_(AM_906-2).jpg",
+      "framing": {
+        "originalWidth": 1920,
+        "originalHeight": 1440,
+        "trimmedBounds": {
+          "left": 0,
+          "top": 62,
+          "right": 1920,
+          "bottom": 1440
+        },
+        "trimmedFraction": 0.043055555555555514,
+        "garmentAspectRatio": 1.3933236574746009,
+        "contentWidth": 336,
+        "contentHeight": 241,
+        "topAndBottomPadding": 95,
+        "leftAndRightPadding": 0
+      },
+      "bounds": {
+        "left": 0,
+        "top": 62,
+        "right": 1920,
+        "bottom": 1440
+      },
+      "colorEstimate": {
+        "color": "Multicolor",
+        "source": "photo-estimate",
+        "support": 0.428,
+        "needsConfirmation": true
+      },
+      "colorGroundTruth": null,
+      "colorCorrectness": "NOT_MEASURED",
+      "cropMaskIoU": null,
+      "disposition": "REVIEW",
+      "reason": "Pixel diagnostics do not establish physical garment boundaries or color truth"
+    },
+    {
+      "id": "commons-0064",
+      "cohort": "reviewed-32",
+      "expectedCategory": "Outerwear",
+      "acceptedTypes": [
+        "Jacket"
+      ],
+      "sha256": "bb68b22a7fdaff20e71eb969bb5d857598a5ca6f4b47f172dc7a8623b7bd6b83",
+      "hashMatches": true,
+      "width": 1920,
+      "height": 2560,
+      "exifOrientation": 1,
+      "license": "CC BY 4.0",
+      "source": "https://commons.wikimedia.org/wiki/File:Jacket_(AM_740158-3).jpg",
+      "framing": {
+        "originalWidth": 1920,
+        "originalHeight": 2560,
+        "trimmedBounds": {
+          "left": 0,
+          "top": 0,
+          "right": 1920,
+          "bottom": 2560
+        },
+        "trimmedFraction": 0,
+        "garmentAspectRatio": 0.75,
+        "contentWidth": 252,
+        "contentHeight": 336,
+        "topAndBottomPadding": 0,
+        "leftAndRightPadding": 84
+      },
+      "bounds": {
+        "left": 0,
+        "top": 0,
+        "right": 1920,
+        "bottom": 2560
+      },
+      "colorEstimate": {
+        "color": "Blue",
+        "source": "photo-estimate",
+        "support": 0.643
+      },
+      "colorGroundTruth": null,
+      "colorCorrectness": "NOT_MEASURED",
+      "cropMaskIoU": null,
+      "disposition": "REVIEW",
+      "reason": "Pixel diagnostics do not establish physical garment boundaries or color truth"
+    },
+    {
+      "id": "commons-0065",
+      "cohort": "reviewed-32",
+      "expectedCategory": "Outerwear",
+      "acceptedTypes": [
+        "Jacket"
+      ],
+      "sha256": "0d094b023d86942acbc89fc5a4bc02968c1b5d0b2c78639cdeb985f522a78494",
+      "hashMatches": true,
+      "width": 1920,
+      "height": 1440,
+      "exifOrientation": 1,
+      "license": "CC BY 4.0",
+      "source": "https://commons.wikimedia.org/wiki/File:Jacket,_woman%27s_(AM_15987-1).jpg",
+      "framing": {
+        "originalWidth": 1920,
+        "originalHeight": 1440,
+        "trimmedBounds": {
+          "left": 0,
+          "top": 0,
+          "right": 1920,
+          "bottom": 1440
+        },
+        "trimmedFraction": 0,
+        "garmentAspectRatio": 1.3333333333333333,
+        "contentWidth": 336,
+        "contentHeight": 252,
+        "topAndBottomPadding": 84,
+        "leftAndRightPadding": 0
+      },
+      "bounds": {
+        "left": 0,
+        "top": 0,
+        "right": 1920,
+        "bottom": 1440
+      },
+      "colorEstimate": {
+        "color": "Black",
+        "source": "photo-estimate",
+        "support": 0.882
+      },
+      "colorGroundTruth": null,
+      "colorCorrectness": "NOT_MEASURED",
+      "cropMaskIoU": null,
+      "disposition": "REVIEW",
+      "reason": "Pixel diagnostics do not establish physical garment boundaries or color truth"
+    },
+    {
+      "id": "commons-0067",
+      "cohort": "reviewed-32",
+      "expectedCategory": "Outerwear",
+      "acceptedTypes": [
+        "Coat"
+      ],
+      "sha256": "7d1d7456c5719af5a74dd6788896cb34fb4c0701d0c3555c06e91c93c9078857",
+      "hashMatches": true,
+      "width": 1920,
+      "height": 3235,
+      "exifOrientation": 1,
+      "license": "Public domain",
+      "source": "https://commons.wikimedia.org/wiki/File:Mexican_Ocelot_fur_coat_1.jpg",
+      "framing": {
+        "originalWidth": 1920,
+        "originalHeight": 3235,
+        "trimmedBounds": {
+          "left": 0,
+          "top": 0,
+          "right": 1920,
+          "bottom": 3235
+        },
+        "trimmedFraction": 0,
+        "garmentAspectRatio": 0.5935085007727975,
+        "contentWidth": 199,
+        "contentHeight": 336,
+        "topAndBottomPadding": 0,
+        "leftAndRightPadding": 137
+      },
+      "bounds": {
+        "left": 0,
+        "top": 0,
+        "right": 1920,
+        "bottom": 3235
+      },
+      "colorEstimate": {
+        "color": "Multicolor",
+        "source": "photo-estimate",
+        "support": 0.517,
+        "needsConfirmation": true
+      },
+      "colorGroundTruth": null,
+      "colorCorrectness": "NOT_MEASURED",
+      "cropMaskIoU": null,
+      "disposition": "REVIEW",
+      "reason": "Pixel diagnostics do not establish physical garment boundaries or color truth"
+    },
+    {
+      "id": "commons-0068",
+      "cohort": "reviewed-32",
+      "expectedCategory": "Outerwear",
+      "acceptedTypes": [
+        "Coat"
+      ],
+      "sha256": "5d372824e1054c4c392969bed227784cd30d7011e95db769218b20a28302633f",
+      "hashMatches": true,
+      "width": 1920,
+      "height": 3394,
+      "exifOrientation": 1,
+      "license": "Public domain",
+      "source": "https://commons.wikimedia.org/wiki/File:Sapphire_mink_fur_coat_1980.jpg",
+      "framing": {
+        "originalWidth": 1920,
+        "originalHeight": 3394,
+        "trimmedBounds": {
+          "left": 0,
+          "top": 0,
+          "right": 1920,
+          "bottom": 3394
+        },
+        "trimmedFraction": 0,
+        "garmentAspectRatio": 0.5657041838538598,
+        "contentWidth": 190,
+        "contentHeight": 336,
+        "topAndBottomPadding": 0,
+        "leftAndRightPadding": 146
+      },
+      "bounds": {
+        "left": 0,
+        "top": 0,
+        "right": 1920,
+        "bottom": 3394
+      },
+      "colorEstimate": {
+        "color": "Gray",
+        "source": "photo-estimate",
+        "support": 0.993
+      },
+      "colorGroundTruth": null,
+      "colorCorrectness": "NOT_MEASURED",
+      "cropMaskIoU": null,
+      "disposition": "REVIEW",
+      "reason": "Pixel diagnostics do not establish physical garment boundaries or color truth"
+    },
+    {
+      "id": "commons-0069",
+      "cohort": "reviewed-32",
+      "expectedCategory": "Outerwear",
+      "acceptedTypes": [
+        "Coat"
+      ],
+      "sha256": "5c7b56ab8cf1d681d16f94dedebccdb6aa7e37838a2da13bd59a0e54f56897f3",
+      "hashMatches": true,
+      "width": 1920,
+      "height": 3089,
+      "exifOrientation": 1,
+      "license": "Public domain",
+      "source": "https://commons.wikimedia.org/wiki/File:Greenland_seal_fur_coat_1.jpg",
+      "framing": {
+        "originalWidth": 1920,
+        "originalHeight": 3089,
+        "trimmedBounds": {
+          "left": 0,
+          "top": 0,
+          "right": 1920,
+          "bottom": 3089
+        },
+        "trimmedFraction": 0,
+        "garmentAspectRatio": 0.6215603755260602,
+        "contentWidth": 209,
+        "contentHeight": 336,
+        "topAndBottomPadding": 0,
+        "leftAndRightPadding": 127
+      },
+      "bounds": {
+        "left": 0,
+        "top": 0,
+        "right": 1920,
+        "bottom": 3089
+      },
+      "colorEstimate": {
+        "color": "Multicolor",
+        "source": "photo-estimate",
+        "support": 0.405,
+        "needsConfirmation": true
+      },
+      "colorGroundTruth": null,
+      "colorCorrectness": "NOT_MEASURED",
+      "cropMaskIoU": null,
+      "disposition": "REVIEW",
+      "reason": "Pixel diagnostics do not establish physical garment boundaries or color truth"
+    },
+    {
+      "id": "commons-0070",
+      "cohort": "reviewed-32",
+      "expectedCategory": "Outerwear",
+      "acceptedTypes": [
+        "Coat"
+      ],
+      "sha256": "8a1fec00b50c99ee69ef70bf3576d2f034047c58c54736231b00bd22ffb25c2f",
+      "hashMatches": true,
+      "width": 1920,
+      "height": 3149,
+      "exifOrientation": 1,
+      "license": "Public domain",
+      "source": "https://commons.wikimedia.org/wiki/File:Greenland_seal_fur_coat_2.jpg",
+      "framing": {
+        "originalWidth": 1920,
+        "originalHeight": 3149,
+        "trimmedBounds": {
+          "left": 0,
+          "top": 0,
+          "right": 1920,
+          "bottom": 3149
+        },
+        "trimmedFraction": 0,
+        "garmentAspectRatio": 0.6097173705938393,
+        "contentWidth": 205,
+        "contentHeight": 336,
+        "topAndBottomPadding": 0,
+        "leftAndRightPadding": 131
+      },
+      "bounds": {
+        "left": 0,
+        "top": 0,
+        "right": 1920,
+        "bottom": 3149
+      },
+      "colorEstimate": {
+        "color": "Brown",
+        "source": "photo-estimate",
+        "support": 0.586
+      },
+      "colorGroundTruth": null,
+      "colorCorrectness": "NOT_MEASURED",
+      "cropMaskIoU": null,
+      "disposition": "REVIEW",
+      "reason": "Pixel diagnostics do not establish physical garment boundaries or color truth"
+    },
+    {
+      "id": "commons-0077",
+      "cohort": "holdout-16",
+      "expectedCategory": "Shoes",
+      "acceptedTypes": [
+        "Sneakers"
+      ],
+      "sha256": "b968758a00cd458040b90ca31a48c5aafe6f3cab4fe708f021bc3a341a58cf70",
+      "hashMatches": true,
+      "width": 1920,
+      "height": 974,
+      "exifOrientation": 1,
+      "license": "CC0",
+      "source": "https://commons.wikimedia.org/wiki/File:Garrison_high-top_sneakers,_1940,_US_Army,_manufacturer_unknown_-_Bata_Shoe_Museum_-_DSC00771.JPG",
+      "framing": {
+        "originalWidth": 1920,
+        "originalHeight": 974,
+        "trimmedBounds": {
+          "left": 0,
+          "top": 0,
+          "right": 1920,
+          "bottom": 974
+        },
+        "trimmedFraction": 0,
+        "garmentAspectRatio": 1.9712525667351128,
+        "contentWidth": 336,
+        "contentHeight": 170,
+        "topAndBottomPadding": 166,
+        "leftAndRightPadding": 0
+      },
+      "bounds": {
+        "left": 0,
+        "top": 0,
+        "right": 1920,
+        "bottom": 974
+      },
+      "colorEstimate": {
+        "color": "Multicolor",
+        "source": "photo-estimate",
+        "support": 0.29,
+        "needsConfirmation": true
+      },
+      "colorGroundTruth": null,
+      "colorCorrectness": "NOT_MEASURED",
+      "cropMaskIoU": null,
+      "disposition": "REVIEW",
+      "reason": "Pixel diagnostics do not establish physical garment boundaries or color truth"
+    },
+    {
+      "id": "commons-0078",
+      "cohort": "holdout-16",
+      "expectedCategory": "Shoes",
+      "acceptedTypes": [
+        "Sneakers"
+      ],
+      "sha256": "ba080a9a5d4aa68c193738e728e83c45b6a833a9bf80c45de4d2b35ece38154e",
+      "hashMatches": true,
+      "width": 1920,
+      "height": 2095,
+      "exifOrientation": 1,
+      "license": "CC0",
+      "source": "https://commons.wikimedia.org/wiki/File:Perfection_high-top_sneakers,_1900-1929_-_Bata_Shoe_Museum_-_DSC00727.JPG",
+      "framing": {
+        "originalWidth": 1920,
+        "originalHeight": 2095,
+        "trimmedBounds": {
+          "left": 0,
+          "top": 0,
+          "right": 1920,
+          "bottom": 2095
+        },
+        "trimmedFraction": 0,
+        "garmentAspectRatio": 0.9164677804295943,
+        "contentWidth": 308,
+        "contentHeight": 336,
+        "topAndBottomPadding": 0,
+        "leftAndRightPadding": 28
+      },
+      "bounds": {
+        "left": 0,
+        "top": 0,
+        "right": 1920,
+        "bottom": 2095
+      },
+      "colorEstimate": {
+        "color": "Multicolor",
+        "source": "photo-estimate",
+        "support": 0.358,
+        "needsConfirmation": true
+      },
+      "colorGroundTruth": null,
+      "colorCorrectness": "NOT_MEASURED",
+      "cropMaskIoU": null,
+      "disposition": "REVIEW",
+      "reason": "Pixel diagnostics do not establish physical garment boundaries or color truth"
+    },
+    {
+      "id": "commons-0079",
+      "cohort": "reviewed-32",
+      "expectedCategory": "Shoes",
+      "acceptedTypes": [
+        "Sneakers"
+      ],
+      "sha256": "b577483e5244dfb53e60cc8a0b54a4130e695cf388e5534e38a2b04580727ec6",
+      "hashMatches": true,
+      "width": 1920,
+      "height": 1275,
+      "exifOrientation": 1,
+      "license": "CC BY 2.0",
+      "source": "https://commons.wikimedia.org/wiki/File:Nike_SB_Dunk_High_MF_Doom.jpg",
+      "framing": {
+        "originalWidth": 1920,
+        "originalHeight": 1275,
+        "trimmedBounds": {
+          "left": 0,
+          "top": 0,
+          "right": 1920,
+          "bottom": 1275
+        },
+        "trimmedFraction": 0,
+        "garmentAspectRatio": 1.5058823529411764,
+        "contentWidth": 336,
+        "contentHeight": 223,
+        "topAndBottomPadding": 113,
+        "leftAndRightPadding": 0
+      },
+      "bounds": {
+        "left": 0,
+        "top": 0,
+        "right": 1920,
+        "bottom": 1275
+      },
+      "colorEstimate": {
+        "color": "Multicolor",
+        "source": "photo-estimate",
+        "support": 0.485,
+        "needsConfirmation": true
+      },
+      "colorGroundTruth": null,
+      "colorCorrectness": "NOT_MEASURED",
+      "cropMaskIoU": null,
+      "disposition": "REVIEW",
+      "reason": "Pixel diagnostics do not establish physical garment boundaries or color truth"
+    },
+    {
+      "id": "commons-0080",
+      "cohort": "reviewed-32",
+      "expectedCategory": "Shoes",
+      "acceptedTypes": [
+        "Sneakers"
+      ],
+      "sha256": "4675887ee36dbaeb894faf1e0879b05473f39fb555024424d52fcdce37d35bb9",
+      "hashMatches": true,
+      "width": 1920,
+      "height": 1280,
+      "exifOrientation": 1,
+      "license": "CC0",
+      "source": "https://commons.wikimedia.org/wiki/File:Houston_sneakers_(Unsplash).jpg",
+      "framing": {
+        "originalWidth": 1920,
+        "originalHeight": 1280,
+        "trimmedBounds": {
+          "left": 0,
+          "top": 0,
+          "right": 1920,
+          "bottom": 1280
+        },
+        "trimmedFraction": 0,
+        "garmentAspectRatio": 1.5,
+        "contentWidth": 336,
+        "contentHeight": 224,
+        "topAndBottomPadding": 112,
+        "leftAndRightPadding": 0
+      },
+      "bounds": {
+        "left": 0,
+        "top": 0,
+        "right": 1920,
+        "bottom": 1280
+      },
+      "colorEstimate": {
+        "color": "Multicolor",
+        "source": "photo-estimate",
+        "support": 0.32,
+        "needsConfirmation": true
+      },
+      "colorGroundTruth": null,
+      "colorCorrectness": "NOT_MEASURED",
+      "cropMaskIoU": null,
+      "disposition": "REVIEW",
+      "reason": "Pixel diagnostics do not establish physical garment boundaries or color truth"
+    },
+    {
+      "id": "commons-0081",
+      "cohort": "reviewed-32",
+      "expectedCategory": "Shoes",
+      "acceptedTypes": [
+        "Sneakers"
+      ],
+      "sha256": "72b53abd07e9438fd5a11631f6595c10d2abc98fda432d22611a58ba3b289952",
+      "hashMatches": true,
+      "width": 1920,
+      "height": 1282,
+      "exifOrientation": 1,
+      "license": "CC0",
+      "source": "https://commons.wikimedia.org/wiki/File:Black_white_sneakers_logo_(Unsplash).jpg",
+      "framing": {
+        "originalWidth": 1920,
+        "originalHeight": 1282,
+        "trimmedBounds": {
+          "left": 0,
+          "top": 0,
+          "right": 1920,
+          "bottom": 1282
+        },
+        "trimmedFraction": 0,
+        "garmentAspectRatio": 1.497659906396256,
+        "contentWidth": 336,
+        "contentHeight": 224,
+        "topAndBottomPadding": 112,
+        "leftAndRightPadding": 0
+      },
+      "bounds": {
+        "left": 0,
+        "top": 0,
+        "right": 1920,
+        "bottom": 1282
+      },
+      "colorEstimate": {
+        "color": "Multicolor",
+        "source": "photo-estimate",
+        "support": 0.548,
+        "needsConfirmation": true
+      },
+      "colorGroundTruth": null,
+      "colorCorrectness": "NOT_MEASURED",
+      "cropMaskIoU": null,
+      "disposition": "REVIEW",
+      "reason": "Pixel diagnostics do not establish physical garment boundaries or color truth"
+    },
+    {
+      "id": "commons-0082",
+      "cohort": "reviewed-32",
+      "expectedCategory": "Shoes",
+      "acceptedTypes": [
+        "Sneakers"
+      ],
+      "sha256": "d312800f42d207212ef45d7d0bd6a41fbd4d61193ed3b0e5df6193f1cedddbd2",
+      "hashMatches": true,
+      "width": 1920,
+      "height": 910,
+      "exifOrientation": 1,
+      "license": "CC BY 4.0",
+      "source": "https://commons.wikimedia.org/wiki/File:Shoes,_leather_tennis_(pair)_(AM_2017.30.1-15).jpg",
+      "framing": {
+        "originalWidth": 1920,
+        "originalHeight": 910,
+        "trimmedBounds": {
+          "left": 0,
+          "top": 0,
+          "right": 1920,
+          "bottom": 910
+        },
+        "trimmedFraction": 0,
+        "garmentAspectRatio": 2.10989010989011,
+        "contentWidth": 336,
+        "contentHeight": 159,
+        "topAndBottomPadding": 177,
+        "leftAndRightPadding": 0
+      },
+      "bounds": {
+        "left": 0,
+        "top": 0,
+        "right": 1920,
+        "bottom": 910
+      },
+      "colorEstimate": {
+        "color": "Multicolor",
+        "source": "photo-estimate",
+        "support": 0.321,
+        "needsConfirmation": true
+      },
+      "colorGroundTruth": null,
+      "colorCorrectness": "NOT_MEASURED",
+      "cropMaskIoU": null,
+      "disposition": "REVIEW",
+      "reason": "Pixel diagnostics do not establish physical garment boundaries or color truth"
+    },
+    {
+      "id": "commons-0083",
+      "cohort": "reviewed-32",
+      "expectedCategory": "Shoes",
+      "acceptedTypes": [
+        "Sneakers"
+      ],
+      "sha256": "e001f7249573020a200b9edfd211a44fef97d57380d8ced46b0916f60d596077",
+      "hashMatches": true,
+      "width": 1920,
+      "height": 1075,
+      "exifOrientation": 1,
+      "license": "CC BY 4.0",
+      "source": "https://commons.wikimedia.org/wiki/File:Shoes,_leather_tennis_(pair)_(AM_2017.30.1-20).jpg",
+      "framing": {
+        "originalWidth": 1920,
+        "originalHeight": 1075,
+        "trimmedBounds": {
+          "left": 0,
+          "top": 0,
+          "right": 1920,
+          "bottom": 1075
+        },
+        "trimmedFraction": 0,
+        "garmentAspectRatio": 1.786046511627907,
+        "contentWidth": 336,
+        "contentHeight": 188,
+        "topAndBottomPadding": 148,
+        "leftAndRightPadding": 0
+      },
+      "bounds": {
+        "left": 0,
+        "top": 0,
+        "right": 1920,
+        "bottom": 1075
+      },
+      "colorEstimate": {
+        "color": "Multicolor",
+        "source": "photo-estimate",
+        "support": 0.416,
+        "needsConfirmation": true
+      },
+      "colorGroundTruth": null,
+      "colorCorrectness": "NOT_MEASURED",
+      "cropMaskIoU": null,
+      "disposition": "REVIEW",
+      "reason": "Pixel diagnostics do not establish physical garment boundaries or color truth"
+    },
+    {
+      "id": "commons-0084",
+      "cohort": "reviewed-32",
+      "expectedCategory": "Shoes",
+      "acceptedTypes": [
+        "Sneakers"
+      ],
+      "sha256": "4cf56d6ce959e70a8e67bb723d295feaaaa3fad01ba739a44c4cef83c39ee1e0",
+      "hashMatches": true,
+      "width": 1920,
+      "height": 1080,
+      "exifOrientation": 1,
+      "license": "CC BY-SA 4.0",
+      "source": "https://commons.wikimedia.org/wiki/File:North_Star_sneakers_(1).jpg",
+      "framing": {
+        "originalWidth": 1920,
+        "originalHeight": 1080,
+        "trimmedBounds": {
+          "left": 0,
+          "top": 0,
+          "right": 1920,
+          "bottom": 1080
+        },
+        "trimmedFraction": 0,
+        "garmentAspectRatio": 1.7777777777777777,
+        "contentWidth": 336,
+        "contentHeight": 189,
+        "topAndBottomPadding": 147,
+        "leftAndRightPadding": 0
+      },
+      "bounds": {
+        "left": 0,
+        "top": 0,
+        "right": 1920,
+        "bottom": 1080
+      },
+      "colorEstimate": {
+        "color": "Multicolor",
+        "source": "photo-estimate",
+        "support": 0.529,
+        "needsConfirmation": true
+      },
+      "colorGroundTruth": null,
+      "colorCorrectness": "NOT_MEASURED",
+      "cropMaskIoU": null,
+      "disposition": "REVIEW",
+      "reason": "Pixel diagnostics do not establish physical garment boundaries or color truth"
+    },
+    {
+      "id": "commons-0085",
+      "cohort": "reviewed-32",
+      "expectedCategory": "Shoes",
+      "acceptedTypes": [
+        "Sneakers"
+      ],
+      "sha256": "b790c875d85395e5c30f43c180e10a9e144829d4d9c3c8f67b65348cc621cf43",
+      "hashMatches": true,
+      "width": 1920,
+      "height": 1080,
+      "exifOrientation": 1,
+      "license": "CC BY-SA 4.0",
+      "source": "https://commons.wikimedia.org/wiki/File:North_Star_sneakers_(2).jpg",
+      "framing": {
+        "originalWidth": 1920,
+        "originalHeight": 1080,
+        "trimmedBounds": {
+          "left": 0,
+          "top": 0,
+          "right": 1920,
+          "bottom": 1080
+        },
+        "trimmedFraction": 0,
+        "garmentAspectRatio": 1.7777777777777777,
+        "contentWidth": 336,
+        "contentHeight": 189,
+        "topAndBottomPadding": 147,
+        "leftAndRightPadding": 0
+      },
+      "bounds": {
+        "left": 0,
+        "top": 0,
+        "right": 1920,
+        "bottom": 1080
+      },
+      "colorEstimate": {
+        "color": "Multicolor",
+        "source": "photo-estimate",
+        "support": 0.524,
+        "needsConfirmation": true
+      },
+      "colorGroundTruth": null,
+      "colorCorrectness": "NOT_MEASURED",
+      "cropMaskIoU": null,
+      "disposition": "REVIEW",
+      "reason": "Pixel diagnostics do not establish physical garment boundaries or color truth"
+    },
+    {
+      "id": "commons-0086",
+      "cohort": "holdout-16",
+      "expectedCategory": "Uncategorized",
+      "acceptedTypes": [
+        "Unknown"
+      ],
+      "sha256": "d9c3beb00a82f49356d80628bacf985f1985f709b651e1eb50c9f2feaaea440c",
+      "hashMatches": true,
+      "width": 1920,
+      "height": 1463,
+      "exifOrientation": 1,
+      "license": "Public domain",
+      "source": "https://commons.wikimedia.org/wiki/File:H._Piffard_-_The_Thin_Red_Line_-_restoration.jpg",
+      "framing": {
+        "originalWidth": 1920,
+        "originalHeight": 1463,
+        "trimmedBounds": {
+          "left": 0,
+          "top": 13,
+          "right": 1904,
+          "bottom": 1463
+        },
+        "trimmedFraction": 0.01714513556618824,
+        "garmentAspectRatio": 1.3131034482758621,
+        "contentWidth": 336,
+        "contentHeight": 256,
+        "topAndBottomPadding": 80,
+        "leftAndRightPadding": 0
+      },
+      "bounds": {
+        "left": 0,
+        "top": 13,
+        "right": 1904,
+        "bottom": 1463
+      },
+      "colorEstimate": {
+        "color": "Brown",
+        "source": "photo-estimate",
+        "support": 0.242,
+        "needsConfirmation": true,
+        "reason": "warm-tone-lighting-ambiguity"
+      },
+      "colorGroundTruth": null,
+      "colorCorrectness": "NOT_MEASURED",
+      "cropMaskIoU": null,
+      "disposition": "REVIEW",
+      "reason": "Pixel diagnostics do not establish physical garment boundaries or color truth"
+    },
+    {
+      "id": "commons-0087",
+      "cohort": "reviewed-32",
+      "expectedCategory": "Shoes",
+      "acceptedTypes": [
+        "Boots",
+        "Ankle boots",
+        "Tall boots"
+      ],
+      "sha256": "9b0f36a07a07491009b3ea5c01a5100464022150091bab13ce6d15e598c9e7c9",
+      "hashMatches": true,
+      "width": 734,
+      "height": 1026,
+      "exifOrientation": 1,
+      "license": "CC0",
+      "source": "https://commons.wikimedia.org/wiki/File:Boots_(drawing).jpg",
+      "framing": {
+        "originalWidth": 734,
+        "originalHeight": 1026,
+        "trimmedBounds": {
+          "left": 102,
+          "top": 36,
+          "right": 726,
+          "bottom": 987
+        },
+        "trimmedFraction": 0.2120082221903533,
+        "garmentAspectRatio": 0.6561514195583596,
+        "contentWidth": 220,
+        "contentHeight": 336,
+        "topAndBottomPadding": 0,
+        "leftAndRightPadding": 116
+      },
+      "bounds": {
+        "left": 102,
+        "top": 36,
+        "right": 726,
+        "bottom": 987
+      },
+      "colorEstimate": {
+        "color": "Multicolor",
+        "source": "photo-estimate",
+        "support": 0.407,
+        "needsConfirmation": true
+      },
+      "colorGroundTruth": null,
+      "colorCorrectness": "NOT_MEASURED",
+      "cropMaskIoU": null,
+      "disposition": "REVIEW",
+      "reason": "Pixel diagnostics do not establish physical garment boundaries or color truth"
+    },
+    {
+      "id": "commons-0088",
+      "cohort": "reviewed-32",
+      "expectedCategory": "Shoes",
+      "acceptedTypes": [
+        "Boots",
+        "Ankle boots",
+        "Tall boots"
+      ],
+      "sha256": "8e5e9cd86c22a0c03b120cd57af33144cc2e61a29b0beed50b5db3c5c222cbba",
+      "hashMatches": true,
+      "width": 1920,
+      "height": 1359,
+      "exifOrientation": 1,
+      "license": "CC0",
+      "source": "https://commons.wikimedia.org/wiki/File:Boot_with_Spur_MET_182113.jpg",
+      "framing": {
+        "originalWidth": 1920,
+        "originalHeight": 1359,
+        "trimmedBounds": {
+          "left": 0,
+          "top": 0,
+          "right": 1920,
+          "bottom": 1359
+        },
+        "trimmedFraction": 0,
+        "garmentAspectRatio": 1.4128035320088301,
+        "contentWidth": 336,
+        "contentHeight": 238,
+        "topAndBottomPadding": 98,
+        "leftAndRightPadding": 0
+      },
+      "bounds": {
+        "left": 0,
+        "top": 0,
+        "right": 1920,
+        "bottom": 1359
+      },
+      "colorEstimate": {
+        "color": "Multicolor",
+        "source": "photo-estimate",
+        "support": 0.497,
+        "needsConfirmation": true
+      },
+      "colorGroundTruth": null,
+      "colorCorrectness": "NOT_MEASURED",
+      "cropMaskIoU": null,
+      "disposition": "REVIEW",
+      "reason": "Pixel diagnostics do not establish physical garment boundaries or color truth"
+    },
+    {
+      "id": "commons-0089",
+      "cohort": "reviewed-32",
+      "expectedCategory": "Shoes",
+      "acceptedTypes": [
+        "Boots",
+        "Ankle boots",
+        "Tall boots"
+      ],
+      "sha256": "44f3c2a087fe5cde4006dadb41903964b8cd906e933c4fae4bf54db7758f9b8b",
+      "hashMatches": true,
+      "width": 1920,
+      "height": 2560,
+      "exifOrientation": 1,
+      "license": "CC0",
+      "source": "https://commons.wikimedia.org/wiki/File:Boot_with_Spur_MET_DP238269.jpg",
+      "framing": {
+        "originalWidth": 1920,
+        "originalHeight": 2560,
+        "trimmedBounds": {
+          "left": 0,
+          "top": 0,
+          "right": 1920,
+          "bottom": 2560
+        },
+        "trimmedFraction": 0,
+        "garmentAspectRatio": 0.75,
+        "contentWidth": 252,
+        "contentHeight": 336,
+        "topAndBottomPadding": 0,
+        "leftAndRightPadding": 84
+      },
+      "bounds": {
+        "left": 0,
+        "top": 0,
+        "right": 1920,
+        "bottom": 2560
+      },
+      "colorEstimate": {
+        "color": "Multicolor",
+        "source": "photo-estimate",
+        "support": 0.492,
+        "needsConfirmation": true
+      },
+      "colorGroundTruth": null,
+      "colorCorrectness": "NOT_MEASURED",
+      "cropMaskIoU": null,
+      "disposition": "REVIEW",
+      "reason": "Pixel diagnostics do not establish physical garment boundaries or color truth"
+    },
+    {
+      "id": "commons-0090",
+      "cohort": "holdout-16",
+      "expectedCategory": "Uncategorized",
+      "acceptedTypes": [
+        "Unknown"
+      ],
+      "sha256": "ed9f58647fcbda1d033b6fdfdf1cf1d4c72c1b36bed0f40e16fea07495ed6baf",
+      "hashMatches": true,
+      "width": 1920,
+      "height": 1272,
+      "exifOrientation": 1,
+      "license": "CC BY-SA 4.0",
+      "source": "https://commons.wikimedia.org/wiki/File:Menambang_Belerang.jpg",
+      "framing": {
+        "originalWidth": 1920,
+        "originalHeight": 1272,
+        "trimmedBounds": {
+          "left": 0,
+          "top": 0,
+          "right": 1920,
+          "bottom": 1272
+        },
+        "trimmedFraction": 0,
+        "garmentAspectRatio": 1.509433962264151,
+        "contentWidth": 336,
+        "contentHeight": 223,
+        "topAndBottomPadding": 113,
+        "leftAndRightPadding": 0
+      },
+      "bounds": {
+        "left": 0,
+        "top": 0,
+        "right": 1920,
+        "bottom": 1272
+      },
+      "colorEstimate": {
+        "color": "Multicolor",
+        "source": "photo-estimate",
+        "support": 0.39,
+        "needsConfirmation": true
+      },
+      "colorGroundTruth": null,
+      "colorCorrectness": "NOT_MEASURED",
+      "cropMaskIoU": null,
+      "disposition": "REVIEW",
+      "reason": "Pixel diagnostics do not establish physical garment boundaries or color truth"
+    },
+    {
+      "id": "commons-0092",
+      "cohort": "reviewed-32",
+      "expectedCategory": "Shoes",
+      "acceptedTypes": [
+        "Boots",
+        "Ankle boots",
+        "Tall boots"
+      ],
+      "sha256": "e098a78500ada7159c9cbea6559ef3c64c87b8e2417fc96487cb34570ca8754d",
+      "hashMatches": true,
+      "width": 1920,
+      "height": 1369,
+      "exifOrientation": 1,
+      "license": "CC BY 4.0",
+      "source": "https://commons.wikimedia.org/wiki/File:Boots_(AM_762134-6).jpg",
+      "framing": {
+        "originalWidth": 1920,
+        "originalHeight": 1369,
+        "trimmedBounds": {
+          "left": 0,
+          "top": 0,
+          "right": 1920,
+          "bottom": 1369
+        },
+        "trimmedFraction": 0,
+        "garmentAspectRatio": 1.4024835646457268,
+        "contentWidth": 336,
+        "contentHeight": 240,
+        "topAndBottomPadding": 96,
+        "leftAndRightPadding": 0
+      },
+      "bounds": {
+        "left": 0,
+        "top": 0,
+        "right": 1920,
+        "bottom": 1369
+      },
+      "colorEstimate": {
+        "color": "Black",
+        "source": "photo-estimate",
+        "support": 0.623
+      },
+      "colorGroundTruth": null,
+      "colorCorrectness": "NOT_MEASURED",
+      "cropMaskIoU": null,
+      "disposition": "REVIEW",
+      "reason": "Pixel diagnostics do not establish physical garment boundaries or color truth"
+    },
+    {
+      "id": "commons-0093",
+      "cohort": "reviewed-32",
+      "expectedCategory": "Shoes",
+      "acceptedTypes": [
+        "Boots",
+        "Ankle boots",
+        "Tall boots"
+      ],
+      "sha256": "83a011c50253fe6f4fd9ae9a7f677a6fb17e598af48647ce64479081223b1769",
+      "hashMatches": true,
+      "width": 1920,
+      "height": 1510,
+      "exifOrientation": 1,
+      "license": "CC BY 4.0",
+      "source": "https://commons.wikimedia.org/wiki/File:Boots_(AM_762134-7).jpg",
+      "framing": {
+        "originalWidth": 1920,
+        "originalHeight": 1510,
+        "trimmedBounds": {
+          "left": 0,
+          "top": 0,
+          "right": 1920,
+          "bottom": 1510
+        },
+        "trimmedFraction": 0,
+        "garmentAspectRatio": 1.271523178807947,
+        "contentWidth": 336,
+        "contentHeight": 264,
+        "topAndBottomPadding": 72,
+        "leftAndRightPadding": 0
+      },
+      "bounds": {
+        "left": 0,
+        "top": 0,
+        "right": 1920,
+        "bottom": 1510
+      },
+      "colorEstimate": {
+        "color": "Multicolor",
+        "source": "photo-estimate",
+        "support": 0.495,
+        "needsConfirmation": true
+      },
+      "colorGroundTruth": null,
+      "colorCorrectness": "NOT_MEASURED",
+      "cropMaskIoU": null,
+      "disposition": "REVIEW",
+      "reason": "Pixel diagnostics do not establish physical garment boundaries or color truth"
+    },
+    {
+      "id": "commons-0094",
+      "cohort": "reviewed-32",
+      "expectedCategory": "Shoes",
+      "acceptedTypes": [
+        "Boots",
+        "Ankle boots",
+        "Tall boots"
+      ],
+      "sha256": "ff3d49e30be2d1141179b7ad2d08d9edff2384926cd5a6f5a8f6818c97fa57ae",
+      "hashMatches": true,
+      "width": 1920,
+      "height": 1440,
+      "exifOrientation": 1,
+      "license": "CC BY 4.0",
+      "source": "https://commons.wikimedia.org/wiki/File:Boots,_pair_woman%27s_(AM_1992.157-4).jpg",
+      "framing": {
+        "originalWidth": 1920,
+        "originalHeight": 1440,
+        "trimmedBounds": {
+          "left": 0,
+          "top": 0,
+          "right": 1920,
+          "bottom": 1440
+        },
+        "trimmedFraction": 0,
+        "garmentAspectRatio": 1.3333333333333333,
+        "contentWidth": 336,
+        "contentHeight": 252,
+        "topAndBottomPadding": 84,
+        "leftAndRightPadding": 0
+      },
+      "bounds": {
+        "left": 0,
+        "top": 0,
+        "right": 1920,
+        "bottom": 1440
+      },
+      "colorEstimate": {
+        "color": "Multicolor",
+        "source": "photo-estimate",
+        "support": 0.506,
+        "needsConfirmation": true
+      },
+      "colorGroundTruth": null,
+      "colorCorrectness": "NOT_MEASURED",
+      "cropMaskIoU": null,
+      "disposition": "REVIEW",
+      "reason": "Pixel diagnostics do not establish physical garment boundaries or color truth"
+    },
+    {
+      "id": "commons-0095",
+      "cohort": "holdout-16",
+      "expectedCategory": "Shoes",
+      "acceptedTypes": [
+        "Boots",
+        "Ankle boots",
+        "Tall boots"
+      ],
+      "sha256": "4905ac445855b950a116ac4074e87f6c3c5b7159d1e923089e17a2bdd26d8f3d",
+      "hashMatches": true,
+      "width": 1920,
+      "height": 2560,
+      "exifOrientation": 1,
+      "license": "CC BY 4.0",
+      "source": "https://commons.wikimedia.org/wiki/File:Boots,_pair_woman%27s_(AM_1992.157-15).jpg",
+      "framing": {
+        "originalWidth": 1920,
+        "originalHeight": 2560,
+        "trimmedBounds": {
+          "left": 0,
+          "top": 0,
+          "right": 1920,
+          "bottom": 2560
+        },
+        "trimmedFraction": 0,
+        "garmentAspectRatio": 0.75,
+        "contentWidth": 252,
+        "contentHeight": 336,
+        "topAndBottomPadding": 0,
+        "leftAndRightPadding": 84
+      },
+      "bounds": {
+        "left": 0,
+        "top": 0,
+        "right": 1920,
+        "bottom": 2560
+      },
+      "colorEstimate": {
+        "color": "Multicolor",
+        "source": "photo-estimate",
+        "support": 0.454,
+        "needsConfirmation": true
+      },
+      "colorGroundTruth": null,
+      "colorCorrectness": "NOT_MEASURED",
+      "cropMaskIoU": null,
+      "disposition": "REVIEW",
+      "reason": "Pixel diagnostics do not establish physical garment boundaries or color truth"
+    },
+    {
+      "id": "validation-0001",
+      "cohort": "fresh-11",
+      "expectedCategory": "Dresses",
+      "acceptedTypes": [
+        "Casual dress",
+        "Shirt dress",
+        "Sweater dress",
+        "Formal dress"
+      ],
+      "sha256": "7953018d9f4bba2998b68d16fce4a59e4189e66d40f82b24459cb1200b4394c0",
+      "hashMatches": true,
+      "width": 1920,
+      "height": 2880,
+      "exifOrientation": 1,
+      "license": "Public domain",
+      "source": "https://commons.wikimedia.org/wiki/File:Summer_dress_(5634765615).jpg",
+      "framing": {
+        "originalWidth": 1920,
+        "originalHeight": 2880,
+        "trimmedBounds": {
+          "left": 0,
+          "top": 0,
+          "right": 1920,
+          "bottom": 2880
+        },
+        "trimmedFraction": 0,
+        "garmentAspectRatio": 0.6666666666666666,
+        "contentWidth": 224,
+        "contentHeight": 336,
+        "topAndBottomPadding": 0,
+        "leftAndRightPadding": 112
+      },
+      "bounds": {
+        "left": 0,
+        "top": 0,
+        "right": 1920,
+        "bottom": 2880
+      },
+      "colorEstimate": {
+        "color": "Multicolor",
+        "source": "photo-estimate",
+        "support": 0.207,
+        "needsConfirmation": true
+      },
+      "colorGroundTruth": null,
+      "colorCorrectness": "NOT_MEASURED",
+      "cropMaskIoU": null,
+      "disposition": "REVIEW",
+      "reason": "Pixel diagnostics do not establish physical garment boundaries or color truth"
+    },
+    {
+      "id": "validation-0002",
+      "cohort": "fresh-11",
+      "expectedCategory": "Dresses",
+      "acceptedTypes": [
+        "Formal dress"
+      ],
+      "sha256": "ded1c225fc7f02989303bd693bf2b839adb7fdd3bacea78eb0d35d539af2fab1",
+      "hashMatches": true,
+      "width": 1224,
+      "height": 1848,
+      "exifOrientation": 1,
+      "license": "CC BY 2.0",
+      "source": "https://commons.wikimedia.org/wiki/File:Elie_Saab_Wedding_Dress_-_Paris_Haute_Couture_Spring-Summer_2012.jpg",
+      "framing": {
+        "originalWidth": 1224,
+        "originalHeight": 1848,
+        "trimmedBounds": {
+          "left": 0,
+          "top": 0,
+          "right": 1224,
+          "bottom": 1848
+        },
+        "trimmedFraction": 0,
+        "garmentAspectRatio": 0.6623376623376623,
+        "contentWidth": 223,
+        "contentHeight": 336,
+        "topAndBottomPadding": 0,
+        "leftAndRightPadding": 113
+      },
+      "bounds": {
+        "left": 0,
+        "top": 0,
+        "right": 1224,
+        "bottom": 1848
+      },
+      "colorEstimate": {
+        "color": "Multicolor",
+        "source": "photo-estimate",
+        "support": 0.402,
+        "needsConfirmation": true
+      },
+      "colorGroundTruth": null,
+      "colorCorrectness": "NOT_MEASURED",
+      "cropMaskIoU": null,
+      "disposition": "REVIEW",
+      "reason": "Pixel diagnostics do not establish physical garment boundaries or color truth"
+    },
+    {
+      "id": "validation-0003",
+      "cohort": "fresh-11",
+      "expectedCategory": "Dresses",
+      "acceptedTypes": [
+        "Casual dress",
+        "Shirt dress",
+        "Sweater dress",
+        "Formal dress"
+      ],
+      "sha256": "de3fa07115e6e2805ff492506a6c99ad9674e675eef0e5e0642e2227207d7c7a",
+      "hashMatches": true,
+      "width": 1569,
+      "height": 2100,
+      "exifOrientation": 1,
+      "license": "Public domain",
+      "source": "https://commons.wikimedia.org/wiki/File:Summer_Dress_LACMA_M.2007.211.740_(1_of_5).jpg",
+      "framing": {
+        "originalWidth": 1569,
+        "originalHeight": 2100,
+        "trimmedBounds": {
+          "left": 0,
+          "top": 0,
+          "right": 1569,
+          "bottom": 2100
+        },
+        "trimmedFraction": 0,
+        "garmentAspectRatio": 0.7471428571428571,
+        "contentWidth": 251,
+        "contentHeight": 336,
+        "topAndBottomPadding": 0,
+        "leftAndRightPadding": 85
+      },
+      "bounds": {
+        "left": 0,
+        "top": 0,
+        "right": 1569,
+        "bottom": 2100
+      },
+      "colorEstimate": {
+        "color": "Multicolor",
+        "source": "photo-estimate",
+        "support": 0.342,
+        "needsConfirmation": true
+      },
+      "colorGroundTruth": null,
+      "colorCorrectness": "NOT_MEASURED",
+      "cropMaskIoU": null,
+      "disposition": "REVIEW",
+      "reason": "Pixel diagnostics do not establish physical garment boundaries or color truth"
+    },
+    {
+      "id": "validation-0004",
+      "cohort": "fresh-11",
+      "expectedCategory": "Dresses",
+      "acceptedTypes": [
+        "Casual dress",
+        "Shirt dress",
+        "Sweater dress",
+        "Formal dress"
+      ],
+      "sha256": "e17f5a64e32f8b3ab87aaedb773cef9277040e0dda0506dc48f587be4da033c7",
+      "hashMatches": true,
+      "width": 1269,
+      "height": 2100,
+      "exifOrientation": 1,
+      "license": "Public domain",
+      "source": "https://commons.wikimedia.org/wiki/File:Summer_Dress_LACMA_M.2007.211.856_(1_of_6).jpg",
+      "framing": {
+        "originalWidth": 1269,
+        "originalHeight": 2100,
+        "trimmedBounds": {
+          "left": 0,
+          "top": 0,
+          "right": 1269,
+          "bottom": 2100
+        },
+        "trimmedFraction": 0,
+        "garmentAspectRatio": 0.6042857142857143,
+        "contentWidth": 203,
+        "contentHeight": 336,
+        "topAndBottomPadding": 0,
+        "leftAndRightPadding": 133
+      },
+      "bounds": {
+        "left": 0,
+        "top": 0,
+        "right": 1269,
+        "bottom": 2100
+      },
+      "colorEstimate": {
+        "color": "Multicolor",
+        "source": "photo-estimate",
+        "support": 0.486,
+        "needsConfirmation": true
+      },
+      "colorGroundTruth": null,
+      "colorCorrectness": "NOT_MEASURED",
+      "cropMaskIoU": null,
+      "disposition": "REVIEW",
+      "reason": "Pixel diagnostics do not establish physical garment boundaries or color truth"
+    },
+    {
+      "id": "validation-0008",
+      "cohort": "fresh-11",
+      "expectedCategory": "Accessories",
+      "acceptedTypes": [
+        "Scarf",
+        "Hat"
+      ],
+      "sha256": "16ed95a6212ecf0500c6b25047f3e9029fc49a04e4786b2c5f13c15d65e45f6f",
+      "hashMatches": true,
+      "width": 360,
+      "height": 540,
+      "exifOrientation": 1,
+      "license": "CC BY-SA 4.0",
+      "source": "https://commons.wikimedia.org/wiki/File:Nigerian_woman_in_a_buba_blouse_and_the_gele_headtie2.jpg",
+      "framing": {
+        "originalWidth": 360,
+        "originalHeight": 540,
+        "trimmedBounds": {
+          "left": 0,
+          "top": 0,
+          "right": 360,
+          "bottom": 540
+        },
+        "trimmedFraction": 0,
+        "garmentAspectRatio": 0.6666666666666666,
+        "contentWidth": 224,
+        "contentHeight": 336,
+        "topAndBottomPadding": 0,
+        "leftAndRightPadding": 112
+      },
+      "bounds": {
+        "left": 0,
+        "top": 0,
+        "right": 360,
+        "bottom": 540
+      },
+      "colorEstimate": {
+        "color": "Multicolor",
+        "source": "photo-estimate",
+        "support": 0.262,
+        "needsConfirmation": true
+      },
+      "colorGroundTruth": null,
+      "colorCorrectness": "NOT_MEASURED",
+      "cropMaskIoU": null,
+      "disposition": "REVIEW",
+      "reason": "Pixel diagnostics do not establish physical garment boundaries or color truth"
+    },
+    {
+      "id": "validation-0010",
+      "cohort": "fresh-11",
+      "expectedCategory": "Dresses",
+      "acceptedTypes": [
+        "Casual dress",
+        "Shirt dress",
+        "Sweater dress",
+        "Formal dress"
+      ],
+      "sha256": "2e2d757d60b5bce8b1e34765c7b59c21ede85c7c69cfbf63d802566934b847c7",
+      "hashMatches": true,
+      "width": 600,
+      "height": 766,
+      "exifOrientation": 1,
+      "license": "CC BY-SA 2.0",
+      "source": "https://commons.wikimedia.org/wiki/File:Blue_Crushed_Velvet_Dress_with_blouse_underneath.jpg",
+      "framing": {
+        "originalWidth": 600,
+        "originalHeight": 766,
+        "trimmedBounds": {
+          "left": 0,
+          "top": 0,
+          "right": 600,
+          "bottom": 766
+        },
+        "trimmedFraction": 0,
+        "garmentAspectRatio": 0.783289817232376,
+        "contentWidth": 263,
+        "contentHeight": 336,
+        "topAndBottomPadding": 0,
+        "leftAndRightPadding": 73
+      },
+      "bounds": {
+        "left": 0,
+        "top": 0,
+        "right": 600,
+        "bottom": 766
+      },
+      "colorEstimate": {
+        "color": "Multicolor",
+        "source": "photo-estimate",
+        "support": 0.306,
+        "needsConfirmation": true
+      },
+      "colorGroundTruth": null,
+      "colorCorrectness": "NOT_MEASURED",
+      "cropMaskIoU": null,
+      "disposition": "REVIEW",
+      "reason": "Pixel diagnostics do not establish physical garment boundaries or color truth"
+    },
+    {
+      "id": "validation-0017",
+      "cohort": "fresh-11",
+      "expectedCategory": "Bottoms",
+      "acceptedTypes": [
+        "Jeans"
+      ],
+      "sha256": "6f83b0769215cf7e19475a0b946b9be4d5d00747c50df18136aafe18a08dbb58",
+      "hashMatches": true,
+      "width": 1920,
+      "height": 2880,
+      "exifOrientation": 1,
+      "license": "CC BY-SA 2.0",
+      "source": "https://commons.wikimedia.org/wiki/File:Grey_Jeans_(3168533938).jpg",
+      "framing": {
+        "originalWidth": 1920,
+        "originalHeight": 2880,
+        "trimmedBounds": {
+          "left": 0,
+          "top": 0,
+          "right": 1920,
+          "bottom": 2880
+        },
+        "trimmedFraction": 0,
+        "garmentAspectRatio": 0.6666666666666666,
+        "contentWidth": 224,
+        "contentHeight": 336,
+        "topAndBottomPadding": 0,
+        "leftAndRightPadding": 112
+      },
+      "bounds": {
+        "left": 0,
+        "top": 0,
+        "right": 1920,
+        "bottom": 2880
+      },
+      "colorEstimate": {
+        "color": "Gray",
+        "source": "photo-estimate",
+        "support": 0.696
+      },
+      "colorGroundTruth": null,
+      "colorCorrectness": "NOT_MEASURED",
+      "cropMaskIoU": null,
+      "disposition": "REVIEW",
+      "reason": "Pixel diagnostics do not establish physical garment boundaries or color truth"
+    },
+    {
+      "id": "validation-0019",
+      "cohort": "fresh-11",
+      "expectedCategory": "Shoes",
+      "acceptedTypes": [
+        "Sneakers"
+      ],
+      "sha256": "16c806adf3d3e39d0cfa260901da9de6c87f2eab7eafa6e0e56593d7782a5140",
+      "hashMatches": true,
+      "width": 1920,
+      "height": 1272,
+      "exifOrientation": 1,
+      "license": "CC BY 2.0",
+      "source": "https://commons.wikimedia.org/wiki/File:DKNY_Marie_Sneaker_23142034_schwarz_-_orange_(1)_(15798649564).jpg",
+      "framing": {
+        "originalWidth": 1920,
+        "originalHeight": 1272,
+        "trimmedBounds": {
+          "left": 0,
+          "top": 0,
+          "right": 1920,
+          "bottom": 1272
+        },
+        "trimmedFraction": 0,
+        "garmentAspectRatio": 1.509433962264151,
+        "contentWidth": 336,
+        "contentHeight": 223,
+        "topAndBottomPadding": 113,
+        "leftAndRightPadding": 0
+      },
+      "bounds": {
+        "left": 0,
+        "top": 0,
+        "right": 1920,
+        "bottom": 1272
+      },
+      "colorEstimate": {
+        "color": "Multicolor",
+        "source": "photo-estimate",
+        "support": 0.288,
+        "needsConfirmation": true
+      },
+      "colorGroundTruth": null,
+      "colorCorrectness": "NOT_MEASURED",
+      "cropMaskIoU": null,
+      "disposition": "REVIEW",
+      "reason": "Pixel diagnostics do not establish physical garment boundaries or color truth"
+    },
+    {
+      "id": "validation-0021",
+      "cohort": "fresh-11",
+      "expectedCategory": "Shoes",
+      "acceptedTypes": [
+        "Sneakers"
+      ],
+      "sha256": "a80a0c707c7aa99e4ee4df7a766109121f8b6baafe51ba9dd764e382f9094f61",
+      "hashMatches": true,
+      "width": 1920,
+      "height": 1272,
+      "exifOrientation": 1,
+      "license": "CC BY 2.0",
+      "source": "https://commons.wikimedia.org/wiki/File:DKNY_Marie_Sneaker_23142034_rot-orange_-_wei%C3%9F_(1)_(16235746307).jpg",
+      "framing": {
+        "originalWidth": 1920,
+        "originalHeight": 1272,
+        "trimmedBounds": {
+          "left": 0,
+          "top": 0,
+          "right": 1920,
+          "bottom": 1272
+        },
+        "trimmedFraction": 0,
+        "garmentAspectRatio": 1.509433962264151,
+        "contentWidth": 336,
+        "contentHeight": 223,
+        "topAndBottomPadding": 113,
+        "leftAndRightPadding": 0
+      },
+      "bounds": {
+        "left": 0,
+        "top": 0,
+        "right": 1920,
+        "bottom": 1272
+      },
+      "colorEstimate": {
+        "color": "Multicolor",
+        "source": "photo-estimate",
+        "support": 0.418,
+        "needsConfirmation": true
+      },
+      "colorGroundTruth": null,
+      "colorCorrectness": "NOT_MEASURED",
+      "cropMaskIoU": null,
+      "disposition": "REVIEW",
+      "reason": "Pixel diagnostics do not establish physical garment boundaries or color truth"
+    },
+    {
+      "id": "validation-0023",
+      "cohort": "fresh-11",
+      "expectedCategory": "Shoes",
+      "acceptedTypes": [
+        "Sneakers"
+      ],
+      "sha256": "4fa7836d0275c1d393b6e71db0044674d04e4fc2c09e6c8946ca8ad8eed5276b",
+      "hashMatches": true,
+      "width": 1920,
+      "height": 1272,
+      "exifOrientation": 1,
+      "license": "CC BY 2.0",
+      "source": "https://commons.wikimedia.org/wiki/File:DKNY_Brave_Logo_Varsity_High-Top_Sneaker_23340363_schwarz_-_tigerlook_(1)_(16415389490).jpg",
+      "framing": {
+        "originalWidth": 1920,
+        "originalHeight": 1272,
+        "trimmedBounds": {
+          "left": 0,
+          "top": 0,
+          "right": 1920,
+          "bottom": 1272
+        },
+        "trimmedFraction": 0,
+        "garmentAspectRatio": 1.509433962264151,
+        "contentWidth": 336,
+        "contentHeight": 223,
+        "topAndBottomPadding": 113,
+        "leftAndRightPadding": 0
+      },
+      "bounds": {
+        "left": 0,
+        "top": 0,
+        "right": 1920,
+        "bottom": 1272
+      },
+      "colorEstimate": {
+        "color": "Multicolor",
+        "source": "photo-estimate",
+        "support": 0.387,
+        "needsConfirmation": true
+      },
+      "colorGroundTruth": null,
+      "colorCorrectness": "NOT_MEASURED",
+      "cropMaskIoU": null,
+      "disposition": "REVIEW",
+      "reason": "Pixel diagnostics do not establish physical garment boundaries or color truth"
+    },
+    {
+      "id": "validation-0024",
+      "cohort": "fresh-11",
+      "expectedCategory": "Shoes",
+      "acceptedTypes": [
+        "Sneakers"
+      ],
+      "sha256": "2183cbbb8af17dee3bab0ea0b9657b61ccbb6be953ae047f7119be0f0e7067a0",
+      "hashMatches": true,
+      "width": 1920,
+      "height": 1272,
+      "exifOrientation": 1,
+      "license": "CC BY 2.0",
+      "source": "https://commons.wikimedia.org/wiki/File:DKNY_Barbara_Hardware_Sneaker_23340609_silber_(1)_(16417111589).jpg",
+      "framing": {
+        "originalWidth": 1920,
+        "originalHeight": 1272,
+        "trimmedBounds": {
+          "left": 0,
+          "top": 0,
+          "right": 1920,
+          "bottom": 1272
+        },
+        "trimmedFraction": 0,
+        "garmentAspectRatio": 1.509433962264151,
+        "contentWidth": 336,
+        "contentHeight": 223,
+        "topAndBottomPadding": 113,
+        "leftAndRightPadding": 0
+      },
+      "bounds": {
+        "left": 0,
+        "top": 0,
+        "right": 1920,
+        "bottom": 1272
+      },
+      "colorEstimate": {
+        "color": "Multicolor",
+        "source": "photo-estimate",
+        "support": 0.586,
+        "needsConfirmation": true
+      },
+      "colorGroundTruth": null,
+      "colorCorrectness": "NOT_MEASURED",
+      "cropMaskIoU": null,
+      "disposition": "REVIEW",
+      "reason": "Pixel diagnostics do not establish physical garment boundaries or color truth"
+    }
+  ]
+}
