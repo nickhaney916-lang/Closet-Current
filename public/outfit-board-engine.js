@@ -28,6 +28,8 @@ function cleanOutfitBoard(value,closet){
  for(const slot of outfitSlots){const item=closet.find(x=>x.id===value?.slots?.[slot.id]);if(item&&slotAllows(slot,item)&&!used.has(item.id)){result.slots[slot.id]=item.id;used.add(item.id);}const idea=value?.ideas?.[slot.id];if(idea&&typeof idea.type==='string')result.ideas[slot.id]={type:idea.type.slice(0,50),color:String(idea.color||'').slice(0,40)};}
  result.layerCount=Math.max([0,1,2,3].includes(Number(value?.layerCount))?Number(value.layerCount):0,result.slots.layer3||result.ideas.layer3?3:result.slots.layer2||result.ideas.layer2?2:result.slots.layer||result.ideas.layer?1:0);
  const top=closet.find(x=>x.id===result.slots.top);if(top?.category==='Dresses'){for(const slot of ['bottom','layer','layer2','layer3']){delete result.slots[slot];delete result.ideas[slot];}result.layerCount=0;}
+ // A pin is a reference to an actually selected owned item, never an invented garment.
+ if(typeof value?.anchorItemId==='string'&&Object.values(result.slots).includes(value.anchorItemId))result.anchorItemId=value.anchorItemId;
  return result;
 }
 function boardGaps(board,closet){const top=closet.find(x=>x.id===board.slots.top);return outfitSlots.filter(s=>(!s.extra||board.layerCount>=s.level)&&!board.slots[s.id]&&!((s.id==='bottom'||s.level)&&top?.category==='Dresses'));}

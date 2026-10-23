@@ -76,7 +76,7 @@
   }
   const items=addRows(local.items,incoming.items,true),looks=addRows(local.looks,incoming.looks);
   const outfitBoard=structuredClone(local.outfitBoard);
-  function mapped(board){const value=structuredClone(board);for(const [slot,id]of Object.entries(value.slots))value.slots[slot]=remap.get(id)||id;return cleanBoard(value,items);}
+  function mapped(board){const value=structuredClone(board);for(const [slot,id]of Object.entries(value.slots))value.slots[slot]=remap.get(id)||id;if(value.anchorItemId)value.anchorItemId=remap.get(value.anchorItemId)||value.anchorItemId;return cleanBoard(value,items);}
   const known=new Set(outfitBoard.saved.map(canonical));
   const save=board=>{const key=canonical(board);if(!known.has(key)){outfitBoard.saved.push(board);known.add(key);}};
   if(incoming.outfitBoard){
