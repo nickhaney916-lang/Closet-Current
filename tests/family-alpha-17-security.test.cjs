@@ -34,16 +34,18 @@ test('offline ownership matrix models deny cross-account read insert update dele
  for(const operation of ['SELECT','INSERT','UPDATE','DELETE','STORAGE_READ','STORAGE_INSERT','STORAGE_UPDATE','STORAGE_DELETE'])
  for(const actor of ids)for(const owner of ids){
   // This is a model of intended policy predicates, NOT an executed Supabase RLS test.
-  const rowAllowed=actor===owner;
+  const rowAllowed=actor===owner&&operation!=='DELETE';
   if(rowAllowed)allowed++;else denied++;
-  assert.equal(rowAllowed,actor===owner,operation);
+  assert.equal(rowAllowed,actor===owner&&operation!=='DELETE',operation);
  }
- assert.equal(allowed,32);assert.equal(denied,96);
+ assert.equal(allowed,28);assert.equal(denied,100);
 });
 test('repository SQL declares owner-gated SELECT, INSERT, UPDATE, DELETE for backups',()=>{
  assert.match(sql,/alter table public\.closet_backups enable row level security/i);
  assert.match(sql,/create policy closet_backup_owner[\s\S]*?for all to authenticated[\s\S]*?using\s*\(\(select auth\.uid\(\)\) = owner_id\)\s*with check\s*\(\(select auth\.uid\(\)\) = owner_id\)/i);
  assert.match(sql,/revoke all on public\.closet_backups from public, anon/i);
+ assert.match(sql,/grant select, insert, update on public\.closet_backups to authenticated/i);
+ assert.doesNotMatch(sql,/grant[\s\S]{0,90}delete on public\.closet_backups to authenticated/i);
  assert.match(sql,/security invoker set search_path = ''/i);
  assert.match(sql,/where owner_id=auth\.uid\(\) and revision=p_expected_revision/i);
 });
