@@ -8,7 +8,7 @@ const ui=readFileSync(new URL('../public/humanoid-3d-saved-demo.mjs',import.meta
 test('human-shaped proxy has head, neck, tapered torso, two limbs, hands and layered shell meshes',()=>{
  const shapes=createBodyGeometry();
  const keys=new Set(shapes.map(x=>x.key));
- assert.deepEqual([...keys].sort(),['bottom','dress','layer','layer2','layer3','shoes','skin','top'].sort());
+ assert.deepEqual([...keys].sort(),['bottom','dress','dressLeg','layer','layer2','layer3','shoes','skin','top'].sort());
  assert.ok(shapes.some(x=>x.id==='head')&&shapes.some(x=>x.id==='coat-shell')&&shapes.some(x=>x.id==='dress-skirt'));
  assert.ok(shapes.length>=15);
  for(const shape of shapes){
@@ -53,6 +53,7 @@ test('WebGL 3D rotates fully without repainting a 2D flat image and respects out
  render.setOutfit({dress:[.4,.2,.5,1]});
  const state=render.getState();
  assert.ok(state.drawn.includes('dress-skirt'));
+ assert.ok(state.drawn.includes('left-exposed-leg')&&state.drawn.includes('right-exposed-leg'));
  assert.ok(!state.drawn.includes('left-leg')&&!state.drawn.includes('jacket-shell'));
  assert.throws(()=>render.setOutfit({layer2:[10,0,0,1]}),/RGBA/);
  assert.throws(()=>render.rotate(NaN),/Invalid/);
