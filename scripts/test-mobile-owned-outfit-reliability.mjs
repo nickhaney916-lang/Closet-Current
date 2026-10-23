@@ -33,8 +33,19 @@ try{
    await page.goto('http://127.0.0.1:'+server.address().port+'/');
    await page.evaluate(()=>Promise.all([closetReady,outfitBoardReady]));
    await page.evaluate(async()=>{
-    const canvas=document.createElement('canvas');canvas.width=100;canvas.height=150;const ctx=canvas.getContext('2d');ctx.fillStyle='#24567a';ctx.fillRect(20,10,60,130);const image=canvas.toDataURL('image/png');
-    const make=(id,category,itemType)=>normalizeClothing({id,category,itemType,name:id,color:'Blue',pattern:'Solid',seasons:[],image});
+    // Every saved piece represents a distinct raster original. Reusing one
+    // identical photo across six IDs would make the newer source-identity
+    // rejection treat the fixtures as ambiguous, unlike real owned items.
+    const make=(id,category,itemType)=>{
+     const canvas=document.createElement('canvas');canvas.width=120;canvas.height=170;
+     const ctx=canvas.getContext('2d');
+     ctx.fillStyle='#e4ddd5';ctx.fillRect(0,0,120,170);
+     ctx.fillStyle='#24567a';ctx.fillRect(18,12,84,145);
+     const stripe=(id.charCodeAt(0)+id.length)%71;
+     ctx.fillStyle='#a2d5bb';ctx.fillRect(23+stripe,22,5,128);
+     return normalizeClothing({id,category,itemType,name:id,color:'Blue',pattern:'Solid',seasons:[],
+      image:canvas.toDataURL('image/png')});
+    };
     const clothes=[make('new','Tops','T-shirt'),make('pants','Bottoms','Jeans'),make('shoes','Shoes','Sneakers'),...['a','b','c'].map(id=>make(id,'Outerwear','Jacket'))];
     await writeAll(clothes);items.splice(0,items.length,...clothes);render();
     $('stylistSeason').value='Fall';styleNewClosetItem('new');
