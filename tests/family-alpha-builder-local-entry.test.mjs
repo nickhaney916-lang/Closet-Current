@@ -45,3 +45,12 @@ test('controller must call real server Auth and single-transaction private DB re
  assert.match(source,/stagingPreviewOnly/); // only accepted reviewed development presentations
  assert.doesNotMatch(source,/localStorage|\.src\s*=|console\.log|data:image\/svg/);
 });
+
+test('confirmed logout and account identity changes immediately signal avatar invalidation',()=>{
+ const authSource=readFileSync('public/auth.js','utf8');
+ const controller=readFileSync('public/family-alpha-preview-controller.mjs','utf8');
+ assert.match(authSource,/closet:alpha-session-changed/);
+ assert.match(authSource,/sessionGeneration\+\+;session=null;window.closetAuth.user=null;/);
+ assert.match(controller,/addEventListener\('closet:alpha-session-changed'/);
+ assert.match(controller,/removeEventListener\('closet:alpha-session-changed'/);
+});
