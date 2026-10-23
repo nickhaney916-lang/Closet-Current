@@ -14,6 +14,9 @@ export function planPosePlacement({slot,pose,canvasWidth,canvasHeight}) {
  const keys=['leftShoulder','rightShoulder','leftHip','rightHip','leftAnkle','rightAnkle'];
  if(!pose||keys.some(k=>!point(pose[k])))throw new Error('Missing body landmarks');
  if(keys.some(k=>pose[k].x<0||pose[k].x>canvasWidth||pose[k].y<0||pose[k].y>canvasHeight))throw new Error('Landmark outside canvas');
+ if(pose.leftShoulder.y>=pose.leftHip.y||pose.rightShoulder.y>=pose.rightHip.y||
+ pose.leftHip.y>=pose.leftAnkle.y||pose.rightHip.y>=pose.rightAnkle.y)
+ throw new Error('Unusable individual body landmarks');
  const shoulderWidth=Math.abs(pose.rightShoulder.x-pose.leftShoulder.x);
  const hipWidth=Math.abs(pose.rightHip.x-pose.leftHip.x);
  const shoulderY=(pose.leftShoulder.y+pose.rightShoulder.y)/2;
