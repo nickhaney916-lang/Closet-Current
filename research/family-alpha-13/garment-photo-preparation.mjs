@@ -141,3 +141,37 @@ export function containGarmentInSlot(prepared,slot,{frameWidth=360,frameHeight=6
   displayedAspectRatio:width/height,scale,clipped:false,
   bodyFitVerified:false};
 }
+
+
+/** Content fingerprint of the app-retained original JPEG byte stream.
+ * NOT a claim that those are the native camera sensor/file bytes.
+ * Unlike cropped-preview hashes, changing the parent photograph changes this.
+ */
+export async function hashRetainedOriginalJPEG(encoded,cryptoProvider=globalThis.crypto){
+ if(typeof encoded!=='string'||encoded.length>12_000_000||
+  !/^data:image\/jpeg;base64,(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(encoded))
+  throw Error('Invalid retained original JPEG envelope');
+ const blob=atob(encoded.slice('data:image/jpeg;base64,'.length));
+ if(blob.length<64||blob.length>8_000_000||blob.charCodeAt(0)!==255||blob.charCodeAt(1)!==216||
+    blob.charCodeAt(blob.length-2)!==255||blob.charCodeAt(blob.length-1)!==217)
+  throw Error('Invalid retained JPEG byte markers');
+ if(!cryptoProvider?.subtle?.digest)throw Error('SHA-256 unavailable');
+ const bytes=Uint8Array.from(blob,c=>c.charCodeAt(0));
+ const digest=await cryptoProvider.subtle.digest('SHA-256',bytes);
+ return 'sha256:'+Array.from(new Uint8Array(digest),v=>v.toString(16).padStart(2,'0')).join('');
+}
+/** Verify an expected original-JPEG byte digest before publishing any derived
+ * RGBA presentation. The caller still MUST ensure frame was decoded from that
+ * JPEG and belongs to the authenticated owner; neither fact is implied by SHA.
+ */
+export async function prepareVerifiedOriginalDerivative(frame,{
+ originalJPEG,sourceVersion,cryptoProvider=globalThis.crypto,...options
+}={}){
+ let hash;
+ try{hash=await hashRetainedOriginalJPEG(originalJPEG,cryptoProvider);}
+ catch{return failure('retained-original-unavailable');}
+ if(sourceVersion!==hash)return failure('retained-original-version-mismatch');
+ const value=prepareSyntheticGarmentOriginal(frame,{...options,sourceVersion:hash});
+ if(value.status!=='prepared')return value;
+ return {...value,verifiedOriginalBytes:true,verifiedOwner:false,sourceSHA:hash};
+}
