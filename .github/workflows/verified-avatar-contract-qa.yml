@@ -3,6 +3,9 @@ on:
   push:
     branches:
       - integration/verified-avatar-contract-20261023
+  pull_request:
+    branches:
+      - qa/issue-230-board-schema-adapter-20261023
   workflow_dispatch:
 jobs:
   offline-contract:
