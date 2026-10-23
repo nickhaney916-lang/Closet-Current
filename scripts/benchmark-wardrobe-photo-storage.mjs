@@ -68,8 +68,8 @@ try{
      const setupMs=tick()-setupStart;
      const record={id:'outfit-board',current:{id:'board-current',name:'Offline saved outfit',slots:{top:items.find(x=>x.category==='Tops')?.id,bottom:items.find(x=>x.category==='Bottoms')?.id,shoes:items.find(x=>x.category==='Shoes')?.id}},saved:[]};
      record.saved=Array.from({length:Math.min(25,Math.floor(size/5))},(_,i)=>({...structuredClone(record.current),id:'saved-'+i}));
-     const state={ 'outfit-board':record },document={schemaVersion:1,items,state};
-     ClosetBackupEngine.validateDocument(document);
+     const state={ 'outfit-board':record },cloudSnapshot={schemaVersion:1,items,state};
+     ClosetBackupEngine.validateDocument(cloudSnapshot);
      const encodedChars=items.reduce((sum,x)=>sum+x.image.length+(x.originalPhoto?.image.length||0),0);
      const uniqueUrls=new Set(items.flatMap(x=>[x.image,x.originalPhoto?.image].filter(Boolean)));
      const decodedJpegBytes=[...uniqueUrls].reduce((sum,x)=>sum+Math.floor((x.length-'data:image/jpeg;base64,'.length)*3/4),0);
@@ -143,13 +143,13 @@ try{
       return 'closet-photo:'+owner+'/'+hex+'.jpg';
      };
      start=tick();let visits=0;
-     const baselineDocument=await ClosetBackupEngine.mapImages(document,async image=>{visits++;return makePath(image);});
+     const baselineDocument=await ClosetBackupEngine.mapImages(cloudSnapshot,async image=>{visits++;return makePath(image);});
      ClosetBackupEngine.validateDocument(baselineDocument);
      const cloudEncodeMs=tick()-start,cloudSerializedBytes=new TextEncoder().encode(JSON.stringify(baselineDocument)).length;
      // Candidate exact-byte memoization is tested only OFFLINE. Do not change
      // the customer's SHA-256 object naming or photographs.
      const cache=new Map();start=tick();let memoHashes=0;
-     const memoDoc=await ClosetBackupEngine.mapImages(document,async image=>{
+     const memoDoc=await ClosetBackupEngine.mapImages(cloudSnapshot,async image=>{
       if(!cache.has(image)){memoHashes++;cache.set(image,makePath(image));}
       return cache.get(image);
      });
