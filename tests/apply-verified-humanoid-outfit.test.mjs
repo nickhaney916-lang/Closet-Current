@@ -52,3 +52,10 @@ test('lost or disposed WebGL context returns 2D fallback instead of reporting su
  const renderer={supported:true,getState:()=>({lost:false,disposed:false}),setOutfit:()=>false};
  assert.equal(applyVerifiedHumanoidOutfit(renderer,prepared),false);
 });
+
+test('WebGL exception during outfit update does not crash the 2D fallback path',()=>{
+ const prepared={placeholderOnly:true,originalPixelsRenderedAs3D:false,selected:[top],colors:{top:rgba}};
+ const renderer={supported:true,setOutfit:()=>{throw Error('WebGL context lost');}};
+ assert.equal(applyVerifiedHumanoidOutfit(renderer,prepared),false);
+ assert.equal(clearVerifiedHumanoidOutfit(renderer),false);
+});
