@@ -151,6 +151,28 @@ try{
      const drawn=await renderAlphaAuthenticatedBoard(stage,options);
      if(drawn.renderedLayers!==1||!drawn.serverAuthChecked||requests!==1||
         stage.querySelectorAll('img').length!==1)throw Error('Verified synthetic avatar render failed');
+     // Suspend the previous inner original-photo SHA digest, then start a
+     // newer request that fails Auth. Stale avatar pixels must never reappear.
+     let releaseDigest,enteredDigest,paused=false;
+     const digestEntered=new Promise(resolve=>{enteredDigest=resolve;});
+     const holdDigest=new Promise(resolve=>{releaseDigest=resolve;});
+     options.cryptoProvider={subtle:{digest:async(...args)=>{
+      if(!paused){paused=true;enteredDigest();await holdDigest;}
+      return crypto.subtle.digest(...args);
+     }}};
+     const late=renderAlphaAuthenticatedBoard(stage,options);
+     await digestEntered;
+     identity=foreign;
+     let newerRefused=false;
+     try{await renderAlphaAuthenticatedBoard(stage,options);}catch{newerRefused=true;}
+     if(!newerRefused||stage.querySelectorAll('img').length)
+      throw Error('Newer unauthenticated request failed to clear old garment');
+     releaseDigest();
+     let staleRejected=false;
+     try{await late;}catch(error){staleRejected=/Superseded/.test(error.message);}
+     if(!staleRejected||stage.querySelectorAll('img').length)
+      throw Error('Old source SHA request restored stale clothing after account rejection');
+     delete options.cryptoProvider;
      identity=foreign;
      let denied=false;
      try{await renderAlphaAuthenticatedBoard(stage,options);}catch{denied=true;}

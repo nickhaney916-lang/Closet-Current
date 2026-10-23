@@ -48,3 +48,55 @@ test('changing retained original invalidates a mask when the saved crop remains 
 test('account switch while local wardrobe read or mask preparation is pending erases stale avatar',()=>withDOM(async()=>{for(const phase of ['read','mask']){const f=fixture(),container=new Elem();let entered,release;const signal=new Promise(r=>entered=r),hold=new Promise(r=>release=r);if(phase==='read')f.options.loadScopedWardrobe=async()=>{entered();await hold;return {ownerId:A,indexedDbName:'closet-current-user-'+A,board,items};};else f.options.preparePresentations=async()=>{entered();await hold;return prepared();};const task=renderAlphaAuthenticatedBoard(container,f.options);await signal;f.options.auth.user.id=B;f.state.epoch++;release();await assert.rejects(task,/account changed|account verification/);assert.equal(container.children.length,0);}}));
 test('superseded async preflight does not erase a newer avatar',()=>withDOM(async()=>{const f=fixture(),container=new Elem();let entered,release,calls=0;const waiting=new Promise(r=>entered=r),held=new Promise(r=>release=r);f.options.fetchFn=async()=>{calls++;if(calls===1){entered();await held;}return {ok:true,status:200,json:async()=>({id:A})};};const old=renderAlphaAuthenticatedBoard(container,f.options);await waiting;const current=await renderAlphaAuthenticatedBoard(container,f.options);assert.equal(current.renderedLayers,3);release();await assert.rejects(old,/Superseded/);assert.equal(container.children[0].children[1].dataset.slot,'shoes');}));
 test('does not log tokens, fetch images, persist photos or use unverified preview fallback',()=>{const source=readFileSync(new URL('../public/family-alpha-2d-auth-preflight.mjs',import.meta.url),'utf8');assert.doesNotMatch(source,/console\.|localStorage|new Image\(|\.src\s*=/);assert.match(source,/getAccessToken/);assert.match(source,/renderSavedBoard2D/);});
+
+test('new rejected Auth request invalidates older in-flight source SHA before stale photo can commit',()=>withDOM(async()=>{
+ const f=fixture(),container=new Elem();
+ let enterDigest,releaseDigest,authCalls=0;
+ const entered=new Promise(resolve=>enterDigest=resolve);
+ const pending=new Promise(resolve=>releaseDigest=resolve);
+ f.options.cryptoProvider={subtle:{digest:async(...args)=>{enterDigest();await pending;return webcrypto.subtle.digest(...args);}}};
+ f.options.fetchFn=async()=>++authCalls===1?
+  {ok:true,status:200,json:async()=>({id:A})}:
+  {ok:false,status:401};
+ const old=renderAlphaAuthenticatedBoard(container,f.options);
+ await entered; // old Auth has passed and inner saved-board SHA hashing is suspended
+ assert.equal(container.children.length,0);
+ await assert.rejects(renderAlphaAuthenticatedBoard(container,f.options),/account verification/);
+ assert.equal(container.children.length,0);
+ releaseDigest();
+ await assert.rejects(old,/Superseded avatar request/);
+ assert.equal(container.children.length,0,'old user garment cannot reappear after rejected newer Auth request');
+}));
+
+test('late inner garment hashing cannot overwrite a newer authenticated owner preview',()=>withDOM(async()=>{
+ const first=fixture(),container=new Elem();
+ let enterDigest,releaseDigest;
+ const entered=new Promise(resolve=>enterDigest=resolve);
+ const pending=new Promise(resolve=>releaseDigest=resolve);
+ first.options.cryptoProvider={subtle:{digest:async(...args)=>{enterDigest();await pending;return webcrypto.subtle.digest(...args);}}};
+ const originalRequest=renderAlphaAuthenticatedBoard(container,first.options);
+ await entered;
+ // New independent verified request renders first while old digest is outstanding.
+ const second=fixture();second.options.cryptoProvider=webcrypto;
+ const current=await renderAlphaAuthenticatedBoard(container,second.options);
+ assert.equal(current.renderedLayers,3);
+ const winningFrame=container.children[0];
+ releaseDigest();
+ await assert.rejects(originalRequest,/Superseded avatar request/);
+ assert.equal(container.children[0],winningFrame,'old renderer never replaces or erases the newer view');
+ assert.deepEqual(container.children[0].children.slice(1).map(x=>x.dataset.slot),['shoes','bottom','top']);
+}));
+
+test('simultaneous avatar containers invalidate requests independently',()=>withDOM(async()=>{
+ const f=fixture(),left=new Elem(),right=new Elem();
+ const rendered=await Promise.all([
+  renderAlphaAuthenticatedBoard(left,f.options),
+  renderAlphaAuthenticatedBoard(right,f.options)
+ ]);
+ assert.deepEqual(rendered.map(x=>x.renderedLayers),[3,3]);
+ const preserved=right.children[0];
+ f.options.fetchFn=async()=>({status:401,ok:false});
+ await assert.rejects(renderAlphaAuthenticatedBoard(left,f.options),/account verification/);
+ assert.equal(left.children.length,0);
+ assert.equal(right.children[0],preserved,'one view does not invalidate a separate mounted view');
+}));
