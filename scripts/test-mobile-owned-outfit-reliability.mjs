@@ -52,7 +52,7 @@ try{
    });
    await page.waitForFunction(()=>styledCollectionResults.length===3);
    assert.equal(await page.locator('#styledCollectionResults .styled-outfit').count(),3);
-   assert.equal(await page.evaluate(()=>new Set(styledCollectionResults.map(x=>x.board.slots.layer)).size),3);
+   assert.equal(await page.evaluate(()=>new Set(styledCollectionResults.map(x=>x.board.slots.layer2)).size),3, 'three different owned jackets must occupy the outer jacket layer, never the sweater layer');
    const card=page.locator('#styledCollectionResults .styled-outfit').first();
    await card.getByRole('button',{name:'Save outfit',exact:true}).tap();
    await page.waitForFunction(()=>savedOutfitBoards.length===1);
