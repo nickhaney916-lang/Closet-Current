@@ -20,4 +20,5 @@ jobs:
       - name: Verify offline avatar contract and saved outfit boundaries
         run: |
           node --test tests/verified-humanoid-color-contract.test.mjs
+          node --test tests/prepare-verified-humanoid-outfit.test.mjs
           node --test tests/resolve-saved-outfit-presentation.test.mjs
