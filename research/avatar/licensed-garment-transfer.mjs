@@ -7,7 +7,7 @@ export function validateGarmentTransfer({accountId, garment, mask}) {
  if (!accountId || typeof accountId!=='string') throw new Error('Missing account');
  if (!garment || garment.accountId!==accountId) throw new Error('Account mismatch');
  if (!/^[a-f0-9]{64}$/i.test(garment.originalSha256||'')) throw new Error('Missing original integrity hash');
- if (!Number.isInteger(garment.width)||!Number.isInteger(garment.height)||garment.width<1||garment.height<1) throw new Error('Invalid original dimensions');
+ if (!Number.isInteger(garment.width)||!Number.isInteger(garment.height)||garment.width<1||garment.height<1||garment.width*garment.height>16000000) throw new Error('Invalid original dimensions');
  if (!(garment.pixels instanceof Uint8ClampedArray)||garment.pixels.length!==garment.width*garment.height*4) throw new Error('Invalid RGBA source');
  if (!(mask instanceof Uint8Array)||mask.length!==garment.width*garment.height) throw new Error('Mask must match original pixels');
  if (!mask.some(value=>value>0)) throw new Error('Empty mask');
