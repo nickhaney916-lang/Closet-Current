@@ -116,6 +116,11 @@ export function createOfflineIntegrationQA(source){
    const now=await selectedMetadata(selected);still(scope);
    if(JSON.stringify(now)!==JSON.stringify(record.qaSelectionMetadata))return twoD(board,'Saved category, color or crop changed; retain safe 2D');
   }
+  // The renderer ships default top/bottom/shoe colors. An incomplete board
+  // would silently invent garment geometry, so keep partial looks in 2D.
+  const topCategory=selected.find(x=>x.slot==='top')?.item.category;
+  if(!board.slots.top||!board.slots.shoes||(topCategory!=='Dresses'&&!board.slots.bottom))
+   return twoD(board,'Incomplete owned outfit must remain 2D');
   if(Object.keys(board.slots).some(x=>!VISUAL.includes(x)))return twoD(board,'Unrenderable 3D accessory, retain 2D');
   // PR #231 supports top, bottom, shoe and one layer. It silently ignores
   // jacket/coat inputs, so do not allow lossy 3D selection.
@@ -129,7 +134,7 @@ export function createOfflineIntegrationQA(source){
     :await verifyCapturedOutfitBoard(board,prepared,scope.owner,ownerCheck);
    still(scope);
    const accepted=prepareWardrobeFor3D(prepared,scope.owner);
-   if(accepted.size!==prepared.length)throw Error('PR232 refused '+(prepared.length-accepted.size)+' sources; metadata '+prepared.map(x=>[x.ownerId===scope.owner,x.originalPhoto?.ownerId===scope.owner,x.originalPhoto?.image?.startsWith('data:image/jpeg;base64,'),x.originalPhoto?.image?.length,x.originalPhoto?.id===x.outfitSourceId,Boolean(x.cropIdentity),x.colorHex]).join(',').slice(0,72));
+   if(accepted.size!==prepared.length)throw Error('Pinned PR232 photo admission refused synthetic source');
    const proxy=bridgeSavedOutfit(board,prepared,scope.owner);still(scope);
    if(!verified.placeholderOnly||!proxy.syntheticGeometryOnly)throw Error('Not research-only placeholder');
    // proxy.references contains originals: never serialize/publish or send to WebGL.
@@ -138,9 +143,8 @@ export function createOfflineIntegrationQA(source){
    return {mode:'3d-placeholder',board:boardCopy(board),renderer:{colors,solidColorOnly:true,unseenSurfacesEstimated:true},contracts:{pr231:true,pr232:true}};
   }catch(error){
    try{still(scope);}catch{return deny('Session changed; 2D fallback denied');}
-   // Test-only sanitized failure classifier; no error object or image bytes leave this branch.
-   const code=String(error?.message||'').replace(/data:[^\\s]+/g,'[image-redacted]').slice(0,110);
-   return twoD(board,'3D QA blocked: '+code);
+   // Do not emit raw error messages: upstream errors might include photos or account metadata.
+   return twoD(board,'Verified 3D source unavailable; use authorized original 2D outfit');
   }
  }
  async function save(board){
