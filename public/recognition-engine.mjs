@@ -391,6 +391,15 @@ export async function classifyIsolatedGarment(model,image,{hint,confirmationMode
  if(!hint||!Array.isArray(hint.categories)||!hint.categories.length||hint.categories.some(x=>!valid.includes(x))||!Array.isArray(hint.types))throw Error('Invalid clothing mask context.');
  if(hint.clipped)return {strong:false,choices:[],details:{},reason:'clipped_garment'};
  onStage('identify');const labels=localCandidates.map(x=>x.label),whole=await model(image,labels,options),close=await confirmationModel(image,labels,options),a=garmentCategoryTotals(whole),b=garmentCategoryTotals(close);
+ // Mask confidence cannot turn a blank wall/pet into clothing. Keep the
+ // same .55/.15 evidence gates used for positive category support, but veto
+ // a strong nonclothing vote from EITHER image view before mask fallback.
+ const negativeEvidence=results=>results.reduce((sum,r)=>sum+
+  (Number.isFinite(r.score)&&r.score>=0&&r.score<=1&&localCandidates.some(c=>c.label===r.label&&c.category==='Uncategorized')?r.score:0),0);
+ if([whole,close].some((rows,i)=>{
+  const clothing=(i===0?a:b)[0]?.score||0,negative=negativeEvidence(rows);
+  return clothing===0||(negative>=.55&&negative-clothing>=.15);
+ }))return {strong:false,choices:[],details:{},reason:'mask_nonclothing_disagrees'};
  const supported=ranked=>ranked[0]&&ranked[0].score>=.55&&ranked[0].score-(ranked[1]?.score||0)>=.15;
  const agreed=supported(a)&&supported(b)&&a[0].category===b[0].category&&hint.categories.includes(a[0].category);
  // A strong, complete mask can retain a single broad category when the

@@ -1,3 +1,18 @@
+# Recognition mask safety follow-up — October 23, 2026
+
+Separate `work/recognition-subtype-safety-20261023` from exact PR #213
+`33744dc0900fcb0cc2d014510e22fa03c2a96637`; original branches preserved. A
+high-confidence mask could override negative-only/absent classifier evidence;
+candidate rejects that contradiction before fallback. Two local full Node runs:
+1788 PASS / 0 FAIL / 0 SKIP each. New source-locked QA avoids the legacy benchmark's
+2048px JPEG re-encoding and compares baseline/candidate on all 59 licensed
+original fixture byte streams. Final exact-head results belong in issue #211/PR.
+See `benchmark/SOURCE-LOCKED-RECOGNITION-SAFETY-20261023.md` and avatar license
+addendum. No new masks, physical phone truth or promotion claim. Main conversation
+owns integration/release; no deployment, settings, customer data or spending.
+
+---
+
 # Issue #211 isolated offline recognition QA — October 22, 2026
 
 New branch `work/issue-211-offline-recognition` from PR #209 exact application

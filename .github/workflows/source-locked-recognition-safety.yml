@@ -1,0 +1,58 @@
+name: Source-locked offline mask recognition safety
+on:
+  push:
+    branches: [work/recognition-subtype-safety-20261023]
+permissions:
+  contents: read
+jobs:
+  safety:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Repeated complete regression on bundled licensed fixtures
+        run: |
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Browser engines only, no AI API or credentials
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium webkit
+      - name: Offline browser contracts and original-photo handling
+        run: |
+          node scripts/test-mask-negative-browsers.mjs
+          node scripts/test-masked-crop-color-browsers.mjs
+          node scripts/test-photo-batch-owner-mobile.mjs
+      - name: Warm pinned model, deny remote requests, compare all original JPEG sources
+        run: node scripts/run-source-locked-recognition.mjs benchmark/source-locked-output
+      - name: Independent source-locked scoring and unchanged acceptance gates
+        run: |
+          git show d499d0583cf989e6af5d34a4992526895425e1f9:scripts/compare-recognition-candidate-59.mjs > scripts/independent-source-qa.mjs
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          import {compareRecognitionCandidate,loadLockedSets} from './scripts/independent-source-qa.mjs';
+          import {auditRecognitionAdmission} from './scripts/audit-recognition-admission.mjs';
+          const cohorts=['reviewed-32','holdout-16','fresh-11'],candidate={},sets={};
+          for(const n of cohorts){candidate[n]=JSON.parse(fs.readFileSync('benchmark/source-locked-output/candidate-'+n+'.json'));sets[n]={manifest:JSON.parse(fs.readFileSync('benchmark/manifest-'+n+'.json')),results:candidate[n]};}
+          const comparison=compareRecognitionCandidate(loadLockedSets(),candidate);
+          const admission=auditRecognitionAdmission(sets,{historical:false});
+          fs.writeFileSync('benchmark/source-locked-output/independent-comparison.json',JSON.stringify(comparison,null,2));
+          fs.writeFileSync('benchmark/source-locked-output/current-admission.json',JSON.stringify(admission,null,2));
+          console.log('QUALITY_GATE',JSON.stringify({admission:admission.recognitionPromotionDecision,unsafeSubtypes:admission.wrongAutoSubtypesTotal,historicalRegressions:comparison.totals.sourceRegressions}));
+          if(comparison.recognitionPromotionAuthorized||comparison.deploymentAuthorized)throw Error('QA cannot authorize release');
+          JS
+      - name: Protect original photos, masks, labels, models and cloud code
+        run: git diff --exit-code 33744dc0900fcb0cc2d014510e22fa03c2a96637 -- benchmark/fixtures benchmark/manifest-*.json benchmark/regression-*.json benchmark/locked-photo-sources.json public/recognition-photo.mjs public/recognition-vectors.json public/recognition-vectors.bin public/app.js public/auth.js supabase
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: source-locked-recognition-safety-results
+          path: benchmark/source-locked-output/*.json
+          retention-days: 14
