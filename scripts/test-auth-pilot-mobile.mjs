@@ -71,7 +71,9 @@ try{
  await denied.locator('#authEmail').fill('synthetic@example.invalid');
  await denied.locator('#authPassword').fill('synthetic-password');
  await denied.getByRole('button',{name:'Log in',exact:true}).tap();
- await denied.waitForFunction(()=>document.getElementById('authStatus')?.textContent.includes('No verified user session'));
+ // Production UI intentionally translates the internal invalid_response exception
+ // into an actionable generic message; it must still keep the closet locked.
+ await denied.waitForFunction(()=>document.getElementById('authStatus')?.textContent.includes('unreadable response'));
  assert.equal(await denied.locator('#authGate').isVisible(),true);
  assert.equal(await denied.locator('#appShell').isVisible(),false);
  assert.equal(await denied.evaluate(()=>localStorage.getItem('closet-current-auth-v1')),null);
