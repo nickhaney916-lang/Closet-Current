@@ -55,6 +55,10 @@ jobs:
           node-version: '22'
       - name: Download licensed original photos and verify locked SHA-256 hashes
         run: node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/fixtures
+      - name: Install pinned inference browser dependency
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install chromium
       - name: Re-run actual pinned-model inference on all 59 original photographs
         run: node scripts/run-source-locked-recognition.mjs benchmark/source-locked-output
       - name: Score fresh inference and enforce release veto
