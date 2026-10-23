@@ -10,7 +10,7 @@ function box(x,y,width,height){
 }
 export function planPosePlacement({slot,pose,canvasWidth,canvasHeight}) {
  if(!allowed.includes(slot))throw new Error('Unsupported garment slot');
- if(!Number.isInteger(canvasWidth)||!Number.isInteger(canvasHeight)||canvasWidth<1||canvasHeight<1)throw new Error('Invalid canvas');
+ if(!Number.isInteger(canvasWidth)||!Number.isInteger(canvasHeight)||canvasWidth<1||canvasHeight<1||canvasWidth*canvasHeight>16000000)throw new Error('Invalid canvas');
  const keys=['leftShoulder','rightShoulder','leftHip','rightHip','leftAnkle','rightAnkle'];
  if(!pose||keys.some(k=>!point(pose[k])))throw new Error('Missing body landmarks');
  if(keys.some(k=>pose[k].x<0||pose[k].x>canvasWidth||pose[k].y<0||pose[k].y>canvasHeight))throw new Error('Landmark outside canvas');
