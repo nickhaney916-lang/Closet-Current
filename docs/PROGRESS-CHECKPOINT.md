@@ -1,3 +1,20 @@
+# Assignment #218 — original-source 2D Outfit Builder QA (October 23)
+
+Isolated `work/2d-outfit-integration-20261023` from cfd722e; PR #217 refreshed
+through 8a7f1d6 and research #216 selectively ported without reverting newer
+account protections. Customer figure now uses original bytes/native crop,
+invalidates changed source/crop/provenance, rejects explicit foreign photo
+owners and holds invalid originals rather than reusing unbound display masks.
+Full local suite with 59 verified licensed fixtures: 1842 PASS / 0 FAIL / 0 SKIP;
+independent locked outfit benchmark 22/22. Final exact-head repeated Node and
+Chromium/WebKit results belong in new draft PR. See
+`docs/2D-OUTFIT-INTEGRATION-20261023.md`. No physical phone, segmentation-accuracy,
+fit or realistic-drape claim; research mask review metadata is not independent
+reviewer evidence. 3D stays separate. Main conversation owns integration/release.
+No merge/deploy, customer photos, paid AI, cloud settings or spending.
+
+---
+
 # Recognition mask safety follow-up — October 23, 2026
 
 Separate `work/recognition-subtype-safety-20261023` from exact PR #213

@@ -51,7 +51,32 @@
   return typeof value==='string'&&value.length>=90&&value.length<=12_000_000&&
    /^data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/]+={0,2}$/.test(value);
  }
- function plan(board,closet,figure='female'){
+ // Resolve display pixels from the saved original, never a cached mask or
+ // generated display image. A crop is geometry into that original only.
+ function savedSource(item,ownerId=null){
+  if(!item||typeof item!=='object')return null;
+  for(const record of [item,item.originalPhoto,item.recognitionPhoto]){
+   if(record&&typeof record==='object')for(const key of ['ownerId','owner_id','accountId'])
+    if(record[key]!==undefined&&record[key]!==ownerId)return null;
+  }
+  const hasOriginal=item.originalPhoto!==undefined;
+  if(!hasOriginal&&(item.outfitSourceId||item.maskApplied===true||item.recognitionPhoto!==undefined))return null;
+  const image=hasOriginal?item.originalPhoto?.image:item.image;
+  if(!isLocalGarmentImage(image))return null;
+  let crop=null;
+  if(item.cropBounds!==undefined){
+   const b=item.cropBounds;
+   if(!hasOriginal||!b||![b.x,b.y,b.width,b.height].every(Number.isFinite)||
+    b.x<0||b.y<0||b.width<=0||b.height<=0||b.x+b.width>1||b.y+b.height>1)return null;
+   crop={x:b.x,y:b.y,width:b.width,height:b.height};
+  }else if(item.outfitSourceId)return null; // Never overlay a whole outfit as one garment.
+  // Metadata changes cancel pending work even if the source bytes are unchanged.
+  const identity=JSON.stringify(Object.fromEntries(Object.entries(item)
+   .filter(([key])=>/original|source|recognition|crop|hash|owner|photoVersion|mask/i.test(key))),
+   (key,value)=>key==='image'?undefined:value);
+  return {image,crop,sourceIdentity:identity,cacheSource:image+identity};
+ }
+ function plan(board,closet,figure='female',ownerId=null){
   const choice=Object.hasOwn(FIGURES,figure)?figure:'female';
   const slots=board?.slots||{},used=new Set(),placements=[],skipped=[];
   const source=Array.isArray(closet)?closet:[];
@@ -60,12 +85,12 @@
   for(const slot of selections){
    if(!slots[slot])continue;
    const item=source.find(x=>x.id===slots[slot]);
-   if(!item||!allowed[slot].includes(item.category)||used.has(item.id)||
-    !isLocalGarmentImage(item.image)){
+   const saved=savedSource(item,ownerId);
+   if(!item||!saved||!allowed[slot].includes(item.category)||used.has(item.id)){
     skipped.push(slot);continue;
    }
    used.add(item.id);
-   placements.push({slot,itemId:item.id,image:item.image,category:item.category,primaryColor:item.color||null,
+   placements.push({slot,itemId:item.id,...saved,category:item.category,primaryColor:item.color||null,
     rect:placementRect(slot,item,choice)});
   }
   return {figure:choice,figureImage:FIGURES[choice],placements,skipped,
@@ -78,10 +103,10 @@
    a.skipped.length===b.skipped.length&&a.skipped.every((v,i)=>v===b.skipped[i])&&
    a.placements.length===b.placements.length&&a.placements.every((v,i)=>{
     const q=b.placements[i];
-    return ['slot','itemId','image','category','primaryColor'].every(k=>v[k]===q[k])&&
+    return ['slot','itemId','image','sourceIdentity','category','primaryColor'].every(k=>v[k]===q[k])&&
      ['left','top','width','height'].every(k=>v.rect[k]===q.rect[k]);
    });
  }
- root.ClosetReusableFigure=Object.freeze({FIGURES,RECTS,FIGURE_RECTS,placementRect,selfieRect,isLocalGarmentImage,plan,samePlan});
+ root.ClosetReusableFigure=Object.freeze({FIGURES,RECTS,FIGURE_RECTS,placementRect,selfieRect,isLocalGarmentImage,savedSource,plan,samePlan});
  if(typeof module!=='undefined')module.exports=root.ClosetReusableFigure;
 })(typeof window!=='undefined'?window:globalThis);

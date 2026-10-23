@@ -1,0 +1,57 @@
+name: Original-source 2D Outfit Builder integration QA
+on:
+  push:
+    branches: [work/2d-outfit-integration-20261023]
+permissions:
+  contents: read
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Original licensed fixtures and repeated complete regression
+        run: |
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs tests/avatar/*.test.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs tests/avatar/*.test.mjs
+          node scripts/issue201-outfit-benchmark.mjs /tmp/benchmark.json
+          cmp benchmark/issue201-results.json /tmp/benchmark.json
+          git diff --exit-code cfd722e4f242234afc5629afc34b6a0b71fc64a9 -- public/app.js public/auth.js public/cloud-backup.js supabase public/recognition-engine.mjs benchmark/manifest-*.json benchmark/locked-photo-sources.json
+  browsers:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node scripts/build.mjs
+      - name: Ephemeral browser dependencies only
+        run: |
+          sudo sed -i 's|http://azure.archive.ubuntu.com/ubuntu|http://archive.ubuntu.com/ubuntu|g' /etc/apt/sources.list.d/ubuntu.sources
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps chromium webkit
+      - name: Independent recommendations, pins, swaps, backups and account isolation
+        run: node scripts/test-issue201-outfit-browsers.mjs
+      - name: Existing licensed-photo figure, recovery and layering browser suite
+        run: |
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json
+          node scripts/test-reusable-figure-phone-browsers.mjs
+      - name: Original RGB, invalid images, stale cached source, mobile layout
+        run: node scripts/test-saved-figure-originals-browsers.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: 2d-outfit-offline-evidence
+          path: |
+            artifacts/2d-outfit/
+            artifacts/issue201/
+            artifacts/local-fitting/
+          retention-days: 7

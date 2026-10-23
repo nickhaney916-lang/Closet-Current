@@ -56,7 +56,7 @@
    // A stalled cached PNG must not be immediately re-used by explicit Retry.
    for(const placement of state.plan.placements||[]){
     previewCache?.remove({owner:state.owner,id:String(placement.itemId),
-     source:placement.image,category:placement.category,
+     source:placement.cacheSource||placement.image,category:placement.category,
      primaryColor:placement.primaryColor||''});
    }
    garmentContainer.replaceChildren();removeFace();updatePhotoHelp(false);
@@ -112,11 +112,24 @@
  if(retry)retry.addEventListener('click',()=>{
   stalledState=null;clearWatchdog();lastPlan=null;requestRender();
  });
- async function imagePixels(value,category,primaryColor){
-  const photo=new Image();photo.src=value;
+ async function imagePixels(value,category,primaryColor,crop){
+  let photo=new Image();photo.src=value;
   try{await decodeImage(photo);}catch{return null;}
-  const w=photo.naturalWidth,h=photo.naturalHeight;
+  let w=photo.naturalWidth,h=photo.naturalHeight;
   if(w<24||h<24||w*h>20_000_000)return null;
+  if(crop){
+   // Native-resolution display copy from the original. No mask is reused,
+   // and the stored original/recognition/display photos remain untouched.
+   const x=Math.floor(crop.x*w),y=Math.floor(crop.y*h);
+   const right=Math.min(w,Math.ceil((crop.x+crop.width)*w));
+   const bottom=Math.min(h,Math.ceil((crop.y+crop.height)*h));
+   const cropped=document.createElement('canvas');
+   cropped.width=right-x;cropped.height=bottom-y;
+   if(cropped.width<24||cropped.height<24)return null;
+   const context=cropped.getContext('2d');if(!context)return null;
+   context.drawImage(photo,x,y,cropped.width,cropped.height,0,0,cropped.width,cropped.height);
+   photo=cropped;w=cropped.width;h=cropped.height;
+  }
   const scale=Math.min(1,Math.sqrt(150000/(w*h)));
   const c=document.createElement('canvas');
   c.width=Math.max(24,Math.floor(w*scale));c.height=Math.max(24,Math.floor(h*scale));
@@ -208,7 +221,7 @@
   }
   const board=()=>typeof currentBoard==='undefined'?null:currentBoard;
   const closet=()=>typeof items==='undefined'?[]:items;
-  const plan=engine.plan(board(),closet(),selector.value);
+  const plan=engine.plan(board(),closet(),selector.value,owner);
   const boardState=JSON.stringify(board());
   const watchdogInput={owner,database,boardState,plan};
   if(stalledState){
@@ -216,7 +229,7 @@
    stalledState=null;
   }
   const sourceChanged=()=>JSON.stringify(board())!==boardState||
-   !engine.samePlan(plan,engine.plan(board(),closet(),selector.value));
+   !engine.samePlan(plan,engine.plan(board(),closet(),selector.value,owner));
   if(lastPlanOwner===owner&&engine.samePlan(lastPlan,plan))return;
   guardWatchdog(watchdogInput);
   lastPlan=null; // A prior success cannot satisfy a request while another plan is rendering.
@@ -254,12 +267,12 @@
    ?'Low-resolution '+plan.figure+' model reference ('+base.naturalWidth+' × '+base.naturalHeight+'). Enlarging it cannot restore detail. Check colors, textures and graphics in your saved clothing photos.'
    :'Model reference only. Check garment details in your saved clothing photos; this collage does not predict fit.';
   for(const placement of plan.placements){
-   const query={owner,id:String(placement.itemId),source:placement.image,
+   const query={owner,id:String(placement.itemId),source:placement.cacheSource||placement.image,
     category:placement.category,primaryColor:placement.primaryColor||''};
    let prepared=previewCache?.get(query);
    let preparedNow=false;
    if(!prepared){
-    const cutout=await imagePixels(placement.image,placement.category,placement.primaryColor);
+    const cutout=await imagePixels(placement.image,placement.category,placement.primaryColor,placement.crop);
     if(cancelled())return;
     if(!cutout){counts.skipped++;continue;}
     let image=cutout.image;
@@ -352,7 +365,7 @@
       activeRender.database===(typeof db==='undefined'?null:db)&&
       activeRender.boardState===JSON.stringify(board)&&
       engine.samePlan(activeRender.plan,engine.plan(board,
-       typeof items==='undefined'?[]:items,selector.value)))return;
+       typeof items==='undefined'?[]:items,selector.value,root.closetAuth?.user?.id||null)))return;
    }catch{/* The guarded render reports unavailable planning/canvas state. */}
    // A timed-out identical request stays visibly retryable until an actual
    // user retry or an input change; background repaint cannot clear the hold.
@@ -361,7 +374,7 @@
    const board=typeof currentBoard==='undefined'?null:currentBoard;
    if(stalledState&&sameRequest(stalledState,{
     owner,database:dbNow,boardState:JSON.stringify(board),
-    plan:engine.plan(board,typeof items==='undefined'?[]:items,selector.value)
+    plan:engine.plan(board,typeof items==='undefined'?[]:items,selector.value,root.closetAuth?.user?.id||null)
    }))return;
    return safeRender();
   });
