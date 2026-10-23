@@ -1,8 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {prepareSyntheticGarmentOriginal,containGarmentInSlot} from '../research/family-alpha-13/garment-photo-preparation.mjs';
+import {prepareSyntheticGarmentOriginal,containGarmentInSlot,hashRetainedOriginalJPEG,prepareVerifiedOriginalDerivative} from '../research/family-alpha-13/garment-photo-preparation.mjs';
 import {syntheticGarment,qaCategories} from '../research/family-alpha-13/synthetic-garments.mjs';
 import {planPhotoLayers} from '../research/family-alpha-13/reference/family-alpha-2d-layer-plan.mjs';
+import {webcrypto} from 'node:crypto';
 const key={sourceIdentity:'synthetic-capture',sourceVersion:'sha256-test-version-001'};
 const prepare=(sample,opts={})=>prepareSyntheticGarmentOriginal(sample.frame,{category:sample.category,...key,...opts});
 for(const kind of qaCategories)test('prepares transparent detailed '+kind+' without touching original',()=>{
@@ -134,4 +135,32 @@ test('invalid placement or unprepared pixels cannot be treated as photographed w
  const photo=prepare(syntheticGarment('Tops'));
  assert.throws(()=>containGarmentInSlot({status:'review'}, {x:.5,y:.5,width:.5,height:.4}),/Invalid/);
  assert.throws(()=>containGarmentInSlot(photo,{x:.5,y:.5,width:0,height:.4}),/Invalid/);
+});
+
+
+test('original retained JPEG SHA binds prepared PNG source and rejects changed full-frame under unchanged crop',async()=>{
+ const raw=Buffer.from([255,216,...Array.from({length:100},(_,i)=>i%241),255,217]);
+ const raw2=Buffer.from(raw);raw2[52]=73;
+ const original='data:image/jpeg;base64,'+raw.toString('base64');
+ const other='data:image/jpeg;base64,'+raw2.toString('base64');
+ const sha=await hashRetainedOriginalJPEG(original,webcrypto);
+ assert.match(sha,/^sha256:[a-f0-9]{64}$/);
+ assert.notEqual(sha,await hashRetainedOriginalJPEG(other,webcrypto));
+ const sample=syntheticGarment('Tops'),before=sample.frame.data.slice();
+ const good=await prepareVerifiedOriginalDerivative(sample.frame,{category:'Tops',sourceIdentity:key.sourceIdentity,
+  sourceVersion:sha,originalJPEG:original,cryptoProvider:webcrypto});
+ assert.equal(good.status,'prepared');assert.equal(good.verifiedOriginalBytes,true);
+ assert.equal(good.verifiedOwner,false);assert.equal(good.sourceSHA,sha);
+ const changed=await prepareVerifiedOriginalDerivative(sample.frame,{category:'Tops',sourceIdentity:key.sourceIdentity,
+  sourceVersion:sha,originalJPEG:other,cryptoProvider:webcrypto});
+ assert.equal(changed.status,'review');assert.equal(changed.reason,'retained-original-version-mismatch');
+ assert.deepEqual(sample.frame.data,before);
+});
+test('wrong JPEG MIME, malformed base64 and invalid SOI or EOI refuse source-derived image',async()=>{
+ for(const encoded of ['','data:image/png;base64,/9j/','data:image/jpeg;base64,%%%%',
+   'data:image/jpeg;base64,'+Buffer.alloc(100).toString('base64')])
+  await assert.rejects(hashRetainedOriginalJPEG(encoded,webcrypto),/Invalid/);
+ const value=await prepareVerifiedOriginalDerivative(syntheticGarment('Dresses').frame,{
+  category:'Dresses',sourceIdentity:'synthetic',sourceVersion:'sha256:'+'0'.repeat(64),originalJPEG:'data:image/png;base64,AA=='});
+ assert.equal(value.status,'review');assert.equal(value.reason,'retained-original-unavailable');
 });
