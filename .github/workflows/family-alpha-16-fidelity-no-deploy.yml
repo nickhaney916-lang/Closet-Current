@@ -1,0 +1,73 @@
+name: Family Alpha 16 Original Photo Mask Fidelity (NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'research/family-alpha-16/**'
+      - 'tests/family-alpha-16-fidelity.test.mjs'
+      - 'scripts/test-family-alpha-16-mobile.mjs'
+      - 'docs/FAMILY-ALPHA-16-FIDELITY-AUDIT.md'
+      - '.github/workflows/family-alpha-16-fidelity-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  node:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Read-only pin of PR257 actual original photo preparation
+        uses: actions/checkout@v4
+        with:
+          ref: df8d2589dd9b1767b727270fed9ce00f7a80afae
+          path: reference-pr257
+          persist-credentials: false
+      - name: Verify read-only reference exact Git blob
+        run: |
+          test "$(git hash-object reference-pr257/research/family-alpha-13/garment-photo-preparation.mjs)" = "12ad1234b44d1257a1f1e697e61468f91595148c"
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Build locally; NO DEPLOY
+        run: node scripts/build.mjs
+      - name: Node unit/regression suite including Auth original-photo and #16 checks
+        run: node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Generate actual-source PR257 objective fidelity matrix
+        run: node research/family-alpha-16/run-matrix.mjs
+      - name: Protect active branches from accidental source changes
+        run: |
+          git fetch origin "${{ github.base_ref }}" --depth=1
+          git diff --name-only "origin/${{ github.base_ref }}...HEAD" | tee /tmp/alpha16-changes.txt
+          if grep -Ev '^(research/family-alpha-16/|tests/family-alpha-16-fidelity.test.mjs$|scripts/test-family-alpha-16-mobile.mjs$|docs/FAMILY-ALPHA-16-FIDELITY-AUDIT.md$|\.github/workflows/family-alpha-16-fidelity-no-deploy.yml$)' /tmp/alpha16-changes.txt; then exit 1; fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: family-alpha-16-objective-node-matrix
+          path: benchmark/family-alpha-16/node-matrix.json
+          retention-days: 14
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: df8d2589dd9b1767b727270fed9ce00f7a80afae
+          path: reference-pr257
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Test-only Playwright, no lockfile changes
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+      - name: Chromium and WebKit three mobile widths, real synthetic JPEG decode
+        run: node scripts/test-family-alpha-16-mobile.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: family-alpha-16-jpeg-png-browser-matrix
+          path: benchmark/family-alpha-16/browser-matrix.json
+          retention-days: 14
