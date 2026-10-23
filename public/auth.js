@@ -12,7 +12,7 @@
  let sessionGeneration=0;
  // In-memory generation invalidates avatar work on account changes, sign-out and page restoration.
  // A refreshed token for the SAME account must not invalidate a healthy wardrobe read.
- window.closetAuth={ready,user:null,getSessionGeneration:()=>sessionGeneration};
+ window.closetAuth={ready,user:null,getSessionGeneration:()=>sessionGeneration,getPublicKey:()=>KEY};
  let signup=false,session=null,busy=false,recovery=false,restoringSession=false,refreshing=null;
  window.closetAuth.getAccessToken=async({force=false}={})=>{
   if(!session?.access_token||!window.closetAuth.user?.id)throw Error('Sign in required');
