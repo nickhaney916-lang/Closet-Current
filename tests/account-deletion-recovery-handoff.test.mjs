@@ -25,6 +25,14 @@ function setup(opts={}){
   async serverNow(){calls.push('time');return opts.now??NOW;},
   async assess(){calls.push('assess');return calls.filter(c=>c==='assess').length===1?
    {...first,...opts.first}:second;},
+  async readPhotoInventory(v){
+   calls.push('inventory-'+v.stage);
+   const second=v.stage==='after-approvals';
+   const data=second?opts.secondInventory:opts.firstInventory;
+   return {ownerScoped:true,filenamesEnumerated:true,photoBytesVerified:false,
+    digest:second&&opts.changePhotoNames?'2'.repeat(64):'1'.repeat(64),
+    count:1,pages:1,...data};
+  },
   async verifyWorkerFenced(v){calls.push('fence-'+v.stage);
    if(opts.fenceError)throw Error('independent fencing failed');
    return {quiescent:opts.quiescent??true,fenceEnforced:opts.fenced??true,
@@ -101,7 +109,8 @@ test('inspector outputs are not a destructive capability; no customer identity o
   'incident999','security888','password','access_token','photo.jpg'])
   assert.equal(json.includes(secret),false,'Private identifier leaked: '+secret);
  assert.deepEqual(x.calls,['authorize','time','assess','fence-before-review',
-  'approve-incident_owner','approve-security_reviewer','assess','fence-after-review']);
+  'inventory-before-approvals','approve-incident_owner','approve-security_reviewer',
+  'assess','inventory-after-approvals','fence-after-review']);
 });
 test('no claim, no tombstone, or apparently unlocked account never enters incident handoff',async()=>{
  const changes=[{cleanupClaimed:false,code:'WRITE_LOCKED_NOT_CLAIMED'},
@@ -132,6 +141,21 @@ test('mid-review Storage/backup/Auth change invalidates approvals and prevents h
   await assert.rejects(x.handoff.prepare(x.request));
   assert.equal(x.calls.filter(c=>c==='assess').length,2);
   assert.equal(x.calls.includes('fence-after-review'),false);
+ }
+});
+test('unchanged presence with changed photo names rejects incident review',async()=>{
+ const x=setup({changePhotoNames:true});
+ await assert.rejects(x.handoff.prepare(x.request),/inventory changed during review/);
+ assert.equal(x.calls.includes('fence-after-review'),false);
+ assert.equal(x.calls.filter(k=>k.startsWith('inventory-')).length,2);
+});
+test('missing, malformed, or wrong-scope inventory proof fails closed',async()=>{
+ for(const firstInventory of [{ownerScoped:false},{filenamesEnumerated:false},
+  {digest:'oops'},{count:0},{count:-1},{count:10001},
+  {pages:0},{pages:102},{photoBytesVerified:true}]){
+  const x=setup({firstInventory});
+  await assert.rejects(x.handoff.prepare(x.request),/inventory unavailable/);
+  assert.equal(x.calls.some(k=>k.startsWith('approve-')),false);
  }
 });
 test('independent worker fence rotation or failed second fence aborts review',async()=>{
