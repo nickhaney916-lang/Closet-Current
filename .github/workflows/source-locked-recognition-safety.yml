@@ -54,12 +54,14 @@ jobs:
 
   mobile-browsers:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Use official Ubuntu mirror for ephemeral browser dependencies
+        run: sudo sed -i 's|http://azure.archive.ubuntu.com/ubuntu|http://archive.ubuntu.com/ubuntu|g' /etc/apt/sources.list.d/ubuntu.sources
       - name: Prepare standalone synthetic browser contracts
         run: |
           node scripts/build.mjs
