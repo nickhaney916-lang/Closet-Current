@@ -1,0 +1,49 @@
+name: Issue 211 offline original-photo recognition QA
+on:
+  push:
+    branches: [work/issue-211-offline-recognition]
+permissions:
+  contents: read
+jobs:
+  offline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install Pillow==12.0.0
+      - name: Repeated full regression and source diagnostics, no inference
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+          node scripts/issue211-source-diagnostics.mjs /tmp/first.json
+          node scripts/issue211-source-diagnostics.mjs /tmp/second.json
+          cmp /tmp/first.json /tmp/second.json
+          node scripts/audit-recognition-admission.mjs --historical benchmark/manifest-reviewed-32.json benchmark/regression-reviewed-32.json benchmark/manifest-holdout-16.json benchmark/regression-holdout-16.json benchmark/manifest-fresh-11.json benchmark/regression-fresh-11.json
+      - name: Install browser test engines only
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium webkit
+      - name: Offline licensed fixture and synthetic mobile comparisons
+        run: |
+          node scripts/issue211-framing-browser.mjs
+          node scripts/test-masked-crop-color-browsers.mjs
+          node scripts/test-photo-batch-owner-mobile.mjs
+          node scripts/test-inspiration-original-photo-browsers.mjs
+      - name: Verify scope and unchanged truth
+        run: |
+          git diff --exit-code 972a50c8065ac4e5478c1e7fefdf740b2a654001 -- benchmark/fixtures benchmark/manifest-*.json benchmark/regression-*.json benchmark/locked-photo-sources.json public/recognition-vectors.bin public/recognition-vectors.json public/app.js public/auth.js supabase
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: issue211-offline-pixel-diagnostics
+          path: /tmp/first.json
+          retention-days: 7

@@ -35,3 +35,22 @@ test('invalid dimensions and pixel buffers fail before preprocessing',()=>{
  assert.throws(()=>uniformPhotoBounds({...photo(),data:new Uint8Array(1)}),/Invalid/);
  assert.throws(()=>uniformPhotoBounds({...photo(),width:NaN}),/Invalid/);
 });
+
+test('odd diagnostic content sizes preserve exact RGB pixels on integer square coordinates',async()=>{
+ // No trimming/resampling ambiguity: solid non-light source, nearest RGB oracle.
+ const image=photo(16,16);image.data.fill(0);
+ image.resize=async(w,h)=>({channels:3,data:Uint8ClampedArray.from({length:w*h*3},(_,i)=>[17,83,191][i%3])});
+ class Raw{constructor(data,width,height,channels){Object.assign(this,{data,width,height,channels});}}
+ for(const size of [129,255,287,319,335,336]){
+  const original=image.data.slice();
+  const output=await prepareRecognitionPhoto(image,Raw,{contentSizeOverride:size});
+  const start=Math.floor((336-size)/2);
+  let colored=0;
+  for(let y=0;y<336;y++)for(let x=0;x<336;x++){
+   const inside=x>=start&&x<start+size&&y>=start&&y<start+size;
+   assert.deepEqual(Array.from(output.data.slice((y*336+x)*3,(y*336+x)*3+3)),inside?[17,83,191]:[255,255,255],`size ${size} at ${x},${y}`);
+   if(inside)colored++;
+  }
+  assert.equal(colored,size*size);assert.deepEqual(image.data,original);
+ }
+});
