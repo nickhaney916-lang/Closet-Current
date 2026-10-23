@@ -1,3 +1,30 @@
+# Issue #201 — independent synthetic outfit benchmark (October 22, 2026)
+
+QA branch `qa/issue201-owned-outfit-benchmark` starts from PR #184 exact head
+`93252a3b6f570b7e38473bd1683ed3468aad84d1`, not the newer staging integration.
+All public app, backend and prior workflows remain unchanged. The source ledger,
+independent oracle and benchmark cover three distinct owned outfits, pins,
+one-piece swap, sparse closets, original/crop/display retention, account scope
+and conflicting-ID backup remapping. Generated 2x2 JPEG swatches are synthetic
+records, not a recognition or realistic-rendering dataset.
+
+Product benchmark: **20 PASS / 2 FAIL**. Failures are explicitly retained for
+central implementation review: prepared-source validation misses original-only
+photo changes; raw scorer can accept a blank-photo anchor. Characterization
+QA may be green while productAcceptance remains false. No inflated accuracy or
+realistic try-on claim. Browser harness uses actual local app/IndexedDB and file
+backup handlers with two fictitious owners; exact-head Chromium/WebKit evidence
+must be checked in issue #201 / draft QA PR. Local binaries were unavailable.
+
+See `ISSUE-201-OUTFIT-BENCHMARK.md` and `benchmark/issue201-results.json`.
+No integration branch edited, product behavior changed, merge/deploy, paid AI,
+Supabase/production settings change, customer photo or Drive Duel access. Main
+conversation retains integration/release ownership and the failed-gate fixes.
+Local build PASS; full suite **1,657 PASS / 0 FAIL / 3 SKIP**; new focused
+characterization **28 PASS / 0 FAIL**. Product gate still **20 PASS / 2 FAIL**.
+
+---
+
 # Issue #9 outfit-preview foundation — October 22, 2026
 
 Isolated `feature/issue-9-outfit-preview-foundation-20261022` from PR #180

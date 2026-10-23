@@ -1,0 +1,112 @@
+{
+  "format": "closet-current-issue201-offline-benchmark",
+  "version": 1,
+  "applicationBase": "93252a3b6f570b7e38473bd1683ed3468aad84d1",
+  "syntheticOnly": true,
+  "generatedOwners": 2,
+  "sourceImages": "2x2 synthetic JPEG swatches, not garment or human photos",
+  "checks": [
+    {
+      "name": "three-distinct-complete-owned-outfits",
+      "status": "PASS"
+    },
+    {
+      "name": "pinned-new-top",
+      "status": "PASS"
+    },
+    {
+      "name": "pinned-long-top",
+      "status": "PASS"
+    },
+    {
+      "name": "pinned-pants",
+      "status": "PASS"
+    },
+    {
+      "name": "pinned-shorts",
+      "status": "PASS"
+    },
+    {
+      "name": "pinned-skirt",
+      "status": "PASS"
+    },
+    {
+      "name": "pinned-shoe-1",
+      "status": "PASS"
+    },
+    {
+      "name": "pinned-dress",
+      "status": "PASS"
+    },
+    {
+      "name": "pinned-jacket",
+      "status": "PASS"
+    },
+    {
+      "name": "pinned-coat",
+      "status": "PASS"
+    },
+    {
+      "name": "truthful-0-options",
+      "status": "PASS"
+    },
+    {
+      "name": "truthful-1-options",
+      "status": "PASS"
+    },
+    {
+      "name": "truthful-2-options",
+      "status": "PASS"
+    },
+    {
+      "name": "one-incomplete-outfit-does-not-invent-shoes",
+      "status": "PASS"
+    },
+    {
+      "name": "one-piece-swap-and-persisted-pin",
+      "status": "PASS"
+    },
+    {
+      "name": "backup-conflict-remaps-source-linked-pin",
+      "status": "PASS"
+    },
+    {
+      "name": "same-id-two-owner-inputs-remain-independent",
+      "status": "PASS"
+    },
+    {
+      "name": "unknown-confidence-remains-disclosed",
+      "status": "PASS"
+    },
+    {
+      "name": "all-source-records-and-rgb-strings-unchanged",
+      "status": "PASS"
+    },
+    {
+      "name": "synthetic-fixture-ingress-rejects-blank-remote-duplicate-foreign",
+      "status": "PASS"
+    },
+    {
+      "name": "original-only-change-invalidates-prepared-source",
+      "status": "FAIL",
+      "reason": "original-only change is not captured by current source guard"
+    },
+    {
+      "name": "raw-engine-refuses-blank-photo-record",
+      "status": "FAIL",
+      "reason": "raw scorer assumes validated records and can select a blank-photo anchor"
+    }
+  ],
+  "passed": 20,
+  "failed": 2,
+  "productAcceptance": false,
+  "physicalPhones": 0,
+  "recognitionAccuracyMeasured": false,
+  "realisticRenderingEvaluated": false,
+  "paidInferenceActivated": false,
+  "hostedIsolationVerified": false,
+  "notes": [
+    "Engine ownership is supplied by caller-scoped closet; UI/database tenant checks are separately tested.",
+    "Expected failures are reported as FAIL, never counted as product passes. Node QA tests pin these known baseline gaps."
+  ]
+}

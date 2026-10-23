@@ -1,0 +1,44 @@
+name: Issue201 synthetic outfit benchmark characterization
+on:
+  push:
+    branches: [qa/issue201-owned-outfit-benchmark]
+permissions:
+  contents: read
+jobs:
+  offline-characterization:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node scripts/check-issue201-qa-scope.mjs
+      - name: Full offline regression
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Reproduce two explicitly failing product gates
+        shell: bash
+        run: |
+          set +e
+          node scripts/issue201-outfit-benchmark.mjs artifacts/issue201/benchmark.json
+          result=$?
+          set -e
+          test "$result" -eq 2
+          cmp benchmark/issue201-results.json artifacts/issue201/benchmark.json
+      - run: npm install --no-save --no-package-lock playwright@1.56.1
+      - name: Install browser emulation only; no inference model
+        timeout-minutes: 15
+        run: npx playwright install --with-deps chromium webkit
+      - name: Actual local app, IndexedDB and synthetic file restore
+        run: node scripts/test-issue201-outfit-browsers.mjs
+      - run: git diff --exit-code && git diff --check
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: issue201-synthetic-benchmark-evidence
+          path: artifacts/issue201/
+          retention-days: 7
