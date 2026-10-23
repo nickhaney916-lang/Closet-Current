@@ -61,6 +61,7 @@ jobs:
           npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
           mkdir -p artifacts/assignment225
       - name: Both browser engines - original capture/import, indexing and private owner store
+        shell: bash
         run: |
           set -o pipefail
           node scripts/test-integrated-pilot-journeys-mobile.mjs | tee artifacts/assignment225/original-capture-import.txt
@@ -68,6 +69,7 @@ jobs:
           node scripts/test-original-source-duplicate-mobile.mjs | tee artifacts/assignment225/source-duplicate.txt
           node scripts/test-phone-color-audit-browsers.mjs | tee artifacts/assignment225/original-color-labeling.txt
       - name: Multiple garments, owned outfits and restore
+        shell: bash
         run: |
           set -o pipefail
           node scripts/test-whole-outfit-save-mobile.mjs | tee artifacts/assignment225/multigarment.txt
@@ -78,6 +80,7 @@ jobs:
           node scripts/test-style-my-new-item-mobile.mjs | tee artifacts/assignment225/new-item-chromium.txt
           STYLE_BROWSER=webkit node scripts/test-style-my-new-item-mobile.mjs | tee artifacts/assignment225/new-item-webkit.txt
       - name: Synthetic account boundaries, PWA and phone acceptance UI
+        shell: bash
         run: |
           set -o pipefail
           node scripts/test-auth-pilot-mobile.mjs artifacts/assignment225/auth-pilot | tee artifacts/assignment225/auth.txt
@@ -90,7 +93,7 @@ jobs:
         run: |
           mkdir -p artifacts/assignment225
           printf '%s\n' 'Emulated Chromium/WebKit and synthetic accounts only.' 'Physical Android: NOT TESTED' 'Physical iPhone: NOT TESTED' 'Hosted Cloudflare Access tester policy: NOT VERIFIED' 'Hosted staging RLS/account isolation: NOT VERIFIED' 'Production deployment: NOT AUTHORIZED' > artifacts/assignment225/READ-ME-FIRST.txt
-          git rev-parse HEAD > artifacts/assignment225/source-commit.txt
+          printf '%s\n' "$GITHUB_SHA" > artifacts/assignment225/source-commit.txt
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
         with:
