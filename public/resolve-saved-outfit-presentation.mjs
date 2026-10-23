@@ -9,6 +9,7 @@ export async function resolveSavedOutfitPresentation(record,items,accountId,veri
  const classified=classifySavedOutfitFor3D(record);
  if(classified.mode==='legacy-2d')return {mode:'2d',board:classified.board,reason:classified.reason};
  if(classified.mode!=='verify-3d')return {mode:'unavailable',reason:classified.reason};
+ if(typeof accountId!=='string'||!accountId.trim()||classified.snapshot.accountId!==accountId)return {mode:'unavailable',reason:'Saved outfit account scope mismatch'};
  try{
   const verified=await restoreVerifiedCapturedOutfitBoard(classified.snapshot,classified.board,items,accountId,verifyOwnership,cryptoProvider);
   return {mode:'3d-placeholder',board:classified.board,verified};
