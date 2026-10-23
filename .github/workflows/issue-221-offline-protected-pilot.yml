@@ -46,18 +46,15 @@ jobs:
           assert.equal(x.releasePromotion,'BLOCKED');
           assert.equal(x.backendProjectRef,'abcdefghijklmnopqrst');
           JS
-      - name: Record exact source and sealed file hashes
-        shell: bash
+      - name: Record source outside immutable assets and verify final package
         run: |
-          git rev-parse HEAD > staging-dist/issue-221-source-commit.txt
-          printf 'Base PR 220 commit: 0f62e253c1fd0024a939cd401710dcd3784a9e77\nSynthetic configuration only; NEVER DEPLOY.\n' > staging-dist/issue-221-NO-DEPLOY.txt
-          (cd staging-dist && find . -type f -print0 | sort -z | xargs -0 sha256sum) > issue-221-file-sha256.txt
+          node scripts/package-protected-pilot.mjs create staging-dist issue-221-package
+          node scripts/package-protected-pilot.mjs verify issue-221-package -
       - name: Upload sealed offline evidence (not a deployable staging candidate)
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: issue-221-SYNTHETIC-NO-DEPLOY
           path: |
-            staging-dist/
-            issue-221-file-sha256.txt
+            issue-221-package/
           retention-days: 3
           if-no-files-found: error

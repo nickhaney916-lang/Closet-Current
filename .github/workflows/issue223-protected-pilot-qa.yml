@@ -1,0 +1,130 @@
+name: Issue 223 protected pilot independent validation - NO DEPLOY
+on:
+  push:
+    branches: [qa/issue223-protected-pilot-20261023]
+permissions:
+  contents: read
+jobs:
+  package-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      CLOSET_STAGING_APP_ORIGIN: https://preview.closet-current-staging.pages.dev/
+      CLOSET_STAGING_SUPABASE_URL: https://abcdefghijklmnopqrst.supabase.co
+      CLOSET_STAGING_SUPABASE_PUBLISHABLE_KEY: sb_publishable_STAGING_TEST_FIXTURE_XYZ001
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Preserve exact approved application and fixtures
+        run: |
+          git diff --exit-code 0f62e253c1fd0024a939cd401710dcd3784a9e77 HEAD -- public supabase benchmark/manifest-*.json benchmark/locked-photo-sources.json benchmark/issue201-results.json
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs tests/avatar/*.test.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs tests/avatar/*.test.mjs
+          node scripts/issue201-outfit-benchmark.mjs /tmp/outfits.json
+          cmp benchmark/issue201-results.json /tmp/outfits.json
+      - name: Build immutable synthetic package and verify final envelope
+        run: |
+          node scripts/build-restricted-staging.mjs
+          node scripts/verify-restricted-staging-bundle.mjs
+          node scripts/package-protected-pilot.mjs create staging-dist pilot-package
+          node scripts/package-protected-pilot.mjs verify pilot-package -
+          tar --sort=name --mtime='UTC 2026-01-01' --owner=0 --group=0 --numeric-owner -cf issue223-SYNTHETIC-NEVER-DEPLOY.tar pilot-package
+          sha256sum issue223-SYNTHETIC-NEVER-DEPLOY.tar > issue223-SYNTHETIC-NEVER-DEPLOY.tar.sha256
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: issue223-SYNTHETIC-NEVER-DEPLOY
+          path: |
+            issue223-SYNTHETIC-NEVER-DEPLOY.tar
+            issue223-SYNTHETIC-NEVER-DEPLOY.tar.sha256
+          retention-days: 7
+          if-no-files-found: error
+  deno:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.9.8
+      - run: |
+          deno check supabase/functions/ai-try-on/index.ts
+          deno test --allow-net=127.0.0.1 --allow-env tests/deno/ai-tryon-runtime.test.mjs
+  browsers:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    container:
+      # Official Playwright 1.56.1 Noble image, registry digest independently checked.
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      CLOSET_STAGING_APP_ORIGIN: https://preview.closet-current-staging.pages.dev/
+      CLOSET_STAGING_SUPABASE_URL: https://abcdefghijklmnopqrst.supabase.co
+      CLOSET_STAGING_SUPABASE_PUBLISHABLE_KEY: sb_publishable_STAGING_TEST_FIXTURE_XYZ001
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: |
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json
+          node scripts/build-restricted-staging.mjs
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+      - name: Generated protected-output runtime and installed Chromium worker
+        run: |
+          node scripts/test-staging-runtime-browsers.mjs
+          node scripts/test-staging-installed-pwa-chromium.mjs
+      - name: Owned outfits, original pixels, garment layering and mobile controls
+        run: |
+          node scripts/test-issue201-outfit-browsers.mjs
+          node scripts/test-reusable-figure-phone-browsers.mjs
+          node scripts/test-saved-figure-originals-browsers.mjs
+          node scripts/test-style-my-new-item-mobile.mjs
+          STYLE_BROWSER=webkit node scripts/test-style-my-new-item-mobile.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: issue223-offline-browser-evidence
+          path: artifacts/
+          retention-days: 7
+  recognition:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: |
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json
+          node scripts/build.mjs
+          sudo sed -i 's|http://azure.archive.ubuntu.com/ubuntu|http://archive.ubuntu.com/ubuntu|g' /etc/apt/sources.list.d/ubuntu.sources
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Existing pinned free model on original full-resolution licensed JPEG bytes
+        run: node scripts/run-source-locked-recognition.mjs artifacts/issue223-recognition
+      - name: Record unchanged accuracy admission gates
+        run: |
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          import {auditRecognitionAdmission} from './scripts/audit-recognition-admission.mjs';
+          const sets={};
+          for(const n of ['reviewed-32','holdout-16','fresh-11'])sets[n]={manifest:JSON.parse(fs.readFileSync('benchmark/manifest-'+n+'.json')),results:JSON.parse(fs.readFileSync('artifacts/issue223-recognition/candidate-'+n+'.json'))};
+          const report=auditRecognitionAdmission(sets,{historical:false});
+          fs.writeFileSync('artifacts/issue223-recognition/admission.json',JSON.stringify(report,null,2));
+          console.log(JSON.stringify({admission:report.recognitionPromotionDecision,wrongSubtypes:report.wrongAutoSubtypesTotal}));
+          JS
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: issue223-original-recognition-evidence
+          path: artifacts/issue223-recognition/
+          retention-days: 7

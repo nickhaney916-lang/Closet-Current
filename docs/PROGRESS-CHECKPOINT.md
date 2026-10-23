@@ -1,3 +1,21 @@
+# Assignment #223 — protected phone pilot preparation (October 23)
+
+Isolated from PR #222 0e1dc1a; customer app/backend pinned to PR #220 0f62e25.
+Historical synthetic artifact outer digest and 95 file hashes match, but final
+strict asset seal FAILS due to two post-seal provenance additions. Fresh original
+93-file build reproduces byte-for-byte. New outer packaging keeps provenance
+outside the immutable seal and verifies final inventory. Historical artifact is
+NEVER deployable. Read-only staging project/key provenance confirmed separate;
+198/198 anonymous routes challenge across root and known alias, but Access
+policy/complete preview inventory/tester admission and hosted isolation remain
+unverified. Local connected candidate only; no hosting recommendation. See
+`docs/ISSUE223-PROTECTED-PHONE-HANDOFF.md` and benchmark/issue223 evidence.
+Final exact-head full tests, original recognition, browser and package digests
+belong in issue #221/new draft PR. Physical devices 0/2; main owns deployment
+approval and release. No merge/deploy/settings/customer photos/paid AI/costs.
+
+---
+
 # Assignment #219 — independent 2D readiness (October 23)
 
 Separate `qa/2d-outfit-readiness-20261023` from verified PR #219 883c8ed.

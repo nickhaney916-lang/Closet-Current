@@ -1,0 +1,15 @@
+{
+  "outerArtifactSha256": "f327d4e3c1e3bcf117b34c2a0e056871c5f7e04eb15b6e4eb4a416b1236b6884",
+  "checksumListedFiles": 95,
+  "checksumFailures": 0,
+  "strictHistoricalSeal": "FAIL: added or deleted asset",
+  "unsealedAdditions": [
+    "issue-221-source-commit.txt",
+    "issue-221-NO-DEPLOY.txt"
+  ],
+  "originalAppCommit": "0f62e253c1fd0024a939cd401710dcd3784a9e77",
+  "artifactCheckoutCommit": "a8537074a67682cedcb64db84c591ac2edad05ee",
+  "rebuiltSealedFiles": 93,
+  "byteDifferences": [],
+  "deployAuthorized": false
+}

@@ -1,0 +1,1201 @@
+{
+  "anonymousProbePassed": true,
+  "totalRoutes": 99,
+  "originCount": 2,
+  "coverageSource": "provided-verified-inventory",
+  "results": [
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/_headers",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/ai-models/female-preview.webp",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/ai-models/male-preview.webp",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/ai-tryon-plan.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/ai-tryon.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/app-theme.css",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/app.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/app.js?v=anonymous-access-probe",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/auth.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/auth.js?v=anonymous-access-probe",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/benchmark-runner.mjs",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/benchmark.html",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/capture-navigation.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/capture.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/closet-browser.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/closet-neutral-matte.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/closet-rack-engine.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/closet-review-engine.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/closet-stylist-engine.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/closet-stylist.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/closet-tile-engine.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/closet-white-matte.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/clothing-details.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/clothing-memory.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/cloud-backup-bridge.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/cloud-backup-engine.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/cloud-backup.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/cloud-backup.js?v=anonymous-access-probe",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/dark-studio-garment-mask.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/device-check-engine.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/device-check.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/dress-layer-review.mjs",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/figure-preview-cache.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/garment-display-preview.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/garment-fidelity-review.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/garment-fit-geometry.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/garment-mask-engine.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/garment-pose-normalizer.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/icons/apple-touch-icon.png",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/icons/icon-192.png",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/icons/icon-512.png",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/icons/icon-maskable-512.png",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/index.html",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/index.html?v=anonymous-access-probe",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/local-catalog.mjs",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/local-garment-edge-finish.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/local-garment-warp.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/local-layer-depth.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/local-layer-visibility.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/local-preview-sampling.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/local-transparent-foreground-safety.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/local-worker.mjs",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/manifest.webmanifest",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/navigation.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/outfit-board-engine.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/outfit-board.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/outfit-capture.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/outfit-diagnostics.mjs",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/outfit-matcher.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/outfit-segmentation.mjs",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/outfit-worker.mjs",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/phone-photo-benchmark.mjs",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/phone-photo-check.html",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/phone-photo-check.mjs",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/photo-check.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/photo-color.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/photo-crop-editor.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/photo-crop-engine.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/photo-import.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/photo-test-session.mjs",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/pilot-data-notice.html",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/pilot-notice.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/pwa.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/recognition-engine.mjs",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/recognition-photo.mjs",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/recognition-vectors.bin",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/recognition-vectors.json",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/reusable-figure-engine.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/reusable-figure-preview.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/robots.txt",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/saved-closet-audit-engine.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/saved-closet-audit.html",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/saved-closet-audit.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/scanner-errors.mjs",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/source-guided-mask-refinement.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/staging-asset-seal.json",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/staging-preflight.json",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/style.css",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/sw.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/sw.js?v=anonymous-access-probe",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/taxonomy.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/trend-data.json",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/trend-library.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/trends.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/underlayer-review.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/vector-scorer.mjs",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/wardrobe-backup-engine.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://closet-current-staging.pages.dev",
+      "path": "/wardrobe-backup.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/_headers",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/ai-models/female-preview.webp",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/ai-models/male-preview.webp",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/ai-tryon-plan.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/ai-tryon.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/app-theme.css",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/app.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/app.js?v=anonymous-access-probe",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/auth.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/auth.js?v=anonymous-access-probe",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/benchmark-runner.mjs",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/benchmark.html",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/capture-navigation.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/capture.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/closet-browser.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/closet-neutral-matte.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/closet-rack-engine.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/closet-review-engine.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/closet-stylist-engine.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/closet-stylist.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/closet-tile-engine.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/closet-white-matte.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/clothing-details.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/clothing-memory.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/cloud-backup-bridge.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/cloud-backup-engine.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/cloud-backup.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/cloud-backup.js?v=anonymous-access-probe",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/dark-studio-garment-mask.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/device-check-engine.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/device-check.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/dress-layer-review.mjs",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/figure-preview-cache.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/garment-display-preview.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/garment-fidelity-review.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/garment-fit-geometry.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/garment-mask-engine.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/garment-pose-normalizer.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/icons/apple-touch-icon.png",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/icons/icon-192.png",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/icons/icon-512.png",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/icons/icon-maskable-512.png",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/index.html",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/index.html?v=anonymous-access-probe",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/local-catalog.mjs",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/local-garment-edge-finish.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/local-garment-warp.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/local-layer-depth.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/local-layer-visibility.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/local-preview-sampling.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/local-transparent-foreground-safety.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/local-worker.mjs",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/manifest.webmanifest",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/navigation.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/outfit-board-engine.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/outfit-board.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/outfit-capture.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/outfit-diagnostics.mjs",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/outfit-matcher.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/outfit-segmentation.mjs",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/outfit-worker.mjs",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/phone-photo-benchmark.mjs",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/phone-photo-check.html",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/phone-photo-check.mjs",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/photo-check.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/photo-color.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/photo-crop-editor.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/photo-crop-engine.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/photo-import.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/photo-test-session.mjs",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/pilot-data-notice.html",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/pilot-notice.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/pwa.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/recognition-engine.mjs",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/recognition-photo.mjs",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/recognition-vectors.bin",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/recognition-vectors.json",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/reusable-figure-engine.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/reusable-figure-preview.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/robots.txt",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/saved-closet-audit-engine.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/saved-closet-audit.html",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/saved-closet-audit.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/scanner-errors.mjs",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/source-guided-mask-refinement.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/staging-asset-seal.json",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/staging-preflight.json",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/style.css",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/sw.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/sw.js?v=anonymous-access-probe",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/taxonomy.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/trend-data.json",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/trend-library.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/trends.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/underlayer-review.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/vector-scorer.mjs",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/wardrobe-backup-engine.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    },
+    {
+      "origin": "https://pilot-access-check.closet-current-staging.pages.dev",
+      "path": "/wardrobe-backup.js",
+      "status": 302,
+      "outcome": "ACCESS_LOGIN_REQUIRED"
+    }
+  ],
+  "privateCloudflareAccessPolicyVerified": false,
+  "previewInventoryComplete": false,
+  "authorizedTesterAccessVerified": false,
+  "restrictedStagingDeployed": false,
+  "productionPromotion": "BLOCKED"
+}

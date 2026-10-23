@@ -1,0 +1,14 @@
+{
+  "checkedAt": "2026-10-23T14:26:36.778Z",
+  "stagingProjectRef": "fbnplztkbsteuzrmbgib",
+  "separateFromLiveProject": true,
+  "stagingStatus": "ACTIVE_HEALTHY",
+  "publicKeyReturnedForStagingProject": true,
+  "publishableKeySha256": "722d0a52b0810bdb7fd8b4ce78c7cbfc9de6c3cd3b441178881817401a3caf2d",
+  "origin": "https://pilot-access-check.closet-current-staging.pages.dev/",
+  "cloudflarePolicyVerified": false,
+  "completePreviewInventory": false,
+  "hostedAuthVerified": false,
+  "realTwoAccountIsolationVerified": false,
+  "deployAuthorized": false
+}
