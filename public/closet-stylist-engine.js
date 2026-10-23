@@ -62,6 +62,37 @@ function stylistLayerSlot(item){
  if(['Cardigan','Vest'].includes(item.itemType))return 'layer';
  return 'layer2';
 }
+// Recorded metadata only: no image inference, ownership decision or invented garment.
+function stylistRecordedDetails(item,context){
+ const tags=String(item.occasion||'').toLowerCase().split(/[,;|]/).map(x=>x.trim());
+ const known=['casual','work','dinner','active'],wanted=context.occasion.toLowerCase();
+ let score=tags.includes(wanted)?3:tags.some(x=>known.includes(x))?-2:0;
+ const fabric=String(item.material||'').trim().toLowerCase();
+ if(['wool','fleece'].includes(fabric))score+=context.season==='Winter'?2:context.season==='Summer'?-2:0;
+ if(fabric==='linen')score+=context.season==='Summer'?2:context.season==='Winter'?-1:0;
+ return score;
+}
+function stylistAppearance(item){
+ return [item.category,item.itemType,colorFamily(item.color),item.pattern,item.material]
+  .map(x=>String(x||'').trim().toLowerCase()).join('|');
+}
+function stylistShortlist(scored,limit){
+ if(!scored.length)return [];
+ const selected=[],seen=new Set(),floor=scored[0].rank-8;
+ for(const x of scored){const key=stylistAppearance(x.item);if(x.rank<floor||seen.has(key))continue;selected.push(x);seen.add(key);if(selected.length===limit)return selected;}
+ for(const x of scored){if(!selected.includes(x))selected.push(x);if(selected.length===limit)break;}
+ return selected;
+}
+function stylistLookDistance(a,b,byId){
+ let distance=0;
+ for(const [slot,weight] of [['top',3],['bottom',3],['shoes',2],['layer',1],['layer2',1],['layer3',1]]){
+  const x=byId.get(a.board.slots[slot]),y=byId.get(b.board.slots[slot]);
+  if(!x&&!y)continue;if(!x||!y){distance+=weight;continue;}
+  const fields=[['itemType',.45],['color',.35],['pattern',.15],['material',.05]];
+  for(const [key,w] of fields){const norm=v=>String(key==='color'?colorFamily(v):v||'').trim().toLowerCase();if(norm(x[key])!==norm(y[key]))distance+=weight*w;}
+ }
+ return distance;
+}
 function stylistItemScore(item,slot,context,library){
  const profile=stylistProfiles[context.request],type=item.itemType;
  const partial=!type||type==='Unknown'||type==='Other';
@@ -86,7 +117,7 @@ function stylistItemScore(item,slot,context,library){
  }
  if(item.seasons?.includes(context.season))score+=2;
  score+=Math.min(4,stylistTrendMatches(item,['layer2','layer3'].includes(slot)?'layer':slot,context,library).length*2);
- return score;
+ return score+stylistRecordedDetails(item,context);
 }
 function stylistHarmony(selected){
  let score=0;const known=selected.filter(x=>x.color&&colorFamily(x.color)!=='unknown');
@@ -140,8 +171,8 @@ function styleOwnedCollection(closet,request={},library=null){
    // Preserve dress and separate structures, each with a bounded shortlist.
    // Contextual anchor harmony is considered BEFORE discarding candidates.
    rankedCache.set(slot,slot==='top'&&slot!==anchorSlot?
-    [...scored.filter(x=>x.item.category!=='Dresses').slice(0,8),
-     ...scored.filter(x=>x.item.category==='Dresses').slice(0,8)]:scored.slice(0,8));
+    [...stylistShortlist(scored.filter(x=>x.item.category!=='Dresses'),8),
+     ...stylistShortlist(scored.filter(x=>x.item.category==='Dresses'),8)]:stylistShortlist(scored,8));
   }
   return rankedCache.get(slot);
  };
@@ -209,7 +240,7 @@ function styleOwnedCollection(closet,request={},library=null){
   if(intent==='Activewear')notices.push('Check that these garments and sneakers are suitable for your actual activity.');
   if(selected.length)candidates.push({board,score,missing:required,references,notices,context,trendUpdatedAt:library?.updatedAt||null});
  }
- candidates.sort((a,b)=>a.missing.length-b.missing.length||b.score-a.score);
+ candidates.sort((a,b)=>a.missing.length-b.missing.length||b.score-a.score||JSON.stringify(Object.entries(a.board.slots).sort()).localeCompare(JSON.stringify(Object.entries(b.board.slots).sort())));
  const uniqueCandidates=[],seen=new Set();
  // Do not pad complete looks with outfits that ask the customer to add clothes.
  const fewestMissing=candidates[0]?.missing.length;
@@ -225,19 +256,23 @@ function styleOwnedCollection(closet,request={},library=null){
   results.push(candidate);chosen.add(candidate.signature);
  };
  const structure=candidate=>unique.find(x=>x.id===candidate.board.slots.top)?.category==='Dresses'?'dress':'separates';
- const core=candidate=>['top','bottom'].map(slot=>candidate.board.slots[slot]||'').join('|');
- const structures=new Set(),cores=new Set();
- // First preserve a compatible dress/separates choice, then vary the main
- // clothing before returning near-identical looks with only different shoes.
- for(const candidate of uniqueCandidates){
-  const key=structure(candidate);if(structures.has(key))continue;
-  take(candidate);structures.add(key);cores.add(core(candidate));
+ const structures=new Set(),byId=new Map(unique.map(x=>[x.id,x]));
+ // Keep structural choice, then maximize the least visible difference from
+ // any chosen look, within eight score points of the best complete candidate.
+ for(const candidate of uniqueCandidates){const key=structure(candidate);if(structures.has(key))continue;take(candidate);structures.add(key);}
+ while(results.length<3){
+  const remaining=uniqueCandidates.filter(x=>!chosen.has(x.signature));if(!remaining.length)break;
+  const floor=remaining[0].score-8,pool=remaining.filter(x=>x.score>=floor);
+  const core=x=>JSON.stringify([x.board.slots.top||'',x.board.slots.bottom||'']);
+  const usedCores=new Set(results.map(core)),newCores=pool.filter(x=>!usedCores.has(core(x)));
+  const eligible=newCores.length?newCores:pool;
+  eligible.sort((a,b)=>{
+   const novelty=x=>Math.min(...results.map(r=>stylistLookDistance(x,r,byId)));
+   return novelty(b)-novelty(a)||b.score-a.score||a.signature.localeCompare(b.signature);
+  });take(eligible[0]);
  }
- for(const candidate of uniqueCandidates){
-  const key=core(candidate);if(cores.has(key))continue;
-  take(candidate);cores.add(key);
- }
- for(const candidate of uniqueCandidates)take(candidate);
+ if(results.length>1&&results.some((a,i)=>results.slice(i+1).some(b=>stylistLookDistance(a,b,byId)<.5)))
+  for(const result of results)result.notices.push('Some options look similar because the compatible saved clothing has limited variation.');
  return results;
 }
 
