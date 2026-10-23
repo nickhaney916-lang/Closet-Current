@@ -7,7 +7,7 @@ permissions:
 jobs:
   offline-clear-draft:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 38
     steps:
       - uses: actions/checkout@v4
         with:
@@ -25,7 +25,7 @@ jobs:
           git diff --name-only "$baseline" HEAD |
           while IFS= read -r file; do
             case "$file" in
-              public/app.js|tests/clear-draft-durability.test.cjs|.github/workflows/clear-draft-durability-qa.yml) ;;
+              public/app.js|tests/clear-draft-durability.test.cjs|scripts/test-clear-draft-real-browser.mjs|.github/workflows/clear-draft-durability-qa.yml) ;;
               *) echo "Out-of-scope modification: $file"; exit 1 ;;
             esac
           done
@@ -44,5 +44,13 @@ jobs:
         run: |
           node scripts/build-restricted-staging.mjs
           node scripts/verify-restricted-staging-bundle.mjs
+      - name: Install offline browser testing tools
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+      - name: Install iPhone WebKit emulation
+        timeout-minutes: 12
+        run: npx playwright install --with-deps webkit
+      - name: Run committed Clear logic against real local IndexedDB (Chromium and WebKit)
+        timeout-minutes: 8
+        run: node scripts/test-clear-draft-real-browser.mjs
       - name: Confirm no staging deploy, paid model, or production change
         run: echo 'OFFLINE ONLY. NO CLOUDFLARE, NO HOSTED DATA, NO NEW SERVICE OR PRODUCTION RELEASE.'
