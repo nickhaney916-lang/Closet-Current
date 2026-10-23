@@ -31,7 +31,7 @@ jobs:
           node scripts/issue201-outfit-benchmark.mjs /tmp/assignment225-outfits.json
           cmp benchmark/issue201-results.json /tmp/assignment225-outfits.json
           node scripts/check-customer-pilot-release-gates.mjs
-          node --test tests/package-protected-pilot.test.mjs
+          node --test tests/protected-pilot-package.test.mjs
 
   browser-device-rehearsal:
     runs-on: ubuntu-latest
