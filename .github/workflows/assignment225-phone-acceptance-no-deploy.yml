@@ -1,0 +1,100 @@
+name: Assignment 225 independent device acceptance rehearsal - NO DEPLOY
+on:
+  push:
+    branches: [qa/assignment225-device-acceptance-20261023]
+permissions:
+  contents: read
+
+# This runs only local/offline test servers, emulated browsers, synthetic
+# identities and approved licensed fixture photos. It never deploys or changes
+# Cloudflare/Supabase settings. A green run is NOT a physical-phone approval.
+jobs:
+  immutable-source-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+      - name: Reject app, security and recognition source drift from reviewed PR 220
+        run: |
+          git diff --exit-code 0f62e253c1fd0024a939cd401710dcd3784a9e77 HEAD -- public supabase benchmark/manifest-*.json benchmark/locked-photo-sources.json benchmark/issue201-results.json
+      - name: Build and run full Node and nested avatar suite
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs tests/avatar/*.test.mjs
+      - name: Verify deterministic outfit benchmark and unchanged release veto
+        run: |
+          node scripts/issue201-outfit-benchmark.mjs /tmp/assignment225-outfits.json
+          cmp benchmark/issue201-results.json /tmp/assignment225-outfits.json
+          node scripts/check-customer-pilot-release-gates.mjs
+          node --test tests/package-protected-pilot.test.mjs
+
+  browser-device-rehearsal:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    container:
+      # Pinned official Playwright Ubuntu Noble image (same tested image as PR 225).
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      CLOSET_STAGING_APP_ORIGIN: https://preview.closet-current-staging.pages.dev/
+      CLOSET_STAGING_SUPABASE_URL: https://abcdefghijklmnopqrst.supabase.co
+      CLOSET_STAGING_SUPABASE_PUBLISHABLE_KEY: sb_publishable_STAGING_TEST_FIXTURE_XYZ001
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+      - name: Prepare original fixtures and local app only
+        run: |
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json
+          node scripts/build.mjs
+          node scripts/build-restricted-staging.mjs
+          node scripts/verify-restricted-staging-bundle.mjs
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+          mkdir -p artifacts/assignment225
+      - name: Both browser engines - original capture/import, indexing and private owner store
+        run: |
+          set -o pipefail
+          node scripts/test-integrated-pilot-journeys-mobile.mjs | tee artifacts/assignment225/original-capture-import.txt
+          node scripts/test-original-crop-source-mobile.mjs | tee artifacts/assignment225/source-crop.txt
+          node scripts/test-original-source-duplicate-mobile.mjs | tee artifacts/assignment225/source-duplicate.txt
+          node scripts/test-phone-color-audit-browsers.mjs | tee artifacts/assignment225/original-color-labeling.txt
+      - name: Multiple garments, owned outfits and restore
+        run: |
+          set -o pipefail
+          node scripts/test-whole-outfit-save-mobile.mjs | tee artifacts/assignment225/multigarment.txt
+          node scripts/test-issue201-outfit-browsers.mjs | tee artifacts/assignment225/owned-outfits.txt
+          node scripts/test-reusable-figure-phone-browsers.mjs | tee artifacts/assignment225/figure-layers.txt
+          node scripts/test-saved-figure-originals-browsers.mjs | tee artifacts/assignment225/original-figure.txt
+          node scripts/test-mobile-owned-outfit-reliability.mjs | tee artifacts/assignment225/save-restore.txt
+          node scripts/test-style-my-new-item-mobile.mjs | tee artifacts/assignment225/new-item-chromium.txt
+          STYLE_BROWSER=webkit node scripts/test-style-my-new-item-mobile.mjs | tee artifacts/assignment225/new-item-webkit.txt
+      - name: Synthetic account boundaries, PWA and phone acceptance UI
+        run: |
+          set -o pipefail
+          node scripts/test-auth-pilot-mobile.mjs artifacts/assignment225/auth-pilot | tee artifacts/assignment225/auth.txt
+          node scripts/test-staging-runtime-browsers.mjs | tee artifacts/assignment225/staging-runtime.txt
+          node scripts/test-staging-installed-pwa-chromium.mjs | tee artifacts/assignment225/pwa.txt
+          node scripts/test-device-check-phone-browsers.mjs | tee artifacts/assignment225/device-check.txt
+          node scripts/test-phone-recognition-triage-browsers.mjs | tee artifacts/assignment225/recognition-triage.txt
+      - name: Record actual CI evidence (never physical-device approval)
+        if: always()
+        run: |
+          mkdir -p artifacts/assignment225
+          printf '%s\n' 'Emulated Chromium/WebKit and synthetic accounts only.' 'Physical Android: NOT TESTED' 'Physical iPhone: NOT TESTED' 'Hosted Cloudflare Access tester policy: NOT VERIFIED' 'Hosted staging RLS/account isolation: NOT VERIFIED' 'Production deployment: NOT AUTHORIZED' > artifacts/assignment225/READ-ME-FIRST.txt
+          git rev-parse HEAD > artifacts/assignment225/source-commit.txt
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: assignment225-SYNTHETIC-BROWSER-NO-DEPLOY
+          path: artifacts/assignment225/
+          retention-days: 7
+          if-no-files-found: error
