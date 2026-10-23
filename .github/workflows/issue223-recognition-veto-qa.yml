@@ -30,10 +30,12 @@ jobs:
           if test -f /etc/apt/sources.list.d/ubuntu.sources; then
             sudo sed -i 's|http://azure.archive.ubuntu.com/ubuntu|http://archive.ubuntu.com/ubuntu|g' /etc/apt/sources.list.d/ubuntu.sources
           fi
-      - name: Install isolated browser test engines
+      - name: Install isolated browser test engines and WebKit host libraries
         run: |
           npm install --no-save --no-package-lock playwright
           npx playwright install chromium webkit
+          sudo apt-get update -o Acquire::Retries=2
+          sudo DEBIAN_FRONTEND=noninteractive npx playwright install-deps webkit
       - name: Validate original-photo and phone review journeys in Chromium and WebKit
         run: |
           node scripts/test-original-crop-source-mobile.mjs
