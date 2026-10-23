@@ -46,6 +46,16 @@ function selectedFrom(board,items){
  if(byId.get(board.slots.top)?.category==='Dresses'&&['bottom','layer','layer2','layer3'].some(s=>board.slots[s]))throw Error('Dress layer conflict');
  return selected;
 }
+async function selectedMetadata(selected){
+ const signatures={};
+ for(const {slot,item}of selected){
+  // No photo text is retained: hash a source identity + styling metadata.
+  const payload=JSON.stringify([item.id,item.category,item.itemType,item.color,item.colorHex,item.pattern,item.cropIdentity,item.image]);
+  const hash=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(payload));
+  signatures[slot]=Array.from(new Uint8Array(hash),x=>x.toString(16).padStart(2,'0')).join('');
+ }
+ return signatures;
+}
 const boardCopy=b=>({name:String(b.name||'Saved outfit').slice(0,80),slots:{...b.slots}});
 const deny=reason=>({mode:'unavailable',reason});
 const twoD=(b,reason)=>({mode:'2d',board:boardCopy(b),reason,originalPixelsRenderedAs3D:false});
@@ -101,6 +111,11 @@ export function createOfflineIntegrationQA(source){
   if(record?.verifiedSnapshot?.accountId&&record.verifiedSnapshot.accountId!==scope.owner)return deny('Foreign saved snapshot');
   if(record?.schemaVersion!==undefined&&record.schemaVersion!==1)return deny('Unsupported snapshot');
   if(record?.board&&JSON.stringify(record.board.slots)!==JSON.stringify(board.slots))return deny('Saved selection changed');
+  if(record?.verifiedSnapshot){
+   if(!record.qaSelectionMetadata)return twoD(board,'Legacy verified snapshot missing category/color/crop version; retain 2D');
+   const now=await selectedMetadata(selected);still(scope);
+   if(JSON.stringify(now)!==JSON.stringify(record.qaSelectionMetadata))return twoD(board,'Saved category, color or crop changed; retain safe 2D');
+  }
   if(Object.keys(board.slots).some(x=>!VISUAL.includes(x)))return twoD(board,'Unrenderable 3D accessory, retain 2D');
   // PR #231 supports top, bottom, shoe and one layer. It silently ignores
   // jacket/coat inputs, so do not allow lossy 3D selection.
@@ -130,7 +145,9 @@ export function createOfflineIntegrationQA(source){
   const prepared=normal(selectedFrom(board,scope.items),scope.owner),keyed=new Map(prepared.map(x=>[x.id,x]));
   const check=(item,id)=>id===scope.owner&&source.current()?.epoch===scope.epoch&&keyed.get(item.id)===item;
   const snapshot=await verifyCapturedOutfitBoard(board,prepared,scope.owner,check);still(scope);
-  return {mode:'3d-placeholder',record:createVerifiedOutfitEnvelope(boardCopy(board),snapshot)};
+  const record=createVerifiedOutfitEnvelope(boardCopy(board),snapshot);
+  record.qaSelectionMetadata=await selectedMetadata(selectedFrom(board,scope.items));still(scope);
+  return {mode:'3d-placeholder',record};
  }
  async function restore(record){
   const classification=classifySavedOutfitFor3D(record);
