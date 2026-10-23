@@ -33,6 +33,7 @@ try{
     const context=await browser.newContext({viewport:{width,height:820},deviceScaleFactor:2,isMobile:true,hasTouch:true,serviceWorkers:'block'});
     const page=await context.newPage();const pageErrors=[],outside=[];
     page.on('pageerror',e=>pageErrors.push(e.message));
+    page.on('console',m=>{if(m.type()==='log'&&m.text().startsWith('ALPHA15'))console.log(name,width,m.text())});
     await context.route('**/*',route=>{
       if(!route.request().url().startsWith(origin+'/')){outside.push(route.request().url());return route.abort('blockedbyclient');}
       return route.continue();
@@ -63,6 +64,7 @@ try{
        ['dress2','Dresses','Shirt dress','#6a9dc2',[250,370]]
       ];
       const items=[],presentations={};let pixelsVerified=0,checks=0;
+      console.log('ALPHA15 entered synthetic fixture');
       function polygon(ctx,id,w,h){
        ctx.beginPath();
        if(id.includes('shirt')||id==='polo'||id==='jacket'||id==='coat'){
@@ -122,6 +124,7 @@ try{
         sourceVersion:await fingerprintAlphaRetainedOriginal(original),approved:true,image:prepared};
       }
       if(pixelsVerified!==13)throw Error('13 synthetic photo masks not verified');checks++;
+      console.log('ALPHA15 generated 13 decoded original photo masks');
       const request={request:'Casual',season:'Fall',audience:'All'};
       const recs=styleOwnedCollection(items,request,null);
       const summaries=validateThreeOutfits(recs,items);
@@ -145,6 +148,7 @@ try{
        checks+=2;
        return result;
       }
+      console.log('ALPHA15 got three real stylist outfits');
       for(const index of [0,1,2,1,0,2]){
        const board=recs[index].board;
        const count=board.slots.top&&items.find(x=>x.id===board.slots.top)?.category==='Dresses'?2:
@@ -152,6 +156,7 @@ try{
        await renderBoard(board,count);
        if(JSON.stringify(board.slots)!==snapshots[index])throw Error('Outfit references mixed when switching');checks++;
       }
+      console.log('ALPHA15 switched all three outfits');
       const baseline=cleanOutfitBoard({slots:{top:'shirt-a',bottom:'jeans',shoes:'sneakers',layer2:'jacket'}},items);
       await renderBoard(baseline,4);
       for(const [slot,to] of [['top','shirt-b'],['bottom','shorts'],['bottom','skirt'],['shoes','loafers'],['layer2','coat']]){
@@ -161,11 +166,13 @@ try{
        if(result.sourceHashes[slot]!==presentations[to].sourceVersion)throw Error('Swapped original lost');
        checks+=2;
       }
+      console.log('ALPHA15 completed one-piece swaps');
       const dressBoard=switchToDress(baseline,'dress',items,cleanOutfitBoard);
       if(dressBoard.slots.bottom||dressBoard.slots.layer2||dressBoard.slots.shoes!=='sneakers')throw Error('Dress transition rule violated');
       await renderBoard(dressBoard,2);checks++;
       try{swapOnePiece(baseline,'shoes','jeans',items,cleanOutfitBoard);throw Error('Bad swap accepted')}catch(e){if(e.message==='Bad swap accepted')throw e;}
       if(JSON.stringify(items)!==wardrobeBefore)throw Error('Failed/valid operations mutated saved closet');checks++;
+      console.log('ALPHA15 dress transition and invalid swap complete');
       const removed=presentations['shirt-a'];delete presentations['shirt-a'];
       let refused=false;try{await renderSavedBoard2D(avatar,{board:baseline,items,presentations,getContext})}catch{refused=true;}
       if(!refused||avatar.children.length)throw Error('Missing mask leaked previous clothes');checks++;
@@ -178,21 +185,26 @@ try{
       if(!refused||avatar.children.length||items[0].image!==oldCrop)throw Error('Changed original not rejected');checks++;
       items[0]={...items[0],originalPhoto:{image:oldOriginal},image:oldCrop};
       await renderBoard(baseline,4);
+      console.log('ALPHA15 missing mask and original replacement cleared');
       scope={authenticatedUserId:ownerB,currentUserId:ownerB,cloudOwnerId:ownerB,indexedDbName:'closet-current-user-'+ownerB,sessionGeneration:2};
       refused=false;try{await renderSavedBoard2D(avatar,{board:baseline,items,presentations,getContext})}catch{refused=true;}
       if(!refused||avatar.children.length)throw Error('Cross-account avatar was not cleared');checks++;
       scope={authenticatedUserId:ownerA,currentUserId:ownerA,cloudOwnerId:ownerA,indexedDbName:'closet-current-user-'+ownerA,sessionGeneration:3};
       await renderBoard(baseline,4);
+      console.log('ALPHA15 account-switch checks complete');
       let releaseDigest;
       const delayed={subtle:{digest:async(...args)=>{await new Promise(resolve=>releaseDigest=resolve);return crypto.subtle.digest(...args)}}};
       const oldRender=renderSavedBoard2D(avatar,{board:baseline,items,presentations,getContext,cryptoProvider:delayed});
-      while(!releaseDigest)await new Promise(resolve=>setTimeout(resolve,0));
+      for(let trial=0;trial<200&&!releaseDigest;trial++)await new Promise(resolve=>setTimeout(resolve,5));
+      if(!releaseDigest)throw Error('Synthetic delayed digest never started');
+      console.log('ALPHA15 old digest pending; starting newer render');
       const newer=await renderSavedBoard2D(avatar,{board:dressBoard,items,presentations,getContext});
       releaseDigest();
       let oldRefused=false;try{await oldRender}catch{oldRefused=true}
       if(!oldRefused||newer.renderedLayers!==2||[...avatar.querySelectorAll('img')].map(x=>x.dataset.slot).join(',')!=='shoes,dress')
        throw Error('Stale pending render overwrote the newer outfit');checks++;
       if(document.documentElement.scrollWidth>innerWidth+1)throw Error('Mobile horizontal overflow');checks++;
+      console.log('ALPHA15 all fixture assertions passed');
       return {checks,syntheticPhotoMasks:pixelsVerified,outfits:3,swaps:5,dressTransitions:1,sourceRejection:1,
        accountRejection:1,pendingRenderRejected:true};
     });
