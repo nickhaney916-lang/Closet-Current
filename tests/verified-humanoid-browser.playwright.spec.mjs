@@ -88,3 +88,21 @@ test('synthetic account switch clears old clothing before applying new outfit',a
  expect(current.state.layers).not.toContain('bottom');
  expect(errors).toEqual([]);
 });
+
+test('WebGL context loss fails closed without stale garment geometry',async({page})=>{
+ const errors=[];page.on('pageerror',error=>errors.push(error.message));
+ await page.goto(base+'/verified-humanoid-browser-fixture.html');
+ const status=page.locator('#status');
+ expect(JSON.parse(await status.textContent()).success).toBe(true);
+ await page.locator('#outfit').click();
+ expect(JSON.parse(await status.textContent()).state.drawn.length).toBeGreaterThan(0);
+ await page.locator('#avatar').evaluate(canvas=>canvas.dispatchEvent(new Event('webglcontextlost',{cancelable:true})));
+ await page.locator('#dress').click();
+ const lost=JSON.parse(await status.textContent());
+ expect(lost.success).toBe(false);
+ expect(lost.state.lost).toBe(true);
+ expect(lost.state.drawn).toEqual([]);
+ await page.locator('#rotate').click();
+ expect(JSON.parse(await status.textContent()).success).toBe(false);
+ expect(errors).toEqual([]);
+});
