@@ -18,6 +18,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Build local static test output (no deploy)
+        run: node scripts/build.mjs
       - name: Full existing Node regression suite plus Family Alpha 14 tests
         run: node --test tests/*.test.cjs tests/*.test.mjs
       - name: Confirm isolated source files only
