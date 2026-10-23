@@ -41,12 +41,23 @@ export async function runMatrix(){
   ['short-sleeve','white','review'],['sweater','dark','review'],
   ['shirt','busy','review'],['dress','multiple','review'],
   ['jacket','clipped','review'],['short-sleeve','blank','review'],
-  ['sneakers','transparent','review'],['skirt','wrinkled','pass']
+  ['sneakers','transparent','review'],['long-sleeve','blurry','review'],
+  ['jacket','reflective','review'],['short-sleeve','low-resolution','review'],
+  ['skirt','wrinkled','pass']
  ];
  for(const [kind0,mode,expected] of conditions){
   const kind=kind0==='shirt'?'short-sleeve':kind0;
-  const scene=syntheticScene(kind,{mode});
-  const f=await fixture(scene,++count);
+  const scene=syntheticScene(kind,mode==='low-resolution'?
+   {mode:'plain',width:24,height:28}:{mode});
+  count++;
+  if(mode==='low-resolution'){
+   let rejected=false;
+   try{await fixture(scene,count);}catch(e){rejected=/Invalid decoded original RGBA frame/.test(e.message);}
+   rows.push({kind,condition:mode,expected,observed:rejected?'review':'pass',
+    reason:rejected?'low-resolution-frame-refused':'unsafe-low-resolution-accepted',metrics:null});
+   continue;
+  }
+  const f=await fixture(scene,count);
   const result=await auditMask(f);
   rows.push({kind,condition:mode,expected,observed:result.status,reason:result.reason,metrics:result.metrics});
  }
