@@ -23,8 +23,7 @@ else{
   for(const key of ['top','bottom','shoes'])document.querySelector('#'+key).addEventListener('change',e=>renderer.setOutfit({[key]:palette[e.target.value]}));
   document.querySelector('#left').addEventListener('click',()=>renderer.rotate(-Math.PI/8));
   document.querySelector('#right').addEventListener('click',()=>renderer.rotate(Math.PI/8));
-  let angle=0;
-  document.querySelector('#reset').addEventListener('click',()=>{renderer.dispose();status.textContent='Reload to reset the preview.';location.reload();});
+  document.querySelector('#reset').addEventListener('click',()=>{location.reload();});
   addEventListener('pagehide',()=>renderer.dispose(),{once:true});
 }
 </script></body></html>
