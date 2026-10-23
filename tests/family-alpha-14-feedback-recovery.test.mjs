@@ -3,9 +3,9 @@ import assert from 'node:assert/strict';
 import {categories,makeReport,recoveryFor} from '../research/family-alpha-14/feedback-recovery.mjs';
 
 for (const category of categories) {
-  test(\`category accepted: \${category}\`, () => {
+  test(`category accepted: ${category}`, () => {
     const result = makeReport({category,description:'Layer did not load'});
-    assert.match(result, new RegExp(\`Category: \${category}\`));
+    assert.match(result, new RegExp(`Category: ${category}`));
     assert.match(result,/Description: Layer did not load/);
     assert.doesNotMatch(result,/account id|image data/i);
   });
@@ -15,7 +15,7 @@ for (const [key,expected] of [
   ['photo_missing','unavailable'],['mask_failed','Background'],
   ['outfit_failed','outfit'],['avatar_failed','layer'],['cancelled','canceled']
 ]) {
-  test(\`failure guidance: \${key}\`, () => {
+  test(`failure guidance: ${key}`, () => {
     const r=recoveryFor(key);
     assert.equal(r.code,key); assert.ok(r.title.length>9);
     assert.match(r.title+' '+r.message,new RegExp(expected,'i'));
