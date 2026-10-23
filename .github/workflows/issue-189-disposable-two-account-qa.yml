@@ -1,0 +1,63 @@
+name: PR189 disposable local two-account privacy verification
+on:
+  push:
+    branches: [qa/staging189-disposable-two-account-20261022]
+permissions:
+  contents: read
+jobs:
+  isolated-local-supabase:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify app/source exactly match CI-green PR189
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --name-only 50223902df0ae54ff15bb89bd9100ddc76bb3581 HEAD |
+          while IFS= read -r path; do
+            test "$path" = ".github/workflows/issue-189-disposable-two-account-qa.yml" || { echo "Unapproved QA change: $path"; exit 1; }
+          done
+          node --check scripts/test-disposable-supabase-security.mjs
+          node scripts/build.mjs
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.121.0
+      - name: Start unrelated ephemeral local Supabase only
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/closet-disposable-stack"
+          supabase init --workdir "$RUNNER_TEMP/closet-disposable-stack"
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          p=Path(os.environ['RUNNER_TEMP'])/'closet-disposable-stack/supabase/config.toml'
+          s=p.read_text().replace('enable_confirmations = true','enable_confirmations = false')
+          p.write_text(s)
+          PY
+          supabase start --workdir "$RUNNER_TEMP/closet-disposable-stack" --exclude studio,imgproxy,realtime,edge-runtime,logflare,vector,supavisor > "$RUNNER_TEMP/local-start.log" 2>&1
+          supabase status --workdir "$RUNNER_TEMP/closet-disposable-stack" -o json > "$RUNNER_TEMP/local-status.json"
+      - name: Run real local A/B Auth REST Storage and backup recovery checks
+        shell: bash
+        env:
+          CLOSET_DISPOSABLE_SUPABASE: LOCAL_DISPOSABLE_ONLY
+        run: |
+          set -euo pipefail
+          command -v psql || (sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client)
+          node scripts/test-disposable-supabase-security.mjs "$RUNNER_TEMP/local-status.json"
+      - name: Destroy local containers and temporary credentials
+        if: always()
+        shell: bash
+        run: |
+          if command -v supabase >/dev/null 2>&1 && test -f "$RUNNER_TEMP/closet-disposable-stack/supabase/config.toml"; then
+            supabase stop --workdir "$RUNNER_TEMP/closet-disposable-stack" --no-backup
+          fi
+          rm -f "$RUNNER_TEMP/local-status.json" "$RUNNER_TEMP/local-start.log"
+          echo 'Only disposable localhost Auth/Postgres/Storage used; no hosted login/link/deploy.'
