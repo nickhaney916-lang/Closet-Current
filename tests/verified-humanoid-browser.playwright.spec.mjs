@@ -45,3 +45,23 @@ test('real browser renders synthetic outfits, rotates, replaces dress, and clear
  expect(errors).toEqual([]);
  await page.screenshot({path:'test-results/'+browserName+'-synthetic-avatar.png'});
 });
+
+test('mobile viewport keeps avatar controls usable and supports outfit switching',async({page,browserName})=>{
+ const errors=[];page.on('pageerror',error=>errors.push(error.message));
+ await page.setViewportSize({width:375,height:812});
+ await page.goto(base+'/verified-humanoid-browser-fixture.html');
+ const status=page.locator('#status');
+ await expect(status).toContainText('initialize');
+ expect(JSON.parse(await status.textContent()).success).toBe(true);
+ const dimensions=await page.evaluate(()=>({scrollWidth:document.documentElement.scrollWidth,innerWidth:window.innerWidth}));
+ expect(dimensions.scrollWidth).toBeLessThanOrEqual(dimensions.innerWidth+1);
+ for(const id of ['outfit','dress','rotate','clear']){
+  const control=page.locator('#'+id);
+  await expect(control).toBeVisible();
+  await control.click();
+  expect(JSON.parse(await status.textContent()).success).toBe(true);
+ }
+ expect(JSON.parse(await status.textContent()).state.layers).toEqual([]);
+ expect(errors).toEqual([]);
+ await page.screenshot({path:'test-results/'+browserName+'-mobile-avatar.png',fullPage:true});
+});
