@@ -1,0 +1,23 @@
+name: Issue 223 source-locked recognition veto QA
+on:
+  push:
+    branches: [qa/issue-223-recognition-gate-20261023]
+  pull_request:
+    branches: [qa/2d-outfit-readiness-20261023]
+permissions:
+  contents: read
+jobs:
+  recognition-veto:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+      - name: Verify immutable measured inference evidence and unsafe subtype veto
+        run: |
+          node --test tests/issue223-source-locked-veto.test.mjs tests/real-photo-recognition-admission.test.mjs
+      - name: Confirm source and staging configuration untouched
+        run: |
+          git diff --exit-code HEAD^ HEAD -- public supabase scripts/recognition-engine.mjs
