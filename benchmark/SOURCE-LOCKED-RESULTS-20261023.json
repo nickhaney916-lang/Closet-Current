@@ -1,0 +1,2680 @@
+{
+  "applicationSHA": "c30d402babf8dd62b0b0282dba9579ae6e0da24e",
+  "workflowRun": 39958489407,
+  "artifactId": 12503668083,
+  "artifactSHA256": "1ee1dcc83a3a6f89abfc945dddf8db2703e782efe9983a8c06c5ee3af863555d",
+  "scope": "Actual full-stored-original JPEG inference on reused manifest cohorts; no human mask truth",
+  "sourceIntegrity": {
+    "baseApplicationSHA": "33744dc0900fcb0cc2d014510e22fa03c2a96637",
+    "sourceCount": 59,
+    "originalHashMatches": 59,
+    "sourceTrace": [
+      {
+        "id": "commons-0001",
+        "sha256": "d20d66d4173f56c47e35540f081ecdfcee6e019df665ee245d967d126e117684",
+        "width": 1920,
+        "height": 2868,
+        "sourceBytes": 757840,
+        "reencoded": false
+      },
+      {
+        "id": "commons-0002",
+        "sha256": "fef606d6ed7354a2238f1bcc2584942747ca6fa4a2b16b2e9eec21f639d10667",
+        "width": 1920,
+        "height": 2868,
+        "sourceBytes": 690240,
+        "reencoded": false
+      },
+      {
+        "id": "commons-0021",
+        "sha256": "04c0ca5bed1bee26e83be98b9a992619b0777811a7fb8a99fe955939334bbd8c",
+        "width": 564,
+        "height": 628,
+        "sourceBytes": 95686,
+        "reencoded": false
+      },
+      {
+        "id": "commons-0023",
+        "sha256": "5be4cb0d7017987d8625caf53ac979f0c78245617dc5828aec5f77ae8f4ea8ef",
+        "width": 1920,
+        "height": 2868,
+        "sourceBytes": 740326,
+        "reencoded": false
+      },
+      {
+        "id": "commons-0024",
+        "sha256": "8e28473b101c70a5e4b7daae819a0342405bfcb7abbf4850dbbb4e801dd7ac4f",
+        "width": 1920,
+        "height": 2868,
+        "sourceBytes": 725090,
+        "reencoded": false
+      },
+      {
+        "id": "commons-0033",
+        "sha256": "7e31adee6fabca386faabd8ca6f0f1f4d93291f74cb84a6ab10cb4bd724cd2f7",
+        "width": 1920,
+        "height": 2400,
+        "sourceBytes": 1207578,
+        "reencoded": false
+      },
+      {
+        "id": "commons-0035",
+        "sha256": "9fd067b0919d519eb7924ebd5c4ddf0bc0f3956cfd229fe1ab12c16cccb085ca",
+        "width": 1920,
+        "height": 2560,
+        "sourceBytes": 910019,
+        "reencoded": false
+      },
+      {
+        "id": "commons-0041",
+        "sha256": "0e4d278fe02d2e527a5b73a08407dda8a57e5597260dc08461bc83e720cf2278",
+        "width": 1920,
+        "height": 2560,
+        "sourceBytes": 609549,
+        "reencoded": false
+      },
+      {
+        "id": "commons-0043",
+        "sha256": "c8d0812ab69d698f5bf8dc5a14ace6b8034e4c74152471acf4f079fdd6d0c344",
+        "width": 1920,
+        "height": 1903,
+        "sourceBytes": 709161,
+        "reencoded": false
+      },
+      {
+        "id": "commons-0044",
+        "sha256": "b3fb8eac5815d1e1cdfde4eb766fc71d6a3640cb0e80c0c82560c45f0b65e501",
+        "width": 1920,
+        "height": 3307,
+        "sourceBytes": 1225279,
+        "reencoded": false
+      },
+      {
+        "id": "commons-0045",
+        "sha256": "eada8b18770db3c5099b664432ad6423e43b120e37d4c4031b6ada718fde2d7d",
+        "width": 1920,
+        "height": 4060,
+        "sourceBytes": 1310926,
+        "reencoded": false
+      },
+      {
+        "id": "commons-0052",
+        "sha256": "a6efd0e1d007ba63c0afd2afe9697f336336944d949d57c67e3aedbfe68e9824",
+        "width": 1920,
+        "height": 2560,
+        "sourceBytes": 858708,
+        "reencoded": false
+      },
+      {
+        "id": "commons-0053",
+        "sha256": "e7a617cd23a159864f619e8397d5f37d48b684e47dddc4ad6b46b14481042019",
+        "width": 1920,
+        "height": 2880,
+        "sourceBytes": 403180,
+        "reencoded": false
+      },
+      {
+        "id": "commons-0064",
+        "sha256": "bb68b22a7fdaff20e71eb969bb5d857598a5ca6f4b47f172dc7a8623b7bd6b83",
+        "width": 1920,
+        "height": 2560,
+        "sourceBytes": 1009657,
+        "reencoded": false
+      },
+      {
+        "id": "commons-0065",
+        "sha256": "0d094b023d86942acbc89fc5a4bc02968c1b5d0b2c78639cdeb985f522a78494",
+        "width": 1920,
+        "height": 1440,
+        "sourceBytes": 403622,
+        "reencoded": false
+      },
+      {
+        "id": "commons-0067",
+        "sha256": "7d1d7456c5719af5a74dd6788896cb34fb4c0701d0c3555c06e91c93c9078857",
+        "width": 1920,
+        "height": 3235,
+        "sourceBytes": 1773752,
+        "reencoded": false
+      },
+      {
+        "id": "commons-0068",
+        "sha256": "5d372824e1054c4c392969bed227784cd30d7011e95db769218b20a28302633f",
+        "width": 1920,
+        "height": 3394,
+        "sourceBytes": 1474024,
+        "reencoded": false
+      },
+      {
+        "id": "commons-0069",
+        "sha256": "5c7b56ab8cf1d681d16f94dedebccdb6aa7e37838a2da13bd59a0e54f56897f3",
+        "width": 1920,
+        "height": 3089,
+        "sourceBytes": 2007386,
+        "reencoded": false
+      },
+      {
+        "id": "commons-0070",
+        "sha256": "8a1fec00b50c99ee69ef70bf3576d2f034047c58c54736231b00bd22ffb25c2f",
+        "width": 1920,
+        "height": 3149,
+        "sourceBytes": 1537980,
+        "reencoded": false
+      },
+      {
+        "id": "commons-0079",
+        "sha256": "b577483e5244dfb53e60cc8a0b54a4130e695cf388e5534e38a2b04580727ec6",
+        "width": 1920,
+        "height": 1275,
+        "sourceBytes": 315931,
+        "reencoded": false
+      },
+      {
+        "id": "commons-0080",
+        "sha256": "4675887ee36dbaeb894faf1e0879b05473f39fb555024424d52fcdce37d35bb9",
+        "width": 1920,
+        "height": 1280,
+        "sourceBytes": 551722,
+        "reencoded": false
+      },
+      {
+        "id": "commons-0081",
+        "sha256": "72b53abd07e9438fd5a11631f6595c10d2abc98fda432d22611a58ba3b289952",
+        "width": 1920,
+        "height": 1282,
+        "sourceBytes": 212501,
+        "reencoded": false
+      },
+      {
+        "id": "commons-0082",
+        "sha256": "d312800f42d207212ef45d7d0bd6a41fbd4d61193ed3b0e5df6193f1cedddbd2",
+        "width": 1920,
+        "height": 910,
+        "sourceBytes": 339527,
+        "reencoded": false
+      },
+      {
+        "id": "commons-0083",
+        "sha256": "e001f7249573020a200b9edfd211a44fef97d57380d8ced46b0916f60d596077",
+        "width": 1920,
+        "height": 1075,
+        "sourceBytes": 396627,
+        "reencoded": false
+      },
+      {
+        "id": "commons-0084",
+        "sha256": "4cf56d6ce959e70a8e67bb723d295feaaaa3fad01ba739a44c4cef83c39ee1e0",
+        "width": 1920,
+        "height": 1080,
+        "sourceBytes": 327379,
+        "reencoded": false
+      },
+      {
+        "id": "commons-0085",
+        "sha256": "b790c875d85395e5c30f43c180e10a9e144829d4d9c3c8f67b65348cc621cf43",
+        "width": 1920,
+        "height": 1080,
+        "sourceBytes": 349706,
+        "reencoded": false
+      },
+      {
+        "id": "commons-0087",
+        "sha256": "9b0f36a07a07491009b3ea5c01a5100464022150091bab13ce6d15e598c9e7c9",
+        "width": 734,
+        "height": 1026,
+        "sourceBytes": 148907,
+        "reencoded": false
+      },
+      {
+        "id": "commons-0088",
+        "sha256": "8e5e9cd86c22a0c03b120cd57af33144cc2e61a29b0beed50b5db3c5c222cbba",
+        "width": 1920,
+        "height": 1359,
+        "sourceBytes": 392519,
+        "reencoded": false
+      },
+      {
+        "id": "commons-0089",
+        "sha256": "44f3c2a087fe5cde4006dadb41903964b8cd906e933c4fae4bf54db7758f9b8b",
+        "width": 1920,
+        "height": 2560,
+        "sourceBytes": 356865,
+        "reencoded": false
+      },
+      {
+        "id": "commons-0092",
+        "sha256": "e098a78500ada7159c9cbea6559ef3c64c87b8e2417fc96487cb34570ca8754d",
+        "width": 1920,
+        "height": 1369,
+        "sourceBytes": 380542,
+        "reencoded": false
+      },
+      {
+        "id": "commons-0093",
+        "sha256": "83a011c50253fe6f4fd9ae9a7f677a6fb17e598af48647ce64479081223b1769",
+        "width": 1920,
+        "height": 1510,
+        "sourceBytes": 426386,
+        "reencoded": false
+      },
+      {
+        "id": "commons-0094",
+        "sha256": "ff3d49e30be2d1141179b7ad2d08d9edff2384926cd5a6f5a8f6818c97fa57ae",
+        "width": 1920,
+        "height": 1440,
+        "sourceBytes": 411041,
+        "reencoded": false
+      },
+      {
+        "id": "commons-0003",
+        "sha256": "cb909d7ad9c3940bfa4db0cc50b2ea7025faebe3dcec8fe80067f900760bba64",
+        "width": 1920,
+        "height": 2868,
+        "sourceBytes": 803511,
+        "reencoded": false
+      },
+      {
+        "id": "commons-0014",
+        "sha256": "d1074e4375b5e60f1bc43996c41b168dcb67425c9d0fac376e43719ecf9fe35f",
+        "width": 1920,
+        "height": 1632,
+        "sourceBytes": 908957,
+        "reencoded": false
+      },
+      {
+        "id": "commons-0016",
+        "sha256": "e0510f06c475fa048585e6ff437359cb4255ce3a425e40a69dc54cc337f5ab24",
+        "width": 1920,
+        "height": 2238,
+        "sourceBytes": 635480,
+        "reencoded": false
+      },
+      {
+        "id": "commons-0025",
+        "sha256": "54de15a268c8cbdd767b9247da91abd22efa546004623eec23da1b2492625f9d",
+        "width": 1920,
+        "height": 1440,
+        "sourceBytes": 1813105,
+        "reencoded": false
+      },
+      {
+        "id": "commons-0036",
+        "sha256": "5668ffc3c84aaecd8c25854e3da13c62a06a04cf9d294411b33d42e40d5e6386",
+        "width": 1920,
+        "height": 902,
+        "sourceBytes": 654325,
+        "reencoded": false
+      },
+      {
+        "id": "commons-0040",
+        "sha256": "b681dc1dbc32dde043fbf9e208437f60e83fa37365ad8023012b2df866cb637e",
+        "width": 1920,
+        "height": 4258,
+        "sourceBytes": 1219460,
+        "reencoded": false
+      },
+      {
+        "id": "commons-0049",
+        "sha256": "819ff96e55abf6f79cb99b5abca1870bc0bccfc669681bbc755562be9dbab547",
+        "width": 1920,
+        "height": 2880,
+        "sourceBytes": 405407,
+        "reencoded": false
+      },
+      {
+        "id": "commons-0059",
+        "sha256": "f7b8eea8f6d741a5f685119cc5c92f69300a5f294940162429e3febd1482f44c",
+        "width": 1920,
+        "height": 1440,
+        "sourceBytes": 445762,
+        "reencoded": false
+      },
+      {
+        "id": "commons-0060",
+        "sha256": "198cd0d18fc3d2b9e2ff7d30ca024e860ee4b90dac3165890ed4e3721e5f153f",
+        "width": 1920,
+        "height": 2560,
+        "sourceBytes": 547203,
+        "reencoded": false
+      },
+      {
+        "id": "commons-0062",
+        "sha256": "ed42247af077518ac3532d851a4330ae7cd69bee9969ab3f784431cfbc61f350",
+        "width": 1920,
+        "height": 1440,
+        "sourceBytes": 465977,
+        "reencoded": false
+      },
+      {
+        "id": "commons-0077",
+        "sha256": "b968758a00cd458040b90ca31a48c5aafe6f3cab4fe708f021bc3a341a58cf70",
+        "width": 1920,
+        "height": 974,
+        "sourceBytes": 369733,
+        "reencoded": false
+      },
+      {
+        "id": "commons-0078",
+        "sha256": "ba080a9a5d4aa68c193738e728e83c45b6a833a9bf80c45de4d2b35ece38154e",
+        "width": 1920,
+        "height": 2095,
+        "sourceBytes": 625005,
+        "reencoded": false
+      },
+      {
+        "id": "commons-0095",
+        "sha256": "4905ac445855b950a116ac4074e87f6c3c5b7159d1e923089e17a2bdd26d8f3d",
+        "width": 1920,
+        "height": 2560,
+        "sourceBytes": 747280,
+        "reencoded": false
+      },
+      {
+        "id": "commons-0046",
+        "sha256": "7f94b8bc8edc340200f0353968f54868dc72e3180bc191530e19f2a82ce91ead",
+        "width": 1920,
+        "height": 789,
+        "sourceBytes": 415131,
+        "reencoded": false
+      },
+      {
+        "id": "commons-0086",
+        "sha256": "d9c3beb00a82f49356d80628bacf985f1985f709b651e1eb50c9f2feaaea440c",
+        "width": 1920,
+        "height": 1463,
+        "sourceBytes": 950042,
+        "reencoded": false
+      },
+      {
+        "id": "commons-0090",
+        "sha256": "ed9f58647fcbda1d033b6fdfdf1cf1d4c72c1b36bed0f40e16fea07495ed6baf",
+        "width": 1920,
+        "height": 1272,
+        "sourceBytes": 562075,
+        "reencoded": false
+      },
+      {
+        "id": "validation-0001",
+        "sha256": "7953018d9f4bba2998b68d16fce4a59e4189e66d40f82b24459cb1200b4394c0",
+        "width": 1920,
+        "height": 2880,
+        "sourceBytes": 1023268,
+        "reencoded": false
+      },
+      {
+        "id": "validation-0002",
+        "sha256": "ded1c225fc7f02989303bd693bf2b839adb7fdd3bacea78eb0d35d539af2fab1",
+        "width": 1224,
+        "height": 1848,
+        "sourceBytes": 1672187,
+        "reencoded": false
+      },
+      {
+        "id": "validation-0003",
+        "sha256": "de3fa07115e6e2805ff492506a6c99ad9674e675eef0e5e0642e2227207d7c7a",
+        "width": 1569,
+        "height": 2100,
+        "sourceBytes": 409992,
+        "reencoded": false
+      },
+      {
+        "id": "validation-0004",
+        "sha256": "e17f5a64e32f8b3ab87aaedb773cef9277040e0dda0506dc48f587be4da033c7",
+        "width": 1269,
+        "height": 2100,
+        "sourceBytes": 294663,
+        "reencoded": false
+      },
+      {
+        "id": "validation-0008",
+        "sha256": "16ed95a6212ecf0500c6b25047f3e9029fc49a04e4786b2c5f13c15d65e45f6f",
+        "width": 360,
+        "height": 540,
+        "sourceBytes": 210823,
+        "reencoded": false
+      },
+      {
+        "id": "validation-0010",
+        "sha256": "2e2d757d60b5bce8b1e34765c7b59c21ede85c7c69cfbf63d802566934b847c7",
+        "width": 600,
+        "height": 766,
+        "sourceBytes": 304955,
+        "reencoded": false
+      },
+      {
+        "id": "validation-0017",
+        "sha256": "6f83b0769215cf7e19475a0b946b9be4d5d00747c50df18136aafe18a08dbb58",
+        "width": 1920,
+        "height": 2880,
+        "sourceBytes": 1297955,
+        "reencoded": false
+      },
+      {
+        "id": "validation-0019",
+        "sha256": "16c806adf3d3e39d0cfa260901da9de6c87f2eab7eafa6e0e56593d7782a5140",
+        "width": 1920,
+        "height": 1272,
+        "sourceBytes": 326977,
+        "reencoded": false
+      },
+      {
+        "id": "validation-0021",
+        "sha256": "a80a0c707c7aa99e4ee4df7a766109121f8b6baafe51ba9dd764e382f9094f61",
+        "width": 1920,
+        "height": 1272,
+        "sourceBytes": 246581,
+        "reencoded": false
+      },
+      {
+        "id": "validation-0023",
+        "sha256": "4fa7836d0275c1d393b6e71db0044674d04e4fc2c09e6c8946ca8ad8eed5276b",
+        "width": 1920,
+        "height": 1272,
+        "sourceBytes": 457374,
+        "reencoded": false
+      },
+      {
+        "id": "validation-0024",
+        "sha256": "2183cbbb8af17dee3bab0ea0b9657b61ccbb6be953ae047f7119be0f0e7067a0",
+        "width": 1920,
+        "height": 1272,
+        "sourceBytes": 325849,
+        "reencoded": false
+      }
+    ],
+    "fullStoredResolution": true,
+    "reencodedSources": 0,
+    "remoteRequestsAfterWarmup": 0,
+    "hintComparisons": [
+      {
+        "id": "commons-0046",
+        "engine": "baseline",
+        "strong": true,
+        "categoryOnly": true,
+        "prediction": "Shoes",
+        "reason": null
+      },
+      {
+        "id": "commons-0046",
+        "engine": "candidate",
+        "strong": false,
+        "categoryOnly": false,
+        "prediction": null,
+        "reason": "mask_nonclothing_disagrees"
+      },
+      {
+        "id": "commons-0086",
+        "engine": "baseline",
+        "strong": true,
+        "categoryOnly": true,
+        "prediction": "Shoes",
+        "reason": null
+      },
+      {
+        "id": "commons-0086",
+        "engine": "candidate",
+        "strong": false,
+        "categoryOnly": false,
+        "prediction": null,
+        "reason": "mask_category_disagrees"
+      },
+      {
+        "id": "commons-0090",
+        "engine": "baseline",
+        "strong": true,
+        "categoryOnly": true,
+        "prediction": "Shoes",
+        "reason": null
+      },
+      {
+        "id": "commons-0090",
+        "engine": "candidate",
+        "strong": false,
+        "categoryOnly": false,
+        "prediction": null,
+        "reason": "mask_nonclothing_disagrees"
+      }
+    ],
+    "frameDiagnostics": [
+      {
+        "id": "commons-0064",
+        "variants": [
+          {
+            "contentSize": 288,
+            "top": [
+              {
+                "label": "a blazer",
+                "score": 0.8772220724917971
+              },
+              {
+                "label": "a jacket",
+                "score": 0.10870598503407981
+              },
+              {
+                "label": "a coat",
+                "score": 0.008094728404314225
+              },
+              {
+                "label": "a cardigan",
+                "score": 0.0019626366333171776
+              },
+              {
+                "label": "a tunic",
+                "score": 0.0017019338786747817
+              }
+            ]
+          },
+          {
+            "contentSize": 320,
+            "top": [
+              {
+                "label": "a blazer",
+                "score": 0.9150785121463857
+              },
+              {
+                "label": "a jacket",
+                "score": 0.07694532846274665
+              },
+              {
+                "label": "a coat",
+                "score": 0.004552849833137814
+              },
+              {
+                "label": "a cardigan",
+                "score": 0.0022766644626465303
+              },
+              {
+                "label": "a tunic",
+                "score": 0.0003348872962669942
+              }
+            ]
+          },
+          {
+            "contentSize": 336,
+            "top": [
+              {
+                "label": "a blazer",
+                "score": 0.8990282032341759
+              },
+              {
+                "label": "a jacket",
+                "score": 0.08261450850137209
+              },
+              {
+                "label": "a coat",
+                "score": 0.006814398829726889
+              },
+              {
+                "label": "a tunic",
+                "score": 0.0038133125129213323
+              },
+              {
+                "label": "a cardigan",
+                "score": 0.003408317009155697
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "commons-0003",
+        "variants": [
+          {
+            "contentSize": 288,
+            "top": [
+              {
+                "label": "a sweatshirt",
+                "score": 0.557511732562074
+              },
+              {
+                "label": "a knitted sweater",
+                "score": 0.32152482974309105
+              },
+              {
+                "label": "a pair of jeans",
+                "score": 0.08128917542148616
+              },
+              {
+                "label": "a hoodie",
+                "score": 0.009505679529051755
+              },
+              {
+                "label": "a T-shirt",
+                "score": 0.008512335574198554
+              }
+            ]
+          },
+          {
+            "contentSize": 320,
+            "top": [
+              {
+                "label": "a sweatshirt",
+                "score": 0.7580723461020621
+              },
+              {
+                "label": "a knitted sweater",
+                "score": 0.14516908141502735
+              },
+              {
+                "label": "a pair of jeans",
+                "score": 0.05592602381480509
+              },
+              {
+                "label": "a T-shirt",
+                "score": 0.011900572301974853
+              },
+              {
+                "label": "a hoodie",
+                "score": 0.009729782914308253
+              }
+            ]
+          },
+          {
+            "contentSize": 336,
+            "top": [
+              {
+                "label": "a sweatshirt",
+                "score": 0.5323678460995268
+              },
+              {
+                "label": "a knitted sweater",
+                "score": 0.22252038810642408
+              },
+              {
+                "label": "a pair of jeans",
+                "score": 0.1520393681141254
+              },
+              {
+                "label": "a T-shirt",
+                "score": 0.025894699442359274
+              },
+              {
+                "label": "a pair of joggers",
+                "score": 0.017470443114772385
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "commons-0014",
+        "variants": [
+          {
+            "contentSize": 288,
+            "top": [
+              {
+                "label": "a tunic",
+                "score": 0.8382216814226713
+              },
+              {
+                "label": "a blouse",
+                "score": 0.14618247979183285
+              },
+              {
+                "label": "a skirt",
+                "score": 0.009398485968635241
+              },
+              {
+                "label": "a cardigan",
+                "score": 0.0011454366955437935
+              },
+              {
+                "label": "a pair of trousers",
+                "score": 0.0008226366680787636
+              }
+            ]
+          },
+          {
+            "contentSize": 320,
+            "top": [
+              {
+                "label": "a tunic",
+                "score": 0.9081374236192589
+              },
+              {
+                "label": "a blouse",
+                "score": 0.08750630264863574
+              },
+              {
+                "label": "a skirt",
+                "score": 0.001575026009033602
+              },
+              {
+                "label": "a cardigan",
+                "score": 0.0006840769143552313
+              },
+              {
+                "label": "a scarf",
+                "score": 0.0006017125380316219
+              }
+            ]
+          },
+          {
+            "contentSize": 336,
+            "top": [
+              {
+                "label": "a tunic",
+                "score": 0.8967446475579022
+              },
+              {
+                "label": "a blouse",
+                "score": 0.09481376698002826
+              },
+              {
+                "label": "a cardigan",
+                "score": 0.0028608486136008026
+              },
+              {
+                "label": "a scarf",
+                "score": 0.002377369641761066
+              },
+              {
+                "label": "a skirt",
+                "score": 0.0009556895282135353
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "commons-0036",
+        "variants": [
+          {
+            "contentSize": 288,
+            "top": [
+              {
+                "label": "a blouse",
+                "score": 0.3328010447457633
+              },
+              {
+                "label": "a jacket",
+                "score": 0.13831791583688274
+              },
+              {
+                "label": "a skirt",
+                "score": 0.12933243334268046
+              },
+              {
+                "label": "a tunic",
+                "score": 0.12327694386172157
+              },
+              {
+                "label": "a knitted sweater",
+                "score": 0.08992133622389434
+              }
+            ]
+          },
+          {
+            "contentSize": 320,
+            "top": [
+              {
+                "label": "a hat",
+                "score": 0.5101167997695463
+              },
+              {
+                "label": "a blouse",
+                "score": 0.09530626299121014
+              },
+              {
+                "label": "a jacket",
+                "score": 0.06888261256493282
+              },
+              {
+                "label": "a skirt",
+                "score": 0.06114817053008474
+              },
+              {
+                "label": "a tunic",
+                "score": 0.04357686482127944
+              }
+            ]
+          },
+          {
+            "contentSize": 336,
+            "top": [
+              {
+                "label": "a skirt",
+                "score": 0.4113238812429583
+              },
+              {
+                "label": "flat shoes",
+                "score": 0.13174372828844996
+              },
+              {
+                "label": "a tunic",
+                "score": 0.10887849457434404
+              },
+              {
+                "label": "a hat",
+                "score": 0.06966898153312638
+              },
+              {
+                "label": "a blouse",
+                "score": 0.06942382647421837
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "commons-0059",
+        "variants": [
+          {
+            "contentSize": 288,
+            "top": [
+              {
+                "label": "a tunic",
+                "score": 0.25887847194532293
+              },
+              {
+                "label": "a casual dress",
+                "score": 0.24966798023320996
+              },
+              {
+                "label": "a blouse",
+                "score": 0.17934760065306982
+              },
+              {
+                "label": "a sweater dress",
+                "score": 0.13405059901876937
+              },
+              {
+                "label": "a formal dress",
+                "score": 0.10008084333925123
+              }
+            ]
+          },
+          {
+            "contentSize": 320,
+            "top": [
+              {
+                "label": "a blouse",
+                "score": 0.2855551378413919
+              },
+              {
+                "label": "a formal dress",
+                "score": 0.16830365021931704
+              },
+              {
+                "label": "a casual dress",
+                "score": 0.1586135359999179
+              },
+              {
+                "label": "a tunic",
+                "score": 0.14548753051381388
+              },
+              {
+                "label": "a sweater dress",
+                "score": 0.0801609739837017
+              }
+            ]
+          },
+          {
+            "contentSize": 336,
+            "top": [
+              {
+                "label": "a formal dress",
+                "score": 0.34380981296364677
+              },
+              {
+                "label": "a casual dress",
+                "score": 0.2847826871288844
+              },
+              {
+                "label": "a tunic",
+                "score": 0.13837674815939702
+              },
+              {
+                "label": "a sweater dress",
+                "score": 0.10028310064724455
+              },
+              {
+                "label": "a blouse",
+                "score": 0.09591181229040426
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "commons-0078",
+        "variants": [
+          {
+            "contentSize": 288,
+            "top": [
+              {
+                "label": "ankle boots",
+                "score": 0.8615307872552255
+              },
+              {
+                "label": "tall boots",
+                "score": 0.09165361978887493
+              },
+              {
+                "label": "sneakers",
+                "score": 0.034304449862680685
+              },
+              {
+                "label": "flat shoes",
+                "score": 0.004289868434637701
+              },
+              {
+                "label": "high heel shoes",
+                "score": 0.004168599574560851
+              }
+            ]
+          },
+          {
+            "contentSize": 320,
+            "top": [
+              {
+                "label": "ankle boots",
+                "score": 0.8355545290109917
+              },
+              {
+                "label": "tall boots",
+                "score": 0.11091932106020577
+              },
+              {
+                "label": "sneakers",
+                "score": 0.046283472601487394
+              },
+              {
+                "label": "high heel shoes",
+                "score": 0.003353164931303355
+              },
+              {
+                "label": "flat shoes",
+                "score": 0.0016028619680824752
+              }
+            ]
+          },
+          {
+            "contentSize": 336,
+            "top": [
+              {
+                "label": "ankle boots",
+                "score": 0.8790441560906799
+              },
+              {
+                "label": "tall boots",
+                "score": 0.08800783055947865
+              },
+              {
+                "label": "sneakers",
+                "score": 0.023373807996645412
+              },
+              {
+                "label": "high heel shoes",
+                "score": 0.005303965018423922
+              },
+              {
+                "label": "flat shoes",
+                "score": 0.0012572255715444076
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "commons-0095",
+        "variants": [
+          {
+            "contentSize": 288,
+            "top": [
+              {
+                "label": "sneakers",
+                "score": 0.5495159149219245
+              },
+              {
+                "label": "a handbag",
+                "score": 0.08930977068418954
+              },
+              {
+                "label": "loafers",
+                "score": 0.06868698332351893
+              },
+              {
+                "label": "sandals",
+                "score": 0.06044361199958016
+              },
+              {
+                "label": "a pair of joggers",
+                "score": 0.05908757354491451
+              }
+            ]
+          },
+          {
+            "contentSize": 320,
+            "top": [
+              {
+                "label": "a hand with no garment",
+                "score": 0.8291351647277476
+              },
+              {
+                "label": "a handbag",
+                "score": 0.11136866105189794
+              },
+              {
+                "label": "a pair of joggers",
+                "score": 0.009062057281021975
+              },
+              {
+                "label": "a coat",
+                "score": 0.008497749881396215
+              },
+              {
+                "label": "sneakers",
+                "score": 0.006293167263110669
+              }
+            ]
+          },
+          {
+            "contentSize": 336,
+            "top": [
+              {
+                "label": "a hand with no garment",
+                "score": 0.7683596804343056
+              },
+              {
+                "label": "a handbag",
+                "score": 0.06502406902005686
+              },
+              {
+                "label": "a vest",
+                "score": 0.051047717881380496
+              },
+              {
+                "label": "a pair of trousers",
+                "score": 0.025907500834262107
+              },
+              {
+                "label": "a knitted sweater",
+                "score": 0.01166333010393489
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "inference": "actual pinned FashionCLIP; runtime/model downloaded before network-denied measurement",
+    "physicalMaskAccuracy": null,
+    "independentHumanMasks": 0,
+    "customerPhotos": 0
+  },
+  "admission": {
+    "evidenceType": "fresh-model-inference",
+    "sets": [
+      {
+        "set": "reviewed-32",
+        "sourceType": "new-real-inference",
+        "measuredPhotos": 32,
+        "garmentPhotos": 32,
+        "nonGarmentControls": 0,
+        "categoryCoveragePercent": 90.63,
+        "categoryPrecisionAmongEmittedPercent": 100,
+        "categoryAccuracyAllGarmentsPercent": 90.63,
+        "categoryAbstentions": 3,
+        "categoryOnlyReviews": 1,
+        "automaticDecisions": 28,
+        "correctAutomaticSubtypes": 27,
+        "incorrectAutomaticCategories": 0,
+        "incorrectAutomaticSubtypes": 1,
+        "rejectedNonGarment": 0,
+        "byCategory": {
+          "Tops": {
+            "total": 2,
+            "emitted": 2,
+            "correct": 2,
+            "strong": 2,
+            "unsafeAutosaves": 0
+          },
+          "Bottoms": {
+            "total": 9,
+            "emitted": 9,
+            "correct": 9,
+            "strong": 9,
+            "unsafeAutosaves": 0
+          },
+          "Dresses": {
+            "total": 2,
+            "emitted": 1,
+            "correct": 1,
+            "strong": 0,
+            "unsafeAutosaves": 0
+          },
+          "Outerwear": {
+            "total": 6,
+            "emitted": 4,
+            "correct": 4,
+            "strong": 4,
+            "unsafeAutosaves": 1
+          },
+          "Shoes": {
+            "total": 13,
+            "emitted": 13,
+            "correct": 13,
+            "strong": 13,
+            "unsafeAutosaves": 0
+          }
+        },
+        "wrongCategoryIds": [],
+        "unsafeAutomaticCategoryIds": [],
+        "unsafeAutomaticSubtypeIds": [
+          "commons-0064"
+        ],
+        "rejectedControlFailures": [],
+        "abstentionIds": [
+          "commons-0053",
+          "commons-0065",
+          "commons-0070"
+        ],
+        "runtimeErrorIds": [],
+        "safeToConsiderForRecognitionPromotion": false
+      },
+      {
+        "set": "holdout-16",
+        "sourceType": "new-real-inference",
+        "measuredPhotos": 16,
+        "garmentPhotos": 13,
+        "nonGarmentControls": 3,
+        "categoryCoveragePercent": 53.85,
+        "categoryPrecisionAmongEmittedPercent": 100,
+        "categoryAccuracyAllGarmentsPercent": 53.85,
+        "categoryAbstentions": 6,
+        "categoryOnlyReviews": 1,
+        "automaticDecisions": 6,
+        "correctAutomaticSubtypes": 4,
+        "incorrectAutomaticCategories": 0,
+        "incorrectAutomaticSubtypes": 2,
+        "rejectedNonGarment": 3,
+        "byCategory": {
+          "Tops": {
+            "total": 3,
+            "emitted": 2,
+            "correct": 2,
+            "strong": 1,
+            "unsafeAutosaves": 1
+          },
+          "Bottoms": {
+            "total": 3,
+            "emitted": 2,
+            "correct": 2,
+            "strong": 2,
+            "unsafeAutosaves": 0
+          },
+          "Dresses": {
+            "total": 2,
+            "emitted": 1,
+            "correct": 1,
+            "strong": 1,
+            "unsafeAutosaves": 0
+          },
+          "Outerwear": {
+            "total": 2,
+            "emitted": 0,
+            "correct": 0,
+            "strong": 0,
+            "unsafeAutosaves": 0
+          },
+          "Shoes": {
+            "total": 3,
+            "emitted": 2,
+            "correct": 2,
+            "strong": 2,
+            "unsafeAutosaves": 1
+          }
+        },
+        "wrongCategoryIds": [],
+        "unsafeAutomaticCategoryIds": [],
+        "unsafeAutomaticSubtypeIds": [
+          "commons-0014",
+          "commons-0078"
+        ],
+        "rejectedControlFailures": [],
+        "abstentionIds": [
+          "commons-0016",
+          "commons-0036",
+          "commons-0059",
+          "commons-0060",
+          "commons-0062",
+          "commons-0095"
+        ],
+        "runtimeErrorIds": [],
+        "safeToConsiderForRecognitionPromotion": false
+      },
+      {
+        "set": "fresh-11",
+        "sourceType": "new-real-inference",
+        "measuredPhotos": 11,
+        "garmentPhotos": 11,
+        "nonGarmentControls": 0,
+        "categoryCoveragePercent": 100,
+        "categoryPrecisionAmongEmittedPercent": 100,
+        "categoryAccuracyAllGarmentsPercent": 100,
+        "categoryAbstentions": 0,
+        "categoryOnlyReviews": 2,
+        "automaticDecisions": 9,
+        "correctAutomaticSubtypes": 9,
+        "incorrectAutomaticCategories": 0,
+        "incorrectAutomaticSubtypes": 0,
+        "rejectedNonGarment": 0,
+        "byCategory": {
+          "Dresses": {
+            "total": 5,
+            "emitted": 5,
+            "correct": 5,
+            "strong": 4,
+            "unsafeAutosaves": 0
+          },
+          "Accessories": {
+            "total": 1,
+            "emitted": 1,
+            "correct": 1,
+            "strong": 1,
+            "unsafeAutosaves": 0
+          },
+          "Bottoms": {
+            "total": 1,
+            "emitted": 1,
+            "correct": 1,
+            "strong": 0,
+            "unsafeAutosaves": 0
+          },
+          "Shoes": {
+            "total": 4,
+            "emitted": 4,
+            "correct": 4,
+            "strong": 4,
+            "unsafeAutosaves": 0
+          }
+        },
+        "wrongCategoryIds": [],
+        "unsafeAutomaticCategoryIds": [],
+        "unsafeAutomaticSubtypeIds": [],
+        "rejectedControlFailures": [],
+        "abstentionIds": [],
+        "runtimeErrorIds": [],
+        "safeToConsiderForRecognitionPromotion": true
+      }
+    ],
+    "wrongAutoSubtypesTotal": 3,
+    "unsafeAutoCategoriesTotal": 0,
+    "anyUnsafeAutomaticClassification": true,
+    "recognitionPromotionDecision": "BLOCKED",
+    "independentPhysicalGarmentLabelsVerified": false,
+    "productionReleaseApproved": false
+  },
+  "independentComparator": {
+    "suite": "cc-recognition-cohort-safety-v1",
+    "evidenceType": "PREDICTION_FILES_NOT_INDEPENDENT_NEW_PHOTO_TRUTH",
+    "cohorts": [
+      {
+        "cohort": "reviewed-32",
+        "manifestPhotos": 32,
+        "historicalCategoryAccuracyPercent": 90.63,
+        "candidateChangedRows": [
+          {
+            "id": "commons-0035",
+            "categoryBefore": null,
+            "categoryAfter": "Bottoms",
+            "typeBefore": null,
+            "typeAfter": "Shorts",
+            "wasAutomatic": false,
+            "isAutomatic": true,
+            "independentSourceIdentityVerified": false
+          },
+          {
+            "id": "commons-0045",
+            "categoryBefore": null,
+            "categoryAfter": "Bottoms",
+            "typeBefore": null,
+            "typeAfter": "Skirt",
+            "wasAutomatic": false,
+            "isAutomatic": true,
+            "independentSourceIdentityVerified": false
+          },
+          {
+            "id": "commons-0083",
+            "categoryBefore": null,
+            "categoryAfter": "Shoes",
+            "typeBefore": null,
+            "typeAfter": "Sneakers",
+            "wasAutomatic": false,
+            "isAutomatic": true,
+            "independentSourceIdentityVerified": false
+          }
+        ],
+        "categoryOrTypeRegressions": [],
+        "previousKnownSubtypeMismatches": [
+          {
+            "id": "commons-0064",
+            "type": "Blazer"
+          }
+        ],
+        "unknownPhysicalGarmentMaskIoU": true
+      },
+      {
+        "cohort": "holdout-16",
+        "manifestPhotos": 16,
+        "historicalCategoryAccuracyPercent": 53.85,
+        "candidateChangedRows": [
+          {
+            "id": "commons-0003",
+            "categoryBefore": "Tops",
+            "categoryAfter": "Tops",
+            "typeBefore": "Sweatshirt",
+            "typeAfter": "Unknown",
+            "wasAutomatic": true,
+            "isAutomatic": false,
+            "independentSourceIdentityVerified": false
+          },
+          {
+            "id": "commons-0049",
+            "categoryBefore": "Dresses",
+            "categoryAfter": "Dresses",
+            "typeBefore": "Unknown",
+            "typeAfter": "Formal dress",
+            "wasAutomatic": false,
+            "isAutomatic": true,
+            "independentSourceIdentityVerified": false
+          }
+        ],
+        "categoryOrTypeRegressions": [],
+        "previousKnownSubtypeMismatches": [
+          {
+            "id": "commons-0014",
+            "type": "Tunic"
+          },
+          {
+            "id": "commons-0078",
+            "type": "Ankle boots"
+          }
+        ],
+        "unknownPhysicalGarmentMaskIoU": true
+      },
+      {
+        "cohort": "fresh-11",
+        "manifestPhotos": 11,
+        "historicalCategoryAccuracyPercent": 100,
+        "candidateChangedRows": [
+          {
+            "id": "validation-0017",
+            "categoryBefore": null,
+            "categoryAfter": "Bottoms",
+            "typeBefore": null,
+            "typeAfter": "Unknown",
+            "wasAutomatic": false,
+            "isAutomatic": false,
+            "independentSourceIdentityVerified": false
+          }
+        ],
+        "categoryOrTypeRegressions": [],
+        "previousKnownSubtypeMismatches": [],
+        "unknownPhysicalGarmentMaskIoU": true
+      }
+    ],
+    "candidateMetrics": [
+      {
+        "cohort": "reviewed-32",
+        "total": 32,
+        "garmentPhotos": 32,
+        "categoryAccuracyPercent": 90.63,
+        "coveragePercent": 90.63,
+        "subtypeErrors": 1,
+        "autoCategoryErrors": 0,
+        "reviewAbstentions": 3,
+        "wrongCategoryIds": [],
+        "unsafeAutoSubtypeIds": [
+          "commons-0064"
+        ]
+      },
+      {
+        "cohort": "holdout-16",
+        "total": 16,
+        "garmentPhotos": 13,
+        "categoryAccuracyPercent": 53.85,
+        "coveragePercent": 53.85,
+        "subtypeErrors": 2,
+        "autoCategoryErrors": 0,
+        "reviewAbstentions": 6,
+        "wrongCategoryIds": [],
+        "unsafeAutoSubtypeIds": [
+          "commons-0014",
+          "commons-0078"
+        ]
+      },
+      {
+        "cohort": "fresh-11",
+        "total": 11,
+        "garmentPhotos": 11,
+        "categoryAccuracyPercent": 100,
+        "coveragePercent": 100,
+        "subtypeErrors": 0,
+        "autoCategoryErrors": 0,
+        "reviewAbstentions": 0,
+        "wrongCategoryIds": [],
+        "unsafeAutoSubtypeIds": []
+      }
+    ],
+    "totals": {
+      "manifestPhotos": 59,
+      "garments": 56,
+      "negativeControls": 3,
+      "newAutomaticCategoryErrors": 0,
+      "newAutomaticSubtypeErrors": 0,
+      "baselineUnsafeSubtypeTotal": 4,
+      "candidateUnsafeSubtypeTotal": 3,
+      "candidateUnsafeCategoryTotal": 0,
+      "sourceRegressions": 0,
+      "candidateCategoryCorrect": 47,
+      "baselineCategoryCorrect": 43
+    },
+    "relativeToHistoricalSourceRegressions": "NONE",
+    "candidateHasNoUnsafeAutoSaves": false,
+    "eligibleForIndependentReview": false,
+    "recognitionPromotionAuthorized": false,
+    "deploymentAuthorized": false,
+    "originalSourceImageHashesValidatedHere": false,
+    "genuineHumanPhysicalGarmentMasksApproved": false,
+    "physicalCameraColorOrRuntimeMeasured": false,
+    "avatarGarmentFidelityMeasured": false,
+    "mustVerifyModelInferenceAndHeldOutSourceBeforeAnyPromotion": true
+  },
+  "baseline": {
+    "reviewed-32": [
+      {
+        "id": "commons-0001",
+        "prediction": {
+          "category": "Tops",
+          "type": "T-shirt"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0002",
+        "prediction": {
+          "category": "Tops",
+          "type": "T-shirt"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0021",
+        "prediction": {
+          "category": "Bottoms",
+          "type": "Jeans"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0023",
+        "prediction": {
+          "category": "Bottoms",
+          "type": "Jeans"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0024",
+        "prediction": {
+          "category": "Bottoms",
+          "type": "Jeans"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0033",
+        "prediction": {
+          "category": "Bottoms",
+          "type": "Shorts"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0035",
+        "prediction": {
+          "category": "Bottoms",
+          "type": "Shorts"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": "bottoms_independent_agreement"
+      },
+      {
+        "id": "commons-0041",
+        "prediction": {
+          "category": "Bottoms",
+          "type": "Skirt"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0043",
+        "prediction": {
+          "category": "Bottoms",
+          "type": "Skirt"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0044",
+        "prediction": {
+          "category": "Bottoms",
+          "type": "Skirt"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0045",
+        "prediction": {
+          "category": "Bottoms",
+          "type": "Skirt"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": "skirt_padded_views_agreement"
+      },
+      {
+        "id": "commons-0052",
+        "prediction": {
+          "category": "Dresses",
+          "type": "Unknown"
+        },
+        "strong": false,
+        "categoryConfirmed": true,
+        "reason": "dress_type_review"
+      },
+      {
+        "id": "commons-0053",
+        "prediction": {
+          "category": null,
+          "type": null
+        },
+        "strong": false,
+        "categoryConfirmed": false,
+        "reason": "checks_disagree"
+      },
+      {
+        "id": "commons-0064",
+        "prediction": {
+          "category": "Outerwear",
+          "type": "Blazer"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0065",
+        "prediction": {
+          "category": null,
+          "type": null
+        },
+        "strong": false,
+        "categoryConfirmed": false,
+        "reason": "checks_disagree"
+      },
+      {
+        "id": "commons-0067",
+        "prediction": {
+          "category": "Outerwear",
+          "type": "Coat"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0068",
+        "prediction": {
+          "category": "Outerwear",
+          "type": "Coat"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0069",
+        "prediction": {
+          "category": "Outerwear",
+          "type": "Coat"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0070",
+        "prediction": {
+          "category": null,
+          "type": null
+        },
+        "strong": false,
+        "categoryConfirmed": false,
+        "reason": "views_disagree"
+      },
+      {
+        "id": "commons-0079",
+        "prediction": {
+          "category": "Shoes",
+          "type": "Sneakers"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0080",
+        "prediction": {
+          "category": "Shoes",
+          "type": "Sneakers"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0081",
+        "prediction": {
+          "category": "Shoes",
+          "type": "Sneakers"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0082",
+        "prediction": {
+          "category": "Shoes",
+          "type": "Sneakers"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0083",
+        "prediction": {
+          "category": "Shoes",
+          "type": "Sneakers"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0084",
+        "prediction": {
+          "category": "Shoes",
+          "type": "Sneakers"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0085",
+        "prediction": {
+          "category": "Shoes",
+          "type": "Sneakers"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0087",
+        "prediction": {
+          "category": "Shoes",
+          "type": "Tall boots"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0088",
+        "prediction": {
+          "category": "Shoes",
+          "type": "Ankle boots"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0089",
+        "prediction": {
+          "category": "Shoes",
+          "type": "Ankle boots"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0092",
+        "prediction": {
+          "category": "Shoes",
+          "type": "Ankle boots"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0093",
+        "prediction": {
+          "category": "Shoes",
+          "type": "Ankle boots"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0094",
+        "prediction": {
+          "category": "Shoes",
+          "type": "Ankle boots"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      }
+    ],
+    "holdout-16": [
+      {
+        "id": "commons-0003",
+        "prediction": {
+          "category": "Tops",
+          "type": "Unknown"
+        },
+        "strong": false,
+        "categoryConfirmed": true,
+        "reason": "category_type_review"
+      },
+      {
+        "id": "commons-0014",
+        "prediction": {
+          "category": "Tops",
+          "type": "Tunic"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0016",
+        "prediction": {
+          "category": null,
+          "type": null
+        },
+        "strong": false,
+        "categoryConfirmed": false,
+        "reason": "checks_disagree"
+      },
+      {
+        "id": "commons-0025",
+        "prediction": {
+          "category": "Bottoms",
+          "type": "Jeans"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0036",
+        "prediction": {
+          "category": null,
+          "type": null
+        },
+        "strong": false,
+        "categoryConfirmed": false,
+        "reason": "category_uncertain"
+      },
+      {
+        "id": "commons-0040",
+        "prediction": {
+          "category": "Bottoms",
+          "type": "Skirt"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0049",
+        "prediction": {
+          "category": "Dresses",
+          "type": "Formal dress"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0059",
+        "prediction": {
+          "category": null,
+          "type": null
+        },
+        "strong": false,
+        "categoryConfirmed": false,
+        "reason": "type_uncertain"
+      },
+      {
+        "id": "commons-0060",
+        "prediction": {
+          "category": null,
+          "type": null
+        },
+        "strong": false,
+        "categoryConfirmed": false,
+        "reason": "category_uncertain"
+      },
+      {
+        "id": "commons-0062",
+        "prediction": {
+          "category": null,
+          "type": null
+        },
+        "strong": false,
+        "categoryConfirmed": false,
+        "reason": "checks_disagree"
+      },
+      {
+        "id": "commons-0077",
+        "prediction": {
+          "category": "Shoes",
+          "type": "Sneakers"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0078",
+        "prediction": {
+          "category": "Shoes",
+          "type": "Ankle boots"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0095",
+        "prediction": {
+          "category": null,
+          "type": null
+        },
+        "strong": false,
+        "categoryConfirmed": false,
+        "reason": "category_uncertain"
+      },
+      {
+        "id": "commons-0046",
+        "prediction": {
+          "category": null,
+          "type": null
+        },
+        "strong": false,
+        "categoryConfirmed": false,
+        "reason": "category_uncertain"
+      },
+      {
+        "id": "commons-0086",
+        "prediction": {
+          "category": null,
+          "type": null
+        },
+        "strong": false,
+        "categoryConfirmed": false,
+        "reason": "category_uncertain"
+      },
+      {
+        "id": "commons-0090",
+        "prediction": {
+          "category": null,
+          "type": null
+        },
+        "strong": false,
+        "categoryConfirmed": false,
+        "reason": "category_uncertain"
+      }
+    ],
+    "fresh-11": [
+      {
+        "id": "validation-0001",
+        "prediction": {
+          "category": "Dresses",
+          "type": "Unknown"
+        },
+        "strong": false,
+        "categoryConfirmed": true,
+        "reason": "dress_type_review"
+      },
+      {
+        "id": "validation-0002",
+        "prediction": {
+          "category": "Dresses",
+          "type": "Formal dress"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "validation-0003",
+        "prediction": {
+          "category": "Dresses",
+          "type": "Formal dress"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "validation-0004",
+        "prediction": {
+          "category": "Dresses",
+          "type": "Formal dress"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "validation-0008",
+        "prediction": {
+          "category": "Accessories",
+          "type": "Scarf"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "validation-0010",
+        "prediction": {
+          "category": "Dresses",
+          "type": "Sweater dress"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "validation-0017",
+        "prediction": {
+          "category": "Bottoms",
+          "type": "Unknown"
+        },
+        "strong": false,
+        "categoryConfirmed": true,
+        "reason": "category_type_review"
+      },
+      {
+        "id": "validation-0019",
+        "prediction": {
+          "category": "Shoes",
+          "type": "Sneakers"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "validation-0021",
+        "prediction": {
+          "category": "Shoes",
+          "type": "Sneakers"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "validation-0023",
+        "prediction": {
+          "category": "Shoes",
+          "type": "Sneakers"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "validation-0024",
+        "prediction": {
+          "category": "Shoes",
+          "type": "Sneakers"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      }
+    ]
+  },
+  "candidate": {
+    "reviewed-32": [
+      {
+        "id": "commons-0001",
+        "prediction": {
+          "category": "Tops",
+          "type": "T-shirt"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0002",
+        "prediction": {
+          "category": "Tops",
+          "type": "T-shirt"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0021",
+        "prediction": {
+          "category": "Bottoms",
+          "type": "Jeans"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0023",
+        "prediction": {
+          "category": "Bottoms",
+          "type": "Jeans"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0024",
+        "prediction": {
+          "category": "Bottoms",
+          "type": "Jeans"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0033",
+        "prediction": {
+          "category": "Bottoms",
+          "type": "Shorts"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0035",
+        "prediction": {
+          "category": "Bottoms",
+          "type": "Shorts"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": "bottoms_independent_agreement"
+      },
+      {
+        "id": "commons-0041",
+        "prediction": {
+          "category": "Bottoms",
+          "type": "Skirt"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0043",
+        "prediction": {
+          "category": "Bottoms",
+          "type": "Skirt"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0044",
+        "prediction": {
+          "category": "Bottoms",
+          "type": "Skirt"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0045",
+        "prediction": {
+          "category": "Bottoms",
+          "type": "Skirt"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": "skirt_padded_views_agreement"
+      },
+      {
+        "id": "commons-0052",
+        "prediction": {
+          "category": "Dresses",
+          "type": "Unknown"
+        },
+        "strong": false,
+        "categoryConfirmed": true,
+        "reason": "dress_type_review"
+      },
+      {
+        "id": "commons-0053",
+        "prediction": {
+          "category": null,
+          "type": null
+        },
+        "strong": false,
+        "categoryConfirmed": false,
+        "reason": "checks_disagree"
+      },
+      {
+        "id": "commons-0064",
+        "prediction": {
+          "category": "Outerwear",
+          "type": "Blazer"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0065",
+        "prediction": {
+          "category": null,
+          "type": null
+        },
+        "strong": false,
+        "categoryConfirmed": false,
+        "reason": "checks_disagree"
+      },
+      {
+        "id": "commons-0067",
+        "prediction": {
+          "category": "Outerwear",
+          "type": "Coat"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0068",
+        "prediction": {
+          "category": "Outerwear",
+          "type": "Coat"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0069",
+        "prediction": {
+          "category": "Outerwear",
+          "type": "Coat"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0070",
+        "prediction": {
+          "category": null,
+          "type": null
+        },
+        "strong": false,
+        "categoryConfirmed": false,
+        "reason": "views_disagree"
+      },
+      {
+        "id": "commons-0079",
+        "prediction": {
+          "category": "Shoes",
+          "type": "Sneakers"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0080",
+        "prediction": {
+          "category": "Shoes",
+          "type": "Sneakers"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0081",
+        "prediction": {
+          "category": "Shoes",
+          "type": "Sneakers"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0082",
+        "prediction": {
+          "category": "Shoes",
+          "type": "Sneakers"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0083",
+        "prediction": {
+          "category": "Shoes",
+          "type": "Sneakers"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0084",
+        "prediction": {
+          "category": "Shoes",
+          "type": "Sneakers"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0085",
+        "prediction": {
+          "category": "Shoes",
+          "type": "Sneakers"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0087",
+        "prediction": {
+          "category": "Shoes",
+          "type": "Tall boots"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0088",
+        "prediction": {
+          "category": "Shoes",
+          "type": "Ankle boots"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0089",
+        "prediction": {
+          "category": "Shoes",
+          "type": "Ankle boots"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0092",
+        "prediction": {
+          "category": "Shoes",
+          "type": "Ankle boots"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0093",
+        "prediction": {
+          "category": "Shoes",
+          "type": "Ankle boots"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0094",
+        "prediction": {
+          "category": "Shoes",
+          "type": "Ankle boots"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      }
+    ],
+    "holdout-16": [
+      {
+        "id": "commons-0003",
+        "prediction": {
+          "category": "Tops",
+          "type": "Unknown"
+        },
+        "strong": false,
+        "categoryConfirmed": true,
+        "reason": "category_type_review"
+      },
+      {
+        "id": "commons-0014",
+        "prediction": {
+          "category": "Tops",
+          "type": "Tunic"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0016",
+        "prediction": {
+          "category": null,
+          "type": null
+        },
+        "strong": false,
+        "categoryConfirmed": false,
+        "reason": "checks_disagree"
+      },
+      {
+        "id": "commons-0025",
+        "prediction": {
+          "category": "Bottoms",
+          "type": "Jeans"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0036",
+        "prediction": {
+          "category": null,
+          "type": null
+        },
+        "strong": false,
+        "categoryConfirmed": false,
+        "reason": "category_uncertain"
+      },
+      {
+        "id": "commons-0040",
+        "prediction": {
+          "category": "Bottoms",
+          "type": "Skirt"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0049",
+        "prediction": {
+          "category": "Dresses",
+          "type": "Formal dress"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0059",
+        "prediction": {
+          "category": null,
+          "type": null
+        },
+        "strong": false,
+        "categoryConfirmed": false,
+        "reason": "type_uncertain"
+      },
+      {
+        "id": "commons-0060",
+        "prediction": {
+          "category": null,
+          "type": null
+        },
+        "strong": false,
+        "categoryConfirmed": false,
+        "reason": "category_uncertain"
+      },
+      {
+        "id": "commons-0062",
+        "prediction": {
+          "category": null,
+          "type": null
+        },
+        "strong": false,
+        "categoryConfirmed": false,
+        "reason": "checks_disagree"
+      },
+      {
+        "id": "commons-0077",
+        "prediction": {
+          "category": "Shoes",
+          "type": "Sneakers"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0078",
+        "prediction": {
+          "category": "Shoes",
+          "type": "Ankle boots"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0095",
+        "prediction": {
+          "category": null,
+          "type": null
+        },
+        "strong": false,
+        "categoryConfirmed": false,
+        "reason": "category_uncertain"
+      },
+      {
+        "id": "commons-0046",
+        "prediction": {
+          "category": null,
+          "type": null
+        },
+        "strong": false,
+        "categoryConfirmed": false,
+        "reason": "category_uncertain"
+      },
+      {
+        "id": "commons-0086",
+        "prediction": {
+          "category": null,
+          "type": null
+        },
+        "strong": false,
+        "categoryConfirmed": false,
+        "reason": "category_uncertain"
+      },
+      {
+        "id": "commons-0090",
+        "prediction": {
+          "category": null,
+          "type": null
+        },
+        "strong": false,
+        "categoryConfirmed": false,
+        "reason": "category_uncertain"
+      }
+    ],
+    "fresh-11": [
+      {
+        "id": "validation-0001",
+        "prediction": {
+          "category": "Dresses",
+          "type": "Unknown"
+        },
+        "strong": false,
+        "categoryConfirmed": true,
+        "reason": "dress_type_review"
+      },
+      {
+        "id": "validation-0002",
+        "prediction": {
+          "category": "Dresses",
+          "type": "Formal dress"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "validation-0003",
+        "prediction": {
+          "category": "Dresses",
+          "type": "Formal dress"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "validation-0004",
+        "prediction": {
+          "category": "Dresses",
+          "type": "Formal dress"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "validation-0008",
+        "prediction": {
+          "category": "Accessories",
+          "type": "Scarf"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "validation-0010",
+        "prediction": {
+          "category": "Dresses",
+          "type": "Sweater dress"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "validation-0017",
+        "prediction": {
+          "category": "Bottoms",
+          "type": "Unknown"
+        },
+        "strong": false,
+        "categoryConfirmed": true,
+        "reason": "category_type_review"
+      },
+      {
+        "id": "validation-0019",
+        "prediction": {
+          "category": "Shoes",
+          "type": "Sneakers"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "validation-0021",
+        "prediction": {
+          "category": "Shoes",
+          "type": "Sneakers"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "validation-0023",
+        "prediction": {
+          "category": "Shoes",
+          "type": "Sneakers"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "validation-0024",
+        "prediction": {
+          "category": "Shoes",
+          "type": "Sneakers"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      }
+    ]
+  }
+}
