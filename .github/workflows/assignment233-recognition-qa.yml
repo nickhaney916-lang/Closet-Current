@@ -43,6 +43,7 @@ jobs:
       - run: node scripts/build.mjs
       - name: Native original photos, repeated baseline and candidate inference
         run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
           node scripts/run-source-locked-recognition.mjs artifacts/assignment233/run1
           node scripts/check-assignment233-recognition.mjs artifacts/assignment233/run1
           node scripts/run-source-locked-recognition.mjs artifacts/assignment233/run2
