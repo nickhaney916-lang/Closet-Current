@@ -120,6 +120,13 @@ Chromium and WebKit must show exact source-page body hashes, both `.html` and
 clean URLs, same-tab notice, return-to-app, online/offline access and missing
 cache entry 503. All nonlocal requests are blocked. No sign-in, file upload,
 private records, generated image, camera or live backend traffic is needed.
+Chromium uses Playwright's actual browser-offline setting. WebKit's online
+six-route/back-link assertions passed, but its Playwright offline navigation
+returned an internal engine error. The final WebKit cached-page test therefore
+makes the local origin unavailable (socket termination); it does not claim the
+Playwright offline API or a physical iPhone airplane-mode pass. The earlier
+engine error remains an explicit emulation limitation in PR/issue results.
+
 CI uploads **evidence only**, not a deployable ZIP. Check actual final SHA and
 conclusions in the PR/issue. Emulator results are not physical Samsung/iPhone
 validation and a locally simulated Pages redirect is not hosted Access evidence.

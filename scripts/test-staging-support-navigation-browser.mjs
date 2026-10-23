@@ -23,9 +23,10 @@ assert.ok(!chromeChannel||chromeChannel==='chrome');
 async function check(directory,label,engine,engineName){
  const root=resolve(directory),report=await auditStagingSupportRoutes(root);
  const files=new Set(JSON.parse(await readFile(resolve(root,'staging-asset-seal.json'),'utf8')).files.map(x=>x.path));
- const seen=[],outside=[];let browser;
+ const seen=[],outside=[];let browser,originUnavailable=false;
  const server=createServer(async(req,res)=>{
   try{
+   if(originUnavailable){req.socket.destroy();return;}
    const url=new URL(req.url,'http://local');seen.push(url.pathname);
    res.setHeader('Cache-Control','no-store');
    if(req.method!=='GET'){res.writeHead(405);return res.end('No writes');}
@@ -95,7 +96,10 @@ async function check(directory,label,engine,engineName){
    const before=context.pages().length;
    await page.getByRole('link',{name:'How are my photos stored?'}).click();
    await page.waitForURL(origin+'/pilot-data-notice.html');assert.equal(context.pages().length,before);
-   await context.setOffline(true);
+   // Playwright WebKit's offline navigation API produced an internal engine
+   // error after online routes passed. Keep that limitation explicit; for
+   // WebKit, take the local origin down instead and test its real worker cache.
+   if(engine===chromium)await context.setOffline(true);else originUnavailable=true;
    for(const path of pages.flatMap(p=>['/'+p+'.html','/'+p])){
     const response=await page.goto(origin+path,{waitUntil:'domcontentloaded'});
     assert.equal(response.status(),200);assert.equal(await page.locator('h1').count(),1);offline.push(path);
@@ -106,10 +110,11 @@ async function check(directory,label,engine,engineName){
    },report.bundleFingerprint);
    assert.equal(missing,503,'Missing immutable HTML may not fall back to a newer network release');
    // A hostile cached Access response may not be laundered into release HTML.
-   await context.setOffline(false);
+   if(engine===chromium)await context.setOffline(false);else originUnavailable=false;
   }
   results.push({label,engine:engineName,realServiceWorker:true,canonicalRedirectCacheObserved:cached,navigations,offlineRoutes:offline,
    originalRedirectErrorsObserved:label==='baseline'?consoleErrors.filter(x=>/redirect|FetchEvent/i.test(x)).length:0,
+   offlineSimulation:engine===chromium?'browser-offline':'origin-unavailable',playwrightOfflineApiVerified:engine===chromium,
    externalRequestsAllowed:0,externalAttemptsBlocked:outside.length,customerDataAccessed:false,physicalPhoneTested:false,hostedRoutesVerified:false});
   await context.close();
  }finally{await browser?.close();await new Promise(ok=>server.close(ok));}
