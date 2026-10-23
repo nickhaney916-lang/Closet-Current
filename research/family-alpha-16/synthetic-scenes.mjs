@@ -46,7 +46,8 @@ export function syntheticScene(kind,{width=160,height=212,mode='plain',seed=1}={
   const seam=Math.abs(X-.5)<.015||Math.abs(Y-.43)<.009;
   const logo=X>.46&&X<.54&&Y>.51&&Y<.57;
   const wrinkled=mode==='wrinkled'&&((x+Math.sin(y/7)*5)%17<3);
-  const rgb=mode==='white'?[237,240,243]:
+  const reflectivePatch=mode==='reflective'&&X>.37&&X<.62&&Y>.28&&Y<.72;
+  const rgb=reflectivePatch?[237,240,243]:mode==='white'?[237,240,243]:
     mode==='dark'?[17,18,18]:
     [0,1,2].map(i=>logo?(i===0?234:i===1?213:142):
       stripe?(i===0?33:i===1?175:88):
@@ -54,6 +55,19 @@ export function syntheticScene(kind,{width=160,height=212,mode='plain',seed=1}={
   const a=mode==='transparent'&&visible?105:255;
   data.set(visible?[...rgb,a]:[...background,255],p);
   truth[i]=visible?1:0;
+ }
+ if(mode==='blurry'){
+  // Deliberate Gaussian-like severe synthetic defocus, including silhouette edges,
+  // not a claim about motion blur or camera optics in customer photographs.
+  const radius=10;const n=data.slice();
+  for(let y=0;y<height;y++)for(let x=0;x<width;x++){
+   let count=0,r=0,g=0,b=0;
+   for(let dy=-radius;dy<=radius;dy+=2)for(let dx=-radius;dx<=radius;dx+=2){
+    const xx=Math.max(0,Math.min(width-1,x+dx)),yy=Math.max(0,Math.min(height-1,y+dy));
+    const j=4*(yy*width+xx);r+=n[j];g+=n[j+1];b+=n[j+2];count++;
+   }
+   const i=4*(y*width+x);data[i]=r/count;data[i+1]=g/count;data[i+2]=b/count;
+  }
  }
  if(mode==='blank'){for(let i=0;i<truth.length;i++){truth[i]=0;data.set([237,240,243,255],i*4);}}
  return {kind,category:['pants','jeans','shorts','skirt'].includes(kind)?'Bottoms':
