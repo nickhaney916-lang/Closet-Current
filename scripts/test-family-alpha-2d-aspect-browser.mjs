@@ -78,6 +78,48 @@ try{
      if(!conflict)throw Error('Dress conflict not blocked');
      return {fourLayers:true,dressLayers:true,missingImageRefused:true,aspectPreserved:true};
     });
+
+    const savedBoard=await page.evaluate(async()=>{
+     const {renderSavedBoard2D,fingerprintAlphaRetainedOriginal,identityForSavedGarment}=
+      await import('/public/family-alpha-2d-saved-board.mjs');
+     const owner='a1111111-1111-4111-8111-111111111111',other='b2222222-2222-4222-8222-222222222222';
+     const canvas=document.createElement('canvas');canvas.width=140;canvas.height=180;
+     canvas.getContext('2d').fillStyle='#aabbcc';canvas.getContext('2d').fillRect(0,0,140,180);
+     const original=canvas.toDataURL('image/jpeg',.96);
+     const shapes={shirt:[150,260],pants:[180,320],shoes:[360,120],jacket:[290,145],dress:[220,420]};
+     const items=[],presentations={};
+     for(const [id,[w,h]] of Object.entries(shapes)){
+      const category={shirt:'Tops',pants:'Bottoms',shoes:'Shoes',jacket:'Outerwear',dress:'Dresses'}[id];
+      const item={id,category,image:original,originalPhoto:{image:original}};items.push(item);
+      const svg='<svg xmlns="http://www.w3.org/2000/svg" width="'+w+'" height="'+h+'"><rect x="2" y="2" width="'+(w-4)+'" height="'+(h-4)+'" fill="#8b9bab"/></svg>';
+      const masked=new Image();masked.src='data:image/svg+xml,'+encodeURIComponent(svg);await masked.decode();
+      presentations[id]={itemId:id,ownerId:owner,sourceIdentity:identityForSavedGarment(item),
+       sourceVersion:await fingerprintAlphaRetainedOriginal(original),approved:true,image:masked};
+     }
+     const context={authenticatedUserId:owner,currentUserId:owner,cloudOwnerId:owner,
+       indexedDbName:'closet-current-user-'+owner,sessionGeneration:1};
+     const getContext=()=>context,stage=document.getElementById('stage');
+     const base={items,presentations,getContext};
+     const first=await renderSavedBoard2D(stage,{...base,
+       board:{slots:{top:'shirt',bottom:'pants',shoes:'shoes',layer2:'jacket'}}});
+     if(first.renderedLayers!==4)throw Error('Saved owned outfit layers not rendered');
+     if([...stage.querySelectorAll('img')].map(x=>x.dataset.slot).join(',')!=='shoes,bottom,top,layer2')throw Error('Saved board layer order');
+     const dress=await renderSavedBoard2D(stage,{...base,board:{slots:{top:'dress',shoes:'shoes'}}});
+     if(dress.renderedLayers!==2||[...stage.querySelectorAll('img')].map(x=>x.dataset.slot).join(',')!=='shoes,dress')throw Error('Real saved dress-to-avatar translation');
+     const changed={...items.find(x=>x.id==='dress'),originalPhoto:{image:canvas.toDataURL('image/jpeg',.5)}};
+     const changedItems=items.map(x=>x.id==='dress'?changed:x);
+     let staleBlocked=false;
+     try{await renderSavedBoard2D(stage,{...base,items:changedItems,board:{slots:{top:'dress',shoes:'shoes'}}});}
+     catch{staleBlocked=true;}
+     if(!staleBlocked||stage.children.length)throw Error('Retained-original change not blocked and cleared');
+     Object.assign(context,{authenticatedUserId:other,currentUserId:other,cloudOwnerId:other,indexedDbName:'closet-current-user-'+other,sessionGeneration:2});
+     let foreignBlocked=false;
+     try{await renderSavedBoard2D(stage,{...base,board:{slots:{top:'shirt'}}});}
+     catch{foreignBlocked=true;}
+     if(!foreignBlocked||stage.children.length)throw Error('Cross-account mask refused or stale avatar leaked');
+     return {savedBoardLayers:4,dressMapping:true,changedOriginalRefused:true,accountSwitchCleared:true};
+    });
+    if(!savedBoard.dressMapping||!savedBoard.accountSwitchCleared)throw Error('Saved board gate failed');
     assert.deepEqual(errors,[]);assert.deepEqual(external,[]);
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+1),true);
     results.push({browser:browserName,width,...data});
