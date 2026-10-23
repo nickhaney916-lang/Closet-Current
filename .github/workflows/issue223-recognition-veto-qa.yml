@@ -40,7 +40,7 @@ jobs:
           node scripts/test-original-source-duplicate-mobile.mjs
           node scripts/test-phone-recognition-triage-browsers.mjs
       - name: Download licensed original photos and verify locked SHA-256 hashes
-        run: node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json
+        run: node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/fixtures
       - name: Re-run actual pinned-model inference on all 59 original photographs
         run: node scripts/run-source-locked-recognition.mjs benchmark/source-locked-output
       - name: Score fresh inference and enforce release veto
