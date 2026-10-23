@@ -9,6 +9,8 @@ on:
       - tests/outfit-3d-board-bridge.test.mjs
       - public/original-photo-fingerprint.mjs
       - tests/original-photo-fingerprint.test.mjs
+      - public/original-jpeg-source.mjs
+      - tests/original-jpeg-source.test.mjs
       - public/verified-3d-photo-preparation.mjs
       - tests/verified-3d-photo-preparation.test.mjs
       - .github/workflows/issue-230-board-schema-qa.yml
@@ -23,4 +25,4 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: '22'
-      - run: node --test tests/outfit-3d-board-bridge.test.mjs tests/original-photo-fingerprint.test.mjs tests/verified-3d-photo-preparation.test.mjs
+      - run: node --test tests/outfit-3d-board-bridge.test.mjs tests/original-photo-fingerprint.test.mjs tests/verified-3d-photo-preparation.test.mjs tests/original-jpeg-source.test.mjs
