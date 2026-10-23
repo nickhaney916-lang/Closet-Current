@@ -43,3 +43,9 @@ test('black clothing is a valid visible original and must not be rejected',()=>{
 test('malformed original pixel length is rejected',()=>{
  assert.throws(()=>prepareSavedOutfitItem({accountId,...item,original:{...original,pixels:new Uint8ClampedArray([1,2,3])}}));
 });
+
+test('reject zero, fractional, and oversized original dimensions before processing',()=>{
+ for(const [width,height] of [[0,1],[1.5,1],[10000,10000]]){
+  assert.throws(()=>prepareSavedOutfitItem({accountId,...item,original:{...original,width,height}}),/Invalid original photo dimensions/);
+ }
+});
