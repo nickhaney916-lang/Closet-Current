@@ -20,6 +20,7 @@ jobs:
           if grep -nE 'fetch[[:space:]]*\(|XMLHttpRequest|https?://|openai|replicate|fal[.]ai|firebase' public/humanoid-3d-detailed-renderer.mjs public/humanoid-3d-body-geometry.mjs public/humanoid-3d-saved-bridge.mjs public/humanoid-3d-saved-demo.mjs; then exit 1; fi
       - name: Full existing Node regression plus all 3D safety checks
         run: |
+          node scripts/build.mjs
           node --test tests/*.test.cjs tests/*.test.mjs
   chromium-webkit-mobile:
     runs-on: ubuntu-latest
