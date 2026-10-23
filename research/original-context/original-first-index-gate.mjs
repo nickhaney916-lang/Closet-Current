@@ -145,3 +145,54 @@ export async function examineOriginalFirst(record,{
  if(sensitive.has(first.itemType)&&!safeSubtype)result.requiresTypeReview=true;
  return result;
 }
+
+
+/**
+ * Additional offline instance-identity admission gate. It does NOT segment
+ * photos: callers supply candidate regions from the real segmentation pipeline.
+ * Multiple garment items may SHARE a valid full-frame original JPEG; they must
+ * retain separate item IDs and distinguishable pixel regions. High overlap is
+ * REVIEW, never evidence for manufacturing another confident garment.
+ */
+export async function auditOriginalOutfitRegions(items,{cryptoProvider=globalThis.crypto,overlapReviewThreshold=.86}={}){
+ if(!Array.isArray(items)||items.length<1||items.length>12||
+    !Number.isFinite(overlapReviewThreshold)||overlapReviewThreshold<.6||overlapReviewThreshold>1)
+   throw Error('Invalid captured garment collection');
+ const problems=[],regions=[],ids=new Set(),parentHashes=new Set(),sourceIds=new Set();
+ for(const [index,item]of items.entries()){
+  if(typeof item?.id!=='string'||!item.id||ids.has(item.id)){
+   problems.push({index,reason:'duplicate-or-invalid-garment-id'});
+  }else ids.add(item.id);
+  if(typeof item?.outfitSourceId!=='string'||!item.outfitSourceId)problems.push({index,reason:'unverified-capture-identity'});
+  else sourceIds.add(item.outfitSourceId);
+  try{
+   if(!item.originalPhoto?.image||!item.recognitionPhoto?.image)throw Error('Missing original');
+   const digest=await sourceFingerprint(item.originalPhoto.image,cryptoProvider);
+   readStoredJpegBytes(item.recognitionPhoto.image);
+   parentHashes.add(digest);
+  }catch{problems.push({index,reason:'invalid-or-missing-original-frame'});}
+  const b=item?.cropBounds;
+  if(!b||!['x','y','width','height'].every(k=>Number.isFinite(b[k]))||
+    b.width<.04||b.height<.04||b.x<0||b.y<0||b.x+b.width>1+1e-8||b.y+b.height>1+1e-8){
+   problems.push({index,reason:'unverified-region-bounds'});continue;
+  }
+  regions.push({index,bounds:{x:b.x,y:b.y,right:b.x+b.width,bottom:b.y+b.height}});
+ }
+ if(parentHashes.size!==1)problems.push({index:null,reason:'different-original-frames'});
+ if(sourceIds.size!==1)problems.push({index:null,reason:'different-capture-groups'});
+ const area=b=>(b.right-b.x)*(b.bottom-b.y);
+ for(let i=0;i<regions.length;i++)for(let j=i+1;j<regions.length;j++){
+  const a=regions[i],b=regions[j],left=Math.max(a.bounds.x,b.bounds.x),top=Math.max(a.bounds.y,b.bounds.y),
+   right=Math.min(a.bounds.right,b.bounds.right),bottom=Math.min(a.bounds.bottom,b.bounds.bottom);
+  const inter=Math.max(0,right-left)*Math.max(0,bottom-top);
+  const smaller=Math.min(area(a.bounds),area(b.bounds));
+  // This review threshold uses the fraction of the smaller region covered,
+  // not IoU. A shirt inside a coat MAY legitimately overlap, so do not delete.
+  if(smaller>0&&inter/smaller>=overlapReviewThreshold)
+   problems.push({index:b.index,otherIndex:a.index,reason:'overlapping-instance-review'});
+ }
+ return {status:problems.length?'review':'safe',garmentCount:items.length,
+  verifiedSharedOriginal:parentHashes.size===1&&sourceIds.size===1,
+  originalSourceSha:parentHashes.size===1?[...parentHashes][0]:null,
+  issues:problems}; // Never include image URLs, base64 bytes or pixel arrays.
+}
