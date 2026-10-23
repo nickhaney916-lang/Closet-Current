@@ -85,6 +85,7 @@ function renderOutfitBoard(){
   else b.append(node('span','+','slot-plus'),node('small',slot.optional?'Optional space':'Choose or find a piece'));
   b.onclick=()=>openBoardPicker(slot.id);slots.append(b);
  }
+ renderBuilderOwnedStart();
  const count=Object.keys(currentBoard.slots).length,gaps=boardGaps(currentBoard,items);$('boardSummary').textContent=count+' of your own pieces selected · '+gaps.length+' open spaces'+(dress?' · dress covers top and bottoms':'');
  renderBoardSuggestions();renderSavedOutfitBoards();if(typeof renderReusableFigurePreview==='function')renderReusableFigurePreview();if(typeof onTryOnBoardChanged==='function')onTryOnBoardChanged();if(typeof renderClosetBrowser==='function')renderClosetBrowser();
 }
@@ -171,3 +172,24 @@ async function refreshTrendLibrary(force=false){
 window.addEventListener('focus',()=>refreshTrendLibrary());document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshTrendLibrary();});setInterval(()=>refreshTrendLibrary(),3600000);
 
 async function reloadCloudBoard(){const state=await new Promise((resolve,reject)=>{const r=db.transaction('state').objectStore('state').get('outfit-board');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});currentBoard=cleanOutfitBoard(state?.current||{},items);savedOutfitBoards=(state?.saved||[]).map(x=>cleanOutfitBoard(x,items));syncBoardInputs();renderOutfitBoard();}
+
+// Reuse the account-bound owned stylist rather than inventing a second scorer.
+function renderBuilderOwnedStart(){
+ const status=$('builderOwnedStatus'),create=$('builderCreateOwned'),selected=$('builderStyleSelected');
+ if(!status||!create||!selected)return;
+ const eligible=items.filter(item=>['Tops','Bottoms','Dresses','Outerwear','Shoes'].includes(item.category));
+ create.disabled=!eligible.length;
+ const id=currentBoard.anchorItemId||currentBoard.slots.top||currentBoard.slots.layer2||currentBoard.slots.layer||currentBoard.slots.bottom||currentBoard.slots.shoes;
+ const piece=eligible.find(item=>item.id===id);
+ selected.hidden=!piece;selected.textContent=currentBoard.anchorItemId?'Style pinned piece':'Style selected piece';
+ status.textContent=eligible.length?'Find up to three different combinations from your saved clothes, swap one piece, then save your favorite. Fewer options appear when your closet is small.':'Your closet is empty. Add a shirt or dress, bottoms and shoes to start building outfits from clothes you own.';
+}
+$('builderAddClothes')?.addEventListener('click',()=>switchView('scan'));
+$('builderCreateOwned')?.addEventListener('click',()=>{
+ if(typeof stylistOwnsCloset!=='function'||!stylistOwnsCloset()){if(typeof refuseStylistAccount==='function')refuseStylistAccount();return;}
+ $('stylistClearAnchor').click();switchView('stylist');$('styleCollectionForm').requestSubmit();
+});
+$('builderStyleSelected')?.addEventListener('click',()=>{
+ const id=currentBoard.anchorItemId||currentBoard.slots.top||currentBoard.slots.layer2||currentBoard.slots.layer||currentBoard.slots.bottom||currentBoard.slots.shoes;
+ if(typeof styleNewClosetItem==='function')styleNewClosetItem(id);
+});

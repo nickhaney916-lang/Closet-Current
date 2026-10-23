@@ -291,3 +291,26 @@ test('cardigan pins as a sweater layer without inventing a jacket or discarding 
  assert.equal(r.board.slots.layer3,undefined);
  assert.equal(r.board.slots.bottom,'jeans');
 });
+
+test('three owned options retain a pinned shoe after serialized board reload and reject swapping it',()=>{
+ const c=setup(),owned=[piece('new-shoe','Shoes','Sneakers'),piece('other-shoe','Shoes','Sneakers'),
+  piece('shirt','Tops','T-shirt'),...['a','b','c'].map(id=>piece(id,'Bottoms','Jeans'))];
+ const original=JSON.stringify(owned),results=c.styleOwnedCollection(owned,{anchorItemId:'new-shoe'});
+ assert.equal(results.length,3);
+ assert.equal(new Set(results.map(r=>r.signature)).size,3);
+ for(const result of results){
+  result.board=c.cleanOutfitBoard(JSON.parse(JSON.stringify(result.board)),owned);
+  assert.equal(result.board.anchorItemId,'new-shoe');assert.equal(result.board.slots.shoes,'new-shoe');
+  assert.equal(c.stylistSwapChoices(result,'shoes',owned).length,0);
+  assert.equal(c.stylistSwapChoices(result,'shoes',owned,'other-shoe').length,0);
+  assert.ok(Object.values(result.board.slots).every(id=>owned.some(item=>item.id===id)));
+ }
+ assert.equal(JSON.stringify(owned),original);
+});
+
+test('board cleanup discards a pin when its owned item is missing or no longer selected',()=>{
+ const c=setup();
+ assert.equal(c.cleanOutfitBoard({slots:{top:'tee'},anchorItemId:'foreign'},closet).anchorItemId,undefined);
+ assert.equal(c.cleanOutfitBoard({slots:{top:'tee'},anchorItemId:'jeans'},closet).anchorItemId,undefined);
+ assert.equal(c.cleanOutfitBoard({slots:{top:'tee'},anchorItemId:'tee'},closet).anchorItemId,'tee');
+});

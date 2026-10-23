@@ -143,6 +143,7 @@ function styleOwnedCollection(closet,request={},library=null){
   }
   const board=cleanOutfitBoard({name:intent,slots,occasion:context.occasion,audience:context.audience,season:context.season},unique);
   if(anchor&&!Object.values(board.slots).includes(anchor.id))continue;
+  if(anchor)board.anchorItemId=anchor.id;
   const required=boardGaps(board,unique).filter(s=>!s.optional).map(s=>s.id);
   score-=required.length*30;
   const references=selected.flatMap(x=>stylistTrendMatches(x.item,['layer2','layer3'].includes(outfitSlots.find(s=>board.slots[s.id]===x.item.id)?.id)?'layer':outfitSlots.find(s=>board.slots[s.id]===x.item.id)?.id,context,library).map(d=>({itemId:x.item.id,label:d.label,reason:d.reason,source:library.sources.find(s=>s.id===d.sourceId)})));
@@ -196,6 +197,8 @@ function styleOwnedCollection(closet,request={},library=null){
 function stylistSwapChoices(result,slot,closet,anchorId=null){
  if(!['top','bottom','shoes','layer','layer2','layer3'].includes(slot)||
     !result?.board||!Array.isArray(closet))return [];
+ // Persisted pins remain protected even after a save/reload or lost UI state.
+ anchorId=result.board.anchorItemId||anchorId;
  const owned=[...new Map(closet.filter(x=>x&&typeof x.id==='string')
   .map(x=>[x.id,x])).values()];
  const board=cleanOutfitBoard(result.board,owned),current=board.slots[slot];
