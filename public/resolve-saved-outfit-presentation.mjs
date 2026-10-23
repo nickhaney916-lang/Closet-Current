@@ -11,7 +11,7 @@ export async function resolveSavedOutfitPresentation(record,items,accountId,veri
  if(classified.mode==='legacy-2d'){
   if(!Array.isArray(items))return {mode:'unavailable',reason:'Account-scoped wardrobe unavailable'};
   const selected=Object.values(classified.board.slots).filter(id=>id!==null&&id!==undefined&&id!=='');
-  if(!selected.every(id=>typeof id==='string'&&id.trim()))return {mode:'unavailable',reason:'Invalid legacy garment selection'};
+  if(!selected.length||!selected.every(id=>typeof id==='string'&&id.trim())||new Set(selected).size!==selected.length)return {mode:'unavailable',reason:'Invalid legacy garment selection'};
   const byId=new Map();
   for(const item of items){
    if(!item||typeof item.id!=='string'||!item.id.trim()||byId.has(item.id))return {mode:'unavailable',reason:'Ambiguous account-scoped wardrobe'};
@@ -40,6 +40,7 @@ export async function resolveSavedOutfitPresentation(record,items,accountId,veri
    if(!item||typeof item.id!=='string'||!item.id.trim()||byId.has(item.id))return {mode:'unavailable',reason:'Ambiguous account-scoped wardrobe'};
    byId.set(item.id,item);
   }
+  if(!ids.length||new Set(ids).size!==ids.length)return {mode:'unavailable',reason:'Invalid saved outfit garment selection'};
   for(const id of ids){
    if(typeof id!=='string'||!id.trim()||!byId.has(id))return {mode:'unavailable',reason:'Saved outfit garment unavailable'};
    try{if(await verifyOwnership(byId.get(id),accountId)!==true)return {mode:'unavailable',reason:'Saved outfit ownership unverified'};}
