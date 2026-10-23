@@ -134,9 +134,11 @@ export function createOfflineIntegrationQA(source){
    const colors=rendererPalette(proxy.colors);
    if(selected.some(x=>x.slot==='top'&&x.item.category==='Dresses')&&!colors.dress)throw Error('Missing dress RGBA');
    return {mode:'3d-placeholder',board:boardCopy(board),renderer:{colors,solidColorOnly:true,unseenSurfacesEstimated:true},contracts:{pr231:true,pr232:true}};
-  }catch{
+  }catch(error){
    try{still(scope);}catch{return deny('Session changed; 2D fallback denied');}
-   return twoD(board,'Verified 3D source unavailable; use original saved 2D outfit');
+   // Test-only sanitized failure classifier; no error object or image bytes leave this branch.
+   const code=String(error?.message||'').replace(/data:[^\\s]+/g,'[image-redacted]').slice(0,110);
+   return twoD(board,'3D QA blocked: '+code);
   }
  }
  async function save(board){
