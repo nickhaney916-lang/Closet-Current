@@ -77,7 +77,7 @@ try{
    if(JSON.stringify(before)!==JSON.stringify(after))changes.push({id:before.id,cohort,baseline:before,candidate:after});
   }
  }
- fs.writeFileSync(join(output,'candidate-changes.json'),JSON.stringify(changes,null,2)+'\\n');
+ fs.writeFileSync(join(output,'candidate-changes.json'),JSON.stringify(changes,null,2)+'\n');
  assert.deepEqual(remote,[],'All post-warm-up remote requests denied; no inference asset should be fetched');
  const report={baseApplicationSHA:base,sourceCount:trace.length,originalHashMatches:trace.length,sourceTrace:trace,
   fullStoredResolution:true,reencodedSources:0,remoteRequestsAfterWarmup:remote.length,
