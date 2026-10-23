@@ -101,7 +101,7 @@ try{
        const c=maskCanvas.getContext('2d');c.save();polygon(c,id,w,h);c.clip();c.drawImage(decoded,0,0);c.restore();
        const png=maskCanvas.toDataURL('image/png');
        const prepared=new Image();prepared.src=png;await prepared.decode();
-       const cx=Math.round(w*.5),cy=Math.round(h*.62);
+       const cx=Math.round(w*(category==='Shoes'?.25:.3)),cy=Math.round(h*(category==='Shoes'?.72:.3));
        const sampleOriginal=s.getImageData(cx,cy,1,1).data;
        const sampleRetained=document.createElement('canvas');sampleRetained.width=w;sampleRetained.height=h;
        const sr=sampleRetained.getContext('2d');sr.drawImage(decoded,0,0);
