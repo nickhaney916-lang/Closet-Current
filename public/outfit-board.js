@@ -181,7 +181,7 @@ function renderBuilderOwnedStart(){
  create.disabled=!eligible.length;
  const id=currentBoard.anchorItemId||currentBoard.slots.top||currentBoard.slots.layer2||currentBoard.slots.layer||currentBoard.slots.bottom||currentBoard.slots.shoes;
  const piece=eligible.find(item=>item.id===id);
- selected.hidden=!piece;selected.textContent=piece?'Style '+(piece.name||piece.itemType||'selected piece'):'Style selected piece';
+ selected.hidden=!piece;selected.textContent=currentBoard.anchorItemId?'Style pinned piece':'Style selected piece';
  status.textContent=eligible.length?'Find up to three different combinations from your saved clothes, swap one piece, then save your favorite. Fewer options appear when your closet is small.':'Your closet is empty. Add a shirt or dress, bottoms and shoes to start building outfits from clothes you own.';
 }
 $('builderAddClothes')?.addEventListener('click',()=>switchView('scan'));

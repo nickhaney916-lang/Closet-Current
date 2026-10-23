@@ -18,7 +18,7 @@ test('builder reuses existing stylist and persisted pin instead of silently chan
  const h=setup();h.c.items=[{id:'top',category:'Tops'},{id:'shoe',category:'Shoes',name:'New shoes'}];
  h.c.currentBoard={slots:{top:'top',shoes:'shoe'},anchorItemId:'shoe'};
  h.c.renderBuilderOwnedStart();assert.equal(h.el('builderCreateOwned').disabled,false);
- assert.equal(h.el('builderStyleSelected').textContent,'Style New shoes');
+ assert.equal(h.el('builderStyleSelected').textContent,'Style pinned piece');
  h.el('builderStyleSelected').click();assert.deepEqual(h.calls,['shoe']);
  h.el('builderCreateOwned').click();assert.deepEqual(h.calls,['shoe','clear','stylist','submit']);
 });
