@@ -1,0 +1,45 @@
+name: Staging email link isolation verification
+on:
+  push:
+    branches: [qa/staging-auth-callback-20261022]
+permissions:
+  contents: read
+jobs:
+  offline-callbacks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 17
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prove original PR197 application/config files are unchanged
+        shell: bash
+        run: |
+          set -euo pipefail
+          baseline=e29aaad4b604b7b451cf4535309012082016c279
+          test "$(git merge-base "$baseline" HEAD)" = "$baseline"
+          git diff --name-only "$baseline" HEAD |
+          while IFS= read -r path; do
+            case "$path" in
+              scripts/test-restricted-staging-email-callbacks.mjs|.github/workflows/staging-email-redirect-qa.yml) ;;
+              *) echo "Unexpected source change: $path"; exit 1 ;;
+            esac
+          done
+          git diff --exit-code "$baseline" HEAD -- public supabase tests scripts/build-restricted-staging.mjs scripts/build-connected-staging-candidate.mjs
+          node --check scripts/test-restricted-staging-email-callbacks.mjs
+      - name: Generate fully synthetic staging bundle (no live backend)
+        env:
+          CLOSET_STAGING_SUPABASE_URL: https://abcdefghijklmnopqrst.supabase.co
+          CLOSET_STAGING_APP_ORIGIN: https://pilot-access-check.closet-current-staging.pages.dev/
+          CLOSET_STAGING_SUPABASE_PUBLISHABLE_KEY: sb_publishable_SYNTHETIC_EMAIL_LINK_QA_20261022
+        run: |
+          node scripts/build-restricted-staging.mjs
+          node scripts/verify-restricted-staging-bundle.mjs
+      - name: Verify actual rewritten email signup, reset and resend targets
+        run: node scripts/test-restricted-staging-email-callbacks.mjs
+      - name: Confirm no real email or hosting operation
+        run: echo 'OFFLINE VIRTUAL GOTRUE ONLY. NO LIVE EMAIL, CUSTOMER LOGIN, CLOUDFLARE, SUPABASE OR DEPLOYMENT.'
