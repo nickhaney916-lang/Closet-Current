@@ -1,0 +1,22 @@
+name: Issue 230 offline board schema bridge
+on:
+  push:
+    branches:
+      - qa/issue-230-board-schema-adapter-20261023
+  pull_request:
+    paths:
+      - public/outfit-3d-board-bridge.mjs
+      - tests/outfit-3d-board-bridge.test.mjs
+      - .github/workflows/issue-230-board-schema-qa.yml
+permissions:
+  contents: read
+jobs:
+  board-schema-bridge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - run: node --test tests/outfit-3d-board-bridge.test.mjs
