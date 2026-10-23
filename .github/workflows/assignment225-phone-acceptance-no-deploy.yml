@@ -33,6 +33,19 @@ jobs:
           node scripts/check-customer-pilot-release-gates.mjs
           node --test tests/protected-pilot-package.test.mjs
 
+  deno-edge-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.9.8
+      - name: Type-check and test disabled-paid-inference Edge runtime
+        run: |
+          deno check supabase/functions/ai-try-on/index.ts
+          deno test --allow-net=127.0.0.1 --allow-env tests/deno/ai-tryon-runtime.test.mjs
+
   browser-device-rehearsal:
     runs-on: ubuntu-latest
     timeout-minutes: 50
@@ -60,34 +73,43 @@ jobs:
           node scripts/verify-restricted-staging-bundle.mjs
           npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
           mkdir -p artifacts/assignment225
-      - name: Both browser engines - original capture/import, indexing and private owner store
+      - name: Complete offline Android Chromium and iPhone WebKit acceptance matrix
         shell: bash
         run: |
-          set -o pipefail
-          node scripts/test-integrated-pilot-journeys-mobile.mjs | tee artifacts/assignment225/original-capture-import.txt
-          node scripts/test-original-crop-source-mobile.mjs | tee artifacts/assignment225/source-crop.txt
-          node scripts/test-original-source-duplicate-mobile.mjs | tee artifacts/assignment225/source-duplicate.txt
-          node scripts/test-phone-color-audit-browsers.mjs | tee artifacts/assignment225/original-color-labeling.txt
-      - name: Multiple garments, owned outfits and restore
-        shell: bash
-        run: |
-          set -o pipefail
-          node scripts/test-whole-outfit-save-mobile.mjs | tee artifacts/assignment225/multigarment.txt
-          node scripts/test-issue201-outfit-browsers.mjs | tee artifacts/assignment225/owned-outfits.txt
-          node scripts/test-reusable-figure-phone-browsers.mjs | tee artifacts/assignment225/figure-layers.txt
-          node scripts/test-saved-figure-originals-browsers.mjs | tee artifacts/assignment225/original-figure.txt
-          node scripts/test-mobile-owned-outfit-reliability.mjs | tee artifacts/assignment225/save-restore.txt
-          node scripts/test-style-my-new-item-mobile.mjs | tee artifacts/assignment225/new-item-chromium.txt
-          STYLE_BROWSER=webkit node scripts/test-style-my-new-item-mobile.mjs | tee artifacts/assignment225/new-item-webkit.txt
-      - name: Synthetic account boundaries, PWA and phone acceptance UI
-        shell: bash
-        run: |
-          set -o pipefail
-          node scripts/test-auth-pilot-mobile.mjs artifacts/assignment225/auth-pilot | tee artifacts/assignment225/auth.txt
-          node scripts/test-staging-runtime-browsers.mjs | tee artifacts/assignment225/staging-runtime.txt
-          node scripts/test-staging-installed-pwa-chromium.mjs | tee artifacts/assignment225/pwa.txt
-          node scripts/test-device-check-phone-browsers.mjs | tee artifacts/assignment225/device-check.txt
-          node scripts/test-phone-recognition-triage-browsers.mjs | tee artifacts/assignment225/recognition-triage.txt
+          mkdir -p artifacts/assignment225
+          failed=0
+          : > artifacts/assignment225/case-results.txt
+          run_case() {
+            local case_name="$1"; shift
+            echo "::group::$case_name"
+            set +e
+            "$@" 2>&1 | tee "artifacts/assignment225/$case_name.txt"
+            local code=${PIPESTATUS[0]}
+            set -e
+            printf '%s exit=%s\n' "$case_name" "$code" >> artifacts/assignment225/case-results.txt
+            if [[ "$code" != 0 ]]; then failed=$((failed+1)); fi
+            echo "::endgroup::"
+          }
+          # Continue across independent test failures; fail the overall gate
+          # unless EVERY CASE passes. Avoid losing downstream failure evidence.
+          run_case original-capture-import node scripts/test-integrated-pilot-journeys-mobile.mjs
+          run_case source-crop node scripts/test-original-crop-source-mobile.mjs
+          run_case source-duplicate node scripts/test-original-source-duplicate-mobile.mjs
+          run_case original-color-labeling node scripts/test-phone-color-audit-browsers.mjs
+          run_case multigarment node scripts/test-whole-outfit-save-mobile.mjs
+          run_case owned-outfits node scripts/test-issue201-outfit-browsers.mjs
+          run_case figure-layers node scripts/test-reusable-figure-phone-browsers.mjs
+          run_case original-figure node scripts/test-saved-figure-originals-browsers.mjs
+          run_case save-restore node scripts/test-mobile-owned-outfit-reliability.mjs
+          run_case new-item-chromium node scripts/test-style-my-new-item-mobile.mjs
+          run_case new-item-webkit env STYLE_BROWSER=webkit node scripts/test-style-my-new-item-mobile.mjs
+          run_case auth node scripts/test-auth-pilot-mobile.mjs artifacts/assignment225/auth-pilot
+          run_case staging-runtime node scripts/test-staging-runtime-browsers.mjs
+          run_case pwa node scripts/test-staging-installed-pwa-chromium.mjs
+          run_case device-check node scripts/test-device-check-phone-browsers.mjs
+          run_case recognition-triage node scripts/test-phone-recognition-triage-browsers.mjs
+          echo "Failed offline acceptance cases: $failed"
+          test "$failed" -eq 0
       - name: Record actual CI evidence (never physical-device approval)
         if: always()
         run: |
