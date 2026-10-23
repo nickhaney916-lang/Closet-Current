@@ -1,7 +1,9 @@
 /** #232 renderer extension: front-photo projection; all other garment surfaces estimated. */
 import {createPhotoHumanoidGeometry} from './humanoid-3d-photo-geometry.mjs';
+import {indexPhotoMesh} from './humanoid-3d-indexed-mesh.mjs';
 import {getVerifiedPhotoFrame} from './humanoid-3d-photo-session.mjs';
-export function createPhotoHumanoid3D(canvas){
+export function createPhotoHumanoid3D(canvas,{indexed=true}={}){
+ if(typeof indexed!=='boolean')throw Error('Invalid mesh mode');
  const gl=canvas?.getContext?.('webgl',{alpha:true,antialias:true,depth:true,preserveDrawingBuffer:true});
  if(!gl)return {supported:false,setFrame:()=>false,render:()=>false,rotate:()=>false,clear(){},dispose(){},getState:()=>({supported:false,fallback:'2d-original-reference'})};
  const vs=`attribute vec3 p;attribute vec3 n;attribute vec2 t;uniform mat4 matrix;varying vec3 N;varying vec2 uv;void main(){gl_Position=matrix*vec4(p,1.);N=n;uv=t;}`;
@@ -13,7 +15,7 @@ export function createPhotoHumanoid3D(canvas){
  if(!gl.getProgramParameter(program,gl.LINK_STATUS)){gl.deleteProgram(program);throw Error('Photo renderer shader link failed');}
  const attrs=Object.fromEntries(['p','n','t'].map(k=>[k,gl.getAttribLocation(program,k)])),u=Object.fromEntries(['matrix','color','photo','skin','yaw','original'].map(k=>[k,gl.getUniformLocation(program,k)]));
  let parts=[],textures=new Map(),frame=null,yaw=0,disposed=false,lost=false,draws=[];
- function release(){for(const p of parts)gl.deleteBuffer(p.buffer);for(const t of textures.values())gl.deleteTexture(t);parts=[];textures.clear();frame=null;draws=[];}
+ function release(){for(const p of parts){gl.deleteBuffer(p.buffer);if(p.indexBuffer)gl.deleteBuffer(p.indexBuffer);}for(const t of textures.values())gl.deleteTexture(t);parts=[];textures.clear();frame=null;draws=[];}
  function clear(){release();if(!lost){gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);}}
  const contextLost=e=>{e.preventDefault();lost=true;release();};canvas.addEventListener('webglcontextlost',contextLost);
  function render(){
@@ -30,7 +32,7 @@ export function createPhotoHumanoid3D(canvas){
    gl.bindBuffer(gl.ARRAY_BUFFER,p.buffer);gl.vertexAttribPointer(attrs.p,3,gl.FLOAT,false,32,0);gl.vertexAttribPointer(attrs.n,3,gl.FLOAT,false,32,12);gl.vertexAttribPointer(attrs.t,2,gl.FLOAT,false,32,24);
    gl.uniform4fv(u.color,color);gl.uniform1f(u.photo,p.photo&&textures.has(p.key)?1:0);gl.uniform1f(u.skin,skin?1:0);
    gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,textures.get(p.key)||textures.values().next().value);
-   gl.drawArrays(gl.TRIANGLES,0,p.count);draws.push(p.id);
+   if(p.indexBuffer){gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,p.indexBuffer);gl.drawElements(gl.TRIANGLES,p.count,gl.UNSIGNED_SHORT,0);}else gl.drawArrays(gl.TRIANGLES,0,p.count);draws.push(p.id);
   }
   return true;
  }
@@ -40,7 +42,11 @@ export function createPhotoHumanoid3D(canvas){
   clear();
   try{
    for(const part of createPhotoHumanoidGeometry(data.selected)){
-    const buffer=gl.createBuffer();if(!buffer)throw Error('GPU buffer unavailable');parts.push({...part,buffer,count:part.vertices.length/8});gl.bindBuffer(gl.ARRAY_BUFFER,buffer);gl.bufferData(gl.ARRAY_BUFFER,part.vertices,gl.STATIC_DRAW);
+    const mesh=indexed?indexPhotoMesh(part.vertices):{vertices:part.vertices,indices:null,sourceVertexCount:part.vertices.length/8};
+    const buffer=gl.createBuffer();if(!buffer)throw Error('GPU buffer unavailable');
+    const record={id:part.id,key:part.key,photo:part.photo,buffer,indexBuffer:null,count:mesh.indices?.length||mesh.sourceVertexCount,uniqueVertices:mesh.vertices.length/8,sourceVertices:mesh.sourceVertexCount,vertexBytes:mesh.vertices.byteLength,indexBytes:mesh.indices?.byteLength||0};parts.push(record);
+    gl.bindBuffer(gl.ARRAY_BUFFER,buffer);gl.bufferData(gl.ARRAY_BUFFER,mesh.vertices,gl.STATIC_DRAW);
+    if(mesh.indices){record.indexBuffer=gl.createBuffer();if(!record.indexBuffer)throw Error('GPU index buffer unavailable');gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,record.indexBuffer);gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,mesh.indices,gl.STATIC_DRAW);}
    }
    for(const m of data.materials){
     const t=gl.createTexture();if(!t)throw Error('GPU texture unavailable');textures.set(m.slot,t);gl.bindTexture(gl.TEXTURE_2D,t);
@@ -52,6 +58,6 @@ export function createPhotoHumanoid3D(canvas){
   }catch(error){clear();throw error;}
  }
  return {supported:true,setFrame,render,clear,rotate(radians){if(!Number.isFinite(radians))throw Error('Invalid rotation');yaw=((yaw+radians)%(Math.PI*2)+Math.PI*2)%(Math.PI*2);return render();},
-  getState(){return {supported:true,yaw,drawn:[...draws],textureCount:textures.size,vertexCount:parts.reduce((n,p)=>n+p.count,0),bufferBytes:parts.reduce((n,p)=>n+p.vertices.byteLength,0),lost,disposed,estimatedSideBack:true,physicalFitVerified:false};},
+  getState(){return {supported:true,yaw,drawn:[...draws],textureCount:textures.size,vertexCount:parts.reduce((n,p)=>n+p.uniqueVertices,0),sourceVertexCount:parts.reduce((n,p)=>n+p.sourceVertices,0),indexCount:parts.reduce((n,p)=>n+(p.indexBuffer?p.count:0),0),bufferBytes:parts.reduce((n,p)=>n+p.vertexBytes+p.indexBytes,0),retainedGeometryBytes:0,indexed,lost,disposed,estimatedSideBack:true,physicalFitVerified:false};},
   dispose(){if(disposed)return;clear();disposed=true;canvas.removeEventListener('webglcontextlost',contextLost);gl.deleteProgram(program);}};
 }

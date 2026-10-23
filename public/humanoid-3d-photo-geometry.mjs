@@ -45,6 +45,7 @@ export function createPhotoHumanoidGeometry(garments=[]){
   const name=side<0?'left':'right';
   add(name+'-ear','skin',oval({x:side*.13,y:1.22,rx:.022,ry:.043,rz:.022,segments:12,rings:8}));
   add(name+'-eye','detail',oval({x:side*.047,y:1.255,z:.122,rx:.024,ry:.008,rz:.011,segments:12,rings:8}));
+  add(name+'-shoulder','skin',oval({x:side*.335,y:.78,rx:.14,ry:.12,rz:.09,segments:24,rings:12}));
   add(name+'-arm','skin',contourMesh([[.79,.092,.085],[.52,.08,.075],[.25,.062,.062],[-.045,.051,.053]],{x:side*.37,lean:side*.17}));
   add(name+'-leg','skin',contourMesh([[-.23,.125,.127],[-.60,.094,.095],[-.73,.10,.098],[-1.14,.065,.074]],{x:side*.15,lean:side*.045}));
   add(name+'-foot','skin',oval({x:side*.195,y:-1.205,z:.08,rx:.10,ry:.074,rz:.20}));
@@ -61,7 +62,11 @@ export function createPhotoHumanoidGeometry(garments=[]){
    const open=['layer2','layer3'].includes(key);
    add(key+'-contoured-shell',key,contourMesh(profile,{gap:open?.22:0,uvTop:.88,uvBottom:profile.at(-1)[0],uvWidth:.82}),true);
    const long=key!=='top'||g.sleeveLength==='Long sleeve';
-   for(const s of [-1,1])add(key+(s<0?'-left-sleeve':'-right-sleeve'),key,contourMesh([[.79,.105+d,.09+d],[.50,.085+d,.078+d],...(long?[[.24,.07+d,.062+d],[-.045,.061+d,.056+d]]:[])],{x:s*.37,lean:s*(long?.17:.06)}));
+   for(const s of [-1,1]){
+    // Rounded estimated shoulder bridges the open sleeve ring and torso shell.
+    add(key+(s<0?'-left-shoulder':'-right-shoulder'),key,oval({x:s*.335,y:.78,rx:.14+d,ry:.12,rz:.09+d,segments:24,rings:12}));
+    add(key+(s<0?'-left-sleeve':'-right-sleeve'),key,contourMesh([[.79,.105+d,.09+d],[.50,.085+d,.078+d],...(long?[[.24,.07+d,.062+d],[-.045,.061+d,.056+d]]:[])],{x:s*.37,lean:s*(long?.17:.06)}));
+   }
   }else if(key==='bottom'){
    if(g.itemType==='Skirt')add('separate-skirt',key,contourMesh([[.04,.27,.17],[-.35,.33,.21],[-.77,.405,.26]],{uvTop:.04,uvBottom:-.77,uvWidth:.85}),true);
    else{
