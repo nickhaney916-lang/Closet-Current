@@ -42,6 +42,6 @@ test('controller must call real server Auth and single-transaction private DB re
  assert.match(source,/prepareReviewedPhotoPresentation/);
  assert.match(source,/humanPreviewConfirmed/);
  assert.match(source,/sourcePixelAuditPassed/);
- assert.match(source,/sourceMask/); // protect source-related proof guards in review imports
+ assert.match(source,/stagingPreviewOnly/); // only accepted reviewed development presentations
  assert.doesNotMatch(source,/localStorage|\.src\s*=|console\.log|data:image\/svg/);
 });
