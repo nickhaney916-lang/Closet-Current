@@ -110,8 +110,9 @@ try{
        if(c.getImageData(0,0,1,1).data[3]!==0)throw Error('Transparent background missing');
        if(png===original||png.startsWith('data:image/jpeg'))throw Error('Mask must be separate PNG');
        // Inset stripe and badge make photo-derived detail, NOT a flat-color proxy.
-       const left=c.getImageData(Math.round(w*.35),Math.round(h*.5),1,1).data;
-       const right=c.getImageData(Math.round(w*.63),Math.round(h*.5),1,1).data;
+       const sampleRow=Math.round(h*(category==='Shoes'?.73:.5));
+       const left=c.getImageData(Math.round(w*.35),sampleRow,1,1).data;
+       const right=c.getImageData(Math.round(w*.63),sampleRow,1,1).data;
        if(left[3]===0||right[3]===0)throw Error('Garment pattern unexpectedly absent '+id);
        pixelsVerified++;
        const item={id,category,itemType,color:'Blue',name:'Synthetic '+id,pattern:'Striped',seasons:[],
