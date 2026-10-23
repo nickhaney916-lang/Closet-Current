@@ -1,3 +1,7 @@
+## 2026-10-23 — Issue #243 isolated photo-textured 3D research
+
+Separate branch `research/issue243-photo-textured-humanoid-20261023` builds on PR #232 (6025b13), preserving 2D and existing adapters. Added contoured procedural garments, original-byte SHA-256 texture sessions with caller authority/current-generation guards, front-only RGB projection, estimated hidden surfaces and synthetic comparisons. Local full suite: 291 pass, 0 fail, 0 skip; initial Chromium/WebKit six viewport journeys and existing avatar baseline passed CI 40011002477. No physical-phone or realistic-fit claims. See `docs/ISSUE243-PHOTO-HUMANOID-RESEARCH.md`; final exact-head results belong in the draft PR and issue #243. No deployment, paid AI, customer data or cloud changes.
+
 # Closet Current progress checkpoint
 
 ## Current checkpoint — October 14, 2026, evening Pacific
