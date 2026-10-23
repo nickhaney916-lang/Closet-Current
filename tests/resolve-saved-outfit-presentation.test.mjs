@@ -66,3 +66,14 @@ test('missing garment cannot be exposed through failed 3D verification fallback'
  assert.equal(result.mode,'unavailable');
  assert.equal(result.board,undefined);
 });
+
+test('empty and duplicate saved garment selections never bypass fallback validation',async()=>{
+ for(const record of [{slots:{}},{slots:{top:'shirt',bottom:'shirt'}}]){
+  const result=await resolveSavedOutfitPresentation(record,[item(1)],'owner',owns,webcrypto);
+  assert.equal(result.mode,'unavailable');
+ }
+ const saved=await verifyCapturedOutfitBoard(board,[item(1)],'owner',owns,webcrypto);
+ const envelope=createVerifiedOutfitEnvelope(board,saved);
+ const result=await resolveSavedOutfitPresentation({...envelope,board:{slots:{top:'shirt',bottom:'shirt'}}},[item(2)],'owner',owns,webcrypto);
+ assert.equal(result.mode,'unavailable');
+});
