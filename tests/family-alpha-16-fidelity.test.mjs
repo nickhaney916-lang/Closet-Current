@@ -131,3 +131,25 @@ test('fingerprints are distinct for different original/crop images and no input 
  await fingerprintAlphaRetainedOriginal(g.item.originalPhoto.image,webcrypto));
  await auditMask(f);assert.equal(JSON.stringify(f.item),before);
 });
+
+test('transparent antialias background halo is counted even below foreground alpha threshold',async()=>{
+ const f=await make('short-sleeve',31),out=f.prepared,rgba=out.rgba.slice();
+ let changed=0;
+ for(let y=0;y<out.height;y++)for(let x=0;x<out.width;x++){
+  const i=(y*out.width+x)*4;
+  if(rgba[i+3]===0&&changed<180){rgba[i+3]=90;changed++;}
+ }
+ f.prepared={...out,rgba};
+ const value=await auditMask(f);
+ assert.equal(value.status,'review');
+ assert.equal(value.reason,'segmentation-fidelity-below-synthetic-gate');
+ assert.ok(value.metrics.transparentBackgroundHaloPixels>0);
+});
+test('synthetic blur, reflective, and low-resolution images are not auto-approved',async()=>{
+ const {rows}=await runMatrix();
+ for(const mode of ['blurry','reflective','low-resolution']){
+  const result=rows.find(x=>x.condition===mode);
+  assert.ok(result,mode);
+  assert.equal(result.observed,'review',mode+': '+result.reason);
+ }
+});
