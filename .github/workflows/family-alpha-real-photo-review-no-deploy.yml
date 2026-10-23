@@ -1,0 +1,46 @@
+name: Family Alpha Reviewed Real JPEG Photo Gate - NO DEPLOY
+on:
+  pull_request:
+    paths:
+      - 'research/family-alpha-reviewed-photo/**'
+      - 'tests/family-alpha-real-photo-review-provider.test.mjs'
+      - 'scripts/test-family-alpha-real-photo-review-browser.mjs'
+      - 'docs/FAMILY-ALPHA-REVIEWED-JPEG-PHOTO-GATE.md'
+      - '.github/workflows/family-alpha-real-photo-review-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  full-node:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Build only; absolutely NO DEPLOY
+        run: node scripts/build.mjs
+      - name: Full existing Node regression and reviewed JPEG source guard tests
+        run: node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Independently run original mask synthetic ground-truth matrix
+        run: node research/family-alpha-16/run-matrix.mjs
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Install test-only Chromium WebKit harness without lock changes
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+      - name: 6 mobile cases actual retained JPEG and human reviewed transparent cutout
+        run: node scripts/test-family-alpha-real-photo-review-browser.mjs
+      - name: 6 mobile original source JPEG transparency fidelity cases
+        run: node scripts/test-family-alpha-16-mobile.mjs
+      - name: 6 mobile three-outfit and one-garment-swap cases
+        run: node scripts/test-family-alpha-15-browser.mjs
