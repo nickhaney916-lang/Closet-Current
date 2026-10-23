@@ -1,0 +1,51 @@
+name: Issue 240 offline saved outfit lifecycle and stale recommendation QA - NO DEPLOY
+on:
+  push:
+    branches: [qa/issue240-offline-outfit-lifecycle-20261023]
+permissions:
+  contents: read
+jobs:
+  source-locked-node-outfit-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with: {fetch-depth: 0}
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with: {node-version: '22'}
+      - name: Ensure main app/cloud/photo/recognition/3D untouched
+        run: |
+          git diff --exit-code 54c9e29ede069a05d1268e003f80cbda043c7d6a HEAD -- public supabase
+          if grep -nE 'fetch[[:space:]]*\(|XMLHttpRequest|api[.]openai|replicate[.]com' research/issue240/outfit-lifecycle.mjs; then exit 1; fi
+      - name: Build existing app without paid API
+        run: node scripts/build.mjs
+      - name: Full root Node regression including synthetic lifecycle
+        run: node --test tests/*.test.cjs tests/*.test.mjs
+  chromium-webkit-mobile-outfit-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with: {node-version: '22'}
+      - name: Install pinned Playwright for tests only
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+      - name: Exercise three-outfit refresh, pins, swap, ownership and restore
+        run: node scripts/test-issue240-outfit-mobile.mjs
+      - name: Mark no deployment artifact
+        if: always()
+        run: |
+          mkdir -p artifacts/issue240
+          printf '%s\n' "$GITHUB_SHA" > artifacts/issue240/head-sha.txt
+          echo 'SYNTHETIC ONLY — no photo sources, no deploy, no customer account' > artifacts/issue240/NO-DEPLOY.txt
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: issue240-synthetic-outfit-mobile-QA-NO-DEPLOY
+          path: artifacts/issue240/
+          retention-days: 7
