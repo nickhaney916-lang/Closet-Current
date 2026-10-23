@@ -53,6 +53,10 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: '22'
+      - name: Install isolated Playwright runtime and Chromium
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install chromium
       - name: Download licensed original photos and verify locked SHA-256 hashes
         run: node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/fixtures
       - name: Install pinned inference browser dependency
