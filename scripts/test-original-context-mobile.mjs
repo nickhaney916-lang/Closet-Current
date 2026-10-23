@@ -17,9 +17,9 @@ const server=createServer(async(req,res)=>{
    res.end('<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1"><title>Original photo synthetic QA</title><style>body{margin:0;max-width:100%;font-family:sans-serif}main{padding:12px;max-width:100%;overflow-wrap:anywhere}canvas{max-width:100%;height:auto}</style><main><h2>Original first QA — synthetic</h2><canvas id="original" width="256" height="384"></canvas><p id="result"></p></main><script src="/public/photo-color.js"></script>');
    return;
   }
-  if(!path.startsWith('/research/original-context/'))throw Error('Unrecognized route');
+  if(!path.startsWith('/research/original-context/')&&path!=='/public/photo-color.js')throw Error('Unrecognized route');
   const file=resolve(root,'.'+decodeURIComponent(path));if(!file.startsWith(root+sep))throw Error('Path escape');
-  res.writeHead(200,{'Content-Type':extname(file)==='.mjs'?'text/javascript':'text/plain','Cache-Control':'no-store'});
+  res.writeHead(200,{'Content-Type':['.mjs','.js'].includes(extname(file))?'text/javascript':'text/plain','Cache-Control':'no-store'});
   res.end(await readFile(file));
  }catch{res.writeHead(404);res.end('missing');}
 });
