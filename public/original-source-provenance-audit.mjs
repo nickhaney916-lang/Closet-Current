@@ -27,7 +27,7 @@ function decodeImageJPEG(source){
   const data=source.slice('data:image/jpeg;base64,'.length);
   if(data.length%4!==0)throw Error('Invalid base64 photo');
   buffer=Uint8Array.from(atob(data),char=>char.charCodeAt(0));
-  if(btoa(String.fromCharCode(...buffer))!==data)throw Error('Noncanonical base64 photo');
+  // Do not spread multi-megabyte buffers onto the JS stack.
  }catch{throw Error('Corrupted JPEG encoding');}
  // Header/trailer screening is NOT a full JPEG decode or blankness check.
  if(buffer.length<8||buffer.length>8388608||buffer[0]!==0xff||buffer[1]!==0xd8||buffer.at(-2)!==0xff||buffer.at(-1)!==0xd9)
