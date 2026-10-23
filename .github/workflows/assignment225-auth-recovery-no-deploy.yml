@@ -1,0 +1,39 @@
+name: Assignment 225 recovery token mismatch - NO DEPLOY
+on:
+  push:
+    branches: [fix/assignment225-recovery-token-20261023]
+permissions:
+  contents: read
+jobs:
+  isolated-auth-recovery:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+      - name: Confirm exactly one production code file changed
+        shell: bash
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "$(git diff --name-only b185e6901b0fb4b8c8aecfa3a0b1cacff2a43af3 HEAD -- public supabase)" = 'public/auth.js'
+          git diff --exit-code b185e6901b0fb4b8c8aecfa3a0b1cacff2a43af3 HEAD -- public ':(exclude)public/auth.js' supabase
+      - name: Build offline and test malformed or cross-account sessions
+        shell: bash
+        run: |
+          node scripts/build.mjs
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+          node --test tests/auth.test.cjs tests/auth-recovery-onboarding.test.cjs tests/auth-email-cutover.test.mjs tests/issue-182-staging-auth.test.cjs tests/cloud-session-generation.test.cjs
+          node scripts/test-auth-pilot-mobile.mjs /tmp/assignment225-auth-pilot
+      - name: Record non-deployable auth regression output
+        shell: bash
+        run: |
+          printf '%s\n' "Draft Auth-only safeguard; cannot enter sealed physical-phone pilot until independently reviewed." "No real Auth, staging writes, customer data or production deployment." 
