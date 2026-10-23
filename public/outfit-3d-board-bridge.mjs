@@ -33,8 +33,10 @@ export function mapBoardSlotsTo3D(board,ownedItems,scope,sourceIdentity){
   const item=byId.get(id);
   if(item.accountId!==scope)throw Error('Foreign wardrobe item');
   if(!item.image||typeof item.image!=='string')throw Error('Missing garment photo');
-  const identity=sourceIdentity(item);
-  if(typeof identity!=='string'||!identity.trim())throw Error('Original-photo provenance unresolved');
+  const provenance=sourceIdentity(item);
+  if(!provenance||typeof provenance!=='object'||typeof provenance.id!=='string'||!provenance.id.trim()||typeof provenance.version!=='string'||!provenance.version.trim())throw Error('Original-photo provenance and version unresolved');
+  if(typeof item.originalSourceVersion!=='string'||item.originalSourceVersion!==provenance.version)throw Error('Original-photo source version mismatch');
+  const identity=provenance.id;
   if(sources.has(identity))throw Error('Duplicate original-photo source');
   sources.add(identity);
   const region=SLOT_REGION[slot],color=hexColor(item.colorHex);
@@ -44,7 +46,7 @@ export function mapBoardSlotsTo3D(board,ownedItems,scope,sourceIdentity){
   if(slot==='shoes'&&item.category!=='Shoes')throw Error('Shoe slot category mismatch');
   if(slot==='layer'&&item.category!=='Outerwear')throw Error('Layer slot category mismatch');
   colors[region]=color;
-  selected.push({slot,itemId:id,sourceIdentity:identity,category:item.category,unseenSurfacesEstimated:true});
+  selected.push({slot,itemId:id,sourceIdentity:identity,sourceVersion:provenance.version,category:item.category,unseenSurfacesEstimated:true});
  }
  return {colors,selected,hasDress:isDress,placeholderOnly:true};
 }
