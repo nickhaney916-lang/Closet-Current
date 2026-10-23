@@ -13,6 +13,9 @@ export function prepareSavedOutfitItem({accountId,record,original,reviewedMask})
  if(!reviewedMask||reviewedMask.accountId!==accountId||reviewedMask.itemId!==record.id||
  reviewedMask.originalSha256!==original.originalSha256||reviewedMask.reviewed!==true)
  throw new Error('Reviewed mask is missing or stale');
+ if(!Number.isSafeInteger(original.width)||!Number.isSafeInteger(original.height)||
+ original.width<1||original.height<1||original.width*original.height>16000000)
+ throw new Error('Invalid original photo dimensions');
  if(!(reviewedMask.pixels instanceof Uint8Array)||reviewedMask.pixels.length!==original.width*original.height)
  throw new Error('Invalid original-resolution mask');
  if(!(original.pixels instanceof Uint8ClampedArray) ||
