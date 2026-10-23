@@ -1,0 +1,51 @@
+name: Issue 235 synthetic storage performance and resilience - NO DEPLOY
+on:
+  push:
+    branches: [qa/issue235-offline-photo-storage-benchmark-20261023]
+permissions:
+  contents: read
+jobs:
+  source-frozen-node-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with: {fetch-depth: 0}
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with: {node-version: '22'}
+      - name: Source fence on Auth original JPEG cloud and Outfit Builder
+        run: |
+          git diff --exit-code 54c9e29ede069a05d1268e003f80cbda043c7d6a HEAD -- public/app.js public/cloud-backup.js public/cloud-backup-engine.js public/cloud-backup-bridge.js public/photo-import.js public/outfit-board.js public/outfit-board-engine.js public/closet-browser.js public/auth.js public/recognition-photo.mjs supabase
+      - name: Build existing app without external paid inference
+        run: node scripts/build.mjs
+      - name: Full available Node regression suite
+        run: node --test tests/*.test.cjs tests/*.test.mjs
+  chromium-webkit-synthetic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      NODE_OPTIONS: --max-old-space-size=3072
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with: {node-version: '22'}
+      - name: Pin browser automation dependency without altering app package lock
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+      - name: Measure 25, 100, 250 and 500 piece wardrobes in Chromium and WebKit
+        run: node scripts/benchmark-wardrobe-photo-storage.mjs
+      - name: Mark synthetic benchmark artifacts NO DEPLOY
+        if: always()
+        run: |
+          mkdir -p artifacts/issue235
+          echo "$GITHUB_SHA" > artifacts/issue235/source-commit.txt
+          echo 'SYNTHETIC BENCHMARK ONLY. NO CUSTOMER IMAGES, CLOUD ACCESS OR DEPLOYMENT.' > artifacts/issue235/READ-ME-FIRST.txt
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: issue235-OFFLINE-STORAGE-MEASUREMENTS-NO-DEPLOY
+          path: artifacts/issue235/
+          retention-days: 7
