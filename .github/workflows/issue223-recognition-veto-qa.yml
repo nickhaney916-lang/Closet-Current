@@ -33,7 +33,7 @@ jobs:
       - name: Install isolated browser test engines
         run: |
           npm install --no-save --no-package-lock playwright
-          npx playwright install --with-deps chromium webkit
+          npx playwright install chromium webkit
       - name: Validate original-photo and phone review journeys in Chromium and WebKit
         run: |
           node scripts/test-original-crop-source-mobile.mjs
