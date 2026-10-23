@@ -31,7 +31,9 @@ function toRGBLabel(r,g,b,family){
  // Only use hue recovered by normalizing a dark chromatic source pixel.
  // Normalization does not change any actual image or color data.
  if(max<75&&max>=18&&diff>=13&&ratio>=.40){
-  const factor=150/max,recovered=family(clamp255(r*factor),clamp255(g*factor),clamp255(b*factor));
+  // Lift hue candidates above the existing palette's <.62 brown gate;
+  // otherwise true orange/yellow shadows get wrongly normalized to Brown.
+  const factor=210/max,recovered=family(clamp255(r*factor),clamp255(g*factor),clamp255(b*factor));
   if(CHROMATIC.has(recovered))return {base,anchor:null,shadow:recovered,value:max,ratio};
  }
  return {base,anchor:null,shadow:null,value:max,ratio};
