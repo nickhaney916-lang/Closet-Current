@@ -120,6 +120,49 @@ try{
      return {savedBoardLayers:4,dressMapping:true,changedOriginalRefused:true,accountSwitchCleared:true};
     });
     if(!savedBoard.dressMapping||!savedBoard.accountSwitchCleared)throw Error('Saved board gate failed');
+    const authPreflight=await page.evaluate(async()=>{
+     const {renderAlphaAuthenticatedBoard}=await import('/public/family-alpha-2d-auth-preflight.mjs');
+     const {fingerprintAlphaRetainedOriginal,identityForSavedGarment}=await import('/public/family-alpha-2d-saved-board.mjs');
+     const owner='a1111111-1111-4111-8111-111111111111',foreign='b2222222-2222-4222-8222-222222222222';
+     const canvas=document.createElement('canvas');canvas.width=128;canvas.height=180;
+     canvas.getContext('2d').fillStyle='#92c1bc';canvas.getContext('2d').fillRect(0,0,128,180);
+     const original=canvas.toDataURL('image/jpeg',.96);
+     const item={id:'test-shirt',category:'Tops',image:original,originalPhoto:{image:original}};
+     const svg='<svg xmlns="http://www.w3.org/2000/svg" width="175" height="290"><rect x="3" y="3" width="168" height="284" fill="#79aecc"/></svg>';
+     const photo=new Image();photo.src='data:image/svg+xml,'+encodeURIComponent(svg);await photo.decode();
+     let identity=owner,requests=0,access='synthetic-test-access-token';
+     const state={epoch:1,cloud:owner};
+     const auth={user:{id:owner},getAccessToken:async()=>access};
+     const options={auth,database:{name:'closet-current-user-'+owner},
+      getCloudOwnerId:()=>state.cloud,getSessionGeneration:()=>state.epoch,
+      publicKey:'synthetic-publishable-key',
+      fetchFn:async(url,request)=>{
+       if(url!=='https://hlkgymugtfbirlpunsra.supabase.co/auth/v1/user'||request.method!=='GET'||
+          request.headers.Authorization!=='Bearer '+access)throw Error('Invalid simulated auth request');
+       requests++;return {ok:true,status:200,json:async()=>({id:identity})};
+      },
+      loadScopedWardrobe:async()=>({ownerId:owner,indexedDbName:'closet-current-user-'+owner,
+       board:{slots:{top:'test-shirt'}},items:[item]}),
+      preparePresentations:async()=>({[item.id]:{itemId:item.id,ownerId:owner,
+       sourceIdentity:identityForSavedGarment(item),
+       sourceVersion:await fingerprintAlphaRetainedOriginal(original),approved:true,image:photo}})
+     };
+     const stage=document.querySelector('#stage');
+     const drawn=await renderAlphaAuthenticatedBoard(stage,options);
+     if(drawn.renderedLayers!==1||!drawn.serverAuthChecked||requests!==1||
+        stage.querySelectorAll('img').length!==1)throw Error('Verified synthetic avatar render failed');
+     identity=foreign;
+     let denied=false;
+     try{await renderAlphaAuthenticatedBoard(stage,options);}catch{denied=true;}
+     if(!denied||stage.querySelectorAll('img').length!==0)throw Error('Foreign Auth identity not refused');
+     identity=owner;options.database.name='closet-current-user-'+foreign;
+     let dbBlocked=false;
+     try{await renderAlphaAuthenticatedBoard(stage,options);}catch{dbBlocked=true;}
+     if(!dbBlocked||stage.children.length!==0)throw Error('Wrong local wardrobe scope accepted');
+     return {serverIdentityGate:true,foreignSessionCleared:true,wrongDbRefused:true};
+    });
+    if(!authPreflight.serverIdentityGate||!authPreflight.foreignSessionCleared)
+     throw Error('Authenticated preview gate failed');
     assert.deepEqual(errors,[]);assert.deepEqual(external,[]);
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+1),true);
     results.push({browser:browserName,width,...data});
