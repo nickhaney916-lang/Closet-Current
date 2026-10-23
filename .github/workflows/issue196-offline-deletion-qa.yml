@@ -1,0 +1,32 @@
+name: Issue196 offline deletion safety only
+on:
+  push:
+    branches: [qa/issue196-offline-deletion-safety]
+permissions:
+  contents: read
+jobs:
+  synthetic-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prove QA-only scope and disabled endpoint
+        run: node scripts/check-issue196-offline-scope.mjs
+      - name: Existing app build and full regression
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Offline deletion and recovery with active network denial
+        run: |
+          node --require ./tests/helpers/issue196-no-network.cjs --test tests/issue196-*.test.mjs tests/account-deletion-*.test.mjs
+          git diff --exit-code
+          git diff --check
+      - name: Record scope of evidence
+        run: |
+          echo "Exact QA commit: $GITHUB_SHA"
+          echo 'Synthetic service-contract tests only. No hosted service, physical erasure, recovery executor or invitation approval. HTTP deletion remains disabled.'
