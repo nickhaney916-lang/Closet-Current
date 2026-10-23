@@ -2,6 +2,7 @@ import test from 'node:test';import assert from 'node:assert/strict';import fs f
 import * as catalog from '../public/local-catalog.mjs';
 import * as engine from '../public/recognition-engine.mjs';
 import {scannerErrorCode} from '../public/scanner-errors.mjs';
+import {requireSubtypeReview} from '../public/recognition-subtype-review.mjs';
 const source=fs.readFileSync('public/local-worker.mjs','utf8');
 function setup({width=500,decodeError=false,detailError=false}={}){
  const sent=[],calls=[],choice=catalog.localCandidates[0],groups=catalog.garmentDetailGroups(choice);
@@ -18,8 +19,8 @@ function setup({width=500,decodeError=false,detailError=false}={}){
  };
  const runtime={CLIPVisionModelWithProjection:{from_pretrained:async()=>async()=>({})},AutoProcessor:{from_pretrained:async()=>async()=>({})},env:{backends:{onnx:{wasm:{}}}},RawImage:{read:async()=>{if(decodeError)throw Error('Image decode failed, private path');return {width,height:500};}}};
  const vectorsAPI={loadVectorAssets:async()=>({metadata:{model:'ff13/fashion-clip',revision:'0'.repeat(40)},vectors:null}),makeVectorScorer:()=>model},photoAPI={prepareRecognitionPhoto:async image=>image};
- const c={vectorsAPI,photoAPI,engine,self:{postMessage:x=>sent.push(x)},catalog,runtime,scannerErrorCode,URL};vm.createContext(c);
- const transformed=source.replace("import {scannerErrorCode} from './scanner-errors.mjs';",'').replace(/await import\('https:[^']+'\)/,'await Promise.resolve(runtime)').replace("await import('./vector-scorer.mjs'+version)",'await Promise.resolve(vectorsAPI)').replace("await import('./recognition-photo.mjs'+version)",'await Promise.resolve(photoAPI)').replace("await import('./recognition-engine.mjs'+new URL(import.meta.url).search)",'await Promise.resolve(engine)').replaceAll('new URL(import.meta.url).search',"''");
+ const c={vectorsAPI,photoAPI,engine,self:{postMessage:x=>sent.push(x)},catalog,runtime,scannerErrorCode,requireSubtypeReview,URL};vm.createContext(c);
+ const transformed=source.replace("import {scannerErrorCode} from './scanner-errors.mjs';",'').replace(/await import\('https:[^']+'\)/,'await Promise.resolve(runtime)').replace("await import('./vector-scorer.mjs'+version)",'await Promise.resolve(vectorsAPI)').replace("await import('./recognition-photo.mjs'+version)",'await Promise.resolve(photoAPI)').replace("await import('./recognition-engine.mjs'+new URL(import.meta.url).search)",'await Promise.resolve(engine)').replace("await import('./recognition-subtype-review.mjs'+new URL(import.meta.url).search)",'await Promise.resolve({requireSubtypeReview})').replaceAll('new URL(import.meta.url).search',"''");
  vm.runInContext(transformed,c);
  return {sent,calls,async scan(){c.self.onmessage({data:{id:'test',type:'classify',image:'data:image/jpeg;base64,AAAA'}});await vm.runInContext('chain',c);return sent.find(x=>x.type==='result');}};
 }
