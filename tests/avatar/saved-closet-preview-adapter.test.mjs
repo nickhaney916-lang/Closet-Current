@@ -32,3 +32,14 @@ test('authorized original photo produces a transparent-background 2D preview',()
  assert.equal(out.fitSimulation,false);
  assert.ok(out.pixels.some(v=>v>0));
 });
+
+test('invisible original photos are blocked even when mask is present',()=>{
+ assert.throws(()=>prepareSavedOutfitItem({accountId,...item,original:{...original,pixels:new Uint8ClampedArray([0,0,0,0])}}));
+});
+test('black clothing is a valid visible original and must not be rejected',()=>{
+ const out=prepareSavedOutfitItem({accountId,...item,original:{...original,pixels:new Uint8ClampedArray([0,0,0,255])}});
+ assert.equal(out.garment.pixels[3],255);
+});
+test('malformed original pixel length is rejected',()=>{
+ assert.throws(()=>prepareSavedOutfitItem({accountId,...item,original:{...original,pixels:new Uint8ClampedArray([1,2,3])}}));
+});
