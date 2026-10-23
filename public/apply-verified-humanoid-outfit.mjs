@@ -23,7 +23,7 @@ export function applyVerifiedHumanoidOutfit(renderer,prepared){
  let applied;
  try{applied=renderer.setOutfit(payload);}catch{return false;}
  if(applied!==true)return false;
- if(typeof renderer.getState==='function'){const state=renderer.getState();if(state?.lost||state?.disposed)return false;}
+ if(typeof renderer.getState==='function'){try{const state=renderer.getState();if(state?.lost||state?.disposed)return false;}catch{return false;}}
  return true;
 }
 
