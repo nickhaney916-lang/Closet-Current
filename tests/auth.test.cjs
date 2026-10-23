@@ -114,6 +114,30 @@ test('returning session refreshes with the correct endpoint and rotated refresh 
 test('expired returning session shows a login message rather than an email-link error',async()=>{
  const a=app(async()=>response({msg:'Invalid refresh token'},false),{},{refresh_token:'expired'});await new Promise(setImmediate);assert.match(a.get('authStatus').textContent,/login session has expired/);assert.equal(a.window.closetAuth.user,null);assert.equal(a.saved.has('closet-current-auth-v1'),false);assert.equal(a.get('authSubmit').disabled,false);
 });
+test('canceled logout reload locks old account and offers cleanup action',async()=>{
+ const a=app(async url=>url.endsWith('/logout')?response({}):response({access_token:'owner-access',refresh_token:'owner-refresh',user:{id:'owner-A'}}));
+ await a.submit();
+ assert.equal(a.window.closetAuth.isSigningOut(),false);
+ await a.get('logout').onclick();
+ assert.equal(a.window.closetAuth.isSigningOut(),true);
+ assert.equal(a.get('appShell').hidden,true);
+ assert.equal(a.get('authGate').hidden,false);
+ assert.equal(a.saved.has('closet-current-auth-v1'),false);
+ assert.equal(a.get('authSubmit').disabled,true,'cannot log in before stale document clears');
+ const fallback=[...a.timers.values()][0];
+ assert.equal(typeof fallback,'function');
+ fallback(); // Simulate a canceled browser reload.
+ assert.match(a.get('authStatus').textContent,/Signed out.*Reload to finish/);
+ assert.equal(a.get('authRetry').hidden,false);
+ assert.equal(a.get('authRetry').disabled,false);
+ assert.equal(a.get('authRetry').textContent,'Finish signing out');
+ assert.equal(a.get('authSubmit').disabled,true);
+ await a.get('authRetry').onclick();
+ assert.equal(a.reloaded(),true);
+ assert.equal(a.window.closetAuth.user,null);
+ assert.equal(a.saved.has('closet-current-auth-v1'),false);
+});
+
 test('logout clears the local session even if its service request fails',async()=>{
  let calls=0;const a=app(async()=>++calls===1?response({access_token:'test-access',refresh_token:'test-refresh',user:{id:'test-user'}}):response({msg:'network error'},false));await a.submit();await a.get('logout').onclick();assert.match(a.requests[1][0],/auth\/v1\/logout$/);assert.equal(a.requests[1][1].headers.Authorization,'Bearer test-access');assert.equal(a.saved.has('closet-current-auth-v1'),false);assert.equal(a.reloaded(),true);
 });
