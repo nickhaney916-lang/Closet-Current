@@ -129,7 +129,7 @@ export function createOfflineIntegrationQA(source){
     :await verifyCapturedOutfitBoard(board,prepared,scope.owner,ownerCheck);
    still(scope);
    const accepted=prepareWardrobeFor3D(prepared,scope.owner);
-   if(accepted.size!==prepared.length)throw Error('PR232 photo admission rejected '+(prepared.length-accepted.size)+' synthetic JPEG garments');
+   if(accepted.size!==prepared.length)throw Error('PR232 refused '+(prepared.length-accepted.size)+' sources; metadata '+prepared.map(x=>[x.ownerId===scope.owner,x.originalPhoto?.ownerId===scope.owner,x.originalPhoto?.image?.startsWith('data:image/jpeg;base64,'),x.originalPhoto?.image?.length,x.originalPhoto?.id===x.outfitSourceId,Boolean(x.cropIdentity),x.colorHex]).join(',').slice(0,72));
    const proxy=bridgeSavedOutfit(board,prepared,scope.owner);still(scope);
    if(!verified.placeholderOnly||!proxy.syntheticGeometryOnly)throw Error('Not research-only placeholder');
    // proxy.references contains originals: never serialize/publish or send to WebGL.
