@@ -136,7 +136,16 @@ export function reviewOnlyUnwornOutfitGroups(map){
  }).map(group=>({...group,reviewOnlyReason:'no-person-evidence-review-only'}));
 }
 export function clothingCropBounds(image,map,group,{marginFraction=.05}={}){
- if(![3,4].includes(image.channels)||image.data.length!==image.width*image.height*image.channels)throw Error('Invalid outfit image pixels.');
+ if(!Number.isSafeInteger(image?.width)||!Number.isSafeInteger(image?.height)||image.width<1||image.height<1||
+    ![3,4].includes(image.channels)||!image.data||image.data.length!==image.width*image.height*image.channels)
+  throw Error('Invalid outfit image pixels.');
+ const b=group?.bounds;
+ // Reject corrupt/stale geometry before allocating output. NaN, zero scales
+ // and out-of-frame bounds otherwise silently copy undefined as black pixels.
+ if(!Number.isInteger(map?.width)||!Number.isInteger(map?.height)||map.width<1||map.height<1||map.width>512||map.height>512||
+    !b||![b.left,b.top,b.right,b.bottom].every(Number.isInteger)||
+    b.left<0||b.top<0||b.right>map.width||b.bottom>map.height||b.right<=b.left||b.bottom<=b.top)
+  throw Error('Invalid outfit crop geometry.');
  if(!Number.isFinite(marginFraction)||marginFraction<.05||marginFraction>.15)
   throw Error('Invalid original photo crop margin.');
  // Recognition must keep the same 5% source crop as before. A display-only
@@ -444,8 +453,16 @@ export function garmentDisplayMaskReliability(map,group,{maxDetachedShare=.2,max
   largestUnexplainedHole,unexplainedHoles,
   sourcePreserved:true,measuresPixelAccuracy:false};
 }
+function validateClothingSelection(map,group){
+ const selected=group?.selected;
+ if(!selected||selected.length!==map.width*map.height)
+  throw Error('Invalid clothing mask dimensions.');
+ for(const value of selected)if(value!==0&&value!==1)
+  throw Error('Invalid clothing mask values.');
+}
 export function isolateClothingPixels(image,map,group,{repairDisplayPinholes=true}={}){
  const {left,top,width,height}=clothingCropBounds(image,map,group),scaleX=image.width/map.width,scaleY=image.height/map.height;
+ validateClothingSelection(map,group);
  const repaired=repairDisplayPinholes?repairGarmentDisplayPinholes(image,map,group):
   {selected:group.selected,repairedPixels:0,repairedHoles:0,originalPixelsOnly:true};
  const data=new Uint8ClampedArray(width*height*3);data.fill(255);
@@ -462,6 +479,7 @@ export function isolateClothingPixels(image,map,group,{repairDisplayPinholes=tru
 // the white display background. Spread samples evenly across the mask.
 export function clothingColorSample(image,map,group){
  clothingCropBounds(image,map,group);
+ validateClothingSelection(map,group);
  const selected=[],sourcePixels=new Set();let distinctMaskPixels=0;
  for(let i=0;i<group.selected.length;i++)if(group.selected[i]){
   distinctMaskPixels++;
@@ -479,7 +497,10 @@ export function clothingColorSample(image,map,group){
  const sampleCount=Math.min(256,selected.length),data=new Uint8ClampedArray(16*16*4);
  for(let n=0;n<sampleCount;n++){
   const source=selected[Math.min(selected.length-1,Math.floor((n+.5)*selected.length/sampleCount))];
-  for(let c=0;c<3;c++)data[n*4+c]=image.data[source+c];data[n*4+3]=255;
+  for(let c=0;c<3;c++)data[n*4+c]=image.data[source+c];
+  // Hidden RGB beneath transparency is not photographed color evidence.
+  // Let the existing palette alpha gate reject it, rather than making it opaque.
+  data[n*4+3]=image.channels===4?image.data[source+3]:255;
  }
  return {data,width:16,height:16,distinctMaskPixels,distinctSourcePixels:selected.length,sampledPixels:sampleCount};
 }
@@ -490,6 +511,8 @@ export function clothingColorSample(image,map,group){
 // hangers and floor frequently leak into sampled colors. A slim or fragmented
 // garment without a useful interior returns null rather than invented color.
 export function clothingInteriorColorSample(image,map,group,{minimumInterior=96}={}){
+ clothingCropBounds(image,map,group);
+ validateClothingSelection(map,group);
  const width=map.width,height=map.height,selected=group.selected;
  if(!Number.isInteger(width)||!Number.isInteger(height)||width<3||height<3||
     selected?.length!==width*height||!Number.isInteger(minimumInterior)||minimumInterior<32||minimumInterior>256)

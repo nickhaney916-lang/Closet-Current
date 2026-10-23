@@ -1,3 +1,21 @@
+# Assignment #233 — original-photo recognition safety (October 23)
+
+Isolated new branch from #226 b06f606; reviewed #220/#224/#226/#228/#231 and
+coordinated in #224/#221. Mask-assisted recognition now uses the same subtype
+review policy as ordinary recognition. Crop geometry/mask integrity fail closed;
+RGBA color samples retain alpha instead of falsely labeling hidden red pixels.
+19 new synthetic tests; local full repository + avatar suite 1881 PASS / 0 FAIL /
+0 SKIP. Native59 repeated exact-head inference and Chromium/WebKit evidence go
+in draft PR. #226 verified baseline is 47/56 correct broad categories, nine
+abstentions, 35 automatic subtypes, 12 category reviews, three rejected controls.
+Raw three subtype errors remain suppressed by review, not solved by model tuning.
+Outfit pieces still classify unmasked original-derived JPEG crops; whole-scene
+instance grounding and independent masks remain blockers. No physical phones,
+merge/deploy, paid AI, customer photos, cloud settings or Drive Duel changes.
+See docs/ASSIGNMENT233-ORIGINAL-RECOGNITION.md. Main owns integration/release.
+
+---
+
 # Assignment #219 — independent 2D readiness (October 23)
 
 Separate `qa/2d-outfit-readiness-20261023` from verified PR #219 883c8ed.

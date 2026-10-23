@@ -1,0 +1,604 @@
+{
+  "sourceCommit": "b06f606b0cbd4ecf9e10875a8b6188111a069011",
+  "workflowRun": 39991911492,
+  "artifactId": 12517508938,
+  "artifactSHA256": "c67d25bfdf2818332c959a4eb34cb054ffe6e3e02041bde8ea8b7fcc5cb31fd4",
+  "cohorts": {
+    "reviewed-32": [
+      {
+        "id": "commons-0001",
+        "prediction": {
+          "category": "Tops",
+          "type": "T-shirt"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0002",
+        "prediction": {
+          "category": "Tops",
+          "type": "T-shirt"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0021",
+        "prediction": {
+          "category": "Bottoms",
+          "type": "Jeans"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0023",
+        "prediction": {
+          "category": "Bottoms",
+          "type": "Jeans"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0024",
+        "prediction": {
+          "category": "Bottoms",
+          "type": "Jeans"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0033",
+        "prediction": {
+          "category": "Bottoms",
+          "type": "Shorts"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0035",
+        "prediction": {
+          "category": "Bottoms",
+          "type": "Shorts"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": "bottoms_independent_agreement"
+      },
+      {
+        "id": "commons-0041",
+        "prediction": {
+          "category": "Bottoms",
+          "type": "Skirt"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0043",
+        "prediction": {
+          "category": "Bottoms",
+          "type": "Skirt"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0044",
+        "prediction": {
+          "category": "Bottoms",
+          "type": "Skirt"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0045",
+        "prediction": {
+          "category": "Bottoms",
+          "type": "Skirt"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": "skirt_padded_views_agreement"
+      },
+      {
+        "id": "commons-0052",
+        "prediction": {
+          "category": "Dresses",
+          "type": "Unknown"
+        },
+        "strong": false,
+        "categoryConfirmed": true,
+        "reason": "dress_type_review"
+      },
+      {
+        "id": "commons-0053",
+        "prediction": {
+          "category": null,
+          "type": null
+        },
+        "strong": false,
+        "categoryConfirmed": false,
+        "reason": "checks_disagree"
+      },
+      {
+        "id": "commons-0064",
+        "prediction": {
+          "category": "Outerwear",
+          "type": "Unknown"
+        },
+        "strong": false,
+        "categoryConfirmed": true,
+        "reason": "subtype_needs_review"
+      },
+      {
+        "id": "commons-0065",
+        "prediction": {
+          "category": null,
+          "type": null
+        },
+        "strong": false,
+        "categoryConfirmed": false,
+        "reason": "checks_disagree"
+      },
+      {
+        "id": "commons-0067",
+        "prediction": {
+          "category": "Outerwear",
+          "type": "Coat"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0068",
+        "prediction": {
+          "category": "Outerwear",
+          "type": "Coat"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0069",
+        "prediction": {
+          "category": "Outerwear",
+          "type": "Coat"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0070",
+        "prediction": {
+          "category": null,
+          "type": null
+        },
+        "strong": false,
+        "categoryConfirmed": false,
+        "reason": "views_disagree"
+      },
+      {
+        "id": "commons-0079",
+        "prediction": {
+          "category": "Shoes",
+          "type": "Sneakers"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0080",
+        "prediction": {
+          "category": "Shoes",
+          "type": "Sneakers"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0081",
+        "prediction": {
+          "category": "Shoes",
+          "type": "Sneakers"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0082",
+        "prediction": {
+          "category": "Shoes",
+          "type": "Sneakers"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0083",
+        "prediction": {
+          "category": "Shoes",
+          "type": "Sneakers"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0084",
+        "prediction": {
+          "category": "Shoes",
+          "type": "Sneakers"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0085",
+        "prediction": {
+          "category": "Shoes",
+          "type": "Sneakers"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0087",
+        "prediction": {
+          "category": "Shoes",
+          "type": "Tall boots"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0088",
+        "prediction": {
+          "category": "Shoes",
+          "type": "Unknown"
+        },
+        "strong": false,
+        "categoryConfirmed": true,
+        "reason": "subtype_needs_review"
+      },
+      {
+        "id": "commons-0089",
+        "prediction": {
+          "category": "Shoes",
+          "type": "Unknown"
+        },
+        "strong": false,
+        "categoryConfirmed": true,
+        "reason": "subtype_needs_review"
+      },
+      {
+        "id": "commons-0092",
+        "prediction": {
+          "category": "Shoes",
+          "type": "Unknown"
+        },
+        "strong": false,
+        "categoryConfirmed": true,
+        "reason": "subtype_needs_review"
+      },
+      {
+        "id": "commons-0093",
+        "prediction": {
+          "category": "Shoes",
+          "type": "Unknown"
+        },
+        "strong": false,
+        "categoryConfirmed": true,
+        "reason": "subtype_needs_review"
+      },
+      {
+        "id": "commons-0094",
+        "prediction": {
+          "category": "Shoes",
+          "type": "Unknown"
+        },
+        "strong": false,
+        "categoryConfirmed": true,
+        "reason": "subtype_needs_review"
+      }
+    ],
+    "holdout-16": [
+      {
+        "id": "commons-0003",
+        "prediction": {
+          "category": "Tops",
+          "type": "Unknown"
+        },
+        "strong": false,
+        "categoryConfirmed": true,
+        "reason": "category_type_review"
+      },
+      {
+        "id": "commons-0014",
+        "prediction": {
+          "category": "Tops",
+          "type": "Unknown"
+        },
+        "strong": false,
+        "categoryConfirmed": true,
+        "reason": "subtype_needs_review"
+      },
+      {
+        "id": "commons-0016",
+        "prediction": {
+          "category": null,
+          "type": null
+        },
+        "strong": false,
+        "categoryConfirmed": false,
+        "reason": "checks_disagree"
+      },
+      {
+        "id": "commons-0025",
+        "prediction": {
+          "category": "Bottoms",
+          "type": "Jeans"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0036",
+        "prediction": {
+          "category": null,
+          "type": null
+        },
+        "strong": false,
+        "categoryConfirmed": false,
+        "reason": "category_uncertain"
+      },
+      {
+        "id": "commons-0040",
+        "prediction": {
+          "category": "Bottoms",
+          "type": "Skirt"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0049",
+        "prediction": {
+          "category": "Dresses",
+          "type": "Formal dress"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0059",
+        "prediction": {
+          "category": null,
+          "type": null
+        },
+        "strong": false,
+        "categoryConfirmed": false,
+        "reason": "type_uncertain"
+      },
+      {
+        "id": "commons-0060",
+        "prediction": {
+          "category": null,
+          "type": null
+        },
+        "strong": false,
+        "categoryConfirmed": false,
+        "reason": "category_uncertain"
+      },
+      {
+        "id": "commons-0062",
+        "prediction": {
+          "category": null,
+          "type": null
+        },
+        "strong": false,
+        "categoryConfirmed": false,
+        "reason": "checks_disagree"
+      },
+      {
+        "id": "commons-0077",
+        "prediction": {
+          "category": "Shoes",
+          "type": "Sneakers"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "commons-0078",
+        "prediction": {
+          "category": "Shoes",
+          "type": "Unknown"
+        },
+        "strong": false,
+        "categoryConfirmed": true,
+        "reason": "subtype_needs_review"
+      },
+      {
+        "id": "commons-0095",
+        "prediction": {
+          "category": null,
+          "type": null
+        },
+        "strong": false,
+        "categoryConfirmed": false,
+        "reason": "category_uncertain"
+      },
+      {
+        "id": "commons-0046",
+        "prediction": {
+          "category": null,
+          "type": null
+        },
+        "strong": false,
+        "categoryConfirmed": false,
+        "reason": "category_uncertain"
+      },
+      {
+        "id": "commons-0086",
+        "prediction": {
+          "category": null,
+          "type": null
+        },
+        "strong": false,
+        "categoryConfirmed": false,
+        "reason": "category_uncertain"
+      },
+      {
+        "id": "commons-0090",
+        "prediction": {
+          "category": null,
+          "type": null
+        },
+        "strong": false,
+        "categoryConfirmed": false,
+        "reason": "category_uncertain"
+      }
+    ],
+    "fresh-11": [
+      {
+        "id": "validation-0001",
+        "prediction": {
+          "category": "Dresses",
+          "type": "Unknown"
+        },
+        "strong": false,
+        "categoryConfirmed": true,
+        "reason": "dress_type_review"
+      },
+      {
+        "id": "validation-0002",
+        "prediction": {
+          "category": "Dresses",
+          "type": "Formal dress"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "validation-0003",
+        "prediction": {
+          "category": "Dresses",
+          "type": "Formal dress"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "validation-0004",
+        "prediction": {
+          "category": "Dresses",
+          "type": "Formal dress"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "validation-0008",
+        "prediction": {
+          "category": "Accessories",
+          "type": "Scarf"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "validation-0010",
+        "prediction": {
+          "category": "Dresses",
+          "type": "Sweater dress"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "validation-0017",
+        "prediction": {
+          "category": "Bottoms",
+          "type": "Unknown"
+        },
+        "strong": false,
+        "categoryConfirmed": true,
+        "reason": "category_type_review"
+      },
+      {
+        "id": "validation-0019",
+        "prediction": {
+          "category": "Shoes",
+          "type": "Sneakers"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "validation-0021",
+        "prediction": {
+          "category": "Shoes",
+          "type": "Sneakers"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "validation-0023",
+        "prediction": {
+          "category": "Shoes",
+          "type": "Sneakers"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      },
+      {
+        "id": "validation-0024",
+        "prediction": {
+          "category": "Shoes",
+          "type": "Sneakers"
+        },
+        "strong": true,
+        "categoryConfirmed": false,
+        "reason": null
+      }
+    ]
+  }
+}
