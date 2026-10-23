@@ -40,7 +40,7 @@ try{
     });
     await page.goto(host+'/alpha13');
     const data=await page.evaluate(async()=>{
-     const {prepareSyntheticGarmentOriginal,containGarmentInSlot}=await import('/research/family-alpha-13/garment-photo-preparation.mjs');
+     const {prepareVerifiedOriginalDerivative,hashRetainedOriginalJPEG,containGarmentInSlot}=await import('/research/family-alpha-13/garment-photo-preparation.mjs');
      const {syntheticGarment}=await import('/research/family-alpha-13/synthetic-garments.mjs');
      const {planPhotoLayers}=await import('/research/family-alpha-13/reference/family-alpha-2d-layer-plan.mjs');
      const {renderPhotoLayers}=await import('/research/family-alpha-13/reference/family-alpha-2d-photo-renderer.mjs');
@@ -60,8 +60,10 @@ try{
       const g=decoded.getContext('2d',{willReadFrequently:true});g.drawImage(img,0,0);
       const photo={width:decoded.width,height:decoded.height,data:g.getImageData(0,0,decoded.width,decoded.height).data};
       const originalBytes=photo.data.slice();
-      const item=prepareSyntheticGarmentOriginal(photo,{category:fixture.category,
-       sourceIdentity:'synthetic-capture-'+id,sourceVersion:'synthetic-jpeg-version-'+id});
+      const version=await hashRetainedOriginalJPEG(retainedJPEG);
+      const item=await prepareVerifiedOriginalDerivative(photo,{originalJPEG:retainedJPEG,
+       category:fixture.category,sourceIdentity:'synthetic-capture-'+id,sourceVersion:version});
+      if(item.status==='prepared'&&(!item.verifiedOriginalBytes||item.sourceSHA!==version))throw Error('Missing retained-original SHA proof');
       if(item.status!=='prepared')throw Error(id+' synthetic photo isolation failed: '+item.reason);
       if(item.width<=24||item.height<=24||item.rgba.length!==item.width*item.height*4)throw Error('Bad prepared pixel dimensions');
       if(!photo.data.every((n,i)=>n===originalBytes[i]))throw Error('Original retained photo mutated');
@@ -85,6 +87,9 @@ try{
       pixelsChecked[id]=checked;
      }
      const originalsBefore=Object.entries(photos).map(([id,src])=>[id,src.length]);
+     const mismatch=await prepareVerifiedOriginalDerivative({width:256,height:320,data:new Uint8ClampedArray(256*320*4)},
+       {originalJPEG:photos.shirt,sourceIdentity:'synthetic-capture-shirt',sourceVersion:prepared.pants.sourceVersion,category:'Tops'});
+     if(mismatch.status!=='review'||mismatch.reason!=='retained-original-version-mismatch')throw Error('Changed source digest was not rejected');
      const selection=(slot,id)=>({slot,itemId:id,sourceIdentity:prepared[id].sourceIdentity,sourceVersion:prepared[id].sourceVersion});
      const current=[selection('layer2','jacket'),selection('bottom','pants'),selection('top','shirt'),selection('shoes','shoes')];
      const stage=document.getElementById('stage');
@@ -119,7 +124,7 @@ try{
      const performanceMs=performance.now()-start;
      document.getElementById('status').textContent='Synthetic JPEG to PNG: 7 prepared garment forms';
      return {garmentsPrepared:garments.length,nativeJPEGSize:{width:256,height:320},pngHasTransparency:true,
-      patternPixelsVerified:Object.keys(pixelsChecked).length,originalsUnmodified:true,
+      patternPixelsVerified:Object.keys(pixelsChecked).length,originalsUnmodified:true,originalJPEGSourceSHAValidated:true,
       layersVerified:4,dressLayersVerified:2,missingImageRefused:true,
       currentRendererStretchCount:currentStretch,containFitPreservesAspect:true,
       processingMs:+performanceMs.toFixed(1)};
