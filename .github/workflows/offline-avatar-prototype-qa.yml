@@ -1,0 +1,21 @@
+name: Offline avatar prototype QA
+on:
+  pull_request:
+    paths:
+      - 'research/avatar/**'
+      - 'tests/avatar/**'
+      - '.github/workflows/offline-avatar-prototype-qa.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  offline-avatar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run standalone offline avatar tests
+        run: node --test tests/avatar/offline-avatar-flow-demo.test.mjs tests/avatar/licensed-garment-transfer.test.mjs tests/avatar/garment-preview-warp.test.mjs tests/avatar/pose-placement.test.mjs tests/avatar/outfit-preview-compositor.test.mjs tests/avatar/saved-closet-preview-adapter.test.mjs
