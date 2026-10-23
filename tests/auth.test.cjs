@@ -114,6 +114,38 @@ test('returning session refreshes with the correct endpoint and rotated refresh 
 test('expired returning session shows a login message rather than an email-link error',async()=>{
  const a=app(async()=>response({msg:'Invalid refresh token'},false),{},{refresh_token:'expired'});await new Promise(setImmediate);assert.match(a.get('authStatus').textContent,/login session has expired/);assert.equal(a.window.closetAuth.user,null);assert.equal(a.saved.has('closet-current-auth-v1'),false);assert.equal(a.get('authSubmit').disabled,false);
 });
+test('logout waits for draft safety and preserves login when draft is not safely stored',async()=>{
+ const a=app(async url=>url.endsWith('/logout')?response({}):response({access_token:'owner-access',refresh_token:'owner-refresh',user:{id:'owner-A'}}));
+ await a.submit();
+ let finish,called=0;
+ a.window.closetAuth.beforeSignOut=()=>{called++;return new Promise(resolve=>finish=resolve);};
+ const first=a.get('logout').onclick(),second=a.get('logout').onclick();
+ assert.equal(called,1,'only one draft flush may be pending');
+ assert.equal(a.get('logout').disabled,true);
+ assert.equal(a.window.closetAuth.user.id,'owner-A','owner is retained during draft write');
+ finish(false);
+ await Promise.all([first,second]);
+ assert.equal(a.get('logout').disabled,false);
+ assert.equal(a.window.closetAuth.user.id,'owner-A','unsaved draft must not sign out');
+ assert.equal(a.saved.has('closet-current-auth-v1'),true);
+ assert.equal(a.requests.filter(([url])=>url.endsWith('/logout')).length,0);
+ a.window.closetAuth.beforeSignOut=async()=>true;
+ await a.get('logout').onclick();
+ assert.equal(a.window.closetAuth.user,null);
+ assert.equal(a.saved.has('closet-current-auth-v1'),false);
+ assert.equal(a.reloaded(),true);
+});
+test('failed draft-flush callback blocks sign-out without clearing photos',async()=>{
+ const a=app(async()=>response({access_token:'test-access',refresh_token:'test-refresh',user:{id:'owner-A'}}));
+ await a.submit();
+ a.window.closetAuth.beforeSignOut=async()=>{throw Error('quota full');};
+ await a.get('logout').onclick();
+ assert.equal(a.window.closetAuth.user.id,'owner-A');
+ assert.equal(a.get('logout').disabled,false);
+ assert.equal(a.saved.has('closet-current-auth-v1'),true);
+ assert.equal(a.reloaded(),false);
+ assert.match(a.get('authStatus').textContent,/Could not safely save/);
+});
 test('canceled logout reload locks old account and offers cleanup action',async()=>{
  const a=app(async url=>url.endsWith('/logout')?response({}):response({access_token:'owner-access',refresh_token:'owner-refresh',user:{id:'owner-A'}}));
  await a.submit();
