@@ -152,6 +152,8 @@ try{
     await sessions[0].page.waitForFunction(()=>items.length===1&&items[0].id==='synthetic-B',null,{timeout:30000});
     sessions[0].set(owners[0]);await sessions[0].page.reload();
     await sessions[0].page.waitForFunction(()=>items.length===1&&items[0].id==='synthetic-A',null,{timeout:30000});
+    await sessions[0].page.evaluate(()=>outfitBoardReady);
+    await sessions[0].page.waitForFunction(()=>currentBoard?.slots?.top==='synthetic-A',null,{timeout:20000});
     // A compromised/misrouted backend response with B's owner_id cannot overwrite A.
     forgeWrongOwnerOnce=true;
     await sessions[0].page.evaluate(()=>closetCloud.sync());
