@@ -81,7 +81,7 @@ export function makeReport({category='Other', description=''}={}) {
     .replace(/https?:\/\/\S+/gi, '[link removed]')
     .replace(/\b(?:\+?1[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b/g, '[phone removed]')
     .replace(/\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi,'[identifier removed]');
-  return \`Closet Current Family Alpha — problem report\nCategory: \${category}\nDescription: \${safeNote || '(not provided)'}\n\nNo photo or account information was attached. Review this text before sharing.\`;
+  return `Closet Current Family Alpha — problem report\nCategory: ${category}\nDescription: ${safeNote || '(not provided)'}\n\nNo photo or account information was attached. Review this text before sharing.`;
 }
 
 function element(tag, className, text) {
