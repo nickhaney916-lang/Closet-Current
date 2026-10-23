@@ -24,3 +24,10 @@ Scope: static source review of the repository default branch, **not** a live cus
 ## Release decision
 
 Remain research-only. Preserve existing 2D outfit functionality. No customer photos, network inference, production writes, merges or deployments.
+
+## Additional verified cloud-auth documentation
+
+- `public/auth.js` exposes `window.closetAuth.user` and `getAccessToken()`, with refresh logic checking that the refreshed user ID matches the original session account. This is a client-side account context, not a substitute for server-side RLS enforcement.
+- `docs/CLOUD-BACKUP.md` documents owner-keyed `closet_backups`, a private `closet-private` bucket, and photo paths composed of an account UUID plus SHA-256 content hash. It reports synthetic tests of RLS, private photo access, and backup restoration. These are documented prior results, not tests rerun in this branch.
+- This existing content hash may provide a provenance version, **but only if the original full-resolution photo object and its immutable hash can be unambiguously mapped to each saved garment**. A hash of a crop or resized JPEG is not interchangeable with the original-byte hash. No live integration is authorized without checking that mapping and cloud account identity.
+- The offline `fingerprintOriginalPhoto` helper hashes the exact bytes provided; differences in JPEG encoding, resizing, or metadata can change its hash even when the image looks identical. Its result is not automatically equivalent to the cloud storage path hash.
