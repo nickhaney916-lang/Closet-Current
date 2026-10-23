@@ -37,7 +37,7 @@ try {
  for(const [engineName,engine] of [['Android Chromium',chromium],['iPhone WebKit',webkit]]) {
   const browser=await engine.launch({headless:true,...(engine===chromium?{args:['--no-sandbox'],channel:'chrome'}: {})});
   const context=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true,serviceWorkers:'block'});
-  const outside=[],calls=[],pageErrors=[],dialogs=[];
+  const outside=[],calls=[],pageErrors=[],dialogs=[],syntheticPhotoStorage=new Map();
   try {
    await context.route('**/*',route=>{
     const url=route.request().url();
@@ -55,6 +55,26 @@ try {
     else if(parsed.pathname==='/rest/v1/closet_backups')result=[];
     else if(parsed.pathname==='/rest/v1/rpc/save_closet_backup')result=1;
     else if(parsed.pathname==='/auth/v1/logout')result={};
+    else if(parsed.pathname.startsWith('/storage/v1/object/closet-private/')){
+     const photoPath=parsed.pathname.slice('/storage/v1/object/closet-private/'.length);
+     const [owner,filename]=photoPath.split('/');
+     const bearer=route.request().headers().authorization||'';
+     const actor=bearer.includes('synthetic-a-access')?'a':
+       bearer.includes('synthetic-b-access')?'b':null;
+     assert.ok(actor,'Mock storage must use signed-in synthetic identity');
+     assert.equal(owner,ids[actor],'Cross-owner synthetic storage access');
+     assert.match(filename,/^[a-f0-9]{64}\\.jpg$/);
+     if(route.request().method()==='POST'||route.request().method()==='PUT'){
+      syntheticPhotoStorage.set(photoPath,route.request().postDataBuffer());
+      return route.fulfill({status:200,contentType:'application/json',
+       headers:{'Access-Control-Allow-Origin':'*'},body:JSON.stringify({Key:photoPath})});
+     }
+     if(route.request().method()==='GET'&&syntheticPhotoStorage.has(photoPath))
+      return route.fulfill({status:200,contentType:'image/jpeg',
+       headers:{'Access-Control-Allow-Origin':'*'},body:syntheticPhotoStorage.get(photoPath)});
+     return route.fulfill({status:404,contentType:'application/json',
+      headers:{'Access-Control-Allow-Origin':'*'},body:'{}'});
+    }
     else {outside.push('unexpected-mocked-path:'+parsed.pathname);return route.abort('blockedbyclient');}
     return route.fulfill({status:200,contentType:'application/json',
      headers:{'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'*'},body:JSON.stringify(result)});
