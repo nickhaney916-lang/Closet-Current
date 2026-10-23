@@ -32,7 +32,7 @@ export function syntheticScene(kind,{width=160,height=212,mode='plain',seed=1}={
  };
  for(let y=0;y<height;y++)for(let x=0;x<width;x++){
   const i=y*width+x,p=4*i,X=norm(x/width),Y=norm(y/height);
-  const visible=inner(X,Y)||(mode==='clipped'&&x===0&&Y>.30&&Y<.67)||
+  const visible=inner(X,Y)||(mode==='clipped'&&X<.35&&Y>.17&&Y<.75)||
    (mode==='multiple'&&X>.02&&X<.14&&Y>.38&&Y<.85);
   const background=mode==='dark'?[12,13,15]:mode==='busy'?
    [(x*7+y*19)%256,(x*13+y*3)%256,(x*11+y*17)%256]:[237,240,243];
