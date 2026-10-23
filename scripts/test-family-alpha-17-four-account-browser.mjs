@@ -97,7 +97,22 @@ try{
       currentBoard=cleanOutfitBoard({name:'Synthetic private outfit',slots:{top:id}},items);
       await persistBoardState();await closetCloud.sync();
      },{id,i});
-     await session.page.waitForFunction(()=>document.querySelector('#cloudStatus').textContent==='Cloud backup up to date',null,{timeout:30000});
+     await session.page.waitForFunction(()=>document.querySelector('#cloudStatus').textContent==='Cloud backup up to date',null,{timeout:10000})
+      .catch(async()=>{
+       const state=await session.page.evaluate(async()=>({
+        message:document.querySelector('#cloudStatus')?.textContent,
+        banner:document.querySelector('#cloudBanner')?.textContent,
+        owner:closetCloud.getOwnerId(db),items:items.length,
+        state:await new Promise(resolve=>{
+         const tx=db.transaction('state','readonly'),get=tx.objectStore('state').get('cloud-sync');
+         get.onsuccess=()=>resolve(get.result);get.onerror=()=>resolve('error');
+        })
+       }));
+       console.error('ALPHA17 BACKUP DIAGNOSTIC',JSON.stringify({engine,width,owner,state,
+        remote:records.get(owner)?{revision:records.get(owner).revision,items:records.get(owner).document.items.length}:null,
+        photoCount:photos.size,errors}));
+       throw Error('Synthetic cloud backup did not become current');
+      });
      const doc=records.get(owner)?.document;
      assert.equal(doc?.items?.length,1);
      assert.equal(doc.items[0].id,id);
