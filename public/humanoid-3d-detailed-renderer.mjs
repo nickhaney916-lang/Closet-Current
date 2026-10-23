@@ -51,11 +51,12 @@ export function createDetailedHumanoid3D(canvas){
   draws.length=0;
   for(const part of buffers){
    const key=part.key;
-   if(key!=='skin'&&(!colors[key]||(colors.dress&&['top','bottom','layer','layer2','layer3'].includes(key))))continue;
+   if(key==='dressLeg'&&!colors.dress)continue;
+   if(key!=='skin'&&key!=='dressLeg'&&(!colors[key]||(colors.dress&&['top','bottom','layer','layer2','layer3'].includes(key))))continue;
    gl.bindBuffer(gl.ARRAY_BUFFER,part.handle);
    gl.vertexAttribPointer(position,3,gl.FLOAT,false,24,0);
    gl.vertexAttribPointer(normals,3,gl.FLOAT,false,24,12);
-   gl.uniform4fv(tint,key==='skin'?SKIN:(colors[key]||TONE));
+   gl.uniform4fv(tint,(key==='skin'||key==='dressLeg')?SKIN:(colors[key]||TONE));
    gl.drawArrays(gl.TRIANGLES,0,part.count);
    draws.push(part.id);
   }
