@@ -145,6 +145,12 @@ test('issue196: recovery uses actual interrupted state; review packet is not an 
  const h=fixture();Object.assign(h.fault,{stage:'deleteBackup',when:'after'});await assert.rejects(h.run(),/interruption/);h.fault.stage=null;
  const before=h.fingerprint(A),now=1792720000000,request={uid:A,incidentTicket:INCIDENT,operatorContext:{syntheticReviewer:true},incidentApprovalProof:'synthetic-review-proof-one',securityApprovalProof:'synthetic-review-proof-two'};
  const deps={enabled:true,authorizeIncident:async({uid})=>uid===A,assess:()=>h.assess(),serverNow:async()=>now,
+  readPhotoInventory:async()=>{
+   const names=h.names(A);
+   return {ownerScoped:true,filenamesEnumerated:true,photoBytesVerified:false,
+    count:names.length,pages:Math.ceil((names.length+1)/100),
+    digest:digest(Buffer.from(JSON.stringify({owner:A,names})))};
+  },
   verifyWorkerFenced:async()=>({quiescent:true,fenceEnforced:true,fenceEpoch:'FENCE-SYNTHETIC196',verifiedAtMs:now}),
   verifyApproval:async({role})=>({verified:true,role,boundToOwnerIncidentAndSnapshot:true,readOnlyReviewOnly:true,principalId:role==='incident_owner'?'reviewer_one':'reviewer_two',verifiedAtMs:now})};
  const receipt=await createDeletionRecoveryHandoff(deps).prepare(request);
@@ -190,17 +196,23 @@ test('issue196: deleting B preserves all A bytes, account records and full-scene
 test('issue196: presence-only recovery snapshot cannot prove a stable byte inventory; packet never grants deletion',async()=>{
  const h=fixture();Object.assign(h.fault,{stage:'claimCleanup',when:'after'});await assert.rejects(h.run(),/interruption/);h.fault.stage=null;
  const before=h.names(A).length,now=1792720000000;
- const receipt=await createDeletionRecoveryHandoff({enabled:true,
+ await assert.rejects(createDeletionRecoveryHandoff({enabled:true,
   authorizeIncident:async()=>true,assess:()=>h.assess(),serverNow:async()=>now,
+  readPhotoInventory:async()=>{
+   const names=h.names(A);
+   return {ownerScoped:true,filenamesEnumerated:true,photoBytesVerified:false,
+    count:names.length,pages:Math.ceil((names.length+1)/100),
+    digest:digest(Buffer.from(JSON.stringify({owner:A,names})))};
+  },
   verifyWorkerFenced:async()=>({quiescent:true,fenceEnforced:true,fenceEpoch:'FENCE-SYNTHETIC196',verifiedAtMs:now}),
   verifyApproval:async({role})=>{
    if(role==='security_reviewer')h.put(A,jpeg('presence-unchanged-new-byte-inventory'));
    return {verified:true,role,boundToOwnerIncidentAndSnapshot:true,readOnlyReviewOnly:true,principalId:role==='incident_owner'?'reviewer_one':'reviewer_two',verifiedAtMs:now};
   }
- }).prepare({uid:A,incidentTicket:INCIDENT,operatorContext:{syntheticReviewer:true},incidentApprovalProof:'synthetic-review-proof-one',securityApprovalProof:'synthetic-review-proof-two'});
+ }).prepare({uid:A,incidentTicket:INCIDENT,operatorContext:{syntheticReviewer:true},incidentApprovalProof:'synthetic-review-proof-one',securityApprovalProof:'synthetic-review-proof-two'}),/inventory changed during review/);
  assert.equal(h.names(A).length,before+1);
- assert.equal(receipt.outcome,'READY_FOR_SEPARATE_MANUAL_INCIDENT_REVIEW');
- assert.equal(receipt.inventoryExhaustivelyVerified,false);assert.equal(receipt.deletionVerified,false);assert.equal(receipt.recoveryAuthorized,false);
+ // The changed object set must now STOP review rather than issue a misleading
+ // diagnostic packet. Still no executor, no claim release, and no deletion.
  // Negative control: a lying fence adapter can hide mutation behind the same
  // presence booleans. This is an acknowledged executor/inventory GAP, not a
  // successful recovery test or a claim actual fencing is implemented.
