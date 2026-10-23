@@ -30,3 +30,7 @@ test('rejects foreign items and missing ownership verifier',async()=>{
  await assert.rejects(()=>prepareCapturedOutfit3DItems([make('foreign')],'verified-account',owns,webcrypto),/ownership/);
  await assert.rejects(()=>prepareCapturedOutfit3DItems([make('shirt')],'verified-account',undefined,webcrypto),/inputs|required/);
 });
+
+test('rejects two garments claiming the same capture ID but different original JPEGs',async()=>{
+ await assert.rejects(()=>prepareCapturedOutfit3DItems([make('shirt',jpeg(1)),make('pants',jpeg(2))],'verified-account',owns,webcrypto),/Conflicting original photographs/);
+});
