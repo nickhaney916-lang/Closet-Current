@@ -27,3 +27,9 @@ test('failed account switch never reaches 3D renderer',async()=>{
  assert.equal(calls,0);
  assert.equal(applyVerifiedHumanoidOutfit({supported:false},{placeholderOnly:true}),false);
 });
+
+test('unsupported layer2 and layer3 cannot disappear silently from a saved outfit',async()=>{
+ for(const slot of ['layer2','layer3']){
+  await assert.rejects(()=>prepareVerifiedHumanoidOutfit({slots:{top:'shirt',[slot]:'coat'}},closet,'a',owns,webcrypto),/Unsupported verified outfit slot/);
+ }
+});
