@@ -131,14 +131,17 @@ try{
      assert.equal(state.db,'closet-current-user-'+owners[i]);
      assert.equal(state.board,state.id);
      assert.ok(state.photo.startsWith('data:image/jpeg;base64,'));
-     const target=owners[(i+1)%4],path=[...photos.keys()].find(s=>s.startsWith(target+'/'));
-     const probe=await p.evaluate(async({target,path})=>{
+     for(let otherIndex=0;otherIndex<4;otherIndex++){
+      if(otherIndex===i)continue;
+      const target=owners[otherIndex],path=[...photos.keys()].find(s=>s.startsWith(target+'/'));
+      const probe=await p.evaluate(async({target,path})=>{
       const h={Authorization:'Bearer '+closetAuth.user.id,apikey:'synthetic'};
       const row=await fetch('https://hlkgymugtfbirlpunsra.supabase.co/rest/v1/closet_backups?select=owner_id,revision,document&owner_id=eq.'+target,{headers:h});
       const photo=await fetch('https://hlkgymugtfbirlpunsra.supabase.co/storage/v1/object/closet-private/'+path,{headers:h});
       return {rows:await row.json(),photoStatus:photo.status};
      },{target,path});
      assert.deepEqual(probe.rows,[]);assert.equal(probe.photoStatus,403);
+      }
     }
     // Same browser origin, owner switch and recovery must use separate IndexedDB names.
     sessions[0].set(owners[1]);await sessions[0].page.reload();
@@ -160,9 +163,9 @@ try{
     releaseHeld();await pending;
     assert.equal(await sessions[3].page.evaluate(()=>items.some(x=>x.id==='late-foreign-item')),false);
     assert.equal(await sessions[3].page.evaluate(()=>document.querySelector('#appShell').hidden),true);
-    assert.ok(denials.filter(x=>x==='row').length===4&&denials.filter(x=>x==='photo').length===4);
+    assert.ok(denials.filter(x=>x==='row').length===12&&denials.filter(x=>x==='photo').length===12);
     assert.deepEqual(errors,[]);
-    results.push({engine,width,accounts:4,rowDenials:4,photoDenials:4,delayedRestoreRejected:true,
+    results.push({engine,width,accounts:4,rowDenials:12,photoDenials:12,delayedRestoreRejected:true,
      accountSwitchPrivate:true,errors:errors.length});
     for(const session of sessions)await session.page.close();
     await context.close();
