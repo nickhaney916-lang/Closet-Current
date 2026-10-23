@@ -15,13 +15,17 @@ signal even though current app type guards can independently prevent saving
 Unknown types. No assertion of an actual customer auto-save incident.
 
 The candidate rejects strong nonclothing evidence from EITHER view and absent
-clothing evidence before mask fallback. Uses existing .55 confidence and .15
-margin gates; no new learned thresholds, labels, model weights or prompts. No
+clothing evidence. It also removes mask-confidence-only category authority:
+both full-catalog views AND both broad-vocabulary category gates must support
+the proposed category. Existing .55/.15 full-catalog and .45/.15 broad gates
+are unchanged; no learned thresholds, labels, model weights or prompts change. No
 fabricated subtype correction. Normal unhinted garment recognition is unchanged.
-A previous unit test explicitly expected strong Bottoms from negative-only scores;
-that assertion is strengthened to require rejection. Accuracy manifests and
-regression thresholds remain byte-identical. Four new negative contract cases
-fail on baseline; valid shoe agreement remains accepted.
+Two previous unit assertions expected strong Bottoms from negative-only or
+unrelated uncertain scores; both are strengthened to require rejection. Accuracy manifests and
+regression thresholds remain byte-identical. Negative contracts fail on baseline; valid shoe agreement and classifier-supported
+broad shoe category remain accepted. The stricter rule may reduce automatic
+coverage on real uncertain masked garments; that tradeoff is not measured without
+independent human masks and is a central integration decision.
 
 ## Original-photo integrity and independent measurement
 
@@ -48,7 +52,8 @@ must be reported separately, never attributed to a causal model improvement.
 
 ## Validation and release limits
 
-Local focused contracts: 10/10 pass. Two full local Node runs each 1788 pass,
+Local focused contracts: 13/13 pass. Final full Node counts are recorded in the
+issue/PR after exact-head verification. Initial two full local Node runs each 1788 pass,
 0 fail, 0 skip, using only bundled licensed fixtures and simulations. Exact-head
 CI runs full suite twice, synthetic Chromium/WebKit contracts and original-image
 handling, and source-locked real Chromium inference before applying unchanged
@@ -61,3 +66,21 @@ multi-item try-on is claimed. These require human-reviewed inventory/masks and
 real devices. No new human annotations, customer files, threshold relaxation,
 production/cloud changes, merge, deploy, provider activation, spending or Drive
 Duel. Main conversation owns integration and release.
+
+## Failed intermediate experiment retained
+
+Run 39957251137 at intermediate `cb8316d502ee361b0a72954234138fa2782136e9`
+ran all source-locked baseline/candidate inferences with identical ordinary
+predictions, then FAILED the unchanged zero-false-hint assertion: one control
+still admitted. Artifact 12502539141 retains the six ordinary result arrays.
+The partial implementation was not declared complete. The next revision removes
+mask-confidence-only authority and requires the ordinary broad category gates
+on both views; the zero-false-hint assertion is unchanged. Diagnostic reports are
+now written before that assertion so a future failure retains the exact source ID.
+No accuracy labels or expected wrong subtype lists were changed.
+
+Independent scoring of the intermediate direct-original observations (not the
+legacy recompressed stream): reviewed 29/32 categories, holdout 7/13 garments,
+fresh 11/11; nine category abstentions and three wrong automatic subtypes.
+This difference is a source-pipeline measurement, NOT a model improvement or a
+promotion recommendation. Source-locked and legacy results must not be pooled.

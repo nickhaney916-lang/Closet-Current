@@ -402,11 +402,19 @@ export async function classifyIsolatedGarment(model,image,{hint,confirmationMode
  }))return {strong:false,choices:[],details:{},reason:'mask_nonclothing_disagrees'};
  const supported=ranked=>ranked[0]&&ranked[0].score>=.55&&ranked[0].score-(ranked[1]?.score||0)>=.15;
  const agreed=supported(a)&&supported(b)&&a[0].category===b[0].category&&hint.categories.includes(a[0].category);
- // A strong, complete mask can retain a single broad category when the
- // classifier is uncertain. Confident contradictions still require Adjust.
- const maskOnly=hint.categories.length===1&&Number.isFinite(hint.confidence)&&hint.confidence>=.9&&hint.confidence<=1&&[a,b].every(r=>!supported(r)||r[0].category===hint.categories[0]);
- if(!agreed&&!maskOnly)return {strong:false,choices:[],details:{},reason:'mask_category_disagrees'};
- const category=agreed?a[0].category:hint.categories[0];
+ // An unreviewed mask score is a proposal, not independent garment truth.
+ // Require both classifier views to support its category; uncertain scores
+ // must stay in review instead of allowing the mask to invent a category.
+ if(!agreed)return {strong:false,choices:[],details:{},reason:'mask_category_disagrees'};
+ const category=a[0].category;
+ // A full-catalog sum can look decisive while the independent broad
+ // vocabulary still rejects clothing. Apply the ordinary category gates
+ // here too; a mask proposal must not bypass those background checks.
+ const broad=categoryChoices(await model(image,categoryCandidates.map(x=>x.label),options));
+ const broadConfirmation=categoryChoices(await confirmationModel(image,categoryCandidates.map(x=>x.label),options));
+ if(!confidentCategory(broad)||!confidentCategory(broadConfirmation)||
+    broad[0].category!==category||broadConfirmation[0].category!==category)
+  return {strong:false,choices:[],details:{},reason:'mask_category_disagrees'};
  const first=clothingChoices(whole)[0],confirmation=clothingChoices(close),sameType=agreed&&strongMatch(clothingChoices(whole))&&confirmation[0]?.category===first.category&&confirmation[0]?.itemType===first.itemType&&confirmation[0].score>=.35&&confirmation[0].score-(confirmation[1]?.score||0)>=.1&&(!hint.types.length||hint.types.includes(first.itemType));
  const choice=sameType?{...first}:{label:category,category,itemType:'Unknown',sleeveLength:['Bottoms','Shoes','Accessories'].includes(category)?'Not applicable':'Unknown',score:Math.min(a[0]?.score??0,b[0]?.score??0)};
  onIdentified(choice);const details=sameType?await readVerifiedDetails(model,confirmationModel,image,choice,onStage):{};

@@ -9,9 +9,15 @@ provenance and never replaces owned clothing truth. Owned-only outfit selection
 must finish before any optional visualization job. Owner and original hashes
 must still match when a delayed result returns; pin/swap changes invalidate it.
 
-Commercial model rights: FASHN VTON 1.5's primary license is Apache-2.0. Dependency
-and weight rights still require an explicit audit; one top-level license does not
-license likenesses, training photos or all model components. CatVTON remains
+Commercial model rights: FASHN VTON 1.5's primary license is Apache-2.0.
+A concrete dependency blocker was verified: the human-parser README says its
+model inherits NVIDIA's SegFormer license; linked Section 3.3 restricts use to
+noncommercial research/evaluation (except NVIDIA affiliates). Therefore the
+standard self-hosted stack is NOT commercially cleared by the top-level Apache
+license. Obtain appropriate permission or replace the parser under separately
+verified suitable rights before any commercial deployment. No licensing inference
+about a separately contracted hosted vendor is made from this source-code check.
+One top-level license also does not license likenesses or training photographs. CatVTON remains
 excluded from commercial release under its noncommercial upstream terms without
 separate permission. No weights were downloaded to make these assessments.
 
@@ -38,7 +44,8 @@ No selfie or customer photo is used here; no cloud configuration is proposed.
 
 Sources checked:
 - https://github.com/fashn-AI/fashn-vton-1.5/blob/main/LICENSE
-- https://github.com/fashn-AI/fashn-human-parser/blob/main/LICENSE (dependency license requires a resolved readable snapshot, not inferred from the parent).
+- https://github.com/fashn-AI/fashn-human-parser (README License section points to inherited NVIDIA terms).
+- https://github.com/NVlabs/SegFormer/blob/master/LICENSE (Section 3.3, noncommercial research/evaluation restriction).
 - https://github.com/Zheng-Chong/CatVTON
 - https://docs.fashn.ai/api-reference/tryon-max
 - https://docs.fashn.ai/api-overview/data-retention-privacy

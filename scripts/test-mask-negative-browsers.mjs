@@ -20,7 +20,7 @@ try{for(const [name,engine]of [['Chromium',chromium],['WebKit',webkit]]){
   const r=await page.evaluate(async()=>{
    const {classifyIsolatedGarment}=await import('/recognition-engine.mjs');
    const photo={width:50,height:50},hint={categories:['Shoes'],types:[],confidence:.99,clipped:false};
-   const bad=async()=>[{label:'a blank wall',score:.9},{label:'sneakers',score:.1}],good=async()=>[{label:'sneakers',score:.95},{label:'a blank wall',score:.05}];
+   const bad=async()=>[{label:'a blank wall',score:.9},{label:'sneakers',score:.1}],good=async(_image,labels=[])=>labels.includes('shoes, boots, or sandals')?[{label:'shoes, boots, or sandals',score:.95},{label:'a blank wall',score:.05}]:[{label:'sneakers',score:.95},{label:'a blank wall',score:.05}];
    const rows=[];for(const [a,b]of [[bad,bad],[good,bad],[bad,good],[good,good]]){let identified=0;
     const result=await classifyIsolatedGarment(a,photo,{hint,confirmationModel:b,onIdentified:()=>identified++});
     rows.push({strong:result.strong,category:result.choices?.[0]?.category||null,identified});

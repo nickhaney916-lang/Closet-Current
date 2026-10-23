@@ -67,7 +67,6 @@ try{
  }
  assert.equal(trace.length,59,'All immutable sources required');
  assert.deepEqual(rows.candidate,rows.baseline,'Unhinted source-locked predictions must remain exactly unchanged');
- assert.equal(hints.filter(r=>r.engine==='candidate'&&r.strong).length,0,'Nonclothing fixtures must reject false mask hint');
  assert.deepEqual(remote,[],'All post-warm-up remote requests denied; no inference asset should be fetched');
  const report={baseApplicationSHA:base,sourceCount:trace.length,originalHashMatches:trace.length,sourceTrace:trace,
   fullStoredResolution:true,reencodedSources:0,remoteRequestsAfterWarmup:remote.length,
@@ -75,5 +74,6 @@ try{
   inference:'actual pinned FashionCLIP; runtime/model downloaded before network-denied measurement',
   physicalMaskAccuracy:null,independentHumanMasks:0,customerPhotos:0};
  fs.writeFileSync(join(output,'source-integrity-and-hint-report.json'),JSON.stringify(report,null,2)+'\n');
+ assert.equal(hints.filter(r=>r.engine==='candidate'&&r.strong).length,0,'Nonclothing fixtures must reject false mask hint');
  console.log(JSON.stringify({sources:trace.length,unhintedPredictionsUnchanged:true,hints,remoteRequestsAfterWarmup:remote.length}));
 }finally{await browser?.close();await new Promise(r=>server.close(r));}
