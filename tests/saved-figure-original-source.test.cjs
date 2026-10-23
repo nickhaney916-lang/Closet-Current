@@ -20,6 +20,8 @@ test('original bytes, crop or provenance change invalidates render and cache',()
  }
 });
 test('stale display masks cannot become original pixels',()=>{
+ for(const derivative of [{maskApplied:true},{recognitionPhoto:{image:display}}])
+  assert.deepEqual(E.plan(board,[{...item,...derivative,originalPhoto:undefined}]).skipped,['top']);
  const changed={...item,image:photo('D'),maskApplied:true};
  assert.equal(E.plan(board,[changed]).placements[0].image,original);
  for(const originalPhoto of [null,{image:'https://remote.invalid/source.jpg'},{image:''}])

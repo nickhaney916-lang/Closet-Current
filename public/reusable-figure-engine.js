@@ -60,7 +60,7 @@
     if(record[key]!==undefined&&record[key]!==ownerId)return null;
   }
   const hasOriginal=item.originalPhoto!==undefined;
-  if(item.outfitSourceId&&!hasOriginal)return null;
+  if(!hasOriginal&&(item.outfitSourceId||item.maskApplied===true||item.recognitionPhoto!==undefined))return null;
   const image=hasOriginal?item.originalPhoto?.image:item.image;
   if(!isLocalGarmentImage(image))return null;
   let crop=null;
