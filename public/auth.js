@@ -146,6 +146,10 @@
   if(typeof window.dispatchEvent==='function'&&typeof window.Event==='function')
    window.dispatchEvent(new window.Event('closet:alpha-session-changed'));
   localStorage.removeItem(STORE);
+  // Hide old-account photo UI and invalidate pending cloud restore transactions
+  // before any potentially delayed server-side sign-out request.
+  $('appShell').hidden=true;$('authGate').hidden=false;
+  window.closetCloud?.invalidateSession?.();
   try{if(departingToken)await request('logout',{},departingToken);}catch{}
   // Reload closes the current account's IndexedDB connection and clears in-memory images.
   location.reload();
