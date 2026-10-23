@@ -55,6 +55,9 @@ are the same physical object.
   runtime tests run with network permission restricted to 127.0.0.1. This is
   loopback HTTP and fake Auth/provider/ledger dependencies, not hosted access
   or paid AI. The existing Style this UI test also runs in both engines.
+  It initially failed because its old SVG fixtures are correctly rejected by
+  the current raster-only security gate. Fixtures now use local canvas PNGs;
+  all interaction assertions and security gates remain unchanged.
 
 ## Integration and launch limits
 
