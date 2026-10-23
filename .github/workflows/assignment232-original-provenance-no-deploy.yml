@@ -1,0 +1,52 @@
+name: Assignment 232 source provenance and owner audit - SYNTHETIC NO DEPLOY
+on:
+  push:
+    branches: [qa/assignment232-original-provenance-owner-audit-20261023]
+permissions:
+  contents: read
+jobs:
+  node-source-and-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with: {fetch-depth: 0}
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with: {node-version: '22'}
+      - name: Assert no existing application, storage, security, recognition or 3D source changed
+        shell: bash
+        run: |
+          git diff --exit-code dabca11062aea018f84016069d514641a1e8526f HEAD -- public/app.js public/auth.js public/cloud-backup.js public/cloud-backup-engine.js public/recognition-photo.mjs public/outfit-board.js public/outfit-board-engine.js public/outfit-capture.js public/photo-import.js public/humanoid-3d-prototype.mjs supabase
+          if grep -nE 'fetch[[:space:]]*\(|XMLHttpRequest|https?://|openai|replicate|fal[.]ai' public/original-source-provenance-audit.mjs; then exit 1; fi
+      - name: Build baseline before existing PWA checks
+        run: node scripts/build.mjs
+      - name: Full Node regression including immutable-source audit
+        run: node --test tests/*.test.cjs tests/*.test.mjs
+  mobile-chromium-webkit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with: {node-version: '22'}
+      - name: Install pinned offline-browser harness (no production dependencies modified)
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+      - name: Synthetic account-bound IndexedDB source regression at 320 390 430
+        run: node scripts/test-assignment232-source-browser.mjs
+      - name: Retain no-deployment marker
+        if: always()
+        run: |
+          mkdir -p artifacts/assignment232
+          printf '%s\n' "$GITHUB_SHA" > artifacts/assignment232/SOURCE-COMMIT.txt
+          printf '%s\n' 'OFFLINE SYNTHETIC FIXTURES; NO LIVE AUTH, HOSTED BACKUP, CUSTOMER PHOTO OR DEPLOY' > artifacts/assignment232/READ-ME-FIRST.txt
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: assignment232-OFFLINE-SYNTHETIC-NO-DEPLOY
+          path: artifacts/assignment232/
+          retention-days: 7
