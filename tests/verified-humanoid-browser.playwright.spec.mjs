@@ -20,7 +20,7 @@ test('real browser renders synthetic outfits, rotates, replaces dress, and clear
  const status=page.locator('#status');
  await expect(status).toContainText('initialize');
  const initial=JSON.parse(await status.textContent());
- if(!initial.success){test.skip(true,browserName+' WebGL unavailable; record unsupported browser');return;}
+ expect(initial.success, browserName+' must initialize WebGL rather than skip rendering').toBe(true);
  await page.locator('#outfit').click();
  await expect(status).toContainText('shirt-pants');
  const outfit=JSON.parse(await status.textContent());
