@@ -24,12 +24,7 @@ jobs:
       - name: Browser engines only, no AI API or credentials
         run: |
           npm install --no-save --no-package-lock playwright
-          npx playwright install --with-deps chromium webkit
-      - name: Offline browser contracts and original-photo handling
-        run: |
-          node scripts/test-mask-negative-browsers.mjs
-          node scripts/test-masked-crop-color-browsers.mjs
-          node scripts/test-photo-batch-owner-mobile.mjs
+          npx playwright install --with-deps chromium
       - name: Warm pinned model, deny remote requests, compare all original JPEG sources
         run: node scripts/run-source-locked-recognition.mjs benchmark/source-locked-output
       - name: Independent source-locked scoring and unchanged acceptance gates
@@ -56,3 +51,22 @@ jobs:
           name: source-locked-recognition-safety-results
           path: benchmark/source-locked-output/*.json
           retention-days: 14
+
+  mobile-browsers:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prepare standalone synthetic browser contracts
+        run: |
+          node scripts/build.mjs
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium webkit
+      - name: Offline Chromium and WebKit mask and original-photo contracts
+        run: |
+          node scripts/test-mask-negative-browsers.mjs
+          node scripts/test-masked-crop-color-browsers.mjs
+          node scripts/test-photo-batch-owner-mobile.mjs
