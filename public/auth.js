@@ -21,6 +21,9 @@
  window.closetAuth={ready,user:null};
  let signup=false,session=null,busy=false,recovery=false,restoringSession=false,refreshing=null;
  let authVersion=0,loggingOut=false;
+ // An intentional sign-out already locks the private account. Do not
+ // interrupt its cleanup reload with the unfinished-photo unload warning.
+ window.closetAuth.isSigningOut=()=>loggingOut;
  window.closetAuth.getAccessToken=async({force=false}={})=>{
   if(loggingOut||!session?.access_token||!window.closetAuth.user?.id)throw Error('Sign in required');
   if(force||session.expires_at<Date.now()/1000+60){
@@ -209,6 +212,16 @@
    localStorage.removeItem(STORE);
    // Reload closes the old IndexedDB connection and in-memory images.
    location.reload();
+   // If navigation is canceled, keep the old account locked and offer
+   // only a reload, never a new login in a stale document.
+   setTimeout(()=>{
+    if(!loggingOut)return;
+    status('Signed out. Reload to finish clearing the previous account before signing in.');
+    const retry=$('authRetry');
+    retry.textContent='Finish signing out';
+    retry.hidden=false;retry.disabled=false;
+    retry.onclick=()=>location.reload();
+   },500);
   }
  };
  setMode(false);
