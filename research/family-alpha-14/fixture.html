@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Family Alpha #14 — synthetic feedback and recovery fixture</title><link rel="stylesheet" href="fixture.css"></head>
+<body><main><h1>Family Alpha — feedback and recovery test</h1><p>This fixture is local and synthetic. It has no accounts, garment photos, uploads or report receiver.</p>
+<section id="feedback"></section><h2>Simulate a failed step</h2><div id="scenarios" class="fixture-buttons"></div>
+<section id="recovery" class="fa14-recovery" aria-live="polite"></section><p id="actionStatus" role="status" aria-live="polite"></p>
+</main><script type="module">
+import {mountFeedback,renderRecovery} from './feedback-recovery.mjs';
+window.__fa14renderRecovery=renderRecovery;
+window.familyFeedback = mountFeedback(document.querySelector('#feedback'));
+const root = document.querySelector('#recovery'),status=document.querySelector('#actionStatus');
+const errors=['photo_rejected','unrecognized','blank_image','photo_missing','mask_failed','outfit_failed','avatar_failed','cancelled'];
+for (const code of errors){const btn=document.createElement('button');btn.type='button';btn.className='fa14-button';btn.textContent=code.replaceAll('_',' ');btn.dataset.scenario=code;btn.onclick=()=>{
+status.textContent='';renderRecovery(root,code,{verifiedOriginal:code==='mask_failed',callbacks:{retry:()=>{status.textContent='A retry was requested. No image was replaced.'},review:()=>{status.textContent='A detail review was requested.'},closet:()=>{status.textContent='A closet review was requested.'},original:()=>{status.textContent='View verified original requested; not a masked layer.'}}});
+};document.querySelector('#scenarios').append(btn);}
+</script></body></html>
