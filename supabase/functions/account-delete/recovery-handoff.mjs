@@ -28,6 +28,17 @@ function snapshotState(s){
  return [s.code,s.writeLocked,s.cleanupClaimed,s.privatePhotoObjectsPresent,
   s.backupPresent,s.authUserPresent].join('|');
 }
+function verifiedPhotoInventory(value,photoPresent){
+ if(!value||typeof value!=='object'||Array.isArray(value)||
+  value.ownerScoped!==true||value.filenamesEnumerated!==true||
+  value.photoBytesVerified!==false||
+  typeof value.digest!=='string'||!/^[a-f0-9]{64}$/.test(value.digest)||
+  !Number.isSafeInteger(value.count)||value.count<0||value.count>10000||
+  !Number.isSafeInteger(value.pages)||value.pages<1||value.pages>101||
+  photoPresent!==(value.count>0))
+  throw Error('Privileged, bounded owner photo-name inventory unavailable');
+ return {digest:value.digest,count:value.count};
+}
 function attestedFence(value,now){
  if(!value||value.quiescent!==true||value.fenceEnforced!==true||
   typeof value.fenceEpoch!=='string'||!FENCE.test(value.fenceEpoch)||
@@ -46,8 +57,8 @@ function approvedIdentity(value,role,now){
 }
 export function createDeletionRecoveryHandoff(deps={}){
  const {enabled=false,authorizeIncident,assess,verifyApproval,
-  verifyWorkerFenced,serverNow}=deps;
- if([authorizeIncident,assess,verifyApproval,verifyWorkerFenced,serverNow]
+  verifyWorkerFenced,serverNow,readPhotoInventory}=deps;
+ if([authorizeIncident,assess,verifyApproval,verifyWorkerFenced,serverNow,readPhotoInventory]
   .some(fn=>typeof fn!=='function'))
   throw Error('Missing independent server-only recovery handoff dependency');
  async function prepare({uid,incidentTicket,operatorContext,
@@ -78,13 +89,18 @@ export function createDeletionRecoveryHandoff(deps={}){
   const fence1=attestedFence(await verifyWorkerFenced({
    uid,incidentTicket,operatorContext,stage:'before-review'
   }),now);
+  // Full owner photo-name checks catch drift even when the presence flag stays true.
+  // This is read-only diagnostic comparison, NOT verified bytes or erasure.
+  const firstInventory=verifiedPhotoInventory(await readPhotoInventory({
+   uid,incidentTicket,operatorContext,stage:'before-approvals',fenceEpoch:fence1
+  }),first.privatePhotoObjectsPresent);
   const a=approvedIdentity(await verifyApproval({
    role:'incident_owner',proof:incidentApprovalProof,uid,incidentTicket,
-   snapshot:first,fenceEpoch:fence1
+   snapshot:first,fenceEpoch:fence1,photoInventoryDigest:firstInventory.digest
   }),'incident_owner',now);
   const b=approvedIdentity(await verifyApproval({
    role:'security_reviewer',proof:securityApprovalProof,uid,incidentTicket,
-   snapshot:first,fenceEpoch:fence1
+   snapshot:first,fenceEpoch:fence1,photoInventoryDigest:firstInventory.digest
   }),'security_reviewer',now);
   if(a===b)throw Error('Two distinct independently verified operators required');
   // A changed backup/photo/Auth state or an unfenced worker means the
@@ -92,6 +108,12 @@ export function createDeletionRecoveryHandoff(deps={}){
   const second=await assess({uid,incidentTicket,operatorContext});
   if(snapshotState(second)!==fingerprint)
    throw Error('Recovery state changed during review; approvals invalidated');
+  const secondInventory=verifiedPhotoInventory(await readPhotoInventory({
+   uid,incidentTicket,operatorContext,stage:'after-approvals',fenceEpoch:fence1
+  }),second.privatePhotoObjectsPresent);
+  if(secondInventory.digest!==firstInventory.digest||
+     secondInventory.count!==firstInventory.count)
+   throw Error('Recovery private-photo inventory changed during review');
   const fence2=attestedFence(await verifyWorkerFenced({
    uid,incidentTicket,operatorContext,stage:'after-review'
   }),now);
