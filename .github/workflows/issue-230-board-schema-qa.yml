@@ -9,8 +9,10 @@ on:
       - tests/outfit-3d-board-bridge.test.mjs
       - public/original-photo-fingerprint.mjs
       - tests/original-photo-fingerprint.test.mjs
+      - public/captured-outfit-3d-adapter.mjs
+      - tests/captured-outfit-3d-adapter.test.mjs
       - public/original-jpeg-source.mjs
-      - tests/original-jpeg-source.test.mjs
+      - tests/original-jpeg-source.test.mjs tests/captured-outfit-3d-adapter.test.mjs
       - public/verified-3d-photo-preparation.mjs
       - tests/verified-3d-photo-preparation.test.mjs
       - .github/workflows/issue-230-board-schema-qa.yml
