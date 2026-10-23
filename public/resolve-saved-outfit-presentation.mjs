@@ -31,7 +31,10 @@ export async function resolveSavedOutfitPresentation(record,items,accountId,veri
   const verified=await restoreVerifiedCapturedOutfitBoard(classified.snapshot,classified.board,items,accountId,verifyOwnership,cryptoProvider);
   return {mode:'3d-placeholder',board:classified.board,verified};
  }catch(error){
-  if(/ownership|Foreign wardrobe item|account scope/i.test(String(error?.message||error)))return {mode:'unavailable',reason:'Outfit ownership verification failed'};
+  const failure=String(error?.message||error);
+  if(/ownership|Foreign wardrobe item|account scope/i.test(failure))return {mode:'unavailable',reason:'Outfit ownership verification failed'};
+  // Only known provenance failures qualify for 2D fallback. Unexpected exceptions fail closed.
+  if(!/Saved outfit source changed|Original-photo source version mismatch|Conflicting original photographs|Original.*(?:missing|invalid|unavailable)|(?:JPEG|photo).*(?:invalid|missing|unavailable)/i.test(failure))return {mode:'unavailable',reason:'Saved outfit verification error'};
   // A 2D fallback may only use garments that still exist and pass ownership checks.
   if(!Array.isArray(items))return {mode:'unavailable',reason:'Account-scoped wardrobe unavailable'};
   const ids=Object.values(classified.board.slots).filter(id=>id!==null&&id!==undefined&&id!=='');
