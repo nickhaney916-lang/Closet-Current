@@ -29,3 +29,9 @@ test('rejects tampered saved snapshots and duplicate slots',async()=>{
  const saved=await verifyCapturedOutfitBoard(board,garments(1),'owner',owns,webcrypto);
  await assert.rejects(()=>restoreVerifiedCapturedOutfitBoard({...saved,selected:[saved.selected[0],saved.selected[0]]},board,garments(1),'owner',owns,webcrypto));
 });
+
+test('rejects saved snapshot from another account even when item IDs and sources match',async()=>{
+ const saved=await verifyCapturedOutfitBoard(board,garments(1),'owner',owns,webcrypto);
+ await assert.rejects(()=>restoreVerifiedCapturedOutfitBoard(saved,board,garments(1),'other-owner',owns,webcrypto),/account scope mismatch/);
+ await assert.rejects(()=>restoreVerifiedCapturedOutfitBoard({...saved,accountId:undefined},board,garments(1),'owner',owns,webcrypto),/account scope mismatch/);
+});
