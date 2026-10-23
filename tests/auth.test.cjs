@@ -13,9 +13,9 @@ function app(fetchImpl=async()=>{throw new TypeError('network unavailable');},ca
  elements.get('authEmail').value='test@example.invalid';
  elements.get('authPassword').value='test-password-only';
  elements.get('authUsername').value='test_user';
- const saved=new Map(),window={};if(initialSession)saved.set('closet-current-auth-v1',JSON.stringify(initialSession));let timerId=0,reloaded=false;
+ const saved=new Map(),windowEvents={},window={addEventListener:(name,fn)=>{windowEvents[name]=fn;}};if(initialSession)saved.set('closet-current-auth-v1',JSON.stringify(initialSession));let timerId=0,reloaded=false;
  vm.runInNewContext(source,{window,document:{getElementById:id=>elements.get(id)},localStorage:{getItem:key=>saved.get(key)||null,setItem:(key,value)=>saved.set(key,value),removeItem:key=>saved.delete(key)},location:{reload(){reloaded=true;},pathname:'/Closet-Current/',...callback},history:{replaceState(){}},URLSearchParams,AbortController,TypeError,setTimeout:fn=>{timers.set(++timerId,fn);return timerId;},clearTimeout:id=>timers.delete(id),fetch:async(...args)=>{requests.push(args);return fetchImpl(...args);}});
- return {get:id=>elements.get(id),listeners,timers,requests,window,saved,reloaded:()=>reloaded,submit:()=>elements.get('authForm').onsubmit({preventDefault(){}})};
+ return {get:id=>elements.get(id),listeners,windowEvents,timers,requests,window,saved,reloaded:()=>reloaded,submit:()=>elements.get('authForm').onsubmit({preventDefault(){}})};
 }
 const response=(data,ok=true)=>({ok,json:async()=>data});
 test('new visitors get signup guidance and hidden username cannot block login',()=>{
@@ -165,4 +165,43 @@ test('simultaneous cloud refreshes rotate the token only once and retain the acc
 test('cloud token refresh cannot switch to a different account',async()=>{
  let calls=0;const a=app(async()=>++calls===1?response({access_token:'old-access',refresh_token:'old-refresh',user:{id:'first-user'}}):response({access_token:'other-access',user:{id:'other-user'}}));await a.submit();
  await assert.rejects(a.window.closetAuth.getAccessToken({force:true}),/account changed/);assert.equal(a.window.closetAuth.user.id,'first-user');
+});
+
+test('Family Alpha session generation starts unauthenticated and increments on first login only',async()=>{
+ const a=app(async()=>response({access_token:'one',refresh_token:'refresh',user:{id:'test-user'},expires_in:3600}));
+ assert.equal(a.window.closetAuth.getSessionGeneration(),0);
+ await a.submit();assert.equal(a.window.closetAuth.getSessionGeneration(),1);
+ assert.equal(a.window.closetAuth.user.id,'test-user');
+});
+test('refresh of the same owner keeps session generation stable for pending avatar work',async()=>{
+ let requests=0;const a=app(async()=>++requests===1?response({access_token:'old',refresh_token:'refresh',user:{id:'test-user'},expires_in:3600}):response({access_token:'new',refresh_token:'rotated',user:{id:'test-user'},expires_in:3600}));
+ await a.submit();const generation=a.window.closetAuth.getSessionGeneration();
+ await a.window.closetAuth.getAccessToken({force:true});
+ assert.equal(a.window.closetAuth.getSessionGeneration(),generation);
+ assert.equal(await a.window.closetAuth.getAccessToken(),'new');
+});
+test('different signed-in owner invalidates prior avatar generation',async()=>{
+ let requested=0;
+ const a=app(async()=>response({access_token:'token-'+requested,refresh_token:'refresh',user:{id:++requested===1?'owner-a':'owner-b'},expires_in:3600}));
+ await a.submit();const old=a.window.closetAuth.getSessionGeneration();
+ await a.submit();assert.equal(a.window.closetAuth.user.id,'owner-b');
+ assert.equal(a.window.closetAuth.getSessionGeneration(),old+1);
+});
+test('logout revokes account and generation immediately before the network responds',async()=>{
+ let resolveNetwork;let calls=0;const a=app(async()=>++calls===1?response({access_token:'token',refresh_token:'refresh',user:{id:'test-user'},expires_in:3600}):new Promise(resolve=>resolveNetwork=resolve));
+ await a.submit();const prior=a.window.closetAuth.getSessionGeneration();
+ const logout=a.get('logout').onclick();
+ assert.equal(a.window.closetAuth.user,null);
+ assert.equal(a.window.closetAuth.getSessionGeneration(),prior+1);
+ assert.equal(a.saved.has('closet-current-auth-v1'),false);
+ await assert.rejects(a.window.closetAuth.getAccessToken(),/Sign in required/);
+ resolveNetwork(response({}));await logout;assert.equal(a.reloaded(),true);
+});
+test('pagehide and persisted pageshow invalidate long-running private avatar work',async()=>{
+ const a=app(async()=>response({access_token:'token',refresh_token:'refresh',user:{id:'test-user'},expires_in:3600}));
+ await a.submit();const previous=a.window.closetAuth.getSessionGeneration();
+ assert.equal(typeof a.windowEvents.pagehide,'function');
+ a.windowEvents.pagehide();assert.equal(a.window.closetAuth.getSessionGeneration(),previous+1);
+ a.windowEvents.pageshow({persisted:false});assert.equal(a.window.closetAuth.getSessionGeneration(),previous+1);
+ a.windowEvents.pageshow({persisted:true});assert.equal(a.window.closetAuth.getSessionGeneration(),previous+2);
 });
