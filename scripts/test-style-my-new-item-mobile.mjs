@@ -463,7 +463,13 @@ try{
   layers:$('reusableFigureGarments').children.length
  })));throw error;}
  await page.evaluate(()=>{clearInterval(window.__stallRefresh);window.renderReusableFigurePreview=window.__restoreRenderRequest;});
- assert.equal(await page.locator('#reusableFigureRetry').isVisible(),true);
+ const stallState=await page.evaluate(()=>({visible:!$('reusableFigureRetry').hidden,
+  status:$('reusableFigureStatus').textContent,busy:$('reusableFigureStage').getAttribute('aria-busy'),
+  decodes:window.__stallDecodes,renderRequests:window.__stallRenderRequests.length,
+  layers:$('reusableFigureGarments').children.length,
+  view:[...document.querySelectorAll('.view')].filter(x=>!x.hidden).map(x=>x.id)}));
+ if(!stallState.visible)console.log('RETRY_VISIBILITY_DIAGNOSTIC '+JSON.stringify(stallState));
+ assert.equal(stallState.visible,true);
  await page.evaluate(()=>HTMLImageElement.prototype.decode=window.__nativeDecode);
  await page.locator('#reusableFigureRetry').click();
  try{await page.waitForFunction(()=>document.querySelectorAll('#reusableFigureGarments img').length===1);}catch(error){
