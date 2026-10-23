@@ -8,8 +8,6 @@ jobs:
   offline-routes:
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    env:
-      STAGING_ROUTE_BASELINE_DIR: ${{ runner.temp }}/issue185-pr181/staging-dist
     steps:
       - uses: actions/checkout@v4
         with:
@@ -25,6 +23,7 @@ jobs:
           git worktree add --detach "$RUNNER_TEMP/issue185-pr181" a42894cd2c7bf3ebc0019f69ba7112888e8fb04c
           node --input-type=module <<'JS'
           import {readFileSync,appendFileSync} from 'node:fs';
+          appendFileSync(process.env.GITHUB_ENV,'STAGING_ROUTE_BASELINE_DIR='+process.env.RUNNER_TEMP+'/issue185-pr181/staging-dist\n');
           const source=readFileSync(process.env.RUNNER_TEMP+'/issue185-pr181/.github/workflows/staging-protected-preview-bundle.yml','utf8');
           for(const name of ['CLOSET_STAGING_SUPABASE_URL','CLOSET_STAGING_APP_ORIGIN','CLOSET_STAGING_SUPABASE_PUBLISHABLE_KEY']){
             const value=source.match(new RegExp('^      '+name+': ([^\\n]+)$','m'))?.[1];
