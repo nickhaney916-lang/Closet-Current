@@ -16,8 +16,8 @@ function nonempty(value){return typeof value==='string'&&value.trim().length>0;}
 function account(value){return nonempty(value)&&/^[a-f0-9-]{36}$/i.test(value);}
 function assertContext(context){
  if(!context||!account(context.authenticatedUserId)||context.indexedDbName!=='closet-current-user-'+context.authenticatedUserId)throw Error('Authenticated account / local database mismatch');
- if(context.cloudOwnerId!==undefined&&context.cloudOwnerId!==context.authenticatedUserId)throw Error('Foreign cloud backup owner');
- if(context.currentUserId!==undefined&&context.currentUserId!==context.authenticatedUserId)throw Error('Authentication session changed');
+ if(!account(context.cloudOwnerId)||context.cloudOwnerId!==context.authenticatedUserId)throw Error('Foreign or unresolved cloud backup owner');
+ if(!account(context.currentUserId)||context.currentUserId!==context.authenticatedUserId)throw Error('Authentication session changed or unverified');
  return context.authenticatedUserId;
 }
 function decodeImageJPEG(source){
@@ -50,6 +50,8 @@ export async function auditRetainedPhotoProvenance(local,context,cryptoProvider=
   ids.add(item.id);
   // The public app normally stores image (cropped when outfit-split).
   // Outfit captures ALSO store originalPhoto.image (re-encoded full outfit).
+  if(item.originalPhoto!==undefined&&(!item.originalPhoto||!nonempty(item.originalPhoto.image)))throw Error('Missing retained full original photo');
+  if(nonempty(item.outfitSourceId)&&!item.originalPhoto)throw Error('Shared outfit source missing its full-frame original');
   const hasOriginal=typeof item.originalPhoto?.image==='string';
   const original=hasOriginal?item.originalPhoto.image:item.image;
   const bytes=decodeImageJPEG(original);
