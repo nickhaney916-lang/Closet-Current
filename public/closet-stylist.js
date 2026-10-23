@@ -12,7 +12,7 @@ function stylistSelectedSources(board){
   const item=items.find(piece=>piece.id===id);
   return {slot,id,ownerId:window.closetAuth?.user?.id||null,database:db,image:item?.image,category:item?.category,itemType:item?.itemType,
    color:item?.color,pattern:item?.pattern,
-   seasons:JSON.stringify(item?.seasons||[]),photoIdentity:stylistSourceIdentity(item)};
+   matchDetails:JSON.stringify([item?.material||'',item?.occasion||'']),seasons:JSON.stringify(item?.seasons||[]),photoIdentity:stylistSourceIdentity(item)};
  });
 }
 function stylistSourcesCurrent(sources){
@@ -22,7 +22,7 @@ function stylistSourcesCurrent(sources){
   return source.ownerId===(window.closetAuth?.user?.id||null)&&source.database===db&&
    !!item&&item.image===source.image&&item.category===source.category&&
    item.itemType===source.itemType&&item.color===source.color&&
-   item.pattern===source.pattern&&JSON.stringify(item.seasons||[])===source.seasons&&
+   item.pattern===source.pattern&&JSON.stringify([item.material||'',item.occasion||''])===source.matchDetails&&JSON.stringify(item.seasons||[])===source.seasons&&
    stylistSourceEqual(stylistSourceIdentity(item),source.photoIdentity);
  });
 }

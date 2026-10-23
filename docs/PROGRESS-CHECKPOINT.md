@@ -1,3 +1,7 @@
+## 2026-10-23 — Assignment 10 owned-outfit diversity
+
+Separate `work/assignment10-owned-outfit-diversity-20261023` from #220 0f62e25. Appearance-aware bounded shortlist/final diversity selection, modest recorded occasion/material scoring, and matching metadata invalidation. Independent synthetic comparison: 1 to 3 visibly distinct combinations, all pinned, sources unchanged. Local full root suite 1805 pass / 0 fail / 3 pre-existing licensed-pilot skips; unchanged product gate 22/22. Seven new tests. Exact head/CI/browser evidence belongs in new draft PR and issue #240. See `docs/ASSIGNMENT10-OWNED-OUTFIT-DIVERSITY.md`. #242 lifecycle, 3D, recognition and backend unchanged; no customer data/paid inference/merge/deploy.
+
 # Assignment #219 — independent 2D readiness (October 23)
 
 Separate `qa/2d-outfit-readiness-20261023` from verified PR #219 883c8ed.
