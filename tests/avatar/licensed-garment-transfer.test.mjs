@@ -32,3 +32,13 @@ test('preview is explicitly not a fit simulation',()=>{
 test('reject oversized original photos before transfer allocation',()=>{
  assert.throws(()=>isolateLicensedGarment({accountId:'test-account',garment:{...garment,width:10000,height:10000},mask:new Uint8Array([255,255])}),/Invalid original dimensions/);
 });
+
+test('reject masks selecting only transparent pixels',()=>{
+ const transparent={...garment,pixels:new Uint8ClampedArray([200,25,50,0,20,150,240,255])};
+ assert.throws(()=>isolateLicensedGarment({accountId:'test-account',garment:transparent,mask:new Uint8Array([255,0])}),/Mask has no visible source pixels/);
+});
+test('allow fully black but visible fabric',()=>{
+ const black={...garment,pixels:new Uint8ClampedArray([0,0,0,255,0,0,0,0])};
+ const out=isolateLicensedGarment({accountId:'test-account',garment:black,mask:new Uint8Array([255,0])});
+ assert.equal(out.pixels[3],255);
+});
