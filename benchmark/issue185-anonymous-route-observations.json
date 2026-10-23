@@ -1,0 +1,51 @@
+[
+  {
+    "path": "/",
+    "status": 302,
+    "locationOrigin": "https://bold-waterfall-ecba.cloudflareaccess.com",
+    "locationPath": "/cdn-cgi/access/login/pilot-access-check.closet-current-staging.pages.dev",
+    "type": "text/html; charset=UTF-8"
+  },
+  {
+    "path": "/pilot-data-notice.html",
+    "status": 302,
+    "locationOrigin": "https://bold-waterfall-ecba.cloudflareaccess.com",
+    "locationPath": "/cdn-cgi/access/login/pilot-access-check.closet-current-staging.pages.dev",
+    "type": "text/html; charset=UTF-8"
+  },
+  {
+    "path": "/pilot-data-notice",
+    "status": 302,
+    "locationOrigin": "https://bold-waterfall-ecba.cloudflareaccess.com",
+    "locationPath": "/cdn-cgi/access/login/pilot-access-check.closet-current-staging.pages.dev",
+    "type": "text/html; charset=UTF-8"
+  },
+  {
+    "path": "/saved-closet-audit.html",
+    "status": 302,
+    "locationOrigin": "https://bold-waterfall-ecba.cloudflareaccess.com",
+    "locationPath": "/cdn-cgi/access/login/pilot-access-check.closet-current-staging.pages.dev",
+    "type": "text/html; charset=UTF-8"
+  },
+  {
+    "path": "/saved-closet-audit",
+    "status": 302,
+    "locationOrigin": "https://bold-waterfall-ecba.cloudflareaccess.com",
+    "locationPath": "/cdn-cgi/access/login/pilot-access-check.closet-current-staging.pages.dev",
+    "type": "text/html; charset=UTF-8"
+  },
+  {
+    "path": "/phone-photo-check.html",
+    "status": 302,
+    "locationOrigin": "https://bold-waterfall-ecba.cloudflareaccess.com",
+    "locationPath": "/cdn-cgi/access/login/pilot-access-check.closet-current-staging.pages.dev",
+    "type": "text/html; charset=UTF-8"
+  },
+  {
+    "path": "/phone-photo-check",
+    "status": 302,
+    "locationOrigin": "https://bold-waterfall-ecba.cloudflareaccess.com",
+    "locationPath": "/cdn-cgi/access/login/pilot-access-check.closet-current-staging.pages.dev",
+    "type": "text/html; charset=UTF-8"
+  }
+]

@@ -7,6 +7,7 @@ import {readFile,writeFile,cp,readdir} from 'node:fs/promises';
 import {writeAtomicStagingBundle} from './atomic-staging-output.mjs';
 import {createStagingAssetSeal,verifyStagingAssetSeal} from './staging-asset-seal.mjs';
 import {createHash} from 'node:crypto';
+import {stagingSupportLinks,stagingNavigationWorker} from './staging-support-navigation.mjs';
 import {execFileSync} from 'node:child_process';
 
 const PROD='hlkgymugtfbirlpunsra';
@@ -95,7 +96,7 @@ async function main(){
  const match=index.match(/\?v=([a-f0-9]{12})/);
  assert.ok(match,'App build must have a versioned release');
  const previous=match[1];
- const version=createHash('sha256').update('restricted-staging\0'+previous+'\0'+
+ const version=createHash('sha256').update(await readFile('scripts/staging-support-navigation.mjs','utf8')).update('restricted-staging\0'+previous+'\0'+
   config.backendURL+'\0'+config.publicKey+'\0'+config.appOrigin).digest('hex').slice(0,12);
  for(const filename of ['index.html','sw.js','phone-photo-check.html','saved-closet-audit.html']){
   await applyFile(stageDir,filename,text=>text.split('?v='+previous).join('?v='+version)
@@ -111,6 +112,8 @@ async function main(){
   return replaceExactly(next,"key.startsWith('closet-current-')",
     "key.startsWith('closet-current-staging-')",1,'isolated staging cache cleanup');
  });
+ await applyFile(stageDir,'index.html',stagingSupportLinks);
+ await applyFile(stageDir,'sw.js',stagingNavigationWorker);
  // These headers are NOT access control; Cloudflare Access policy must
  // be independently enabled and tested before serving ANY staging bundle.
  await writeFile(stageDir+'/_headers',
