@@ -48,9 +48,10 @@ function draftMetadataSnapshot(value){
  if(value&&typeof value==='object')return Object.fromEntries(Object.entries(value).map(([key,child])=>[key,draftMetadataSnapshot(child)]));
  return value;
 }
-let pendingDraftWrite=null;
+let pendingDraftWrite=null,clearingDraft=false;
 function persistDraft(){
- if(!db)return Promise.resolve(false);
+ // Prevent an old draft write from reintroducing photos while clearing.
+ if(clearingDraft||!db)return Promise.resolve(false);
  const owner=window.closetAuth?.user?.id,database=db;
  const current=()=>!!owner&&window.closetAuth?.user?.id===owner&&db===database&&database.name==='closet-current-user-'+owner;
  if(!current())return Promise.resolve(false);
@@ -530,6 +531,7 @@ function exactlyRepeatedCapturedItem(existing,proposed){
  return union<=0||overlap/union>=.975;
 }
 function candidate(image,options={}){
+ if(clearingDraft){message('Finish clearing unfinished photos before taking another picture.');return false;}
  if([...items,...batch].some(item=>exactlyRepeatedCapturedItem(item,{image,...options}))){if(typeof recordDeviceEvent==='function')recordDeviceEvent('exact_duplicate_skipped');message('Exact duplicate skipped. Show the next garment.');return false;}
  const item=normalizeClothing({id:crypto.randomUUID(),image,name:'',category:'Uncategorized',color:'',notes:'',localStatus:'Reading photo…'});
  if(typeof recordDeviceEvent==='function')recordDeviceEvent('photo_queued');
@@ -862,7 +864,47 @@ async function upload(file){
 }
 $('retryDraftSave').onclick=async()=>{const button=$('retryDraftSave');button.disabled=true;try{if(await persistDraft())message('Unfinished photos saved on this device. Check Photo results before closing; they are not yet confirmed closet pieces.');}finally{button.disabled=false;}};
 $('upload').onchange=e=>{upload(e.target.files[0]);e.target.value='';};
-$('discard').onclick=()=>{if(batch.length&&confirm('Discard all unsaved images in this batch?')){batch=[];persistDraft();session=0;render();}};
+// Only remove the visible queue after the owner-bound empty draft commits.
+// Previously uploaded cloud photos are NOT erased by this local action.
+async function clearUnfinishedPhotosSafely(){
+ if(clearingDraft||!batch.length)return false;
+ const owner=window.closetAuth?.user?.id,database=db;
+ if(!owner||!database||database.name!=='closet-current-user-'+owner){
+  message('Unfinished photos cannot be cleared while device storage is unavailable. Keep this page open.');return false;
+ }
+ if(busy||cameraOpening||stream||saving||automaticRunning||automaticQueue.length||localPending.size||localJobs.size){
+  message('Finish or stop photo processing before clearing unfinished photos. No photos were removed.');return false;
+ }
+ if(!confirm('Remove unfinished photos from this device’s review list? Previously uploaded cloud photo files may remain. This is not full account deletion.'))return false;
+ const original=batch,originalIds=batch.map(x=>x.id),button=$('discard');
+ clearingDraft=true;button.disabled=true;
+ try{
+  await queued(()=>new Promise((resolve,reject)=>{
+   const tx=database.transaction('state','readwrite');
+   tx.objectStore('state').put({id:'draft',batch:[]});
+   tx.oncomplete=resolve;
+   tx.onerror=()=>reject(tx.error||Error('Draft clear failed'));
+   tx.onabort=()=>reject(tx.error||Error('Draft clear aborted'));
+  }));
+  if(window.closetAuth?.user?.id!==owner||db!==database||batch!==original||
+   batch.length!==originalIds.length||batch.some((item,i)=>item.id!==originalIds[i])){
+   message('Your review queue changed while clearing. Reload and review photos before trying again.');
+   return false;
+  }
+  batch=[];session=0;
+  window.closetUnsavedDraftOwner=null;
+  $('draftSaveStatus').textContent='Unfinished photo review cleared from this device. Previously uploaded cloud photos may still remain.';
+  $('retryDraftSave').hidden=true;
+  render();
+  message('Unfinished photos removed from this device’s review list. Cloud photo files and old backups may remain.');
+  return true;
+ }catch{
+  // On quota/abort/transaction failure, leave photos intact and visible.
+  const text='Could not clear unfinished photos from device storage. Your photos are still here. Keep this page open and retry.';
+  $('draftSaveStatus').textContent=text;message(text);return false;
+ }finally{clearingDraft=false;button.disabled=false;}
+}
+$('discard').onclick=clearUnfinishedPhotosSafely;
 // A sign-out must never silently discard unfinished photos held in memory.
 // The owning account remains active until its latest draft transaction completes.
 // In-progress captures/recognition are blocked rather than discarded.
