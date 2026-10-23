@@ -51,7 +51,7 @@ function draftMetadataSnapshot(value){
 let pendingDraftWrite=null,clearingDraft=false;
 function persistDraft(){
  // Prevent an old draft write from reintroducing photos while clearing.
- if(clearingDraft||!db)return Promise.resolve(false);
+ if((typeof clearingDraft!=='undefined'&&clearingDraft)||!db)return Promise.resolve(false);
  const owner=window.closetAuth?.user?.id,database=db;
  const current=()=>!!owner&&window.closetAuth?.user?.id===owner&&db===database&&database.name==='closet-current-user-'+owner;
  if(!current())return Promise.resolve(false);
@@ -531,7 +531,7 @@ function exactlyRepeatedCapturedItem(existing,proposed){
  return union<=0||overlap/union>=.975;
 }
 function candidate(image,options={}){
- if(clearingDraft){message('Finish clearing unfinished photos before taking another picture.');return false;}
+ if(typeof clearingDraft!=='undefined'&&clearingDraft){message('Finish clearing unfinished photos before taking another picture.');return false;}
  if([...items,...batch].some(item=>exactlyRepeatedCapturedItem(item,{image,...options}))){if(typeof recordDeviceEvent==='function')recordDeviceEvent('exact_duplicate_skipped');message('Exact duplicate skipped. Show the next garment.');return false;}
  const item=normalizeClothing({id:crypto.randomUUID(),image,name:'',category:'Uncategorized',color:'',notes:'',localStatus:'Reading photo…'});
  if(typeof recordDeviceEvent==='function')recordDeviceEvent('photo_queued');
