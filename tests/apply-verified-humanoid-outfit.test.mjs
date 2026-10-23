@@ -40,3 +40,15 @@ test('sign-out clears all garment slots before a new account is verified',()=>{
  assert.ok(Object.values(calls[1]).every(value=>value===null));
  assert.equal(clearVerifiedHumanoidOutfit({supported:false}),false);
 });
+
+test('lost or disposed WebGL context returns 2D fallback instead of reporting success',()=>{
+ const prepared={placeholderOnly:true,originalPixelsRenderedAs3D:false,selected:[top],colors:{top:rgba}};
+ let calls=0;
+ for(const flag of ['lost','disposed']){
+  const renderer={supported:true,getState:()=>({[flag]:true}),setOutfit:()=>{calls++;return true;}};
+  assert.equal(applyVerifiedHumanoidOutfit(renderer,prepared),false);
+ }
+ assert.equal(calls,0);
+ const renderer={supported:true,getState:()=>({lost:false,disposed:false}),setOutfit:()=>false};
+ assert.equal(applyVerifiedHumanoidOutfit(renderer,prepared),false);
+});
