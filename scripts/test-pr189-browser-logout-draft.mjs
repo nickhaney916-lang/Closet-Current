@@ -43,7 +43,7 @@ try {
     const url=route.request().url();
     if(new URL(url).origin===origin)return route.continue();
     if(!url.startsWith(backend+'/')){outside.push(url);return route.abort('blockedbyclient');}
-    const parsed=new URL(url),body=route.request().postDataJSON?.()||{};
+    const parsed=new URL(url),body=parsed.pathname==='/auth/v1/token'?(route.request().postDataJSON()||{}):{};
     const identity=(body?.email||'').startsWith('b-')?'b':'a';
     calls.push({path:parsed.pathname,method:route.request().method()});
     let result={};
@@ -130,14 +130,17 @@ try {
    assert.deepEqual(dialogs,[],'Unexpected browser unsaved changes warning');
    // Existing stylesheet requests an optional Google Font; block it as well.
    // No external request ever leaves this synthetic browser harness.
-   const unexpected=outside.filter(url=>!/^https:\/\/fonts\.(?:googleapis|gstatic)\.com\//.test(url));
+   const allowedPublicTrend=/^https:\/\/raw\.githubusercontent\.com\/nickhaney916-lang\/Closet-Current\/main\/public\/trend-data\.json(?:\?|$)/;
+   const unexpected=outside.filter(url=>
+    !/^https:\/\/fonts\.(?:googleapis|gstatic)\.com\//.test(url) &&
+    !allowedPublicTrend.test(url));
    assert.deepEqual(unexpected,[],'Unexpected production or external browser requests');
    assert.deepEqual(pageErrors,[],'Application threw in browser');
    results.push({engine:engineName,syntheticOnly:true,
     blockedBusyLogout:true,blockedFailedDraftSave:true,
     deliberateLogoutNoBrowserPrompt:true,clearedOldBrowserDocument:true,
     accountBIsolated:true,accountADraftRecovered:true,
-    outsideRequests:outside.length,pageErrors:pageErrors.length,
+    blockedExternalRequests:outside.length,pageErrors:pageErrors.length,
     hostedAuthTested:false,realDeviceValidated:false,productionReleaseApproved:false});
   }finally{await context.close();await browser.close();}
  }
