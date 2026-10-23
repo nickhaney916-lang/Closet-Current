@@ -1,3 +1,30 @@
+# Issue #9 outfit-preview foundation — October 22, 2026
+
+Isolated `feature/issue-9-outfit-preview-foundation-20261022` from PR #180
+`083f9c234a0a0829476df25287ccf8ff638af937`; original branches, #181 and #182/#183
+untouched. Builder reuses the owned stylist with an empty-closet entry, retained
+selected-item pins through save/reload and conflicting-ID backup restore, and
+swap protection independent of transient UI state. Low-resolution 160×297 figure
+references are disclosed rather than falsely sharpened; the local circular selfie
+experiment requires explicit nonpersistent consent before file access, cleared on
+revocation/account change/page exit. No actual user selfie processed.
+
+Local build PASS; full Node suite **1,629 pass / 0 fail / 3 skipped (1,632 total)**;
+focused suite **75 pass / 0 fail**. Branch-only offline browser CI added; results
+must be observed at the final SHA, not inferred from local tests. Local browser
+installation blocked by download network restrictions. No new physical-phone
+runs (0/2), independent held-out generated-output evaluations (0), realistic
+multi-garment output or competitor superiority established. Existing licensed
+source fixtures remain regression-only evidence. See
+`docs/ISSUE-9-OUTFIT-FOUNDATION-20261022.md` for commercial rendering research,
+per-credit projections, source-integrity design and concrete next gates.
+No paid request, production edit/merge/deploy, staging Auth/security change,
+Drive Duel modification or customer wardrobe access. Realistic rendering remains
+disabled pending rights-cleared native-detail figures, human fidelity evidence,
+physical phone testing and separately approved capped inference/privacy work.
+
+---
+
 # Consolidated phone diagnostics and full-asset staging access — October 21, 2026
 
 - Integrated the independently verified **PR #167** offline original-photo phone-trial worksheet and **PR #165** complete SHA-256-sealed staging static asset access sweep in a new draft-only true two-parent development branch; original PRs remain unmodified. A source guard pins the five security implementation/workflow/test/document blobs exactly to #165, preserves the PR #167 phone tool, customer app, Supabase, production workflows, original-full-frame recognition-before-crop behavior, and existing release blockers.

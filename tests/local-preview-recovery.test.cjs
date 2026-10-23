@@ -100,3 +100,32 @@ test('identical requests across event-loop turns do not restart an in-flight dec
  assert.equal(h.el('reusableFigureStage').attributes['aria-busy'],'false');
  assert.equal(h.el('reusableFigureRetry').hidden,false);
 });
+
+test('selfie consent is required before file access and revoked with its blob',()=>{
+ const h=setup(),consent=h.el('reusableSelfieConsent'),upload=h.el('reusableSelfieUpload');
+ let reads=0,created=0,revoked=0;
+ Object.defineProperty(upload,'files',{get(){reads++;return [{type:'image/png',size:200}];}});
+ h.c.URL={createObjectURL(){created++;return 'blob:synthetic-consented-face';},revokeObjectURL(){revoked++;}};
+ upload.change();assert.equal(reads,0);assert.equal(created,0);assert.equal(upload.disabled,true);
+ consent.checked=true;consent.change();assert.equal(upload.disabled,false);
+ upload.change();assert.equal(reads,1);assert.equal(created,1);assert.equal(h.el('reusableFigureSelfie').hidden,false);
+ consent.checked=false;consent.change();assert.equal(revoked,1);assert.equal(upload.disabled,true);
+ assert.equal(h.el('reusableFigureSelfie').src,undefined);assert.equal(h.el('reusableFigureSelfie').hidden,true);
+});
+
+test('account switch revokes selfie consent and clears temporary image',async()=>{
+ const h=setup();let revoked=0;
+ h.c.URL={createObjectURL(){return 'blob:synthetic';},revokeObjectURL(){revoked++;}};
+ h.el('reusableSelfieConsent').checked=true;
+ h.el('reusableSelfieUpload').files=[{type:'image/png',size:100}];
+ h.el('reusableSelfieUpload').change();
+ h.c.closetAuth.user.id='other';await h.start();
+ assert.equal(revoked,1);assert.equal(h.el('reusableSelfieConsent').checked,false);
+ assert.equal(h.el('reusableSelfieUpload').disabled,true);assert.equal(h.el('reusableFigureSelfie').hidden,true);
+});
+
+test('low-resolution model disclosure uses decoded native dimensions',async()=>{
+ const h=setup();await h.start();await h.finish();
+ assert.match(h.el('reusableFigureClarity').textContent,/Low-resolution female model reference \(100 × 150\)/);
+ assert.match(h.el('reusableFigureClarity').textContent,/saved clothing photos/);
+});

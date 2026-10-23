@@ -34,6 +34,11 @@ try{
  const errors=[];page.on('pageerror',e=>errors.push(e.message));
  const url='http://127.0.0.1:'+server.address().port+'/';
  await page.goto(url);await page.evaluate(()=>Promise.all([closetReady,outfitBoardReady]));
+ await page.evaluate(()=>switchView('builder'));
+ assert.match(await page.locator('#builderOwnedStatus').innerText(),/closet is empty/);
+ assert.equal(await page.locator('#builderCreateOwned').isDisabled(),true);
+ await page.locator('#builderAddClothes').click();
+ assert.equal(await page.locator('#scan').isVisible(),true);
  const original=await page.evaluate(async()=>{
   const make=(id,category,itemType,color)=>({
    id,category,itemType,color,name:id.replaceAll('-',' '),image:'data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="100" height="150"><rect width="100" height="150" fill="'+color.toLowerCase()+'"/></svg>'),
@@ -121,6 +126,7 @@ try{
   saved:savedOutfitBoards.length,item:JSON.stringify(items.find(x=>x.id==='new-green-top'))}));
  assert.equal(after.saved,2,'direct card save and board save both survive reload');
  assert.equal(after.board.slots.top,'new-green-top','new item persists after reload');
+ assert.equal(after.board.anchorItemId,'new-green-top','selected pin survives IndexedDB reload');
  assert.equal(after.board.slots.shoes,nextShoes,'one-piece swap persists after reload');
  assert.equal(after.item,original,'original garment remains unchanged in saved collection');
  // Duplicate clothing names and stale search/slot filters must never redirect

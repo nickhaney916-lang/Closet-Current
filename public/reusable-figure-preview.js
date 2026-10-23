@@ -8,6 +8,7 @@
  const garmentContainer=byId('reusableFigureGarments'),selfie=byId('reusableFigureSelfie');
  const status=byId('reusableFigureStatus'),selector=byId('reusableFigureChoice');
  const upload=byId('reusableSelfieUpload'),remove=byId('reusableSelfieRemove');
+ const consent=byId('reusableSelfieConsent'),clarity=byId('reusableFigureClarity');
  const retry=byId('reusableFigureRetry');
  const photoHelp=byId('reusableFigurePhotoHelp');
  const photoHelpText=byId('reusableFigurePhotoHelpText');
@@ -76,15 +77,22 @@
  const acceptableFace=file=>file&&['image/jpeg','image/png','image/webp'].includes(file.type)&&
   file.size>0&&file.size<=8_000_000;
  function removeFace(){
+  if(consent)consent.checked=false;upload.disabled=true;
   selfie.hidden=true;selfie.removeAttribute('src');upload.value='';
   if(localFaceURL)URL.revokeObjectURL(localFaceURL);
   localFaceURL=null;remove.hidden=true;
   if(faceControls)faceControls.hidden=true;
   for(const input of faceInputs)if(input)input.value='0';
  }
+ consent?.addEventListener('change',()=>{
+  if(!consent.checked)removeFace();else upload.disabled=false;
+ });
  upload.addEventListener('change',()=>{
+  // Consent precedes even reading the file, creating a blob URL or decoding.
+  if(!consent?.checked){removeFace();return;}
   const file=upload.files?.[0];
   removeFace();
+  consent.checked=true;upload.disabled=false;
   if(!file)return;
   if(!acceptableFace(file)){status.textContent='Use a JPEG, PNG or WebP selfie smaller than 8 MB.';return;}
   localFaceURL=URL.createObjectURL(file);
@@ -242,6 +250,9 @@
   await decodeImage(base);
   if(cancelled())return;
   base.style.visibility='visible';
+  if(clarity)clarity.textContent=base.naturalWidth<600||base.naturalHeight<1000
+   ?'Low-resolution '+plan.figure+' model reference ('+base.naturalWidth+' × '+base.naturalHeight+'). Enlarging it cannot restore detail. Check colors, textures and graphics in your saved clothing photos.'
+   :'Model reference only. Check garment details in your saved clothing photos; this collage does not predict fit.';
   for(const placement of plan.placements){
    const query={owner,id:String(placement.itemId),source:placement.image,
     category:placement.category,primaryColor:placement.primaryColor||''};

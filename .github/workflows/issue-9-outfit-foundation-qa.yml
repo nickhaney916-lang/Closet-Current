@@ -1,0 +1,30 @@
+name: Issue 9 outfit foundation offline QA
+on:
+  push:
+    branches: [feature/issue-9-outfit-preview-foundation-20261022]
+permissions:
+  contents: read
+jobs:
+  offline-outfits:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node scripts/build.mjs
+      - run: node --test tests/*.test.cjs tests/*.test.mjs
+      - run: npm install --no-save --no-package-lock playwright@1.56.1
+      - run: npx playwright install --with-deps chromium webkit
+      - run: node scripts/test-reusable-figure-phone-browsers.mjs
+      - run: node scripts/test-style-my-new-item-mobile.mjs
+      - run: STYLE_BROWSER=webkit node scripts/test-style-my-new-item-mobile.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: issue-9-offline-outfit-evidence
+          path: |
+            artifacts/local-fitting/
+            artifacts/style-new-clothes/
+          retention-days: 3
