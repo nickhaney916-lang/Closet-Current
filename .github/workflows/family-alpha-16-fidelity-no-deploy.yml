@@ -31,6 +31,8 @@ jobs:
         run: node scripts/build.mjs
       - name: Node unit/regression suite including Auth original-photo and #16 checks
         run: node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Run pinned PR257 independent fidelity and provenance unit tests
+        run: node --test research/family-alpha-16/tests/*.test.mjs
       - name: Generate actual-source PR257 objective fidelity matrix
         run: node research/family-alpha-16/run-matrix.mjs
       - name: Protect active branches from accidental source changes
