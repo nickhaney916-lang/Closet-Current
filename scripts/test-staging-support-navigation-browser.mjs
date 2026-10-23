@@ -64,12 +64,17 @@ async function check(directory,label,engine,engineName){
   for(const route of pages){
    const paths=label==='baseline'?['/'+route+'.html']:['/'+route+'.html','/'+route];
    for(const path of paths){
-    await page.goto(origin+'/__route-harness');
+    // A Chrome error-page navigation can finish after goto rejects. Isolate
+    // each expected failure in its own tab rather than racing the error page.
+    const probe=label==='baseline'?await context.newPage():page;
+    if(label!=='baseline')await page.goto(origin+'/__route-harness');
+    probe.on('console',msg=>{if(msg.type()==='error')consoleErrors.push(msg.text());});
     let response,error;
-    try{response=await page.goto(origin+path,{waitUntil:'domcontentloaded',timeout:15000});}catch(e){error=e;}
+    try{response=await probe.goto(origin+path,{waitUntil:'domcontentloaded',timeout:15000});}catch(e){error=e;}
     if(label==='baseline'){
      assert.ok(error,'Original worker must reproduce redirected-navigation failure: '+path);
-     navigations.push({path,networkFailureReproduced:true});continue;
+     assert.match(error.message,/net::ERR_FAILED|redirect|service worker/i);
+     navigations.push({path,networkFailureReproduced:true});await probe.close();continue;
     }
     assert.ifError(error);assert.equal(response.status(),200);
     const body=await response.body(),expected=await readFile(resolve(root,route+'.html'));
