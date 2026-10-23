@@ -80,7 +80,7 @@ test('queue and wait time do not block stable source saves or require paid model
  assert.equal(h.writes.length,1);
 });
 test('new selection guards are used by both preview and save in actual customer script',()=>{
- assert.match(script,/const sources=stylistSelectedSources\(board\)/);
+ assert.match(script,/const sources=result\.preparedSources\|\|stylistSelectedSources\(board\)/);
  assert.match(script,/styledCollectionResults\.includes\(result\)&&stylistSourcesCurrent\(sources\)/);
  assert.match(script,/saveOwnedOutfitBoard\(\{\.\.\.board,name:result\.context\.request\+' · option '\+\(index\+1\)\},current\)/);
  assert.match(boardScript,/if\(typeof sourceStillCurrent==='function'&&!sourceStillCurrent\(\)\)/);

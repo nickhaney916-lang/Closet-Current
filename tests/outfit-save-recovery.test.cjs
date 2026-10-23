@@ -57,7 +57,7 @@ test('old-account transaction completion never replaces new-account saved outfit
 function preview(){
  const elements=new Map();let release,finish,fail;
  const ready=new Promise(r=>release=r),persist=new Promise((r,j)=>{finish=r;fail=j;});
- const c={window:{closetAuth:{user:{id:'one'}}},items:[{id:'shirt',category:'Tops',image:'original-photo',itemType:'T-shirt'}],
+ const c={db:{name:'closet-current-user-one'},window:{closetAuth:{user:{id:'one'}}},items:[{id:'shirt',category:'Tops',image:'original-photo',itemType:'T-shirt'}],
   outfitBoardReady:ready,currentBoard:{slots:{}},URL,encodeURIComponent,Date,structuredClone,
   $:id=>{if(!elements.has(id))elements.set(id,{textContent:''});return elements.get(id);},
   boardWriteContext:()=>({current:()=>c.window.closetAuth?.user?.id==='one'}),

@@ -1,3 +1,4 @@
+const syntheticPhoto=require('./helpers/issue204-photo.cjs');
 // Cross-feature integration from ACTUAL customer source functions: original
 // unclipped RGB -> color provenance -> owned-only three outfits -> dress/normal
 // fitting inputs -> account-scoped preview cache. No model or provider traffic.
@@ -16,7 +17,7 @@ vm.runInContext(app.slice(first,last),sandbox);
 for(const f of ['outfit-matcher.js','trend-library.js','outfit-board-engine.js','closet-stylist-engine.js'])
  vm.runInContext(fs.readFileSync('public/'+f,'utf8'),sandbox);
 
-const image=letter=>'data:image/jpeg;base64,'+letter.repeat(256);
+const image=letter=>syntheticPhoto(letter);
 const piece=(id,category,itemType,color='Black',extra={})=>({
  id,category,itemType,color,name:id,image:image('D'),pattern:'Solid',
  sleeveLength:'Unknown',fit:'Regular',seasons:[],...extra
