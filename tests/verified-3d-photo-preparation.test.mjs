@@ -57,3 +57,25 @@ test('deleted shared source fails closed for all dependent garments',async()=>{
  const bottom={...item,id:'pants',category:'Bottoms',colorHex:'#443322'};
  await assert.rejects(prepareVerified3DItems([item,bottom],'a',async()=>undefined,webcrypto),/bytes|photo|Uint8Array|required|input/i);
 });
+
+test('restored saved outfit resolves original verified garments and rejects stale source',async()=>{
+ const item=await fixture();
+ const bottom={...item,id:'pants',category:'Bottoms',colorHex:'#443322'};
+ const snapshot=JSON.parse(JSON.stringify({slots:{top:'shirt',bottom:'pants'}}));
+ const restored=JSON.parse(JSON.stringify(snapshot));
+ const verified=await prepareVerified3DItems([item,bottom],'a',async()=>bytes,webcrypto);
+ const result=mapBoardSlotsTo3D(restored,verified.items,'a',verified.sourceIdentity);
+ assert.deepEqual(result.selected.map(x=>x.itemId),['shirt','pants']);
+ assert.equal(result.placeholderOnly,true);
+ const changed={...verified.items[1],originalSourceVersion:'stale-version'};
+ assert.throws(()=>mapBoardSlotsTo3D(restored,[verified.items[0],changed],'a',verified.sourceIdentity),/provenance|version/i);
+});
+
+test('saved outfit restoration rejects deleted garments and foreign-account replacements',async()=>{
+ const item=await fixture();
+ const bottom={...item,id:'pants',category:'Bottoms',colorHex:'#443322'};
+ const restored=JSON.parse(JSON.stringify({slots:{top:'shirt',bottom:'pants'}}));
+ const verified=await prepareVerified3DItems([item,bottom],'a',async()=>bytes,webcrypto);
+ assert.throws(()=>mapBoardSlotsTo3D(restored,[verified.items[0]],'a',verified.sourceIdentity),/Missing saved wardrobe item/);
+ assert.throws(()=>mapBoardSlotsTo3D(restored,[verified.items[0],{...verified.items[1],accountId:'b'}],'a',verified.sourceIdentity),/Foreign wardrobe item/);
+});
