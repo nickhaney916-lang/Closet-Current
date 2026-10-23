@@ -205,3 +205,23 @@ test('pagehide and persisted pageshow invalidate long-running private avatar wor
  a.windowEvents.pageshow({persisted:false});assert.equal(a.window.closetAuth.getSessionGeneration(),previous+1);
  a.windowEvents.pageshow({persisted:true});assert.equal(a.window.closetAuth.getSessionGeneration(),previous+2);
 });
+
+test('a late token refresh cannot restore the signed-out account or saved credentials',async()=>{
+ let requestCount=0,releaseRefresh,releaseLogout;
+ const a=app(async()=>{
+  requestCount++;
+  if(requestCount===1)return response({access_token:'original',refresh_token:'r1',user:{id:'test-user'},expires_in:3600});
+  if(requestCount===2)return new Promise(resolve=>releaseRefresh=resolve);
+  return new Promise(resolve=>releaseLogout=resolve);
+ });
+ await a.submit();const before=a.window.closetAuth.getSessionGeneration();
+ const pendingRefresh=a.window.closetAuth.getAccessToken({force:true});
+ const signout=a.get('logout').onclick();
+ assert.equal(a.window.closetAuth.user,null);
+ assert.equal(a.window.closetAuth.getSessionGeneration(),before+1);
+ releaseRefresh(response({access_token:'late-access',refresh_token:'late-refresh',user:{id:'test-user'},expires_in:3600}));
+ await assert.rejects(pendingRefresh,/Session account changed/);
+ assert.equal(a.window.closetAuth.user,null);
+ assert.equal(a.saved.has('closet-current-auth-v1'),false);
+ releaseLogout(response({}));await signout;assert.equal(a.reloaded(),true);
+});
