@@ -16,11 +16,19 @@
  let signup=false,session=null,busy=false,recovery=false,restoringSession=false,refreshing=null;
  window.closetAuth.getAccessToken=async({force=false}={})=>{
   if(!session?.access_token||!window.closetAuth.user?.id)throw Error('Sign in required');
+  const requestedOwner=window.closetAuth.user.id,requestedGeneration=sessionGeneration;
   if(force||session.expires_at<Date.now()/1000+60){
    if(!session.refresh_token)throw Error('Sign in again');
-   if(!refreshing){const expected=window.closetAuth.user.id;refreshing=request('token?grant_type=refresh_token',{refresh_token:session.refresh_token}).then(data=>{if(data.user?.id!==expected||!data.access_token)throw Error('Session account changed');showUser(data);}).finally(()=>{refreshing=null;});}
+   if(!refreshing){const expected=requestedOwner,epoch=requestedGeneration;
+    refreshing=request('token?grant_type=refresh_token',{refresh_token:session.refresh_token}).then(data=>{
+     if(sessionGeneration!==epoch||window.closetAuth.user?.id!==expected||data.user?.id!==expected||!data.access_token)
+      throw Error('Session account changed');
+     showUser(data);
+    }).finally(()=>{refreshing=null;});}
    await refreshing;
   }
+  if(!session||sessionGeneration!==requestedGeneration||window.closetAuth.user?.id!==requestedOwner)
+   throw Error('Session account changed');
   return session.access_token;
  };
  const status=t=>$('authStatus').textContent=t;
