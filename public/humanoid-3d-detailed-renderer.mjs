@@ -32,11 +32,11 @@ export function createDetailedHumanoid3D(canvas){
   buffers.push({id:part.id,key:part.key,handle,count:part.vertices.length/6});
  }
  let colors={...DEFAULT},yaw=0,disposed=false,lost=false;
- const onLost=event=>{event.preventDefault?.();lost=true;};
+ const onLost=event=>{event.preventDefault?.();lost=true;draws.length=0;};
  canvas.addEventListener?.('webglcontextlost',onLost);
  const draws=[];
  function render(){
-  if(disposed||lost)return false;
+  if(disposed||lost||gl.isContextLost?.())return false;
   const width=Math.max(1,canvas.clientWidth||canvas.width||320),height=Math.max(1,canvas.clientHeight||canvas.height||480);
   const dpr=Math.min(2,typeof devicePixelRatio==='number'?devicePixelRatio:1);
   const px=Math.min(1200,Math.round(width*dpr)),py=Math.min(1200,Math.round(height*dpr));
@@ -63,26 +63,26 @@ export function createDetailedHumanoid3D(canvas){
   return true;
  }
  function setOutfit(next){
-  if(disposed)return false;
+  if(disposed||lost||gl.isContextLost?.())return false;
   if(!next||typeof next!=='object'||Array.isArray(next))throw new TypeError('Garment colors required');
   for(const [key,value] of Object.entries(next)){
    if(!['top','bottom','shoes','layer','layer2','layer3','dress'].includes(key))throw new TypeError('Unknown clothing layer');
    if(value!==null&&!isColor(value))throw new TypeError('RGBA color required for '+key);
   }
   for(const [key,value] of Object.entries(next)){if(value===null)delete colors[key];else colors[key]=[...value];}
-  render();return true;
+  return render();
  }
  function rotate(radians){
   if(!Number.isFinite(radians))throw new TypeError('Invalid angle');
-  if(disposed)return false;
+  if(disposed||lost||gl.isContextLost?.())return false;
   yaw=((yaw+radians)%(Math.PI*2)+Math.PI*2)%(Math.PI*2);
   return render();
  }
  function dispose(){
   if(disposed)return;
-  disposed=true;canvas.removeEventListener?.('webglcontextlost',onLost);
+  disposed=true;draws.length=0;canvas.removeEventListener?.('webglcontextlost',onLost);
   for(const part of buffers)gl.deleteBuffer(part.handle);
   gl.deleteProgram(program);
  }
- return {supported:true,render,setOutfit,rotate,angle:()=>yaw,getState:()=>({supported:true,yaw,drawn:[...draws],layers:Object.keys(colors),disposed,lost}),dispose};
+ return {supported:true,render,setOutfit,rotate,angle:()=>yaw,getState:()=>({supported:true,yaw,drawn:[...draws],layers:Object.keys(colors),disposed,lost:lost||Boolean(gl.isContextLost?.())}),dispose};
 }
