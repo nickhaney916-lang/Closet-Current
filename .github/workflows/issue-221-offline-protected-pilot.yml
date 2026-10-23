@@ -1,0 +1,63 @@
+# Issue #221: build the exact PR #220 source in an isolated, non-deploying CI job.
+# All backend identifiers are synthetic; this artifact must never be hosted.
+name: Issue 221 offline protected pilot packaging
+on:
+  push:
+    branches: [qa/issue-221-pilot-current-20261023]
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [qa/2d-outfit-readiness-20261023]
+permissions:
+  contents: read
+jobs:
+  offline-package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      CLOSET_STAGING_APP_ORIGIN: https://preview.closet-current-staging.pages.dev/
+      CLOSET_STAGING_SUPABASE_URL: https://abcdefghijklmnopqrst.supabase.co
+      CLOSET_STAGING_SUPABASE_PUBLISHABLE_KEY: sb_publishable_STAGING_TEST_FIXTURE_XYZ001
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+      - name: Assert pinned integration ancestry
+        shell: bash
+        run: |
+          git merge-base --is-ancestor "0f62e253c1fd0024a939cd401710dcd3784a9e77" HEAD
+          echo "Source is exact PR 220 head plus packaging workflow only."
+      - name: Build restricted synthetic preview, no cloud access
+        run: |
+          node scripts/build-restricted-staging.mjs
+          node scripts/verify-restricted-staging-bundle.mjs
+      - name: Verify package cannot be mistaken for approved deployment
+        shell: bash
+        run: |
+          node --input-type=module <<'JS'
+          import {readFile} from 'node:fs/promises';
+          import assert from 'node:assert/strict';
+          const x=JSON.parse(await readFile('staging-dist/staging-preflight.json','utf8'));
+          assert.equal(x.restrictedStagingDeployed,false);
+          assert.equal(x.privateCloudflareAccessPolicyVerified,false);
+          assert.equal(x.paidAIHardBlocked,true);
+          assert.equal(x.releasePromotion,'BLOCKED');
+          assert.equal(x.backendProjectRef,'abcdefghijklmnopqrst');
+          JS
+      - name: Record exact source and sealed file hashes
+        shell: bash
+        run: |
+          git rev-parse HEAD > staging-dist/issue-221-source-commit.txt
+          printf 'Base PR 220 commit: 0f62e253c1fd0024a939cd401710dcd3784a9e77\nSynthetic configuration only; NEVER DEPLOY.\n' > staging-dist/issue-221-NO-DEPLOY.txt
+          (cd staging-dist && find . -type f -print0 | sort -z | xargs -0 sha256sum) > issue-221-file-sha256.txt
+      - name: Upload sealed offline evidence (not a deployable staging candidate)
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: issue-221-SYNTHETIC-NO-DEPLOY
+          path: |
+            staging-dist/
+            issue-221-file-sha256.txt
+          retention-days: 3
+          if-no-files-found: error
