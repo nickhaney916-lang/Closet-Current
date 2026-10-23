@@ -59,3 +59,11 @@ test('WebGL exception during outfit update does not crash the 2D fallback path',
  assert.equal(applyVerifiedHumanoidOutfit(renderer,prepared),false);
  assert.equal(clearVerifiedHumanoidOutfit(renderer),false);
 });
+
+test('renderer state inspection exceptions preserve fallback both before and after rendering',()=>{
+ const prepared={placeholderOnly:true,originalPixelsRenderedAs3D:false,selected:[top],colors:{top:rgba}};
+ let calls=0;
+ assert.equal(applyVerifiedHumanoidOutfit({supported:true,getState:()=>{throw Error('context inaccessible');},setOutfit:()=>{calls++;return true;}},prepared),false);
+ assert.equal(calls,0);
+ assert.equal(applyVerifiedHumanoidOutfit({supported:true,getState:()=>{if(calls++)throw Error('context lost after draw');return {};},setOutfit:()=>true},prepared),false);
+});
