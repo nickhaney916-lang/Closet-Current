@@ -18,13 +18,16 @@ export function toVerifiedHumanoidColors(verified){
   colors[key]=[...value];
  }
  if(verified.hasDress){
-  if(!selectedSlots.has('top')||selectedSlots.has('bottom')||selectedSlots.has('layer'))throw Error('Invalid dress selection');
+  if(!selectedSlots.has('top')||['bottom','layer','layer2','layer3'].some(slot=>selectedSlots.has(slot)))throw Error('Invalid dress selection');
   if(!colors.top)throw Error('Verified dress color missing');
   colors.dress=colors.top;delete colors.top;delete colors.bottom;delete colors.layer;
  }
+ for(const key of Object.keys(colors)){
+  if(key!=='dress'&&!selectedSlots.has(key))throw Error('Unselected garment renderer color');
+ }
  for(const item of verified.selected){
   const expected=verified.hasDress&&item.slot==='top'?'dress':item.slot;
-  if(!colors[expected])throw Error('Selected garment renderer color missing');
+  if(!COLOR_KEYS.has(expected)||!colors[expected])throw Error('Selected garment renderer color missing');
  }
  return Object.freeze(colors);
 }
