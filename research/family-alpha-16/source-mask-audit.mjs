@@ -107,7 +107,7 @@ export async function auditMask({item,prepared,ownerId,getScope,getItem,decodeOr
    typeof getScope!=='function'||typeof getItem!=='function'||typeof decodeOriginal!=='function')
    return safeResult('reject','missing-trusted-input');
   const start=assertScope(getScope(),ownerId);
-  const original=sourceOf(item),identity=identityForSavedGarment(item);
+  const original=sourceOf(item),savedCrop=item.image,identity=identityForSavedGarment(item);
   const originalSha=await fingerprintAlphaRetainedOriginal(original,cryptoProvider);
   const cropSha=await fingerprintSavedCrop(item,cryptoProvider);
   if(!isCurrent())return safeResult('reject','superseded');
@@ -123,7 +123,7 @@ export async function auditMask({item,prepared,ownerId,getScope,getItem,decodeOr
   if(!isCurrent())return safeResult('reject','superseded');
   const current=getItem(item.id);
   if(!current||current.id!==item.id||identityForSavedGarment(current)!==identity||
-     sourceOf(current)!==original||current.image!==item.image)
+     sourceOf(current)!==original||current.image!==savedCrop)
    return safeResult('reject','saved-photo-changed');
   if(assertScope(getScope(),ownerId)!==start)
    return safeResult('reject','session-changed');
