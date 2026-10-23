@@ -1,4 +1,4 @@
-import {renderSavedBoard2D} from './family-alpha-2d-saved-board.mjs';
+import {renderSavedBoard2D,invalidateSavedBoard2D} from './family-alpha-2d-saved-board.mjs';
 
 /**
  * RESEARCH ONLY: proof-of-concept authenticated entry boundary for saved 2D
@@ -87,7 +87,10 @@ export async function renderAlphaAuthenticatedBoard(container,options={}){
   throw new TypeError('Avatar container required');
  const sequence=(renders.get(container)||0)+1;
  renders.set(container,sequence);
- container.replaceChildren(); // remove any former user's garment images immediately
+ // Also cancel the inner source-SHA renderer NOW. Otherwise an earlier
+ // authenticated request could commit stale pixels while this newer request
+ // is still waiting on Auth and owner-scoped wardrobe data.
+ invalidateSavedBoard2D(container);
  const assertCurrent=verified=>{
   if(renders.get(container)!==sequence)throw new Error('Superseded avatar verification');
   const current=requireUnchanged(options,verified);
