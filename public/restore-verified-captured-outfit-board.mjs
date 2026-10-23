@@ -6,6 +6,7 @@ import {verifyCapturedOutfitBoard} from './verified-captured-outfit-board.mjs';
  */
 export async function restoreVerifiedCapturedOutfitBoard(savedSnapshot,board,items,accountId,verifyOwnership,cryptoProvider=globalThis.crypto){
  if(!savedSnapshot||!Array.isArray(savedSnapshot.selected)||!savedSnapshot.selected.length)throw Error('Verified saved outfit snapshot required');
+ if(savedSnapshot.accountId!==accountId)throw Error('Saved outfit account scope mismatch');
  const current=await verifyCapturedOutfitBoard(board,items,accountId,verifyOwnership,cryptoProvider);
  if(savedSnapshot.selected.length!==current.selected.length)throw Error('Saved outfit selection changed');
  const previous=new Map();
