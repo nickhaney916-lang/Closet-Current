@@ -1,0 +1,53 @@
+name: Offline garment recognition historical quality baseline
+on:
+  push:
+    branches: [qa/recognition-historical-baseline-20261022]
+permissions:
+  contents: read
+jobs:
+  baseline-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 28
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Confirm app, model weights, fixture truth, and protected staging are unchanged
+        shell: bash
+        run: |
+          set -euo pipefail
+          baseline=972a50c8065ac4e5478c1e7fefdf740b2a654001
+          test "$(git merge-base "$baseline" HEAD)" = "$baseline"
+          git diff --name-only "$baseline" HEAD |
+          while IFS= read -r path; do
+            case "$path" in
+              scripts/audit-historical-recognition-59.mjs|.github/workflows/recognition-historical-baseline-qa.yml) ;;
+              *) echo "Forbidden recognition QA path: $path"; exit 1 ;;
+            esac
+          done
+          git diff --exit-code "$baseline" HEAD -- public supabase benchmark tests scripts/build.mjs .github/workflows/ai-recognition-repair.yml
+          node --check scripts/audit-historical-recognition-59.mjs
+          git diff --check
+      - name: Score 59 historical source-locked manifest observations (NOT current inference)
+        run: node scripts/audit-historical-recognition-59.mjs
+      - name: Original-photo and color/crop safety tests
+        run: |
+          node --test tests/original-first-recognition.test.cjs tests/photo-crop-resolution.test.cjs tests/real-photo-recognition-admission.test.mjs tests/recognition-regression.test.mjs tests/recognition-photo.test.mjs tests/garment-mask-metrics.test.mjs
+      - name: Full offline app Node test suite and build
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Save locked historical report only (no photographs or customer images)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Closet-Current-Recognition-Historical-59-Baseline-Research-Only
+          path: artifacts/recognition-baseline/historical-59-report.json
+          if-no-files-found: warn
+          retention-days: 7
+      - name: Confirm real-photo physical-mask scoring and model activation remain blocked
+        run: echo 'HISTORICAL CHARACTERIZATION ONLY. NO PAID CODEX, REAL PHOTO MASK APPROVAL, MODEL PROMOTION, STAGING DEPLOYMENT OR CUSTOMER DATA.'
