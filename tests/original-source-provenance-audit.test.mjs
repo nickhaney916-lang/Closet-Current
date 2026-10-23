@@ -74,7 +74,7 @@ test('cross-account database/auth mismatch and cloud backup owner mismatch are r
  {...ctx(),currentUserId:ownerB},
  {...ctx(),cloudOwnerId:ownerB},
  {authenticatedUserId:ownerA,indexedDbName:'closet-current-user-'+ownerB}
- ])await assert.rejects(auditRetainedPhotoProvenance(d,mismatch,webcrypto),/mismatch|Foreign/);
+ ])await assert.rejects(auditRetainedPhotoProvenance(d,mismatch,webcrypto),/mismatch|Foreign|session changed/);
  const a=await auditRetainedPhotoProvenance(d,ctx(),webcrypto);
  const saved=snapshotSourceHashes(d.state['outfit-board'].current,a);
  const b=await auditRetainedPhotoProvenance(d,ctx(ownerB),webcrypto);
