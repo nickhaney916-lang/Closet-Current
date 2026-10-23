@@ -74,3 +74,47 @@ test('empty photo batch still waits for prior state writes',async()=>{
  resolve();
  assert.equal(await pending,true);
 });
+
+
+test('real draft persistence function waits for a synthetic IndexedDB commit',async()=>{
+ const from=source.indexOf('function draftMetadataSnapshot(');
+ const to=source.indexOf('\nfunction readDraft()',from);
+ assert.ok(from>=0&&to>from,'draft snapshot and persistence source must be available');
+ const storage=[];
+ const database={name:'closet-current-user-A',transaction(name,mode){
+  assert.equal(name,'state');assert.equal(mode,'readwrite');
+  const tx={error:null,oncomplete:null,onerror:null,onabort:null};
+  tx.objectStore=()=>({put(record){storage.push(structuredClone(record));setImmediate(()=>tx.oncomplete());}});
+  return tx;
+ }};
+ const fields={draftSaveStatus:{textContent:''},retryDraftSave:{hidden:true}};
+ const window={closetAuth:{user:{id:'A'}},closetCloud:{beforeWrite:async()=>{},changed(){}}};
+ const context={window,db:database,batch:[{id:'test-photo',image:'synthetic-not-a-person'}],
+  writes:Promise.resolve(),structuredClone,setImmediate,
+  $:id=>fields[id],message:()=>{}};
+ vm.runInNewContext(source.slice(from,to)+'\nwindow.persistDraftForTest=persistDraft;',context);
+ assert.equal(await window.persistDraftForTest(),true);
+ assert.equal(storage.length,1);
+ assert.equal(storage[0].id,'draft');
+ assert.equal(storage[0].batch[0].id,'test-photo');
+ assert.equal(window.closetUnsavedDraftOwner,null);
+});
+test('real draft transaction quota failure returns false and keeps retry visible',async()=>{
+ const from=source.indexOf('function draftMetadataSnapshot(');
+ const to=source.indexOf('\nfunction readDraft()',from);
+ const error=Object.assign(new Error('storage full'),{name:'QuotaExceededError'});
+ const database={name:'closet-current-user-A',transaction(){
+  const tx={error,oncomplete:null,onerror:null,onabort:null};
+  tx.objectStore=()=>({put(){setImmediate(()=>tx.onerror());}});
+  return tx;
+ }};
+ const fields={draftSaveStatus:{textContent:''},retryDraftSave:{hidden:true}};
+ const window={closetAuth:{user:{id:'A'}},closetCloud:{beforeWrite:async()=>{},changed(){}}};
+ const ctx={window,db:database,batch:[{id:'test-unsaved-photo'}],writes:Promise.resolve(),
+  structuredClone,setImmediate,$:id=>fields[id],message:()=>{}};
+ vm.runInNewContext(source.slice(from,to)+'\nwindow.persistDraftForTest=persistDraft;',ctx);
+ assert.equal(await window.persistDraftForTest(),false);
+ assert.equal(fields.retryDraftSave.hidden,false);
+ assert.match(fields.draftSaveStatus.textContent,/Device storage is full/);
+ assert.equal(ctx.batch.length,1,'unsaved photo remains in the page');
+});
