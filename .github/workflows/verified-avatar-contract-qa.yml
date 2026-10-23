@@ -1,0 +1,20 @@
+name: Verified avatar contract QA (no deploy)
+on:
+  push:
+    branches:
+      - integration/verified-avatar-contract-20261023
+  workflow_dispatch:
+jobs:
+  offline-contract:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify offline avatar contract and saved outfit boundaries
+        run: |
+          node --test tests/verified-humanoid-color-contract.test.mjs
+          node --test tests/resolve-saved-outfit-presentation.test.mjs
