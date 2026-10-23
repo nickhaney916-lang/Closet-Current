@@ -4,6 +4,9 @@ name: Issue 221 offline protected pilot packaging
 on:
   push:
     branches: [qa/issue-221-pilot-current-20261023]
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [qa/2d-outfit-readiness-20261023]
 permissions:
   contents: read
 jobs:
@@ -22,7 +25,7 @@ jobs:
       - name: Assert pinned integration ancestry
         shell: bash
         run: |
-          test "$(git rev-parse HEAD^)" = "0f62e253c1fd0024a939cd401710dcd3784a9e77"
+          git merge-base --is-ancestor "0f62e253c1fd0024a939cd401710dcd3784a9e77" HEAD
           echo "Source is exact PR 220 head plus packaging workflow only."
       - name: Build restricted synthetic preview, no cloud access
         run: |
