@@ -1,14 +1,11 @@
-# Offline avatar flow — standalone synthetic proof of interaction
-
-Open this file locally in a browser. No network, account access, photo upload, paid AI, or app integration.
-
-The two clothing tiles are **synthetic SVG fixtures**, not extracted fabric from real photographs. Click a garment to animate its transfer to the figure, switch items, or choose a dress. A user-facing production pipeline would still need: original-image garment masks, texture-preserving UV mapping or image warping, occlusion handling, pose-aware fit rendering, and independent human-reviewed garment-fidelity tests.
-
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Closet Current Offline Avatar Study</title>
 <style>
 body{font:16px system-ui;background:#f8f7f5;color:#252525;max-width:850px;margin:30px auto;padding:16px}button{cursor:pointer;border:2px solid #ddd;border-radius:14px;background:white;padding:16px;font:inherit;min-height:58px}button:focus-visible{outline:4px solid #4b77c5}button[aria-pressed=true]{border-color:#255db4;background:#edf4ff}.layout{display:grid;grid-template-columns:minmax(180px,1fr) minmax(200px,1fr);gap:20px}.closet{display:grid;gap:12px;align-content:start}.stage{position:relative;min-height:440px;background:#eee9e2;border-radius:18px;overflow:hidden}.figure{position:absolute;inset:25px 20%;background:#d5b29c;clip-path:polygon(38% 0,62% 0,67% 12%,83% 17%,92% 45%,82% 49%,72% 26%,70% 55%,81% 99%,61% 99%,50% 62%,39% 99%,19% 99%,30% 55%,28% 26%,18% 49%,8% 45%,17% 17%,33% 12%)}.garment{position:absolute;left:27%;width:46%;top:95px;height:155px;opacity:0;transform:translateX(-130%) scale(.7);transition:transform .42s ease,opacity .42s ease;clip-path:polygon(12% 0,30% 0,70% 0,88% 0,100% 30%,83% 42%,77% 26%,77% 100%,23% 100%,23% 26%,17% 42%,0 30%)}.garment.active{opacity:1;transform:translateX(0) scale(1)}.denim{background:repeating-linear-gradient(95deg,#42668b,#42668b 3px,#4e7296 4px,#4e7296 7px)}.stripe{background:repeating-linear-gradient(0deg,#f6f1e6,#f6f1e6 18px,#42658e 18px,#42658e 26px)}.dress{height:240px;clip-path:polygon(26% 0,74% 0,95% 20%,78% 30%,70% 26%,100% 100%,0 100%,30% 26%,22% 30%,5% 20%);background:repeating-linear-gradient(45deg,#a73f62,#a73f62 14px,#d97a95 14px,#d97a95 16px)}@media(prefers-reduced-motion:reduce){.garment{transition:none}}@media(max-width:460px){.layout{grid-template-columns:1fr}.stage{min-height:380px}}
 </style>
 <h1>Closet Current · Avatar interaction study</h1>
 <p>Offline synthetic demonstration. Not a photo-to-avatar fitting model.</p>
+<p>Synthetic garments only: not extracted fabric from real photographs.</p>
 <div class="layout">
 <section class="closet" aria-label="Synthetic closet">
 <button type="button" data-item="denim" aria-pressed="false">Denim jacket · add</button>
@@ -36,3 +33,4 @@ status.textContent=value==='none'?'No garment selected':value+' synthetic garmen
 buttons.forEach(b=>b.addEventListener('click',()=>select(b.dataset.item)));
 })();
 </script>
+</body></html>
