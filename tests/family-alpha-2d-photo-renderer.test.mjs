@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';
+test('2D renderer requires verified preloaded image elements and does not fetch URLs',()=>{const source=readFileSync(new URL('../public/family-alpha-2d-photo-renderer.mjs',import.meta.url),'utf8');assert.match(source,/planPhotoLayers/);assert.match(source,/HTMLImageElement/);assert.doesNotMatch(source,/fetch\(|new Image\(|\.src\s*=/);assert.match(source,/replaceChildren/);});
