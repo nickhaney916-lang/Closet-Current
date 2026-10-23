@@ -51,3 +51,11 @@ test('missing account context and failed item ownership never expose saved board
   assert.equal(result.board,undefined);
  }
 });
+
+test('legacy 2D board rejects foreign, missing and ambiguous garment records',async()=>{
+ for(const [items,verifier] of [[[item(1)],()=>false],[[],owns],[[item(1),item(1)],owns]]){
+  const result=await resolveSavedOutfitPresentation(board,items,'owner',verifier,webcrypto);
+  assert.equal(result.mode,'unavailable');
+  assert.equal(result.board,undefined);
+ }
+});
