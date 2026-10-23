@@ -1,0 +1,55 @@
+name: Assignment 229 token-free 3D humanoid independent QA - NO DEPLOY
+on:
+  push:
+    branches: [research/assignment229-humanoid-bridge-20261023]
+permissions:
+  contents: read
+jobs:
+  offline-source-and-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with: {fetch-depth: 0}
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with: {node-version: '22'}
+      - name: Check only research files changed relative to PR 228 and no paid API imports
+        shell: bash
+        run: |
+          git diff --exit-code d950673497a7d912f5f16dfd723f798790eafe83 HEAD -- public/app.js public/auth.js public/recognition-photo.mjs public/closet-stylist.js public/closet-stylist-engine.js public/outfit-board.js public/outfit-board-engine.js supabase
+          if grep -nE 'fetch[[:space:]]*\(|XMLHttpRequest|https?://|openai|replicate|fal[.]ai|firebase' public/humanoid-3d-detailed-renderer.mjs public/humanoid-3d-body-geometry.mjs public/humanoid-3d-saved-bridge.mjs public/humanoid-3d-saved-demo.mjs; then exit 1; fi
+      - name: Full existing Node regression plus all 3D safety checks
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+  chromium-webkit-mobile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with: {node-version: '22'}
+      - name: Use pinned local browser test framework; no customer credentials
+        shell: bash
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+      - name: Test 320/390/430 mobile-sized Chromium and WebKit, synthetic only
+        shell: bash
+        run: node scripts/test-humanoid-3d-saved-mobile.mjs
+      - name: Record explicit no-deploy no-physical proof
+        if: always()
+        shell: bash
+        run: |
+          mkdir -p artifacts/assignment229
+          printf '%s\n' "$GITHUB_SHA" > artifacts/assignment229/source-commit.txt
+          printf '%s\n' 'SYNTHETIC ONLY. NOT DEPLOYABLE. NO PHYSICAL PHONE. NO GARMENT FIT CERTIFICATION.' > artifacts/assignment229/READ-ME-FIRST.txt
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: assignment229-TOKEN-FREE-SYNTHETIC-NO-DEPLOY
+          path: artifacts/assignment229/
+          retention-days: 7

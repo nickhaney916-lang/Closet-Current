@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Closet Current | Offline 3D Outfit Research</title>
+<style>
+:root{font:16px system-ui,sans-serif;color:#282431;background:#faf8fb;line-height:1.45}
+*{box-sizing:border-box}
+body{margin:0}main{max-width:1080px;margin:0 auto;padding:16px}
+h1{font-size:1.5rem;margin:0 0 8px}h2{font-size:1.05rem;margin:0 0 8px}
+p{margin:0 0 12px}.note{font-size:.88rem;color:#554b5e}
+.shell{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(260px,.8fr);gap:14px}
+.stage,.panel{border:1px solid #dad1e4;border-radius:16px;background:white;padding:12px;min-width:0}
+.stage{position:relative;min-height:480px}
+canvas{width:100%;height:450px;display:block;touch-action:pan-y}
+#fallback{position:absolute;inset:12px;display:grid;place-items:center;background:#fffaf4;border-radius:12px}
+#fallback[hidden]{display:none}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+button,select{font:inherit;min-height:48px;min-width:0;padding:9px 12px;border:1px solid #a99ab5;border-radius:10px;background:#fff;color:inherit}
+button{cursor:pointer}button:disabled{opacity:.55;cursor:not-allowed}button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid #7954af;outline-offset:2px}
+.field{display:grid;gap:4px;margin:10px 0;font-size:.92rem}
+.field select{width:100%}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.references{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.reference{min-width:0;border-radius:12px;border:1px solid #eee6f0;padding:5px}
+.reference img{display:block;width:100%;height:100px;object-fit:contain;image-rendering:auto;background:#fafafa}
+.reference small{font-size:.75rem;display:block;overflow-wrap:anywhere}
+#status{min-height:38px;margin-top:10px;color:#503864}
+.badge{font-size:.75rem;color:#775881}
+input[type=range]{width:100%;min-height:32px}
+@media(max-width:650px){.shell{grid-template-columns:1fr}.stage{min-height:376px}canvas{height:355px}.references img{height:90px}}
+@media(max-width:350px){main{padding:9px}.panel,.stage{padding:9px}.row{grid-template-columns:1fr}}
+</style></head>
+<body><main><h1>Closet Current · 3D Outfit Lab</h1>
+<p class="note">Private offline research using only synthetic fabric pictures and account fixtures. No customer closet is connected, no paid AI is active and no external network images are loaded. Approximate 3D silhouette only — not a true fit, cloth-drape or unseen-print simulation.</p>
+<div class="shell">
+<section class="stage" aria-label="Rotating 3D model">
+<canvas id="humanoidCanvas" role="img" aria-label="Procedural rotating human-proportioned 3D avatar wearing color proxy clothing"></canvas>
+<div id="fallback" hidden><p>3D acceleration unavailable. Original-photo references remain available below.</p></div>
+<div class="actions"><button id="turnLeft" type="button">↶ Turn left</button><button id="turnRight" type="button">Turn right ↷</button><button id="front" type="button">Front view</button></div>
+<label class="field" for="angle">Rotate 360° · <output id="degrees">0°</output><input type="range" id="angle" min="-180" max="180" step="15" value="0"></label>
+<p id="angleNotice" class="note">Side and back garment geometry are estimates. Compare fabric only with the original-photo references.</p>
+</section>
+<section class="panel" aria-label="Synthetic saved outfit controls">
+<h2>Three saved-wardrobe outfits</h2>
+<label class="field" for="lookSelect">Recommended look<select id="lookSelect"></select></label>
+<div class="row">
+<label class="field" for="pinSlot">Pin one owned garment<select id="pinSlot"><option value="top">Top/dress</option><option value="bottom">Bottom</option><option value="shoes">Shoes</option><option value="layer2">Jacket</option></select></label>
+<button id="pin" type="button">Pin selected item</button>
+</div>
+<label class="field" for="swapSlot">Swap one piece<select id="swapSlot"><option value="top">Top/dress</option><option value="bottom">Bottom</option><option value="shoes">Shoes</option><option value="layer2">Jacket</option></select></label>
+<label class="field" for="swapItem">Owned replacement<select id="swapItem"></select></label>
+<div class="actions"><button id="swap" type="button">Swap piece</button><button id="styleNew" type="button">Style a new top</button></div>
+<div class="actions"><button id="save" type="button">Save outfit</button><button id="restore" type="button">Restore saved</button></div>
+<p id="status" role="status" aria-live="polite">Loading offline sample outfits…</p>
+<h2>Unmodified original photo references</h2>
+<div id="references" class="references"></div>
+<p class="note">Original colors/stripes/checks are retained in these references. The model deliberately shows only approximate, solid-color geometry. No texture transfer or measured fit is claimed.</p>
+<div class="actions"><button id="switchAccount" type="button">Switch synthetic account</button></div>
+<p id="owner" class="badge"></p>
+</section></div></main>
+<script type="module" src="./humanoid-3d-saved-demo.mjs"></script></body></html>
