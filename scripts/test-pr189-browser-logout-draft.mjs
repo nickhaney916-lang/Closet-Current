@@ -35,7 +35,7 @@ const origin='http://127.0.0.1:'+server.address().port;
 const results=[];
 try {
  for(const [engineName,engine] of [['Android Chromium',chromium],['iPhone WebKit',webkit]]) {
-  const browser=await engine.launch({headless:true,...(engine===chromium?{args:['--no-sandbox']}: {})});
+  const browser=await engine.launch({headless:true,...(engine===chromium?{args:['--no-sandbox'],channel:'chrome'}: {})});
   const context=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true,serviceWorkers:'block'});
   const outside=[],calls=[],pageErrors=[],dialogs=[];
   try {
