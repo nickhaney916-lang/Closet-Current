@@ -25,3 +25,9 @@ test('unselected renderer layers and conflicting dress outerwear are rejected',(
  assert.throws(()=>toVerifiedHumanoidColors({placeholderOnly:true,selected:[top,source('layer2','coat')],colors:{top:red,layer2:blue},hasDress:true}),/Invalid dress/);
  assert.throws(()=>toVerifiedHumanoidColors({placeholderOnly:true,selected:[{...top,slot:'unknown'}],colors:{top:red},hasDress:false}));
 });
+
+test('direct dress color injection cannot bypass verified top source',()=>{
+ const top=source('top','a');
+ assert.throws(()=>toVerifiedHumanoidColors({placeholderOnly:true,selected:[top],colors:{top:red,dress:blue},hasDress:true}),/Dress renderer color/);
+ assert.throws(()=>toVerifiedHumanoidColors({placeholderOnly:true,selected:[source('dress','a')],colors:{dress:red},hasDress:false}));
+});
