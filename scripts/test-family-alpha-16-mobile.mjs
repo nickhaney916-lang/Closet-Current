@@ -13,7 +13,7 @@ const server=createServer(async(req,res)=>{
   }
   if(!(pathname.startsWith('/public/family-alpha-2d-')||
    pathname.startsWith('/research/family-alpha-16/')||
-   pathname.startsWith('/reference-pr257/research/family-alpha-13/'))||
+   pathname.startsWith('/research/family-alpha-13/'))||
    !pathname.endsWith('.mjs'))throw Error('Denied');
   const filename=resolve(root,'.'+pathname);if(!filename.startsWith(root+sep))throw Error('Traversal');
   const content=await readFile(filename);
@@ -38,7 +38,7 @@ try{
     const result=await page.evaluate(async()=>{
      const {syntheticScene}=await import('/research/family-alpha-16/synthetic-scenes.mjs');
      const {auditMask,fingerprintSavedCrop}=await import('/research/family-alpha-16/source-mask-audit.mjs');
-     const {prepareSyntheticGarmentOriginal}=await import('/reference-pr257/research/family-alpha-13/garment-photo-preparation.mjs');
+     const {prepareSyntheticGarmentOriginal}=await import('/research/family-alpha-13/garment-photo-preparation.mjs');
      const {fingerprintAlphaRetainedOriginal,identityForSavedGarment}=await import('/public/family-alpha-2d-saved-board.mjs');
      const {renderPhotoLayers}=await import('/public/family-alpha-2d-photo-renderer.mjs');
      const owner='a1111111-1111-4111-8111-111111111111',other='b2222222-2222-4222-8222-222222222222';
