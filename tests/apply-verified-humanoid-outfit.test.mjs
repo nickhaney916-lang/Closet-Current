@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {applyVerifiedHumanoidOutfit} from '../public/apply-verified-humanoid-outfit.mjs';
+import {applyVerifiedHumanoidOutfit,clearVerifiedHumanoidOutfit} from '../public/apply-verified-humanoid-outfit.mjs';
 const top={slot:'top',itemId:'shirt',sourceIdentity:'capture',sourceVersion:'sha'};
 const bottom={slot:'bottom',itemId:'pants',sourceIdentity:'capture',sourceVersion:'sha'};
 const rgba=[.1,.2,.3,1];
@@ -30,4 +30,13 @@ test('renderer boundary rejects spoofed source identity, duplicate garments, inv
  assert.throws(()=>applyVerifiedHumanoidOutfit(renderer,{...base,colors:{top:[1,2,3,4]}}),/RGBA/);
  assert.throws(()=>applyVerifiedHumanoidOutfit(renderer,{...base,selected:[top,bottom],colors:{dress:rgba,bottom:rgba}}),/Invalid dress/);
  assert.equal(calls,0);
+});
+
+test('sign-out clears all garment slots before a new account is verified',()=>{
+ const calls=[];const renderer={supported:true,setOutfit:next=>{calls.push(next);return true;}};
+ applyVerifiedHumanoidOutfit(renderer,{placeholderOnly:true,originalPixelsRenderedAs3D:false,selected:[top],colors:{top:rgba}});
+ assert.equal(clearVerifiedHumanoidOutfit(renderer),true);
+ assert.deepEqual(Object.keys(calls[1]).sort(),['top','bottom','shoes','layer','layer2','layer3','dress'].sort());
+ assert.ok(Object.values(calls[1]).every(value=>value===null));
+ assert.equal(clearVerifiedHumanoidOutfit({supported:false}),false);
 });
