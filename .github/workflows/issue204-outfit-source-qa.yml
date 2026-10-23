@@ -1,0 +1,42 @@
+name: Issue204 original source and valid photo outfit QA
+on:
+  push:
+    branches: [fix/issue204-outfit-source-guards]
+permissions:
+  contents: read
+jobs:
+  source-and-photo-safety:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node scripts/check-issue204-outfit-scope.mjs
+      - name: Build, complete regression and focused defect checks
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+          node --test tests/issue204-outfit-source-guards.test.mjs tests/issue201-outfit-benchmark.test.mjs
+      - name: Require actual independent benchmark acceptance
+        run: |
+          node scripts/issue201-outfit-benchmark.mjs artifacts/issue204/benchmark.json
+          cmp benchmark/issue201-results.json artifacts/issue204/benchmark.json
+      - run: npm install --no-save --no-package-lock playwright@1.56.1
+      - name: Browser emulators only, no inference model
+        timeout-minutes: 15
+        run: npx playwright install --with-deps chromium webkit
+      - name: Chromium and WebKit actual saved-photo provenance and recovery
+        run: node scripts/test-issue201-outfit-browsers.mjs
+      - run: git diff --exit-code && git diff --check
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: issue204-synthetic-outfit-evidence
+          path: |
+            artifacts/issue204/
+            artifacts/issue201/browser-results.json
+          retention-days: 7

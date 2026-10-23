@@ -5,11 +5,11 @@ import {readFileSync} from 'node:fs';
 import {runBenchmark,engine,oracle,sourceGuard} from '../scripts/issue201-outfit-benchmark.mjs';
 import {wardrobe,validateSynthetic} from '../benchmark/issue201-synthetic-wardrobes.mjs';
 const report=runBenchmark();
-for(const check of report.checks.filter(c=>!['original-only-change-invalidates-prepared-source','raw-engine-refuses-blank-photo-record'].includes(c.name)))
+for(const check of report.checks)
  test('issue201: '+check.name,()=>assert.equal(check.status,'PASS',check.reason));
-test('issue201: product gate reports two known gaps as failures, not 100% quality',()=>{
- assert.deepEqual(report.checks.filter(x=>x.status==='FAIL').map(x=>x.name),['original-only-change-invalidates-prepared-source','raw-engine-refuses-blank-photo-record']);
- assert.equal(report.productAcceptance,false);assert.equal(report.recognitionAccuracyMeasured,false);assert.equal(report.realisticRenderingEvaluated,false);
+test('issue201: both independently observed product gaps are fixed without an accuracy claim',()=>{
+ assert.deepEqual(report.checks.filter(x=>x.status==='FAIL'),[]);
+ assert.equal(report.productAcceptance,true);assert.equal(report.recognitionAccuracyMeasured,false);assert.equal(report.realisticRenderingEvaluated,false);
 });
 test('issue201: benchmark is repeatable without time, trend network or random fixture changes',()=>assert.deepEqual(runBenchmark(),report));
 test('issue201: independent oracle detects invented, duplicate-slot and wrong-source outputs',()=>{

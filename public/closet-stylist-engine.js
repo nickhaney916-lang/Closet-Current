@@ -7,6 +7,49 @@ const stylistProfiles={
  Work:{occasion:'Work',top:['Button-down shirt','Blouse','Polo','Sweater','Shirt dress','Casual dress'],bottom:['Trousers','Skirt','Jeans'],shoes:['Loafers','Flats','Ankle boots','Heels']},
  Activewear:{occasion:'Active',top:['Tank top','T-shirt','Sweatshirt','Hoodie'],bottom:['Leggings','Joggers','Shorts'],shoes:['Sneakers']}
 };
+// Synchronous scorer contract: embedded raster bytes only, with plausible
+// format headers/dimensions. The UI additionally decodes pixels before use.
+// Never fetch remote URLs, private-object paths or execute SVG from old imports.
+function stylistLocalRaster(value){
+ if(typeof value!=='string'||value.length>12000000)return false;
+ const match=value.match(/^data:image\/(jpeg|png|webp);base64,([A-Za-z0-9+/]+={0,2})$/);
+ if(!match||match[2].length%4)return false;
+ const body=match[2],alphabet='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/',
+  size=body.length/4*3-(body.endsWith('==')?2:body.endsWith('=')?1:0);
+ const byte=i=>{const at=Math.floor(i/3)*4,a=alphabet.indexOf(body[at]),b=alphabet.indexOf(body[at+1]),c=alphabet.indexOf(body[at+2]),d=alphabet.indexOf(body[at+3]);return i%3===0?(a<<2)|(b>>4):i%3===1?((b&15)<<4)|(c>>2):((c&3)<<6)|d;};
+ const u16=i=>byte(i)*256+byte(i+1),u32=i=>byte(i)*16777216+byte(i+1)*65536+byte(i+2)*256+byte(i+3);
+ const dimensions=(w,h)=>w>0&&h>0&&w<=8192&&h<=8192&&w*h<=24000000;
+ if(match[1]==='jpeg'){
+  if(size<20||u16(0)!==65496||u16(size-2)!==65497)return false;
+  let at=2,valid=false;
+  for(let n=0;n<2048&&at+4<size;n++){
+   if(byte(at++)!==255)return false;
+   while(byte(at)===255&&at<size)at++;
+   const marker=byte(at++);if(marker===218)return valid;
+   const length=u16(at);if(length<2||at+length>size)return false;
+   if([192,193,194,195,197,198,199,201,202,203,205,206,207].includes(marker)){
+    if(length<8||!dimensions(u16(at+5),u16(at+3)))return false;valid=true;
+   }
+   at+=length;
+  }
+  return false;
+ }
+ if(match[1]==='png')return size>=45&&u32(0)===2303741511&&u32(4)===218765834&&u32(8)===13&&u32(12)===1229472850&&dimensions(u32(16),u32(20))&&u32(size-12)===0&&u32(size-8)===1229278788;
+ const text=i=>String.fromCharCode(byte(i),byte(i+1),byte(i+2),byte(i+3));
+ return size>=30&&text(0)==='RIFF'&&text(8)==='WEBP'&&['VP8 ','VP8L','VP8X'].includes(text(12))&&byte(4)+byte(5)*256+byte(6)*65536+byte(7)*16777216+8===size;
+}
+function stylistPhotoForItem(item,ownerId=null){
+ if(!item||typeof item!=='object')return null;
+ // Tenant-scoped caller remains mandatory. Explicit foreign ownership on a
+ // legacy record or photo can never be treated as a local fallback.
+ for(const value of [item,item.originalPhoto,item.recognitionPhoto]){
+  if(value&&typeof value==='object')for(const key of ['ownerId','owner_id'])
+   if(value[key]!==undefined&&value[key]!==ownerId)return null;
+ }
+ for(const [source,image]of [['display',item.image],['recognition',item.recognitionPhoto?.image],['original',item.originalPhoto?.image]])
+  if(stylistLocalRaster(image))return {source,image};
+ return null;
+}
 function stylistNeutral(color){return ['black','white','gray','cream','tan','beige','brown','navy','ivory','silver','gold'].includes(colorFamily(color));}
 function stylistTrendMatches(item,slot,context,library){return (library?.directions||[]).filter(d=>d.slot===slot&&d.type===item.itemType&&(!d.audiences.length||d.audiences.includes('All')||context.audience==='All'||d.audiences.includes(context.audience))&&(!d.occasions.length||d.occasions.includes(context.occasion))&&(!d.seasons.length||d.seasons.includes(context.season))).filter(d=>library.sources.some(s=>s.id===d.sourceId));}
 // Match the clothing figure's three independent optional layers. Use the
@@ -60,8 +103,8 @@ function stylistHarmony(selected){
 }
 function styleOwnedCollection(closet,request={},library=null){
  const intent=Object.hasOwn(stylistProfiles,request.request)?request.request:'Casual';
- const context={request:intent,occasion:stylistProfiles[intent].occasion,audience:['Women','Men','All'].includes(request.audience)?request.audience:'All',season:['Spring','Summer','Fall','Winter'].includes(request.season)?request.season:'Fall'};
- const unique=[...new Map(closet.filter(x=>x&&typeof x.id==='string').map(x=>[x.id,x])).values()];
+ const context={request:intent,occasion:stylistProfiles[intent].occasion,audience:['Women','Men','All'].includes(request.audience)?request.audience:'All',season:['Spring','Summer','Fall','Winter'].includes(request.season)?request.season:'Fall',ownerId:typeof request.ownerId==='string'?request.ownerId:null};
+ const unique=[...new Map(closet.filter(x=>x&&typeof x.id==='string'&&stylistPhotoForItem(x,context.ownerId)).map(x=>[x.id,x])).values()];
  // Explicitly selected garment must appear in every option. Never substitute
  // another owner's item or choose a different top in place of the anchor.
  const anchorId=typeof request.anchorItemId==='string'?request.anchorItemId:null;
@@ -148,6 +191,7 @@ function styleOwnedCollection(closet,request={},library=null){
   score-=required.length*30;
   const references=selected.flatMap(x=>stylistTrendMatches(x.item,['layer2','layer3'].includes(outfitSlots.find(s=>board.slots[s.id]===x.item.id)?.id)?'layer':outfitSlots.find(s=>board.slots[s.id]===x.item.id)?.id,context,library).map(d=>({itemId:x.item.id,label:d.label,reason:d.reason,source:library.sources.find(s=>s.id===d.sourceId)})));
   const notices=[];
+  if(selected.some(x=>stylistPhotoForItem(x.item,context.ownerId)?.source!=='display'))notices.push('An original photo fallback is shown for a missing preview. Check the garment and background together.');
   if(selected.some(x=>!x.item.itemType||['Unknown','Other'].includes(x.item.itemType)))notices.push('Some garment types are unconfirmed; these are category and color matches.');
   if(selected.some(x=>x.item.colorSource==='photo-estimate'))notices.push('Some colors are estimated from photos; confirm the colors together.');
   if(selected.some(x=>!x.item.color||colorFamily(x.item.color)==='unknown'))notices.push('Some colors are unknown; check the photos together.');
@@ -199,7 +243,7 @@ function stylistSwapChoices(result,slot,closet,anchorId=null){
     !result?.board||!Array.isArray(closet))return [];
  // Persisted pins remain protected even after a save/reload or lost UI state.
  anchorId=result.board.anchorItemId||anchorId;
- const owned=[...new Map(closet.filter(x=>x&&typeof x.id==='string')
+ const owned=[...new Map(closet.filter(x=>x&&typeof x.id==='string'&&stylistPhotoForItem(x,result.context?.ownerId??null))
   .map(x=>[x.id,x])).values()];
  const board=cleanOutfitBoard(result.board,owned),current=board.slots[slot];
  if(!current||current===anchorId||anchorId&&!Object.values(board.slots).includes(anchorId))return [];
