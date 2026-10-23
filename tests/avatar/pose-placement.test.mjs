@@ -21,3 +21,11 @@ test('pose rejection prevents misleading preview',()=>{
  assert.throws(()=>planPosePlacement({...base,slot:'top',pose:{...pose,leftAnkle:{x:999,y:120}}}));
  assert.throws(()=>planPosePlacement({...base,slot:'hat'}));
 });
+
+test('reject oversized canvases before allocating image buffers',()=>{
+ assert.throws(()=>planPosePlacement({...base,slot:'top',canvasWidth:10000,canvasHeight:10000}),/Invalid canvas/);
+});
+test('reject individually inverted limb landmarks even if averages remain ordered',()=>{
+ const wrong={...pose,leftHip:{x:35,y:10},rightHip:{x:65,y:100}};
+ assert.throws(()=>planPosePlacement({...base,slot:'top',pose:wrong}),/Unusable individual body landmarks/);
+});
