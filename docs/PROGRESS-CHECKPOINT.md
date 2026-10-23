@@ -1,3 +1,27 @@
+# Issue #185 staging support-route diagnosis — October 22, 2026
+
+Separate `fix/issue-185-staging-support-routes-20261022` from exact PR181
+`a42894cd2c7bf3ebc0019f69ba7112888e8fb04c`; original #181/#183/#184 branches and
+all customer `public/`, Supabase and deployment sources unchanged. The original
+PR181 ZIP has 93 correctly rooted files / 92 valid SHA-sealed assets and 77 valid
+local HTML asset/link targets. Exact-source rebuild reproduces its seal hash.
+Seven anonymous root/support .html/clean routes return Access 302; no hosted
+404/network failure or authenticated page contents verified here.
+
+Staging-output-only candidate handles cached canonical HTML redirects with
+strict same-origin/path/type checks, maps only existing release HTML clean URLs,
+keeps support links in the same tab and binds transform source to the immutable
+cache fingerprint. No Access/Auth policy, routing settings or production change.
+Full local Node **1,631 pass / 0 fail / 3 skipped**; 11 new route/seal/privacy unit
+checks pass. Branch-only real-worker Chromium baseline-negative / Chromium and
+WebKit candidate browser QA must be checked at final SHA in the issue/PR; unit
+passes do not prove browser behavior. No physical phone run or authenticated
+hosted restoration claimed. See `docs/ISSUE-185-STAGING-SUPPORT-ROUTES.md` for
+actual artifact hashes, confidence limits and read-only owner smoke checklist.
+No deployment, merge, hosted writes, paid use, customer data or Drive Duel work.
+
+---
+
 # Consolidated phone diagnostics and full-asset staging access — October 21, 2026
 
 - Integrated the independently verified **PR #167** offline original-photo phone-trial worksheet and **PR #165** complete SHA-256-sealed staging static asset access sweep in a new draft-only true two-parent development branch; original PRs remain unmodified. A source guard pins the five security implementation/workflow/test/document blobs exactly to #165, preserves the PR #167 phone tool, customer app, Supabase, production workflows, original-full-frame recognition-before-crop behavior, and existing release blockers.
