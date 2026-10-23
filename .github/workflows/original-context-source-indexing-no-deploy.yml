@@ -1,0 +1,67 @@
+name: Original-context indexing and synthetic camera QA - NO DEPLOY
+on:
+  push:
+    branches: [qa/original-source-context-indexing-20261023]
+permissions:
+  contents: read
+jobs:
+  source-locked-node:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with: {fetch-depth: 0}
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with: {node-version: '22'}
+      - name: Ensure all production and paid recognition artifacts are unmodified
+        run: |
+          git diff --exit-code 54c9e29ede069a05d1268e003f80cbda043c7d6a HEAD -- public supabase benchmark tests/recognition-benchmark.test.mjs
+          if grep -nE '(fetch|XMLHttpRequest)[[:space:]]*\(|api[.]openai|replicate[.]com' research/original-context/original-first-index-gate.mjs; then exit 1; fi
+      - name: Build current app unchanged
+        run: node scripts/build.mjs
+      - name: Full existing and new root Node regression (photo, crop, segmentation, indexing)
+        run: node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Controlled synthetic before-after decision safety benchmark
+        run: node scripts/compare-original-context-synthetic.mjs
+      - name: Existing offline recognition benchmark regression from historical result metadata only (no photographs)
+        run: node scripts/check-original-context-historical.mjs
+      - name: Mark measurements synthetic or unchanged prior metadata
+        if: always()
+        run: |
+          mkdir -p artifacts/original-context
+          echo "$GITHUB_SHA" > artifacts/original-context/research-head.txt
+          echo 'NO DEPLOY — mock classification only; existing real-photo images not accessed; no production accuracy claim' > artifacts/original-context/READ-ME-FIRST.txt
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: original-context-synthetic-versus-historical-metadata-NO-DEPLOY
+          path: artifacts/original-context/
+          retention-days: 7
+  chromium-webkit-synthetic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with: {node-version: '22'}
+      - name: Install runner-local browser test package only
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+      - name: Native-res source crop, real source JPEG decode and existing masked palette (six browser viewports)
+        run: node scripts/test-original-context-mobile.mjs
+      - name: Mark no-deploy job
+        if: always()
+        run: |
+          mkdir -p artifacts/original-context-browser
+          echo "$GITHUB_SHA" > artifacts/original-context-browser/research-head.txt
+          echo 'SYNTHETIC SOURCE PHOTOS ONLY. WEBKIT/CHROMIUM EMULATION IS NOT PHYSICAL PHONE QA.' > artifacts/original-context-browser/NO-DEPLOY.txt
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: original-context-chromium-webkit-NO-DEPLOY
+          path: artifacts/original-context-browser/
+          retention-days: 7
