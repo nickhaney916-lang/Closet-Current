@@ -1,3 +1,17 @@
+# Restricted staging integration — October 22, 2026 (PR #189)
+
+**Current development candidate:** `integration/staging-security-reliability-20261022`. This branch selectively integrates PR #186's output-only Cloudflare support-page routing, PR #183's staging Auth QA evidence, and PR #187's Android logout fix. It targets staging packaging PR #181, never production `main`. Unlike the standalone route PR #186, **the combined branch intentionally changes `public/app.js` and `public/auth.js`**.
+
+**Independent review:** [issue #188](https://github.com/nickhaney916-lang/Closet-Current/issues/188) identified two P1 blockers. The first, risk of dropping unfinished photos when logout bypasses the browser unload warning, is addressed on this integration branch by a pre-signout app guard: when photo capture or recognition is busy, signout is blocked; with a draft, the latest account-bound IndexedDB write must succeed before the owner can be cleared, and rejected or quota-limited saves leave the account and photos open for Retry. Login remains locked after signout until the old document unloads. New source and regression tests need final exact-head validation. This guarantees only device-local draft persistence at the time of signout, **not** successful cloud/photo restoration or durability of Incognito storage after the tab is closed.
+
+The second issue was **CI infrastructure timeout** installing WebKit on the prior integrated head. The WebKit installation timeout was extended; final new-head browser CI pass is REQUIRED. Historical combined SHA `26ecdde7834b78b8b6ae264a95bb2c4142ebfbbb`: **1,641 Node passed, 0 failed, 3 skipped**, Chromium local route simulation passed; WebKit was **not run** because installation timed out. These counts **DO NOT describe the new commits**.
+
+An integration-only scope guard permits reviewed Auth/App and routing changes while pinning Supabase, original PR181 packaging, production-sensitive paths and paid-inference controls against baseline. The original single-issue scope guards are intentionally retained but are not valid when applied to a combined branch.
+
+**Still blocked before pilot promotion:** exact-head full Node/browser/scope CI success; real local disposable two-account test; separate hosted Cloudflare root/all-route protection, staging Auth anonymous-provider/callback audit and A/B isolation; Samsung logout/draft retest; independent iPhone and real garment/photo accuracy; no production or user deployment approval. No merges, Cloudflare uploads, database writes, paid services, or Drive Duel edits.
+
+---
+
 # Issue #185 staging support-route diagnosis — October 22, 2026
 
 Separate `fix/issue-185-staging-support-routes-20261022` from exact PR181
