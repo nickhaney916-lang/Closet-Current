@@ -135,7 +135,7 @@ test('real source contracts: browser captures and imports re-encode; cloud hash 
  assert.match(app,/function snap\(\).*?canvas\.toDataURL\('image\/jpeg',\.94\)/);
  assert.match(photo,/return canvas\.toDataURL\('image\/jpeg',quality\)/);
  assert.match(outfit,/originalPhoto:\{image\}/);
- assert.match(cloud,/key==='image'/ .source || /imageBytes\(image\)/); // engine mapping is independently exercised above
+ assert.match(cloud,/imageBytes\(image\)/); // engine mapping is independently exercised above
  assert.match(cloud,/const hash=async bytes=>.*crypto\.subtle\.digest\('SHA-256',bytes\)/);
  assert.match(board,/currentBoard\.slots|currentBoard\.slots/);
 });
