@@ -124,9 +124,11 @@ export function mountAlphaBuilderPreview({
  panel.hidden=false;launch.disabled=false;
  const pagehide=()=>invalidate();
  const boardChange=()=>invalidate();
+ const sessionChange=()=>invalidate();
  const logout=()=>invalidate();
  window.addEventListener('pagehide',pagehide);
  window.addEventListener('closet:alpha-board-changed',boardChange);
+ window.addEventListener('closet:alpha-session-changed',sessionChange);
  const logoutButton=document.getElementById('logout');
  logoutButton?.addEventListener('click',logout,{capture:true});
  const stop=()=>{
@@ -134,6 +136,7 @@ export function mountAlphaBuilderPreview({
   invalidate();destroyed=true;launch.removeEventListener('click',start);
   window.removeEventListener('pagehide',pagehide);
   window.removeEventListener('closet:alpha-board-changed',boardChange);
+  window.removeEventListener('closet:alpha-session-changed',sessionChange);
   logoutButton?.removeEventListener('click',logout,{capture:true});
   panel.hidden=true;
  };
