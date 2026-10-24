@@ -73,7 +73,7 @@ export function applyPinnedMobileReview(baseApp,reviewApp){
  const expectedSource="await savePiece(value,batch.filter(x=>x.id!==item.id),editorCurrent);";
  const safeSource="await savePiece(value,()=>batch.filter(x=>x.id!==item.id),editorCurrent);";
  if(!candidate.body.includes(expectedSource)||candidate.body.includes(safeSource)||
-    !candidate.body.includes('const editorHint=JSON.stringify(item.segmentHint??null);')||
+    !candidate.body.includes('editorHint=JSON.stringify(item.segmentHint??null);')||
     !candidate.body.includes('I checked the original photo, category, item type and color')||
     !candidate.body.includes('ClothingDetails.validColor(value.color)')||
     !candidate.body.includes('Original unmasked garment photo used for recognition')||
@@ -344,7 +344,7 @@ export async function assertDisabledIntegratedCandidate({root=resolve('.')}={}){
   sha256(backup)!==x.integrationBackupSha256||
   !app.includes('const verifiedColorAdmission=new WeakMap()')||
   !app.includes('I checked the original photo, category, item type and color')||
-  !app.includes('const editorHint=JSON.stringify(item.segmentHint??null);')||
+  !app.includes('editorHint=JSON.stringify(item.segmentHint??null);')||
   !app.includes('await savePiece(value,()=>batch.filter(x=>x.id!==item.id),editorCurrent);')||
   !app.includes("const recoverable=job.type!=='load'&&data.code==='image';")||
   !app.includes("const expected=job.type==='load'?'ready':'result';")||
