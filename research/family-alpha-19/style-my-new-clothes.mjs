@@ -206,7 +206,20 @@ export function createStyleMyNewClothes({readContext,readWardrobe,stylistItemSco
     err('Pinned new clothing cannot be replaced or duplicated');
    const target=byId.get(newItemId);
    if(!target||!authorized(target,who.owner))err('Missing or foreign swap target');
-   const candidate=swapOnePiece(previous.board,slot,newItemId,[...byId.values()],cleanOutfitBoard);
+   // PR #15 intentionally refuses dress transitions as generic one-piece swaps.
+   // A SHOES-only change on an already pinned dress is safe and is not a dress transition.
+   let candidate;
+   if(byId.get(result.pinId)?.category==='Dresses'&&slot==='shoes'){
+    if(target.category!=='Shoes'||Object.values(previous.board.slots).includes(newItemId))
+     err('Missing or incompatible dress shoe');
+    candidate=cleanOutfitBoard({...structuredClone(previous.board),
+     slots:{...previous.board.slots,shoes:newItemId}},[...byId.values()]);
+    if(candidate.slots.top!==result.pinId||candidate.slots.shoes!==newItemId||
+      Object.keys(candidate.slots).some(k=>!['top','shoes'].includes(k)))
+     err('Dress shoe swap changed another garment');
+   }else{
+    candidate=swapOnePiece(previous.board,slot,newItemId,[...byId.values()],cleanOutfitBoard);
+   }
    const sources={...previous.sources,[newItemId]:{
     ownerId:who.owner,sourceIdentity:target.outfitSourceId||target.id,
     sourceVersion:await hashPhoto(snapshotSource(target),cryptoProvider),
