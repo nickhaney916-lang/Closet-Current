@@ -34,6 +34,8 @@ jobs:
         run: node scripts/audit-family-alpha-recognition-bridge.mjs --artifact-root=dist-family-alpha-staging-auth-hold
       - name: Test positive and negative audit cases using real staged/reviewed blobs
         run: node --test tests/family-alpha-recognition-bridge-audit.test.mjs
+      - name: Assemble modern recognition candidate too, since the full Node test glob covers its safety checks
+        run: node scripts/build-family-alpha-recognition-integrated-hold.mjs
       - name: Full Stage Family Alpha Node regression suite (no model inference or live accounts)
         run: node --test tests/*.test.cjs tests/*.test.mjs
       - name: Assert this NEVER certifies a combined build or deploy
