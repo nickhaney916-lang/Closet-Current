@@ -12,6 +12,7 @@ permissions:
 env:
   FAMILY_ALPHA_STAGING_PIN: '879f1b92fb15f9bc9a7f0429c7ee178f7bbf1373'
   FAMILY_ALPHA_RECOGNITION_PIN: '795ad6637f8d4f782bc99751211b25e8e72a3a7d'
+  RECOVERY_PIN: '08ed6ac4a3fc921eae5d5d3df3bd3966429559d2'
 jobs:
   compatibility-node:
     runs-on: ubuntu-latest
@@ -25,7 +26,7 @@ jobs:
           node-version: '22'
       - name: Fetch exact publicly committed source revisions, NO branch head substitutions
         run: |
-          git fetch --no-tags origin "$FAMILY_ALPHA_STAGING_PIN" "$FAMILY_ALPHA_RECOGNITION_PIN"
+          git fetch --no-tags origin "$FAMILY_ALPHA_STAGING_PIN" "$FAMILY_ALPHA_RECOGNITION_PIN" "$RECOVERY_PIN"
           git cat-file -e "$FAMILY_ALPHA_STAGING_PIN^{commit}"
           git cat-file -e "$FAMILY_ALPHA_RECOGNITION_PIN^{commit}"
       - name: Build existing default BLOCKED Family Alpha staging Auth candidate

@@ -6,6 +6,7 @@ import {execFileSync} from 'node:child_process';
 import {
  combineStageAndRecognitionMarkup,
  buildDisabledIntegratedCandidate,
+ applyPinnedWorkerRecovery,WORKER_RECOVERY_REF,
  assertDisabledIntegratedCandidate,
  listedRecognitionAssets,OUTPUT
 } from '../scripts/build-family-alpha-recognition-integrated-hold.mjs';
@@ -75,9 +76,12 @@ test('staged production Auth/config must differ from raw recognition project',as
  assert.ok(x.stagePrivateAuthTransformationPreserved);
 });
 test('compiled modern app bytes match EXACT locked recognition head',async()=>{
- const app=await readFile(join(OUTPUT,'app.js'));
- const original=execFileSync('git',['show',RECOGNITION_REF+':public/app.js']);
- assert.ok(app.equals(original));
+ const app=await readFile(join(OUTPUT,'app.js'),'utf8');
+ const original=execFileSync('git',['show',RECOGNITION_REF+':public/app.js'],{encoding:'utf8'});
+ const recovery=execFileSync('git',['show',WORKER_RECOVERY_REF+':public/app.js'],{encoding:'utf8'});
+ assert.equal(app,applyPinnedWorkerRecovery(original,recovery));
+ assert.ok(app.includes('worker_response_invalid'));
+ assert.ok(app.includes("const recoverable=job.type!=='load'&&data.code==='image';"));
  const worker=await readFile(join(OUTPUT,'local-worker.mjs'));
  const modernWorker=execFileSync('git',['show',RECOGNITION_REF+':public/local-worker.mjs']);
  assert.ok(worker.equals(modernWorker));
