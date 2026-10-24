@@ -8,6 +8,7 @@ on:
       - 'tests/family-alpha-recognition-integrated-hold.test.mjs'
       - 'tests/integration/family-alpha-assignment22-integrity.test.cjs'
       - 'tests/integration/family-alpha-worker-recovery.test.mjs'
+      - 'scripts/test-family-alpha-mobile-review-hold-browser.mjs'
       - 'tests/family-alpha-recognition-bridge-audit.test.mjs'
       - 'tests/fixtures/family-alpha-recognition-avatar-mock-harness.js'
       - 'scripts/test-family-alpha-recognition-to-avatar-mock-browser.mjs'
@@ -20,6 +21,7 @@ env:
   STAGE_PIN: '879f1b92fb15f9bc9a7f0429c7ee178f7bbf1373'
   RECOGNITION_PIN: '795ad6637f8d4f782bc99751211b25e8e72a3a7d'
   RECOVERY_PIN: '08ed6ac4a3fc921eae5d5d3df3bd3966429559d2'
+  REVIEW_PIN: '1ecac1079e75f1f25dc70a4c712b2448eb87dca8'
 jobs:
   built-source-and-regression:
     runs-on: ubuntu-latest
@@ -31,7 +33,7 @@ jobs:
         with: {node-version: '22'}
       - name: Fetch exactly authorized SOURCE-PINNED revisions
         run: |
-          git fetch --no-tags origin "$STAGE_PIN" "$RECOGNITION_PIN" "$RECOVERY_PIN"
+          git fetch --no-tags origin "$STAGE_PIN" "$RECOGNITION_PIN" "$RECOVERY_PIN" "$REVIEW_PIN"
           git cat-file -e "$STAGE_PIN^{commit}"
           git cat-file -e "$RECOGNITION_PIN^{commit}"
       - name: Build existing disabled isolated staging Auth candidate
@@ -65,7 +67,7 @@ jobs:
       - name: Fetch exact pinned staging and recognition commits
         run: |
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          git fetch --no-tags origin "$STAGE_PIN" "$RECOGNITION_PIN" "$RECOVERY_PIN"
+          git fetch --no-tags origin "$STAGE_PIN" "$RECOGNITION_PIN" "$RECOVERY_PIN" "$REVIEW_PIN"
       - name: Build original reviewed staging and combined held candidate, without keys
         run: |
           node scripts/build-family-alpha-staging-auth-hold.mjs
@@ -76,6 +78,8 @@ jobs:
         run: node scripts/test-family-alpha-recognition-integrated-hold-browser.mjs
       - name: Actual modern recognition human-color IndexedDB save to compiled original-JPEG 2D avatar — MOCK local Auth only
         run: node scripts/test-family-alpha-recognition-to-avatar-mock-browser.mjs
+      - name: Verify original JPEG correction dialog and acknowledgement on actual combined HOLD browser app, synthetic QA authorization only
+        run: node scripts/test-family-alpha-mobile-review-hold-browser.mjs
       - name: Original confirmed JPEG photo-layer and stage Auth synthetic browser regressions
         run: |
           node scripts/test-family-alpha-stage-auth-browser.mjs
