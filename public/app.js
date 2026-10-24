@@ -169,8 +169,16 @@ function adjustPhoto(item){
  if(stream||cameraOpening)stopCamera();
  const dialog=document.createElement('dialog');dialog.className='photo-adjust clothing-editor';
  dialog.setAttribute('aria-label','Review clothing photo details');
- const editorDB=db,editorOwner=window.closetAuth?.user?.id,editorSource=recognitionSourcePhoto(item);
- const editorCurrent=()=>db===editorDB&&window.closetAuth?.user?.id===editorOwner&&recognitionSourcePhoto(item)===editorSource&&(batch.includes(item)||items.includes(item));
+ const editorDB=db,editorOwner=window.closetAuth?.user?.id,editorSource=recognitionSourcePhoto(item),
+  editorDisplay=item.image,editorScene=item.originalPhoto?.image??null,
+  editorHint=JSON.stringify(item.segmentHint??null);
+ // Manual review also belongs to the exact display/source scene and mask
+ // the person opened; a retake or a changed region must reopen Adjust.
+ const editorCurrent=()=>db===editorDB&&window.closetAuth?.user?.id===editorOwner&&
+  recognitionSourcePhoto(item)===editorSource&&item.image===editorDisplay&&
+  (item.originalPhoto?.image??null)===editorScene&&
+  JSON.stringify(item.segmentHint??null)===editorHint&&
+  (batch.includes(item)||items.includes(item));
  const form=node('form'),draft=structuredClone(item),collect=clothingFields(form,draft);
  const evidence=item.recognitionDiagnostics?.outerwearRecovery;
  if(evidence?.outerwearReviewSuggested&&draft.category!=='Outerwear'){
@@ -192,6 +200,45 @@ function adjustPhoto(item){
   style=node('button','Save & style this','primary'),
   cancel=node('button','Cancel','secondary'),remove=node('button','Remove photo','secondary');
  const reviewingNewPiece=batch.some(x=>x.id===item.id);
+ if(reviewingNewPiece){
+  const guide=node('p','Check your photo, choose the right category and confirm the color. If the item type is uncertain, leave it as Unknown rather than guessing.','fine');
+  guide.className='photo-review-guide';
+  form.prepend(guide);
+  // The user must be able to compare the original unmasked recognition RGB
+  // with a masked presentation crop, without accepting either as validated.
+  if(editorSource&&editorSource!==item.image){
+   const sourceFigure=node('figure',null,'clothing-reference photo-review-original');
+   const original=node('img');original.src=editorSource;original.alt='Original unmasked garment photo used for recognition';
+   sourceFigure.append(original,node('figcaption','Original unmasked photo · compare with the displayed cutout'));
+   form.prepend(sourceFigure);
+  }
+  // Expand the retained full outfit when a garment came from layered capture.
+  const scene=form.querySelector('.original-outfit-context');
+  if(scene)scene.open=true;
+ }
+ const requiresManualConfirmation=()=>reviewingNewPiece&&(
+  item.outfitSourceId||item.segmentHint?.clipped||
+  item.segmentHint?.displayFallback==='original-crop'||
+  item.possibleDuplicate||item.recognitionReviewRequired&&
+  (['Shoes','Dresses'].includes(draft.category)||
+   draft.category==='Bottoms'&&['Shorts','Skirt','Unknown'].includes(draft.itemType)));
+ const acknowledgement=node('label',null,'photo-review-acknowledgement');
+ const reviewed=node('input');reviewed.type='checkbox';
+ reviewed.setAttribute('aria-label','I checked the original photo, category, item type and color');
+ acknowledgement.append(reviewed,node('span','I checked the original photo, category, item type and color.'));
+ const feedback=node('p',null,'fine photo-review-feedback');
+ feedback.setAttribute('role','status');feedback.setAttribute('aria-live','polite');
+ const updateConfirmation=()=>{
+  const required=requiresManualConfirmation();
+  acknowledgement.hidden=!required;
+  if(!required)reviewed.checked=false;
+ };
+ form.addEventListener('input',event=>{
+  if(['Main category','Item type','Color'].includes(event.target?.getAttribute?.('aria-label'))){
+   reviewed.checked=false;feedback.textContent='';updateConfirmation();
+  }
+ });
+ updateConfirmation();
  style.type='submit';style.hidden=!reviewingNewPiece;
  cancel.type=remove.type='button';cancel.onclick=()=>dialog.close();
  if(reviewingNewPiece&&item.outfitSourceId&&
@@ -209,6 +256,21 @@ function adjustPhoto(item){
   const value={...collect(),name:draft.name.trim()||
    (draft.itemType&&draft.itemType!=='Unknown'?draft.itemType:'Closet piece'),
    savedAt:new Date().toISOString(),userAdjusted:true,requiresOwnershipConfirmation:false};
+  // New manually reviewed pieces still require a real garment category,
+  // a confirmed color and a coherent category/type pair. Never mistake
+  // closing the dialog or an unchanged model guess for human approval.
+  if(reviewingNewPiece){
+   const types=clothingSchema.types[value.category];
+   if(!Array.isArray(types)||!ClothingDetails.validColor(value.color)||
+      (value.itemType&&value.itemType!=='Unknown'&&!types.includes(value.itemType))){
+    feedback.textContent='Choose a clothing category and color, and check the item type before saving.';
+    return;
+   }
+   if(requiresManualConfirmation()&&!reviewed.checked){
+    feedback.textContent='Review the original photo and check the confirmation box before saving this uncertain piece.';
+    return;
+   }
+  }
   // Never save an Uncategorized/unsupported item in response to a request
   // to style it; the user can correct the category or choose plain Save.
   if(withStyling&&!['Tops','Bottoms','Dresses','Outerwear','Shoes'].includes(value.category)){
@@ -216,6 +278,7 @@ function adjustPhoto(item){
    return;
   }
   save.disabled=style.disabled=true;
+  feedback.textContent='Saving reviewed clothing…';
   try{
    if(typeof ClothingMemory!=='undefined')Object.assign(value,ClothingMemory.confirm(value));
    if(value.color&&value.colorSource==='photo-estimate')value.colorSource='user';
@@ -226,6 +289,7 @@ function adjustPhoto(item){
    await savePiece(value,batch.filter(x=>x.id!==item.id),editorCurrent);
    const existing=items.find(x=>x.id===item.id);if(existing)Object.assign(existing,value);else items.push(value);
    batch=batch.filter(x=>x.id!==item.id);dialog.close();render();scheduleMemoryReview();
+   if(!withStyling)message(reviewingNewPiece?'Clothing saved to My closet.':'Clothing changes saved.');
    if(withStyling){
     // The save is already durable. A stylist UI error is NOT a save failure.
     try{
@@ -235,11 +299,13 @@ function adjustPhoto(item){
    }
   }catch{
    save.disabled=style.disabled=false;
+   feedback.textContent='Could not save changes. Your photo is still here; try again.';
    message('Could not save changes. Try again.');
   }
  };
  dialog.onclose=()=>{if(batch.some(x=>x.id===item.id)&&!wasAdjusted){item.userAdjusted=false;if(wasScanning&&item.localAnalyzed&&!localPending.has(item.id)){item.localAnalyzed=false;queueAutomatic(item);}}dialog.remove();};
- const actions=node('div',null,'actions');actions.append(save,style,cancel,remove);form.append(actions);dialog.append(form);document.body.append(dialog);dialog.showModal();
+ const actions=node('div',null,'actions');actions.append(save,style,cancel,remove);
+ form.append(acknowledgement,feedback,actions);dialog.append(form);document.body.append(dialog);dialog.showModal();
 }
 function renderRecognitionNotice(){
  const notice=$('recognitionNotice');if(!notice)return;
