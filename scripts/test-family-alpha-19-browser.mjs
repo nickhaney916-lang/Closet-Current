@@ -92,6 +92,16 @@ try{
        if(d<(pin==='new-dress'?1:2))throw Error('Looks too similar');
        report.differences.push(d);report.checks++;
       }
+      if(pin==='new-dress'){
+       const first=r.options[0].board.slots;
+       const other=clothes.find(x=>x.category==='Shoes'&&x.id!==first.shoes).id;
+       const swapped=await client.swap(r,0,'shoes',other);
+       if(swapped.options[0].board.slots.top!=='new-dress'||
+         swapped.options[0].board.slots.shoes!==other||
+         swapped.options[0].board.slots.bottom||swapped.options[0].board.slots.layer2)
+         throw Error('Pinned dress shoe swap became a structural transition');
+       await client.verify(swapped);report.swaps++;
+      }
       if(pin==='new-shirt'){
        const first=r.options[0].board.slots;
        const target=clothes.find(x=>x.category==='Bottoms'&&x.id!==first.bottom).id;
@@ -115,7 +125,7 @@ try{
     const metrics=await page.evaluate(()=>({scroll:document.documentElement.scrollWidth,width:innerWidth,images:document.querySelectorAll('img').length}));
     assert.deepEqual(errors,[]);assert.deepEqual(outside,[]);
     assert.ok(metrics.scroll<=width+2,engine+' '+width+' overflow');
-    assert.equal(facts.outfits,15);assert.ok(facts.decodedImages>=40);assert.equal(facts.swaps,1);
+    assert.equal(facts.outfits,15);assert.ok(facts.decodedImages>=40);assert.equal(facts.swaps,2);
     results.push({engine,width,...facts,overflow:false,outsideRequests:0,pageErrors:0});
     await context.close();
    }
