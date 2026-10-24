@@ -5,6 +5,9 @@ on:
       - 'public/app.js'
       - 'tests/recognition-human-color-admission.test.mjs'
       - 'tests/recognition-review-clearance-gate.test.mjs'
+      - 'tests/quick-color-review.test.cjs'
+      - 'tests/photo-results.test.cjs'
+      - 'tests/recognition-confirmation-reliability.test.cjs'
       - 'docs/RECOGNITION-HUMAN-COLOR-ADMISSION-20261023.md'
       - '.github/workflows/recognition-human-color-no-deploy.yml'
   workflow_dispatch:
