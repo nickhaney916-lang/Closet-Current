@@ -31,7 +31,7 @@ function runFixture({
  const fakeDB={};
  const ctx={
   window:{closetAuth:{user:{id:'synthetic-owner-A'}}},
-  db:fakeDB,batch:[item],items:[],recognitionState:{phase:'ready',activeId:null},
+  db:fakeDB,batch:[item],items:duplicate?[{id:'synthetic-existing',image:item.image}]:[],recognitionState:{phase:'ready',activeId:null},
   render(){},persistDraft(){},message(){},
   localPending:new Set([item.id]),
   localReady:true,recognitionUnavailable:false,
@@ -132,14 +132,6 @@ test('missing original-derived color must not clear the review flag',async()=>{
 test('possible duplicate and pending ownership confirmation cannot clear review flag',async()=>{
  for(const opts of [{duplicate:true},{ownership:true}]){
   const fixture=runFixture(opts);
-  if(opts.duplicate){
-   // The real flow determines a duplicate using saved item state.
-   // Supply an identical display source from another saved garment.
-   // Our fixture items reference is attached to the VM context below.
-   // This branch is tested separately through source fence until a known
-   // distinct original identity is introduced.
-   continue;
-  }
   await fixture.run();
   assert.equal(fixture.saved,0);
   assert.equal(fixture.item.recognitionReviewRequired,true);
