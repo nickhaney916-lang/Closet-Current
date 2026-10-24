@@ -59,12 +59,14 @@ try{
     const context=await browser.newContext({viewport:{width,height:844},isMobile:true,hasTouch:true,
      serviceWorkers:'block'});
     const unexpected=[],errors=[];
-    await context.route('**/auth.js*',route=>route.fulfill({contentType:'text/javascript',body:
-     "window.closetAuth={user:{id:'review-23-"+browserName.toLowerCase()+"-"+width+"'},ready:Promise.resolve()};document.getElementById('authGate').hidden=true;document.getElementById('appShell').hidden=false;"}));
     await context.route('**/*',route=>{
      if(route.request().url().startsWith(base+'/')||/^(data:|blob:)/.test(route.request().url()))return route.continue();
      unexpected.push(route.request().url());return route.abort();
     });
+    // Playwright routes are evaluated newest-first. Install the Auth stub
+    // last so a real login service cannot accidentally be contacted.
+    await context.route('**/auth.js*',route=>route.fulfill({contentType:'text/javascript',body:
+     "window.closetAuth={user:{id:'review-23-"+browserName.toLowerCase()+"-"+width+"'},ready:Promise.resolve()};document.getElementById('authGate').hidden=true;document.getElementById('appShell').hidden=false;"}));
     const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));
     try{
      await page.goto(base+'/');
