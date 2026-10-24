@@ -129,7 +129,7 @@ function scanFixture(error,{manual=false,duplicate=false,slow=false}={}){
  const classify=slow?new Promise(resolve=>{classifyResolve=resolve;}):null;
  const context=vm.createContext({
   window:{closetAuth:{user:{id:'owner-1'}}},db:{name:'closet-current-user-owner-1'},
-  batch:[item],items:[],recognitionState:{phase:'ready',activeId:null},
+  batch:[item],items:duplicate?[{id:'existing-synthetic-photo',image:item.image}]:[],recognitionState:{phase:'ready',activeId:null},
   render(){},persistDraft(){},message(){},recordDeviceEvent(){},
   localPending:new Set([item.id]),localReady:true,recognitionUnavailable:false,
   recognitionSourcePhoto:x=>x.image,
