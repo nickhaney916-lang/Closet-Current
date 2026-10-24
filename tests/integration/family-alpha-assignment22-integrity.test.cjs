@@ -3,7 +3,7 @@
 // outside generic test glob: requires the prior isolated HOLD build.
 'use strict';
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
-const E=require('../../dist-family-alpha-recognition-integration-hold/wardrobe-backup-engine.js'),photo=require('../helpers/issue204-photo.cjs');
+const E=require('../../dist-family-alpha-recognition-integration-hold/wardrobe-backup-engine.js'),photo=require('./fixture-synthetic-jpeg.cjs');
 const app=fs.readFileSync('dist-family-alpha-recognition-integration-hold/app.js','utf8');
 const part=(a,b)=>app.slice(app.indexOf(a),app.indexOf(b,app.indexOf(a)));
 const piece=(id='top')=>({id,name:'Confirmed navy top',category:'Tops',itemType:'T-shirt',color:'Navy',colorSource:'user',image:photo('D'),outfitSourceId:'scene-a',originalPhoto:{image:photo('A'),sourceId:'scene-a'},recognitionPhoto:{image:photo('B'),crop:{x:10,y:20,width:30,height:40}},segmentHint:{categories:['Tops'],types:['T-shirt']},pattern:'Striped',seasons:['Fall'],userAdjusted:false});
