@@ -63,7 +63,7 @@ export function applyPinnedWorkerRecovery(baseApp,recoveryApp){
 // do not import its earlier app.js wholesale or lose current source integrity.
 const photoEditorBlock=app=>{
  const begin=app.indexOf('function adjustPhoto(item){');
- const end=app.indexOf('\\nfunction renderRecognitionNotice()',begin);
+ const end=app.indexOf('\nfunction renderRecognitionNotice()',begin);
  if(begin<0||end<=begin||app.indexOf('function adjustPhoto(item){',begin+1)>=0)
   throw Error('Manual photo editor cannot be uniquely reconciled');
  return {begin,end,body:app.slice(begin,end)};
@@ -101,7 +101,7 @@ export function applyPinnedMobileReviewStyle(css,reviewCss){
     !addition.includes('.photo-review-original')||
     !addition.includes('min-height:48px'))
   throw Error('Mobile review CSS controls missing');
- return css.trimEnd()+'\\n\\n'+addition+'\\n';
+ return css.trimEnd()+'\n\n'+addition+'\n';
 }
 const isAlphaFile=name=>name.startsWith('family-alpha-')||name.startsWith('alpha-stage-')||
  name.startsWith('__alpha_research/');
