@@ -146,10 +146,10 @@ export async function buildDisabledIntegratedCandidate({root=resolve('.')}={}){
  // leave all controls and styling rules unchanged with system fallbacks.
  const cssPath=join(target,'style.css');
  const originalCss=await readFile(cssPath,'utf8');
- const importPattern=/^@import url\\('https:\\/\\/fonts\\.googleapis\\.com\\/[^']+'\\);\\s*/;
- if(!importPattern.test(originalCss)||originalCss.match(importPattern)?.length!==1)
+ const importLine="@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@400;500&display=swap');\\n";
+ if(!originalCss.startsWith(importLine))
   throw Error('Unexpected Google Fonts import; review offline styling first');
- const localCss=originalCss.replace(importPattern,'');
+ const localCss=originalCss.slice(importLine.length);
  if(localCss.includes('fonts.googleapis.com')||localCss.includes('fonts.gstatic.com'))
   throw Error('External font reference remains in offline style');
  await writeFile(cssPath,localCss);
