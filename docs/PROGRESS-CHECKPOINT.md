@@ -1,3 +1,19 @@
+# Assignment #20 — independent original-photo benchmark (October 23)
+
+Draft PR #280, isolated branch from #279 `5ef76452649b016ba76fef42ec05a9d19108173d`.
+59 licensed source hashes verified; local build and 1,897 Node tests PASS, no skips.
+Independent archived actual-model rescoring: 43/56 historical versus 47/56 verified
+#226 categories; gain predates this assignment. Shoes 19/20, dresses 7/9, shorts
+2/2, skirts 5/6, jackets 1/4; exact/accepted jacket subtype 0/4. Numeric confidence
+calibration and real-photo color accuracy remain null. Adds strict per-type audit
+and fresh-inference CI without changing runtime/model/cloud/labels/source pixels.
+Fresh inference workflow 40063660896 is pending; no fresh local result claimed
+(browser installation unavailable). See docs/ASSIGNMENT20-ORIGINAL-PHOTO-BENCHMARK.md
+and PR #280 for subsequent measured evidence. Main controls integration/release;
+no merge/deploy, customer photos, paid AI, spending or Drive Duel changes.
+
+---
+
 # Assignment #233 — original-photo recognition safety (October 23)
 
 Isolated new branch from #226 b06f606; reviewed #220/#224/#226/#228/#231 and
