@@ -93,7 +93,7 @@ test('recognition source must include original photo, human color review and tra
 });
 test('stage already integrated recognition should force explicit rebaseline, not use stale report',()=>{
  const x=inputs();
- x.stage['public/app.js']+=x.recognition['public/app.js'];
+ x.stage['public/app.js']+=x.recognition['public/app.js'].replace('async function recognizeItem(item){}','');
  assert.throws(()=>computeIntegrationAudit(x.stage,x.recognition),/stage has new recognition helper/);
 });
 test('missing pinned source is not replaced by a moving branch or inferred file',()=>{
