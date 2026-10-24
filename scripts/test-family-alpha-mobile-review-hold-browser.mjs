@@ -79,9 +79,9 @@ try{
     // Capture the swallowed save exception while retaining all actual gates.
     await context.route('**/app.js',async route=>{
      const actual=await readFile(resolve(root,'app.js'),'utf8');
-     const old="}catch{\n    save.disabled=style.disabled=false;";
+     const old="}catch{\n   save.disabled=style.disabled=false;";
      if(!actual.includes(old))throw Error('Manual save catch changed');
-     const instrumented=actual.replace(old,"}catch(error){console.warn('QA_SAVE_REJECTION',String(error?.message));\n    save.disabled=style.disabled=false;");
+     const instrumented=actual.replace(old,"}catch(error){console.warn('QA_SAVE_REJECTION',String(error?.message));\n   save.disabled=style.disabled=false;");
      return route.fulfill({contentType:'text/javascript',body:instrumented});
     });
     const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));
