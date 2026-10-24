@@ -1,0 +1,49 @@
+name: Family Alpha Live-Policy Metadata Report - READ ONLY / NO DEPLOY
+on:
+  pull_request:
+    paths:
+      - 'research/family-alpha-live-readonly/**'
+      - 'scripts/family-alpha-readonly-supabase-snapshot-check.mjs'
+      - 'tests/family-alpha-readonly-supabase-snapshot.test.mjs'
+      - 'docs/FAMILY-ALPHA-DEPLOYED-SUPABASE-READONLY-AUDIT-20261023.md'
+      - '.github/workflows/family-alpha-live-policy-readonly-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  snapshot-static-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Create isolated offline Family Alpha candidate, normal dist unchanged
+        run: node scripts/build-family-alpha-staging.mjs
+      - name: Verify all Node regression suites including actual read-only metadata snapshot risk classifications
+        run: node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Report dated Supabase metadata findings offline, never query live user data
+        run: node scripts/family-alpha-readonly-supabase-snapshot-check.mjs
+      - name: Confirm no-live-authorization assertion and release HOLD
+        run: |
+          node --input-type=module -e "import {runStaticMetadataAudit} from './scripts/family-alpha-readonly-supabase-snapshot-check.mjs';let x=await runStaticMetadataAudit();if(x.releaseStatus!=='HOLD'||x.actualPrivateAccountAccessTested!==false||x.findings.every(f=>f.id!=='production.overbroad-table-grants'))process.exit(1); console.log('LIVE RLS behavior still NOT VERIFIED; no deployment');"
+  browser-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build app locally only
+        run: node scripts/build.mjs
+      - name: Install pinned browser test tool without lockfile update
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+      - name: Recheck 4 synthetic user privacy flows against simulated backend
+        run: node scripts/test-family-alpha-17-four-account-browser.mjs
