@@ -54,7 +54,9 @@ jobs:
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
       - name: Fetch exact pinned staging and recognition commits
-        run: git fetch --no-tags origin "$STAGE_PIN" "$RECOGNITION_PIN"
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git fetch --no-tags origin "$STAGE_PIN" "$RECOGNITION_PIN"
       - name: Build original reviewed staging and combined held candidate, without keys
         run: |
           node scripts/build-family-alpha-staging-auth-hold.mjs
