@@ -1,0 +1,56 @@
+name: Family Alpha Protected Staging Preflight - NO DEPLOY
+on:
+  pull_request:
+    paths:
+      - 'scripts/check-family-alpha-protected-staging-preflight.mjs'
+      - 'tests/family-alpha-protected-staging-preflight.test.mjs'
+      - 'docs/FAMILY-ALPHA-PROTECTED-STAGING-PREFLIGHT-HOLD.md'
+      - '.github/workflows/family-alpha-protected-staging-preflight-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  offline-access-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 22
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build production and both separate Family Alpha HOLD candidate folders; no deployment
+        run: node scripts/build-family-alpha-staging-auth-hold.mjs
+      - name: Full Node regressions including protected Access challenge assertions
+        run: node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Offline host and Auth gate preflight — no real URLs or private user data
+        run: node scripts/check-family-alpha-protected-staging-preflight.mjs
+      - name: Record sanitized HOLD report for offline review only
+        run: |
+          node --input-type=module -e "import {inspectProtectedStagingCandidate,preflightSummary} from './scripts/check-family-alpha-protected-staging-preflight.mjs';import {writeFile} from 'node:fs/promises'; const x=await inspectProtectedStagingCandidate(); if(x.releaseGate!=='HOLD'||x.readyForFamily||x.liveAccessTested||x.protectedAccessVerified||x.blockers.length<5)process.exit(1); await writeFile('family-alpha-protected-access-offline-hold.json',preflightSummary(x)); console.log('Report is historical/offline only; release HOLD')"
+      - uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: family-alpha-protected-access-offline-preflight-hold
+          path: family-alpha-protected-access-offline-hold.json
+          retention-days: 7
+  synthetic-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build static staging-auth candidate without activating any host
+        run: node scripts/build-family-alpha-staging-auth-hold.mjs
+      - name: Pinned test-only Playwright install without lockfile
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+      - name: Six viewports for blocked staging and six fabricated approved-host login cases
+        run: node scripts/test-family-alpha-stage-auth-browser.mjs
+      - name: Four-owner mock backend privacy regression in six browser viewports
+        run: node scripts/test-family-alpha-17-four-account-browser.mjs
