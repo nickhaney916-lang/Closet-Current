@@ -15,7 +15,7 @@ import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 
 export const STAGING_REF='879f1b92fb15f9bc9a7f0429c7ee178f7bbf1373'; // PR #277
-export const RECOGNITION_REF='0586d08d9d40ce5da479f5ff656e03adf2c837e0'; // PR #282
+export const RECOGNITION_REF='795ad6637f8d4f782bc99751211b25e8e72a3a7d'; // PR #283 includes PR #282 recognition + original-source wardrobe integrity
 export const STAGING_PROJECT='fbnplztkbsteuzrmbgib';
 export const PRODUCTION_PROJECT='hlkgymugtfbirlpunsra';
 export const AUDITED_ASSETS=Object.freeze([

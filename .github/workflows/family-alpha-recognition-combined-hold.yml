@@ -6,6 +6,7 @@ on:
       - 'scripts/audit-family-alpha-recognition-bridge.mjs'
       - 'scripts/test-family-alpha-recognition-integrated-hold-browser.mjs'
       - 'tests/family-alpha-recognition-integrated-hold.test.mjs'
+      - 'tests/integration/family-alpha-assignment22-integrity.test.cjs'
       - 'tests/family-alpha-recognition-bridge-audit.test.mjs'
       - 'tests/fixtures/family-alpha-recognition-avatar-mock-harness.js'
       - 'scripts/test-family-alpha-recognition-to-avatar-mock-browser.mjs'
@@ -16,7 +17,7 @@ permissions:
   contents: read
 env:
   STAGE_PIN: '879f1b92fb15f9bc9a7f0429c7ee178f7bbf1373'
-  RECOGNITION_PIN: '0586d08d9d40ce5da479f5ff656e03adf2c837e0'
+  RECOGNITION_PIN: '795ad6637f8d4f782bc99751211b25e8e72a3a7d'
 jobs:
   built-source-and-regression:
     runs-on: ubuntu-latest
@@ -37,6 +38,8 @@ jobs:
         run: node scripts/build-family-alpha-recognition-integrated-hold.mjs
       - name: Verify manifest, original JPEG source evidence, stage-only Auth and atomic held controls
         run: node --test tests/family-alpha-recognition-integrated-hold.test.mjs
+      - name: Verify actual Work #22 original-JPEG/crop/queued-draft/backup integrity against combined artifact
+        run: node --test tests/integration/family-alpha-assignment22-integrity.test.cjs
       - name: Run stage + integration full Node regression suite
         run: node --test tests/*.test.cjs tests/*.test.mjs
       - name: Never label offline combined artifact as authorized release
