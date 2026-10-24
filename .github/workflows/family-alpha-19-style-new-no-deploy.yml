@@ -26,10 +26,8 @@ jobs:
         run: node --test tests/*.test.cjs tests/*.test.mjs
       - name: Prevent modifications to other owners' code
         run: |
-          git fetch origin integration/family-alpha-security-staging-integration-20261023 --depth=1 || true
-          git fetch origin integration/family-alpha-staging-artifact-no-deploy-20261023 --depth=1 || true
           git fetch origin 703881baafbe883a28ba2de3543bad2d5f0b2467 --depth=1
-          git diff --name-only 703881baafbe883a28ba2de3543bad2d5f0b2467...HEAD | tee /tmp/alpha19-changed.txt
+          git diff --name-only 703881baafbe883a28ba2de3543bad2d5f0b2467 HEAD | tee /tmp/alpha19-changed.txt
           if grep -Ev '^(research/family-alpha-19/|tests/family-alpha-19-style-new-clothes.test.mjs$|scripts/test-family-alpha-19-browser.mjs$|docs/FAMILY-ALPHA-19-STYLE-MY-NEW-CLOTHES.md$|\.github/workflows/family-alpha-19-style-new-no-deploy.yml$)' /tmp/alpha19-changed.txt; then exit 1; fi
   mobile-quality:
     runs-on: ubuntu-latest
