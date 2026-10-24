@@ -1,0 +1,23 @@
+name: Assignment 21 recognition recovery (no deploy)
+on:
+  push:
+    branches:
+      - chat/assignment21-recognition-recovery-20261023
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  offline-recognition-recovery:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Build application
+        run: node scripts/build.mjs
+      - name: Direct recognition controller and actual handler safety
+        run: node --test tests/assignment21-recognition-recovery.test.mjs tests/recognition-review-clearance-gate.test.mjs
+      - name: Full offline Node regression and avatar suite
+        run: node --test tests/*.test.cjs tests/*.test.mjs tests/avatar/*.test.mjs
