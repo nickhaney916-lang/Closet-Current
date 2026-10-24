@@ -1,0 +1,53 @@
+name: Family Alpha 18 mobile and garment acceptance - NO DEPLOY
+on:
+  pull_request:
+    paths:
+      - '**/*family-alpha-18*'
+      - 'research/family-alpha-18/**'
+      - 'public/family-alpha-preview-controller.mjs'
+      - 'docs/FAMILY-ALPHA-18*'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - run: node scripts/build.mjs
+      - run: node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Offline synthetic matrix (no inference or external photos)
+        run: |
+          mkdir -p benchmark/family-alpha-18
+          node --input-type=module -e "import {qualityMatrix} from './research/family-alpha-18/quality-matrix.mjs';import {writeFileSync} from 'node:fs';writeFileSync('benchmark/family-alpha-18/quality-matrix.json',JSON.stringify(qualityMatrix(),null,2));"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: family-alpha-18-offline-matrix
+          path: benchmark/family-alpha-18/
+  browsers:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+      - run: node scripts/test-family-alpha-18-mobile.mjs
+      - run: node scripts/test-family-alpha-18-quality-browser.mjs
+      - run: node scripts/test-family-alpha-15-browser.mjs
+      - run: node scripts/test-family-alpha-real-photo-review-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: family-alpha-18-synthetic-browser-evidence
+          path: |
+            benchmark/family-alpha-18/
+            benchmark/family-alpha-15/
