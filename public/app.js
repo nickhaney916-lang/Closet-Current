@@ -955,6 +955,12 @@ function localRequest(type,image,itemId,hint){
     localWorker.onmessage=event=>{
      if(worker!==localWorker)return;
      const data=event.data;
+     // A malformed worker message must fail closed, not strand an unresolved
+     // scan until the watchdog fires or throw outside the promise lifecycle.
+     if(!data||typeof data!=='object'){
+      stopRecognitionWorker('Recognition returned an invalid response. Your photos are kept. Try again or use Adjust.','worker_response_invalid');
+      return;
+     }
      if(data.type==='progress'){
       for(const job of localJobs.values())if(job.type==='load')job.touch();
       if(typeof recordDeviceEvent==='function')recordDeviceEvent('scanner_progress',{stage:data.phase||data.stage,percent:data.percent});
@@ -971,8 +977,24 @@ function localRequest(type,image,itemId,hint){
       // Keep the in-progress status without modifying garment attributes.
       return;
      }
+     // A load acknowledgment is not a garment classification. Never promote
+     // an unknown/mismatched protocol event to a successful model result.
+     const expected=job.type==='load'?'ready':'result';
+     if(data.type!=='error'&&data.type!==expected){
+      stopRecognitionWorker('Recognition returned an unexpected response. Your photos are kept. Try again or use Adjust.','worker_response_invalid');
+      return;
+     }
      clearTimeout(job.timer);localJobs.delete(data.id);
-     if(data.type==='error'){localReady=false;if(typeof recordDeviceEvent==='function')recordDeviceEvent('scanner_error',{stage:data.stage,code:data.code,durationMs:Date.now()-job.started});job.reject(Error(data.text));}else job.resolve(data);
+     if(data.type==='error'){
+      // A corrupt single JPEG is a per-photo failure: the already loaded
+      // worker can safely scan the next garment without a full model reload.
+      // Runtime, memory, asset and unknown failures remain fail-closed.
+      const recoverable=job.type!=='load'&&data.code==='image';
+      if(!recoverable)localReady=false;
+      if(typeof recordDeviceEvent==='function')recordDeviceEvent('scanner_error',{stage:data.stage,code:data.code,durationMs:Date.now()-job.started});
+      const error=Error(typeof data.text==='string'&&data.text?data.text:'Recognition stopped. Try again or use Adjust.');
+      error.recoverable=recoverable;job.reject(error);
+     }else job.resolve(data);
     };
     localWorker.onerror=()=>{if(worker===localWorker)stopRecognitionWorker('Local recognition is unavailable. Try again or use Adjust.');};
    }
@@ -1093,7 +1115,7 @@ async function recognizeItem(item){
   catch(error){
    // A delayed rejected request for a discarded/replaced source must not
    // block recognition of the next newly photographed article.
-   if(categoryStillCurrent()&&!item.userAdjusted)recognitionUnavailable=true;
+   if(categoryStillCurrent()&&!item.userAdjusted&&!error?.recoverable)recognitionUnavailable=true;
    throw error;
   }
   if(!batch.some(x=>x.id===item.id))return;
