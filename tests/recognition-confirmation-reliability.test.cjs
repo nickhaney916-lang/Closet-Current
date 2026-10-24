@@ -14,6 +14,9 @@ function setup(result){
  for(const path of ['public/taxonomy.js','public/clothing-details.js'])vm.runInContext(fs.readFileSync(path,'utf8'),state);
  state.ClothingDetails=state.window.ClothingDetails;
  vm.runInContext(source.slice(source.indexOf('function recognitionSourcePhoto('),source.indexOf('function clothingFields(')),state);
+ // Include the same transient quick-color evidence helpers as the browser;
+ // a standalone function excerpt must not silently replace them with mocks.
+ vm.runInContext(source.slice(source.indexOf('const verifiedColorAdmission=new WeakMap();'),source.indexOf('// Saving is transactional')),state);
  vm.runInContext(source.slice(source.indexOf('function trustedAutomaticPhotoColor('),source.indexOf('function queueAutomatic(')),state);
  vm.runInContext(source.slice(source.indexOf('async function enableLocal('),source.indexOf('async function importClothingPhotos(')),state);
  vm.runInContext(source.slice(source.indexOf('function canConfirmReviewedColor('),source.indexOf('function renderPhotoResults(')),state);
