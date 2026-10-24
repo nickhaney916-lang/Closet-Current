@@ -13,7 +13,7 @@ const fileContents=Object.fromEntries(await Promise.all(
  ['auth.js','cloud-backup.js','family-alpha-2d-auth-preflight.mjs','alpha-stage-config.js'].map(async f=>
   [f,await readFile(root+'/'+f,'utf8')]
  )));
-const fakeHtml=\`<!doctype html><html lang="en"><meta name="viewport" content="width=device-width, initial-scale=1"><body>
+const fakeHtml=`<!doctype html><html lang="en"><meta name="viewport" content="width=device-width, initial-scale=1"><body>
 <div id="authGate"><p id="authStatus"></p><form id="authForm">
 <input id="authEmail" type="email" value="fictional@example.invalid">
 <input id="authPassword" type="password" value="invented-only">
@@ -29,7 +29,7 @@ const fakeHtml=\`<!doctype html><html lang="en"><meta name="viewport" content="w
 <script src="/alpha-stage-config.js"></script>
 <script src="/auth.js"></script>
 <script src="/cloud-backup.js"></script>
-</body></html>\`;
+</body></html>`;
 const results=[];
 for(const [browserName,driver]of [['Chromium',chromium],['WebKit',webkit]]){
  const browser=await driver.launch({headless:true,...(browserName==='Chromium'?{args:['--no-sandbox']}:{})});
