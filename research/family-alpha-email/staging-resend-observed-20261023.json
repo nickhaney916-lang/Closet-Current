@@ -1,0 +1,82 @@
+{
+  "schemaVersion": 1,
+  "observedDate": "2026-10-23",
+  "snapshotType": "owner-supplied screenshots; no live settings API or DNS queries",
+  "releaseGate": "HOLD",
+  "domain": {
+    "registeredDomain": "closet-current.com",
+    "sendingDomain": "mail.closet-current.com",
+    "mailFromProposed": "accounts@mail.closet-current.com",
+    "resendVerification": "PENDING",
+    "verificationSource": "Resend dashboard owner screenshot at 9:17 PM PT",
+    "dnsRecordsScreenshotObserved": [
+      {
+        "type": "TXT",
+        "name": "resend._domainkey.mail",
+        "value": "NOT_STORED_PUBLIC_DKIM_VALUE"
+      },
+      {
+        "type": "CNAME",
+        "name": "rsend.mail",
+        "target": "rsend.forge.rmta.net",
+        "cloudflareProxy": "DNS only"
+      },
+      {
+        "type": "CNAME",
+        "name": "send.mail",
+        "target": "send.forge.rmta.net",
+        "cloudflareProxy": "DNS only"
+      }
+    ],
+    "dnsAuthoritativePubliclyQueried": false,
+    "dnsLiveVerifiedByResend": false
+  },
+  "email": {
+    "resendAccountAccessObserved": true,
+    "customSmtpCurrentlyEnabled": false,
+    "supabaseBuiltinMailSelected": true,
+    "smtpKeyGenerated": false,
+    "smtpKeyConfigured": false,
+    "testEmailSent": false,
+    "mailDeliveryTested": false,
+    "apiKeyInRepo": false,
+    "resendSmtpPublicConfig": {
+      "host": "smtp.resend.com",
+      "port": 465,
+      "username": "resend",
+      "senderName": "Closet Current"
+    }
+  },
+  "staging": {
+    "projectRef": "fbnplztkbsteuzrmbgib",
+    "authEmailProviderEnabled": true,
+    "accountSignupAllowed": true,
+    "confirmEmailEnabled": true,
+    "anonymousSignInsEnabled": false,
+    "currentSiteUrlObserved": "https://pilot-access-check.closet-current-staging.pages.dev/",
+    "currentRedirectAllowlistObserved": [
+      "https://pilot-access-check.closet-current-staging.pages.dev/"
+    ],
+    "rootRedirectAbsentFromObservedList": true,
+    "rootCandidate": "https://closet-current-staging.pages.dev/",
+    "pilotPreviewOnlyPage": true,
+    "actualStagedAppDeployed": false,
+    "cloudflareRootChallengeOwnerVerified": true,
+    "cloudflareOnePreviewChallengeOwnerVerified": true,
+    "actualSignedInSupabaseTest": false
+  },
+  "production": {
+    "projectRef": "hlkgymugtfbirlpunsra",
+    "mustRemainUnchanged": true
+  },
+  "barriers": [
+    "Resend domain verified",
+    "Owner-approved sender/domain SMTP key configured privately in staging only",
+    "Exact protected staging app callback and Supabase staging Site URL/Redirect URL allowlist approved",
+    "Approved synthetic signup/confirm/reset delivery and same-owner recovery test",
+    "Direct public Supabase signup abuse model/registration gating reviewed",
+    "Real staging A/B account backup and private JPEG cross-owner denial",
+    "Physical-phone consented family Alpha testing"
+  ],
+  "authorizedMutations": false
+}
