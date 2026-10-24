@@ -255,13 +255,36 @@ function renderRecognitionNotice(){
 
 // The normal scanner remains automatic. Only images with a confirmed garment
 // category and no reliable color offer this one-choice inline fallback.
+// The ephemeral evidence token must be earned AFTER the original RGB, model,
+// mask and user-correction gates. Never write it to cloud or local storage.
+const verifiedColorAdmission=new WeakMap();
+function admitReviewedColor(item){
+ const image=recognitionSourcePhoto(item);
+ if(!image)return;
+ verifiedColorAdmission.set(item,{
+  image,display:item.image,scene:item.originalPhoto?.image??null,
+  hint:JSON.stringify(item.segmentHint??null),category:item.category,
+  type:item.itemType,owner:window.closetAuth?.user?.id,ownerDB:db
+ });
+}
+function hasReviewedColorAdmission(item){
+ const proof=verifiedColorAdmission.get(item);
+ return !!proof&&proof.ownerDB===db&&proof.owner===window.closetAuth?.user?.id&&
+  proof.image===recognitionSourcePhoto(item)&&proof.display===item.image&&
+  proof.scene===(item.originalPhoto?.image??null)&&
+  proof.hint===JSON.stringify(item.segmentHint??null)&&
+  proof.category===item.category&&proof.type===item.itemType;
+}
 // Saving is transactional and rechecks eligibility at write time so it cannot
 // overwrite a newer capture, duplicate, or unfinished recognition result.
 function canConfirmReviewedColor(item){
  return !!item&&batch.some(x=>x.id===item.id)&&!items.some(x=>x.id===item.id)&&
   !localPending.has(item.id)&&item.localAnalyzed&&!item.userAdjusted&&
   !item.possibleDuplicate&&!item.requiresOwnershipConfirmation&&
-  !item.scanFailed&&!item.saveFailed&&!item.recognitionReviewRequired&&
+  !item.scanFailed&&!item.saveFailed&&
+  // The scan is still under human review, so only an original-photo-backed
+  // admission from THIS session may offer the one-tap color confirmation.
+  item.recognitionReviewRequired===true&&hasReviewedColorAdmission(item)&&
   // A restored outfit lacking its unmasked ORIGINAL RGB crop must not
   // become a closet item through the quick-color path. The display mask,
   // repaired cutout or AI derivative is never a valid recognition source.
@@ -294,7 +317,7 @@ async function confirmReviewedColor(item,color){
   // Clone after the final safety/identity gate, never before the queue delay.
   value=normalizeClothing({...structuredClone(item),color,colorSource:'user',
    name:[color,item.itemType&&item.itemType!=='Unknown'?item.itemType:item.category].filter(Boolean).join(' '),
-   userAdjusted:true,requiresOwnershipConfirmation:false,
+   userAdjusted:true,recognitionReviewRequired:false,requiresOwnershipConfirmation:false,
    indexingLevel:item.itemType==='Unknown'?'category-color':'specific-type',
    savedAt:new Date().toISOString(),indexedAt:new Date().toISOString()});
   const tx=db.transaction(['items','state'],'readwrite');
@@ -1044,6 +1067,8 @@ async function saveIndexed(item,sourceStillCurrent){
  batch=batch.filter(x=>x.id!==item.id);persistDraft();return true;
 }
 async function recognizeItem(item){
+ // An old admission must not survive a new scan attempt.
+ verifiedColorAdmission.delete(item);
  const scanStarted=Date.now();let savingIndexed=false;
  const scanDB=db,scanOwner=globalThis.window?.closetAuth?.user?.id;
  item.recognitionReviewRequired=true;
@@ -1127,7 +1152,10 @@ async function recognizeItem(item){
    if(item.outfitSourceId&&item.segmentHint?.displayFallback==='original-crop'){
     item.localStatus='The outline may contain more than one item or background. Check with Adjust or photograph the garment alone before saving.';return true;
    }
-   if(!item.color||item.color==='Unknown'){item.localStatus=item.possibleDuplicate?'Possible duplicate: compare this photo with your closet before saving.':item.requiresOwnershipConfirmation?'Confirm this garment belongs in your closet before saving.':'Garment category recognized. Choose a color below to save; specific type is optional.';return true;}
+   if(!item.color||item.color==='Unknown'){
+    if(!item.possibleDuplicate&&!item.requiresOwnershipConfirmation)admitReviewedColor(item);
+    item.localStatus=item.possibleDuplicate?'Possible duplicate: compare this photo with your closet before saving.':item.requiresOwnershipConfirmation?'Confirm this garment belongs in your closet before saving.':'Garment category recognized. Choose a color below to save; specific type is optional.';return true;
+   }
   }
   if(!result.strong&&!corePartial){if(typeof recordDeviceEvent==='function')recordDeviceEvent('not_recognized',{durationMs:Date.now()-scanStarted});if(item.outfitSourceId&&item.segmentHint?.displayFallback==='original-crop'){item.localStatus='The outline may contain more than one garment or background. Check with Adjust or photograph the item alone.';return true;}item.localStatus=(item.possibleDuplicate?'Possible duplicate. ':'')+(item.color?'Color kept. Confirm the garment category and type in Adjust.':'Garment identity needs confirmation. Choose a color and category in Adjust.');return true;}
   if(!segmentationAllows(item,result.choices[0])){item.localStatus=item.segmentHint?.clipped?'This piece is partly outside the photo. Retake the whole garment or use Adjust.':item.outfitSourceId&&item.segmentHint?.displayFallback==='original-crop'?'This photo region may include multiple garments or background. Verify with Adjust or photograph the item alone.':'The clothing mask and garment checks disagree. Use Adjust or take a clearer photo.';return true;}
@@ -1150,6 +1178,7 @@ async function recognizeItem(item){
   // garment photo stays reviewable when neither reliable photo color nor model
   // color is available; optional subtype and label details can remain blank.
   if(item.category==='Uncategorized'||!ClothingDetails.validColor(item.color)){
+   if(item.category!=='Uncategorized'&&!item.possibleDuplicate&&!item.requiresOwnershipConfirmation)admitReviewedColor(item);
    item.localStatus=item.possibleDuplicate?'Possible duplicate: compare this photo with your closet before saving.':item.requiresOwnershipConfirmation?'Confirm this garment belongs in your closet before saving.':'Garment identified. Choose a color below to save; your original photo is kept.';
    return true;
   }
