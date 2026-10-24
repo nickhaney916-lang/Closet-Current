@@ -140,6 +140,20 @@ export async function buildDisabledIntegratedCandidate({root=resolve('.')}={}){
  `;
  await writeFile(join(target,'ai-tryon.js'),noPaidTryOn);
  modified.push({path:'ai-tryon.js',sha256:sha256(noPaidTryOn),safetyOverride:'PAID_GENERATION_DISABLED'});
+ // Avoid even attempting Google Fonts requests in a strict offline build:
+ // CSP might prevent the response but the network request is still visible.
+ // Only remove the ONE known public font @import from the pinned modern CSS;
+ // leave all controls and styling rules unchanged with system fallbacks.
+ const cssPath=join(target,'style.css');
+ const originalCss=await readFile(cssPath,'utf8');
+ const importPattern=/^@import url\\('https:\\/\\/fonts\\.googleapis\\.com\\/[^']+'\\);\\s*/;
+ if(!importPattern.test(originalCss)||originalCss.match(importPattern)?.length!==1)
+  throw Error('Unexpected Google Fonts import; review offline styling first');
+ const localCss=originalCss.replace(importPattern,'');
+ if(localCss.includes('fonts.googleapis.com')||localCss.includes('fonts.gstatic.com'))
+  throw Error('External font reference remains in offline style');
+ await writeFile(cssPath,localCss);
+ modified.push({path:'style.css',sha256:sha256(localCss),safetyOverride:'REMOTE_FONT_IMPORT_DISABLED'});
  const stageIndex=stageSource('public/index.html').toString('utf8');
  const modernIndex=source('public/index.html').toString('utf8');
  const index=combineStageAndRecognitionMarkup(modernIndex,stageIndex);
