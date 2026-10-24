@@ -23,7 +23,7 @@ jobs:
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
       - name: Build ordinary dist and separate release-HOLD artifact, NEVER DEPLOY
-        run: node scripts/build-family-alpha-staging.mjs
+        run: node scripts/build-family-alpha-staging-auth-hold.mjs
       - name: Run all current app, four-account and avatar security tests
         run: node --test tests/*.test.cjs tests/*.test.mjs
       - name: Verify package content provenance and release HOLD
@@ -42,7 +42,7 @@ jobs:
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
       - name: Build ordinary app and isolated non-deploy candidate
-        run: node scripts/build-family-alpha-staging.mjs
+        run: node scripts/build-family-alpha-staging-auth-hold.mjs
       - name: Pinned test-only Playwright, no lockfile changes
         run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
       - name: Four-account A-B-C-D mock backend privacy and stale cloud restore

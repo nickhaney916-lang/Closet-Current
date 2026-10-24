@@ -39,10 +39,17 @@ try{
     });
     await context.route('https://hlkgymugtfbirlpunsra.supabase.co/**',async route=>{
      const request=route.request(),url=new URL(request.url()),actor=request.headers().authorization?.replace(/^Bearer /i,'');
-     const send=(value,status=200)=>route.fulfill({status,contentType:'application/json',headers:{'Access-Control-Allow-Origin':'*'},body:JSON.stringify(value)});
+     // Match the simulated browser's actual CORS preflight, rather than
+     // hard-coding a header subset. Account-switch races may initiate late
+     // requests in WebKit; real owner-denial assertions remain unchanged.
+     const requestOrigin=request.headers().origin||origin;
+     const cors={'Access-Control-Allow-Origin':requestOrigin,'Vary':'Origin'};
+     const send=(value,status=200)=>route.fulfill({status,contentType:'application/json',headers:cors,body:JSON.stringify(value)});
      if(request.method()==='OPTIONS')return route.fulfill({status:204,headers:{
-      'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'authorization, apikey, content-type',
-      'Access-Control-Allow-Methods':'GET, POST, OPTIONS','Access-Control-Max-Age':'600'}});
+      ...cors,
+      'Access-Control-Allow-Headers':request.headers()['access-control-request-headers']||'authorization, apikey, content-type',
+      'Access-Control-Allow-Methods':'GET, POST, OPTIONS',
+      'Access-Control-Max-Age':'600'}});
      if(!owners.includes(actor))return send({},401);
      if(url.pathname==='/rest/v1/closet_backups'){
       const target=url.searchParams.get('owner_id')?.replace(/^eq\./,'');
@@ -71,7 +78,7 @@ try{
        photos.set(path,bytes);return send({});
       }
       if(request.method()==='GET'&&photos.has(path))
-       return route.fulfill({status:200,contentType:'image/jpeg',headers:{'Access-Control-Allow-Origin':'*'},body:photos.get(path)});
+       return route.fulfill({status:200,contentType:'image/jpeg',headers:cors,body:photos.get(path)});
       return send({},404);
      }
      return send({},404);
