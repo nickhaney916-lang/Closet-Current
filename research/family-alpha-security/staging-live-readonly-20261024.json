@@ -1,0 +1,111 @@
+{
+  "schemaVersion": 1,
+  "observedDate": "2026-10-24",
+  "snapshotType": "sanitized connected Supabase read-only catalog, role-emulation queries, security advisor; owner-supplied Resend UI screenshot",
+  "releaseGate": "HOLD",
+  "project": {
+    "stagingRef": "fbnplztkbsteuzrmbgib",
+    "productionRef": "hlkgymugtfbirlpunsra",
+    "stagingActive": true,
+    "productionReadOrChanged": false,
+    "dataMutations": false,
+    "liveBackendWritesAttempted": false
+  },
+  "security": {
+    "publicBackupTable": "closet_backups",
+    "backupRlsEnabled": true,
+    "backupPolicies": [
+      "authenticated_owner_using_and_check",
+      "closet_backup_writer_owner_using_and_check"
+    ],
+    "privateBucket": "closet-private",
+    "storageBucketPublic": false,
+    "objectRlsEnabled": true,
+    "authenticatedStorageActions": [
+      "INSERT_OWN_FOLDER",
+      "SELECT_OWN_FOLDER",
+      "DELETE_OWN_FOLDER"
+    ],
+    "storageUpdatePolicyPresent": false,
+    "storageAppCurrentUploadMethod": "immutable_photo_hash_POST_no_upsert",
+    "storedExistingBackupRows": 1,
+    "storedExistingObjectRows": 1,
+    "authUserCount": 1,
+    "anonymousAuthUserCount": 0,
+    "syntheticPostgresRoleChecks": {
+      "method": "BEGIN READ ONLY; SET LOCAL ROLE; temporary synthetic request.jwt.claim.sub; counts only; ROLLBACK; NO JWT ISSUED",
+      "matchingBackupOwnerVisible": 1,
+      "matchingPhotoFolderOwnerVisible": 1,
+      "syntheticForeignOwnerAVisibleBackups": 0,
+      "syntheticForeignOwnerAVisiblePhotos": 0,
+      "syntheticForeignOwnerBVisibleBackups": 0,
+      "syntheticForeignOwnerBVisiblePhotos": 0,
+      "anonymousBackup": "PERMISSION_DENIED",
+      "anonymousVisiblePrivatePhotos": 0
+    },
+    "liveJwtSignInUsed": false,
+    "realCrossOwnerJWTTested": false,
+    "realAandBWriteUpdateDeleteTested": false,
+    "securityAdvisorWarnings": [
+      {
+        "code": "auth_leaked_password_protection",
+        "level": "WARN",
+        "enabled": false,
+        "remediation": "https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection"
+      }
+    ]
+  },
+  "mail": {
+    "resendVerifiedOwnerScreenshot": true,
+    "resendVerifiedObservedOn": "2026-10-24",
+    "sendingDomain": "mail.closet-current.com",
+    "lastObservedStagingCustomSmtpEnabled": false,
+    "lastObservedSmtpSettingDate": "2026-10-23",
+    "currentCustomSmtpState": "NOT_LIVE_RECHECKED",
+    "smtpKeyGeneratedObserved": false,
+    "smtpCredentialKnown": false,
+    "mailDeliveryTested": false,
+    "emailConfirmationReceived": false,
+    "passwordRecoveryReceived": false,
+    "senderProposal": "accounts@mail.closet-current.com",
+    "publicHost": "smtp.resend.com",
+    "publicPort": 465,
+    "publicUsername": "resend",
+    "resendForgeFeatureSeenEnabled": true
+  },
+  "authAndHost": {
+    "signupAllowedLastObserved": true,
+    "signupStatusLastObservedOn": "2026-10-23",
+    "liveSignupRestrictionRechecked": false,
+    "confirmationEnabledLastObserved": true,
+    "anonymousSignInEnabledLastObserved": false,
+    "lastObservedSiteUrl": "https://pilot-access-check.closet-current-staging.pages.dev/",
+    "actualProtectedStagingRoot": "https://closet-current-staging.pages.dev/",
+    "protectedRootAccessEnforcementRechecked": false,
+    "rootAuthCallbackPresentInLastObservedAllowlist": false,
+    "liveRedirectRechecked": false,
+    "actualStagingAppDeployed": false,
+    "stagingAuthBuildDefault": "HOLD-NO-CALLBACK-OR-KEY",
+    "stagingPublishableKeyInArtifact": false,
+    "outboundEmailSent": false
+  },
+  "evidenceBoundaries": {
+    "containsCredentials": false,
+    "containsJWTs": false,
+    "containsEmailAddressesOfPeople": false,
+    "containsPhotoData": false,
+    "containsWardrobeJson": false,
+    "providerDashboardReadOnlyAccessAvailable": false,
+    "productionSourceUnmodified": true
+  },
+  "pendingApprovals": [
+    "Confirm invite-only policy for direct Supabase signup endpoint",
+    "Confirm exact protected staging app URL and redirect policy",
+    "Generate dedicated Resend sending credential privately if approved",
+    "Activate staging-only SMTP with approved rate limits privately",
+    "Test disposable email login/confirmation/reset and expiry",
+    "Test genuine disposable JWT A/B owner-only row and private object read/write denial",
+    "Verify actual Cloudflare Access policy on root and previews",
+    "Physical device Family Alpha sign-in and capture test with consent"
+  ]
+}
