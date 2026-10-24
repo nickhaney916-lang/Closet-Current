@@ -2,13 +2,14 @@ const test=require('node:test'),assert=require('node:assert/strict'),vm=require(
 const source=fs.readFileSync('public/app.js','utf8');
 function setup(){
  function node(tag,text){return {tag,text:text||'',children:[],setAttribute(){},append(...children){this.children.push(...children);},replaceChildren(...children){this.children=children;}};}
- const c={recognitionState:{phase:'idle',percent:null,activeId:null},node,items:[],batch:[],categories:['Tops','Dresses'],ClothingDetails:{colors:['Black','Blue','Red'],validColor:v=>['Black','Blue','Red'].includes(v)},localPending:new Set(),localReady:true,adjustPhoto(item){c.adjusted=item;},cropClothingPhoto(item){c.cropped=item;}};
+ const c={window:{closetAuth:{user:{id:'synthetic-owner-A'}}},db:{},recognitionState:{phase:'idle',percent:null,activeId:null},node,items:[],batch:[],categories:['Tops','Dresses'],ClothingDetails:{colors:['Black','Blue','Red'],validColor:v=>['Black','Blue','Red'].includes(v)},localPending:new Set(),localReady:true,adjustPhoto(item){c.adjusted=item;},cropClothingPhoto(item){c.cropped=item;}};
  vm.createContext(c);
  // Render and inline quick-save now share the production original-RGB guard.
  // Slice that helper into this small DOM harness rather than replacing it
  // with a permissive fake that would obscure a missing-original regression.
  vm.runInContext(source.slice(source.indexOf('function recognitionSourcePhoto('),source.indexOf('function clothingFields(')),c);
  vm.runInContext(source.slice(source.indexOf('function cropButton('),source.indexOf('function adjustPhoto(')),c);
+ vm.runInContext(source.slice(source.indexOf('const verifiedColorAdmission=new WeakMap();'),source.indexOf('// Saving is transactional')),c);
  vm.runInContext(source.slice(source.indexOf('function canConfirmReviewedColor('),source.indexOf('function renderPhotoResults(')),c);
  vm.runInContext(source.slice(source.indexOf('function renderPhotoResults('),source.indexOf('function render(){')),c);
  return {c,grid:node('div')};
@@ -45,8 +46,8 @@ test('saved outfit pieces show their clipped image without an add or selection s
 });
 
 test('an unresolved color offers one-choice inline saving without adding tabs',async()=>{
- const {c,grid}=setup(),item={id:'shirt',image:'photo',category:'Tops',itemType:'T-shirt',color:'',localAnalyzed:true,seasons:[]};
- c.batch=[item];const selected=[];
+ const {c,grid}=setup(),item={id:'shirt',image:'photo',category:'Tops',itemType:'T-shirt',color:'',localAnalyzed:true,recognitionReviewRequired:true,seasons:[]};
+ c.batch=[item];c.admitReviewedColor(item);const selected=[];
  c.confirmReviewedColor=async(input,color)=>{selected.push({input,color});return true;};
  c.renderPhotoResults(grid,[item]);const nodes=descendants(grid),picker=nodes.find(x=>x.tag==='select');
  assert.ok(picker);

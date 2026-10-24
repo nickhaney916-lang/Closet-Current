@@ -1,0 +1,32 @@
+name: Recognition source-backed human color - NO DEPLOY
+on:
+  pull_request:
+    paths:
+      - 'public/app.js'
+      - 'tests/recognition-human-color-admission.test.mjs'
+      - 'tests/recognition-review-clearance-gate.test.mjs'
+      - 'tests/quick-color-review.test.cjs'
+      - 'tests/photo-results.test.cjs'
+      - 'tests/recognition-confirmation-reliability.test.cjs'
+      - 'docs/RECOGNITION-HUMAN-COLOR-ADMISSION-20261023.md'
+      - '.github/workflows/recognition-human-color-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  direct-and-full-node:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify inherited locked public benchmark input
+        run: node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos
+      - name: Test actual recognition quick-color proof and prior source safety
+        run: node --test tests/recognition-review-clearance-gate.test.mjs tests/recognition-human-color-admission.test.mjs
+      - name: Build application bundle
+        run: node scripts/build.mjs
+      - name: Full app and avatar tests
+        run: node --test tests/*.test.cjs tests/*.test.mjs tests/avatar/*.test.mjs

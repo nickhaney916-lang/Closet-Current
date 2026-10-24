@@ -5,8 +5,8 @@ assert.ok(begin>=0&&end>begin,'Inline color confirmation must exist');
 
 function setup(overrides={}){
  const saves=[],drafts=[],messages=[];let renderCount=0,persistCount=0,notifyCount=0,blocked=false;
- const item={id:'shirt',image:'photo',category:'Tops',itemType:'T-shirt',localAnalyzed:true,color:'',...overrides};
- const state={item,items:[],batch:[item],localPending:new Set(),categories:['Tops','Bottoms','Dresses','Outerwear','Shoes','Accessories'],db:{
+ const item={id:'shirt',image:'photo',category:'Tops',itemType:'T-shirt',localAnalyzed:true,recognitionReviewRequired:true,color:'',...overrides};
+ const state={item,window:{closetAuth:{user:{id:'synthetic-owner-A'}}},items:[],batch:[item],localPending:new Set(),categories:['Tops','Bottoms','Dresses','Outerwear','Shoes','Accessories'],db:{
   transaction(){const tx={objectStore:name=>({put(value){if(name==='items')saves.push(value);else drafts.push(value);}})};setImmediate(()=>{if(blocked)tx.onabort?.();else tx.oncomplete?.()});return tx;}
  },
  ClothingDetails:{validColor:v=>['Blue','Red','Brown','Orange','Black','White','Multicolor'].includes(v)},
@@ -14,7 +14,11 @@ function setup(overrides={}){
  persistDraft:()=>persistCount++,render:()=>renderCount++,scheduleMemoryReview:()=>notifyCount++,
  message:t=>messages.push(t)
  };
- vm.createContext(state);vm.runInContext(code.slice(code.indexOf('function recognitionSourcePhoto('),code.indexOf('function clothingFields(')),state);vm.runInContext(code.slice(begin,end),state);
+ vm.createContext(state);vm.runInContext(code.slice(code.indexOf('function recognitionSourcePhoto('),code.indexOf('function clothingFields(')),state);
+ // The fixture represents a model-category and mask-validated but COLORLESS
+ // garment. Seed the actual ephemeral proof used by production, not a stub.
+ vm.runInContext(code.slice(code.indexOf('const verifiedColorAdmission=new WeakMap();'),code.indexOf('// Saving is transactional')),state);
+ vm.runInContext(code.slice(begin,end),state);state.admitReviewedColor(item);
  return {state,item,saves,drafts,messages,counts:()=>({renderCount,persistCount,notifyCount}),block:()=>blocked=true};
 }
 test('one selected color saves a recognized item and removes its draft',async()=>{
