@@ -27,6 +27,7 @@ const STAGED_AUTH_PROTECTED=new Set([
 ]);
 // Parallel Chat #21 exact reviewed worker-response patch; no unrelated app
 // changes from its earlier #279 parent may be imported into #283 source.
+export const REVIEW_REF='1ecac1079e75f1f25dc70a4c712b2448eb87dca8';
 export const WORKER_RECOVERY_REF='08ed6ac4a3fc921eae5d5d3df3bd3966429559d2';
 const workerBlock=app=>{
  const begin=app.indexOf('function localRequest(type,image,itemId,hint){');
@@ -55,6 +56,52 @@ export function applyPinnedWorkerRecovery(baseApp,recoveryApp){
     !result.includes('const verifiedColorAdmission=new WeakMap()'))
   throw Error('Scanner recovery lost previously verified wardrobe or original-source guards');
  return result;
+}
+// Parallel Chat #23 original-source manual review, reconciled with the later
+// #283 queued-save supplier and independently approved #281 worker recovery.
+// Extract ONLY the Adjust dialog and one photo-status label from PR #284;
+// do not import its earlier app.js wholesale or lose current source integrity.
+const photoEditorBlock=app=>{
+ const begin=app.indexOf('function adjustPhoto(item){');
+ const end=app.indexOf('\\nfunction renderRecognitionNotice()',begin);
+ if(begin<0||end<=begin||app.indexOf('function adjustPhoto(item){',begin+1)>=0)
+  throw Error('Manual photo editor cannot be uniquely reconciled');
+ return {begin,end,body:app.slice(begin,end)};
+};
+export function applyPinnedMobileReview(baseApp,reviewApp){
+ const current=photoEditorBlock(baseApp),candidate=photoEditorBlock(reviewApp);
+ const expectedSource="await savePiece(value,batch.filter(x=>x.id!==item.id),editorCurrent);";
+ const safeSource="await savePiece(value,()=>batch.filter(x=>x.id!==item.id),editorCurrent);";
+ if(!candidate.body.includes(expectedSource)||candidate.body.includes(safeSource)||
+    !candidate.body.includes('const editorHint=JSON.stringify(item.segmentHint??null);')||
+    !candidate.body.includes('I checked the original photo, category, item type and color')||
+    !candidate.body.includes('ClothingDetails.validColor(value.color)')||
+    !candidate.body.includes('Original unmasked garment photo used for recognition')||
+    !current.body.includes(safeSource))
+  throw Error('Unexpected reviewed editor or missing prior queued-save safety');
+ const reviewed=candidate.body.replace(expectedSource,safeSource);
+ let merged=baseApp.slice(0,current.begin)+reviewed+baseApp.slice(current.end);
+ const oldLabel="'Needs a clearer photo'";
+ const newLabel="'Review garment details'";
+ if(merged.split(oldLabel).length!==2||!reviewApp.includes(newLabel))
+  throw Error('Unrecognized photo-result wording changed during review');
+ merged=merged.replace(oldLabel,newLabel);
+ if(!merged.includes(safeSource)||!merged.includes('normalizeClothing(structuredClone(item))')||
+    !merged.includes('const verifiedColorAdmission=new WeakMap()')||
+    !merged.includes("const recoverable=job.type!=='load'&&data.code==='image';"))
+  throw Error('Manual review changed worker recovery / original-source data safety');
+ return merged;
+}
+export function applyPinnedMobileReviewStyle(css,reviewCss){
+ const marker='/* Assignment 23: readable, explicitly acknowledged photo review on phones. */';
+ if(css.includes(marker)||reviewCss.split(marker).length!==2)
+  throw Error('Expected mobile review style not unique');
+ const addition=reviewCss.slice(reviewCss.indexOf(marker)).trimEnd();
+ if(!addition.includes('.photo-review-acknowledgement')||
+    !addition.includes('.photo-review-original')||
+    !addition.includes('min-height:48px'))
+  throw Error('Mobile review CSS controls missing');
+ return css.trimEnd()+'\\n\\n'+addition+'\\n';
 }
 const isAlphaFile=name=>name.startsWith('family-alpha-')||name.startsWith('alpha-stage-')||
  name.startsWith('__alpha_research/');
@@ -180,7 +227,12 @@ export async function buildDisabledIntegratedCandidate({root=resolve('.')}={}){
  const importLine="@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@400;500&display=swap');";
  if(!originalCss.startsWith(importLine))
   throw Error('Unexpected Google Fonts import; review offline styling first');
- const localCss=originalCss.slice(importLine.length);
+ const previewCss=originalCss.slice(importLine.length);
+ let mobileCss;
+ try{mobileCss=execFileSync('git',['show',REVIEW_REF+':public/style.css'],
+  {maxBuffer:8*1024*1024,stdio:['ignore','pipe','ignore']}).toString('utf8');}
+ catch{throw Error('Missing pinned mobile review PR #284 style source');}
+ const localCss=applyPinnedMobileReviewStyle(previewCss,mobileCss);
  if(localCss.includes('fonts.googleapis.com')||localCss.includes('fonts.gstatic.com'))
   throw Error('External font reference remains in offline style');
  await writeFile(cssPath,localCss);
@@ -200,7 +252,12 @@ export async function buildDisabledIntegratedCandidate({root=resolve('.')}={}){
  try{workerRecovery=execFileSync('git',['show',WORKER_RECOVERY_REF+':public/app.js'],
   {maxBuffer:50*1024*1024,stdio:['ignore','pipe','ignore']}).toString('utf8');}
  catch{throw Error('Missing pinned recovery PR #281 source SHA: fetch its immutable commit');}
- const mergedApp=applyPinnedWorkerRecovery(modernApp.toString('utf8'),workerRecovery);
+ const workerMerged=applyPinnedWorkerRecovery(modernApp.toString('utf8'),workerRecovery);
+ let mobileReview;
+ try{mobileReview=execFileSync('git',['show',REVIEW_REF+':public/app.js'],
+  {maxBuffer:50*1024*1024,stdio:['ignore','pipe','ignore']}).toString('utf8');}
+ catch{throw Error('Missing pinned mobile review PR #284 app source');}
+ const mergedApp=applyPinnedMobileReview(workerMerged,mobileReview);
  await writeFile(join(target,'app.js'),mergedApp);
  const app=await readFile(join(target,'app.js'),'utf8');
  if(sha256(app)!==sha256(mergedApp)||
@@ -254,6 +311,7 @@ export async function buildDisabledIntegratedCandidate({root=resolve('.')}={}){
   stagedReviewed2DAvatarPresent:true,
   workerRecoveryRef:WORKER_RECOVERY_REF,workerRecoveryProtocolGuarded:true,
   recoverableImageErrorIsolated:true,
+  mobileReviewRef:REVIEW_REF,sourcePinnedManualReview:true,queuedManualSavePreserved:true,
   integrationAppSha256:sha256(app),integrationIndexSha256:sha256(index),
   recognitionOverlayFiles:modified,retainedStageGatedAssets:unchanged,
   testingLimitations:[
@@ -272,7 +330,8 @@ export async function assertDisabledIntegratedCandidate({root=resolve('.')}={}){
  const x=JSON.parse(await readFile(join(target,'alpha-recognition-integration-hold-manifest.json'),'utf8'));
  if(x.releaseGate!=='HOLD'||x.status!=='UNAPPROVED_COMBINED_SOURCE_OFFLINE_ONLY'||
   !x.stageAuthBlocked||!x.workerRecoveryProtocolGuarded||!x.recoverableImageErrorIsolated||
-  x.workerRecoveryRef!==WORKER_RECOVERY_REF||!x.modernHumanColorProofRetained||!x.wardrobeDraftAndBackupIntegrityPinned||!x.stagedReviewed2DAvatarPresent||
+  x.workerRecoveryRef!==WORKER_RECOVERY_REF||x.mobileReviewRef!==REVIEW_REF||
+  !x.sourcePinnedManualReview||!x.queuedManualSavePreserved||!x.modernHumanColorProofRetained||!x.wardrobeDraftAndBackupIntegrityPinned||!x.stagedReviewed2DAvatarPresent||
   !x.stagePrivateAuthTransformationPreserved||x.stagingProjectRef!==STAGE_ID||
   !x.missingApprovedCallback||!x.missingPublishableKey||
   x.cloudAuthorizationsTested||x.nativePhonesTested||x.customerDataRead||
@@ -284,6 +343,9 @@ export async function assertDisabledIntegratedCandidate({root=resolve('.')}={}){
  if(sha256(app)!==x.integrationAppSha256||sha256(index)!==x.integrationIndexSha256||
   sha256(backup)!==x.integrationBackupSha256||
   !app.includes('const verifiedColorAdmission=new WeakMap()')||
+  !app.includes('I checked the original photo, category, item type and color')||
+  !app.includes('const editorHint=JSON.stringify(item.segmentHint??null);')||
+  !app.includes('await savePiece(value,()=>batch.filter(x=>x.id!==item.id),editorCurrent);')||
   !app.includes("const recoverable=job.type!=='load'&&data.code==='image';")||
   !app.includes("const expected=job.type==='load'?'ready':'result';")||
   !index.includes('id="familyAlphaLocalPreview"')||
