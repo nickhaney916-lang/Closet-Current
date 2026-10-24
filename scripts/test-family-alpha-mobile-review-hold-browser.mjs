@@ -75,17 +75,15 @@ try{
     // last so a real login service cannot accidentally be contacted.
     await context.route('**/auth.js*',route=>route.fulfill({contentType:'text/javascript',body:
      "window.closetAuth={user:{id:'review-23-"+browserName.toLowerCase()+"-"+width+"'},ready:Promise.resolve()};document.getElementById('authGate').hidden=true;document.getElementById('appShell').hidden=false;"}));
-    // Diagnostic in the test-only HTTP response, never in compiled app files.
-    // Capture the swallowed save exception while retaining all actual gates.
-    await context.route('**/app.js',async route=>{
-     const actual=await readFile(resolve(root,'app.js'),'utf8');
-     const old="}catch{\n   save.disabled=style.disabled=false;";
-     if(!actual.includes(old))throw Error('Manual save catch changed');
-     const instrumented=actual.replace(old,"}catch(error){console.warn('QA_SAVE_REJECTION',String(error?.message));\n   save.disabled=style.disabled=false;");
-     return route.fulfill({contentType:'text/javascript',body:instrumented});
-    });
+    // Cloud remains unavailable in the *real* staging HOLD bundle.
+    // Only this synthetic localhost browser fixture replaces the remote
+    // adapter with an owner-checked, no-network local mock. This does NOT
+    // unlock stage Auth or relax the application's queued-save owner checks.
+    await context.route('**/cloud-backup.js*',route=>route.fulfill({
+     contentType:'text/javascript',
+     body:"window.closetCloud={beforeWrite:async(db)=>{const id=window.closetAuth?.user?.id;if(!id||db?.name!=='closet-current-user-'+id)throw Error('Synthetic owner mismatch');},changed(){},getOwnerId:db=>db?.name==='closet-current-user-'+window.closetAuth?.user?.id?window.closetAuth.user.id:null,start:async()=>{},invalidateSession(){},sync:async()=>{}};"
+    }));
     const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));
-    page.on('console',message=>{if(message.text().startsWith('QA_SAVE_REJECTION'))errors.push(message.text());});
     try{
      await page.goto(base+'/');
      await page.evaluate(()=>closetReady);
@@ -106,20 +104,6 @@ try{
      assert.equal(await confirm.isChecked(),false,'Changing the type requires fresh confirmation');
      await confirm.check();
      await dialog.getByRole('button',{name:'Save changes'}).click();
-     await page.waitForTimeout(800);
-     const stateAfterSave=await page.evaluate(()=>({
-      message:document.getElementById('message')?.textContent,
-      feedback:document.querySelector('dialog.photo-adjust .photo-review-feedback')?.textContent,
-      dialogOpen:document.querySelector('dialog.photo-adjust')?.open,
-      dbName:typeof db!=='undefined'?db?.name:null,
-      authOwner:window.closetAuth?.user?.id,
-      saved:typeof items!=='undefined'?items.length:-1,
-      draft:typeof batch!=='undefined'?batch.length:-1,
-      reviewed:document.querySelector('dialog.photo-adjust .photo-review-acknowledgement input')?.checked,
-      disabled:document.querySelector('dialog.photo-adjust .actions button')?.disabled,
-      fields:[...document.querySelectorAll('dialog.photo-adjust select,dialog.photo-adjust input')].map(e=>({label:e.getAttribute('aria-label'),value:e.value}))
-     }));
-     if(stateAfterSave.dialogOpen)throw Error('Combined manual save review still open: '+JSON.stringify({...stateAfterSave,qaConsole:errors}));
      await dialog.waitFor({state:'detached'});
      assert.equal(await page.evaluate(()=>items.length),1);
      assert.deepEqual(await page.evaluate(()=>({category:items[0].category,type:items[0].itemType,
