@@ -1,0 +1,64 @@
+name: Family Alpha recognition/staging bridge audit - NO DEPLOY
+on:
+  pull_request:
+    paths:
+      - 'scripts/audit-family-alpha-recognition-bridge.mjs'
+      - 'tests/family-alpha-recognition-bridge-audit.test.mjs'
+      - 'docs/FAMILY-ALPHA-RECOGNITION-INTEGRATION-BRIDGE-HOLD.md'
+      - '.github/workflows/family-alpha-recognition-bridge-hold.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+env:
+  FAMILY_ALPHA_STAGING_PIN: '879f1b92fb15f9bc9a7f0429c7ee178f7bbf1373'
+  FAMILY_ALPHA_RECOGNITION_PIN: '0586d08d9d40ce5da479f5ff656e03adf2c837e0'
+jobs:
+  compatibility-node:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Fetch exact publicly committed source revisions, NO branch head substitutions
+        run: |
+          git fetch --no-tags origin "$FAMILY_ALPHA_STAGING_PIN" "$FAMILY_ALPHA_RECOGNITION_PIN"
+          git cat-file -e "$FAMILY_ALPHA_STAGING_PIN^{commit}"
+          git cat-file -e "$FAMILY_ALPHA_RECOGNITION_PIN^{commit}"
+      - name: Build existing default BLOCKED Family Alpha staging Auth candidate
+        run: node scripts/build-family-alpha-staging-auth-hold.mjs
+      - name: Inspect actual staged output and original versus recognition source SHA-pinned contracts
+        run: node scripts/audit-family-alpha-recognition-bridge.mjs --artifact-root=dist-family-alpha-staging-auth-hold
+      - name: Test positive and negative audit cases using real staged/reviewed blobs
+        run: node --test tests/family-alpha-recognition-bridge-audit.test.mjs
+      - name: Assemble modern recognition candidate too, since the full Node test glob covers its safety checks
+        run: node scripts/build-family-alpha-recognition-integrated-hold.mjs
+      - name: Full Stage Family Alpha Node regression suite (no model inference or live accounts)
+        run: node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Assert this NEVER certifies a combined build or deploy
+        run: |
+          node --input-type=module -e "import {runIntegrationAudit} from './scripts/audit-family-alpha-recognition-bridge.mjs';const r=await runIntegrationAudit({artifactRoot:'dist-family-alpha-staging-auth-hold'});if(r.releaseGate!=='HOLD'||r.appParity||r.status!=='INTEGRATION_BLOCKED_DO_NOT_DEPLOY'||r.artifactCheck?.latestHumanColorAdmissionInStage)process.exit(1);console.log('Recognition/staging differences verified, no combined build, stage Auth disabled, Family Alpha HOLD');"
+  original-avatar-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build blocked artifact, never deploy
+        run: node scripts/build-family-alpha-staging-auth-hold.mjs
+      - name: Install test-only browser harness
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+      - name: Verify default-blocked/isolated staging authentication on Chromium/WebKit
+        run: node scripts/test-family-alpha-stage-auth-browser.mjs
+      - name: Verify reviewed-original-JPEG avatar candidate packaging and imported modules
+        run: node scripts/test-family-alpha-staging-artifact-browser.mjs
