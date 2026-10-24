@@ -10,6 +10,12 @@ const begin=source.indexOf('async function recognizeItem(item){');
 const end=source.indexOf('\nasync function recognizeBatch()',begin);
 assert.ok(begin>=0&&end>begin,'real recognition handler must remain accessible for the regression fixture');
 const handler=source.slice(begin,end);
+// Inherited tests execute the ACTUAL admission helper created by the
+// recognition quick-color safety follow-up, not a copied mock function.
+const proofStart=source.indexOf('const verifiedColorAdmission=new WeakMap();');
+const proofEnd=source.indexOf('// Saving is transactional',proofStart);
+assert.ok(proofStart>=0&&proofEnd>proofStart,'original-proof helper must be present');
+const proofSource=source.slice(proofStart,proofEnd);
 assert.ok(source.includes('!item.recognitionReviewRequired&&'),
  'save-index admission must continue checking reviewRequired');
 
@@ -74,7 +80,7 @@ function runFixture({
   recordDeviceEvent(){},
   $:()=>({textContent:''})
  };
- const execute=vm.runInNewContext(handler+'\nrecognizeItem',ctx,{timeout:1200});
+ const execute=vm.runInNewContext(proofSource+handler+'\nrecognizeItem',ctx,{timeout:1200});
  return {item,run:async()=>execute(item),get saved(){return saved}};
 }
 
