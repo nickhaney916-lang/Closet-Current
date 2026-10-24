@@ -171,6 +171,16 @@ export async function buildDisabledIntegratedCandidate({root=resolve('.')}={}){
     unique(app,'function recognitionSourcePhoto(item)')!==1||
     unique(app,'function canConfirmReviewedColor(item)')!==1)
   throw Error('Latest original-photo recognition and color review implementation not retained');
+ // Verified Work Assignment #22 fixes are part of this coherent pinned
+ // recognition source: late queue drafts, deep original JPEG/crop/hint isolation,
+ // and explicit type-loss refusal on backup restore.
+ const backup=await readFile(join(target,'wardrobe-backup-engine.js'),'utf8');
+ if(sha256(backup)!==sha256(source('public/wardrobe-backup-engine.js'))||
+    !app.includes("typeof nextBatch==='function'?nextBatch():nextBatch")||
+    !app.includes("await savePiece(value,()=>batch.filter(x=>x.id!==item.id),editorCurrent)")||
+    !app.includes("normalizeClothing(structuredClone(item))")||
+    !backup.includes('Backup clothing type would lose confirmed detail. Nothing was restored.'))
+  throw Error('Assignment #22 original-image / current draft / backup subtype protections missing');
  const boot=await readFile(join(target,'family-alpha-preview-boot.js'),'utf8');
  if(!boot.includes("host!=='localhost'&&host!=='127.0.0.1'")||
     !boot.includes('window.__CLOSET_CURRENT_FAMILY_ALPHA_LOCAL_PREVIEW__!==true'))
@@ -201,6 +211,8 @@ export async function buildDisabledIntegratedCandidate({root=resolve('.')}={}){
   nativePhonesTested:false,customerDataRead:false,
   originalJPEGRecognitionFromPinnedModernSource:true,
   modernHumanColorProofRetained:true,
+  wardrobeDraftAndBackupIntegrityPinned:true,
+  integrationBackupSha256:sha256(backup),
   stagePrivateAuthTransformationPreserved:true,
   stagedReviewed2DAvatarPresent:true,
   integrationAppSha256:sha256(app),integrationIndexSha256:sha256(index),
@@ -220,16 +232,17 @@ export async function assertDisabledIntegratedCandidate({root=resolve('.')}={}){
  const target=join(resolve(root),OUTPUT);
  const x=JSON.parse(await readFile(join(target,'alpha-recognition-integration-hold-manifest.json'),'utf8'));
  if(x.releaseGate!=='HOLD'||x.status!=='UNAPPROVED_COMBINED_SOURCE_OFFLINE_ONLY'||
-  !x.stageAuthBlocked||!x.modernHumanColorProofRetained||!x.stagedReviewed2DAvatarPresent||
+  !x.stageAuthBlocked||!x.modernHumanColorProofRetained||!x.wardrobeDraftAndBackupIntegrityPinned||!x.stagedReviewed2DAvatarPresent||
   !x.stagePrivateAuthTransformationPreserved||x.stagingProjectRef!==STAGE_ID||
   !x.missingApprovedCallback||!x.missingPublishableKey||
   x.cloudAuthorizationsTested||x.nativePhonesTested||x.customerDataRead||
   x.stagingRef!==STAGING_REF||x.recognitionRef!==RECOGNITION_REF)
   throw Error('Unsupported integrated candidate release claim');
- const [app,index,auth,config,boot]=await Promise.all(
-  ['app.js','index.html','auth.js','alpha-stage-config.js','family-alpha-preview-boot.js'].map(p=>
+ const [app,index,auth,config,boot,backup]=await Promise.all(
+  ['app.js','index.html','auth.js','alpha-stage-config.js','family-alpha-preview-boot.js','wardrobe-backup-engine.js'].map(p=>
    readFile(join(target,p),'utf8')));
  if(sha256(app)!==x.integrationAppSha256||sha256(index)!==x.integrationIndexSha256||
+  sha256(backup)!==x.integrationBackupSha256||
   !app.includes('const verifiedColorAdmission=new WeakMap()')||
   !index.includes('id="familyAlphaLocalPreview"')||
   !index.includes('id="reusableFigureStage"')||
