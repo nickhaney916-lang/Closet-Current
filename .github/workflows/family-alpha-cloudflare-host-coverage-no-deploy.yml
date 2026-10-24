@@ -1,0 +1,36 @@
+name: Family Alpha Cloudflare Host Coverage — OFFLINE NO DEPLOY
+on:
+  pull_request:
+    paths:
+      - 'research/family-alpha-access/**'
+      - 'scripts/family-alpha-cloudflare-host-coverage-offline.mjs'
+      - 'tests/family-alpha-cloudflare-host-coverage.test.mjs'
+      - 'docs/FAMILY-ALPHA-CLOUDFLARE-ROOT-PREVIEW-COVERAGE-HOLD.md'
+      - '.github/workflows/family-alpha-cloudflare-host-coverage-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  access-coverage-source-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build staged Auth HOLD artifacts locally without host access or deployment
+        run: node scripts/build-family-alpha-staging-auth-hold.mjs
+      - name: Run complete Node regression including historical Cloudflare snapshot checks
+        run: node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Report root and wildcard Access gaps from dated evidence, NEVER claim live verification
+        run: node scripts/family-alpha-cloudflare-host-coverage-offline.mjs
+      - name: Save sanitized coverage HOLD report only
+        run: |
+          node --input-type=module -e "import {evaluateSavedAccessCheckpoint} from './scripts/family-alpha-cloudflare-host-coverage-offline.mjs'; import {writeFile} from 'node:fs/promises'; const r=await evaluateSavedAccessCheckpoint(); if(r.releaseGate!=='HOLD'||r.liveCloudflareRead||r.anonymousHostProbePerformed||r.readyForFamily||r.checks.some(c=>c.status==='VERIFIED'))process.exit(1); await writeFile('family-alpha-cloudflare-coverage-offline-hold.json',JSON.stringify(r,null,2)+'\n');"
+      - uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: family-alpha-cloudflare-coverage-historical-hold
+          path: family-alpha-cloudflare-coverage-offline-hold.json
+          retention-days: 7
