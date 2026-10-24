@@ -105,7 +105,7 @@ test('unverified original-outfit crop remains review-required despite a confiden
  await fixture.run();
  assert.equal(fixture.saved,0);
  assert.equal(fixture.item.recognitionReviewRequired,true);
- assert.match(fixture.item.localStatus,/may include more than one item/);
+ assert.match(fixture.item.localStatus,/may include multiple garments or background/);
 });
 test('user-edited garment is preserved and remains flagged for review',async()=>{
  const fixture=runFixture({userAdjusted:true,category:'Bottoms',type:'Shorts',modelCategory:'Bottoms',modelType:'Shorts'});
