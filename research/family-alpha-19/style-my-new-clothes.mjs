@@ -91,8 +91,9 @@ export function createStyleMyNewClothes({readContext,readWardrobe,stylistItemSco
  let ticket=0;
  function begin(){
   const id=++ticket,who=identity(readContext()),start=readWardrobe();
-  const byId=indexWardrobe(start,who.owner);
+  const byId=indexWardrobe(structuredClone(start),who.owner);
   const originals=new Map([...byId].map(([k,v])=>[k,snapshotSource(v)]));
+  const crops=new Map([...byId].map(([k,v])=>[k,v.image||null]));
   function guard(){
    if(id!==ticket)err('Superseded new clothing recommendation');
    const now=identity(readContext());
@@ -102,6 +103,7 @@ export function createStyleMyNewClothes({readContext,readWardrobe,stylistItemSco
    for(const [key,old]of byId){
     const updated=live.get(key);
     if(!updated||snapshotSource(updated)!==originals.get(key)||
+      (updated.image||null)!==crops.get(key)||
       updated.category!==old.category||updated.itemType!==old.itemType||
       updated.color!==old.color||updated.outfitSourceId!==old.outfitSourceId||
       JSON.stringify(updated.seasons||[])!==JSON.stringify(old.seasons||[]))
@@ -142,7 +144,8 @@ export function createStyleMyNewClothes({readContext,readWardrobe,stylistItemSco
      if(bottom)slots.bottom=bottom.item.id;
      if(jacket)slots.layer2=jacket.item.id;
      const selected=[top,bottom,shoe,jacket].filter(Boolean);
-     if(new Set(selected.map(x=>x.item.id)).size!==selected.length)continue;
+     if(new Set(selected.map(x=>x.item.id)).size!==selected.length||
+       new Set(selected.map(x=>snapshotSource(x.item))).size!==selected.length)continue;
      let board=cleanOutfitBoard({slots,layerCount:jacket?2:0,
       occasion:ctx.occasion,season,audience,name:'Style my new clothes'},rows);
      try{verifyBoard(board,byId,pinId,pinSlot);}catch{continue;}
@@ -150,11 +153,12 @@ export function createStyleMyNewClothes({readContext,readWardrobe,stylistItemSco
      candidates.push({board,score,signature:signature(board.slots)});
     }
    candidates.sort((a,b)=>b.score-a.score||a.signature.localeCompare(b.signature));
-   const chosen=[],minDifferences=pin.category==='Dresses'?1:2,seen=new Set();
+   const chosen=[],minDifferences=pin.category==='Dresses'?1:2,seen=new Set(),seenVisual=new Set();
    for(const candidate of candidates){
-    if(seen.has(candidate.signature))continue;
+    const visualPhotoSig=visual.map(slot=>candidate.board.slots[slot]?slot+':'+snapshotSource(byId.get(candidate.board.slots[slot])):'').join('|');
+    if(seen.has(candidate.signature)||seenVisual.has(visualPhotoSig))continue;
     if(chosen.some(x=>diffSlots(x.board.slots,candidate.board.slots,pinSlot)<minDifferences))continue;
-    seen.add(candidate.signature);chosen.push(candidate);if(chosen.length===3)break;
+    seen.add(candidate.signature);seenVisual.add(visualPhotoSig);chosen.push(candidate);if(chosen.length===3)break;
    }
    const versions=Object.create(null);
    for(const value of chosen)for(const id of Object.values(value.board.slots)){
