@@ -1068,7 +1068,10 @@ async function saveIndexed(item,sourceStillCurrent){
 }
 async function recognizeItem(item){
  // An old admission must not survive a new scan attempt.
- verifiedColorAdmission.delete(item);
+ // Old standalone test harnesses execute only recognizeItem without app UI
+ // bindings. In the full app this evidence map is always present; missing
+ // proof must never authorize quick color or a saved garment.
+ if(typeof verifiedColorAdmission!=='undefined')verifiedColorAdmission.delete(item);
  const scanStarted=Date.now();let savingIndexed=false;
  const scanDB=db,scanOwner=globalThis.window?.closetAuth?.user?.id;
  item.recognitionReviewRequired=true;
@@ -1153,7 +1156,7 @@ async function recognizeItem(item){
     item.localStatus='The outline may contain more than one item or background. Check with Adjust or photograph the garment alone before saving.';return true;
    }
    if(!item.color||item.color==='Unknown'){
-    if(!item.possibleDuplicate&&!item.requiresOwnershipConfirmation)admitReviewedColor(item);
+    if(!item.possibleDuplicate&&!item.requiresOwnershipConfirmation&&typeof admitReviewedColor==='function')admitReviewedColor(item);
     item.localStatus=item.possibleDuplicate?'Possible duplicate: compare this photo with your closet before saving.':item.requiresOwnershipConfirmation?'Confirm this garment belongs in your closet before saving.':'Garment category recognized. Choose a color below to save; specific type is optional.';return true;
    }
   }
@@ -1178,7 +1181,7 @@ async function recognizeItem(item){
   // garment photo stays reviewable when neither reliable photo color nor model
   // color is available; optional subtype and label details can remain blank.
   if(item.category==='Uncategorized'||!ClothingDetails.validColor(item.color)){
-   if(item.category!=='Uncategorized'&&!item.possibleDuplicate&&!item.requiresOwnershipConfirmation)admitReviewedColor(item);
+   if(item.category!=='Uncategorized'&&!item.possibleDuplicate&&!item.requiresOwnershipConfirmation&&typeof admitReviewedColor==='function')admitReviewedColor(item);
    item.localStatus=item.possibleDuplicate?'Possible duplicate: compare this photo with your closet before saving.':item.requiresOwnershipConfirmation?'Confirm this garment belongs in your closet before saving.':'Garment identified. Choose a color below to save; your original photo is kept.';
    return true;
   }
