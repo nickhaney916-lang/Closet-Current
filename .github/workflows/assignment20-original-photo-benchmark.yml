@@ -1,0 +1,41 @@
+name: Assignment 20 original photograph accuracy audit
+on:
+  push:
+    branches: [qa/assignment20-original-photo-benchmark-20261023]
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      - name: Preserve active recognition and cloud implementation
+        run: git diff --exit-code 5ef76452649b016ba76fef42ec05a9d19108173d HEAD -- public supabase benchmark/fixtures benchmark/locked-photo-sources.json benchmark/manifest-reviewed-32.json benchmark/manifest-holdout-16.json benchmark/manifest-fresh-11.json
+      - run: npm install --no-save --no-package-lock playwright@1.56.1
+      - run: node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/fixtures
+      - run: node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos
+      - run: node scripts/build.mjs
+      - run: node --test tests/*.test.cjs tests/*.test.mjs tests/avatar/*.test.mjs
+      - name: Fresh actual pinned-model inference, immutable original sources
+        run: |
+          node scripts/run-source-locked-recognition.mjs artifacts/assignment20/run1
+          node scripts/check-assignment233-recognition.mjs artifacts/assignment20/run1
+          node scripts/report-assignment20-recognition.mjs artifacts/assignment20/run1 > artifacts/assignment20/accuracy.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: assignment20-original-photo-measurements
+          path: artifacts/assignment20
+          retention-days: 14
