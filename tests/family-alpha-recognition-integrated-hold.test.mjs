@@ -7,6 +7,7 @@ import {
  combineStageAndRecognitionMarkup,
  buildDisabledIntegratedCandidate,
  applyPinnedWorkerRecovery,WORKER_RECOVERY_REF,
+ applyPinnedMobileReview,applyPinnedMobileReviewStyle,REVIEW_REF,
  assertDisabledIntegratedCandidate,
  listedRecognitionAssets,OUTPUT
 } from '../scripts/build-family-alpha-recognition-integrated-hold.mjs';
@@ -79,8 +80,17 @@ test('compiled modern app bytes match EXACT locked recognition head',async()=>{
  const app=await readFile(join(OUTPUT,'app.js'),'utf8');
  const original=execFileSync('git',['show',RECOGNITION_REF+':public/app.js'],{encoding:'utf8'});
  const recovery=execFileSync('git',['show',WORKER_RECOVERY_REF+':public/app.js'],{encoding:'utf8'});
- assert.equal(app,applyPinnedWorkerRecovery(original,recovery));
+ const editor=execFileSync('git',['show',REVIEW_REF+':public/app.js'],{encoding:'utf8'});
+ assert.equal(app,applyPinnedMobileReview(applyPinnedWorkerRecovery(original,recovery),editor));
  assert.ok(app.includes('worker_response_invalid'));
+ assert.ok(app.includes('I checked the original photo, category, item type and color'));
+ assert.ok(app.includes('await savePiece(value,()=>batch.filter(x=>x.id!==item.id),editorCurrent);'));
+ const reviewedCss=execFileSync('git',['show',REVIEW_REF+':public/style.css'],{encoding:'utf8'});
+ const liveCss=await readFile(join(OUTPUT,'style.css'),'utf8');
+ assert.ok(liveCss.includes('.photo-review-acknowledgement'));
+ assert.ok(liveCss.includes('.photo-review-original'));
+ assert.ok(liveCss.includes('min-height:48px'));
+ assert.ok(reviewedCss.includes('.photo-review-acknowledgement'));
  assert.ok(app.includes("const recoverable=job.type!=='load'&&data.code==='image';"));
  const worker=await readFile(join(OUTPUT,'local-worker.mjs'));
  const modernWorker=execFileSync('git',['show',RECOGNITION_REF+':public/local-worker.mjs']);
