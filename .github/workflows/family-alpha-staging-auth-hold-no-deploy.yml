@@ -1,0 +1,56 @@
+name: Family Alpha Staging Auth Routing - FAIL CLOSED / NO DEPLOY
+on:
+  pull_request:
+    paths:
+      - 'scripts/build-family-alpha-staging-auth-hold.mjs'
+      - 'scripts/test-family-alpha-stage-auth-browser.mjs'
+      - 'tests/family-alpha-stage-auth-isolation.test.mjs'
+      - 'docs/FAMILY-ALPHA-STAGING-AUTH-ISOLATION-HOLD.md'
+      - '.github/workflows/family-alpha-staging-auth-hold-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  node-isolation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 22
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Build three isolated outputs, default staging Auth blocked
+        run: node scripts/build-family-alpha-staging-auth-hold.mjs
+      - name: Full application, four-account security and new staging Auth regression
+        run: node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Assert candidate HOLD and stage project not production
+        run: |
+          node --input-type=module -e "import {assertStagingAuthCandidate,STAGE_ID,PROD_ID} from './scripts/build-family-alpha-staging-auth-hold.mjs';const x=await assertStagingAuthCandidate();if(x.releaseGate!=='HOLD'||x.routingReadyForQa||x.publishingAuthorized||STAGE_ID===PROD_ID)process.exit(1);console.log('Stage Auth is BLOCKED by default, normal production dist unchanged');"
+  synthetic-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Prepare isolated staging HOLD Auth output (no production modifications)
+        run: node scripts/build-family-alpha-staging-auth-hold.mjs
+      - name: Install test-only pinned browser harness
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+      - name: Blocked default plus approved SYNTHETIC route in Chromium and WebKit
+        run: node scripts/test-family-alpha-stage-auth-browser.mjs
+      - name: Four fabricated account privacy check via mock server
+        run: node scripts/test-family-alpha-17-four-account-browser.mjs
+      - name: Packaged photo component imports, reviewed original JPEG and 2D avatar
+        run: node scripts/test-family-alpha-staging-artifact-browser.mjs
+      - name: Uploaded artifact is an OFFLINE HOLD snapshot, not deployable
+        uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: family-alpha-staging-auth-inert-candidate-no-deploy
+          path: dist-family-alpha-staging-auth-hold/
+          retention-days: 7
