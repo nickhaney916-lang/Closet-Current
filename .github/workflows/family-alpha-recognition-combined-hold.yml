@@ -1,0 +1,76 @@
+name: Family Alpha Combined Recognition/2D STAGING HOLD - NO DEPLOY
+on:
+  pull_request:
+    paths:
+      - 'scripts/build-family-alpha-recognition-integrated-hold.mjs'
+      - 'scripts/audit-family-alpha-recognition-bridge.mjs'
+      - 'scripts/test-family-alpha-recognition-integrated-hold-browser.mjs'
+      - 'tests/family-alpha-recognition-integrated-hold.test.mjs'
+      - 'tests/family-alpha-recognition-bridge-audit.test.mjs'
+      - 'docs/FAMILY-ALPHA-RECOGNITION-INTEGRATION-BRIDGE-HOLD.md'
+      - '.github/workflows/family-alpha-recognition-combined-hold.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+env:
+  STAGE_PIN: '879f1b92fb15f9bc9a7f0429c7ee178f7bbf1373'
+  RECOGNITION_PIN: '0586d08d9d40ce5da479f5ff656e03adf2c837e0'
+jobs:
+  built-source-and-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 28
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Fetch exactly authorized SOURCE-PINNED revisions
+        run: |
+          git fetch --no-tags origin "$STAGE_PIN" "$RECOGNITION_PIN"
+          git cat-file -e "$STAGE_PIN^{commit}"
+          git cat-file -e "$RECOGNITION_PIN^{commit}"
+      - name: Build existing disabled isolated staging Auth candidate
+        run: node scripts/build-family-alpha-staging-auth-hold.mjs
+      - name: Build modern original-photo recognition + protected staging Auth + 2D HOLD artifact
+        run: node scripts/build-family-alpha-recognition-integrated-hold.mjs
+      - name: Verify manifest, original JPEG source evidence, stage-only Auth and atomic held controls
+        run: node --test tests/family-alpha-recognition-integrated-hold.test.mjs
+      - name: Run stage + integration full Node regression suite
+        run: node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Never label offline combined artifact as authorized release
+        run: |
+          node --input-type=module -e "import {assertDisabledIntegratedCandidate} from './scripts/build-family-alpha-recognition-integrated-hold.mjs';const r=await assertDisabledIntegratedCandidate();if(r.releaseGate!=='HOLD'||r.status!=='UNAPPROVED_COMBINED_SOURCE_OFFLINE_ONLY'||!r.stageAuthBlocked||!r.missingPublishableKey||!r.missingApprovedCallback||r.nativePhonesTested||r.cloudAuthorizationsTested)process.exit(1);console.log('OFFLINE HOLD: modern recognition + stage photo avatar + stage-only Auth, zero keys');"
+  playwright-no-authorization:
+    runs-on: ubuntu-latest
+    timeout-minutes: 32
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Fetch exact pinned staging and recognition commits
+        run: git fetch --no-tags origin "$STAGE_PIN" "$RECOGNITION_PIN"
+      - name: Build original reviewed staging and combined held candidate, without keys
+        run: |
+          node scripts/build-family-alpha-staging-auth-hold.mjs
+          node scripts/build-family-alpha-recognition-integrated-hold.mjs
+      - name: Install isolated test-only browser tooling
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+      - name: Modern scanner UI and real retained-JPEG avatar sources under completely disabled Stage Auth
+        run: node scripts/test-family-alpha-recognition-integrated-hold-browser.mjs
+      - name: Original confirmed JPEG photo-layer and stage Auth synthetic browser regressions
+        run: |
+          node scripts/test-family-alpha-stage-auth-browser.mjs
+          node scripts/test-family-alpha-staging-artifact-browser.mjs
+      - name: Store only an explicitly disabled/nondeployable artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: family-alpha-combined-recognition-HOLD-NO-DEPLOY
+          path: dist-family-alpha-recognition-integration-hold/
+          retention-days: 7
