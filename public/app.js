@@ -1117,7 +1117,9 @@ async function recognizeItem(item){
     item.localStatus='Garment checks disagree with the current category or type. Confirm the garment in Adjust before saving.';
     return true;
    }
-   item.recognitionReviewRequired=false;
+   // Keep this photo in review until mask/source, manual edits, color,
+   // duplicate/ownership and all other save gates pass. In particular, a
+   // strong classifier score is NOT enough to clear a clipped/mixed mask.
   }
   if(corePartial){
    if(item.userAdjusted||!segmentationAllows(item,result.choices[0])){item.localStatus=item.userAdjusted?'Your adjustments are preserved. Save this piece when ready.':item.outfitSourceId&&item.segmentHint?.displayFallback==='original-crop'?'This photo region may include multiple garments or background. Verify with Adjust or photograph the item alone.':'The clothing checks disagree. Use Adjust or take a clearer photo.';return true;}
@@ -1153,6 +1155,10 @@ async function recognizeItem(item){
   }
   if(item.possibleDuplicate){if(typeof recordDeviceEvent==='function')recordDeviceEvent('duplicate_review');item.localStatus='Possible duplicate: compare this photo with your closet before saving.';return true;}
   if(item.requiresOwnershipConfirmation){item.localStatus='Identified. Add this piece only if it belongs in your closet.';return true;}
+  // Every early return above still requires review. Clear it ONLY for the
+  // final original-linked category+color admission path, directly before the
+  // atomic save (whose preflight checks it again).
+  item.recognitionReviewRequired=false;
   item.localStatus='Recognized. Saving to your closet…';
   savingIndexed=true;
   // Applying the FINAL verified classifier legitimately changed category/type.
