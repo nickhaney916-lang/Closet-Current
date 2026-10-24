@@ -1,0 +1,59 @@
+name: Family Alpha 19 Style My New Clothes (NO DEPLOY)
+on:
+  push:
+    branches: [qa/family-alpha-19-style-new-clothes-20261023]
+  pull_request:
+    paths:
+      - 'research/family-alpha-19/**'
+      - 'tests/family-alpha-19-style-new-clothes.test.mjs'
+      - 'scripts/test-family-alpha-19-browser.mjs'
+      - 'docs/FAMILY-ALPHA-19-STYLE-MY-NEW-CLOTHES.md'
+      - '.github/workflows/family-alpha-19-style-new-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  node-regressions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Build without deployment or paid AI
+        run: node scripts/build.mjs
+      - name: Entire Node regression suite, including real stylist and new-item QA
+        run: node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Prevent modifications to other owners' code
+        run: |
+          git fetch origin integration/family-alpha-security-staging-integration-20261023 --depth=1 || true
+          git fetch origin integration/family-alpha-staging-artifact-no-deploy-20261023 --depth=1 || true
+          git fetch origin 703881baafbe883a28ba2de3543bad2d5f0b2467 --depth=1
+          git diff --name-only 703881baafbe883a28ba2de3543bad2d5f0b2467...HEAD | tee /tmp/alpha19-changed.txt
+          if grep -Ev '^(research/family-alpha-19/|tests/family-alpha-19-style-new-clothes.test.mjs$|scripts/test-family-alpha-19-browser.mjs$|docs/FAMILY-ALPHA-19-STYLE-MY-NEW-CLOTHES.md$|\.github/workflows/family-alpha-19-style-new-no-deploy.yml$)' /tmp/alpha19-changed.txt; then exit 1; fi
+  mobile-quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Install pinned test-only browser dependency
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+      - name: Verify independent new-garment matching in actual browsers
+        run: node scripts/test-family-alpha-19-browser.mjs
+      - name: Rerun existing three outfits and one-piece swap photo-layer browser QA
+        run: node scripts/test-family-alpha-15-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: family-alpha-19-synthetic-outfit-quality
+          path: |
+            benchmark/family-alpha-19/mobile-quality.json
+            benchmark/family-alpha-15/
+          retention-days: 14
