@@ -25,6 +25,37 @@ const STAGED_AUTH_PROTECTED=new Set([
  'auth.js','cloud-backup.js','cloud-backup-engine.js','cloud-backup-bridge.js',
  'family-alpha-2d-auth-preflight.mjs','index.html','pwa.js','sw.js'
 ]);
+// Parallel Chat #21 exact reviewed worker-response patch; no unrelated app
+// changes from its earlier #279 parent may be imported into #283 source.
+export const WORKER_RECOVERY_REF='08ed6ac4a3fc921eae5d5d3df3bd3966429559d2';
+const workerBlock=app=>{
+ const begin=app.indexOf('function localRequest(type,image,itemId,hint){');
+ const end=app.indexOf('\nasync function enableLocal()',begin);
+ if(begin<0||end<=begin||app.indexOf('function localRequest(type,image,itemId,hint){',begin+1)>=0)
+  throw Error('Scanner worker controller not uniquely identified');
+ return {begin,end,body:app.slice(begin,end)};
+};
+export function applyPinnedWorkerRecovery(baseApp,recoveryApp){
+ const original=workerBlock(baseApp),candidate=workerBlock(recoveryApp);
+ if(!original.body.includes('if(data.type===\'error\'){localReady=false;')||
+    original.body.includes('worker_response_invalid')||
+    !candidate.body.includes("stopRecognitionWorker('Recognition returned an invalid response.")||
+    !candidate.body.includes("const expected=job.type==='load'?'ready':'result';")||
+    !candidate.body.includes("const recoverable=job.type!=='load'&&data.code==='image';")||
+    !candidate.body.includes('error.recoverable=recoverable;job.reject(error);'))
+  throw Error('Unexpected worker recovery source; do not import across branches');
+ const failure='if(categoryStillCurrent()&&!item.userAdjusted)recognitionUnavailable=true;';
+ const recovery='if(categoryStillCurrent()&&!item.userAdjusted&&!error?.recoverable)recognitionUnavailable=true;';
+ if(baseApp.split(failure).length!==2||recoveryApp.split(recovery).length!==2)
+  throw Error('Original-source guarded scan failure path cannot be reconciled');
+ const merged=baseApp.slice(0,original.begin)+candidate.body+baseApp.slice(original.end);
+ const result=merged.replace(failure,recovery);
+ if(!result.includes('normalizeClothing(structuredClone(item))')||
+    !result.includes("typeof nextBatch==='function'?nextBatch():nextBatch")||
+    !result.includes('const verifiedColorAdmission=new WeakMap()'))
+  throw Error('Scanner recovery lost previously verified wardrobe or original-source guards');
+ return result;
+}
 const isAlphaFile=name=>name.startsWith('family-alpha-')||name.startsWith('alpha-stage-')||
  name.startsWith('__alpha_research/');
 const source=(path)=>{
@@ -164,9 +195,15 @@ export async function buildDisabledIntegratedCandidate({root=resolve('.')}={}){
   const actual=await readFile(join(target,path));
   if(!actual.equals(expected))throw Error('Integration overwrote gated stage '+path);
  }
- const app=await readFile(join(target,'app.js'),'utf8');
  const modernApp=source('public/app.js');
- if(sha256(app)!==sha256(modernApp)||
+ let workerRecovery;
+ try{workerRecovery=execFileSync('git',['show',WORKER_RECOVERY_REF+':public/app.js'],
+  {maxBuffer:50*1024*1024,stdio:['ignore','pipe','ignore']}).toString('utf8');}
+ catch{throw Error('Missing pinned recovery PR #281 source SHA: fetch its immutable commit');}
+ const mergedApp=applyPinnedWorkerRecovery(modernApp.toString('utf8'),workerRecovery);
+ await writeFile(join(target,'app.js'),mergedApp);
+ const app=await readFile(join(target,'app.js'),'utf8');
+ if(sha256(app)!==sha256(mergedApp)||
     unique(app,'const verifiedColorAdmission=new WeakMap()')!==1||
     unique(app,'function recognitionSourcePhoto(item)')!==1||
     unique(app,'function canConfirmReviewedColor(item)')!==1)
@@ -215,6 +252,8 @@ export async function buildDisabledIntegratedCandidate({root=resolve('.')}={}){
   integrationBackupSha256:sha256(backup),
   stagePrivateAuthTransformationPreserved:true,
   stagedReviewed2DAvatarPresent:true,
+  workerRecoveryRef:WORKER_RECOVERY_REF,workerRecoveryProtocolGuarded:true,
+  recoverableImageErrorIsolated:true,
   integrationAppSha256:sha256(app),integrationIndexSha256:sha256(index),
   recognitionOverlayFiles:modified,retainedStageGatedAssets:unchanged,
   testingLimitations:[
@@ -232,7 +271,8 @@ export async function assertDisabledIntegratedCandidate({root=resolve('.')}={}){
  const target=join(resolve(root),OUTPUT);
  const x=JSON.parse(await readFile(join(target,'alpha-recognition-integration-hold-manifest.json'),'utf8'));
  if(x.releaseGate!=='HOLD'||x.status!=='UNAPPROVED_COMBINED_SOURCE_OFFLINE_ONLY'||
-  !x.stageAuthBlocked||!x.modernHumanColorProofRetained||!x.wardrobeDraftAndBackupIntegrityPinned||!x.stagedReviewed2DAvatarPresent||
+  !x.stageAuthBlocked||!x.workerRecoveryProtocolGuarded||!x.recoverableImageErrorIsolated||
+  x.workerRecoveryRef!==WORKER_RECOVERY_REF||!x.modernHumanColorProofRetained||!x.wardrobeDraftAndBackupIntegrityPinned||!x.stagedReviewed2DAvatarPresent||
   !x.stagePrivateAuthTransformationPreserved||x.stagingProjectRef!==STAGE_ID||
   !x.missingApprovedCallback||!x.missingPublishableKey||
   x.cloudAuthorizationsTested||x.nativePhonesTested||x.customerDataRead||
@@ -244,6 +284,8 @@ export async function assertDisabledIntegratedCandidate({root=resolve('.')}={}){
  if(sha256(app)!==x.integrationAppSha256||sha256(index)!==x.integrationIndexSha256||
   sha256(backup)!==x.integrationBackupSha256||
   !app.includes('const verifiedColorAdmission=new WeakMap()')||
+  !app.includes("const recoverable=job.type!=='load'&&data.code==='image';")||
+  !app.includes("const expected=job.type==='load'?'ready':'result';")||
   !index.includes('id="familyAlphaLocalPreview"')||
   !index.includes('id="reusableFigureStage"')||
   !config.includes('HOLD-NO-CALLBACK-OR-KEY')||
