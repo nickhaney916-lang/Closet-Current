@@ -153,6 +153,18 @@ test('one-piece pants, shoe, top and jacket swap preserves pinned new piece and 
   assert.equal(await h.client.verify(modified),true);
  }
 });
+test('pinned dress changes only its shoes without adding pants or outerwear',async()=>{
+ const h=harness(),r=await h.generate('new-dress');
+ const old=r.options[0],shoe=['sneakers2','loafers','flats','boots'].find(id=>id!==old.board.slots.shoes);
+ const next=await h.client.swap(r,0,'shoes',shoe);
+ assert.equal(next.options[0].board.slots.top,'new-dress');
+ assert.equal(next.options[0].board.slots.shoes,shoe);
+ assert.equal(next.options[0].board.slots.bottom,undefined);
+ assert.equal(next.options[0].board.slots.layer2,undefined);
+ assert.equal(r.options[0].board.slots.shoes,old.board.slots.shoes);
+ assert.equal(await h.client.verify(next),true);
+ await assert.rejects(h.client.swap(r,0,'shoes','shorts'),/incompatible/);
+});
 test('swap cannot replace the new item, insert incompatible clothing or mutate the recommendation',async()=>{
  const h=harness(),r=await h.generate('new-shirt'),save=JSON.stringify(r);
  await assert.rejects(h.client.swap(r,0,'top','polo'),/Pinned/);
