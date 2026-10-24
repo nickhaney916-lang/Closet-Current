@@ -40,7 +40,11 @@ try{
     });
     try{
      await page.goto(origin+'/');
-     await page.evaluate(async()=>{
+     // Let initial mobile document navigation settle before asynchronous imports.
+     await page.locator('#review').waitFor({state:'attached'});
+     await page.waitForLoadState('networkidle');
+     console.log('FAMILY_ALPHA_REVIEW_START',browserName,width);
+     const installFixture=async()=>{
       const {syntheticGarment}=await import('/research/family-alpha-13/synthetic-garments.mjs');
       const {prepareReviewedPhotoPresentation}=await import('/research/family-alpha-reviewed-photo/real-jpeg-review-provider.mjs');
       const {confirmReviewedPhotoInContainer}=await import('/research/family-alpha-reviewed-photo/preview-confirmation.mjs');
@@ -78,7 +82,10 @@ try{
        }
       };
       window.fixture.pending=window.fixture.start();
-     });
+     };
+     // Install async imports in the document module lifecycle, not a remote
+     // evaluate call whose execution context can expire during module loading.
+     await page.addScriptTag({type:'module',content:'await ('+installFixture.toString()+')();'});
      await page.getByRole('heading',{name:'Does this look like your clothing?'}).waitFor();
      const before=await page.evaluate(()=>{
       const buttons=[...document.querySelectorAll('#review button')];

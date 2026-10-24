@@ -81,3 +81,14 @@ The owner chose to polish the existing display rather than redesign the app. Com
 ## Private cloud backup continuation
 
 The owner requested automatic saving without individual phone-gallery files after nine items were captured. Added private account-owned photo storage and revision-protected metadata, durable pending changes, offline retry, existing-local migration and independent-browser recovery. 181 checks, live Supabase account-isolation tests and the browser recovery flow passed. No real user wardrobe was inspected; actual items migrate when the updated signed-in app runs. See docs/CLOUD-BACKUP.md for limits and verification.
+
+## Assignment 18 — isolated Family Alpha mobile acceptance (October 23, 2026 PT)
+
+Independent branch `qa/family-alpha-18-mobile-acceptance-20261023`, based on
+PR #268 exact `f9d2422`. Pending-preview interruption reproducibly stranded its
+launch button; isolated retry fix and regression added. Synthetic matrix,
+mobile browser checks, four-account private guide and empty feedback example
+are documented in `docs/FAMILY-ALPHA-18-ACCEPTANCE.md`. Current CI evidence is in
+the assignment draft PR and issue #255. No Auth/staging/backend branch modified,
+no deployment or actual phone testing; release HOLD. Apply only the small
+controller fix when reconciling newer main-owner branches, not older Auth files.

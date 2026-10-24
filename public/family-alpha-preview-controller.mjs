@@ -31,6 +31,7 @@ export function mountAlphaBuilderPreview({
   serial++;
   abort?.abort();
   abort=null;
+  launch.disabled=false; // Interrupted reviews must remain retryable.
   review.replaceChildren();
   invalidateSavedBoard2D(avatar);
  };

@@ -1,0 +1,2 @@
+tester_label,platform_family,orientation,test_step,expected_result_code,actual_result_code,result,severity,retake_or_retry_attempted,retake_or_retry_succeeded
+A,ANDROID,PORTRAIT,REVIEW,OWN_GARMENT_VISIBLE,CUTOUT_NEEDS_RETAKE,FAIL,MEDIUM,YES,YES
