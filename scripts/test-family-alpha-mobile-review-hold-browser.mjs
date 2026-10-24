@@ -75,7 +75,17 @@ try{
     // last so a real login service cannot accidentally be contacted.
     await context.route('**/auth.js*',route=>route.fulfill({contentType:'text/javascript',body:
      "window.closetAuth={user:{id:'review-23-"+browserName.toLowerCase()+"-"+width+"'},ready:Promise.resolve()};document.getElementById('authGate').hidden=true;document.getElementById('appShell').hidden=false;"}));
+    // Diagnostic in the test-only HTTP response, never in compiled app files.
+    // Capture the swallowed save exception while retaining all actual gates.
+    await context.route('**/app.js',async route=>{
+     const actual=await readFile(resolve(root,'app.js'),'utf8');
+     const old="}catch{\n    save.disabled=style.disabled=false;";
+     if(!actual.includes(old))throw Error('Manual save catch changed');
+     const instrumented=actual.replace(old,"}catch(error){console.warn('QA_SAVE_REJECTION',String(error?.message));\n    save.disabled=style.disabled=false;");
+     return route.fulfill({contentType:'text/javascript',body:instrumented});
+    });
     const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));
+    page.on('console',message=>{if(message.text().startsWith('QA_SAVE_REJECTION'))errors.push(message.text());});
     try{
      await page.goto(base+'/');
      await page.evaluate(()=>closetReady);
