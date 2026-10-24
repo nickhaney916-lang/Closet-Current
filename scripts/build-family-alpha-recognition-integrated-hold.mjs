@@ -66,7 +66,14 @@ export function combineStageAndRecognitionMarkup(newIndex,stageIndex){
  const withPanel=newIndex.replace(anchor,panel+anchor);
  const withBoot=withPanel.replace('</body>',
   '<script src="family-alpha-preview-boot.js"></script></body>');
- const withStageAuth=stageIndexSource(withBoot);
+ // A blocked Auth build must make ZERO third-party requests before sign-in.
+ // Public fonts and trend refresh otherwise run eagerly. CSP prevents them
+ // from leaving this offline inspection page without rewriting production
+ // trend/model files or relying on a test-specific network interceptor.
+ const csp='<meta http-equiv="Content-Security-Policy" content="default-src \'self\' data: blob:; connect-src \'self\'; img-src \'self\' data: blob:; font-src \'self\' data:; style-src \'self\' \'unsafe-inline\'; script-src \'self\'; worker-src \'self\' blob:; object-src \'none\'; base-uri \'self\'; form-action \'self\'">';
+ if(withBoot.split('</head>').length!==2)throw Error('Integrated CSP insertion point changed');
+ const localOnly=withBoot.replace('</head>',csp+'</head>');
+ const withStageAuth=stageIndexSource(localOnly);
  if(unique(withStageAuth,'id="familyAlphaLocalPreview"')!==1||
    unique(withStageAuth,'id="reusableFigureStage"')!==1||
    unique(withStageAuth,'src="alpha-stage-config.js"')!==1||
