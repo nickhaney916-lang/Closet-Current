@@ -1,0 +1,28 @@
+name: Recognition Review Clearance After Gates - NO DEPLOY
+on:
+  pull_request:
+    paths:
+      - 'public/app.js'
+      - 'tests/recognition-review-clearance-gate.test.mjs'
+      - 'docs/RECOGNITION-REVIEW-CLEARANCE-GATE-20261023.md'
+      - '.github/workflows/recognition-review-clearance-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-gate-and-regressions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Download existing source-locked public photo fixtures only (no user photos)
+        run: node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos
+      - name: Run real async app recognition handler gate tests against synthetic mocked sources
+        run: node --test tests/recognition-review-clearance-gate.test.mjs
+      - name: Build unchanged local application bundle
+        run: node scripts/build.mjs
+      - name: Full app and avatar Node test regressions
+        run: node --test tests/*.test.cjs tests/*.test.mjs tests/avatar/*.test.mjs
