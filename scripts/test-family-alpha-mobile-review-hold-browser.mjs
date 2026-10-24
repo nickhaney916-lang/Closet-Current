@@ -96,6 +96,20 @@ try{
      assert.equal(await confirm.isChecked(),false,'Changing the type requires fresh confirmation');
      await confirm.check();
      await dialog.getByRole('button',{name:'Save changes'}).click();
+     await page.waitForTimeout(800);
+     const stateAfterSave=await page.evaluate(()=>({
+      message:document.getElementById('message')?.textContent,
+      feedback:document.querySelector('dialog.photo-adjust .photo-review-feedback')?.textContent,
+      dialogOpen:document.querySelector('dialog.photo-adjust')?.open,
+      dbName:typeof db!=='undefined'?db?.name:null,
+      authOwner:window.closetAuth?.user?.id,
+      saved:typeof items!=='undefined'?items.length:-1,
+      draft:typeof batch!=='undefined'?batch.length:-1,
+      reviewed:document.querySelector('dialog.photo-adjust .photo-review-acknowledgement input')?.checked,
+      disabled:document.querySelector('dialog.photo-adjust .actions button')?.disabled,
+      fields:[...document.querySelectorAll('dialog.photo-adjust select,dialog.photo-adjust input')].map(e=>({label:e.getAttribute('aria-label'),value:e.value}))
+     }));
+     if(stateAfterSave.dialogOpen)throw Error('Combined manual save review still open: '+JSON.stringify(stateAfterSave));
      await dialog.waitFor({state:'detached'});
      assert.equal(await page.evaluate(()=>items.length),1);
      assert.deepEqual(await page.evaluate(()=>({category:items[0].category,type:items[0].itemType,
