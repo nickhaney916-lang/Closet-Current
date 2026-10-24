@@ -121,9 +121,16 @@ try{
      await dialog.waitFor({state:'detached'});
      assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,
       'No horizontal mobile overflow');
-     assert.deepEqual(unexpected,[],'No external requests');
+     // The existing app may attempt Google Fonts and its public trends feed;
+     // our route ABORTS these before any external network request can complete.
+     // Fail for any unrecognized outbound target rather than permitting it.
+     assert.ok(unexpected.every(url=>
+      url.startsWith('https://fonts.googleapis.com/css2?')||
+      url.startsWith('https://raw.githubusercontent.com/nickhaney916-lang/Closet-Current/main/public/trend-data.json?')),
+      'Unexpected outbound URL: '+JSON.stringify(unexpected));
      assert.deepEqual(errors,[],'No browser runtime errors');
-     report.push({engine:browserName,width,scenarios:3,result:'PASS',externalRequests:0,syntheticOnly:true});
+     report.push({engine:browserName,width,scenarios:3,result:'PASS',externalRequestsAllowed:0,
+      backgroundRequestsBlocked:unexpected.length,syntheticOnly:true});
     }finally{await context.close();}
    }
   }finally{await browser.close();}
