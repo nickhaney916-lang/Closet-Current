@@ -6,6 +6,7 @@ on:
       - 'scripts/audit-family-alpha-recognition-bridge.mjs'
       - 'scripts/test-family-alpha-recognition-integrated-hold-browser.mjs'
       - 'tests/family-alpha-recognition-integrated-hold.test.mjs'
+      - 'tests/integration/family-alpha-assignment22-integrity.test.cjs'
       - 'tests/family-alpha-recognition-bridge-audit.test.mjs'
       - 'tests/fixtures/family-alpha-recognition-avatar-mock-harness.js'
       - 'scripts/test-family-alpha-recognition-to-avatar-mock-browser.mjs'
@@ -37,6 +38,8 @@ jobs:
         run: node scripts/build-family-alpha-recognition-integrated-hold.mjs
       - name: Verify manifest, original JPEG source evidence, stage-only Auth and atomic held controls
         run: node --test tests/family-alpha-recognition-integrated-hold.test.mjs
+      - name: Verify actual Work #22 original-JPEG/crop/queued-draft/backup integrity against combined artifact
+        run: node --test tests/integration/family-alpha-assignment22-integrity.test.cjs
       - name: Run stage + integration full Node regression suite
         run: node --test tests/*.test.cjs tests/*.test.mjs
       - name: Never label offline combined artifact as authorized release
