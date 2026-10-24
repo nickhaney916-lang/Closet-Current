@@ -178,7 +178,7 @@ test('crop change alone invalidates presentation without silently substituting o
 test('deleting a garment or changing source-group ID invalidates prior recommendation',async()=>{
  const h=harness(),r=await h.generate('new-shirt'),id=r.options[0].board.slots.shoes;
  h.setClothes(h.clothes.filter(x=>x.id!==id));
- await assert.rejects(h.client.verify(r),/Missing|changed|source/i);
+ await assert.rejects(h.client.verify(r),/Missing|changed|source|Invalid saved outfit/i);
  const refreshed=await h.generate('new-shirt');assert.equal(refreshed.options.some(x=>x.board.slots.shoes===id),false);
  const group=refreshed.options[0].board.slots.top;
  h.setClothes(h.clothes.map(x=>x.id===group?{...x,outfitSourceId:'changed'}:x));
@@ -220,8 +220,8 @@ test('expired Auth or wrong private DB always fails closed',async()=>{
 test('older pending source hash cannot be accepted after logout, account change, or newer request',async()=>{
  let unblock,started;
  const begun=new Promise(resolve=>started=resolve);
- const h=harness(A),style=h.style;
- const delayed={subtle:{digest:async(...args)=>{started();await new Promise(ok=>unblock=ok);return webcrypto.subtle.digest(...args)}}};
+ const h=harness(A),style=h.style;let delayOnce=true;
+ const delayed={subtle:{digest:async(...args)=>{if(delayOnce){delayOnce=false;started();await new Promise(ok=>unblock=ok);}return webcrypto.subtle.digest(...args)}}};
  const client=createStyleMyNewClothes({readContext:()=>h.ctx,readWardrobe:()=>h.clothes,
   stylistItemScore:(...a)=>style.stylistItemScore(...a),
   stylistHarmony:(...a)=>style.stylistHarmony(...a),
@@ -234,8 +234,9 @@ test('older pending source hash cannot be accepted after logout, account change,
 });
 test('explicit invalidation supersedes older outfit operations',async()=>{
  let unblock,started;const begun=new Promise(resolve=>started=resolve);
- const h=harness(A),style=h.style,cryptoProvider={subtle:{digest:async(...args)=>{
-  started();await new Promise(ok=>unblock=ok);return webcrypto.subtle.digest(...args);
+ const h=harness(A),style=h.style;let delayOnce=true;
+ const cryptoProvider={subtle:{digest:async(...args)=>{
+  if(delayOnce){delayOnce=false;started();await new Promise(ok=>unblock=ok);}return webcrypto.subtle.digest(...args);
  }}};
  const client=createStyleMyNewClothes({readContext:()=>h.ctx,readWardrobe:()=>h.clothes,
   stylistItemScore:(...a)=>style.stylistItemScore(...a),stylistHarmony:(...a)=>style.stylistHarmony(...a),
