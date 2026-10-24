@@ -40,6 +40,10 @@ try{
     });
     try{
      await page.goto(origin+'/');
+     // Let initial mobile document navigation settle before asynchronous imports.
+     await page.locator('#review').waitFor({state:'attached'});
+     await page.waitForLoadState('networkidle');
+     console.log('FAMILY_ALPHA_REVIEW_START',browserName,width);
      await page.evaluate(async()=>{
       const {syntheticGarment}=await import('/research/family-alpha-13/synthetic-garments.mjs');
       const {prepareReviewedPhotoPresentation}=await import('/research/family-alpha-reviewed-photo/real-jpeg-review-provider.mjs');
