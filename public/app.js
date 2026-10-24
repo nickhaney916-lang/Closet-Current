@@ -91,7 +91,9 @@ function persistDraft(){
  pendingDraftWrite=request;return request.promise;
 }
 function readDraft(){return new Promise((resolve,reject)=>{const r=db.transaction('state').objectStore('state').get('draft');r.onsuccess=()=>resolve(r.result?.batch||[]);r.onerror=()=>reject(r.error);});}
-function savePiece(value,nextBatch,stillCurrent){return queued(()=>new Promise((resolve,reject)=>{if(typeof stillCurrent==='function'&&!stillCurrent())return reject(Error('The photo or account changed. Reopen Adjust before saving.'));const tx=db.transaction(['items','state'],'readwrite');tx.objectStore('items').put(value);tx.objectStore('state').put({id:'draft',batch:structuredClone(nextBatch)});tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);}));}
+// Resolve the remaining draft at commit time, after cloud/write queue delays.
+// A captured array could drop newer photos or resurrect removed drafts.
+function savePiece(value,nextBatch,stillCurrent){return queued(()=>new Promise((resolve,reject)=>{if(typeof stillCurrent==='function'&&!stillCurrent())return reject(Error('The photo or account changed. Reopen Adjust before saving.'));const tx=db.transaction(['items','state'],'readwrite');tx.objectStore('items').put(value);tx.objectStore('state').put({id:'draft',batch:structuredClone(typeof nextBatch==='function'?nextBatch():nextBatch)});tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);}));}
 function node(tag,text,className){const n=document.createElement(tag);if(text)n.textContent=text;if(className)n.className=className;return n;}
 function empty(grid,title,subtitle){const n=node('div',null,'empty');n.append(node('h3',title),node('p',subtitle));grid.append(n);}
 function field(body,title,value,type='input'){const label=node('label',title),input=node(type);input.setAttribute('aria-label',title);if(type==='select'){for(const c of categories){const o=node('option',c);o.value=c;input.append(o);}}input.value=value||'';if(type==='input')input.maxLength=120;if(type==='textarea')input.maxLength=500;label.append(input);body.append(label);return input;}
@@ -223,7 +225,7 @@ function adjustPhoto(item){
    // A second persistDraft here could fail after a successful transaction and
    // incorrectly tell the customer that their wardrobe save failed.
    value.recognitionReviewRequired=false;
-   await savePiece(value,batch.filter(x=>x.id!==item.id),editorCurrent);
+   await savePiece(value,()=>batch.filter(x=>x.id!==item.id),editorCurrent);
    const existing=items.find(x=>x.id===item.id);if(existing)Object.assign(existing,value);else items.push(value);
    batch=batch.filter(x=>x.id!==item.id);dialog.close();render();scheduleMemoryReview();
    if(withStyling){
@@ -1056,7 +1058,9 @@ async function saveIndexed(item,sourceStillCurrent){
   // The queue can wait while recognition or a user edit changes the draft.
   // Snapshot ONLY after the last safety validation, so the IndexedDB item
   // reflects the exact original-derived category/color that was approved.
-  value={...normalizeClothing(item),name:item.name.trim()||'Closet piece',savedAt:new Date().toISOString(),indexedAt:new Date().toISOString()};
+  // IDB clones at put(); keep the published in-memory record equally isolated
+  // from nested original/crop/hint objects still held by the draft.
+  value={...normalizeClothing(structuredClone(item)),name:item.name.trim()||'Closet piece',savedAt:new Date().toISOString(),indexedAt:new Date().toISOString()};
   const tx=db.transaction(['items','state'],'readwrite');
   tx.objectStore('items').put(value);
   tx.objectStore('state').put({id:'draft',batch:structuredClone(batch.filter(x=>x.id!==item.id))});

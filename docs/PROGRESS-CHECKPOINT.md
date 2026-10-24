@@ -1,3 +1,17 @@
+# Assignment #22 — recognition-to-closet data integrity (October 23)
+
+Isolated branch from #282 `0586d08d9d40ce5da479f5ff656e03adf2c837e0`.
+Reproduced stale queued manual-save draft, nested automatic-save photo/crop/hint
+aliasing after IDB put, and silent subtype normalization during file restore.
+Four baseline-negative tests fail on parent; seven candidate tests pass. Full
+local build and 1,921 app/avatar tests PASS, no failures/skips. Adds synthetic
+actual IndexedDB browser CI; verify its final results in the draft PR. No model
+benchmarking, worker/retries, cloud/Auth configuration or customer photos.
+See docs/ASSIGNMENT22-RECOGNITION-CLOSET-INTEGRITY.md. Main owns integration and
+release; no merge/deploy, paid services, spending or Drive Duel changes.
+
+---
+
 # Assignment #233 — original-photo recognition safety (October 23)
 
 Isolated new branch from #226 b06f606; reviewed #220/#224/#226/#228/#231 and
