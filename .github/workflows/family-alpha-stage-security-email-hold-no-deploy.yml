@@ -1,0 +1,32 @@
+name: Family Alpha live-metadata security + Resend email HOLD - NO DEPLOY
+on:
+  pull_request:
+    paths:
+      - 'research/family-alpha-security/staging-live-readonly-20261024.json'
+      - 'scripts/family-alpha-stage-security-email-gate.mjs'
+      - 'tests/family-alpha-stage-security-email-gate.test.mjs'
+      - 'docs/FAMILY-ALPHA-STAGING-SECURITY-EMAIL-HANDOFF-HOLD-20261024.md'
+      - '.github/workflows/family-alpha-stage-security-email-hold-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  evidence-and-staged-auth-no-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build disabled staging AUTH artefact — NO key, NO callback
+        run: node scripts/build-family-alpha-staging-auth-hold.mjs
+      - name: Evaluate current live-metadata evidence, owner-screen Verified DNS and strict SMTP/RLS release HOLD
+        run: node scripts/family-alpha-stage-security-email-gate.mjs
+      - name: Twelve positive and negative account/email security evidence gates
+        run: node --test tests/family-alpha-stage-security-email-gate.test.mjs
+      - name: Check static credentials and production routing are absent
+        run: |
+          node --input-type=module -e "import {runStagingSecurityAndEmail} from './scripts/family-alpha-stage-security-email-gate.mjs';const r=await runStagingSecurityAndEmail();if(r.releaseGate!=='HOLD'||r.invitationReady||r.readyForFamilyAlpha||r.liveMailSent||r.customSmtpLiveConfigurationVerified||r.genuineJWTAuthorizationTested||!r.productionUnchanged)process.exit(1);console.log('FAMILY ALPHA HOLD: Resend domain screenshot Verified, no SMTP, production untouched, synthetic SQL RLS is not real JWT validation');"
+      - name: Full current normal app node regression suite (no Supabase or email calls)
+        run: node --test tests/*.test.cjs tests/*.test.mjs
