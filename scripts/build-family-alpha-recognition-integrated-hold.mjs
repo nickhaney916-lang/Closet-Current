@@ -146,7 +146,7 @@ export async function buildDisabledIntegratedCandidate({root=resolve('.')}={}){
  // leave all controls and styling rules unchanged with system fallbacks.
  const cssPath=join(target,'style.css');
  const originalCss=await readFile(cssPath,'utf8');
- const importLine="@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@400;500&display=swap');\\n";
+ const importLine="@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@400;500&display=swap');";
  if(!originalCss.startsWith(importLine))
   throw Error('Unexpected Google Fonts import; review offline styling first');
  const localCss=originalCss.slice(importLine.length);
