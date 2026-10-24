@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "observedDate": "2026-10-24",
+  "sourceTypes": [
+    "owner-provided Resend status screenshot from this conversation (domain status)",
+    "connected Supabase project read-only metadata, advisors, pg_catalog SQL",
+    "historical owner-provided auth dashboard screenshots (authorization/email settings)"
+  ],
+  "releaseGate": "HOLD",
+  "reviewedProject": {
+    "name": "Closet Current Staging",
+    "id": "fbnplztkbsteuzrmbgib",
+    "status": "ACTIVE_HEALTHY",
+    "productionProjectMustNotChange": "hlkgymugtfbirlpunsra"
+  },
+  "email": {
+    "sendingDomain": "mail.closet-current.com",
+    "resendDashboardStatus": "VERIFIED",
+    "dnsVerifiedEvidence": "Owner-provided screenshot explicitly showed Verified in Resend; no new authoritative DNS query",
+    "senderAddressProposed": "accounts@mail.closet-current.com",
+    "customSmtpEnabledNow": "NOT_REVERIFIED_AFTER_ORIGINAL_OFF_OBSERVATION",
+    "smtpCredentialExistsNow": "NOT_VERIFIED",
+    "actualDeliveryTested": false,
+    "stageSiteUrlAndAllowlistNow": "NOT_REVERIFIED_AFTER_PILOT_ACCESS_CHECK_ONLY",
+    "stageApplicationLiveDeploymentTested": false
+  },
+  "security": {
+    "observedLiveDate": "2026-10-24",
+    "backups": "public.closet_backups RLS enabled; authenticated SELECT owner_id=auth.uid; anon no backup grants",
+    "backupWrites": "public.save_closet_backup callable by authenticated, not anon; invoker wrapper delegates to private security-definer function owned by no-login closet_backup_writer; private function requires request.jwt.claim.sub matching owner and versioned writes",
+    "photoBucket": {
+      "name": "closet-private",
+      "public": false,
+      "allowedMimeTypes": [
+        "image/jpeg"
+      ],
+      "fileSizeLimitBytes": 8388608
+    },
+    "photoPolicies": "storage.objects authenticated SELECT/INSERT/DELETE restricted to bucket closet-private and first folder equal auth.uid; no UPDATE policy observed; uploads use non-upsert content-hash immutable name",
+    "advisor": "Leaked Password Protection Disabled warning; enabling may require Supabase Pro or above, do not buy/enable without owner authorization",
+    "signupAndAnonymousState": "Historical Auth owner screenshots had public signup enabled and anonymous off; current Auth API settings not queried",
+    "completedLiveJwtCrossOwnerTests": false,
+    "completedLiveHostedSignupRecoveryTests": false
+  },
+  "ownerRequiredBeforeInvites": [
+    "Approve exact Access-protected staging host and check whether the actual app is deployed there",
+    "Verify staging Auth Site URL and allowlist include the exact approved protected app callback; remove pilot check as default only when ready",
+    "Decide allowlist/invite-only staging signup strategy or configure provider-side abuse controls; Cloudflare Access does not guard direct Supabase signup endpoint",
+    "Create a dedicated Resend sending-only key privately, then configure custom SMTP ONLY in staging and do one disposable test; do not put tokens in logs/chat/repo",
+    "Use two real disposable staged Auth accounts to verify A/B backup and object READ/WRITE denial with their actual JWTs",
+    "Keep separate parent approval for physical family phone/photos and release"
+  ],
+  "mutationsMade": false,
+  "keysReadOrStored": false,
+  "realFamilyDataRead": false,
+  "readyToInvite": false
+}

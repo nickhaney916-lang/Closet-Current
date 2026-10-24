@@ -1,0 +1,31 @@
+name: Family Alpha Resend Supabase SMTP Readiness — OFFLINE HOLD
+on:
+  pull_request:
+    paths:
+      - 'research/family-alpha-email/**'
+      - 'scripts/family-alpha-resend-staging-email-readiness.mjs'
+      - 'tests/family-alpha-resend-staging-email-readiness.test.mjs'
+      - 'tests/family-alpha-staging-current-security-checkpoint.test.mjs'
+      - 'docs/FAMILY-ALPHA-RESEND-SUPABASE-SMTP-HANDOFF-HOLD.md'
+      - '.github/workflows/family-alpha-resend-staging-email-hold-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  staged-smtp-no-credentials:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build source-pinned normal app and separate disabled Family Alpha staging Auth candidate
+        run: node scripts/build-family-alpha-staging-auth-hold.mjs
+      - name: Run all Node regressions including historical pending and current owner-verified Resend security snapshot
+        run: node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Print dated email readiness evidence without external network or keys
+        run: node scripts/family-alpha-resend-staging-email-readiness.mjs
+      - name: Ensure this workflow cannot certify email delivery or approve Family Alpha
+        run: |
+          node --input-type=module -e "import {runRecordedEmailReadiness} from './scripts/family-alpha-resend-staging-email-readiness.mjs';const x=await runRecordedEmailReadiness();if(x.releaseGate!=='HOLD'||x.readyToInvite||x.domainVerification!=='PENDING'||x.actualEmailSent||!x.privacyNoKeysStored)process.exit(1);console.log('Historical Resend screenshot PENDING (unchanged); newer Resend owner screenshot VERIFIED, SMTP activation and delivery unverified; no credentials or staging/production changes');"
