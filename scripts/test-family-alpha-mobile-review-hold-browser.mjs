@@ -119,7 +119,7 @@ try{
       disabled:document.querySelector('dialog.photo-adjust .actions button')?.disabled,
       fields:[...document.querySelectorAll('dialog.photo-adjust select,dialog.photo-adjust input')].map(e=>({label:e.getAttribute('aria-label'),value:e.value}))
      }));
-     if(stateAfterSave.dialogOpen)throw Error('Combined manual save review still open: '+JSON.stringify(stateAfterSave));
+     if(stateAfterSave.dialogOpen)throw Error('Combined manual save review still open: '+JSON.stringify({...stateAfterSave,qaConsole:errors}));
      await dialog.waitFor({state:'detached'});
      assert.equal(await page.evaluate(()=>items.length),1);
      assert.deepEqual(await page.evaluate(()=>({category:items[0].category,type:items[0].itemType,
