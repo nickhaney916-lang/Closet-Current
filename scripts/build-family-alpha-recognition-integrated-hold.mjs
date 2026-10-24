@@ -71,8 +71,11 @@ export function combineStageAndRecognitionMarkup(newIndex,stageIndex){
  // from leaving this offline inspection page without rewriting production
  // trend/model files or relying on a test-specific network interceptor.
  const csp='<meta http-equiv="Content-Security-Policy" content="default-src \'self\' data: blob:; connect-src \'self\'; img-src \'self\' data: blob:; font-src \'self\' data:; style-src \'self\' \'unsafe-inline\'; script-src \'self\'; worker-src \'self\' blob:; object-src \'none\'; base-uri \'self\'; form-action \'self\'">';
- if(withBoot.split('</head>').length!==2)throw Error('Integrated CSP insertion point changed');
- const localOnly=withBoot.replace('</head>',csp+'</head>');
+ // CSP must precede stylesheet declarations: the browser's speculative
+ // preload scanner can start fetching @import Google Fonts before it reaches
+ // a policy appended at the END of <head>.
+ if(withBoot.split('<head>').length!==2)throw Error('Integrated CSP insertion point changed');
+ const localOnly=withBoot.replace('<head>','<head>'+csp);
  const withStageAuth=stageIndexSource(localOnly);
  if(unique(withStageAuth,'id="familyAlphaLocalPreview"')!==1||
    unique(withStageAuth,'id="reusableFigureStage"')!==1||
