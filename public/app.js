@@ -219,9 +219,8 @@ function adjustPhoto(item){
  const requiresManualConfirmation=()=>reviewingNewPiece&&(
   item.outfitSourceId||item.segmentHint?.clipped||
   item.segmentHint?.displayFallback==='original-crop'||
-  item.possibleDuplicate||item.recognitionReviewRequired&&
-  (['Shoes','Dresses'].includes(draft.category)||
-   draft.category==='Bottoms'&&['Shorts','Skirt','Unknown'].includes(draft.itemType)));
+  item.possibleDuplicate||['Shoes','Dresses'].includes(draft.category)||
+  draft.category==='Bottoms'&&['Shorts','Skirt','Unknown'].includes(draft.itemType));
  const acknowledgement=node('label',null,'photo-review-acknowledgement');
  const reviewed=node('input');reviewed.type='checkbox';
  reviewed.setAttribute('aria-label','I checked the original photo, category, item type and color');
@@ -251,7 +250,10 @@ function adjustPhoto(item){
  remove.onclick=async()=>{try{if(items.some(x=>x.id===item.id))await removeItem(item.id);items=items.filter(x=>x.id!==item.id);batch=batch.filter(x=>x.id!==item.id);sessionCapturedIds.delete(item.id);await persistDraft();dialog.close();render();}catch{message('Could not remove this photo. Try again.');}};
  form.onsubmit=async event=>{
   event.preventDefault();
-  if(!editorCurrent()){message('Your photo or account changed. Reopen Adjust before saving.');return;}
+  if(!editorCurrent()){
+   feedback.textContent='The original photo or account changed. Reopen Adjust before saving.';
+   message('Your photo or account changed. Reopen Adjust before saving.');return;
+  }
   const withStyling=event.submitter===style&&reviewingNewPiece;
   const value={...collect(),name:draft.name.trim()||
    (draft.itemType&&draft.itemType!=='Unknown'?draft.itemType:'Closet piece'),
