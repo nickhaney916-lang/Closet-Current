@@ -89,3 +89,21 @@ node scripts/test-family-alpha-recognition-integrated-hold-browser.mjs
 ```
 
 **Do not deploy or merge this work.** The real staging account/HTTPS callback, Access policy and sender credentials are separately gated and require explicit user approval. Work #20/#21/#22/#23 findings still need review before merging functional fixes. The family pilot remains **HOLD**.
+
+
+## Update — source recognition → human color → local closet → reviewed 2D photo avatar (October 24, 2026 PT)
+
+The source-integrated staging candidate now has a connected **offline MOCK functional fixture**, not just page-startup checks:
+
+- `tests/fixtures/family-alpha-recognition-avatar-mock-harness.js` supplies a deliberately fabricated classifier result and fabricated staging Auth response. It does **not** copy app recognition rules, grant account access, call any paid model or send a cloud request.
+- `scripts/test-family-alpha-recognition-to-avatar-mock-browser.mjs` extracts and runs **actual** source-pinned `recognitionSourcePhoto`, `queued`, `recognizeItem`, `canConfirmReviewedColor`, `confirmReviewedColor` and the per-scan review proof from the compiled modern app.
+- Chromium/WebKit generates a real JPEG byte-stream from a synthetic Tops fixture and browser-decodes it; the model output is mocked as a recognized T-shirt. The original JPEG is held constant, the auto-save is refused while color is unknown, and explicit human `Blue` color confirmation triggers the app's real IndexedDB `items` + `draft` transaction. The saved original JPEG matches its source, with `colorSource:user` and the review-cleared flag only on the confirmed saved item.
+- The **actual staged Family Alpha preview controller**, packaged source mask/photo-review modules and real saved-wardrobe reader use that saved record and one real `outfit-board` IndexedDB record. A human click on **Use cutout** generates a transparent source-backed PNG photo layer and places it in the 2D avatar.
+- Swapping the synthetic Auth owner causes the real private-DB reader to reject the now-foreign IndexedDB scope and the preview controller clears the old layer. No bearer token reached an actual server; the mock auth response is restricted to the staging Auth path.
+- The harness is explicitly hosted on a **separate localhost test-only HTML page**, not an actual signed-in staging/production app. The normal combined candidate's real page remains fully Auth-HOLD and cannot be signed in without separately authorized provider/callback configuration.
+
+**Verified head `e2ba2c2b504a5e7b36ee3a1c1fc5d7039b3ebc9d`:** [Combined no-deploy Actions #40100363867](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/40100363867) **SUCCESS**: all **6/6** new mock flow browser viewport cases passed (Chromium/WebKit at 320,390,430px), with no external requests or JS page errors. Prior combined startup **6/6**, Auth HOLD/mock **12/12**, and original-photo 2D avatar **6/6** browser cases also passed. **454/454 full offline Node tests passed.** Separate bridge audit [#40100363862](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/40100363862) passed.
+
+**Important limits:** This confirms end-to-end compatibility of selected real app functions and the source-backed 2D avatar when inputs/accounts are mocked, **not actual clothing classifier quality** (model result injected), not live Supabase row/storage security, not actual app Auth UI on a deployed staging host, and not physical-phone camera use. No real family/customer photographs, paid services, production modification, SMTP credentials, merging or deployment. **Family Alpha HOLD.**
+
+**Next priorities:** Independently review PR #280 original-photo benchmark, #281 retries, #283 record-integrity, #284 mobile correction UX for integration conflicts. Then seek approval for stage callback/Access/SMTP and perform real A/B JWT/RLS private backup/Storage tests with synthetic identities before any invitations.
