@@ -114,6 +114,22 @@ export async function buildDisabledIntegratedCandidate({root=resolve('.')}={}){
   await writeFile(join(target,targetPath),original);
   modified.push({path:targetPath,sha256:sha256(original)});
  }
+ // The newer recognition UI includes an unrelated production AI try-on
+ // endpoint. No paid service, hidden production routing or provider request
+ // may be present in this staging candidate. Preserve the local figure and
+ // original-photo avatar; replace ONLY the paid generation surface.
+ const noPaidTryOn=`'use strict';
+ // Family Alpha offline HOLD: paid AI try-on is deliberately disabled.
+ function onTryOnBoardChanged(){
+  const button=document.getElementById('tryOnGenerate');
+  const status=document.getElementById('tryOnStatus');
+  if(button){button.disabled=true;button.hidden=true;}
+  if(status)status.textContent='Paid AI generation is disabled for Family Alpha testing. Use your saved-clothing local figure.';
+ }
+ onTryOnBoardChanged();
+ `;
+ await writeFile(join(target,'ai-tryon.js'),noPaidTryOn);
+ modified.push({path:'ai-tryon.js',sha256:sha256(noPaidTryOn),safetyOverride:'PAID_GENERATION_DISABLED'});
  const stageIndex=stageSource('public/index.html').toString('utf8');
  const modernIndex=source('public/index.html').toString('utf8');
  const index=combineStageAndRecognitionMarkup(modernIndex,stageIndex);
