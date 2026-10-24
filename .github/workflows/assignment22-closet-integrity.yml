@@ -1,0 +1,37 @@
+name: Assignment 22 recognition to closet data integrity
+on:
+  push:
+    branches: [qa/assignment22-recognition-closet-integrity-20261023]
+permissions:
+  contents: read
+jobs:
+  offline-integrity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      - name: Preserve models, fixtures, cloud settings and unrelated runtime
+        run: git diff --exit-code 0586d08d9d40ce5da479f5ff656e03adf2c837e0 HEAD -- public/recognition-engine.mjs public/local-worker.mjs public/recognition-vectors.json public/recognition-vectors.bin public/auth.js public/cloud-backup.js supabase benchmark/fixtures benchmark/locked-photo-sources.json
+      - run: npm install --no-save --no-package-lock playwright@1.56.1
+      - run: node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos
+      - run: node scripts/build.mjs
+      - run: node --test tests/*.test.cjs tests/*.test.mjs tests/avatar/*.test.mjs
+      - name: Actual IndexedDB save/reopen and synthetic JPEG original integrity
+        run: node scripts/test-assignment22-integrity-browsers.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: assignment22-offline-integrity
+          path: artifacts/assignment22
+          retention-days: 14
