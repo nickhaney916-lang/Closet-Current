@@ -43,6 +43,7 @@ function makeCase({
   };}};return tx;}
  };
  const ctx={
+  structuredClone,
   window:{closetAuth:{user:{id:'owner-A'}}},db,
   items:duplicate?[{id:'other-garment',image:original}]:[],
   batch:[item],localPending:new Set([item.id]),
