@@ -1,0 +1,38 @@
+name: Assignment 23 mobile recognition review (NO DEPLOY)
+on:
+  push:
+    branches: [chat/assignment23-recognition-review-mobile-20261023]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  node-and-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Build
+        run: node scripts/build.mjs
+      - name: Full application, recognition and avatar regression
+        run: node --test tests/*.test.cjs tests/*.test.mjs tests/avatar/*.test.mjs
+  synthetic-phone-ui:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - run: npm install --no-save --no-package-lock playwright@1.56.1
+      - name: Build offline app
+        run: node scripts/build.mjs
+      - name: Real app mobile review and correction UI in Chromium and WebKit
+        run: node scripts/test-assignment23-review-mobile.mjs

@@ -164,3 +164,26 @@ input[type="checkbox"]{min-height:20px;width:20px;height:20px;vertical-align:mid
 .local-selfie-experiment{border-top:1px solid var(--line);padding-top:8px}
 .reusable-figure-controls .selfie-consent{display:flex;align-items:center;gap:10px;font-weight:400}
 .reusable-figure-controls .selfie-consent input{width:24px;min-height:24px;flex:none}
+
+
+/* Assignment 23: readable, explicitly acknowledged photo review on phones. */
+.photo-adjust .photo-review-guide{margin:8px 0 16px;line-height:1.55}
+.photo-adjust .photo-review-original{margin:12px 0;padding:10px;
+ border:1px solid var(--line);border-radius:10px;background:#f8f8f4}
+.photo-adjust .photo-review-original img{width:100%;max-height:230px;
+ object-fit:contain;background:#f1f1ec}
+.photo-adjust .photo-review-original figcaption{font-size:13px;line-height:1.5;
+ font-weight:600;margin:8px 0 2px}
+.photo-adjust .photo-review-acknowledgement{display:flex;align-items:flex-start;
+ gap:12px;min-height:56px;padding:14px 12px;margin:16px 0 10px;
+ border:1px solid var(--line);border-radius:10px;background:#f8f7f2;
+ font-size:14px;line-height:1.5;cursor:pointer}
+.photo-adjust .photo-review-acknowledgement input{width:24px;height:24px;
+ flex:0 0 24px;margin:0;accent-color:#7043ba}
+.photo-adjust .photo-review-acknowledgement span{flex:1}
+.photo-adjust .photo-review-feedback{font-size:14px;line-height:1.5;
+ margin:8px 0;overflow-wrap:anywhere}
+.photo-adjust .photo-review-feedback:empty{display:none}
+.photo-adjust input:not([type=checkbox]),.photo-adjust select{
+ min-height:48px;font-size:16px;max-width:100%}
+.photo-adjust .actions button{min-height:48px;white-space:normal}

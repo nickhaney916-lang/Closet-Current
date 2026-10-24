@@ -20,7 +20,7 @@ test('recognized photo immediately shows its saved category and Adjust and Crop 
  c.renderPhotoResults(grid,[item]);const nodes=descendants(grid),buttons=nodes.filter(x=>x.tag==='button');assert.equal(buttons.length,3);assert.equal(buttons[0].text,'Style this');assert.equal(buttons[1].text,'Adjust');assert.ok(nodes.some(x=>x.text==='Tops · T-shirt · Blue'));assert.ok(nodes.some(x=>x.text.includes('Solid · Short sleeve')));c.styleNewClosetItem=id=>{c.styled=id;};buttons[0].onclick();assert.equal(c.styled,'shirt');buttons[1].onclick();assert.equal(c.adjusted,item);buttons[2].onclick();assert.equal(c.cropped,item);
 });
 test('failed recognition keeps the photo and offers correction and crop actions without guessing',()=>{
- const {c,grid}=setup();c.renderPhotoResults(grid,[{id:'unknown',image:'photo',category:'Uncategorized'}]);const nodes=descendants(grid);assert.ok(nodes.some(x=>x.text==='Needs a clearer photo'));assert.equal(nodes.filter(x=>x.tag==='button').length,2);assert.ok(nodes.some(x=>x.tag==='img'&&x.src==='photo'));
+ const {c,grid}=setup();c.renderPhotoResults(grid,[{id:'unknown',image:'photo',category:'Uncategorized'}]);const nodes=descendants(grid);assert.ok(nodes.some(x=>x.text==='Review garment details'));assert.equal(nodes.filter(x=>x.tag==='button').length,2);assert.ok(nodes.some(x=>x.tag==='img'&&x.src==='photo'));
 });
 test('processing displays its category as soon as the worker identifies it',()=>{
  const {c,grid}=setup();c.localPending.add('shirt');c.renderPhotoResults(grid,[{id:'shirt',category:'Tops',itemType:'T-shirt'}]);const nodes=descendants(grid);assert.ok(nodes.some(x=>x.text==='T-shirt'));assert.ok(nodes.some(x=>x.text==='Tops · T-shirt'));assert.equal(nodes.filter(x=>x.tag==='button').length,2);assert.equal(nodes.find(x=>x.tag==='button').text,'Adjust');
@@ -33,7 +33,7 @@ test('queued photos stay compact and offer Adjust during model setup',()=>{
  const {c,grid}=setup();c.localReady=false;c.localPending.add('waiting');c.renderPhotoResults(grid,[{id:'waiting',category:'Uncategorized',image:'photo'}]);const nodes=descendants(grid);assert.ok(nodes.some(x=>x.text==='Waiting…'));assert.ok(!nodes.some(x=>/first use|Preparing recognition/.test(x.text)));assert.equal(nodes.filter(x=>x.tag==='button').length,2);
 });
 test('a scanner failure is distinguished from a garment that was not recognized',()=>{
- const {c,grid}=setup();c.renderPhotoResults(grid,[{id:'failed',category:'Uncategorized',scanFailed:true}]);const nodes=descendants(grid);assert.ok(nodes.some(x=>x.text==='Scanner unavailable'));assert.ok(!nodes.some(x=>x.text==='Needs a clearer photo'));
+ const {c,grid}=setup();c.renderPhotoResults(grid,[{id:'failed',category:'Uncategorized',scanFailed:true}]);const nodes=descendants(grid);assert.ok(nodes.some(x=>x.text==='Scanner unavailable'));assert.ok(!nodes.some(x=>x.text==='Review garment details'));
 });
 
 test('storage failure shows Not saved and keeps recognized labels with one Adjust action',()=>{
