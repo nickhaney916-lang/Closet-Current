@@ -7,6 +7,8 @@ on:
       - 'scripts/test-family-alpha-recognition-integrated-hold-browser.mjs'
       - 'tests/family-alpha-recognition-integrated-hold.test.mjs'
       - 'tests/family-alpha-recognition-bridge-audit.test.mjs'
+      - 'tests/fixtures/family-alpha-recognition-avatar-mock-harness.js'
+      - 'scripts/test-family-alpha-recognition-to-avatar-mock-browser.mjs'
       - 'docs/FAMILY-ALPHA-RECOGNITION-INTEGRATION-BRIDGE-HOLD.md'
       - '.github/workflows/family-alpha-recognition-combined-hold.yml'
   workflow_dispatch:
@@ -65,6 +67,8 @@ jobs:
         run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
       - name: Modern scanner UI and real retained-JPEG avatar sources under completely disabled Stage Auth
         run: node scripts/test-family-alpha-recognition-integrated-hold-browser.mjs
+      - name: Actual modern recognition human-color IndexedDB save to compiled original-JPEG 2D avatar — MOCK local Auth only
+        run: node scripts/test-family-alpha-recognition-to-avatar-mock-browser.mjs
       - name: Original confirmed JPEG photo-layer and stage Auth synthetic browser regressions
         run: |
           node scripts/test-family-alpha-stage-auth-browser.mjs
