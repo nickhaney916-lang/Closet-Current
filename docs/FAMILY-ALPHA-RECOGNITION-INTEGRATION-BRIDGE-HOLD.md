@@ -62,3 +62,30 @@ The separate `dist-family-alpha-staging-auth-hold/` is a **disabled historical c
 5. Before actual family deployment require explicit owner consent and real staging Auth callback, restricted email delivery, live A/B JWT row/bucket denial, protected Cloudflare URLs and physical phone original photos. **User requested email SMTP setup be resumed tomorrow morning; this research task does not enable it.**
 
 **Result:** Reproducible blocking compatibility report complete. **Integration itself / Family Alpha release: HOLD** until a separate implementation and real-stage verification are approved. No merge, deploy, production/data changes, personal photos, paid AI or Drive Duel.
+
+
+## Update — actual combined source candidate assembled (October 24, 2026 PT)
+
+The initial audit correctly established that merely copying one app script would be unsafe. That blocking source review remains historically true for **unmodified** staging. The new follow-on, `scripts/build-family-alpha-recognition-integrated-hold.mjs`, now assembles a **distinct** local `dist-family-alpha-recognition-integration-hold/` folder. This never alters public/ sources or any deployed site.
+
+1. Builds the previous `dist-family-alpha-staging-auth-hold` with private Auth/backup still **disabled by default**.
+2. Overlays **86** pinned, compatible code/model/style files from recognition source PR #282 while preserving the stage-only Auth/backup, private reviewed-original-JPEG avatar preview, and safe development-only launcher. This includes the exact verified new recognition `app.js`, model worker and companion models, plus original-source and one-choice human color proof.
+3. Reconstructs one isolated page that retains the modern recognition/reusable figure controls **and** the old Family Alpha local reviewed-photo 2D preview panel. The staging config is injected before Auth and the source-avatar launcher stays hidden outside localhost, while the real account stays blocked without approved credentials/callback.
+4. Removes only the known remote-font `@import` from this offline candidate and adds a restrictive local-only CSP before CSS. The production AI try-on endpoint is replaced by a **disabled paid-generation shim**, so no paid inference can run from this preview; the local 2D clothing figure remains.
+5. Checks the candidate contains no production Supabase project reference, includes no private SMTP/API key, has blank stage Auth key/callback, and carries explicit `HOLD` release metadata.
+6. Runs real locally served Chromium/WebKit startup at 320, 390 and 430px, requiring no page errors, no outbound network requests, hidden private app, disabled account login, modern figure markup and original-JPEG avatar panel. Other inherited synthetic stage Auth and photo-avatar browser cases still run.
+
+**Scope of completion:** The offline **source integration and blocked browser startup** have been demonstrated. This is a real combined bundle, but **not an authorized logged-in/functional Family Alpha test**. Because Auth intentionally blocks, the browser test does not establish that a real person can photograph, recognize, review, save, back up and dress the 2D avatar with their private clothes end-to-end. It also does not establish new accuracy, native Android/iPhone behavior, Supabase JWT isolation, validated staging email or Cloudflare host readiness.
+
+For reproducibility with exact pinned commits already fetched:
+
+```sh
+node scripts/build-family-alpha-staging-auth-hold.mjs
+node scripts/build-family-alpha-recognition-integrated-hold.mjs
+node --test tests/family-alpha-recognition-integrated-hold.test.mjs
+node --test tests/*.test.cjs tests/*.test.mjs
+# With isolated Playwright installed (CI):
+node scripts/test-family-alpha-recognition-integrated-hold-browser.mjs
+```
+
+**Do not deploy or merge this work.** The real staging account/HTTPS callback, Access policy and sender credentials are separately gated and require explicit user approval. Work #20/#21/#22/#23 findings still need review before merging functional fixes. The family pilot remains **HOLD**.
