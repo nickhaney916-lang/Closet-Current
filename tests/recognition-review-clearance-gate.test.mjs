@@ -16,7 +16,7 @@ const proofStart=source.indexOf('const verifiedColorAdmission=new WeakMap();');
 const proofEnd=source.indexOf('// Saving is transactional',proofStart);
 assert.ok(proofStart>=0&&proofEnd>proofStart,'original-proof helper must be present');
 const proofSource=source.slice(proofStart,proofEnd);
-assert.ok(source.includes('!item.recognitionReviewRequired&&'),
+assert.ok(source.includes('||item.recognitionReviewRequired||'),
  'save-index admission must continue checking reviewRequired');
 
 function runFixture({
