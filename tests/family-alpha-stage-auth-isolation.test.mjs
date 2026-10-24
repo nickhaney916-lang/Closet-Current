@@ -76,7 +76,7 @@ test('staged PWA never registers a service worker that could cache production cr
  assert.match(out,/installApp/);
  assert.doesNotMatch(out,/register\(|serviceWorker|caches\./);
 });
-test('CI's isolated staging Auth artifact has only the intended changes and cannot be deployed as approved',async()=>{
+test('CI isolated staging Auth artifact has only intended changes and cannot be deployed as approved',async()=>{
  const m=await assertStagingAuthCandidate();
  assert.equal(m.releaseGate,'HOLD');
  assert.equal(m.routingReadyForQa,false);
