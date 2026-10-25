@@ -13,7 +13,7 @@
  */
 import {prepareSyntheticGarmentOriginal} from '../family-alpha-13/garment-photo-preparation.mjs';
 import {auditMask,fingerprintSavedCrop} from '../family-alpha-16/source-mask-audit.mjs';
-import {fingerprintAlphaRetainedOriginal,identityForSavedGarment}
+import {fingerprintAlphaRetainedOriginal,fingerprintAlphaReviewContext,identityForSavedGarment}
  from '../../public/family-alpha-2d-saved-board.mjs';
 
 const MAX_PIXELS=8_000_000;
@@ -27,12 +27,30 @@ const validScope=(getScope,ownerId,epoch,isCurrent)=>{
   throw Error('Family Alpha account or session changed');
  return next.epoch;
 };
-function validateLiveRecord(item,getItem){
+function reviewSnapshot(item){
+ return Object.freeze({
+  image:item?.image,
+  original:sourceOf(item),
+  region:item?.recognitionPhoto?.image??null,
+  hint:JSON.stringify(item?.segmentHint??null),
+  category:item?.category,
+  type:item?.itemType,
+  sleeve:item?.sleeveLength,
+  sourceGroup:item?.outfitSourceId??null
+ });
+}
+function validateLiveRecord(item,getItem,expected){
  const current=getItem?.(item.id);
- if(!current||current.id!==item.id||current.image!==item.image||
-  sourceOf(current)!==sourceOf(item)||
+ const check=value=>{
+  const now=reviewSnapshot(value);
+  return now.image===expected.image&&now.original===expected.original&&
+   now.region===expected.region&&now.hint===expected.hint&&
+   now.category===expected.category&&now.type===expected.type&&
+   now.sleeve===expected.sleeve&&now.sourceGroup===expected.sourceGroup;
+ };
+ if(!current||current.id!==item.id||!check(item)||!check(current)||
   identityForSavedGarment(current)!==identityForSavedGarment(item))
-  throw Error('Saved original or wardrobe identity changed');
+  throw Error('Saved original, garment region or wardrobe identity changed');
 }
 function validateFrame(frame){
  if(!frame||!Number.isInteger(frame.width)||!Number.isInteger(frame.height)||
@@ -102,19 +120,21 @@ export async function prepareReviewedPhotoPresentation({
   return reviewOnly('reject','invalid-owner-or-source-interface');
  let epoch;
  try{
+  const initial=reviewSnapshot(item);
   epoch=validScope(getScope,ownerId,undefined,isCurrent);
-  validateLiveRecord(item,getItem);
+  validateLiveRecord(item,getItem,initial);
   const original=sourceOf(item),sourceIdentity=identityForSavedGarment(item);
   const sourceVersion=await fingerprintAlphaRetainedOriginal(original,cryptoProvider);
+  const reviewContextVersion=await fingerprintAlphaReviewContext(item,cryptoProvider);
   const cropSha=await fingerprintSavedCrop(item,cryptoProvider);
   validScope(getScope,ownerId,epoch,isCurrent);
-  validateLiveRecord(item,getItem);
+  validateLiveRecord(item,getItem,initial);
   // Browser default: decode from actual retained JPEG bytes. Decode AGAIN in
   // independent audit so the producer cannot merely attest its own output.
   const frame=await decodeOriginal(original);
   validateFrame(frame);
   validScope(getScope,ownerId,epoch,isCurrent);
-  validateLiveRecord(item,getItem);
+  validateLiveRecord(item,getItem,initial);
   const raw=prepareSyntheticGarmentOriginal(frame,{
    category:item.category,sourceIdentity,sourceVersion
   });
@@ -127,7 +147,7 @@ export async function prepareReviewedPhotoPresentation({
    decodeOriginal,cryptoProvider,isCurrent
   });
   validScope(getScope,ownerId,epoch,isCurrent);
-  validateLiveRecord(item,getItem);
+  validateLiveRecord(item,getItem,initial);
   // No synthetic ground-truth: even an exact RGB match is REVIEW only.
   if(audited.status!=='review'||audited.reason!=='source-pixels-match-but-matting-unverified')
    return reviewOnly(audited.status==='reject'?'reject':'review',audited.reason);
@@ -135,7 +155,7 @@ export async function prepareReviewedPhotoPresentation({
    return reviewOnly('review','explicit-preview-confirmation-required');
   const preview=await makeTransparentImage(raw);
   validScope(getScope,ownerId,epoch,isCurrent);
-  validateLiveRecord(item,getItem);
+  validateLiveRecord(item,getItem,initial);
   // Keep candidate image ephemeral; never upload or store it. The reviewer
   // must see the actual transparent image next to the original for approval.
   const approved=await reviewPreview(Object.freeze({
@@ -145,20 +165,21 @@ export async function prepareReviewedPhotoPresentation({
    verifiedOriginalPixels:true,segmentationGroundTruthUnavailable:true
   }));
   validScope(getScope,ownerId,epoch,isCurrent);
-  validateLiveRecord(item,getItem);
+  validateLiveRecord(item,getItem,initial);
   if(approved!==true)return reviewOnly('review','preview-not-approved');
   if(await fingerprintAlphaRetainedOriginal(sourceOf(getItem(item.id)),cryptoProvider)!==sourceVersion||
-     await fingerprintSavedCrop(getItem(item.id),cryptoProvider)!==cropSha)
-   return reviewOnly('reject','original-or-crop-changed');
+     await fingerprintSavedCrop(getItem(item.id),cryptoProvider)!==cropSha||
+     await fingerprintAlphaReviewContext(getItem(item.id),cryptoProvider)!==reviewContextVersion)
+   return reviewOnly('reject','original-region-or-crop-changed');
   validScope(getScope,ownerId,epoch,isCurrent);
-  validateLiveRecord(item,getItem);
+  validateLiveRecord(item,getItem,initial);
   // A human-approved visual presentation is NOT independent source-mask
   // segmentation proof or an authorization verdict. Caller still requires
   // real Auth + Supabase RLS and must never claim physical virtual try-on.
   return Object.freeze({
    status:'approved-for-staging-preview',reason:'visually-confirmed-source-pixels',
    presentation:Object.freeze({
-    itemId:item.id,ownerId,sourceIdentity,sourceVersion,
+    itemId:item.id,ownerId,sourceIdentity,sourceVersion,reviewContextVersion,
     approved:true,image:preview,
     humanPreviewConfirmed:true,sourcePixelAuditPassed:true,
     sourceMaskGroundTruthUnverified:true,stagingPreviewOnly:true
