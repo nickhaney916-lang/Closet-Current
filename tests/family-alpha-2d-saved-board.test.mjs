@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {webcrypto} from 'node:crypto';
 import {
- fingerprintAlphaRetainedOriginal,identityForSavedGarment,
+ fingerprintAlphaRetainedOriginal,fingerprintAlphaReviewContext,identityForSavedGarment,
  prepareSavedBoard2D,renderSavedBoard2D
 } from '../public/family-alpha-2d-saved-board.mjs';
 
@@ -23,6 +23,7 @@ const assemble=async(items,owner=a)=>{
  for(const x of items)presentations[x.id]={
   itemId:x.id,ownerId:owner,sourceIdentity:identityForSavedGarment(x),
   sourceVersion:await fingerprintAlphaRetainedOriginal(x.originalPhoto?.image||x.image,webcrypto),
+  reviewContextVersion:await fingerprintAlphaReviewContext(x,webcrypto),
   approved:true,image:{id:x.id}
  };
  return presentations;
@@ -157,4 +158,57 @@ test('new render supersedes old digest request without erasing newer account res
   await assert.rejects(old,/Superseded/);
   assert.equal(container.children[0].children[1].dataset.slot,'top','prior request never wipes newest frame');
  }finally{globalThis.document=oldDoc;globalThis.HTMLImageElement=oldEl;}
+});
+
+test('layered real outfit keeps short and long sleeves on base top and jackets above them',async()=>{
+ const base=item('short-top','Tops',21);base.sleeveLength='Short sleeve';
+ const long=item('long-top','Tops',23);long.sleeveLength='Long sleeve';
+ const jacket=item('outer-jacket','Outerwear',25);jacket.itemType='Jacket';
+ const bottom=item('blue-jeans','Bottoms',27),shoes=item('sneakers','Shoes',29);
+ const owned=[base,long,jacket,bottom,shoes];
+ for(const top of [base,long]){
+  const prepared=await prepare({slots:{top:top.id,bottom:bottom.id,
+   shoes:shoes.id,layer2:jacket.id},layerCount:2},owned,await assemble(owned));
+  assert.deepEqual(prepared.layerRefs.map(x=>x.slot),['shoes','bottom','top','layer2']);
+  assert.equal(prepared.outfit.top,top.id);
+  assert.equal(prepared.outfit.layer2,'outer-jacket');
+ }
+ const dress=item('one-dress','Dresses',31);
+ await assert.rejects(prepare({slots:{top:dress.id,bottom:bottom.id,layer2:jacket.id}},
+  [...owned,dress],await assemble([...owned,dress])),/Dress cannot be combined/);
+});
+test('full outfit unchanged, different unmasked recognition JPEG invalidates approved avatar cutout',async()=>{
+ const garment=item('outfit-shirt','Tops',35);
+ garment.outfitSourceId='scene-synth-1';
+ garment.recognitionPhoto={image:mkJPEG(67)};
+ garment.segmentHint={categories:['Tops'],types:['T-shirt'],clipped:false};
+ const references=await assemble([garment]);
+ assert.equal((await prepare({slots:{top:garment.id}},[garment],references)).layerRefs.length,1);
+ const keptOriginal=garment.originalPhoto.image,keptDisplay=garment.image;
+ garment.recognitionPhoto.image=mkJPEG(69);
+ assert.equal(garment.originalPhoto.image,keptOriginal);
+ assert.equal(garment.image,keptDisplay);
+ await assert.rejects(prepare({slots:{top:garment.id}},[garment],references),/stale/);
+});
+test('changing segment hint or garment subtype invalidates previous human-approved layer',async()=>{
+ const garment=item('outfit-bottom','Bottoms',37);
+ garment.recognitionPhoto={image:mkJPEG(70)};
+ garment.segmentHint={categories:['Bottoms'],types:['Shorts'],clipped:false};
+ garment.itemType='Shorts';
+ const p=await assemble([garment]);
+ const board={slots:{bottom:garment.id}};
+ assert.equal((await prepare(board,[garment],p)).layerRefs[0].slot,'bottom');
+ garment.segmentHint={categories:['Bottoms'],types:['Skirt'],clipped:false};
+ await assert.rejects(prepare(board,[garment],p),/stale/);
+ garment.segmentHint={categories:['Bottoms'],types:['Shorts'],clipped:false};
+ garment.itemType='Skirt';
+ await assert.rejects(prepare(board,[garment],p),/stale/);
+});
+test('no per-garment region proof is accepted for a multi-item presentation',async()=>{
+ const garment=item('outfit-skirt','Bottoms',43);
+ garment.recognitionPhoto={image:mkJPEG(74)};
+ garment.segmentHint={categories:['Bottoms'],types:['Skirt'],clipped:false};
+ const p=await assemble([garment]);
+ delete p[garment.id].reviewContextVersion;
+ await assert.rejects(prepare({slots:{bottom:garment.id}},[garment],p),/stale/);
 });
