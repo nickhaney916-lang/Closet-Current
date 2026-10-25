@@ -24,6 +24,7 @@ const run=promisify(execFile);
 export const STAGE_ID='fbnplztkbsteuzrmbgib';
 export const PROD_ID='hlkgymugtfbirlpunsra';
 export const STAGE_BASE='https://'+STAGE_ID+'.supabase.co';
+export const APPROVED_STAGE_CALLBACK='https://closet-current-staging.pages.dev/';
 export const PROD_BASE='https://'+PROD_ID+'.supabase.co';
 export const SRC='dist-family-alpha-candidate';
 export const OUT='dist-family-alpha-staging-auth-hold';
@@ -35,18 +36,18 @@ function replaceOnce(text,oldValue,newValue){
  if(pieces.length!==2)throw Error('Staging auth expected exactly one original: '+oldValue.slice(0,90));
  return pieces.join(newValue);
 }
-function validRedirect(url){
+// Owner-approved exact protected staging root ONLY; no pilot, preview, live,
+// wildcard, alternate host/path, credentials, query or fragment.
+export function validRedirect(url){
  if(typeof url!=='string'||!url)return null;
  try{
   const parsed=new URL(url);
-  if(parsed.protocol!=='https:'||!parsed.hostname||parsed.username||parsed.password||
-   parsed.search||parsed.hash||parsed.port||
-   !['/','/Closet-Current/'].includes(parsed.pathname)||
-   parsed.hostname==='nickhaney916-lang.github.io'||
-   parsed.hostname==='localhost'||parsed.hostname.endsWith('.invalid')===false&&
-    parsed.hostname.endsWith('.github.io'))
+  if(parsed.href!==APPROVED_STAGE_CALLBACK||parsed.protocol!=='https:'||
+   parsed.username||parsed.password||parsed.search||parsed.hash||
+   parsed.pathname!=='/'||parsed.port||
+   parsed.hostname!=='closet-current-staging.pages.dev')
    return null;
-  return parsed.href;
+  return APPROVED_STAGE_CALLBACK;
  }catch{return null;}
 }
 export function stageConfigScript({approvedRedirect,publicKey,enableForTesting=false}={}){
@@ -66,7 +67,7 @@ export function stageConfigScript({approvedRedirect,publicKey,enableForTesting=f
   releaseGate:'HOLD'};
  return "'use strict';\n// Generated staging AUTH config. NEVER deploy without Access + redirect approval.\n"+
   "(function(){const candidate=Object.freeze("+JSON.stringify(config)+");\n"+
-  " const sameHost=Boolean(candidate.redirect)&&location.origin===new URL(candidate.redirect).origin;\n"+
+  " const sameHost=Boolean(candidate.redirect)&&candidate.redirect==='https://closet-current-staging.pages.dev/'&&location.protocol==='https:'&&location.origin==='https://closet-current-staging.pages.dev'&&location.pathname==='/';\n"+
   " const ready=candidate.intent==='explicit-qa-only'&&location.protocol==='https:'&&"+
    "sameHost&&candidate.key.startsWith('sb_publishable_')&&"+
    "candidate.base==='https://"+STAGE_ID+".supabase.co'&&"+
@@ -77,8 +78,9 @@ export function stageConfigScript({approvedRedirect,publicKey,enableForTesting=f
 }
 const safeAuthGuard=` const stage=window.__CLOSET_ALPHA_STAGE_AUTH__;
  if(!stage||stage.ready!==true||stage.base!=='${STAGE_BASE}'||
-    stage.releaseGate!=='HOLD'||!stage.redirect.startsWith(location.origin+'/')||
-    location.protocol!=='https:'){
+    stage.releaseGate!=='HOLD'||stage.redirect!=='https://closet-current-staging.pages.dev/'||
+    location.origin!=='https://closet-current-staging.pages.dev'||
+    location.protocol!=='https:'||location.pathname!=='/'){
   // A missing approved redirect/key MUST NOT silently fall back to the
   // production Supabase account or a previous device's local Auth token.
   const auth=document.getElementById('authGate'),shell=document.getElementById('appShell');
@@ -191,7 +193,7 @@ export async function buildStagingAuthCandidate({
   schemaVersion:1,kind:'Family Alpha staged Auth routing — OFFLINE ONLY / NOT DEPLOYED',
   releaseGate:'HOLD',projectRef:STAGE_ID,stageApiUrl:STAGE_BASE,
   emailRedirect:enableForTesting?approvedRedirect||null:null,
-  routingReadyForQa:enableForTesting===true&&Boolean(validRedirect(approvedRedirect))&&
+  routingReadyForQa:enableForTesting===true&&approvedRedirect===APPROVED_STAGE_CALLBACK&&
    typeof publicKey==='string'&&/^sb_publishable_/.test(publicKey),
   keyFingerprint:enableForTesting&&publicKey?sha(publicKey).slice(0,12):null,
   publishingAuthorized:false,realAuthTested:false,protectedAccessVerified:false,
@@ -223,6 +225,7 @@ export async function assertStagingAuthCandidate({root=resolve('.')}={}){
   !staged[0].includes("$('authMode').hidden=true")||
   staged[0].includes("request('signup'+EMAIL_REDIRECT")||
   !staged[0].includes("window.addEventListener?.('storage'")||
+  !staged[0].includes("stage.redirect!=='https://closet-current-staging.pages.dev/'")||
   !staged[1].includes('const E=window.ClosetBackupEngine,BASE=stage.base,KEY=stage.key')||
   !staged[2].includes(STAGE_BASE+'/auth/v1/user')||
   !staged[3].includes('alpha-stage-config.js')||
