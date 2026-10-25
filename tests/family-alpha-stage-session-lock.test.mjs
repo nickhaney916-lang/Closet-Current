@@ -34,7 +34,7 @@ function fixture(responses=[]){
  const window={
   __CLOSET_ALPHA_STAGE_AUTH__:{
    ready:true,base:STAGE_BASE,key:'sb_publishable_SYNTHETIC_ONLY',
-   redirect:'https://mock-staging.example.invalid/',releaseGate:'HOLD'
+   redirect:'https://closet-current-staging.pages.dev/',releaseGate:'HOLD'
   },
   Event:function Event(type){this.type=type;},
   dispatchEvent:event=>{dispatched.push(event.type);},
@@ -42,7 +42,7 @@ function fixture(responses=[]){
   closetCloud:{invalidateSession(){cloudClears++;}}
  };
  const location={
-  origin:'https://mock-staging.example.invalid',protocol:'https:',
+  origin:'https://closet-current-staging.pages.dev',protocol:'https:',
   pathname:'/',hash:'',search:'',reload(){reloads++;}
  };
  const fetch=async (url,options)=>{
