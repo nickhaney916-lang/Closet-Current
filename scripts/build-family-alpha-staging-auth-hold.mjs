@@ -130,7 +130,12 @@ export function stageIndexSource(original){
  const match=original.match(/<script src="auth\.js(?:\?v=[a-f0-9]+)?"\><\/script>/);
  if(!match||original.split(match[0]).length!==2)
   throw Error('Cannot safely inject staging configuration before production Auth script');
- return replaceOnce(original,match[0],
+ // Hide public Create account in the actual HTML, even when Auth startup
+ // is held before JS reaches the invite-only mode handler.
+ const inviteOnly=replaceOnce(original,
+  'id="authMode" type="button">Create an account</button>',
+  'id="authMode" type="button" hidden>Create an account</button>');
+ return replaceOnce(inviteOnly,match[0],
   '<script src="alpha-stage-config.js"></script>'+match[0]);
 }
 export function stagePwaSource(){
@@ -218,6 +223,7 @@ export async function assertStagingAuthCandidate({root=resolve('.')}={}){
   !staged[1].includes('const E=window.ClosetBackupEngine,BASE=stage.base,KEY=stage.key')||
   !staged[2].includes(STAGE_BASE+'/auth/v1/user')||
   !staged[3].includes('alpha-stage-config.js')||
+  !staged[3].includes('id="authMode" type="button" hidden')||
   !staged[4].includes("'HOLD'")||
   staged.some(v=>v.includes(PROD_BASE)))
   throw Error('Staging environment isolation failed');
