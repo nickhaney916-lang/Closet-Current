@@ -1,0 +1,43 @@
+name: Family Alpha staging verified invitation setup - NO DEPLOY
+on:
+  pull_request:
+    paths:
+      - 'scripts/family-alpha-stage-invite-acceptance.mjs'
+      - 'scripts/build-family-alpha-staging-auth-hold.mjs'
+      - 'tests/family-alpha-stage-invite-acceptance.test.mjs'
+      - 'docs/FAMILY-ALPHA-STAGING-INVITE-ACCEPTANCE-HOLD-20261025.md'
+      - '.github/workflows/family-alpha-staging-invite-acceptance-hold.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+env:
+  STAGE_PIN: '879f1b92fb15f9bc9a7f0429c7ee178f7bbf1373'
+  RECOGNITION_PIN: '795ad6637f8d4f782bc99751211b25e8e72a3a7d'
+  RECOVERY_PIN: '08ed6ac4a3fc921eae5d5d3df3bd3966429559d2'
+  REVIEW_PIN: '1ecac1079e75f1f25dc70a4c712b2448eb87dca8'
+jobs:
+  invitation-setup-offline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 27
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Fetch pinned staging and full original JPEG recognition sources
+        run: git fetch --no-tags origin "$STAGE_PIN" "$RECOGNITION_PIN" "$RECOVERY_PIN" "$REVIEW_PIN"
+      - name: Build staging-only registration-blocked Auth without callback or key
+        run: node scripts/build-family-alpha-staging-auth-hold.mjs
+      - name: Test verified invite password setup and no private closet before acceptance
+        run: node --test tests/family-alpha-stage-invite-acceptance.test.mjs
+      - name: Build staged original JPEG and avatar output with release HOLD
+        run: |
+          node scripts/build-family-alpha-recognition-integrated-hold.mjs
+          node scripts/build-family-alpha-protected-preview-hold.mjs
+      - name: Run all offline Node regressions
+        run: node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Refuse activated sign-in or invitations in the artifact
+        run: |
+          node --input-type=module -e "import{assertStagingAuthCandidate}from'./scripts/build-family-alpha-staging-auth-hold.mjs';import{assertProtectedPreviewHold}from'./scripts/build-family-alpha-protected-preview-hold.mjs';const a=await assertStagingAuthCandidate(),p=await assertProtectedPreviewHold();if(a.releaseGate!=='HOLD'||a.routingReadyForQa||a.publishingAuthorized||p.deployAllowed||p.ownerApproved||p.photoAvatarEnabled||p.stagingAuthKeyPresent||p.stagingCallbackRegistered)process.exit(1);console.log('Family Alpha invite password setup: offline proof only. No accounts/emails/deployment. HOLD.');"
