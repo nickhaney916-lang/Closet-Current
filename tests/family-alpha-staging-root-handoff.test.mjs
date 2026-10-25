@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
- STAGING_ROOT,OBSERVED_STAGE_DEPLOYMENT,exactObservedStagingRoot,
- classifyAssets,makeGate
+ STAGING_ROOT,OBSERVED_STAGE_DEPLOYMENT,OWNER_OBSERVED_ACCESS_SMOKE,
+ exactObservedStagingRoot,verifyOwnerAccessSmoke,classifyAssets,makeGate
 } from '../scripts/audit-family-alpha-staging-root-handoff.mjs';
 
 const candidate=()=>classifyAssets([
@@ -91,4 +91,39 @@ test('changed HOLD flag, disabled Auth proof, local-only boot or production rout
  assert.throws(()=>gate({boot:'preview enabled at staging'}));
  assert.throws(()=>gate({index:'<script src="auth.js"></script>'}));
  assert.throws(()=>gate({candidate:classifyAssets(['index.html'])}));
+});
+
+test('owner-reported Access login challenge covers four exact staging URLs, not identity denial',()=>{
+ const observed=verifyOwnerAccessSmoke();
+ assert.equal(OWNER_OBSERVED_ACCESS_SMOKE.source,'OWNER_REPORTED_INCOGNITO_BROWSER');
+ assert.equal(observed.observedChallenges,4);
+ assert.equal(observed.rootLoginChallengeObserved,true);
+ assert.equal(observed.indexHtmlLoginChallengeObserved,true);
+ assert.equal(observed.previewLoginChallengeObserved,true);
+ assert.equal(observed.hashedDeployLoginChallengeObserved,true);
+ assert.equal(observed.approvedOwnerReachedPlaceholder,true);
+ assert.equal(observed.unapprovedEmailCodeNotReceived,true);
+ assert.equal(observed.unapprovedIdentityDenialProven,false);
+ assert.equal(observed.allStaticAssetsProven,false);
+ const g=gate();
+ assert.equal(g.ownerObservedIncognitoChallenges,4);
+ assert.deepEqual(g.ownerObservedAccessPaths,observed.checkedUrls);
+ assert.equal(g.ownerReachedPlaceholderAfterAuthentication,true);
+ assert.equal(g.indexHtmlLoginChallengeObserved,true);
+ assert.equal(g.unapprovedEmailCodeNotReceived,true);
+ assert.equal(g.unapprovedIdentityDeniedProven,false);
+ assert.equal(g.protectedStaticAssetPathsTested,false);
+ assert.equal(g.deployAllowed,false);
+ assert.equal(g.familyInvitesAllowed,false);
+});
+test('incomplete Access observations or invented unauthorized denial fail the audit',()=>{
+ const observed=OWNER_OBSERVED_ACCESS_SMOKE;
+ for(const smoke of [
+  {...observed,unapprovedSessionDenialVerified:true},
+  {...observed,allStaticAssetsProtectedVerified:true},
+  {...observed,checks:observed.checks.slice(0,3)},
+  {...observed,approvedOwnerReachedAccessPlaceholder:false},
+  {...observed,checks:observed.checks.map((x,i)=>i===1?{...x,result:'APP_LOADED'}:x)},
+  {...observed,checks:observed.checks.map((x,i)=>i===3?{...x,url:'https://closet-current.pages.dev/'}:x)}
+ ])assert.throws(()=>gate({accessSmoke:smoke}),/Cloudflare Access smoke/);
 });
