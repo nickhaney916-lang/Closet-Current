@@ -67,7 +67,12 @@ function harness({type='invite',getUserId='synthetic-invite-owner',putUserId=get
   get replaced(){return replaced;},
   get reloads(){return reloads;},
   async settle(){await new Promise(r=>setImmediate(r));},
-  async submit(){await el.get('authForm').onsubmit({preventDefault(){}});}
+  async submit(){
+   // The actual callback intentionally clears any prefilled password first.
+   // Simulate the tester entering a new password only AFTER link verification.
+   el.get('authPassword').value='new-password-12345';
+   await el.get('authForm').onsubmit({preventDefault(){}});
+  }
  };
 }
 test('new invitation step is added only to isolated staged Auth, leaving original production code unchanged',()=>{
