@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {runInNewContext} from 'node:vm';
 import {readFile} from 'node:fs/promises';
 import {
  STAGE_ID,STAGE_BASE,PROD_ID,PROD_BASE,SRC,OUT,stageConfigScript,
@@ -129,4 +130,28 @@ test('only exact staging Pages root can be activated, even with a public QA key'
  assert.match(src,/candidate.redirect==='https:\/\/closet-current-staging\.pages\.dev\/'/);
  assert.match(src,/location.pathname==='\/'/);
  assert.doesNotMatch(src,/pilot-access-check|alpha-preview\.example\.com|closet-current.pages.dev\/|hlkgymugtfbirlpunsra/);
+});
+
+test('staging Auth bootstrap rejects preview and live origins even with valid synthetic public config',()=>{
+ const script=stageConfigScript({
+  approvedRedirect:APPROVED_STAGE_CALLBACK,
+  publicKey:'sb_publishable_SYNTHETIC_ONLY_12345678',
+  enableForTesting:true
+ });
+ for(const [location,ready] of [
+  [{protocol:'https:',origin:'https://closet-current-staging.pages.dev',pathname:'/'},true],
+  [{protocol:'https:',origin:'https://closet-current-staging.pages.dev',pathname:'/evil'},false],
+  [{protocol:'https:',origin:'https://pilot-access-check.closet-current-staging.pages.dev',pathname:'/'},false],
+  [{protocol:'https:',origin:'https://a15254d6.closet-current-staging.pages.dev',pathname:'/'},false],
+  [{protocol:'https:',origin:'https://closet-current.pages.dev',pathname:'/'},false],
+  [{protocol:'http:',origin:'http://closet-current-staging.pages.dev',pathname:'/'},false]
+ ]){
+  const window={};
+  runInNewContext(script,{window,location});
+  const config=window.__CLOSET_ALPHA_STAGE_AUTH__;
+  assert.equal(config.ready,ready,JSON.stringify(location));
+  assert.equal(config.projectRef,STAGE_ID);
+  assert.equal(config.releaseGate,'HOLD');
+  assert.equal(Object.isFrozen(config),true);
+ }
 });
