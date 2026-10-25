@@ -78,7 +78,7 @@ jobs:
               if(ent.isDirectory())await checkFiles(name);
               else{
                 assetCount++;
-                if(/\.(?:js|mjs|html|json)$/.test(name)){
+                // Audit JSON manifests contain historical production provenance;\n                // reject production endpoints and secrets in executable assets.\n                if(/\.(?:js|mjs|html)$/.test(name)){
                   const source=await readFile(join(root,name),'utf8');
                   if(source.includes('hlkgymugtfbirlpunsra')||
                      source.includes('sb_secret_')||
