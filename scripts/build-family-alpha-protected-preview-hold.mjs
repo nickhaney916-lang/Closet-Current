@@ -65,7 +65,9 @@ export function guardedStagingPreviewBoot(localBoot){
   !localBoot.includes('window.closetCloud?.getOwnerId')||
   !localBoot.includes('mountAlphaBuilderPreview')||
   !localBoot.includes("getLatestItem:id=>items.find(item=>item.id===id)||null")||
-  !localBoot.includes('getScope')===false)
+  !localBoot.includes('getDatabase:()=>db')||
+  !localBoot.includes('fetchFn:window.fetch.bind(window)')||
+  !localBoot.includes('localApproved:true'))
   throw Error('Changed source preview: refuse staging adapter until code is reviewed');
  const replacement=` const stage=window.__CLOSET_ALPHA_STAGE_AUTH__;
  const rollout=window.__CLOSET_ALPHA_PREVIEW_ROLLOUT__;
@@ -76,7 +78,8 @@ export function guardedStagingPreviewBoot(localBoot){
  if(!eligible)return;`;
  const adapted=localBoot.replace(SOURCE_GATE,replacement);
  if(adapted.includes(SOURCE_GATE)||adapted.includes('__CLOSET_CURRENT_FAMILY_ALPHA_LOCAL_PREVIEW__')||
-  !adapted.includes('verifyAlphaAuthUser')===false||
+  !adapted.includes('stage?.ready===true')||
+  !adapted.includes('localApproved:true')||
   adapted.includes(PROD_BASE))
   throw Error('Unsafe staged preview boot rewrite');
  return adapted.replace(
