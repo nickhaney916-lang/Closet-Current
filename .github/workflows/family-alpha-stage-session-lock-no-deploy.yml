@@ -1,0 +1,43 @@
+name: Family Alpha STAGING session rejection and cross-tab lock - NO DEPLOY
+on:
+  pull_request:
+    paths:
+      - 'scripts/family-alpha-stage-session-hardening.mjs'
+      - 'scripts/build-family-alpha-staging-auth-hold.mjs'
+      - 'tests/family-alpha-stage-session-lock.test.mjs'
+      - 'docs/FAMILY-ALPHA-STAGING-SESSION-LOCK-20261025.md'
+      - '.github/workflows/family-alpha-stage-session-lock-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+env:
+  STAGE_PIN: '879f1b92fb15f9bc9a7f0429c7ee178f7bbf1373'
+  RECOGNITION_PIN: '795ad6637f8d4f782bc99751211b25e8e72a3a7d'
+  RECOVERY_PIN: '08ed6ac4a3fc921eae5d5d3df3bd3966429559d2'
+  REVIEW_PIN: '1ecac1079e75f1f25dc70a4c712b2448eb87dca8'
+jobs:
+  stage-auth-offline-lock:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Fetch exact pinned protected stage and recognition commits
+        run: git fetch --no-tags origin "$STAGE_PIN" "$RECOGNITION_PIN" "$RECOVERY_PIN" "$REVIEW_PIN"
+      - name: Build default-disabled staging Auth only
+        run: node scripts/build-family-alpha-staging-auth-hold.mjs
+      - name: Check staged Auth source lock regression scenarios with synthetic users
+        run: node --test tests/family-alpha-stage-session-lock.test.mjs
+      - name: Build complete source-locked Family Alpha 2D development HOLD candidate
+        run: node scripts/build-family-alpha-recognition-integrated-hold.mjs
+      - name: Build separate disabled protected-stage avatar
+        run: node scripts/build-family-alpha-protected-preview-hold.mjs
+      - name: Run complete offline Node regression suite
+        run: node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Verify all variants remain disabled - no live deploy
+        run: |
+          node --input-type=module -e "import {assertProtectedPreviewHold} from './scripts/build-family-alpha-protected-preview-hold.mjs';const x=await assertProtectedPreviewHold();if(x.releaseGate!=='HOLD'||x.deployAllowed||x.ownerApproved||x.stagingAuthReady||x.stagingAuthKeyPresent||x.stagingCallbackRegistered)process.exit(1);console.log('STAGING USER SESSION FIX PASS; FAMILY ALPHA DEPLOYMENT HOLD.');"
