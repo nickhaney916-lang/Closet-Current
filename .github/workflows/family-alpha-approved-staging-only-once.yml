@@ -17,7 +17,7 @@ env:
   REVIEW_PIN: '1ecac1079e75f1f25dc70a4c712b2448eb87dca8'
 jobs:
   deploy-login-disabled-stage-only:
-    if: github.event.head_commit.message == 'deploy(stage): owner-approved login-disabled Family Alpha only 2026-10-25'
+    if: "github.event.head_commit.message == 'deploy(stage): owner-approved login-disabled Family Alpha only 2026-10-25'"
     runs-on: ubuntu-latest
     timeout-minutes: 35
     steps:
@@ -32,8 +32,8 @@ jobs:
         run: |
           set -euo pipefail
           test "$GITHUB_REF" = "refs/heads/deploy/approved-staging-login-disabled-family-alpha-20261025"
-          test "$(git rev-parse HEAD^)" = "51c21462d440f9339008ecb43ef049d5bccde446"
-          test "$(git diff --name-only HEAD^ HEAD)" = ".github/workflows/family-alpha-approved-staging-only-once.yml"
+          git merge-base --is-ancestor "51c21462d440f9339008ecb43ef049d5bccde446" HEAD
+          test "$(git diff --name-only 51c21462d440f9339008ecb43ef049d5bccde446 HEAD)" = ".github/workflows/family-alpha-approved-staging-only-once.yml"
           echo 'Owner-approved staging-only source commit matched. Production remains out of scope.'
       - name: Fetch source-pinned staging, recognition, recovery and review commits
         run: git fetch --no-tags origin "$STAGE_PIN" "$RECOGNITION_PIN" "$RECOVERY_PIN" "$REVIEW_PIN"
