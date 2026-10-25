@@ -1,10 +1,8 @@
 name: Owner-approved Family Alpha staging-only login-disabled upload
+# One-time staging upload completed successfully in run 40237500438.
+# Trigger retired after upload. This branch cannot redeploy automatically.
 on:
-  push:
-    branches:
-      - deploy/approved-staging-login-disabled-family-alpha-20261025
-    paths:
-      - .github/workflows/family-alpha-approved-staging-only-once.yml
+  workflow_dispatch:
 permissions:
   contents: read
 concurrency:
@@ -17,7 +15,7 @@ env:
   REVIEW_PIN: '1ecac1079e75f1f25dc70a4c712b2448eb87dca8'
 jobs:
   deploy-login-disabled-stage-only:
-    if: "github.event.head_commit.message == 'deploy(stage): owner-approved login-disabled Family Alpha only 2026-10-25'"
+    if: ${{ false }}
     runs-on: ubuntu-latest
     timeout-minutes: 35
     steps:
