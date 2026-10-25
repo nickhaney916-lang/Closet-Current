@@ -20,7 +20,7 @@ function fixture(){
  const window={
   __CLOSET_ALPHA_STAGE_AUTH__:{
    ready:true,base:STAGE_BASE,key:'sb_publishable_SYNTHETIC_BROWSER_TEST',
-   redirect:'https://test-only.example.invalid/',releaseGate:'HOLD'
+   redirect:'https://closet-current-staging.pages.dev/',releaseGate:'HOLD'
   },
   addEventListener:(name,fn)=>events.set(name,fn),
   Event:function Event(name){this.type=name;},
@@ -38,7 +38,7 @@ function fixture(){
   throw Error('Unexpected synthetic Auth call');
  };
  const location={
-  origin:'https://test-only.example.invalid',protocol:'https:',pathname:'/',
+  origin:'https://closet-current-staging.pages.dev',protocol:'https:',pathname:'/',
   hash:'',search:'',reload(){}
  };
  vm.runInNewContext(staged,{
