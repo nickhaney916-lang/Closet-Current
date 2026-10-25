@@ -40,3 +40,20 @@ It cross-checks the original-JPEG/2D candidate, static resource closure, Cloudfl
 Never merge or run the existing production deploy workflow in order to perform staging activation; it targets the live `closet-current` Pages project. Check the exact staging artifact and project destination at every authorized deployment step.
 
 **No account creation, emails, SQL or provider writes, photo downloads/uploads, deployment, merge, spending, production changes or Drive Duel changes in this work.**
+
+
+## Owner screenshot reconfirmation — October 25, 2026
+
+The owner opened **Supabase staging → Authentication → URL Configuration** on a phone and showed:
+
+- **Site URL** still displays the beginning of the temporary `https://pilot-access-check.closet-current-staging.pages.dev/` address. No change was saved.
+- **Redirect URLs** shows **Total URLs: 2**, consisting of the exact `https://pilot-access-check.closet-current-staging.pages.dev/` and `https://closet-current-staging.pages.dev/` entries. No wildcard or production redirect was shown.
+- Supabase dashboard displayed a banner that it was investigating a technical issue; this is a dated UI observation, not evidence of an active Auth delivery failure.
+
+These screens strengthen the evidence about current displayed configuration but **do not** mean email confirmations or redirects have passed an actual new-user delivery test. Do not change Site URL until separately approved.
+
+## Browser smoke of the final assembled protected staging bundle
+
+In addition to the held bundle's Node and asset graph regressions, `scripts/test-family-alpha-final-protected-hold-browser.mjs` exercises the **final** `dist-family-alpha-protected-preview-hold` output in Chromium and WebKit at 360 and 430px, loading three **fully intercepted synthetic origins**: intended staging root, a deployment-hash preview, and the production-named host. All requests are served from the local generated bundle or blocked. There are no live Cloudflare, Supabase, Resend or production requests.
+
+The test insists that the app stays behind the Auth gate; the staged Auth key and callback are empty; the avatar rollout is disabled; legacy production localStorage sessions are ignored; and no missing startup assets, external requests, provider calls or page errors occur. This only verifies **inert/offline** browser behavior. It is neither successful approved staging sign-in nor live privacy/photo proof, and cannot authorize deployment.
