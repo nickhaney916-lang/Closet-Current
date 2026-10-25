@@ -17,6 +17,7 @@ import {fileURLToPath} from 'node:url';
 import {execFile} from 'node:child_process';
 import {promisify} from 'node:util';
 import {assertCandidate,listFiles} from './build-family-alpha-staging.mjs';
+import {hardenStagingAuthSession} from './family-alpha-stage-session-hardening.mjs';
 const run=promisify(execFile);
 export const STAGE_ID='fbnplztkbsteuzrmbgib';
 export const PROD_ID='hlkgymugtfbirlpunsra';
@@ -106,7 +107,7 @@ export function stageAuthSource(original){
  if(code.includes(PROD_ID)||code.includes('nickhaney916-lang.github.io')||
     code.includes('sb_publishable_5bw6Gkrw3Qx73dZYGNzmIw_x_OoauDO'))
   throw Error('Production Auth reference remains in staged Auth script');
- return code;
+ return hardenStagingAuthSession(code);
 }
 export function stageCloudSource(original){
  const old="(function(){\n const E=window.ClosetBackupEngine,BASE='"+PROD_BASE+"',KEY='sb_publishable_5bw6Gkrw3Qx73dZYGNzmIw_x_OoauDO',BUCKET='closet-private';";
@@ -208,6 +209,8 @@ export async function assertStagingAuthCandidate({root=resolve('.')}={}){
  await verifyPreserved(source,target);
  const staged=await Promise.all(['auth.js','cloud-backup.js','family-alpha-2d-auth-preflight.mjs','index.html','alpha-stage-config.js','pwa.js'].map(f=>readFile(join(target,f),'utf8')));
  if(!staged[0].includes('closet-alpha-staging-auth-v1')||
+  !staged[0].includes('stageTerminalRefreshError')||
+  !staged[0].includes("window.addEventListener?.('storage'")||
   !staged[1].includes('const E=window.ClosetBackupEngine,BASE=stage.base,KEY=stage.key')||
   !staged[2].includes(STAGE_BASE+'/auth/v1/user')||
   !staged[3].includes('alpha-stage-config.js')||
