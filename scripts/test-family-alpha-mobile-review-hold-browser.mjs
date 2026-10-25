@@ -128,13 +128,20 @@ try{
      assert.equal(await outerReview.isChecked(),false,'Changed outerwear color revokes earlier acknowledgement');
      await outerReview.check();
      await dialog.getByRole('button',{name:'Save changes'}).click();
+     assert.match(await dialog.locator('.photo-review-feedback').innerText(),/Choose a clothing category and color/,
+      'Unsupported Navy is still refused by the existing canonical color schema');
+     assert.equal(await page.evaluate(()=>items.length),0,'Unsupported color cannot be saved');
+     await dialog.locator('input[aria-label="Color"]').fill('Red');
+     assert.equal(await outerReview.isChecked(),false,'Correcting invalid color requires review again');
+     await outerReview.check();
+     await dialog.getByRole('button',{name:'Save changes'}).click();
      await dialog.waitFor({state:'detached'});
      const confirmedOuter=await page.evaluate(()=>({
       category:items[0]?.category,type:items[0]?.itemType,
       color:items[0]?.color,userAdjusted:items[0]?.userAdjusted
      }));
-     assert.deepEqual(confirmedOuter,{category:'Outerwear',type:'Unknown',color:'Navy',userAdjusted:true},
-      'Human accepted the broad Outerwear category without inventing a coat/jacket type');
+     assert.deepEqual(confirmedOuter,{category:'Outerwear',type:'Unknown',color:'Red',userAdjusted:true},
+      'Human accepted broad Outerwear without inventing Coat/Jacket, after valid color selection');
 
      // Layered image: display cutout is visibly distinct from original RGB
      // and full source outfit expands. A checkmark alone is never automatic.
