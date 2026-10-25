@@ -4,6 +4,8 @@ on:
     paths:
       - 'scripts/build-family-alpha-protected-preview-hold.mjs'
       - 'tests/family-alpha-protected-preview-hold.test.mjs'
+      - 'scripts/audit-family-alpha-stage-assets-hold.mjs'
+      - 'tests/family-alpha-stage-assets-hold.test.mjs'
       - 'docs/FAMILY-ALPHA-PROTECTED-PREVIEW-ACTIVATION-HOLD-20261025.md'
       - '.github/workflows/family-alpha-protected-preview-activation-hold.yml'
   workflow_dispatch:
@@ -33,6 +35,10 @@ jobs:
         run: node scripts/build-family-alpha-recognition-integrated-hold.mjs
       - name: Build separate, still disabled protected staging photo-avatar artifact
         run: node scripts/build-family-alpha-protected-preview-hold.mjs
+      - name: Verify every packaged full-app HTML CSS manifest and literal module asset exists (NO DEPLOY)
+        run: node scripts/audit-family-alpha-stage-assets-hold.mjs
+      - name: Test missing-assets, external URLs and traversal fail closed
+        run: node --test tests/family-alpha-stage-assets-hold.test.mjs
       - name: Check exact staging host, independent flags and no bypass paths
         run: node --test tests/family-alpha-protected-preview-hold.test.mjs
       - name: Check existing staging placeholder/full-app evidence remains gated
