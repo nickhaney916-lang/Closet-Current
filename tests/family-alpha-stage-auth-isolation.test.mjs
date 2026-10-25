@@ -1,8 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {runInNewContext} from 'node:vm';
 import {readFile} from 'node:fs/promises';
 import {
  STAGE_ID,STAGE_BASE,PROD_ID,PROD_BASE,SRC,OUT,stageConfigScript,
+ APPROVED_STAGE_CALLBACK,validRedirect,
  stageAuthSource,stageCloudSource,stageAvatarPreflightSource,
  stageIndexSource,stagePwaSource,assertStagingAuthCandidate
 } from '../scripts/build-family-alpha-staging-auth-hold.mjs';
@@ -37,7 +39,8 @@ test('unapproved stage config is HOLD and cannot accidentally sign in on a real 
  assert.match(src,/"redirect":""/);
  assert.match(src,/HOLD-NO-CALLBACK-OR-KEY/);
  assert.match(src,/releaseGate/);
- assert.match(src,/location\.origin===new URL\(candidate\.redirect\)\.origin/);
+ assert.match(src,/location\.origin==='https:\/\/closet-current-staging\.pages\.dev'/);
+ assert.match(src,/location\.pathname==='\/'/);
  assert.match(src,/Object\.defineProperty\(window,'__CLOSET_ALPHA_STAGE_AUTH__'/);
  assert.doesNotMatch(src,/nickhaney916-lang\.github\.io|hlkgymugtfbirlpunsra/);
 });
@@ -46,7 +49,13 @@ test('production, broken, non-HTTPS or missing staging callback/keys refuse an e
   'http://closet-alpha.example.com/','https://nickhaney916-lang.github.io/Closet-Current/',
   'https://localhost/','https://alpha.example.com/?secret=abc',
   'https://alpha.example.com/#frag','https://alpha.example.com/redirect',
-  'https://user:pass@alpha.example.com/'
+  'https://user:pass@alpha.example.com/',
+  'https://closet-current.pages.dev/',
+  'https://pilot-access-check.closet-current-staging.pages.dev/',
+  'https://a15254d6.closet-current-staging.pages.dev/',
+  'https://closet-current-staging.pages.dev.evil.example/',
+  'https://closet-current-staging.pages.dev/Closet-Current/',
+  'https://closet-current-staging.pages.dev/?next=/'
  ])assert.throws(()=>stageConfigScript({
   approvedRedirect:url,publicKey:'sb_publishable_SYNTHETIC_123456',
   enableForTesting:true
@@ -55,18 +64,18 @@ test('production, broken, non-HTTPS or missing staging callback/keys refuse an e
   approvedRedirect:'https://alpha.example.com/',publicKey:'wrong-key',enableForTesting:true
  }),/Invalid staging callback or publishable public key/);
  assert.throws(()=>stageConfigScript({
-  approvedRedirect:'https://alpha.example.com/',enableForTesting:true
+  approvedRedirect:APPROVED_STAGE_CALLBACK,enableForTesting:true
  }),/required together/);
  assert.throws(()=>stageConfigScript({
-  approvedRedirect:'https://alpha.example.com/',publicKey:'sb_publishable_SYNTHETIC_123456'
+  approvedRedirect:APPROVED_STAGE_CALLBACK,publicKey:'sb_publishable_SYNTHETIC_123456'
  }),/require explicit isolated test path/);
 });
 test('even explicit isolated QA needs correct HTTPS host and a separate publishable key',()=>{
  const src=stageConfigScript({
-  approvedRedirect:'https://alpha-preview.example.com/',
+  approvedRedirect:APPROVED_STAGE_CALLBACK,
   publicKey:'sb_publishable_SYNTHETIC_ONLY_12345678',enableForTesting:true
  });
- assert.match(src,/alpha-preview\.example\.com/);
+ assert.match(src,/closet-current-staging\.pages\.dev/);
  assert.match(src,/location\.protocol==='https:'/);
  assert.match(src,/fbnplztkbsteuzrmbgib/);
  assert.doesNotMatch(src,/hlkgymugtfbirlpunsra|nickhaney916-lang\.github\.io/);
@@ -94,4 +103,55 @@ test('CI isolated staging Auth artifact has only intended changes and cannot be 
  assert.ok([auth,cloud,preflight,config].every(x=>!x.includes(PROD_BASE)));
  assert.ok(ordinary.includes(PROD_BASE),'Existing normal build must not change');
  assert.equal(JSON.parse(manifest).emailRedirect,null);
+});
+
+test('only exact staging Pages root can be activated, even with a public QA key',()=>{
+ assert.equal(validRedirect(APPROVED_STAGE_CALLBACK),APPROVED_STAGE_CALLBACK);
+ for(const url of [
+   'https://closet-current.pages.dev/',
+   'https://pilot-access-check.closet-current-staging.pages.dev/',
+   'https://4f4bd85e.closet-current-staging.pages.dev/',
+   'https://closet-current-staging.pages.dev.evil.example/',
+   'https://closet-current-staging.pages.dev/Closet-Current/',
+   'https://closet-current-staging.pages.dev/?s=1',
+   'https://closet-current-staging.pages.dev/#invite',
+   'http://closet-current-staging.pages.dev/'
+ ]){
+  assert.equal(validRedirect(url),null,url);
+  assert.throws(()=>stageConfigScript({
+   approvedRedirect:url,publicKey:'sb_publishable_SYNTHETIC_ONLY_12345678',
+   enableForTesting:true
+  }),/Invalid staging callback/,url);
+ }
+ const src=stageConfigScript({
+  approvedRedirect:APPROVED_STAGE_CALLBACK,
+  publicKey:'sb_publishable_SYNTHETIC_ONLY_12345678',enableForTesting:true
+ });
+ assert.match(src,/candidate.redirect==='https:\/\/closet-current-staging\.pages\.dev\/'/);
+ assert.match(src,/location.pathname==='\/'/);
+ assert.doesNotMatch(src,/pilot-access-check|alpha-preview\.example\.com|closet-current.pages.dev\/|hlkgymugtfbirlpunsra/);
+});
+
+test('staging Auth bootstrap rejects preview and live origins even with valid synthetic public config',()=>{
+ const script=stageConfigScript({
+  approvedRedirect:APPROVED_STAGE_CALLBACK,
+  publicKey:'sb_publishable_SYNTHETIC_ONLY_12345678',
+  enableForTesting:true
+ });
+ for(const [location,ready] of [
+  [{protocol:'https:',origin:'https://closet-current-staging.pages.dev',pathname:'/'},true],
+  [{protocol:'https:',origin:'https://closet-current-staging.pages.dev',pathname:'/evil'},false],
+  [{protocol:'https:',origin:'https://pilot-access-check.closet-current-staging.pages.dev',pathname:'/'},false],
+  [{protocol:'https:',origin:'https://a15254d6.closet-current-staging.pages.dev',pathname:'/'},false],
+  [{protocol:'https:',origin:'https://closet-current.pages.dev',pathname:'/'},false],
+  [{protocol:'http:',origin:'http://closet-current-staging.pages.dev',pathname:'/'},false]
+ ]){
+  const window={};
+  runInNewContext(script,{window,location});
+  const config=window.__CLOSET_ALPHA_STAGE_AUTH__;
+  assert.equal(config.ready,ready,JSON.stringify(location));
+  assert.equal(config.projectRef,STAGE_ID);
+  assert.equal(config.releaseGate,'HOLD');
+  assert.equal(Object.isFrozen(config),true);
+ }
 });
