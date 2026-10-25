@@ -19,6 +19,54 @@ export const OBSERVED_STAGE_DEPLOYMENT=Object.freeze({
   unauthorizedUserDenialVerified:false,
   allStaticRoutesProtectedVerified:false
 });
+/** Owner-reported browser checks, NOT an API export or live authorization proof.
+ * Logged in this audit only after the owner personally tested each URL.
+ * Staging still serves the one-file Access placeholder; no release approval.
+ */
+export const OWNER_OBSERVED_ACCESS_SMOKE=Object.freeze({
+  observedOn:'2026-10-25',
+  source:'OWNER_REPORTED_INCOGNITO_BROWSER',
+  checks:Object.freeze([
+    Object.freeze({url:'https://closet-current-staging.pages.dev/',result:'CLOUDFLARE_LOGIN'}),
+    Object.freeze({url:'https://closet-current-staging.pages.dev/index.html',result:'CLOUDFLARE_LOGIN'}),
+    Object.freeze({url:'https://pilot-access-check.closet-current-staging.pages.dev/',result:'CLOUDFLARE_LOGIN'}),
+    Object.freeze({url:'https://a15254d6.closet-current-staging.pages.dev/',result:'CLOUDFLARE_LOGIN'})
+  ]),
+  approvedOwnerReachedAccessPlaceholder:true,
+  unapprovedEmailCodeNotReceived:true,
+  unapprovedSessionDenialVerified:false,
+  allStaticAssetsProtectedVerified:false
+});
+const EXPECTED_ACCESS_ROUTES=Object.freeze([
+ 'https://closet-current-staging.pages.dev/',
+ 'https://closet-current-staging.pages.dev/index.html',
+ 'https://pilot-access-check.closet-current-staging.pages.dev/',
+ 'https://a15254d6.closet-current-staging.pages.dev/'
+]);
+/** A login prompt alone is not a blocked unapproved identity. */
+export function verifyOwnerAccessSmoke(smoke=OWNER_OBSERVED_ACCESS_SMOKE){
+ if(smoke?.source!=='OWNER_REPORTED_INCOGNITO_BROWSER'||
+    smoke?.observedOn!=='2026-10-25'||
+    !Array.isArray(smoke?.checks)||smoke.checks.length!==EXPECTED_ACCESS_ROUTES.length||
+    smoke.checks.some((v,i)=>v?.url!==EXPECTED_ACCESS_ROUTES[i]||v?.result!=='CLOUDFLARE_LOGIN')||
+    smoke.approvedOwnerReachedAccessPlaceholder!==true||
+    smoke.unapprovedEmailCodeNotReceived!==true||
+    smoke.unapprovedSessionDenialVerified!==false||
+    smoke.allStaticAssetsProtectedVerified!==false)
+  throw Error('Cloudflare Access smoke evidence is incomplete or overstated');
+ return Object.freeze({
+  checkedUrls:EXPECTED_ACCESS_ROUTES,
+  observedChallenges:EXPECTED_ACCESS_ROUTES.length,
+  rootLoginChallengeObserved:true,
+  indexHtmlLoginChallengeObserved:true,
+  previewLoginChallengeObserved:true,
+  hashedDeployLoginChallengeObserved:true,
+  approvedOwnerReachedPlaceholder:true,
+  unapprovedEmailCodeNotReceived:true,
+  unapprovedIdentityDenialProven:false,
+  allStaticAssetsProven:false
+ });
+}
 const REQUIRED_FILES=Object.freeze([
   'index.html','app.js','auth.js','cloud-backup.js',
   'alpha-stage-config.js','family-alpha-preview-boot.js',
@@ -69,7 +117,7 @@ async function files(dir,prefix=''){
   }
   return out.sort();
 }
-export function makeGate({candidate,config,boot,index,manifest}){
+export function makeGate({candidate,config,boot,index,manifest,accessSmoke=OWNER_OBSERVED_ACCESS_SMOKE}){
   if(candidate.kind!=='OFFLINE_FULL_APP_FILES')throw Error('Full offline app files absent');
   if(manifest.releaseGate!=='HOLD'||manifest.stageAuthBlocked!==true||
     manifest.missingPublishableKey!==true||manifest.missingApprovedCallback!==true||
@@ -83,6 +131,7 @@ export function makeGate({candidate,config,boot,index,manifest}){
     throw Error('Staging sign-in or local-only preview changed');
   if([config,boot,index].some(v=>v.includes('https://'+PROD_ID+'.supabase.co')))
     throw Error('Production Supabase project embedded');
+  const observedAccess=verifyOwnerAccessSmoke(accessSmoke);
   const deployed=classifyAssets(OBSERVED_STAGE_DEPLOYMENT.uploadedAssets);
   if(deployed.kind!=='ACCESS_TEST_PLACEHOLDER')
     throw Error('Historical staging screenshot evidence changed; re-verify');
@@ -98,7 +147,13 @@ export function makeGate({candidate,config,boot,index,manifest}){
     stagingCallbackRegisteredWithLiveAuth:false,
     actualFullAppDeployed:false,
     ownerAllowedAccessChallengeObserved:true,
+    ownerObservedIncognitoChallenges:observedAccess.observedChallenges,
+    ownerObservedAccessPaths:observedAccess.checkedUrls,
+    indexHtmlLoginChallengeObserved:observedAccess.indexHtmlLoginChallengeObserved,
+    ownerReachedPlaceholderAfterAuthentication:observedAccess.approvedOwnerReachedPlaceholder,
+    unapprovedEmailCodeNotReceived:observedAccess.unapprovedEmailCodeNotReceived,
     unauthorizedAccountDenialTested:false,
+    unapprovedIdentityDeniedProven:false,
     protectedStaticAssetPathsTested:false,
     realStagingJwtRlsAndStorageTested:false,
     nativePhoneCaptureTested:false,
@@ -107,7 +162,7 @@ export function makeGate({candidate,config,boot,index,manifest}){
     familyInvitesAllowed:false,
     remainingBlockers:Object.freeze([
       'Explicit deployment approval and source-pinned deployable staging bundle',
-      'Exact protected root, static asset and non-allowlisted-user denial verification',
+      'Unapproved identity denial after full verification; broader asset/alias protection and re-check after full staging deployment',
       'Staging-only publishable key and registered root callback after approval',
       'Direct staging Auth signup policy, real approved test-account login and reset',
       'JWT A/B owner-scoped backup and private JPEG read/write denial proofs',
