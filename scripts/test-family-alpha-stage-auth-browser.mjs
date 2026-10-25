@@ -4,7 +4,8 @@ import {readFile} from 'node:fs/promises';
 import {chromium,webkit} from 'playwright';
 import {stageConfigScript,STAGE_BASE,PROD_BASE,OUT} from './build-family-alpha-staging-auth-hold.mjs';
 
-const root=OUT,qaOrigin='https://alpha-stage-qa.example.invalid';
+const root=OUT,qaOrigin='https://closet-current-staging.pages.dev';
+// Playwright intercepts every request for this hostname; NO live Cloudflare or Supabase calls.
 const pub='sb_publishable_SYNTHETIC_ONLY_FAKE_BROWSER_KEY_12345678';
 const configApproved=stageConfigScript({
  approvedRedirect:qaOrigin+'/',publicKey:pub,enableForTesting:true
