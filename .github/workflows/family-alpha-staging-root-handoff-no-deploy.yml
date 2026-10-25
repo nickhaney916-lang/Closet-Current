@@ -1,0 +1,43 @@
+name: Family Alpha staging root/complete-app handoff - NO DEPLOY
+on:
+  pull_request:
+    paths:
+      - 'scripts/audit-family-alpha-staging-root-handoff.mjs'
+      - 'tests/family-alpha-staging-root-handoff.test.mjs'
+      - 'docs/FAMILY-ALPHA-STAGING-ROOT-HANDOFF-HOLD-20261025.md'
+      - '.github/workflows/family-alpha-staging-root-handoff-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+env:
+  STAGE_PIN: '879f1b92fb15f9bc9a7f0429c7ee178f7bbf1373'
+  RECOGNITION_PIN: '795ad6637f8d4f782bc99751211b25e8e72a3a7d'
+  RECOVERY_PIN: '08ed6ac4a3fc921eae5d5d3df3bd3966429559d2'
+  REVIEW_PIN: '1ecac1079e75f1f25dc70a4c712b2448eb87dca8'
+jobs:
+  read-only-handoff:
+    runs-on: ubuntu-latest
+    timeout-minutes: 28
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Fetch pinned protected staging and recognition source commits
+        run: |
+          git fetch --no-tags origin "$STAGE_PIN" "$RECOGNITION_PIN" "$RECOVERY_PIN" "$REVIEW_PIN"
+      - name: Build staging Auth disabled - production unchanged
+        run: node scripts/build-family-alpha-staging-auth-hold.mjs
+      - name: Build complete, unreleasable stage Auth + original JPEG/2D HOLD candidate
+        run: node scripts/build-family-alpha-recognition-integrated-hold.mjs
+      - name: Test exact staging-root host and placeholder/full-app fail-closed scenarios
+        run: node --test tests/family-alpha-staging-root-handoff.test.mjs
+      - name: Verify actual combined staging artifact without any provider requests
+        run: node scripts/audit-family-alpha-staging-root-handoff.mjs
+      - name: Full offline Node regressions with no skips
+        run: node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Keep Family Alpha release HOLD - never publish
+        run: |
+          node --input-type=module -e "import {auditStageHandoff} from './scripts/audit-family-alpha-staging-root-handoff.mjs';const x=await auditStageHandoff();if(x.releaseGate!=='HOLD'||x.deployAllowed||x.familyInvitesAllowed||x.actualFullAppDeployed||x.stagingCallbackRegisteredWithLiveAuth||x.actualDeployedStaging!=='ACCESS_TEST_PLACEHOLDER')process.exit(1);console.log('Family Alpha stage-root audit: HOLD. No deployment or account activation.');"
