@@ -113,6 +113,29 @@ try{
        original:await page.evaluate(()=>items[0].image),userAdjusted:true});
      assert.match(await page.locator('#message').innerText(),/Clothing saved to My closet/);
 
+     // Outerwear is the weakest category in the licensed original-photo
+     // benchmark (1/4). Do not promote Jacket or Coat guesses with one tap.
+     // Require a fresh human check of original source, type and color even
+     // when the subtype is legitimately left Unknown.
+     dialog=await installFixture(page,{category:'Outerwear',type:'Unknown',color:'Blue'});
+     const outerReview=dialog.locator('input[aria-label="I checked the original photo, category, item type and color"]');
+     assert.equal(await outerReview.isVisible(),true,'Uncertain Outerwear requires reviewed original');
+     await dialog.getByRole('button',{name:'Save changes'}).click();
+     assert.match(await dialog.locator('.photo-review-feedback').innerText(),/check the confirmation box/);
+     assert.equal(await page.evaluate(()=>items.length),0,'No unapproved Outerwear save');
+     await outerReview.check();
+     await dialog.locator('input[aria-label="Color"]').fill('Navy');
+     assert.equal(await outerReview.isChecked(),false,'Changed outerwear color revokes earlier acknowledgement');
+     await outerReview.check();
+     await dialog.getByRole('button',{name:'Save changes'}).click();
+     await dialog.waitFor({state:'detached'});
+     const confirmedOuter=await page.evaluate(()=>({
+      category:items[0]?.category,type:items[0]?.itemType,
+      color:items[0]?.color,userAdjusted:items[0]?.userAdjusted
+     }));
+     assert.deepEqual(confirmedOuter,{category:'Outerwear',type:'Unknown',color:'Navy',userAdjusted:true},
+      'Human accepted the broad Outerwear category without inventing a coat/jacket type');
+
      // Layered image: display cutout is visibly distinct from original RGB
      // and full source outfit expands. A checkmark alone is never automatic.
      dialog=await installFixture(page,{category:'Dresses',type:'Unknown',color:'Blue',outfit:true});
@@ -145,7 +168,7 @@ try{
       url.startsWith('https://raw.githubusercontent.com/nickhaney916-lang/Closet-Current/main/public/trend-data.json?')),
       'Unexpected outbound URL: '+JSON.stringify(unexpected));
      assert.deepEqual(errors,[],'No browser runtime errors');
-     report.push({engine:browserName,width,scenarios:3,result:'PASS',externalRequestsAllowed:0,
+     report.push({engine:browserName,width,scenarios:4,result:'PASS',externalRequestsAllowed:0,
       backgroundRequestsBlocked:unexpected.length,syntheticOnly:true});
     }finally{await context.close();}
    }
