@@ -1,0 +1,44 @@
+name: Family Alpha protected staging preview activation HOLD - NO DEPLOY
+on:
+  pull_request:
+    paths:
+      - 'scripts/build-family-alpha-protected-preview-hold.mjs'
+      - 'tests/family-alpha-protected-preview-hold.test.mjs'
+      - 'docs/FAMILY-ALPHA-PROTECTED-PREVIEW-ACTIVATION-HOLD-20261025.md'
+      - '.github/workflows/family-alpha-protected-preview-activation-hold.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+env:
+  STAGE_PIN: '879f1b92fb15f9bc9a7f0429c7ee178f7bbf1373'
+  RECOGNITION_PIN: '795ad6637f8d4f782bc99751211b25e8e72a3a7d'
+  RECOVERY_PIN: '08ed6ac4a3fc921eae5d5d3df3bd3966429559d2'
+  REVIEW_PIN: '1ecac1079e75f1f25dc70a4c712b2448eb87dca8'
+jobs:
+  offline-preview-hold:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Fetch known source-pinned staging, recognition, recovery and mobile review commits
+        run: git fetch --no-tags origin "$STAGE_PIN" "$RECOGNITION_PIN" "$RECOVERY_PIN" "$REVIEW_PIN"
+      - name: Build unchanged ordinary app and default-blocked staged Auth artifact
+        run: node scripts/build-family-alpha-staging-auth-hold.mjs
+      - name: Build existing disabled full-recognition/2D artifact
+        run: node scripts/build-family-alpha-recognition-integrated-hold.mjs
+      - name: Build separate, still disabled protected staging photo-avatar artifact
+        run: node scripts/build-family-alpha-protected-preview-hold.mjs
+      - name: Check exact staging host, independent flags and no bypass paths
+        run: node --test tests/family-alpha-protected-preview-hold.test.mjs
+      - name: Check existing staging placeholder/full-app evidence remains gated
+        run: node scripts/audit-family-alpha-staging-root-handoff.mjs
+      - name: Run all offline Node regressions
+        run: node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Insist the staged visual boot is NOT activated
+        run: |
+          node --input-type=module -e "import {assertProtectedPreviewHold} from './scripts/build-family-alpha-protected-preview-hold.mjs';const x=await assertProtectedPreviewHold();if(x.releaseGate!=='HOLD'||x.deployAllowed||x.ownerApproved||x.photoAvatarEnabled||x.stagingAuthReady||x.stagingAuthKeyPresent||x.stagingCallbackRegistered||x.signedInJwtRlsProof)process.exit(1);console.log('Protected stage photo-avatar offline activation remains HOLD, no deploy.');"
