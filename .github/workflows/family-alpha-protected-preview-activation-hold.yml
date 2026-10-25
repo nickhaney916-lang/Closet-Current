@@ -10,6 +10,7 @@ on:
       - 'scripts/family-alpha-live-jwt-readonly-gate.mjs'
       - 'tests/family-alpha-live-jwt-readonly-gate.test.mjs'
       - 'scripts/audit-family-alpha-staging-activation-checklist-hold.mjs'
+      - 'scripts/test-family-alpha-final-protected-hold-browser.mjs'
       - 'tests/family-alpha-staging-activation-checklist-hold.test.mjs'
       - 'docs/FAMILY-ALPHA-STAGING-ACTIVATION-CHECKLIST-HOLD-20261025.md'
       - 'docs/FAMILY-ALPHA-PROTECTED-PREVIEW-ACTIVATION-HOLD-20261025.md'
@@ -62,3 +63,33 @@ jobs:
       - name: Insist the staged visual boot is NOT activated
         run: |
           node --input-type=module -e "import {assertProtectedPreviewHold} from './scripts/build-family-alpha-protected-preview-hold.mjs';const x=await assertProtectedPreviewHold();if(x.releaseGate!=='HOLD'||x.deployAllowed||x.ownerApproved||x.photoAvatarEnabled||x.stagingAuthReady||x.stagingAuthKeyPresent||x.stagingCallbackRegistered||x.signedInJwtRlsProof)process.exit(1);console.log('Protected stage photo-avatar offline activation remains HOLD, no deploy.');"
+
+  held-bundle-browser-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Fetch reviewed source commits (no stage or production changes)
+        run: git fetch --no-tags origin "$STAGE_PIN" "$RECOGNITION_PIN" "$RECOVERY_PIN" "$REVIEW_PIN"
+      - name: Install pinned Playwright for offline local asset browser checks
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+      - name: Assemble fully held staging Auth and recognition photo candidate
+        run: |
+          node scripts/build-family-alpha-staging-auth-hold.mjs
+          node scripts/build-family-alpha-recognition-integrated-hold.mjs
+          node scripts/build-family-alpha-protected-preview-hold.mjs
+      - name: Chromium and WebKit final held-bundle startup, fail-closed security (NO PROVIDER CALLS)
+        run: node scripts/test-family-alpha-final-protected-hold-browser.mjs
+      - name: Retain NO DEPLOY and NO ACCOUNT permissions
+        run: |
+          node --input-type=module -e "import {assertProtectedPreviewHold} from './scripts/build-family-alpha-protected-preview-hold.mjs'; const x=await assertProtectedPreviewHold(); if(x.releaseGate!=='HOLD'||x.deployAllowed!==false||x.ownerApproved!==false||x.stagingAuthReady!==false||x.photoAvatarEnabled!==false) process.exit(1); console.log('Final browser staging source remains HOLD. No uploads performed.');"
