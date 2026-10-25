@@ -53,6 +53,39 @@ export async function fingerprintAlphaRetainedOriginal(image,cryptoProvider=glob
  const hash=new Uint8Array(await cryptoProvider.subtle.digest('SHA-256',bytes));
  return 'sha256:'+Array.from(hash,v=>v.toString(16).padStart(2,'0')).join('');
 }
+/**
+ * Bind a multi-garment item's UNMASKED per-garment recognition JPEG and
+ * segment/category evidence to the separately retained original-scene JPEG.
+ * A full outfit frame can remain identical while the selected sleeve,
+ * skirt/shorts region or unmasked recognition crop changes. The avatar MUST
+ * not reuse a previously approved cutout in that case.
+ *
+ * This is only a change detector, not proof of ownership, segmentation
+ * correctness, photo authenticity, or a real Supabase RLS decision.
+ */
+export async function fingerprintAlphaReviewContext(item,cryptoProvider=globalThis.crypto){
+ if(!item||typeof item!=='object')throw new Error('Review garment required');
+ const hasRegion=item.recognitionPhoto!==undefined||item.segmentHint!==undefined;
+ if(!hasRegion)return null; // Legacy ordinary one-garment source: no region
+ if(!cryptoProvider?.subtle?.digest)throw new Error('SHA-256 unavailable');
+ const photo=item.recognitionPhoto?.image;
+ if(item.recognitionPhoto!==undefined&&typeof photo!=='string')
+  throw new Error('Invalid unmasked original garment region');
+ const photoVersion=photo?await fingerprintAlphaRetainedOriginal(photo,cryptoProvider):null;
+ const evidence=JSON.stringify({
+  photoVersion,
+  segmentHint:item.segmentHint??null,
+  category:item.category??null,
+  itemType:item.itemType??null,
+  sleeveLength:item.sleeveLength??null,
+  outfitSourceId:item.outfitSourceId??null
+ });
+ if(typeof evidence!=='string'||evidence.length>16000)
+  throw new Error('Invalid garment region evidence');
+ const bytes=new TextEncoder().encode(evidence);
+ const digest=new Uint8Array(await cryptoProvider.subtle.digest('SHA-256',bytes));
+ return 'review-sha256:'+Array.from(digest,x=>x.toString(16).padStart(2,'0')).join('');
+}
 /** Local provenance label; intentionally not a proof of Auth or RLS ownership. */
 export function identityForSavedGarment(item){
  if(!item||typeof item.id!=='string'||!SOURCE_GROUP.test(item.id)||
@@ -121,11 +154,16 @@ export async function prepareSavedBoard2D({
   // that cropping, masked pixels or JPEG marker checks establish correct label.
   const sourceVersion=await fingerprintAlphaRetainedOriginal(source,cryptoProvider);
   assertSameContext(getContext,initial);
+  const contextVersion=await fingerprintAlphaReviewContext(item,cryptoProvider);
+  assertSameContext(getContext,initial);
   const sourceIdentity=identityForSavedGarment(item);
   if(!Object.hasOwn(presentations,item.id))throw new Error('Unprepared clothing photo for '+slot);
   const prepared=presentations[item.id];
   if(!prepared||prepared.itemId!==item.id||prepared.ownerId!==initial.ownerId||
    prepared.sourceIdentity!==sourceIdentity||prepared.sourceVersion!==sourceVersion||
+   // Never treat a full-scene SHA as sufficient to approve a different
+   // individually segmented shirt, jacket or bottom from that same scene.
+   (contextVersion!==null&&prepared.reviewContextVersion!==contextVersion)||
    prepared.approved!==true||!prepared.image)
     throw new Error('Unapproved, foreign, or stale garment presentation for '+slot);
   refs[slot]=item.id;
