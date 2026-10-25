@@ -46,7 +46,7 @@ export function addStageInvitePasswordSetup(input){
   "    const user=await request('user',{password},session.access_token,'PUT');",
   [
    "    const user=await request('user',{password},session.access_token,'PUT');",
-   "    if(!user?.id||user.id!==window.closetAuth.user?.id&&window.closetAuth.user?.id)",
+   "    if(!user?.id||user.id!==session?.user?.id)",
    "     throw Error('Password setup returned a different account');"
   ].join('\n'));
  // The prior stage session fencing already checks submitEpoch before showUser.
