@@ -18,6 +18,7 @@ import {execFile} from 'node:child_process';
 import {promisify} from 'node:util';
 import {assertCandidate,listFiles} from './build-family-alpha-staging.mjs';
 import {hardenStagingAuthSession} from './family-alpha-stage-session-hardening.mjs';
+import {removePublicStageSignup} from './family-alpha-stage-invite-only-ui.mjs';
 const run=promisify(execFile);
 export const STAGE_ID='fbnplztkbsteuzrmbgib';
 export const PROD_ID='hlkgymugtfbirlpunsra';
@@ -107,7 +108,7 @@ export function stageAuthSource(original){
  if(code.includes(PROD_ID)||code.includes('nickhaney916-lang.github.io')||
     code.includes('sb_publishable_5bw6Gkrw3Qx73dZYGNzmIw_x_OoauDO'))
   throw Error('Production Auth reference remains in staged Auth script');
- return hardenStagingAuthSession(code);
+ return removePublicStageSignup(hardenStagingAuthSession(code));
 }
 export function stageCloudSource(original){
  const old="(function(){\n const E=window.ClosetBackupEngine,BASE='"+PROD_BASE+"',KEY='sb_publishable_5bw6Gkrw3Qx73dZYGNzmIw_x_OoauDO',BUCKET='closet-private';";
@@ -129,7 +130,12 @@ export function stageIndexSource(original){
  const match=original.match(/<script src="auth\.js(?:\?v=[a-f0-9]+)?"\><\/script>/);
  if(!match||original.split(match[0]).length!==2)
   throw Error('Cannot safely inject staging configuration before production Auth script');
- return replaceOnce(original,match[0],
+ // Hide public Create account in the actual HTML, even when Auth startup
+ // is held before JS reaches the invite-only mode handler.
+ const inviteOnly=replaceOnce(original,
+  'id="authMode" type="button">Create an account</button>',
+  'id="authMode" type="button" hidden>Create an account</button>');
+ return replaceOnce(inviteOnly,match[0],
   '<script src="alpha-stage-config.js"></script>'+match[0]);
 }
 export function stagePwaSource(){
@@ -210,10 +216,14 @@ export async function assertStagingAuthCandidate({root=resolve('.')}={}){
  const staged=await Promise.all(['auth.js','cloud-backup.js','family-alpha-2d-auth-preflight.mjs','index.html','alpha-stage-config.js','pwa.js'].map(f=>readFile(join(target,f),'utf8')));
  if(!staged[0].includes('closet-alpha-staging-auth-v1')||
   !staged[0].includes('stageTerminalRefreshError')||
+  !staged[0].includes('Family Alpha accounts require a private invitation')||
+  !staged[0].includes("$('authMode').hidden=true")||
+  staged[0].includes("request('signup'+EMAIL_REDIRECT")||
   !staged[0].includes("window.addEventListener?.('storage'")||
   !staged[1].includes('const E=window.ClosetBackupEngine,BASE=stage.base,KEY=stage.key')||
   !staged[2].includes(STAGE_BASE+'/auth/v1/user')||
   !staged[3].includes('alpha-stage-config.js')||
+  !staged[3].includes('id="authMode" type="button" hidden')||
   !staged[4].includes("'HOLD'")||
   staged.some(v=>v.includes(PROD_BASE)))
   throw Error('Staging environment isolation failed');
