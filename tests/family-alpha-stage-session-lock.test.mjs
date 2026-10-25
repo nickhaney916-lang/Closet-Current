@@ -27,6 +27,7 @@ function fixture(responses=[]){
   value:'synthetic',hidden:false,type:id==='authPassword'?'password':'text',
   setAttribute(){},addEventListener(){},checkValidity(){return true;}
  });
+ elements.get('appShell').hidden=true;
  elements.get('authEmail').value='synthetic@example.invalid';
  elements.get('authPassword').value='fake-password';
  let cloudClears=0,reloads=0;
@@ -109,7 +110,7 @@ test('401 and owner mismatch lock; network, timeout, 429 and 503 preserve curren
   const f=fixture([{data:success()},rejection]);
   await f.login();
   await assert.rejects(f.window.closetAuth.getAccessToken({force:true}),undefined,name);
-  assert.equal(f.elements.get('appShell').hidden,!shouldLock,name);
+  assert.equal(f.elements.get('appShell').hidden,shouldLock,name);
   assert.equal(Boolean(f.window.closetAuth.user),!shouldLock,name);
   assert.equal(f.cloudClears,shouldLock?1:0,name);
   assert.equal(f.saved.has(STORE),!shouldLock,name);
