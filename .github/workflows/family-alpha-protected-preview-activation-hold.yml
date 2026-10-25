@@ -11,6 +11,7 @@ on:
       - 'tests/family-alpha-live-jwt-readonly-gate.test.mjs'
       - 'scripts/audit-family-alpha-staging-activation-checklist-hold.mjs'
       - 'tests/family-alpha-staging-activation-checklist-hold.test.mjs'
+      - 'docs/FAMILY-ALPHA-STAGING-ACTIVATION-CHECKLIST-HOLD-20261025.md'
       - 'docs/FAMILY-ALPHA-PROTECTED-PREVIEW-ACTIVATION-HOLD-20261025.md'
       - '.github/workflows/family-alpha-protected-preview-activation-hold.yml'
   workflow_dispatch:
