@@ -1,0 +1,146 @@
+name: Owner-approved Family Alpha staging-only login-disabled upload
+on:
+  push:
+    branches:
+      - deploy/approved-staging-login-disabled-family-alpha-20261025
+    paths:
+      - .github/workflows/family-alpha-approved-staging-only-once.yml
+permissions:
+  contents: read
+concurrency:
+  group: closet-current-STAGING-approved-family-alpha-20261025
+  cancel-in-progress: false
+env:
+  STAGE_PIN: '879f1b92fb15f9bc9a7f0429c7ee178f7bbf1373'
+  RECOGNITION_PIN: '795ad6637f8d4f782bc99751211b25e8e72a3a7d'
+  RECOVERY_PIN: '08ed6ac4a3fc921eae5d5d3df3bd3966429559d2'
+  REVIEW_PIN: '1ecac1079e75f1f25dc70a4c712b2448eb87dca8'
+jobs:
+  deploy-login-disabled-stage-only:
+    if: github.event.head_commit.message == 'deploy(stage): owner-approved login-disabled Family Alpha only 2026-10-25'
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Enforce exact single-change approval and pinned reviewed source parent
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = "refs/heads/deploy/approved-staging-login-disabled-family-alpha-20261025"
+          test "$(git rev-parse HEAD^)" = "51c21462d440f9339008ecb43ef049d5bccde446"
+          test "$(git diff --name-only HEAD^ HEAD)" = ".github/workflows/family-alpha-approved-staging-only-once.yml"
+          echo 'Owner-approved staging-only source commit matched. Production remains out of scope.'
+      - name: Fetch source-pinned staging, recognition, recovery and review commits
+        run: git fetch --no-tags origin "$STAGE_PIN" "$RECOGNITION_PIN" "$RECOVERY_PIN" "$REVIEW_PIN"
+      - name: Build staging Auth intentionally DISABLED
+        run: node scripts/build-family-alpha-staging-auth-hold.mjs
+      - name: Build original-JPEG recognition and two-dimensional photo avatar held
+        run: node scripts/build-family-alpha-recognition-integrated-hold.mjs
+      - name: Assemble protected complete staging app (Auth and avatar OFF)
+        run: node scripts/build-family-alpha-protected-preview-hold.mjs
+      - name: Check complete packaged assets and exact project and callback HOLD
+        run: |
+          node scripts/audit-family-alpha-stage-assets-hold.mjs
+          node scripts/audit-family-alpha-staging-activation-checklist-hold.mjs
+      - name: Run full offline Node suite; do not allow skips
+        run: node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Verify disabled Auth, avatar, and no production URLs in shipped executable files
+        run: |
+          node --input-type=module <<'NODE'
+          import {readFile,readdir} from 'node:fs/promises';
+          import {join} from 'node:path';
+          import {assertProtectedPreviewHold,STAGE_PREVIEW_OUTPUT} from './scripts/build-family-alpha-protected-preview-hold.mjs';
+          const gate=await assertProtectedPreviewHold();
+          if(gate.releaseGate!=='HOLD'||gate.deployAllowed!==false||
+             gate.stagingProjectRef!=='fbnplztkbsteuzrmbgib'||
+             gate.ownerApproved!==false||gate.photoAvatarEnabled!==false||
+             gate.stagingAuthReady!==false||gate.stagingAuthKeyPresent!==false||
+             gate.familyReleaseAuthorized!==false||gate.signedInJwtRlsProof!==false)
+            throw Error('Stage build lost protected HOLD safeguards');
+          const root=STAGE_PREVIEW_OUTPUT;
+          const config=await readFile(join(root,'alpha-stage-config.js'),'utf8');
+          const rollout=await readFile(join(root,'alpha-stage-preview-rollout.js'),'utf8');
+          if(!config.includes('HOLD-NO-CALLBACK-OR-KEY')||
+             !config.includes('"key":""')||!config.includes('"redirect":""')||
+             !rollout.includes('"ownerApproved":false')||
+             !rollout.includes('"enablePhotoAvatar":false'))
+            throw Error('Stage login or avatar unexpectedly enabled');
+          let assetCount=0;
+          async function checkFiles(prefix=''){
+            for(const ent of await readdir(join(root,prefix),{withFileTypes:true})){
+              if(ent.isSymbolicLink())throw Error('Symlinks prohibited');
+              const name=prefix?prefix+'/'+ent.name:ent.name;
+              if(ent.isDirectory())await checkFiles(name);
+              else{
+                assetCount++;
+                if(/\.(?:js|mjs|html|json)$/.test(name)){
+                  const source=await readFile(join(root,name),'utf8');
+                  if(source.includes('hlkgymugtfbirlpunsra')||
+                     source.includes('sb_secret_')||
+                     source.includes('service_role'))
+                    throw Error('Production endpoint or privileged key marker in shipped staged asset: '+name);
+                }
+              }
+            }
+          }
+          await checkFiles();
+          if(assetCount<60)throw Error('This is the one-file placeholder, NOT complete app');
+          console.log('Complete login-disabled protected staging package validated: '+assetCount+' files; no provider key added.');
+          NODE
+      - name: Verify exact existing staging Pages project and unauthenticated Cloudflare Access challenge BEFORE upload
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          node --input-type=module <<'NODE'
+          const token=process.env.CLOUDFLARE_API_TOKEN;
+          const account='43ad9703708ddb191712306bebadcace';
+          if(!token)throw Error('Missing existing Cloudflare GitHub token; stop before upload');
+          const api='https://api.cloudflare.com/client/v4/accounts/'+account+'/pages/projects/closet-current-staging';
+          const check=await fetch(api,{headers:{Authorization:'Bearer '+token},redirect:'error'});
+          if(!check.ok)throw Error('Cannot confirm existing exact staging Pages project: HTTP '+check.status);
+          const body=await check.json();
+          if(!body.success||body.result?.name!=='closet-current-staging'||
+             body.result.production_branch!=='main')
+            throw Error('Unexpected Cloudflare Pages project or production branch: STOP');
+          const uri='https://closet-current-staging.pages.dev/';
+          const r=await fetch(uri,{method:'GET',redirect:'manual',cache:'no-store'});
+          const location=r.headers.get('location')||'';
+          let access=false;
+          try{
+            const u=new URL(location,uri);
+            access=r.status>=300&&r.status<400&&
+              u.protocol==='https:'&&u.hostname.endsWith('.cloudflareaccess.com')&&
+              u.pathname.startsWith('/cdn-cgi/access/');
+          }catch{}
+          if(!access)throw Error('Staging anonymous Access challenge not independently confirmed: STOP');
+          console.log('Existing CLOUDFLARE staging project exact match and unauthenticated Access challenge verified. No provider settings changed.');
+          NODE
+      - name: OWNER-APPROVED deployment to CLOSET-CURRENT-STAGING ONLY — never production
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: '43ad9703708ddb191712306bebadcace'
+          command: pages deploy dist-family-alpha-protected-preview-hold --project-name=closet-current-staging --branch=main
+      - name: Verify unauthenticated root and app.js still challenged after staging deployment
+        run: |
+          node --input-type=module <<'NODE'
+          for(const path of ['/','/index.html','/app.js','/auth.js']){
+            const root='https://closet-current-staging.pages.dev'+path;
+            const r=await fetch(root,{method:'GET',redirect:'manual',cache:'no-store'});
+            const loc=r.headers.get('location')||'';
+            let ok=false;
+            try{
+              const u=new URL(loc,root);
+              ok=r.status>=300&&r.status<400&&u.protocol==='https:'&&
+                u.hostname.endsWith('.cloudflareaccess.com')&&
+                u.pathname.startsWith('/cdn-cgi/access/');
+            }catch{}
+            if(!ok)throw Error('Post-staging-upload Access route challenge failed: '+path+' HTTP '+r.status);
+          }
+          console.log('Staging-only upload completed. Root, index, app.js and auth.js still challenge anonymous access. Family Alpha release remains HOLD.');
+          NODE
