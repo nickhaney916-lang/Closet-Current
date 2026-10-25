@@ -79,7 +79,16 @@ export function applyPinnedMobileReview(baseApp,reviewApp){
     !candidate.body.includes('Original unmasked garment photo used for recognition')||
     !current.body.includes(safeSource))
   throw Error('Unexpected reviewed editor or missing prior queued-save safety');
- const reviewed=candidate.body.replace(expectedSource,safeSource);
+ let reviewed=candidate.body.replace(expectedSource,safeSource);
+ // The licensed original-photo cohort remains weak for jackets (1/4
+ // correctly categorized), so Outerwear must never be easier to confirm
+ // than uncertain Shoes, Dresses, Shorts and Skirts. This is review safety,
+ // NOT a classifier accuracy change. Keep Unknown subtype permitted.
+ const defaultReview="item.possibleDuplicate||['Shoes','Dresses'].includes(draft.category)||";
+ const outerwearReview="item.possibleDuplicate||['Shoes','Dresses','Outerwear'].includes(draft.category)||";
+ if(reviewed.split(defaultReview).length!==2)
+  throw Error('Uncertain garment review categories changed: refresh outerwear hold');
+ reviewed=reviewed.replace(defaultReview,outerwearReview);
  let merged=baseApp.slice(0,current.begin)+reviewed+baseApp.slice(current.end);
  const oldLabel="'Needs a clearer photo'";
  const newLabel="'Review garment details'";
@@ -344,6 +353,7 @@ export async function assertDisabledIntegratedCandidate({root=resolve('.')}={}){
   sha256(backup)!==x.integrationBackupSha256||
   !app.includes('const verifiedColorAdmission=new WeakMap()')||
   !app.includes('I checked the original photo, category, item type and color')||
+  !app.includes("['Shoes','Dresses','Outerwear'].includes(draft.category)")||
   !app.includes('editorHint=JSON.stringify(item.segmentHint??null);')||
   !app.includes('await savePiece(value,()=>batch.filter(x=>x.id!==item.id),editorCurrent);')||
   !app.includes("const recoverable=job.type!=='load'&&data.code==='image';")||
