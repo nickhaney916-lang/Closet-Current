@@ -20,6 +20,13 @@ jobs:
         with: {node-version: '22'}
       - name: Build only; absolutely NO DEPLOY
         run: node scripts/build.mjs
+      - name: Fetch exact pinned protected-stage and recognition source commits
+        run: |
+          git fetch --no-tags origin 879f1b92fb15f9bc9a7f0429c7ee178f7bbf1373 795ad6637f8d4f782bc99751211b25e8e72a3a7d 08ed6ac4a3fc921eae5d5d3df3bd3966429559d2 1ecac1079e75f1f25dc70a4c712b2448eb87dca8
+      - name: Prepare isolated staging Auth HOLD fixture required by full Node suite
+        run: node scripts/build-family-alpha-staging-auth-hold.mjs
+      - name: Prepare disabled recognition plus original-JPEG avatar fixture required by full Node suite
+        run: node scripts/build-family-alpha-recognition-integrated-hold.mjs
       - name: Full existing Node regression and reviewed JPEG source guard tests
         run: node --test tests/*.test.cjs tests/*.test.mjs
       - name: Independently run original mask synthetic ground-truth matrix
