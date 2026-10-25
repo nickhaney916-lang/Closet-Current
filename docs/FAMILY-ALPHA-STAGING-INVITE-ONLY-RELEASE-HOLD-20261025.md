@@ -13,7 +13,7 @@ Independent Work Assignment #26 ([draft PR #294](https://github.com/nickhaney916
 `scripts/family-alpha-stage-invite-only-ui.mjs` applies a strict-source transform **only after** `stageAuthSource()` has moved all endpoints, credentials and storage to staging AND after terminal-session lock protection from draft #296. It changes only the isolated staging `auth.js` development build. The normal `public/auth.js` and `dist/` remain unchanged.
 
 - Sign-in explains the four-account pilot is **invitation-only**.
-- The visible Create account / signup mode is hidden. Even if that hidden mode is invoked through script, it resets to login mode.
+- The public Create account button is marked `hidden` **in the generated staging HTML before JavaScript runs**; the signup mode is also disabled in the staging Auth script. Even if that hidden mode is invoked programmatically, it resets to login mode.
 - The staged Auth code has **no request to the signup endpoint**.
 - Existing approved-account login, resend confirmation, and password-recovery affordances remain; none were exercised with real email.
 - The staged Auth client still has an **empty publishable key and empty callback**. Its generated app is nonfunctional on live staging until a separate authorized future configuration.
