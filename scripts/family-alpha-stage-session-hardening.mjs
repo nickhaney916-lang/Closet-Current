@@ -14,27 +14,27 @@ export function hardenStagingAuthSession(input){
   throw Error('Stage Auth isolation must precede session hardening');
  let code=input;
  code=exact(code,
-  "    if(!session.refresh_token)throw Error('Sign in again');",
-  "    if(!session.refresh_token){lockLocalSession('Session expired. Sign in again.');throw Error('Sign in again');}");
+  "   if(!session.refresh_token)throw Error('Sign in again');",
+  "   if(!session.refresh_token){lockLocalSession('Session expired. Sign in again.');throw Error('Sign in again');}");
  const oldRefresh=[
-  "     refreshing=request('token?grant_type=refresh_token',{refresh_token:session.refresh_token}).then(data=>{",
-  "      if(sessionGeneration!==epoch||window.closetAuth.user?.id!==expected||data.user?.id!==expected||!data.access_token)",
-  "       throw Error('Session account changed');",
-  "      showUser(data);",
-  "     }).finally(()=>{refreshing=null;});}"
+  "    refreshing=request('token?grant_type=refresh_token',{refresh_token:session.refresh_token}).then(data=>{",
+  "     if(sessionGeneration!==epoch||window.closetAuth.user?.id!==expected||data.user?.id!==expected||!data.access_token)",
+  "      throw Error('Session account changed');",
+  "     showUser(data);",
+  "    }).finally(()=>{refreshing=null;});}"
  ].join('\n');
  const newRefresh=[
-  "     refreshing=request('token?grant_type=refresh_token',{refresh_token:session.refresh_token}).then(data=>{",
-  "      if(sessionGeneration!==epoch||window.closetAuth.user?.id!==expected||data.user?.id!==expected||!data.access_token){",
-  "       const error=Error('Session account changed');error.code='stage_refresh_owner_mismatch';throw error;",
-  "      }",
-  "      showUser(data);",
-  "     }).catch(error=>{",
-  "      // Keep network outages/429/5xx retryable; terminal denial must lock the private UI.",
-  "      if(sessionGeneration===epoch&&window.closetAuth.user?.id===expected&&stageTerminalRefreshError(error))",
-  "       lockLocalSession('Your session expired. Sign in again.');",
-  "      throw error;",
-  "     }).finally(()=>{refreshing=null;});}"
+  "    refreshing=request('token?grant_type=refresh_token',{refresh_token:session.refresh_token}).then(data=>{",
+  "     if(sessionGeneration!==epoch||window.closetAuth.user?.id!==expected||data.user?.id!==expected||!data.access_token){",
+  "      const error=Error('Session account changed');error.code='stage_refresh_owner_mismatch';throw error;",
+  "     }",
+  "     showUser(data);",
+  "    }).catch(error=>{",
+  "     // Keep network outages/429/5xx retryable; terminal denial must lock the private UI.",
+  "     if(sessionGeneration===epoch&&window.closetAuth.user?.id===expected&&stageTerminalRefreshError(error))",
+  "      lockLocalSession('Your session expired. Sign in again.');",
+  "     throw error;",
+  "    }).finally(()=>{refreshing=null;});}"
  ].join('\n');
  code=exact(code,oldRefresh,newRefresh);
  const helpers=[
@@ -78,23 +78,23 @@ export function hardenStagingAuthSession(input){
   "  const email=$('authEmail').value.trim(),password=$('authPassword').value;",
   "  const email=$('authEmail').value.trim(),password=$('authPassword').value;\n  const submitEpoch=sessionGeneration;");
  code=exact(code,
-  "     recovery=false;showUser({...session,user});",
-  "     if(sessionGeneration!==submitEpoch)throw Error('Session changed; sign in again.');\n     recovery=false;showUser({...session,user});");
+  "    recovery=false;showUser({...session,user});",
+  "    if(sessionGeneration!==submitEpoch)throw Error('Session changed; sign in again.');\n     recovery=false;showUser({...session,user});");
  code=exact(code,
-  "     if(data.access_token&&data.user)showUser(data);",
-  "     if(data.access_token&&data.user){if(sessionGeneration!==submitEpoch)throw Error('Session changed; sign in again.');showUser(data);}");
+  "    if(data.access_token&&data.user)showUser(data);",
+  "    if(data.access_token&&data.user){if(sessionGeneration!==submitEpoch)throw Error('Session changed; sign in again.');showUser(data);}");
  code=exact(code,
   "   }else showUser(await request('token?grant_type=password',{email,password}));",
   "   }else{const data=await request('token?grant_type=password',{email,password});if(sessionGeneration!==submitEpoch)throw Error('Session changed; sign in again.');showUser(data);}");
  code=exact(code,
-  " (async()=>{\n   try{",
+  " (async()=>{\n  try{",
   " (async()=>{\n   const bootstrapEpoch=sessionGeneration;\n   try{");
  code=exact(code,
-  "     showUser(data);return;\n    }\n    const saved=",
-  "     if(sessionGeneration!==bootstrapEpoch)throw Error('Session changed during link verification');\n     showUser(data);return;\n    }\n    const saved=");
+  "    showUser(data);return;\n   }\n   const saved=",
+  "    if(sessionGeneration!==bootstrapEpoch)throw Error('Session changed during link verification');\n    showUser(data);return;\n   }\n   const saved=");
  code=exact(code,
-  "     showUser(data);return;\n    }\n   }catch(error){localStorage.removeItem(STORE);",
-  "     if(sessionGeneration!==bootstrapEpoch)throw Error('Session changed during login restore');\n     showUser(data);return;\n    }\n   }catch(error){localStorage.removeItem(STORE);");
+  "    showUser(data);return;\n   }\n  }catch(error){localStorage.removeItem(STORE);",
+  "    if(sessionGeneration!==bootstrapEpoch)throw Error('Session changed during login restore');\n    showUser(data);return;\n   }\n  }catch(error){localStorage.removeItem(STORE);");
  if(code.includes('https://hlkgymugtfbirlpunsra.supabase.co')||
   !code.includes('stageTerminalRefreshError')||
   !code.includes("window.addEventListener?.('storage'"))
