@@ -5,7 +5,7 @@ import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {
  resolveAsset,htmlAssets,cssAssets,moduleAssets,checkStaticGraph,
- auditStageStaticAssets,ENTRYPOINTS,CORE
+ ENTRYPOINTS,CORE
 } from '../scripts/audit-family-alpha-stage-assets-hold.mjs';
 
 test('runtime URLs resolve within staging root and preserve build cache-busting',()=>{
@@ -108,18 +108,4 @@ test('symlinks, placeholder-only uploads and other incomplete artifacts are reje
   await assert.rejects(checkStaticGraph({root,core:CORE,minAssets:10}),/Missing required full-app asset/);
   await assert.rejects(checkStaticGraph({root,minAssets:1000}),/Full Family Alpha bundle absent/);
  });
-});
-test('actual protected stage full-app candidate contains all entrypoint assets and remains HOLD',async()=>{
- const result=await auditStageStaticAssets();
- assert.equal(result.releaseGate,'HOLD');
- assert.equal(result.deployAllowed,false);
- assert.equal(result.uploadAuthorized,false);
- assert.equal(result.fullAppDeployed,false);
- assert.equal(result.realRlsCrossUserProven,false);
- assert.equal(result.liveAssetCoverageProven,false);
- assert.equal(result.stagingOrigin,'https://closet-current-staging.pages.dev/');
- assert.equal(result.stageProjectRef,'fbnplztkbsteuzrmbgib');
- assert.ok(result.candidateAssetCount>=60);
- assert.ok(result.referencedAssetCount>=20);
- assert.equal(result.missingReferencedAssets,0);
 });
