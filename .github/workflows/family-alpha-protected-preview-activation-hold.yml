@@ -79,6 +79,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Trust GitHub Actions checked-out workspace in pinned browser container
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - name: Fetch reviewed source commits (no stage or production changes)
         run: git fetch --no-tags origin "$STAGE_PIN" "$RECOGNITION_PIN" "$RECOVERY_PIN" "$REVIEW_PIN"
       - name: Install pinned Playwright for offline local asset browser checks
