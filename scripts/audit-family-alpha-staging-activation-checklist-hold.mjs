@@ -16,6 +16,7 @@ import {
  auditStageHandoff,verifyOwnerAccessSmoke
 } from './audit-family-alpha-staging-root-handoff.mjs';
 
+export {STAGE_ID,APPROVED_STAGE_CALLBACK};
 export const STAGE_PAGES_PROJECT='closet-current-staging';
 export const PRODUCTION_PAGES_PROJECT='closet-current';
 export const STAGE_AUTH_CONFIG_URL='https://supabase.com/dashboard/project/'+STAGE_ID+'/auth/url-configuration';
