@@ -41,8 +41,7 @@ export function removePublicStageSignup(input){
  code=exactlyOne(code,signupSource,signupBlocked);
  if(code.includes("request('signup'+EMAIL_REDIRECT")||
    code.includes('https://hlkgymugtfbirlpunsra.supabase.co')||
-   !code.includes('Family Alpha is invitation-only')&&
-    !code.includes('Family Alpha is invitation-only'))
+   !code.includes('Family Alpha is invitation-only'))
   throw Error('Open signup or production Auth endpoint remains in staged UI');
  return code;
 }
