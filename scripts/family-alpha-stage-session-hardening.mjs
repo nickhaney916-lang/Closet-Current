@@ -67,7 +67,8 @@ export function hardenStagingAuthSession(input){
   " window.addEventListener?.('storage',event=>{",
   "  if(event?.key!==STORE||(event.storageArea&&event.storageArea!==localStorage)||",
   "    event.newValue===event.oldValue)return;",
-  "  if(session||window.closetAuth.user)lockLocalSession('Your login changed in another tab. Sign in again.');",
+  "  if(session||window.closetAuth.user)lockLocalSession('Your login changed in another tab. Sign in again.');", 
+  "  else {sessionGeneration++;localStorage.removeItem(STORE);}",
   " });",
   " window.addEventListener?.('pagehide',()=>{sessionGeneration++;});"
  ].join('\n');
