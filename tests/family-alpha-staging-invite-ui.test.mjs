@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import {readFile} from 'node:fs/promises';
-import {stageAuthSource,STAGE_BASE,PROD_BASE} from '../scripts/build-family-alpha-staging-auth-hold.mjs';
+import {stageAuthSource,stageIndexSource,STAGE_BASE,PROD_BASE} from '../scripts/build-family-alpha-staging-auth-hold.mjs';
 import {removePublicStageSignup} from '../scripts/family-alpha-stage-invite-only-ui.mjs';
 const original=await readFile('public/auth.js','utf8');
 const staged=stageAuthSource(original);
@@ -88,4 +88,13 @@ test('staging login/password reset still has no production routing, no accidenta
  assert.equal(f.calls.some(url=>url.startsWith(PROD_BASE)),false);
  assert.equal(f.storage.has('closet-current-auth-v1'),false);
  assert.equal(f.storage.has('closet-alpha-staging-auth-v1'),true);
+});
+
+test('staging HTML hides registration before Auth JS has even initialized',async()=>{
+ const html=await readFile('public/index.html','utf8');
+ const stagedHtml=stageIndexSource(html);
+ assert.match(stagedHtml,/id="authMode" type="button" hidden>\s*Create an account/);
+ assert.doesNotMatch(html,/id="authMode" type="button" hidden/);
+ assert.equal(stagedHtml.indexOf('alpha-stage-config.js')<stagedHtml.indexOf('auth.js'),true);
+ assert.throws(()=>stageIndexSource(stagedHtml),/Cannot safely inject|expected exactly one original/);
 });
