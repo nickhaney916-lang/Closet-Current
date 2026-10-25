@@ -9,6 +9,8 @@ on:
       - 'tests/family-alpha-stage-two-account-cloud-mock.test.mjs'
       - 'scripts/family-alpha-live-jwt-readonly-gate.mjs'
       - 'tests/family-alpha-live-jwt-readonly-gate.test.mjs'
+      - 'scripts/audit-family-alpha-staging-activation-checklist-hold.mjs'
+      - 'tests/family-alpha-staging-activation-checklist-hold.test.mjs'
       - 'docs/FAMILY-ALPHA-PROTECTED-PREVIEW-ACTIVATION-HOLD-20261025.md'
       - '.github/workflows/family-alpha-protected-preview-activation-hold.yml'
   workflow_dispatch:
@@ -46,6 +48,10 @@ jobs:
         run: node --test tests/family-alpha-stage-two-account-cloud-mock.test.mjs
       - name: Test future JWT A/B read-only staging probe (MOCK ONLY; no network)
         run: node --test tests/family-alpha-live-jwt-readonly-gate.test.mjs
+      - name: Audit staged Site URL mismatch, producer workflow target and complete-app activation HOLD
+        run: node scripts/audit-family-alpha-staging-activation-checklist-hold.mjs
+      - name: Fail closed for unapproved staging redirects, client activation and false GO states
+        run: node --test tests/family-alpha-staging-activation-checklist-hold.test.mjs
       - name: Check exact staging host, independent flags and no bypass paths
         run: node --test tests/family-alpha-protected-preview-hold.test.mjs
       - name: Check existing staging placeholder/full-app evidence remains gated
