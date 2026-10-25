@@ -6,6 +6,7 @@ on:
       - 'tests/family-alpha-protected-preview-hold.test.mjs'
       - 'scripts/audit-family-alpha-stage-assets-hold.mjs'
       - 'tests/family-alpha-stage-assets-hold.test.mjs'
+      - 'tests/family-alpha-stage-two-account-cloud-mock.test.mjs'
       - 'docs/FAMILY-ALPHA-PROTECTED-PREVIEW-ACTIVATION-HOLD-20261025.md'
       - '.github/workflows/family-alpha-protected-preview-activation-hold.yml'
   workflow_dispatch:
@@ -39,6 +40,8 @@ jobs:
         run: node scripts/audit-family-alpha-stage-assets-hold.mjs
       - name: Test missing-assets, external URLs and traversal fail closed
         run: node --test tests/family-alpha-stage-assets-hold.test.mjs
+      - name: Prove staging cloud mock owner A/B client checks, foreign photo refusal and session race HOLD
+        run: node --test tests/family-alpha-stage-two-account-cloud-mock.test.mjs
       - name: Check exact staging host, independent flags and no bypass paths
         run: node --test tests/family-alpha-protected-preview-hold.test.mjs
       - name: Check existing staging placeholder/full-app evidence remains gated
