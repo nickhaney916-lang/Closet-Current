@@ -1,10 +1,11 @@
 name: OWNER APPROVED - Closet Current STAGING owner-login once
 # Cloudflare public destinations supported; owner policy must be verified before upload.
 # Strict synthetic wildcard/alternate destination tests retained before provider access.
+# SUSPENDED: Cloudflare Access Apps API returned zero applications for the
+# Pages account, despite prior owner-observed login challenges. Never deploy
+# owner-enabled Auth without owner-only Access policy proof.
 on:
-  push:
-    branches: [deploy/approved-owner-auth-staging-only-20261025]
-    paths: ['.github/workflows/family-alpha-owner-auth-staging-once.yml']
+  workflow_dispatch:
 permissions:
   contents: read
 concurrency:
@@ -16,10 +17,10 @@ env:
   RECOVERY_PIN: '08ed6ac4a3fc921eae5d5d3df3bd3966429559d2'
   REVIEW_PIN: '1ecac1079e75f1f25dc70a4c712b2448eb87dca8'
   # STAGING-only, public/publishable browser API key; NEVER a secret or service-role credential
-  STAGE_PUBLIC_KEY: 'sb_publishable_Tc9eXwg8XTY6rJ0uZBD2VQ_NTGeIUNG'
+  STAGE_PUBLIC_KEY: ''
 jobs:
   staging-owner-auth:
-    if: "github.event.head_commit.message == 'deploy(stage-auth): approved owner-only login 2026-10-25'"
+    if: ${{ false }}
     runs-on: ubuntu-latest
     timeout-minutes: 35
     steps:
