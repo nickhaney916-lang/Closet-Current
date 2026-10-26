@@ -1,0 +1,49 @@
+name: CLOSET ALPHA - browser CORS check (synthetic only, NO DEPLOY)
+on:
+  push:
+    branches: [audit/closet-alpha-browser-auth-cors-20261026]
+    paths: [.github/workflows/closet-alpha-chromium-cors-diagnostic.yml]
+permissions:
+  contents: read
+jobs:
+  chromium-cors-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install isolated browser runtime without changing tracked repository files
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install chromium
+      - name: Simulate staging page origin, observe real Chromium CORS, use NO real credentials or accounts
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import {chromium} from 'playwright';
+          const root='https://closet-current-staging.pages.dev/';
+          const target='https://fbnplztkbsteuzrmbgib.supabase.co/auth/v1/health';
+          const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
+          try{
+            const page=await browser.newPage();
+            await page.route(root,route=>route.fulfill({status:200,contentType:'text/html',
+              body:'<!doctype html><title>synthetic staging origin CORS diagnostic</title><p>No user account</p>'}));
+            await page.goto(root,{waitUntil:'load',timeout:15000});
+            const check=await page.evaluate(async url=>{
+              try{
+                const r=await fetch(url,{method:'GET',headers:{
+                  // Invalid synthetic key deliberately triggers only the CORS/preflight path.
+                  'apikey':'fake_publishable_alpha_cors_probe','Content-Type':'application/json'
+                },signal:AbortSignal.timeout(10000)});
+                return {fetchResolved:true,status:r.status,contentType:r.headers.get('content-type')};
+              }catch(e){
+                return {fetchResolved:false,errorName:String(e?.name||'Unknown')};
+              }
+            },target);
+            console.log('CHROMIUM_EXACT_STAGING_ORIGIN_CORS_SYNTHETIC '+JSON.stringify(check));
+            if(!check.fetchResolved)throw Error('Exact staging origin cannot browser-fetch hosted Supabase Auth');
+            console.log('CHROMIUM_CORS_CONNECTIVITY_PASS_NO_LOGIN_NO_EMAIL_NO_CHANGE');
+          }finally{await browser.close()}
+          NODE
