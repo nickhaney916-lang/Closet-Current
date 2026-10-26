@@ -16,9 +16,9 @@ function normalizeDestination(value){
  if(typeof value!=='string')return null;
  // Cloudflare's new public destinations supersede deprecated domains.
  const input=value.replace(/^https:\/\//i,'');
- if(!/^(?:\\*\\.)?closet-current-staging\\.pages\\.dev(?:\\/|\\/\\*)?$/.test(input))
+ if(!/^(?:\*\.)?closet-current-staging\.pages\.dev(?:\/|\/\*)?$/.test(input))
   return null;
- return input.replace(/\\/(?:\\*)?$/,'');
+ return input.replace(/\/(?:\*)?$/,'');
 }
 function domains(app){
  const set=new Set();
