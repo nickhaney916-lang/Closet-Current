@@ -51,7 +51,7 @@ export function addStagingLoginDiagnostics(input) {
     "   $('appShell').hidden=true;$('authGate').hidden=false;",
     "   try{window.closetCloud?.invalidateSession?.();}catch{}",
     "   return 'Staging login diagnostic APP-TYPE: Login response arrived, but the app could not finish opening the private closet.';",
-    "  }"
+    "  }",
     "  if(error?.code==='invalid_credentials'||/invalid login credentials/i.test(String(error?.message||'')))",
     "   return 'Staging login diagnostic AUTH-REJECT: Email or password was not accepted.';",
     "  if(error?.status===429)",
