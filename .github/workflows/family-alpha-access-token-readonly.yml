@@ -1,0 +1,82 @@
+name: Family Alpha - read-only Cloudflare credential visibility (NO DEPLOY)
+on:
+  push:
+    branches: [audit/family-alpha-readonly-cloudflare-token-check-20261025]
+    paths: ['.github/workflows/family-alpha-access-token-readonly.yml']
+permissions:
+  contents: read
+jobs:
+  read-only-credential-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      PAGES_TOKEN: '${{ secrets.CLOUDFLARE_API_TOKEN }}'
+      STAGING_NAMED_TOKEN: '${{ secrets.CLOUDFLARE_STAGING_API_TOKEN }}'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check which existing GitHub token sees staging Access apps (GET only)
+        run: |
+          node --input-type=module <<'NODE'
+          const account='43ad9703708ddb191712306bebadcace';
+          const base='https://api.cloudflare.com/client/v4/accounts/'+account;
+          const envs=[
+           ['GitHub CLOUDFLARE_API_TOKEN',process.env.PAGES_TOKEN],
+           ['GitHub CLOUDFLARE_STAGING_API_TOKEN',process.env.STAGING_NAMED_TOKEN]
+          ];
+          let usable=0,matched=false;
+          for(const [label,token] of envs){
+            if(!token){
+              console.log(label+': NOT CONFIGURED as a GitHub Actions repository secret');
+              continue;
+            }
+            usable++;
+            const check=async path=>{
+              try{
+                const r=await fetch(base+path,{
+                  method:'GET',redirect:'error',
+                  headers:{Authorization:'Bearer '+token,Accept:'application/json'}
+                });
+                if(!r.ok)return {ok:false,status:r.status};
+                const d=await r.json();
+                return {ok:d.success===true,status:r.status,
+                   result:d.result,result_info:d.result_info};
+              }catch{return {ok:false,status:0}}
+            };
+            const pages=await check('/pages/projects/closet-current-staging');
+            const apps=await check('/access/apps?per_page=100');
+            const list=Array.isArray(apps.result)?apps.result:[];
+            const host='closet-current-staging.pages.dev';
+            let root=false,wildcard=false;
+            for(const app of list){
+              const values=[
+                app.domain,
+                ...(Array.isArray(app.domains)?app.domains:[]),
+                ...(Array.isArray(app.self_hosted_domains)?app.self_hosted_domains:[]),
+                ...(Array.isArray(app.destinations)?app.destinations.map(x=>x?.uri):[])
+              ].filter(Boolean).map(x=>typeof x==='string'?x:x?.domain);
+              for(const raw of values){
+                const name=String(raw).replace(/^https:\/\//,'').replace(/\/\*?$/,'');
+                if(name===host)root=true;
+                if(name==='*.'+host)wildcard=true;
+              }
+            }
+            const safe={
+              pagesRead:pages.ok&&pages.result?.name==='closet-current-staging',
+              accessRequestStatus:apps.status,
+              accessRequestSuccess:apps.ok,
+              visibleAccessAppCount:list.length,
+              matchedRoot:root,
+              matchedWildcard:wildcard,
+              paginated:(apps.result_info?.total_pages??1)>1
+            };
+            console.log(label+': '+JSON.stringify(safe));
+            if(safe.pagesRead&&safe.accessRequestSuccess&&root&&wildcard&&!safe.paginated)
+              matched=true;
+          }
+          if(usable===0)throw Error('No configured GitHub Cloudflare token; zero writes performed');
+          if(!matched)throw Error('No GitHub token conclusively sees BOTH staging root and wildcard Access apps; login activation remains suspended');
+          console.log('READ-ONLY CLOUDFLARE ACCESS VISIBILITY PASS; no deployment or changes performed.');
+          NODE
