@@ -1,8 +1,8 @@
 name: Owner approved - Closet Current exact STAGING owner login once
+# Successfully deployed staging owner login in run 40378610477.
+# One-time publishing is now retired, explicitly non-runnable.
 on:
-  push:
-    branches: [deploy/closet-current-staging-owner-auth-reviewed-20261026]
-    paths: ['.github/workflows/closet-current-staging-owner-login-reviewed-once.yml']
+  workflow_dispatch:
 permissions:
   contents: read
 concurrency:
@@ -13,10 +13,10 @@ env:
   RECOGNITION_PIN: '795ad6637f8d4f782bc99751211b25e8e72a3a7d'
   RECOVERY_PIN: '08ed6ac4a3fc921eae5d5d3df3bd3966429559d2'
   REVIEW_PIN: '1ecac1079e75f1f25dc70a4c712b2448eb87dca8'
-  STAGE_PUBLIC_KEY: 'sb_publishable_Tc9eXwg8XTY6rJ0uZBD2VQ_NTGeIUNG'
+  STAGE_PUBLIC_KEY: ''
 jobs:
   stage-owner-only:
-    if: "github.event.head_commit.message == 'deploy(stage-auth): approved owner only 2026-10-26'"
+    if: ${{ false }}
     runs-on: ubuntu-latest
     timeout-minutes: 35
     steps:
