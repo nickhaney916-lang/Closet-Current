@@ -1,0 +1,133 @@
+name: Owner approved - Closet Current exact STAGING owner login once
+on:
+  push:
+    branches: [deploy/closet-current-staging-owner-auth-reviewed-20261026]
+    paths: ['.github/workflows/closet-current-staging-owner-login-reviewed-once.yml']
+permissions:
+  contents: read
+concurrency:
+  group: closet-current-STAGING-OWNER-LOGIN-20261026
+  cancel-in-progress: false
+env:
+  STAGE_PIN: '879f1b92fb15f9bc9a7f0429c7ee178f7bbf1373'
+  RECOGNITION_PIN: '795ad6637f8d4f782bc99751211b25e8e72a3a7d'
+  RECOVERY_PIN: '08ed6ac4a3fc921eae5d5d3df3bd3966429559d2'
+  REVIEW_PIN: '1ecac1079e75f1f25dc70a4c712b2448eb87dca8'
+  STAGE_PUBLIC_KEY: 'sb_publishable_Tc9eXwg8XTY6rJ0uZBD2VQ_NTGeIUNG'
+jobs:
+  stage-owner-only:
+    if: "github.event.head_commit.message == 'deploy(stage-auth): approved owner only 2026-10-26'"
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Require exact reviewed parent and single new staging-only workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = "refs/heads/deploy/closet-current-staging-owner-auth-reviewed-20261026"
+          test "$(git rev-parse HEAD^)" = "813206822dd8a0fab316bc4b9fcff03f25886519"
+          test "$(git diff --name-only HEAD^ HEAD)" = ".github/workflows/closet-current-staging-owner-login-reviewed-once.yml"
+          echo 'Exact approved staging owner login baseline validated, no other changed source files.'
+      - name: Fetch immutable staging recognition and review source pins
+        run: git fetch --no-tags origin "$STAGE_PIN" "$RECOGNITION_PIN" "$RECOVERY_PIN" "$REVIEW_PIN"
+      - name: Assemble full source-pinned held staging build, avatar OFF
+        run: |
+          node scripts/build-family-alpha-staging-auth-hold.mjs
+          node scripts/build-family-alpha-recognition-integrated-hold.mjs
+          node scripts/build-family-alpha-protected-preview-hold.mjs
+          node scripts/audit-family-alpha-stage-assets-hold.mjs
+      - name: Run complete offline staging and privacy regression suite
+        run: node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Create separate owner-only staging login artifact using existing STAGING publishable key
+        run: node scripts/build-family-alpha-owner-auth-approved.mjs
+      - name: Verify QA build only modified alpha-stage-config.js; avatar/family release disabled
+        run: |
+          node --input-type=module <<'NODE'
+          import {verifyApprovedOwnerAuth} from './scripts/build-family-alpha-owner-auth-approved.mjs';
+          const report=await verifyApprovedOwnerAuth({publicKey:process.env.STAGE_PUBLIC_KEY});
+          if(report.qaFiles<60||report.releaseGate!=='HOLD'||
+             report.stagingAuthEnabled!==true||report.avatarEnabled!==false||
+             report.familyAlphaAuthorized!==false||report.productionUntouched!==true||
+             report.stageRoot!=='https://closet-current-staging.pages.dev/')
+            throw Error('QA package failed stage-only, owner-only, avatar-disabled hold');
+          console.log('Complete authorized owner-login package verified. NO family activation.');
+          NODE
+      - name: Confirm correct existing Pages target with deploy token AND both same-owner Access policies with separate read-only token
+        env:
+          CLOUDFLARE_PAGES_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCESS_READ_TOKEN: ${{ secrets.CLOUDFLARE_STAGING_API_TOKEN }}
+        run: |
+          node --input-type=module <<'NODE'
+          import {verifyOwnerOnlyStageAccess} from './scripts/verify-owner-only-stage-access.mjs';
+          const pagesToken=process.env.CLOUDFLARE_PAGES_TOKEN;
+          const accessToken=process.env.CLOUDFLARE_ACCESS_READ_TOKEN;
+          if(!pagesToken||!accessToken||pagesToken===accessToken)
+            throw Error('Separate deployment and least-privilege Access read tokens required');
+          const url='https://api.cloudflare.com/client/v4/accounts/43ad9703708ddb191712306bebadcace/pages/projects/closet-current-staging';
+          const r=await fetch(url,{method:'GET',redirect:'error',
+            headers:{Authorization:'Bearer '+pagesToken,Accept:'application/json'}});
+          if(!r.ok)throw Error('Cannot confirm exact staging Pages destination');
+          const p=await r.json();
+          if(p.success!==true||p.result?.name!=='closet-current-staging'||
+             p.result.production_branch!=='main')
+            throw Error('Pages project does not match approved staging destination');
+          const auth=await verifyOwnerOnlyStageAccess({token:accessToken});
+          if(auth.result!=='OWNER_ONLY_ACCESS_READ_VERIFIED'||
+             auth.approvedIdentityCount!==1||auth.allowPolicies!==2||
+             auth.rootDomain!=='closet-current-staging.pages.dev'||
+             auth.previewDomain!=='*.closet-current-staging.pages.dev'||
+             auth.changesMade!==false)
+            throw Error('Owner-only Cloudflare Access root / wildcard proof failed');
+          console.log('Exact staging Pages project + both single-owner Access policies VERIFIED with separate credentials.');
+          NODE
+      - name: Require unauthenticated Access challenge on staging root, JS and preview BEFORE deploy
+        run: |
+          node --input-type=module <<'NODE'
+          for(const uri of [
+            'https://closet-current-staging.pages.dev/',
+            'https://closet-current-staging.pages.dev/index.html',
+            'https://closet-current-staging.pages.dev/app.js',
+            'https://closet-current-staging.pages.dev/auth.js',
+            'https://fd096539.closet-current-staging.pages.dev/'
+          ]){
+            const r=await fetch(uri,{method:'GET',redirect:'manual',cache:'no-store'});
+            let matched=false;
+            try {
+              const u=new URL(r.headers.get('location')||'',uri);
+              matched=r.status>=300&&r.status<400&&u.protocol==='https:'&&
+                u.hostname.endsWith('.cloudflareaccess.com')&&
+                u.pathname.startsWith('/cdn-cgi/access/');
+            }catch{}
+            if(!matched)throw Error('Unauthenticated Cloudflare Access checkpoint failed for '+new URL(uri).pathname);
+          }
+          console.log('Both staging root and prior preview are challenged for anonymous requests.');
+          NODE
+      - name: OWNER APPROVED upload only owner-login QA to closet-current-staging (NEVER production)
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: '43ad9703708ddb191712306bebadcace'
+          command: pages deploy dist-family-alpha-OWNER-ONLY-staging-qa --project-name=closet-current-staging --branch=main
+      - name: Check anonymous denial after staging owner-login deploy
+        run: |
+          node --input-type=module <<'NODE'
+          for(const path of ['/','/index.html','/auth.js','/app.js','/cloud-backup.js','/alpha-stage-config.js']){
+            const uri='https://closet-current-staging.pages.dev'+path;
+            const r=await fetch(uri,{method:'GET',redirect:'manual',cache:'no-store'});
+            let secure=false;
+            try{
+              const u=new URL(r.headers.get('location')||'',uri);
+              secure=r.status>=300&&r.status<400&&u.protocol==='https:'&&
+                u.hostname.endsWith('.cloudflareaccess.com')&&
+                u.pathname.startsWith('/cdn-cgi/access/');
+            }catch{}
+            if(!secure)throw Error('Post-deploy Access protection failed on '+path);
+          }
+          console.log('Staging-only owner-login QA deployed; all 6 anonymous routes Access challenged. Family Alpha remains HOLD.');
+          NODE
