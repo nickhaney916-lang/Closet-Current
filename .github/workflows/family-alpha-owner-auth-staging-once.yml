@@ -1,4 +1,5 @@
 name: OWNER APPROVED - Closet Current STAGING owner-login once
+# Cloudflare public destinations supported; owner policy must be verified before upload.
 on:
   push:
     branches: [deploy/approved-owner-auth-staging-only-20261025]
