@@ -1,0 +1,63 @@
+name: FAMILY ALPHA - diagnose staging auth network safely (NO SEND / NO DEPLOY)
+on:
+  push:
+    branches: [audit/family-alpha-auth-recovery-network-readonly-20261026]
+    paths: ['.github/workflows/family-alpha-staging-auth-network-readonly.yml']
+permissions:
+  contents: read
+jobs:
+  auth-network-inspection:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Read-only staging Supabase DNS, health, and password recovery browser preflight
+        run: |
+          node --input-type=module <<'NODE'
+          import {lookup} from 'node:dns/promises';
+          const project='fbnplztkbsteuzrmbgib';
+          const host=project+'.supabase.co';
+          const base='https://'+host;
+          const origin='https://closet-current-staging.pages.dev';
+          const safeError=e=>String(e?.cause?.code||e?.code||e?.name||'network failure');
+          try {
+            const addr=await lookup(host);
+            console.log('STAGE_SUPABASE_DNS '+JSON.stringify({resolved:true,ipVersion:addr.family}));
+          }catch(e){
+            console.log('STAGE_SUPABASE_DNS '+JSON.stringify({resolved:false,errorCode:safeError(e)}));
+            process.exitCode=1;
+          }
+          async function inspect(uri,options={}){
+            try {
+              const r=await fetch(uri,{redirect:'manual',signal:AbortSignal.timeout(12000),...options});
+              return {connected:true,status:r.status,
+                contentType:(r.headers.get('content-type')||'').split(';')[0],
+                allowOrigin:r.headers.get('access-control-allow-origin'),
+                allowMethods:r.headers.get('access-control-allow-methods'),
+                allowHeaders:r.headers.get('access-control-allow-headers'),
+                vary:r.headers.get('vary')};
+            }catch(e){return {connected:false,errorCode:safeError(e)}}
+          }
+          const health=await inspect(base+'/auth/v1/health',{headers:{Origin:origin}});
+          console.log('STAGE_SUPABASE_AUTH_HEALTH '+JSON.stringify(health));
+          const preflight=await inspect(base+'/auth/v1/recover?redirect_to='+encodeURIComponent(origin+'/'),{
+            method:'OPTIONS',
+            headers:{
+              Origin:origin,
+              'Access-Control-Request-Method':'POST',
+              'Access-Control-Request-Headers':'apikey,content-type'
+            }
+          });
+          console.log('STAGE_SUPABASE_RECOVER_PREFLIGHT '+JSON.stringify(preflight));
+          // Does not POST recover, sign in, reset password, or touch user data.
+          if(!health.connected||!preflight.connected)
+            throw Error('Supabase stage Auth cannot be reached reliably from GitHub runner');
+          if(preflight.status<200||preflight.status>=300)
+            throw Error('Supabase Auth CORS preflight was not successful');
+          const originOk=preflight.allowOrigin===origin||preflight.allowOrigin==='*';
+          if(!originOk)throw Error('Supabase staging Auth CORS preflight did not allow exact Pages origin');
+          console.log('STAGE_SUPABASE_AUTH_NETWORK_READONLY_OK');
+          NODE
