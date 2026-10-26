@@ -3,8 +3,10 @@ import assert from 'node:assert/strict';
 import {verifyOwnerOnlyStageAccess} from '../scripts/verify-owner-only-stage-access.mjs';
 const project='closet-current-staging.pages.dev';
 const okApps=[
- {id:'stage-root-app-0000000000000001',type:'self_hosted',domain:project},
- {id:'stage-wildcard-app-0000000002',type:'self_hosted',domain:'*.'+project},
+ {id:'stage-root-app-0000000000000001',type:'self_hosted',
+  destinations:[{type:'public',uri:project+'/'}]},
+ {id:'stage-wildcard-app-0000000002',type:'self_hosted',
+  destinations:[{type:'public',uri:'*.'+project+'/*'}]},
  {id:'unrelated-production-app-0000003',type:'self_hosted',domain:'closet-current.pages.dev'}
 ];
 const policy=[{decision:'allow',include:[{email:{email:'synthetic-owner@example.invalid'}}]}];
@@ -85,4 +87,14 @@ test('no permissions or partially paginated responses cannot authorize staging u
    token:'SYNTHETIC_CF_TOKEN_NEVER_REAL',fetchFn:h.fetchFn
   }),/unavailable|Incomplete/);
  }
+});
+
+test('modern Cloudflare public destination overrides must not make app assets public',async()=>{
+ const apps=[...okApps];
+ apps[0]={...apps[0],destinations:[{
+  type:'public',uri:project+'/',overrides:[{behavior:'public',path_pattern:'/app.js'}]
+ }]};
+ await assert.rejects(verifyOwnerOnlyStageAccess({
+  token:'SYNTHETIC_CF_TOKEN_NEVER_REAL',fetchFn:transport({apps}).fetchFn
+ }),/overrides would bypass owner/);
 });
