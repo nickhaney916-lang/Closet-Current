@@ -4,6 +4,10 @@ import {readFile} from 'node:fs/promises';
 const folder='dist-family-alpha-OWNER-ONLY-staging-qa/';
 const auth=await readFile(folder+'auth.js','utf8');
 const config=await readFile(folder+'alpha-stage-config.js','utf8');
+const actualIndex=await readFile(folder+'index.html','utf8');
+const cspTag=actualIndex.match(/<meta http-equiv="Content-Security-Policy"[^>]+>/)?.[0];
+if(!cspTag||!cspTag.includes("connect-src 'self' https://fbnplztkbsteuzrmbgib.supabase.co;"))
+  throw Error('Owner-only staging artifact missing required exact-domain CSP');
 const origin='https://closet-current-staging.pages.dev';
 const url=origin+'/';
 const tokenUrl='https://fbnplztkbsteuzrmbgib.supabase.co/auth/v1/token?grant_type=password';
@@ -14,7 +18,7 @@ try{
   let count=0;
   const errors=[];
   page.on('pageerror',err=>errors.push(err.name));
-  const html='<html><meta charset="utf-8"><body><section id="authGate"><form id="authForm">'+
+  const html='<html><head><meta charset="utf-8">'+cspTag+'</head><body><section id="authGate"><form id="authForm">'+
    '<input id="authEmail" type="email" required><input id="authPassword" type="password" required minlength="8">'+
    '<label id="usernameWrap" hidden><input id="authUsername"></label>'+
    '<button id="authPasswordToggle" type="button"></button><p id="authStatus"></p>'+
@@ -39,6 +43,12 @@ try{
     body:JSON.stringify(response)});
   });
   await page.goto(url);
+  // Verify actual CSP is enforced, not merely present in the generated HTML.
+  const forbidden=await page.evaluate(async()=>{
+    try{await fetch('https://hlkgymugtfbirlpunsra.supabase.co/auth/v1/health',
+      {headers:{apikey:'synthetic-not-real'}});return false;}catch{return true;}
+  });
+  if(!forbidden)throw Error('CSP unexpectedly allows production Supabase requests');
   await page.locator('#authEmail').fill('synthetic@example.invalid');
   await page.locator('#authPassword').fill('synthetic-not-a-real-password');
   await page.locator('#authSubmit').click();
