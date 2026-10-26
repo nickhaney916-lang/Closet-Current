@@ -4,7 +4,7 @@ import {readFile,writeFile} from 'node:fs/promises';
 import {join} from 'node:path';
 import vm from 'node:vm';
 import {
- buildApprovedOwnerAuth,verifyApprovedOwnerAuth,AUTH_OUTPUT
+ buildApprovedOwnerAuth,verifyApprovedOwnerAuth,AUTH_OUTPUT,ownerStageCsp,OWNER_STAGE_CONNECT_SRC
 } from '../scripts/build-family-alpha-owner-auth-approved.mjs';
 import {assertProtectedPreviewHold,STAGE_PREVIEW_OUTPUT} from '../scripts/build-family-alpha-protected-preview-hold.mjs';
 import {stageConfigScript,STAGE_ID,APPROVED_STAGE_CALLBACK} from '../scripts/build-family-alpha-staging-auth-hold.mjs';
@@ -76,4 +76,34 @@ test('QA manifest contains no exposed key and no family release authorization',a
  assert.equal(manifest.verifiedRealOwnerLogin,false);
  assert.equal(manifest.familyAlphaReleaseAuthorized,false);
  assert.equal(JSON.stringify(manifest).includes(acceptedKey),false);
+});
+
+test('owner-only artifact CSP authorizes exact stage Auth origin and never broadens the held preview or production',async()=>{
+ const [owner,held]=await Promise.all([
+   readFile(join(AUTH_OUTPUT,'index.html'),'utf8'),
+   readFile(join(STAGE_PREVIEW_OUTPUT,'index.html'),'utf8')
+ ]);
+ assert.ok(owner.includes(OWNER_STAGE_CONNECT_SRC));
+ assert.ok(!owner.includes("connect-src 'self';"));
+ assert.ok(held.includes("connect-src 'self';"));
+ assert.ok(!held.includes(OWNER_STAGE_CONNECT_SRC));
+ assert.ok(!owner.includes('https://hlkgymugtfbirlpunsra.supabase.co'));
+ assert.ok(!owner.includes('connect-src https:'));
+ assert.ok(!owner.includes('connect-src *'));
+ assert.equal(owner,ownerStageCsp(held));
+ for(const unsafe of [
+   '<html><head></head></html>',
+   held.replace("connect-src 'self';","connect-src *;"),
+   held.replace("connect-src 'self';",OWNER_STAGE_CONNECT_SRC),
+   held.replace('Content-Security-Policy','Some-Other-Policy')
+ ])assert.throws(()=>ownerStageCsp(unsafe),/staging CSP/);
+});
+
+test('tampering with allowed origin or broadening connect-src fails owner-only verification',async()=>{
+ const p=join(AUTH_OUTPUT,'index.html');
+ const original=await readFile(p,'utf8');
+ try {
+  await writeFile(p,original.replace(OWNER_STAGE_CONNECT_SRC,"connect-src *;"));
+  await assert.rejects(verifyApprovedOwnerAuth({publicKey:acceptedKey}),/Unapproved staged owner-only CSP change/);
+ }finally{await writeFile(p,original)}
 });
