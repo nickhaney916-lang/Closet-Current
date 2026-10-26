@@ -13,6 +13,8 @@ on:
       - 'scripts/test-family-alpha-final-protected-hold-browser.mjs'
       - 'tests/family-alpha-staging-activation-checklist-hold.test.mjs'
       - 'tests/family-alpha-post-site-url-owner-login-hold.test.mjs'
+      - 'scripts/build-family-alpha-owner-login-rehearsal-hold.mjs'
+      - 'tests/family-alpha-owner-login-rehearsal-hold.test.mjs'
       - 'docs/FAMILY-ALPHA-STAGING-SITEURL-OWNER-LOGIN-PLAN-20261025.md'
       - 'docs/FAMILY-ALPHA-STAGING-ACTIVATION-CHECKLIST-HOLD-20261025.md'
       - 'docs/FAMILY-ALPHA-PROTECTED-PREVIEW-ACTIVATION-HOLD-20261025.md'
@@ -58,6 +60,10 @@ jobs:
         run: node --test tests/family-alpha-staging-activation-checklist-hold.test.mjs
       - name: Verify owner-confirmed Site URL, mock owner-only Auth host, still-disabled live release
         run: node --test tests/family-alpha-post-site-url-owner-login-hold.test.mjs
+      - name: Build synthetic owner-login rehearsal in a distinct never-deploy folder
+        run: node scripts/build-family-alpha-owner-login-rehearsal-hold.mjs
+      - name: Test review artifact protects staging login, owner routing and avatar hold
+        run: node --test tests/family-alpha-owner-login-rehearsal-hold.test.mjs
       - name: Check exact staging host, independent flags and no bypass paths
         run: node --test tests/family-alpha-protected-preview-hold.test.mjs
       - name: Check existing staging placeholder/full-app evidence remains gated
