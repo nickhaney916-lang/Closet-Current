@@ -1,0 +1,41 @@
+name: Family Alpha - staging owner-only Auth CSP QA NO DEPLOY
+on:
+  push:
+    branches: [fix/closet-alpha-staging-owner-auth-connect-src-20261026]
+permissions:
+  contents: read
+env:
+  STAGE_PIN: '879f1b92fb15f9bc9a7f0429c7ee178f7bbf1373'
+  RECOGNITION_PIN: '795ad6637f8d4f782bc99751211b25e8e72a3a7d'
+  RECOVERY_PIN: '08ed6ac4a3fc921eae5d5d3df3bd3966429559d2'
+  REVIEW_PIN: '1ecac1079e75f1f25dc70a4c712b2448eb87dca8'
+  STAGE_PUBLIC_KEY: 'sb_publishable_Tc9eXwg8XTY6rJ0uZBD2VQ_NTGeIUNG'
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Restore source-pinned Family Alpha input
+        run: git fetch --no-tags origin "$STAGE_PIN" "$RECOGNITION_PIN" "$RECOVERY_PIN" "$REVIEW_PIN"
+      - name: Build staging held package, no release or avatar
+        run: |
+          node scripts/build-family-alpha-staging-auth-hold.mjs
+          node scripts/build-family-alpha-recognition-integrated-hold.mjs
+          node scripts/build-family-alpha-protected-preview-hold.mjs
+          node scripts/audit-family-alpha-stage-assets-hold.mjs
+      - name: Full existing offline test suite and diagnostic tests
+        run: node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Prepare owner-only artifact but DO NOT DEPLOY
+        run: |
+          node scripts/build-family-alpha-owner-auth-approved.mjs
+          node --input-type=module -e "import {verifyApprovedOwnerAuth} from './scripts/build-family-alpha-owner-auth-approved.mjs';const r=await verifyApprovedOwnerAuth({publicKey:process.env.STAGE_PUBLIC_KEY});if(r.releaseGate!=='HOLD'||r.avatarEnabled||r.familyAlphaAuthorized||!r.productionUntouched)throw Error('Safety gate');console.log('STAGING_DIAGNOSTIC_QA_SAFE')"
+      - name: Install isolated Chromium
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install chromium
+      - name: Test staging login diagnostic codes using synthetic replies only
+        run: node scripts/verify-staging-login-diagnostic-browser.mjs
