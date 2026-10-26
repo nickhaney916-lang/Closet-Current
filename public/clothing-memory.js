@@ -6,14 +6,14 @@
  function confirm(item){const details={};for(const key of keys)if(!missing(item[key]))details[key]=item[key];const out={...item,confirmedDetails:details};delete out.learningReviewedWeek;return out;}
  function suggest(item,examples){
   if(!valid(item.recognitionMemory))return null;
-  const seen=new Set(),matches=[];
+  const seen=new Set(),seenIds=new Set(),matches=[],queryPhoto=item.recognitionPhoto?.image||item.image;
   for(const other of examples){const d=other.confirmedDetails,m=other.recognitionMemory,photo=other.recognitionPhoto?.image||other.image;
-   if(other.id===item.id||!d||missing(d.category)||missing(d.itemType)||d.category!==other.category||d.itemType!==other.itemType||!valid(m)||m.modelKey!==item.recognitionMemory.modelKey||seen.has(photo))continue;
-   seen.add(photo);let score=0;for(let i=0;i<512;i++)score+=m.features[i]*item.recognitionMemory.features[i];if(score>=.9)matches.push({other,score});
+   if(other.id===item.id||seenIds.has(other.id)||typeof photo!=='string'||!photo||photo===queryPhoto||!d||missing(d.category)||missing(d.itemType)||d.category!==other.category||d.itemType!==other.itemType||!valid(m)||m.modelKey!==item.recognitionMemory.modelKey||seen.has(photo))continue;
+   seen.add(photo);seenIds.add(other.id);let score=0;for(let i=0;i<512;i++)score+=m.features[i]*item.recognitionMemory.features[i];if(score>=.9)matches.push({other,score});
   }
   matches.sort((a,b)=>b.score-a.score);const top=matches.slice(0,3);if(top.length<2)return null;
   const category=top[0].other.confirmedDetails.category,type=top[0].other.confirmedDetails.itemType;
-  if(top.some(x=>x.other.confirmedDetails.category!==category||x.other.confirmedDetails.itemType!==type)||!missing(item.category)&&item.category!==category||item.segmentHint&&(item.segmentHint.clipped||!item.segmentHint.categories?.includes(category)||item.segmentHint.types?.length&&!item.segmentHint.types.includes(type)))return null;
+  if(top.some(x=>x.other.confirmedDetails.category!==category||x.other.confirmedDetails.itemType!==type)||!missing(item.category)&&item.category!==category||!missing(item.itemType)&&item.itemType!==type||item.segmentHint&&(item.segmentHint.clipped||!item.segmentHint.categories?.includes(category)||item.segmentHint.types?.length&&!item.segmentHint.types.includes(type)))return null;
   const fields={};for(const key of keys){const value=top[0].other.confirmedDetails[key];if(missing(item[key])&&!missing(value)&&top.every(x=>x.other.confirmedDetails[key]===value&&x.other[key]===value))fields[key]=value;}
   if(!Object.keys(fields).length)return null;
   return {fields,sourceIds:top.map(x=>x.other.id),similarity:top[0].score,requiresConfirmation:true};

@@ -17,3 +17,24 @@ test('background feature refresh merges into the latest saved row without overwr
  const updated=await c.saveMemoryReview({id:'one',image:'photo',category:'Tops',itemType:'T-shirt',color:'Blue',recognitionMemory:memory(),learningReviewedWeek:'2026-10-19'});assert.equal(updated.itemType,'Polo');assert.equal(updated.color,'Green');assert.equal(updated.notes,'Latest correction');assert.equal(M.valid(record.recognitionMemory),true);
  assert.equal(await c.saveMemoryReview({id:'one',image:'old-crop',recognitionMemory:memory()}),null);assert.equal(record.image,'photo');
 });
+
+test('known garment subtype blocks attributes from a different confirmed subtype',()=>{
+ const q=target({itemType:'T-shirt',pattern:'Unknown',sleeveLength:'Unknown'});
+ assert.equal(M.suggest(q,[example('one'),example('two')]),null);
+ assert.equal(q.itemType,'T-shirt');assert.equal(q.pattern,'Unknown');
+ const same=M.suggest(target({itemType:'Polo'}),[example('one'),example('two')]);
+ assert.equal(same.fields.pattern,'Striped');assert.ok(!('itemType' in same.fields));
+});
+test('a duplicate of the query photograph is not independent confirmed support',()=>{
+ const q=target({image:'photo-one'});
+ assert.equal(M.suggest(q,[example('one'),example('two')]),null);
+ assert.equal(M.suggest(q,[example('one'),example('two'),example('three')]).sourceIds.length,2);
+});
+test('query exclusion follows the unmasked recognition source rather than the display cutout',()=>{
+ const q=target({image:'white-background-cutout',recognitionPhoto:{image:'raw-source'}});
+ assert.equal(M.suggest(q,[example('one',{image:'different-display',recognitionPhoto:{image:'raw-source'}}),example('two')]),null);
+});
+test('two revisions of the same confirmed item cannot count as two supporting examples',()=>{
+ assert.equal(M.suggest(target(),[example('one'),example('one',{image:'new-photo-of-same-item'})]),null);
+ assert.ok(M.suggest(target(),[example('one'),example('two')]));
+});
