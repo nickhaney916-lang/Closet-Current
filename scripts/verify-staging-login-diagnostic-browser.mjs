@@ -49,7 +49,7 @@ try{
     appVisible:!document.getElementById('appShell').hidden,
     sessionPresent:Boolean(window.closetAuth?.user)
   }));
-  if(count!==1||errors.length||!outcome.status.includes(expected)||
+  if(count!==1||errors.length||outcome.appVisible||outcome.sessionPresent||!outcome.status.includes(expected)||
     outcome.status.includes('synthetic@example.invalid')||
     outcome.status.includes('synthetic-not-a-real-password'))
    throw Error('Synthetic diagnostic test failed for '+type);
