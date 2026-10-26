@@ -12,14 +12,31 @@ const API='https://api.cloudflare.com/client/v4/accounts/'+ACCOUNT+'/access/apps
 const ROOT='closet-current-staging.pages.dev';
 const WILD='*.'+ROOT;
 const hex=s=>createHash('sha256').update(s).digest('hex').slice(0,12);
+function normalizeDestination(value){
+ if(typeof value!=='string')return null;
+ // Cloudflare's new public destinations supersede deprecated domains.
+ const input=value.replace(/^https:\/\//i,'');
+ if(!/^(?:\\*\\.)?closet-current-staging\\.pages\\.dev(?:\\/|\\/\\*)?$/.test(input))
+  return null;
+ return input.replace(/\\/(?:\\*)?$/,'');
+}
 function domains(app){
  const set=new Set();
- if(typeof app.domain==='string')set.add(app.domain);
- for(const x of [app.domains,app.self_hosted_domains]){
-  if(!Array.isArray(x))continue;
-  for(const value of x) {
-   const domain=typeof value==='string'?value:value?.domain;
-   if(typeof domain==='string')set.add(domain);
+ for(const legacy of [app.domain,...(Array.isArray(app.domains)?app.domains:[]),
+   ...(Array.isArray(app.self_hosted_domains)?app.self_hosted_domains:[])]){
+  const name=typeof legacy==='string'?legacy:legacy?.domain;
+  const safe=normalizeDestination(name);
+  if(safe)set.add(safe);
+ }
+ if(Array.isArray(app.destinations)){
+  for(const entry of app.destinations){
+   if(entry?.type!=='public'&&entry?.type!==undefined)continue;
+   const value=normalizeDestination(entry.uri);
+   if(value){
+    if(Array.isArray(entry.overrides)&&entry.overrides.length>0)
+      throw Error('Public Access destination overrides would bypass owner');
+    set.add(value);
+   }
   }
  }
  return [...set];
@@ -54,7 +71,8 @@ export async function verifyOwnerOnlyStageAccess({token,fetchFn=fetch}={}){
  if(typeof token!=='string'||token.length<16)throw Error('Cloudflare Access read token missing');
  const apps=await json(API+'?per_page=100',fetchFn,token);
  const selected=apps.filter(app=>domains(app).some(d=>d===ROOT||d===WILD));
- if(selected.length!==2)throw Error('Expected two staging root and wildcard Access apps, got '+selected.length);
+ if(selected.length!==2)throw Error('Expected two staging root and wildcard Access apps, got '+selected.length+
+   '; apps='+apps.length+'; destinationBased='+apps.filter(a=>Array.isArray(a.destinations)).length);
  const keys=new Set();
  for(const app of selected){
   for(const d of domains(app))if(d===ROOT||d===WILD)keys.add(d);
