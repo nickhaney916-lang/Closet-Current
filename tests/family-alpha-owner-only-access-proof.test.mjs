@@ -59,7 +59,7 @@ test('missing wildcard, mismatched apps, extra staging apps or inconsistent owne
  for(const apps of [
   okApps.slice(0,1),
   [okApps[0],okApps[0],okApps[1]],
-  [okApps[0],{...okApps[1],domain:'another-preview.example.invalid'}],
+  [okApps[0],{...okApps[1],destinations:[{type:'public',uri:'another-preview.example.invalid/'}]}],
   [okApps[0],{...okApps[1],type:'saas'}]
  ]){
   const h=transport({apps});
