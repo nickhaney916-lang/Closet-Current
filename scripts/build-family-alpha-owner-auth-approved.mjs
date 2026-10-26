@@ -20,6 +20,22 @@ import {
 export const AUTH_OUTPUT='dist-family-alpha-OWNER-ONLY-staging-qa';
 export const AUTH_MANIFEST='family-alpha-owner-auth-qa-manifest.json';
 const digest=data=>createHash('sha256').update(data).digest('hex');
+// Restrict the only permitted third-party connection to the STAGING Auth host.
+// The held/offline preview stays self-only; production has no source edits.
+export const OWNER_STAGE_CONNECT_SRC="connect-src 'self' https://"+STAGE_ID+".supabase.co;";
+const HELD_CONNECT_SRC="connect-src 'self';";
+export function ownerStageCsp(index){
+ if(typeof index!=='string'||index.split('<meta http-equiv="Content-Security-Policy"').length!==2||
+    index.split(HELD_CONNECT_SRC).length!==2||index.includes(OWNER_STAGE_CONNECT_SRC)||
+    index.includes(PROD_ID)||index.includes('connect-src https:')||
+    index.includes('connect-src *'))
+   throw Error('Unsafe or unexpected staging CSP source; abort');
+ const next=index.replace(HELD_CONNECT_SRC,OWNER_STAGE_CONNECT_SRC);
+ if(!next.includes(OWNER_STAGE_CONNECT_SRC)||next.includes(HELD_CONNECT_SRC))
+   throw Error('Staging CSP could not be narrowed to exact allowed host');
+ return next;
+}
+
 function getKey(value){
  if(typeof value!=='string'||!/^sb_publishable_[A-Za-z0-9_-]{8,}$/.test(value)||
     /SYNTHETIC|EXAMPLE|FAKE|DEMO|PLACEHOLDER/i.test(value))
@@ -47,6 +63,11 @@ async function compare(src,target){
   if(!b.includes(file))throw Error('Missing stage asset: '+file);
   if(file==='alpha-stage-config.js')continue;
   const [before,after]=await Promise.all([readFile(join(src,file)),readFile(join(target,file))]);
+  if(file==='index.html'){
+    if(after.toString('utf8')!==ownerStageCsp(before.toString('utf8')))
+      throw Error('Unapproved staged owner-only CSP change');
+    continue;
+  }
   if(!before.equals(after))throw Error('Unapproved change to source-pinned app: '+file);
  }
  return a.length;
@@ -76,6 +97,8 @@ export async function buildApprovedOwnerAuth({root=resolve('.'),publicKey}={}){
  await rm(target,{recursive:true,force:true});
  await cp(source,target,{recursive:true});
  await writeFile(join(target,'alpha-stage-config.js'),config);
+ const heldHtml=await readFile(join(source,'index.html'),'utf8');
+ await writeFile(join(target,'index.html'),ownerStageCsp(heldHtml));
  const manifest=Object.freeze({
   kind:'FAMILY_ALPHA_OWNER_ONLY_STAGE_LOGIN_AUTHORIZED',
   stagingProjectRef:STAGE_ID,
@@ -85,6 +108,9 @@ export async function buildApprovedOwnerAuth({root=resolve('.'),publicKey}={}){
   publishableKeyPresent:true,
   privilegedKeyPresent:false,
   onlyChangedStageAsset:'alpha-stage-config.js',
+  onlyChangedStageAssets:['alpha-stage-config.js','index.html'],
+  ownerStageCspOrigin:'https://'+STAGE_ID+'.supabase.co',
+  heldPreviewCspUnchanged:true,
   sourceFolder:STAGE_PREVIEW_OUTPUT,
   publicSignupAllowed:false,
   cloudflareAccessPolicyUntouched:true,
@@ -119,6 +145,9 @@ export async function verifyApprovedOwnerAuth({root=resolve('.'),publicKey}={}){
     manifest.stagingProjectRef!==STAGE_ID||
     manifest.stageRoot!==APPROVED_STAGE_CALLBACK||
     manifest.onlyChangedStageAsset!=='alpha-stage-config.js'||
+    JSON.stringify(manifest.onlyChangedStageAssets)!==JSON.stringify(['alpha-stage-config.js','index.html'])||
+    manifest.ownerStageCspOrigin!=='https://'+STAGE_ID+'.supabase.co'||
+    manifest.heldPreviewCspUnchanged!==true||
     manifest.ownerOnlyAuthConfigSHA256!==digest(conf)||
     manifest.publicSignupAllowed!==false||
     manifest.familyAccountsAdded!==false||
