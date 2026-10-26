@@ -59,22 +59,7 @@ jobs:
           const origin='https://closet-current-staging.pages.dev';
           const root=origin+'/';
           const url='https://fbnplztkbsteuzrmbgib.supabase.co/auth/v1/token?grant_type=password';
-          const html=`<!doctype html><meta charset="utf-8">
-<section id="authGate"><form id="authForm">
-<label>Email <input id="authEmail" type="email" required></label>
-<label>Password <input id="authPassword" type="password" required minlength="8"></label>
-<label hidden>Username <input id="authUsername"></label><span id="usernameWrap" hidden></span>
-<button type="button" id="authPasswordToggle"></button>
-<p id="authStatus"></p><button type="submit" id="authSubmit">Log in</button>
-<button id="authMode" type="button" hidden></button>
-<button id="authReset" type="button"></button><button id="authResend" type="button"></button>
-</form></section>
-<div id="appShell" hidden><span id="accountLabel"></span><button id="logout"></button></div>
-<script>window.__CLOSET_ALPHA_STAGE_AUTH__=Object.freeze({
-ready:true,base:'https://fbnplztkbsteuzrmbgib.supabase.co',
-key:'sb_publishable_synthetic_browser_fixture',
-redirect:'https://closet-current-staging.pages.dev/',releaseGate:'HOLD'
-});</script><script src="/auth.js"></script>`;
+          const html="<!doctype html><meta charset=\"utf-8\">\n<section id=\"authGate\"><form id=\"authForm\">\n<label>Email <input id=\"authEmail\" type=\"email\" required></label>\n<label>Password <input id=\"authPassword\" type=\"password\" required minlength=\"8\"></label>\n<label hidden>Username <input id=\"authUsername\"></label><span id=\"usernameWrap\" hidden></span>\n<button type=\"button\" id=\"authPasswordToggle\"></button>\n<p id=\"authStatus\"></p><button type=\"submit\" id=\"authSubmit\">Log in</button>\n<button id=\"authMode\" type=\"button\" hidden></button>\n<button id=\"authReset\" type=\"button\"></button><button id=\"authResend\" type=\"button\"></button>\n</form></section>\n<div id=\"appShell\" hidden><span id=\"accountLabel\"></span><button id=\"logout\"></button></div>\n<script>window.__CLOSET_ALPHA_STAGE_AUTH__=Object.freeze({\nready:true,base:'https://fbnplztkbsteuzrmbgib.supabase.co',\nkey:'sb_publishable_synthetic_browser_fixture',\nredirect:'https://closet-current-staging.pages.dev/',releaseGate:'HOLD'\n});</script><script src=\"/auth.js\"></script>";
           const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
           try {
             for(const mode of ['success','invalid_password']){
