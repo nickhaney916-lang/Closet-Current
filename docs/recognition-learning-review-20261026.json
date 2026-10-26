@@ -1,0 +1,1605 @@
+{
+  "date": "2026-10-26",
+  "reviewedMain": "1f43dcf933f965913e6ae469d179f46b1cb645c7",
+  "validatedCandidate": "5a48ff7da1a528e4e1107f33d25b06d1ec2ca090",
+  "priorValidatedBaseline": {
+    "commit": "afdd179f590df2b2c63fc577385a119a92c18d79",
+    "run": 38777903857
+  },
+  "validation": {
+    "nodeRun": 40351853520,
+    "realPhotoRun": 40351853348,
+    "artifactId": 12664036782,
+    "nodePassed": 253,
+    "nodeFailed": 0,
+    "focusedRetrievalPassed": 14,
+    "newRegressionCasesFailedBeforeFix": 4,
+    "nightlyRun": 40340221801,
+    "nightlyAttempts": 2,
+    "nightlyCategoriesPerAttempt": {
+      "correct": 14,
+      "submitted": 14
+    }
+  },
+  "changes": [
+    "Reject confirmed reference subtypes that conflict with a known query subtype",
+    "Exclude the query recognition photograph from independent supporting examples",
+    "Count distinct reference item IDs as well as distinct photographs"
+  ],
+  "preserved": [
+    "Account-scoped confirmed example inputs and mandatory human confirmation",
+    "Similarity threshold 0.9 and two-reference minimum",
+    "No copied color, brand, size or material",
+    "Classifier, model vectors, preprocessing, garment masks, automatic saving, interface, camera, corrections and private storage"
+  ],
+  "photoEvaluations": {
+    "reviewed32": {
+      "beforeEvaluation": {
+        "manifestCount": 32,
+        "resultsCount": 32,
+        "missingResults": 0,
+        "single": {
+          "evaluated": 32,
+          "autoIndexedCount": 31,
+          "categoryReviewCount": 1,
+          "categoryAccuracyPercent": 100,
+          "typeAccuracyPercent": 71.88,
+          "acceptedTypeAccuracyPercent": 93.75,
+          "abstentionPercent": 0
+        },
+        "negative": {
+          "evaluated": 0,
+          "rejected": 0,
+          "falsePositives": 0
+        },
+        "outfit": {
+          "evaluated": 0,
+          "expectedPieces": 0,
+          "matchedPieces": 0,
+          "pieceRecallPercent": null,
+          "unexpectedPieces": 0
+        },
+        "reasonCounts": {
+          "accepted": 26,
+          "bottoms_independent_agreement": 1,
+          "skirt_padded_views_agreement": 1,
+          "dress_type_review": 1,
+          "skirt_dress_independent_agreement": 1,
+          "jacket_runner_up_independent_agreement": 1,
+          "coat_near_full_independent_agreement": 1
+        },
+        "perCategory": {
+          "Tops": {
+            "total": 2,
+            "categoryCorrect": 2,
+            "typeCorrect": 2,
+            "abstained": 0
+          },
+          "Bottoms": {
+            "total": 9,
+            "categoryCorrect": 9,
+            "typeCorrect": 9,
+            "abstained": 0
+          },
+          "Dresses": {
+            "total": 2,
+            "categoryCorrect": 2,
+            "typeCorrect": 0,
+            "abstained": 0
+          },
+          "Outerwear": {
+            "total": 6,
+            "categoryCorrect": 6,
+            "typeCorrect": 5,
+            "abstained": 0
+          },
+          "Shoes": {
+            "total": 13,
+            "categoryCorrect": 13,
+            "typeCorrect": 7,
+            "abstained": 0
+          }
+        },
+        "errors": []
+      },
+      "afterEvaluation": {
+        "manifestCount": 32,
+        "resultsCount": 32,
+        "missingResults": 0,
+        "single": {
+          "evaluated": 32,
+          "autoIndexedCount": 31,
+          "categoryReviewCount": 1,
+          "categoryAccuracyPercent": 100,
+          "typeAccuracyPercent": 71.88,
+          "acceptedTypeAccuracyPercent": 93.75,
+          "abstentionPercent": 0
+        },
+        "negative": {
+          "evaluated": 0,
+          "rejected": 0,
+          "falsePositives": 0
+        },
+        "outfit": {
+          "evaluated": 0,
+          "expectedPieces": 0,
+          "matchedPieces": 0,
+          "pieceRecallPercent": null,
+          "unexpectedPieces": 0
+        },
+        "reasonCounts": {
+          "accepted": 26,
+          "bottoms_independent_agreement": 1,
+          "skirt_padded_views_agreement": 1,
+          "dress_type_review": 1,
+          "skirt_dress_independent_agreement": 1,
+          "jacket_runner_up_independent_agreement": 1,
+          "coat_near_full_independent_agreement": 1
+        },
+        "perCategory": {
+          "Tops": {
+            "total": 2,
+            "categoryCorrect": 2,
+            "typeCorrect": 2,
+            "abstained": 0
+          },
+          "Bottoms": {
+            "total": 9,
+            "categoryCorrect": 9,
+            "typeCorrect": 9,
+            "abstained": 0
+          },
+          "Dresses": {
+            "total": 2,
+            "categoryCorrect": 2,
+            "typeCorrect": 0,
+            "abstained": 0
+          },
+          "Outerwear": {
+            "total": 6,
+            "categoryCorrect": 6,
+            "typeCorrect": 5,
+            "abstained": 0
+          },
+          "Shoes": {
+            "total": 13,
+            "categoryCorrect": 13,
+            "typeCorrect": 7,
+            "abstained": 0
+          }
+        },
+        "errors": []
+      },
+      "evaluationsIdentical": true,
+      "changedOutcomes": [],
+      "outcomes": [
+        {
+          "id": "commons-0001",
+          "prediction": {
+            "category": "Tops",
+            "type": "T-shirt"
+          },
+          "strong": true,
+          "categoryConfirmed": false,
+          "reason": null,
+          "details": {
+            "sleeveLength": "Short sleeve"
+          },
+          "colorEstimate": {
+            "color": "Multicolor",
+            "source": "photo-estimate",
+            "support": 0.49,
+            "needsConfirmation": true
+          }
+        },
+        {
+          "id": "commons-0002",
+          "prediction": {
+            "category": "Tops",
+            "type": "T-shirt"
+          },
+          "strong": true,
+          "categoryConfirmed": false,
+          "reason": null,
+          "details": {
+            "color": "Red",
+            "sleeveLength": "Short sleeve"
+          },
+          "colorEstimate": {
+            "color": "Red",
+            "source": "photo-estimate",
+            "support": 0.91
+          }
+        },
+        {
+          "id": "commons-0021",
+          "prediction": {
+            "category": "Bottoms",
+            "type": "Jeans"
+          },
+          "strong": true,
+          "categoryConfirmed": false,
+          "reason": null,
+          "details": {
+            "color": "Blue"
+          },
+          "colorEstimate": {
+            "color": "Multicolor",
+            "source": "photo-estimate",
+            "support": 0.5,
+            "needsConfirmation": true
+          }
+        },
+        {
+          "id": "commons-0023",
+          "prediction": {
+            "category": "Bottoms",
+            "type": "Jeans"
+          },
+          "strong": true,
+          "categoryConfirmed": false,
+          "reason": null,
+          "details": {
+            "color": "Blue"
+          },
+          "colorEstimate": {
+            "color": "Multicolor",
+            "source": "photo-estimate",
+            "support": 0.37,
+            "needsConfirmation": true
+          }
+        },
+        {
+          "id": "commons-0024",
+          "prediction": {
+            "category": "Bottoms",
+            "type": "Jeans"
+          },
+          "strong": true,
+          "categoryConfirmed": false,
+          "reason": null,
+          "details": {
+            "color": "Blue",
+            "fit": "Fitted"
+          },
+          "colorEstimate": {
+            "color": "Multicolor",
+            "source": "photo-estimate",
+            "support": 0.45,
+            "needsConfirmation": true
+          }
+        },
+        {
+          "id": "commons-0033",
+          "prediction": {
+            "category": "Bottoms",
+            "type": "Shorts"
+          },
+          "strong": true,
+          "categoryConfirmed": false,
+          "reason": null,
+          "details": {
+            "color": "Orange",
+            "pattern": "Solid"
+          },
+          "colorEstimate": {
+            "color": "Brown",
+            "source": "photo-estimate",
+            "support": 0.61
+          }
+        },
+        {
+          "id": "commons-0035",
+          "prediction": {
+            "category": "Bottoms",
+            "type": "Shorts"
+          },
+          "strong": true,
+          "categoryConfirmed": false,
+          "reason": "bottoms_independent_agreement",
+          "details": {},
+          "colorEstimate": {
+            "color": "Brown",
+            "source": "photo-estimate",
+            "support": 0.73
+          }
+        },
+        {
+          "id": "commons-0041",
+          "prediction": {
+            "category": "Bottoms",
+            "type": "Skirt"
+          },
+          "strong": true,
+          "categoryConfirmed": false,
+          "reason": null,
+          "details": {
+            "color": "Beige"
+          },
+          "colorEstimate": {
+            "color": "Gray",
+            "source": "photo-estimate",
+            "support": 0.78
+          }
+        },
+        {
+          "id": "commons-0043",
+          "prediction": {
+            "category": "Bottoms",
+            "type": "Skirt"
+          },
+          "strong": true,
+          "categoryConfirmed": false,
+          "reason": null,
+          "details": {
+            "fit": "Regular"
+          },
+          "colorEstimate": {
+            "color": "Multicolor",
+            "source": "photo-estimate",
+            "support": 0.44,
+            "needsConfirmation": true
+          }
+        },
+        {
+          "id": "commons-0044",
+          "prediction": {
+            "category": "Bottoms",
+            "type": "Skirt"
+          },
+          "strong": true,
+          "categoryConfirmed": false,
+          "reason": null,
+          "details": {
+            "color": "Multicolor",
+            "pattern": "Graphic"
+          },
+          "colorEstimate": {
+            "color": "Red",
+            "source": "photo-estimate",
+            "support": 0.65
+          }
+        },
+        {
+          "id": "commons-0045",
+          "prediction": {
+            "category": "Bottoms",
+            "type": "Skirt"
+          },
+          "strong": true,
+          "categoryConfirmed": false,
+          "reason": "skirt_padded_views_agreement",
+          "details": {},
+          "colorEstimate": {
+            "color": "Multicolor",
+            "source": "photo-estimate",
+            "support": 0.41,
+            "needsConfirmation": true
+          }
+        },
+        {
+          "id": "commons-0052",
+          "prediction": {
+            "category": "Dresses",
+            "type": "Unknown"
+          },
+          "strong": false,
+          "categoryConfirmed": true,
+          "reason": "dress_type_review",
+          "details": {},
+          "colorEstimate": {
+            "color": "Gray",
+            "source": "photo-estimate",
+            "support": 1
+          }
+        },
+        {
+          "id": "commons-0053",
+          "prediction": {
+            "category": "Dresses",
+            "type": "Casual dress"
+          },
+          "strong": true,
+          "categoryConfirmed": false,
+          "reason": "skirt_dress_independent_agreement",
+          "details": {},
+          "colorEstimate": {
+            "color": "Black",
+            "source": "photo-estimate",
+            "support": 0.59
+          }
+        },
+        {
+          "id": "commons-0064",
+          "prediction": {
+            "category": "Outerwear",
+            "type": "Blazer"
+          },
+          "strong": true,
+          "categoryConfirmed": false,
+          "reason": null,
+          "details": {
+            "color": "Blue",
+            "pattern": "Solid"
+          },
+          "colorEstimate": {
+            "color": "Blue",
+            "source": "photo-estimate",
+            "support": 0.67
+          }
+        },
+        {
+          "id": "commons-0065",
+          "prediction": {
+            "category": "Outerwear",
+            "type": "Jacket"
+          },
+          "strong": true,
+          "categoryConfirmed": false,
+          "reason": "jacket_runner_up_independent_agreement",
+          "details": {},
+          "colorEstimate": {
+            "color": "Black",
+            "source": "photo-estimate",
+            "support": 0.86
+          }
+        },
+        {
+          "id": "commons-0067",
+          "prediction": {
+            "category": "Outerwear",
+            "type": "Coat"
+          },
+          "strong": true,
+          "categoryConfirmed": false,
+          "reason": null,
+          "details": {
+            "pattern": "Animal print"
+          },
+          "colorEstimate": {
+            "color": "Beige",
+            "source": "photo-estimate",
+            "support": 0.61
+          }
+        },
+        {
+          "id": "commons-0068",
+          "prediction": {
+            "category": "Outerwear",
+            "type": "Coat"
+          },
+          "strong": true,
+          "categoryConfirmed": false,
+          "reason": null,
+          "details": {
+            "color": "Gray",
+            "sleeveLength": "Long sleeve"
+          },
+          "colorEstimate": {
+            "color": "Gray",
+            "source": "photo-estimate",
+            "support": 1
+          }
+        },
+        {
+          "id": "commons-0069",
+          "prediction": {
+            "category": "Outerwear",
+            "type": "Coat"
+          },
+          "strong": true,
+          "categoryConfirmed": false,
+          "reason": null,
+          "details": {},
+          "colorEstimate": {
+            "color": "Multicolor",
+            "source": "photo-estimate",
+            "support": 0.52,
+            "needsConfirmation": true
+          }
+        },
+        {
+          "id": "commons-0070",
+          "prediction": {
+            "category": "Outerwear",
+            "type": "Coat"
+          },
+          "strong": true,
+          "categoryConfirmed": false,
+          "reason": "coat_near_full_independent_agreement",
+          "details": {},
+          "colorEstimate": {
+            "color": "Brown",
+            "source": "photo-estimate",
+            "support": 0.69
+          }
+        },
+        {
+          "id": "commons-0079",
+          "prediction": {
+            "category": "Shoes",
+            "type": "Sneakers"
+          },
+          "strong": true,
+          "categoryConfirmed": false,
+          "reason": null,
+          "details": {
+            "pattern": "Graphic"
+          },
+          "colorEstimate": {
+            "color": "Multicolor",
+            "source": "photo-estimate",
+            "support": 0.4,
+            "needsConfirmation": true
+          }
+        },
+        {
+          "id": "commons-0080",
+          "prediction": {
+            "category": "Shoes",
+            "type": "Sneakers"
+          },
+          "strong": true,
+          "categoryConfirmed": false,
+          "reason": null,
+          "details": {},
+          "colorEstimate": {
+            "color": "Blue",
+            "source": "photo-estimate",
+            "support": 0.62
+          }
+        },
+        {
+          "id": "commons-0081",
+          "prediction": {
+            "category": "Shoes",
+            "type": "Sneakers"
+          },
+          "strong": true,
+          "categoryConfirmed": false,
+          "reason": null,
+          "details": {},
+          "colorEstimate": {
+            "color": "Gray",
+            "source": "photo-estimate",
+            "support": 0.68
+          }
+        },
+        {
+          "id": "commons-0082",
+          "prediction": {
+            "category": "Shoes",
+            "type": "Sneakers"
+          },
+          "strong": true,
+          "categoryConfirmed": false,
+          "reason": null,
+          "details": {
+            "color": "Beige",
+            "fit": "Relaxed"
+          },
+          "colorEstimate": {
+            "color": "Multicolor",
+            "source": "photo-estimate",
+            "support": 0.42,
+            "needsConfirmation": true
+          }
+        },
+        {
+          "id": "commons-0083",
+          "prediction": {
+            "category": "Shoes",
+            "type": "Sneakers"
+          },
+          "strong": true,
+          "categoryConfirmed": false,
+          "reason": null,
+          "details": {
+            "color": "Beige",
+            "pattern": "Solid"
+          },
+          "colorEstimate": {
+            "color": "Multicolor",
+            "source": "photo-estimate",
+            "support": 0.38,
+            "needsConfirmation": true
+          }
+        },
+        {
+          "id": "commons-0084",
+          "prediction": {
+            "category": "Shoes",
+            "type": "Sneakers"
+          },
+          "strong": true,
+          "categoryConfirmed": false,
+          "reason": null,
+          "details": {
+            "pattern": "Graphic"
+          },
+          "colorEstimate": {
+            "color": "Blue",
+            "source": "photo-estimate",
+            "support": 0.56
+          }
+        },
+        {
+          "id": "commons-0085",
+          "prediction": {
+            "category": "Shoes",
+            "type": "Sneakers"
+          },
+          "strong": true,
+          "categoryConfirmed": false,
+          "reason": null,
+          "details": {
+            "fit": "Regular"
+          },
+          "colorEstimate": {
+            "color": "Blue",
+            "source": "photo-estimate",
+            "support": 0.56
+          }
+        },
+        {
+          "id": "commons-0087",
+          "prediction": {
+            "category": "Shoes",
+            "type": "Tall boots"
+          },
+          "strong": true,
+          "categoryConfirmed": false,
+          "reason": null,
+          "details": {
+            "pattern": "Graphic"
+          },
+          "colorEstimate": {
+            "color": "Gray",
+            "source": "photo-estimate",
+            "support": 0.57
+          }
+        },
+        {
+          "id": "commons-0088",
+          "prediction": {
+            "category": "Shoes",
+            "type": "Ankle boots"
+          },
+          "strong": true,
+          "categoryConfirmed": false,
+          "reason": null,
+          "details": {
+            "color": "Black"
+          },
+          "colorEstimate": {
+            "color": "Multicolor",
+            "source": "photo-estimate",
+            "support": 0.54,
+            "needsConfirmation": true
+          }
+        },
+        {
+          "id": "commons-0089",
+          "prediction": {
+            "category": "Shoes",
+            "type": "Ankle boots"
+          },
+          "strong": true,
+          "categoryConfirmed": false,
+          "reason": null,
+          "details": {
+            "color": "Multicolor",
+            "pattern": "Graphic"
+          },
+          "colorEstimate": {
+            "color": "Gray",
+            "source": "photo-estimate",
+            "support": 0.66
+          }
+        },
+        {
+          "id": "commons-0092",
+          "prediction": {
+            "category": "Shoes",
+            "type": "Ankle boots"
+          },
+          "strong": true,
+          "categoryConfirmed": false,
+          "reason": null,
+          "details": {},
+          "colorEstimate": {
+            "color": "Black",
+            "source": "photo-estimate",
+            "support": 0.62
+          }
+        },
+        {
+          "id": "commons-0093",
+          "prediction": {
+            "category": "Shoes",
+            "type": "Ankle boots"
+          },
+          "strong": true,
+          "categoryConfirmed": false,
+          "reason": null,
+          "details": {},
+          "colorEstimate": {
+            "color": "Multicolor",
+            "source": "photo-estimate",
+            "support": 0.47,
+            "needsConfirmation": true
+          }
+        },
+        {
+          "id": "commons-0094",
+          "prediction": {
+            "category": "Shoes",
+            "type": "Ankle boots"
+          },
+          "strong": true,
+          "categoryConfirmed": false,
+          "reason": null,
+          "details": {},
+          "colorEstimate": {
+            "color": "Multicolor",
+            "source": "photo-estimate",
+            "support": 0.51,
+            "needsConfirmation": true
+          }
+        }
+      ]
+    },
+    "holdout16": {
+      "beforeEvaluation": {
+        "manifestCount": 16,
+        "resultsCount": 16,
+        "missingResults": 0,
+        "single": {
+          "evaluated": 13,
+          "autoIndexedCount": 7,
+          "categoryReviewCount": 1,
+          "categoryAccuracyPercent": 61.54,
+          "typeAccuracyPercent": 30.77,
+          "acceptedTypeAccuracyPercent": 30.77,
+          "abstentionPercent": 38.46
+        },
+        "negative": {
+          "evaluated": 3,
+          "rejected": 3,
+          "falsePositives": 0
+        },
+        "outfit": {
+          "evaluated": 0,
+          "expectedPieces": 0,
+          "matchedPieces": 0,
+          "pieceRecallPercent": null,
+          "unexpectedPieces": 0
+        },
+        "reasonCounts": {
+          "accepted": 6,
+          "checks_disagree": 2,
+          "category_uncertain": 2,
+          "dress_type_review": 1,
+          "type_uncertain": 1,
+          "outerwear_independent_agreement": 1
+        },
+        "perCategory": {
+          "Tops": {
+            "total": 3,
+            "categoryCorrect": 2,
+            "typeCorrect": 0,
+            "abstained": 1
+          },
+          "Bottoms": {
+            "total": 3,
+            "categoryCorrect": 2,
+            "typeCorrect": 2,
+            "abstained": 1
+          },
+          "Dresses": {
+            "total": 2,
+            "categoryCorrect": 1,
+            "typeCorrect": 0,
+            "abstained": 1
+          },
+          "Outerwear": {
+            "total": 2,
+            "categoryCorrect": 1,
+            "typeCorrect": 1,
+            "abstained": 1
+          },
+          "Shoes": {
+            "total": 3,
+            "categoryCorrect": 2,
+            "typeCorrect": 1,
+            "abstained": 1
+          }
+        },
+        "errors": [
+          {
+            "id": "commons-0016",
+            "reason": "category",
+            "expected": "Tops",
+            "actual": "none"
+          },
+          {
+            "id": "commons-0036",
+            "reason": "category",
+            "expected": "Bottoms",
+            "actual": "none"
+          },
+          {
+            "id": "commons-0059",
+            "reason": "category",
+            "expected": "Dresses",
+            "actual": "none"
+          },
+          {
+            "id": "commons-0062",
+            "reason": "category",
+            "expected": "Outerwear",
+            "actual": "none"
+          },
+          {
+            "id": "commons-0095",
+            "reason": "category",
+            "expected": "Shoes",
+            "actual": "none"
+          }
+        ]
+      },
+      "afterEvaluation": {
+        "manifestCount": 16,
+        "resultsCount": 16,
+        "missingResults": 0,
+        "single": {
+          "evaluated": 13,
+          "autoIndexedCount": 7,
+          "categoryReviewCount": 1,
+          "categoryAccuracyPercent": 61.54,
+          "typeAccuracyPercent": 30.77,
+          "acceptedTypeAccuracyPercent": 30.77,
+          "abstentionPercent": 38.46
+        },
+        "negative": {
+          "evaluated": 3,
+          "rejected": 3,
+          "falsePositives": 0
+        },
+        "outfit": {
+          "evaluated": 0,
+          "expectedPieces": 0,
+          "matchedPieces": 0,
+          "pieceRecallPercent": null,
+          "unexpectedPieces": 0
+        },
+        "reasonCounts": {
+          "accepted": 6,
+          "checks_disagree": 2,
+          "category_uncertain": 2,
+          "dress_type_review": 1,
+          "type_uncertain": 1,
+          "outerwear_independent_agreement": 1
+        },
+        "perCategory": {
+          "Tops": {
+            "total": 3,
+            "categoryCorrect": 2,
+            "typeCorrect": 0,
+            "abstained": 1
+          },
+          "Bottoms": {
+            "total": 3,
+            "categoryCorrect": 2,
+            "typeCorrect": 2,
+            "abstained": 1
+          },
+          "Dresses": {
+            "total": 2,
+            "categoryCorrect": 1,
+            "typeCorrect": 0,
+            "abstained": 1
+          },
+          "Outerwear": {
+            "total": 2,
+            "categoryCorrect": 1,
+            "typeCorrect": 1,
+            "abstained": 1
+          },
+          "Shoes": {
+            "total": 3,
+            "categoryCorrect": 2,
+            "typeCorrect": 1,
+            "abstained": 1
+          }
+        },
+        "errors": [
+          {
+            "id": "commons-0016",
+            "reason": "category",
+            "expected": "Tops",
+            "actual": "none"
+          },
+          {
+            "id": "commons-0036",
+            "reason": "category",
+            "expected": "Bottoms",
+            "actual": "none"
+          },
+          {
+            "id": "commons-0059",
+            "reason": "category",
+            "expected": "Dresses",
+            "actual": "none"
+          },
+          {
+            "id": "commons-0062",
+            "reason": "category",
+            "expected": "Outerwear",
+            "actual": "none"
+          },
+          {
+            "id": "commons-0095",
+            "reason": "category",
+            "expected": "Shoes",
+            "actual": "none"
+          }
+        ]
+      },
+      "evaluationsIdentical": true,
+      "changedOutcomes": [],
+      "outcomes": [
+        {
+          "id": "commons-0003",
+          "prediction": {
+            "category": "Tops",
+            "type": "Sweatshirt"
+          },
+          "strong": true,
+          "categoryConfirmed": false,
+          "reason": null,
+          "details": {
+            "sleeveLength": "Long sleeve"
+          },
+          "colorEstimate": {
+            "color": "Multicolor",
+            "source": "photo-estimate",
+            "support": 0.52,
+            "needsConfirmation": true
+          }
+        },
+        {
+          "id": "commons-0014",
+          "prediction": {
+            "category": "Tops",
+            "type": "Tunic"
+          },
+          "strong": true,
+          "categoryConfirmed": false,
+          "reason": null,
+          "details": {},
+          "colorEstimate": {
+            "color": "Brown",
+            "source": "photo-estimate",
+            "support": 1
+          }
+        },
+        {
+          "id": "commons-0016",
+          "prediction": {
+            "category": null,
+            "type": null
+          },
+          "strong": false,
+          "categoryConfirmed": false,
+          "reason": "checks_disagree",
+          "details": {},
+          "colorEstimate": {
+            "color": "Beige",
+            "source": "photo-estimate",
+            "support": 1
+          }
+        },
+        {
+          "id": "commons-0025",
+          "prediction": {
+            "category": "Bottoms",
+            "type": "Jeans"
+          },
+          "strong": true,
+          "categoryConfirmed": false,
+          "reason": null,
+          "details": {
+            "color": "Blue",
+            "pattern": "Graphic"
+          },
+          "colorEstimate": {
+            "color": "Blue",
+            "source": "photo-estimate",
+            "support": 0.94
+          }
+        },
+        {
+          "id": "commons-0036",
+          "prediction": {
+            "category": null,
+            "type": null
+          },
+          "strong": false,
+          "categoryConfirmed": false,
+          "reason": "category_uncertain",
+          "details": {},
+          "colorEstimate": {
+            "color": "Multicolor",
+            "source": "photo-estimate",
+            "support": 0.4,
+            "needsConfirmation": true
+          }
+        },
+        {
+          "id": "commons-0040",
+          "prediction": {
+            "category": "Bottoms",
+            "type": "Skirt"
+          },
+          "strong": true,
+          "categoryConfirmed": false,
+          "reason": null,
+          "details": {
+            "color": "Multicolor",
+            "fit": "Fitted",
+            "pattern": "Graphic"
+          },
+          "colorEstimate": {
+            "color": "Pink",
+            "source": "photo-estimate",
+            "support": 0.55
+          }
+        },
+        {
+          "id": "commons-0049",
+          "prediction": {
+            "category": "Dresses",
+            "type": "Unknown"
+          },
+          "strong": false,
+          "categoryConfirmed": true,
+          "reason": "dress_type_review",
+          "details": {},
+          "colorEstimate": {
+            "color": "Multicolor",
+            "source": "photo-estimate",
+            "support": 0.29,
+            "needsConfirmation": true
+          }
+        },
+        {
+          "id": "commons-0059",
+          "prediction": {
+            "category": null,
+            "type": null
+          },
+          "strong": false,
+          "categoryConfirmed": false,
+          "reason": "type_uncertain",
+          "details": {},
+          "colorEstimate": {
+            "color": "Gray",
+            "source": "photo-estimate",
+            "support": 0.94
+          }
+        },
+        {
+          "id": "commons-0060",
+          "prediction": {
+            "category": "Outerwear",
+            "type": "Jacket"
+          },
+          "strong": true,
+          "categoryConfirmed": false,
+          "reason": "outerwear_independent_agreement",
+          "details": {},
+          "colorEstimate": {
+            "color": "Gray",
+            "source": "photo-estimate",
+            "support": 0.78
+          }
+        },
+        {
+          "id": "commons-0062",
+          "prediction": {
+            "category": null,
+            "type": null
+          },
+          "strong": false,
+          "categoryConfirmed": false,
+          "reason": "checks_disagree",
+          "details": {},
+          "colorEstimate": {
+            "color": "Multicolor",
+            "source": "photo-estimate",
+            "support": 0.47,
+            "needsConfirmation": true
+          }
+        },
+        {
+          "id": "commons-0077",
+          "prediction": {
+            "category": "Shoes",
+            "type": "Sneakers"
+          },
+          "strong": true,
+          "categoryConfirmed": false,
+          "reason": null,
+          "details": {},
+          "colorEstimate": {
+            "color": "Multicolor",
+            "source": "photo-estimate",
+            "support": 0.42,
+            "needsConfirmation": true
+          }
+        },
+        {
+          "id": "commons-0078",
+          "prediction": {
+            "category": "Shoes",
+            "type": "Ankle boots"
+          },
+          "strong": true,
+          "categoryConfirmed": false,
+          "reason": null,
+          "details": {},
+          "colorEstimate": {
+            "color": "Multicolor",
+            "source": "photo-estimate",
+            "support": 0.4,
+            "needsConfirmation": true
+          }
+        },
+        {
+          "id": "commons-0095",
+          "prediction": {
+            "category": null,
+            "type": null
+          },
+          "strong": false,
+          "categoryConfirmed": false,
+          "reason": "category_uncertain",
+          "details": {},
+          "colorEstimate": {
+            "color": "Multicolor",
+            "source": "photo-estimate",
+            "support": 0.57,
+            "needsConfirmation": true
+          }
+        },
+        {
+          "id": "commons-0046",
+          "prediction": {
+            "category": null,
+            "type": null
+          },
+          "strong": false,
+          "categoryConfirmed": false,
+          "reason": "category_uncertain",
+          "details": {},
+          "colorEstimate": {
+            "color": "Blue",
+            "source": "photo-estimate",
+            "support": 0.55
+          }
+        },
+        {
+          "id": "commons-0086",
+          "prediction": {
+            "category": null,
+            "type": null
+          },
+          "strong": false,
+          "categoryConfirmed": false,
+          "reason": "category_uncertain",
+          "details": {},
+          "colorEstimate": {
+            "color": "Multicolor",
+            "source": "photo-estimate",
+            "support": 0.34,
+            "needsConfirmation": true
+          }
+        },
+        {
+          "id": "commons-0090",
+          "prediction": {
+            "category": null,
+            "type": null
+          },
+          "strong": false,
+          "categoryConfirmed": false,
+          "reason": "category_uncertain",
+          "details": {},
+          "colorEstimate": {
+            "color": "Multicolor",
+            "source": "photo-estimate",
+            "support": 0.4,
+            "needsConfirmation": true
+          }
+        }
+      ]
+    },
+    "fresh11": {
+      "beforeEvaluation": {
+        "manifestCount": 11,
+        "resultsCount": 11,
+        "missingResults": 0,
+        "single": {
+          "evaluated": 11,
+          "autoIndexedCount": 9,
+          "categoryReviewCount": 2,
+          "categoryAccuracyPercent": 100,
+          "typeAccuracyPercent": 54.55,
+          "acceptedTypeAccuracyPercent": 81.82,
+          "abstentionPercent": 0
+        },
+        "negative": {
+          "evaluated": 0,
+          "rejected": 0,
+          "falsePositives": 0
+        },
+        "outfit": {
+          "evaluated": 0,
+          "expectedPieces": 0,
+          "matchedPieces": 0,
+          "pieceRecallPercent": null,
+          "unexpectedPieces": 0
+        },
+        "reasonCounts": {
+          "dress_type_review": 1,
+          "accepted": 9,
+          "category_type_review": 1
+        },
+        "perCategory": {
+          "Dresses": {
+            "total": 5,
+            "categoryCorrect": 5,
+            "typeCorrect": 1,
+            "abstained": 0
+          },
+          "Accessories": {
+            "total": 1,
+            "categoryCorrect": 1,
+            "typeCorrect": 1,
+            "abstained": 0
+          },
+          "Bottoms": {
+            "total": 1,
+            "categoryCorrect": 1,
+            "typeCorrect": 0,
+            "abstained": 0
+          },
+          "Shoes": {
+            "total": 4,
+            "categoryCorrect": 4,
+            "typeCorrect": 4,
+            "abstained": 0
+          }
+        },
+        "errors": []
+      },
+      "afterEvaluation": {
+        "manifestCount": 11,
+        "resultsCount": 11,
+        "missingResults": 0,
+        "single": {
+          "evaluated": 11,
+          "autoIndexedCount": 9,
+          "categoryReviewCount": 2,
+          "categoryAccuracyPercent": 100,
+          "typeAccuracyPercent": 54.55,
+          "acceptedTypeAccuracyPercent": 81.82,
+          "abstentionPercent": 0
+        },
+        "negative": {
+          "evaluated": 0,
+          "rejected": 0,
+          "falsePositives": 0
+        },
+        "outfit": {
+          "evaluated": 0,
+          "expectedPieces": 0,
+          "matchedPieces": 0,
+          "pieceRecallPercent": null,
+          "unexpectedPieces": 0
+        },
+        "reasonCounts": {
+          "dress_type_review": 1,
+          "accepted": 9,
+          "category_type_review": 1
+        },
+        "perCategory": {
+          "Dresses": {
+            "total": 5,
+            "categoryCorrect": 5,
+            "typeCorrect": 1,
+            "abstained": 0
+          },
+          "Accessories": {
+            "total": 1,
+            "categoryCorrect": 1,
+            "typeCorrect": 1,
+            "abstained": 0
+          },
+          "Bottoms": {
+            "total": 1,
+            "categoryCorrect": 1,
+            "typeCorrect": 0,
+            "abstained": 0
+          },
+          "Shoes": {
+            "total": 4,
+            "categoryCorrect": 4,
+            "typeCorrect": 4,
+            "abstained": 0
+          }
+        },
+        "errors": []
+      },
+      "evaluationsIdentical": true,
+      "changedOutcomes": [],
+      "outcomes": [
+        {
+          "id": "validation-0001",
+          "prediction": {
+            "category": "Dresses",
+            "type": "Unknown"
+          },
+          "strong": false,
+          "categoryConfirmed": true,
+          "reason": "dress_type_review",
+          "details": {},
+          "colorEstimate": {
+            "color": "Multicolor",
+            "source": "photo-estimate",
+            "support": 0.3,
+            "needsConfirmation": true
+          }
+        },
+        {
+          "id": "validation-0002",
+          "prediction": {
+            "category": "Dresses",
+            "type": "Formal dress"
+          },
+          "strong": true,
+          "categoryConfirmed": false,
+          "reason": null,
+          "details": {
+            "pattern": "Graphic",
+            "sleeveLength": "Short sleeve"
+          },
+          "colorEstimate": {
+            "color": "Multicolor",
+            "source": "photo-estimate",
+            "support": 0.33,
+            "needsConfirmation": true
+          }
+        },
+        {
+          "id": "validation-0003",
+          "prediction": {
+            "category": "Dresses",
+            "type": "Formal dress"
+          },
+          "strong": true,
+          "categoryConfirmed": false,
+          "reason": null,
+          "details": {
+            "color": "White"
+          },
+          "colorEstimate": {
+            "color": "Multicolor",
+            "source": "photo-estimate",
+            "support": 0.46,
+            "needsConfirmation": true
+          }
+        },
+        {
+          "id": "validation-0004",
+          "prediction": {
+            "category": "Dresses",
+            "type": "Formal dress"
+          },
+          "strong": true,
+          "categoryConfirmed": false,
+          "reason": null,
+          "details": {
+            "color": "White",
+            "pattern": "Graphic"
+          },
+          "colorEstimate": {
+            "color": "Gray",
+            "source": "photo-estimate",
+            "support": 0.59
+          }
+        },
+        {
+          "id": "validation-0008",
+          "prediction": {
+            "category": "Accessories",
+            "type": "Scarf"
+          },
+          "strong": true,
+          "categoryConfirmed": false,
+          "reason": null,
+          "details": {
+            "color": "Pink"
+          },
+          "colorEstimate": {
+            "color": "Multicolor",
+            "source": "photo-estimate",
+            "support": 0.32,
+            "needsConfirmation": true
+          }
+        },
+        {
+          "id": "validation-0010",
+          "prediction": {
+            "category": "Dresses",
+            "type": "Sweater dress"
+          },
+          "strong": true,
+          "categoryConfirmed": false,
+          "reason": null,
+          "details": {
+            "color": "Blue",
+            "sleeveLength": "Long sleeve"
+          },
+          "colorEstimate": {
+            "color": "Multicolor",
+            "source": "photo-estimate",
+            "support": 0.34,
+            "needsConfirmation": true
+          }
+        },
+        {
+          "id": "validation-0017",
+          "prediction": {
+            "category": "Bottoms",
+            "type": "Unknown"
+          },
+          "strong": false,
+          "categoryConfirmed": true,
+          "reason": "category_type_review",
+          "details": {},
+          "colorEstimate": {
+            "color": "Gray",
+            "source": "photo-estimate",
+            "support": 0.62,
+            "needsConfirmation": true
+          }
+        },
+        {
+          "id": "validation-0019",
+          "prediction": {
+            "category": "Shoes",
+            "type": "Sneakers"
+          },
+          "strong": true,
+          "categoryConfirmed": false,
+          "reason": null,
+          "details": {
+            "color": "Orange"
+          },
+          "colorEstimate": {
+            "color": "Multicolor",
+            "source": "photo-estimate",
+            "support": 0.33,
+            "needsConfirmation": true
+          }
+        },
+        {
+          "id": "validation-0021",
+          "prediction": {
+            "category": "Shoes",
+            "type": "Sneakers"
+          },
+          "strong": true,
+          "categoryConfirmed": false,
+          "reason": null,
+          "details": {
+            "color": "Orange",
+            "fit": "Relaxed"
+          },
+          "colorEstimate": {
+            "color": "Multicolor",
+            "source": "photo-estimate",
+            "support": 0.46,
+            "needsConfirmation": true
+          }
+        },
+        {
+          "id": "validation-0023",
+          "prediction": {
+            "category": "Shoes",
+            "type": "Sneakers"
+          },
+          "strong": true,
+          "categoryConfirmed": false,
+          "reason": null,
+          "details": {
+            "pattern": "Animal print"
+          },
+          "colorEstimate": {
+            "color": "Multicolor",
+            "source": "photo-estimate",
+            "support": 0.4,
+            "needsConfirmation": true
+          }
+        },
+        {
+          "id": "validation-0024",
+          "prediction": {
+            "category": "Shoes",
+            "type": "Sneakers"
+          },
+          "strong": true,
+          "categoryConfirmed": false,
+          "reason": null,
+          "details": {
+            "color": "Gray"
+          },
+          "colorEstimate": {
+            "color": "Gray",
+            "source": "photo-estimate",
+            "support": 0.84
+          }
+        }
+      ]
+    }
+  },
+  "retrieval": {
+    "description": "Reference labels use reviewed annotations. Each 32-photo query excludes itself. Fresh and holdout queries use only the 32 reference photos. Suggestions require human review and are not automatic classifications.",
+    "referenceCount": 32,
+    "threshold": 0.9,
+    "sets": {
+      "reviewed32": {
+        "evaluated": 32,
+        "suggestions": 0,
+        "correctTypeSuggestions": 0,
+        "incorrectTypeSuggestions": 0,
+        "negativeSuggestions": 0,
+        "details": []
+      },
+      "fresh11": {
+        "evaluated": 11,
+        "suggestions": 0,
+        "correctTypeSuggestions": 0,
+        "incorrectTypeSuggestions": 0,
+        "negativeSuggestions": 0,
+        "details": []
+      },
+      "holdout16": {
+        "evaluated": 16,
+        "suggestions": 0,
+        "correctTypeSuggestions": 0,
+        "incorrectTypeSuggestions": 0,
+        "negativeSuggestions": 0,
+        "details": []
+      }
+    }
+  },
+  "unchangedAssetSha256": {
+    "public/local-worker.mjs": "90f4aa0c2c7ef047f8d917c9413e893c7e8cf2f64fe168b95f3e01ef68dd71dd",
+    "public/recognition-engine.mjs": "b6ca6005d9cf71e000b30ecb61818371e84c022fdb3d173082309f8b5b9a91a3",
+    "public/recognition-photo.mjs": "ecfe8d4f678633cde8114f5968d5a26614375329ad5c71fe3a9939b54cbfbdc3",
+    "public/recognition-vectors.json": "3408987cb30b4eeb7c646bdac52e7ea1e5fc5203ef75b2695e7bafd2cf4401de",
+    "public/recognition-vectors.bin": "e1e0415f2272e81c0f3ce2f08fd5fd5c2a9eb6481437d696936c723e8e1abb2f",
+    "public/outfit-worker.mjs": "1484bbb3ee4b8243f29842d286e3c81c6b324a787974ba9eaecef13d6e50cc03",
+    "public/outfit-segmentation.mjs": "17a6c39d72043ca7bd379aef7f11f828746dbbed7e413d7f18d5ee220671e150"
+  },
+  "limitations": [
+    "No measured classification accuracy gain; all per-photo outcomes unchanged",
+    "Four existing accepted subtype mismatches remain: commons-0064, commons-0003, commons-0014, commons-0078",
+    "Five holdout garments abstain: commons-0016, commons-0036, commons-0059, commons-0062, commons-0095",
+    "No new independently human-labeled phone or segmentation-mask set; no physical-phone quality claim",
+    "Retrieval generates zero proposals across these public photo sets; do not claim neural self-training or universal identification"
+  ]
+}
