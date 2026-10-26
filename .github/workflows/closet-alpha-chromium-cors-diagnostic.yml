@@ -47,3 +47,77 @@ jobs:
             console.log('CHROMIUM_CORS_CONNECTIVITY_PASS_NO_LOGIN_NO_EMAIL_NO_CHANGE');
           }finally{await browser.close()}
           NODE
+
+      - name: Simulate complete staged login form with synthetic success and invalid-password replies (NO account access)
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import {chromium} from 'playwright';
+          import {readFile} from 'node:fs/promises';
+          import {stageAuthSource} from './scripts/build-family-alpha-staging-auth-hold.mjs';
+          const code=stageAuthSource(await readFile('public/auth.js','utf8'));
+          const origin='https://closet-current-staging.pages.dev';
+          const root=origin+'/';
+          const url='https://fbnplztkbsteuzrmbgib.supabase.co/auth/v1/token?grant_type=password';
+          const html=`<!doctype html><meta charset="utf-8">
+<section id="authGate"><form id="authForm">
+<label>Email <input id="authEmail" type="email" required></label>
+<label>Password <input id="authPassword" type="password" required minlength="8"></label>
+<label hidden>Username <input id="authUsername"></label><span id="usernameWrap" hidden></span>
+<button type="button" id="authPasswordToggle"></button>
+<p id="authStatus"></p><button type="submit" id="authSubmit">Log in</button>
+<button id="authMode" type="button" hidden></button>
+<button id="authReset" type="button"></button><button id="authResend" type="button"></button>
+</form></section>
+<div id="appShell" hidden><span id="accountLabel"></span><button id="logout"></button></div>
+<script>window.__CLOSET_ALPHA_STAGE_AUTH__=Object.freeze({
+ready:true,base:'https://fbnplztkbsteuzrmbgib.supabase.co',
+key:'sb_publishable_synthetic_browser_fixture',
+redirect:'https://closet-current-staging.pages.dev/',releaseGate:'HOLD'
+});</script><script src="/auth.js"></script>`;
+          const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
+          try {
+            for(const mode of ['success','invalid_password']){
+              const page=await browser.newPage();
+              const errs=[];
+              page.on('pageerror',err=>errs.push(err.name));
+              await page.route(root,route=>route.fulfill({status:200,contentType:'text/html',body:html}));
+              await page.route(origin+'/auth.js',route=>route.fulfill({status:200,contentType:'text/javascript',body:code}));
+              let outboundRequests=0;
+              await page.route(url,route=>{
+                outboundRequests++;
+                const payload=mode==='success'
+                  ? {access_token:'synthetic_not_real',refresh_token:'synthetic_not_real',expires_in:3600,
+                    user:{id:'01d3ac52-0ab2-45e4-9ebc-078bafe15e20',email:'alpha-synthetic@example.invalid',user_metadata:{username:'AlphaDemo'}}}
+                  : {msg:'Invalid login credentials',error_code:'invalid_credentials'};
+                return route.fulfill({status:mode==='success'?200:400,
+                  headers:{'Access-Control-Allow-Origin':origin,'Content-Type':'application/json'},
+                  body:JSON.stringify(payload)});
+              });
+              await page.goto(root,{waitUntil:'load',timeout:15000});
+              await page.fill('#authEmail','alpha-synthetic@example.invalid');
+              await page.fill('#authPassword','synthetic-password-NOT-real');
+              await page.click('#authSubmit');
+              await page.waitForFunction(mode=>mode==='success'?
+                document.getElementById('appShell').hidden===false:
+                document.getElementById('authStatus').textContent.includes('Email or password is incorrect'),mode,{timeout:8000});
+              const state=await page.evaluate(()=>({
+                shellShown:document.getElementById('appShell').hidden===false,
+                gateShown:document.getElementById('authGate').hidden===false,
+                message:document.getElementById('authStatus').textContent,
+                signedIn:Boolean(window.closetAuth.user?.id)
+              }));
+              console.log('STAGED_APP_SYNTHETIC_LOGIN '+JSON.stringify({
+                mode,outboundRequests,appShown:state.shellShown,
+                authGateShown:state.gateShown,signedIn:state.signedIn,
+                clientPageErrors:errs.length,wrongPasswordMessageCorrect:
+                  mode==='invalid_password'&&state.message.startsWith('Email or password is incorrect')
+              }));
+              if(outboundRequests!==1||errs.length||state.shellShown!==(mode==='success')||
+                 state.signedIn!==(mode==='success'))
+                throw Error('Staged Auth browser mock '+mode+' failed');
+              await page.close();
+            }
+          }finally{await browser.close()}
+          console.log('STAGING_LOGIN_SYNTHETIC_CLIENT_BEHAVIOR_PASS_NO_REAL_USER_NO_CHANGE');
+          NODE
