@@ -20,6 +20,7 @@ import {assertCandidate,listFiles} from './build-family-alpha-staging.mjs';
 import {hardenStagingAuthSession} from './family-alpha-stage-session-hardening.mjs';
 import {removePublicStageSignup} from './family-alpha-stage-invite-only-ui.mjs';
 import {addStageInvitePasswordSetup} from './family-alpha-stage-invite-acceptance.mjs';
+import {addStagingLoginDiagnostics} from './family-alpha-staging-login-diagnostic.mjs';
 const run=promisify(execFile);
 export const STAGE_ID='fbnplztkbsteuzrmbgib';
 export const PROD_ID='hlkgymugtfbirlpunsra';
@@ -111,7 +112,7 @@ export function stageAuthSource(original){
  if(code.includes(PROD_ID)||code.includes('nickhaney916-lang.github.io')||
     code.includes('sb_publishable_5bw6Gkrw3Qx73dZYGNzmIw_x_OoauDO'))
   throw Error('Production Auth reference remains in staged Auth script');
- return addStageInvitePasswordSetup(removePublicStageSignup(hardenStagingAuthSession(code)));
+ return addStagingLoginDiagnostics(addStageInvitePasswordSetup(removePublicStageSignup(hardenStagingAuthSession(code))));
 }
 export function stageCloudSource(original){
  const old="(function(){\n const E=window.ClosetBackupEngine,BASE='"+PROD_BASE+"',KEY='sb_publishable_5bw6Gkrw3Qx73dZYGNzmIw_x_OoauDO',BUCKET='closet-private';";
