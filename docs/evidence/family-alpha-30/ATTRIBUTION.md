@@ -1,0 +1,21 @@
+# Licensed comparison photographs
+
+Originals are repository-pinned Wikimedia photos; source checksums and native dimensions are in results.json. Comparisons/derived cutouts retain the listed per-image attribution and license; CC BY-SA derivatives retain the source ShareAlike terms. No customer images. Display tiles are resized only for this sheet; processing uses native source pixels. Labels may include incidental mannequins/people in licensed photos.
+
+| ID | Author | Source | License | Credit |
+| --- | --- | --- | --- | --- |
+| commons-0001 | Ecko Unlimited | [Source](<https://commons.wikimedia.org/wiki/File:T-shirt,_oversized,_maat_XL,_Merk_Ecko_Unlimited,_blauw,_wit_en_grijs_met_opdruk,_objectnr_86904-3.JPG>) | [CC BY-SA 3.0](<https://creativecommons.org/licenses/by-sa/3.0>) | https://museumrotterdam.nl/collectie/item/86904-3 |
+| commons-0003 | Armani? | [Source](<https://commons.wikimedia.org/wiki/File:Zwart_shirt_met_lange_mouwen_van_merk_Armani_Jeans,_opdruk_letters_%E2%80%9CAJ%E2%80%9D_op_voorkant,_maat_M,_objectnr_86975-3.JPG>) | [CC BY-SA 3.0](<https://creativecommons.org/licenses/by-sa/3.0>) | https://museumrotterdam.nl/collectie/item/86975-3 |
+| commons-0065 | Unknown author Unknown author | [Source](<https://commons.wikimedia.org/wiki/File:Jacket,_woman%27s_(AM_15987-1).jpg>) | [CC BY 4.0](<https://creativecommons.org/licenses/by/4.0>) | API data Catalogue record Photo |
+| commons-0068 | Libricool ( talk ) 19:57, 14 October 2010 (UTC) | [Source](<https://commons.wikimedia.org/wiki/File:Sapphire_mink_fur_coat_1980.jpg>) | [Public domain](<>) | Own work |
+| commons-0053 |  | [Source](<https://commons.wikimedia.org/wiki/File:Dress,_match_(AM_2017.66.33-1).jpg>) | [CC BY 4.0](<https://creativecommons.org/licenses/by/4.0>) | API data Catalogue record Photo |
+| commons-0043 | Hiart | [Source](<https://commons.wikimedia.org/wiki/File:Woman%27s_summer_skirt_from_China,_Honolulu_Museum_of_Art_5152.1.JPG>) | [CC0](<http://creativecommons.org/publicdomain/zero/1.0/deed.en>) | Own work |
+| commons-0033 | OldBullLeeWasHere | [Source](<https://commons.wikimedia.org/wiki/File:Men%27s_Shorts_-_Old_Bull_Lee_-_Orange.jpg>) | [CC BY-SA 3.0](<https://creativecommons.org/licenses/by-sa/3.0>) | Own work |
+| commons-0021 | Honeyhuyue | [Source](<https://commons.wikimedia.org/wiki/File:Jeans_for_men.jpg>) | [Public domain](<>) | Own work |
+| commons-0082 | Adidas | [Source](<https://commons.wikimedia.org/wiki/File:Shoes,_leather_tennis_(pair)_(AM_2017.30.1-15).jpg>) | [CC BY 4.0](<https://creativecommons.org/licenses/by/4.0>) | API data Catalogue record Photo |
+| commons-0088 | Challinor, Taylor, and Company | [Source](<https://commons.wikimedia.org/wiki/File:Boot_with_Spur_MET_182113.jpg>) | [CC0](<http://creativecommons.org/publicdomain/zero/1.0/deed.en>) | This file was donated to Wikimedia Commons as part of a project by the Metropolitan Museum of Art . See the Image and Data Resources Open Access Policy |
+| commons-0016 |  | [Source](<https://commons.wikimedia.org/wiki/File:Blouse_MET_41.64_F.jpg>) | [CC0](<http://creativecommons.org/publicdomain/zero/1.0/deed.en>) | This file was donated to Wikimedia Commons as part of a project by the Metropolitan Museum of Art . See the Image and Data Resources Open Access Policy |
+| commons-0079 | TanSenpai from Philadelphia, United States | [Source](<https://commons.wikimedia.org/wiki/File:Nike_SB_Dunk_High_MF_Doom.jpg>) | [CC BY 2.0](<https://creativecommons.org/licenses/by/2.0>) | MF Doom's |
+| commons-0089 | Challinor, Taylor, and Company | [Source](<https://commons.wikimedia.org/wiki/File:Boot_with_Spur_MET_DP238269.jpg>) | [CC0](<http://creativecommons.org/publicdomain/zero/1.0/deed.en>) | This file was donated to Wikimedia Commons as part of a project by the Metropolitan Museum of Art . See the Image and Data Resources Open Access Policy |
+| commons-0094 | Crockett & Jones | [Source](<https://commons.wikimedia.org/wiki/File:Boots,_pair_woman%27s_(AM_1992.157-4).jpg>) | [CC BY 4.0](<https://creativecommons.org/licenses/by/4.0>) | API data Catalogue record Photo |
+| commons-0059 | Unknown author Unknown author | [Source](<https://commons.wikimedia.org/wiki/File:Dress_and_jacket_(AM_1970.236-4).jpg>) | [CC BY 4.0](<https://creativecommons.org/licenses/by/4.0>) | API data Catalogue record Photo |

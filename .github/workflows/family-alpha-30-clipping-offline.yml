@@ -1,0 +1,44 @@
+name: Family Alpha 30 Clipping OFFLINE NO DEPLOY
+on:
+  pull_request:
+    paths:
+      - 'research/family-alpha-30/**'
+      - 'scripts/benchmark-family-alpha-30.mjs'
+      - 'scripts/test-family-alpha-30-browser.mjs'
+      - 'tests/family-alpha-30.test.mjs'
+      - '.github/workflows/family-alpha-30-clipping-offline.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-pixels-and-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0, persist-credentials: false}
+      - run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git fetch --no-tags origin 879f1b92fb15f9bc9a7f0429c7ee178f7bbf1373 795ad6637f8d4f782bc99751211b25e8e72a3a7d 08ed6ac4a3fc921eae5d5d3df3bd3966429559d2 1ecac1079e75f1f25dc70a4c712b2448eb87dca8 d0ff131a4e5617e1a3f4fcfb40d00602fdce9833 094896d1b0655662787a78bc80d61af822a9e265
+      - name: Existing disabled build prerequisites, no candidate activation
+        run: |
+          node scripts/build-family-alpha-staging-auth-hold.mjs
+          node scripts/build-family-alpha-recognition-integrated-hold.mjs
+          node scripts/build-family-alpha-protected-preview-hold.mjs
+      - name: All Node and clipping checks
+        run: node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Install pinned browser test tool only
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+      - name: Native source RGBA alpha pipeline and unmodified PR 320 geometry
+        run: node scripts/test-family-alpha-30-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: family-alpha-30-synthetic-browser
+          path: benchmark/family-alpha-30/browser/
+          if-no-files-found: ignore

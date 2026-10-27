@@ -1,0 +1,20 @@
+{
+  "annotationMethod":"Category/type labels reused from frozen independent reviewed/holdout manifests; scene risks and sparse foreground/background probes recorded by this assignment from originals BEFORE clipping comparison. Sparse probes are not full masks or independent external visual approval.",
+  "rows":[
+    {"id":"commons-0001","role":"shirt","scene":"dark backdrop; hanger/neck risk","foreground":[[0.48,0.40],[0.40,0.67]],"background":[[0.04,0.05],[0.96,0.94]]},
+    {"id":"commons-0003","role":"long sleeves","scene":"mannequin and jeans; complex","foreground":[[0.50,0.30],[0.15,0.43],[0.83,0.43]],"background":[[0.04,0.05],[0.50,0.80]]},
+    {"id":"commons-0065","role":"jacket","scene":"flat product; sleeves touch frame","foreground":[[0.50,0.35],[0.26,0.30]],"background":[[0.96,0.06],[0.05,0.90]]},
+    {"id":"commons-0068","role":"coat","scene":"outdoor background and hanger","foreground":[[0.50,0.43],[0.50,0.80]],"background":[[0.03,0.05],[0.95,0.90]]},
+    {"id":"commons-0053","role":"dress","scene":"white backdrop; mannequin neck","foreground":[[0.50,0.40],[0.50,0.70]],"background":[[0.05,0.05],[0.95,0.90]]},
+    {"id":"commons-0043","role":"skirt","scene":"mannequin waist; pale fabric","foreground":[[0.50,0.60],[0.35,0.80]],"background":[[0.05,0.05],[0.50,0.12]]},
+    {"id":"commons-0033","role":"shorts","scene":"worn on person; textured wall","foreground":[[0.40,0.50],[0.60,0.53]],"background":[[0.06,0.06],[0.50,0.80]]},
+    {"id":"commons-0021","role":"pants","scene":"person, shirt and shoes","foreground":[[0.45,0.47],[0.62,0.72]],"background":[[0.05,0.05],[0.50,0.10]]},
+    {"id":"commons-0082","role":"sneakers","scene":"isolated pale product on white","foreground":[[0.35,0.62],[0.75,0.46]],"background":[[0.02,0.02],[0.97,0.95]]},
+    {"id":"commons-0088","role":"boots","scene":"isolated black boot on light gradient","foreground":[[0.65,0.25],[0.34,0.67]],"background":[[0.03,0.03],[0.95,0.95]]},
+    {"id":"commons-0016","role":"long sleeve blouse","scene":"pale flat garment on beige; low contrast","foreground":[[0.50,0.50],[0.38,0.70]],"background":[[0.03,0.03],[0.97,0.97]]},
+    {"id":"commons-0079","role":"sneakers difficult","scene":"outdoor support and background objects","foreground":[[0.55,0.53],[0.40,0.66]],"background":[[0.03,0.03],[0.95,0.90]]},
+    {"id":"commons-0089","role":"boots gradient","scene":"isolated product with floor shadow","foreground":[[0.50,0.48],[0.35,0.70]],"background":[[0.03,0.03],[0.95,0.90]]},
+    {"id":"commons-0094","role":"boots light background","scene":"isolated product with laces and shadow","foreground":[[0.70,0.40],[0.45,0.65]],"background":[[0.03,0.03],[0.95,0.03]]},
+    {"id":"commons-0059","role":"dress difficult","scene":"flat garment with clutter and clipped edges","foreground":[[0.50,0.50],[0.65,0.70]],"background":[[0.02,0.95],[0.94,0.05]]}
+  ]
+}
