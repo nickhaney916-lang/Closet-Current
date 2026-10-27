@@ -1,63 +1,92 @@
 /**
- * Research-only licensed ORIGINAL cutout verification. Do not auto-promote
- * the result to an app wardrobe: it is deliberately hand-directed edit data.
- * Reference Work #33 already has attribution and permission for this fixture.
+ * Research-only LICENSED actual garment reconstruction + human alpha edit.
+ * Work #33's frozen PNG is an **ALPHA MASK**, never a color clothing PNG.
+ * Reapply Work #30's immutable mask to source JPEG RGB before erasing.
  */
 import {execFileSync} from 'node:child_process';
-import {mkdir,writeFile} from 'node:fs/promises';
+import {mkdir,writeFile,rm} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
+import {pathToFileURL} from 'node:url';
+import {resolve} from 'node:path';
 import sharp from 'sharp';
 import {applyReviewedEraser} from '../research/family-alpha-35/reviewed-mask-controls.mjs';
 const sourceRef='53f2ad344dc56a1477e343531c423aed0e66c17d';
+const clipPin='dd6bac3fa9ff640d4f562cf925337440bdb5cf8f';
 const key='commons-0053';
-const reference='research/family-alpha-33/frozen-alpha/'+key+'.png';
-const original=execFileSync('git',['show',sourceRef+':'+reference],{maxBuffer:8e6});
-const {data,info}=await sharp(original).ensureAlpha().raw().toBuffer({resolveWithObject:true});
-if(info.width<32||info.height<32||info.width*info.height>8e6)throw Error('Unexpected original native PNG');
+const maskFile='research/family-alpha-33/frozen-alpha/'+key+'.png';
+const srcFile='benchmark/fixtures/'+key+'.jpg';
+const pinnedPath='research/family-alpha-30/clipping.mjs';
+const pinnedBytes=execFileSync('git',['show',clipPin+':'+pinnedPath],{maxBuffer:3e6});
 const digest=x=>createHash('sha256').update(x).digest('hex');
+const maskPNG=execFileSync('git',['show',sourceRef+':'+maskFile],{maxBuffer:12e6});
+const jpeg=execFileSync('git',['show',sourceRef+':'+srcFile],{maxBuffer:12e6});
+const findings=JSON.parse(execFileSync('git',['show',sourceRef+':research/family-alpha-33/findings.json']));
+const label=findings.rows.find(x=>x.id===key);
+if(!label||label.sourceSHA256!==digest(jpeg)||label.alphaSHA256!==digest(maskPNG)||
+ label.hasProposal!==true||label.ownerApproved!==false)
+ throw Error('Frozen licensed garment or mask labels/source identity changed');
+const {data:sourceData,info:sourceInfo}=await sharp(jpeg).rotate().ensureAlpha().raw().toBuffer({resolveWithObject:true});
+const {data:maskData,info:maskInfo}=await sharp(maskPNG).greyscale().raw().toBuffer({resolveWithObject:true});
+if(sourceInfo.width!==maskInfo.width||sourceInfo.height!==maskInfo.height||maskInfo.channels!==1)
+ throw Error('Mismatch between licensed JPEG and Work30 source alpha');
+const output='benchmark/family-alpha-35-real-dress-HOLD';
+await mkdir(output,{recursive:true});
+const temp=resolve('research/family-alpha-30/clipping.mjs');
+await mkdir('research/family-alpha-30',{recursive:true});
+let prepared;
+try{
+ await writeFile(temp,pinnedBytes);
+ const {prepareAlphaProposal}=await import(pathToFileURL(temp).href+'?source-pin='+clipPin);
+ const frame={width:sourceInfo.width,height:sourceInfo.height,data:new Uint8ClampedArray(sourceData)};
+ const result=prepareAlphaProposal(frame,{
+  alpha:new Uint8Array(maskData),category:label.category,
+  sourceIdentity:key,sourceVersion:'sha256:'+label.sourceSHA256
+ });
+ if(result.status!=='review'||result.image!==null||!result.proposedCutout)
+  throw Error('Expected unapproved original-RGB mannequin-cutout proposal');
+ prepared=result.proposedCutout;
+}finally{await rm(temp,{force:true});}
+const encode=async frame=>sharp(Buffer.from(frame.rgba),{raw:{
+ width:frame.width,height:frame.height,channels:4
+}}).png().toBuffer();
+const actualColoredPNG=await encode(prepared);
+if(digest(actualColoredPNG)!==label.work30NativeCutoutSHA256)
+ throw Error('Reconstructed licensed original RGB proposal not EXACT Work30 frozen source');
 const planned=[
- // USER-REVIEW-REQUIRED erase strokes for the mannequin NECK (NOT the shirt).
- // These positions reflect inspection of the licensed photo, not inference
- // from skin color. Refuse any result that touches a garment without approval.
+ // Manually reviewed top-center mannequin NECK area, NOT automatic skin
+ // detection. Human must still accept the visible garment after these taps.
  [.43,.065],[.50,.065],[.57,.065],
  [.42,.111],[.49,.111],[.56,.111],
  [.46,.155],[.53,.155]
 ].map(([x,y])=>({x,y,radius:.043}));
-const base={width:info.width,height:info.height,rgba:new Uint8ClampedArray(data)};
-const proposal=applyReviewedEraser(base,planned);
-const cleaned=await sharp(Buffer.from(proposal.rgba),{raw:{
- width:info.width,height:info.height,channels:4
-}}).png().toBuffer();
-// Native decoded RGB is preserved by review, but PNG encoding may change
-// transparent RGB pre-multiplication; exact checks apply to RAW pixels above.
-const finalRaw=await sharp(cleaned).ensureAlpha().raw().toBuffer();
+const base={width:prepared.width,height:prepared.height,rgba:new Uint8ClampedArray(prepared.rgba)};
+const changed=applyReviewedEraser(base,planned);
+const editedPNG=await encode(changed);
 let alteredRgb=0,addedAlpha=0,erasedAlpha=0;
-for(let p=0;p<data.length;p+=4){
- if(proposal.rgba[p+3]>data[p+3])addedAlpha++;
- if(proposal.rgba[p+3]<data[p+3])erasedAlpha++;
- if(proposal.rgba[p+3]>=128){
-  for(let c=0;c<3;c++)if(proposal.rgba[p+c]!==data[p+c])alteredRgb++;
- }
+for(let p=0;p<base.rgba.length;p+=4){
+ if(changed.rgba[p+3]>base.rgba[p+3])addedAlpha++;
+ if(changed.rgba[p+3]<base.rgba[p+3])erasedAlpha++;
+ if(changed.rgba[p+3]>=128)
+  for(let c=0;c<3;c++)if(changed.rgba[p+c]!==base.rgba[p+c])alteredRgb++;
 }
 if(alteredRgb||addedAlpha||erasedAlpha<100||
- proposal.visiblePixels/proposal.originalVisiblePixels<.55)
- throw Error('Unsafe real-photo mask modification');
-const out='benchmark/family-alpha-35-real-dress-HOLD';
-await mkdir(out,{recursive:true});
-await writeFile(out+'/'+key+'-original-provisional.png',original);
-await writeFile(out+'/'+key+'-manually-proposed-neck-cleanup.png',cleaned);
-await writeFile(out+'/evidence.json',JSON.stringify({
- releaseGate:'HOLD',role:'manual original cutout clean-up proposal, NOT garment approval',
- benchmark:'licensed Work #33 original frozen native PNG, not family data',
- sourceCommit:sourceRef,sourceFile:reference,
- inputSha256:digest(original),outputSha256:digest(cleaned),
- width:info.width,height:info.height,
- originalSourcePixelRGBChanged:false,originalJPEGChanged:false,
- rawForegoundRgbAltered:alteredRgb,addedAlpha,erasedAlpha,
- strokes:planned,modelInferred:false,ownerApproved:false,
- clippingAccuracyCertified:false,retainedGarmentFraction:proposal.visiblePixels/proposal.originalVisiblePixels
+ changed.visiblePixels/changed.originalVisiblePixels<.55)
+ throw Error('Manually proposed alpha-only source faithful operation invalid');
+await writeFile(output+'/'+key+'-original-provisional.png',actualColoredPNG);
+await writeFile(output+'/'+key+'-manually-proposed-neck-cleanup.png',editedPNG);
+await writeFile(output+'/evidence.json',JSON.stringify({
+ releaseGate:'HOLD',role:'manual licensed actual black dress neck cleanup proposal, NOT owner garment approval',
+ sourceJPEGPin:sourceRef,originalJPEGSha256:digest(jpeg),
+ maskFile,maskSha256:digest(maskPNG),
+ replayedWork30CutoutSha256:digest(actualColoredPNG),
+ finalCandidateSha256:digest(editedPNG),
+ rgbaCutoutSize:{width:base.width,height:base.height},
+ rawRGBChanged:false,retainedOriginalJPEGChanged:false,
+ originalColoredCutoutVerified:true,alphaOnly:true,erasedAlpha,addedAlpha,alteredRgb,
+ planned,modelInferred:false,ownerApproved:false,
+ clippingAccuracyCertified:false,retainedGarmentFraction:changed.visiblePixels/changed.originalVisiblePixels
 },null,2)+'\n');
-console.log('REAL_LICENSED_MANNEQUIN_NECK_ALPHA_ONLY_REVIEW_PROPOSAL',JSON.stringify({
- width:info.width,height:info.height,erasedAlpha,addedAlpha,alteredRgb,
- inputSha256:digest(original),outputSha256:digest(cleaned),releaseGate:'HOLD'
+console.log('REAL_LICENSED_COLORED_DRESS_SOURCE_RGB_ALPHA_ONLY_REVIEW_PROPOSAL',JSON.stringify({
+ originalColoredCutoutVerified:true,width:base.width,height:base.height,
+ erasedAlpha,addedAlpha,alteredRgb,releaseGate:'HOLD'
 }));
