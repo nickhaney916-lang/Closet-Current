@@ -1,4 +1,4 @@
-name: Family Alpha #49 Work44 visual + owner-private + security integration HOLD (NO DEPLOY)
+name: Family Alpha #50 actual phone acceptance evidence + existing visual-security HOLD (NO DEPLOY)
 on:
   pull_request:
     paths:
@@ -9,6 +9,9 @@ on:
       - 'docs/family-alpha-47/**'
       - 'docs/family-alpha-48/**'
       - 'docs/family-alpha-49/**'
+      - 'docs/family-alpha-50/**'
+      - 'scripts/check-family-alpha-50-physical-phone-hold.mjs'
+      - 'tests/integration/family-alpha-50-physical-phone-hold.test.mjs'
       - 'research/work44-board-design/**'
       - 'scripts/build-work44-visual-board-hold.mjs'
       - 'scripts/test-work44-integrated-browser.mjs'
@@ -76,6 +79,10 @@ jobs:
         run: |
           node --test tests/work44/*.test.mjs tests/integration/family-alpha-49-combined-visual-security-hold.test.mjs
           node scripts/check-family-alpha-49-combined-visual-security-hold.mjs
+      - name: Validate genuine Android/iPhone manual acceptance evidence stays privacy-safe and on HOLD
+        run: |
+          node --test tests/integration/family-alpha-50-physical-phone-hold.test.mjs
+          node scripts/check-family-alpha-50-physical-phone-hold.mjs
       - name: Verify actual 3-look recommendation and one-item swaps before and after Work44 (licensed + synthetic, browser mobile)
         run: node scripts/test-work44-integrated-browser.mjs
       - run: node scripts/test-work43-full-browser.mjs
