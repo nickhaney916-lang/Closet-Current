@@ -130,41 +130,75 @@ test('forged RLS pass or attempted promotion of synthetic claim to real four-use
 });
 
 
-test('actual live staging backup RPC metadata detects invoker/grant mismatch and refuses to certify cloud writes',async()=>{
- const snapshot=await (await import('node:fs/promises')).readFile('docs/family-alpha-47/live-staging-metadata-20261027.json','utf8').then(JSON.parse);
- const w=snapshot.backupRpcRuntime;
- assert.equal(w.function,'public.save_closet_backup(bigint,jsonb)');
- assert.equal(w.authenticatedCanExecute,true);
- assert.equal(w.functionSecurityDefiner,false);
- assert.equal(w.authenticatedCanInsert,false);
- assert.equal(w.authenticatedCanUpdate,false);
- assert.equal(w.authenticatedInheritsWriterPrivileges,false);
- assert.equal(w.authenticatedHasWriterMembership,false);
- assert.equal(w.liveRpcWriteAttempted,false);
+test('live stage metadata proves restricted private definer callee, not a broken authenticated cloud grant',async()=>{
+ const s=await snapshot(),w=s.backupRpcRuntime;
+ assert.equal(w.publicEntry,'public.save_closet_backup(bigint,jsonb)');
+ assert.equal(w.publicEntrySecurityDefiner,false);
+ assert.equal(w.publicEntryInvokesQualifiedPrivateFunction,true);
+ assert.equal(w.publicEntryInvokes,'closet_rpc_private.save_checked(bigint,jsonb)');
+ assert.equal(w.authenticatedDirectTableInsert,false);
+ assert.equal(w.authenticatedDirectTableUpdate,false);
+ assert.equal(w.privateHelperSecurityDefiner,true);
+ assert.equal(w.privateHelperOwner,'closet_backup_writer');
+ assert.equal(w.privateHelperSearchPathEmpty,true);
+ assert.equal(w.authenticatedPrivateHelperExecute,true);
+ assert.equal(w.authenticatedPrivateSchemaUsage,true);
+ assert.equal(w.writerRoleNoLogin,true);
+ assert.equal(w.writerRoleNoBypassRls,true);
+ assert.equal(w.writerRoleIsTableOwner,false);
+ assert.equal(w.writerRoleCanSelectInsertUpdate,true);
+ assert.equal(w.writerRoleOwnerScopedRlsPolicyPresent,true);
  assert.equal(w.actualHttpOutcome,'NOT TESTED');
- const gate=assessMetadataEvidence(snapshot);
- assert.equal(gate.evidenceConsistent,true);
- assert.equal(gate.stageCloudBackupWriteStatus,'BLOCKED_PROBABLE_INVOKER_PRIVILEGE_MISMATCH');
+ assert.equal(w.liveRpcWriteAttempted,false);
+ assert.equal(w.likelyNormalAuthenticatedCloudBackupWritable,'UNKNOWN_UNTIL_REAL_JWT_FUNCTIONAL_TEST');
+ assert.equal(s.auditCorrection.requiresAnyPermissionChange,false);
+ assert.equal(s.auditCorrection.supersedes,'BLOCKER_PROBABLE_AUTHENTICATED_SAVE_PERMISSION_DENIAL');
+ const gate=assessMetadataEvidence(s);
+ assert.equal(gate.evidenceConsistent,true,gate.issues.join('\n'));
+ assert.equal(gate.stageCloudBackupWriteStatus,'RESTRICTED_WRITER_CHAIN_PRESENT_LIVE_WRITE_UNTESTED');
  assert.equal(gate.actualBackupSaveHttpVerified,false);
  assert.equal(gate.decision,'HOLD');
 });
-test('neither a forged successful cloud write nor ad-hoc grant change silently clears the release blocker',async()=>{
- const snapshot=await (await import('node:fs/promises')).readFile('docs/family-alpha-47/live-staging-metadata-20261027.json','utf8').then(JSON.parse);
- for(const change of [
-  w=>w.authenticatedCanInsert=true,
-  w=>w.authenticatedCanUpdate=true,
-  w=>w.functionSecurityDefiner=true,
-  w=>w.authenticatedInheritsWriterPrivileges=true,
-  w=>w.authenticatedHasWriterMembership=true,
-  w=>w.likelyNormalAuthenticatedCloudBackupWritable=true,
+test('no broad privileges, privileged definer, forged backup success or broken delegated writer are release-passable',async()=>{
+ const s=await snapshot();
+ const changes=[
+  w=>w.authenticatedDirectTableInsert=true,
+  w=>w.authenticatedDirectTableUpdate=true,
+  w=>w.publicEntrySecurityDefiner=true,
+  w=>w.publicEntryInvokesQualifiedPrivateFunction=false,
+  w=>w.publicEntryInvokes='public.unsafe_writer(bigint,jsonb)',
+  w=>w.authenticatedPrivateHelperExecute=false,
+  w=>w.authenticatedPrivateSchemaUsage=false,
+  w=>w.anonPrivateHelperExecute=true,
+  w=>w.anonPublicExecute=true,
+  w=>w.privateHelperSecurityDefiner=false,
+  w=>w.privateHelperOwner='postgres',
+  w=>w.privateHelperSearchPathEmpty=false,
+  w=>w.privateHelperUsesRequestJwtSub=false,
+  w=>w.privateHelperValidatesPayloadAndRevision=false,
+  w=>w.privateHelperUsesOwnerScopedInsertUpdate=false,
+  w=>w.writerRoleNoLogin=false,
+  w=>w.writerRoleNoBypassRls=false,
+  w=>w.writerRoleIsTableOwner=true,
+  w=>w.writerRoleOwnerScopedRlsPolicyPresent=false,
   w=>w.liveRpcWriteAttempted=true,
   w=>w.actualHttpOutcome='PASS',
-  w=>w.status='READY',
+  w=>w.likelyNormalAuthenticatedCloudBackupWritable=true,
+  w=>w.status='READY_FOR_RELEASE'
+ ];
+ for(const change of changes){
+  const tampered=copy(s);change(tampered.backupRpcRuntime);
+  const result=assessMetadataEvidence(tampered);
+  assert.equal(result.decision,'HOLD');
+  assert.equal(result.evidenceConsistent,false,JSON.stringify(tampered.backupRpcRuntime));
+  assert.equal(result.deploymentAuthorized,false);
+ }
+ for(const mutation of [
+   o=>o.auditCorrection.requiresAnyPermissionChange=true,
+   o=>o.auditCorrection.liveHttpWriteVerified=true,
+   o=>o.auditCorrection.currentFinding='BACKUP_READY'
  ]){
-  const modified=structuredClone(snapshot);change(modified.backupRpcRuntime);
-  const outcome=assessMetadataEvidence(modified);
-  assert.equal(outcome.decision,'HOLD');
-  assert.equal(outcome.evidenceConsistent,false);
-  assert.equal(outcome.deploymentAuthorized,false);
+  const t=copy(s);mutation(t);
+  assert.equal(assessMetadataEvidence(t).evidenceConsistent,false);
  }
 });
