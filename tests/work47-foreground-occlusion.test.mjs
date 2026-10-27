@@ -40,7 +40,8 @@ test('render path places anatomical foreground AFTER actual fitted canvas, never
 });
 test('app fit creates at most one foreground, removes it on reset and owner/session disposal',async()=>{
  const editor=await readFile('research/work47/editor.mjs','utf8');
- assert.match(editor,/if\(!foreground\)\{foreground=createHumanoidForegroundOverlay\(doc\);frame\.append\(foreground\);\}/);
+ assert.match(editor,/const anatomy=foreground\?null:createHumanoidForegroundOverlay\(doc\)/);
+ assert.match(editor,/if\(anatomy\)\{foreground=anatomy;frame\.append\(foreground\);\}/);
  assert.match(editor,/if\(!records\.size\)\{foreground\?\.remove\(\);foreground=null/);
  assert.match(editor,/records\.clear\(\);foreground\?\.remove\(\);foreground=null/);
  assert.match(editor,/sessionTarget\.addEventListener\('closet:alpha-session-changed',clear\)/);
