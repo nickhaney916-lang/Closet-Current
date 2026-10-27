@@ -1,0 +1,137 @@
+{
+  "schema": "closet-current-family-alpha-47-live-staging-readonly-v1",
+  "capturedOn": "2026-10-27",
+  "stagingProjectId": "fbnplztkbsteuzrmbgib",
+  "projectStatus": "ACTIVE_HEALTHY",
+  "collection": "Supabase project metadata, read-only SELECT on system catalogs, row counts, policy introspection, security advisors; zero customer rows returned",
+  "registeredUsers": 1,
+  "distinctUnexpiredSessionUsers": 1,
+  "backup": {
+    "table": "public.closet_backups",
+    "rows": 1,
+    "distinctOwnerCount": 1,
+    "rlsEnabled": true,
+    "authenticatedSelectGrant": true,
+    "authenticatedInsertGrant": false,
+    "authenticatedUpdateGrant": false,
+    "ownerUsingClause": true,
+    "ownerWithCheckClause": true,
+    "writerRole": "closet_backup_writer",
+    "writerSelectInsertUpdateGrant": true
+  },
+  "photos": {
+    "bucket": "closet-private",
+    "private": true,
+    "storageBuckets": 1,
+    "storageObjects": 1,
+    "mimeTypes": [
+      "image/jpeg"
+    ],
+    "maxUploadBytes": 8388608,
+    "storageRlsEnabled": true,
+    "authenticatedPolicies": [
+      "closet_photos_read",
+      "closet_photos_insert",
+      "closet_photos_delete"
+    ],
+    "authenticatedOwnerFolderScope": true,
+    "authenticatedUpdatePolicyPresent": false
+  },
+  "advisors": {
+    "leakedPasswordProtection": "WARN_DISABLED",
+    "remediation": "https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection"
+  },
+  "verification": {
+    "twoDifferentAuthenticatedUserJwtSessions": "NOT TESTED",
+    "fourDistinctFamilySessions": "NOT TESTED",
+    "physicalAndroid": "NOT TESTED",
+    "physicalIphone": "NOT TESTED",
+    "protectedCloudflareAccess": "NOT TESTED",
+    "actualOwnerSourceToStagingIntegration": "NOT TESTED"
+  },
+  "photoBoardCandidate": {
+    "referencePR": 349,
+    "sourceHead": "b771329a5502cf53e495c860fe8c342d7ca3443a",
+    "fullSourceProvenanceTests": "PASS_OFFLINE",
+    "humanVisualApproval": "NOT GIVEN",
+    "realAccountRlsProof": "NOT TESTED"
+  },
+  "release": "HOLD",
+  "deploymentAuthorized": false,
+  "stagingModified": false,
+  "productionModified": false,
+  "limitations": "Single-user SQL metadata and automated fake-IndexedDB tests cannot prove four-user cross-account privacy, production routing safety, actual family phone behavior or aesthetic approval. On Oct 27 two read-only transaction-local synthetic JWT-sub simulations returned zero visible backup/photo rows; this is NOT authenticated real-JWT or four-user account isolation. Correction: initial catalog-only investigation wrongly concluded direct authenticated INSERT/UPDATE denial breaks backup writes. Full private SQL helper inspection shows the public INVOKER wrapper delegates to the private DEFINER function owned by restricted closet_backup_writer; the earlier write-blocker finding is withdrawn. Actual signed-JWT API backup save still NOT TESTED.",
+  "syntheticNonownerReadProbes": {
+    "method": "LIVE_STAGING_SQL_READ_ONLY_TRANSACTION_ROLE_SIMULATION",
+    "observedOn": "2026-10-27",
+    "exactSqlPattern": "BEGIN TRANSACTION READ ONLY; set_config('request.jwt.claim.sub', synthetic fixture UUID, true); SET LOCAL ROLE authenticated; count visibility of public.closet_backups and storage.objects scoped to closet-private; ROLLBACK",
+    "roleEmulationNotJwt": true,
+    "realJwtSessionCountUsed": 0,
+    "newAccountsCreated": 0,
+    "rowContentsAccessed": false,
+    "photoBytesAccessed": false,
+    "transactionsRolledBack": true,
+    "independentFixtures": [
+      {
+        "identity": "synthetic-nonowner-A",
+        "roleVerified": true,
+        "claimVerified": true,
+        "visibleBackupRows": 0,
+        "visiblePhotoObjects": 0
+      },
+      {
+        "identity": "synthetic-nonowner-B",
+        "roleVerified": true,
+        "claimVerified": true,
+        "visibleBackupRows": 0,
+        "visiblePhotoObjects": 0
+      }
+    ],
+    "result": "NONOWNER_READ_VISIBILITY_PASS_SQL_SIMULATION_ONLY",
+    "provesRealCrossAccountIsolation": false,
+    "missingControls": "No signed-in owner positive control; no authenticated API-backed JWT; no real upload/delete/RLS mutation; no physical phone test."
+  },
+  "backupRpcRuntime": {
+    "observedOn": "2026-10-27",
+    "method": "LIVE_STAGING_READ_ONLY_PG_PROC_ROLE_FUNCTION_DEFINITION_AND_ACL_INSPECTION",
+    "publicEntry": "public.save_closet_backup(bigint,jsonb)",
+    "publicEntryOwner": "postgres",
+    "publicEntrySecurityDefiner": false,
+    "publicEntryInvokesQualifiedPrivateFunction": true,
+    "publicEntryInvokes": "closet_rpc_private.save_checked(bigint,jsonb)",
+    "authenticatedPublicExecute": true,
+    "authenticatedDirectTableSelect": true,
+    "authenticatedDirectTableInsert": false,
+    "authenticatedDirectTableUpdate": false,
+    "authenticatedPrivateSchemaUsage": true,
+    "authenticatedPrivateHelperExecute": true,
+    "anonPublicExecute": false,
+    "anonPrivateHelperExecute": false,
+    "anonPrivateSchemaUsage": false,
+    "privateHelperSecurityDefiner": true,
+    "privateHelperOwner": "closet_backup_writer",
+    "privateHelperSearchPathEmpty": true,
+    "privateHelperUsesRequestJwtSub": true,
+    "privateHelperValidatesPayloadAndRevision": true,
+    "privateHelperUsesOwnerScopedInsertUpdate": true,
+    "writerRoleNoLogin": true,
+    "writerRoleNoBypassRls": true,
+    "writerRoleIsTableOwner": false,
+    "writerRoleCanSelectInsertUpdate": true,
+    "writerRoleOwnerScopedRlsPolicyPresent": true,
+    "liveRpcWriteAttempted": false,
+    "ownerContentAccessed": false,
+    "actualHttpOutcome": "NOT TESTED",
+    "likelyNormalAuthenticatedCloudBackupWritable": "UNKNOWN_UNTIL_REAL_JWT_FUNCTIONAL_TEST",
+    "status": "RESTRICTED_PRIVATE_WRITER_CHAIN_PRESENT_NO_GRANT_BLOCKER_ESTABLISHED",
+    "correction": "The earlier inference of a broken authenticated backup write was mistaken: the public SECURITY INVOKER wrapper does not write tables directly; it delegates to a private SECURITY DEFINER helper owned by no-login, no-bypassrls closet_backup_writer. Direct authenticated INSERT/UPDATE denial is intentional. No schema change is justified by the earlier claim."
+  },
+  "auditCorrection": {
+    "observedOn": "2026-10-27",
+    "supersedes": "BLOCKER_PROBABLE_AUTHENTICATED_SAVE_PERMISSION_DENIAL",
+    "reason": "Previously examined only the public wrapper, not its qualified closet_rpc_private.save_checked SECURITY DEFINER callee",
+    "currentFinding": "SECURE_WRITER_CHAIN_CONFIGURED_METADATA_ONLY",
+    "liveHttpWriteVerified": false,
+    "requiresAnyPermissionChange": false
+  }
+}
