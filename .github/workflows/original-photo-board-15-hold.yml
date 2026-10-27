@@ -1,0 +1,35 @@
+name: Original clothing photo 15-case visual review (NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'research/family-alpha-original-board-15/**'
+      - 'scripts/build-original-photo-board-15-hold.mjs'
+      - 'scripts/test-original-photo-board-15-browser.mjs'
+      - '.github/workflows/original-photo-board-15-hold.yml'
+permissions:
+  contents: read
+jobs:
+  gallery:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+      - name: Verify source-locked licensed JPEG and generate local-only review
+        run: node scripts/build-original-photo-board-15-hold.mjs
+      - name: Test photo-board component and capture 6 unapproved viewport comparisons
+        run: node scripts/test-original-photo-board-15-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: original-photo-board-15-UNAPPROVED-HOLD
+          path: |
+            benchmark/family-alpha-board15/
+            dist-original-photo-board-15-HOLD/matrix.json
+            dist-original-photo-board-15-HOLD/RELEASE-HOLD.txt
