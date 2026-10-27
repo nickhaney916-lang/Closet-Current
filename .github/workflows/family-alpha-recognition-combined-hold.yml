@@ -6,6 +6,8 @@ on:
       - 'scripts/audit-family-alpha-recognition-bridge.mjs'
       - 'scripts/test-family-alpha-recognition-integrated-hold-browser.mjs'
       - 'tests/family-alpha-recognition-integrated-hold.test.mjs'
+      - 'scripts/audit-family-alpha-review-burden.mjs'
+      - 'tests/family-alpha-review-burden.test.mjs'
       - 'public/family-alpha-2d-saved-board.mjs'
       - 'research/family-alpha-reviewed-photo/real-jpeg-review-provider.mjs'
       - 'tests/family-alpha-2d-saved-board.test.mjs'
@@ -26,6 +28,7 @@ env:
   RECOGNITION_PIN: '795ad6637f8d4f782bc99751211b25e8e72a3a7d'
   RECOVERY_PIN: '08ed6ac4a3fc921eae5d5d3df3bd3966429559d2'
   REVIEW_PIN: '1ecac1079e75f1f25dc70a4c712b2448eb87dca8'
+  BENCHMARK_PIN: 'd0ff131a4e5617e1a3f4fcfb40d00602fdce9833'
 jobs:
   built-source-and-regression:
     runs-on: ubuntu-latest
@@ -37,7 +40,7 @@ jobs:
         with: {node-version: '22'}
       - name: Fetch exactly authorized SOURCE-PINNED revisions
         run: |
-          git fetch --no-tags origin "$STAGE_PIN" "$RECOGNITION_PIN" "$RECOVERY_PIN" "$REVIEW_PIN"
+          git fetch --no-tags origin "$STAGE_PIN" "$RECOGNITION_PIN" "$RECOVERY_PIN" "$REVIEW_PIN" "$BENCHMARK_PIN"
           git cat-file -e "$STAGE_PIN^{commit}"
           git cat-file -e "$RECOGNITION_PIN^{commit}"
       - name: Build existing disabled isolated staging Auth candidate
@@ -52,6 +55,8 @@ jobs:
         run: node --test tests/integration/family-alpha-assignment22-integrity.test.cjs
       - name: Verify malformed worker replies, recoverable JPEG failure, stale retry and manual source authority in actual stage-HOLD recognizer
         run: node --test tests/integration/family-alpha-worker-recovery.test.mjs
+      - name: Measure frozen archived strong-decision manual-review burden (metadata only, source pinned)
+        run: node scripts/audit-family-alpha-review-burden.mjs
       - name: Run stage + integration full Node regression suite
         run: node --test tests/*.test.cjs tests/*.test.mjs
       - name: Never label offline combined artifact as authorized release
@@ -73,7 +78,7 @@ jobs:
       - name: Fetch exact pinned staging and recognition commits
         run: |
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          git fetch --no-tags origin "$STAGE_PIN" "$RECOGNITION_PIN" "$RECOVERY_PIN" "$REVIEW_PIN"
+          git fetch --no-tags origin "$STAGE_PIN" "$RECOGNITION_PIN" "$RECOVERY_PIN" "$REVIEW_PIN" "$BENCHMARK_PIN"
       - name: Build original reviewed staging and combined held candidate, without keys
         run: |
           node scripts/build-family-alpha-staging-auth-hold.mjs
