@@ -26,6 +26,7 @@ export function createHumanoidForegroundOverlay(doc=document){
  if(remaining.length!==FOREGROUND_PARTS.length||
     remaining.some(p=>!allowed.has(p))||new Set(remaining).size!==allowed.size)
   throw Error('Humanoid anatomical foreground source changed — retain photo fallback');
+ svg.setAttribute('data-humanoid','foreground-anatomy-v1');
  svg.setAttribute('data-humanoid-overlay','reviewed-anatomy-v1');
  svg.setAttribute('aria-hidden','true');
  Object.assign(svg.style,{
