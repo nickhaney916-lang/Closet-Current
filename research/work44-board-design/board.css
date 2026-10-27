@@ -1,0 +1,10 @@
+/* Original photos remain fully visible and retain their aspect ratio. */
+.work42-board{font:15px/1.42 system-ui;color:#292634;background:#f6f2ee;padding:12px;border:1px solid #e9e2dc;border-radius:16px}
+.work42-board h3{font-size:17px;line-height:1.3;margin:0 0 3px;color:#28232e}
+.work42-board p{font-size:13px;line-height:1.4;margin:0 0 10px;color:#5b5464}
+.work42-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.work42-grid figure{min-width:0;margin:0;background:#fff;border:1px solid #e7e1df;border-radius:11px;overflow:hidden}
+.work42-grid img{display:block;width:100%;height:clamp(112px,36vw,150px);object-fit:contain;background:#f1efed}
+.work42-grid figcaption{padding:7px 9px;font-weight:600;line-height:1.3;overflow-wrap:anywhere}
+/* Names already appear in the photo cards; keep the new-piece reminder. */
+.alpha29-options>article>p:not(:first-of-type){display:none}
