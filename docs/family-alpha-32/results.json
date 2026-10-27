@@ -1,0 +1,1664 @@
+{
+  "release": "HOLD",
+  "physicalPhones": false,
+  "realPhotos": false,
+  "ownerApproved": false,
+  "results": [
+    {
+      "engine": "Chromium",
+      "width": 320,
+      "screenshot": "Chromium-320-shirt-SYNTHETIC-HOLD.png",
+      "name": "shirt",
+      "baselineMetrics": {
+        "anchorError": [
+          15.362217607860918,
+          15.362217607860915
+        ],
+        "meanAnchorError": 15.362217607860917
+      },
+      "plans": [
+        {
+          "mode": "rigid",
+          "status": "preview-only",
+          "scale": 1.1,
+          "x": 48,
+          "y": 96,
+          "width": 240,
+          "height": 280,
+          "maxDistortion": 0,
+          "waistFactor": 1,
+          "protectedUntil": 110,
+          "transitionEnd": 250,
+          "minStretch": 1,
+          "maxStretch": 1
+        },
+        {
+          "mode": "bounded-warp",
+          "status": "preview-only",
+          "scale": 1.1,
+          "x": 48,
+          "y": 96,
+          "width": 240,
+          "height": 280,
+          "maxDistortion": 0.06000000000000005,
+          "waistFactor": 0.94,
+          "protectedUntil": 110,
+          "transitionEnd": 250,
+          "minStretch": 0.9308284441170085,
+          "maxStretch": 1.0260448433250158
+        }
+      ],
+      "sourceUnchanged": true
+    },
+    {
+      "engine": "Chromium",
+      "width": 320,
+      "screenshot": "Chromium-320-jacket-SYNTHETIC-HOLD.png",
+      "name": "jacket",
+      "baselineMetrics": {
+        "anchorError": [
+          6.609416683978425,
+          6.609416683978425
+        ],
+        "meanAnchorError": 6.609416683978425
+      },
+      "plans": [
+        {
+          "mode": "rigid",
+          "status": "preview-only",
+          "scale": 1.14,
+          "x": 43.2,
+          "y": 94.4,
+          "width": 240,
+          "height": 280,
+          "maxDistortion": 0,
+          "waistFactor": 1,
+          "protectedUntil": 110,
+          "transitionEnd": 250,
+          "minStretch": 1,
+          "maxStretch": 1
+        },
+        {
+          "mode": "bounded-warp",
+          "status": "preview-only",
+          "scale": 1.14,
+          "x": 43.2,
+          "y": 94.4,
+          "width": 240,
+          "height": 280,
+          "maxDistortion": 0.06000000000000005,
+          "waistFactor": 0.94,
+          "protectedUntil": 110,
+          "transitionEnd": 250,
+          "minStretch": 0.9308284441170085,
+          "maxStretch": 1.0260448433250158
+        }
+      ],
+      "sourceUnchanged": true
+    },
+    {
+      "engine": "Chromium",
+      "width": 320,
+      "screenshot": "Chromium-320-trousers-SYNTHETIC-HOLD.png",
+      "name": "trousers",
+      "baselineMetrics": {
+        "anchorError": [
+          11.003252911721207,
+          11.003252911721207
+        ],
+        "meanAnchorError": 11.003252911721207
+      },
+      "plans": [
+        {
+          "mode": "rigid",
+          "status": "preview-only",
+          "scale": 1.1111111111111112,
+          "x": 46.66666666666666,
+          "y": 281.6666666666667,
+          "width": 240,
+          "height": 280,
+          "maxDistortion": 0,
+          "waistFactor": 1,
+          "protectedUntil": 110,
+          "transitionEnd": 250,
+          "minStretch": 1,
+          "maxStretch": 1
+        },
+        {
+          "mode": "rigid",
+          "status": "preview-only",
+          "scale": 1.1111111111111112,
+          "x": 46.66666666666666,
+          "y": 281.6666666666667,
+          "width": 240,
+          "height": 280,
+          "maxDistortion": 0,
+          "waistFactor": 1,
+          "protectedUntil": 110,
+          "transitionEnd": 250,
+          "minStretch": 1,
+          "maxStretch": 1
+        }
+      ],
+      "sourceUnchanged": true
+    },
+    {
+      "engine": "Chromium",
+      "width": 320,
+      "screenshot": "Chromium-320-dress-SYNTHETIC-HOLD.png",
+      "name": "dress",
+      "baselineMetrics": {
+        "anchorError": [
+          3.429257032232678,
+          3.429257032232678
+        ],
+        "meanAnchorError": 3.429257032232678
+      },
+      "plans": [
+        {
+          "mode": "rigid",
+          "status": "preview-only",
+          "scale": 1.375,
+          "x": 15,
+          "y": 98.75,
+          "width": 240,
+          "height": 280,
+          "maxDistortion": 0,
+          "waistFactor": 1,
+          "protectedUntil": 110,
+          "transitionEnd": 250,
+          "minStretch": 1,
+          "maxStretch": 1
+        },
+        {
+          "mode": "bounded-warp",
+          "status": "preview-only",
+          "scale": 1.375,
+          "x": 15,
+          "y": 98.75,
+          "width": 240,
+          "height": 280,
+          "maxDistortion": 0.06000000000000005,
+          "waistFactor": 0.94,
+          "protectedUntil": 110,
+          "transitionEnd": 250,
+          "minStretch": 0.9308284441170085,
+          "maxStretch": 1.0260448433250158
+        }
+      ],
+      "sourceUnchanged": true
+    },
+    {
+      "engine": "Chromium",
+      "width": 320,
+      "screenshot": "Chromium-320-skirt-SYNTHETIC-HOLD.png",
+      "name": "skirt",
+      "baselineMetrics": {
+        "anchorError": [
+          8.815946854838474,
+          8.815946854838474
+        ],
+        "meanAnchorError": 8.815946854838474
+      },
+      "plans": [
+        {
+          "mode": "rigid",
+          "status": "preview-only",
+          "scale": 0.8888888888888888,
+          "x": 73.33333333333334,
+          "y": 288.3333333333333,
+          "width": 240,
+          "height": 280,
+          "maxDistortion": 0,
+          "waistFactor": 1,
+          "protectedUntil": 110,
+          "transitionEnd": 250,
+          "minStretch": 1,
+          "maxStretch": 1
+        },
+        {
+          "mode": "rigid",
+          "status": "preview-only",
+          "scale": 0.8888888888888888,
+          "x": 73.33333333333334,
+          "y": 288.3333333333333,
+          "width": 240,
+          "height": 280,
+          "maxDistortion": 0,
+          "waistFactor": 1,
+          "protectedUntil": 110,
+          "transitionEnd": 250,
+          "minStretch": 1,
+          "maxStretch": 1
+        }
+      ],
+      "sourceUnchanged": true
+    },
+    {
+      "engine": "Chromium",
+      "width": 320,
+      "screenshot": "Chromium-320-shoes-SYNTHETIC-HOLD.png",
+      "name": "shoes",
+      "baselineMetrics": {
+        "anchorError": [
+          3.6975710138667917,
+          3.6975710138667917
+        ],
+        "meanAnchorError": 3.6975710138667917
+      },
+      "plans": [
+        {
+          "mode": "rigid",
+          "status": "preview-only",
+          "scale": 0.8888888888888888,
+          "x": 73.33333333333334,
+          "y": 495.22222222222223,
+          "width": 240,
+          "height": 100,
+          "maxDistortion": 0,
+          "waistFactor": 1,
+          "protectedUntil": 0,
+          "transitionEnd": 100,
+          "minStretch": 1,
+          "maxStretch": 1
+        },
+        {
+          "mode": "rigid",
+          "status": "preview-only",
+          "scale": 0.8888888888888888,
+          "x": 73.33333333333334,
+          "y": 495.22222222222223,
+          "width": 240,
+          "height": 100,
+          "maxDistortion": 0,
+          "waistFactor": 1,
+          "protectedUntil": 0,
+          "transitionEnd": 100,
+          "minStretch": 1,
+          "maxStretch": 1
+        }
+      ],
+      "sourceUnchanged": true
+    },
+    {
+      "engine": "Chromium",
+      "width": 390,
+      "screenshot": "Chromium-390-shirt-SYNTHETIC-HOLD.png",
+      "name": "shirt",
+      "baselineMetrics": {
+        "anchorError": [
+          15.362217607860918,
+          15.362217607860915
+        ],
+        "meanAnchorError": 15.362217607860917
+      },
+      "plans": [
+        {
+          "mode": "rigid",
+          "status": "preview-only",
+          "scale": 1.1,
+          "x": 48,
+          "y": 96,
+          "width": 240,
+          "height": 280,
+          "maxDistortion": 0,
+          "waistFactor": 1,
+          "protectedUntil": 110,
+          "transitionEnd": 250,
+          "minStretch": 1,
+          "maxStretch": 1
+        },
+        {
+          "mode": "bounded-warp",
+          "status": "preview-only",
+          "scale": 1.1,
+          "x": 48,
+          "y": 96,
+          "width": 240,
+          "height": 280,
+          "maxDistortion": 0.06000000000000005,
+          "waistFactor": 0.94,
+          "protectedUntil": 110,
+          "transitionEnd": 250,
+          "minStretch": 0.9308284441170085,
+          "maxStretch": 1.0260448433250158
+        }
+      ],
+      "sourceUnchanged": true
+    },
+    {
+      "engine": "Chromium",
+      "width": 390,
+      "screenshot": "Chromium-390-jacket-SYNTHETIC-HOLD.png",
+      "name": "jacket",
+      "baselineMetrics": {
+        "anchorError": [
+          6.609416683978425,
+          6.609416683978425
+        ],
+        "meanAnchorError": 6.609416683978425
+      },
+      "plans": [
+        {
+          "mode": "rigid",
+          "status": "preview-only",
+          "scale": 1.14,
+          "x": 43.2,
+          "y": 94.4,
+          "width": 240,
+          "height": 280,
+          "maxDistortion": 0,
+          "waistFactor": 1,
+          "protectedUntil": 110,
+          "transitionEnd": 250,
+          "minStretch": 1,
+          "maxStretch": 1
+        },
+        {
+          "mode": "bounded-warp",
+          "status": "preview-only",
+          "scale": 1.14,
+          "x": 43.2,
+          "y": 94.4,
+          "width": 240,
+          "height": 280,
+          "maxDistortion": 0.06000000000000005,
+          "waistFactor": 0.94,
+          "protectedUntil": 110,
+          "transitionEnd": 250,
+          "minStretch": 0.9308284441170085,
+          "maxStretch": 1.0260448433250158
+        }
+      ],
+      "sourceUnchanged": true
+    },
+    {
+      "engine": "Chromium",
+      "width": 390,
+      "screenshot": "Chromium-390-trousers-SYNTHETIC-HOLD.png",
+      "name": "trousers",
+      "baselineMetrics": {
+        "anchorError": [
+          11.003252911721207,
+          11.003252911721207
+        ],
+        "meanAnchorError": 11.003252911721207
+      },
+      "plans": [
+        {
+          "mode": "rigid",
+          "status": "preview-only",
+          "scale": 1.1111111111111112,
+          "x": 46.66666666666666,
+          "y": 281.6666666666667,
+          "width": 240,
+          "height": 280,
+          "maxDistortion": 0,
+          "waistFactor": 1,
+          "protectedUntil": 110,
+          "transitionEnd": 250,
+          "minStretch": 1,
+          "maxStretch": 1
+        },
+        {
+          "mode": "rigid",
+          "status": "preview-only",
+          "scale": 1.1111111111111112,
+          "x": 46.66666666666666,
+          "y": 281.6666666666667,
+          "width": 240,
+          "height": 280,
+          "maxDistortion": 0,
+          "waistFactor": 1,
+          "protectedUntil": 110,
+          "transitionEnd": 250,
+          "minStretch": 1,
+          "maxStretch": 1
+        }
+      ],
+      "sourceUnchanged": true
+    },
+    {
+      "engine": "Chromium",
+      "width": 390,
+      "screenshot": "Chromium-390-dress-SYNTHETIC-HOLD.png",
+      "name": "dress",
+      "baselineMetrics": {
+        "anchorError": [
+          3.429257032232678,
+          3.429257032232678
+        ],
+        "meanAnchorError": 3.429257032232678
+      },
+      "plans": [
+        {
+          "mode": "rigid",
+          "status": "preview-only",
+          "scale": 1.375,
+          "x": 15,
+          "y": 98.75,
+          "width": 240,
+          "height": 280,
+          "maxDistortion": 0,
+          "waistFactor": 1,
+          "protectedUntil": 110,
+          "transitionEnd": 250,
+          "minStretch": 1,
+          "maxStretch": 1
+        },
+        {
+          "mode": "bounded-warp",
+          "status": "preview-only",
+          "scale": 1.375,
+          "x": 15,
+          "y": 98.75,
+          "width": 240,
+          "height": 280,
+          "maxDistortion": 0.06000000000000005,
+          "waistFactor": 0.94,
+          "protectedUntil": 110,
+          "transitionEnd": 250,
+          "minStretch": 0.9308284441170085,
+          "maxStretch": 1.0260448433250158
+        }
+      ],
+      "sourceUnchanged": true
+    },
+    {
+      "engine": "Chromium",
+      "width": 390,
+      "screenshot": "Chromium-390-skirt-SYNTHETIC-HOLD.png",
+      "name": "skirt",
+      "baselineMetrics": {
+        "anchorError": [
+          8.815946854838474,
+          8.815946854838474
+        ],
+        "meanAnchorError": 8.815946854838474
+      },
+      "plans": [
+        {
+          "mode": "rigid",
+          "status": "preview-only",
+          "scale": 0.8888888888888888,
+          "x": 73.33333333333334,
+          "y": 288.3333333333333,
+          "width": 240,
+          "height": 280,
+          "maxDistortion": 0,
+          "waistFactor": 1,
+          "protectedUntil": 110,
+          "transitionEnd": 250,
+          "minStretch": 1,
+          "maxStretch": 1
+        },
+        {
+          "mode": "rigid",
+          "status": "preview-only",
+          "scale": 0.8888888888888888,
+          "x": 73.33333333333334,
+          "y": 288.3333333333333,
+          "width": 240,
+          "height": 280,
+          "maxDistortion": 0,
+          "waistFactor": 1,
+          "protectedUntil": 110,
+          "transitionEnd": 250,
+          "minStretch": 1,
+          "maxStretch": 1
+        }
+      ],
+      "sourceUnchanged": true
+    },
+    {
+      "engine": "Chromium",
+      "width": 390,
+      "screenshot": "Chromium-390-shoes-SYNTHETIC-HOLD.png",
+      "name": "shoes",
+      "baselineMetrics": {
+        "anchorError": [
+          3.6975710138667917,
+          3.6975710138667917
+        ],
+        "meanAnchorError": 3.6975710138667917
+      },
+      "plans": [
+        {
+          "mode": "rigid",
+          "status": "preview-only",
+          "scale": 0.8888888888888888,
+          "x": 73.33333333333334,
+          "y": 495.22222222222223,
+          "width": 240,
+          "height": 100,
+          "maxDistortion": 0,
+          "waistFactor": 1,
+          "protectedUntil": 0,
+          "transitionEnd": 100,
+          "minStretch": 1,
+          "maxStretch": 1
+        },
+        {
+          "mode": "rigid",
+          "status": "preview-only",
+          "scale": 0.8888888888888888,
+          "x": 73.33333333333334,
+          "y": 495.22222222222223,
+          "width": 240,
+          "height": 100,
+          "maxDistortion": 0,
+          "waistFactor": 1,
+          "protectedUntil": 0,
+          "transitionEnd": 100,
+          "minStretch": 1,
+          "maxStretch": 1
+        }
+      ],
+      "sourceUnchanged": true
+    },
+    {
+      "engine": "Chromium",
+      "width": 430,
+      "screenshot": "Chromium-430-shirt-SYNTHETIC-HOLD.png",
+      "name": "shirt",
+      "baselineMetrics": {
+        "anchorError": [
+          15.362217607860918,
+          15.362217607860915
+        ],
+        "meanAnchorError": 15.362217607860917
+      },
+      "plans": [
+        {
+          "mode": "rigid",
+          "status": "preview-only",
+          "scale": 1.1,
+          "x": 48,
+          "y": 96,
+          "width": 240,
+          "height": 280,
+          "maxDistortion": 0,
+          "waistFactor": 1,
+          "protectedUntil": 110,
+          "transitionEnd": 250,
+          "minStretch": 1,
+          "maxStretch": 1
+        },
+        {
+          "mode": "bounded-warp",
+          "status": "preview-only",
+          "scale": 1.1,
+          "x": 48,
+          "y": 96,
+          "width": 240,
+          "height": 280,
+          "maxDistortion": 0.06000000000000005,
+          "waistFactor": 0.94,
+          "protectedUntil": 110,
+          "transitionEnd": 250,
+          "minStretch": 0.9308284441170085,
+          "maxStretch": 1.0260448433250158
+        }
+      ],
+      "sourceUnchanged": true
+    },
+    {
+      "engine": "Chromium",
+      "width": 430,
+      "screenshot": "Chromium-430-jacket-SYNTHETIC-HOLD.png",
+      "name": "jacket",
+      "baselineMetrics": {
+        "anchorError": [
+          6.609416683978425,
+          6.609416683978425
+        ],
+        "meanAnchorError": 6.609416683978425
+      },
+      "plans": [
+        {
+          "mode": "rigid",
+          "status": "preview-only",
+          "scale": 1.14,
+          "x": 43.2,
+          "y": 94.4,
+          "width": 240,
+          "height": 280,
+          "maxDistortion": 0,
+          "waistFactor": 1,
+          "protectedUntil": 110,
+          "transitionEnd": 250,
+          "minStretch": 1,
+          "maxStretch": 1
+        },
+        {
+          "mode": "bounded-warp",
+          "status": "preview-only",
+          "scale": 1.14,
+          "x": 43.2,
+          "y": 94.4,
+          "width": 240,
+          "height": 280,
+          "maxDistortion": 0.06000000000000005,
+          "waistFactor": 0.94,
+          "protectedUntil": 110,
+          "transitionEnd": 250,
+          "minStretch": 0.9308284441170085,
+          "maxStretch": 1.0260448433250158
+        }
+      ],
+      "sourceUnchanged": true
+    },
+    {
+      "engine": "Chromium",
+      "width": 430,
+      "screenshot": "Chromium-430-trousers-SYNTHETIC-HOLD.png",
+      "name": "trousers",
+      "baselineMetrics": {
+        "anchorError": [
+          11.003252911721207,
+          11.003252911721207
+        ],
+        "meanAnchorError": 11.003252911721207
+      },
+      "plans": [
+        {
+          "mode": "rigid",
+          "status": "preview-only",
+          "scale": 1.1111111111111112,
+          "x": 46.66666666666666,
+          "y": 281.6666666666667,
+          "width": 240,
+          "height": 280,
+          "maxDistortion": 0,
+          "waistFactor": 1,
+          "protectedUntil": 110,
+          "transitionEnd": 250,
+          "minStretch": 1,
+          "maxStretch": 1
+        },
+        {
+          "mode": "rigid",
+          "status": "preview-only",
+          "scale": 1.1111111111111112,
+          "x": 46.66666666666666,
+          "y": 281.6666666666667,
+          "width": 240,
+          "height": 280,
+          "maxDistortion": 0,
+          "waistFactor": 1,
+          "protectedUntil": 110,
+          "transitionEnd": 250,
+          "minStretch": 1,
+          "maxStretch": 1
+        }
+      ],
+      "sourceUnchanged": true
+    },
+    {
+      "engine": "Chromium",
+      "width": 430,
+      "screenshot": "Chromium-430-dress-SYNTHETIC-HOLD.png",
+      "name": "dress",
+      "baselineMetrics": {
+        "anchorError": [
+          3.429257032232678,
+          3.429257032232678
+        ],
+        "meanAnchorError": 3.429257032232678
+      },
+      "plans": [
+        {
+          "mode": "rigid",
+          "status": "preview-only",
+          "scale": 1.375,
+          "x": 15,
+          "y": 98.75,
+          "width": 240,
+          "height": 280,
+          "maxDistortion": 0,
+          "waistFactor": 1,
+          "protectedUntil": 110,
+          "transitionEnd": 250,
+          "minStretch": 1,
+          "maxStretch": 1
+        },
+        {
+          "mode": "bounded-warp",
+          "status": "preview-only",
+          "scale": 1.375,
+          "x": 15,
+          "y": 98.75,
+          "width": 240,
+          "height": 280,
+          "maxDistortion": 0.06000000000000005,
+          "waistFactor": 0.94,
+          "protectedUntil": 110,
+          "transitionEnd": 250,
+          "minStretch": 0.9308284441170085,
+          "maxStretch": 1.0260448433250158
+        }
+      ],
+      "sourceUnchanged": true
+    },
+    {
+      "engine": "Chromium",
+      "width": 430,
+      "screenshot": "Chromium-430-skirt-SYNTHETIC-HOLD.png",
+      "name": "skirt",
+      "baselineMetrics": {
+        "anchorError": [
+          8.815946854838474,
+          8.815946854838474
+        ],
+        "meanAnchorError": 8.815946854838474
+      },
+      "plans": [
+        {
+          "mode": "rigid",
+          "status": "preview-only",
+          "scale": 0.8888888888888888,
+          "x": 73.33333333333334,
+          "y": 288.3333333333333,
+          "width": 240,
+          "height": 280,
+          "maxDistortion": 0,
+          "waistFactor": 1,
+          "protectedUntil": 110,
+          "transitionEnd": 250,
+          "minStretch": 1,
+          "maxStretch": 1
+        },
+        {
+          "mode": "rigid",
+          "status": "preview-only",
+          "scale": 0.8888888888888888,
+          "x": 73.33333333333334,
+          "y": 288.3333333333333,
+          "width": 240,
+          "height": 280,
+          "maxDistortion": 0,
+          "waistFactor": 1,
+          "protectedUntil": 110,
+          "transitionEnd": 250,
+          "minStretch": 1,
+          "maxStretch": 1
+        }
+      ],
+      "sourceUnchanged": true
+    },
+    {
+      "engine": "Chromium",
+      "width": 430,
+      "screenshot": "Chromium-430-shoes-SYNTHETIC-HOLD.png",
+      "name": "shoes",
+      "baselineMetrics": {
+        "anchorError": [
+          3.6975710138667917,
+          3.6975710138667917
+        ],
+        "meanAnchorError": 3.6975710138667917
+      },
+      "plans": [
+        {
+          "mode": "rigid",
+          "status": "preview-only",
+          "scale": 0.8888888888888888,
+          "x": 73.33333333333334,
+          "y": 495.22222222222223,
+          "width": 240,
+          "height": 100,
+          "maxDistortion": 0,
+          "waistFactor": 1,
+          "protectedUntil": 0,
+          "transitionEnd": 100,
+          "minStretch": 1,
+          "maxStretch": 1
+        },
+        {
+          "mode": "rigid",
+          "status": "preview-only",
+          "scale": 0.8888888888888888,
+          "x": 73.33333333333334,
+          "y": 495.22222222222223,
+          "width": 240,
+          "height": 100,
+          "maxDistortion": 0,
+          "waistFactor": 1,
+          "protectedUntil": 0,
+          "transitionEnd": 100,
+          "minStretch": 1,
+          "maxStretch": 1
+        }
+      ],
+      "sourceUnchanged": true
+    },
+    {
+      "engine": "WebKit",
+      "width": 320,
+      "screenshot": "WebKit-320-shirt-SYNTHETIC-HOLD.png",
+      "name": "shirt",
+      "baselineMetrics": {
+        "anchorError": [
+          15.57923119827405,
+          15.5401572959573
+        ],
+        "meanAnchorError": 15.559694247115676
+      },
+      "plans": [
+        {
+          "mode": "rigid",
+          "status": "preview-only",
+          "scale": 1.1,
+          "x": 48,
+          "y": 96,
+          "width": 240,
+          "height": 280,
+          "maxDistortion": 0,
+          "waistFactor": 1,
+          "protectedUntil": 110,
+          "transitionEnd": 250,
+          "minStretch": 1,
+          "maxStretch": 1
+        },
+        {
+          "mode": "bounded-warp",
+          "status": "preview-only",
+          "scale": 1.1,
+          "x": 48,
+          "y": 96,
+          "width": 240,
+          "height": 280,
+          "maxDistortion": 0.06000000000000005,
+          "waistFactor": 0.94,
+          "protectedUntil": 110,
+          "transitionEnd": 250,
+          "minStretch": 0.9308284441170085,
+          "maxStretch": 1.0260448433250158
+        }
+      ],
+      "sourceUnchanged": true
+    },
+    {
+      "engine": "WebKit",
+      "width": 320,
+      "screenshot": "WebKit-320-jacket-SYNTHETIC-HOLD.png",
+      "name": "jacket",
+      "baselineMetrics": {
+        "anchorError": [
+          6.4909240741911365,
+          6.573429561217574
+        ],
+        "meanAnchorError": 6.5321768177043555
+      },
+      "plans": [
+        {
+          "mode": "rigid",
+          "status": "preview-only",
+          "scale": 1.14,
+          "x": 43.2,
+          "y": 94.4,
+          "width": 240,
+          "height": 280,
+          "maxDistortion": 0,
+          "waistFactor": 1,
+          "protectedUntil": 110,
+          "transitionEnd": 250,
+          "minStretch": 1,
+          "maxStretch": 1
+        },
+        {
+          "mode": "bounded-warp",
+          "status": "preview-only",
+          "scale": 1.14,
+          "x": 43.2,
+          "y": 94.4,
+          "width": 240,
+          "height": 280,
+          "maxDistortion": 0.06000000000000005,
+          "waistFactor": 0.94,
+          "protectedUntil": 110,
+          "transitionEnd": 250,
+          "minStretch": 0.9308284441170085,
+          "maxStretch": 1.0260448433250158
+        }
+      ],
+      "sourceUnchanged": true
+    },
+    {
+      "engine": "WebKit",
+      "width": 320,
+      "screenshot": "WebKit-320-trousers-SYNTHETIC-HOLD.png",
+      "name": "trousers",
+      "baselineMetrics": {
+        "anchorError": [
+          10.78880934125193,
+          10.83407856350711
+        ],
+        "meanAnchorError": 10.81144395237952
+      },
+      "plans": [
+        {
+          "mode": "rigid",
+          "status": "preview-only",
+          "scale": 1.1111111111111112,
+          "x": 46.66666666666666,
+          "y": 281.6666666666667,
+          "width": 240,
+          "height": 280,
+          "maxDistortion": 0,
+          "waistFactor": 1,
+          "protectedUntil": 110,
+          "transitionEnd": 250,
+          "minStretch": 1,
+          "maxStretch": 1
+        },
+        {
+          "mode": "rigid",
+          "status": "preview-only",
+          "scale": 1.1111111111111112,
+          "x": 46.66666666666666,
+          "y": 281.6666666666667,
+          "width": 240,
+          "height": 280,
+          "maxDistortion": 0,
+          "waistFactor": 1,
+          "protectedUntil": 110,
+          "transitionEnd": 250,
+          "minStretch": 1,
+          "maxStretch": 1
+        }
+      ],
+      "sourceUnchanged": true
+    },
+    {
+      "engine": "WebKit",
+      "width": 320,
+      "screenshot": "WebKit-320-dress-SYNTHETIC-HOLD.png",
+      "name": "dress",
+      "baselineMetrics": {
+        "anchorError": [
+          2.743124300052238,
+          3.6362722380951737
+        ],
+        "meanAnchorError": 3.189698269073706
+      },
+      "plans": [
+        {
+          "mode": "rigid",
+          "status": "preview-only",
+          "scale": 1.375,
+          "x": 15,
+          "y": 98.75,
+          "width": 240,
+          "height": 280,
+          "maxDistortion": 0,
+          "waistFactor": 1,
+          "protectedUntil": 110,
+          "transitionEnd": 250,
+          "minStretch": 1,
+          "maxStretch": 1
+        },
+        {
+          "mode": "bounded-warp",
+          "status": "preview-only",
+          "scale": 1.375,
+          "x": 15,
+          "y": 98.75,
+          "width": 240,
+          "height": 280,
+          "maxDistortion": 0.06000000000000005,
+          "waistFactor": 0.94,
+          "protectedUntil": 110,
+          "transitionEnd": 250,
+          "minStretch": 0.9308284441170085,
+          "maxStretch": 1.0260448433250158
+        }
+      ],
+      "sourceUnchanged": true
+    },
+    {
+      "engine": "WebKit",
+      "width": 320,
+      "screenshot": "WebKit-320-skirt-SYNTHETIC-HOLD.png",
+      "name": "skirt",
+      "baselineMetrics": {
+        "anchorError": [
+          9.04502071569878,
+          9.012699432788128
+        ],
+        "meanAnchorError": 9.028860074243454
+      },
+      "plans": [
+        {
+          "mode": "rigid",
+          "status": "preview-only",
+          "scale": 0.8888888888888888,
+          "x": 73.33333333333334,
+          "y": 288.3333333333333,
+          "width": 240,
+          "height": 280,
+          "maxDistortion": 0,
+          "waistFactor": 1,
+          "protectedUntil": 110,
+          "transitionEnd": 250,
+          "minStretch": 1,
+          "maxStretch": 1
+        },
+        {
+          "mode": "rigid",
+          "status": "preview-only",
+          "scale": 0.8888888888888888,
+          "x": 73.33333333333334,
+          "y": 288.3333333333333,
+          "width": 240,
+          "height": 280,
+          "maxDistortion": 0,
+          "waistFactor": 1,
+          "protectedUntil": 110,
+          "transitionEnd": 250,
+          "minStretch": 1,
+          "maxStretch": 1
+        }
+      ],
+      "sourceUnchanged": true
+    },
+    {
+      "engine": "WebKit",
+      "width": 320,
+      "screenshot": "WebKit-320-shoes-SYNTHETIC-HOLD.png",
+      "name": "shoes",
+      "baselineMetrics": {
+        "anchorError": [
+          3.607732519297906,
+          3.652707491264117
+        ],
+        "meanAnchorError": 3.6302200052810116
+      },
+      "plans": [
+        {
+          "mode": "rigid",
+          "status": "preview-only",
+          "scale": 0.8888888888888888,
+          "x": 73.33333333333334,
+          "y": 495.22222222222223,
+          "width": 240,
+          "height": 100,
+          "maxDistortion": 0,
+          "waistFactor": 1,
+          "protectedUntil": 0,
+          "transitionEnd": 100,
+          "minStretch": 1,
+          "maxStretch": 1
+        },
+        {
+          "mode": "rigid",
+          "status": "preview-only",
+          "scale": 0.8888888888888888,
+          "x": 73.33333333333334,
+          "y": 495.22222222222223,
+          "width": 240,
+          "height": 100,
+          "maxDistortion": 0,
+          "waistFactor": 1,
+          "protectedUntil": 0,
+          "transitionEnd": 100,
+          "minStretch": 1,
+          "maxStretch": 1
+        }
+      ],
+      "sourceUnchanged": true
+    },
+    {
+      "engine": "WebKit",
+      "width": 390,
+      "screenshot": "WebKit-390-shirt-SYNTHETIC-HOLD.png",
+      "name": "shirt",
+      "baselineMetrics": {
+        "anchorError": [
+          15.57923119827405,
+          15.5401572959573
+        ],
+        "meanAnchorError": 15.559694247115676
+      },
+      "plans": [
+        {
+          "mode": "rigid",
+          "status": "preview-only",
+          "scale": 1.1,
+          "x": 48,
+          "y": 96,
+          "width": 240,
+          "height": 280,
+          "maxDistortion": 0,
+          "waistFactor": 1,
+          "protectedUntil": 110,
+          "transitionEnd": 250,
+          "minStretch": 1,
+          "maxStretch": 1
+        },
+        {
+          "mode": "bounded-warp",
+          "status": "preview-only",
+          "scale": 1.1,
+          "x": 48,
+          "y": 96,
+          "width": 240,
+          "height": 280,
+          "maxDistortion": 0.06000000000000005,
+          "waistFactor": 0.94,
+          "protectedUntil": 110,
+          "transitionEnd": 250,
+          "minStretch": 0.9308284441170085,
+          "maxStretch": 1.0260448433250158
+        }
+      ],
+      "sourceUnchanged": true
+    },
+    {
+      "engine": "WebKit",
+      "width": 390,
+      "screenshot": "WebKit-390-jacket-SYNTHETIC-HOLD.png",
+      "name": "jacket",
+      "baselineMetrics": {
+        "anchorError": [
+          6.4909240741911365,
+          6.573429561217574
+        ],
+        "meanAnchorError": 6.5321768177043555
+      },
+      "plans": [
+        {
+          "mode": "rigid",
+          "status": "preview-only",
+          "scale": 1.14,
+          "x": 43.2,
+          "y": 94.4,
+          "width": 240,
+          "height": 280,
+          "maxDistortion": 0,
+          "waistFactor": 1,
+          "protectedUntil": 110,
+          "transitionEnd": 250,
+          "minStretch": 1,
+          "maxStretch": 1
+        },
+        {
+          "mode": "bounded-warp",
+          "status": "preview-only",
+          "scale": 1.14,
+          "x": 43.2,
+          "y": 94.4,
+          "width": 240,
+          "height": 280,
+          "maxDistortion": 0.06000000000000005,
+          "waistFactor": 0.94,
+          "protectedUntil": 110,
+          "transitionEnd": 250,
+          "minStretch": 0.9308284441170085,
+          "maxStretch": 1.0260448433250158
+        }
+      ],
+      "sourceUnchanged": true
+    },
+    {
+      "engine": "WebKit",
+      "width": 390,
+      "screenshot": "WebKit-390-trousers-SYNTHETIC-HOLD.png",
+      "name": "trousers",
+      "baselineMetrics": {
+        "anchorError": [
+          10.78880934125193,
+          10.83407856350711
+        ],
+        "meanAnchorError": 10.81144395237952
+      },
+      "plans": [
+        {
+          "mode": "rigid",
+          "status": "preview-only",
+          "scale": 1.1111111111111112,
+          "x": 46.66666666666666,
+          "y": 281.6666666666667,
+          "width": 240,
+          "height": 280,
+          "maxDistortion": 0,
+          "waistFactor": 1,
+          "protectedUntil": 110,
+          "transitionEnd": 250,
+          "minStretch": 1,
+          "maxStretch": 1
+        },
+        {
+          "mode": "rigid",
+          "status": "preview-only",
+          "scale": 1.1111111111111112,
+          "x": 46.66666666666666,
+          "y": 281.6666666666667,
+          "width": 240,
+          "height": 280,
+          "maxDistortion": 0,
+          "waistFactor": 1,
+          "protectedUntil": 110,
+          "transitionEnd": 250,
+          "minStretch": 1,
+          "maxStretch": 1
+        }
+      ],
+      "sourceUnchanged": true
+    },
+    {
+      "engine": "WebKit",
+      "width": 390,
+      "screenshot": "WebKit-390-dress-SYNTHETIC-HOLD.png",
+      "name": "dress",
+      "baselineMetrics": {
+        "anchorError": [
+          2.743124300052238,
+          3.6362722380951737
+        ],
+        "meanAnchorError": 3.189698269073706
+      },
+      "plans": [
+        {
+          "mode": "rigid",
+          "status": "preview-only",
+          "scale": 1.375,
+          "x": 15,
+          "y": 98.75,
+          "width": 240,
+          "height": 280,
+          "maxDistortion": 0,
+          "waistFactor": 1,
+          "protectedUntil": 110,
+          "transitionEnd": 250,
+          "minStretch": 1,
+          "maxStretch": 1
+        },
+        {
+          "mode": "bounded-warp",
+          "status": "preview-only",
+          "scale": 1.375,
+          "x": 15,
+          "y": 98.75,
+          "width": 240,
+          "height": 280,
+          "maxDistortion": 0.06000000000000005,
+          "waistFactor": 0.94,
+          "protectedUntil": 110,
+          "transitionEnd": 250,
+          "minStretch": 0.9308284441170085,
+          "maxStretch": 1.0260448433250158
+        }
+      ],
+      "sourceUnchanged": true
+    },
+    {
+      "engine": "WebKit",
+      "width": 390,
+      "screenshot": "WebKit-390-skirt-SYNTHETIC-HOLD.png",
+      "name": "skirt",
+      "baselineMetrics": {
+        "anchorError": [
+          9.04502071569878,
+          9.012699432788128
+        ],
+        "meanAnchorError": 9.028860074243454
+      },
+      "plans": [
+        {
+          "mode": "rigid",
+          "status": "preview-only",
+          "scale": 0.8888888888888888,
+          "x": 73.33333333333334,
+          "y": 288.3333333333333,
+          "width": 240,
+          "height": 280,
+          "maxDistortion": 0,
+          "waistFactor": 1,
+          "protectedUntil": 110,
+          "transitionEnd": 250,
+          "minStretch": 1,
+          "maxStretch": 1
+        },
+        {
+          "mode": "rigid",
+          "status": "preview-only",
+          "scale": 0.8888888888888888,
+          "x": 73.33333333333334,
+          "y": 288.3333333333333,
+          "width": 240,
+          "height": 280,
+          "maxDistortion": 0,
+          "waistFactor": 1,
+          "protectedUntil": 110,
+          "transitionEnd": 250,
+          "minStretch": 1,
+          "maxStretch": 1
+        }
+      ],
+      "sourceUnchanged": true
+    },
+    {
+      "engine": "WebKit",
+      "width": 390,
+      "screenshot": "WebKit-390-shoes-SYNTHETIC-HOLD.png",
+      "name": "shoes",
+      "baselineMetrics": {
+        "anchorError": [
+          3.607732519297906,
+          3.652707491264117
+        ],
+        "meanAnchorError": 3.6302200052810116
+      },
+      "plans": [
+        {
+          "mode": "rigid",
+          "status": "preview-only",
+          "scale": 0.8888888888888888,
+          "x": 73.33333333333334,
+          "y": 495.22222222222223,
+          "width": 240,
+          "height": 100,
+          "maxDistortion": 0,
+          "waistFactor": 1,
+          "protectedUntil": 0,
+          "transitionEnd": 100,
+          "minStretch": 1,
+          "maxStretch": 1
+        },
+        {
+          "mode": "rigid",
+          "status": "preview-only",
+          "scale": 0.8888888888888888,
+          "x": 73.33333333333334,
+          "y": 495.22222222222223,
+          "width": 240,
+          "height": 100,
+          "maxDistortion": 0,
+          "waistFactor": 1,
+          "protectedUntil": 0,
+          "transitionEnd": 100,
+          "minStretch": 1,
+          "maxStretch": 1
+        }
+      ],
+      "sourceUnchanged": true
+    },
+    {
+      "engine": "WebKit",
+      "width": 430,
+      "screenshot": "WebKit-430-shirt-SYNTHETIC-HOLD.png",
+      "name": "shirt",
+      "baselineMetrics": {
+        "anchorError": [
+          15.57923119827405,
+          15.5401572959573
+        ],
+        "meanAnchorError": 15.559694247115676
+      },
+      "plans": [
+        {
+          "mode": "rigid",
+          "status": "preview-only",
+          "scale": 1.1,
+          "x": 48,
+          "y": 96,
+          "width": 240,
+          "height": 280,
+          "maxDistortion": 0,
+          "waistFactor": 1,
+          "protectedUntil": 110,
+          "transitionEnd": 250,
+          "minStretch": 1,
+          "maxStretch": 1
+        },
+        {
+          "mode": "bounded-warp",
+          "status": "preview-only",
+          "scale": 1.1,
+          "x": 48,
+          "y": 96,
+          "width": 240,
+          "height": 280,
+          "maxDistortion": 0.06000000000000005,
+          "waistFactor": 0.94,
+          "protectedUntil": 110,
+          "transitionEnd": 250,
+          "minStretch": 0.9308284441170085,
+          "maxStretch": 1.0260448433250158
+        }
+      ],
+      "sourceUnchanged": true
+    },
+    {
+      "engine": "WebKit",
+      "width": 430,
+      "screenshot": "WebKit-430-jacket-SYNTHETIC-HOLD.png",
+      "name": "jacket",
+      "baselineMetrics": {
+        "anchorError": [
+          6.4909240741911365,
+          6.573429561217574
+        ],
+        "meanAnchorError": 6.5321768177043555
+      },
+      "plans": [
+        {
+          "mode": "rigid",
+          "status": "preview-only",
+          "scale": 1.14,
+          "x": 43.2,
+          "y": 94.4,
+          "width": 240,
+          "height": 280,
+          "maxDistortion": 0,
+          "waistFactor": 1,
+          "protectedUntil": 110,
+          "transitionEnd": 250,
+          "minStretch": 1,
+          "maxStretch": 1
+        },
+        {
+          "mode": "bounded-warp",
+          "status": "preview-only",
+          "scale": 1.14,
+          "x": 43.2,
+          "y": 94.4,
+          "width": 240,
+          "height": 280,
+          "maxDistortion": 0.06000000000000005,
+          "waistFactor": 0.94,
+          "protectedUntil": 110,
+          "transitionEnd": 250,
+          "minStretch": 0.9308284441170085,
+          "maxStretch": 1.0260448433250158
+        }
+      ],
+      "sourceUnchanged": true
+    },
+    {
+      "engine": "WebKit",
+      "width": 430,
+      "screenshot": "WebKit-430-trousers-SYNTHETIC-HOLD.png",
+      "name": "trousers",
+      "baselineMetrics": {
+        "anchorError": [
+          10.78880934125193,
+          10.83407856350711
+        ],
+        "meanAnchorError": 10.81144395237952
+      },
+      "plans": [
+        {
+          "mode": "rigid",
+          "status": "preview-only",
+          "scale": 1.1111111111111112,
+          "x": 46.66666666666666,
+          "y": 281.6666666666667,
+          "width": 240,
+          "height": 280,
+          "maxDistortion": 0,
+          "waistFactor": 1,
+          "protectedUntil": 110,
+          "transitionEnd": 250,
+          "minStretch": 1,
+          "maxStretch": 1
+        },
+        {
+          "mode": "rigid",
+          "status": "preview-only",
+          "scale": 1.1111111111111112,
+          "x": 46.66666666666666,
+          "y": 281.6666666666667,
+          "width": 240,
+          "height": 280,
+          "maxDistortion": 0,
+          "waistFactor": 1,
+          "protectedUntil": 110,
+          "transitionEnd": 250,
+          "minStretch": 1,
+          "maxStretch": 1
+        }
+      ],
+      "sourceUnchanged": true
+    },
+    {
+      "engine": "WebKit",
+      "width": 430,
+      "screenshot": "WebKit-430-dress-SYNTHETIC-HOLD.png",
+      "name": "dress",
+      "baselineMetrics": {
+        "anchorError": [
+          2.743124300052238,
+          3.6362722380951737
+        ],
+        "meanAnchorError": 3.189698269073706
+      },
+      "plans": [
+        {
+          "mode": "rigid",
+          "status": "preview-only",
+          "scale": 1.375,
+          "x": 15,
+          "y": 98.75,
+          "width": 240,
+          "height": 280,
+          "maxDistortion": 0,
+          "waistFactor": 1,
+          "protectedUntil": 110,
+          "transitionEnd": 250,
+          "minStretch": 1,
+          "maxStretch": 1
+        },
+        {
+          "mode": "bounded-warp",
+          "status": "preview-only",
+          "scale": 1.375,
+          "x": 15,
+          "y": 98.75,
+          "width": 240,
+          "height": 280,
+          "maxDistortion": 0.06000000000000005,
+          "waistFactor": 0.94,
+          "protectedUntil": 110,
+          "transitionEnd": 250,
+          "minStretch": 0.9308284441170085,
+          "maxStretch": 1.0260448433250158
+        }
+      ],
+      "sourceUnchanged": true
+    },
+    {
+      "engine": "WebKit",
+      "width": 430,
+      "screenshot": "WebKit-430-skirt-SYNTHETIC-HOLD.png",
+      "name": "skirt",
+      "baselineMetrics": {
+        "anchorError": [
+          9.04502071569878,
+          9.012699432788128
+        ],
+        "meanAnchorError": 9.028860074243454
+      },
+      "plans": [
+        {
+          "mode": "rigid",
+          "status": "preview-only",
+          "scale": 0.8888888888888888,
+          "x": 73.33333333333334,
+          "y": 288.3333333333333,
+          "width": 240,
+          "height": 280,
+          "maxDistortion": 0,
+          "waistFactor": 1,
+          "protectedUntil": 110,
+          "transitionEnd": 250,
+          "minStretch": 1,
+          "maxStretch": 1
+        },
+        {
+          "mode": "rigid",
+          "status": "preview-only",
+          "scale": 0.8888888888888888,
+          "x": 73.33333333333334,
+          "y": 288.3333333333333,
+          "width": 240,
+          "height": 280,
+          "maxDistortion": 0,
+          "waistFactor": 1,
+          "protectedUntil": 110,
+          "transitionEnd": 250,
+          "minStretch": 1,
+          "maxStretch": 1
+        }
+      ],
+      "sourceUnchanged": true
+    },
+    {
+      "engine": "WebKit",
+      "width": 430,
+      "screenshot": "WebKit-430-shoes-SYNTHETIC-HOLD.png",
+      "name": "shoes",
+      "baselineMetrics": {
+        "anchorError": [
+          3.607732519297906,
+          3.652707491264117
+        ],
+        "meanAnchorError": 3.6302200052810116
+      },
+      "plans": [
+        {
+          "mode": "rigid",
+          "status": "preview-only",
+          "scale": 0.8888888888888888,
+          "x": 73.33333333333334,
+          "y": 495.22222222222223,
+          "width": 240,
+          "height": 100,
+          "maxDistortion": 0,
+          "waistFactor": 1,
+          "protectedUntil": 0,
+          "transitionEnd": 100,
+          "minStretch": 1,
+          "maxStretch": 1
+        },
+        {
+          "mode": "rigid",
+          "status": "preview-only",
+          "scale": 0.8888888888888888,
+          "x": 73.33333333333334,
+          "y": 495.22222222222223,
+          "width": 240,
+          "height": 100,
+          "maxDistortion": 0,
+          "waistFactor": 1,
+          "protectedUntil": 0,
+          "transitionEnd": 100,
+          "minStretch": 1,
+          "maxStretch": 1
+        }
+      ],
+      "sourceUnchanged": true
+    }
+  ]
+}
