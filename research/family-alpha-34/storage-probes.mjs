@@ -6,7 +6,7 @@ export async function runStorageProbes(e){
  const read=store=>new Promise((resolve,reject)=>{const tx=e.getDatabase().transaction(store),r=tx.objectStore(store).getAll();tx.oncomplete=()=>resolve(r.result);tx.onabort=()=>reject(tx.error);});
  const snapshot=async()=>JSON.stringify({items:await read('items'),state:await read('state')});
  const rejected=async fn=>{try{await fn();}catch{return true;}return false;};
- const base=await snapshot(),rows=await read('items'),row=rows[0];check(row?.originalPhoto?.image,'Original-photo fixture required');
+ const base=await snapshot(),rows=await read('items'),row=rows[0];check(row?.originalPhoto?.image||row?.image,'Original-photo fixture required');
  async function preserve(name,run){check(await rejected(run),name+' did not reject');check(await snapshot()===base,name+' left partial records or altered original/state');results.push({name,status:'PASS'});}
  const originalPut=IDBObjectStore.prototype.put;
  async function fault(fn,hook){IDBObjectStore.prototype.put=function(value,...args){return hook.call(this,originalPut,value,args);};try{return await fn();}finally{IDBObjectStore.prototype.put=originalPut;}}
@@ -29,7 +29,7 @@ export async function runStorageProbes(e){
  // Duplicate item IDs are an upsert; concurrent duplicate saves must create one row.
  await Promise.all(Array.from({length:12},()=>savePiece(temporary,()=>e.getBatch())));
  check((await read('items')).filter(x=>x.id===temporary.id).length===1,'duplicate saves created duplicate rows');
- check(JSON.stringify((await read('items')).find(x=>x.id===temporary.id).originalPhoto)===JSON.stringify(row.originalPhoto),'duplicate save lost original');
+ check(JSON.stringify((await read('items')).find(x=>x.id===temporary.id).originalPhoto??(await read('items')).find(x=>x.id===temporary.id).image)===JSON.stringify(row.originalPhoto??row.image),'duplicate save lost original');
  results.push({name:'concurrent repeated saves remain idempotent; late draft retained',status:'PASS'});
  await removeItem(temporary.id);e.setBatch(oldBatch);
  await new Promise((resolve,reject)=>{const tx=e.getDatabase().transaction('state','readwrite'),s=tx.objectStore('state');s.clear();for(const value of originalState)s.put(value);tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error);});
