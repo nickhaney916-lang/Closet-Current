@@ -6,7 +6,7 @@ import {resolve} from 'node:path';
 
 let wrapper=await readFile('scripts/test-work43-full-browser.mjs','utf8');
 function replace(a,b){assert.equal(wrapper.split(a).length,2,'Test wrapper changed');wrapper=wrapper.replace(a,b);}
-replace("resolve('dist-work43-photo-board-HOLD')","resolve('dist-family-alpha-51-session-HOLD')");
+replace("resolve('dist-work43-photo-board-HOLD')","resolve('dist-family-alpha-51-mobile-nav-HOLD')");
 // Include all viewports for real-photo fixtures, not just the 390px baseline.
 replace('once("for(const width of [320,390,430])", "for(const width of [390])");','once("for(const width of [320,390,430])", "for(const width of [320,390,430])");');
 const marker="const p=join('scripts','.work43-browser-generated.mjs');";
