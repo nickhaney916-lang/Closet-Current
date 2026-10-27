@@ -5,6 +5,9 @@ on:
       - 'public/photo-import.js'
       - 'tests/photo-source-preservation.test.cjs'
       - 'scripts/test-family-alpha-original-jpeg-browser.mjs'
+      - 'scripts/test-family-alpha-41-style-import-browser.mjs'
+      - 'scripts/build-family-alpha-41-original-jpeg-hold.mjs'
+      - 'tests/integration/family-alpha-41-original-jpeg-hold.test.mjs'
       - 'docs/FAMILY-ALPHA-ORIGINAL-JPEG-PRESERVATION-HOLD.md'
       - 'scripts/build-family-alpha-40-session-fit-hold.mjs'
       - 'scripts/test-family-alpha-40-browser.mjs'
@@ -39,6 +42,7 @@ jobs:
           node scripts/build-family-alpha-36-rigid-fit-hold.mjs
           node scripts/build-family-alpha-full-stage-routing-hold.mjs
           node scripts/build-family-alpha-40-session-fit-hold.mjs
+          node scripts/build-family-alpha-41-original-jpeg-hold.mjs
       - name: Run original wardrobe and source-matched fit/atomic recovery suites
         run: |
           npm install --no-save --no-package-lock --no-audit --no-fund fake-indexeddb@6.2.4
@@ -46,6 +50,7 @@ jobs:
           node --test tests/integration/family-alpha-assignment22-integrity.test.cjs tests/integration/family-alpha-worker-recovery.test.mjs
           node --test tests/integration/family-alpha-full-stage-routing-hold.test.mjs
           node --test tests/integration/family-alpha-40-session-fit-hold.test.mjs
+          node --test tests/integration/family-alpha-41-original-jpeg-hold.test.mjs
       - name: Refuse any release or source image/session persistence claim
         run: |
           node --input-type=module -e "import {assert40HOLD} from './scripts/build-family-alpha-40-session-fit-hold.mjs';const x=await assert40HOLD();if(x.releaseGate!=='HOLD'||!x.memoryOnly||x.fitPreferencesCloudSaved||x.fitPreferencesIndexedDbSaved||x.stagingDeployed||x.ownerVisualApproved)process.exit(1);console.log('HOLD: per-account per-image memory only, no persistent fit or staging connection');"
@@ -79,10 +84,11 @@ jobs:
           node scripts/build-family-alpha-36-rigid-fit-hold.mjs
           node scripts/build-family-alpha-full-stage-routing-hold.mjs
           node scripts/build-family-alpha-40-session-fit-hold.mjs
+          node scripts/build-family-alpha-41-original-jpeg-hold.mjs
       - name: Install pinned test browser and simulated IndexedDB
         run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 fake-indexeddb@6.2.4
       - name: Full synthetic phone journey re-review same source plus owner/PNG-scoped fitting, swap, rollback
-        run: node scripts/test-family-alpha-40-browser.mjs
+        run: node scripts/test-family-alpha-41-style-import-browser.mjs
       - name: Preserve synthetic original JPEG fidelity and refuse embedded EXIF/GPS in Chrome/WebKit
         run: node scripts/test-family-alpha-original-jpeg-browser.mjs
       - name: Preserve synthetic-only screenshots, never real-family data
