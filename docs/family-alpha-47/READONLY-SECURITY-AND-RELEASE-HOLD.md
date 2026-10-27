@@ -15,7 +15,7 @@ Only the **staging** project `fbnplztkbsteuzrmbgib` was inspected through read-o
 | Accounts with unexpired sessions | **1** | Does not prove the session works on a current browser |
 | Cloud backup table | 1 row / 1 distinct owner | Only count metadata obtained; actual backup contents not accessed |
 | `public.closet_backups` | RLS enabled; owner-matching USING and WITH CHECK | Policy shape is encouraging; separate-owner test still needed |
-| Backup grants | `authenticated`: SELECT; `closet_backup_writer`: SELECT/INSERT/UPDATE | Frontend is not directly granted backup writes. Existing server writer ownership needs independent checks |
+| Backup grants | `authenticated`: SELECT; `closet_backup_writer`: SELECT/INSERT/UPDATE | Frontend is not directly granted backup writes. Read-only function-ownership check now confirms the restricted private definer helper; direct writes are intentionally denied |
 | Private photo bucket | `closet-private`, private | Not publicly listed |
 | Photo format/limit | JPEG only; 8,388,608 bytes | Photo upload constraints checked |
 | Photo storage | 1 object (count only), RLS on | Photo contents NOT viewed |
@@ -23,6 +23,8 @@ Only the **staging** project `fbnplztkbsteuzrmbgib` was inspected through read-o
 | Auth security advisor | **Leaked Password Protection Disabled** | Active warning; do not enable pilot until remediated and rechecked |
 | JWT owner A/B read/write isolation | NOT TESTED | One registered user cannot prove cross-owner protection |
 | Cloudflare stage access, simultaneous family sessions, Android/iPhone devices | NOT TESTED | No live validation was performed |
+
+**Backup RPC correction (2026-10-27):** The previous provisional staging cloud-backup write-permission blocker has been retracted after tracing the public `SECURITY INVOKER` wrapper into the private `SECURITY DEFINER` helper owned by the no-login, no-RLS-bypass `closet_backup_writer` role. The private helper enforces owner and revision checks under RLS. This structure explains the lack of direct authenticated write grants. This does not establish that a real signed-in backup RPC has succeeded; that live API test is still pending. See [correction and role details](STAGING-BACKUP-RPC-PERMISSION-BLOCKER-HOLD.md).
 
 Supabase advisor remediation: https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection
 
