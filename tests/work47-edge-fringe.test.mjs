@@ -92,7 +92,7 @@ test('display-relevant scaled fringe band affects 960px cutouts but never change
  assert.equal(r.radiusNativePx,8);
  assert.ok(r.changed>1000,'At phone scale cleanup must affect a visible band, not subpixel noise');
  const alphaAt=(x,y)=>src[(y*width+x)*4+3];
- assert.equal(alphaAt(100,500),Math.round(180*.12));
+ assert.equal(alphaAt(100,500),Math.round(180/8),'Nearest edge uses exact radius-scaled attenuation');
  assert.equal(alphaAt(105,500),Math.round(180*6/8));
  assert.equal(alphaAt(112,500),180,'Fringe beyond max distance must remain original');
  assert.equal(alphaAt(130,500),255,'Opaque original texture core remains');
