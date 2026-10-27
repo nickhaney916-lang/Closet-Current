@@ -43,13 +43,13 @@ replaceOnce("assert.equal(await article.locator('.family-alpha-avatar img').coun
      await fitter.waitFor({state:'visible'});
      await fitter.getByLabel('Garment to align').selectOption('top');
      const before=await article.locator('.family-alpha-avatar img[data-slot="top"]').evaluate(img=>({
-      left:img.style.left,top:img.style.top,w:img.getBoundingClientRect().width,
+      top:img.style.top,w:img.getBoundingClientRect().width,
       h:img.getBoundingClientRect().height,src:img.src
      }));
      await fitter.getByRole('button',{name:'↑ Up'}).click();
      await fitter.getByRole('button',{name:'+ Larger'}).click();
      const changed=await article.locator('.family-alpha-avatar img[data-slot="top"]').evaluate(img=>({
-      left:img.style.left,top:img.style.top,w:img.getBoundingClientRect().width,
+      top:img.style.top,w:img.getBoundingClientRect().width,
       h:img.getBoundingClientRect().height,src:img.src
      }));
      assert.notEqual(changed.top,before.top);
@@ -62,9 +62,7 @@ replaceOnce("assert.equal(await article.locator('.family-alpha-avatar img').coun
      await fitter.getByLabel('Garment to align').selectOption('bottom');
      await fitter.getByRole('button',{name:'↑ Up'}).click();
      assert.match(await fitter.locator('[role="status"]').innerText(),/preview only/);
-     const footwearReference=article.locator('.family-alpha-avatar img[data-slot="shoes"]');`);
-
- `assert.equal(await article.locator('.family-alpha-avatar img').count(),3);
+     const footwearReference=article.locator('.family-alpha-avatar img[data-slot="shoes"]');
      assert.equal(await footwearReference.count(),1);
      assert.equal(await footwearReference.getAttribute('data-display-mode'),
       'footwear-photo-reference','Never make a single or unverified shoe appear worn by two feet');
@@ -72,14 +70,14 @@ replaceOnce("assert.equal(await article.locator('.family-alpha-avatar img').coun
      const footwearNote=article.locator('.family-alpha-avatar [data-footwear-note="reference-not-worn"]');
      assert.equal(await footwearNote.count(),1,'Single-source footwear needs a visible not-worn caption');
      assert.match(await footwearNote.innerText(),/not worn/);`);
-replaceOnce("'benchmark/family-alpha-34/'","'benchmark/family-alpha-35/'");
+replaceOnce("'benchmark/family-alpha-34/'","'benchmark/family-alpha-36/'");
 // Screenshot directory was already replaced above in every path occurrence.
-const generated=join('scripts','.family-alpha-35-review-browser.generated.mjs');
+const generated=join('scripts','.family-alpha-36-review-browser.generated.mjs');
 try{
  await writeFile(generated,s);
  const p=spawnSync(process.execPath,[resolve(generated)],{stdio:'inherit',
   env:{...process.env,CLOSET_35_OFFLINE:'1'},timeout:240000,maxBuffer:8e6});
  if(p.error)throw p.error;
  if(p.status!==0)throw Error('Compiled synthetic browser full-journey FAIL '+p.status);
- console.log('FAMILY_ALPHA_35_COMPILED_BROWSER_PASS — mock originals, human eraser, reference footwear, outfit swap and atomic save');
+ console.log('FAMILY_ALPHA_36_COMPILED_BROWSER_PASS — mock originals, human eraser, reference footwear, outfit swap and atomic save');
 }finally{await rm(generated,{force:true});}
