@@ -18,7 +18,7 @@ export function confirmReviewedCutoutWithEraser(container,detail,{isActive=()=>t
   panel.setAttribute('aria-label','Review and clean photographed garment cutout');
   const title=create('h2','Remove unwanted mannequin or background');
   title.style.cssText='font:600 1.2rem/1.3 system-ui;margin:6px 0';
-  const hint=create('p','Compare the original photo. Tap only leftover mannequin, hanger, skin, or background on the cutout to erase it. Never erase fabric; tap Undo if uncertain.');
+  const hint=create('p','Compare the original photo. Tap small unwanted spots to erase, or use Outline unwanted area to trace a mannequin neck along the INSIDE of the clothing collar. Never remove fabric; use Undo or Retake if uncertain.');
   hint.style.cssText='font:1rem/1.4 system-ui';
   const two=create('div');two.style.cssText='display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px';
   const a=create('figure'),b=create('figure');a.style.cssText=b.style.cssText='margin:0;min-width:0';
@@ -34,6 +34,8 @@ export function confirmReviewedCutoutWithEraser(container,detail,{isActive=()=>t
   const controls=create('div');controls.style.cssText='display:flex;flex-wrap:wrap;gap:8px;margin:12px 0';
   const button=(text,primary=false)=>{const btn=create('button',text);btn.type='button';btn.style.cssText='min-height:48px;padding:9px 14px;border-radius:10px;font:600 1rem system-ui;cursor:pointer;border:1px solid #555;'+(primary?'background:#4f3488;color:#fff':'background:#fff;color:#111');return btn;};
   const undo=button('Undo eraser'),reset=button('Reset cutout');
+  const outline=button('Outline unwanted area'),applyOutline=button('Apply outline');
+  applyOutline.disabled=true;controls.append(outline,applyOutline);
   const count=create('span','No eraser changes');count.setAttribute('role','status');controls.append(undo,reset,count);
   const ackLabel=create('label');
   ackLabel.style.cssText='display:flex;align-items:start;gap:9px;font:1rem/1.45 system-ui;padding:10px 0';
@@ -55,15 +57,45 @@ export function confirmReviewedCutoutWithEraser(container,detail,{isActive=()=>t
   actions.append(reject,accept);
   panel.append(title,hint,two,controls,ackLabel,shoeWrap,actions);
   container.replaceChildren(panel);
-  const edits=[];
-  let finished=false,rendered=null;
+  const edits=[],outlinePoints=[];
+  let outlineMode=false,finished=false,rendered=null;
+  outline.onclick=()=>{
+   outlineMode=!outlineMode;
+   if(!outlineMode)outlinePoints.length=0;
+   outline.textContent=outlineMode?'Cancel outline':'Outline unwanted area';
+   paint();
+  };
+  applyOutline.onclick=()=>{
+   if(!outlineMode||outlinePoints.length<3||edits.length>=40)return;
+   edits.push({kind:'polygon',points:outlinePoints.map(p=>({...p}))});
+   outlinePoints.length=0;outlineMode=false;
+   outline.textContent='Outline unwanted area';
+   paint();
+  };
   function paint(){
    try{
     rendered=applyReviewedEraser(base,edits);
     const pixels=ctx.createImageData(base.width,base.height);
     pixels.data.set(rendered.rgba);ctx.putImageData(pixels,0,0);
-    count.textContent=edits.length?edits.length+' erase marks; remaining garment '+Math.round(rendered.visiblePixels/rendered.originalVisiblePixels*100)+'%':'No eraser changes';
-    accept.disabled=false;
+    if(outlineMode&&outlinePoints.length){
+     ctx.save();ctx.strokeStyle='#f04438';ctx.lineWidth=Math.max(2,base.width/240);
+     ctx.beginPath();
+     outlinePoints.forEach((point,i)=>{
+      const x=point.x*base.width,y=point.y*base.height;
+      if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+     });
+     if(outlinePoints.length>=3)ctx.closePath();
+     ctx.stroke();ctx.restore();
+    }
+    count.textContent=outlineMode
+     ?'Outline mode: tap 3-24 points around unwanted mannequin, then Apply outline ('+outlinePoints.length+' points)'
+     :edits.length?edits.length+' manual erase areas; retained '+Math.round(rendered.visiblePixels/rendered.originalVisiblePixels*100)+'%':'No eraser changes';
+    applyOutline.disabled=!outlineMode||outlinePoints.length<3;
+    if(detail.category==='Shoes'){
+     shoes.disabled=!hasTwoClearlySeparatedFootwearComponents(rendered);
+     if(shoes.disabled)shoes.checked=false;
+    }
+    accept.disabled=outlineMode&&outlinePoints.length>0;
    }catch(err){
     rendered=null;accept.disabled=true;count.textContent='Too much removed or invalid mask. Undo or reset; otherwise retake.';
    }
@@ -74,28 +106,39 @@ export function confirmReviewedCutoutWithEraser(container,detail,{isActive=()=>t
    if(rect.width<=0||rect.height<=0)return;
    const x=(event.clientX-rect.left)/rect.width,y=(event.clientY-rect.top)/rect.height;
    if(!Number.isFinite(x)||!Number.isFinite(y)||x<0||x>1||y<0||y>1)return;
+   if(outlineMode){
+    if(outlinePoints.length>=24)return;
+    outlinePoints.push({x,y});paint();return;
+   }
    if(edits.length>=40)return;
-   edits.push({x,y,radius:.043});
-   paint();
+   edits.push({x,y,radius:.043});paint();
   }
   function done(value){
    if(finished)return;finished=true;
    canvas.removeEventListener('pointerup',onTap);
    reject.removeEventListener('click',onReject);accept.removeEventListener('click',onConfirm);
    undo.removeEventListener('click',onUndo);reset.removeEventListener('click',onReset);
+   outline.onclick=null;applyOutline.onclick=null;
    signal?.removeEventListener('abort',onAbort);
    (doc.defaultView||globalThis.window)?.removeEventListener?.('pagehide',onAbort);
    container.replaceChildren();resolve(value);
   }
   function onConfirm(e){
-   if(!e.isTrusted||!isActive()||!ack.checked||!rendered)return;
+   if(!e.isTrusted||!isActive()||!ack.checked||!rendered||outlineMode&&outlinePoints.length)return;
    done(Object.freeze({approved:true,eraseStrokes:edits.map(p=>Object.freeze({...p})),
     requestedFootwearPair:detail.category==='Shoes'&&shoes.checked&&!shoes.disabled,
     explicitlyReviewed:true}));
   }
   function onReject(){done(false);}
-  function onUndo(){edits.pop();paint();}
-  function onReset(){edits.length=0;paint();}
+  function onUndo(){
+   if(outlineMode&&outlinePoints.length)outlinePoints.pop();
+   else edits.pop();
+   paint();
+  }
+  function onReset(){
+   edits.length=0;outlinePoints.length=0;outlineMode=false;
+   outline.textContent='Outline unwanted area';paint();
+  }
   function onAbort(){done(false);}
   canvas.addEventListener('pointerup',onTap);
   undo.addEventListener('click',onUndo);
