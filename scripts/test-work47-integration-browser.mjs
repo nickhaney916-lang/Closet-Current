@@ -22,7 +22,11 @@ s=s.replace(hook,String.raw\x60
     await article.locator('canvas[data-work47="top"]').waitFor();
     const anatomy=article.locator('svg[data-humanoid-overlay="reviewed-anatomy-v1"]');
     await anatomy.waitFor({state:'attached'});
-    assert.equal(await anatomy.locator('[data-part]').count(),7,'Foreground must contain only head, ears, neck and hands');
+    const anatomyParts=await anatomy.locator('[data-part]').evaluateAll(ns=>ns.map(n=>n.getAttribute('data-part')));
+    for(const required of ['neck','left-ear','right-ear','head','left-hand','right-hand','left-fingers','right-fingers'])
+     assert.ok(anatomyParts.includes(required),'Missing refined real anatomy '+required);
+    for(const covered of ['torso','left-arm','right-arm','left-leg','right-leg','left-foot','right-foot'])
+     assert.ok(!anatomyParts.includes(covered),'Covered humanoid body must stay behind garment '+covered);
     assert.equal(await article.locator('.family-alpha-avatar svg[data-humanoid="articulated-2d-v1"]').count(),1,
       'Existing humanoid remains behind real photographed clothing');
     const source=await article.locator('img[data-slot="top"]').getAttribute('src');
