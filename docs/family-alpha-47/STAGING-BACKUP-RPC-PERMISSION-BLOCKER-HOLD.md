@@ -1,35 +1,47 @@
-# Family Alpha #47 — STOP: staging cloud backup writer permission mismatch
+# CORRECTION — Staging cloud-backup permission blocker WAS NOT ESTABLISHED
 
-**Observed Oct 27, 2026. STAGING ONLY, read-only PostgreSQL system-catalog queries, no application content or database changes.**
+**October 27, 2026. This document supersedes its own original finding. Retaining this file path to correct the link already posted to issue #255.**
 
-## Finding — likely live cloud backup save blocker
+**Earlier statement withdrawn:** It was incorrect to infer that signed-in staging users could not save cloud backups merely because `authenticated` lacks direct INSERT/UPDATE on `public.closet_backups` and the public `save_closet_backup` routine is `SECURITY INVOKER`. That inspection stopped at the public entry and **missed the private helper it invokes**. Do **not** change table grants on the basis of that previous claim.
 
-The existing `public/cloud-backup.js` signed-in client calls `POST /rest/v1/rpc/save_closet_backup`, passing its authenticated session token. Read-only staging metadata shows:
+## Correct live staging database evidence (read-only)
 
-| Check | Live staging finding |
+The actual `pg_get_functiondef` confirms the public SQL RPC body delegates with a fully qualified invocation:
+
+```sql
+SELECT closet_rpc_private.save_checked(p_expected_revision, p_document);
+```
+
+The stage catalog reports:
+
+| Security control | Verified live staging result |
 | --- | --- |
-| `public.save_closet_backup(bigint,jsonb)` exists | Yes |
-| `authenticated` allowed to call function | **Yes** |
-| `anon` allowed to call function | No |
-| Function `SECURITY DEFINER` | **False** (`SECURITY INVOKER`) |
-| Function switches to `closet_backup_writer` role | No |
-| Authenticated effective table `SELECT` | Yes |
-| Authenticated effective table `INSERT` | **No** |
-| Authenticated effective table `UPDATE` | **No** |
-| Authenticated inherits backup-writer privileges | No |
-| Authenticated member of backup-writer role | No |
-| Writer role login or BYPASSRLS | **No** (both disabled) |
-| Backup owner-scoped RLS | Enabled, with owner-matching `USING` / `WITH CHECK` |
-| Actual live `save_closet_backup` write response | **NOT TESTED** |
+| Public entry | `public.save_closet_backup(bigint,jsonb)` |
+| Entry owner / mode | `postgres` / `SECURITY INVOKER`, `search_path=''` |
+| Public EXECUTE | `authenticated`: yes, `anon`: no |
+| Delegated private entry | `closet_rpc_private.save_checked(bigint,jsonb)` |
+| Private helper mode | `SECURITY DEFINER`, `search_path=''` |
+| Helper owner | `closet_backup_writer`, a `NOLOGIN`, `NOBYPASSRLS`, non-table-owner role |
+| Private helper grants | `authenticated`: schema USAGE and function EXECUTE; `anon`: neither |
+| Writer table privileges | SELECT, INSERT, UPDATE, constrained by dedicated owner-scoped RLS `USING` and `WITH CHECK` |
+| Helper validation | Reads the transaction's request JWT subject; checks payload structure, 5 MiB document size, revision number, matches owner on INSERT/UPDATE |
+| Direct authenticated table grants | SELECT only; INSERT/UPDATE intentionally withheld |
+| Real signed-in backup HTTP POST | **NOT TESTED** |
 
-A standard authenticated JWT invokes a `SECURITY INVOKER` routine with the authenticated role's effective table privileges. The routine's INSERT/UPDATE should be rejected without matching effective privileges. The dedicated writer role's privileges do not reach this invocation. This makes the expected signed-in cloud save **likely unable to create or update a backup** even though the `EXECUTE` privilege exists. It is not appropriate to mark cloud-save readiness PASS based on row-level policy existence or one previously existing backup.
+**Interpretation:** The outer invoker checks/forwards under the caller, while its private definer executes SQL with the narrow writer role's table permissions and still faces RLS. This is a deliberate privilege-boundary pattern. Missing direct `authenticated` INSERT/UPDATE grants are *consistent with the current design* and not evidence of a broken backup.
 
-## Safe remediation review — do not execute automatically
+The helper's current SQL uses owner-claim and revision predicates; this is database metadata evidence, **not proof that Auth/REST, real JWT claims, retry, cloud restore and all row-level policy behaviors actually succeed**. No staging writes, credentials or private user rows/photos were accessed. The SQL checker cannot prove the private schema is excluded from PostgREST's exposed schemas; that setting also remains to verify.
 
-Do **NOT** unconditionally grant direct INSERT/UPDATE on the backup table to `authenticated`. That could enable direct PostgREST table mutations outside `save_closet_backup` and bypass its revision-controlled optimistic concurrency and validated document expectations, even if RLS still prevents ownership theft.
+Supabase security guidance advises preferring `SECURITY INVOKER` and carefully reviewing every `SECURITY DEFINER` function's owner, fixed search path and EXECUTE privileges:
+https://supabase.com/docs/guides/database/functions
+https://supabase.com/docs/guides/database/postgres/row-level-security
 
-The owner/security reviewer should independently evaluate a **narrow, audited function-owner/role execution design**, such as an appropriately owned restricted `SECURITY DEFINER` backup RPC that runs under a dedicated `NOLOGIN`, `NOBYPASSRLS` writer role while preserving strict owner-scoped `USING` and `WITH CHECK` policies, fully qualified objects/search path, valid JWT ownership proof, private stage-only grants and optimistic concurrency. This is a *design direction requiring review*, **not a supplied migration or permission to deploy**. Explicit tests must confirm the function owner itself does not bypass table RLS and cannot touch other owners.
+## Remaining independent release blockers
 
-Only after explicit authorization for a staging-only configuration or schema change: validate with disposable **two real, separately signed-in adult staging sessions**, positive own backup creation/update, negative cross-owner API writes, revision conflicts, retry and private photo integrity. No family user content or privileged credential should enter GitHub, logs or public issue comments. The cloud backup production implementation must not be changed or migrated unintentionally.
+- One registered staging Auth user; two real distinct authenticated adult sessions and true write/isolation tests missing.
+- Safe staged Auth/backup build deliberately disabled and not deployed; Cloudflare Access stage protection not independently proven.
+- Actual cloud backup function HTTP result, concurrent revision protection and image restore not independently tested.
+- Leaked-password protection advisor warning still present.
+- Photo-only outfits are not human approved, 2D photo layering still fails owner-grade acceptance; no physical Android/iPhone test.
 
-The new read-only stage evidence and CI release guard record `BLOCKER_PROBABLE_AUTHENTICATED_SAVE_PERMISSION_DENIAL` and `actualHttpOutcome: NOT TESTED`. **Family Alpha remains HOLD.** No changes were made to Supabase Auth, functions, roles, policies, photos, accounts, Cloudflare, deployment, production or Drive Duel.
+**Final decision: Family Alpha HOLD. No permission/schema/function changes recommended or made. Production, staging configuration, cloud accounts, private data, deployment and Drive Duel remain untouched.**
