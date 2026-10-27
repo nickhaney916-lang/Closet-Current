@@ -38,6 +38,7 @@ jobs:
         run: node scripts/build-family-alpha-protected-preview-hold.mjs
       - name: Prepare immutable styling and avatar integration fixtures for full suite
         run: |
+          git fetch --no-tags origin 0fb6ab04ab79c36d449acee21aaaf4318871d647 97397e80a7cf66e5e656c5b74c924a51e50f0f6f 68bed0c0f0f25538d0d5a00fbaf9aa34d80b8663
           node scripts/build-family-alpha-29-hold.mjs
           node scripts/build-family-alpha-31-hold.mjs
       - name: Full Node regression, outfit and independent original-photo audit
