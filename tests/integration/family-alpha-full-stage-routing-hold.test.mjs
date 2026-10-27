@@ -7,7 +7,7 @@ import {
  assertStagingLockedRouting
 } from '../../scripts/build-family-alpha-full-stage-routing-hold.mjs';
 import {PROD_BASE,STAGE_BASE} from '../../scripts/build-family-alpha-staging-auth-hold.mjs';
-test('exact original 2D style and atomic wardrobe compile with staging-only auth/backup guard',async()=>{
+test('original 2D style and atomic wardrobe inherit staging-only auth/backup guard',async()=>{
  const manifest=await assertFullStagingRoutingHOLD();
  assert.equal(manifest.releaseGate,'HOLD');
  assert.equal(manifest.authEnabled,false);
