@@ -69,6 +69,14 @@ export function measureVisiblePanelCoverage(pixels,sampleWidth,sampleHeight,plan
  }
  return {opaque,retained,ratio:opaque?retained/opaque:0};
 }
+export function requireVisiblePanelCoverage(coverage){
+ if(!coverage||!Number.isSafeInteger(coverage.opaque)||!Number.isSafeInteger(coverage.retained)||
+    coverage.opaque<32||coverage.retained<32||
+    !Number.isFinite(coverage.ratio)||coverage.ratio<0.60||
+    coverage.retained>coverage.opaque)
+  throw Error('Reviewed garment panels discard too many visible pixels; use original-photo fallback and recheck cutout');
+ return coverage;
+}
 export function paintGarmentFit(canvas,image,profile,adjust={}){
  const plan=planGarmentFit(image.naturalWidth,image.naturalHeight,profile,adjust);
  // Refuse fitting that would silently crop visible garment fabric. Sample only
@@ -78,9 +86,7 @@ export function paintGarmentFit(canvas,image,profile,adjust={}){
  sample.width=Math.ceil(image.naturalWidth*ratio);sample.height=Math.ceil(image.naturalHeight*ratio);
  const probe=sample.getContext('2d',{willReadFrequently:true});probe.drawImage(image,0,0,sample.width,sample.height);
  const pixels=probe.getImageData(0,0,sample.width,sample.height).data;
- const coverage=measureVisiblePanelCoverage(pixels,sample.width,sample.height,plan,image.naturalWidth,image.naturalHeight);
- if(coverage.opaque<32||coverage.retained<32||coverage.ratio<0.60)
-  throw Error('Reviewed garment panels discard too many visible pixels; use original-photo fallback and recheck cutout');
+ requireVisiblePanelCoverage(measureVisiblePanelCoverage(pixels,sample.width,sample.height,plan,image.naturalWidth,image.naturalHeight));
  canvas.width=720;canvas.height=1200;const ctx=canvas.getContext('2d');ctx.scale(2,2);ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
  for(const p of plan.pieces){ctx.save();ctx.transform(...p.matrix);ctx.beginPath();p.polygon.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));ctx.closePath();ctx.clip();ctx.drawImage(image,0,0);ctx.restore();}
  return plan;
