@@ -13,9 +13,9 @@ test('source pinned independent real-photo benchmark makes visual gate HOLD, des
  assert.equal(r.releaseGate,'HOLD');assert.equal(r.readyForFourAccounts,false);
  assert.equal(r.ownerApproved,false);assert.equal(r.physicalPhoneVerified,false);
  assert.equal(r.photoCohort,15);assert.equal(r.provisionalCutouts,7);
- assert.equal(r.unrenderablePhotos,8);assert.equal(r.visuallyInspected,5);
- assert.equal(r.inspectedFails,3);assert.equal(r.inspectedReviews,2);
- assert.equal(r.inspectedAccepted,0);assert.equal(r.uninspectedProposals,2);
+ assert.equal(r.unrenderablePhotos,8);assert.equal(r.visuallyInspected,7);
+ assert.equal(r.inspectedFails,5);assert.equal(r.inspectedReviews,2);
+ assert.equal(r.inspectedAccepted,0);assert.equal(r.uninspectedProposals,0);
  assert.ok(r.visuallyFailedCases.some(x=>x.id==='commons-0053'&&
   x.issues.some(t=>t.includes('mannequin'))));
  assert.ok(r.visuallyFailedCases.some(x=>x.id==='commons-0082'&&
