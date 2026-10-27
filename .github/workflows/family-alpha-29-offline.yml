@@ -1,0 +1,50 @@
+name: Family Alpha 29 Style Workflow OFFLINE NO DEPLOY
+on:
+  pull_request:
+    paths:
+      - 'research/family-alpha-29/**'
+      - 'research/family-alpha-19/style-my-new-clothes.mjs'
+      - 'scripts/build-family-alpha-29-hold.mjs'
+      - 'scripts/test-family-alpha-29-browser.mjs'
+      - 'tests/family-alpha-29.test.mjs'
+      - 'tests/fixtures/family-alpha-29.mjs'
+      - 'tests/integration/family-alpha-29-store.test.mjs'
+      - '.github/workflows/family-alpha-29-offline.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  synthetic-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git fetch --no-tags origin 0fb6ab04ab79c36d449acee21aaaf4318871d647 879f1b92fb15f9bc9a7f0429c7ee178f7bbf1373 795ad6637f8d4f782bc99751211b25e8e72a3a7d 08ed6ac4a3fc921eae5d5d3df3bd3966429559d2 1ecac1079e75f1f25dc70a4c712b2448eb87dca8 d0ff131a4e5617e1a3f4fcfb40d00602fdce9833
+      - name: Build separate opt-in HOLD output
+        run: |
+          node scripts/build-family-alpha-staging-auth-hold.mjs
+          node scripts/build-family-alpha-recognition-integrated-hold.mjs
+          node scripts/build-family-alpha-protected-preview-hold.mjs
+          node scripts/build-family-alpha-29-hold.mjs
+      - name: Install pinned test-only tools
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 fake-indexeddb@6.2.4
+      - name: Node regressions and actual fake-IDB workflow storage
+        run: |
+          node --test tests/*.test.cjs tests/*.test.mjs
+          node --test tests/integration/family-alpha-29-store.test.mjs
+      - name: Real compiled UI with synthetic service mocks and JPEGs
+        run: node scripts/test-family-alpha-29-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: family-alpha-29-synthetic-browser-results
+          path: benchmark/family-alpha-29/
+          if-no-files-found: ignore
