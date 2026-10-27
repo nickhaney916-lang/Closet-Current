@@ -26,6 +26,13 @@ replaceOnce("for(let piece=0;piece<3;piece++){await article.getByRole('button',{
        await board.click({position:{x:35,y:35}});
        await cleanup.getByRole('button',{name:'Undo eraser',exact:true}).click();
        await board.click({position:{x:65,y:70}});
+       // The user can also trace a contiguous mannequin-like region
+       // along an inside collar rather than making uncontrolled brush holes.
+       await cleanup.getByRole('button',{name:'Outline unwanted area',exact:true}).click();
+       for(const pos of [{x:46,y:28},{x:75,y:28},{x:73,y:55},{x:49,y:55}])
+        await board.click({position:pos});
+       await cleanup.getByRole('button',{name:'Apply outline',exact:true}).click();
+       assert.match(await cleanup.locator('[role="status"]').innerText(),/manual erase areas/);
       }
       await verify.check();
       await cleanup.getByRole('button',{name:'Use cutout',exact:true}).click();
