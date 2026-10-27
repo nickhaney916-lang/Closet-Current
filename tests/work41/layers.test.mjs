@@ -1,0 +1,5 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';import {compositingPlan} from '../../research/work41-compositing/layers.mjs';
+const ref=(slot,id=slot)=>({slot,itemId:id,sourceIdentity:id,sourceVersion:'fixture'});
+test('orders bottom, top and outerwear without changing references',()=>{const rows=[ref('layer'),ref('top'),ref('bottom')],before=structuredClone(rows);assert.deepEqual(compositingPlan(rows).map(x=>x.slot),['bottom','top','layer']);assert.deepEqual(rows,before);});
+test('dress may have outer layer; never silently combine dress with top or bottom',()=>{assert.deepEqual(compositingPlan([ref('layer'),ref('dress')]).map(x=>x.slot),['dress','layer']);assert.throws(()=>compositingPlan([ref('dress'),ref('bottom')]));assert.throws(()=>compositingPlan([ref('dress'),ref('top')]));});
+test('invalid slots, ambiguous shoes and duplicate item or slot are refused',()=>{for(const v of [[ref('shoes')],[ref('top'),ref('top','other')],[ref('top','x'),ref('bottom','x')],[{slot:'top',itemId:'x'}]])assert.throws(()=>compositingPlan(v));});
