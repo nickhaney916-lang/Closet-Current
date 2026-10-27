@@ -10,8 +10,17 @@ import {createAlphaHumanoidFigure} from '../../public/family-alpha-2d-photo-rend
  * connected to uncovered skin and does not incorrectly erase covered limbs.
  * Temporary visualization only; never a sign-off on garment shape or fit.
  */
+export const REQUIRED_FOREGROUND_PARTS=Object.freeze([
+ 'left-hand','right-hand','neck','left-ear','right-ear','head'
+]);
+export const OPTIONAL_FOREGROUND_DETAILS=Object.freeze([
+ 'left-fingers','right-fingers','face-shading','face-hairline',
+ 'left-brow','right-brow','left-eyelid','right-eyelid',
+ 'left-eye','right-eye','nose','mouth','chin',
+ 'left-inner-ear','right-inner-ear'
+]);
 export const FOREGROUND_PARTS=Object.freeze([
- 'neck','left-ear','right-ear','head','face-shading','left-hand','right-hand'
+ ...REQUIRED_FOREGROUND_PARTS,...OPTIONAL_FOREGROUND_DETAILS
 ]);
 
 export function createHumanoidForegroundOverlay(doc=document){
@@ -22,9 +31,12 @@ export function createHumanoidForegroundOverlay(doc=document){
   if(!allowed.has(node.getAttribute('data-part')))node.remove();
  }
  const remaining=[...svg.children].map(el=>el.getAttribute('data-part'));
- // Prevent a future figure redesign from silently adding unsupported anatomy.
- if(remaining.length!==FOREGROUND_PARTS.length||
-    remaining.some(p=>!allowed.has(p))||new Set(remaining).size!==allowed.size)
+ // Both the simple source benchmark and the protected app's more detailed,
+ // source-pinned face and finger artwork are supported. Fail closed on
+ // missing identity landmarks or unexpected duplication.
+ if(remaining.length!==new Set(remaining).size||
+    remaining.some(p=>!allowed.has(p))||
+    REQUIRED_FOREGROUND_PARTS.some(part=>!remaining.includes(part)))
   throw Error('Humanoid anatomical foreground source changed — retain photo fallback');
  svg.setAttribute('data-humanoid','foreground-anatomy-v1');
  svg.setAttribute('data-humanoid-overlay','reviewed-anatomy-v1');
