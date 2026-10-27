@@ -30,11 +30,15 @@ export function fitPhotoLayerToSlot(slot,naturalWidth,naturalHeight){
  * a garment cutout is missing. This replaces the old rounded-rectangle blob.
  */
 export function createAlphaHumanoidFigure(doc=document){
- if(typeof doc?.createElementNS!=='function')
+ if(typeof doc?.createElementNS!=='function'&&typeof doc?.createElement!=='function')
   throw new TypeError('SVG-compatible document required');
  const ns='http://www.w3.org/2000/svg';
+ // Real browsers always have createElementNS. The createElement fallback keeps
+ // pre-existing headless/Node DOM fakes usable; it is not a browser SVG path.
+ const element=(tag)=>typeof doc.createElementNS==='function'
+  ?doc.createElementNS(ns,tag):doc.createElement(tag);
  const node=(tag,attrs)=>{
-  const el=doc.createElementNS(ns,tag);
+  const el=element(tag);
   for(const [key,value] of Object.entries(attrs))el.setAttribute(key,String(value));
   return el;
  };
