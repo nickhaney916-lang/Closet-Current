@@ -5,6 +5,8 @@ on:
       - 'research/family-alpha-35/**'
       - 'scripts/build-family-alpha-35-visual-repair-hold.mjs'
       - 'scripts/test-family-alpha-35-browser.mjs'
+      - 'scripts/test-family-alpha-35-licensed-neck-browser.mjs'
+      - 'scripts/test-family-alpha-35-licensed-neck.mjs'
       - 'tests/integration/family-alpha-35-visual-repair-hold.test.mjs'
       - 'docs/FAMILY-ALPHA-35-VISUAL-REPAIR-HOLD.md'
       - '.github/workflows/family-alpha-35-mask-shoes-no-deploy.yml'
@@ -68,15 +70,29 @@ jobs:
           node scripts/build-family-alpha-refined-avatar-integration-hold.mjs
           node scripts/build-family-alpha-34-storage-hold.mjs
           node scripts/build-family-alpha-35-visual-repair-hold.mjs
-      - name: Install isolated browser and IndexedDB test tooling
-        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 fake-indexeddb@6.2.4
+      - name: Fetch frozen licensed Work #33 source cutout for offline validation only
+        run: git fetch --no-tags origin 53f2ad344dc56a1477e343531c423aed0e66c17d
+      - name: Install isolated browser and PNG-only test tooling
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 fake-indexeddb@6.2.4 sharp@0.35.5
       - name: Full compiled Style New Clothes and atomic-save exercise with eraser and honest shoe reference
         run: node scripts/test-family-alpha-35-browser.mjs
+      - name: Replay real licensed black dress mask with human-labeled neckline removal; no automatic admission
+        run: node scripts/test-family-alpha-35-licensed-neck.mjs
+      - name: Render actual real licensed mask before/after on source-backed 2D humanoid
+        run: node scripts/test-family-alpha-35-licensed-neck-browser.mjs
       - name: Preserve synthetic-only screenshot evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: family-alpha-35-human-erasure-single-footwear-SYNTHETIC-HOLD
           path: benchmark/family-alpha-35/
+          retention-days: 7
+          if-no-files-found: warn
+      - name: Save explicitly provisional LICENSED original/cutout before-after gallery (no family data)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: family-alpha-35-real-licensed-mannequin-neck-BEFORE-AFTER-PROVISIONAL-HOLD
+          path: benchmark/family-alpha-35-real-dress-HOLD/
           retention-days: 7
           if-no-files-found: warn
