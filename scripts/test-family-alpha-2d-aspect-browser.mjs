@@ -54,6 +54,14 @@ try{
      const selections=[garment('layer','jacket'),garment('top','shirt'),garment('bottom','pants'),garment('shoes','shoes')];
      if(renderPhotoLayers(stage,selections,images)!==4)throw Error('Four layers failed');
      const frame=stage.firstElementChild,frameBox=frame.getBoundingClientRect();
+     const human=frame.querySelector('svg[data-humanoid="articulated-2d-v1"]');
+     if(!human||human.querySelectorAll('[data-part]').length<12||
+        !human.querySelector('[data-part="head"]')||!human.querySelector('[data-part="left-arm"]')||
+        !human.querySelector('[data-part="right-arm"]')||!human.querySelector('[data-part="left-leg"]')||
+        !human.querySelector('[data-part="right-leg"]'))
+      throw Error('Old blob placeholder is not a true articulated humanoid');
+     if(Math.abs(human.getBoundingClientRect().width-frameBox.width)>1)
+      throw Error('Humanoid does not share actual clothing frame');
      const drawn=[...frame.querySelectorAll('img')],planned=planPhotoLayers(selections);
      if(drawn.map(x=>x.dataset.slot).join(',')!=='shoes,bottom,top,layer')throw Error('Layer order changed');
      for(let i=0;i<drawn.length;i++){
@@ -76,8 +84,47 @@ try{
      let conflict=false;
      try{planPhotoLayers([garment('dress','dress'),garment('top','shirt')]);}catch{conflict=true;}
      if(!conflict)throw Error('Dress conflict not blocked');
-     return {fourLayers:true,dressLayers:true,missingImageRefused:true,aspectPreserved:true};
+     return {fourLayers:true,dressLayers:true,missingImageRefused:true,aspectPreserved:true,anatomicalHumanoid:true};
     });
+
+    const alphaAdjusted=await page.evaluate(async()=>{
+     const {renderPhotoLayers,fitPhotoLayerToSlot,measureTransparentGarmentBounds}=
+      await import('/public/family-alpha-2d-photo-renderer.mjs');
+     const {planPhotoLayers}=await import('/public/family-alpha-2d-layer-plan.mjs');
+     const sourceCanvas=document.createElement('canvas');
+     sourceCanvas.width=240;sourceCanvas.height=320;
+     const ctx=sourceCanvas.getContext('2d');
+     ctx.clearRect(0,0,240,320);
+     ctx.fillStyle='rgba(42,112,172,1)';
+     ctx.fillRect(70,45,110,230); // Real alpha padding, not a fake JPEG mask.
+     const originalPNG=sourceCanvas.toDataURL('image/png');
+     const image=new Image();image.src=originalPNG;await image.decode();
+     const slot={slot:'top',itemId:'cutout-alpha',sourceIdentity:'synthetic',
+      sourceVersion:'v1'};
+     const planned=planPhotoLayers([slot])[0],fallback=fitPhotoLayerToSlot(planned,240,320);
+     const bounds=measureTransparentGarmentBounds(image);
+     if(!bounds||bounds.left<60||bounds.right>190)
+      throw Error('Original transparent PNG bounds not detected');
+     const stage=document.querySelector('#stage');
+     if(renderPhotoLayers(stage,[slot],{'cutout-alpha':image})!==1)
+      throw Error('Approved transparent PNG was not rendered');
+     const img=stage.querySelector('img');
+     if(!img||img.src!==originalPNG||img.style.objectFit!=='contain')
+      throw Error('Approved original pixel source or aspect containment changed');
+     const displayedWidth=parseFloat(img.style.width)/100;
+     if(displayedWidth<=fallback.width*1.06||
+        displayedWidth>fallback.width*1.350001)
+      throw Error('Alpha alignment did not reduce transparent source padding');
+     const aspect=parseFloat(img.style.width)*stage.firstElementChild.offsetWidth/
+      (parseFloat(img.style.height)*stage.firstElementChild.offsetHeight);
+     if(Math.abs(aspect-240/320)>.01)
+      throw Error('Actual garment JPG/PNG source aspect was distorted');
+     const humanoid=stage.querySelector('svg[data-humanoid="articulated-2d-v1"]');
+     if(!humanoid||stage.querySelectorAll('img').length!==1)
+      throw Error('Human silhouette must remain beneath one actual PNG');
+     return true;
+    });
+    if(!alphaAdjusted)throw Error('Transparent-source fitting test did not finish');
 
     const savedBoard=await page.evaluate(async()=>{
      const {renderSavedBoard2D,fingerprintAlphaRetainedOriginal,identityForSavedGarment}=
@@ -238,7 +285,7 @@ try{
      throw Error('Real browser IndexedDB account scope fixture failed');
     assert.deepEqual(errors,[]);assert.deepEqual(external,[]);
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+1),true);
-    results.push({browser:browserName,width,...data});
+    results.push({browser:browserName,width,...data,alphaBoundsFitted:true});
     await context.close();
    }
   }finally{await browser.close();}
