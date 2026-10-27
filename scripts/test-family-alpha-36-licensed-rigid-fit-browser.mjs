@@ -89,8 +89,8 @@ try{
      });
      const fit=page.locator('#aligned .alpha36-fit-controls');
      await fit.getByLabel('Garment to align').selectOption('dress');
-     await fit.getByRole('button',{name:'↑ Up'}).click();
-     await fit.getByRole('button',{name:'+ Larger'}).click();
+     await fit.getByRole('button',{name:'↓ Down'}).click();
+     await fit.getByRole('button',{name:'− Smaller'}).click();
      const summary=await page.evaluate(()=>{
       const a=document.querySelector('#baseline img[data-slot="dress"]'),b=document.querySelector('#aligned img[data-slot="dress"]');
       const f=el=>({x:el.style.left,y:el.style.top,w:el.getBoundingClientRect().width,
@@ -100,7 +100,7 @@ try{
        fitPanelPresent:Boolean(document.querySelector('.alpha36-fit-controls'))};
      });
      assert.ok(summary.noPhotoResampling);
-     assert.ok(summary.aligned.w>summary.base.w,'Real garment should be proportionally enlarged by explicit adjustment');
+     assert.ok(summary.aligned.w<summary.base.w,'Real garment should be proportionally reduced by explicit adjustment');
      assert.notEqual(summary.base.y,summary.aligned.y);
      assert.ok(Math.abs(summary.base.w/summary.base.h-summary.aligned.w/summary.aligned.h)<.002);
      assert.equal(summary.figureCount,2);
