@@ -3,7 +3,7 @@ on:
   pull_request:
     paths:
       - 'scripts/build-family-alpha-refined-avatar-integration-hold.mjs'
-      - 'tests/family-alpha-refined-avatar-integration-hold.test.mjs'
+      - 'tests/integration/family-alpha-refined-avatar-integration-hold.test.mjs'
       - 'scripts/test-family-alpha-31-browser.mjs'
       - 'docs/FAMILY-ALPHA-REFINED-STYLE-INTEGRATION-HOLD.md'
       - '.github/workflows/family-alpha-refined-visual-integration-no-deploy.yml'
@@ -33,7 +33,7 @@ jobs:
           node scripts/build-family-alpha-31-hold.mjs
           node scripts/build-family-alpha-refined-avatar-integration-hold.mjs
       - name: Full Node regressions with strict unchanged source, privacy and visual gates
-        run: node --test tests/*.test.cjs tests/*.test.mjs
+        run: node --test tests/*.test.cjs tests/*.test.mjs tests/integration/family-alpha-refined-avatar-integration-hold.test.mjs
       - name: Explicit release STOP — no accounts/photos/fit certified
         run: |
           node --input-type=module -e "import {assertVisualHOLD} from './scripts/build-family-alpha-refined-avatar-integration-hold.mjs';const m=await assertVisualHOLD();if(m.releaseGate!=='HOLD'||m.deployAuthorized||m.familyFourAccountsCertified||m.realPhotoCutoutsCertified||m.reliableGarmentFittingVerified)process.exit(1);console.log('HOLD: no actual fitting or production/staging authorization');"
