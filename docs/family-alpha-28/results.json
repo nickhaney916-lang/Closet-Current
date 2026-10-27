@@ -1,0 +1,79 @@
+{
+  "sourceRef": "795ad6637f8d4f782bc99751211b25e8e72a3a7d",
+  "sourceSha256": "141aa36cbeeb3af4226c98db7ded5d7ac0ea8bd6ee845db2766625d5fc509590",
+  "runtime": "v24.22.1",
+  "platform": "linux",
+  "method": "Node VM actual extracted writeAll/savePiece + fake-indexeddb; synthetic 1 MiB image strings; no image decoding",
+  "failures": {
+    "bulk": {
+      "baselineRowsAfterRejectedWrite": 1,
+      "candidateRowsAfterRejectedWrite": 0
+    },
+    "save": {
+      "baselineRowsAfterRejectedWrite": 1,
+      "candidateRowsAfterRejectedWrite": 0
+    }
+  },
+  "cloneFailure": {
+    "baseline": 1,
+    "candidate": 0
+  },
+  "measurements": {
+    "baseline": [
+      {
+        "writeRead20Ms": 75.29,
+        "heapDeltaBytes": 122555176
+      },
+      {
+        "writeRead20Ms": 54.61,
+        "heapDeltaBytes": 42019832
+      },
+      {
+        "writeRead20Ms": 31.11,
+        "heapDeltaBytes": 41986440
+      }
+    ],
+    "candidate": [
+      {
+        "writeRead20Ms": 34.1,
+        "heapDeltaBytes": 42001864
+      },
+      {
+        "writeRead20Ms": 39.84,
+        "heapDeltaBytes": 162440
+      },
+      {
+        "writeRead20Ms": 39.36,
+        "heapDeltaBytes": -19688
+      }
+    ]
+  },
+  "fullDraftSnapshot20": {
+    "clonePlusJSONElapsedMs": 1462.11,
+    "serializedCharactersAcross20Captures": 440435495
+  },
+  "verified": [
+    "20 committed originals/metadata unchanged",
+    "same-factory connection close/reopen retains committed originals (not browser restart)",
+    "20 rapid queued saves retained",
+    "existing stillCurrent guard unchanged",
+    "throwing draft callback aborts item write",
+    "explicit transaction abort retains prior originals",
+    "synchronous quota fault aborts candidate bulk and item+draft writes",
+    "queue accepts retry after rejected write",
+    "actual fake-indexeddb DataCloneError aborts entire candidate bulk write"
+  ],
+  "notTested": [
+    "physical Android/iPhone",
+    "Chromium/WebKit",
+    "real IndexedDB quota/eviction",
+    "browser restart/refresh",
+    "offline-online cloud restore",
+    "initial app loading",
+    "actual model initialization/inference",
+    "actual high-resolution image decoding",
+    "wardrobe/builder navigation",
+    "GPU or browser memory"
+  ],
+  "release": "HOLD"
+}
