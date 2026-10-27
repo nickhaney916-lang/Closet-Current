@@ -16,5 +16,16 @@ s=s.slice(0,start)+`   await panel.locator('.alpha29-options article').nth(2).lo
    }
 `+s.slice(end);
 once("await first.getByRole('button',{name:'Swap shoes in outfit 1',exact:true}).click();await panel.getByRole('button',{name:'Save outfit 1',exact:true}).click();", "await first.getByRole('button',{name:'Swap shoes in outfit 1',exact:true}).click();await panel.locator('.alpha29-options article').nth(2).locator('.work42-board').waitFor();await panel.getByRole('button',{name:'Save outfit 1',exact:true}).click();");
+once("await panel.getByRole('button',{name:'Save outfit 1',exact:true}).click();await page.waitForFunction(()=>document.querySelector('#alpha29NewClothes [role=\"status\"]').textContent.includes('Outfit saved'));", `
+   const favoriteBefore=await page.evaluate(()=>new Promise((resolve,reject)=>{const r=db.transaction('state').objectStore('state').get('family-alpha-new-clothes-favorites');r.onsuccess=()=>resolve(r.result??null);r.onerror=()=>reject(r.error);}));
+   await page.evaluate(()=>{window.__work43Put=IDBObjectStore.prototype.put;IDBObjectStore.prototype.put=function(v,...rest){if(v?.id==='family-alpha-new-clothes-favorites')throw new DOMException('Synthetic failed favorite','QuotaExceededError');return window.__work43Put.call(this,v,...rest);};});
+   await panel.getByRole('button',{name:'Save outfit 1',exact:true}).click();
+   await page.waitForFunction(()=>document.querySelector('#alpha29NewClothes [role="status"]').textContent.includes('Your outfit is still here'));
+   assert.equal(await panel.locator('.work42-board').count(),3,'Failed save should keep the current boards');
+   assert.deepEqual(await page.evaluate(()=>new Promise((resolve,reject)=>{const r=db.transaction('state').objectStore('state').get('family-alpha-new-clothes-favorites');r.onsuccess=()=>resolve(r.result??null);r.onerror=()=>reject(r.error);})),favoriteBefore);
+   await page.evaluate(()=>{IDBObjectStore.prototype.put=window.__work43Put;delete window.__work43Put;});
+   await panel.getByRole('button',{name:'Save outfit 1',exact:true}).click();
+   await page.waitForFunction(()=>document.querySelector('#alpha29NewClothes [role="status"]').textContent.includes('Outfit saved'));
+`);
 once("reviewedAvatars:3", "photoBoards:3");once("refinedFaceVisible:refinedOnly", "refinedFaceVisible:false");
 const p=join('scripts','.work43-browser-generated.mjs');try{await writeFile(p,s);const r=spawnSync(process.execPath,[resolve(p)],{stdio:'inherit',timeout:300000,maxBuffer:8e6,env:{...process.env,CLOSET_35_OFFLINE:'1'}});if(r.error)throw r.error;if(r.status!==0)throw Error('Photo board full workflow failed '+r.status);}finally{await rm(p,{force:true});}
