@@ -49,6 +49,22 @@ export function assessMetadataEvidence(e,{today='2026-10-27'}={}){
   issues.push('Private JPEG owner-scoped storage metadata not reproduced');
  if(a.leakedPasswordProtection!=='WARN_DISABLED')
   issues.push('Security advisor snapshot must accurately preserve password-protection warning');
+ const rls=e?.syntheticNonownerReadProbes||{}, cases=rls.independentFixtures;
+ if(rls.method!=='LIVE_STAGING_SQL_READ_ONLY_TRANSACTION_ROLE_SIMULATION'||
+    rls.observedOn!==e?.capturedOn||
+    rls.roleEmulationNotJwt!==true||rls.realJwtSessionCountUsed!==0||
+    rls.newAccountsCreated!==0||rls.rowContentsAccessed!==false||
+    rls.photoBytesAccessed!==false||rls.transactionsRolledBack!==true||
+    rls.provesRealCrossAccountIsolation!==false||
+    rls.result!=='NONOWNER_READ_VISIBILITY_PASS_SQL_SIMULATION_ONLY'||
+    !rls.exactSqlPattern?.includes('BEGIN TRANSACTION READ ONLY')||
+    !rls.exactSqlPattern?.includes('SET LOCAL ROLE authenticated')||
+    !rls.exactSqlPattern?.includes('ROLLBACK')||
+    !Array.isArray(cases)||cases.length!==2||
+    cases[0]?.identity!=='synthetic-nonowner-A'||cases[1]?.identity!=='synthetic-nonowner-B'||
+    cases.some(x=>x.roleVerified!==true||x.claimVerified!==true||
+      x.visibleBackupRows!==0||x.visiblePhotoObjects!==0))
+  issues.push('Synthetic nonowner SQL role probe must be exact, denied, read-only, and never mislabeled JWT or release evidence');
  if(e?.photoBoardCandidate?.referencePR!==349||
     e?.photoBoardCandidate?.sourceHead!==PIN||
     e.photoBoardCandidate?.fullSourceProvenanceTests!=='PASS_OFFLINE')
