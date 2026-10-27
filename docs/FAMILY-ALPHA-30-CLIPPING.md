@@ -46,7 +46,7 @@ Provisional visuals show cleaner isolation for the pale blouse and product boots
 
 Local full stacked Node suite: **561/561 PASS**, including 11 new clipping tests. Synthetic known-mask fixtures cover top, bottoms, shorts, skirt, dress, outerwear and paired shoes. They check exact retained RGB, source identity, completeness/contamination against known synthetic truth, native dimensions, original immutability, failure handling and the enclosed-hole regression. Those exact synthetic masks are supplied fixtures, not model-generated accuracy evidence.
 
-Chromium/WebKit script is prepared for 320/390px. It really encodes/decodes JPEG and transparent PNG, independently audits the source pixels, rejects an unapproved presentation, and renders a synthetic approved fixture through the existing source-bound adapter. It reads the two geometry assets from immutable PR #320 commit `094896d1...` without changing them. It checks account-epoch invalidation clears an in-flight render. Accounts/mask truth/approval are synthetic. **Browser execution pending exact-head CI; no physical-phone claim.** ONNX model inference is not run inside the browser or loaded into the app.
+Chromium/WebKit script is prepared for 320/390px. It really encodes/decodes JPEG and transparent PNG, independently audits the source pixels, rejects an unapproved presentation, and renders a synthetic approved fixture through the existing source-bound adapter. It reads the two geometry assets from immutable PR #320 commit `094896d1...` without changing them. It checks account-epoch invalidation clears an in-flight render. Accounts/mask truth/approval are synthetic. **4/4 Chromium/WebKit 320/390px cases PASS** in [no-deploy Actions 40446103300](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/40446103300), verified code `e9068bb0dc029ed7ec7e6e73d99dc71cd282d30c`. Source mismatches zero; supplied synthetic-mask IoU 1; unapproved presentation rejected; account-epoch invalidation cleared the avatar; no external requests/page errors. These are supplied synthetic masks, not model accuracy. [Synthetic screenshots/results artifact](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/40446103300/artifacts/12708656128). No physical-phone or live Auth/RLS claim. ONNX model inference is not run inside the browser or loaded into the app.
 
 ## Reproduce
 
@@ -61,8 +61,10 @@ ALPHA30_MASK_DIR=/tmp/alpha30-masks node scripts/benchmark-family-alpha-30.mjs
 node scripts/test-family-alpha-30-browser.mjs
 ```
 
-The benchmark requires matching original, model and alpha checksums before using model output. Without ALPHA30_MASK_DIR it compares the border-connected candidate only; do not relabel that run as model results. Full native transparent PNGs are generated under benchmark/family-alpha-30, while the committed resized sheets carry photo attribution. No downloads or secrets are needed by the clipping module.
+Local inference versions were onnxruntime 1.23.2, NumPy 2.5.4 and Pillow 12.3.0; exact model/source/alpha hashes are in model-results.json. The benchmark requires matching original, model and alpha checksums before using model output. Without ALPHA30_MASK_DIR it compares the border-connected candidate only; do not relabel that run as model results. Full native transparent PNGs are generated under benchmark/family-alpha-30, while the committed resized sheets carry photo attribution. No downloads or secrets are needed by the clipping module.
 
 ## Remaining blockers
 
 No independent full real-photo masks, owner aesthetic approval, actual phone capture, hair/person/mannequin semantic separation, lace/hem reliability, garment-to-body fit or live account/RLS checks. #320's appearance gate is unchanged. Main thread must decide whether to pursue a category-aware segmentation model or guided retakes for worn/cluttered scenes, review actual pixel edges, and integrate only after provenance checks. This candidate is not automatically wired into the protected staging build. No merge/deploy/invitations authorized.
+
+The final results update is documentation-only; the verified code and visual benchmark assets remain unchanged.
