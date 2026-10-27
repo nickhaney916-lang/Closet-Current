@@ -136,17 +136,39 @@ export function createAlphaHumanoidFigure(doc=document){
  // Independently shaped arms make this recognizably human, not one torso oval.
  part('left-arm','M129 138 Q112 139 101 153 Q96 171 93 198 L85 279 Q83 309 90 335 L98 345 Q108 339 109 323 L117 273 L127 211 Q135 189 143 164 Z');
  part('right-arm','M231 138 Q248 139 259 153 Q264 171 267 198 L275 279 Q277 309 270 335 L262 345 Q252 339 251 323 L243 273 L233 211 Q225 189 217 164 Z');
- part('left-hand','M90 327 Q82 342 83 355 L91 365 Q95 370 100 360 L108 340 Z',shade);
- part('right-hand','M270 327 Q278 342 277 355 L269 365 Q265 370 260 360 L252 340 Z',shade);
+ // Smaller, separated hands and slight finger contours, not large mittens.
+ part('left-hand','M91 328 Q86 333 84 343 L83 355 Q84 360 92 365 Q97 369 100 360 L106 346 L109 339 Z',skin);
+ part('right-hand','M269 328 Q274 333 276 343 L277 355 Q276 360 268 365 Q263 369 260 360 L254 346 L251 339 Z',skin);
+ const detail=(name,d,stroke='#ad897a',width=1.45)=>svg.append(node('path',{
+  'data-part':name,d,fill:'none',stroke,'stroke-width':width,
+  'stroke-linecap':'round','stroke-linejoin':'round'
+ }));
+ detail('left-fingers','M88 354 L94 358 M91 348 L98 352 M95 344 L102 348');
+ detail('right-fingers','M272 354 L266 358 M269 348 L262 352 M265 344 L258 348');
  // Waist/hip anatomy and connected chest prevent artificial disconnected pieces.
  part('torso','M146 125 Q160 121 180 122 Q200 121 214 125 L231 144 Q239 165 230 196 L218 256 Q211 279 214 310 Q213 328 197 337 Q180 343 163 337 Q147 328 146 310 Q149 279 142 256 L130 196 Q121 165 129 144 Z',skin);
  part('neck','M163 104 L162 129 Q180 143 198 129 L197 104 Z',shade);
- // Subtle face cues rather than pasted flat oval, with neck and ears.
- svg.append(node('ellipse',{'data-part':'left-ear',cx:145,cy:75,rx:7,ry:12,fill:skin,stroke:edge,'stroke-width':1}));
- svg.append(node('ellipse',{'data-part':'right-ear',cx:215,cy:75,rx:7,ry:12,fill:skin,stroke:edge,'stroke-width':1}));
- svg.append(node('ellipse',{'data-part':'head',cx:180,cy:72,rx:34,ry:44,fill:skin,stroke:edge,'stroke-width':1.5}));
- svg.append(node('path',{'data-part':'face-shading',d:'M166 104 Q181 111 197 103',fill:'none',stroke:shade,'stroke-width':2}));
- svg.append(node('path',{'data-part':'shoulder-highlight',d:'M137 150 Q155 141 165 147 M195 147 Q206 141 223 150',fill:'none',stroke:highlight,'stroke-width':3,'stroke-linecap':'round'}));
+ // Neutral, non-user-specific face details. No real facial likeness,
+ // hairstyle inference or body metrics. Maintain the same 360x600 anchors.
+ svg.append(node('ellipse',{'data-part':'left-ear',cx:146,cy:82,rx:5.5,ry:10,fill:skin,stroke:edge,'stroke-width':1}));
+ svg.append(node('ellipse',{'data-part':'right-ear',cx:214,cy:82,rx:5.5,ry:10,fill:skin,stroke:edge,'stroke-width':1}));
+ // Chin and cheek taper improve the mannequin's featureless oval while
+ // remaining underneath all caller-reviewed, source-backed clothing photos.
+ part('head','M180 28 C199 28 210 40 214 58 Q216 75 209 94 Q206 107 194 116 Q180 125 166 116 Q154 107 151 94 Q144 75 146 58 C150 40 161 28 180 28 Z');
+ detail('face-hairline','M152 54 Q169 43 179 48 Q196 42 208 54',shade,1.2);
+ detail('left-brow','M159 69 Q165 65 172 68','#94776a',1.9);
+ detail('right-brow','M188 68 Q195 65 201 69','#94776a',1.9);
+ detail('left-eyelid','M159 80 Q165 82 172 80','#745d55',1.7);
+ detail('right-eyelid','M188 80 Q195 82 201 80','#745d55',1.7);
+ svg.append(node('ellipse',{'data-part':'left-eye',cx:166,cy:79.7,rx:1.85,ry:2.25,fill:'#57463e'}));
+ svg.append(node('ellipse',{'data-part':'right-eye',cx:194,cy:79.7,rx:1.85,ry:2.25,fill:'#57463e'}));
+ detail('nose','M180 79 Q178 86 178 91 Q180 94 183 92','#a88a7e',1.7);
+ detail('mouth','M171 103 Q179 106 188 103','#a67e75',1.8);
+ detail('chin','M174 113 Q180 115 186 113','#c7a898',1.1);
+ detail('left-inner-ear','M143 80 Q146 77 147 84','#b49383',1.05);
+ detail('right-inner-ear','M217 80 Q214 77 213 84','#b49383',1.05);
+ detail('collarbone','M163 133 Q174 138 180 138 Q186 138 197 133',highlight,1.9);
+ detail('shoulder-highlight','M137 150 Q155 141 165 147 M195 147 Q206 141 223 150',highlight,3);
  return svg;
 }
 

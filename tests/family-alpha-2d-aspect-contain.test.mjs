@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {planPhotoLayers} from '../public/family-alpha-2d-layer-plan.mjs';
-import {fitPhotoLayerToSlot,fitVisibleAlphaBoundsToSlot,measureTransparentGarmentBounds,renderPhotoLayers} from '../public/family-alpha-2d-photo-renderer.mjs';
+import {fitPhotoLayerToSlot,fitVisibleAlphaBoundsToSlot,measureTransparentGarmentBounds,createAlphaHumanoidFigure,renderPhotoLayers} from '../public/family-alpha-2d-photo-renderer.mjs';
 const garment=(slot,itemId)=>({slot,itemId,sourceIdentity:'synthetic',sourceVersion:'sha256-synthetic'});
 const approx=(a,b)=>assert.ok(Math.abs(a-b)<1e-9,`${a} should approximately equal ${b}`);
 
@@ -162,4 +162,36 @@ test('synthetic PNG alpha bbox measurement reads only opacity and returns source
  approx(bounds.right,108/144*200);
  approx(bounds.top,28/144*200);
  approx(bounds.bottom,116/144*200);
+});
+
+test('neutral anatomically articulated human includes distinct facial landmarks and fingers (not an oval placeholder)',()=>{
+ const created=[];
+ const doc={createElement:tag=>{created.push(tag);return new FakeEl();},
+  createElementNS:(ns,tag)=>{assert.equal(ns,'http://www.w3.org/2000/svg');created.push(tag);return new FakeEl();}};
+ const svg=createAlphaHumanoidFigure(doc);
+ const present=Object.fromEntries(svg.children
+  .filter(x=>x.attributes['data-part'])
+  .map(x=>[x.attributes['data-part'],x]));
+ for(const name of ['head','neck','torso','left-arm','right-arm','left-hand','right-hand',
+  'left-leg','right-leg','left-foot','right-foot','left-eye','right-eye','left-eyelid',
+  'right-eyelid','left-brow','right-brow','nose','mouth','chin','left-fingers','right-fingers']){
+  assert.ok(present[name],'Missing distinct humanoid feature '+name);
+ }
+ assert.equal(svg.attributes['data-humanoid'],'articulated-2d-v1');
+ assert.equal(svg.attributes['aria-hidden'],'true');
+ assert.equal(svg.attributes.viewBox,'0 0 360 600');
+ assert.ok(created.includes('path')&&created.includes('ellipse'));
+ assert.deepEqual(Object.keys(present).length,new Set(Object.keys(present)).size);
+ assert.ok(present.head.attributes.d?.includes('Q180 125'),'Jawline must taper, not single oval');
+ assert.equal(present['left-eye'].attributes.cx,'166');
+ assert.equal(present['right-eye'].attributes.cx,'194');
+ assert.equal(present['left-hand'].attributes.fill,'#d9bfae');
+});
+test('human detail overlay is purely local SVG and cannot change cutout image bytes or fetch remote portrait',()=>{
+ const source=readFileSync(new URL('../public/family-alpha-2d-photo-renderer.mjs',import.meta.url),'utf8');
+ assert.match(source,/face-hairline/);
+ assert.match(source,/left-fingers/);
+ assert.match(source,/photo layers/);
+ assert.doesNotMatch(source,/fetch\(|\.src\s*=|new Image\(/);
+ assert.doesNotMatch(source,/<image|<foreignObject|data:image\/svg\+xml/);
 });
