@@ -29,6 +29,7 @@ once("await panel.getByRole('button',{name:'Save outfit 1',exact:true}).click();
 `);
 once("reviewedAvatars:3", "photoBoards:3");once("refinedFaceVisible:refinedOnly", "refinedFaceVisible:false");
 if(process.env.WORK43_LICENSED==='1'){
+ once("const mime={'.js':","const mime={'.jpg':'image/jpeg','.js':");
  const ids=['commons-0001','commons-0003','commons-0016','commons-0021','commons-0043','commons-0033','commons-0082','commons-0088','commons-0089','commons-0094'];
  const manifest=JSON.parse(await readFile('benchmark/locked-photo-sources.json','utf8')),licSources=[];
  for(const id of ids){const x=manifest.find(y=>y.id===id);assert.ok(x?.verified&&x.attribution?.license);const b=await readFile('benchmark/fixtures/'+x.image);assert.equal(createHash('sha256').update(b).digest('hex'),x.sha256);licSources.push({id,image:x.image});}
