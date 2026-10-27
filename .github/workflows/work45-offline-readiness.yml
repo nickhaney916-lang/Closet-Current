@@ -1,0 +1,25 @@
+name: Work 45 offline staging readiness - NO DEPLOY
+on:
+  pull_request:
+    paths:
+      - 'docs/work45/**'
+      - '.github/workflows/work45-offline-readiness.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  offline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build isolated staging HOLD candidate
+        run: node scripts/build-family-alpha-staging-auth-hold.mjs
+      - name: Run backup, owner-isolation, protected-host and two-JWT mock regressions
+        run: node --test tests/cloud-backup.test.cjs tests/family-alpha-stage-two-account-cloud-mock.test.mjs tests/family-alpha-protected-staging-preflight.test.mjs tests/integration/family-alpha-48-real-jwt-readonly-preflight.test.mjs
+      - name: Verify offline HOLD and disabled live preflight
+        run: |
+          node scripts/check-family-alpha-protected-staging-preflight.mjs
+          node scripts/family-alpha-48-real-jwt-readonly-preflight.mjs
