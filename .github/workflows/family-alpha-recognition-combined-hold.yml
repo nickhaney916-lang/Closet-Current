@@ -44,6 +44,8 @@ jobs:
         run: node scripts/build-family-alpha-staging-auth-hold.mjs
       - name: Build modern original-photo recognition + protected staging Auth + 2D HOLD artifact
         run: node scripts/build-family-alpha-recognition-integrated-hold.mjs
+      - name: Build OFFLINE protected preview prerequisite for stacked owner-only QA tests
+        run: node scripts/build-family-alpha-protected-preview-hold.mjs
       - name: Verify manifest, original JPEG source evidence, stage-only Auth and atomic held controls
         run: node --test tests/family-alpha-recognition-integrated-hold.test.mjs
       - name: Verify actual Work #22 original-JPEG/crop/queued-draft/backup integrity against combined artifact
