@@ -1,0 +1,115 @@
+name: Family Alpha 36 Manual Shoulder/Waist Alignment HOLD - NO DEPLOY
+on:
+  pull_request:
+    paths:
+      - 'research/family-alpha-36/**'
+      - 'scripts/build-family-alpha-36-rigid-fit-hold.mjs'
+      - 'scripts/test-family-alpha-36-browser.mjs'
+      - 'scripts/test-family-alpha-36-licensed-rigid-fit-browser.mjs'
+      - 'tests/integration/family-alpha-36-rigid-fit-hold.test.mjs'
+      - 'docs/FAMILY-ALPHA-36-MANUAL-ANATOMICAL-ALIGN-HOLD.md'
+      - 'scripts/build-family-alpha-35-visual-repair-hold.mjs'
+      - 'scripts/test-family-alpha-35-browser.mjs'
+      - 'scripts/test-family-alpha-35-licensed-neck-browser.mjs'
+      - 'scripts/test-family-alpha-35-licensed-neck.mjs'
+      - 'tests/integration/family-alpha-35-visual-repair-hold.test.mjs tests/integration/family-alpha-36-rigid-fit-hold.test.mjs'
+      - 'docs/FAMILY-ALPHA-35-VISUAL-REPAIR-HOLD.md'
+      - '.github/workflows/family-alpha-36-rigid-fit-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  full-node-originals-and-storage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 29
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Fetch prior immutable inputs including storage transaction repair
+        run: |
+          git fetch --no-tags origin 0fb6ab04ab79c36d449acee21aaaf4318871d647 879f1b92fb15f9bc9a7f0429c7ee178f7bbf1373 795ad6637f8d4f782bc99751211b25e8e72a3a7d 08ed6ac4a3fc921eae5d5d3df3bd3966429559d2 1ecac1079e75f1f25dc70a4c712b2448eb87dca8 d0ff131a4e5617e1a3f4fcfb40d00602fdce9833 68bed0c0f0f25538d0d5a00fbaf9aa34d80b8663 97397e80a7cf66e5e656c5b74c924a51e50f0f6f 44f288dfdcfa02ec5b2cf89a7c79c08cfcaa3584 e75cd4689356ae468a88504ddb25df4b4ff6cb70 c86f48f0119329e4001002304e2dfe480815b099 100ffc194793470c871f2b0c6092bc59f1c583b8 77d9f5b83eae475cd8d5d35593c1dc9c2e6bf02f
+      - name: Build previous disabled offline source-pinned save and avatar candidates
+        run: |
+          node scripts/build-family-alpha-staging-auth-hold.mjs
+          node scripts/build-family-alpha-recognition-integrated-hold.mjs
+          node scripts/build-family-alpha-protected-preview-hold.mjs
+          node scripts/build-family-alpha-29-hold.mjs
+          node scripts/build-family-alpha-31-hold.mjs
+          node scripts/build-family-alpha-refined-avatar-integration-hold.mjs
+          node scripts/build-family-alpha-34-storage-hold.mjs
+          node scripts/build-family-alpha-35-visual-repair-hold.mjs
+          node scripts/build-family-alpha-36-rigid-fit-hold.mjs
+      - name: Test original wardrobe, atomic saves, reviewed source images and manual alpha-only cleanup
+        run: |
+          npm install --no-save --no-package-lock --no-audit --no-fund fake-indexeddb@6.2.4
+          node --test tests/*.test.cjs tests/*.test.mjs tests/integration/family-alpha-refined-avatar-integration-hold.test.mjs tests/integration/family-alpha-29-store.test.mjs tests/integration/family-alpha-34-storage.test.mjs tests/integration/family-alpha-35-visual-repair-hold.test.mjs
+          node --test tests/integration/family-alpha-assignment22-integrity.test.cjs tests/integration/family-alpha-worker-recovery.test.mjs
+      - name: Confirm approved original JPEG and both release holds unchanged
+        run: |
+          node --input-type=module -e "import {assert36HOLD} from './scripts/build-family-alpha-36-rigid-fit-hold.mjs';const x=await assert36HOLD();if(x.releaseGate!=='HOLD'||x.deployAuthorized||x.ownerVisualApproved||x.manualAdjustmentsPersisted||x.realFamilyAccountIsolationVerified)process.exit(1);console.log('HOLD: manual rigid fit is NOT owner photo fitting acceptance');"
+  chromium-and-webkit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Fetch exactly pinned predecessor sources
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git fetch --no-tags origin 0fb6ab04ab79c36d449acee21aaaf4318871d647 879f1b92fb15f9bc9a7f0429c7ee178f7bbf1373 795ad6637f8d4f782bc99751211b25e8e72a3a7d 08ed6ac4a3fc921eae5d5d3df3bd3966429559d2 1ecac1079e75f1f25dc70a4c712b2448eb87dca8 d0ff131a4e5617e1a3f4fcfb40d00602fdce9833 68bed0c0f0f25538d0d5a00fbaf9aa34d80b8663 97397e80a7cf66e5e656c5b74c924a51e50f0f6f 44f288dfdcfa02ec5b2cf89a7c79c08cfcaa3584 e75cd4689356ae468a88504ddb25df4b4ff6cb70 c86f48f0119329e4001002304e2dfe480815b099 100ffc194793470c871f2b0c6092bc59f1c583b8 77d9f5b83eae475cd8d5d35593c1dc9c2e6bf02f
+      - name: Rebuild previous accepted no-deploy owner-safe stages
+        run: |
+          node scripts/build-family-alpha-staging-auth-hold.mjs
+          node scripts/build-family-alpha-recognition-integrated-hold.mjs
+          node scripts/build-family-alpha-protected-preview-hold.mjs
+          node scripts/build-family-alpha-29-hold.mjs
+          node scripts/build-family-alpha-31-hold.mjs
+          node scripts/build-family-alpha-refined-avatar-integration-hold.mjs
+          node scripts/build-family-alpha-34-storage-hold.mjs
+          node scripts/build-family-alpha-35-visual-repair-hold.mjs
+          node scripts/build-family-alpha-36-rigid-fit-hold.mjs
+      - name: Fetch frozen licensed Work #33 source cutout for offline validation only
+        run: git fetch --no-tags origin 53f2ad344dc56a1477e343531c423aed0e66c17d
+      - name: Install isolated browser and PNG-only test tooling
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 fake-indexeddb@6.2.4 sharp@0.35.5
+      - name: Full compiled Style New Clothes and atomic-save exercise with eraser and honest shoe reference
+        run: node scripts/test-family-alpha-36-browser.mjs
+      - name: Replay real licensed black dress mask with human-labeled neckline removal; no automatic admission
+        run: node scripts/test-family-alpha-35-licensed-neck.mjs
+      - name: Render actual real licensed mask before/after on source-backed 2D humanoid
+        run: node scripts/test-family-alpha-35-licensed-neck-browser.mjs
+      - name: Compare unchanged licensed dress photo with bounded rigid shoulder and waist preview
+        run: node scripts/test-family-alpha-36-licensed-rigid-fit-browser.mjs
+      - name: Preserve clearly provisional actual licensed garment fit screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: family-alpha-36-real-licensed-dress-rigid-position-PROVISIONAL-HOLD
+          path: benchmark/family-alpha-36-real-dress-HOLD/
+          retention-days: 7
+          if-no-files-found: warn
+      - name: Preserve synthetic-only screenshot evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: family-alpha-36-shoulder-waist-rigid-fit-SYNTHETIC-HOLD
+          path: benchmark/family-alpha-36/
+          retention-days: 7
+          if-no-files-found: warn
+      - name: Save explicitly provisional LICENSED original/cutout before-after gallery (no family data)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: family-alpha-35-real-licensed-mannequin-neck-BEFORE-AFTER-PROVISIONAL-HOLD
+          path: benchmark/family-alpha-35-real-dress-HOLD/
+          retention-days: 7
+          if-no-files-found: warn
