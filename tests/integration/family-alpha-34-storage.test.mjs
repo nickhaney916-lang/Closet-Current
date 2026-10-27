@@ -1,0 +1,21 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';import vm from 'node:vm';
+import {readFileSync} from 'node:fs';import {execFileSync} from 'node:child_process';
+import {IDBFactory,IDBObjectStore,IDBDatabase} from 'fake-indexeddb';
+import {runStorageProbes} from '../../research/family-alpha-34/storage-probes.mjs';
+import {abortSynchronousWriteFailure} from '../../scripts/family-alpha-28-storage-candidate.mjs';
+import {assertStorageHOLD} from '../../scripts/build-family-alpha-34-storage-hold.mjs';
+const parent=readFileSync('dist-family-alpha-31-refined-avatar-HOLD/app.js','utf8'),source=readFileSync('dist-family-alpha-34-storage-HOLD/app.js','utf8');
+function extract(s,name){const a=s.indexOf('function '+name+'('),b=s.indexOf('\nfunction ',a+1);assert.ok(a>=0&&b>a);return s.slice(a,b);}
+async function setup(s){
+ const factory=new IDBFactory(),owner='a1111111-1111-4111-8111-111111111111',db=await new Promise((resolve,reject)=>{const r=factory.open('closet-current-user-'+owner,2);r.onupgradeneeded=()=>{for(const name of ['items','state'])r.result.createObjectStore(name,{keyPath:'id'});};r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});
+ const rows=[{id:'top',ownerId:owner,image:'synthetic-JPEG-1',originalPhoto:{image:'synthetic-JPEG-1'},category:'Tops',color:'Blue',crop:{x:1},userAdjusted:true},{id:'shoe',ownerId:owner,image:'synthetic-JPEG-2',originalPhoto:{image:'synthetic-JPEG-2'},category:'Shoes'}];
+ await new Promise((resolve,reject)=>{const tx=db.transaction(['items','state'],'readwrite');for(const r of rows)tx.objectStore('items').put(r);for(const r of [{id:'draft',batch:[{id:'pending',originalPhoto:{image:'synthetic-draft'}}]},{id:'outfit-board',current:{slots:{top:'top',shoes:'shoe'}},saved:[{name:'kept',slots:{top:'top'}}]},{id:'family-alpha-new-clothes-favorites',values:[{ownerId:owner,slots:{top:'top',shoes:'shoe'}}]}])tx.objectStore('state').put(r);tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error);});
+ const window={closetAuth:{user:{id:owner}},closetCloud:{beforeWrite:async()=>{},changed(){}}};
+ const c={db,window,structuredClone,Error,DOMException};vm.createContext(c);
+ const queue=parent.slice(parent.indexOf('function queued('),parent.indexOf('\nlet db,'));
+ vm.runInContext('let writes=Promise.resolve();'+queue+['writeAll','savePiece','removeItem'].map(n=>extract(s,n)).join('\n'),c);
+ let batch=[{id:'pending',originalPhoto:{image:'synthetic-draft'}}];return {c,db,read:()=>new Promise((resolve,reject)=>{const r=db.transaction('items').objectStore('items').getAll();r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);}),environment:{getDatabase:()=>db,writeAll:c.writeAll,savePiece:c.savePiece,removeItem:c.removeItem,queued:c.queued,getBatch:()=>batch,setBatch:v=>batch=v,window,IDBObjectStore,IDBDatabase}};
+}
+test('exact #318 implementation and surgical two-function change; every other compiled asset unchanged',async()=>{assert.equal(readFileSync('scripts/family-alpha-28-storage-candidate.mjs','utf8'),execFileSync('git',['show','c86f48f0119329e4001002304e2dfe480815b099:scripts/family-alpha-28-storage-candidate.mjs'],{encoding:'utf8'}));assert.equal(source,abortSynchronousWriteFailure(parent));assert.throws(()=>abortSynchronousWriteFailure(source));await assertStorageHOLD();});
+test('unpatched compiled #328 reproduces partial item commit; #318 overlay prevents it',async()=>{for(const [text,patched]of [[parent,false],[source,true]]){const h=await setup(text),put=IDBObjectStore.prototype.put;let count=0;try{IDBObjectStore.prototype.put=function(...args){if(++count===2)throw new DOMException('synthetic quota','QuotaExceededError');return put.apply(this,args);};await assert.rejects(h.c.writeAll([{id:'partial-1'},{id:'partial-2'}]));}finally{IDBObjectStore.prototype.put=put;}assert.equal((await h.read()).filter(x=>x.id.startsWith('partial')).length,patched?0:1);h.db.close();}});
+test('actual patched storage functions pass shared failure, retry, duplicate, queue and ownership probes',async()=>{const h=await setup(source);try{const r=await runStorageProbes(h.environment);assert.equal(r.checks,12);assert.equal(r.originalsAndAllStateUnchanged,true);}finally{h.db.close();}});
