@@ -29,6 +29,10 @@ jobs:
         run: node scripts/build-family-alpha-recognition-integrated-hold.mjs
       - name: Prepare disabled protected-preview prerequisite for owner-only QA tests
         run: node scripts/build-family-alpha-protected-preview-hold.mjs
+      - name: Prepare immutable styling and avatar integration fixtures for full suite
+        run: |
+          node scripts/build-family-alpha-29-hold.mjs
+          node scripts/build-family-alpha-31-hold.mjs
       - name: Run all Node regressions including photo aspect containment
         run: node --test tests/*.test.cjs tests/*.test.mjs
   chromium-webkit:

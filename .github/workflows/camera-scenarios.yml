@@ -31,5 +31,9 @@ jobs:
           node scripts/build-family-alpha-staging-auth-hold.mjs
           node scripts/build-family-alpha-recognition-integrated-hold.mjs
           node scripts/build-family-alpha-protected-preview-hold.mjs
+      - name: Prepare immutable styling and avatar integration fixtures for full suite
+        run: |
+          node scripts/build-family-alpha-29-hold.mjs
+          node scripts/build-family-alpha-31-hold.mjs
       - name: Run complete Node test suite (all application and recognition tests, no skips)
         run: node --test tests/*.test.cjs tests/*.test.mjs

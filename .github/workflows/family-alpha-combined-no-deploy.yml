@@ -36,6 +36,10 @@ jobs:
         run: node scripts/build-family-alpha-recognition-integrated-hold.mjs
       - name: Prepare disabled protected-preview prerequisite for owner-only QA tests
         run: node scripts/build-family-alpha-protected-preview-hold.mjs
+      - name: Prepare immutable styling and avatar integration fixtures for full suite
+        run: |
+          node scripts/build-family-alpha-29-hold.mjs
+          node scripts/build-family-alpha-31-hold.mjs
       - name: Full Node regression, outfit and independent original-photo audit
         run: node --test tests/*.test.cjs tests/*.test.mjs
       - name: Generate combined source-fidelity benchmark from pinned PR257 code
