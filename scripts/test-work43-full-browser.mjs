@@ -27,6 +27,14 @@ once("await panel.getByRole('button',{name:'Save outfit 1',exact:true}).click();
    await panel.getByRole('button',{name:'Save outfit 1',exact:true}).click();
    await page.waitForFunction(()=>document.querySelector('#alpha29NewClothes [role="status"]').textContent.includes('Outfit saved'));
 `);
+once("   await page.evaluate(()=>{window.closetAuth.user=null;window.dispatchEvent(new Event('closet:alpha-session-changed'));});assert.ok(await panel.isHidden());", `
+   await page.evaluate(()=>{const garment=items.find(x=>x.id==='bottom1');if(!garment)throw Error('Fixture missing');garment.originalPhoto.image='data:image/jpeg;base64,AAAA';});
+   await panel.getByRole('button',{name:'Swap shoes in outfit 1',exact:true}).click();
+   await page.waitForFunction(()=>document.querySelector('#alpha29NewClothes [role="status"]').textContent.includes('Clothes or account changed'));
+   assert.equal(await panel.locator('.work42-board').count(),0,'Changed source must clear all boards');
+   await page.evaluate(()=>{window.closetAuth.user={id:'b2222222-2222-4222-8222-222222222222'};window.dispatchEvent(new Event('closet:alpha-session-changed'));});
+   assert.ok(await panel.isHidden());assert.equal(await panel.locator('img').count(),0);
+`);
 once("reviewedAvatars:3", "photoBoards:3");once("refinedFaceVisible:refinedOnly", "refinedFaceVisible:false");
 if(process.env.WORK43_LICENSED==='1'){
  once("const mime={'.js':","const mime={'.jpg':'image/jpeg','.js':");
