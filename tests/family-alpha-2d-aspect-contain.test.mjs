@@ -148,16 +148,18 @@ test('alpha measurement never reads opaque JPEG or remote image and fails safely
  assert.equal(measureTransparentGarmentBounds(image,{createElement:()=>({getContext:()=>{throw Error('no canvas');}})}),null);
 });
 test('synthetic PNG alpha bbox measurement reads only opacity and returns source-space geometry',()=>{
- const width=20,height=20,pixels=new Uint8ClampedArray(width*height*4);
- for(let y=4;y<16;y++)for(let x=5;x<15;x++)pixels[(y*width+x)*4+3]=255;
+ const width=144,height=144,pixels=new Uint8ClampedArray(width*height*4);
+ for(let y=28;y<116;y++)for(let x=36;x<108;x++)pixels[(y*width+x)*4+3]=255;
  let draws=0;
  const image={complete:true,naturalWidth:200,naturalHeight:200,src:'data:image/png;base64,AAAA'};
  const bounds=measureTransparentGarmentBounds(image,{createElement:tag=>{
   assert.equal(tag,'canvas');
   return {getContext:()=>({drawImage:()=>{draws++;},getImageData:()=>({data:pixels})})};
  }});
- // 200px sampling canvas: scale=144/200; valid mock must return 144x144,
- // so a 20x20 pixel buffer is intentionally incompatible and safely held.
- assert.equal(bounds,null);
  assert.equal(draws,1);
+ assert.ok(bounds!==null,'Visible sampled alpha should create real bounds');
+ approx(bounds.left,36/144*200);
+ approx(bounds.right,108/144*200);
+ approx(bounds.top,28/144*200);
+ approx(bounds.bottom,116/144*200);
 });
