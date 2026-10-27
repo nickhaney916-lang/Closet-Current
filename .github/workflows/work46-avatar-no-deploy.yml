@@ -1,0 +1,32 @@
+name: Work 46 Real Garment Avatar Diagnostic NO DEPLOY
+on:
+  pull_request:
+    paths: ['research/work46-avatar/**', 'scripts/build-work46-avatar.mjs', 'scripts/test-work46-avatar-browser.mjs', 'tests/work46-avatar/**', '.github/workflows/work46-avatar-no-deploy.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  diagnostic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0, persist-credentials: false}
+      - run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git fetch --no-tags origin dd6bac3fa9ff640d4f562cf925337440bdb5cf8f 094896d1b0655662787a78bc80d61af822a9e265 e75cd4689356ae468a88504ddb25df4b4ff6cb70
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.35.5
+      - run: node scripts/build-work46-avatar.mjs
+      - run: node --test tests/family-alpha-33.test.mjs tests/work46-avatar/*.test.mjs
+      - run: node scripts/test-work46-avatar-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: work46-real-photo-manual-fit-PROVISIONAL-HOLD
+          path: benchmark/work46-avatar/
+          if-no-files-found: ignore
