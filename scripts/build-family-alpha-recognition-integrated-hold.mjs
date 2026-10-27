@@ -294,7 +294,9 @@ export async function buildDisabledIntegratedCandidate({root=resolve('.')}={}){
  ];
  const avatarAssetHashes={};
  for(const [name,oldAnchor,newAnchor] of humanAssets){
-  const upstream=source('public/'+name).toString('utf8');
+  // 2D preview assets are owned by immutable protected STAGING_REF, not
+  // the independent original-JPEG RECOGNITION_REF (which has no 2D preview).
+  const upstream=stageSource('public/'+name).toString('utf8');
   const local=await readFile(join(base,'public',name),'utf8');
   const targetPath=join(target,name);
   const copied=await readFile(targetPath,'utf8');
