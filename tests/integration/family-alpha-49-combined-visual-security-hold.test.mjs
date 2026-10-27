@@ -20,7 +20,7 @@ const stage=()=>({
  productionModified:false,stagingModified:false
 });
 const base=()=>({visual:vis(),stage:stage(),
- jwt:safeSummary(null,'NOT_EXECUTED_NEEDS_EXPLICIT_LOCAL_LIVE_OPTIN')});
+ jwt:structuredClone(safeSummary(null,'NOT_EXECUTED_NEEDS_EXPLICIT_LOCAL_LIVE_OPTIN'))});
 const mutate=(fn)=>{const d=base();fn(d);return evaluateCombined(d)};
 test('source-locked Work44 presentation and #352 corrected stage gate coexist without release',async()=>{
  const r=await assertFamily49();
