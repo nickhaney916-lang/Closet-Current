@@ -14,11 +14,10 @@ for(let i=20;i<123;i++)PICTURE[i]=i%230+5;
 PICTURE[123]=255;PICTURE[124]=217;
 const URI='data:image/jpeg;base64,'+Buffer.from(PICTURE).toString('base64');
 const SLIM=URI.replace(/.$/,'A');
-let seq=0;
 async function database(owner){
  const name='closet-current-user-'+owner;
  return new Promise((resolve,reject)=>{
-  const req=indexedDB.open(name,++seq);
+  const req=indexedDB.open(name,1);
   req.onupgradeneeded=()=>{if(!req.result.objectStoreNames.contains('items'))req.result.createObjectStore('items',{keyPath:'id'});};
   req.onsuccess=()=>resolve(req.result);
   req.onerror=()=>reject(req.error);
