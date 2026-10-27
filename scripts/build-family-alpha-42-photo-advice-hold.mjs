@@ -60,7 +60,7 @@ export function patchApp(original){
  block=once(block,'  card.append(image,body);grid.append(card);',[
    "  // Local optional advice never saves, rejects, uploads, or alters clothing.",
    "  const advisory=typeof photoAdvisories!=='undefined'?photoAdvisories.get(item):null;",
-   "  if(!saved&&advisory?.source===(item.recognitionPhoto?.image||item.image)&&advisory.hint?.text){",
+   "  if(!saved&&advisory?.source===recognitionSourcePhoto(item)&&advisory.hint?.text){",
    "   body.append(node('p','Photo tip: '+advisory.hint.text,'fine capture-photo-advice'));",
    "   const retake=node('button','Take a clearer photo','secondary');retake.type='button';",
    "   retake.onclick=()=>switchView('scan'); // The original photo stays available.",
@@ -69,16 +69,27 @@ export function patchApp(original){
    "  card.append(image,body);grid.append(card);"
   ].join('\n'));
  s=s.slice(0,start)+block+s.slice(end);
+ // Recognition's authoritative source is the original linked image/crop,
+ // not necessarily item.image or a generated transparent cutout. Do not
+ // surface an old photo's hint when user/session/category changed mid-scan.
  s=once(s,
-  "  const quality=await checkPhoto(item.recognitionPhoto?.image||item.image);\n  if(!batch.some(x=>x.id===item.id))return;",
   [
-   "  const checkedOriginal=item.recognitionPhoto?.image||item.image;",
-   "  const quality=await checkPhoto(checkedOriginal);",
-   "  if(!batch.some(x=>x.id===item.id))return;",
-   "  if(typeof photoAdvisories!=='undefined'&&checkedOriginal===(item.recognitionPhoto?.image||item.image)){",
-   "   if(quality.captureAdvice?.hint)photoAdvisories.set(item,{source:checkedOriginal,hint:quality.captureAdvice.hint});",
+   "  if(!categoryStillCurrent()){",
+   "   item.localAnalyzed=false;item.scanFailed=true;",
+   "   item.localStatus='Photo or category changed while scanning. Retry to identify the new original photo.';",
+   "   return true;",
+   "  }"
+  ].join('\n'),
+  [
+   "  if(!categoryStillCurrent()){",
+   "   item.localAnalyzed=false;item.scanFailed=true;",
+   "   item.localStatus='Photo or category changed while scanning. Retry to identify the new original photo.';",
+   "   return true;",
+   "  }",
+   "  if(typeof photoAdvisories!=='undefined'){",
+   "   if(quality.captureAdvice?.hint)photoAdvisories.set(item,{source:sourcePhoto,hint:quality.captureAdvice.hint});",
    "   else photoAdvisories.delete(item);",
-   "   render();",
+   "   render(); // Optional tip; existing recognition and owner checks remain authoritative.",
    "  }"
   ].join('\n'));
  if(!s.includes('queueAutomatic(item);')||!s.includes('function captureTick(')||
