@@ -25,7 +25,11 @@ Use the build prerequisites and commands in `.github/workflows/family-alpha-31-o
 
 ## Results so far
 
-Local: held builds PASS; 569/569 inherited Node tests and 2/2 added source-pin tests PASS; 5/5 fake-IDB workflow tests PASS. Local browser launch BLOCKED (missing executables for runtime Playwright 1.62.1). Exact branch CI results will be recorded separately.
+Local: held builds PASS; 571/571 Node tests (including 2 added pin tests) and 5/5 fake-IDB workflow tests PASS. Local browser launch BLOCKED (missing executables for runtime Playwright 1.62.1).
+
+Verified source commit 1fbf2a9ac4ce03995d8e43ea4ba4a26c4a16facf: [integration CI 40446077058](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/40446077058) SUCCESS: 571/571 Node, 5/5 fake-IDB, 6/6 compiled journey cases, 6/6 separate alpha positioning cases. Chromium and WebKit each passed 320, 390 and 430. Existing #29 workflow, combined recognition HOLD workflow and camera scenario workflow also SUCCESS on this commit. The initial unsorted all-source comparison failed because IndexedDB reload orders records by key; comparing stable garment IDs corrected the test without changing application code.
+
+Two inherited shallow-checkout Node jobs initially failed on missing immutable styling source objects (their browser jobs passed). A subsequent CI-only change explicitly fetches the three source pins. No tests were removed or skipped; no application changes after verified 1fbf2a9a.
 
 Browser workflow covers synthetic JPEG import, manual recognition confirmation/save, three options, explicit cutout approvals, three articulated humanoids, unchanged image aspect, swap, favorite save/reload/restore, all saved original source payloads, mobile overflow/touch controls, logout hiding and zero external requests at 320/390/430 for Chromium/WebKit. Separate inherited PNG alpha suite checks placement, transparent padding and unchanged image source.
 
