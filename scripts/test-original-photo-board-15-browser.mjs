@@ -27,7 +27,7 @@ try{
     const page=await browser.newPage({viewport:{width,height:840},deviceScaleFactor:1});
     const errors=[],external=[];
     page.on('pageerror',e=>errors.push(String(e)));
-    page.on('request',r=>{if(!r.url().startsWith(origin))external.push(r.url());});
+    page.on('request',r=>{const u=r.url();if(!u.startsWith(origin)&&!u.startsWith('blob:'+origin+'/'))external.push(u);});
     await page.goto(origin+'/',{waitUntil:'load'});
     await page.locator('html[data-gallery="ready"]').waitFor({timeout:30000});
     assert.equal(await page.locator('#matrix .tile').count(),15);
