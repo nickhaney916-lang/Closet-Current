@@ -52,8 +52,6 @@ const inserted=`     if(i===0){
 `;
 change("     await fitter.getByRole('button',{name:'Reset'}).click();",
  inserted+"     await fitter.getByRole('button',{name:'Reset'}).click();");
-change("     assert.equal(await article.locator('.family-alpha-avatar img[data-slot=\\\"top\\\"]').evaluate(img=>img.style.top),before.top);",
- `     assert.equal(await article.locator('.family-alpha-avatar img[data-slot="top"]').evaluate(img=>img.style.top),before.top);`);
 change("'benchmark/family-alpha-36/'","'benchmark/family-alpha-40/'");
 change("'.family-alpha-36-review-browser.generated.mjs'",
  "'.family-alpha-40-review-browser.generated.mjs'");
