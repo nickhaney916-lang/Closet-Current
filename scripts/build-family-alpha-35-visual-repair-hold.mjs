@@ -118,6 +118,14 @@ export function patchSource(name,s){
    frame.append(el);
    frame.setAttribute('aria-label',frame.getAttribute('aria-label')+
     '; footwear shown only as a reference photograph, NOT fitted to both feet');
+   const note=document.createElement('span');
+   note.dataset.footwearNote='reference-not-worn';
+   note.textContent='Shoe photo only — not worn';
+   Object.assign(note.style,{position:'absolute',right:'2%',top:'83%',
+    width:'32%',boxSizing:'border-box',textAlign:'center',fontSize:'10px',
+    fontWeight:'700',lineHeight:'1.15',padding:'3px',color:'#23314b',
+    background:'white',borderRadius:'5px',pointerEvents:'none'});
+   frame.append(note);
   }else{
    el.dataset.displayMode=layer.slot==='shoes'?'verified-separate-shoe-pair':'garment-on-avatar';
    Object.assign(el.style,{position:'absolute',left:(fit.x*100)+'%',top:(fit.y*100)+'%',
