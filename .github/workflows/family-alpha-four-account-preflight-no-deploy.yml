@@ -1,0 +1,27 @@
+name: Closet Current Family Alpha — real staging metadata preflight HOLD (NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'scripts/check-family-alpha-stage-live-preflight.mjs'
+      - 'tests/family-alpha-stage-live-preflight.test.mjs'
+      - 'docs/family-alpha-27/staging-metadata-audit-20261027.json'
+      - 'docs/family-alpha-27/STAGING-LIVE-METADATA-PREFLIGHT-20261027.md'
+      - '.github/workflows/family-alpha-four-account-preflight-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  metadata-and-four-real-sessions-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Test twelve existing Family Alpha gates plus independent staging metadata and four real signed-in JWT gate
+        run: node --test tests/family-alpha-27.test.mjs tests/family-alpha-stage-live-preflight.test.mjs
+      - name: Verify actual one-user staging snapshot correctly blocks any Family Alpha approval
+        run: |
+          node scripts/check-family-alpha-stage-live-preflight.mjs 2026-10-27
+          node --input-type=module -e "import fs from 'node:fs';import {evaluateStageMetadata} from './scripts/check-family-alpha-stage-live-preflight.mjs';const data=JSON.parse(fs.readFileSync('docs/family-alpha-27/staging-metadata-audit-20261027.json'));const x=evaluateStageMetadata(data,{today:'2026-10-27'});if(x.decision!=='HOLD'||x.reportedAccounts!==1||x.personallyIdentifyingDataAccessed)process.exit(1);console.log('CORRECTLY HELD: one account and no live 4-JWT isolation confirmation');"

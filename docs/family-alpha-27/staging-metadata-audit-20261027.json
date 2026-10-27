@@ -1,0 +1,43 @@
+{
+  "kind": "STAGING_METADATA_ONLY_READ_ONLY_AUDIT",
+  "stagingProjectRef": "fbnplztkbsteuzrmbgib",
+  "observedOn": "2026-10-27",
+  "readSource": "Staging-only Supabase project metadata, SQL system catalogs, policy introspection, security advisors",
+  "projectStatus": "ACTIVE_HEALTHY",
+  "registeredAuthAccountCount": 1,
+  "familyParticipantsVerifiedByRealJwt": 0,
+  "tables": {
+    "closet_backups": {
+      "rlsEnabled": true,
+      "ownerScopedUsing": true,
+      "ownerScopedWithCheck": true,
+      "authenticatedSelectGrant": true,
+      "authenticatedUnscopedWrites": false
+    }
+  },
+  "privatePhotoStorage": {
+    "bucket": "closet-private",
+    "privateBucketCount": 1,
+    "publicBucketCount": 0,
+    "ownerFolderScopedSelect": true,
+    "ownerFolderScopedInsert": true,
+    "ownerFolderScopedDelete": true,
+    "updatePolicyPresent": false
+  },
+  "securityAdvisors": {
+    "leakedPasswordProtectionEnabled": false
+  },
+  "liveValidations": {
+    "signedInOwnerAAndOwnerBReadWriteIsolation": "NOT TESTED",
+    "fourDistinctLiveFamilyJwtSessions": "NOT TESTED",
+    "fourSimultaneousMobileBrowserSessions": "NOT TESTED",
+    "protectedStageAccess": "NOT TESTED",
+    "stagingBuildAndBackupProdRoutingAbsenceDeployed": "NOT TESTED",
+    "physicalAndroid": "NOT TESTED",
+    "physicalIphone": "NOT TESTED",
+    "realOriginalPhotoAndCloudRestore": "NOT TESTED"
+  },
+  "ownerReleaseApproval": false,
+  "releaseGate": "HOLD",
+  "notes": "No users, backups, photos, JWTs, credentials, email addresses, server logs or customer content read. Metadata and policy shape cannot prove real user-level authorization. Staging never modified."
+}
