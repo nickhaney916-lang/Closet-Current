@@ -1,6 +1,6 @@
 /** Offline fitting of actual source pixels. No mask creation, owner approval,
  * storage, requests or fabric synthesis. Callers must verify their source. */
-export const BODY=Object.freeze({shoulders:[[128,148],[232,148]],waist:[[145,306],[215,306]]});
+export const BODY=Object.freeze({shoulders:[[115,145],[245,145]],waist:[[145,306],[215,306]]});
 const point=p=>Array.isArray(p)&&p.length===2&&p.every(Number.isFinite);
 export function similarity(source,target){
  if(!Array.isArray(source)||!Array.isArray(target)||source.length!==2||target.length!==2||![...source,...target].every(point))throw Error('Two source and body anchors required');
@@ -38,6 +38,21 @@ export function planGarmentFit(width,height,profile,adjust={}){
 }
 export function paintGarmentFit(canvas,image,profile,adjust={}){
  const plan=planGarmentFit(image.naturalWidth,image.naturalHeight,profile,adjust);
+ // Refuse fitting that would silently crop visible garment fabric. Sample only
+ // for this guard; the actual garment is drawn from the native source image.
+ const sample=canvas.ownerDocument.createElement('canvas');
+ const ratio=Math.min(1,240/Math.max(image.naturalWidth,image.naturalHeight));
+ sample.width=Math.ceil(image.naturalWidth*ratio);sample.height=Math.ceil(image.naturalHeight*ratio);
+ const probe=sample.getContext('2d',{willReadFrequently:true});probe.drawImage(image,0,0,sample.width,sample.height);
+ const pixels=probe.getImageData(0,0,sample.width,sample.height).data;
+ const inside=(x,y,poly)=>{let yes=false;for(let i=0,j=poly.length-1;i<poly.length;j=i++){const [a,b]=poly[i],[c,d]=poly[j];if((b>y)!==(d>y)&&x<(c-a)*(y-b)/(d-b)+a)yes=!yes;}return yes;};
+ for(let y=0;y<sample.height;y++)for(let x=0;x<sample.width;x++){
+  if(pixels[(y*sample.width+x)*4+3]<128)continue;
+  const p=[(x+.5)*image.naturalWidth/sample.width,(y+.5)*image.naturalHeight/sample.height];
+  for(const piece of plan.pieces)if(inside(...p,piece.polygon)){
+   const [u,v]=mapPoint(piece.matrix,p);if(u<0||u>360||v<0||v>600)throw Error('Fit would crop visible garment; adjust landmarks or reduce size');
+  }
+ }
  canvas.width=720;canvas.height=1200;const ctx=canvas.getContext('2d');ctx.scale(2,2);ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
  for(const p of plan.pieces){ctx.save();ctx.transform(...p.matrix);ctx.beginPath();p.polygon.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));ctx.closePath();ctx.clip();ctx.drawImage(image,0,0);ctx.restore();}
  return plan;
