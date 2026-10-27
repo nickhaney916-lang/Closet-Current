@@ -54,6 +54,14 @@ try{
      const selections=[garment('layer','jacket'),garment('top','shirt'),garment('bottom','pants'),garment('shoes','shoes')];
      if(renderPhotoLayers(stage,selections,images)!==4)throw Error('Four layers failed');
      const frame=stage.firstElementChild,frameBox=frame.getBoundingClientRect();
+     const human=frame.querySelector('svg[data-humanoid="articulated-2d-v1"]');
+     if(!human||human.querySelectorAll('[data-part]').length<12||
+        !human.querySelector('[data-part="head"]')||!human.querySelector('[data-part="left-arm"]')||
+        !human.querySelector('[data-part="right-arm"]')||!human.querySelector('[data-part="left-leg"]')||
+        !human.querySelector('[data-part="right-leg"]'))
+      throw Error('Old blob placeholder is not a true articulated humanoid');
+     if(Math.abs(human.getBoundingClientRect().width-frameBox.width)>1)
+      throw Error('Humanoid does not share actual clothing frame');
      const drawn=[...frame.querySelectorAll('img')],planned=planPhotoLayers(selections);
      if(drawn.map(x=>x.dataset.slot).join(',')!=='shoes,bottom,top,layer')throw Error('Layer order changed');
      for(let i=0;i<drawn.length;i++){
@@ -76,7 +84,7 @@ try{
      let conflict=false;
      try{planPhotoLayers([garment('dress','dress'),garment('top','shirt')]);}catch{conflict=true;}
      if(!conflict)throw Error('Dress conflict not blocked');
-     return {fourLayers:true,dressLayers:true,missingImageRefused:true,aspectPreserved:true};
+     return {fourLayers:true,dressLayers:true,missingImageRefused:true,aspectPreserved:true,anatomicalHumanoid:true};
     });
 
     const savedBoard=await page.evaluate(async()=>{
