@@ -24,7 +24,7 @@ if(!isLocalGallery(location)){
   // Diagnostic ONLY: licensed, source/hash-bound unapproved proposal. No fake
   // approved:true, real account or live app authorization is manufactured.
   const refs=[{slot:slot(row.category),itemId:row.id,sourceIdentity:row.id,sourceVersion:'sha256:'+row.sourceSHA256}];
-  beforeRender(before.box,refs,{[row.id]:image});currentRender(current.box,refs,{[row.id]:image});if(row.category==='Shoes'){candidate.box.classList.add('unavailable');candidate.box.append(el('p','PHOTO REFERENCE ONLY — a single side-view shoe cannot be presented as a worn pair.'),image.cloneNode(false));}else{currentRender(candidate.box,refs,{[row.id]:image});mountManualGarmentAlignment(candidate.box,{isActive:()=>ticket===generation});}
+  beforeRender(before.box,refs,{[row.id]:image});currentRender(current.box,refs,{[row.id]:image});if(row.category==='Shoes'){candidate.box.classList.add('unavailable');const ref=image.cloneNode(false);ref.style.cssText='display:block;max-width:100%;height:auto';candidate.box.append(el('p','PHOTO REFERENCE ONLY — a single side-view shoe cannot be presented as a worn pair.'),ref);}else{currentRender(candidate.box,refs,{[row.id]:image});mountManualGarmentAlignment(candidate.box,{isActive:()=>ticket===generation});}
   root.dataset.ready='true';root.dataset.id=id;root.dataset.hasProposal='true';root.dataset.cutoutSHA=row.nativeCutout.sha256;
  }
  select.onchange=()=>show(select.value);await show(select.value);
