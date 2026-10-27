@@ -112,6 +112,46 @@ export function applyPinnedMobileReviewStyle(css,reviewCss){
   throw Error('Mobile review CSS controls missing');
  return css.trimEnd()+'\n\n'+addition+'\n';
 }
+// Synthetic Family Alpha safety overlay only. The locked licensed jacket cohort
+// is weak (1/4), so manual Adjust acknowledgment must apply to automatic
+// indexing and quick-color confirmation, not just the dialog itself.
+// This is an abstention/review gate; it does NOT improve model classification.
+export function applyOuterwearAutoReviewHold(app){
+ const quickStart=app.indexOf('function canConfirmReviewedColor(item){');
+ const quickEnd=app.indexOf('\nasync function confirmReviewedColor(item,color)',quickStart);
+ const scanStart=app.indexOf('async function recognizeItem(item){');
+ const scanEnd=app.indexOf('\nasync function ',scanStart+1);
+ if(quickStart<0||quickEnd<=quickStart||scanStart<0||scanEnd<=scanStart||
+    app.indexOf('function canConfirmReviewedColor(item){',quickStart+1)>=0||
+    app.indexOf('async function recognizeItem(item){',scanStart+1)>=0)
+  throw Error('Outerwear original-photo automatic-admission source changed');
+ const quick=app.slice(quickStart,quickEnd);
+ const quickAnchor='  !item.possibleDuplicate&&!item.requiresOwnershipConfirmation&&\n  !item.scanFailed&&!item.saveFailed&&';
+ if(quick.split(quickAnchor).length!==2||quick.includes('OUTERWEAR_AUTO_REVIEW_HOLD'))
+  throw Error('Outerwear quick-color guard cannot be applied uniquely');
+ const guardedQuick=quick.replace(quickAnchor,
+  "  !item.possibleDuplicate&&!item.requiresOwnershipConfirmation&&\n  item.category!=='Outerwear'&& // OUTERWEAR_AUTO_REVIEW_HOLD: require full original-photo Adjust\n  !item.scanFailed&&!item.saveFailed&&");
+ const scan=app.slice(scanStart,scanEnd);
+ const finalAnchor='  // Every early return above still requires review. Clear it ONLY for the\n  // final original-linked category+color admission path, directly before the\n  // atomic save (whose preflight checks it again).\n  item.recognitionReviewRequired=false;';
+ if(scan.split(finalAnchor).length!==2||
+    !scan.includes("if(item.requiresOwnershipConfirmation){")||
+    !scan.includes("if(!segmentationAllows(item,result.choices[0]))")||
+    scan.includes('OUTERWEAR_AUTO_REVIEW_HOLD'))
+  throw Error('Outerwear automatic-save transaction gate cannot be applied uniquely');
+ const guardedScan=scan.replace(finalAnchor,
+  "  // OUTERWEAR_AUTO_REVIEW_HOLD: this category has weak measured evidence.\n  // Preserve the raw photo and model suggestions for explicit Adjust instead.\n  if(item.category==='Outerwear'){\n   item.localStatus='Check the original photo in Adjust to confirm outerwear, type and color before saving.';\n   return true;\n  }\n"+finalAnchor);
+ const partialMessage="'Garment category recognized. Choose a color below to save; specific type is optional.'";
+ const safePartial="item.category==='Outerwear'?'Outerwear needs an original-photo check in Adjust before saving.':"+partialMessage;
+ const colorMessage="'Garment identified. Choose a color below to save; your original photo is kept.'";
+ const safeColorMessage="item.category==='Outerwear'?'Outerwear needs an original-photo check in Adjust before saving.':"+colorMessage;
+ if(guardedScan.split(partialMessage).length!==2||guardedScan.split(colorMessage).length!==2)
+  throw Error('Outerwear review status wording changed');
+ const updatedScan=guardedScan.replace(partialMessage,safePartial).replace(colorMessage,safeColorMessage);
+ const first=app.slice(0,quickStart)+guardedQuick+app.slice(quickEnd);
+ const shiftedStart=first.indexOf('async function recognizeItem(item){');
+ const shiftedEnd=first.indexOf('\nasync function ',shiftedStart+1);
+ return first.slice(0,shiftedStart)+updatedScan+first.slice(shiftedEnd);
+}
 const isAlphaFile=name=>name.startsWith('family-alpha-')||name.startsWith('alpha-stage-')||
  name.startsWith('__alpha_research/');
 const source=(path)=>{
@@ -266,7 +306,7 @@ export async function buildDisabledIntegratedCandidate({root=resolve('.')}={}){
  try{mobileReview=execFileSync('git',['show',REVIEW_REF+':public/app.js'],
   {maxBuffer:50*1024*1024,stdio:['ignore','pipe','ignore']}).toString('utf8');}
  catch{throw Error('Missing pinned mobile review PR #284 app source');}
- const mergedApp=applyPinnedMobileReview(workerMerged,mobileReview);
+ const mergedApp=applyOuterwearAutoReviewHold(applyPinnedMobileReview(workerMerged,mobileReview));
  await writeFile(join(target,'app.js'),mergedApp);
  const app=await readFile(join(target,'app.js'),'utf8');
  if(sha256(app)!==sha256(mergedApp)||
@@ -321,6 +361,7 @@ export async function buildDisabledIntegratedCandidate({root=resolve('.')}={}){
   workerRecoveryRef:WORKER_RECOVERY_REF,workerRecoveryProtocolGuarded:true,
   recoverableImageErrorIsolated:true,
   mobileReviewRef:REVIEW_REF,sourcePinnedManualReview:true,queuedManualSavePreserved:true,
+  outerwearAutoSaveHold:true,
   integrationAppSha256:sha256(app),integrationIndexSha256:sha256(index),
   recognitionOverlayFiles:modified,retainedStageGatedAssets:unchanged,
   testingLimitations:[
@@ -340,7 +381,7 @@ export async function assertDisabledIntegratedCandidate({root=resolve('.')}={}){
  if(x.releaseGate!=='HOLD'||x.status!=='UNAPPROVED_COMBINED_SOURCE_OFFLINE_ONLY'||
   !x.stageAuthBlocked||!x.workerRecoveryProtocolGuarded||!x.recoverableImageErrorIsolated||
   x.workerRecoveryRef!==WORKER_RECOVERY_REF||x.mobileReviewRef!==REVIEW_REF||
-  !x.sourcePinnedManualReview||!x.queuedManualSavePreserved||!x.modernHumanColorProofRetained||!x.wardrobeDraftAndBackupIntegrityPinned||!x.stagedReviewed2DAvatarPresent||
+  !x.sourcePinnedManualReview||!x.queuedManualSavePreserved||!x.outerwearAutoSaveHold||!x.modernHumanColorProofRetained||!x.wardrobeDraftAndBackupIntegrityPinned||!x.stagedReviewed2DAvatarPresent||
   !x.stagePrivateAuthTransformationPreserved||x.stagingProjectRef!==STAGE_ID||
   !x.missingApprovedCallback||!x.missingPublishableKey||
   x.cloudAuthorizationsTested||x.nativePhonesTested||x.customerDataRead||
@@ -354,6 +395,7 @@ export async function assertDisabledIntegratedCandidate({root=resolve('.')}={}){
   !app.includes('const verifiedColorAdmission=new WeakMap()')||
   !app.includes('I checked the original photo, category, item type and color')||
   !app.includes("['Shoes','Dresses','Outerwear'].includes(draft.category)")||
+  !app.includes('OUTERWEAR_AUTO_REVIEW_HOLD')||
   !app.includes('editorHint=JSON.stringify(item.segmentHint??null);')||
   !app.includes('await savePiece(value,()=>batch.filter(x=>x.id!==item.id),editorCurrent);')||
   !app.includes("const recoverable=job.type!=='load'&&data.code==='image';")||
