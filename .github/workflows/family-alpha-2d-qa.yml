@@ -47,3 +47,11 @@ jobs:
         run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
       - name: Verify decoded image proportions in Chromium and WebKit mobile viewports
         run: node scripts/test-family-alpha-2d-aspect-browser.mjs
+      - name: Preserve synthetic-only screenshot evidence for owner visual review, not product QA
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: family-alpha-2d-human-outfit-SYNTHETIC-HOLD
+          path: benchmark/family-alpha-2d-visual-review-hold/
+          retention-days: 7
+          if-no-files-found: warn
