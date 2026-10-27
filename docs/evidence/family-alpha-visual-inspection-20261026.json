@@ -1,0 +1,109 @@
+{
+  "basis": "independent-inspection-of-licensed-390px-Chromium-gallery",
+  "galleryCommit": "bf731e7fe9e5b8b41864fbf686d84cc80e311b91",
+  "sourceRun": 40447471490,
+  "screenshotArchive": "https://github.com/nickhaney916-lang/Closet-Current/actions/runs/40447471490/artifacts/12709022370",
+  "ownerApproved": false,
+  "physicalPhoneVerified": false,
+  "familyReleaseAuthorized": false,
+  "scope": "All seven provisional cutouts inspected via actual Chromium 390px licensed-original screenshots. Not an independent larger photo-quality benchmark, not a product-owner approval or physical-device test.",
+  "inspections": [
+    {
+      "id": "commons-0001",
+      "photoCategory": "shirt",
+      "assessment": "REVIEW",
+      "issues": [
+        "neckline/hanger residue risk",
+        "shoulder/sleeve float",
+        "garment photograph still recognizably preserved"
+      ],
+      "explanation": "The white printed shirt remains recognizable, but the photograph includes a dark hanger/mannequin-shaped neck area and the sleeves/shoulders float outside the body instead of wrapping naturally.",
+      "screenshot": "screenshots/chromium-390-commons-0001-PROVISIONAL-HOLD.png",
+      "ownerApproved": false,
+      "technicalDisplayPassClaim": false
+    },
+    {
+      "id": "commons-0016",
+      "photoCategory": "long sleeve blouse",
+      "assessment": "REVIEW",
+      "issues": [
+        "wide sleeves and hem remain a flat sprite",
+        "body and arm geometry disagree"
+      ],
+      "explanation": "The embroidered blouse and detail remain legible, but the broad garment is visibly pasted in front of the torso. No anatomical draping or realistic sleeve/arm continuity is demonstrated.",
+      "screenshot": "screenshots/chromium-390-commons-0016-PROVISIONAL-HOLD.png",
+      "ownerApproved": false,
+      "technicalDisplayPassClaim": false
+    },
+    {
+      "id": "commons-0053",
+      "photoCategory": "dress",
+      "assessment": "FAIL",
+      "issues": [
+        "mannequin neck and chest included in cutout",
+        "false second neck over illustrated humanoid",
+        "unusable for fashion try-on"
+      ],
+      "explanation": "The transparent dress proposal still contains the original pale mannequin neck/chest, clearly overlapping the refined avatar's own neck and face. This is a hard reject regardless of image decode or screenshot test PASS.",
+      "screenshot": "screenshots/chromium-390-commons-0053-PROVISIONAL-HOLD.png",
+      "ownerApproved": false,
+      "technicalDisplayPassClaim": false
+    },
+    {
+      "id": "commons-0082",
+      "photoCategory": "sneakers",
+      "assessment": "FAIL",
+      "issues": [
+        "single side-profile shoe placed across both feet",
+        "no independently sourced second shoe",
+        "foot position and orientation implausible"
+      ],
+      "explanation": "The source photograph is a single sideways sneaker, and the entire sneaker image spans both figure feet. Passing transparency and aspect tests cannot establish realistic pair-of-shoes presentation.",
+      "screenshot": "screenshots/chromium-390-commons-0082-PROVISIONAL-HOLD.png",
+      "ownerApproved": false,
+      "technicalDisplayPassClaim": false
+    },
+    {
+      "id": "commons-0088",
+      "photoCategory": "boots",
+      "assessment": "FAIL",
+      "issues": [
+        "single photographed boot spans both feet",
+        "boot is centered beneath legs rather than independently worn",
+        "no corresponding second-shoe source"
+      ],
+      "explanation": "A single black boot cutout is displayed centrally beneath two feet, creating an invalid footwear fitting impression. The avatar cannot honestly render a pair from a lone side-view product photo without a separately reviewed convention.",
+      "screenshot": "screenshots/chromium-390-commons-0088-PROVISIONAL-HOLD.png",
+      "ownerApproved": false,
+      "technicalDisplayPassClaim": false
+    },
+    {
+      "id": "commons-0089",
+      "photoCategory": "boots gradient",
+      "assessment": "FAIL",
+      "issues": [
+        "single boot rendered centrally across both illustrated feet",
+        "source has no independently photographed second boot",
+        "no anatomical left-right shoe placement"
+      ],
+      "explanation": "The photographed black boot is a single side view. Its intact transparent cutout sits under both illustrated feet as though it were a wearable pair. This is not a plausible foot-to-shoe fitting, regardless of background removal.",
+      "screenshot": "screenshots/chromium-390-commons-0089-PROVISIONAL-HOLD.png",
+      "ownerApproved": false,
+      "technicalDisplayPassClaim": false
+    },
+    {
+      "id": "commons-0094",
+      "photoCategory": "boots light background",
+      "assessment": "FAIL",
+      "issues": [
+        "one sideways boot represented at two-foot position",
+        "unverified second boot absent from photograph",
+        "shoe toe spans outside natural foot zone"
+      ],
+      "explanation": "The source photograph shows one long side-view boot, not two separately positioned footwear items. On the avatar it spreads across both feet and is not acceptable as fitted shoes.",
+      "screenshot": "screenshots/chromium-390-commons-0094-PROVISIONAL-HOLD.png",
+      "ownerApproved": false,
+      "technicalDisplayPassClaim": false
+    }
+  ]
+}
