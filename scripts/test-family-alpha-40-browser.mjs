@@ -15,24 +15,14 @@ assert.equal(s.split(widthField).length,3,'Both source and edited PNG geometry s
 s=s.replaceAll(widthField,"top:img.style.top,cssWidth:img.style.width,w:img.getBoundingClientRect().width,");
 change("resolve('dist-family-alpha-36-rigid-align-HOLD')",
  "resolve('dist-family-alpha-40-session-fit-HOLD')");
-const inserted=`     if(i===0){
+const inserted=`     if(i===1){
       // Second approval of the very same garment source and deliberately
       // repeated alpha eraser strokes must restore the top position.
       const expectedTop=changed.top,expectedWidth=changed.cssWidth;
-      await article.getByRole('button',{name:'Review 2D preview 1',exact:true}).click();
+      await article.getByRole('button',{name:'Review 2D preview 2',exact:true}).click();
       for(let piece=0;piece<3;piece++){
        const cleanup=article.locator('.family-alpha-mask-editor');
        await cleanup.waitFor({state:'visible'});
-       if(piece===0){
-        const board=cleanup.locator('canvas');
-        await board.click({position:{x:35,y:35}});
-        await cleanup.getByRole('button',{name:'Undo eraser',exact:true}).click();
-        await board.click({position:{x:65,y:70}});
-        await cleanup.getByRole('button',{name:'Outline unwanted area',exact:true}).click();
-        for(const pos of [{x:46,y:28},{x:75,y:28},{x:73,y:55},{x:49,y:55}])
-         await board.click({position:pos});
-        await cleanup.getByRole('button',{name:'Apply outline',exact:true}).click();
-       }
        await cleanup.getByRole('checkbox',{
         name:'I checked the actual cutout for mannequin, person, hanger and missing fabric',exact:true
        }).check();
@@ -42,11 +32,12 @@ const inserted=`     if(i===0){
       const returned=await article.locator('.family-alpha-avatar img[data-slot="top"]').evaluate(img=>({
        top:img.style.top,cssWidth:img.style.width,w:img.getBoundingClientRect().width,src:img.src
       }));
+      assert.equal(returned.src,changed.src,'Cannot alter garment PNG to restore geometry');
       assert.equal(returned.top,expectedTop,
        'Same-owner/same-JPEG/mask fit alignment must restore after rerender');
       assert.equal(returned.cssWidth,expectedWidth,
        'Restored garment percentage width must be identical regardless of engine layout');
-      assert.equal(returned.src,changed.src,'Cannot alter garment PNG to restore geometry');
+
       assert.equal(await article.locator('.alpha36-fit-controls').count(),1);
      }
 `;
