@@ -79,3 +79,52 @@ test('full source-pinned signed-in board and independent release gate jointly re
  assert.equal(full.deploymentsAuthorized,false);
 });
 
+
+
+test('actual read-only staging role simulations deny both distinct synthetic nonowners, without authenticating or reading user content',async()=>{
+ const s=await snapshot(),p=s.syntheticNonownerReadProbes;
+ assert.equal(p.method,'LIVE_STAGING_SQL_READ_ONLY_TRANSACTION_ROLE_SIMULATION');
+ assert.equal(p.roleEmulationNotJwt,true);
+ assert.equal(p.realJwtSessionCountUsed,0);
+ assert.equal(p.newAccountsCreated,0);
+ assert.equal(p.transactionsRolledBack,true);
+ assert.equal(p.rowContentsAccessed,false);
+ assert.equal(p.photoBytesAccessed,false);
+ assert.equal(p.independentFixtures.length,2);
+ for(const account of p.independentFixtures){
+  assert.equal(account.roleVerified,true);
+  assert.equal(account.claimVerified,true);
+  assert.equal(account.visibleBackupRows,0);
+  assert.equal(account.visiblePhotoObjects,0);
+ }
+ assert.equal(p.provesRealCrossAccountIsolation,false);
+ assert.equal(assessMetadataEvidence(s).evidenceConsistent,true);
+ assert.equal(assessMetadataEvidence(s).decision,'HOLD');
+});
+test('forged RLS pass or attempted promotion of synthetic claim to real four-user JWT invalidates evidence and stays HOLD',async()=>{
+ const s=await snapshot();
+ const mutations=[
+  o=>o.syntheticNonownerReadProbes.independentFixtures[0].visibleBackupRows=1,
+  o=>o.syntheticNonownerReadProbes.independentFixtures[1].visiblePhotoObjects=1,
+  o=>o.syntheticNonownerReadProbes.independentFixtures[0].roleVerified=false,
+  o=>o.syntheticNonownerReadProbes.independentFixtures[1].claimVerified=false,
+  o=>o.syntheticNonownerReadProbes.transactionsRolledBack=false,
+  o=>o.syntheticNonownerReadProbes.roleEmulationNotJwt=false,
+  o=>o.syntheticNonownerReadProbes.realJwtSessionCountUsed=4,
+  o=>o.syntheticNonownerReadProbes.newAccountsCreated=2,
+  o=>o.syntheticNonownerReadProbes.rowContentsAccessed=true,
+  o=>o.syntheticNonownerReadProbes.photoBytesAccessed=true,
+  o=>o.syntheticNonownerReadProbes.provesRealCrossAccountIsolation=true,
+  o=>o.syntheticNonownerReadProbes.independentFixtures=[o.syntheticNonownerReadProbes.independentFixtures[0]],
+  o=>o.syntheticNonownerReadProbes.independentFixtures[1].identity='real-user',
+  o=>o.syntheticNonownerReadProbes.result='REAL_OWNERSHIP_PASS',
+  o=>o.syntheticNonownerReadProbes.exactSqlPattern='SELECT COUNT(*)'
+ ];
+ for(const mutate of mutations){
+  const candidate=copy(s);mutate(candidate);
+  const result=assessMetadataEvidence(candidate);
+  assert.equal(result.decision,'HOLD');
+  assert.equal(result.evidenceConsistent,false,JSON.stringify(candidate.syntheticNonownerReadProbes));
+  assert.equal(result.deploymentAuthorized,false);
+ }
+});
