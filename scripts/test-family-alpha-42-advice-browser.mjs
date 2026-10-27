@@ -63,22 +63,22 @@ try{
       if(start<0||end<start)throw Error('Source reviewed result renderer missing');
       const src=current.slice(start,end).trim();
       const render=new Function('node','localPending','items','recognitionState','photoAdvisories',
-       'adjustPhoto','cropButton','switchView','canConfirmReviewedColor','return ('+src+')')(
+       'adjustPhoto','cropButton','switchView','canConfirmReviewedColor','recognitionSourcePhoto','return ('+src+')')(
        (tag,text,klass)=>{
         const el=document.createElement(tag);
         if(text!==null&&text!==undefined)el.textContent=text;
         if(klass)el.className=klass;return el;
        },new Set(),[],{activeId:null,phase:'idle'},new WeakMap(),()=>{},
-       ()=>document.createElement('button'),()=>{},()=>false);
+       ()=>document.createElement('button'),()=>{},()=>false,item=>item.image);
       const item={id:'synthetic',image:source,category:'Uncategorized',itemType:'Unknown',
        seasons:[],color:'',pattern:'',sleeveLength:'',fit:'',name:'',
        localAnalyzed:false};
       let navigation='';
       const evidence=new WeakMap([[item,{source:source,hint:assessed.captureAdvice.hint}]]);
       const renderActual=new Function('node','localPending','items','recognitionState','photoAdvisories',
-       'adjustPhoto','cropButton','switchView','canConfirmReviewedColor','return ('+src+')')(
+       'adjustPhoto','cropButton','switchView','canConfirmReviewedColor','recognitionSourcePhoto','return ('+src+')')(
        (tag,text,klass)=>{const el=document.createElement(tag);if(text!=null)el.textContent=text;if(klass)el.className=klass;return el;},
-       new Set(),[],{activeId:null},evidence,()=>{},()=>document.createElement('button'),where=>{navigation=where;},()=>false);
+       new Set(),[],{activeId:null},evidence,()=>{},()=>document.createElement('button'),where=>{navigation=where;},()=>false,item=>item.image);
       const grid=document.getElementById('review');
       renderActual(grid,[item]);
       const tip=grid.querySelector('.capture-photo-advice');
