@@ -1,0 +1,63 @@
+name: Family Alpha #52 Simulated Touch and Keyboard Focus HOLD (NO DEPLOY)
+on:
+  pull_request:
+    paths: ['scripts/test-family-alpha-52-touch-keyboard-browser.mjs', 'tests/integration/family-alpha-52-touch-keyboard-guard.test.mjs', '.github/workflows/family-alpha-52-touch-keyboard-no-deploy.yml']
+permissions:
+  contents: read
+jobs:
+  visual:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 fake-indexeddb@6.2.4
+      - name: Fetch exact inherited source pins
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git fetch --no-tags origin 0fb6ab04ab79c36d449acee21aaaf4318871d647 879f1b92fb15f9bc9a7f0429c7ee178f7bbf1373 795ad6637f8d4f782bc99751211b25e8e72a3a7d 08ed6ac4a3fc921eae5d5d3df3bd3966429559d2 1ecac1079e75f1f25dc70a4c712b2448eb87dca8 d0ff131a4e5617e1a3f4fcfb40d00602fdce9833 68bed0c0f0f25538d0d5a00fbaf9aa34d80b8663 97397e80a7cf66e5e656c5b74c924a51e50f0f6f 44f288dfdcfa02ec5b2cf89a7c79c08cfcaa3584 e75cd4689356ae468a88504ddb25df4b4ff6cb70 c86f48f0119329e4001002304e2dfe480815b099 100ffc194793470c871f2b0c6092bc59f1c583b8 77d9f5b83eae475cd8d5d35593c1dc9c2e6bf02f
+      - name: Verify imported Work46 session safety files match exact successful PR355 head
+        run: |
+          git fetch --no-tags origin 8df9eebd12303c0e5ffae60ed27a5e0a14b8c5ec
+          for file in scripts/build-work46-session-hold.mjs scripts/test-work46-navigation.mjs tests/work46-session-races.test.mjs; do
+            git show 8df9eebd12303c0e5ffae60ed27a5e0a14b8c5ec:"$file" | cmp - "$file"
+          done
+      - name: Build source-pinned private offline parent and presentation overlay
+        run: |
+          node scripts/build-family-alpha-staging-auth-hold.mjs
+          node scripts/build-family-alpha-recognition-integrated-hold.mjs
+          node scripts/build-family-alpha-protected-preview-hold.mjs
+          node scripts/build-family-alpha-29-hold.mjs
+          node scripts/build-family-alpha-31-hold.mjs
+          node scripts/build-family-alpha-refined-avatar-integration-hold.mjs
+          node scripts/build-family-alpha-34-storage-hold.mjs
+          node scripts/build-family-alpha-35-visual-repair-hold.mjs
+          node scripts/build-family-alpha-36-rigid-fit-hold.mjs
+          node scripts/build-family-alpha-full-stage-routing-hold.mjs
+          node scripts/build-family-alpha-40-session-fit-hold.mjs
+          node scripts/build-family-alpha-41-original-jpeg-hold.mjs
+          node scripts/build-family-alpha-42-photo-advice-hold.mjs
+          node scripts/build-family-alpha-43-still-source-hold.mjs
+          node scripts/build-work43-photo-board-hold.mjs
+          node scripts/build-work44-visual-board-hold.mjs
+          node scripts/build-work46-session-hold.mjs
+          node scripts/build-family-alpha-51-mobile-nav-hold.mjs
+      - name: Run account and wardrobe race regressions
+        run: |
+          node --test tests/work46-session-races.test.mjs tests/work43/*.test.mjs tests/integration/family-alpha-51-mobile-nav-hold.test.mjs
+          node scripts/check-family-alpha-49-combined-visual-security-hold.mjs
+          node --test tests/integration/family-alpha-52-touch-keyboard-guard.test.mjs
+      - name: Licensed mobile real recommendation + keyboard focus and native simulated touch swap
+        run: node scripts/test-family-alpha-52-touch-keyboard-browser.mjs
+      - name: Repeat WebKit keyboard and touch test with actual licensed photos
+        run: FAMILY_ALPHA_52_WEBKIT_ONLY=1 node scripts/test-family-alpha-52-touch-keyboard-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: family-alpha-52-keyboard-touch-HOLD
+          path: benchmark/family-alpha-52-touch-keyboard/
