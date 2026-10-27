@@ -6,7 +6,7 @@ This is a **read-only evidence and release-blocking check**, not an image-proces
 
 ## What independent visual inspection actually showed
 
-Only **5 of the 7 provisional image-backed proposals** have been visually inspected in the generated Chromium 390px comparison screenshots. Remaining 2 are **UNINSPECTED**, never silently called PASS. The 8 examples without any usable cutout remain **NO PREVIEW**; their full original JPEGs cannot be substituted for transparent clothing.
+All **7 provisional image-backed proposals** have now been visually inspected in the generated Chromium 390px comparison screenshots. **Five FAIL and two remain REVIEW; zero PASS.** The 8 examples without any usable cutout remain **NO PREVIEW**; their full original JPEGs cannot be substituted for transparent clothing.
 
 | Case | Physical content visible in preview | Main-thread assessment |
 |---|---|---|
@@ -15,6 +15,8 @@ Only **5 of the 7 provisional image-backed proposals** have been visually inspec
 | `commons-0053` — black dress | Original mannequin neck/chest **remains inside the cutout**, creating a second neck on the avatar | **FAIL** |
 | `commons-0082` — side-profile sneaker | One photographed shoe positioned across **two feet**, no second shoe source | **FAIL** |
 | `commons-0088` — black boot | One photographed boot spans two illustrated feet, does not represent a wearable pair | **FAIL** |
+| `commons-0089` — boot with gradient | Single sideways boot overlaps two feet; no separate second shoe source | **FAIL** |
+| `commons-0094` — lace-up boot | One long photographed side-view boot lies across both feet | **FAIL** |
 
 These assessments are **preliminary main-thread observations**, not the user's approval, nor exhaustive review of the 15 sources. The Work #33 report still says screenshot inspection/owner approval pending. A successfully decoded/layered PNG and passing synthetic browser acceptance does not mean the mask is visually fit for a human preview.
 
@@ -22,7 +24,7 @@ These assessments are **preliminary main-thread observations**, not the user's a
 
 `scripts/audit-family-alpha-licensed-visual-release-hold.mjs` uses `git show` against Work #33's **pinned actual gallery metadata** and reads our limited per-case visual observations from `docs/evidence/family-alpha-visual-inspection-20261026.json`. It never needs the original photographs, PNG pixels, API tokens, live browsers, Supabase or customer photos.
 
-It **rejects** missing/changed cohort, duplicates, missing cutout SHA, fabricated owner approval, missing or external screenshot reference, uninspected case labeled inspected, case FAIL uplifted to PASS, and attempting to show a no-cutout original photograph as a valid avatar garment. The output is `benchmark/family-alpha-visual-release-gate-HOLD.json`, with explicit `readyForFourAccounts:false`, `ownerApproved:false`, zero accepted, counts of 8 unrenderable and 2 not yet examined. Tests intentionally assert this HOLD state instead of faking positive release.
+It **rejects** missing/changed cohort, duplicates, missing cutout SHA, fabricated owner approval, missing or external screenshot reference, uninspected case labeled inspected, case FAIL uplifted to PASS, and attempting to show a no-cutout original photograph as a valid avatar garment. The output is `benchmark/family-alpha-visual-release-gate-HOLD.json`, with explicit `readyForFourAccounts:false`, `ownerApproved:false`, zero accepted, counts of 8 unrenderable, 5 visually failed, 2 review-required, and none uninspected among provisional cutouts. Tests intentionally assert this HOLD state instead of faking positive release.
 
 A separate **no-deploy** GitHub Actions workflow runs strict source/annotation/tamper tests, uploads only the **metadata** result and treats a correct HOLD as a successful *safety audit*, not a successful garment-fitting benchmark.
 
@@ -31,7 +33,7 @@ A separate **no-deploy** GitHub Actions workflow runs strict source/annotation/t
 1. **Reject / repair mannequin-adjacent masks** before any figure overlay. On the dress, reprocessing only alpha around the neckline is not automatically safe: collars/high necklines can be real clothing. Require original-photo human comparison; if no clean crop is possible, retake.
 2. **Single shoe vs pair** must have an explicit reviewed source/view distinction before claiming both feet wear a pair. Do not automatically mirror a single profile photograph as if it were a verified left-right pair.
 3. **Shoulder/sleeve and dress lengths** need manually reviewed source-aware fitting, using Work #32's limited research only if visually better on licensed real garments; avoid uncontrolled fabric stretching.
-4. Complete the two uninspected licensed proposals, and obtain actual owner signoff with physical mobile images before real four-family staging. Even a good benchmark would not replace real adult account-isolation proof at the start of the same four-person testing session.
+4. Obtain actual owner signoff with physical mobile images before real four-family staging. Even a good benchmark would not replace real adult account-isolation proof at the start of the same four-person testing session.
 
 The improved neutral 2D human **is real** in the code and actual photo layers render, but the project must not promise realistic virtual fitting or released Family Alpha visual quality.
 
