@@ -49,6 +49,14 @@ const inserted=`     if(i===0){
 `;
 change("     await fitter.getByRole('button',{name:'Reset'}).click();",
  inserted+"     await fitter.getByRole('button',{name:'Reset'}).click();");
+change("     assert.equal(await article.locator('.family-alpha-avatar img[data-slot=\"top\"]').evaluate(img=>img.style.top),before.top);",
+ `     const resetValue=await article.locator('.family-alpha-avatar img[data-slot="top"]').evaluate(img=>img.style.top);
+     const debugFit={original:before.top,edited:changed.top,afterReset:resetValue,
+      controls:await article.locator('.alpha36-fit-controls').count(),
+      message:await fitter.locator('[role="status"]').innerText(),
+      select:await fitter.getByLabel('Garment to align').inputValue()};
+     console.log('FIT_RESET_DIAGNOSTIC',JSON.stringify(debugFit));
+     assert.equal(resetValue,before.top,JSON.stringify(debugFit));`);
 change("'benchmark/family-alpha-36/'","'benchmark/family-alpha-40/'");
 change("'.family-alpha-36-review-browser.generated.mjs'",
  "'.family-alpha-40-review-browser.generated.mjs'");
