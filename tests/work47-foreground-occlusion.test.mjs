@@ -18,7 +18,7 @@ test('foreground exactly reuses existing original humanoid anatomy, never clothi
  const overlay=createHumanoidForegroundOverlay(fakeDocument);
  const orig=partMap(base),newParts=partMap(overlay);
  assert.equal(newParts.size,7);
- assert.deepEqual([...newParts.keys()].sort(),[...FOREGROUND_PARTS].sort());
+ assert.deepEqual([...newParts.keys()].sort(),FOREGROUND_PARTS.filter(p=>orig.has(p)).sort());
  for(const [part,svg] of newParts){
   assert.equal(svg.name,orig.get(part).name);
   assert.deepEqual([...svg.attrs.entries()],[...orig.get(part).attrs.entries()],part);
@@ -50,7 +50,8 @@ test('app fit creates at most one foreground, removes it on reset and owner/sess
 });
 test('new foreground module bundles only in offline candidate; prod remains untouched',async()=>{
  const build=await readFile('scripts/build-work47-fit-hold.mjs','utf8');
- assert.match(build,/\['editor\.mjs','fit\.mjs','occlusion\.mjs'\]/);
+ assert.match(build,/\['editor\.mjs','fit\.mjs'\]/);
+ assert.match(build,/const compiled=offline\.replace\(from,/);
  assert.match(build,/Unexpected inherited asset change/);
  assert.match(build,/deploymentAuthorized:false/);
  const overlay=await readFile('research/work47/occlusion.mjs','utf8');
@@ -67,4 +68,25 @@ test('compiled app imports original vetted renderer from bundle root, while loca
  const bundledRenderer=await readFile('dist-work47-garment-fit-HOLD/family-alpha-2d-photo-renderer.mjs','utf8');
  assert.match(bundledRenderer,/export function createAlphaHumanoidFigure/);
  assert.match(built,/createAlphaHumanoidFigure/);
+});
+
+test('protected compiled refined humanoid preserves actual face and finger features without covered limbs',async()=>{
+ const renderer=await import('../dist-work47-garment-fit-HOLD/family-alpha-2d-photo-renderer.mjs');
+ const overlaySource=await import('../dist-work47-garment-fit-HOLD/__alpha_research/work47/occlusion.mjs');
+ const source=partMap(renderer.createAlphaHumanoidFigure(fakeDocument));
+ const foreground=overlaySource.createHumanoidForegroundOverlay(fakeDocument);
+ const actual=partMap(foreground);
+ for(const required of ['neck','head','left-hand','right-hand','left-ear','right-ear',
+   'left-fingers','right-fingers','left-eye','right-eye','nose','mouth','chin']){
+  assert.ok(actual.has(required),'Refined source detail not visible '+required);
+  assert.deepEqual([...actual.get(required).attrs.entries()],
+                   [...source.get(required).attrs.entries()],
+                   'Refined detail must match source exactly '+required);
+ }
+ for(const excluded of ['torso','left-arm','right-arm','left-leg','right-leg',
+                        'left-foot','right-foot','ground-shadow','shoulder-highlight','collarbone']){
+  assert.equal(actual.has(excluded),false,'Covered-body artwork must remain behind garment '+excluded);
+ }
+ assert.equal(foreground.getAttribute('data-humanoid'),'foreground-anatomy-v1');
+ assert.equal(foreground.style.pointerEvents,'none');
 });
