@@ -66,8 +66,8 @@ test('forged production endpoints or release claims fail closed without changing
   'family-alpha-2d-auth-preflight.mjs':preflight,
   'alpha-stage-config.js':config,'index.html':index,'pwa.js':pwa};
  assert.equal(assertStagingLockedRouting(files),true);
- assert.throws(()=>assertStagingLockedRouting({...files,'cloud-backup.js':backup+PROD_BASE}),/Production project/);
- assert.throws(()=>assertStagingLockedRouting({...files,'auth.js':source+PROD_BASE}),/Production project/);
+ assert.throws(()=>assertStagingLockedRouting({...files,'cloud-backup.js':backup+PROD_BASE}),/Production endpoint|Production project/);
+ assert.throws(()=>assertStagingLockedRouting({...files,'auth.js':source+PROD_BASE}),/Production endpoint|Production project/);
  assert.throws(()=>assertStagingLockedRouting({...files,'alpha-stage-config.js':config.replace('"key":""','"key":"sb_publishable_dummy"')}),/AssertionError|actual expected|\bfalse\b/);
  const path=OUTPUT+'/alpha-stage-full-routing-HOLD-manifest.json';
  const original=await readFile(path,'utf8');
