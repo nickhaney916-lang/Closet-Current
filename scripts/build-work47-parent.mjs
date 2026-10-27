@@ -1,0 +1,3 @@
+import {execFileSync} from 'node:child_process';
+const steps=['family-alpha-staging-auth','family-alpha-recognition-integrated','family-alpha-protected-preview','family-alpha-29','family-alpha-31','family-alpha-refined-avatar-integration','family-alpha-34-storage','family-alpha-35-visual-repair','family-alpha-36-rigid-fit','family-alpha-full-stage-routing','family-alpha-40-session-fit','family-alpha-41-original-jpeg','family-alpha-42-photo-advice','family-alpha-43-still-source','work43-photo-board','work44-visual-board','work46-session','family-alpha-51-mobile-nav','work47-fit'];
+for(const s of steps)execFileSync(process.execPath,['scripts/build-'+s+'-hold.mjs'],{stdio:'inherit',timeout:240000});
