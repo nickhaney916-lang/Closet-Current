@@ -1,7 +1,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {measureVisiblePanelCoverage,requireVisiblePanelCoverage}
- from '../../research/work47/fit.mjs';
+ from '../research/work47/fit.mjs';
 
 const pixels=(w,h,within=()=>true)=>{
  const data=new Uint8ClampedArray(w*h*4);
