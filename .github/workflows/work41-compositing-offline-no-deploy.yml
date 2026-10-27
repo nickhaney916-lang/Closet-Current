@@ -20,6 +20,8 @@ jobs:
       - run: node --test tests/work41/*.test.mjs tests/family-alpha-2d-photo-renderer.test.mjs
       - name: Reproduce unapproved Work 33 assets from immutable commit
         run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git config --global --add safe.directory /tmp/work41-gallery
           git fetch origin refs/pull/329/head refs/pull/320/head refs/pull/326/head
           git cat-file -e 53f2ad344dc56a1477e343531c423aed0e66c17d^{commit}
           git worktree add --detach /tmp/work41-gallery 53f2ad344dc56a1477e343531c423aed0e66c17d
