@@ -19,7 +19,8 @@ test('full original-photo review and Style New Clothes candidate retains only tw
  assert.match(check,/alphaCaptureAdvice\(\{width:decoded.width/);
  assert.match(check,/Optional advice cannot block recognition/);
  assert.match(check,/photoQuality\(pixels\)/);
- assert.match(a,/const quality=await checkPhoto\(sourcePhoto\)/);\n assert.match(a,/advisory\?\.source===recognitionSourcePhoto\(item\)/);
+ assert.match(a,/const quality=await checkPhoto\(sourcePhoto\)/);
+ assert.match(a,/advisory\?\.source===recognitionSourcePhoto\(item\)/);
 });
 test('unknown app, photo-check or capture source changes are rejected by source-pinned overlay',async()=>{
  assert.throws(()=>patchApp('foo'),/source drift/i);
