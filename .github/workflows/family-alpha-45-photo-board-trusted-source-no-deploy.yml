@@ -1,0 +1,38 @@
+name: Family Alpha #45 protected photo-board saved-original identity checks (NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'research/family-alpha-45/**'
+      - 'research/work42-presentation/policy.mjs'
+      - 'tests/integration/family-alpha-45-trusted-photo-board-sources.test.mjs'
+      - 'docs/family-alpha-45/**'
+      - '.github/workflows/family-alpha-45-photo-board-trusted-source-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-and-owner-integrity-offline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Pin independent Work42's unchanged original-photo fallback policy to exact approved research source
+        run: |
+          git fetch --no-tags origin 61cf651e6b18b0f82c1242a7017e73c85e685128
+          git show 61cf651e6b18b0f82c1242a7017e73c85e685128:research/work42-presentation/policy.mjs | cmp - research/work42-presentation/policy.mjs
+      - name: Install synthetic IndexedDB for independent privacy handoff verification
+        run: npm install --no-save --no-package-lock --no-audit --no-fund fake-indexeddb@6.2.4
+      - name: Refuse forged caller owner, image and approval; preserve exact private saved originals
+        run: node --test --test-concurrency=1 tests/integration/family-alpha-45-trusted-photo-board-sources.test.mjs
+      - name: Refuse cloud, staging, public app, source JPEG and deployment changes in this branch
+        run: |
+          git diff --name-only 9b093fe3f86613c2876e7e1b1f135d7a52948c20 HEAD | tee /tmp/changed.txt
+          if grep -E '^(public/|supabase/|cloudflare/|scripts/build-family-alpha-|research/family-alpha-29/|research/family-alpha-37/|research/family-alpha-38/|research/work42-presentation/board)' /tmp/changed.txt; then
+            echo 'Unexpected application or provider source change in privacy QA branch'; exit 1
+          fi
+          echo 'HOLD: verified read-only photo source contract, no active application, user account or deployment modification'
