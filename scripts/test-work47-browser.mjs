@@ -18,5 +18,15 @@ if(row.profile&&width===390&&name==='chromium'){
  await foreground.evaluate(el=>el.style.visibility='hidden');
  await target.screenshot({path:'benchmark/work47/occlusion-pairs/'+row.id+'-baseline.png'});
  await foreground.evaluate(el=>el.style.visibility='visible');
+ const beforeEdge=await page.locator('#after canvas').evaluate(c=>c.toDataURL());
+ await mkdir('benchmark/work47/edge-fringe-pairs',{recursive:true});
+ await target.screenshot({path:'benchmark/work47/edge-fringe-pairs/'+row.id+'-original-cutout.png'});
+ await page.getByRole('button',{name:'Soften fringe: off',exact:true}).click();
+ assert.equal(await page.getByRole('button',{name:'Soften fringe: on',exact:true}).getAttribute('aria-pressed'),'true');
+ await target.screenshot({path:'benchmark/work47/edge-fringe-pairs/'+row.id+'-optional-soft-edge.png'});
+ await page.getByRole('button',{name:'Soften fringe: on',exact:true}).click();
+ assert.equal(await page.getByRole('button',{name:'Soften fringe: off',exact:true}).getAttribute('aria-pressed'),'false');
+ assert.equal(await page.locator('#after canvas').evaluate(c=>c.toDataURL()),beforeEdge,
+   'Fringe preview must be reversible without changing source garment pixels');
 }
 if(row.profile){const before=await page.locator('#after canvas').evaluate(c=>c.toDataURL());await page.getByRole('button',{name:'↓ Down',exact:true}).click();assert.notEqual(await page.locator('#after canvas').evaluate(c=>c.toDataURL()),before);await page.getByRole('button',{name:'Reset',exact:true}).click();assert.equal(await page.locator('#after canvas').evaluate(c=>c.toDataURL()),before);}await page.screenshot({path:`${out}/${name}-${width}-${row.id}.png`,fullPage:true});results.push({engine:name,width,id:row.id,rendered:!!row.profile,hasCutout:row.hasCutout,ownerApproved:false});}assert.deepEqual(errors,[]);assert.deepEqual(external,[]);await context.close();}}finally{await browser.close();}}}finally{server.close();}await writeFile('benchmark/work47/browser-results.json',JSON.stringify(results,null,2));console.log('WORK47_BROWSER_MATRIX',results.length);

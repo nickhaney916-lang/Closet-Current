@@ -29,6 +29,18 @@ s=s.replace(hook,String.raw\x60
      assert.ok(!anatomyParts.includes(covered),'Covered humanoid body must stay behind garment '+covered);
     assert.equal(await article.locator('.family-alpha-avatar svg[data-humanoid="articulated-2d-v1"]').count(),1,
       'Existing humanoid remains behind real photographed clothing');
+    const edgeToggle=fitter.getByRole('checkbox',{name:/Soften translucent cutout halo/});
+    assert.equal(await edgeToggle.isEnabled(),true);
+    assert.equal(await edgeToggle.isChecked(),false,'Unreviewed edge cleanup must default OFF');
+    const baseCanvas=await article.locator('canvas[data-work47="top"]').evaluate(c=>c.toDataURL());
+    await edgeToggle.check();
+    assert.equal(await edgeToggle.isChecked(),true,'Explicit toggle must remain checked');
+    const cleanupStatus=await fitter.getByRole('status').textContent();
+    assert.match(cleanupStatus,/Fringe attenuated|No translucent border detected/);
+    await edgeToggle.uncheck();
+    assert.equal(await edgeToggle.isChecked(),false);
+    assert.equal(await article.locator('canvas[data-work47="top"]').evaluate(c=>c.toDataURL()),baseCanvas,
+      'Returning to OFF must restore exact original garment fit pixels');
     const source=await article.locator('img[data-slot="top"]').getAttribute('src');
     assert.equal(await article.locator('img[data-slot="top"]').evaluate(x=>x.hidden),true);
     await fitter.getByRole('button',{name:'↓ Down',exact:true}).click();
