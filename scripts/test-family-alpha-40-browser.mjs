@@ -10,12 +10,15 @@ function change(a,b){
  assert.equal(s.split(a).length,2,'Upstream browser protocol drift '+a.slice(0,80));
  s=s.replace(a,b);
 }
+const widthField="top:img.style.top,w:img.getBoundingClientRect().width,";
+assert.equal(s.split(widthField).length,3,'Both source and edited PNG geometry snapshots required');
+s=s.replaceAll(widthField,"top:img.style.top,cssWidth:img.style.width,w:img.getBoundingClientRect().width,");
 change("resolve('dist-family-alpha-36-rigid-align-HOLD')",
  "resolve('dist-family-alpha-40-session-fit-HOLD')");
 const inserted=`     if(i===0){
       // Second approval of the very same garment source and deliberately
       // repeated alpha eraser strokes must restore the top position.
-      const expectedTop=changed.top,expectedWidth=changed.w;
+      const expectedTop=changed.top,expectedWidth=changed.cssWidth;
       await article.getByRole('button',{name:'Review 2D preview 1',exact:true}).click();
       for(let piece=0;piece<3;piece++){
        const cleanup=article.locator('.family-alpha-mask-editor');
@@ -37,26 +40,20 @@ const inserted=`     if(i===0){
       }
       await fitter.waitFor({state:'visible'});
       const returned=await article.locator('.family-alpha-avatar img[data-slot="top"]').evaluate(img=>({
-       top:img.style.top,w:img.getBoundingClientRect().width,src:img.src
+       top:img.style.top,cssWidth:img.style.width,w:img.getBoundingClientRect().width,src:img.src
       }));
       assert.equal(returned.top,expectedTop,
        'Same-owner/same-JPEG/mask fit alignment must restore after rerender');
-      assert.ok(Math.abs(returned.w-expectedWidth)<1,
-       'Restored clothing must preserve proportional scale');
+      assert.equal(returned.cssWidth,expectedWidth,
+       'Restored garment percentage width must be identical regardless of engine layout');
       assert.equal(returned.src,changed.src,'Cannot alter garment PNG to restore geometry');
       assert.equal(await article.locator('.alpha36-fit-controls').count(),1);
      }
 `;
 change("     await fitter.getByRole('button',{name:'Reset'}).click();",
  inserted+"     await fitter.getByRole('button',{name:'Reset'}).click();");
-change("     assert.equal(await article.locator('.family-alpha-avatar img[data-slot=\"top\"]').evaluate(img=>img.style.top),before.top);",
- `     const resetValue=await article.locator('.family-alpha-avatar img[data-slot="top"]').evaluate(img=>img.style.top);
-     const debugFit={original:before.top,edited:changed.top,afterReset:resetValue,
-      controls:await article.locator('.alpha36-fit-controls').count(),
-      message:await fitter.locator('[role="status"]').innerText(),
-      select:await fitter.getByLabel('Garment to align').inputValue()};
-     console.log('FIT_RESET_DIAGNOSTIC',JSON.stringify(debugFit));
-     assert.equal(resetValue,before.top,JSON.stringify(debugFit));`);
+change("     assert.equal(await article.locator('.family-alpha-avatar img[data-slot=\\\"top\\\"]').evaluate(img=>img.style.top),before.top);",
+ `     assert.equal(await article.locator('.family-alpha-avatar img[data-slot="top"]').evaluate(img=>img.style.top),before.top);`);
 change("'benchmark/family-alpha-36/'","'benchmark/family-alpha-40/'");
 change("'.family-alpha-36-review-browser.generated.mjs'",
  "'.family-alpha-40-review-browser.generated.mjs'");
