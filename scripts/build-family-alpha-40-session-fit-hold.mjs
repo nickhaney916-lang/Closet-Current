@@ -57,7 +57,7 @@ export function overlayManualFit(original){
   edits.set(id,chosen);`);
  s=once(s,
   " const buttons=make('div');buttons.style.cssText",
-  " const previouslyAdjusted=[...edits.entries()].find(([,edit])=>edit.dx!==0||edit.dy!==0||edit.scale!==1);\\n if(previouslyAdjusted)picker.value=previouslyAdjusted[0];\\n const buttons=make('div');buttons.style.cssText");
+  " const previouslyAdjusted=[...edits.entries()].find(([,edit])=>edit.dx!==0||edit.dy!==0||edit.scale!==1);\n if(previouslyAdjusted)picker.value=previouslyAdjusted[0];\n const buttons=make('div');buttons.style.cssText");
  s=once(s,'  edits.set(id,next);redraw();',
   '  edits.set(id,next);redraw();\n  if(active())onAdjustment({slot:id,edit:{...next}});');
  s=once(s,'  edits.set(picker.value,{dx:0,dy:0,scale:1});redraw();',
