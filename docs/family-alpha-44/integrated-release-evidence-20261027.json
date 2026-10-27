@@ -1,0 +1,40 @@
+{
+  "schema": "closet-family-alpha-44-release-evidence-v1",
+  "observedOn": "2026-10-27",
+  "parentCandidateCommit": "9b093fe3f86613c2876e7e1b1f135d7a52948c20",
+  "status": "HOLD",
+  "visual": {
+    "licensedOriginals": 15,
+    "proposedCutouts": 7,
+    "missingUsableCutouts": 8,
+    "visuallyApprovedCutouts": 0,
+    "work37Fit": "INCOMPLETE",
+    "work38Isolation": "INCOMPLETE",
+    "work41Compositing": "FAIL",
+    "work42PhotoFallback": "NOT VERIFIED",
+    "allowedDefaultPresentation": "REVIEW_REQUIRED",
+    "garmentAcceptanceRecords": [],
+    "photoOnlyOutfitFallbackOwnerAccepted": false,
+    "humanWornPreviewOwnerAccepted": false,
+    "fourPersonAlphaOutfitExperienceApproved": false
+  },
+  "sourceIntegrity": {
+    "originalJpegOnlyRecognition": true,
+    "stageAuthCloudDisabled": true,
+    "manualStillMaxAxis": 4096,
+    "automaticFrameMaxAxis": 2048,
+    "sameOwnerSessionPhotoHashFitRequired": true
+  },
+  "physicalPhoneTests": {
+    "android": "NOT TESTED",
+    "iphone": "NOT TESTED"
+  },
+  "liveAuthorization": {
+    "uniqueFamilyJwtSessions": 0,
+    "twoOwnerReadWriteRlsTest": "NOT TESTED",
+    "distinctParticipantsOneSimultaneousSession": "NOT TESTED"
+  },
+  "ownerExplicitGoApproval": false,
+  "deploymentAuthorized": false,
+  "description": "Pinned development evidence, not staging-live results. Technical CI passes do not constitute visual acceptance."
+}
