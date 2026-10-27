@@ -1,0 +1,17 @@
+# Work 43 — source-pinned offline outfit-photo integration / HOLD
+
+This independent disabled build layers an original-photo board onto the existing #344 offline candidate and #346 release-governance branch. It reuses the existing Work #42 photo board and validation modules from draft #345 and the existing three-look recommendation, swap, favorites and atomic wardrobe store. It does not introduce a new recommendation engine. The regular application source, production, staging, provider settings, original JPEG storage, wardrobe schema, avatar and garment-processing code are not edited.
+
+## Boundary
+
+The `photoBoard` entry in the existing workflow runs the existing authenticated session verification, recommendation `engine.verify`, and account/session/full-wardrobe snapshot guard before obtaining the item by ID. The adapter reads that current guarded item's originalPhoto.image, or image when originalPhoto is absent; it binds the copied JPEG bytes to a computed SHA and sends them to Work #42's board. Board verifies blob/hash consistency, decodes before display, only uses local object URLs, and revokes/clears on session change, page hide, wardrobe invalidation or replacement. This is not a new cloud/authorization scheme and local hashes alone do not prove ownership: the trust boundary is the existing verified current-account database, workflow and its guard. Actual live RLS/four-account isolation is not verified by mocked browser tests.
+
+Each existing recommendation displays a board with original photographs and the label not a virtual try-on. The old unapproved 2D review button is removed from this isolated candidate; no automated worn approval is granted. The existing unmodified humanoid files remain in the source-pinned build. One shoe is shown only as a photo. Existing swap updates are redrawn, favorites use the existing atomic store; restoring a favorite redraws its photo board. Failure handling retains a still-valid generated outfit on transient save errors, while account/wardrobe mismatch clears it. Photos are not uploaded or put into a separate new store.
+
+Original photo context may contain people, hangers or cropped garments, as found in the licensed benchmark. A board faithfully displays such limitations and does not guarantee visual quality. Work #42's real-photo board remains REVIEW, not a family release approval. Work #41 worn layering remains FAIL. No realistic 2D garment fit is claimed.
+
+## Tests / release status
+
+Local source-pinned patch tests `node --test tests/work43/integration.test.mjs`: 3 pass. They verify UI wiring, session/outfit guard order and compatibility with prior boot overlays; they do not establish runtime or security. Full no-deploy CI builds every pinned #344 ancestor and the overlay, asserts unmodified files remain byte-identical, then exercises a synthetic import/adjust/save, three photo boards, swap/favorite, reload/restore and atomic fault probes at 320/390/430 in Chromium/WebKit. Auth, cloud and classifier are mocked; no personal photos. Actual exact-head CI must be checked before claiming any pass.
+
+Real-photo before/after comparison of this integrated candidate, real account ownership/isolation, exact image integrity under account races, real camera and physical Samsung/iPhone tests are still required. Do not enable or merge based only on these tests. Family Alpha HOLD, no deployment, no production/staging/provider changes and no paid services.
