@@ -38,3 +38,5 @@ Browser workflow covers synthetic JPEG import, manual recognition confirmation/s
 Synthetic Auth/cloud/classifier mocks; real browser decoding/DOM/IndexedDB only when CI passes. No family photos/accounts, model accuracy, live RLS, hosted authentication, browser restart, cloud restoration or physical-phone validation. Synthetic figures cannot establish realistic fitting. Layer overlap, sleeve alignment, visible clipping and pixelation on real garments remain unmeasured and owned by main fitting work / Work 30.
 
 Family Alpha HOLD. No merge, deployment, staging/production/provider changes, spending, Drive Duel or existing PR branch modifications. Main conversation owns integration and release.
+
+Final CI-only source revision 6a88bcaf5976f44bf5ae68bb2a0e9324c01e5e63: all five applicable PR workflows SUCCESS: integration [40446236566](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/40446236566), inherited styling 40446236587, 2D 40446236612, combined candidate 40446236662, combined recognition HOLD 40446236629. This resolves the shallow-checkout setup failures. Subsequent report-only changes do not change the tested application or test scripts.
