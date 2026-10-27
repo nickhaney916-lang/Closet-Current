@@ -61,7 +61,7 @@ if(process.env.FAMILY_ALPHA_52_WEBKIT_ONLY==='1')s=s.replace("[['Chromium',chrom
 wrapper=wrapper.replace(marker,extra.replaceAll('\\x60','`')+'\n'+marker);
 // Exercise the real use-case through a native simulated touchscreen tap, not mouse click.
 const swapAction="await first.getByRole('button',{name:'Swap shoes in outfit 1',exact:true}).click();";
-assert.equal(wrapper.split(swapAction).length,2,'Real outfit swap touch anchor changed');
+assert.equal(wrapper.split(swapAction).length,3,'Expected normal swap and distinct account-change regression anchors');
 wrapper=wrapper.replace(swapAction,"await first.getByRole('button',{name:'Swap shoes in outfit 1',exact:true}).tap();");
 const p='scripts/.family-alpha-52-wrapper.mjs';await mkdir('benchmark/family-alpha-52-touch-keyboard',{recursive:true});
 try{await writeFile(p,wrapper);const result=spawnSync(process.execPath,[resolve(p)],{stdio:'inherit',timeout:900000,env:{...process.env,WORK43_LICENSED:'1'}});if(result.error)throw result.error;if(result.status!==0)throw Error('Family Alpha 51 browser journey failed: '+result.status);}finally{await rm(p,{force:true});}
