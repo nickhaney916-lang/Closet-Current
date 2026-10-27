@@ -20,6 +20,11 @@ s=s.replace(hook,String.raw\x60
     await editorCanvas.click({position:{x:rect.width*.75,y:rect.height*.2}});
     await fitter.getByRole('button',{name:'Apply landmark fit',exact:true}).click();
     await article.locator('canvas[data-work47="top"]').waitFor();
+    const anatomy=article.locator('svg[data-humanoid-overlay="reviewed-anatomy-v1"]');
+    await anatomy.waitFor({state:'attached'});
+    assert.equal(await anatomy.locator('[data-part]').count(),7,'Foreground must contain only head, ears, neck and hands');
+    assert.equal(await article.locator('.family-alpha-avatar svg[data-humanoid="articulated-2d-v1"]').count(),1,
+      'Existing humanoid remains behind real photographed clothing');
     const source=await article.locator('img[data-slot="top"]').getAttribute('src');
     assert.equal(await article.locator('img[data-slot="top"]').evaluate(x=>x.hidden),true);
     await fitter.getByRole('button',{name:'↓ Down',exact:true}).click();
@@ -27,6 +32,7 @@ s=s.replace(hook,String.raw\x60
     await mkdir('benchmark/work47/integration',{recursive:true});await article.screenshot({path:'benchmark/work47/integration/'+name.toLowerCase()+'-'+width+'-fitted.png'});
     await fitter.getByRole('button',{name:'Reset landmark fit',exact:true}).click();
     assert.equal(await article.locator('canvas[data-work47]').count(),0);
+    assert.equal(await article.locator('svg[data-humanoid-overlay]').count(),0,'No foreground overlay after fit reset');
     assert.equal(await article.locator('img[data-slot="top"]').getAttribute('src'),source);
    }
 \x60+hook);
