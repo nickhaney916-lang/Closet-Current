@@ -1,0 +1,36 @@
+import {assert43HOLD,OUTPUT as PARENT} from './build-family-alpha-43-still-source-hold.mjs';
+import {readFile,writeFile,cp,rm,mkdir,readdir} from 'node:fs/promises';import {join,resolve} from 'node:path';import {fileURLToPath} from 'node:url';import {createHash} from 'node:crypto';import assert from 'node:assert/strict';
+export const OUTPUT='dist-work43-photo-board-HOLD';
+const BOOT='__alpha_research/family-alpha-29/boot.js',UI='__alpha_research/family-alpha-29/ui.mjs',FLOW='__alpha_research/family-alpha-29/workflow.mjs',PREFIX='__alpha_research/work43-integration/',MARK='work43-photo-board-HOLD.json';
+const sha=b=>createHash('sha256').update(b).digest('hex');
+function once(s,a,b){if(s.split(a).length!==2)throw Error('Upstream integration anchor changed: '+a.slice(0,100));return s.replace(a,b);}
+export function patchFlow(s){
+ s=once(s,'const {readContext,readWardrobe,verifySession,store,renderPreview}=deps;','const {readContext,readWardrobe,verifySession,store,renderPreview,renderPhotoBoard}=deps;');
+ s=once(s,'  async preview(index,container,review){',`  async photoBoard(index,container){const {t,r}=current();await verified(t);await engine.verify(r);guard(t);const look=r.options[index];if(!look)throw Error('Choose an outfit');return renderPhotoBoard({look,container,guard:()=>guard(t),context:readContext(),items:readWardrobe()});},\n  async preview(index,container,review){`);return s;
+}
+export function patchUI(s){
+ s=once(s,'{root,workflow,readWardrobe,onRestore,addPhotos}', '{root,workflow,readWardrobe,onRestore,addPhotos,clearPhotoBoards}');
+ s=once(s," root.className='alpha29';root.hidden=false;"," root.className='alpha29';root.hidden=false;const sheet=el('link');sheet.rel='stylesheet';sheet.href='__alpha_research/work43-integration/board.css';root.append(sheet);");
+ s=once(s,'function clear(){ui++;workflow.invalidate();','function clear(){ui++;clearPhotoBoards();workflow.invalidate();');
+ s=once(s,"cards.replaceChildren();workflow.invalidate();status.textContent='Could not complete this step. Check your saved clothes and account, then try again.';","try{workflow.getResult();status.textContent='Could not complete this step. Your outfit is still here; try again.';}catch{clearPhotoBoards();cards.replaceChildren();workflow.invalidate();status.textContent='Clothes or account changed. Choose your piece and generate again.';}");
+ s=once(s,'function draw(result){cards.replaceChildren();','async function draw(result){clearPhotoBoards();cards.replaceChildren();');
+ s=once(s,"onRestore(record);status.textContent='Favorite restored in Outfit Builder.';","onRestore(record);await draw(workflow.getResult());status.textContent='Favorite restored in Outfit Builder.';");
+ s=once(s,"const card=el('article'),avatar=el('div'),review=el('div'),preview=el('button','Review 2D preview '+(i+1)),save=el('button','Save outfit '+(i+1));", "const card=el('article'),photo=el('div'),save=el('button','Save outfit '+(i+1));");
+ s=once(s,"card.append(el('h3','Outfit '+(i+1)),el('p','Your new piece stays selected.'),avatar,review,preview);", "card.append(el('h3','Outfit '+(i+1)),el('p','Your new piece stays selected.'),photo);cards.append(card);try{await workflow.photoBoard(i,photo);}catch{photo.replaceChildren(el('p','Photo review required. Your outfit selections are unchanged.'));}");
+ s=once(s,"draw(await workflow.swap(i,slot,choice.value));","await draw(await workflow.swap(i,slot,choice.value));");
+ s=once(s,"   preview.onclick=()=>run(async()=>{await workflow.preview(i,avatar,review);status.textContent='Reviewed 2D preview. This does not show realistic fit.';});\n",'');
+ s=once(s,'card.append(save);cards.append(card);','card.append(save);cards.append(card);if(busy)disable(true);');
+ s=once(s,'draw(await workflow.generate(select.value));','await draw(await workflow.generate(select.value));');return s;
+}
+export function patchBoot(s){
+ s=once(s,',confirmation,sessionFit]=await Promise.all([',',confirmation,sessionFit,photoBoard]=await Promise.all([');
+ s=once(s,"import('../family-alpha-40/session-fit.mjs')", "import('../family-alpha-40/session-fit.mjs'),import('../work43-integration/verified-board.mjs')");
+ s=once(s,'  const aborts=new Set();','  const aborts=new Set();\n  const boards=new Set();\n  const clearPhotoBoards=()=>{for(const board of boards)board.dispose();boards.clear();};');
+ s=once(s,'   cancelPreviews(){for(const a of aborts)a.abort();aborts.clear();},','   cancelPreviews(){for(const a of aborts)a.abort();aborts.clear();clearPhotoBoards();},\n   async renderPhotoBoard(args){return photoBoard.renderVerifiedBoard({...args,register:board=>boards.add(board)});},');
+ s=once(s,'{root,workflow,readWardrobe:()=>items,addPhotos:', '{root,workflow,clearPhotoBoards,readWardrobe:()=>items,addPhotos:');
+ s=once(s,'const stop=()=>{observer.disconnect();align.stop();ui.stop();};','const stop=()=>{observer.disconnect();clearPhotoBoards();align.stop();ui.stop();};');return s;
+}
+async function list(d,p=''){let out=[];for(const e of await readdir(d,{withFileTypes:true})){if(e.isSymbolicLink())throw Error('Symlink forbidden');const path=p+e.name;if(e.isDirectory())out.push(...await list(join(d,e.name),path+'/'));else if(e.isFile())out.push(path);else throw Error('Invalid asset');}return out.sort();}
+export async function assertWork43HOLD(){await assert43HOLD();const patches={[BOOT]:patchBoot,[UI]:patchUI,[FLOW]:patchFlow};for(const [path,fn]of Object.entries(patches))assert.equal(await readFile(join(OUTPUT,path),'utf8'),fn(await readFile(join(PARENT,path),'utf8')));const base=await list(PARENT),out=await list(OUTPUT),extra=['policy.mjs','board.mjs','board.css','verified-board.mjs'].map(x=>PREFIX+x);assert.deepEqual(out,[...base,...extra,MARK].sort());for(const file of base)if(!patches[file])assert.equal(sha(await readFile(join(PARENT,file))),sha(await readFile(join(OUTPUT,file))),file);for(const file of extra)assert.deepEqual(await readFile(join(OUTPUT,file)),await readFile('research/work43-integration/'+file.slice(PREFIX.length)));const m=JSON.parse(await readFile(join(OUTPUT,MARK),'utf8'));assert.equal(m.releaseGate,'HOLD');assert.equal(m.deployAuthorized,false);assert.equal(m.wornPreviewEnabled,false);assert.equal(m.realAccountVerified,false);return m;}
+export async function buildWork43(){await assert43HOLD();await rm(OUTPUT,{recursive:true,force:true});await cp(PARENT,OUTPUT,{recursive:true});for(const [p,fn]of Object.entries({[BOOT]:patchBoot,[UI]:patchUI,[FLOW]:patchFlow}))await writeFile(join(OUTPUT,p),fn(await readFile(join(PARENT,p),'utf8')));await mkdir(join(OUTPUT,PREFIX),{recursive:true});for(const f of ['policy.mjs','board.mjs','board.css','verified-board.mjs'])await cp('research/work43-integration/'+f,join(OUTPUT,PREFIX,f));const m={releaseGate:'HOLD',deployAuthorized:false,wornPreviewEnabled:false,realAccountVerified:false,parent:'9b093fe3f86613c2876e7e1b1f135d7a52948c20'};await writeFile(join(OUTPUT,MARK),JSON.stringify(m,null,2));return assertWork43HOLD();}
+if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url))console.log('WORK43_HOLD',JSON.stringify(await buildWork43()));

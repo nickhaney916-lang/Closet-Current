@@ -1,0 +1,56 @@
+// Adapt the existing full synthetic import/atomic/favorites journey to the
+// photo-only UI. All authentication, cloud and classifier calls remain mocked.
+import {readFile,writeFile,rm} from 'node:fs/promises';import {spawnSync} from 'node:child_process';import {resolve,join} from 'node:path';import {createHash} from 'node:crypto';import assert from 'node:assert/strict';
+let s=await readFile('scripts/test-family-alpha-34-browser.mjs','utf8');
+function once(a,b){assert.equal(s.split(a).length,2,'Upstream browser contract changed: '+a.slice(0,70));s=s.replace(a,b);}
+once("resolve('dist-family-alpha-34-storage-HOLD')","resolve('dist-work43-photo-board-HOLD')");
+const start=s.indexOf('   for(let i=0;i<3;i++){'),end=s.indexOf('   const first=panel.locator',start);assert.ok(start>=0&&end>start);
+s=s.slice(0,start)+`   await panel.locator('.alpha29-options article').nth(2).locator('.work42-board').waitFor();
+   for(let i=0;i<3;i++){
+    const article=panel.locator('.alpha29-options article').nth(i);
+    await article.locator('.work42-board').waitFor();
+    assert.equal(await article.locator('.work42-grid img').count(),3);
+    assert.match(await article.locator('.work42-board p').innerText(),/not a virtual try-on/);
+    assert.equal(await article.locator('.family-alpha-avatar').count(),0);
+    if(i===0){await mkdir('benchmark/work43',{recursive:true});await article.screenshot({path:'benchmark/work43/'+name.toLowerCase()+'-'+width+'-synthetic-photo-board.png'});}
+   }
+`+s.slice(end);
+once("await first.getByRole('button',{name:'Swap shoes in outfit 1',exact:true}).click();await panel.getByRole('button',{name:'Save outfit 1',exact:true}).click();", "await first.getByRole('button',{name:'Swap shoes in outfit 1',exact:true}).click();await panel.locator('.alpha29-options article').nth(2).locator('.work42-board').waitFor();await panel.getByRole('button',{name:'Save outfit 1',exact:true}).click();");
+once("await panel.getByRole('button',{name:'Save outfit 1',exact:true}).click();await page.waitForFunction(()=>document.querySelector('#alpha29NewClothes [role=\"status\"]').textContent.includes('Outfit saved'));", `
+   const favoriteBefore=await page.evaluate(()=>new Promise((resolve,reject)=>{const r=db.transaction('state').objectStore('state').get('family-alpha-new-clothes-favorites');r.onsuccess=()=>resolve(r.result??null);r.onerror=()=>reject(r.error);}));
+   await page.evaluate(()=>{window.__work43Put=IDBObjectStore.prototype.put;IDBObjectStore.prototype.put=function(v,...rest){if(v?.id==='family-alpha-new-clothes-favorites')throw new DOMException('Synthetic failed favorite','QuotaExceededError');return window.__work43Put.call(this,v,...rest);};});
+   await panel.getByRole('button',{name:'Save outfit 1',exact:true}).click();
+   await page.waitForFunction(()=>document.querySelector('#alpha29NewClothes [role="status"]').textContent.includes('Your outfit is still here'));
+   assert.equal(await panel.locator('.work42-board').count(),3,'Failed save should keep the current boards');
+   assert.deepEqual(await page.evaluate(()=>new Promise((resolve,reject)=>{const r=db.transaction('state').objectStore('state').get('family-alpha-new-clothes-favorites');r.onsuccess=()=>resolve(r.result??null);r.onerror=()=>reject(r.error);})),favoriteBefore);
+   await page.evaluate(()=>{IDBObjectStore.prototype.put=window.__work43Put;delete window.__work43Put;});
+   await panel.getByRole('button',{name:'Save outfit 1',exact:true}).click();
+   await page.waitForFunction(()=>document.querySelector('#alpha29NewClothes [role="status"]').textContent.includes('Outfit saved'));
+`);
+once("   await page.evaluate(()=>{window.closetAuth.user=null;window.dispatchEvent(new Event('closet:alpha-session-changed'));});assert.ok(await panel.isHidden());", `
+   await page.evaluate(()=>{const garment=items.find(x=>x.id==='bottom1');if(!garment)throw Error('Fixture missing');garment.originalPhoto.image='data:image/jpeg;base64,AAAA';});
+   await panel.getByRole('button',{name:'Swap shoes in outfit 1',exact:true}).click();
+   await page.waitForFunction(()=>document.querySelector('#alpha29NewClothes [role="status"]').textContent.includes('Clothes or account changed'));
+   assert.equal(await panel.locator('.work42-board').count(),0,'Changed source must clear all boards');
+   await page.evaluate(()=>{window.closetAuth.user={id:'b2222222-2222-4222-8222-222222222222'};window.dispatchEvent(new Event('closet:alpha-session-changed'));});
+   assert.ok(await panel.isHidden());assert.equal(await panel.locator('img').count(),0);
+`);
+once("reviewedAvatars:3", "photoBoards:3");once("refinedFaceVisible:refinedOnly", "refinedFaceVisible:false");
+if(process.env.WORK43_LICENSED==='1'){
+ once("const mime={'.js':","const mime={'.jpg':'image/jpeg','.js':");
+ const ids=['commons-0001','commons-0003','commons-0016','commons-0021','commons-0043','commons-0033','commons-0082','commons-0088','commons-0089','commons-0094'];
+ const manifest=JSON.parse(await readFile('benchmark/locked-photo-sources.json','utf8')),licSources=[];
+ for(const id of ids){const x=manifest.find(y=>y.id===id);assert.ok(x?.verified&&x.attribution?.license);const b=await readFile('benchmark/fixtures/'+x.image);assert.equal(createHash('sha256').update(b).digest('hex'),x.sha256);licSources.push({id,image:x.image});}
+ once("else if(path==='/__qa__/storage-probes.mjs')file=resolve('research/family-alpha-34/storage-probes.mjs');", "else if(path==='/__qa__/storage-probes.mjs')file=resolve('research/family-alpha-34/storage-probes.mjs');else if(/^\\/\u005f\u005fqa\u005f\u005f\\/licensed\\/commons-\\d{4}\\.jpg$/.test(path))file=resolve('benchmark/fixtures',path.split('/').at(-1));");
+ once("for(const width of [320,390,430])", "for(const width of [390])");
+ once("await panel.locator('.alpha29-options article').nth(2).waitFor();", "try{await panel.locator('.alpha29-options article').nth(2).waitFor({timeout:10000});}catch(e){console.log('WORK43_LICENSED_DIAG',JSON.stringify(await page.evaluate(()=>({status:document.querySelector('#alpha29NewClothes [role=\"status\"]')?.textContent,count:items.length,categories:items.map(x=>x.category),types:items.map(x=>x.itemType),scores:items.map(x=>stylistItemScore(x,x.category==='Tops'?'top':x.category==='Bottoms'?'bottom':'shoes',{request:'Casual',season:'Fall',audience:'All',occasion:'Casual'},null)),photoHeaders:items.map(x=>{const p=x.originalPhoto?.image||x.image||'';const t=p.split(',')[1]||'';try{const d=atob(t);return [d.length,d.charCodeAt(0),d.charCodeAt(1),d.charCodeAt(d.length-2),d.charCodeAt(d.length-1)];}catch{return ['bad'];}})}))));throw e;}");
+ once("const newId=await page.evaluate(async({owner})=>{", "const newId=await page.evaluate(async({owner,licSources})=>{");
+ const a=s.indexOf('    function shot(category,n){'),z=s.indexOf('    const rows=',a);assert.ok(a>=0&&z>a);
+ const init=`    const real={};for(const row of licSources){const response=await fetch('/__qa__/licensed/'+row.image);if(!response.ok)throw Error('Licensed fixture missing');const blob=await response.blob();real[row.id]=await new Promise((resolve,reject)=>{const f=new FileReader();f.onload=()=>resolve(f.result);f.onerror=reject;f.readAsDataURL(blob);});}
+    function shot(category,n){const map={1:'commons-0003',2:'commons-0016',3:'commons-0021',4:'commons-0043',5:'commons-0033',6:'commons-0082',7:'commons-0088',8:'commons-0089',9:'commons-0094',19:'commons-0001'};return real[map[n]];}
+`;
+ s=s.slice(0,a)+init+s.slice(z);
+ once('   },{owner});',`   },{owner,licSources:${JSON.stringify(licSources)}});`);
+ s=s.replaceAll("'-synthetic-photo-board.png'", "'-LICENSED-photo-board-PROVISIONAL.png'");
+}
+const p=join('scripts','.work43-browser-generated.mjs');try{await writeFile(p,s);const r=spawnSync(process.execPath,[resolve(p)],{stdio:'inherit',timeout:300000,maxBuffer:8e6,env:{...process.env,CLOSET_35_OFFLINE:'1'}});if(r.error)throw r.error;if(r.status!==0)throw Error('Photo board full workflow failed '+r.status);}finally{await rm(p,{force:true});}
