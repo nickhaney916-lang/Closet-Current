@@ -56,3 +56,15 @@ test('new foreground module bundles only in offline candidate; prod remains unto
  const overlay=await readFile('research/work47/occlusion.mjs','utf8');
  assert.doesNotMatch(overlay,/(fetch\(|XMLHttpRequest|localStorage|indexedDB|toDataURL|image\.src|body\.innerHTML)/);
 });
+
+test('compiled app imports original vetted renderer from bundle root, while localhost uses source path',async()=>{
+ const source=await readFile('research/work47/occlusion.mjs','utf8');
+ const built=await readFile('dist-work47-garment-fit-HOLD/__alpha_research/work47/occlusion.mjs','utf8');
+ const from="from '../../public/family-alpha-2d-photo-renderer.mjs'";
+ const to="from '../../family-alpha-2d-photo-renderer.mjs'";
+ assert.equal(source.split(from).length,2);
+ assert.equal(built,source.replace(from,to));
+ const bundledRenderer=await readFile('dist-work47-garment-fit-HOLD/family-alpha-2d-photo-renderer.mjs','utf8');
+ assert.match(bundledRenderer,/export function createAlphaHumanoidFigure/);
+ assert.match(built,/createAlphaHumanoidFigure/);
+});
