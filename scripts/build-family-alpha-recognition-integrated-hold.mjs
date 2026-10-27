@@ -285,6 +285,29 @@ export async function buildDisabledIntegratedCandidate({root=resolve('.')}={}){
   await writeFile(join(target,targetPath),original);
   modified.push({path:targetPath,sha256:sha256(original)});
  }
+ // VISUAL QUALITY CANDIDATE ONLY. The pinned 2D renderer has an oval
+ // rectangle body. Substitute only these audited public geometry sources in
+ // the disabled HOLD preview; don't alter classification or staging Auth.
+ const humanAssets=[
+  ['family-alpha-2d-photo-renderer.mjs',"const body=document.createElement('div')",'data-humanoid'],
+  ['family-alpha-2d-layer-plan.mjs','top:{x:0.5,y:0.30,width:0.58,height:0.36}','Align with the anatomical front-facing']
+ ];
+ const avatarAssetHashes={};
+ for(const [name,oldAnchor,newAnchor] of humanAssets){
+  const upstream=source('public/'+name).toString('utf8');
+  const local=await readFile(join(base,'public',name),'utf8');
+  const targetPath=join(target,name);
+  const copied=await readFile(targetPath,'utf8');
+  if(copied!==upstream||!upstream.includes(oldAnchor)||upstream.includes(newAnchor)||
+     !local.includes(newAnchor)||local.includes(oldAnchor)||
+     (name.includes('photo-renderer')&&!local.includes('planPhotoLayers'))||
+     (name.includes('layer-plan')&&!local.includes('sourceIdentity')))
+   throw Error('Human figure quality overlay source drift: '+name);
+  await writeFile(targetPath,local);
+  avatarAssetHashes[name]=sha256(local);
+  modified.push({path:name,sha256:sha256(local),
+   safetyOverride:'LOCAL_2D_HUMANOID_QUALITY_CANDIDATE_HOLD_ONLY'});
+ }
  // The newer recognition UI includes an unrelated production AI try-on
  // endpoint. No paid service, hidden production routing or provider request
  // may be present in this staging candidate. Preserve the local figure and
@@ -392,6 +415,9 @@ export async function buildDisabledIntegratedCandidate({root=resolve('.')}={}){
   integrationBackupSha256:sha256(backup),
   stagePrivateAuthTransformationPreserved:true,
   stagedReviewed2DAvatarPresent:true,
+  humanoidPhotoLayerPreviewOnly:true,
+  visualQualityPhoneApproved:false,segmentationQualityPhoneApproved:false,
+  humanoidPreviewAssetSha256:avatarAssetHashes,
   workerRecoveryRef:WORKER_RECOVERY_REF,workerRecoveryProtocolGuarded:true,
   recoverableImageErrorIsolated:true,
   mobileReviewRef:REVIEW_REF,sourcePinnedManualReview:true,queuedManualSavePreserved:true,
@@ -416,12 +442,18 @@ export async function assertDisabledIntegratedCandidate({root=resolve('.')}={}){
  if(x.releaseGate!=='HOLD'||x.status!=='UNAPPROVED_COMBINED_SOURCE_OFFLINE_ONLY'||
   !x.stageAuthBlocked||!x.workerRecoveryProtocolGuarded||!x.recoverableImageErrorIsolated||
   x.workerRecoveryRef!==WORKER_RECOVERY_REF||x.mobileReviewRef!==REVIEW_REF||
-  !x.sourcePinnedManualReview||!x.queuedManualSavePreserved||!x.outerwearAutoSaveHold||!x.tunicDressAutoSaveHold||!x.modernHumanColorProofRetained||!x.wardrobeDraftAndBackupIntegrityPinned||!x.stagedReviewed2DAvatarPresent||
+  !x.sourcePinnedManualReview||!x.queuedManualSavePreserved||!x.outerwearAutoSaveHold||!x.tunicDressAutoSaveHold||!x.modernHumanColorProofRetained||!x.wardrobeDraftAndBackupIntegrityPinned||!x.stagedReviewed2DAvatarPresent||!x.humanoidPhotoLayerPreviewOnly||
+  x.visualQualityPhoneApproved||x.segmentationQualityPhoneApproved||
   !x.stagePrivateAuthTransformationPreserved||x.stagingProjectRef!==STAGE_ID||
   !x.missingApprovedCallback||!x.missingPublishableKey||
   x.cloudAuthorizationsTested||x.nativePhonesTested||x.customerDataRead||
   x.stagingRef!==STAGING_REF||x.recognitionRef!==RECOGNITION_REF)
   throw Error('Unsupported integrated candidate release claim');
+ for(const name of ['family-alpha-2d-photo-renderer.mjs','family-alpha-2d-layer-plan.mjs']){
+  const expected=x.humanoidPreviewAssetSha256?.[name];
+  if(typeof expected!=='string'||expected!==sha256(await readFile(join(target,name))))
+   throw Error('Unverified humanoid photo overlay module in HOLD artifact: '+name);
+ }
  const [app,index,auth,config,boot,backup]=await Promise.all(
   ['app.js','index.html','auth.js','alpha-stage-config.js','family-alpha-preview-boot.js','wardrobe-backup-engine.js'].map(p=>
    readFile(join(target,p),'utf8')));
