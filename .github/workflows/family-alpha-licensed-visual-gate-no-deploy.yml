@@ -1,0 +1,39 @@
+name: Family Alpha Licensed Garment Visual Acceptance HOLD - NO DEPLOY
+on:
+  pull_request:
+    paths:
+      - 'scripts/audit-family-alpha-licensed-visual-release-hold.mjs'
+      - 'docs/evidence/family-alpha-visual-inspection-20261026.json'
+      - 'tests/integration/family-alpha-licensed-visual-release-hold.test.mjs'
+      - 'docs/FAMILY-ALPHA-LICENSED-VISUAL-ACCEPTANCE-HOLD.md'
+      - '.github/workflows/family-alpha-licensed-visual-gate-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  strict-local-visual-evidence-hold:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Fetch ONLY original immutable licensed-gallery metadata revision
+        run: |
+          git fetch --no-tags origin bf731e7fe9e5b8b41864fbf686d84cc80e311b91
+          git cat-file -e bf731e7fe9e5b8b41864fbf686d84cc80e311b91:research/family-alpha-33/findings.json
+      - name: Fail closed on false approval, inaccurate source or unrendered cutout
+        run: node --test tests/integration/family-alpha-licensed-visual-release-hold.test.mjs
+      - name: Produce review blockers only — no personal photos or customer actions
+        run: |
+          node scripts/audit-family-alpha-licensed-visual-release-hold.mjs
+          node --input-type=module -e "import fs from 'node:fs';const x=JSON.parse(fs.readFileSync('benchmark/family-alpha-visual-release-gate-HOLD.json'));if(x.releaseGate!=='HOLD'||x.readyForFourAccounts||x.ownerApproved||x.photoCohort!==15||x.provisionalCutouts!==7||x.inspectedAccepted!==0)process.exit(1);console.log('HOLD — real-photo visual acceptance NOT passed');"
+      - name: Upload ONLY metadata-only visual gate report
+        uses: actions/upload-artifact@v4
+        with:
+          name: family-alpha-real-licensed-visual-HOLD-metadata-only
+          path: benchmark/family-alpha-visual-release-gate-HOLD.json
+          retention-days: 7
