@@ -1,0 +1,21 @@
+import {readFile,writeFile,cp,rm,mkdir} from 'node:fs/promises';
+import {execFileSync} from 'node:child_process';
+import {createHash} from 'node:crypto';
+import {assertDisabledIntegratedCandidate,OUTPUT as BASE} from './build-family-alpha-recognition-integrated-hold.mjs';
+const out='dist-family-alpha-29-hold';
+await assertDisabledIntegratedCandidate();
+const pinned=execFileSync('git',['show','0fb6ab04ab79c36d449acee21aaaf4318871d647:research/family-alpha-19/style-my-new-clothes.mjs']);
+if(!(await readFile('research/family-alpha-19/style-my-new-clothes.mjs')).equals(pinned))throw Error('PR #276 engine source changed');
+await rm(out,{recursive:true,force:true});await cp(BASE,out,{recursive:true});
+for(const folder of ['family-alpha-19','family-alpha-29'])await cp('research/'+folder,out+'/__alpha_research/'+folder,{recursive:true});
+// #276 uses existing #15 atomic swap unchanged.
+await mkdir(out+'/__alpha_research/family-alpha-15',{recursive:true});
+await cp('research/family-alpha-15/three-outfit-validator.mjs',out+'/__alpha_research/family-alpha-15/three-outfit-validator.mjs');
+let html=await readFile(out+'/index.html','utf8');
+if(!html.includes('<section id="closet"')||html.includes('alpha29NewClothes'))throw Error('Wardrobe markup changed');
+html=html.replace(/(<section id="closet"[^>]*>)/,'$1<section id="alpha29NewClothes" hidden aria-label="Style My New Clothes"></section>');
+html=html.replace('</head>','<link rel="stylesheet" href="__alpha_research/family-alpha-29/style.css"></head>');
+html=html.replace('</body>','<script src="__alpha_research/family-alpha-29/boot.js"></script></body>');
+await writeFile(out+'/index.html',html);
+await writeFile(out+'/alpha29-manifest.json',JSON.stringify({release:'HOLD',offlineOptInOnly:true,publicHostsBlocked:true,sourceEngine:'0fb6ab04ab79c36d449acee21aaaf4318871d647',sourceEngineSHA256:createHash('sha256').update(pinned).digest('hex'),stageAuthEnabled:false,physicalPhonesTested:false},null,2));
+console.log('ALPHA29_OFFLINE_HOLD',out);
