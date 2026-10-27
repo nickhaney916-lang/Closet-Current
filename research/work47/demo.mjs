@@ -9,6 +9,6 @@ async function show(id){const t=++ticket,r=manifest.rows.find(x=>x.id===id);docu
  $('#controlFigure').hidden=!r.profile;if(r.profile&&im){renderBaseline($('#control'),im,r);let state={dx:0,dy:0,scale:1};const draw=()=>renderLandmarkPrototype($('#after'),im,r.profile,state);draw();const grid=document.createElement('div');grid.className='w47-buttons';for(const [name,fn]of [['← Left',()=>state.dx-=3],['↑ Up',()=>state.dy-=4],['→ Right',()=>state.dx+=3],['− Smaller',()=>state.scale-=.025],['↓ Down',()=>state.dy+=4],['+ Larger',()=>state.scale+=.025],['Reset',()=>state={dx:0,dy:0,scale:1}]]){const b=document.createElement('button');b.textContent=name;b.onclick=()=>{const old={...state};fn();try{draw();}catch{state=old;} };grid.append(b);}$('#controls').append(grid);
  $('#status').textContent='REVIEW · Manually marked garment landmarks. Fit and edge quality require visual inspection.';
  }else{$('#after').textContent=r.category==='Shoes'?'Single side-view shoe: reference only. No duplicated or fabricated pair.':'Isolation or front-facing fit is unreliable. Keep the original-photo fallback.';$('#status').textContent='FAIL for worn-avatar acceptance · fallback retained.';}
- await $('#original').decode();document.body.dataset.ready='true';document.body.dataset.id=id;window.work47={row:r,image:im};
+ await $('#original').decode();if(t!==ticket)return;document.body.dataset.ready='true';document.body.dataset.id=id;window.work47={row:r,image:im};
 }
 $('#sample').onchange=()=>show($('#sample').value);await show($('#sample').value);

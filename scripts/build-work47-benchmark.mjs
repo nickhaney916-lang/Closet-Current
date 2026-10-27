@@ -4,6 +4,7 @@ const pin='53f2ad344dc56a1477e343531c423aed0e66c17d',clip='dd6bac3fa9ff640d4f562
 const git=p=>execFileSync('git',['show',pin+':'+p],{maxBuffer:20e6});const digest=b=>createHash('sha256').update(b).digest('hex');
 const findings=JSON.parse(git('research/family-alpha-33/findings.json'));
 const profiles=JSON.parse(await readFile('research/work47/profiles.json'));
+const assessment=JSON.parse(await readFile('research/work47/visual-assessment.json'));
 const locked=JSON.parse(await readFile('benchmark/locked-photo-sources.json'));
 const dest='benchmark/work47';await mkdir(dest+'/assets',{recursive:true});
 // Reuse exact Work30 border-connected method; never convert its REVIEW into approval.
@@ -29,6 +30,7 @@ for(const row of findings.rows){
 
  if(alpha){for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=y*w+x;if(p?.erase?.some(poly=>inside((x+.5)/w,(y+.5)/h,poly)))alpha[i]=0;rgba[i*4+3]=alpha[i];}await sharp(rgba,{raw:info}).png().toFile(dest+'/assets/'+row.id+'.png');}
  await writeFile(dest+'/assets/'+row.id+'.jpg',jpeg);
- rows.push({...row,attribution:lock.attribution,width:w,height:h,profile:p||null,baselineBounds,hasCutout:!!alpha,cutoutMethod:method,automaticStatus:auto.status,automaticReason:auto.reason||'unapproved proposal',originalPreserved:true,cutoutRGBChanged:false,cutoutSHA256:alpha?digest(await readFile(dest+'/assets/'+row.id+'.png')):null,ownerApproved:false});
+ const grade=assessment.rows.find(x=>x.id===row.id);if(!grade)throw Error('Visual assessment missing');
+ rows.push({...row,priorDecision:row.decision,decision:grade.decision,reason:grade.reason,assessor:assessment.assessor,attribution:lock.attribution,width:w,height:h,profile:p||null,baselineBounds,hasCutout:!!alpha,cutoutMethod:method,automaticStatus:auto.status,automaticReason:auto.reason||'unapproved proposal',originalPreserved:true,cutoutRGBChanged:false,cutoutSHA256:alpha?digest(await readFile(dest+'/assets/'+row.id+'.png')):null,ownerApproved:false});
 }
-await writeFile(dest+'/manifest.json',JSON.stringify({release:'HOLD',rows},null,2));console.log('WORK47_LICENSED_ASSETS',JSON.stringify({originals:rows.length,cutouts:rows.filter(x=>x.hasCutout).length,fitProfiles:Object.keys(profiles).length,automaticApproved:0}));
+await writeFile(dest+'/manifest.json',JSON.stringify({release:'HOLD',visualCounts:assessment.counts,assessor:assessment.assessor,rows},null,2));console.log('WORK47_LICENSED_ASSETS',JSON.stringify({originals:rows.length,cutouts:rows.filter(x=>x.hasCutout).length,fitProfiles:Object.keys(profiles).length,automaticApproved:0}));
