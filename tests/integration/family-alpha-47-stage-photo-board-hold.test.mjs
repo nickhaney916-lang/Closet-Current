@@ -128,3 +128,43 @@ test('forged RLS pass or attempted promotion of synthetic claim to real four-use
   assert.equal(result.deploymentAuthorized,false);
  }
 });
+
+
+test('actual live staging backup RPC metadata detects invoker/grant mismatch and refuses to certify cloud writes',async()=>{
+ const snapshot=await (await import('node:fs/promises')).readFile('docs/family-alpha-47/live-staging-metadata-20261027.json','utf8').then(JSON.parse);
+ const w=snapshot.backupRpcRuntime;
+ assert.equal(w.function,'public.save_closet_backup(bigint,jsonb)');
+ assert.equal(w.authenticatedCanExecute,true);
+ assert.equal(w.functionSecurityDefiner,false);
+ assert.equal(w.authenticatedCanInsert,false);
+ assert.equal(w.authenticatedCanUpdate,false);
+ assert.equal(w.authenticatedInheritsWriterPrivileges,false);
+ assert.equal(w.authenticatedHasWriterMembership,false);
+ assert.equal(w.liveRpcWriteAttempted,false);
+ assert.equal(w.actualHttpOutcome,'NOT TESTED');
+ const gate=assessMetadataEvidence(snapshot);
+ assert.equal(gate.evidenceConsistent,true);
+ assert.equal(gate.stageCloudBackupWriteStatus,'BLOCKED_PROBABLE_INVOKER_PRIVILEGE_MISMATCH');
+ assert.equal(gate.actualBackupSaveHttpVerified,false);
+ assert.equal(gate.decision,'HOLD');
+});
+test('neither a forged successful cloud write nor ad-hoc grant change silently clears the release blocker',async()=>{
+ const snapshot=await (await import('node:fs/promises')).readFile('docs/family-alpha-47/live-staging-metadata-20261027.json','utf8').then(JSON.parse);
+ for(const change of [
+  w=>w.authenticatedCanInsert=true,
+  w=>w.authenticatedCanUpdate=true,
+  w=>w.functionSecurityDefiner=true,
+  w=>w.authenticatedInheritsWriterPrivileges=true,
+  w=>w.authenticatedHasWriterMembership=true,
+  w=>w.likelyNormalAuthenticatedCloudBackupWritable=true,
+  w=>w.liveRpcWriteAttempted=true,
+  w=>w.actualHttpOutcome='PASS',
+  w=>w.status='READY',
+ ]){
+  const modified=structuredClone(snapshot);change(modified.backupRpcRuntime);
+  const outcome=assessMetadataEvidence(modified);
+  assert.equal(outcome.decision,'HOLD');
+  assert.equal(outcome.evidenceConsistent,false);
+  assert.equal(outcome.deploymentAuthorized,false);
+ }
+});
