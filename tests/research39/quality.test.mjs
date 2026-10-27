@@ -1,0 +1,6 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';import {assessPhoto} from '../../research/family-alpha-39/quality.mjs';
+function frame(fn,w=64,h=64){const a=new Uint8ClampedArray(w*h*4);for(let y=0;y<h;y++)for(let x=0;x<w;x++){let v=fn(x,y);let i=(y*w+x)*4;a[i]=a[i+1]=a[i+2]=v;a[i+3]=255;}return {width:1200,height:900,sampleWidth:w,sampleHeight:h,rgba:a};}
+test('detects measurable dark and bright images without rejecting',()=>{for(const [v,code] of [[10,'dark'],[250,'bright']]){const r=assessPhoto(frame(()=>v));assert.equal(r.hint.code,code);assert.equal(r.decision,'user-choice');}});
+test('reports small dimensions before subjective metrics',()=>{const r=assessPhoto({...frame((x,y)=>(x+y)%2?100:180),width:400,height:500});assert.equal(r.hint.code,'resolution');});
+test('smooth gradient warns possible softness while high-detail pattern does not',()=>{const soft=assessPhoto(frame(x=>x*3));const crisp=assessPhoto(frame((x,y)=>(x+y)%2?30:220));assert.equal(soft.hint.code,'soft');assert.equal(crisp.hint,null);});
+test('invalid decode throws without touching input pixels',()=>{const x=frame(()=>100),copy=x.rgba.slice();assessPhoto(x);assert.deepEqual(x.rgba,copy);assert.throws(()=>assessPhoto({...x,rgba:new Uint8Array(1)}));});
