@@ -45,11 +45,38 @@ try{
       const jpegData=canvas.toDataURL('image/jpeg',.92);
       const binary=atob(jpegData.split(',')[1]);
       const bytes=Uint8Array.from(binary,x=>x.charCodeAt(0));
-      const file=new File([bytes],'synthetic-shirt.jpg',{type:'image/jpeg'});
+      // Build an actually decoded, metadata-free synthetic JPEG from the
+      // canvas JPEG's original entropy/pixels by removing ONLY APP/COM
+      // segments in this TEST fixture. Product code never strips markers
+      // this way, nor does it silently modify user JPEG bytes.
+      const cleanedParts=[bytes.subarray(0,2)];
+      let offset=2,sawScan=false;
+      while(offset<bytes.length-2){
+       if(bytes[offset]!==255)throw Error('Unexpected synthetic JPEG stream');
+       const marker=bytes[offset+1];
+       if(marker===218){cleanedParts.push(bytes.subarray(offset));sawScan=true;break;}
+       const segmentLen=(bytes[offset+2]<<8)|bytes[offset+3];
+       if(segmentLen<2||offset+2+segmentLen>bytes.length)throw Error('Invalid synthetic segment');
+       if(!(marker>=224&&marker<=239)&&marker!==254)
+        cleanedParts.push(bytes.subarray(offset,offset+2+segmentLen));
+       offset+=2+segmentLen;
+      }
+      if(!sawScan)throw Error('Synthetic source missing image entropy');
+      const plainBytes=new Uint8Array(cleanedParts.reduce((n,p)=>n+p.length,0));
+      let pos=0;for(const part of cleanedParts){plainBytes.set(part,pos);pos+=part.length;}
+      if(!plainOriginalJPEG(plainBytes))throw Error('Metadata-free test JPEG rejected');
+      const jpegBinary=[];for(let p=0;p<plainBytes.length;p+=16384)
+       jpegBinary.push(String.fromCharCode(...plainBytes.subarray(p,p+16384)));
+      const expectedData='data:image/jpeg;base64,'+btoa(jpegBinary.join(''));
+      const file=new File([plainBytes],'synthetic-shirt.jpg',{type:'image/jpeg'});
       const output=await photoToJPEG(file);
-      const preserved=output===jpegData;
-      const safeSource=plainOriginalJPEG(bytes);
-      if(safeSource&&!preserved)throw Error('Safe JPEG altered during import');
+      const preserved=output===expectedData;
+      const safeSource=plainOriginalJPEG(plainBytes);
+      if(!preserved)throw Error('Original metadata-free JPEG bytes were recompressed');
+      const sourceAgain=new Image();sourceAgain.src=expectedData;
+      await sourceAgain.decode();
+      if(sourceAgain.naturalWidth!==2200||sourceAgain.naturalHeight!==1600)
+       throw Error('Metadata-free source pixels were not decodable');
       const restored=new Image();restored.src=output;await restored.decode();
       if(restored.naturalWidth!==2200||restored.naturalHeight!==1600)
        throw Error('Source photograph was silently downscaled');
@@ -57,8 +84,8 @@ try{
       // metadata must force a redraw to remove original metadata bytes.
       const gps=new TextEncoder().encode('Exif\0\0GPS-TEST-ONLY');
       const app=new Uint8Array(gps.length+4);app.set([255,225,0,gps.length+2]);app.set(gps,4);
-      const modified=new Uint8Array(bytes.length+app.length);
-      modified.set(bytes.subarray(0,2));modified.set(app,2);modified.set(bytes.subarray(2),2+app.length);
+      const modified=new Uint8Array(plainBytes.length+app.length);
+      modified.set(plainBytes.subarray(0,2));modified.set(app,2);modified.set(plainBytes.subarray(2),2+app.length);
       const gpsFile=new File([modified],'synthetic-gps-marker.jpg',{type:'image/jpeg'});
       const gpsOutput=await photoToJPEG(gpsFile);
       if(gpsOutput===('data:image/jpeg;base64,'+btoa(String.fromCharCode(...modified.subarray(0,32768)))))
@@ -75,7 +102,7 @@ try{
       const picture=document.createElement('img');
       picture.src=output;picture.style.cssText='width:100%;max-width:390px;height:auto';
       display.append(h,picture);
-      return {safeJpeg: safeSource, preserved,originalBytes:bytes.length,
+      return {safeJpeg: safeSource, preserved,originalBytes:plainBytes.length,
        outputBytes:gpsBytes.length,finalWidth:restored.naturalWidth,
        finalHeight:restored.naturalHeight,exifMarkerStripped:true};
      });
