@@ -7,6 +7,7 @@ on:
       - 'scripts/build-work43-photo-board-hold.mjs'
       - '.github/workflows/family-alpha-47-stage-photo-release-hold.yml'
       - 'docs/family-alpha-47/**'
+      - 'docs/family-alpha-48/**'
       - 'scripts/check-family-alpha-47-stage-photo-board-hold.mjs'
       - 'tests/integration/family-alpha-47-stage-photo-board-hold.test.mjs'
       - 'scripts/family-alpha-48-real-jwt-readonly-preflight.mjs'
