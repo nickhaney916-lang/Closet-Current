@@ -238,3 +238,35 @@ test('Tunic source overlay refuses duplicated or changed prior review gates',()=
   '  if(!ClothingDetails.validColor(item.color)){')),
   /admission anchors changed/);
 });
+
+test('complete disabled original-JPEG integration renders articulated humanoid behind unchanged photo pixels',async()=>{
+ const manifest=JSON.parse(await readFile(join(OUTPUT,'alpha-recognition-integration-hold-manifest.json'),'utf8'));
+ assert.equal(manifest.releaseGate,'HOLD');
+ assert.equal(manifest.humanoidPhotoLayerPreviewOnly,true);
+ assert.equal(manifest.visualQualityPhoneApproved,false);
+ assert.equal(manifest.segmentationQualityPhoneApproved,false);
+ const humanoid=await readFile(join(OUTPUT,'family-alpha-2d-photo-renderer.mjs'),'utf8');
+ const planner=await readFile(join(OUTPUT,'family-alpha-2d-layer-plan.mjs'),'utf8');
+ const original=execFileSync('git',['show',STAGING_REF+':public/family-alpha-2d-photo-renderer.mjs'],{encoding:'utf8'});
+ assert.match(original,/const body=document\.createElement\('div'\)/);
+ assert.doesNotMatch(humanoid,/const body=document\.createElement\('div'\)/);
+ assert.match(humanoid,/data-humanoid/);
+ for(const limb of ['left-leg','right-leg','left-arm','right-arm','head','neck','torso','left-foot','right-foot'])
+  assert.ok(humanoid.includes(limb),'Figure missing '+limb);
+ assert.ok(humanoid.includes('image.cloneNode(false)'),'Photo pixels remain image-backed');
+ assert.doesNotMatch(humanoid,/new Image\(|fetch\(|\.src\s*=/);
+ assert.ok(planner.includes('Align with the anatomical front-facing'));
+ assert.ok(planner.includes('sourceVersion')&&planner.includes('sourceIdentity'));
+ await assertDisabledIntegratedCandidate();
+});
+test('avatar preview quality metadata cannot falsely mark physical visual fit or matting approved',async()=>{
+ const path=join(OUTPUT,'alpha-recognition-integration-hold-manifest.json');
+ const original=await readFile(path,'utf8');
+ try{
+  for(const key of ['visualQualityPhoneApproved','segmentationQualityPhoneApproved']){
+   const changed=JSON.parse(original);changed[key]=true;
+   await writeFile(path,JSON.stringify(changed));
+   await assert.rejects(()=>assertDisabledIntegratedCandidate(),/Unsupported integrated candidate release claim/);
+  }
+ }finally{await writeFile(path,original);}
+});

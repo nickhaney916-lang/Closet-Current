@@ -57,6 +57,10 @@ jobs:
         run: node --test tests/integration/family-alpha-worker-recovery.test.mjs
       - name: Measure frozen archived strong-decision manual-review burden (metadata only, source pinned)
         run: node scripts/audit-family-alpha-review-burden.mjs
+      - name: Prepare immutable styling and avatar integration fixtures for full suite
+        run: |
+          node scripts/build-family-alpha-29-hold.mjs
+          node scripts/build-family-alpha-31-hold.mjs
       - name: Run stage + integration full Node regression suite
         run: node --test tests/*.test.cjs tests/*.test.mjs
       - name: Never label offline combined artifact as authorized release

@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {planPhotoLayers} from '../public/family-alpha-2d-layer-plan.mjs';
-import {fitPhotoLayerToSlot,renderPhotoLayers} from '../public/family-alpha-2d-photo-renderer.mjs';
+import {fitPhotoLayerToSlot,fitVisibleAlphaBoundsToSlot,measureTransparentGarmentBounds,renderPhotoLayers} from '../public/family-alpha-2d-photo-renderer.mjs';
 const garment=(slot,itemId)=>({slot,itemId,sourceIdentity:'synthetic',sourceVersion:'sha256-synthetic'});
 const approx=(a,b)=>assert.ok(Math.abs(a-b)<1e-9,`${a} should approximately equal ${b}`);
 
@@ -49,7 +49,7 @@ class FakeImage extends FakeEl{
 
 test('renderer applies actual contained geometry, not a stretched image box',()=>{
  const previousDocument=globalThis.document,previousImage=globalThis.HTMLImageElement;
- globalThis.document={createElement:()=>new FakeEl()};globalThis.HTMLImageElement=FakeImage;
+ globalThis.document={createElement:()=>new FakeEl(),createElementNS:()=>new FakeEl()};globalThis.HTMLImageElement=FakeImage;
  try{
   const container=new FakeEl();
   const outfits=[garment('layer','j'),garment('top','t'),garment('bottom','b'),garment('shoes','s')];
@@ -57,6 +57,13 @@ test('renderer applies actual contained geometry, not a stretched image box',()=
   assert.equal(renderPhotoLayers(container,outfits,images),4);
   const avatar=container.children[0];
   assert.equal(avatar.style.aspectRatio,'3/5');
+  const human=avatar.children[0];
+  assert.equal(human.attributes['data-humanoid'],'articulated-2d-v1');
+  assert.equal(human.attributes.viewBox,'0 0 360 600');
+  const parts=human.children.map(el=>el.attributes['data-part']).filter(Boolean);
+  for(const essential of ['head','neck','torso','left-arm','right-arm','left-hand','right-hand','left-leg','right-leg','left-foot','right-foot'])
+   assert.ok(parts.includes(essential),'Missing anatomical part: '+essential);
+  assert.equal(parts.length,new Set(parts).size,'Figure parts must be individually identifiable');
   const rendered=avatar.children.slice(1),slots=planPhotoLayers(outfits);
   assert.deepEqual(rendered.map(x=>x.dataset.slot),['shoes','bottom','top','layer']);
   for(let i=0;i<rendered.length;i++){
@@ -75,4 +82,84 @@ test('renderer does not fetch, rewrite, or invent original garment image URLs',(
  const source=readFileSync(new URL('../public/family-alpha-2d-photo-renderer.mjs',import.meta.url),'utf8');
  assert.doesNotMatch(source,/fetch\(|new Image\(|\.src\s*=/);
  assert.match(source,/cloneNode\(false\)/);
+});
+
+test('photo slots are aligned beneath the humanoid face and over anatomically relevant zones',()=>{
+ const slots=Object.fromEntries(planPhotoLayers([
+  garment('shoes','s'),garment('bottom','b'),garment('top','t'),
+  garment('layer2','j')
+ ]).map(x=>[x.slot,x]));
+ const virtualHeight=600;
+ assert.ok((slots.top.y-slots.top.height/2)*virtualHeight>=115,
+  'Shirt slot must begin under the face/neck rather than cover the head');
+ assert.ok(slots.bottom.y>slots.top.y,'Bottoms must sit below shirt');
+ assert.ok(slots.shoes.y>slots.bottom.y,'Shoes must sit below hips and shins');
+ assert.ok((slots.shoes.y+slots.shoes.height/2)*virtualHeight<=595,
+  'Shoes should stay inside frame');
+ assert.ok(slots.layer2.width>slots.top.width,'Jacket should surround the base top');
+ assert.ok(slots.layer2.y>=slots.top.y,'Outerwear should align at shoulders/chest');
+ const [dress]=planPhotoLayers([garment('dress','d')]);
+ assert.ok(dress.y-dress.height/2<slots.top.y,'Dress reaches chest');
+ assert.ok(dress.y+dress.height/2>slots.bottom.y,'Dress extends toward legs');
+});
+
+test('large transparent margins do not force small floating clothes: visibly fit without altering source proportions',()=>{
+ const slot=planPhotoLayers([garment('top','real-reviewed-shirt')])[0];
+ const full=fitPhotoLayerToSlot(slot,240,320);
+ const bounds={left:60,right:180,top:40,bottom:280};
+ const fit=fitVisibleAlphaBoundsToSlot(slot,240,320,bounds);
+ assert.ok(fit.width>full.width,'Visible source footprint should be larger');
+ assert.ok(fit.width<=full.width*1.35+1e-12,'Quality cap prevents heavy upscaling');
+ approx(fit.width*3/(fit.height*5),240/320);
+ approx(fit.x,slot.x,'Symmetric source margins remain centered');
+ approx(fit.y,slot.y);
+ // Visible footprint, not transparent image rectangle, is positioned in slot.
+ assert.ok((bounds.right-bounds.left)*fit.width/240<=slot.width+1e-12);
+ assert.ok((bounds.bottom-bounds.top)*fit.height/320<=slot.height+1e-12);
+});
+test('asymmetric transparent margins align the actual clothing center with torso rather than image center',()=>{
+ const slot=planPhotoLayers([garment('top','real-reviewed-shirt')])[0];
+ const bounds={left:60,right:160,top:25,bottom:280};
+ const fit=fitVisibleAlphaBoundsToSlot(slot,240,320,bounds);
+ const apparentX=fit.x+((bounds.left+bounds.right)/2-120)*fit.width/240;
+ const apparentY=fit.y+((bounds.top+bounds.bottom)/2-160)*fit.height/320;
+ approx(apparentX,slot.x);
+ approx(apparentY,slot.y);
+ assert.ok(fit.x>slot.x,'Clothing at left of frame shifts its source image right');
+});
+test('invalid/no-alpha/full-frame/sliver bounds never falsely claim a fitted garment',()=>{
+ const slot=planPhotoLayers([garment('layer2','safe-jacket')])[0];
+ const standard=fitPhotoLayerToSlot(slot,320,420);
+ for(const b of [null,{left:-1,top:0,right:300,bottom:400},
+  {left:0,top:0,right:320,bottom:420},
+  {left:150,top:0,right:160,bottom:420},
+  {left:80,top:20,right:80,bottom:300},
+  {left:60,top:NaN,right:200,bottom:400}]){
+  assert.deepEqual(fitVisibleAlphaBoundsToSlot(slot,320,420,b),standard);
+ }
+});
+test('alpha measurement never reads opaque JPEG or remote image and fails safely on unsupported canvas',()=>{
+ for(const image of [
+  {complete:true,naturalWidth:160,naturalHeight:200,src:'data:image/jpeg;base64,test'},
+  {complete:true,naturalWidth:160,naturalHeight:200,src:'https://elsewhere.invalid/a.png'},
+  {complete:false,naturalWidth:160,naturalHeight:200,src:'data:image/png;base64,test'}
+ ])assert.equal(measureTransparentGarmentBounds(image,{createElement:()=>{throw Error('should not be invoked');}}),null);
+ const image={complete:true,naturalWidth:160,naturalHeight:200,src:'data:image/png;base64,test'};
+ assert.equal(measureTransparentGarmentBounds(image,{createElement:()=>({getContext:()=>{throw Error('no canvas');}})}),null);
+});
+test('synthetic PNG alpha bbox measurement reads only opacity and returns source-space geometry',()=>{
+ const width=144,height=144,pixels=new Uint8ClampedArray(width*height*4);
+ for(let y=28;y<116;y++)for(let x=36;x<108;x++)pixels[(y*width+x)*4+3]=255;
+ let draws=0;
+ const image={complete:true,naturalWidth:200,naturalHeight:200,src:'data:image/png;base64,AAAA'};
+ const bounds=measureTransparentGarmentBounds(image,{createElement:tag=>{
+  assert.equal(tag,'canvas');
+  return {getContext:()=>({drawImage:()=>{draws++;},getImageData:()=>({data:pixels})})};
+ }});
+ assert.equal(draws,1);
+ assert.ok(bounds!==null,'Visible sampled alpha should create real bounds');
+ approx(bounds.left,36/144*200);
+ approx(bounds.right,108/144*200);
+ approx(bounds.top,28/144*200);
+ approx(bounds.bottom,116/144*200);
 });
