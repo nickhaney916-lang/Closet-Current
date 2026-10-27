@@ -48,19 +48,27 @@ export function patchApp(original){
    " window.addEventListener('pagehide',()=>{photoAdvisories=new WeakMap();});",
    "}"
   ].join('\n'));
- s=once(s,
-  "  const adjust=node('button','Adjust','secondary');adjust.type='button';adjust.onclick=()=>adjustPhoto(item);body.append(adjust,cropButton(item));",
-  [
+ // The compiled candidate's Adjust button differs from the ordinary
+ // public source because pinned mobile review overlays have already landed.
+ // Confine insertion to one existing, fully rendered photo-results card,
+ // leaving approved/mobile Adjust markup, source hashing and save intact.
+ const start=s.indexOf('function renderPhotoResults(grid,results){');
+ const end=s.indexOf('\nfunction render(){',start);
+ if(start<0||end<start||s.indexOf('function renderPhotoResults(grid,results){',start+1)>=0)
+  throw Error('Source-backed photo card function cannot be uniquely isolated');
+ let block=s.slice(start,end);
+ block=once(block,'  card.append(image,body);grid.append(card);',[
    "  // Local optional advice never saves, rejects, uploads, or alters clothing.",
    "  const advisory=typeof photoAdvisories!=='undefined'?photoAdvisories.get(item):null;",
    "  if(!saved&&advisory?.source===(item.recognitionPhoto?.image||item.image)&&advisory.hint?.text){",
    "   body.append(node('p','Photo tip: '+advisory.hint.text,'fine capture-photo-advice'));",
    "   const retake=node('button','Take a clearer photo','secondary');retake.type='button';",
-   "   retake.onclick=()=>switchView('scan'); // Existing photo remains available.",
+   "   retake.onclick=()=>switchView('scan'); // The original photo stays available.",
    "   body.append(retake);",
    "  }",
-   "  const adjust=node('button','Adjust','secondary');adjust.type='button';adjust.onclick=()=>adjustPhoto(item);body.append(adjust,cropButton(item));"
+   "  card.append(image,body);grid.append(card);"
   ].join('\n'));
+ s=s.slice(0,start)+block+s.slice(end);
  s=once(s,
   "  const quality=await checkPhoto(item.recognitionPhoto?.image||item.image);\n  if(!batch.some(x=>x.id===item.id))return;",
   [
