@@ -1,0 +1,158 @@
+import {assert41HOLD,OUTPUT as PARENT} from './build-family-alpha-41-original-jpeg-hold.mjs';
+import {readFile,writeFile,cp,rm,readdir} from 'node:fs/promises';
+import {join,resolve} from 'node:path';
+import {fileURLToPath} from 'node:url';
+import {createHash} from 'node:crypto';
+import assert from 'node:assert/strict';
+/** Offline only. Preserve every inherited source except exact private app and photo checker. */
+export const OUTPUT='dist-family-alpha-42-photo-advice-HOLD';
+const APP='app.js',CHECK='photo-check.js',MARKER='alpha42-photo-advice-HOLD-manifest.json';
+const PARENT_SHA='c093dff392a6c1021f7cc072a37f6e106992c1e0';
+const hash=t=>createHash('sha256').update(t).digest('hex');
+function once(s,a,b){
+ if(s.split(a).length!==2)throw Error('Reviewed source drift '+a.slice(0,80));
+ return s.replace(a,b);
+}
+export function patchCheck(original,advice){
+ if(!advice.startsWith('/** Work #39')||!advice.includes('function alphaCaptureAdvice('))
+  throw Error('Untrusted or duplicate advisory function');
+ const from=" return {...photoQuality(pixels),colorEstimate,aspect:decoded.width/decoded.height};";
+ const into=[
+ // Existing color/16-pixel signature and palette logic stay untouched.
+ " let captureAdvice=null;",
+ " try{",
+ "  const factor=Math.min(1,128/Math.max(decoded.width,decoded.height));",
+ "  const adviceCanvas=document.createElement('canvas');",
+ "  adviceCanvas.width=Math.max(3,Math.round(decoded.width*factor));",
+ "  adviceCanvas.height=Math.max(3,Math.round(decoded.height*factor));",
+ "  const c=adviceCanvas.getContext('2d',{willReadFrequently:true});",
+ "  if(c){c.drawImage(decoded,0,0,adviceCanvas.width,adviceCanvas.height);",
+ "   captureAdvice=alphaCaptureAdvice({width:decoded.width,height:decoded.height,",
+ "    sampleWidth:adviceCanvas.width,sampleHeight:adviceCanvas.height,",
+ "    rgba:c.getImageData(0,0,adviceCanvas.width,adviceCanvas.height).data});",
+ "  }",
+ " }catch{/* Optional advice cannot block recognition or source review. */}",
+ " return {...photoQuality(pixels),colorEstimate,",
+ "  aspect:decoded.width/decoded.height,captureAdvice};"
+ ].join('\n');
+ return once(original,from,into)+'\n'+advice+'\n';
+}
+export function patchApp(original){
+ let s=once(original,
+  "const recognitionState={phase:'idle',percent:null,activeId:null};",
+  [
+   "const recognitionState={phase:'idle',percent:null,activeId:null};",
+   "let photoAdvisories=new WeakMap();",
+   "if(typeof window!=='undefined'&&window.addEventListener){",
+   " window.addEventListener('closet:alpha-session-changed',()=>{photoAdvisories=new WeakMap();});",
+   " window.addEventListener('pagehide',()=>{photoAdvisories=new WeakMap();});",
+   "}"
+  ].join('\n'));
+ // The compiled candidate's Adjust button differs from the ordinary
+ // public source because pinned mobile review overlays have already landed.
+ // Confine insertion to one existing, fully rendered photo-results card,
+ // leaving approved/mobile Adjust markup, source hashing and save intact.
+ const start=s.indexOf('function renderPhotoResults(grid,results){');
+ const end=s.indexOf('\nfunction render(){',start);
+ if(start<0||end<start||s.indexOf('function renderPhotoResults(grid,results){',start+1)>=0)
+  throw Error('Source-backed photo card function cannot be uniquely isolated');
+ let block=s.slice(start,end);
+ block=once(block,'  card.append(image,body);grid.append(card);',[
+   "  // Local optional advice never saves, rejects, uploads, or alters clothing.",
+   "  const advisory=typeof photoAdvisories!=='undefined'?photoAdvisories.get(item):null;",
+   "  if(!saved&&advisory?.source===recognitionSourcePhoto(item)&&advisory.hint?.text){",
+   "   body.append(node('p','Photo tip: '+advisory.hint.text,'fine capture-photo-advice'));",
+   "   const retake=node('button','Take a clearer photo','secondary');retake.type='button';",
+   "   retake.onclick=()=>switchView('scan'); // The original photo stays available.",
+   "   body.append(retake);",
+   "  }",
+   "  card.append(image,body);grid.append(card);"
+  ].join('\n'));
+ s=s.slice(0,start)+block+s.slice(end);
+ // Recognition's authoritative source is the original linked image/crop,
+ // not necessarily item.image or a generated transparent cutout. Do not
+ // surface an old photo's hint when user/session/category changed mid-scan.
+ s=once(s,
+  [
+   "  if(!categoryStillCurrent()){",
+   "   item.localAnalyzed=false;item.scanFailed=true;",
+   "   item.localStatus='Photo or category changed while scanning. Retry to identify the new original photo.';",
+   "   return true;",
+   "  }"
+  ].join('\n'),
+  [
+   "  if(!categoryStillCurrent()){",
+   "   item.localAnalyzed=false;item.scanFailed=true;",
+   "   item.localStatus='Photo or category changed while scanning. Retry to identify the new original photo.';",
+   "   return true;",
+   "  }",
+   "  if(typeof photoAdvisories!=='undefined'){",
+   "   if(quality.captureAdvice?.hint)photoAdvisories.set(item,{source:sourcePhoto,hint:quality.captureAdvice.hint});",
+   "   else photoAdvisories.delete(item);",
+   "   render(); // Optional tip; existing recognition and owner checks remain authoritative.",
+   "  }"
+  ].join('\n'));
+ if(!s.includes('queueAutomatic(item);')||!s.includes('function captureTick(')||
+    !s.includes('function takePhoto(')||!s.includes('async function recognizeItem('))
+  throw Error('Recognized source or capture cadence was lost');
+ return s;
+}
+async function files(dir,prefix=''){
+ const out=[];
+ for(const e of await readdir(dir,{withFileTypes:true})){
+  if(e.isSymbolicLink())throw Error('Symlink in private candidate');
+  const name=prefix+e.name;
+  if(e.isDirectory())out.push(...await files(join(dir,e.name),name+'/'));
+  else if(e.isFile())out.push(name);
+  else throw Error('Unsafe output type');
+ }
+ return out.sort();
+}
+async function expected(){
+ const advice=await readFile('research/family-alpha-42/photo-advice-classic.js','utf8');
+ return {
+  [APP]:patchApp(await readFile(join(PARENT,APP),'utf8')),
+  [CHECK]:patchCheck(await readFile(join(PARENT,CHECK),'utf8'),advice)
+ };
+}
+export async function assert42HOLD(){
+ await assert41HOLD();
+ const [before,after,targets,raw]=await Promise.all([
+  files(PARENT),files(OUTPUT),expected(),readFile(join(OUTPUT,MARKER),'utf8')
+ ]);
+ assert.deepEqual(after,[...before,MARKER].sort());
+ const manifest=JSON.parse(raw);
+ assert.equal(manifest.releaseGate,'HOLD');assert.equal(manifest.parentPin,PARENT_SHA);
+ assert.equal(manifest.optionalAdviceOnly,true);
+ for(const k of ['automaticPhotoDiscard','serverPhotoUpload','originalJpegModified',
+  'stagingDeployed','ownerVisualApproved','physicalPhoneApproved'])
+  assert.equal(manifest[k],false);
+ for(const path of before){
+  const actual=await readFile(join(OUTPUT,path));
+  if(path===APP||path===CHECK){
+   assert.equal(actual.toString('utf8'),targets[path]);
+   assert.equal(manifest.overlays[path],hash(actual));
+  }else assert.equal(hash(actual),hash(await readFile(join(PARENT,path))),
+   'Unauthorized camera, wardrobe, JWT, source photo, mask or styling change '+path);
+ }
+ return manifest;
+}
+export async function build42HOLD(){
+ await assert41HOLD();
+ const targets=await expected();
+ await rm(OUTPUT,{recursive:true,force:true});
+ await cp(PARENT,OUTPUT,{recursive:true});
+ for(const [path,body]of Object.entries(targets))await writeFile(join(OUTPUT,path),body);
+ const manifest={
+  releaseGate:'HOLD',parentPin:PARENT_SHA,
+  overlays:Object.fromEntries(Object.entries(targets).map(([p,v])=>[p,hash(v)])),
+  optionalAdviceOnly:true,automaticPhotoDiscard:false,
+  serverPhotoUpload:false,originalJpegModified:false,
+  stagingDeployed:false,ownerVisualApproved:false,physicalPhoneApproved:false,
+  autoCaptureCadenceUnchanged:true,recognitionUsesOriginalBeforeCutout:true
+ };
+ await writeFile(join(OUTPUT,MARKER),JSON.stringify(manifest,null,2)+'\n');
+ return assert42HOLD();
+}
+if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url))
+ console.log('FAMILY_ALPHA_42_ADVICE_HOLD',JSON.stringify(await build42HOLD()));
