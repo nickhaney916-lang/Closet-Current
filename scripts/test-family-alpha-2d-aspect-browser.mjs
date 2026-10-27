@@ -58,11 +58,16 @@ try{
      if(renderPhotoLayers(stage,selections,images)!==4)throw Error('Four layers failed');
      const frame=stage.firstElementChild,frameBox=frame.getBoundingClientRect();
      const human=frame.querySelector('svg[data-humanoid="articulated-2d-v1"]');
-     if(!human||human.querySelectorAll('[data-part]').length<12||
+     if(!human||human.querySelectorAll('[data-part]').length<25||
+        !human.querySelector('[data-part="left-eye"]')||
+        !human.querySelector('[data-part="right-eye"]')||
+        !human.querySelector('[data-part="left-fingers"]')||
+        !human.querySelector('[data-part="nose"]')||
+        !human.querySelector('[data-part="mouth"]')||
         !human.querySelector('[data-part="head"]')||!human.querySelector('[data-part="left-arm"]')||
         !human.querySelector('[data-part="right-arm"]')||!human.querySelector('[data-part="left-leg"]')||
         !human.querySelector('[data-part="right-leg"]'))
-      throw Error('Old blob placeholder is not a true articulated humanoid');
+      throw Error('Neutral facial landmarks and articulated body not present');
      if(Math.abs(human.getBoundingClientRect().width-frameBox.width)>1)
       throw Error('Humanoid does not share actual clothing frame');
      const drawn=[...frame.querySelectorAll('img')],planned=planPhotoLayers(selections);
@@ -332,8 +337,11 @@ try{
       if(renderPhotoLayers(stage,selected,pngs)!==selected.length)
        throw Error('Synthetic visual example layer count changed');
       const human=stage.querySelector('svg[data-humanoid="articulated-2d-v1"]');
-      if(!human||stage.querySelectorAll('img').length!==selected.length)
-       throw Error('No displayed human and photo overlays in actual screenshot');
+      if(!human||stage.querySelectorAll('img').length!==selected.length||
+       !human.querySelector('[data-part="left-eye"]')||
+       !human.querySelector('[data-part="right-eye"]')||
+       !human.querySelector('[data-part="right-fingers"]'))
+       throw Error('Missing face, hands or source PNG overlays in visual screenshot');
       if([...stage.querySelectorAll('img')].some(el=>!
         el.src.startsWith('data:image/png;base64,')))
        throw Error('Nonlocal/unexpected source slipped into screenshot');
