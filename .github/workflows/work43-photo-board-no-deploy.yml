@@ -40,6 +40,10 @@ jobs:
           node scripts/build-work43-photo-board-hold.mjs
       - run: node --test tests/work43/*.test.mjs
       - run: node scripts/test-work43-full-browser.mjs
+      - name: Licensed garment photo journey (390px emulation)
+        run: node scripts/test-work43-full-browser.mjs
+        env:
+          WORK43_LICENSED: '1'
       - uses: actions/upload-artifact@v4
         if: always()
         with:
