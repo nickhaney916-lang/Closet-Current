@@ -14,7 +14,7 @@ The #276 module is included **byte-for-byte unchanged**, with its existing #15 s
 
 Workflow: capture/import → existing recognition review/Adjust → existing atomic garment save → My Closet's new-piece selector → Style My New Clothes → 1–3 options. Each card keeps the pin visible and offers swaps only for other slots. Review 2D preview uses the existing original-JPEG preparation, explicit cutout approval for every garment, source attestation and existing 2D renderer. It must show an unavailable/error state if review fails; no generic avatar is called a photo preview. Extra review remains necessary until the main thread supplies approved source-bound presentations; it is not skipped for convenience.
 
-Buttons/selects have minimum 48px height. UI requires explicit Save outfit, then confirms only after durable completion. Favorites retain only board IDs, source hashes and metadata, never duplicate original photographs. Restore explicitly selects the favorite in the existing Outfit Builder.
+Buttons/selects have minimum 48px height. UI requires explicit Save outfit, then confirms only after durable completion. Favorites retain only board IDs, source hashes and metadata fingerprints, never duplicate original photographs. Restore explicitly selects the favorite in the existing Outfit Builder.
 
 ## Data and operation safety
 
@@ -32,7 +32,7 @@ Client checks and synthetic mocks do not prove server RLS or deployed authorizat
 
 - Source-pinned staging/combined/protected-preview builders: PASS, Auth and rollout remain OFF.
 - Separate #29 builder: PASS; #276 engine byte equality enforced.
-- Full stacked Node suite: **559/559 PASS**, including 9 new workflow/source tests.
+- Full stacked Node suite: **561/561 PASS**, including 11 new workflow/source tests.
 - Additional fake-indexeddb integration suite: **5/5 PASS** (save/restore, DB mismatch, concurrent board edit, failed-write retry, account change while queued). This models IndexedDB, not browser quota/eviction or cloud.
 - New browser script executes the actual compiled app import → Adjust save → panel → three reviewed avatars → shoe swap → favorite save → reload/restore. Auth/cloud/classification are explicitly local synthetic mocks. Chromium/WebKit execution is pending an exact-head CI result; no local browser binaries are available.
 - Physical phones, live model accuracy, true Auth/RLS, live cloud restoration and family garments: **NOT TESTED**.

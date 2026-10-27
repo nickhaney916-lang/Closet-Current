@@ -28,7 +28,7 @@ try{for(const [name,engine]of [['Chromium',chromium],['WebKit',webkit]]){
     await writeAll(rows);items=rows;render();
     // Classifier intentionally mocked; actual import, original JPEG, Adjust and save remain real.
     queueAutomatic=item=>{item.localAnalyzed=true;item.recognitionReviewRequired=true;};scheduleMemoryReview=()=>{};
-    const photo=shot('Tops',19),blob=await (await fetch(photo)).blob();await importClothingPhotos([new File([blob],'synthetic-new-top.jpg',{type:'image/jpeg'})]);return batch.at(-1).id;
+    const photo=shot('Tops',19),bytes=Uint8Array.from(atob(photo.split(',')[1]),x=>x.charCodeAt(0));await importClothingPhotos([new File([bytes],'synthetic-new-top.jpg',{type:'image/jpeg'})]);return batch.at(-1).id;
    },{owner});
    const card=page.locator('#reviewGrid article.photo-result').last();await card.getByRole('button',{name:'Adjust',exact:true}).click();
    const dialog=page.locator('dialog.photo-adjust');await dialog.getByLabel('Item name',{exact:true}).fill('New blue top');await dialog.getByLabel('Main category',{exact:true}).selectOption('Tops');await dialog.getByLabel('Item type',{exact:true}).selectOption('T-shirt');await dialog.getByLabel('Color',{exact:true}).fill('Blue');

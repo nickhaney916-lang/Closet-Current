@@ -1,4 +1,5 @@
 import {test} from 'node:test';
+import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {execFileSync} from 'node:child_process';
@@ -12,3 +13,15 @@ test('favorite references restore with source verification and preserve prior fa
 test('removal, changed details or photo invalidate old recommendations and favorites',async()=>{for(const change of [h=>h.clothes.shift(),h=>h.clothes[0].color='Red',h=>h.clothes[0].pattern='Striped',h=>h.clothes[0].image=h.clothes[1].image]){const h=harness();await h.client.generate('pin');const f=await h.client.save(0),writes=h.writes;change(h);assert.throws(()=>h.client.getResult());await assert.rejects(h.client.save(0));await assert.rejects(h.client.restore(f));assert.equal(h.writes,writes);}});
 test('foreign items, favorites and pending account changes fail closed',async()=>{const foreign=harness();foreign.clothes[1].ownerId=B;await assert.rejects(foreign.client.generate('pin'));const h=harness();await h.client.generate('pin');const f=await h.client.save(0);f.ownerId=B;await assert.rejects(h.client.restore(f));let release;h.verify=()=>new Promise(r=>release=r);const request=h.client.generate('pin');h.ctx={...h.ctx,authenticatedUserId:B,currentUserId:B,cloudOwnerId:B,indexedDbName:'closet-current-user-'+B,sessionGeneration:2};release({ownerId:A,sessionGeneration:1});await assert.rejects(request);assert.equal(h.writes,1);});
 test('interrupted favorite save cannot claim success and leaves wardrobe unchanged',async()=>{const h=harness(),original=JSON.stringify(h.clothes);h.deps.store.saveFavorite=async()=>{throw Error('synthetic interruption');};await h.client.generate('pin');await assert.rejects(h.client.save(0));assert.equal(h.favorites.length,0);assert.equal(JSON.stringify(h.clothes),original);});
+
+test('offline UI is hard off on staging/public hosts and without explicit opt-in',async()=>{
+ const boot=readFileSync('research/family-alpha-29/boot.js','utf8');
+ for(const [hostname,flag]of [['closet-current-staging.pages.dev',true],['closet-current.pages.dev',true],['localhost',false],['127.0.0.1',undefined]]){
+  await vm.runInNewContext(boot,{location:{hostname},window:{__CLOSET_ALPHA29_OFFLINE__:flag},document:{getElementById(){throw Error('Blocked boot accessed private UI');}}});
+ }
+});
+test('candidate leaves inherited auth/recognition/avatar bytes unchanged',()=>{
+ const base='dist-family-alpha-recognition-integration-hold/',out='dist-family-alpha-29-hold/';
+ for(const name of ['auth.js','cloud-backup.js','app.js','family-alpha-2d-photo-renderer.mjs','family-alpha-2d-saved-board.mjs','alpha-stage-config.js'])assert.equal(readFileSync(out+name,'utf8'),readFileSync(base+name,'utf8'),name);
+ const manifest=JSON.parse(readFileSync(out+'alpha29-manifest.json','utf8'));assert.equal(manifest.release,'HOLD');assert.equal(manifest.stageAuthEnabled,false);
+});
