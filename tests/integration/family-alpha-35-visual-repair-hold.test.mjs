@@ -88,3 +88,32 @@ test('bad release claims and tampered preview scripts cannot be marked ready',as
  }finally{await writeFile(m,before);}
  await assert35HOLD();
 });
+
+test('human-traced neckline polygon removes only selected mask alpha without erasing fabric RGB',()=>{
+ const source=rgba(180,240,[[12,12,170,218]]);
+ const old=new Uint8ClampedArray(source.rgba);
+ const outline={kind:'polygon',points:[
+  {x:.43,y:.1},{x:.66,y:.1},{x:.61,y:.22},{x:.54,y:.33},{x:.45,y:.2}
+ ]};
+ const result=applyReviewedEraser(source,[outline]);
+ assert.ok(result.removedPixels>300);
+ assert.ok(result.visiblePixels/result.originalVisiblePixels>.55);
+ assert.equal(result.rgba[(20*180+90)*4+3],old[(20*180+90)*4+3],
+  'Outside manually outlined region stays visible');
+ assert.equal(result.rgba[(39*180+99)*4+3],0,
+  'Inside the explicitly traced polygon becomes transparent');
+ for(let i=0;i<old.length;i+=4)for(let k=0;k<3;k++)
+  assert.equal(result.rgba[i+k],old[i+k],'No alpha-only edit can touch authentic garment RGB');
+ assert.deepEqual(source.rgba,old,'Retained original array is immutable');
+});
+test('malicious or too broad trace rejected and no automatic semantic mannequin removal occurs',()=>{
+ const orig=rgba(128,180,[[8,8,120,170]]);
+ for(const shape of [
+  {kind:'polygon',points:[]},
+  {kind:'polygon',points:[{x:.4,y:.3},{x:.5,y:.3},{x:8,y:.3}]},
+  {kind:'polygon',points:[{x:0,y:0},{x:1,y:0},{x:1,y:1},{x:0,y:1}]},
+  {kind:'polygon',points:[{x:.3,y:.3},{x:.31,y:.3},{x:.32,y:.3}]}
+ ])assert.throws(()=>applyReviewedEraser(orig,[shape]),/Invalid/);
+ const noManualEdits=applyReviewedEraser(orig,[]);
+ assert.equal(noManualEdits.removedPixels,0,'Never infer unwanted skin from fabric color');
+});
