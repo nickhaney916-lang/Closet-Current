@@ -38,7 +38,7 @@ replaceOnce("assert.equal(await article.locator('.family-alpha-avatar img').coun
       'footwear-photo-reference','Never make a single or unverified shoe appear worn by two feet');
      assert.match(await footwearReference.getAttribute('alt'),/reference photograph/);`);
 replaceOnce("'benchmark/family-alpha-34/'","'benchmark/family-alpha-35/'");
-replaceOnce("await mkdir('benchmark/family-alpha-34'","await mkdir('benchmark/family-alpha-35'");
+// Screenshot directory was already replaced above in every path occurrence.
 const generated=join('scripts','.family-alpha-35-review-browser.generated.mjs');
 try{
  await writeFile(generated,s);
