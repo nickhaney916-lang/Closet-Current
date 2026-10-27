@@ -5,7 +5,9 @@ import {createServer} from 'node:http';
 import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import {resolve,extname} from 'node:path';
 import assert from 'node:assert/strict';
-const root=resolve('dist-family-alpha-31-hold'),owner='a1111111-1111-4111-8111-111111111111';
+const refinedOnly=process.env.CLOSET_ALPHA_REFINED_31_VISUAL==='1';
+const root=resolve(refinedOnly?'dist-family-alpha-31-refined-avatar-HOLD':'dist-family-alpha-31-hold');
+const owner='a1111111-1111-4111-8111-111111111111';
 const mime={'.js':'text/javascript','.mjs':'text/javascript','.html':'text/html','.css':'text/css','.json':'application/json','.svg':'image/svg+xml'};
 const server=createServer(async(req,res)=>{try{const path=decodeURIComponent(new URL(req.url,'http://localhost').pathname);let file=resolve(root,'.'+(path==='/'?'/index.html':path));if(path==='/__qa__/synthetic.mjs')file=resolve('research/family-alpha-13/synthetic-garments.mjs');else if(!file.startsWith(root+'/'))throw Error('path');const data=await readFile(file);res.writeHead(200,{'content-type':mime[extname(file)]||'application/octet-stream'});res.end(data);}catch{res.writeHead(404);res.end('Not found');}});
 await new Promise(r=>server.listen(0,'127.0.0.1',r));const origin='http://127.0.0.1:'+server.address().port,results=[];
@@ -41,6 +43,31 @@ try{for(const [name,engine]of [['Chromium',chromium],['WebKit',webkit]]){
     for(let piece=0;piece<3;piece++){await article.getByRole('button',{name:'Use cutout',exact:true}).click();}
     await article.locator('.family-alpha-avatar').waitFor();assert.equal(await article.locator('.family-alpha-avatar img').count(),3);
     assert.equal(await article.locator('svg[data-humanoid="articulated-2d-v1"]').count(),1);
+    if(refinedOnly){
+     for(const name of ['head','neck','left-eye','right-eye','nose','mouth',
+      'left-fingers','right-fingers','left-arm','right-arm','left-leg','right-leg']){
+      assert.equal(await article.locator('svg[data-humanoid="articulated-2d-v1"] [data-part="'+name+'"]').count(),1,
+       'Refined source-backed figure is missing '+name);
+     }
+     if(i===0&&width===390){
+      // Synthetic-only evidence. Screenshot is directly from 31's actual
+      // compiled local Style My New Clothes UI after user-confirmed cutouts.
+      await page.evaluate(()=>{
+       let heading=document.getElementById('alpha31-visual-synthetic-label');
+       if(!heading){
+        heading=document.createElement('p');heading.id='alpha31-visual-synthetic-label';
+        heading.style.cssText='padding:12px;border:2px dashed #666;background:#fff;color:#222;font-size:13px;';
+        document.querySelector('#alpha29NewClothes').prepend(heading);
+       }
+       heading.textContent='SYNTHETIC REVIEW ONLY — original garment photos and avatar rendered in a mocked local test. This is NOT real clothing fitting, account security or release approval.';
+      });
+      await mkdir('benchmark/family-alpha-refined-avatar-HOLD',{recursive:true});
+      await article.screenshot({
+       path:'benchmark/family-alpha-refined-avatar-HOLD/'+name.toLowerCase()+'-390px-first-outfit-SYNTHETIC.png',
+       animations:'disabled'
+      });
+     }
+    }
     const layers=await article.locator('.family-alpha-avatar img').evaluateAll(imgs=>imgs.map(img=>({src:img.src,w:img.naturalWidth,h:img.naturalHeight,box:img.getBoundingClientRect().toJSON()})));
     for(const img of layers){assert.ok(img.src.startsWith('data:image/png'));assert.ok(img.w>0&&img.h>0);assert.ok(Math.abs(img.box.width/img.box.height-img.w/img.h)<0.02);}
 
@@ -53,7 +80,7 @@ try{for(const [name,engine]of [['Chromium',chromium],['WebKit',webkit]]){
    const restored=await page.evaluate(id=>({pin:currentBoard.slots.top===id,original:items.find(x=>x.id===id).originalPhoto?.image||items.find(x=>x.id===id).image}),newId);assert.ok(restored.pin);assert.equal(restored.original,before.original);
    const layout=await panel.evaluate(p=>({panelWidth:p.getBoundingClientRect().width,viewport:innerWidth,buttons:[...p.querySelectorAll('button')].filter(x=>x.getBoundingClientRect().height>0).every(x=>x.getBoundingClientRect().height>=44),overflow:document.documentElement.scrollWidth>innerWidth+2}));assert.ok(layout.buttons);assert.ok(!layout.overflow,JSON.stringify(layout));
    await page.evaluate(()=>{window.closetAuth.user=null;window.dispatchEvent(new Event('closet:alpha-session-changed'));});assert.ok(await panel.isHidden());
-   assert.deepEqual(errors,[]);assert.deepEqual(external,[]);results.push({engine:name,width,status:'PASS',threeOutfits:true,reviewedAvatars:3,pinSwapSaveReloadRestore:true,physicalPhone:false,mocked:['Auth','cloud','classifier']});
+   assert.deepEqual(errors,[]);assert.deepEqual(external,[]);results.push({engine:name,width,status:'PASS',threeOutfits:true,reviewedAvatars:3,pinSwapSaveReloadRestore:true,refinedFaceApprovedForFamily:false,refinedFaceVisible:refinedOnly,physicalPhone:false,mocked:['Auth','cloud','classifier']});
   }finally{await context.close();}
  }}finally{await browser.close();}
 }}finally{server.close();}
