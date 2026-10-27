@@ -6,7 +6,7 @@
   "ownerApproved": false,
   "physicalPhoneVerified": false,
   "familyReleaseAuthorized": false,
-  "scope": "Five of the seven proposed licensed garment cutouts, viewed in generated Chromium 390px screenshots. Not a systematic independent human benchmark, not acceptance by product owner.",
+  "scope": "All seven provisional cutouts inspected via actual Chromium 390px licensed-original screenshots. Not an independent larger photo-quality benchmark, not a product-owner approval or physical-device test.",
   "inspections": [
     {
       "id": "commons-0001",
@@ -74,6 +74,34 @@
       ],
       "explanation": "A single black boot cutout is displayed centrally beneath two feet, creating an invalid footwear fitting impression. The avatar cannot honestly render a pair from a lone side-view product photo without a separately reviewed convention.",
       "screenshot": "screenshots/chromium-390-commons-0088-PROVISIONAL-HOLD.png",
+      "ownerApproved": false,
+      "technicalDisplayPassClaim": false
+    },
+    {
+      "id": "commons-0089",
+      "photoCategory": "boots gradient",
+      "assessment": "FAIL",
+      "issues": [
+        "single boot rendered centrally across both illustrated feet",
+        "source has no independently photographed second boot",
+        "no anatomical left-right shoe placement"
+      ],
+      "explanation": "The photographed black boot is a single side view. Its intact transparent cutout sits under both illustrated feet as though it were a wearable pair. This is not a plausible foot-to-shoe fitting, regardless of background removal.",
+      "screenshot": "screenshots/chromium-390-commons-0089-PROVISIONAL-HOLD.png",
+      "ownerApproved": false,
+      "technicalDisplayPassClaim": false
+    },
+    {
+      "id": "commons-0094",
+      "photoCategory": "boots light background",
+      "assessment": "FAIL",
+      "issues": [
+        "one sideways boot represented at two-foot position",
+        "unverified second boot absent from photograph",
+        "shoe toe spans outside natural foot zone"
+      ],
+      "explanation": "The source photograph shows one long side-view boot, not two separately positioned footwear items. On the avatar it spreads across both feet and is not acceptable as fitted shoes.",
+      "screenshot": "screenshots/chromium-390-commons-0094-PROVISIONAL-HOLD.png",
       "ownerApproved": false,
       "technicalDisplayPassClaim": false
     }
