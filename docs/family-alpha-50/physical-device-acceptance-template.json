@@ -1,0 +1,68 @@
+{
+  "schema": "closet-family-alpha-50-physical-phones-v1",
+  "observedOn": "2026-10-27",
+  "candidateCommit": "be35089adea220b8cbc69b27b0232cbfc02d4a62",
+  "source": "UNTESTED_MANUAL_DEVICE_TEMPLATE",
+  "ownerVisualAcceptance": "NOT_GIVEN",
+  "stageHostProtected": "NOT_TESTED",
+  "realTwoOwnerJwtIsolation": "NOT_TESTED",
+  "physicalAndroidIphoneAuthorized": false,
+  "release": "HOLD",
+  "deploymentAuthorized": false,
+  "productionModified": false,
+  "stagingModified": false,
+  "privacy": {
+    "photoBytesIncluded": false,
+    "garmentNamesIncluded": false,
+    "originalFileNamesIncluded": false,
+    "emailAddressesIncluded": false,
+    "accountIdsIncluded": false,
+    "tokensIncluded": false,
+    "deviceIdentifiersIncluded": false,
+    "rawErrorMessagesIncluded": false
+  },
+  "devices": [
+    {
+      "platform": "Android",
+      "browser": "NOT_TESTED",
+      "physicalHardwareObserved": false,
+      "steps": {
+        "hardware_camera": "NOT_TESTED",
+        "manual_photo_quality": "NOT_TESTED",
+        "hands_free_start_stop": "NOT_TESTED",
+        "whole_outfit_review": "NOT_TESTED",
+        "original_photo_indexing": "NOT_TESTED",
+        "category_color_correction": "NOT_TESTED",
+        "three_owned_outfits": "NOT_TESTED",
+        "original_photo_board": "NOT_TESTED",
+        "one_piece_swap": "NOT_TESTED",
+        "favorites_save_reload": "NOT_TESTED",
+        "offline_recovery": "NOT_TESTED",
+        "switch_browser_session": "NOT_TESTED",
+        "cloud_backup_restore": "NOT_TESTED",
+        "two_owner_privacy": "NOT_TESTED"
+      }
+    },
+    {
+      "platform": "iPhone",
+      "browser": "NOT_TESTED",
+      "physicalHardwareObserved": false,
+      "steps": {
+        "hardware_camera": "NOT_TESTED",
+        "manual_photo_quality": "NOT_TESTED",
+        "hands_free_start_stop": "NOT_TESTED",
+        "whole_outfit_review": "NOT_TESTED",
+        "original_photo_indexing": "NOT_TESTED",
+        "category_color_correction": "NOT_TESTED",
+        "three_owned_outfits": "NOT_TESTED",
+        "original_photo_board": "NOT_TESTED",
+        "one_piece_swap": "NOT_TESTED",
+        "favorites_save_reload": "NOT_TESTED",
+        "offline_recovery": "NOT_TESTED",
+        "switch_browser_session": "NOT_TESTED",
+        "cloud_backup_restore": "NOT_TESTED",
+        "two_owner_privacy": "NOT_TESTED"
+      }
+    }
+  ]
+}
