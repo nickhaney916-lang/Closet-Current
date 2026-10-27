@@ -1,0 +1,25 @@
+name: Family Alpha 40 Still Capture Research OFFLINE NO DEPLOY
+on:
+  pull_request:
+    paths: ['research/family-alpha-40/**', 'tests/research40/**', 'scripts/test-work40-still-browser.mjs', '.github/workflows/family-alpha-40-still-capture-no-deploy.yml']
+permissions:
+  contents: read
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+      - run: node --test tests/research40/*.test.mjs tests/photo-source-preservation.test.cjs tests/capture.test.cjs
+      - run: node scripts/test-work40-still-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: work40-still-capture-research-HOLD
+          path: benchmark/family-alpha-40/
