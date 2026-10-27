@@ -36,6 +36,47 @@ export function planGarmentFit(width,height,profile,adjust={}){
  });
  return {pieces,source:src,target,sourceRGBModified:false,mode:pieces.length>1?'rigid-panels':'rigid-anchors'};
 }
+// Guard against a plausible but blank or severely truncated garment fit.
+// Only alpha pixel occupancy is checked. This cannot grade visual realism.
+const insidePanel=(x,y,poly)=>{
+ let yes=false;
+ for(let i=0,j=poly.length-1;i<poly.length;j=i++){
+  const [a,b]=poly[i],[c,d]=poly[j];
+  if((b>y)!==(d>y)&&x<(c-a)*(y-b)/(d-b)+a)yes=!yes;
+ }
+ return yes;
+};
+export function measureVisiblePanelCoverage(pixels,sampleWidth,sampleHeight,plan,sourceWidth,sourceHeight){
+ if(!ArrayBuffer.isView(pixels)||!Number.isSafeInteger(sampleWidth)||!Number.isSafeInteger(sampleHeight)||
+    sampleWidth<1||sampleHeight<1||pixels.length!==sampleWidth*sampleHeight*4||
+    !Number.isSafeInteger(sourceWidth)||!Number.isSafeInteger(sourceHeight)||
+    sourceWidth<16||sourceHeight<16||!Array.isArray(plan?.pieces)||!plan.pieces.length)
+  throw Error('Invalid alpha coverage evidence');
+ let opaque=0,retained=0;
+ for(let y=0;y<sampleHeight;y++)for(let x=0;x<sampleWidth;x++){
+  if(pixels[(y*sampleWidth+x)*4+3]<128)continue;
+  opaque++;
+  const sourcePixel=[(x+.5)*sourceWidth/sampleWidth,(y+.5)*sourceHeight/sampleHeight];
+  let included=false;
+  for(const piece of plan.pieces){
+   if(!insidePanel(sourcePixel[0],sourcePixel[1],piece.polygon))continue;
+   included=true;
+   const [u,v]=mapPoint(piece.matrix,sourcePixel);
+   if(u<0||u>360||v<0||v>600)
+    throw Error('Fit would crop visible garment; adjust landmarks or reduce size');
+  }
+  if(included)retained++;
+ }
+ return {opaque,retained,ratio:opaque?retained/opaque:0};
+}
+export function requireVisiblePanelCoverage(coverage){
+ if(!coverage||!Number.isSafeInteger(coverage.opaque)||!Number.isSafeInteger(coverage.retained)||
+    coverage.opaque<32||coverage.retained<32||
+    !Number.isFinite(coverage.ratio)||coverage.ratio<0.60||
+    coverage.retained>coverage.opaque)
+  throw Error('Reviewed garment panels discard too many visible pixels; use original-photo fallback and recheck cutout');
+ return coverage;
+}
 export function paintGarmentFit(canvas,image,profile,adjust={}){
  const plan=planGarmentFit(image.naturalWidth,image.naturalHeight,profile,adjust);
  // Refuse fitting that would silently crop visible garment fabric. Sample only
@@ -45,14 +86,7 @@ export function paintGarmentFit(canvas,image,profile,adjust={}){
  sample.width=Math.ceil(image.naturalWidth*ratio);sample.height=Math.ceil(image.naturalHeight*ratio);
  const probe=sample.getContext('2d',{willReadFrequently:true});probe.drawImage(image,0,0,sample.width,sample.height);
  const pixels=probe.getImageData(0,0,sample.width,sample.height).data;
- const inside=(x,y,poly)=>{let yes=false;for(let i=0,j=poly.length-1;i<poly.length;j=i++){const [a,b]=poly[i],[c,d]=poly[j];if((b>y)!==(d>y)&&x<(c-a)*(y-b)/(d-b)+a)yes=!yes;}return yes;};
- for(let y=0;y<sample.height;y++)for(let x=0;x<sample.width;x++){
-  if(pixels[(y*sample.width+x)*4+3]<128)continue;
-  const p=[(x+.5)*image.naturalWidth/sample.width,(y+.5)*image.naturalHeight/sample.height];
-  for(const piece of plan.pieces)if(inside(...p,piece.polygon)){
-   const [u,v]=mapPoint(piece.matrix,p);if(u<0||u>360||v<0||v>600)throw Error('Fit would crop visible garment; adjust landmarks or reduce size');
-  }
- }
+ requireVisiblePanelCoverage(measureVisiblePanelCoverage(pixels,sample.width,sample.height,plan,image.naturalWidth,image.naturalHeight));
  canvas.width=720;canvas.height=1200;const ctx=canvas.getContext('2d');ctx.scale(2,2);ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
  for(const p of plan.pieces){ctx.save();ctx.transform(...p.matrix);ctx.beginPath();p.polygon.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));ctx.closePath();ctx.clip();ctx.drawImage(image,0,0);ctx.restore();}
  return plan;
