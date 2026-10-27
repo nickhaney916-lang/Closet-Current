@@ -1,0 +1,124 @@
+{
+  "release": "HOLD",
+  "visualDecision": "NOT_OWNER_REVIEWED",
+  "scope": "offline licensed photo-board layout; no garment-on-avatar, no real account or styling recommendation validation",
+  "rows": [
+    {
+      "id": "commons-0001",
+      "role": "T-shirt",
+      "sceneRisk": "Dark background; hanger or collar visible",
+      "ownerApproval": "NOT GIVEN"
+    },
+    {
+      "id": "commons-0003",
+      "role": "Long-sleeve shirt",
+      "sceneRisk": "Mannequin and other clothing visible",
+      "ownerApproval": "NOT GIVEN"
+    },
+    {
+      "id": "commons-0065",
+      "role": "Jacket",
+      "sceneRisk": "Sleeves reach photo edges",
+      "ownerApproval": "NOT GIVEN"
+    },
+    {
+      "id": "commons-0068",
+      "role": "Coat",
+      "sceneRisk": "Outdoor background and hanger",
+      "ownerApproval": "NOT GIVEN"
+    },
+    {
+      "id": "commons-0053",
+      "role": "Dress",
+      "sceneRisk": "White mannequin neck visible",
+      "ownerApproval": "NOT GIVEN"
+    },
+    {
+      "id": "commons-0043",
+      "role": "Skirt",
+      "sceneRisk": "Mannequin waist and pale fabric",
+      "ownerApproval": "NOT GIVEN"
+    },
+    {
+      "id": "commons-0033",
+      "role": "Shorts",
+      "sceneRisk": "Person wearing garment; textured wall",
+      "ownerApproval": "NOT GIVEN"
+    },
+    {
+      "id": "commons-0021",
+      "role": "Jeans",
+      "sceneRisk": "Person, shirt and shoes also visible",
+      "ownerApproval": "NOT GIVEN"
+    },
+    {
+      "id": "commons-0082",
+      "role": "Sneakers",
+      "sceneRisk": "Pale product with white background",
+      "ownerApproval": "NOT GIVEN"
+    },
+    {
+      "id": "commons-0088",
+      "role": "Single boot",
+      "sceneRisk": "One side-view boot only",
+      "ownerApproval": "NOT GIVEN"
+    },
+    {
+      "id": "commons-0016",
+      "role": "Blouse",
+      "sceneRisk": "Low contrast light fabric and background",
+      "ownerApproval": "NOT GIVEN"
+    },
+    {
+      "id": "commons-0079",
+      "role": "Sneakers",
+      "sceneRisk": "Background objects and support",
+      "ownerApproval": "NOT GIVEN"
+    },
+    {
+      "id": "commons-0089",
+      "role": "Boots",
+      "sceneRisk": "Product gradient with floor shadow",
+      "ownerApproval": "NOT GIVEN"
+    },
+    {
+      "id": "commons-0094",
+      "role": "Boot",
+      "sceneRisk": "Side-view laces and shadow",
+      "ownerApproval": "NOT GIVEN"
+    },
+    {
+      "id": "commons-0059",
+      "role": "Dress",
+      "sceneRisk": "Clutter and clipped edges",
+      "ownerApproval": "NOT GIVEN"
+    }
+  ],
+  "scenarios": [
+    {
+      "name": "Reference combination A",
+      "ids": [
+        "commons-0001",
+        "commons-0021",
+        "commons-0082"
+      ]
+    },
+    {
+      "name": "Reference combination B",
+      "ids": [
+        "commons-0016",
+        "commons-0043",
+        "commons-0094"
+      ]
+    },
+    {
+      "name": "Reference combination C",
+      "ids": [
+        "commons-0003",
+        "commons-0033",
+        "commons-0089",
+        "commons-0065"
+      ]
+    }
+  ]
+}
