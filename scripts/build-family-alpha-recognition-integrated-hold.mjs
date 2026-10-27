@@ -300,7 +300,10 @@ export async function buildDisabledIntegratedCandidate({root=resolve('.')}={}){
   const local=await readFile(join(base,'public',name),'utf8');
   const targetPath=join(target,name);
   const copied=await readFile(targetPath,'utf8');
-  if(copied!==upstream||!upstream.includes(oldAnchor)||upstream.includes(newAnchor)||
+  // The base staging folder copies this branch's ordinary dist; its 2D
+  // modules may therefore already be the new LOCAL files. Both legitimate
+  // forms are checked, and the immutable upstream blob must still match.
+  if((copied!==upstream&&copied!==local)||!upstream.includes(oldAnchor)||upstream.includes(newAnchor)||
      !local.includes(newAnchor)||local.includes(oldAnchor)||
      (name.includes('photo-renderer')&&!local.includes('planPhotoLayers'))||
      (name.includes('layer-plan')&&!local.includes('sourceIdentity')))
