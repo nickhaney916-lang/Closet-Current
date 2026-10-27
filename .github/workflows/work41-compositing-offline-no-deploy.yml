@@ -1,0 +1,35 @@
+name: Work 41 Compositing Research OFFLINE NO DEPLOY
+on:
+  pull_request:
+    paths: ['research/work41-compositing/**', 'tests/work41/**', 'scripts/test-work41-composite-browser.mjs', '.github/workflows/work41-compositing-offline-no-deploy.yml']
+permissions:
+  contents: read
+jobs:
+  visual:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.35.5
+      - run: node --test tests/work41/*.test.mjs tests/family-alpha-2d-photo-renderer.test.mjs
+      - name: Reproduce unapproved Work 33 assets from immutable commit
+        run: |
+          git fetch origin refs/pull/329/head refs/pull/320/head refs/pull/326/head
+          git cat-file -e 53f2ad344dc56a1477e343531c423aed0e66c17d^{commit}
+          git worktree add --detach /tmp/work41-gallery 53f2ad344dc56a1477e343531c423aed0e66c17d
+          cd /tmp/work41-gallery
+          NODE_PATH="$GITHUB_WORKSPACE/node_modules" node scripts/build-family-alpha-33-gallery.mjs
+      - run: node scripts/test-work41-composite-browser.mjs
+        env:
+          WORK33_GALLERY: /tmp/work41-gallery/dist-family-alpha-33-visual-hold
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: work41-real-photo-compositing-PROVISIONAL-HOLD
+          path: benchmark/work41/
