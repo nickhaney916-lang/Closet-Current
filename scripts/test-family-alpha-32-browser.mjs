@@ -1,0 +1,13 @@
+import {chromium,webkit} from 'playwright';
+import {createServer} from 'node:http';
+import {readFile,mkdir,writeFile} from 'node:fs/promises';
+import {resolve,extname} from 'node:path';
+import assert from 'node:assert/strict';
+const out='benchmark/family-alpha-32',root=resolve('.');await mkdir(out,{recursive:true});
+const server=createServer(async(req,res)=>{try{const path=new URL(req.url,'http://localhost').pathname;if(!path.startsWith('/research/family-alpha-32/')&&!/^\/public\/family-alpha-2d-[a-z-]+\.mjs$/.test(path))throw Error('path');const file=resolve(root,'.'+path);if(!file.startsWith(root+'/'))throw Error('path');res.writeHead(200,{'content-type':extname(file)==='.html'?'text/html':'text/javascript'});res.end(await readFile(file));}catch{res.writeHead(404);res.end();}});await new Promise(r=>server.listen(0,'127.0.0.1',r));
+const origin='http://127.0.0.1:'+server.address().port,results=[];
+try{for(const [name,engine]of [['Chromium',chromium],['WebKit',webkit]]){const browser=await engine.launch({headless:true,args:name==='Chromium'?['--no-sandbox']:[]});try{for(const width of [320,390,430]){const context=await browser.newContext({viewport:{width,height:844},isMobile:true,hasTouch:true,serviceWorkers:'block'}),external=[],errors=[];await context.route('**/*',r=>{if(r.request().url().startsWith(origin+'/'))r.continue();else{external.push(r.request().url());r.abort();}});const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));await page.goto(origin+'/research/family-alpha-32/index.html');await page.waitForFunction(()=>window.ready);
+for(const garment of ['shirt','jacket','trousers','dress','skirt','shoes']){const metrics=await page.evaluate(n=>window.compare(n),garment);assert.ok(metrics.sourceUnchanged);assert.equal(await page.locator('svg[data-humanoid]').count(),3);assert.equal(await page.locator('.overlay canvas').count(),2);assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));for(const plan of metrics.plans){assert.ok(plan.maxDistortion<=.08);if(plan.mode==='bounded-warp'){assert.ok(plan.minStretch>=.9&&plan.maxStretch<=1.1);}}
+const screenshot=`${name}-${width}-${garment}-SYNTHETIC-HOLD.png`;await page.screenshot({path:out+'/'+screenshot,fullPage:true});results.push({engine:name,width,screenshot,...metrics});}
+assert.deepEqual(errors,[]);assert.deepEqual(external,[]);await context.close();}}finally{await browser.close();}}}finally{server.close();}
+await writeFile(out+'/results.json',JSON.stringify({release:'HOLD',physicalPhones:false,realPhotos:false,ownerApproved:false,results},null,2));console.log('FIT32_BROWSER_PASS',results.length);

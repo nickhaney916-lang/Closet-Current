@@ -1,0 +1,11 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';
+import {planFit,rowTransform} from '../../research/family-alpha-32/fit.mjs';
+const args={width:240,height:280,anchors:{reviewed:true,pair:[{x:70,y:40},{x:170,y:40}]},target:[{x:125,y:140},{x:235,y:140}],waistFactor:.94,protectedUntil:110,transitionEnd:250};
+test('shoulders map exactly; no vertical deformation and protected logo band is rigid',()=>{const p=planFit(args);assert.equal(p.mode,'bounded-warp');assert.equal(p.x+70*p.scale,125);assert.equal(p.y+40*p.scale,140);assert.equal(rowTransform(p,80).factor,1);assert.ok(p.minStretch>=.9);assert.ok(p.maxStretch<=1.1);assert.equal(rowTransform(p,250).factor,.94);});
+test('excess width changes or shear fall back to rigid',()=>{for(const change of [{waistFactor:.6},{waistFactor:1.2},{protectedUntil:249},{waistFactor:NaN}])assert.equal(planFit({...args,...change}).mode,'rigid');});
+test('unreviewed, rotated, malformed, clipped and excessive scaling require original preview review',()=>{for(const change of [{width:Infinity},{width:99999},{anchors:{pair:args.anchors.pair}},{anchors:{reviewed:true,pair:[{x:70,y:40},{x:170,y:80}]}},{target:[{x:0,y:140},{x:359,y:140}]},{target:[{x:125,y:0},{x:235,y:0}]}])assert.equal(planFit({...args,...change}).status,'review-required');});
+test('source metadata is never mutated; boundary factors remain bounded for every row',()=>{const before=JSON.stringify(args),p=planFit(args);for(let y=0;y<280;y++){const r=rowTransform(p,y);assert.ok(r.factor>=.94&&r.factor<=1);assert.equal(r.y,p.y+y*p.scale);}assert.equal(JSON.stringify(args),before);});
+
+test('expansion uses worst endpoint singular values, not only contraction',()=>{const p=planFit({...args,waistFactor:1.08,protectedUntil:110,transitionEnd:210});assert.equal(p.mode,'rigid');});
+
+test('an otherwise bounded expansion that would leave frame falls back to rigid',()=>{const p=planFit({...args,width:320,target:[{x:78.75,y:140},{x:191.25,y:140}],waistFactor:1.04,protectedUntil:0,transitionEnd:280});assert.equal(p.mode,'rigid');});
