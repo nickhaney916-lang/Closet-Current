@@ -14,6 +14,7 @@ export function planFit({width,height,anchors,target,waistFactor=1,protectedUnti
  if(x<0||x+width*scale>360||y<0||y+height*scale>600)return fallback('Fit would clip source pixels at frame boundary');
  const rigid={status:'preview-only',mode:'rigid',scale,x,y,width,height,maxDistortion:0,waistFactor:1};
  if(!finite(waistFactor)||Math.abs(waistFactor-1)>LIMITS.maxWidthChange||!finite(protectedUntil)||!finite(transitionEnd)||protectedUntil<0||transitionEnd>height||transitionEnd<=protectedUntil)return {...rigid,reason:'Deformation refused; retain rigid approved pixels'};
+ if(x+(1-Math.max(1,waistFactor))*width*scale/2<0||x+(1+Math.max(1,waistFactor))*width*scale/2>360)return {...rigid,reason:'Warp would clip source pixels; rigid fallback'};
  const derivative=(waistFactor-1)/(transitionEnd-protectedUntil),shear=Math.abs(derivative)*width/2;
  // Singular values of [[horizontal stretch, shear],[0,1]], at worst image edge.
  const stretches=[1,waistFactor].map(f=>{const sum=f*f+shear*shear+1,disc=Math.sqrt(Math.max(0,sum*sum-4*f*f));return [Math.sqrt((sum-disc)/2),Math.sqrt((sum+disc)/2)];});

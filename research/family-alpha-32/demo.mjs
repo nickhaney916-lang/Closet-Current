@@ -9,7 +9,7 @@ const cleanups=[];
 export async function compare(name){
  for(const dispose of cleanups.splice(0))dispose();
  const g=garments[name],image=await fixtureImage(name),source=image.src,root=document.getElementById('comparisons');root.replaceChildren();
- const plans=[],summary=[];
+ const plans=[],summary=[];let baselineMetrics;
  for(const [mode,label] of [['baseline','Existing #322 alpha containment'],['rigid','Anatomy-anchor proposal · REVIEW'],['warp','Bounded warp proposal · REVIEW']]){
   const card=document.createElement('section');card.className='card';const title=document.createElement('h2');title.textContent=label;card.append(title);
   const frame=document.createElement('div');frame.className='frame';card.append(frame);root.append(card);
@@ -17,6 +17,9 @@ export async function compare(name){
    const selections=[{slot:g.slot,itemId:name,sourceIdentity:'synthetic:'+name,sourceVersion:'synthetic-v1'}],images={[name]:image};
    if(name==='jacket'){selections.push({slot:'top',itemId:'shirt',sourceIdentity:'synthetic:shirt',sourceVersion:'synthetic-v1'});images.shirt=await fixtureImage('shirt');}
    renderPhotoLayers(frame,selections,images);frame.querySelector('.family-alpha-avatar').style.width='100%';
+   const im=frame.querySelector('img[data-slot="'+g.slot+'"]'),box=im.getBoundingClientRect(),f=frame.getBoundingClientRect();
+   const anchorError=g.pair.map((p,i)=>Math.hypot((box.left-f.left+p.x*box.width/image.naturalWidth)*360/f.width-g.target[i].x,(box.top-f.top+p.y*box.height/image.naturalHeight)*600/f.height-g.target[i].y));
+   baselineMetrics={anchorError,meanAnchorError:anchorError.reduce((a,b)=>a+b)/2};
   }else{
    frame.append(createAlphaHumanoidFigure(document));
    if(name==='jacket'){const under=document.createElement('canvas');under.width=360;under.height=600;const s=garments.shirt;paintFit(under,await fixtureImage('shirt'),planFit({width:240,height:280,anchors:{pair:s.pair,reviewed:true},target:s.target}));frame.append(under);}
@@ -48,6 +51,6 @@ export async function compare(name){
   const note=document.createElement('p');note.className='metric';note.textContent=mode==='baseline'?'Unmodified renderer / unchanged approved PNG':`Scale ${plans.at(-1).scale.toFixed(3)}× · width change ${(100*plans.at(-1).maxDistortion).toFixed(1)}% · no y deformation`;card.append(note);
  }
  document.querySelector('#garment').textContent=name.toUpperCase()+(name==='jacket'?' over shirt':'');
- return {name,plans:summary,sourceUnchanged:source===image.src};
+ return {name,baselineMetrics,plans:summary,sourceUnchanged:source===image.src};
 }
 window.compare=compare;

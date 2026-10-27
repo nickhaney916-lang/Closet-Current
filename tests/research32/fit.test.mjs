@@ -7,3 +7,5 @@ test('unreviewed, rotated, malformed, clipped and excessive scaling require orig
 test('source metadata is never mutated; boundary factors remain bounded for every row',()=>{const before=JSON.stringify(args),p=planFit(args);for(let y=0;y<280;y++){const r=rowTransform(p,y);assert.ok(r.factor>=.94&&r.factor<=1);assert.equal(r.y,p.y+y*p.scale);}assert.equal(JSON.stringify(args),before);});
 
 test('expansion uses worst endpoint singular values, not only contraction',()=>{const p=planFit({...args,waistFactor:1.08,protectedUntil:110,transitionEnd:210});assert.equal(p.mode,'rigid');});
+
+test('an otherwise bounded expansion that would leave frame falls back to rigid',()=>{const p=planFit({...args,width:320,target:[{x:78.75,y:140},{x:191.25,y:140}],waistFactor:1.04,protectedUntil:0,transitionEnd:280});assert.equal(p.mode,'rigid');});
