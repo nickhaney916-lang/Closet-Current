@@ -13,7 +13,7 @@ export function mountLandmarkEditor(container,{isActive=()=>false,sessionTarget=
  canvas.style.cssText='display:block;width:100%;height:auto;touch-action:none;background:#e9e9e9';canvas.setAttribute('aria-label','Mark left and right garment landmarks');status.setAttribute('role','status');
  const buttons=make('div');buttons.style.cssText='display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px';
  panel.append(title,hint,select,canvas,apply,reset,buttons,status);container.append(panel);
- let points=[],disposed=false;const records=new Map(),oldPanels=[...container.querySelectorAll('.alpha36-fit-controls')];
+ let points=[],disposed=false;const observer=new MutationObserver(()=>{if(!container.contains(frame)||!container.contains(panel))dispose(false);});observer.observe(container,{childList:true,subtree:true});const records=new Map(),oldPanels=[...container.querySelectorAll('.alpha36-fit-controls')];
  const active=()=>{try{return !disposed&&container.contains(frame)&&container.contains(panel)&&isActive()===true;}catch{return false;}};
  const current=()=>images.find(x=>x.dataset.slot===select.value);
  function check(){if(active())return true;dispose(false);return false;}
@@ -25,6 +25,6 @@ export function mountLandmarkEditor(container,{isActive=()=>false,sessionTarget=
  for(const [label,change]of [['← Left',a=>a.dx-=3],['↑ Up',a=>a.dy-=4],['→ Right',a=>a.dx+=3],['− Smaller',a=>a.scale-=.025],['↓ Down',a=>a.dy+=4],['+ Larger',a=>a.scale+=.025]]){const b=make('button',label);b.onclick=()=>{if(!check())return;const r=records.get(select.value);if(!r)return;const prev={...r.adjust};change(r.adjust);try{redraw(r);}catch{r.adjust=prev;status.textContent='Adjustment limit reached.';}};buttons.append(b);}
  for(const b of panel.querySelectorAll('button')){b.type='button';b.style.cssText='min-height:48px;font:inherit;border:1px solid #9eaaa4;background:#eff5f1;border-radius:8px;color:#213b37';}
  select.onchange=drawSource;
- function dispose(restore=active()){if(disposed)return;disposed=true;canvas.onpointerup=null;apply.onclick=null;reset.onclick=null;select.onchange=null;for(const r of records.values()){r.canvas.remove();if(restore)r.source.hidden=false;}records.clear();if(restore)for(const p of oldPanels)p.hidden=false;sessionTarget.removeEventListener('pagehide',clear);sessionTarget.removeEventListener('closet:alpha-session-changed',clear);panel.remove();}
+ function dispose(restore=active()){if(disposed)return;disposed=true;observer.disconnect();canvas.onpointerup=null;apply.onclick=null;reset.onclick=null;select.onchange=null;for(const r of records.values()){r.canvas.remove();if(restore)r.source.hidden=false;}records.clear();if(restore)for(const p of oldPanels)p.hidden=false;sessionTarget.removeEventListener('pagehide',clear);sessionTarget.removeEventListener('closet:alpha-session-changed',clear);panel.remove();}
  const clear=()=>dispose(false);sessionTarget.addEventListener('pagehide',clear);sessionTarget.addEventListener('closet:alpha-session-changed',clear);drawSource();return {mounted:true,dispose};
 }

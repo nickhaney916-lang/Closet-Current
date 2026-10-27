@@ -28,8 +28,13 @@ s=s.replace(hook,String.raw\x60
     await fitter.getByRole('button',{name:'Reset landmark fit',exact:true}).click();
     assert.equal(await article.locator('canvas[data-work47]').count(),0);
     assert.equal(await article.locator('img[data-slot="top"]').getAttribute('src'),source);
+    await editorCanvas.click({position:{x:rect.width*.25,y:rect.height*.2}});
+    await editorCanvas.click({position:{x:rect.width*.75,y:rect.height*.2}});
+    await fitter.getByRole('button',{name:'Apply landmark fit',exact:true}).click();
+    assert.equal(await article.locator('canvas[data-work47]').count(),1);
    }
 \x60+hook);
+s=s.replace("await first.getByRole('button',{name:'Swap shoes in outfit 1',exact:true}).click();", "await first.getByRole('button',{name:'Swap shoes in outfit 1',exact:true}).click();assert.equal(await panel.locator('.w47-controls,canvas[data-work47]').count(),0);");
 s=s.replace("textContent.includes('Clothes or account changed')", "textContent.includes('Could not complete this step')");
 `;
 wrapper=wrapper.replace(marker,injected.replaceAll('\\x60','`')+'\n'+marker);const p='scripts/.work47-integration.mjs';try{await writeFile(p,wrapper);const r=spawnSync(process.execPath,[resolve(p)],{stdio:'inherit',timeout:600000,env:{...process.env,CLOSET_35_OFFLINE:'1',WORK43_LICENSED:'0'}});if(r.error)throw r.error;assert.equal(r.status,0);}finally{await rm(p,{force:true});}
