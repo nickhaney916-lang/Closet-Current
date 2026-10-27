@@ -60,7 +60,7 @@ if(process.env.FAMILY_ALPHA_52_WEBKIT_ONLY==='1')s=s.replace("[['Chromium',chrom
 // Insert literal template delimiters after constructing the wrapper source.
 const afterAllUpstreamTransforms=String.raw`
 const swapTouch="await first.getByRole('button',{name:'Swap shoes in outfit 1',exact:true}).click();";
-assert.equal(s.split(swapTouch).length,3,'Two distinct licensed-photo swap contexts must remain');
+assert.equal(s.split(swapTouch).length,2,'Final transformed source must retain exactly one early swap action');
 s=s.replace(swapTouch,"await first.getByRole('button',{name:'Swap shoes in outfit 1',exact:true}).tap();");
 `;
 wrapper=wrapper.replace(marker,extra.replaceAll('\\x60','`')+'\n'+afterAllUpstreamTransforms+'\n'+marker);
