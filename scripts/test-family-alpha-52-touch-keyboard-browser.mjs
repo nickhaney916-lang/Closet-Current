@@ -63,6 +63,6 @@ const swapTouch="await first.getByRole('button',{name:'Swap shoes in outfit 1',e
 assert.equal(s.split(swapTouch).length,3,'Two distinct licensed-photo swap contexts must remain');
 s=s.replace(swapTouch,"await first.getByRole('button',{name:'Swap shoes in outfit 1',exact:true}).tap();");
 `;
-wrapper=wrapper.replace(marker,extra.replaceAll('\\\\x60','`')+'\\n'+afterAllUpstreamTransforms+'\\n'+marker);
+wrapper=wrapper.replace(marker,extra.replaceAll('\\x60','`')+'\n'+afterAllUpstreamTransforms+'\n'+marker);
 const p='scripts/.family-alpha-52-wrapper.mjs';await mkdir('benchmark/family-alpha-52-touch-keyboard',{recursive:true});
 try{await writeFile(p,wrapper);const result=spawnSync(process.execPath,[resolve(p)],{stdio:'inherit',timeout:900000,env:{...process.env,WORK43_LICENSED:'1'}});if(result.error)throw result.error;if(result.status!==0)throw Error('Family Alpha 51 browser journey failed: '+result.status);}finally{await rm(p,{force:true});}
