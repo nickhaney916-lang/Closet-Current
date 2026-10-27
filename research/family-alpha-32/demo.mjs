@@ -10,7 +10,7 @@ export async function compare(name){
  for(const dispose of cleanups.splice(0))dispose();
  const g=garments[name],image=await fixtureImage(name),source=image.src,root=document.getElementById('comparisons');root.replaceChildren();
  const plans=[],summary=[];
- for(const [mode,label] of [['baseline','Existing #322 alpha containment'],['rigid','Reviewed anatomy anchors · rigid'],['warp','Bounded warp proposal · REVIEW']]){
+ for(const [mode,label] of [['baseline','Existing #322 alpha containment'],['rigid','Anatomy-anchor proposal · REVIEW'],['warp','Bounded warp proposal · REVIEW']]){
   const card=document.createElement('section');card.className='card';const title=document.createElement('h2');title.textContent=label;card.append(title);
   const frame=document.createElement('div');frame.className='frame';card.append(frame);root.append(card);
   if(mode==='baseline'){
