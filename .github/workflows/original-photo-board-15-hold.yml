@@ -21,6 +21,8 @@ jobs:
       - uses: actions/checkout@v4
         with: {fetch-depth: 0}
       - run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+      - name: Trust GitHub's checked-out workspace for immutable git-show verification
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - name: Verify source-locked licensed JPEG and generate local-only review
         run: node scripts/build-original-photo-board-15-hold.mjs
       - name: Test photo-board component and capture 6 unapproved viewport comparisons
