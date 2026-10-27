@@ -20,6 +20,80 @@ export function fitPhotoLayerToSlot(slot,naturalWidth,naturalHeight){
 }
 
 /**
+ * Visual-only alignment of an ALREADY human-approved transparent photo. The
+ * RGBA pixels, original photo, class/type and mask are NEVER changed here.
+ * Fit the actually visible alpha pixels rather than huge transparent PNG
+ * margins. Bound scale gain to avoid pixelated clothing and unsafe zoom.
+ * Any invalid/nontransparent image falls back to the old contain placement.
+ */
+export function fitVisibleAlphaBoundsToSlot(slot,naturalWidth,naturalHeight,bounds){
+ const fallback=fitPhotoLayerToSlot(slot,naturalWidth,naturalHeight);
+ if(!bounds||!['left','top','right','bottom'].every(k=>Number.isFinite(bounds[k]))||
+    bounds.left<0||bounds.top<0||bounds.right>naturalWidth||
+    bounds.bottom>naturalHeight||bounds.right<=bounds.left||
+    bounds.bottom<=bounds.top)return fallback;
+ const bw=bounds.right-bounds.left,bh=bounds.bottom-bounds.top;
+ // Tiny isolated specks, very thin slivers and near-full-rect masks cannot
+ // provide dependable evidence of how a photographed garment should align.
+ if(bw/naturalWidth<.18||bh/naturalHeight<.18||
+    bw*bh/(naturalWidth*naturalHeight)<.06||
+    (bw/naturalWidth>.94&&bh/naturalHeight>.94))return fallback;
+ const baseScale=fallback.width*3/naturalWidth;
+ const nextScale=Math.min(
+  slot.width*3/bw,slot.height*5/bh,baseScale*1.35);
+ if(!Number.isFinite(nextScale)||nextScale<=baseScale)return fallback;
+ const visibleCx=(bounds.left+bounds.right)/2;
+ const visibleCy=(bounds.top+bounds.bottom)/2;
+ const width=naturalWidth*nextScale/3,height=naturalHeight*nextScale/5;
+ const x=slot.x+(naturalWidth/2-visibleCx)*nextScale/3;
+ const y=slot.y+(naturalHeight/2-visibleCy)*nextScale/5;
+ if(![width,height,x,y].every(Number.isFinite)||width<=0||height<=0)
+  return fallback;
+ return Object.freeze({x,y,width,height});
+}
+
+/** Inspect transparency on an already decoded data-PNG in an offline canvas.
+ * Never infer a mask from a JPEG (including fake white backgrounds) or fetch
+ * external URLs. Any failure silently retains existing geometrical contain.
+ * The low-resolution alpha sample is used ONLY for placement, not for masking.
+ */
+export function measureTransparentGarmentBounds(image,doc=document){
+ const src=typeof image?.currentSrc==='string'&&image.currentSrc
+  ?image.currentSrc:image?.src;
+ if(typeof src!=='string'||!src.startsWith('data:image/png;base64,')||
+    !image.complete||!Number.isFinite(image.naturalWidth)||
+    !Number.isFinite(image.naturalHeight)||image.naturalWidth<16||
+    image.naturalHeight<16||image.naturalWidth*image.naturalHeight>8_000_000||
+    typeof doc?.createElement!=='function')return null;
+ try{
+  const canvas=doc.createElement('canvas');
+  if(!canvas||typeof canvas.getContext!=='function')return null;
+  const scale=Math.min(1,144/Math.max(image.naturalWidth,image.naturalHeight));
+  const w=Math.max(1,Math.ceil(image.naturalWidth*scale));
+  const h=Math.max(1,Math.ceil(image.naturalHeight*scale));
+  canvas.width=w;canvas.height=h;
+  const ctx=canvas.getContext('2d',{willReadFrequently:true});
+  if(!ctx||typeof ctx.drawImage!=='function'||typeof ctx.getImageData!=='function')return null;
+  ctx.drawImage(image,0,0,w,h);
+  const pixels=ctx.getImageData(0,0,w,h).data;
+  if(pixels.length!==w*h*4)return null;
+  let left=w,right=-1,top=h,bottom=-1,visible=0;
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+   if(pixels[(y*w+x)*4+3]<40)continue;
+   left=Math.min(left,x);right=Math.max(right,x);
+   top=Math.min(top,y);bottom=Math.max(bottom,y);visible++;
+  }
+  if(visible/w/h<.035||right<left||bottom<top)return null;
+  return Object.freeze({
+   left:left/w*image.naturalWidth,
+   right:(right+1)/w*image.naturalWidth,
+   top:top/h*image.naturalHeight,
+   bottom:(bottom+1)/h*image.naturalHeight
+  });
+ }catch{return null;}
+}
+
+/**
  * Family Alpha visual candidate: actual articulated front-facing 2D HUMAN
  * silhouette behind verified garment-photo layers. No generated garments,
  * image URLs, user likeness or external assets. Anatomical outlines do not
@@ -91,7 +165,10 @@ export function renderPhotoLayers(container,selections,images){
   const image=images[layer.itemId];
   if(!(image instanceof HTMLImageElement)||!image.complete||image.naturalWidth===0||image.naturalHeight===0)
    throw new Error('Preloaded verified masked garment image required for '+layer.slot);
-  const fit=fitPhotoLayerToSlot(layer,image.naturalWidth,image.naturalHeight);
+  const bounds=measureTransparentGarmentBounds(image,document);
+  const fit=bounds
+   ?fitVisibleAlphaBoundsToSlot(layer,image.naturalWidth,image.naturalHeight,bounds)
+   :fitPhotoLayerToSlot(layer,image.naturalWidth,image.naturalHeight);
   const el=image.cloneNode(false);
   el.alt='';
   el.dataset.slot=layer.slot;
