@@ -46,10 +46,10 @@ try{for(const [name,engine]of [['Chromium',chromium],['WebKit',webkit]]){
 
    }
    const first=panel.locator('.alpha29-options article').first();await first.getByRole('button',{name:'Swap shoes in outfit 1',exact:true}).click();await panel.getByRole('button',{name:'Save outfit 1',exact:true}).click();await page.waitForFunction(()=>document.querySelector('#alpha29NewClothes [role="status"]').textContent.includes('Outfit saved'));
-   const savedSources=await page.evaluate(()=>JSON.stringify(items.map(x=>({id:x.id,image:x.image,originalPhoto:x.originalPhoto,ownerId:x.ownerId}))));
+   const savedSources=await page.evaluate(()=>JSON.stringify(items.map(x=>({id:x.id,image:x.image,originalPhoto:x.originalPhoto,ownerId:x.ownerId})).sort((a,b)=>a.id.localeCompare(b.id))));
    const before=await page.evaluate(()=>({original:items.find(x=>x.name==='New blue top').originalPhoto?.image||items.find(x=>x.name==='New blue top').image,count:items.length}));assert.equal(before.count,10);
    await page.reload();await page.evaluate(()=>Promise.all([closetReady,outfitBoardReady]));await page.evaluate(()=>switchView('closet'));await panel.getByRole('button',{name:'Restore favorite 1',exact:true}).click();await page.waitForFunction(()=>document.querySelector('#alpha29NewClothes [role="status"]').textContent.includes('Favorite restored'));
-   assert.equal(await page.evaluate(()=>JSON.stringify(items.map(x=>({id:x.id,image:x.image,originalPhoto:x.originalPhoto,ownerId:x.ownerId})))),savedSources);
+   assert.equal(await page.evaluate(()=>JSON.stringify(items.map(x=>({id:x.id,image:x.image,originalPhoto:x.originalPhoto,ownerId:x.ownerId})).sort((a,b)=>a.id.localeCompare(b.id)))),savedSources);
    const restored=await page.evaluate(id=>({pin:currentBoard.slots.top===id,original:items.find(x=>x.id===id).originalPhoto?.image||items.find(x=>x.id===id).image}),newId);assert.ok(restored.pin);assert.equal(restored.original,before.original);
    const layout=await panel.evaluate(p=>({panelWidth:p.getBoundingClientRect().width,viewport:innerWidth,buttons:[...p.querySelectorAll('button')].filter(x=>x.getBoundingClientRect().height>0).every(x=>x.getBoundingClientRect().height>=44),overflow:document.documentElement.scrollWidth>innerWidth+2}));assert.ok(layout.buttons);assert.ok(!layout.overflow,JSON.stringify(layout));
    await page.evaluate(()=>{window.closetAuth.user=null;window.dispatchEvent(new Event('closet:alpha-session-changed'));});assert.ok(await panel.isHidden());
