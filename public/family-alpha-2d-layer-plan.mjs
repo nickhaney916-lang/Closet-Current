@@ -4,13 +4,16 @@
  */
 const ORDER=['shoes','bottom','top','layer','layer2','layer3','dress'];
 const POSITIONS={
- shoes:{x:0.5,y:0.88,width:0.42,height:0.13},
- bottom:{x:0.5,y:0.63,width:0.49,height:0.45},
- top:{x:0.5,y:0.30,width:0.58,height:0.36},
- layer:{x:0.5,y:0.31,width:0.64,height:0.40},
- layer2:{x:0.5,y:0.32,width:0.69,height:0.45},
- layer3:{x:0.5,y:0.33,width:0.73,height:0.49},
- dress:{x:0.5,y:0.48,width:0.66,height:0.73}
+ // Align with the anatomical front-facing 360x600 figure, not an oval blob:
+ // the face ends near y=115; shoulders start at y=140; waist is ~325;
+ // ankles/shoes are ~540-575. Photo proportions are STILL preserved.
+ shoes:{x:0.5,y:0.915,width:0.44,height:0.14},
+ bottom:{x:0.5,y:0.685,width:0.48,height:0.45},
+ top:{x:0.5,y:0.395,width:0.58,height:0.38},
+ layer:{x:0.5,y:0.40,width:0.65,height:0.42},
+ layer2:{x:0.5,y:0.405,width:0.69,height:0.45},
+ layer3:{x:0.5,y:0.41,width:0.73,height:0.47},
+ dress:{x:0.5,y:0.49,width:0.66,height:0.65}
 };
 export function planPhotoLayers(selections){
  if(!Array.isArray(selections))throw new TypeError('Selections must be an array');
