@@ -10,6 +10,6 @@ test('whole-outfit conversion retains detail before isolating smaller garments',
  assert.equal(h.canvas.width,2304);assert.equal(h.canvas.height,3072);assert.deepEqual(h.calls[0],[0,0,2304,3072]);assert.equal(h.calls[1].quality,.94);
 });
 test('small originals are never enlarged and regular imports use the improved clarity defaults',async()=>{
- const h=setup(600,800);await h.c.photoToJPEG({}, {maxDimension:3072,quality:.94});assert.equal(h.canvas.width,600);assert.equal(h.canvas.height,800);
+ const h=setup(600,800);await h.c.photoToJPEG({size:100,type:'image/png'}, {maxDimension:3072,quality:.94});assert.equal(h.canvas.width,600);assert.equal(h.canvas.height,800);
  const regular=setup(3024,4032);await regular.c.photoToJPEG({size:100,type:'image/png'});assert.equal(regular.canvas.height,4032);assert.equal(regular.calls[1].quality,.96);
 });
