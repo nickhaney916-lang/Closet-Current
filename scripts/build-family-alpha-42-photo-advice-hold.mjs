@@ -16,9 +16,9 @@ function once(s,a,b){
 export function patchCheck(original,advice){
  if(!advice.startsWith('/** Work #39')||!advice.includes('function alphaCaptureAdvice('))
   throw Error('Untrusted or duplicate advisory function');
- const from=" const pixels=ctx.getImageData(0,0,16,16).data;return {...photoQuality(pixels),colorEstimate:window.PhotoColor?.estimate(pixels,16,16)||null,aspect:decoded.width/decoded.height};";
+ const from=" return {...photoQuality(pixels),colorEstimate,aspect:decoded.width/decoded.height};";
  const into=[
- " const pixels=ctx.getImageData(0,0,16,16).data;",
+ // Existing color/16-pixel signature and palette logic stay untouched.
  " let captureAdvice=null;",
  " try{",
  "  const factor=Math.min(1,128/Math.max(decoded.width,decoded.height));",
@@ -32,7 +32,7 @@ export function patchCheck(original,advice){
  "    rgba:c.getImageData(0,0,adviceCanvas.width,adviceCanvas.height).data});",
  "  }",
  " }catch{/* Optional advice cannot block recognition or source review. */}",
- " return {...photoQuality(pixels),colorEstimate:window.PhotoColor?.estimate(pixels,16,16)||null,",
+ " return {...photoQuality(pixels),colorEstimate,",
  "  aspect:decoded.width/decoded.height,captureAdvice};"
  ].join('\n');
  return once(original,from,into)+'\n'+advice+'\n';
