@@ -16,8 +16,8 @@ export function planFit({width,height,anchors,target,waistFactor=1,protectedUnti
  if(!finite(waistFactor)||Math.abs(waistFactor-1)>LIMITS.maxWidthChange||!finite(protectedUntil)||!finite(transitionEnd)||protectedUntil<0||transitionEnd>height||transitionEnd<=protectedUntil)return {...rigid,reason:'Deformation refused; retain rigid approved pixels'};
  const derivative=(waistFactor-1)/(transitionEnd-protectedUntil),shear=Math.abs(derivative)*width/2;
  // Singular values of [[horizontal stretch, shear],[0,1]], at worst image edge.
- const f=Math.min(waistFactor,1),sum=f*f+shear*shear+1,disc=Math.sqrt(Math.max(0,sum*sum-4*f*f));
- const min=Math.sqrt((sum-disc)/2),max=Math.sqrt((sum+disc)/2);
+ const stretches=[1,waistFactor].map(f=>{const sum=f*f+shear*shear+1,disc=Math.sqrt(Math.max(0,sum*sum-4*f*f));return [Math.sqrt((sum-disc)/2),Math.sqrt((sum+disc)/2)];});
+ const min=Math.min(...stretches.map(x=>x[0])),max=Math.max(...stretches.map(x=>x[1]));
  if(min<LIMITS.minStretch||max>LIMITS.maxStretch)return {...rigid,reason:'Local stretch/shear limit exceeded; rigid fallback'};
  return {...rigid,mode:waistFactor===1?'rigid':'bounded-warp',waistFactor,protectedUntil,transitionEnd,minStretch:min,maxStretch:max,maxDistortion:Math.abs(waistFactor-1)};
 }

@@ -5,7 +5,9 @@ import {createAlphaHumanoidFigure,renderPhotoLayers} from '../../public/family-a
 import {fingerprintAlphaRetainedOriginal,identityForSavedGarment} from '../../public/family-alpha-2d-saved-board.mjs';
 const hash=async s=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s))),x=>x.toString(16).padStart(2,'0')).join('');
 const owner='a1111111-1111-4111-8111-111111111111';
+const cleanups=[];
 export async function compare(name){
+ for(const dispose of cleanups.splice(0))dispose();
  const g=garments[name],image=await fixtureImage(name),source=image.src,root=document.getElementById('comparisons');root.replaceChildren();
  const plans=[],summary=[];
  for(const [mode,label] of [['baseline','Existing #322 alpha containment'],['rigid','Reviewed anatomy anchors · rigid'],['warp','Bounded warp proposal · REVIEW']]){
@@ -38,9 +40,9 @@ export async function compare(name){
     const p={...presentation};change(p);try{await renderApprovedFit(scratch,{item,presentation:p,annotation,getContext:context});}catch{rejects++;}if(scratch.children.length)throw Error('Foreign/stale pixels displayed');
    }
    const badAnnotation={...annotation,pngHash:'wrong'};try{await renderApprovedFit(scratch,{item,presentation,annotation:badAnnotation,getContext:context});}catch{rejects++;}
-   epoch++;if(result.clearIfStale()||holder.children.length)throw Error('Session switch retained fit');epoch--;
+   epoch++;if(result.clearIfStale()||holder.children.length)throw Error('Session switch retained fit');epoch--;result.dispose();
    // Redraw same approved fixture after exercising clear-on-session-change.
-   await renderApprovedFit(holder,{item,presentation,annotation,getContext:context});
+   const final=await renderApprovedFit(holder,{item,presentation,annotation,getContext:context});cleanups.push(final.dispose);
    if(rejects!==5)throw Error('Invalid provenance accepted');
   }
   const note=document.createElement('p');note.className='metric';note.textContent=mode==='baseline'?'Unmodified renderer / unchanged approved PNG':`Scale ${plans.at(-1).scale.toFixed(3)}× · width change ${(100*plans.at(-1).maxDistortion).toFixed(1)}% · no y deformation`;card.append(note);

@@ -1,12 +1,13 @@
 import {fingerprintAlphaRetainedOriginal,fingerprintAlphaReviewContext,identityForSavedGarment} from '../../public/family-alpha-2d-saved-board.mjs';
 import {planFit,paintFit,clearOnScopeChange} from './fit.mjs';
+const active=new WeakMap();
 // Adapter preserves existing approved-photo identity and live account contracts.
 // Matching local hashes do NOT establish Auth/RLS. Caller owns upstream authorization.
-export async function renderApprovedFit(container,{item,presentation,annotation,getContext,getItem=()=>item,document=globalThis.document,cryptoProvider=globalThis.crypto}){
- container.replaceChildren();
+export async function renderApprovedFit(container,{item,presentation,annotation,getContext,getItem=()=>item,document=globalThis.document,cryptoProvider=globalThis.crypto,signal,sessionTarget=globalThis.window}){
+ const token={};active.set(container,token);container.replaceChildren();
  const ctx=getContext(),owner=ctx?.authenticatedUserId;
- const scope=()=>{const c=getContext();return c&&c.authenticatedUserId===owner&&c.currentUserId===owner&&c.cloudOwnerId===owner&&c.indexedDbName==='closet-current-user-'+owner&&c.sessionGeneration===ctx.sessionGeneration&&getItem()===item;};
- const reject=()=>{container.replaceChildren();throw Error('Unapproved, stale or foreign fitting source');};
+ const scope=()=>{const c=getContext();return active.get(container)===token&&!signal?.aborted&&c&&c.authenticatedUserId===owner&&c.currentUserId===owner&&c.cloudOwnerId===owner&&c.indexedDbName==='closet-current-user-'+owner&&c.sessionGeneration===ctx.sessionGeneration&&getItem()===item;};
+ const reject=()=>{if(active.get(container)===token)container.replaceChildren();throw Error('Unapproved, stale or foreign fitting source');};
  if(!owner||!Number.isSafeInteger(ctx.sessionGeneration)||!scope()||!item||!presentation||presentation.itemId!==item.id||presentation.ownerId!==owner||item.ownerId&&item.ownerId!==owner||!presentation.approved||!presentation.humanPreviewConfirmed||!presentation.sourcePixelAuditPassed||presentation.sourceIdentity!==identityForSavedGarment(item))return reject();
  const original=item.originalPhoto?.image||item.image,identity=presentation.sourceIdentity;
  const version=await fingerprintAlphaRetainedOriginal(original,cryptoProvider),review=await fingerprintAlphaReviewContext(item,cryptoProvider);
@@ -22,5 +23,9 @@ export async function renderApprovedFit(container,{item,presentation,annotation,
  paintFit(canvas,image,plan);
  if(!scope()||image.src!==src||identityForSavedGarment(item)!==identity||await fingerprintAlphaRetainedOriginal(item.originalPhoto?.image||item.image,cryptoProvider)!==version||await fingerprintAlphaReviewContext(item,cryptoProvider)!==review)return reject();
  if(!scope())return reject();container.replaceChildren(canvas);
- return {plan,displayed:true,sourceUnchanged:image.src===src,clearIfStale:()=>clearOnScopeChange(container,()=>scope()?{ownerId:owner,sessionGeneration:ctx.sessionGeneration}:null,{ownerId:owner,sessionGeneration:ctx.sessionGeneration})};
+ const clearIfStale=()=>active.get(container)===token&&clearOnScopeChange(container,()=>scope()?{ownerId:owner,sessionGeneration:ctx.sessionGeneration}:null,{ownerId:owner,sessionGeneration:ctx.sessionGeneration});
+ const clear=()=>{if(active.get(container)===token){container.replaceChildren();active.delete(container);}dispose();};
+ const dispose=()=>{sessionTarget?.removeEventListener('closet:alpha-session-changed',clear);signal?.removeEventListener('abort',clear);};
+ sessionTarget?.addEventListener('closet:alpha-session-changed',clear,{once:true});signal?.addEventListener('abort',clear,{once:true});
+ return {plan,displayed:true,sourceUnchanged:image.src===src,clearIfStale,dispose};
 }
