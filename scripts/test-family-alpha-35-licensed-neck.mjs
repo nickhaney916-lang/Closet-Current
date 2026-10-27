@@ -52,13 +52,16 @@ const encode=async frame=>sharp(Buffer.from(frame.rgba),{raw:{
 const actualColoredPNG=await encode(prepared);
 if(digest(actualColoredPNG)!==label.work30NativeCutoutSHA256)
  throw Error('Reconstructed licensed original RGB proposal not EXACT Work30 frozen source');
-const planned=[
- // Manually reviewed top-center mannequin NECK area, NOT automatic skin
- // detection. Human must still accept the visible garment after these taps.
- [.43,.065],[.50,.065],[.57,.065],
- [.42,.111],[.49,.111],[.56,.111],
- [.46,.155],[.53,.155]
-].map(([x,y])=>({x,y,radius:.043}));
+const planned=[{
+ // Human-traced inner edge of the genuine white V-collar. The area INSIDE
+ // the trim contains the mannequin's upper neck/chest, not dress fabric.
+ // No semantic skin detection, recoloring or invented garment texture.
+ kind:'polygon',points:[
+  [.454,.036],[.696,.036],[.706,.110],[.700,.138],
+  [.673,.180],[.632,.205],[.571,.244],[.505,.208],
+  [.470,.170],[.452,.135]
+ ].map(([x,y])=>({x,y}))
+}];
 const base={width:prepared.width,height:prepared.height,rgba:new Uint8ClampedArray(prepared.rgba)};
 const changed=applyReviewedEraser(base,planned);
 const editedPNG=await encode(changed);
@@ -75,7 +78,7 @@ if(alteredRgb||addedAlpha||erasedAlpha<100||
 await writeFile(output+'/'+key+'-original-provisional.png',actualColoredPNG);
 await writeFile(output+'/'+key+'-manually-proposed-neck-cleanup.png',editedPNG);
 await writeFile(output+'/evidence.json',JSON.stringify({
- releaseGate:'HOLD',role:'manual licensed actual black dress neck cleanup proposal, NOT owner garment approval',
+ releaseGate:'HOLD',role:'hand outlined mannequin neck INSIDE genuine V-collar, no owner garment approval',
  sourceJPEGPin:sourceRef,originalJPEGSha256:digest(jpeg),
  maskFile,maskSha256:digest(maskPNG),
  replayedWork30CutoutSha256:digest(actualColoredPNG),
