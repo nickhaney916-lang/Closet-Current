@@ -1,3 +1,4 @@
+import {attenuateReviewedFringeAlpha} from './edge-fringe.mjs';
 /** Offline fitting of actual source pixels. No mask creation, owner approval,
  * storage, requests or fabric synthesis. Callers must verify their source. */
 export const BODY=Object.freeze({shoulders:[[115,145],[245,145]],waist:[[145,306],[215,306]]});
@@ -78,6 +79,8 @@ export function requireVisiblePanelCoverage(coverage){
  return coverage;
 }
 export function paintGarmentFit(canvas,image,profile,adjust={}){
+ if(typeof adjust.edgeCleanup!=='undefined'&&typeof adjust.edgeCleanup!=='boolean')
+  throw Error('Edge cleanup must be an explicit boolean');
  const plan=planGarmentFit(image.naturalWidth,image.naturalHeight,profile,adjust);
  // Refuse fitting that would silently crop visible garment fabric. Sample only
  // for this guard; the actual garment is drawn from the native source image.
@@ -87,7 +90,23 @@ export function paintGarmentFit(canvas,image,profile,adjust={}){
  const probe=sample.getContext('2d',{willReadFrequently:true});probe.drawImage(image,0,0,sample.width,sample.height);
  const pixels=probe.getImageData(0,0,sample.width,sample.height).data;
  requireVisiblePanelCoverage(measureVisiblePanelCoverage(pixels,sample.width,sample.height,plan,image.naturalWidth,image.naturalHeight));
+ let drawable=image;
+ let fringe={changed:0,eligible:0,mode:'off',ownerApproved:false};
+ if(adjust.edgeCleanup===true){
+  // Prepare a separate, temporary display derivative, never change the
+  // decoded original, the user's JPEG, the reviewed mask, or accepted cutout.
+  const temp=canvas.ownerDocument.createElement('canvas');
+  temp.width=image.naturalWidth;temp.height=image.naturalHeight;
+  const tc=temp.getContext('2d',{willReadFrequently:true});
+  tc.drawImage(image,0,0);
+  const data=tc.getImageData(0,0,temp.width,temp.height);
+  fringe=attenuateReviewedFringeAlpha(data.data,temp.width,temp.height);
+  if(fringe.changed){
+   tc.putImageData(data,0,0);
+   drawable=temp;
+  }
+ }
  canvas.width=720;canvas.height=1200;const ctx=canvas.getContext('2d');ctx.scale(2,2);ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
- for(const p of plan.pieces){ctx.save();ctx.transform(...p.matrix);ctx.beginPath();p.polygon.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));ctx.closePath();ctx.clip();ctx.drawImage(image,0,0);ctx.restore();}
- return plan;
+ for(const p of plan.pieces){ctx.save();ctx.transform(...p.matrix);ctx.beginPath();p.polygon.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));ctx.closePath();ctx.clip();ctx.drawImage(drawable,0,0);ctx.restore();}
+ return {...plan,fringe};
 }
