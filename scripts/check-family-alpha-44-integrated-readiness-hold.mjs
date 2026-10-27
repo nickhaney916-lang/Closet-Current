@@ -59,12 +59,14 @@ export function evaluateVisualReview(evidence){
  failures(issues,'High-res camera source gate must be exact',
   si.manualStillMaxAxis===4096&&si.automaticFrameMaxAxis===2048);
  failures(issues,'Fit state must be session+owner+approved-mask scoped',si.sameOwnerSessionPhotoHashFitRequired===true);
- failures(issues,'Work37 fitting lacks accepted real visual evidence',v.work37Fit==='PASS');
- failures(issues,'Work38 segmentation is not accepted',v.work38Isolation==='PASS');
  // Work41 can be superseded by explicitly accepted photo-only presentation:
  // never require broken worn overlays if owner approves a truthful photo board.
  const photoOnly=v.allowedDefaultPresentation==='PHOTO_ONLY'&&
   v.work42PhotoFallback==='PASS'&&v.photoOnlyOutfitFallbackOwnerAccepted===true;
+ if(!photoOnly){
+  failures(issues,'Work37 fitting lacks accepted real visual evidence',v.work37Fit==='PASS');
+  failures(issues,'Work38 segmentation is not accepted',v.work38Isolation==='PASS');
+ }
  const wearable=v.allowedDefaultPresentation==='WORN_WITH_REVIEWED_GARMENTS'&&
   v.work41Compositing==='PASS'&&v.humanWornPreviewOwnerAccepted===true&&
   v.visuallyApprovedCutouts>0;
