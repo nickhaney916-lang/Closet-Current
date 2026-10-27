@@ -42,7 +42,7 @@ async function files(dir,prefix=''){
  for(const e of await readdir(join(dir,prefix),{withFileTypes:true})){
   if(e.isSymbolicLink())throw Error('Unsafe symlink');
   const p=prefix+e.name;
-  if(e.isDirectory())out.push(...await files(dir,p));
+  if(e.isDirectory())out.push(...await files(dir,p+'/'));
   else if(e.isFile())out.push(p);
   else throw Error('Unexpected compiled entry');
  }
