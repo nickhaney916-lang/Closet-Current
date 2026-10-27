@@ -1,7 +1,7 @@
 name: Work 46 Session and Navigation OFFLINE NO DEPLOY
 on:
   pull_request:
-    paths: ['tests/work46-session-races.test.mjs', 'scripts/test-work46-navigation.mjs', 'docs/work46/**', '.github/workflows/work46-session-navigation.yml']
+    paths: ['tests/work46-session-races.test.mjs', 'scripts/test-work46-navigation.mjs', 'scripts/build-work46-session-hold.mjs', 'docs/work46/**', '.github/workflows/work46-session-navigation.yml']
 permissions:
   contents: read
 jobs:
@@ -39,6 +39,7 @@ jobs:
           node scripts/build-family-alpha-43-still-source-hold.mjs
           node scripts/build-work43-photo-board-hold.mjs
           node scripts/build-work44-visual-board-hold.mjs
+          node scripts/build-work46-session-hold.mjs
       - name: Run account and wardrobe race regressions
         run: node --test tests/work46-session-races.test.mjs tests/work43/*.test.mjs
       - name: Run licensed full workflow and mobile hit testing
