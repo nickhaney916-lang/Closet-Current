@@ -15,6 +15,36 @@ export function applyReviewedEraser(original,strokes,{minRetained=.55}={}){
  for(let p=3;p<data.length;p+=4)if(data[p]>=128)before++;
  if(before<64)throw Error('Original has no meaningful garment alpha');
  for(const point of strokes){
+  if(point?.kind==='polygon'){
+   const pts=point.points;
+   if(!Array.isArray(pts)||pts.length<3||pts.length>24||
+      pts.some(p=>!p||!Number.isFinite(p.x)||!Number.isFinite(p.y)||
+       p.x<0||p.x>1||p.y<0||p.y>1))
+    throw new Error('Invalid manual mask outline');
+   let area=0;
+   for(let i=0;i<pts.length;i++){
+    const a=pts[i],b=pts[(i+1)%pts.length];
+    area+=a.x*b.y-b.x*a.y;
+   }
+   if(Math.abs(area)<.001||Math.abs(area)>.48)
+    throw new Error('Invalid outline area; use smaller garment-residue region');
+   const minX=Math.max(0,Math.floor(Math.min(...pts.map(p=>p.x))*w));
+   const maxX=Math.min(w-1,Math.ceil(Math.max(...pts.map(p=>p.x))*w));
+   const minY=Math.max(0,Math.floor(Math.min(...pts.map(p=>p.y))*h));
+   const maxY=Math.min(h-1,Math.ceil(Math.max(...pts.map(p=>p.y))*h));
+   for(let y=minY;y<=maxY;y++)for(let x=minX;x<=maxX;x++){
+    const px=(x+.5)/w,py=(y+.5)/h;
+    let inside=false;
+    for(let i=0,j=pts.length-1;i<pts.length;j=i++){
+     const a=pts[i],b=pts[j];
+     if((a.y>py)!==(b.y>py)&&
+        px<(b.x-a.x)*(py-a.y)/(b.y-a.y)+a.x)
+      inside=!inside;
+    }
+    if(inside)data[(y*w+x)*4+3]=0;
+   }
+   continue;
+  }
   if(!point||!['x','y','radius'].every(k=>Number.isFinite(point[k]))||
    point.x<0||point.x>1||point.y<0||point.y>1||
    point.radius<.012||point.radius>.12)
