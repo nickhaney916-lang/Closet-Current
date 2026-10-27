@@ -1,8 +1,8 @@
 /** Synthetic 2D avatar aspect-ratio checks in real Chromium and WebKit layout engines. NO DEPLOY. */
 import assert from 'node:assert/strict';
 import {createServer} from 'node:http';
-import {readFile} from 'node:fs/promises';
-import {resolve,sep} from 'node:path';
+import {readFile,mkdir,writeFile} from 'node:fs/promises';
+import {resolve,sep,join} from 'node:path';
 import {chromium,webkit} from 'playwright';
 
 const root=resolve('.');
@@ -24,6 +24,9 @@ const server=createServer(async(req,res)=>{
 await new Promise(ok=>server.listen(0,'127.0.0.1',ok));
 const host='http://127.0.0.1:'+server.address().port;
 const results=[];
+const visualDir=resolve('benchmark/family-alpha-2d-visual-review-hold');
+await mkdir(visualDir,{recursive:true});
+const screenshots=[];
 try{
  for(const [browserName,driver] of [['Chromium',chromium],['WebKit',webkit]]){
   const browser=await driver.launch({headless:true,...(browserName==='Chromium'?{args:['--no-sandbox']}:{})});
@@ -285,11 +288,94 @@ try{
      throw Error('Real browser IndexedDB account scope fixture failed');
     assert.deepEqual(errors,[]);assert.deepEqual(external,[]);
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+1),true);
+    // OFFLINE SCREENSHOT EVIDENCE: actual compiled headless 2D renderer,
+    // entirely code-generated colored/silhouette PNG garments. This is
+    // NOT product photography or a demonstration of correct real-photo matting.
+    for(const kind of ['everyday','dress']){
+     const fixture=await page.evaluate(async kind=>{
+      const {renderPhotoLayers}=await import('/public/family-alpha-2d-photo-renderer.mjs');
+      const stage=document.querySelector('#stage');
+      stage.replaceChildren();
+      // Each vector is an ORIGINAL synthetic shape, rasterized to actual
+      // decoded transparent PNG; no external image, user source or AI call.
+      const defs={
+       shirt:{w:220,h:290,shape:'M65 20 L155 20 L204 75 L177 102 L166 83 L169 258 L51 258 L54 83 L43 102 L16 75 Z',fill:'#d5766b'},
+       pants:{w:220,h:340,shape:'M44 15 L176 15 L189 304 L130 304 L114 132 L99 304 L30 304 Z',fill:'#476d86'},
+       shoes:{w:240,h:130,shape:'M12 58 L92 58 L112 90 L112 115 L5 115 L5 92 Z M128 58 L210 58 L235 92 L235 115 L122 115 L122 90 Z',fill:'#424a56'},
+       jacket:{w:250,h:305,shape:'M64 12 L25 53 L9 155 L46 170 L65 110 L65 276 L119 276 L119 46 L131 46 L131 276 L185 276 L185 110 L204 170 L241 155 L225 53 L186 12 Z',fill:'#9b876e'},
+       dress:{w:235,h:410,shape:'M75 12 L160 12 L223 84 L188 112 L167 83 L208 390 L27 390 L68 83 L47 112 L12 84 Z',fill:'#4b9885'}
+      };
+      const pngs={};
+      for(const [name,m] of Object.entries(defs)){
+       const svg='<svg xmlns="http://www.w3.org/2000/svg" width="'+m.w+
+        '" height="'+m.h+'" viewBox="0 0 '+m.w+' '+m.h+'">'+
+        '<path d="'+m.shape+'" fill="'+m.fill+'" stroke="#374151" stroke-width="2"/>'+
+        '<path d="M70 45 L142 45 M80 70 L140 70 M82 96 L150 96" fill="none" stroke="#ffffff" stroke-width="4" opacity=".25"/>'+
+        '</svg>';
+       const original=new Image();
+       original.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
+       await original.decode();
+       const canvas=document.createElement('canvas');canvas.width=m.w;canvas.height=m.h;
+       canvas.getContext('2d').drawImage(original,0,0);
+       const image=new Image();
+       image.src=canvas.toDataURL('image/png');
+       await image.decode();
+       pngs[name]=image;
+      }
+      const garment=(slot,itemId)=>({
+       slot,itemId,sourceIdentity:'SYNTHETIC-ONLY-'+itemId,sourceVersion:'synthetic-snapshot-v1'
+      });
+      const selected=kind==='dress'
+       ?[garment('dress','dress'),garment('shoes','shoes')]
+       :[garment('top','shirt'),garment('bottom','pants'),
+         garment('shoes','shoes'),garment('layer2','jacket')];
+      if(renderPhotoLayers(stage,selected,pngs)!==selected.length)
+       throw Error('Synthetic visual example layer count changed');
+      const human=stage.querySelector('svg[data-humanoid="articulated-2d-v1"]');
+      if(!human||stage.querySelectorAll('img').length!==selected.length)
+       throw Error('No displayed human and photo overlays in actual screenshot');
+      if([...stage.querySelectorAll('img')].some(el=>!
+        el.src.startsWith('data:image/png;base64,')))
+       throw Error('Nonlocal/unexpected source slipped into screenshot');
+      // Evidentiary labels prevent simulated outfits from being mistaken for
+      // independently tested real apparel or a release preview.
+      let label=document.getElementById('alpha-visual-evidence-heading');
+      if(!label){
+       label=document.createElement('div');
+       label.id='alpha-visual-evidence-heading';
+       label.style.cssText='margin:0 auto 12px;max-width:360px;padding:12px;'+
+        'border-radius:12px;background:#e5e7eb;color:#111827;font-size:12px;'+
+        'line-height:1.5';
+       document.body.insertBefore(label,stage);
+      }
+      label.textContent='SYNTHETIC ONLY — not real garment photos, matting or fit. '+
+       '2D humanoid + approved-PNG-style overlay. Family Alpha remains HOLD. '+
+       (kind==='dress'?'Dress & shoes':'Everyday layers: top, trousers, shoes, jacket');
+      const rect=stage.getBoundingClientRect();
+      if(rect.width<250||rect.width>360)throw Error('Unexpected visual review stage sizing');
+      return {kind,images:selected.length,width:Math.round(rect.width)};
+     },kind);
+     assert.deepEqual(errors,[]);
+     assert.deepEqual(external,[]);
+     const file=browserName.toLowerCase()+'-'+width+'-'+kind+'-SYNTHETIC-HOLD.png';
+     await page.screenshot({path:join(visualDir,file),fullPage:true,animations:'disabled'});
+     screenshots.push({file,browser:browserName,viewportWidth:width,...fixture,
+      content:'Synthetic 2D humanoid with code-generated transparent PNG silhouettes, not customer clothing',
+      visualAcceptance:'NOT_TESTED',releaseGate:'HOLD'});
+    }
     results.push({browser:browserName,width,...data,alphaBoundsFitted:true});
     await context.close();
    }
   }finally{await browser.close();}
  }
  assert.equal(results.length,6);
+ assert.equal(screenshots.length,12);
+ await writeFile(join(visualDir,'visual-evidence-manifest.json'),JSON.stringify({
+  releaseGate:'HOLD',kind:'CI headless visual evidence from code-generated synthetic PNGs',
+  actualClothingQualityProved:false,realPhotosUsed:false,customerImagesUsed:false,
+  ownerApproved:false,claims:'Anatomical SVG and local photo-image overlay only; not physical fit or matting',
+  screenshots
+ },null,2)+'\n');
  console.log('FAMILY_ALPHA_2D_ASPECT_BROWSER_PASS '+JSON.stringify(results));
+ console.log('FAMILY_ALPHA_2D_SYNTHETIC_EVIDENCE_HOLD '+JSON.stringify({screenshots:screenshots.length,visualDir}));
 }finally{await new Promise(ok=>server.close(ok));}
