@@ -247,7 +247,7 @@ test('complete disabled original-JPEG integration renders articulated humanoid b
  assert.equal(manifest.segmentationQualityPhoneApproved,false);
  const humanoid=await readFile(join(OUTPUT,'family-alpha-2d-photo-renderer.mjs'),'utf8');
  const planner=await readFile(join(OUTPUT,'family-alpha-2d-layer-plan.mjs'),'utf8');
- const original=execFileSync('git',['show',RECOGNITION_REF+':public/family-alpha-2d-photo-renderer.mjs'],{encoding:'utf8'});
+ const original=execFileSync('git',['show',STAGING_REF+':public/family-alpha-2d-photo-renderer.mjs'],{encoding:'utf8'});
  assert.match(original,/const body=document\.createElement\('div'\)/);
  assert.doesNotMatch(humanoid,/const body=document\.createElement\('div'\)/);
  assert.match(humanoid,/data-humanoid/);
