@@ -22,7 +22,7 @@ s=s.replace(navMarker, String.raw\x60
     const control=controls.nth(j);await control.scrollIntoViewIfNeeded();
     const measure=()=>control.evaluate(e=>{const r=e.getBoundingClientRect(),x=r.left+r.width/2,y=r.top+r.height/2,top=document.elementFromPoint(x,y);return {reachable:!!top&&(top===e||e.contains(top)),name:e.getAttribute('aria-label')||e.textContent.trim(),x,y};});
     let hit=await measure();
-    if(!hit.reachable){console.log('WORK46_AUTOSCROLL_OCCLUSION',JSON.stringify({browser:name,width,...hit}));await page.mouse.wheel(0,200);hit=await measure();}
+    if(!hit.reachable){console.log('WORK46_AUTOSCROLL_OCCLUSION',JSON.stringify({browser:name,width,...hit}));await mkdir('benchmark/work46-navigation',{recursive:true});await page.screenshot({path:'benchmark/work46-navigation/'+name.toLowerCase()+'-'+width+'-obstructed.png'});await page.mouse.wheel(0,200);hit=await measure();}
     assert.ok(hit.reachable,JSON.stringify({test:'mobile-control-hit-after-scroll',browser:name,width,...hit}));
    }
    await mkdir('benchmark/work46-navigation',{recursive:true});
