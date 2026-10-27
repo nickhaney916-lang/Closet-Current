@@ -152,6 +152,40 @@ export function applyOuterwearAutoReviewHold(app){
  const shiftedEnd=first.indexOf('\nasync function ',shiftedStart+1);
  return first.slice(0,shiftedStart)+updatedScan+first.slice(shiftedEnd);
 }
+// Staging HOLD only: a real historic dress was accepted as a Tunic top.
+// This is an unreviewed-save safety gate, not a classifier threshold or an
+// inference accuracy change. Recheck exact source anchors on every build.
+export function applyTunicDressAutoReviewHold(app){
+ const quickStart=app.indexOf('function canConfirmReviewedColor(item){');
+ const quickEnd=app.indexOf('\nasync function confirmReviewedColor(item,color)',quickStart);
+ const scanStart=app.indexOf('async function recognizeItem(item){');
+ const scanEnd=app.indexOf('\nasync function ',scanStart+1);
+ if(quickStart<0||quickEnd<=quickStart||scanStart<0||scanEnd<=scanStart||
+    app.indexOf('function canConfirmReviewedColor(item){',quickStart+1)>=0||
+    app.indexOf('async function recognizeItem(item){',scanStart+1)>=0)
+  throw Error('Tunic-to-dress review contract moved');
+ const quick=app.slice(quickStart,quickEnd),scan=app.slice(scanStart,scanEnd);
+ const quickAnchor="  item.category!=='Outerwear'&& // OUTERWEAR_AUTO_REVIEW_HOLD: require full original-photo Adjust";
+ if(quick.split(quickAnchor).length!==2||quick.includes('TUNIC_DRESS_AUTO_REVIEW_HOLD'))
+  throw Error('Prior Outerwear quick-color hold missing or Tunic hold duplicated');
+ const safeQuick=quick.replace(quickAnchor,quickAnchor+
+  "\n  !(item.category==='Tops'&&item.itemType==='Tunic')&& // TUNIC_DRESS_AUTO_REVIEW_HOLD");
+ const colorAnchor="  if(item.category==='Uncategorized'||!ClothingDetails.validColor(item.color)){";
+ const autoAnchor="  // Every early return above still requires review. Clear it ONLY for the";
+ if(scan.split(colorAnchor).length!==2||scan.split(autoAnchor).length!==2||
+    !scan.includes("if(item.category==='Outerwear'){")||
+    scan.includes('TUNIC_DRESS_AUTO_REVIEW_HOLD'))
+  throw Error('Tunic source-photo admission anchors changed');
+ const notice="   item.localStatus='A tunic can be a dress. Check the original photo in Adjust and confirm category, item type and color before saving.';";
+ const beforeColor="  // TUNIC_DRESS_AUTO_REVIEW_HOLD: no one-tap color for a possible dress.\n  if(item.category==='Tops'&&item.itemType==='Tunic'){\n"+notice+"\n   return true;\n  }\n";
+ const beforeAuto="  // TUNIC_DRESS_AUTO_REVIEW_HOLD: block unattended Tunic indexing.\n  if(item.category==='Tops'&&item.itemType==='Tunic'){\n"+notice+"\n   return true;\n  }\n";
+ const safeScan=scan.replace(colorAnchor,beforeColor+colorAnchor).replace(autoAnchor,beforeAuto+autoAnchor);
+ const first=app.slice(0,quickStart)+safeQuick+app.slice(quickEnd);
+ const updatedStart=first.indexOf('async function recognizeItem(item){');
+ const updatedEnd=first.indexOf('\nasync function ',updatedStart+1);
+ if(updatedStart<0||updatedEnd<=updatedStart)throw Error('Scan moved during Tunic overlay');
+ return first.slice(0,updatedStart)+safeScan+first.slice(updatedEnd);
+}
 const isAlphaFile=name=>name.startsWith('family-alpha-')||name.startsWith('alpha-stage-')||
  name.startsWith('__alpha_research/');
 const source=(path)=>{
@@ -306,7 +340,7 @@ export async function buildDisabledIntegratedCandidate({root=resolve('.')}={}){
  try{mobileReview=execFileSync('git',['show',REVIEW_REF+':public/app.js'],
   {maxBuffer:50*1024*1024,stdio:['ignore','pipe','ignore']}).toString('utf8');}
  catch{throw Error('Missing pinned mobile review PR #284 app source');}
- const mergedApp=applyOuterwearAutoReviewHold(applyPinnedMobileReview(workerMerged,mobileReview));
+ const mergedApp=applyTunicDressAutoReviewHold(applyOuterwearAutoReviewHold(applyPinnedMobileReview(workerMerged,mobileReview)));
  await writeFile(join(target,'app.js'),mergedApp);
  const app=await readFile(join(target,'app.js'),'utf8');
  if(sha256(app)!==sha256(mergedApp)||
@@ -362,6 +396,7 @@ export async function buildDisabledIntegratedCandidate({root=resolve('.')}={}){
   recoverableImageErrorIsolated:true,
   mobileReviewRef:REVIEW_REF,sourcePinnedManualReview:true,queuedManualSavePreserved:true,
   outerwearAutoSaveHold:true,
+  tunicDressAutoSaveHold:true,
   integrationAppSha256:sha256(app),integrationIndexSha256:sha256(index),
   recognitionOverlayFiles:modified,retainedStageGatedAssets:unchanged,
   testingLimitations:[
@@ -381,7 +416,7 @@ export async function assertDisabledIntegratedCandidate({root=resolve('.')}={}){
  if(x.releaseGate!=='HOLD'||x.status!=='UNAPPROVED_COMBINED_SOURCE_OFFLINE_ONLY'||
   !x.stageAuthBlocked||!x.workerRecoveryProtocolGuarded||!x.recoverableImageErrorIsolated||
   x.workerRecoveryRef!==WORKER_RECOVERY_REF||x.mobileReviewRef!==REVIEW_REF||
-  !x.sourcePinnedManualReview||!x.queuedManualSavePreserved||!x.outerwearAutoSaveHold||!x.modernHumanColorProofRetained||!x.wardrobeDraftAndBackupIntegrityPinned||!x.stagedReviewed2DAvatarPresent||
+  !x.sourcePinnedManualReview||!x.queuedManualSavePreserved||!x.outerwearAutoSaveHold||!x.tunicDressAutoSaveHold||!x.modernHumanColorProofRetained||!x.wardrobeDraftAndBackupIntegrityPinned||!x.stagedReviewed2DAvatarPresent||
   !x.stagePrivateAuthTransformationPreserved||x.stagingProjectRef!==STAGE_ID||
   !x.missingApprovedCallback||!x.missingPublishableKey||
   x.cloudAuthorizationsTested||x.nativePhonesTested||x.customerDataRead||
@@ -396,6 +431,7 @@ export async function assertDisabledIntegratedCandidate({root=resolve('.')}={}){
   !app.includes('I checked the original photo, category, item type and color')||
   !app.includes("['Shoes','Dresses','Outerwear'].includes(draft.category)")||
   !app.includes('OUTERWEAR_AUTO_REVIEW_HOLD')||
+  !app.includes('TUNIC_DRESS_AUTO_REVIEW_HOLD')||
   !app.includes('editorHint=JSON.stringify(item.segmentHint??null);')||
   !app.includes('await savePiece(value,()=>batch.filter(x=>x.id!==item.id),editorCurrent);')||
   !app.includes("const recoverable=job.type!=='load'&&data.code==='image';")||
