@@ -1,0 +1,4 @@
+// Offline visual-interpretation examples derived from one licensed JPEG.
+import {createRequire} from 'node:module';const sharp=createRequire(import.meta.url)('sharp');import {assessPhoto} from '../research/family-alpha-39/quality.mjs';import {createHash} from 'node:crypto';import {readFile} from 'node:fs/promises';
+const source='benchmark/fixtures/commons-0043.jpg';const input=await readFile(source);let variants=[['original',sharp(input)],['darkened',sharp(input).modulate({brightness:.15})],['blurred',sharp(input).blur(12)]];
+for(const [name,p] of variants){let {data,info}=await p.rotate().resize({width:128,height:128,fit:'inside'}).ensureAlpha().raw().toBuffer({resolveWithObject:true});const r=assessPhoto({width:1920,height:1903,sampleWidth:info.width,sampleHeight:info.height,rgba:data});console.log(JSON.stringify({name,sourceSHA256:createHash('sha256').update(input).digest('hex'),hint:r.hint,metrics:r.metrics}));}
