@@ -6,7 +6,7 @@ import {createServer} from 'node:http';
 import {readFile,mkdir,writeFile} from 'node:fs/promises';
 import {resolve,join} from 'node:path';
 import assert from 'node:assert/strict';
-const root=resolve('dist-family-alpha-40-session-fit-HOLD');
+const root=resolve('dist-family-alpha-41-original-jpeg-HOLD');
 const output='benchmark/family-alpha-original-jpeg-import-HOLD';
 await mkdir(output,{recursive:true});
 const server=createServer(async (req,res)=>{
