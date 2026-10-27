@@ -5,6 +5,7 @@ on:
       - 'research/family-alpha-36/**'
       - 'scripts/build-family-alpha-36-rigid-fit-hold.mjs'
       - 'scripts/test-family-alpha-36-browser.mjs'
+      - 'scripts/test-family-alpha-36-licensed-rigid-fit-browser.mjs'
       - 'tests/integration/family-alpha-36-rigid-fit-hold.test.mjs'
       - 'docs/FAMILY-ALPHA-36-MANUAL-ANATOMICAL-ALIGN-HOLD.md'
       - 'scripts/build-family-alpha-35-visual-repair-hold.mjs'
@@ -86,6 +87,16 @@ jobs:
         run: node scripts/test-family-alpha-35-licensed-neck.mjs
       - name: Render actual real licensed mask before/after on source-backed 2D humanoid
         run: node scripts/test-family-alpha-35-licensed-neck-browser.mjs
+      - name: Compare unchanged licensed dress photo with bounded rigid shoulder and waist preview
+        run: node scripts/test-family-alpha-36-licensed-rigid-fit-browser.mjs
+      - name: Preserve clearly provisional actual licensed garment fit screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: family-alpha-36-real-licensed-dress-rigid-position-PROVISIONAL-HOLD
+          path: benchmark/family-alpha-36-real-dress-HOLD/
+          retention-days: 7
+          if-no-files-found: warn
       - name: Preserve synthetic-only screenshot evidence
         if: always()
         uses: actions/upload-artifact@v4
