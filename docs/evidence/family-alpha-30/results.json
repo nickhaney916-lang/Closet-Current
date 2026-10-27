@@ -1,0 +1,523 @@
+{
+  "candidateMethod": "local U2NETP alpha proposal; native original RGB",
+  "method": "native decoded JPEG, identical baseline/candidate frames; no recoloring or resizing during clipping; sparse probes are NOT whole-mask accuracy",
+  "labelsSha256": "bf2cb795493be1c8db5f94300e12f30d3ba19c281e33e3432a9a8e3bb95a94ff",
+  "sourceLabels": "frozen reviewed-32 + holdout-16; no label changes based on results",
+  "rows": [
+    {
+      "id": "commons-0001",
+      "category": "Tops",
+      "type": "T-shirt",
+      "role": "shirt",
+      "scene": "dark backdrop; hanger/neck risk",
+      "sourceSHA256": "d20d66d4173f56c47e35540f081ecdfcee6e019df665ee245d967d126e117684",
+      "baseline": {
+        "prepared": false,
+        "reason": "busy-or-ambiguous-background",
+        "foregroundProbeRecall": null,
+        "backgroundProbeContamination": null
+      },
+      "borderCandidateDecision": "review",
+      "borderCandidateReason": "garment-clipped-by-photo-edge",
+      "candidate": {
+        "prepared": true,
+        "foregroundPixels": 2574605,
+        "exactRetainedRGBRate": 1,
+        "partialAlphaPixels": 2551466,
+        "foregroundProbeRecall": 1,
+        "backgroundProbeContamination": 0,
+        "outputWidth": 1903,
+        "outputHeight": 2415,
+        "sourceNativeDimensions": [
+          1920,
+          2868
+        ],
+        "algorithmDecision": "review",
+        "rejectionReason": "model-saliency-requires-garment-and-edge-review",
+        "pngVisibleRGBMismatchPixels": 0
+      },
+      "decision": "FAIL",
+      "reason": "Scene contains attached person/mannequin/hanger or clutter; semantic isolation remains unverified.",
+      "fullMaskIoU": null,
+      "independentFullMaskAvailable": false,
+      "ownerVisuallyApproved": false
+    },
+    {
+      "id": "commons-0003",
+      "category": "Tops",
+      "type": "T-shirt",
+      "role": "long sleeves",
+      "scene": "mannequin and jeans; complex",
+      "sourceSHA256": "cb909d7ad9c3940bfa4db0cc50b2ea7025faebe3dcec8fe80067f900760bba64",
+      "baseline": {
+        "prepared": false,
+        "reason": "busy-or-ambiguous-background",
+        "foregroundProbeRecall": null,
+        "backgroundProbeContamination": null
+      },
+      "borderCandidateDecision": "review",
+      "borderCandidateReason": "opposite-background-edges-disagree",
+      "candidate": {
+        "prepared": false,
+        "reason": "garment-clipped-by-photo-edge",
+        "foregroundProbeRecall": null,
+        "backgroundProbeContamination": null,
+        "algorithmDecision": "review",
+        "rejectionReason": "garment-clipped-by-photo-edge"
+      },
+      "decision": "REVIEW",
+      "reason": "Scene contains attached person/mannequin/hanger or clutter; semantic isolation remains unverified.",
+      "fullMaskIoU": null,
+      "independentFullMaskAvailable": false,
+      "ownerVisuallyApproved": false
+    },
+    {
+      "id": "commons-0065",
+      "category": "Outerwear",
+      "type": "Jacket",
+      "role": "jacket",
+      "scene": "flat product; sleeves touch frame",
+      "sourceSHA256": "0d094b023d86942acbc89fc5a4bc02968c1b5d0b2c78639cdeb985f522a78494",
+      "baseline": {
+        "prepared": false,
+        "reason": "busy-or-ambiguous-background",
+        "foregroundProbeRecall": null,
+        "backgroundProbeContamination": null
+      },
+      "borderCandidateDecision": "review",
+      "borderCandidateReason": "opposite-background-edges-disagree",
+      "candidate": {
+        "prepared": false,
+        "reason": "garment-clipped-by-photo-edge",
+        "foregroundProbeRecall": null,
+        "backgroundProbeContamination": null,
+        "algorithmDecision": "review",
+        "rejectionReason": "garment-clipped-by-photo-edge"
+      },
+      "decision": "REVIEW",
+      "reason": "garment-clipped-by-photo-edge",
+      "fullMaskIoU": null,
+      "independentFullMaskAvailable": false,
+      "ownerVisuallyApproved": false
+    },
+    {
+      "id": "commons-0068",
+      "category": "Outerwear",
+      "type": "Coat",
+      "role": "coat",
+      "scene": "outdoor background and hanger",
+      "sourceSHA256": "5d372824e1054c4c392969bed227784cd30d7011e95db769218b20a28302633f",
+      "baseline": {
+        "prepared": false,
+        "reason": "busy-or-ambiguous-background",
+        "foregroundProbeRecall": null,
+        "backgroundProbeContamination": null
+      },
+      "borderCandidateDecision": "review",
+      "borderCandidateReason": "opposite-background-edges-disagree",
+      "candidate": {
+        "prepared": false,
+        "reason": "garment-clipped-by-photo-edge",
+        "foregroundProbeRecall": null,
+        "backgroundProbeContamination": null,
+        "algorithmDecision": "review",
+        "rejectionReason": "garment-clipped-by-photo-edge"
+      },
+      "decision": "REVIEW",
+      "reason": "Scene contains attached person/mannequin/hanger or clutter; semantic isolation remains unverified.",
+      "fullMaskIoU": null,
+      "independentFullMaskAvailable": false,
+      "ownerVisuallyApproved": false
+    },
+    {
+      "id": "commons-0053",
+      "category": "Dresses",
+      "type": "Dress",
+      "role": "dress",
+      "scene": "white backdrop; mannequin neck",
+      "sourceSHA256": "e7a617cd23a159864f619e8397d5f37d48b684e47dddc4ad6b46b14481042019",
+      "baseline": {
+        "prepared": true,
+        "foregroundPixels": 2025381,
+        "exactRetainedRGBRate": 1,
+        "partialAlphaPixels": 0,
+        "foregroundProbeRecall": 1,
+        "backgroundProbeContamination": 0,
+        "outputWidth": 1340,
+        "outputHeight": 2715,
+        "sourceNativeDimensions": [
+          1920,
+          2880
+        ]
+      },
+      "borderCandidateDecision": "review",
+      "borderCandidateReason": "enclosed-pale-fabric-or-hole-needs-review",
+      "candidate": {
+        "prepared": true,
+        "foregroundPixels": 2164880,
+        "exactRetainedRGBRate": 1,
+        "partialAlphaPixels": 2128726,
+        "foregroundProbeRecall": 1,
+        "backgroundProbeContamination": 0,
+        "outputWidth": 1423,
+        "outputHeight": 2797,
+        "sourceNativeDimensions": [
+          1920,
+          2880
+        ],
+        "algorithmDecision": "review",
+        "rejectionReason": "model-saliency-requires-garment-and-edge-review",
+        "pngVisibleRGBMismatchPixels": 0
+      },
+      "decision": "FAIL",
+      "reason": "Scene contains attached person/mannequin/hanger or clutter; semantic isolation remains unverified.",
+      "fullMaskIoU": null,
+      "independentFullMaskAvailable": false,
+      "ownerVisuallyApproved": false
+    },
+    {
+      "id": "commons-0043",
+      "category": "Bottoms",
+      "type": "Skirt",
+      "role": "skirt",
+      "scene": "mannequin waist; pale fabric",
+      "sourceSHA256": "c8d0812ab69d698f5bf8dc5a14ace6b8034e4c74152471acf4f079fdd6d0c344",
+      "baseline": {
+        "prepared": false,
+        "reason": "busy-or-ambiguous-background",
+        "foregroundProbeRecall": null,
+        "backgroundProbeContamination": null
+      },
+      "borderCandidateDecision": "review",
+      "borderCandidateReason": "border-is-not-a-simple-background",
+      "candidate": {
+        "prepared": false,
+        "reason": "garment-clipped-by-photo-edge",
+        "foregroundProbeRecall": null,
+        "backgroundProbeContamination": null,
+        "algorithmDecision": "review",
+        "rejectionReason": "garment-clipped-by-photo-edge"
+      },
+      "decision": "REVIEW",
+      "reason": "Scene contains attached person/mannequin/hanger or clutter; semantic isolation remains unverified.",
+      "fullMaskIoU": null,
+      "independentFullMaskAvailable": false,
+      "ownerVisuallyApproved": false
+    },
+    {
+      "id": "commons-0033",
+      "category": "Bottoms",
+      "type": "Shorts",
+      "role": "shorts",
+      "scene": "worn on person; textured wall",
+      "sourceSHA256": "7e31adee6fabca386faabd8ca6f0f1f4d93291f74cb84a6ab10cb4bd724cd2f7",
+      "baseline": {
+        "prepared": false,
+        "reason": "busy-or-ambiguous-background",
+        "foregroundProbeRecall": null,
+        "backgroundProbeContamination": null
+      },
+      "borderCandidateDecision": "review",
+      "borderCandidateReason": "opposite-background-edges-disagree",
+      "candidate": {
+        "prepared": false,
+        "reason": "garment-clipped-by-photo-edge",
+        "foregroundProbeRecall": null,
+        "backgroundProbeContamination": null,
+        "algorithmDecision": "review",
+        "rejectionReason": "garment-clipped-by-photo-edge"
+      },
+      "decision": "REVIEW",
+      "reason": "Scene contains attached person/mannequin/hanger or clutter; semantic isolation remains unverified.",
+      "fullMaskIoU": null,
+      "independentFullMaskAvailable": false,
+      "ownerVisuallyApproved": false
+    },
+    {
+      "id": "commons-0021",
+      "category": "Bottoms",
+      "type": "Jeans",
+      "role": "pants",
+      "scene": "person, shirt and shoes",
+      "sourceSHA256": "04c0ca5bed1bee26e83be98b9a992619b0777811a7fb8a99fe955939334bbd8c",
+      "baseline": {
+        "prepared": false,
+        "reason": "busy-or-ambiguous-background",
+        "foregroundProbeRecall": null,
+        "backgroundProbeContamination": null
+      },
+      "borderCandidateDecision": "review",
+      "borderCandidateReason": "border-is-not-a-simple-background",
+      "candidate": {
+        "prepared": false,
+        "reason": "garment-clipped-by-photo-edge",
+        "foregroundProbeRecall": null,
+        "backgroundProbeContamination": null,
+        "algorithmDecision": "review",
+        "rejectionReason": "garment-clipped-by-photo-edge"
+      },
+      "decision": "REVIEW",
+      "reason": "Scene contains attached person/mannequin/hanger or clutter; semantic isolation remains unverified.",
+      "fullMaskIoU": null,
+      "independentFullMaskAvailable": false,
+      "ownerVisuallyApproved": false
+    },
+    {
+      "id": "commons-0082",
+      "category": "Shoes",
+      "type": "Sneakers",
+      "role": "sneakers",
+      "scene": "isolated pale product on white",
+      "sourceSHA256": "d312800f42d207212ef45d7d0bd6a41fbd4d61193ed3b0e5df6193f1cedddbd2",
+      "baseline": {
+        "prepared": true,
+        "foregroundPixels": 873180,
+        "exactRetainedRGBRate": 1,
+        "partialAlphaPixels": 0,
+        "foregroundProbeRecall": 1,
+        "backgroundProbeContamination": 0,
+        "outputWidth": 1901,
+        "outputHeight": 909,
+        "sourceNativeDimensions": [
+          1920,
+          910
+        ]
+      },
+      "borderCandidateDecision": "review",
+      "borderCandidateReason": "enclosed-pale-fabric-or-hole-needs-review",
+      "candidate": {
+        "prepared": true,
+        "foregroundPixels": 951740,
+        "exactRetainedRGBRate": 1,
+        "partialAlphaPixels": 948661,
+        "foregroundProbeRecall": 1,
+        "backgroundProbeContamination": 0,
+        "outputWidth": 1907,
+        "outputHeight": 910,
+        "sourceNativeDimensions": [
+          1920,
+          910
+        ],
+        "algorithmDecision": "review",
+        "rejectionReason": "model-saliency-requires-garment-and-edge-review",
+        "pngVisibleRGBMismatchPixels": 0
+      },
+      "decision": "REVIEW",
+      "reason": "model-saliency-requires-garment-and-edge-review",
+      "fullMaskIoU": null,
+      "independentFullMaskAvailable": false,
+      "ownerVisuallyApproved": false
+    },
+    {
+      "id": "commons-0088",
+      "category": "Shoes",
+      "type": "Boots",
+      "role": "boots",
+      "scene": "isolated black boot on light gradient",
+      "sourceSHA256": "8e5e9cd86c22a0c03b120cd57af33144cc2e61a29b0beed50b5db3c5c222cbba",
+      "baseline": {
+        "prepared": false,
+        "reason": "busy-or-ambiguous-background",
+        "foregroundProbeRecall": null,
+        "backgroundProbeContamination": null
+      },
+      "borderCandidateDecision": "review",
+      "borderCandidateReason": "enclosed-pale-fabric-or-hole-needs-review",
+      "candidate": {
+        "prepared": true,
+        "foregroundPixels": 896671,
+        "exactRetainedRGBRate": 1,
+        "partialAlphaPixels": 886760,
+        "foregroundProbeRecall": 0.5,
+        "backgroundProbeContamination": 0,
+        "outputWidth": 1459,
+        "outputHeight": 1258,
+        "sourceNativeDimensions": [
+          1920,
+          1359
+        ],
+        "algorithmDecision": "review",
+        "rejectionReason": "model-saliency-requires-garment-and-edge-review",
+        "pngVisibleRGBMismatchPixels": 0
+      },
+      "decision": "FAIL",
+      "reason": "Sparse garment/background probe failure; cutout must not be displayed.",
+      "fullMaskIoU": null,
+      "independentFullMaskAvailable": false,
+      "ownerVisuallyApproved": false
+    },
+    {
+      "id": "commons-0016",
+      "category": "Tops",
+      "type": "Blouse",
+      "role": "long sleeve blouse",
+      "scene": "pale flat garment on beige; low contrast",
+      "sourceSHA256": "e0510f06c475fa048585e6ff437359cb4255ce3a425e40a69dc54cc337f5ab24",
+      "baseline": {
+        "prepared": false,
+        "reason": "busy-or-ambiguous-background",
+        "foregroundProbeRecall": null,
+        "backgroundProbeContamination": null
+      },
+      "borderCandidateDecision": "review",
+      "borderCandidateReason": "border-is-not-a-simple-background",
+      "candidate": {
+        "prepared": true,
+        "foregroundPixels": 2831590,
+        "exactRetainedRGBRate": 1,
+        "partialAlphaPixels": 2829115,
+        "foregroundProbeRecall": 1,
+        "backgroundProbeContamination": 0,
+        "outputWidth": 1920,
+        "outputHeight": 2236,
+        "sourceNativeDimensions": [
+          1920,
+          2238
+        ],
+        "algorithmDecision": "review",
+        "rejectionReason": "model-saliency-requires-garment-and-edge-review",
+        "pngVisibleRGBMismatchPixels": 0
+      },
+      "decision": "REVIEW",
+      "reason": "model-saliency-requires-garment-and-edge-review",
+      "fullMaskIoU": null,
+      "independentFullMaskAvailable": false,
+      "ownerVisuallyApproved": false
+    },
+    {
+      "id": "commons-0079",
+      "category": "Shoes",
+      "type": "Sneakers",
+      "role": "sneakers difficult",
+      "scene": "outdoor support and background objects",
+      "sourceSHA256": "b577483e5244dfb53e60cc8a0b54a4130e695cf388e5534e38a2b04580727ec6",
+      "baseline": {
+        "prepared": false,
+        "reason": "busy-or-ambiguous-background",
+        "foregroundProbeRecall": null,
+        "backgroundProbeContamination": null
+      },
+      "borderCandidateDecision": "review",
+      "borderCandidateReason": "opposite-background-edges-disagree",
+      "candidate": {
+        "prepared": false,
+        "reason": "garment-clipped-by-photo-edge",
+        "foregroundProbeRecall": null,
+        "backgroundProbeContamination": null,
+        "algorithmDecision": "review",
+        "rejectionReason": "garment-clipped-by-photo-edge"
+      },
+      "decision": "REVIEW",
+      "reason": "Scene contains attached person/mannequin/hanger or clutter; semantic isolation remains unverified.",
+      "fullMaskIoU": null,
+      "independentFullMaskAvailable": false,
+      "ownerVisuallyApproved": false
+    },
+    {
+      "id": "commons-0089",
+      "category": "Shoes",
+      "type": "Boots",
+      "role": "boots gradient",
+      "scene": "isolated product with floor shadow",
+      "sourceSHA256": "44f3c2a087fe5cde4006dadb41903964b8cd906e933c4fae4bf54db7758f9b8b",
+      "baseline": {
+        "prepared": false,
+        "reason": "busy-or-ambiguous-background",
+        "foregroundProbeRecall": null,
+        "backgroundProbeContamination": null
+      },
+      "borderCandidateDecision": "review",
+      "borderCandidateReason": "border-is-not-a-simple-background",
+      "candidate": {
+        "prepared": true,
+        "foregroundPixels": 999240,
+        "exactRetainedRGBRate": 1,
+        "partialAlphaPixels": 986261,
+        "foregroundProbeRecall": 1,
+        "backgroundProbeContamination": 0,
+        "outputWidth": 1505,
+        "outputHeight": 1320,
+        "sourceNativeDimensions": [
+          1920,
+          2560
+        ],
+        "algorithmDecision": "review",
+        "rejectionReason": "model-saliency-requires-garment-and-edge-review",
+        "pngVisibleRGBMismatchPixels": 0
+      },
+      "decision": "REVIEW",
+      "reason": "model-saliency-requires-garment-and-edge-review",
+      "fullMaskIoU": null,
+      "independentFullMaskAvailable": false,
+      "ownerVisuallyApproved": false
+    },
+    {
+      "id": "commons-0094",
+      "category": "Shoes",
+      "type": "Boots",
+      "role": "boots light background",
+      "scene": "isolated product with laces and shadow",
+      "sourceSHA256": "ff3d49e30be2d1141179b7ad2d08d9edff2384926cd5a6f5a8f6818c97fa57ae",
+      "baseline": {
+        "prepared": false,
+        "reason": "busy-or-ambiguous-background",
+        "foregroundProbeRecall": null,
+        "backgroundProbeContamination": null
+      },
+      "borderCandidateDecision": "review",
+      "borderCandidateReason": "opposite-background-edges-disagree",
+      "candidate": {
+        "prepared": true,
+        "foregroundPixels": 1210914,
+        "exactRetainedRGBRate": 1,
+        "partialAlphaPixels": 1201734,
+        "foregroundProbeRecall": 1,
+        "backgroundProbeContamination": 0,
+        "outputWidth": 1892,
+        "outputHeight": 1299,
+        "sourceNativeDimensions": [
+          1920,
+          1440
+        ],
+        "algorithmDecision": "review",
+        "rejectionReason": "model-saliency-requires-garment-and-edge-review",
+        "pngVisibleRGBMismatchPixels": 0
+      },
+      "decision": "REVIEW",
+      "reason": "model-saliency-requires-garment-and-edge-review",
+      "fullMaskIoU": null,
+      "independentFullMaskAvailable": false,
+      "ownerVisuallyApproved": false
+    },
+    {
+      "id": "commons-0059",
+      "category": "Dresses",
+      "type": "Dress",
+      "role": "dress difficult",
+      "scene": "flat garment with clutter and clipped edges",
+      "sourceSHA256": "f7b8eea8f6d741a5f685119cc5c92f69300a5f294940162429e3febd1482f44c",
+      "baseline": {
+        "prepared": false,
+        "reason": "busy-or-ambiguous-background",
+        "foregroundProbeRecall": null,
+        "backgroundProbeContamination": null
+      },
+      "borderCandidateDecision": "review",
+      "borderCandidateReason": "opposite-background-edges-disagree",
+      "candidate": {
+        "prepared": false,
+        "reason": "garment-clipped-by-photo-edge",
+        "foregroundProbeRecall": null,
+        "backgroundProbeContamination": null,
+        "algorithmDecision": "review",
+        "rejectionReason": "garment-clipped-by-photo-edge"
+      },
+      "decision": "REVIEW",
+      "reason": "Scene contains attached person/mannequin/hanger or clutter; semantic isolation remains unverified.",
+      "fullMaskIoU": null,
+      "independentFullMaskAvailable": false,
+      "ownerVisuallyApproved": false
+    }
+  ],
+  "release": "HOLD"
+}
