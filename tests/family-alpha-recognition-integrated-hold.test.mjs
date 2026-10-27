@@ -8,7 +8,7 @@ import {
  buildDisabledIntegratedCandidate,
  applyPinnedWorkerRecovery,WORKER_RECOVERY_REF,
  applyPinnedMobileReview,applyPinnedMobileReviewStyle,REVIEW_REF,
- applyOuterwearAutoReviewHold,
+ applyOuterwearAutoReviewHold,applyTunicDressAutoReviewHold,
  assertDisabledIntegratedCandidate,
  listedRecognitionAssets,OUTPUT
 } from '../scripts/build-family-alpha-recognition-integrated-hold.mjs';
@@ -82,7 +82,7 @@ test('compiled modern app bytes match EXACT locked recognition head',async()=>{
  const original=execFileSync('git',['show',RECOGNITION_REF+':public/app.js'],{encoding:'utf8'});
  const recovery=execFileSync('git',['show',WORKER_RECOVERY_REF+':public/app.js'],{encoding:'utf8'});
  const editor=execFileSync('git',['show',REVIEW_REF+':public/app.js'],{encoding:'utf8'});
- assert.equal(app,applyOuterwearAutoReviewHold(applyPinnedMobileReview(applyPinnedWorkerRecovery(original,recovery),editor)));
+ assert.equal(app,applyTunicDressAutoReviewHold(applyOuterwearAutoReviewHold(applyPinnedMobileReview(applyPinnedWorkerRecovery(original,recovery),editor))));
  assert.ok(app.includes('worker_response_invalid'));
  assert.ok(app.includes('I checked the original photo, category, item type and color'));
  assert.ok(app.includes('await savePiece(value,()=>batch.filter(x=>x.id!==item.id),editorCurrent);'));
@@ -159,4 +159,82 @@ test('outerwear source overlay refuses source drift and duplicate application',(
   '  item.recognitionReviewRequired=false;\n  item.localStatus=\'Recognized. Saving to your closet…\';',
   '  item.localStatus=\'Recognized. Saving to your closet…\';')),
   /transaction gate/);
+});
+
+test('historical 100-photo source-label accounting documents Tunic→Dress risk without claiming model improvement',async()=>{
+ const {results,byClass}=JSON.parse(await readFile('docs/recognition-holdout-results.json','utf8'));
+ assert.equal(results.length,100);
+ assert.equal(results.filter(r=>r.accepted).length,70);
+ assert.equal(results.filter(r=>r.accepted&&!r.correctCategory).length,2);
+ const tunics=results.filter(r=>r.predicted?.category==='Tops'&&r.predicted?.itemType==='Tunic');
+ assert.equal(tunics.length,7);
+ const automaticallyAccepted=tunics.filter(r=>r.accepted);
+ assert.equal(automaticallyAccepted.length,1);
+ assert.equal(automaticallyAccepted[0].class,'dress');
+ assert.equal(automaticallyAccepted[0].expectedCategory,'Dresses');
+ assert.equal(automaticallyAccepted[0].correctCategory,false);
+ assert.equal(byClass.dress.wrongAccepted,1);
+ const hypotheticallyRetained=results.filter(r=>r.accepted&&
+  !(r.predicted?.category==='Tops'&&r.predicted?.itemType==='Tunic'));
+ assert.equal(hypotheticallyRetained.length,69);
+ assert.equal(hypotheticallyRetained.filter(r=>r.correctCategory).length,68);
+ assert.equal(hypotheticallyRetained.filter(r=>!r.correctCategory).length,1);
+ // This retrospective metadata simulation does NOT rerun the current worker,
+ // prove correct color, or demonstrate any deployed recognition improvements.
+});
+test('held Tunic source prompts original-photo Adjust before auto-save and denies one-tap color',async()=>{
+ const app=await readFile(join(OUTPUT,'app.js'),'utf8');
+ const q=app.indexOf('function canConfirmReviewedColor(item){');
+ const qend=app.indexOf('\nasync function confirmReviewedColor(item,color)',q);
+ const a=app.indexOf('async function recognizeItem(item){');
+ const aend=app.indexOf('\nasync function ',a+1);
+ assert.ok(q>=0&&qend>q&&a>=0&&aend>a);
+ const quick=app.slice(q,qend),scan=app.slice(a,aend);
+ assert.ok(quick.includes("!(item.category==='Tops'&&item.itemType==='Tunic')&& // TUNIC_DRESS_AUTO_REVIEW_HOLD"));
+ assert.ok(quick.includes("item.category!=='Outerwear'&& // OUTERWEAR_AUTO_REVIEW_HOLD"));
+ const guard=scan.indexOf("if(item.category==='Tops'&&item.itemType==='Tunic'){");
+ const colorGate=scan.indexOf("if(item.category==='Uncategorized'||!ClothingDetails.validColor(item.color)){");
+ const save=scan.indexOf('item.recognitionReviewRequired=false;');
+ const lastGuard=scan.lastIndexOf("if(item.category==='Tops'&&item.itemType==='Tunic'){");
+ assert.ok(guard>=0&&guard<colorGate&&colorGate<lastGuard&&lastGuard<save);
+ assert.ok(scan.slice(guard,colorGate).includes("return true;"));
+ assert.ok(scan.slice(lastGuard,save).includes("return true;"));
+ assert.match(scan,/A tunic can be a dress\. Check the original photo in Adjust/);
+ assert.ok(scan.includes('const sourcePhoto=recognitionSourcePhoto(item)'));
+ const deps={
+  batch:[],items:[],localPending:new Set(),
+  hasReviewedColorAdmission:()=>true,
+  recognitionSourcePhoto:()=> 'data:image/jpeg;base64,AAAA',
+  categories:['Uncategorized','Tops','Bottoms','Dresses','Outerwear','Shoes','Accessories'],
+  ClothingDetails:{validColor:value=>!!value}
+ };
+ const evaluate=new Function('deps',
+  'const {batch,items,localPending,hasReviewedColorAdmission,recognitionSourcePhoto,categories,ClothingDetails}=deps;'+
+  quick+';return canConfirmReviewedColor;')(deps);
+ const garment={id:'synthetic-a',category:'Tops',itemType:'T-shirt',color:'',
+  image:'data:image/jpeg;base64,AAAA',localAnalyzed:true,userAdjusted:false,
+  possibleDuplicate:false,requiresOwnershipConfirmation:false,scanFailed:false,
+  saveFailed:false,recognitionReviewRequired:true,segmentHint:null};
+ deps.batch.push(garment);
+ assert.equal(evaluate(garment),true,'unambiguous T-shirt remains eligible');
+ garment.itemType='Tunic';assert.equal(evaluate(garment),false,'Tunic must go through Adjust');
+ garment.itemType='Sweater';assert.equal(evaluate(garment),true,'other Tops not broadly suppressed');
+ garment.category='Outerwear';garment.itemType='Coat';
+ assert.equal(evaluate(garment),false,'prior outerwear denial remains');
+});
+test('Tunic source overlay refuses duplicated or changed prior review gates',()=>{
+ const modern=execFileSync('git',['show',RECOGNITION_REF+':public/app.js'],{encoding:'utf8'});
+ const recovery=execFileSync('git',['show',WORKER_RECOVERY_REF+':public/app.js'],{encoding:'utf8'});
+ const editor=execFileSync('git',['show',REVIEW_REF+':public/app.js'],{encoding:'utf8'});
+ const stage=applyOuterwearAutoReviewHold(applyPinnedMobileReview(applyPinnedWorkerRecovery(modern,recovery),editor));
+ const held=applyTunicDressAutoReviewHold(stage);
+ assert.throws(()=>applyTunicDressAutoReviewHold(held),/duplicated/);
+ assert.throws(()=>applyTunicDressAutoReviewHold(stage.replace(
+  "item.category!=='Outerwear'&& // OUTERWEAR_AUTO_REVIEW_HOLD: require full original-photo Adjust",
+  "item.category!=='Outerwear'&& // unexpected replacement")),
+  /Prior Outerwear quick-color hold/);
+ assert.throws(()=>applyTunicDressAutoReviewHold(stage.replace(
+  '  if(item.category===\'Uncategorized\'||!ClothingDetails.validColor(item.color)){',
+  '  if(!ClothingDetails.validColor(item.color)){')),
+  /admission anchors changed/);
 });
