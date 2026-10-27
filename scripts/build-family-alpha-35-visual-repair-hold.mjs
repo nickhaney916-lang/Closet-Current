@@ -113,8 +113,8 @@ export function patchSource(name,s){
    el.alt='Footwear reference photograph, not a pair worn on this figure';
    Object.assign(el.style,{position:'absolute',left:'83%',top:'76%',width:'27%',
     height:'auto',transform:'translate(-50%,-50%)',objectFit:'contain',
-    pointerEvents:'none',background:'white',border:'2px solid #39465e',
-    borderRadius:'7px',padding:'4px',boxSizing:'border-box',boxShadow:'0 1px 5px #4446'});
+    pointerEvents:'none',background:'white',outline:'2px solid #39465e',
+    borderRadius:'7px',boxShadow:'0 1px 5px #4446'});
    frame.append(el);
    frame.setAttribute('aria-label',frame.getAttribute('aria-label')+
     '; footwear shown only as a reference photograph, NOT fitted to both feet');
