@@ -1,0 +1,11 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {createHash} from 'node:crypto';
+import {execFileSync} from 'node:child_process';
+import {isLocalGallery,validateGalleryManifest} from '../research/family-alpha-33/policy.mjs';
+const manifest=()=>JSON.parse(readFileSync('dist-family-alpha-33-visual-hold/manifest.json','utf8'));
+test('real gallery has fifteen labeled rows, seven exact #30 proposals, eight honest blockers',()=>{const m=manifest();assert.equal(validateGalleryManifest(m),true);assert.equal(m.rows.filter(x=>x.proposal).length,7);assert.equal(m.rows.filter(x=>!x.proposal).length,8);for(const r of m.rows.filter(x=>x.proposal))assert.equal(r.nativeCutout.sha256,r.work30NativeCutoutSHA256);});
+test('unmodified before/current humanoid and planner bytes match exact upstream pins',()=>{const m=manifest();for(const r of m.geometry){const b=readFileSync('dist-family-alpha-33-visual-hold/geometry/'+r.name+'/'+r.file);assert.equal(createHash('sha256').update(b).digest('hex'),r.sha256);assert.ok(b.equals(execFileSync('git',['show',r.pin+':public/'+r.file])));}assert.ok(readFileSync('research/family-alpha-30/clipping.mjs').equals(execFileSync('git',['show',m.pins.clippingPin+':research/family-alpha-30/clipping.mjs'])));});
+test('no false approvals, PASS for missing/failed cutouts or remote image paths',()=>{for(const mutate of [m=>m.ownerVisuallyApproved=true,m=>m.release='PASS',m=>m.rows[0].ownerApproved=true,m=>m.rows.find(x=>!x.proposal).decision='PASS',m=>m.rows[0].original='https://example.invalid/photo.jpg',m=>m.rows[0].proposal='assets/foreign.png']){const m=manifest();mutate(m);assert.throws(()=>validateGalleryManifest(m));}});
+test('public/staging/lookalike origins are blocked',()=>{for(const hostname of ['closet-current-staging.pages.dev','closet-current.pages.dev','localhost.evil.invalid','127.0.0.1.evil.invalid','example.invalid'])assert.equal(isLocalGallery({protocol:'https:',hostname}),false);for(const hostname of ['localhost','127.0.0.1'])assert.equal(isLocalGallery({protocol:'http:',hostname}),true);});
