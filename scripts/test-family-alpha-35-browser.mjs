@@ -36,7 +36,10 @@ replaceOnce("assert.equal(await article.locator('.family-alpha-avatar img').coun
      assert.equal(await footwearReference.count(),1);
      assert.equal(await footwearReference.getAttribute('data-display-mode'),
       'footwear-photo-reference','Never make a single or unverified shoe appear worn by two feet');
-     assert.match(await footwearReference.getAttribute('alt'),/reference photograph/);`);
+     assert.match(await footwearReference.getAttribute('alt'),/reference photograph/);
+     const footwearNote=article.locator('.family-alpha-avatar [data-footwear-note="reference-not-worn"]');
+     assert.equal(await footwearNote.count(),1,'Single-source footwear needs a visible not-worn caption');
+     assert.match(await footwearNote.innerText(),/not worn/);`);
 replaceOnce("'benchmark/family-alpha-34/'","'benchmark/family-alpha-35/'");
 // Screenshot directory was already replaced above in every path occurrence.
 const generated=join('scripts','.family-alpha-35-review-browser.generated.mjs');
