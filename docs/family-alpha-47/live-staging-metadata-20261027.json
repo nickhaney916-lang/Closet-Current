@@ -60,5 +60,35 @@
   "deploymentAuthorized": false,
   "stagingModified": false,
   "productionModified": false,
-  "limitations": "Single-user SQL metadata and automated fake-IndexedDB tests cannot prove four-user cross-account privacy, production routing safety, actual family phone behavior or aesthetic approval."
+  "limitations": "Single-user SQL metadata and automated fake-IndexedDB tests cannot prove four-user cross-account privacy, production routing safety, actual family phone behavior or aesthetic approval. On Oct 27 two read-only transaction-local synthetic JWT-sub simulations returned zero visible backup/photo rows; this is NOT authenticated real-JWT or four-user account isolation.",
+  "syntheticNonownerReadProbes": {
+    "method": "LIVE_STAGING_SQL_READ_ONLY_TRANSACTION_ROLE_SIMULATION",
+    "observedOn": "2026-10-27",
+    "exactSqlPattern": "BEGIN TRANSACTION READ ONLY; set_config('request.jwt.claim.sub', synthetic fixture UUID, true); SET LOCAL ROLE authenticated; count visibility of public.closet_backups and storage.objects scoped to closet-private; ROLLBACK",
+    "roleEmulationNotJwt": true,
+    "realJwtSessionCountUsed": 0,
+    "newAccountsCreated": 0,
+    "rowContentsAccessed": false,
+    "photoBytesAccessed": false,
+    "transactionsRolledBack": true,
+    "independentFixtures": [
+      {
+        "identity": "synthetic-nonowner-A",
+        "roleVerified": true,
+        "claimVerified": true,
+        "visibleBackupRows": 0,
+        "visiblePhotoObjects": 0
+      },
+      {
+        "identity": "synthetic-nonowner-B",
+        "roleVerified": true,
+        "claimVerified": true,
+        "visibleBackupRows": 0,
+        "visiblePhotoObjects": 0
+      }
+    ],
+    "result": "NONOWNER_READ_VISIBILITY_PASS_SQL_SIMULATION_ONLY",
+    "provesRealCrossAccountIsolation": false,
+    "missingControls": "No signed-in owner positive control; no authenticated API-backed JWT; no real upload/delete/RLS mutation; no physical phone test."
+  }
 }
