@@ -21,12 +21,40 @@ Seven proposals can be inspected; eight cases have no cutout. Those eight explic
 
 This is a localhost-only diagnostic use of the existing low-level photo renderer to inspect **unapproved licensed benchmark images**. It is separate from the application, does not fake approved:true, create an account, store a wardrobe, or enable any normal avatar approval route. No real-user authorization is implied. Default app/staging/release gates remain unchanged.
 
-## Current evidence
+## Visual findings — these pinned versions only
 
-- Local exact replay builder PASS: 15 originals, 7 matching native proposals, 8 blocked cases; both upstream renderer/planner hashes unchanged.
-- Local new Node tests: 4/4 PASS for source replay/geometry identity, honest coverage, false-approval prevention and localhost boundary.
-- Chromium/WebKit 320/390px screenshot run prepared; execution and screenshot inspection pending exact-head CI. Automated display checks are technical checks, never visual acceptance.
-- Garment findings start as REVIEW pending screenshot inspection, or FAIL/NOT RENDERED where no cutout exists. The final findings file will record actual visual observations; no owner acceptance or physical-phone verification is implied.
+Assistant inspection covered all seven rendered Chromium 390px examples, with WebKit 320/390px cross-checks. This is not independent external annotation, owner approval or physical-phone verification. It makes no claim about later Work #32 fitting changes.
+
+| Example | On-avatar decision | Observed reason |
+| --- | --- | --- |
+| 0001 shirt | FAIL | Dark collar/hanger contamination persists; tilted source silhouette does not establish sleeve/arm contact. Print remains recognizable. |
+| 0003 long-sleeve shirt | FAIL — NOT RENDERED | No cutout; mannequin/jeans scene blocked. Fit and edge quality are not evaluated. |
+| 0065 jacket | FAIL — NOT RENDERED | No cutout; clipped source. No forced whole-photo overlay. |
+| 0068 coat | FAIL — NOT RENDERED | No cutout; outdoor scene/hanger. |
+| 0053 dress | FAIL | Extra white mannequin neck appears under/in front of the avatar chin. Trim/logos survive, but the source contaminant survives too. |
+| 0043 skirt | FAIL — NOT RENDERED | No cutout; mannequin/low-contrast scene. |
+| 0033 shorts | FAIL — NOT RENDERED | No cutout; person and textured background. |
+| 0021 pants | FAIL — NOT RENDERED | No cutout; person, shirt and shoes remain inseparable in available evidence. |
+| 0082 sneakers | FAIL | Side-view footwear composition occupies one shared area; individual soles do not align to the two front-facing feet, and bare body-foot shapes remain visible. |
+| 0088 boot | FAIL | Tall boot is scaled into a short central footwear slot; shaft/sole do not align to the body legs/feet. Prior clipping FAIL remains. |
+| 0016 blouse | REVIEW | Strongest example: pale background removed, embroidery and hem recognizable; loose torso placement plausible. Sleeve/arm contact, hem size and fine edges still need review. |
+| 0079 difficult sneakers | FAIL — NOT RENDERED | No cutout; outdoor support/background. |
+| 0089 boots | FAIL | Photographic heel perspective and offset/small shared placement do not match the two ankles. Surface highlights remain visible. |
+| 0094 lace-up boots | FAIL | Side profile crosses the foot area instead of attaching naturally to individual legs. Laces/seams recognizable but grounding fails. |
+| 0059 difficult dress | FAIL — NOT RENDERED | No cutout; clutter and clipped edges. |
+
+**Summary: 7 rendered proposals → 6 FAIL / 1 REVIEW; 8 additional blocked cases → FAIL / NOT RENDERED. Overall 0 PASS, 1 REVIEW, 14 FAIL.** The eight blocked cases are not eight measured bad fits; they are missing prerequisites. Work #30's separate clipping decisions remain unchanged at 12 REVIEW / 3 FAIL. This assignment grades the complete on-avatar visual requirement, not classifier accuracy or independent full-mask quality.
+
+The newer face/hands and alpha-bounds adjustment do not repair attached mannequin parts or photographic footwear perspective. Native color/texture stays recognizable. Image-aspect preservation and correct decoding do not establish garment-to-body proportions or realistic drape. At mobile size, fine halos, missing thin details and softened boundaries cannot receive full-resolution approval. Those edge limits remain REVIEW, even where the standalone cutout looks clean.
+
+Work #30 receives source-object/edge observations; Work #32/main receives sleeve, scale, ankle/sole and perspective observations. No segmentation, pose warping, per-foot mapping or fitting code is changed here.
+
+## Technical evidence
+
+- Local replay: all 15 original hashes and **all seven exact Work #30 native PNG hashes** match. Both geometry pairs remain byte-identical to upstream pins.
+- Initial [no-deploy Actions 40447471490](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/40447471490), code `bf731e7f`: **565/565 Node PASS; 60/60 Chromium/WebKit technical cases PASS** (15 examples × 2 engines × 320/390px). That comprises 28 rendered-proposal cases and 32 correctly blocked cases. No network outside localhost, broken images, page errors or horizontal overflow. [All 60 provisional mobile screenshots and raw results](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/40447471490/artifacts/12709022370).
+- Initial screenshots were inspected before these grades were written. A follow-up run will refresh the screenshot labels with the actual findings and confirm image-aspect preservation. Technical PASS is never promoted to visual PASS.
+- No model inference, app Auth, private wardrobe, cloud/RLS or actual phone test. Owner visual acceptance **NOT GIVEN**.
 
 ## Reproduce
 
