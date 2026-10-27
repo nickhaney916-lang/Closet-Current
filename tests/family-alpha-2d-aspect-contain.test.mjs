@@ -49,7 +49,7 @@ class FakeImage extends FakeEl{
 
 test('renderer applies actual contained geometry, not a stretched image box',()=>{
  const previousDocument=globalThis.document,previousImage=globalThis.HTMLImageElement;
- globalThis.document={createElement:()=>new FakeEl()};globalThis.HTMLImageElement=FakeImage;
+ globalThis.document={createElement:()=>new FakeEl(),createElementNS:()=>new FakeEl()};globalThis.HTMLImageElement=FakeImage;
  try{
   const container=new FakeEl();
   const outfits=[garment('layer','j'),garment('top','t'),garment('bottom','b'),garment('shoes','s')];
@@ -57,6 +57,13 @@ test('renderer applies actual contained geometry, not a stretched image box',()=
   assert.equal(renderPhotoLayers(container,outfits,images),4);
   const avatar=container.children[0];
   assert.equal(avatar.style.aspectRatio,'3/5');
+  const human=avatar.children[0];
+  assert.equal(human.attributes['data-humanoid'],'articulated-2d-v1');
+  assert.equal(human.attributes.viewBox,'0 0 360 600');
+  const parts=human.children.map(el=>el.attributes['data-part']).filter(Boolean);
+  for(const essential of ['head','neck','torso','left-arm','right-arm','left-hand','right-hand','left-leg','right-leg','left-foot','right-foot'])
+   assert.ok(parts.includes(essential),'Missing anatomical part: '+essential);
+  assert.equal(parts.length,new Set(parts).size,'Figure parts must be individually identifiable');
   const rendered=avatar.children.slice(1),slots=planPhotoLayers(outfits);
   assert.deepEqual(rendered.map(x=>x.dataset.slot),['shoes','bottom','top','layer']);
   for(let i=0;i<rendered.length;i++){
@@ -75,4 +82,23 @@ test('renderer does not fetch, rewrite, or invent original garment image URLs',(
  const source=readFileSync(new URL('../public/family-alpha-2d-photo-renderer.mjs',import.meta.url),'utf8');
  assert.doesNotMatch(source,/fetch\(|new Image\(|\.src\s*=/);
  assert.match(source,/cloneNode\(false\)/);
+});
+
+test('photo slots are aligned beneath the humanoid face and over anatomically relevant zones',()=>{
+ const slots=Object.fromEntries(planPhotoLayers([
+  garment('shoes','s'),garment('bottom','b'),garment('top','t'),
+  garment('layer2','j')
+ ]).map(x=>[x.slot,x]));
+ const virtualHeight=600;
+ assert.ok((slots.top.y-slots.top.height/2)*virtualHeight>=115,
+  'Shirt slot must begin under the face/neck rather than cover the head');
+ assert.ok(slots.bottom.y>slots.top.y,'Bottoms must sit below shirt');
+ assert.ok(slots.shoes.y>slots.bottom.y,'Shoes must sit below hips and shins');
+ assert.ok((slots.shoes.y+slots.shoes.height/2)*virtualHeight<=595,
+  'Shoes should stay inside frame');
+ assert.ok(slots.layer2.width>slots.top.width,'Jacket should surround the base top');
+ assert.ok(slots.layer2.y>=slots.top.y,'Outerwear should align at shoulders/chest');
+ const [dress]=planPhotoLayers([garment('dress','d')]);
+ assert.ok(dress.y-dress.height/2<slots.top.y,'Dress reaches chest');
+ assert.ok(dress.y+dress.height/2>slots.bottom.y,'Dress extends toward legs');
 });
