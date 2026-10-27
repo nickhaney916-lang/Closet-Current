@@ -1,6 +1,6 @@
 // Adapt the existing full synthetic import/atomic/favorites journey to the
 // photo-only UI. All authentication, cloud and classifier calls remain mocked.
-import {readFile,writeFile,rm} from 'node:fs/promises';import {spawnSync} from 'node:child_process';import {resolve,join} from 'node:path';import assert from 'node:assert/strict';
+import {readFile,writeFile,rm} from 'node:fs/promises';import {spawnSync} from 'node:child_process';import {resolve,join} from 'node:path';import {createHash} from 'node:crypto';import assert from 'node:assert/strict';
 let s=await readFile('scripts/test-family-alpha-34-browser.mjs','utf8');
 function once(a,b){assert.equal(s.split(a).length,2,'Upstream browser contract changed: '+a.slice(0,70));s=s.replace(a,b);}
 once("resolve('dist-family-alpha-34-storage-HOLD')","resolve('dist-work43-photo-board-HOLD')");
@@ -28,4 +28,19 @@ once("await panel.getByRole('button',{name:'Save outfit 1',exact:true}).click();
    await page.waitForFunction(()=>document.querySelector('#alpha29NewClothes [role="status"]').textContent.includes('Outfit saved'));
 `);
 once("reviewedAvatars:3", "photoBoards:3");once("refinedFaceVisible:refinedOnly", "refinedFaceVisible:false");
+if(process.env.WORK43_LICENSED==='1'){
+ const ids=['commons-0001','commons-0003','commons-0016','commons-0021','commons-0043','commons-0033','commons-0082','commons-0088','commons-0089','commons-0094'];
+ const manifest=JSON.parse(await readFile('benchmark/locked-photo-sources.json','utf8')),licSources=[];
+ for(const id of ids){const x=manifest.find(y=>y.id===id);assert.ok(x?.verified&&x.attribution?.license);const b=await readFile('benchmark/fixtures/'+x.image);assert.equal(createHash('sha256').update(b).digest('hex'),x.sha256);licSources.push({id,image:x.image});}
+ once("else if(path==='/__qa__/storage-probes.mjs')file=resolve('research/family-alpha-34/storage-probes.mjs');", "else if(path==='/__qa__/storage-probes.mjs')file=resolve('research/family-alpha-34/storage-probes.mjs');else if(/^\\/\u005f\u005fqa\u005f\u005f\\/licensed\\/commons-\\d{4}\\.jpg$/.test(path))file=resolve('benchmark/fixtures',path.split('/').at(-1));");
+ once("for(const width of [320,390,430])", "for(const width of [390])");
+ once("const newId=await page.evaluate(async({owner})=>{", "const newId=await page.evaluate(async({owner,licSources})=>{");
+ const a=s.indexOf('    function shot(category,n){'),z=s.indexOf('    const rows=',a);assert.ok(a>=0&&z>a);
+ const init=`    const real={};for(const row of licSources){const response=await fetch('/__qa__/licensed/'+row.image);if(!response.ok)throw Error('Licensed fixture missing');const blob=await response.blob();real[row.id]=await new Promise((resolve,reject)=>{const f=new FileReader();f.onload=()=>resolve(f.result);f.onerror=reject;f.readAsDataURL(blob);});}
+    function shot(category,n){const map={1:'commons-0003',2:'commons-0016',3:'commons-0021',4:'commons-0043',5:'commons-0033',6:'commons-0082',7:'commons-0088',8:'commons-0089',9:'commons-0094',19:'commons-0001'};return real[map[n]];}
+`;
+ s=s.slice(0,a)+init+s.slice(z);
+ once('   },{owner});',`   },{owner,licSources:${JSON.stringify(licSources)}});`);
+ s=s.replaceAll("'-synthetic-photo-board.png'", "'-LICENSED-photo-board-PROVISIONAL.png'");
+}
 const p=join('scripts','.work43-browser-generated.mjs');try{await writeFile(p,s);const r=spawnSync(process.execPath,[resolve(p)],{stdio:'inherit',timeout:300000,maxBuffer:8e6,env:{...process.env,CLOSET_35_OFFLINE:'1'}});if(r.error)throw r.error;if(r.status!==0)throw Error('Photo board full workflow failed '+r.status);}finally{await rm(p,{force:true});}
