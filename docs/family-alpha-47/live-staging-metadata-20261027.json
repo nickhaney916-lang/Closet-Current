@@ -60,7 +60,7 @@
   "deploymentAuthorized": false,
   "stagingModified": false,
   "productionModified": false,
-  "limitations": "Single-user SQL metadata and automated fake-IndexedDB tests cannot prove four-user cross-account privacy, production routing safety, actual family phone behavior or aesthetic approval. On Oct 27 two read-only transaction-local synthetic JWT-sub simulations returned zero visible backup/photo rows; this is NOT authenticated real-JWT or four-user account isolation.",
+  "limitations": "Single-user SQL metadata and automated fake-IndexedDB tests cannot prove four-user cross-account privacy, production routing safety, actual family phone behavior or aesthetic approval. On Oct 27 two read-only transaction-local synthetic JWT-sub simulations returned zero visible backup/photo rows; this is NOT authenticated real-JWT or four-user account isolation. Subsequent read-only inspection of save_closet_backup confirms a likely authenticated cloud write blocker: invoker routine, EXECUTE allowed, but authenticated lacks effective INSERT/UPDATE and has no writer-role membership. No actual RPC request attempted.",
   "syntheticNonownerReadProbes": {
     "method": "LIVE_STAGING_SQL_READ_ONLY_TRANSACTION_ROLE_SIMULATION",
     "observedOn": "2026-10-27",
@@ -90,5 +90,23 @@
     "result": "NONOWNER_READ_VISIBILITY_PASS_SQL_SIMULATION_ONLY",
     "provesRealCrossAccountIsolation": false,
     "missingControls": "No signed-in owner positive control; no authenticated API-backed JWT; no real upload/delete/RLS mutation; no physical phone test."
+  },
+  "backupRpcRuntime": {
+    "observedOn": "2026-10-27",
+    "method": "LIVE_STAGING_READ_ONLY_PG_PROC_AND_EFFECTIVE_ROLE_GRANT_INSPECTION",
+    "function": "public.save_closet_backup(bigint,jsonb)",
+    "authenticatedCanExecute": true,
+    "functionSecurityDefiner": false,
+    "switchesToWriterRole": false,
+    "authenticatedCanInsert": false,
+    "authenticatedCanUpdate": false,
+    "authenticatedInheritsWriterPrivileges": false,
+    "authenticatedHasWriterMembership": false,
+    "liveRpcWriteAttempted": false,
+    "ownerContentAccessed": false,
+    "actualHttpOutcome": "NOT TESTED",
+    "likelyNormalAuthenticatedCloudBackupWritable": false,
+    "status": "BLOCKER_PROBABLE_AUTHENTICATED_SAVE_PERMISSION_DENIAL",
+    "note": "Existing client calls RPC as signed-in user; invoker function without effective insert/update privileges cannot write its protected backup table. Need reviewed secure remediation. Do NOT blindly grant direct table writes as that may bypass revision-controlled RPC validation."
   }
 }
