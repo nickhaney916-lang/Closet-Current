@@ -8,6 +8,7 @@ import {
  buildDisabledIntegratedCandidate,
  applyPinnedWorkerRecovery,WORKER_RECOVERY_REF,
  applyPinnedMobileReview,applyPinnedMobileReviewStyle,REVIEW_REF,
+ applyOuterwearAutoReviewHold,
  assertDisabledIntegratedCandidate,
  listedRecognitionAssets,OUTPUT
 } from '../scripts/build-family-alpha-recognition-integrated-hold.mjs';
@@ -81,7 +82,7 @@ test('compiled modern app bytes match EXACT locked recognition head',async()=>{
  const original=execFileSync('git',['show',RECOGNITION_REF+':public/app.js'],{encoding:'utf8'});
  const recovery=execFileSync('git',['show',WORKER_RECOVERY_REF+':public/app.js'],{encoding:'utf8'});
  const editor=execFileSync('git',['show',REVIEW_REF+':public/app.js'],{encoding:'utf8'});
- assert.equal(app,applyPinnedMobileReview(applyPinnedWorkerRecovery(original,recovery),editor));
+ assert.equal(app,applyOuterwearAutoReviewHold(applyPinnedMobileReview(applyPinnedWorkerRecovery(original,recovery),editor)));
  assert.ok(app.includes('worker_response_invalid'));
  assert.ok(app.includes('I checked the original photo, category, item type and color'));
  assert.ok(app.includes('await savePiece(value,()=>batch.filter(x=>x.id!==item.id),editorCurrent);'));
@@ -104,4 +105,58 @@ test('integrated candidate cannot be promoted to release with falsified HOLD met
   await writeFile(path,JSON.stringify(obj));
   await assert.rejects(()=>assertDisabledIntegratedCandidate(),/Unsupported integrated candidate release claim/);
  }finally{await writeFile(path,original);}
+});
+
+test('outerwear auto-index and one-choice color are held for original-photo Adjust',async()=>{
+ const app=await readFile(join(OUTPUT,'app.js'),'utf8');
+ const start=app.indexOf('function canConfirmReviewedColor(item){');
+ const end=app.indexOf('\nasync function confirmReviewedColor(item,color)',start);
+ const scanStart=app.indexOf('async function recognizeItem(item){');
+ const scanEnd=app.indexOf('\nasync function ',scanStart+1);
+ assert.ok(start>=0&&end>start&&scanStart>=0&&scanEnd>scanStart);
+ const quickSource=app.slice(start,end);
+ const scanSource=app.slice(scanStart,scanEnd);
+ assert.match(quickSource,/item\.category!=='Outerwear'&& \/\/ OUTERWEAR_AUTO_REVIEW_HOLD/);
+ const hold=scanSource.indexOf("if(item.category==='Outerwear'){");
+ const autoSave=scanSource.indexOf('item.recognitionReviewRequired=false;');
+ assert.ok(hold>=0&&autoSave>hold,'outerwear review must precede automatic admission');
+ assert.match(scanSource.slice(hold,autoSave),/return true;/);
+ assert.match(scanSource,/Outerwear needs an original-photo check in Adjust before saving/);
+ assert.ok(scanSource.includes('const sourcePhoto=recognitionSourcePhoto(item)'));
+ // Execute the REAL compiled quick-color function with synthetic local
+ // dependencies. A previously valid Tops fallback must still work; Outerwear
+ // can never bypass Adjust just by choosing a color.
+ const deps={
+  batch:[],items:[],localPending:new Set(),
+  hasReviewedColorAdmission:()=>true,
+  recognitionSourcePhoto:()=> 'data:image/jpeg;base64,AAAA',
+  categories:['Uncategorized','Tops','Bottoms','Dresses','Outerwear','Shoes','Accessories'],
+  ClothingDetails:{validColor:value=>!!value}
+ };
+ const evaluate=new Function('deps',
+  'const {batch,items,localPending,hasReviewedColorAdmission,recognitionSourcePhoto,categories,ClothingDetails}=deps;'+
+  quickSource+';return canConfirmReviewedColor;')(deps);
+ const garment={id:'synthetic-a',category:'Tops',itemType:'T-Shirt',color:'',
+  image:'data:image/jpeg;base64,AAAA',localAnalyzed:true,userAdjusted:false,
+  possibleDuplicate:false,requiresOwnershipConfirmation:false,scanFailed:false,
+  saveFailed:false,recognitionReviewRequired:true,segmentHint:null};
+ deps.batch.push(garment);
+ assert.equal(evaluate(garment),true,'unambiguous Tops quick-color unchanged');
+ garment.category='Outerwear';garment.itemType='Unknown';
+ assert.equal(evaluate(garment),false,'Outerwear quick-color must be blocked');
+});
+test('outerwear source overlay refuses source drift and duplicate application',()=>{
+ const modern=execFileSync('git',['show',RECOGNITION_REF+':public/app.js'],{encoding:'utf8'});
+ const recovery=execFileSync('git',['show',WORKER_RECOVERY_REF+':public/app.js'],{encoding:'utf8'});
+ const editor=execFileSync('git',['show',REVIEW_REF+':public/app.js'],{encoding:'utf8'});
+ const source=applyPinnedMobileReview(applyPinnedWorkerRecovery(modern,recovery),editor);
+ const protectedApp=applyOuterwearAutoReviewHold(source);
+ assert.throws(()=>applyOuterwearAutoReviewHold(protectedApp),/changed|uniquely/);
+ assert.throws(()=>applyOuterwearAutoReviewHold(source.replace(
+  'function canConfirmReviewedColor(item){','function renamedColorConfirmation(item){')),
+  /source changed/);
+ assert.throws(()=>applyOuterwearAutoReviewHold(source.replace(
+  '  item.recognitionReviewRequired=false;\n  item.localStatus=\'Recognized. Saving to your closet…\';',
+  '  item.localStatus=\'Recognized. Saving to your closet…\';')),
+  /transaction gate/);
 });
