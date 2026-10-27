@@ -90,6 +90,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: family-alpha-original-jpeg-and-fit-SYNTHETIC-HOLD
-          path: |\n            benchmark/family-alpha-40/\n            benchmark/family-alpha-original-jpeg-import-HOLD/
+          path: |
+            benchmark/family-alpha-40/
+            benchmark/family-alpha-original-jpeg-import-HOLD/
           retention-days: 7
           if-no-files-found: warn
