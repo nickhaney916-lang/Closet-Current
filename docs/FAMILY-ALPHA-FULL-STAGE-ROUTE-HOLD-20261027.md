@@ -1,25 +1,25 @@
-# Closet Current — latest avatar/styling pipeline and production-safe staged Auth routing (HOLD)
+# Closet Current — Full family avatar already inherits staging-only Auth and backup guards
 
-**2026-10-27 · Family Alpha issue #255 · developer-only immutable offline comparison; NOT DEPLOYABLE**
+**2026-10-27 · Family Alpha #255 · source-pinned development HOLD; no deploy**
 
-## Why this is essential
+## Material discovery during integration
 
-The existing polished development preview ([draft PR #333](https://github.com/nickhaney916-lang/Closet-Current/pull/333)) integrates real user-confirmed JPEG source, manual alpha eraser, single-shoe reference, neutral 2D humanoid, 3 new-with-existing wardrobe outfits, nonstretch manual shoulder/waist alignment, favorites, and atomic rollback. But original Closet Current `public/cloud-backup.js` references production Supabase **`hlkgymugtfbirlpunsra`** and original `auth.js` also defaults to production. A careless copy of the demo into the staging website could incorrectly send a protected family photo/backup to the production tenant.
+Original `public/auth.js` and `public/cloud-backup.js` include the **production Supabase** project `hlkgymugtfbirlpunsra`. We initially suspected the latest app-integrated candidate might still include that fallback.
 
-Previous stage-only [Auth builder](https://github.com/nickhaney916-lang/Closet-Current/blob/main/scripts/build-family-alpha-staging-auth-hold.mjs) defines exact source-shape transforms to use **staging `fbnplztkbsteuzrmbgib`**, but the latest styling candidate did not include those transformations. This PR **combines them offline** to identify drift and prevent unsafe publication. It does NOT turn the configuration on.
+The first new CI attempt intentionally failed while trying to call `stageAuthSource()` on #333's compiled `auth.js`, because the function expected the **original production source** but received **already transformed staging-safe source**. Tracing the exact build dependency chain resolved this: `build-family-alpha-recognition-integrated-hold.mjs` uses `dist-family-alpha-staging-auth-hold`, then Work #29, #31, #34, and main-thread #35/#36 all inherit that disabled staged Auth/Cloud lineage. **It would be incorrect to rewrite these same files a second time.**
 
-## Exact change boundary
+The corrected [draft PR #337](https://github.com/nickhaney916-lang/Closet-Current/pull/337) verifies this inheritance. It produces `dist-family-alpha-full-stage-routing-HOLD` by copying #333's **entire** compiled candidate byte-for-byte, adding **only a new metadata HOLD manifest**.
 
-From `dist-family-alpha-36-rigid-align-HOLD`, copy every compiled file byte-for-byte to a new disabled `dist-family-alpha-full-stage-routing-HOLD`, replacing only the existing stage Auth transform's five audited targets: `auth.js`, `cloud-backup.js`, `family-alpha-2d-auth-preflight.mjs`, `index.html`, `pwa.js`; plus an inert `alpha-stage-config.js` and SHA-verified HOLD manifest. The transformation functions are imported and reused from `scripts/build-family-alpha-staging-auth-hold.mjs` unmodified.
+## Enforced gates
 
-The config remains `"key":""`, `"redirect":""`, `intent:HOLD-NO-CALLBACK-OR-KEY`, `releaseGate:HOLD`. Auth denies sign in even if the compiled files are served under the legitimate staging hostname, cloud backup denies start/sync and the PWA intentionally does not register the ordinary service worker. The API URL for the staged modules is staging only. The build must fail if any transformed file contains the production project URL, original production key, or previously approved source hash changes; **every other outfit/photo/storage/recognition file must match the source exactly**.
+Source-aware checks verify that the real compiled `auth.js`, `cloud-backup.js` and `family-alpha-2d-auth-preflight.mjs` reference only the staging project `fbnplztkbsteuzrmbgib` and never the production project or original production publishable key. The actual compiled `index.html` must load the guarded `alpha-stage-config.js` before Auth, public signup must remain hidden, and normal PWA registration must be disabled. The inherited config must still contain `"key":""` and `"redirect":""` and `HOLD-NO-CALLBACK-OR-KEY`.
 
-A Node VM regression executes the generated Auth and backup scripts under a fake exact staging hostname with intentionally empty credentials, checks they reject with no network call, and confirms mismatched domains never permit Auth. Falsified release/approval metadata or transplanted production URLs are rejected. GitHub Actions runs only local builds and tests; **no live Supabase, secrets, user records, staging deployment or production access**.
+An offline Node VM test executes **the actual compiled** Auth and backup scripts under a simulated exact staging hostname with empty credentials. Sign-in/backup must fail before any network request; other origins must not allow activation. A recursive all-file SHA comparison verifies that **none** of the original 2D avatar, human-approved JPG→PNG source, garment segmentation, outfit recommendations, manual placement, single-shoe safety, favorites, or IndexedDB atomic rollback assets changed.
 
-## Exclusions and release blocks
+The dedicated GitHub Actions run rebuilds every exact source-pinned predecessor and verifies all these checks without accessing live user accounts, staging, Supabase Auth, Cloudflare or production.
 
-- Work #37 [draft #334](https://github.com/nickhaney916-lang/Closet-Current/pull/334) is an incomplete landmark planner, **no source-backed demonstrated drape**. Work #38 cutout/isolation improvements have not been delivered or evaluated in this candidate. Neither branch is modified.
-- A safe production routing fence does NOT certify staging Cloudflare Access, a signed-in user, real JWT ownership, four real distinct family accounts, real cloud backup or ready garment visuals. Currently only **one staging Auth user** observed, and a Supabase advisor reported leaked-password protection disabled.
-- No Auth keys are embedded; therefore this output **cannot sign anyone in**. It is a release-blocking audit artifact, not a version that should be uploaded to staging.
-- Real apparel fit/segmentation still lacks owner visual acceptance. Retain release HOLD until source-clean cutouts, believable fit, safe live staging Auth, verified four-account isolation, and physical phones pass.
-- No merges, deployments, provider settings changes, extra Work assignments, real user/family images, spending or Drive Duel changes.
+## Remaining release restrictions
+
+This result does **not** prove what the deployed staging browser currently serves. **No publishable key or approved callback is embedded in this artifact.** No real JWT ownership, four-user sessions, Android/iPhone validation or cloud restoration has happened. Work #37 [PR #334](https://github.com/nickhaney916-lang/Closet-Current/pull/334) is geometry-only, incomplete; Work #38 cutout recovery is still separate. Realistic garment fit and clean cutouts remain blocked.
+
+**Family Alpha remains HOLD**, with no merges, staging or production deployment, Supabase/Cloudflare/Resend changes, customer photos, paid services, spending, Drive Duel changes or additional Work assignments.
