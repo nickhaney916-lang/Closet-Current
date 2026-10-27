@@ -19,6 +19,7 @@ export function patchUI(s){
  s=once(s,"card.append(el('h3','Outfit '+(i+1)),el('p','Your new piece stays selected.'),avatar,review,preview);", "card.append(el('h3','Outfit '+(i+1)),el('p','Your new piece stays selected.'),photo);cards.append(card);try{await workflow.photoBoard(i,photo);}catch{photo.replaceChildren(el('p','Photo review required. Your outfit selections are unchanged.'));}");
  s=once(s,"draw(await workflow.swap(i,slot,choice.value));","await draw(await workflow.swap(i,slot,choice.value));");
  s=once(s,"   preview.onclick=()=>run(async()=>{await workflow.preview(i,avatar,review);status.textContent='Reviewed 2D preview. This does not show realistic fit.';});\n",'');
+ s=once(s,'card.append(save);cards.append(card);','card.append(save);cards.append(card);if(busy)disable(true);');
  s=once(s,'draw(await workflow.generate(select.value));','await draw(await workflow.generate(select.value));');return s;
 }
 export function patchBoot(s){
