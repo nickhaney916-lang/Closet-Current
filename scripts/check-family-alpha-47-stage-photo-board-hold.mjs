@@ -65,20 +65,31 @@ export function assessMetadataEvidence(e,{today='2026-10-27'}={}){
     cases.some(x=>x.roleVerified!==true||x.claimVerified!==true||
       x.visibleBackupRows!==0||x.visiblePhotoObjects!==0))
   issues.push('Synthetic nonowner SQL role probe must be exact, denied, read-only, and never mislabeled JWT or release evidence');
- const w=e?.backupRpcRuntime||{};
- if(w.observedOn!==e?.capturedOn||
-    w.method!=='LIVE_STAGING_READ_ONLY_PG_PROC_AND_EFFECTIVE_ROLE_GRANT_INSPECTION'||
-    w.function!=='public.save_closet_backup(bigint,jsonb)'||
-    w.authenticatedCanExecute!==true||w.functionSecurityDefiner!==false||
-    w.switchesToWriterRole!==false||w.authenticatedCanInsert!==false||
-    w.authenticatedCanUpdate!==false||
-    w.authenticatedInheritsWriterPrivileges!==false||
-    w.authenticatedHasWriterMembership!==false||
-    w.liveRpcWriteAttempted!==false||w.ownerContentAccessed!==false||
-    w.actualHttpOutcome!=='NOT TESTED'||
-    w.likelyNormalAuthenticatedCloudBackupWritable!==false||
-    w.status!=='BLOCKER_PROBABLE_AUTHENTICATED_SAVE_PERMISSION_DENIAL')
-  issues.push('Backup RPC invoker permission mismatch or real HTTP outcome misrepresented');
+ const w=e?.backupRpcRuntime||{},correction=e?.auditCorrection||{};
+ const controls={
+  observedOn:e?.capturedOn,
+  method:'LIVE_STAGING_READ_ONLY_PG_PROC_ROLE_FUNCTION_DEFINITION_AND_ACL_INSPECTION',
+  publicEntry:'public.save_closet_backup(bigint,jsonb)',publicEntryOwner:'postgres',
+  publicEntrySecurityDefiner:false,publicEntryInvokesQualifiedPrivateFunction:true,
+  publicEntryInvokes:'closet_rpc_private.save_checked(bigint,jsonb)',
+  authenticatedPublicExecute:true,authenticatedDirectTableSelect:true,
+  authenticatedDirectTableInsert:false,authenticatedDirectTableUpdate:false,
+  authenticatedPrivateSchemaUsage:true,authenticatedPrivateHelperExecute:true,
+  anonPublicExecute:false,anonPrivateHelperExecute:false,anonPrivateSchemaUsage:false,
+  privateHelperSecurityDefiner:true,privateHelperOwner:'closet_backup_writer',
+  privateHelperSearchPathEmpty:true,privateHelperUsesRequestJwtSub:true,
+  privateHelperValidatesPayloadAndRevision:true,privateHelperUsesOwnerScopedInsertUpdate:true,
+  writerRoleNoLogin:true,writerRoleNoBypassRls:true,writerRoleIsTableOwner:false,
+  writerRoleCanSelectInsertUpdate:true,writerRoleOwnerScopedRlsPolicyPresent:true,
+  liveRpcWriteAttempted:false,ownerContentAccessed:false,actualHttpOutcome:'NOT TESTED',
+  likelyNormalAuthenticatedCloudBackupWritable:'UNKNOWN_UNTIL_REAL_JWT_FUNCTIONAL_TEST',
+  status:'RESTRICTED_PRIVATE_WRITER_CHAIN_PRESENT_NO_GRANT_BLOCKER_ESTABLISHED'
+ };
+ if(Object.entries(controls).some(([key,val])=>w[key]!==val)||
+   correction.supersedes!=='BLOCKER_PROBABLE_AUTHENTICATED_SAVE_PERMISSION_DENIAL'||
+   correction.currentFinding!=='SECURE_WRITER_CHAIN_CONFIGURED_METADATA_ONLY'||
+   correction.liveHttpWriteVerified!==false||correction.requiresAnyPermissionChange!==false)
+  issues.push('Restricted wrapper/private-definer writer chain not intact, or prior false blocker not corrected');
  if(e?.photoBoardCandidate?.referencePR!==349||
     e?.photoBoardCandidate?.sourceHead!==PIN||
     e.photoBoardCandidate?.fullSourceProvenanceTests!=='PASS_OFFLINE')
@@ -100,7 +111,7 @@ export function assessMetadataEvidence(e,{today='2026-10-27'}={}){
   realDistinctOwnerJwtValidation:'NOT TESTED',
   screenshotOrSoftwareCiIsReleaseApproval:false,
   allowedPresentationUntilHumanReview:'PHOTO_PREVIEW_ONLY',
-  stageCloudBackupWriteStatus:'BLOCKED_PROBABLE_INVOKER_PRIVILEGE_MISMATCH',
+  stageCloudBackupWriteStatus:'RESTRICTED_WRITER_CHAIN_PRESENT_LIVE_WRITE_UNTESTED',
   actualBackupSaveHttpVerified:false,
   deploymentAuthorized:false,productionModified:false,stagingModified:false
  });
