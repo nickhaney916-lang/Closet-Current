@@ -50,7 +50,7 @@ try{
       canvas.width=1280;canvas.height=960;
       const g=canvas.getContext('2d');
       g.fillStyle='#101113';g.fillRect(0,0,1280,960);
-      g.fillStyle='#26272c';g.fillRect(100,80,1080,800);
+      g.fillStyle='#191b1c';g.fillRect(100,80,1080,800);
       g.fillStyle='#111215';g.fillRect(350,100,580,720);
       g.fillStyle='#151719';g.fillRect(450,70,380,100);
       const source=canvas.toDataURL('image/jpeg',.90);
