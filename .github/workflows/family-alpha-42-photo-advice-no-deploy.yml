@@ -54,7 +54,7 @@ jobs:
       - name: Run original wardrobe and source-matched fit/atomic recovery suites
         run: |
           npm install --no-save --no-package-lock --no-audit --no-fund fake-indexeddb@6.2.4
-          node --test tests/*.test.cjs tests/*.test.mjs tests/integration/family-alpha-refined-avatar-integration-hold.test.mjs tests/integration/family-alpha-29-store.test.mjs tests/integration/family-alpha-34-storage.test.mjs tests/integration/family-alpha-35-visual-repair-hold.test.mjs
+          node --test --test-concurrency=1 tests/*.test.cjs tests/*.test.mjs tests/integration/family-alpha-refined-avatar-integration-hold.test.mjs tests/integration/family-alpha-29-store.test.mjs tests/integration/family-alpha-34-storage.test.mjs tests/integration/family-alpha-35-visual-repair-hold.test.mjs
           node --test tests/integration/family-alpha-assignment22-integrity.test.cjs tests/integration/family-alpha-worker-recovery.test.mjs
           node --test tests/integration/family-alpha-full-stage-routing-hold.test.mjs
           node --test tests/integration/family-alpha-40-session-fit-hold.test.mjs
