@@ -1,0 +1,102 @@
+{
+  "environment": "staging",
+  "source": "main 39deed98; preparation only; no live checks performed by Assignment 27",
+  "gates": [
+    {
+      "id": "access",
+      "status": "NOT TESTED",
+      "method": "pending",
+      "evidence": "",
+      "build": "",
+      "testedAt": ""
+    },
+    {
+      "id": "adult-isolation",
+      "status": "NOT TESTED",
+      "method": "pending",
+      "evidence": "",
+      "build": "",
+      "testedAt": ""
+    },
+    {
+      "id": "four-accounts",
+      "status": "NOT TESTED",
+      "method": "pending",
+      "evidence": "",
+      "build": "",
+      "testedAt": ""
+    },
+    {
+      "id": "android",
+      "status": "NOT TESTED",
+      "method": "pending",
+      "evidence": "",
+      "build": "",
+      "testedAt": ""
+    },
+    {
+      "id": "iphone",
+      "status": "NOT TESTED",
+      "method": "pending",
+      "evidence": "",
+      "build": "",
+      "testedAt": ""
+    },
+    {
+      "id": "capture",
+      "status": "NOT TESTED",
+      "method": "pending",
+      "evidence": "",
+      "build": "",
+      "testedAt": ""
+    },
+    {
+      "id": "correction",
+      "status": "NOT TESTED",
+      "method": "pending",
+      "evidence": "",
+      "build": "",
+      "testedAt": ""
+    },
+    {
+      "id": "avatar",
+      "status": "NOT TESTED",
+      "method": "pending",
+      "evidence": "",
+      "build": "",
+      "testedAt": ""
+    },
+    {
+      "id": "recommendations",
+      "status": "NOT TESTED",
+      "method": "pending",
+      "evidence": "",
+      "build": "",
+      "testedAt": ""
+    },
+    {
+      "id": "swap",
+      "status": "NOT TESTED",
+      "method": "pending",
+      "evidence": "",
+      "build": "",
+      "testedAt": ""
+    },
+    {
+      "id": "cloud-restore",
+      "status": "NOT TESTED",
+      "method": "pending",
+      "evidence": "",
+      "build": "",
+      "testedAt": ""
+    },
+    {
+      "id": "feedback",
+      "status": "NOT TESTED",
+      "method": "pending",
+      "evidence": "",
+      "build": "",
+      "testedAt": ""
+    }
+  ]
+}
