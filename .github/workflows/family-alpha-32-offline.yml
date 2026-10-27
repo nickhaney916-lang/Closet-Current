@@ -1,0 +1,27 @@
+name: Family Alpha 32 Fitting Research OFFLINE NO DEPLOY
+on:
+  pull_request:
+    paths: ['research/family-alpha-32/**', 'tests/research32/**', 'scripts/test-family-alpha-32-browser.mjs', '.github/workflows/family-alpha-32-offline.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  synthetic-research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+      - run: node --test tests/research32/*.test.mjs
+      - run: node scripts/test-family-alpha-32-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: family-alpha-32-SYNTHETIC-comparisons-HOLD
+          path: benchmark/family-alpha-32/
