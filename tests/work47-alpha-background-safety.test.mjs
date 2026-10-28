@@ -85,7 +85,7 @@ test('protected painter and original-photo fallback remain exact source-owned, n
  assert.ok(fit.includes('return {...plan,fringe,binaryEdge,coverage,assignment,joins,faceOverlap,cutoutIntegrity};'));
  assert.match(editor,/Cutout still looks like a solid photograph/);
  assert.match(editor,/Keep the original and remove its background before fitting/);
- assert.ok(build.includes("['editor.mjs','fit.mjs','edge-fringe.mjs','binary-edge.mjs','atomic-preview.mjs','cutout-integrity.mjs']"),'Source-pinned offline preview module allowlist changed');
+ assert.ok(build.includes("['editor.mjs','fit.mjs','portable-fit.mjs','edge-fringe.mjs','binary-edge.mjs','atomic-preview.mjs','cutout-integrity.mjs']"),'Source-pinned offline preview module allowlist changed');
  const mod=await readFile('research/work47/cutout-integrity.mjs','utf8');
  assert.doesNotMatch(mod,/fetch\(|localStorage|indexedDB|XMLHttpRequest|\.src\s*=/);
  assert.match(editor,/isActive\(\)===true|isActive\(\)\s*===\s*true|isActive\(\)\s*\&\&|isActive\(\)\s*\?\s*true|isActive\(\)===true|isActive\(\)\s*===\s*true|isActive\(\)/);
