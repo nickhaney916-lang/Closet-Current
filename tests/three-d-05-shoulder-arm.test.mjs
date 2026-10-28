@@ -23,6 +23,11 @@ test('actual sloping arm cross-sections replace horizontally stacked cylinders',
   assert.ok(centers.some(p=>Math.abs(p.ringNormal[0])>.10),'At least one tilted ring is required');
   assert.ok(centers.every(p=>p.rx>=.105*scale),'Swept sleeve must encompass generic arm circumference');
   assert.ok(centers[0].rx<centers.at(-1).rx,'Wrist should be narrower than shoulder');
+  const lastRow=Array.from({length:33},(_,j)=>g.vertices[((centers.length-1)*33+j)*9+1]);
+  assert.ok(Math.max(...lastRow)-Math.min(...lastRow)<.05,
+   'Shoulder ring must blend toward horizontal torso seam, not rise into angular horns');
+  assert.ok(centers.at(-1).shoulderBlend>.7);
+  assert.ok(centers[0].shoulderBlend<.1);
   assert.ok(centers[0].y<=1.25&&centers.at(-1).y>=2.15);
  }
 });

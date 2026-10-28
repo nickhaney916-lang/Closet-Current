@@ -44,10 +44,15 @@ export function buildSweptSleeve({side=1,shoulderScale=1,length='long',color=[.2
   const p=rings[i],a=rings[Math.max(0,i-1)],b=rings[Math.min(rings.length-1,i+1)];
   const dx=b.x-a.x,dy=b.y-a.y,m=Math.hypot(dx,dy);
   if(m<1e-8)throw Error('Degenerate sleeve centerline');
-  // [uy,-ux] is perpendicular to the arm's tilted x/y centerline.
-  const ux=dy/m,uy=-dx/m;
+  // Cross-sections follow the arm's sloped centerline at the cuff/elbow.
+  // Near the shoulder, ease their tilt toward the horizontal torso seam:
+  // a fully tilted proximal ring previously rose above the shoulder as a
+  // sharp black horn in the real licensed-photo browser screenshot.
+  const fade=1-.88*clamp((p.y-1.90)/.26,0,1);
+  const tilt=Math.atan2(-dx,dy)*fade;
+  const ux=Math.cos(tilt),uy=Math.sin(tilt);
   crossSectionCenters.push(Object.freeze({x:p.x,y:p.y,z:0,rx:p.rx,rz:p.rz,
-   ringNormal:[dx/m,dy/m,0]}));
+   ringNormal:[-uy,ux,0],shoulderBlend:1-fade}));
   for(let j=0;j<=segments;j++){
    const theta=-Math.PI+j*2*Math.PI/segments;
    const sn=Math.sin(theta),cs=Math.cos(theta);
