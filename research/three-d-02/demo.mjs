@@ -89,6 +89,8 @@ async function run(){
   $('viewer').dataset.sleeveLength=r.sleeveLength;
   $('viewer').dataset.photoMeshes=String(r.photoMeshes);
   $('viewer').dataset.solidGarmentMeshes=String(r.solidGarmentMeshes);
+  $('viewer').dataset.sweptSleeves=String(r.sweptSleeves);
+  $('viewer').dataset.mannequinHands=String(r.mannequinHands);
  }});
  const [rawManifest,rawLicense]=await Promise.all([
   fetch('../../benchmark/work47/manifest.json',{cache:'no-store'}),
