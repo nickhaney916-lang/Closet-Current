@@ -43,6 +43,38 @@ s=s.replace(hook,String.raw\x60
       'Returning to OFF must restore exact original garment fit pixels');
     const source=await article.locator('img[data-slot="top"]').getAttribute('src');
     assert.equal(await article.locator('img[data-slot="top"]').evaluate(x=>x.hidden),true);
+    // Prove a REAL browser canvas failure after partial draw never replaces
+    // the current real garment-on-avatar canvas or leaks the source image.
+    const beforeDrawFailure=await article.locator('canvas[data-work47="top"]').evaluate(c=>c.toDataURL());
+    const preFailureElement=await article.locator('canvas[data-work47="top"]').evaluate(c=>{
+     c.dataset.alpha56Original='yes';return true;
+    });
+    await page.evaluate(()=>{
+     const original=CanvasRenderingContext2D.prototype.drawImage;
+     window.__alpha56Restore=()=>{CanvasRenderingContext2D.prototype.drawImage=original;delete window.__alpha56Restore;};
+     let thrown=false;
+     CanvasRenderingContext2D.prototype.drawImage=function(...args){
+      const result=original.apply(this,args);
+      if(!thrown&&this.canvas.dataset.work47==='top'){
+       thrown=true;throw Error('SIMULATED_PARTIAL_GARMENT_RENDER_FAILURE');
+      }
+      return result;
+     };
+    });
+    try{
+     await fitter.getByRole('button',{name:'↓ Down',exact:true}).click();
+     assert.match(await fitter.getByRole('status').textContent(),/Preview unchanged/);
+     assert.equal(await article.locator('canvas[data-work47="top"]').evaluate(c=>c.toDataURL()),beforeDrawFailure,
+       'A partial failed redraw must not erase previously rendered real clothing');
+     assert.equal(await article.locator('canvas[data-work47="top"]').getAttribute('data-alpha56-original'),'yes',
+       'The prior canvas ELEMENT must survive failure, not just be redrawn after');
+     assert.equal(await article.locator('img[data-slot="top"]').getAttribute('src'),source,
+       'Private reviewed photo source must not change under failed redraw');
+     assert.equal(await article.locator('svg[data-humanoid-overlay]').count(),1,
+       'Previously selected genuine humanoid foreground stays visible');
+    }finally{
+     await page.evaluate(()=>window.__alpha56Restore?.());
+    }
     await fitter.getByRole('button',{name:'↓ Down',exact:true}).click();
     assert.equal(await article.locator('img[data-slot="top"]').getAttribute('src'),source);
     await mkdir('benchmark/work47/integration',{recursive:true});await article.screenshot({path:'benchmark/work47/integration/'+name.toLowerCase()+'-'+width+'-fitted.png'});
