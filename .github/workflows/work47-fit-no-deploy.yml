@@ -1,4 +1,4 @@
-name: Work48 sleeve continuity and body fit HOLD (NO DEPLOY)
+name: Family Alpha #59 Work48 human visual-review evidence HOLD (NO DEPLOY)
 on:
   pull_request:
     paths: ['research/work47/**', 'research/work48/**', 'scripts/*work48*', 'tests/work48*', 'scripts/*work47*', 'tests/work47*', '.github/workflows/work47-fit-no-deploy.yml']
@@ -41,6 +41,8 @@ jobs:
         run: node scripts/test-work48-integration-browser.mjs
       - name: Inherited licensed three-outfit and mobile navigation regression
         run: node scripts/test-family-alpha-51-mobile-nav-browser.mjs
+      - name: Human-initiated visual review, evidence export and privacy safety (Chromium + WebKit)
+        run: node scripts/test-work48-visual-review-browser.mjs
       - name: All fifteen photographs in both engines at all three widths
         run: node scripts/test-work48-browser.mjs
       - uses: actions/upload-artifact@v4
