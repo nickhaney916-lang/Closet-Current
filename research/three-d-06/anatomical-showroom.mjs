@@ -6,6 +6,7 @@
 import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {requireAnatomicalShirtPreview} from '../three-d-07/rig-shirt-transfer.mjs';
 const ALLOWED=Object.freeze({
  male:{file:'male-cc0-rigged.glb',title:'Anatomical mannequin A'},
  female:{file:'female-cc0-rigged.glb',title:'Anatomical mannequin B'}
@@ -45,6 +46,19 @@ export function mountAnatomicalShowroom(canvas,{onChange=()=>{}}={}){
  let selected=null,current='female',finish=false,loading=0,
   lastColor='porcelain',lastStats=null,spin=false,frame=0;
  const loader=new GLTFLoader();
+ let clothTexture=null,clothSource=null;
+ const clothUniforms={
+  uVerifiedShirt:{value:0},uVerifiedTexture:{value:null},
+  uVerifiedCrop:{value:new THREE.Vector4(0,0,1,1)},
+  uVerifiedColor:{value:new THREE.Color(0x1e1e1e)}
+ };
+ const clearShirt=()=>{
+  clothSource=null;clothUniforms.uVerifiedShirt.value=0;
+  clothUniforms.uVerifiedTexture.value=null;
+  if(clothTexture)clothTexture.dispose();clothTexture=null;
+  canvas.dataset.shirt='none';canvas.dataset.photoSource='';
+  draw();
+ };
  const resize=()=>{
   const b=canvas.getBoundingClientRect();
   const width=Math.max(240,Math.floor(b.width||500)),height=Math.max(320,Math.floor(b.height||670));
@@ -68,11 +82,15 @@ export function mountAnatomicalShowroom(canvas,{onChange=()=>{}}={}){
     // This is only a mannequin privacy/modesty layer, NOT clothing fitting.
     material.onBeforeCompile=shader=>{
      shader.vertexShader=shader.vertexShader.replace('void main() {',
-      'varying vec3 vStudioBody;\nvoid main() {');
+      'varying vec3 vStudioBody;\nvarying float vStudioFacing;\nvoid main() {');
      shader.vertexShader=shader.vertexShader.replace('#include <worldpos_vertex>',
-      '#include <worldpos_vertex>\nvStudioBody=(modelMatrix*vec4(transformed,1.0)).xyz;');
+      '#include <worldpos_vertex>\nvStudioBody=(modelMatrix*vec4(transformed,1.0)).xyz;\nvStudioFacing=dot(normalize(mat3(modelMatrix)*transformedNormal),vec3(0.,0.,1.));');
+     shader.uniforms.uVerifiedShirt=clothUniforms.uVerifiedShirt;
+     shader.uniforms.uVerifiedTexture=clothUniforms.uVerifiedTexture;
+     shader.uniforms.uVerifiedCrop=clothUniforms.uVerifiedCrop;
+     shader.uniforms.uVerifiedColor=clothUniforms.uVerifiedColor;
      shader.fragmentShader=shader.fragmentShader.replace('void main() {',
-      'varying vec3 vStudioBody;\nvoid main() {');
+      'varying vec3 vStudioBody;\nvarying float vStudioFacing;\nuniform float uVerifiedShirt;\nuniform sampler2D uVerifiedTexture;\nuniform vec4 uVerifiedCrop;\nuniform vec3 uVerifiedColor;\nvoid main() {');
      shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>',
       `#include <color_fragment>
        float torso= smoothstep(1.10,1.14,vStudioBody.y)*
@@ -84,6 +102,29 @@ export function mountAnatomicalShowroom(canvas,{onChange=()=>{}}={}){
        float baseCoverage=clamp(torso+shorts,0.0,1.0);
        vec3 neutralCloth=vec3(.19,.26,.24);
        diffuseColor.rgb=mix(diffuseColor.rgb,neutralCloth,baseCoverage);
+       if(uVerifiedShirt>0.5) {
+        // This is a body-surface preview, NOT tailored or simulated clothing.
+        // Keep the unverified back/outer sleeves source-median black. Only the
+        // front torso may display Work47 original-RGB transparent pixels.
+        float halfWidth=abs(vStudioBody.x);
+        float sleeveShirt=smoothstep(1.11,1.17,vStudioBody.y)*
+         (1.0-smoothstep(1.52,1.62,vStudioBody.y))*
+         (1.0-smoothstep(.61,.72,halfWidth));
+        diffuseColor.rgb=mix(diffuseColor.rgb,uVerifiedColor,sleeveShirt);
+        vec2 p=vec2(.5+vStudioBody.x/.73,
+          (vStudioBody.y-1.12)/.49);
+        vec2 uv=vec2(uVerifiedCrop.x+p.x*uVerifiedCrop.z,
+           1.0-uVerifiedCrop.y-uVerifiedCrop.w+p.y*uVerifiedCrop.w);
+        if(p.x>=0.0&&p.x<=1.0&&p.y>=0.0&&p.y<=1.0) {
+         vec4 sourcePixel=texture2D(uVerifiedTexture,uv);
+         float frontOnly=max(smoothstep(.015,.09,vStudioBody.z),smoothstep(.17,.61,vStudioFacing));
+         float chestOnly=(1.0-smoothstep(.28,.365,halfWidth))*
+          smoothstep(1.12,1.18,vStudioBody.y)*
+          (1.0-smoothstep(1.51,1.58,vStudioBody.y));
+         float alpha=sourcePixel.a*frontOnly*chestOnly;
+         diffuseColor.rgb=mix(diffuseColor.rgb,sourcePixel.rgb,alpha);
+        }
+       }
       `);
     };
     obj.material=material;
@@ -114,10 +155,33 @@ export function mountAnatomicalShowroom(canvas,{onChange=()=>{}}={}){
    throw Error('Downloaded GLB has no usable anatomical skinned human');
   return {meshCount,skinned,bones,triangles};
  };
+ const applyShirt=(candidate,{acknowledged=false}={})=>{
+  if(!selected||finish)throw Error('A verified rigged humanoid must load first');
+  const source=requireAnatomicalShirtPreview(candidate,{acknowledged});
+  const tex=new THREE.Texture(source.textureImage);
+  tex.colorSpace=THREE.SRGBColorSpace;tex.flipY=true;
+  tex.wrapS=THREE.ClampToEdgeWrapping;tex.wrapT=THREE.ClampToEdgeWrapping;
+  tex.needsUpdate=true;
+  clearShirt();
+  clothTexture=tex;clothSource=source;
+  clothUniforms.uVerifiedShirt.value=1;
+  clothUniforms.uVerifiedTexture.value=clothTexture;
+  const [l,t,w,h]=source.cropRect;
+  clothUniforms.uVerifiedCrop.value.set(l,t,w,h);
+  clothUniforms.uVerifiedColor.value.setRGB(...source.baseColor,THREE.SRGBColorSpace);
+  canvas.dataset.shirt='source-reviewed';
+  canvas.dataset.photoSource=source.id;
+  draw();
+  return {status:'research-preview',id:source.id,sourceSHA256:source.sourceSHA256,
+   anatomicalSurface:true,realGarmentGeometry:false,
+   humanVisualApproval:false,releaseAuthorized:false};
+ };
  const load=async kind=>{
   if(finish||!Object.hasOwn(ALLOWED,kind))throw Error('Unknown mannequin source');
   const token=++loading;
-  const url='./models/'+ALLOWED[kind].file;
+  // Resolve bundled CC0 assets relative to this module, not to the hosting
+  // research page (the 3D-07 photographed garment page lives elsewhere).
+  const url=new URL('./models/'+ALLOWED[kind].file,import.meta.url).href;
   let gltf;
   try{gltf=await loader.loadAsync(url);}catch(e){throw Error('Local CC0 body unavailable: '+String(e.message||e));}
   if(finish||token!==loading)return false;
@@ -134,6 +198,7 @@ export function mountAnatomicalShowroom(canvas,{onChange=()=>{}}={}){
   if(selected){group.remove(selected);selected.traverse(o=>{
    if(o.isMesh&&o.userData.ownedMaterial)o.material.dispose();
   });}
+  clearShirt();
   selected=obj;group.add(selected);current=kind;lastStats=stats;
   shade(lastColor);front();
   canvas.dataset.model=kind;
@@ -160,12 +225,12 @@ export function mountAnatomicalShowroom(canvas,{onChange=()=>{}}={}){
   window.requestAnimationFrame(frameLoop);
  };
  const start=()=>{resize();window.requestAnimationFrame(frameLoop);};
- const stop=()=>{finish=true;loading++;controls.dispose();
+ const stop=()=>{clearShirt();finish=true;loading++;controls.dispose();
   if(selected)selected.traverse(o=>{if(o.isMesh&&o.userData.ownedMaterial)o.material.dispose();});
   floor.geometry.dispose();floor.material.dispose();
   shadow.geometry.dispose();shadow.material.dispose();renderer.dispose();};
- return {load,shade,front,side,back,rotate,start,stop,
+ return {load,shade,front,side,back,rotate,start,stop,applyShirt,clearShirt,
   setSpin:v=>{spin=!!v;},
-  getState:()=>({kind:current,loaded:!!selected,finish,stats:lastStats,frames:frame,finishMaterial:lastColor})
+  getState:()=>({kind:current,loaded:!!selected,finish,stats:lastStats,frames:frame,finishMaterial:lastColor,photoSource:clothSource?.id||null})
  };
 }
