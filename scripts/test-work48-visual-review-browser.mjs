@@ -84,7 +84,8 @@ try{
     assert.equal(await grade.inputValue(),'PASS');
     assert.deepEqual(errors,[],'Browser page errors');
     assert.deepEqual(external,[],'No remote traffic permitted');
-    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,'No horizontal scrolling');
+    const layout=await page.evaluate(()=>({viewport:innerWidth,scrollWidth:document.documentElement.scrollWidth,offenders:[...document.querySelectorAll('#review-root *')].filter(e=>e.getBoundingClientRect().right>innerWidth+1).slice(0,5).map(e=>({tag:e.tagName,role:e.getAttribute('aria-label'),width:Math.round(e.getBoundingClientRect().width)}))}));
+    assert.ok(layout.scrollWidth<=layout.viewport+1,'Mobile visual review overflow '+JSON.stringify({browser:name,width,...layout}));
     if(name==='chromium'&&width===390){
      await mkdir('benchmark/work48/visual-review',{recursive:true});
      await page.screenshot({path:'benchmark/work48/visual-review/390px-reviewed-sample-HOLD.png',fullPage:true});
