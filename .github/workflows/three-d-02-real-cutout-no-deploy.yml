@@ -1,0 +1,49 @@
+name: 3D-02 source-bound real garment cutout on WebGL2 HOLD (NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'research/three-d-02/**'
+      - 'scripts/test-three-d-02-browser.mjs'
+      - 'tests/three-d-02-cutout-material.test.mjs'
+      - '.github/workflows/three-d-02-real-cutout-no-deploy.yml'
+permissions:
+  contents: read
+jobs:
+  experimental-source-bound-mesh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Fail if any existing 2D/3D01, photo, account or production source has changed
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git fetch --no-tags origin ecd33ce0d8a252f45cf42d2cd1b37e6f92b247d6
+          git diff --name-only ecd33ce0d8a252f45cf42d2cd1b37e6f92b247d6 HEAD | while IFS= read -r file; do
+            case "$file" in
+              research/three-d-02/*|scripts/test-three-d-02-browser.mjs|tests/three-d-02-cutout-material.test.mjs|.github/workflows/three-d-02-real-cutout-no-deploy.yml) ;;
+              *) echo "Unexpected Auth, original pixels, 2D renderer, isolation algorithm, staging or production change: $file"; exit 1 ;;
+            esac
+          done
+          test "$(git diff --name-only ecd33ce0d8a252f45cf42d2cd1b37e6f92b247d6 HEAD | wc -l)" -le 7
+      - name: Install isolated research benchmark and browser dependencies only
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 playwright@1.56.1
+      - name: Build exact existing 2D Work47 real licensed cutout assets without changing original JPEGs
+        run: |
+          git fetch --no-tags origin 53f2ad344dc56a1477e343531c423aed0e66c17d dd6bac3fa9ff640d4f562cf925337440bdb5cf8f 3a572193987cb29389727426136c6eb3ac326783
+          node scripts/build-work47-benchmark.mjs
+      - name: Exact hashes, alpha bounds, pre-review refusal, 3D geometries and privacy tests
+        run: node --test tests/three-d-01-prototype.test.mjs tests/three-d-02-cutout-material.test.mjs
+      - name: Real 320/390/430px WebGL2 mask texture, rejection and 3D rotation
+        run: node scripts/test-three-d-02-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: THREE-D-02-REAL-SOURCE-RGB-CUTOUT-HOLD-NOT-VISUALLY-ACCEPTED
+          path: benchmark/three-d-02/
+          if-no-files-found: warn
