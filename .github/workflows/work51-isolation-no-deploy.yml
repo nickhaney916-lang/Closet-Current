@@ -1,7 +1,7 @@
 name: Work51 source support cleanup HOLD (NO DEPLOY)
 on:
   pull_request:
-    paths: ['research/work51/**', 'scripts/*work51*', 'tests/work51*', '.github/workflows/work51-isolation-no-deploy.yml', 'research/work50/**', 'scripts/*work50*', 'tests/work50*', 'scripts/*family-alpha-63*', 'tests/family-alpha-63*', '.github/workflows/family-alpha-63-auto-portable-no-deploy.yml']
+    paths: ['research/work51/**', 'research/work47/portable-fit.mjs', 'research/work47/editor.mjs', 'scripts/test-family-alpha-67-portable-fit-browser.mjs', 'tests/work47-portable-fit.test.mjs', 'scripts/*work51*', 'tests/work51*', '.github/workflows/work51-isolation-no-deploy.yml', 'research/work50/**', 'scripts/*work50*', 'tests/work50*', 'scripts/*family-alpha-63*', 'tests/family-alpha-63*', '.github/workflows/family-alpha-63-auto-portable-no-deploy.yml']
 permissions:
   contents: read
 jobs:
@@ -49,8 +49,10 @@ jobs:
         run: |
           node --test tests/work47*.test.mjs tests/work48*.test.mjs tests/work49*.test.mjs tests/work50*.test.mjs tests/work51*.test.mjs tests/family-alpha-63*.test.mjs tests/work43/*.test.mjs tests/work46-session-races.test.mjs
           node scripts/check-family-alpha-49-combined-visual-security-hold.mjs
-      - name: Full protected app with manual landmark editor
-        run: node scripts/test-work51-integration-browser.mjs
+      - name: Full protected app including local fit download/restore and forged approval refusal
+        run: |
+          node scripts/test-work51-integration-browser.mjs
+          node scripts/test-family-alpha-67-portable-fit-browser.mjs
       - name: Inherited licensed three-outfit and mobile navigation regression
         run: node scripts/test-family-alpha-51-mobile-nav-browser.mjs
       - name: Human-initiated visual review, evidence export and privacy safety (Chromium + WebKit)
