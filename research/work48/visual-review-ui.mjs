@@ -2,7 +2,7 @@ import {newReviewEvidence,recordReview,validateEvidence,parseReviewImport,serial
 // Localhost research-only: no storage API, remote POST, owner sign-off or approvals.
 export function mountVisualReview(root,manifest,onNavigate){
  if(!root||typeof onNavigate!=='function')throw Error('Review root/navigation required');
- let evidence=newReviewEvidence(manifest),currentId=manifest.rows[0].id;
+ let evidence=newReviewEvidence(manifest),currentId=manifest.rows[0].id;const revised=new Set();
  const el=(tag,txt)=>{const e=document.createElement(tag);if(txt!==undefined)e.textContent=txt;return e;};
  const label=(txt,control)=>{const l=el('label',txt);l.append(control);return l;};
  const heading=el('h2','Human visual acceptance — licensed garments');
@@ -53,9 +53,9 @@ export function mountVisualReview(root,manifest,onNavigate){
  };
  upload.onchange=async()=>{
   const file=upload.files?.[0];upload.value='';if(!file)return;
-  try{if(file.size>32000)throw Error('Review too large');const imported=parseReviewImport(manifest,await file.text());evidence=imported;render(currentId);status.textContent='Prior local review imported. No owner approval. HOLD.';}
+  try{if(file.size>32000)throw Error('Review too large');const imported=parseReviewImport(manifest,await file.text());for(const id of revised){const i=manifest.rows.findIndex(r=>r.id===id);imported.rows[i]=newReviewEvidence(manifest).rows[i];}evidence=imported;render(currentId);status.textContent='Prior local review imported. No owner approval. HOLD.';}
   catch{status.textContent='Invalid review file rejected; current work kept. Family Alpha HOLD.';}
  };
  render(currentId);
- return Object.freeze({show:render,counts:()=>validateEvidence(manifest,evidence),dispose:()=>{root.replaceChildren();evidence=null;}});
+ return Object.freeze({invalidate(id){const i=manifest.rows.findIndex(r=>r.id===id);if(i<0)throw Error('Unknown licensed garment');revised.add(id);evidence=structuredClone(evidence);evidence.rows[i]=newReviewEvidence(manifest).rows[i];render(currentId);},show:render,counts:()=>validateEvidence(manifest,evidence),dispose:()=>{root.replaceChildren();evidence=null;}});
 }
