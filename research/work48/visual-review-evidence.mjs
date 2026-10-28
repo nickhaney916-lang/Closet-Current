@@ -64,11 +64,12 @@ export function validateEvidence(manifest,evidence){
   if(!REASONS.includes(row.reason))
    fail('Every completed visual judgment needs a specific 12–400 character explanation');
   if(row.decision==='PASS'){
+   if(row.reason!==REASONS[0])fail('Manual PASS requires explicit positive four-criteria reason');
    if(!original.profile||!original.hasCutout||CHECKS.some(k=>!row.checks[k]))
     fail('A manual PASS requires a supported fit, reviewed cutout and all four checked criteria');
    passes++;
-  }else if(row.decision==='REVIEW'){needsReview++;}
-  else failed++;
+  }else if(row.decision==='REVIEW'){if(row.reason===REASONS[0])fail('REVIEW requires unresolved reason');needsReview++;}
+  else {if(row.reason===REASONS[0])fail('FAIL requires problem reason');failed++;}
   reviewed++;
  }
  return Object.freeze({
