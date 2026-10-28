@@ -1,0 +1,32 @@
+name: Family Alpha #69 offline release gate HOLD (NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'scripts/family-alpha-69-release-gate.mjs'
+      - 'tests/family-alpha-69-release-gate.test.mjs'
+      - 'research/family-alpha-69/**'
+      - '.github/workflows/family-alpha-69-release-gate-no-deploy.yml'
+permissions:
+  contents: read
+jobs:
+  release-evidence-hold:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22' }
+      - name: Prove only offline evidence files changed from exact verified PR382
+        run: |
+          git fetch --no-tags origin d8d95bf7297b91bdde2a5cfa274203ca12cbc1f1
+          git diff --name-only d8d95bf7297b91bdde2a5cfa274203ca12cbc1f1 HEAD | while IFS= read -r file; do
+            case "$file" in
+              scripts/family-alpha-69-release-gate.mjs|tests/family-alpha-69-release-gate.test.mjs|research/family-alpha-69/evidence-HOLD.json|research/family-alpha-69/README.md|.github/workflows/family-alpha-69-release-gate-no-deploy.yml) ;;
+              *) echo "Unexpected app, photo, secret, deploy or production change: $file"; exit 1 ;;
+            esac
+          done
+      - name: Reject forged approval, source SHA, private data and missing gates
+        run: node --test tests/family-alpha-69-release-gate.test.mjs
+      - name: Print strict HOLD-only offline report
+        run: node scripts/family-alpha-69-release-gate.mjs
