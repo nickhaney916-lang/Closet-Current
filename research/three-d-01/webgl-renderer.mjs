@@ -75,9 +75,9 @@ export function mount3D(canvas,{onRender=()=>{}}={}){
   gl.uniform1i(u.uPhoto,0);
   gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,photo||white);
   for(const m of meshes){
-   const region=m.photoRegion,top=crop[1]+region[1]*crop[3],height=crop[3]*region[3];
+   const region=m.photoRegion,height=crop[3]*region[3],baseBottom=1-crop[1]-crop[3];
    gl.uniform4fv(u.uCrop,new Float32Array([
-    crop[0]+region[0]*crop[2],1-top-height,crop[2]*region[2],height
+    crop[0]+region[0]*crop[2],baseBottom+(1-region[1]-region[3])*crop[3],crop[2]*region[2],height
    ]));
    const sourceMatchedColor=m.material.photographed&&matchedColor||m.part==='garment'&&matchedColor;
    gl.uniform3fv(u.uColor,new Float32Array(sourceMatchedColor?matchedColor:m.material.color));

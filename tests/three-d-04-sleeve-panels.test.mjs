@@ -41,8 +41,8 @@ test('source median colors cover non-photo sleeves and photo print only on verif
  assert.match(renderer,/photoMeshes:meshes\.filter/);
  assert.match(renderer,/m\.material\.photographed&&projection/);
  assert.match(renderer,/smoothstep\(\.30,\.75,vFront\)/);
- assert.match(renderer,/crop\[1\]\+region\[1\]\*crop\[3\]/);
- assert.match(renderer,/1-top-height/);
+ assert.match(renderer,/baseBottom=1-crop\[1\]-crop\[3\]/);
+ assert.match(renderer,/baseBottom\+\(1-region\[1\]-region\[3\]\)\*crop\[3\]/);
 });
 test('no new source file or photo processing, owner tracking, account storage or paid AI',async()=>{
  const files=['research/three-d-01/geometry.mjs','research/three-d-01/webgl-renderer.mjs',
