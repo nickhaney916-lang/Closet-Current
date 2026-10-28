@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {readFile} from 'node:fs/promises';
+test('Work52 overlay changes only the planner import; manual, source, approval and storage remain inherited',async()=>{const p='__alpha_research/family-alpha-35/review-cutout.mjs',before=await readFile('dist-work51-isolation-HOLD/'+p,'utf8'),after=await readFile('dist-work52-isolation-HOLD/'+p,'utf8');assert.equal(after,before.replace("from '../work51/propose.mjs'","from '../work52/propose.mjs'"));});
