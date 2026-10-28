@@ -67,7 +67,7 @@ export async function verify(){
  for(const name of ['automaticApproved','visualOwnerApproved','deploymentAuthorized',
   'stagingModified','productionModified','liveJwtOwnerIsolationVerified','physicalPhoneVerified'])
   assert.equal(marker[name],false,name+' must remain false');
- assert.deepEqual(marker.onlyAddedCompiledAssets,[WORK52_PLANNER]);
+ assert.deepEqual(marker.onlyAddedCompiledAssets,[WORK52_PLANNER,FIT_PORTABLE]);
  assert.deepEqual(marker.onlyModifiedCompiledAssets,[REVIEW]);
  return {decision:'HOLD',sourceBoundWork52:true,fitRecipeRecoveredLocally:true,
   supersededReviewCancelPreserved:true,sourceAndOwnerAssetsUnchanged:true,
