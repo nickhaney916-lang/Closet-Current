@@ -69,14 +69,14 @@ test('preview remains explicit, reversible, non-network, non-storage, unapproved
   readFile('scripts/build-work47-fit-hold.mjs','utf8'),
   readFile('research/work47/edge-fringe.mjs','utf8')
  ]);
- assert.match(fit,/if\(adjust.edgeCleanup===true\)/);
+ assert.ok(fit.includes('if(adjust.edgeCleanup===true||adjust.binaryEdgeReview===true)'),'Neither edge mode may silently activate by default');
  assert.match(fit,/ctx.drawImage\(drawable,0,0\)/);
- assert.match(fit,/return \{\.\.\.plan,fringe,coverage,assignment,joins,faceOverlap,cutoutIntegrity\}/);
+ assert.ok(fit.includes('return {...plan,fringe,binaryEdge,coverage,assignment,joins,faceOverlap,cutoutIntegrity};'));
  assert.match(editor,/edgeToggle.type='checkbox';edgeToggle.disabled=true/);
  assert.match(editor,/edgeToggle.onchange=/);
  assert.match(editor,/records.clear\(\);foreground\?\.remove\(\)/);
  assert.match(editor,/edgeToggle.onchange=null/);
- assert.match(build,/\['editor\.mjs','fit\.mjs','edge-fringe\.mjs','atomic-preview\.mjs','cutout-integrity\.mjs'\]/);
+ assert.ok(build.includes("['editor.mjs','fit.mjs','edge-fringe.mjs','binary-edge.mjs','atomic-preview.mjs','cutout-integrity.mjs']"),'Source-pinned offline preview module allowlist changed');
  for(const s of [fit,edge,editor])assert.doesNotMatch(s,/fetch\(|localStorage|indexedDB|XMLHttpRequest|\.src\s*=/);
 });
 
