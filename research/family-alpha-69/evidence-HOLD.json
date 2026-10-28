@@ -1,0 +1,42 @@
+{
+  "format": "closet-current-family-alpha-release-evidence-v1",
+  "repository": "nickhaney916-lang/Closet-Current",
+  "source": {
+    "pr": 382,
+    "head": "d8d95bf7297b91bdde2a5cfa274203ca12cbc1f1"
+  },
+  "ci": {
+    "integration": {
+      "run": "https://github.com/nickhaney916-lang/Closet-Current/actions/runs/40745955804",
+      "status": "SUCCESS"
+    },
+    "inherited": {
+      "run": "https://github.com/nickhaney916-lang/Closet-Current/actions/runs/40745955911",
+      "attempt": 2,
+      "status": "SUCCESS"
+    }
+  },
+  "visual": {
+    "licensedOriginals": 15,
+    "pass": 0,
+    "review": 5,
+    "fail": 10,
+    "humanApproved": false
+  },
+  "checks": {
+    "humanVisualApproval": "NOT_VERIFIED",
+    "fourDistinctFamilyAccounts": "NOT_VERIFIED",
+    "liveTwoOwnerJwtIsolation": "NOT_VERIFIED",
+    "realCloudBackupRestore": "NOT_VERIFIED",
+    "androidPhysicalPhone": "NOT_VERIFIED",
+    "iphonePhysicalPhone": "NOT_VERIFIED",
+    "protectedStagingAccess": "NOT_VERIFIED",
+    "privateBugReporting": "NOT_VERIFIED"
+  },
+  "decision": {
+    "status": "HOLD",
+    "deployAuthorized": false,
+    "stagingModified": false,
+    "productionModified": false
+  }
+}
