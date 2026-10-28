@@ -6,7 +6,7 @@ test('Two independently sourced commercial-reusable human figures, no paid model
  assert.deepEqual(Object.keys(SOURCES),['male','female']);
  for(const [key,x]of Object.entries(SOURCES)){
   assert.equal(x.license,'CC0-1.0');
-  assert.equal(x.sha256,null,'Discovery branch must not impersonate verified immutable SHA lock');
+  assert.match(x.sha256,/^[a-f0-9]{64}$/,'Each real human model must now be pinned to its audited SHA-256');
   assert.ok(x.source.startsWith('https://www.innerscene.com/tools/library/3d-parts/'));
   assert.ok(x.download.startsWith('https://www.innerscene.com/api/library/'));
   assert.equal(x.filename,key+'-cc0-rigged.glb');

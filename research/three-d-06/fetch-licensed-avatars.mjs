@@ -2,8 +2,8 @@
  * 3D-06: download published CC0 MakeHuman-derived human bases for RESEARCH ONLY.
  * Runtime preview serves only loopback local files. No personal images or AI.
  *
- * First CI verification discovers exact file fingerprints. For release-ready
- * inclusion, fill immutable SHA-256 values and vendor the two approved GLBs.
+ * SHA-256 values were locked from the Oct 28 2026 CC0 source verification run.
+ * The files remain RESEARCH ONLY and are not bundled in the production app.
  */
 import {createHash} from 'node:crypto';
 import {mkdir,readFile,writeFile} from 'node:fs/promises';
@@ -12,11 +12,11 @@ export const SOURCES=Object.freeze({
  male:Object.freeze({
   source:'https://www.innerscene.com/tools/library/3d-parts/male-base-mesh-3d-person-rigged-a-pose-380e6d89',
   download:'https://www.innerscene.com/api/library/male-base-mesh-3d-person-rigged-a-pose-380e6d89/download',
-  sha256:null,license:'CC0-1.0',filename:'male-cc0-rigged.glb'}),
+  sha256:'d15a07e2b4cf1d08a3b91cb212a9a06a91438077f05a3f2a62f45351e8a71eb8',license:'CC0-1.0',filename:'male-cc0-rigged.glb'}),
  female:Object.freeze({
   source:'https://www.innerscene.com/tools/library/3d-parts/female-base-mesh-3d-person-rigged-a-pose-dba97ed5',
   download:'https://www.innerscene.com/api/library/female-base-mesh-3d-person-rigged-a-pose-dba97ed5/download',
-  sha256:null,license:'CC0-1.0',filename:'female-cc0-rigged.glb'})
+  sha256:'a571a5872a5f9d75c013ce6d88b3484436cf2109bf133fbc31e42c41f52389f1',license:'CC0-1.0',filename:'female-cc0-rigged.glb'})
 });
 export const MODEL_OUTPUT='research/three-d-06/models';
 export function validateGLB(bytes){
