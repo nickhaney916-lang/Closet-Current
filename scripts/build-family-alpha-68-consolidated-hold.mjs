@@ -42,7 +42,7 @@ async function paths(root,p=''){
 export async function verify(){
  await verify66();
  const before=await paths(PARENT),after=await paths(OUTPUT);
- assert.deepEqual(after,[...before,WORK52_PLANNER,MARKER].sort(),'Compiled asset inventory changed unexpectedly');
+ assert.deepEqual(after,[...before,WORK52_PLANNER,FIT_PORTABLE,MARKER].sort(),'Compiled asset inventory changed unexpectedly');
  for(const f of before){
   const previous=await readFile(join(PARENT,f));
   const current=await readFile(join(OUTPUT,f));
@@ -79,13 +79,16 @@ export async function build(){
  await cp(PARENT,OUTPUT,{recursive:true});
  await mkdir(join(OUTPUT,'__alpha_research/work52'),{recursive:true});
  await cp('research/work52/propose.mjs',join(OUTPUT,WORK52_PLANNER));
+ // Work47's inherited build uses a fixed source allowlist; Work67 added this
+ // validated local-only helper, so explicitly package its byte-exact import.
+ await cp('research/work47/portable-fit.mjs',join(OUTPUT,FIT_PORTABLE));
  await writeFile(join(OUTPUT,REVIEW),
   patchReviewedEditor(await readFile(join(PARENT,REVIEW),'utf8')));
  await writeFile(join(OUTPUT,MARKER),JSON.stringify({
   pins:PINS,decision:'HOLD',automaticApproved:false,visualOwnerApproved:false,
   deploymentAuthorized:false,stagingModified:false,productionModified:false,
   liveJwtOwnerIsolationVerified:false,physicalPhoneVerified:false,
-  onlyAddedCompiledAssets:[WORK52_PLANNER],onlyModifiedCompiledAssets:[REVIEW],
+  onlyAddedCompiledAssets:[WORK52_PLANNER,FIT_PORTABLE],onlyModifiedCompiledAssets:[REVIEW],
   note:'Work52 source-constrained proposals plus #67 exact reviewed PNG-bound local fit recipes, preserving #66 stale review cancellation'
  },null,2)+'\n');
  return verify();
