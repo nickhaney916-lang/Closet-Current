@@ -1,0 +1,7 @@
+{
+ "commons-0053": {"description":"Manually marked residual mannequin shoulder outside genuine white piping; source-bound proposal, not an approved mask.","edits":[{"kind":"polygon","action":"remove","points":[{"x":0.245,"y":0.172},{"x":0.284,"y":0.166},{"x":0.276,"y":0.22},{"x":0.263,"y":0.288},{"x":0.250,"y":0.302},{"x":0.242,"y":0.240}]}],"backgroundSearch":[[0.22,0.84,0.64,0.97]],"fabricProbes":[[0.46,0.35,0.56,0.52],[0.30,0.23,0.38,0.27]]},
+ "commons-0001":{"description":"Selected hem-edge antialias proposal; no semantic hanger deletion or color filtering.","edits":[{"action":"soften","x":0.50,"y":0.88,"radius":0.08}],"fabricProbes":[[0.40,0.35,0.63,0.57]]},
+ "commons-0003":{"description":"Selected traced cuff edge antialias proposal; no fabric reconstruction.","edits":[{"action":"soften","x":0.12,"y":0.61,"radius":0.04}],"fabricProbes":[[0.34,0.16,0.69,0.30]]},
+ "commons-0016":{"description":"Selected cuff-edge antialias proposal; embroidery remains a review concern.","edits":[{"action":"soften","x":0.08,"y":0.44,"radius":0.05}],"fabricProbes":[[0.43,0.24,0.60,0.72]]},
+ "commons-0043":{"description":"Selected waistband-edge antialias proposal; no global erosion of pale fabric.","edits":[{"action":"soften","x":0.50,"y":0.045,"radius":0.08}],"fabricProbes":[[0.38,0.55,0.62,0.75]]}
+}

@@ -82,6 +82,12 @@ try{
     await input.setInputFiles({name:'fake.json',mimeType:'application/json',buffer:Buffer.from(forged)});
     await page.waitForFunction(()=>document.querySelector('#review-root [role=status]')?.textContent?.includes('Invalid review file rejected'));
     assert.equal(await grade.inputValue(),'PASS');
+    // A different cutout invalidates the prior visual decision, including an older import.
+    await page.getByRole('button',{name:'Original cutout fallback',exact:true}).click();
+    await page.waitForFunction(()=>document.querySelector('[aria-label="Your visual grade"]')?.value==='NOT_REVIEWED');
+    await input.setInputFiles({name:'older.json',mimeType:'application/json',buffer:Buffer.from(payload)});
+    await page.waitForFunction(()=>document.querySelector('#review-root [role=status]')?.textContent?.includes('Prior local review imported'));
+    assert.equal(await grade.inputValue(),'NOT_REVIEWED');
     assert.deepEqual(errors,[],'Browser page errors');
     assert.deepEqual(external,[],'No remote traffic permitted');
     const layout=await page.evaluate(()=>({viewport:innerWidth,scrollWidth:document.documentElement.scrollWidth,offenders:[...document.querySelectorAll('#review-root *')].filter(e=>e.getBoundingClientRect().right>innerWidth+1).slice(0,5).map(e=>({tag:e.tagName,role:e.getAttribute('aria-label'),width:Math.round(e.getBoundingClientRect().width)}))}));
