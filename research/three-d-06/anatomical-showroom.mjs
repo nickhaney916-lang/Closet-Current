@@ -82,15 +82,15 @@ export function mountAnatomicalShowroom(canvas,{onChange=()=>{}}={}){
     // This is only a mannequin privacy/modesty layer, NOT clothing fitting.
     material.onBeforeCompile=shader=>{
      shader.vertexShader=shader.vertexShader.replace('void main() {',
-      'varying vec3 vStudioBody;\nvoid main() {');
+      'varying vec3 vStudioBody;\nvarying float vStudioFacing;\nvoid main() {');
      shader.vertexShader=shader.vertexShader.replace('#include <worldpos_vertex>',
-      '#include <worldpos_vertex>\nvStudioBody=(modelMatrix*vec4(transformed,1.0)).xyz;');
+      '#include <worldpos_vertex>\nvStudioBody=(modelMatrix*vec4(transformed,1.0)).xyz;\nvStudioFacing=dot(normalize(mat3(modelMatrix)*transformedNormal),vec3(0.,0.,1.));');
      shader.uniforms.uVerifiedShirt=clothUniforms.uVerifiedShirt;
      shader.uniforms.uVerifiedTexture=clothUniforms.uVerifiedTexture;
      shader.uniforms.uVerifiedCrop=clothUniforms.uVerifiedCrop;
      shader.uniforms.uVerifiedColor=clothUniforms.uVerifiedColor;
      shader.fragmentShader=shader.fragmentShader.replace('void main() {',
-      'varying vec3 vStudioBody;\nuniform float uVerifiedShirt;\nuniform sampler2D uVerifiedTexture;\nuniform vec4 uVerifiedCrop;\nuniform vec3 uVerifiedColor;\nvoid main() {');
+      'varying vec3 vStudioBody;\nvarying float vStudioFacing;\nuniform float uVerifiedShirt;\nuniform sampler2D uVerifiedTexture;\nuniform vec4 uVerifiedCrop;\nuniform vec3 uVerifiedColor;\nvoid main() {');
      shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>',
       `#include <color_fragment>
        float torso= smoothstep(1.10,1.14,vStudioBody.y)*
@@ -117,7 +117,7 @@ export function mountAnatomicalShowroom(canvas,{onChange=()=>{}}={}){
            1.0-uVerifiedCrop.y-uVerifiedCrop.w+p.y*uVerifiedCrop.w);
         if(p.x>=0.0&&p.x<=1.0&&p.y>=0.0&&p.y<=1.0) {
          vec4 sourcePixel=texture2D(uVerifiedTexture,uv);
-         float frontOnly=smoothstep(.015,.09,vStudioBody.z);
+         float frontOnly=max(smoothstep(.015,.09,vStudioBody.z),smoothstep(.17,.61,vStudioFacing));
          float chestOnly=(1.0-smoothstep(.28,.365,halfWidth))*
           smoothstep(1.12,1.18,vStudioBody.y)*
           (1.0-smoothstep(1.51,1.58,vStudioBody.y));

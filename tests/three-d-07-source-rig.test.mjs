@@ -46,6 +46,8 @@ test('Renderer uses *actual rigged anatomical surface* not paper doll or standal
  assert.match(src,/uVerifiedTexture/);
  assert.match(src,/uVerifiedCrop/);
  assert.match(src,/vStudioBody\.z/);
+ assert.match(src,/vStudioFacing/);
+ assert.match(src,/transformedNormal/);
  assert.match(src,/new THREE\.WebGLRenderer/);
  assert.match(src,/isSkinnedMesh/);
  assert.match(src,/realGarmentGeometry:false/);
