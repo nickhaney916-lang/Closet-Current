@@ -64,6 +64,10 @@ try{
     }
    return darker;
   });
+  await mkdir('benchmark/three-d-06',{recursive:true});
+  await page.screenshot({path:'benchmark/three-d-06/coverage-diagnostic-'+width+'px-HOLD.png',
+    fullPage:true});
+  console.log('MODESTY_LAYER_GPU_COUNT',JSON.stringify({width,darkSampleCount:modest}));
   assert.ok(modest>30,'Neutral fitted base layer must cover torso/pelvis; nude research mesh cannot be family-facing');
   const front=await page.locator('#avatar').evaluate(c=>c.toDataURL());
   assert.ok(front.length>15000,'Actual detailed anatomical human mesh must be rendered');
