@@ -73,7 +73,8 @@ try{
     assert.match(await page.locator('#review-root [role=status]').innerText(),/0\/15 reviewed/);
     const input=page.getByLabel('Import previous manual review');
     await input.setInputFiles({name:'review.json',mimeType:'application/json',buffer:Buffer.from(payload)});
-    assert.match(await page.locator('#review-root [role=status]').innerText(),/Prior local review imported/);
+    await page.waitForFunction(()=>document.querySelector('#review-root [role=status]')?.textContent?.includes('Prior local review imported'));
+    assert.equal(await page.getByLabel('Your visual grade').inputValue(),'PASS');
     await page.selectOption('#sample','commons-0001');
     await page.waitForFunction(()=>document.body.dataset.ready==='true'&&document.body.dataset.id==='commons-0001');
     assert.equal(await grade.inputValue(),'PASS');
