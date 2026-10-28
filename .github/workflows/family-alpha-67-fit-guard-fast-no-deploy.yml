@@ -1,0 +1,14 @@
+name: Family Alpha #67 fit recipe strict guard (NO DEPLOY)
+on:
+  pull_request:
+    paths: ['research/work47/portable-fit.mjs', 'research/work47/editor.mjs', 'tests/work47-portable-fit.test.mjs', '.github/workflows/family-alpha-67-fit-guard-fast-no-deploy.yml']
+permissions:
+  contents: read
+jobs:
+  fit-recipe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test source-bound local fit recipe and forged approval refusal
+        run: node --test tests/work47-portable-fit.test.mjs
