@@ -18,8 +18,8 @@ export function mountLandmarkEditor(container,{isActive=()=>false,sessionTarget=
  canvas.style.cssText='display:block;width:100%;height:auto;touch-action:none;background:#e9e9e9';canvas.setAttribute('aria-label','Mark left and right garment landmarks');status.setAttribute('role','status');
  const buttons=make('div');buttons.style.cssText='display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px';
  panel.append(title,hint,select,canvas,edgeLabel,apply,reset,buttons,status);container.append(panel);
- let points=[],disposed=false,foreground=null,traceSide=null,tracePoints=[];const observer=new MutationObserver(()=>{if(!container.contains(frame)||!container.contains(panel))dispose(false);});observer.observe(container,{childList:true,subtree:true});const records=new Map(),oldPanels=[...container.querySelectorAll('.alpha36-fit-controls')];
- const active=()=>{try{return !disposed&&container.contains(frame)&&container.contains(panel)&&isActive()===true;}catch{return false;}};
+ let points=[],disposed=false,foreground=null,traceSide=null,tracePoints=[];const observer=new MutationObserver(()=>{if(!container.isConnected||!container.contains(frame)||!container.contains(panel))dispose(false);});observer.observe(doc.documentElement,{childList:true,subtree:true});const records=new Map(),oldPanels=[...container.querySelectorAll('.alpha36-fit-controls')];
+ const active=()=>{try{return !disposed&&container.isConnected&&container.contains(frame)&&container.contains(panel)&&isActive()===true;}catch{return false;}};
  const current=()=>images.find(x=>x.dataset.slot===select.value);
  function check(){if(active())return true;dispose(false);return false;}
  const slides=mountRigidFitControls(panel,{getRecord:()=>records.get(select.value),redraw,isActive:active,onError:e=>{status.textContent=e.message;}});

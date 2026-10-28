@@ -56,6 +56,13 @@ s=s.replace(hook,String.raw\x60
     await leftAngle.fill('-5');await leftAngle.dispatchEvent('input');
     assert.equal(await leftAngle.inputValue(),'-5',await fitter.getByRole('status').textContent());
     assert.equal(await article.locator('[data-part="neck"]').last().getAttribute('mask')!==null,true);
+    const newControls=fitter.locator('button,select,input[type="range"]');
+    for(let j=0;j<await newControls.count();j++){
+     const control=newControls.nth(j);if(!await control.isEnabled())continue;
+     await control.scrollIntoViewIfNeeded();
+     const reachable=await control.evaluate(e=>{const r=e.getBoundingClientRect(),p=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2);return p===e||e.contains(p);});
+     assert.equal(reachable,true,'New fitting control must remain reachable above navigation');
+    }
     const source=await article.locator('img[data-slot="top"]').getAttribute('src');
     assert.equal(await article.locator('img[data-slot="top"]').evaluate(x=>x.hidden),true);
     await fitter.getByRole('button',{name:'↓ Down',exact:true}).click();
@@ -65,8 +72,14 @@ s=s.replace(hook,String.raw\x60
     assert.equal(await article.locator('canvas[data-work47]').count(),0);
     assert.equal(await article.locator('svg[data-humanoid-overlay]').count(),0,'No foreground overlay after fit reset');
     assert.equal(await article.locator('img[data-slot="top"]').getAttribute('src'),source);
+    await editorCanvas.scrollIntoViewIfNeeded();rect=await editorCanvas.boundingBox();
+    await editorCanvas.click({position:{x:rect.width*.25,y:rect.height*.09}});
+    await editorCanvas.click({position:{x:rect.width*.75,y:rect.height*.09}});
+    await fitter.getByRole('button',{name:'Apply landmark fit',exact:true}).click();
+    assert.equal(await article.locator('canvas[data-work47]').count(),1);
    }
 \x60+hook);
+s=s.replace("await first.getByRole('button',{name:'Swap shoes in outfit 1',exact:true}).click();","await first.getByRole('button',{name:'Swap shoes in outfit 1',exact:true}).click();await page.waitForFunction(()=>!document.querySelector('#alpha29NewClothes .w47-controls'));");
 s=s.replace("textContent.includes('Clothes or account changed')", "textContent.includes('Could not complete this step')");
 `;
 wrapper=wrapper.replace(marker,injected.replaceAll('\\x60','`')+'\n'+marker);const p='scripts/.work48-integration.mjs';try{await writeFile(p,wrapper);const r=spawnSync(process.execPath,[resolve(p)],{stdio:'inherit',timeout:600000,env:{...process.env,CLOSET_35_OFFLINE:'1',WORK43_LICENSED:'0'}});if(r.error)throw r.error;assert.equal(r.status,0);}finally{await rm(p,{force:true});}
