@@ -28,7 +28,7 @@ try{
   const context=await browser.newContext({viewport:{width,height:850}});
   const page=await context.newPage(),errors=[],external=[];
   page.on('pageerror',e=>errors.push(e.message));
-  page.on('request',r=>{if(!r.url().startsWith(origin))external.push(r.url().slice(0,100));});
+  page.on('request',r=>{const url=r.url();if(url.startsWith(origin)||url.startsWith('blob:'+origin+'/'))return;external.push(url.slice(0,100));});
   await page.goto(origin+'/research/three-d-02/index.html');
   await page.waitForFunction(()=>document.querySelector('#status')?.textContent.includes('template ready'),null,{timeout:30000});
   const viewer=page.locator('#viewer');
