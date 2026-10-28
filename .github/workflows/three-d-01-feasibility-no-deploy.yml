@@ -1,0 +1,45 @@
+name: 3D-01 real source 3D garment feasibility HOLD (NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'research/three-d-01/**'
+      - 'tests/three-d-01-prototype.test.mjs'
+      - 'scripts/test-three-d-01-browser.mjs'
+      - '.github/workflows/three-d-01-feasibility-no-deploy.yml'
+permissions:
+  contents: read
+jobs:
+  isolated-webgl-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Enforce source-only POC and no app/deployment change
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git fetch --no-tags origin 4dca3b59d401578062a4e27c63e384ae63955d32
+          git diff --name-only 4dca3b59d401578062a4e27c63e384ae63955d32 HEAD | while IFS= read -r file; do
+            case "$file" in
+              research/three-d-01/*|tests/three-d-01-prototype.test.mjs|scripts/test-three-d-01-browser.mjs|.github/workflows/three-d-01-feasibility-no-deploy.yml) ;;
+              *) echo "Forbidden app, photos, Auth, cloud or deployment change: $file"; exit 1 ;;
+            esac
+          done
+          test "$(git diff --name-only 4dca3b59d401578062a4e27c63e384ae63955d32 HEAD | wc -l)" -le 9
+      - name: Verify existing 2D source contracts, real 3D meshes and cutout safety
+        run: node --test tests/three-d-01-prototype.test.mjs
+      - name: Install browser harness only, not in the app
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+      - name: Actual offline WebGL2 3D browser rotation and local licensed photos
+        run: node scripts/test-three-d-01-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: THREE-D-01-REAL-WEBGL-RESEARCH-ONLY-HOLD
+          path: benchmark/three-d-01/
+          if-no-files-found: warn
