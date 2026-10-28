@@ -1,7 +1,7 @@
-name: Work49 reversible source cutout refinement HOLD (NO DEPLOY)
+name: Work50 automatic isolation HOLD (NO DEPLOY)
 on:
   pull_request:
-    paths: ['research/work47/**', 'research/work48/**', 'research/work49/**', 'scripts/*work49*', 'tests/work49*', 'scripts/*work48*', 'tests/work48*', 'scripts/*work47*', 'tests/work47*', '.github/workflows/work47-fit-no-deploy.yml']
+    paths: ['research/work47/**', 'research/work48/**', 'research/work49/**', 'research/work50/**', 'scripts/*work50*', 'tests/work50*', 'scripts/*work49*', 'tests/work49*', 'scripts/*work48*', 'tests/work48*', 'scripts/*work47*', 'tests/work47*', '.github/workflows/work47-fit-no-deploy.yml']
 permissions:
   contents: read
 jobs:
@@ -35,12 +35,14 @@ jobs:
           node scripts/build-work47-benchmark.mjs
           node scripts/build-work49-cutout-hold.mjs
           node scripts/build-work49-benchmark.mjs
+          node scripts/build-work50-isolation-hold.mjs
+          node scripts/build-work50-benchmark.mjs
       - name: Source, geometry and privacy regression tests
         run: |
-          node --test tests/work47*.test.mjs tests/work48*.test.mjs tests/work49*.test.mjs tests/work43/*.test.mjs tests/work46-session-races.test.mjs
+          node --test tests/work47*.test.mjs tests/work48*.test.mjs tests/work49*.test.mjs tests/work50*.test.mjs tests/work43/*.test.mjs tests/work46-session-races.test.mjs
           node scripts/check-family-alpha-49-combined-visual-security-hold.mjs
       - name: Full protected app with manual landmark editor
-        run: node scripts/test-work49-integration-browser.mjs
+        run: node scripts/test-work50-integration-browser.mjs
       - name: Inherited licensed three-outfit and mobile navigation regression
         run: node scripts/test-family-alpha-51-mobile-nav-browser.mjs
       - name: Human-initiated visual review, evidence export and privacy safety (Chromium + WebKit)
@@ -48,13 +50,14 @@ jobs:
       - name: All fifteen photographs in both engines at all three widths
         run: |
           node scripts/test-work49-editor-browser.mjs
-          node scripts/test-work49-browser.mjs
+          node scripts/test-work50-browser.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: work49-cutout-refinement-HOLD
+          name: work50-automatic-isolation-HOLD
           path: |
             benchmark/work47/
             benchmark/work48/
             benchmark/work49/
+            benchmark/work50/
             benchmark/family-alpha-51-navigation/

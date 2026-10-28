@@ -21,6 +21,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Install offline test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 fake-indexeddb@6.2.4
       - name: Validate production build (do not deploy)
         run: node scripts/build.mjs
       - name: Fetch pinned staging/recognition fixture source for inherited Node tests
@@ -31,9 +33,13 @@ jobs:
           node scripts/build-family-alpha-staging-auth-hold.mjs
           node scripts/build-family-alpha-recognition-integrated-hold.mjs
           node scripts/build-family-alpha-protected-preview-hold.mjs
-      - name: Prepare immutable styling and avatar integration fixtures for full suite
+      - name: Prepare immutable styling, fit and licensed mask fixtures for full suite
         run: |
-          node scripts/build-family-alpha-29-hold.mjs
-          node scripts/build-family-alpha-31-hold.mjs
+          node scripts/build-work47-parent.mjs
+          node scripts/build-work47-benchmark.mjs
+          node scripts/build-work49-cutout-hold.mjs
+          node scripts/build-work49-benchmark.mjs
+          node scripts/build-work50-isolation-hold.mjs
+          node scripts/build-work50-benchmark.mjs
       - name: Run complete Node test suite (all application and recognition tests, no skips)
         run: node --test tests/*.test.cjs tests/*.test.mjs
