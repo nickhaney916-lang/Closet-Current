@@ -9,7 +9,7 @@ import {pathToFileURL} from 'node:url';
 import assert from 'node:assert/strict';
 import {build as build63,verify as verify63,OUTPUT as PARENT,PROVIDER}
  from './build-family-alpha-63-automatic-portable-hold.mjs';
-export {PARENT};
+export {PARENT,PROVIDER};
 export const OUTPUT='dist-family-alpha-64-isolation-guidance-HOLD';
 export const CONFIRM='__alpha_research/family-alpha-reviewed-photo/preview-confirmation.mjs';
 export const GUIDANCE='__alpha_research/work50/review-guidance.mjs';
