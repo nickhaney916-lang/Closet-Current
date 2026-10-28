@@ -42,7 +42,7 @@ jobs:
       - name: Verify exact successful Work67 fit and Work52 pale source pins
         run: |
           git fetch --no-tags origin 8c0c077a23e4013ed6b51f9c6a99722b7251992f 214c1b497241e8b1b5002a83a0e88819db4a1fdd
-          for file in scripts/build-work47-fit-hold.mjs research/work47/editor.mjs research/work47/portable-fit.mjs tests/work47-portable-fit.test.mjs scripts/test-family-alpha-67-portable-fit-browser.mjs; do
+          for file in scripts/build-work47-fit-hold.mjs research/work47/editor.mjs research/work47/portable-fit.mjs tests/work47-portable-fit.test.mjs tests/work47-alpha-background-safety.test.mjs tests/work47-atomic-preview.test.mjs tests/work47-edge-fringe.test.mjs tests/work47-foreground-occlusion.test.mjs scripts/test-family-alpha-67-portable-fit-browser.mjs; do
             git show 8c0c077a23e4013ed6b51f9c6a99722b7251992f:"$file" | cmp - "$file"
           done
           for file in research/work52/propose.mjs research/work52/fixtures.mjs tests/work52-proposal.test.mjs; do
