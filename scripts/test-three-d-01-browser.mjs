@@ -9,7 +9,7 @@ const server=createServer(async(req,res)=>{
  try{
   const path=new URL(req.url,'http://localhost').pathname;
   if(!/^\/(?:research\/|benchmark\/)/.test(path)||path.includes('\0'))throw Error('Not allowed');
-  const file=resolve(root+'.'+decodeURIComponent(path));
+  const file=resolve(root,'.'+decodeURIComponent(path));
   if(!file.startsWith(root+'/'))throw Error('Forbidden path');
   const content=await readFile(file);
   const mime={'.mjs':'text/javascript','.js':'text/javascript','.html':'text/html',
