@@ -48,10 +48,23 @@ export function softenReviewedBinarySilhouette(rgba,width,height){
   if(x<width-1&&dist[i+1]+1<dist[i])dist[i]=dist[i+1]+1;
   if(y<height-1&&dist[i+width]+1<dist[i])dist[i]=dist[i+width]+1;
  }
+ // Further constrain edits to the outermost SOLID garment contour.
+ // External transparency can tunnel through tiny gaps in logos/printed fabrics;
+ // a flood fill alone must never soften those internal channels.
+ const rowMin=new Int32Array(height).fill(width),rowMax=new Int32Array(height).fill(-1);
+ const colMin=new Int32Array(width).fill(height),colMax=new Int32Array(width).fill(-1);
+ for(let y=0;y<height;y++)for(let x=0;x<width;x++){
+  if(alpha[y*width+x]<251)continue;
+  rowMin[y]=Math.min(rowMin[y],x);rowMax[y]=Math.max(rowMax[y],x);
+  colMin[x]=Math.min(colMin[x],y);colMax[x]=Math.max(colMax[x],y);
+ }
  let changed=0;
  // Bound editing to the innermost opaque silhouette fringe only.
  for(let i=0;i<n;i++){
   if(alpha[i]<251||dist[i]>radius||dist[i]===0)continue;
+  const x=i%width,y=(i-x)/width;
+  if(x-rowMin[y]>radius&&rowMax[y]-x>radius&&
+     y-colMin[x]>radius&&colMax[x]-y>radius)continue;
   const next=Math.min(alpha[i],Math.round(alpha[i]*(.60+.40*(dist[i]-1)/radius)));
   if(next<alpha[i]){rgba[4*i+3]=next;changed++;}
  }
