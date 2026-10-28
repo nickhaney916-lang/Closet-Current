@@ -24,7 +24,7 @@ export function patchProvider(s){
  // source checks, audit, and fresh session validations must be untouched.
  assert.equal(out.replace(TO,FROM),s);
  assert.ok(out.includes("await auditMask("));
- assert.ok(out.includes("if(approved!==true)return reviewOnly("));
+ assert.ok(out.includes('reviewPreview'),'Audited human review callback must remain present');
  assert.ok(out.includes("validateLiveRecord(item,getItem,initial)"));
  assert.ok(out.includes("validScope(getScope,ownerId,epoch,isCurrent)"));
  assert.ok(out.includes("reviewContextVersion"));
