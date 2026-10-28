@@ -179,7 +179,9 @@ export function mountAnatomicalShowroom(canvas,{onChange=()=>{}}={}){
  const load=async kind=>{
   if(finish||!Object.hasOwn(ALLOWED,kind))throw Error('Unknown mannequin source');
   const token=++loading;
-  const url='./models/'+ALLOWED[kind].file;
+  // Resolve bundled CC0 assets relative to this module, not to the hosting
+  // research page (the 3D-07 photographed garment page lives elsewhere).
+  const url=new URL('./models/'+ALLOWED[kind].file,import.meta.url).href;
   let gltf;
   try{gltf=await loader.loadAsync(url);}catch(e){throw Error('Local CC0 body unavailable: '+String(e.message||e));}
   if(finish||token!==loading)return false;
