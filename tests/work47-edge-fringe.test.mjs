@@ -76,7 +76,7 @@ test('preview remains explicit, reversible, non-network, non-storage, unapproved
  assert.match(editor,/edgeToggle.onchange=/);
  assert.match(editor,/records.clear\(\);foreground\?\.remove\(\)/);
  assert.match(editor,/edgeToggle.onchange=null/);
- assert.match(build,/\['editor\.mjs','fit\.mjs','edge-fringe\.mjs','atomic-preview\.mjs'\]/);
+ assert.match(build,/\['editor\.mjs','fit\.mjs','edge-fringe\.mjs','atomic-preview\.mjs','cutout-integrity\.mjs'\]/);
  for(const s of [fit,edge,editor])assert.doesNotMatch(s,/fetch\(|localStorage|indexedDB|XMLHttpRequest|\.src\s*=/);
 });
 
