@@ -18,7 +18,7 @@ async function show(){
  if(!choice)throw Error('Unsupported research sample');
  $('review').checked=false;$('apply').disabled=true;
  $('review').disabled=!Object.hasOwn(SAMPLES,id);
- resetProjection();viewer.setScene(choice.type,$('figure').value);
+ resetProjection();viewer.setScene(choice.type,$('figure').value,choice.type==='shirt'?'long':'short');
  $('fabric-note').textContent='Fabric color not yet source-verified.';
  const row=locked.find(x=>x.id===id);
  if(!row?.verified||!row.attribution?.license)throw Error('Unlicensed source');
@@ -71,7 +71,7 @@ function bindControls(){
  $('sample').addEventListener('change',()=>{show().catch(e=>setStatus('Preview blocked: '+e.message));});
  $('figure').addEventListener('change',()=>{
   if(!viewer||closed)return;
-  viewer.setScene(opts[$('sample').value].type,$('figure').value);
+  viewer.setScene(opts[$('sample').value].type,$('figure').value,opts[$('sample').value].type==='shirt'?'long':'short');
   setStatus('3D figure proportions updated. Garment texture '+(accepted?'source-validated provisional':'OFF')+'. Family Alpha HOLD.');
  });
  $('front').onclick=()=>viewer?.setRotation(0);
@@ -86,6 +86,9 @@ async function run(){
   $('viewer').dataset.type=r.type;
   $('viewer').dataset.body=r.body;
   $('viewer').dataset.photoProjection=String(r.frontPhotoProjection);
+  $('viewer').dataset.sleeveLength=r.sleeveLength;
+  $('viewer').dataset.photoMeshes=String(r.photoMeshes);
+  $('viewer').dataset.solidGarmentMeshes=String(r.solidGarmentMeshes);
  }});
  const [rawManifest,rawLicense]=await Promise.all([
   fetch('../../benchmark/work47/manifest.json',{cache:'no-store'}),
