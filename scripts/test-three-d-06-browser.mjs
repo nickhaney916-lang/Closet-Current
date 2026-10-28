@@ -60,15 +60,17 @@ try{
    for(let y=Math.floor(ctx.height*.29);y<Math.floor(ctx.height*.51);y+=3)
     for(let x=Math.floor(ctx.width*.37);x<Math.floor(ctx.width*.63);x+=3){
      const i=(y*ctx.width+x)*4;
-     if(pixels[i]<110&&pixels[i+1]<135&&pixels[i+2]<135)darker++;
+     // Preserve a deliberate teal-cloth hue on the torso, distinct from
+     // warm porcelain skin and warm/neutral background under strong lights.
+     if(pixels[i+1]>=pixels[i]+9&&pixels[i+2]>=pixels[i]-3&&pixels[i]<225)darker++;
     }
    return darker;
   });
   await mkdir('benchmark/three-d-06',{recursive:true});
   await page.screenshot({path:'benchmark/three-d-06/coverage-diagnostic-'+width+'px-HOLD.png',
     fullPage:true});
-  console.log('MODESTY_LAYER_GPU_COUNT',JSON.stringify({width,darkSampleCount:modest}));
-  assert.ok(modest>30,'Neutral fitted base layer must cover torso/pelvis; nude research mesh cannot be family-facing');
+  console.log('MODESTY_LAYER_COLOR_COVERAGE',JSON.stringify({width,darkSampleCount:modest}));
+  assert.ok(modest>120,'Source-free teal modesty garment must visibly cover torso and pelvis, not nude anatomy');
   const front=await page.locator('#avatar').evaluate(c=>c.toDataURL());
   assert.ok(front.length>15000,'Actual detailed anatomical human mesh must be rendered');
   await page.getByRole('button',{name:'Side',exact:true}).click();
