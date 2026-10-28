@@ -76,7 +76,7 @@ test('preview remains explicit, reversible, non-network, non-storage, unapproved
  assert.match(editor,/edgeToggle.onchange=/);
  assert.match(editor,/records.clear\(\);foreground\?\.remove\(\)/);
  assert.match(editor,/edgeToggle.onchange=null/);
- assert.ok(build.includes("['editor.mjs','fit.mjs','edge-fringe.mjs','binary-edge.mjs','atomic-preview.mjs','cutout-integrity.mjs']"),'Source-pinned offline preview module allowlist changed');
+ assert.ok(build.includes("['editor.mjs','fit.mjs','portable-fit.mjs','edge-fringe.mjs','binary-edge.mjs','atomic-preview.mjs','cutout-integrity.mjs']"),'Source-pinned offline preview module allowlist changed');
  for(const s of [fit,edge,editor])assert.doesNotMatch(s,/fetch\(|localStorage|indexedDB|XMLHttpRequest|\.src\s*=/);
 });
 
