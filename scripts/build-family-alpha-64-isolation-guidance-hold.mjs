@@ -21,8 +21,8 @@ const once=(s,a,b)=>{
 export function patchProvider(s){
  s=once(s,"import {prepareAutomaticGarment as prepareSyntheticGarmentOriginal} from '../work50/isolate.mjs';",
  "import {prepareAutomaticGarment as prepareSyntheticGarmentOriginal} from '../work50/isolate.mjs';\nimport {summarizeIsolationReview} from '../work50/isolation-review-guidance.mjs';");
- return once(s,"   description:'Automatic isolation preview; not realistic fit',",
- "   description:'Automatic isolation preview; not realistic fit',\n   isolationReview:summarizeIsolationReview(raw),");
+ return once(s,"const approved=await reviewPreview(Object.freeze({",
+ "const approved=await reviewPreview(Object.freeze({\n   isolationReview:summarizeIsolationReview(raw),");
 }
 export function patchConfirmation(s){
  const source="export function confirmReviewedPhotoInContainer(container,detail,{";
