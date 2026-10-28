@@ -8,7 +8,7 @@ export const TYPES=Object.freeze(['shirt','pants','dress']);
 export const SLOTS=Object.freeze({shirt:'top',pants:'bottom',dress:'dress'});
 const ring=(y,rx,rz,x=0,z=0)=>({y,rx,rz,x,z});
 const material=(name,color,photographed=false)=>({name,color,photographed});
-function tube(name,rings,{segments=32,color=[.75,.76,.76],photographed=false,part='body'}={}){
+function tube(name,rings,{segments=32,color=[.75,.76,.76],photographed=false,part='body',photoRegion=[0,0,1,1]}={}){
  if(!Array.isArray(rings)||rings.length<2||rings.length>32||
   !Number.isSafeInteger(segments)||segments<8||segments>64||
   rings.some(r=>!Number.isFinite(r.y)||!Number.isFinite(r.rx)||!Number.isFinite(r.rz)||r.rx<=0||r.rz<=0))
@@ -33,7 +33,7 @@ function tube(name,rings,{segments=32,color=[.75,.76,.76],photographed=false,par
  }
  return {name,part,material:material(name,color,photographed),
   vertices:new Float32Array(vertices),indices:new Uint16Array(indices),stride:9,
-  bounds:{minY:yMin,maxY:yMax},surface:'true-3d-closed-circumference'};
+  photoRegion, bounds:{minY:yMin,maxY:yMax},surface:'true-3d-closed-circumference'};
 }
 function sphere(name,center,radius,color,lat=12,lon=24){
  const vertices=[],indices=[];
@@ -53,8 +53,8 @@ const MODEL=Object.freeze({
  adult:{shoulder:1,hip:1,height:1},
  youth:{shoulder:.91,hip:.92,height:.94}
 });
-export function buildAvatarScene({type='shirt',body='adult',photoEnabled=true}={}){
- if(!TYPES.includes(type)||!Object.hasOwn(MODEL,body)||typeof photoEnabled!=='boolean')
+export function buildAvatarScene({type='shirt',body='adult',photoEnabled=true,sleeveLength='short'}={}){
+ if(!TYPES.includes(type)||!Object.hasOwn(MODEL,body)||typeof photoEnabled!=='boolean'||!['short','long'].includes(sleeveLength))
   throw Error('Unsupported 3D garment or figure');
  const scale=MODEL[body],s=scale.shoulder;
  const skin=[.64,.67,.69],cloth=type==='shirt'?[.67,.22,.29]:type==='pants'?[.21,.34,.55]:[.39,.43,.62];
@@ -68,18 +68,28 @@ export function buildAvatarScene({type='shirt',body='adult',photoEnabled=true}={
   tube('body right arm',[ring(1.25,.09,.09,.62),ring(2.13,.11,.11,.38)],{color:skin})
  ];
  if(type==='shirt'){
-  parts.push(tube('shirt torso',[ring(1.33,.315*s,.205),ring(1.70,.345*s,.225),ring(2.02,.40*s,.24),ring(2.23,.34*s,.22)],{color:cloth,part:'garment',photographed:photoEnabled}));
-  for(const side of [-1,1])parts.push(tube('shirt sleeve '+side,
-   [ring(1.81,.145,.15,.55*s*side),ring(2.11,.16,.16,.39*s*side)],{color:cloth,part:'garment',photographed:photoEnabled}));
+  parts.push(tube('shirt torso',[
+   ring(1.33,.315*s,.205),ring(1.70,.345*s,.225),ring(2.02,.40*s,.24),
+   ring(2.15,.375*s,.227),ring(2.265,.13*s,.115)
+  ],{color:cloth,part:'garment',photographed:photoEnabled}));
+  for(const side of [-1,1]){
+   const sleeveRings=sleeveLength==='long'?
+    [ring(1.25,.112,.12,.63*s*side),ring(1.55,.132,.145,.605*s*side),
+     ring(1.85,.147,.153,.535*s*side),ring(2.12,.17,.17,.39*s*side)]:
+    [ring(1.81,.145,.15,.55*s*side),ring(2.11,.16,.16,.39*s*side)];
+   parts.push(tube('shirt sleeve '+side,sleeveRings,{
+    color:cloth,part:'garment',photographed:false
+   }));
+  }
  }else if(type==='pants'){
   parts.push(tube('pants hips',[ring(1.08,.29*s,.20),ring(1.36,.32*s,.23)],{color:cloth,part:'garment',photographed:photoEnabled}));
   for(const side of [-1,1])parts.push(tube('pants leg '+side,
    [ring(.14,.135,.14,.164*s*side),ring(.78,.155,.16,.164*s*side),ring(1.24,.168,.17,.164*s*side)],{color:cloth,part:'garment',photographed:photoEnabled}));
  }else{
-  parts.push(tube('dress bodice',[ring(1.30,.29*s,.21),ring(1.70,.34*s,.22),ring(2.06,.38*s,.23),ring(2.22,.31*s,.21)],{color:cloth,part:'garment',photographed:photoEnabled}));
-  parts.push(tube('dress skirt',[ring(.50,.57*s,.41),ring(.90,.46*s,.32),ring(1.38,.30*s,.23)],{color:cloth,part:'garment',photographed:photoEnabled}));
+  parts.push(tube('dress bodice',[ring(1.30,.29*s,.21),ring(1.70,.34*s,.22),ring(2.06,.38*s,.23),ring(2.17,.355*s,.22),ring(2.26,.135*s,.12)],{color:cloth,part:'garment',photographed:photoEnabled,photoRegion:[0,0,1,.49]}));
+  parts.push(tube('dress skirt',[ring(.50,.57*s,.41),ring(.90,.46*s,.32),ring(1.38,.30*s,.23)],{color:cloth,part:'garment',photographed:photoEnabled,photoRegion:[0,.39,1,.61]}));
   for(const side of [-1,1])parts.push(tube('dress sleeve '+side,
-   [ring(1.89,.13,.14,.51*s*side),ring(2.12,.16,.16,.37*s*side)],{color:cloth,part:'garment',photographed:photoEnabled}));
+   [ring(1.89,.13,.14,.51*s*side),ring(2.12,.16,.16,.37*s*side)],{color:cloth,part:'garment',photographed:false}));
  }
  const triangles=parts.reduce((n,p)=>n+p.indices.length/3,0);
  return Object.freeze({type,slot:SLOTS[type],body,parts,triangles,

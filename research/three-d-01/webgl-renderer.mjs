@@ -25,7 +25,7 @@ const FS=[
  ' if(uUsePhoto>.5&&vFront>.14){',
  '  vec2 uv=uCrop.xy+vUV*uCrop.zw;',
  '  vec4 sampled=texture(uPhoto,clamp(uv,vec2(.001),vec2(.999)));',
- '  cloth=mix(cloth,sampled.rgb,clamp(sampled.a*.9,0.,.9));',
+ '  cloth=mix(cloth,sampled.rgb,clamp(sampled.a*.9,0.,.9)*smoothstep(.30,.75,vFront));',
  ' }',
  ' outColor=vec4(pow(clamp(cloth*vLight,vec3(0.),vec3(1.)),vec3(.87)),1.);',
  '}'
@@ -47,7 +47,7 @@ export function mount3D(canvas,{onRender=()=>{}}={}){
  if(!gl)throw Error('WebGL2 unsupported; use the original-photo board');
  const prog=programFor(gl),u={},meshes=[],textures=[];
  for(const n of ['uYaw','uAspect','uColor','uPhoto','uUsePhoto','uCrop'])u[n]=gl.getUniformLocation(prog,n);
- let scene=null,type='shirt',body='adult',yaw=0,photo=null,crop=[.12,.08,.76,.84],projection=false,matchedColor=null,count=0,closed=false;
+ let scene=null,type='shirt',body='adult',sleeveLength='short',yaw=0,photo=null,crop=[.12,.08,.76,.84],projection=false,matchedColor=null,count=0,closed=false;
  const white=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,white);
  gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,1,1,0,gl.RGBA,gl.UNSIGNED_BYTE,new Uint8Array([255,255,255,255]));
  const free=()=>{for(const m of meshes){gl.deleteBuffer(m.vert);gl.deleteBuffer(m.index);gl.deleteVertexArray(m.vao);}meshes.length=0;};
@@ -60,7 +60,7 @@ export function mount3D(canvas,{onRender=()=>{}}={}){
    gl.enableVertexAttribArray(loc);gl.vertexAttribPointer(loc,size,gl.FLOAT,false,36,offset);
   }
   gl.bindVertexArray(null);
-  return {vert,index,vao,count:item.indices.length,material:item.material,name:item.name};
+  return {vert,index,vao,count:item.indices.length,material:item.material,name:item.name,part:item.part,photoRegion:item.photoRegion||[0,0,1,1]};
  };
  function draw(){
   if(closed)return false;
@@ -72,10 +72,15 @@ export function mount3D(canvas,{onRender=()=>{}}={}){
   gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LEQUAL);
   gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.useProgram(prog);
   gl.uniform1f(u.uYaw,yaw);gl.uniform1f(u.uAspect,w/h);
-  gl.uniform1i(u.uPhoto,0);gl.uniform4fv(u.uCrop,new Float32Array([crop[0],1-crop[1]-crop[3],crop[2],crop[3]]));
+  gl.uniform1i(u.uPhoto,0);
   gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,photo||white);
   for(const m of meshes){
-   gl.uniform3fv(u.uColor,new Float32Array(m.material.photographed&&matchedColor?matchedColor:m.material.color));
+   const region=m.photoRegion,height=crop[3]*region[3],baseBottom=1-crop[1]-crop[3];
+   gl.uniform4fv(u.uCrop,new Float32Array([
+    crop[0]+region[0]*crop[2],baseBottom+(1-region[1]-region[3])*crop[3],crop[2]*region[2],height
+   ]));
+   const sourceMatchedColor=m.material.photographed&&matchedColor||m.part==='garment'&&matchedColor;
+   gl.uniform3fv(u.uColor,new Float32Array(sourceMatchedColor?matchedColor:m.material.color));
    gl.uniform1f(u.uUsePhoto,m.material.photographed&&projection?1:0);
    gl.bindVertexArray(m.vao);gl.drawElements(gl.TRIANGLES,m.count,gl.UNSIGNED_SHORT,0);
   }
@@ -83,13 +88,15 @@ export function mount3D(canvas,{onRender=()=>{}}={}){
   const error=gl.getError();if(error!==gl.NO_ERROR)throw Error('WebGL error '+error);
   count++;canvas.dataset.renderCount=String(count);canvas.dataset.meshCount=String(meshes.length);
   canvas.dataset.yaw=String(yaw);
-  onRender({type,body,yaw,meshes:meshes.length,triangles:scene?.triangles||0,
+  onRender({type,body,sleeveLength,yaw,meshes:meshes.length,triangles:scene?.triangles||0,
+   photoMeshes:meshes.filter(m=>m.material.photographed).length,
+   solidGarmentMeshes:meshes.filter(m=>m.part==='garment'&&!m.material.photographed).length,
    frontPhotoProjection:projection,releaseAuthorized:false});
   return true;
  }
- function setScene(next,shape=body){
-  if(closed||!TYPES.includes(next)||!['adult','youth'].includes(shape))throw Error('Unsupported 3D figure');
-  free();type=next;body=shape;scene=buildAvatarScene({type,body});
+ function setScene(next,shape=body,sleeves='short'){
+  if(closed||!TYPES.includes(next)||!['adult','youth'].includes(shape)||!['short','long'].includes(sleeves))throw Error('Unsupported 3D figure');
+  free();type=next;body=shape;sleeveLength=sleeves;scene=buildAvatarScene({type,body,sleeveLength});
   for(const item of scene.parts)meshes.push(upload(item));
   return draw();
  }
@@ -131,5 +138,5 @@ export function mount3D(canvas,{onRender=()=>{}}={}){
   free();for(const t of textures)gl.deleteTexture(t);gl.deleteTexture(white);gl.deleteProgram(prog);photo=null;};
  setScene('shirt');
  return {setScene,setPhoto,draw,rotate,setRotation,dispose,
-  getState:()=>({type,body,yaw,meshes:meshes.length,projection,renderCount:count,closed})};
+  getState:()=>({type,body,sleeveLength,yaw,meshes:meshes.length,projection,renderCount:count,closed})};
 }
