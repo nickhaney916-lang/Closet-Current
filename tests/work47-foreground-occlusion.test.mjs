@@ -50,7 +50,7 @@ test('app fit creates at most one foreground, removes it on reset and owner/sess
 });
 test('new foreground module bundles only in offline candidate; prod remains untouched',async()=>{
  const build=await readFile('scripts/build-work47-fit-hold.mjs','utf8');
- assert.match(build,/\['editor\.mjs','fit\.mjs','edge-fringe\.mjs','atomic-preview\.mjs'\]/);
+ assert.match(build,/\['editor\.mjs','fit\.mjs','edge-fringe\.mjs','atomic-preview\.mjs','cutout-integrity\.mjs'\]/);
  assert.match(build,/const compiled=offline\.replace\(from,/);
  assert.match(build,/Unexpected inherited asset change/);
  assert.match(build,/deploymentAuthorized:false/);

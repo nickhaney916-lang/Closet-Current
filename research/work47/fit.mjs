@@ -1,4 +1,5 @@
 import {attenuateReviewedFringeAlpha} from './edge-fringe.mjs';
+import {inspectReviewedCutoutAlpha,requireIsolatedCutoutForPreview} from './cutout-integrity.mjs';
 /** Offline fitting of actual source pixels. No mask creation, owner approval,
  * storage, requests or fabric synthesis. Callers must verify their source. */
 export const BODY=Object.freeze({shoulders:[[115,145],[245,145]],waist:[[145,306],[215,306]]});
@@ -89,6 +90,7 @@ export function paintGarmentFit(canvas,image,profile,adjust={}){
  sample.width=Math.ceil(image.naturalWidth*ratio);sample.height=Math.ceil(image.naturalHeight*ratio);
  const probe=sample.getContext('2d',{willReadFrequently:true});probe.drawImage(image,0,0,sample.width,sample.height);
  const pixels=probe.getImageData(0,0,sample.width,sample.height).data;
+ const cutoutIntegrity=requireIsolatedCutoutForPreview(inspectReviewedCutoutAlpha(pixels,sample.width,sample.height));
  requireVisiblePanelCoverage(measureVisiblePanelCoverage(pixels,sample.width,sample.height,plan,image.naturalWidth,image.naturalHeight));
  let drawable=image;
  let fringe={changed:0,eligible:0,mode:'off',ownerApproved:false};
@@ -108,5 +110,5 @@ export function paintGarmentFit(canvas,image,profile,adjust={}){
  }
  canvas.width=720;canvas.height=1200;const ctx=canvas.getContext('2d');ctx.scale(2,2);ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
  for(const p of plan.pieces){ctx.save();ctx.transform(...p.matrix);ctx.beginPath();p.polygon.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));ctx.closePath();ctx.clip();ctx.drawImage(drawable,0,0);ctx.restore();}
- return {...plan,fringe};
+ return {...plan,fringe,cutoutIntegrity};
 }

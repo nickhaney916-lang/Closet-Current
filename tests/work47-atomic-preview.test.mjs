@@ -83,6 +83,6 @@ test('atomic fit is only offline, stateless and retains default-off fringe/owner
  assert.match(editor,/repaintReviewedPreviewAtomic\(record,\{doc,render:paintGarmentFit,isCurrent:/);
  assert.match(editor,/edgeCleanup:false/);
  assert.match(editor,/records\.clear\(\);foreground\?\.remove\(\)/);
- assert.match(build,/\['editor\.mjs','fit\.mjs','edge-fringe\.mjs','atomic-preview\.mjs'\]/);
+ assert.match(build,/\['editor\.mjs','fit\.mjs','edge-fringe\.mjs','atomic-preview\.mjs','cutout-integrity\.mjs'\]/);
  assert.match(build,/deploymentAuthorized:false/);
 });
