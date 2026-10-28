@@ -1,5 +1,6 @@
 import {inPiece,sourceAssignment} from '../work48/panel-geometry.mjs';
 import {attenuateReviewedFringeAlpha} from './edge-fringe.mjs';
+import {inspectReviewedCutoutAlpha,requireIsolatedCutoutForPreview} from './cutout-integrity.mjs';
 /** Offline fitting of actual source pixels. No mask creation, owner approval,
  * storage, requests or fabric synthesis. Callers must verify their source. */
 export const BODY=Object.freeze({shoulders:[[115,145],[245,145]],waist:[[142,286],[218,286]]});
@@ -96,6 +97,7 @@ export function paintGarmentFit(canvas,image,profile,adjust={}){
  sample.width=Math.ceil(image.naturalWidth*ratio);sample.height=Math.ceil(image.naturalHeight*ratio);
  const probe=sample.getContext('2d',{willReadFrequently:true});probe.drawImage(image,0,0,sample.width,sample.height);
  const pixels=probe.getImageData(0,0,sample.width,sample.height).data;
+ const cutoutIntegrity=requireIsolatedCutoutForPreview(inspectReviewedCutoutAlpha(pixels,sample.width,sample.height));
  const coverage=requireVisiblePanelCoverage(measureVisiblePanelCoverage(pixels,sample.width,sample.height,plan,image.naturalWidth,image.naturalHeight));
  const assignment=sourceAssignment(pixels,sample.width,sample.height,plan,image.naturalWidth,image.naturalHeight);
  if(plan.exclusivePanels&&(assignment.coveredRatio<.995||assignment.duplicateRatio>.003))throw Error('Sleeve outlines overlap or leave fabric unassigned; reset and recheck the source');
@@ -132,5 +134,5 @@ export function paintGarmentFit(canvas,image,profile,adjust={}){
  if(faceOverlap>4)throw Error('Garment overlaps the face; lower it or recheck the shoulder landmarks');
  canvas.width=720;canvas.height=1200;const ctx=canvas.getContext('2d');ctx.scale(2,2);ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
  for(const p of plan.pieces)paint(ctx,p);
- return {...plan,fringe,coverage,assignment,joins,faceOverlap};
+ return {...plan,fringe,coverage,assignment,joins,faceOverlap,cutoutIntegrity};
 }
