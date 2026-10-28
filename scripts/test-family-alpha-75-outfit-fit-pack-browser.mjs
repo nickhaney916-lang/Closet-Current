@@ -29,7 +29,7 @@ async function packBrowserSnippet(){
  assert.equal(await article.locator('canvas[data-work47="top"]').evaluate(c=>c.toDataURL()),beforePack,'Forged outfit pack did not alter preview');
 }
 let source=await readFile('scripts/test-work54-integration-browser.mjs','utf8');
-const anchor="     const widthControl=fitter.getByLabel('Garment width / length (proportional)',{exact:true});";
+const anchor="    const widthControl=fitter.getByLabel('Garment width / length (proportional)',{exact:true});";
 assert.equal(source.split(anchor).length,2,'Work54 protected browser anchor changed');
 const snippet=packBrowserSnippet.toString().replace(/^async function packBrowserSnippet\(\)\s*\{/,'').replace(/\}\s*$/,'');
 source=source.replace(anchor,snippet+'\n'+anchor);
