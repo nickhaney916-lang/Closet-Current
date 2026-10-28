@@ -8,6 +8,18 @@ export const CHECKS=Object.freeze([
  'sourcePixels','cutoutEdge','bodyAttachment','proportions'
 ]);
 export const DECISIONS=Object.freeze(['NOT_REVIEWED','PASS','REVIEW','FAIL']);
+export const REASONS=Object.freeze([
+ 'All four visual criteria manually checked',
+ 'Sleeves or underarm attachment still disconnected',
+ 'Shoulder seams or neck placement appear wrong',
+ 'Waist, hem or body proportions look unnatural',
+ 'Cutout fringe, hanger or background remains',
+ 'Original photo does not support a faithful front view',
+ 'Missing or occluded fabric cannot be reconstructed',
+ 'Single-view footwear is reference-only',
+ 'Print, fabric or fine details are visually distorted',
+ 'Original-photo fallback needed for this garment'
+]);
 const ROOT=['schema','decision','release','ownerApproved','productionModified',
  'stagingModified','source','rows'];
 const ROW=['id','decision','reason','checks'];
@@ -49,7 +61,7 @@ export function validateEvidence(manifest,evidence){
    if(row.reason!==''||CHECKS.some(k=>row.checks[k]))fail('Pending rows must not claim review evidence');
    continue;
   }
-  if(row.reason.trim().length<12||row.reason.trim()!==row.reason)
+  if(!REASONS.includes(row.reason))
    fail('Every completed visual judgment needs a specific 12–400 character explanation');
   if(row.decision==='PASS'){
    if(!original.profile||!original.hasCutout||CHECKS.some(k=>!row.checks[k]))
@@ -84,5 +96,6 @@ export function parseReviewImport(manifest,json){
  return e;
 }
 export function serializeReviewExport(manifest,evidence){
+ validateEvidence(manifest,evidence);
  return JSON.stringify({ ...evidence },null,2)+'\n';
 }
