@@ -2,7 +2,7 @@ import {inPiece,sourceAssignment} from '../work48/panel-geometry.mjs';
 import {attenuateReviewedFringeAlpha} from './edge-fringe.mjs';
 /** Offline fitting of actual source pixels. No mask creation, owner approval,
  * storage, requests or fabric synthesis. Callers must verify their source. */
-export const BODY=Object.freeze({shoulders:[[115,145],[245,145]],waist:[[145,306],[215,306]]});
+export const BODY=Object.freeze({shoulders:[[115,145],[245,145]],waist:[[142,286],[218,286]]});
 const point=p=>Array.isArray(p)&&p.length===2&&p.every(Number.isFinite);
 export function similarity(source,target){
  if(!Array.isArray(source)||!Array.isArray(target)||source.length!==2||target.length!==2||![...source,...target].every(point))throw Error('Two source and body anchors required');

@@ -9,11 +9,11 @@ async function show(id){const t=++ticket,row=manifest.rows.find(r=>r.id===id);do
  if(profiles[id]){const profile=profiles[id];record={source:image,profile,adjust:{dx:0,dy:0,scale:1,tilt:0,leftSleeve:0,rightSleeve:0,edgeCleanup:false}};
  before=renderFit($('#before'),image,row.profile,{},true);renderFit($('#beforeDetail'),image,row.profile,{},true);
  const detailOffset=()=>{for(const id of ['#beforeDetail','#afterDetail']){const host=$(id),frame=host.firstElementChild;if(frame)frame.style.top=-(profile.slot==='bottom'?240:110)/360*host.clientWidth+'px';}};
- const draw=()=>{after=renderFit($('#after'),image,profile,record.adjust);renderFit($('#afterDetail'),image,profile,record.adjust);detailOffset();};draw();
+ const draw=()=>{after=renderFit($('#after'),image,profile,record.adjust);renderFit($('#afterDetail'),image,profile,record.adjust);detailOffset();$('#status').textContent='REVIEW · Same source cutout. New rigid attachment geometry; inspect the close-ups.';};draw();
  controls=mountRigidFitControls($('#controls'),{getRecord:()=>record,redraw:draw,isActive:()=>t===ticket,onError:e=>$('#status').textContent=e.message});
  const edge=document.createElement('button');edge.textContent='Edge cleanup: off';edge.onclick=()=>{const old=record.adjust.edgeCleanup;record.adjust.edgeCleanup=!old;try{draw();edge.textContent=record.adjust.edgeCleanup?'Edge cleanup: on':'Edge cleanup: off';}catch(e){record.adjust.edgeCleanup=old;$('#status').textContent=e.message;}};
  const reset=document.createElement('button');reset.textContent='Reset fit';reset.onclick=()=>{record.adjust={dx:0,dy:0,scale:1,tilt:0,leftSleeve:0,rightSleeve:0,edgeCleanup:false};draw();controls.sync();edge.textContent='Edge cleanup: off';};$('#controls').append(edge,reset);$('#status').textContent='REVIEW · Same source cutout. New rigid attachment geometry; inspect the close-ups.';
  }else{for(const s of ['#before','#after'])$(s).textContent='Original-photo fallback. No reliable front-facing garment fit.';$('#status').textContent='FAIL for worn-avatar acceptance · fallback retained.';}
- await $('#original').decode();if(t!==ticket)return;window.work48={row,image,record,before,get after(){return after;},sourceAssignment};document.body.dataset.ready='true';document.body.dataset.id=id;
+ if(t!==ticket)return;try{await $('#original').decode();}catch(error){if(t!==ticket)return;throw error;}if(t!==ticket)return;window.work48={row,image,record,before,get after(){return after;},sourceAssignment};document.body.dataset.ready='true';document.body.dataset.id=id;
 }
 $('#sample').onchange=()=>show($('#sample').value);await show($('#sample').value);
