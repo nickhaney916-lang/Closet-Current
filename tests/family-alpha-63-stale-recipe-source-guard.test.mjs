@@ -18,7 +18,7 @@ function proposal(id=1){
   const on=x>=30&&x<98&&y>=35&&y<135,k=(y*width+x)*4,v=on?30:250;
   data.set([v,v,v,255],k);
  }
- const photo={width,height,data,sourceIdentity:'synthetic-only-'+id,sourceVersion:'v-'+id};
+ const photo={width,height,data,sourceIdentity:'synthetic-only-'+id,sourceVersion:'synthetic-source-version-'+id};
  const result=prepareAutomaticGarment(photo,{category:'Tops',sourceIdentity:photo.sourceIdentity,sourceVersion:photo.sourceVersion});
  assert.equal(result.status,'prepared');
  assert.equal(result.autoAccepted,false);
