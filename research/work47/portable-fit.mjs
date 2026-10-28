@@ -26,7 +26,9 @@ const normalizePoint=p=>{if(!Array.isArray(p)||p.length!==2||!p.every(unit))fail
 const normalizeTraces=t=>{
  if(!exact(t,[])&&!exact(t,['left'])&&!exact(t,['right'])&&!exact(t,['left','right']))fail();
  const result={};
- for(const side of ['left','right'])if(Object.hasOwn(t,side))result[side]=validateSleeveOutline(t[side]);
+ for(const side of ['left','right'])if(Object.hasOwn(t,side)){
+  try{result[side]=validateSleeveOutline(t[side]);}catch{fail();}
+ }
  return result;
 };
 function normalizeFit(record,slot,width,height){
