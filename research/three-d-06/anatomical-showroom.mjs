@@ -1,0 +1,145 @@
+/**
+ * Native Three.js + locally served GLTFLoader; no CDN, paid AI or user accounts.
+ * Load genuinely anatomical, CC0 163-joint human A-pose GLBs.
+ * NO garment rig transfer or true clothing fit is claimed here.
+ */
+import * as THREE from 'three';
+import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+const ALLOWED=Object.freeze({
+ male:{file:'male-cc0-rigged.glb',title:'Anatomical mannequin A'},
+ female:{file:'female-cc0-rigged.glb',title:'Anatomical mannequin B'}
+});
+const COLORS=Object.freeze({porcelain:0xc3bdb5,slate:0x777f84});
+export function mountAnatomicalShowroom(canvas,{onChange=()=>{}}={}){
+ if(!canvas||typeof canvas.getContext!=='function')throw Error('Canvas required');
+ const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false,
+  powerPreference:'high-performance',preserveDrawingBuffer:true});
+ renderer.setPixelRatio(Math.min(2,window.devicePixelRatio||1));
+ renderer.setClearColor(0xf4f3ef);
+ renderer.outputColorSpace=THREE.SRGBColorSpace;
+ renderer.toneMapping=THREE.ACESFilmicToneMapping;
+ renderer.toneMappingExposure=1.13;
+ const scene=new THREE.Scene();scene.background=new THREE.Color(0xf4f3ef);
+ const camera=new THREE.PerspectiveCamera(34,1,.03,100);
+ camera.position.set(0,1.11,4.65);
+ const controls=new OrbitControls(camera,canvas);
+ controls.enableDamping=true;controls.dampingFactor=.09;
+ controls.enablePan=false;controls.minDistance=2.2;controls.maxDistance=7.5;
+ controls.minPolarAngle=.35;controls.maxPolarAngle=Math.PI-.35;
+ controls.target.set(0,1.04,0);
+ controls.enableZoom=true;
+ scene.add(new THREE.HemisphereLight(0xffffff,0xa7b8bb,2.6));
+ const key=new THREE.DirectionalLight(0xfff3e5,3.8);
+ key.position.set(-2.4,5.2,4);scene.add(key);
+ const rim=new THREE.DirectionalLight(0xd8e7ff,2.5);
+ rim.position.set(3,2.6,-3);scene.add(rim);
+ const floor=new THREE.Mesh(new THREE.CircleGeometry(1.25,64),
+  new THREE.MeshBasicMaterial({color:0xd5d9d5}));
+ floor.rotation.x=-Math.PI/2;floor.position.y=-.012;scene.add(floor);
+ const shadow=new THREE.Mesh(new THREE.CircleGeometry(.62,64),
+  new THREE.MeshBasicMaterial({color:0x777e7d,transparent:true,opacity:.11,depthWrite:false}));
+ shadow.rotation.x=-Math.PI/2;shadow.position.y=-.010;shadow.scale.set(1.35,.55,1);
+ scene.add(shadow);
+ const group=new THREE.Group();scene.add(group);
+ let selected=null,current='female',finish=false,loading=0,
+  lastColor='porcelain',lastStats=null,spin=false,frame=0;
+ const loader=new GLTFLoader();
+ const resize=()=>{
+  const b=canvas.getBoundingClientRect();
+  const width=Math.max(240,Math.floor(b.width||500)),height=Math.max(320,Math.floor(b.height||670));
+  renderer.setSize(width,height,false);
+  camera.aspect=width/height;camera.updateProjectionMatrix();
+ };
+ const shade=skin=>{
+  if(!Object.hasOwn(COLORS,skin))throw Error('Unknown matte mannequin finish');
+  lastColor=skin;
+  if(selected)selected.traverse(obj=>{
+   if(obj.isMesh){
+    // A uniform opaque clay material avoids emitting personal likeness or
+    // inadvertently loading a source-specific photograph into an avatar.
+    if(obj.userData.ownedMaterial)obj.material.dispose();
+    obj.material=new THREE.MeshStandardMaterial({color:COLORS[skin],
+     metalness:0,roughness:.77,side:THREE.DoubleSide});
+    obj.userData.ownedMaterial=true;
+   }
+  });
+  draw();return lastColor;
+ };
+ function draw(){
+  if(finish)return;
+  resize();
+  controls.update();
+  renderer.render(scene,camera);frame++;
+  canvas.dataset.frames=String(frame);
+  canvas.dataset.rotation=String(camera.position.x.toFixed(3));
+ }
+ const inspect=root=>{
+  let meshCount=0,skinned=0,bones=0,triangles=0;
+  root.traverse(o=>{
+   if(o.isSkinnedMesh){skinned++;bones=Math.max(bones,o.skeleton?.bones?.length||0);}
+   if(o.isMesh){
+    meshCount++;
+    const g=o.geometry;
+    triangles+=g.index?Math.floor(g.index.count/3):Math.floor(g.attributes.position.count/3);
+   }
+  });
+  if(skinned<1||bones<25||triangles<10000)
+   throw Error('Downloaded GLB has no usable anatomical skinned human');
+  return {meshCount,skinned,bones,triangles};
+ };
+ const load=async kind=>{
+  if(finish||!Object.hasOwn(ALLOWED,kind))throw Error('Unknown mannequin source');
+  const token=++loading;
+  const url='./models/'+ALLOWED[kind].file;
+  let gltf;
+  try{gltf=await loader.loadAsync(url);}catch(e){throw Error('Local CC0 body unavailable: '+String(e.message||e));}
+  if(finish||token!==loading)return false;
+  const obj=gltf.scene,stats=inspect(obj);
+  // Normalize known original A-poses to a common world-space 2m stature;
+  // this is a display scale, not a user's measurements.
+  obj.updateMatrixWorld(true);
+  const bbox=new THREE.Box3().setFromObject(obj);
+  const size=bbox.getSize(new THREE.Vector3());
+  if(!Number.isFinite(size.y)||size.y<.5||size.y>3.5)throw Error('Unsafe body scale');
+  const center=bbox.getCenter(new THREE.Vector3());
+  const scale=2.0/size.y;obj.scale.multiplyScalar(scale);
+  obj.position.set(-center.x*scale,-bbox.min.y*scale,-center.z*scale);
+  if(selected){group.remove(selected);selected.traverse(o=>{
+   if(o.isMesh&&o.userData.ownedMaterial)o.material.dispose();
+  });}
+  selected=obj;group.add(selected);current=kind;lastStats=stats;
+  shade(lastColor);front();
+  canvas.dataset.model=kind;
+  canvas.dataset.bones=String(stats.bones);
+  canvas.dataset.skinnedMeshes=String(stats.skinned);
+  canvas.dataset.triangles=String(stats.triangles);
+  canvas.dataset.license='CC0-1.0';
+  onChange({kind,stats,localModel:true,releaseAuthorized:false});
+  return true;
+ };
+ const front=()=>{camera.position.set(0,1.1,4.65);controls.target.set(0,1.04,0);controls.update();draw();};
+ const side=()=>{camera.position.set(4.65,1.1,0);controls.target.set(0,1.04,0);controls.update();draw();};
+ const back=()=>{camera.position.set(0,1.1,-4.65);controls.target.set(0,1.04,0);controls.update();draw();};
+ const rotate=degrees=>{
+  if(!Number.isFinite(degrees))throw Error('Invalid camera angle');
+  const a=degrees*Math.PI/180,r=Math.hypot(camera.position.x,camera.position.z);
+  camera.position.set(Math.sin(a)*r,1.1,Math.cos(a)*r);controls.update();draw();
+ };
+ const frameLoop=()=>{
+  if(finish)return;
+  if(spin)group.rotation.y+=.005;
+  controls.update();renderer.render(scene,camera);
+  frame++;canvas.dataset.frames=String(frame);
+  window.requestAnimationFrame(frameLoop);
+ };
+ const start=()=>{resize();window.requestAnimationFrame(frameLoop);};
+ const stop=()=>{finish=true;loading++;controls.dispose();
+  if(selected)selected.traverse(o=>{if(o.isMesh&&o.userData.ownedMaterial)o.material.dispose();});
+  floor.geometry.dispose();floor.material.dispose();
+  shadow.geometry.dispose();shadow.material.dispose();renderer.dispose();};
+ return {load,shade,front,side,back,rotate,start,stop,
+  setSpin:v=>{spin=!!v;},
+  getState:()=>({kind:current,loaded:!!selected,finish,stats:lastStats,frames:frame,finishMaterial:lastColor})
+ };
+}
