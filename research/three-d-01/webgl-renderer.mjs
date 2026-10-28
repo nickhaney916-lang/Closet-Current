@@ -47,7 +47,7 @@ export function mount3D(canvas,{onRender=()=>{}}={}){
  if(!gl)throw Error('WebGL2 unsupported; use the original-photo board');
  const prog=programFor(gl),u={},meshes=[],textures=[];
  for(const n of ['uYaw','uAspect','uColor','uPhoto','uUsePhoto','uCrop'])u[n]=gl.getUniformLocation(prog,n);
- let scene=null,type='shirt',body='adult',yaw=0,photo=null,crop=[.12,.08,.76,.84],projection=false,count=0,closed=false;
+ let scene=null,type='shirt',body='adult',yaw=0,photo=null,crop=[.12,.08,.76,.84],projection=false,matchedColor=null,count=0,closed=false;
  const white=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,white);
  gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,1,1,0,gl.RGBA,gl.UNSIGNED_BYTE,new Uint8Array([255,255,255,255]));
  const free=()=>{for(const m of meshes){gl.deleteBuffer(m.vert);gl.deleteBuffer(m.index);gl.deleteVertexArray(m.vao);}meshes.length=0;};
@@ -72,10 +72,10 @@ export function mount3D(canvas,{onRender=()=>{}}={}){
   gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LEQUAL);
   gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.useProgram(prog);
   gl.uniform1f(u.uYaw,yaw);gl.uniform1f(u.uAspect,w/h);
-  gl.uniform1i(u.uPhoto,0);gl.uniform4fv(u.uCrop,new Float32Array(crop));
+  gl.uniform1i(u.uPhoto,0);gl.uniform4fv(u.uCrop,new Float32Array([crop[0],1-crop[1]-crop[3],crop[2],crop[3]]));
   gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,photo||white);
   for(const m of meshes){
-   gl.uniform3fv(u.uColor,new Float32Array(m.material.color));
+   gl.uniform3fv(u.uColor,new Float32Array(m.material.photographed&&matchedColor?matchedColor:m.material.color));
    gl.uniform1f(u.uUsePhoto,m.material.photographed&&projection?1:0);
    gl.bindVertexArray(m.vao);gl.drawElements(gl.TRIANGLES,m.count,gl.UNSIGNED_SHORT,0);
   }
@@ -93,7 +93,7 @@ export function mount3D(canvas,{onRender=()=>{}}={}){
   for(const item of scene.parts)meshes.push(upload(item));
   return draw();
  }
- function setPhoto(image,{cropRect=[.12,.08,.76,.84]}={}){
+ function setPhoto(image,{cropRect=[.12,.08,.76,.84],baseColor=null}={}){
   if(closed)throw Error('3D preview closed');
   if(!Array.isArray(cropRect)||cropRect.length!==4||
    cropRect.some(x=>typeof x!=='number'||!Number.isFinite(x)||x<0||x>1)||
@@ -101,7 +101,8 @@ export function mount3D(canvas,{onRender=()=>{}}={}){
    throw Error('Invalid front-photo crop');
   if(image&&!(image instanceof HTMLImageElement)&&!(image instanceof HTMLCanvasElement))
    throw Error('Photo must be locally decoded');
-  crop=[...cropRect];projection=!!image;
+  if(baseColor!==null&&(!Array.isArray(baseColor)||baseColor.length!==3||baseColor.some(c=>typeof c!=='number'||!Number.isFinite(c)||c<0||c>1)))throw Error('Invalid reviewed fabric color');
+  crop=[...cropRect];projection=!!image;matchedColor=image&&baseColor?[...baseColor]:null;
   if(photo){gl.deleteTexture(photo);textures.splice(textures.indexOf(photo),1);photo=null;}
   if(image){
    photo=gl.createTexture();textures.push(photo);gl.activeTexture(gl.TEXTURE0);
