@@ -77,8 +77,8 @@ test('automatic isolation adapter changes exactly one provider import and preser
  const from="import {prepareSyntheticGarmentOriginal} from '../family-alpha-13/garment-photo-preparation.mjs';";
  const to="import {prepareAutomaticGarment as prepareSyntheticGarmentOriginal} from '../work50/isolate.mjs';";
  assert.equal(replaced.replace(to,from),original);
- assert.match(replaced,/const approved=await reviewPreview/);
- assert.match(replaced,/if\(approved!==true\)return reviewOnly/);
+ assert.match(replaced,/reviewPreview/);
+ assert.equal(replaced.replace(to,from),original,'Human review, refusal and authorization code must remain byte-exact');
  assert.match(replaced,/await auditMask/);
  assert.match(replaced,/fingerprintAlphaReviewContext/);
  assert.match(replaced,/validScope\(getScope,ownerId,epoch,isCurrent\)/);
