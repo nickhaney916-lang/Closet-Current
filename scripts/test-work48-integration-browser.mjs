@@ -63,6 +63,52 @@ s=s.replace(hook,String.raw\x60
      const reachable=await control.evaluate(e=>{const r=e.getBoundingClientRect(),p=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2);return p===e||e.contains(p);});
      assert.equal(reachable,true,'New fitting control must remain reachable above navigation');
     }
+
+    // PR365: test a fully opaque, unisolated PNG in the actual browser
+    // painter. PNG MIME does not prove that a garment background was removed.
+    const unisolated=await page.evaluate(async()=>{
+      const {paintGarmentFit}=await import('/__alpha_research/work47/fit.mjs');
+      const raw=document.createElement('canvas');raw.width=100;raw.height=120;
+      raw.getContext('2d').fillStyle='#adbbca';
+      raw.getContext('2d').fillRect(0,0,raw.width,raw.height);
+      const photo=new Image();photo.src=raw.toDataURL('image/png');
+      await photo.decode();
+      const destination=document.createElement('canvas');
+      try{
+       paintGarmentFit(destination,photo,{slot:'top',anchors:[[.25,.10],[.75,.10]]});
+       return {blocked:false};
+      }catch(e){
+       return {blocked:true,reason:String(e.message||'').slice(0,130),destWidth:destination.width};
+      }
+    });
+    assert.ok(unisolated.blocked&&/Cutout is opaque or rectangular/.test(unisolated.reason),
+      'An unisolated fully opaque PNG must be rejected in the protected app');
+    // PR364: inject a real browser drawImage exception AFTER partially drawing
+    // to the staged canvas; the last accepted Work48 geometry stays intact.
+    const savedCanvas=article.locator('canvas[data-work47="top"]');
+    const beforeFailure=await savedCanvas.evaluate(c=>{c.dataset.alpha58Original='yes';return c.toDataURL();});
+    await page.evaluate(()=>{
+      const native=CanvasRenderingContext2D.prototype.drawImage;
+      window.__alpha58Restore=()=>{CanvasRenderingContext2D.prototype.drawImage=native;delete window.__alpha58Restore;};
+      let injected=false;
+      CanvasRenderingContext2D.prototype.drawImage=function(...args){
+        const ret=native.apply(this,args);
+        if(!injected&&this.canvas.dataset.work47==='top'){
+          injected=true;throw Error('SYNTHETIC_PARTIALLY_DRAWN_GARMENT');
+        }
+        return ret;
+      };
+    });
+    try{
+      await fitter.getByRole('button',{name:'↓ Down',exact:true}).click();
+      assert.match(await fitter.getByRole('status').textContent(),/Preview unchanged/);
+      assert.equal(await article.locator('canvas[data-work47="top"]').evaluate(c=>c.toDataURL()),beforeFailure,
+        'A staged failure must not replace visible Work48 garment pixels');
+      assert.equal(await article.locator('canvas[data-work47="top"]').getAttribute('data-alpha58-original'),'yes',
+        'A staged failure must preserve the previously connected canvas ELEMENT');
+      assert.equal(await article.locator('svg[data-humanoid-overlay]').count(),1,
+        'Existing foreground anatomy cannot vanish after failed sleeve redraw');
+    }finally{await page.evaluate(()=>window.__alpha58Restore?.());}
     const source=await article.locator('img[data-slot="top"]').getAttribute('src');
     assert.equal(await article.locator('img[data-slot="top"]').evaluate(x=>x.hidden),true);
     await fitter.getByRole('button',{name:'↓ Down',exact:true}).click();
