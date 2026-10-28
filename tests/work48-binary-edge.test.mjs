@@ -81,3 +81,23 @@ test('enclosed transparent print holes and interior fabric are never treated as 
  assert.equal(a(145,160,after),0,'Original printed transparent hole remains empty');
  assert.equal(a(25,160,original),255,'The source garment never changes');
 });
+
+
+test('transparent print channel linked to exterior still cannot erode interior artwork',()=>{
+ const w=320,h=320;
+ const original=make(w,h,(x,y)=>{
+  const garment=x>=25&&x<295&&y>=25&&y<295;
+  const hole=x>=145&&x<175&&y>=145&&y<175;
+  const channel=x===145&&y>=25&&y<=145;
+  return garment&&!hole&&!channel?255:0;
+ });
+ const result=new Uint8ClampedArray(original);
+ const change=softenReviewedBinarySilhouette(result,w,h);
+ const a=(x,y,v)=>v[4*(y*w+x)+3];
+ assert.ok(change.changed>0,'Outer boundary preview should visibly soften');
+ assert.equal(a(144,160,result),255,'Artwork next to connected interior hole remains exact');
+ assert.equal(a(146,140,result),255,'Fabric bordering narrow transparent channel remains exact');
+ assert.equal(a(25,160,result),153,'Actual outer edge softens');
+ assert.equal(a(145,160,result),0,'No synthetic fabric in hole');
+ assert.equal(a(144,160,original),255,'Original cutout data unmodified');
+});
