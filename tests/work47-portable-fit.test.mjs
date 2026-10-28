@@ -35,7 +35,7 @@ test('changing single source PNG byte, image dimensions or slot strictly rejects
 });
 test('no forged approval, source hash, owner, release, accounts, URLs, code fields or edit extras',async()=>{
  const s=source(),recipe=await createPortableFitRecipe(s,review());
- for(const change of [
+ for(const [index,change] of [
   x=>x.ownerApproved=true,x=>x.requiresReview=false,x=>x.decision='PASS',
   x=>x.release='READY',x=>x.email='someone@example.com',x=>x.owner_id='test',
   x=>x.accessToken='secret',x=>x.format='something-else',
@@ -44,7 +44,7 @@ test('no forged approval, source hash, owner, release, accounts, URLs, code fiel
   x=>x.adjust.dx=Infinity,x=>x.adjust.leftSleeve=90,
   x=>{x.adjust.edgeCleanup=true;x.adjust.binaryEdgeReview=true;},
   x=>x.profile.anchors[0][0]=-1,x=>x.traces.left='hacked'
- ])await assert.rejects(restorePortableFitRecipe(s,changed(recipe,change)),/invalid or belongs|different reviewed/);
+ ].entries())await assert.rejects(restorePortableFitRecipe(s,changed(recipe,change)),/invalid or belongs|different reviewed/,'forged fit variant '+index);
  await assert.rejects(restorePortableFitRecipe(s,'not json'));
  await assert.rejects(restorePortableFitRecipe(s,'{}'.repeat(5500)));
 });
