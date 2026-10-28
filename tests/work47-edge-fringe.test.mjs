@@ -71,12 +71,12 @@ test('preview remains explicit, reversible, non-network, non-storage, unapproved
  ]);
  assert.match(fit,/if\(adjust.edgeCleanup===true\)/);
  assert.match(fit,/ctx.drawImage\(drawable,0,0\)/);
- assert.match(fit,/return \{\.\.\.plan,fringe,coverage,assignment,joins,faceOverlap,cutoutIntegrity\}/);
+ assert.match(fit,/return \{\.\.\.plan,fringe,binaryEdge,coverage,assignment,joins,faceOverlap,cutoutIntegrity\}/);
  assert.match(editor,/edgeToggle.type='checkbox';edgeToggle.disabled=true/);
  assert.match(editor,/edgeToggle.onchange=/);
  assert.match(editor,/records.clear\(\);foreground\?\.remove\(\)/);
  assert.match(editor,/edgeToggle.onchange=null/);
- assert.match(build,/\['editor\.mjs','fit\.mjs','edge-fringe\.mjs','atomic-preview\.mjs','cutout-integrity\.mjs'\]/);
+ assert.match(build,/\['editor\.mjs','fit\.mjs','edge-fringe\.mjs','binary-edge\\.mjs','atomic-preview\.mjs','cutout-integrity\.mjs'\]/);
  for(const s of [fit,edge,editor])assert.doesNotMatch(s,/fetch\(|localStorage|indexedDB|XMLHttpRequest|\.src\s*=/);
 });
 
