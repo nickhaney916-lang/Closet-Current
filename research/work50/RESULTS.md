@@ -35,6 +35,6 @@ REVIEW means a provisional fitting example still needs deliberate visual correct
 
 ## Verification boundaries
 
-Protected app tests use offline mocked Auth/cloud/classification and synthetic records with licensed images. They can verify save/reopen, manual corrections, recommendations, swaps, favorites, original JPEG binding, account/session invalidation and storage-fault behavior; they cannot establish live Supabase RLS, physical Android/iPhone results or real cloud restore. Those remain untested. No settings, accounts, production, staging, paid services or Drive Duel changed. Family Alpha HOLD.
+Protected app tests use offline mocked Auth/cloud/classification and synthetic records with licensed images. They can verify save/reopen, manual corrections, recommendations, swaps, favorites, original JPEG binding, account/session invalidation and storage-fault behavior; they cannot establish live Supabase RLS, physical Android/iPhone results or real cloud restore. Those remain untested. An intermediate native-first adapter caused a protected sleeve-continuity regression: changed crop bounds invalidated calibrated landmarks. It was replaced with conservative cleanup inside the existing exact crop frame; native proposals are used only when previous extraction is unavailable. The guard was preserved. No settings, accounts, production, staging, paid services or Drive Duel changed. Family Alpha HOLD.
 
 Reproduction, exact source and browser evidence: PR373, issue255 and `.github/workflows/work47-fit-no-deploy.yml`.

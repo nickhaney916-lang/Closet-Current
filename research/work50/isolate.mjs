@@ -53,10 +53,21 @@ export function prepareAutomaticGarment(frame,options={}){
  const {width:w,height:h,data}=frame||{};
  const legacy=prepareSyntheticGarmentOriginal(frame,options);
  if(legacy.reason==='missing-source-identity'||legacy.reason==='invalid-segmentation-mask')return legacy;
- // Prefer source-native connectivity over the earlier global threshold, which
- // can silently discard pale straps attached to darker cloth.
- const r=isolateGarment({width:w,height:h,rgba:data},{category:options.category});
- if(!r.applied&&legacy.status==='prepared')return {...legacy,requiresHumanReview:true,qualityDecision:'REVIEW',autoAccepted:false,confidence:{...r,rgba:undefined}};
+ // Existing fitted records use the previous crop coordinate frame. Refine its
+ // alpha conservatively; never replace that silhouette with a differently
+ // cropped source-native proposal and silently move shoulder landmarks.
+ let initialAlpha=null;
+ if(legacy.status==='prepared'){
+  initialAlpha=new Uint8Array(w*h);
+  for(let y=0;y<legacy.height;y++)for(let x=0;x<legacy.width;x++)initialAlpha[(y+legacy.bounds.top)*w+x+legacy.bounds.left]=legacy.rgba[(y*legacy.width+x)*4+3];
+ }
+ const r=isolateGarment({width:w,height:h,rgba:data},{category:options.category,initialAlpha});
+ if(legacy.status==='prepared'){
+  if(!r.applied)return {...legacy,requiresHumanReview:true,qualityDecision:'REVIEW',autoAccepted:false,confidence:{...r,rgba:undefined}};
+  const rgba=new Uint8ClampedArray(legacy.rgba);let foregroundPixels=0;
+  for(let y=0;y<legacy.height;y++)for(let x=0;x<legacy.width;x++){const p=(y*legacy.width+x)*4;rgba[p+3]=r.rgba[((y+legacy.bounds.top)*w+x+legacy.bounds.left)*4+3];if(rgba[p+3]>=128)foregroundPixels++;}
+  return {...legacy,rgba,foregroundPixels,requiresHumanReview:true,qualityDecision:'REVIEW',autoAccepted:false,confidence:{...r,rgba:undefined}};
+ }
  if(!r.applied)return {status:'review',reason:r.reasons.at(-1),confidence:r};
  let left=w,top=h,right=0,bottom=0,count=0;for(let y=0;y<h;y++)for(let x=0;x<w;x++)if(r.rgba[(y*w+x)*4+3]>=128){left=Math.min(left,x);top=Math.min(top,y);right=Math.max(right,x+1);bottom=Math.max(bottom,y+1);count++;}
  const pad=Math.max(2,Math.ceil(Math.max(right-left,bottom-top)*.045));left=Math.max(0,left-pad);top=Math.max(0,top-pad);right=Math.min(w,right+pad);bottom=Math.min(h,bottom+pad);const width=right-left,height=bottom-top,rgba=new Uint8ClampedArray(width*height*4);for(let y=0;y<height;y++)rgba.set(r.rgba.subarray(((y+top)*w+left)*4,((y+top)*w+right)*4),y*width*4);
