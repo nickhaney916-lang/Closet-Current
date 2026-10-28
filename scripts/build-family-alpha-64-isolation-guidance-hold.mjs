@@ -68,7 +68,7 @@ export async function verify(){
   else assert.deepEqual(actual,original,'Unexpected private source, garment, cloud, Auth or mask mutation: '+path);
  }
  assert.deepEqual(await readFile(join(OUTPUT,GUIDE)),await readFile('research/work50/isolation-review-guidance.mjs'));
- const m=JSON.parse(await readFile(join(OUTPUT,'family-alpha-64-HOLD.json','utf8')));
+ const m=JSON.parse(await readFile(join(OUTPUT,'family-alpha-64-HOLD.json'),'utf8'));
  assert.equal(m.parentCommit,PARENT_SHA);
  assert.equal(m.release,'HOLD');
  assert.equal(m.automaticApproved,false);
