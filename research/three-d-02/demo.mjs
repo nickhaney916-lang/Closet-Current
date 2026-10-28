@@ -10,7 +10,7 @@ const opts={
  'commons-0021':{type:'pants',category:'Bottoms'}
 };
 const resetProjection=()=>{
- accepted=false;$('viewer').dataset.cutoutReady='false';
+ accepted=false;$('viewer').dataset.cutoutReady='false';$('viewer').dataset.fabricRgb='';
  if(viewer)viewer.setPhoto(null);
 };
 async function show(){
@@ -19,6 +19,7 @@ async function show(){
  $('review').checked=false;$('apply').disabled=true;
  $('review').disabled=!Object.hasOwn(SAMPLES,id);
  resetProjection();viewer.setScene(choice.type,$('figure').value);
+ $('fabric-note').textContent='Fabric color not yet source-verified.';
  const row=locked.find(x=>x.id===id);
  if(!row?.verified||!row.attribution?.license)throw Error('Unlicensed source');
  const link=document.createElement('a');link.textContent='Original author, license and source';
@@ -54,8 +55,10 @@ function bindControls(){
   try{
    const loaded=await loadLicensedCutout(id,{manifest,reviewConfirmed:true});
    if(closed||turn!==epoch||$('sample').value!==id||!$('review').checked)return;
-   viewer.setPhoto(loaded.cutout,{cropRect:loaded.cropRect});
+   viewer.setPhoto(loaded.cutout,{cropRect:loaded.cropRect,baseColor:loaded.baseColor});
    accepted=true;$('viewer').dataset.cutoutReady='true';
+   $('viewer').dataset.fabricRgb=loaded.representativeSourceRGB.join(',');
+   $('fabric-note').textContent='Source garment median RGB: '+loaded.representativeSourceRGB.join(', ')+'. Same source pixels tint inferred sleeves, edges and rear (not reconstructed fabric).';
    setStatus('3D '+loaded.type+' using validated provisional SOURCE-RGB CUTOUT. Alpha border gated. Shape and rear inferred. NOT visually approved. Family Alpha HOLD.');
   }catch(error){
    if(!closed&&turn===epoch){

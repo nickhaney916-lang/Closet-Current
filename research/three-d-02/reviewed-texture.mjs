@@ -4,6 +4,7 @@
  * No source editing, cloud, accounts, persistence or browser identity.
  */
 import {adaptGarmentFor3D} from '../three-d-01/garment-adapter.mjs';
+import {representativeFabricColor} from '../three-d-03/fabric-color.mjs';
 const allowed=Object.freeze({
  'commons-0003':Object.freeze({type:'shirt',category:'Tops',slot:'top'}),
  'commons-0053':Object.freeze({type:'dress',category:'Dresses',slot:'dress'})
@@ -85,10 +86,12 @@ export async function loadLicensedCutout(id,{manifest,reviewConfirmed=false,fetc
  });
  if(decision.status!=='preview')throw Error('Cutout integrity failed: '+decision.reason);
  const crop=cropFromAlpha(sample);
+ const fabric=representativeFabricColor({data:sample.data,width:sample.width,height:sample.height});
  return Object.freeze({
   id,type:p.type,original,cutout,sourceSHA256:row.sourceSHA256,
   alphaStatus:decision.alphaStatus,visiblePixels:crop.visiblePixels,
-  cropRect:crop.cropRect,ownerApproved:false,releaseAuthorized:false,
+  cropRect:crop.cropRect,baseColor:fabric.baseColor,representativeSourceRGB:fabric.rgb,
+  ownerApproved:false,releaseAuthorized:false,
   realFabricTexture:true,backMaterial:'unverified-neutral',
   humanVisualApproval:false
  });
