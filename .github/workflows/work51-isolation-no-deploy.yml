@@ -1,0 +1,74 @@
+name: Work51 source support cleanup HOLD (NO DEPLOY)
+on:
+  pull_request:
+    paths: ['research/work51/**', 'scripts/*work51*', 'tests/work51*', '.github/workflows/work51-isolation-no-deploy.yml', 'research/work50/**', 'scripts/*work50*', 'tests/work50*', 'scripts/*family-alpha-63*', 'tests/family-alpha-63*', '.github/workflows/family-alpha-63-auto-portable-no-deploy.yml']
+permissions:
+  contents: read
+jobs:
+  visual:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 fake-indexeddb@6.2.4
+      - name: Fetch exact inherited source pins
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git fetch --no-tags origin 0fb6ab04ab79c36d449acee21aaaf4318871d647 879f1b92fb15f9bc9a7f0429c7ee178f7bbf1373 795ad6637f8d4f782bc99751211b25e8e72a3a7d 08ed6ac4a3fc921eae5d5d3df3bd3966429559d2 1ecac1079e75f1f25dc70a4c712b2448eb87dca8 d0ff131a4e5617e1a3f4fcfb40d00602fdce9833 68bed0c0f0f25538d0d5a00fbaf9aa34d80b8663 97397e80a7cf66e5e656c5b74c924a51e50f0f6f 44f288dfdcfa02ec5b2cf89a7c79c08cfcaa3584 e75cd4689356ae468a88504ddb25df4b4ff6cb70 c86f48f0119329e4001002304e2dfe480815b099 100ffc194793470c871f2b0c6092bc59f1c583b8 77d9f5b83eae475cd8d5d35593c1dc9c2e6bf02f
+      - name: Verify exact Work50 automatic-isolation and gallery code was copied byte-for-byte
+        run: |
+          git fetch --no-tags origin 3c4034ca3b173f8886b374dd968594f8345edb84
+          for file in research/work50/isolate.mjs research/work50/README.md research/work50/demo.mjs research/work50/index.html tests/work50-isolation.test.mjs tests/work50-benchmark.test.mjs scripts/build-work50-benchmark.mjs scripts/test-work50-browser.mjs; do
+            git show 3c4034ca3b173f8886b374dd968594f8345edb84:"$file" | cmp - "$file"
+          done
+      - name: Verify imported Work46 session safety files match exact successful PR355 head
+        run: |
+          git fetch --no-tags origin 8df9eebd12303c0e5ffae60ed27a5e0a14b8c5ec
+          for file in scripts/build-work46-session-hold.mjs scripts/test-work46-navigation.mjs tests/work46-session-races.test.mjs; do
+            git show 8df9eebd12303c0e5ffae60ed27a5e0a14b8c5ec:"$file" | cmp - "$file"
+          done
+      - name: Build protected offline app and real licensed benchmark
+        run: |
+          npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 playwright@1.56.1 fake-indexeddb@6.2.4
+          git fetch origin research/work38-manual-outline
+          node scripts/build-work47-parent.mjs
+          node scripts/build-work47-benchmark.mjs
+          node scripts/build-work49-cutout-hold.mjs
+          node scripts/build-work49-benchmark.mjs
+          node scripts/build-family-alpha-63-automatic-portable-hold.mjs
+          node scripts/build-work50-benchmark.mjs
+          node scripts/build-work51-isolation-hold.mjs
+          node scripts/build-work51-benchmark.mjs
+      - name: Source, geometry and privacy regression tests
+        run: |
+          node --test tests/work47*.test.mjs tests/work48*.test.mjs tests/work49*.test.mjs tests/work50*.test.mjs tests/work51*.test.mjs tests/family-alpha-63*.test.mjs tests/work43/*.test.mjs tests/work46-session-races.test.mjs
+          node scripts/check-family-alpha-49-combined-visual-security-hold.mjs
+      - name: Full protected app with manual landmark editor
+        run: node scripts/test-work51-integration-browser.mjs
+      - name: Inherited licensed three-outfit and mobile navigation regression
+        run: node scripts/test-family-alpha-51-mobile-nav-browser.mjs
+      - name: Human-initiated visual review, evidence export and privacy safety (Chromium + WebKit)
+        run: node scripts/test-work48-visual-review-browser.mjs
+      - name: All fifteen photographs in both engines at all three widths
+        run: |
+          node scripts/test-work49-editor-browser.mjs
+          node scripts/test-work49-browser.mjs
+          node scripts/test-work51-editor-browser.mjs
+          node scripts/test-work51-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: work51-support-cleanup-HOLD
+          path: |
+            benchmark/work47/
+            benchmark/work48/
+            benchmark/work49/
+            benchmark/work50/
+            benchmark/work51/
+            benchmark/family-alpha-51-navigation/
