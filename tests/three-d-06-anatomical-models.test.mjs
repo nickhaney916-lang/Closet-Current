@@ -41,7 +41,9 @@ test('This model branch cannot write private original clothing or retrieve custo
  }
  const loader=await readFile('research/three-d-06/anatomical-showroom.mjs','utf8');
  assert.match(loader,/GLTFLoader/);assert.match(loader,/isSkinnedMesh/);
- assert.match(loader,/new THREE\.WebGLRenderer/);assert.match(loader,/localModel:true,releaseAuthorized:false/);
+ assert.match(loader,/new THREE\.WebGLRenderer/);
+ assert.match(loader,/baseCoverage/);
+ assert.match(loader,/neutralCloth/);assert.match(loader,/localModel:true,releaseAuthorized:false/);
  const html=await readFile('research/three-d-06/index.html','utf8');
  assert.match(html,/node_modules\/three\/build\/three\.module\.js/);
  assert.match(html,/RESEARCH ONLY/);

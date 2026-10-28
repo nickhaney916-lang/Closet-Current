@@ -12,6 +12,9 @@ This isolated experiment evaluates two separate adult **163-bone real anatomical
 
 The site's descriptions as of October 28, 2026 call both CC0, commercially reusable, rigged, textured GLB; model publisher retains rights responsibility and any use must respect source license and supplier reliability. **Do not confuse these CC0 base assets with MakeHuman/MPFB GPL/AGPL application source**; neither tool's program code is copied into Closet Current. This prototype retains links to sources. Verify licensing again before production.
 
+
+**Modesty-by-default:** The unmodified published CC0 base meshes are unclothed anatomy. Our showroom material includes a source-free neutral fitted upper-body-and-shorts **shader layer** over the actual anatomical mesh for privacy and family suitability. This is not a photographed garment, fitted apparel or a claim of physical fabric simulation. It does not modify the acquired GLB assets. CI validates dark torso coverage in actual GPU pixels in the neutral warm-clay finish. Screenshot artifacts include separate male and female views.
+
 ## Real working visual showroom
 
 `research/three-d-06/index.html` is a source-only local research page powered by installed **Three.js GLTFLoader** and actual downloaded **skinned human geometry**, not an image or CSS rotation. The page supports:

@@ -52,6 +52,19 @@ try{
    triangles:Number(el.dataset.triangles),frames:Number(el.dataset.frames),
    skinned:Number(el.dataset.skinnedMeshes)}));
   assert.ok(stats.bones>=25&&stats.skinned>=1&&stats.triangles>10000,JSON.stringify(stats));
+  const modest=await page.locator('#avatar').evaluate(c=>{
+   const ctx=document.createElement('canvas');ctx.width=c.width;ctx.height=c.height;
+   const p=ctx.getContext('2d');p.drawImage(c,0,0);
+   const pixels=p.getImageData(0,0,ctx.width,ctx.height).data;
+   let darker=0;
+   for(let y=Math.floor(ctx.height*.29);y<Math.floor(ctx.height*.51);y+=3)
+    for(let x=Math.floor(ctx.width*.37);x<Math.floor(ctx.width*.63);x+=3){
+     const i=(y*ctx.width+x)*4;
+     if(pixels[i]<110&&pixels[i+1]<135&&pixels[i+2]<135)darker++;
+    }
+   return darker;
+  });
+  assert.ok(modest>30,'Neutral fitted base layer must cover torso/pelvis; nude research mesh cannot be family-facing');
   const front=await page.locator('#avatar').evaluate(c=>c.toDataURL());
   assert.ok(front.length>15000,'Actual detailed anatomical human mesh must be rendered');
   await page.getByRole('button',{name:'Side',exact:true}).click();
@@ -72,6 +85,9 @@ try{
   const sm=await page.locator('#avatar').evaluate(c=>({
    bones:Number(c.dataset.bones),frames:Number(c.dataset.frames)}));
   assert.ok(sm.bones>=25&&sm.frames>stats.frames);
+  await page.getByRole('button',{name:'Front',exact:true}).click();
+  await mkdir('benchmark/three-d-06',{recursive:true});
+  await page.screenshot({path:'benchmark/three-d-06/cc0-anatomical-MALE-'+width+'px-HOLD.png',fullPage:true});
   await page.getByRole('button',{name:'Rotate +35°'}).click();
   assert.ok(Number(await page.locator('#avatar').getAttribute('data-frames'))>sm.frames);
   await page.getByRole('button',{name:'Auto-rotate: Off'}).click();
@@ -83,7 +99,7 @@ try{
   await page.locator('#finish').selectOption('porcelain');
   await page.getByRole('button',{name:'Front',exact:true}).click();
   await mkdir('benchmark/three-d-06',{recursive:true});
-  await page.screenshot({path:'benchmark/three-d-06/cc0-anatomical-human-'+width+'px-HOLD.png',
+  await page.screenshot({path:'benchmark/three-d-06/cc0-anatomical-FEMALE-'+width+'px-HOLD.png',
    fullPage:true});
   assert.deepEqual(errors,[]);
   // A completed, inspected local GLB may trigger Chromium's harmless

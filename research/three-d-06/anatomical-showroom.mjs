@@ -59,8 +59,34 @@ export function mountAnatomicalShowroom(canvas,{onChange=()=>{}}={}){
     // A uniform opaque clay material avoids emitting personal likeness or
     // inadvertently loading a source-specific photograph into an avatar.
     if(obj.userData.ownedMaterial)obj.material.dispose();
-    obj.material=new THREE.MeshStandardMaterial({color:COLORS[skin],
+    const material=new THREE.MeshStandardMaterial({color:COLORS[skin],
      metalness:0,roughness:.77,side:THREE.DoubleSide});
+    // Source body meshes are unclothed anatomical references. In this
+    // family-facing fashion research preview, apply a simple neutral matte
+    // athletic base layer directly in the shader, following the REAL
+    // anatomical mesh surface without extra cylindrical garment geometry.
+    // This is only a mannequin privacy/modesty layer, NOT clothing fitting.
+    material.onBeforeCompile=shader=>{
+     shader.vertexShader=shader.vertexShader.replace('void main() {',
+      'varying vec3 vStudioBody;\nvoid main() {');
+     shader.vertexShader=shader.vertexShader.replace('#include <worldpos_vertex>',
+      '#include <worldpos_vertex>\nvStudioBody=(modelMatrix*vec4(transformed,1.0)).xyz;');
+     shader.fragmentShader=shader.fragmentShader.replace('void main() {',
+      'varying vec3 vStudioBody;\nvoid main() {');
+     shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>',
+      `#include <color_fragment>
+       float torso= smoothstep(1.10,1.14,vStudioBody.y)*
+        (1.0-smoothstep(1.52,1.57,vStudioBody.y))*
+        (1.0-smoothstep(.28,.37,abs(vStudioBody.x)));
+       float shorts= smoothstep(.74,.78,vStudioBody.y)*
+        (1.0-smoothstep(1.10,1.14,vStudioBody.y))*
+        (1.0-smoothstep(.29,.38,abs(vStudioBody.x)));
+       float baseCoverage=clamp(torso+shorts,0.0,1.0);
+       vec3 neutralCloth=vec3(.19,.26,.24);
+       diffuseColor.rgb=mix(diffuseColor.rgb,neutralCloth,baseCoverage);
+      `);
+    };
+    obj.material=material;
     obj.userData.ownedMaterial=true;
    }
   });
