@@ -1,0 +1,453 @@
+{
+  "format": "closet-current-alpha70-qa-plan-v1",
+  "target": "CLOSET_CURRENT_STAGING_ONLY",
+  "productionAccess": false,
+  "deployAuthorized": false,
+  "subjects": [
+    "adult-a",
+    "adult-b",
+    "child-a",
+    "child-b"
+  ],
+  "physicalCoverage": {
+    "android": "adult-a",
+    "ios": "adult-b",
+    "others": "guardian-supervised-physical-phone"
+  },
+  "cases": [
+    {
+      "id": "adult-a/P01",
+      "actors": [
+        "adult-a"
+      ],
+      "group": "physical-camera",
+      "expected": "ALLOW",
+      "step": "On the actual phone, open protected staging and grant camera access only when prompted. Observe in-app preview and retake."
+    },
+    {
+      "id": "adult-a/P02",
+      "actors": [
+        "adult-a"
+      ],
+      "group": "original-photo",
+      "expected": "ALLOW",
+      "step": "Take a synthetic nonpersonal garment photograph and verify the full original remains available for recognition and source review."
+    },
+    {
+      "id": "adult-a/P03",
+      "actors": [
+        "adult-a"
+      ],
+      "group": "type-color-review",
+      "expected": "ALLOW",
+      "step": "Verify classification type and color, correct any ambiguity, and confirm original photo remains shown during review."
+    },
+    {
+      "id": "adult-a/P04",
+      "actors": [
+        "adult-a"
+      ],
+      "group": "multi-garment",
+      "expected": "ALLOW",
+      "step": "Capture a synthetic photograph containing two nonpersonal garments; review each separately and reject uncertain detection."
+    },
+    {
+      "id": "adult-a/P05",
+      "actors": [
+        "adult-a"
+      ],
+      "group": "save-reload",
+      "expected": "ALLOW",
+      "step": "Save synthetic garment, refresh and reopen My Closet; verify source and ownership persist without a gallery photo save."
+    },
+    {
+      "id": "adult-a/P06",
+      "actors": [
+        "adult-a"
+      ],
+      "group": "outfit-swap",
+      "expected": "ALLOW",
+      "step": "Generate three outfits with owned synthetic garments, swap one item and reopen the saved outfit."
+    },
+    {
+      "id": "adult-a/P07",
+      "actors": [
+        "adult-a"
+      ],
+      "group": "avatar-cutout",
+      "expected": "ALLOW",
+      "step": "Use the 2D figure and explicit cutout/fit review. Confirm no automatic approval and manual edits can be reverted."
+    },
+    {
+      "id": "adult-a/P08",
+      "actors": [
+        "adult-a"
+      ],
+      "group": "session-logout",
+      "expected": "DENY",
+      "step": "Log out and reopen the protected app; previously owned private images, garments and backups must not remain accessible without login."
+    },
+    {
+      "id": "adult-a/P09",
+      "actors": [
+        "adult-a"
+      ],
+      "group": "fresh-session",
+      "expected": "ALLOW",
+      "step": "Reopen in a fresh browser session. Authenticate as the same test account and verify original garment/outfit identity without cross-account leakage."
+    },
+    {
+      "id": "adult-b/P01",
+      "actors": [
+        "adult-b"
+      ],
+      "group": "physical-camera",
+      "expected": "ALLOW",
+      "step": "On the actual phone, open protected staging and grant camera access only when prompted. Observe in-app preview and retake."
+    },
+    {
+      "id": "adult-b/P02",
+      "actors": [
+        "adult-b"
+      ],
+      "group": "original-photo",
+      "expected": "ALLOW",
+      "step": "Take a synthetic nonpersonal garment photograph and verify the full original remains available for recognition and source review."
+    },
+    {
+      "id": "adult-b/P03",
+      "actors": [
+        "adult-b"
+      ],
+      "group": "type-color-review",
+      "expected": "ALLOW",
+      "step": "Verify classification type and color, correct any ambiguity, and confirm original photo remains shown during review."
+    },
+    {
+      "id": "adult-b/P04",
+      "actors": [
+        "adult-b"
+      ],
+      "group": "multi-garment",
+      "expected": "ALLOW",
+      "step": "Capture a synthetic photograph containing two nonpersonal garments; review each separately and reject uncertain detection."
+    },
+    {
+      "id": "adult-b/P05",
+      "actors": [
+        "adult-b"
+      ],
+      "group": "save-reload",
+      "expected": "ALLOW",
+      "step": "Save synthetic garment, refresh and reopen My Closet; verify source and ownership persist without a gallery photo save."
+    },
+    {
+      "id": "adult-b/P06",
+      "actors": [
+        "adult-b"
+      ],
+      "group": "outfit-swap",
+      "expected": "ALLOW",
+      "step": "Generate three outfits with owned synthetic garments, swap one item and reopen the saved outfit."
+    },
+    {
+      "id": "adult-b/P07",
+      "actors": [
+        "adult-b"
+      ],
+      "group": "avatar-cutout",
+      "expected": "ALLOW",
+      "step": "Use the 2D figure and explicit cutout/fit review. Confirm no automatic approval and manual edits can be reverted."
+    },
+    {
+      "id": "adult-b/P08",
+      "actors": [
+        "adult-b"
+      ],
+      "group": "session-logout",
+      "expected": "DENY",
+      "step": "Log out and reopen the protected app; previously owned private images, garments and backups must not remain accessible without login."
+    },
+    {
+      "id": "adult-b/P09",
+      "actors": [
+        "adult-b"
+      ],
+      "group": "fresh-session",
+      "expected": "ALLOW",
+      "step": "Reopen in a fresh browser session. Authenticate as the same test account and verify original garment/outfit identity without cross-account leakage."
+    },
+    {
+      "id": "child-a/P01",
+      "actors": [
+        "child-a"
+      ],
+      "group": "physical-camera",
+      "expected": "ALLOW",
+      "step": "On the actual phone, open protected staging and grant camera access only when prompted. Observe in-app preview and retake."
+    },
+    {
+      "id": "child-a/P02",
+      "actors": [
+        "child-a"
+      ],
+      "group": "original-photo",
+      "expected": "ALLOW",
+      "step": "Take a synthetic nonpersonal garment photograph and verify the full original remains available for recognition and source review."
+    },
+    {
+      "id": "child-a/P03",
+      "actors": [
+        "child-a"
+      ],
+      "group": "type-color-review",
+      "expected": "ALLOW",
+      "step": "Verify classification type and color, correct any ambiguity, and confirm original photo remains shown during review."
+    },
+    {
+      "id": "child-a/P04",
+      "actors": [
+        "child-a"
+      ],
+      "group": "multi-garment",
+      "expected": "ALLOW",
+      "step": "Capture a synthetic photograph containing two nonpersonal garments; review each separately and reject uncertain detection."
+    },
+    {
+      "id": "child-a/P05",
+      "actors": [
+        "child-a"
+      ],
+      "group": "save-reload",
+      "expected": "ALLOW",
+      "step": "Save synthetic garment, refresh and reopen My Closet; verify source and ownership persist without a gallery photo save."
+    },
+    {
+      "id": "child-a/P06",
+      "actors": [
+        "child-a"
+      ],
+      "group": "outfit-swap",
+      "expected": "ALLOW",
+      "step": "Generate three outfits with owned synthetic garments, swap one item and reopen the saved outfit."
+    },
+    {
+      "id": "child-a/P07",
+      "actors": [
+        "child-a"
+      ],
+      "group": "avatar-cutout",
+      "expected": "ALLOW",
+      "step": "Use the 2D figure and explicit cutout/fit review. Confirm no automatic approval and manual edits can be reverted."
+    },
+    {
+      "id": "child-a/P08",
+      "actors": [
+        "child-a"
+      ],
+      "group": "session-logout",
+      "expected": "DENY",
+      "step": "Log out and reopen the protected app; previously owned private images, garments and backups must not remain accessible without login."
+    },
+    {
+      "id": "child-a/P09",
+      "actors": [
+        "child-a"
+      ],
+      "group": "fresh-session",
+      "expected": "ALLOW",
+      "step": "Reopen in a fresh browser session. Authenticate as the same test account and verify original garment/outfit identity without cross-account leakage."
+    },
+    {
+      "id": "child-b/P01",
+      "actors": [
+        "child-b"
+      ],
+      "group": "physical-camera",
+      "expected": "ALLOW",
+      "step": "On the actual phone, open protected staging and grant camera access only when prompted. Observe in-app preview and retake."
+    },
+    {
+      "id": "child-b/P02",
+      "actors": [
+        "child-b"
+      ],
+      "group": "original-photo",
+      "expected": "ALLOW",
+      "step": "Take a synthetic nonpersonal garment photograph and verify the full original remains available for recognition and source review."
+    },
+    {
+      "id": "child-b/P03",
+      "actors": [
+        "child-b"
+      ],
+      "group": "type-color-review",
+      "expected": "ALLOW",
+      "step": "Verify classification type and color, correct any ambiguity, and confirm original photo remains shown during review."
+    },
+    {
+      "id": "child-b/P04",
+      "actors": [
+        "child-b"
+      ],
+      "group": "multi-garment",
+      "expected": "ALLOW",
+      "step": "Capture a synthetic photograph containing two nonpersonal garments; review each separately and reject uncertain detection."
+    },
+    {
+      "id": "child-b/P05",
+      "actors": [
+        "child-b"
+      ],
+      "group": "save-reload",
+      "expected": "ALLOW",
+      "step": "Save synthetic garment, refresh and reopen My Closet; verify source and ownership persist without a gallery photo save."
+    },
+    {
+      "id": "child-b/P06",
+      "actors": [
+        "child-b"
+      ],
+      "group": "outfit-swap",
+      "expected": "ALLOW",
+      "step": "Generate three outfits with owned synthetic garments, swap one item and reopen the saved outfit."
+    },
+    {
+      "id": "child-b/P07",
+      "actors": [
+        "child-b"
+      ],
+      "group": "avatar-cutout",
+      "expected": "ALLOW",
+      "step": "Use the 2D figure and explicit cutout/fit review. Confirm no automatic approval and manual edits can be reverted."
+    },
+    {
+      "id": "child-b/P08",
+      "actors": [
+        "child-b"
+      ],
+      "group": "session-logout",
+      "expected": "DENY",
+      "step": "Log out and reopen the protected app; previously owned private images, garments and backups must not remain accessible without login."
+    },
+    {
+      "id": "child-b/P09",
+      "actors": [
+        "child-b"
+      ],
+      "group": "fresh-session",
+      "expected": "ALLOW",
+      "step": "Reopen in a fresh browser session. Authenticate as the same test account and verify original garment/outfit identity without cross-account leakage."
+    },
+    {
+      "id": "two-owner/X01",
+      "actors": [
+        "adult-a",
+        "adult-b"
+      ],
+      "group": "backup-cross",
+      "expected": "DENY",
+      "step": "As adult A, attempt to fetch adult B's backup owner row through normal authenticated client routes; expect zero rows."
+    },
+    {
+      "id": "two-owner/X02",
+      "actors": [
+        "adult-a",
+        "adult-b"
+      ],
+      "group": "backup-cross",
+      "expected": "DENY",
+      "step": "As adult B, attempt to fetch adult A's backup owner row through normal authenticated client routes; expect zero rows."
+    },
+    {
+      "id": "two-owner/X03",
+      "actors": [
+        "adult-a",
+        "adult-b"
+      ],
+      "group": "photo-cross",
+      "expected": "DENY",
+      "step": "As adult A, try to list adult B's private photo prefix and download a known synthetic B photo path; expect inaccessible."
+    },
+    {
+      "id": "two-owner/X04",
+      "actors": [
+        "adult-a",
+        "adult-b"
+      ],
+      "group": "photo-cross",
+      "expected": "DENY",
+      "step": "As adult B, try to list adult A's private photo prefix and download a known synthetic A photo path; expect inaccessible."
+    },
+    {
+      "id": "two-owner/X05",
+      "actors": [
+        "adult-a",
+        "adult-b"
+      ],
+      "group": "cloud-restore",
+      "expected": "ALLOW",
+      "step": "With adult A, restore A's synthetic backup in a fresh session after authenticated save; B's synthetic data must not appear."
+    },
+    {
+      "id": "two-owner/X06",
+      "actors": [
+        "adult-a",
+        "adult-b"
+      ],
+      "group": "cloud-restore",
+      "expected": "ALLOW",
+      "step": "With adult B, restore B's synthetic backup in a fresh session after authenticated save; A's synthetic data must not appear."
+    },
+    {
+      "id": "two-owner/X07",
+      "actors": [
+        "adult-a",
+        "adult-b"
+      ],
+      "group": "account-switch",
+      "expected": "DENY",
+      "step": "After switching from adult A to adult B on the same physical phone, check A's image and outfit references cannot be reopened."
+    },
+    {
+      "id": "two-owner/X08",
+      "actors": [
+        "adult-a",
+        "adult-b"
+      ],
+      "group": "account-switch",
+      "expected": "DENY",
+      "step": "After switching from adult B to adult A on the same physical phone, check B's image and outfit references cannot be reopened."
+    },
+    {
+      "id": "two-owner/X09",
+      "actors": [
+        "adult-a",
+        "adult-b"
+      ],
+      "group": "storage-fault",
+      "expected": "ALLOW",
+      "step": "Under an interrupted synthetic save/restore, existing owned wardrobe and original source must remain intact; reauthenticate and retry."
+    },
+    {
+      "id": "two-owner/X10",
+      "actors": [
+        "adult-a",
+        "adult-b"
+      ],
+      "group": "protected-access",
+      "expected": "DENY",
+      "step": "Confirm an unauthenticated fresh browser cannot retrieve private wardrobe, backup or source photo by direct URL."
+    },
+    {
+      "id": "two-owner/X11",
+      "actors": [
+        "adult-a",
+        "adult-b"
+      ],
+      "group": "private-feedback",
+      "expected": "ALLOW",
+      "step": "Confirm a test participant can report a bug privately without uploading a family photo or exposing an account identifier in a public issue."
+    }
+  ]
+}

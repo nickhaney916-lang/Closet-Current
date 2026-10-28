@@ -1,0 +1,55 @@
+{
+  "format": "closet-current-alpha70-staging-readonly-metadata-v1",
+  "project": "fbnplztkbsteuzrmbgib",
+  "date": "2026-10-28",
+  "readOnly": true,
+  "productionTouched": false,
+  "photoBucket": {
+    "id": "closet-private",
+    "public": false,
+    "fileSizeLimitBytes": 8388608,
+    "allowedMimeTypes": [
+      "image/jpeg"
+    ]
+  },
+  "backup": {
+    "table": "public.closet_backups",
+    "rlsEnabled": true,
+    "authenticatedPrivileges": [
+      "SELECT"
+    ],
+    "writerPrivileges": [
+      "INSERT",
+      "SELECT",
+      "UPDATE"
+    ],
+    "ownerPolicies": [
+      "closet_backup_owner",
+      "closet_backup_writer_owner"
+    ],
+    "ownerPredicatePresentForBothReadAndWrite": true
+  },
+  "storage": {
+    "table": "storage.objects",
+    "rlsEnabled": true,
+    "authenticatedPolicies": [
+      "closet_photos_delete",
+      "closet_photos_insert",
+      "closet_photos_read"
+    ],
+    "ownerScopedFolderAndPrivateBucket": true,
+    "objectUpdatePolicyObserved": false
+  },
+  "securityAdvisor": {
+    "issue": "auth_leaked_password_protection",
+    "status": "WARN",
+    "description": "Leaked password protection disabled",
+    "remediation": "https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection"
+  },
+  "verifiedActualTwoUserJwt": false,
+  "verifiedCloudBackupSaveRestore": false,
+  "verifiedPhysicalDevices": false,
+  "verifiedFourAccounts": false,
+  "visualHumanPass": 0,
+  "release": "HOLD"
+}
