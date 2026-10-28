@@ -1,4 +1,5 @@
 import {applyReviewedEraser,hasTwoClearlySeparatedFootwearComponents} from './mask-controls.mjs';
+import {createPortableCutoutEditRecipe,restorePortableCutoutEditRecipe} from './portable-edits.mjs';
 /**
  * Deliberate human mask touch-up, not AI segmentation. Nothing is stored or
  * uploaded. The user sees original JPEG side-by-side with the *actual edited*
@@ -41,6 +42,11 @@ export function confirmReviewedCutoutWithEraser(container,detail,{isActive=()=>t
   const outline=button('Outline unwanted area'),applyOutline=button('Apply outline');
   applyOutline.disabled=true;controls.append(outline,applyOutline);
   const count=create('span','Original cutout — no edits');count.setAttribute('role','status');controls.append(undo,redo,reset,count);
+  const recipeDownload=button('Download edit recipe'),recipeImport=button('Import saved edits');
+  const recipeFile=create('input');recipeFile.type='file';recipeFile.accept='application/json,.json';recipeFile.style.display='none';recipeFile.setAttribute('aria-label','Choose saved edit recipe');
+  const recipeNotice=create('p','Local file only — no photos included, no cloud sync. Import only for the exact same original garment and reviewed cutout. Recheck every edge before approval.');
+  recipeNotice.setAttribute('role','status');recipeDownload.disabled=true;
+  controls.append(recipeDownload,recipeImport,recipeFile,recipeNotice);
   const ackLabel=create('label');
   ackLabel.style.cssText='display:flex;align-items:start;gap:9px;font:1rem/1.45 system-ui;padding:10px 0';
   const ack=create('input');ack.type='checkbox';ack.setAttribute('aria-label','I checked the actual cutout for mannequin, person, hanger and missing fabric');
@@ -100,11 +106,52 @@ export function confirmReviewedCutoutWithEraser(container,detail,{isActive=()=>t
      shoes.disabled=!hasTwoClearlySeparatedFootwearComponents(rendered);
      if(shoes.disabled)shoes.checked=false;
     }
-    undo.disabled=!edits.length&&!outlinePoints.length;redo.disabled=!redoStack.length;accept.disabled=outlineMode&&outlinePoints.length>0;
+    undo.disabled=!edits.length&&!outlinePoints.length;redo.disabled=!redoStack.length;recipeDownload.disabled=!edits.length;accept.disabled=outlineMode&&outlinePoints.length>0;
    }catch(err){
     rendered=null;accept.disabled=true;count.textContent='Too much removed or invalid mask. Undo or reset; otherwise retake.';
    }
   }
+  const recipeSource={originalImage:detail.originalImage,maskFrame:base,category:detail.category};
+  const isCurrent=()=>!finished&&!signal?.aborted&&isActive();
+  recipeDownload.onclick=async(event)=>{
+   if(!event.isTrusted||!isCurrent()||!rendered||!edits.length||outlineMode)return;
+   const snapshot=JSON.stringify(edits);
+   recipeDownload.disabled=true;
+   try{
+    const recipe=await createPortableCutoutEditRecipe(recipeSource,edits);
+    if(!isCurrent()||JSON.stringify(edits)!==snapshot)return;
+    const blob=new Blob([JSON.stringify(recipe,null,2)],{type:'application/json'});
+    const url=URL.createObjectURL(blob),link=create('a');
+    link.href=url;link.download='closet-current-cutout-edits.json';
+    link.style.display='none';panel.append(link);link.click();link.remove();URL.revokeObjectURL(url);
+    recipeNotice.textContent='Recipe downloaded locally. No photo saved in the recipe; recheck cutout when importing.';
+   }catch{
+    if(isCurrent())recipeNotice.textContent='Recipe export unavailable; cutout remains unchanged.';
+   }finally{if(isCurrent())recipeDownload.disabled=!edits.length;}
+  };
+  recipeImport.onclick=(event)=>{if(event.isTrusted&&isCurrent())recipeFile.click();};
+  recipeFile.onchange=async()=>{
+   const file=recipeFile.files?.[0];recipeFile.value='';
+   if(!file||!isCurrent())return;
+   const prior=JSON.stringify(edits);
+   try{
+    if(file.size>16000||file.size<40)throw Error('Invalid recipe file size');
+    const json=await file.text();if(!isCurrent()||JSON.stringify(edits)!==prior)return;
+    const restored=await restorePortableCutoutEditRecipe(recipeSource,json);
+    if(!isCurrent()||JSON.stringify(edits)!==prior)return;
+    // Re-run the exact approved mask engine on the active current-source
+    // evidence; import must never bypass cutout integrity or confirmation.
+    applyReviewedEraser(base,restored);
+    if(!isCurrent()||JSON.stringify(edits)!==prior)return;
+    edits.splice(0,edits.length,...restored);redoStack.length=0;
+    outlinePoints.length=0;outlineMode=false;outline.textContent='Outline unwanted area';
+    ack.checked=false;shoes.checked=false;
+    paint();
+    recipeNotice.textContent='Edits restored to current source. Review real cutout again before using.';
+   }catch{
+    if(isCurrent())recipeNotice.textContent='Recipe rejected (wrong source or unsafe edits). Original cutout remains available.';
+   }
+  };
   function onTap(event){
    if(!event.isTrusted||pan.checked||signal?.aborted||!isActive()||finished)return;
    const rect=canvas.getBoundingClientRect();
@@ -123,7 +170,7 @@ export function confirmReviewedCutoutWithEraser(container,detail,{isActive=()=>t
    canvas.removeEventListener('pointerup',onTap);
    reject.removeEventListener('click',onReject);accept.removeEventListener('click',onConfirm);
    undo.removeEventListener('click',onUndo);reset.removeEventListener('click',onReset);
-   outline.onclick=null;applyOutline.onclick=null;redo.onclick=null;zoom.onchange=null;pan.onchange=null;
+   outline.onclick=null;applyOutline.onclick=null;redo.onclick=null;zoom.onchange=null;pan.onchange=null;recipeDownload.onclick=null;recipeImport.onclick=null;recipeFile.onchange=null;
    signal?.removeEventListener('abort',onAbort);
    (doc.defaultView||globalThis.window)?.removeEventListener?.('pagehide',onAbort);
    container.replaceChildren();resolve(value);
