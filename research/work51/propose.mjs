@@ -51,13 +51,13 @@ export function proposeIsolationCleanup(base,{category='Tops',existingEdits=[]}=
   const end=rows.get(last);points.push({x:end[0]/w,y:(last+1)/h},{x:(end[1]+1)/w,y:(last+1)/h});
   for(const y of [...ys].reverse()){const row=rows.get(y);points.push({x:(row[1]+1)/w,y:y/h});}
   let remove=0,unsafe=false;const pending=[];const minX=Math.max(0,Math.floor(Math.min(...points.map(p=>p.x))*w)),maxX=Math.min(w-1,Math.ceil(Math.max(...points.map(p=>p.x))*w));
-  for(let y=first;y<=last;y++)for(let x=minX;x<=maxX;x++){const i=y*w+x;if(rgba[i*4+3]<128||changed[i]||!inside((x+.5)/w,(y+.5)/h,points))continue;const c=color(i);
+  for(let y=first;y<=last;y++)for(let x=minX;x<=maxX;x++){const i=y*w+x;if(rgba[i*4+3]===0||changed[i]||!inside((x+.5)/w,(y+.5)/h,points))continue;const c=color(i);
    // Neutral highlights inside the support are allowed; white garment piping
    // is protected by proximity to dark cloth at the actual source boundary.
    if(cloth[i]||Math.max(...c)-Math.min(...c)>65)unsafe=true;
    const reach=Math.max(1,Math.round(Math.min(w,h)*.0015));
    if(c[0]-c[1]<2||c[1]-c[2]<2){for(const [dx,dy]of [[reach,0],[-reach,0],[0,reach],[0,-reach]]){const xx=x+dx,yy=y+dy;if(xx>=0&&xx<w&&yy>=0&&yy<h&&cloth[yy*w+xx])unsafe=true;}}
-   pending.push(i);remove++;
+   pending.push(i);if(rgba[i*4+3]>=128)remove++;
   }
   if(unsafe||planned+remove>visible*.12){if(last>first){const m=Math.floor((first+last)/2);span(first,m);span(m+1,last);}return;}
   if(remove<4)return;edits.push({action:'remove',kind:'polygon',points});planned+=remove;for(const i of pending)changed[i]=1;
