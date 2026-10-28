@@ -1,5 +1,6 @@
 import {paintGarmentFit} from './fit.mjs';
 import {createHumanoidForegroundOverlay} from './occlusion.mjs';
+import {repaintReviewedPreviewAtomic} from './atomic-preview.mjs';
 /** Mount ONLY after upstream saved-photo ownership, source hashes and explicit
  * mask review. No caller can use this helper to authenticate/approve a cutout.
  * All geometry is ephemeral; guarded source changes discard the preview. */
@@ -20,7 +21,7 @@ export function mountLandmarkEditor(container,{isActive=()=>false,sessionTarget=
  const current=()=>images.find(x=>x.dataset.slot===select.value);
  function check(){if(active())return true;dispose(false);return false;}
  function drawSource(){if(!check())return;points=[];const im=current(),ctx=canvas.getContext('2d');canvas.width=480;canvas.height=Math.round(480*im.naturalHeight/im.naturalWidth);ctx.drawImage(im,0,0,canvas.width,canvas.height);apply.disabled=true;edgeToggle.checked=records.get(select.value)?.adjust.edgeCleanup===true;edgeToggle.disabled=!records.has(select.value);status.textContent='Mark left, then right garment landmark.';}
- function redraw(record){if(!check())return;const result=paintGarmentFit(record.canvas,record.source,record.profile,record.adjust);current().hidden=true;for(const p of oldPanels)p.hidden=true;status.textContent=record.adjust.edgeCleanup
+ function redraw(record){if(!check())return;const result=repaintReviewedPreviewAtomic(record,{doc,render:paintGarmentFit,isCurrent:()=>active()&&records.get(select.value)===record&&current()===record.source});current().hidden=true;for(const p of oldPanels)p.hidden=true;status.textContent=record.adjust.edgeCleanup
  ?(result.fringe.changed?'Fringe attenuated on '+result.fringe.changed+' edge pixels; review cuffs and contours.':'No translucent border detected; original pixels remain unchanged.')
  :'Original reviewed cutout displayed; temporary fit still requires visual review.';}
  canvas.onpointerup=e=>{if(!e.isTrusted||!check()||points.length>=2)return;const r=canvas.getBoundingClientRect(),x=(e.clientX-r.left)/r.width,y=(e.clientY-r.top)/r.height;if(x<0||x>1||y<0||y>1)return;points.push([x,y]);const ctx=canvas.getContext('2d');ctx.fillStyle='#ce2248';ctx.beginPath();ctx.arc(x*canvas.width,y*canvas.height,6,0,Math.PI*2);ctx.fill();apply.disabled=points.length!==2;status.textContent=points.length===1?'Mark the right landmark.':'Two points marked; apply to inspect fit.';};
