@@ -1,0 +1,34 @@
+name: Family Alpha #70 private four-phone and staging readonly rehearsal HOLD (NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'scripts/family-alpha-70-mobile-qa.mjs'
+      - 'tests/family-alpha-70-private-qa.test.mjs'
+      - 'research/family-alpha-70/**'
+      - '.github/workflows/family-alpha-70-private-qa-no-deploy.yml'
+permissions:
+  contents: read
+jobs:
+  private-qa-hold:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22' }
+      - name: Restrict new changes to private test plan, metadata-free checklist and read-only mocks
+        run: |
+          git fetch --no-tags origin 022d6908c20fdbe4135a9904d8c76f01c36cb888
+          git diff --name-only 022d6908c20fdbe4135a9904d8c76f01c36cb888 HEAD | while IFS= read -r file; do
+            case "$file" in
+              scripts/family-alpha-70-mobile-qa.mjs|tests/family-alpha-70-private-qa.test.mjs|research/family-alpha-70/device-qa-manifest.json|research/family-alpha-70/staging-metadata-20261028.json|research/family-alpha-70/README.md|.github/workflows/family-alpha-70-private-qa-no-deploy.yml) ;;
+              *) echo "Unexpected source/photo/secret/staging/production change: $file"; exit 1 ;;
+            esac
+          done
+      - name: Mock two-owner privacy, real-phone worksheet and forged evidence abuse regression (no network)
+        run: node --test tests/family-alpha-70-private-qa.test.mjs tests/family-alpha-69-release-gate.test.mjs
+      - name: Show safe, empty 47-case HOLD summary
+        run: |
+          node scripts/family-alpha-70-mobile-qa.mjs
+          node scripts/family-alpha-69-release-gate.mjs
