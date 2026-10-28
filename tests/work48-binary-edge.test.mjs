@@ -61,3 +61,23 @@ test('both edge previews cannot be simultaneously requested; default fit remains
  assert.match(editor,/binaryToggle.onchange=null/);
  assert.match(build,/'binary-edge.mjs'/);
 });
+
+
+test('enclosed transparent print holes and interior fabric are never treated as exterior silhouette',()=>{
+ const w=320,h=320;
+ const original=make(w,h,(x,y)=>{
+  const garment=x>=25&&x<295&&y>=25&&y<295;
+  const printedHole=x>=145&&x<175&&y>=145&&y<175;
+  return garment&&!printedHole?255:0;
+ });
+ const after=new Uint8ClampedArray(original);
+ const result=softenReviewedBinarySilhouette(after,w,h);
+ assert.ok(result.changed>0,'Actual exterior garment contour should be softened');
+ const a=(x,y,bytes)=>bytes[4*(y*w+x)+3];
+ assert.equal(a(144,160,after),255,'Opaque pixels beside enclosed print holes must be preserved');
+ assert.equal(a(175,160,after),255,'Opposite edge of enclosed hole unchanged');
+ assert.equal(a(130,160,after),255,'Interior fabric untouched');
+ assert.equal(a(25,160,after),153,'Outer silhouette still softens');
+ assert.equal(a(145,160,after),0,'Original printed transparent hole remains empty');
+ assert.equal(a(25,160,original),255,'The source garment never changes');
+});
