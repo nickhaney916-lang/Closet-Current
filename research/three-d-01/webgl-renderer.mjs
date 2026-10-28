@@ -11,7 +11,7 @@ const VS=[
  ' vec3 p=vec3(aPos.x*c+aPos.z*s,aPos.y,-aPos.x*s+aPos.z*c);',
  ' vec3 n=normalize(vec3(aNormal.x*c+aNormal.z*s,aNormal.y,-aNormal.x*s+aNormal.z*c));',
  ' float depth=4.7-p.z;',
- ' gl_Position=vec4(p.x*2.75/max(uAspect,.55),(p.y-1.38)*2.75,p.z*.12,depth);',
+ ' gl_Position=vec4(p.x*2.75/max(uAspect,.55),(p.y-1.38)*2.75,-p.z*.12,depth);',
  ' vUV=aUV;vFront=aFront;vLight=clamp(.55+.40*dot(n,normalize(vec3(.45,.8,.7))),.35,1.);',
  '}'
 ].join('\n');

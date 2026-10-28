@@ -8,6 +8,8 @@ The bug was the coordinate-system mismatch: Work47 crop bounds are normalized fr
 
 After correct source UV mapping, the formerly burgundy garment shell's sleeves, edges and neutral inferred rear must not remain generic red. New `fabric-color.mjs` computes the **channel-wise median of alpha-opaque original RGB** from the existing review sample. This is a deterministic color analysis of real pixels, NOT new inferred fabric texture, AI generation, color correction of the original photo, image storage or approval. The uniform neutral material is applied only to the garment mesh and never to the grey mannequin's head, body, arms or legs. Visible original photographed fabric on the front remains the source PNG, not a plain-color replacement.
 
+A second image inspection after correcting the uniform color found that the photographed white **AJ lettering was still not drawn**. The vertex shader also had a reversed clip-depth sign (`p.z * .12`), allowing the cylinder's **untextured rear face to hide the real photographed front face**. Correcting it to `-p.z * .12` gives camera-nearer front clothing the nearer depth value. The new browser test now requires actual bright print pixels on the visible upper torso in addition to the dark source-colored fabric. This was a genuine missing-clothing-detail flaw, not a mere test artifact.
+
 This is still **static approximate geometry**, not realistic fit, cloth physics, measured back, or wearer identity. Median colors only approximate large-scale fabric and can be wrong for high-contrast print or color-blocking. The user must still review edges, source identity, and actual look. No human PASS has been claimed.
 
 ## Scope boundaries

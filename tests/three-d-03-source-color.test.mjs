@@ -43,6 +43,7 @@ test('shader crop converts original top-left RGBA bounds to GL bottom-left UV sp
  const src=await readFile('research/three-d-01/webgl-renderer.mjs','utf8');
  assert.match(src,/1-crop\[1\]-crop\[3\]/);
  assert.match(src,/UNPACK_FLIP_Y_WEBGL,true/);
+ assert.match(src,/-p\.z\*\.12/,'Front body surface must have nearer depth');
  assert.match(src,/m\.material\.photographed&&matchedColor/);
  assert.match(src,/Invalid reviewed fabric color/);
 });

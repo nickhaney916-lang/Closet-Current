@@ -20,7 +20,17 @@ const addition=[
  "  assert.equal(median.length,3,'Missing original source fabric median');",
  "  assert.ok(median.every(v=>v<100),JSON.stringify({problem:'not a black original shirt',observed}));",
  "  assert.ok([observed.at39,observed.at43].some(px=>px.every(v=>v<100)),JSON.stringify({problem:'actual black shirt not shown on 3D torso',observed}));",
- "  console.log('THREE_D_03_SOURCE_FABRIC_COLOR',JSON.stringify({width,sourceMedianRGB:median,actualTorsoRGB:observed.at43,rear:'inferred'}));"
+ "  const print=await viewer.evaluate(c=>{",
+ "   const t=document.createElement('canvas');t.width=c.width;t.height=c.height;",
+ "   const ctx=t.getContext('2d');ctx.drawImage(c,0,0);let white=0,max=0;",
+ "   for(let y=.28;y<.40;y+=.008)for(let x=.37;x<.63;x+=.01){",
+ "    const p=ctx.getImageData(Math.floor(c.width*x),Math.floor(c.height*y),1,1).data;",
+ "    const light=Math.min(p[0],p[1],p[2]);if(light>110)white++;max=Math.max(max,light);",
+ "   }",
+ "   return {white,max};",
+ "  });",
+ "  assert.ok(print.white>=8,JSON.stringify({problem:'Photographed white shirt lettering still occluded by back surface or lost from texture',print,observed}));",
+ "  console.log('THREE_D_03_SOURCE_FABRIC_COLOR',JSON.stringify({width,sourceMedianRGB:median,actualTorsoRGB:observed.at43,whitePrintPixels:print.white,rear:'inferred'}));"
 ].join('\n');
 const filename='scripts/.three-d-03-real-uv-browser-generated.mjs';
 await writeFile(filename,original.replace(anchor,anchor+'\n'+addition));
