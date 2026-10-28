@@ -8,6 +8,7 @@ import {pathToFileURL} from 'node:url';
 import assert from 'node:assert/strict';
 import {build as build65,verify as verify65,OUTPUT as PARENT}
  from './build-family-alpha-65-review-lifecycle-hold.mjs';
+export {PARENT};
 export const OUTPUT='dist-family-alpha-66-work51-review-lifecycle-HOLD';
 export const WORK51_SHA='043950847dcdaab98d82bdb07f8fe8c84341cc18';
 export const WORK65_SHA='37ed07499e642f16cb893c09f694a3762a10edaa';
