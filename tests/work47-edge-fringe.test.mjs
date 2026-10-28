@@ -71,7 +71,7 @@ test('preview remains explicit, reversible, non-network, non-storage, unapproved
  ]);
  assert.match(fit,/if\(adjust.edgeCleanup===true\)/);
  assert.match(fit,/ctx.drawImage\(drawable,0,0\)/);
- assert.match(fit,/return \{\.\.\.plan,fringe\}/);
+ assert.match(fit,/return \{\.\.\.plan,fringe,coverage,assignment,joins,faceOverlap\}/);
  assert.match(editor,/edgeToggle.type='checkbox';edgeToggle.disabled=true/);
  assert.match(editor,/edgeToggle.onchange=/);
  assert.match(editor,/records.clear\(\);foreground\?\.remove\(\)/);

@@ -16,8 +16,8 @@ s=s.replace(hook,String.raw\x60
     await fitter.getByLabel('Reviewed garment to fit').selectOption('top');
     const editorCanvas=fitter.locator('canvas');await editorCanvas.scrollIntoViewIfNeeded();
     let rect=await editorCanvas.boundingBox();
-    await editorCanvas.click({position:{x:rect.width*.25,y:rect.height*.2}});
-    await editorCanvas.click({position:{x:rect.width*.75,y:rect.height*.2}});
+    await editorCanvas.click({position:{x:rect.width*.25,y:rect.height*.09}});
+    await editorCanvas.click({position:{x:rect.width*.75,y:rect.height*.09}});
     await fitter.getByRole('button',{name:'Apply landmark fit',exact:true}).click();
     await article.locator('canvas[data-work47="top"]').waitFor();
     const anatomy=article.locator('svg[data-humanoid-overlay="reviewed-anatomy-v1"]');

@@ -1,0 +1,19 @@
+import {renderFit} from './render.mjs';import {mountRigidFitControls} from './controls.mjs';import {sourceAssignment} from './panel-geometry.mjs';
+if(!['localhost','127.0.0.1','[::1]'].includes(location.hostname))throw Error('Offline prototype only');
+const $=s=>document.querySelector(s),manifest=await(await fetch('/benchmark/work47/manifest.json')).json(),profiles=await(await fetch('./profiles.json')).json();let ticket=0,controls;
+const load=async path=>{const blob=await(await fetch(path)).blob(),src=await new Promise((r,j)=>{const f=new FileReader();f.onload=()=>r(f.result);f.onerror=j;f.readAsDataURL(blob);});const image=new Image();image.src=src;await image.decode();return image;};
+for(const row of manifest.rows){const o=document.createElement('option');o.value=row.id;o.textContent=row.id+' · '+row.role;$('#sample').append(o);}
+async function show(id){const t=++ticket,row=manifest.rows.find(r=>r.id===id);document.body.dataset.ready='false';controls?.dispose();for(const id of ['#before','#after','#beforeDetail','#afterDetail','#controls'])$(id).replaceChildren();$('#cutout').hidden=!row.hasCutout;$('#cutout').removeAttribute('src');$('#original').src='/benchmark/work47/assets/'+id+'.jpg';$('#fallback').textContent=row.hasCutout?'':'No reliable cutout; original-photo fallback.';$('#license').replaceChildren(document.createTextNode('Photo: '+row.attribution.author+' · '));for(const [label,url]of [['Source',row.attribution.source],[row.attribution.license,row.attribution.licenseUrl]]){const a=document.createElement('a');a.href=url;a.textContent=label;a.target='_blank';a.rel='noreferrer';$('#license').append(a,document.createTextNode(' · '));}
+ let image,before,after,record;if(row.hasCutout){image=await load('/benchmark/work47/assets/'+id+'.png');if(t!==ticket)return;$('#cutout').src=image.src;}
+ $('.details').hidden=!profiles[id];$('#detailTitle').hidden=!profiles[id];
+ if(profiles[id]){const profile=profiles[id];record={source:image,profile,adjust:{dx:0,dy:0,scale:1,tilt:0,leftSleeve:0,rightSleeve:0,edgeCleanup:false}};
+ before=renderFit($('#before'),image,row.profile,{},true);renderFit($('#beforeDetail'),image,row.profile,{},true);
+ const detailOffset=()=>{for(const id of ['#beforeDetail','#afterDetail']){const host=$(id),frame=host.firstElementChild;if(frame)frame.style.top=-(profile.slot==='bottom'?240:110)/360*host.clientWidth+'px';}};
+ const draw=()=>{after=renderFit($('#after'),image,profile,record.adjust);renderFit($('#afterDetail'),image,profile,record.adjust);detailOffset();};draw();
+ controls=mountRigidFitControls($('#controls'),{getRecord:()=>record,redraw:draw,isActive:()=>t===ticket,onError:e=>$('#status').textContent=e.message});
+ const edge=document.createElement('button');edge.textContent='Edge cleanup: off';edge.onclick=()=>{const old=record.adjust.edgeCleanup;record.adjust.edgeCleanup=!old;try{draw();edge.textContent=record.adjust.edgeCleanup?'Edge cleanup: on':'Edge cleanup: off';}catch(e){record.adjust.edgeCleanup=old;$('#status').textContent=e.message;}};
+ const reset=document.createElement('button');reset.textContent='Reset fit';reset.onclick=()=>{record.adjust={dx:0,dy:0,scale:1,tilt:0,leftSleeve:0,rightSleeve:0,edgeCleanup:false};draw();controls.sync();edge.textContent='Edge cleanup: off';};$('#controls').append(edge,reset);$('#status').textContent='REVIEW · Same source cutout. New rigid attachment geometry; inspect the close-ups.';
+ }else{for(const s of ['#before','#after'])$(s).textContent='Original-photo fallback. No reliable front-facing garment fit.';$('#status').textContent='FAIL for worn-avatar acceptance · fallback retained.';}
+ await $('#original').decode();if(t!==ticket)return;window.work48={row,image,record,before,get after(){return after;},sourceAssignment};document.body.dataset.ready='true';document.body.dataset.id=id;
+}
+$('#sample').onchange=()=>show($('#sample').value);await show($('#sample').value);
