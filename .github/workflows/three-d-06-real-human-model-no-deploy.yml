@@ -1,0 +1,49 @@
+name: 3D-06 genuine CC0 anatomical GLB male-female preview (NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'research/three-d-06/**'
+      - 'scripts/test-three-d-06-browser.mjs'
+      - 'tests/three-d-06-anatomical-models.test.mjs'
+      - '.github/workflows/three-d-06-real-human-model-no-deploy.yml'
+permissions:
+  contents: read
+jobs:
+  licensed-human-rig-showroom:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Enforce new non-deployment research only
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git fetch --no-tags origin a907c500ad4ba15d0a89482b5be881b0298492bb
+          git diff --name-only a907c500ad4ba15d0a89482b5be881b0298492bb HEAD | while IFS= read -r path; do
+            case "$path" in
+              research/three-d-06/*|scripts/test-three-d-06-browser.mjs|tests/three-d-06-anatomical-models.test.mjs|.github/workflows/three-d-06-real-human-model-no-deploy.yml) ;;
+              *) echo "Unexpected application, clothing, auth, cloud, or previous 3D code changed: $path"; exit 1 ;;
+            esac
+          done
+          test "$(git diff --name-only a907c500ad4ba15d0a89482b5be881b0298492bb HEAD | wc -l)" -le 9
+      - name: Install pinned local rendering and actual Chromium harness
+        run: npm install --no-save --no-package-lock --no-audit --no-fund three@0.180.0 playwright@1.56.1
+      - name: Verify CC0 asset procurement and source/privacy boundaries
+        run: node --test tests/three-d-06-anatomical-models.test.mjs
+      - name: Acquire and inspect only two published CC0 anatomical GLB source files
+        run: node research/three-d-06/fetch-licensed-avatars.mjs
+      - name: Verify real female and male skinned figures on 320 390 430 mobile Chromium
+        run: node scripts/test-three-d-06-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: THREE-D-06-REAL-CC0-HUMAN-ANATOMICAL-STUDIO-HOLD
+          path: |
+            benchmark/three-d-06/
+            research/three-d-06/models/verified-assets.json
+          if-no-files-found: warn
