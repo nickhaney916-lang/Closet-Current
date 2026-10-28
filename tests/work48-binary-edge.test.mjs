@@ -54,8 +54,8 @@ test('both edge previews cannot be simultaneously requested; default fit remains
  const editor=await readFile('research/work47/editor.mjs','utf8');
  const build=await readFile('scripts/build-work47-fit-hold.mjs','utf8');
  assert.match(fit,/adjust.binaryEdgeReview===true&&adjust.edgeCleanup===true/);
- assert.match(fit,/if\\(adjust.edgeCleanup===true\\|\\|adjust.binaryEdgeReview===true\\)/);
- assert.match(fit,/affectedOpaqueRatio>\\.15/);
+ assert.ok(fit.includes('if(adjust.edgeCleanup===true||adjust.binaryEdgeReview===true)'));
+ assert.ok(fit.includes('affectedOpaqueRatio>.15'));
  assert.match(editor,/binaryToggle.type='checkbox';binaryToggle.disabled=true/);
  assert.match(editor,/binaryToggle.onchange=/);
  assert.match(editor,/binaryToggle.onchange=null/);
