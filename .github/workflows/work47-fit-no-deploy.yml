@@ -1,7 +1,7 @@
-name: Work47 real garment landmark fit HOLD (NO DEPLOY)
+name: Work48 sleeve continuity and body fit HOLD (NO DEPLOY)
 on:
   pull_request:
-    paths: ['research/work47/**', 'scripts/*work47*', 'tests/work47*', '.github/workflows/work47-fit-no-deploy.yml']
+    paths: ['research/work47/**', 'research/work48/**', 'scripts/*work48*', 'tests/work48*', 'scripts/*work47*', 'tests/work47*', '.github/workflows/work47-fit-no-deploy.yml']
 permissions:
   contents: read
 jobs:
@@ -35,18 +35,19 @@ jobs:
           node scripts/build-work47-benchmark.mjs
       - name: Source, geometry and privacy regression tests
         run: |
-          node --test tests/work47*.test.mjs tests/work43/*.test.mjs tests/work46-session-races.test.mjs
+          node --test tests/work47*.test.mjs tests/work48*.test.mjs tests/work43/*.test.mjs tests/work46-session-races.test.mjs
           node scripts/check-family-alpha-49-combined-visual-security-hold.mjs
       - name: Full protected app with manual landmark editor
-        run: node scripts/test-work47-integration-browser.mjs
+        run: node scripts/test-work48-integration-browser.mjs
       - name: Inherited licensed three-outfit and mobile navigation regression
         run: node scripts/test-family-alpha-51-mobile-nav-browser.mjs
       - name: All fifteen photographs in both engines at all three widths
-        run: node scripts/test-work47-browser.mjs
+        run: node scripts/test-work48-browser.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: work47-real-garment-fit-HOLD
+          name: work48-real-garment-fit-HOLD
           path: |
             benchmark/work47/
+            benchmark/work48/
             benchmark/family-alpha-51-navigation/

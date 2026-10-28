@@ -1,0 +1,89 @@
+{
+  "assessor": "Assistant visual inspection; not owner approval or independent mask truth",
+  "date": "2026-10-27",
+  "release": "HOLD",
+  "scope": "worn-avatar visual acceptance",
+  "ownerApproved": false,
+  "counts": {
+    "PASS": 0,
+    "REVIEW": 5,
+    "FAIL": 10
+  },
+  "rows": [
+    {
+      "id": "commons-0001",
+      "decision": "REVIEW",
+      "reason": "Improved collar cleanup and shoulders; oversized pose and edge completeness unapproved."
+    },
+    {
+      "id": "commons-0003",
+      "decision": "REVIEW",
+      "reason": "New manual isolation and shoulder fit; cuffs and traced fabric boundaries unapproved."
+    },
+    {
+      "id": "commons-0065",
+      "decision": "FAIL",
+      "reason": "Clipped sleeves and no reliable isolated jacket; fallback."
+    },
+    {
+      "id": "commons-0068",
+      "decision": "FAIL",
+      "reason": "Back-facing coat and complex background; no faithful front view."
+    },
+    {
+      "id": "commons-0053",
+      "decision": "REVIEW",
+      "reason": "Mannequin neck removed; improved shoulder and hem placement; armhole/collar fringe unapproved."
+    },
+    {
+      "id": "commons-0043",
+      "decision": "REVIEW",
+      "reason": "Waist-aligned Work38 skirt proposal; pale hem and tracing completeness unapproved."
+    },
+    {
+      "id": "commons-0033",
+      "decision": "FAIL",
+      "reason": "Occluded shorts and surrounding person; original fallback."
+    },
+    {
+      "id": "commons-0021",
+      "decision": "FAIL",
+      "reason": "Occluded pants waist and no reliable cutout; original fallback."
+    },
+    {
+      "id": "commons-0082",
+      "decision": "FAIL",
+      "reason": "Single side-view shoe; reference only, no fabricated pair."
+    },
+    {
+      "id": "commons-0088",
+      "decision": "FAIL",
+      "reason": "Single side-view boot; reference only, no fabricated pair."
+    },
+    {
+      "id": "commons-0016",
+      "decision": "REVIEW",
+      "reason": "Rigid sleeve rotation improves cuff direction; raglan joins, arm contact and tunic proportions unresolved."
+    },
+    {
+      "id": "commons-0079",
+      "decision": "FAIL",
+      "reason": "Support/background contamination and single-shoe perspective; fallback."
+    },
+    {
+      "id": "commons-0089",
+      "decision": "FAIL",
+      "reason": "Single side-view boot; reference only, no fabricated pair."
+    },
+    {
+      "id": "commons-0094",
+      "decision": "FAIL",
+      "reason": "Single side-view boot; reference only, no fabricated pair."
+    },
+    {
+      "id": "commons-0059",
+      "decision": "FAIL",
+      "reason": "Clutter and source-clipped fabric; no complete derivative or invented fabric."
+    }
+  ]
+}
