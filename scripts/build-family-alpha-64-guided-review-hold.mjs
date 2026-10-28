@@ -22,9 +22,9 @@ function replaceOnce(source,from,to){
 }
 export function patchProviderGuidance(source){
  let changed=replaceOnce(source,importAuto,importAuto+'\n'+importGuidance);
- const match="   description:'Automatic isolation preview; not realistic fit',";
+ const match="  const approved=await reviewPreview(Object.freeze({";
  changed=replaceOnce(changed,match,
-  "   isolationGuidance:buildIsolationReviewGuidance(raw),\n"+match);
+  match+"\n   isolationGuidance:buildIsolationReviewGuidance(raw),");
  assert.match(changed,/reviewPreview\(Object\.freeze/);
  assert.match(changed,/validScope\(getScope,ownerId,epoch,isCurrent\)/);
  assert.match(changed,/await auditMask/);
