@@ -42,7 +42,7 @@ test('shoulder attachment overlaps body torso without detached tube mouth',()=>{
   }
   assert.equal(model.parts.filter(p=>p.surface?.startsWith('swept-')).length,2);
   assert.equal(model.parts.filter(p=>p.name.startsWith('body hand ')).length,2);
- });
+ }
 });
 test('long sleeves reach cuffs and expose distinct neutral hands only after sleeve',()=>{
  const model=buildAvatarScene({type:'shirt',sleeveLength:'long'});
