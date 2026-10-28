@@ -1,5 +1,6 @@
 import {inPiece,sourceAssignment} from '../work48/panel-geometry.mjs';
 import {attenuateReviewedFringeAlpha} from './edge-fringe.mjs';
+import {softenReviewedBinarySilhouette} from './binary-edge.mjs';
 import {inspectReviewedCutoutAlpha,requireIsolatedCutoutForPreview} from './cutout-integrity.mjs';
 /** Offline fitting of actual source pixels. No mask creation, owner approval,
  * storage, requests or fabric synthesis. Callers must verify their source. */
@@ -89,6 +90,10 @@ export function requireVisiblePanelCoverage(coverage){
 export function paintGarmentFit(canvas,image,profile,adjust={}){
  if(typeof adjust.edgeCleanup!=='undefined'&&typeof adjust.edgeCleanup!=='boolean')
   throw Error('Edge cleanup must be an explicit boolean');
+ if(typeof adjust.binaryEdgeReview!=='undefined'&&typeof adjust.binaryEdgeReview!=='boolean')
+  throw Error('Binary edge review must be an explicit boolean');
+ if(adjust.binaryEdgeReview===true&&adjust.edgeCleanup===true)
+  throw Error('Choose only one reversible edge preview at a time');
  const plan=planGarmentFit(image.naturalWidth,image.naturalHeight,profile,adjust);
  // Refuse fitting that would silently crop visible garment fabric. Sample only
  // for this guard; the actual garment is drawn from the native source image.
@@ -103,7 +108,8 @@ export function paintGarmentFit(canvas,image,profile,adjust={}){
  if(plan.exclusivePanels&&(assignment.coveredRatio<.995||assignment.duplicateRatio>.003))throw Error('Sleeve outlines overlap or leave fabric unassigned; reset and recheck the source');
  let drawable=image;
  let fringe={changed:0,eligible:0,mode:'off',ownerApproved:false};
- if(adjust.edgeCleanup===true){
+ let binaryEdge={changed:0,mode:'off',ownerApproved:false};
+ if(adjust.edgeCleanup===true||adjust.binaryEdgeReview===true){
   // Prepare a separate, temporary display derivative, never change the
   // decoded original, the user's JPEG, the reviewed mask, or accepted cutout.
   const temp=canvas.ownerDocument.createElement('canvas');
@@ -111,8 +117,12 @@ export function paintGarmentFit(canvas,image,profile,adjust={}){
   const tc=temp.getContext('2d',{willReadFrequently:true});
   tc.drawImage(image,0,0);
   const data=tc.getImageData(0,0,temp.width,temp.height);
-  fringe=attenuateReviewedFringeAlpha(data.data,temp.width,temp.height);
-  if(fringe.changed){
+  if(adjust.binaryEdgeReview===true){
+   binaryEdge=softenReviewedBinarySilhouette(data.data,temp.width,temp.height);
+   if(binaryEdge.affectedOpaqueRatio>.15)
+    throw Error('Binary edge operation would alter too much reviewed fabric; original cutout retained');
+  }else fringe=attenuateReviewedFringeAlpha(data.data,temp.width,temp.height);
+  if(fringe.changed||binaryEdge.changed){
    tc.putImageData(data,0,0);
    drawable=temp;
   }
@@ -134,5 +144,5 @@ export function paintGarmentFit(canvas,image,profile,adjust={}){
  if(faceOverlap>4)throw Error('Garment overlaps the face; lower it or recheck the shoulder landmarks');
  canvas.width=720;canvas.height=1200;const ctx=canvas.getContext('2d');ctx.scale(2,2);ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
  for(const p of plan.pieces)paint(ctx,p);
- return {...plan,fringe,coverage,assignment,joins,faceOverlap,cutoutIntegrity};
+ return {...plan,fringe,binaryEdge,coverage,assignment,joins,faceOverlap,cutoutIntegrity};
 }
