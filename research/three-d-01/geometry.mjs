@@ -4,13 +4,15 @@
  * 2D clothing slots map to these templates. All measurements are approximations.
  * No browser, network, storage, file access, AI calls or PII.
  */
+import {buildSweptSleeve} from '../three-d-05/swept-sleeve.mjs';
 export const TYPES=Object.freeze(['shirt','pants','dress']);
 export const SLOTS=Object.freeze({shirt:'top',pants:'bottom',dress:'dress'});
 const ring=(y,rx,rz,x=0,z=0)=>({y,rx,rz,x,z});
 const material=(name,color,photographed=false)=>({name,color,photographed});
-function tube(name,rings,{segments=32,color=[.75,.76,.76],photographed=false,part='body',photoRegion=[0,0,1,1]}={}){
+function tube(name,rings,{segments=32,color=[.75,.76,.76],photographed=false,part='body',photoRegion=[0,0,1,1],uvProjectionWidth=null}={}){
  if(!Array.isArray(rings)||rings.length<2||rings.length>32||
   !Number.isSafeInteger(segments)||segments<8||segments>64||
+  (uvProjectionWidth!==null&&(!Number.isFinite(uvProjectionWidth)||uvProjectionWidth<=0))||
   rings.some(r=>!Number.isFinite(r.y)||!Number.isFinite(r.rx)||!Number.isFinite(r.rz)||r.rx<=0||r.rz<=0))
   throw Error('Invalid 3D garment rings');
  const yMin=Math.min(...rings.map(r=>r.y)),yMax=Math.max(...rings.map(r=>r.y));
@@ -24,7 +26,9 @@ function tube(name,rings,{segments=32,color=[.75,.76,.76],photographed=false,par
    const x=(r.x||0)+r.rx*sn,z=(r.z||0)+r.rz*cs;
    const nx=sn/r.rx,nz=cs/r.rz,m=Math.hypot(nx,nz);
    // position xyz, outward radial normal xyz, source-photo uv, front flag
-   vertices.push(x,r.y,z,nx/m,0,nz/m,.5+.49*sn,(r.y-yMin)/(yMax-yMin),Math.max(0,cs));
+   vertices.push(x,r.y,z,nx/m,0,nz/m,
+    uvProjectionWidth===null ? .5+.49*sn : Math.max(.001,Math.min(.999,.5+x/uvProjectionWidth)),
+    (r.y-yMin)/(yMax-yMin),Math.max(0,cs));
    if(i<rings.length-1&&j<segments){
     const a=i*(segments+1)+j,b=a+segments+1;
     indices.push(a,b,a+1,a+1,b,b+1);
@@ -69,17 +73,19 @@ export function buildAvatarScene({type='shirt',body='adult',photoEnabled=true,sl
  ];
  if(type==='shirt'){
   parts.push(tube('shirt torso',[
-   ring(1.33,.315*s,.205),ring(1.70,.345*s,.225),ring(2.02,.40*s,.24),
-   ring(2.15,.375*s,.227),ring(2.265,.13*s,.115)
-  ],{color:cloth,part:'garment',photographed:photoEnabled}));
+   ring(1.33,.313*s,.205),ring(1.53,.324*s,.215),
+   ring(1.76,.344*s,.226),ring(2.02,.386*s,.236),
+   ring(2.145,.369*s,.227),ring(2.19,.307*s,.200),
+   ring(2.235,.204*s,.153),ring(2.28,.123*s,.112)
+  ],{color:cloth,part:'garment',photographed:photoEnabled,uvProjectionWidth:.86*s}));
   for(const side of [-1,1]){
-   const sleeveRings=sleeveLength==='long'?
-    [ring(1.25,.112,.12,.63*s*side),ring(1.55,.132,.145,.605*s*side),
-     ring(1.85,.147,.153,.535*s*side),ring(2.12,.17,.17,.39*s*side)]:
-    [ring(1.81,.145,.15,.55*s*side),ring(2.11,.16,.16,.39*s*side)];
-   parts.push(tube('shirt sleeve '+side,sleeveRings,{
-    color:cloth,part:'garment',photographed:false
-   }));
+   // Cross-section planes are perpendicular to a sloping arm axis,
+   // not horizontal tubes shifted across x between shoulder and wrist.
+   parts.push(buildSweptSleeve({side,shoulderScale:s,length:sleeveLength,color:cloth}));
+   // A small source-free body-colored hand below the cuff is an
+   // explicit, reusable mannequin shape, not user anthropometry.
+   parts.push(sphere('body hand '+side,[side*.63*s,1.14,0],
+    [.077*s,.123,.078],skin,10,20));
   }
  }else if(type==='pants'){
   parts.push(tube('pants hips',[ring(1.08,.29*s,.20),ring(1.36,.32*s,.23)],{color:cloth,part:'garment',photographed:photoEnabled}));

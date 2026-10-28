@@ -89,6 +89,8 @@ export function mount3D(canvas,{onRender=()=>{}}={}){
   count++;canvas.dataset.renderCount=String(count);canvas.dataset.meshCount=String(meshes.length);
   canvas.dataset.yaw=String(yaw);
   onRender({type,body,sleeveLength,yaw,meshes:meshes.length,triangles:scene?.triangles||0,
+   sweptSleeves:scene?.parts.filter(p=>p.surface==='swept-circumferential-mesh-not-horizontal-cylinders').length||0,
+   mannequinHands:scene?.parts.filter(p=>p.name.startsWith('body hand ')).length||0,
    photoMeshes:meshes.filter(m=>m.material.photographed).length,
    solidGarmentMeshes:meshes.filter(m=>m.part==='garment'&&!m.material.photographed).length,
    frontPhotoProjection:projection,releaseAuthorized:false});

@@ -1,0 +1,55 @@
+name: 3D-05 arm-axis sleeves and continuous shoulder geometry real WebGL2 HOLD (NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'research/three-d-05/**'
+      - 'research/three-d-01/geometry.mjs'
+      - 'research/three-d-01/webgl-renderer.mjs'
+      - 'research/three-d-02/demo.mjs'
+      - 'scripts/test-three-d-05-browser.mjs'
+      - 'tests/three-d-05-shoulder-arm.test.mjs'
+      - '.github/workflows/three-d-05-shoulder-fit-no-deploy.yml'
+permissions:
+  contents: read
+jobs:
+  experimental-source-bound-mesh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Restrict changes to exactly eight experimental 3D and no-deploy test files
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git fetch --no-tags origin 17c3dadd30a1e4b7277935a368c26af0f120534a
+          git diff --name-only 17c3dadd30a1e4b7277935a368c26af0f120534a HEAD | while IFS= read -r file; do
+            case "$file" in
+              research/three-d-05/*|research/three-d-01/geometry.mjs|research/three-d-01/webgl-renderer.mjs|research/three-d-02/demo.mjs|scripts/test-three-d-05-browser.mjs|tests/three-d-05-shoulder-arm.test.mjs|.github/workflows/three-d-05-shoulder-fit-no-deploy.yml) ;;
+              *) echo "Unexpected Auth, original pixels, 2D renderer, isolation algorithm, staging or production change: $file"; exit 1 ;;
+            esac
+          done
+          test "$(git diff --name-only 17c3dadd30a1e4b7277935a368c26af0f120534a HEAD | wc -l)" -le 8
+      - name: Install isolated research benchmark and browser dependencies only
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 playwright@1.56.1
+      - name: Build exact existing 2D Work47 real licensed cutout assets without changing original JPEGs
+        run: |
+          git fetch --no-tags origin 53f2ad344dc56a1477e343531c423aed0e66c17d dd6bac3fa9ff640d4f562cf925337440bdb5cf8f 3a572193987cb29389727426136c6eb3ac326783
+          node scripts/build-work47-benchmark.mjs
+      - name: Exact RGB-median, UV crop, source SHA, 3D geometry, cutout/privacy safety tests
+        run: node --test tests/three-d-01-prototype.test.mjs tests/three-d-02-cutout-material.test.mjs tests/three-d-03-source-color.test.mjs tests/three-d-04-sleeve-panels.test.mjs tests/three-d-05-shoulder-arm.test.mjs
+      - name: Real 320/390/430px WebGL2 SOURCE BLACK shirt pixel test + inherited cutout/rotation browser checks
+        run: |
+          node scripts/test-three-d-05-browser.mjs
+          mkdir -p benchmark/three-d-05
+          cp benchmark/three-d-02/*.png benchmark/three-d-05/
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: THREE-D-05-REAL-ARM-SWEEP-SHOULDER-HOLD
+          path: benchmark/three-d-05/
+          if-no-files-found: warn
