@@ -67,6 +67,7 @@ jobs:
       - name: Source, geometry and privacy regression tests
         run: |
           node --test tests/work54*.test.mjs tests/work47*.test.mjs tests/work48*.test.mjs tests/work49*.test.mjs tests/work50*.test.mjs tests/family-alpha-63*.test.mjs tests/family-alpha-64*.test.mjs tests/family-alpha-65*.test.mjs tests/family-alpha-66*.test.mjs tests/work51-proposal.test.mjs tests/work43/*.test.mjs tests/work46-session-races.test.mjs
+          node --test tests/family-alpha-73-work54-mobile-layout.test.mjs
           node scripts/check-family-alpha-49-combined-visual-security-hold.mjs
       - name: Verify combined source-bound fit recovery, pale proposal, exact asset allowlist and protected stale-photo review
         run: |
