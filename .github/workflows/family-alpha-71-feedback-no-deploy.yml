@@ -1,0 +1,61 @@
+name: Family Alpha #71 private in-app feedback overlay HOLD (NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'research/family-alpha-71/**'
+      - 'scripts/build-family-alpha-71-private-feedback-hold.mjs'
+      - 'scripts/test-family-alpha-71-feedback-browser.mjs'
+      - 'tests/family-alpha-71-private-feedback.test.mjs'
+      - '.github/workflows/family-alpha-71-feedback-no-deploy.yml'
+permissions:
+  contents: read
+jobs:
+  private-feedback:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Verify isolated overlay commit and fetch exact audited sources
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git fetch --no-tags origin 4d0943b32343cb3fba608d8069a36982efaae393
+          git diff --name-only 4d0943b32343cb3fba608d8069a36982efaae393 HEAD | while IFS= read -r file; do
+            case "$file" in
+              research/family-alpha-71/README.md|research/family-alpha-71/private-feedback.mjs|scripts/build-family-alpha-71-private-feedback-hold.mjs|scripts/test-family-alpha-71-feedback-browser.mjs|tests/family-alpha-71-private-feedback.test.mjs|.github/workflows/family-alpha-71-feedback-no-deploy.yml) ;;
+              *) echo "Unexpected app/auth/cloud/camera or staging change: $file"; exit 1 ;;
+            esac
+          done
+          git fetch --no-tags origin 0fb6ab04ab79c36d449acee21aaaf4318871d647 879f1b92fb15f9bc9a7f0429c7ee178f7bbf1373 795ad6637f8d4f782bc99751211b25e8e72a3a7d 08ed6ac4a3fc921eae5d5d3df3bd3966429559d2 1ecac1079e75f1f25dc70a4c712b2448eb87dca8 d0ff131a4e5617e1a3f4fcfb40d00602fdce9833 68bed0c0f0f25538d0d5a00fbaf9aa34d80b8663 97397e80a7cf66e5e656c5b74c924a51e50f0f6f 44f288dfdcfa02ec5b2cf89a7c79c08cfcaa3584 e75cd4689356ae468a88504ddb25df4b4ff6cb70 c86f48f0119329e4001002304e2dfe480815b099 100ffc194793470c871f2b0c6092bc59f1c583b8 77d9f5b83eae475cd8d5d35593c1dc9c2e6bf02f
+      - name: Dependencies and protected source build
+        run: |
+          npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 playwright@1.56.1 fake-indexeddb@6.2.4
+          git fetch origin research/work38-manual-outline
+          node scripts/build-work47-parent.mjs
+          node scripts/build-work47-benchmark.mjs
+          node scripts/build-work49-cutout-hold.mjs
+          node scripts/build-work49-benchmark.mjs
+          node scripts/build-family-alpha-63-automatic-portable-hold.mjs
+          node scripts/build-family-alpha-64-isolation-guidance-hold.mjs
+          node scripts/build-family-alpha-65-review-lifecycle-hold.mjs
+          node scripts/build-family-alpha-66-work51-review-lifecycle-hold.mjs
+          node scripts/build-family-alpha-68-consolidated-hold.mjs
+          node scripts/build-family-alpha-71-private-feedback-hold.mjs
+      - name: Pure feedback schema and leak attempts
+        run: node --test tests/family-alpha-71-private-feedback.test.mjs tests/family-alpha-69-release-gate.test.mjs
+      - name: Protected Chromium and WebKit downloaded note and session privacy
+        run: node scripts/test-family-alpha-71-feedback-browser.mjs
+      - name: Inherited source-bound editor and fit integration remain functional
+        run: |
+          node scripts/test-family-alpha-68-editor-browser.mjs
+          node scripts/test-family-alpha-68-fit-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: family-alpha-71-UI-feedback-HOLD
+          path: benchmark/family-alpha-71-feedback/
