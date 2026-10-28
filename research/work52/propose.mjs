@@ -19,6 +19,7 @@ export function proposeIsolationCleanup(base, options={}) {
   diff[i]=Math.max(...bg.map((v,c)=>Math.abs(rgba[i*4+c]-v)));
   if(rgba[i*4+3]>=128){visible++;const x=i%w,y=Math.floor(i/w);if(x>w*.35&&x<w*.65&&y>h*.35&&y<h*.7){coreCount++;coreContrast+=diff[i];}}
  }
+ if(visible<64||visible>n*.95)return empty('unisolated-or-empty-source');
  if(!coreCount||coreContrast/coreCount<10||coreContrast/coreCount>70)return empty('pale-core-background-ambiguity');
  // Flood only source pixels within two RGB levels of the observed background.
  // Every retained alpha value, including translucent lace, is a barrier unless
