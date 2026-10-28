@@ -79,7 +79,7 @@ try{
     assert.equal(await grade.inputValue(),'PASS');
     const forged=JSON.stringify({...parsed,release:'READY',ownerApproved:true});
     await input.setInputFiles({name:'fake.json',mimeType:'application/json',buffer:Buffer.from(forged)});
-    assert.match(await page.locator('#review-root [role=status]').innerText(),/Invalid review file rejected/);
+    await page.waitForFunction(()=>document.querySelector('#review-root [role=status]')?.textContent?.includes('Invalid review file rejected'));
     assert.equal(await grade.inputValue(),'PASS');
     assert.deepEqual(errors,[],'Browser page errors');
     assert.deepEqual(external,[],'No remote traffic permitted');
