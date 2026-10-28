@@ -27,4 +27,21 @@ try{for(const [name,engine]of (process.env.W48_CHROMIUM_ONLY==='1'?[['chromium',
  }
  assert.equal(await page.getByRole('button',{name:'Hard mask edge: off',exact:true}).count(),1);assert.match(await page.locator('#status').innerText(),/^REVIEW/,'Successful reset must clear any rejected-adjustment warning');if(name==='chromium'&&width===390)await page.locator('.pair').screenshot({path:out+'/edge-pairs/'+row.id+'-edge-off.png'});}
  const facts=await page.evaluate(async()=>{const d=window.work48;if(!d.record)return null;const {mapPoint}=await import('/research/work47/fit.mjs');const cuff=(plan,before)=>d.record.profile.cuffChecks?.map((k,i)=>{const p=before?plan.pieces[i]:plan.pieces.find(p=>p.side===k.side),v=mapPoint(p.matrix,[k.source[0]*d.row.width,k.source[1]*d.row.height]);return {side:k.side,error:Math.hypot(v[0]-k.target[0],v[1]-k.target[1])};});const c=document.createElement('canvas');const ratio=Math.min(1,240/Math.max(d.image.naturalWidth,d.image.naturalHeight));c.width=Math.ceil(d.image.naturalWidth*ratio);c.height=Math.ceil(d.image.naturalHeight*ratio);c.getContext('2d').drawImage(d.image,0,0,c.width,c.height);const pixels=c.getContext('2d').getImageData(0,0,c.width,c.height).data;return {beforeAssignment:d.sourceAssignment(pixels,c.width,c.height,d.before,d.row.width,d.row.height),afterAssignment:d.after.assignment,joins:d.after.joins,cuffBefore:cuff(d.before,true),cuffAfter:cuff(d.after,false),newProfile:d.record.profile,canvasChanged:document.querySelector('#before canvas').toDataURL()!==document.querySelector('#after canvas').toDataURL()};});
- if(supported&&name==='chromium'&&width===390){await mkdir(out+'/closeups',{recursive:true});await page.locator('.details').screenshot({path:out+'/closeups/'+row.id+'-edges.png'});}await page.screenshot({path:`${out}/screenshots/${name}-${width}-${row.id}.png`,fullPage:true});results.push({engine:name,width,id:row.id,supported,facts,refinement:row.refinement,grade:supported?'REVIEW':'FAIL',ownerApproved:false});}assert.deepEqual(errors,[]);assert.deepEqual(external,[]);await context.close();}}finally{await browser.close();}}}finally{server.close();}await writeFile(out+'/browser-results.json',JSON.stringify(results,null,2));console.log('WORK49_BROWSER_MATRIX',results.length);
+ if(supported&&name==='chromium'&&width===390){await mkdir(out+'/closeups',{recursive:true});await page.locator('.details').screenshot({path:out+'/closeups/'+row.id+'-edges.png'});}await page.screenshot({path:`${out}/screenshots/${name}-${width}-${row.id}.png`,fullPage:true});results.push({engine:name,width,id:row.id,supported,facts,refinement:row.refinement,grade:supported?'REVIEW':'FAIL',ownerApproved:false});
+ if(supported&&row.id==='commons-0001'&&name==='chromium'&&width===390){
+  await page.getByRole('button',{name:'Hard mask edge: off',exact:true}).click();
+  assert.equal(await page.evaluate(()=>window.work48.record.adjust.binaryEdgeReview),true);
+  await page.getByRole('button',{name:'Original cutout fallback',exact:true}).click();
+  const reset=await page.evaluate(()=>({
+   sameSource:window.work48.record.source.src===window.work48.image.src,
+   edgeCleanup:window.work48.record.adjust.edgeCleanup,
+   binaryEdgeReview:window.work48.record.adjust.binaryEdgeReview
+  }));
+  assert.deepEqual(reset,{sameSource:true,edgeCleanup:false,binaryEdgeReview:false},
+   'New source must never inherit outdated optional edge-rendering review');
+  assert.equal(await page.getByRole('button',{name:'Hard mask edge: off',exact:true}).count(),1);
+  assert.equal(await page.getByRole('button',{name:'Edge cleanup: off',exact:true}).count(),1);
+  assert.equal(await page.getByLabel('Your visual grade').inputValue(),'NOT_REVIEWED',
+   'Changing the mask source must clear any prior visual decisions');
+ }
+}assert.deepEqual(errors,[]);assert.deepEqual(external,[]);await context.close();}}finally{await browser.close();}}}finally{server.close();}await writeFile(out+'/browser-results.json',JSON.stringify(results,null,2));console.log('WORK49_BROWSER_MATRIX',results.length);
