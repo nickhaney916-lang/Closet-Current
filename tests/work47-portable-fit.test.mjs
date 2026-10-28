@@ -42,7 +42,7 @@ test('no forged approval, source hash, owner, release, accounts, URLs, code fiel
   x=>x.cutoutSHA256='0'.repeat(64),x=>x.profile.target=[[115,145],[245,145]],
   x=>x.adjust.shear=.25,x=>x.adjust.scale=1.6,
   x=>x.adjust.dx=Infinity,x=>x.adjust.leftSleeve=90,
-  x=>x.adjust.edgeCleanup=true,x=>x.adjust.binaryEdgeReview=true,
+  x=>{x.adjust.edgeCleanup=true;x.adjust.binaryEdgeReview=true;},
   x=>x.profile.anchors[0][0]=-1,x=>x.traces.left='hacked'
  ])await assert.rejects(restorePortableFitRecipe(s,changed(recipe,change)),/invalid or belongs|different reviewed/);
  await assert.rejects(restorePortableFitRecipe(s,'not json'));
