@@ -1,0 +1,9 @@
+# Family Alpha #73 — Work54 mobile review layout unblock (HOLD)
+
+This independent main-thread integration patch targets the exact failed Work54 CI run [#40753907291](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/40753907291), whose last step threw `true !== false` at `scripts/test-work54-browser.mjs:3:946`, the **horizontal document-overflow assertion** in the 15-photo Chromium/WebKit, 320/390/430px visual reviewer.
+
+**Scope:** Only CSS of the Work54 licensed review page receives shrinkable box sizing for its existing reviewed-source editor, file inputs and controls, with a max-width bound for nested photo avatar. It does not use overflow-x:hidden or overflow-x:clip to conceal defective controls or garment pixels. The original browser assertion still fails on overflow and now records the first overflowing DOM elements without logging source photos or user IDs. All source-fitting geometry, original RGB/JPEG, Work54 masks, exact source planner, the 15 licensed photo cases, benchmark grades, owner/session Auth, private backup, manual/fit recipe, unrelated branches, staging and production remain unchanged.
+
+**Goal:** Make the existing Work54 15-photo responsive review page usable on narrow screens without claiming new visual realism or promoting any photographic acceptance grades. All tests must pass on the exact candidate source before Work54 becomes eligible for main-thread review. Worn-avatar visual grades remain 0 PASS / 5 REVIEW / 10 FAIL.
+
+**Verification:** The inherited Work54 no-deploy GitHub Actions workflow runs its entire protected browser suite, all 15 photos in Chromium/WebKit at three widths, all inherited privacy/wardrobe/fit cases, and screenshots. New source unit tests check the controls avoid clipping and diagnostic assertions remain strict. **Family Alpha HOLD.**
