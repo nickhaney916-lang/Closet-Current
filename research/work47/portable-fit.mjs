@@ -63,7 +63,15 @@ async function fingerprint(source){
 }
 export async function createPortableFitRecipe(source,record){
  const binding=await fingerprint(source);
- const safe=normalizeFit(record,binding.slot,binding.width,binding.height);
+ if(!record||!record.profile||!record.adjust||typeof record.adjust!=='object'||
+    Object.keys(record.adjust).some(k=>!ADJUST.includes(k)))fail();
+ const defaults={dx:0,dy:0,scale:1,tilt:0,leftSleeve:0,rightSleeve:0,
+  edgeCleanup:false,binaryEdgeReview:false};
+ const safe=normalizeFit({
+  profile:{slot:record.profile.slot,anchors:record.profile.anchors},
+  adjust:{...defaults,...record.adjust},
+  traces:record.traces||{}
+ },binding.slot,binding.width,binding.height);
  const {profile,adjust,traces}=safe;
  const recipe={format:FORMAT,...binding,
   profile:{slot:profile.slot,anchors:profile.anchors},
