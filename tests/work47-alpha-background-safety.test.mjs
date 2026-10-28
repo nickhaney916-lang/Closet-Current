@@ -82,10 +82,10 @@ test('protected painter and original-photo fallback remain exact source-owned, n
  const [fit,editor,build]=await Promise.all(['research/work47/fit.mjs',
  'research/work47/editor.mjs','scripts/build-work47-fit-hold.mjs'].map(p=>readFile(p,'utf8')));
  assert.match(fit,/requireIsolatedCutoutForPreview\(inspectReviewedCutoutAlpha\(pixels/);
- assert.match(fit,/return \{\.\.\.plan,fringe,coverage,assignment,joins,faceOverlap,cutoutIntegrity\}/);
+ assert.ok(fit.includes('return {...plan,fringe,binaryEdge,coverage,assignment,joins,faceOverlap,cutoutIntegrity};'));
  assert.match(editor,/Cutout still looks like a solid photograph/);
  assert.match(editor,/Keep the original and remove its background before fitting/);
- assert.match(build,/\['editor\.mjs','fit\.mjs','edge-fringe\.mjs','atomic-preview\.mjs','cutout-integrity\.mjs'\]/);
+ assert.ok(build.includes("['editor.mjs','fit.mjs','edge-fringe.mjs','binary-edge.mjs','atomic-preview.mjs','cutout-integrity.mjs']"),'Source-pinned offline preview module allowlist changed');
  const mod=await readFile('research/work47/cutout-integrity.mjs','utf8');
  assert.doesNotMatch(mod,/fetch\(|localStorage|indexedDB|XMLHttpRequest|\.src\s*=/);
  assert.match(editor,/isActive\(\)===true|isActive\(\)\s*===\s*true|isActive\(\)\s*\&\&|isActive\(\)\s*\?\s*true|isActive\(\)===true|isActive\(\)\s*===\s*true|isActive\(\)/);
