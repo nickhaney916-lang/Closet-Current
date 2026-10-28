@@ -41,8 +41,22 @@ try{
    outside.push(u.slice(0,100));
   });
   await page.goto(origin+'/research/three-d-07/index.html');
-  await page.waitForFunction(()=>document.querySelector('#avatar')?.dataset.ready==='true',
-   null,{timeout:75000});
+  try{
+   await page.waitForFunction(()=>document.querySelector('#avatar')?.dataset.ready==='true',
+    null,{timeout:25000});
+  }catch(e){
+   const details=await page.evaluate(()=>({
+    title:document.title,status:document.querySelector('#status')?.textContent,
+    photoStatus:document.querySelector('#photoStatus')?.textContent,
+    body:document.body.innerText.slice(0,1200),
+    canvasReady:document.querySelector('#avatar')?.dataset.ready
+   }));
+   console.error('THREE_D_07_STARTUP_DIAGNOSTIC',JSON.stringify({width,details,errors,
+    failedRequests:failures.slice(-12),outsideRequests:outside.slice(-12)}));
+   await mkdir('benchmark/three-d-07',{recursive:true});
+   await page.screenshot({path:'benchmark/three-d-07/startup-failure-'+width+'-HOLD.png',fullPage:true});
+   throw e;
+  }
   const canvas=page.locator('#avatar');
   assert.equal(await canvas.getAttribute('data-model'),'female');
   assert.equal(await canvas.getAttribute('data-shirt'),'none');
