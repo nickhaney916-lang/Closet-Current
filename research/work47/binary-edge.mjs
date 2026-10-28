@@ -19,11 +19,25 @@ export function softenReviewedBinarySilhouette(rgba,width,height){
  if(!solid||!clear||solid/n<.02||clear/n<.02||partial/n>.002)
   return unedited('NOT_REVIEWED_BINARY_CUTOUT');
  // Never process an opaque rectangular photo or heavily antialiased cutout.
+ // Use ONLY transparent background reachable from the IMAGE EXTERIOR.
+ // Enclosed transparent holes inside prints, embroidered letters, or fabric
+ // openings are NOT silhouette edges and must stay exactly unchanged.
+ const outside=new Uint8Array(n),queue=new Uint32Array(n);
+ let head=0,tail=0;
+ const seed=i=>{if(alpha[i]<=4&&!outside[i]){outside[i]=1;queue[tail++]=i;}};
+ for(let x=0;x<width;x++){seed(x);seed((height-1)*width+x);}
+ for(let y=1;y<height-1;y++){seed(y*width);seed(y*width+width-1);}
+ if(!tail)return unedited('NO_EXTERIOR_TRANSPARENCY');
+ while(head<tail){
+  const i=queue[head++],x=i%width;
+  if(x)seed(i-1);
+  if(x<width-1)seed(i+1);
+  if(i>=width)seed(i-width);
+  if(i<n-width)seed(i+width);
+ }
  const radius=Math.max(2,Math.min(12,Math.ceil(Math.max(width,height)/250)));
  const far=radius+1,dist=new Uint8Array(n);
- for(let y=0;y<height;y++)for(let x=0;x<width;x++){
-  const i=y*width+x;dist[i]=alpha[i]<=4?0:Math.min(far,x+1,y+1,width-x,height-y);
- }
+ for(let i=0;i<n;i++)dist[i]=outside[i]?0:far;
  for(let y=0;y<height;y++)for(let x=0;x<width;x++){
   const i=y*width+x;
   if(x&&dist[i-1]+1<dist[i])dist[i]=dist[i-1]+1;
