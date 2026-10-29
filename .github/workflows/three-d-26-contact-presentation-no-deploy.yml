@@ -1,0 +1,65 @@
+name: 3D-26 body attachment and garment-aware mannequin presentation (HOLD NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'research/three-d-26/**'
+      - 'research/three-d-24/anatomical-dress.mjs'
+      - 'research/three-d-15/outfit-controller.mjs'
+      - 'research/three-d-15/showroom.mjs'
+      - 'research/three-d-15/demo.mjs'
+      - 'tests/three-d-26-contact.test.mjs'
+      - 'scripts/test-three-d-26-browser.mjs'
+      - '.github/workflows/three-d-26-contact-presentation-no-deploy.yml'
+      - 'scripts/audit-three-d-26-contact.mjs'
+      - 'scripts/build-three-d-26-visual-qa.mjs'
+permissions:
+  contents: read
+jobs:
+  anatomical-dress-source-bound-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Fail on any non-research source change, other clothing or original photo
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git fetch --no-tags origin 35efaadf9f80589195b261da58a5c16daa68e294
+          git diff --name-only 35efaadf9f80589195b261da58a5c16daa68e294 HEAD | while IFS= read -r path; do
+            case "$path" in
+              research/three-d-26/*|research/three-d-24/anatomical-dress.mjs|research/three-d-15/outfit-controller.mjs|research/three-d-15/showroom.mjs|research/three-d-15/demo.mjs|tests/three-d-26-contact.test.mjs|scripts/test-three-d-26-browser.mjs|.github/workflows/three-d-26-contact-presentation-no-deploy.yml|scripts/audit-three-d-26-contact.mjs|scripts/build-three-d-26-visual-qa.mjs) ;;
+              *) echo "Unexpected original photo, shirt, recognition, auth, staging, prod or Drive Duel edit: $path"; exit 1 ;;
+            esac
+          done
+          test "$(git diff --name-only 35efaadf9f80589195b261da58a5c16daa68e294 HEAD | wc -l)" -le 12
+      - name: Use local exact research dependencies only
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 three@0.180.0 playwright@1.56.1
+      - name: Reproduce frozen original licensed dress source and two original approved model hashes
+        run: |
+          git fetch --no-tags origin 53f2ad344dc56a1477e343531c423aed0e66c17d dd6bac3fa9ff640d4f562cf925337440bdb5cf8f 3a572193987cb29389727426136c6eb3ac326783 dfb40889c4c1221fb1833b859e8a11ef38aeb76e
+          node scripts/build-work47-benchmark.mjs
+          node research/three-d-20/restore-approved-models.mjs
+      - name: Verify real skinned dress vertex geometry and unchanged original photographic source coordinates
+        run: |
+          node --test tests/three-d-26-contact.test.mjs tests/three-d-22-fit.test.mjs tests/three-d-23-dress-neckline.test.mjs tests/three-d-24-dress-fit.test.mjs
+          node --test --test-name-pattern='genuine original anatomy|source module|Family Alpha' tests/three-d-25-integrated-anatomy.test.mjs
+          node --test --test-name-pattern='Stock-only|Both garment cutouts' tests/three-d-15-outfits.test.mjs
+      - name: Real Chromium WebGL2 source-reviewed V-neck before and after on two rigs
+        run: node scripts/test-three-d-26-browser.mjs
+      - name: Actual posed-body nearest-triangle contact probes (not full collision proof)
+        run: node scripts/audit-three-d-26-contact.mjs
+      - name: Original photo, cutout, full-view and shoulder-closeup comparisons
+        run: node scripts/build-three-d-26-visual-qa.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: THREE-D-26-CONTACT-PRESENTATION-REAL-WEBGL-REVIEW
+          path: |
+            benchmark/three-d-26/
+            research/three-d-06/models/verified-assets.json
+          if-no-files-found: warn

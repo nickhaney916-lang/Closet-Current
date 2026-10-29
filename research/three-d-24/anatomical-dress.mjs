@@ -41,7 +41,7 @@ export function anatomicalSections(root){
  }
  return {waist,neck,shoulders,radius};
 }
-export function fitAnatomicalDress(dress,root,{enabled=true}={}){
+export function fitAnatomicalDress(dress,root,{enabled=true,clearHipEnvelope=false}={}){
  if(enabled===false)return dress;
  if(enabled!==true||!dress?.mesh?.isSkinnedMesh||dress.stats?.sourceId!=='commons-0053'||dress.stats.physicalFrontNeckline!==true||dress.stats.releaseAuthorized!==false)throw Error('Reviewed PR427 dress with physical neckline required');
  const m=dress.mesh,g=m.geometry,rows=dress.stats.ringCount,stride=g.attributes.position.count/rows,segments=stride-1;
@@ -60,7 +60,11 @@ export function fitAnatomicalDress(dress,root,{enabled=true}={}){
     const y=v.p.y,hipY=body.waist.y-.025;
     const slice=body.radius(Math.max(hipY,y),angle);
     let radius=slice.radius+.018;
-    if(y<hipY){const hem=original(0,j).p.y,t=T.MathUtils.clamp((hipY-y)/(hipY-hem),0,1);radius+=.095*Math.pow(t,1.35);}
+    if(y<hipY){
+     // Reuse the final verified PR429 lower-hip clearance correction.
+     if(clearHipEnvelope){const dir=new T.Vector3(Math.sin(angle),0,Math.cos(angle));for(const drop of [.06,.10,.13]){const hip=body.radius(body.waist.y-drop,angle);const extent=hip.origin.clone().sub(slice.origin).dot(dir)+hip.radius+.024;radius=Math.max(radius,extent);}}
+     const hem=original(0,j).p.y,t=T.MathUtils.clamp((hipY-y)/(hipY-hem),0,1);radius+=.095*Math.pow(t,1.35);
+    }
     const target=new T.Vector3(slice.origin.x+Math.sin(angle)*radius,y,slice.origin.z+Math.cos(angle)*radius);
     v.p.copy(target);
    }

@@ -7,12 +7,13 @@ import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {createOutfitController} from './outfit-controller.mjs';
+import {installOpeningSkinAttribute} from '../three-d-26/contact-presentation.mjs';
 const ALLOWED=Object.freeze({
  male:{file:'male-cc0-rigged.glb',title:'Anatomical mannequin A'},
  female:{file:'female-cc0-rigged.glb',title:'Anatomical mannequin B'}
 });
 const COLORS=Object.freeze({porcelain:0xc3bdb5,slate:0x777f84});
-export function mountAnatomicalShowroom(canvas,{onChange=()=>{},refineFit=true,enableCuffFix=true,enableCuffFacing=true,enableCuffBridge=true,naturalFit=true,necklineSeams=true,dressNeckline=true,dressAnatomy=true}={}){
+export function mountAnatomicalShowroom(canvas,{onChange=()=>{},refineFit=true,enableCuffFix=true,enableCuffFacing=true,enableCuffBridge=true,naturalFit=true,necklineSeams=true,dressNeckline=true,dressAnatomy=true,dressContact=true}={}){
  if(!canvas||typeof canvas.getContext!=='function')throw Error('Canvas required');
  // Baseline comparison imports the untouched verified renderer.
  const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false,
@@ -48,6 +49,7 @@ export function mountAnatomicalShowroom(canvas,{onChange=()=>{},refineFit=true,e
  const group=new THREE.Group();scene.add(group);
  let selected=null,current='female',finish=false,loading=0,
   lastColor='porcelain',lastStats=null,spin=false,frame=0,pose='relaxed',started=false,dirty=true,lastTime=0;
+ const dressPresentation={value:0};
  const loadTimes=[];let lastRenderMs=0,outfit=null,poseChanges=0;
  const loader=new GLTFLoader();
  canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();canvas.dataset.context='lost';});
@@ -74,12 +76,13 @@ export function mountAnatomicalShowroom(canvas,{onChange=()=>{},refineFit=true,e
     // anatomical mesh surface without extra cylindrical garment geometry.
     // This is only a mannequin privacy/modesty layer, NOT clothing fitting.
     material.onBeforeCompile=shader=>{
+     shader.uniforms.uDressPresentation=dressPresentation;
      shader.vertexShader=shader.vertexShader.replace('void main() {',
-      'attribute vec3 studioRestPosition;\n'+'varying vec3 vStudioBody;\nvoid main() {');
+      'attribute vec3 studioRestPosition;attribute float dressOpeningSkin;\n'+'varying vec3 vStudioBody;varying float vOpeningSkin;\nvoid main() {');
      shader.vertexShader=shader.vertexShader.replace('#include <worldpos_vertex>',
-      '#include <worldpos_vertex>\nvStudioBody=studioRestPosition;');
+      '#include <worldpos_vertex>\nvStudioBody=studioRestPosition;vOpeningSkin=dressOpeningSkin;');
      shader.fragmentShader=shader.fragmentShader.replace('void main() {',
-      'varying vec3 vStudioBody;\nvoid main() {');
+      'varying vec3 vStudioBody;varying float vOpeningSkin;uniform float uDressPresentation;\nvoid main() {');
      shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>',
       `#include <color_fragment>
        float torso= smoothstep(1.10,1.14,vStudioBody.y)*
@@ -88,7 +91,7 @@ export function mountAnatomicalShowroom(canvas,{onChange=()=>{},refineFit=true,e
        float shorts= smoothstep(.74,.78,vStudioBody.y)*
         (1.0-smoothstep(1.10,1.14,vStudioBody.y))*
         (1.0-smoothstep(.29,.38,abs(vStudioBody.x)));
-       float baseCoverage=clamp(torso+shorts,0.0,1.0);
+       float baseCoverage=clamp(torso*(1.0-uDressPresentation*vOpeningSkin)+shorts,0.0,1.0);
        vec3 neutralCloth=vec3(.075,.115,.10);
        diffuseColor.rgb=mix(diffuseColor.rgb,neutralCloth,baseCoverage);
       `);
@@ -123,7 +126,7 @@ export function mountAnatomicalShowroom(canvas,{onChange=()=>{},refineFit=true,e
  };
  const load=async kind=>{
   if(finish||!Object.hasOwn(ALLOWED,kind))throw Error('Unknown mannequin source');
-  outfit?.setOutfit('none');spin=false;group.rotation.y=0;
+  outfit?.setOutfit('none');dressPresentation.value=0;spin=false;group.rotation.y=0;
   const token=++loading;
   const began=performance.now();
   const url=new URL('../three-d-06/models/'+ALLOWED[kind].file,import.meta.url).href;
@@ -146,10 +149,10 @@ export function mountAnatomicalShowroom(canvas,{onChange=()=>{},refineFit=true,e
   selected=obj;group.add(selected);current=kind;lastStats=stats;
   {
    selected.updateMatrixWorld(true);
-   outfit=createOutfitController(selected,{refineFit,enableCuffFix,enableCuffFacing,enableCuffBridge,naturalFit,necklineSeams,dressNeckline,dressAnatomy});outfit.setPose(pose);
+   outfit=createOutfitController(selected,{refineFit,enableCuffFix,enableCuffFacing,enableCuffBridge,naturalFit,necklineSeams,dressNeckline,dressAnatomy,dressContact});outfit.setPose(pose);
   }
   canvas.dataset.pose=pose;loadTimes.push(performance.now()-began);
-  outfit.setOutfit('pants');syncOutfit();shade(lastColor);front();
+  installOpeningSkinAttribute(selected);outfit.setOutfit('pants');syncOutfit();shade(lastColor);front();
   canvas.dataset.model=kind;
   canvas.dataset.bones=String(stats.bones);
   canvas.dataset.skinnedMeshes=String(stats.skinned);
@@ -180,7 +183,7 @@ export function mountAnatomicalShowroom(canvas,{onChange=()=>{},refineFit=true,e
  const setPose=mode=>{if(!selected)return;spin=false;group.rotation.y=0;outfit.setPose(mode);pose=mode;canvas.dataset.pose=mode;poseChanges++;draw();};
  const zoom=direction=>{const offset=camera.position.clone().sub(controls.target);const length=THREE.MathUtils.clamp(offset.length()*direction,controls.minDistance,controls.maxDistance);camera.position.copy(controls.target).add(offset.setLength(length));controls.update();draw();};
  document.addEventListener('visibilitychange',()=>{dirty=true;});
- const syncOutfit=()=>{const s=outfit?.getState();canvas.dataset.outfit=s?.mode||'none';canvas.dataset.shirt=s?.shirt?'source-reviewed':'none';canvas.dataset.pants=s?.pants?'neutral-research':'none';canvas.dataset.dress=s?.dress?'source-reviewed':'none';};
+ const syncOutfit=()=>{const s=outfit?.getState();dressPresentation.value=dressContact&&s?.mode==='dress'?1:0;canvas.dataset.outfit=s?.mode||'none';canvas.dataset.shirt=s?.shirt?'source-reviewed':'none';canvas.dataset.pants=s?.pants?'neutral-research':'none';canvas.dataset.dress=s?.dress?'source-reviewed':'none';};
  const applyOutfit=(mode,candidate,options={})=>{if(!selected||finish)throw Error('Loaded figure required');spin=false;group.rotation.y=0;const s=outfit.setOutfit(mode,candidate,options);syncOutfit();draw();return s;};
  const stop=()=>{outfit?.dispose();syncOutfit();finish=true;loading++;controls.dispose();
   if(selected){outfit?.dispose();const skeletons=new Set();selected.traverse(o=>{if(o.isSkinnedMesh)skeletons.add(o.skeleton);if(o.isMesh){o.geometry.dispose();if(o.userData.ownedMaterial)o.material.dispose();}});skeletons.forEach(s=>s.dispose());}
@@ -188,6 +191,6 @@ export function mountAnatomicalShowroom(canvas,{onChange=()=>{},refineFit=true,e
   shadow.geometry.dispose();shadow.material.map?.dispose();shadow.material.dispose();renderer.dispose();};
  return {load,shade,front,side,back,rotate,start,stop,setPose,zoom,applyOutfit,
   setSpin:v=>{spin=!!v;dirty=true;},
-  getState:()=>({kind:current,loaded:!!selected,finish,stats:lastStats,frames:frame,finishMaterial:lastColor,pose:pose,loadMs:loadTimes.at(-1),lastRenderMs,geometries:renderer.info.memory.geometries,textures:renderer.info.memory.textures,pixelRatio:renderer.getPixelRatio(),drawPixels:canvas.width*canvas.height,cameraDistance:camera.position.distanceTo(controls.target),outfit:outfit?.getState()||null,poseChanges,releaseAuthorized:false})
+  getState:()=>({kind:current,loaded:!!selected,finish,stats:lastStats,frames:frame,finishMaterial:lastColor,pose:pose,loadMs:loadTimes.at(-1),lastRenderMs,geometries:renderer.info.memory.geometries,textures:renderer.info.memory.textures,pixelRatio:renderer.getPixelRatio(),drawPixels:canvas.width*canvas.height,cameraDistance:camera.position.distanceTo(controls.target),outfit:outfit?.getState()||null,dressPresentation:dressPresentation.value,poseChanges,releaseAuthorized:false})
  };
 }
