@@ -1,0 +1,62 @@
+name: 3D-37 second source exact original/alpha audit (DRAFT HOLD NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'scripts/build-three-d-37-second-jeans.mjs'
+      - 'research/three-d-37/**'
+      - '.github/workflows/three-d-37-second-jeans-no-deploy.yml'
+      - 'research/three-d-30/reviewed-photo-pants.mjs'
+      - 'research/three-d-31/photo-jeans-demo.mjs'
+      - 'research/three-d-15/outfit-controller.mjs'
+      - 'research/three-d-15/showroom.mjs'
+      - 'research/three-d-32/natural-jeans-drape.mjs'
+      - 'research/three-d-33/posterior-fabric-fairing.mjs'
+      - 'research/three-d-34/hanging-pants-envelope.mjs'
+      - 'research/three-d-35/independent-jeans-loft.mjs'
+      - 'research/three-d-36/crotch-seat-panel.mjs'
+      - 'scripts/test-three-d-37-second-browser.mjs'
+      - 'tests/three-d-37-source-true.test.mjs'
+permissions:
+  contents: read
+jobs:
+  second-original-and-cutout:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Only isolated original-photograph research source
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor d698c952812167c1cbed05356000d67385a08634 HEAD
+          git diff --name-only d698c952812167c1cbed05356000d67385a08634 HEAD | while IFS= read -r f; do
+            case "$f" in
+              research/three-d-37/*|research/three-d-30/reviewed-photo-pants.mjs|research/three-d-31/photo-jeans-demo.mjs|research/three-d-15/outfit-controller.mjs|research/three-d-15/showroom.mjs|research/three-d-32/natural-jeans-drape.mjs|research/three-d-33/posterior-fabric-fairing.mjs|research/three-d-34/hanging-pants-envelope.mjs|research/three-d-35/independent-jeans-loft.mjs|research/three-d-36/crotch-seat-panel.mjs|scripts/build-three-d-37-second-jeans.mjs|tests/three-d-37-source-true.test.mjs|scripts/test-three-d-37-second-browser.mjs|.github/workflows/three-d-37-second-jeans-no-deploy.yml) ;;
+              *) echo "OUT OF SCOPE: $f"; exit 1 ;;
+            esac
+          done
+      - name: Install pinned local image/geometric QA dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 three@0.180.0 playwright@1.56.1
+      - name: Original candidate exact SHA and RGB-derived alpha, fail closed until pins
+        run: node scripts/build-three-d-37-second-jeans.mjs
+      - name: Verify original source, different garment, original RGB, source review and alpha
+        run: node --test tests/three-d-37-source-true.test.mjs
+      - name: Rebuild original licensed shirt and CC0 human figures
+        run: |
+          git fetch --no-tags origin 53f2ad344dc56a1477e343531c423aed0e66c17d dd6bac3fa9ff640d4f562cf925337440bdb5cf8f 3a572193987cb29389727426136c6eb3ac326783 dfb40889c4c1221fb1833b859e8a11ef38aeb76e
+          node scripts/build-work47-benchmark.mjs
+          node research/three-d-20/restore-approved-models.mjs
+      - name: Real second jeans pair on both original anatomical figures and four angles
+        run: node scripts/test-three-d-37-second-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: THREE-D-37-SECOND-SOURCE-JEANS-SHA-AND-GENUINE-WEBGL-HOLD
+          path: |
+            benchmark/three-d-37/
+          if-no-files-found: warn
