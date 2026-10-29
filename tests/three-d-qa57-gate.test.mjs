@@ -28,8 +28,8 @@ test('unreviewed or REVIEW/FAIL clothing can never become a release PASS',()=>{
 });
 test('stale screenshots, missing explanations and missing privacy/phone approval fail closed',()=>{
  const copy=structuredClone(positive);
- copy.assessments['male:source:rear'].screenshotSHA256=h('d');
- copy.assessments['male:source:rear'].notes='ok';
+ copy.assessments['male:source:back'].screenshotSHA256=h('d');
+ copy.assessments['male:source:back'].notes='ok';
  copy.privacyGateVerified=false;
  copy.physicalDeviceTested=false;
  assert.equal(assessFamilyAlpha(copy,ledger).approved,false);
