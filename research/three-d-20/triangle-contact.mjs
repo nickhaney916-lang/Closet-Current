@@ -67,6 +67,36 @@ function selectSkinTriangles(root,axes){
   if(selected[side].length<20)throw Error('Real body wrist triangles unavailable: '+side);
  return {selected,sourceMeshCount,sourceTriangleCount:seenTris};
 }
+export function pointAgainstActualSkinTriangles(point,axisCenter,triangles){
+ if(!(point instanceof THREE.Vector3)||!(axisCenter instanceof THREE.Vector3)||
+  !Array.isArray(triangles)||!triangles.length||triangles.length>limits.maxSkinTriangles||
+  !(triangles[0] instanceof THREE.Triangle)||
+  ![point.x,point.y,point.z,axisCenter.x,axisCenter.y,axisCenter.z].every(valid))
+  throw Error('Finite cuff point, real wrist axis and body triangles required');
+ const inward=axisCenter.clone().sub(point);
+ if(inward.lengthSq()<1e-10)throw Error('Degenerate forearm radial direction');
+ inward.normalize();
+ const inwardRay=new THREE.Ray(point,inward),outwardRay=new THREE.Ray(point,inward.clone().negate());
+ const near=new THREE.Vector3(),hit=new THREE.Vector3();
+ let squared=Infinity,nearest=null,inHit=Infinity,outHit=Infinity;
+ for(const triangle of triangles){
+  triangle.closestPointToPoint(point,near);
+  const d=point.distanceToSquared(near);
+  if(d<squared){squared=d;nearest=near.clone();}
+  if(inwardRay.intersectTriangle(triangle.a,triangle.b,triangle.c,false,hit)){
+   const d=point.distanceTo(hit);if(d>1e-6&&d<inHit)inHit=d;
+  }
+  if(outwardRay.intersectTriangle(triangle.a,triangle.b,triangle.c,false,hit)){
+   const d=point.distanceTo(hit);if(d>1e-6&&d<outHit)outHit=d;
+  }
+ }
+ if(!nearest||!Number.isFinite(squared))throw Error('No nearby real skin triangle surface');
+ return Object.freeze({
+  nearestDistance:Math.sqrt(squared),
+  inwardSurfaceHit:inHit<.2?inHit:null,
+  outwardSurfaceHit:outHit<.2?outHit:null
+ });
+}
 function sampleRealHem(shirt,axes,{step=2}={}){
  const bridge=shirt.meshes.find(m=>m.name==='3D18-neutral-wrist-hem-bridge');
  const facing=shirt.meshes.find(m=>m.name==='3D17-neutral-inner-cuff-facing');
@@ -96,42 +126,15 @@ export function measureCuffBodyTriangleContact(root,shirt,{hemStep=2}={}){
  root.updateMatrixWorld(true);
  const axes=wristAxes(root),hem=sampleRealHem(shirt,axes,{step:hemStep});
  const skin=selectSkinTriangles(root,axes),sideMetrics={};
- const nearestPoint=new THREE.Vector3(),intersection=new THREE.Vector3();
  for(const side of ['L','R']){
-  const distances=[],radialInward=[],radialOutward=[],nearestRadial=[],axial=[];
+  const distances=[],radialInward=[],radialOutward=[],axial=[];
   const triangles=skin.selected[side],samples=hem[side];
-  let bodyHitCount=0;
   for(const {p,center,t} of samples){
    axial.push(t);
-   let closest=Infinity,nearest=null;
-   for(const tri of triangles){
-    tri.closestPointToPoint(p,nearestPoint);
-    const d=p.distanceToSquared(nearestPoint);
-    if(d<closest){closest=d;nearest=nearestPoint.clone();}
-   }
-   if(!nearest||!Number.isFinite(closest))throw Error('No real wrist skin contact');
-   distances.push(Math.sqrt(closest));
-   nearestRadial.push(p.distanceTo(nearest));
-   // Determine whether body skin lies inward or outward in the actual
-   // forearm-radial direction. Neither proves continuous cloth coverage.
-   const inward=center.clone().sub(p).normalize();
-   if(!valid(inward.x)||inward.lengthSq()<.99)throw Error('Invalid wrist bone radial axis');
-   const inwardRay=new THREE.Ray(p,inward),outwardRay=new THREE.Ray(p,inward.clone().negate());
-   let closestIn=Infinity,closestOut=Infinity;
-   for(const tri of triangles){
-    const hitIn=inwardRay.intersectTriangle(tri.a,tri.b,tri.c,false,intersection);
-    if(hitIn){
-     const d=p.distanceTo(hitIn);
-     if(d>1e-6&&d<closestIn)closestIn=d;
-    }
-    const hitOut=outwardRay.intersectTriangle(tri.a,tri.b,tri.c,false,intersection);
-    if(hitOut){
-     const d=p.distanceTo(hitOut);
-     if(d>1e-6&&d<closestOut)closestOut=d;
-    }
-   }
-   if(closestIn<.2){radialInward.push(closestIn);bodyHitCount++;}
-   if(closestOut<.2)radialOutward.push(closestOut);
+   const hit=pointAgainstActualSkinTriangles(p,center,triangles);
+   distances.push(hit.nearestDistance);
+   if(hit.inwardSurfaceHit!==null)radialInward.push(hit.inwardSurfaceHit);
+   if(hit.outwardSurfaceHit!==null)radialOutward.push(hit.outwardSurfaceHit);
   }
   sideMetrics[side]={
    realSourceHemSamples:samples.length,
@@ -139,9 +142,8 @@ export function measureCuffBodyTriangleContact(root,shirt,{hemStep=2}={}){
    hemPointToBodyTriangleMeters:stats(distances),
    inwardRadialSkinSurfaceMeters:stats(radialInward),
    outwardRadialSkinSurfaceMeters:stats(radialOutward),
-   nearestSkinPointEuclideanMeters:stats(nearestRadial),
    hemBoneAxisFraction:stats(axial),
-   inwardSkinHitFraction:Number((bodyHitCount/samples.length).toFixed(4)),
+   inwardSkinHitFraction:Number((radialInward.length/samples.length).toFixed(4)),
    signedClearance:null,
    garmentTriangleToBodyTriangleIntersectionValidated:false,
    watertightBodyValidated:false,

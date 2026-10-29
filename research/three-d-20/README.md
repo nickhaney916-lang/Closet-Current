@@ -2,6 +2,12 @@
 
 **Objective:** Progress from [PR #421's vertex-sampling audit](https://github.com/nickhaney916-lang/Closet-Current/pull/421) to a genuine *body-surface* contact diagnostic before altering any more material or geometry. User wants a lifelike human wearing the original photographed garment. Previous 3D18 wrist hem attempts left pale visible wrist wedges despite green source/functional CI. A third neutral strip without determining whether skin actually meets the hem is not justified.
 
+## Provider hash mismatch: hold original-rig tests
+
+Exact-head first CI [#40916946805](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/40916946805) passed the 4-file source guard but blocked during immutable CC0 male GLB download: three separate provider responses did not match the previous verified male SHA-256. The repository's original pin enforcement correctly refused the changed bytes. This does **not** establish any new real-body wrist measurements; never repin to unknown bytes, disable SHA checks, or silently substitute human models.
+
+A separate unit-test CI job tests the same actual Triangle.closestPointToPoint and inward/outward Ray.intersectTriangle algorithm against mathematically known geometry. This can pass independently of model-provider availability. The full original-male/female source-verified pose test remains RED/HOLD until the exact previously authenticated GLB binaries are available through an independently verified source. A green geometry-only test is **not** visual appearance acceptance.
+
 ## Implementation
 
 This strictly read-only code measures the **true posed anatomical surface triangles** from the source-hash-pinned CC0 male and female models, rather than only distances to selected body vertices. `research/three-d-20/triangle-contact.mjs`:
@@ -16,7 +22,7 @@ This strictly read-only code measures the **true posed anatomical surface triang
 
 ## Source identity / no-op guarantees
 
-Exact parent [3D19 PR #421](https://github.com/nickhaney916-lang/Closet-Current/pull/421) commit `5deb26e55cac8e40fa4d286ac5925a58cdfb97f9`. Only four new research/test/CI files. Historical Work47 original 15 licensed source JPEGs and existing provisional masks rebuilt from immutable source, both 163-bone anatomical CC0 binary GLBs SHA256-locked and never changed. Node tests use original Work61 `createOutfitController`, source-verified original AJ shirt, both real body rigs and each **source and relaxed pose**; source pose repeated for reproducibility on the female rig. Results emitted as `benchmark/three-d-20/actual-skin-triangle-contact-HOLD.json`.
+Exact parent [3D19 PR #421](https://github.com/nickhaney916-lang/Closet-Current/pull/421) commit `5deb26e55cac8e40fa4d286ac5925a58cdfb97f9`. Only five new research/test/CI files. Historical Work47 original 15 licensed source JPEGs and existing provisional masks rebuilt from immutable source, both 163-bone anatomical CC0 binary GLBs SHA256-locked and never changed. Node tests use original Work61 `createOutfitController`, source-verified original AJ shirt, both real body rigs and each **source and relaxed pose**; source pose repeated for reproducibility on the female rig. Results emitted as `benchmark/three-d-20/actual-skin-triangle-contact-HOLD.json`.
 
 The dedicated no-deploy CI re-runs both original 3D18 and 3D19 tests and the new actual wrist triangle contact test, plus existing 3D18 browser WebGL screenshot comparison and the 3D19 eight-panel genuine screenshot sheet. These are read-only legacy tests; any failures are not renamed or suppressed. CI artifact includes the real 3D20 contact report alongside old pre/post screenshot evidence. No new external browser requests, personal photos, Supabase/Cloudflare/Resend, paid AI, staging/production, family accounts, original JPEG or alpha modifications, Drive Duel, or merges/deployments.
 
