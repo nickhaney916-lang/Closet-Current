@@ -105,7 +105,7 @@ export function hangOriginalDenimEnvelope(pants,root,{enabled=true}={}){
   let safeDz=dz;
   // Preserve existing negative male closest-body oriented samples: never
   // deepen them or manufacture a signed contact PASS.
-  const allowed=Math.min(gap,.006)-.0004;
+  const allowed=gap-.0004;
   if(afterGap<allowed&&hit.normal.z>0){
    safeDz=clamp((allowed-gap)/hit.normal.z,dz,0);limited++;
   }else if(afterGap<allowed){limited++;safeDz=0;}
