@@ -1,0 +1,18 @@
+# Closet Current 3D-17 — source-neutral inner cuff facing on real rigged clothing (HOLD)
+
+## Why this is the next 3D priority
+
+The most recent integrated [3D-16 PR #418](https://github.com/nickhaney916-lang/Closet-Current/pull/418), exact head `8a7e25a59ca70943a7e9b0cd942cea5008a9cc8b`, mechanically improved the real photographed AJ shirt's cuff on both anatomical figures, and its [dedicated CI #40887769851](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/40887769851) passed. The actual source-licensed screenshot review **still saw pale forearm slivers and a black unfinished cuff rim**. Instead of endlessly changing sleeve length, the next meaningful fix is a thin garment-like **inner facing** around the real open cuff boundary. This stays within the user's 3D-first plan.
+
+## What is actually implemented
+
+- `research/three-d-17/inner-cuff-facing.mjs` inspects the actual source-pose Work56/59/61 **separate skinned shirt** indexed topology, finds genuine open boundary edges close to the real left/right wrist bones from `wristAxes`, and adds a narrow neutral-fabric inward/axial facing around each cuff. Limits: **5mm axial, 2mm inward**, not a closed disk or wrist-length invention; both cuffs must have multiple verified edges or the atomic outfit build fails closed.
+- The new facing is a true `THREE.SkinnedMesh` sharing the **existing original 163-bone CC0 skeleton and Work56 source-derived shirt shader**, with skin indices/normalized skin weights inherited from the exact boundary vertices. Its `panelPosition=(0,-99,0)` sentinel ensures it uses the verified original *median neutral shirt color* and **never reproduces the white AJ logo or samples new/unverified pixels**.
+- No modification to source JPEGs/transparent PNGs, alpha masks, reviewed-original source SHA, garment photograph UV coordinates, initial cuff correction, body anatomy or skin weights. Atomic shirt+pants and dress exclusion remain as Work61. Disposing/replacing the outfit removes/disposes this new geometry, not the shared existing material/skeleton.
+- `research/three-d-15/demo.mjs?cuffFacing=before` disables only the new cuff facing. The corrected 3D-16 radial/axial cuff-fit remains enabled in **both** before and after examples, ensuring an apples-to-apples check. No additional applications or new user accounts involved.
+
+## Verification and honesty
+
+Dedicated no-deploy CI strict eight-file allowlist from pinned 3D16 parent, original licensed **15-photo Work47** benchmark reconstruction, exact source SHA, both original source-verified adult anatomical GLBs. Node suite verifies distinct cuff geometry on both wrists, photographic original cloth mesh and RGB/panel/normal/weights identical byte-for-byte, neutral faces/pixel refusal, skeleton and dispose behavior, pose changes, unchanged neutral pants. Real Chromium WebGL2 mobile **320, 390 and 430 px × male/female × before/after** with same source review click, original JPEG/PNG identity, camera, pose, 3D side rotation, actual framebuffer changed pixel counts, no internet, twelve HOLD-labelled screenshots and JSON results.
+
+This is a better *cuff topology*, **not a certified seam, perfectly fitting wrist, full collision solver, photoreal cloth or full fifteen-photo PASS**. Real screenshots still require independent visual grading. Inherited camera/indexing CI remains red, and earlier stages may reject the research-only path with frozen source guards. **Family Alpha release remains HOLD** pending visual results, authenticated four-account RLS/JWT/cloud backup and physical phones. No merge, staging/production, paid inference, private photos, Drive Duel edits or user invitations.
