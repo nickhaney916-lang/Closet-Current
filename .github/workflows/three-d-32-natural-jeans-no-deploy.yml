@@ -1,0 +1,63 @@
+name: 3D-32 real denim anatomical drape (DRAFT HOLD NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'research/three-d-32/**'
+      - 'research/three-d-15/outfit-controller.mjs'
+      - 'research/three-d-15/showroom.mjs'
+      - 'research/three-d-31/photo-jeans-demo.mjs'
+      - 'tests/three-d-32-natural-jeans.test.mjs'
+      - 'scripts/test-three-d-32-pants-browser.mjs'
+      - '.github/workflows/three-d-32-natural-jeans-no-deploy.yml'
+permissions:
+  contents: read
+jobs:
+  original-photo-drape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Exact green PR437 parent and only isolated research/test scope
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor c470801b8a83d0b3582fdcb62e8045a0bd630fde HEAD
+          git diff --name-only c470801b8a83d0b3582fdcb62e8045a0bd630fde HEAD | while IFS= read -r f; do
+            case "$f" in
+              research/three-d-32/*|research/three-d-15/outfit-controller.mjs|research/three-d-15/showroom.mjs|research/three-d-31/photo-jeans-demo.mjs|tests/three-d-32-natural-jeans.test.mjs|scripts/test-three-d-32-pants-browser.mjs|.github/workflows/three-d-32-natural-jeans-no-deploy.yml) ;;
+              *) echo "OUT OF SCOPE: $f"; exit 1 ;;
+            esac
+          done
+      - name: Install only pinned local WebGL image and geometry tools
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 three@0.180.0 playwright@1.56.1
+      - name: Verify real public-domain original and preserved alpha cutout
+        run: |
+          node scripts/build-three-d-31-jeans-proposal.mjs
+          node --test tests/three-d-31-jeans-source.test.mjs
+      - name: Restore original licensed AJ shirt and exact CC0 163-bone figures
+        run: |
+          git fetch --no-tags origin 53f2ad344dc56a1477e343531c423aed0e66c17d dd6bac3fa9ff640d4f562cf925337440bdb5cf8f 3a572193987cb29389727426136c6eb3ac326783 dfb40889c4c1221fb1833b859e8a11ef38aeb76e
+          node scripts/build-work47-benchmark.mjs
+          node research/three-d-20/restore-approved-models.mjs
+      - name: Original male and female geometry and photo/UV/body preservation
+        run: |
+          node --test tests/three-d-32-natural-jeans.test.mjs
+          node --test tests/three-d-29-neckline.test.mjs
+      - name: Genuine 320 390 430 WebGL before and after, male female, source relaxed, all four views
+        run: node scripts/test-three-d-32-pants-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: THREE-D-32-SOURCE-TRUE-JEANS-NATURAL-DRAPE-REAL-BROWSER-HOLD
+          path: |
+            benchmark/three-d-32/
+            benchmark/three-d-31/metrics.json
+            benchmark/three-d-31/original-jeans.jpg
+            benchmark/three-d-31/cutout-proposal.png
+            research/three-d-06/models/verified-assets.json
+          if-no-files-found: warn
