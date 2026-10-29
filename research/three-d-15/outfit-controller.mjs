@@ -12,9 +12,10 @@ import {finishInnerCuffs} from '../three-d-17/inner-cuff-facing.mjs';
 import {bridgeSourceCuffHem} from '../three-d-18/wrist-hem-bridge.mjs';
 import {fitContinuousShirt} from '../three-d-20/surface-fit.mjs';
 import {finishNecklineAndSeams} from '../three-d-22/neckline-seams.mjs';
+import {fitAnatomicalDress,finishAnatomicalOpenings} from '../three-d-24/anatomical-dress.mjs';
 export const OUTFITS=Object.freeze(['none','pants','shirt','shirt-pants','dress']);
 export function sourceForOutfit(mode){if(!OUTFITS.includes(mode))throw Error('Unsupported outfit');return mode==='dress'?'commons-0053':mode.includes('shirt')?'commons-0003':null;}
-export function createOutfitController(root,{refineFit=true,enableCuffFix=true,enableCuffFacing=true,enableCuffBridge=true,naturalFit=true,necklineSeams=true,dressNeckline=true}={}){
+export function createOutfitController(root,{refineFit=true,enableCuffFix=true,enableCuffFacing=true,enableCuffBridge=true,naturalFit=true,necklineSeams=true,dressNeckline=true,dressAnatomy=true}={}){
  // Canonical normals must be captured before the existing presentation clone.
  const fitPants=createPantsFitter(root),shoulders=captureShoulderSurface(root);prepareBodyPresentation(root);
  let parts={},mode='none',pose='relaxed',changes=0,closed=false;
@@ -32,7 +33,15 @@ export function createOutfitController(root,{refineFit=true,enableCuffFix=true,e
    if(next==='pants'||next==='shirt-pants')built.pants=fitPants({pose:'source'});
    if(next==='dress'){
     const raw=buildSourceDress(root,candidate,{reviewed});
-    try{const shaped=shapePhysicalDressNeckline(raw,{enabled:dressNeckline});built.dress=refineFit?finishDressEdges(shaped):shaped;}catch(e){raw.dispose();throw e;}
+    try{
+     const shaped=shapePhysicalDressNeckline(raw,{enabled:dressNeckline});
+     // The original anatomical fitter requires a real physical V-neck boundary.
+     // A V-neck rollback also leaves anatomical cutting OFF; never silently
+     // substitute a deeper, unreviewed neck profile to satisfy the fitter.
+     const anatomyEnabled=dressAnatomy&&dressNeckline;
+     const fitted=anatomyEnabled?fitAnatomicalDress(shaped,root):shaped;
+     built.dress=refineFit?(anatomyEnabled?finishAnatomicalOpenings(fitted):finishDressEdges(fitted)):fitted;
+    }catch(e){raw.dispose();throw e;}
    }
    const skeletons=new Set();root.traverse(o=>{if(o.isSkinnedMesh&&!o.userData.work56Garment)skeletons.add(o.skeleton);});
    if(!all(built).every(m=>skeletons.has(m.skeleton)))throw Error('Garment skeleton mismatch');
