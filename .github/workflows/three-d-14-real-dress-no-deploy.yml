@@ -20,7 +20,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with: {fetch-depth: 0}
-      - name: Only eight new dress research or no-deploy files may change
+      - name: Only nine new dress research or no-deploy files may change
         run: |
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           git fetch --no-tags origin d09786163eb52a4a0fa05a5ffc546fc171896080
@@ -30,7 +30,7 @@ jobs:
               *) echo "Unexpected core, source-photo, authentication, prior garment, pants or production change: $f"; exit 1 ;;
             esac
           done
-          test "$(git diff --name-only d09786163eb52a4a0fa05a5ffc546fc171896080 HEAD | wc -l)" -le 8
+          test "$(git diff --name-only d09786163eb52a4a0fa05a5ffc546fc171896080 HEAD | wc -l)" -le 9
       - name: Install local research-only model and source-photo dependencies
         run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 three@0.180.0 playwright@1.56.1
       - name: Build frozen real licensed Work47 15-image source benchmark
@@ -38,7 +38,7 @@ jobs:
           git fetch --no-tags origin 53f2ad344dc56a1477e343531c423aed0e66c17d dd6bac3fa9ff640d4f562cf925337440bdb5cf8f 3a572193987cb29389727426136c6eb3ac326783
           node scripts/build-work47-benchmark.mjs
       - name: Download and SHA-verify the exact two CC0 anatomical GLB sources
-        run: node research/three-d-06/fetch-licensed-avatars.mjs
+        run: node research/three-d-14/cc0-pinned-download.mjs
       - name: Run real source identity, geometry and privacy refusal tests
         run: node --test tests/three-d-14-dress.test.mjs
       - name: Exercise real WebGL2 photographed A-line dress on both figures and all phone widths

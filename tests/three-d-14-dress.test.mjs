@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {DRESS_ID,dressRings,requireDress} from '../research/three-d-14/dress-shell.mjs';
+import {isPinnedProviderUrl} from '../research/three-d-14/cc0-pinned-download.mjs';
 const sample=()=>({id:DRESS_ID,type:'dress',
  sourceSHA256:'a'.repeat(64),ownerApproved:false,humanVisualApproval:false,
  releaseAuthorized:false,realFabricTexture:true,
@@ -55,4 +56,13 @@ test('No paid inference, personal photos, storage, remote runtime dependencies o
  const html=await readFile('research/three-d-14/index.html','utf8');
  assert.match(html,/Family Alpha HOLD/);
  assert.match(html,/Provisional source-RGB cutout/);
+});
+
+test('CC0 redirect allowlist permits provider-owned files only with exact model path',()=>{
+ const good='https://files.innerscene.com/library/female-base-mesh-3d-person-rigged-a-pose-dba97ed5/8da570410cb260e809c5/female-base-mesh-base_female.glb';
+ assert.equal(isPinnedProviderUrl(good,'female'),true);
+ assert.equal(isPinnedProviderUrl('https://evil.example/library/female-base-mesh-3d-person-rigged-a-pose-dba97ed5/1/file.glb','female'),false);
+ assert.equal(isPinnedProviderUrl('http://files.innerscene.com/library/female-base-mesh-3d-person-rigged-a-pose-dba97ed5/1/file.glb','female'),false);
+ assert.equal(isPinnedProviderUrl(good,'male'),false);
+ assert.equal(isPinnedProviderUrl('https://files.innerscene.com/library/female-base-mesh-3d-person-rigged-a-pose-dba97ed5/1/../../secrets.glb','female'),false);
 });

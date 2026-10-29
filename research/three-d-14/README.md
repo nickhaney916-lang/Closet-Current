@@ -21,7 +21,7 @@ To prepare on a local development machine (not staging/production):
 ```sh
 npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 three@0.180.0 playwright@1.56.1
 node scripts/build-work47-benchmark.mjs
-node research/three-d-06/fetch-licensed-avatars.mjs
+node research/three-d-14/cc0-pinned-download.mjs
 python3 -m http.server 8000 --bind 127.0.0.1
 ```
 
@@ -29,6 +29,10 @@ Open `http://127.0.0.1:8000/research/three-d-14/index.html`.
 
 ## Independent no-deploy verification
 
-Dedicated PR-triggered workflow changes only the eight new research, test and CI files. Builds the locked Work47 15-photo benchmark from exact historical source pins and downloads both exact-hash CC0 bodies; tests source refusal (wrong ID, wrong type, unreviewed, invalid alpha crop), flare geometry, skeleton binding, front-only original RGB and no cloud. Genuine Chromium software-WebGL2 browser journeys at 320/390/430 verify both anatomically distinct adult bodies, visible original source image changing the framebuffer, full 3D camera rotation, real shared skeleton, source/relaxed pose, independence on model switch and removal, no external runtime network and screenshot artifacts.
+Dedicated PR-triggered workflow changes only the eight new research, test and CI files. Builds the locked Work47 15-photo benchmark from exact historical source pins and downloads both exact-hash CC0 bodies through the provider-owned `files.innerscene.com` distribution host; tests source refusal (wrong ID, wrong type, unreviewed, invalid alpha crop), flare geometry, skeleton binding, front-only original RGB and no cloud. Genuine Chromium software-WebGL2 browser journeys at 320/390/430 verify both anatomically distinct adult bodies, visible original source image changing the framebuffer, full 3D camera rotation, real shared skeleton, source/relaxed pose, independence on model switch and removal, no external runtime network and screenshot artifacts.
 
 **Not Family Alpha-ready:** these are research images on source-licensed stock dress and adult generic mannequin, not user wardrobe outfits. Separate QA grade, real Android/iPhone and live JWT/RLS and cloud save/restore, all prior source security gates and owner signoff are required before inviting four people. No merges, deployments, paid AI services, customer photos, account/Cloudflare/Supabase/Resend changes, private image uploads or Drive Duel changes.
+
+## Live source-host redirect observed, retained exact-hash protection
+
+The first no-deploy CI rebuilt the licensed images but failed closed on the older 3D-06 script's overly narrow final-URL host check. The original `www.innerscene.com/api/library/.../download` endpoint currently redirects to `https://files.innerscene.com/library/<exact-original-slug>/<version>/<model>.glb` (same published model provider). We do **not** edit 3D-06 or weaken a general URL rule. A new 3D-14-only acquisition helper accepts HTTPS from **only** the two exact provider hosts, under the exact source-specific `/library/<locked-model-slug>/...` path and `.glb` suffix, enforces maximum size and both previously pinned SHA-256 hashes, verifies real GLB skeleton geometry, and refuses any different bytes/host/path. The browser still issues zero external requests. This is not permission to substitute, redistribute or modify an unverified model.
