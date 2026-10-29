@@ -43,5 +43,6 @@ test('Original source is not implicitly usable in the existing reviewed pants ad
  };
  assert.throws(()=>requireReviewedPhotoPants(source,{reviewed:true}),/reviewed|cutout/i,'Missing actual byte verification is not a pass');
  assert.throws(()=>requireReviewedPhotoPants({...source,sourceAssetsVerified:true}),/reviewed|cutout/i,'Research source still needs an explicit review');
- assert.equal(requireReviewedPhotoPants({...source,sourceAssetsVerified:true},{reviewed:true}).id,j.id,'Only pinned source plus explicit provisional review may reach the 3D mesh');
+ assert.throws(()=>requireReviewedPhotoPants({...source,sourceAssetsVerified:true},{reviewed:true}),/reviewed|cutout/i,'Source-denim backing RGB must be measured, not assumed');
+ assert.equal(requireReviewedPhotoPants({...source,sourceAssetsVerified:true,neutralColorRGB:[99,126,174]},{reviewed:true}).id,j.id,'Only pinned original SHA, alpha SHA, source-denim RGB and explicit provisional review may reach the 3D mesh');
 });
