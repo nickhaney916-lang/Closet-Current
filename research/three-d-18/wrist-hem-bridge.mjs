@@ -43,8 +43,10 @@ export function bridgeSourceCuffHem(shirt,root,{extend=EXTEND,radial=RADIAL}={})
   const extendPoint=point=>{
    const t=point.clone().sub(axis.elbow).dot(axis.axis)/axis.axisLengthSq;
    if(!bounded(t,.65,1.20))throw Error('Cuff edge is not near source anatomical wrist');
-   const projected=axis.elbow.clone().addScaledVector(axis.axis,
-    THREE.MathUtils.clamp(t,0,1));
+   // Use the full anatomical forearm-axis projection even at cuff
+   // vertices slightly beyond the wrist bone, so "radial" is actually
+   // perpendicular and cannot inadvertently add axial displacement.
+   const projected=axis.elbow.clone().addScaledVector(axis.axis,t);
    const outward=point.clone().sub(projected);
    if(outward.lengthSq()<.0001||outward.lengthSq()>.09)
     throw Error('Source cuff radial geometry incompatible with wrist');
