@@ -1,0 +1,689 @@
+{
+  "profiles": [
+    {
+      "width": 320,
+      "height": 568,
+      "dpr": 2,
+      "version": "before",
+      "models": 2,
+      "poses": 2,
+      "views": 4,
+      "touchRotation": true,
+      "pinch": true,
+      "sourceIntegrity": true,
+      "sameSkeleton": true,
+      "noRebuildOnPose": true,
+      "clearResources": {
+        "geometries": 9,
+        "textures": 2
+      },
+      "dressedResources": {
+        "geometries": 12,
+        "textures": 3
+      },
+      "idleGPURedraws": 0,
+      "externalRequests": 0,
+      "drawPixels": 161100,
+      "readbackAndEncodeMs": [
+        485.80000000004657,
+        72.30000000004657,
+        67.5,
+        71,
+        74.19999999995343,
+        71.5999999998603
+      ],
+      "engine": "Chromium WebGL2 / SwiftShader",
+      "nativePhone": false,
+      "Safari": false,
+      "release": "HOLD"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "dpr": 3,
+      "version": "before",
+      "models": 2,
+      "poses": 2,
+      "views": 4,
+      "touchRotation": true,
+      "pinch": true,
+      "sourceIntegrity": true,
+      "sameSkeleton": true,
+      "noRebuildOnPose": true,
+      "clearResources": {
+        "geometries": 9,
+        "textures": 2
+      },
+      "dressedResources": {
+        "geometries": 12,
+        "textures": 3
+      },
+      "idleGPURedraws": 0,
+      "externalRequests": 0,
+      "drawPixels": 383250,
+      "readbackAndEncodeMs": [
+        534.8999999999069,
+        85.60000000009313,
+        92.10000000009313,
+        96.29999999981374,
+        105.30000000004657,
+        131.9000000001397
+      ],
+      "engine": "Chromium WebGL2 / SwiftShader",
+      "nativePhone": false,
+      "Safari": false,
+      "release": "HOLD"
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "dpr": 3,
+      "version": "before",
+      "models": 2,
+      "poses": 2,
+      "views": 4,
+      "touchRotation": true,
+      "pinch": true,
+      "sourceIntegrity": true,
+      "sameSkeleton": true,
+      "noRebuildOnPose": true,
+      "clearResources": {
+        "geometries": 9,
+        "textures": 2
+      },
+      "dressedResources": {
+        "geometries": 12,
+        "textures": 3
+      },
+      "idleGPURedraws": 0,
+      "externalRequests": 0,
+      "drawPixels": 504270,
+      "readbackAndEncodeMs": [
+        597.8999999999069,
+        106.10000000009313,
+        110.0999999998603,
+        119.9000000001397,
+        110.5999999998603,
+        117.10000000009313
+      ],
+      "engine": "Chromium WebGL2 / SwiftShader",
+      "nativePhone": false,
+      "Safari": false,
+      "release": "HOLD"
+    },
+    {
+      "width": 320,
+      "height": 568,
+      "dpr": 2,
+      "version": "after",
+      "models": 2,
+      "poses": 2,
+      "views": 4,
+      "touchRotation": true,
+      "pinch": true,
+      "sourceIntegrity": true,
+      "sameSkeleton": true,
+      "noRebuildOnPose": true,
+      "clearResources": {
+        "geometries": 10,
+        "textures": 2
+      },
+      "dressedResources": {
+        "geometries": 13,
+        "textures": 3
+      },
+      "idleGPURedraws": 0,
+      "externalRequests": 0,
+      "drawPixels": 161100,
+      "readbackAndEncodeMs": [
+        345.5,
+        77.5,
+        79.10000000009313,
+        79.39999999990687,
+        78.30000000004657,
+        75.69999999995343
+      ],
+      "engine": "Chromium WebGL2 / SwiftShader",
+      "nativePhone": false,
+      "Safari": false,
+      "release": "HOLD"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "dpr": 3,
+      "version": "after",
+      "models": 2,
+      "poses": 2,
+      "views": 4,
+      "touchRotation": true,
+      "pinch": true,
+      "sourceIntegrity": true,
+      "sameSkeleton": true,
+      "noRebuildOnPose": true,
+      "clearResources": {
+        "geometries": 10,
+        "textures": 2
+      },
+      "dressedResources": {
+        "geometries": 13,
+        "textures": 3
+      },
+      "idleGPURedraws": 0,
+      "externalRequests": 0,
+      "drawPixels": 383250,
+      "readbackAndEncodeMs": [
+        361.19999999995343,
+        103.80000000004657,
+        102.80000000004657,
+        113.89999999990687,
+        106.80000000004657,
+        145.60000000009313
+      ],
+      "engine": "Chromium WebGL2 / SwiftShader",
+      "nativePhone": false,
+      "Safari": false,
+      "release": "HOLD"
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "dpr": 3,
+      "version": "after",
+      "models": 2,
+      "poses": 2,
+      "views": 4,
+      "touchRotation": true,
+      "pinch": true,
+      "sourceIntegrity": true,
+      "sameSkeleton": true,
+      "noRebuildOnPose": true,
+      "clearResources": {
+        "geometries": 10,
+        "textures": 2
+      },
+      "dressedResources": {
+        "geometries": 13,
+        "textures": 3
+      },
+      "idleGPURedraws": 0,
+      "externalRequests": 0,
+      "drawPixels": 504270,
+      "readbackAndEncodeMs": [
+        685.1999999999534,
+        120.19999999995343,
+        118.69999999995343,
+        121.60000000009313,
+        118.10000000009313,
+        121.39999999990687
+      ],
+      "engine": "Chromium WebGL2 / SwiftShader",
+      "nativePhone": false,
+      "Safari": false,
+      "release": "HOLD"
+    }
+  ],
+  "corruptedCutoutBlocked": true,
+  "corruptedPantsReferenceBlocked": true,
+  "pantsReference": {
+    "id": "commons-0021",
+    "sourceSHA256": "04c0ca5bed1bee26e83be98b9a992619b0777811a7fb8a99fe955939334bbd8c",
+    "hasCutout": false,
+    "mode": "neutral-research-no-valid-cutout",
+    "photoApplied": false,
+    "releaseAuthorized": false,
+    "reason": "Occluded pants waist and no reliable cutout; original fallback.",
+    "attribution": {
+      "id": "commons-0021",
+      "title": "File:Jeans for men.jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Jeans_for_men.jpg",
+      "license": "Public domain",
+      "licenseUrl": "",
+      "author": "Honeyhuyue",
+      "credit": "Own work"
+    }
+  },
+  "screenshotSHA256": {
+    "after-female-320-relaxed-back-HOLD.png": "81aa3e5debde60fef914caeee2203c63f3c11fef597c655d7852a398e12a659c",
+    "after-female-320-relaxed-front-HOLD.png": "87596829d8e0210f6bd3f77ce40dcb9daef5c075cc35ba3ecb7db99016dd5940",
+    "after-female-320-relaxed-side-HOLD.png": "c8480eef5df080a502a2fb98739f347160185ac1b6ce2d77de3dca25807b900e",
+    "after-female-320-relaxed-threequarter-HOLD.png": "ef8820387776d20aec5da27e1bb28bed8bc3deadbb950b3211378dcaf030e7ed",
+    "after-female-320-source-back-HOLD.png": "2fae2831fa67313ea4662cb7aaa29957a45f85e496f97ec9958eee0072f79e66",
+    "after-female-320-source-front-HOLD.png": "fb08fdbc01e15ac7b74289d54709af910abea3770c89eb11c6cab40a44a4ed44",
+    "after-female-320-source-side-HOLD.png": "1c734b48c2ffeebf6aeb50bf91b30403d1e8a000dae34c8da7ed003278535149",
+    "after-female-320-source-threequarter-HOLD.png": "784ad8fc4b204e0221b0f7db1a42ad0c99ea0a44bfd07d2e14b00774f73f7140",
+    "after-female-390-relaxed-back-HOLD.png": "4bc23a7945e64a0e62f5b9e9a2beba60101cf22510afcbe582c458ec2b6745de",
+    "after-female-390-relaxed-front-HOLD.png": "94e4adbc8154bd3608279ea53e25f711d838661306b1b38374420dc702a3c6da",
+    "after-female-390-relaxed-side-HOLD.png": "d2d5fb0db020a416399b1881684109ee16b0d92cd491efbfb851e2de04f9a932",
+    "after-female-390-relaxed-threequarter-HOLD.png": "ba23ca3adfd773bebf0d933eb4f15093598f800b40056ecb51a3dab9fb832c29",
+    "after-female-390-source-back-HOLD.png": "ef6f221b2aba7c943fd21795883e5e6509ea9416d858813a2eaa2ffe1069799a",
+    "after-female-390-source-front-HOLD.png": "fd93010c6e22cf6f63d6040866caab8506ce5519c0b0675b1275df68e9c81747",
+    "after-female-390-source-side-HOLD.png": "6421f91931687a2589b912b6920508ef5aa6bbecbca0ac1ecc5157639e6daa30",
+    "after-female-390-source-threequarter-HOLD.png": "f358a19475de511e0e30235cc7737b71230dd40c56c6cef71bd7a5c57a385d90",
+    "after-female-430-relaxed-back-HOLD.png": "aca44594d5795a756b362a56902c3c1635b4ed809db9a3701b8acd67a05522d0",
+    "after-female-430-relaxed-front-HOLD.png": "b396673e9dd8032936f1ab1ffbcc4e4a80fdd690b44bd03eac8f291a376d272e",
+    "after-female-430-relaxed-side-HOLD.png": "160c42677bfb5d23304d51c59f471a56f0a5a51eb5d6b3e9d4eb71d8b4c1ef01",
+    "after-female-430-relaxed-threequarter-HOLD.png": "385e73c89f40a56b1d6ed38e63d70b29f0a017192375bfccd833e008e0ee989a",
+    "after-female-430-source-back-HOLD.png": "d1afddf25eea1b34788b7debf176ac789683e3699935a8da8e55e2aeb2961b02",
+    "after-female-430-source-front-HOLD.png": "f8fa09d595d1753821b02def4fca6429da8c612bdd1cf50a110b9ab6f0eb1a6a",
+    "after-female-430-source-side-HOLD.png": "6a5bbb116dff7377fb3c080d47dd02402bc4f374ce0c53473311e4977822c20b",
+    "after-female-430-source-threequarter-HOLD.png": "e0d60d4e4cf559c86809a05b6cb6eeaf9f54c9781632f0562025b70857a271ad",
+    "after-male-320-relaxed-back-HOLD.png": "ac21ed3f0cddd88016f010e5e8b1380f06a915397e54c3f16702073b5d98f067",
+    "after-male-320-relaxed-front-HOLD.png": "a6b33aa25fd6aa1fdc82803f7fe47d59f753ccc9b36c5ff5c2da3523a6a8cb87",
+    "after-male-320-relaxed-side-HOLD.png": "95387a8338ad77984d44f9de9b459cf4b232950405a5083c678b3ca119f24c24",
+    "after-male-320-relaxed-threequarter-HOLD.png": "cb10ee87d00d6a12eac92e6964d1f7772cbdfa3c1abec44da63118568c03111b",
+    "after-male-320-source-back-HOLD.png": "853edabb97e7991120e095f2712409dd6a8c39340665ce879f3bd639d70aedfc",
+    "after-male-320-source-front-HOLD.png": "70da52d8e180eac5147f269ad20050d0bbb030f7fbc8551eac943a10e6eedeca",
+    "after-male-320-source-side-HOLD.png": "ac45fce048ccd049de6774fb7f5b49f0ac3d99e05a0d2bd3c65aed9886586b9d",
+    "after-male-320-source-threequarter-HOLD.png": "fa9f282d6f0c7f6d55560cca270b6741a1963d8d27b7334f2a9f0c55c869e50e",
+    "after-male-390-relaxed-back-HOLD.png": "9e326e93a360bb609606917c3338331bc0308c685a37ee7ce7a26be26ca2b99c",
+    "after-male-390-relaxed-front-HOLD.png": "2565673b851d6dccb86082eb604db8e52bc64b1d8d846a28c5257c70c6d08829",
+    "after-male-390-relaxed-side-HOLD.png": "56379579a77ac07abf9250736bf05c285b057483ffb0845b25dd0f80bbbc0731",
+    "after-male-390-relaxed-threequarter-HOLD.png": "5c3be85ccd341d4c9b296991f0e0f2d786c2a4e927193cfdd33bf53b906e0378",
+    "after-male-390-source-back-HOLD.png": "93f2884380dbb9155e0b9d483c4e8e54b1e806994ce573ad132d2b6ef3906831",
+    "after-male-390-source-front-HOLD.png": "27d99f1508145cc9972c497df97e095e5b93ad4c486fefc3d3720756e80dbbd0",
+    "after-male-390-source-side-HOLD.png": "bf9d34eef76c2957b07f18ab241eaa973706426e49c6021cdf6d219ffe7206f7",
+    "after-male-390-source-threequarter-HOLD.png": "260ce4e2a72d48b17fc99b6b74e38d6de25a48a0c5773084a71e5c2cc2a7cf63",
+    "after-male-430-relaxed-back-HOLD.png": "48d3af23b9011b5d1fcd6993d09d7b42e5ab3cf7972449661b84df037cf7c78b",
+    "after-male-430-relaxed-front-HOLD.png": "72df72f50a411223c88ad848f2d336b3c09cc3228ef94aecb79c58c3ca217169",
+    "after-male-430-relaxed-side-HOLD.png": "580f5f046c631c0530c9d9d83809f6f4f47a755ae9c8d2ea9e33820489a06239",
+    "after-male-430-relaxed-threequarter-HOLD.png": "60e499f4f93fc5ee3a8f951efc579f8229a8c1f84376687c12590e2b167cb3fe",
+    "after-male-430-source-back-HOLD.png": "f7baebc27c8c8aef4a2c9fc186c895da1af0ee8c5806e9fc917463e58306f263",
+    "after-male-430-source-front-HOLD.png": "d783d15346b957282cc1b469889bd636517164913e34b03a2902539b99fb010d",
+    "after-male-430-source-side-HOLD.png": "3e248aab770edb65b317694c42f5b0ba6b89ea1b5137245574ddffffd9f2e651",
+    "after-male-430-source-threequarter-HOLD.png": "4a51dc94fb5ea53ceba74cacf175b617ada21fb5b3a0adfa6bcf70b3cbf64de4",
+    "after-mobile-320-HOLD.png": "1969106f7fd74e49bb87d48fa0d21de2d5e3695744da521d5e5e88d80960f88f",
+    "after-mobile-390-HOLD.png": "c1d53014a0c5a0f990a804220e3e6da68b04e90f6f59fef35437e0b632f12efd",
+    "after-mobile-430-HOLD.png": "8cb2ff932b6b9e27909aa6daf69044528874f90db7725920056b3f43c88f461f",
+    "before-female-320-relaxed-back-HOLD.png": "5bb3a4797a5e834cc31e5926c8c05744fdcf4dd4cff334ca864f08a5ff5efb32",
+    "before-female-320-relaxed-front-HOLD.png": "5d92123c9b9a9621b60fa273ad3c354617790be48dee43dc73101d01b4963a32",
+    "before-female-320-relaxed-side-HOLD.png": "4d23579ce6ba535350def30b467216c6d88cc69daf8499d7dbe69108963425c3",
+    "before-female-320-relaxed-threequarter-HOLD.png": "33f315ac1b8c713cc5600dbfe0968a2d14097c6b1dc8b7175e8de78472677e00",
+    "before-female-320-source-back-HOLD.png": "1862751b0cdb6f9cedc9a0388161acc71c6577e33eadf9c44b3cc000c8f284ac",
+    "before-female-320-source-front-HOLD.png": "45d9fccd6ba4880b34521a70f584bb7039cbf1536e4f6af12bf80c7fb82b710c",
+    "before-female-320-source-side-HOLD.png": "f54ad49c97ea9d77cf3da561817d8382a76e70673080ed979583c9b50903f0ba",
+    "before-female-320-source-threequarter-HOLD.png": "36838ee678e4fb0263e789bf7d3e2738611270da3b44d0c61caf47d7b56502be",
+    "before-female-390-relaxed-back-HOLD.png": "f578ce82ab7638661e7cadbfefd3a500dbc1df27a89e154db2bbd9c4c9600da4",
+    "before-female-390-relaxed-front-HOLD.png": "096f4dcf884de6498e8684e07319bd6a64154eee92d86945af88a5028842aaf4",
+    "before-female-390-relaxed-side-HOLD.png": "74051e5008167f813ec0da01c66c5a1a9b36accfe310d08282c6d8f39c4b19f0",
+    "before-female-390-relaxed-threequarter-HOLD.png": "16290e8d3ad5f0fccb78b0f4fc3b462be2c5f969d94d272209e2f6f5eaf69ac0",
+    "before-female-390-source-back-HOLD.png": "d5bbdf9bcd3d45712c103b2ddcea4396b73aedc6602c4881aa6aa50a07873b43",
+    "before-female-390-source-front-HOLD.png": "765df56dbb48eafb39ae18e640544d8636c3062a65cd07f21be70c623e330a53",
+    "before-female-390-source-side-HOLD.png": "b14ba613157adf82a062d1d7a393b86dd285be3728396077299f542ccfde3fc1",
+    "before-female-390-source-threequarter-HOLD.png": "71524e6ee54ce619190066e53967cbf51131157714a66141abf75e443e36bdca",
+    "before-female-430-relaxed-back-HOLD.png": "41c9225d7918545131eecefb1172b11d92537401a26510cb0693fa9d9e13f847",
+    "before-female-430-relaxed-front-HOLD.png": "8fa2f9cf237663915f96c6e2e3a26c3afe449d2ca41feebea366f9e43d492baa",
+    "before-female-430-relaxed-side-HOLD.png": "856e547e668ba2869f37241c70ffbc12b392900a22d30c120533b2568ad3c99c",
+    "before-female-430-relaxed-threequarter-HOLD.png": "febfafa3aa009307258de78c02f2edaa90f77e0dad8c685873b219737048aee5",
+    "before-female-430-source-back-HOLD.png": "39aecaf4d5536f2221a55b9326c4cf951ba0283a005788bc529166219ce692aa",
+    "before-female-430-source-front-HOLD.png": "fce879b2fab15911d5be1f847d5509009e1233a2a25f0cff5103aa09f369f395",
+    "before-female-430-source-side-HOLD.png": "eced92fb532287c08a488bea0ca51e1b15dfb0f1aaa08092010ee33093759f54",
+    "before-female-430-source-threequarter-HOLD.png": "ef094cc9b7773ba3c5ec7d22c32a8d169864de30c9c9195f010523d380a2e769",
+    "before-male-320-relaxed-back-HOLD.png": "4adb4c7a691fff83266ba39a21082e09ec4ac10a69869fdbde69483e7679d1b9",
+    "before-male-320-relaxed-front-HOLD.png": "1d2af88415ee40fd8b7d3009ffbf2fa9c0c22ee1eb62e38be2be53a258944b6b",
+    "before-male-320-relaxed-side-HOLD.png": "aec3ae4a24cd173eb61ae85296ac1d2af05f0ab2c8add20dc7815fd5e5220ecc",
+    "before-male-320-relaxed-threequarter-HOLD.png": "1d777dbd7fc84b93d07ffcdffb8567f9fb6e0a0fab61b607a00c1da28bfe9562",
+    "before-male-320-source-back-HOLD.png": "cc85bf1da190c291aacd9485e7a18ab455fe5722a6fa886dbaf85843330a0547",
+    "before-male-320-source-front-HOLD.png": "f5ac840d51fa7645ded4b56aa40e04a4e9d2b499601bb2e1dcd776214ae2143e",
+    "before-male-320-source-side-HOLD.png": "106728f48ee46fa0a12a0820c5e734f78e532c894ccd9373f959f1901f683c3d",
+    "before-male-320-source-threequarter-HOLD.png": "929919c1c24746548130a1cb8f44aaeffa3cd81c5098bfd23c4383d325ba801f",
+    "before-male-390-relaxed-back-HOLD.png": "f1c142ea9c22ea7d7a8641e219399cb1846f0fd085f72e24af5e961346d808cd",
+    "before-male-390-relaxed-front-HOLD.png": "70c1457dae160fffd3863dbdc7de43b3d10e6aa3e22a96b69fd0f63928bf3339",
+    "before-male-390-relaxed-side-HOLD.png": "5127a558f8da6676e48e3fe2779e46d076e26c62124db739166ae37b388fab90",
+    "before-male-390-relaxed-threequarter-HOLD.png": "da42df30ae73851da1aff30c1639c63e359d30ae393c778ef84a9cf9d7bb232d",
+    "before-male-390-source-back-HOLD.png": "cd797b8d7ad4422fe2f603ddcfa46714b7322f9c7a0fef90240d4a1a55e28947",
+    "before-male-390-source-front-HOLD.png": "32d36169a7df891683fa09517312c8f87fb8beb0f812a62c66ed510ddc6c1ccb",
+    "before-male-390-source-side-HOLD.png": "51fd2d335b64d9833bbbed447d4a8afb88555086c23b6bbc17dd18fd7fb962ec",
+    "before-male-390-source-threequarter-HOLD.png": "f94a0a479428925af8de9a16ecfc44c6bd09d9a2498f26656095305e34191191",
+    "before-male-430-relaxed-back-HOLD.png": "b8560bcc0d8f862737ac1a7acecd37dc7ba20f2e4287946142855fa67494a224",
+    "before-male-430-relaxed-front-HOLD.png": "96fba10619502c9dae70b152472ec56e87b80f2ad72942be9cefb3697b34b374",
+    "before-male-430-relaxed-side-HOLD.png": "580dbb6960108507d9f19988cec5aaf6a09122d841ba509596387a705cb75ca2",
+    "before-male-430-relaxed-threequarter-HOLD.png": "a79724475a5b402920b5c52a1521dc1aad6bc56c58ee89a2a455db0522cb3834",
+    "before-male-430-source-back-HOLD.png": "68f015951aff0f895adca79a15cb0a7cec26b3cd4b11dd18a9377b1e285bba3e",
+    "before-male-430-source-front-HOLD.png": "d334e87b3e87a634686c4d40c9a562f30ecbe7c9fc23f2efb781f42d04044263",
+    "before-male-430-source-side-HOLD.png": "10982f7f41c831d5e466882b622c078d78ebca9be4bb695fe8c71ae6f52adec8",
+    "before-male-430-source-threequarter-HOLD.png": "fa3ae47c434c3b606df0072288722508be26f96e74bdc5b95c3efd3ffd5f5d55",
+    "before-mobile-320-HOLD.png": "35db929e50922291a4dcb0b42fcc1bc883f8a34db17bbc17b9fe3e418f278ff3",
+    "before-mobile-390-HOLD.png": "59372395cdfd4f4efbea7f96d0e3287ab9f68988ef3f11135979a47407cfffa3",
+    "before-mobile-430-HOLD.png": "e3c9abee0893ff64b574bb0e555b7bb27b469ca977bf72411684f27698593dc6"
+  },
+  "changedPixels": [
+    {
+      "model": "female",
+      "width": 320,
+      "pose": "source",
+      "view": "front",
+      "changedPixelFraction": 0.05177126917712692
+    },
+    {
+      "model": "female",
+      "width": 320,
+      "pose": "source",
+      "view": "threequarter",
+      "changedPixelFraction": 0.05152370990237099
+    },
+    {
+      "model": "female",
+      "width": 320,
+      "pose": "source",
+      "view": "side",
+      "changedPixelFraction": 0.03393654114365412
+    },
+    {
+      "model": "female",
+      "width": 320,
+      "pose": "source",
+      "view": "back",
+      "changedPixelFraction": 0.0570536959553696
+    },
+    {
+      "model": "female",
+      "width": 320,
+      "pose": "relaxed",
+      "view": "front",
+      "changedPixelFraction": 0.05177126917712692
+    },
+    {
+      "model": "female",
+      "width": 320,
+      "pose": "relaxed",
+      "view": "threequarter",
+      "changedPixelFraction": 0.05134588563458856
+    },
+    {
+      "model": "female",
+      "width": 320,
+      "pose": "relaxed",
+      "view": "side",
+      "changedPixelFraction": 0.033929567642956765
+    },
+    {
+      "model": "female",
+      "width": 320,
+      "pose": "relaxed",
+      "view": "back",
+      "changedPixelFraction": 0.0570536959553696
+    },
+    {
+      "model": "female",
+      "width": 390,
+      "pose": "source",
+      "view": "front",
+      "changedPixelFraction": 0.0877409471659985
+    },
+    {
+      "model": "female",
+      "width": 390,
+      "pose": "source",
+      "view": "threequarter",
+      "changedPixelFraction": 0.08782699390502265
+    },
+    {
+      "model": "female",
+      "width": 390,
+      "pose": "source",
+      "view": "side",
+      "changedPixelFraction": 0.05747726606042828
+    },
+    {
+      "model": "female",
+      "width": 390,
+      "pose": "source",
+      "view": "back",
+      "changedPixelFraction": 0.0969179622567713
+    },
+    {
+      "model": "female",
+      "width": 390,
+      "pose": "relaxed",
+      "view": "front",
+      "changedPixelFraction": 0.0877409471659985
+    },
+    {
+      "model": "female",
+      "width": 390,
+      "pose": "relaxed",
+      "view": "threequarter",
+      "changedPixelFraction": 0.08741370881001272
+    },
+    {
+      "model": "female",
+      "width": 390,
+      "pose": "relaxed",
+      "view": "side",
+      "changedPixelFraction": 0.05747726606042828
+    },
+    {
+      "model": "female",
+      "width": 390,
+      "pose": "relaxed",
+      "view": "back",
+      "changedPixelFraction": 0.0969179622567713
+    },
+    {
+      "model": "female",
+      "width": 430,
+      "pose": "source",
+      "view": "front",
+      "changedPixelFraction": 0.0925886287625418
+    },
+    {
+      "model": "female",
+      "width": 430,
+      "pose": "source",
+      "view": "threequarter",
+      "changedPixelFraction": 0.0926480862133036
+    },
+    {
+      "model": "female",
+      "width": 430,
+      "pose": "source",
+      "view": "side",
+      "changedPixelFraction": 0.060703579834014615
+    },
+    {
+      "model": "female",
+      "width": 430,
+      "pose": "source",
+      "view": "back",
+      "changedPixelFraction": 0.1023901895206243
+    },
+    {
+      "model": "female",
+      "width": 430,
+      "pose": "relaxed",
+      "view": "front",
+      "changedPixelFraction": 0.0925886287625418
+    },
+    {
+      "model": "female",
+      "width": 430,
+      "pose": "relaxed",
+      "view": "threequarter",
+      "changedPixelFraction": 0.09221404682274248
+    },
+    {
+      "model": "female",
+      "width": 430,
+      "pose": "relaxed",
+      "view": "side",
+      "changedPixelFraction": 0.06070308435525827
+    },
+    {
+      "model": "female",
+      "width": 430,
+      "pose": "relaxed",
+      "view": "back",
+      "changedPixelFraction": 0.1023901895206243
+    },
+    {
+      "model": "male",
+      "width": 320,
+      "pose": "source",
+      "view": "front",
+      "changedPixelFraction": 0.05183751743375174
+    },
+    {
+      "model": "male",
+      "width": 320,
+      "pose": "source",
+      "view": "threequarter",
+      "changedPixelFraction": 0.05252092050209205
+    },
+    {
+      "model": "male",
+      "width": 320,
+      "pose": "source",
+      "view": "side",
+      "changedPixelFraction": 0.03587866108786611
+    },
+    {
+      "model": "male",
+      "width": 320,
+      "pose": "source",
+      "view": "back",
+      "changedPixelFraction": 0.059961645746164575
+    },
+    {
+      "model": "male",
+      "width": 320,
+      "pose": "relaxed",
+      "view": "front",
+      "changedPixelFraction": 0.05183751743375174
+    },
+    {
+      "model": "male",
+      "width": 320,
+      "pose": "relaxed",
+      "view": "threequarter",
+      "changedPixelFraction": 0.05231171548117155
+    },
+    {
+      "model": "male",
+      "width": 320,
+      "pose": "relaxed",
+      "view": "side",
+      "changedPixelFraction": 0.03587866108786611
+    },
+    {
+      "model": "male",
+      "width": 320,
+      "pose": "relaxed",
+      "view": "back",
+      "changedPixelFraction": 0.059961645746164575
+    },
+    {
+      "model": "male",
+      "width": 390,
+      "pose": "source",
+      "view": "front",
+      "changedPixelFraction": 0.08794041915191812
+    },
+    {
+      "model": "male",
+      "width": 390,
+      "pose": "source",
+      "view": "threequarter",
+      "changedPixelFraction": 0.08920504546787915
+    },
+    {
+      "model": "male",
+      "width": 390,
+      "pose": "source",
+      "view": "side",
+      "changedPixelFraction": 0.061065154330041393
+    },
+    {
+      "model": "male",
+      "width": 390,
+      "pose": "source",
+      "view": "back",
+      "changedPixelFraction": 0.10185196049672436
+    },
+    {
+      "model": "male",
+      "width": 390,
+      "pose": "relaxed",
+      "view": "front",
+      "changedPixelFraction": 0.08794041915191812
+    },
+    {
+      "model": "male",
+      "width": 390,
+      "pose": "relaxed",
+      "view": "threequarter",
+      "changedPixelFraction": 0.08876307812652783
+    },
+    {
+      "model": "male",
+      "width": 390,
+      "pose": "relaxed",
+      "view": "side",
+      "changedPixelFraction": 0.0610612431146312
+    },
+    {
+      "model": "male",
+      "width": 390,
+      "pose": "relaxed",
+      "view": "back",
+      "changedPixelFraction": 0.10185196049672436
+    },
+    {
+      "model": "male",
+      "width": 430,
+      "pose": "source",
+      "view": "front",
+      "changedPixelFraction": 0.09270506627028366
+    },
+    {
+      "model": "male",
+      "width": 430,
+      "pose": "source",
+      "view": "threequarter",
+      "changedPixelFraction": 0.0941429456212065
+    },
+    {
+      "model": "male",
+      "width": 430,
+      "pose": "source",
+      "view": "side",
+      "changedPixelFraction": 0.06440678805896197
+    },
+    {
+      "model": "male",
+      "width": 430,
+      "pose": "source",
+      "view": "back",
+      "changedPixelFraction": 0.10741186671621454
+    },
+    {
+      "model": "male",
+      "width": 430,
+      "pose": "relaxed",
+      "view": "front",
+      "changedPixelFraction": 0.09270506627028366
+    },
+    {
+      "model": "male",
+      "width": 430,
+      "pose": "relaxed",
+      "view": "threequarter",
+      "changedPixelFraction": 0.0936539080886907
+    },
+    {
+      "model": "male",
+      "width": 430,
+      "pose": "relaxed",
+      "view": "side",
+      "changedPixelFraction": 0.06440629258020562
+    },
+    {
+      "model": "male",
+      "width": 430,
+      "pose": "relaxed",
+      "view": "back",
+      "changedPixelFraction": 0.10741186671621454
+    }
+  ],
+  "frontRearChecks": 24
+}
