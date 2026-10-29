@@ -1,7 +1,7 @@
 /**
  * Native Three.js + locally served GLTFLoader; no CDN, paid AI or user accounts.
  * Load genuinely anatomical, CC0 163-joint human A-pose GLBs.
- * Work58: Work57 presentation plus the unchanged Work56 separate garment.
+ * Work60: unchanged Work59 shirt/presentation plus a separate neutral pants slot.
  */
 import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';

@@ -1,4 +1,4 @@
-/** Work58: local, verified stock shirt; no accounts, wardrobe storage or AI. */
+/** Work60: verified stock shirt + neutral research pants; local ephemeral preview. */
 import {mountAnatomicalShowroom} from './showroom.mjs';
 import {loadLicensedCutout,readVerifiedAsset} from '../three-d-02/reviewed-texture.mjs';
 import {LICENSED_SHIRT} from '../three-d-07/rig-shirt-transfer.mjs';
@@ -6,7 +6,7 @@ import {loadPantsReference} from './pants-source.mjs';
 const $=id=>document.getElementById(id);
 let app,epoch=0,closed=false,spinning=false,manifest,verified=false;const previews=[];
 const status=s=>{$('status').textContent=s;};
-const sync=()=>{const s=app.getState();$('diagnostics').textContent=JSON.stringify(s);$('pants').textContent=s.pants?'Remove neutral pants':'Add neutral pants';$('garment').textContent=s.shirt?'Remove real shirt':'Review black AJ shirt';};
+const sync=()=>{const s=app.getState();$('diagnostics').textContent=JSON.stringify(s);$('pants').textContent=s.pants?'Pants: on':'Pants: off';$('pants').setAttribute('aria-pressed',String(!!s.pants));$('pants').setAttribute('aria-label',s.pants?'Remove neutral research pants':'Add neutral research pants');$('garment').textContent=s.shirt?'Remove real shirt':'Review black AJ shirt';};
 const resetSpin=()=>{spinning=false;app.setSpin(false);$('spin').textContent='Turntable: off';$('spin').setAttribute('aria-pressed','false');};
 const clear=()=>{epoch++;app.clearShirt();$('review').checked=false;$('dress').disabled=true;sync();};
 async function load(){

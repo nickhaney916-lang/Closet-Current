@@ -1,6 +1,10 @@
 {
   "profiles": [
     {
+      "canvasCss": {
+        "width": 300,
+        "height": 239
+      },
       "width": 320,
       "height": 568,
       "dpr": 2,
@@ -25,12 +29,12 @@
       "externalRequests": 0,
       "drawPixels": 161100,
       "readbackAndEncodeMs": [
-        589.5,
-        70.0999999998603,
-        70.9000000001397,
-        73.39999999990687,
-        79.39999999990687,
-        80.5
+        496.10000000009313,
+        85.10000000009313,
+        158.79999999981374,
+        86.8000000002794,
+        82.39999999990687,
+        75
       ],
       "engine": "Chromium WebGL2 / SwiftShader",
       "nativePhone": false,
@@ -38,6 +42,10 @@
       "release": "HOLD"
     },
     {
+      "canvasCss": {
+        "width": 350,
+        "height": 487
+      },
       "width": 390,
       "height": 844,
       "dpr": 3,
@@ -62,12 +70,12 @@
       "externalRequests": 0,
       "drawPixels": 383250,
       "readbackAndEncodeMs": [
-        576.6999999999534,
-        94,
-        98.60000000009313,
-        92.89999999990687,
-        89.70000000018626,
-        88.5
+        598.2999999998137,
+        93.70000000018626,
+        94.5,
+        95.09999999962747,
+        104.8000000002794,
+        106.1999999997206
       ],
       "engine": "Chromium WebGL2 / SwiftShader",
       "nativePhone": false,
@@ -75,6 +83,10 @@
       "release": "HOLD"
     },
     {
+      "canvasCss": {
+        "width": 390,
+        "height": 575
+      },
       "width": 430,
       "height": 932,
       "dpr": 3,
@@ -99,12 +111,12 @@
       "externalRequests": 0,
       "drawPixels": 504270,
       "readbackAndEncodeMs": [
-        665.9000000001397,
-        123.19999999995343,
-        137.5999999998603,
-        145.20000000018626,
-        119.30000000004657,
-        120
+        671,
+        118.59999999962747,
+        117.10000000009313,
+        109.3000000002794,
+        120.70000000018626,
+        118.89999999990687
       ],
       "engine": "Chromium WebGL2 / SwiftShader",
       "nativePhone": false,
@@ -112,6 +124,10 @@
       "release": "HOLD"
     },
     {
+      "canvasCss": {
+        "width": 300,
+        "height": 239
+      },
       "width": 320,
       "height": 568,
       "dpr": 2,
@@ -136,12 +152,12 @@
       "externalRequests": 0,
       "drawPixels": 161100,
       "readbackAndEncodeMs": [
-        310.0999999998603,
-        72.20000000018626,
-        80.19999999995343,
-        76.0999999998603,
-        88.60000000009313,
-        74
+        402.90000000037253,
+        92.6999999997206,
+        87.5,
+        99.39999999990687,
+        117.10000000009313,
+        97.89999999990687
       ],
       "engine": "Chromium WebGL2 / SwiftShader",
       "nativePhone": false,
@@ -149,6 +165,10 @@
       "release": "HOLD"
     },
     {
+      "canvasCss": {
+        "width": 350,
+        "height": 487
+      },
       "width": 390,
       "height": 844,
       "dpr": 3,
@@ -173,12 +193,12 @@
       "externalRequests": 0,
       "drawPixels": 383250,
       "readbackAndEncodeMs": [
-        587,
-        138.69999999995343,
-        99.80000000004657,
-        105.19999999995343,
-        108.19999999995343,
-        112.4000000001397
+        512.7000000001863,
+        99,
+        182.39999999990687,
+        114.5,
+        104.70000000018626,
+        106.6999999997206
       ],
       "engine": "Chromium WebGL2 / SwiftShader",
       "nativePhone": false,
@@ -186,6 +206,10 @@
       "release": "HOLD"
     },
     {
+      "canvasCss": {
+        "width": 390,
+        "height": 575
+      },
       "width": 430,
       "height": 932,
       "dpr": 3,
@@ -210,12 +234,12 @@
       "externalRequests": 0,
       "drawPixels": 504270,
       "readbackAndEncodeMs": [
-        708.4000000001397,
-        134.89999999990687,
-        118.19999999995343,
-        135,
-        201.70000000018626,
-        138.5999999998603
+        620,
+        114,
+        117.60000000009313,
+        116,
+        126.10000000009313,
+        116.60000000009313
       ],
       "engine": "Chromium WebGL2 / SwiftShader",
       "nativePhone": false,
@@ -292,9 +316,9 @@
     "after-male-430-source-front-HOLD.png": "d783d15346b957282cc1b469889bd636517164913e34b03a2902539b99fb010d",
     "after-male-430-source-side-HOLD.png": "3e248aab770edb65b317694c42f5b0ba6b89ea1b5137245574ddffffd9f2e651",
     "after-male-430-source-threequarter-HOLD.png": "4a51dc94fb5ea53ceba74cacf175b617ada21fb5b3a0adfa6bcf70b3cbf64de4",
-    "after-mobile-320-HOLD.png": "1969106f7fd74e49bb87d48fa0d21de2d5e3695744da521d5e5e88d80960f88f",
-    "after-mobile-390-HOLD.png": "c1d53014a0c5a0f990a804220e3e6da68b04e90f6f59fef35437e0b632f12efd",
-    "after-mobile-430-HOLD.png": "8cb2ff932b6b9e27909aa6daf69044528874f90db7725920056b3f43c88f461f",
+    "after-mobile-320-HOLD.png": "10f5e224aa194d9c1573958ac6c603d1095ea1baa3ff6cfc9e0a5dfdccd39e57",
+    "after-mobile-390-HOLD.png": "a179483a77d3ac64cb3856a85ecac86b5c93734161da5c3625b2e122224e2cb9",
+    "after-mobile-430-HOLD.png": "6982b236eadb4062a8c7b12b76ea763850b11ad2dd98913a3f6d298c521e143c",
     "before-female-320-relaxed-back-HOLD.png": "5bb3a4797a5e834cc31e5926c8c05744fdcf4dd4cff334ca864f08a5ff5efb32",
     "before-female-320-relaxed-front-HOLD.png": "5d92123c9b9a9621b60fa273ad3c354617790be48dee43dc73101d01b4963a32",
     "before-female-320-relaxed-side-HOLD.png": "4d23579ce6ba535350def30b467216c6d88cc69daf8499d7dbe69108963425c3",
@@ -343,9 +367,9 @@
     "before-male-430-source-front-HOLD.png": "d334e87b3e87a634686c4d40c9a562f30ecbe7c9fc23f2efb781f42d04044263",
     "before-male-430-source-side-HOLD.png": "10982f7f41c831d5e466882b622c078d78ebca9be4bb695fe8c71ae6f52adec8",
     "before-male-430-source-threequarter-HOLD.png": "fa3ae47c434c3b606df0072288722508be26f96e74bdc5b95c3efd3ffd5f5d55",
-    "before-mobile-320-HOLD.png": "35db929e50922291a4dcb0b42fcc1bc883f8a34db17bbc17b9fe3e418f278ff3",
-    "before-mobile-390-HOLD.png": "59372395cdfd4f4efbea7f96d0e3287ab9f68988ef3f11135979a47407cfffa3",
-    "before-mobile-430-HOLD.png": "e3c9abee0893ff64b574bb0e555b7bb27b469ca977bf72411684f27698593dc6"
+    "before-mobile-320-HOLD.png": "e7aa13a84ec17ef127d2539e112a32838710b806d0b5ab4348b57d48c14911e0",
+    "before-mobile-390-HOLD.png": "f2d758615193e0f480e133f277b32c2475ee4ed753cd82303f1228a841c203c7",
+    "before-mobile-430-HOLD.png": "70fc177a61303a0d10ff297c75fa31b4c88d4bfb0cd677b970e4ed156d8ebf57"
   },
   "changedPixels": [
     {

@@ -47,6 +47,8 @@ Serve repository root locally and open `/research/three-d-13/index.html?version=
 
 Six Chromium WebGL2/SwiftShader journeys: before/after × 320×568,390×844,430×932. Each captures both figures, both poses and front/three-quarter/side/back: **96 real view frames**, plus six full mobile pages. Checks cover trusted photo review, exact shirt/pants topology, same rig, no pose rebuilds, repeated independent garment removal/reapply, stable GPU object counts, touch/pinch, idle redraw suppression, viewport controls, zero unexpected external requests/errors, empty local/session storage, and refusal of corrupt AJ PNG or pants-reference JPEG. Node tests bend an actual lower-leg bone by 0.12 rad and verify pants movement/reversal. The existing relaxed standing pose itself does not move the legs; no gait/squat collision validation is claimed.
 
+The compact fixed-height pants toggle prevents on/off label wrapping from changing the canvas height; paired browser profiles and pixel comparisons require equal canvas dimensions.
+
 Idle verification requires 120 actual animation cycles without redraw (20-second bound), then independently monitors another 60 cycles. A quiet wall-clock gap alone can miss a late OrbitControls damping frame on software GPUs; continuous rendering still fails this test. This changes the harness, not the garment or predecessor renderer.
 
 Full outfit **13 geometries / 3 textures**, shirt-only12/3, pants-only10/2, neither9/2. Object counts are not total GPU bytes, physical-phone performance or battery measurements. Emulated touch Chromium with software WebGL is not native Android Chrome or iPhone Safari. Existing account isolation/auth are untouched, not live-account reaudited.
