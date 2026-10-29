@@ -1,7 +1,8 @@
 /** Work59: post-fit geometry corrections; existing photo/material/skeleton reused. */
 import * as T from 'three';
 import {buildGarmentShell} from '../three-d-08/garment-shell.mjs';
-export function refineGarment(shirt,root){
+import {repairCuffBoundary} from '../three-d-13/cuff-boundary.mjs';
+export function refineGarment(shirt,root,{repairCuffs=true}={}){
  const {front,back,center}=shirt.stats.envelope;
  const arms=[];for(const side of ['L','R']){let elbow,wrist;root.traverse(o=>{if(o.isBone&&o.name==='lowerarm01'+side)elbow=o.getWorldPosition(new T.Vector3());if(o.isBone&&o.name==='wrist'+side)wrist=o.getWorldPosition(new T.Vector3());});if(elbow&&wrist)arms.push({elbow,wrist});}
  let changed=0;
@@ -43,7 +44,8 @@ export function refineGarment(shirt,root){
   g.computeBoundingBox();g.computeBoundingSphere();
  }
  addCollarBand(shirt,root);
- shirt.stats={...shirt.stats,refinement:'Work59-convex-drape-shoulder-ease',baseOffsetMinimum:.018,minClearance:null,collisionValidated:false,correctedVertices:changed};return shirt;
+ const cuff=repairCuffs?repairCuffBoundary(shirt,root):null;
+ shirt.stats={...shirt.stats,cuffRepair:cuff,refinement:'Work59-convex-drape-shoulder-ease',baseOffsetMinimum:.018,minClearance:null,collisionValidated:false,correctedVertices:changed};return shirt;
 }
 export function buildNaturalShirt(root,candidate,options){return refineGarment(buildGarmentShell(root,candidate,options),root);}
 
