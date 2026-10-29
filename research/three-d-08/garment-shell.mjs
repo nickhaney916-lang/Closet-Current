@@ -39,13 +39,19 @@ export function addFittedFrontPanel(samples,coords,UV){
  if(!Array.isArray(samples)||samples.length<500||!Array.isArray(coords)||!Array.isArray(UV))
   throw Error('Insufficient verified anatomical front landmarks');
  const rows=16,cols=20,grid=[];
+ const ease=(v,a,b)=>{
+  const t=Math.max(0,Math.min(1,(v-a)/(b-a)));
+  return t*t*(3-2*t);
+ };
+ const halfWidthAt=v=>.265+.052*ease(v,.10,.62)-.180*ease(v,.79,1);
  for(let r=0;r<=rows;r++){
-  const v=r/rows,y=1.13+.49*v;
-  const taper=Math.max(0,Math.min(1,(v-.78)/.22));
-  const halfWidth=.335-.195*taper;
+  const v=r/rows,halfWidth=halfWidthAt(v);
   const row=[];
   for(let c=0;c<=cols;c++){
-   const x=(c/cols*2-1)*halfWidth;
+   const nx=c/cols*2-1,x=nx*halfWidth;
+   // Gentle curved front hem: side edges rise slightly; neckline tapers
+   // into the anatomy rather than remaining a flat square rectangle.
+   const y=1.13+.49*v+.021*(1-v)**5*nx*nx;
    let maxDepth=-Infinity,closest=Infinity,nearest=-Infinity;
    for(const p of samples){
     if(p.z<-.02)continue; // Only actual front landmarks
@@ -74,6 +80,8 @@ export function addFittedFrontPanel(samples,coords,UV){
   push(br);push(tr);push(tl);
  }
  return Object.freeze({triangles:rows*cols*2,rows,cols,
+  hemHalfWidth:halfWidthAt(0),chestHalfWidth:halfWidthAt(.65),
+  neckHalfWidth:halfWidthAt(1),hemEdgeRise:.021,
   sourceDerivedDepth:true,frontIsIndependentMeshSurface:true});
 }
 

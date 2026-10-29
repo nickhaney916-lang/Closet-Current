@@ -24,6 +24,11 @@ test('Real 3D front panel uses sampled body curvature and leaves no center chest
  assert.equal(coords.length,640*3*3);
  assert.equal(UV.length,640*3*2);
  assert.equal(panel.sourceDerivedDepth,true);
+ assert.ok(panel.hemHalfWidth<panel.chestHalfWidth,
+  'Hem must follow actual waist width instead of a rectangular black bib');
+ assert.ok(panel.neckHalfWidth<panel.chestHalfWidth*.65,
+  'Neckline has to taper into shoulders');
+ assert.ok(panel.hemEdgeRise>.015,'Hem must be curved, not flat square edge');
  assert.ok(coords.filter((_,i)=>i%3===2).every(z=>z>.1));
  // The panel must not be a flat sticker; center and shoulder differ in depth.
  const depths=coords.filter((_,i)=>i%3===2);
