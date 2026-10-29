@@ -39,6 +39,7 @@ for(const kind of ['female','male'])test(kind+' verified CC0 dress uses measured
   assert.equal(result.dress.originalPhotoMappingPreserved,true);
   assert.equal(result.dress.frontCenterUnchanged,true);
   assert.equal(result.dress.upperOriginalBodiceGeometryUnchanged,true);
+  assert.equal(result.dress.originalWeldedShadingNormalsUnchanged,true);
   assert.ok(result.dress.skirtDrapeLimitedBelowY<=1.28);
   assert.equal(result.dress.shoulderAndArmholesUnchanged,true);
   assert.equal(result.dress.originalRGBUnchanged,true);

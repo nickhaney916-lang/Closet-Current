@@ -41,8 +41,10 @@ export function softenAnatomicalSkirt(dress,root,{enabled=true}={}){
   dress.stats.releaseAuthorized!==false||dress.stats.collisionValidated!==false||
   !root?.isObject3D)throw Error('Only exact unapproved source-bound anatomical dress permitted');
  const mesh=dress.mesh,geo=mesh.geometry,p=geo.getAttribute('position'),
-  rest=geo.getAttribute('dressRest'),skin=geo.getAttribute('skinWeight');
- if(!p||!rest||!skin||p.count!==rest.count||p.count!==skin.count||
+  rest=geo.getAttribute('dressRest'),skin=geo.getAttribute('skinWeight'),
+  originalNormals=geo.getAttribute('normal');
+ if(!p||!rest||!skin||!originalNormals||p.count!==rest.count||
+  p.count!==skin.count||p.count!==originalNormals.count||
   p.count<2000)throw Error('Original skinned garment source attributes missing');
  root.updateMatrixWorld(true);mesh.updateWorldMatrix(true,false);
  const waist=root.getObjectByName('spine04');
@@ -60,18 +62,27 @@ export function softenAnatomicalSkirt(dress,root,{enabled=true}={}){
  // Earlier using its Y blindly warped the photographed chest into dark bands.
  // Only touch the original LOWER skirt: a conservative hem-derived cutoff,
  // at least .18m below the source bone, and never above 1.28m on the 2m rig.
- const skirtTransitionY=Math.min(center.y-.18,hemY+.60,1.28);
- if(skirtTransitionY-hemY<.30||skirtTransitionY-hemY>.68)
-  throw Error('Could not safely isolate the lower original dress skirt');
+ // Use ORIGINAL photo-space dressRest.y instead of bone or posed mesh Y:
+ // upper-body skinned vertices can have rest/posed Y that differ markedly.
+ // Source dress ring 0 is hem; ring 3 is waist, with >=0.51m separation.
+ let originalHemY=Infinity;
+ for(let i=0;i<rest.count;i++)originalHemY=Math.min(originalHemY,rest.getY(i));
+ const skirtTransitionY=originalHemY+.33;
+ if(!Number.isFinite(originalHemY)||skirtTransitionY>1.30||
+  skirtTransitionY-hemY>.8)
+  throw Error('Cannot isolate original photographed lower dress skirt');
  let changed=0,max=0,frontPreserved=0;
  // Validate before mutating, since any failure must preserve atomic outfit rollback.
  const edits=[];
  for(let i=0;i<p.count;i++){
   world.fromBufferAttribute(p,i).applyMatrix4(mesh.matrixWorld);
   const angleCos=(world.z-center.z)/(Math.hypot(world.x-center.x,world.z-center.z)||1);
+  // Never move original photographic waist/bodice/neckline/armhole rings.
+  const originalY=rest.getY(i);
+  if(originalY>=skirtTransitionY-.00001)continue;
   const move=outwardDrapeAtRest({
-   x:world.x,y:world.y,z:world.z,centerX:center.x,centerZ:center.z,
-   waistY:skirtTransitionY,hemY
+   x:world.x,y:originalY,z:world.z,centerX:center.x,centerZ:center.z,
+   waistY:skirtTransitionY,hemY:originalHemY
   });
   if(angleCos>=SKIRT_DRAPE.frontUntouchedCos)frontPreserved++;
   if(move<=1e-6)continue;
@@ -90,7 +101,12 @@ export function softenAnatomicalSkirt(dress,root,{enabled=true}={}){
   p.setXYZ(edit.i,edit.local.x,edit.local.y,edit.local.z);
   changed++;max=Math.max(max,edit.move);
  }
- p.needsUpdate=true;geo.computeVertexNormals();
+ p.needsUpdate=true;
+ // CRITICAL: original anatomical fitter weld-averaged shared face normals.
+ // Globally recomputing normals after a tiny hem movement destroys that
+ // smoothing on unchanged torso faces and creates visible black CHEST bands.
+ // Keep all original shaded normals byte-identical; only 0–18mm hem geometry
+ // changes in research, not normals, source colors or any unreviewed UVs.
  geo.computeBoundingBox();geo.computeBoundingSphere();
  return {...dress,stats:{...dress.stats,
   skirtDrapeApplied:true,
@@ -98,6 +114,7 @@ export function softenAnatomicalSkirt(dress,root,{enabled=true}={}){
   skirtDrapeChangedVertices:changed,skirtDrapeMaxOutward:max,
   skirtDrapeLimitedBelowY:skirtTransitionY,
   upperOriginalBodiceGeometryUnchanged:true,
+  originalWeldedShadingNormalsUnchanged:true,
   originalPhotoCoordinatesUnchanged:false,
   originalPhotoMappingPreserved:true,
   originalRGBUnchanged:true,
