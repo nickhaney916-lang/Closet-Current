@@ -47,7 +47,7 @@ test('A changed publisher response or malformed rig NEVER gets automatically re-
   {bytes:good,kind:'male',expectedSHA:sha(good),license:'restricted'},
   {bytes:syntheticGLB({bones:6}),kind:'male',expectedSHA:sha(syntheticGLB({bones:6}))},
   {bytes:good.subarray(0,9000),kind:'male',expectedSHA:sha(good.subarray(0,9000))}
- ]) assert.throws(()=>verifyLockedGLB(bad.bytes,bad),/required|mismatch|limits|skeleton/);
+ ]) assert.throws(()=>verifyLockedGLB(bad.bytes,bad),/required|mismatch|limits|skeleton/i);
 });
 test('Full-pair source custody refuses a good-shaped but hash-drifted model and writes nothing',async()=>{
  const dir=await mkdtemp(join(tmpdir(),'closet-3d21-'));
