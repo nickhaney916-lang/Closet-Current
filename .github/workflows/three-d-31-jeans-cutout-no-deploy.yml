@@ -1,0 +1,39 @@
+name: 3D-31 public-domain source-true jeans cutout audit (HOLD NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'scripts/build-three-d-31-jeans-proposal.mjs'
+      - 'tests/three-d-31-jeans-source.test.mjs'
+      - 'research/three-d-31/**'
+      - '.github/workflows/three-d-31-jeans-cutout-no-deploy.yml'
+permissions:
+  contents: read
+jobs:
+  independent-real-original-mask-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Exact PR436 source and nonproduction-only diff
+        run: |
+          git merge-base --is-ancestor 3556b01461df7819e3f2aa0b9349be8978802c9c HEAD
+          git diff --name-only 3556b01461df7819e3f2aa0b9349be8978802c9c HEAD | while IFS= read -r f; do
+            case "$f" in
+              scripts/build-three-d-31-jeans-proposal.mjs|tests/three-d-31-jeans-source.test.mjs|research/three-d-31/*|.github/workflows/three-d-31-jeans-cutout-no-deploy.yml) ;;
+              *) echo "Prohibited original source / production / staging change: $f"; exit 1 ;;
+            esac
+          done
+      - name: Install only locally pinned research image decoder
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3
+      - name: Download genuine public-domain original from known Wikimedia host and propose alpha
+        run: node scripts/build-three-d-31-jeans-proposal.mjs
+      - name: Check actual source bytes, alpha and safe original RGB without approving
+        run: node --test tests/three-d-31-jeans-source.test.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: THREE-D-31-REAL-PUBLIC-DOMAIN-JEANS-SOURCE-AND-PROVISIONAL-MASK-HOLD
+          path: |
+            benchmark/three-d-31/
+          if-no-files-found: warn
