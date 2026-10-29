@@ -13,6 +13,8 @@ test('Actual anatomical garment is separate skinned shell geometry, never source
  assert.match(source,/uImage/);
  assert.match(source,/texture2D\(uImage,uv\)/);
  assert.match(source,/if\(present<\.5\)discard/);
+ assert.match(source,/neckEdge=1\.61\+\.10\*smoothstep/,'Collar must curve upward toward shoulder instead of square hole');
+ assert.match(source,/step\(\.68,absX\)/,'Source-free hands must remain exposed beyond sleeves');
  assert.equal(SHELL_LIMITS.shirtTop>1.6,true);
  assert.equal(SHELL_LIMITS.originalBackPhotograph,undefined);
 });
