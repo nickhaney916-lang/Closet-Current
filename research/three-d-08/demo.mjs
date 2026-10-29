@@ -28,6 +28,7 @@ async function changeBody(){
   $('avatar').dataset.bones=String(st.stats.bones);
   status('Verified '+st.kind+' CC0 anatomical humanoid. Shirt review required. Family Alpha HOLD.');
   photoStatus('No photographed clothing on body; explicit review required.');
+  $('avatar').dataset.pose=st.pose;
  }catch(e){if(ticket===epoch)status('Local body blocked: '+e.message);}
 }
 async function applyPhoto(event){
@@ -41,6 +42,7 @@ async function applyPhoto(event){
   });
   if(closed||ticket!==epoch||!$('review').checked)return;
   const decision=app.applyShirt(source,{acknowledged:true,mode:$("mode").value});
+  $('avatar').dataset.pose=app.getState().pose;
   $('avatar').dataset.photoApproved='false';
   $('avatar').dataset.photoSource=source.id;
   $('avatar').dataset.shirt='source-reviewed';
@@ -94,7 +96,33 @@ async function run(){
  });
  $('dress').addEventListener('click',applyPhoto);
  $('clear').addEventListener('click',clear);
- $('mode').addEventListener('change',clear);
+ $('mode').addEventListener('change',()=>{
+  clear();
+  if($('mode').value==='projection'&&$('pose').value==='relaxed'){
+   $('pose').value='source';
+   app.setPose('source');
+   $('poseStatus').textContent='Frozen surface projection is source-pose only. Reset to fitting pose.';
+  }
+ });
+ $('pose').addEventListener('change',()=>{
+  const next=$('pose').value;
+  if(next==='relaxed'&&$('mode').value==='projection'){
+   // The historical body-paint mode has non-rest-space UVs and would cause
+   // photo-swimming on the moved body. Only the real skinned shirt may relax.
+   $('mode').value='shell';
+   clear();
+  }
+  try{
+   const result=app.setPose(next);
+   $('avatar').dataset.pose=result.pose;
+   $('poseStatus').textContent=next==='relaxed'?
+    'Relaxed pose active; '+(result.garmentFollowsSameSkeleton?'original reviewed shirt follows the same skeleton.':'no source photo applied.')+' Family Alpha HOLD.':
+    'Fitting A-pose active; photographic source remains unchanged. Family Alpha HOLD.';
+  }catch(e){
+   $('poseStatus').textContent='Body pose blocked: '+e.message;
+   $('pose').value=app.getState().pose;
+  }
+ });
  $('model').addEventListener('change',changeBody);
  $('finish').addEventListener('change',()=>app.shade($('finish').value));
  for(const name of ['front','side','back'])$(name).addEventListener('click',()=>app[name]());

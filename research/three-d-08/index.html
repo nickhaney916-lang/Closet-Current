@@ -47,12 +47,12 @@ button:disabled{opacity:.45;cursor:default}
 </head><body>
 <header><p>CLOSET CURRENT · 3D DEVELOPMENT STUDIO · PRIVATE LOCAL PROTOTYPE</p>
 <h1>Real clothing, real anatomical figure</h1>
-<p>Separate anatomical garment shell · Work56 · Family Alpha HOLD</p></header>
+<p>Original photographed separate shirt + relaxed anatomical mannequin · integration HOLD</p></header>
 <main>
 <section>
  <div id="viewer-box">
   <canvas id="avatar" role="img" aria-label="Rotatable detailed anatomical clay humanoid mannequin"></canvas>
-  <span id="stamp">3D-08 · REAL PHOTO · HOLD</span>
+  <span id="stamp">3D-10 · RIGGED PHOTO · HOLD</span>
  </div>
  <div class="actionrow">
   <button type="button" id="front">Front</button>
@@ -64,9 +64,11 @@ button:disabled{opacity:.45;cursor:default}
  <p id="status" role="status" aria-live="polite">Loading locally licensed mannequin…</p>
 </section>
 <section>
- <span class="pill">WORK56 · SEPARATE SHIRT MESH</span>
+ <span class="pill">3D-10 · WORK56 + WORK57</span>
  <h2>Choose a reusable human figure</h2>
  <label>Comparison mode<select id="mode"><option value="shell">New separate garment shell</option><option value="projection">Frozen 3D-07 surface projection</option></select></label>
+ <label>Body presentation pose<select id="pose"><option value="source">Original fitting pose</option><option value="relaxed">Relaxed fashion pose (Work57)</option></select></label>
+ <p id="poseStatus" class="small" role="status">Garment fits in original A-pose. Relaxed presentation moves body and the separate shirt together.</p>
  <label>Base model
   <select id="model">
    <option value="female">Anatomical mannequin B</option>
@@ -96,7 +98,7 @@ button:disabled{opacity:.45;cursor:default}
  <p id="metadata" class="small">Skeleton and mesh details are checked after local model verification.</p>
  <p class="small"><strong>License:</strong> CC0 anatomical MakeHuman-derived human base meshes, published by Innerscene. No sign-up or per-person charges. Both assets are downloaded and verified only for local research; no external URLs are called by the avatar viewer.</p>
  <p class="small">Sources: <a href="https://www.innerscene.com/tools/library/3d-parts/female-base-mesh-3d-person-rigged-a-pose-dba97ed5" target="_blank" rel="noopener noreferrer">model B</a> and <a href="https://www.innerscene.com/tools/library/3d-parts/male-base-mesh-3d-person-rigged-a-pose-380e6d89" target="_blank" rel="noopener noreferrer">model A</a>.</p>
- <p class="small">The separate shirt shell requires seam, drape, pose validation and independent visual grading. This is not a fit guarantee or a public release. No user account, private wardrobe, original family photo or production data is involved.</p>
+ <p class="small">This is a source-verified research pose integration, NOT human-approved realistic cloth; neckline/drape/phone verification and independent visual grading. This is not a fit guarantee or a public release. No user account, private wardrobe, original family photo or production data is involved.</p>
 </section>
 </main>
 <script type="module" src="./demo.mjs"></script>
