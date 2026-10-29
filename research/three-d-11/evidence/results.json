@@ -1,0 +1,566 @@
+{
+  "profiles": [
+    {
+      "width": 320,
+      "height": 568,
+      "dpr": 2,
+      "version": "before",
+      "models": 2,
+      "poses": 2,
+      "views": 4,
+      "touchRotation": true,
+      "pinch": true,
+      "sourceIntegrity": true,
+      "sameSkeleton": true,
+      "noRebuildOnPose": true,
+      "clearResources": {
+        "geometries": 9,
+        "textures": 2
+      },
+      "dressedResources": {
+        "geometries": 11,
+        "textures": 3
+      },
+      "idleGPURedraws": 0,
+      "externalRequests": 0,
+      "drawPixels": 161100,
+      "readbackAndEncodeMs": [
+        633.7999999988824,
+        73,
+        70.80000000074506,
+        74.90000000037253,
+        75.39999999850988,
+        78.90000000037253
+      ],
+      "engine": "Chromium WebGL2 / SwiftShader",
+      "nativePhone": false,
+      "Safari": false,
+      "release": "HOLD"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "dpr": 3,
+      "version": "before",
+      "models": 2,
+      "poses": 2,
+      "views": 4,
+      "touchRotation": true,
+      "pinch": true,
+      "sourceIntegrity": true,
+      "sameSkeleton": true,
+      "noRebuildOnPose": true,
+      "clearResources": {
+        "geometries": 9,
+        "textures": 2
+      },
+      "dressedResources": {
+        "geometries": 11,
+        "textures": 3
+      },
+      "idleGPURedraws": 0,
+      "externalRequests": 0,
+      "drawPixels": 383250,
+      "readbackAndEncodeMs": [
+        559.1000000014901,
+        97.5,
+        94.39999999850988,
+        95,
+        93.70000000111759,
+        102.79999999888241
+      ],
+      "engine": "Chromium WebGL2 / SwiftShader",
+      "nativePhone": false,
+      "Safari": false,
+      "release": "HOLD"
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "dpr": 3,
+      "version": "before",
+      "models": 2,
+      "poses": 2,
+      "views": 4,
+      "touchRotation": true,
+      "pinch": true,
+      "sourceIntegrity": true,
+      "sameSkeleton": true,
+      "noRebuildOnPose": true,
+      "clearResources": {
+        "geometries": 9,
+        "textures": 2
+      },
+      "dressedResources": {
+        "geometries": 11,
+        "textures": 3
+      },
+      "idleGPURedraws": 0,
+      "externalRequests": 0,
+      "drawPixels": 504270,
+      "readbackAndEncodeMs": [
+        615.6999999992549,
+        90,
+        90.80000000074506,
+        91.19999999925494,
+        93.20000000111759,
+        101.79999999888241
+      ],
+      "engine": "Chromium WebGL2 / SwiftShader",
+      "nativePhone": false,
+      "Safari": false,
+      "release": "HOLD"
+    },
+    {
+      "width": 320,
+      "height": 568,
+      "dpr": 2,
+      "version": "after",
+      "models": 2,
+      "poses": 2,
+      "views": 4,
+      "touchRotation": true,
+      "pinch": true,
+      "sourceIntegrity": true,
+      "sameSkeleton": true,
+      "noRebuildOnPose": true,
+      "clearResources": {
+        "geometries": 9,
+        "textures": 2
+      },
+      "dressedResources": {
+        "geometries": 12,
+        "textures": 3
+      },
+      "idleGPURedraws": 0,
+      "externalRequests": 0,
+      "drawPixels": 161100,
+      "readbackAndEncodeMs": [
+        544.4000000003725,
+        74.70000000111759,
+        74.29999999888241,
+        72.30000000074506,
+        90.19999999925494,
+        100.20000000111759
+      ],
+      "engine": "Chromium WebGL2 / SwiftShader",
+      "nativePhone": false,
+      "Safari": false,
+      "release": "HOLD"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "dpr": 3,
+      "version": "after",
+      "models": 2,
+      "poses": 2,
+      "views": 4,
+      "touchRotation": true,
+      "pinch": true,
+      "sourceIntegrity": true,
+      "sameSkeleton": true,
+      "noRebuildOnPose": true,
+      "clearResources": {
+        "geometries": 9,
+        "textures": 2
+      },
+      "dressedResources": {
+        "geometries": 12,
+        "textures": 3
+      },
+      "idleGPURedraws": 0,
+      "externalRequests": 0,
+      "drawPixels": 383250,
+      "readbackAndEncodeMs": [
+        651.1999999992549,
+        93.20000000111759,
+        96.29999999888241,
+        88.5,
+        89.5,
+        89.70000000111759
+      ],
+      "engine": "Chromium WebGL2 / SwiftShader",
+      "nativePhone": false,
+      "Safari": false,
+      "release": "HOLD"
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "dpr": 3,
+      "version": "after",
+      "models": 2,
+      "poses": 2,
+      "views": 4,
+      "touchRotation": true,
+      "pinch": true,
+      "sourceIntegrity": true,
+      "sameSkeleton": true,
+      "noRebuildOnPose": true,
+      "clearResources": {
+        "geometries": 9,
+        "textures": 2
+      },
+      "dressedResources": {
+        "geometries": 12,
+        "textures": 3
+      },
+      "idleGPURedraws": 0,
+      "externalRequests": 0,
+      "drawPixels": 504270,
+      "readbackAndEncodeMs": [
+        550.8999999985099,
+        107.80000000074506,
+        102,
+        99,
+        97.30000000074506,
+        106.09999999962747
+      ],
+      "engine": "Chromium WebGL2 / SwiftShader",
+      "nativePhone": false,
+      "Safari": false,
+      "release": "HOLD"
+    }
+  ],
+  "corruptedCutoutBlocked": true,
+  "changedPixels": [
+    {
+      "model": "female",
+      "width": 320,
+      "pose": "source",
+      "view": "front",
+      "changedPixelFraction": 0.010285913528591354
+    },
+    {
+      "model": "female",
+      "width": 320,
+      "pose": "source",
+      "view": "threequarter",
+      "changedPixelFraction": 0.009804741980474199
+    },
+    {
+      "model": "female",
+      "width": 320,
+      "pose": "source",
+      "view": "side",
+      "changedPixelFraction": 0.006115760111576011
+    },
+    {
+      "model": "female",
+      "width": 320,
+      "pose": "source",
+      "view": "back",
+      "changedPixelFraction": 0.006419107391910739
+    },
+    {
+      "model": "female",
+      "width": 320,
+      "pose": "relaxed",
+      "view": "front",
+      "changedPixelFraction": 0.010226638772663877
+    },
+    {
+      "model": "female",
+      "width": 320,
+      "pose": "relaxed",
+      "view": "threequarter",
+      "changedPixelFraction": 0.010202231520223152
+    },
+    {
+      "model": "female",
+      "width": 320,
+      "pose": "relaxed",
+      "view": "side",
+      "changedPixelFraction": 0.006886331938633194
+    },
+    {
+      "model": "female",
+      "width": 320,
+      "pose": "relaxed",
+      "view": "back",
+      "changedPixelFraction": 0.0063354253835425384
+    },
+    {
+      "model": "female",
+      "width": 390,
+      "pose": "source",
+      "view": "front",
+      "changedPixelFraction": 0.01591212802711776
+    },
+    {
+      "model": "female",
+      "width": 390,
+      "pose": "source",
+      "view": "threequarter",
+      "changedPixelFraction": 0.015909520550177636
+    },
+    {
+      "model": "female",
+      "width": 390,
+      "pose": "source",
+      "view": "side",
+      "changedPixelFraction": 0.009850396010560281
+    },
+    {
+      "model": "female",
+      "width": 390,
+      "pose": "source",
+      "view": "back",
+      "changedPixelFraction": 0.008877155242658323
+    },
+    {
+      "model": "female",
+      "width": 390,
+      "pose": "relaxed",
+      "view": "front",
+      "changedPixelFraction": 0.015893223819301847
+    },
+    {
+      "model": "female",
+      "width": 390,
+      "pose": "relaxed",
+      "view": "threequarter",
+      "changedPixelFraction": 0.016852775333268146
+    },
+    {
+      "model": "female",
+      "width": 390,
+      "pose": "relaxed",
+      "view": "side",
+      "changedPixelFraction": 0.011122192888106645
+    },
+    {
+      "model": "female",
+      "width": 390,
+      "pose": "relaxed",
+      "view": "back",
+      "changedPixelFraction": 0.008800886542159643
+    },
+    {
+      "model": "female",
+      "width": 430,
+      "pose": "source",
+      "view": "front",
+      "changedPixelFraction": 0.016636690201907594
+    },
+    {
+      "model": "female",
+      "width": 430,
+      "pose": "source",
+      "view": "threequarter",
+      "changedPixelFraction": 0.016676823981171807
+    },
+    {
+      "model": "female",
+      "width": 430,
+      "pose": "source",
+      "view": "side",
+      "changedPixelFraction": 0.010342128081258516
+    },
+    {
+      "model": "female",
+      "width": 430,
+      "pose": "source",
+      "view": "back",
+      "changedPixelFraction": 0.009030100334448161
+    },
+    {
+      "model": "female",
+      "width": 430,
+      "pose": "relaxed",
+      "view": "front",
+      "changedPixelFraction": 0.016585160411247368
+    },
+    {
+      "model": "female",
+      "width": 430,
+      "pose": "relaxed",
+      "view": "threequarter",
+      "changedPixelFraction": 0.017693050910442217
+    },
+    {
+      "model": "female",
+      "width": 430,
+      "pose": "relaxed",
+      "view": "side",
+      "changedPixelFraction": 0.011603121516164994
+    },
+    {
+      "model": "female",
+      "width": 430,
+      "pose": "relaxed",
+      "view": "back",
+      "changedPixelFraction": 0.008954292084726867
+    },
+    {
+      "model": "male",
+      "width": 320,
+      "pose": "source",
+      "view": "front",
+      "changedPixelFraction": 0.009668758716875872
+    },
+    {
+      "model": "male",
+      "width": 320,
+      "pose": "source",
+      "view": "threequarter",
+      "changedPixelFraction": 0.009417712691771269
+    },
+    {
+      "model": "male",
+      "width": 320,
+      "pose": "source",
+      "view": "side",
+      "changedPixelFraction": 0.005676429567642957
+    },
+    {
+      "model": "male",
+      "width": 320,
+      "pose": "source",
+      "view": "back",
+      "changedPixelFraction": 0.0065481171548117155
+    },
+    {
+      "model": "male",
+      "width": 320,
+      "pose": "relaxed",
+      "view": "front",
+      "changedPixelFraction": 0.009755927475592747
+    },
+    {
+      "model": "male",
+      "width": 320,
+      "pose": "relaxed",
+      "view": "threequarter",
+      "changedPixelFraction": 0.010177824267782427
+    },
+    {
+      "model": "male",
+      "width": 320,
+      "pose": "relaxed",
+      "view": "side",
+      "changedPixelFraction": 0.006460948396094839
+    },
+    {
+      "model": "male",
+      "width": 320,
+      "pose": "relaxed",
+      "view": "back",
+      "changedPixelFraction": 0.006935146443514644
+    },
+    {
+      "model": "male",
+      "width": 390,
+      "pose": "source",
+      "view": "front",
+      "changedPixelFraction": 0.014280499331834035
+    },
+    {
+      "model": "male",
+      "width": 390,
+      "pose": "source",
+      "view": "threequarter",
+      "changedPixelFraction": 0.014697043773019133
+    },
+    {
+      "model": "male",
+      "width": 390,
+      "pose": "source",
+      "view": "side",
+      "changedPixelFraction": 0.008804797757569831
+    },
+    {
+      "model": "male",
+      "width": 390,
+      "pose": "source",
+      "view": "back",
+      "changedPixelFraction": 0.009062937974642287
+    },
+    {
+      "model": "male",
+      "width": 390,
+      "pose": "relaxed",
+      "view": "front",
+      "changedPixelFraction": 0.014343078778397054
+    },
+    {
+      "model": "male",
+      "width": 390,
+      "pose": "relaxed",
+      "view": "threequarter",
+      "changedPixelFraction": 0.016090740197516377
+    },
+    {
+      "model": "male",
+      "width": 390,
+      "pose": "relaxed",
+      "view": "side",
+      "changedPixelFraction": 0.009629412339884619
+    },
+    {
+      "model": "male",
+      "width": 390,
+      "pose": "relaxed",
+      "view": "back",
+      "changedPixelFraction": 0.009430592223200026
+    },
+    {
+      "model": "male",
+      "width": 430,
+      "pose": "source",
+      "view": "front",
+      "changedPixelFraction": 0.01466270283661588
+    },
+    {
+      "model": "male",
+      "width": 430,
+      "pose": "source",
+      "view": "threequarter",
+      "changedPixelFraction": 0.01537123745819398
+    },
+    {
+      "model": "male",
+      "width": 430,
+      "pose": "source",
+      "view": "side",
+      "changedPixelFraction": 0.009231264709525578
+    },
+    {
+      "model": "male",
+      "width": 430,
+      "pose": "source",
+      "view": "back",
+      "changedPixelFraction": 0.009274866840084231
+    },
+    {
+      "model": "male",
+      "width": 430,
+      "pose": "relaxed",
+      "view": "front",
+      "changedPixelFraction": 0.01469490895577852
+    },
+    {
+      "model": "male",
+      "width": 430,
+      "pose": "relaxed",
+      "view": "threequarter",
+      "changedPixelFraction": 0.016737272389446303
+    },
+    {
+      "model": "male",
+      "width": 430,
+      "pose": "relaxed",
+      "view": "side",
+      "changedPixelFraction": 0.010069119286510591
+    },
+    {
+      "model": "male",
+      "width": 430,
+      "pose": "relaxed",
+      "view": "back",
+      "changedPixelFraction": 0.009615260745695528
+    }
+  ],
+  "frontRearChecks": 24
+}
