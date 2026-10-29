@@ -65,7 +65,14 @@ for(const kind of ['male','female'])test(kind+' actual Work56 shirt skeleton fol
  const q=setFashionPose(root,'source');
  const returned=sample.applyBoneTransform(chosen,rest.clone());
  assert.equal(q.mode,'source');
- assert.ok(returned.distanceTo(before)<.0003,'Round trip pose must restore source garment position');
+ const roundTripDrift=returned.distanceTo(before);
+ const maxBoneError=Math.max(...[...beforeQuats].map(([bone,quat])=>bone.quaternion.angleTo(quat)));
+ console.log('THREE_D_10_POSE_RETURN_DIAGNOSTIC',JSON.stringify({
+  kind,sourceVertex:before.toArray(),returnedVertex:returned.toArray(),
+  roundTripDrift,maxBoneError,relaxedVertex:after.toArray(),
+  originalSourceQuaternionRestored:maxBoneError<.00002
+ }));
+ assert.ok(roundTripDrift<.0003,'Round trip pose must restore source garment position');
  for(const [bone,quat] of beforeQuats)assert.ok(bone.quaternion.angleTo(quat)<.00002,'Source rig quaternion must restore precisely');
  garment.dispose();assert.ok(garment.meshes.every(m=>!m.parent));
 });
