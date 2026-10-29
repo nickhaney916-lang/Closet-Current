@@ -16,6 +16,7 @@ on:
       - 'research/three-d-36/crotch-seat-panel.mjs'
       - 'scripts/test-three-d-37-second-browser.mjs'
       - 'tests/three-d-37-source-true.test.mjs'
+      - 'tests/three-d-37-second-models.test.mjs'
 permissions:
   contents: read
 jobs:
@@ -36,7 +37,7 @@ jobs:
           git merge-base --is-ancestor d698c952812167c1cbed05356000d67385a08634 HEAD
           git diff --name-only d698c952812167c1cbed05356000d67385a08634 HEAD | while IFS= read -r f; do
             case "$f" in
-              research/three-d-37/*|research/three-d-30/reviewed-photo-pants.mjs|research/three-d-31/photo-jeans-demo.mjs|research/three-d-15/outfit-controller.mjs|research/three-d-15/showroom.mjs|research/three-d-32/natural-jeans-drape.mjs|research/three-d-33/posterior-fabric-fairing.mjs|research/three-d-34/hanging-pants-envelope.mjs|research/three-d-35/independent-jeans-loft.mjs|research/three-d-36/crotch-seat-panel.mjs|scripts/build-three-d-37-second-jeans.mjs|tests/three-d-37-source-true.test.mjs|scripts/test-three-d-37-second-browser.mjs|.github/workflows/three-d-37-second-jeans-no-deploy.yml) ;;
+              research/three-d-37/*|research/three-d-30/reviewed-photo-pants.mjs|research/three-d-31/photo-jeans-demo.mjs|research/three-d-15/outfit-controller.mjs|research/three-d-15/showroom.mjs|research/three-d-32/natural-jeans-drape.mjs|research/three-d-33/posterior-fabric-fairing.mjs|research/three-d-34/hanging-pants-envelope.mjs|research/three-d-35/independent-jeans-loft.mjs|research/three-d-36/crotch-seat-panel.mjs|scripts/build-three-d-37-second-jeans.mjs|tests/three-d-37-source-true.test.mjs|tests/three-d-37-second-models.test.mjs|scripts/test-three-d-37-second-browser.mjs|.github/workflows/three-d-37-second-jeans-no-deploy.yml) ;;
               *) echo "OUT OF SCOPE: $f"; exit 1 ;;
             esac
           done
@@ -51,6 +52,10 @@ jobs:
           git fetch --no-tags origin 53f2ad344dc56a1477e343531c423aed0e66c17d dd6bac3fa9ff640d4f562cf925337440bdb5cf8f 3a572193987cb29389727426136c6eb3ac326783 dfb40889c4c1221fb1833b859e8a11ef38aeb76e
           node scripts/build-work47-benchmark.mjs
           node research/three-d-20/restore-approved-models.mjs
+      - name: 2nd actual original jeans on both anatomical models and full source UV provenance
+        run: |
+          node --test tests/three-d-37-second-models.test.mjs
+          node --test tests/three-d-36-crotch-panel.test.mjs
       - name: Real second jeans pair on both original anatomical figures and four angles
         run: node scripts/test-three-d-37-second-browser.mjs
       - uses: actions/upload-artifact@v4
