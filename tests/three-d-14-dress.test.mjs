@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
-import {DRESS_ID,dressRings,requireDress} from '../research/three-d-14/dress-shell.mjs';
+import {DRESS_ID,dressRings,requireDress,fitDressEnvelope} from '../research/three-d-14/dress-shell.mjs';
 import {isPinnedProviderUrl} from '../research/three-d-14/cc0-pinned-download.mjs';
 const sample=()=>({id:DRESS_ID,type:'dress',
  sourceSHA256:'a'.repeat(64),ownerApproved:false,humanVisualApproval:false,
@@ -73,4 +73,20 @@ test('Studio loader is declared in module scope and startup stays diagnostic',as
  assert.match(viewer,/const loader=new GLTFLoader\(\)/);
  assert.doesNotMatch(viewer,/scene\.add\(display\),loader=/);
  assert.match(browser,/DRESS_3D14_STARTUP_DIAGNOSTIC/);
+});
+
+test('Actual chest depth drives front dress clearance without inflating inferred back',()=>{
+ const rings=dressRings(1.10,1.60,.245),pts=[];
+ for(const [y] of rings)for(const dx of [-.16,-.10,-.04,.04,.10,.16]){
+  pts.push({x:dx,y:y+.018,z:.31},{x:dx,y:y-.018,z:-.17});
+ }
+ const fitted=fitDressEnvelope(rings,pts);
+ assert.equal(fitted.length,9);
+ for(const row of fitted.slice(2,-1)){
+  assert.ok(row.front>=.345,'Real breasts and abdomen must not pass through dress bodice');
+  assert.ok(row.back<=.65,'Rear material is a separate bounded envelope');
+  assert.ok(row.measuredSourcePose);
+ }
+ assert.equal(fitted.at(-1).neckOpening,true,'Anatomical neck remains intentionally open');
+ assert.throws(()=>fitDressEnvelope(rings,[]));
 });

@@ -35,6 +35,36 @@ export function dressRings(waist,neck,radius){
   [neck+.005,.123,.10]
  ];
 }
+/** Probe original body source-pose surface, not a guessed single waist radius.
+ * Return separate front/back radii; neck stays open as a deliberate collar.
+ * A source-pose sample is not evidence for arbitrary-pose collision clearance.
+ */
+export function fitDressEnvelope(rings,points,{centerX=0,centerZ=0}={}){
+ if(!Array.isArray(rings)||rings.length<6||!Array.isArray(points)||
+  points.length<20)throw Error('Real anatomical surface samples required');
+ return rings.map(([y,rx,rz],i)=>{
+  if(![y,rx,rz,centerX,centerZ].every(Number.isFinite)||rx<=0||rz<=0)
+   throw Error('Invalid anatomical ring');
+  if(i===rings.length-1)return {y,rx,front:rz,back:rz,neckOpening:true};
+  let front=rz,back=rz,samples=0;
+  for(const p of points){
+   if(Math.abs(p.y-y)>.095)continue;
+   const dx=p.x-centerX;
+   if(Math.abs(dx)>Math.min(.285,rx*.80))continue;
+   const ratio=dx/rx,denom=Math.sqrt(1-ratio*ratio);
+   if(denom<.58)continue;
+   const dz=p.z-centerZ,margin=.035;
+   if(dz>=0)front=Math.max(front,(dz+margin)/denom);
+   else back=Math.max(back,(-dz+margin)/denom);
+   samples++;
+  }
+  if(samples<4)throw Error('Insufficient body samples to cover dress chest');
+  // Keep expansion local to the front when breasts/abdomen protrude;
+  // don't turn the entire garment into an oversized symmetric barrel.
+  return {y,rx,front:Math.min(.72,front),back:Math.min(.65,back),
+   measuredSourcePose:true,neckOpening:false,samples};
+ });
+}
 export function buildSourceDress(root,raw,{reviewed=false,segments=64}={}){
  const source=requireDress(raw,reviewed);
  if(!root?.traverse||!Number.isInteger(segments)||segments<24||segments>96)
@@ -51,23 +81,28 @@ export function buildSourceDress(root,raw,{reviewed=false,segments=64}={}){
  if(!waistB||!neckB)throw Error('Anatomical waist/neck bones missing');
  const waist=waistB.getWorldPosition(new T.Vector3()),neck=neckB.getWorldPosition(new T.Vector3());
  const pos=base.geometry.attributes.position, inverse=base.matrixWorld.clone().invert();
- const nearby=[];
- for(let i=0;i<pos.count;i+=5){
+ const nearby=[],torsoSamples=[];
+ for(let i=0;i<pos.count;i+=2){
   const p=new T.Vector3().fromBufferAttribute(pos,i).applyMatrix4(base.matrixWorld);
   if(Math.abs(p.y-waist.y)<.07&&Math.abs(p.x-waist.x)<.47)nearby.push(p);
+  if(p.y>=waist.y-.60&&p.y<=neck.y+.02&&Math.abs(p.x-waist.x)<.32)
+   torsoSamples.push(p);
  }
  const r=Math.min(.34,Math.max(.20,nearby.length?Math.max(...nearby.map(p=>Math.abs(p.x-waist.x))):.24));
- const rings=dressRings(waist.y,neck.y,r), names=base.skeleton.bones.map(b=>b.name.replaceAll('.',''));
+ const rawRings=dressRings(waist.y,neck.y,r);
+ const rings=fitDressEnvelope(rawRings,torsoSamples,{centerX:waist.x,centerZ:waist.z}),
+  names=base.skeleton.bones.map(b=>b.name.replaceAll('.',''));
  const bone=(label,fallback)=>{let n=names.indexOf(label);if(n<0)n=names.indexOf(fallback);
   if(n<0)throw Error('Missing real skeleton bone '+label);return n;};
  const spine=bone('spine04','spine03'),pelvis=bone('pelvis','spine04'),
   left=bone('upperleg01L','pelvis'),right=bone('upperleg01R','pelvis');
  const positions=[],rest=[],skinIndices=[],skinWeights=[],triangles=[];
  for(let ring=0;ring<rings.length;ring++){
-  const [y,rx,rz]=rings[ring];
+  const {y,rx,front,back}=rings[ring];
   for(let j=0;j<=segments;j++){
    const ang=j*2*Math.PI/segments,xs=Math.sin(ang),zs=Math.cos(ang);
-   const p=new T.Vector3(waist.x+rx*xs,y,waist.z+rz*zs);
+   const depth=zs>=0?front:back;
+   const p=new T.Vector3(waist.x+rx*xs,y,waist.z+depth*zs);
    rest.push(p.x,p.y,p.z);p.applyMatrix4(inverse);
    positions.push(p.x,p.y,p.z);
    const spineW=T.MathUtils.smoothstep(y,waist.y-.06,waist.y+.18);
@@ -105,9 +140,9 @@ export function buildSourceDress(root,raw,{reviewed=false,segments=64}={}){
  material.onBeforeCompile=sh=>{
   Object.assign(sh.uniforms,{
    uDressImage:{value:map},uDressCrop:{value:new T.Vector4(...source.cropRect)},
-   uDressBase:{value:fabric},uDressHem:{value:rings[0][0]},
-   uDressTop:{value:rings.at(-1)[0]},uDressCenterX:{value:waist.x},
-   uDressWidth:{value:Math.max(...rings.map(row=>row[1]))}
+   uDressBase:{value:fabric},uDressHem:{value:rings[0].y},
+   uDressTop:{value:rings.at(-1).y},uDressCenterX:{value:waist.x},
+   uDressWidth:{value:Math.max(...rings.map(row=>row.rx))}
   });
   sh.vertexShader=sh.vertexShader.replace('void main() {',
    'attribute vec3 dressRest;varying vec3 vDressRest;varying vec3 vDressNormal;\nvoid main() {');
@@ -125,6 +160,7 @@ export function buildSourceDress(root,raw,{reviewed=false,segments=64}={}){
  const stats={triangles:triangles.length/3,ringCount:rings.length,
   sourceId:source.id,sourceSHA256:source.sourceSHA256,sharedSkeleton:mesh.skeleton===base.skeleton,
   frontOriginalPixels:true,back:'source-median-inferred',realSeparate3DMesh:true,
+  sourceBodyEnvelope:true,frontProtrusionRemediated:true,
   photoVisualAccepted:false,collisionValidated:false,releaseAuthorized:false};
  return {mesh,meshes:[mesh],stats,dispose(){mesh.removeFromParent();geometry.dispose();material.dispose();map.dispose();}};
 }
