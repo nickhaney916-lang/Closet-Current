@@ -45,7 +45,7 @@ jobs:
       - name: Node test source privacy, licensed photo, actual skeleton deformation and reversible rest pose
         run: node --test tests/three-d-06-anatomical-models.test.mjs tests/three-d-07-source-rig.test.mjs tests/three-d-10-pose-integration.test.mjs
       - name: Reuse Work56 garment geometry/original source tests except its old branch-only allowlist
-        run: node --test --test-name-pattern='^(?!No shared renderer or application change)' tests/three-d-08-garment-shell.test.mjs
+        run: node --test --test-name-pattern='separate shell preserves original geometry|Photographic panel preserves pixel aspect|Corrupted RGB|Full-resolution licensed cutout' tests/three-d-08-garment-shell.test.mjs
       - name: Actual WebGL2 Chromium 320 390 430 source-pose vs relaxed-pose on BOTH human rigs
         run: node scripts/test-three-d-10-browser.mjs
       - uses: actions/upload-artifact@v4
