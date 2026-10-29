@@ -1,0 +1,59 @@
+name: 3D-30 original-source reviewed photo pants gate (DRAFT HOLD NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'research/three-d-30/**'
+      - 'research/three-d-15/outfit-controller.mjs'
+      - 'tests/three-d-30-reviewed-photo-pants.test.mjs'
+      - '.github/workflows/three-d-30-photo-pants-no-deploy.yml'
+permissions:
+  contents: read
+jobs:
+  source-gated-lower-body:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Exactly source-pinned PR435 parent and only isolated research
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git fetch --no-tags origin 49395aec081fb03e9c10cb65be8bdbf7045c11a0
+          git merge-base --is-ancestor 49395aec081fb03e9c10cb65be8bdbf7045c11a0 HEAD
+          git diff --name-only 49395aec081fb03e9c10cb65be8bdbf7045c11a0 HEAD | while IFS= read -r f; do
+            case "$f" in
+              research/three-d-30/*|research/three-d-15/outfit-controller.mjs|tests/three-d-30-reviewed-photo-pants.test.mjs|.github/workflows/three-d-30-photo-pants-no-deploy.yml) ;;
+              *) echo "Prohibited original image, skin rig, staging, prod, auth or Drive Duel change: $f"; exit 1 ;;
+            esac
+          done
+          test "$(git diff --name-only 49395aec081fb03e9c10cb65be8bdbf7045c11a0 HEAD | wc -l)" -le 5
+      - name: Install local pinned research dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund three@0.180.0 sharp@0.34.3 playwright@1.56.1
+      - name: Restore only original licensed photos and exact original CC0 figures
+        run: |
+          git fetch --no-tags origin 53f2ad344dc56a1477e343531c423aed0e66c17d dd6bac3fa9ff640d4f562cf925337440bdb5cf8f 3a572193987cb29389727426136c6eb3ac326783 dfb40889c4c1221fb1833b859e8a11ef38aeb76e
+          node scripts/build-work47-benchmark.mjs
+          node research/three-d-20/restore-approved-models.mjs
+      - name: Actual source-gated pants projection, both original rigs and atomic outfit rollback
+        run: |
+          node --test tests/three-d-30-reviewed-photo-pants.test.mjs
+          node --test tests/three-d-29-neckline.test.mjs
+          node --test --test-name-pattern='Stock-only|Both garment cutouts' tests/three-d-15-outfits.test.mjs
+      - name: Existing source-true dress/shirt neutral pants browser regression (430px)
+        run: |
+          QUICK=1 MODEL=female node scripts/test-three-d-29-browser.mjs
+          QUICK=1 MODEL=male node scripts/test-three-d-29-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: THREE-D-30-PANTS-SOURCE-GATE-NEUTRAL-FALLBACK-HOLD
+          path: |
+            benchmark/three-d-29/
+            benchmark/work47/manifest.json
+            research/three-d-06/models/verified-assets.json
+          if-no-files-found: warn
