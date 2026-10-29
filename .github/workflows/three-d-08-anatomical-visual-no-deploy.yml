@@ -43,7 +43,7 @@ jobs:
           node --test --test-name-pattern='targeted geometry' tests/three-d-11-drape.test.mjs
           node --test --test-name-pattern='canonical Work56|Original stock source' tests/three-d-09-integration.test.mjs
       - name: Genuine Work59 before/after Chromium WebGL2 at 320/390/430 widths
-        run: node scripts/test-three-d-11-browser.mjs
+        run: node scripts/test-three-d-08-anatomical-capture.mjs
       - name: Retain original Work59 96-frame evidence and 24 print checks
         run: node scripts/test-three-d-11-evidence.mjs
       - name: Independent source and anatomical screenshot checks; generate visual inspection sheets
