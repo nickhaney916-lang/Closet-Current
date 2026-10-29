@@ -95,7 +95,8 @@ for(let col=0;col<4;col++){
   while(lo<hi){const m=(lo+hi)>>1;if(valid[m]<y)lo=m+1;else hi=m;}
   const right=valid[lo],left=valid[Math.max(0,lo-1)];
   const x1=spans[left][col],x2=spans[right][col];
-  spans[y][col]=left===right?x1:Math.round(x1+(x2-x1)*((y-left)/(right-left)));
+  const t=left===right?0:Math.max(0,Math.min(1,(y-left)/(right-left)));
+  spans[y][col]=Math.round(x1+(x2-x1)*t);
  }
 }
 const result=new Uint8Array(sw*sh);
