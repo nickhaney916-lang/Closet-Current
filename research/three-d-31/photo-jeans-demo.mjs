@@ -34,7 +34,7 @@ async function start(){
  const pixels=verifyVisibleRGB(original,cutout);
  $('original').src=original.src;$('cutout').src=cutout.src;
  pants=Object.freeze({id:PANTS_RESEARCH_SOURCE.id,type:'pants',sourceSHA256:PANTS_RESEARCH_SOURCE.originalSHA256,cutoutSHA256:PANTS_RESEARCH_SOURCE.cutoutSHA256,
-  cutout,original,originalVerified:true,cutoutVerified:true,visibleSourceRGBPreserved:true,frontOrientationReviewed:true,
+  cutout,original,originalVerified:true,cutoutVerified:true,sourceAssetsVerified:true,visibleSourceRGBPreserved:true,frontOrientationReviewed:true,
   cropRect:[0,0,1,1],ownerApproved:false,humanVisualApproval:false,releaseAuthorized:false,provisional:true});
  const manifest=await fetch('/benchmark/work47/manifest.json',{cache:'no-store'}).then(r=>r.json());
  shirt=await loadLicensedCutout('commons-0003',{manifest,reviewConfirmed:true});
