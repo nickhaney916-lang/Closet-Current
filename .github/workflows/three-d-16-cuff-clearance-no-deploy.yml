@@ -1,0 +1,61 @@
+name: 3D-16 source-shirt inner cuff correction (NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'research/three-d-16/**'
+      - 'research/three-d-15/outfit-controller.mjs'
+      - 'research/three-d-15/showroom.mjs'
+      - 'research/three-d-15/demo.mjs'
+      - 'tests/three-d-16-cuff-clearance.test.mjs'
+      - 'scripts/test-three-d-16-browser.mjs'
+      - '.github/workflows/three-d-16-cuff-clearance-no-deploy.yml'
+permissions:
+  contents: read
+jobs:
+  source-cuff-clearance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Prevent changes outside 3D-16 research scope
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git fetch --no-tags origin 43bfb946bef2c046c5fa806fefc0158392c79570
+          git diff --name-only 43bfb946bef2c046c5fa806fefc0158392c79570 HEAD | while IFS= read -r path; do
+            case "$path" in
+              research/three-d-16/*|research/three-d-15/outfit-controller.mjs|research/three-d-15/showroom.mjs|research/three-d-15/demo.mjs|tests/three-d-16-cuff-clearance.test.mjs|scripts/test-three-d-16-browser.mjs|.github/workflows/three-d-16-cuff-clearance-no-deploy.yml) ;;
+              *) echo "Unexpected production, auth, 2D or customer data change: $path"; exit 1 ;;
+            esac
+          done
+          test "$(git diff --name-only 43bfb946bef2c046c5fa806fefc0158392c79570 HEAD | wc -l)" -le 8
+      - name: Install local pinned research dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 three@0.180.0 playwright@1.56.1
+      - name: Rebuild SHA-pinned licensed original photos and CC0 humanoid source
+        run: |
+          git fetch --no-tags origin 53f2ad344dc56a1477e343531c423aed0e66c17d dd6bac3fa9ff640d4f562cf925337440bdb5cf8f 3a572193987cb29389727426136c6eb3ac326783 dfb40889c4c1221fb1833b859e8a11ef38aeb76e
+          node scripts/build-work47-benchmark.mjs
+          for attempt in 1 2 3; do
+            node research/three-d-14/cc0-pinned-download.mjs && break
+            if [ "$attempt" = 3 ]; then exit 1; fi
+            sleep 2
+          done
+      - name: Validate actual male female sleeve geometry and source privacy
+        run: |
+          node --test tests/three-d-16-cuff-clearance.test.mjs
+          node --test --test-name-pattern='atomic outfit slots|Stock-only mode|Both garment cutouts' tests/three-d-15-outfits.test.mjs
+      - name: Real Chromium WebGL2 320 390 430 source shirt cuff comparisons
+        run: node scripts/test-three-d-16-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: THREE-D-16-REAL-SHIRT-CUFF-BEFORE-AFTER-HOLD
+          path: |
+            benchmark/three-d-16/
+            research/three-d-06/models/verified-assets.json
+          if-no-files-found: warn
