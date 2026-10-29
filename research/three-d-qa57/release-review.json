@@ -1,0 +1,12 @@
+{
+  "title": "Closet Current independent 3D visual QA #57",
+  "disposition": "HOLD",
+  "sourceId": "commons-0003",
+  "reviewer": null,
+  "reviewDate": null,
+  "physicalDeviceTested": false,
+  "privacyGateVerified": false,
+  "ownerReleaseApproval": false,
+  "assessments": {},
+  "notes": "No independent human PASS recorded. Work58 reported cloth side fit and realism FAIL. Do not invite family testers based on geometry or Chromium alone. Current AJ shirt is only 1 of 15 licensed benchmark photographs."
+}
