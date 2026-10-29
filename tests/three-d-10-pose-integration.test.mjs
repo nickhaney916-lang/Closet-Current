@@ -79,8 +79,8 @@ test('Experimental shell viewer guards fit-in-source-pose before rendering relax
  assert.match(s,/garmentFollowsSameSkeleton/);
  const ui=await readFile('research/three-d-08/demo.mjs','utf8');
  const html=await readFile('research/three-d-08/index.html','utf8');
- assert.match(ui,/id.*pose|\\$\\('pose'\\)/);
- assert.match(ui,/change.*clear|clear\\(\\)/);
+ assert.ok(ui.includes("$('pose')"),'Pose must be a controlled element in original shirt viewer');
+ assert.ok(ui.includes('clear()'),'Review withdrawal must clear photo even when posing');
  assert.match(html,/id="pose"/);
  assert.match(html,/value="source"/);
  assert.match(html,/value="relaxed"/);
