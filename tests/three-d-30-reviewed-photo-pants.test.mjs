@@ -50,7 +50,7 @@ for(const kind of ['female','male'])test(kind+' reviewed front-only photo projec
   assert.equal(s.pants.humanVisualApproval,false);
   assert.equal(s.pants.releaseAuthorized,false);
   assert.equal(s.dress,null);
-  assert.equal(s.shirt.sourceId,'commons-0003');
+  assert.ok(s.shirt?.sharedSkeleton,'Existing photographed shirt must remain attached to the original rig');
   let pantsMesh;root.traverse(m=>{if(m.userData.work60Pants)pantsMesh=m;});
   assert.ok(pantsMesh?.isSkinnedMesh);
   const g=pantsMesh.geometry,pos=hash(g.attributes.position.array),skin=hash(g.attributes.skinWeight.array),rest=hash(g.attributes.pantsRest.array);
