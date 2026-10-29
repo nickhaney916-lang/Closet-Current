@@ -1,0 +1,21 @@
+# Closet Current — 3D-08 separate shirt geometry on real anatomical figures (HOLD)
+
+Owner priority: move the existing photographed clothing from a body-surface shader into **separate, independently rendered three-dimensional garment geometry** on the anatomically human CC0 humanoid (male and female). This directly follows 3D-07, PR #397 at verified exact parent SHA `ac7d2bd1f2c223baf61fa0c3580cbc3b9b1330ec`; deliberately stop spending time polishing the old tube mannequin.
+
+## Implementation
+
+- Reuses the source-verified `commons-0003` original black AJ shirt JPEG/transparent PNG from Work47. Both require their original frozen SHA-256 and manual research review from `loadLicensedCutout` before GPU use. Existing clothing type/color recognition and alpha cropping are preserved.
+- `buildAnatomicalGarmentShell` clones real mesh geometry and reuses the exact source GLB **skinned skeleton**, not HTML or a second unrelated cylinder. It offsets a separate copy of anatomical vertex positions by a small fixed finite amount along the normal, draws with its own independently compiled THREE MeshStandardMaterial and maps original RGB/alpha **only to its front chest**. Shader discards all geometry outside supported shirt torso and sleeves. The underlying mannequin body remains and still wears its neutral modesty layer underneath the removable outer shell.
+- Outer shell coordinates come from the anatomically proportioned 163-bone male/female GLB. Sleeves, plain sides and unphotographed back are neutral source-median fabric, never fabricated photographic pixels. Real skinned geometry rotates with the human mesh, independently of body color/material.
+- **This is only an experimental shell**, not real garment manufacture: no garment measurements, draped cloth, independent natural silhouette or fabric physics. Because it follows near-body geometry, it may still look like tight paint. The half-cut UV, shoulder edges and original white logo must be judged on actual real image screenshots rather than count triangles as PASS.
+- Explicit source-review checkbox remains unchecked; trusted click required, alpha source fail-closed; model switch/uncheck/remove disposes the texture and additional skin meshes. No user data is stored or synced; dedicated localhost-only research preview with local assets and no external runtime network.
+
+## Exact no-deploy validation
+
+Only 8 files on the stacked research branch: new 3D08 adapter, demo, HTML, README, tests, browser harness, workflow plus experimental anatomical renderer. Rebuild original Work47 licensed benchmark from historical hashes (15 original photos, 9 provisional alpha cutouts, 0 automatic approval); re-fetch exact hash-locked licensed CC0 male and female GLBs. Run all previous 3D-07 source/browser safety gates and 3D08 standalone skinned-mesh Node tests. Actual Chromium software-WebGL2 at 320/390/430 must load both figures, accept no original cloth until trusted review, load real JPEG and PNG, physically create a nonzero number of separate skinned outer meshes, preserve original black color and white chest print, rotate side/back, prevent auto-projection on model switch, and remove shell cleanly when unchecking.
+
+No merge/deploy, staging/production, real family photos or accounts, Cloudflare/Supabase/Resend, paid services or Drive Duel. This is not approved for Family Alpha. Last independent quality grades remain **0 PASS / 5 REVIEW / 10 FAIL**; parallel Work #53 isolation and #55 independent 15-photo visual acceptance are separate. Owner-specific JWT/RLS, cloud backup and physical phone validation remain outstanding. Human visual acceptance requires comparing actual 3D08 screenshots with 3D07 and source photographs; do not claim aesthetic PASS from geometry CI.
+
+## Screenshot-led edge correction
+
+The first green exact-head browser screenshots revealed a large square white collar opening and long sleeve coverage over generic mannequin fingertips. We changed the neck discard from a fixed rectangular cutoff to an anatomically curved U-shaped collar threshold, and shortened the outer sleeve region to leave source-free hands. Original licensed front AJ print and photograph alpha remain unchanged. This is a candidate cosmetic correction, subject to refreshed actual screenshot and regression results—not assumed natural-looking.
