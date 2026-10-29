@@ -1,0 +1,105 @@
+name: 3D-24 unified shirt and dress realism integration HOLD (NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'research/three-d-24/**'
+      - 'research/three-d-23/dress-neckline.mjs'
+      - 'research/three-d-15/demo.mjs'
+      - 'research/three-d-15/showroom.mjs'
+      - 'research/three-d-15/outfit-controller.mjs'
+      - 'tests/three-d-23-dress-neckline.test.mjs'
+      - 'tests/three-d-24-combined-research.test.mjs'
+      - 'scripts/test-three-d-23-dress-browser.mjs'
+      - '.github/workflows/three-d-24-combined-outfits-no-deploy.yml'
+permissions:
+  contents: read
+jobs:
+  integrated-nodes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env: {PLAYWRIGHT_BROWSERS_PATH: /ms-playwright}
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Prohibit any production, image, source, staging, security or unrelated code changes
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git fetch --no-tags origin a010cafcbcaf8152d939dff459cefa9e0baa50cf
+          git diff --name-only a010cafcbcaf8152d939dff459cefa9e0baa50cf HEAD | while IFS= read -r file; do
+            case "$file" in
+              research/three-d-24/*|research/three-d-23/dress-neckline.mjs|research/three-d-15/demo.mjs|research/three-d-15/showroom.mjs|research/three-d-15/outfit-controller.mjs|tests/three-d-23-dress-neckline.test.mjs|tests/three-d-24-combined-research.test.mjs|scripts/test-three-d-23-dress-browser.mjs|.github/workflows/three-d-24-combined-outfits-no-deploy.yml) ;;
+              *) echo "Unexpected change: $file"; exit 1;;
+            esac
+          done
+          test "$(git diff --name-only a010cafcbcaf8152d939dff459cefa9e0baa50cf HEAD | wc -l)" -le 9
+      - name: Install pinned offline rendering and benchmark tools
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 three@0.180.0 playwright@1.56.1
+      - name: Reconstruct original licensed clothing and two original hash-locked CC0 bodies
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git fetch --no-tags origin 53f2ad344dc56a1477e343531c423aed0e66c17d dd6bac3fa9ff640d4f562cf925337440bdb5cf8f 3a572193987cb29389727426136c6eb3ac326783 dfb40889c4c1221fb1833b859e8a11ef38aeb76e
+          node scripts/build-work47-benchmark.mjs
+          node research/three-d-20/restore-approved-models.mjs
+      - name: Both source-pinned real anatomical rig garment fit paths and unchanged privacy
+        run: |
+          node --test tests/three-d-24-combined-research.test.mjs tests/three-d-22-fit.test.mjs tests/three-d-20-fit.test.mjs tests/three-d-23-dress-neckline.test.mjs
+          node --test --test-name-pattern='Stock-only|Both garment cutouts' tests/three-d-15-outfits.test.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: THREE-D-24-NODE-SOURCE-SAFETY-HOLD
+          path: research/three-d-06/models/verified-assets.json
+          if-no-files-found: warn
+  original-shirt-mobile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env: {PLAYWRIGHT_BROWSERS_PATH: /ms-playwright, QUICK: "1"}
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 three@0.180.0 playwright@1.56.1
+      - name: Source-pinned exact original shirt and dress, anatomical GLBs
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git fetch --no-tags origin 53f2ad344dc56a1477e343531c423aed0e66c17d dd6bac3fa9ff640d4f562cf925337440bdb5cf8f 3a572193987cb29389727426136c6eb3ac326783 dfb40889c4c1221fb1833b859e8a11ef38aeb76e
+          node scripts/build-work47-benchmark.mjs
+          node research/three-d-20/restore-approved-models.mjs
+      - name: Exact Work64 shirt visual source-vs-fit, independent dress unchanged at 430px two real humans
+        run: node scripts/test-three-d-22-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: THREE-D-24-SHIRT-NO-DRESS-REGRESSION-REAL-CHROMIUM-HOLD
+          path: benchmark/three-d-22/
+          if-no-files-found: warn
+  original-dress-mobile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env: {PLAYWRIGHT_BROWSERS_PATH: /ms-playwright}
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 three@0.180.0 playwright@1.56.1
+      - name: Source-pinned original dress photo/alpha and both exact anatomical GLBs
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git fetch --no-tags origin 53f2ad344dc56a1477e343531c423aed0e66c17d dd6bac3fa9ff640d4f562cf925337440bdb5cf8f 3a572193987cb29389727426136c6eb3ac326783 dfb40889c4c1221fb1833b859e8a11ef38aeb76e
+          node scripts/build-work47-benchmark.mjs
+          node research/three-d-20/restore-approved-models.mjs
+      - name: PR427 dress real WebGL 320 390 430 both humanoids and poses, combined Work64 shirt unaffected
+        run: node scripts/test-three-d-23-dress-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: THREE-D-24-DRESS-NO-SHIRT-REGRESSION-REAL-CHROMIUM-HOLD
+          path: benchmark/three-d-23/
+          if-no-files-found: warn
