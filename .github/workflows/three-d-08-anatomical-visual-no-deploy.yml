@@ -1,0 +1,65 @@
+name: Chat 3D08 independent anatomical visual QA (NO DEPLOY)
+on:
+  pull_request:
+    branches:
+      - research/work59-natural-drape
+    paths:
+      - 'research/three-d-08-anatomical-qa/**'
+      - 'scripts/test-three-d-08-anatomical-*.mjs'
+      - '.github/workflows/three-d-08-anatomical-visual-no-deploy.yml'
+permissions:
+  contents: read
+jobs:
+  independent-visual:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Strict independent QA file scope — original geometry and photos unchanged
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git diff --name-only d09786163eb52a4a0fa05a5ffc546fc171896080 HEAD | while IFS= read -r path; do
+            case "$path" in
+              research/three-d-08-anatomical-qa/*|scripts/test-three-d-08-anatomical-*.mjs|.github/workflows/three-d-08-anatomical-visual-no-deploy.yml) ;;
+              *) echo "Outside independent visual QA scope: $path"; exit 1 ;;
+            esac
+          done
+      - name: Pinned research-only dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 three@0.180.0 playwright@1.56.1
+      - name: Recreate historic original licensed benchmark and exact CC0 anatomical model hashes
+        run: |
+          git fetch --no-tags origin 53f2ad344dc56a1477e343531c423aed0e66c17d dd6bac3fa9ff640d4f562cf925337440bdb5cf8f 3a572193987cb29389727426136c6eb3ac326783
+          node scripts/build-work47-benchmark.mjs
+          node research/three-d-06/fetch-licensed-avatars.mjs
+      - name: Provenance and functional anatomical garment source tests
+        run: |
+          node --test tests/three-d-06-anatomical-models.test.mjs tests/three-d-07-source-rig.test.mjs
+          node --test --test-name-pattern='targeted geometry' tests/three-d-11-drape.test.mjs
+          node --test --test-name-pattern='canonical Work56|Original stock source' tests/three-d-09-integration.test.mjs
+      - name: Genuine Work59 before/after Chromium WebGL2 at 320/390/430 widths
+        run: node scripts/test-three-d-08-anatomical-capture.mjs
+      - name: Retain original Work59 96-frame evidence and 24 print checks
+        run: node scripts/test-three-d-11-evidence.mjs
+      - name: Independent source and anatomical screenshot checks; generate visual inspection sheets
+        run: node scripts/test-three-d-08-anatomical-qa.mjs
+      - name: Test mobile QA gallery and exported HOLD reviews
+        run: node scripts/test-three-d-08-anatomical-gallery.mjs
+      - name: Upload original source, licensed cutout, screenshots, audit and human gallery (NO DEPLOY)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: CHAT-3D08-ANATOMICAL-VISUAL-ACCEPTANCE-HOLD
+          path: |
+            research/three-d-08-anatomical-qa/gallery.html
+            benchmark/three-d-08-anatomical-qa/
+            benchmark/three-d-11/
+            benchmark/work47/assets/commons-0003.jpg
+            benchmark/work47/assets/commons-0003.png
+            research/three-d-06/models/verified-assets.json
+          retention-days: 14

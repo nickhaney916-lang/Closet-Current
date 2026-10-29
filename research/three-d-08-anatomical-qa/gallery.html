@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Closet Current · Independent 3D Visual Acceptance · HOLD</title>
+<style>
+:root{font:14px/1.4 system-ui,Arial,sans-serif;color:#203b30;background:#f4f3ee}
+*{box-sizing:border-box}body{margin:0;padding:18px}main{max-width:1250px;margin:auto}
+h1{font-size:22px;margin:0 0 4px}p{margin:8px 0 15px}
+.status{display:inline-block;background:#243e33;color:white;border-radius:8px;padding:6px 10px;font-weight:bold}
+fieldset{border:1px solid #c4d0c4;border-radius:12px;padding:10px;margin:12px 0}
+legend{font-weight:bold}label{display:inline-flex;flex-direction:column;gap:3px;margin:4px 8px 4px 0}
+select,button,textarea{font:inherit;border:1px solid #a5b6a5;border-radius:8px;min-height:44px;padding:7px 10px;background:white;color:#203b30}
+button{cursor:pointer}button:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid #467a67}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+figure{margin:0;min-width:0;background:#fff;border:1px solid #d7dfd6;border-radius:12px;overflow:hidden}
+figcaption{padding:10px;font-weight:bold}figure img{width:100%;height:440px;object-fit:contain;background:#f4f3ef;display:block}
+.sources{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.sources img{height:180px}aside{background:#e9efe7;border-radius:9px;padding:12px}
+.caution{color:#72410b;font-weight:600}.feedback{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+textarea{width:100%;min-height:80px}
+@media(min-width:960px){.stage{display:grid;grid-template-columns:3fr 1fr;gap:12px}}
+@media(max-width:640px){body{padding:10px}.grid{grid-template-columns:1fr}figure img{height:310px}.feedback{grid-template-columns:repeat(2,minmax(0,1fr))}}
+</style></head><body><main>
+<h1>Independent anatomical 3D clothing review</h1>
+<p><span class="status">FAMILY ALPHA HOLD</span> Actual licensed AJ shirt · original photographic pixels · actual Chromium WebGL captures. No simulated or generated clothing.</p>
+<fieldset><legend>Compare authentic screenshot frames</legend>
+<label>Figure<select id="model"><option>female</option><option>male</option></select></label>
+<label>Viewport<select id="width"><option>430</option><option>390</option><option>320</option></select></label>
+<label>Pose<select id="pose"><option>relaxed</option><option>source</option></select></label>
+<label>Angle<select id="view"><option>front</option><option>threequarter</option><option>side</option><option>back</option></select></label>
+</fieldset>
+<div class="stage"><div class="grid">
+<figure><figcaption>Before — unchanged Work58 real garment</figcaption><img id="before" alt="Before actual 3D garment screenshot"></figure>
+<figure><figcaption>After — Work59 refined garment</figcaption><img id="after" alt="After actual 3D garment screenshot"></figure>
+</div><aside><b>Original photographic source</b>
+<div class="sources">
+<figure><figcaption>Licensed JPEG</figcaption><img src="../../benchmark/work47/assets/commons-0003.jpg" alt="Original licensed real shirt JPEG"></figure>
+<figure><figcaption>Verified cutout</figcaption><img src="../../benchmark/work47/assets/commons-0003.png" alt="Original RGB provisional transparent PNG"></figure>
+</div>
+<p class="caution">View continuity, photo logo, shoulder caps, collar boundary, inner cuffs, loose side hang and unexpected bare body pixels. Pixel-difference tests do not constitute visual approval.</p>
+<p id="preliminary"></p></aside></div>
+<fieldset><legend>Independent reviewer marks — deliberately unapproved by default</legend>
+<p>Grade each field after inspecting the images. An export is evidence for human review, not automatic Family Alpha authorization.</p>
+<div class="feedback" id="grades"></div>
+<label style="display:flex">Notes describing visible evidence<textarea id="notes" placeholder="Document location/angle, original vs refined difference, clipping or unnatural fabric"></textarea></label>
+<button id="export">Export local review JSON</button>
+<p id="saveStatus" role="status"></p>
+</fieldset>
+<p><a href="../../benchmark/three-d-08-anatomical-qa/results-HOLD.json">Measured 96-frame hash/pixel results (HOLD)</a>. No data leaves this page; there is no account, tracking, upload or external runtime dependency.</p>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const fields=['photo','anatomy','shoulder','collar','print','cuffs','sideDrape','overall'];
+const preliminary={
+ male:'PRELIMINARY image QA: photo/print PASS, shoulders and collar REVIEW, inner cuff FAIL, overall realism FAIL',
+ female:'PRELIMINARY image QA: photo/print PASS, shoulder/collar/side drape REVIEW, overall realism FAIL'
+};
+const REVIEW={};
+for(const criterion of fields){
+ const label=document.createElement('label');label.textContent=criterion;
+ const select=document.createElement('select');select.id='grade-'+criterion;
+ for(const value of ['UNREVIEWED','PASS','REVIEW','FAIL']){
+  const option=document.createElement('option');option.value=value;option.textContent=value;
+  select.append(option);
+ }
+ label.append(select);$('grades').append(label);
+}
+function render(){
+ const model=$('model').value,width=$('width').value,
+  pose=$('pose').value,view=$('view').value;
+ for(const version of ['before','after']){
+  $(version).src='../../benchmark/three-d-11/'+version+'-'+model+'-'+width+'-'+pose+'-'+view+'-HOLD.png';
+  $(version).alt=version+' actual Chromium '+model+' '+pose+' '+view+' '+width+'px image';
+ }
+ $('preliminary').textContent=preliminary[model];
+ const key=[model,width,pose,view].join('/');
+ const saved=REVIEW[key]||{};
+ for(const criterion of fields)$('grade-'+criterion).value=saved[criterion]||'UNREVIEWED';
+ $('notes').value=saved.notes||'';
+}
+function remember(){
+ const key=[$('model').value,$('width').value,$('pose').value,$('view').value].join('/');
+ const review={notes:$('notes').value};
+ for(const criterion of fields)review[criterion]=$('grade-'+criterion).value;
+ REVIEW[key]=review;
+}
+for(const id of ['model','width','pose','view'])$(id).addEventListener('change',render);
+for(const id of fields.map(s=>'grade-'+s).concat('notes'))
+ $(id).addEventListener('change',remember);
+$('export').addEventListener('click',()=>{
+ remember();
+ const json={status:'HOLD',ownerApproved:false,physicalPhoneVerified:false,
+  source:'commons-0003',base:'work59-d09786163eb52a4a0fa05a5ffc546fc171896080',
+  reviews:REVIEW,warning:'Human observations only, not permission to release'};
+ const blob=new Blob([JSON.stringify(json,null,2)],{type:'application/json'});
+ const url=URL.createObjectURL(blob),a=document.createElement('a');
+ a.href=url;a.download='closet-current-3d-visual-review-HOLD.json';a.click();
+ setTimeout(()=>URL.revokeObjectURL(url),1000);
+ $('saveStatus').textContent='Review exported locally; approval is still HOLD.';
+});
+render();
+</script></body></html>
