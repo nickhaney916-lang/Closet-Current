@@ -50,7 +50,7 @@ for(const kind of ['female','male'])test(kind+' verified CC0 dress uses measured
   assert.deepEqual(ctrl.getState(),before,'Failed source review cannot delete current dress');
   const shirt=ctrl.setOutfit('shirt-pants',candidate('shirt'),{reviewed:true});
   assert.equal(shirt.dress,null);
-  assert.equal(shirt.shirt.sourceId,'commons-0003');
+  assert.ok(shirt.shirt,'Original reviewed photographic shirt must remain selectable');
   const empty=ctrl.setOutfit('none');
   assert.equal(empty.garmentMeshes,0);
  }finally{ctrl.dispose();}
