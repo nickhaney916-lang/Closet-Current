@@ -22,3 +22,7 @@ The test checks a real decoded original image, no applied source/approval claim,
 ## Release limitations
 
 This protects mobile reliability, **not** garment fit, customer photos or real family account storage. Natural-drape fabric and collar code remains Work59's active responsibility; do not duplicate it. The prior independent human rating remains 0 PASS / 5 REVIEW / 10 FAIL until fresh real-photo evidence is graded. The four-person Family Alpha stays HOLD until actual staged JWT/RLS, save/restore, real physical Android/iPhone phones, visual acceptance, and owner go/no-go. No merging, production/staging, cloud, private user data, payment, external runtime models or Drive Duel modification. The research mock is confined to loopback and should not appear in app navigation.
+
+## CI composition
+
+The prior Work59 single-stage source allowlist was extended **only** for `.github/workflows/three-d-11-photo-recovery-no-deploy.yml`. The new 3D-12 workflow reciprocally permits exactly the pre-existing Work59 workflow file, with an eight-file count ceiling. No wildcards were broadened to include application, backend, original photograph, production, or cloud settings. As a stacked draft, both stages must pass at the **same exact commit** before integration can even be considered; earlier green runs are evidence for their own commit, not for the branch tip.
