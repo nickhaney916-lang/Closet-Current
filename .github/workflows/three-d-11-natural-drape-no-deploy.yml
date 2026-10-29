@@ -25,7 +25,7 @@ jobs:
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           git diff --name-only 7d05929a1a06d80d04a4ea000c419d30761c3c8c HEAD | while IFS= read -r path; do
             case "$path" in
-              research/three-d-11/*|scripts/test-three-d-11-*.mjs|tests/three-d-11-*.test.mjs|.github/workflows/three-d-11-natural-drape-no-deploy.yml) ;;
+              research/three-d-11/*|scripts/test-three-d-11-*.mjs|tests/three-d-11-*.test.mjs|.github/workflows/three-d-11-natural-drape-no-deploy.yml|.github/workflows/three-d-11-photo-recovery-no-deploy.yml) ;;
               *) echo "Unexpected predecessor, application, account or source-photo change: $path"; exit 1 ;;
             esac
           done
