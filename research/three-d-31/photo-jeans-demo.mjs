@@ -31,7 +31,7 @@ function verifyVisibleRGB(original,cutout){
 function update(){if(app)$('diagnostics').textContent=JSON.stringify(app.getState(),null,2);}
 async function start(){
  if(!['localhost','127.0.0.1','[::1]'].includes(location.hostname))throw Error('Research preview is localhost only');
- app=mountAnatomicalShowroom($('avatar'),{naturalPantsDrape:new URLSearchParams(location.search).get('pantsDrape')!=='before'});app.start();
+ app=mountAnatomicalShowroom($('avatar'),{naturalPantsDrape:new URLSearchParams(location.search).get('pantsDrape')!=='before',posteriorJeansFairing:new URLSearchParams(location.search).get('seatFairing')!=='before'});app.start();
  const [original,cutout,m]=await Promise.all([
   imageFrom('/benchmark/three-d-31/original-jeans.jpg',PANTS_RESEARCH_SOURCE.originalSHA256,'source'),
   imageFrom('/benchmark/three-d-31/cutout-proposal.png',PANTS_RESEARCH_SOURCE.cutoutSHA256,'mask'),
