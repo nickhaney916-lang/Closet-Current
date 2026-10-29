@@ -1,0 +1,28 @@
+name: 3D-21 original CC0 humanoid checksum custody (RESEARCH ONLY)
+on:
+  pull_request:
+    paths:
+      - 'research/three-d-21/**'
+      - 'tests/three-d-21-model-custody.test.mjs'
+      - '.github/workflows/three-d-21-pinned-model-custody-no-deploy.yml'
+permissions:
+  contents: read
+jobs:
+  original-pair-custody-fail-closed:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Permit only four new research and test files
+        run: |
+          git fetch --no-tags origin cb587f135c5f9882fd5bec79de88ded124f10b14
+          git diff --name-only cb587f135c5f9882fd5bec79de88ded124f10b14 HEAD | while IFS= read -r file; do
+            case "$file" in
+              research/three-d-21/*|tests/three-d-21-model-custody.test.mjs|.github/workflows/three-d-21-pinned-model-custody-no-deploy.yml) ;;
+              *) echo "Forbidden existing 3D, model, photo, family data, staging or production change: $file"; exit 1 ;;
+            esac
+          done
+          test "$(git diff --name-only cb587f135c5f9882fd5bec79de88ded124f10b14 HEAD | wc -l)" -le 4
+      - name: Verify original model identity and reject drift without any third-party request
+        run: node --test tests/three-d-21-model-custody.test.mjs
