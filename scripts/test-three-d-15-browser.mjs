@@ -15,9 +15,10 @@ const server=createServer(async(req,res)=>{
   const ext=extname(path);
   const mime={'.mjs':'text/javascript','.js':'text/javascript','.html':'text/html',
    '.json':'application/json','.glb':'model/gltf-binary','.jpg':'image/jpeg','.png':'image/png'};
+  const bytes=await readFile(path);
   res.writeHead(200,{'content-type':mime[ext]||'application/octet-stream','cache-control':'no-store'});
-  res.end(await readFile(path));
- }catch(e){res.writeHead(404);res.end('No such local research asset');}
+  res.end(bytes);
+ }catch(e){if(!res.headersSent){res.writeHead(404);res.end('No such local research asset');}else res.destroy(e);}
 });
 await new Promise(done=>server.listen(0,'127.0.0.1',done));
 const origin='http://127.0.0.1:'+server.address().port;
