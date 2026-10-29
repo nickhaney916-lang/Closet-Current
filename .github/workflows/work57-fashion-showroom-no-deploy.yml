@@ -1,0 +1,49 @@
+name: Work57 anatomical fashion showroom (NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'research/work57-showroom/**'
+      - 'scripts/test-work57-*.mjs'
+      - 'tests/work57-*.test.mjs'
+      - '.github/workflows/work57-fashion-showroom-no-deploy.yml'
+permissions:
+  contents: read
+jobs:
+  mobile-showroom:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Restrict changes to the isolated Work57 presentation experiment
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git diff --name-only e24dcbe417fcca9e52f412f83e65f8ebe58a49c3 HEAD | while IFS= read -r path; do
+            case "$path" in
+              research/work57-showroom/*|scripts/test-work57-*.mjs|tests/work57-*.test.mjs|.github/workflows/work57-fashion-showroom-no-deploy.yml) ;;
+              *) echo "Unexpected shared renderer, garment, application, auth or cloud change: $path"; exit 1 ;;
+            esac
+          done
+      - name: Install pinned research rendering dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund three@0.180.0 playwright@1.56.1 sharp@0.34.3
+      - name: Obtain only the two exact hash-locked licensed anatomical bodies
+        run: node research/three-d-06/fetch-licensed-avatars.mjs
+      - name: Verify source identity, unchanged geometry and reversible pose
+        run: node --test tests/three-d-06-anatomical-models.test.mjs tests/work57-showroom.test.mjs
+      - name: Real Chromium WebGL at five touch-enabled phone profiles
+        run: node scripts/test-work57-browser.mjs
+      - name: Build before-and-after sheets and measured mobile report
+        run: node scripts/test-work57-evidence.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: WORK57-MALE-FEMALE-FASHION-SHOWROOM-MOBILE-HOLD
+          path: |
+            benchmark/work57/
+            research/work57-showroom/evidence/
+            research/three-d-06/models/verified-assets.json
