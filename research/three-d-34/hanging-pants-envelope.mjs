@@ -66,13 +66,18 @@ export function hangOriginalDenimEnvelope(pants,root,{enabled=true}={}){
   const upper=slices.filter(s=>s.y>end-.085).map(s=>s.z);
   if(lower.length<2||upper.length<2)throw Error('Seat and knee rear depth anchors required');
   const kneeZ=median(lower),seatZ=median(upper);
+  // Calibrate fabric ease against actual seat-to-knee original-body depth
+  // contrast: flatter female geometry needs more hanging slack; deeper male
+  // seat already provides a larger back shape. No guessed garment photo.
+  const hangingEase=clamp(.042-Math.abs(seatZ-kneeZ)*.50,.018,.032);
   const sliceAt=y=>slices.reduce((best,s)=>Math.abs(s.y-y)<Math.abs(best.y-y)?s:best,slices[0]);
-  return {start,end,kneeZ,seatZ,slices,sliceAt,
+  return {start,end,kneeZ,seatZ,hangingEase,slices,sliceAt,
    targetAt:y=>{
     const t=clamp((y-start)/(end-start),0,1);
     // Line of hanging cloth rather than a buttock-shaped radial envelope.
-    // Source-derived seat/knee endpoints; 4mm intentional middle ease.
-    return T.MathUtils.lerp(kneeZ,seatZ,t)-.004*Math.sin(Math.PI*t);
+    // Source-derived seat/knee endpoints; up to 32mm loose rear cloth ease
+    // inside those anchors, not on the genuine photographed front.
+    return T.MathUtils.lerp(kneeZ,seatZ,t)-hangingEase*Math.sin(Math.PI*t);
    }};
  });
  const nearest=bodySurface(root);
@@ -141,7 +146,7 @@ export function hangOriginalDenimEnvelope(pants,root,{enabled=true}={}){
   structuralNegativeBefore:negativeBefore,structuralNegativeAfter:negativeAfter,
   structuralSourceDeficit:sumDeficit/moved,structuralSourceRecovered:sumRecovered/moved,
   structuralProfiles:profiles.map(p=>({kneeY:p.start,seatY:p.end,
-   originalKneeBackZ:p.kneeZ,originalSeatBackZ:p.seatZ,originalMeasuredSlices:p.slices.length})),
+   originalKneeBackZ:p.kneeZ,originalSeatBackZ:p.seatZ,sourceDerivedHangingEase:p.hangingEase,originalMeasuredSlices:p.slices.length})),
   originalSourceRGBUnchanged:true,originalSourceUVUnchanged:true,
   originalPantsRestUnchanged:true,originalBodyUntouched:true,
   rearSource:'none — source-derived neutral',fullCollisionValidated:false,
