@@ -35,10 +35,13 @@ test('Original source is not implicitly usable in the existing reviewed pants ad
  const j=JSON.parse(await readFile(base+'metrics.json','utf8'));
  assert.equal(PANTS_SOURCE.id,'commons-0021');
  assert.equal(PANTS_SOURCE.originalBenchmarkMaskAvailable,false);
- assert.throws(()=>requireReviewedPhotoPants({
+ const source={
   id:j.id,type:'pants',sourceSHA256:j.originalSHA256,cutoutSHA256:j.cutoutSHA256,
   originalVerified:true,cutoutVerified:true,visibleSourceRGBPreserved:true,frontOrientationReviewed:true,
   cutout:{width:j.width,height:j.height},cropRect:[0,0,1,1],ownerApproved:false,humanVisualApproval:false,releaseAuthorized:false,
   provisional:true
- },{reviewed:true}),/reviewed|cutout/i);
+ };
+ assert.throws(()=>requireReviewedPhotoPants(source,{reviewed:true}),/reviewed|cutout/i,'Missing actual byte verification is not a pass');
+ assert.throws(()=>requireReviewedPhotoPants({...source,sourceAssetsVerified:true}),/reviewed|cutout/i,'Research source still needs an explicit review');
+ assert.equal(requireReviewedPhotoPants({...source,sourceAssetsVerified:true},{reviewed:true}).id,j.id,'Only pinned source plus explicit provisional review may reach the 3D mesh');
 });
