@@ -7,7 +7,7 @@
 import * as T from 'three';
 const NEAR=-.11, FULL=-.018, END=.031;
 export function repairCuffBoundary(shirt,root,{reach=.016}={}){
- if(!shirt?.meshes?.length||!root?.traverse||
+ if(!shirt?.meshes?.length||!root?.traverse||typeof root.updateMatrixWorld!=='function'||
   !Number.isFinite(reach)||reach<.004||reach>.024)
   throw Error('Source-fitted garment and bounded cuff reach required');
  root.updateMatrixWorld(true);
