@@ -31,6 +31,9 @@ async function apply(event){
 }
 async function start(){
  if(!['localhost','127.0.0.1','[::1]'].includes(location.hostname))throw Error('Local research access only');
+ // Even a pre-WebGL source-hash failure exposes a safe, empty diagnostic.
+ // Existing Work59 failure tests must never dereference an uninitialized rig.
+ window.work59Diagnostics=()=>app?.getState()||{shirt:null,releaseAuthorized:false,photoOnly:degraded};
  fallback=createVerifiedPhotoFallback(document,{onDeactivate:()=>{
   epoch++;try{app?.stop();}catch{}app=null;
  }});
