@@ -83,7 +83,7 @@ test('Absent or unsafe cuff landmarks and exaggerated reach must fail closed',()
  for(const options of [{reach:0},{reach:.1},{reach:NaN}])
   assert.throws(()=>repairCuffBoundary({meshes:[{}]}, {traverse(){}}, options));
  assert.throws(()=>repairCuffBoundary({meshes:[]},{traverse(){}}));
- assert.throws(()=>repairCuffBoundary({meshes:[{}]},{traverse(){}},{reach:.016}),/forearm/);
+ assert.throws(()=>repairCuffBoundary({meshes:[{}]},{traverse(){},updateMatrixWorld(){}},{reach:.016}),/forearm/);
 });
 test('Only experimental 3D shell source changed; original images, model hashes and owner review untouched',async()=>{
  for(const path of ['research/three-d-13/cuff-boundary.mjs','research/three-d-11/natural-drape.mjs']){
