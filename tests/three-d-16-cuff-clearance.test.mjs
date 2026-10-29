@@ -47,7 +47,8 @@ for(const kind of ['male','female'])test(kind+' source-pose wrist and cuff 3D cl
  assert.equal(b.shirt.collisionValidated,false);assert.equal(b.shirt.minClearance,null);
  assert.ok(b.shirt.cuffMovedVertices>0,'Actual cuff vertices must move');
  assert.ok(b.shirt.cuffEligibleVertices>=b.shirt.cuffMovedVertices);
- assert.ok(b.shirt.cuffMaxCorrection>0&&b.shirt.cuffMaxCorrection<=.0080001);
+ assert.ok(b.shirt.cuffMaxCorrection>0&&b.shirt.cuffMaxCorrection<=.01281);
+ assert.equal(b.shirt.cuffAxialExtension,.010);
  assert.ok(b.shirt.cuffCorrectionByArm.L>0&&b.shirt.cuffCorrectionByArm.R>0,'Both cuffs must receive correction');
  assert.equal(b.pants.sourceSHA256,null);
  assert.equal(b.pants.photoApplied,false);
@@ -66,7 +67,7 @@ for(const kind of ['male','female'])test(kind+' source-pose wrist and cuff 3D cl
    const u=new THREE.Vector3().fromBufferAttribute(x.attributes.position,i),
     v=new THREE.Vector3().fromBufferAttribute(y.attributes.position,i);
    const d=u.distanceTo(v);if(d>1e-7)moved++;
-   assert.ok(d<.00801,'No garment position may move by more than 8mm: '+d);
+   assert.ok(d<.01281,'No garment position may move beyond bounded radial+axial cuff displacement: '+d);
   }
  }
  assert.ok(moved>0);

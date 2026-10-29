@@ -3,7 +3,7 @@
  *
  * The Work59/Work61 shirt already owns its real licensed source-photo panel
  * and shared CC0 skeleton. This adjustment only moves actual cloth positions
- * outward 0–8mm near the two wrist openings; original photo UV, masks, skin
+ * outward 0–8mm and toward the actual wrist 0–10mm near the two openings; original photo UV, masks, skin
  * weights, body geometry, material and shader are NEVER changed.
  *
  * This is a targeted geometric attempt, not certified body/cloth collision.
@@ -14,6 +14,7 @@ const WRIST_TYPES=Object.freeze(['L','R']);
 const MIN_NORMAL=.022;
 const MAX_NORMAL=.13;
 const MAX_OFFSET=.008;
+const MAX_AXIAL=.010;
 const fade=(x,a,b)=>T.MathUtils.smoothstep(x,a,b);
 
 export function wristAxes(root){
@@ -70,10 +71,15 @@ export function protectShirtCuffClearance(shirt,root,{
     if(dist<MIN_NORMAL||dist>MAX_NORMAL)continue;
     eligible++;
     const amount=offset*fade(t,.72,.94);
-    if(amount<=1e-7)continue;
-    result=q.clone().addScaledVector(radial.multiplyScalar(1/dist),amount);
+    // Work56 clips this sleeve 13mm short of the wrist. Close most of that
+    // artificial length gap using the REAL forearm-to-wrist axis, not a
+    // fabricated picture or cloth cap, while retaining the natural opening.
+    const axial=MAX_AXIAL*fade(t,.81,.95);
+    if(amount<=1e-7&&axial<=1e-7)continue;
+    result=q.clone().addScaledVector(radial.multiplyScalar(1/dist),amount)
+     .addScaledVector(arm.axis.clone().normalize(),axial);
     moved++;forearmRows[arm.side]++;
-    maxMovement=Math.max(maxMovement,amount);
+    maxMovement=Math.max(maxMovement,Math.hypot(amount,axial));
     break;
    }
    const local=result.clone().applyMatrix4(inv);
@@ -89,7 +95,7 @@ export function protectShirtCuffClearance(shirt,root,{
   cuffEligibleVertices:eligible,cuffMovedVertices:moved,
   cuffCorrectionByArm:{...forearmRows},
   cuffMaxCorrection:maxMovement,cuffCorrectionLimit:offset,
-  originalPanelCoordinatesPreserved:true,
+  cuffAxialExtension:MAX_AXIAL,originalPanelCoordinatesPreserved:true,
   minClearance:null,collisionValidated:false,releaseAuthorized:false
  }};
 }

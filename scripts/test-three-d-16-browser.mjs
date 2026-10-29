@@ -67,7 +67,8 @@ try{
     assert.ok(state.outfit.shirt.cuffMovedVertices>0);
     assert.ok(state.outfit.shirt.cuffCorrectionByArm.L>0&&
       state.outfit.shirt.cuffCorrectionByArm.R>0);
-    assert.ok(state.outfit.shirt.cuffMaxCorrection<=.0080001);
+    assert.ok(state.outfit.shirt.cuffMaxCorrection<=.01281);
+    assert.equal(state.outfit.shirt.cuffAxialExtension,.010);
     assert.equal(state.outfit.shirt.collisionValidated,false);
    }
    const rect=await page.locator('#avatar').boundingBox();
@@ -105,6 +106,7 @@ try{
    cuffMovedVertices:after.state.outfit.shirt.cuffMovedVertices,
    cuffByArm:after.state.outfit.shirt.cuffCorrectionByArm,
    maxCorrection:after.state.outfit.shirt.cuffMaxCorrection,
+   axialExtension:after.state.outfit.shirt.cuffAxialExtension,
    clothPhotoUnchanged:true,release:'HOLD'};
   records.push(row);
   console.log('THREE_D_16_ACTUAL_WEBGL_CUFF',JSON.stringify(row));
