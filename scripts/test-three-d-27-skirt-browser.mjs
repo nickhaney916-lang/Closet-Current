@@ -42,6 +42,20 @@ function inspectChange(before,after){
  }
  return {changed,oldGreen,newGreen};
 }
+/** Regression against photographic upper-chest tearing: screenshot LEDGER only. */
+function unchangedUpperBodice(before,after){
+ assert.equal(before.info.width,after.info.width);
+ assert.equal(before.info.height,after.info.height);
+ const w=before.info.width,h=before.info.height;
+ let changed=0;
+ for(let y=Math.floor(h*.225);y<Math.floor(h*.36);y++)
+  for(let x=Math.floor(w*.30);x<Math.floor(w*.70);x++){
+   const idx=(y*w+x)*3;
+   if(Math.max(...[0,1,2].map(c=>Math.abs(before.data[idx+c]-after.data[idx+c])))>7)
+    changed++;
+  }
+ return changed;
+}
 async function review(page,mode){
  await page.locator('#outfit').selectOption(mode);
  await page.locator('#reviewDialog').waitFor({state:'visible'});
@@ -118,7 +132,13 @@ try{
   assert.equal(old.sourceSHA256,now.sourceSHA256);
   assert.deepEqual(old.stats,now.stats,'Side skirt drape must not allocate a new texture or extra mesh');
   for(const name of Object.keys(old.shots)){
-   const diff=inspectChange(await raw(old.shots[name]),await raw(now.shots[name]));
+   const baseline=await raw(old.shots[name]),candidate=await raw(now.shots[name]);
+   const diff=inspectChange(baseline,candidate);
+   if(name.endsWith('front')){
+    const torn=unchangedUpperBodice(baseline,candidate);
+    assert.equal(torn,0,kind+'/'+width+'/'+name+
+     ' must have ZERO photographed chest/neckline changed pixels; skirt shaping cannot warp bodice');
+   }
    assert.ok(diff.changed>10,kind+'/'+width+'/'+name+
     ' must visibly change side/rear skirt silhouette while keeping original dress texture');
    changed[name]=diff;

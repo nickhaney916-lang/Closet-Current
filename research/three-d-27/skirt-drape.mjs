@@ -56,6 +56,13 @@ export function softenAnatomicalSkirt(dress,root,{enabled=true}={}){
  }
  if(!Number.isFinite(hemY)||center.y-hemY<.30||
   center.y-hemY>1.5)throw Error('Unsafe source dress skirt extent');
+ // spine04 is a UPPER torso landmark on this CC0 source, not the dress waist.
+ // Earlier using its Y blindly warped the photographed chest into dark bands.
+ // Only touch the original LOWER skirt: a conservative hem-derived cutoff,
+ // at least .18m below the source bone, and never above 1.28m on the 2m rig.
+ const skirtTransitionY=Math.min(center.y-.18,hemY+.60,1.28);
+ if(skirtTransitionY-hemY<.30||skirtTransitionY-hemY>.68)
+  throw Error('Could not safely isolate the lower original dress skirt');
  let changed=0,max=0,frontPreserved=0;
  // Validate before mutating, since any failure must preserve atomic outfit rollback.
  const edits=[];
@@ -64,7 +71,7 @@ export function softenAnatomicalSkirt(dress,root,{enabled=true}={}){
   const angleCos=(world.z-center.z)/(Math.hypot(world.x-center.x,world.z-center.z)||1);
   const move=outwardDrapeAtRest({
    x:world.x,y:world.y,z:world.z,centerX:center.x,centerZ:center.z,
-   waistY:center.y,hemY
+   waistY:skirtTransitionY,hemY
   });
   if(angleCos>=SKIRT_DRAPE.frontUntouchedCos)frontPreserved++;
   if(move<=1e-6)continue;
@@ -89,6 +96,8 @@ export function softenAnatomicalSkirt(dress,root,{enabled=true}={}){
   skirtDrapeApplied:true,
   skirtDrapeMethod:'bounded-lateral-hem-original-skinned-mesh',
   skirtDrapeChangedVertices:changed,skirtDrapeMaxOutward:max,
+  skirtDrapeLimitedBelowY:skirtTransitionY,
+  upperOriginalBodiceGeometryUnchanged:true,
   originalPhotoCoordinatesUnchanged:false,
   originalPhotoMappingPreserved:true,
   originalRGBUnchanged:true,
