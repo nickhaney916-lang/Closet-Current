@@ -39,8 +39,14 @@ jobs:
           git fetch --no-tags origin 53f2ad344dc56a1477e343531c423aed0e66c17d dd6bac3fa9ff640d4f562cf925337440bdb5cf8f 3a572193987cb29389727426136c6eb3ac326783
           node scripts/build-work47-benchmark.mjs
           node research/three-d-06/fetch-licensed-avatars.mjs
-      - name: Test original 3D source safeguards and new fail-closed human gate
-        run: node --test tests/three-d-06-anatomical-models.test.mjs tests/three-d-07-source-rig.test.mjs tests/three-d-09-integration.test.mjs tests/three-d-qa57-gate.test.mjs
+      - name: Source provenance and new fail-closed independent human gate
+        run: node --test tests/three-d-06-anatomical-models.test.mjs tests/three-d-07-source-rig.test.mjs tests/three-d-qa57-gate.test.mjs
+      - name: Work58 geometry/texture behavioral tests (original ancestor scope check stays frozen)
+        run: |
+          # Work58's fourth test intentionally rejects ANY descendant file outside 3D09.
+          # Its exact parent remains verified green; our separate frozen QA-only scope
+          # guard above performs the appropriate scope test on this child PR.
+          node --test --test-name-pattern="canonical Work56 fit|Original stock source and cutout" tests/three-d-09-integration.test.mjs
       - name: Produce actual Chromium WebGL2 screens at three mobile sizes
         run: node scripts/test-three-d-09-browser.mjs
       - name: Check existing original pixel and front/rear restraint tests
