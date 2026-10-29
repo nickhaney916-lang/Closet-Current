@@ -1,3 +1,4 @@
+import {isSourceVerifiedDenimId} from '../three-d-30/reviewed-photo-pants.mjs';
 /** 3D-33: source-preserving posterior fabric fairing for original photographed jeans.
  * This is deliberately only a small, testable surface-geometry operation,
  * NOT an invented photographed rear, full signed collision, or cloth simulation.
@@ -19,7 +20,7 @@ export function fairPhotographedJeansSeat(pants,root,{enabled=true}={}){
   front=g?.getAttribute('pantsSourceFront');
  if(!mesh?.isSkinnedMesh||pants.meshes.length!==1||!mesh.userData.work60Pants||
  !pants.stats?.naturalJeansDrape||!pants.stats?.photoApplied||
- pants.stats?.sourceId!=='commons-public-domain-jeans-2005'||
+ !isSourceVerifiedDenimId(pants.stats?.sourceId)||
  !rest||rest.count!==pos?.count||!front||front.count!==pos.count||
  !g.getAttribute('pantsSourceUV')||!root?.traverse)
   throw Error('3D33 requires source-verified original-jeans 3D32 garment only');
