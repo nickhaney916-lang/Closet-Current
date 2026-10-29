@@ -28,6 +28,55 @@ const normal=p=>{
  if(out.lengthSq()<1e-6)out.set(0,0,1);
  return out.normalize();
 };
+/**
+ * Fit a contiguous front cloth panel over the real anatomical chest, using
+ * nearby frontmost GLB body positions as depth landmarks. Without this,
+ * the male CC0 mesh has a large *uncovered center-chest gap* despite thousands
+ * of "torso" source triangles and green mechanical GPU tests.
+ * The panel is a separate curved surface; it is not a body shader/sticker.
+ */
+export function addFittedFrontPanel(samples,coords,UV){
+ if(!Array.isArray(samples)||samples.length<500||!Array.isArray(coords)||!Array.isArray(UV))
+  throw Error('Insufficient verified anatomical front landmarks');
+ const rows=16,cols=20,grid=[];
+ for(let r=0;r<=rows;r++){
+  const v=r/rows,y=1.13+.49*v;
+  const taper=Math.max(0,Math.min(1,(v-.78)/.22));
+  const halfWidth=.335-.195*taper;
+  const row=[];
+  for(let c=0;c<=cols;c++){
+   const x=(c/cols*2-1)*halfWidth;
+   let maxDepth=-Infinity,closest=Infinity,nearest=-Infinity;
+   for(const p of samples){
+    if(p.z<-.02)continue; // Only actual front landmarks
+    const dx=Math.abs(p.x-x),dy=Math.abs(p.y-y);
+    const d2=dx*dx+dy*dy;
+    if(d2<closest){closest=d2;nearest=p.z;}
+    if(dx<.07&&dy<.07)maxDepth=Math.max(maxDepth,p.z);
+   }
+   if(!Number.isFinite(maxDepth))maxDepth=nearest;
+   if(!Number.isFinite(maxDepth))throw Error('Cannot fit anatomical front garment');
+   // Tiny offset from original skin plus easing to avoid hard flat board.
+   const z=Math.max(.04,maxDepth)+.025;
+   row.push({x,y,z});
+  }
+  grid.push(row);
+ }
+ const push=(p)=>{
+  coords.push(p.x,p.y,p.z);
+  UV.push(.5+p.x/.73,(p.y-1.12)/.49);
+ };
+ for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){
+  const bl=grid[r][c],br=grid[r][c+1],
+   tl=grid[r+1][c],tr=grid[r+1][c+1];
+  // +Z visible source photo faces the camera/front.
+  push(bl);push(br);push(tl);
+  push(br);push(tr);push(tl);
+ }
+ return Object.freeze({triangles:rows*cols*2,rows,cols,
+  sourceDerivedDepth:true,frontIsIndependentMeshSurface:true});
+}
+
 export function buildSeparateShirtShell(root,group,{minTriangles=600,maxTriangles=150000}={}){
  if(!root?.isObject3D||!group?.isObject3D||
   !Number.isSafeInteger(maxTriangles)||maxTriangles<20000||
@@ -35,7 +84,7 @@ export function buildSeparateShirtShell(root,group,{minTriangles=600,maxTriangle
   throw Error('Verified rigged anatomical body required');
  group.updateWorldMatrix(true,true);root.updateWorldMatrix(true,true);
  const inverse=group.matrixWorld.clone().invert();
- const coords=[],UV=[],zones={torso:0,sleeve:0};
+ const coords=[],UV=[],zones={torso:0,sleeve:0},frontLandmarks=[];
  let scanned=0,skinnedCount=0;
  root.traverse(mesh=>{
   if(!mesh.isSkinnedMesh||!mesh.geometry?.attributes?.position)return;
@@ -48,6 +97,10 @@ export function buildSeparateShirtShell(root,group,{minTriangles=600,maxTriangle
   for(let i=0;i<count;i+=3){
    const p=[0,1,2].map(k=>vertex(mesh,idx?idx.getX(i+k):i+k,attr,inverse));
    const center=p[0].clone().add(p[1]).add(p[2]).multiplyScalar(1/3);
+   for(const point of p){
+    if(Math.abs(point.x)<.48&&point.y>=1.06&&point.y<=1.70&&point.z>=-.02)
+     frontLandmarks.push({x:point.x,y:point.y,z:point.z});
+   }
    const zone=shirtZone(center);
    if(!zone||p.some(v=>!shirtZone(v)||Math.abs(v.x-center.x)>.14||
     Math.abs(v.y-center.y)>.14))continue;
@@ -60,6 +113,7 @@ export function buildSeparateShirtShell(root,group,{minTriangles=600,maxTriangle
    zones[zone]++;
   }
  });
+ const panel=addFittedFrontPanel(frontLandmarks,coords,UV);
  const triangles=coords.length/9;
  if(triangles<minTriangles||zones.torso<minTriangles*.5||
   zones.sleeve<minTriangles*.05)
@@ -69,6 +123,7 @@ export function buildSeparateShirtShell(root,group,{minTriangles=600,maxTriangle
  geometry.setAttribute('uv',new THREE.Float32BufferAttribute(UV,2));
  geometry.computeVertexNormals();geometry.computeBoundingBox();
  return {geometry,triangles,zones,skinnedCount,scanned,
+  frontPanelTriangles:panel.triangles,anatomicalFrontLandmarks:frontLandmarks.length,
   separateGarmentMesh:true,sharesBodyGeometry:false,
   garmentRigged:false,clothPhysics:false,
   inferredBack:true,releaseAuthorized:false};

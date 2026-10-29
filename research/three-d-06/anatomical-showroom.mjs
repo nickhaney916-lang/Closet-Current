@@ -206,6 +206,7 @@ export function mountAnatomicalShowroom(canvas,{onChange=()=>{}}={}){
   canvas.dataset.garmentTriangles=String(build.triangles);
   canvas.dataset.garmentTorsoTriangles=String(build.zones.torso);
   canvas.dataset.garmentSleeveTriangles=String(build.zones.sleeve);
+  canvas.dataset.garmentFrontPanelTriangles=String(build.frontPanelTriangles);
   canvas.dataset.photoSource=source.id;
   draw();
   return {status:'separate-static-3d-shell',sourceSHA256:source.sourceSHA256,

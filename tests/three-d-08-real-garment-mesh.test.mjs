@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import * as THREE from 'three';
-import {shirtZone,buildSeparateShirtShell,makeSourceClothingMaterial}
+import {shirtZone,addFittedFrontPanel,buildSeparateShirtShell,makeSourceClothingMaterial}
  from '../research/three-d-08/garment-shell.mjs';
 test('3D shell uses separate anatomical torso and sleeve surfaces with sane bounds',()=>{
  assert.equal(shirtZone({x:0,y:1.4,z:.2}),'torso');
@@ -12,6 +12,25 @@ test('3D shell uses separate anatomical torso and sleeve surfaces with sane boun
   assert.equal(shirtZone(p),null);
  assert.throws(()=>buildSeparateShirtShell(null,null),/Verified rigged/);
 });
+test('Real 3D front panel uses sampled body curvature and leaves no center chest hole',()=>{
+ const body=[];
+ for(let j=0;j<=32;j++)for(let i=0;i<=32;i++){
+  const x=-.42+i*.84/32,y=1.06+j*.64/32;
+  const z=.17+.11*(1-(x/.5)**2)+.03*Math.cos(y*5);
+  body.push({x,y,z});
+ }
+ const coords=[],UV=[],panel=addFittedFrontPanel(body,coords,UV);
+ assert.equal(panel.triangles,640);
+ assert.equal(coords.length,640*3*3);
+ assert.equal(UV.length,640*3*2);
+ assert.equal(panel.sourceDerivedDepth,true);
+ assert.ok(coords.filter((_,i)=>i%3===2).every(z=>z>.1));
+ // The panel must not be a flat sticker; center and shoulder differ in depth.
+ const depths=coords.filter((_,i)=>i%3===2);
+ assert.ok(Math.max(...depths)-Math.min(...depths)>.04);
+ assert.throws(()=>addFittedFrontPanel([],[],[]));
+});
+
 test('Separate shirt material accepts only source-bound original RGB and alpha',()=>{
  assert.throws(()=>makeSourceClothingMaterial(null),/verified/);
  assert.throws(()=>makeSourceClothingMaterial({verified:true}),/verified/);

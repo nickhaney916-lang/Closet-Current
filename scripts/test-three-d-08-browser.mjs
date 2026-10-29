@@ -78,9 +78,10 @@ try{
   const surface=await canvas.evaluate(c=>({
    total:Number(c.dataset.garmentTriangles),
    torso:Number(c.dataset.garmentTorsoTriangles),
-   sleeves:Number(c.dataset.garmentSleeveTriangles)
+   sleeves:Number(c.dataset.garmentSleeveTriangles),
+   panel:Number(c.dataset.garmentFrontPanelTriangles)
   }));
-  assert.ok(surface.total>600&&surface.torso>300&&surface.sleeves>60,
+  assert.ok(surface.total>1200&&surface.torso>300&&surface.sleeves>60&&surface.panel>=600,
    JSON.stringify({problem:'No real separate anatomical shirt triangle shell',surface}));
   console.log('THREE_D_08_GENUINE_SEPARATE_GARMENT',JSON.stringify({
    width,...surface,source:'real Work47 cutout',fit:'STATIC POSE ONLY'
@@ -162,7 +163,8 @@ try{
   const maleMeshStats=await canvas.evaluate(c=>({
    total:Number(c.dataset.garmentTriangles),
    torso:Number(c.dataset.garmentTorsoTriangles),
-   sleeves:Number(c.dataset.garmentSleeveTriangles)
+   sleeves:Number(c.dataset.garmentSleeveTriangles),
+   panel:Number(c.dataset.garmentFrontPanelTriangles)
   }));
   console.log('THREE_D_08_MALE_CHEST_DIAGNOSTIC',
    JSON.stringify({width,maleCenter,maleMeshStats,
