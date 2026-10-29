@@ -41,7 +41,7 @@ for(const kind of ['female','male'])test(kind+' original neck contour, genuine a
 });
 for(const kind of ['female','male'])test(kind+' measured torso rays reach actual triangle interiors rather than guessed radii',async()=>{
  const r=await person(kind),section=anatomicalSections(r),nearest=bodySurface(r);
- for(const dy of [.03,.13,.24,.36])for(let j=0;j<16;j++){
+ for(const dy of [-.13,-.10,-.06,.03,.13,.24,.36])for(let j=0;j<16;j++){
   const y=Math.min(section.neck.y-.12,section.waist.y+dy),angle=j*2*Math.PI/16,q=section.radius(y,angle),p=q.origin.clone().add(new T.Vector3(Math.sin(angle)*q.radius,0,Math.cos(angle)*q.radius));
   assert.ok(nearest(p).distance<1e-5,'Measured radial point must lie on original body triangle');
  }

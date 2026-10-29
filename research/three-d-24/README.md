@@ -15,7 +15,10 @@ fix these structural problems.
 planes, finds an interior sagittal axis from those same sections, and measures
 radial triangle intersections. It fits a subdivided bodice and waist with 18 mm
 radial ease. Below the hips, a continuous modest A-line flare replaces the large
-hip-derived cone. The original dress length and source-photo mapping remain.
+hip-derived cone. Three measured lower hip sections bound the pelvis/buttock
+envelope before skirt ease is added, preventing the male hip breakthrough
+found during the first screenshot review. The contact gate includes hip/skirt
+probes as well as shoulders/chest/waist. The original dress length and source-photo mapping remain.
 
 Two real armholes are clipped out of the side topology using each original
 upper-arm shoulder landmark. The shoulder contour now follows the original
