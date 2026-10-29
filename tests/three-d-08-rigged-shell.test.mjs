@@ -41,6 +41,7 @@ test('Maintains source-only Work47 review and genuine original rig switching',as
  assert.match(demo,/event\?\.isTrusted/);
  assert.match(demo,/app\.applyShirtShell\(source,\{acknowledged:true\}\)/);
  assert.match(demo,/loadLicensedCutout\(LICENSED_SHIRT/);
+ assert.match(demo,/\.\.\/three-d-07\/rig-shirt-transfer\.mjs/);
  assert.match(demo,/readVerifiedAsset/);
  assert.match(demo,/app\.clearShirt\(\)/);
 });

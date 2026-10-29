@@ -1,7 +1,7 @@
 /** Source-bound 3D-07: only real licensed shirt; never customer photos. */
 import {mountAnatomicalShowroom} from '../three-d-06/anatomical-showroom.mjs';
 import {loadLicensedCutout,readVerifiedAsset} from '../three-d-02/reviewed-texture.mjs';
-import {LICENSED_SHIRT} from './rig-shirt-transfer.mjs';
+import {LICENSED_SHIRT} from '../three-d-07/rig-shirt-transfer.mjs';
 const $=id=>document.getElementById(id);
 let app=null,epoch=0,closed=false,manifest=null,original=null,spin=false;
 const status=s=>{$('status').textContent=s;};
