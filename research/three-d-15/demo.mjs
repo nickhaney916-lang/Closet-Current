@@ -3,7 +3,7 @@ import {mountAnatomicalShowroom} from './showroom.mjs';
 import {DRESS_ID} from './dress-shell.mjs';
 import {loadLicensedCutout,readVerifiedAsset} from '../three-d-02/reviewed-texture.mjs';
 import {LICENSED_SHIRT} from '../three-d-07/rig-shirt-transfer.mjs';
-import {loadPantsReference} from './pants-source.mjs';
+import {loadPantsReference} from '../three-d-13/pants-source.mjs';
 const $=id=>document.getElementById(id);
 let app,epoch=0,closed=false,spinning=false,manifest,verified=false;const previews=[];
 const status=s=>{$('status').textContent=s;};
