@@ -1,0 +1,70 @@
+name: 3D-20 exact anatomical skin triangle contact at photographed cuffs (NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'research/three-d-20/**'
+      - 'tests/three-d-20-triangle-contact.test.mjs'
+      - 'tests/three-d-20-geometry-math.test.mjs'
+      - '.github/workflows/three-d-20-actual-skin-triangle-no-deploy.yml'
+permissions:
+  contents: read
+jobs:
+  pure-triangle-distance-and-radial-direction:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install local geometry-only Three.js
+        run: npm install --no-save --no-package-lock --no-audit --no-fund three@0.180.0
+      - name: Test actual triangle math without claiming unverified GLB model fitness
+        run: node --test tests/three-d-20-geometry-math.test.mjs
+  real-posed-source-verified-triangle-contact:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Guard only five read-only analysis and no-deploy files
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git fetch --no-tags origin 5deb26e55cac8e40fa4d286ac5925a58cdfb97f9
+          git diff --name-only 5deb26e55cac8e40fa4d286ac5925a58cdfb97f9 HEAD | while IFS= read -r path; do
+            case "$path" in
+              research/three-d-20/*|tests/three-d-20-triangle-contact.test.mjs|tests/three-d-20-geometry-math.test.mjs|.github/workflows/three-d-20-actual-skin-triangle-no-deploy.yml) ;;
+              *) echo "Unauthorized garment mesh/photo/auth/account/2D/3D renderer/production modification: $path"; exit 1 ;;
+            esac
+          done
+          test "$(git diff --name-only 5deb26e55cac8e40fa4d286ac5925a58cdfb97f9 HEAD | wc -l)" -le 5
+      - name: Install exact local skinned geometry/browser verification prerequisites
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 three@0.180.0 playwright@1.56.1
+      - name: Rebuild original SHA-pinned licensed JPEG/PNG and both fixed CC0 rigged source models
+        run: |
+          git fetch --no-tags origin 53f2ad344dc56a1477e343531c423aed0e66c17d dd6bac3fa9ff640d4f562cf925337440bdb5cf8f 3a572193987cb29389727426136c6eb3ac326783 dfb40889c4c1221fb1833b859e8a11ef38aeb76e
+          node scripts/build-work47-benchmark.mjs
+          for attempt in 1 2 3; do
+            node research/three-d-14/cc0-pinned-download.mjs && break
+            if [ "$attempt" = 3 ]; then exit 1; fi
+            sleep 2
+          done
+      - name: Preserve 3D18/19 source verification; check true posed body triangle/ray contacts
+        run: |
+          node --test --test-concurrency=1 tests/three-d-18-wrist-hem.test.mjs tests/three-d-19-wrist-audit.test.mjs tests/three-d-20-triangle-contact.test.mjs tests/three-d-20-geometry-math.test.mjs
+      - name: Preserve matched real original shirt WebGL screenshots with no 3D code changes
+        run: node scripts/test-three-d-18-browser.mjs
+      - name: Preserve held visual wrist review sheet, not automatic human PASS
+        run: node scripts/build-three-d-19-visual-qa.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: THREE-D-20-TRUE-SKIN-TRIANGLE-CONTACT-AND-REAL-SOURCE-WRIST-IMAGES-HOLD
+          path: |
+            benchmark/three-d-20/
+            benchmark/three-d-19/
+            benchmark/three-d-18/
+            research/three-d-06/models/verified-assets.json
+          if-no-files-found: warn
