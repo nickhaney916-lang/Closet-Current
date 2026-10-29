@@ -22,7 +22,7 @@ export const PANTS_RESEARCH_SOURCE=Object.freeze({
 const finite=n=>typeof n==='number'&&Number.isFinite(n);
 export function requireReviewedPhotoPants(source,{reviewed=false}={}){
  const isLegacy=source?.id===PANTS_SOURCE.id&&source?.sourceSHA256===PANTS_SOURCE.originalSHA256;
- const isResearch=source?.id===PANTS_RESEARCH_SOURCE.id&&source?.sourceSHA256===PANTS_RESEARCH_SOURCE.originalSHA256&&source?.cutoutSHA256===PANTS_RESEARCH_SOURCE.cutoutSHA256;
+ const isResearch=source?.id===PANTS_RESEARCH_SOURCE.id&&source?.sourceSHA256===PANTS_RESEARCH_SOURCE.originalSHA256&&source?.cutoutSHA256===PANTS_RESEARCH_SOURCE.cutoutSHA256&&source?.sourceAssetsVerified===true;
  if(reviewed!==true||(!isLegacy&&!isResearch)||source?.type!=='pants'||
  !/^[a-f0-9]{64}$/.test(source?.cutoutSHA256||'')||
  source.originalVerified!==true||source.cutoutVerified!==true||
