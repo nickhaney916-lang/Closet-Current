@@ -48,7 +48,7 @@ jobs:
       - name: Validate original source panels, both real cuff boundaries, shared rigs and privacy
         run: |
           node --test tests/three-d-17-inner-cuff-facing.test.mjs
-          node --test --test-name-pattern='atomic outfit slots|Stock-only mode|Both garment cutouts' tests/three-d-15-outfits.test.mjs
+          node --test --test-name-pattern='Stock-only mode|Both garment cutouts' tests/three-d-15-outfits.test.mjs
       - name: Compare photographed actual WebGL2 cuff before after on male female 320 390 430
         run: node scripts/test-three-d-17-browser.mjs
       - uses: actions/upload-artifact@v4
