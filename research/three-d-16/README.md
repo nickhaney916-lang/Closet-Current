@@ -1,0 +1,25 @@
+# Closet Current — 3D-16: source-safe inner shirt cuff adjustment (HOLD)
+
+## Why this priority
+
+The current unified [Work61 / PR #417](https://github.com/nickhaney916-lang/Closet-Current/pull/417) is genuinely functional and [its exact-head CI #40884449268](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/40884449268) passed. Its inspected, source-verified shirt/pants/dress screenshots still show an **inner-forearm/inside-cuff pale body sliver**, especially on the male photographed AJ long-sleeve shirt. Prior independent 3D-08 visual QA [PR #413](https://github.com/nickhaney916-lang/Closet-Current/pull/413) called the male cuff FAIL; Work61's collar repair improved shoulder breakthrough but deliberately did not address the wrist.
+
+This change is **limited to cuff fit**, not another duplicate complete-outfit system and not a claimed natural-cloth result.
+
+## Functioning code
+
+- New `research/three-d-16/cuff-clearance.mjs` uses the actual anatomical rig's named `lowerarm01L/R` and `wristL/R` skeleton bones. Near each wrist (source/rest pose only), it moves garment `position` vertices radially outward by at most **8 mm** with a smooth falloff starting near the elbow-side cuff boundary.
+- It operates only on the existing **Work56-independent-shirt-shell** mesh, avoiding collar/dress/pants meshes. Duplicated source-point positions are kept together to avoid new gaps at the existing stitched rim. Shirt's exact `panelPosition`/original photo UV, `panelNormal`, `skinIndex` and `skinWeight` attributes, source JPEG/PNG alpha, original skin/body geometry and shader remain unchanged.
+- `research/three-d-15/outfit-controller.mjs` calls the local correction after Work61 shoulder refinement, within its existing atomic source-pose outfit builder. It is default-on for this candidate, with optional `enableCuffFix:false` for scientific same-scene comparison. The compact unified showroom recognizes `?cuff=before` for before captures; the unqualified page uses the new correction. Dress/exclusive-category and neutral-pants behavior remain the previous Work61 implementation.
+- Fail-closed validation and data in `stats` expose number of changed vertices **on each real arm**, eligible vertices, max actual movement and a hard `collisionValidated:false, minClearance:null` flag. **Do not interpret** 8mm clearance as a complete collision solver; there may be other pose/camera/body intersection locations.
+- No new geometry, material, texture, guessed print, jeans fabric, outside URL, model binary, paid AI or camera pipeline. The exact licensed AJ original RGB and separate photographed dress remain unchanged.
+
+## Verification
+
+A new independent stage-only no-deploy CI, based on **exact pinned Work61 PR417 head `43bfb946bef2c046c5fa806fefc0158392c79570`**, permits only eight new/experimental paths. Rebuild the exact Work47 15-photo licensed originals and provisional source-bound cutouts; re-download and SHA-verify the original two CC0 male/female rigged GLBs; run Work61 functional source/atomic outfit tests (excluding its old standalone source diff-allowlist assertion which cannot recognize a later stage), plus genuine male and female 3D-16 bone/UV/mesh/forearm correction and failed-input tests. Node tests compare *before and after* from separate verified CC0 models with the **same previous Work61 fit**, checking source photo coordinate buffers byte-for-byte, original skeleton weights and indices unchanged, unchanged body position/normal arrays, capped real vertex displacement, actual change in both wrists, unchanged neutral pants/dress release gates, pose stability and no disposal leaks.
+
+Real **Chromium WebGL2/SwiftShader** at 320,390,430 CSS px captures the same selected source-verified AJ shirt and neutral pants on both original anatomical humans, separately with `?cuff=before` vs the current corrected fit. Each pair requires original photo explicit review and trusted Apply, unchanged photo SHA and control, same skeleton/pose/camera/canvas dimensions, actual changed GPU pixel counts, side rotation, source authorization HOLD and zero outside browser requests. Saves twelve actual, source-faithful screenshots and a JSON evidence manifest labelled HOLD. This is a visual inspection tool, not an assertion that the cuff looks natural.
+
+**Remaining independent quality gates:** screenshot owner/independent review of both inner-cuff close-ups; original 15 licensed real clothing cases, correct printed shirt with separate unphotographed rear; pose-dependent self-intersection/collision not certified; thickened source dress shoulder/neck and neutral pants waist/crotch remain REVIEW or FAIL for natural cloth. Last independent human 15-photo baseline was 0 PASS/5 REVIEW/10 FAIL and is not silently promoted. Physical iPhone/Android and protected staging account/cloud backup still unverified.
+
+No merges, staging/production changes, private family photos, invites, external services or Drive Duel edits. **Four-person Family Alpha stays HOLD.**
