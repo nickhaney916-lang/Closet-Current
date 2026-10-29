@@ -1,0 +1,55 @@
+name: 3D-31 public-domain source-true jeans cutout audit (HOLD NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'scripts/build-three-d-31-jeans-proposal.mjs'
+      - 'tests/three-d-31-jeans-source.test.mjs'
+      - 'research/three-d-31/**'
+      - 'research/three-d-30/reviewed-photo-pants.mjs'
+      - 'scripts/test-three-d-31-photo-jeans-browser.mjs'
+      - '.github/workflows/three-d-31-jeans-cutout-no-deploy.yml'
+permissions:
+  contents: read
+jobs:
+  independent-real-original-mask-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Exact PR436 source and nonproduction-only diff
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor 3556b01461df7819e3f2aa0b9349be8978802c9c HEAD
+          git diff --name-only 3556b01461df7819e3f2aa0b9349be8978802c9c HEAD | while IFS= read -r f; do
+            case "$f" in
+              scripts/build-three-d-31-jeans-proposal.mjs|tests/three-d-31-jeans-source.test.mjs|scripts/test-three-d-31-photo-jeans-browser.mjs|research/three-d-31/*|research/three-d-30/reviewed-photo-pants.mjs|.github/workflows/three-d-31-jeans-cutout-no-deploy.yml) ;;
+              *) echo "Prohibited original source / production / staging change: $f"; exit 1 ;;
+            esac
+          done
+      - name: Install only locally pinned research image decoder
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 three@0.180.0 playwright@1.56.1
+      - name: Download genuine public-domain original from known Wikimedia host and propose alpha
+        run: node scripts/build-three-d-31-jeans-proposal.mjs
+      - name: Check actual source bytes, alpha and safe original RGB without approving
+        run: node --test tests/three-d-31-jeans-source.test.mjs
+      - name: Restore only existing exact licensed source shirt and 163-bone original rigs
+        run: |
+          git fetch --no-tags origin 53f2ad344dc56a1477e343531c423aed0e66c17d dd6bac3fa9ff640d4f562cf925337440bdb5cf8f 3a572193987cb29389727426136c6eb3ac326783 dfb40889c4c1221fb1833b859e8a11ef38aeb76e
+          node scripts/build-work47-benchmark.mjs
+          node research/three-d-20/restore-approved-models.mjs
+      - name: Real 3D WebGL2 licensed jean pixels, two anatomical models, 320 390 430 and source shirt controls
+        run: node scripts/test-three-d-31-photo-jeans-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: THREE-D-31-REAL-PUBLIC-DOMAIN-JEANS-SOURCE-AND-PROVISIONAL-MASK-HOLD
+          path: |
+            benchmark/three-d-31/
+            research/three-d-06/models/verified-assets.json
+          if-no-files-found: warn

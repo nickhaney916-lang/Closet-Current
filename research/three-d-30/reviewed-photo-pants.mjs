@@ -11,10 +11,21 @@ export const PANTS_SOURCE=Object.freeze({
  originalBenchmarkMaskAvailable:false,
  releaseAuthorized:false
 });
+export const PANTS_RESEARCH_SOURCE=Object.freeze({
+ id:'commons-public-domain-jeans-2005',
+ originalSHA256:'b316902ad85e8ff46b164ceb7f2c38d3c1424c9d789703e0267e3dfce68fbe1c',
+ cutoutSHA256:'e51ed275c6ff1c18d37dfbb821d8994576868f707c551da4fcccea1eaa4b9441',
+ originalBenchmarkMaskAvailable:true,
+ sourcePage:'https://commons.wikimedia.org/wiki/File:Jeans.jpg',
+ license:'public domain',ownerApproved:false,releaseAuthorized:false
+});
 const finite=n=>typeof n==='number'&&Number.isFinite(n);
 export function requireReviewedPhotoPants(source,{reviewed=false}={}){
- if(reviewed!==true||source?.id!==PANTS_SOURCE.id||source?.type!=='pants'||
- source?.sourceSHA256!==PANTS_SOURCE.originalSHA256||
+ const isLegacy=source?.id===PANTS_SOURCE.id&&source?.sourceSHA256===PANTS_SOURCE.originalSHA256;
+ const isResearch=source?.id===PANTS_RESEARCH_SOURCE.id&&source?.sourceSHA256===PANTS_RESEARCH_SOURCE.originalSHA256&&source?.cutoutSHA256===PANTS_RESEARCH_SOURCE.cutoutSHA256&&source?.sourceAssetsVerified===true&&
+ Array.isArray(source?.neutralColorRGB)&&source.neutralColorRGB.length===3&&
+ source.neutralColorRGB.every(c=>Number.isInteger(c)&&c>=0&&c<=255);
+ if(reviewed!==true||(!isLegacy&&!isResearch)||source?.type!=='pants'||
  !/^[a-f0-9]{64}$/.test(source?.cutoutSHA256||'')||
  source.originalVerified!==true||source.cutoutVerified!==true||
  source.visibleSourceRGBPreserved!==true||source.frontOrientationReviewed!==true||
@@ -62,6 +73,11 @@ export function projectReviewedPhotoPants(pants,source,{reviewed=false}={}){
  g.setAttribute('pantsSourceUV',new THREE.BufferAttribute(uv,2));
  g.setAttribute('pantsSourceFront',new THREE.BufferAttribute(front,1));
  const material=mesh.material,prior=material.onBeforeCompile;
+ if(source.id===PANTS_RESEARCH_SOURCE.id){
+  // Unknown back fabric stays neutral: derive its solid backing *color* from
+  // actual measured source denim RGB, never invent rear pockets or stitches.
+  material.color.setRGB(...source.neutralColorRGB.map(x=>x/255),THREE.SRGBColorSpace);
+ }
  material.onBeforeCompile=shader=>{
   prior?.(shader);
   shader.uniforms.uPantsOriginalPhoto={value:texture};
@@ -82,7 +98,7 @@ export function projectReviewedPhotoPants(pants,source,{reviewed=false}={}){
   stats:{...pants.stats,photoApplied:true,sourceId:source.id,
    sourceSHA256:source.sourceSHA256,cutoutSHA256:source.cutoutSHA256,
    originalImagePreserved:true,originalRGBPreserved:true,photoFrontOnly:true,
-   backMaterial:'unphotographed-neutral',orientationReviewed:true,
+   backMaterial:'unphotographed-neutral',sourceDerivedNeutralColor:source.id===PANTS_RESEARCH_SOURCE.id,orientationReviewed:true,
    imageMapping:'original-source-front-projection-not-tailored-fit',
    collisionValidated:false,humanVisualApproval:false,releaseAuthorized:false},
   dispose(){if(disposed)return;disposed=true;texture.dispose();pants.dispose();}
