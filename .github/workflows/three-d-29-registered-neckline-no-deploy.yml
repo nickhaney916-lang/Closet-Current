@@ -1,0 +1,55 @@
+name: 3D-29 registered photographic neckline and contact (DRAFT HOLD NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'research/three-d-29/**'
+      - 'research/three-d-15/**'
+      - 'tests/three-d-29*'
+      - 'scripts/*three-d-29*'
+      - '.github/workflows/three-d-29-registered-neckline-no-deploy.yml'
+permissions:
+  contents: read
+jobs:
+  registered-neckline-contact-webgl:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Verify exact successful PR434 parent and isolated research-only scope
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor 287aad20f0baaad066180d78cc44b47b76f00052 HEAD
+          git diff --name-only 287aad20f0baaad066180d78cc44b47b76f00052 HEAD | while IFS= read -r f; do
+            case "$f" in
+              research/three-d-29/*|research/three-d-15/demo.mjs|research/three-d-15/showroom.mjs|research/three-d-15/outfit-controller.mjs|tests/three-d-29-neckline.test.mjs|tests/three-d-24-dress-fit.test.mjs|scripts/test-three-d-29-browser.mjs|scripts/audit-three-d-29-contact.mjs|.github/workflows/three-d-29-registered-neckline-no-deploy.yml) ;;
+              *) echo "Out-of-scope file: $f"; exit 1 ;;
+            esac
+          done
+      - name: Install pinned research dependencies only
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 three@0.180.0 playwright@1.56.1
+      - name: Rebuild exact licensed originals and hash-locked original CC0 figures
+        run: |
+          node scripts/build-work47-benchmark.mjs
+          node research/three-d-20/restore-approved-models.mjs
+      - name: Geometry, source bytes, body hashes, lower skirt and rollback regressions
+        run: node --test tests/three-d-29-neckline.test.mjs tests/three-d-26-contact.test.mjs tests/three-d-27-skirt-drape.test.mjs tests/three-d-24-dress-fit.test.mjs
+      - name: All upper triangle centroids on both original bodies in both poses
+        run: node scripts/audit-three-d-29-contact.mjs
+      - name: Genuine Chromium 320 390 430 source and relaxed four-view comparisons
+        run: node scripts/test-three-d-29-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: THREE-D-29-REGISTERED-NECKLINE-CONTACT-HOLD
+          path: |
+            benchmark/three-d-29/
+            benchmark/work47/assets/commons-0053.jpg
+            benchmark/work47/assets/commons-0053.png
+            research/three-d-06/models/verified-assets.json
+          if-no-files-found: warn

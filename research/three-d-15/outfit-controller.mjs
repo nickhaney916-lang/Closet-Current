@@ -15,9 +15,10 @@ import {finishNecklineAndSeams} from '../three-d-22/neckline-seams.mjs';
 import {fitAnatomicalDress,finishAnatomicalOpenings} from '../three-d-24/anatomical-dress.mjs';
 import {bindDressContact} from '../three-d-26/contact-presentation.mjs';
 import {softenAnatomicalSkirt} from '../three-d-27/skirt-drape.mjs';
+import {registerDressNeckline,clearNeckTriangleInteriors} from '../three-d-29/registered-neckline.mjs';
 export const OUTFITS=Object.freeze(['none','pants','shirt','shirt-pants','dress']);
 export function sourceForOutfit(mode){if(!OUTFITS.includes(mode))throw Error('Unsupported outfit');return mode==='dress'?'commons-0053':mode.includes('shirt')?'commons-0003':null;}
-export function createOutfitController(root,{refineFit=true,enableCuffFix=true,enableCuffFacing=true,enableCuffBridge=true,naturalFit=true,necklineSeams=true,dressNeckline=true,dressAnatomy=true,dressContact=true,skirtDrape=true}={}){
+export function createOutfitController(root,{refineFit=true,enableCuffFix=true,enableCuffFacing=true,enableCuffBridge=true,naturalFit=true,necklineSeams=true,dressNeckline=true,dressAnatomy=true,dressContact=true,skirtDrape=true,registeredNeckline=true}={}){
  // Canonical normals must be captured before the existing presentation clone.
  const fitPants=createPantsFitter(root),shoulders=captureShoulderSurface(root);prepareBodyPresentation(root);
  let parts={},mode='none',pose='relaxed',changes=0,closed=false;
@@ -37,11 +38,13 @@ export function createOutfitController(root,{refineFit=true,enableCuffFix=true,e
     const raw=buildSourceDress(root,candidate,{reviewed});
     try{
      const shaped=shapePhysicalDressNeckline(raw,{enabled:dressNeckline});
+     if(registeredNeckline&&dressAnatomy&&dressNeckline)registerDressNeckline(shaped,candidate);
      // The original anatomical fitter requires a real physical V-neck boundary.
      // A V-neck rollback also leaves anatomical cutting OFF; never silently
      // substitute a deeper, unreviewed neck profile to satisfy the fitter.
      const anatomyEnabled=dressAnatomy&&dressNeckline;
      let fitted=anatomyEnabled?fitAnatomicalDress(shaped,root,{clearHipEnvelope:dressContact}):shaped;
+     if(anatomyEnabled&&registeredNeckline)clearNeckTriangleInteriors(fitted,root);
      if(anatomyEnabled&&dressContact)bindDressContact(fitted,root);
      if(anatomyEnabled&&skirtDrape)fitted=softenAnatomicalSkirt(fitted,root);
      built.dress=refineFit?(anatomyEnabled?finishAnatomicalOpenings(fitted):finishDressEdges(fitted)):fitted;

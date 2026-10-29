@@ -23,7 +23,7 @@ test('Only a reviewed PR427 dress on original anatomical sections may be tailore
  assert.throws(()=>fitAnatomicalDress(null,new T.Group()));assert.throws(()=>anatomicalSections(new T.Group()));const x={};assert.equal(fitAnatomicalDress(x,null,{enabled:false}),x);
 });
 for(const kind of ['female','male'])test(kind+' original neck contour, genuine armholes, source mapping, body, rig and disposal',async()=>{
- const a=await person(kind),b=await person(kind),beforeBody=bodyFingerprint(b),baseline=createOutfitController(a,{dressAnatomy:false}),current=createOutfitController(b,{dressAnatomy:true});
+ const a=await person(kind),b=await person(kind),beforeBody=bodyFingerprint(b),baseline=createOutfitController(a,{dressAnatomy:false}),current=createOutfitController(b,{dressAnatomy:true,registeredNeckline:false});
  baseline.setOutfit('dress',candidate('dress'),{reviewed:true});const state=current.setOutfit('dress',candidate('dress'),{reviewed:true});baseline.setPose('source');current.setPose('source');a.updateMatrixWorld(true);b.updateMatrixWorld(true);
  assert.equal(state.dress.actualOpenArmholes,true);assert.ok(state.dress.armholeClippedTriangles>100);assert.equal(state.dress.necklineProfilePreserved,true);assert.equal(state.dress.collisionValidated,false);assert.equal(state.dress.sourceSHA256,'a'.repeat(64));
  assert.deepEqual(bodyFingerprint(b),beforeBody);
