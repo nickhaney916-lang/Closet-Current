@@ -1,3 +1,4 @@
+import {isSourceVerifiedDenimId} from '../three-d-30/reviewed-photo-pants.mjs';
 /** 3D35 — a separate patterned trouser surface, NOT another skin-offset brush.
  *
  * Sample the already source-verified skinned garment in its original source
@@ -64,7 +65,7 @@ export function fitIndependentDenimLoft(pants,root,{enabled=true}={}){
   rest=src?.getAttribute('pantsRest'),uv=src?.getAttribute('pantsSourceUV'),
   front=src?.getAttribute('pantsSourceFront');
  if(!mesh?.isSkinnedMesh||pants.meshes.length!==1||!mesh.userData.work60Pants||
- pants.stats?.sourceId!=='commons-public-domain-jeans-2005'||
+ !isSourceVerifiedDenimId(pants.stats?.sourceId)||
  !pants.stats?.structuralJeansEnvelope||!pants.stats?.photoApplied||
  !pos||!rest||!uv||!front||[rest.count,uv.count,front.count].some(n=>n!==pos.count)||
  !src.getAttribute('skinIndex')||!src.getAttribute('skinWeight'))
