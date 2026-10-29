@@ -1,0 +1,55 @@
+name: 3D-12 verified-photo recovery on Work59 natural drape (NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'research/three-d-11/**'
+      - 'scripts/test-three-d-11-work59-recovery-browser.mjs'
+      - 'tests/three-d-11-work59-recovery.test.mjs'
+      - '.github/workflows/three-d-11-photo-recovery-no-deploy.yml'
+permissions:
+  contents: read
+jobs:
+  safe-original-photo-fallback:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Fail closed on any clothing, production or Work59 drape change
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git fetch --no-tags origin d09786163eb52a4a0fa05a5ffc546fc171896080
+          git diff --name-only d09786163eb52a4a0fa05a5ffc546fc171896080 HEAD | while IFS= read -r path; do
+            case "$path" in
+              research/three-d-11/demo.mjs|research/three-d-11/index.html|research/three-d-11/work59-verified-photo-fallback.mjs|research/three-d-11/PHOTO-RECOVERY.md|scripts/test-three-d-11-work59-recovery-browser.mjs|tests/three-d-11-work59-recovery.test.mjs|.github/workflows/three-d-11-photo-recovery-no-deploy.yml) ;;
+              *) echo "Unexpected production, original JPEG/PNG, Work59 geometry or account change: $path"; exit 1 ;;
+            esac
+          done
+          test "$(git diff --name-only d09786163eb52a4a0fa05a5ffc546fc171896080 HEAD | wc -l)" -le 7
+      - name: Install research-only local licensed photo and GLB test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 three@0.180.0 playwright@1.56.1
+      - name: Rebuild original source-locked 15-photo Work47 benchmark and CC0 figures
+        run: |
+          git fetch --no-tags origin 53f2ad344dc56a1477e343531c423aed0e66c17d dd6bac3fa9ff640d4f562cf925337440bdb5cf8f 3a572193987cb29389727426136c6eb3ac326783
+          node scripts/build-work47-benchmark.mjs
+          node research/three-d-06/fetch-licensed-avatars.mjs
+      - name: Verify fail-closed image identity, Work59 source geometry and privacy contracts
+        run: |
+          node --test tests/three-d-11-work59-recovery.test.mjs tests/three-d-11-drape.test.mjs
+      - name: Verify four real Chromium WebGL/rig/source/context failure scenarios
+        run: node scripts/test-three-d-11-work59-recovery-browser.mjs
+      - name: Verify unchanged healthy Work59 mobile real-garment view and pose
+        run: node scripts/test-three-d-11-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: THREE-D-12-WORK59-VERIFIED-ORIGINAL-RECOVERY-HOLD
+          path: |
+            benchmark/three-d-12/
+            research/three-d-06/models/verified-assets.json
+          if-no-files-found: warn
