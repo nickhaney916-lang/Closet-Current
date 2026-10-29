@@ -7,13 +7,13 @@ This is independent visual QUALITY ASSURANCE only. Base is exact verified [Work5
 Run pinned read-only GitHub workflow \`three-d-08-anatomical-visual-no-deploy.yml\`, or in an existing repository checkout after dependencies/historical benchmark and GLBs have been reconstructed:
 
 \`\`\`sh
-node scripts/test-three-d-11-browser.mjs
+node scripts/test-three-d-08-anatomical-capture.mjs
 node scripts/test-three-d-11-evidence.mjs
 node scripts/test-three-d-08-anatomical-qa.mjs
 node scripts/test-three-d-08-anatomical-gallery.mjs
 \`\`\`
 
-The first two are unchanged Work59 real Chromium SwiftShader 3D dress-and-rotate tests that generate **96 authentic captures**: before/after × female/male × 320/390/430 × source/relaxed × front/three-quarter/side/back. No generated garments or fake human views. Original licensed black AJ \`commons-0003\` JPEG and its *existing* source-RGB transparent PNG are independently SHA-256 verified, including unchanged Work47 license/identity and no owner approval. A newly generated comparison test checks all 96 PNGs for data, 48 paired actual framebuffer differences, angle uniqueness, and limits unrelated lower-body changes from a garment-only refinement. This is a **regression check**, not a silhouette-based declaration of realistic fit.
+The first script is an isolated source-pinned Work59 capture harness with a measured 0–1 late idle-frame tolerance; Work59's original harness remains unchanged. The second script is Work59's unchanged evidence creator. Both use real Chromium SwiftShader 3D dress-and-rotate tests that generate **96 authentic captures**: before/after × female/male × 320/390/430 × source/relaxed × front/three-quarter/side/back. No generated garments or fake human views. Original licensed black AJ \`commons-0003\` JPEG and its *existing* source-RGB transparent PNG are independently SHA-256 verified, including unchanged Work47 license/identity and no owner approval. A newly generated comparison test checks all 96 PNGs for data, 48 paired actual framebuffer differences, angle uniqueness, and limits unrelated lower-body changes from a garment-only refinement. This is a **regression check**, not a silhouette-based declaration of realistic fit.
 
 The QA creates:
 - \`benchmark/three-d-08-anatomical-qa/female-visual-inspection-HOLD.jpg\`
