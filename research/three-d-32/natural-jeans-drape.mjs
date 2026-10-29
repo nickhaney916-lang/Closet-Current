@@ -32,11 +32,13 @@ export function drapeSourceJeans(pants,root,{enabled=true}={}){
   nodes.get(id).ids.push(i);
  }
  let changed=0,maxShift=0,hipMoved=0,thighMoved=0,kneeMoved=0,ankleMoved=0,
-  contactLimited=0,minBefore=Infinity,minAfter=Infinity;
+  contactLimited=0,minBefore=Infinity,minAfter=Infinity,invalidBase=0,invalidContact=0;
  // A continuous easing function follows measured leg segment landmarks. It
  // removes only excess radial bulk, rather than replacing anatomy with cylinders.
  for(const n of nodes.values()){
-  const o=n.original,side=o.x>=0?0:1,leg=legs[side];
+  const o=n.original;
+  if(!o.toArray().every(Number.isFinite)){invalidBase++;continue;}
+  const side=o.x>=0?0:1,leg=legs[side];
   const center=o.y>leg.knee.y?
    leg.hip.clone().lerp(leg.knee,T.MathUtils.clamp((leg.hip.y-o.y)/(leg.hip.y-leg.knee.y),0,1)):
    leg.knee.clone().lerp(leg.ankle,T.MathUtils.clamp((leg.knee.y-o.y)/(leg.knee.y-leg.ankle.y),0,1));
@@ -67,7 +69,11 @@ export function drapeSourceJeans(pants,root,{enabled=true}={}){
   // This is source-pose nearest-triangle sampling, not signed cloth collision.
   const hit=nearest(o);
   if(!hit)throw Error('Original anatomical triangle missing');
+  if(![...hit.point.toArray(),...hit.normal.toArray()].every(Number.isFinite)){
+   invalidContact++;continue;
+  }
   const gap=o.clone().sub(hit.point).dot(hit.normal);
+  if(!Number.isFinite(gap)){invalidContact++;continue;}
   let q=o.clone().add(delta);
   const gapAfter=q.clone().sub(hit.point).dot(hit.normal);
   if(gapAfter<.007){
@@ -78,6 +84,9 @@ export function drapeSourceJeans(pants,root,{enabled=true}={}){
   }
   minBefore=Math.min(minBefore,gap);minAfter=Math.min(minAfter,q.clone().sub(hit.point).dot(hit.normal));
   const move=q.distanceTo(o);
+  if(!Number.isFinite(move)){
+   throw Error('Nonfinite pants drape movement at source original coordinate '+JSON.stringify(o.toArray())+' gap '+gap+' delta '+JSON.stringify(delta.toArray()));
+  }
   if(move<.00001)continue;
   n.q.copy(q);maxShift=Math.max(maxShift,move);changed++;
   if(seat>.1)hipMoved++;
@@ -85,6 +94,7 @@ export function drapeSourceJeans(pants,root,{enabled=true}={}){
   if(knee>.1)kneeMoved++;
   if(calf>.1||hem>.1)ankleMoved++;
  }
+ if(invalidBase||invalidContact)throw Error('Preexisting original pants/body nonfinite samples '+JSON.stringify({invalidBase,invalidContact,changed,maxShift}));
  if(changed<150||maxShift<.002||maxShift>.0150001)throw Error('Anatomical drape failed measured geometry bound: '+JSON.stringify({changed,maxShift}));
  for(const n of nodes.values()){
   if(n.q.equals(n.original))continue;
