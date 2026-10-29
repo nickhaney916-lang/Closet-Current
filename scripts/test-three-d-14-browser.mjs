@@ -31,8 +31,17 @@ try{
   page.on('request',r=>{if(!r.url().startsWith(origin)&&!r.url().startsWith('blob:'+origin+'/')&&
    !r.url().startsWith('data:'))outside.push(r.url().slice(0,130));});
   await page.goto(origin+'/research/three-d-14/index.html');
-  await page.waitForFunction(()=>document.getElementById('avatar')?.dataset.ready==='true',
-   null,{timeout:50000});
+  try{
+   await page.waitForFunction(()=>document.getElementById('avatar')?.dataset.ready==='true',
+    null,{timeout:20000});
+  }catch(e){
+   const d=await page.evaluate(()=>({status:document.getElementById('status')?.textContent,
+    body:document.body.innerText.slice(0,550),ready:document.getElementById('avatar')?.dataset.ready}));
+   await mkdir('benchmark/three-d-14',{recursive:true});
+   await page.screenshot({path:'benchmark/three-d-14/startup-failure-'+width+'-HOLD.png',fullPage:true});
+   console.error('DRESS_3D14_STARTUP_DIAGNOSTIC',JSON.stringify({width,diagnostic:d,errors,outside}));
+   throw e;
+  }
   const c=page.locator('#avatar');
   assert.equal(await c.getAttribute('data-bones'),'163');
   assert.equal(await c.getAttribute('data-dress'),'none','No user permission means no dress applied');

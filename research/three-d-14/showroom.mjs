@@ -17,7 +17,7 @@ export function mountDressStudio(canvas,{onChange=()=>{}}={}){
  camera.position.set(0,1.07,4.1);
  const orbit=new OrbitControls(camera,canvas);orbit.enablePan=false;orbit.enableDamping=true;
  orbit.minDistance=2.5;orbit.maxDistance=6;orbit.target.set(0,1.05,0);
- const display=new T.Group();scene.add(display),loader=new GLTFLoader();
+ const display=new T.Group();scene.add(display);const loader=new GLTFLoader();
  let body=null,garment=null,token=0,stopped=false,mode='female',pose='relaxed',frames=0,active=false;
  const resize=()=>{const r=canvas.getBoundingClientRect(),w=Math.max(260,Math.floor(r.width)),h=Math.max(320,Math.floor(r.height));
   if(canvas.width!==Math.round(w*renderer.getPixelRatio())||canvas.height!==Math.round(h*renderer.getPixelRatio()))renderer.setSize(w,h,false);

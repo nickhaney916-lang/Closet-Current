@@ -66,3 +66,11 @@ test('CC0 redirect allowlist permits provider-owned files only with exact model 
  assert.equal(isPinnedProviderUrl(good,'male'),false);
  assert.equal(isPinnedProviderUrl('https://files.innerscene.com/library/female-base-mesh-3d-person-rigged-a-pose-dba97ed5/1/../../secrets.glb','female'),false);
 });
+
+test('Studio loader is declared in module scope and startup stays diagnostic',async()=>{
+ const viewer=await readFile('research/three-d-14/showroom.mjs','utf8');
+ const browser=await readFile('scripts/test-three-d-14-browser.mjs','utf8');
+ assert.match(viewer,/const loader=new GLTFLoader\(\)/);
+ assert.doesNotMatch(viewer,/scene\.add\(display\),loader=/);
+ assert.match(browser,/DRESS_3D14_STARTUP_DIAGNOSTIC/);
+});
