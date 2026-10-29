@@ -15,6 +15,7 @@ import {finishNecklineAndSeams} from '../three-d-22/neckline-seams.mjs';
 import {fitAnatomicalDress,finishAnatomicalOpenings} from '../three-d-24/anatomical-dress.mjs';
 import {bindDressContact} from '../three-d-26/contact-presentation.mjs';
 import {softenAnatomicalSkirt} from '../three-d-27/skirt-drape.mjs';
+import {requireReviewedPhotoPants,projectReviewedPhotoPants} from '../three-d-30/reviewed-photo-pants.mjs';
 import {registerDressNeckline,clearNeckTriangleInteriors} from '../three-d-29/registered-neckline.mjs';
 export const OUTFITS=Object.freeze(['none','pants','shirt','shirt-pants','dress']);
 export function sourceForOutfit(mode){if(!OUTFITS.includes(mode))throw Error('Unsupported outfit');return mode==='dress'?'commons-0053':mode.includes('shirt')?'commons-0003':null;}
@@ -24,16 +25,20 @@ export function createOutfitController(root,{refineFit=true,enableCuffFix=true,e
  let parts={},mode='none',pose='relaxed',changes=0,closed=false;
  const all=p=>Object.values(p).flatMap(g=>g.meshes);
  const summarize=()=>({mode,pose,changes,slots:Object.keys(parts),garmentMeshes:all(parts).length,shirt:parts.shirt?{...parts.shirt.stats,sharedSkeleton:parts.shirt.sharedSkeleton}:null,pants:parts.pants?.stats||null,dress:parts.dress?.stats||null,releaseAuthorized:false});
- function setOutfit(next,candidate,{reviewed=false}={}){
+ function setOutfit(next,candidate,{reviewed=false,pantsCandidate=null,pantsReviewed=false}={}){
   if(closed)throw Error('Outfit controller closed');const id=sourceForOutfit(next);
   // Reject invalid review/source before detaching an existing valid outfit.
   if(id==='commons-0053')requireDress(candidate,reviewed);
   if(id==='commons-0003')requireAnatomicalShirtPreview(candidate,{acknowledged:reviewed});
+  if(pantsCandidate){if(next!=='pants'&&next!=='shirt-pants')throw Error('Photo pants only allowed in lower-body outfit slots');requireReviewedPhotoPants(pantsCandidate,{reviewed:pantsReviewed});}
   const held=all(parts).map(mesh=>({mesh,parent:mesh.parent})),built={};held.forEach(({mesh})=>mesh.removeFromParent());setFashionPose(root,'source');
   try{
    // Build shirt FIRST, while the rig contains no other garments.
    if(next.includes('shirt')){built.shirt=attachReviewedShirt(root,candidate,{acknowledged:reviewed,pose:'source',improved:true});if(refineFit)built.shirt=protectShirtShoulders(built.shirt,shoulders);if(refineFit&&enableCuffFix)built.shirt=protectShirtCuffClearance(built.shirt,root);if(refineFit&&enableCuffFix&&enableCuffFacing)built.shirt=finishInnerCuffs(built.shirt,root);if(refineFit&&enableCuffFix&&enableCuffFacing&&enableCuffBridge)built.shirt=bridgeSourceCuffHem(built.shirt,root);if(naturalFit)built.shirt=fitContinuousShirt(built.shirt,root);if(necklineSeams)built.shirt=finishNecklineAndSeams(built.shirt,root);}
-   if(next==='pants'||next==='shirt-pants')built.pants=fitPants({pose:'source'});
+   if(next==='pants'||next==='shirt-pants'){
+    built.pants=fitPants({pose:'source'});
+    if(pantsCandidate)built.pants=projectReviewedPhotoPants(built.pants,pantsCandidate,{reviewed:pantsReviewed});
+   }
    if(next==='dress'){
     const raw=buildSourceDress(root,candidate,{reviewed});
     try{
