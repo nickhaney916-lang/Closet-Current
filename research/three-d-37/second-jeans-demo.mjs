@@ -7,9 +7,9 @@ const $=id=>document.getElementById(id),urls=[],status=text=>{$('status').textCo
 let app,pants,shirt,ready=false,closed=false;
 const digest=async bytes=>[...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))].map(v=>v.toString(16).padStart(2,'0')).join('');
 async function imageFrom(url,sha,id){
- if(!/^\/benchmark\/(?:three-d-31\/(?:original-jeans\.jpg|cutout-proposal\.png)|work47\/assets\/commons-0003\.(?:jpg|png))$/.test(url))throw Error('Only original local research assets allowed');
+ if(!/^\/benchmark\/(?:three-d-37\/(?:original-denimjeans2\.jpg|cutout-proposal\.png)|work47\/assets\/commons-0003\.(?:jpg|png))$/.test(url))throw Error('Only original local research assets allowed');
  const res=await fetch(url,{cache:'no-store'});if(!res.ok)throw Error('Original source unavailable: '+id);
- const ab=await res.arrayBuffer();if(ab.byteLength<1000||ab.byteLength>3e6||await digest(ab)!==sha)throw Error('Original image hash mismatch: '+id);
+ const ab=await res.arrayBuffer();if(ab.byteLength<1000||ab.byteLength>25000000||await digest(ab)!==sha)throw Error('Original image hash mismatch: '+id);
  const b=new Blob([ab],{type:url.endsWith('.png')?'image/png':'image/jpeg'}),u=URL.createObjectURL(b);urls.push(u);
  const img=new Image();img.src=u;await img.decode();return img;
 }
