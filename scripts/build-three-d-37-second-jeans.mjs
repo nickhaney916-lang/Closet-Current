@@ -65,9 +65,51 @@ for(let i=0;i<input.length;i++){
  // background and does not claim to recover faded fabric without review.
  input[i]=((b>r+10&&b>g+3&&b>55)||(b>r+15&&b>53&&r<135))?1:0;
 }
-const closed=morph(morph(input,sw,sh,true),sw,sh,false);
-const {result,parts,largest:component}=largest(closed,sw,sh);
-if(component<sw*sh*.17)throw Error('Second source alpha segmentation lacks complete denim');
+// Actual second source has faded light-blue interior and near-white worn
+// patches, so a color threshold alone wrongly deletes real fabric. Establish
+// source-derived LEFT/RIGHT waistband and leg outer contours from the actual
+// blue points per row, then KEEP original RGB at EVERY interior pixel.
+// These outlines remain provisional and are not a verified human cutout.
+const spans=[];
+const pct=(a,q)=>{const x=a.slice().sort((u,v)=>u-v);return x[Math.floor((x.length-1)*q)];};
+for(let y=0;y<sh;y++){
+ const pts=[];
+ for(let x=Math.floor(sw*.04);x<Math.ceil(sw*.96);x++){
+  let yes=false;
+  for(let yy=Math.max(0,y-2);yy<=Math.min(sh-1,y+2);yy++)if(input[yy*sw+x]){yes=true;break;}
+  if(yes)pts.push(x);
+ }
+ const left=pts.filter(x=>x<sw*.5),right=pts.filter(x=>x>=sw*.5);
+ if(pts.length<=30){spans.push([-1,-1,-1,-1]);continue;}
+ if(y<sh*.33)spans.push([pct(pts,.01),pct(pts,.99),-1,-1]);
+ else if(left.length>10&&right.length>10)spans.push([pct(left,.01),pct(left,.99),pct(right,.01),pct(right,.99)]);
+ else spans.push([-1,-1,-1,-1]);
+}
+// Interpolate only boundary positions between observed original denim rows.
+for(let col=0;col<4;col++){
+ const valid=spans.map((r,i)=>r[col]>=0?i:-1).filter(i=>i>=0);
+ if(!valid.length||col<2&&valid.length<200)throw Error('Original jean edge contours missing '+col);
+ for(let y=0;y<sh;y++){
+  if(spans[y][col]>=0)continue;
+  let lo=0,hi=valid.length-1;
+  while(lo<hi){const m=(lo+hi)>>1;if(valid[m]<y)lo=m+1;else hi=m;}
+  const right=valid[lo],left=valid[Math.max(0,lo-1)];
+  const x1=spans[left][col],x2=spans[right][col];
+  spans[y][col]=left===right?x1:Math.round(x1+(x2-x1)*((y-left)/(right-left)));
+ }
+}
+const result=new Uint8Array(sw*sh);
+for(let y=0;y<sh;y++){
+ let containsActualDenim=false;
+ for(let yy=Math.max(0,y-3);yy<=Math.min(sh-1,y+3)&&!containsActualDenim;yy++)
+  for(let x=0;x<sw;x++)if(input[yy*sw+x]){containsActualDenim=true;break;}
+ if(!containsActualDenim)continue;
+ const [x1,x2,x3,x4]=spans[y];
+ for(let x=Math.max(0,x1);x<=Math.min(sw-1,x2);x++)result[y*sw+x]=1;
+ if(y>=sh*.33)for(let x=Math.max(0,x3);x<=Math.min(sw-1,x4);x++)result[y*sw+x]=1;
+}
+const parts=0,component=result.reduce((total,v)=>total+v,0);
+if(component<sw*sh*.20)throw Error('Source-true original denim legs not fully segmented');
 const maskRaw=await sharp(Buffer.from(result),{raw:{width:sw,height:sh,channels:1}}).resize(w,h,{kernel:'nearest'}).raw().toBuffer();
 const rgba=Buffer.from(decoded.data);
 let count=0,waist=0,left=0,right=0,gap=0,minX=w,minY=h,maxX=-1,maxY=-1,
@@ -101,7 +143,7 @@ const metrics={id:'commons-cc-by-sa-denimjeans2-2008',sourcePage:PAGE,sourceURL:
  sourceDerivedNeutralColor:backing,components:parts,largestLowResComponent:component,
  originalBytesUnmodified:true,sourceRGBPreserved:true,ownerApproved:false,
  humanVisualApproval:false,releaseAuthorized:false,frontOrientationReviewed:true,
- maskStatus:'REVIEW',cutoutColorMethod:'source RGB exact, alpha only',
+ maskStatus:'REVIEW',cutoutColorMethod:'source RGB exact, provisional row-anchored observed denim edges; alpha only',imageOrientation:'laid-flat-front',
  existingOriginalJeansNotReplaced:true,fullCollisionValidated:false};
 await writeFile(DEST+'/original-denimjeans2.jpg',jpeg);
 await writeFile(DEST+'/cutout-proposal.png',cutout);
