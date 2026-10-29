@@ -4,6 +4,7 @@
  * No invented photographed rear, no tailoring, no body-specific measurements.
  */
 import * as THREE from 'three';
+import {CLOTH_VERTEX,CLOTH_VERTEX_DECLARATIONS} from '../three-d-09/cloth-silhouette.mjs';
 export const SHELL_LIMITS=Object.freeze({
  torsoBottom:1.08,shirtTop:1.67,outerArm:.77,neckOpening:.105,
  baseFront:1.12,printTop:1.58,halfPhotoChest:.37
@@ -12,7 +13,8 @@ function shellMaterial(source){
  const uniforms={
   uImage:{value:new THREE.Texture(source.textureImage)},
   uCrop:{value:new THREE.Vector4(...source.cropRect)},
-  uFallback:{value:new THREE.Color().setRGB(...source.baseColor,THREE.SRGBColorSpace)}
+  uFallback:{value:new THREE.Color().setRGB(...source.baseColor,THREE.SRGBColorSpace)},
+  uRelaxedFit:{value:1}
  };
  const tex=uniforms.uImage.value;
  tex.colorSpace=THREE.SRGBColorSpace;tex.flipY=true;tex.needsUpdate=true;
@@ -24,10 +26,13 @@ function shellMaterial(source){
   shader.uniforms.uImage=uniforms.uImage;
   shader.uniforms.uCrop=uniforms.uCrop;
   shader.uniforms.uFallback=uniforms.uFallback;
+  shader.uniforms.uRelaxedFit=uniforms.uRelaxedFit;
   shader.vertexShader=shader.vertexShader.replace('void main() {',
-    'varying vec3 vShellPoint;\nvarying float vShellFacing;\nvoid main() {');
+    'varying vec3 vShellPoint;\nvarying float vShellFacing;\n'+CLOTH_VERTEX_DECLARATIONS+'\nvoid main() {');
+  shader.vertexShader=shader.vertexShader.replace('#include <project_vertex>',
+    '#include <project_vertex>\n'+CLOTH_VERTEX);
   shader.vertexShader=shader.vertexShader.replace('#include <worldpos_vertex>',
-    '#include <worldpos_vertex>\nvShellPoint=(modelMatrix*vec4(transformed,1.0)).xyz;\nvShellFacing=dot(normalize(mat3(modelMatrix)*transformedNormal),vec3(0.,0.,1.));');
+    '#include <worldpos_vertex>\nvShellPoint=vSilhouetteShiftedWorld;\nvShellFacing=dot(normalize(mat3(modelMatrix)*transformedNormal),vec3(0.,0.,1.));');
   shader.fragmentShader=shader.fragmentShader.replace('void main() {',
     'varying vec3 vShellPoint;\nvarying float vShellFacing;\nuniform sampler2D uImage;\nuniform vec4 uCrop;\nuniform vec3 uFallback;\nvoid main() {');
   shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>',[
@@ -52,11 +57,11 @@ function shellMaterial(source){
     '}'
    ].join('\n'));
  };
- material.customProgramCacheKey=()=> 'closet-current-3d08-source-bound-skin-v1';
- return {material,tex};
+ material.customProgramCacheKey=()=> 'closet-current-3d09-relaxed-world-space-silhouette-v1';
+ return {material,tex,fitUniform:uniforms.uRelaxedFit};
 }
-export function buildAnatomicalGarmentShell(root,source){
- if(!root?.traverse||!source?.verified||!source?.textureImage||
+export function buildAnatomicalGarmentShell(root,source,{relaxed=true}={}){
+ if(typeof relaxed!=='boolean'||!root?.traverse||!source?.verified||!source?.textureImage||
   source?.ownerApproved!==false||source?.releaseAuthorized!==false)
   throw Error('Cannot build shirt shell without reviewed source-bound image');
  const all=[],meshes=[];
@@ -67,7 +72,8 @@ export function buildAnatomicalGarmentShell(root,source){
    all.push(obj);
  });
  if(all.length===0)throw Error('No real skinned body meshes for garment shell');
- const {material,tex}=shellMaterial(source);
+ const {material,tex,fitUniform}=shellMaterial(source);
+ fitUniform.value=relaxed?1:0;
  try{
   for(const src of all){
    const geometry=src.geometry.clone();
@@ -97,6 +103,11 @@ export function buildAnatomicalGarmentShell(root,source){
    originalTexturePreserved:true,photographedRear:false,
    originalRigSkeletons:true,offsetInModelUnits:.007,
    visualApproval:false,ownerApproved:false,releaseAuthorized:false,
+   get relaxed(){return fitUniform.value===1;},
+   setRelaxed(value){if(typeof value!=='boolean')throw Error('Invalid silhouette mode');
+    fitUniform.value=value?1:0;return fitUniform.value===1;},
+   silhouette:'bounded-normalized-world-displacement',
+   simulatedFabric:false,
    dispose(){
     for(const m of meshes){m.parent?.remove(m);m.geometry.dispose();}
     material.dispose();tex.dispose();

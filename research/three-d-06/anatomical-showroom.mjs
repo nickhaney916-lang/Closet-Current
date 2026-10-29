@@ -59,6 +59,7 @@ export function mountAnatomicalShowroom(canvas,{onChange=()=>{}}={}){
   clothUniforms.uVerifiedTexture.value=null;
   if(clothTexture)clothTexture.dispose();clothTexture=null;
   canvas.dataset.shirt='none';canvas.dataset.photoSource='';canvas.dataset.shellMeshes='0';
+  canvas.dataset.silhouette='none';
   draw();
  };
  const resize=()=>{
@@ -188,11 +189,21 @@ export function mountAnatomicalShowroom(canvas,{onChange=()=>{}}={}){
   canvas.dataset.shirt='separate-rigged-shell';
   canvas.dataset.photoSource=source.id;
   canvas.dataset.shellMeshes=String(actualShirtShell.meshes.length);
+  canvas.dataset.silhouette='relaxed';
   draw();
   return Object.freeze({status:'research-preview',id:source.id,
    sourceSHA256:source.sourceSHA256,realGarmentGeometry:true,
    separateSkinnedShell:true,actualTailoredFit:false,
    inferredRear:true,humanVisualApproval:false,releaseAuthorized:false});
+ };
+ const setShirtSilhouette=relaxed=>{
+  if(!actualShirtShell)throw Error('Source-reviewed garment shell required');
+  if(typeof relaxed!=='boolean')throw Error('Silhouette mode must be boolean');
+  actualShirtShell.setRelaxed(relaxed);
+  canvas.dataset.silhouette=relaxed?'relaxed':'close-fit';
+  draw();
+  return {mode:canvas.dataset.silhouette,sourceStillVerified:!!clothSource,
+   claimOfFabricSimulation:false};
  };
  const load=async kind=>{
   if(finish||!Object.hasOwn(ALLOWED,kind))throw Error('Unknown mannequin source');
@@ -247,8 +258,8 @@ export function mountAnatomicalShowroom(canvas,{onChange=()=>{}}={}){
   if(selected)selected.traverse(o=>{if(o.isMesh&&o.userData.ownedMaterial)o.material.dispose();});
   floor.geometry.dispose();floor.material.dispose();
   shadow.geometry.dispose();shadow.material.dispose();renderer.dispose();};
- return {load,shade,front,side,back,rotate,start,stop,applyShirt,applyShirtShell,clearShirt,
+ return {load,shade,front,side,back,rotate,start,stop,applyShirt,applyShirtShell,clearShirt,setShirtSilhouette,
   setSpin:v=>{spin=!!v;},
-  getState:()=>({kind:current,loaded:!!selected,finish,stats:lastStats,frames:frame,finishMaterial:lastColor,photoSource:clothSource?.id||null,shellMeshes:actualShirtShell?.meshes.length||0})
+  getState:()=>({kind:current,loaded:!!selected,finish,stats:lastStats,frames:frame,finishMaterial:lastColor,photoSource:clothSource?.id||null,shellMeshes:actualShirtShell?.meshes.length||0,silhouette:actualShirtShell?.relaxed?'relaxed':actualShirtShell?'close-fit':'none'})
  };
 }
