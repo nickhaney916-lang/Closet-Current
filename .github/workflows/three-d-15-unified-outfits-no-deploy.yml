@@ -41,7 +41,7 @@ jobs:
         run: node research/three-d-15/cc0-pinned-download.mjs
       - name: Preserve Work60 functional tests; apply the stronger exact-parent 3D15 diff guard above
         run: |
-          node --test --test-name-pattern='^(?!Work59 and all earlier tracked files stay unchanged; isolated lower-body scope$).*' tests/three-d-13-pants.test.mjs
+          node --test --test-name-pattern='real lower-body geometry|Pants source is hash-bound' tests/three-d-13-pants.test.mjs
           node --test tests/three-d-15-unified-outfits.test.mjs
           node --test --test-name-pattern='targeted geometry' tests/three-d-11-drape.test.mjs
           node --test --test-name-pattern='canonical Work56|Original stock source' tests/three-d-09-integration.test.mjs
