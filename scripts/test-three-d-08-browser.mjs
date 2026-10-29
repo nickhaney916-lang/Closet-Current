@@ -101,7 +101,26 @@ try{
     }
    return {black};
   });
-  assert.ok(pixelChange.black>20,JSON.stringify({problem:'Photographed black shirt absent from body surface',pixelChange}));
+  assert.ok(pixelChange.black>20,JSON.stringify({problem:'Photographed black shirt absent from independent garment shell',pixelChange}));
+  // Regression for visual failure from first successful shader tests:
+  // male chest had huge white opening while black strips survived at sides.
+  // Compare central upper-chest pixels, not overall black count.
+  const central=await canvas.evaluate(c=>{
+   const t=document.createElement('canvas');t.width=c.width;t.height=c.height;
+   const context=t.getContext('2d');context.drawImage(c,0,0);
+   const rgba=context.getImageData(0,0,t.width,t.height).data;
+   let black=0,total=0;
+   for(let y=Math.floor(t.height*.34);y<Math.floor(t.height*.42);y+=2)
+    for(let x=Math.floor(t.width*.47);x<Math.floor(t.width*.53);x+=2){
+     const i=(y*t.width+x)*4;total++;
+     if(rgba[i]<115&&rgba[i+1]<115&&rgba[i+2]<115)black++;
+    }
+   return {black,total};
+  });
+  assert.ok(central.black>=18,JSON.stringify({
+    problem:'Large exposed white center-chest gap despite black side strips',
+    width,model:'female',central
+  }));
   await mkdir('benchmark/three-d-08',{recursive:true});
   await page.screenshot({path:'benchmark/three-d-08/female-'+width+'-real-shirt-anatomical-HOLD.png',
    fullPage:true});
@@ -126,6 +145,25 @@ try{
   await page.waitForFunction(()=>document.querySelector('#avatar')?.dataset.shirt==='separate-garment',
    null,{timeout:45000});
   await page.getByRole('button',{name:'Front',exact:true}).click();
+  // Re-run the central chest pixel coverage check on the OTHER rig,
+  // because the former male mesh had a serious hollow front center.
+  const maleCenter=await canvas.evaluate(c=>{
+   const t=document.createElement('canvas');t.width=c.width;t.height=c.height;
+   const context=t.getContext('2d');context.drawImage(c,0,0);
+   const p=context.getImageData(0,0,t.width,t.height).data;
+   let black=0,total=0;
+   for(let y=Math.floor(t.height*.34);y<Math.floor(t.height*.42);y+=2)
+    for(let x=Math.floor(t.width*.47);x<Math.floor(t.width*.53);x+=2){
+     const i=(y*t.width+x)*4;total++;
+     if(p[i]<115&&p[i+1]<115&&p[i+2]<115)black++;
+    }
+   return {black,total};
+  });
+  assert.ok(maleCenter.black>=18,JSON.stringify({
+   problem:'Male center chest failed genuine cloth-coverage gate',width,maleCenter
+  }));
+  console.log('THREE_D_08_REAL_CENTER_CHEST_COVERAGE',
+   JSON.stringify({width,female:central,male:maleCenter}));
   await page.screenshot({path:'benchmark/three-d-08/male-'+width+'-real-shirt-anatomical-HOLD.png',
    fullPage:true});
   await page.locator('#clear').click();

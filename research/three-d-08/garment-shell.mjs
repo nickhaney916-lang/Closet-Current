@@ -8,7 +8,11 @@ const range=(n,a,b)=>n>=a&&n<=b;
 export function shirtZone(p){
  if(!p||![p.x,p.y,p.z].every(Number.isFinite))return null;
  const ax=Math.abs(p.x);
- if(!range(p.y,1.075,1.675)||Math.abs(p.z)>.40)return null;
+ // The licensed male model's chest projects farther forward in its own
+ // anatomical surface than the female model. A narrow fixed depth clip
+ // creates a huge WHITE CENTER-HOLE on the male shirt. Since source meshes
+ // are already CC0-skinned real body surfaces, use a generous safe depth.
+ if(!range(p.y,1.075,1.675)||Math.abs(p.z)>1.0)return null;
  if(ax<=.355)return 'torso';
  if(ax<=.86)return 'sleeve';
  return null;
