@@ -30,7 +30,7 @@ test('Opposite source side changes ray direction but does not manufacture signed
 test('Surface contact exactly at triangle plane produces zero nearest distance, not fake penetrations',()=>{
  const tri=skinTriangle(),p=new THREE.Vector3(0,0,0);
  const r=pointAgainstActualSkinTriangles(p,new THREE.Vector3(0,0,-.05),[tri]);
- assert.equal(r.nearestDistance,0);
+ assert.ok(r.nearestDistance<1e-12,'Floating-point triangle contact is numerically zero');
  assert.equal(r.inwardSurfaceHit,null);
  assert.equal(r.outwardSurfaceHit,null);
 });
