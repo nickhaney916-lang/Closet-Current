@@ -1,0 +1,54 @@
+name: 3D-10 QA source-recovery and pose-stability gate (NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'research/three-d-10-qa/**'
+      - 'scripts/test-three-d-10-qa-browser.mjs'
+      - 'tests/three-d-10-qa.test.mjs'
+      - '.github/workflows/three-d-10-qa-source-recovery-no-deploy.yml'
+permissions:
+  contents: read
+jobs:
+  qa-verified-anatomical-shirt-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Reject any edit outside four new review-only files
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git fetch --no-tags origin b1b3a306aeba7ce490b0f4d4305813e736117bda
+          git diff --name-only b1b3a306aeba7ce490b0f4d4305813e736117bda HEAD | while IFS= read -r file; do
+            case "$file" in
+              research/three-d-10-qa/*|scripts/test-three-d-10-qa-browser.mjs|tests/three-d-10-qa.test.mjs|.github/workflows/three-d-10-qa-source-recovery-no-deploy.yml) ;;
+              *) echo "Unexpected Work56/Work57/Work58/Work59/production/photo/auth change: $file"; exit 1 ;;
+            esac
+          done
+          test "$(git diff --name-only b1b3a306aeba7ce490b0f4d4305813e736117bda HEAD | wc -l)" -le 4
+      - name: Install pinned research-only renderer, browser, and photograph library
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 three@0.180.0 playwright@1.56.1
+      - name: Rebuild exact SHA-pinned original 15-photo Work47 benchmark
+        run: |
+          git fetch --no-tags origin 53f2ad344dc56a1477e343531c423aed0e66c17d dd6bac3fa9ff640d4f562cf925337440bdb5cf8f 3a572193987cb29389727426136c6eb3ac326783
+          node scripts/build-work47-benchmark.mjs
+      - name: Verify the two original CC0 humanoid GLB bodies
+        run: node research/three-d-06/fetch-licensed-avatars.mjs
+      - name: Test source identity and reversible Work56 and Work57 pose before browser
+        run: node --test tests/three-d-06-anatomical-models.test.mjs tests/three-d-07-source-rig.test.mjs tests/three-d-10-pose-integration.test.mjs tests/three-d-10-qa.test.mjs
+      - name: Actual 320 390 430 Chromium WebGL2 source poisoning recovery and repeatable pose
+        run: node scripts/test-three-d-10-qa-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: THREE-D-10-QA-SOURCE-REJECTION-REAL-WEBGL-HOLD
+          path: |
+            benchmark/three-d-10/
+            benchmark/three-d-08/
+            research/three-d-06/models/verified-assets.json
+          if-no-files-found: warn
