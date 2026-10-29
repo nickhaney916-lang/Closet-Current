@@ -72,6 +72,11 @@ try{
      await page.locator('#'+angle).click();await page.waitForTimeout(110);
      const png=await page.locator('#avatar').screenshot({path:dir+'/'+width+'-'+model+'-'+version+'-'+pose+'-'+angle+'-HOLD.png'});
      const id=pose+'/'+angle;
+     if(pose==='source'&&angle==='front'){
+      const sourcePixelDifference=await differences(neutral,png);
+      assert.ok(sourcePixelDifference>1800,'Actual source-photographed jeans must visibly render, not only change a mesh flag: '+sourcePixelDifference);
+      results.push({width,model,version,pose,angle:'verified-original-second-photo-vs-neutral',beforeAfterChangedPixels:sourcePixelDifference});
+     }
      if(version==='before')before[id]=png;
      else{
       const n=await differences(before[id],png);
