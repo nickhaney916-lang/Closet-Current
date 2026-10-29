@@ -17,11 +17,13 @@ export function createVerifiedPhotoFallback(doc,{onDeactivate=()=>{}}={}){
  const panel=$('photoFallback'),image=$('fallbackOriginal'),canvas=$('avatar');
  if(!panel||!image||!canvas)throw Error('Photo fallback elements missing');
  let original=null,shown=false;
- const authorize=({id,sourceSHA256,url}={})=>{
+ const authorize=({id,sourceSHA256,url,verifiedPreviewURL}={})=>{
   if(shown||original)throw Error('Photo identity already finalized');
   if(id!==LICENSED_FALLBACK.id||!hex.test(sourceSHA256||'')||
-   url!==LICENSED_FALLBACK.url)throw Error('Unverified licensed photo identity');
-  original=Object.freeze({id,sourceSHA256,url});
+   url!==LICENSED_FALLBACK.url||typeof verifiedPreviewURL!=='string'||
+   !doc.location?.origin||!verifiedPreviewURL.startsWith('blob:'+doc.location.origin+'/')||
+   verifiedPreviewURL.length>400)throw Error('Unverified licensed photo identity');
+  original=Object.freeze({id,sourceSHA256,url,displayURL:verifiedPreviewURL});
   return true;
  };
  const show=(reason='The 3D viewer is unavailable.')=>{
@@ -35,7 +37,9 @@ export function createVerifiedPhotoFallback(doc,{onDeactivate=()=>{}}={}){
   panel.hidden=false;
   image.hidden=!original;
   if(original){
-   image.src=original.url;
+   // Reuse exact SHA-verified in-memory original JPEG bytes, not a second
+   // network request that could change after the source hash check.
+   image.src=original.displayURL;
    image.alt='Original licensed black printed shirt photo — 3D viewer unavailable';
   }else{
    image.removeAttribute('src');

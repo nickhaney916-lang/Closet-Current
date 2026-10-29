@@ -22,7 +22,8 @@ async function sources(){
  const blobs=await Promise.all([readVerifiedAsset('/benchmark/work47/assets/'+LICENSED_SHIRT+'.jpg',row.sourceSHA256),readVerifiedAsset('/benchmark/work47/assets/'+LICENSED_SHIRT+'.png',row.cutoutSHA256)]);
  for(const [i,id] of ['original','cutout'].entries()){const u=URL.createObjectURL(blobs[i]);previews.push(u);$(id).src=u;await $(id).decode();}
  const link=document.createElement('a');link.href=license.attribution.source;link.textContent='Licensed source · '+license.attribution.license;link.target='_blank';link.rel='noopener noreferrer';$('credit').append(link);verified=true;
- fallback.authorize({id:LICENSED_SHIRT,sourceSHA256:row.sourceSHA256,url:LICENSED_FALLBACK.url});
+ fallback.authorize({id:LICENSED_SHIRT,sourceSHA256:row.sourceSHA256,
+  url:LICENSED_FALLBACK.url,verifiedPreviewURL:previews[0]});
 }
 async function apply(event){
  if(!event.isTrusted||!verified||!$('review').checked||$('dress').disabled||closed)return;

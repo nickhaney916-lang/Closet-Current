@@ -28,8 +28,8 @@ try{
  await mkdir('benchmark/three-d-12',{recursive:true});
  for(const scenario of ['no-webgl','blocked-glb','tampered-original','context-loss']){
   const ctx=await browser.newContext({viewport:{width:390,height:850}});
-  const page=await ctx.newPage(),external=[],events=[];
-  page.on('request',r=>{const url=r.url();if(!url.startsWith(origin)&&
+  const page=await ctx.newPage(),external=[],events=[],requests=[];
+  page.on('request',r=>{const url=r.url();requests.push(url);if(!url.startsWith(origin)&&
    !url.startsWith('blob:'+origin)&&!url.startsWith('data:'))external.push(url);});
   page.on('pageerror',e=>events.push(e.message));
   if(scenario==='no-webgl'){
@@ -78,7 +78,10 @@ try{
    const info=await photo.evaluate(img=>({w:img.naturalWidth,h:img.naturalHeight,
     src:img.getAttribute('src')}));
    assert.ok(info.w>100&&info.h>100,JSON.stringify(info));
-   assert.equal(info.src,'../../benchmark/work47/assets/commons-0003.jpg');
+   assert.ok(info.src.startsWith('blob:'+origin+'/'),
+    'Fallback must display in-memory verified original, not re-request source path');
+   assert.equal(requests.filter(u=>u===origin+'/benchmark/work47/assets/commons-0003.jpg').length,1,
+    'Never perform a second original JPEG request after SHA verification');
    assert.match(await page.locator('#photoStatus').innerText(),
     /Photo only. No 3D shirt, fit, saved outfit or approval/);
   }
