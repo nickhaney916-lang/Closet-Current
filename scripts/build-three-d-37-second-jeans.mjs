@@ -106,8 +106,9 @@ const metrics={id:'commons-cc-by-sa-denimjeans2-2008',sourcePage:PAGE,sourceURL:
 await writeFile(DEST+'/original-denimjeans2.jpg',jpeg);
 await writeFile(DEST+'/cutout-proposal.png',cutout);
 await writeFile(DEST+'/metrics.json',JSON.stringify(metrics,null,2));
-await sharp({create:{width:w,height:h,channels:3,background:'#ded8cf'}})
- .composite([{input:cutout,blend:'over'}]).resize(460).png().toFile(DEST+'/matte-review.png');
+const matte=await sharp({create:{width:w,height:h,channels:3,background:'#ded8cf'}})
+ .composite([{input:cutout,blend:'over'}]).png().toBuffer();
+await sharp(matte).resize(460).png().toFile(DEST+'/matte-review.png');
 console.log('THREE_D37_SECOND_ORIGINAL_SOURCE_AND_DERIVED_ALPHA',JSON.stringify(metrics));
 if(metrics.visibleRatio<.20||metrics.visibleRatio>.72||waist<9000||left<8000||right<8000||gap<15000||
  minY>h*.20||maxY<h*.78)throw Error('SECOND ORIGINAL incomplete source mask: REVIEW and block usage');
