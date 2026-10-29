@@ -1,0 +1,49 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Closet Current · 3D-14 source-verified dress research</title>
+<style>
+:root{font:15px/1.5 system-ui,sans-serif;color:#263a30;background:#f4f6f1;color-scheme:light}
+*{box-sizing:border-box}body{margin:0}header{background:#264b3d;color:#fff;padding:18px;text-align:center}
+header h1{font-size:clamp(21px,4vw,32px);margin:3px 0}header p{margin:0;font-size:13px}
+main{max-width:1100px;margin:auto;display:grid;grid-template-columns:minmax(0,1.45fr) minmax(300px,1fr);gap:15px;padding:15px}
+section{background:#fff;border:1px solid #d9e1d9;border-radius:14px;padding:15px;min-width:0}
+#holder{height:570px;max-height:69vh;min-height:360px;background:#f4f3ef;border-radius:10px;overflow:hidden}
+canvas{width:100%;height:100%;display:block;touch-action:none}
+.controls{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+button,select{font:inherit;min-height:44px;border:1px solid #aec5b6;background:#eef4ef;color:#234936;border-radius:9px;padding:9px 12px;cursor:pointer}
+button{flex:1;font-weight:600}button:disabled{opacity:.5;cursor:default}
+label{font-weight:600;display:grid;gap:5px;margin:14px 0}
+select{width:100%;background:#fff}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+figure{margin:0;padding:6px;border:1px solid #dae2db;border-radius:8px}
+figcaption{font-size:12px;font-weight:650;min-height:33px}
+figure img{width:100%;height:156px;object-fit:contain;display:block;background:#eef0ee}
+#cutout{background-image:linear-gradient(45deg,#e0e0e0 25%,transparent 25%),linear-gradient(-45deg,#e0e0e0 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#e0e0e0 75%),linear-gradient(-45deg,transparent 75%,#e0e0e0 75%);background-size:14px 14px;background-position:0 0,0 7px,7px -7px,-7px 0}
+.notice{padding:11px;background:#fbf4e7;border:1px solid #d8bf96;border-radius:8px;font-size:13px}
+.check{display:flex;gap:9px;align-items:flex-start}.check input{width:21px;height:21px;flex:none;margin-top:2px}
+#apply{width:100%}#status{min-height:45px;font-weight:600}
+small{font-size:12px;color:#617269}a{color:#246f4d}
+@media(max-width:800px){main{grid-template-columns:1fr;padding:9px}#holder{height:445px;min-height:330px}}
+</style>
+<script type="importmap">{"imports":{"three":"../../node_modules/three/build/three.module.js","three/addons/":"../../node_modules/three/examples/jsm/"}}</script>
+</head><body>
+<header><p>CLOSET CURRENT · 3D-14 · LOCAL RESEARCH</p>
+<h1>Real photographed dress on a 3D humanoid</h1>
+<p>Separate shared-skeleton A-line garment · Original fabric on front · Family Alpha HOLD</p></header>
+<main><section><div id="holder"><canvas id="avatar" aria-label="Interactive rigged human with experimental 3D dress"></canvas></div>
+<div class="controls"><button id="front">Front</button><button id="threequarter">3/4</button><button id="side">Side</button><button id="back">Back</button></div>
+<p id="status" role="status">Loading verified local assets…</p>
+<small>Drag the figure to rotate. Photo-real fabric on the front is provisional; the back and skirt geometry are inferred.</small>
+</section>
+<section><div class="notice"><strong>RESEARCH — NOT APPROVED.</strong> The existing Work47 source cutout has not passed human visual grading. This is a separate skinned dress mesh, not simulated fabric or measured fit. No private family clothing is used.</div>
+<label>Human figure<select id="model"><option value="female">Female CC0 anatomical base</option><option value="male">Male CC0 anatomical base</option></select></label>
+<label>Pose<select id="pose"><option value="relaxed">Relaxed</option><option value="source">Source A-pose</option></select></label>
+<div class="pair"><figure><figcaption>Original licensed photograph</figcaption><img id="original" alt="Unmodified original dress photograph"></figure>
+<figure><figcaption>Provisional source-RGB cutout</figcaption><img id="cutout" alt="Transparent dress source mask awaiting human approval"></figure></div>
+<label class="check"><input type="checkbox" id="review"><span>I compared the original and cutout. Preview only; this does not approve the dress.</span></label>
+<button type="button" id="apply" disabled>Display actual dress on 3D body</button>
+<button type="button" id="remove">Remove dress</button>
+<p id="info" role="status"><small>No original clothing photograph has been applied.</small></p>
+<small id="license">Verified source and license information are loading.</small>
+<p><small>Unlike the pants research prototype, this dress has a provisional transparent cutout. No new mask or fabric pixels are invented. The A-line geometry, rear and actual fit remain unverified.</small></p>
+</section></main><script type="module" src="./demo.mjs"></script></body></html>
