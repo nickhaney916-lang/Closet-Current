@@ -1,0 +1,61 @@
+name: Chat57 independent 3D visual and mobile acceptance (NO DEPLOY)
+on:
+  pull_request:
+    branches:
+      - research/work58-posed-real-clothing
+    paths:
+      - 'research/three-d-qa57/**'
+      - 'scripts/test-three-d-qa57-*.mjs'
+      - 'tests/three-d-qa57-*.test.mjs'
+      - '.github/workflows/three-d-qa57-no-deploy.yml'
+permissions:
+  contents: read
+jobs:
+  independent-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Reject edits outside independent QA infrastructure
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git diff --name-only 7d05929a1a06d80d04a4ea000c419d30761c3c8c HEAD | while IFS= read -r path; do
+            case "$path" in
+              research/three-d-qa57/*|scripts/test-three-d-qa57-*.mjs|tests/three-d-qa57-*.test.mjs|.github/workflows/three-d-qa57-no-deploy.yml) ;;
+              *) echo "FAIL: non-QA file edited: $path"; exit 1 ;;
+            esac
+          done
+      - name: Install pinned local-only research dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 three@0.180.0 playwright@1.56.1
+      - name: Recreate licensed benchmark and verify pinned model sources
+        run: |
+          git fetch --no-tags origin 53f2ad344dc56a1477e343531c423aed0e66c17d dd6bac3fa9ff640d4f562cf925337440bdb5cf8f 3a572193987cb29389727426136c6eb3ac326783
+          node scripts/build-work47-benchmark.mjs
+          node research/three-d-06/fetch-licensed-avatars.mjs
+      - name: Test original 3D source safeguards and new fail-closed human gate
+        run: node --test tests/three-d-06-anatomical-models.test.mjs tests/three-d-07-source-rig.test.mjs tests/three-d-09-integration.test.mjs tests/three-d-qa57-gate.test.mjs
+      - name: Produce actual Chromium WebGL2 screens at three mobile sizes
+        run: node scripts/test-three-d-09-browser.mjs
+      - name: Check existing original pixel and front/rear restraint tests
+        run: node scripts/test-three-d-09-evidence.mjs
+      - name: Independent 36-frame screenshot integrity and two side-by-side plates
+        run: node scripts/test-three-d-qa57-evidence.mjs
+      - name: Test unsupported WebGL and failed model safeguards
+        run: node scripts/test-three-d-qa57-negative.mjs
+      - name: Archive actual pictures, exact hashes, timings and limitations (HOLD)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: CHAT57-3D-REAL-CLOTHING-INDEPENDENT-QA-HOLD
+          path: |
+            research/three-d-qa57/evidence/
+            benchmark/three-d-09/
+            research/three-d-06/models/verified-assets.json
+          retention-days: 14
