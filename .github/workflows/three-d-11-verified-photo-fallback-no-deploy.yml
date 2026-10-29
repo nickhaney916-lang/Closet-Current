@@ -1,0 +1,57 @@
+name: 3D-11 original photo recovery on unsupported WebGL (NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'research/three-d-11/**'
+      - 'research/three-d-08/index.html'
+      - 'research/three-d-08/demo.mjs'
+      - 'tests/three-d-11-photo-fallback.test.mjs'
+      - 'scripts/test-three-d-11-fallback-browser.mjs'
+      - '.github/workflows/three-d-11-verified-photo-fallback-no-deploy.yml'
+permissions:
+  contents: read
+jobs:
+  licensed-offline-original-fallback:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Exact seven-file safe local research scope, no change to garment geometry
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git fetch --no-tags origin dabee1903c71c0d571b64bbb7570d788a127286a
+          git diff --name-only dabee1903c71c0d571b64bbb7570d788a127286a HEAD | while IFS= read -r path; do
+            case "$path" in
+              research/three-d-11/*|research/three-d-08/index.html|research/three-d-08/demo.mjs|tests/three-d-11-photo-fallback.test.mjs|scripts/test-three-d-11-fallback-browser.mjs|.github/workflows/three-d-11-verified-photo-fallback-no-deploy.yml) ;;
+              *) echo "Unexpected garment build, original source, auth, staging, production or other source: $path"; exit 1 ;;
+            esac
+          done
+          test "$(git diff --name-only dabee1903c71c0d571b64bbb7570d788a127286a HEAD | wc -l)" -le 7
+      - name: Install exact existing offline test dependencies only
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 three@0.180.0 playwright@1.56.1
+      - name: Rebuild 15 licensed JPEGs and Work47 original-RGB nine proposed masks
+        run: |
+          git fetch --no-tags origin 53f2ad344dc56a1477e343531c423aed0e66c17d dd6bac3fa9ff640d4f562cf925337440bdb5cf8f 3a572193987cb29389727426136c6eb3ac326783
+          node scripts/build-work47-benchmark.mjs
+      - name: Verify exact CC0 SHA-locked male and female anatomical GLB models
+        run: node research/three-d-06/fetch-licensed-avatars.mjs
+      - name: Fail-closed original photo fallback and source identity unit tests
+        run: node --test tests/three-d-11-photo-fallback.test.mjs
+      - name: Real Chromium 390px disabled WebGL / blocked GLB / tampered original JPEG
+        run: node scripts/test-three-d-11-fallback-browser.mjs
+      - name: Preserve 3D10 actual male/female licensed shirt and relaxed pose on three phone widths
+        run: node scripts/test-three-d-10-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: THREE-D-11-REAL-WEBGL-FAILURE-PHOTO-ONLY-HOLD
+          path: |
+            benchmark/three-d-11/
+            benchmark/three-d-10/
+          if-no-files-found: warn

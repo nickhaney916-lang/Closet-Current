@@ -2,8 +2,9 @@
 import {mountAnatomicalShowroom} from './shell-showroom.mjs';
 import {loadLicensedCutout,readVerifiedAsset} from '../three-d-02/reviewed-texture.mjs';
 import {LICENSED_SHIRT} from '../three-d-07/rig-shirt-transfer.mjs';
+import {createVerifiedPhotoFallback} from '../three-d-11/verified-photo-fallback.mjs';
 const $=id=>document.getElementById(id);
-let app=null,epoch=0,closed=false,manifest=null,original=null,spin=false;
+let app=null,epoch=0,closed=false,manifest=null,original=null,spin=false,photoFallback=null;
 const status=s=>{$('status').textContent=s;};
 const photoStatus=s=>{$('photoStatus').textContent=s;};
 const clear=()=>{
@@ -29,7 +30,10 @@ async function changeBody(){
   status('Verified '+st.kind+' CC0 anatomical humanoid. Shirt review required. Family Alpha HOLD.');
   photoStatus('No photographed clothing on body; explicit review required.');
   $('avatar').dataset.pose=st.pose;
- }catch(e){if(ticket===epoch)status('Local body blocked: '+e.message);}
+ }catch(e){if(ticket===epoch){
+  status('Local body blocked: '+e.message);
+  photoFallback?.show('Verified local anatomical model cannot load');
+ }}
 }
 async function applyPhoto(event){
  if(!event?.isTrusted||closed||!$('review').checked||$('dress').disabled)return;
@@ -58,13 +62,14 @@ async function applyPhoto(event){
 async function run(){
  if(!['localhost','127.0.0.1','[::1]'].includes(location.hostname))
   throw Error('Only localhost research access is permitted');
- app=mountAnatomicalShowroom($('avatar'),{onChange:({kind,stats})=>{
-  $('avatar').dataset.model=kind;
-  $('avatar').dataset.bones=String(stats.bones);
-  $('avatar').dataset.license='CC0-1.0';
-  $('metadata').textContent='Rigged human '+kind+' · '+stats.bones+
-   ' source bones · '+stats.triangles+' triangles · real skinned WebGL mesh';
+ photoFallback=createVerifiedPhotoFallback(document,{onDeactivate:()=>{
+  epoch++;try{app?.clearShirt();}catch{}
  }});
+ // Even when WebGL is disabled, load & hash-check the original licensed
+ // JPEG first. A failed 3D render must not leave a blank wardrobe preview.
+ $('avatar').addEventListener('webglcontextlost',event=>{
+  event.preventDefault();photoFallback.show('WebGL context lost');
+ });
  const [r,licenses]=await Promise.all([
   fetch('../../benchmark/work47/manifest.json',{cache:'no-store'}),
   fetch('../../benchmark/locked-photo-sources.json',{cache:'no-store'})
@@ -84,6 +89,8 @@ async function run(){
  ]);
  $('original').src='../../benchmark/work47/assets/'+LICENSED_SHIRT+'.jpg';
  $('cutout').src='../../benchmark/work47/assets/'+LICENSED_SHIRT+'.png';
+ photoFallback.authorize({id:LICENSED_SHIRT,sourceSHA256:row.sourceSHA256,
+  url:'../../benchmark/work47/assets/'+LICENSED_SHIRT+'.jpg'});
  const link=document.createElement('a');
  link.href=license.attribution.source;link.textContent='Verified shirt image and license';
  link.rel='noopener noreferrer';link.target='_blank';
@@ -132,7 +139,17 @@ async function run(){
   spin=!spin;app.setSpin(spin);$('spin').textContent='Auto-rotate: '+(spin?'On':'Off');
  });
  window.addEventListener('pagehide',()=>{closed=true;epoch++;app.stop();});
- window.work56Diagnostics=()=>app.getState();
+ window.work56Diagnostics=()=>app?.getState()||{photoOnly:true,loaded:false};
+ app=mountAnatomicalShowroom($('avatar'),{onChange:({kind,stats})=>{
+  $('avatar').dataset.model=kind;
+  $('avatar').dataset.bones=String(stats.bones);
+  $('avatar').dataset.license='CC0-1.0';
+  $('metadata').textContent='Rigged human '+kind+' · '+stats.bones+
+   ' source bones · '+stats.triangles+' triangles · real skinned WebGL mesh';
+ }});
  app.start();await changeBody();
 }
-run().catch(e=>status('Anatomical clothing preview blocked: '+e.message));
+run().catch(e=>{
+ status('Anatomical clothing preview blocked: '+e.message);
+ photoFallback?.show('3D startup unavailable');
+});
