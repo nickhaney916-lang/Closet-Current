@@ -7,6 +7,7 @@ import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {requireAnatomicalShirtPreview} from '../three-d-07/rig-shirt-transfer.mjs';
+import {buildSeparateShirtShell,makeSourceClothingMaterial} from '../three-d-08/garment-shell.mjs';
 const ALLOWED=Object.freeze({
  male:{file:'male-cc0-rigged.glb',title:'Anatomical mannequin A'},
  female:{file:'female-cc0-rigged.glb',title:'Anatomical mannequin B'}
@@ -46,13 +47,23 @@ export function mountAnatomicalShowroom(canvas,{onChange=()=>{}}={}){
  let selected=null,current='female',finish=false,loading=0,
   lastColor='porcelain',lastStats=null,spin=false,frame=0;
  const loader=new GLTFLoader();
- let clothTexture=null,clothSource=null;
+ let clothTexture=null,clothSource=null,shellMesh=null,shellStats=null;
  const clothUniforms={
   uVerifiedShirt:{value:0},uVerifiedTexture:{value:null},
   uVerifiedCrop:{value:new THREE.Vector4(0,0,1,1)},
   uVerifiedColor:{value:new THREE.Color(0x1e1e1e)}
  };
  const clearShirt=()=>{
+  if(shellMesh){
+   group.remove(shellMesh);
+   shellMesh.geometry.dispose();
+   if(shellMesh.material?.userData?.clothingTexture)
+    shellMesh.material.userData.clothingTexture.dispose();
+   shellMesh.material.dispose();
+   shellMesh=null;shellStats=null;
+  }
+  canvas.dataset.garmentMesh='none';
+  canvas.dataset.garmentTriangles='0';
   clothSource=null;clothUniforms.uVerifiedShirt.value=0;
   clothUniforms.uVerifiedTexture.value=null;
   if(clothTexture)clothTexture.dispose();clothTexture=null;
@@ -176,6 +187,32 @@ export function mountAnatomicalShowroom(canvas,{onChange=()=>{}}={}){
    anatomicalSurface:true,realGarmentGeometry:false,
    humanVisualApproval:false,releaseAuthorized:false};
  };
+ const applySeparateGarment=(candidate,{acknowledged=false}={})=>{
+  if(!selected||finish)throw Error('A verified anatomical GLB must be loaded first');
+  const source=requireAnatomicalShirtPreview(candidate,{acknowledged});
+  // Extract real original GLB anatomy, not a cylinder/sticker/body material.
+  const build=buildSeparateShirtShell(selected,group);
+  let m;
+  try{m=makeSourceClothingMaterial(source);}catch(e){build.geometry.dispose();throw e;}
+  clearShirt();
+  const garment=new THREE.Mesh(build.geometry,m.material);
+  garment.name='Separate photographed-shirt mesh (3D-08 HOLD)';
+  garment.renderOrder=2;garment.frustumCulled=false;
+  m.material.userData.clothingTexture=m.texture;
+  group.add(garment);
+  shellMesh=garment;shellStats=build;clothSource=source;
+  canvas.dataset.shirt='separate-garment';
+  canvas.dataset.garmentMesh='true';
+  canvas.dataset.garmentTriangles=String(build.triangles);
+  canvas.dataset.garmentTorsoTriangles=String(build.zones.torso);
+  canvas.dataset.garmentSleeveTriangles=String(build.zones.sleeve);
+  canvas.dataset.photoSource=source.id;
+  draw();
+  return {status:'separate-static-3d-shell',sourceSHA256:source.sourceSHA256,
+   triangles:build.triangles,zones:build.zones,
+   separateGarmentMesh:true,garmentRigged:false,clothPhysics:false,
+   measuredFit:false,humanVisualApproval:false,releaseAuthorized:false};
+ };
  const load=async kind=>{
   if(finish||!Object.hasOwn(ALLOWED,kind))throw Error('Unknown mannequin source');
   const token=++loading;
@@ -229,8 +266,8 @@ export function mountAnatomicalShowroom(canvas,{onChange=()=>{}}={}){
   if(selected)selected.traverse(o=>{if(o.isMesh&&o.userData.ownedMaterial)o.material.dispose();});
   floor.geometry.dispose();floor.material.dispose();
   shadow.geometry.dispose();shadow.material.dispose();renderer.dispose();};
- return {load,shade,front,side,back,rotate,start,stop,applyShirt,clearShirt,
+ return {load,shade,front,side,back,rotate,start,stop,applyShirt,applySeparateGarment,clearShirt,
   setSpin:v=>{spin=!!v;},
-  getState:()=>({kind:current,loaded:!!selected,finish,stats:lastStats,frames:frame,finishMaterial:lastColor,photoSource:clothSource?.id||null})
+  getState:()=>({kind:current,loaded:!!selected,finish,stats:lastStats,frames:frame,finishMaterial:lastColor,photoSource:clothSource?.id||null,separateGarmentTriangles:shellStats?.triangles||0})
  };
 }

@@ -1,0 +1,21 @@
+# Closet Current 3D-08 — SEPARATE anatomical-garment mesh (HOLD)
+
+**Main-thread priority:** Stop using a photograph painted onto the humanoid as if it were actual clothing. Continue the proven 3D-07 bridge by introducing a **second 3D mesh**, created using the real CC0 male/female anatomical model's current, skinned A-pose geometry. This is a separate, offset, independent `THREE.Mesh` with actual triangles, not a photo on the base body's shader.
+
+**Parent:** [draft PR #397](https://github.com/nickhaney916-lang/Closet-Current/pull/397), exact successful 3D-07 head `ac7d2bd1f2c223baf61fa0c3580cbc3b9b1330ec`. This branch is independently draft and no-deploy.
+
+## Actual functionality
+
+- `garment-shell.mjs` samples the **actual skinned GLB vertices in world space** from each anatomical body, selects approximate shoulder, torso and upper/lower-arm surfaces within conservative bounded coordinates, and copies those triangles into a **new, offset, separate garment geometry**, with its own mesh, normals, source UV and shader. The original skeletal body mesh is untouched. The garment rotates with the mannequin and remains distinct from the body material. Both shoulders/sleeves and torso must contribute real triangles or this candidate fails closed.
+- Real licensed Work47 original `commons-0003` photo, source-RGB transparent cutout PNG and original JPEG are validated with exact frozen SHA-256 and 3D-07 explicit human-review gating before GPU. On the actual separate cloth shell, the original black color and AJ print map onto the approximate front chest only; arms and rear get the real garment's **source-derived median color**, not fabricated printed rear data.
+- The shirt geometry has an intentional thin standoff from skin, basic open edges, and no measured sewing seam, texture panels on sleeves, high-quality collars, cloth drape, independently rigged skin weights or physical body measurements. **It is a fixed A-pose shell, NOT a true dynamically skinned/animated garment**. Photos preserve their original pixels, source identity and owner-review state. Switching male/female and unchecking review removes the mesh fully, including GPU geometry, material and texture, and requires a fresh explicit acknowledgment.
+- The research page `research/three-d-08/index.html` shows unchanged licensed original and source-bound cutout side-by-side, with touch-enabled front/side/back of the **real skinned CC0 body plus distinct separate experimental garment mesh**. Model and assets are local-only and no runtime third-party requests are permitted.
+- The existing 3D-07 **body-surface overlay** remains in its own separate research page unchanged, so reviewers can compare it against the new separate shell.
+
+## Reproducible exact-source validation
+
+Only eight research/test/workflow files are allowed. Dedicated CI source allowlist verifies this, then reconstructs the frozen 15-photo licensed Work47 benchmark, fetches the two SHA-locked CC0 male/female GLBs, runs Node geometry/source/privacy tests and actual Chromium software-WebGL2 at 320, 390 and 430px. The GPU browser test requires source review before any garment is visible, **600+ separate mesh triangles**, substantial real torso and sleeve contributions, genuine canvas appearance change, front/side/back, male/female, uncheck/model-switch/clear mesh disposal, original JPEG/PNG SHA and zero remote requests. Actual screenshots are labelled HOLD.
+
+**Do not confuse mechanical success with visual acceptance.** The current human visual benchmark remains **0 PASS, 5 REVIEW, 10 FAIL** over the old 15-photo check; the new independent benchmark may have to be rerun with 3D-08 on both bodies. Work #53 fine details, Work #55 independent human grading, and Family Alpha Issue #255 are separate. A rigid cutout fitted near a rigged body is only the next engineering milestone, not a high-fidelity virtual try-on.
+
+No merges, no staging or production deployment, no Supabase/Cloudflare/Resend or actual user account/photo changes, no paid AI/remote asset API at browser runtime, and no Drive Duel modifications. Family Alpha remains HOLD until owner-specific JWT/RLS, backup restore, actual devices and human quality signoff.
