@@ -79,7 +79,8 @@ export function drapeSourceJeans(pants,root,{enabled=true}={}){
   if(gapAfter<.007){
    const corrective=.007-gapAfter;
    q.addScaledVector(hit.normal,corrective);
-   if(q.distanceTo(o)>.015)q.copy(o).lerp(q,.015/q.distanceTo(o));
+   const length=q.distanceTo(o);
+   if(length>.015){const corrected=q.clone();q.copy(o).lerp(corrected,.015/length);}
    contactLimited++;
   }
   minBefore=Math.min(minBefore,gap);minAfter=Math.min(minAfter,q.clone().sub(hit.point).dot(hit.normal));
