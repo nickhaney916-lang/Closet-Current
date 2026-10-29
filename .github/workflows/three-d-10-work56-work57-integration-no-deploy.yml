@@ -1,0 +1,59 @@
+name: 3D-10 Work56 real shirt + Work57 relaxed pose integration (NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'research/three-d-08/shell-showroom.mjs'
+      - 'research/three-d-08/index.html'
+      - 'research/three-d-08/demo.mjs'
+      - 'research/three-d-10/**'
+      - 'tests/three-d-10-pose-integration.test.mjs'
+      - 'scripts/test-three-d-10-browser.mjs'
+      - '.github/workflows/three-d-10-work56-work57-integration-no-deploy.yml'
+permissions:
+  contents: read
+jobs:
+  original-photo-on-relaxed-anatomical-skeleton:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Fail closed on any other source, account, production or provider change
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git fetch --no-tags origin 89c4808cba4e790ae4fe7d268ada81ef3c90d966
+          git diff --name-only 89c4808cba4e790ae4fe7d268ada81ef3c90d966 HEAD | while IFS= read -r file; do
+            case "$file" in
+              research/three-d-08/shell-showroom.mjs|research/three-d-08/index.html|research/three-d-08/demo.mjs|research/three-d-10/*|tests/three-d-10-pose-integration.test.mjs|scripts/test-three-d-10-browser.mjs|.github/workflows/three-d-10-work56-work57-integration-no-deploy.yml) ;;
+              *) echo "Unexpected protected source changed: $file"; exit 1 ;;
+            esac
+          done
+          test "$(git diff --name-only 89c4808cba4e790ae4fe7d268ada81ef3c90d966 HEAD | wc -l)" -le 8
+      - name: Install exact existing safe offline test/render dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 three@0.180.0 playwright@1.56.1
+      - name: Rebuild historical locked 15-photo source and Work47 nine mask derivatives
+        run: |
+          git fetch --no-tags origin 53f2ad344dc56a1477e343531c423aed0e66c17d dd6bac3fa9ff640d4f562cf925337440bdb5cf8f 3a572193987cb29389727426136c6eb3ac326783
+          node scripts/build-work47-benchmark.mjs
+      - name: Fetch only exactly pinned commercial-safe CC0 male and female glTF models
+        run: node research/three-d-06/fetch-licensed-avatars.mjs
+      - name: Node test source privacy, licensed photo, actual skeleton deformation and reversible rest pose
+        run: node --test tests/three-d-06-anatomical-models.test.mjs tests/three-d-07-source-rig.test.mjs tests/three-d-10-pose-integration.test.mjs
+      - name: Reuse Work56 garment geometry/original source tests except its old branch-only allowlist
+        run: node --test --test-name-pattern='^(?!No shared renderer or application change)' tests/three-d-08-garment-shell.test.mjs
+      - name: Actual WebGL2 Chromium 320 390 430 source-pose vs relaxed-pose on BOTH human rigs
+        run: node scripts/test-three-d-10-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: THREE-D-10-REAL-PHOTO-SHIRT-AND-RELAXED-RIG-PHONES-HOLD
+          path: |
+            benchmark/three-d-10/
+            benchmark/three-d-08/
+            research/three-d-06/models/verified-assets.json
+          if-no-files-found: warn

@@ -8,6 +8,7 @@ import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {requireAnatomicalShirtPreview} from '../three-d-07/rig-shirt-transfer.mjs';
 import {buildGarmentShell} from './garment-shell.mjs';
+import {setFashionPose} from '../three-d-10/relaxed-pose.mjs';
 const ALLOWED=Object.freeze({
  male:{file:'male-cc0-rigged.glb',title:'Anatomical mannequin A'},
  female:{file:'female-cc0-rigged.glb',title:'Anatomical mannequin B'}
@@ -45,7 +46,7 @@ export function mountAnatomicalShowroom(canvas,{onChange=()=>{}}={}){
  scene.add(shadow);
  const group=new THREE.Group();scene.add(group);
  let selected=null,current='female',finish=false,loading=0,
-  lastColor='porcelain',lastStats=null,spin=false,frame=0;
+  lastColor='porcelain',lastStats=null,spin=false,frame=0,pose='source';
  const loader=new GLTFLoader();
  let clothTexture=null,clothSource=null,garment=null;
  const clothUniforms={
@@ -162,11 +163,25 @@ export function mountAnatomicalShowroom(canvas,{onChange=()=>{}}={}){
   if(!selected||finish)throw Error('A verified rigged humanoid must load first');
   const source=requireAnatomicalShirtPreview(candidate,{acknowledged});
   if(!['shell','projection'].includes(mode))throw Error('Unknown research garment mode');
+  if(mode==='projection'&&pose==='relaxed')throw Error('Relaxed pose requires the separate source-rigged shirt; body surface projection may drift');
   let tex=null;
   if(mode==='projection'){tex=new THREE.Texture(source.textureImage);tex.colorSpace=THREE.SRGBColorSpace;tex.flipY=true;tex.wrapS=THREE.ClampToEdgeWrapping;tex.wrapT=THREE.ClampToEdgeWrapping;tex.needsUpdate=true;}
   clearShirt();
   clothTexture=tex;clothSource=source;
-  if(mode==="shell"){garment=buildGarmentShell(selected,candidate,{acknowledged});canvas.dataset.garmentTriangles=String(garment.stats.triangles);canvas.dataset.garmentBones=String(garment.stats.skinBones);}
+  if(mode==="shell"){
+   // Work56 derives original garment rest-space geometry from anatomical bone
+   // landmarks. Always construct in the licensed GLB A-pose even when the
+   // customer previews a relaxed presentation pose. Both garment/body share
+   // the SAME original skeleton and must move together afterward.
+   if(pose!=='source')setFashionPose(selected,'source');
+   try{
+    garment=buildGarmentShell(selected,candidate,{acknowledged});
+    canvas.dataset.garmentTriangles=String(garment.stats.triangles);
+    canvas.dataset.garmentBones=String(garment.stats.skinBones);
+   }finally{
+    if(pose!=='source')setFashionPose(selected,pose);
+   }
+  }
   clothUniforms.uVerifiedShirt.value=mode==="projection"?1:0;
   canvas.dataset.mode=mode;
   clothUniforms.uVerifiedTexture.value=clothTexture;
@@ -203,6 +218,8 @@ export function mountAnatomicalShowroom(canvas,{onChange=()=>{}}={}){
   if(selected){clearShirt();group.remove(selected);disposeBody(selected);}
   clearShirt();
   selected=obj;group.add(selected);current=kind;lastStats=stats;
+  setFashionPose(selected,pose);
+  canvas.dataset.pose=pose;
   shade(lastColor);front();
   canvas.dataset.model=kind;
   canvas.dataset.bones=String(stats.bones);
@@ -227,12 +244,24 @@ export function mountAnatomicalShowroom(canvas,{onChange=()=>{}}={}){
   window.requestAnimationFrame(frameLoop);
  };
  const start=()=>{resize();window.addEventListener("resize",draw);window.requestAnimationFrame(frameLoop);};
+ const setPose=mode=>{
+  if(finish||!selected)throw Error('Anatomical body must load before posing');
+  if(!['source','relaxed'].includes(mode))throw Error('Unknown mannequin pose');
+  if(mode==='relaxed'&&canvas.dataset.mode==='projection'&&clothSource)
+   throw Error('Body-paint photography cannot safely follow relaxed bones; select separate 3D shirt');
+  const result=setFashionPose(selected,mode);
+  pose=mode;canvas.dataset.pose=mode;
+  canvas.dataset.sourceBoundShirt=String(!!(garment&&clothSource));
+  draw();
+  return {pose:mode,bones:result.bones,garmentFollowsSameSkeleton:!!garment,
+   sourceImageUnchanged:true,releaseAuthorized:false};
+ };
  const stop=()=>{window.removeEventListener("resize",draw);clearShirt();finish=true;loading++;controls.dispose();
   if(selected)disposeBody(selected);
   floor.geometry.dispose();floor.material.dispose();
   shadow.geometry.dispose();shadow.material.dispose();renderer.dispose();};
- return {load,shade,front,side,back,rotate,start,stop,applyShirt,clearShirt,
+ return {load,shade,front,side,back,rotate,start,stop,applyShirt,clearShirt,setPose,
   setSpin:v=>{spin=!!v;},
-  getState:()=>({kind:current,loaded:!!selected,finish,stats:lastStats,frames:frame,finishMaterial:lastColor,photoSource:clothSource?.id||null,garment:garment?.stats||null,resources:{geometries:renderer.info.memory.geometries,textures:renderer.info.memory.textures}})
+  getState:()=>({kind:current,loaded:!!selected,finish,stats:lastStats,frames:frame,finishMaterial:lastColor,photoSource:clothSource?.id||null,pose,garment:garment?.stats||null,resources:{geometries:renderer.info.memory.geometries,textures:renderer.info.memory.textures}})
  };
 }
