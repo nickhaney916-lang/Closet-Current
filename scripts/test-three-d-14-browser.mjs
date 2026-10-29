@@ -58,6 +58,24 @@ try{
   assert.match(await page.locator('#info').innerText(),/NOT visually accepted/);
   const dressed=await c.evaluate(c=>c.toDataURL('image/png'));
   assert.notEqual(dressed,before,'Actual 3D garment should change framebuffer');
+
+  const photoEvidence=await c.evaluate(canvas=>{
+   const temp=document.createElement('canvas');temp.width=canvas.width;temp.height=canvas.height;
+   const ctx=temp.getContext('2d');ctx.drawImage(canvas,0,0);
+   let bright=0,dark=0;
+   for(let ry=.27;ry<.43;ry+=.006)
+    for(let rx=.38;rx<.61;rx+=.006){
+     const p=ctx.getImageData(Math.floor(temp.width*rx),Math.floor(temp.height*ry),1,1).data;
+     const avg=(p[0]+p[1]+p[2])/3;
+     if(avg>105&&avg<245&&Math.max(p[0],p[1],p[2])-Math.min(p[0],p[1],p[2])<36)bright++;
+     if(avg<85)dark++;
+    }
+   return {bright,dark};
+  });
+  console.log('THREE_D_14_LICENSED_DRESS_PRINT_PIXELS',JSON.stringify({width,...photoEvidence}));
+  assert.ok(photoEvidence.bright>=3&&photoEvidence.dark>20,
+   JSON.stringify({problem:'Original photographic white source detail must be visible on black front dress',...photoEvidence}));
+
   await page.getByRole('button',{name:'Side',exact:true}).click();
   const side=await c.evaluate(c=>c.toDataURL('image/png'));
   assert.notEqual(side,dressed,'Separate garment truly rotates in 3D');

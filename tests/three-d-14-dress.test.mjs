@@ -29,6 +29,7 @@ test('Anatomical A-line dress is single continuous skirt without two pant legs',
 test('Separate dress keeps shared skeleton, source cutout and front-only original RGB',async()=>{
  const s=await readFile('research/three-d-14/dress-shell.mjs','utf8');
  assert.match(s,/new T\.SkinnedMesh/);
+ assert.match(s,/triangles\.push\(a,a\+1,b,a\+1,b\+1,b\)/,'Outward-facing original photo normals required');
  assert.match(s,/mesh\.bind\(base\.skeleton,base\.bindMatrix\)/);
  assert.match(s,/skinWeight/);
  assert.match(s,/uDressImage/);

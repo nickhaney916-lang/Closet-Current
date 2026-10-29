@@ -110,7 +110,7 @@ export function buildSourceDress(root,raw,{reviewed=false,segments=64}={}){
    skinIndices.push(spine,pelvis,left,right);skinWeights.push(spineW,1-spineW-l-rr,l,rr);
    if(ring<rings.length-1&&j<segments){
     const a=ring*(segments+1)+j,b=a+segments+1;
-    triangles.push(a,b,a+1,a+1,b,b+1);
+    triangles.push(a,a+1,b,a+1,b+1,b);
    }
   }
  }
