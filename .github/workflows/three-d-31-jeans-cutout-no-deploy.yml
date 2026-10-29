@@ -25,7 +25,7 @@ jobs:
             esac
           done
       - name: Install only locally pinned research image decoder
-        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 three@0.180.0
       - name: Download genuine public-domain original from known Wikimedia host and propose alpha
         run: node scripts/build-three-d-31-jeans-proposal.mjs
       - name: Check actual source bytes, alpha and safe original RGB without approving
