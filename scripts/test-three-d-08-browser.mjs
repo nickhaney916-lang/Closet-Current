@@ -159,8 +159,19 @@ try{
     }
    return {black,total};
   });
+  const maleMeshStats=await canvas.evaluate(c=>({
+   total:Number(c.dataset.garmentTriangles),
+   torso:Number(c.dataset.garmentTorsoTriangles),
+   sleeves:Number(c.dataset.garmentSleeveTriangles)
+  }));
+  console.log('THREE_D_08_MALE_CHEST_DIAGNOSTIC',
+   JSON.stringify({width,maleCenter,maleMeshStats,
+    femaleCenter:central,sourceId:await canvas.getAttribute('data-photo-source')}));
+  await page.screenshot({path:'benchmark/three-d-08/male-'+width+
+    '-coverage-diagnostic-HOLD.png',fullPage:true});
   assert.ok(maleCenter.black>=18,JSON.stringify({
-   problem:'Male center chest failed genuine cloth-coverage gate',width,maleCenter
+   problem:'Male center chest failed genuine cloth-coverage gate',
+   width,maleCenter,maleMeshStats
   }));
   console.log('THREE_D_08_REAL_CENTER_CHEST_COVERAGE',
    JSON.stringify({width,female:central,male:maleCenter}));
