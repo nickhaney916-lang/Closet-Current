@@ -11,10 +11,19 @@ export const PANTS_SOURCE=Object.freeze({
  originalBenchmarkMaskAvailable:false,
  releaseAuthorized:false
 });
+export const PANTS_RESEARCH_SOURCE=Object.freeze({
+ id:'commons-public-domain-jeans-2005',
+ originalSHA256:'b316902ad85e8ff46b164ceb7f2c38d3c1424c9d789703e0267e3dfce68fbe1c',
+ cutoutSHA256:'e51ed275c6ff1c18d37dfbb821d8994576868f707c551da4fcccea1eaa4b9441',
+ originalBenchmarkMaskAvailable:true,
+ sourcePage:'https://commons.wikimedia.org/wiki/File:Jeans.jpg',
+ license:'public domain',ownerApproved:false,releaseAuthorized:false
+});
 const finite=n=>typeof n==='number'&&Number.isFinite(n);
 export function requireReviewedPhotoPants(source,{reviewed=false}={}){
- if(reviewed!==true||source?.id!==PANTS_SOURCE.id||source?.type!=='pants'||
- source?.sourceSHA256!==PANTS_SOURCE.originalSHA256||
+ const isLegacy=source?.id===PANTS_SOURCE.id&&source?.sourceSHA256===PANTS_SOURCE.originalSHA256;
+ const isResearch=source?.id===PANTS_RESEARCH_SOURCE.id&&source?.sourceSHA256===PANTS_RESEARCH_SOURCE.originalSHA256&&source?.cutoutSHA256===PANTS_RESEARCH_SOURCE.cutoutSHA256;
+ if(reviewed!==true||(!isLegacy&&!isResearch)||source?.type!=='pants'||
  !/^[a-f0-9]{64}$/.test(source?.cutoutSHA256||'')||
  source.originalVerified!==true||source.cutoutVerified!==true||
  source.visibleSourceRGBPreserved!==true||source.frontOrientationReviewed!==true||
