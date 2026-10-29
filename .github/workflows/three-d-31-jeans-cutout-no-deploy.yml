@@ -24,6 +24,7 @@ jobs:
         with: {fetch-depth: 0}
       - name: Exact PR436 source and nonproduction-only diff
         run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
           git merge-base --is-ancestor 3556b01461df7819e3f2aa0b9349be8978802c9c HEAD
           git diff --name-only 3556b01461df7819e3f2aa0b9349be8978802c9c HEAD | while IFS= read -r f; do
             case "$f" in
