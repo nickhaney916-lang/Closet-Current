@@ -1,0 +1,113 @@
+{
+  "profiles": [
+    {
+      "width": 320,
+      "height": 568,
+      "dpr": 2,
+      "models": 2,
+      "poses": 2,
+      "views": 3,
+      "touchRotation": true,
+      "pinch": true,
+      "sourceIntegrity": true,
+      "sameSkeleton": true,
+      "noRebuildOnPose": true,
+      "clearResources": {
+        "geometries": 9,
+        "textures": 2
+      },
+      "dressedResources": {
+        "geometries": 11,
+        "textures": 3
+      },
+      "idleGPURedraws": 0,
+      "externalRequests": 0,
+      "drawPixels": 161100,
+      "readbackAndEncodeMs": [
+        568.9000000003725,
+        74.59999999962747,
+        78.70000000018626,
+        78.79999999981374,
+        77.1000000005588,
+        71.79999999981374
+      ],
+      "engine": "Chromium WebGL2 / SwiftShader",
+      "nativePhone": false,
+      "Safari": false,
+      "release": "HOLD"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "dpr": 3,
+      "models": 2,
+      "poses": 2,
+      "views": 3,
+      "touchRotation": true,
+      "pinch": true,
+      "sourceIntegrity": true,
+      "sameSkeleton": true,
+      "noRebuildOnPose": true,
+      "clearResources": {
+        "geometries": 9,
+        "textures": 2
+      },
+      "dressedResources": {
+        "geometries": 11,
+        "textures": 3
+      },
+      "idleGPURedraws": 0,
+      "externalRequests": 0,
+      "drawPixels": 383250,
+      "readbackAndEncodeMs": [
+        555.2999999998137,
+        100.29999999981374,
+        96.8999999994412,
+        94.1000000005588,
+        101.8999999994412,
+        100.09999999962747
+      ],
+      "engine": "Chromium WebGL2 / SwiftShader",
+      "nativePhone": false,
+      "Safari": false,
+      "release": "HOLD"
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "dpr": 3,
+      "models": 2,
+      "poses": 2,
+      "views": 3,
+      "touchRotation": true,
+      "pinch": true,
+      "sourceIntegrity": true,
+      "sameSkeleton": true,
+      "noRebuildOnPose": true,
+      "clearResources": {
+        "geometries": 9,
+        "textures": 2
+      },
+      "dressedResources": {
+        "geometries": 11,
+        "textures": 3
+      },
+      "idleGPURedraws": 0,
+      "externalRequests": 0,
+      "drawPixels": 504270,
+      "readbackAndEncodeMs": [
+        518,
+        118.80000000074506,
+        105,
+        101,
+        99.19999999925494,
+        102.80000000074506
+      ],
+      "engine": "Chromium WebGL2 / SwiftShader",
+      "nativePhone": false,
+      "Safari": false,
+      "release": "HOLD"
+    }
+  ],
+  "corruptedCutoutBlocked": true
+}
