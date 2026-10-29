@@ -1,0 +1,60 @@
+name: 3D-22 natural neckline and photo seam fit (HOLD NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'research/three-d-22/**'
+      - 'research/three-d-15/outfit-controller.mjs'
+      - 'research/three-d-15/showroom.mjs'
+      - 'research/three-d-15/demo.mjs'
+      - 'scripts/test-three-d-22-browser.mjs'
+      - 'tests/three-d-22-fit.test.mjs'
+      - 'scripts/build-three-d-22-visual-qa.mjs'
+      - '.github/workflows/three-d-22-neckline-seams-no-deploy.yml'
+permissions:
+  contents: read
+jobs:
+  neckline-and-photo-seams:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Restrict to garment research, tests and evidence; no application or deployment edits
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git fetch --no-tags origin 926c85ebf9d2d29c919771f3dcd6c1527208b63c
+          git diff --name-only 926c85ebf9d2d29c919771f3dcd6c1527208b63c HEAD | while IFS= read -r path; do
+            case "$path" in
+              research/three-d-22/*|research/three-d-15/outfit-controller.mjs|research/three-d-15/showroom.mjs|research/three-d-15/demo.mjs|scripts/test-three-d-22-browser.mjs|tests/three-d-22-fit.test.mjs|scripts/build-three-d-22-visual-qa.mjs|.github/workflows/three-d-22-neckline-seams-no-deploy.yml) ;;
+              *) echo "Unexpected garment, model, recognition, source/photo, auth, cloud, staging, production or Drive Duel modification: $path"; exit 1 ;;
+            esac
+          done
+          test "$(git diff --name-only 926c85ebf9d2d29c919771f3dcd6c1527208b63c HEAD | wc -l)" -le 18
+      - name: Install local pinned research source and Chromium dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 three@0.180.0 playwright@1.56.1
+      - name: Rebuild exact source-pinned licensed clothing, original alpha benchmark and anatomical CC0 models
+        run: |
+          git fetch --no-tags origin 53f2ad344dc56a1477e343531c423aed0e66c17d dd6bac3fa9ff640d4f562cf925337440bdb5cf8f 3a572193987cb29389727426136c6eb3ac326783 dfb40889c4c1221fb1833b859e8a11ef38aeb76e
+          node scripts/build-work47-benchmark.mjs
+          node research/three-d-20/restore-approved-models.mjs
+      - name: Verify both rigs, source panels, body, skinning, bounded fit and disposal
+        run: |
+          node --test tests/three-d-22-fit.test.mjs tests/three-d-20-fit.test.mjs
+          node --test --test-name-pattern='Stock-only|Both garment cutouts' tests/three-d-15-outfits.test.mjs
+      - name: Real mobile WebGL2 before-after, two rigs, two garments, two poses, four angles
+        run: node scripts/test-three-d-22-browser.mjs
+      - name: Build labeled same-camera visual comparisons and screenshot hash ledger
+        run: node scripts/build-three-d-22-visual-qa.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: THREE-D-22-NECKLINE-SEAMS-REAL-WEBGL-HOLD
+          path: |
+            benchmark/three-d-22/
+            research/three-d-06/models/verified-assets.json
+          if-no-files-found: warn
