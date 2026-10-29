@@ -62,7 +62,7 @@ Evidence: `evidence/{male,female}-before-after-HOLD.jpg`, `verified-sources-HOLD
 | Knees / side silhouette / hems | REVIEW | REVIEW | Baggy lower legs but stiff cross-section transitions, broad knees and blunt ankle hems |
 | Pants photo fidelity | FAIL | FAIL | No valid pants cutout; deliberately neutral, never claimed real photographed jeans |
 | Natural cloth drape / finished fashion realism | FAIL | FAIL | No sewn panels, real folds, pockets, fabric simulation or arbitrary-pose collision solver |
-| Existing shirt collar / cuffs | REVIEW | REVIEW | Inherited Work59 limitations retained; no shirt-drape changes owned here |
+| Existing shirt collar / cuffs | FAIL | REVIEW | Inherited male cuff/collar defects remain visible; no shirt-drape changes owned here |
 
 **Family Alpha remains HOLD.** No owner appearance approval, physical-device certification, full 15-photo garment acceptance or independent release signoff is implied.
 
