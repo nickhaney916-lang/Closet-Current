@@ -18,10 +18,11 @@ import {softenAnatomicalSkirt} from '../three-d-27/skirt-drape.mjs';
 import {requireReviewedPhotoPants,projectReviewedPhotoPants} from '../three-d-30/reviewed-photo-pants.mjs';
 import {drapeSourceJeans} from '../three-d-32/natural-jeans-drape.mjs';
 import {fairPhotographedJeansSeat} from '../three-d-33/posterior-fabric-fairing.mjs';
+import {hangOriginalDenimEnvelope} from '../three-d-34/hanging-pants-envelope.mjs';
 import {registerDressNeckline,clearNeckTriangleInteriors} from '../three-d-29/registered-neckline.mjs';
 export const OUTFITS=Object.freeze(['none','pants','shirt','shirt-pants','dress']);
 export function sourceForOutfit(mode){if(!OUTFITS.includes(mode))throw Error('Unsupported outfit');return mode==='dress'?'commons-0053':mode.includes('shirt')?'commons-0003':null;}
-export function createOutfitController(root,{refineFit=true,enableCuffFix=true,enableCuffFacing=true,enableCuffBridge=true,naturalFit=true,necklineSeams=true,dressNeckline=true,dressAnatomy=true,dressContact=true,skirtDrape=true,registeredNeckline=true,naturalPantsDrape=true,posteriorJeansFairing=true}={}){
+export function createOutfitController(root,{refineFit=true,enableCuffFix=true,enableCuffFacing=true,enableCuffBridge=true,naturalFit=true,necklineSeams=true,dressNeckline=true,dressAnatomy=true,dressContact=true,skirtDrape=true,registeredNeckline=true,naturalPantsDrape=true,posteriorJeansFairing=true,structuralPantsEnvelope=true}={}){
  // Canonical normals must be captured before the existing presentation clone.
  const fitPants=createPantsFitter(root),shoulders=captureShoulderSurface(root);prepareBodyPresentation(root);
  let parts={},mode='none',pose='relaxed',changes=0,closed=false;
@@ -43,7 +44,10 @@ export function createOutfitController(root,{refineFit=true,enableCuffFix=true,e
      built.pants=projectReviewedPhotoPants(built.pants,pantsCandidate,{reviewed:pantsReviewed});
      if(naturalPantsDrape&&pantsCandidate.id==='commons-public-domain-jeans-2005'){
       built.pants=drapeSourceJeans(built.pants,root);
-      if(posteriorJeansFairing)built.pants=fairPhotographedJeansSeat(built.pants,root);
+      if(posteriorJeansFairing){
+       built.pants=fairPhotographedJeansSeat(built.pants,root);
+       if(structuralPantsEnvelope)built.pants=hangOriginalDenimEnvelope(built.pants,root);
+      }
      }
     }
    }
