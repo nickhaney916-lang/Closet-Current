@@ -34,6 +34,7 @@ const comparison=[
  "   const t=document.createElement('canvas');t.width=c.width;t.height=c.height;",
  "   t.getContext('2d').drawImage(c,0,0);window.__relaxedPixels=t.getContext('2d').getImageData(0,0,t.width,t.height).data;",
  "  });",
+ "  await mkdir('benchmark/three-d-09',{recursive:true});",
  "  await page.screenshot({path:'benchmark/three-d-09/side-'+width+'-relaxed-source-shirt-HOLD.png',fullPage:true});",
  "  await page.locator('#fit').click();",
  "  assert.equal(await canvas.getAttribute('data-silhouette'),'close-fit');",
