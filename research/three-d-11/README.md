@@ -20,7 +20,7 @@ The new preview adapts Work58's controller/renderer with a single fitting hook. 
 
 - **14 functional Node tests**, including existing canonical Work56/shared-skeleton and source RGB/hash tests. New tests verify real geometry changes, added collar, measured forward waist expansion over 10 mm, normalized weights, pose reversal/rest UV stability, original body positions, shared rig and disposal. The old Work58 single-branch path guard is replaced with a 3D11-only guard; no functional test is weakened.
 - **Six real Chromium WebGL2 / SwiftShader journeys**: before/after at 320×568, 390×844, 430×932; both figures, original/relaxed poses and front/three-quarter/side/back = **96 actual screenshots**.
-- Trusted review/apply, corrupted cutout refusal, repeated pose and remove/reapply, model reset, real touch drag/pinch, canvas aspect, controls without primary scrolling, no horizontal overflow, zero external requests, and zero idle GPU redraws checked.
+- Trusted review/apply, corrupted cutout refusal, repeated pose and remove/reapply, model reset, real touch drag/pinch, canvas aspect, controls without primary scrolling, no horizontal overflow, zero external requests, and zero idle GPU redraws after camera damping settles checked (bounded quiescence wait, not a fixed sleep).
 - Before: 11 geometries/3 textures. After: **12/3**. Clear: **9/2**, stable across repeated cycles. Shirt triangles rise from 19,664→19,960 male and 19,543→19,815 female; source bodies remain 109,064 triangles/163 bones.
 - **24 front/rear print checks** verify visible central AJ detail and neutral central rear in both versions/poses/all widths. All 48 paired view comparisons must change real framebuffer pixels. These are regression checks, not automatic visual approval.
 
