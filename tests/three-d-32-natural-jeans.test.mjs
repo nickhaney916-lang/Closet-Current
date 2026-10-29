@@ -35,6 +35,7 @@ for(const kind of ['female','male'])test(kind+' actual original-body bounded jea
    const after=fresh.setOutfit('pants',null,{pantsCandidate:source(),pantsReviewed:true});
    const f=garment(nextRoot);
    assert.equal(after.pants.naturalJeansDrape,true);
+   console.log('3D32_MEASURED_ANATOMICAL_DRAPE',kind,JSON.stringify({moved:after.pants.drapeMovedUniqueVertices,max:after.pants.maxDrapeMovement,thigh:after.pants.thighVertices,ankle:after.pants.ankleVertices,contactLimited:after.pants.sourcePoseContactLimited,probeBefore:after.pants.sourcePoseSampledMinBefore,probeAfter:after.pants.sourcePoseSampledMinAfter}));
    assert.ok(after.pants.drapeMovedUniqueVertices>150);
    assert.ok(after.pants.maxDrapeMovement>=.002&&after.pants.maxDrapeMovement<=.0150001);
    assert.ok(after.pants.thighVertices>20||after.pants.ankleVertices>20);
