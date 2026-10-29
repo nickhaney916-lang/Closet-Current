@@ -55,7 +55,30 @@ export function proposalFromOriginal(image,w,h){
   // blue-dominance estimate: no fabricated color, cutout only.
   guess[i]=(b-r>=17&&b-g>=10&&b>65&&r<205)?1:0;
  }
- const {out:chosen,largest,componentCount}=maxComponent(morphology(morphology(guess,w,h,true),w,h,false),w,h);
+ const closed=morphology(morphology(guess,w,h,true),w,h,false);
+ // Open tiny carpet threads without extrapolating new cloth. Then carve the
+ // ORIGINAL visible gap between legs from the photographed laid-flat silhouette,
+ // using two conservative boundary anchors reviewed against the source JPEG.
+ const opened=morphology(morphology(closed,w,h,false),w,h,true);
+ for(let y=Math.round(h*.40);y<Math.round(h*.90);y++){
+  const t=Math.max(0,Math.min(1,(y/h-.40)/(.90-.40)));
+  const left=(.49+( .40-.49)*t)*w,right=(.545+(.66-.545)*t)*w;
+  for(let x=Math.floor(left);x<=Math.ceil(right);x++)opened[y*w+x]=0;
+ }
+ const {out:chosen,largest,componentCount}=maxComponent(opened,w,h);
+ // Restore genuine small interior details missed by blue-only classification,
+ // but never fill the much larger between-legs background or image border.
+ const exterior=new Uint8Array(w*h);
+ for(let start=0;start<w*h;start++){
+  if(chosen[start]||exterior[start])continue;
+  const q=[start];exterior[start]=1;let touchesEdge=false;
+  for(let k=0;k<q.length;k++){
+   const i=q[k],x=i%w,y=(i/w)|0;if(x===0||y===0||x===w-1||y===h-1)touchesEdge=true;
+   for(const off of [-1,1,-w,w]){const j=i+off;if(j<0||j>=w*h||off===-1&&x===0||off===1&&x===w-1||chosen[j]||exterior[j])continue;
+    exterior[j]=1;q.push(j);}
+  }
+  if(!touchesEdge&&q.length<=90)for(const i of q)chosen[i]=1;
+ }
  // Keep actual visible original RGB, transparency only. Tiny edge feather uses
  // the original pixel color at every opacity; never paints synthetic fabric.
  const result=new Uint8Array(image),mask=new Uint8Array(N);
@@ -80,7 +103,8 @@ export function proposalFromOriginal(image,w,h){
 }
 await mkdir(DEST,{recursive:true});
 const original=await acquire(),originalSHA256=sha(original);
-const expected=process.env.CC31_ORIGINAL_SHA256||'';
+const expected='b316902ad85e8ff46b164ceb7f2c38d3c1424c9d789703e0267e3dfce68fbe1c';
+if(process.env.CC31_ORIGINAL_SHA256&&process.env.CC31_ORIGINAL_SHA256!==expected)throw Error('Pinned original hash may not be overridden');
 if(expected&&originalSHA256!==expected)throw Error('Exact original photo SHA256 mismatch: expected '+expected+' actual '+originalSHA256);
 await writeFile(DEST+'/original-jeans.jpg',original);
 const {data,info}=await sharp(original).ensureAlpha().raw().toBuffer({resolveWithObject:true});
