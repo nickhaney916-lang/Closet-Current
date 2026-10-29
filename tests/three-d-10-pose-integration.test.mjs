@@ -34,6 +34,11 @@ for(const kind of ['male','female'])test(kind+' actual Work56 shirt skeleton fol
  const beforeQuats=new Map();root.traverse(o=>{if(o.isBone)beforeQuats.set(o,o.quaternion.clone());});
  assert.equal(setFashionPose(root,'source').mode,'source');
  const garment=buildGarmentShell(root,candidate,{acknowledged:true});
+ // Work56 attaches newly skinned geometry after the glTF scene was first
+ // normalized. In the browser, renderer.render refreshes the world pose.
+ // For a rigorous Node before/after test, refresh those matrices explicitly.
+ root.updateMatrixWorld(true);
+ root.traverse(o=>{if(o.isSkinnedMesh)o.skeleton.update();});
  assert.ok(garment.stats.triangles>1000);
  assert.equal(garment.stats.skinBones,163);
  const sample=garment.meshes.find(m=>m.geometry.attributes.position.count>100);
@@ -66,14 +71,15 @@ for(const kind of ['male','female'])test(kind+' actual Work56 shirt skeleton fol
  const returned=sample.applyBoneTransform(chosen,rest.clone());
  assert.equal(q.mode,'source');
  const roundTripDrift=returned.distanceTo(before);
- const maxBoneError=Math.max(...[...beforeQuats].map(([bone,quat])=>bone.quaternion.angleTo(quat)));
+ const maxBoneError=Math.max(...[...beforeQuats].flatMap(([bone,quat])=>
+  ['x','y','z','w'].map(axis=>Math.abs(bone.quaternion[axis]-quat[axis]))));
  console.log('THREE_D_10_POSE_RETURN_DIAGNOSTIC',JSON.stringify({
   kind,sourceVertex:before.toArray(),returnedVertex:returned.toArray(),
   roundTripDrift,maxBoneError,relaxedVertex:after.toArray(),
   originalSourceQuaternionRestored:maxBoneError<.00002
  }));
  assert.ok(roundTripDrift<.0003,'Round trip pose must restore source garment position');
- for(const [bone,quat] of beforeQuats)assert.ok(bone.quaternion.angleTo(quat)<.00002,'Source rig quaternion must restore precisely');
+ for(const [bone,quat] of beforeQuats)assert.ok(['x','y','z','w'].every(axis=>Math.abs(bone.quaternion[axis]-quat[axis])<.000002),'Source rig quaternion components must restore precisely');
  garment.dispose();assert.ok(garment.meshes.every(m=>!m.parent));
 });
 test('Experimental shell viewer guards fit-in-source-pose before rendering relaxed and refuses body-paint',async()=>{
