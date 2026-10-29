@@ -1,0 +1,63 @@
+name: 3D-15 unified photographed shirt dress and neutral pants (NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'research/three-d-15/**'
+      - 'research/three-d-14/**'
+      - 'tests/three-d-14-dress.test.mjs'
+      - 'scripts/test-three-d-15-*.mjs'
+      - 'tests/three-d-15-*.test.mjs'
+      - '.github/workflows/three-d-15-unified-outfits-no-deploy.yml'
+permissions:
+  contents: read
+jobs:
+  integrated-garment-pose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Keep Work56, Work57, application and cloud files unchanged
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git diff --name-only d990703eb281d71153fe8f2c3467a0f0573cadeb HEAD | while IFS= read -r path; do
+            case "$path" in
+              research/three-d-15/*|research/three-d-14/dress-shell.mjs|research/three-d-14/cc0-pinned-download.mjs|tests/three-d-14-dress.test.mjs|scripts/test-three-d-15-*.mjs|tests/three-d-15-*.test.mjs|.github/workflows/three-d-15-unified-outfits-no-deploy.yml) ;;
+              *) echo "Unexpected predecessor, application, account or source-photo change: $path"; exit 1 ;;
+            esac
+          done
+      - name: Install pinned local research dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 three@0.180.0 playwright@1.56.1
+      - name: Reconstruct existing licensed benchmark and verify original model hashes
+        run: |
+          git fetch --no-tags origin 53f2ad344dc56a1477e343531c423aed0e66c17d dd6bac3fa9ff640d4f562cf925337440bdb5cf8f 3a572193987cb29389727426136c6eb3ac326783 dfb40889c4c1221fb1833b859e8a11ef38aeb76e
+          node scripts/build-work47-benchmark.mjs
+          for attempt in 1 2 3; do
+            node research/three-d-14/cc0-pinned-download.mjs && break
+            if [ "$attempt" = 3 ]; then exit 1; fi
+            sleep 2
+          done
+      - name: Verify canonical fit, unchanged predecessors, real skin deformation and RGB
+        run: |
+          node --test tests/three-d-06-anatomical-models.test.mjs tests/three-d-07-source-rig.test.mjs tests/three-d-15-outfits.test.mjs
+          node --test --test-name-pattern='targeted geometry' tests/three-d-11-drape.test.mjs
+          node --test --test-name-pattern='real lower-body|Pants source' tests/three-d-13-pants.test.mjs
+          node --test --test-name-pattern='Only original|Anatomical A-line|Separate dress|CC0 redirect|Actual chest' tests/three-d-14-dress.test.mjs
+          node --test --test-name-pattern='canonical Work56|Original stock source' tests/three-d-09-integration.test.mjs
+      - name: Actual mobile WebGL source/relaxed clothing, touch, cleanup and hash refusal
+        run: node scripts/test-three-d-15-browser.mjs
+      - name: Actual screenshot sheets and front/rear print checks
+        run: node scripts/test-three-d-15-evidence.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: THREE-D-15-WORK61-UNIFIED-OUTFITS-HOLD
+          path: |
+            benchmark/three-d-15/
+            research/three-d-15/evidence/
+            research/three-d-06/models/verified-assets.json
