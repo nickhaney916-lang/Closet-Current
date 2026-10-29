@@ -7,6 +7,7 @@ import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {requireAnatomicalShirtPreview} from '../three-d-07/rig-shirt-transfer.mjs';
+import {buildSkinnedShirtShell,createSourceShirtMaterial} from '../three-d-08/skinned-shirt.mjs';
 const ALLOWED=Object.freeze({
  male:{file:'male-cc0-rigged.glb',title:'Anatomical mannequin A'},
  female:{file:'female-cc0-rigged.glb',title:'Anatomical mannequin B'}
@@ -46,13 +47,24 @@ export function mountAnatomicalShowroom(canvas,{onChange=()=>{}}={}){
  let selected=null,current='female',finish=false,loading=0,
   lastColor='porcelain',lastStats=null,spin=false,frame=0;
  const loader=new GLTFLoader();
- let clothTexture=null,clothSource=null;
+ let clothTexture=null,clothSource=null,riggedShirt=null,riggedMaterial=null,riggedTexture=null;
+ const removeRiggedShirt=()=>{
+  if(riggedShirt)for(const shell of riggedShirt.shells){
+   shell.parent?.remove(shell);shell.geometry.dispose();
+  }
+  riggedMaterial?.dispose();riggedTexture?.dispose();
+  riggedShirt=null;riggedMaterial=null;riggedTexture=null;
+  canvas.dataset.garmentMesh='none';
+  canvas.dataset.garmentShells='0';
+  canvas.dataset.garmentTriangles='0';
+ };
  const clothUniforms={
   uVerifiedShirt:{value:0},uVerifiedTexture:{value:null},
   uVerifiedCrop:{value:new THREE.Vector4(0,0,1,1)},
   uVerifiedColor:{value:new THREE.Color(0x1e1e1e)}
  };
  const clearShirt=()=>{
+  removeRiggedShirt();
   clothSource=null;clothUniforms.uVerifiedShirt.value=0;
   clothUniforms.uVerifiedTexture.value=null;
   if(clothTexture)clothTexture.dispose();clothTexture=null;
@@ -69,7 +81,7 @@ export function mountAnatomicalShowroom(canvas,{onChange=()=>{}}={}){
   if(!Object.hasOwn(COLORS,skin))throw Error('Unknown matte mannequin finish');
   lastColor=skin;
   if(selected)selected.traverse(obj=>{
-   if(obj.isMesh){
+   if(obj.isMesh&&!obj.userData.researchOnly){
     // A uniform opaque clay material avoids emitting personal likeness or
     // inadvertently loading a source-specific photograph into an avatar.
     if(obj.userData.ownedMaterial)obj.material.dispose();
@@ -176,6 +188,25 @@ export function mountAnatomicalShowroom(canvas,{onChange=()=>{}}={}){
    anatomicalSurface:true,realGarmentGeometry:false,
    humanVisualApproval:false,releaseAuthorized:false};
  };
+ const applySkinnedShirt=(candidate,{acknowledged=false}={})=>{
+  if(!selected||finish)throw Error('Verified anatomical rig required');
+  const source=requireAnatomicalShirtPreview(candidate,{acknowledged});
+  clearShirt(); // Remove prior body-paint and separate shells.
+  const {material,texture}=createSourceShirtMaterial(source.textureImage,
+    source.cropRect,source.baseColor);
+  riggedMaterial=material;riggedTexture=texture;
+  try{
+   selected.updateMatrixWorld(true);
+   riggedShirt=buildSkinnedShirtShell(selected,source,()=>material);
+   canvas.dataset.shirt='separate-skinned-shirt';
+   canvas.dataset.garmentMesh='skinned';
+   canvas.dataset.garmentShells=String(riggedShirt.shellCount);
+   canvas.dataset.garmentTriangles=String(riggedShirt.triangles);
+   canvas.dataset.photoSource=source.id;
+   draw();
+   return riggedShirt;
+  }catch(e){removeRiggedShirt();throw e;}
+ };
  const load=async kind=>{
   if(finish||!Object.hasOwn(ALLOWED,kind))throw Error('Unknown mannequin source');
   const token=++loading;
@@ -229,7 +260,7 @@ export function mountAnatomicalShowroom(canvas,{onChange=()=>{}}={}){
   if(selected)selected.traverse(o=>{if(o.isMesh&&o.userData.ownedMaterial)o.material.dispose();});
   floor.geometry.dispose();floor.material.dispose();
   shadow.geometry.dispose();shadow.material.dispose();renderer.dispose();};
- return {load,shade,front,side,back,rotate,start,stop,applyShirt,clearShirt,
+ return {load,shade,front,side,back,rotate,start,stop,applyShirt,applySkinnedShirt,clearShirt,
   setSpin:v=>{spin=!!v;},
   getState:()=>({kind:current,loaded:!!selected,finish,stats:lastStats,frames:frame,finishMaterial:lastColor,photoSource:clothSource?.id||null})
  };

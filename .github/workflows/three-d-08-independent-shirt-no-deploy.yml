@@ -1,0 +1,54 @@
+name: 3D-08 independent skeletal shirt shell on CC0 humanoid (NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'research/three-d-08/**'
+      - 'research/three-d-06/anatomical-showroom.mjs'
+      - 'scripts/test-three-d-08-browser.mjs'
+      - 'tests/three-d-08-skinned-shirt.test.mjs'
+      - '.github/workflows/three-d-08-independent-shirt-no-deploy.yml'
+permissions:
+  contents: read
+jobs:
+  verified-shirt-on-real-human:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Restrict changes to exactly eight research-only files
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git fetch --no-tags origin ac7d2bd1f2c223baf61fa0c3580cbc3b9b1330ec
+          git diff --name-only ac7d2bd1f2c223baf61fa0c3580cbc3b9b1330ec HEAD | while IFS= read -r path; do
+            case "$path" in
+              research/three-d-08/*|research/three-d-06/anatomical-showroom.mjs|scripts/test-three-d-08-browser.mjs|tests/three-d-08-skinned-shirt.test.mjs|.github/workflows/three-d-08-independent-shirt-no-deploy.yml) ;;
+              *) echo "Unexpected production, 2D, original photograph, auth, cloud or Drive Duel file: $path"; exit 1 ;;
+            esac
+          done
+          test "$(git diff --name-only ac7d2bd1f2c223baf61fa0c3580cbc3b9b1330ec HEAD | wc -l)" -le 8
+      - name: Install local research-only original photo and GLB dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 three@0.180.0 playwright@1.56.1
+      - name: Reproduce SHA-locked original 15-image benchmark without editing originals
+        run: |
+          git fetch --no-tags origin 53f2ad344dc56a1477e343531c423aed0e66c17d dd6bac3fa9ff640d4f562cf925337440bdb5cf8f 3a572193987cb29389727426136c6eb3ac326783
+          node scripts/build-work47-benchmark.mjs
+      - name: Obtain exact hash-locked CC0 anatomical male and female source meshes
+        run: node research/three-d-06/fetch-licensed-avatars.mjs
+      - name: Run GLB licensing, prior source-projection and independent skinned shirt safety tests
+        run: node --test tests/three-d-06-anatomical-models.test.mjs tests/three-d-07-source-rig.test.mjs tests/three-d-08-skinned-shirt.test.mjs
+      - name: Real WebGL2 male female source shirt review click, side/back, mobile phones
+        run: node scripts/test-three-d-08-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: THREE-D-08-SEPARATE-REAL-SKINNED-GARMENT-HOLD
+          path: |
+            benchmark/three-d-08/
+            research/three-d-06/models/verified-assets.json
+          if-no-files-found: warn
