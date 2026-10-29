@@ -86,6 +86,27 @@ try{
    assert.equal((await page.evaluate(()=>work58Diagnostics())).loaded,true);
    await page.locator('#front').click();
    assert.ok((await page.evaluate(()=>work58Diagnostics().frames))>=before);
+   if(optimized){
+    // Test the unchanged Work58 REAL licensed source-review + garment path
+    // with the cache installed; no synthesized clothing or automatic approval.
+    const manifest=JSON.parse(await readFile('benchmark/work47/manifest.json','utf8'));
+    const shirtRow=manifest.rows.find(r=>r.id==='commons-0003');
+    await page.locator('#garment').click();
+    assert.equal(await page.locator('#review').isChecked(),false);
+    await page.locator('#review').check();
+    await page.locator('#dress').click();
+    await page.waitForFunction(()=>document.querySelector('#avatar')?.dataset.shirt==='source-reviewed',null,{timeout:45000});
+    const dressed=await page.evaluate(()=>work58Diagnostics());
+    assert.equal(dressed.shirt.sourceSHA256,shirtRow.sourceSHA256);
+    assert.equal(dressed.shirt.sharedSkeleton,true);
+    assert.equal(dressed.geometries,11);
+    assert.equal(dressed.textures,3);
+    await page.locator('#garment').click();
+    const removed=await page.evaluate(()=>work58Diagnostics());
+    assert.equal(removed.shirt,null);
+    assert.equal(removed.geometries,9);
+    assert.equal(removed.textures,2);
+   }
    const metrics=optimized?await page.evaluate(()=>mobile3dMetrics()):null;
    assert.deepEqual(errors,[]);assert.deepEqual(outside,[]);
    assert.equal(requests.length,optimized?2:7,'Only verified cached GLB bytes avoid repeated requests');
