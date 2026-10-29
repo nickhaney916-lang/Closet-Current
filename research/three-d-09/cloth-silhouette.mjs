@@ -4,8 +4,8 @@
  * NEVER generated fabric photographs or user body measurements.
  */
 export const RELAXED_SHIRT=Object.freeze({
- base:0.013,hem:0.045,upperSleeve:0.022,ripple:0.0025,
- maxDisplacement:0.085,view:'visual-comparison-only',
+ base:0.009,hem:0.024,upperSleeve:0.015,ripple:0.0013,
+ maxDisplacement:0.055,view:'visual-comparison-only',
  physicallySimulated:false,tailoredFit:false,releaseAuthorized:false
 });
 const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
@@ -20,8 +20,9 @@ export function shellClearanceAt({x,y,z,relaxed=true}={}){
  const sleeves=smooth(.30,.57,Math.abs(x))*(1-smooth(1.57,1.70,y));
  const ripples=Math.sin(y*21+x*18)*RELAXED_SHIRT.ripple*
   (1-smooth(1.38,1.62,y));
- const offset=relaxed?RELAXED_SHIRT.base+RELAXED_SHIRT.hem*hem+
-  RELAXED_SHIRT.upperSleeve*sleeves+ripples:0;
+ const center= smooth(.05,.23,Math.abs(x));
+ const offset=relaxed?(RELAXED_SHIRT.base+RELAXED_SHIRT.hem*hem+
+  RELAXED_SHIRT.upperSleeve*sleeves+ripples)*center:0;
  return clamp(offset,0,RELAXED_SHIRT.maxDisplacement);
 }
 /** GLSL declarations at shader scope; vertex modifier runs after skinning. */
@@ -31,10 +32,11 @@ export const CLOTH_VERTEX=[
  'float ccHem=1.0-smoothstep(1.08,1.35,ccWorldPoint.y);',
  'float ccSleeve=smoothstep(.30,.57,abs(ccWorldPoint.x))*',
  ' (1.0-smoothstep(1.57,1.70,ccWorldPoint.y));',
- 'float ccRipple=.0025*sin(ccWorldPoint.y*21.0+ccWorldPoint.x*18.0)*',
+ 'float ccRipple=.0013*sin(ccWorldPoint.y*21.0+ccWorldPoint.x*18.0)*',
  ' (1.0-smoothstep(1.38,1.62,ccWorldPoint.y));',
- 'float ccOffset=clamp((.013+.045*ccHem+.022*ccSleeve+ccRipple)',
- ' *uRelaxedFit,0.0,.085);',
+ 'float ccCenter=smoothstep(.05,.23,abs(ccWorldPoint.x));',
+ 'float ccOffset=clamp((.009+.024*ccHem+.015*ccSleeve+ccRipple)',
+ ' *uRelaxedFit*ccCenter,0.0,.055);',
  '// A genuine world-space displacement changes the side silhouette.',
  'vec3 ccRadial=normalize(vec3(ccWorldPoint.x,0.,ccWorldPoint.z)+',
  ' vec3(.0001,0.,.0001));',

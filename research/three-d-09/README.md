@@ -8,10 +8,15 @@ This phase follows the successful **separate, genuinely skinned 3D garment shell
 
 The same independently skinned **separate** outer garment geometry still follows both CC0 anatomical models (163 bones, source-pinned real GLBs), with the same source-approved Work47 black AJ photo on the front, the same original cutout alpha and exact SHA-256, and the same source-median neutral color on sleeves, sides and unverified rear. Nothing reinterprets the source image.
 
-- New `cloth-silhouette.mjs` adds **bounded world-space fabric clearance** *after genuine skeletal skinning* and *before WebGL projection*. Base +0.013 normalized world units, up to +0.045 at the hem and +0.022 on arms. A tiny 0.0025 sinusoidal modulation is a non-physical visual wrinkle cue. Total new displacement is clamped to at most 0.085 units.
+- New `cloth-silhouette.mjs` adds **bounded world-space fabric clearance** *after genuine skeletal skinning* and *before WebGL projection*. Revised base +0.009 normalized world units, up to +0.024 at the hem and +0.015 on arms. A tiny 0.0013 sinusoidal modulation is a non-physical silhouette cue. Total new displacement is clamped to at most 0.055 units. The center-front body/garment seam is anchored with a smooth x-axis attenuation, eliminating unphysical gaps caused by radial outward displacement near the midline.
 - Geometry changes in the GPU vertex stage are actual x/z world-space displacement, rather than a drawn flat decal or fake screenshot. Thus the rotated side view should show a visibly different garment outline, slight waist clearance and more separate sleeve fabric while preserving the user's photographed chest logo and color.
 - A new research-only `3D-09/index.html` gives the owner a button to switch **Silhouette: relaxed ↔ close-fit** on the *same verified garment and rig*, with zero source file changes. This has no meaning when a shirt isn't active, and clearing/unchecking/reloading a body disposes the shell and requires explicit review again. Only reviewed `commons-0003` licensed shirt is tested.
 - Both states are explicitly **research visualization hypotheses**, not a physically simulated woven shirt, real garment measurements, human-specific fit, or independent verified photographic rear. The underlying skinned humanoid and source-bounded cutout remain intact.
+
+
+## Screenshot-led correction
+
+The first exact-head CI run #40796842579 passed **17/17 Node** and all three browser widths with a measured side silhouette delta of 2184–2187 pixels, but its visual screenshots exposed an **unacceptable large V-shaped opening below the male logo** and an excessively flared lower hem on the female figure. The original 3D08 male screenshot did **not** have this V gap. This phase therefore rejects its first green GPU screenshot as visual quality and reduces displacement, with a center-front anchor and regression tests preventing center seam displacement. Visual approval remains HOLD until later corrected screenshots are inspected.
 
 ## Test gate
 

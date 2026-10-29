@@ -14,9 +14,10 @@ test('Silhouette clearance is a bounded, opt-in research shape, not garment phys
    assert.equal(shellClearanceAt({x,y,z:.18,relaxed:false}),0);
   }
  }
+ assert.equal(shellClearanceAt({x:0,y:1.10,z:.20}),0,'Keep body center seam attached to avoid V-shaped tears');
  const hem=shellClearanceAt({x:.3,y:1.09,z:.15});
  const chest=shellClearanceAt({x:.3,y:1.5,z:.15});
- assert.ok(hem>chest+.025,{hem,chest});
+ assert.ok(hem>chest+.012,{hem,chest});
  assert.ok(shellClearanceAt({x:.62,y:1.3,z:.03})>chest,'Sleeves require nonzero extra separation');
 });
 test('No extreme displacement, injection, nonexistent real-world coordinates or fake body measurements',()=>{
@@ -26,6 +27,7 @@ test('No extreme displacement, injection, nonexistent real-world coordinates or 
  assert.match(CLOTH_VERTEX,/gl_Position=projectionMatrix\*viewMatrix\*vec4\(vSilhouetteShiftedWorld,1\.0\)/);
  assert.match(CLOTH_VERTEX,/ccWorldPoint=\(modelMatrix\*vec4\(transformed,1\.0\)\)\.xyz/);
  assert.match(CLOTH_VERTEX,/ccRadial\*ccOffset/);
+ assert.match(CLOTH_VERTEX,/ccCenter=smoothstep\(\.05,\.23,abs\(ccWorldPoint\.x\)\)/);
  assert.match(CLOTH_VERTEX_DECLARATIONS,/uniform float uRelaxedFit/);
  assert.doesNotMatch(CLOTH_VERTEX,/texture2D|uImage|sourcePixel/);
 });
