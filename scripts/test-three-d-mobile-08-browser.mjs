@@ -139,6 +139,31 @@ try{
  records.push({touchVerification:'real simulated Chrome two-touch rotation/pinch PASS',
   nativeDevice:false});
  await ctx.close();
+ // A single failed model download is retryable, never inserted in verified cache.
+ const bad=await chrome.newContext({viewport:{width:390,height:844},
+  isMobile:true,hasTouch:true,deviceScaleFactor:3});
+ const bp=await bad.newPage();let failOnce=0;
+ await bp.route('**/male-cc0-rigged.glb',route=>{
+  if(failOnce++===0)return route.abort('failed');
+  return route.continue();
+ });
+ await bp.goto(origin+'/research/three-d-mobile-08/index.html');
+ await bp.waitForFunction(()=>document.querySelector('#avatar')?.dataset.ready==='true');
+ await bp.locator('#model').selectOption('male');
+ await bp.waitForFunction(()=>document.querySelector('#status')?.textContent.startsWith('Local preview unavailable:'),null,{timeout:30000});
+ assert.equal(await bp.locator('#avatar').getAttribute('data-ready'),'false');
+ assert.equal(await bp.evaluate(()=>work58Diagnostics().shirt),null);
+ const cacheAfterFailure=await bp.evaluate(()=>mobile3dMetrics());
+ assert.ok(!cacheAfterFailure.modelNames.includes('male-cc0-rigged.glb'));
+ await bp.locator('#model').evaluate(el=>el.dispatchEvent(new Event('change',{bubbles:true})));
+ await bp.waitForFunction(()=>document.querySelector('#avatar')?.dataset.ready==='true'&&
+  document.querySelector('#avatar')?.dataset.model==='male',null,{timeout:45000});
+ assert.equal((await bp.evaluate(()=>mobile3dMetrics())).cacheEntries,2);
+ records.push({faultInjection:'first male GLB request deliberately aborted, same model retry succeeded',
+  failedLoadCached:false,wardrobeAccountDataTouched:false,
+  reviewButtonMayEnableDuringError:true,
+  note:'Existing Work58 error-state UI limitation is independently handled in PR409, not changed here'});
+ await bad.close();
  // Attempt actual Playwright WebKit (engine-specific, not Safari on physical iPhone).
  const safari={engine:'Playwright WebKit',width:390,height:844,dpr:3,
   launched:false,webgl2:false,modelsLoaded:0,physicalSafari:false,
