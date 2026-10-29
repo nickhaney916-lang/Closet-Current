@@ -4,14 +4,16 @@
  */
 import * as T from 'three';
 import {requireAnatomicalShirtPreview} from '../three-d-07/rig-shirt-transfer.mjs';
+import {originalPhotoSpan,deriveTorsoEnvelope,roundedNeckBoundary,drapeTorso,smoothSurfaceNormals} from './garment-fit-profile.mjs';
 export function buildGarmentShell(root,candidate,{acknowledged=false}={}){
  const source=requireAnatomicalShirtPreview(candidate,{acknowledged});
  root.updateMatrixWorld(true);
  const bone=name=>{let found;root.traverse(o=>{if(o.isBone&&o.name.replaceAll('.','')===name)found=o;});if(!found)throw Error('Missing anatomical landmark '+name);return found.getWorldPosition(new T.Vector3());};
  const neck=bone('neck01'),waist=bone('spine04');
+ const envelope=deriveTorsoEnvelope(root),photoSpan=originalPhotoSpan(source.textureImage,source.cropRect);
  const wrists=['L','R'].map(s=>({p:bone('wrist'+s),n:bone('wrist'+s).sub(bone('lowerarm02'+s)).normalize()}));
  // Continuous open boundaries cut through existing anatomy, not cylinder parts.
- const planes=[p=>p.y-(waist.y-.025),p=>neck.y-.028-p.y,
+ const planes=[p=>p.y-(waist.y-.025),p=>roundedNeckBoundary(p,neck.y,envelope.center),
   ...wrists.map(({p:w,n})=>p=>w.clone().sub(p).dot(n)-.013)];
  const texture=new T.Texture(source.textureImage);texture.colorSpace=T.SRGBColorSpace;
  texture.needsUpdate=true;
@@ -20,23 +22,28 @@ export function buildGarmentShell(root,candidate,{acknowledged=false}={}){
  // Photo is sampled ONCE on the front chest panel. Side/rear/sleeve coverage
  // is neutral source-median cloth: never repeat logos or fabricate rear imagery.
  material.onBeforeCompile=s=>{
-  Object.assign(s.uniforms,{uPhoto:{value:texture},uFabric:{value:base},uCrop:{value:new T.Vector4(...source.cropRect)}});
+  Object.assign(s.uniforms,{uPhoto:{value:texture},uFabric:{value:base},uCrop:{value:new T.Vector4(...source.cropRect)},uPhotoSpan:{value:new T.Vector2(photoSpan.width,photoSpan.height)},uFrontDepth:{value:envelope.center},uNeck:{value:neck.y},uPhotoTexel:{value:new T.Vector2(1/photoSpan.imageWidth,1/photoSpan.imageHeight)}});
   s.vertexShader=s.vertexShader.replace('void main() {','attribute vec3 panelPosition;attribute vec3 panelNormal;\nvarying vec3 vPanel;\nvarying vec3 vPanelNormal;\nvoid main() {');
   s.vertexShader=s.vertexShader.replace('#include <worldpos_vertex>','#include <worldpos_vertex>\nvPanel=panelPosition;vPanelNormal=panelNormal;');
-  s.fragmentShader=s.fragmentShader.replace('void main() {','varying vec3 vPanel;\nvarying vec3 vPanelNormal;\nuniform sampler2D uPhoto;uniform vec3 uFabric;uniform vec4 uCrop;\nvoid main() {');
+  s.fragmentShader=s.fragmentShader.replace('void main() {','varying vec3 vPanel;\nvarying vec3 vPanelNormal;\nuniform sampler2D uPhoto;uniform vec3 uFabric;uniform vec4 uCrop;uniform vec2 uPhotoSpan;uniform float uFrontDepth;uniform float uNeck;uniform vec2 uPhotoTexel;\nvoid main() {');
   s.fragmentShader=s.fragmentShader.replace('#include <color_fragment>',`#include <color_fragment>
    diffuseColor.rgb=uFabric;
-   vec2 panel=vec2(.5+vPanel.x/.78,(vPanel.y-1.11)/.57);
+   vec2 panel=vec2(.5+vPanel.x/uPhotoSpan.x,(vPanel.y-1.11)/uPhotoSpan.y);
    vec2 uv=vec2(uCrop.x+panel.x*uCrop.z,1.-uCrop.y-uCrop.w+panel.y*uCrop.w);
    if(panel.x>0.&&panel.x<1.&&panel.y>0.&&panel.y<1.){
     vec4 photo=texture2D(uPhoto,uv);
-    float front=smoothstep(-.08,-.06,vPanel.z);
+    // Conservative material-only sampling guard: source RGB/mask bytes stay
+    // unchanged while unreviewed alpha-edge fringe falls back to neutral cloth.
+    vec2 margin=uPhotoTexel*6.;
+    float interiorAlpha=min(min(texture2D(uPhoto,uv+vec2(margin.x,0.)).a,texture2D(uPhoto,uv-vec2(margin.x,0.)).a),min(texture2D(uPhoto,uv+vec2(0.,margin.y)).a,texture2D(uPhoto,uv-vec2(0.,margin.y)).a));
+    float front=smoothstep(.05,.25,vPanelNormal.z)*smoothstep(uFrontDepth-.015,uFrontDepth+.015,vPanel.z);
+    float necklineInterior=1.-smoothstep(uNeck-.11,uNeck-.075,vPanel.y);
     float chest=1.-smoothstep(.22,.29,abs(vPanel.x));
-    diffuseColor.rgb=mix(uFabric,photo.rgb,photo.a*front*chest);
+    diffuseColor.rgb=mix(uFabric,photo.rgb,photo.a*smoothstep(.95,1.,interiorAlpha)*front*chest*necklineInterior);
    }
   `);
  };
- const meshes=[],stats={triangles:0,openBoundaryEdges:0,skinBones:0,minClearance:.018,sourceSHA256:source.sourceSHA256,releaseAuthorized:false};
+ const meshes=[],stats={triangles:0,openBoundaryEdges:0,skinBones:0,minClearance:.018,sourceSHA256:source.sourceSHA256,photoSpan,envelope,releaseAuthorized:false};
  const body=[];root.traverse(o=>{if(o.isSkinnedMesh)body.push(o);});
  for(const original of body){
   const g=original.geometry,pos=g.attributes.position,norm=g.attributes.normal;
@@ -53,6 +60,7 @@ export function buildGarmentShell(root,candidate,{acknowledged=false}={}){
    const clearance=.018+.022*torso;
    const q=p.clone().addScaledVector(n,clearance);
    if(torso>.1){q.x+=Math.sign(p.x)*.012*torso;q.z+=Math.sign(p.z+.09)*.018*torso;}
+   drapeTorso(q,p,n,envelope);
    const v={p:q,clip:p,n:n.clone(),skin:Array.from({length:4},(_,k)=>g.attributes.skinIndex.array[i*4+k]),weight:Array.from({length:4},(_,k)=>g.attributes.skinWeight.array[i*4+k])};
    cache.set(i,v);return v;
   }
@@ -70,6 +78,7 @@ export function buildGarmentShell(root,candidate,{acknowledged=false}={}){
   if(!verts.length)continue;
   // Add narrow thickness at open neckline/hem/cuffs. No caps across openings.
   const key=v=>v.p.toArray().map(n=>n.toFixed(5)).join(',');
+  const surfaceVertices=verts.length;
   const edges=new Map();
   for(let i=0;i<verts.length;i+=3)for(let k=0;k<3;k++){
    const a=verts[i+k],b=verts[i+(k+1)%3],ka=key(a),kb=key(b),id=[ka,kb].sort().join('|');
@@ -81,11 +90,11 @@ export function buildGarmentShell(root,candidate,{acknowledged=false}={}){
    indices.push(...Array.from({length:6},(_,k)=>start+k));stats.openBoundaryEdges++;
   }
   const geometry=new T.BufferGeometry(),p=[],si=[],sw=[],panel=[],panelN=[];
-  for(const v of verts){p.push(...v.p.clone().applyMatrix4(inverse).toArray());si.push(...v.skin);sw.push(...v.weight);panel.push(...v.clip.toArray());panelN.push(...v.n.toArray());}
+  for(const v of verts){p.push(...v.p.clone().applyMatrix4(inverse).toArray());si.push(...v.skin);sw.push(...v.weight);panel.push(...v.p.toArray());panelN.push(...v.n.toArray());}
   geometry.setAttribute('position',new T.Float32BufferAttribute(p,3));
   geometry.setAttribute('panelPosition',new T.Float32BufferAttribute(panel,3));geometry.setAttribute('panelNormal',new T.Float32BufferAttribute(panelN,3));
   geometry.setAttribute('skinIndex',new T.Uint16BufferAttribute(si,4));geometry.setAttribute('skinWeight',new T.Float32BufferAttribute(sw,4));
-  geometry.setIndex(indices);geometry.computeVertexNormals();
+  geometry.setIndex(indices);geometry.computeVertexNormals();smoothSurfaceNormals(geometry,surfaceVertices);
   const shell=new T.SkinnedMesh(geometry,material);shell.name='Work56-independent-shirt-shell';
   shell.position.copy(original.position);shell.quaternion.copy(original.quaternion);shell.scale.copy(original.scale);
   original.parent.add(shell);shell.bind(original.skeleton,original.bindMatrix);shell.frustumCulled=false;

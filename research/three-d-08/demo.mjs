@@ -104,6 +104,7 @@ async function run(){
   spin=!spin;app.setSpin(spin);$('spin').textContent='Auto-rotate: '+(spin?'On':'Off');
  });
  window.addEventListener('pagehide',()=>{closed=true;epoch++;app.stop();});
+ window.work56Diagnostics=()=>app.getState();
  app.start();await changeBody();
 }
 run().catch(e=>status('Anatomical clothing preview blocked: '+e.message));

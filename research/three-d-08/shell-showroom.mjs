@@ -59,6 +59,7 @@ export function mountAnatomicalShowroom(canvas,{onChange=()=>{}}={}){
   clothUniforms.uVerifiedTexture.value=null;
   if(clothTexture)clothTexture.dispose();clothTexture=null;
   canvas.dataset.shirt='none';canvas.dataset.photoSource='';
+  delete canvas.dataset.garmentTriangles;delete canvas.dataset.garmentBones;delete canvas.dataset.mode;
   draw();
  };
  const resize=()=>{
@@ -160,10 +161,9 @@ export function mountAnatomicalShowroom(canvas,{onChange=()=>{}}={}){
  const applyShirt=(candidate,{acknowledged=false,mode="shell"}={})=>{
   if(!selected||finish)throw Error('A verified rigged humanoid must load first');
   const source=requireAnatomicalShirtPreview(candidate,{acknowledged});
-  const tex=new THREE.Texture(source.textureImage);
-  tex.colorSpace=THREE.SRGBColorSpace;tex.flipY=true;
-  tex.wrapS=THREE.ClampToEdgeWrapping;tex.wrapT=THREE.ClampToEdgeWrapping;
-  tex.needsUpdate=true;
+  if(!['shell','projection'].includes(mode))throw Error('Unknown research garment mode');
+  let tex=null;
+  if(mode==='projection'){tex=new THREE.Texture(source.textureImage);tex.colorSpace=THREE.SRGBColorSpace;tex.flipY=true;tex.wrapS=THREE.ClampToEdgeWrapping;tex.wrapT=THREE.ClampToEdgeWrapping;tex.needsUpdate=true;}
   clearShirt();
   clothTexture=tex;clothSource=source;
   if(mode==="shell"){garment=buildGarmentShell(selected,candidate,{acknowledged});canvas.dataset.garmentTriangles=String(garment.stats.triangles);canvas.dataset.garmentBones=String(garment.stats.skinBones);}
@@ -180,6 +180,7 @@ export function mountAnatomicalShowroom(canvas,{onChange=()=>{}}={}){
    anatomicalSurface:mode==="projection",realGarmentGeometry:mode==="shell",
    humanVisualApproval:false,releaseAuthorized:false};
  };
+ const disposeBody=root=>{const skeletons=new Set();root.traverse(o=>{if(o.isSkinnedMesh)skeletons.add(o.skeleton);if(o.isMesh){o.geometry.dispose();if(o.userData.ownedMaterial)o.material.dispose();}});skeletons.forEach(s=>s.dispose());};
  const load=async kind=>{
   if(finish||!Object.hasOwn(ALLOWED,kind))throw Error('Unknown mannequin source');
   const token=++loading;
@@ -199,9 +200,7 @@ export function mountAnatomicalShowroom(canvas,{onChange=()=>{}}={}){
   const center=bbox.getCenter(new THREE.Vector3());
   const scale=2.0/size.y;obj.scale.multiplyScalar(scale);
   obj.position.set(-center.x*scale,-bbox.min.y*scale,-center.z*scale);
-  if(selected){group.remove(selected);selected.traverse(o=>{
-   if(o.isMesh&&o.userData.ownedMaterial)o.material.dispose();
-  });}
+  if(selected){clearShirt();group.remove(selected);disposeBody(selected);}
   clearShirt();
   selected=obj;group.add(selected);current=kind;lastStats=stats;
   shade(lastColor);front();
@@ -229,11 +228,11 @@ export function mountAnatomicalShowroom(canvas,{onChange=()=>{}}={}){
  };
  const start=()=>{resize();window.addEventListener("resize",draw);window.requestAnimationFrame(frameLoop);};
  const stop=()=>{window.removeEventListener("resize",draw);clearShirt();finish=true;loading++;controls.dispose();
-  if(selected)selected.traverse(o=>{if(o.isMesh&&o.userData.ownedMaterial)o.material.dispose();});
+  if(selected)disposeBody(selected);
   floor.geometry.dispose();floor.material.dispose();
   shadow.geometry.dispose();shadow.material.dispose();renderer.dispose();};
  return {load,shade,front,side,back,rotate,start,stop,applyShirt,clearShirt,
   setSpin:v=>{spin=!!v;},
-  getState:()=>({kind:current,loaded:!!selected,finish,stats:lastStats,frames:frame,finishMaterial:lastColor,photoSource:clothSource?.id||null})
+  getState:()=>({kind:current,loaded:!!selected,finish,stats:lastStats,frames:frame,finishMaterial:lastColor,photoSource:clothSource?.id||null,garment:garment?.stats||null,resources:{geometries:renderer.info.memory.geometries,textures:renderer.info.memory.textures}})
  };
 }

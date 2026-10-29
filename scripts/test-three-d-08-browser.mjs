@@ -53,7 +53,8 @@ try{
      await canvas.screenshot({path:`benchmark/three-d-08/${model}-${width}-${mode}-${view}-HOLD.png`});
     }
     assert.notEqual(pixels[0],pixels[1]);assert.notEqual(pixels[0],pixels[2]);
-    await page.locator('#clear').click();assert.equal(await canvas.getAttribute('data-shirt'),'none');
+    await page.locator('#clear').click();assert.equal(await canvas.getAttribute('data-shirt'),'none');assert.equal(await canvas.getAttribute('data-garment-triangles'),null);
+    const cleared=await page.evaluate(()=>work56Diagnostics());assert.equal(cleared.garment,null);assert.ok(cleared.resources.textures<=2,'Clear must release photographic GPU textures');
    }
   }
   assert.deepEqual(errors,[]);assert.deepEqual(outside,[]);
