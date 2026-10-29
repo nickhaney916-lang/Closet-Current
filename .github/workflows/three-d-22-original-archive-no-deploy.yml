@@ -1,0 +1,65 @@
+name: 3D-22 recover original pinned CC0 and run true wrist triangle QA (HOLD NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'research/three-d-22/**'
+      - 'tests/three-d-22-archive-recovery.test.mjs'
+      - '.github/workflows/three-d-22-original-archive-no-deploy.yml'
+permissions:
+  contents: read
+jobs:
+  exact-original-anatomy-recovery-and-wrist-contact:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Require ONLY four new no-deploy custody/QA files
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git fetch --no-tags origin 7672436991a880d81bec0e49b858aff00b43eed1
+          git diff --name-only 7672436991a880d81bec0e49b858aff00b43eed1 HEAD | while IFS= read -r file; do
+            case "$file" in
+              research/three-d-22/*|tests/three-d-22-archive-recovery.test.mjs|.github/workflows/three-d-22-original-archive-no-deploy.yml) ;;
+              *) echo "Unexpected production, garment, model identity, photos, cloud or previous code changed: $file"; exit 1 ;;
+            esac
+          done
+          test "$(git diff --name-only 7672436991a880d81bec0e49b858aff00b43eed1 HEAD | wc -l)" -le 4
+      - name: Install exact local/offline original-source and Chromium test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 three@0.180.0 playwright@1.56.1
+      - name: Fetch immutable approved original human archive COMMIT, never live model download
+        run: |
+          git fetch --no-tags origin 926c85ebf9d2d29c919771f3dcd6c1527208b63c
+          test "$(git rev-parse 926c85ebf9d2d29c919771f3dcd6c1527208b63c:research/three-d-20/fixtures/male-cc0-rigged.glb.gz)" = "d0f424cdeb0cbd441bba90d16a9030d5e7db0ce8"
+          test "$(git rev-parse 926c85ebf9d2d29c919771f3dcd6c1527208b63c:research/three-d-20/fixtures/female-cc0-rigged.glb.gz)" = "eff0a2bde56b2e8da62c32684fb5cc11b3db0423"
+      - name: Verify source Git blobs, actual original GLB hashes, atomic custody and no substitution
+        run: |
+          node --test tests/three-d-21-model-custody.test.mjs tests/three-d-22-archive-recovery.test.mjs
+          node research/three-d-22/recover-original-cc0.mjs
+      - name: Build exact original licensed AJ-shirt JPEG and alpha from historical SHA pins
+        run: |
+          git fetch --no-tags origin 53f2ad344dc56a1477e343531c423aed0e66c17d dd6bac3fa9ff640d4f562cf925337440bdb5cf8f 3a572193987cb29389727426136c6eb3ac326783 dfb40889c4c1221fb1833b859e8a11ef38aeb76e
+          node scripts/build-work47-benchmark.mjs
+      - name: Actual source-posed and relaxed two-rig wrist SKIN triangle contact
+        run: |
+          node --test --test-concurrency=1 tests/three-d-18-wrist-hem.test.mjs tests/three-d-19-wrist-audit.test.mjs tests/three-d-20-triangle-contact.test.mjs tests/three-d-20-geometry-math.test.mjs
+      - name: Real Chromium WebGL2 mobile wrist review and visual sheet (NO visual PASS)
+        run: |
+          node scripts/test-three-d-18-browser.mjs
+          node scripts/build-three-d-19-visual-qa.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: THREE-D-22-ORIGINAL-CC0-RECOVERY-SKIN-TRIANGLE-MEASUREMENTS-HOLD
+          path: |
+            benchmark/three-d-20/actual-skin-triangle-contact-HOLD.json
+            benchmark/three-d-19/
+            benchmark/three-d-18/
+            research/three-d-06/models/verified-assets.json
+            research/three-d-06/models/verified-archive-from-pr423/verified-assets.json
+          if-no-files-found: warn
