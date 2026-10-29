@@ -18,7 +18,8 @@ export function requireReviewedPhotoPants(source,{reviewed=false}={}){
  !/^[a-f0-9]{64}$/.test(source?.cutoutSHA256||'')||
  source.originalVerified!==true||source.cutoutVerified!==true||
  source.visibleSourceRGBPreserved!==true||source.frontOrientationReviewed!==true||
- source.cutout?.width<64||source.cutout?.height<64||
+ !source.cutout||!Number.isSafeInteger(source.cutout.width)||!Number.isSafeInteger(source.cutout.height)||
+ source.cutout.width<64||source.cutout.height<64||
  source.ownerApproved!==false||source.humanVisualApproval!==false||
  source.releaseAuthorized!==false||source.provisional!==true||
  !Array.isArray(source.cropRect)||source.cropRect.length!==4||
