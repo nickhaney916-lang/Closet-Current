@@ -51,6 +51,9 @@ for(const kind of ['female','male'])for(const src of [A,B])
    assert.ok(a.shirt.rearReliefMovedRenderedVertices>=24);
    assert.ok(a.shirt.rearReliefMaximumMove>=.004&&a.shirt.rearReliefMaximumMove<=.01801);
    assert.ok(a.shirt.rearReliefProtectedFrontVertices>=30);
+   assert.ok(a.shirt.rearHemDrapeMovedVertices>=8,'Actual original-source rear shirt hem must physically drape');
+   assert.ok(a.shirt.rearHemDrapeMaximumDrop>=.004&&a.shirt.rearHemDrapeMaximumDrop<=.01201,
+    'Visible original-source hem fall must remain under 12.01 mm');
    assert.equal(a.shirt.originalPhotographedFrontAndUVUnchanged,true);
    assert.equal(a.shirt.sourceNeutralRearPhotoNotInvented,true);
    assert.equal(a.shirt.independentShoulderCapAndSewnSeamsUnchanged,true);
@@ -71,6 +74,7 @@ for(const kind of ['female','male'])for(const src of [A,B])
     {stats:b.shirt,meshes:independentCloth},beforeRoot);
    const isolatedStats=isolated.stats;
    assert.equal(isolatedStats.sourceNeutralRearFabricRelief,true);
+   assert.ok(isolatedStats.rearHemDrapeMovedVertices>=8,'Isolated genuine rear hem moves under the source-preserving operator');
    assert.ok(isolatedStats.rearReliefMovedRenderedVertices>=24,
     'Isolated original source cloth must still show actual bounded rear tailoring');
    // The posed solver can alter an already fitted garment's exact source
@@ -88,7 +92,7 @@ for(const kind of ['female','male'])for(const src of [A,B])
     assert.deepEqual(tailored[section],original[section],
      '3D53 must not alter source body, photographed denim, real L/R sleeve caps or sewn collar: '+section);
    assert.equal(original.shirts.length,tailored.shirts.length);
-   let moved=0,unchangedPhoto=0;
+   let moved=0,unchangedPhoto=0,hemMoved=0;
    for(let j=0;j<original.shirts.length;j++){
     const x=original.shirts[j],y=tailored.shirts[j];
     assert.equal(x.name,y.name);
@@ -98,25 +102,40 @@ for(const kind of ['female','male'])for(const src of [A,B])
     assert.equal(x.pos.length,y.pos.length);
     assert.equal(x.world.length,y.world.length,'World-space visible shirt vertices must retain original count');
     for(let i=0;i<x.world.length;i+=3){
-     // Direct same-rig source geometry before/after JUST the 3D53 stage.
-     // Unlike two collision-corrected outfits, this measures only the
-     // opt-in cloth geometry displacement in physical world coordinates.
-     const dx=Math.abs(x.world[i]-y.world[i]),dy=Math.abs(x.world[i+1]-y.world[i+1]),dz=Math.abs(x.world[i+2]-y.world[i+2]);
-     assert.ok(Number.isFinite(dx)&&Number.isFinite(dy)&&Number.isFinite(dz),'World-space source garment geometry must remain finite');
-     assert.ok(dx<.000001&&dy<.000001,
-      'Actual world-space rear fabric must move only along source-fitted back depth');
-     assert.ok(dz<=.01802,'Individual original shirt panel shift must be bounded in world space');
-     if(dz>.0001)moved++;
-     if(x.protected.panelNormal[i+2]>-.8){assert.ok(dz<.000001,'Original photographed front or side material moved');unchangedPhoto++;}
+     // Same actual skinned mesh before/after the sole source-neutral 3D53
+     // shape operator: core rear fold shifts only in world depth; the
+     // separately bounded rear-only HEM may fall downward <=12.01 mm.
+     const dx=Math.abs(x.world[i]-y.world[i]),
+      dy=Math.abs(x.world[i+1]-y.world[i+1]),
+      dz=Math.abs(x.world[i+2]-y.world[i+2]);
+     assert.ok([dx,dy,dz].every(Number.isFinite),'World-space source cloth must remain finite');
+     assert.ok(dx<.000001,'Source-only rear cloth can never shift shirt width or sewn side seams');
+     assert.ok(dz<=.01802&&dy<=.01202,'Original real rear cloth z fold / y hem stay strictly bounded');
+     assert.ok(Math.hypot(dy,dz)<=.01802,'Combined original source fold/hem displacement remains within safety envelope');
+     if(dz>.0001||dy>.0001)moved++;
+     if(dy>.0001){
+      hemMoved++;
+      assert.ok(y.world[i+1]<=x.world[i+1]+.000001,
+       'Original source rear hem may fall, not move upward');
+      assert.ok(x.protected.panelNormal[i+2]<-.8&&x.world[i+2]<b.shirt.envelope.center-.04,
+       'Rear hem motion must never involve photographed front or side fabric');
+      assert.ok(Math.abs(x.world[i])<.155&&x.world[i+1]>1.105&&x.world[i+1]<1.275,
+       'Rear hem may only fall within its genuine lower back source-neutral cloth bounds');
+     }
+     if(x.protected.panelNormal[i+2]>-.8){
+      assert.ok(dz<.000001&&dy<.000001,'Original photographed front or side material moved');
+      unchangedPhoto++;
+     }
     }
    }
-   assert.ok(moved>=24&&unchangedPhoto>30,'Source-neutral real rear change and protected original photo not demonstrated');
+   assert.ok(moved>=24&&unchangedPhoto>30&&hemMoved>=8,
+    'Actual rear source fold/hem fall and protected original photographed front not demonstrated');
    for(const pose of ['source','blend-50','relaxed']){
     const state=after.setPose(pose);
     assert.equal(state.shirt.poseTriangleContact.after.count,0,'Actual fitted real garment/source body contact '+kind+'/'+src.id+'/'+pose);
     assert.equal(state.shirt.poseTriangleContact.fullCollisionValidated,false);
    }
    assert.equal(after.setOutfit('none').garmentMeshes,0);
-   console.log('THREE_D53_SOURCE_NEUTRAL_BACK_GEOMETRY',JSON.stringify({kind,source:src.id,moved,unchangedPhoto,max:a.shirt.rearReliefMaximumMove,release:false}));
+   console.log('THREE_D53_SOURCE_NEUTRAL_BACK_GEOMETRY',JSON.stringify({kind,source:src.id,moved,hemMoved,unchangedPhoto,max:a.shirt.rearReliefMaximumMove,hemDrop:a.shirt.rearHemDrapeMaximumDrop,release:false}));
   }finally{before.dispose();after.dispose();}
  });
