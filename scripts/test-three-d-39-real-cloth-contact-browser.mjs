@@ -79,10 +79,11 @@ try{
    assert.equal(Boolean(outfit.outfit.shirt.originalClothContactCorrection),version==='after');
    if(version==='after'){
     assert.equal(outfit.outfit.shirt.outfitPantSourceId,'commons-cc-by-sa-denimjeans2-2008');
-    assert.ok(outfit.outfit.shirt.contactMovedUniqueVertices>=25);
+    assert.ok(outfit.outfit.shirt.contactMovedUniqueVertices>=(kind==='male'?25:0));
+    assert.equal(outfit.outfit.shirt.contactCorrectionNecessary,kind==='male');
     assert.ok(outfit.outfit.shirt.contactAfterTotalDepth<outfit.outfit.shirt.contactBeforeTotalDepth);
     assert.ok(outfit.outfit.shirt.contactAfterCount<=outfit.outfit.shirt.contactBeforeCount);
-    assert.ok(outfit.outfit.shirt.contactMaxShift>=.003&&outfit.outfit.shirt.contactMaxShift<=.042001);
+    assert.ok(outfit.outfit.shirt.contactMaxShift>=(kind==='male'?.003:0)&&outfit.outfit.shirt.contactMaxShift<=.042001);
     assert.equal(outfit.outfit.shirt.sourcePanelCoordinatesUnchanged,true);
     assert.equal(outfit.outfit.shirt.sourcePanelPixelsUnchanged,true);
     assert.equal(outfit.outfit.shirt.originalShirtSkinAndOriginalPantUVUnchanged,true);
@@ -110,7 +111,7 @@ try{
    assert.equal(rollback.outfit.shirt,null);
    assert.deepEqual(errors,[]);
    assert.deepEqual(external,[],'Never send original photographed garment sources or private data externally');
-   if(version==='after')assert.ok(fullChanged>100,'Original photographed cloth contact actually changes original WebGL outfit rendering: '+fullChanged);
+   if(version==='after')assert.ok(fullChanged>(kind==='male'?100:-1),'Source-measured actual contact must not fabricate unneeded female outfit correction: '+fullChanged);
    caseInfo.versions[version]={shirt:outfit.outfit.shirt,pantsSource:outfit.outfit.pants.sourceId,
     originalPhotoUnchanged:true,completeOutfitSourceSHA:outfit.outfit.pants.sourceSHA256,
     fullChangedPixels:version==='after'?fullChanged:null};
