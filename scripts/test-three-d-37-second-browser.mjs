@@ -53,7 +53,7 @@ try{
    assert.equal(Boolean(s.outfit.pants.independentPatternedShell),true);
    assert.equal(Boolean(s.outfit.pants.originalCrotchSaddle),version==='after');
    assert.equal(s.outfit.pants.sourceSHA256,'aa7f288055874773b87cd38b5b4e473b532920f61c2d17cb0ccd7872466c444a');
-   assert.equal(s.outfit.pants.cutoutSHA256,'SECOND_MASK_EXACT_SHA_PENDING');
+   assert.equal(s.outfit.pants.cutoutSHA256,'4cf80f77fa34d04844d7310de180135df607248847ea17b1aed4ef613d0cb3db');
    assert.equal(s.outfit.pants.originalRGBPreserved,true);assert.equal(s.outfit.pants.releaseAuthorized,false);
    if(version==='after'){
     assert.ok(s.outfit.pants.crotchMaxMovement>=.003&&s.outfit.pants.crotchMaxMovement<=.034001);
