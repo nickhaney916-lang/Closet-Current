@@ -20,7 +20,7 @@ export function tailorOriginalShirtShoulderSleeves(shirt,root,{enabled=true}={})
   return {side,shoulder,elbow,axis:elbow.clone().sub(shoulder)};
  });
  const selected=shirt.meshes.filter(m=>m.name==='Work56-independent-shirt-shell');
- if(selected.length!==1)throw Error('3D44 requires one original independently photographed shirt shell');
+ if(!selected.length)throw Error('3D44 requires existing original independently photographed shirt shell(s): '+shirt.meshes.map(m=>m.name).join(','));
  let moved=0,max=0,total=0,protectedPhotoTorso=0,protectedCuff=0;
  const perArm=Object.fromEntries(arms.map(a=>[a.side,{changed:0,maximum:0}]));
  for(const mesh of selected){
