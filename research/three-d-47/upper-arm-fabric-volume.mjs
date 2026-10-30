@@ -44,25 +44,45 @@ export function tailorIndependentUpperArmVolume(shirt,root,{enabled=true}={}){
    groups.get(key).refs.push({mesh,index:i});
   }
  }
+ // 3D52: Inspect the *actual* existing detached cap geometry before moving it.
+ // The original narrow 3D47 window passed both male original-photo cases, but
+ // could not reach either female cap. 3D50 expanded the window for *all* caps,
+ // thereby introducing 176 real male source-pose body crossings per denim.
+ // Recover the wider window only on a side whose original cap has fewer than
+ // ten real movable vertices. This is garment-coverage based, not gender,
+ // denim, image, or model-name based; torso stays on its proven narrow window.
+ const originalCapCandidates={L:0,R:0};
+ for(const {world,refs} of groups.values()){
+  const capCount=refs.filter(r=>Boolean(r.mesh.userData.work45IndependentShoulderCap)).length;
+  if(!capCount)continue;
+  const x=Math.abs(world.x),z=Math.abs(world.z),side=world.x<0?'L':'R';
+  if(x<=.35)continue;
+  const dy=world.y-bones[side].y;
+  const envelope=smooth(x,.35,.44)*(1-smooth(x,.59,.72))*
+   smooth(dy,-.30,-.18)*(1-smooth(dy,.035,.15));
+  if(envelope<.12)continue;
+  const dx=.014*envelope,dz=.017*envelope*smooth(z,.055,.13);
+  if(Math.hypot(dx,dz)<.002)continue;
+  originalCapCandidates[side]+=capCount;
+ }
+ const recoverCap={L:originalCapCandidates.L<10,R:originalCapCandidates.R<10};
  const perSide={L:{changed:0,caps:0,torso:0,max:0},R:{changed:0,caps:0,torso:0,max:0}};
  let changed=0,maxMove=0,seamGroups=0,maxGap=0,protectedFront=0,depthMoves=0;
  for(const {world,refs} of groups.values()){
   const x=Math.abs(world.x),z=Math.abs(world.z);
-  // 3D50: The original 3D47 x>.35 torso window entirely missed the
-  // real female cap panel, silently shaping 2442 torso points per arm but
-  // ZERO independent cap vertices. Use the actual detached-panel membership
-  // to select a source-safe wider fabric window, not male body dimensions.
-  // 3D45 never cuts an original print/chest triangle at x<.227; keep
-  // the unedited center-front photograph behind a hard x=.235 boundary.
-  const hasRealCap=refs.some(r=>Boolean(r.mesh.userData.work45IndependentShoulderCap));
-  const sourceSafeFront=hasRealCap?.235:.35;
-  if(x<=sourceSafeFront){protectedFront+=refs.length;continue;}
+  // Only widen a true independent cap whose narrow candidate set is
+  // insufficient. All other cap/torso points retain the exact 3D47 envelope.
+  // The 3D45 original chest/print no-cut boundary is x=.227.
   const side=world.x<0?'L':'R',shoulder=bones[side];
+  const hasRealCap=refs.some(r=>Boolean(r.mesh.userData.work45IndependentShoulderCap));
+  const expand=hasRealCap&&recoverCap[side];
+  const sourceSafeFront=expand?.235:.35;
+  if(x<=sourceSafeFront){protectedFront+=refs.length;continue;}
   const dy=world.y-shoulder.y;
-  const across=hasRealCap
+  const across=expand
    ? smooth(x,.235,.305)*(1-smooth(x,.59,.72))
    : smooth(x,.35,.44)*(1-smooth(x,.59,.72));
-  const down=hasRealCap
+  const down=expand
    ? smooth(dy,-.43,-.30)*(1-smooth(dy,.035,.15))
    : smooth(dy,-.30,-.18)*(1-smooth(dy,.035,.15));
   const depth=smooth(z,.055,.13);
@@ -121,6 +141,8 @@ export function tailorIndependentUpperArmVolume(shirt,root,{enabled=true}={}){
   upperArmFabricSeamGap:maxGap,
   upperArmFabricProtectedFrontVertices:protectedFront,
   upperArmFabricBySide:perSide,
+  upperArmFabricOriginalCapCandidates:originalCapCandidates,
+  upperArmFabricAdaptiveCapRecoverySides:recoverCap,
   originalPhotographicSourceAndPanelCoordinatesUnchanged:true,
   realIndependentGarmentCapMeshesPreserved:true,
   signedVolumeContainmentCertified:false,
