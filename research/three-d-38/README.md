@@ -1,0 +1,15 @@
+# 3D-38 — original photographed complete outfit shirt hem + jeans waist, DRAFT HOLD
+
+Parent [PR #443](https://github.com/nickhaney916-lang/Closet-Current/pull/443), exact second-source verified dedicated-success head `074ca161651d34de705f39a7bbbe1386cd0d12d5`. Only research modules, tests, and CI; never merges/deploys. Family Alpha #255 stays on HOLD, no new work assignments.
+
+## Actual geometry change
+
+Previously the original source-photographed AJ shirt and either real licensed jeans photo were independently fitted against the original CC0 163-bone male/female bodies; their **waist/hem relationship was not actually modeled**. This stage measures the separately skinned **actual photographed denim waist surface** (32 angular bins, actual garment vertices, actual original source-pose coordinates). Source-posed original shirt geometry in a local 25cm torso band is moved radially outward by a **max 28mm bounded source-registered drape** when needed for pants hem coverage and a controlled 7mm hem ease. It is visually continuous, using coincident shirt vertices moved identically. It does not invent an extra mesh or recolor the source. Only activates for simultaneous `shirt-pants` with original source-ID verified pants; shirt-only, jeans-only, neutral fallback, dress are untouched.
+
+**Original photo and rig invariants:** actual original JPEG and derived alpha hashes of BOTH licensed photographed jeans unchanged; AJ shirt original crop/RGB/UV encoded in `panelPosition`/`panelNormal` immutable; original `skinIndex`/`skinWeight` and original anatomical body untouched. Photographed reverse denim remains neutral; no invented images, printed jeans seams, fake sewn shirt or back textures. This is a measured source-pose radial garment interaction, not signed collision, physical cloth or true user garment fit. Existing real shirt photo source is Commons `commons-0003`.
+
+**Reversible experimental review** on second original: `/research/three-d-37/index.html?waistFit=before` vs `waistFit=after`, with explicit source review click and full-outfit button. The earlier first photograph demo similarly supports `waistFit=before/after`.
+
+**Quality gate:** exact parent, strict 8 file whitelist, two original photographic jeans hashes + alpha and license, 4 figure/photo combinations from two original anatomical CC0 rigs and two original denim sources, immutable original source panels and original rest bone weights, neutral and dress regression; 320/390/430 px Chromium WebGL real original photographed shirt+second jeans source/relaxed 4 cameras front/3/4/side/back, before/after, synthetic event abuse rejected, outside requests rejected, screenshot artifacts and pixel comparisons. Human screenshot approval separately required, never claim fully realistic fit. Future focus on garment-aware cloth-to-cloth contact in all poses, authentic licensed multi-garment benchmark, actual physical phone QA, user-account RLS/cloud backup and four-family alpha consent.
+
+No production, staging, new private family images, Drive Duel, cost, server keys or deployment.
