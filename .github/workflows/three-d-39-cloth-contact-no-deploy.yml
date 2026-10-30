@@ -8,6 +8,7 @@ on:
       - 'research/three-d-31/photo-jeans-demo.mjs'
       - 'research/three-d-37/second-jeans-demo.mjs'
       - 'tests/three-d-39-original-cloth-contact.test.mjs'
+      - 'tests/three-d-38-full-outfit-waist.test.mjs'
       - 'scripts/test-three-d-39-real-cloth-contact-browser.mjs'
       - '.github/workflows/three-d-39-cloth-contact-no-deploy.yml'
 permissions:
@@ -30,7 +31,7 @@ jobs:
           git merge-base --is-ancestor a329134d451baa7ef7fbaeb30cfadf712542a1c6 HEAD
           git diff --name-only a329134d451baa7ef7fbaeb30cfadf712542a1c6 HEAD | while IFS= read -r f; do
             case "$f" in
-              research/three-d-39/*|research/three-d-15/outfit-controller.mjs|research/three-d-15/showroom.mjs|research/three-d-31/photo-jeans-demo.mjs|research/three-d-37/second-jeans-demo.mjs|tests/three-d-39-original-cloth-contact.test.mjs|scripts/test-three-d-39-real-cloth-contact-browser.mjs|.github/workflows/three-d-39-cloth-contact-no-deploy.yml) ;;
+              research/three-d-39/*|research/three-d-15/outfit-controller.mjs|research/three-d-15/showroom.mjs|research/three-d-31/photo-jeans-demo.mjs|research/three-d-37/second-jeans-demo.mjs|tests/three-d-39-original-cloth-contact.test.mjs|tests/three-d-38-full-outfit-waist.test.mjs|scripts/test-three-d-39-real-cloth-contact-browser.mjs|.github/workflows/three-d-39-cloth-contact-no-deploy.yml) ;;
               *) echo "OUT OF SCOPE: $f"; exit 1 ;;
             esac
           done
