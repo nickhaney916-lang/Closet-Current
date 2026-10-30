@@ -105,7 +105,10 @@ export function constructIndependentShoulderCaps(shirt,root,{enabled=true}={}){
     const sorted=[...weight.entries()].sort((a,b)=>b[1]-a[1]).slice(0,4);
     while(sorted.length<4)sorted.push([0,0]);
     const sum=sorted.reduce((s,p)=>s+p[1],0);
-    if(sum<.95)throw Error('3D45 invalid original cap skin weights');
+    // Truncating a legitimate 5–8 bone weighted midpoint to the original
+    // 4 influence skin format can discard small nonzero contributions.
+    // Reject only a genuinely empty/non-finite original influence set.
+    if(!Number.isFinite(sum)||sum<.01)throw Error('3D45 invalid original cap skin weights');
     data.skinIndex.push(...sorted.map(v=>v[0]));
     data.skinWeight.push(...sorted.map(v=>v[1]/sum));
     midpointMap.set(name,id);
