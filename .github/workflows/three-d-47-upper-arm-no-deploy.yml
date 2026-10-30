@@ -15,7 +15,7 @@ on:
       - 'scripts/*three-d-47*.mjs'
       - 'tests/three-d-47-upper-arm-volume.test.mjs'
       - 'tests/three-d-48-cap-seam-witness.test.mjs'
-      - 'research/three-d-48/**'
+      - 'research/three-d-qa-48/**'
       - '.github/workflows/three-d-47-upper-arm-no-deploy.yml'
 permissions:
   contents: read
@@ -37,7 +37,7 @@ jobs:
           git merge-base --is-ancestor fe351f01fe565179e40daa57ec2d7aead15adc99 HEAD
           git diff --name-only fe351f01fe565179e40daa57ec2d7aead15adc99 HEAD | while IFS= read -r f; do
             case "$f" in
-              research/three-d-47/*|research/three-d-48/*|tests/three-d-48-cap-seam-witness.test.mjs|research/three-d-42/posed-contact.mjs|research/three-d-15/outfit-controller.mjs|research/three-d-15/showroom.mjs|research/three-d-31/photo-jeans-demo.mjs|research/three-d-37/second-jeans-demo.mjs|tests/three-d-47-upper-arm-volume.test.mjs|scripts/*three-d-47*.mjs|.github/workflows/three-d-47-upper-arm-no-deploy.yml) ;;
+              research/three-d-47/*|research/three-d-qa-48/*|tests/three-d-48-cap-seam-witness.test.mjs|research/three-d-42/posed-contact.mjs|research/three-d-15/outfit-controller.mjs|research/three-d-15/showroom.mjs|research/three-d-31/photo-jeans-demo.mjs|research/three-d-37/second-jeans-demo.mjs|tests/three-d-47-upper-arm-volume.test.mjs|scripts/*three-d-47*.mjs|.github/workflows/three-d-47-upper-arm-no-deploy.yml) ;;
               *) echo "OUT OF SCOPE: $f"; exit 1 ;;
             esac
           done
