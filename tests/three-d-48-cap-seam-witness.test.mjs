@@ -14,7 +14,29 @@ import {denim} from '../scripts/audit-three-d-42-triangles.mjs';
 import {PANTS_RESEARCH_SOURCE as A,PANTS_RESEARCH_SOURCE_SECOND as B} from '../research/three-d-30/reviewed-photo-pants.mjs';
 
 const key=p=>p.toArray().map(v=>v.toFixed(5)).join(':');
-const at=(mesh,index)=>new THREE.Vector3().fromBufferAttribute(mesh.geometry.getAttribute('position'),index).applyMatrix4(mesh.matrixWorld);
+// 3D52: fail closed on invalid indices or non-finite source coordinates.
+// A wrong mesh with a duplicate display name formerly returned a NaN
+// distance (serialized as null), which gave no useful seam diagnosis.
+const at=(mesh,index)=>{
+ const pos=mesh.geometry.getAttribute('position');
+ assert.ok(pos&&Number.isInteger(index)&&index>=0&&index<pos.count,
+  'Seam witness must reference a real position on the exact named mesh instance: '+
+  JSON.stringify({name:mesh.name,index,count:pos?.count}));
+ const p=new THREE.Vector3().fromBufferAttribute(pos,index).applyMatrix4(mesh.matrixWorld);
+ assert.ok([p.x,p.y,p.z].every(Number.isFinite),'Non-finite original photographed seam position '+mesh.name+'/'+index);
+ return p;
+};
+const indexedVertices=mesh=>{
+ const index=mesh.geometry.index,pos=mesh.geometry.getAttribute('position');
+ assert.ok(index&&index.count>=3&&pos,'Real original cloth seam requires indexed, rendered garment faces');
+ const used=new Set();
+ for(let i=0;i<index.count;i++){
+  const vertex=index.getX(i);
+  assert.ok(Number.isInteger(vertex)&&vertex>=0&&vertex<pos.count,'Invalid rendered garment triangle index');
+  used.add(vertex);
+ }
+ return used;
+};
 const garmentMeshes=root=>{
  root.updateMatrixWorld(true);
  const shells=[],caps=[];
@@ -31,17 +53,24 @@ const garmentMeshes=root=>{
 function seamWitnesses(root){
  const {shells,caps}=garmentMeshes(root);
  const byPosition=new Map();
- for(const shell of shells){
-  for(let i=0;i<shell.geometry.getAttribute('position').count;i++){
+ // The shirt construction contains multiple shell meshes with the SAME
+ // display name. Preserve traversal-stable instance ordinals, not names.
+ // Limit witnesses to triangle-referenced vertices: unused cap-cut shell
+ // vertices are not evidence of an actual rendered sewn seam.
+ for(const [shellId,shell] of shells.entries()){
+  for(const i of indexedVertices(shell)){
    const k=key(at(shell,i));
    if(!byPosition.has(k))byPosition.set(k,[]);
-   byPosition.get(k).push({mesh:shell.name,index:i});
+   byPosition.get(k).push({shellId,index:i});
   }
  }
  const matches=[];
- for(const cap of caps)for(let i=0;i<cap.geometry.getAttribute('position').count;i++){
+ for(const [capId,cap] of caps.entries())for(const i of indexedVertices(cap)){
   const adjacent=byPosition.get(key(at(cap,i)))||[];
-  for(const shell of adjacent)matches.push({side:cap.userData.work45IndependentShoulderCap,cap:cap.name,ci:i,shell:shell.mesh,si:shell.index});
+  for(const shell of adjacent)matches.push({
+   side:cap.userData.work45IndependentShoulderCap,capId,ci:i,
+   shellId:shell.shellId,si:shell.index
+  });
  }
  return matches;
 }
@@ -64,15 +93,20 @@ for(const kind of ['female','male'])for(const src of [A,B])
    for(const w of witnesses)counts[w.side]++;
    assert.ok(counts.L>=3&&counts.R>=3,
     'A zero seam gap without verified left/right cap-to-shell shared vertices is NOT a passing seam test: '+JSON.stringify(counts));
-   const original=new Map(),tailored=new Map();
-   for(const {shells,caps} of [garmentMeshes(beforeRoot)])for(const m of [...shells,...caps])original.set(m.name,m);
-   for(const {shells,caps} of [garmentMeshes(afterRoot)])for(const m of [...shells,...caps])tailored.set(m.name,m);
+   const original=garmentMeshes(beforeRoot),tailored=garmentMeshes(afterRoot);
+   assert.deepEqual(tailored.shells.map(m=>m.name),original.shells.map(m=>m.name),
+    'Actual original source shirt panel identities and traversal order must be preserved');
+   assert.deepEqual(tailored.caps.map(m=>[m.name,m.userData.work45IndependentShoulderCap]),
+    original.caps.map(m=>[m.name,m.userData.work45IndependentShoulderCap]),
+    'Actual independently skinned L/R cap order must not change');
    for(const w of witnesses){
-    const ca=tailored.get(w.cap),sh=tailored.get(w.shell),base=original.get(w.cap);
-    assert.ok(ca&&sh&&base,'Actual photo garment mesh identity must remain intact');
+    const ca=tailored.caps[w.capId],sh=tailored.shells[w.shellId],base=original.caps[w.capId];
+    assert.ok(ca&&sh&&base,'Witness must resolve the exact photographed cap and shell mesh instances');
     const afterCap=at(ca,w.ci),afterTorso=at(sh,w.si);
     const separation=afterCap.distanceTo(afterTorso);
-    assert.ok(separation<=5e-5,'Actual sewn left/right cap-to-torso seam pulled apart: '+JSON.stringify({...w,separation}));
+    assert.ok(Number.isFinite(separation)&&separation<=5e-5,
+     'Actual sewn cap-to-torso seam separated: '+JSON.stringify({...w,
+      cap:ca.name,shell:sh.name,capXYZ:afterCap.toArray(),shellXYZ:afterTorso.toArray(),separation}));
     if(afterCap.distanceTo(at(base,w.ci))>.0005)moved[w.side]++;
    }
    assert.ok(moved.L>0&&moved.R>0,
