@@ -86,7 +86,7 @@ try{
     assert.equal(outfit.outfit.shirt.outfitPantSourceId,(source==='37'?'commons-cc-by-sa-denimjeans2-2008':'commons-public-domain-jeans-2005'));
     assert.ok(outfit.outfit.shirt.torsoMovedUniqueVertices>120);
     assert.ok(outfit.outfit.shirt.shoulderClearanceEditedVertexEvents>10);
-    assert.ok(outfit.outfit.shirt.shoulderClearanceMaximumRestMove<=.039001);
+    assert.ok(outfit.outfit.shirt.shoulderClearanceMaximumRestMove<=.009001);
     assert.equal(outfit.outfit.shirt.originalShirtSourcePixelsAndUVUnchanged,true);
     assert.equal(outfit.outfit.shirt.shoulderCollisionCertified,false);
     assert.ok(outfit.outfit.pants.rearPanelMovedUniqueVertices>250);
