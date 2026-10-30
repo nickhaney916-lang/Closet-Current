@@ -39,7 +39,7 @@ test(model+' preserved original shirt photograph + '+src.id+' actual independent
   assert.ok(now.shirt.torsoProtectedSourceFrontMaxShift<=.003);
   assert.ok(now.pants.rearPanelMovedUniqueVertices>250);
   assert.ok(now.pants.rearPanelBackVertices>140);
-  assert.ok(now.pants.rearPanelMaxShift>.014&&now.pants.rearPanelMaxShift<=.040001);
+  assert.ok(now.pants.rearPanelMaxShift>.007&&now.pants.rearPanelMaxShift<=.025001);
   assert.ok(now.pants.rearPanelMeasuredLegRows.every(n=>n>=12));
   assert.equal(now.pants.rearPhotoInvented,false);
   assert.equal(now.shirt.sourcePhotoTextureAndCoordinatesUnchanged,true);
@@ -68,7 +68,7 @@ test(model+' preserved original shirt photograph + '+src.id+' actual independent
    if(d>.00001)movedPants++;pantsMax=Math.max(pantsMax,d);
   }
   assert.ok(movedShirt>250&&shirtMax<=.033,'Real original shirt cloth silhouette must physically change '+JSON.stringify({movedShirt,shirtMax}));
-  assert.ok(movedPants>500&&pantsMax<=.041,'Actual rear original photo jeans mesh must change '+JSON.stringify({movedPants,pantsMax}));
+  assert.ok(movedPants>500&&pantsMax<=.0255,'Actual rear original photo jeans mesh must change '+JSON.stringify({movedPants,pantsMax}));
   for(const pose of ['relaxed','source','relaxed','source']){
    after.setPose(pose);assert.deepEqual(originalBody(r1),body1);
    assert.deepEqual(hashes(pants(r1),sourceJeans),hashes(pants(r0),sourceJeans));
