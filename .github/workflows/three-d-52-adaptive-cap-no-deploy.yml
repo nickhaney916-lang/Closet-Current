@@ -1,0 +1,76 @@
+name: 3D-52 adaptive real-cap collision repair original photo gate (DRAFT HOLD NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'research/three-d-47/upper-arm-fabric-volume.mjs'
+      - 'tests/three-d-47-upper-arm-volume.test.mjs'
+      - 'research/three-d-52/**'
+      - '.github/workflows/three-d-52-adaptive-cap-no-deploy.yml'
+permissions:
+  contents: read
+jobs:
+  source-real-cap-pose-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Exact held integrated 3D51 parent and source-only changes
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor 12fdd0e3b90d3c0a643db5a3ef3b22a829933873 HEAD
+          git diff --name-only 12fdd0e3b90d3c0a643db5a3ef3b22a829933873 HEAD | while IFS= read -r f; do
+            case "$f" in
+              research/three-d-47/upper-arm-fabric-volume.mjs|tests/three-d-47-upper-arm-volume.test.mjs|research/three-d-52/*|.github/workflows/three-d-52-adaptive-cap-no-deploy.yml) ;;
+              *) echo "BLOCKED: out of research scope: $f"; exit 1 ;;
+            esac
+          done
+      - name: Install local licensed original-source research dependencies, no paid inference
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 three@0.180.0 playwright@1.56.1 three-mesh-bvh@0.9.2
+      - name: Regenerate both unchanged original photographed denim sources and validate licenses
+        run: |
+          node scripts/build-three-d-31-jeans-proposal.mjs
+          node scripts/build-three-d-37-second-jeans.mjs
+          node --test tests/three-d-31-jeans-source.test.mjs tests/three-d-37-source-true.test.mjs
+      - name: Restore original fixed-hash 163-bone male and female anatomical rigs and photographed shirt
+        run: |
+          git fetch --no-tags origin 53f2ad344dc56a1477e343531c423aed0e66c17d dd6bac3fa9ff640d4f562cf925337440bdb5cf8f 3a572193987cb29389727426136c6eb3ac326783 dfb40889c4c1221fb1833b859e8a11ef38aeb76e
+          node scripts/build-work47-benchmark.mjs
+          node research/three-d-20/restore-approved-models.mjs
+      - name: Original photographed independent garment and adaptive bilateral cap coverage
+        run: |
+          node --test tests/three-d-45-independent-caps.test.mjs
+          node --test tests/three-d-46-shoulder-contour.test.mjs
+          node --test tests/three-d-47-upper-arm-volume.test.mjs
+      - name: Real photographed bilateral cap-to-shirt seam witnesses, unchanged source metadata
+        run: node --test tests/three-d-48-cap-seam-witness.test.mjs
+      - name: Source-true collar after shoulder repair
+        run: node --test tests/three-d-48-collar-roll.test.mjs
+      - name: Actual source skinned 3D shirt and jeans and body intersections at seven pose samples
+        run: |
+          node scripts/audit-three-d-47-upper-arm-volume.mjs
+          node --input-type=module <<'AUDIT'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const a=JSON.parse(readFileSync('benchmark/three-d-47/intermediate-triangle-audit.json','utf8'));
+          assert.equal(a.records.length,28,'Four original figure/denim cases times seven real sampled poses');
+          for(const r of a.records)for(const k of ['shirtBody','pantsBody','shirtJeans'])
+            assert.equal(r[k].crossingTrianglePairs,0,r.kind+'/'+r.source+'/'+r.pose+' '+k);
+          assert.equal(a.signedVolumeContainmentCertified,false);
+          assert.equal(a.releaseAuthorized,false);
+          AUDIT
+      - name: Genuine original photographed 3D collar mobile Chromium 320 390 430 front side back
+        run: node scripts/test-three-d-48-collar-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: THREE-D-52-ADAPTIVE-CAP-COLLAR-SOURCE-PHOTO-REAL-QA-HOLD
+          path: |
+            benchmark/three-d-47/intermediate-triangle-audit.json
+            benchmark/three-d-48/
+          if-no-files-found: warn
