@@ -11,7 +11,7 @@ const originalFields=['panelPosition','panelNormal','skinIndex','skinWeight'];
 const sourceHash=meshes=>meshes.filter(m=>m.geometry.getAttribute('panelPosition')).map(m=>Object.fromEntries(originalFields.map(k=>[k,hash(m.geometry.getAttribute(k).array)])));
 for(const figure of ['female','male'])for(const photo of [A,B]){
  test('3D42 original photo+skin preserved, real pose-aware back and shoulder move '+figure+' '+photo.id,async()=>{
-  const root=await person(figure),body=()=>root.children.map(o=>o.name).join('|');
+  const root=await person(figure),body=()=>{const out=[];root.traverse(m=>{if(m.isSkinnedMesh&&!m.userData.work56Garment)out.push([m.name,hash(m.geometry.getAttribute('position').array)]);});return out;};
   const app=createOutfitController(root,{sewnPattern:true,poseAwareShoulderContact:true});
   try{
    const before=body(),s=app.setOutfit('shirt-pants',candidate('shirt'),{reviewed:true,pantsCandidate:denim(photo),pantsReviewed:true});
@@ -30,7 +30,7 @@ for(const figure of ['female','male'])for(const photo of [A,B]){
    for(const pose of ['source','relaxed','source']){
     app.setPose(pose);assert.deepEqual(sourceHash(shirt),fields);
    }
-   assert.equal(body(),before);
+   assert.deepEqual(body(),before);
    assert.equal(app.setOutfit('pants').pants.independentSewnPattern,undefined);
    assert.equal(app.setOutfit('none').garmentMeshes,0);
   }finally{app.dispose();}
