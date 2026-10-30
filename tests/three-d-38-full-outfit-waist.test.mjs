@@ -24,8 +24,8 @@ for(const model of ['female','male'])for(const original of [PANTS_RESEARCH_SOURC
  test(model+' original shirt over separately photographed denim '+original.id+' physical hem drape and neutral fallback',async()=>{
   const beforeRoot=await person(model),afterRoot=await person(model);
   const originalBody1=modelBody(beforeRoot),originalBody2=modelBody(afterRoot);
-  const before=createOutfitController(beforeRoot,{sourceShirtWaistFit:false,clothWaistContact:false});
-  const after=createOutfitController(afterRoot,{sourceShirtWaistFit:true,clothWaistContact:false});
+  const before=createOutfitController(beforeRoot,{shirtHangingSilhouette:false,denimHangingSilhouette:false,sourceShirtWaistFit:false,clothWaistContact:false});
+  const after=createOutfitController(afterRoot,{shirtHangingSilhouette:false,denimHangingSilhouette:false,sourceShirtWaistFit:true,clothWaistContact:false});
   try{
    const jeans=candidateJeans(original),s=clothSource();
    const a=before.setOutfit('shirt-pants',s,{reviewed:true,pantsCandidate:jeans,pantsReviewed:true});
@@ -79,7 +79,7 @@ for(const model of ['female','male'])for(const original of [PANTS_RESEARCH_SOURC
   }finally{before.dispose();after.dispose();}
  });
 test('Shirt alone, neutral pants and dress do not activate photographed outfit-waist operation',async()=>{
- const root=await person('female'),app=createOutfitController(root);
+ const root=await person('female'),app=createOutfitController(root,{shirtHangingSilhouette:false,denimHangingSilhouette:false});
  try{
   const top=app.setOutfit('shirt',clothSource(),{reviewed:true});
   assert.equal(top.shirt.originalPhotoShirtOverDenim,undefined);
