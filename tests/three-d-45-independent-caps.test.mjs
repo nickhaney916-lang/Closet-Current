@@ -28,6 +28,9 @@ for(const kind of ['female','male'])for(const src of [A,B])test('3D45 physically
   assert.ok(changed.shirt.realSeparateSkinnedCapMeshes>=2);
   assert.ok(changed.shirt.armholePanelRetessellatedFaces>changed.shirt.armholePanelOriginalSourceFaces);
   assert.ok(changed.shirt.armholePanelInteriorEdgesSplit>=16);
+  assert.ok(changed.shirt.shoulderYokeShapedVertices>40,'Shoulder and torso meet with source-neutral pattern slope, not a detached muscle pad');
+  assert.ok(changed.shirt.shoulderYokeMaximumModelSpaceMove>.006&&changed.shirt.shoulderYokeMaximumModelSpaceMove<=.0287);
+  assert.ok(changed.shirt.shoulderYokeProfile.L.vertices>10&&changed.shirt.shoulderYokeProfile.R.vertices>10);
   assert.ok(changed.shirt.originalShirtPixelsUnchanged);
   assert.ok(changed.shirt.originalFrontGarmentPhotoAndUVUnchanged);
   assert.equal(changed.shirt.sweptMotionCollisionCertified,false);
