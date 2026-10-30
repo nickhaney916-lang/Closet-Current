@@ -65,16 +65,22 @@ export function clearShirtAgainstPosedShoulders(shirt,root,{enabled=true}={}){
  const center=shirt.stats.envelope.center;
  let posedTriangles=0,probes=0,corrections=0,total=0,max=0,protectedPhotoFront=0;
  let sourceHits=0,relaxedHits=0;
+ const posedBodyCaches={};
  // Two source-derived poses are sampled against the ORIGINAL skinned body;
  // each correction is mapped back through the original garment skin weights.
  try{
+  // Original rig/body triangle poses are unchanged by cloth edits: compute
+  // each real posed body geometry once, not six times per original photo.
+  for(const pose of ['source','relaxed']){
+   setFashionPose(root,pose);posedBodyCaches[pose]=posedBodyLookup(root);
+  }
   for(let pass=0;pass<3;pass++){
    const sum=original.map(({p})=>Array.from({length:p.count},()=>new T.Vector3()));
    const votes=original.map(({p})=>new Uint8Array(p.count));
    for(const pose of ['source','relaxed']){
     setFashionPose(root,pose);
-    const body=posedBodyLookup(root);posedTriangles=Math.max(posedTriangles,body.triangles);
-    try{
+    const body=posedBodyCaches[pose];posedTriangles=Math.max(posedTriangles,body.triangles);
+    {
      for(let j=0;j<original.length;j++){
       const {mesh,p}=original[j];mesh.updateWorldMatrix(true,false);mesh.skeleton.update();
       for(let i=0;i<p.count;i++){
@@ -106,7 +112,7 @@ export function clearShirtAgainstPosedShoulders(shirt,root,{enabled=true}={}){
        if(pose==='source')sourceHits++;else relaxedHits++;
       }
      }
-    }finally{body.dispose();}
+    }
    }
    for(let j=0;j<original.length;j++){
     const {p,initial}=original[j];
@@ -137,7 +143,7 @@ export function clearShirtAgainstPosedShoulders(shirt,root,{enabled=true}={}){
     p.needsUpdate=true;
    }
   }
- }finally{setFashionPose(root,'source');}
+ }finally{Object.values(posedBodyCaches).forEach(body=>body.dispose());setFashionPose(root,'source');}
  if(corrections<10||max<.001||max>.039001||sourceHits+relaxedHits<10)
   throw Error('3D42 pose-aware original-shirt contact did not produce bounded meaningful geometry '+JSON.stringify({corrections,max,sourceHits,relaxedHits}));
  for(const {mesh,p,attributes} of original){
