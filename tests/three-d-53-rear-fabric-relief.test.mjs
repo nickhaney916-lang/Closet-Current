@@ -8,6 +8,7 @@ import * as THREE from 'three';
 import {person,candidate} from '../research/three-d-24/test-fixtures.mjs';
 import {createOutfitController} from '../research/three-d-15/outfit-controller.mjs';
 import {createPoseContact} from '../research/three-d-42/posed-contact.mjs';
+import {easeSourceNeutralRearFabric} from '../research/three-d-53/source-neutral-rear-relief.mjs';
 import {denim} from '../scripts/audit-three-d-42-triangles.mjs';
 import {PANTS_RESEARCH_SOURCE as A,PANTS_RESEARCH_SOURCE_SECOND as B} from '../research/three-d-30/reviewed-photo-pants.mjs';
 const attributes=['panelPosition','panelNormal','skinIndex','skinWeight'];
@@ -55,7 +56,31 @@ for(const kind of ['female','male'])for(const src of [A,B])
    assert.equal(a.shirt.independentShoulderCapAndSewnSeamsUnchanged,true);
    assert.equal(a.pants.sourceSHA256,src.originalSHA256);
    assert.equal(a.shirt.releaseAuthorized,false);
-   const original=collect(beforeRoot),tailored=collect(afterRoot);
+   // The full outfit's real body-contact solver may make a separate
+   // correction to male vertices when the rear panel changes. Compare
+   // JUST the rear construction on the SAME original fitted rig here.
+   // The separate complete fitted 3D53 outfit below still exercises the
+   // genuine solver at source/intermediate/relaxed poses.
+   const original=collect(beforeRoot);
+   const independentCloth=[];
+   beforeRoot.traverse(m=>{
+    if(m.isSkinnedMesh&&m.userData.work56Garment&&!m.userData.work60Pants)
+     independentCloth.push(m);
+   });
+   const isolated=easeSourceNeutralRearFabric(
+    {stats:b.shirt,meshes:independentCloth},beforeRoot);
+   const isolatedStats=isolated.stats;
+   assert.equal(isolatedStats.sourceNeutralRearFabricRelief,true);
+   assert.equal(isolatedStats.rearReliefMovedRenderedVertices,a.shirt.rearReliefMovedRenderedVertices,
+    'Isolated source-true rear shaping and integrated stage must select same original rendered cloth');
+   assert.equal(isolatedStats.originalPhotographedFrontAndUVUnchanged,true);
+   const tailored=collect(beforeRoot);
+   const integrated=collect(afterRoot);
+   assert.deepEqual(integrated.body,original.body,'Integrated rear panel cannot mutate source anatomy');
+   assert.deepEqual(integrated.pants,original.pants,'Integrated rear panel cannot mutate original licensed denim');
+   for(const section of ['caps','collars'])
+    assert.deepEqual(integrated[section],original[section],
+     'Integrated contact fit must preserve original independent caps and sewn collar: '+section);
    for(const section of ['body','pants','caps','collars'])
     assert.deepEqual(tailored[section],original[section],
      '3D53 must not alter source body, photographed denim, real L/R sleeve caps or sewn collar: '+section);
@@ -65,12 +90,14 @@ for(const kind of ['female','male'])for(const src of [A,B])
     const x=original.shirts[j],y=tailored.shirts[j];
     assert.equal(x.name,y.name);
     assert.deepEqual(x.protected,y.protected,'Photographic front/UV/rig original arrays must not change');
+    assert.deepEqual(x.protected,integrated.shirts[j].protected,
+     'Integrated full contact fit must retain original photographed UV/rig metadata');
     assert.equal(x.pos.length,y.pos.length);
     assert.equal(x.world.length,y.world.length,'World-space visible shirt vertices must retain original count');
     for(let i=0;i<x.world.length;i+=3){
-     // Male and female source meshes can use different local transforms.
-     // 3D53 moves only WORLD z; local x/y can legitimately change when
-     // converting this displacement back through the original mesh matrix.
+     // Direct same-rig source geometry before/after JUST the 3D53 stage.
+     // Unlike two collision-corrected outfits, this measures only the
+     // opt-in cloth geometry displacement in physical world coordinates.
      const dx=Math.abs(x.world[i]-y.world[i]),dy=Math.abs(x.world[i+1]-y.world[i+1]),dz=Math.abs(x.world[i+2]-y.world[i+2]);
      assert.ok(Number.isFinite(dx)&&Number.isFinite(dy)&&Number.isFinite(dz),'World-space source garment geometry must remain finite');
      assert.ok(dx<.000001&&dy<.000001,
