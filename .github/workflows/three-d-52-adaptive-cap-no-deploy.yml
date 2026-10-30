@@ -4,6 +4,7 @@ on:
     paths:
       - 'research/three-d-47/upper-arm-fabric-volume.mjs'
       - 'tests/three-d-47-upper-arm-volume.test.mjs'
+      - 'tests/three-d-48-cap-seam-witness.test.mjs'
       - 'research/three-d-52/**'
       - '.github/workflows/three-d-52-adaptive-cap-no-deploy.yml'
 permissions:
@@ -26,7 +27,7 @@ jobs:
           git merge-base --is-ancestor 12fdd0e3b90d3c0a643db5a3ef3b22a829933873 HEAD
           git diff --name-only 12fdd0e3b90d3c0a643db5a3ef3b22a829933873 HEAD | while IFS= read -r f; do
             case "$f" in
-              research/three-d-47/upper-arm-fabric-volume.mjs|tests/three-d-47-upper-arm-volume.test.mjs|research/three-d-52/*|.github/workflows/three-d-52-adaptive-cap-no-deploy.yml) ;;
+              research/three-d-47/upper-arm-fabric-volume.mjs|tests/three-d-47-upper-arm-volume.test.mjs|tests/three-d-48-cap-seam-witness.test.mjs|research/three-d-52/*|.github/workflows/three-d-52-adaptive-cap-no-deploy.yml) ;;
               *) echo "BLOCKED: out of research scope: $f"; exit 1 ;;
             esac
           done
