@@ -22,7 +22,7 @@ for(const figure of ['female','male'])for(const photo of [A,B]){
    assert.ok(s.shirt.shoulderClearancePosedBodyTriangles>5000);
    assert.ok(s.shirt.shoulderClearanceProbeCount>100);
    assert.ok(s.shirt.shoulderClearanceEditedVertexEvents>10);
-   assert.ok(s.shirt.shoulderClearanceMaximumRestMove>.001&&s.shirt.shoulderClearanceMaximumRestMove<=.039001);
+   assert.ok(s.shirt.shoulderClearanceMaximumRestMove>.001&&s.shirt.shoulderClearanceMaximumRestMove<=.009001);
    assert.equal(s.pants.independentSewnPattern,true);
    assert.equal(s.pants.sourceSHA256,photo.originalSHA256);
    const shirt=outfitMeshes(root).shirt.filter(m=>m.geometry.getAttribute('panelPosition'));
