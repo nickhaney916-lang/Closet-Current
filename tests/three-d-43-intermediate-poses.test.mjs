@@ -8,6 +8,7 @@ import {denim} from '../scripts/audit-three-d-42-triangles.mjs';
 import {PANTS_RESEARCH_SOURCE as A} from '../research/three-d-30/reviewed-photo-pants.mjs';
 import {setResearchPose,APPROVED_RESEARCH_POSES} from '../research/three-d-43/intermediate-pose.mjs';
 const namedBones=root=>{const arr=[];root.traverse(o=>{if(o.isBone)arr.push(o);});return arr;};
+const poseDifference=(a,b)=>Math.min(Math.max(...a.toArray().map((v,i)=>Math.abs(v-b.toArray()[i]))),Math.max(...a.toArray().map((v,i)=>Math.abs(v+b.toArray()[i]))));
 const poses=root=>namedBones(root).map(o=>o.quaternion.clone());
 const originalBody=root=>{const records=[];root.traverse(o=>{if(o.isSkinnedMesh&&!o.userData.work56Garment)records.push(o.geometry.getAttribute('position').array.slice());});return records;};
 test('Original anatomical arm interpolation is deterministic, bounded and does not alter body positions',async()=>{
@@ -20,11 +21,11 @@ test('Original anatomical arm interpolation is deterministic, bounded and does n
   assert.equal(got.length,source.length);
   for(let i=0;i<got.length;i++){
    const expected=source[i].clone().slerp(relaxed[i],t);
-   assert.ok(got[i].angleTo(expected)<1e-6,'Original rig quaternion must interpolate exactly '+mode+'/'+i);
+   assert.ok(poseDifference(got[i],expected)<1e-6,'Original rig quaternion components must interpolate exactly '+mode+'/'+i+' '+JSON.stringify({got:got[i].toArray(),expected:expected.toArray(),difference:poseDifference(got[i],expected)}));
   }
   setResearchPose(root,'source');setResearchPose(root,mode);
   const repeat=poses(root);
-  for(let i=0;i<repeat.length;i++)assert.ok(repeat[i].angleTo(got[i])<1e-6);
+  for(let i=0;i<repeat.length;i++)assert.ok(poseDifference(repeat[i],got[i])<1e-6,'Same original bone pose must be deterministic '+i);
  }
  assert.equal(APPROVED_RESEARCH_POSES.length,5);
  assert.throws(()=>setResearchPose(root,'blend-17'),/Only original/);
