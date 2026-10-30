@@ -23,10 +23,11 @@ import {fitIndependentDenimLoft} from '../three-d-35/independent-jeans-loft.mjs'
 import {supportOriginalDenimCrotch} from '../three-d-36/crotch-seat-panel.mjs';
 import {alignOriginalShirtOverJeans} from '../three-d-38/shirt-over-denim-waist.mjs';
 import {fitPhotographedOutfitContact} from '../three-d-39/actual-garment-contact.mjs';
+import {drapeOriginalPhotographedShirtTorso,hangOriginalPhotographedDenimPanels} from '../three-d-40/independent-hanging-silhouettes.mjs';
 import {registerDressNeckline,clearNeckTriangleInteriors} from '../three-d-29/registered-neckline.mjs';
 export const OUTFITS=Object.freeze(['none','pants','shirt','shirt-pants','dress']);
 export function sourceForOutfit(mode){if(!OUTFITS.includes(mode))throw Error('Unsupported outfit');return mode==='dress'?'commons-0053':mode.includes('shirt')?'commons-0003':null;}
-export function createOutfitController(root,{refineFit=true,enableCuffFix=true,enableCuffFacing=true,enableCuffBridge=true,naturalFit=true,necklineSeams=true,dressNeckline=true,dressAnatomy=true,dressContact=true,skirtDrape=true,registeredNeckline=true,naturalPantsDrape=true,posteriorJeansFairing=true,structuralPantsEnvelope=true,independentJeansLoft=true,crotchSeatPanel=true,sourceShirtWaistFit=true,clothWaistContact=true}={}){
+export function createOutfitController(root,{refineFit=true,enableCuffFix=true,enableCuffFacing=true,enableCuffBridge=true,naturalFit=true,necklineSeams=true,dressNeckline=true,dressAnatomy=true,dressContact=true,skirtDrape=true,registeredNeckline=true,naturalPantsDrape=true,posteriorJeansFairing=true,structuralPantsEnvelope=true,independentJeansLoft=true,crotchSeatPanel=true,sourceShirtWaistFit=true,clothWaistContact=true,shirtHangingSilhouette=true,denimHangingSilhouette=true}={}){
  // Canonical normals must be captured before the existing presentation clone.
  const fitPants=createPantsFitter(root),shoulders=captureShoulderSurface(root);prepareBodyPresentation(root);
  let parts={},mode='none',pose='relaxed',changes=0,closed=false;
@@ -41,7 +42,7 @@ export function createOutfitController(root,{refineFit=true,enableCuffFix=true,e
   const held=all(parts).map(mesh=>({mesh,parent:mesh.parent})),built={};held.forEach(({mesh})=>mesh.removeFromParent());setFashionPose(root,'source');
   try{
    // Build shirt FIRST, while the rig contains no other garments.
-   if(next.includes('shirt')){built.shirt=attachReviewedShirt(root,candidate,{acknowledged:reviewed,pose:'source',improved:true});if(refineFit)built.shirt=protectShirtShoulders(built.shirt,shoulders);if(refineFit&&enableCuffFix)built.shirt=protectShirtCuffClearance(built.shirt,root);if(refineFit&&enableCuffFix&&enableCuffFacing)built.shirt=finishInnerCuffs(built.shirt,root);if(refineFit&&enableCuffFix&&enableCuffFacing&&enableCuffBridge)built.shirt=bridgeSourceCuffHem(built.shirt,root);if(naturalFit)built.shirt=fitContinuousShirt(built.shirt,root);if(necklineSeams)built.shirt=finishNecklineAndSeams(built.shirt,root);}
+   if(next.includes('shirt')){built.shirt=attachReviewedShirt(root,candidate,{acknowledged:reviewed,pose:'source',improved:true});if(refineFit)built.shirt=protectShirtShoulders(built.shirt,shoulders);if(refineFit&&enableCuffFix)built.shirt=protectShirtCuffClearance(built.shirt,root);if(refineFit&&enableCuffFix&&enableCuffFacing)built.shirt=finishInnerCuffs(built.shirt,root);if(refineFit&&enableCuffFix&&enableCuffFacing&&enableCuffBridge)built.shirt=bridgeSourceCuffHem(built.shirt,root);if(naturalFit)built.shirt=fitContinuousShirt(built.shirt,root);if(necklineSeams)built.shirt=finishNecklineAndSeams(built.shirt,root);if(shirtHangingSilhouette&&necklineSeams)built.shirt=drapeOriginalPhotographedShirtTorso(built.shirt);}
    if(next==='pants'||next==='shirt-pants'){
     built.pants=fitPants({pose:'source'});
     if(pantsCandidate){
@@ -54,7 +55,10 @@ export function createOutfitController(root,{refineFit=true,enableCuffFix=true,e
         built.pants=hangOriginalDenimEnvelope(built.pants,root);
         if(independentJeansLoft){
          built.pants=fitIndependentDenimLoft(built.pants,root);
-         if(crotchSeatPanel)built.pants=supportOriginalDenimCrotch(built.pants,root);
+         if(crotchSeatPanel){
+          built.pants=supportOriginalDenimCrotch(built.pants,root);
+          if(denimHangingSilhouette)built.pants=hangOriginalPhotographedDenimPanels(built.pants);
+         }
         }
        }
       }
