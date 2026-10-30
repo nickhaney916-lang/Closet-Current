@@ -33,6 +33,19 @@ for(const kind of ['female','male'])for(const source of [A,B])test('3D47 source-
   assert.ok(tailored.shirt.upperArmFabricMaxMove>.006&&tailored.shirt.upperArmFabricMaxMove<.023);
   assert.ok(tailored.shirt.upperArmFabricSeamGap<=5e-5);
   assert.ok(tailored.shirt.upperArmFabricBySide.L.caps>10&&tailored.shirt.upperArmFabricBySide.R.caps>10);
+  // 3D52 regression: original narrow cap profile was collision-safe on the
+  // pinned male fixture; widening it created 176 *real* source-pose crossings.
+  // Female source caps had zero narrow-window candidates, requiring recovery.
+  const expectedRecovery=kind==='female';
+  assert.deepEqual(tailored.shirt.upperArmFabricAdaptiveCapRecoverySides,
+   {L:expectedRecovery,R:expectedRecovery},
+   'Use true source-cap coverage to choose each sleeve envelope, never widen an already covered cap');
+  for(const side of ['L','R']){
+   const candidates=tailored.shirt.upperArmFabricOriginalCapCandidates[side];
+   assert.ok(Number.isInteger(candidates)&&candidates>=0,'Actual untouched source-cap candidates measured');
+   assert.equal(candidates<10,expectedRecovery,
+    'Existing cap candidates and adaptive source-true silhouette decision must agree');
+  }
   assert.ok(tailored.shirt.upperArmFabricProtectedFrontVertices>100);
   assert.equal(tailored.shirt.originalPhotographicSourceAndPanelCoordinatesUnchanged,true);
   assert.equal(tailored.shirt.signedVolumeContainmentCertified,false);
