@@ -27,8 +27,8 @@ jobs:
       - name: Exact tested PR455 parent and no deployment or production paths
         run: |
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          git merge-base --is-ancestor 95f59cd0b3383f20e34e39cf54457791d701938d HEAD
-          git diff --name-only 95f59cd0b3383f20e34e39cf54457791d701938d HEAD | while IFS= read -r f; do
+          git merge-base --is-ancestor 2040be33d945a0c25e45a84f6841795c085a0108 HEAD
+          git diff --name-only 2040be33d945a0c25e45a84f6841795c085a0108 HEAD | while IFS= read -r f; do
             case "$f" in
               research/three-d-48/*|research/three-d-15/outfit-controller.mjs|research/three-d-15/showroom.mjs|research/three-d-31/photo-jeans-demo.mjs|research/three-d-37/second-jeans-demo.mjs|scripts/test-three-d-48-collar-browser.mjs|tests/three-d-48-collar-roll.test.mjs|.github/workflows/three-d-48-collar-no-deploy.yml) ;;
               *) echo "OUT OF SCOPE: $f"; exit 1 ;;
