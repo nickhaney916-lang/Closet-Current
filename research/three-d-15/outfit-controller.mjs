@@ -33,10 +33,11 @@ import {constructShirtPanels} from '../three-d-42/shirt-pattern.mjs';
 import {tailorOriginalShirtShoulderSleeves} from '../three-d-44/shoulder-sleeve-tailoring.mjs';
 import {constructIndependentShoulderCaps} from '../three-d-45/independent-shoulder-cap.mjs';
 import {reprofileIndependentShoulderSilhouette} from '../three-d-46/independent-shoulder-contour.mjs';
+import {tailorIndependentUpperArmVolume} from '../three-d-47/upper-arm-fabric-volume.mjs';
 import {registerDressNeckline,clearNeckTriangleInteriors} from '../three-d-29/registered-neckline.mjs';
 export const OUTFITS=Object.freeze(['none','pants','shirt','shirt-pants','dress']);
 export function sourceForOutfit(mode){if(!OUTFITS.includes(mode))throw Error('Unsupported outfit');return mode==='dress'?'commons-0053':mode.includes('shirt')?'commons-0003':null;}
-export function createOutfitController(root,{refineFit=true,enableCuffFix=true,enableCuffFacing=true,enableCuffBridge=true,naturalFit=true,necklineSeams=true,dressNeckline=true,dressAnatomy=true,dressContact=true,skirtDrape=true,registeredNeckline=true,naturalPantsDrape=true,posteriorJeansFairing=true,structuralPantsEnvelope=true,independentJeansLoft=true,crotchSeatPanel=true,sourceShirtWaistFit=true,clothWaistContact=true,shirtHangingSilhouette=true,denimHangingSilhouette=true,jeansPanelFall=false,independentGarments=false,poseContactFactory=null,tailoredShoulderSleeves=false,independentShoulderCaps=false,realisticShoulderContour=false}={}){
+export function createOutfitController(root,{refineFit=true,enableCuffFix=true,enableCuffFacing=true,enableCuffBridge=true,naturalFit=true,necklineSeams=true,dressNeckline=true,dressAnatomy=true,dressContact=true,skirtDrape=true,registeredNeckline=true,naturalPantsDrape=true,posteriorJeansFairing=true,structuralPantsEnvelope=true,independentJeansLoft=true,crotchSeatPanel=true,sourceShirtWaistFit=true,clothWaistContact=true,shirtHangingSilhouette=true,denimHangingSilhouette=true,jeansPanelFall=false,independentGarments=false,poseContactFactory=null,tailoredShoulderSleeves=false,independentShoulderCaps=false,realisticShoulderContour=false,upperArmFabricVolume=false}={}){
  if(independentGarments&&typeof poseContactFactory!=='function')throw Error('Independent garment triangle solver must be explicitly loaded');
  // Canonical normals must be captured before the existing presentation clone.
  const fitPants=createPantsFitter(root),shoulders=captureShoulderSurface(root);prepareBodyPresentation(root);
@@ -84,7 +85,7 @@ export function createOutfitController(root,{refineFit=true,enableCuffFix=true,e
     if(clothWaistContact)built.shirt=fitPhotographedOutfitContact(built.shirt,built.pants);
    }
    if(independentGarments&&built.pants?.stats?.originalPhotographedHangingLegPanels)built.pants=sewPatternTrousers(built.pants,root);
-   if(independentGarments&&built.shirt){built.shirt=constructShirtPanels(hangSleevePanels(relaxShirtSidePanels(built.shirt),root));if(tailoredShoulderSleeves)built.shirt=tailorOriginalShirtShoulderSleeves(built.shirt,root);if(independentShoulderCaps)built.shirt=constructIndependentShoulderCaps(built.shirt,root);if(realisticShoulderContour)built.shirt=reprofileIndependentShoulderSilhouette(built.shirt,root);if(built.pants?.stats?.independentSewnPattern)built.shirt=clearShirtPatternWaist(built.shirt,built.pants);}
+   if(independentGarments&&built.shirt){built.shirt=constructShirtPanels(hangSleevePanels(relaxShirtSidePanels(built.shirt),root));if(tailoredShoulderSleeves)built.shirt=tailorOriginalShirtShoulderSleeves(built.shirt,root);if(independentShoulderCaps)built.shirt=constructIndependentShoulderCaps(built.shirt,root);if(realisticShoulderContour)built.shirt=reprofileIndependentShoulderSilhouette(built.shirt,root);if(upperArmFabricVolume)built.shirt=tailorIndependentUpperArmVolume(built.shirt,root);if(built.pants?.stats?.independentSewnPattern)built.shirt=clearShirtPatternWaist(built.shirt,built.pants);}
    if(next==='dress'){
     const raw=buildSourceDress(root,candidate,{reviewed});
     try{
