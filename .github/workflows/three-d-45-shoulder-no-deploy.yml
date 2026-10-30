@@ -51,12 +51,13 @@ jobs:
           git fetch --no-tags origin 53f2ad344dc56a1477e343531c423aed0e66c17d dd6bac3fa9ff640d4f562cf925337440bdb5cf8f 3a572193987cb29389727426136c6eb3ac326783 dfb40889c4c1221fb1833b859e8a11ef38aeb76e
           node scripts/build-work47-benchmark.mjs
           node research/three-d-20/restore-approved-models.mjs
+      - name: Fail-fast: genuinely detached bilateral cap topology, shoulder yoke and immutable originals
+        run: node --test tests/three-d-45-independent-caps.test.mjs
       - name: Original 3D42 independent construction regression + source-true intermediate arm pose unit testing
         run: |
           node --test tests/three-d-42-construction.test.mjs
           node --test tests/three-d-43-intermediate-poses.test.mjs
           node --test tests/three-d-44-shoulder-tailoring.test.mjs
-          node --test tests/three-d-45-independent-caps.test.mjs
       - name: Existing exact original source/relaxed posed triangle gate
         run: node scripts/audit-three-d-42-triangles.mjs
       - name: All actual source-photo body, shirt and jeans triangles at five sampled original arm poses
