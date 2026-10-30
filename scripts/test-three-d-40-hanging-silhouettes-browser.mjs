@@ -86,7 +86,7 @@ try{
     assert.ok(outfit.outfit.shirt.contactAfterTotalDepth<=outfit.outfit.shirt.contactBeforeTotalDepth);
     assert.ok(outfit.outfit.shirt.contactAfterCount<=outfit.outfit.shirt.contactBeforeCount);
     assert.ok(outfit.outfit.shirt.torsoDrapeMaxShift<=.032001);
-    assert.ok(outfit.outfit.pants.rearPanelMaxShift<=.040001);
+    assert.ok(outfit.outfit.pants.rearPanelMaxShift<=.025001);
     assert.equal(outfit.outfit.shirt.sourcePanelCoordinatesUnchanged,true);
     assert.equal(outfit.outfit.shirt.sourcePanelPixelsUnchanged,true);
     assert.equal(outfit.outfit.shirt.originalShirtSkinAndOriginalPantUVUnchanged,true);
