@@ -52,7 +52,7 @@ export function drapeOriginalPhotographedShirtTorso(shirt,{enabled=true}={}){
    const h=smooth(y,1.135,1.185)*(1-smooth(y,1.355,1.475));
    if(h<.02||Math.abs(p.x)>.31)continue;
    const backWeight=1-smooth(p.z-mid,-.005,.055);
-   const sideWeight=smooth(Math.abs(p.x),.115,.185)*(1-smooth(Math.abs(p.x),.24,.315));
+   const sideWeight=smooth(Math.abs(p.x),.115,.185)*(1-smooth(Math.abs(p.x),.24,.315))*(1-smooth(p.z-mid,.005,.060));
    const blend=clamp(Math.max(backWeight*.92,sideWeight*.72),0,1);
    if(blend<.03)continue;
    // Structure is an actual hanging rear and side panel, not a body-normal
