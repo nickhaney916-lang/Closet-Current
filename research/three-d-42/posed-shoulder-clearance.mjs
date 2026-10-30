@@ -74,7 +74,7 @@ export function clearShirtAgainstPosedShoulders(shirt,root,{enabled=true}={}){
   for(const pose of ['source','relaxed']){
    setFashionPose(root,pose);posedBodyCaches[pose]=posedBodyLookup(root);
   }
-  for(let pass=0;pass<3;pass++){
+  for(let pass=0;pass<2;pass++){
    const sum=original.map(({p})=>Array.from({length:p.count},()=>new T.Vector3()));
    const votes=original.map(({p})=>new Uint8Array(p.count));
    for(const pose of ['source','relaxed']){
@@ -86,13 +86,13 @@ export function clearShirtAgainstPosedShoulders(shirt,root,{enabled=true}={}){
       for(let i=0;i<p.count;i++){
        const q=mesh.applyBoneTransform(i,new T.Vector3().fromBufferAttribute(p,i)).applyMatrix4(mesh.matrixWorld);
        const x=Math.abs(q.x),y=q.y;
-       if(y<1.33||y>1.79||x>.66)continue;
+       if(y<1.40||y>1.74||x>.47)continue;
        const collar=(1-smooth(y,1.60,1.72)*(1-smooth(x,.105,.21)));
-       const band=smooth(y,1.33,1.43)*(1-smooth(y,1.74,1.79));
-       const rear=1-smooth(q.z-center,.015,.085);
-       const arm=smooth(x,.18,.31)*(1-smooth(x,.52,.66));
-       const influence=Math.max(rear,arm*.75)*collar*band;
-       if(q.z>center+.085){protectedPhotoFront++;continue;}
+       const band=smooth(y,1.40,1.49)*(1-smooth(y,1.67,1.74));
+       const rear=1-smooth(q.z-center,-.005,.038);
+       const arm=smooth(x,.19,.26)*(1-smooth(x,.38,.46));
+       const influence=Math.max(rear,arm*.40)*collar*band;
+       if(q.z>center+.045){protectedPhotoFront++;continue;}
        if(influence<.065)continue;
        probes++;
        const hit=body.lookup(q);
@@ -102,9 +102,9 @@ export function clearShirtAgainstPosedShoulders(shirt,root,{enabled=true}={}){
        // centerline; do not use nearest-point distance as a penetration depth.
        const radial=hit.point.clone().sub(new T.Vector3(0,y,center));
        if(normal.dot(radial)<0)normal.negate();
-       const gap=q.clone().sub(hit.point).dot(normal),targetGap=.011;
+       const gap=q.clone().sub(hit.point).dot(normal),targetGap=.006;
        if(gap>=targetGap)continue;
-       const step=Math.min(.015,Math.max(0,targetGap-gap))*influence;
+       const step=Math.min(.0045,Math.max(0,targetGap-gap))*influence;
        if(step<.00012)continue;
        const rest=localRestDisplacement(mesh,i,normal.multiplyScalar(step));
        sum[j][i].add(rest);
@@ -129,12 +129,12 @@ export function clearShirtAgainstPosedShoulders(shirt,root,{enabled=true}={}){
      for(const i of ids)delta.add(sum[j][i]);
      delta.multiplyScalar(1/ids.length);
      const amount=delta.length();
-     if(amount>.015)delta.setLength(.015);
+     if(amount>.0045)delta.setLength(.0045);
      for(const i of ids){
       const base=new T.Vector3(initial[i*3],initial[i*3+1],initial[i*3+2]);
       const q=new T.Vector3().fromBufferAttribute(p,i).add(delta);
       const cumulative=q.clone().sub(base);
-      if(cumulative.length()>.039)q.copy(base).add(cumulative.setLength(.039));
+      if(cumulative.length()>.009)q.copy(base).add(cumulative.setLength(.009));
       const d=q.distanceTo(base);
       if(d>.0001){corrections++;total+=delta.length();max=Math.max(max,d);}
       p.setXYZ(i,q.x,q.y,q.z);
@@ -144,7 +144,7 @@ export function clearShirtAgainstPosedShoulders(shirt,root,{enabled=true}={}){
    }
   }
  }finally{Object.values(posedBodyCaches).forEach(body=>body.dispose());setFashionPose(root,'source');}
- if(corrections<10||max<.001||max>.039001||sourceHits+relaxedHits<10)
+ if(corrections<10||max<.0003||max>.009001||sourceHits+relaxedHits<10)
   throw Error('3D42 pose-aware original-shirt contact did not produce bounded meaningful geometry '+JSON.stringify({corrections,max,sourceHits,relaxedHits}));
  for(const {mesh,p,attributes} of original){
   for(const name of images){
