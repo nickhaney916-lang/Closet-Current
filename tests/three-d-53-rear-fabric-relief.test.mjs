@@ -1,0 +1,78 @@
+/** 3D53 independent, actual original 163-bone source-photo rigs.
+ * No customer photos; original source garment UVs and sewn shoulder caps must
+ * remain exactly unchanged while the central neutral rear cloth actually moves.
+ */
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {person,candidate} from '../research/three-d-24/test-fixtures.mjs';
+import {createOutfitController} from '../research/three-d-15/outfit-controller.mjs';
+import {createPoseContact} from '../research/three-d-42/posed-contact.mjs';
+import {denim} from '../scripts/audit-three-d-42-triangles.mjs';
+import {PANTS_RESEARCH_SOURCE as A,PANTS_RESEARCH_SOURCE_SECOND as B} from '../research/three-d-30/reviewed-photo-pants.mjs';
+const attributes=['panelPosition','panelNormal','skinIndex','skinWeight'];
+const collect=root=>{
+ const body=[],pants=[],shirts=[],caps=[],collars=[];
+ root.traverse(m=>{
+  if(!m.isSkinnedMesh)return;
+  if(!m.userData.work56Garment){body.push([...m.geometry.getAttribute('position').array]);return;}
+  if(m.userData.work60Pants){pants.push([...m.geometry.getAttribute('position').array]);return;}
+  const entry={name:m.name,pos:[...m.geometry.getAttribute('position').array],
+   protected:Object.fromEntries(attributes.map(n=>[n,[...m.geometry.getAttribute(n).array]]))};
+  if(m.userData.work45IndependentShoulderCap)caps.push(entry);
+  else if(m.name==='Work59-source-neutral-collar-band')collars.push(entry);
+  else if(m.name==='Work56-independent-shirt-shell')shirts.push(entry);
+ });
+ return {body,pants,shirts,caps,collars};
+};
+for(const kind of ['female','male'])for(const src of [A,B])
+ test('3D53 real source-neutral rear drape '+kind+'/'+src.id,async()=>{
+  const beforeRoot=await person(kind),afterRoot=await person(kind);
+  const base={jeansPanelFall:true,independentGarments:true,
+   tailoredShoulderSleeves:true,independentShoulderCaps:true,
+   realisticShoulderContour:true,upperArmFabricVolume:true,
+   sourceNeutralCollarRoll:true,poseContactFactory:createPoseContact};
+  const before=createOutfitController(beforeRoot,base);
+  const after=createOutfitController(afterRoot,{...base,rearShirtFabricRelief:true});
+  try{
+   const args={reviewed:true,pantsCandidate:denim(src),pantsReviewed:true};
+   const b=before.setOutfit('shirt-pants',candidate('shirt'),args);
+   const a=after.setOutfit('shirt-pants',candidate('shirt'),args);
+   assert.equal(Boolean(b.shirt.sourceNeutralRearFabricRelief),false);
+   assert.equal(a.shirt.sourceNeutralRearFabricRelief,true);
+   assert.ok(a.shirt.rearReliefMovedRenderedVertices>=24);
+   assert.ok(a.shirt.rearReliefMaximumMove>=.004&&a.shirt.rearReliefMaximumMove<=.01801);
+   assert.ok(a.shirt.rearReliefProtectedFrontVertices>=30);
+   assert.equal(a.shirt.originalPhotographedFrontAndUVUnchanged,true);
+   assert.equal(a.shirt.sourceNeutralRearPhotoNotInvented,true);
+   assert.equal(a.shirt.independentShoulderCapAndSewnSeamsUnchanged,true);
+   assert.equal(a.pants.sourceSHA256,src.originalSHA256);
+   assert.equal(a.shirt.releaseAuthorized,false);
+   const original=collect(beforeRoot),tailored=collect(afterRoot);
+   for(const section of ['body','pants','caps','collars'])
+    assert.deepEqual(tailored[section],original[section],
+     '3D53 must not alter source body, photographed denim, real L/R sleeve caps or sewn collar: '+section);
+   assert.equal(original.shirts.length,tailored.shirts.length);
+   let moved=0,unchangedPhoto=0;
+   for(let j=0;j<original.shirts.length;j++){
+    const x=original.shirts[j],y=tailored.shirts[j];
+    assert.equal(x.name,y.name);
+    assert.deepEqual(x.protected,y.protected,'Photographic front/UV/rig original arrays must not change');
+    assert.equal(x.pos.length,y.pos.length);
+    for(let i=0;i<x.pos.length;i+=3){
+     const dx=Math.abs(x.pos[i]-y.pos[i]),dy=Math.abs(x.pos[i+1]-y.pos[i+1]),dz=Math.abs(x.pos[i+2]-y.pos[i+2]);
+     assert.ok(dx<.000001&&dy<.000001,'Rear relief must move exclusively along garment back normal');
+     assert.ok(dz<=.01802,'Individual real panel move is physically bounded');
+     if(dz>.0001)moved++;
+     if(x.protected.panelNormal[i+2]>-.8){assert.ok(dz<.000001,'Original photographed forward material moved');unchangedPhoto++;}
+    }
+   }
+   assert.ok(moved>=24&&unchangedPhoto>30,'Source-neutral real rear change and protected original photo not demonstrated');
+   for(const pose of ['source','blend-50','relaxed']){
+    const state=after.setPose(pose);
+    assert.equal(state.shirt.poseTriangleContact.after.count,0,'Actual fitted real garment/source body contact '+kind+'/'+src.id+'/'+pose);
+    assert.equal(state.shirt.poseTriangleContact.fullCollisionValidated,false);
+   }
+   assert.equal(after.setOutfit('none').garmentMeshes,0);
+   console.log('THREE_D53_SOURCE_NEUTRAL_BACK_GEOMETRY',JSON.stringify({kind,source:src.id,moved,unchangedPhoto,max:a.shirt.rearReliefMaximumMove,release:false}));
+  }finally{before.dispose();after.dispose();}
+ });
