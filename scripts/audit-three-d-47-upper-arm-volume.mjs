@@ -62,7 +62,7 @@ export async function auditUpperArmFabricVolume({figures=['female','male'],sourc
    continuousMotionCollisionCertified:false,releaseAuthorized:false};
  return summary;
 }
-if(process.argv[1]?.endsWith('audit-three-d-47-shoulder-contour.mjs')){
+if(process.argv[1]?.endsWith('audit-three-d-47-upper-arm-volume.mjs')){
  const summary=await auditUpperArmFabricVolume();
  await mkdir('benchmark/three-d-47',{recursive:true});
  await writeFile('benchmark/three-d-47/intermediate-triangle-audit.json',JSON.stringify(summary,null,2));
