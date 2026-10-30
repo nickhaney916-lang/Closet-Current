@@ -75,14 +75,23 @@ export function roundRealShoulderSleeveCrest(shirt,root,{enabled=true}={}){
   if(x<=.305||x>=.62)continue;
   const dy=q.y-arms[side].y;
   const across=smooth(x,.305,.375)*(1-smooth(x,.505,.62));
-  const height=smooth(dy,-.050,.020)*(1-smooth(dy,.09,.17));
+  // Actual independently cut 3D45 sleeve-cap source vertices extend
+  // noticeably BELOW the upper-arm joint in the 163-bone source rig.
+  // The initial "dy=-.05 to +.17" window moved ZERO rendered vertices
+  // across male/female original photos: all four genuine source fixture
+  // tests correctly failed. Use the independently verified 3D47/3D52
+  // physical cap-recovery y band, not a fabricated high-shoulder ring.
+  // Smooth taper protects the original lower sleeve and neckline.
+  const height=smooth(dy,-.43,-.28)*(1-smooth(dy,.025,.16));
   const weight=across*height;
   if(weight<.075)continue;
   // A source-bone referenced crest that eases to zero on both sides of
   // the shoulder: reduce the square high ridge, transitioning smoothly
   // into the sleeve instead of adding a surface cap/foam bulge.
-  const excessive=Math.max(0,dy-.013);
-  const drop=(.003+.009*smooth(excessive,.015,.095))*weight;
+  // A subtle downward shoulder-to-sleeve cloth ease (4–11 mm),
+  // strongest near the real deltoid crest, capped by the strict total
+  // 14mm original-source sewn-profile movement envelope.
+  const drop=(.004+.007*smooth(dy,-.24,.04))*weight;
   const inward=.0035*weight;
   const step=new THREE.Vector3(-Math.sign(q.x)*inward,-drop,0);
   const length=step.length();
