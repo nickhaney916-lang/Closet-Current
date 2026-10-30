@@ -16,8 +16,8 @@ function bodyHashes(root){const out=[];root.traverse(o=>{if(o.isSkinnedMesh&&!o.
 for(const model of ['female','male'])test(model+' actual second independently photographed CC BY-SA 4.0 denim on original 3D35 vs 3D36 original-photographed rear-seat crotch cloth saddle retains all licensed source pixels/UV/CC0 bone data',async()=>{
  const beforeRoot=await person(model),afterRoot=await person(model);
  const aBody=bodyHashes(beforeRoot),bBody=bodyHashes(afterRoot);
- const before=createOutfitController(beforeRoot,{naturalPantsDrape:true,posteriorJeansFairing:true,structuralPantsEnvelope:true,independentJeansLoft:true,crotchSeatPanel:false});
- const after=createOutfitController(afterRoot,{naturalPantsDrape:true,posteriorJeansFairing:true,structuralPantsEnvelope:true,independentJeansLoft:true,crotchSeatPanel:true});
+ const before=createOutfitController(beforeRoot,{shirtHangingSilhouette:false,denimHangingSilhouette:false,naturalPantsDrape:true,posteriorJeansFairing:true,structuralPantsEnvelope:true,independentJeansLoft:true,crotchSeatPanel:false});
+ const after=createOutfitController(afterRoot,{shirtHangingSilhouette:false,denimHangingSilhouette:false,naturalPantsDrape:true,posteriorJeansFairing:true,structuralPantsEnvelope:true,independentJeansLoft:true,crotchSeatPanel:true});
  try{
   const old=before.setOutfit('pants',null,{pantsCandidate:candidateJeans(),pantsReviewed:true}),
    now=after.setOutfit('pants',null,{pantsCandidate:candidateJeans(),pantsReviewed:true});
@@ -62,7 +62,7 @@ for(const model of ['female','male'])test(model+' actual second independently ph
  }finally{before.dispose();after.dispose();}
 });
 test('Fail closed missing photo source, neutral back remains neutral, dress/shirt preview unchanged',async()=>{
- const root=await person('female'),ctrl=createOutfitController(root);
+ const root=await person('female'),ctrl=createOutfitController(root,{shirtHangingSilhouette:false,denimHangingSilhouette:false});
  try{
   const neutral=ctrl.setOutfit('pants');assert.equal(neutral.pants.posteriorFabricFairing,undefined);
   assert.equal(neutral.pants.photoApplied,false);
