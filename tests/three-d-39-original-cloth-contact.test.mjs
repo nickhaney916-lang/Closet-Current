@@ -38,13 +38,15 @@ for(const model of ['female','male'])for(const original of [PANTS_RESEARCH_SOURC
    assert.equal(b.shirt.sourcePanelPixelsUnchanged,true);
    assert.equal(b.shirt.sourcePanelCoordinatesUnchanged,true);
    assert.equal(b.shirt.originalShirtSkinAndOriginalPantUVUnchanged,true);
-   assert.ok(b.shirt.contactMovedUniqueVertices>=25);
+   assert.ok(b.shirt.contactMovedUniqueVertices>=(model==='male'?25:0));
+   assert.equal(b.shirt.contactCorrectionNecessary,model==='male');
+   if(model==='female')assert.ok(b.shirt.contactBeforeTotalDepth<.002,'Actual source pose already nearly clear; do not force fake dress movement');
    assert.ok(b.shirt.contactEvaluatedNodes>=70);
    assert.ok(b.shirt.contactAfterTotalDepth < b.shirt.contactBeforeTotalDepth);
    assert.ok(b.shirt.contactAfterCount<=b.shirt.contactBeforeCount);
    assert.ok(b.shirt.contactMinRadialGapAfter>=b.shirt.contactMinRadialGapBefore-.00001);
-   assert.ok(b.shirt.contactMaxShift>=.003&&b.shirt.contactMaxShift<=.042001);
-   assert.ok(b.shirt.contactMeanShift>.0003);
+   assert.ok(b.shirt.contactMaxShift>=(model==='male'?.003:0)&&b.shirt.contactMaxShift<=.042001);
+   assert.ok(b.shirt.contactMeanShift>=(model==='male'?.0003:0));
    assert.ok(b.shirt.contactSurfaceVertexSamples>200);
    assert.equal(b.shirt.certifiedFullCollisionFree,false);
    assert.equal(b.shirt.humanVisualApproval,false);assert.equal(b.shirt.signedCollisionValidated,false);
@@ -66,7 +68,7 @@ for(const model of ['female','male'])for(const original of [PANTS_RESEARCH_SOURC
      if(d>1e-5)moved++;max=Math.max(max,d);
     }
    }
-   assert.ok(moved>30,'Original physically changed source-registered hem geometry required: '+moved);
+   assert.ok(moved>=(model==='male'?30:0),'Must not force movement where measured material contact is already nearly cleared: '+moved);
    assert.ok(max<.043,'Measured residual contact correction remains bounded '+max);
    for(const pose of ['relaxed','source','relaxed','source']){
     after.setPose(pose);
