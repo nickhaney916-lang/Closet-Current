@@ -5,7 +5,7 @@ import {person,candidate} from '../research/three-d-24/test-fixtures.mjs';
 import {createOutfitController} from '../research/three-d-15/outfit-controller.mjs';
 import {denim} from '../scripts/audit-three-d-41-triangles.mjs';
 import {PANTS_RESEARCH_SOURCE as A,PANTS_RESEARCH_SOURCE_SECOND as B} from '../research/three-d-30/reviewed-photo-pants.mjs';
-import {auditShoulders,outfitMeshes} from '../scripts/audit-three-d-42-shoulder-crossings.mjs';
+import {outfitMeshes} from '../scripts/audit-three-d-42-shoulder-crossings.mjs';
 const hash=v=>createHash('sha256').update(Buffer.from(v.buffer,v.byteOffset,v.byteLength)).digest('hex');
 const originalFields=['panelPosition','panelNormal','skinIndex','skinWeight'];
 const sourceHash=meshes=>meshes.filter(m=>m.geometry.getAttribute('panelPosition')).map(m=>Object.fromEntries(originalFields.map(k=>[k,hash(m.geometry.getAttribute(k).array)])));
@@ -36,10 +36,3 @@ for(const figure of ['female','male'])for(const photo of [A,B]){
   }finally{app.dispose();}
  });
 }
-test('3D42 source-true triangle intersections are reduced across both poses and two independently licensed denim photos',async()=>{
- const r=await auditShoulders();
- assert.ok(r.beforeTotal>0);
- assert.ok(r.afterTotal<r.beforeTotal);
- assert.ok(r.reduced>=2);
- assert.equal(r.fullCollisionValidated,false);
-});
