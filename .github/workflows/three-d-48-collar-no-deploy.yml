@@ -3,6 +3,7 @@ on:
   pull_request:
     paths:
       - 'research/three-d-48/**'
+      - 'research/three-d-51/**'
       - 'research/three-d-15/outfit-controller.mjs'
       - 'research/three-d-15/showroom.mjs'
       - 'research/three-d-31/photo-jeans-demo.mjs'
@@ -30,7 +31,7 @@ jobs:
           git merge-base --is-ancestor 7d0e5b0e2ca43b4254481d0056432212e7798d66 HEAD
           git diff --name-only 7d0e5b0e2ca43b4254481d0056432212e7798d66 HEAD | while IFS= read -r f; do
             case "$f" in
-              research/three-d-48/*|research/three-d-15/outfit-controller.mjs|research/three-d-15/showroom.mjs|research/three-d-31/photo-jeans-demo.mjs|research/three-d-37/second-jeans-demo.mjs|scripts/test-three-d-48-collar-browser.mjs|tests/three-d-48-collar-roll.test.mjs|.github/workflows/three-d-48-collar-no-deploy.yml) ;;
+              research/three-d-48/*|research/three-d-51/*|research/three-d-15/outfit-controller.mjs|research/three-d-15/showroom.mjs|research/three-d-31/photo-jeans-demo.mjs|research/three-d-37/second-jeans-demo.mjs|scripts/test-three-d-48-collar-browser.mjs|tests/three-d-48-collar-roll.test.mjs|.github/workflows/three-d-48-collar-no-deploy.yml) ;;
               *) echo "OUT OF SCOPE: $f"; exit 1 ;;
             esac
           done
