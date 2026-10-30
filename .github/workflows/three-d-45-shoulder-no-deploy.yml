@@ -64,7 +64,21 @@ jobs:
       - name: Source-preserving tailored sleeve five-sampled-pose actual BVH triangle gate
         run: node scripts/audit-three-d-44-shoulder-poses.mjs
       - name: Real separately sewn armhole panels across five sampled male/female poses
-        run: node scripts/audit-three-d-45-independent-caps.mjs
+        run: |
+          node scripts/audit-three-d-45-independent-caps.mjs
+          node --input-type=module <<'AUDIT'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const path='benchmark/three-d-45/intermediate-triangle-audit.json';
+          const out=JSON.parse(readFileSync(path,'utf8'));
+          assert.equal(out.studied,28,'Both original rigs × two original denims × five poses + two repeat poses');
+          assert.equal(out.records.length,28,'No missing real triangle observations');
+          for(const item of out.records)for(const name of ['shirtBody','pantsBody','shirtJeans'])
+            assert.equal(item[name].crossingTrianglePairs,0,'Actual independent caps crossed '+name+' in '+JSON.stringify({kind:item.kind,pose:item.pose,source:item.source}));
+          assert.equal(out.continuousMotionCollisionCertified,false);
+          assert.equal(out.releaseAuthorized,false);
+          console.log('THREE_D45_INDEPENDENT_PANEL_AUDIT_REPORT_VERIFIED',out.records.length);
+          AUDIT
       - name: Four original model+photo combinations tested physically in real skinned source-pose geometry
         run: |
           node --test tests/three-d-41-source-leg-fall.test.mjs
