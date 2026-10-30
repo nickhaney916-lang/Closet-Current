@@ -18,6 +18,11 @@ on:
       - 'research/three-d-qa-48/**'
       - 'research/three-d-qa-49/**'
       - 'research/three-d-50/**'
+      - 'research/three-d-48/**'
+      - 'research/three-d-51/**'
+      - 'tests/three-d-48-collar-roll.test.mjs'
+      - 'scripts/test-three-d-48-collar-browser.mjs'
+      - '.github/workflows/three-d-48-collar-no-deploy.yml'
       - '.github/workflows/three-d-50-female-cap-no-deploy.yml'
       - 'scripts/report-three-d-qa-49-visual-evidence.mjs'
       - '.github/workflows/three-d-47-upper-arm-no-deploy.yml'
@@ -41,7 +46,7 @@ jobs:
           git merge-base --is-ancestor fe351f01fe565179e40daa57ec2d7aead15adc99 HEAD
           git diff --name-only fe351f01fe565179e40daa57ec2d7aead15adc99 HEAD | while IFS= read -r f; do
             case "$f" in
-              research/three-d-47/*|research/three-d-qa-48/*|research/three-d-qa-49/*|research/three-d-50/*|.github/workflows/three-d-50-female-cap-no-deploy.yml|scripts/report-three-d-qa-49-visual-evidence.mjs|tests/three-d-48-cap-seam-witness.test.mjs|research/three-d-42/posed-contact.mjs|research/three-d-15/outfit-controller.mjs|research/three-d-15/showroom.mjs|research/three-d-31/photo-jeans-demo.mjs|research/three-d-37/second-jeans-demo.mjs|tests/three-d-47-upper-arm-volume.test.mjs|scripts/*three-d-47*.mjs|.github/workflows/three-d-47-upper-arm-no-deploy.yml) ;;
+              research/three-d-47/*|research/three-d-qa-48/*|research/three-d-qa-49/*|research/three-d-50/*|research/three-d-48/*|research/three-d-51/*|tests/three-d-48-collar-roll.test.mjs|scripts/test-three-d-48-collar-browser.mjs|.github/workflows/three-d-48-collar-no-deploy.yml|.github/workflows/three-d-50-female-cap-no-deploy.yml|scripts/report-three-d-qa-49-visual-evidence.mjs|tests/three-d-48-cap-seam-witness.test.mjs|research/three-d-42/posed-contact.mjs|research/three-d-15/outfit-controller.mjs|research/three-d-15/showroom.mjs|research/three-d-31/photo-jeans-demo.mjs|research/three-d-37/second-jeans-demo.mjs|tests/three-d-47-upper-arm-volume.test.mjs|scripts/*three-d-47*.mjs|.github/workflows/three-d-47-upper-arm-no-deploy.yml) ;;
               *) echo "OUT OF SCOPE: $f"; exit 1 ;;
             esac
           done
@@ -116,6 +121,10 @@ jobs:
           node --test tests/three-d-38-full-outfit-waist.test.mjs tests/three-d-37-second-models.test.mjs tests/three-d-29-neckline.test.mjs
       - name: Render actual original photographed tailored sleeves before-after at 320/390/430 in 3 views
         run: node scripts/test-three-d-46-shoulder-browser.mjs
+      - name: '3D51 integrated source-photo collar with corrected female caps and original body'
+        run: node --test tests/three-d-48-collar-roll.test.mjs
+      - name: '3D51 real photographed collar before/after female male mobile WebGL'
+        run: node scripts/test-three-d-48-collar-browser.mjs
       - name: '3D47: genuine WebGL before/after upper-arm fabric photo at 320/390/430'
         run: node scripts/test-three-d-47-upper-arm-browser.mjs
       - name: '3D-QA-49: complete, authentic source-photo mobile gallery; never auto-certify realism'
@@ -125,6 +134,7 @@ jobs:
         with:
           name: THREE-D-47-INDEPENDENT-UPPER-ARM-VOLUME-WEBGL-HOLD
           path: |
+            benchmark/three-d-48/
             benchmark/three-d-47/
             benchmark/three-d-qa-49/
             benchmark/three-d-46/
