@@ -23,6 +23,47 @@ export function constructIndependentShoulderCaps(shirt,root,{enabled=true}={}){
  let originalFaces=0,retainedFaces=0,addedFaces=0,caps=0;
  const shells=shirt.meshes.filter(m=>m.name==='Work56-independent-shirt-shell');
  if(!shells.length)throw Error('Original photographed garment shell not present');
+ // Before separating cap faces, cut a continuous textile shoulder-yoke slope
+ // into BOTH the future cap and the remaining torso/sleeve. This is a garment
+ // pattern shaping operation, not an offset skin/body shell: source-front
+ // photograph x<=.24, collar, lower arms and cuffs are outside its domain.
+ // Shared original seam vertices receive precisely the same displacement.
+ const yoke={L:{vertices:0,max:0},R:{vertices:0,max:0}};
+ let totalYoke=0,maxYoke=0;
+ for(const shell of shells){
+  shell.updateWorldMatrix(true,false);
+  const p=shell.geometry.getAttribute('position'),worldToLocal=shell.matrixWorld.clone().invert();
+  const groups=new Map();
+  for(let i=0;i<p.count;i++){
+   const q=new T.Vector3().fromBufferAttribute(p,i).applyMatrix4(shell.matrixWorld),k=pkey(q);
+   if(!groups.has(k))groups.set(k,{point:q,ids:[]});
+   groups.get(k).ids.push(i);
+  }
+  for(const node of groups.values()){
+   const q=node.point,x=Math.abs(q.x);
+   if(x<.255||x>.62)continue;
+   const arm=arms.find(a=>Math.sign(a.shoulder.x)===Math.sign(q.x));
+   if(!arm)continue;
+   const spread=sm(x,.255,.33)*(1-sm(x,.51,.62));
+   const raised=sm(q.y,arm.shoulder.y-.075,arm.shoulder.y+.005)*
+    (1-sm(q.y,arm.shoulder.y+.087,arm.shoulder.y+.16));
+   const weight=spread*raised;
+   if(weight<.10)continue;
+   const dx=-Math.sign(q.x)*.014*weight,dy=-.025*weight;
+   const v=q.clone().add(new T.Vector3(dx,dy,0)).applyMatrix4(worldToLocal);
+   for(const i of node.ids)p.setXYZ(i,v.x,v.y,v.z);
+   const dist=Math.hypot(dx,dy);
+   yoke[arm.side].vertices+=node.ids.length;
+   yoke[arm.side].max=Math.max(yoke[arm.side].max,dist);
+   maxYoke=Math.max(maxYoke,dist);totalYoke+=node.ids.length;
+  }
+  p.needsUpdate=true;shell.geometry.computeVertexNormals();
+  smoothSurfaceNormals(shell.geometry,p.count);
+  shell.geometry.computeBoundingBox();shell.geometry.computeBoundingSphere();
+ }
+ if(totalYoke<40||maxYoke<.006||maxYoke>.0287||arms.some(a=>yoke[a.side].vertices<10))
+  throw Error('3D45 natural source-neutral bilateral shoulder slope not substantive or bounded '+JSON.stringify({totalYoke,maxYoke,yoke}));
+
  // We plan both cap components before modifying any source shirt indices.
  const plans=[];
  for(const shell of shells){
@@ -172,7 +213,7 @@ export function constructIndependentShoulderCaps(shirt,root,{enabled=true}={}){
   armholePanelOriginalSourceFaces:counts.L.faces+counts.R.faces,
   armholePanelRetessellatedFaces:addedFaces,
   armholePanelInteriorEdgesSplit:counts.L.edges+counts.R.edges,
-  armholePanels:counts,originalShirtPixelsUnchanged:true,
+  armholePanels:counts,shoulderYokeProfile:yoke,shoulderYokeShapedVertices:totalYoke,shoulderYokeMaximumModelSpaceMove:maxYoke,originalShirtPixelsUnchanged:true,
   sourcePanelAttributesInterpolatedForNewNeutralOnly:true,
   originalFrontGarmentPhotoAndUVUnchanged:true,
   independentOriginalBodyRigUnchanged:true,
