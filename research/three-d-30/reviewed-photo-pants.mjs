@@ -21,8 +21,8 @@ export const PANTS_RESEARCH_SOURCE=Object.freeze({
 });
 export const PANTS_RESEARCH_SOURCE_SECOND=Object.freeze({
  id:'commons-cc-by-sa-denimjeans2-2008',
- originalSHA256:'AUDIT_ORIGINAL_SHA_NOT_PINNED',
- cutoutSHA256:'AUDIT_CUTOUT_SHA_NOT_PINNED',
+ originalSHA256:'aa7f288055874773b87cd38b5b4e473b532920f61c2d17cb0ccd7872466c444a',
+ cutoutSHA256:'4cf80f77fa34d04844d7310de180135df607248847ea17b1aed4ef613d0cb3db',
  originalBenchmarkMaskAvailable:true,
  sourcePage:'https://commons.wikimedia.org/wiki/File:Denimjeans2.JPG',
  license:'CC BY-SA 4.0',
