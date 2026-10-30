@@ -1,0 +1,85 @@
+name: 3D-56 actual pose-conditioned photographed sleeve drape and seam QA (DRAFT HOLD NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'research/three-d-56/**'
+      - 'research/three-d-15/outfit-controller.mjs'
+      - 'research/three-d-15/showroom.mjs'
+      - 'research/three-d-31/photo-jeans-demo.mjs'
+      - 'research/three-d-37/second-jeans-demo.mjs'
+      - 'tests/three-d-56-pose-sleeves.test.mjs'
+      - 'scripts/test-three-d-56-pose-browser.mjs'
+      - '.github/workflows/three-d-56-pose-cloth-no-deploy.yml'
+permissions:
+  contents: read
+jobs:
+  real-pose-conditioned-cloth:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Exact verified 3D55 parent; strict research-only 3D56 paths
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor 32e0678a0ad40b0c6636323c8fcb0a0955505a88 HEAD
+          git diff --name-only 32e0678a0ad40b0c6636323c8fcb0a0955505a88 HEAD | while IFS= read -r f; do
+            case "$f" in
+              research/three-d-56/*|research/three-d-15/outfit-controller.mjs|research/three-d-15/showroom.mjs|research/three-d-31/photo-jeans-demo.mjs|research/three-d-37/second-jeans-demo.mjs|tests/three-d-56-pose-sleeves.test.mjs|scripts/test-three-d-56-pose-browser.mjs|.github/workflows/three-d-56-pose-cloth-no-deploy.yml) ;;
+              *) echo "BLOCKED outside approved research 3D56: $f"; exit 1 ;;
+            esac
+          done
+      - name: Install pinned original-source local research dependencies; no external inference
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 three@0.180.0 playwright@1.56.1 three-mesh-bvh@0.9.2
+      - name: Generate both licensed original photographic denim sources, hash and license verify
+        run: |
+          node scripts/build-three-d-31-jeans-proposal.mjs
+          node scripts/build-three-d-37-second-jeans.mjs
+          node --test tests/three-d-31-jeans-source.test.mjs tests/three-d-37-source-true.test.mjs
+      - name: Restore immutable 163-bone original female/male anatomical rigs and original photographed shirt
+        run: |
+          git fetch --no-tags origin 53f2ad344dc56a1477e343531c423aed0e66c17d dd6bac3fa9ff640d4f562cf925337440bdb5cf8f 3a572193987cb29389727426136c6eb3ac326783 dfb40889c4c1221fb1833b859e8a11ef38aeb76e
+          node scripts/build-work47-benchmark.mjs
+          node research/three-d-20/restore-approved-models.mjs
+      - name: Guard existing independent caps, real bilateral seams, collar and proven neutral rear hem
+        run: |
+          node --test tests/three-d-47-upper-arm-volume.test.mjs
+          node --test tests/three-d-48-cap-seam-witness.test.mjs
+          node --test tests/three-d-48-collar-roll.test.mjs
+          node --test tests/three-d-53-rear-fabric-relief.test.mjs
+      - name: Proven independent shoulder crest source photos and new real elbow-to-wrist cloth hang on male/female and both original jeans
+        run: |
+          node --test tests/three-d-54-shoulder-sleeve-rounding.test.mjs
+          node --test tests/three-d-55-source-sleeve-hang.test.mjs
+      - name: Actual pose-conditioned cloth, source arrays, L/R shoulder and wrist seams, 28 BVH audits and deterministic returns
+        run: |
+          node --test tests/three-d-56-pose-sleeves.test.mjs
+          node --input-type=module <<'AUDIT'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const a=JSON.parse(readFileSync('benchmark/three-d-56/collision-seam-audit.json','utf8'));
+          assert.equal(a.records.length,28);
+          for(const r of a.records){
+            for(const k of ['shirtBody','pantsBody','shirtJeans'])assert.equal(r[k].crossingTrianglePairs,0);
+            for(const k of ['maximumGap','maximumCuffGap'])assert.ok(Number.isFinite(r[k])&&r[k]<=5e-5);
+            for(const side of ['L','R']){assert.ok(r.seamWitnesses[side]>=3);assert.ok(r.cuffWitnesses[side]>=3);}
+          }
+          assert.equal(a.continuousMotionCertified,false);
+          assert.equal(a.releaseAuthorized,false);
+          AUDIT
+      - name: Authentic original source mobile 320 390 430, both rigs both denim five poses front side back and real sleeve camera closeups
+        run: node scripts/test-three-d-56-pose-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: THREE-D-56-ORIGINAL-PHOTO-POSE-CLOTH-MOBILE-QA-HOLD
+          path: |
+            benchmark/three-d-56/
+          if-no-files-found: warn
