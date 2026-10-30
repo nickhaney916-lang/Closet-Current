@@ -36,10 +36,11 @@ import {reprofileIndependentShoulderSilhouette} from '../three-d-46/independent-
 import {tailorIndependentUpperArmVolume} from '../three-d-47/upper-arm-fabric-volume.mjs';
 import {shapeSourceNeutralCollarRoll} from '../three-d-48/source-neutral-collar-roll.mjs';
 import {easeSourceNeutralRearFabric} from '../three-d-53/source-neutral-rear-relief.mjs';
+import {roundShoulderSleeveTransition,joinShoulderSeamNormals} from '../three-d-54/shoulder-sleeve-transition.mjs';
 import {registerDressNeckline,clearNeckTriangleInteriors} from '../three-d-29/registered-neckline.mjs';
 export const OUTFITS=Object.freeze(['none','pants','shirt','shirt-pants','dress']);
 export function sourceForOutfit(mode){if(!OUTFITS.includes(mode))throw Error('Unsupported outfit');return mode==='dress'?'commons-0053':mode.includes('shirt')?'commons-0003':null;}
-export function createOutfitController(root,{refineFit=true,enableCuffFix=true,enableCuffFacing=true,enableCuffBridge=true,naturalFit=true,necklineSeams=true,dressNeckline=true,dressAnatomy=true,dressContact=true,skirtDrape=true,registeredNeckline=true,naturalPantsDrape=true,posteriorJeansFairing=true,structuralPantsEnvelope=true,independentJeansLoft=true,crotchSeatPanel=true,sourceShirtWaistFit=true,clothWaistContact=true,shirtHangingSilhouette=true,denimHangingSilhouette=true,jeansPanelFall=false,independentGarments=false,poseContactFactory=null,tailoredShoulderSleeves=false,independentShoulderCaps=false,realisticShoulderContour=false,upperArmFabricVolume=false,sourceNeutralCollarRoll=false,rearShirtFabricRelief=false}={}){
+export function createOutfitController(root,{refineFit=true,enableCuffFix=true,enableCuffFacing=true,enableCuffBridge=true,naturalFit=true,necklineSeams=true,dressNeckline=true,dressAnatomy=true,dressContact=true,skirtDrape=true,registeredNeckline=true,naturalPantsDrape=true,posteriorJeansFairing=true,structuralPantsEnvelope=true,independentJeansLoft=true,crotchSeatPanel=true,sourceShirtWaistFit=true,clothWaistContact=true,shirtHangingSilhouette=true,denimHangingSilhouette=true,jeansPanelFall=false,independentGarments=false,poseContactFactory=null,tailoredShoulderSleeves=false,independentShoulderCaps=false,realisticShoulderContour=false,upperArmFabricVolume=false,sourceNeutralCollarRoll=false,rearShirtFabricRelief=false,shoulderSleeveTransition=false}={}){
  if(independentGarments&&typeof poseContactFactory!=='function')throw Error('Independent garment triangle solver must be explicitly loaded');
  // Canonical normals must be captured before the existing presentation clone.
  const fitPants=createPantsFitter(root),shoulders=captureShoulderSurface(root);prepareBodyPresentation(root);
@@ -87,7 +88,7 @@ export function createOutfitController(root,{refineFit=true,enableCuffFix=true,e
     if(clothWaistContact)built.shirt=fitPhotographedOutfitContact(built.shirt,built.pants);
    }
    if(independentGarments&&built.pants?.stats?.originalPhotographedHangingLegPanels)built.pants=sewPatternTrousers(built.pants,root);
-   if(independentGarments&&built.shirt){built.shirt=constructShirtPanels(hangSleevePanels(relaxShirtSidePanels(built.shirt),root));if(tailoredShoulderSleeves)built.shirt=tailorOriginalShirtShoulderSleeves(built.shirt,root);if(independentShoulderCaps)built.shirt=constructIndependentShoulderCaps(built.shirt,root);if(realisticShoulderContour)built.shirt=reprofileIndependentShoulderSilhouette(built.shirt,root);if(upperArmFabricVolume)built.shirt=tailorIndependentUpperArmVolume(built.shirt,root);if(sourceNeutralCollarRoll)built.shirt=shapeSourceNeutralCollarRoll(built.shirt,root);if(rearShirtFabricRelief)built.shirt=easeSourceNeutralRearFabric(built.shirt,root);if(built.pants?.stats?.independentSewnPattern)built.shirt=clearShirtPatternWaist(built.shirt,built.pants);}
+   if(independentGarments&&built.shirt){built.shirt=constructShirtPanels(hangSleevePanels(relaxShirtSidePanels(built.shirt),root));if(tailoredShoulderSleeves)built.shirt=tailorOriginalShirtShoulderSleeves(built.shirt,root);if(independentShoulderCaps)built.shirt=constructIndependentShoulderCaps(built.shirt,root);if(realisticShoulderContour)built.shirt=reprofileIndependentShoulderSilhouette(built.shirt,root);if(upperArmFabricVolume)built.shirt=tailorIndependentUpperArmVolume(built.shirt,root);if(shoulderSleeveTransition)built.shirt=roundShoulderSleeveTransition(built.shirt,root);if(sourceNeutralCollarRoll)built.shirt=shapeSourceNeutralCollarRoll(built.shirt,root);if(rearShirtFabricRelief)built.shirt=easeSourceNeutralRearFabric(built.shirt,root);if(built.pants?.stats?.independentSewnPattern)built.shirt=clearShirtPatternWaist(built.shirt,built.pants);}
    if(next==='dress'){
     const raw=buildSourceDress(root,candidate,{reviewed});
     try{
@@ -106,12 +107,12 @@ export function createOutfitController(root,{refineFit=true,enableCuffFix=true,e
    }
    const skeletons=new Set();root.traverse(o=>{if(o.isSkinnedMesh&&!o.userData.work56Garment)skeletons.add(o.skeleton);});
    if(!all(built).every(m=>skeletons.has(m.skeleton)))throw Error('Garment skeleton mismatch');
-   if(independentGarments&&built.shirt){builtContact=poseContactFactory(root,built.shirt,built.pants);setFashionPose(root,pose);builtContact.fit(pose);}
+   if(independentGarments&&built.shirt){builtContact=poseContactFactory(root,built.shirt,built.pants);setFashionPose(root,pose);builtContact.fit(pose);if(shoulderSleeveTransition)joinShoulderSeamNormals(built.shirt,root);}
   }catch(e){builtContact?.dispose();Object.values(built).forEach(g=>g.dispose());held.forEach(({mesh,parent})=>parent.add(mesh));throw e;}
   finally{setResearchPose(root,pose);}
   contact?.dispose();Object.values(parts).forEach(g=>g.dispose());parts=built;mode=next;contact=builtContact;changes++;return summarize();
  }
- function setPose(next){if(closed)throw Error('Outfit controller closed');if(!independentGarments&&next.startsWith('blend-'))throw Error('Intermediate garment pose requires isolated independent research mode');setResearchPose(root,next);pose=next;contact?.fit(next);return summarize();}
+ function setPose(next){if(closed)throw Error('Outfit controller closed');if(!independentGarments&&next.startsWith('blend-'))throw Error('Intermediate garment pose requires isolated independent research mode');setResearchPose(root,next);pose=next;contact?.fit(next);if(shoulderSleeveTransition&&parts.shirt)joinShoulderSeamNormals(parts.shirt,root);return summarize();}
  function dispose(){if(closed)return;contact?.dispose();Object.values(parts).forEach(g=>g.dispose());parts={};mode='none';closed=true;releaseBodyPresentation(root);}
  setPose(pose);return {setOutfit,setPose,getState:summarize,dispose};
 }
