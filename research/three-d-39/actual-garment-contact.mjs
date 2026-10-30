@@ -114,8 +114,9 @@ export function fitPhotographedOutfitContact(shirt,pants,{enabled=true}={}){
   }
   changes.set(m,rows);
  }
- if(samples<70||moved<25||maxShift<.003||maxShift>.04201||
- !(sumDepthAfter<sumDepthBefore)&&insideAfter>=insideBefore)
+ const alreadyNearlyClear=sumDepthBefore<.002&&insideBefore<=5;
+ if(samples<70||maxShift>.04201||
+ (!alreadyNearlyClear&&(moved<25||maxShift<.003||!(sumDepthAfter<sumDepthBefore))))
   throw Error('Original source cloth-to-cloth contact cannot be improved safely '+JSON.stringify({samples,moved,maxShift,insideBefore,insideAfter,sumDepthBefore,sumDepthAfter,invalid}));
  if(minGapAfter<minGapBefore-.00001||sumDepthAfter>sumDepthBefore+1e-8)
   throw Error('Cannot worsen measured original photographed waist penetration');
@@ -140,6 +141,8 @@ export function fitPhotographedOutfitContact(shirt,pants,{enabled=true}={}){
   contactAngularSections:AZ,contactEvaluatedNodes:samples,
   contactUnsupportedOriginalMaterialNodes:invalid,
   contactBeforeCount:insideBefore,contactAfterCount:insideAfter,
+  contactCorrectionNecessary:!alreadyNearlyClear,
+  contactAlreadyNearlyClear:alreadyNearlyClear,
   contactBeforeTotalDepth:sumDepthBefore,contactAfterTotalDepth:sumDepthAfter,
   contactBeforeMaxDepth:maxBefore,contactAfterMaxDepth:maxAfter,
   contactMaxShift:maxShift,contactMeanShift:shiftSum/moved,
