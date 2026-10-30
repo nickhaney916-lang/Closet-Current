@@ -67,6 +67,8 @@ try{
    if(version==='after'){
     assert.ok(outfit.outfit.shirt.rearReliefMovedRenderedVertices>=24);
     assert.ok(outfit.outfit.shirt.rearReliefMaximumMove>=.004&&outfit.outfit.shirt.rearReliefMaximumMove<=.01801);
+    assert.ok(outfit.outfit.shirt.rearHemDrapeMovedVertices>=8);
+    assert.ok(outfit.outfit.shirt.rearHemDrapeMaximumDrop>=.004&&outfit.outfit.shirt.rearHemDrapeMaximumDrop<=.01201);
     assert.equal(outfit.outfit.shirt.originalPhotographedFrontAndUVUnchanged,true);
     assert.equal(outfit.outfit.shirt.sourceNeutralRearPhotoNotInvented,true);
     assert.ok(outfit.outfit.shirt.realSeparateSkinnedCapMeshes>=2);
@@ -112,7 +114,7 @@ try{
   assert.ok(scenario.changedPixels>10,'No actual source-neutral rear cloth relief pixels changed');
   results.push(scenario);
  }
- await writeFile(dir+'/browser-results.json',JSON.stringify({scenario:'Original photographic fitted source shirt and both licensed jeans, before/after 3D53 true source-neutral rear fabric relief, collar always enabled. Two anatomical figures, mobile genuine WebGL',
+ await writeFile(dir+'/browser-results.json',JSON.stringify({scenario:'Original source-photographed shirt and licensed denim, before/after real source-neutral rear folds plus gently falling rear-only hem, source collar always enabled. Two anatomical figures, mobile genuine WebGL',
   widths:[320,390,430],figures:['female','male'],sources:['Jeans.jpg','Denimjeans2.JPG'],
   poses:['blend-50','relaxed'],views:['front','side','back'],
   measurements:results,originalPhotographicSourcesUntouched:true,sourceApprovalGatePassed:true,
