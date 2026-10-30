@@ -11,8 +11,8 @@ import {existsSync} from 'node:fs';
 const DEST='benchmark/three-d-37';
 const URL='https://upload.wikimedia.org/wikipedia/commons/9/92/Denimjeans2.JPG';
 const PAGE='https://commons.wikimedia.org/wiki/File:Denimjeans2.JPG';
-const PIN_ORIGINAL='AUDIT_ONLY_PIN_AFTER_FIRST_SOURCE_HASH';
-const PIN_CUTOUT='AUDIT_ONLY_PIN_AFTER_FIRST_DERIVED_HASH';
+const PIN_ORIGINAL='aa7f288055874773b87cd38b5b4e473b532920f61c2d17cb0ccd7872466c444a';
+const PIN_CUTOUT='4cf80f77fa34d04844d7310de180135df607248847ea17b1aed4ef613d0cb3db';
 const sha=b=>createHash('sha256').update(b).digest('hex');
 async function original(){
  if(existsSync(DEST+'/original-denimjeans2.jpg'))return readFile(DEST+'/original-denimjeans2.jpg');
@@ -111,7 +111,7 @@ for(let y=0;y<sh;y++){
 }
 const parts=0,component=result.reduce((total,v)=>total+v,0);
 if(component<sw*sh*.20)throw Error('Source-true original denim legs not fully segmented');
-const maskRaw=await sharp(Buffer.from(result),{raw:{width:sw,height:sh,channels:1}}).resize(w,h,{kernel:'nearest'}).raw().toBuffer();
+const maskRaw=await sharp(Buffer.from(result),{raw:{width:sw,height:sh,channels:1}}).resize(w,h,{kernel:'nearest'}).greyscale().raw().toBuffer();
 const rgba=Buffer.from(decoded.data);
 let count=0,waist=0,left=0,right=0,gap=0,minX=w,minY=h,maxX=-1,maxY=-1,
  color=[0,0,0],colorCount=0;
