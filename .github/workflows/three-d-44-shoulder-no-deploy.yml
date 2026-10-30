@@ -1,0 +1,83 @@
+name: 3D-44 original-photo shoulder cap and upper-sleeve tailoring mobile QA (DRAFT HOLD NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'research/three-d-44/**'
+      - 'research/three-d-42/posed-contact.mjs'
+      - 'research/three-d-15/outfit-controller.mjs'
+      - 'research/three-d-15/showroom.mjs'
+      - 'research/three-d-31/photo-jeans-demo.mjs'
+      - 'research/three-d-37/second-jeans-demo.mjs'
+      - 'tests/three-d-40-independent-silhouettes.test.mjs'
+      - 'tests/three-d-39-original-cloth-contact.test.mjs'
+      - 'tests/three-d-37-second-models.test.mjs'
+      - 'tests/three-d-38-full-outfit-waist.test.mjs'
+      - 'scripts/*three-d-44*.mjs'
+      - 'tests/three-d-44-shoulder-tailoring.test.mjs'
+      - '.github/workflows/three-d-44-shoulder-no-deploy.yml'
+permissions:
+  contents: read
+jobs:
+  original-photo-full-outfit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Exact dedicated-success PR451 parent, no production file changes
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor 7cb3d6b138d71c9dcd34aaec85868b3f76787e64 HEAD
+          git diff --name-only 06af713c0048cb7ba018b26eca937554efe84975 HEAD | while IFS= read -r f; do
+            case "$f" in
+              research/three-d-44/*|research/three-d-42/posed-contact.mjs|research/three-d-15/outfit-controller.mjs|research/three-d-15/showroom.mjs|research/three-d-31/photo-jeans-demo.mjs|research/three-d-37/second-jeans-demo.mjs|tests/three-d-44-shoulder-tailoring.test.mjs|scripts/*three-d-44*.mjs|.github/workflows/three-d-44-shoulder-no-deploy.yml) ;;
+              *) echo "OUT OF SCOPE: $f"; exit 1 ;;
+            esac
+          done
+      - name: Install pinned no-token original photo development tools
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 three@0.180.0 playwright@1.56.1 three-mesh-bvh@0.9.2
+      - name: Reproduce byte-exact two different original photos and source-only alpha proposals
+        run: |
+          node scripts/build-three-d-31-jeans-proposal.mjs
+          node scripts/build-three-d-37-second-jeans.mjs
+          node --test tests/three-d-31-jeans-source.test.mjs tests/three-d-37-source-true.test.mjs
+      - name: Restore original CC0 male/female 163-bone models and genuine photographed AJ shirt
+        run: |
+          git fetch --no-tags origin 53f2ad344dc56a1477e343531c423aed0e66c17d dd6bac3fa9ff640d4f562cf925337440bdb5cf8f 3a572193987cb29389727426136c6eb3ac326783 dfb40889c4c1221fb1833b859e8a11ef38aeb76e
+          node scripts/build-work47-benchmark.mjs
+          node research/three-d-20/restore-approved-models.mjs
+      - name: Original 3D42 independent construction regression + source-true intermediate arm pose unit testing
+        run: |
+          node --test tests/three-d-42-construction.test.mjs
+          node --test tests/three-d-43-intermediate-poses.test.mjs
+          node --test tests/three-d-44-shoulder-tailoring.test.mjs
+      - name: Existing exact original source/relaxed posed triangle gate
+        run: node scripts/audit-three-d-42-triangles.mjs
+      - name: All actual source-photo body, shirt and jeans triangles at five sampled original arm poses
+        run: node scripts/audit-three-d-43-pose-sweep.mjs
+      - name: Source-preserving tailored sleeve five-sampled-pose actual BVH triangle gate
+        run: node scripts/audit-three-d-44-shoulder-poses.mjs
+      - name: Four original model+photo combinations tested physically in real skinned source-pose geometry
+        run: |
+          node --test tests/three-d-41-source-leg-fall.test.mjs
+          node --test tests/three-d-40-independent-silhouettes.test.mjs tests/three-d-39-original-cloth-contact.test.mjs
+          node --test tests/three-d-38-full-outfit-waist.test.mjs tests/three-d-37-second-models.test.mjs tests/three-d-29-neckline.test.mjs
+      - name: Render actual original photographed tailored sleeves before-after at 320/390/430 in 3 views
+        run: node scripts/test-three-d-44-shoulder-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: THREE-D-44-SOURCE-TRUE-UPPER-SLEEVE-MOBILE-COLLISION-HOLD
+          path: |
+            benchmark/three-d-44/
+            benchmark/three-d-43/intermediate-triangle-audit.json
+            benchmark/three-d-42/triangle-collisions.json
+            benchmark/three-d-37/metrics.json
+            benchmark/three-d-37/matte-review.png
+            benchmark/three-d-31/metrics.json
+          if-no-files-found: warn
