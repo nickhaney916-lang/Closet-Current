@@ -123,6 +123,12 @@ export function hangOriginalPhotographedDenimPanels(pants,{enabled=true}={}){
    slice.push({y,z:pct(back,.08),count:back.length});
   }
   if(slice.length<12)throw Error('Original photographed posterior leg sections unavailable');
+  // Fair the actual measured source-cloth depth longitudinally before moving
+  // triangles; otherwise noisy slice maxima form unnatural horizontal bulges.
+  for(let pass=0;pass<5;pass++){
+   const old=slice.map(a=>a.z);
+   for(let i=1;i<slice.length-1;i++)slice[i].z=.24*old[i-1]+.52*old[i]+.24*old[i+1];
+  }
   const interp=y=>{
    if(y<=slice[0].y)return slice[0].z;
    for(let i=1;i<slice.length;i++)if(y<=slice[i].y){
@@ -146,11 +152,11 @@ export function hangOriginalPhotographedDenimPanels(pants,{enabled=true}={}){
   const rearPlane=profile.interp(q.y);
   // A genuine hanging textile panel falls behind the original measured rear:
   // remove muscular thigh notches without painting imaginary seam/pocket.
-  const rear=1-smooth(q.z-rearPlane,.015,.135);
+  const rear=1-smooth(q.z-rearPlane,.005,.180);
   const lateral=smooth(Math.abs(q.x),Math.abs(leg.hip.x)+.02,Math.abs(leg.hip.x)+.125);
-  const shape=.014+.024*Math.sin(Math.PI*clamp(t,0,1));
+  const shape=.008+.012*Math.sin(Math.PI*clamp(t,0,1));
   const dz=-shape*rear*fade*photoWeight;
-  const dx=Math.sign(q.x)*.018*lateral*fade*photoWeight;
+  const dx=Math.sign(q.x)*.006*lateral*fade*photoWeight;
   const dist=Math.hypot(dx,dz);
   if(dist<.00015)continue;
   const scale=Math.min(1,.040/dist);
@@ -158,7 +164,7 @@ export function hangOriginalPhotographedDenimPanels(pants,{enabled=true}={}){
   changes.push({n,target});moved++;total+=q.distanceTo(target);max=Math.max(max,q.distanceTo(target));
   if(rear>.5)back++;else side++;
  }
- if(moved<250||max<.014||max>.040001||back<140)
+ if(moved<250||max<.007||max>.025001||back<140)
   {geometry.dispose();throw Error('Original photographed jeans rear hanging cloth panel not substantive '+JSON.stringify({moved,max,back,side}));}
  for(const {n,target} of changes){
   const local=target.applyMatrix4(inverse);
