@@ -33,7 +33,7 @@ jobs:
         run: |
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           git merge-base --is-ancestor 7cb3d6b138d71c9dcd34aaec85868b3f76787e64 HEAD
-          git diff --name-only 06af713c0048cb7ba018b26eca937554efe84975 HEAD | while IFS= read -r f; do
+          git diff --name-only 7cb3d6b138d71c9dcd34aaec85868b3f76787e64 HEAD | while IFS= read -r f; do
             case "$f" in
               research/three-d-44/*|research/three-d-42/posed-contact.mjs|research/three-d-15/outfit-controller.mjs|research/three-d-15/showroom.mjs|research/three-d-31/photo-jeans-demo.mjs|research/three-d-37/second-jeans-demo.mjs|tests/three-d-44-shoulder-tailoring.test.mjs|scripts/*three-d-44*.mjs|.github/workflows/three-d-44-shoulder-no-deploy.yml) ;;
               *) echo "OUT OF SCOPE: $f"; exit 1 ;;
