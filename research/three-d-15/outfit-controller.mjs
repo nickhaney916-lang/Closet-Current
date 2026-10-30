@@ -2,6 +2,7 @@
 import {createPantsFitter} from '../three-d-13/canonical-pants-fit.mjs';
 import {prepareBodyPresentation,attachReviewedShirt,releaseBodyPresentation} from '../three-d-11/dress-in-source-pose.mjs';
 import {setFashionPose} from '../three-d-09/pose-source.mjs';
+import {setResearchPose} from '../three-d-43/intermediate-pose.mjs';
 import {buildSourceDress,requireDress} from '../three-d-14/dress-shell.mjs';
 import {requireAnatomicalShirtPreview} from '../three-d-07/rig-shirt-transfer.mjs';
 import {finishDressEdges} from './dress-finish.mjs';
@@ -101,10 +102,10 @@ export function createOutfitController(root,{refineFit=true,enableCuffFix=true,e
    if(!all(built).every(m=>skeletons.has(m.skeleton)))throw Error('Garment skeleton mismatch');
    if(independentGarments&&built.shirt){builtContact=poseContactFactory(root,built.shirt,built.pants);setFashionPose(root,pose);builtContact.fit(pose);}
   }catch(e){builtContact?.dispose();Object.values(built).forEach(g=>g.dispose());held.forEach(({mesh,parent})=>parent.add(mesh));throw e;}
-  finally{setFashionPose(root,pose);}
+  finally{setResearchPose(root,pose);}
   contact?.dispose();Object.values(parts).forEach(g=>g.dispose());parts=built;mode=next;contact=builtContact;changes++;return summarize();
  }
- function setPose(next){if(closed)throw Error('Outfit controller closed');setFashionPose(root,next);pose=next;contact?.fit(next);return summarize();}
+ function setPose(next){if(closed)throw Error('Outfit controller closed');if(!independentGarments&&next.startsWith('blend-'))throw Error('Intermediate garment pose requires isolated independent research mode');setResearchPose(root,next);pose=next;contact?.fit(next);return summarize();}
  function dispose(){if(closed)return;contact?.dispose();Object.values(parts).forEach(g=>g.dispose());parts={};mode='none';closed=true;releaseBodyPresentation(root);}
  setPose(pose);return {setOutfit,setPose,getState:summarize,dispose};
 }

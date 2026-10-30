@@ -3,7 +3,7 @@
  * are local oriented face distances, NOT signed watertight volume depths. */
 import * as T from 'three';
 import {MeshBVH} from '../../node_modules/three-mesh-bvh/build/index.module.js';
-import {setFashionPose} from '../three-d-09/pose-source.mjs';
+import {setResearchPose} from '../three-d-43/intermediate-pose.mjs';
 import {smoothSurfaceNormals} from '../three-d-08/garment-fit-profile.mjs';
 export function posedGeometry(meshes){const pos=[],idx=[],map=[];
  for(const m of meshes){m.updateWorldMatrix(true,false);m.skeleton.update();const off=pos.length/3,p=m.geometry.attributes.position;for(let i=0;i<p.count;i++){pos.push(...m.applyBoneTransform(i,new T.Vector3().fromBufferAttribute(p,i)).applyMatrix4(m.matrixWorld).toArray());map.push([m,i]);}const ix=m.geometry.index;for(let i=0;i<(ix?.count??p.count);i++)idx.push(off+(ix?ix.getX(i):i));}
@@ -19,7 +19,7 @@ export function createPoseContact(root,shirt,pants){
  const bodies=[];root.traverse(m=>{if(m.isSkinnedMesh&&!m.userData.work56Garment)bodies.push(m);});
  const meshes=shirt?.meshes||[],base=new Map(meshes.map(m=>[m,m.geometry.attributes.position.array.slice()])),cache=new Map();
  function restore(data,normals=null){for(const m of meshes){m.geometry.attributes.position.array.set(data.get(m));m.geometry.attributes.position.needsUpdate=true;if(normals){m.geometry.attributes.normal.array.set(normals.get(m));m.geometry.attributes.normal.needsUpdate=true;}else{m.geometry.computeVertexNormals();smoothSurfaceNormals(m.geometry,m.geometry.attributes.position.count);}m.geometry.computeBoundingSphere();}}
- function fit(pose){if(!meshes.length)return;setFashionPose(root,pose);if(cache.has(pose)){restore(cache.get(pose).positions,cache.get(pose).normals);shirt.stats.poseTriangleContact=cache.get(pose).stats;return;}
+ function fit(pose){if(!meshes.length)return;setResearchPose(root,pose);if(cache.has(pose)){restore(cache.get(pose).positions,cache.get(pose).normals);shirt.stats.poseTriangleContact=cache.get(pose).stats;return;}
   const began=performance.now();restore(base);const body=posedGeometry(bodies),groups=new Map(),membership=new Map();
   for(const m of meshes){const p=m.geometry.attributes.position;for(let i=0;i<p.count;i++){const k=[p.getX(i),p.getY(i),p.getZ(i)].map(v=>v.toFixed(5)).join(':');if(!groups.has(k))groups.set(k,[]);groups.get(k).push([m,i]);membership.set(m.uuid+':'+i,k);}}
   let before,after,steps=0,totalMoved=0;const records=[];
