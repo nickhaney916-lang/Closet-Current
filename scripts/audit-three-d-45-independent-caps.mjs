@@ -58,9 +58,9 @@ export async function auditIndependentShoulderCaps({figures=['female','male'],so
    continuousMotionCollisionCertified:false,releaseAuthorized:false};
  return summary;
 }
-if(process.argv[1]?.endsWith('audit-three-d-45-shoulder-poses.mjs')){
+if(process.argv[1]?.endsWith('audit-three-d-45-independent-caps.mjs')){
  const summary=await auditIndependentShoulderCaps();
  await mkdir('benchmark/three-d-45',{recursive:true});
  await writeFile('benchmark/three-d-45/intermediate-triangle-audit.json',JSON.stringify(summary,null,2));
- console.log('THREE_D44_TAILORED_SOURCE_TRUE_FIVE_POSE_TRIANGLE_AUDIT',JSON.stringify({studied:summary.studied,figures:summary.figures,sources:summary.sources,poses:summary.poses,releaseAuthorized:false}));
+ console.log('THREE_D45_INDEPENDENT_CAP_FIVE_POSE_TRIANGLE_AUDIT',JSON.stringify({studied:summary.studied,figures:summary.figures,sources:summary.sources,poses:summary.poses,releaseAuthorized:false}));
 }
