@@ -1,0 +1,21 @@
+# Closet Current — 3D56 physical original-photograph elbow folds (DRAFT HOLD)
+
+## Exact verified starting point
+
+Use research [draft PR #465](https://github.com/nickhaney916-lang/Closet-Current/pull/465), exact SHA `32e0678a0ad40b0c6636323c8fcb0a0955505a88`, [dedicated original-source no-deploy #41144090004 SUCCESS](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/41144090004). Existing 3D55 genuine original photographed garment male/female x two original licensed denims passed 4/4, inherited all source/photo/independent cap/collar/3D53 rear and 3D54 original shoulder tests, all 28 actual skinned BVH source shirt/body, original jeans/body and shirt/jeans triangle intersection records, and 12 genuine Chromium original photo scenarios / 144 before-and-after frames at 320/390/430 across front/side/back + blend-50/relaxed, 6,602 changed pixels. Original screenshot/audit archive GitHub artifact `13021510353` retained in ChatGPT Closet Current Library. Actual front/side/back source-photo closeups were reviewed: sleeve construction still looks somewhat rigid and padded despite true, subtle forearm folds. **Photorealism HUMAN REVIEW, not PASS**.
+
+## New real garment source geometry — implement rather than research-only documentation
+
+`research/three-d-56/source-elbow-cloth-creases.mjs` adds two broad, softly staggered *physical* creases around the original anatomical elbow and adjacent forearm on the existing genuine source-photographed skinned sleeve mesh. It uses each original male/female 163-joint `lowerarm01` and `wrist` source bone location and a nonuniform angular phase to avoid unnatural repetitive ring creases. Triangle-used source vertices receive a small source-measured radial outer fabric gathering and gravity ease; torso photo print, neckline, original independent L/R cap shoulder seams, source wrist cuffs, body, collar, licensed photographed jeans and source-neutral shirt back remain outside the edited region. Genuine source-photo `panelPosition`, `panelNormal`, `skinIndex` and `skinWeight` attributes remain byte-identical, with maximum physical source point move <=13mm. This is **skinned cloth geometry**, NOT all-pose dynamic cloth simulation, generic artificial texture, synthesized reverse photography, AI garment rendering, signed containment or certified swept collision.
+
+Opt-in only after true previous source stages, controller flag `sourceElbowClothCreases` and research licensed-original photo URL `rear53=after&round54=after&hang55=after&crease56=after`. Original production, alpha, 2D fallback and login unchanged. Do not access private user/family photos or make paid external per-outfit inference.
+
+## Unchanged fail-closed quality gates
+
+1. Strict parent ancestry from previous dedicated green original source 3D55, research-only file whitelist and default-disabled opt-in, NO deploy.
+2. Real male/female 163-bone rigs, independently licensed source shirt and two separately licensed original denim photos: all old 3D47/48/53/54/55 test gates remain, plus new original 3D56 same-rig before/after true source geometry. Need distinct physical forearm folds left/right, <=13.02mm per-vertex displacement, source front/UV/skin exact, independent sewn L/R cap meshes unchanged, original body/denim unchanged.
+3. Independent actual skinned mesh BVH **28 poses/samples** zero shirt/body, jeans/body, shirt/denim triangle crossings with real 3D56 geometry ON; no skipped pose; no false claims of signed interior penetration or swept motion certification.
+4. Real source-photographed Chromium 320/390/430 both original figures, both licensed denims, front/side/back and blend-50/relaxed; true 144 before/after frames, actual changed pixels required in each view. Use real screenshot crops and separate human pass/review/fail judgments; do not call pixel movement human photorealism.
+5. Draft/HOLD. Do not merge, deploy, alter staging/production, bill users, touch Drive Duel, use private photos, release to Family Alpha Issue #255 or claim physical-phone QA.
+
+**Current status:** Genuine new code, tests, strict source-photo Chromium and research-only CI workflow written. No 3D56 exact-head job has yet passed; no genuine 3D56 screenshots or visual acceptance exist at this initial commit.
