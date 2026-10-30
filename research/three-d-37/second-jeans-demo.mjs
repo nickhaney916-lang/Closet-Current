@@ -62,6 +62,14 @@ async function start(){
  $('neutral').addEventListener('click',()=>{if(!ready)return;app.applyOutfit('pants');status('Original neutral anatomical research pants. No photographed cloth applied.');update();});
  $('photo').addEventListener('click',e=>{if(!ready||!e.isTrusted||!$('review').checked)return;app.applyOutfit('pants',null,{pantsCandidate:pants,pantsReviewed:true});status('Original denim front pixels on 3D pant mesh · unphotographed neutral back · HOLD');update();});
  $('full').addEventListener('click',e=>{if(!ready||!e.isTrusted||!$('review').checked)return;app.applyOutfit('shirt-pants',shirt,{reviewed:true,pantsCandidate:pants,pantsReviewed:true});status('Original AJ shirt plus original denim pixels on separate 3D pants · HOLD');update();});
- window.cc31Diagnostics=()=>app.getState();window.addEventListener('pagehide',()=>{closed=true;app.stop();urls.forEach(u=>URL.revokeObjectURL(u));});
+ window.cc31Diagnostics=()=>app.getState();
+ // Localhost, explicit research opt-in only. The source-photo review gate
+ // and actual original garment/rig loading must already be completed.
+ if(new URLSearchParams(location.search).get('sweep')==='after')window.cc43SetPose=(pose)=>{
+  if(!ready||!['source','blend-25','blend-50','blend-75','relaxed'].includes(pose))throw Error('Original licensed outfit or approved research pose unavailable');
+  const state=app.getState();if(state.outfit?.mode!=='shirt-pants'||!state.outfit?.shirt?.poseTriangleContact)throw Error('Original reviewed shirt/jeans with independent pose solver required');
+  app.setPose(pose);update();return app.getState();
+ };
+window.addEventListener('pagehide',()=>{closed=true;app.stop();urls.forEach(u=>URL.revokeObjectURL(u));});
 }
 start().catch(e=>{status('Provisional image preview blocked: '+e.message);$('review').disabled=true;$('photo').disabled=true;$('full').disabled=true;console.error(e);});
