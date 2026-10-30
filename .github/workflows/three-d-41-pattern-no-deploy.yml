@@ -58,7 +58,7 @@ jobs:
         run: |
           node --test tests/three-d-40-independent-silhouettes.test.mjs tests/three-d-39-original-cloth-contact.test.mjs
           node --test tests/three-d-38-full-outfit-waist.test.mjs tests/three-d-37-second-models.test.mjs tests/three-d-29-neckline.test.mjs
-      - name: Render 96 genuine full-outfit real mobile WebGL source/relaxed angles and neutrals
+      - name: Render 192 genuine full-outfit real mobile WebGL source/relaxed angles and neutrals
         run: node scripts/test-three-d-41-pattern-browser.mjs
       - uses: actions/upload-artifact@v4
         if: always()

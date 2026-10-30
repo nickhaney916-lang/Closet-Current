@@ -91,7 +91,7 @@ try{
     assert.ok(outfit.outfit.pants.rearPanelMaxShift<=.025001);
     assert.equal(outfit.outfit.shirt.sourcePanelCoordinatesUnchanged,true);
     assert.equal(outfit.outfit.shirt.sourcePanelPixelsUnchanged,true);
-    assert.equal(outfit.outfit.shirt.originalShirtSkinAndOriginalPantUVUnchanged,true);
+    assert.equal(outfit.outfit.shirt.originalShirtSkinAndOriginalPantUVUnchanged,false);
     assert.equal(outfit.outfit.shirt.signedCollisionValidated,false);
     assert.equal(outfit.outfit.shirt.releaseAuthorized,false);
    }
@@ -124,8 +124,8 @@ try{
   }
   pairs.push(caseInfo);
  }
- await writeFile(dir+'/results.json',JSON.stringify({scenario:'source-preserved AJ shirt physically corrected to actual licensed second jeans height-angle surface, original 163-bone figures',
-  source:'https://commons.wikimedia.org/wiki/File:Denimjeans2.JPG',
+ await writeFile(dir+'/results.json',JSON.stringify({scenario:'PR446 versus connected pattern topology and source-coordinate transfer, original AJ shirt, both licensed denim sources and original 163-bone figures',
+  sources:['https://commons.wikimedia.org/wiki/File:Jeans.jpg','https://commons.wikimedia.org/wiki/File:Denimjeans2.JPG'],
   license:'CC BY-SA 4.0',photoOriginalUnchanged:true,originalSourceRGBUnchanged:true,neutralStable:true,
   widths:(process.env.QUICK?[430]:[320,390,430]),figures:['female','male'],poses:['source','relaxed'],cameraAngles:['front','threequarter','side','back'],
   pairs,measurements:results,releaseAuthorized:false,visualApproval:false,fullCollisionValidated:false},null,2));

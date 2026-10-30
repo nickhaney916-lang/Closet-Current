@@ -24,7 +24,7 @@ import {supportOriginalDenimCrotch} from '../three-d-36/crotch-seat-panel.mjs';
 import {alignOriginalShirtOverJeans} from '../three-d-38/shirt-over-denim-waist.mjs';
 import {fitPhotographedOutfitContact} from '../three-d-39/actual-garment-contact.mjs';
 import {drapeOriginalPhotographedShirtTorso,hangOriginalPhotographedDenimPanels} from '../three-d-40/independent-hanging-silhouettes.mjs';
-import {relaxShirtSidePanels} from '../three-d-41/shirt-side-hang.mjs';
+import {relaxShirtSidePanels,clearShirtPatternWaist} from '../three-d-41/shirt-side-hang.mjs';
 import {sewPatternTrousers} from '../three-d-41/pattern-trousers.mjs';
 import {registerDressNeckline,clearNeckTriangleInteriors} from '../three-d-29/registered-neckline.mjs';
 export const OUTFITS=Object.freeze(['none','pants','shirt','shirt-pants','dress']);
@@ -73,7 +73,8 @@ export function createOutfitController(root,{refineFit=true,enableCuffFix=true,e
     built.shirt=alignOriginalShirtOverJeans(built.shirt,built.pants);
     if(clothWaistContact)built.shirt=fitPhotographedOutfitContact(built.shirt,built.pants);
    }
-   if(sewnPattern&&built.pants?.stats?.originalPhotographedHangingLegPanels)built.pants=sewPatternTrousers(built.pants);
+   if(sewnPattern&&built.pants?.stats?.originalPhotographedHangingLegPanels)built.pants=sewPatternTrousers(built.pants,root);
+   if(sewnPattern&&built.shirt&&built.pants?.stats?.independentSewnPattern)built.shirt=clearShirtPatternWaist(built.shirt,built.pants);
    if(next==='dress'){
     const raw=buildSourceDress(root,candidate,{reviewed});
     try{
