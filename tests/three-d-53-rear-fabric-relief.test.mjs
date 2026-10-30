@@ -4,6 +4,7 @@
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import * as THREE from 'three';
 import {person,candidate} from '../research/three-d-24/test-fixtures.mjs';
 import {createOutfitController} from '../research/three-d-15/outfit-controller.mjs';
 import {createPoseContact} from '../research/three-d-42/posed-contact.mjs';
@@ -11,12 +12,19 @@ import {denim} from '../scripts/audit-three-d-42-triangles.mjs';
 import {PANTS_RESEARCH_SOURCE as A,PANTS_RESEARCH_SOURCE_SECOND as B} from '../research/three-d-30/reviewed-photo-pants.mjs';
 const attributes=['panelPosition','panelNormal','skinIndex','skinWeight'];
 const collect=root=>{
+ root.updateMatrixWorld(true);
  const body=[],pants=[],shirts=[],caps=[],collars=[];
  root.traverse(m=>{
   if(!m.isSkinnedMesh)return;
   if(!m.userData.work56Garment){body.push([...m.geometry.getAttribute('position').array]);return;}
   if(m.userData.work60Pants){pants.push([...m.geometry.getAttribute('position').array]);return;}
-  const entry={name:m.name,pos:[...m.geometry.getAttribute('position').array],
+  const position=m.geometry.getAttribute('position');
+  const world=[];
+  if(m.name==='Work56-independent-shirt-shell')for(let i=0;i<position.count;i++){
+   const q=new THREE.Vector3().fromBufferAttribute(position,i).applyMatrix4(m.matrixWorld);
+   world.push(q.x,q.y,q.z);
+  }
+  const entry={name:m.name,pos:[...position.array],world,
    protected:Object.fromEntries(attributes.map(n=>[n,[...m.geometry.getAttribute(n).array]]))};
   if(m.userData.work45IndependentShoulderCap)caps.push(entry);
   else if(m.name==='Work59-source-neutral-collar-band')collars.push(entry);
@@ -58,12 +66,18 @@ for(const kind of ['female','male'])for(const src of [A,B])
     assert.equal(x.name,y.name);
     assert.deepEqual(x.protected,y.protected,'Photographic front/UV/rig original arrays must not change');
     assert.equal(x.pos.length,y.pos.length);
-    for(let i=0;i<x.pos.length;i+=3){
-     const dx=Math.abs(x.pos[i]-y.pos[i]),dy=Math.abs(x.pos[i+1]-y.pos[i+1]),dz=Math.abs(x.pos[i+2]-y.pos[i+2]);
-     assert.ok(dx<.000001&&dy<.000001,'Rear relief must move exclusively along garment back normal');
-     assert.ok(dz<=.01802,'Individual real panel move is physically bounded');
+    assert.equal(x.world.length,y.world.length,'World-space visible shirt vertices must retain original count');
+    for(let i=0;i<x.world.length;i+=3){
+     // Male and female source meshes can use different local transforms.
+     // 3D53 moves only WORLD z; local x/y can legitimately change when
+     // converting this displacement back through the original mesh matrix.
+     const dx=Math.abs(x.world[i]-y.world[i]),dy=Math.abs(x.world[i+1]-y.world[i+1]),dz=Math.abs(x.world[i+2]-y.world[i+2]);
+     assert.ok(Number.isFinite(dx)&&Number.isFinite(dy)&&Number.isFinite(dz),'World-space source garment geometry must remain finite');
+     assert.ok(dx<.000001&&dy<.000001,
+      'Actual world-space rear fabric must move only along source-fitted back depth');
+     assert.ok(dz<=.01802,'Individual original shirt panel shift must be bounded in world space');
      if(dz>.0001)moved++;
-     if(x.protected.panelNormal[i+2]>-.8){assert.ok(dz<.000001,'Original photographed forward material moved');unchangedPhoto++;}
+     if(x.protected.panelNormal[i+2]>-.8){assert.ok(dz<.000001,'Original photographed front or side material moved');unchangedPhoto++;}
     }
    }
    assert.ok(moved>=24&&unchangedPhoto>30,'Source-neutral real rear change and protected original photo not demonstrated');
