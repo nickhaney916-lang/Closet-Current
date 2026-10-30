@@ -1,0 +1,79 @@
+name: 3D-53 original-photo rear cloth relief and mobile visual QA (DRAFT HOLD NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'research/three-d-53/**'
+      - 'research/three-d-15/outfit-controller.mjs'
+      - 'research/three-d-15/showroom.mjs'
+      - 'research/three-d-31/photo-jeans-demo.mjs'
+      - 'research/three-d-37/second-jeans-demo.mjs'
+      - 'scripts/audit-three-d-47-upper-arm-volume.mjs'
+      - 'scripts/test-three-d-53-rear-browser.mjs'
+      - 'tests/three-d-53-rear-fabric-relief.test.mjs'
+      - '.github/workflows/three-d-53-original-rear-cloth-no-deploy.yml'
+permissions:
+  contents: read
+jobs:
+  real-source-neutral-rear-cloth:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Exact green 3D52 parent; research-only source paths
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor cc7738aa4d4c7adb89e77e0a080782bd6605ffe6 HEAD
+          git diff --name-only cc7738aa4d4c7adb89e77e0a080782bd6605ffe6 HEAD | while IFS= read -r f; do
+            case "$f" in
+              research/three-d-53/*|research/three-d-15/outfit-controller.mjs|research/three-d-15/showroom.mjs|research/three-d-31/photo-jeans-demo.mjs|research/three-d-37/second-jeans-demo.mjs|scripts/audit-three-d-47-upper-arm-volume.mjs|scripts/test-three-d-53-rear-browser.mjs|tests/three-d-53-rear-fabric-relief.test.mjs|.github/workflows/three-d-53-original-rear-cloth-no-deploy.yml) ;;
+              *) echo "BLOCKED non-research scope: $f"; exit 1 ;;
+            esac
+          done
+      - name: Install pinned local source verification dependencies, no inference
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 three@0.180.0 playwright@1.56.1 three-mesh-bvh@0.9.2
+      - name: Recreate fixed-hash licensed original shirt and both original denim source crops
+        run: |
+          node scripts/build-three-d-31-jeans-proposal.mjs
+          node scripts/build-three-d-37-second-jeans.mjs
+          node --test tests/three-d-31-jeans-source.test.mjs tests/three-d-37-source-true.test.mjs
+      - name: Original source 163-bone male/female rig models and unchanged shirt
+        run: |
+          git fetch --no-tags origin 53f2ad344dc56a1477e343531c423aed0e66c17d dd6bac3fa9ff640d4f562cf925337440bdb5cf8f 3a572193987cb29389727426136c6eb3ac326783 dfb40889c4c1221fb1833b859e8a11ef38aeb76e
+          node scripts/build-work47-benchmark.mjs
+          node research/three-d-20/restore-approved-models.mjs
+      - name: Preserve green bilateral cap, seam, collar and real fabric geometry tests
+        run: |
+          node --test tests/three-d-47-upper-arm-volume.test.mjs
+          node --test tests/three-d-48-cap-seam-witness.test.mjs
+          node --test tests/three-d-48-collar-roll.test.mjs
+      - name: 3D53 opt-in real source-neutral photographed shirt rear panel QA
+        run: node --test tests/three-d-53-rear-fabric-relief.test.mjs
+      - name: Audit all 28 genuine male/female and licensed denim source skinned pose samples with relief ON
+        run: |
+          node scripts/audit-three-d-47-upper-arm-volume.mjs --rear53
+          node --input-type=module <<'AUDIT'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const a=JSON.parse(readFileSync('benchmark/three-d-53/intermediate-triangle-audit.json','utf8'));
+          assert.equal(a.sourceNeutralRearFabricRelief,true,'Opt-in 3D53 must really be used for every audit');
+          assert.equal(a.records.length,28);
+          for(const r of a.records)for(const key of ['shirtBody','pantsBody','shirtJeans'])
+            assert.equal(r[key].crossingTrianglePairs,0,'Actual posed garment triangle collision '+r.kind+'/'+r.source+'/'+r.pose+'/'+key);
+          assert.equal(a.signedVolumeContainmentCertified,false);
+          assert.equal(a.releaseAuthorized,false);
+          AUDIT
+      - name: True original source before/after Chromium mobile screens 320 390 430, all anatomical viewpoints
+        run: node scripts/test-three-d-53-rear-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: THREE-D-53-ORIGINAL-PHOTO-REAR-RELIEF-REAL-MOBILE-QA-HOLD
+          path: |
+            benchmark/three-d-53/
+          if-no-files-found: warn
