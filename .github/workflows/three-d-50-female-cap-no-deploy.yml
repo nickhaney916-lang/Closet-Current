@@ -25,7 +25,7 @@ jobs:
           git merge-base --is-ancestor 4229bf7933af359740ca751e9f9c6766187e0e6c HEAD
           git diff --name-only 4229bf7933af359740ca751e9f9c6766187e0e6c HEAD | while IFS= read -r f; do
             case "$f" in
-              research/three-d-47/upper-arm-fabric-volume.mjs|research/three-d-50/*|.github/workflows/three-d-50-female-cap-no-deploy.yml) ;;
+              research/three-d-47/upper-arm-fabric-volume.mjs|research/three-d-50/*|.github/workflows/three-d-47-upper-arm-no-deploy.yml|.github/workflows/three-d-50-female-cap-no-deploy.yml) ;;
               *) echo "BLOCKED out-of-scope edit: $f"; exit 1 ;;
             esac
           done
