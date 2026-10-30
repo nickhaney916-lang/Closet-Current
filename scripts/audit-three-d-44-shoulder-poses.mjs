@@ -60,7 +60,7 @@ export async function auditTailoredShoulders({figures=['female','male'],sources=
 }
 if(process.argv[1]?.endsWith('audit-three-d-44-shoulder-poses.mjs')){
  const summary=await auditTailoredShoulders();
- await mkdir('benchmark/three-d-43',{recursive:true});
+ await mkdir('benchmark/three-d-44',{recursive:true});
  await writeFile('benchmark/three-d-44/intermediate-triangle-audit.json',JSON.stringify(summary,null,2));
  console.log('THREE_D44_TAILORED_SOURCE_TRUE_FIVE_POSE_TRIANGLE_AUDIT',JSON.stringify({studied:summary.studied,figures:summary.figures,sources:summary.sources,poses:summary.poses,releaseAuthorized:false}));
 }
