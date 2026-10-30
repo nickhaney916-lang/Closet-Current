@@ -71,7 +71,8 @@ jobs:
         with:
           name: THREE-D-43-SAMPLED-POSE-REAL-PHOTOGRAPHIC-CLOTHING-WEBGL-HOLD
           path: |
-            benchmark/three-d-43/\n            benchmark/three-d-42/triangle-collisions.json
+            benchmark/three-d-43/
+            benchmark/three-d-42/triangle-collisions.json
             benchmark/three-d-37/metrics.json
             benchmark/three-d-37/matte-review.png
             benchmark/three-d-31/metrics.json
