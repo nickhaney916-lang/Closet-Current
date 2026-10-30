@@ -46,7 +46,7 @@ export function createOutfitController(root,{refineFit=true,enableCuffFix=true,e
   if(id==='commons-0053')requireDress(candidate,reviewed);
   if(id==='commons-0003')requireAnatomicalShirtPreview(candidate,{acknowledged:reviewed});
   if(pantsCandidate){if(next!=='pants'&&next!=='shirt-pants')throw Error('Photo pants only allowed in lower-body outfit slots');requireReviewedPhotoPants(pantsCandidate,{reviewed:pantsReviewed});}
-  const held=all(parts).map(mesh=>({mesh,parent:mesh.parent})),built={};held.forEach(({mesh})=>mesh.removeFromParent());setFashionPose(root,'source');
+  let builtContact=null;const held=all(parts).map(mesh=>({mesh,parent:mesh.parent})),built={};held.forEach(({mesh})=>mesh.removeFromParent());setFashionPose(root,'source');
   try{
    // Build shirt FIRST, while the rig contains no other garments.
    if(next.includes('shirt')){built.shirt=attachReviewedShirt(root,candidate,{acknowledged:reviewed,pose:'source',improved:true});if(refineFit)built.shirt=protectShirtShoulders(built.shirt,shoulders);if(refineFit&&enableCuffFix)built.shirt=protectShirtCuffClearance(built.shirt,root);if(refineFit&&enableCuffFix&&enableCuffFacing)built.shirt=finishInnerCuffs(built.shirt,root);if(refineFit&&enableCuffFix&&enableCuffFacing&&enableCuffBridge)built.shirt=bridgeSourceCuffHem(built.shirt,root);if(naturalFit)built.shirt=fitContinuousShirt(built.shirt,root);if(necklineSeams)built.shirt=finishNecklineAndSeams(built.shirt,root);if(shirtHangingSilhouette&&necklineSeams)built.shirt=drapeOriginalPhotographedShirtTorso(built.shirt);}
@@ -99,9 +99,10 @@ export function createOutfitController(root,{refineFit=true,enableCuffFix=true,e
    }
    const skeletons=new Set();root.traverse(o=>{if(o.isSkinnedMesh&&!o.userData.work56Garment)skeletons.add(o.skeleton);});
    if(!all(built).every(m=>skeletons.has(m.skeleton)))throw Error('Garment skeleton mismatch');
-  }catch(e){Object.values(built).forEach(g=>g.dispose());held.forEach(({mesh,parent})=>parent.add(mesh));throw e;}
+   if(independentGarments&&built.shirt){builtContact=createPoseContact(root,built.shirt,built.pants);setFashionPose(root,pose);builtContact.fit(pose);}
+  }catch(e){builtContact?.dispose();Object.values(built).forEach(g=>g.dispose());held.forEach(({mesh,parent})=>parent.add(mesh));throw e;}
   finally{setFashionPose(root,pose);}
-  contact?.dispose();Object.values(parts).forEach(g=>g.dispose());parts=built;mode=next;contact=independentGarments&&parts.shirt?createPoseContact(root,parts.shirt,parts.pants):null;contact?.fit(pose);changes++;return summarize();
+  contact?.dispose();Object.values(parts).forEach(g=>g.dispose());parts=built;mode=next;contact=builtContact;changes++;return summarize();
  }
  function setPose(next){if(closed)throw Error('Outfit controller closed');setFashionPose(root,next);pose=next;contact?.fit(next);return summarize();}
  function dispose(){if(closed)return;contact?.dispose();Object.values(parts).forEach(g=>g.dispose());parts={};mode='none';closed=true;releaseBodyPresentation(root);}

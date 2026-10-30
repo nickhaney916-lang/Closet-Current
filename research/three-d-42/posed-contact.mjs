@@ -32,7 +32,9 @@ export function createPoseContact(root,shirt,pants){
    steps++;
   }
   const current=posedGeometry(meshes);after=triangleContacts(current.g,body.g,{collect:true});after.pairs=after.pairs.slice(0,30);current.g.dispose();body.g.dispose();
-  const positions=new Map(meshes.map(m=>[m,m.geometry.attributes.position.array.slice()])),stats={pose,before,after,steps,totalMoved,solveMilliseconds:performance.now()-began,method:'actual posed garment/body triangle intersections; outward local body-face corrections, original photo fields frozen',fullCollisionValidated:false};restore(positions);const normals=new Map(meshes.map(m=>[m,m.geometry.attributes.normal.array.slice()]));cache.set(pose,{positions,normals,stats});shirt.stats.poseTriangleContact=stats;
+  let maximumWorldCorrection=0,sumWorldCorrection=0,correctedVertices=0;
+  for(const m of meshes){const p=m.geometry.attributes.position,b=base.get(m);for(let i=0;i<p.count;i++){const old=m.applyBoneTransform(i,new T.Vector3(b[i*3],b[i*3+1],b[i*3+2])).applyMatrix4(m.matrixWorld),now=m.applyBoneTransform(i,new T.Vector3().fromBufferAttribute(p,i)).applyMatrix4(m.matrixWorld),distance=old.distanceTo(now);if(distance>1e-6){correctedVertices++;sumWorldCorrection+=distance;maximumWorldCorrection=Math.max(maximumWorldCorrection,distance);}}}
+  const positions=new Map(meshes.map(m=>[m,m.geometry.attributes.position.array.slice()])),stats={pose,before,after,steps,totalMoved,maximumWorldCorrection,meanWorldCorrection:correctedVertices?sumWorldCorrection/correctedVertices:0,correctedVertices,solveMilliseconds:performance.now()-began,method:'actual posed garment/body triangle intersections; outward local body-face corrections, original photo fields frozen',fullCollisionValidated:false};restore(positions);const normals=new Map(meshes.map(m=>[m,m.geometry.attributes.normal.array.slice()]));cache.set(pose,{positions,normals,stats});shirt.stats.poseTriangleContact=stats;
  }
  return {fit,dispose(){cache.clear();base.clear();}};
 }

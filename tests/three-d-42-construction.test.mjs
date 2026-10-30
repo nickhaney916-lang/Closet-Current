@@ -28,6 +28,6 @@ test('Posed contact cache is deterministic, source fields remain immutable, and 
  app.setOutfit('shirt-pants',candidate('shirt'),{reviewed:true,pantsCandidate:denim(A),pantsReviewed:true});
  const garments=[];root.traverse(m=>{if(m.isSkinnedMesh&&m.userData.work56Garment)garments.push(m);});const snapshots={};
  const hash=()=>garments.map(m=>createHash('sha256').update(Buffer.from(m.geometry.attributes.position.array.buffer)).digest('hex'));
- const times=[];for(const pose of ['source','relaxed','source','relaxed']){const t=performance.now(),s=app.setPose(pose);times.push(performance.now()-t);assert.equal(s.shirt.poseTriangleContact.after.count,0);if(snapshots[pose])assert.deepEqual(hash(),snapshots[pose]);else snapshots[pose]=hash();}
+ const times=[];for(const pose of ['source','relaxed','source','relaxed']){const t=performance.now(),s=app.setPose(pose);times.push(performance.now()-t);assert.equal(s.shirt.poseTriangleContact.after.count,0);assert.ok(s.shirt.poseTriangleContact.maximumWorldCorrection<.06,'Pose correction exceeds material shape budget');if(snapshots[pose])assert.deepEqual(hash(),snapshots[pose]);else snapshots[pose]=hash();}
  let disposed=0;garments.forEach(m=>m.geometry.addEventListener('dispose',()=>disposed++));app.dispose();assert.equal(disposed,garments.length);assert.equal(app.getState().garmentMeshes,0);console.log('POSE_CACHE_TIMES_MS',JSON.stringify(times));
 });
