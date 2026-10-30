@@ -67,9 +67,12 @@ try{
    assert.equal(jeans.outfit.pants.sourceSHA256,'aa7f288055874773b87cd38b5b4e473b532920f61c2d17cb0ccd7872466c444a');
    assert.equal(jeans.outfit.pants.cutoutSHA256,'4cf80f77fa34d04844d7310de180135df607248847ea17b1aed4ef613d0cb3db');
    assert.equal(jeans.outfit.pants.originalRGBPreserved,true);
+   // Side silhouette, not frontal pixels, is the relevant leg-fall acceptance view.
+   await page.locator('#side').click();await page.waitForTimeout(110);
    const jeansOnly=await page.locator('#avatar').screenshot({path:dir+'/'+width+'-'+kind+'-'+version+'-jeans-only.png'});
    if(version==='before')before.jeans=jeansOnly;
    else assert.ok(await changed(before.jeans,jeansOnly)>35,'Real source-measured independent rear/lower-leg fall must change the silhouette');
+   await page.locator('#front').click();
    await page.locator('#full').click();
    const outfit=await state();
    assert.equal(outfit.outfit.mode,'shirt-pants');
