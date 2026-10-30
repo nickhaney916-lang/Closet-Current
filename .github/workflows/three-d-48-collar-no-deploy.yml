@@ -51,7 +51,7 @@ jobs:
           node --test tests/three-d-47-upper-arm-volume.test.mjs
       - name: Real original photo collar: unchanged outer seam / protected source fields / male female / posed triangles
         run: |
-          node --test tests/three-d-22-neckline.test.mjs tests/three-d-48-collar-roll.test.mjs
+          node --test tests/three-d-29-neckline.test.mjs tests/three-d-48-collar-roll.test.mjs
       - name: Existing source-photo/jeans/caps and intermediate poses actual triangle audit
         run: node scripts/audit-three-d-47-upper-arm-volume.mjs
       - name: Original photo WebGL source-neutral collar A B at 320 390 430 and male female
