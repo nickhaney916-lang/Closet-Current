@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import {MeshBVH} from 'three-mesh-bvh';
 import {mkdir,writeFile} from 'node:fs/promises';
 import {person,candidate} from '../research/three-d-24/test-fixtures.mjs';
+import {createPoseContact} from '../research/three-d-42/posed-contact.mjs';
 import {createOutfitController} from '../research/three-d-15/outfit-controller.mjs';
 import {PANTS_RESEARCH_SOURCE as A,PANTS_RESEARCH_SOURCE_SECOND as B} from '../research/three-d-30/reviewed-photo-pants.mjs';
 export const denim=src=>({id:src.id,type:'pants',sourceSHA256:src.originalSHA256,cutoutSHA256:src.cutoutSHA256,sourceAssetsVerified:true,originalVerified:true,cutoutVerified:true,visibleSourceRGBPreserved:true,frontOrientationReviewed:true,neutralColorRGB:src===A?[83,104,135]:[57,81,120],cropRect:src===A?[.085,.07,.87,.82]:[.055,.08,.88,.86],cutout:{width:src===A?435:1754,height:src===A?650:2838},ownerApproved:false,humanVisualApproval:false,releaseAuthorized:false,provisional:true});
@@ -12,7 +13,7 @@ export function crossings(a,b){const ba=new MeshBVH(a),bb=new MeshBVH(b),left=ne
 if(process.argv[1]?.endsWith('audit-three-d-42-triangles.mjs')){
  const records=[];
  for(const kind of (process.env.KIND?[process.env.KIND]:['female','male']))for(const src of (process.env.FIRST_ONLY?[A]:[A,B]))for(const version of (process.env.AFTER_ONLY?['after']:['before','after'])){
-  const root=await person(kind),app=createOutfitController(root,{jeansPanelFall:true,independentGarments:version==='after'});
+  const root=await person(kind),app=createOutfitController(root,{poseContactFactory:createPoseContact,jeansPanelFall:true,independentGarments:version==='after'});
   app.setOutfit('shirt-pants',candidate('shirt'),{reviewed:true,pantsCandidate:denim(src),pantsReviewed:true});
   for(const pose of ['source','relaxed']){app.setPose(pose);root.updateMatrixWorld(true);const body=[],shirt=[],pants=[];root.traverse(m=>{if(!m.isSkinnedMesh)return;(m.userData.work56Garment?(m.userData.work60Pants?pants:shirt):body).push(m);});const b=posed(body),s=posed(shirt),p=posed(pants);const r={kind,source:src.id,version,pose,poseCorrection:app.getState().shirt.poseTriangleContact||null,shirtBody:crossings(s,b),jeansBody:crossings(p,b),shirtJeans:crossings(s,p)};records.push(r);console.log(JSON.stringify(r));[b,s,p].forEach(g=>g.dispose());}app.dispose();
  }

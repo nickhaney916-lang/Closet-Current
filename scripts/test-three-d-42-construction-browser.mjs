@@ -40,9 +40,9 @@ try{
   const before={},caseInfo={source,width,kind,versions:{}};
   for(const version of ['before','after']){
    const context=await browser.newContext({viewport:{width,height:932},deviceScaleFactor:1,hasTouch:true,isMobile:true});
-   const page=await context.newPage(),errors=[],external=[];
+   const page=await context.newPage(),errors=[],external=[],collisionRequests=[];
    page.on('pageerror',e=>errors.push(String(e.message)));
-   page.on('request',r=>{const u=r.url();if(!u.startsWith(origin)&&!u.startsWith('blob:'+origin)&&!u.startsWith('data:'))external.push(u);});
+   page.on('request',r=>{const u=r.url();if(u.includes('three-mesh-bvh'))collisionRequests.push(u);if(!u.startsWith(origin)&&!u.startsWith('blob:'+origin)&&!u.startsWith('data:'))external.push(u);});
    await page.goto(origin+'/research/three-d-'+source+'/index.html?pantsDrape=after&seatFairing=after&envelope=after&loft=after&crotchPanel=after&waistFit=after&waistContact=after&hanging=after&clothFall=after&construction='+version);
    await page.waitForFunction(()=>window.cc31Diagnostics?.()?.loaded===true,null,{timeout:180000});
    if(kind==='male'){
@@ -51,6 +51,8 @@ try{
    }
    const state=()=>page.evaluate(()=>window.cc31Diagnostics());
    const initial=await state();
+   if(version==='before')assert.deepEqual(collisionRequests,[],'Original preview must not load optional collision dependency');
+   else assert.ok(collisionRequests.length>0,'Independent pose correction dependency must load only on explicit opt-in');
    assert.equal(initial.stats.bones,163);
    assert.equal(initial.outfit.pants.photoApplied,false);
    await page.locator('#front').click();
