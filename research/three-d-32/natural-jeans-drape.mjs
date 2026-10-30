@@ -1,3 +1,4 @@
+import {isSourceVerifiedDenimId} from '../three-d-30/reviewed-photo-pants.mjs';
 /** 3D-32: bounded original-body-aware jeans drape on separate skinned pants.
  * Shape source-pose mesh only. Never touch photographed RGB, original source UV,
  * original body rig, pantsRest mapping, skin weights or original image SHA.
@@ -16,7 +17,7 @@ export function drapeSourceJeans(pants,root,{enabled=true}={}){
  if(!enabled)return pants;
  const mesh=pants?.meshes?.[0],g=mesh?.geometry,pos=g?.getAttribute('position'),rest=g?.getAttribute('pantsRest');
  if(!mesh?.isSkinnedMesh||pants.meshes.length!==1||!mesh.userData.work60Pants||
- pants.stats?.sourceId!=='commons-public-domain-jeans-2005'||pants.stats.photoApplied!==true||
+ !isSourceVerifiedDenimId(pants.stats?.sourceId)||pants.stats.photoApplied!==true||
  !rest||rest.count!==pos?.count||!g.getAttribute('pantsSourceUV')||
  !g.getAttribute('pantsSourceFront')||!root?.traverse)
   throw Error('Only reviewed real source-jeans on original anatomical pants may drape');

@@ -1,3 +1,4 @@
+import {isSourceVerifiedDenimId} from '../three-d-30/reviewed-photo-pants.mjs';
 /** 3D-36 (HOLD): source-derived rear-seat / connected crotch saddle drape.
  *
  * The 3D35 independent loft retains an anatomical cleft along the buttock
@@ -27,7 +28,7 @@ export function supportOriginalDenimCrotch(pants,root,{enabled=true}={}){
   skin=src?.getAttribute('skinWeight'),index=src?.getAttribute('skinIndex');
  if(!mesh?.isSkinnedMesh||pants.meshes?.length!==1||!mesh.userData.work60Pants||
  !pants.stats?.independentPatternedShell||!pants.stats?.photoApplied||
- pants.stats?.sourceId!=='commons-public-domain-jeans-2005'||
+ !isSourceVerifiedDenimId(pants.stats?.sourceId)||
  !pos||!uv||!front||!rest||!skin||!index||
  [uv.count,front.count,rest.count,skin.count,index.count].some(v=>v!==pos.count))
   throw Error('Original source-verified independent jeans shell required for crotch panel prototype');

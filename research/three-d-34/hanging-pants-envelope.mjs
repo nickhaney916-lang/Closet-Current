@@ -1,3 +1,4 @@
+import {isSourceVerifiedDenimId} from '../three-d-30/reviewed-photo-pants.mjs';
 /** 3D34 — continuous seat-to-knee trouser envelope, research only.
  * The original Work60 pants are body-derived: an anatomical buttock projection
  * survives small (3D32/33) smoothing. Here each leg's BACK outer envelope is
@@ -23,7 +24,7 @@ export function hangOriginalDenimEnvelope(pants,root,{enabled=true}={}){
  if(!mesh?.isSkinnedMesh||pants.meshes.length!==1||
  !mesh.userData.work60Pants||!pants.stats?.naturalJeansDrape||
  !pants.stats?.posteriorFabricFairing||!pants.stats?.photoApplied||
- pants.stats?.sourceId!=='commons-public-domain-jeans-2005'||
+ !isSourceVerifiedDenimId(pants.stats?.sourceId)||
  !pos||!rest||!uv||!front||
  [rest.count,uv.count,front.count].some(c=>c!==pos.count))
   throw Error('3D34 requires exact reviewed original-source jeans after natural fit and posterior fairing');

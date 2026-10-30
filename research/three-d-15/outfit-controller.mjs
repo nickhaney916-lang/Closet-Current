@@ -15,7 +15,7 @@ import {finishNecklineAndSeams} from '../three-d-22/neckline-seams.mjs';
 import {fitAnatomicalDress,finishAnatomicalOpenings} from '../three-d-24/anatomical-dress.mjs';
 import {bindDressContact} from '../three-d-26/contact-presentation.mjs';
 import {softenAnatomicalSkirt} from '../three-d-27/skirt-drape.mjs';
-import {requireReviewedPhotoPants,projectReviewedPhotoPants} from '../three-d-30/reviewed-photo-pants.mjs';
+import {requireReviewedPhotoPants,projectReviewedPhotoPants,isSourceVerifiedDenimId} from '../three-d-30/reviewed-photo-pants.mjs';
 import {drapeSourceJeans} from '../three-d-32/natural-jeans-drape.mjs';
 import {fairPhotographedJeansSeat} from '../three-d-33/posterior-fabric-fairing.mjs';
 import {hangOriginalDenimEnvelope} from '../three-d-34/hanging-pants-envelope.mjs';
@@ -44,7 +44,7 @@ export function createOutfitController(root,{refineFit=true,enableCuffFix=true,e
     built.pants=fitPants({pose:'source'});
     if(pantsCandidate){
      built.pants=projectReviewedPhotoPants(built.pants,pantsCandidate,{reviewed:pantsReviewed});
-     if(naturalPantsDrape&&pantsCandidate.id==='commons-public-domain-jeans-2005'){
+     if(naturalPantsDrape&&isSourceVerifiedDenimId(pantsCandidate.id)){
       built.pants=drapeSourceJeans(built.pants,root);
       if(posteriorJeansFairing){
        built.pants=fairPhotographedJeansSeat(built.pants,root);
