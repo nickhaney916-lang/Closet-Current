@@ -22,10 +22,11 @@ import {hangOriginalDenimEnvelope} from '../three-d-34/hanging-pants-envelope.mj
 import {fitIndependentDenimLoft} from '../three-d-35/independent-jeans-loft.mjs';
 import {supportOriginalDenimCrotch} from '../three-d-36/crotch-seat-panel.mjs';
 import {alignOriginalShirtOverJeans} from '../three-d-38/shirt-over-denim-waist.mjs';
+import {fitPhotographedOutfitContact} from '../three-d-39/actual-garment-contact.mjs';
 import {registerDressNeckline,clearNeckTriangleInteriors} from '../three-d-29/registered-neckline.mjs';
 export const OUTFITS=Object.freeze(['none','pants','shirt','shirt-pants','dress']);
 export function sourceForOutfit(mode){if(!OUTFITS.includes(mode))throw Error('Unsupported outfit');return mode==='dress'?'commons-0053':mode.includes('shirt')?'commons-0003':null;}
-export function createOutfitController(root,{refineFit=true,enableCuffFix=true,enableCuffFacing=true,enableCuffBridge=true,naturalFit=true,necklineSeams=true,dressNeckline=true,dressAnatomy=true,dressContact=true,skirtDrape=true,registeredNeckline=true,naturalPantsDrape=true,posteriorJeansFairing=true,structuralPantsEnvelope=true,independentJeansLoft=true,crotchSeatPanel=true,sourceShirtWaistFit=true}={}){
+export function createOutfitController(root,{refineFit=true,enableCuffFix=true,enableCuffFacing=true,enableCuffBridge=true,naturalFit=true,necklineSeams=true,dressNeckline=true,dressAnatomy=true,dressContact=true,skirtDrape=true,registeredNeckline=true,naturalPantsDrape=true,posteriorJeansFairing=true,structuralPantsEnvelope=true,independentJeansLoft=true,crotchSeatPanel=true,sourceShirtWaistFit=true,clothWaistContact=true}={}){
  // Canonical normals must be captured before the existing presentation clone.
  const fitPants=createPantsFitter(root),shoulders=captureShoulderSurface(root);prepareBodyPresentation(root);
  let parts={},mode='none',pose='relaxed',changes=0,closed=false;
@@ -62,6 +63,7 @@ export function createOutfitController(root,{refineFit=true,enableCuffFix=true,e
    }
    if(next==='shirt-pants'&&built.shirt&&built.pants?.stats?.photoApplied&&sourceShirtWaistFit&&isSourceVerifiedDenimId(pantsCandidate?.id)){
     built.shirt=alignOriginalShirtOverJeans(built.shirt,built.pants);
+    if(clothWaistContact)built.shirt=fitPhotographedOutfitContact(built.shirt,built.pants);
    }
    if(next==='dress'){
     const raw=buildSourceDress(root,candidate,{reviewed});
