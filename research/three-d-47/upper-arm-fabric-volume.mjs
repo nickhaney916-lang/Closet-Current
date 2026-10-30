@@ -48,12 +48,23 @@ export function tailorIndependentUpperArmVolume(shirt,root,{enabled=true}={}){
  let changed=0,maxMove=0,seamGroups=0,maxGap=0,protectedFront=0,depthMoves=0;
  for(const {world,refs} of groups.values()){
   const x=Math.abs(world.x),z=Math.abs(world.z);
-  // The central source-photographed chest, print and neckline stay unmoved.
-  if(x<=.35){protectedFront+=refs.length;continue;}
+  // 3D50: The original 3D47 x>.35 torso window entirely missed the
+  // real female cap panel, silently shaping 2442 torso points per arm but
+  // ZERO independent cap vertices. Use the actual detached-panel membership
+  // to select a source-safe wider fabric window, not male body dimensions.
+  // 3D45 never cuts an original print/chest triangle at x<.227; keep
+  // the unedited center-front photograph behind a hard x=.235 boundary.
+  const hasRealCap=refs.some(r=>Boolean(r.mesh.userData.work45IndependentShoulderCap));
+  const sourceSafeFront=hasRealCap?.235:.35;
+  if(x<=sourceSafeFront){protectedFront+=refs.length;continue;}
   const side=world.x<0?'L':'R',shoulder=bones[side];
   const dy=world.y-shoulder.y;
-  const across=smooth(x,.35,.44)*(1-smooth(x,.59,.72));
-  const down=smooth(dy,-.30,-.18)*(1-smooth(dy,.035,.15));
+  const across=hasRealCap
+   ? smooth(x,.235,.305)*(1-smooth(x,.59,.72))
+   : smooth(x,.35,.44)*(1-smooth(x,.59,.72));
+  const down=hasRealCap
+   ? smooth(dy,-.43,-.30)*(1-smooth(dy,.035,.15))
+   : smooth(dy,-.30,-.18)*(1-smooth(dy,.035,.15));
   const depth=smooth(z,.055,.13);
   const envelope=across*down;
   if(envelope<.12)continue;
