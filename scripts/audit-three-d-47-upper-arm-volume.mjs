@@ -16,11 +16,11 @@ const getMeshes=root=>{
   (m.userData.work56Garment?(m.userData.work60Pants?pants:shirt):body).push(m);
  });return {body,shirt,pants};
 };
-export async function auditUpperArmFabricVolume({figures=['female','male'],sources=[A,B],rearShirtFabricRelief=false,naturalShoulderSleeveTransition=false,sourceMeasuredSleeveHang=false,sourceElbowClothCreases=false}={}){
+export async function auditUpperArmFabricVolume({figures=['female','male'],sources=[A,B],rearShirtFabricRelief=false,naturalShoulderSleeveTransition=false,sourceMeasuredSleeveHang=false,sourceElbowClothCreases=false,poseResponsiveElbowCloth=false}={}){
  const records=[];
  for(const kind of figures)for(const src of sources){
   const root=await person(kind);
-  const app=createOutfitController(root,{poseContactFactory:createPoseContact,jeansPanelFall:true,independentGarments:true,tailoredShoulderSleeves:true,independentShoulderCaps:true,realisticShoulderContour:true,upperArmFabricVolume:true,sourceNeutralCollarRoll:rearShirtFabricRelief||naturalShoulderSleeveTransition||sourceMeasuredSleeveHang||sourceElbowClothCreases,rearShirtFabricRelief:rearShirtFabricRelief||naturalShoulderSleeveTransition||sourceMeasuredSleeveHang||sourceElbowClothCreases,naturalShoulderSleeveTransition:naturalShoulderSleeveTransition||sourceMeasuredSleeveHang||sourceElbowClothCreases,sourceMeasuredSleeveHang:sourceMeasuredSleeveHang||sourceElbowClothCreases,sourceElbowClothCreases});
+  const app=createOutfitController(root,{poseContactFactory:createPoseContact,jeansPanelFall:true,independentGarments:true,tailoredShoulderSleeves:true,independentShoulderCaps:true,realisticShoulderContour:true,upperArmFabricVolume:true,sourceNeutralCollarRoll:rearShirtFabricRelief||naturalShoulderSleeveTransition||sourceMeasuredSleeveHang||sourceElbowClothCreases,rearShirtFabricRelief:rearShirtFabricRelief||naturalShoulderSleeveTransition||sourceMeasuredSleeveHang||sourceElbowClothCreases,naturalShoulderSleeveTransition:naturalShoulderSleeveTransition||sourceMeasuredSleeveHang||sourceElbowClothCreases,sourceMeasuredSleeveHang:sourceMeasuredSleeveHang||sourceElbowClothCreases,sourceElbowClothCreases:sourceElbowClothCreases||poseResponsiveElbowCloth,poseResponsiveElbowCloth});
   try{
    app.setOutfit('shirt-pants',candidate('shirt'),{reviewed:true,pantsCandidate:denim(src),pantsReviewed:true});
    const order=['source','blend-25','blend-50','blend-75','relaxed','blend-50','source'];
@@ -31,7 +31,8 @@ export async function auditUpperArmFabricVolume({figures=['female','male'],sourc
     if(rearShirtFabricRelief||naturalShoulderSleeveTransition){assert.equal(state.shirt.sourceNeutralRearFabricRelief,true);assert.equal(state.shirt.originalPhotographedFrontAndUVUnchanged,true);}
     if(naturalShoulderSleeveTransition||sourceMeasuredSleeveHang){assert.equal(state.shirt.naturalSourceShoulderSleeveTransition,true);assert.ok(state.shirt.shoulderRoundRealSeamGap<=5e-5);}
     if(sourceMeasuredSleeveHang||sourceElbowClothCreases){assert.equal(state.shirt.sourceMeasuredNaturalSleeveHang,true);assert.equal(state.shirt.originalPhotographedSleeveUVAndSkinPreserved,true);}
-    if(sourceElbowClothCreases){assert.equal(state.shirt.originalSourceElbowClothCreases,true);assert.equal(state.shirt.originalSourceElbowPhotoUVAndSkinUnchanged,true);}
+    if(sourceElbowClothCreases||poseResponsiveElbowCloth){assert.equal(state.shirt.originalSourceElbowClothCreases,true);assert.equal(state.shirt.originalSourceElbowPhotoUVAndSkinUnchanged,true);}
+    if(poseResponsiveElbowCloth){assert.equal(state.shirt.sourceMeasuredPoseResponsiveElbow,true);assert.equal(state.shirt.poseTriangleContact.sourceMeasuredPoseResponsiveElbow,true);assert.equal(state.shirt.poseResponsiveElbowState.pose,pose);}
     assert.equal(state.shirt.originalPhotographicSourceAndPanelCoordinatesUnchanged,true);
     assert.ok(state.shirt.upperArmFabricDepthMoves>15);
     assert.ok(state.shirt.upperArmFabricSeamGap<=5e-5);
@@ -62,17 +63,18 @@ export async function auditUpperArmFabricVolume({figures=['female','male'],sourc
  }
  const summary={records,figures,sources:sources.map(s=>s.id),poses:APPROVED_RESEARCH_POSES,tailoredShoulderSleeves:true,
    studied:records.length,uncertifiedSweptIntervals:4,
-   verifiedSampledTriangleClearance:true,upperArmFabricVolumeTailored:true,sourceNeutralRearFabricRelief:rearShirtFabricRelief||naturalShoulderSleeveTransition||sourceMeasuredSleeveHang||sourceElbowClothCreases,naturalShoulderSleeveTransition:naturalShoulderSleeveTransition||sourceMeasuredSleeveHang||sourceElbowClothCreases,sourceMeasuredSleeveHang:sourceMeasuredSleeveHang||sourceElbowClothCreases,sourceElbowClothCreases,signedVolumeContainmentCertified:false,
+   verifiedSampledTriangleClearance:true,upperArmFabricVolumeTailored:true,sourceNeutralRearFabricRelief:rearShirtFabricRelief||naturalShoulderSleeveTransition||sourceMeasuredSleeveHang||sourceElbowClothCreases,naturalShoulderSleeveTransition:naturalShoulderSleeveTransition||sourceMeasuredSleeveHang||sourceElbowClothCreases,sourceMeasuredSleeveHang:sourceMeasuredSleeveHang||sourceElbowClothCreases,sourceElbowClothCreases:sourceElbowClothCreases||poseResponsiveElbowCloth,poseResponsiveElbowCloth,signedVolumeContainmentCertified:false,
    continuousMotionCollisionCertified:false,releaseAuthorized:false};
  return summary;
 }
 if(process.argv[1]?.endsWith('audit-three-d-47-upper-arm-volume.mjs')){
- const crease56=process.argv.includes('--crease56');
+ const dynamic57=process.argv.includes('--dynamic57');
+ const crease56=dynamic57||process.argv.includes('--crease56');
  const hang55=crease56||process.argv.includes('--hang55');
  const round54=hang55||process.argv.includes('--round54');
  const rear53=round54||process.argv.includes('--rear53');
- const summary=await auditUpperArmFabricVolume({rearShirtFabricRelief:rear53,naturalShoulderSleeveTransition:round54,sourceMeasuredSleeveHang:hang55,sourceElbowClothCreases:crease56});
- const out=crease56?'benchmark/three-d-56':hang55?'benchmark/three-d-55':round54?'benchmark/three-d-54':rear53?'benchmark/three-d-53':'benchmark/three-d-47';
+ const summary=await auditUpperArmFabricVolume({rearShirtFabricRelief:rear53,naturalShoulderSleeveTransition:round54,sourceMeasuredSleeveHang:hang55,sourceElbowClothCreases:crease56,poseResponsiveElbowCloth:dynamic57});
+ const out=dynamic57?'benchmark/three-d-57':crease56?'benchmark/three-d-56':hang55?'benchmark/three-d-55':round54?'benchmark/three-d-54':rear53?'benchmark/three-d-53':'benchmark/three-d-47';
  await mkdir(out,{recursive:true});
  await writeFile(out+'/intermediate-triangle-audit.json',JSON.stringify(summary,null,2));
  console.log('THREE_D47_INDEPENDENT_CAP_FIVE_POSE_TRIANGLE_AUDIT',JSON.stringify({studied:summary.studied,figures:summary.figures,sources:summary.sources,poses:summary.poses,releaseAuthorized:false}));
