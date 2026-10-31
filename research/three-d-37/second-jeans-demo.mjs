@@ -63,6 +63,10 @@ async function start(){
  $('photo').addEventListener('click',e=>{if(!ready||!e.isTrusted||!$('review').checked)return;app.applyOutfit('pants',null,{pantsCandidate:pants,pantsReviewed:true});status('Original denim front pixels on 3D pant mesh · unphotographed neutral back · HOLD');update();});
  $('full').addEventListener('click',e=>{if(!ready||!e.isTrusted||!$('review').checked)return;app.applyOutfit('shirt-pants',shirt,{reviewed:true,pantsCandidate:pants,pantsReviewed:true});status('Original AJ shirt plus original denim pixels on separate 3D pants · HOLD');update();});
  window.cc31Diagnostics=()=>app.getState();
+ if(new URLSearchParams(location.search).has('fit59'))window.cc59InspectTorso=(angle)=>{
+  if(!ready||app.getState().outfit.mode!=='shirt-pants')throw Error('Original reviewed genuine photo shirt + denim required');
+  app.inspectTorso(angle);update();return app.getState();
+ };
  if(new URLSearchParams(location.search).has('move56'))window.cc56InspectSleeves=(angle)=>{
   if(!ready||app.getState().outfit.mode!=='shirt-pants')throw Error('Reviewed real original outfit required');
   app.inspectSleeves(angle);update();return app.getState();
