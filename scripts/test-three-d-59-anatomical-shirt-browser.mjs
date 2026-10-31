@@ -156,11 +156,13 @@ try{
   // Keep original full-body exact side views and measured differences.
   // For source-safe 13mm fabric, profile relief may be subpixel at 320px;
   // demand strong true original WebGL TORSo detail at a real closer camera.
-  for(const angle of ['front','back'])assert.ok(
+  // Keep the original strict physical native CSS full-body per-angle
+  // acceptance -- including exact lateral view. New true photographed
+  // torso closeups are EXTRA evidence, NEVER a side-view gate waiver.
+  for(const angle of ['front','side','back'])assert.ok(
    scenario.poses.some(p=>p.angle===angle&&p.pixelDifference>10),
-   'Original photograph shirt must visibly change '+angle+' full-body: '+JSON.stringify(scenario));
-  assert.ok(scenario.poses.some(p=>p.angle==='side'&&p.pixelDifference>0),
-   'Preserve exact full-body side image and its real diff rather than hide it: '+JSON.stringify(scenario));
+   'Original photographed anatomical shirt MUST visibly change '+angle+
+   ' even at genuine 320px full-body source camera: '+JSON.stringify(scenario));
   for(const angle of ['front','side','back'])assert.ok(
    scenario.poses.some(p=>p.angle==='torso-'+angle&&p.originalWebGLCamera&&p.pixelDifference>15),
    'Genuine original photographed shirt TORSo '+angle+' must visibly change in native WebGL 3D closeup: '+JSON.stringify(scenario));
