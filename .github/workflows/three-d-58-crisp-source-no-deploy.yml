@@ -65,7 +65,7 @@ jobs:
           node --input-type=module <<'AUDIT'
           import assert from 'node:assert/strict';
           import {readFileSync} from 'node:fs';
-          const a=JSON.parse(readFileSync('benchmark/three-d-58/collision-seam-audit.json','utf8'));
+          const a=JSON.parse(readFileSync('benchmark/three-d-56/collision-seam-audit.json','utf8'));
           assert.equal(a.records.length,28);
           for(const r of a.records){
             for(const k of ['shirtBody','pantsBody','shirtJeans'])assert.equal(r[k].crossingTrianglePairs,0);
