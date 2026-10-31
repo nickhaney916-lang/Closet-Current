@@ -101,10 +101,11 @@ export function fitPhotographedShirtSideFlow(shirt,root,{enabled=true}={}){
   }
   for(const {q,ids} of groups.values()){
    const x=Math.abs(q.x),y=q.y,z=q.z,k=key(q);
-   if(x<=.215||z>center+.13){originalFrontProtected+=ids.length;continue;}
+   // Preserve central original front photo; permit only lateral photographed fabric to reshape its true side profile.
+   if(x<=.215){originalFrontProtected+=ids.length;continue;}
    if(y<=1.14){hemProtected+=ids.length;continue;}
    if(y>=1.44||realCaps.has(k)){originalCapSeamProtected+=ids.length;continue;}
-   if(x>.385||Math.abs(z-center)>.14)continue;
+   if(x>.385||Math.abs(z-center)>.24)continue;
    const side=q.x<0?'L':'R',limit=bodyLimit(side,q);
    if(limit===null){unsupportedBody+=ids.length;continue;}
    bySide[side].measured+=ids.length;
@@ -114,13 +115,25 @@ export function fitPhotographedShirtSideFlow(shirt,root,{enabled=true}={}){
    // the side fabric into unchanged shoulder, back and lower waist.
    const horiz=smooth(x,.215,.253)*(1-smooth(x,.345,.385));
    const vertical=smooth(y,1.14,1.215)*(1-smooth(y,1.365,1.44));
-   const depth=1-smooth(Math.abs(z-center),.055,.14);
+   // A genuine side view projects z/y (not x); keep the shaped source-fabric flank visible
+   // in silhouette without altering front-center art, sewn caps, rear center or waist hem.
+   const depth=1-smooth(Math.abs(z-center),.17,.24);
    const weight=horiz*vertical*depth;
    if(weight<.08)continue;
    const dx=-Math.sign(q.x)*Math.min(.012,excess)*weight;
    const backWeight=1-smooth(z-center,-.018,.05);
-   const dz=-.0025*backWeight*weight;
-   const delta=new THREE.Vector3(dx,0,dz),length=delta.length();
+   // The former x-only tuck was invisible to an exactly lateral camera. A bounded,
+   // locally source-measured side-panel taper in z makes the *real skinned cloth*
+   // read as draping rather than a flat body shell from the anatomical side view.
+   // No synthetic texture, generated art, central-front photo or photo UV is touched.
+   const flankExposure=smooth(Math.abs(z-center),.065,.135);
+   const dz=(-.0105*Math.sign(z-center)*flankExposure-
+     .0025*backWeight*(1-flankExposure))*weight;
+   const delta=new THREE.Vector3(dx,0,dz);
+   // Bound the actual 3D vector, not its individual components, to protect true
+   // source-panel displacement and the independent contact solver's 13mm gate.
+   delta.multiplyScalar(Math.min(1,.0129/Math.max(delta.length(),1e-12)));
+   const length=delta.length();
    if(length<.00025)continue;
    if(!Number.isFinite(length)||length>.01301)
     throw Error('3D59 anatomy-measured source cloth width exceeded 13mm fit envelope');
