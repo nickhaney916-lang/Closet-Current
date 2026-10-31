@@ -40,6 +40,9 @@ export function fitPhotographedShirtSideFlow(shirt,root,{enabled=true}={}){
  // Exclude arms and off-axis mesh outliers by source depth and 90th percentile;
  // a single stray vertex must not fake a very wide torso.
  const measured={L:new Map(),R:new Map()},bodyPoints={L:0,R:0};
+ // Actual posterior anatomy sampled from the same immutable original torso;
+ // never invent an unphotographed source-back texture or fit to a cylinder.
+ const measuredRear=new Map();
  root.traverse(m=>{
   if(!m.isSkinnedMesh||m.userData.work56Garment)return;
   m.updateWorldMatrix(true,false);
@@ -50,6 +53,10 @@ export function fitPhotographedShirtSideFlow(shirt,root,{enabled=true}={}){
    const q=new THREE.Vector3().fromBufferAttribute(p,i).applyMatrix4(m.matrixWorld);
    if(q.y<1.08||q.y>1.49||Math.abs(q.z-center)>.20)continue;
    const x=Math.abs(q.x);
+   if(x<.19&&q.z<center-.055){
+    const r=row(q.y);if(!measuredRear.has(r))measuredRear.set(r,[]);
+    measuredRear.get(r).push({x:q.x,z:q.z});
+   }
    if(x<.10||x>.32)continue;
    const side=q.x<0?'L':'R',r=row(q.y);
    if(!measured[side].has(r))measured[side].set(r,[]);
@@ -60,6 +67,8 @@ export function fitPhotographedShirtSideFlow(shirt,root,{enabled=true}={}){
  if(Math.min(bodyPoints.L,bodyPoints.R)<80)
   throw Error('3D59 no actual measured male/female anatomical torso source surface on both sides '+JSON.stringify(bodyPoints));
 
+ if([...measuredRear.values()].reduce((n,a)=>n+a.length,0)<80)
+  throw Error('3D59 must measure genuine rear anatomical torso before shaping rear silhouette');
  const realCaps=new Set(),capBytes=new Map();
  for(const m of caps){
   m.updateWorldMatrix(true,false);
@@ -68,6 +77,15 @@ export function fitPhotographedShirtSideFlow(shirt,root,{enabled=true}={}){
   capBytes.set(m,p.array.slice());
   for(const i of new Set(idx.array))
    realCaps.add(key(new THREE.Vector3().fromBufferAttribute(p,i).applyMatrix4(m.matrixWorld)));
+ }
+ function rearBodyLimit(q){
+  const samples=[];
+  for(let k=row(q.y)-2;k<=row(q.y)+2;k++)
+   for(const p of measuredRear.get(k)||[])
+    if(Math.abs(p.x-q.x)<=.09)samples.push(p.z);
+  if(samples.length<8)return null;
+  samples.sort((a,b)=>a-b);
+  return samples[Math.floor(.10*(samples.length-1))];
  }
  function bodyLimit(side,q){
   const samples=[];
@@ -82,7 +100,8 @@ export function fitPhotographedShirtSideFlow(shirt,root,{enabled=true}={}){
  }
  const bySide={L:{moved:0,maxMove:0,measured:0},R:{moved:0,maxMove:0,measured:0}};
  let moved=0,maxMove=0,originalFrontProtected=0,
-  originalCapSeamProtected=0,sourceMappedVertices=0,unsupportedBody=0,hemProtected=0;
+  originalCapSeamProtected=0,sourceMappedVertices=0,unsupportedBody=0,hemProtected=0,
+  posteriorSilhouetteMoved=0,posteriorSilhouetteMaximumMove=0;
  for(const mesh of shells){
   mesh.updateWorldMatrix(true,false);
   const g=mesh.geometry,p=g.getAttribute('position'),idx=g.index;
@@ -101,10 +120,36 @@ export function fitPhotographedShirtSideFlow(shirt,root,{enabled=true}={}){
   }
   for(const {q,ids} of groups.values()){
    const x=Math.abs(q.x),y=q.y,z=q.z,k=key(q);
-   // Preserve central original front photo; permit only lateral photographed fabric to reshape its true side profile.
-   if(x<=.215){originalFrontProtected+=ids.length;continue;}
+   // Preserve original neckline, cap-seam and waist/hem; only physically
+   // independent mid-torso source cloth is eligible for the fit.
    if(y<=1.14){hemProtected+=ids.length;continue;}
    if(y>=1.44||realCaps.has(k)){originalCapSeamProtected+=ids.length;continue;}
+   // The true lateral camera projects z/y. Its actual rear outline comes from
+   // original shirt vertices near the *back centre*, which the old x-only side
+   // fit excluded. Reprofile only the original neutral-backed exterior here,
+   // using same-rig measured anatomical rear clearance to maintain separation.
+   // Original printed chest, photographed source UV/RGB, collar, independent
+   // caps and approved rear fabric MATERIAL remain byte-identical.
+   if(x<=.215){
+    const rearBody=rearBodyLimit(q);
+    const clearance=rearBody===null?0:rearBody-z;
+    const back=smooth(center-z,.085,.155);
+    const lateral=1-smooth(x,.115,.210);
+    const vertical=smooth(y,1.16,1.235)*(1-smooth(y,1.335,1.435));
+    const relief=back*lateral*vertical;
+    if(rearBody!==null&&clearance>.01&&relief>.10){
+     const dz=-Math.min(.0122,Math.max(0,clearance-.008)*.85)*relief;
+     if(dz<-.00025){
+      const local=q.clone().add(new THREE.Vector3(0,0,dz)).applyMatrix4(inv);
+      for(const i of ids){p.setXYZ(i,local.x,local.y,local.z);moved++;posteriorSilhouetteMoved++;}
+      const length=Math.abs(dz);
+      posteriorSilhouetteMaximumMove=Math.max(posteriorSilhouetteMaximumMove,length);
+      maxMove=Math.max(maxMove,length);
+      continue;
+     }
+    }
+    originalFrontProtected+=ids.length;continue;
+   }
    if(x>.385||Math.abs(z-center)>.24)continue;
    const side=q.x<0?'L':'R',limit=bodyLimit(side,q);
    if(limit===null){unsupportedBody+=ids.length;continue;}
@@ -160,6 +205,7 @@ export function fitPhotographedShirtSideFlow(shirt,root,{enabled=true}={}){
    throw Error('3D59 altered original independent sewn shoulder panel geometry');
  }
  if(moved<40||maxMove<.0015||maxMove>.01301||originalFrontProtected<100||
+    posteriorSilhouetteMoved<20||posteriorSilhouetteMaximumMove<.0015||
     ['L','R'].some(side=>bySide[side].moved<20))
   throw Error('3D59 actual anatomical shirt side-flow not demonstrably different on both shoulders and genuine photographed fabric '+
    JSON.stringify({moved,maxMove,bodyPoints,bySide,originalFrontProtected,originalCapSeamProtected,unsupportedBody,hemProtected}));
@@ -174,7 +220,9 @@ export function fitPhotographedShirtSideFlow(shirt,root,{enabled=true}={}){
   shirtSideFlowProtectedHem:hemProtected,
   shirtSideFlowUnmeasuredBodyVertices:unsupportedBody,
   shirtSideFlowOriginalMappedVertices:sourceMappedVertices,
-  shirtSideFlowMethod:'90th-percentile original anatomical source torso width by side, y row and z depth with bounded independent cloth clearance',
+  shirtSideFlowMethod:'same-rig measured original anatomical side width/depth plus source-neutral posterior silhouette clearance at real y height (no synthesized texture)',
+  posteriorSilhouetteMovedRealVertices:posteriorSilhouetteMoved,
+  posteriorSilhouetteMaximumWorldMove:posteriorSilhouetteMaximumMove,
   originalPhotographedSourcePixelsUVAndSkinUnchanged:true,
   originalBodyOriginalDenimAndIndependentCapsUnchanged:true,
   directBodyMeasurementsOnly:true,
