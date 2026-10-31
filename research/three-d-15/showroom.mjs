@@ -189,6 +189,18 @@ export function mountAnatomicalShowroom(canvas,{onChange=()=>{},refineFit=true,e
   if(selected){outfit?.dispose();const skeletons=new Set();selected.traverse(o=>{if(o.isSkinnedMesh)skeletons.add(o.skeleton);if(o.isMesh){o.geometry.dispose();if(o.userData.ownedMaterial)o.material.dispose();}});skeletons.forEach(s=>s.dispose());}
   floor.geometry.dispose();floor.material.dispose();
   shadow.geometry.dispose();shadow.material.map?.dispose();shadow.material.dispose();renderer.dispose();};
+ const inspectTorso=(angle='side')=>{
+  // Original-source research-only genuine WebGL closeup of the *actual*
+  // rib/waist body-fitting mesh, NOT a resized or sharpened screenshot.
+  if(!['front','side','back'].includes(angle))throw Error('True source garment torso view must be front/side/back');
+  if(!selected||finish)throw Error('Original reviewed anatomical garment showroom required');
+  spin=false;group.rotation.y=0;
+  controls.minDistance=1.20;
+  controls.target.set(0,1.34,0);
+  const radius=1.28;
+  camera.position.set(angle==='side'?radius:0,1.34,angle==='front'?radius:angle==='back'?-radius:0);
+  controls.update();draw();
+ };
  const inspectSleeves=(angle='front')=>{
   if(!['front','side','back','left-arm','right-arm'].includes(angle))throw Error('Unsupported fabric view');
   spin=false;group.rotation.y=0;
@@ -196,7 +208,7 @@ export function mountAnatomicalShowroom(canvas,{onChange=()=>{},refineFit=true,e
   else{controls.minDistance=1.9;controls.target.set(0,1.35,0);camera.position.set(angle==='side'?1.9:0,1.35,angle==='front'?1.9:angle==='back'?-1.9:0);}
   controls.update();draw();
  };
- return {load,shade,front,side,back,rotate,start,stop,setPose,zoom,applyOutfit,inspectSleeves,
+ return {load,shade,front,side,back,rotate,start,stop,setPose,zoom,applyOutfit,inspectSleeves,inspectTorso,
   setSpin:v=>{spin=!!v;dirty=true;},
   getState:()=>({kind:current,loaded:!!selected,finish,stats:lastStats,frames:frame,finishMaterial:lastColor,pose:pose,loadMs:loadTimes.at(-1),lastRenderMs,geometries:renderer.info.memory.geometries,textures:renderer.info.memory.textures,pixelRatio:renderer.getPixelRatio(),drawPixels:canvas.width*canvas.height,cameraDistance:camera.position.distanceTo(controls.target),outfit:outfit?.getState()||null,dressPresentation:dressPresentation.value,poseChanges,releaseAuthorized:false})
  };
