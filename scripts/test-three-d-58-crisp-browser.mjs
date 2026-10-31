@@ -66,7 +66,9 @@ try{
    assert.equal(outfit.outfit.shirt.sourceNeutralRearFabricRelief,true);
    assert.equal(outfit.outfit.shirt.naturalSourceShoulderSleeveTransition,true);
    assert.equal(outfit.outfit.shirt.sourceMeasuredNaturalSleeveHang,true);
-   assert.equal(outfit.outfit.shirt.poseConditionedSleeveDrape,true);
+   assert.equal(typeof outfit.outfit.shirt.poseConditionedSleeveDrape,'object','Real original source pose-conditioned garment stats must be present, never replaced with a fake boolean');
+   assert.ok(outfit.outfit.shirt.poseConditionedSleeveDrape.maximum>.002&&outfit.outfit.shirt.poseConditionedSleeveDrape.maximum<=.01501);
+   assert.equal(outfit.outfit.shirt.poseConditionedSleeveDrape.pose,'relaxed');
    assert.equal(outfit.sourceDetailRendering.enabled,version==='after');
    assert.equal(outfit.sourceDetailRendering.renderPixelRatio,version==='after'?2:1);
    if(version==='after'){
