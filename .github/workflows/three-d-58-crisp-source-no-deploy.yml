@@ -75,7 +75,7 @@ jobs:
           assert.equal(a.continuousMotionCertified,false);
           assert.equal(a.releaseAuthorized,false);
           AUDIT
-      - name: Authentic original source 320 390 430, two anatomical rigs, both original denims and real posed arms: original vs 2x image detail
+      - name: Authentic original source 320 390 430 both anatomical rigs and denim with crisp 2x original-photo detail
         run: node scripts/test-three-d-58-crisp-browser.mjs
       - uses: actions/upload-artifact@v4
         if: always()
