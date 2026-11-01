@@ -102,7 +102,7 @@ test('outfit board reflects actual existing wardrobe slot types and dress/dup co
 });
 test('false photo source, conflicting same-group originals and invalid binary are blocked',async()=>{
  await assert.rejects(()=>indexAuthenticatedSavedCloset(create([{...top,originalPhoto:{image:'https://example.invalid/personal.jpg'}}]),session),/JPEG unavailable/);
- await assert.rejects(()=>indexAuthenticatedSavedCloset(create([{...top,image:'data:image/jpeg;base64,AAAA'}]),session),/signature|JPEG unavailable/);
+ await assert.rejects(()=>indexAuthenticatedSavedCloset(create([{...top,originalPhoto:undefined,image:'data:image/jpeg;base64,AAAA'}]),session),/signature|JPEG unavailable/);
  await assert.rejects(()=>indexAuthenticatedSavedCloset(create([
   top,{...bottom,originalPhoto:{image:makeJPEG(88)}}
  ]),session),/conflicting original bytes/);
