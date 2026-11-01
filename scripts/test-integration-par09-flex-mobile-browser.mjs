@@ -91,24 +91,6 @@ async function capture(page,key){
  assert.ok(evidence.drawFrames>1,'actual WebGL animation frame required');
  assert.equal(evidence.horizontalOverflow,false,'no horizontal overflow');
  const png=await page.locator('#avatar').screenshot();
-     await baselinePage.waitForTimeout(100);
-     const unflexed=await baselinePage.locator('#avatar').screenshot();
-     const rawC=await sharp(unflexed).removeAlpha().raw().toBuffer();
-     const rawD=await sharp(png).removeAlpha().raw().toBuffer();
-     assert.equal(rawC.length,rawD.length);
-     let fabricChanged=0;
-     for(let k=0;k<rawC.length;k+=3)
-      if(Math.abs(rawC[k]-rawD[k])+Math.abs(rawC[k+1]-rawD[k+1])+Math.abs(rawC[k+2]-rawD[k+2])>24)fabricChanged++;
-     assert.ok(fabricChanged>=20,
-      'source-neutral flex must produce visible real SAME-POSE original-photo-cloth change '+
-      JSON.stringify({figure,denim,pose,fabricChanged}));
-     const flexKey='unflexed-'+figure+'-390-'+denim+'-'+pose+'.png';
-     await writeFile(output+'/'+flexKey,unflexed);
-     flexComparisons.push({figure,denim,pose,sameGenuine163BonePose:true,
-      sourceSHA:p.sourceSHA,preservedOriginalPhotographedFront:p.flexFrontPhotoUnchanged,
-      actualSkinnedTriangleCrossings:p.contact,realSamePoseFabricChangedPixels:fabricChanged,
-      withoutFlexImage:flexKey,withFlexImage:'knee-'+figure+'-390-'+denim+'-'+pose+'.png',
-      familyAlpha:'HOLD',humanClothRealism:'REVIEW',releaseAuthorized:false});
  assert.equal(png.subarray(0,8).toString('hex'),'89504e470d0a1a0a');
  const pixel=await sharp(png).resize(64,64).removeAlpha().raw().toBuffer();
  let min=255,max=0,total=0;
@@ -287,6 +269,25 @@ async function kneeSweep(){
     if(pose!=='right-12'){
      await page.waitForTimeout(100);
      const png=await page.locator('#avatar').screenshot();
+     await baselinePage.waitForTimeout(100);
+     const unflexed=await baselinePage.locator('#avatar').screenshot();
+     const rawC=await sharp(unflexed).removeAlpha().raw().toBuffer();
+     const rawD=await sharp(png).removeAlpha().raw().toBuffer();
+     assert.equal(rawC.length,rawD.length);
+     let fabricChanged=0;
+     for(let k=0;k<rawC.length;k+=3)
+      if(Math.abs(rawC[k]-rawD[k])+Math.abs(rawC[k+1]-rawD[k+1])+Math.abs(rawC[k+2]-rawD[k+2])>24)fabricChanged++;
+     assert.ok(fabricChanged>=20,
+      'source-neutral flex must produce visible real SAME-POSE original-photo-cloth change '+
+      JSON.stringify({figure,denim,pose,fabricChanged}));
+     const flexKey='unflexed-'+figure+'-390-'+denim+'-'+pose+'.png';
+     await writeFile(output+'/'+flexKey,unflexed);
+     flexComparisons.push({figure,denim,pose,sameGenuine163BonePose:true,
+      sourceSHA:p.sourceSHA,preservedOriginalPhotographedFront:p.flexFrontPhotoUnchanged,
+      actualSkinnedTriangleCrossings:p.contact,realSamePoseFabricChangedPixels:fabricChanged,
+      withoutFlexImage:flexKey,withFlexImage:'knee-'+figure+'-390-'+denim+'-'+pose+'.png',
+      familyAlpha:'HOLD',humanClothRealism:'REVIEW',releaseAuthorized:false});
+ 
      const rawA=await sharp(standing).removeAlpha().raw().toBuffer();
      const rawB=await sharp(png).removeAlpha().raw().toBuffer();
      assert.equal(rawA.length,rawB.length);
