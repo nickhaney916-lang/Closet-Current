@@ -1,4 +1,5 @@
 import {tailorSourceDress74} from './source-true-dress-tailoring.mjs';
+import {createSourceTrueSkirtMotion} from '../fabric-motion-01/bounded-skirt-motion.mjs';
 import {createPoseConditionedSleeveContact} from '../three-d-56/pose-conditioned-sleeves.mjs';
 /** Atomic single-rig outfit slots. No persistence or account data; source review stays provisional. */
 import {createPantsFitter} from '../three-d-13/canonical-pants-fit.mjs';
@@ -53,7 +54,7 @@ import {slopeTruePhotographedShoulderTop} from '../three-d-64/source-shoulder-to
 import {registerDressNeckline,clearNeckTriangleInteriors} from '../three-d-29/registered-neckline.mjs';
 export const OUTFITS=Object.freeze(['none','pants','shirt','shirt-pants','dress']);
 export function sourceForOutfit(mode){if(!OUTFITS.includes(mode))throw Error('Unsupported outfit');return mode==='dress'?'commons-0053':mode.includes('shirt')?'commons-0003':null;}
-export function createOutfitController(root,{refineFit=true,enableCuffFix=true,enableCuffFacing=true,enableCuffBridge=true,naturalFit=true,necklineSeams=true,dressNeckline=true,dressAnatomy=true,dressContact=true,skirtDrape=true,dressMobile74=false,registeredNeckline=true,naturalPantsDrape=true,posteriorJeansFairing=true,structuralPantsEnvelope=true,independentJeansLoft=true,crotchSeatPanel=true,sourceShirtWaistFit=true,clothWaistContact=true,shirtHangingSilhouette=true,denimHangingSilhouette=true,jeansPanelFall=false,independentGarments=false,poseContactFactory=null,tailoredShoulderSleeves=false,independentShoulderCaps=false,realisticShoulderContour=false,upperArmFabricVolume=false,sourceNeutralCollarRoll=false,rearShirtFabricRelief=false,naturalShoulderSleeveTransition=false,sourceMeasuredSleeveHang=false,poseConditionedSleeveDrape=false,anatomicalShirtSideFlow=false,naturalShoulderFall61=false,trueShoulderTop64=false,photoDenimRearDrape73=false,photoDenimCalfHang74=false,photoDenimFolds75=false,photoDenimContinuity76=false,photoDenimContactAudit77=false,photoDenimKneePose78=false,photoDenimFlex79=false}={}){
+export function createOutfitController(root,{refineFit=true,enableCuffFix=true,enableCuffFacing=true,enableCuffBridge=true,naturalFit=true,necklineSeams=true,dressNeckline=true,dressAnatomy=true,dressContact=true,skirtDrape=true,dressMobile74=false,registeredNeckline=true,naturalPantsDrape=true,posteriorJeansFairing=true,structuralPantsEnvelope=true,independentJeansLoft=true,crotchSeatPanel=true,sourceShirtWaistFit=true,clothWaistContact=true,shirtHangingSilhouette=true,denimHangingSilhouette=true,jeansPanelFall=false,independentGarments=false,poseContactFactory=null,tailoredShoulderSleeves=false,independentShoulderCaps=false,realisticShoulderContour=false,upperArmFabricVolume=false,sourceNeutralCollarRoll=false,rearShirtFabricRelief=false,naturalShoulderSleeveTransition=false,sourceMeasuredSleeveHang=false,poseConditionedSleeveDrape=false,anatomicalShirtSideFlow=false,naturalShoulderFall61=false,trueShoulderTop64=false,photoDenimRearDrape73=false,photoDenimCalfHang74=false,photoDenimFolds75=false,photoDenimContinuity76=false,photoDenimContactAudit77=false,photoDenimKneePose78=false,photoDenimFlex79=false,skirtSecondaryMotion01=false}={}){
  if(independentGarments&&typeof poseContactFactory!=='function')throw Error('Independent garment triangle solver must be explicitly loaded');
  if(photoDenimCalfHang74&&!photoDenimRearDrape73)throw Error('3D74 requires exact 3D73 source photographed denim baseline');
  if(photoDenimFolds75&&!photoDenimCalfHang74)throw Error('3D75 requires exact 3D74 source photographed calf geometry baseline');
@@ -61,19 +62,20 @@ export function createOutfitController(root,{refineFit=true,enableCuffFix=true,e
  if(photoDenimContactAudit77&&!photoDenimContinuity76)throw Error('3D77 exact skinned-contact audit requires genuine 3D76 denim');
  if(photoDenimKneePose78&&!photoDenimContactAudit77)throw Error('3D78 actual bone-bent denim contact requires exact 3D77 source audit');
  if(photoDenimFlex79&&!photoDenimKneePose78)throw Error('DENIM-FLEX needs authenticated original 3D78 anatomical knee pose');
+ if(skirtSecondaryMotion01&&(!dressMobile74||!skirtDrape))throw Error('Skirt secondary motion needs the genuine tailored source dress');
  // Canonical normals must be captured before the existing presentation clone.
  const fitPants=createPantsFitter(root),shoulders=captureShoulderSurface(root);prepareBodyPresentation(root);
  let contact=null;
- let parts={},mode='none',pose='relaxed',changes=0,closed=false;
+ let parts={},mode='none',pose='relaxed',changes=0,closed=false,motion01=null;
  const all=p=>Object.values(p).flatMap(g=>g.meshes);
- const summarize=()=>({mode,pose,changes,slots:Object.keys(parts),garmentMeshes:all(parts).length,shirt:parts.shirt?{...parts.shirt.stats,sharedSkeleton:parts.shirt.sharedSkeleton}:null,pants:parts.pants?.stats||null,dress:parts.dress?.stats||null,releaseAuthorized:false});
+ const summarize=()=>({mode,pose,changes,slots:Object.keys(parts),garmentMeshes:all(parts).length,shirt:parts.shirt?{...parts.shirt.stats,sharedSkeleton:parts.shirt.sharedSkeleton}:null,pants:parts.pants?.stats||null,dress:parts.dress?.stats||null,fabricMotion:motion01?.state()||null,releaseAuthorized:false});
  function setOutfit(next,candidate,{reviewed=false,pantsCandidate=null,pantsReviewed=false}={}){
   if(closed)throw Error('Outfit controller closed');const id=sourceForOutfit(next);
   // Reject invalid review/source before detaching an existing valid outfit.
   if(id==='commons-0053')requireDress(candidate,reviewed);
   if(id==='commons-0003')requireAnatomicalShirtPreview(candidate,{acknowledged:reviewed});
   if(pantsCandidate){if(next!=='pants'&&next!=='shirt-pants')throw Error('Photo pants only allowed in lower-body outfit slots');requireReviewedPhotoPants(pantsCandidate,{reviewed:pantsReviewed});}
-  let builtContact=null;const held=all(parts).map(mesh=>({mesh,parent:mesh.parent})),built={};held.forEach(({mesh})=>mesh.removeFromParent());setFashionPose(root,'source');
+  let builtContact=null,newMotion01=null;const held=all(parts).map(mesh=>({mesh,parent:mesh.parent})),built={};held.forEach(({mesh})=>mesh.removeFromParent());setFashionPose(root,'source');
   try{
    // Build shirt FIRST, while the rig contains no other garments.
    if(next.includes('shirt')){built.shirt=attachReviewedShirt(root,candidate,{acknowledged:reviewed,pose:'source',improved:true});if(refineFit)built.shirt=protectShirtShoulders(built.shirt,shoulders);if(refineFit&&enableCuffFix)built.shirt=protectShirtCuffClearance(built.shirt,root);if(refineFit&&enableCuffFix&&enableCuffFacing)built.shirt=finishInnerCuffs(built.shirt,root);if(refineFit&&enableCuffFix&&enableCuffFacing&&enableCuffBridge)built.shirt=bridgeSourceCuffHem(built.shirt,root);if(naturalFit)built.shirt=fitContinuousShirt(built.shirt,root);if(necklineSeams)built.shirt=finishNecklineAndSeams(built.shirt,root);if(shirtHangingSilhouette&&necklineSeams)built.shirt=drapeOriginalPhotographedShirtTorso(built.shirt);}
@@ -127,18 +129,23 @@ export function createOutfitController(root,{refineFit=true,enableCuffFix=true,e
      if(anatomyEnabled&&skirtDrape)fitted=softenAnatomicalSkirt(fitted,root);
      if(anatomyEnabled&&skirtDrape&&dressMobile74)fitted=tailorSourceDress74(fitted,root);
      built.dress=refineFit?(anatomyEnabled?finishAnatomicalOpenings(fitted):finishDressEdges(fitted)):fitted;
+     if(skirtSecondaryMotion01)newMotion01=createSourceTrueSkirtMotion(built.dress,root);
     }catch(e){raw.dispose();throw e;}
    }
    const skeletons=new Set();root.traverse(o=>{if(o.isSkinnedMesh&&!o.userData.work56Garment)skeletons.add(o.skeleton);});
    if(!all(built).every(m=>skeletons.has(m.skeleton)))throw Error('Garment skeleton mismatch');
    if(independentGarments&&built.shirt){builtContact=poseConditionedSleeveDrape?createPoseConditionedSleeveContact(root,built.shirt,built.pants,poseContactFactory):poseContactFactory(root,built.shirt,built.pants);setFashionPose(root,pose);builtContact.fit(pose);}
    if(photoDenimContactAudit77&&built.pants?.stats?.sourcePhotoDenimSeamContinuity76)built.pants=auditTrueSkinnedPhotographedDenimContact77(built.pants,root,{pose});
-  }catch(e){builtContact?.dispose();Object.values(built).forEach(g=>g.dispose());held.forEach(({mesh,parent})=>parent.add(mesh));throw e;}
+  }catch(e){newMotion01?.dispose();builtContact?.dispose();Object.values(built).forEach(g=>g.dispose());held.forEach(({mesh,parent})=>parent.add(mesh));throw e;}
   finally{setResearchPose(root,pose);}
+  motion01?.dispose();motion01=newMotion01;
   contact?.dispose();Object.values(parts).forEach(g=>g.dispose());parts=built;mode=next;contact=builtContact;changes++;return summarize();
  }
  function setPose(next){if(closed)throw Error('Outfit controller closed');if(!independentGarments&&next.startsWith('blend-'))throw Error('Intermediate garment pose requires isolated independent research mode');setResearchPose(root,next);pose=next;contact?.fit(next);return summarize();}
- function dispose(){if(closed)return;contact?.dispose();Object.values(parts).forEach(g=>g.dispose());parts={};mode='none';closed=true;releaseBodyPresentation(root);}
+ function dispose(){if(closed)return;motion01?.dispose();motion01=null;contact?.dispose();Object.values(parts).forEach(g=>g.dispose());parts={};mode='none';closed=true;releaseBodyPresentation(root);}
+ function kickFabricMotion01(strength=1){if(closed||mode!=='dress'||!motion01)throw Error('Current real source dress required for bounded fabric movement');motion01.kick(strength);return motion01.state();}
+ function stepFabricMotion01(dt){if(closed||mode!=='dress'||!motion01)throw Error('Current real source dress required for bounded fabric step');return { ...motion01.step(dt),...motion01.state()};}
+ function resetFabricMotion01(){if(closed||mode!=='dress'||!motion01)throw Error('Current real source dress required for restoring fabric');motion01.reset();return motion01.state();}
  function auditKneePose78(next){
   if(!photoDenimKneePose78||!parts.pants?.stats?.auditedTrueSkinnedBodyToSourcePhotoDenim77)
    throw Error('3D78 only original SHA-vetted 3D77 research denim can bend knee');
@@ -147,5 +154,5 @@ export function createOutfitController(root,{refineFit=true,enableCuffFix=true,e
   if(photoDenimFlex79)parts.pants=bendSourceTrueDenim79(parts.pants,root,{pose:next});
   return summarize();
  }
- setPose(pose);return {setOutfit,setPose,getState:summarize,auditKneePose78,dispose};
+ setPose(pose);return {setOutfit,setPose,getState:summarize,auditKneePose78,kickFabricMotion01,stepFabricMotion01,resetFabricMotion01,dispose};
 }
