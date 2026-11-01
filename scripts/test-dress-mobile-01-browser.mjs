@@ -127,7 +127,7 @@ try{
    await prepare(page,figure);
    for(const denim of ['public','second']){
     for(const garment of ['dress','two']){
-     if(garment==='two'&&denim==='second')await page.locator('#swap').click();
+     if(garment==='two'&&(await d(page)).denim!==denim)await page.locator('#swap').click();
      await page.locator('#'+garment).click();
      let q=await d(page);validSource(q);
      if(garment==='dress')assertDress(q);else assertTwo(q,denim);
