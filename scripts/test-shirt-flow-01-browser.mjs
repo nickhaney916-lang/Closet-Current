@@ -153,10 +153,10 @@ try{
  }
  assert.equal(scenarios.length,6);
  assert.equal(ab.length,6);
- assert.equal(captures.length,48);
+ assert.equal(captures.length,54);
  assert.deepEqual(errors,[]);
  assert.deepEqual(outside,[]);
- const results={screenshots:captures.length,actualGenuineWebGLPhotographedShirtFrames:48,
+ const results={screenshots:captures.length,actualGenuineWebGLPhotographedShirtFrames:54,
   rigKinds:['female','male'],widths:[320,390,430],
   trueSourceReviewedAndHashBound:true,sourceOriginalPhotosUntouched:true,
   sameBonePoseOriginalSourceSleeveAB:ab,scenarios,captures,
