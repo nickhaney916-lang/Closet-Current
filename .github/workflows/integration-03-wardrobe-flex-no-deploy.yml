@@ -50,7 +50,7 @@ jobs:
         run: |
           git fetch --no-tags origin 53f2ad344dc56a1477e343531c423aed0e66c17d dd6bac3fa9ff640d4f562cf925337440bdb5cf8f 3a572193987cb29389727426136c6eb3ac326783 dfb40889c4c1221fb1833b859e8a11ef38aeb76e
           node research/three-d-20/restore-approved-models.mjs
-      - name: Capture 36 real 3D WebGL and 18 real source-photo 2D viewport screenshots, privacy cases, transitions and memory
+      - name: Capture 36 real 3D WebGL + 8 real same-pose denim flex + 18 original 2D, owner/privacy/recovery
         run: node scripts/test-integration-03-wardrobe-flex-browser.mjs
       - name: Validate all real release-hold evidence
         run: |
@@ -60,8 +60,10 @@ jobs:
           const dir='benchmark/integration-03-wardrobe-flex',r=JSON.parse(readFileSync(dir+'/browser-results.json'));
           assert.equal(r.genuineWebGLFrames,36);
           assert.equal(r.originalPhoto2DFrames,18);
-          assert.equal(r.screenshots,54);
-          assert.equal(readdirSync(dir).filter(x=>x.endsWith('.png')).length,54);
+          assert.equal(r.screenshots,62);
+          assert.equal(r.accountBoundFlexFrames8,8);
+          assert.ok(r.flexFrames.every(f=>f.real163BoneWebGL));
+          assert.equal(readdirSync(dir).filter(x=>x.endsWith('.png')).length,62);
           assert.deepEqual(r.widths,[320,390,430]);
           assert.ok(r.interactions.length>=10);
           assert.ok(r.transitions.length>=6);

@@ -249,10 +249,66 @@ try{
   'Original genuine 3D garment swaps and model changes must stay within bounded GPU memory');
  assert.deepEqual(offsite,[]);assert.deepEqual(errors,[]);
  await context.close();
- const report={screenshots:webglFrames.length+photoFrames.length,
+ // Account-bound real original-photo denim FLEX verification, 8 extra 390px WebGL screenshots.
+ const flexFrames=[];
+ for(const figure of ['female','male']){
+  const ctx=await browser.newContext({viewport:{width:390,height:900},deviceScaleFactor:1,isMobile:true,hasTouch:true});
+  const pages=[];
+  for(const mode of ['before','after']){
+   const page=await ctx.newPage(),errors=[],offsite=[];
+   page.on('pageerror',e=>errors.push(String(e.message)));
+   page.on('request',q=>{if(!q.url().startsWith(host)&&!q.url().startsWith('blob:'+host)&&!q.url().startsWith('data:'))offsite.push(q.url());});
+   await page.goto(host+'/research/integration-03-wardrobe-flex/index.html?flex79='+mode,{waitUntil:'domcontentloaded'});
+   await page.waitForFunction(()=>window.ccWardrobe10Diagnostics?.()?.viewerReady===true&&window.ccWardrobe10Diagnostics()?.viewerMode==='verified-3d',null,{timeout:180000});
+   if(figure==='male'){await page.locator('#model').selectOption('male');
+    await page.waitForFunction(()=>window.ccWardrobe10Diagnostics?.()?.figure==='male'&&window.ccWardrobe10Diagnostics()?.viewerReady,null,{timeout:180000});}
+   await page.evaluate(()=>window.ccWardrobe10View(90));
+   pages.push({page,mode,errors,offsite});
+  }
+  for(const denim of ['public','second']){
+   if(denim==='second')for(const item of pages){
+    await item.page.locator('#swap').click();
+    await item.page.waitForFunction(sha=>window.ccWardrobe10Diagnostics?.()?.displayed3DSources?.bottom===sha,SRC.second,{timeout:180000});
+   }
+   const comparisons=[];
+   for(const item of pages){
+    const p=await item.page.evaluate(()=>window.ccWardrobeFlexPose('left-12'));
+    assert.equal(p.sourceSHA,SRC[denim]);assert.equal(p.account,'fixture-account-a');
+    assert.deepEqual(p.degrees,[12,0]);assert.equal(p.actualKneeBones.length,2);
+    assert.equal(p.contact,0);assert.equal(p.originalPhotoUnchanged,true);
+    assert.equal(p.flexApplied,item.mode==='after');
+    if(item.mode==='after'){assert.equal(p.flexFrontPhotoUnchanged,true);
+     assert.equal(p.flexNoNewCrossings,true);
+     assert.ok(p.flexChangedVertices>=30&&p.flexActualBoundedShift>0&&p.flexActualBoundedShift<=.022);}
+    await item.page.waitForTimeout(130);
+    const png=await item.page.locator('#avatar').screenshot();
+    assert.equal(png.subarray(0,8).toString('hex'),'89504e470d0a1a0a');
+    const key=['owned-source-flex',figure,denim,item.mode].join('-');
+    await writeFile(dir+'/'+key+'.png',png);
+    flexFrames.push({key,figure,denim,mode:item.mode,sha:p.sourceSHA,real163BoneWebGL:true});
+    comparisons.push(png);
+    const rst=await item.page.evaluate(()=>window.ccWardrobeFlexPose('source'));
+    assert.deepEqual(rst.degrees,[0,0]);assert.equal(rst.contact,0);
+   }
+   const a=await sharp(comparisons[0]).removeAlpha().raw().toBuffer();
+   const b=await sharp(comparisons[1]).removeAlpha().raw().toBuffer();
+   assert.equal(a.length,b.length);
+   let changed=0;
+   for(let k=0;k<a.length;k+=3)if(Math.abs(a[k]-b[k])+Math.abs(a[k+1]-b[k+1])+Math.abs(a[k+2]-b[k+2])>24)changed++;
+   assert.ok(changed>=20,'real source-neutral fabric change must be visible on SAME true knee pose');
+  }
+  for(const item of pages){
+   await item.page.locator('#logout').click();
+   assert.equal(await item.page.evaluate(()=>{try{window.ccWardrobeFlexPose('left-12');return false;}catch{return true;}}),true);
+   assert.deepEqual(item.errors,[]);assert.deepEqual(item.offsite,[]);
+  }
+  await ctx.close();
+ }
+ assert.equal(flexFrames.length,8);
+ const report={screenshots:webglFrames.length+photoFrames.length+flexFrames.length,
   genuineWebGLFrames:webglFrames.length,originalPhoto2DFrames:photoFrames.length,
   widths:[320,390,430],figureTypes:['female','male'],licensedDenimCount:2,
-  sourceSHA256s:SRC,webglFrames,photoFrames,failures,transitions,interactions,memory,
+  sourceSHA256s:SRC,webglFrames,photoFrames,accountBoundFlexFrames8:flexFrames.length,flexFrames,failures,transitions,interactions,memory,
   threeDCapabilityOnlyOnMatchingSource:true,originalSavedJPEGHashChecked:true,
   sessionAndOwnershipGuard:true,noAccountMixing:true,
   physicallyTestedAndroid:false,physicallyTestedIphone:false,
