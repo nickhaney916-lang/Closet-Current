@@ -1,0 +1,40 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Closet Current — real device 3D garment acceptance · HOLD</title>
+<style>
+:root{font:15px system-ui,sans-serif;color:#20382d;background:#f3f4f0}*{box-sizing:border-box}
+body{margin:0}header{padding:15px;background:#fff;border-bottom:1px solid #b9c9bd}
+h1{font-size:20px;margin:0 0 7px}h2{font-size:17px;margin:10px 0}
+main{max-width:800px;margin:auto;padding:9px}.panel{background:#fff;border:1px solid #ccd6cd;border-radius:12px;padding:13px;margin:10px 0}
+label{display:block;margin:9px 0;line-height:1.4}button,select{font:inherit;padding:9px;border:1px solid #c6d4c9;border-radius:8px;min-height:42px;background:#fff}
+button:focus-visible{outline:2px solid #207e55}
+#preview{width:100%;height:650px;border:1px solid #c6d4c9;border-radius:8px;background:#f4f3ef}
+.muted{font-size:12px;color:#546558}.hold{color:#8d422d;font-weight:700}
+code,pre{overflow-wrap:anywhere;white-space:pre-wrap}pre{font-size:12px;background:#f3f4f0;padding:10px;border-radius:8px}
+input[type=checkbox]{min-width:20px;min-height:20px;vertical-align:middle}.controls{display:flex;gap:8px;flex-wrap:wrap}
+</style></head><body><header><h1>Closet Current · 3D physical-phone QA</h1>
+<p class="muted">Local research only · original licensed photos · no account, uploads or external services</p>
+</header><main>
+<section class="panel"><strong class="hold">NOT ACCEPTED until a physical phone runs this actual 3D viewer and the review is submitted.</strong>
+<p>This harness must be opened from the <strong>physical device</strong>, not a desktop emulator. It does not certify photorealism, continuous cloth collisions, privacy/auth, or Family Alpha by itself.</p>
+<p class="muted">Android USB research setup: from the repo root install dependencies and restore the original approved source fixtures, run <code>node scripts/serve-three-d-66-device.mjs</code>, and on a connected Android handset run <code>adb reverse tcp:8765 tcp:8765</code>. Open <code>http://localhost:8765/research/three-d-66/phone-acceptance.html</code> in Android Chrome. Original photos remain local. A physical iPhone requires a separately trusted HTTPS test origin; no production deployment is authorized.</p></section>
+<section class="panel">
+<div class="controls"><button id="jeans31">Public-domain jeans</button><button id="jeans37">CC BY-SA jeans</button></div>
+<iframe id="preview" title="The actual original photographed 3D wardrobe renderer, not a screenshot" loading="eager" sandbox="allow-scripts allow-same-origin"></iframe>
+<p class="muted">In the actual viewer select the source-review checkbox, tap <strong>Original shirt + jeans</strong>, rotate the figure, switch male/female and try relaxed/source poses. Real original photos and an actual skinned garment must appear.</p>
+</section>
+<section class="panel"><h2>Live original 3D renderer diagnostics</h2>
+<button id="sample">Sample renderer</button>
+<pre id="measure" aria-live="polite">Awaiting a genuine source outfit…</pre>
+</section>
+<section class="panel"><h2>Physical acceptance checks</h2>
+<label><input id="physical" type="checkbox"> I am using a real physical Android phone or iPhone, not an emulator or desktop.</label>
+<label><input id="front" type="checkbox"> The real photographed front is crisp and recognizable at normal handset zoom.</label>
+<label><input id="side" type="checkbox"> Side, shoulders, sleeve, and back look like naturally worn independent fabric, not pasted body paint; unknown denim rear is explicitly neutral.</label>
+<label><input id="pose" type="checkbox"> I switched models and poses and found no tears, flicker, disappearing cloth, body clipping or crashes.</label>
+<label><input id="touch" type="checkbox"> Touch rotation, zoom, original-source review and model selection all work on this phone.</label>
+<label><input id="privacy" type="checkbox"> No personal closet photo or identity was uploaded; this run used only licensed benchmark assets.</label>
+<div class="controls"><button id="record">Generate device QA report</button><button id="save" disabled>Save report JSON on this phone</button></div>
+<pre id="verdict" aria-live="polite">No real-device acceptance evidence recorded. Family Alpha HOLD.</pre>
+</section></main>
+<script type="module" src="./phone-acceptance.mjs"></script></body></html>
