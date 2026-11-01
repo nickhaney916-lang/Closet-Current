@@ -1,0 +1,7 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {fairNeutralShirtSeams} from './neutral-shirt-seam-fairing.mjs';
+function mesh(){const position={itemSize:3,count:3,array:new Float32Array([0,0,0,.02,0,0,.05,0,0])};const attrs={position,uv:{},skinIndex:{},skinWeight:{}};return {isSkinnedMesh:true,geometry:{getAttribute:key=>attrs[key],computeVertexNormals(){}}};}
+test('neutral seam endpoints move toward each other, bounded at 6mm',()=>{const m=mesh();const r=fairNeutralShirtSeams({shirt:m,pairs:[[0,1]],neutralVertexIndices:new Set([0,1])});assert.equal(r.movedVertices,2);assert.ok(r.maxDisplacementMeters<=.00600001);assert.equal(m.geometry.getAttribute('position').array[6],.05);});
+test('photo-front vertex is protected',()=>{const m=mesh();assert.throws(()=>fairNeutralShirtSeams({shirt:m,pairs:[[0,1]],neutralVertexIndices:new Set([1,2])}),/Photographed front/);assert.equal(m.geometry.getAttribute('position').array[0],0);});
+test('missing seam metadata fails closed',()=>assert.throws(()=>fairNeutralShirtSeams({shirt:mesh(),pairs:[],neutralVertexIndices:new Set([0,1])}),/topology/));
+test('oversized movement rejected',()=>assert.throws(()=>fairNeutralShirtSeams({shirt:mesh(),pairs:[[0,1]],neutralVertexIndices:new Set([0,1]),maxMoveMeters:.03}),/Unsafe/));
+test('non-skinned garment rejected',()=>assert.throws(()=>fairNeutralShirtSeams({shirt:{geometry:mesh().geometry},pairs:[[0,1]],neutralVertexIndices:new Set([0,1])}),/skinned/));
