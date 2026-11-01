@@ -31,7 +31,7 @@ jobs:
           git merge-base --is-ancestor b6c4e37f4868fd5a43287bc9880083b38993fb0c HEAD
           git diff --name-only b6c4e37f4868fd5a43287bc9880083b38993fb0c HEAD | while IFS= read -r file; do
             case "$file" in
-              research/three-d-74/*|research/three-d-15/outfit-controller.mjs|research/three-d-15/showroom.mjs|research/three-d-69/index-to-real-garment-demo.mjs|tests/three-d-74-source-denim-calf.test.mjs|scripts/test-three-d-74-original-denim-calf-browser.mjs| .github/workflows/three-d-74-source-calf-no-deploy.yml) ;;
+              research/three-d-74/*|research/three-d-15/outfit-controller.mjs|research/three-d-15/showroom.mjs|research/three-d-69/index-to-real-garment-demo.mjs|tests/three-d-74-source-denim-calf.test.mjs|scripts/test-three-d-74-original-denim-calf-browser.mjs|.github/workflows/three-d-74-source-calf-no-deploy.yml) ;;
               *) echo "BLOCKED: 3D74 changes unrelated or protected path $file"; exit 1 ;;
             esac
           done
@@ -43,7 +43,7 @@ jobs:
           node --check research/three-d-15/outfit-controller.mjs
           node --check research/three-d-15/showroom.mjs
           node --check research/three-d-69/index-to-real-garment-demo.mjs
-          node --check scripts/test-three-d-73-source-denim-browser.mjs
+          node --check scripts/test-three-d-74-original-denim-calf-browser.mjs
           node --test tests/three-d-74-source-denim-calf.test.mjs tests/three-d-73-real-denim-drape.test.mjs tests/three-d-69-indexed-photo-real-3d.test.mjs
       - name: Generate approved exact public-licensed source shirt and two original denim photos
         run: |
