@@ -13,7 +13,7 @@ test('3D76 graph fold relaxation is local, bounded and protects original-photo p
  assert.ok(Math.abs(out[2])<Math.abs(z[2]));
  assert.equal(relaxMeshFoldHeights76(z,neighbor,eligible,{strength:0})[1],z[1]);
  assert.throws(()=>relaxMeshFoldHeights76(z,neighbor,eligible,{strength:1}),/finite original denim mesh graph/);
- assert.throws(()=>relaxMeshFoldHeights76(z,[[100],[],[],[],[]],eligible),/broken original triangle edge|finite/);
+ assert.throws(()=>relaxMeshFoldHeights76(z,[[],[100,2],[],[],[]],eligible),/broken original triangle edge|finite/);
 });
 test('3D76 OFF by default and never accepts neutral/trustless trousers',()=>{
  assert.equal(relaxOriginalPhotoDenimFoldContinuity76(null,null,{enabled:false}),null);
