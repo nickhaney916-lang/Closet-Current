@@ -99,6 +99,10 @@ export function shapeSourceTrueYokeTorsoFlow(root,shirt){
   p.needsUpdate=true;g.computeVertexNormals();smoothSurfaceNormals(g,p.count);g.computeBoundingBox();g.computeBoundingSphere();
   for(const [name,old] of before){
    const attr=g.getAttribute(name);
+   // Some original photographed panels encode texture projection in
+   // panelPosition/panelNormal and intentionally have no conventional UV.
+   // A missing optional UV must remain absent; never create guessed UVs.
+   if(name==='uv'&&!old){if(attr)throw Error('Invented texture UV on source panel');continue;}
    if(!old||!attr||attr.array.length!==old.length||!old.every((v,i)=>v===attr.array[i]))
     throw Error('Changed immutable original photograph, panel normal or skin '+name);
   }
