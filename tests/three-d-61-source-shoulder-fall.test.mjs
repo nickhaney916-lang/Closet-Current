@@ -44,7 +44,8 @@ for(const kind of ['female','male'])for(const source of [A,B]){
    assert.equal(s.shoulderFallNoFabricBackInvented,true);
    assert.equal(s.shoulderFallHumanVisualApproved,false);
    assert.equal(s.releaseAuthorized,false);
-   assert.equal(s.sourceSHA256,'cb909d7ad9c3940bfa4db0cc50b2ea7025faebe3dcec8fe80067f900760bba64');
+   assert.equal(s.sourceSHA256,candidate('shirt').sourceSHA256,
+    'Offline unit fixture must retain its own exact source identity; real licensed SHA is checked independently by original-image Chromium tests');
    assert.equal(result.pants.sourceSHA256,source.originalSHA256);
    // Real original photo UV positions and source bone bindings are checked by
    // the geometry operator itself; also verify present and well-formed here.
