@@ -13,7 +13,7 @@ const PREVIEW='http://localhost:8765/research/three-d-66/phone-acceptance.html';
 export const getValue=(s)=>String(s??'').trim().slice(0,180);
 export function classifyDevice({kernelQemu='',hardware='',model='',fingerprint='',usbState='',adbTransport=''}={}){
  const lower=[kernelQemu,hardware,model,fingerprint].map(s=>getValue(s).toLowerCase());
- const virtual=lower[0]==='1'||/(?:^|[-_ ])(?:goldfish|ranchu|vbox|qemu|emulator|sdk_gphone|generic_x86|bluestacks)(?:$|[-_ ])/i.test(lower.join(' '));
+ const virtual=lower[0]==='1'||/(goldfish|ranchu|vbox|qemu|emulator|sdk_gphone|generic_x86|bluestacks)/i.test(lower.join(' '));
  const usb=adbTransport==='usb'||usbState==='configured';
  return {emulatorIndicated:virtual,usbTransportIndicated:usb,
   physicalHardwareCandidate:!virtual&&usb,
@@ -68,7 +68,7 @@ export async function recordEvidence({captureScreen=false,reportDir='benchmark/t
   device:{model:device.model,osVersion:device.osVersion,sdkVersion:device.sdkVersion,hardware:device.hardware,abi:device.abi},
   evidence:classification,
   adbReverseLoopback:true,
-  realChromiumSourceSceneOpened:true,
+  chromeLaunchRequested:true,\n  realChromiumSourceSceneOpened:false,
   browserOriginalSourceGarmentMeasured:false,
   hardwareIdentityConfirmedByHuman:false,
   humanAppearanceAccepted:false,
