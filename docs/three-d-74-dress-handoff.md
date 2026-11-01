@@ -43,3 +43,26 @@ Photographed licensed dress **Commons `commons-0053`**, “Dress, match (AM 2017
 
 ## Boundaries verified by path scope
 No direct changes to 3D-73 denim work, main/production/staging, photo recognition or indexing, authenticated accounts, family photos, billing, Drive Duel, or Delta Ebb. Do not confuse functional rendered geometry and original source SHA correctness with an owner-approved photographed 3D dress. Human photorealism, physics and actual phone acceptance remain HOLD.
+
+## Exact verified QA result — appended after real run (2026-11-01 UTC)
+
+**Successful dedicated GitHub Actions:** https://github.com/nickhaney916-lang/Closet-Current/actions/runs/41270346519
+
+- Dedicated code commit validated: `0087d2f65d6ceb8faf4a42710590acc6239adcef`; later docs-only commit does not change the tested source files.
+- Workflow status: **completed SUCCESS**. Explicit source restoration, licensed Work47 and original 163-bone male/female, direct 3D74 source tests plus previous dress regression tests, **108 actual Chromium SwiftShader WebGL PNG screenshots**, strict evidence assertions and artifact upload all passed.
+- Downloadable GitHub artifact ID: `13068923050`, `CC-PAR-03-3D74-GENUINE-PHOTO-DRESS-108-WEBGL-HOLD`, includes `gallery.html`, `results.json` and all original 108 PNGs.
+- Three viewport widths × 2 figures × 2 before/after × nine angles = 108 genuine screenshots. `results.json` holds 6 grouped before/after comparisons. Exact original JPEG SHA-256 for each: `e7a617cd23a159864f619e8397d5f37d48b684e47dddc4ad6b46b14481042019`.
+- Changed original dress lower-skirt position-buffer vertices on female: **1,851**; male: **1,845**, identical count at all 320/390/430 widths because these are the same rig geometry.
+- Actual screenshot changed pixels (390px): female **front 335, side 283, rear 596**; male **front 248, side 278, rear 559**. These modest framebuffer changes verify the optional geometry is doing real 3D work; they **do not** measure material realism or cloth quality.
+- Before and after source SHA match exactly in all 6 scenarios; 0°→360° WebGL views returned to original framebuffer. No generated/fake images used.
+
+### Manual inspection of real 108 screenshots
+**PASS (technical):** photograph-bound dress still visibly worn by both original skeletal rigs, armhole openings exist, source identity unchanged, 360 camera responds, side/rear skirt outline changes without modifying source pixels or photographed front texture.
+
+**REVIEW (human):** the front image detail is present and appears sharper than neutral surfaces, but shoulders remain angular, neckline trim and armhole edges do not yet look genuinely sewn, hips and bust may appear shell-like. The opt-in hem relief is subtle, not flowing hanging cloth.
+
+**FAIL (premium visual goal):** rear and much of the side dress remains featureless near-black neutral fabric with none of the original front photographic texture, because the source does not contain authentic rear imagery; the hem retains a rigid A-line contour. These are real acceptance blockers, not solved by successful 108-frame geometry and source checks.
+
+**NOT TESTED:** physical Android Chrome and iPhone Safari, authentic garment sizing and arbitrary real-wardrobe original photograph conversion, measured continuous collision, dynamic fabric simulation, independent professional/human 10/10 appearance.
+
+**Family Alpha #255 remains HOLD.** QA implementation is research-only and opt-in OFF by default; avoid merging or deploying before main-thread review.
