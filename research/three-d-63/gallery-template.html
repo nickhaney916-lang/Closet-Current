@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Closet Current — 3D original photographed clothing review (HOLD)</title>
+<style>
+:root{font:15px system-ui,-apple-system,sans-serif;color:#223c34;background:#f4f5f2}
+*{box-sizing:border-box}body{margin:0}
+header{background:#fff;border-bottom:1px solid #d3dcd5;padding:18px max(16px,calc((100vw - 1100px)/2))}
+header h1{font-size:23px;margin:0 0 6px}
+header p{font-size:13px;color:#546b60;margin:0}
+main{max-width:1100px;margin:auto;padding:17px}
+small,.muted{color:#60776b}.panel{background:white;border:1px solid #d4ddd5;border-radius:12px;padding:13px;margin:10px 0}
+.controls{display:flex;gap:10px;flex-wrap:wrap;align-items:end}
+label{font-weight:600;display:flex;flex-direction:column;gap:5px;font-size:12px;color:#42574d}
+select,button{min-height:39px;font:inherit;padding:7px;border:1px solid #b6c9ba;border-radius:8px;background:#fff;color:#223c34}
+button{cursor:pointer}button:focus-visible,select:focus-visible{outline:3px solid #286e57}
+.images{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;margin:12px 0}
+figure{margin:0;background:#fff;border:1px solid #ced8ce;border-radius:11px;overflow:hidden}
+figure img{width:100%;display:block;background:#f4f3ef;object-fit:contain;max-height:600px}
+figure figcaption{font-size:13px;font-weight:700;padding:9px 12px}
+.issue{border-left:3px solid #b17a32;padding-left:10px;font-size:13px}
+legend{font-weight:700}fieldset{border:0;padding:0;display:flex;gap:14px;flex-wrap:wrap}
+fieldset label{font-size:13px;flex-direction:row;align-items:center}
+ul{padding-left:20px}li{margin:5px 0}#reviewStatus{font-size:12px;color:#59695e}
+button.primary{background:#234c3e;color:#fff;border-color:#234c3e}
+.note{background:#f9f3e7;border:1px solid #dfd0b1;padding:10px;border-radius:9px;font-size:12px}
+@media(max-width:580px){.images{gap:6px}figure figcaption{font-size:12px}main{padding:9px}header h1{font-size:19px}}
+</style>
+</head>
+<body>
+<header><h1>Closet Current · original garment quality review</h1>
+<p>Source-verified browser screenshots · 320 / 390 / 430 CSS px · male and female anatomical rigs · DRAFT / FAMILY ALPHA HOLD</p>
+</header>
+<main>
+<div class="note"><strong>Important:</strong> These are genuine source-photo 3D screenshots, not generated artist mockups. The left view uses original source rendering; the right uses the 3D-60 crispness setting. Both have the same 3D-59 fitted shirt. A pixel difference is <strong>not</strong> proof of photorealism or a physical phone test. Jeans backs are neutral because no reverse-side photo is verified.</div>
+<section class="panel controls" aria-label="Choose real photographed evidence">
+<label>Jeans photo<select id="src"><option value="31">Original Jeans.jpg (public domain)</option><option value="37">Denimjeans2.JPG (CC BY-SA)</option></select></label>
+<label>Anatomical figure<select id="figure"><option value="female">Female</option><option value="male">Male</option></select></label>
+<label>Mobile width<select id="width"><option value="390">390 px</option><option value="320">320 px</option><option value="430">430 px</option></select></label>
+<label>Pose<select id="pose"><option value="relaxed">Relaxed</option><option value="blend-50">Intermediate movement</option></select></label>
+<label>View<select id="view"><option value="front">Front</option><option value="side">Side</option><option value="back">Back</option><option value="left-arm">Left sleeve close-up</option><option value="right-arm">Right sleeve close-up</option></select></label>
+</section>
+<section class="images" aria-label="Authentic before and after screenshots">
+<figure><figcaption>Before · original photo rendering</figcaption><img id="before" alt="Actual photographed clothing rendered on 3D before enhanced source clarity"></figure>
+<figure><figcaption>After · crisper original photo</figcaption><img id="after" alt="Actual photographed clothing on 3D after source clarity setting"></figure>
+</section>
+<div class="panel">
+<strong>Independent visual acceptance — record a human judgment</strong>
+<p class="muted" style="font-size:12px">No item is approved automatically. Review shoulders, natural shirt contact, sleeve gravity, clear photo front/rear provenance, and seams. This local page doesn't send data or save it to a server.</p>
+<fieldset><legend class="muted">Current image pair</legend>
+<label><input type="radio" name="judgment" value="PASS"> PASS</label>
+<label><input type="radio" name="judgment" value="REVIEW" checked> REVIEW</label>
+<label><input type="radio" name="judgment" value="FAIL"> FAIL</label>
+</fieldset>
+<label style="margin-top:12px">Quality observation<textarea id="notes" rows="3" style="font:inherit;border:1px solid #b6c9ba;border-radius:7px;padding:9px" placeholder="Example: left shoulder still looks padded; no rear denim detail exists"></textarea></label>
+<div class="controls" style="margin-top:10px"><button id="record" class="primary">Record this view</button><button id="export">Export reviewed findings (JSON)</button><span id="reviewStatus" aria-live="polite">No human acceptance recorded</span></div>
+</div>
+<div class="panel issue">
+<strong>Current limitations to judge</strong>
+<ul><li>Shoulder cap should follow anatomical slope instead of a broad foam ridge.</li><li>Shirt must hang as a separate textile rather than resemble a body shell.</li><li>Front-only photographic jeans must not imply true photographed sides/rear.</li><li>Geometry contact sampling is not swept-motion or continuous signed penetration certification.</li><li>These are desktop Chromium mobile-sized previews, not Android/iPhone physical-device tests.</li></ul>
+</div>
+<p class="muted" style="font-size:12px">Evidence: 3D-60 dedicated original-source no-deploy GitHub Actions run #41254944731. Photos are locally copied, SHA-256 hashed in manifest.json. External requests: none. Release approval: false.</p>
+</main>
+<script>
+'use strict';
+const frames=__VERIFIED_FRAMES__;
+const selectors=['src','figure','width','pose','view'];
+const state=Object.fromEntries(selectors.map(id=>[id,document.getElementById(id)]));
+const judgments=new Map();
+const key=()=>selectors.map(id=>state[id].value).join('|');
+function update(){
+ const data=Object.fromEntries(selectors.map(id=>[id,state[id].value]));
+ const close=data.view.endsWith('-arm');
+ if(close&&data.pose!=='relaxed'){state.pose.value='relaxed';data.pose='relaxed';}
+ for(const version of ['before','after']){
+  const item=frames.find(f=>f.src===data.src&&String(f.width)===data.width&&f.figure===data.figure&&f.version===version&&f.pose===data.pose&&f.view===data.view);
+  if(!item)throw Error('Genuine original photo evidence missing for '+JSON.stringify(data));
+  const img=document.getElementById(version);
+  img.src='images/'+item.name;img.alt='Actual '+version+' screenshot '+item.name;
+ }
+ const old=judgments.get(key());
+ document.querySelector('input[name="judgment"][value="'+(old?.status||'REVIEW')+'"]').checked=true;
+ document.getElementById('notes').value=old?.notes||'';
+ document.getElementById('reviewStatus').textContent=old?'Human review recorded for this view':'Not yet reviewed; default REVIEW';
+}
+for(const id of selectors)state[id].addEventListener('change',update);
+document.getElementById('record').addEventListener('click',()=>{
+ const k=key(),status=document.querySelector('input[name="judgment"]:checked').value;
+ judgments.set(k,{source:state.src.value,width:Number(state.width.value),figure:state.figure.value,pose:state.pose.value,view:state.view.value,status,notes:document.getElementById('notes').value.trim()});
+ update();
+});
+document.getElementById('export').addEventListener('click',()=>{
+ const data={product:'Closet Current 3D source-photo human quality review',evidenceRun:41254944731,
+  humanReviewRecords:[...judgments.values()],sourcePhotosPreserved:true,
+  physicalPhonesVerified:false,familyAlphaApproved:false,releaseAuthorized:false};
+ const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+ const url=URL.createObjectURL(blob);
+ const a=document.createElement('a');a.href=url;a.download='closet-current-3d63-human-visual-review.json';a.click();
+ URL.revokeObjectURL(url);
+});
+update();
+</script>
+</body></html>
