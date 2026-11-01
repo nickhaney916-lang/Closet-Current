@@ -51,7 +51,7 @@ test('new viewer isolate consumes its own real continuous contact solver, not a 
  for(const part of ["new URLSearchParams(location.search).get('smoothFlow')!=='after'",
   'window.ccShirtFlow02=fraction','window.ccShirtFlowPlay02=','e.isTrusted',
   'assertVerifiedShirtPose01(app.getState(),shirt.sourceSHA256)'])assert.ok(view.includes(part),part);
- for(const part of ["from '../shirt-flow-02/continuous-arm-pose.mjs'","createPoseContact","triangleContacts","applyBoneTransform"])assert.ok(contact.includes(part),part);
+ for(const part of ["from './continuous-arm-pose.mjs'","createPoseContact","triangleContacts","applyBoneTransform"])assert.ok(contact.includes(part),part);
  assert.ok(ctl.includes("from './pose-conditioned-sleeves.mjs'"));
  assert.ok(solver.includes("from '../shirt-flow-02/continuous-arm-pose.mjs'"));
  assert.ok(html.includes('id="arm-progress"'));
