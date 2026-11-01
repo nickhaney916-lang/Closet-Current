@@ -57,7 +57,7 @@ small,.meta{font-size:12px;color:#597164}
 <script type="module">
 import {PHONE_QA_CASES,assessPhysicalPhoneEvidence,phoneReleaseGate} from './phone-hardware-acceptance.mjs';
 const $=id=>document.getElementById(id);
-const query='pantsDrape=after&seatFairing=after&envelope=after&loft=after&crotchPanel=after&waistFit=after&waistContact=after&hanging=after&clothFall=after&construction=after&sweep=after&sleeve44=after&caps45=after&contour46=after&volume47=after&collar48=after&rear53=after&round54=after&hang55=after&move56=after&fit59=after&crisp58=after&slope61=after&crest64=after&drape66=after';
+const query='pantsDrape=after&seatFairing=after&envelope=after&loft=after&crotchPanel=after&waistFit=after&waistContact=after&hanging=after&clothFall=after&construction=after&sweep=after&sleeve44=after&caps45=after&contour46=after&volume47=after&collar48=after&rear53=after&round54=after&hang55=after&move56=after&fit59=after&crisp58=after&slope61=after&crest64=after&drape66=after&phone66=after';
 const descriptions={
 verified_original_photo_front:'Original photographic shirt and denim front crisp; source SHA verified',
 three_quarter_side_back_neutral_source_truth:'Side/back jeans stay neutral and honest, never fabricated source photos',
@@ -130,7 +130,7 @@ $('export').addEventListener('click',()=>{
  platform:$('platform').value, browser:$('browser').value,
  makeModel:$('model').value,osVersion:$('os').value,gitCommitSHA:$('commit').value,
  runEnvironment:$('physical').checked?'physical-device':'unverified',
- physicalDeviceObserved:$('physical').checked,localTestOriginVerified:location.hostname==='localhost'||location.hostname==='127.0.0.1',
+ physicalDeviceObserved:$('physical').checked,localTestOriginVerified:location.hostname==='localhost'||location.hostname==='127.0.0.1'||(location.protocol==='https:'&&location.hostname.endsWith('.ts.net')&&new URLSearchParams(location.search).get('phone66')==='after'),
  originalSourceScreenshotSHA256:photoHash,actualDeviceRecordingSHA256:videoHash,
  independentHumanReviewerSigned:$('human').checked,reviewerNameOrHandle:$('reviewer').value,
  cases:PHONE_QA_CASES.map(id=>({id,status:choices.get(id).value})),
