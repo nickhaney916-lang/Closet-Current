@@ -42,10 +42,23 @@ export function createOriginal163BoneGait02(root,{sourceSHA256=WALK02.sourceSHA2
     all.length<163)throw Error('POSE-WALK-02 requires original 163-bone skinned body, no synthetic skeleton');
  const locate=n=>{
   const match=all.filter(b=>identifier(b.name)===identifier(n));
-  if(match.length!==1)throw Error('Original anatomical gait joint missing or ambiguous: '+n);
+  if(match.length!==1)throw Error('Original anatomical gait joint missing or ambiguous: '+n+'; original named joints: '+all.map(b=>b.name).filter(x=>/leg|hip|pelvis|root|spine/i.test(x)).slice(0,35).join(','));
   return match[0];
  };
- const joints=new Map(wanted.map(n=>[n,locate(n)]));
+ // Some licensed 163-bone figures have a real pelvis joint with a different
+ // model-defined name. Resolve it anatomically as the nearest BONE ancestor
+ // shared by both original upper legs; never synthesize a new joint.
+ const leftUpper=locate('upperleg01L'),rightUpper=locate('upperleg01R');
+ const ancestry=new Set();for(let p=leftUpper.parent;p;p=p.parent)if(p.isBone)ancestry.add(p);
+ let common=null;for(let p=rightUpper.parent;p;p=p.parent)if(p.isBone&&ancestry.has(p)){common=p;break;}
+ if(!common||common===leftUpper||common===rightUpper)
+  throw Error('Original anatomical pelvis/common hip parent unavailable on original skeleton');
+ const namedPelvis=all.filter(b=>identifier(b.name)==='pelvis');
+ if(namedPelvis.length>1)throw Error('Original pelvis bone ambiguous');
+ if(namedPelvis.length===1&&namedPelvis[0]!==common)
+  throw Error('Actual original leg ancestor disagrees with named pelvis');
+ const joints=new Map([['pelvis',common],['upperleg01L',leftUpper],['upperleg01R',rightUpper],
+  ['lowerleg01L',locate('lowerleg01L')],['lowerleg01R',locate('lowerleg01R')]]);
  const before=new Map([...joints].map(([n,b])=>[n,b.quaternion.clone()]));
  const axisX=new T.Vector3(1,0,0),axisY=new T.Vector3(0,1,0);
  let disposed=false,samples=0,last=gait02Angles(0);
