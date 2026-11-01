@@ -115,7 +115,7 @@ function exportReview(){
 }
 function start(){
  if(!validOrigin)throw Error('Original-source anatomical demo restricted to research localhost, no production deployment');
- app=mountAnatomicalShowroom($('avatar'),{premiumTurntable67:true,independentGarments:false});
+ app=mountAnatomicalShowroom($('avatar'),{premiumTurntable67:true,premiumNeutralSilhouette70:new URLSearchParams(location.search).get('silhouette70')==='after',independentGarments:false});
  app.start();
  $('model').addEventListener('change',load);
  $('finish').addEventListener('change',()=>{app?.shade($('finish').value);diagnostics();});
