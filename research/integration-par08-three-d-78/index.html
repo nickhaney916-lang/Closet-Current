@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Closet Current — mobile original-photograph 3D reliability research</title>
+<style>
+:root{font:15px system-ui,sans-serif;color:#19382e;background:#f4f4f1}
+*{box-sizing:border-box}html,body{margin:0;min-width:0;width:100%;max-width:100%;overflow-x:hidden}
+header{background:white;padding:10px 12px;border-bottom:1px solid #cad5cc}header strong{font-size:16px}
+main{width:100%;max-width:960px;padding:10px;margin:auto}
+h1{font-size:20px;margin:5px 0 9px}.hold{color:#8e442b;font-weight:650}
+.layout{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:10px}
+#viewerHost{position:relative;min-width:0;width:100%;min-height:340px;background:#ebece6;border:1px solid #d3dcd4;border-radius:10px;overflow:hidden}
+canvas{display:block;width:100%;height:min(78svh,620px);min-height:340px;touch-action:none}
+aside{min-width:0}.panel{padding:11px;border:1px solid #d1dbd1;border-radius:11px;margin-bottom:9px;background:white;min-width:0}
+h2{margin:0 0 9px;font-size:16px}p{line-height:1.4;font-size:13px;margin:8px 0}
+label{display:block;font-size:13px;margin:6px 0}select{width:100%;margin-top:4px}
+button,select{font:inherit;font-size:14px;min-height:44px;color:inherit;background:#fff;border:1px solid #aebbb1;border-radius:7px;padding:8px;min-width:0}
+button{cursor:pointer}button:disabled{opacity:.45}button:focus-visible,select:focus-visible{outline:3px solid #387e70}
+.controls{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:8px 0}
+#retry{background:#e1f0e7}#status{margin:8px 0;min-height:38px}
+input[type=checkbox]{width:21px;height:21px;vertical-align:middle}
+#angle{width:100%;min-height:30px}#evidence{font-size:11px;overflow-wrap:anywhere;white-space:pre-wrap}
+#fallback{display:none;position:relative;background:white;padding:14px;border:1px solid #e1b6a2;border-radius:10px;margin:8px 0}
+#fallback[data-visible=true]{display:block}#fallback img{width:46%;max-width:180px;height:112px;object-fit:contain;background:#f6f6f2}
+#fallback .photos{display:flex;gap:8px;flex-wrap:wrap}
+@media(max-width:640px){.layout{grid-template-columns:minmax(0,1fr)}main{padding:7px}canvas{height:52svh;min-height:320px;max-height:470px}.panel{padding:9px}.controls button{font-size:13px;padding:6px}}
+</style>
+<script type="importmap">{"imports":{"three":"/node_modules/three/build/three.module.js","three/addons/":"/node_modules/three/examples/jsm/"}}</script>
+</head><body><header><strong>Closet Current · Mobile 3D × 3D-78 Compatibility</strong> <span class="hold">RESEARCH · HOLD</span></header>
+<main><h1>Real photographed clothing on real anatomical 3D</h1>
+<div class="layout"><section aria-label="Anatomical viewer and original photograph fallback">
+<div id="viewerHost"><canvas id="avatar" aria-label="Interactive anatomical 3D figure; swipe to rotate, pinch to zoom"></canvas></div>
+<div id="fallback" data-visible="false" role="region" aria-label="Original photograph and safe 2D fallback">
+<strong>3D unavailable — original reference photos remain accessible</strong>
+<p>This licensed research image is the source, not a rendered substitute or your private closet. The existing 2D wardrobe board is unchanged.</p>
+<div class="photos"><img src="/benchmark/work47/assets/commons-0003.jpg" alt="Licensed original shirt research photograph">
+<img id="denimOriginal" src="/benchmark/three-d-31/original-jeans.jpg" alt="Licensed original denim research photograph"></div>
+</div></section>
+<aside><section class="panel"><h2>Load and recovery</h2><div id="status" role="status" aria-live="polite">Loading original-source research assets…</div><div class="controls">
+<button id="retry" type="button">Retry 3D</button><button id="clear" type="button" disabled>Clear</button><button id="wear" type="button" disabled>Wear clothes</button></div>
+<label for="model">163-bone anatomical figure<select id="model"><option value="female">Female</option><option value="male">Male</option></select></label>
+<label><input id="review" type="checkbox"> I acknowledge these are public licensed benchmark garments, not my private closet</label>
+<div class="controls"><button id="swap" disabled>Swap denim</button><button id="front" disabled>Front</button><button id="side" disabled>Side</button><button id="back" disabled>Back</button><button id="turn" disabled>Rotate</button><button id="zin" disabled>Zoom +</button><button id="zout" disabled>Zoom −</button></div>
+<label for="angle">Viewing angle <output id="degree">0°</output></label><input id="angle" aria-label="Viewing angle" type="range" min="0" max="360" value="0" step="1" disabled>
+<p>Touch-drag to orbit; pinch with two fingers to zoom. 3D never invents source photography.</p></section>
+<section class="panel"><h2>Original-source integrity</h2><div id="evidence">Source SHA-256 validation pending.</div><p class="hold">Family Alpha #255 HOLD · Human photorealism REVIEW · Real phones NOT TESTED</p></section></aside></div></main>
+<script type="module" src="./mobile-demo.mjs"></script>
+</body></html>
