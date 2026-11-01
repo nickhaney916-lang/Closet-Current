@@ -231,7 +231,7 @@ try{
   genuineWebGLFrames:webglFrames.length,originalPhoto2DFrames:photoFrames.length,
   widths:[320,390,430],figureTypes:['female','male'],licensedDenimCount:2,
   sourceSHA256s:SRC,webglFrames,photoFrames,failures,transitions,interactions,memory,
-  3dCapabilityOnlyOnMatchingSource:true,originalSavedJPEGHashChecked:true,
+  threeDCapabilityOnlyOnMatchingSource:true,originalSavedJPEGHashChecked:true,
   sessionAndOwnershipGuard:true,noAccountMixing:true,
   physicallyTestedAndroid:false,physicallyTestedIphone:false,
   arbitraryUserPhotoTo3DCertified:false,humanPhotorealismApproved:false,
