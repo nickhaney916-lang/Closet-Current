@@ -72,8 +72,9 @@ async function start(){
   naturalShoulderSleeveTransition:true,sourceMeasuredSleeveHang:true,
   anatomicalShirtSideFlow:true,naturalShoulderFall61:true,
   trueShoulderTop64:true,poseConditionedSleeveDrape:true,
-  photoDenimRearDrape73:new URLSearchParams(location.search).get('denimDrape73')==='after'||new URLSearchParams(location.search).get('calf74')==='after',
-  photoDenimCalfHang74:new URLSearchParams(location.search).get('calf74')==='after'
+  photoDenimRearDrape73:new URLSearchParams(location.search).get('denimDrape73')==='after'||new URLSearchParams(location.search).get('calf74')==='after'||new URLSearchParams(location.search).get('folds75')==='after',
+  photoDenimCalfHang74:new URLSearchParams(location.search).get('calf74')==='after'||new URLSearchParams(location.search).get('folds75')==='after',
+  photoDenimFolds75:new URLSearchParams(location.search).get('folds75')==='after'
  });
  app.start();
  try{
@@ -108,8 +109,9 @@ async function start(){
  // Genuine garment geometry diagnostics only: no original decoded image data.
  window.cc73State=()=>({figure:app.getState().kind,sourceBones:app.getState().stats?.bones,
   denim:app.getState().outfit?.pants||null,shirt:app.getState().outfit?.shirt||null,
-  selectedDenim:currentSelection,photoDenimDrapeEnabled:new URLSearchParams(location.search).get('denimDrape73')==='after'||new URLSearchParams(location.search).get('calf74')==='after',
-  photoDenimCalfHang74Enabled:new URLSearchParams(location.search).get('calf74')==='after',
+  selectedDenim:currentSelection,photoDenimDrapeEnabled:new URLSearchParams(location.search).get('denimDrape73')==='after'||new URLSearchParams(location.search).get('calf74')==='after'||new URLSearchParams(location.search).get('folds75')==='after',
+  photoDenimCalfHang74Enabled:new URLSearchParams(location.search).get('calf74')==='after'||new URLSearchParams(location.search).get('folds75')==='after',
+  photoDenimFolds75Enabled:new URLSearchParams(location.search).get('folds75')==='after',
   sourceHash:app.getState().outfit?.pants?.sourceSHA256||null,
   familyAlpha:'HOLD',releaseAuthorized:false});
  window.addEventListener('pagehide',()=>{closed=true;app.stop();first?.dispose();second?.dispose();});
