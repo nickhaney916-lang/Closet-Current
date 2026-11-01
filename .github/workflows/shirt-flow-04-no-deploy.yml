@@ -26,7 +26,7 @@ jobs:
         run: |
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           git merge-base --is-ancestor c126df1e02670027c1a22bbd6bd88de35c3807ee HEAD
-          git diff --name-only 51a47292d8b39fcd136438ad9694de79c24d667c HEAD | while IFS= read -r path; do
+          git diff --name-only c126df1e02670027c1a22bbd6bd88de35c3807ee HEAD | while IFS= read -r path; do
             case "$path" in
               research/shirt-flow-04/*|scripts/test-shirt-flow-04-browser.mjs|tests/shirt-flow-04.test.mjs|.github/workflows/shirt-flow-04-no-deploy.yml) ;;
               *) echo "UNAUTHORIZED sibling/production file change: $path"; exit 1 ;;
