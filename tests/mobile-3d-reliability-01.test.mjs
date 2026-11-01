@@ -41,6 +41,6 @@ test('real Chromium 72-frame acceptance and resilience suite exist without mocks
   "'before','after'","'public','second'","images.length,72","for(let i=0;i<10;i++)",
   "for(let i=0;i<5;i++)","WEBGL_lose_context","missing-model","missing-original-denim"])
   assert.ok(runner.includes(x),x);
- assert.match(runner,/const gl=c\.getContext\('webgl2'\)/);
+ assert.match(runner,/gl=c\.getContext\('webgl2'\)/);
  assert.match(runner,/Math\.max\(\.\.\.swapGeo\)/);
 });
