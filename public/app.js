@@ -386,7 +386,7 @@ async function importClothingPhotos(files){
  if(files.length>20)return message('Choose up to 20 clothing photos per batch.');
  stopCamera();busy=true;controls(true);session=0;
  try{
-  const result=await readPhotoBatch(files,photoToJPEG,(image,file)=>{const sourceSha256=await sourcePhotoSha256(file);const accepted=candidate(image,{sourceSha256});if(accepted){const item=batch.at(-1);if(item)item.importFilename=file.name;}return accepted;});
+  const result=await readPhotoBatch(files,photoToJPEG,async(image,file)=>{const sourceSha256=await sourcePhotoSha256(file);const accepted=candidate(image,{sourceSha256});if(accepted){const item=batch.at(-1);if(item)item.importFilename=file.name;}return accepted;});
   if(typeof window!=='undefined')window.__lastPhotoImportResult=result;
   if(result.added){switchView('review');message(result.errors.length?result.errors.join('; '):'');}
   else message(result.errors.length?'No photos could be imported. '+result.errors.join('; '):'Exact duplicate photos were skipped; they are already in your closet or review batch.');
