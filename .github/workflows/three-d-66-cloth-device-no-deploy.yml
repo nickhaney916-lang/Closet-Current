@@ -3,15 +3,13 @@ on:
   pull_request:
     paths:
       - 'research/three-d-66/**'
-      - 'research/three-d-66/phone-acceptance.html'
-      - 'research/three-d-66/phone-acceptance.mjs'
       - 'research/three-d-15/outfit-controller.mjs'
       - 'research/three-d-15/showroom.mjs'
       - 'research/three-d-31/photo-jeans-demo.mjs'
       - 'research/three-d-37/second-jeans-demo.mjs'
       - 'tests/three-d-66-source-fabric-drape.test.mjs'
       - 'scripts/test-three-d-66-original-sleeve-browser.mjs'
-      - '.github/workflows/three-d-66-shoulder-top-no-deploy.yml'
+      - '.github/workflows/three-d-66-cloth-device-no-deploy.yml'
 permissions:
   contents: read
 jobs:
@@ -34,8 +32,8 @@ jobs:
           git merge-base --is-ancestor ce9ae8d555938549e7e9c1ee8c455b598297c7af HEAD
           git diff --name-only ce9ae8d555938549e7e9c1ee8c455b598297c7af HEAD | while IFS= read -r file; do
             case "$file" in
-              research/three-d-66/*|research/three-d-15/outfit-controller.mjs|research/three-d-15/showroom.mjs|research/three-d-31/photo-jeans-demo.mjs|research/three-d-37/second-jeans-demo.mjs|tests/three-d-66-source-fabric-drape.test.mjs|scripts/test-three-d-66-original-sleeve-browser.mjs|.github/workflows/three-d-66-shoulder-top-no-deploy.yml) ;;
-              *) echo "3D64 DISALLOWED production/staging or unrelated path $file"; exit 1 ;;
+              research/three-d-66/*|research/three-d-15/outfit-controller.mjs|research/three-d-15/showroom.mjs|research/three-d-31/photo-jeans-demo.mjs|research/three-d-37/second-jeans-demo.mjs|tests/three-d-66-source-fabric-drape.test.mjs|scripts/test-three-d-66-original-sleeve-browser.mjs|.github/workflows/three-d-66-cloth-device-no-deploy.yml) ;;
+              *) echo "3D66 DISALLOWED production/staging or unrelated path $file"; exit 1 ;;
             esac
           done
       - name: Install pinned local original-photo research only; no external AI inference
@@ -52,14 +50,14 @@ jobs:
           node research/three-d-20/restore-approved-models.mjs
       - name: Real original skinned upper sleeve gravity folds with source UV, 163 bone and bilateral sewn cap seams
         run: |
-          node --check research/three-d-66/source-shoulder-top-slope.mjs
+          node --check research/three-d-66/original-sleeve-gravity-drape.mjs
           node --test tests/three-d-66-source-fabric-drape.test.mjs
       - name: Real Chromium source photographed 390 mobile original UPPER SLEEVE pixel gate both figures and denims
         run: node scripts/test-three-d-66-original-sleeve-browser.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: THREE-D-64-ACTUAL-UPPER-SLEEVE-ORIGINAL-SOURCE-QA-HOLD
+          name: THREE-D-66-ACTUAL-UPPER-SLEEVE-ORIGINAL-SOURCE-QA-HOLD
           path: |
             benchmark/three-d-66/
           if-no-files-found: warn
