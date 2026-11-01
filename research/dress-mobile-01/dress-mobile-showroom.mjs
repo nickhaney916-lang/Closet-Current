@@ -16,7 +16,7 @@ const ALLOWED=Object.freeze({
  female:{file:'female-cc0-rigged.glb',title:'Anatomical mannequin B'}
 });
 const COLORS=Object.freeze({porcelain:0xc3bdb5,slate:0x777f84});
-export function mountAnatomicalShowroom(canvas,{onChange=()=>{},refineFit=true,enableCuffFix=true,enableCuffFacing=true,enableCuffBridge=true,naturalFit=true,necklineSeams=true,dressNeckline=true,dressAnatomy=true,dressContact=true,skirtDrape=true,dressMobile74=false,registeredNeckline=true,naturalPantsDrape=true,posteriorJeansFairing=true,structuralPantsEnvelope=true,independentJeansLoft=true,crotchSeatPanel=true,sourceShirtWaistFit=true,clothWaistContact=true,shirtHangingSilhouette=true,denimHangingSilhouette=true,jeansPanelFall=false,independentGarments=false,poseContactFactory=null,tailoredShoulderSleeves=false,independentShoulderCaps=false,realisticShoulderContour=false,upperArmFabricVolume=false,sourceNeutralCollarRoll=false,rearShirtFabricRelief=false,naturalShoulderSleeveTransition=false,sourceMeasuredSleeveHang=false,poseConditionedSleeveDrape=false,anatomicalShirtSideFlow=false,crispSourcePhotoClarity=false,naturalShoulderFall61=false,trueShoulderTop64=false,photoDenimRearDrape73=false,photoDenimCalfHang74=false,photoDenimFolds75=false,photoDenimContinuity76=false,photoDenimContactAudit77=false,photoDenimKneePose78=false,photoDenimFlex79=false,premiumTurntable67=false,skirtSecondaryMotion01=false}={}){
+export function mountAnatomicalShowroom(canvas,{onChange=()=>{},refineFit=true,enableCuffFix=true,enableCuffFacing=true,enableCuffBridge=true,naturalFit=true,necklineSeams=true,dressNeckline=true,dressAnatomy=true,dressContact=true,skirtDrape=true,dressMobile74=false,registeredNeckline=true,naturalPantsDrape=true,posteriorJeansFairing=true,structuralPantsEnvelope=true,independentJeansLoft=true,crotchSeatPanel=true,sourceShirtWaistFit=true,clothWaistContact=true,shirtHangingSilhouette=true,denimHangingSilhouette=true,jeansPanelFall=false,independentGarments=false,poseContactFactory=null,tailoredShoulderSleeves=false,independentShoulderCaps=false,realisticShoulderContour=false,upperArmFabricVolume=false,sourceNeutralCollarRoll=false,rearShirtFabricRelief=false,naturalShoulderSleeveTransition=false,sourceMeasuredSleeveHang=false,poseConditionedSleeveDrape=false,anatomicalShirtSideFlow=false,crispSourcePhotoClarity=false,naturalShoulderFall61=false,trueShoulderTop64=false,photoDenimRearDrape73=false,photoDenimCalfHang74=false,photoDenimFolds75=false,photoDenimContinuity76=false,photoDenimContactAudit77=false,photoDenimKneePose78=false,photoDenimFlex79=false,premiumTurntable67=false}={}){
  if(!canvas||typeof canvas.getContext!=='function')throw Error('Canvas required');
  // Baseline comparison imports the untouched verified renderer.
  const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false,
@@ -76,8 +76,8 @@ export function mountAnatomicalShowroom(canvas,{onChange=()=>{},refineFit=true,e
  const dressPresentation={value:0};
  const loadTimes=[];let lastRenderMs=0,outfit=null,poseChanges=0,sourcePhotoSampling=null;
  const loader=new GLTFLoader();
- let rafId=0,motionActive=false,lastMotionTime=0;
- const onContextLost=e=>{e.preventDefault();canvas.dataset.context='lost';spin=false;motionActive=false;lastMotionTime=0;};
+ let rafId=0;
+ const onContextLost=e=>{e.preventDefault();canvas.dataset.context='lost';spin=false;};
  const onContextRestored=()=>{canvas.dataset.context='ready';dirty=true;};
  canvas.addEventListener('webglcontextlost',onContextLost);
  canvas.addEventListener('webglcontextrestored',onContextRestored);
@@ -153,7 +153,7 @@ export function mountAnatomicalShowroom(canvas,{onChange=()=>{},refineFit=true,e
  };
  const load=async kind=>{
   if(finish||!Object.hasOwn(ALLOWED,kind))throw Error('Unknown mannequin source');
-  outfit?.setOutfit('none');dressPresentation.value=0;spin=false;motionActive=false;lastMotionTime=0;group.rotation.y=0;
+  outfit?.setOutfit('none');dressPresentation.value=0;spin=false;group.rotation.y=0;
   const token=++loading;
   const began=performance.now();
   const url=new URL('../three-d-06/models/'+ALLOWED[kind].file,import.meta.url).href;
@@ -176,7 +176,7 @@ export function mountAnatomicalShowroom(canvas,{onChange=()=>{},refineFit=true,e
   selected=obj;group.add(selected);current=kind;lastStats=stats;sourcePhotoSampling=null;
   {
    selected.updateMatrixWorld(true);
-   outfit=createOutfitController(selected,{refineFit,enableCuffFix,enableCuffFacing,enableCuffBridge,naturalFit,necklineSeams,dressNeckline,dressAnatomy,dressContact,skirtDrape,dressMobile74,registeredNeckline,naturalPantsDrape,posteriorJeansFairing,structuralPantsEnvelope,independentJeansLoft,crotchSeatPanel,sourceShirtWaistFit,clothWaistContact,shirtHangingSilhouette,denimHangingSilhouette,jeansPanelFall,independentGarments,poseContactFactory,tailoredShoulderSleeves,independentShoulderCaps,realisticShoulderContour,upperArmFabricVolume,sourceNeutralCollarRoll,rearShirtFabricRelief,naturalShoulderSleeveTransition,sourceMeasuredSleeveHang,poseConditionedSleeveDrape,anatomicalShirtSideFlow,naturalShoulderFall61,trueShoulderTop64,photoDenimRearDrape73,photoDenimCalfHang74,photoDenimFolds75,photoDenimContinuity76,photoDenimContactAudit77,photoDenimKneePose78,photoDenimFlex79,skirtSecondaryMotion01});outfit.setPose(pose);
+   outfit=createOutfitController(selected,{refineFit,enableCuffFix,enableCuffFacing,enableCuffBridge,naturalFit,necklineSeams,dressNeckline,dressAnatomy,dressContact,skirtDrape,dressMobile74,registeredNeckline,naturalPantsDrape,posteriorJeansFairing,structuralPantsEnvelope,independentJeansLoft,crotchSeatPanel,sourceShirtWaistFit,clothWaistContact,shirtHangingSilhouette,denimHangingSilhouette,jeansPanelFall,independentGarments,poseContactFactory,tailoredShoulderSleeves,independentShoulderCaps,realisticShoulderContour,upperArmFabricVolume,sourceNeutralCollarRoll,rearShirtFabricRelief,naturalShoulderSleeveTransition,sourceMeasuredSleeveHang,poseConditionedSleeveDrape,anatomicalShirtSideFlow,naturalShoulderFall61,trueShoulderTop64,photoDenimRearDrape73,photoDenimCalfHang74,photoDenimFolds75,photoDenimContinuity76,photoDenimContactAudit77,photoDenimKneePose78,photoDenimFlex79});outfit.setPose(pose);
   }
   canvas.dataset.pose=pose;loadTimes.push(performance.now()-began);
   installOpeningSkinAttribute(selected);outfit.setOutfit('pants');syncOutfit();reapDetachedGarmentGeometries();shade(lastColor);front();
@@ -207,13 +207,6 @@ export function mountAnatomicalShowroom(canvas,{onChange=()=>{},refineFit=true,e
   const changed=controls.update();
   // Cap auto-spin at 30fps; idle renders stop while controls stay responsive.
   if(spin&&time-lastTime>33){if(premiumTurntable67){advanceAnatomicalTurntable(camera,controls,Math.min(.05,(time-lastTime)/1000||.033),18);}else group.rotation.y+=.012;dirty=true;lastTime=time;}
-  if(motionActive){
-   const dt=lastMotionTime?Math.min(.05,Math.max(0,(time-lastMotionTime)/1000)):1/60;
-   lastMotionTime=time;
-   const result=outfit?.stepFabricMotion01(dt);
-   dirty=true;
-   if(result?.settled){motionActive=false;lastMotionTime=0;}
-  }
   resize();if(changed||dirty)draw();
   rafId=window.requestAnimationFrame(frameLoop);
  };
@@ -226,10 +219,10 @@ export function mountAnatomicalShowroom(canvas,{onChange=()=>{},refineFit=true,e
  const onVisibilityChange=()=>{dirty=true;};
  document.addEventListener('visibilitychange',onVisibilityChange);
  const syncOutfit=()=>{const s=outfit?.getState();dressPresentation.value=dressContact&&s?.mode==='dress'?1:0;canvas.dataset.outfit=s?.mode||'none';canvas.dataset.shirt=s?.shirt?'source-reviewed':'none';canvas.dataset.pants=s?.pants?'neutral-research':'none';canvas.dataset.dress=s?.dress?'source-reviewed':'none';};
- const applyOutfit=(mode,candidate,options={})=>{if(!selected||finish)throw Error('Loaded figure required');spin=false;motionActive=false;lastMotionTime=0;group.rotation.y=0;const s=outfit.setOutfit(mode,candidate,options);sourcePhotoSampling=mode.includes('shirt')&&crispSourcePhotoClarity?configureOriginalPhotoSampling(selected,renderer,{enabled:true}):null;syncOutfit();reapDetachedGarmentGeometries();draw();return s;};
+ const applyOutfit=(mode,candidate,options={})=>{if(!selected||finish)throw Error('Loaded figure required');spin=false;group.rotation.y=0;const s=outfit.setOutfit(mode,candidate,options);sourcePhotoSampling=mode.includes('shirt')&&crispSourcePhotoClarity?configureOriginalPhotoSampling(selected,renderer,{enabled:true}):null;syncOutfit();reapDetachedGarmentGeometries();draw();return s;};
  const stop=()=>{
   if(finish)return;
-  finish=true;spin=false;motionActive=false;started=false;loading++;
+  finish=true;spin=false;started=false;loading++;
   if(rafId)window.cancelAnimationFrame(rafId);
   canvas.removeEventListener('webglcontextlost',onContextLost);
   canvas.removeEventListener('webglcontextrestored',onContextRestored);
@@ -261,10 +254,8 @@ export function mountAnatomicalShowroom(canvas,{onChange=()=>{},refineFit=true,e
   controls.update();draw();
  };
  return {load,shade,front,side,back,rotate,viewAt:rotate,resetView:front,start,stop,setPose,zoom,applyOutfit,inspectSleeves,inspectTorso,
-  kickFabricMotion01:strength=>{if(!skirtSecondaryMotion01||finish||!selected)throw Error('Genuine source dress motion is not available');const state=outfit.kickFabricMotion01(strength);motionActive=true;lastMotionTime=0;dirty=true;return state;},
-  resetFabricMotion01:()=>{if(!skirtSecondaryMotion01||finish||!selected)throw Error('Genuine source dress motion is not available');motionActive=false;lastMotionTime=0;const state=outfit.resetFabricMotion01();draw();return state;},
   auditKneePose78:next=>{if(!photoDenimKneePose78||finish||!outfit)throw Error('Actual photographed denim 3D78 research unavailable'); const result=outfit.auditKneePose78(next);draw();return result;},
   setSpin:v=>{spin=!!v;dirty=true;},
-  getState:()=>({kind:current,loaded:!!selected,finish,stats:lastStats,frames:frame,finishMaterial:lastColor,pose:pose,loadMs:loadTimes.at(-1),lastRenderMs,geometries:renderer.info.memory.geometries,textures:renderer.info.memory.textures,pixelRatio:renderer.getPixelRatio(),drawPixels:canvas.width*canvas.height,trackedGarmentGeometries:trackedGarmentGeometries.size,reclaimedGarmentGeometries,sourceDetailRendering:{enabled:crispSourcePhotoClarity,renderPixelRatio:renderer.getPixelRatio(),maxPixelRatio:2,materialCount:sourcePhotoSampling?.materialCount||0,configuredSamplers:sourcePhotoSampling?.configuredSamplers||0,sourceImages:sourcePhotoSampling?.images||[],originalPhotosAndColorsUnchanged:true,humanVisualApproved:false,releaseAuthorized:false},cameraDistance:camera.position.distanceTo(controls.target),premium360Enabled:premiumTurntable67,viewAngle:premiumTurntable67?viewAngleFromCamera(camera,controls.target):null,cameraPosition:premiumTurntable67?camera.position.toArray():null,cameraTarget:premiumTurntable67?controls.target.toArray():null,mannequinBodyYaw:group.rotation.y,spinEnabled:spin,outfit:outfit?.getState()||null,skirtMotionEnabled:skirtSecondaryMotion01,skirtMotionActive:motionActive,dressPresentation:dressPresentation.value,poseChanges,releaseAuthorized:false})
+  getState:()=>({kind:current,loaded:!!selected,finish,stats:lastStats,frames:frame,finishMaterial:lastColor,pose:pose,loadMs:loadTimes.at(-1),lastRenderMs,geometries:renderer.info.memory.geometries,textures:renderer.info.memory.textures,pixelRatio:renderer.getPixelRatio(),drawPixels:canvas.width*canvas.height,trackedGarmentGeometries:trackedGarmentGeometries.size,reclaimedGarmentGeometries,sourceDetailRendering:{enabled:crispSourcePhotoClarity,renderPixelRatio:renderer.getPixelRatio(),maxPixelRatio:2,materialCount:sourcePhotoSampling?.materialCount||0,configuredSamplers:sourcePhotoSampling?.configuredSamplers||0,sourceImages:sourcePhotoSampling?.images||[],originalPhotosAndColorsUnchanged:true,humanVisualApproved:false,releaseAuthorized:false},cameraDistance:camera.position.distanceTo(controls.target),premium360Enabled:premiumTurntable67,viewAngle:premiumTurntable67?viewAngleFromCamera(camera,controls.target):null,cameraPosition:premiumTurntable67?camera.position.toArray():null,cameraTarget:premiumTurntable67?controls.target.toArray():null,mannequinBodyYaw:group.rotation.y,spinEnabled:spin,outfit:outfit?.getState()||null,dressPresentation:dressPresentation.value,poseChanges,releaseAuthorized:false})
  };
 }
