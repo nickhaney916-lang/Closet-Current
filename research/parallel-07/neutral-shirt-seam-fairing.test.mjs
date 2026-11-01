@@ -5,3 +5,5 @@ test('photo-front vertex is protected',()=>{const m=mesh();assert.throws(()=>fai
 test('missing seam metadata fails closed',()=>assert.throws(()=>fairNeutralShirtSeams({shirt:mesh(),pairs:[],neutralVertexIndices:new Set([0,1])}),/topology/));
 test('oversized movement rejected',()=>assert.throws(()=>fairNeutralShirtSeams({shirt:mesh(),pairs:[[0,1]],neutralVertexIndices:new Set([0,1]),maxMoveMeters:.03}),/Unsafe/));
 test('non-skinned garment rejected',()=>assert.throws(()=>fairNeutralShirtSeams({shirt:{geometry:mesh().geometry},pairs:[[0,1]],neutralVertexIndices:new Set([0,1])}),/skinned/));
+
+test('invalid later seam does not partially mutate earlier valid seam',()=>{const m=mesh(),before=Array.from(m.geometry.getAttribute('position').array);assert.throws(()=>fairNeutralShirtSeams({shirt:m,pairs:[[0,1],[1,9]],neutralVertexIndices:new Set([0,1,2])}),/indices/);assert.deepEqual(Array.from(m.geometry.getAttribute('position').array),before);});
