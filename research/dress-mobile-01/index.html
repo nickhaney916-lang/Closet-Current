@@ -1,0 +1,54 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Closet Current — Source-True Anatomical Dress Mobile HOLD</title>
+<style>
+:root{font:14px system-ui,sans-serif;background:#f3f5f1;color:#17392d}*{box-sizing:border-box}
+html,body{margin:0;min-width:0;max-width:100%;overflow-x:hidden}
+header{padding:9px 12px;background:#fff;border-bottom:1px solid #cad7ca}
+header strong{font-size:17px}.hold{color:#904b28;font-weight:700}
+main{max-width:1020px;padding:8px;margin:auto}h1{font-size:20px;margin:5px 0 8px}
+.layout{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,.9fr);gap:10px}
+.panel{min-width:0;background:white;border:1px solid #cedace;border-radius:12px;padding:10px;margin-bottom:9px}
+#viewerHost{width:100%;min-width:0;background:#eeeee8;border-radius:11px;overflow:hidden}
+#avatar{display:block;width:100%;height:min(74svh,620px);min-height:320px;touch-action:none}
+#fallback{display:none;min-height:318px;background:#fff;border:1px solid #d5cec5;border-radius:10px;padding:12px}
+#fallback[data-visible=true]{display:block}
+#photos{display:flex;gap:7px;justify-content:center;align-items:flex-start;flex-wrap:wrap}
+#photos figure{margin:0;flex:0 1 43%;min-width:90px;max-width:170px}
+#photos img{width:100%;height:225px;object-fit:contain;background:#f8f8f6;border:1px solid #ddd}
+figcaption{font-size:11px;text-align:center}
+#status{min-height:34px;font-size:13px;line-height:1.4;overflow-wrap:anywhere}
+h2{font-size:16px;margin:0 0 8px}p{font-size:12px;line-height:1.45}
+button,select{color:inherit;font:inherit;background:white;min-height:44px;min-width:0;padding:7px;border:1px solid #aabbaa;border-radius:8px}
+button:disabled{opacity:.45}button:focus-visible,select:focus-visible{outline:3px solid #1e7355}
+.controls{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:7px 0}
+label{display:block;font-size:12px;margin:7px 0}select{width:100%;margin-top:4px}
+#angle{width:100%;min-height:30px}#evidence{font-size:11px;white-space:pre-wrap;overflow-wrap:anywhere}
+@media(max-width:650px){.layout{grid-template-columns:minmax(0,1fr)}#avatar{height:51svh;max-height:470px;min-height:310px}main{padding:6px}.panel{padding:9px}}
+</style>
+<script type="importmap">{"imports":{"three":"/node_modules/three/build/three.module.js","three/addons/":"/node_modules/three/examples/jsm/"}}</script>
+</head><body><header><strong>Closet Current · Mobile Dress / Two-Piece 3D</strong> <span class="hold"> RESEARCH HOLD</span></header>
+<main><h1>Original photographed dress on the anatomical figure</h1>
+<div class="layout"><section aria-label="Source-backed dress or 2D photographs">
+<div id="viewerHost"><canvas id="avatar" aria-label="Real 163-joint WebGL figure wearing verified photographed clothing; drag to rotate, pinch to zoom"></canvas></div>
+<div id="fallback" role="region" data-visible="false" aria-label="Verified original photograph 2D fallback">
+<h2>Original photograph / 2D reference</h2><p id="reason">3D is unavailable. These are licensed original reference images, not fabricated garment meshes.</p>
+<div id="photos"><figure><img id="dressOriginal" src="/benchmark/work47/assets/commons-0053.jpg" alt="Licensed original photographed dress"><figcaption>Original dress JPEG</figcaption></figure>
+<figure><img id="shirtOriginal" src="/benchmark/work47/assets/commons-0003.jpg" alt="Licensed original photographed shirt"><figcaption>Original shirt JPEG</figcaption></figure>
+<figure><img id="denimOriginal" src="/benchmark/three-d-31/original-jeans.jpg" alt="Licensed original photographed denim"><figcaption>Original denim JPEG</figcaption></figure></div></div>
+</section><aside><section class="panel"><h2>Select outfit</h2>
+<div id="status" role="status" aria-live="polite">Verifying licensed photo assets…</div>
+<label for="model">Anatomical figure<select id="model"><option value="female">Female</option><option value="male">Male</option></select></label>
+<label><input type="checkbox" id="review"> I acknowledge licensed sample photographs and provisional 3D fitting</label>
+<div class="controls"><button id="dress" disabled>Wear dress</button><button id="two" disabled>Shirt + jeans</button><button id="clear" disabled>Clear</button></div>
+<div class="controls"><button id="swap" disabled>Swap jeans</button><button id="retry">Retry 3D</button><button id="fallbackToggle">Show 2D</button></div>
+<p>Dress is one piece: a skirt must never overlap hidden jeans. The source-photo front is real; unphotographed sides/back remain neutral.</p>
+</section><section class="panel"><h2>Mobile camera</h2>
+<div class="controls"><button id="front" disabled>Front</button><button id="side" disabled>Side</button><button id="back" disabled>Back</button>
+<button id="turn" disabled>Rotate</button><button id="zin" disabled>Zoom +</button><button id="zout" disabled>Zoom −</button></div>
+<label for="angle">View angle <output id="degree">0°</output></label><input id="angle" type="range" min="0" max="360" value="0" disabled>
+<p>Touch-drag to orbit; pinch to zoom. Changing outfits does not write wardrobe data.</p>
+</section><section class="panel"><h2>Original photo integrity</h2>
+<div id="evidence">Awaiting SHA-256 verification of originals and cutouts.</div>
+<p class="hold">Family Alpha #255 HOLD · Human realism REVIEW · Phones NOT TESTED</p></section></aside></div>
+</main><script type="module" src="./dress-mobile-demo.mjs"></script></body></html>
