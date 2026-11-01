@@ -9,7 +9,7 @@ import {readFile,mkdir,writeFile} from 'node:fs/promises';
 import {resolve,extname} from 'node:path';
 import {chromium} from 'playwright';
 import sharp from 'sharp';
-const root=resolve('.'),folder='benchmark/shirt-flow-01',captures=[],scenarios=[],ab=[],errors=[],outside=[];
+const root=resolve('.'),folder='benchmark/shirt-flow-01',captures=[],scenarios=[],ab=[],errors=[],outside=[],failedResponses=[],consoleErrors=[],requestFailures=[];
 const server=createServer(async(req,res)=>{
  try{
   const p=decodeURIComponent(new URL(req.url,'http://localhost').pathname);
@@ -29,6 +29,9 @@ await new Promise(ok=>server.listen(0,'127.0.0.1',ok));
 const host='http://127.0.0.1:'+server.address().port;
 function monitor(page){
  page.on('pageerror',e=>errors.push(String(e.message)));
+ page.on('console',m=>{if(m.type()==='error')consoleErrors.push(m.text());});
+ page.on('response',r=>{if(r.status()>=400)failedResponses.push({status:r.status(),url:r.url()});});
+ page.on('requestfailed',r=>requestFailures.push({url:r.url(),error:r.failure()?.errorText}));
  page.on('request',r=>{const u=r.url();if(!u.startsWith(host)&&!u.startsWith('data:')&&!u.startsWith('blob:'+host))outside.push(u);});
 }
 const baseParams='construction=after&sleeve44=after&caps45=after&contour46=after&volume47=after&collar48=after&rear53=after&round54=after&hang55=after&sweep=after&crisp58=after';
@@ -41,7 +44,9 @@ async function openOriginal(page,kind,enabled=true){
  catch(e){throw Error('Original source showroom not ready: '+JSON.stringify({
   status:await page.locator('#status').textContent().catch(()=>'?'),
   loaded:await page.evaluate(()=>window.cc31Diagnostics?.()?.loaded??null).catch(()=>null),
-  errors:errors.slice(-5),outside:outside.slice(-5)}));}
+  errors:errors.slice(-5),outside:outside.slice(-5),
+  failedResponses:failedResponses.slice(-15),consoleErrors:consoleErrors.slice(-10),requestFailures:requestFailures.slice(-8),
+  html:await page.evaluate(()=>({ready:document.readyState,script:document.querySelector('script[type=module][src]')?.src,hasCanvas:!!document.querySelector('#avatar')}))}));}
  if(kind==='male'){
   await page.locator('#model').selectOption('male');
   await page.waitForFunction(()=>window.cc31Diagnostics?.()?.loaded&&window.cc31Diagnostics().kind==='male',null,{timeout:180000});
