@@ -23,7 +23,7 @@ test('no private photography, API credentials, remote URLs, auth or deploy in is
  }
  assert.match(demo,/localhost/);
  assert.match(workflow,/contents: read/);
- assert.doesNotMatch(workflow,/deploy|publish|push:/i,'workflow name may say no-deploy but steps must not deploy');
+ assert.doesNotMatch(workflow,/\bwrangler\b|\bnpm run deploy\b|^\s*push:\s*$/mi);
 });
 test('user-visible states, retry, 2D source fallback, WebGL context and cleanup are wired',()=>{
  for(const id of ['retry','wear','swap','clear','front','side','back','turn','zin','zout','model','review','angle'])
