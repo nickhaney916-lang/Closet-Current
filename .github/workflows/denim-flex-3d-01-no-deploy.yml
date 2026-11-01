@@ -1,0 +1,91 @@
+name: PAR-09 Genuine source-denim anatomical flex 72-frame QA (DRAFT HOLD NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'research/denim-flex-3d-01/**'
+      - 'tests/denim-flex-3d-01.test.mjs'
+      - 'scripts/test-denim-flex-3d-01-browser.mjs'
+      - '.github/workflows/denim-flex-3d-01-no-deploy.yml'
+permissions:
+  contents: read
+jobs:
+  real-source-true-knee-flex:
+    runs-on: ubuntu-latest
+    timeout-minutes: 65
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+      - name: Exact verified 3D78 ancestor and strict independent no-deploy file fence
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor 8c586c94acc10fd1fc80c532bd5040eb6b2f8a1e HEAD
+          git diff --name-only 8c586c94acc10fd1fc80c532bd5040eb6b2f8a1e HEAD | while IFS= read -r file; do
+            case "$file" in
+              research/denim-flex-3d-01/*|tests/denim-flex-3d-01.test.mjs|scripts/test-denim-flex-3d-01-browser.mjs|.github/workflows/denim-flex-3d-01-no-deploy.yml) ;;
+              *) echo "UNAUTHORIZED PAR09 path: $file"; exit 1 ;;
+            esac
+          done
+      - name: Install pinned source-only original WebGL research dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 three@0.180.0 playwright@1.56.1 three-mesh-bvh@0.9.2
+      - name: Verify module syntax, original sources, original 3D78 anatomy, true collision and flex unit tests
+        run: |
+          node --check research/denim-flex-3d-01/pose-responsive-source-denim.mjs
+          node --check research/denim-flex-3d-01/flex-outfit-controller.mjs
+          node --check research/denim-flex-3d-01/flex-showroom.mjs
+          node --check research/denim-flex-3d-01/flex-demo.mjs
+          node --check scripts/test-denim-flex-3d-01-browser.mjs
+          node --test tests/denim-flex-3d-01.test.mjs tests/three-d-78-original-anatomical-knee-poses.test.mjs tests/three-d-77-true-skinned-denim-contact.test.mjs tests/three-d-76-source-denim-fold-continuity.test.mjs tests/three-d-75-photo-denim-folds.test.mjs tests/three-d-74-source-denim-calf.test.mjs tests/three-d-73-real-denim-drape.test.mjs tests/three-d-69-indexed-photo-real-3d.test.mjs
+      - name: Build SHA-locked licensed original photographs and alpha masks
+        run: |
+          node scripts/build-three-d-31-jeans-proposal.mjs
+          node scripts/build-three-d-37-second-jeans.mjs
+          node scripts/build-work47-benchmark.mjs
+          node --test tests/three-d-31-jeans-source.test.mjs tests/three-d-37-source-true.test.mjs
+      - name: Restore exact authentic approved CC0 male/female 163-bone anatomical GLB rigs
+        run: |
+          git fetch --no-tags origin 53f2ad344dc56a1477e343531c423aed0e66c17d dd6bac3fa9ff640d4f562cf925337440bdb5cf8f 3a572193987cb29389727426136c6eb3ac326783 dfb40889c4c1221fb1833b859e8a11ef38aeb76e
+          node research/three-d-20/restore-approved-models.mjs
+      - name: Real before/after same-bent-knee WebGL 72 frames plus all four pose triangle contact and restoration
+        run: node scripts/test-denim-flex-3d-01-browser.mjs
+      - name: Exact evidence counts, measurable non-faked shape change and honest release gates
+        run: |
+          node --input-type=module <<'CHECK'
+          import {readFileSync,readdirSync} from 'node:fs';
+          import assert from 'node:assert/strict';
+          const dir='benchmark/denim-flex-3d-01';
+          const r=JSON.parse(readFileSync(dir+'/browser-results.json','utf8'));
+          assert.equal(r.screenshots,72);
+          assert.equal(readdirSync(dir).filter(f=>f.endsWith('.png')).length,72);
+          assert.deepEqual(r.widths,[320,390,430]);
+          assert.deepEqual(r.poses,['source','left-12','right-12','both-16']);
+          assert.equal(r.comparisons.length,12);
+          assert.equal(r.contactCases.length,96);
+          assert.equal(r.restorations.length,24);
+          assert.equal(r.realAnatomicalBones,163);
+          assert.equal(r.measuredPoseResponsiveRearFabric,true);
+          assert.equal(r.genuineWebGL,true);
+          assert.equal(r.originalPhotoUVRestSkinPreserved,true);
+          assert.equal(r.sourceFrontVerticesPreserved,true);
+          assert.equal(r.noNewSkinnedBodyTriangleCrossings,true);
+          assert.equal(r.noInventedUnphotographedRear,true);
+          assert.ok(r.comparisons.every(c=>c.sameRealBothKnees16DegreePose&&c.rearOrSideChangedPixels>=6));
+          assert.equal(r.realPhoneAndroidTested,false);
+          assert.equal(r.realIPhoneTested,false);
+          assert.equal(r.humanPhotorealismApproved,false);
+          assert.equal(r.productionTouched,false);
+          assert.equal(r.familyAlpha,'HOLD');
+          assert.equal(r.releaseAuthorized,false);
+          CHECK
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: PAR09-REAL-SOURCE-DENIM-BENT-KNEE-72-WEBGL-CONTACT-HOLD
+          path: benchmark/denim-flex-3d-01/
+          if-no-files-found: warn
