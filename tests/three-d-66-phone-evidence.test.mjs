@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {PHONE_QA_CASES,assessPhysicalPhoneEvidence,phoneReleaseGate} from '../research/three-d-66/phone-hardware-acceptance.mjs';
+import {assertPrivateResearchOrigin} from '../research/three-d-66/private-qa-origin.mjs';
 const hash='c'.repeat(64);
 const full=(platform='Android')=>({
  platform,makeModel:platform==='Android'?'Samsung Galaxy S25':'iPhone 16',
@@ -49,4 +50,25 @@ test('generated proof must never equate any simulated device to actual physical 
   assert.equal(result.status,'HOLD',name);
   assert.equal(result.physicalPhoneAccepted,false,name);
  }
+});
+
+test('only localhost or explicitly opted-in private tailnet HTTPS serves physical-phone 3D research',()=>{
+ for(const href of ['http://localhost:8787/research/three-d-31/index.html',
+                     'http://127.0.0.1:8787/research/three-d-37/index.html']){
+  const status=assertPrivateResearchOrigin({href});
+  assert.equal(status.local,true);
+  assert.equal(status.privatePhoneQA,false);
+  assert.equal(status.releaseAuthorized,false);
+ }
+ const privatePhone=assertPrivateResearchOrigin({href:'https://closet-workstation.haney-test.ts.net/research/three-d-31/index.html?phone66=after'});
+ assert.equal(privatePhone.local,false);
+ assert.equal(privatePhone.privatePhoneQA,true);
+ assert.equal(privatePhone.releaseAuthorized,false);
+ for(const url of [
+  'http://closet-workstation.haney-test.ts.net/research/three-d-31/index.html?phone66=after',
+  'https://closet-workstation.haney-test.ts.net/research/three-d-31/index.html',
+  'https://closet-workstation.haney-test.ts.net/research/three-d-31/index.html?phone66=before',
+  'https://example.com/research/three-d-31/index.html?phone66=after',
+  'https://closet-workstation.haney-test.ts.net.example.com/research/three-d-31/index.html?phone66=after'
+ ]) assert.throws(()=>assertPrivateResearchOrigin({href:url}),/Research 3D only/);
 });
