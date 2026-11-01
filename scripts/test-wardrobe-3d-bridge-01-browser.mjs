@@ -150,6 +150,7 @@ try{
     }
    }
   }
+  console.log('WARDROBE10_VIEWPORT_COMPLETE',width,'webgl',webglFrames.length,'photo',photoFrames.length);
   assert.deepEqual(errors,[],'Genuine account+source browser JS errors');
   assert.deepEqual(offsite,[],'Original photo must not leave licensed localhost fixture');
   await context.close();
@@ -200,11 +201,12 @@ try{
  // Genuine failing cases; each must deny account access or deny unsupported mesh and restore 2D.
  for(const negative of ['wrong-owner','duplicate','corrupt','unconfirmed','unsupported-category']){
   await p.evaluate(n=>window.ccWardrobe10Test.inject(n),negative);
-  await p.waitForFunction(()=>window.ccWardrobe10Diagnostics().phase==='error');
   const d=await diag(p);
+  assert.equal(d.phase,'error','Negative must fail closed: '+negative+' '+JSON.stringify(d).slice(0,1500));
   assert.equal(d.indexReady,false);
   assert.equal(d.visibleAccountIds.length,0);
   failures.push({negative,pass:true,closed:'account index'});
+  console.log('WARDROBE10_NEGATIVE_PASS',negative);
   await p.evaluate(()=>window.ccWardrobe10Test.reset());
   await p.waitForFunction(()=>window.ccWardrobe10Diagnostics().viewerReady,
    null,{timeout:180000});
