@@ -3,8 +3,11 @@
 import {mountAnatomicalShowroom} from './showroom.mjs';
 import {PANTS_RESEARCH_SOURCE} from '../three-d-30/reviewed-photo-pants.mjs';
 import {loadLicensedCutout} from '../three-d-02/reviewed-texture.mjs';
+import {SHIRT_FLOW01,armPoseAt01,assertVerifiedShirtPose01,createArmPoseCycle01} from './arm-motion-gate.mjs';
 const $=id=>document.getElementById(id),urls=[],status=text=>{$('status').textContent=text;};
-let app,pants,shirt,ready=false,closed=false;
+let app,pants,shirt,ready=false,closed=false,armCycle=null,armTimer=null;
+const flowEnabled=()=>new URLSearchParams(location.search).get('shirtFlow')==='after'&&new URLSearchParams(location.search).get('move56')==='after'&&new URLSearchParams(location.search).get('construction')==='after'&&new URLSearchParams(location.search).get('sweep')==='after';
+function stopArms(){if(armTimer!==null){clearInterval(armTimer);armTimer=null;}armCycle?.dispose();armCycle=null;}
 const digest=async bytes=>[...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))].map(v=>v.toString(16).padStart(2,'0')).join('');
 async function imageFrom(url,sha,id){
  if(!/^\/benchmark\/(?:three-d-31\/(?:original-jeans\.jpg|cutout-proposal\.png)|work47\/assets\/commons-0003\.(?:jpg|png))$/.test(url))throw Error('Only original local research assets allowed');
@@ -54,15 +57,47 @@ async function start(){
  const manifest=await fetch('/benchmark/work47/manifest.json',{cache:'no-store'}).then(r=>r.json());
  shirt=await loadLicensedCutout('commons-0003',{manifest,reviewConfirmed:true});
  await app.load('female');ready=true;status('Original RGB verified at '+verified.pixels+' visible pixels; source-dominant neutral backing and alpha silhouette registered. Research mask REVIEW · HOLD');update();
- $('model').addEventListener('change',async()=>{if(closed)return;ready=false;$('review').checked=false;$('photo').disabled=true;$('full').disabled=true;await app.load($('model').value);ready=true;update();status('New original anatomical model · provisional photo requires fresh review');});
+ $('model').addEventListener('change',async()=>{if(closed)return;stopArms();ready=false;$('review').checked=false;$('photo').disabled=true;$('full').disabled=true;await app.load($('model').value);ready=true;update();status('New original anatomical model · provisional photo requires fresh review');});
  $('review').addEventListener('change',()=>{$('photo').disabled=!ready||!$('review').checked;$('full').disabled=!ready||!$('review').checked;});
  for(const angle of ['front','side','back'])$(angle).addEventListener('click',()=>{app[angle]();update();});
  $('threequarter').addEventListener('click',()=>{app.rotate(30);update();});
  $('pose').addEventListener('change',()=>{app.setPose($('pose').value);update();});
- $('neutral').addEventListener('click',()=>{if(!ready)return;app.applyOutfit('pants');status('Original neutral anatomical research pants. No photographed cloth applied.');update();});
- $('photo').addEventListener('click',e=>{if(!ready||!e.isTrusted||!$('review').checked)return;app.applyOutfit('pants',null,{pantsCandidate:pants,pantsReviewed:true});status('Original denim front pixels on 3D pant mesh · unphotographed neutral back · HOLD');update();});
- $('full').addEventListener('click',e=>{if(!ready||!e.isTrusted||!$('review').checked)return;app.applyOutfit('shirt-pants',shirt,{reviewed:true,pantsCandidate:pants,pantsReviewed:true});status('Original AJ shirt plus original denim pixels on separate 3D pants · HOLD');update();});
+ $('neutral').addEventListener('click',()=>{stopArms();if(!ready)return;app.applyOutfit('pants');status('Original neutral anatomical research pants. No photographed cloth applied.');update();});
+ $('photo').addEventListener('click',e=>{stopArms();if(!ready||!e.isTrusted||!$('review').checked)return;app.applyOutfit('pants',null,{pantsCandidate:pants,pantsReviewed:true});status('Original denim front pixels on 3D pant mesh · unphotographed neutral back · HOLD');update();});
+ $('full').addEventListener('click',e=>{stopArms();if(!ready||!e.isTrusted||!$('review').checked)return;app.applyOutfit('shirt-pants',shirt,{reviewed:true,pantsCandidate:pants,pantsReviewed:true});status('Original AJ shirt plus original denim pixels on separate 3D pants · HOLD');update();});
  window.cc31Diagnostics=()=>app.getState();
+ window.ccShirtFlow01=stage=>{
+  if(!ready||closed||!flowEnabled()||!shirt||shirt.id!==SHIRT_FLOW01.approvedSourceId)
+   throw Error('Verified original photographed shirt arm flow feature is disabled');
+  const before=assertVerifiedShirtPose01(app.getState(),shirt.sourceSHA256);
+  const pose=armPoseAt01(stage);
+  app.setPose(pose);update();const after=assertVerifiedShirtPose01(app.getState(),shirt.sourceSHA256);
+  const detail=app.getState().outfit.shirt;
+  if(detail.poseConditionedSleeveDrape.pose!==pose||detail.poseTriangleContact.after.count!==0)
+   throw Error('Original photographed shirt pose is not collision-verified');
+  return {...before,...after,pose,stage,
+   photographicSourceSHA256:shirt.sourceSHA256,originalBodyBones:163,
+   bothArmFabricSides:detail.poseConditionedSleeveDrape.sides,
+   maxFabricShiftMeters:detail.poseConditionedSleeveDrape.maximum,
+   trueSkinnedGarmentContactCount:detail.poseTriangleContact.after.count,
+   fullSweptClothCertified:false,physicalPhoneVerified:false,releaseAuthorized:false};
+ };
+ window.ccShirtFlowPlay01=()=>{
+  if(!ready||closed||!flowEnabled())throw Error('Photo shirt flow not authorized');
+  assertVerifiedShirtPose01(app.getState(),shirt?.sourceSHA256);
+  stopArms();armCycle=createArmPoseCycle01();
+  // Research keyframe preview; not a claim of seamless cloth physics.
+  const stages=[0,.25,.5,.75,1];let i=0;
+  armTimer=setInterval(()=>{try{window.ccShirtFlow01(stages[i++%stages.length]);}
+   catch(e){stopArms();console.error(e);}},350);
+  return {fiveOriginalSourcePoses:true,intervalMs:350,
+   continuousClothPhysicsCertified:false,releaseAuthorized:false};
+ };
+ window.ccShirtFlowStop01=()=>{stopArms();return {stopped:true,releaseAuthorized:false};};
+ for(const [id,stage] of [['arm-source',0],['arm-quarter',.25],['arm-half',.5],['arm-threequarter',.75],['arm-relaxed',1]])
+  $(id)?.addEventListener('click',()=>window.ccShirtFlow01(stage));
+ $('arm-play')?.addEventListener('click',()=>window.ccShirtFlowPlay01());
+ $('arm-stop')?.addEventListener('click',()=>window.ccShirtFlowStop01());
  if(new URLSearchParams(location.search).has('fit59'))window.cc59InspectTorso=(angle)=>{
   if(!ready||app.getState().outfit.mode!=='shirt-pants')throw Error('Original reviewed genuine photo shirt + denim required');
   app.inspectTorso(angle);update();return app.getState();
@@ -78,6 +113,6 @@ async function start(){
   const state=app.getState();if(state.outfit?.mode!=='shirt-pants'||!state.outfit?.shirt?.poseTriangleContact)throw Error('Original reviewed shirt/jeans with independent pose solver required');
   app.setPose(pose);update();return app.getState();
  };
-window.addEventListener('pagehide',()=>{closed=true;app.stop();urls.forEach(u=>URL.revokeObjectURL(u));});
+window.addEventListener('pagehide',()=>{closed=true;stopArms();app.stop();urls.forEach(u=>URL.revokeObjectURL(u));});
 }
 start().catch(e=>{status('Provisional image preview blocked: '+e.message);$('review').disabled=true;$('photo').disabled=true;$('full').disabled=true;console.error(e);});
