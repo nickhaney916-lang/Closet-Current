@@ -1,0 +1,87 @@
+name: POSE-WALK-02 Original 163-bone Gait + Source Dress Fabric · NO DEPLOY HOLD
+on:
+  pull_request:
+    paths:
+      - 'research/fabric-walk-02/**'
+      - 'scripts/test-fabric-walk-02-browser.mjs'
+      - 'tests/fabric-walk-02.test.mjs'
+      - '.github/workflows/fabric-walk-02-no-deploy.yml'
+permissions:
+  contents: read
+jobs:
+  source-and-genuine-skinned-motion:
+    runs-on: ubuntu-latest
+    timeout-minutes: 65
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+      - name: Assert exact successful PR503 ancestor and NO production or sibling changes
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor 250c4e2092f7ef9def2e9e2eeeef52b32f7eef1a HEAD
+          git diff --name-only 250c4e2092f7ef9def2e9e2eeeef52b32f7eef1a HEAD | while IFS= read -r path; do
+            case "$path" in
+              research/fabric-walk-02/*|scripts/test-fabric-walk-02-browser.mjs|tests/fabric-walk-02.test.mjs|.github/workflows/fabric-walk-02-no-deploy.yml) ;;
+              *) echo "UNAUTHORIZED sibling or production edit: $path"; exit 1 ;;
+            esac
+          done
+      - name: Offline original source photograph and genuine skinned research runtime
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 three@0.180.0 playwright@1.56.1 three-mesh-bvh@0.9.2
+      - name: Static JS safety, unit tests, preservation of previous 3D verified research
+        run: |
+          node --check research/fabric-walk-02/anatomical-gait-driver.mjs
+          node --check research/fabric-walk-02/dress-outfit-controller.mjs
+          node --check research/fabric-walk-02/dress-mobile-showroom.mjs
+          node --check research/fabric-walk-02/wardrobe-demo.mjs
+          node --check scripts/test-fabric-walk-02-browser.mjs
+          node --test tests/fabric-walk-02.test.mjs tests/fabric-motion-01.test.mjs tests/integration-04-wardrobe-dress.test.mjs tests/dress-mobile-01.test.mjs tests/three-d-78-original-anatomical-knee-poses.test.mjs
+      - name: Generate unchanged source photograph / original garment segmentation
+        run: |
+          node scripts/build-three-d-31-jeans-proposal.mjs
+          node scripts/build-three-d-37-second-jeans.mjs
+          node scripts/build-work47-benchmark.mjs
+          node --test tests/three-d-31-jeans-source.test.mjs tests/three-d-37-source-true.test.mjs
+      - name: Restore SHA-verified CC0 male/female original anatomical 163-bone GLBs
+        run: |
+          git fetch --no-tags origin 53f2ad344dc56a1477e343531c423aed0e66c17d dd6bac3fa9ff640d4f562cf925337440bdb5cf8f 3a572193987cb29389727426136c6eb3ac326783 dfb40889c4c1221fb1833b859e8a11ef38aeb76e
+          node research/three-d-20/restore-approved-models.mjs
+      - name: Test genuine 163-bone gait 24 original JPEG WebGL frames, actual contacts, source and privacy
+        run: node scripts/test-fabric-walk-02-browser.mjs
+      - name: Assert genuine photographed rig evidence and strict family release HOLD
+        run: |
+          node --input-type=module <<'CHECK'
+          import assert from 'node:assert/strict';
+          import {readFileSync,readdirSync} from 'node:fs';
+          const dir='benchmark/fabric-walk-02',r=JSON.parse(readFileSync(dir+'/browser-results.json'));
+          assert.equal(r.screenshots,24);
+          assert.equal(readdirSync(dir).filter(s=>s.endsWith('.png')).length,24);
+          assert.deepEqual(r.mobileWidths,[320,390,430]);
+          assert.deepEqual(r.originalFigures,['female','male']);
+          assert.ok(r.cases.length===6&&r.cases.every(x=>x.leftChangedPixels>=50&&x.rightChangedPixels>=50&&x.resetChangedPixels===0));
+          assert.equal(r.realTriangleContactAudits.length,2);
+          assert.equal(r.genuineAnatomicalHipKneeAndPelvisMotion,true);
+          assert.equal(r.clothRespondsToBodyGait,true);
+          assert.equal(r.exactPoseAndClothReset,true);
+          assert.equal(r.sourcePhotoRestUVAndSkinUnmodified,true);
+          assert.equal(r.defaultOff,true);
+          assert.equal(r.continuousCollisionCertified,false);
+          assert.equal(r.walkingFootPlantPhysicsCertified,false);
+          assert.equal(r.physicalAndroidIphoneVerified,false);
+          assert.equal(r.realUserPhotosUsed,false);
+          assert.equal(r.productionModified,false);
+          assert.equal(r.familyAlpha,'HOLD');
+          assert.equal(r.releaseAuthorized,false);
+          CHECK
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: POSE-WALK-02-REAL-PHOTO-DRESS-24-WEBGL-HOLD
+          path: benchmark/fabric-walk-02/
+          if-no-files-found: warn
