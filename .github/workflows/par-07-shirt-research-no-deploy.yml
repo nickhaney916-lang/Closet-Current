@@ -1,0 +1,20 @@
+name: PAR-07 shirt research unit tests — no deploy
+on:
+  pull_request:
+    paths:
+      - 'research/parallel-07/**'
+      - '.github/workflows/par-07-shirt-research-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  shirt-research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify original SHA gate and source-neutral seam guards
+        run: node --test research/parallel-07/*.test.mjs
