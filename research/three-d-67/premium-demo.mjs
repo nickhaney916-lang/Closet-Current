@@ -125,7 +125,7 @@ function start(){
  $('zoomIn').addEventListener('click',()=>{app.zoom(.85);diagnostics();});
  $('zoomOut').addEventListener('click',()=>{app.zoom(1.17);diagnostics();});
  $('spin').addEventListener('click',()=>{spinning=!spinning;app.setSpin(spinning);syncSpin();diagnostics();});
- $('avatar').addEventListener('pointerdown',()=>{spinning=false;syncSpin();});
+ $('avatar').addEventListener('pointerdown',()=>{spinning=false;app.setSpin(false);syncSpin();});
  $('avatar').addEventListener('wheel',()=>{spinning=false;app.setSpin(false);syncSpin();},{passive:true});
  $('categoryDemo').addEventListener('click',categoryExample);
  $('swapDemo').addEventListener('click',swapExample);
