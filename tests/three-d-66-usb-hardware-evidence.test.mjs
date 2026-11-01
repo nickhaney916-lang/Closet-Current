@@ -33,7 +33,9 @@ test('ADB capture is user-opted, local, no identifier export or automatic accept
  assert.match(s,/adb\(\['reverse','tcp:8765','tcp:8765'\]\)/);
  assert.match(s,/adb\(\['shell','am','start'/);
  assert.match(s,/host.*127\.0\.0\.1|const HOST='127\.0\.0\.1/);
- assert.match(s,/chromeLaunchRequested:true/);
+ assert.match(s,/chromeLaunchRequested:!captureScreen/);
+ assert.ok(s.includes('if(!captureScreen)adb('));
+ assert.ok(s.includes('fileURLToPath(import.meta.url)'));
  assert.match(s,/realChromiumSourceSceneOpened:false/);
  assert.match(s,/humanAppearanceAccepted:false/);
  assert.match(s,/originalPhotoAndSkinnedContactValidatedOnPhone:false/);
