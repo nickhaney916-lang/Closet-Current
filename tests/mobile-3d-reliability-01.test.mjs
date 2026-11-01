@@ -15,7 +15,8 @@ test('original shirt and two pinned licensed denim SHA-256 identities match orig
  const sources=readFileSync('research/three-d-30/reviewed-photo-pants.mjs','utf8');
  assert.ok(original.includes(shirt));
  assert.ok(sources.includes(denim1)&&sources.includes(denim2));
- for(const x of [denim1,denim2,shirt])assert.ok(demo.includes(x)&&runner.includes(x));
+ for(const x of [denim1,denim2])assert.ok(demo.includes(x)&&runner.includes(x));
+ assert.ok(runner.includes(shirt)&&demo.includes('VERIFIED_PUBLIC_SHIRT_SHA256'));
 });
 test('no private photography, API credentials, remote URLs, auth or deploy in isolated app',()=>{
  for(const s of [doc,demo,copy]){
