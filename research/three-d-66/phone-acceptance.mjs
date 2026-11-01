@@ -2,14 +2,15 @@
  * an Android/iPhone; an emulated UA or Playwright is not acceptance.
  * On-device report stays local until the user explicitly downloads it.
  */
+import {approvedPrivateIosOrigins,allowedResearchPhoneOrigin} from './approved-phone-origins.mjs';
 const $=id=>document.getElementById(id);
 const params='pantsDrape=after&seatFairing=after&envelope=after&loft=after&crotchPanel=after&waistFit=after&waistContact=after&hanging=after&clothFall=after&construction=after&sweep=after&sleeve44=after&caps45=after&contour46=after&volume47=after&collar48=after&rear53=after&round54=after&hang55=after&move56=after&fit59=after&crisp58=after&slope61=after&crest64=after&drape66=after';
 let source='31',measure=null,report=null;
-const trustedOrigin=['localhost','127.0.0.1','[::1]'].includes(location.hostname);
-if(!trustedOrigin||location.protocol!=='http:'){
- $('verdict').textContent='BLOCKED: only localhost USB phone research preview is allowed. No staging or public server authorized.';
+const trustedOrigin=allowedResearchPhoneOrigin(location,approvedPrivateIosOrigins);
+if(!trustedOrigin){
+ $('verdict').textContent='BLOCKED: localhost Android USB or explicitly approved private iPhone HTTPS research origin required. No public staging or production authorized.';
  $('record').disabled=true;$('sample').disabled=true;
- throw Error('3D66 research handset preview is localhost/ADB reverse only');
+ throw Error('3D66 physical handset QA origin not explicitly approved');
 }
 const browser=navigator.userAgent||'';
 const handheld=/Android|iPhone|iPad|iPod/i.test(browser);
