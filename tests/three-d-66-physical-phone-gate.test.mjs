@@ -12,7 +12,7 @@ test('physical Android USB research runs via localhost only; no network upload',
  assert.match(s,/adb reverse tcp:8765 tcp:8765/);
  assert.match(s,/connect-src 'self' blob:/);
  assert.match(s,/noindex,nofollow/);
- assert.match(s,/path\.split\('\/'\)\.includes\('\.\.'\)/);
+ assert.ok(s.includes("pathname.split('/').includes('..')"),'The local research server must reject path traversal');
  assert.doesNotMatch(s,/\.listen\(port,'0\.0\.0\.0'/);
 });
 test('real original garment iframe is opted into 3D66, not fake image playback',()=>{
