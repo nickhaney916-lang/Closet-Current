@@ -7,6 +7,7 @@
 import {spawnSync} from 'node:child_process';
 import {writeFile,mkdir} from 'node:fs/promises';
 import {resolve,join} from 'node:path';
+import {fileURLToPath} from 'node:url';
 
 const HOST='127.0.0.1:8765';
 const PREVIEW='http://localhost:8765/research/three-d-66/phone-acceptance.html';
@@ -58,7 +59,7 @@ export async function recordEvidence({captureScreen=false,reportDir='benchmark/t
  });
  if(!ok)throw Error('Local read-only original-photo server not running; run node scripts/serve-three-d-66-device.mjs first');
  adb(['reverse','tcp:8765','tcp:8765']);
- adb(['shell','am','start','-a','android.intent.action.VIEW','-d',PREVIEW,'com.android.chrome']);
+ if(!captureScreen)adb(['shell','am','start','-a','android.intent.action.VIEW','-d',PREVIEW,'com.android.chrome']);
  await mkdir(reportDir,{recursive:true});
  const report={
   schema:'ClosetCurrent-3D66-USB-Android-Preflight',
@@ -68,7 +69,7 @@ export async function recordEvidence({captureScreen=false,reportDir='benchmark/t
   device:{model:device.model,osVersion:device.osVersion,sdkVersion:device.sdkVersion,hardware:device.hardware,abi:device.abi},
   evidence:classification,
   adbReverseLoopback:true,
-  chromeLaunchRequested:true,
+  chromeLaunchRequested:!captureScreen,
   realChromiumSourceSceneOpened:false,
   browserOriginalSourceGarmentMeasured:false,
   hardwareIdentityConfirmedByHuman:false,
@@ -94,7 +95,7 @@ export async function recordEvidence({captureScreen=false,reportDir='benchmark/t
  await writeFile(join(reportDir,'usb-preflight.json'),JSON.stringify(report,null,2)+'\n','utf8');
  return report;
 }
-if(process.argv[1]&&resolve(process.argv[1])===resolve(new URL(import.meta.url).pathname)){
+if(process.argv[1]&&resolve(process.argv[1])===resolve(fileURLToPath(import.meta.url))){
  const captureScreen=process.argv.includes('--capture-screen');
  recordEvidence({captureScreen}).then(r=>{
   console.log('ANDROID_USB_PREFLIGHT_RECORDED',JSON.stringify({
