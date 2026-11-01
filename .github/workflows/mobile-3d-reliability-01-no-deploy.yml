@@ -39,7 +39,7 @@ jobs:
           node --check research/mobile-3d-reliability-01/mobile-showroom.mjs
           node --check research/mobile-3d-reliability-01/mobile-demo.mjs
           node --check scripts/test-mobile-3d-reliability-01-browser.mjs
-          node --test tests/mobile-3d-reliability-01.test.mjs tests/three-d-67-humanoid-index-contract.test.mjs tests/three-d-69-indexed-photo-real-3d.test.mjs tests/three-d-15-outfits.test.mjs tests/three-d-76-source-denim-fold-continuity.test.mjs
+          node --test tests/mobile-3d-reliability-01.test.mjs tests/three-d-67-humanoid-index-contract.test.mjs tests/three-d-69-indexed-photo-real-3d.test.mjs tests/three-d-76-source-denim-fold-continuity.test.mjs
       - name: Generate licensed original photos, alpha cutouts and manifests with known SHA-256
         run: |
           node scripts/build-three-d-31-jeans-proposal.mjs
@@ -50,6 +50,8 @@ jobs:
         run: |
           git fetch --no-tags origin 53f2ad344dc56a1477e343531c423aed0e66c17d dd6bac3fa9ff640d4f562cf925337440bdb5cf8f 3a572193987cb29389727426136c6eb3ac326783 dfb40889c4c1221fb1833b859e8a11ef38aeb76e
           node research/three-d-20/restore-approved-models.mjs
+      - name: Test full 3D15 anatomical outfit integration after restoring real licensed sources and rig files
+        run: node --test tests/three-d-15-outfits.test.mjs
       - name: Real Chromium WebGL mobile 72 source frames, memory, swaps and failure recovery
         run: node scripts/test-mobile-3d-reliability-01-browser.mjs
       - name: Verify exact genuine screenshot count, source identity, and honest device/release gates
