@@ -1,0 +1,93 @@
+name: 3D-77 true skinned source-photographed denim/body triangle contact audit (DRAFT HOLD NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'research/three-d-77/**'
+      - 'research/three-d-15/outfit-controller.mjs'
+      - 'research/three-d-15/showroom.mjs'
+      - 'research/three-d-69/index-to-real-garment-demo.mjs'
+      - 'tests/three-d-77-true-skinned-denim-contact.test.mjs'
+      - 'scripts/test-three-d-77-original-skin-contact-browser.mjs'
+      - '.github/workflows/three-d-77-skinned-contact-no-deploy.yml'
+permissions:
+  contents: read
+jobs:
+  measured-original-denim:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+      - name: Enforce exact successful 3D76 photographed denim seam continuity ancestor and isolated research paths
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor 61eb0b2a7d5bfa3300aad220ce394ab0cceda711 HEAD
+          git diff --name-only 61eb0b2a7d5bfa3300aad220ce394ab0cceda711 HEAD | while IFS= read -r file; do
+            case "$file" in
+              research/three-d-77/*|research/three-d-15/outfit-controller.mjs|research/three-d-15/showroom.mjs|research/three-d-69/index-to-real-garment-demo.mjs|tests/three-d-77-true-skinned-denim-contact.test.mjs|scripts/test-three-d-77-original-skin-contact-browser.mjs|.github/workflows/three-d-77-skinned-contact-no-deploy.yml) ;;
+              *) echo "BLOCKED: 3D77 changes unrelated or protected path $file"; exit 1 ;;
+            esac
+          done
+      - name: Install source-only original WebGL research tooling
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 three@0.180.0 playwright@1.56.1 three-mesh-bvh@0.9.2
+      - name: Confirm real source photo and optional real geometry integrity
+        run: |
+          node --check research/three-d-77/true-skinned-denim-body-intersections.mjs
+          node --check research/three-d-15/outfit-controller.mjs
+          node --check research/three-d-15/showroom.mjs
+          node --check research/three-d-69/index-to-real-garment-demo.mjs
+          node --check scripts/test-three-d-77-original-skin-contact-browser.mjs
+          node --test tests/three-d-77-true-skinned-denim-contact.test.mjs tests/three-d-76-source-denim-fold-continuity.test.mjs tests/three-d-75-photo-denim-folds.test.mjs tests/three-d-74-source-denim-calf.test.mjs tests/three-d-73-real-denim-drape.test.mjs tests/three-d-69-indexed-photo-real-3d.test.mjs
+      - name: Generate approved exact public-licensed source shirt and two original denim photos
+        run: |
+          node scripts/build-three-d-31-jeans-proposal.mjs
+          node scripts/build-three-d-37-second-jeans.mjs
+          node scripts/build-work47-benchmark.mjs
+          node --test tests/three-d-31-jeans-source.test.mjs tests/three-d-37-source-true.test.mjs
+      - name: Restore original approved male and female CC0 163-bone rigs
+        run: |
+          git fetch --no-tags origin 53f2ad344dc56a1477e343531c423aed0e66c17d dd6bac3fa9ff640d4f562cf925337440bdb5cf8f 3a572193987cb29389727426136c6eb3ac326783 dfb40889c4c1221fb1833b859e8a11ef38aeb76e
+          node research/three-d-20/restore-approved-models.mjs
+      - name: Actually render 48 real source-photographed skinned WebGL denim views at 320 and 390
+        run: node scripts/test-three-d-77-original-skin-contact-browser.mjs
+      - name: Validate source identity, actual independently sewn 3D cloth and release HOLD
+        run: |
+          node --input-type=module <<'CHECK'
+          import {readFileSync,readdirSync} from 'node:fs';
+          import assert from 'node:assert/strict';
+          const path='benchmark/three-d-77',m=JSON.parse(readFileSync(path+'/browser-results.json','utf8'));
+          assert.equal(m.realAnatomicalBones,163);assert.equal(m.genuineCC0Original3D,true);
+          assert.equal(m.licensedPhotographicShirtAndTwoJeans,true);
+          assert.equal(m.originalPhotoBytesPreserved,true);
+          assert.equal(m.realSkinned3DRearFabricMovement,true);
+          assert.equal(m.truePosedBodyGarmentTriangleIntersectionAudited,true);
+          assert.equal(m.contactDiagnosticReadOnly,true);
+          for(const x of m.cases.filter(c=>c.mode==='after')){
+            assert.ok(Number.isInteger(x.actualSkinnedBodyCrossingSegments));
+            assert.equal(x.actualTriangleIntersectionClassification.reviewedSegments,x.actualSkinnedBodyCrossingSegments);
+          }
+          assert.equal(m.backPhotoInvented,false);
+          assert.equal(m.screenshots,48);assert.equal(m.cases.length,16);
+          assert.equal(m.comparisons.length,8);
+          assert.equal(m.humanPhotorealismApproved,false);
+          assert.equal(m.physicalAndroidPhoneTested,false);
+          assert.equal(m.physicalIphoneTested,false);
+          assert.equal(m.releaseAuthorized,false);
+          assert.equal(m.familyAlpha,'HOLD');
+          assert.equal(readdirSync(path).filter(f=>f.endsWith('.png')).length,48);
+          for(const x of m.comparisons)
+            assert.ok(x.realRearOrSidePixelChange<=16&&x.sourcePhotographedFrontProtected===true);
+          CHECK
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: THREE-D-77-TRUE-163-BONE-ORIGINAL-DENIM-BODY-COLLISION-AUDIT-HOLD
+          path: benchmark/three-d-77/
+          if-no-files-found: warn
