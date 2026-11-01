@@ -118,7 +118,7 @@ try{
    previous=image;
   }
   const restored=await page.evaluate(()=>window.ccShirtFlow02(0));
-  assert.equal(restored.pose,'source');
+  assert.equal(restored.pose,0);
   const reset=await snap(page,tag+'-restored',rig,width,'source','reset');
   const resetDiff=difference(first,reset);
   assert.equal(resetDiff,0,'Original source skin and sleeve pose must return with zero RGB drift');
@@ -126,11 +126,13 @@ try{
   const after=await state(page);
   assert.equal(after.outfit.shirt.sourceSHA256,sha);
   assert.equal(after.outfit.shirt.poseTriangleContact.after.count,0);
+  const beforePlay=await state(page);
   const play=await page.evaluate(()=>window.ccShirtFlowPlay02());
   assert.equal(play.sampledPoseCount,17);
   await page.waitForTimeout(1200);
   const playing=await state(page);
-  assert.notEqual(playing.pose,'source','Actual periodic browser pose movement required');
+  assert.ok(Number.isFinite(playing.pose)&&playing.pose>=0&&playing.pose<=1,'Real anatomical phase must remain bounded');
+  assert.ok(playing.poseChanges>beforePlay.poseChanges,'Real timed sampled arm pose movement required');
   assert.equal((await page.evaluate(()=>window.ccShirtFlowStop01())).stopped,true);
   await page.evaluate(()=>window.ccShirtFlow02(0));
   scenarios.push({width,rig,sourceSHA256:sha,poseCount:17,changedPixelsLastStep:prior,
