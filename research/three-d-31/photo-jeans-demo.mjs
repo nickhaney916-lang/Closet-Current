@@ -3,8 +3,9 @@
 import {mountAnatomicalShowroom} from '../three-d-15/showroom.mjs';
 import {PANTS_RESEARCH_SOURCE} from '../three-d-30/reviewed-photo-pants.mjs';
 import {loadLicensedCutout} from '../three-d-02/reviewed-texture.mjs';
+import {displaySourceCoverage} from '../three-d-62/source-coverage.mjs';
 const $=id=>document.getElementById(id),urls=[],status=text=>{$('status').textContent=text;};
-let app,pants,shirt,ready=false,closed=false;
+let app,pants,shirt,ready=false,closed=false,currentView='front';
 const digest=async bytes=>[...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))].map(v=>v.toString(16).padStart(2,'0')).join('');
 async function imageFrom(url,sha,id){
  if(!/^\/benchmark\/(?:three-d-31\/(?:original-jeans\.jpg|cutout-proposal\.png)|work47\/assets\/commons-0003\.(?:jpg|png))$/.test(url))throw Error('Only original local research assets allowed');
@@ -28,7 +29,15 @@ function verifyVisibleRGB(original,cutout){
  const neutralRGB=colors.map(v=>{v.sort((x,y)=>x-y);return v[Math.floor(v.length/2)];});
  return {pixels:n,neutralRGB};
 }
-function update(){if(app)$('diagnostics').textContent=JSON.stringify(app.getState(),null,2);}
+function update(){
+ if(!app)return;
+ const state=app.getState();
+ $('diagnostics').textContent=JSON.stringify(state,null,2);
+ displaySourceCoverage($('sourceCoverage'),{
+  view:currentView,photoPants:state.outfit?.pants?.photoApplied===true,
+  photoShirt:Boolean(state.outfit?.shirt)
+ });
+}
 async function start(){
  if(!['localhost','127.0.0.1','[::1]'].includes(location.hostname))throw Error('Research preview is localhost only');
  const independentGarments=new URLSearchParams(location.search).get('construction')==='after';
@@ -54,14 +63,14 @@ async function start(){
  const manifest=await fetch('/benchmark/work47/manifest.json',{cache:'no-store'}).then(r=>r.json());
  shirt=await loadLicensedCutout('commons-0003',{manifest,reviewConfirmed:true});
  await app.load('female');ready=true;status('Original RGB verified at '+verified.pixels+' visible pixels; source-dominant neutral backing and alpha silhouette registered. Research mask REVIEW · HOLD');update();
- $('model').addEventListener('change',async()=>{if(closed)return;ready=false;$('review').checked=false;$('photo').disabled=true;$('full').disabled=true;await app.load($('model').value);ready=true;update();status('New original anatomical model · provisional photo requires fresh review');});
+ $('model').addEventListener('change',async()=>{if(closed)return;ready=false;$('review').checked=false;$('photo').disabled=true;$('full').disabled=true;await app.load($('model').value);currentView='front';ready=true;update();status('New original anatomical model · provisional photo requires fresh review');});
  $('review').addEventListener('change',()=>{$('photo').disabled=!ready||!$('review').checked;$('full').disabled=!ready||!$('review').checked;});
- for(const angle of ['front','side','back'])$(angle).addEventListener('click',()=>{app[angle]();update();});
- $('threequarter').addEventListener('click',()=>{app.rotate(30);update();});
+ for(const angle of ['front','side','back'])$(angle).addEventListener('click',()=>{app[angle]();currentView=angle;update();});
+ $('threequarter').addEventListener('click',()=>{app.rotate(30);currentView='threequarter';update();});
  $('pose').addEventListener('change',()=>{app.setPose($('pose').value);update();});
  $('neutral').addEventListener('click',()=>{if(!ready)return;app.applyOutfit('pants');status('Original neutral anatomical research pants. No photographed cloth applied.');update();});
  $('photo').addEventListener('click',e=>{if(!ready||!e.isTrusted||!$('review').checked)return;app.applyOutfit('pants',null,{pantsCandidate:pants,pantsReviewed:true});status('Original denim front pixels on 3D pant mesh · unphotographed neutral back · HOLD');update();});
- $('full').addEventListener('click',e=>{if(!ready||!e.isTrusted||!$('review').checked)return;app.applyOutfit('shirt-pants',shirt,{reviewed:true,pantsCandidate:pants,pantsReviewed:true});status('Original AJ shirt plus original denim pixels on separate 3D pants · HOLD');update();});
+ $('full').addEventListener('click',e=>{if(!ready||!e.isTrusted||!$('review').checked)return;app.applyOutfit('shirt-pants',shirt,{reviewed:true,pantsCandidate:pants,pantsReviewed:true});status('Original photographed shirt/front denim on independent 3D meshes; side and back remain neutral · HOLD');update();});
  window.cc31Diagnostics=()=>app.getState();
  if(new URLSearchParams(location.search).has('fit59'))window.cc59InspectTorso=(angle)=>{
   if(!ready||app.getState().outfit.mode!=='shirt-pants')throw Error('Original reviewed genuine photo shirt + denim required');

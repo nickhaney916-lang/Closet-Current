@@ -1,0 +1,49 @@
+name: 3D-62 original-photo source coverage and licensed attribution (DRAFT HOLD NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'research/three-d-62/**'
+      - 'research/three-d-31/index.html'
+      - 'research/three-d-37/index.html'
+      - 'research/three-d-31/photo-jeans-demo.mjs'
+      - 'research/three-d-37/second-jeans-demo.mjs'
+      - 'tests/three-d-62-source-coverage.test.mjs'
+      - '.github/workflows/three-d-62-source-coverage-no-deploy.yml'
+permissions:
+  contents: read
+jobs:
+  real-source-coverage-truth:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+      - name: Check exact original anatomical 3D61 branch and no production changes
+        run: |
+          git merge-base --is-ancestor fd816495563bda6ca64d9c2ee416c351eba741ac HEAD
+          git diff --name-only fd816495563bda6ca64d9c2ee416c351eba741ac HEAD | while IFS= read -r path; do
+            case "$path" in
+              research/three-d-62/*|research/three-d-31/index.html|research/three-d-37/index.html|research/three-d-31/photo-jeans-demo.mjs|research/three-d-37/second-jeans-demo.mjs|tests/three-d-62-source-coverage.test.mjs|.github/workflows/three-d-62-source-coverage-no-deploy.yml) ;;
+              *) echo "DISALLOWED 3D62 changed path: $path"; exit 1 ;;
+            esac
+          done
+      - name: Real-source orientation, original-license and explicit review-gate regression
+        run: |
+          node --check research/three-d-62/source-coverage.mjs
+          node --check research/three-d-31/photo-jeans-demo.mjs
+          node --check research/three-d-37/second-jeans-demo.mjs
+          node --test tests/three-d-62-source-coverage.test.mjs
+      - name: Require all source surfaces remain research-only and invisible to production
+        run: |
+          test ! -f research/three-d-62/.release-authorized
+          node --input-type=module <<'CHECK'
+          import {readFileSync} from 'node:fs';
+          import assert from 'node:assert/strict';
+          const model=readFileSync('research/three-d-62/source-coverage.mjs','utf8');
+          assert.ok(model.includes('hasVerifiedRearPhoto:false'));
+          assert.ok(model.includes('releaseAuthorized:false'));
+          assert.ok(!model.includes('fetch('));
+          assert.ok(!model.includes('innerHTML'));
+          CHECK
