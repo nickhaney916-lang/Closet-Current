@@ -3,12 +3,12 @@ on:
   pull_request:
     paths:
       - 'research/three-d-61/**'
-      -       -       - 'research/three-d-15/outfit-controller.mjs'
+      - 'research/three-d-15/outfit-controller.mjs'
       - 'research/three-d-15/showroom.mjs'
       - 'research/three-d-31/photo-jeans-demo.mjs'
       - 'research/three-d-37/second-jeans-demo.mjs'
       - 'tests/three-d-61-source-shoulder-fall.test.mjs'
-      -       -       - 'scripts/test-three-d-61-shoulder-browser.mjs'
+      - 'scripts/test-three-d-61-shoulder-browser.mjs'
       - '.github/workflows/three-d-61-shoulder-no-deploy.yml'
 permissions:
   contents: read
