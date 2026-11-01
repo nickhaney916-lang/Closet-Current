@@ -5,6 +5,7 @@
  */
 import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+import {setAnatomicalCameraView,advanceAnatomicalTurntable,viewAngleFromCamera} from '../three-d-67/premium-orbit-camera.mjs';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {createOutfitController} from './outfit-controller.mjs';
 import {installOpeningSkinAttribute} from '../three-d-26/contact-presentation.mjs';
@@ -14,7 +15,7 @@ const ALLOWED=Object.freeze({
  female:{file:'female-cc0-rigged.glb',title:'Anatomical mannequin B'}
 });
 const COLORS=Object.freeze({porcelain:0xc3bdb5,slate:0x777f84});
-export function mountAnatomicalShowroom(canvas,{onChange=()=>{},refineFit=true,enableCuffFix=true,enableCuffFacing=true,enableCuffBridge=true,naturalFit=true,necklineSeams=true,dressNeckline=true,dressAnatomy=true,dressContact=true,skirtDrape=true,registeredNeckline=true,naturalPantsDrape=true,posteriorJeansFairing=true,structuralPantsEnvelope=true,independentJeansLoft=true,crotchSeatPanel=true,sourceShirtWaistFit=true,clothWaistContact=true,shirtHangingSilhouette=true,denimHangingSilhouette=true,jeansPanelFall=false,independentGarments=false,poseContactFactory=null,tailoredShoulderSleeves=false,independentShoulderCaps=false,realisticShoulderContour=false,upperArmFabricVolume=false,sourceNeutralCollarRoll=false,rearShirtFabricRelief=false,naturalShoulderSleeveTransition=false,sourceMeasuredSleeveHang=false,poseConditionedSleeveDrape=false,anatomicalShirtSideFlow=false,crispSourcePhotoClarity=false,naturalShoulderFall61=false,trueShoulderTop64=false}={}){
+export function mountAnatomicalShowroom(canvas,{onChange=()=>{},refineFit=true,enableCuffFix=true,enableCuffFacing=true,enableCuffBridge=true,naturalFit=true,necklineSeams=true,dressNeckline=true,dressAnatomy=true,dressContact=true,skirtDrape=true,registeredNeckline=true,naturalPantsDrape=true,posteriorJeansFairing=true,structuralPantsEnvelope=true,independentJeansLoft=true,crotchSeatPanel=true,sourceShirtWaistFit=true,clothWaistContact=true,shirtHangingSilhouette=true,denimHangingSilhouette=true,jeansPanelFall=false,independentGarments=false,poseContactFactory=null,tailoredShoulderSleeves=false,independentShoulderCaps=false,realisticShoulderContour=false,upperArmFabricVolume=false,sourceNeutralCollarRoll=false,rearShirtFabricRelief=false,naturalShoulderSleeveTransition=false,sourceMeasuredSleeveHang=false,poseConditionedSleeveDrape=false,anatomicalShirtSideFlow=false,crispSourcePhotoClarity=false,naturalShoulderFall61=false,trueShoulderTop64=false,premiumTurntable67=false}={}){
  if(!canvas||typeof canvas.getContext!=='function')throw Error('Canvas required');
  // Baseline comparison imports the untouched verified renderer.
  const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false,
@@ -162,25 +163,32 @@ export function mountAnatomicalShowroom(canvas,{onChange=()=>{},refineFit=true,e
   onChange({kind,stats,localModel:true,releaseAuthorized:false});
   return true;
  };
- const front=()=>{group.rotation.y=0;camera.position.set(0,1.04,4.25);controls.target.set(0,1.04,0);controls.update();draw();};
- const side=()=>{group.rotation.y=0;camera.position.set(4.25,1.04,0);controls.target.set(0,1.04,0);controls.update();draw();};
- const back=()=>{group.rotation.y=0;camera.position.set(0,1.04,-4.25);controls.target.set(0,1.04,0);controls.update();draw();};
+ const front=()=>{group.rotation.y=0;controls.target.set(0,1.04,0);if(premiumTurntable67)setAnatomicalCameraView(camera,controls,0,{radius:4.25,elevation:0});else{camera.position.set(0,1.04,4.25);controls.update();}draw();};
+ const side=()=>{group.rotation.y=0;controls.target.set(0,1.04,0);if(premiumTurntable67)setAnatomicalCameraView(camera,controls,90,{radius:4.25,elevation:0});else{camera.position.set(4.25,1.04,0);controls.update();}draw();};
+ const back=()=>{group.rotation.y=0;controls.target.set(0,1.04,0);if(premiumTurntable67)setAnatomicalCameraView(camera,controls,180,{radius:4.25,elevation:0});else{camera.position.set(0,1.04,-4.25);controls.update();}draw();};
  const rotate=degrees=>{
   if(!Number.isFinite(degrees))throw Error('Invalid camera angle');
   group.rotation.y=0;
-  const a=degrees*Math.PI/180,r=Math.hypot(camera.position.x,camera.position.z);
-  camera.position.set(Math.sin(a)*r,1.1,Math.cos(a)*r);controls.update();draw();
+  if(premiumTurntable67){
+   spin=false;setAnatomicalCameraView(camera,controls,degrees);
+  }else{
+   const a=degrees*Math.PI/180,r=Math.hypot(camera.position.x,camera.position.z);
+   camera.position.set(Math.sin(a)*r,1.1,Math.cos(a)*r);controls.update();
+  }
+  draw();
  };
  const frameLoop=time=>{
   if(finish||!started)return;
   const changed=controls.update();
   // Cap auto-spin at 30fps; idle renders stop while controls stay responsive.
-  if(spin&&time-lastTime>33){group.rotation.y+=.012;dirty=true;lastTime=time;}
+  if(spin&&time-lastTime>33){if(premiumTurntable67){advanceAnatomicalTurntable(camera,controls,Math.min(.05,(time-lastTime)/1000||.033),18);}else group.rotation.y+=.012;dirty=true;lastTime=time;}
   resize();if(changed||dirty)draw();
   window.requestAnimationFrame(frameLoop);
  };
  const start=()=>{if(started||finish)return;started=true;resize();draw();window.requestAnimationFrame(frameLoop);};
  controls.addEventListener('change',()=>{dirty=true;});
+ // Direct touch/mouse always takes control from automatic camera rotation.
+ if(premiumTurntable67)controls.addEventListener('start',()=>{spin=false;dirty=true;});
  const setPose=mode=>{if(!selected)return;spin=false;group.rotation.y=0;outfit.setPose(mode);pose=mode;canvas.dataset.pose=mode;poseChanges++;draw();};
  const zoom=direction=>{const offset=camera.position.clone().sub(controls.target);const length=THREE.MathUtils.clamp(offset.length()*direction,controls.minDistance,controls.maxDistance);camera.position.copy(controls.target).add(offset.setLength(length));controls.update();draw();};
  document.addEventListener('visibilitychange',()=>{dirty=true;});
@@ -209,8 +217,8 @@ export function mountAnatomicalShowroom(canvas,{onChange=()=>{},refineFit=true,e
   else{controls.minDistance=1.9;controls.target.set(0,1.35,0);camera.position.set(angle==='side'?1.9:0,1.35,angle==='front'?1.9:angle==='back'?-1.9:0);}
   controls.update();draw();
  };
- return {load,shade,front,side,back,rotate,start,stop,setPose,zoom,applyOutfit,inspectSleeves,inspectTorso,
+ return {load,shade,front,side,back,rotate,viewAt:rotate,resetView:front,start,stop,setPose,zoom,applyOutfit,inspectSleeves,inspectTorso,
   setSpin:v=>{spin=!!v;dirty=true;},
-  getState:()=>({kind:current,loaded:!!selected,finish,stats:lastStats,frames:frame,finishMaterial:lastColor,pose:pose,loadMs:loadTimes.at(-1),lastRenderMs,geometries:renderer.info.memory.geometries,textures:renderer.info.memory.textures,pixelRatio:renderer.getPixelRatio(),drawPixels:canvas.width*canvas.height,sourceDetailRendering:{enabled:crispSourcePhotoClarity,renderPixelRatio:renderer.getPixelRatio(),maxPixelRatio:2,materialCount:sourcePhotoSampling?.materialCount||0,configuredSamplers:sourcePhotoSampling?.configuredSamplers||0,sourceImages:sourcePhotoSampling?.images||[],originalPhotosAndColorsUnchanged:true,humanVisualApproved:false,releaseAuthorized:false},cameraDistance:camera.position.distanceTo(controls.target),outfit:outfit?.getState()||null,dressPresentation:dressPresentation.value,poseChanges,releaseAuthorized:false})
+  getState:()=>({kind:current,loaded:!!selected,finish,stats:lastStats,frames:frame,finishMaterial:lastColor,pose:pose,loadMs:loadTimes.at(-1),lastRenderMs,geometries:renderer.info.memory.geometries,textures:renderer.info.memory.textures,pixelRatio:renderer.getPixelRatio(),drawPixels:canvas.width*canvas.height,sourceDetailRendering:{enabled:crispSourcePhotoClarity,renderPixelRatio:renderer.getPixelRatio(),maxPixelRatio:2,materialCount:sourcePhotoSampling?.materialCount||0,configuredSamplers:sourcePhotoSampling?.configuredSamplers||0,sourceImages:sourcePhotoSampling?.images||[],originalPhotosAndColorsUnchanged:true,humanVisualApproved:false,releaseAuthorized:false},cameraDistance:camera.position.distanceTo(controls.target),premium360Enabled:premiumTurntable67,viewAngle:premiumTurntable67?viewAngleFromCamera(camera,controls.target):null,cameraPosition:premiumTurntable67?camera.position.toArray():null,cameraTarget:premiumTurntable67?controls.target.toArray():null,mannequinBodyYaw:group.rotation.y,spinEnabled:spin,outfit:outfit?.getState()||null,dressPresentation:dressPresentation.value,poseChanges,releaseAuthorized:false})
  };
 }

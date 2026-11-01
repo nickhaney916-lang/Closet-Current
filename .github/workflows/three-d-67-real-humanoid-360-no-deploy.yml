@@ -1,0 +1,73 @@
+name: 3D-67 true anatomical 3D and indexed closet 360 acceptance (DRAFT HOLD NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'research/three-d-67/**'
+      - 'research/three-d-15/showroom.mjs'
+      - 'tests/three-d-67-humanoid-index-contract.test.mjs'
+      - 'scripts/test-three-d-67-humanoid-360-browser.mjs'
+      - '.github/workflows/three-d-67-real-humanoid-360-no-deploy.yml'
+permissions:
+  contents: read
+jobs:
+  real-humanoid-360:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+      - name: Strict exact verified 3D64 ancestor and isolated research files only
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor ce9ae8d555938549e7e9c1ee8c455b598297c7af HEAD
+          git diff --name-only ce9ae8d555938549e7e9c1ee8c455b598297c7af HEAD | while IFS= read -r file; do
+            case "$file" in
+              research/three-d-67/*|research/three-d-15/showroom.mjs|tests/three-d-67-humanoid-index-contract.test.mjs|scripts/test-three-d-67-humanoid-360-browser.mjs|.github/workflows/three-d-67-real-humanoid-360-no-deploy.yml) ;;
+              *) echo "UNAUTHORIZED 3D67 outside research: $file"; exit 1 ;;
+            esac
+          done
+      - name: Install pinned source-only original WebGL dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 three@0.180.0 playwright@1.56.1 three-mesh-bvh@0.9.2
+      - name: Validate real 360 closure, index/category trust, per-account source SHA, no fake 3D approval
+        run: |
+          node --check research/three-d-67/premium-orbit-camera.mjs
+          node --check research/three-d-67/indexed-closet-3d-contract.mjs
+          node --check research/three-d-67/premium-demo.mjs
+          node --check scripts/test-three-d-67-humanoid-360-browser.mjs
+          node --test tests/three-d-67-humanoid-index-contract.test.mjs
+      - name: Restore original locked CC0 163 bone male and female from exact approved source
+        run: |
+          git fetch --no-tags origin 53f2ad344dc56a1477e343531c423aed0e66c17d dd6bac3fa9ff640d4f562cf925337440bdb5cf8f 3a572193987cb29389727426136c6eb3ac326783 dfb40889c4c1221fb1833b859e8a11ef38aeb76e
+          node research/three-d-20/restore-approved-models.mjs
+      - name: Actual WebGL male/female 0–360 orbit, mobile 320/390/430 and original source screenshots
+        run: node scripts/test-three-d-67-humanoid-360-browser.mjs
+      - name: Verify genuine screenshot evidence and retain human realism as unapproved
+        run: |
+          node --input-type=module <<'CHECK'
+          import {readFileSync,readdirSync} from 'node:fs';
+          import assert from 'node:assert/strict';
+          const path='benchmark/three-d-67';
+          const m=JSON.parse(readFileSync(path+'/browser-results.json','utf8'));
+          assert.equal(m.scenarios.length,6);
+          assert.equal(m.originalCC0HumanRigs,true);
+          assert.equal(m.actualThreeDimensionalCameraOrbit,true);
+          assert.equal(m.indexedClothingProductionIntegrated,false);
+          assert.equal(m.humanRealismScore,null);
+          assert.equal(m.physicalAndroidIphoneTested,false);
+          assert.equal(m.releaseAuthorized,false);
+          assert.equal(m.familyAlpha,'HOLD');
+          assert.equal(readdirSync(path).filter(x=>x.endsWith('.png')).length,54);
+          CHECK
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: THREE-D-67-ORIGINAL-CC0-360-MOBILE-AND-INDEX-QA-HOLD
+          path: benchmark/three-d-67/
+          if-no-files-found: warn
