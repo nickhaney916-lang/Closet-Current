@@ -50,7 +50,7 @@ This connection loops back through ADB to the read-only, loopback-only source se
 
 ## iPhone Safari physical acceptance
 
-Not testable through ADB reverse and not covered by Chromium responsive simulation. A physical iPhone and a **separately authorized, trusted HTTPS research endpoint** are required, with the same original SHA-checked source garment preview and no production deployment. This PR does **not** claim the iPhone was tested. Its localhost-only server deliberately does not listen on a LAN address or bypass the original preview privacy gate.
+Not testable through ADB reverse and not covered by Chromium responsive simulation. A physical iPhone and a **separately authorized, trusted HTTPS research endpoint** are required, with the same original SHA-checked source garment preview and no production deployment. The fail-closed origin policy is in `research/three-d-66/approved-phone-origins.mjs` and currently lists **zero** authorized HTTPS origins. Before an independently approved, private research HTTPS host can be used, a reviewer must explicitly add its **exact** origin (including scheme and port) to that research-only allowlist and rerun the no-deploy tests. No wildcard hostnames, query-token shortcuts, production/staging deployments or actual iPhone certification are permitted by this PR. This PR does **not** claim the iPhone was tested. Its localhost-only server deliberately does not listen on a LAN address or bypass the original preview privacy gate.
 
 ## Release checklist
 
