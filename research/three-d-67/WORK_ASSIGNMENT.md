@@ -10,6 +10,13 @@
 ### Mission
 Establish authentic anatomical male and female **three-dimensional skinned human rigs** as a premium mobile wardrobe foundation. **True 360° orbit**, not a rotating GIF, static photograph, sprite, flat mannequin, or fake perspective. The “10/10” rating is an **aspirational user-facing quality goal**; do not label the app 10/10, 8/10, or better than named competitors without independent human scoring and a documented comparable rubric.
 
+### Core product principle — AI index is the differentiator (user-confirmed 2026-10-31)
+The **3D humanoid is the visualization endpoint, not the product by itself.** The premium workflow must be **full-resolution original camera photo → in-house clothing recognition and trustworthy categorization → user review/correction for uncertainty → private searchable closet inventory → category-compatible 3D garment fitting/movement → three outfits from owned items → one-piece swap/pin/save**, with reliable round-trip provenance and no paid per-outfit tokens.
+
+**Release blockers:** a gorgeous rotating avatar without trustworthy item category, color, subtype, source-photo linkage, wardrobe isolation, and movable original-owned garments is **NOT** a successful Closet Current experience. Do not substitute newly generated/imagined back, seams, textures or items for the owner's actual photographed garments. Rendered 3D images from genuine photos may be exported only with clear provenance, consent and correct labeling. When 3D conversion is unsupported, show the original photo or working 2D fallback without fabricating a 3D reconstruction.
+
+**Priority P0 alongside rotation:** build a strict, research-only **indexed wardrobe → 3D slot compatibility contract** that supports Tops, Bottoms, Dresses, Outerwear, Shoes, Accessories, validates color and subtype if known, rejects ambiguous unconfirmed categories and duplicate identities, maps shirt/pants/dress to current separate anatomical garment surfaces, and preserves original-photo source IDs and review gating. A categorical metadata bridge does not itself imply a photorealistic 3D mesh or a deployed photo-ingest pipeline. Test it with synthetic metadata only, not private user photos.
+
 ### Priority 1 — Deliver and verify the actual rotatable 3D experience
 - Load original, CC0, SHA-locked, anatomically skinned 163-joint male and female GLBs. Preserve rig identity and original body triangles, garment mesh contracts and body privacy/modesty.
 - Implement repeatable **0°→45°→90°→135°→180°→225°→270°→315°→360°** viewing with front/right/left/three-quarter/back and a 360° return to exactly the original orientation. Preserve zoom and target through changes; avoid accumulating rotations of the body model.
