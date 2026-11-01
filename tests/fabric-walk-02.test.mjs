@@ -10,13 +10,13 @@ test('source-approved actual anatomical gait: conservative real hip, knee, pelvi
  assert.equal(WALK02.originalSkeletonBones,163);
  assert.equal(WALK02.sweptCollisionCertified,false);
  assert.equal(WALK02.releaseAuthorized,false);
- assert.equal(WALK02.maxHipDegrees,11);
+ assert.equal(WALK02.maxHipDegrees,6);
  for(const p of [0,.1,.25,.5,.75,1]){
   const a=gait02Angles(p);
-  assert.ok(Math.abs(a.pelvisYaw)<=2.5);
-  assert.ok(Math.abs(a.leftHip)<=11&&Math.abs(a.rightHip)<=11);
-  assert.ok(a.leftKnee>=0&&a.leftKnee<=12);
-  assert.ok(a.rightKnee>=0&&a.rightKnee<=12);
+  assert.ok(Math.abs(a.pelvisYaw)<=1.5);
+  assert.ok(Math.abs(a.leftHip)<=6&&Math.abs(a.rightHip)<=6);
+  assert.ok(a.leftKnee>=0&&a.leftKnee<=8);
+  assert.ok(a.rightKnee>=0&&a.rightKnee<=8);
   assert.equal(a.leftHip,-a.rightHip);
  }
  for(const v of [NaN,Infinity,-.01,1.01])assert.throws(()=>gait02Angles(v),/phase/);
