@@ -29,9 +29,9 @@ test('finite bounded reversible damped spring with no perpetual render',()=>{
  s.reset();assert.deepEqual(s.sample(),{displacement:0,velocity:0,settled:true});
 });
 test('integrated 3D dress remains opt-in; protected photographic data and identity cannot be rewritten',()=>{
- const c=readFileSync('research/dress-mobile-01/dress-outfit-controller.mjs','utf8'),
-  v=readFileSync('research/dress-mobile-01/dress-mobile-showroom.mjs','utf8'),
-  w=readFileSync('research/integration-04-wardrobe-dress/wardrobe-demo.mjs','utf8'),
+ const c=readFileSync('research/fabric-motion-01/dress-outfit-controller.mjs','utf8'),
+  v=readFileSync('research/fabric-motion-01/dress-mobile-showroom.mjs','utf8'),
+  w=readFileSync('research/fabric-motion-01/wardrobe-demo.mjs','utf8'),
   source=readFileSync('research/fabric-motion-01/bounded-skirt-motion.mjs','utf8');
  assert.match(c,/skirtSecondaryMotion01=false/);
  assert.match(v,/skirtSecondaryMotion01=false/);
