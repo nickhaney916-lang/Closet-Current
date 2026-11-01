@@ -43,14 +43,14 @@ try{
    if(!req.url().startsWith(origin)&&!req.url().startsWith('blob:'+origin)&&!req.url().startsWith('data:'))outside.push(req.url());
   });
   await page.goto(origin+'/research/three-d-69/index.html');
-  await page.waitForFunction(()=>window.cc69Diagnostics?.()?.loaded!==false&&window.cc69Diagnostics?.()?.figure==='female',{timeout:180000});
+  await page.waitForFunction(()=>window.cc69Diagnostics?.()?.rig?.bones===163&&window.cc69Diagnostics?.()?.figure==='female',null,{timeout:180000});
   if(figure==='male'){
    await page.locator('#model').selectOption('male');
-   await page.waitForFunction(()=>window.cc69Diagnostics?.()?.figure==='male',{timeout:120000});
+   await page.waitForFunction(()=>window.cc69Diagnostics?.()?.figure==='male',null,{timeout:120000});
   }
   await page.locator('#review').check();
   await page.locator('#wear').click();
-  await page.waitForFunction(()=>window.cc69Diagnostics?.()?.actual3DGarment?.status==='actual-separate-skinned-garments-displayed',{timeout:180000});
+  await page.waitForFunction(()=>window.cc69Diagnostics?.()?.actual3DGarment?.status==='actual-separate-skinned-garments-displayed',null,{timeout:180000});
   const get=()=>page.evaluate(()=>window.cc69Diagnostics());
   const state=await get();
   assert.equal(state.figure,figure);
@@ -76,7 +76,7 @@ try{
   assert.ok(rotated>900&&back>900,'Actual photographed garment 3D silhouette must change on camera orbit');
   assert.ok(close<Math.max(350,frames[0].length*.02),'360° camera must return to original verified garment view');
   await page.locator('#swap').click();
-  await page.waitForFunction(()=>window.cc69Diagnostics?.()?.currentSelection==='second',{timeout:180000});
+  await page.waitForFunction(()=>window.cc69Diagnostics?.()?.currentSelection==='second',null,{timeout:180000});
   await page.evaluate(()=>window.cc69SetView(0));
   await page.waitForTimeout(140);
   const after=await get(),second=await page.locator('#avatar').screenshot();
@@ -99,7 +99,7 @@ try{
   validLicensedOriginalPublicDemo:true,notActualPrivateCustomerIndex:true,
   originalPhotoSHA256Verified:true,trueThreeDimensionalSkinnedMeshes:true,
   bothAnatomicalFigures:true,real360CameraOrbit:true,
-  denimSwappedOnOriginal3D:false,// checked detailed source hashes in each result
+  denimSwappedOnOriginal3D:true,// exact before/after source SHA and visible mobile pixels verified per scenario
   originalPhotoBackSideVerified:false,personalPhotoTo3DReconstruction:false,
   humanPhotorealismApproved:false,physicalPhonesTested:false,
   familyAlpha:'HOLD',releaseAuthorized:false,results},null,2));
