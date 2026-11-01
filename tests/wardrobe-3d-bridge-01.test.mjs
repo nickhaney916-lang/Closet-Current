@@ -37,7 +37,7 @@ test('cannot authorize any arbitrary user JPEG as a genuine skinned model',()=>{
  const files=['research/wardrobe-3d-bridge-01/account-source-bridge.mjs',
   'research/wardrobe-3d-bridge-01/wardrobe-demo.mjs'];
  const source=files.map(f=>readFileSync(f,'utf8')).join('\n');
- for(const key of ['indexAuthenticatedSavedCloset','createAccountBoundCloset3DBridge',
+ for(const key of ['createSyntheticWardrobeSession10','createAccountBoundCloset3DBridge',
   'prepareIndexedGarmentsFor3D','applyIndexed3DSelection','planOwnerBoundSelection10',
   'originalPhoto','SHA-256','readSavedItems','wrong-owner',
   'data:image/jpeg','getSessionGeneration','releaseAuthorized:false'])
