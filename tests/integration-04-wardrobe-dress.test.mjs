@@ -47,7 +47,9 @@ test('cannot authorize any arbitrary user JPEG as a genuine skinned model',()=>{
 
 test('integration-03 source-bound denim flex is off unless locally opted-in and current-owner verified',()=>{
  const src=readFileSync('research/integration-04-wardrobe-dress/wardrobe-demo.mjs','utf8');
- assert.ok(src.includes("from '../integration-par09-flex-mobile/mobile-showroom.mjs'"));
+ assert.ok(src.includes("from '../dress-mobile-01/dress-mobile-showroom.mjs'"));
+ assert.ok(src.includes("planSavedSourceDress({bound,live:current,slots,dress:dressCandidate})"));
+ assert.ok(src.includes("app.applyOutfit('none')"));
  assert.ok(src.includes("photoDenimFlex79:new URLSearchParams(location.search).get('flex79')==='after'"));
  assert.ok(src.includes('window.ccWardrobeFlexPose=next=>'));
  assert.ok(src.includes('!authorized()||!viewerReady||!last3D'));
