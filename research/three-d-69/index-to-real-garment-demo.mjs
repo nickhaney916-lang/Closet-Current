@@ -27,7 +27,7 @@ function indexRecord(source){
   ])});
 }
 const format=(result,plan)=>({
- demoOnly:'public licensed original photos, never a user's private closet',
+ demoOnly:"public licensed original photos, never a user's private closet",
  sourceIndexOwner:'synthetic benchmark (NOT authenticated production)',
  categoryItemType:['Tops/T-shirt','Bottoms/Jeans'],
  actualOriginalShirtSHA256:VERIFIED_PUBLIC_SHIRT_SHA256,
