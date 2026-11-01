@@ -68,6 +68,23 @@ test('automatic AI labels are not user-confirmed, even when saved and high confi
   const suspect={...top,...flags};
   await assert.rejects(()=>index(create([suspect]),session),/confirmation|Uncertain category|Minimum color|user review|subtype|color needs/i);
  }
+ // Actual public/app.js saveIndexed() only stores specific-type automatically
+ // after strong model agreement and independent confirmation passes.
+ const strongAuto={...top,userAdjusted:false,localAnalyzed:true,
+  indexedAt:'2026-10-31T20:00:00Z',indexingLevel:'specific-type',
+  scanFailed:false,saveFailed:false,colorSource:'user'};
+ const automatic=await index(create([strongAuto]),session);
+ assert.equal(automatic.byId.get('one').categoryFrom,'strong-multicheck-auto-indexed');
+ for(const overrides of [
+  {indexingLevel:'category-color'},
+  {localAnalyzed:false},
+  {indexedAt:undefined},
+  {colorSource:'photo-estimate'},
+  {possibleDuplicate:true},
+  {requiresOwnershipConfirmation:true}
+ ]){
+  await assert.rejects(()=>index(create([{...strongAuto,...overrides}]),session),/confirmation/i);
+ }
  const reviewMemory={...top,userAdjusted:false,confirmedDetails:{category:'Tops',itemType:'T-shirt'},colorSource:'user'};
  const result=await index(create([reviewMemory]),session);
  assert.equal(result.validatedItems,1);
