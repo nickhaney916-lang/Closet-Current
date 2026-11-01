@@ -71,7 +71,8 @@ async function start(){
   sourceNeutralCollarRoll:true,rearShirtFabricRelief:true,
   naturalShoulderSleeveTransition:true,sourceMeasuredSleeveHang:true,
   anatomicalShirtSideFlow:true,naturalShoulderFall61:true,
-  trueShoulderTop64:true,poseConditionedSleeveDrape:true
+  trueShoulderTop64:true,poseConditionedSleeveDrape:true,
+  photoDenimRearDrape73:new URLSearchParams(location.search).get('denimDrape73')==='after'
  });
  app.start();
  try{
@@ -103,6 +104,12 @@ async function start(){
   sourcePhotoGenuine:true,humanApproved:false,phoneTested:false,
   production:false});
  window.cc69SetView=angle=>{app.viewAt(angle);return window.cc69Diagnostics();};
+ // Genuine garment geometry diagnostics only: no original decoded image data.
+ window.cc73State=()=>({figure:app.getState().kind,sourceBones:app.getState().stats?.bones,
+  denim:app.getState().outfit?.pants||null,shirt:app.getState().outfit?.shirt||null,
+  selectedDenim:currentSelection,photoDenimDrapeEnabled:new URLSearchParams(location.search).get('denimDrape73')==='after',
+  sourceHash:app.getState().outfit?.pants?.sourceSHA256||null,
+  familyAlpha:'HOLD',releaseAuthorized:false});
  window.addEventListener('pagehide',()=>{closed=true;app.stop();first?.dispose();second?.dispose();});
 }
 start().catch(e=>{setStatus('No fabricated 3D wardrobe: '+String(e.message||e));$('wear').disabled=$('swap').disabled=true;});
