@@ -1,0 +1,95 @@
+name: SHIRT-FLOW-04 17 Photo-Shirt Shoulder Torso Motion + Real Contact · NO DEPLOY HOLD
+on:
+  pull_request:
+    paths:
+      - 'research/shirt-flow-04/**'
+      - 'scripts/test-shirt-flow-04-browser.mjs'
+      - 'tests/shirt-flow-04.test.mjs'
+      - '.github/workflows/shirt-flow-04-no-deploy.yml'
+permissions:
+  contents: read
+jobs:
+  original-shirt-true-skinned-arm-poses:
+    runs-on: ubuntu-latest
+    timeout-minutes: 70
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+      - name: Strict exact verified SHIRT-FLOW-03 verified research ancestor; forbid production and sibling writes
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor c126df1e02670027c1a22bbd6bd88de35c3807ee HEAD
+          git diff --name-only c126df1e02670027c1a22bbd6bd88de35c3807ee HEAD | while IFS= read -r path; do
+            case "$path" in
+              research/shirt-flow-04/*|scripts/test-shirt-flow-04-browser.mjs|tests/shirt-flow-04.test.mjs|.github/workflows/shirt-flow-04-no-deploy.yml) ;;
+              *) echo "UNAUTHORIZED sibling/production file change: $path"; exit 1 ;;
+            esac
+          done
+      - name: Install original source-local offline Three + Chromium test runtime
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 three@0.180.0 playwright@1.56.1 three-mesh-bvh@0.9.2
+      - name: Check genuine photographed sleeve source identity, original pose solver and developer regressions
+        run: |
+          node --check research/shirt-flow-04/photo-jeans-demo.mjs
+          node --check research/shirt-flow-04/showroom.mjs
+          node --check research/shirt-flow-04/outfit-controller.mjs
+          node --check research/shirt-flow-02/continuous-arm-pose.mjs
+          node --check research/shirt-flow-03/gravity-fabric-folds.mjs
+          node --check research/shirt-flow-04/source-torso-drape.mjs
+           node --check research/shirt-flow-04/pose-conditioned-sleeves.mjs
+           node --check research/shirt-flow-02/posed-contact.mjs
+          node --check scripts/test-shirt-flow-04-browser.mjs
+          node --test tests/shirt-flow-04.test.mjs
+      - name: Restore fixed original licensed garment source + 2 photographed denim source masks
+        run: |
+          node scripts/build-work47-benchmark.mjs
+          node scripts/build-three-d-31-jeans-proposal.mjs
+          node scripts/build-three-d-37-second-jeans.mjs
+          node --test tests/three-d-31-jeans-source.test.mjs tests/three-d-37-source-true.test.mjs
+      - name: Exact original SHA-256 verified male/female 163 bone GLB models
+        run: |
+          git fetch --no-tags origin 53f2ad344dc56a1477e343531c423aed0e66c17d dd6bac3fa9ff640d4f562cf925337440bdb5cf8f 3a572193987cb29389727426136c6eb3ac326783 dfb40889c4c1221fb1833b859e8a11ef38aeb76e
+          node research/three-d-20/restore-approved-models.mjs
+      - name: Genuine mobile 163-bone photo shirt with moving torso, real posed collision and A/B
+        run: node scripts/test-shirt-flow-04-browser.mjs
+      - name: Reverify genuine both-rig exact posed bilateral sleeve seams and skinned BVH
+        run: node --test tests/three-d-55-source-sleeve-hang.test.mjs tests/three-d-56-pose-sleeves.test.mjs
+      - name: Verify 126 actual WebGL images, source identity, exact resets, no real accounts, HOLD
+        run: |
+          node --input-type=module <<'CHECK'
+          import assert from 'node:assert/strict';
+          import {readFileSync,readdirSync} from 'node:fs';
+          const dir='benchmark/shirt-flow-04',r=JSON.parse(readFileSync(dir+'/results.json'));
+          assert.equal(r.screenshots,126);
+          assert.equal(readdirSync(dir).filter(x=>x.endsWith('.png')).length,126);
+          assert.deepEqual(r.widths,[320,390,430]);
+          assert.deepEqual(r.rigKinds,['female','male']);
+          assert.equal(r.scenarios.length,6);
+          assert.ok(r.scenarios.every(x=>x.poseCount===17&&x.resetDifferentPixels===0&&x.genuineSkinnedSleeveContactZero));
+          assert.equal(r.sameBonePoseTrueTorsoFlowAB.length,6);
+          assert.ok(r.sameBonePoseTrueTorsoFlowAB.every(x=>x.sourceTorsoOnlyChangedPixels>=12));
+          assert.equal(r.exactSourcePoseResetCount,6);
+          assert.equal(r.trueSourceReviewedAndHashBound,true);
+          assert.equal(r.sourceOriginalPhotosUntouched,true);
+          assert.equal(r.gravityResponsivePhotographedSleeveGeometry,true);
+          assert.equal(r.sourceTrueShoulderTorsoPhotoGeometry,true);
+          assert.equal(r.entireArmPhysicsCertified,false);
+          assert.equal(r.continuousCollisionBetweenKeyframesCertified,false);
+          assert.equal(r.actualPhysicalPhoneTested,false);
+          assert.equal(r.visualPhotorealismApproved,false);
+          assert.equal(r.familyAlpha,'HOLD');
+          assert.equal(r.releaseAuthorized,false);
+          assert.equal(r.productionChanged,false);
+          CHECK
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: SHIRT-FLOW-04-ORIGINAL-PHOTO-126-WEBGL-HOLD
+          path: benchmark/shirt-flow-04/
+          if-no-files-found: warn
