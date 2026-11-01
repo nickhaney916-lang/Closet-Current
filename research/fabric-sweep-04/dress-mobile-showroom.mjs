@@ -10,6 +10,7 @@ import {setAnatomicalCameraView,advanceAnatomicalTurntable,viewAngleFromCamera} 
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {createOutfitController} from './dress-outfit-controller.mjs';
 import {WALK02,createOriginal163BoneGait02} from '../fabric-walk-02/anatomical-gait-driver.mjs';
+import {SWEEP04,createContinuousGaitClock04} from './continuous-gait-phase.mjs';
 import {posedGeometry,triangleContacts} from '../three-d-42/posed-contact.mjs';
 import {installOpeningSkinAttribute} from '../three-d-26/contact-presentation.mjs';
 import {configureOriginalPhotoSampling,originalSourceDisplayPixelRatio} from '../three-d-58/crisp-original-source-rendering.mjs';
@@ -79,6 +80,7 @@ export function mountAnatomicalShowroom(canvas,{onChange=()=>{},refineFit=true,e
  const loadTimes=[];let lastRenderMs=0,outfit=null,poseChanges=0,sourcePhotoSampling=null;
  const loader=new GLTFLoader();
  let rafId=0,motionActive=false,lastMotionTime=0,
+  continuityClock04=null,
   gait02=null,gaitActive=false,gaitElapsed=0,gaitLastTime=0,gaitLastHalf=-1;
  const onContextLost=e=>{e.preventDefault();canvas.dataset.context='lost';spin=false;motionActive=false;lastMotionTime=0;haltGait02();};
  const onContextRestored=()=>{canvas.dataset.context='ready';dirty=true;};
@@ -155,6 +157,7 @@ export function mountAnatomicalShowroom(canvas,{onChange=()=>{},refineFit=true,e
   return {meshCount,skinned,bones,triangles};
  };
  const haltGait02=()=>{gaitActive=false;gaitElapsed=0;gaitLastTime=0;gaitLastHalf=-1;
+  continuityClock04?.dispose();continuityClock04=null;
   if(gait02){gait02.dispose();gait02=null;}
   if(outfit?.getState()?.mode==='dress'&&skirtSecondaryMotion01){
    try{outfit.resetFabricMotion01();if(poseConditionedPleats03)outfit.resetPosePleats03();}catch{}
@@ -224,9 +227,10 @@ export function mountAnatomicalShowroom(canvas,{onChange=()=>{},refineFit=true,e
   // Cap auto-spin at 30fps; idle renders stop while controls stay responsive.
   if(spin&&time-lastTime>33){if(premiumTurntable67){advanceAnatomicalTurntable(camera,controls,Math.min(.05,(time-lastTime)/1000||.033),18);}else group.rotation.y+=.012;dirty=true;lastTime=time;}
   if(gaitActive&&gait02){
-   const dt=gaitLastTime?Math.min(.05,Math.max(0,(time-gaitLastTime)/1000)):1/60;
+   const tick=continuityClock04?.tick(time);
+   if(!tick)throw Error('Continuous true-body gait clock missing');
+   const dt=tick.deltaSeconds,phase=tick.phase;
    gaitLastTime=time;gaitElapsed+=dt;
-   const phase=(gaitElapsed/WALK02.cycleSeconds)%1;
    gait02.sample(phase);
    const half=phase<.5?0:1;
    if(half!==gaitLastHalf){outfit.kickFabricMotion01(half===0?.55:-.55);gaitLastHalf=half;}
@@ -333,7 +337,15 @@ export function mountAnatomicalShowroom(canvas,{onChange=()=>{},refineFit=true,e
  };
  return {load,shade,front,side,back,rotate,viewAt:rotate,resetView:front,start,stop,setPose,zoom,applyOutfit,inspectSleeves,inspectTorso,
   setGaitPhase02,resetGait02,auditGaitDress02,
-  startGait02:()=>{requireGait02();gaitActive=true;gaitElapsed=0;gaitLastTime=0;gaitLastHalf=-1;
+  sampleSweep04:phase=>{
+   if(!Number.isFinite(phase)||phase<0||phase>1||Math.abs(phase*8-Math.round(phase*8))>1e-9)
+    throw Error('One of nine exact original-rig interpolation phases required');
+   const state=setGaitPhase02(phase);
+   return {...state,sampledPhase:phase,original163BoneRig:true,
+    originalDressSHA256:SWEEP04.sourceSHA256,releaseAuthorized:false};
+  },
+  startGait02:()=>{requireGait02();continuityClock04?.dispose();
+   continuityClock04=createContinuousGaitClock04();gaitActive=true;gaitElapsed=0;gaitLastTime=0;gaitLastHalf=-1;
    motionActive=false;dirty=true;return {walkingInPlace:true,original163BoneRig:true,releaseAuthorized:false};},
   kickFabricMotion01:strength=>{if(!skirtSecondaryMotion01||finish||!selected)throw Error('Genuine source dress motion is not available');const state=outfit.kickFabricMotion01(strength);motionActive=true;lastMotionTime=0;dirty=true;return state;},
   resetFabricMotion01:()=>{if(!skirtSecondaryMotion01||finish||!selected)throw Error('Genuine source dress motion is not available');motionActive=false;lastMotionTime=0;const state=outfit.resetFabricMotion01();draw();return state;},
@@ -342,6 +354,7 @@ export function mountAnatomicalShowroom(canvas,{onChange=()=>{},refineFit=true,e
   getState:()=>({kind:current,loaded:!!selected,finish,stats:lastStats,frames:frame,finishMaterial:lastColor,pose:pose,loadMs:loadTimes.at(-1),lastRenderMs,geometries:renderer.info.memory.geometries,textures:renderer.info.memory.textures,pixelRatio:renderer.getPixelRatio(),drawPixels:canvas.width*canvas.height,trackedGarmentGeometries:trackedGarmentGeometries.size,reclaimedGarmentGeometries,sourceDetailRendering:{enabled:crispSourcePhotoClarity,renderPixelRatio:renderer.getPixelRatio(),maxPixelRatio:2,materialCount:sourcePhotoSampling?.materialCount||0,configuredSamplers:sourcePhotoSampling?.configuredSamplers||0,sourceImages:sourcePhotoSampling?.images||[],originalPhotosAndColorsUnchanged:true,humanVisualApproved:false,releaseAuthorized:false},cameraDistance:camera.position.distanceTo(controls.target),premium360Enabled:premiumTurntable67,viewAngle:premiumTurntable67?viewAngleFromCamera(camera,controls.target):null,cameraPosition:premiumTurntable67?camera.position.toArray():null,cameraTarget:premiumTurntable67?controls.target.toArray():null,mannequinBodyYaw:group.rotation.y,spinEnabled:spin,outfit:outfit?.getState()||null,skirtMotionEnabled:skirtSecondaryMotion01,skirtMotionActive:motionActive,
   gait02Enabled:poseDrivenDressWalk02,gait02Active:gaitActive,
   posePleats03Enabled:poseConditionedPleats03,posePleats03State:outfit?.getState()?.posePleats03||null,
-  gait02State:gait02?.state()||null,dressPresentation:dressPresentation.value,poseChanges,releaseAuthorized:false})
+  gait02State:gait02?.state()||null,continuousGait04:continuityClock04?.state()||null,
+   sampledSweptCollisionCertified:false,dressPresentation:dressPresentation.value,poseChanges,releaseAuthorized:false})
  };
 }
