@@ -15,7 +15,9 @@ export const getValue=(s)=>String(s??'').trim().slice(0,180);
 export function classifyDevice({kernelQemu='',hardware='',model='',fingerprint='',usbState='',adbTransport=''}={}){
  const lower=[kernelQemu,hardware,model,fingerprint].map(s=>getValue(s).toLowerCase());
  const virtual=lower[0]==='1'||/(goldfish|ranchu|vbox|qemu|emulator|sdk_gphone|generic_x86|bluestacks)/i.test(lower.join(' '));
- const usb=adbTransport==='usb'||usbState==='configured';
+ // Some genuine USB-authorized devices omit usb: from `adb devices -l`;
+ // sys.usb.state=mtp,adb is corroboration, not independent device proof.
+ const usb=adbTransport==='usb'||getValue(usbState).split(',').map(x=>x.trim()).includes('adb');
  return {emulatorIndicated:virtual,usbTransportIndicated:usb,
   physicalHardwareCandidate:!virtual&&usb,
   independentlyVerifiedPhysicalHardware:false};
