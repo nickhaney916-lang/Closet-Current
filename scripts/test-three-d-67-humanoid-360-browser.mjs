@@ -86,12 +86,22 @@ try{
   await page.locator('#spin').click();
   await page.waitForTimeout(130);
   const spinning=await state();assert.equal(spinning.spinEnabled,true);
-  const hit=await page.locator('#avatar').boundingBox();
-  assert.ok(hit&&hit.width>50&&hit.height>50,'Actual WebGL canvas must have real touch area');
-  // Playwright real touchscreen emits a valid pointer lifecycle, not a fabricated
-  // pointerdown without an active pointer (OrbitControls needs pointer capture).
-  await page.touchscreen.tap(hit.x+hit.width/2,hit.y+hit.height/2);
+  // Clicking the spin control scrolls the mobile document. A raw coordinate
+  // tap can hit outside the canvas after that scroll. Use an element-targeted
+  // REAL touchscreen gesture and require a trusted pointerdown on the canvas.
+  await page.locator('#avatar').evaluate(el=>{
+   window.cc67TouchEvidence={pointerdowns:0,targets:[],trusted:[]};
+   el.addEventListener('pointerdown',e=>{
+    window.cc67TouchEvidence.pointerdowns++;
+    window.cc67TouchEvidence.targets.push(e.target===el);
+    window.cc67TouchEvidence.trusted.push(e.isTrusted);
+   },{passive:true});
+  });
+  await page.locator('#avatar').tap();
   await page.waitForTimeout(60);
+  const touchEvidence=await page.evaluate(()=>window.cc67TouchEvidence);
+  assert.ok(touchEvidence.pointerdowns>=1&&touchEvidence.targets.every(Boolean)&&touchEvidence.trusted.every(Boolean),
+   'Actual mobile pointerdown must reach the WebGL canvas: '+JSON.stringify(touchEvidence));
   assert.equal((await state()).spinEnabled,false,'Direct touch must cancel automated rotation');
   await page.locator('#reset').click();
   assert.ok(Math.abs((await state()).viewAngle)<.01);
