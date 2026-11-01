@@ -65,7 +65,7 @@ function confirmedFromSaved(item){
  return humanConfirmed&&item.requiresOwnershipConfirmation!==true&&
    item.possibleDuplicate!==true&&item.colorSource!=='photo-estimate';
 }
-export async function indexAuthenticatedSavedCloset(snapshot,session,{getCurrentSession=()=>session}={}){
+export async function indexAuthenticatedSavedCloset(snapshot,session,{getCurrentSession}={}){
  requireSession(snapshot,session);
  if(!Array.isArray(snapshot.items)||snapshot.items.length>1000)throw Error('Invalid indexed closet snapshot size');
  if(typeof getCurrentSession!=='function')throw Error('Session freshness checker required');
