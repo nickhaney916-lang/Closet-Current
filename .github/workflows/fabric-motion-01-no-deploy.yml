@@ -3,10 +3,6 @@ on:
   pull_request:
     paths:
       - 'research/fabric-motion-01/**'
-      - 'research/dress-mobile-01/dress-outfit-controller.mjs'
-      - 'research/dress-mobile-01/dress-mobile-showroom.mjs'
-      - 'research/integration-04-wardrobe-dress/wardrobe-demo.mjs'
-      - 'research/integration-04-wardrobe-dress/index.html'
       - 'tests/fabric-motion-01.test.mjs'
       - 'scripts/test-fabric-motion-01-browser.mjs'
       - '.github/workflows/fabric-motion-01-no-deploy.yml'
@@ -32,7 +28,7 @@ jobs:
           git merge-base --is-ancestor 57e915d752f1ecfcff904b3cddfaf68d14779d2e HEAD
           git diff --name-only 57e915d752f1ecfcff904b3cddfaf68d14779d2e HEAD | while IFS= read -r path; do
             case "$path" in
-              research/fabric-motion-01/*|research/dress-mobile-01/dress-outfit-controller.mjs|research/dress-mobile-01/dress-mobile-showroom.mjs|research/integration-04-wardrobe-dress/wardrobe-demo.mjs|research/integration-04-wardrobe-dress/index.html|tests/fabric-motion-01.test.mjs|scripts/test-fabric-motion-01-browser.mjs|.github/workflows/fabric-motion-01-no-deploy.yml) ;;
+              research/fabric-motion-01/*|tests/fabric-motion-01.test.mjs|scripts/test-fabric-motion-01-browser.mjs|.github/workflows/fabric-motion-01-no-deploy.yml) ;;
               *) echo "UNAUTHORIZED production / sibling change: $path"; exit 1 ;;
             esac
           done
@@ -41,9 +37,9 @@ jobs:
       - name: Source syntax, spring safety, exact-owner source and garment regression
         run: |
           node --check research/fabric-motion-01/bounded-skirt-motion.mjs
-          node --check research/dress-mobile-01/dress-outfit-controller.mjs
-          node --check research/dress-mobile-01/dress-mobile-showroom.mjs
-          node --check research/integration-04-wardrobe-dress/wardrobe-demo.mjs
+          node --check research/fabric-motion-01/dress-outfit-controller.mjs
+          node --check research/fabric-motion-01/dress-mobile-showroom.mjs
+          node --check research/fabric-motion-01/wardrobe-demo.mjs
           node --check scripts/test-fabric-motion-01-browser.mjs
           node --test tests/fabric-motion-01.test.mjs tests/integration-04-wardrobe-dress.test.mjs tests/dress-mobile-01.test.mjs tests/three-d-78-original-anatomical-knee-poses.test.mjs tests/three-d-77-true-skinned-denim-contact.test.mjs
       - name: Generate original licensed JPEGs and authentic source segmentation
