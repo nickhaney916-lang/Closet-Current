@@ -11,6 +11,10 @@ test('Genuine USB phone only receives candidate status, NEVER physical acceptanc
  assert.equal(r.usbTransportIndicated,true);
  assert.equal(r.physicalHardwareCandidate,true);
  assert.equal(r.independentlyVerifiedPhysicalHardware,false);
+ const realMtp=classifyDevice({hardware:'qcom',model:'Galaxy phone',kernelQemu:'0',usbState:'mtp,adb',adbTransport:'unknown'});
+ assert.equal(realMtp.usbTransportIndicated,true,'Genuine USB MTP/ADB properties should qualify as a candidate');
+ assert.equal(realMtp.physicalHardwareCandidate,true);
+ assert.equal(realMtp.independentlyVerifiedPhysicalHardware,false);
 });
 test('Emulators, USB-less, or virtual fingerprints stay blocked',()=>{
  for(const fake of [
