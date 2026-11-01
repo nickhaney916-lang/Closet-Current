@@ -10,6 +10,16 @@ async function photoToJPEG(file,{maxDimension=2048,quality=.94}={}){
   return canvas.toDataURL('image/jpeg',quality);
  }finally{URL.revokeObjectURL(url);}
 }
+// Hash the uploaded source bytes *before* relying on any resized JPEG. The
+// fingerprint identifies an exact imported source; it is not a perceptual
+// garment match and never sends file bytes to a server.
+async function sourcePhotoSha256(file){
+ if(typeof file?.arrayBuffer!=='function'||typeof globalThis.crypto?.subtle?.digest!=='function')return null;
+ try{
+  const bytes=await file.arrayBuffer(),digest=await globalThis.crypto.subtle.digest('SHA-256',bytes);
+  return Array.from(new Uint8Array(digest),byte=>byte.toString(16).padStart(2,'0')).join('');
+ }catch{return null;} // Never lose a valid wardrobe photo because hashing failed.
+}
 async function readPhotoBatch(files,decode,onPhoto){
  const errors=[],results=[];let added=0;
  for(const file of files){

@@ -1,0 +1,133 @@
+{
+  "assignment": "CC-PAR-01 / CAPTURE-QA-01",
+  "baseline": "39deed987afe2e5668d64e145835ad43ad14c7be",
+  "date": "2026-10-31",
+  "scope": "research branch, no deployment",
+  "semantics": {
+    "PASS": "Reproduced in automated synthetic tests or inspected deterministic rule; does NOT certify real-world image accuracy.",
+    "FAIL": "Known unmet requirement or recorded incorrect output.",
+    "REVIEW": "Partial evidence, unresolved readiness, or human review required.",
+    "NOT TESTED": "No admissible independent empirical test for this scenario."
+  },
+  "cases": [
+    {
+      "id": "C01",
+      "scenario": "Original uploaded file SHA-256 stable and changes on source-byte change",
+      "status": "PASS",
+      "evidence": "tests/capture-source-identity.test.cjs; public/photo-import.js",
+      "source": "synthetic unit test"
+    },
+    {
+      "id": "C02",
+      "scenario": "Deduplicate identical original single-item image despite a changed display JPEG",
+      "status": "PASS",
+      "evidence": "tests/capture-source-identity.test.cjs; public/app.js candidate()",
+      "source": "synthetic unit test"
+    },
+    {
+      "id": "C03",
+      "scenario": "Allow distinct pieces of one source outfit to coexist",
+      "status": "PASS",
+      "evidence": "tests/capture-source-identity.test.cjs; public/app.js candidate()",
+      "source": "synthetic unit test"
+    },
+    {
+      "id": "C04",
+      "scenario": "Account-local duplicate checks and independent closet sessions",
+      "status": "PASS",
+      "evidence": "tests/capture-source-identity.test.cjs; public/app.js openDB()",
+      "source": "synthetic unit test, not cross-account browser QA"
+    },
+    {
+      "id": "C05",
+      "scenario": "Reject uncertain labels without automatic garment save",
+      "status": "PASS",
+      "evidence": "tests/automatic-indexing.test.cjs",
+      "source": "synthetic classifier stub"
+    },
+    {
+      "id": "C06",
+      "scenario": "Preserve user corrections and retry failed IndexedDB transactions",
+      "status": "PASS",
+      "evidence": "tests/automatic-indexing.test.cjs",
+      "source": "synthetic mocked storage"
+    },
+    {
+      "id": "C07",
+      "scenario": "Supported categories and subtypes remain searchable after simulated indexing",
+      "status": "PASS",
+      "evidence": "tests/automatic-indexing.test.cjs; tests/taxonomy.test.cjs",
+      "source": "100 synthetic captured items"
+    },
+    {
+      "id": "C08",
+      "scenario": "Import/classify original native full-resolution photo before resizing to JPEG",
+      "status": "FAIL",
+      "evidence": "public/photo-import.js photoToJPEG(); public/app.js importClothingPhotos()",
+      "source": "code inspection: resized to max 2048"
+    },
+    {
+      "id": "C09",
+      "scenario": "Camera snapshot maintains exact native source pixels for recognition",
+      "status": "FAIL",
+      "evidence": "public/app.js snap()",
+      "source": "code inspection: downscaled to max 2048"
+    },
+    {
+      "id": "C10",
+      "scenario": "Prevent sneaker-versus-ankle-boot false automatic classification",
+      "status": "FAIL",
+      "evidence": "benchmark/manifest-holdout-16.json; benchmark/regression-holdout-16.json commons-0078",
+      "source": "historical labeled-photo result (not rerun)"
+    },
+    {
+      "id": "C11",
+      "scenario": "Real photo colors and patterned garment colors match human verification",
+      "status": "REVIEW",
+      "evidence": "public/photo-color.js; tests/photo-color.test.cjs; tests/masked-palette.test.cjs",
+      "source": "algorithmic tests only, not independent color-photo accuracy"
+    },
+    {
+      "id": "C12",
+      "scenario": "Reliable skirt/shorts and dress/skirt subtype discrimination",
+      "status": "REVIEW",
+      "evidence": "benchmark/regression-holdout-16.json; public/recognition-engine.mjs",
+      "source": "historical abstentions and subtype review; no broad physical validation"
+    },
+    {
+      "id": "C13",
+      "scenario": "Automatic real-world full-outfit multi-garment recall",
+      "status": "NOT TESTED",
+      "evidence": "public/outfit-worker.mjs; tests/outfit-worker.test.mjs",
+      "source": "mocked segmentation tests, no new measured photo recall"
+    },
+    {
+      "id": "C14",
+      "scenario": "Saved item original-source JPEG and full-size photo persist after reload or crop",
+      "status": "FAIL",
+      "evidence": "public/photo-import.js photoToJPEG(); public/app.js cropClothingPhoto()",
+      "source": "original file bytes are not stored on imported singles; SHA alone is not source preservation"
+    },
+    {
+      "id": "C15",
+      "scenario": "Authenticated save/reload/restore across two physical devices",
+      "status": "NOT TESTED",
+      "evidence": "tests/cloud-backup.test.cjs; public/app.js openDB()",
+      "source": "mocked/algorithmic tests do not establish device acceptance"
+    },
+    {
+      "id": "C16",
+      "scenario": "3D render readiness includes verified source binding, contour quality, real-phone visuals",
+      "status": "REVIEW",
+      "evidence": "public/app.js candidate(); public/outfit-worker.mjs",
+      "source": "record taxonomy does not prove rendering/contour acceptance"
+    },
+    {
+      "id": "C17",
+      "scenario": "Physical Android Chrome and iPhone Safari capture acceptance",
+      "status": "NOT TESTED",
+      "evidence": "No physical handset acceptance evidence collected in this parallel research",
+      "source": "no device test"
+    }
+  ]
+}
