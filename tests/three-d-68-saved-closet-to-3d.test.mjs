@@ -19,8 +19,9 @@ const bottom=item('two','Bottoms','Jeans','Blue',cutBottom,{outfitSourceId:'same
 const other=item('three','Tops','Blouse','Cream',makeJPEG(33));
 const shoes=item('four','Shoes','Sneakers','White',makeJPEG(34));
 const create=(items)=>({authenticated:true,ownerId:owner,generation:7,origin:'authenticated-account-scoped-closet-read',items});
+const index=(snapshot,current,options={})=>indexAuthenticatedSavedCloset(snapshot,current,{getCurrentSession:()=>current,...options});
 test('actual stored closet PHOTO schema maps two clothing segments of same full original',async()=>{
- const snap=await indexAuthenticatedSavedCloset(create([top,bottom,other,shoes]),session);
+ const snap=await index(create([top,bottom,other,shoes]),session);
  assert.equal(snap.validatedItems,4);
  assert.equal(snap.originalPhotosHashedLocally,true);
  assert.equal(snap.externalUpload,false);
@@ -65,29 +66,30 @@ test('automatic AI labels are not user-confirmed, even when saved and high confi
   {userAdjusted:true,category:'Uncategorized'}
  ]){
   const suspect={...top,...flags};
-  await assert.rejects(()=>indexAuthenticatedSavedCloset(create([suspect]),session),/confirmation|Uncertain category|Minimum color|user review|subtype|color needs/i);
+  await assert.rejects(()=>index(create([suspect]),session),/confirmation|Uncertain category|Minimum color|user review|subtype|color needs/i);
  }
  const reviewMemory={...top,userAdjusted:false,confirmedDetails:{category:'Tops',itemType:'T-shirt'},colorSource:'user'};
- const result=await indexAuthenticatedSavedCloset(create([reviewMemory]),session);
+ const result=await index(create([reviewMemory]),session);
  assert.equal(result.validatedItems,1);
 });
 test('auth session, same-user token refresh and account switches are fail-closed',async()=>{
- await assert.rejects(()=>indexAuthenticatedSavedCloset(create([top]),{...session,ownerId:'other-account'}),/authenticated/);
- await assert.rejects(()=>indexAuthenticatedSavedCloset({...create([top]),generation:8},session),/authenticated/);
- await assert.rejects(()=>indexAuthenticatedSavedCloset(create([top]),{...session,authenticated:false}),/authenticated/);
- await assert.rejects(()=>indexAuthenticatedSavedCloset(create([{...top,ownerId:'other-account'}]),session),/account mismatch/);
+ await assert.rejects(()=>indexAuthenticatedSavedCloset(create([top]),session),/Session freshness checker/);
+ await assert.rejects(()=>index(create([top]),{...session,ownerId:'other-account'}),/authenticated/);
+ await assert.rejects(()=>index({...create([top]),generation:8},session),/authenticated/);
+ await assert.rejects(()=>index(create([top]),{...session,authenticated:false}),/authenticated/);
+ await assert.rejects(()=>index(create([{...top,ownerId:'other-account'}]),session),/account mismatch/);
  let calls=0;
- await assert.rejects(()=>indexAuthenticatedSavedCloset(create([top]),session,{getCurrentSession:()=>{
+ await assert.rejects(()=>index(create([top]),session,{getCurrentSession:()=>{
   calls++;return calls>=2?{...session,generation:8}:session;
  }}),/authenticated/);
- const a=await indexAuthenticatedSavedCloset(create([top]),session,{getCurrentSession:()=>session});
+ const a=await index(create([top]),session,{getCurrentSession:()=>session});
  assert.equal(a.ownerId,owner);
 });
 test('outfit board reflects actual existing wardrobe slot types and dress/dup conflicts',async()=>{
  const dress=item('d','Dresses','Casual dress','Red',makeJPEG(57));
  const jacket=item('j','Outerwear','Jacket','Brown',makeJPEG(58));
  const bag=item('b','Accessories','Bag','Black',makeJPEG(59));
- const snap=await indexAuthenticatedSavedCloset(create([top,bottom,other,shoes,dress,jacket,bag]),session);
+ const snap=await index(create([top,bottom,other,shoes,dress,jacket,bag]),session);
  assert.equal(planIndexedBoardToAnatomical3D({slots:{top:'d',shoes:'four'}},snap).selected.top.category,'Dresses');
  assert.throws(()=>planIndexedBoardToAnatomical3D({slots:{top:'d',bottom:'two'}},snap),/Dress is incompatible/);
  assert.throws(()=>planIndexedBoardToAnatomical3D({slots:{bottom:'two',layer2:'j'}},snap),/Layered outfit needs/);
@@ -101,10 +103,10 @@ test('outfit board reflects actual existing wardrobe slot types and dress/dup co
  assert.throws(()=>previewExistingThreeSuggestions([{slots:{top:'one'}}],snap),/exactly three/);
 });
 test('false photo source, conflicting same-group originals and invalid binary are blocked',async()=>{
- await assert.rejects(()=>indexAuthenticatedSavedCloset(create([{...top,originalPhoto:{image:'https://example.invalid/personal.jpg'}}]),session),/JPEG unavailable/);
- await assert.rejects(()=>indexAuthenticatedSavedCloset(create([{...top,originalPhoto:undefined,image:'data:image/jpeg;base64,AAAA'}]),session),/signature|JPEG unavailable/);
- await assert.rejects(()=>indexAuthenticatedSavedCloset(create([
+ await assert.rejects(()=>index(create([{...top,originalPhoto:{image:'https://example.invalid/personal.jpg'}}]),session),/JPEG unavailable/);
+ await assert.rejects(()=>index(create([{...top,originalPhoto:undefined,image:'data:image/jpeg;base64,AAAA'}]),session),/signature|JPEG unavailable/);
+ await assert.rejects(()=>index(create([
   top,{...bottom,originalPhoto:{image:makeJPEG(88)}}
  ]),session),/conflicting original bytes/);
- await assert.rejects(()=>indexAuthenticatedSavedCloset(create([top,top]),session),/Duplicate/);
+ await assert.rejects(()=>index(create([top,top]),session),/Duplicate/);
 });
