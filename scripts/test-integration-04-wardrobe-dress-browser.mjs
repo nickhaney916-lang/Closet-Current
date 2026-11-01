@@ -155,10 +155,12 @@ try{
    for(const state of ['dress-fallback','empty','no-webgl']){
     if(state==='dress-fallback'){
      await p.evaluate(()=>window.ccWardrobe10Test.inject('noDressMesh'));
-     await p.waitForFunction(()=>window.ccWardrobe10Diagnostics().viewerMode==='original-photo-2d');
+     // Setting a dress-only failure must not change a working two-piece outfit.
+     // Select the licensed dress FIRST, then require genuine 2D fail-closed behavior.
      await p.locator('#category').selectOption('Dresses');
      await p.locator('#items .item').first().click();
-     await p.waitForFunction(()=>window.ccWardrobe10Diagnostics().fallbackVisible);
+     await p.waitForFunction(()=>window.ccWardrobe10Diagnostics().fallbackVisible&&
+       window.ccWardrobe10Diagnostics().viewerMode==='original-photo-2d',null,{timeout:180000});
     }else if(state==='empty'){
      await p.evaluate(()=>window.ccWardrobe10Test.reset());
      await p.waitForFunction(()=>window.ccWardrobe10Diagnostics().viewerReady,null,{timeout:180000});
