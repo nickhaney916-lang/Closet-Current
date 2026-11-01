@@ -298,11 +298,24 @@ export function mountAnatomicalShowroom(canvas,{onChange=()=>{},refineFit=true,e
   restoredRealBoneQuaternions:true,restoredOriginalSkirtGeometry:true,
   original163BoneRig:true,releaseAuthorized:false};};
  const auditGaitDress02=()=>{
-  requireGait02();const dresses=[],bodies=[];selected.traverse(o=>{if(o.isSkinnedMesh){
-   if(o.userData.experimentalDress14)dresses.push(o);
-   else if(!o.userData.work56Garment)bodies.push(o);
+  requireGait02();
+  // Later anatomical fit passes legitimately replace/clone the original
+  // dress mesh and lose experimentalDress14, but retain the canonical
+  // work56Garment ownership tag used throughout this real outfit viewer.
+  // Accept precisely ONE such mesh ONLY while the outfit state is the
+  // verified exact source SHA one-piece dress (never shirt/jeans).
+  const currentOutfit=outfit.getState();
+  if(currentOutfit.mode!=='dress'||currentOutfit.garmentMeshes!==1||
+     currentOutfit.dress?.sourceSHA256!==WALK02.sourceSHA256||
+     currentOutfit.shirt||currentOutfit.pants)
+   throw Error('Only exact original-source, independently skinned one-piece dress may be audited');
+  const dresses=[],bodies=[];selected.traverse(o=>{if(o.isSkinnedMesh){
+   if(o.userData.work56Garment)dresses.push(o);
+   else bodies.push(o);
   }});
-  if(dresses.length!==1||bodies.length<1)throw Error('One independent genuine photographed dress and anatomical body required');
+  if(dresses.length!==1||bodies.length<1)
+   throw Error('Expected exactly one genuine independent dress plus original anatomical body: '+
+    JSON.stringify({garments:dresses.map(m=>m.name),bodies:bodies.map(m=>m.name)}));
   let d,b;try{d=posedGeometry(dresses);b=posedGeometry(bodies);
    const result=triangleContacts(d.g,b.g);
    return {actualSkinnedDressBodyTriangleCrossings:result.count,
