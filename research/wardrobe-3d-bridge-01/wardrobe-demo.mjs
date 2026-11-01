@@ -176,6 +176,17 @@ async function loadAccount(){
  try{
   bound=await session.load();
   if(token!==bootToken||!isCurrent(identity))return;
+  // The research fixture's stored display metadata must match the exact
+  // locally hashed and account-scoped canonical index. A reclassified source
+  // must not remain visible with a stale "confirmed" category/color label.
+  const pristine=closets[identity.ownerId];
+  for(const item of pristine){
+   const verified=bound.indexed.byId.get(item.id);
+   if(!verified||verified.sourceSHA256!==item.expectedSHA256||
+      verified.category!==item.category||verified.itemType!==item.itemType||
+      verified.color!==item.color||verified.ownerId!==identity.ownerId)
+    throw Error('Confirmed source photo/category/color or account changed since trusted original fixture');
+  }
   sourceVerified=true;
   // Real saved schema; choose known top and first bottom for source-verified 3D.
   const saved=readableItems();
