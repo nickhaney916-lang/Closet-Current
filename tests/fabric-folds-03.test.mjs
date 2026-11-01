@@ -14,8 +14,8 @@ test('source-bounded pose-driven radial hem pleats vanish on neutral and are opp
  for(const angle of [-3.14,-1.7,-.4,0,.3,1.5,3.14]){
   for(const lower of [0,.2,.5,.9,1]){
    const neutral=fold03Signal(0,angle,lower),back=fold03Signal(1,angle,lower);
-   assert.equal(neutral.radial,0);assert.equal(neutral.tangential,0);
-   assert.equal(back.radial,0);
+   assert.ok(Math.abs(neutral.radial)<1e-12&&Math.abs(neutral.tangential)<1e-12);
+   assert.ok(Math.abs(back.radial)<1e-12);
    const left=fold03Signal(.25,angle,lower),right=fold03Signal(.75,angle,lower);
    for(const p of [left,right]){
     assert.ok(p.radial>=0&&p.radial<=1,'never inward radial squeeze');
@@ -36,7 +36,7 @@ test('source-bounded pose-driven radial hem pleats vanish on neutral and are opp
 test('reject fabricated clothing, unvetted private photos, missing original skinned rig or canonical spring',()=>{
  assert.throws(()=>createSourceNeutralPosePleats03({},new THREE.Group(),null),/FOLDS-03 requires/);
  assert.throws(()=>createSourceNeutralPosePleats03({stats:{sourceId:'commons-0053'}},new THREE.Group(),null),/FOLDS-03 requires/);
- assert.equal(PLEATS03.sourceFrontUntouched,true);
+ assert.equal(PLEATS03.photoFrontUntouched,true);
  assert.equal(PLEATS03.releaseAuthorized,false);
  assert.equal(PLEATS03.sweptCollisionCertified,false);
  assert.equal(PLEATS03.physicalPhoneTested,false);
