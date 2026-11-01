@@ -70,7 +70,7 @@ jobs:
           assert.equal(d.checkedGarments,24);
           assert.equal(d.swapsAtLeast,10);
           assert.equal(d.figureSwitchesAtLeast,5);
-          assert.equal(d.negativeCases.length,4);
+          assert.equal(d.negativeCases.length,5);
           assert.equal(d.webGLMemoryMeasurements>=25,true);
           assert.equal(d.offsiteRequests,0);
           assert.equal(d.originalPhotoAnd2DFallbackUnchanged,true);
