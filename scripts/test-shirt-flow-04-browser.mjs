@@ -56,7 +56,12 @@ async function openOriginal(page,kind,enabled=true){
  assert.equal(pre.outfit.shirt,null);
  await page.locator('#review').check();
  await page.locator('#full').click();
- await page.waitForFunction(()=>window.cc31Diagnostics?.()?.outfit?.mode==='shirt-pants',null,{timeout:180000});
+ try{await page.waitForFunction(()=>window.cc31Diagnostics?.()?.outfit?.mode==='shirt-pants',null,{timeout:30000});}
+ catch(e){throw Error('Original photographed 3D torso fit failed before QA: '+JSON.stringify({
+  status:await page.locator('#status').textContent().catch(()=>'?'),
+  state:await page.evaluate(()=>window.cc31Diagnostics?.()?.outfit??null).catch(()=>null),
+  errors:errors.slice(-10),consoleErrors:consoleErrors.slice(-10),failedResponses:failedResponses.slice(-10),outside:outside.slice(-5)
+ }));}
  const outfit=await state(page);
  assert.equal(outfit.outfit.mode,'shirt-pants');
  assert.equal(outfit.outfit.shirt.skinBones,163);
