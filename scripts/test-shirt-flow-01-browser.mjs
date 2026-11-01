@@ -37,7 +37,11 @@ async function openOriginal(page,kind,enabled=true){
  await page.goto(host+'/research/shirt-flow-01/index.html?'+baseParams+
   '&move56='+(enabled?'after':'before')+'&shirtFlow='+(enabled?'after':'before'),
   {waitUntil:'domcontentloaded'});
- await page.waitForFunction(()=>window.cc31Diagnostics?.()?.loaded===true,null,{timeout:180000});
+ try{await page.waitForFunction(()=>window.cc31Diagnostics?.()?.loaded===true,null,{timeout:45000});}
+ catch(e){throw Error('Original source showroom not ready: '+JSON.stringify({
+  status:await page.locator('#status').textContent().catch(()=>'?'),
+  loaded:await page.evaluate(()=>window.cc31Diagnostics?.()?.loaded??null).catch(()=>null),
+  errors:errors.slice(-5),outside:outside.slice(-5)}));}
  if(kind==='male'){
   await page.locator('#model').selectOption('male');
   await page.waitForFunction(()=>window.cc31Diagnostics?.()?.loaded&&window.cc31Diagnostics().kind==='male',null,{timeout:180000});
