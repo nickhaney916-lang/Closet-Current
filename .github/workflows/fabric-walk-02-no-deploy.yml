@@ -66,6 +66,10 @@ jobs:
           assert.deepEqual(r.originalFigures,['female','male']);
           assert.ok(r.cases.length===6&&r.cases.every(x=>x.leftChangedPixels>=50&&x.rightChangedPixels>=50&&x.resetChangedPixels===0));
           assert.equal(r.realTriangleContactAudits.length,2);
+          assert.ok(r.realTriangleContactAudits.every(x=>
+            x.crossedSegmentsAtLeftStep<=x.crossedSegmentsAtRest&&
+            x.crossedSegmentsAtRightStep<=x.crossedSegmentsAtRest),
+            'True anatomy source dress must not add body intersections on either step');
           assert.equal(r.genuineAnatomicalHipKneeAndPelvisMotion,true);
           assert.equal(r.clothRespondsToBodyGait,true);
           assert.equal(r.exactPoseAndClothReset,true);
