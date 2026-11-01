@@ -1,0 +1,62 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Closet Current — account-bound wardrobe photo + true 3D research HOLD</title>
+<style>
+:root{font:15px system-ui,sans-serif;background:#f4f5f2;color:#17382e}*{box-sizing:border-box}
+html,body{margin:0;width:100%;max-width:100%;overflow-x:hidden}
+header{padding:12px;background:#fff;border-bottom:1px solid #cfdbd2}header strong{font-size:17px}
+main{max-width:1020px;margin:auto;padding:10px}
+h1{font:normal 23px Georgia,serif;margin:6px 0 8px}.sub{font-size:13px;line-height:1.4}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.78fr);gap:11px}
+.panel{border:1px solid #cadacf;border-radius:12px;background:#fff;padding:10px;margin:0 0 10px;min-width:0}
+h2{font-size:16px;margin:0 0 9px}h3{font-size:14px;margin:8px 0}
+#viewerHost{min-width:0;width:100%;border-radius:10px;overflow:hidden;background:#eaece7}
+#avatar{display:block;width:100%;min-height:320px;height:min(75svh,610px);touch-action:none}
+#photoFallback{display:none;min-height:320px;padding:12px;background:#f7f6f1;border-radius:10px}
+#photoFallback[data-visible=true]{display:block}
+#fallbackPhotos{display:flex;justify-content:center;align-items:flex-start;gap:9px;flex-wrap:wrap}
+#fallbackPhotos figure{margin:0;width:min(46%,200px);min-width:100px}
+#fallbackPhotos img{width:100%;height:250px;object-fit:contain;background:#fff;border:1px solid #dfdfd7;border-radius:7px}
+figcaption{font-size:12px;overflow-wrap:anywhere}
+#originals{display:flex;gap:8px;overflow:auto;min-height:55px}
+#originals img{height:82px;max-width:92px;object-fit:contain;background:#f6f6f3}
+#items{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.item{display:flex;gap:8px;text-align:left;align-items:center;overflow:hidden;min-width:0}
+.item img{width:46px;height:64px;object-fit:contain;flex-shrink:0}
+.item span{font-size:12px;overflow-wrap:anywhere}
+button,select{font:inherit;color:inherit;background:white;border:1px solid #acbbae;border-radius:8px;min-height:44px;padding:7px;cursor:pointer;min-width:0}
+button:disabled{opacity:.45;cursor:default}
+button:focus-visible,select:focus-visible{outline:3px solid #27745c}
+.item[aria-pressed=true]{border:2px solid #166b4c;background:#e8f2ec}
+.actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:9px 0}
+label{display:block;font-size:13px;margin:7px 0}
+select{width:100%}#status{min-height:30px;font-size:13px;overflow-wrap:anywhere}
+#evidence{white-space:pre-wrap;overflow-wrap:anywhere;font-size:11px}
+#angle{width:100%}.hold{color:#934c2b;font-weight:700}
+@media(max-width:650px){.grid{grid-template-columns:minmax(0,1fr)}#avatar{height:48svh;min-height:310px;max-height:470px}main{padding:7px}.item{min-height:70px}}
+</style>
+<script type="importmap">{"imports":{"three":"/node_modules/three/build/three.module.js","three/addons/":"/node_modules/three/examples/jsm/"}}</script>
+</head><body><header><strong>Closet Current — Saved Wardrobe → Original Photo / Verified 3D</strong> <span class="hold">SYNTHETIC RESEARCH · HOLD</span></header>
+<main><h1>Your confirmed closet, safely previewed</h1>
+<p class="sub">Two synthetic accounts. Genuine SHA-verified licensed example photos only. Unverified garments stay in the original-photo/2D preview. No real wardrobes, login credentials or cloud storage are accessed.</p>
+<div class="grid"><section class="panel" aria-label="Verified outfit and photo fallback">
+<div id="viewerHost"><canvas id="avatar" aria-label="Original 163-bone WebGL anatomical figure. Drag to rotate, pinch to zoom"></canvas></div>
+<div id="photoFallback" data-visible="true" role="region" aria-label="Original saved item photograph and 2D outfit fallback">
+<h2>Original photograph / 2D preview</h2><p id="fallbackReason">Confirming saved clothing and source photographs…</p><div id="fallbackPhotos"></div></div>
+<h3>Selected original photographs</h3><div id="originals"></div>
+</section><aside>
+<section class="panel"><h2>Research account and wardrobe</h2>
+<label for="account">Synthetic account<select id="account"><option value="fixture-account-a">Account A</option><option value="fixture-account-b">Account B</option></select></label>
+<div class="actions"><button id="logout">Log out</button><button id="signin">Sign in</button><button id="retry">Retry 3D</button></div>
+<label for="category">Browse saved category<select id="category"><option value="Tops">Tops</option><option value="Bottoms">Bottoms</option><option value="Dresses">Dresses</option></select></label>
+<div id="items" role="group" aria-label="Authenticated, SHA-verified closet garments"></div>
+<div class="actions"><button id="clear">Clear outfit</button><button id="wear">Show selected outfit</button><button id="swap">Swap denim</button></div>
+<div role="status" aria-live="polite" id="status">Checking two licensed synthetic wardrobe sets…</div>
+</section>
+<section class="panel"><h2>Mobile figure controls</h2>
+<label for="model">163-bone anatomical figure<select id="model"><option value="female">Female</option><option value="male">Male</option></select></label>
+<div class="actions"><button id="front">Front</button><button id="side">Side</button><button id="back">Back</button><button id="zin">Zoom +</button><button id="zout">Zoom −</button><button id="turn">Rotate</button></div>
+<label for="angle">Viewing angle <output id="degree">0°</output></label><input id="angle" type="range" min="0" max="360" value="0">
+<p class="sub">3D only for exact independently verified source photo + mesh, and only while this synthetic owner session is current.</p>
+</section>
+<section class="panel"><h2>Source and account verification</h2><div id="evidence">Source SHA pending.</div><p class="hold">Family Alpha #255 HOLD · No deployment · Physical phones NOT TESTED</p></section>
+</aside></div></main><script type="module" src="./wardrobe-demo.mjs"></script></body></html>

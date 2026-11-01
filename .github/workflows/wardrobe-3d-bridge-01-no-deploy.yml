@@ -1,0 +1,84 @@
+name: PAR-10 Wardrobe source photo / authenticated-synthetic 3D bridge (DRAFT HOLD NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'research/wardrobe-3d-bridge-01/**'
+      - 'tests/wardrobe-3d-bridge-01.test.mjs'
+      - 'scripts/test-wardrobe-3d-bridge-01-browser.mjs'
+      - '.github/workflows/wardrobe-3d-bridge-01-no-deploy.yml'
+permissions:
+  contents: read
+jobs:
+  authenticated-source-and-real-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 65
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+      - name: Assert exact PR497 verified ancestor and NO production or parallel modifications
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor 1f8b0b93a4cda2932dfe2c1db1fb213608603586 HEAD
+          git diff --name-only 1f8b0b93a4cda2932dfe2c1db1fb213608603586 HEAD | while IFS= read -r path; do
+            case "$path" in
+              research/wardrobe-3d-bridge-01/*|tests/wardrobe-3d-bridge-01.test.mjs|scripts/test-wardrobe-3d-bridge-01-browser.mjs|.github/workflows/wardrobe-3d-bridge-01-no-deploy.yml) ;;
+              *) echo "UNAUTHORIZED external/production change: $path"; exit 1 ;;
+            esac
+          done
+      - name: Pin original-source only test runtime
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 three@0.180.0 playwright@1.56.1 three-mesh-bvh@0.9.2
+      - name: Source and account separation unit tests / regression and browser source syntax
+        run: |
+          node --check research/wardrobe-3d-bridge-01/account-source-bridge.mjs
+          node --check research/wardrobe-3d-bridge-01/wardrobe-demo.mjs
+          node --check scripts/test-wardrobe-3d-bridge-01-browser.mjs
+          node --test tests/wardrobe-3d-bridge-01.test.mjs tests/three-d-68-account-bound-bridge.test.mjs tests/three-d-69-indexed-photo-real-3d.test.mjs tests/three-d-78-original-anatomical-knee-poses.test.mjs tests/three-d-77-true-skinned-denim-contact.test.mjs tests/three-d-76-source-denim-fold-continuity.test.mjs
+      - name: Build unchanged original source licensed JPEGs and masks
+        run: |
+          node scripts/build-three-d-31-jeans-proposal.mjs
+          node scripts/build-three-d-37-second-jeans.mjs
+          node scripts/build-work47-benchmark.mjs
+          node --test tests/three-d-31-jeans-source.test.mjs tests/three-d-37-source-true.test.mjs
+      - name: Restore exact original male and female CC0 163-bone source figures
+        run: |
+          git fetch --no-tags origin 53f2ad344dc56a1477e343531c423aed0e66c17d dd6bac3fa9ff640d4f562cf925337440bdb5cf8f 3a572193987cb29389727426136c6eb3ac326783 dfb40889c4c1221fb1833b859e8a11ef38aeb76e
+          node research/three-d-20/restore-approved-models.mjs
+      - name: Capture 36 real 3D WebGL and 18 real source-photo 2D viewport screenshots, privacy cases, transitions and memory
+        run: node scripts/test-wardrobe-3d-bridge-01-browser.mjs
+      - name: Validate all real release-hold evidence
+        run: |
+          node --input-type=module <<'CHECK'
+          import assert from 'node:assert/strict';
+          import {readFileSync,readdirSync} from 'node:fs';
+          const dir='benchmark/wardrobe-3d-bridge-01',r=JSON.parse(readFileSync(dir+'/browser-results.json'));
+          assert.equal(r.genuineWebGLFrames,36);
+          assert.equal(r.originalPhoto2DFrames,18);
+          assert.equal(r.screenshots,54);
+          assert.equal(readdirSync(dir).filter(x=>x.endsWith('.png')).length,54);
+          assert.deepEqual(r.widths,[320,390,430]);
+          assert.ok(r.interactions.length>=10);
+          assert.ok(r.transitions.length>=6);
+          assert.ok(r.failures.length>=10);
+          assert.equal(r.originalSavedJPEGHashChecked,true);
+          assert.equal(r.sessionAndOwnershipGuard,true);
+          assert.equal(r.noAccountMixing,true);
+          assert.equal(r.arbitraryUserPhotoTo3DCertified,false);
+          assert.equal(r.physicallyTestedAndroid,false);
+          assert.equal(r.physicallyTestedIphone,false);
+          assert.equal(r.productionModified,false);
+          assert.equal(r.familyAlpha,'HOLD');
+          assert.equal(r.releaseAuthorized,false);
+          CHECK
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: PAR10-REAL-WEBGL36-ORIGINAL-PHOTO2D18-ACCOUNT-PRIVACY-HOLD
+          path: benchmark/wardrobe-3d-bridge-01/
+          if-no-files-found: warn
