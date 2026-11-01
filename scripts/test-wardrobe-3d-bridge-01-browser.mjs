@@ -93,8 +93,12 @@ try{
    for(const denim of ['public','second']){
     // A account's first/second denim correspond to the pinned candidates.
     if(denim==='second')await p.locator('#swap').click();
-    await p.waitForFunction(hash=>window.ccWardrobe10Diagnostics().displayed3DSources?.bottom===hash,
-     SRC[denim],{timeout:180000});
+    await p.waitForTimeout(700);
+    const observed=await diag(p);
+    if(observed.displayed3DSources?.bottom!==SRC[denim])
+     throw Error('Verified original-photo outfit did not mount: '+JSON.stringify({
+      figure,width,denim,observed,status:await p.locator('#status').textContent(),
+      fallbackReason:await p.locator('#fallbackReason').textContent()}).slice(0,4000));
     const d=await diag(p);
     assert.equal(d.viewerMode,'verified-3d');assert.equal(d.bones,163);
     assert.equal(d.displayed3DSources.top,SRC.shirt);
