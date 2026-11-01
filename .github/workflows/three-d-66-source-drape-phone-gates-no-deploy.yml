@@ -10,6 +10,7 @@ on:
       - 'tests/three-d-66-original-upper-sleeve-fabric.test.mjs'
       - 'tests/three-d-66-phone-evidence.test.mjs'
       - 'scripts/test-three-d-66-real-fabric-browser.mjs'
+      - 'scripts/serve-three-d-66-private-device.mjs'
       - '.github/workflows/three-d-66-source-drape-phone-gates-no-deploy.yml'
 permissions:
   contents: read
@@ -33,7 +34,7 @@ jobs:
           git merge-base --is-ancestor ce9ae8d555938549e7e9c1ee8c455b598297c7af HEAD
           git diff --name-only ce9ae8d555938549e7e9c1ee8c455b598297c7af HEAD | while IFS= read -r file; do
             case "$file" in
-              research/three-d-66/*|research/three-d-15/outfit-controller.mjs|research/three-d-15/showroom.mjs|research/three-d-31/photo-jeans-demo.mjs|research/three-d-37/second-jeans-demo.mjs|tests/three-d-66-original-upper-sleeve-fabric.test.mjs|tests/three-d-66-phone-evidence.test.mjs|scripts/test-three-d-66-real-fabric-browser.mjs|.github/workflows/three-d-66-source-drape-phone-gates-no-deploy.yml) ;;
+              research/three-d-66/*|research/three-d-15/outfit-controller.mjs|research/three-d-15/showroom.mjs|research/three-d-31/photo-jeans-demo.mjs|research/three-d-37/second-jeans-demo.mjs|tests/three-d-66-original-upper-sleeve-fabric.test.mjs|tests/three-d-66-phone-evidence.test.mjs|scripts/test-three-d-66-real-fabric-browser.mjs|scripts/serve-three-d-66-private-device.mjs|.github/workflows/three-d-66-source-drape-phone-gates-no-deploy.yml) ;;
               *) echo "DISALLOWED changed production/staging/other path: $file"; exit 1 ;;
             esac
           done
@@ -56,7 +57,10 @@ jobs:
       - name: Real original-photo source true upperarm fabric visual A/B 390px both rigs both denim sources
         run: node scripts/test-three-d-66-real-fabric-browser.mjs
       - name: Real phone certification cannot be claimed from mobile emulation
-        run: node --test tests/three-d-66-phone-evidence.test.mjs
+        run: |
+          node --check scripts/serve-three-d-66-private-device.mjs
+          node --check research/three-d-66/private-qa-origin.mjs
+          node --test tests/three-d-66-phone-evidence.test.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
