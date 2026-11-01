@@ -59,8 +59,8 @@ const foot='</div></main><script>const manifest='+safeManifest+';'+
  'const update=()=>document.getElementById("progress").textContent=selects.filter(x=>ratings.includes(x.value)).length+" of 36 views assessed";'+
  'selects.forEach(s=>s.addEventListener("change",update));'+
  'document.getElementById("export").addEventListener("click",()=>{'+
- 'const entries=manifest.comparisons.map(c=>({id:c.id,rating:document.querySelector("[data-rating="+c.id+"]").value,'+
- 'note:document.querySelector("[data-note="+c.id+"]").value})).filter(r=>ratings.includes(r.rating));'+
+ 'const entries=manifest.comparisons.map(c=>({id:c.id,rating:selects.find(s=>s.dataset.rating===c.id).value,'+
+ 'note:[...document.querySelectorAll("textarea[data-note]")].find(n=>n.dataset.note===c.id).value})).filter(r=>ratings.includes(r.rating));'+
  'const reviewer=document.getElementById("reviewer").value.trim().slice(0,100);'+
  'const complete=entries.length===36&&reviewer.length>=2;'+
  'const out={title:"Closet Current 3D72 visual review",source:manifest.source,reviewer,'+
