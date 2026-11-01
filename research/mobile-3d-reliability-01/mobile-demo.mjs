@@ -47,6 +47,8 @@ function sample(label){
   geometries:state.geometries,textures:state.textures,
   pixelRatio:state.pixelRatio,drawPixels:state.drawPixels,
   renderMs:state.lastRenderMs,loadMs:state.loadMs,
+  cameraDistance:state.cameraDistance,trackedGarmentGeometries:state.trackedGarmentGeometries,
+  reclaimedGarmentGeometries:state.reclaimedGarmentGeometries,
   heapBytes:performance.memory?.usedJSHeapSize??null};
  memorySamples.push(result);
  if(memorySamples.length>150)memorySamples.shift();
@@ -210,7 +212,9 @@ window.ccMobileDiagnostics=()=>{
  return {phase,ready:phase==='ready',figure:current?.kind||null,
   rig:current?.stats||null,viewAngle:current?.viewAngle??null,
   memory:current?{geometries:current.geometries,textures:current.textures,drawPixels:current.drawPixels,
-   pixelRatio:current.pixelRatio,renderMs:current.lastRenderMs,heapBytes:performance.memory?.usedJSHeapSize??null}:null,
+   pixelRatio:current.pixelRatio,renderMs:current.lastRenderMs,heapBytes:performance.memory?.usedJSHeapSize??null,
+   cameraDistance:current.cameraDistance,trackedGarmentGeometries:current.trackedGarmentGeometries,
+   reclaimedGarmentGeometries:current.reclaimedGarmentGeometries}:null,
   memorySamples:memorySamples.slice(-24),swaps,figureSwitches,restarts,
   selection,actual3DGarment:lastResult,originalShirtSHA256:VERIFIED_PUBLIC_SHIRT_SHA256,
   originalDenimSHA256:lastResult?.originalPhotoSHA256s?.bottom||null,
