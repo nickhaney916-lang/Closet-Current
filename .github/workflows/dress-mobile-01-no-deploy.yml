@@ -1,0 +1,88 @@
+name: PAR-12 Real Source Dress Mobile 90 WebGL and 2D Frames (DRAFT HOLD NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'research/dress-mobile-01/**'
+      - 'tests/dress-mobile-01.test.mjs'
+      - 'scripts/test-dress-mobile-01-browser.mjs'
+      - '.github/workflows/dress-mobile-01-no-deploy.yml'
+permissions:
+  contents: read
+jobs:
+  source-authentic-dress-mobile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 65
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+      - name: Exact PR499 baseline ancestor and no production/sibling mutation
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor 5c51eec44991670eb17a71cc7d2e68c7f9db8b44 HEAD
+          git diff --name-only 5c51eec44991670eb17a71cc7d2e68c7f9db8b44 HEAD | while IFS= read -r path; do
+            case "$path" in
+              research/dress-mobile-01/*|tests/dress-mobile-01.test.mjs|scripts/test-dress-mobile-01-browser.mjs|.github/workflows/dress-mobile-01-no-deploy.yml) ;;
+              *) echo "BLOCKED: unauthorized path $path"; exit 1 ;;
+            esac
+          done
+      - name: Install strictly pinned original WebGL research libraries
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 three@0.180.0 playwright@1.56.1 three-mesh-bvh@0.9.2
+      - name: Unit and relevant original source/3D integration regressions
+        run: |
+          node --check research/dress-mobile-01/dress-mobile-demo.mjs
+          node --check research/dress-mobile-01/dress-outfit-controller.mjs
+          node --check research/dress-mobile-01/dress-mobile-showroom.mjs
+          node --check research/dress-mobile-01/source-true-dress-tailoring.mjs
+          node --check scripts/test-dress-mobile-01-browser.mjs
+          node --test tests/dress-mobile-01.test.mjs tests/three-d-14-dress.test.mjs tests/three-d-24-dress-fit.test.mjs tests/three-d-69-indexed-photo-real-3d.test.mjs tests/three-d-78-original-anatomical-knee-poses.test.mjs tests/three-d-76-source-denim-fold-continuity.test.mjs
+      - name: Verify unchanged licensed source photographs, original alpha cutouts and JPEG SHAs
+        run: |
+          node scripts/build-three-d-31-jeans-proposal.mjs
+          node scripts/build-three-d-37-second-jeans.mjs
+          node scripts/build-work47-benchmark.mjs
+          node --test tests/three-d-31-jeans-source.test.mjs tests/three-d-37-source-true.test.mjs
+      - name: Restore exact original CC0 female and male 163-bone skeletal GLB files
+        run: |
+          git fetch --no-tags origin 53f2ad344dc56a1477e343531c423aed0e66c17d dd6bac3fa9ff640d4f562cf925337440bdb5cf8f 3a572193987cb29389727426136c6eb3ac326783 dfb40889c4c1221fb1833b859e8a11ef38aeb76e
+          node research/three-d-20/restore-approved-models.mjs
+      - name: Generate 72 real WebGL source dress/two-piece shots and 18 true 2D photo fallback shots, failures and memory
+        run: node scripts/test-dress-mobile-01-browser.mjs
+      - name: Exact 90-image and honest release-hold acceptance evidence
+        run: |
+          node --input-type=module <<'CHECK'
+          import {readFileSync,readdirSync} from 'node:fs';
+          import assert from 'node:assert/strict';
+          const dir='benchmark/dress-mobile-01',r=JSON.parse(readFileSync(dir+'/browser-results.json','utf8'));
+          assert.equal(r.realWebGLScreenshots,72);
+          assert.equal(r.realOriginalPhotoFallbackScreenshots,18);
+          assert.equal(r.screenshots,90);
+          assert.equal(readdirSync(dir).filter(x=>x.endsWith('.png')).length,90);
+          assert.deepEqual(r.widths,[320,390,430]);
+          assert.equal(r.original163BoneCC0Figures,true);
+          assert.equal(r.sourceLicensedOriginalJPEGAndAlphaVerified,true);
+          assert.equal(r.sourceFrontUVSkinUnmodified,true);
+          assert.equal(r.noDressPantsCoexistence,true);
+          assert.equal(r.unknownBackSourceNeutral,true);
+          assert.equal(r.dressTwoPieceSwaps.length,12);
+          assert.equal(r.figureChanges.length,6);
+          assert.ok(r.negatives.length>=10);
+          assert.ok(r.recoveries.length>=5);
+          assert.equal(r.realPhonesTested,false);
+          assert.equal(r.humanPhotoRealismApproved,false);
+          assert.equal(r.productionTouched,false);
+          assert.equal(r.familyAlpha,'HOLD');
+          assert.equal(r.releaseAuthorized,false);
+          CHECK
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: PAR12-GENUINE-72-WEBGL-DRESS-18-SOURCE-PHOTO-2D-MOBILE-HOLD
+          path: benchmark/dress-mobile-01/
+          if-no-files-found: warn
