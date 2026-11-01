@@ -26,7 +26,7 @@ for(const kind of ['female','male']){
    assert.ok(s.pants.neutralContourLowerLegVertices>=30);
    assert.ok(s.pants.neutralContourMaxMotion<=.01301);
    assert.equal(s.pants.neutralContourPhotographedGarmentApplied,false);
-   assert.equal(s.pants.humanVisualApproval,false);
+   assert.equal(s.pants.neutralContourHumanAestheticApproved,false);
    assert.equal(s.releaseAuthorized,false);
    for(const pose of ['source','relaxed']){
     const posed=controller.setPose(pose);
