@@ -31,7 +31,7 @@ jobs:
           git merge-base --is-ancestor 92518a453fe828cc29b8942077fa87c9351846a7 HEAD
           git diff --name-only 92518a453fe828cc29b8942077fa87c9351846a7 HEAD | while IFS= read -r file; do
             case "$file" in
-              research/three-d-71/*|research/three-d-15/outfit-controller.mjs|research/three-d-15/showroom.mjs|research/three-d-67/premium-demo.mjs|tests/three-d-71-neutral-silhouette.test.mjs|scripts/test-three-d-71-neutral-360-browser.mjs|.github/workflows/three-d-71-seat-thigh-no-deploy.yml) ;;
+              research/three-d-71/*|research/three-d-15/outfit-controller.mjs|research/three-d-15/showroom.mjs|research/three-d-67/premium-demo.mjs|tests/three-d-71-seat-thigh.test.mjs|scripts/test-three-d-71-seat-thigh-360-browser.mjs|.github/workflows/three-d-71-seat-thigh-no-deploy.yml) ;;
               *) echo "UNAUTHORIZED 3D67 outside research: $file"; exit 1 ;;
             esac
           done
@@ -46,10 +46,10 @@ jobs:
           node --check research/three-d-71/seat-thigh-fabric-fall.mjs
           node --check research/three-d-70/neutral-anatomical-leg-fairing.mjs
           node --check research/three-d-67/premium-demo.mjs
-          node --check scripts/test-three-d-71-neutral-360-browser.mjs
-          node --test tests/three-d-71-neutral-silhouette.test.mjs
+          node --check scripts/test-three-d-71-seat-thigh-360-browser.mjs
+          node --test tests/three-d-71-seat-thigh.test.mjs
       - name: Genuine male/female 163-bone WebGL 360 baseline versus seat-to-thigh fall at 320 and 390
-        run: node scripts/test-three-d-71-neutral-360-browser.mjs
+        run: node scripts/test-three-d-71-seat-thigh-360-browser.mjs
       - name: Verify original male/female 72 WebGL before/after screenshots and all release HOLD labels
         run: |
           node --input-type=module <<'CHECK'
