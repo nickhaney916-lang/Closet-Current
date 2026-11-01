@@ -39,7 +39,7 @@ jobs:
           node --check research/wardrobe-3d-bridge-01/account-source-bridge.mjs
           node --check research/wardrobe-3d-bridge-01/wardrobe-demo.mjs
           node --check scripts/test-wardrobe-3d-bridge-01-browser.mjs
-          node --test tests/wardrobe-3d-bridge-01.test.mjs tests/three-d-68-saved-closet-adapter.test.mjs tests/three-d-69-indexed-photo-real-3d.test.mjs tests/three-d-78-original-anatomical-knee-poses.test.mjs tests/three-d-77-true-skinned-denim-contact.test.mjs tests/three-d-76-source-denim-fold-continuity.test.mjs
+          node --test tests/wardrobe-3d-bridge-01.test.mjs tests/three-d-68-saved-closet-to-3d.test.mjs tests/three-d-68-account-bound-bridge.test.mjs tests/three-d-69-indexed-photo-real-3d.test.mjs tests/three-d-78-original-anatomical-knee-poses.test.mjs tests/three-d-77-true-skinned-denim-contact.test.mjs tests/three-d-76-source-denim-fold-continuity.test.mjs
       - name: Build unchanged original source licensed JPEGs and masks
         run: |
           node scripts/build-three-d-31-jeans-proposal.mjs
