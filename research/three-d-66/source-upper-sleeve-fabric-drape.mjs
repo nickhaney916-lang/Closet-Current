@@ -72,31 +72,29 @@ export function drapeSourceUpperSleeveFabric(shirt,root,{enabled=true}={}){
   const hasCap=refs.some(r=>!!r.mesh.userData.work45IndependentShoulderCap);
   const hasTorso=refs.some(r=>r.mesh.name==='Work56-independent-shirt-shell');
   if(hasCap&&hasTorso)witnesses[side]++;
-  const x=Math.abs(q.x);
-  if(x<=.39)continue; // real front print / neckline remains unaltered
-  const t=q.clone().sub(arm.shoulder).dot(arm.axis)/arm.len2;
-  if(t<=.18||t>=.84)continue; // top cap and real elbow seam fixed
-  const center=arm.shoulder.clone().addScaledVector(arm.axis,t);
-  const radial=q.clone().sub(center);
-  const radius=radial.length();
-  if(radius<.03||radius>.23)continue;
-  const along=smooth(t,.18,.30)*(1-smooth(t,.72,.84));
-  const radialWeight=smooth(radius,.03,.068)*(1-smooth(radius,.185,.23));
-  const lateral=smooth(x,.39,.47);
-  const envelope=along*radialWeight*lateral;
-  if(envelope<.07)continue;
-  // The source photographs and true 163-joint upper-arm proportions determine
-  // placement. Two broad displaced folds, no fake repetitive procedural print.
-  const near=Math.exp(-Math.pow((t-.37)/.14,2));
-  const far=Math.exp(-Math.pow((t-.67)/.13,2));
-  const frontBack=Math.abs(radial.z)/radius;
-  const directionWeight=.65+.35*smooth(frontBack,.12,.72);
-  const expansion=(.0037*near+.0065*far)*envelope*directionWeight;
-  const gravity=.0017*envelope*(.6+.4*far);
-  if(expansion<.00018)continue;
-  // An outward anatomical separation offsets the slight downward fabric
-  // weight, preventing synthetic inward body-cloth inflation.
-  const shift=radial.multiplyScalar(expansion/radius).add(new THREE.Vector3(0,-gravity,0));
+  const x=Math.abs(q.x),dy=q.y-arm.shoulder.y;
+  // Genuine 3D64 success proves source-rendered yoke cloth in this bone-height
+  // band. The prior 3D66 humerus-to-elbow projection window matched ZERO real
+  // sleeve triangles on both source rigs: do not infer a synthetic cylinder.
+  // Leave central photographed print, neckline, elbow, cuff and waist intact.
+  if(x<=.315||x>=.565||dy<=-.155||dy>=.265)continue;
+  const across=smooth(x,.315,.365)*(1-smooth(x,.49,.565));
+  const high=smooth(dy,-.155,-.035)*(1-smooth(dy,.13,.265));
+  const envelope=across*high;
+  if(envelope<.075)continue;
+  // Two broad nonrepeating source-bone-relative fabric relief lanes on the
+  // actual detached original sleeve and matched shirt yoke, not image detail.
+  const near=Math.exp(-Math.pow((x-.375)/.075,2));
+  const far=Math.exp(-Math.pow((x-.485)/.08,2));
+  const depth=Math.abs(q.z-arm.shoulder.z);
+  const relief=(.0025*near+.0045*far)*envelope*
+    (.70+.30*smooth(depth,.025,.14));
+  const gravity=(.0011*near+.0028*far)*envelope;
+  if(relief<.00018)continue;
+  // Move fabric outboard AND away from real chest depth instead of pulling it
+  // toward the body. Source images, physical cloth seams and arm skin retained.
+  const awayZ=q.z>=arm.shoulder.z?1:-1;
+  const shift=new THREE.Vector3(Math.sign(q.x)*.0019*envelope,-gravity,awayZ*relief);
   const distance=shift.length();
   if(!Number.isFinite(distance)||distance>.01301)
    throw Error('3D66 cloth fall beyond strict real source 13mm envelope');
@@ -143,7 +141,7 @@ export function drapeSourceUpperSleeveFabric(shirt,root,{enabled=true}={}){
   upperSleeveDrapeRealCapTorsoWitnesses:witnesses,
   upperSleeveDrapeRealSeamGap:seamGap,
   upperSleeveDrapeProtectedPhotoCenterVertices:sourceCenterProtected,
-  upperSleeveDrapeMethod:'two bone-relative original upperarm longitudinal soft folds, outwards fabric clearance, original UV and skin identical',
+  upperSleeveDrapeMethod:'two source-upperarm-bone-height yoke-to-upper-sleeve textile relief lanes, outboard physical clearance, original UV and skin identical',
   originalPhotographicPixelsUVAndSkinUnchanged:true,
   signedAllPoseCollisionCertified:false,physicalAndroidIphoneCertified:false,
   humanPhotorealismApproved:false,releaseAuthorized:false
