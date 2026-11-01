@@ -163,6 +163,18 @@ try{
  await p.locator('#category').selectOption('Tops');await click('category-tops');
  await p.locator('#items .item').first().click();await click('select-shirt');
  await p.locator('#swap').click();await click('swap-denim');
+ const swapMemory=[];
+ for(let i=0;i<10;i++){
+  await p.locator('#swap').click();
+  const d=await diag(p);
+  assert.equal(d.viewerMode,'verified-3d');
+  assert.ok(d.memory?.geometries<=25&&d.memory?.textures<=8,
+   'Actual GPU resources cannot leak on 10 saved-denim swaps');
+  swapMemory.push({geometries:d.memory.geometries,textures:d.memory.textures,reclaimed:d.memory.reclaimed});
+  await click('wardrobe-swap-'+i);
+ }
+ assert.ok(Math.max(...swapMemory.map(x=>x.geometries))-
+  Math.min(...swapMemory.map(x=>x.geometries))<=4,'GPU geometry plateau after repeated saved outfit changes');
  await p.locator('#front').click();await click('front');
  await p.locator('#side').click();await click('side');
  await p.locator('#back').click();await click('back');
@@ -231,6 +243,8 @@ try{
  failures.push({negative:'stale async read',pass:true,closed:'generation invalidation'});
  const fin=await diag(p);
  assert.ok(fin.interactions>=10);ownerSafe(fin);
+ assert.ok(memory.every(m=>m.geometries<=25&&m.textures<=8),
+  'Original genuine 3D garment swaps and model changes must stay within bounded GPU memory');
  assert.deepEqual(offsite,[]);assert.deepEqual(errors,[]);
  await context.close();
  const report={screenshots:webglFrames.length+photoFrames.length,
