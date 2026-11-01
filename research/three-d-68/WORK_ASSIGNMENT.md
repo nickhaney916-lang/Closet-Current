@@ -20,3 +20,8 @@ The adapter produces a metadata-only, no-photo `planIndexedBoardToAnatomical3D` 
 
 ## Release gate
 Strict no-deploy research CI; zero private photos in fixtures; no AI inference cost; correct customer account isolation; original stored JPEG SHA; no source leakage or invented reconstruction; 3D mannequin and clothing remain distinct components. Family Alpha remains HOLD.
+
+### Complete nonproduction app handoff (existing auth + readAll contract)
+The separate `research/three-d-68/account-bound-closet-3d-bridge.mjs` consumes the **actual existing** `window.closetAuth.ready`, `user.id`, `getSessionGeneration()` methods and a read-only callback for the already owner-scoped `readAll()` data. The entrypoint forces session freshness before reading, again before hashing, again after hashing, and before each saved outfit plan, three owned outfit suggestions, or one-piece swap. The caller must already have authenticated account-bound storage isolation. If the user logs out or changes account, discard that bridge instance immediately and never reuse old plans.
+
+This is a **code-complete research adapter, not a live deployment or a guarantee that already-stored photos are authenticated by themselves**. A fully integrated user experience requires a separately authorized account-bound UI wiring milestone and genuine photographed 3D meshes; no full 3D photo reconstruction is claimed.
