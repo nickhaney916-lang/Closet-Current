@@ -1,0 +1,86 @@
+name: 3D-69 genuine indexed original photograph on 360 anatomical 3D (DRAFT HOLD NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'research/three-d-69/**'
+      - 'tests/three-d-69-indexed-photo-real-3d.test.mjs'
+      - 'scripts/test-three-d-69-real-source-index-browser.mjs'
+      - '.github/workflows/three-d-69-source-true-index-to-3d-no-deploy.yml'
+permissions:
+  contents: read
+jobs:
+  source-true-indexed-3d:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Enforce exact 3D-68 authenticated saved closet parent, strict research-only paths
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor 9b958c6fbef87d7828d37f4fef9a07d5a7946d9a HEAD
+          git diff --name-only 9b958c6fbef87d7828d37f4fef9a07d5a7946d9a HEAD | while IFS= read -r file; do
+            case "$file" in
+              research/three-d-69/*|tests/three-d-69-indexed-photo-real-3d.test.mjs|scripts/test-three-d-69-real-source-index-browser.mjs|.github/workflows/three-d-69-source-true-index-to-3d-no-deploy.yml) ;;
+              *) echo "3D69 BLOCKED production, privacy or unrelated path: $file"; exit 1 ;;
+            esac
+          done
+      - name: Install pinned local original source cloth and WebGL research prerequisites
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 three@0.180.0 playwright@1.56.1 three-mesh-bvh@0.9.2
+      - name: Test exact public source SHA capabilities, no spoofed source and original-photo fallback
+        run: |
+          node --check research/three-d-69/sha-verified-original-garment-sources.mjs
+          node --check research/three-d-69/index-to-real-garment-viewer.mjs
+          node --check research/three-d-69/index-to-real-garment-demo.mjs
+          node --check scripts/test-three-d-69-real-source-index-browser.mjs
+          node --test tests/three-d-69-indexed-photo-real-3d.test.mjs
+      - name: Prepare real original public-domain / CC BY-SA source denim and original shirt
+        run: |
+          node scripts/build-three-d-31-jeans-proposal.mjs
+          node scripts/build-three-d-37-second-jeans.mjs
+          node scripts/build-work47-benchmark.mjs
+          node --test tests/three-d-31-jeans-source.test.mjs tests/three-d-37-source-true.test.mjs
+      - name: Restore authenticated hash-locked 163-joint CC0 male and female source rigs
+        run: |
+          git fetch --no-tags origin 53f2ad344dc56a1477e343531c423aed0e66c17d dd6bac3fa9ff640d4f562cf925337440bdb5cf8f 3a572193987cb29389727426136c6eb3ac326783 dfb40889c4c1221fb1833b859e8a11ef38aeb76e
+          node research/three-d-20/restore-approved-models.mjs
+      - name: Real original photographic shirt, TWO denims, true 360 camera and live indexed outfit swap on BOTH anatomical figures in 320/390 Chromium
+        run: node scripts/test-three-d-69-real-source-index-browser.mjs
+      - name: Assert genuine 20 mobile original-source frames and human/phone release HOLD
+        run: |
+          node --input-type=module <<'VERIFY'
+          import assert from 'node:assert/strict';
+          import {readFileSync,readdirSync} from 'node:fs';
+          const p='benchmark/three-d-69',m=JSON.parse(readFileSync(p+'/browser-results.json','utf8'));
+          assert.equal(m.validLicensedOriginalPublicDemo,true);
+          assert.equal(m.notActualPrivateCustomerIndex,true);
+          assert.equal(m.originalPhotoSHA256Verified,true);
+          assert.equal(m.trueThreeDimensionalSkinnedMeshes,true);
+          assert.equal(m.real360CameraOrbit,true);
+          assert.equal(m.denimSwappedOnOriginal3D,true);
+          assert.equal(m.personalPhotoTo3DReconstruction,false);
+          assert.equal(m.humanPhotorealismApproved,false);
+          assert.equal(m.physicalPhonesTested,false);
+          assert.equal(m.releaseAuthorized,false);
+          assert.equal(m.familyAlpha,'HOLD');
+          assert.equal(m.results.length,4);
+          assert.equal(readdirSync(p).filter(x=>x.endsWith('.png')).length,20);
+          for(const sc of m.results){
+            assert.ok(sc.rotated>900&&sc.back>900&&sc.originalPhotographedDenimSwapPixels>250);
+            assert.equal(sc.denimBefore,'b316902ad85e8ff46b164ceb7f2c38d3c1424c9d789703e0267e3dfce68fbe1c');
+            assert.equal(sc.denimAfter,'aa7f288055874773b87cd38b5b4e473b532920f61c2d17cb0ccd7872466c444a');
+          }
+          VERIFY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: THREE-D-69-ORIGINAL-INDEXED-PHOTOGRAPHED-360-WARDROBE-HOLD
+          path: benchmark/three-d-69/
+          if-no-files-found: warn
