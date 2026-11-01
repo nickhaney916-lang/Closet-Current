@@ -1,0 +1,66 @@
+name: 3D-63 original photographic clothing independent human visual gate (HOLD NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'scripts/three-d-63-visual-review.mjs'
+      - 'research/three-d-63/**'
+      - '.github/workflows/three-d-63-genuine-visual-gallery-no-deploy.yml'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  screenshot-provenance-visual-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Enforce exact 3D60 green-source parent and strict research-only file whitelist
+        run: |
+          git merge-base --is-ancestor 4986934a6dc24e5ff208a188874438973db04def HEAD
+          git diff --name-only 4986934a6dc24e5ff208a188874438973db04def HEAD | while IFS= read -r file; do
+            case "$file" in
+              scripts/three-d-63-visual-review.mjs|research/three-d-63/*|.github/workflows/three-d-63-genuine-visual-gallery-no-deploy.yml) ;;
+              *) echo "3D63 BLOCKED unrelated file: $file"; exit 1 ;;
+            esac
+          done
+      - name: Download exact successfully verified genuine Chromium source-artifact, never simulated screenshots
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api -H "Accept: application/vnd.github+json" repos/${{ github.repository }}/actions/runs/41254944731 --jq '.conclusion' | grep -Fx success
+          mkdir -p "$RUNNER_TEMP/real-3d60"
+          gh run download 41254944731 --repo "${{ github.repository }}" --name THREE-D-60-CRISP-AND-NATURAL-FIT-MOBILE-QA-HOLD --dir "$RUNNER_TEMP/real-3d60"
+          test -s "$RUNNER_TEMP/real-3d60/three-d-60/browser-results.json"
+      - name: Verify and copy every genuine original PNG byte; generate human visual gate
+        run: |
+          node --check scripts/three-d-63-visual-review.mjs
+          node scripts/three-d-63-visual-review.mjs "$RUNNER_TEMP/real-3d60" "$RUNNER_TEMP/closet-3d63-review"
+          test -s "$RUNNER_TEMP/closet-3d63-review/index.html"
+          test -s "$RUNNER_TEMP/closet-3d63-review/manifest.json"
+          node --input-type=module <<'VERIFY'
+          import assert from 'node:assert/strict';
+          import {readFileSync,existsSync,readdirSync} from 'node:fs';
+          const root=process.env.RUNNER_TEMP+'/closet-3d63-review';
+          const m=JSON.parse(readFileSync(root+'/manifest.json','utf8'));
+          assert.equal(m.screenshotCount,192);
+          assert.equal(m.frames.length,192);
+          assert.equal(readdirSync(root+'/images').length,192);
+          assert.equal(m.humanVisualApproved,false);
+          assert.equal(m.actualPhysicalPhonesApproved,false);
+          assert.equal(m.releaseAuthorized,false);
+          assert.equal(m.familyAlpha,'HOLD');
+          const h=readFileSync(root+'/index.html','utf8');
+          assert.ok(h.includes('Independent visual acceptance'));
+          assert.ok(h.includes('Export reviewed findings'));
+          assert.ok(!h.includes('__VERIFIED_FRAMES__'));
+          for(const f of m.frames)assert.ok(existsSync(root+'/images/'+f.name));
+          VERIFY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: THREE-D-63-GENUINE-ORIGINAL-PHOTO-HUMAN-QA-HOLD
+          path: ${{ runner.temp }}/closet-3d63-review/
+          if-no-files-found: warn
