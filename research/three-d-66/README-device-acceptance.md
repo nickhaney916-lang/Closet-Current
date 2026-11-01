@@ -21,6 +21,18 @@ node scripts/serve-three-d-66-device.mjs
 
 If the original avatar restore fails because source objects are not present, the dedicated no-deploy workflow restores them by pinned Git commit and SHA. Do not replace a missing original with a fabricated/mannequin placeholder.
 
+## Verified USB hardware preflight (not a completed visual test)
+
+In a second desktop terminal, with the read-only preview server running and **one** authorized, unlocked Android handset connected by USB:
+
+```sh
+node scripts/capture-three-d-66-android-hardware.mjs
+```
+
+This checks original local server availability, uses `adb devices -l` and Android `getprop` to reject known virtual devices and unknown transport, establishes `adb reverse`, and launches Android Chrome. It saves a local `benchmark/three-d-66/physical-android/usb-preflight.json` with the generic device model, OS, and interface class, **not** the device serial, IMEI, personal photographs or private account data. This proves only **a plausible USB physical-device connection**, not that the source renderer loaded, that a person viewed the garment, or that the phone passed visual QA.
+
+For an optional *real device screen capture* after displaying the verified original outfit and giving your consent, rerun with `--capture-screen`. The screenshot may contain phone personal information (notifications, names); inspect/redact it locally before sharing. This capture is never done automatically and no file uploads occur. Next, finish the real original renderer's on-device checks, save `closet-current-3d66-physical-device-qa.json` from the page, and supply both redacted evidence files for independent acceptance.
+
 ## Physical Android Chrome over USB
 
 On the phone, enable USB debugging with informed permission; unlock the phone, connect a USB cable, accept its debug prompt. On the desktop in a **separate terminal**:
