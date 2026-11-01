@@ -124,7 +124,7 @@ try{
  // Fail-closed when feature not explicitly selected, even with exact original dress.
  const ctx=await browser.newContext({viewport:{width:390,height:900},isMobile:true,hasTouch:true});
  const p=await ctx.newPage();watch(p);
- await p.goto(host+'/research/integration-04-wardrobe-dress/index.html',{waitUntil:'domcontentloaded'});
+ await p.goto(host+'/research/fabric-motion-01/index.html',{waitUntil:'domcontentloaded'});
  await p.waitForFunction(()=>window.ccWardrobe10Diagnostics?.()?.viewerReady,null,{timeout:180000});
  await p.locator('#category').selectOption('Dresses');await p.locator('#items .item').first().click();
  assert.equal((await diag(p)).viewerMode,'verified-3d');
