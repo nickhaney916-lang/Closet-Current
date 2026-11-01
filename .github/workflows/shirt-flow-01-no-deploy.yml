@@ -52,10 +52,10 @@ jobs:
         run: |
           git fetch --no-tags origin 53f2ad344dc56a1477e343531c423aed0e66c17d dd6bac3fa9ff640d4f562cf925337440bdb5cf8f 3a572193987cb29389727426136c6eb3ac326783 dfb40889c4c1221fb1833b859e8a11ef38aeb76e
           node research/three-d-20/restore-approved-models.mjs
-      - name: Reverify genuine both-rig exact posed bilateral sleeve seams and skinned BVH
-        run: node --test tests/three-d-55-source-sleeve-hang.test.mjs tests/three-d-56-pose-sleeves.test.mjs
       - name: Real mobile browser photographed shirt source/pose + before/after sleeves
         run: node scripts/test-shirt-flow-01-browser.mjs
+      - name: Reverify genuine both-rig exact posed bilateral sleeve seams and skinned BVH
+        run: node --test tests/three-d-55-source-sleeve-hang.test.mjs tests/three-d-56-pose-sleeves.test.mjs
       - name: Verify 54 actual WebGL images, source identity, exact resets, no real accounts, HOLD
         run: |
           node --input-type=module <<'CHECK'
