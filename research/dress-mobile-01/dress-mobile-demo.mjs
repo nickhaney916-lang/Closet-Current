@@ -181,6 +181,7 @@ async function boot(){
   const loaded=await app.load($('model').value);
   if(token!==rev)return;
   if(loaded!==true||state()?.stats?.bones!==163)throw Error('True CC0 163-bone skinned anatomical figure missing');
+  app.applyOutfit('none'); // Original showroom adds neutral sample pants on load; clear before any selected dress.
   phase='ready';selection='none';denim='public';allVerified=true;
   enable();status('Original Commons dress, shirt, both jeans and female/male 163-bone assets verified. Review, then select outfit.');
   sample('loaded');evidence();
@@ -211,6 +212,7 @@ $('model').addEventListener('change',async()=>{
  const token=rev,kind=$('model').value;phase='loading';status('Switching actual anatomical '+kind+' 163-bone rig…');enable();
  try{const loaded=await app.load(kind);if(token!==rev)return;
   if(!loaded||state()?.stats?.bones!==163)throw Error('Original 163-bone figure switch failed');
+  app.applyOutfit('none'); // Prevent neutral source pants reappearing on figure switch after dress.
   models++;selection='none';phase='ready';$('review').checked=false;enable();
   fallback('Model changed; review original photographs before selecting.');
   status('Original '+kind+' anatomical figure ready. Review source photographs, then select.');
