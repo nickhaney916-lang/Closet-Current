@@ -1,0 +1,25 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Closet Current · original photographed jeans 3D research</title>
+<style>
+:root{font-family:system-ui,-apple-system,sans-serif;color:#254234;background:#f4f3ef}*{box-sizing:border-box}body{margin:0}
+header{padding:10px 16px;border-bottom:1px solid #cdd5cb;background:#fff}header strong{font-size:18px}.tag{float:right;font-size:11px;color:#8b493c;font-weight:700}
+main{max-width:900px;margin:auto;padding:8px 12px 20px}h1{font-size:19px;margin:5px 0}.hint{font-size:12px;color:#536d62;margin:0 0 6px}
+#avatar{display:block;width:100%;height: min(58svh,640px);min-height:290px;border-radius:15px;touch-action:none;background:#f4f3ef}
+.controls{display:flex;gap:7px;flex-wrap:wrap;margin:8px 0}button,select{font:inherit;font-size:13px;background:white;border:1px solid #b9c8ba;border-radius:10px;min-height:42px;padding:6px 10px}
+button:disabled{opacity:.4}.review{display:flex;align-items:center;gap:8px;font-size:13px;margin:8px 0}input[type=checkbox]{width:19px;height:19px}
+.sources{display:grid;grid-template-columns:1fr 1fr;gap:6px}.sources figure{min-width:0;margin:0;padding:5px;background:white;border-radius:8px}
+.sources img{height:105px;max-width:100%;width:100%;object-fit:contain}.sources figcaption{font-size:11px;text-align:center}
+#status{font-size:12px;min-height:34px}details{font-size:11px;max-width:100%;overflow-wrap:anywhere}
+</style>
+<script type="importmap">{"imports":{"three":"/node_modules/three/build/three.module.js","three/addons/":"/node_modules/three/examples/jsm/"}}</script>
+</head><body><header><strong>Closet Current</strong><span class="tag">3D PHOTO JEANS · RESEARCH HOLD</span></header>
+<main><h1>Actual photographed jeans on 3D</h1><p class="hint">Source-verified public-domain pixels, front only. No invented back or human fitting claim.</p>
+<select id="model" aria-label="Select figure"><option value="female">Female figure</option><option value="male">Male figure</option></select>
+<canvas id="avatar" aria-label="Original-rig anatomical humanoid"></canvas>
+<div class="controls"><button id="front">Front</button><button id="threequarter">¾</button><button id="side">Side</button><button id="back">Back</button><select id="pose"><option value="relaxed">Relaxed</option><option value="source">Source</option></select></div>
+<div class="sources"><figure><img id="original" alt="Public-domain original blue jeans photograph"><figcaption>Original photograph · SHA-locked</figcaption></figure><figure><img id="cutout" alt="Provisional transparent jeans cutout"><figcaption>Original RGB · proposed alpha only</figcaption></figure></div>
+<label class="review"><input id="review" type="checkbox">I have inspected this research cutout; show the provisional result.</label>
+<div class="controls"><button id="photo" disabled>Photographed jeans</button><button id="full" disabled>Original shirt + jeans</button><button id="neutral">Neutral reference pants</button></div>
+<p id="status" role="status">Verifying local source…</p><details><summary>Technical diagnostics (not release approval)</summary><pre id="diagnostics"></pre></details>
+<p class="hint">Attribution: public-domain image by Oktaeder, uploaded by Juanmak, <a href="https://commons.wikimedia.org/wiki/File:Jeans.jpg">Wikimedia Commons File:Jeans.jpg</a>. Any unphotographed rear remains neutral.</p></main>
+<script type="module" src="./photo-jeans-demo.mjs"></script></body></html>
