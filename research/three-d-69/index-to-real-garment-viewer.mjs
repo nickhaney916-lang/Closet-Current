@@ -9,6 +9,7 @@
  * as a user's closet. No network, DB, identity or export in this module.
  */
 import {requireAnatomicalShirtPreview} from '../three-d-07/rig-shirt-transfer.mjs';
+import {isVettedOriginalGarmentCandidate} from './sha-verified-original-garment-sources.mjs';
 import {requireReviewedPhotoPants,PANTS_RESEARCH_SOURCE,PANTS_RESEARCH_SOURCE_SECOND} from '../three-d-30/reviewed-photo-pants.mjs';
 
 const denimSources=Object.freeze([PANTS_RESEARCH_SOURCE,PANTS_RESEARCH_SOURCE_SECOND]);
@@ -40,6 +41,7 @@ function verifyPlan(plan){
  return slots;
 }
 function verifyShirt(piece,candidate){
+ if(!isVettedOriginalGarmentCandidate(candidate))throw Error('Independently SHA-tested photographed shirt source capability required');
  if(piece.category!=='Tops'||piece.anatomicalSlot!=='shirt-or-dress'||
     !sameString(candidate?.id,'commons-0003')||
     !sameString(piece.sourceSHA256,candidate.sourceSHA256)||
@@ -52,6 +54,7 @@ function verifyShirt(piece,candidate){
  return candidate;
 }
 function verifyPants(piece,candidate){
+ if(!isVettedOriginalGarmentCandidate(candidate))throw Error('Independently SHA-tested photographed pants source capability required');
  if(piece.category!=='Bottoms'||piece.anatomicalSlot!=='pants')
   throw Error('Indexed bottoms not compatible with an actual photographic pant mesh');
  const pinned=denimSources.find(s=>s.id===candidate?.id);
@@ -113,8 +116,8 @@ export function applyIndexed3DSelection(viewer,prepared,{checkCurrentSession}={}
  if(state?.stats?.bones!==163||state.loaded!==true||state.releaseAuthorized!==false)
   throw Error('Original licensed 163-joint anatomical figure not loaded');
  const {shirt,pants}=verifiedDecodedImages.get(prepared);
- if(shirt)requireAnatomicalShirtPreview(shirt,{acknowledged:true});
- if(pants)requireReviewedPhotoPants(pants,{reviewed:true});
+ if(shirt){if(!isVettedOriginalGarmentCandidate(shirt))throw Error('Original authenticated photographed shirt source not current');requireAnatomicalShirtPreview(shirt,{acknowledged:true});}
+ if(pants){if(!isVettedOriginalGarmentCandidate(pants))throw Error('Original authenticated denim source not current');requireReviewedPhotoPants(pants,{reviewed:true});}
  viewer.applyOutfit(prepared.mode,shirt,{
   reviewed:!!shirt,pantsCandidate:pants,pantsReviewed:!!pants
  });
