@@ -13,7 +13,7 @@
 import * as T from 'three';
 export const WALK02=Object.freeze({
  sourceSHA256:'e7a617cd23a159864f619e8397d5f37d48b684e47dddc4ad6b46b14481042019',
- maxHipDegrees:11,maxKneeDegrees:12,maxPelvisYawDegrees:2.5,
+ maxHipDegrees:6,maxKneeDegrees:8,maxPelvisYawDegrees:1.5,
  cycleSeconds:1.65,originalSkeletonBones:163,
  releaseAuthorized:false,physicalPhoneVerified:false,
  sweptCollisionCertified:false,humanVisualApproved:false
