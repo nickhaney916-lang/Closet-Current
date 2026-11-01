@@ -52,3 +52,12 @@ test('research viewer retains protected source, review gate, original source pho
   assert.ok(html.includes('id="'+id+'"'));
  assert.doesNotMatch(demo,/supabase\.auth|createClient\(|localStorage\.setItem\(/);
 });
+
+test('all isolated original-shirt viewer ESM paths resolve through the real source modules',async()=>{
+ const [view,controller]=await Promise.all([
+  import('../research/shirt-flow-01/showroom.mjs'),
+  import('../research/shirt-flow-01/outfit-controller.mjs')
+ ]);
+ assert.equal(typeof view.mountAnatomicalShowroom,'function');
+ assert.equal(typeof controller.createOutfitController,'function');
+});
