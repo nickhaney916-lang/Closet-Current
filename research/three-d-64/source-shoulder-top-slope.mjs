@@ -50,7 +50,7 @@ export function slopeTruePhotographedShoulderTop(shirt,root,{enabled=true}={}){
    groups.get(key).refs.push({mesh,i});
   }
  }
- let moved=0,maxMove=0,nearBoneHeight=0,otherHeight=0,protected=0,seamGap=0;
+ let moved=0,maxMove=0,nearBoneHeight=0,otherHeight=0,skippedVertices=0,seamGap=0;
  const witness={L:0,R:0},stats={L:{caps:0,shells:0,max:0},R:{caps:0,shells:0,max:0}};
  for(const {q,refs} of groups.values()){
   const side=Math.sign(q.x)===Math.sign(bones.L.x)?'L':'R';
@@ -62,7 +62,7 @@ export function slopeTruePhotographedShoulderTop(shirt,root,{enabled=true}={}){
   // the squared shoulder top at y=120..170px. Limit this operator to a
   // bone-relative high yoke, and use a source-continuous neutral taper.
   // Protected inner front print/neck x<.255; no cuffs, waist or back art.
-  if(x<=.255||x>=.565||dy<=-.155||dy>=.265){protected+=refs.length;continue;}
+  if(x<=.255||x>=.565||dy<=-.155||dy>=.265){skippedVertices+=refs.length;continue;}
   const across=sm(x,.255,.325)*(1-sm(x,.455,.565));
   const high=sm(dy,-.155,-.055)*(1-sm(dy,.125,.265));
   const weight=across*high;
@@ -110,7 +110,7 @@ export function slopeTruePhotographedShoulderTop(shirt,root,{enabled=true}={}){
     originalFrontProtected<100||seamGap>5e-5||!Number.isFinite(seamGap)||
     ['L','R'].some(side=>stats[side].caps<5||stats[side].shells<5||witness[side]<3))
   throw Error('3D64 real upper shoulder top failed source-bone, two-sided real seam or visible material checks '+JSON.stringify(
-   {moved,nearBoneHeight,otherHeight,maxMove,protected,originalFrontProtected,seamGap,witness,stats}));
+   {moved,nearBoneHeight,otherHeight,maxMove,skippedVertices,originalFrontProtected,seamGap,witness,stats}));
  return {...shirt,stats:{...shirt.stats,
   trueSourceShoulderTopSlope:true,shoulderTopMovedOriginalRenderedVertices:moved,
   shoulderTopNearRealBoneHeightVertices:nearBoneHeight,shoulderTopLowerBandVertices:otherHeight,
