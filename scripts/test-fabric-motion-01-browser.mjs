@@ -75,7 +75,7 @@ try{
  for(const width of [320,390,430]){
   const ctx=await browser.newContext({viewport:{width,height:900},deviceScaleFactor:1,isMobile:true,hasTouch:true});
   const page=await ctx.newPage();watch(page);
-  await page.goto(host+'/research/integration-04-wardrobe-dress/index.html?motion=after',{waitUntil:'domcontentloaded'});
+  await page.goto(host+'/research/fabric-motion-01/index.html?motion=after',{waitUntil:'domcontentloaded'});
   for(const figure of ['female','male']){
    if(figure==='male'){
     await page.locator('#model').selectOption('male');
