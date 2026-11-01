@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Closet Current · REAL phone verification (HOLD)</title>
+<style>
+:root{font:15px system-ui,-apple-system,sans-serif;color:#173c30;background:#eff4f0;accent-color:#346b53}*{box-sizing:border-box}
+body{margin:0}header{padding:14px;background:#fff;border-bottom:1px solid #b9cdbd}
+header h1{font-size:21px;margin:0 0 6px}p{line-height:1.5}
+main{max-width:780px;margin:auto;padding:10px}
+section{background:white;border:1px solid #c6d7ca;border-radius:12px;padding:14px;margin:10px 0}
+label{display:block;margin:9px 0;font-size:13px;font-weight:600}
+input,select,textarea,button{font:inherit;padding:9px;border:1px solid #a3c0ab;border-radius:8px;width:100%;min-height:38px}
+button{background:#184f37;color:#fff;font-weight:700;cursor:pointer}
+button:disabled{opacity:.4}button.secondary{background:#fff;color:#184f37}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.note{padding:9px;background:#fff1d5;border-radius:8px;border:1px solid #e7c797}
+iframe{width:100%;height:650px;border:1px solid #9eaea3;border-radius:8px}
+.item{border-top:1px solid #dce8e0;padding:9px 0}.item select{width:130px;margin-top:5px}
+small,.meta{font-size:12px;color:#597164}
+@media(max-width:440px){.grid{grid-template-columns:1fr}iframe{height:620px}}
+</style></head><body><header><h1>Closet Current · physical device QA</h1>
+<small>Research-only · no customer photos · no uploads · Family Alpha HOLD</small></header>
+<main>
+<section><p class="note"><strong>This page never certifies hardware or releases the app.</strong> Use an actual Android Chrome handset or iPhone Safari. A simulator, emulated viewport or changed User-Agent is not a physical test. Independent review and both platforms are required.</p>
+<div class="grid">
+<label>Actual platform<select id="platform"><option value="">Choose physical phone</option><option>Android</option><option>iPhone</option></select></label>
+<label>Browser<select id="browser"><option value="">Choose</option><option>Chrome</option><option>Safari</option></select></label>
+<label>Make and model<input id="model" placeholder="Actual phone make/model"></label>
+<label>OS version<input id="os" placeholder="Android / iOS version"></label>
+<label>Exact git SHA<input id="commit" placeholder="40-character reviewed source commit"></label>
+<label>Independent human reviewer<input id="reviewer" placeholder="Reviewer name/handle"></label>
+</div>
+<p class="meta" id="device">Reading browser environment…</p>
+<label><input id="physical" type="checkbox" style="width:auto;min-height:0"> I attest I am physically holding a real phone; I am not using an emulator, simulator or desktop responsive view</label>
+<label><input id="human" type="checkbox" style="width:auto;min-height:0"> Independent reviewer inspected the real screenshots and recording</label>
+</section>
+<section><h2>Live genuine 3D outfit preview</h2>
+<p class="meta">Only local same-origin licensed research photos. Approve the source review checkbox <strong>inside</strong> this preview and tap the actual “Original shirt + jeans” control, then switch figure, pose and camera views. The iframe is not a screenshot or mockup.</p>
+<label>Licensed denim fixture<select id="source"><option value="31">Jeans.jpg · public domain</option><option value="37">Denimjeans2.JPG · CC BY-SA 4.0</option></select></label>
+<button id="load">Load real photographed garment preview</button><iframe id="app" title="Source-verified 3D original photograph app test" loading="lazy"></iframe>
+<button class="secondary" id="measure">Sample real outfit render + pose timings (after photo review)</button>
+<p class="meta" id="metrics">No actual source-verified outfit recorded yet.</p>
+</section>
+<section><h2>Real handset acceptance checks</h2>
+<p class="meta">Mark each PASS only when personally verified on the device. Camera and account privacy are NOT implemented in this isolated research demo, so these must stay BLOCKED until the real application is tested.</p>
+<div id="cases"></div>
+<label>Actual peak memory in MiB (from device profiler, not estimated)<input id="memory" type="number" step=".1" min="0" placeholder="From real device instrumentation"></label>
+<label>Actual render p95 milliseconds<input id="p95" type="number" step=".1" min="0" placeholder="Use sampled real rendering metric"></label>
+</section>
+<section><h2>Genuine photo/video evidence (hashed only)</h2>
+<p class="meta">Select locally saved original screenshots and a real screen recording. Bytes are read only for local SHA-256 calculations; no network upload or storage.</p>
+<label>Original on-device screenshot<input id="screenshot" type="file" accept="image/png,image/jpeg"></label>
+<label>Real handset screen recording<input id="recording" type="file" accept="video/*"></label>
+<p class="meta" id="hashes">No original evidence files hashed.</p>
+<label>Reviewer observations<textarea id="notes" rows="3" placeholder="Shoulder profile, seams, camera views, context loss and motion"></textarea></label>
+<button id="export">Export unapproved evidence JSON locally</button>
+<p class="meta" id="status" aria-live="polite">Physical hardware approval: HOLD</p>
+</section></main>
+<script type="module">
+import {PHONE_QA_CASES,assessPhysicalPhoneEvidence,phoneReleaseGate} from './phone-hardware-acceptance.mjs';
+const $=id=>document.getElementById(id);
+const query='pantsDrape=after&seatFairing=after&envelope=after&loft=after&crotchPanel=after&waistFit=after&waistContact=after&hanging=after&clothFall=after&construction=after&sweep=after&sleeve44=after&caps45=after&contour46=after&volume47=after&collar48=after&rear53=after&round54=after&hang55=after&move56=after&fit59=after&crisp58=after&slope61=after&crest64=after&drape66=after&phone66=after';
+const descriptions={
+verified_original_photo_front:'Original photographic shirt and denim front crisp; source SHA verified',
+three_quarter_side_back_neutral_source_truth:'Side/back jeans stay neutral and honest, never fabricated source photos',
+female_male_anatomical_load:'Both original 163-bone figures load and rotate',
+pose_source_blend_relaxed_zero_sampled_contact:'Three real source/blend/relaxed poses, sampled contact zero',
+garment_swap_no_leaked_textures:'Switch outfit to neutral and back repeatedly, inspect textures/memory',
+portrait_landscape_touch_rotate_zoom:'Real phone touch rotation/zoom and portrait/landscape',
+app_background_resume_and_webgl_context:'Background/foreground restore with usable WebGL',
+memory_and_render_responsiveness:'Actual phone measured render speed and memory',
+relaunch_session_and_isolated_account:'Actual app session/auth and different account privacy (research preview not sufficient)',
+camera_capture_original_no_gallery_leak:'Actual app camera capture/recognition, original source, no gallery leak (research preview not sufficient)'};
+const caseRoot=$('cases');const choices=new Map();
+for(const name of PHONE_QA_CASES){
+ const div=document.createElement('div');div.className='item';
+ const label=document.createElement('label');label.textContent=descriptions[name];label.htmlFor='case-'+name;
+ const select=document.createElement('select');select.id='case-'+name;
+ for(const choice of ['BLOCKED','PASS','REVIEW','FAIL']){
+  const option=document.createElement('option');option.textContent=choice;option.value=choice;select.append(option);
+ }
+ if(name==='relaunch_session_and_isolated_account'||name==='camera_capture_original_no_gallery_leak'){
+  select.value='BLOCKED';
+ }
+ choices.set(name,select);div.append(label,select);caseRoot.append(div);
+}
+$('device').textContent='Browser info (self-reported, not proof of real hardware): '+navigator.userAgent+
+ ' · touch points '+(navigator.maxTouchPoints||0)+' · DPR '+(window.devicePixelRatio||1);
+$('load').addEventListener('click',()=>{
+ $('app').src='../three-d-'+$('source').value+'/index.html?'+query;
+ $('metrics').textContent='Use the real photo source review inside the 3D preview before measuring.';
+});
+let recorded=[],photoHash='',videoHash='';
+const sha=async file=>{
+ const bytes=await file.arrayBuffer();
+ return [...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))].map(x=>x.toString(16).padStart(2,'0')).join('');
+};
+for(const [id,kind] of [['screenshot','photo'],['recording','video']]){
+ $(id).addEventListener('change',async()=>{
+  const file=$(id).files?.[0];if(!file)return;
+  const hash=await sha(file);
+  if(kind==='photo')photoHash=hash;else videoHash=hash;
+  $('hashes').textContent='Screenshot SHA-256: '+(photoHash||'missing')+' / Recording SHA-256: '+(videoHash||'missing');
+ });
+}
+$('measure').addEventListener('click',async()=>{
+ const child=$('app').contentWindow;
+ if(!child?.cc31Diagnostics||!child?.cc43SetPose){
+  $('metrics').textContent='Source photo review and actual 3D preview not ready';return;
+ }
+ const first=child.cc31Diagnostics();
+ if(first.outfit?.mode!=='shirt-pants'||first.outfit?.shirt?.actualUpperSleeveGravityDrape!==true){
+  $('metrics').textContent='Requires genuine reviewed photo source shirt+jeans and opt-in drape 66';return;
+ }
+ recorded=[];
+ for(let i=0;i<12;i++){
+  const pose=i%2===0?'blend-50':'relaxed';
+  const state=child.cc43SetPose(pose);
+  const ms=state.lastRenderMs;
+  if(Number.isFinite(ms)&&ms>0)recorded.push(ms);
+  if(state.outfit?.shirt?.poseTriangleContact?.after?.count!==0)
+   throw Error('Real model pose contact failed on this phone');
+  await new Promise(ok=>requestAnimationFrame(ok));
+ }
+ recorded.sort((a,b)=>a-b);
+ const p95=recorded[Math.min(recorded.length-1,Math.ceil(.95*recorded.length)-1)];
+ if(Number.isFinite(p95))$('p95').value=p95.toFixed(2);
+ $('metrics').textContent='12 actual WebGL render samples; p95 '+p95.toFixed(2)+' ms. Real device memory still requires an instrumented trace. This is NOT a physical-device attestation.';
+});
+$('export').addEventListener('click',()=>{
+ const reports={
+ platform:$('platform').value, browser:$('browser').value,
+ makeModel:$('model').value,osVersion:$('os').value,gitCommitSHA:$('commit').value,
+ runEnvironment:$('physical').checked?'physical-device':'unverified',
+ physicalDeviceObserved:$('physical').checked,localTestOriginVerified:location.hostname==='localhost'||location.hostname==='127.0.0.1'||(location.protocol==='https:'&&location.hostname.endsWith('.ts.net')&&new URLSearchParams(location.search).get('phone66')==='after'),
+ originalSourceScreenshotSHA256:photoHash,actualDeviceRecordingSHA256:videoHash,
+ independentHumanReviewerSigned:$('human').checked,reviewerNameOrHandle:$('reviewer').value,
+ cases:PHONE_QA_CASES.map(id=>({id,status:choices.get(id).value})),
+ performance:{p95RenderMs:Number($('p95').value),maxMemoryMiB:Number($('memory').value)},
+ notes:$('notes').value,platformUserAgent:navigator.userAgent,
+ inspectedSourcePhoto: $('source').value,sourcePixelsChanged:false
+ };
+ const assessment=assessPhysicalPhoneEvidence(reports);
+ const release=phoneReleaseGate([reports]);
+ $('status').textContent='Evidence: '+assessment.status+' | RELEASE: '+release.status+
+  ' | Not accepted: '+assessment.reasons.join('; ');
+ const blob=new Blob([JSON.stringify({reports,assessment,release},null,2)],{type:'application/json'});
+ const url=URL.createObjectURL(blob),a=document.createElement('a');
+ a.href=url;a.download='closet-current-physical-phone-HOLD.json';a.click();
+ setTimeout(()=>URL.revokeObjectURL(url),5000);
+});
+</script></body></html>
