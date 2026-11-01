@@ -7,8 +7,16 @@ export function fairNeutralShirtSeams({shirt,pairs,neutralVertexIndices,maxMoveM
  if(!shirt?.isSkinnedMesh||!p||!geometry.getAttribute('uv')||!geometry.getAttribute('skinIndex')||!geometry.getAttribute('skinWeight'))throw Error('Independent skinned shirt required');
  if(!Array.isArray(pairs)||!pairs.length||!(neutralVertexIndices instanceof Set)||!neutralVertexIndices.size)throw Error('Measured neutral seam topology required');
  if(!Number.isFinite(maxMoveMeters)||maxMoveMeters<=0||maxMoveMeters>.008||!Number.isFinite(blend)||blend<=0||blend>.5)throw Error('Unsafe fairing parameters');
+ if(p.array.length!==p.count*3)throw Error('Invalid garment position buffer');
  const original=Float64Array.from(p.array),stride=p.itemSize;
  if(stride!==3)throw Error('3D positions required');
+ // Validate every correspondence before touching the live mesh; errors must be atomic.
+ for(const pair of pairs){
+  if(!Array.isArray(pair)||pair.length!==2)throw Error('Invalid seam pair');
+  const [a,b]=pair;
+  if(!Number.isInteger(a)||!Number.isInteger(b)||a===b||a<0||b<0||a>=p.count||b>=p.count)throw Error('Invalid seam indices');
+  if(!neutralVertexIndices.has(a)||!neutralVertexIndices.has(b))throw Error('Photographed front cannot be modified');
+ }
  const delta=new Float64Array(original.length),weight=new Uint16Array(p.count);
  for(const pair of pairs){
   if(!Array.isArray(pair)||pair.length!==2)throw Error('Invalid seam pair');
