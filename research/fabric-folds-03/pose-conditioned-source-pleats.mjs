@@ -72,7 +72,8 @@ export function createSourceNeutralPosePleats03(dress,root,spring){
   const dx=row.point.x-center.x,dz=row.point.z-center.z,r=Math.hypot(dx,dz);
   const c=dz/r,lower=clamp((transition-row.y)/(transition-hem),0,1);
   const mask=(1-smooth(.05,.62,c))*smooth(.15,.97,lower);
-  if(row.front||mask<.003){row.ids.forEach(i=>frontProtected.add(i));continue;}
+  if(row.front){row.ids.forEach(i=>frontProtected.add(i));continue;}
+  if(mask<.003)continue;
   active.push({...row,mask,theta:Math.atan2(dx,dz),lower,
    nx:dx/r,nz:dz/r,tx:dz/r,tz:-dx/r});
  }
