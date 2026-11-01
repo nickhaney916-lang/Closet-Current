@@ -163,9 +163,15 @@ async function stress(){
   'repeated swaps must keep measurable finite WebGL allocations');
  // Repeated same-shirt/denim selections must not show unbounded GPU geometry accumulation.
  const swapGeo=samples.filter(s=>s.operation==='swap').map(s=>s.geometries);
- assert.ok(Math.max(...swapGeo)-Math.min(...swapGeo)<120,'swaps leak too many WebGL geometries');
+ assert.ok(Math.max(...swapGeo)-Math.min(...swapGeo)<=4,
+  'REJECT linear garment GPU geometry leaks during 10 genuine swaps: '+swapGeo.join(','));
+ const switchGeo=samples.filter(s=>s.operation==='figure-switch').map(s=>s.geometries);
+ assert.ok(Math.max(...switchGeo)-Math.min(...switchGeo)<=4,
+  'REJECT linear garment GPU geometry leaks during 5 actual figure switches: '+switchGeo.join(','));
+ assert.ok(samples.at(-1).reclaimedGarmentGeometries>0,
+  'previous source garments must have been reclaimed explicitly');
  const swapTex=samples.filter(s=>s.operation==='swap').map(s=>s.textures);
- assert.ok(Math.max(...swapTex)-Math.min(...swapTex)<32,'swaps leak too many textures');
+ assert.ok(Math.max(...swapTex)-Math.min(...swapTex)<=2,'original source textures must not accumulate');
  // The stress suite just clicked controls below the long canvas: restore the
  // canvas to the visible viewport before dispatching genuine Playwright pointer input.
  const canvas=page.locator('#avatar');
@@ -184,13 +190,34 @@ async function stress(){
  assert.ok(Math.abs(moved.viewAngle-view0.viewAngle)>1,
   'real viewport-visible pointer drag should rotate the 3D camera: '+JSON.stringify({
    before:view0.viewAngle,after:moved.viewAngle,bounds}));
+ // Verify real browser two-finger mobile pinch, not synthetic DOM events.
+ const touch=await ctx.newCDPSession(page);
+ const cx=bounds.x+bounds.width*.5,cy=bounds.y+bounds.height*.52;
+ const pair=sep=>[{x:cx-sep/2,y:cy},{x:cx+sep/2,y:cy}];
+ const beforePinch=await page.evaluate(()=>window.ccMobileDiagnostics().memory.cameraDistance);
+ await touch.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:pair(76)});
+ for(const gap of [86,104,124,146,164,188]){
+  await touch.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:pair(gap)});
+  await page.waitForTimeout(32);
+ }
+ await touch.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+ await page.waitForTimeout(330);
+ const afterPinch=await page.evaluate(()=>window.ccMobileDiagnostics().memory.cameraDistance);
+ assert.ok(Math.abs(afterPinch-beforePinch)>.05,
+  'Genuine Chromium two-finger pinch must change real camera distance: '+
+    JSON.stringify({beforePinch,afterPinch}));
+ await touch.detach();
+ await page.locator('#zout').click();
+ const buttonZoomBefore=await page.evaluate(()=>window.ccMobileDiagnostics().memory.cameraDistance);
  await page.locator('#zin').click();
  const afterZoom=await page.evaluate(()=>window.ccMobileDiagnostics());
  assert.ok(afterZoom.memory?.drawPixels>0);
+ assert.ok(afterZoom.memory.cameraDistance<buttonZoomBefore-.01,
+  'Mobile zoom controls must change actual camera, not just labels');
  assert.deepEqual(pageErrors,[]);assert.deepEqual(offsite,[]);
  memory.push(...samples);
  await writeFile(output+'/stress.json',JSON.stringify({swaps:10,figureSwitches:5,
-  pointerRotateDegrees:moved.viewAngle-view0.viewAngle,samples},null,2));
+  pointerRotateDegrees:moved.viewAngle-view0.viewAngle,samples,realPinch:true,realButtonZoom:true},null,2));
  await ctx.close();
 }
 async function fault(label,setup){
@@ -231,6 +258,8 @@ async function faults(){
   ctx.route('**/three-d-06/models/*.glb',route=>route.abort('failed')));
  await fault('missing-original-denim',async ctx=>
   ctx.route('**/benchmark/three-d-37/original-denimjeans2.jpg',route=>route.abort('failed')));
+ await fault('interrupted-model-loading',async ctx=>
+  ctx.route('**/three-d-06/models/*.glb',route=>route.abort('aborted')));
  const ctx=await browser.newContext({viewport:{width:390,height:850},isMobile:true,hasTouch:true});
  const {page}=await open(ctx,'after','female');
  await page.evaluate(()=>{
@@ -263,12 +292,13 @@ try{
   physicalAndroidTested:false,physicalIphoneTested:false,humanGarmentPhotorealism:'REVIEW',
   familyAlpha:'HOLD',productionModified:false,releaseAuthorized:false};
  assert.equal(report.realWebGLScreenshots,72);
- assert.equal(report.negativeCases.length,4);
+ assert.equal(report.negativeCases.length,5);
  assert.ok(report.negativeCases.slice(1).every(n=>n.recovery==='PASS'));
  await writeFile(output+'/browser-results.json',JSON.stringify(report,null,2));
  console.log('PAR08_MOBILE_WEBGL_ACCEPTANCE',JSON.stringify({
   frames:images.length,figures:2,widths:3,originalDenimSources:2,angles:3,
   negative:negative.length,swaps:10,figureSwitches:5,memSamples:memory.length,
+  realPinchAndButtonZoom:true,reclaimedUnusedGarmentGeometries:true,
   humanRealism:'REVIEW',physicalPhones:'NOT TESTED',familyAlpha:'HOLD'}));
 }finally{
  await browser?.close();await new Promise(resolve=>server.close(resolve));
