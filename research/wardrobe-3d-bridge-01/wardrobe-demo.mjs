@@ -321,7 +321,7 @@ window.ccWardrobe10Test=Object.freeze({
     which==='unsupported-category'){
    const list=readableItems().map(x=>({...x,confirmedDetails:{...x.confirmedDetails},
     originalPhoto:{...x.originalPhoto}}));
-   if(which==='wrong-owner')list[0].ownerId='fixture-account-b';
+   if(which==='wrong-owner')list[0].ownerId=current().ownerId==='fixture-account-a'?'fixture-account-b':'fixture-account-a';
    if(which==='duplicate')list[1].id=list[0].id;
    if(which==='unconfirmed'){list[0].userAdjusted=false;list[0].confirmedDetails=null;}
    if(which==='corrupt')list[0].originalPhoto.image='data:image/jpeg;base64,SU5WQUxJRA==';
