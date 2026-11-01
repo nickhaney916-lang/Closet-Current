@@ -42,7 +42,7 @@ function verifyPlan(plan){
 }
 function verifyShirt(piece,candidate){
  if(!isVettedOriginalGarmentCandidate(candidate))throw Error('Independently SHA-tested photographed shirt source capability required');
- if(piece.category!=='Tops'||piece.anatomicalSlot!=='shirt-or-dress'||
+ if(piece.category!=='Tops'||piece.itemType!=='T-shirt'||piece.anatomicalSlot!=='shirt-or-dress'||
     !sameString(candidate?.id,'commons-0003')||
     !sameString(piece.sourceSHA256,candidate.sourceSHA256)||
     candidate.sourceSHA256!==VERIFIED_PUBLIC_SHIRT_SHA256)
@@ -55,7 +55,7 @@ function verifyShirt(piece,candidate){
 }
 function verifyPants(piece,candidate){
  if(!isVettedOriginalGarmentCandidate(candidate))throw Error('Independently SHA-tested photographed pants source capability required');
- if(piece.category!=='Bottoms'||piece.anatomicalSlot!=='pants')
+ if(piece.category!=='Bottoms'||piece.itemType!=='Jeans'||piece.anatomicalSlot!=='pants')
   throw Error('Indexed bottoms not compatible with an actual photographic pant mesh');
  const pinned=denimSources.find(s=>s.id===candidate?.id);
  if(!pinned||!sameString(piece.sourceSHA256,candidate.sourceSHA256)||
