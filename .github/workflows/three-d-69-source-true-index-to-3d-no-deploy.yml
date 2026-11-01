@@ -78,6 +78,32 @@ jobs:
             assert.equal(sc.denimAfter,'aa7f288055874773b87cd38b5b4e473b532920f61c2d17cb0ccd7872466c444a');
           }
           VERIFY
+      - name: Capture independent 108 real WebGL QA frames at 320/390/430 with 9 headings and both licensed jeans on male and female
+        run: |
+          node --check research/three-d-69/qa-108-real-webgl.mjs
+          node research/three-d-69/qa-108-real-webgl.mjs
+      - name: Assert all 108 genuine viewport/figure/denim/angle screenshots and honest HOLD statuses
+        run: |
+          node --input-type=module <<'QA'
+          import assert from 'node:assert/strict';
+          import {readFileSync,readdirSync} from 'node:fs';
+          const dir='benchmark/three-d-69/qa-108';
+          const report=JSON.parse(readFileSync(dir+'/report.json','utf8'));
+          assert.equal(report.realScreenshots,108);
+          assert.equal(report.entries.length,108);
+          assert.equal(new Set(report.entries.map(x=>x.file)).size,108);
+          assert.equal(report.scenarios.length,6);
+          assert.equal(readdirSync(dir).filter(x=>x.endsWith('.png')).length,108);
+          assert.equal(report.photorealism,'REVIEW');
+          assert.equal(report.physicalAndroid,'NOT TESTED');
+          assert.equal(report.physicalIPhone,'NOT TESTED');
+          assert.equal(report.familyAlpha,'HOLD');
+          assert.equal(report.releaseAuthorized,false);
+          for(const scenario of report.scenarios){
+            assert.equal(scenario.swap.shirtPreserved,true);
+            assert.equal(scenario.swap.originalDenimSourceChanged,true);
+          }
+          QA
       - uses: actions/upload-artifact@v4
         if: always()
         with:
