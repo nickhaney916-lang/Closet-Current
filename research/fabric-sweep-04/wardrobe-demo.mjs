@@ -370,6 +370,10 @@ window.ccWardrobe10Diagnostics=()=>{
     gait02State:state?.gait02State||null,
      posePleats03Enabled:state?.posePleats03Enabled||false,
      posePleats03State:state?.posePleats03State||null,
+     swept04Clock:state?.continuousGait04||null,
+     swept04Enabled:new URLSearchParams(location.search).get('sweep')==='after'&&
+      new URLSearchParams(location.search).get('walk')==='after'&&
+      new URLSearchParams(location.search).get('folds')==='after',
    dressOriginalSHA256:dressCandidate?.sourceSHA256||null,
   fallbackVisible:$('photoFallback').dataset.visible==='true',
   displayed3DSources:last3D?.originalPhotoSHA256s||null,
@@ -443,6 +447,27 @@ window.ccWardrobeGait02=action=>{
   dressSHA:SYNTHETIC_SOURCES10.dress.sha,result,
   sourceTrue163BoneResearch:true,fullClothPhysics:false,
   sweptCollisionCertified:false,releaseAuthorized:false};
+};
+// Limited, source/owner-gated discrete gait samples only. Never claim full
+// swept surface collision certification from nine measured poses.
+window.ccWardrobeSweep04=phase=>{
+ const approved=authorized()&&viewerReady&&!!last3D&&
+  bound.indexed.byId.get(slots.top)?.category==='Dresses'&&
+  last3D.originalPhotoSHA256s?.dress===SYNTHETIC_SOURCES10.dress.sha&&
+  app.getState().stats?.bones===163&&app.getState().outfit?.mode==='dress'&&
+  app.getState().posePleats03Enabled===true&&
+  new URLSearchParams(location.search).get('sweep')==='after'&&
+  new URLSearchParams(location.search).get('folds')==='after'&&
+  new URLSearchParams(location.search).get('walk')==='after';
+ if(!approved)throw Error('Original SHA-verified 163-bone dress, current owner and explicit sweep research required');
+ if(!Number.isFinite(phase)||phase<0||phase>1||
+   Math.abs(phase*8-Math.round(phase*8))>1e-9)
+  throw Error('Finite exact nine-point real anatomical gait phase required');
+ const bodyAndDrape=app.sampleSweep04(phase);
+ return {phase,account:current().ownerId,generation:current().generation,
+  sourceSHA:SYNTHETIC_SOURCES10.dress.sha,bodyAndDrape,
+  realSkinnedBones:true,unseenTextureNotInvented:true,
+  mathematicallySweptCollisionCertified:false,releaseAuthorized:false};
 };
 window.ccWardrobe10Test=Object.freeze({
  select,changeAccount,logout,
