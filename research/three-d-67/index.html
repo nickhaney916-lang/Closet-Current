@@ -1,0 +1,49 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Closet Current — premium anatomical 3D and indexed wardrobe research</title>
+<style>
+:root{font:15px system-ui,-apple-system,sans-serif;background:#f2f3ef;color:#233a30}*{box-sizing:border-box}body{margin:0}
+header{padding:14px max(14px,calc((100vw - 960px)/2));background:#fff;border-bottom:1px solid #cfd9d1;display:flex;justify-content:space-between;align-items:center;gap:12px}
+header strong{font:500 22px Georgia,serif}header span{font-size:11px;font-weight:700;color:#89542e}
+main{max-width:960px;margin:auto;padding:13px}h1{font-size:20px;margin:0 0 5px}h2{font-size:15px;margin:0 0 10px}p{line-height:1.45}
+small,.subtle{font-size:12px;color:#607369}.layout{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(235px,.7fr);gap:13px}
+.viewer{position:relative;border-radius:17px;overflow:hidden;background:#efeee7;border:1px solid #d4ddd4}
+canvas{width:100%;height:min(78svh,690px);min-height:485px;display:block;touch-action:none}
+.caption{position:absolute;left:12px;top:12px;font-size:11px;padding:7px 11px;border-radius:30px;background:#ffffffe0;pointer-events:none}
+.panel{padding:13px;margin-bottom:12px;border:1px solid #d4ded4;border-radius:13px;background:#fff}
+button,select{font:inherit;background:#fff;color:#224634;border:1px solid #c2d2c5;border-radius:9px;min-height:44px;padding:8px 11px}
+button{cursor:pointer}button[aria-pressed=true]{background:#27513f;color:#fff;border-color:#27513f}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid #6aaf8c;outline-offset:2px}
+.angles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.angles button{padding:8px 3px;font-size:12px}
+.btnrow,.pickers{display:flex;gap:7px;flex-wrap:wrap}.btnrow button,.pickers select{flex:1;min-width:0}
+input[type=range]{width:100%;height:35px;accent-color:#38674f}label{font-size:12px;display:block;margin:12px 0 6px}
+#status{font-size:12px;min-height:29px}pre{font-size:11px;white-space:pre-wrap;overflow-wrap:anywhere;max-height:270px;overflow:auto}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#8caa96;margin-right:5px}
+@media(max-width:680px){.layout{grid-template-columns:1fr}.viewer{min-height:0}canvas{height:55svh;min-height:355px}.side{display:grid;grid-template-columns:1fr 1fr;gap:9px}.panel{margin:0}.wide{grid-column:1/-1}header strong{font-size:19px}}
+@media(max-width:360px){main{padding:7px}.side{gap:6px}.angles button{font-size:11px}}
+</style>
+<script type="importmap">{"imports":{"three":"/node_modules/three/build/three.module.js","three/addons/":"/node_modules/three/examples/jsm/"}}</script></head><body>
+<header><strong>Closet Current</strong><span>3D-67 · RESEARCH HOLD</span></header><main>
+<h1>The 3D humanoid + intelligently indexed closet</h1>
+<p class="subtle">Original skinned anatomical 3D, not a rotating picture. Product vision: camera photo → confirmed AI categories → private wardrobe → real garment fitting and swaps. This page uses licensed 3D figures and synthetic indexing metadata only; no private wardrobe photos.</p>
+<div class="layout">
+<div class="viewer"><canvas id="avatar" aria-label="Interactive full 360 degree original 3D anatomical human"></canvas><span class="caption" id="caption">Original CC0 anatomical rig · loading</span></div>
+<div class="side">
+<section class="panel"><h2>Figure and materials</h2>
+<div class="pickers"><select id="model" aria-label="Figure"><option value="female">Female</option><option value="male">Male</option></select><select id="finish" aria-label="Material"><option value="porcelain">Matte warm</option><option value="slate">Soft graphite</option></select></div>
+<p class="subtle">Actual male and female CC0 rigs · source SHA-locked · no personal likeness or body measurements.</p></section>
+<section class="panel wide"><h2>360° camera orbit</h2>
+<div class="angles" aria-label="Camera view presets">
+<button data-angle="0" aria-pressed="true">Front 0°</button><button data-angle="45" aria-pressed="false">¾ front</button><button data-angle="90" aria-pressed="false">Right 90°</button>
+<button data-angle="135" aria-pressed="false">¾ rear</button><button data-angle="180" aria-pressed="false">Back 180°</button><button data-angle="225" aria-pressed="false">¾ rear</button>
+<button data-angle="270" aria-pressed="false">Left 270°</button><button data-angle="315" aria-pressed="false">¾ front</button><button data-angle="360" aria-pressed="false">360° reset</button></div>
+<label for="angle">Free rotation <output id="angleReadout">0°</output></label><input id="angle" type="range" min="0" max="360" step="1" value="0" aria-label="Rotate full 360 degrees"/>
+<div class="btnrow"><button id="spin" aria-pressed="false">Auto-rotate</button><button id="reset">Reset front</button></div>
+<div class="btnrow"><button id="zoomIn">Zoom +</button><button id="zoomOut">Zoom −</button></div>
+<p class="subtle">Touch drag to orbit, pinch to zoom, or use angle presets. Auto-spin stops on direct touch.</p></section>
+<section class="panel wide"><h2>AI closet indexing is the differentiator</h2>
+<p class="subtle"><span class="dot"></span>Original photo → category, subtype and color review → private item identity → 3D slot → outfit swap. Category checks are strict; unconfirmed items do not become invented 3D garments.</p>
+<div class="btnrow"><button id="categoryDemo">Validate fixture categories</button><button id="swapDemo">Swap an indexed item</button></div><pre id="categoryResult" aria-live="polite">No user clothes loaded. Only synthetic index contract tests are available in this research showroom.</pre></section>
+<section class="panel wide"><h2>Human visual realism review</h2><p class="subtle">Target 10/10 excellence. No automatic human aesthetic score or competitor ranking.</p>
+<div class="btnrow"><button id="export">Export local angle/visual review</button></div><p class="subtle">Real hardware NOT TESTED · Human anatomy REVIEW · Family Alpha HOLD</p></section>
+<section class="panel wide"><p id="status" role="status" aria-live="polite">Validating genuine local anatomical meshes…</p><details><summary>Real WebGL diagnostics</summary><pre id="diagnostics"></pre></details></section>
+</div></div></main><script type="module" src="./premium-demo.mjs"></script></body></html>
