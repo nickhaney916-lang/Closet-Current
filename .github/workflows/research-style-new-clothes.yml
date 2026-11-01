@@ -1,0 +1,17 @@
+name: Research Style New Clothes
+on:
+  pull_request:
+    paths:
+      - 'public/style-new-clothes-engine.js'
+      - 'tests/style-new-clothes.test.cjs'
+      - '.github/workflows/research-style-new-clothes.yml'
+  workflow_dispatch:
+jobs:
+  pinned-outfits:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: node tests/style-new-clothes.test.cjs
