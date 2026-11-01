@@ -55,7 +55,7 @@ try{
     if(!r.url().startsWith(host)&&!r.url().startsWith('blob:'+host)&&!r.url().startsWith('data:'))
      offsite.push(r.url());
    });
-   await page.goto(host+'/research/three-d-69/index.html?denimDrape73=after&calf74=after&folds75=after&continuity76=after&contact77=on&knee78=on);
+   await page.goto(host+'/research/three-d-69/index.html?denimDrape73=after&calf74=after&folds75=after&continuity76=after&contact77=on&knee78=on');
    await page.waitForFunction(()=>window.cc69Diagnostics?.()?.rig?.bones===163&&window.cc69Diagnostics()?.loaded===true,
     null,{timeout:180000});
    if(figure==='male'){
