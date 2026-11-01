@@ -87,6 +87,11 @@ function safeControls(){
   last3D.originalPhotoSHA256s?.dress===SYNTHETIC_SOURCES10.dress.sha&&
   new URLSearchParams(location.search).get('motion')==='after';
  for(const id of ['sway','sway-back','reset-sway'])$(id).disabled=!verifiedDress;
+ const verifiedGait=enabled&&!!last3D&&
+  bound?.indexed?.byId?.get(slots.top)?.category==='Dresses'&&
+  last3D.originalPhotoSHA256s?.dress===SYNTHETIC_SOURCES10.dress.sha&&
+  new URLSearchParams(location.search).get('walk')==='after';
+ for(const id of ['walk-left','walk-right','walk-reset','walk-play','walk-stop','walk-audit'])$(id).disabled=!verifiedGait;
 }
 function updateCards(){
  const container=$('items');container.replaceChildren();
@@ -265,7 +270,9 @@ async function initViewer(){
    photoDenimFolds75:true,photoDenimContinuity76:true,photoDenimContactAudit77:true,
    photoDenimKneePose78:true,
     photoDenimFlex79:new URLSearchParams(location.search).get('flex79')==='after',dressMobile74:true,
-    skirtSecondaryMotion01:new URLSearchParams(location.search).get('motion')==='after'
+    skirtSecondaryMotion01:['after'].includes(new URLSearchParams(location.search).get('motion'))||
+     new URLSearchParams(location.search).get('walk')==='after',
+    poseDrivenDressWalk02:new URLSearchParams(location.search).get('walk')==='after'
   });
   canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();
    if(token!==bootToken)return;
@@ -337,6 +344,10 @@ $('angle').addEventListener('input',()=>{if(!viewerReady)return;
 $('zin').addEventListener('click',()=>{if(viewerReady){app.zoom(.84);interactions++;}});
 $('zout').addEventListener('click',()=>{if(viewerReady){app.zoom(1.18);interactions++;}});
 $('turn').addEventListener('click',()=>{if(viewerReady){app.setSpin(!app.getState().spinEnabled);interactions++;}});
+ for(const [id,action] of [['walk-left','left-step'],['walk-right','right-step'],['walk-reset','reset'],
+   ['walk-play','play'],['walk-stop','stop'],['walk-audit','audit']]){
+  $(id).addEventListener('click',()=>{window.ccWardrobeGait02(action);interactions++;});
+ }
  for(const [id,action] of [['sway','left'],['sway-back','right'],['reset-sway','reset']]){
   $(id).addEventListener('click',()=>{window.ccWardrobeSkirtMotion01(action);interactions++;});
  }
@@ -353,6 +364,8 @@ window.ccWardrobe10Diagnostics=()=>{
    outfitMode:state?.outfit?.mode||'none',realDress:state?.outfit?.dress||null,
     skirtMotion:state?.outfit?.fabricMotion||null,skirtMotionActive:state?.skirtMotionActive||false,
     skirtMotionEnabled:state?.skirtMotionEnabled||false,
+    gait02Enabled:state?.gait02Enabled||false,gait02Active:state?.gait02Active||false,
+    gait02State:state?.gait02State||null,
    dressOriginalSHA256:dressCandidate?.sourceSHA256||null,
   fallbackVisible:$('photoFallback').dataset.visible==='true',
   displayed3DSources:last3D?.originalPhotoSHA256s||null,
@@ -406,6 +419,26 @@ window.ccWardrobeSkirtMotion01=action=>{
  return {account:current().ownerId,generation:current().generation,
   dressSHA:SYNTHETIC_SOURCES10.dress.sha,action,motion:result,
   genuine163BoneDress:true,releaseAuthorized:false,collisionCertified:false};
+};
+window.ccWardrobeGait02=action=>{
+ const verified=authorized()&&viewerReady&&!!last3D&&
+  bound.indexed.byId.get(slots.top)?.category==='Dresses'&&
+  last3D.originalPhotoSHA256s?.dress===SYNTHETIC_SOURCES10.dress.sha&&
+  app.getState().stats?.bones===163&&app.getState().outfit?.mode==='dress'&&
+  new URLSearchParams(location.search).get('walk')==='after';
+ if(!verified)throw Error('Only present genuine source dress and current synthetic owner can move 163-bone rig');
+ const methods={'left-step':()=>app.setGaitPhase02(.25),
+  'right-step':()=>app.setGaitPhase02(.75),
+  'reset':()=>app.resetGait02(),
+  'play':()=>app.startGait02(),
+  'stop':()=>app.resetGait02(),
+  'audit':()=>app.auditGaitDress02()};
+ if(!Object.hasOwn(methods,action))throw Error('Only verified walking/pose/contact actions available');
+ const result=methods[action]();recorded('actual-bone-gait-'+action);
+ return {action,account:current().ownerId,generation:current().generation,
+  dressSHA:SYNTHETIC_SOURCES10.dress.sha,result,
+  sourceTrue163BoneResearch:true,fullClothPhysics:false,
+  sweptCollisionCertified:false,releaseAuthorized:false};
 };
 window.ccWardrobe10Test=Object.freeze({
  select,changeAccount,logout,
