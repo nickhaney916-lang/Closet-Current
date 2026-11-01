@@ -84,6 +84,8 @@ try{
    await p.evaluate(()=>window.ccWardrobe10View(90));
    const tag='source-gait-02-'+width+'-'+rig;
    const source=await shot(p,tag+'-source',rig,width,'source');
+   // Compare true skinned dress/body contacts at rest vs same original rig in motion.
+   const sourceContact=width===390?await p.evaluate(()=>window.ccWardrobeGait02('audit')):null;
    assert.equal(await p.locator('#walk-left').isDisabled(),false);
    const left=await p.evaluate(()=>window.ccWardrobeGait02('left-step'));
    assert.equal(left.sourceTrue163BoneResearch,true);assert.equal(left.dressSHA,SHA);
@@ -107,9 +109,17 @@ try{
     assert.ok(measure.result.realDressTriangles>1000);
     assert.ok(measure.result.realBodyTriangles>10000);
     assert.equal(measure.result.sweptCollisionCertified,false);
+    const base=sourceContact?.result;
+    assert.ok(base&&Number.isInteger(base.actualSkinnedDressBodyTriangleCrossings));
+    assert.equal(base.realBodyTriangles,measure.result.realBodyTriangles);
+    assert.equal(base.realDressTriangles,measure.result.realDressTriangles);
     contacts.push({rig,bodyTriangles:measure.result.realBodyTriangles,
      dressTriangles:measure.result.realDressTriangles,
-     crossedSegmentsAtRightStep:measure.result.actualSkinnedDressBodyTriangleCrossings});
+     crossedSegmentsAtRest:base.actualSkinnedDressBodyTriangleCrossings,
+     crossedSegmentsAtRightStep:measure.result.actualSkinnedDressBodyTriangleCrossings,
+     netNewOrResolvedSegmentCount:measure.result.actualSkinnedDressBodyTriangleCrossings-
+      base.actualSkinnedDressBodyTriangleCrossings,
+     dynamicallyCollisionCertified:false});
    }
    const reset=await p.evaluate(()=>window.ccWardrobeGait02('reset'));
    assert.equal(reset.result.restoredRealBoneQuaternions,true);
