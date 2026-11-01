@@ -69,8 +69,13 @@ export function slopeTruePhotographedShoulderTop(shirt,root,{enabled=true}={}){
   if(weight<.075)continue;
   const upperInfluence=sm(dy,-.065,.065);
   const drop=(.0095+.0145*upperInfluence)*weight;
-  const inward=(.0035+.006*upperInfluence)*weight;
-  const move=new THREE.Vector3(-Math.sign(q.x)*inward,-drop,0);
+  // Keep the cloth OUTSIDE the actual anatomical deltoid: the previous
+  // inward taper caused 110 source-pose crossing triangle pairs on the
+  // genuine male rig even after the validated pose-contact fitter.
+  // An outward clearance ease is preferable to fabric intersecting skin;
+  // only the actual joint-anchored high-yoke profile is still lowered.
+  const clearanceOut=(.0035+.006*upperInfluence)*weight;
+  const move=new THREE.Vector3(Math.sign(q.x)*clearanceOut,-drop,0);
   const distance=move.length();
   if(distance<.0005)continue;
   if(!Number.isFinite(distance)||distance>.02801)
