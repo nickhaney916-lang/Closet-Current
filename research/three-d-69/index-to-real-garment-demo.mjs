@@ -72,11 +72,12 @@ async function start(){
   naturalShoulderSleeveTransition:true,sourceMeasuredSleeveHang:true,
   anatomicalShirtSideFlow:true,naturalShoulderFall61:true,
   trueShoulderTop64:true,poseConditionedSleeveDrape:true,
-  photoDenimRearDrape73:new URLSearchParams(location.search).get('denimDrape73')==='after'||new URLSearchParams(location.search).get('calf74')==='after'||new URLSearchParams(location.search).get('folds75')==='after'||new URLSearchParams(location.search).get('continuity76')==='after'||new URLSearchParams(location.search).get('contact77')==='on',
-  photoDenimCalfHang74:new URLSearchParams(location.search).get('calf74')==='after'||new URLSearchParams(location.search).get('folds75')==='after'||new URLSearchParams(location.search).get('continuity76')==='after'||new URLSearchParams(location.search).get('contact77')==='on',
-  photoDenimFolds75:new URLSearchParams(location.search).get('folds75')==='after'||new URLSearchParams(location.search).get('continuity76')==='after'||new URLSearchParams(location.search).get('contact77')==='on',
-  photoDenimContinuity76:new URLSearchParams(location.search).get('continuity76')==='after'||new URLSearchParams(location.search).get('contact77')==='on',
-  photoDenimContactAudit77:new URLSearchParams(location.search).get('contact77')==='on'
+  photoDenimRearDrape73:new URLSearchParams(location.search).get('denimDrape73')==='after'||new URLSearchParams(location.search).get('calf74')==='after'||new URLSearchParams(location.search).get('folds75')==='after'||new URLSearchParams(location.search).get('continuity76')==='after'||new URLSearchParams(location.search).get('contact77')==='on'||new URLSearchParams(location.search).get('knee78')==='on',
+  photoDenimCalfHang74:new URLSearchParams(location.search).get('calf74')==='after'||new URLSearchParams(location.search).get('folds75')==='after'||new URLSearchParams(location.search).get('continuity76')==='after'||new URLSearchParams(location.search).get('contact77')==='on'||new URLSearchParams(location.search).get('knee78')==='on',
+  photoDenimFolds75:new URLSearchParams(location.search).get('folds75')==='after'||new URLSearchParams(location.search).get('continuity76')==='after'||new URLSearchParams(location.search).get('contact77')==='on'||new URLSearchParams(location.search).get('knee78')==='on',
+  photoDenimContinuity76:new URLSearchParams(location.search).get('continuity76')==='after'||new URLSearchParams(location.search).get('contact77')==='on'||new URLSearchParams(location.search).get('knee78')==='on',
+  photoDenimContactAudit77:new URLSearchParams(location.search).get('contact77')==='on'||new URLSearchParams(location.search).get('knee78')==='on',
+  photoDenimKneePose78:new URLSearchParams(location.search).get('knee78')==='on'
  });
  app.start();
  try{
@@ -108,14 +109,17 @@ async function start(){
   sourcePhotoGenuine:true,humanApproved:false,phoneTested:false,
   production:false});
  window.cc69SetView=angle=>{app.viewAt(angle);return window.cc69Diagnostics();};
+ if(new URLSearchParams(location.search).get('knee78')==='on')
+  window.cc78KneePose=pose=>app.auditKneePose78(pose);
  // Genuine garment geometry diagnostics only: no original decoded image data.
  window.cc73State=()=>({figure:app.getState().kind,sourceBones:app.getState().stats?.bones,
   denim:app.getState().outfit?.pants||null,shirt:app.getState().outfit?.shirt||null,
-  selectedDenim:currentSelection,photoDenimDrapeEnabled:new URLSearchParams(location.search).get('denimDrape73')==='after'||new URLSearchParams(location.search).get('calf74')==='after'||new URLSearchParams(location.search).get('folds75')==='after'||new URLSearchParams(location.search).get('continuity76')==='after'||new URLSearchParams(location.search).get('contact77')==='on',
-  photoDenimCalfHang74Enabled:new URLSearchParams(location.search).get('calf74')==='after'||new URLSearchParams(location.search).get('folds75')==='after'||new URLSearchParams(location.search).get('continuity76')==='after'||new URLSearchParams(location.search).get('contact77')==='on',
-  photoDenimFolds75Enabled:new URLSearchParams(location.search).get('folds75')==='after'||new URLSearchParams(location.search).get('continuity76')==='after'||new URLSearchParams(location.search).get('contact77')==='on',
-  photoDenimContinuity76Enabled:new URLSearchParams(location.search).get('continuity76')==='after'||new URLSearchParams(location.search).get('contact77')==='on',
-  photoDenimContactAudit77Enabled:new URLSearchParams(location.search).get('contact77')==='on',
+  selectedDenim:currentSelection,photoDenimDrapeEnabled:new URLSearchParams(location.search).get('denimDrape73')==='after'||new URLSearchParams(location.search).get('calf74')==='after'||new URLSearchParams(location.search).get('folds75')==='after'||new URLSearchParams(location.search).get('continuity76')==='after'||new URLSearchParams(location.search).get('contact77')==='on'||new URLSearchParams(location.search).get('knee78')==='on',
+  photoDenimCalfHang74Enabled:new URLSearchParams(location.search).get('calf74')==='after'||new URLSearchParams(location.search).get('folds75')==='after'||new URLSearchParams(location.search).get('continuity76')==='after'||new URLSearchParams(location.search).get('contact77')==='on'||new URLSearchParams(location.search).get('knee78')==='on',
+  photoDenimFolds75Enabled:new URLSearchParams(location.search).get('folds75')==='after'||new URLSearchParams(location.search).get('continuity76')==='after'||new URLSearchParams(location.search).get('contact77')==='on'||new URLSearchParams(location.search).get('knee78')==='on',
+  photoDenimContinuity76Enabled:new URLSearchParams(location.search).get('continuity76')==='after'||new URLSearchParams(location.search).get('contact77')==='on'||new URLSearchParams(location.search).get('knee78')==='on',
+  photoDenimContactAudit77Enabled:new URLSearchParams(location.search).get('contact77')==='on'||new URLSearchParams(location.search).get('knee78')==='on',
+  photoDenimKneePose78Enabled:new URLSearchParams(location.search).get('knee78')==='on',
   sourceHash:app.getState().outfit?.pants?.sourceSHA256||null,
   familyAlpha:'HOLD',releaseAuthorized:false});
  window.addEventListener('pagehide',()=>{closed=true;app.stop();first?.dispose();second?.dispose();});
