@@ -1,0 +1,66 @@
+name: 3D-66 actual anatomical upper-sleeve fabric and physical-phone gate (NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'research/three-d-66/**'
+      - 'research/three-d-15/outfit-controller.mjs'
+      - 'research/three-d-15/showroom.mjs'
+      - 'research/three-d-31/photo-jeans-demo.mjs'
+      - 'research/three-d-37/second-jeans-demo.mjs'
+      - 'tests/three-d-66-original-upper-sleeve-fabric.test.mjs'
+      - 'tests/three-d-66-phone-evidence.test.mjs'
+      - 'scripts/test-three-d-66-real-fabric-browser.mjs'
+      - '.github/workflows/three-d-66-source-drape-phone-gates-no-deploy.yml'
+permissions:
+  contents: read
+jobs:
+  source-photo-sleeve-and-hardware-honesty:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Exact GREEN 3D64 real upper shoulder parent and isolated no-production diff
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor ce9ae8d555938549e7e9c1ee8c455b598297c7af HEAD
+          git diff --name-only ce9ae8d555938549e7e9c1ee8c455b598297c7af HEAD | while IFS= read -r file; do
+            case "$file" in
+              research/three-d-66/*|research/three-d-15/outfit-controller.mjs|research/three-d-15/showroom.mjs|research/three-d-31/photo-jeans-demo.mjs|research/three-d-37/second-jeans-demo.mjs|tests/three-d-66-original-upper-sleeve-fabric.test.mjs|tests/three-d-66-phone-evidence.test.mjs|scripts/test-three-d-66-real-fabric-browser.mjs|.github/workflows/three-d-66-source-drape-phone-gates-no-deploy.yml) ;;
+              *) echo "DISALLOWED changed production/staging/other path: $file"; exit 1 ;;
+            esac
+          done
+      - name: Pinned offline original-photo research dependencies, never paid model inference
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 three@0.180.0 playwright@1.56.1 three-mesh-bvh@0.9.2
+      - name: Restore original independently licensed denim, exact source SHA and photographic pixels
+        run: |
+          node scripts/build-three-d-31-jeans-proposal.mjs
+          node scripts/build-three-d-37-second-jeans.mjs
+          node --test tests/three-d-31-jeans-source.test.mjs tests/three-d-37-source-true.test.mjs
+      - name: Original CC0 163-bone male female and source photographed shirt, not synthesized stand-ins
+        run: |
+          git fetch --no-tags origin 53f2ad344dc56a1477e343531c423aed0e66c17d dd6bac3fa9ff640d4f562cf925337440bdb5cf8f 3a572193987cb29389727426136c6eb3ac326783 dfb40889c4c1221fb1833b859e8a11ef38aeb76e
+          node scripts/build-work47-benchmark.mjs
+          node research/three-d-20/restore-approved-models.mjs
+      - name: Anatomical true source upper-sleeve drape with bilateral source UV, seams and zero posed BVH sampled penetration
+        run: |
+          node --check research/three-d-66/source-upper-sleeve-fabric-drape.mjs
+          node --test tests/three-d-66-original-upper-sleeve-fabric.test.mjs
+      - name: Real original-photo source true upperarm fabric visual A/B 390px both rigs both denim sources
+        run: node scripts/test-three-d-66-real-fabric-browser.mjs
+      - name: Real phone certification cannot be claimed from mobile emulation
+        run: node --test tests/three-d-66-phone-evidence.test.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: THREE-D-66-SOURCE-UPPER-SLEEVE-CLOTH-AND-PHONE-PREPARATION-HOLD
+          path: |
+            benchmark/three-d-66/
+          if-no-files-found: warn
