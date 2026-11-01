@@ -39,7 +39,7 @@ export function arrangeIndexedOutfit(items,{ownerId}={}){
  if(bySlot.dress&&(bySlot.pants||bySlot.shirt))
   throw Error('One-piece dress hides shirt/pants; user must swap or choose a layered outfit');
  return Object.freeze({ownerId,items:Object.freeze(picks),slots:Object.freeze(bySlot),
-  3dReady:picks.length>0&&picks.every(i=>i.threeDimensionalMeshApproved),
+  threeDReady:picks.length>0&&picks.every(i=>i.threeDimensionalMeshApproved),
   fallback:picks.some(i=>!i.threeDimensionalMeshApproved)?'original-camera-photo-or-2d':'none',
   categoryVerified:true,sourcePhotoIdentityPreserved:true,releaseAuthorized:false});
 }
