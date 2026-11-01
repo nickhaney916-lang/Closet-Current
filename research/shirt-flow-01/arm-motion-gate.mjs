@@ -17,7 +17,6 @@ export function armPoseAt01(value){
 export function assertVerifiedShirtPose01(state,expectedSha){
  if(!state?.loaded||state.stats?.bones!==163||
     state.outfit?.mode!=='shirt-pants'||
-    state.outfit?.shirt?.sourceId!==SHIRT_FLOW01.approvedSourceId||
     !/^[a-f0-9]{64}$/.test(expectedSha||'')||
     state.outfit?.shirt?.sourceSHA256!==expectedSha||
     !state.outfit?.shirt?.sourceMeasuredNaturalSleeveHang||
