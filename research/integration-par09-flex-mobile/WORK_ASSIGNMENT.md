@@ -1,0 +1,13 @@
+# Closet Current INTEGRATION-02 — Verified Parallel #9 genuine photographed denim flex × verified PAR08 mobile 3D78
+
+**Strict isolated research. Family Alpha #255 HOLD. No merges, deploys, production, staging, user photos, stored wardrobe, auth, billing, Supabase, Drive Duel or Delta Ebb changes.**
+
+Starting exact verified main-controlled mobile research branch: PR #497 head `1f8b0b93a4cda2932dfe2c1db1fb213608603586` (CI #41318003159 SUCCESS, 80 genuine source photo WebGL frames). Separately verified independent source of 3D cloth bending: Parallel #9 PR #496 head `84a9b989c3171c816d45a19838abd27b4f20d128` (CI #41317258546 SUCCESS, 72 actual WebGL images, guarded source-neutral rear/side bend), no merge or changes to its code.
+
+## Implemented integration boundary
+An isolated new research viewer `research/integration-par09-flex-mobile/` explicitly copies the proven PAR08 mobile fault-tolerant viewer and bounded PAR09 true denim-flex controller into a single testable rig with **real source photograph 163-bone anatomical cloth**. Only an explicit local `?flex79=after` enables the flex. The default is OFF; no other viewer is affected. The originally photographed denim front, UV/rest, and skin arrays remain unmodified; the unphotographed rear cannot gain invented imagery. True BVH contact checks from 3D77 still fail closed. Original CC0 male/female 163-bone rigs; two licensed original SHA-verified jeans photos; existing source-photographed shirt.
+
+## Acceptance evidence
+A strict dedicated PR-only, read-only, no-deploy CI tests original source SHA, bone changes, 72 real whole-outfit mobile before/after WebGL captures 320/390/430 (2 models × 2 source pants × 3 camera angles), 8 **additional same-pose** before/after genuine denim-flex PNG comparison pairs (16 PNGs) in original 390px side camera at exactly the same actual left and both-knee angles. Total **88 actual WebGL captures**. Same-pose side pixel change minimum 20; compare independent licensed garment image without swapping standing/bent pose. Per-pose original skinned body/denim triangle contacts zero, source front unchanged. Ten denim swaps, five figure changes, GPU stability, touch pinch/zoom, five negative fault/recovery gates.
+
+Any failure must be investigated and corrected on this branch until exact-final-commit CI SUCCESS; no claim of source/photo or human photorealism without evidence. This task proves isolated viewer compatibility, not freeform user-camera photo-to-3D production readiness. Real Android/iPhone acceptance remains NOT TESTED, garment human naturalness REVIEW, physics and signed swept collision NOT CERTIFIED, Family Alpha #255 HOLD. Parallel #10 owns saved wardrobes, #11 owns photo materials, #7 shirt seams incomplete.
