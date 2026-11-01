@@ -166,15 +166,24 @@ async function stress(){
  assert.ok(Math.max(...swapGeo)-Math.min(...swapGeo)<120,'swaps leak too many WebGL geometries');
  const swapTex=samples.filter(s=>s.operation==='swap').map(s=>s.textures);
  assert.ok(Math.max(...swapTex)-Math.min(...swapTex)<32,'swaps leak too many textures');
+ // The stress suite just clicked controls below the long canvas: restore the
+ // canvas to the visible viewport before dispatching genuine Playwright pointer input.
+ const canvas=page.locator('#avatar');
+ await canvas.scrollIntoViewIfNeeded();
+ await page.waitForTimeout(160);
  const view0=await page.evaluate(()=>window.ccMobileSetView(0));
- const canvas=page.locator('#avatar'),bounds=await canvas.boundingBox();
- assert.ok(bounds);
- await page.mouse.move(bounds.x+bounds.width*.5,bounds.y+bounds.height*.5);
- await page.mouse.down();await page.mouse.move(bounds.x+bounds.width*.81,bounds.y+bounds.height*.48,{steps:12});
+ const bounds=await canvas.boundingBox();
+ assert.ok(bounds&&bounds.y>=-1&&bounds.y+bounds.height<=850+1,
+  'Touch target must be entirely in the visible mobile viewport');
+ await page.mouse.move(bounds.x+bounds.width*.46,bounds.y+bounds.height*.45);
+ await page.mouse.down();
+ await page.mouse.move(bounds.x+bounds.width*.84,bounds.y+bounds.height*.45,{steps:18});
  await page.mouse.up();
- await page.waitForTimeout(130);
+ await page.waitForTimeout(550);
  const moved=await page.evaluate(()=>window.ccMobileDiagnostics());
- assert.ok(Math.abs(moved.viewAngle-view0.viewAngle)>1,'real camera pointer-drag should rotate 3D view');
+ assert.ok(Math.abs(moved.viewAngle-view0.viewAngle)>1,
+  'real viewport-visible pointer drag should rotate the 3D camera: '+JSON.stringify({
+   before:view0.viewAngle,after:moved.viewAngle,bounds}));
  await page.locator('#zin').click();
  const afterZoom=await page.evaluate(()=>window.ccMobileDiagnostics());
  assert.ok(afterZoom.memory?.drawPixels>0);
