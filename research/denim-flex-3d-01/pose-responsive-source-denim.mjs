@@ -166,9 +166,13 @@ export function bendSourceTrueDenim79(pants,root,{pose='source',enabled=true}={}
    originalPhotoSourcePreserved79:true,unphotographedReverseRemainsNeutral79:true,
    dynamicSimulationCertified79:false,sweptCollisionCertified79:false,
    mobilePhysicalVerified79:false,humanVisualApproved79:false,releaseAuthorized:false}};
-  let disposed=false;
-  return {...result,dispose(){if(disposed)return;disposed=true;
-   mesh.geometry=g;geometry.dispose();pants.dispose();}};
+  let disposed=false,restored=false;
+  const restoreGeometry79=()=>{
+   if(!restored){restored=true;mesh.geometry=g;geometry.dispose();}
+   return pants; // original independent skinned parent remains alive for next pose
+  };
+  return {...result,restoreGeometry79,dispose(){if(disposed)return;disposed=true;
+   restoreGeometry79();pants.dispose();}};
  }catch(e){
   mesh.geometry=g;geometry.dispose();
   throw e;
