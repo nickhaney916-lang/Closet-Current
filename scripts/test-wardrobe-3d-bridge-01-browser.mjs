@@ -170,10 +170,7 @@ try{
  for(const account of [names.b,names.a,names.b]){
   await p.locator('#account').selectOption(account);
   await p.waitForFunction(id=>window.ccWardrobe10Diagnostics().account===id&&
-   window.ccWardrobe10Diagnostics().viewerReady,id=>id,{timeout:180000}).catch(async()=>{
-    await p.waitForFunction(id=>window.ccWardrobe10Diagnostics().account===id&&
-     window.ccWardrobe10Diagnostics().viewerReady,account,{timeout:180000});
-   });
+   window.ccWardrobe10Diagnostics().viewerReady,account,{timeout:180000});
   transitions.push('switch-'+account);ownerSafe(await diag(p));
  }
  await p.locator('#logout').click();transitions.push('logout');
