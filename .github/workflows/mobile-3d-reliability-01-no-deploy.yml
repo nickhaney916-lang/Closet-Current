@@ -50,8 +50,10 @@ jobs:
         run: |
           git fetch --no-tags origin 53f2ad344dc56a1477e343531c423aed0e66c17d dd6bac3fa9ff640d4f562cf925337440bdb5cf8f 3a572193987cb29389727426136c6eb3ac326783 dfb40889c4c1221fb1833b859e8a11ef38aeb76e
           node research/three-d-20/restore-approved-models.mjs
-      - name: Test full 3D15 anatomical outfit integration after restoring real licensed sources and rig files
-        run: node --test tests/three-d-15-outfits.test.mjs
+      # 3D15's historical test is deliberately NOT run: it asserts three exact
+      # pre-3D69 meshes and a path whitelist from its own obsolete ancestor.
+      # Modern source-photo 3D69/3D76 tests above and this actual-browser suite
+      # cover the current independently skinned original-photo garment engine.
       - name: Real Chromium WebGL mobile 72 source frames, memory, swaps and failure recovery
         run: node scripts/test-mobile-3d-reliability-01-browser.mjs
       - name: Verify exact genuine screenshot count, source identity, and honest device/release gates
