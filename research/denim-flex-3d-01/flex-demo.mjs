@@ -5,8 +5,8 @@
 import {mountAnatomicalShowroom} from './flex-showroom.mjs';
 import {createPoseContact} from '../three-d-42/posed-contact.mjs';
 import {planIndexedBoardToAnatomical3D} from '../three-d-68/saved-closet-3d-adapter.mjs';
-import {loadSourceVetted3D69ResearchBundle} from './sha-verified-original-garment-sources.mjs';
-import {prepareIndexedGarmentsFor3D,applyIndexed3DSelection,VERIFIED_PUBLIC_SHIRT_SHA256} from './index-to-real-garment-viewer.mjs';
+import {loadSourceVetted3D69ResearchBundle} from '../three-d-69/sha-verified-original-garment-sources.mjs';
+import {prepareIndexedGarmentsFor3D,applyIndexed3DSelection,VERIFIED_PUBLIC_SHIRT_SHA256} from '../three-d-69/index-to-real-garment-viewer.mjs';
 const $=id=>document.getElementById(id);
 if(!['localhost','127.0.0.1','[::1]'].includes(location.hostname))throw Error('Public licensed source 3D research must run on localhost only');
 const setStatus=s=>$('status').textContent=s;
