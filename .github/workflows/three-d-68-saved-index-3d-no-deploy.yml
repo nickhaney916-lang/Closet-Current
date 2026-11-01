@@ -1,0 +1,62 @@
+name: 3D-68 authenticated saved closet indexing and 3D outfit slot bridge (DRAFT HOLD NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'research/three-d-68/**'
+      - 'tests/three-d-68-saved-closet-to-3d.test.mjs'
+      - 'tests/three-d-68-account-bound-bridge.test.mjs'
+      - '.github/workflows/three-d-68-saved-index-3d-no-deploy.yml'
+permissions:
+  contents: read
+jobs:
+  saved-closet-index-bridge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Enforce exact 3D-67 index-first parent, no changes to production or authentication
+        run: |
+          git merge-base --is-ancestor 5afd00f4247f78b696410368b1e4124a2bc5df1b HEAD
+          git diff --name-only 5afd00f4247f78b696410368b1e4124a2bc5df1b HEAD | while IFS= read -r file; do
+            case "$file" in
+              research/three-d-68/*|tests/three-d-68-saved-closet-to-3d.test.mjs|tests/three-d-68-account-bound-bridge.test.mjs|.github/workflows/three-d-68-saved-index-3d-no-deploy.yml) ;;
+              *) echo "DISALLOWED original-data/production or unrelated 3D68 path: $file"; exit 1 ;;
+            esac
+          done
+      - name: Verify production saved-closet schema and actual board slot source contracts unchanged
+        run: |
+          node --input-type=module <<'VERIFY'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const app=readFileSync('public/app.js','utf8'),
+                board=readFileSync('public/outfit-board-engine.js','utf8'),
+                taxonomy=readFileSync('public/taxonomy.js','utf8');
+          for(const field of ['originalPhoto','outfitSourceId','recognitionPhoto','colorSource','userAdjusted','confirmedDetails','requiresOwnershipConfirmation'])assert.ok(app.includes(field),'The saved closet schema changed: '+field);
+          for(const slot of ["top","bottom","layer","layer2","layer3","shoes","bag","accessory","finish"])assert.ok(board.includes("id:'"+slot+"'"),'Original board slot missing: '+slot);
+          for(const category of ["Tops","Bottoms","Dresses","Outerwear","Shoes","Accessories"])assert.ok(taxonomy.includes(category+':['),'Original clothing taxonomy missing: '+category);
+          VERIFY
+      - name: Local-only original saved JPEG hashing, user confirmation, privacy and three outfit swaps
+        run: |
+          node --version
+          node --check research/three-d-68/saved-closet-3d-adapter.mjs
+          node --test tests/three-d-68-saved-closet-to-3d.test.mjs tests/three-d-68-account-bound-bridge.test.mjs
+      - name: Never issue automatically verified 3D mesh, account, phone, human realism or alpha release
+        run: |
+          node --input-type=module <<'VERIFY'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const src=readFileSync('research/three-d-68/saved-closet-3d-adapter.mjs','utf8');
+          assert.ok(src.includes('actual3DMeshReady:false'));
+          assert.ok(src.includes('releaseAuthorized:false'));
+          assert.ok(src.includes("externalUpload:false"));
+          assert.ok(src.includes("originalJPEGBytesDiscarded:true"));
+          assert.ok(!src.includes('fetch('));
+          assert.ok(!src.includes('localStorage'));
+          assert.ok(!src.includes('innerHTML'));
+          VERIFY
