@@ -112,7 +112,8 @@ test('outfit board reflects actual existing wardrobe slot types and dress/dup co
  assert.throws(()=>planIndexedBoardToAnatomical3D({slots:{bottom:'two',layer2:'j'}},snap),/Layered outfit needs/);
  assert.equal(planIndexedBoardToAnatomical3D({slots:{top:'one',layer2:'j'}},snap).releaseAuthorized,false);
  assert.equal(planIndexedBoardToAnatomical3D({slots:{top:'one',layer2:'j',bag:'b'}},snap).selected.layer2.anatomicalSlot,'layer-2');
- assert.throws(()=>planIndexedBoardToAnatomical3D({slots:{top:'one',bottom:'one'}},snap),/category or subtype incompatible/);
+ assert.throws(()=>planIndexedBoardToAnatomical3D({slots:{top:'one',bottom:'one'}},snap),/cannot occupy two/);
+ assert.throws(()=>planIndexedBoardToAnatomical3D({slots:{bottom:'three'}},snap),/category or subtype incompatible/);
  assert.throws(()=>planIndexedBoardToAnatomical3D({slots:{top:'one',layer:'one'}},snap),/cannot occupy two/);
  assert.throws(()=>planIndexedBoardToAnatomical3D({slots:{top:'one',unknown:'two'}},snap),/Unrecognized/);
  assert.throws(()=>planIndexedBoardToAnatomical3D({slots:{top:'one',shoes:'hidden-id'}},snap),/unauthorized/);
