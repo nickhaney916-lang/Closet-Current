@@ -1,0 +1,12 @@
+# Closet Current INTEGRATION-01 — PAR08 mobile viewer × 3D78 original photographed clothing
+
+Main controller isolated compatibility gate; **no merge, no production, no staging, Family Alpha #255 HOLD**.
+
+**Sources, both independently verified beforehand:** PAR08 PR #494 exact HEAD `a89287a20522fb87115da702454c4adeb15f8c8b`, dedicated CI #41279903892 72 genuine WebGL images with original licensed photographs and verified mobile controls, retry, and GPU memory. Main PR #495 3D78 exact HEAD `8c586c94acc10fd1fc80c532bd5040eb6b2f8a1e`, successful CI #41278625077 with 48 real original photograph/true 163-bone knee pose views. **Integration branch based only on exact 3D78 HEAD**; the original PAR08 files were copied into `research/integration-par08-three-d-78` and wired solely in this copy to the 3D78 original garment controller with 3D73–78 flags. Neither source branch modified and no PR merged.
+
+Implementation: source-verified local original-license research showroom with reliable PAR08 memory cleanup, mobile controls, source 2D fallback on real WebGL/model/source failure, original 163-bone male/female independently skinned 3D jeans and original shirt, plus real knee articulation callback. Source/JPEG SHA, front UV/rest, skin weights unchanged. No synthetic reverse photos or production-user saved outfit integration.
+
+Dedicated strict no-deploy test `scripts/test-integration-par08-3d78-browser.mjs`: baseline 72 original WebGL PNGs (base 3D78 native vs PAR08 integration, male/female, 320/390/430, both photo denim originals, 0/90/180 degrees). 8 additional original real 390px side-camera skinned knee pose PNGs; male/female × two denims × left-12/both-16, with source/right-12 static contact measurement; every source photo SHA pinned and triangle intersections measured. 10 actual denim swaps, 5 figure changes, WebGL/GPU geometry and texture stability, pointer/touch zoom, five negative failure cases and fallback recovery.
+
+### Honest release gates
+Research compatibility gate, **not** production integration. No user-account wardrobe 2D fallback or real private photos; any failures remain NOT COMPLETE until corrected and exact CI successful. No real hardware Android/iPhone test. No human photorealism acceptance. Dynamic cloth physics and signed continuous collision not established. Parallel #9 owns denim flex; #7 shirt seam not accepted. No authorizations to merge or deploy.
