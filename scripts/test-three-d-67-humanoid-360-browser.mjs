@@ -86,7 +86,11 @@ try{
   await page.locator('#spin').click();
   await page.waitForTimeout(130);
   const spinning=await state();assert.equal(spinning.spinEnabled,true);
-  await page.locator('#avatar').dispatchEvent('pointerdown',{bubbles:true});
+  const hit=await page.locator('#avatar').boundingBox();
+  assert.ok(hit&&hit.width>50&&hit.height>50,'Actual WebGL canvas must have real touch area');
+  // Playwright real touchscreen emits a valid pointer lifecycle, not a fabricated
+  // pointerdown without an active pointer (OrbitControls needs pointer capture).
+  await page.touchscreen.tap(hit.x+hit.width/2,hit.y+hit.height/2);
   await page.waitForTimeout(60);
   assert.equal((await state()).spinEnabled,false,'Direct touch must cancel automated rotation');
   await page.locator('#reset').click();
