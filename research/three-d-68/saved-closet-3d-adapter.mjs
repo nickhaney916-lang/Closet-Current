@@ -61,8 +61,18 @@ function confirmedFromSaved(item){
  // Auto recognition ('indexedAt' alone) is NOT a user confirmation.
  const confirmed=item?.confirmedDetails;
  const detailsConfirmed=confirmed?.category===item.category&&confirmed?.itemType===item.itemType;
- const humanConfirmed=item?.userAdjusted===true||detailsConfirmed;
- return humanConfirmed&&item.requiresOwnershipConfirmation!==true&&
+ // The actual saveIndexed() path in public/app.js only stores a
+ // non-user-adjusted specific-type item after the local multiple-view
+ // classifier returns result.strong, source masks agree, and duplicates and
+ // ownership questions are absent. It stamps indexedAt, localAnalyzed and
+ // indexingLevel='specific-type'. Do not infer strong from indexedAt alone:
+ // category-only guesses and imported records must still be reviewed.
+ const strongLocallyIndexed=item?.userAdjusted!==true&&
+   item?.localAnalyzed===true&&item?.indexingLevel==='specific-type'&&
+   validText(item?.indexedAt,64)&&item?.scanFailed!==true&&
+   item?.saveFailed!==true;
+ const classified=Boolean(item?.userAdjusted===true||detailsConfirmed||strongLocallyIndexed);
+ return classified&&item.requiresOwnershipConfirmation!==true&&
    item.possibleDuplicate!==true&&item.colorSource!=='photo-estimate';
 }
 export async function indexAuthenticatedSavedCloset(snapshot,session,{getCurrentSession}={}){
@@ -98,7 +108,7 @@ export async function indexAuthenticatedSavedCloset(snapshot,session,{getCurrent
   },{ownerId:session.ownerId});
   byId.set(record.id,Object.freeze({...record,originalOutfitGroup:group,
    sourceFrom:item.originalPhoto?.image?'original-outfit-photo':'stored-single-garment-photo',
-   categoryFrom:'user-confirmed-existing-closet',
+   categoryFrom:item.userAdjusted===true||item.confirmedDetails?.category===item.category&&item.confirmedDetails?.itemType===item.itemType?'user-reviewed-existing-closet':'strong-multicheck-auto-indexed',
    photographic3DReconstructionApproved:false}));
  }
  return Object.freeze({ownerId:session.ownerId,generation:session.generation,
