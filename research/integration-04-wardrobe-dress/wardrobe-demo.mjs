@@ -82,6 +82,11 @@ function safeControls(){
  const enabled=ok&&viewerReady;
  for(const id of ['front','side','back','zin','zout','turn','angle'])$(id).disabled=!enabled;
  $('model').disabled=!ok;
+ const verifiedDress=enabled&&!!last3D&&
+  bound?.indexed?.byId?.get(slots.top)?.category==='Dresses'&&
+  last3D.originalPhotoSHA256s?.dress===SYNTHETIC_SOURCES10.dress.sha&&
+  new URLSearchParams(location.search).get('motion')==='after';
+ for(const id of ['sway','sway-back','reset-sway'])$(id).disabled=!verifiedDress;
 }
 function updateCards(){
  const container=$('items');container.replaceChildren();
@@ -259,7 +264,8 @@ async function initViewer(){
    photoDenimRearDrape73:true,photoDenimCalfHang74:true,
    photoDenimFolds75:true,photoDenimContinuity76:true,photoDenimContactAudit77:true,
    photoDenimKneePose78:true,
-    photoDenimFlex79:new URLSearchParams(location.search).get('flex79')==='after',dressMobile74:true
+    photoDenimFlex79:new URLSearchParams(location.search).get('flex79')==='after',dressMobile74:true,
+    skirtSecondaryMotion01:new URLSearchParams(location.search).get('motion')==='after'
   });
   canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();
    if(token!==bootToken)return;
@@ -331,6 +337,9 @@ $('angle').addEventListener('input',()=>{if(!viewerReady)return;
 $('zin').addEventListener('click',()=>{if(viewerReady){app.zoom(.84);interactions++;}});
 $('zout').addEventListener('click',()=>{if(viewerReady){app.zoom(1.18);interactions++;}});
 $('turn').addEventListener('click',()=>{if(viewerReady){app.setSpin(!app.getState().spinEnabled);interactions++;}});
+ for(const [id,action] of [['sway','left'],['sway-back','right'],['reset-sway','reset']]){
+  $(id).addEventListener('click',()=>{window.ccWardrobeSkirtMotion01(action);interactions++;});
+ }
 window.ccWardrobe10Diagnostics=()=>{
  const state=app?.getState();
  return {account:current().ownerId,generation:current().generation,
@@ -342,6 +351,8 @@ window.ccWardrobe10Diagnostics=()=>{
   sourceVerified,viewerReady,figure:state?.kind??null,bones:state?.stats?.bones??0,
   viewerMode:last3D?'verified-3d':'original-photo-2d',
    outfitMode:state?.outfit?.mode||'none',realDress:state?.outfit?.dress||null,
+    skirtMotion:state?.outfit?.fabricMotion||null,skirtMotionActive:state?.skirtMotionActive||false,
+    skirtMotionEnabled:state?.skirtMotionEnabled||false,
    dressOriginalSHA256:dressCandidate?.sourceSHA256||null,
   fallbackVisible:$('photoFallback').dataset.visible==='true',
   displayed3DSources:last3D?.originalPhotoSHA256s||null,
@@ -381,6 +392,20 @@ window.ccWardrobeFlexPose=next=>{
   flexChangedVertices:p.denimFlexChangedVertices79||0,
   flexActualBoundedShift:p.denimFlexActualBoundedShift79||0,
   releaseAuthorized:false};
+};
+// This function intentionally provides NO access to arbitrary geometry or accounts.
+window.ccWardrobeSkirtMotion01=action=>{
+ const verified=authorized()&&viewerReady&&!!last3D&&
+  bound.indexed.byId.get(slots.top)?.category==='Dresses'&&
+  last3D.originalPhotoSHA256s?.dress===SYNTHETIC_SOURCES10.dress.sha&&
+  app.getState().stats?.bones===163&&app.getState().outfit?.mode==='dress'&&
+  new URLSearchParams(location.search).get('motion')==='after';
+ if(!verified)throw Error('Current owner, exact source photographed dress, 163-bone rig and motion opt-in required');
+ if(!['left','right','reset'].includes(action))throw Error('Only bounded dress movement or exact reset permitted');
+ const result=action==='reset'?app.resetFabricMotion01():app.kickFabricMotion01(action==='left'?1:-1);
+ return {account:current().ownerId,generation:current().generation,
+  dressSHA:SYNTHETIC_SOURCES10.dress.sha,action,motion:result,
+  genuine163BoneDress:true,releaseAuthorized:false,collisionCertified:false};
 };
 window.ccWardrobe10Test=Object.freeze({
  select,changeAccount,logout,
