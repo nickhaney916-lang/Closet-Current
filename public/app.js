@@ -155,8 +155,12 @@ function difference(a,b){if(!a||!b)return 255;let total=0;for(let i=0;i<a.length
 function snap(){if(!video.videoWidth||video.readyState<2)throw Error('The camera has not provided a usable frame yet.');const scale=Math.min(1,2048/Math.max(video.videoWidth,video.videoHeight));canvas.width=Math.max(1,Math.round(video.videoWidth*scale));canvas.height=Math.max(1,Math.round(video.videoHeight*scale));canvas.getContext('2d').drawImage(video,0,0,canvas.width,canvas.height);return canvas.toDataURL('image/jpeg',.94);}
 function beep(){if(!$('sound').checked||!audio)return;try{const o=audio.createOscillator(),g=audio.createGain();o.frequency.value=740;g.gain.value=.04;o.connect(g);g.connect(audio.destination);o.start();o.stop(audio.currentTime+.12);}catch{}}
 function candidate(image,options={}){
- if([...items,...batch].some(item=>item.image===image)){if(typeof recordDeviceEvent==='function')recordDeviceEvent('exact_duplicate_skipped');message('Exact duplicate skipped. Show the next garment.');return false;}
+ const sourceSha256=typeof options.sourceSha256==='string'&&/^[a-f0-9]{64}$/.test(options.sourceSha256)?options.sourceSha256:null;
+ // A whole-outfit source legitimately produces several individual records.
+ // Hash deduplication applies only to single-item imports in this account.
+ if([...items,...batch].some(item=>item.image===image||(!options.outfitSourceId&&!item.outfitSourceId&&sourceSha256&&item.sourceSha256===sourceSha256))){if(typeof recordDeviceEvent==='function')recordDeviceEvent('exact_duplicate_skipped');message('Exact duplicate skipped. Show the next garment.');return false;}
  const item=normalizeClothing({id:crypto.randomUUID(),image,name:'',category:'Uncategorized',color:'',notes:'',localStatus:'Reading photo…'});
+ if(sourceSha256)item.sourceSha256=sourceSha256;
  if(typeof recordDeviceEvent==='function')recordDeviceEvent('photo_queued');
  if(options.outfitSourceId){item.outfitSourceId=options.outfitSourceId;item.requiresOwnershipConfirmation=false;item.segmentHint=options.segmentHint;item.recognitionPhoto=options.recognitionPhoto;item.originalPhoto=options.originalPhoto;item.cropBounds=options.cropBounds;if(options.colorEstimate){Object.assign(item,ClothingDetails.fillColor(item,options.colorEstimate));if(item.colorSource==='photo-estimate')item.colorMethod='garment-mask';}}
  batch.push(item);sessionCapturedIds.add(item.id);persistDraft();session++;$('sessionCount').textContent=session;$('reviewCount').textContent=batch.length;$('lastCaptureImage').src=image;$('lastCaptureImage').hidden=false;
@@ -382,7 +386,7 @@ async function importClothingPhotos(files){
  if(files.length>20)return message('Choose up to 20 clothing photos per batch.');
  stopCamera();busy=true;controls(true);session=0;
  try{
-  const result=await readPhotoBatch(files,photoToJPEG,(image,file)=>{const accepted=candidate(image);if(accepted){const item=batch.at(-1);if(item)item.importFilename=file.name;}return accepted;});
+  const result=await readPhotoBatch(files,photoToJPEG,(image,file)=>{const sourceSha256=await sourcePhotoSha256(file);const accepted=candidate(image,{sourceSha256});if(accepted){const item=batch.at(-1);if(item)item.importFilename=file.name;}return accepted;});
   if(typeof window!=='undefined')window.__lastPhotoImportResult=result;
   if(result.added){switchView('review');message(result.errors.length?result.errors.join('; '):'');}
   else message(result.errors.length?'No photos could be imported. '+result.errors.join('; '):'Exact duplicate photos were skipped; they are already in your closet or review batch.');
