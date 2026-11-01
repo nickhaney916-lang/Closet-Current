@@ -27,6 +27,8 @@ test('actual 163 bones receive animation, fully restore original quaternion byte
   const b=new THREE.Bone();b.name=['pelvis','upperleg01L','upperleg01R','lowerleg01L','lowerleg01R'][i]||'joint'+i;
   bones.push(b);root.add(b);
  }
+ // The synthetic test fixture preserves a genuine thigh-parent/child knee hierarchy.
+ bones[0].add(bones[1],bones[2]);bones[1].add(bones[3]);bones[2].add(bones[4]);
  const mesh=new THREE.SkinnedMesh(new THREE.BoxGeometry(1,2,1),new THREE.MeshBasicMaterial());
  mesh.bind(new THREE.Skeleton(bones));root.add(mesh);
  const initial=bones.map(b=>b.quaternion.toArray());
