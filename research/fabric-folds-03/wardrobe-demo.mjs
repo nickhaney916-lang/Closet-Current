@@ -272,7 +272,9 @@ async function initViewer(){
     photoDenimFlex79:new URLSearchParams(location.search).get('flex79')==='after',dressMobile74:true,
     skirtSecondaryMotion01:['after'].includes(new URLSearchParams(location.search).get('motion'))||
      new URLSearchParams(location.search).get('walk')==='after',
-    poseDrivenDressWalk02:new URLSearchParams(location.search).get('walk')==='after'
+    poseDrivenDressWalk02:new URLSearchParams(location.search).get('walk')==='after',
+    poseConditionedPleats03:new URLSearchParams(location.search).get('walk')==='after'&&
+      new URLSearchParams(location.search).get('folds')==='after'
   });
   canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();
    if(token!==bootToken)return;
@@ -366,6 +368,8 @@ window.ccWardrobe10Diagnostics=()=>{
     skirtMotionEnabled:state?.skirtMotionEnabled||false,
     gait02Enabled:state?.gait02Enabled||false,gait02Active:state?.gait02Active||false,
     gait02State:state?.gait02State||null,
+     posePleats03Enabled:state?.posePleats03Enabled||false,
+     posePleats03State:state?.posePleats03State||null,
    dressOriginalSHA256:dressCandidate?.sourceSHA256||null,
   fallbackVisible:$('photoFallback').dataset.visible==='true',
   displayed3DSources:last3D?.originalPhotoSHA256s||null,
