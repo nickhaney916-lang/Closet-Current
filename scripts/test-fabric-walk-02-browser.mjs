@@ -95,6 +95,7 @@ try{
    const leftView=await shot(p,tag+'-left',rig,width,'left');
    const leftPixels=diff(source,leftView);
    assert.ok(leftPixels>=50,'Real pelvis and knees must visibly affect dressed humanoid: '+leftPixels);
+   const leftContact=width===390?await p.evaluate(()=>window.ccWardrobeGait02('audit')):null;
    const right=await p.evaluate(()=>window.ccWardrobeGait02('right-step'));
    assert.equal(right.result.original163BoneRig,true);assert.ok(right.result.changedBoneCount>=3);
    const rightView=await shot(p,tag+'-right',rig,width,'right');
@@ -116,10 +117,15 @@ try{
     contacts.push({rig,bodyTriangles:measure.result.realBodyTriangles,
      dressTriangles:measure.result.realDressTriangles,
      crossedSegmentsAtRest:base.actualSkinnedDressBodyTriangleCrossings,
+     crossedSegmentsAtLeftStep:leftContact?.result.actualSkinnedDressBodyTriangleCrossings,
      crossedSegmentsAtRightStep:measure.result.actualSkinnedDressBodyTriangleCrossings,
      netNewOrResolvedSegmentCount:measure.result.actualSkinnedDressBodyTriangleCrossings-
       base.actualSkinnedDressBodyTriangleCrossings,
      dynamicallyCollisionCertified:false});
+    assert.ok(leftContact.result.actualSkinnedDressBodyTriangleCrossings<=base.actualSkinnedDressBodyTriangleCrossings,
+     'Left step introduced NEW actual source-dress/body triangle crossings: '+JSON.stringify(contacts.at(-1)));
+    assert.ok(measure.result.actualSkinnedDressBodyTriangleCrossings<=base.actualSkinnedDressBodyTriangleCrossings,
+     'Right step introduced NEW actual source-dress/body triangle crossings: '+JSON.stringify(contacts.at(-1)));
    }
    const reset=await p.evaluate(()=>window.ccWardrobeGait02('reset'));
    assert.equal(reset.result.restoredRealBoneQuaternions,true);
