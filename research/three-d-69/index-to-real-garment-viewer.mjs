@@ -12,6 +12,8 @@ import {requireAnatomicalShirtPreview} from '../three-d-07/rig-shirt-transfer.mj
 import {requireReviewedPhotoPants,PANTS_RESEARCH_SOURCE,PANTS_RESEARCH_SOURCE_SECOND} from '../three-d-30/reviewed-photo-pants.mjs';
 
 const denimSources=Object.freeze([PANTS_RESEARCH_SOURCE,PANTS_RESEARCH_SOURCE_SECOND]);
+export const VERIFIED_PUBLIC_SHIRT_SHA256='cb909d7ad9c3940bfa4db0cc50b2ea7025faebe3dcec8fe80067f900760bba64';
+const verifiedDecodedImages=new WeakMap();
 const hex64=/^[0-9a-f]{64}$/;
 const sameString=(a,b)=>typeof a==='string'&&a.length>0&&a===b;
 const freeze=o=>Object.freeze(o);
@@ -40,7 +42,8 @@ function verifyPlan(plan){
 function verifyShirt(piece,candidate){
  if(piece.category!=='Tops'||piece.anatomicalSlot!=='shirt-or-dress'||
     !sameString(candidate?.id,'commons-0003')||
-    !sameString(piece.sourceSHA256,candidate.sourceSHA256))
+    !sameString(piece.sourceSHA256,candidate.sourceSHA256)||
+    candidate.sourceSHA256!==VERIFIED_PUBLIC_SHIRT_SHA256)
   throw Error('Indexed top does not match exact reviewed photographed shirt source');
  requireAnatomicalShirtPreview(candidate,{acknowledged:true});
  if(!candidate.original||!candidate.cutout||
@@ -80,22 +83,24 @@ export function prepareIndexedGarmentsFor3D(plan,{shirtCandidate=null,pantsCandi
  if(top)verifyShirt(top,shirtCandidate);
  if(bottom)verifyPants(bottom,pantsCandidate);
  const mode=top&&bottom?'shirt-pants':top?'shirt':'pants';
- return freeze({
+ const prepared=freeze({
   status:'source-bound-3d-ready-for-provisional-preview',
   ownerId:plan.ownerId,generation:plan.generation,
   mode,originalIndexedIds:freeze([top?.itemId,bottom?.itemId].filter(Boolean)),
   sourceSHA256s:freeze({...(top?{top:top.sourceSHA256}:{}),...(bottom?{bottom:bottom.sourceSHA256}:{})}),
   // Actual loaded image-bearing candidates never appear in logged JSON.
-  candidateShirt:top?shirtCandidate:null,candidatePants:bottom?pantsCandidate:null,
+  // Real decoded source photos are retained only in a private WeakMap.
   reviewedBenchmarkAssets:true,originalFrontOnly:true,
   originalUnphotographedBack:'neutral-fabric-no-invented-details',
   sourcePhotosNotModified:true,actual3DMeshReady:true,
   certifiedHumanAppearance:false,physicalPhoneAccepted:false,
   releaseAuthorized:false
  });
+ verifiedDecodedImages.set(prepared,freeze({shirt:top?shirtCandidate:null,pants:bottom?pantsCandidate:null}));
+ return prepared;
 }
 export function applyIndexed3DSelection(viewer,prepared,{checkCurrentSession}={}){
- if(!prepared||prepared.status!=='source-bound-3d-ready-for-provisional-preview'||
+ if(!prepared||!verifiedDecodedImages.has(prepared)||prepared.status!=='source-bound-3d-ready-for-provisional-preview'||
     !prepared.actual3DMeshReady||prepared.releaseAuthorized!==false)
   throw Error('Actual approved source-bound 3D garment or original-photo fallback required');
  if(typeof checkCurrentSession!=='function')throw Error('Live authenticated session check required');
@@ -107,21 +112,20 @@ export function applyIndexed3DSelection(viewer,prepared,{checkCurrentSession}={}
  const state=viewer.getState();
  if(state?.stats?.bones!==163||state.loaded!==true||state.releaseAuthorized!==false)
   throw Error('Original licensed 163-joint anatomical figure not loaded');
- if(prepared.candidateShirt)requireAnatomicalShirtPreview(prepared.candidateShirt,{acknowledged:true});
- if(prepared.candidatePants)requireReviewedPhotoPants(prepared.candidatePants,{reviewed:true});
- const fitted=viewer.applyOutfit(prepared.mode,prepared.candidateShirt,{
-  reviewed:!!prepared.candidateShirt,
-  pantsCandidate:prepared.candidatePants,
-  pantsReviewed:!!prepared.candidatePants
+ const {shirt,pants}=verifiedDecodedImages.get(prepared);
+ if(shirt)requireAnatomicalShirtPreview(shirt,{acknowledged:true});
+ if(pants)requireReviewedPhotoPants(pants,{reviewed:true});
+ viewer.applyOutfit(prepared.mode,shirt,{
+  reviewed:!!shirt,pantsCandidate:pants,pantsReviewed:!!pants
  });
  const actual=viewer.getState().outfit;
  if(actual?.mode!==prepared.mode||
-    (prepared.candidateShirt&&!actual.shirt)||
-    (prepared.candidatePants&&(
+    (shirt&&!actual.shirt)||
+    (pants&&(
       actual.pants?.photoApplied!==true||
       actual.pants?.sourceSHA256!==prepared.sourceSHA256s.bottom)))
   throw Error('Real skinned garment did not apply genuine photographed original; HOLD');
- if(prepared.candidateShirt&&
+ if(shirt&&
     actual.shirt?.sourceSHA256!==prepared.sourceSHA256s.top)
   throw Error('Original photographed shirt image source was substituted; HOLD');
  // Do not return original decoded JPEG image objects to the host app.
