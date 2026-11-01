@@ -23,7 +23,8 @@ export const MOTION01=Object.freeze({
 });
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 const smooth=(a,b,v)=>{const q=clamp((v-a)/(b-a),0,1);return q*q*(3-2*q);};
-const protectedAttributes=['dressRest','skinIndex','skinWeight','uv'];
+// Dress projects its original JPEG via protected dressRest shader coordinates, not an explicit UV attribute.
+const protectedAttributes=['dressRest','skinIndex','skinWeight'];
 const valid=x=>typeof x==='number'&&Number.isFinite(x);
 
 /** Independent, fixed-step critically bounded damped spring, deterministic even on slow mobile frames. */
