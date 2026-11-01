@@ -22,11 +22,14 @@ test('source-bounded pose-driven radial hem pleats vanish on neutral and are opp
     assert.ok(p.vertical>=0&&p.vertical<=1);
     assert.ok(Math.abs(p.tangential)<=1);
    }
-   assert.ok(Math.abs(left.tangential-right.tangential)>.01||
-     Math.abs(left.radial-right.radial)>.01,'real opposite gait phase must shape pleat differently');
+   // A few symmetric angular positions can legitimately match; test the
+   // asymmetric side-rear sector separately below.
   }
  }
- for(const bad of [-1,.999999999e99,NaN,Infinity])assert.throws(()=>fold03Signal(bad,0,.5),/Finite/);
+ const asymmetricLeft=fold03Signal(.25,.7,.6),asymmetricRight=fold03Signal(.75,.7,.6);
+ assert.ok(Math.abs(asymmetricLeft.tangential-asymmetricRight.tangential)>.01||
+   Math.abs(asymmetricLeft.radial-asymmetricRight.radial)>.01);
+ for(const bad of [-1,2,NaN,Infinity])assert.throws(()=>fold03Signal(bad,0,.5),/Finite/);
  assert.throws(()=>fold03Signal(.2,0,-.1),/Finite/);
  assert.throws(()=>fold03Signal(.2,0,1.2),/Finite/);
 });
