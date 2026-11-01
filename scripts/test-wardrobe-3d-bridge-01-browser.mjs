@@ -91,8 +91,10 @@ try{
      window.ccWardrobe10Diagnostics().viewerReady,{timeout:180000});
    }
    for(const denim of ['public','second']){
-    // A account's first/second denim correspond to the pinned candidates.
-    if(denim==='second')await p.locator('#swap').click();
+    // Selection intentionally persists across figure switches. Ensure the
+    // requested real source identity BEFORE testing each independent view.
+    if((await diag(p)).displayed3DSources?.bottom!==SRC[denim])
+     await p.locator('#swap').click();
     await p.waitForTimeout(700);
     const observed=await diag(p);
     if(observed.displayed3DSources?.bottom!==SRC[denim])
