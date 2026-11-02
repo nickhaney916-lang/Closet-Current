@@ -1,0 +1,13 @@
+# SHIRT-FLOW-05 — true photographed garment temporal relaxation (DRAFT HOLD)
+
+Base PR #510 SHA `b2476f36218ca828cc01a5e62e55e1b15d828174`, original independently verified no-deploy CI #41354147333 SUCCESS. Repo `nickhaney916-lang/Closet-Current`.
+
+**New aim:** source-photographed 163-bone anatomical shirt's 3D yoke/chest/waist cloth should visibly **continue settling at a fixed body pose** after arm movement rather than being frozen by static pose keyframes. The isolated research module uses a bounded second-order damped spring with each step exactly 1/60 of a simulated second. Its restoring force and impulse respond only to observed original 17 sampled skeletal pose changes; each step rebuilds the original source geometry from the F04 canonical base, and true BVH body collision correction is performed again on moved shirt triangles. All temporary temporal state stays in RAM and is reset on original pose 0, new garment or controller disposal.
+
+**Preserved:** original JPEG SHA, RGB and mask, source projection panelPosition/panelNormal, optional UV unchanged, skin indices/weights, original 163-bone figures, owner verified source photo review, no online processing, and source reset zero pixel difference. No underhanded images/texture painting and no generated photographic back.
+
+**Opt in:** localhost research photo display, `construction=after&sleeve44=after&caps45=after&contour46=after&volume47=after&collar48=after&rear53=after&round54=after&hang55=after&sweep=after&crisp58=after&move56=after&shirtFlow=after&smoothFlow=after&fabricFlow=after&torsoFlow=after&timeFlow=after`; select reviewed original photo, then use `window.ccShirtFlow05(0.5)` and repeat the **same** call to see cloth settling with the body frozen. F04 remains available as `timeFlow=before`.
+
+**Strict required CI:** 17 anatomical phases × 2 genuine rigs × 3 mobile widths + original before/after plus **6 added identical-skeleton-pose cloth settling WebGL screenshots** (132 genuine WebGL screenshots total); six original exact 0-pixel resets, six body-pose matched F04/F05 A/B; all actual skinned body triangle postcontact count zero; source SHA unchanged; isolated research branch only; inherited 3D55/3D56 bilateral sleeve/cuff seam tests; strict immutable photo/UV/skin tests. Final proof must be from full exact final HEAD SHA CI success, images inspected, not merely passing scripts or submitting PR.
+
+**Scope limitations:** research-keyed bounded spring approximation; NOT unrestricted cloth physics, continuous pose swept volume collision, validated real-time frame rate, actual Android/iPhone hardware testing, or human 10/10 photorealism. Family Alpha issue #255 HOLD; PR DRAFT; no merge, production deploy, account data, billing or other apps.
