@@ -198,7 +198,8 @@ try{
  }
  assert.equal(scenarios.length,6);
  assert.equal(ab.length,6);
- assert.equal(captures.length,126);
+ assert.equal(captures.length,132);
+ assert.equal(settling.length,6);
  assert.deepEqual(errors,[]);
  assert.deepEqual(outside,[]);
  const results={screenshots:captures.length,actualGenuineWebGLPhotographedShirtFrames:132,
