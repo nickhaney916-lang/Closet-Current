@@ -4,7 +4,7 @@ import {readFileSync} from 'node:fs';
 import {sourceDenimCuffRelease08,sourceDenimTaperWeights07,
  createPhotoDenimStaticFitter06,settleDenimRest06} from '../research/denim-fit-06/static-source-denim-fit.mjs';
 test('F08 measured original calf geometry has smooth cuff entry and exit, not new folds',()=>{
- const values=[0,.08,.17,.18,.24,.34,.45,.58,.70,.84,.90,1]
+ const values=[0,.10,.24,.28,.32,.38,.50,.70,.80,.92,.95,1]
   .map(sourceDenimCuffRelease08);
  assert.equal(values[0],0);assert.equal(values.at(-1),0);
  assert.deepEqual(values.slice(0,4),[0,0,0,0]);
@@ -13,10 +13,12 @@ test('F08 measured original calf geometry has smooth cuff entry and exit, not ne
  assert.ok(values[8]>0&&values[8]<1);
  assert.equal(values[9],0);assert.equal(values[10],0);
  assert.ok(values.every(x=>x>=0&&x<=1));
+ for(const phase of [0,.05,.12,.20,.26,.28])assert.equal(sourceDenimCuffRelease08(phase),0,
+  'Original F07 hem taper must not be canceled by new upper calf fairing');
  for(const x of [-.01,1.01,NaN,Infinity])
   assert.throws(()=>sourceDenimCuffRelease08(x),/finite within observed geometry/);
- assert.ok(sourceDenimCuffRelease08(.1801)<.001,'Cuff must not pinch where source side/rear mesh starts');
- assert.ok(sourceDenimCuffRelease08(.8399)<.001,'Cuff must not form a ledge at upper source rows');
+ assert.ok(sourceDenimCuffRelease08(.2801)<.001,'Cuff must not pinch where source side/rear mesh starts');
+ assert.ok(sourceDenimCuffRelease08(.9199)<.001,'Cuff must not form a ledge at upper source rows');
 });
 test('F08 defaults off and cannot run without approved photographed F07 denim silhouette',()=>{
  assert.throws(()=>createPhotoDenimStaticFitter06({}, {},{sourceFairing08:true}),
