@@ -111,10 +111,10 @@ export function createPhotoDenimStaticFitter06(pants,root,{sourceSilhouette07=fa
   let changed=0,max=0;const perLeg=[0,0],q=new T.Vector3();
   let kneeMoved=0,hemMoved=0,kneeEaseTotal=0,hemEaseTotal=0,sourceKneeRearGroups=0;
   for(const row of eligible){
-   const kneeRest=sourceSilhouette07?.016*row.kneeEase:0;
-   const hemRest=sourceSilhouette07?.0015*row.hemEase:0;
+   const kneeRest=sourceSilhouette07 ? .016*row.kneeEase : 0;
+   const hemRest=sourceSilhouette07 ? .0015*row.hemEase : 0;
    const dy=-eq.meters*.22*row.blend-
-     (sourceSilhouette07?.0025*row.kneeEase:0);
+     (sourceSilhouette07 ? .0025*row.kneeEase : 0);
    // A rounded, loose knee break supported by the real 3D75 folds, but a
    // closer ankle hem. The larger knee-relative envelope gives the JEANS
    // an actual leg profile instead of an equal-width geometric tube.
