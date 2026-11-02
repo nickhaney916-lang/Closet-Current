@@ -75,7 +75,7 @@ jobs:
           assert.equal(r.scenarios.length,6);
           assert.ok(r.scenarios.every(x=>x.poseCount===17&&x.resetDifferentPixels===0&&x.genuineSkinnedSleeveContactZero));
           assert.equal(r.sameBonePosePhotoMaterialOnlyAB.length,6);
-          assert.ok(r.sameBonePoseTorsoPlusTemporalAB.every(x=>x.sourcePhotoMaterialOnlyChangedPixels>=12));
+          assert.ok(r.sameBonePosePhotoMaterialOnlyAB.every(x=>x.sourcePhotoMaterialOnlyChangedPixels>=12));
           assert.equal(r.exactSourcePoseResetCount,6);
           assert.equal(r.sourceTrueTemporalSettlingFrames,6);
           assert.equal(r.trueSourceReviewedAndHashBound,true);
