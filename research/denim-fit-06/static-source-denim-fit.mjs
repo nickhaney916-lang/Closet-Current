@@ -26,8 +26,8 @@ export function sourceDenimTaperWeights07(phase){
  // smooth(start,end,value): measured lower calf should be near zero knee ease,
  // while actual knee-side rear vertices receive a visible nonzero gentle break.
  return Object.freeze({
-  kneeEase:smooth(.05,.35,phase)*(1-.40*smooth(.86,1.01,phase)),
-  hemEase:1-smooth(.18,.36,phase)
+  kneeEase:smooth(.10,.60,phase),
+  hemEase:1-smooth(.25,.70,phase)
  });
 }
 export function settleDenimRest06(target=DENIM_FIT06.targetMeters){
@@ -134,13 +134,13 @@ export function createPhotoDenimStaticFitter06(pants,root,{sourceSilhouette07=fa
   let changed=0,max=0;const perLeg=[0,0],q=new T.Vector3();
   let kneeMoved=0,hemMoved=0,kneeEaseTotal=0,hemEaseTotal=0,sourceKneeRearGroups=0;
   for(const row of eligible){
-   const kneeRest=sourceSilhouette07 ? .016*row.kneeEase : 0;
-   const hemRest=sourceSilhouette07 ? .0015*row.hemEase : 0;
-   const dy=-eq.meters*.22*row.blend-
-     (sourceSilhouette07 ? .0025*row.kneeEase : 0);
-   // A rounded, loose knee break supported by the real 3D75 folds, but a
-   // closer ankle hem. The larger knee-relative envelope gives the JEANS
-   // an actual leg profile instead of an equal-width geometric tube.
+   const kneeRest=sourceSilhouette07 ? .0015*row.kneeEase : 0;
+   // Fit the lower source-neutral calf closer to its anatomical form.
+   // Do NOT manufacture a rounded 'knee bubble' or move the JPEG front.
+   const hemRest=sourceSilhouette07 ? -.014*row.hemEase : 0;
+   const dy=-eq.meters*.22*row.blend;
+   // Smooth lower-calf taper into the original real sewn upper knee geometry.
+   // The source photo front, authentic pattern and cloth folds remain intact.
    const radius=eq.meters*.92*row.blend+kneeRest+hemRest;
    const dx=radius*row.radialX,dz=radius*row.radialZ,
      shift=Math.hypot(dx,dy,dz);
