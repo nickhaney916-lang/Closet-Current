@@ -1,4 +1,4 @@
-name: DENIM-FAIRING-08 Original Photo Side/Rear Cuff Shape + 3D HOLD
+name: DENIM-ANGLE-09 Genuine Source Photo Multiview Front Rear + 3D HOLD
 on:
   pull_request:
     paths:
@@ -11,6 +11,7 @@ on:
       - 'tests/denim-fit-06.test.mjs'
       - 'tests/denim-silhouette-07.test.mjs'
       - 'tests/denim-fairing-08.test.mjs'
+      - 'tests/denim-angle-09.test.mjs'
       - '.github/workflows/fabric-sweep-04-no-deploy.yml'
 permissions:
   contents: read
@@ -34,7 +35,7 @@ jobs:
           git merge-base --is-ancestor 7716c3876284bfa474f9964e7d5b0e69f629d79b HEAD
           git diff --name-only 7716c3876284bfa474f9964e7d5b0e69f629d79b HEAD | while IFS= read -r path; do
             case "$path" in
-              research/fabric-sweep-04/*|research/dress-fit-05/*|research/denim-fit-06/*|scripts/test-fabric-sweep-04-browser.mjs|tests/fabric-sweep-04.test.mjs|tests/dress-fit-05.test.mjs|tests/denim-fit-06.test.mjs|tests/denim-silhouette-07.test.mjs|tests/denim-fairing-08.test.mjs|.github/workflows/fabric-sweep-04-no-deploy.yml) ;;
+              research/fabric-sweep-04/*|research/dress-fit-05/*|research/denim-fit-06/*|scripts/test-fabric-sweep-04-browser.mjs|tests/fabric-sweep-04.test.mjs|tests/dress-fit-05.test.mjs|tests/denim-fit-06.test.mjs|tests/denim-silhouette-07.test.mjs|tests/denim-fairing-08.test.mjs|tests/denim-angle-09.test.mjs|.github/workflows/fabric-sweep-04-no-deploy.yml) ;;
               *) echo "UNAUTHORIZED sibling or production edit: $path"; exit 1 ;;
             esac
           done
@@ -50,8 +51,9 @@ jobs:
           node --check research/denim-fit-06/static-source-denim-fit.mjs
           node --check tests/denim-silhouette-07.test.mjs
           node --check tests/denim-fairing-08.test.mjs
+          node --check tests/denim-angle-09.test.mjs
           node --check scripts/test-fabric-sweep-04-browser.mjs
-          node --test tests/denim-fairing-08.test.mjs tests/denim-silhouette-07.test.mjs tests/denim-fit-06.test.mjs tests/dress-fit-05.test.mjs tests/fabric-sweep-04.test.mjs tests/fabric-folds-03.test.mjs tests/fabric-walk-02.test.mjs tests/fabric-motion-01.test.mjs tests/integration-04-wardrobe-dress.test.mjs tests/dress-mobile-01.test.mjs tests/three-d-78-original-anatomical-knee-poses.test.mjs
+          node --test tests/denim-angle-09.test.mjs tests/denim-fairing-08.test.mjs tests/denim-silhouette-07.test.mjs tests/denim-fit-06.test.mjs tests/dress-fit-05.test.mjs tests/fabric-sweep-04.test.mjs tests/fabric-folds-03.test.mjs tests/fabric-walk-02.test.mjs tests/fabric-motion-01.test.mjs tests/integration-04-wardrobe-dress.test.mjs tests/dress-mobile-01.test.mjs tests/three-d-78-original-anatomical-knee-poses.test.mjs
       - name: Generate unchanged source photograph / original garment segmentation
         run: |
           node scripts/build-three-d-31-jeans-proposal.mjs
@@ -207,6 +209,47 @@ jobs:
           assert.equal(r.productionModified,false);
           assert.equal(r.familyAlpha,'HOLD');
           CHECK
+      - name: Verify genuine multi-angle source-photo WebGL male/female F07 vs F08, exact resets and no-release
+        run: |
+          node --input-type=module <<'CHECK'
+          import assert from 'node:assert/strict';
+          import {readFileSync,readdirSync} from 'node:fs';
+          const dir='benchmark/denim-angle-09';
+          const r=JSON.parse(readFileSync(dir+'/results.json','utf8'));
+          assert.equal(r.actualOriginalDenimAngleComparisons.length,16);
+          assert.equal(r.actualWebGLAngleFrames,32);
+          assert.equal(readdirSync(dir).filter(x=>x.endsWith('.png')).length,32);
+          assert.deepEqual(r.cameraAnglesDegrees,[0,45,135,180]);
+          assert.deepEqual(r.genuine163BoneFigures,['female','male']);
+          assert.equal(r.originalPhotoSources,2);
+          assert.equal(new Set(r.actualOriginalDenimAngleComparisons.map(x=>x.sourceDenim)).size,2);
+          for(const a of r.actualOriginalDenimAngleComparisons){
+           assert.equal(a.width,390);
+           assert.ok(r.cameraAnglesDegrees.includes(a.angle));
+           assert.equal(a.sameConfirmedOriginalSource,true);
+           assert.equal(a.sameReal163BoneAnatomy,true);
+           assert.equal(a.sourceFrontUVAndSHAProtected,true);
+           assert.equal(a.noNewBVHContacts,true);
+           assert.equal(a.sourcePhotographyRearNotInferred,true);
+           assert.equal(a.actualBrowserWebGL,true);
+           assert.ok(Number.isSafeInteger(a.changedPixels)&&a.changedPixels>=0);
+           assert.equal(a.releaseAuthorized,false);
+          }
+          assert.equal(r.originalPhotographedFrontUVAndSHAUnmodified,true);
+          assert.equal(r.synthesizedUnseenRearPhoto,false);
+          assert.equal(r.sourceAccountIsolated,true);
+          assert.equal(r.humanPhotorealismAccepted,false);
+          assert.equal(r.physicalPhoneApproved,false);
+          assert.equal(r.releaseAuthorized,false);
+          assert.equal(r.productionModified,false);
+          assert.equal(r.familyAlpha,'HOLD');
+          CHECK
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: DENIM-ANGLE-09-F07-F08-REAL-WEBGL-32-FRAMES-HOLD
+          path: benchmark/denim-angle-09/
+          if-no-files-found: error
       - uses: actions/upload-artifact@v4
         if: always()
         with:
