@@ -28,7 +28,7 @@ const server=createServer(async(req,res)=>{
 });
 await new Promise(ok=>server.listen(0,'127.0.0.1',ok));
 const host='http://127.0.0.1:'+server.address().port;
-const screenshots=[],cases=[],contacts=[],sweeps=[],frozenDress=[],frozenDenim=[],denimSilhouetteComparisons=[],denimFairing08Comparisons=[],denimAngle09Comparisons=[],javascriptErrors=[],nonLocalRequests=[];
+const screenshots=[],cases=[],contacts=[],sweeps=[],frozenDress=[],frozenDenim=[],denimSilhouetteComparisons=[],denimFairing08Comparisons=[],denimAngle09Comparisons=[],pointerRotation11=[],javascriptErrors=[],nonLocalRequests=[];
 function monitor(page){
  page.on('pageerror',error=>javascriptErrors.push(String(error.message)));
  page.on('request',r=>{
@@ -77,6 +77,7 @@ try{
  await mkdir('benchmark/denim-silhouette-07',{recursive:true});
  await mkdir('benchmark/denim-fairing-08',{recursive:true});
   await mkdir('benchmark/denim-angle-09',{recursive:true});
+ await mkdir('benchmark/source-rotate-11',{recursive:true});
  for(const width of [320,390,430]){
   const ctx=await browser.newContext({viewport:{width,height:900},deviceScaleFactor:1,isMobile:true,hasTouch:true});
   const p=await ctx.newPage();monitor(p);
@@ -442,6 +443,43 @@ try{
         'F07 original photographed garment lost its source pose after angle sweep');
       assert.ok(diff(await raw(returned08),await raw(frozen))<=2,
         'F08 photographed garment shifted after real 360 navigation');
+      // F11: real canvas pointer drag, not a programmatic view preset.
+      // Exercise the photo-provenance change event on a genuine 163-bone
+      // original-denim mobile WebGL canvas. Keep existing frame counts intact.
+      if(width===390&&rig==='female'&&denimIndex===0){
+       await bp.evaluate(()=>window.ccWardrobe10View(0));
+       await bp.waitForFunction(()=>window.ccWardrobe10Diagnostics()?.photoCoverageViewClass==='front-photo');
+       const front11=await bp.locator('#avatar').screenshot();
+       const canvas11=await bp.locator('#avatar').boundingBox();
+       assert.ok(canvas11&&canvas11.width>100&&canvas11.height>100,
+        'A visible real original-source WebGL canvas is required for drag QA');
+       const y11=canvas11.y+canvas11.height*.5;
+       await bp.mouse.move(canvas11.x+canvas11.width*.78,y11);
+       await bp.mouse.down();
+       await bp.mouse.move(canvas11.x+canvas11.width*.18,y11,{steps:15});
+       await bp.mouse.up();
+       await bp.waitForFunction(()=>{
+        const state=window.ccWardrobe10Diagnostics?.();
+        return state?.sourcePhotoCoverageVisible===true&&
+         ['mixed-photo-and-model','unphotographed-rear'].includes(state.photoCoverageViewClass);
+       },null,{timeout:10000});
+       const rotated11=await bp.locator('#avatar').screenshot();
+       const drag11=await diag(bp),pixels11=diff(await raw(front11),await raw(rotated11));
+       assert.ok(pixels11>=50,'Real source-photographed 3D canvas must rotate with the drag');
+       assert.equal(drag11.account,'fixture-account-a');
+       assert.equal(drag11.bones,163);
+       assert.equal(drag11.displayed3DSources?.bottom,sourceDenim);
+       assert.equal(drag11.verifiedOriginalRearPhotograph,false);
+       assert.equal(await bp.locator('#photoCoverage').getAttribute('data-rear-photo-verified'),'false');
+       pointerRotation11.push({width,rig,denimIndex,
+        input:'Playwright real canvas mouse drag (not programmatic camera preset)',
+        pixelsChangedOnRealWebGL: pixels11,
+        initialClass:'front-photo',draggedViewClass:drag11.photoCoverageViewClass,
+        sourceSHA256:sourceDenim,authenticatedOwner:'fixture-account-a',
+        original163BoneAnatomy:true,unseenRearPhotographCertified:false,
+        originalFrontSourcePreserved:true,physicalPhoneTested:false,
+        releaseAuthorized:false});
+      }
       await bp.evaluate(()=>window.ccWardrobe10Test.logout());
       assert.equal(await bp.locator('#photoCoverage').isVisible(),false);
       assert.equal((await diag(bp)).sourcePhotoCoverageVisible,false);
@@ -475,6 +513,14 @@ try{
  assert.equal(await p.locator('#walk-left').isDisabled(),true);
  assert.equal(await p.evaluate(()=>{try{window.ccWardrobeGait02('play');return false;}catch{return true;}}),true);
  await ctx.close();
+ assert.equal(pointerRotation11.length,1,'Exactly one independent original-photo mobile WebGL drag witness');
+ assert.ok(pointerRotation11[0].pixelsChangedOnRealWebGL>=50);
+ await writeFile('benchmark/source-rotate-11/results.json',JSON.stringify({
+  actualOriginalDenimPointerDrags:pointerRotation11,
+  realMobileBrowserPointerQA:true,realPhysicalPhoneTested:false,
+  modeledRearOnly:true,customerPhotosUsed:false,
+  productionModified:false,releaseAuthorized:false,familyAlpha:'HOLD'
+ },null,2));
  assert.equal(denimAngle09Comparisons.length,16);
  assert.deepEqual([...new Set(denimAngle09Comparisons.map(x=>x.angle))],[0,45,135,180]);
  assert.equal(new Set(denimAngle09Comparisons.map(x=>x.sourceDenim)).size,2);
