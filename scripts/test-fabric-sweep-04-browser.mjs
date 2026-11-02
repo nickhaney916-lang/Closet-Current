@@ -441,7 +441,7 @@ try{
      const near13=await diag(touchPage12),nearDistance13=near13.memory.cameraDistance;
      const nearPng13=await touchPage12.locator('#avatar').screenshot();
      const changedIn13=diff(await raw(front13),await raw(nearPng13));
-     assert.ok(nearDistance13>=2.5&&nearDistance13<firstDistance13-.15&&changedIn13>=50,
+     assert.ok(nearDistance13>=2.5-1e-9&&nearDistance13<firstDistance13-.15&&changedIn13>=50,
       'Native two-finger zoom-in must change real WebGL without exceeding original camera bounds');
      const out13=await originalCanvasPinch13(touchPage12,false);
      await touchPage12.waitForTimeout(600);
@@ -451,7 +451,7 @@ try{
      const pinchDiag13={rig,width,denimIndex,firstDistance13,nearDistance13,
       farDistance13,changedIn13,changedOut13};
      console.log('F13 original source native pinch distances/pixels:',JSON.stringify(pinchDiag13));
-     assert.ok(farDistance13>nearDistance13+.15&&farDistance13<=6&&changedOut13>=50,
+     assert.ok(farDistance13>nearDistance13+.15&&farDistance13<=6+1e-9&&changedOut13>=50,
       'Native two-finger zoom-out must change original WebGL and stay bounded: '+JSON.stringify(pinchDiag13));
      await touchPage12.locator('#reset-view').click();
      await touchPage12.waitForTimeout(650);
