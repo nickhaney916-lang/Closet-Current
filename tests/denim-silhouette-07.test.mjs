@@ -13,18 +13,18 @@ test('F07 uses actual 163-bone knee/ankle sourced, bounded taper and original 3D
   'sourceNeutralKneeRearGroups07:sourceKneeRearGroups','taperAdditionalMean<.008'])
   assert.ok(s.includes(key),'Photo original geometry proof: '+key);
  assert.match(s,/sourceSilhouette07\?silhouette07\.maxShiftMeters:DENIM_FIT06\.maxWorldShiftMeters/);
- assert.match(s,/const kneeRest=sourceSilhouette07 \? \.016\*row\.kneeEase : 0/);
+ assert.match(s,/const hemRest=sourceSilhouette07 \? -\.014\*row\.hemEase : 0/);
 });
 test('Anatomical calf easing follows numeric smooth(start,end,phase) and does not inflate every source ring',()=>{
- const ankle=sourceDenimTaperWeights07(0),lower=sourceDenimTaperWeights07(.20),
-  knee=sourceDenimTaperWeights07(.50),top=sourceDenimTaperWeights07(1);
+ const ankle=sourceDenimTaperWeights07(0),lower=sourceDenimTaperWeights07(.38),
+  knee=sourceDenimTaperWeights07(.75),top=sourceDenimTaperWeights07(1);
  assert.equal(ankle.kneeEase,0);
  assert.equal(ankle.hemEase,1);
  assert.ok(lower.kneeEase>0&&lower.kneeEase<knee.kneeEase);
  assert.ok(lower.hemEase>0&&lower.hemEase<1);
  assert.equal(knee.kneeEase,1);
  assert.equal(knee.hemEase,0);
- assert.ok(top.kneeEase>=.59&&top.kneeEase<=.61);
+ assert.equal(top.kneeEase,1);
  assert.equal(top.hemEase,0);
  for(const v of [-1,1.01,NaN,Infinity])
   assert.throws(()=>sourceDenimTaperWeights07(v),/finite within observed geometry/);
