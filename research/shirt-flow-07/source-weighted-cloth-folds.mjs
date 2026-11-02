@@ -107,7 +107,11 @@ export function shapeSourceWeightedClothFold07(root,shirt){
    // Anchor centreprint/neck/collar; hems at the real garment endpoint;
    // side seams/caps at x>=.305 and neckline at dy>=-.15.
    const sideMask=fade(x,.028,.068,.250,.307);
-   const vertical=fade(dy,sourceHemDy+.010,sourceHemDy+.092,-.27,-.16);
+   // 0 = measured sewn hem, 1 = protected upper shirt/neck contact.
+   const clothHeight=-.16-sourceHemDy;
+   if(clothHeight<.11)throw Error('Original anatomical source garment torso too short for independently shaped cloth folds');
+   const t=(dy-sourceHemDy)/clothHeight;
+   const vertical=fade(t,.03,.14,.86,.98);
    const mask=sideMask*vertical;
    if(mask<.035){locked+=ids.length;continue;}
    const sign=q.x-centerX>=0?1:-1;
@@ -118,9 +122,9 @@ export function shapeSourceWeightedClothFold07(root,shirt){
    const ribbon1=Math.exp(-Math.pow((diagonal+.135)/.055,2));
    const ribbon2=-.68*Math.exp(-Math.pow((diagonal+.047)/.060,2));
    const ribbon3=.72*Math.exp(-Math.pow((diagonal-.092)/.070,2));
-   const waist=fade(dy,sourceHemDy+.032,sourceHemDy+.105,sourceHemDy+.175,sourceHemDy+.255);
-   const chest=fade(dy,sourceHemDy+.125,sourceHemDy+.19,-.34,-.22);
-   const yoke=fade(dy,-.44,-.37,-.24,-.15);
+   const waist=fade(t,.05,.19,.30,.49);
+   const chest=fade(t,.31,.45,.57,.77);
+   const yoke=fade(t,.63,.77,.86,.98);
    const folds=(ribbon1+ribbon2+ribbon3)*(1+.14*Math.sin(x*17+sign*.3));
    const verticalHem=.57*Math.sin(x*34+sign*.4+dy*4)*waist;
    const bow=.36*Math.cos(x*25+sign*.4)*chest;
