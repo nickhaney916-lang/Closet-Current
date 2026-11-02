@@ -38,7 +38,7 @@ const baseParams='construction=after&sleeve44=after&caps45=after&contour46=after
 const state=p=>p.evaluate(()=>window.cc31Diagnostics());
 async function openOriginal(page,kind,enabled=true){
  await page.goto(host+'/research/shirt-flow-08/index.html?'+baseParams+
-  '&move56=after&shirtFlow=after&smoothFlow=after&fabricFlow=after&torsoFlow=after&timeFlow=after&lightFlow=after&foldFlow=after&hemFlow='+(enabled?'after':'before'),
+  '&move56=after&shirtFlow=after&smoothFlow=after&fabricFlow=after&torsoFlow=after&timeFlow=after&lightFlow=after&foldFlow=after&settleFit=after&hemFlow='+(enabled?'after':'before'),
   {waitUntil:'domcontentloaded'});
  try{await page.waitForFunction(()=>window.cc31Diagnostics?.()?.loaded===true,null,{timeout:45000});}
  catch(e){throw Error('Original source showroom not ready: '+JSON.stringify({
@@ -123,9 +123,10 @@ function difference(a,b){
   if(Math.abs(a.data[i]-b.data[i])+Math.abs(a.data[i+1]-b.data[i+1])+Math.abs(a.data[i+2]-b.data[i+2])>24)pixels++;
  return pixels;
 }
-let browser;const settling=[];
+let browser;const settling=[],frozenFits=[];
 try{
  await mkdir(folder,{recursive:true});
+ await mkdir('benchmark/shirt-fit-09',{recursive:true});
  browser=await chromium.launch({headless:true,args:[
   '--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader','--enable-webgl']});
  for(const width of [320,390,430])for(const rig of ['female','male']){
@@ -224,11 +225,53 @@ try{
    await bctx.close();
    await page.evaluate(()=>window.ccShirtFlow08(0));
   }
+  // F09: the physics is an internal fit tool, NOT an animation for users.
+  // Capture genuine photographed garment before and after fixed-step settling,
+  // then prove identical same-pose render after another call and rotation.
+  await page.evaluate(()=>window.ccShirtFlow08(0));
+  await page.evaluate(()=>window.ccShirtFlow08(.5));
+  await page.locator('#side').click();
+  const beforeFreeze=await page.locator('#avatar').screenshot();
+  const proof=await page.evaluate(()=>window.ccShirtFitFreeze09(.5));
+  assert.equal(proof.frozenSourcePhotographed3DMesh,true);
+  assert.equal(proof.bodyTriangleContactVerifiedEachStep,true);
+  assert.equal(proof.sourcePhotoUVAndSkinPreserved,true);
+  assert.equal(proof.sourceSHA256,sha);
+  assert.equal(proof.actualSkinnedBodyContactCount,0);
+  assert.ok(proof.steps>=5&&proof.steps<=96);
+  const fit=await page.locator('#avatar').screenshot();
+  const metrics=(buf)=>sharp(buf).removeAlpha().raw().toBuffer({resolveWithObject:true});
+  await page.evaluate(()=>window.ccShirtFlow08(.5));
+  const same=await page.locator('#avatar').screenshot();
+  const samePixels=difference(await metrics(fit),await metrics(same));
+  assert.equal(samePixels,0,'Frozen original photo 3D pose must not move after repeated fit');
+  await page.locator('#back').click();
+  await page.locator('#side').click();
+  const rotation=await page.locator('#avatar').screenshot();
+  const rotatedPixels=difference(await metrics(fit),await metrics(rotation));
+  assert.ok(rotatedPixels<=2,'Frozen garment must survive 360 view navigation without material drift: '+rotatedPixels);
+  const saved=['before','frozen','same-pose','rotated-back'].map((phase,i)=>({
+    path:'benchmark/shirt-fit-09/'+tag+'-'+phase+'.png',
+    bytes:[beforeFreeze,fit,same,rotation][i]
+  }));
+  for(const entry of saved)await writeFile(entry.path,entry.bytes);
+  frozenFits.push({width,rig,pose:.5,sourceSHA256:sha,steps:proof.steps,
+   samePoseChangedPixels:samePixels,rotationReturnChangedPixels:rotatedPixels,
+   actualBodyTriangleContacts:proof.actualSkinnedBodyContactCount,
+   originalPhotoAndSkinPreserved:proof.sourcePhotoUVAndSkinPreserved,
+   physicalPhoneVerified:false,releaseAuthorized:false});
   await page.locator('#neutral').click();
   assert.equal((await state(page)).outfit.shirt,null);
   assert.equal(await page.evaluate(()=>{try{window.ccShirtFlow08(.5);return false;}catch{return true;}}),true);
   await context.close();
  }
+ await writeFile('benchmark/shirt-fit-09/results.json',JSON.stringify({
+  scenarios:frozenFits,realWebGLFrames:frozenFits.length*4,widths:[320,390,430],
+  rigs:['female','male'],sourcePhotoAndRigPreserved:true,
+  staticAfterFitting:true,fullClothPhysicsCertified:false,
+  physicalPhoneVerified:false,visualPhotorealismApproved:false,releaseAuthorized:false
+ },null,2));
+ assert.equal(frozenFits.length,6);
  assert.equal(scenarios.length,6);
  assert.equal(ab.length,6);
  assert.equal(captures.length,132);
