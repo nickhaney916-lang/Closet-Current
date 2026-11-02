@@ -9,6 +9,7 @@ import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import {extname,resolve} from 'node:path';
 import {chromium} from 'playwright';
 import sharp from 'sharp';
+import {photographedLowerGarmentPixelWitness10} from '../research/denim-fit-06/garment-pixel-witness-10.mjs';
 const root=resolve('.'),dir='benchmark/fabric-sweep-04',SHA='e7a617cd23a159864f619e8397d5f37d48b684e47dddc4ad6b46b14481042019';
 const server=createServer(async(req,res)=>{
  try{
@@ -290,7 +291,7 @@ try{
     assert.equal(fitted.sourceMeasuredAnatomicalSilhouette07,true);
     assert.equal(fitted.originalSourceNeutralCuffFairing08,true);
     assert.equal(fitted.originalPhotoTextureRGBAndUVUnmodified08,true);
-    assert.ok(fitted.cuffReleasedVertices08>=8&&fitted.maxCuffReleaseMeters08>=.0055);
+    assert.ok(fitted.cuffReleasedVertices08>=8&&fitted.maxCuffReleaseMeters08>=.008);
     assert.equal(fitted.originalSkinnedKneeHemTaperImproved07,true);
     assert.equal(fitted.originalPhotoTextureRGBAndUVUnmodified07,true);
     assert.ok(fitted.additionalKneeVsHemEaseMeters07>=.008);
@@ -374,12 +375,19 @@ try{
        actualSewnFoldTopologyPreserved:true,
        releaseAuthorized:false,physicalPhoneApproved:false});
 
-      const changed08=diff(await raw(frame07),await raw(frozen));
+      const originalF07RGB=await raw(frame07),fairingF08RGB=await raw(frozen);
+      const changed08=diff(originalF07RGB,fairingF08RGB);
+      const garmentWitness10=photographedLowerGarmentPixelWitness10(originalF07RGB,fairingF08RGB);
       assert.ok(changed08>=20,'Real photographed cuff geometry must differ from exact original F07: '+changed08);
+      assert.ok(garmentWitness10.changedGarmentPixels>=20,
+       'Actual photographed jeans cuff surface must change independently of top-edge screenshot artifacts: '+
+       garmentWitness10.changedGarmentPixels);
       for(const [suffix,image] of [['baseline-f07',frame07],['cuff-f08',frozen]])
        await writeFile('benchmark/denim-fairing-08/'+prefix+'-'+suffix+'.png',image);
       denimFairing08Comparisons.push({width,rig,denimIndex,sourceDenim,
        changedPixelsAgainstExactOriginalF07:changed08,
+       changedGarmentPixelsAgainstExactOriginalF07:garmentWitness10.changedGarmentPixels,
+       garmentPixelsExcludingScreenshotTopRow:true,
        realSource163BoneRig:true,frontPhotoAndUVUnchanged:true,
        noNewSkinnedTriangleContacts:fitted.bodyContactAfter<=fitted.bodyContactBefore,
        cuffReleasedVertices:fitted.cuffReleasedVertices08,
@@ -390,6 +398,20 @@ try{
       for(const angle of [0,45,135,180]){
        await bp.evaluate(a=>window.ccWardrobe10View(a),angle);
        await p.evaluate(a=>window.ccWardrobe10View(a),angle);
+       // F10: source provenance must be truthful on both real WebGL viewers.
+       const expectedViewClass=angle===0?'front-photo':
+        angle===180?'unphotographed-rear':'mixed-photo-and-model';
+       for(const viewer of [bp,p]){
+        const label=viewer.locator('#photoCoverage');
+        assert.equal(await label.isVisible(),true);
+        assert.equal(await label.getAttribute('data-view-class'),expectedViewClass);
+        assert.equal(await label.getAttribute('data-rear-photo-verified'),'false');
+        if(angle===180)assert.match(await label.textContent(),/Back NOT photographed/);
+        const d10=await diag(viewer);
+        assert.equal(d10.photoCoverageViewClass,expectedViewClass);
+        assert.equal(d10.sourcePhotoCoverageVisible,true);
+        assert.equal(d10.verifiedOriginalRearPhotograph,false);
+       }
        const a07=await bp.locator('#avatar').screenshot();
        const a08=await p.locator('#avatar').screenshot();
        const changedPixels=diff(await raw(a07),await raw(a08));
@@ -420,6 +442,10 @@ try{
         'F07 original photographed garment lost its source pose after angle sweep');
       assert.ok(diff(await raw(returned08),await raw(frozen))<=2,
         'F08 photographed garment shifted after real 360 navigation');
+      await bp.evaluate(()=>window.ccWardrobe10Test.logout());
+      assert.equal(await bp.locator('#photoCoverage').isVisible(),false);
+      assert.equal((await diag(bp)).sourcePhotoCoverageVisible,false);
+      assert.equal(await bp.locator('#photoCoverage').textContent(),'');
       await bc.close();
     }
     frozenDenim.push({width,rig,denimIndex,sourceDenim,

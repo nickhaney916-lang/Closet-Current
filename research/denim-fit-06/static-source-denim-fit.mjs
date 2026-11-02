@@ -37,7 +37,10 @@ export function sourceDenimTaperWeights07(phase){
 export function sourceDenimCuffRelease08(phase){
  if(!Number.isFinite(phase)||phase<0||phase>1)
   throw Error('Source calf cuff phase must be finite within observed geometry');
- return smooth(.28,.38,phase)*(1-smooth(.48,.72,phase));
+ // Restore the verified original F07 lower-hem inward taper (phase <.28):
+ // extra fairing MUST be zero there. Extend relief UP the source calf rather
+ // than cancel the legitimate hem contour. Upper rows fade back to unchanged.
+ return smooth(.28,.38,phase)*(1-smooth(.70,.92,phase));
 }
 export function settleDenimRest06(target=DENIM_FIT06.targetMeters){
  if(!Number.isFinite(target)||target<.002||target>DENIM_FIT06.maxWorldShiftMeters)
@@ -150,7 +153,9 @@ export function createPhotoDenimStaticFitter06(pants,root,{sourceSilhouette07=fa
    // Fit the lower source-neutral calf closer to its anatomical form.
    // Do NOT manufacture a rounded 'knee bubble' or move the JPEG front.
    const hemRest=sourceSilhouette07 ? -.016*row.hemEase : 0;
-   const cuffRelease=sourceFairing08?.006*sourceDenimCuffRelease08(row.sourceCalfPhase):0;
+   // More legible licensed side/rear garment relief; bounded to the same 24mm
+   // original-source-neutral fit budget, with original front/UV/skin unchanged.
+   const cuffRelease=sourceFairing08?.0085*sourceDenimCuffRelease08(row.sourceCalfPhase):0;
    const dy=-eq.meters*.22*row.blend;
    // Smooth lower-calf taper into the original real sewn upper knee geometry.
    // The source photo front, authentic pattern and cloth folds remain intact.
@@ -186,7 +191,7 @@ export function createPhotoDenimStaticFitter06(pants,root,{sourceSilhouette07=fa
    throw Error('Photographed knee-to-hem taper not measurably improved: '+JSON.stringify({
     kneeMoved,hemMoved,taperAdditionalMean,max}));
 
-  if(sourceFairing08&&(cuffMoved<8||maxCuffRelease<.0055))
+  if(sourceFairing08&&(cuffMoved<8||maxCuffRelease<.008))
    throw Error('Genuine original-photo cuff geometry not measurably fairing: '+JSON.stringify({cuffMoved,maxCuffRelease}));
   frozen=true;
   proof=Object.freeze({actualPhotoDenimFrozenFit:true,

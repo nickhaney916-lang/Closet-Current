@@ -5,6 +5,7 @@
  * Never production auth, DB, storage, private pictures or CDN.
  */
 import {mountAnatomicalShowroom} from './dress-mobile-showroom.mjs';
+import {classifySourcePhotoView10} from '../denim-fit-06/source-photo-coverage-10.mjs';
 import {loadLicensedCutout} from '../three-d-02/reviewed-texture.mjs';
 import {planSavedSourceDress,applySavedSourceDress,DRESS_SHA} from '../integration-04-wardrobe-dress/owner-dress-guard.mjs';
 import {createPoseContact} from '../three-d-42/posed-contact.mjs';
@@ -26,6 +27,31 @@ const current=()=>session?.current()||{authenticated:false,ownerId:null,generati
 const isCurrent=s=>{const t=current();return !!s&&t.authenticated&&
  t.ownerId===s.ownerId&&t.generation===s.generation};
 const authorized=()=>!!bound&&isCurrent(bound);
+// This is always front-only source coverage. We never infer original photos
+// of unseen sides/rear from 163-bone geometry or a flat fallback material.
+function updatePhotoCoverage10(degrees=app?.getState()?.viewAngle??0){
+ const label=$('photoCoverage');
+ const selectedBottom=bound?.indexed?.byId?.get(slots.bottom);
+ const selectedTop=bound?.indexed?.byId?.get(slots.top);
+ const sha=last3D?.originalPhotoSHA256s;
+ const denim=selectedBottom?.sourceSHA256===sha?.bottom&&
+  [SYNTHETIC_SOURCES10.public.sha,SYNTHETIC_SOURCES10.second.sha].includes(sha?.bottom);
+ const dress=selectedTop?.sourceSHA256===sha?.dress&&sha?.dress===DRESS_SHA;
+ const valid=authorized()&&viewerReady&&sourceVerified&&!!last3D&&
+  app?.getState()?.stats?.bones===163&&(denim||dress);
+ if(!valid){
+  label.textContent='';label.dataset.visible='false';label.dataset.viewClass='hidden';
+  label.dataset.rearPhotoVerified='false';return null;
+ }
+ const proof=classifySourcePhotoView10(degrees);
+ // Avoid repeated live-region announcements during drag/spin of one angle class.
+ if(label.dataset.viewClass!==proof.viewClass||label.dataset.visible!=='true')
+  label.textContent=proof.explanation;
+ label.dataset.viewClass=proof.viewClass;
+ label.dataset.visible='true';
+ label.dataset.rearPhotoVerified='false';
+ return proof;
+}
 const readableItems=()=>authorized()?closets[current().ownerId]:[];
 const recorded=(name)=>{const st=app?.getState();
  const q={name,geometries:st?.geometries??null,textures:st?.textures??null,
@@ -38,6 +64,8 @@ function clearRendered(){
  $('fallbackPhotos').replaceChildren();$('evidence').textContent='No authenticated clothing exposed.';
  $('viewerHost').style.display='none';$('photoFallback').dataset.visible='true';
  $('fallbackReason').textContent='Sign in to view this account’s licensed synthetic original photos.';
+ $('photoCoverage').textContent='';$('photoCoverage').dataset.visible='false';
+ $('photoCoverage').dataset.viewClass='hidden';$('photoCoverage').dataset.rearPhotoVerified='false';
  last3D=null;
  try{app?.applyOutfit('none');}catch{}
 }
@@ -49,6 +77,8 @@ function stopViewer(){
 function showFallback(reason){
  $('viewerHost').style.display='none';$('photoFallback').dataset.visible='true';
  $('fallbackReason').textContent=reason;
+ $('photoCoverage').textContent='';$('photoCoverage').dataset.visible='false';
+ $('photoCoverage').dataset.viewClass='hidden';$('photoCoverage').dataset.rearPhotoVerified='false';
  const frame=$('fallbackPhotos');frame.replaceChildren();
  for(const slot of ['top','bottom']){
   const id=slots[slot],item=readableItems().find(v=>v.id===id);
@@ -92,6 +122,7 @@ function safeControls(){
   last3D.originalPhotoSHA256s?.dress===SYNTHETIC_SOURCES10.dress.sha&&
   new URLSearchParams(location.search).get('walk')==='after';
  for(const id of ['walk-left','walk-right','walk-reset','walk-play','walk-stop','walk-audit'])$(id).disabled=!verifiedGait;
+ updatePhotoCoverage10();
 }
 function updateCards(){
  const container=$('items');container.replaceChildren();
@@ -260,6 +291,7 @@ async function initViewer(){
   const old=$('avatar'),canvas=old.cloneNode(false);
   canvas.width=1;canvas.height=1;old.replaceWith(canvas);
   app=mountAnatomicalShowroom(canvas,{
+   onViewChange:angle=>updatePhotoCoverage10(angle),
    premiumTurntable67:true,independentGarments:true,poseContactFactory:createPoseContact,
    crispSourcePhotoClarity:true,jeansPanelFall:true,tailoredShoulderSleeves:true,
    independentShoulderCaps:true,realisticShoulderContour:true,upperArmFabricVolume:true,
@@ -345,11 +377,14 @@ $('model').addEventListener('change',async()=>{
 for(const [id,method] of [['front','front'],['side','side'],['back','back']]){
  $(id).addEventListener('click',()=>{if(!viewerReady)return;app[method]();
   const a=id==='front'?0:id==='side'?90:180;
-  $('angle').value=String(a);$('degree').textContent=a+'°';interactions++;recorded('view-'+id);
+  $('angle').value=String(a);$('degree').textContent=a+'°';
+  updatePhotoCoverage10(app.getState().viewAngle??a);
+  interactions++;recorded('view-'+id);
  });
 }
 $('angle').addEventListener('input',()=>{if(!viewerReady)return;
- const a=Number($('angle').value);app.viewAt(a);$('degree').textContent=a+'°';interactions++;});
+ const a=Number($('angle').value);app.viewAt(a);$('degree').textContent=a+'°';
+ updatePhotoCoverage10(app.getState().viewAngle??a);interactions++;});
 $('zin').addEventListener('click',()=>{if(viewerReady){app.zoom(.84);interactions++;}});
 $('zout').addEventListener('click',()=>{if(viewerReady){app.zoom(1.18);interactions++;}});
 $('turn').addEventListener('click',()=>{if(viewerReady){app.setSpin(!app.getState().spinEnabled);interactions++;}});
@@ -389,6 +424,9 @@ window.ccWardrobe10Diagnostics=()=>{
       new URLSearchParams(location.search).get('folds')==='after',
    dressOriginalSHA256:dressCandidate?.sourceSHA256||null,
   fallbackVisible:$('photoFallback').dataset.visible==='true',
+  photoCoverageViewClass:authorized()&&viewerReady?$('photoCoverage').dataset.viewClass:'hidden',
+  sourcePhotoCoverageVisible:authorized()&&viewerReady&&$('photoCoverage').dataset.visible==='true',
+  verifiedOriginalRearPhotograph:false,
   displayed3DSources:last3D?.originalPhotoSHA256s||null,
   memory:state?{geometries:state.geometries,textures:state.textures,
    tracked:state.trackedGarmentGeometries,reclaimed:state.reclaimedGarmentGeometries,
@@ -401,6 +439,7 @@ window.ccWardrobe10Diagnostics=()=>{
 window.ccWardrobe10View=angle=>{
  if(!viewerReady||!last3D)throw Error('Verified source 3D not currently displayed');
  app.viewAt(angle);$('angle').value=String(angle);$('degree').textContent=angle+'°';
+ updatePhotoCoverage10(app.getState().viewAngle??angle);
  return window.ccWardrobe10Diagnostics();
 };
 // Locally restricted real 163-bone denim audit; never authorizes release.
@@ -464,7 +503,7 @@ window.ccWardrobeDenimFreeze06=()=>{
   if(new URLSearchParams(location.search).get('denimFairing')==='after'&&
     (!proof.originalSourceNeutralCuffFairing08||
      !proof.originalPhotoTextureRGBAndUVUnmodified08||
-     proof.cuffReleasedVertices08<8||proof.maxCuffReleaseMeters08<.0055))
+     proof.cuffReleasedVertices08<8||proof.maxCuffReleaseMeters08<.008))
    throw Error('Actual licensed photographed cuff fairing proof missing');
   const after=current();
   if(!after.authenticated||after.ownerId!==owner.ownerId||after.generation!==owner.generation||
