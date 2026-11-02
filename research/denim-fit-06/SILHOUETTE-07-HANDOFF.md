@@ -17,3 +17,6 @@ Retain ALL F06 full no-deploy existing 100 actual photographed dress + jeans Web
 
 ## Barriers
 Arbitrary personal photo-to-3D, real phone acceptance, photorealistic dyed denim rear detail, mathematically swept collision, full textile cloth solver, merging or deployment remain **unverified or prohibited**. Family Alpha issue #255 remains HOLD; no production, sibling app, customer accounts or billing modifications.
+
+## QA correction recorded
+Initial CI #41461909467 FAILED CLOSED because the original source mesh lacked eligible side/rear vertices in the assumed fixed 0.12–0.36 hem band (`hemMoved:0`). Corrected code uses observed source calf height min/max **per licensed leg** to target a genuine lower-to-higher side/rear calf taper, and still requires finite original anatomical coverage, both lower/upper surface populations, ≥8mm relative easing and genuine WebGL before/after image evidence. No weakening of photo, collision, rotation, or source identity standards. Retest the final branch head.
