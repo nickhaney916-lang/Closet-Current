@@ -190,6 +190,14 @@ export function mountAnatomicalShowroom(canvas,{onChange=()=>{},refineFit=true,e
  // Direct touch/mouse always takes control from automatic camera rotation.
  if(premiumTurntable67)controls.addEventListener('start',()=>{spin=false;dirty=true;});
  const setPose=mode=>{if(!selected)return;spin=false;group.rotation.y=0;outfit.setPose(mode);pose=mode;canvas.dataset.pose=mode;poseChanges++;draw();};
+ const settlePose=phase=>{
+  if(!selected||finish||!outfit)throw Error('Research mannequin not loaded');
+  spin=false;group.rotation.y=0;
+  const settled=outfit.settlePose(phase);
+  pose=phase;canvas.dataset.pose=String(phase);poseChanges++;
+  draw();
+  return settled;
+ };
  const zoom=direction=>{const offset=camera.position.clone().sub(controls.target);const length=THREE.MathUtils.clamp(offset.length()*direction,controls.minDistance,controls.maxDistance);camera.position.copy(controls.target).add(offset.setLength(length));controls.update();draw();};
  document.addEventListener('visibilitychange',()=>{dirty=true;});
  const syncOutfit=()=>{const s=outfit?.getState();dressPresentation.value=dressContact&&s?.mode==='dress'?1:0;canvas.dataset.outfit=s?.mode||'none';canvas.dataset.shirt=s?.shirt?'source-reviewed':'none';canvas.dataset.pants=s?.pants?'neutral-research':'none';canvas.dataset.dress=s?.dress?'source-reviewed':'none';};
@@ -217,7 +225,7 @@ export function mountAnatomicalShowroom(canvas,{onChange=()=>{},refineFit=true,e
   else{controls.minDistance=1.9;controls.target.set(0,1.35,0);camera.position.set(angle==='side'?1.9:0,1.35,angle==='front'?1.9:angle==='back'?-1.9:0);}
   controls.update();draw();
  };
- return {load,shade,front,side,back,rotate,viewAt:rotate,resetView:front,start,stop,setPose,zoom,applyOutfit,inspectSleeves,inspectTorso,
+ return {load,shade,front,side,back,rotate,viewAt:rotate,resetView:front,start,stop,setPose,settlePose,zoom,applyOutfit,inspectSleeves,inspectTorso,
   auditKneePose78:next=>{if(!photoDenimKneePose78)throw Error('3D78 research knee pose not authorized');const proof=outfit.auditKneePose78(next);draw();return proof;},
   setSpin:v=>{spin=!!v;dirty=true;},
   getState:()=>({kind:current,loaded:!!selected,finish,stats:lastStats,frames:frame,finishMaterial:lastColor,pose:pose,loadMs:loadTimes.at(-1),lastRenderMs,geometries:renderer.info.memory.geometries,textures:renderer.info.memory.textures,pixelRatio:renderer.getPixelRatio(),drawPixels:canvas.width*canvas.height,sourceDetailRendering:{enabled:crispSourcePhotoClarity,renderPixelRatio:renderer.getPixelRatio(),maxPixelRatio:2,materialCount:sourcePhotoSampling?.materialCount||0,configuredSamplers:sourcePhotoSampling?.configuredSamplers||0,sourceImages:sourcePhotoSampling?.images||[],originalPhotosAndColorsUnchanged:true,humanVisualApproved:false,releaseAuthorized:false},cameraDistance:camera.position.distanceTo(controls.target),premium360Enabled:premiumTurntable67,viewAngle:premiumTurntable67?viewAngleFromCamera(camera,controls.target):null,cameraPosition:premiumTurntable67?camera.position.toArray():null,cameraTarget:premiumTurntable67?controls.target.toArray():null,mannequinBodyYaw:group.rotation.y,spinEnabled:spin,outfit:outfit?.getState()||null,dressPresentation:dressPresentation.value,poseChanges,releaseAuthorized:false})
