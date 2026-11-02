@@ -92,12 +92,12 @@ export function shapeTrueSourceHemSwing08(root,shirt,phase){
    // Outward flare+downward settling changes *actual screen silhouette*.
    // Smooth broad waves avoid small high-frequency polygonal spikes.
    const wave=Math.sin((q.x-c)*13.5+raised*.75+(dy-hem)*5.2);
-   const flare=.012+.016*outer+(.009*wave+.006*raised)*motion;
-   const settle=.014+.007*(.5+.5*wave)+.006*motion;
-   const backFall=.007+.008*(.5+.5*Math.cos((q.x-c)*9.0+raised));
+   const flare=.010+.012*outer+(.006*wave+.004*raised)*motion;
+   const settle=.017+.006*(.5+.5*wave)+.006*motion;
+   const backFall=.003+.003*(.5+.5*Math.cos((q.x-c)*9.0+raised));
    const delta=new T.Vector3(
      side*flare*skirt, -settle*skirt,
-     fb*(.009+.010*outer+.007*wave)*skirt+fb*backFall*skirt
+     fb*(.006+.006*outer+.004*wave)*skirt+fb*backFall*skirt
    );
    delta.clampLength(0,.037);
    const amplitude=delta.length();
