@@ -28,7 +28,7 @@ const server=createServer(async(req,res)=>{
 });
 await new Promise(ok=>server.listen(0,'127.0.0.1',ok));
 const host='http://127.0.0.1:'+server.address().port;
-const screenshots=[],cases=[],contacts=[],sweeps=[],frozenDress=[],frozenDenim=[],denimSilhouetteComparisons=[],denimFairing08Comparisons=[],denimAngle09Comparisons=[],pointerRotation11=[],touchSwipe12=[],pinchZoom13=[],javascriptErrors=[],nonLocalRequests=[];
+const screenshots=[],cases=[],contacts=[],sweeps=[],frozenDress=[],frozenDenim=[],denimSilhouetteComparisons=[],denimFairing08Comparisons=[],denimAngle09Comparisons=[],denimRear14Comparisons=[],pointerRotation11=[],touchSwipe12=[],pinchZoom13=[],javascriptErrors=[],nonLocalRequests=[];
 function monitor(page){
  page.on('pageerror',error=>javascriptErrors.push(String(error.message)));
  page.on('request',r=>{
@@ -130,6 +130,7 @@ try{
  await mkdir('benchmark/source-rotate-11',{recursive:true});
  await mkdir('benchmark/source-touch-12',{recursive:true});
  await mkdir('benchmark/mobile-pinch-13',{recursive:true});
+ await mkdir('benchmark/denim-rear-thigh-14',{recursive:true});
  for(const width of [320,390,430]){
   const ctx=await browser.newContext({viewport:{width,height:900},deviceScaleFactor:1,isMobile:true,hasTouch:true});
   const p=await ctx.newPage();monitor(p);
@@ -664,6 +665,71 @@ try{
       assert.equal((await diag(bp)).sourcePhotoCoverageVisible,false);
       assert.equal(await bp.locator('#photoCoverage').textContent(),'');
       await bc.close();
+      // R14: compare original authenticated F08 sewn denim against an
+      // entirely independent opt-in R14 viewer on same rig/source/angle.
+      // No fake screenshot, no external photo and no geometry altered in F08.
+      const rearCtx14=await browser.newContext({
+       viewport:{width,height:900},deviceScaleFactor:1,isMobile:true,hasTouch:true});
+      try{
+       const rearPage14=await rearCtx14.newPage();monitor(rearPage14);
+       await rearPage14.goto(host+'/research/fabric-sweep-04/index.html?walk=after&folds=after&sweep=after&dressFit=after&denimFit=after&denimSilhouette=after&denimFairing=after&denimRear14=after',{waitUntil:'domcontentloaded'});
+       if(rig==='male'){
+        await rearPage14.waitForFunction(()=>window.ccWardrobe10Diagnostics?.()?.viewerReady===true,null,{timeout:180000});
+        await rearPage14.locator('#model').selectOption('male');
+        await rearPage14.waitForFunction(()=>window.ccWardrobe10Diagnostics()?.figure==='male'&&window.ccWardrobe10Diagnostics()?.viewerReady===true,null,{timeout:180000});
+       }
+       await ready(rearPage14);
+       await rearPage14.locator('#swap').click();
+       if(denimIndex===1)await rearPage14.locator('#swap').click();
+       await rearPage14.waitForFunction(()=>window.ccWardrobe10Diagnostics?.()?.outfitMode==='shirt-pants',null,{timeout:30000});
+       const original14=await diag(rearPage14);
+       assert.equal(original14.sourceDenimRearThigh14Enabled,true);
+       assert.equal(original14.displayed3DSources?.bottom,sourceDenim);
+       assert.equal(original14.account,'fixture-account-a');
+       assert.equal(original14.bones,163);
+       const fitted14=await rearPage14.evaluate(()=>window.ccWardrobeDenimFreeze06());
+       assert.equal(fitted14.originalPhotoSHA256,sourceDenim);
+       assert.equal(fitted14.sourceMeasuredRearThighRelief14,true);
+       assert.equal(fitted14.originalPhotographedFrontProtected14,true);
+       assert.equal(fitted14.sourcePhotoRGBUVRestAndSkinUnchanged14,true);
+       assert.equal(fitted14.noInventedPhotographicRear14,true);
+       assert.ok(fitted14.rearThighSourceNeutralVertices14>=40);
+       assert.ok(Math.min(...fitted14.rearThighPerLeg14)>=15);
+       assert.ok(fitted14.rearThighMaximumWorldMoveMeters14>=.008&&
+        fitted14.rearThighMaximumWorldMoveMeters14<=.0100001);
+       assert.equal(fitted14.trueBVHBodyContactNoNew,true);
+       assert.ok(fitted14.bodyContactAfter<=fitted14.bodyContactBefore);
+       await rearPage14.evaluate(()=>window.ccWardrobe10View(180));
+       await p.evaluate(()=>window.ccWardrobe10View(180));
+       const modelRear14=await rearPage14.locator('#avatar').screenshot();
+       const originalRear08=await p.locator('#avatar').screenshot();
+       const rearPixels14=diff(await raw(originalRear08),await raw(modelRear14));
+       assert.ok(rearPixels14>=20,'Genuine source-neutral rear thigh drape must be visibly different in matched original WebGL rear: '+rearPixels14);
+       const after14=await diag(rearPage14);
+       assert.equal(after14.photoCoverageViewClass,'unphotographed-rear');
+       assert.equal(after14.verifiedOriginalRearPhotograph,false);
+       assert.equal(after14.displayed3DSources?.bottom,sourceDenim);
+       for(const [name,png] of [['exact-f08-rear',originalRear08],['measured-r14-rear',modelRear14]])
+        await writeFile('benchmark/denim-rear-thigh-14/'+prefix+'-'+name+'.png',png);
+       denimRear14Comparisons.push({rig,width,denimIndex,sourceDenim,
+        sameOriginalLicensedSHA:true,sameOriginal163BoneFigure:true,
+        sameActualCameraAngle:180,originalAccount:'fixture-account-a',
+        changedWebGLRearPixels:rearPixels14,
+        shiftedActualSourceRearVertices:fitted14.rearThighSourceNeutralVertices14,
+        perLegMoved:fitted14.rearThighPerLeg14,
+        maxMeasuredRearShiftMeters:fitted14.rearThighMaximumWorldMoveMeters14,
+        originalSourceFrontUVRestAndSkinUntouched:true,
+        realSkinnedBodyContactsBefore:fitted14.bodyContactBefore,
+        realSkinnedBodyContactsAfter:fitted14.bodyContactAfter,
+        modeledRearNotPhotographed:true,physicallyTested:false,
+        productionModified:false,releaseAuthorized:false});
+       await rearPage14.locator('#logout').click();
+       assert.equal((await diag(rearPage14)).sourcePhotoCoverageVisible,false);
+       await p.evaluate(()=>window.ccWardrobe10View(90));
+       const returnedF08=await p.locator('#avatar').screenshot();
+       assert.ok(diff(await raw(frozen),await raw(returnedF08))<=2,
+        'Original F08 photographed denim view must survive independent R14 QA');
+      }finally{await rearCtx14.close();}
     }
     frozenDenim.push({width,rig,denimIndex,sourceDenim,
       sourceOwner:fitted.account,sourceGeneration:fitted.generation,
@@ -692,6 +758,21 @@ try{
  assert.equal(await p.locator('#walk-left').isDisabled(),true);
  assert.equal(await p.evaluate(()=>{try{window.ccWardrobeGait02('play');return false;}catch{return true;}}),true);
  await ctx.close();
+ assert.equal(denimRear14Comparisons.length,4,'Both actual anatomy rigs and both licensed denims need matched rear F08/R14 views');
+ assert.deepEqual([...new Set(denimRear14Comparisons.map(x=>x.rig))],['female','male']);
+ assert.equal(new Set(denimRear14Comparisons.map(x=>x.sourceDenim)).size,2);
+ assert.ok(denimRear14Comparisons.every(x=>x.changedWebGLRearPixels>=20&&
+  x.originalSourceFrontUVRestAndSkinUntouched&&
+  x.realSkinnedBodyContactsAfter<=x.realSkinnedBodyContactsBefore&&x.modeledRearNotPhotographed));
+ await writeFile('benchmark/denim-rear-thigh-14/results.json',JSON.stringify({
+  originalLicensedSourceRearComparisons:denimRear14Comparisons,
+  realWebGLRearFrames:denimRear14Comparisons.length*2,
+  original163BoneFigures:['female','male'],licensedDenimSources:2,mobileWidth:390,
+  originalFrontJPEGUVSkinRestProtected:true,
+  noOriginalPhotographedRearClaim:true,humanPhotorealismApproved:false,
+  physicalAndroidIPhoneTested:false,productionModified:false,
+  familyAlpha:'HOLD',releaseAuthorized:false
+ },null,2));
  assert.equal(pinchZoom13.length,8,'All eight source-licensed two-finger zoom and reset cases');
  assert.deepEqual([...new Set(pinchZoom13.map(x=>x.width))],[320,390,430]);
  assert.deepEqual([...new Set(pinchZoom13.map(x=>x.rig))],['female','male']);

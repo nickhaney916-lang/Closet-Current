@@ -42,6 +42,14 @@ export function sourceDenimCuffRelease08(phase){
  // than cancel the legitimate hem contour. Upper rows fade back to unchanged.
  return smooth(.28,.38,phase)*(1-smooth(.70,.92,phase));
 }
+// R14: broad, seam-compatible posterior upper-thigh fabric relief derived
+// ONLY from the original skinned anatomical hip/knee span. No new wrinkles,
+// rear image, dye, labels, UV coordinates or generated pixels.
+export function sourceNeutralRearThighEnvelope14(phase){
+ if(!Number.isFinite(phase)||phase<0||phase>1)
+  throw Error('Genuine source measured hip-to-knee phase must be finite in [0,1]');
+ return smooth(.04,.27,phase)*(1-smooth(.72,.96,phase));
+}
 export function settleDenimRest06(target=DENIM_FIT06.targetMeters){
  if(!Number.isFinite(target)||target<.002||target>DENIM_FIT06.maxWorldShiftMeters)
   throw Error('Finite bounded nonzero photographed denim gravity target required');
@@ -59,7 +67,9 @@ export function settleDenimRest06(target=DENIM_FIT06.targetMeters){
   fixedStepSeconds:DENIM_FIT06.timestepSeconds,releaseAuthorized:false});
 }
 function same(a,b){return a?.length===b?.length&&a.every((x,i)=>x===b[i]);}
-export function createPhotoDenimStaticFitter06(pants,root,{sourceSilhouette07=false,sourceFairing08=false}={}){
+export function createPhotoDenimStaticFitter06(pants,root,{sourceSilhouette07=false,sourceFairing08=false,sourceRearThigh14=false}={}){
+ if(typeof sourceRearThigh14!=='boolean'||(sourceRearThigh14&&(!sourceSilhouette07||!sourceFairing08)))
+  throw Error('Source-rear R14 must opt in to fully verified original F07/F08 source silhouette/cuff');
  if(typeof sourceFairing08!=='boolean'||(sourceFairing08&&!sourceSilhouette07))
   throw Error('Source-true photographed cuff fairing requires explicit approved silhouette');
  if(typeof sourceSilhouette07!=='boolean')throw Error('Photographed source silhouette feature gate must be boolean');
@@ -110,6 +120,29 @@ export function createPhotoDenimStaticFitter06(pants,root,{sourceSilhouette07=fa
   eligible.push({...row,side,height,blend,
     radialX:dx/radial,radialZ:row.q.z/radial});
  }
+ // R14 uses ORIGINAL source-sewn rear thigh rows, independent of calf
+ // eligibility, and the actual rig's true hip/knee reference. Never
+ // extrapolate unseen colors or add procedural/repetitive fold textures.
+ const rearThigh14=[];
+ if(sourceRearThigh14){
+  if(legs.some(l=>!Array.isArray(l.hip)||l.hip[1]-l.knee[1]<.25))
+   throw Error('R14 missing authentic hip/knee source anatomy');
+  for(const row of rows.values()){
+   if(row.front>=.12||row.q.z>-.025)continue;
+   const side=row.q.x>=0?0:1,leg=legs[side];
+   const phase=(row.q.y-leg.knee[1])/(leg.hip[1]-leg.knee[1]);
+   if(phase<=.04||phase>=.96)continue;
+   const centerX=T.MathUtils.lerp(leg.knee[0],leg.hip[0],phase);
+   if(Math.abs(row.q.x-centerX)>.29)continue;
+   const weight=sourceNeutralRearThighEnvelope14(phase);
+   if(weight<=.05)continue;
+   rearThigh14.push({...row,side,phase,weight});
+  }
+  if(rearThigh14.length<35||
+   rearThigh14.filter(x=>x.side===0).length<12||
+   rearThigh14.filter(x=>x.side===1).length<12)
+   throw Error('R14 genuine rear upper-thigh original sewn mesh rows unavailable');
+ }
  if(eligible.length<35||untouched<100||eligible.filter(x=>x.side===0).length<12||
    eligible.filter(x=>x.side===1).length<12)
   throw Error('Source-neutral original photo calf/hem surface missing; cannot fit jeans');
@@ -148,6 +181,7 @@ export function createPhotoDenimStaticFitter06(pants,root,{sourceSilhouette07=fa
   let changed=0,max=0;const perLeg=[0,0],q=new T.Vector3();
   let kneeMoved=0,hemMoved=0,kneeEaseTotal=0,hemEaseTotal=0,sourceKneeRearGroups=0;
   let cuffMoved=0,maxCuffRelease=0;
+  let rear14Moved=0,rear14Max=0;const rear14PerLeg=[0,0];
   for(const row of eligible){
    const kneeRest=sourceSilhouette07 ? .0015*row.kneeEase : 0;
    // Fit the lower source-neutral calf closer to its anatomical form.
@@ -179,6 +213,23 @@ export function createPhotoDenimStaticFitter06(pants,root,{sourceSilhouette07=fa
     }
    }
   }
+  // Measured source-rear 163-bone thigh is a continuous modeled fabric
+  // surface. Add a single smoothly bounded outward rest ease (<=10 mm).
+  // Keep hip/knee and the original photographed front exactly fixed.
+  if(sourceRearThigh14){
+   for(const row of rearThigh14){
+    const delta=-.010*row.weight;
+    if(Math.abs(delta)<.0004)continue;
+    const world=row.q.clone();world.z+=delta;
+    const local=world.applyMatrix4(inv);
+    for(const i of row.ids){p.setXYZ(i,local.x,local.y,local.z);changed++;rear14Moved++;rear14PerLeg[row.side]++;}
+    rear14Max=Math.max(rear14Max,Math.abs(delta));
+    max=Math.max(max,Math.abs(delta));
+   }
+   if(rear14Moved<40||Math.min(...rear14PerLeg)<15||rear14Max<.008||rear14Max>.0100001)
+    throw Error('R14 actual source-neutral modeled thigh drape not visible/bounded: '+
+     JSON.stringify({rear14Moved,rear14PerLeg,rear14Max}));
+  }
   p.needsUpdate=true;g.computeVertexNormals();g.computeBoundingBox();g.computeBoundingSphere();
   audit();
   const budget=sourceSilhouette07?silhouette07.maxShiftMeters:DENIM_FIT06.maxWorldShiftMeters;
@@ -208,6 +259,14 @@ export function createPhotoDenimStaticFitter06(pants,root,{sourceSilhouette07=fa
    originalSourceNeutralCuffFairing08:sourceFairing08,
    cuffReleasedVertices08:cuffMoved,maxCuffReleaseMeters08:maxCuffRelease,
    originalPhotoTextureRGBAndUVUnmodified08:true,
+   sourceMeasuredRearThighRelief14:sourceRearThigh14,
+   rearThighSourceNeutralVertices14:rear14Moved,
+   rearThighPerLeg14:rear14PerLeg,
+   rearThighMaximumWorldMoveMeters14:rear14Max,
+   actual163BoneHipKneeSourceAnchors14:sourceRearThigh14,
+   originalPhotographedFrontProtected14:true,
+   sourcePhotoRGBUVRestAndSkinUnchanged14:true,
+   noInventedPhotographicRear14:true,
    sourceUVRestAndSkinByteIdentical:true,realBVHVerifiedByCaller:false,
    noUnseenTextureInvented:true,physicalPhoneApproved:false,
    humanPhotorealismApproved:false,releaseAuthorized:false});

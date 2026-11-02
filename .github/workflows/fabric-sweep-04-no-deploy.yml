@@ -1,4 +1,4 @@
-name: MOBILE-PINCH-13 Real 2-Finger Photo Viewer Zoom + Exact Reset HOLD
+name: DENIM-REAR-14 Source-Measured Modeled Thigh Drape WebGL + Photo Integrity HOLD
 on:
   pull_request:
     paths:
@@ -11,6 +11,7 @@ on:
       - 'tests/denim-fit-06.test.mjs'
       - 'tests/denim-silhouette-07.test.mjs'
       - 'tests/denim-fairing-08.test.mjs'
+      - 'tests/denim-rear-thigh-14.test.mjs'
       - 'tests/denim-angle-09.test.mjs'
       - 'tests/source-photo-coverage-10.test.mjs'
       - 'tests/garment-pixel-witness-10.test.mjs'
@@ -37,7 +38,7 @@ jobs:
           git merge-base --is-ancestor 7716c3876284bfa474f9964e7d5b0e69f629d79b HEAD
           git diff --name-only 7716c3876284bfa474f9964e7d5b0e69f629d79b HEAD | while IFS= read -r path; do
             case "$path" in
-              research/fabric-sweep-04/*|research/dress-fit-05/*|research/denim-fit-06/*|scripts/test-fabric-sweep-04-browser.mjs|tests/fabric-sweep-04.test.mjs|tests/dress-fit-05.test.mjs|tests/denim-fit-06.test.mjs|tests/denim-silhouette-07.test.mjs|tests/denim-fairing-08.test.mjs|tests/denim-angle-09.test.mjs|tests/source-photo-coverage-10.test.mjs|tests/garment-pixel-witness-10.test.mjs|.github/workflows/fabric-sweep-04-no-deploy.yml) ;;
+              research/fabric-sweep-04/*|research/dress-fit-05/*|research/denim-fit-06/*|scripts/test-fabric-sweep-04-browser.mjs|tests/fabric-sweep-04.test.mjs|tests/dress-fit-05.test.mjs|tests/denim-fit-06.test.mjs|tests/denim-silhouette-07.test.mjs|tests/denim-fairing-08.test.mjs|tests/denim-rear-thigh-14.test.mjs|tests/denim-angle-09.test.mjs|tests/source-photo-coverage-10.test.mjs|tests/garment-pixel-witness-10.test.mjs|.github/workflows/fabric-sweep-04-no-deploy.yml) ;;
               *) echo "UNAUTHORIZED sibling or production edit: $path"; exit 1 ;;
             esac
           done
@@ -53,13 +54,14 @@ jobs:
           node --check research/denim-fit-06/static-source-denim-fit.mjs
           node --check tests/denim-silhouette-07.test.mjs
           node --check tests/denim-fairing-08.test.mjs
+          node --check tests/denim-rear-thigh-14.test.mjs
           node --check tests/denim-angle-09.test.mjs
           node --check tests/source-photo-coverage-10.test.mjs
           node --check tests/garment-pixel-witness-10.test.mjs
           node --check research/denim-fit-06/garment-pixel-witness-10.mjs
           node --check research/denim-fit-06/source-photo-coverage-10.mjs
           node --check scripts/test-fabric-sweep-04-browser.mjs
-          node --test tests/garment-pixel-witness-10.test.mjs tests/source-photo-coverage-10.test.mjs tests/denim-angle-09.test.mjs tests/denim-fairing-08.test.mjs tests/denim-silhouette-07.test.mjs tests/denim-fit-06.test.mjs tests/dress-fit-05.test.mjs tests/fabric-sweep-04.test.mjs tests/fabric-folds-03.test.mjs tests/fabric-walk-02.test.mjs tests/fabric-motion-01.test.mjs tests/integration-04-wardrobe-dress.test.mjs tests/dress-mobile-01.test.mjs tests/three-d-78-original-anatomical-knee-poses.test.mjs
+          node --test tests/denim-rear-thigh-14.test.mjs tests/garment-pixel-witness-10.test.mjs tests/source-photo-coverage-10.test.mjs tests/denim-angle-09.test.mjs tests/denim-fairing-08.test.mjs tests/denim-silhouette-07.test.mjs tests/denim-fit-06.test.mjs tests/dress-fit-05.test.mjs tests/fabric-sweep-04.test.mjs tests/fabric-folds-03.test.mjs tests/fabric-walk-02.test.mjs tests/fabric-motion-01.test.mjs tests/integration-04-wardrobe-dress.test.mjs tests/dress-mobile-01.test.mjs tests/three-d-78-original-anatomical-knee-poses.test.mjs
       - name: Generate unchanged source photograph / original garment segmentation
         run: |
           node scripts/build-three-d-31-jeans-proposal.mjs
@@ -375,6 +377,53 @@ jobs:
           assert.equal(r.releaseAuthorized,false);
           assert.equal(r.familyAlpha,'HOLD');
           CHECK
+      - name: Verify REAR-14 genuine original 163-bone modeled rear thigh geometry without fabricating rear photographs
+        run: |
+          node --input-type=module <<'CHECK'
+          import assert from 'node:assert/strict';
+          import {readFileSync,readdirSync} from 'node:fs';
+          const dir='benchmark/denim-rear-thigh-14';
+          const r=JSON.parse(readFileSync(dir+'/results.json','utf8'));
+          assert.equal(r.originalLicensedSourceRearComparisons.length,4);
+          assert.equal(r.realWebGLRearFrames,8);
+          assert.equal(readdirSync(dir).filter(x=>x.endsWith('.png')).length,8);
+          assert.deepEqual(r.original163BoneFigures,['female','male']);
+          assert.equal(r.licensedDenimSources,2);
+          assert.equal(r.mobileWidth,390);
+          assert.equal(new Set(r.originalLicensedSourceRearComparisons.map(x=>x.sourceDenim)).size,2);
+          for(const a of r.originalLicensedSourceRearComparisons){
+           assert.equal(a.width,390);
+           assert.ok(['female','male'].includes(a.rig));
+           assert.ok([0,1].includes(a.denimIndex));
+           assert.equal(a.originalAccount,'fixture-account-a');
+           assert.equal(a.sameOriginalLicensedSHA,true);
+           assert.equal(a.sameOriginal163BoneFigure,true);
+           assert.equal(a.sameActualCameraAngle,180);
+           assert.ok(a.changedWebGLRearPixels>=20);
+           assert.ok(a.shiftedActualSourceRearVertices>=40);
+           assert.ok(Math.min(...a.perLegMoved)>=15);
+           assert.ok(a.maxMeasuredRearShiftMeters>=.008&&a.maxMeasuredRearShiftMeters<=.0100001);
+           assert.equal(a.originalSourceFrontUVRestAndSkinUntouched,true);
+           assert.ok(a.realSkinnedBodyContactsAfter<=a.realSkinnedBodyContactsBefore);
+           assert.equal(a.modeledRearNotPhotographed,true);
+           assert.equal(a.physicallyTested,false);
+           assert.equal(a.productionModified,false);
+           assert.equal(a.releaseAuthorized,false);
+          }
+          assert.equal(r.originalFrontJPEGUVSkinRestProtected,true);
+          assert.equal(r.noOriginalPhotographedRearClaim,true);
+          assert.equal(r.humanPhotorealismApproved,false);
+          assert.equal(r.physicalAndroidIPhoneTested,false);
+          assert.equal(r.productionModified,false);
+          assert.equal(r.familyAlpha,'HOLD');
+          assert.equal(r.releaseAuthorized,false);
+          CHECK
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: DENIM-REAR-14-8-ACTUAL-ORIGINAL-DENIM-WEBGL-FRAMES-HOLD
+          path: benchmark/denim-rear-thigh-14/
+          if-no-files-found: error
       - uses: actions/upload-artifact@v4
         if: always()
         with:
