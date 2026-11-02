@@ -62,6 +62,7 @@ export function shapeSourceWeightedClothFold07(root,shirt){
  const stats={L:{yoke:0,chest:0,waist:0},R:{yoke:0,chest:0,waist:0}};
  const immutableKeys=['panelPosition','panelNormal','uv','skinIndex','skinWeight'];
  let shifted=0,locked=0,maxMeters=0,foldBands=0;
+ const observedSourceHemDy=[];
  for(const mesh of shells){
   mesh.updateWorldMatrix(true,false);mesh.skeleton.update();
   const geo=mesh.geometry,p=geo.getAttribute('position'),index=geo.index;
@@ -78,24 +79,35 @@ export function shapeSourceWeightedClothFold07(root,shirt){
    groups.get(id).ids.push(i);
   }
   const inverseWorld=mesh.matrixWorld.clone().invert();
+  // Measure the ACTUAL original photo's skinned front-torso hem, not a
+  // generic clothing length. In the verified garment the hem is shorter
+  // than the old assumed dy=-.86; a hard-coded waist band misses it.
+  const sourceTorsoY=[...groups.values()].filter(({q})=>{
+   const x=Math.abs(q.x-centerX);
+   return x>.068&&x<.24&&q.z>=spineZ-.025&&q.y<shoulderY-.14;
+  }).map(({q})=>q.y-shoulderY).sort((a,b)=>a-b);
+  if(sourceTorsoY.length<40)throw Error('Cannot measure actual photographed front shirt torso hem');
+  const sourceHemDy=sourceTorsoY[Math.floor(sourceTorsoY.length*.035)];
+  if(sourceHemDy>=-.26||sourceHemDy<-.98)throw Error('Original sewn source shirt waist endpoint invalid '+sourceHemDy);
+  observedSourceHemDy.push(sourceHemDy);
   for(const {q,ids} of groups.values()){
    const side=q.x-centerX>=0?'R':'L',x=Math.abs(q.x-centerX),dy=q.y-shoulderY;
    // Anchor centreprint/neck/collar; hems at the real garment endpoint;
    // side seams/caps at x>=.305 and neckline at dy>=-.15.
    const sideMask=fade(x,.028,.068,.250,.307);
-   const vertical=fade(dy,-.88,-.79,-.27,-.16);
+   const vertical=fade(dy,sourceHemDy+.010,sourceHemDy+.092,-.27,-.16);
    const mask=sideMask*vertical;
    if(mask<.035){locked+=ids.length;continue;}
    const sign=q.x-centerX>=0?1:-1;
    // Real fold ridges are diagonally shifted by actual arm spread.
    // Three overlapping wave families create broad yoke tension and
    // finer lower-front ripples from the existing mesh triangle normals.
-   const diagonal=dy+.57+.43*x+(sign*.038*armSpread/.5);
+   const diagonal=(dy-sourceHemDy)-.16+.43*x+(sign*.038*armSpread/.5);
    const ribbon1=Math.exp(-Math.pow((diagonal+.135)/.055,2));
    const ribbon2=-.68*Math.exp(-Math.pow((diagonal+.047)/.060,2));
    const ribbon3=.72*Math.exp(-Math.pow((diagonal-.092)/.070,2));
-   const chest=fade(dy,-.69,-.57,-.35,-.22);
-   const waist=fade(dy,-.86,-.77,-.54,-.38);
+   const waist=fade(dy,sourceHemDy+.032,sourceHemDy+.105,sourceHemDy+.175,sourceHemDy+.255);
+   const chest=fade(dy,sourceHemDy+.125,sourceHemDy+.19,-.34,-.22);
    const yoke=fade(dy,-.44,-.37,-.24,-.15);
    const folds=(ribbon1+ribbon2+ribbon3)*(1+.14*Math.sin(x*17+sign*.3));
    const verticalHem=.57*Math.sin(x*34+sign*.4+dy*4)*waist;
@@ -135,7 +147,7 @@ export function shapeSourceWeightedClothFold07(root,shirt){
   actualBodyCollisionCheckedByCaller:true,continuousCollisionCertified:false,
   samePoseGeometryComparisonRequired:true,foldMagnitudeMaxMeters:maxMeters,
   foldBands,shiftedPhotographedVertices:shifted,protectedSourceBoundaries:locked,
-  anatomicalTension:tension,sides:stats,generatedNewImagesOrTextures:0,
+  anatomicalTension:tension,observedSourceHemDy,sides:stats,generatedNewImagesOrTextures:0,
   photoRealismHumanApproved:false,physicalPhoneApproved:false,
   releaseAuthorized:false
  };
