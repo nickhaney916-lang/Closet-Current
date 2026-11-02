@@ -28,7 +28,7 @@ const server=createServer(async(req,res)=>{
 });
 await new Promise(ok=>server.listen(0,'127.0.0.1',ok));
 const host='http://127.0.0.1:'+server.address().port;
-const screenshots=[],cases=[],contacts=[],sweeps=[],frozenDress=[],frozenDenim=[],denimSilhouetteComparisons=[],denimFairing08Comparisons=[],denimAngle09Comparisons=[],denimRear14Comparisons=[],pointerRotation11=[],touchSwipe12=[],pinchZoom13=[],javascriptErrors=[],nonLocalRequests=[];
+const screenshots=[],cases=[],contacts=[],sweeps=[],frozenDress=[],frozenDenim=[],denimSilhouetteComparisons=[],denimFairing08Comparisons=[],denimAngle09Comparisons=[],denimRear14Comparisons=[],denimSide15Comparisons=[],pointerRotation11=[],touchSwipe12=[],pinchZoom13=[],javascriptErrors=[],nonLocalRequests=[];
 function monitor(page){
  page.on('pageerror',error=>javascriptErrors.push(String(error.message)));
  page.on('request',r=>{
@@ -131,6 +131,7 @@ try{
  await mkdir('benchmark/source-touch-12',{recursive:true});
  await mkdir('benchmark/mobile-pinch-13',{recursive:true});
  await mkdir('benchmark/denim-rear-thigh-14',{recursive:true});
+ await mkdir('benchmark/denim-side-thigh-15',{recursive:true});
  for(const width of [320,390,430]){
   const ctx=await browser.newContext({viewport:{width,height:900},deviceScaleFactor:1,isMobile:true,hasTouch:true});
   const p=await ctx.newPage();monitor(p);
@@ -723,6 +724,67 @@ try{
         realSkinnedBodyContactsAfter:fitted14.bodyContactAfter,
         modeledRearNotPhotographed:true,physicallyTested:false,
         productionModified:false,releaseAuthorized:false});
+       // S15: original 163-bone source rear geometry vs independent
+       // source-neutral lateral thigh, two real angles and identical camera.
+       const sideCtx15=await browser.newContext({
+        viewport:{width,height:900},deviceScaleFactor:1,isMobile:true,hasTouch:true});
+       try{
+        const sidePage15=await sideCtx15.newPage();monitor(sidePage15);
+        await sidePage15.goto(host+'/research/fabric-sweep-04/index.html?walk=after&folds=after&sweep=after&dressFit=after&denimFit=after&denimSilhouette=after&denimFairing=after&denimRear14=after&denimSide15=after',{waitUntil:'domcontentloaded'});
+        if(rig==='male'){
+         await sidePage15.waitForFunction(()=>window.ccWardrobe10Diagnostics?.()?.viewerReady===true,null,{timeout:180000});
+         await sidePage15.locator('#model').selectOption('male');
+         await sidePage15.waitForFunction(()=>window.ccWardrobe10Diagnostics()?.figure==='male'&&window.ccWardrobe10Diagnostics()?.viewerReady===true,null,{timeout:180000});
+        }
+        await ready(sidePage15);
+        await sidePage15.locator('#swap').click();
+        if(denimIndex===1)await sidePage15.locator('#swap').click();
+        await sidePage15.waitForFunction(()=>window.ccWardrobe10Diagnostics?.()?.outfitMode==='shirt-pants',null,{timeout:30000});
+        const original15=await diag(sidePage15);
+        assert.equal(original15.sourceDenimSideThigh15Enabled,true);
+        assert.equal(original15.displayed3DSources?.bottom,sourceDenim);
+        assert.equal(original15.account,'fixture-account-a');
+        assert.equal(original15.bones,163);
+        const fitted15=await sidePage15.evaluate(()=>window.ccWardrobeDenimFreeze06());
+        assert.equal(fitted15.originalPhotoSHA256,sourceDenim);
+        assert.equal(fitted15.sourceMeasuredRearThighRelief14,true);
+        assert.equal(fitted15.sourceMeasuredSideThighRelief15,true);
+        assert.equal(fitted15.actual163BoneHipKneeSourceAnchors15,true);
+        assert.equal(fitted15.originalPhotographedFrontProtected15,true);
+        assert.equal(fitted15.sourcePhotoRGBUVRestAndSkinUnchanged15,true);
+        assert.equal(fitted15.noInventedPhotographicRear15,true);
+        assert.ok(fitted15.sideThighSourceNeutralVertices15>=40);
+        assert.ok(Math.min(...fitted15.sideThighPerLeg15)>=15);
+        assert.ok(fitted15.sideThighMaximumWorldMoveMeters15>=.006&&
+         fitted15.sideThighMaximumWorldMoveMeters15<=.0065001);
+        assert.equal(fitted15.trueBVHBodyContactNoNew,true);
+        assert.ok(fitted15.bodyContactAfter<=fitted15.bodyContactBefore);
+        for(const angle of [135,180]){
+         await rearPage14.evaluate(a=>window.ccWardrobe10View(a),angle);
+         await sidePage15.evaluate(a=>window.ccWardrobe10View(a),angle);
+         const baseline15=await rearPage14.locator('#avatar').screenshot();
+         const eased15=await sidePage15.locator('#avatar').screenshot();
+         const changed15=diff(await raw(baseline15),await raw(eased15));
+         assert.ok(changed15>=20,'Real source-neutral lateral thigh must visibly change matched R14 WebGL at '+angle+': '+changed15);
+         const label=prefix+'-view-'+angle;
+         await writeFile('benchmark/denim-side-thigh-15/'+label+'-exact-r14.png',baseline15);
+         await writeFile('benchmark/denim-side-thigh-15/'+label+'-anatomical-s15.png',eased15);
+         denimSide15Comparisons.push({rig,width,denimIndex,sourceDenim,angle,
+          sameOriginalLicensedSHA:true,sameOriginal163BoneFigure:true,
+          originalAccount:'fixture-account-a',changedActualWebGLPixels:changed15,
+          sideThighSourceNeutralVertices:fitted15.sideThighSourceNeutralVertices15,
+          perLegMoved:fitted15.sideThighPerLeg15,
+          maxMeasuredLateralShiftMeters:fitted15.sideThighMaximumWorldMoveMeters15,
+          originalFrontJPEGUVRestSkinUnchanged:true,
+          realSkinnedBodyContactsBefore:fitted15.bodyContactBefore,
+          realSkinnedBodyContactsAfter:fitted15.bodyContactAfter,
+          unseenRearImageInvented:false,physicalPhoneTested:false,
+          humanPhotorealismApproved:false,productionModified:false,
+          releaseAuthorized:false});
+        }
+        await sidePage15.locator('#logout').click();
+        assert.equal((await diag(sidePage15)).sourcePhotoCoverageVisible,false);
+       }finally{await sideCtx15.close();}
        await rearPage14.locator('#logout').click();
        assert.equal((await diag(rearPage14)).sourcePhotoCoverageVisible,false);
        await p.evaluate(()=>window.ccWardrobe10View(90));
@@ -758,6 +820,21 @@ try{
  assert.equal(await p.locator('#walk-left').isDisabled(),true);
  assert.equal(await p.evaluate(()=>{try{window.ccWardrobeGait02('play');return false;}catch{return true;}}),true);
  await ctx.close();
+ assert.equal(denimSide15Comparisons.length,8,'Both original 163-bone rigs, two licensed denims, real 135/180 WebGL R14/S15 views');
+ assert.deepEqual([...new Set(denimSide15Comparisons.map(x=>x.angle))],[135,180]);
+ assert.equal(new Set(denimSide15Comparisons.map(x=>x.sourceDenim)).size,2);
+ assert.ok(denimSide15Comparisons.every(x=>x.changedActualWebGLPixels>=20&&
+  x.originalFrontJPEGUVRestSkinUnchanged&&
+  x.realSkinnedBodyContactsAfter<=x.realSkinnedBodyContactsBefore&&!x.unseenRearImageInvented));
+ await writeFile('benchmark/denim-side-thigh-15/results.json',JSON.stringify({
+  originalLicensedSideThighComparisons:denimSide15Comparisons,
+  actualWebGLFrames:denimSide15Comparisons.length*2,
+  original163BoneFigures:['female','male'],licensedSourceDenims:2,
+  cameraAnglesDegrees:[135,180],mobileWidth:390,
+  sourceFrontJPEGUVRestAndSkinUntouched:true,unseenRearPhotoSynthesized:false,
+  humanPhotorealismApproved:false,physicalAndroidIphoneTested:false,
+  productionModified:false,familyAlpha:'HOLD',releaseAuthorized:false
+ },null,2));
  assert.equal(denimRear14Comparisons.length,4,'Both actual anatomy rigs and both licensed denims need matched rear F08/R14 views');
  assert.deepEqual([...new Set(denimRear14Comparisons.map(x=>x.rig))],['female','male']);
  assert.equal(new Set(denimRear14Comparisons.map(x=>x.sourceDenim)).size,2);
