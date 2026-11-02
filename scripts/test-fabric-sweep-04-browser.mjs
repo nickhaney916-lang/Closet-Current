@@ -27,7 +27,7 @@ const server=createServer(async(req,res)=>{
 });
 await new Promise(ok=>server.listen(0,'127.0.0.1',ok));
 const host='http://127.0.0.1:'+server.address().port;
-const screenshots=[],cases=[],contacts=[],sweeps=[],frozenDress=[],frozenDenim=[],denimSilhouetteComparisons=[],denimFairing08Comparisons=[],javascriptErrors=[],nonLocalRequests=[];
+const screenshots=[],cases=[],contacts=[],sweeps=[],frozenDress=[],frozenDenim=[],denimSilhouetteComparisons=[],denimFairing08Comparisons=[],denimAngle09Comparisons=[],javascriptErrors=[],nonLocalRequests=[];
 function monitor(page){
  page.on('pageerror',error=>javascriptErrors.push(String(error.message)));
  page.on('request',r=>{
@@ -75,6 +75,7 @@ try{
  await mkdir('benchmark/denim-fit-06',{recursive:true});
  await mkdir('benchmark/denim-silhouette-07',{recursive:true});
  await mkdir('benchmark/denim-fairing-08',{recursive:true});
+  await mkdir('benchmark/denim-angle-09',{recursive:true});
  for(const width of [320,390,430]){
   const ctx=await browser.newContext({viewport:{width,height:900},deviceScaleFactor:1,isMobile:true,hasTouch:true});
   const p=await ctx.newPage();monitor(p);
@@ -384,6 +385,41 @@ try{
        cuffReleasedVertices:fitted.cuffReleasedVertices08,
        maxCuffReleaseMeters:fitted.maxCuffReleaseMeters08,
        originalSourcePhotoSHA256:sourceDenim,releaseAuthorized:false});
+      // F09 -- actual browser WebGL in matched authenticated F07 and F08 viewers.
+      // Front and oblique and rear, not invented detail about unseen fabric.
+      for(const angle of [0,45,135,180]){
+       await bp.evaluate(a=>window.ccWardrobe10View(a),angle);
+       await p.evaluate(a=>window.ccWardrobe10View(a),angle);
+       const a07=await bp.locator('#avatar').screenshot();
+       const a08=await p.locator('#avatar').screenshot();
+       const changedPixels=diff(await raw(a07),await raw(a08));
+       const before09=await diag(bp),after09=await diag(p);
+       assert.equal(before09.bones,163);assert.equal(after09.bones,163);
+       assert.equal(before09.sourceDenimSilhouette07Enabled,true);
+       assert.equal(before09.sourceDenimCuffFairing08Enabled,false);
+       assert.equal(after09.sourceDenimCuffFairing08Enabled,true);
+       assert.equal(before09.displayed3DSources?.bottom,sourceDenim);
+       assert.equal(after09.displayed3DSources?.bottom,sourceDenim);
+       assert.equal(before09.account,'fixture-account-a');
+       assert.equal(after09.account,'fixture-account-a');
+       const name=prefix+'-view-'+String(angle).padStart(3,'0');
+       await writeFile('benchmark/denim-angle-09/'+name+'-baseline-f07.png',a07);
+       await writeFile('benchmark/denim-angle-09/'+name+'-fairing-f08.png',a08);
+       denimAngle09Comparisons.push({rig,denimIndex,sourceDenim,width,angle,
+        sameConfirmedOriginalSource:true,sameReal163BoneAnatomy:true,
+        sourceFrontUVAndSHAProtected:true,
+        noNewBVHContacts:fitted.bodyContactAfter<=fitted.bodyContactBefore,
+        changedPixels,sourcePhotographyRearNotInferred:true,
+        actualBrowserWebGL:true,releaseAuthorized:false});
+      }
+      await bp.evaluate(()=>window.ccWardrobe10View(90));
+      await p.evaluate(()=>window.ccWardrobe10View(90));
+      const returned07=await bp.locator('#avatar').screenshot();
+      const returned08=await p.locator('#avatar').screenshot();
+      assert.ok(diff(await raw(returned07),await raw(frame07))<=2,
+        'F07 original photographed garment lost its source pose after angle sweep');
+      assert.ok(diff(await raw(returned08),await raw(frozen))<=2,
+        'F08 photographed garment shifted after real 360 navigation');
       await bc.close();
     }
     frozenDenim.push({width,rig,denimIndex,sourceDenim,
@@ -413,6 +449,19 @@ try{
  assert.equal(await p.locator('#walk-left').isDisabled(),true);
  assert.equal(await p.evaluate(()=>{try{window.ccWardrobeGait02('play');return false;}catch{return true;}}),true);
  await ctx.close();
+ assert.equal(denimAngle09Comparisons.length,16);
+ assert.deepEqual([...new Set(denimAngle09Comparisons.map(x=>x.angle))],[0,45,135,180]);
+ assert.equal(new Set(denimAngle09Comparisons.map(x=>x.sourceDenim)).size,2);
+ await writeFile('benchmark/denim-angle-09/results.json',JSON.stringify({
+  actualOriginalDenimAngleComparisons:denimAngle09Comparisons,
+  actualWebGLAngleFrames:denimAngle09Comparisons.length*2,
+  genuine163BoneFigures:['female','male'],originalPhotoSources:2,
+  cameraAnglesDegrees:[0,45,135,180],mobileWidth:390,
+  originalPhotographedFrontUVAndSHAUnmodified:true,
+  synthesizedUnseenRearPhoto:false,sourceAccountIsolated:true,
+  humanPhotorealismAccepted:false,physicalPhoneApproved:false,
+  productionModified:false,releaseAuthorized:false,familyAlpha:'HOLD'
+ },null,2));
  assert.equal(denimFairing08Comparisons.length,4);
   await writeFile('benchmark/denim-fairing-08/results.json',JSON.stringify({
    matchedOriginalPhotoFairingPairs:denimFairing08Comparisons,
