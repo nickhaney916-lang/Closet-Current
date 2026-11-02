@@ -44,7 +44,9 @@ function updatePhotoCoverage10(degrees=app?.getState()?.viewAngle??0){
   label.dataset.rearPhotoVerified='false';return null;
  }
  const proof=classifySourcePhotoView10(degrees);
- label.textContent=proof.explanation;
+ // Avoid repeated live-region announcements during drag/spin of one angle class.
+ if(label.dataset.viewClass!==proof.viewClass||label.dataset.visible!=='true')
+  label.textContent=proof.explanation;
  label.dataset.viewClass=proof.viewClass;
  label.dataset.visible='true';
  label.dataset.rearPhotoVerified='false';
