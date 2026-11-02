@@ -1,4 +1,4 @@
-name: DENIM-ANGLE-09 Genuine Source Photo Multiview Front Rear + 3D HOLD
+name: SOURCE-COVERAGE-10 Truthful Source Photograph Provenance + 3D HOLD
 on:
   pull_request:
     paths:
@@ -12,6 +12,7 @@ on:
       - 'tests/denim-silhouette-07.test.mjs'
       - 'tests/denim-fairing-08.test.mjs'
       - 'tests/denim-angle-09.test.mjs'
+      - 'tests/source-photo-coverage-10.test.mjs'
       - '.github/workflows/fabric-sweep-04-no-deploy.yml'
 permissions:
   contents: read
@@ -35,7 +36,7 @@ jobs:
           git merge-base --is-ancestor 7716c3876284bfa474f9964e7d5b0e69f629d79b HEAD
           git diff --name-only 7716c3876284bfa474f9964e7d5b0e69f629d79b HEAD | while IFS= read -r path; do
             case "$path" in
-              research/fabric-sweep-04/*|research/dress-fit-05/*|research/denim-fit-06/*|scripts/test-fabric-sweep-04-browser.mjs|tests/fabric-sweep-04.test.mjs|tests/dress-fit-05.test.mjs|tests/denim-fit-06.test.mjs|tests/denim-silhouette-07.test.mjs|tests/denim-fairing-08.test.mjs|tests/denim-angle-09.test.mjs|.github/workflows/fabric-sweep-04-no-deploy.yml) ;;
+              research/fabric-sweep-04/*|research/dress-fit-05/*|research/denim-fit-06/*|scripts/test-fabric-sweep-04-browser.mjs|tests/fabric-sweep-04.test.mjs|tests/dress-fit-05.test.mjs|tests/denim-fit-06.test.mjs|tests/denim-silhouette-07.test.mjs|tests/denim-fairing-08.test.mjs|tests/denim-angle-09.test.mjs|tests/source-photo-coverage-10.test.mjs|.github/workflows/fabric-sweep-04-no-deploy.yml) ;;
               *) echo "UNAUTHORIZED sibling or production edit: $path"; exit 1 ;;
             esac
           done
@@ -52,8 +53,10 @@ jobs:
           node --check tests/denim-silhouette-07.test.mjs
           node --check tests/denim-fairing-08.test.mjs
           node --check tests/denim-angle-09.test.mjs
+          node --check tests/source-photo-coverage-10.test.mjs
+          node --check research/denim-fit-06/source-photo-coverage-10.mjs
           node --check scripts/test-fabric-sweep-04-browser.mjs
-          node --test tests/denim-angle-09.test.mjs tests/denim-fairing-08.test.mjs tests/denim-silhouette-07.test.mjs tests/denim-fit-06.test.mjs tests/dress-fit-05.test.mjs tests/fabric-sweep-04.test.mjs tests/fabric-folds-03.test.mjs tests/fabric-walk-02.test.mjs tests/fabric-motion-01.test.mjs tests/integration-04-wardrobe-dress.test.mjs tests/dress-mobile-01.test.mjs tests/three-d-78-original-anatomical-knee-poses.test.mjs
+          node --test tests/source-photo-coverage-10.test.mjs tests/denim-angle-09.test.mjs tests/denim-fairing-08.test.mjs tests/denim-silhouette-07.test.mjs tests/denim-fit-06.test.mjs tests/dress-fit-05.test.mjs tests/fabric-sweep-04.test.mjs tests/fabric-folds-03.test.mjs tests/fabric-walk-02.test.mjs tests/fabric-motion-01.test.mjs tests/integration-04-wardrobe-dress.test.mjs tests/dress-mobile-01.test.mjs tests/three-d-78-original-anatomical-knee-poses.test.mjs
       - name: Generate unchanged source photograph / original garment segmentation
         run: |
           node scripts/build-three-d-31-jeans-proposal.mjs
