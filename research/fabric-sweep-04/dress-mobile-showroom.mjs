@@ -38,6 +38,9 @@ export function mountAnatomicalShowroom(canvas,{onChange=()=>{},onViewChange=()=
  controls.minPolarAngle=.8;controls.maxPolarAngle=1.65;
  controls.target.set(0,1.04,0);
  controls.enableZoom=true;
+ // Save a canonical safe full-body framing for touch users. Restoring must
+ // erase residual damped pointer gesture state, not merely change the yaw.
+ controls.saveState();
  // Report genuine OrbitControls drag/zoom/turntable camera angles to the
  // provenance label without changing any original WebGL source pixels.
  controls.addEventListener('change',()=>{
@@ -259,6 +262,20 @@ export function mountAnatomicalShowroom(canvas,{onChange=()=>{},onViewChange=()=
  if(premiumTurntable67)controls.addEventListener('start',()=>{spin=false;dirty=true;});
  const setPose=mode=>{if(!selected)return;haltGait02();spin=false;group.rotation.y=0;outfit.setPose(mode);pose=mode;canvas.dataset.pose=mode;poseChanges++;draw();};
  const zoom=direction=>{const offset=camera.position.clone().sub(controls.target);const length=THREE.MathUtils.clamp(offset.length()*direction,controls.minDistance,controls.maxDistance);camera.position.copy(controls.target).add(offset.setLength(length));controls.update();draw();};
+ const resetFraming13=()=>{
+  if(finish||!selected)throw Error('Original authenticated anatomical source viewer required');
+  spin=false;group.rotation.y=0;
+  // OrbitControls.reset clears zoom scale/damping along with the rotation,
+  // restoring the camera and target actually saved at initialization.
+  const damp=controls.enableDamping;
+  controls.enableDamping=false;
+  try{controls.reset();controls.update();}finally{controls.enableDamping=damp;}
+  dirty=true;draw();
+  return {cameraDistance:camera.position.distanceTo(controls.target),
+   viewAngle:premiumTurntable67?viewAngleFromCamera(camera,controls.target):0,
+   originalSkinnedFigure:!!selected&&lastStats?.bones===163,
+   originalSourceGarmentsUntouched:true,releaseAuthorized:false};
+ };
  const onVisibilityChange=()=>{dirty=true;};
  document.addEventListener('visibilitychange',onVisibilityChange);
  const syncOutfit=()=>{const s=outfit?.getState();dressPresentation.value=dressContact&&s?.mode==='dress'?1:0;canvas.dataset.outfit=s?.mode||'none';canvas.dataset.shirt=s?.shirt?'source-reviewed':'none';canvas.dataset.pants=s?.pants?'neutral-research':'none';canvas.dataset.dress=s?.dress?'source-reviewed':'none';};
@@ -379,7 +396,7 @@ export function mountAnatomicalShowroom(canvas,{onChange=()=>{},onViewChange=()=
     sweptCollisionCertified:false,releaseAuthorized:false};
   }finally{d?.g?.dispose();b?.g?.dispose();}
  };
- return {load,shade,front,side,back,rotate,viewAt:rotate,resetView:front,start,stop,setPose,zoom,applyOutfit,inspectSleeves,inspectTorso,
+ return {load,shade,front,side,back,rotate,viewAt:rotate,resetView:resetFraming13,start,stop,setPose,zoom,applyOutfit,inspectSleeves,inspectTorso,
   setGaitPhase02,resetGait02,auditGaitDress02,freezeDressFit05,freezeDenimFit06,
   sampleSweep04:phase=>{
    if(!Number.isFinite(phase)||phase<0||phase>1||Math.abs(phase*8-Math.round(phase*8))>1e-9)
