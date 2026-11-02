@@ -438,6 +438,8 @@ try{
      await touchPage12.waitForTimeout(650);
      const initial13=await diag(touchPage12),firstDistance13=initial13.memory.cameraDistance;
      assert.ok(Math.abs(firstDistance13-4.65)<.02,'Full-body reset must return to safe canonical camera distance');
+     assert.ok(Math.abs(initial13.memory.cameraPosition[0])<1e-9,
+      'The FIRST reset must cancel all residual yaw before photography, not only the second reset');
      const front13=await touchPage12.locator('#avatar').screenshot();
      const in13=await originalCanvasPinch13(touchPage12,true);
      await touchPage12.waitForTimeout(600);
@@ -462,6 +464,8 @@ try{
      const restorePng13=await touchPage12.locator('#avatar').screenshot();
      const changedReset13=diff(await raw(front13),await raw(restorePng13));
      assert.ok(Math.abs(restored13.memory.cameraDistance-firstDistance13)<.02);
+     assert.ok(Math.abs(restored13.memory.cameraPosition[0])<1e-9);
+     assert.ok(Math.abs(restored13.memory.cameraPosition[2]-initial13.memory.cameraPosition[2])<1e-9);
      assert.equal(restored13.photoCoverageViewClass,'front-photo');
      assert.equal(restored13.displayed3DSources?.bottom,sourceDenim);
      assert.equal(restored13.account,'fixture-account-a');
@@ -481,6 +485,8 @@ try{
       owner:'fixture-account-a',original163BoneRig:true,in13,out13,
       firstDistance13,nearDistance13,farDistance13,resetDistance13:restored13.memory.cameraDistance,
       changedIn13,changedOut13,changedReset13,resetClass:restored13.photoCoverageViewClass,
+      initialCameraX:initial13.memory.cameraPosition[0],
+      restoredCameraX:restored13.memory.cameraPosition[0],
       noNewBVHContacts:touchFit12.trueBVHBodyContactNoNew,
       originalSourcePhotoAndSkinUntouched:true,physicalPhoneVerified:false,
       familyAlpha:'HOLD',productionModified:false,releaseAuthorized:false});
