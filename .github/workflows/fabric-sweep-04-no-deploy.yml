@@ -356,6 +356,8 @@ jobs:
            assert.ok(Math.abs(a.resetDistance13-a.firstDistance13)<.02);
            assert.ok(a.changedIn13>=50&&a.changedOut13>=50);
            assert.ok(a.changedReset13<=2);
+           assert.ok(Math.abs(a.initialCameraX)<1e-9);
+           assert.ok(Math.abs(a.restoredCameraX)<1e-9);
            assert.equal(a.resetClass,'front-photo');
            assert.equal(a.noNewBVHContacts,true);
            assert.equal(a.originalSourcePhotoAndSkinUntouched,true);
