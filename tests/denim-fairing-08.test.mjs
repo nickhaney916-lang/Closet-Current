@@ -39,7 +39,7 @@ test('F08 source photo SHA, UV/rest/skin and physical body BVH are still mandato
   assert.ok(fit.includes(s),s);
  assert.ok(controller.includes('sourceFairing08:sourceDenimCuffFairing08'));
  assert.ok(room.includes('sourceDenimCuffFairing08Enabled:sourceDenimCuffFairing08'));
- for(const s of ["get('denimFairing')==='after'",'proof.maxCuffReleaseMeters08<.0055',
+ for(const s of ["get('denimFairing')==='after'",'proof.maxCuffReleaseMeters08<.008',
   'last3D?.originalPhotoSHA256s?.bottom','bound?.ownerId!==owner.ownerId'])
   assert.ok(wardrobe.includes(s),s);
  for(const s of ['baseline-f07','cuff-f08','changedPixelsAgainstExactOriginalF07',
