@@ -9,6 +9,7 @@ import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import {extname,resolve} from 'node:path';
 import {chromium} from 'playwright';
 import sharp from 'sharp';
+import {photographedLowerGarmentPixelWitness10} from '../research/denim-fit-06/garment-pixel-witness-10.mjs';
 const root=resolve('.'),dir='benchmark/fabric-sweep-04',SHA='e7a617cd23a159864f619e8397d5f37d48b684e47dddc4ad6b46b14481042019';
 const server=createServer(async(req,res)=>{
  try{
@@ -374,12 +375,19 @@ try{
        actualSewnFoldTopologyPreserved:true,
        releaseAuthorized:false,physicalPhoneApproved:false});
 
-      const changed08=diff(await raw(frame07),await raw(frozen));
+      const originalF07RGB=await raw(frame07),fairingF08RGB=await raw(frozen);
+      const changed08=diff(originalF07RGB,fairingF08RGB);
+      const garmentWitness10=photographedLowerGarmentPixelWitness10(originalF07RGB,fairingF08RGB);
       assert.ok(changed08>=20,'Real photographed cuff geometry must differ from exact original F07: '+changed08);
+      assert.ok(garmentWitness10.changedGarmentPixels>=20,
+       'Actual photographed jeans cuff surface must change independently of top-edge screenshot artifacts: '+
+       garmentWitness10.changedGarmentPixels);
       for(const [suffix,image] of [['baseline-f07',frame07],['cuff-f08',frozen]])
        await writeFile('benchmark/denim-fairing-08/'+prefix+'-'+suffix+'.png',image);
       denimFairing08Comparisons.push({width,rig,denimIndex,sourceDenim,
        changedPixelsAgainstExactOriginalF07:changed08,
+       changedGarmentPixelsAgainstExactOriginalF07:garmentWitness10.changedGarmentPixels,
+       garmentPixelsExcludingScreenshotTopRow:true,
        realSource163BoneRig:true,frontPhotoAndUVUnchanged:true,
        noNewSkinnedTriangleContacts:fitted.bodyContactAfter<=fitted.bodyContactBefore,
        cuffReleasedVertices:fitted.cuffReleasedVertices08,
