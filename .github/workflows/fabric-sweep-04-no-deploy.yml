@@ -1,4 +1,4 @@
-name: SOURCE-ROTATE-11 Real WebGL Pointer-Provenance + 3D HOLD
+name: SOURCE-TOUCH-12 Native Chromium Touch Gesture Source-Coverage QA HOLD
 on:
   pull_request:
     paths:
@@ -280,6 +280,57 @@ jobs:
           assert.equal(r.releaseAuthorized,false);
           assert.equal(r.familyAlpha,'HOLD');
           CHECK
+      - name: Verify F12 native mobile touch WebGL photographs and false-rear protection (NO RELEASE)
+        run: |
+          node --input-type=module <<'CHECK'
+          import assert from 'node:assert/strict';
+          import {readFileSync,readdirSync} from 'node:fs';
+          const r=JSON.parse(readFileSync('benchmark/source-touch-12/results.json','utf8'));
+          assert.deepEqual(r.mobileWidths,[320,390,430]);
+          assert.deepEqual(r.anatomicalRigs,['female','male']);
+          assert.equal(r.licensedOriginalDenims,2);
+          assert.equal(r.actualNativeChromeTouchEvents,true);
+          assert.equal(r.genuineChromiumTouchSwipes.length,8);
+          assert.equal(r.realWebGLTouchFrameCount,16);
+          assert.equal(readdirSync('benchmark/source-touch-12').filter(x=>x.endsWith('.png')).length,16);
+          assert.equal(new Set(r.genuineChromiumTouchSwipes.map(x=>x.sourceSHA256)).size,2);
+          assert.deepEqual([...new Set(r.genuineChromiumTouchSwipes.map(x=>x.width))],[320,390,430]);
+          assert.deepEqual([...new Set(r.genuineChromiumTouchSwipes.map(x=>x.rig))],['female','male']);
+          for(const t of r.genuineChromiumTouchSwipes){
+           assert.equal(t.actualRigBones,163);
+           assert.equal(t.signedInSyntheticAccount,'fixture-account-a');
+           assert.equal(t.finger12.steps,18);
+           assert.equal(t.finger12.chromeNativeTouchEvents,true);
+           assert.equal(t.finger12.physicalTouchHardwareUsed,false);
+           assert.match(t.input,/native touchStart\/touchMove\/touchEnd/);
+           assert.match(t.sourceSHA256,/^[a-f0-9]{64}$/);
+           assert.equal(t.frontClass,'front-photo');
+           assert.ok(['mixed-photo-and-model','unphotographed-rear'].includes(t.afterClass));
+           assert.ok(t.changedWebGLPixels>=50);
+           assert.equal(t.sourceIdentitySameAfterTouch,true);
+           assert.equal(t.isolatedBrowserSession,true);
+           assert.equal(t.garmentContactNoNew,true);
+           assert.equal(t.confirmedRearOriginalPhoto,false);
+           assert.equal(t.originalPhotoRGBUVAndSkinUnmodified,true);
+           assert.equal(t.physicalAndroidIphoneTested,false);
+           assert.equal(t.productionModified,false);
+           assert.equal(t.releaseAuthorized,false);
+          }
+          assert.equal(r.realPhysicalAndroidIphoneVerified,false);
+          assert.equal(r.sourcePrivacyAndOwnerPreserved,true);
+          assert.equal(r.unseenRearPhotoInvented,false);
+          assert.equal(r.originalPhotoRGBUVAndSkinUnchanged,true);
+          assert.equal(r.photorealismHumanApproved,false);
+          assert.equal(r.productionModified,false);
+          assert.equal(r.familyAlpha,'HOLD');
+          assert.equal(r.releaseAuthorized,false);
+          CHECK
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: SOURCE-TOUCH-12-NATIVE-MOBILE-CHROME-16-REAL-WEBGL-FRAMES-HOLD
+          path: benchmark/source-touch-12/
+          if-no-files-found: error
       - uses: actions/upload-artifact@v4
         if: always()
         with:
