@@ -27,7 +27,7 @@ const server=createServer(async(req,res)=>{
 });
 await new Promise(ok=>server.listen(0,'127.0.0.1',ok));
 const host='http://127.0.0.1:'+server.address().port;
-const screenshots=[],cases=[],contacts=[],sweeps=[],frozenDress=[],frozenDenim=[],javascriptErrors=[],nonLocalRequests=[];
+const screenshots=[],cases=[],contacts=[],sweeps=[],frozenDress=[],frozenDenim=[],denimSilhouetteComparisons=[],javascriptErrors=[],nonLocalRequests=[];
 function monitor(page){
  page.on('pageerror',error=>javascriptErrors.push(String(error.message)));
  page.on('request',r=>{
@@ -73,10 +73,11 @@ try{
  await mkdir(dir,{recursive:true});
  await mkdir('benchmark/dress-fit-05',{recursive:true});
  await mkdir('benchmark/denim-fit-06',{recursive:true});
+ await mkdir('benchmark/denim-silhouette-07',{recursive:true});
  for(const width of [320,390,430]){
   const ctx=await browser.newContext({viewport:{width,height:900},deviceScaleFactor:1,isMobile:true,hasTouch:true});
   const p=await ctx.newPage();monitor(p);
-  await p.goto(host+'/research/fabric-sweep-04/index.html?walk=after&folds=after&sweep=after&dressFit=after&denimFit=after',{waitUntil:'domcontentloaded'});
+  await p.goto(host+'/research/fabric-sweep-04/index.html?walk=after&folds=after&sweep=after&dressFit=after&denimFit=after&denimSilhouette=after',{waitUntil:'domcontentloaded'});
   for(const rig of ['female','male']){
    if(rig==='male'){
     await p.locator('#model').selectOption('male');
@@ -284,6 +285,13 @@ try{
     assert.equal(fitted.frontPhotographUnchanged,true);
     assert.ok(fitted.changedVertices>=60&&Math.min(...fitted.perLeg)>=20);
     assert.ok(fitted.rest.meters>.0057);
+    assert.equal(fitted.sourceMeasuredAnatomicalSilhouette07,true);
+    assert.equal(fitted.originalSkinnedKneeHemTaperImproved07,true);
+    assert.equal(fitted.originalPhotoTextureRGBAndUVUnmodified07,true);
+    assert.ok(fitted.additionalKneeVsHemEaseMeters07>=.008);
+    assert.ok(fitted.sourceNeutralKneeRearGroups07>=15);
+    assert.ok(fitted.maxWorldShiftMeters<=.024);
+
     const frozen=await p.locator('#avatar').screenshot();
     const raw=buffer=>sharp(buffer).removeAlpha().raw().toBuffer({resolveWithObject:true});
     const moved=diff(await raw(before),await raw(frozen));
@@ -302,6 +310,44 @@ try{
     for(const [suffix,png] of [['original',before],['gravity-frozen',frozen],
       ['turntable-return',rotated],['repeated-fit',repeated]])
      await writeFile('benchmark/denim-fit-06/'+prefix+'-'+suffix+'.png',png);
+    if(width===390){
+      // Real browser against the IDENTICAL saved-source JEANS and original
+      // anatomical rig, not synthesized diagrams or guessed pixel data.
+      // Parent F06 baseline (taper OFF) remains fully active independently.
+      const bc=await browser.newContext({viewport:{width,height:900},deviceScaleFactor:1,isMobile:true,hasTouch:true});
+      const bp=await bc.newPage();monitor(bp);
+      await bp.goto(host+'/research/fabric-sweep-04/index.html?walk=after&folds=after&sweep=after&dressFit=after&denimFit=after',{waitUntil:'domcontentloaded'});
+      if(rig==='male'){
+        await bp.waitForFunction(()=>window.ccWardrobe10Diagnostics?.()?.viewerReady===true,null,{timeout:180000});
+        await bp.locator('#model').selectOption('male');
+        await bp.waitForFunction(()=>window.ccWardrobe10Diagnostics()?.figure==='male'&&window.ccWardrobe10Diagnostics()?.viewerReady,null,{timeout:180000});
+      }
+      await ready(bp);
+      await bp.locator('#swap').click();
+      if(denimIndex===1)await bp.locator('#swap').click();
+      await bp.waitForFunction(()=>window.ccWardrobe10Diagnostics?.()?.outfitMode==='shirt-pants',null,{timeout:30000});
+      const old=await diag(bp);
+      assert.equal(old.sourceDenimSilhouette07Enabled,false);
+      assert.equal(old.displayed3DSources?.bottom,sourceDenim);
+      await bp.evaluate(()=>window.ccWardrobe10View(90));
+      const original06=await bp.evaluate(()=>window.ccWardrobeDenimFreeze06());
+      assert.equal(original06.sourceMeasuredAnatomicalSilhouette07,false);
+      assert.equal(original06.originalPhotoSHA256,sourceDenim);
+      const image06=await bp.locator('#avatar').screenshot();
+      const pixelDelta=diff(await raw(image06),await raw(frozen));
+      assert.ok(pixelDelta>=30,'Anatomical knee-to-ankle taper must be visible on ORIGINAL denim screenshot: '+pixelDelta);
+      for(const [suffix,image] of [['baseline-f06',image06],['silhouette-f07',frozen]])
+        await writeFile('benchmark/denim-silhouette-07/'+prefix+'-'+suffix+'.png',image);
+      denimSilhouetteComparisons.push({width,rig,denimIndex,sourceDenim,
+        changedPixelsAgainstExactOriginalF06:pixelDelta,
+        realSourceDenim:true,originalFrontAndSkinPreserved:true,
+        original163BoneMannequin:true,
+        noNewTriangleContacts:fitted.bodyContactAfter<=fitted.bodyContactBefore,
+        kneeVsHemEaseMeters:fitted.additionalKneeVsHemEaseMeters07,
+        actualSewnFoldTopologyPreserved:true,
+        releaseAuthorized:false,physicalPhoneApproved:false});
+      await bc.close();
+    }
     frozenDenim.push({width,rig,denimIndex,sourceDenim,
       sourceOwner:fitted.account,sourceGeneration:fitted.generation,
       sourceBoundToSavedWardrobe:fitted.sourceBoundToSavedWardrobe,
@@ -329,6 +375,16 @@ try{
  assert.equal(await p.locator('#walk-left').isDisabled(),true);
  assert.equal(await p.evaluate(()=>{try{window.ccWardrobeGait02('play');return false;}catch{return true;}}),true);
  await ctx.close();
+ await writeFile('benchmark/denim-silhouette-07/results.json',JSON.stringify({
+   genuinePhotoOriginalDenimComparisons:denimSilhouetteComparisons,
+   realMatchedWebGLComparisonFrames:denimSilhouetteComparisons.length*2,
+   cameraAngleDegrees:90,width:390,original163BoneFigures:['female','male'],
+   licensedSourceDenims:2,sourceFrontPhotosAndSkinsUnchanged:true,
+   frontTextureDetailsNotSynthesized:true,physicalPhoneApproved:false,
+   independentHumanPhotorealismApproved:false,releaseAuthorized:false,
+   familyAlpha:'HOLD',productionModified:false
+ },null,2));
+ assert.equal(denimSilhouetteComparisons.length,4);
  await writeFile('benchmark/denim-fit-06/results.json',JSON.stringify({
   frozenDenim,realWebGLFrames:frozenDenim.length*4,
   original163BoneFigures:['female','male'],mobileWidths:[320,390,430],
