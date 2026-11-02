@@ -27,7 +27,7 @@ const server=createServer(async(req,res)=>{
 });
 await new Promise(ok=>server.listen(0,'127.0.0.1',ok));
 const host='http://127.0.0.1:'+server.address().port;
-const screenshots=[],cases=[],contacts=[],sweeps=[],frozenDress=[],javascriptErrors=[],nonLocalRequests=[];
+const screenshots=[],cases=[],contacts=[],sweeps=[],frozenDress=[],frozenDenim=[],javascriptErrors=[],nonLocalRequests=[];
 function monitor(page){
  page.on('pageerror',error=>javascriptErrors.push(String(error.message)));
  page.on('request',r=>{
@@ -72,10 +72,11 @@ try{
   '--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader','--enable-webgl']});
  await mkdir(dir,{recursive:true});
  await mkdir('benchmark/dress-fit-05',{recursive:true});
+ await mkdir('benchmark/denim-fit-06',{recursive:true});
  for(const width of [320,390,430]){
   const ctx=await browser.newContext({viewport:{width,height:900},deviceScaleFactor:1,isMobile:true,hasTouch:true});
   const p=await ctx.newPage();monitor(p);
-  await p.goto(host+'/research/fabric-sweep-04/index.html?walk=after&folds=after&sweep=after&dressFit=after',{waitUntil:'domcontentloaded'});
+  await p.goto(host+'/research/fabric-sweep-04/index.html?walk=after&folds=after&sweep=after&dressFit=after&denimFit=after',{waitUntil:'domcontentloaded'});
   for(const rig of ['female','male']){
    if(rig==='male'){
     await p.locator('#model').selectOption('male');
@@ -259,6 +260,59 @@ try{
     actualWebGLFoldBeforeAfterChangedPixels:afterMinusBeforePixels});
    await p.locator('#swap').click();
    assert.equal(await p.evaluate(()=>{try{window.ccWardrobeDressFreeze05();return false;}catch{return true;}}),true);
+   // One real 163-bone mannequin and the SAME source-verified wardrobe viewer:
+   // fitted licensed shirt+jeans (not a standalone fake pants model).
+   for(let denimIndex=0;denimIndex<(width===390?2:1);denimIndex++){
+    if(denimIndex===1)await p.locator('#swap').click();
+    await p.waitForFunction(()=>window.ccWardrobe10Diagnostics?.()?.outfitMode==='shirt-pants',null,{timeout:30000});
+    const beforeState=await diag(p);
+    assert.equal(beforeState.realDress,null);
+    assert.equal(beforeState.staticDenimFit06Enabled,true);
+    assert.equal(beforeState.account,'fixture-account-a');
+    const sourceDenim=beforeState.displayed3DSources?.bottom;
+    assert.ok([ 
+     'b316902ad85e8ff46b164ceb7f2c38d3c1424c9d789703e0267e3dfce68fbe1c',
+     'aa7f288055874773b87cd38b5b4e473b532920f61c2d17cb0ccd7872466c444a'
+    ].includes(sourceDenim),'Real photo original denim source not matched');
+    await p.evaluate(()=>window.ccWardrobe10View(90));
+    const before=await p.locator('#avatar').screenshot();
+    const fitted=await p.evaluate(()=>window.ccWardrobeDenimFreeze06());
+    assert.equal(fitted.originalPhotoSHA256,sourceDenim);
+    assert.equal(fitted.actualPhotoDenimFrozenFit,true);
+    assert.equal(fitted.trueBVHBodyContactNoNew,true);
+    assert.equal(fitted.sourceUVRestAndSkinByteIdentical,true);
+    assert.equal(fitted.frontPhotographUnchanged,true);
+    assert.ok(fitted.changedVertices>=60&&Math.min(...fitted.perLeg)>=20);
+    assert.ok(fitted.rest.meters>.0057);
+    const frozen=await p.locator('#avatar').screenshot();
+    const raw=buffer=>sharp(buffer).removeAlpha().raw().toBuffer({resolveWithObject:true});
+    const moved=diff(await raw(before),await raw(frozen));
+    assert.ok(moved>=6,'Real photographed source denim fitting did not change side silhouette: '+moved);
+    await p.evaluate(()=>window.ccWardrobe10View(180));
+    await p.evaluate(()=>window.ccWardrobe10View(90));
+    const rotated=await p.locator('#avatar').screenshot();
+    const drift=diff(await raw(frozen),await raw(rotated));
+    assert.ok(drift<=2,'Actual photo jeans static fitting drifted during 360-degree view: '+drift);
+    const same=await p.evaluate(()=>window.ccWardrobeDenimFreeze06());
+    assert.equal(same.originalPhotoSHA256,sourceDenim);
+    const repeated=await p.locator('#avatar').screenshot();
+    const repeatDrift=diff(await raw(frozen),await raw(repeated));
+    assert.ok(repeatDrift<=2,'Reapplied original photo jeans gravity equilibrium moved unexpectedly: '+repeatDrift);
+    const prefix=width+'-'+rig+'-denim-'+denimIndex;
+    for(const [suffix,png] of [['original',before],['gravity-frozen',frozen],
+      ['turntable-return',rotated],['repeated-fit',repeated]])
+     await writeFile('benchmark/denim-fit-06/'+prefix+'-'+suffix+'.png',png);
+    frozenDenim.push({width,rig,denimIndex,sourceDenim,
+      sourceOwner:fitted.account,sourceGeneration:fitted.generation,
+      sourceBoundToSavedWardrobe:fitted.sourceBoundToSavedWardrobe,
+      movedPixels:moved,rotationDrift:drift,repeatDrift,
+      originalPhotoFrontAndSkinUnchanged:true,bodyContactsBefore:fitted.bodyContactBefore,
+      bodyContactsAfter:fitted.bodyContactAfter,physicalPhoneVerified:false,
+      releaseAuthorized:false});
+   }
+   await p.locator('#swap').click();
+   assert.equal(await p.evaluate(()=>{try{window.ccWardrobeDenimFreeze06();return false;}catch{return true;}}),false,
+    'Swapping between two source-verified jeans remains valid when both licensed meshes exist');
    assert.equal(await p.evaluate(()=>{try{window.ccWardrobeGait02('left-step');return false;}catch{return true;}}),true);
   }
   await p.locator('#logout').click();
@@ -275,6 +329,15 @@ try{
  assert.equal(await p.locator('#walk-left').isDisabled(),true);
  assert.equal(await p.evaluate(()=>{try{window.ccWardrobeGait02('play');return false;}catch{return true;}}),true);
  await ctx.close();
+ await writeFile('benchmark/denim-fit-06/results.json',JSON.stringify({
+  frozenDenim,realWebGLFrames:frozenDenim.length*4,
+  original163BoneFigures:['female','male'],mobileWidths:[320,390,430],
+  independentOriginalDenims:2,savedWardrobeOwnerBound:true,
+  fullyGeneralUserPhoto3DCertified:false,physicalPhoneVerified:false,
+  humanVisualApproved:false,releaseAuthorized:false,productionModified:false,
+  familyAlpha:'HOLD'
+ },null,2));
+ assert.equal(frozenDenim.length,8);
  await writeFile('benchmark/dress-fit-05/results.json',JSON.stringify({
   frozenDress,frozenWebGLImages:frozenDress.length*4,mobileWidths:[320,390,430],
   originalFigures:['female','male'],actualVerifiedSource:true,

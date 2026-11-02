@@ -1,12 +1,14 @@
-name: DRESS-FIT-05 Original-Photo Dress Settle and Freeze + SWEEP-04 NO DEPLOY HOLD
+name: DENIM-FIT-06 Saved Photo Jeans+Dress Static Fit + True BVH NO DEPLOY HOLD
 on:
   pull_request:
     paths:
       - 'research/fabric-sweep-04/**'
       - 'research/dress-fit-05/**'
+      - 'research/denim-fit-06/**'
       - 'scripts/test-fabric-sweep-04-browser.mjs'
       - 'tests/fabric-sweep-04.test.mjs'
       - 'tests/dress-fit-05.test.mjs'
+      - 'tests/denim-fit-06.test.mjs'
       - '.github/workflows/fabric-sweep-04-no-deploy.yml'
 permissions:
   contents: read
@@ -30,7 +32,7 @@ jobs:
           git merge-base --is-ancestor 7716c3876284bfa474f9964e7d5b0e69f629d79b HEAD
           git diff --name-only 7716c3876284bfa474f9964e7d5b0e69f629d79b HEAD | while IFS= read -r path; do
             case "$path" in
-              research/fabric-sweep-04/*|research/dress-fit-05/*|scripts/test-fabric-sweep-04-browser.mjs|tests/fabric-sweep-04.test.mjs|tests/dress-fit-05.test.mjs|.github/workflows/fabric-sweep-04-no-deploy.yml) ;;
+              research/fabric-sweep-04/*|research/dress-fit-05/*|research/denim-fit-06/*|scripts/test-fabric-sweep-04-browser.mjs|tests/fabric-sweep-04.test.mjs|tests/dress-fit-05.test.mjs|tests/denim-fit-06.test.mjs|.github/workflows/fabric-sweep-04-no-deploy.yml) ;;
               *) echo "UNAUTHORIZED sibling or production edit: $path"; exit 1 ;;
             esac
           done
@@ -43,8 +45,9 @@ jobs:
           node --check research/fabric-sweep-04/dress-mobile-showroom.mjs
           node --check research/fabric-sweep-04/wardrobe-demo.mjs
           node --check research/dress-fit-05/static-source-dress-fit.mjs
+          node --check research/denim-fit-06/static-source-denim-fit.mjs
           node --check scripts/test-fabric-sweep-04-browser.mjs
-          node --test tests/dress-fit-05.test.mjs tests/fabric-sweep-04.test.mjs tests/fabric-folds-03.test.mjs tests/fabric-walk-02.test.mjs tests/fabric-motion-01.test.mjs tests/integration-04-wardrobe-dress.test.mjs tests/dress-mobile-01.test.mjs tests/three-d-78-original-anatomical-knee-poses.test.mjs
+          node --test tests/denim-fit-06.test.mjs tests/dress-fit-05.test.mjs tests/fabric-sweep-04.test.mjs tests/fabric-folds-03.test.mjs tests/fabric-walk-02.test.mjs tests/fabric-motion-01.test.mjs tests/integration-04-wardrobe-dress.test.mjs tests/dress-mobile-01.test.mjs tests/three-d-78-original-anatomical-knee-poses.test.mjs
       - name: Generate unchanged source photograph / original garment segmentation
         run: |
           node scripts/build-three-d-31-jeans-proposal.mjs
@@ -118,6 +121,39 @@ jobs:
           assert.equal(r.releaseAuthorized,false);
           assert.equal(r.productionModified,false);
           CHECK
+      - name: Verify original photographed saved jeans static fit on genuine 163-bone mannequins
+        run: |
+          node --input-type=module <<'CHECK'
+          import assert from 'node:assert/strict';
+          import {readFileSync,readdirSync} from 'node:fs';
+          const r=JSON.parse(readFileSync('benchmark/denim-fit-06/results.json'));
+          assert.equal(r.frozenDenim.length,8);
+          assert.equal(r.realWebGLFrames,32);
+          assert.equal(readdirSync('benchmark/denim-fit-06').filter(x=>x.endsWith('.png')).length,32);
+          assert.deepEqual(r.original163BoneFigures,['female','male']);
+          assert.deepEqual(r.mobileWidths,[320,390,430]);
+          assert.equal(r.independentOriginalDenims,2);
+          assert.equal(new Set(r.frozenDenim.map(x=>x.sourceDenim)).size,2);
+          assert.ok(r.frozenDenim.every(x=>x.sourceOwner==='fixture-account-a'&&
+            Number.isInteger(x.sourceGeneration)&&x.sourceGeneration>=1&&
+            x.sourceBoundToSavedWardrobe===true&&x.movedPixels>=6&&
+            x.rotationDrift<=2&&x.repeatDrift<=2&&
+            x.bodyContactsAfter<=x.bodyContactsBefore&&
+            x.originalPhotoFrontAndSkinUnchanged));
+          assert.equal(r.savedWardrobeOwnerBound,true);
+          assert.equal(r.fullyGeneralUserPhoto3DCertified,false);
+          assert.equal(r.physicalPhoneVerified,false);
+          assert.equal(r.humanVisualApproved,false);
+          assert.equal(r.releaseAuthorized,false);
+          assert.equal(r.productionModified,false);
+          assert.equal(r.familyAlpha,'HOLD');
+          CHECK
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: DENIM-FIT-06-32-REAL-WEBGL-SAVED-WARDROBE-HOLD
+          path: benchmark/denim-fit-06/
+          if-no-files-found: warn
       - uses: actions/upload-artifact@v4
         if: always()
         with:
