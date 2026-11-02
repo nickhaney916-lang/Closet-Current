@@ -86,7 +86,24 @@ export function shapeSourceWeightedClothFold07(root,shirt){
    const x=Math.abs(q.x-centerX);
    return x>.028&&x<.307&&q.y<shoulderY-.16;
   }).map(({q})=>q.y-shoulderY).sort((a,b)=>a-b);
-  if(sourceTorsoY.length<40)throw Error('Cannot measure actual photographed shirt torso hem');
+  if(sourceTorsoY.length<40){
+   const full=[...groups.values()].map(({q,ids})=>({
+    x:Math.abs(q.x-centerX),dy:q.y-shoulderY,
+    py:geo.getAttribute('panelPosition').getY(ids[0]),n:ids.length
+   }));
+   const sample=arr=>{
+    const sorted=arr.filter(Number.isFinite).sort((a,b)=>a-b);
+    return {n:sorted.length,min:sorted[0],q05:sorted[Math.floor(sorted.length*.05)],
+      median:sorted[Math.floor(sorted.length*.5)],q95:sorted[Math.floor(sorted.length*.95)],max:sorted.at(-1)};
+   };
+   throw Error('Cannot measure actual photographed shirt torso hem '+JSON.stringify({
+    sourceTorsoCount:sourceTorsoY.length,uniqueSkinned:groups.size,
+    worldX:sample(full.map(v=>v.x)),worldDy:sample(full.map(v=>v.dy)),
+    sourcePanelY:sample(full.map(v=>v.py)),
+    originalShellVertices:p.count,maxVertexMultiplicity:Math.max(...full.map(v=>v.n)),
+    lowerCandidates:full.filter(v=>v.dy<-.16).length
+   }));
+  }
   const sourceHemDy=sourceTorsoY[Math.floor(sourceTorsoY.length*.035)];
   if(sourceHemDy>=-.26||sourceHemDy<-.98)throw Error('Original sewn source shirt waist endpoint invalid '+JSON.stringify({sourceHemDy,sampledTorso:sourceTorsoY.length,low:sourceTorsoY[0],med:sourceTorsoY[Math.floor(sourceTorsoY.length/2)],high:sourceTorsoY.at(-1)}));
   observedSourceHemDy.push(sourceHemDy);
