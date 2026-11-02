@@ -276,7 +276,9 @@ async function initViewer(){
     poseConditionedPleats03:new URLSearchParams(location.search).get('walk')==='after'&&
       new URLSearchParams(location.search).get('folds')==='after',
     staticDressFit05:new URLSearchParams(location.search).get('dressFit')==='after',
-    staticDenimFit06:new URLSearchParams(location.search).get('denimFit')==='after'
+    staticDenimFit06:new URLSearchParams(location.search).get('denimFit')==='after',
+    sourceDenimSilhouette07:new URLSearchParams(location.search).get('denimFit')==='after'&&
+      new URLSearchParams(location.search).get('denimSilhouette')==='after'
   });
   canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();
    if(token!==bootToken)return;
@@ -374,6 +376,7 @@ window.ccWardrobe10Diagnostics=()=>{
      posePleats03State:state?.posePleats03State||null,
       staticDressFit05Enabled:state?.staticDressFit05Enabled||false,
       staticDressFit05State:state?.staticDressFit05State||null,
+      sourceDenimSilhouette07Enabled:state?.sourceDenimSilhouette07Enabled||false,
       staticDenimFit06Enabled:state?.staticDenimFit06Enabled||false,
       staticDenimFit06State:state?.staticDenimFit06State||null,
      swept04Clock:state?.continuousGait04||null,
@@ -448,6 +451,12 @@ window.ccWardrobeDenimFreeze06=()=>{
     new URLSearchParams(location.search).get('denimFit')!=='after')
    throw Error('Current synthetic owner, saved original photographed jeans SHA and explicit 3D fitting required');
   const proof=app.freezeDenimFit06();
+  if(new URLSearchParams(location.search).get('denimSilhouette')==='after'&&
+     (!proof.sourceMeasuredAnatomicalSilhouette07||
+      !proof.originalSkinnedKneeHemTaperImproved07||
+      !proof.originalPhotoTextureRGBAndUVUnmodified07||
+      proof.additionalKneeVsHemEaseMeters07<.008))
+   throw Error('Genuine source photographed jeans silhouette did not pass anatomical taper audit');
   const after=current();
   if(!after.authenticated||after.ownerId!==owner.ownerId||after.generation!==owner.generation||
     proof.originalPhotoSHA256!==expected||!proof.frontPhotographUnchanged||

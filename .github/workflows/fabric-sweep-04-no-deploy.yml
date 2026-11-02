@@ -1,4 +1,4 @@
-name: DENIM-FIT-06 Saved Photo Jeans+Dress Static Fit + True BVH NO DEPLOY HOLD
+name: DENIM-SILHOUETTE-07 Source Photo Real Jeans Knee-Hem Taper + 3D HOLD
 on:
   pull_request:
     paths:
@@ -9,6 +9,7 @@ on:
       - 'tests/fabric-sweep-04.test.mjs'
       - 'tests/dress-fit-05.test.mjs'
       - 'tests/denim-fit-06.test.mjs'
+      - 'tests/denim-silhouette-07.test.mjs'
       - '.github/workflows/fabric-sweep-04-no-deploy.yml'
 permissions:
   contents: read
@@ -32,7 +33,7 @@ jobs:
           git merge-base --is-ancestor 7716c3876284bfa474f9964e7d5b0e69f629d79b HEAD
           git diff --name-only 7716c3876284bfa474f9964e7d5b0e69f629d79b HEAD | while IFS= read -r path; do
             case "$path" in
-              research/fabric-sweep-04/*|research/dress-fit-05/*|research/denim-fit-06/*|scripts/test-fabric-sweep-04-browser.mjs|tests/fabric-sweep-04.test.mjs|tests/dress-fit-05.test.mjs|tests/denim-fit-06.test.mjs|.github/workflows/fabric-sweep-04-no-deploy.yml) ;;
+              research/fabric-sweep-04/*|research/dress-fit-05/*|research/denim-fit-06/*|scripts/test-fabric-sweep-04-browser.mjs|tests/fabric-sweep-04.test.mjs|tests/dress-fit-05.test.mjs|tests/denim-fit-06.test.mjs|tests/denim-silhouette-07.test.mjs|.github/workflows/fabric-sweep-04-no-deploy.yml) ;;
               *) echo "UNAUTHORIZED sibling or production edit: $path"; exit 1 ;;
             esac
           done
@@ -46,8 +47,9 @@ jobs:
           node --check research/fabric-sweep-04/wardrobe-demo.mjs
           node --check research/dress-fit-05/static-source-dress-fit.mjs
           node --check research/denim-fit-06/static-source-denim-fit.mjs
+          node --check tests/denim-silhouette-07.test.mjs
           node --check scripts/test-fabric-sweep-04-browser.mjs
-          node --test tests/denim-fit-06.test.mjs tests/dress-fit-05.test.mjs tests/fabric-sweep-04.test.mjs tests/fabric-folds-03.test.mjs tests/fabric-walk-02.test.mjs tests/fabric-motion-01.test.mjs tests/integration-04-wardrobe-dress.test.mjs tests/dress-mobile-01.test.mjs tests/three-d-78-original-anatomical-knee-poses.test.mjs
+          node --test tests/denim-silhouette-07.test.mjs tests/denim-fit-06.test.mjs tests/dress-fit-05.test.mjs tests/fabric-sweep-04.test.mjs tests/fabric-folds-03.test.mjs tests/fabric-walk-02.test.mjs tests/fabric-motion-01.test.mjs tests/integration-04-wardrobe-dress.test.mjs tests/dress-mobile-01.test.mjs tests/three-d-78-original-anatomical-knee-poses.test.mjs
       - name: Generate unchanged source photograph / original garment segmentation
         run: |
           node scripts/build-three-d-31-jeans-proposal.mjs
@@ -148,6 +150,39 @@ jobs:
           assert.equal(r.productionModified,false);
           assert.equal(r.familyAlpha,'HOLD');
           CHECK
+      - name: Assert actual matched WebGL source jeans anatomical taper A/B and preserved front photograph
+        run: |
+          node --input-type=module <<'CHECK'
+          import assert from 'node:assert/strict';
+          import {readFileSync,readdirSync} from 'node:fs';
+          const dir='benchmark/denim-silhouette-07';
+          const r=JSON.parse(readFileSync(dir+'/results.json','utf8'));
+          assert.equal(r.genuinePhotoOriginalDenimComparisons.length,4);
+          assert.equal(r.realMatchedWebGLComparisonFrames,8);
+          assert.equal(readdirSync(dir).filter(x=>x.endsWith('.png')).length,8);
+          assert.deepEqual(r.original163BoneFigures,['female','male']);
+          assert.equal(r.cameraAngleDegrees,90);
+          assert.equal(r.width,390);
+          assert.equal(r.licensedSourceDenims,2);
+          assert.equal(new Set(r.genuinePhotoOriginalDenimComparisons.map(x=>x.sourceDenim)).size,2);
+          assert.ok(r.genuinePhotoOriginalDenimComparisons.every(x=>
+            x.width===390&&x.changedPixelsAgainstExactOriginalF06>=30&&
+            x.originalFrontAndSkinPreserved&&x.actualSewnFoldTopologyPreserved&&
+            x.noNewTriangleContacts&&x.realSourceDenim&&
+            x.original163BoneMannequin&&x.kneeVsHemEaseMeters>=.008));
+          assert.equal(r.frontTextureDetailsNotSynthesized,true);
+          assert.equal(r.physicalPhoneApproved,false);
+          assert.equal(r.independentHumanPhotorealismApproved,false);
+          assert.equal(r.releaseAuthorized,false);
+          assert.equal(r.familyAlpha,'HOLD');
+          assert.equal(r.productionModified,false);
+          CHECK
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: DENIM-SILHOUETTE-07-ACTUAL-SOURCE-MATCHED-F06-F07-HOLD
+          path: benchmark/denim-silhouette-07/
+          if-no-files-found: warn
       - uses: actions/upload-artifact@v4
         if: always()
         with:
