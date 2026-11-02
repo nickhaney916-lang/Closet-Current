@@ -101,7 +101,7 @@ export function createPhotoDenimStaticFitter06(pants,root,{sourceSilhouette07=fa
  for(const row of eligible){
   const r=sourceRanges[row.side],phase=(row.height-r.min)/(r.max-r.min);
   row.sourceCalfPhase=phase;
-  row.kneeEase=smooth(phase,.20,.43)*(1-smooth(phase,.88,1.07));
+  row.kneeEase=smooth(phase,.05,.35)*(1-.40*smooth(phase,.86,1.01));
   row.hemEase=1-smooth(phase,.18,.36);
  }
  let frozen=false,proof=null,closed=false;
