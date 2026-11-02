@@ -338,18 +338,7 @@ try{
       assert.equal(original06.sourceMeasuredAnatomicalSilhouette07,false);
       assert.equal(original06.originalPhotoSHA256,sourceDenim);
       const image06=await bp.locator('#avatar').screenshot();
-      const pixelDelta=diff(await raw(image06),await raw(frozen));
-      assert.ok(pixelDelta>=30,'Anatomical knee-to-ankle taper must be visible on ORIGINAL denim screenshot: '+pixelDelta);
-      for(const [suffix,image] of [['baseline-f06',image06],['silhouette-f07',frozen]])
-        await writeFile('benchmark/denim-silhouette-07/'+prefix+'-'+suffix+'.png',image);
-      denimSilhouetteComparisons.push({width,rig,denimIndex,sourceDenim,
-        changedPixelsAgainstExactOriginalF06:pixelDelta,
-        realSourceDenim:true,originalFrontAndSkinPreserved:true,
-        original163BoneMannequin:true,
-        noNewTriangleContacts:fitted.bodyContactAfter<=fitted.bodyContactBefore,
-        kneeVsHemEaseMeters:fitted.additionalKneeVsHemEaseMeters07,
-        actualSewnFoldTopologyPreserved:true,
-        releaseAuthorized:false,physicalPhoneApproved:false});
+
       // Same original SHA, same actual 163-bone figure, same exact angle; F07 ON,
       // F08 OFF comparison must be real WebGL, not hand-drawn or resampled.
       await bp.goto(host+'/research/fabric-sweep-04/index.html?walk=after&folds=after&sweep=after&dressFit=after&denimFit=after&denimSilhouette=after',{waitUntil:'domcontentloaded'});
@@ -371,6 +360,19 @@ try{
       assert.equal(proof07.originalSourceNeutralCuffFairing08,false);
       assert.equal(proof07.originalPhotoSHA256,sourceDenim);
       const frame07=await bp.locator('#avatar').screenshot();
+      const pixelDelta=diff(await raw(image06),await raw(frame07));
+      assert.ok(pixelDelta>=30,'Original F06-to-F07 anatomical source silhouette must differ in real WebGL: '+pixelDelta);
+      for(const [suffix,image] of [['baseline-f06',image06],['silhouette-f07',frame07]])
+       await writeFile('benchmark/denim-silhouette-07/'+prefix+'-'+suffix+'.png',image);
+      denimSilhouetteComparisons.push({width,rig,denimIndex,sourceDenim,
+       changedPixelsAgainstExactOriginalF06:pixelDelta,
+       realSourceDenim:true,originalFrontAndSkinPreserved:true,
+       original163BoneMannequin:true,
+       noNewTriangleContacts:proof07.bodyContactAfter<=proof07.bodyContactBefore,
+       kneeVsHemEaseMeters:proof07.additionalKneeVsHemEaseMeters07,
+       actualSewnFoldTopologyPreserved:true,
+       releaseAuthorized:false,physicalPhoneApproved:false});
+
       const changed08=diff(await raw(frame07),await raw(frozen));
       assert.ok(changed08>=20,'Real photographed cuff geometry must differ from exact original F07: '+changed08);
       for(const [suffix,image] of [['baseline-f07',frame07],['cuff-f08',frozen]])
