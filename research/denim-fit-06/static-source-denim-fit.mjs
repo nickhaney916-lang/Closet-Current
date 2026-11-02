@@ -37,10 +37,10 @@ export function sourceDenimTaperWeights07(phase){
 export function sourceDenimCuffRelease08(phase){
  if(!Number.isFinite(phase)||phase<0||phase>1)
   throw Error('Source calf cuff phase must be finite within observed geometry');
- // Wider source-measured lower-calf transition creates a continuous stitched
- // side/rear contour rather than a barely visible 5-pixel cuff pinch.
- // Entry/exit remain exactly zero at real source phase boundaries.
- return smooth(.18,.34,phase)*(1-smooth(.58,.84,phase));
+ // Restore the verified original F07 lower-hem inward taper (phase <.28):
+ // extra fairing MUST be zero there. Extend relief UP the source calf rather
+ // than cancel the legitimate hem contour. Upper rows fade back to unchanged.
+ return smooth(.28,.38,phase)*(1-smooth(.70,.92,phase));
 }
 export function settleDenimRest06(target=DENIM_FIT06.targetMeters){
  if(!Number.isFinite(target)||target<.002||target>DENIM_FIT06.maxWorldShiftMeters)
