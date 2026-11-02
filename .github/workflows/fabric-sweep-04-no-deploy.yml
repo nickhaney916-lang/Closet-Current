@@ -308,6 +308,7 @@ jobs:
            assert.ok(['mixed-photo-and-model','unphotographed-rear'].includes(t.afterClass));
            assert.ok(t.changedWebGLPixels>=50);
            assert.equal(t.sourceIdentitySameAfterTouch,true);
+           assert.equal(t.isolatedBrowserSession,true);
            assert.equal(t.garmentContactNoNew,true);
            assert.equal(t.confirmedRearOriginalPhoto,false);
            assert.equal(t.originalPhotoRGBUVAndSkinUnmodified,true);
