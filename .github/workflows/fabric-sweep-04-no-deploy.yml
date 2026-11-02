@@ -203,7 +203,7 @@ jobs:
             x.originalSourcePhotoSHA256===x.sourceDenim&&
             x.realSource163BoneRig&&x.frontPhotoAndUVUnchanged&&
             x.noNewSkinnedTriangleContacts&&
-            x.cuffReleasedVertices>=8&&x.maxCuffReleaseMeters>=.0055));
+            x.cuffReleasedVertices>=8&&x.maxCuffReleaseMeters>=.008));
           assert.equal(r.originalFrontPhotoUntouched,true);
           assert.equal(r.savedWardrobeSourceValidated,true);
           assert.equal(r.physicalPhoneApproved,false);
