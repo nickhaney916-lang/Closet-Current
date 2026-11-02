@@ -13,6 +13,9 @@ h2{font-size:16px;margin:0 0 9px}h3{font-size:14px;margin:8px 0}
 #avatar{display:block;width:100%;min-height:320px;height:min(75svh,610px);touch-action:none}
 #photoFallback{display:none;min-height:320px;padding:12px;background:#f7f6f1;border-radius:10px}
 #photoFallback[data-visible=true]{display:block}
+#photoCoverage[data-visible=false]{display:none}
+#photoCoverage{font-size:13px;line-height:1.4;padding:8px 10px;margin:6px 0;background:#f7f6f1;border:1px solid #d9d5c8;border-radius:8px}
+#photoCoverage[data-view-class=unphotographed-rear]{border-style:dashed}
 #fallbackPhotos{display:flex;justify-content:center;align-items:flex-start;gap:9px;flex-wrap:wrap}
 #fallbackPhotos figure{margin:0;width:min(46%,200px);min-width:100px}
 #fallbackPhotos img{width:100%;height:250px;object-fit:contain;background:#fff;border:1px solid #dfdfd7;border-radius:7px}
@@ -40,6 +43,7 @@ select{width:100%}#status{min-height:30px;font-size:13px;overflow-wrap:anywhere}
 <p class="sub">Two synthetic accounts. Genuine SHA-verified licensed example photos only. Only exact licensed dress, shirt and jeans get provisional 3D; everything else stays original-photo/2D. No real wardrobes, login credentials or cloud storage are accessed.</p>
 <div class="grid"><section class="panel" aria-label="Verified outfit and photo fallback">
 <div id="viewerHost"><canvas id="avatar" aria-label="Original 163-bone WebGL anatomical figure. Drag to rotate, pinch to zoom"></canvas></div>
+<div id="photoCoverage" data-visible="false" data-view-class="hidden" role="status" aria-live="polite" aria-label="Original garment photograph coverage"></div>
 <div id="photoFallback" data-visible="true" role="region" aria-label="Original saved item photograph and 2D outfit fallback">
 <h2>Original photograph / 2D preview</h2><p id="fallbackReason">Confirming saved clothing and source photographs…</p><div id="fallbackPhotos"></div></div>
 <h3>Selected original photographs</h3><div id="originals"></div>
