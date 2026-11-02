@@ -84,9 +84,9 @@ export function shapeSourceWeightedClothFold07(root,shirt){
   // than the old assumed dy=-.86; a hard-coded waist band misses it.
   const sourceTorsoY=[...groups.values()].filter(({q})=>{
    const x=Math.abs(q.x-centerX);
-   return x>.068&&x<.24&&q.y<shoulderY-.14;
+   return x>.028&&x<.307&&q.y<shoulderY-.16;
   }).map(({q})=>q.y-shoulderY).sort((a,b)=>a-b);
-  if(sourceTorsoY.length<40)throw Error('Cannot measure actual photographed front shirt torso hem');
+  if(sourceTorsoY.length<40)throw Error('Cannot measure actual photographed shirt torso hem');
   const sourceHemDy=sourceTorsoY[Math.floor(sourceTorsoY.length*.035)];
   if(sourceHemDy>=-.26||sourceHemDy<-.98)throw Error('Original sewn source shirt waist endpoint invalid '+JSON.stringify({sourceHemDy,sampledTorso:sourceTorsoY.length,low:sourceTorsoY[0],med:sourceTorsoY[Math.floor(sourceTorsoY.length/2)],high:sourceTorsoY.at(-1)}));
   observedSourceHemDy.push(sourceHemDy);
