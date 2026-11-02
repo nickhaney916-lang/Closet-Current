@@ -290,7 +290,7 @@ try{
     assert.equal(fitted.sourceMeasuredAnatomicalSilhouette07,true);
     assert.equal(fitted.originalSourceNeutralCuffFairing08,true);
     assert.equal(fitted.originalPhotoTextureRGBAndUVUnmodified08,true);
-    assert.ok(fitted.cuffReleasedVertices08>=8&&fitted.maxCuffReleaseMeters08>=.0055);
+    assert.ok(fitted.cuffReleasedVertices08>=8&&fitted.maxCuffReleaseMeters08>=.008);
     assert.equal(fitted.originalSkinnedKneeHemTaperImproved07,true);
     assert.equal(fitted.originalPhotoTextureRGBAndUVUnmodified07,true);
     assert.ok(fitted.additionalKneeVsHemEaseMeters07>=.008);
