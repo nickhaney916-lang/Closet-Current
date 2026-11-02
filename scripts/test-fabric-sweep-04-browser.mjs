@@ -346,45 +346,71 @@ try{
     for(const [suffix,png] of [['original',before],['gravity-frozen',frozen],
       ['turntable-return',rotated],['repeated-fit',repeated]])
      await writeFile('benchmark/denim-fit-06/'+prefix+'-'+suffix+'.png',png);
-    // F12: actual Chromium touchStart/move/end via CDP on the
-    // MOBILE-SIZED original-photographed F08 WebGL canvas. Both real rigs,
-    // both licensed sources at 390px, and 320/430px first-source cases.
-    // The untouched F11 mouse proof remains independently enforced.
-    await p.evaluate(()=>window.ccWardrobe10View(0));
-    await p.waitForFunction(()=>window.ccWardrobe10Diagnostics()?.photoCoverageViewClass==='front-photo');
-    assert.equal((await diag(p)).displayed3DSources?.bottom,sourceDenim);
-    const untouched12=await p.locator('#avatar').screenshot();
-    const finger12=await originalCanvasTouchSwipe12(p);
-    await p.waitForFunction(()=>['mixed-photo-and-model','unphotographed-rear'].includes(
-     window.ccWardrobe10Diagnostics?.()?.photoCoverageViewClass),null,{timeout:12000});
-    await p.waitForTimeout(600); // genuine OrbitControls damping must finish
-    const touched12=await p.locator('#avatar').screenshot();
-    const observed12=await diag(p);
-    const changed12=diff(await raw(untouched12),await raw(touched12));
-    assert.ok(changed12>=50,'Actual touch must alter >=50 original WebGL RGB pixels: '+changed12);
-    assert.equal(observed12.bones,163);
-    assert.equal(observed12.viewerMode,'verified-3d');
-    assert.equal(observed12.sourcePhotoCoverageVisible,true);
-    assert.equal(observed12.verifiedOriginalRearPhotograph,false);
-    assert.equal(observed12.account,'fixture-account-a');
-    assert.equal(observed12.displayed3DSources?.bottom,sourceDenim);
-    assert.equal(observed12.sourceDenimCuffFairing08Enabled,true);
-    assert.equal(await p.locator('#photoCoverage').getAttribute('data-rear-photo-verified'),'false');
-    assert.equal((await p.locator('#photoCoverage').textContent()).toLowerCase().includes('modeled'),true);
-    await writeFile('benchmark/source-touch-12/'+prefix+'-photographed-front.png',untouched12);
-    await writeFile('benchmark/source-touch-12/'+prefix+'-real-touch-model-view.png',touched12);
-    touchSwipe12.push({rig,width,denimIndex,sourceSHA256:sourceDenim,
-     signedInSyntheticAccount:'fixture-account-a',actualRigBones:163,
-     input:'Chromium CDP native touchStart/touchMove/touchEnd on real WebGL canvas',
-     finger12,frontClass:'front-photo',afterClass:observed12.photoCoverageViewClass,
-     changedWebGLPixels:changed12,sourceIdentitySameAfterTouch:true,
-     garmentContactNoNew:fitted.bodyContactAfter<=fitted.bodyContactBefore,
-     confirmedRearOriginalPhoto:false,originalPhotoRGBUVAndSkinUnmodified:true,
-     physicalAndroidIphoneTested:false,productionModified:false,releaseAuthorized:false});
-    await p.evaluate(()=>window.ccWardrobe10View(90));
-    await p.waitForTimeout(850);
-    assert.equal((await diag(p)).displayed3DSources?.bottom,sourceDenim,
-     'Touch must never change wardrobe original identity');
+    // F12: a fully separate synthetic logged-in browser session for
+    // EACH native finger swipe. Never touch 'p', the original F04-F11
+    // reference page, because residual OrbitControls damping can otherwise
+    // contaminate a later figure's zero-pixel reset acceptance.
+    const touchCtx12=await browser.newContext({
+     viewport:{width,height:900},deviceScaleFactor:1,isMobile:true,hasTouch:true});
+    try{
+     const touchPage12=await touchCtx12.newPage();monitor(touchPage12);
+     await touchPage12.goto(host+'/research/fabric-sweep-04/index.html?walk=after&folds=after&sweep=after&dressFit=after&denimFit=after&denimSilhouette=after&denimFairing=after',{waitUntil:'domcontentloaded'});
+     if(rig==='male'){
+      await touchPage12.waitForFunction(()=>window.ccWardrobe10Diagnostics?.()?.viewerReady===true,null,{timeout:180000});
+      await touchPage12.locator('#model').selectOption('male');
+      await touchPage12.waitForFunction(()=>window.ccWardrobe10Diagnostics()?.figure==='male'&&
+       window.ccWardrobe10Diagnostics()?.viewerReady===true,null,{timeout:180000});
+     }
+     await ready(touchPage12);
+     await touchPage12.locator('#swap').click();
+     if(denimIndex===1)await touchPage12.locator('#swap').click();
+     await touchPage12.waitForFunction(()=>window.ccWardrobe10Diagnostics?.()?.outfitMode==='shirt-pants',null,{timeout:30000});
+     const touchSource12=await diag(touchPage12);
+     assert.equal(touchSource12.displayed3DSources?.bottom,sourceDenim,
+      'Isolated finger-swipe session must use the SAME original licensed SHA');
+     assert.equal(touchSource12.account,'fixture-account-a');
+     assert.equal(touchSource12.bones,163);
+     const touchFit12=await touchPage12.evaluate(()=>window.ccWardrobeDenimFreeze06());
+     assert.equal(touchFit12.originalPhotoSHA256,sourceDenim);
+     assert.equal(touchFit12.trueBVHBodyContactNoNew,true);
+     assert.equal(touchFit12.originalPhotoTextureRGBAndUVUnmodified08,true);
+     await touchPage12.evaluate(()=>window.ccWardrobe10View(0));
+     await touchPage12.waitForFunction(()=>window.ccWardrobe10Diagnostics()?.photoCoverageViewClass==='front-photo');
+     const untouched12=await touchPage12.locator('#avatar').screenshot();
+     const finger12=await originalCanvasTouchSwipe12(touchPage12);
+     await touchPage12.waitForFunction(()=>['mixed-photo-and-model','unphotographed-rear'].includes(
+      window.ccWardrobe10Diagnostics?.()?.photoCoverageViewClass),null,{timeout:12000});
+     await touchPage12.waitForTimeout(600);
+     const touched12=await touchPage12.locator('#avatar').screenshot();
+     const observed12=await diag(touchPage12);
+     const changed12=diff(await raw(untouched12),await raw(touched12));
+     assert.ok(changed12>=50,'Actual finger swipe must alter >=50 original WebGL RGB pixels: '+changed12);
+     assert.equal(observed12.bones,163);
+     assert.equal(observed12.viewerMode,'verified-3d');
+     assert.equal(observed12.sourcePhotoCoverageVisible,true);
+     assert.equal(observed12.verifiedOriginalRearPhotograph,false);
+     assert.equal(observed12.account,'fixture-account-a');
+     assert.equal(observed12.displayed3DSources?.bottom,sourceDenim);
+     assert.equal(observed12.sourceDenimCuffFairing08Enabled,true);
+     assert.equal(await touchPage12.locator('#photoCoverage').getAttribute('data-rear-photo-verified'),'false');
+     assert.ok((await touchPage12.locator('#photoCoverage').textContent()).toLowerCase().includes('modeled'));
+     await writeFile('benchmark/source-touch-12/'+prefix+'-photographed-front.png',untouched12);
+     await writeFile('benchmark/source-touch-12/'+prefix+'-real-touch-model-view.png',touched12);
+     touchSwipe12.push({rig,width,denimIndex,sourceSHA256:sourceDenim,
+      signedInSyntheticAccount:'fixture-account-a',actualRigBones:163,
+      input:'Chromium CDP native touchStart/touchMove/touchEnd on real WebGL canvas',
+      finger12,frontClass:'front-photo',afterClass:observed12.photoCoverageViewClass,
+      changedWebGLPixels:changed12,sourceIdentitySameAfterTouch:true,
+      garmentContactNoNew:touchFit12.trueBVHBodyContactNoNew,
+      isolatedBrowserSession:true,
+      confirmedRearOriginalPhoto:false,originalPhotoRGBUVAndSkinUnmodified:true,
+      physicalAndroidIphoneTested:false,productionModified:false,releaseAuthorized:false});
+     await touchPage12.locator('#logout').click();
+     assert.equal((await diag(touchPage12)).sourcePhotoCoverageVisible,false);
+     assert.equal(await touchPage12.locator('#photoCoverage').isVisible(),false);
+    }finally{await touchCtx12.close();}
+    // All inherited tests continue on untouched 'p' and their prior exact
+    // zero RGB frame reset requirements, not a weakened or re-baselined pose.
     if(width===390){
       // Real browser against the IDENTICAL saved-source JEANS and original
       // anatomical rig, not synthesized diagrams or guessed pixel data.
