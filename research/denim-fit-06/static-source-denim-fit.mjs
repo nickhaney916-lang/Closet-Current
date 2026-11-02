@@ -83,14 +83,27 @@ export function createPhotoDenimStaticFitter06(pants,root,{sourceSilhouette07=fa
   // calf-to-knee volume transition; no guessed texture or repeating
   // decorative waves. Source 3D75/76 already carries the real folds.
   // Protect the original photograph's front and its actual colors.
-  const kneeEase=smooth(height,.36,.56)*(1-smooth(height,.78,.96));
-  const hemEase=smooth(height,.065,.18)*(1-smooth(height,.23,.40));
-  eligible.push({...row,side,height,blend,kneeEase,hemEase,
+  eligible.push({...row,side,height,blend,
     radialX:dx/radial,radialZ:row.q.z/radial});
  }
  if(eligible.length<35||untouched<100||eligible.filter(x=>x.side===0).length<12||
    eligible.filter(x=>x.side===1).length<12)
   throw Error('Source-neutral original photo calf/hem surface missing; cannot fit jeans');
+ // Licensed denim meshes expose different portions of actual calf geometry.
+ // Calibrate from observable sewn 163-bone source, not assumed missing hem rows.
+ const sourceRanges=[0,1].map(side=>{
+  const heights=eligible.filter(row=>row.side===side).map(row=>row.height);
+  return {min:Math.min(...heights),max:Math.max(...heights)};
+ });
+ if(sourceSilhouette07&&sourceRanges.some(x=>!Number.isFinite(x.min+x.max)||
+    x.max-x.min<.08||x.max-x.min>.85))
+  throw Error('Measured source-photographed lower leg insufficient for anatomical taper');
+ for(const row of eligible){
+  const r=sourceRanges[row.side],phase=(row.height-r.min)/(r.max-r.min);
+  row.sourceCalfPhase=phase;
+  row.kneeEase=smooth(phase,.20,.43)*(1-smooth(phase,.88,1.07));
+  row.hemEase=1-smooth(phase,.18,.36);
+ }
  let frozen=false,proof=null,closed=false;
  function audit(){
   if(closed||mesh.geometry!==g)throw Error('Authenticated source denim geometry detached');
@@ -129,10 +142,10 @@ export function createPhotoDenimStaticFitter06(pants,root,{sourceSilhouette07=fa
    for(const i of row.ids){p.setXYZ(i,q.x,q.y,q.z);changed++;perLeg[row.side]++;}
    max=Math.max(max,shift);
    if(sourceSilhouette07){
-    if(row.height>=.55&&row.height<=.80){
+    if(row.sourceCalfPhase>=.38&&row.sourceCalfPhase<=1.001){
       kneeMoved++;kneeEaseTotal+=kneeRest;sourceKneeRearGroups++;
     }
-    if(row.height>=.12&&row.height<=.36){
+    if(row.sourceCalfPhase<.38){
       hemMoved++;hemEaseTotal+=hemRest;
     }
    }
@@ -157,6 +170,7 @@ export function createPhotoDenimStaticFitter06(pants,root,{sourceSilhouette07=fa
    sourceMeasuredAnatomicalSilhouette07:sourceSilhouette07,
    originalSkinnedKneeHemTaperImproved07:sourceSilhouette07,
    sourceNeutralKneeRearGroups07:sourceKneeRearGroups,
+   actualSourceCalfCoverage07:sourceSilhouette07?sourceRanges:null,
    additionalKneeVsHemEaseMeters07:sourceSilhouette07?taperAdditionalMean:0,
    actualSeamFoldTopologyPreserved07:true,
    originalPhotoTextureRGBAndUVUnmodified07:true,
