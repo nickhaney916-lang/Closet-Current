@@ -62,7 +62,30 @@ export function shapeSourceWeightedClothFold07(root,shirt){
  const stats={L:{yoke:0,chest:0,waist:0},R:{yoke:0,chest:0,waist:0}};
  const immutableKeys=['panelPosition','panelNormal','uv','skinIndex','skinWeight'];
  let shifted=0,locked=0,maxMeters=0,foldBands=0;
- const observedSourceHemDy=[];
+ // Measure the hem across ALL independently skinned source shirt sections,
+ // not a single narrow upper-chest mesh.
+ const sourceTorsoY=[],sourcePanelY=[];
+ for(const m of shells){
+  m.updateWorldMatrix(true,false);m.skeleton.update();
+  const p=m.geometry.getAttribute('position'),panel=m.geometry.getAttribute('panelPosition'),ix=m.geometry.index;
+  if(!p||!panel||!ix)throw Error('Original photographed multi-panel shirt missing');
+  for(const i of new Set(ix.array)){
+   const q=m.applyBoneTransform(i,new T.Vector3().fromBufferAttribute(p,i)).applyMatrix4(m.matrixWorld);
+   const x=Math.abs(q.x-centerX),dy=q.y-shoulderY;
+   if(x<.31&&dy<-.16){sourceTorsoY.push(dy);sourcePanelY.push(panel.getY(i));}
+  }
+ }
+ sourceTorsoY.sort((a,b)=>a-b);
+ if(sourceTorsoY.length<40)throw Error('True multi-mesh source garment lower torso absent '+JSON.stringify({
+  componentCount:shells.length,torsoPoints:sourceTorsoY.length,
+  lowerDy:sourceTorsoY[0],higherDy:sourceTorsoY.at(-1),
+  minPhotoPanelY:Math.min(...sourcePanelY),maxPhotoPanelY:Math.max(...sourcePanelY)
+ }));
+ const sourceHemDy=sourceTorsoY[Math.floor(sourceTorsoY.length*.035)];
+ if(sourceHemDy>=-.26||sourceHemDy<-.98)throw Error('Multi-panel original photo sewn hem invalid '+JSON.stringify({
+  componentCount:shells.length,sourceHemDy,lowerDy:sourceTorsoY[0],higherDy:sourceTorsoY.at(-1)
+ }));
+ const observedSourceHemDy=[sourceHemDy];
  for(const mesh of shells){
   mesh.updateWorldMatrix(true,false);mesh.skeleton.update();
   const geo=mesh.geometry,p=geo.getAttribute('position'),index=geo.index;
@@ -79,34 +102,6 @@ export function shapeSourceWeightedClothFold07(root,shirt){
    groups.get(id).ids.push(i);
   }
   const inverseWorld=mesh.matrixWorld.clone().invert();
-  // Measure the ACTUAL original photo's skinned front-torso hem, not a
-  // generic clothing length. In the verified garment the hem is shorter
-  // than the old assumed dy=-.86; a hard-coded waist band misses it.
-  const sourceTorsoY=[...groups.values()].filter(({q})=>{
-   const x=Math.abs(q.x-centerX);
-   return x>.028&&x<.307&&q.y<shoulderY-.16;
-  }).map(({q})=>q.y-shoulderY).sort((a,b)=>a-b);
-  if(sourceTorsoY.length<40){
-   const full=[...groups.values()].map(({q,ids})=>({
-    x:Math.abs(q.x-centerX),dy:q.y-shoulderY,
-    py:geo.getAttribute('panelPosition').getY(ids[0]),n:ids.length
-   }));
-   const sample=arr=>{
-    const sorted=arr.filter(Number.isFinite).sort((a,b)=>a-b);
-    return {n:sorted.length,min:sorted[0],q05:sorted[Math.floor(sorted.length*.05)],
-      median:sorted[Math.floor(sorted.length*.5)],q95:sorted[Math.floor(sorted.length*.95)],max:sorted.at(-1)};
-   };
-   throw Error('Cannot measure actual photographed shirt torso hem '+JSON.stringify({
-    sourceTorsoCount:sourceTorsoY.length,uniqueSkinned:groups.size,
-    worldX:sample(full.map(v=>v.x)),worldDy:sample(full.map(v=>v.dy)),
-    sourcePanelY:sample(full.map(v=>v.py)),
-    originalShellVertices:p.count,maxVertexMultiplicity:Math.max(...full.map(v=>v.n)),
-    lowerCandidates:full.filter(v=>v.dy<-.16).length
-   }));
-  }
-  const sourceHemDy=sourceTorsoY[Math.floor(sourceTorsoY.length*.035)];
-  if(sourceHemDy>=-.26||sourceHemDy<-.98)throw Error('Original sewn source shirt waist endpoint invalid '+JSON.stringify({sourceHemDy,sampledTorso:sourceTorsoY.length,low:sourceTorsoY[0],med:sourceTorsoY[Math.floor(sourceTorsoY.length/2)],high:sourceTorsoY.at(-1)}));
-  observedSourceHemDy.push(sourceHemDy);
   for(const {q,ids} of groups.values()){
    const side=q.x-centerX>=0?'R':'L',x=Math.abs(q.x-centerX),dy=q.y-shoulderY;
    // Anchor centreprint/neck/collar; hems at the real garment endpoint;
