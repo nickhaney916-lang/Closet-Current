@@ -269,7 +269,15 @@ export function mountAnatomicalShowroom(canvas,{onChange=()=>{},onViewChange=()=
   // restoring the camera and target actually saved at initialization.
   const damp=controls.enableDamping;
   controls.enableDamping=false;
-  try{controls.reset();controls.update();}finally{controls.enableDamping=damp;}
+  try{
+   controls.reset();controls.update();
+   // A damped single-finger drag can leave a sub-degree residual spherical
+   // delta on the *first* reset. Flush it then snap the exact saved canonical
+   // full-body position/target while damping is OFF, before any RAF can run.
+   controls.target.set(0,1.04,0);
+   camera.position.set(0,1.11,4.65);
+   controls.update();
+  }finally{controls.enableDamping=damp;}
   dirty=true;draw();
   return {cameraDistance:camera.position.distanceTo(controls.target),
    viewAngle:premiumTurntable67?viewAngleFromCamera(camera,controls.target):0,
