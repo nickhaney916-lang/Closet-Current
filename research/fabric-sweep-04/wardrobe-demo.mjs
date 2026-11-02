@@ -437,7 +437,7 @@ window.ccWardrobe10Diagnostics=()=>{
   displayed3DSources:last3D?.originalPhotoSHA256s||null,
   memory:state?{geometries:state.geometries,textures:state.textures,
    tracked:state.trackedGarmentGeometries,reclaimed:state.reclaimedGarmentGeometries,
-   frames:state.frames,cameraDistance:state.cameraDistance,drawPixels:state.drawPixels}:null,
+   frames:state.frames,cameraDistance:state.cameraDistance,cameraPosition:state.cameraPosition,cameraTarget:state.cameraTarget,drawPixels:state.drawPixels}:null,
   memorySamples:memorySamples.slice(-35),renderCount,interactions,transitions,swaps,
   retryCount,modelSwitches,
   noPrivateImagesUsed:true,produced3DFromArbitraryUserPhoto:false,
