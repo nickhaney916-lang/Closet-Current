@@ -275,7 +275,8 @@ async function initViewer(){
     poseDrivenDressWalk02:new URLSearchParams(location.search).get('walk')==='after',
     poseConditionedPleats03:new URLSearchParams(location.search).get('walk')==='after'&&
       new URLSearchParams(location.search).get('folds')==='after',
-    staticDressFit05:new URLSearchParams(location.search).get('dressFit')==='after'
+    staticDressFit05:new URLSearchParams(location.search).get('dressFit')==='after',
+    staticDenimFit06:new URLSearchParams(location.search).get('denimFit')==='after'
   });
   canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();
    if(token!==bootToken)return;
@@ -373,6 +374,8 @@ window.ccWardrobe10Diagnostics=()=>{
      posePleats03State:state?.posePleats03State||null,
       staticDressFit05Enabled:state?.staticDressFit05Enabled||false,
       staticDressFit05State:state?.staticDressFit05State||null,
+      staticDenimFit06Enabled:state?.staticDenimFit06Enabled||false,
+      staticDenimFit06State:state?.staticDenimFit06State||null,
      swept04Clock:state?.continuousGait04||null,
      swept04Enabled:new URLSearchParams(location.search).get('sweep')==='after'&&
       new URLSearchParams(location.search).get('walk')==='after'&&
@@ -431,6 +434,34 @@ window.ccWardrobeSkirtMotion01=action=>{
   dressSHA:SYNTHETIC_SOURCES10.dress.sha,action,motion:result,
   genuine163BoneDress:true,releaseAuthorized:false,collisionCertified:false};
 };
+window.ccWardrobeDenimFreeze06=()=>{
+  const owner=current();
+  const prepared=last3D?.originalPhotoSHA256s?.bottom;
+  const expected=bound?.indexed?.byId?.get(slots.bottom)?.sourceSHA256;
+  if(!authorized()||!viewerReady||!last3D||!owner.authenticated||
+    !['pants','shirt-pants'].includes(app?.getState()?.outfit?.mode)||
+    !prepared||prepared!==expected||
+    ![SYNTHETIC_SOURCES10.public.sha,SYNTHETIC_SOURCES10.second.sha].includes(prepared)||
+    bound?.ownerId!==owner.ownerId||bound?.generation!==owner.generation||
+    app.getState().stats?.bones!==163||
+    app.getState().staticDenimFit06Enabled!==true||
+    new URLSearchParams(location.search).get('denimFit')!=='after')
+   throw Error('Current synthetic owner, saved original photographed jeans SHA and explicit 3D fitting required');
+  const proof=app.freezeDenimFit06();
+  const after=current();
+  if(!after.authenticated||after.ownerId!==owner.ownerId||after.generation!==owner.generation||
+    proof.originalPhotoSHA256!==expected||!proof.frontPhotographUnchanged||
+    !proof.sourceUVRestAndSkinByteIdentical||!proof.trueBVHBodyContactNoNew)
+   throw Error('Authenticated source denim owner and real body collision proof invalidated');
+  recorded('original-source-denim-static-fit06');
+  return {...proof,account:owner.ownerId,generation:owner.generation,
+   sourceBoundToSavedWardrobe:true,familyAlpha:'HOLD',productionModified:false,releaseAuthorized:false};
+ };
+ $('denim-freeze')?.addEventListener('click',e=>{
+  if(!e.isTrusted)return;
+  try{window.ccWardrobeDenimFreeze06();interactions++;}
+  catch(error){phase('ready','Original photographed jeans fitting blocked: '+String(error.message||error));}
+ });
 window.ccWardrobeDressFreeze05=()=>{
   const verified=authorized()&&viewerReady&&!!last3D&&
    bound.indexed.byId.get(slots.top)?.category==='Dresses'&&
