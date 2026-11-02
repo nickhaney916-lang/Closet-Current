@@ -32,6 +32,13 @@ export function sourceDenimTaperWeights07(phase){
   hemEase:smooth(0,.12,phase)*(1-smooth(.25,.70,phase))
  });
 }
+// F08 uses the real source lower-calf span, with a zero-displacement entry and exit.
+// This only modifies already source-neutral side/rear vertices; no new fabric image.
+export function sourceDenimCuffRelease08(phase){
+ if(!Number.isFinite(phase)||phase<0||phase>1)
+  throw Error('Source calf cuff phase must be finite within observed geometry');
+ return smooth(0,.10,phase)*(1-smooth(.18,.46,phase));
+}
 export function settleDenimRest06(target=DENIM_FIT06.targetMeters){
  if(!Number.isFinite(target)||target<.002||target>DENIM_FIT06.maxWorldShiftMeters)
   throw Error('Finite bounded nonzero photographed denim gravity target required');
@@ -49,7 +56,9 @@ export function settleDenimRest06(target=DENIM_FIT06.targetMeters){
   fixedStepSeconds:DENIM_FIT06.timestepSeconds,releaseAuthorized:false});
 }
 function same(a,b){return a?.length===b?.length&&a.every((x,i)=>x===b[i]);}
-export function createPhotoDenimStaticFitter06(pants,root,{sourceSilhouette07=false}={}){
+export function createPhotoDenimStaticFitter06(pants,root,{sourceSilhouette07=false,sourceFairing08=false}={}){
+ if(typeof sourceFairing08!=='boolean'||(sourceFairing08&&!sourceSilhouette07))
+  throw Error('Source-true photographed cuff fairing requires explicit approved silhouette');
  if(typeof sourceSilhouette07!=='boolean')throw Error('Photographed source silhouette feature gate must be boolean');
  const mesh=pants?.meshes?.[0],g=mesh?.geometry,p=g?.getAttribute('position');
  if(!root?.isObject3D||pants?.meshes?.length!==1||
@@ -135,15 +144,17 @@ export function createPhotoDenimStaticFitter06(pants,root,{sourceSilhouette07=fa
   restore();const eq=settleDenimRest06();
   let changed=0,max=0;const perLeg=[0,0],q=new T.Vector3();
   let kneeMoved=0,hemMoved=0,kneeEaseTotal=0,hemEaseTotal=0,sourceKneeRearGroups=0;
+  let cuffMoved=0,maxCuffRelease=0;
   for(const row of eligible){
    const kneeRest=sourceSilhouette07 ? .0015*row.kneeEase : 0;
    // Fit the lower source-neutral calf closer to its anatomical form.
    // Do NOT manufacture a rounded 'knee bubble' or move the JPEG front.
    const hemRest=sourceSilhouette07 ? -.016*row.hemEase : 0;
+   const cuffRelease=sourceFairing08?.006*sourceDenimCuffRelease08(row.sourceCalfPhase):0;
    const dy=-eq.meters*.22*row.blend;
    // Smooth lower-calf taper into the original real sewn upper knee geometry.
    // The source photo front, authentic pattern and cloth folds remain intact.
-   const radius=eq.meters*.92*row.blend+kneeRest+hemRest;
+   const radius=eq.meters*.92*row.blend+kneeRest+hemRest+cuffRelease;
    const dx=radius*row.radialX,dz=radius*row.radialZ,
      shift=Math.hypot(dx,dy,dz);
    const budget=sourceSilhouette07?silhouette07.maxShiftMeters:DENIM_FIT06.maxWorldShiftMeters;
@@ -153,6 +164,7 @@ export function createPhotoDenimStaticFitter06(pants,root,{sourceSilhouette07=fa
    q.copy(row.q).add(new T.Vector3(dx,dy,dz)).applyMatrix4(inv);
    for(const i of row.ids){p.setXYZ(i,q.x,q.y,q.z);changed++;perLeg[row.side]++;}
    max=Math.max(max,shift);
+   if(sourceFairing08&&cuffRelease>.001){cuffMoved++;maxCuffRelease=Math.max(maxCuffRelease,cuffRelease);}
    if(sourceSilhouette07){
     if(row.sourceCalfPhase>=.38&&row.sourceCalfPhase<=1.001){
       kneeMoved++;kneeEaseTotal+=kneeRest;sourceKneeRearGroups++;
@@ -174,6 +186,8 @@ export function createPhotoDenimStaticFitter06(pants,root,{sourceSilhouette07=fa
    throw Error('Photographed knee-to-hem taper not measurably improved: '+JSON.stringify({
     kneeMoved,hemMoved,taperAdditionalMean,max}));
 
+  if(sourceFairing08&&(cuffMoved<8||maxCuffRelease<.0055))
+   throw Error('Genuine original-photo cuff geometry not measurably fairing: '+JSON.stringify({cuffMoved,maxCuffRelease}));
   frozen=true;
   proof=Object.freeze({actualPhotoDenimFrozenFit:true,
    originalPhotoSHA256:pants.stats.sourceSHA256,originalDenimId:pants.stats.sourceId,
@@ -186,6 +200,9 @@ export function createPhotoDenimStaticFitter06(pants,root,{sourceSilhouette07=fa
    additionalKneeVsHemEaseMeters07:sourceSilhouette07?taperAdditionalMean:0,
    actualSeamFoldTopologyPreserved07:true,
    originalPhotoTextureRGBAndUVUnmodified07:true,
+   originalSourceNeutralCuffFairing08:sourceFairing08,
+   cuffReleasedVertices08:cuffMoved,maxCuffReleaseMeters08:maxCuffRelease,
+   originalPhotoTextureRGBAndUVUnmodified08:true,
    sourceUVRestAndSkinByteIdentical:true,realBVHVerifiedByCaller:false,
    noUnseenTextureInvented:true,physicalPhoneApproved:false,
    humanPhotorealismApproved:false,releaseAuthorized:false});
