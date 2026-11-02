@@ -274,7 +274,8 @@ async function initViewer(){
      new URLSearchParams(location.search).get('walk')==='after',
     poseDrivenDressWalk02:new URLSearchParams(location.search).get('walk')==='after',
     poseConditionedPleats03:new URLSearchParams(location.search).get('walk')==='after'&&
-      new URLSearchParams(location.search).get('folds')==='after'
+      new URLSearchParams(location.search).get('folds')==='after',
+    staticDressFit05:new URLSearchParams(location.search).get('dressFit')==='after'
   });
   canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();
    if(token!==bootToken)return;
@@ -370,6 +371,8 @@ window.ccWardrobe10Diagnostics=()=>{
     gait02State:state?.gait02State||null,
      posePleats03Enabled:state?.posePleats03Enabled||false,
      posePleats03State:state?.posePleats03State||null,
+      staticDressFit05Enabled:state?.staticDressFit05Enabled||false,
+      staticDressFit05State:state?.staticDressFit05State||null,
      swept04Clock:state?.continuousGait04||null,
      swept04Enabled:new URLSearchParams(location.search).get('sweep')==='after'&&
       new URLSearchParams(location.search).get('walk')==='after'&&
@@ -428,6 +431,31 @@ window.ccWardrobeSkirtMotion01=action=>{
   dressSHA:SYNTHETIC_SOURCES10.dress.sha,action,motion:result,
   genuine163BoneDress:true,releaseAuthorized:false,collisionCertified:false};
 };
+window.ccWardrobeDressFreeze05=()=>{
+  const verified=authorized()&&viewerReady&&!!last3D&&
+   bound.indexed.byId.get(slots.top)?.category==='Dresses'&&
+   last3D.originalPhotoSHA256s?.dress===SYNTHETIC_SOURCES10.dress.sha&&
+   app.getState().stats?.bones===163&&app.getState().outfit?.mode==='dress'&&
+   app.getState().staticDressFit05Enabled===true&&
+   new URLSearchParams(location.search).get('dressFit')==='after';
+  if(!verified)throw Error('Current synthetic owner + original SHA-verified dress and static fit opt-in required');
+  const pre={owner:current().ownerId,generation:current().generation};
+  const result=app.freezeDressFit05();
+  if(current().ownerId!==pre.owner||current().generation!==pre.generation)
+   throw Error('Authenticated synthetic owner changed during photographed fit');
+  if(!result.actualOriginalSourceDressStaticFit||
+      !result.originalPhotoFrontUntouched||
+      !result.sourceRestAndSkinPreserved||!result.zeroNewSkinnedBodyContacts)
+   throw Error('Original licensed dress static fit did not pass identity and real BVH checks');
+  recorded('original-photo-dress-static-fit05');
+  return {...result,account:pre.owner,generation:pre.generation,
+   familyAlpha:'HOLD',productionModified:false,releaseAuthorized:false};
+ };
+ $('dress-freeze')?.addEventListener('click',event=>{
+  if(!event.isTrusted)return;
+  try{window.ccWardrobeDressFreeze05();interactions++;}
+  catch(e){phase('ready','Original photographed dress fitting blocked: '+String(e.message||e));}
+ });
 window.ccWardrobeGait02=action=>{
  const verified=authorized()&&viewerReady&&!!last3D&&
   bound.indexed.byId.get(slots.top)?.category==='Dresses'&&
