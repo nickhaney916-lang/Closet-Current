@@ -217,6 +217,6 @@ try{
  await writeFile(folder+'/results.json',JSON.stringify(results,null,2));
  console.log('SHIRT_FLOW_05',JSON.stringify({screenshots:captures.length,
   rigs:6,matchedSourceFabricComparisons:ab.length,
-  minSourceTorsoAndTemporalPixels:Math.min(...ab.map(x=>x.gravitationFoldOnlyChangedPixels)),
+  minSourceTorsoAndTemporalPixels:Math.min(...ab.map(x=>x.sourceTorsoPlusTemporalOnlyChangedPixels)),
   exactResets:6,hold:true}));
 }finally{await browser?.close();await new Promise(ok=>server.close(ok));}
