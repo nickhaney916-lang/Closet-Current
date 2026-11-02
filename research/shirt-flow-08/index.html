@@ -26,8 +26,8 @@ button:disabled{opacity:.4}.hint code{white-space:normal;overflow-wrap:anywhere;
  <button id="arm-source">Source arms</button><button id="arm-quarter">25% arms</button>
  <button id="arm-half">50% arms</button><button id="arm-threequarter">75% arms</button>
  <button id="arm-relaxed">Relaxed arms</button><button id="arm-play">Cycle poses</button>
- <button id="arm-stop">Stop cycle</button><button id="arm-smooth-play">Preview 17-phase motion</button><button id="arm-smooth-stop">Stop motion</button><label for="arm-progress">Arm phase</label><input type="range" id="arm-progress" min="0" max="16" step="1" value="0">
+ <button id="arm-stop">Stop cycle</button><button id="arm-smooth-play">Preview 17-phase motion</button><button id="arm-smooth-stop">Stop motion</button><button id="settle-freeze" title="Research only: one-time physical settle then freeze garment shape">Settle &amp; freeze</button><label for="arm-progress">Arm phase</label><input type="range" id="arm-progress" min="0" max="16" step="1" value="0">
 </div>
-<p id="status" role="status">Verifying local source…</p><details><summary>Technical diagnostics (not release approval)</summary><pre id="diagnostics"></pre></details>
+<p class="hint">Static garment fitting research: <code>?settleFit=after</code> with the verified original-photo cloth flags. Physics runs once to fit, then stops. This does not certify physical phone performance or unrestricted cloth simulation.</p><p id="status" role="status">Verifying local source…</p><details><summary>Technical diagnostics (not release approval)</summary><pre id="diagnostics"></pre></details>
 <p class="hint">Attribution: public-domain image by Oktaeder, uploaded by Juanmak, <a href="https://commons.wikimedia.org/wiki/File:Jeans.jpg">Wikimedia Commons File:Jeans.jpg</a>. Any unphotographed rear remains neutral.</p></main>
 <script type="module" src="./photo-jeans-demo.mjs"></script></body></html>
