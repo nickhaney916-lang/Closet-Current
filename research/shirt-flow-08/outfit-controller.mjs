@@ -134,6 +134,16 @@ export function createOutfitController(root,{refineFit=true,enableCuffFix=true,e
   contact?.dispose();Object.values(parts).forEach(g=>g.dispose());parts=built;mode=next;contact=builtContact;changes++;return summarize();
  }
  function setPose(next){if(closed)throw Error('Outfit controller closed');if(!independentGarments&&typeof next==='string'&&next.startsWith('blend-'))throw Error('Intermediate garment pose requires isolated independent research mode');setResearchPose(root,next);pose=next;contact?.fit(next);return summarize();}
+ function settlePose(next){
+  if(closed||!contact?.settle||!parts.shirt)
+   throw Error('F09 requires a verified photographed 3D shirt and temporal contact solver');
+  const previous=pose;
+  try{
+   const settled=contact.settle(next);
+   pose=next;
+   return {...summarize(),settledFit:settled};
+  }catch(error){setResearchPose(root,previous);pose=previous;contact.fit(previous);throw error;}
+ }
  function dispose(){if(closed)return;contact?.dispose();Object.values(parts).forEach(g=>g.dispose());parts={};mode='none';closed=true;releaseBodyPresentation(root);}
  function auditKneePose78(next){
   if(!photoDenimKneePose78||!parts.pants?.stats?.auditedTrueSkinnedBodyToSourcePhotoDenim77)
@@ -141,5 +151,5 @@ export function createOutfitController(root,{refineFit=true,enableCuffFix=true,e
   parts.pants=auditSourcePhotoDenimAlternativeKneePose78(parts.pants,root,{pose:next});
   return summarize();
  }
- setPose(pose);return {setOutfit,setPose,getState:summarize,auditKneePose78,dispose};
+ setPose(pose);return {setOutfit,setPose,settlePose,getState:summarize,auditKneePose78,dispose};
 }

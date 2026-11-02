@@ -8,6 +8,7 @@ import {createSourcePhotoTemporalDrape} from '../shirt-flow-05/temporal-cloth-dr
 import {calibratePhotoClothLight} from '../shirt-flow-06/source-photo-material.mjs';
 import {shapeSourceWeightedClothFold07} from '../shirt-flow-07/source-weighted-cloth-folds.mjs';
 import {shapeTrueSourceHemSwing08} from './source-hem-sway.mjs';
+import {settleAndFreeze09} from '../shirt-flow-09/settle-and-freeze.mjs';
 import {setResearchPose} from '../shirt-flow-02/continuous-arm-pose.mjs';
 import {smoothSurfaceNormals} from '../three-d-08/garment-fit-profile.mjs';
 const smooth=T.MathUtils.smoothstep;
@@ -104,6 +105,7 @@ export function createPoseConditionedSleeveContact(root,shirt,pants,contactFacto
   newTexturesOrFabricPatterns:optical.newTexturesOrFabricPatterns||0,
   physicalPhoneApproved:false,releaseAuthorized:false};
  const meshes=shirt.meshes,base=new Map(meshes.map(m=>[m,m.geometry.attributes.position.array.slice()])),cache=new Map();
+ let frozen=null;
  const capture=()=>meshes.map(m=>({position:m.geometry.attributes.position.array.slice(),normal:m.geometry.attributes.normal.array.slice()}));
  const restore=snapshot=>meshes.forEach((m,i)=>{const g=m.geometry;g.attributes.position.array.set(snapshot[i].position);g.attributes.normal.array.set(snapshot[i].normal);g.attributes.position.needsUpdate=g.attributes.normal.needsUpdate=true;g.computeBoundingBox();g.computeBoundingSphere();});
  function applyTemporal(pose){
@@ -119,6 +121,13 @@ export function createPoseConditionedSleeveContact(root,shirt,pants,contactFacto
  }
  function fit(pose){
   setResearchPose(root,pose);
+  if(frozen&&frozen.pose===pose){
+   restore(frozen.meshes);
+   shirt.stats.poseTriangleContact=frozen.contact;
+   shirt.stats.frozenSourceFit09=frozen.proof;
+   return;
+  }
+  if(frozen){frozen=null;shirt.stats.frozenSourceFit09=null;}
   if(cache.has(pose)){
    const c=cache.get(pose);restore(c.meshes);
    shirt.stats.poseTriangleContact=c.contact;shirt.stats.poseConditionedSleeveDrape=c.ease;
@@ -141,5 +150,25 @@ export function createPoseConditionedSleeveContact(root,shirt,pants,contactFacto
   cache.set(pose,{meshes:capture(),contact:shirt.stats.poseTriangleContact,ease:shirt.stats.poseConditionedSleeveDrape,gravity,torso,folds,hem});
   applyTemporal(pose);
  }
- return {fit,dispose(){optical.dispose();temporal?.reset();base.clear();cache.clear();}};
+ function settle(pose){
+  if(!temporal)throw Error('F09 requires verified original source 60Hz F05 cloth spring');
+  if(typeof pose!=='number'||!Number.isFinite(pose)||pose<0||pose>1||
+     Math.abs(pose*16-Math.round(pose*16))>1e-9)
+   throw Error('F09 only accepts 17 actual anatomical pose samples');
+  // Rebuild from the authentic source pose, independent of prior animation.
+  frozen=null;temporal.reset();fit(0);fit(pose);
+  return settleAndFreeze09({
+   pose,
+   step:()=>{
+    fit(pose);const motion=temporal.getState();
+    return {motion,contact:shirt.stats.poseTriangleContact,
+     photoAndSkinPreserved:shirt.stats.temporalPhotoDrape05?.photoAndSkinPreserved===true};
+   },
+   freeze:proof=>{
+    frozen={pose,meshes:capture(),contact:shirt.stats.poseTriangleContact,proof};
+    shirt.stats.frozenSourceFit09=proof;
+   }
+  });
+ }
+ return {fit,settle,dispose(){frozen=null;optical.dispose();temporal?.reset();base.clear();cache.clear();}};
 }

@@ -162,6 +162,31 @@ async function start(){
     throw Error('Original true skinned shirt weighted hem not source or BVH verified');
   return {...result,sourceHemSwing08:{...hem,bodyContactCountVerifiedAfterFit:true}};
  };
+ window.ccShirtFitFreeze09=fraction=>{
+  if(!ready||closed||!flowEnabled()||
+     new URLSearchParams(location.search).get('settleFit')!=='after'||
+     new URLSearchParams(location.search).get('timeFlow')!=='after')
+   throw Error('Static photographed garment fit is research-only and requires explicit consent');
+  // The F08 gate checks verified true photographed garment source and 3D contact.
+  window.ccShirtFlow08(fraction);
+  const result=app.settlePose(fraction);
+  const detail=app.getState().outfit.shirt;
+  const proof=detail?.frozenSourceFit09;
+  if(!proof?.frozenSourcePhotographed3DMesh||
+     !proof.sourcePhotoUVAndSkinPreserved||detail.poseTriangleContact.after.count!==0)
+   throw Error('Unverified settled original-photo garment cannot be frozen');
+  update();
+  status('Original photograph fitted, 60Hz cloth settled and 3D mesh frozen. Research HOLD; no user photos or release.');
+  return {...proof,sourceSHA256:shirt.sourceSHA256,
+   originalBoneCount:163,stableAfterSettle:true,actualSkinnedBodyContactCount:detail.poseTriangleContact.after.count,
+   humanVisualApproved:false,physicalPhoneVerified:false,releaseAuthorized:false};
+ };
+ $('settle-freeze')?.addEventListener('click',e=>{
+  if(!e.isTrusted)return;
+  stopArms();
+  try{window.ccShirtFitFreeze09(Number($('arm-progress').value)/16);}
+  catch(error){status('Research settle/freeze blocked: '+error.message);}
+ });
  window.ccShirtFlowPlay02=()=>{
   if(!ready||closed||!flowEnabled()||new URLSearchParams(location.search).get('smoothFlow')!=='after')
    throw Error('Smooth preview not authorized');

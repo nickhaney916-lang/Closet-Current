@@ -1,10 +1,12 @@
-name: SHIRT-FLOW-08 Original 3D Photographed Hem Swing + True Source Collision · NO DEPLOY HOLD
+name: SHIRT-FIT-09 Static Original-Photo Cloth Settle Freeze + F08 Regressions · NO DEPLOY HOLD
 on:
   pull_request:
     paths:
       - 'research/shirt-flow-08/**'
+      - 'research/shirt-flow-09/**'
       - 'scripts/test-shirt-flow-08-browser.mjs'
       - 'tests/shirt-flow-08.test.mjs'
+      - 'tests/shirt-flow-09.test.mjs'
       - '.github/workflows/shirt-flow-08-no-deploy.yml'
 permissions:
   contents: read
@@ -28,7 +30,7 @@ jobs:
           git merge-base --is-ancestor 93dd718e85177d09cfc47d6b22909f00d942972d HEAD
           git diff --name-only 93dd718e85177d09cfc47d6b22909f00d942972d HEAD | while IFS= read -r path; do
             case "$path" in
-              research/shirt-flow-08/*|scripts/test-shirt-flow-08-browser.mjs|tests/shirt-flow-08.test.mjs|.github/workflows/shirt-flow-08-no-deploy.yml) ;;
+              research/shirt-flow-08/*|research/shirt-flow-09/*|scripts/test-shirt-flow-08-browser.mjs|tests/shirt-flow-08.test.mjs|tests/shirt-flow-09.test.mjs|.github/workflows/shirt-flow-08-no-deploy.yml) ;;
               *) echo "UNAUTHORIZED sibling/production file change: $path"; exit 1 ;;
             esac
           done
@@ -49,7 +51,9 @@ jobs:
            node --check research/shirt-flow-08/pose-conditioned-sleeves.mjs
            node --check research/shirt-flow-02/posed-contact.mjs
           node --check scripts/test-shirt-flow-08-browser.mjs
-          node --test tests/shirt-flow-08.test.mjs
+          node --check research/shirt-flow-09/settle-and-freeze.mjs
+          node --check tests/shirt-flow-09.test.mjs
+          node --test tests/shirt-flow-08.test.mjs tests/shirt-flow-09.test.mjs
       - name: Restore fixed original licensed garment source + 2 photographed denim source masks
         run: |
           node scripts/build-work47-benchmark.mjs
@@ -100,6 +104,33 @@ jobs:
           assert.equal(r.releaseAuthorized,false);
           assert.equal(r.productionChanged,false);
           CHECK
+      - name: Verify six actual settled and frozen 3D shirt research scenes + 24 real mobile WebGL images
+        run: |
+          node --input-type=module <<'CHECK'
+          import assert from 'node:assert/strict';
+          import {readFileSync,readdirSync} from 'node:fs';
+          const r=JSON.parse(readFileSync('benchmark/shirt-fit-09/results.json'));
+          assert.equal(r.scenarios.length,6);
+          assert.equal(r.realWebGLFrames,24);
+          assert.deepEqual(r.widths,[320,390,430]);
+          assert.deepEqual(r.rigs,['female','male']);
+          assert.equal(readdirSync('benchmark/shirt-fit-09').filter(x=>x.endsWith('.png')).length,24);
+          assert.ok(r.scenarios.every(s=>s.steps>=5&&s.steps<=96&&
+            s.actualBodyTriangleContacts===0&&s.originalPhotoAndSkinPreserved&&
+            s.samePoseChangedPixels===0&&s.rotationReturnChangedPixels<=2));
+          assert.equal(r.staticAfterFitting,true);
+          assert.equal(r.sourcePhotoAndRigPreserved,true);
+          assert.equal(r.fullClothPhysicsCertified,false);
+          assert.equal(r.physicalPhoneVerified,false);
+          assert.equal(r.visualPhotorealismApproved,false);
+          assert.equal(r.releaseAuthorized,false);
+          CHECK
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: SHIRT-FIT-09-24-WEBGL-STATIC-FROZEN-HOLD
+          path: benchmark/shirt-fit-09/
+          if-no-files-found: warn
       - uses: actions/upload-artifact@v4
         if: always()
         with:
