@@ -25,8 +25,8 @@ jobs:
       - name: Strict exact verified SHIRT-FLOW-04 verified research ancestor; forbid production and sibling writes
         run: |
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          git merge-base --is-ancestor c132df1e02670027c1a22bbd6bd88de35c3807ee HEAD
-          git diff --name-only c132df1e02670027c1a22bbd6bd88de35c3807ee HEAD | while IFS= read -r path; do
+          git merge-base --is-ancestor b2476f36218ca828cc01a5e62e55e1b15d828174 HEAD
+          git diff --name-only b2476f36218ca828cc01a5e62e55e1b15d828174 HEAD | while IFS= read -r path; do
             case "$path" in
               research/shirt-flow-05/*|scripts/test-shirt-flow-05-browser.mjs|tests/shirt-flow-05.test.mjs|.github/workflows/shirt-flow-05-no-deploy.yml) ;;
               *) echo "UNAUTHORIZED sibling/production file change: $path"; exit 1 ;;
@@ -74,7 +74,7 @@ jobs:
           assert.equal(r.scenarios.length,6);
           assert.ok(r.scenarios.every(x=>x.poseCount===17&&x.resetDifferentPixels===0&&x.genuineSkinnedSleeveContactZero));
           assert.equal(r.sameBonePoseTorsoPlusTemporalAB.length,6);
-          assert.ok(r.sameBonePoseTrueTorsoFlowAB.every(x=>x.sourceTorsoPlusTemporalOnlyChangedPixels>=12));
+          assert.ok(r.sameBonePoseTorsoPlusTemporalAB.every(x=>x.sourceTorsoPlusTemporalOnlyChangedPixels>=12));
           assert.equal(r.exactSourcePoseResetCount,6);
           assert.equal(r.sourceTrueTemporalSettlingFrames,6);
           assert.equal(r.trueSourceReviewedAndHashBound,true);
