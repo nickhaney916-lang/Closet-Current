@@ -313,7 +313,11 @@ async function initViewer(){
       new URLSearchParams(location.search).get('denimSilhouette')==='after',
      sourceDenimCuffFairing08:new URLSearchParams(location.search).get('denimFit')==='after'&&
        new URLSearchParams(location.search).get('denimSilhouette')==='after'&&
-       new URLSearchParams(location.search).get('denimFairing')==='after'
+       new URLSearchParams(location.search).get('denimFairing')==='after',
+     sourceDenimRearThigh14:new URLSearchParams(location.search).get('denimFit')==='after'&&
+       new URLSearchParams(location.search).get('denimSilhouette')==='after'&&
+       new URLSearchParams(location.search).get('denimFairing')==='after'&&
+       new URLSearchParams(location.search).get('denimRear14')==='after'
   });
   canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();
    if(token!==bootToken)return;
@@ -423,6 +427,7 @@ window.ccWardrobe10Diagnostics=()=>{
       staticDressFit05State:state?.staticDressFit05State||null,
       sourceDenimSilhouette07Enabled:state?.sourceDenimSilhouette07Enabled||false,
       sourceDenimCuffFairing08Enabled:state?.sourceDenimCuffFairing08Enabled||false,
+      sourceDenimRearThigh14Enabled:state?.sourceDenimRearThigh14Enabled||false,
       staticDenimFit06Enabled:state?.staticDenimFit06Enabled||false,
       staticDenimFit06State:state?.staticDenimFit06State||null,
      swept04Clock:state?.continuousGait04||null,
@@ -512,6 +517,15 @@ window.ccWardrobeDenimFreeze06=()=>{
      !proof.originalPhotoTextureRGBAndUVUnmodified08||
      proof.cuffReleasedVertices08<8||proof.maxCuffReleaseMeters08<.008))
    throw Error('Actual licensed photographed cuff fairing proof missing');
+  if(new URLSearchParams(location.search).get('denimRear14')==='after'&&
+    (!proof.sourceMeasuredRearThighRelief14||
+     !proof.originalPhotographedFrontProtected14||
+     !proof.sourcePhotoRGBUVRestAndSkinUnchanged14||
+     !proof.noInventedPhotographicRear14||
+     proof.rearThighSourceNeutralVertices14<40||
+     Math.min(...proof.rearThighPerLeg14)<15||
+     proof.rearThighMaximumWorldMoveMeters14<.008))
+   throw Error('Actual source-neutral measured rear thigh geometry failed, never fabricate photographic rear');
   const after=current();
   if(!after.authenticated||after.ownerId!==owner.ownerId||after.generation!==owner.generation||
     proof.originalPhotoSHA256!==expected||!proof.frontPhotographUnchanged||
