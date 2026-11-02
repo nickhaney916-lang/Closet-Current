@@ -1,4 +1,4 @@
-name: SOURCE-COVERAGE-10 Truthful Source Photograph Provenance + 3D HOLD
+name: SOURCE-ROTATE-11 Real WebGL Pointer-Provenance + 3D HOLD
 on:
   pull_request:
     paths:
@@ -252,6 +252,40 @@ jobs:
           assert.equal(r.productionModified,false);
           assert.equal(r.familyAlpha,'HOLD');
           CHECK
+      - name: Verify actual mobile browser pointer drag and truthful source provenance, never release
+        run: |
+          node --input-type=module <<'CHECK'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const r=JSON.parse(readFileSync('benchmark/source-rotate-11/results.json','utf8'));
+          assert.equal(r.realMobileBrowserPointerQA,true);
+          assert.equal(r.realPhysicalPhoneTested,false);
+          assert.equal(r.actualOriginalDenimPointerDrags.length,1);
+          const d=r.actualOriginalDenimPointerDrags[0];
+          assert.equal(d.width,390);
+          assert.equal(d.rig,'female');
+          assert.equal(d.denimIndex,0);
+          assert.equal(d.initialClass,'front-photo');
+          assert.ok(['mixed-photo-and-model','unphotographed-rear'].includes(d.draggedViewClass));
+          assert.ok(d.pixelsChangedOnRealWebGL>=50);
+          assert.match(d.input,/real canvas mouse drag/i);
+          assert.match(d.sourceSHA256,/^[a-f0-9]{64}$/);
+          assert.equal(d.authenticatedOwner,'fixture-account-a');
+          assert.equal(d.original163BoneAnatomy,true);
+          assert.equal(d.unseenRearPhotographCertified,false);
+          assert.equal(d.originalFrontSourcePreserved,true);
+          assert.equal(r.modeledRearOnly,true);
+          assert.equal(r.customerPhotosUsed,false);
+          assert.equal(r.productionModified,false);
+          assert.equal(r.releaseAuthorized,false);
+          assert.equal(r.familyAlpha,'HOLD');
+          CHECK
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: SOURCE-ROTATE-11-REAL-MOBILE-POINTER-WEBGL-HOLD
+          path: benchmark/source-rotate-11/
+          if-no-files-found: error
       - uses: actions/upload-artifact@v4
         if: always()
         with:
