@@ -322,7 +322,13 @@ async function initViewer(){
        new URLSearchParams(location.search).get('denimSilhouette')==='after'&&
        new URLSearchParams(location.search).get('denimFairing')==='after'&&
        new URLSearchParams(location.search).get('denimRear14')==='after'&&
-       new URLSearchParams(location.search).get('denimSide15')==='after'
+       new URLSearchParams(location.search).get('denimSide15')==='after',
+     sourceDenimPosteriorContour16:new URLSearchParams(location.search).get('denimFit')==='after'&&
+       new URLSearchParams(location.search).get('denimSilhouette')==='after'&&
+       new URLSearchParams(location.search).get('denimFairing')==='after'&&
+       new URLSearchParams(location.search).get('denimRear14')==='after'&&
+       new URLSearchParams(location.search).get('denimSide15')==='after'&&
+       new URLSearchParams(location.search).get('denimPosterior16')==='after'
   });
   canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();
    if(token!==bootToken)return;
@@ -434,6 +440,7 @@ window.ccWardrobe10Diagnostics=()=>{
       sourceDenimCuffFairing08Enabled:state?.sourceDenimCuffFairing08Enabled||false,
       sourceDenimRearThigh14Enabled:state?.sourceDenimRearThigh14Enabled||false,
       sourceDenimSideThigh15Enabled:state?.sourceDenimSideThigh15Enabled||false,
+      sourceDenimPosteriorContour16Enabled:state?.sourceDenimPosteriorContour16Enabled||false,
       staticDenimFit06Enabled:state?.staticDenimFit06Enabled||false,
       staticDenimFit06State:state?.staticDenimFit06State||null,
      swept04Clock:state?.continuousGait04||null,
@@ -542,6 +549,16 @@ window.ccWardrobeDenimFreeze06=()=>{
      proof.sideThighMaximumWorldMoveMeters15<.006||
      proof.sideThighMaximumWorldMoveMeters15>.0065001))
    throw Error('True sewn source-neutral side thigh geometry failed; cannot invent rear fabric photo');
+  if(new URLSearchParams(location.search).get('denimPosterior16')==='after'&&
+    (!proof.sourceMeasuredPosteriorContour16||
+     !proof.original163BoneHipKneeAnchor16||
+     !proof.frontPhotographUVRestSkinProtected16||
+     !proof.rearIsModeledNotPhotographed16||
+     proof.posteriorSourceNeutralVertices16<40||
+     Math.min(...proof.posteriorPerLeg16)<15||
+     proof.posteriorMaximumWorldMoveMeters16<.0105||
+     proof.posteriorMaximumWorldMoveMeters16>.0115001))
+   throw Error('Original photographed jeans rear source-neutral contour invalid or missing');
   const after=current();
   if(!after.authenticated||after.ownerId!==owner.ownerId||after.generation!==owner.generation||
     proof.originalPhotoSHA256!==expected||!proof.frontPhotographUnchanged||
