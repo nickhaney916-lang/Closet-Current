@@ -7,7 +7,7 @@ test('F07 uses actual 163-bone knee/ankle sourced, bounded taper and original 3D
  const path='research/denim-fit-06/static-source-denim-fit.mjs';
  const s=readFileSync(path,'utf8');
  for(const key of ['sourceSilhouette07=false','row.kneeEase','row.hemEase',
-  'knee.y-ankle.y','row.height>=.55','row.height<=.80',
+  'knee.y-ankle.y','row.sourceCalfPhase>=.38','row.sourceCalfPhase<=1.001',
   'pantsSourceFront','pantsSourceUV','pantsRest','skinIndex','skinWeight',
   'originalPhotoTextureRGBAndUVUnmodified07:true','actualSeamFoldTopologyPreserved07:true',
   'sourceNeutralKneeRearGroups07:sourceKneeRearGroups','taperAdditionalMean<.008'])
