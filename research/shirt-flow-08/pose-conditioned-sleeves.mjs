@@ -9,6 +9,7 @@ import {calibratePhotoClothLight} from '../shirt-flow-06/source-photo-material.m
 import {shapeSourceWeightedClothFold07} from '../shirt-flow-07/source-weighted-cloth-folds.mjs';
 import {shapeTrueSourceHemSwing08} from './source-hem-sway.mjs';
 import {settleAndFreeze09} from '../shirt-flow-09/settle-and-freeze.mjs';
+import {settleGravityTarget10,applyPhotographedGravityRest10} from '../shirt-flow-10/gravity-rest-equilibrium.mjs';
 import {setResearchPose} from '../shirt-flow-02/continuous-arm-pose.mjs';
 import {smoothSurfaceNormals} from '../three-d-08/garment-fit-profile.mjs';
 const smooth=T.MathUtils.smoothstep;
@@ -95,7 +96,7 @@ function joinCapNormals(shirt,root){
  if(sides.L<3||sides.R<3)throw Error('Missing actual bilateral sewn shading witnesses');return sides;
 }
 
-export function createPoseConditionedSleeveContact(root,shirt,pants,contactFactory,{gravityFabricFlow=false,torsoDrape04=false,temporalDrape05=false,sourceClothLight06=false,sourceWeightedFolds07=false,sourceHemSwing08=false}={}){
+export function createPoseConditionedSleeveContact(root,shirt,pants,contactFactory,{gravityFabricFlow=false,torsoDrape04=false,temporalDrape05=false,sourceClothLight06=false,sourceWeightedFolds07=false,sourceHemSwing08=false,gravityRest10=false}={}){
  if(typeof contactFactory!=='function')throw Error('Real triangle contact factory required');
  const temporal=temporalDrape05?createSourcePhotoTemporalDrape(root,shirt):null;
  const optical=calibratePhotoClothLight(shirt,{enabled:sourceClothLight06});
@@ -157,7 +158,7 @@ export function createPoseConditionedSleeveContact(root,shirt,pants,contactFacto
    throw Error('F09 only accepts 17 actual anatomical pose samples');
   // Rebuild from the authentic source pose, independent of prior animation.
   frozen=null;temporal.reset();fit(0);fit(pose);
-  return settleAndFreeze09({
+  const settled=settleAndFreeze09({
    pose,
    step:()=>{
     fit(pose);const motion=temporal.getState();
@@ -169,6 +170,22 @@ export function createPoseConditionedSleeveContact(root,shirt,pants,contactFacto
     shirt.stats.frozenSourceFit09=proof;
    }
   });
+  if(!gravityRest10)return settled;
+  // The F05 transient spring returns to zero. Only an independent *nonzero*
+  // bounded gravity-equilibrium rest shape improves the actual static fit.
+  const equilibrium=settleGravityTarget10();
+  const extra=applyPhotographedGravityRest10(root,shirt,{equilibrium});
+  const check=contactFactory(root,shirt,pants);
+  try{check.fit(pose);}finally{check.dispose();}
+  if(shirt.stats.poseTriangleContact?.after?.count!==0)
+   throw Error('Nonzero resting cloth shape intersects original anatomical body');
+  const proof=Object.freeze({...settled,
+   sourceGravityRestFit10:{...extra,bodyCollisionVerifiedByCaller:true},
+   staticNonzeroClothEquilibrium:true});
+  frozen={pose,meshes:capture(),contact:shirt.stats.poseTriangleContact,proof};
+  shirt.stats.frozenSourceFit09=proof;
+  shirt.stats.gravityRestFit10=proof.sourceGravityRestFit10;
+  return proof;
  }
  return {fit,settle,dispose(){frozen=null;optical.dispose();temporal?.reset();base.clear();cache.clear();}};
 }
