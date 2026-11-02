@@ -150,7 +150,9 @@ export function createPhotoDenimStaticFitter06(pants,root,{sourceSilhouette07=fa
    // Fit the lower source-neutral calf closer to its anatomical form.
    // Do NOT manufacture a rounded 'knee bubble' or move the JPEG front.
    const hemRest=sourceSilhouette07 ? -.016*row.hemEase : 0;
-   const cuffRelease=sourceFairing08?.006*sourceDenimCuffRelease08(row.sourceCalfPhase):0;
+   // More legible licensed side/rear garment relief; bounded to the same 24mm
+   // original-source-neutral fit budget, with original front/UV/skin unchanged.
+   const cuffRelease=sourceFairing08?.0085*sourceDenimCuffRelease08(row.sourceCalfPhase):0;
    const dy=-eq.meters*.22*row.blend;
    // Smooth lower-calf taper into the original real sewn upper knee geometry.
    // The source photo front, authentic pattern and cloth folds remain intact.
@@ -186,7 +188,7 @@ export function createPhotoDenimStaticFitter06(pants,root,{sourceSilhouette07=fa
    throw Error('Photographed knee-to-hem taper not measurably improved: '+JSON.stringify({
     kneeMoved,hemMoved,taperAdditionalMean,max}));
 
-  if(sourceFairing08&&(cuffMoved<8||maxCuffRelease<.0055))
+  if(sourceFairing08&&(cuffMoved<8||maxCuffRelease<.008))
    throw Error('Genuine original-photo cuff geometry not measurably fairing: '+JSON.stringify({cuffMoved,maxCuffRelease}));
   frozen=true;
   proof=Object.freeze({actualPhotoDenimFrozenFit:true,
