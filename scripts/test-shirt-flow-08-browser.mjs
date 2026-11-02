@@ -36,9 +36,9 @@ function monitor(page){
 }
 const baseParams='construction=after&sleeve44=after&caps45=after&contour46=after&volume47=after&collar48=after&rear53=after&round54=after&hang55=after&sweep=after&crisp58=after';
 const state=p=>p.evaluate(()=>window.cc31Diagnostics());
-async function openOriginal(page,kind,enabled=true){
+async function openOriginal(page,kind,enabled=true,gravityRest=enabled){
  await page.goto(host+'/research/shirt-flow-08/index.html?'+baseParams+
-  '&move56=after&shirtFlow=after&smoothFlow=after&fabricFlow=after&torsoFlow=after&timeFlow=after&lightFlow=after&foldFlow=after&settleFit=after&hemFlow='+(enabled?'after':'before'),
+  '&move56=after&shirtFlow=after&smoothFlow=after&fabricFlow=after&torsoFlow=after&timeFlow=after&lightFlow=after&foldFlow=after&settleFit=after&gravityRest='+(gravityRest?'after':'before')+'&hemFlow='+(enabled?'after':'before'),
   {waitUntil:'domcontentloaded'});
  try{await page.waitForFunction(()=>window.cc31Diagnostics?.()?.loaded===true,null,{timeout:45000});}
  catch(e){throw Error('Original source showroom not ready: '+JSON.stringify({
@@ -123,10 +123,11 @@ function difference(a,b){
   if(Math.abs(a.data[i]-b.data[i])+Math.abs(a.data[i+1]-b.data[i+1])+Math.abs(a.data[i+2]-b.data[i+2])>24)pixels++;
  return pixels;
 }
-let browser;const settling=[],frozenFits=[];
+let browser;const settling=[],frozenFits=[],gravityComparisons=[];
 try{
  await mkdir(folder,{recursive:true});
  await mkdir('benchmark/shirt-fit-09',{recursive:true});
+ await mkdir('benchmark/shirt-fit-10',{recursive:true});
  browser=await chromium.launch({headless:true,args:[
   '--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader','--enable-webgl']});
  for(const width of [320,390,430])for(const rig of ['female','male']){
@@ -239,6 +240,13 @@ try{
   assert.equal(proof.sourceSHA256,sha);
   assert.equal(proof.actualSkinnedBodyContactCount,0);
   assert.ok(proof.steps>=5&&proof.steps<=96);
+  assert.equal(proof.staticNonzeroClothEquilibrium,true);
+  assert.equal(proof.sourceGravityRestFit10?.actualPhotographedSource3DEquilibrium,true);
+  assert.equal(proof.sourceGravityRestFit10?.bodyCollisionVerifiedByCaller,true);
+  assert.equal(proof.sourceGravityRestFit10?.originalPhotoAttributesUnchanged,true);
+  assert.equal(proof.sourceGravityRestFit10?.originalPhotoPixelsUnchanged,true);
+  assert.ok(proof.sourceGravityRestFit10?.worldEquilibriumMeters>.007);
+  assert.ok(proof.sourceGravityRestFit10?.verticesMoved>=120);
   const fit=await page.locator('#avatar').screenshot();
   const metrics=(buf)=>sharp(buf).removeAlpha().raw().toBuffer({resolveWithObject:true});
   await page.evaluate(()=>window.ccShirtFlow08(.5));
@@ -255,6 +263,26 @@ try{
     bytes:[beforeFreeze,fit,same,rotation][i]
   }));
   for(const entry of saved)await writeFile(entry.path,entry.bytes);
+  if(width===390){
+   // Isolate exactly the new physical *nonzero* resting shape at same rig,
+   // original photo, pose, lighting and camera; F09 remains a verified control.
+   const f09Context=await browser.newContext({viewport:{width,height:932},deviceScaleFactor:1,hasTouch:true,isMobile:true});
+   const f09Page=await f09Context.newPage();monitor(f09Page);
+   await openOriginal(f09Page,rig,true,false);
+   await f09Page.locator('#side').click();
+   const f09Proof=await f09Page.evaluate(()=>window.ccShirtFitFreeze09(.5));
+   assert.equal(f09Proof.frozenSourcePhotographed3DMesh,true);
+   assert.equal(f09Proof.staticNonzeroClothEquilibrium,undefined);
+   assert.equal(f09Proof.sourceSHA256,sha);
+   const f09Image=await f09Page.locator('#avatar').screenshot();
+   const changedFromF09=difference(await metrics(f09Image),await metrics(fit));
+   assert.ok(changedFromF09>=10,'Nonzero resting gravity geometry must visibly alter SAME original photographed fitted shirt '+rig+': '+changedFromF09);
+   for(const [name,img] of [['control-f09',f09Image],['gravity-f10',fit]])
+    await writeFile('benchmark/shirt-fit-10/'+tag+'-'+name+'.png',img);
+   gravityComparisons.push({width,rig,sourceSHA256:sha,actualChangedPixels:changedFromF09,
+    originalSourcePreserved:true,zeroBodyContact:true,physicalPhoneVerified:false,releaseAuthorized:false});
+   await f09Context.close();
+  }
   frozenFits.push({width,rig,pose:.5,sourceSHA256:sha,steps:proof.steps,
    samePoseChangedPixels:samePixels,rotationReturnChangedPixels:rotatedPixels,
    actualBodyTriangleContacts:proof.actualSkinnedBodyContactCount,
@@ -265,6 +293,13 @@ try{
   assert.equal(await page.evaluate(()=>{try{window.ccShirtFlow08(.5);return false;}catch{return true;}}),true);
   await context.close();
  }
+ assert.equal(gravityComparisons.length,2);
+ await writeFile('benchmark/shirt-fit-10/results.json',JSON.stringify({
+  matchedActualSourceF09vsF10:gravityComparisons,
+  realWebGLComparisonImages:4,nonzeroPhysicalRestFit:true,
+  fullClothPhysicsCertified:false,realPhysicalPhoneApproved:false,
+  humanVisualAccepted:false,releaseAuthorized:false
+ },null,2));
  await writeFile('benchmark/shirt-fit-09/results.json',JSON.stringify({
   scenarios:frozenFits,realWebGLFrames:frozenFits.length*4,widths:[320,390,430],
   rigs:['female','male'],sourcePhotoAndRigPreserved:true,
