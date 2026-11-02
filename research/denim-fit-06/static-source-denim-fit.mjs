@@ -37,7 +37,8 @@ export function settleDenimRest06(target=DENIM_FIT06.targetMeters){
   fixedStepSeconds:DENIM_FIT06.timestepSeconds,releaseAuthorized:false});
 }
 function same(a,b){return a?.length===b?.length&&a.every((x,i)=>x===b[i]);}
-export function createPhotoDenimStaticFitter06(pants,root){
+export function createPhotoDenimStaticFitter06(pants,root,{sourceSilhouette07=false}={}){
+ if(typeof sourceSilhouette07!=='boolean')throw Error('Photographed source silhouette feature gate must be boolean');
  const mesh=pants?.meshes?.[0],g=mesh?.geometry,p=g?.getAttribute('position');
  if(!root?.isObject3D||pants?.meshes?.length!==1||
   !mesh?.isSkinnedMesh||mesh?.skeleton?.bones?.length!==163||
@@ -54,6 +55,7 @@ export function createPhotoDenimStaticFitter06(pants,root){
  const guard=new Map(protectedFields.map(k=>[k,g.getAttribute(k).array.slice()]));
  const front=g.getAttribute('pantsSourceFront');
  const legs=pants.stats.landmarks;
+ const silhouette07=Object.freeze({maxShiftMeters:.024,minimumAddedKneeEaseMeters:.010});
  if(legs?.length!==2||legs.some(x=>!Array.isArray(x.knee)||!Array.isArray(x.ankle)))
   throw Error('True original photographed knee/ankle reference required');
  root.updateMatrixWorld(true);mesh.updateWorldMatrix(true,false);
@@ -77,7 +79,14 @@ export function createPhotoDenimStaticFitter06(pants,root){
   const legX=T.MathUtils.lerp(ankle.x,knee.x,clamp(height,0,1));
   const dx=row.q.x-legX,radial=Math.hypot(dx,row.q.z);
   if(height<.04||height>.82||radial<.035||radial>.31||blend<.025)continue;
-  eligible.push({...row,side,blend,radialX:dx/radial,radialZ:row.q.z/radial});
+  // 07 uses ORIGINAL anatomical knee/ankle positions to create a
+  // calf-to-knee volume transition; no guessed texture or repeating
+  // decorative waves. Source 3D75/76 already carries the real folds.
+  // Protect the original photograph's front and its actual colors.
+  const kneeEase=smooth(height,.36,.56)*(1-smooth(height,.78,.96));
+  const hemEase=smooth(height,.065,.18)*(1-smooth(height,.23,.40));
+  eligible.push({...row,side,height,blend,kneeEase,hemEase,
+    radialX:dx/radial,radialZ:row.q.z/radial});
  }
  if(eligible.length<35||untouched<100||eligible.filter(x=>x.side===0).length<12||
    eligible.filter(x=>x.side===1).length<12)
@@ -100,27 +109,57 @@ export function createPhotoDenimStaticFitter06(pants,root){
  function freeze(){
   restore();const eq=settleDenimRest06();
   let changed=0,max=0;const perLeg=[0,0],q=new T.Vector3();
+  let kneeMoved=0,hemMoved=0,kneeEaseTotal=0,hemEaseTotal=0,sourceKneeRearGroups=0;
   for(const row of eligible){
-   const dy=-eq.meters*.22*row.blend,
-     radius=eq.meters*.92*row.blend,
-     dx=radius*row.radialX,dz=radius*row.radialZ,
+   const kneeRest=sourceSilhouette07?.016*row.kneeEase:0;
+   const hemRest=sourceSilhouette07?.0015*row.hemEase:0;
+   const dy=-eq.meters*.22*row.blend-
+     (sourceSilhouette07?.0025*row.kneeEase:0);
+   // A rounded, loose knee break supported by the real 3D75 folds, but a
+   // closer ankle hem. The larger knee-relative envelope gives the JEANS
+   // an actual leg profile instead of an equal-width geometric tube.
+   const radius=eq.meters*.92*row.blend+kneeRest+hemRest;
+   const dx=radius*row.radialX,dz=radius*row.radialZ,
      shift=Math.hypot(dx,dy,dz);
-   if(!Number.isFinite(shift)||shift>DENIM_FIT06.maxWorldShiftMeters)
+   const budget=sourceSilhouette07?silhouette07.maxShiftMeters:DENIM_FIT06.maxWorldShiftMeters;
+   if(!Number.isFinite(shift)||shift>budget)
     throw Error('Photographed denim rest outside source-neutral fit bounds');
    if(shift<.00005)continue;
    q.copy(row.q).add(new T.Vector3(dx,dy,dz)).applyMatrix4(inv);
    for(const i of row.ids){p.setXYZ(i,q.x,q.y,q.z);changed++;perLeg[row.side]++;}
    max=Math.max(max,shift);
+   if(sourceSilhouette07){
+    if(row.height>=.55&&row.height<=.80){
+      kneeMoved++;kneeEaseTotal+=kneeRest;sourceKneeRearGroups++;
+    }
+    if(row.height>=.12&&row.height<=.36){
+      hemMoved++;hemEaseTotal+=hemRest;
+    }
+   }
   }
   p.needsUpdate=true;g.computeVertexNormals();g.computeBoundingBox();g.computeBoundingSphere();
   audit();
-  if(changed<60||Math.min(...perLeg)<20||max<.002||max>DENIM_FIT06.maxWorldShiftMeters)
+  const budget=sourceSilhouette07?silhouette07.maxShiftMeters:DENIM_FIT06.maxWorldShiftMeters;
+  if(changed<60||Math.min(...perLeg)<20||max<.002||max>budget)
    throw Error('Genuine photographed denim static hem drape not achieved: '+JSON.stringify({changed,perLeg,max}));
+  const taperAdditionalMean=(kneeMoved?kneeEaseTotal/kneeMoved:0)-
+   (hemMoved?hemEaseTotal/hemMoved:0);
+  if(sourceSilhouette07&&(kneeMoved<15||hemMoved<15||
+    taperAdditionalMean<.008||max<silhouette07.minimumAddedKneeEaseMeters))
+   throw Error('Photographed knee-to-hem taper not measurably improved: '+JSON.stringify({
+    kneeMoved,hemMoved,taperAdditionalMean,max}));
+
   frozen=true;
   proof=Object.freeze({actualPhotoDenimFrozenFit:true,
    originalPhotoSHA256:pants.stats.sourceSHA256,originalDenimId:pants.stats.sourceId,
    authentic163BoneMannequin:true,changedVertices:changed,perLeg,
    maxWorldShiftMeters:max,rest:eq,frontPhotographUnchanged:true,
+   sourceMeasuredAnatomicalSilhouette07:sourceSilhouette07,
+   originalSkinnedKneeHemTaperImproved07:sourceSilhouette07,
+   sourceNeutralKneeRearGroups07:sourceKneeRearGroups,
+   additionalKneeVsHemEaseMeters07:sourceSilhouette07?taperAdditionalMean:0,
+   actualSeamFoldTopologyPreserved07:true,
+   originalPhotoTextureRGBAndUVUnmodified07:true,
    sourceUVRestAndSkinByteIdentical:true,realBVHVerifiedByCaller:false,
    noUnseenTextureInvented:true,physicalPhoneApproved:false,
    humanPhotorealismApproved:false,releaseAuthorized:false});
