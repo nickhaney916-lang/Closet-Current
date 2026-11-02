@@ -278,7 +278,10 @@ async function initViewer(){
     staticDressFit05:new URLSearchParams(location.search).get('dressFit')==='after',
     staticDenimFit06:new URLSearchParams(location.search).get('denimFit')==='after',
     sourceDenimSilhouette07:new URLSearchParams(location.search).get('denimFit')==='after'&&
-      new URLSearchParams(location.search).get('denimSilhouette')==='after'
+      new URLSearchParams(location.search).get('denimSilhouette')==='after',
+     sourceDenimCuffFairing08:new URLSearchParams(location.search).get('denimFit')==='after'&&
+       new URLSearchParams(location.search).get('denimSilhouette')==='after'&&
+       new URLSearchParams(location.search).get('denimFairing')==='after'
   });
   canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();
    if(token!==bootToken)return;
@@ -377,6 +380,7 @@ window.ccWardrobe10Diagnostics=()=>{
       staticDressFit05Enabled:state?.staticDressFit05Enabled||false,
       staticDressFit05State:state?.staticDressFit05State||null,
       sourceDenimSilhouette07Enabled:state?.sourceDenimSilhouette07Enabled||false,
+      sourceDenimCuffFairing08Enabled:state?.sourceDenimCuffFairing08Enabled||false,
       staticDenimFit06Enabled:state?.staticDenimFit06Enabled||false,
       staticDenimFit06State:state?.staticDenimFit06State||null,
      swept04Clock:state?.continuousGait04||null,
@@ -457,6 +461,11 @@ window.ccWardrobeDenimFreeze06=()=>{
       !proof.originalPhotoTextureRGBAndUVUnmodified07||
       proof.additionalKneeVsHemEaseMeters07<.008))
    throw Error('Genuine source photographed jeans silhouette did not pass anatomical taper audit');
+  if(new URLSearchParams(location.search).get('denimFairing')==='after'&&
+    (!proof.originalSourceNeutralCuffFairing08||
+     !proof.originalPhotoTextureRGBAndUVUnmodified08||
+     proof.cuffReleasedVertices08<8||proof.maxCuffReleaseMeters08<.0055))
+   throw Error('Actual licensed photographed cuff fairing proof missing');
   const after=current();
   if(!after.authenticated||after.ownerId!==owner.ownerId||after.generation!==owner.generation||
     proof.originalPhotoSHA256!==expected||!proof.frontPhotographUnchanged||
