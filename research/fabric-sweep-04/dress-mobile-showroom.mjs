@@ -19,7 +19,7 @@ const ALLOWED=Object.freeze({
  female:{file:'female-cc0-rigged.glb',title:'Anatomical mannequin B'}
 });
 const COLORS=Object.freeze({porcelain:0xc3bdb5,slate:0x777f84});
-export function mountAnatomicalShowroom(canvas,{onChange=()=>{},refineFit=true,enableCuffFix=true,enableCuffFacing=true,enableCuffBridge=true,naturalFit=true,necklineSeams=true,dressNeckline=true,dressAnatomy=true,dressContact=true,skirtDrape=true,dressMobile74=false,registeredNeckline=true,naturalPantsDrape=true,posteriorJeansFairing=true,structuralPantsEnvelope=true,independentJeansLoft=true,crotchSeatPanel=true,sourceShirtWaistFit=true,clothWaistContact=true,shirtHangingSilhouette=true,denimHangingSilhouette=true,jeansPanelFall=false,independentGarments=false,poseContactFactory=null,tailoredShoulderSleeves=false,independentShoulderCaps=false,realisticShoulderContour=false,upperArmFabricVolume=false,sourceNeutralCollarRoll=false,rearShirtFabricRelief=false,naturalShoulderSleeveTransition=false,sourceMeasuredSleeveHang=false,poseConditionedSleeveDrape=false,anatomicalShirtSideFlow=false,crispSourcePhotoClarity=false,naturalShoulderFall61=false,trueShoulderTop64=false,photoDenimRearDrape73=false,photoDenimCalfHang74=false,photoDenimFolds75=false,photoDenimContinuity76=false,photoDenimContactAudit77=false,photoDenimKneePose78=false,photoDenimFlex79=false,premiumTurntable67=false,skirtSecondaryMotion01=false,poseDrivenDressWalk02=false,poseConditionedPleats03=false,staticDressFit05=false}={}){
+export function mountAnatomicalShowroom(canvas,{onChange=()=>{},refineFit=true,enableCuffFix=true,enableCuffFacing=true,enableCuffBridge=true,naturalFit=true,necklineSeams=true,dressNeckline=true,dressAnatomy=true,dressContact=true,skirtDrape=true,dressMobile74=false,registeredNeckline=true,naturalPantsDrape=true,posteriorJeansFairing=true,structuralPantsEnvelope=true,independentJeansLoft=true,crotchSeatPanel=true,sourceShirtWaistFit=true,clothWaistContact=true,shirtHangingSilhouette=true,denimHangingSilhouette=true,jeansPanelFall=false,independentGarments=false,poseContactFactory=null,tailoredShoulderSleeves=false,independentShoulderCaps=false,realisticShoulderContour=false,upperArmFabricVolume=false,sourceNeutralCollarRoll=false,rearShirtFabricRelief=false,naturalShoulderSleeveTransition=false,sourceMeasuredSleeveHang=false,poseConditionedSleeveDrape=false,anatomicalShirtSideFlow=false,crispSourcePhotoClarity=false,naturalShoulderFall61=false,trueShoulderTop64=false,photoDenimRearDrape73=false,photoDenimCalfHang74=false,photoDenimFolds75=false,photoDenimContinuity76=false,photoDenimContactAudit77=false,photoDenimKneePose78=false,photoDenimFlex79=false,premiumTurntable67=false,skirtSecondaryMotion01=false,poseDrivenDressWalk02=false,poseConditionedPleats03=false,staticDressFit05=false,staticDenimFit06=false}={}){
  if(!canvas||typeof canvas.getContext!=='function')throw Error('Canvas required');
  // Baseline comparison imports the untouched verified renderer.
  const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false,
@@ -195,7 +195,7 @@ export function mountAnatomicalShowroom(canvas,{onChange=()=>{},refineFit=true,e
   selected=obj;group.add(selected);current=kind;lastStats=stats;sourcePhotoSampling=null;
   {
    selected.updateMatrixWorld(true);
-   outfit=createOutfitController(selected,{refineFit,enableCuffFix,enableCuffFacing,enableCuffBridge,naturalFit,necklineSeams,dressNeckline,dressAnatomy,dressContact,skirtDrape,dressMobile74,registeredNeckline,naturalPantsDrape,posteriorJeansFairing,structuralPantsEnvelope,independentJeansLoft,crotchSeatPanel,sourceShirtWaistFit,clothWaistContact,shirtHangingSilhouette,denimHangingSilhouette,jeansPanelFall,independentGarments,poseContactFactory,tailoredShoulderSleeves,independentShoulderCaps,realisticShoulderContour,upperArmFabricVolume,sourceNeutralCollarRoll,rearShirtFabricRelief,naturalShoulderSleeveTransition,sourceMeasuredSleeveHang,poseConditionedSleeveDrape,anatomicalShirtSideFlow,naturalShoulderFall61,trueShoulderTop64,photoDenimRearDrape73,photoDenimCalfHang74,photoDenimFolds75,photoDenimContinuity76,photoDenimContactAudit77,photoDenimKneePose78,photoDenimFlex79,skirtSecondaryMotion01,posePleats03:poseConditionedPleats03,staticDressFit05});outfit.setPose(pose);
+   outfit=createOutfitController(selected,{refineFit,enableCuffFix,enableCuffFacing,enableCuffBridge,naturalFit,necklineSeams,dressNeckline,dressAnatomy,dressContact,skirtDrape,dressMobile74,registeredNeckline,naturalPantsDrape,posteriorJeansFairing,structuralPantsEnvelope,independentJeansLoft,crotchSeatPanel,sourceShirtWaistFit,clothWaistContact,shirtHangingSilhouette,denimHangingSilhouette,jeansPanelFall,independentGarments,poseContactFactory,tailoredShoulderSleeves,independentShoulderCaps,realisticShoulderContour,upperArmFabricVolume,sourceNeutralCollarRoll,rearShirtFabricRelief,naturalShoulderSleeveTransition,sourceMeasuredSleeveHang,poseConditionedSleeveDrape,anatomicalShirtSideFlow,naturalShoulderFall61,trueShoulderTop64,photoDenimRearDrape73,photoDenimCalfHang74,photoDenimFolds75,photoDenimContinuity76,photoDenimContactAudit77,photoDenimKneePose78,photoDenimFlex79,skirtSecondaryMotion01,posePleats03:poseConditionedPleats03,staticDressFit05,staticDenimFit06});outfit.setPose(pose);
   }
   canvas.dataset.pose=pose;loadTimes.push(performance.now()-began);
   installOpeningSkinAttribute(selected);outfit.setOutfit('pants');syncOutfit();reapDetachedGarmentGeometries();shade(lastColor);front();
@@ -324,6 +324,25 @@ export function mountAnatomicalShowroom(canvas,{onChange=()=>{},refineFit=true,e
      collisionVerified:true,releaseAuthorized:false};
   }catch(e){outfit.restoreDressFit05();draw();throw e;}
  };
+ const freezeDenimFit06=()=>{
+  if(!staticDenimFit06||finish||!selected||
+     !['pants','shirt-pants'].includes(outfit?.getState()?.mode))
+   throw Error('Exact source-photographed 163-bone jeans fitting research not enabled');
+  haltGait02();spin=false;motionActive=false;lastMotionTime=0;
+  const before=outfit.auditDenimFit06();
+  let proof;
+  try{
+   proof=outfit.freezeDenimFit06();
+   const after=outfit.auditDenimFit06();
+   if(after.sourceSHA256!==before.sourceSHA256||
+      after.actualSkinnedDenimBodyTriangleCrossings>before.actualSkinnedDenimBodyTriangleCrossings)
+    throw Error('Static photographed jeans introduced real skinned body intersections or changed source');
+   draw();
+   return {...proof,bodyContactBefore:before.actualSkinnedDenimBodyTriangleCrossings,
+     bodyContactAfter:after.actualSkinnedDenimBodyTriangleCrossings,
+     trueBVHBodyContactNoNew:true,realBVHVerifiedByCaller:true,releaseAuthorized:false};
+  }catch(error){outfit.restoreDenimFit06();draw();throw error;}
+ };
  const auditGaitDress02=()=>{
   requireGait02();
   // Later anatomical fit passes legitimately replace/clone the original
@@ -356,7 +375,7 @@ export function mountAnatomicalShowroom(canvas,{onChange=()=>{},refineFit=true,e
   }finally{d?.g?.dispose();b?.g?.dispose();}
  };
  return {load,shade,front,side,back,rotate,viewAt:rotate,resetView:front,start,stop,setPose,zoom,applyOutfit,inspectSleeves,inspectTorso,
-  setGaitPhase02,resetGait02,auditGaitDress02,freezeDressFit05,
+  setGaitPhase02,resetGait02,auditGaitDress02,freezeDressFit05,freezeDenimFit06,
   sampleSweep04:phase=>{
    if(!Number.isFinite(phase)||phase<0||phase>1||Math.abs(phase*8-Math.round(phase*8))>1e-9)
     throw Error('One of nine exact original-rig interpolation phases required');
@@ -375,6 +394,7 @@ export function mountAnatomicalShowroom(canvas,{onChange=()=>{},refineFit=true,e
   gait02Enabled:poseDrivenDressWalk02,gait02Active:gaitActive,
   posePleats03Enabled:poseConditionedPleats03,posePleats03State:outfit?.getState()?.posePleats03||null,
   staticDressFit05Enabled:staticDressFit05,staticDressFit05State:outfit?.getState()?.dressStaticFit05||null,
+  staticDenimFit06Enabled:staticDenimFit06,staticDenimFit06State:outfit?.getState()?.denimStaticFit06||null,
   gait02State:gait02?.state()||null,continuousGait04:continuityClock04?.state()||null,
    sampledSweptCollisionCertified:false,dressPresentation:dressPresentation.value,poseChanges,releaseAuthorized:false})
  };
