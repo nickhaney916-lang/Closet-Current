@@ -37,7 +37,10 @@ export function sourceDenimTaperWeights07(phase){
 export function sourceDenimCuffRelease08(phase){
  if(!Number.isFinite(phase)||phase<0||phase>1)
   throw Error('Source calf cuff phase must be finite within observed geometry');
- return smooth(.28,.38,phase)*(1-smooth(.48,.72,phase));
+ // Wider source-measured lower-calf transition creates a continuous stitched
+ // side/rear contour rather than a barely visible 5-pixel cuff pinch.
+ // Entry/exit remain exactly zero at real source phase boundaries.
+ return smooth(.18,.34,phase)*(1-smooth(.58,.84,phase));
 }
 export function settleDenimRest06(target=DENIM_FIT06.targetMeters){
  if(!Number.isFinite(target)||target<.002||target>DENIM_FIT06.maxWorldShiftMeters)
