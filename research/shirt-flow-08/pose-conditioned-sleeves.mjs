@@ -156,7 +156,7 @@ export function createPoseConditionedSleeveContact(root,shirt,pants,contactFacto
      Math.abs(pose*16-Math.round(pose*16))>1e-9)
    throw Error('F09 only accepts 17 actual anatomical pose samples');
   // Rebuild from the authentic source pose, independent of prior animation.
-  frozen=null;temporal.reset();fit('source');fit(pose);
+  frozen=null;temporal.reset();fit(0);fit(pose);
   return settleAndFreeze09({
    pose,
    step:()=>{
