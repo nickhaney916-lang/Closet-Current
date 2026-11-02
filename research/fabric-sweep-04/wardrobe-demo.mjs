@@ -317,7 +317,12 @@ async function initViewer(){
      sourceDenimRearThigh14:new URLSearchParams(location.search).get('denimFit')==='after'&&
        new URLSearchParams(location.search).get('denimSilhouette')==='after'&&
        new URLSearchParams(location.search).get('denimFairing')==='after'&&
-       new URLSearchParams(location.search).get('denimRear14')==='after'
+       new URLSearchParams(location.search).get('denimRear14')==='after',
+     sourceDenimSideThigh15:new URLSearchParams(location.search).get('denimFit')==='after'&&
+       new URLSearchParams(location.search).get('denimSilhouette')==='after'&&
+       new URLSearchParams(location.search).get('denimFairing')==='after'&&
+       new URLSearchParams(location.search).get('denimRear14')==='after'&&
+       new URLSearchParams(location.search).get('denimSide15')==='after'
   });
   canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();
    if(token!==bootToken)return;
@@ -428,6 +433,7 @@ window.ccWardrobe10Diagnostics=()=>{
       sourceDenimSilhouette07Enabled:state?.sourceDenimSilhouette07Enabled||false,
       sourceDenimCuffFairing08Enabled:state?.sourceDenimCuffFairing08Enabled||false,
       sourceDenimRearThigh14Enabled:state?.sourceDenimRearThigh14Enabled||false,
+      sourceDenimSideThigh15Enabled:state?.sourceDenimSideThigh15Enabled||false,
       staticDenimFit06Enabled:state?.staticDenimFit06Enabled||false,
       staticDenimFit06State:state?.staticDenimFit06State||null,
      swept04Clock:state?.continuousGait04||null,
@@ -526,6 +532,16 @@ window.ccWardrobeDenimFreeze06=()=>{
      Math.min(...proof.rearThighPerLeg14)<15||
      proof.rearThighMaximumWorldMoveMeters14<.008))
    throw Error('Actual source-neutral measured rear thigh geometry failed, never fabricate photographic rear');
+  if(new URLSearchParams(location.search).get('denimSide15')==='after'&&
+    (!proof.sourceMeasuredSideThighRelief15||
+     !proof.originalPhotographedFrontProtected15||
+     !proof.sourcePhotoRGBUVRestAndSkinUnchanged15||
+     !proof.noInventedPhotographicRear15||
+     proof.sideThighSourceNeutralVertices15<40||
+     Math.min(...proof.sideThighPerLeg15)<15||
+     proof.sideThighMaximumWorldMoveMeters15<.006||
+     proof.sideThighMaximumWorldMoveMeters15>.0065001))
+   throw Error('True sewn source-neutral side thigh geometry failed; cannot invent rear fabric photo');
   const after=current();
   if(!after.authenticated||after.ownerId!==owner.ownerId||after.generation!==owner.generation||
     proof.originalPhotoSHA256!==expected||!proof.frontPhotographUnchanged||
