@@ -13,7 +13,7 @@ test('F07 uses actual 163-bone knee/ankle sourced, bounded taper and original 3D
   'sourceNeutralKneeRearGroups07:sourceKneeRearGroups','taperAdditionalMean<.008'])
   assert.ok(s.includes(key),'Photo original geometry proof: '+key);
  assert.match(s,/sourceSilhouette07\?silhouette07\.maxShiftMeters:DENIM_FIT06\.maxWorldShiftMeters/);
- assert.match(s,/const hemRest=sourceSilhouette07 \? -\.014\*row\.hemEase : 0/);
+ assert.match(s,/const hemRest=sourceSilhouette07 \? -\.016\*row\.hemEase : 0/);
 });
 test('Anatomical calf easing follows numeric smooth(start,end,phase) and does not inflate every source ring',()=>{
  const ankle=sourceDenimTaperWeights07(0),lower=sourceDenimTaperWeights07(.38),
