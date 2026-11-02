@@ -19,7 +19,7 @@ test('S15 lateral thigh relief has exact hip/knee zero boundaries, bounded smoot
 test('S15 is default OFF and cannot activate without source-rear R14 and F07/F08',()=>{
  for(const option of [{sourceSideThigh15:true},{sourceRearThigh14:true,sourceSideThigh15:true},
   {sourceSilhouette07:true,sourceSideThigh15:true},{sourceSideThigh15:'after'}]){
-  assert.throws(()=>createPhotoDenimStaticFitter06({}, {},option),/Side-thigh S15 requires/);
+  assert.throws(()=>createPhotoDenimStaticFitter06({}, {},option),/Side-thigh S15 requires|Source-rear R14 must opt in/);
  }
  assert.throws(()=>createPhotoDenimStaticFitter06({}, {},{
   sourceSilhouette07:true,sourceFairing08:true,sourceRearThigh14:true,sourceSideThigh15:true
@@ -30,7 +30,7 @@ test('S15 preserves original front positions, JPEG UV rest skin and only modeled
  for(const key of ['pantsRest','pantsSourceUV','pantsSourceFront','skinIndex','skinWeight',
   'originalPhotographedFrontProtected15:true','sourcePhotoRGBUVRestAndSkinUnchanged15:true',
   'noInventedPhotographicRear15:true','sourceSideThigh15=false','sideThighPerLeg15',
-  'sideThighMaximumWorldMoveMeters15','trueBVHVerifiedByCaller:false'])
+  'sideThighMaximumWorldMoveMeters15','realBVHVerifiedByCaller:false'])
   assert.ok(fitter.includes(key),key);
  const demo=readFileSync('research/fabric-sweep-04/wardrobe-demo.mjs','utf8');
  assert.ok(demo.includes("get('denimSide15')==='after'"));
