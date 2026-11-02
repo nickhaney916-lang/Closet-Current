@@ -20,3 +20,6 @@ Arbitrary personal photo-to-3D, real phone acceptance, photorealistic dyed denim
 
 ## QA correction recorded
 Initial CI #41461909467 FAILED CLOSED because the original source mesh lacked eligible side/rear vertices in the assumed fixed 0.12–0.36 hem band (`hemMoved:0`). Corrected code uses observed source calf height min/max **per licensed leg** to target a genuine lower-to-higher side/rear calf taper, and still requires finite original anatomical coverage, both lower/upper surface populations, ≥8mm relative easing and genuine WebGL before/after image evidence. No weakening of photo, collision, rotation, or source identity standards. Retest the final branch head.
+
+## Corrected second QA failure
+Dedicated CI #41462748291 failed its unchanged 8mm taper gate: observed 188 knee-region and 98 lower source vertices but only ~4.94mm mean relative easing. Root cause: the new 07 profile mistakenly called the `smooth(start,end,value)` helper in value-first order. Fixed 07 with a unit-tested numeric source-phase curve (0mm additional knee easing at source lower edge, maximum near the measured calf/knee transition, smooth upper taper), rather than changing contact/image thresholds. Parent F06 baseline math and source signatures remain exactly unchanged.
