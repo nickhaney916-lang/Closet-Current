@@ -328,7 +328,14 @@ async function initViewer(){
        new URLSearchParams(location.search).get('denimFairing')==='after'&&
        new URLSearchParams(location.search).get('denimRear14')==='after'&&
        new URLSearchParams(location.search).get('denimSide15')==='after'&&
-       new URLSearchParams(location.search).get('denimPosterior16')==='after'
+       new URLSearchParams(location.search).get('denimPosterior16')==='after',
+     sourceDenimPhotoWidth17:new URLSearchParams(location.search).get('denimFit')==='after'&&
+       new URLSearchParams(location.search).get('denimSilhouette')==='after'&&
+       new URLSearchParams(location.search).get('denimFairing')==='after'&&
+       new URLSearchParams(location.search).get('denimRear14')==='after'&&
+       new URLSearchParams(location.search).get('denimSide15')==='after'&&
+       new URLSearchParams(location.search).get('denimPosterior16')==='after'&&
+       new URLSearchParams(location.search).get('denimPhotoWidth17')==='after'
   });
   canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();
    if(token!==bootToken)return;
@@ -441,6 +448,7 @@ window.ccWardrobe10Diagnostics=()=>{
       sourceDenimRearThigh14Enabled:state?.sourceDenimRearThigh14Enabled||false,
       sourceDenimSideThigh15Enabled:state?.sourceDenimSideThigh15Enabled||false,
       sourceDenimPosteriorContour16Enabled:state?.sourceDenimPosteriorContour16Enabled||false,
+      sourceDenimPhotoWidth17Enabled:state?.sourceDenimPhotoWidth17Enabled||false,
       staticDenimFit06Enabled:state?.staticDenimFit06Enabled||false,
       staticDenimFit06State:state?.staticDenimFit06State||null,
      swept04Clock:state?.continuousGait04||null,
@@ -559,6 +567,17 @@ window.ccWardrobeDenimFreeze06=()=>{
      proof.posteriorMaximumWorldMoveMeters16<.0105||
      proof.posteriorMaximumWorldMoveMeters16>.0115001))
    throw Error('Original photographed jeans rear source-neutral contour invalid or missing');
+  if(new URLSearchParams(location.search).get('denimPhotoWidth17')==='after'&&
+    (!proof.originalPhotoCalibratedCalfWidth17||
+     !proof.frontJPEGUVRestSkinUnchanged17||
+     proof.unseenRearPhotoSynthesized17!==false||
+     proof.sourceCalfWidthMovedVertices17<40||
+     Math.min(...proof.sourceCalfWidthPerLeg17)<15||
+     proof.sourceCalfWidthMaxShiftMeters17<.007||
+     proof.sourceCalfWidthMaxShiftMeters17>.0180001||
+     !Array.isArray(proof.sourceCutoutLegWidthRatios17)||
+     proof.sourceCutoutLegWidthRatios17.length!==2))
+    throw Error('W17 original garment photograph hem source-provenance or visual silhouette invalid');
   const after=current();
   if(!after.authenticated||after.ownerId!==owner.ownerId||after.generation!==owner.generation||
     proof.originalPhotoSHA256!==expected||!proof.frontPhotographUnchanged||
