@@ -20,6 +20,16 @@ export const DENIM_FIT06=Object.freeze({
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const smooth=(a,b,v)=>{const q=clamp((v-a)/(b-a),0,1);return q*q*(3-2*q);};
 const protectedFields=['pantsRest','pantsSourceUV','pantsSourceFront','skinIndex','skinWeight'];
+export function sourceDenimTaperWeights07(phase){
+ if(!Number.isFinite(phase)||phase<0||phase>1)
+  throw Error('Anatomical denim source calf phase must be finite within observed geometry');
+ // smooth(start,end,value): measured lower calf should be near zero knee ease,
+ // while actual knee-side rear vertices receive a visible nonzero gentle break.
+ return Object.freeze({
+  kneeEase:smooth(.05,.35,phase)*(1-.40*smooth(.86,1.01,phase)),
+  hemEase:1-smooth(.18,.36,phase)
+ });
+}
 export function settleDenimRest06(target=DENIM_FIT06.targetMeters){
  if(!Number.isFinite(target)||target<.002||target>DENIM_FIT06.maxWorldShiftMeters)
   throw Error('Finite bounded nonzero photographed denim gravity target required');
@@ -101,8 +111,8 @@ export function createPhotoDenimStaticFitter06(pants,root,{sourceSilhouette07=fa
  for(const row of eligible){
   const r=sourceRanges[row.side],phase=(row.height-r.min)/(r.max-r.min);
   row.sourceCalfPhase=phase;
-  row.kneeEase=smooth(phase,.05,.35)*(1-.40*smooth(phase,.86,1.01));
-  row.hemEase=1-smooth(phase,.18,.36);
+  const weights=sourceDenimTaperWeights07(phase);
+  row.kneeEase=weights.kneeEase;row.hemEase=weights.hemEase;
  }
  let frozen=false,proof=null,closed=false;
  function audit(){
