@@ -137,7 +137,7 @@ export function createPhotoDenimStaticFitter06(pants,root,{sourceSilhouette07=fa
    const kneeRest=sourceSilhouette07 ? .0015*row.kneeEase : 0;
    // Fit the lower source-neutral calf closer to its anatomical form.
    // Do NOT manufacture a rounded 'knee bubble' or move the JPEG front.
-   const hemRest=sourceSilhouette07 ? -.014*row.hemEase : 0;
+   const hemRest=sourceSilhouette07 ? -.016*row.hemEase : 0;
    const dy=-eq.meters*.22*row.blend;
    // Smooth lower-calf taper into the original real sewn upper knee geometry.
    // The source photo front, authentic pattern and cloth folds remain intact.
