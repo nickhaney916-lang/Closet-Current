@@ -390,6 +390,20 @@ try{
       for(const angle of [0,45,135,180]){
        await bp.evaluate(a=>window.ccWardrobe10View(a),angle);
        await p.evaluate(a=>window.ccWardrobe10View(a),angle);
+       // F10: source provenance must be truthful on both real WebGL viewers.
+       const expectedViewClass=angle===0?'front-photo':
+        angle===180?'unphotographed-rear':'mixed-photo-and-model';
+       for(const viewer of [bp,p]){
+        const label=viewer.locator('#photoCoverage');
+        assert.equal(await label.isVisible(),true);
+        assert.equal(await label.getAttribute('data-view-class'),expectedViewClass);
+        assert.equal(await label.getAttribute('data-rear-photo-verified'),'false');
+        if(angle===180)assert.match(await label.textContent(),/Back NOT photographed/);
+        const d10=await diag(viewer);
+        assert.equal(d10.photoCoverageViewClass,expectedViewClass);
+        assert.equal(d10.sourcePhotoCoverageVisible,true);
+        assert.equal(d10.verifiedOriginalRearPhotograph,false);
+       }
        const a07=await bp.locator('#avatar').screenshot();
        const a08=await p.locator('#avatar').screenshot();
        const changedPixels=diff(await raw(a07),await raw(a08));
@@ -420,6 +434,10 @@ try{
         'F07 original photographed garment lost its source pose after angle sweep');
       assert.ok(diff(await raw(returned08),await raw(frozen))<=2,
         'F08 photographed garment shifted after real 360 navigation');
+      await bp.evaluate(()=>window.ccWardrobe10Test.logout());
+      assert.equal(await bp.locator('#photoCoverage').isVisible(),false);
+      assert.equal((await diag(bp)).sourcePhotoCoverageVisible,false);
+      assert.equal(await bp.locator('#photoCoverage').textContent(),'');
       await bc.close();
     }
     frozenDenim.push({width,rig,denimIndex,sourceDenim,
