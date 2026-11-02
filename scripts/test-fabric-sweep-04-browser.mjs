@@ -27,7 +27,7 @@ const server=createServer(async(req,res)=>{
 });
 await new Promise(ok=>server.listen(0,'127.0.0.1',ok));
 const host='http://127.0.0.1:'+server.address().port;
-const screenshots=[],cases=[],contacts=[],sweeps=[],frozenDress=[],frozenDenim=[],denimSilhouetteComparisons=[],javascriptErrors=[],nonLocalRequests=[];
+const screenshots=[],cases=[],contacts=[],sweeps=[],frozenDress=[],frozenDenim=[],denimSilhouetteComparisons=[],denimFairing08Comparisons=[],javascriptErrors=[],nonLocalRequests=[];
 function monitor(page){
  page.on('pageerror',error=>javascriptErrors.push(String(error.message)));
  page.on('request',r=>{
@@ -74,10 +74,11 @@ try{
  await mkdir('benchmark/dress-fit-05',{recursive:true});
  await mkdir('benchmark/denim-fit-06',{recursive:true});
  await mkdir('benchmark/denim-silhouette-07',{recursive:true});
+ await mkdir('benchmark/denim-fairing-08',{recursive:true});
  for(const width of [320,390,430]){
   const ctx=await browser.newContext({viewport:{width,height:900},deviceScaleFactor:1,isMobile:true,hasTouch:true});
   const p=await ctx.newPage();monitor(p);
-  await p.goto(host+'/research/fabric-sweep-04/index.html?walk=after&folds=after&sweep=after&dressFit=after&denimFit=after&denimSilhouette=after',{waitUntil:'domcontentloaded'});
+  await p.goto(host+'/research/fabric-sweep-04/index.html?walk=after&folds=after&sweep=after&dressFit=after&denimFit=after&denimSilhouette=after&denimFairing=after',{waitUntil:'domcontentloaded'});
   for(const rig of ['female','male']){
    if(rig==='male'){
     await p.locator('#model').selectOption('male');
@@ -286,6 +287,9 @@ try{
     assert.ok(fitted.changedVertices>=60&&Math.min(...fitted.perLeg)>=20);
     assert.ok(fitted.rest.meters>.0057);
     assert.equal(fitted.sourceMeasuredAnatomicalSilhouette07,true);
+    assert.equal(fitted.originalSourceNeutralCuffFairing08,true);
+    assert.equal(fitted.originalPhotoTextureRGBAndUVUnmodified08,true);
+    assert.ok(fitted.cuffReleasedVertices08>=8&&fitted.maxCuffReleaseMeters08>=.0055);
     assert.equal(fitted.originalSkinnedKneeHemTaperImproved07,true);
     assert.equal(fitted.originalPhotoTextureRGBAndUVUnmodified07,true);
     assert.ok(fitted.additionalKneeVsHemEaseMeters07>=.008);
@@ -346,6 +350,38 @@ try{
         kneeVsHemEaseMeters:fitted.additionalKneeVsHemEaseMeters07,
         actualSewnFoldTopologyPreserved:true,
         releaseAuthorized:false,physicalPhoneApproved:false});
+      // Same original SHA, same actual 163-bone figure, same exact angle; F07 ON,
+      // F08 OFF comparison must be real WebGL, not hand-drawn or resampled.
+      await bp.goto(host+'/research/fabric-sweep-04/index.html?walk=after&folds=after&sweep=after&dressFit=after&denimFit=after&denimSilhouette=after',{waitUntil:'domcontentloaded'});
+      if(rig==='male'){
+       await bp.waitForFunction(()=>window.ccWardrobe10Diagnostics?.()?.viewerReady===true,null,{timeout:180000});
+       await bp.locator('#model').selectOption('male');
+       await bp.waitForFunction(()=>window.ccWardrobe10Diagnostics()?.figure==='male'&&window.ccWardrobe10Diagnostics()?.viewerReady,null,{timeout:180000});
+      }
+      await ready(bp);
+      await bp.locator('#swap').click();
+      if(denimIndex===1)await bp.locator('#swap').click();
+      await bp.waitForFunction(()=>window.ccWardrobe10Diagnostics?.()?.outfitMode==='shirt-pants',null,{timeout:30000});
+      const old07=await diag(bp);
+      assert.equal(old07.sourceDenimSilhouette07Enabled,true);
+      assert.equal(old07.sourceDenimCuffFairing08Enabled,false);
+      assert.equal(old07.displayed3DSources?.bottom,sourceDenim);
+      await bp.evaluate(()=>window.ccWardrobe10View(90));
+      const proof07=await bp.evaluate(()=>window.ccWardrobeDenimFreeze06());
+      assert.equal(proof07.originalSourceNeutralCuffFairing08,false);
+      assert.equal(proof07.originalPhotoSHA256,sourceDenim);
+      const frame07=await bp.locator('#avatar').screenshot();
+      const changed08=diff(await raw(frame07),await raw(frozen));
+      assert.ok(changed08>=20,'Real photographed cuff geometry must differ from exact original F07: '+changed08);
+      for(const [suffix,image] of [['baseline-f07',frame07],['cuff-f08',frozen]])
+       await writeFile('benchmark/denim-fairing-08/'+prefix+'-'+suffix+'.png',image);
+      denimFairing08Comparisons.push({width,rig,denimIndex,sourceDenim,
+       changedPixelsAgainstExactOriginalF07:changed08,
+       realSource163BoneRig:true,frontPhotoAndUVUnchanged:true,
+       noNewSkinnedTriangleContacts:fitted.bodyContactAfter<=fitted.bodyContactBefore,
+       cuffReleasedVertices:fitted.cuffReleasedVertices08,
+       maxCuffReleaseMeters:fitted.maxCuffReleaseMeters08,
+       originalSourcePhotoSHA256:sourceDenim,releaseAuthorized:false});
       await bc.close();
     }
     frozenDenim.push({width,rig,denimIndex,sourceDenim,
@@ -375,7 +411,17 @@ try{
  assert.equal(await p.locator('#walk-left').isDisabled(),true);
  assert.equal(await p.evaluate(()=>{try{window.ccWardrobeGait02('play');return false;}catch{return true;}}),true);
  await ctx.close();
- await writeFile('benchmark/denim-silhouette-07/results.json',JSON.stringify({
+ assert.equal(denimFairing08Comparisons.length,4);
+  await writeFile('benchmark/denim-fairing-08/results.json',JSON.stringify({
+   matchedOriginalPhotoFairingPairs:denimFairing08Comparisons,
+   realMatchedWebGLFrames:denimFairing08Comparisons.length*2,
+   original163BoneFigures:['female','male'],mobileWidth:390,
+   licensedOriginalDenims:2,savedWardrobeSourceValidated:true,
+   originalFrontPhotoUntouched:true,physicalPhoneApproved:false,
+   humanPhotorealismApproved:false,productionModified:false,
+   familyAlpha:'HOLD',releaseAuthorized:false
+  },null,2));
+  await writeFile('benchmark/denim-silhouette-07/results.json',JSON.stringify({
    genuinePhotoOriginalDenimComparisons:denimSilhouetteComparisons,
    realMatchedWebGLComparisonFrames:denimSilhouetteComparisons.length*2,
    cameraAngleDegrees:90,width:390,original163BoneFigures:['female','male'],
