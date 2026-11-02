@@ -503,7 +503,7 @@ window.ccWardrobeDenimFreeze06=()=>{
   if(new URLSearchParams(location.search).get('denimFairing')==='after'&&
     (!proof.originalSourceNeutralCuffFairing08||
      !proof.originalPhotoTextureRGBAndUVUnmodified08||
-     proof.cuffReleasedVertices08<8||proof.maxCuffReleaseMeters08<.0055))
+     proof.cuffReleasedVertices08<8||proof.maxCuffReleaseMeters08<.008))
    throw Error('Actual licensed photographed cuff fairing proof missing');
   const after=current();
   if(!after.authenticated||after.ownerId!==owner.ownerId||after.generation!==owner.generation||
