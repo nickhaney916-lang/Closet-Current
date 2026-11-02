@@ -39,7 +39,7 @@ export function createSourcePhotoTemporalDrape(root,shirt){
  let lastPose=null,velocity=0,displacement=0,steps=0;
  const reset=()=>{lastPose=null;velocity=0;displacement=0;steps=0;};
  const step=pose=>{
-  if(pose==='source'||pose==='relaxed'||pose===0){reset();return {active:false,reset:true,shifted:0,steps:0,millimeters:0,photoAndSkinPreserved:true,releaseAuthorized:false};}
+  if(pose==='source'||pose==='relaxed'||pose===0){reset();if(pose===0)lastPose=0;return {active:false,reset:true,shifted:0,steps:0,millimeters:0,photoAndSkinPreserved:true,releaseAuthorized:false};}
   if(typeof pose!=='number'||!Number.isFinite(pose)||pose<0||pose>1||Math.abs(pose*16-Math.round(pose*16))>1e-9)
    throw Error('Only verified 17 original skeletal phase samples supported');
   root.updateMatrixWorld(true);
