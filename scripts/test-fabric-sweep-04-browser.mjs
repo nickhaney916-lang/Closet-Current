@@ -27,7 +27,7 @@ const server=createServer(async(req,res)=>{
 });
 await new Promise(ok=>server.listen(0,'127.0.0.1',ok));
 const host='http://127.0.0.1:'+server.address().port;
-const screenshots=[],cases=[],contacts=[],sweeps=[],javascriptErrors=[],nonLocalRequests=[];
+const screenshots=[],cases=[],contacts=[],sweeps=[],frozenDress=[],javascriptErrors=[],nonLocalRequests=[];
 function monitor(page){
  page.on('pageerror',error=>javascriptErrors.push(String(error.message)));
  page.on('request',r=>{
@@ -71,10 +71,11 @@ try{
  browser=await chromium.launch({headless:true,args:[
   '--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader','--enable-webgl']});
  await mkdir(dir,{recursive:true});
+ await mkdir('benchmark/dress-fit-05',{recursive:true});
  for(const width of [320,390,430]){
   const ctx=await browser.newContext({viewport:{width,height:900},deviceScaleFactor:1,isMobile:true,hasTouch:true});
   const p=await ctx.newPage();monitor(p);
-  await p.goto(host+'/research/fabric-sweep-04/index.html?walk=after&folds=after&sweep=after',{waitUntil:'domcontentloaded'});
+  await p.goto(host+'/research/fabric-sweep-04/index.html?walk=after&folds=after&sweep=after&dressFit=after',{waitUntil:'domcontentloaded'});
   for(const rig of ['female','male']){
    if(rig==='male'){
     await p.locator('#model').selectOption('male');
@@ -210,6 +211,45 @@ try{
    assert.ok((await diag(p)).gait02State.samples>=2);
    const stop=await p.evaluate(()=>window.ccWardrobeGait02('stop'));
    assert.equal(stop.result.restoredRealBoneQuaternions,true);
+   // Source-faithful static garment fit, genuine browser WebGL (not an illustration).
+   // Source gait and spring have been reset above; one real original licensed dress
+   // on the original 163-bone male/female figure, same pose and side camera.
+   const tagFit=width+'-'+rig;
+   const webglCanvas=p.locator('#avatar');
+   const bFit=await webglCanvas.screenshot();
+   const proof=await p.evaluate(()=>window.ccWardrobeDressFreeze05());
+   assert.equal(proof.actualOriginalSourceDressStaticFit,true);
+   assert.equal(proof.licensedOriginalPhotographSHA256,SHA);
+   assert.equal(proof.originalPhotoFrontUntouched,true);
+   assert.equal(proof.sourceRestAndSkinPreserved,true);
+   assert.equal(proof.zeroNewSkinnedBodyContacts,true);
+   assert.equal(proof.collisionVerified,true);
+   assert.ok(proof.changedVertices>=70);
+   assert.ok(proof.gravitySpring.restMeters>.0064);
+   assert.ok(proof.maxWorldDisplacementMeters>.0025&&proof.maxWorldDisplacementMeters<=.0095);
+   const aFit=await webglCanvas.screenshot();
+   const raw=buffer=>sharp(buffer).removeAlpha().raw().toBuffer({resolveWithObject:true});
+   const originalPixels=diff(await raw(bFit),await raw(aFit));
+   assert.ok(originalPixels>=8,'Real photographed skirt geometry must change in static WebGL fit: '+originalPixels);
+   await p.evaluate(()=>window.ccWardrobe10View(180));
+   await p.evaluate(()=>window.ccWardrobe10View(90));
+   const rotated=await webglCanvas.screenshot();
+   const freezeDrift=diff(await raw(aFit),await raw(rotated));
+   assert.ok(freezeDrift<=2,'Frozen photographed dress moved unexpectedly during 360-degree camera navigation: '+freezeDrift);
+   const again=await p.evaluate(()=>window.ccWardrobeDressFreeze05());
+   assert.equal(again.originalPhotoFrontUntouched,true);
+   const same=await webglCanvas.screenshot();
+   const identical=diff(await raw(aFit),await raw(same));
+   assert.ok(identical<=2,'Repeated source-photo dress equilibrium fit did not exactly reproduce frozen geometry: '+identical);
+   for(const [name,png] of [['before',bFit],['frozen',aFit],['rotation-return',rotated],['repeat-frozen',same]])
+    await writeFile('benchmark/dress-fit-05/'+tagFit+'-'+name+'.png',png);
+   frozenDress.push({rig,width,sourceSHA256:SHA,account:proof.account,generation:proof.generation,
+    changedWebGLPixels:originalPixels,rotationDriftPixels:freezeDrift,repeatDriftPixels:identical,
+    originalPhotoFrontUntouched:true,sourceRestAndSkinPreserved:true,
+    bodyContactsBefore:proof.originalSkinnedBodyTriangleContactsBefore,
+    bodyContactsAfter:proof.originalSkinnedBodyTriangleContactsAfter,
+    sourceColorAndShaderUnmodified:true,physicalPhoneVerified:false,releaseAuthorized:false});
+   assert.equal(proof.account,'fixture-account-a');
    cases.push({rig,width,leftChangedPixels:leftPixels,rightChangedPixels:rightPixels,
     oppositeStepsChangedPixels:crossed,resetChangedPixels:resetDifference,
     leftJointAngles:left.result.angles,rightJointAngles:right.result.angles,
@@ -218,6 +258,7 @@ try{
     maxPleatShiftMeters:Math.max(foldLeft.worldLastShiftMeters,foldRight.worldLastShiftMeters),
     actualWebGLFoldBeforeAfterChangedPixels:afterMinusBeforePixels});
    await p.locator('#swap').click();
+   assert.equal(await p.evaluate(()=>{try{window.ccWardrobeDressFreeze05();return false;}catch{return true;}}),true);
    assert.equal(await p.evaluate(()=>{try{window.ccWardrobeGait02('left-step');return false;}catch{return true;}}),true);
   }
   await p.locator('#logout').click();
@@ -234,6 +275,13 @@ try{
  assert.equal(await p.locator('#walk-left').isDisabled(),true);
  assert.equal(await p.evaluate(()=>{try{window.ccWardrobeGait02('play');return false;}catch{return true;}}),true);
  await ctx.close();
+ await writeFile('benchmark/dress-fit-05/results.json',JSON.stringify({
+  frozenDress,frozenWebGLImages:frozenDress.length*4,mobileWidths:[320,390,430],
+  originalFigures:['female','male'],actualVerifiedSource:true,
+  originalPhotoUnchanged:true,realPhoneApproved:false,visualPhotorealismApproved:false,
+  releaseAuthorized:false,familyAlpha:'HOLD',productionModified:false
+ },null,2));
+ assert.equal(frozenDress.length,6);
  assert.equal(screenshots.length,44);assert.equal(cases.length,6);
  assert.equal(sweeps.length,2);
  assert.ok(sweeps.every(x=>x.phaseSamples.length===9&&x.sampledNoNewContacts));
