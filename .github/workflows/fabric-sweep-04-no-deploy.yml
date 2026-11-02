@@ -1,4 +1,4 @@
-name: SOURCE-TOUCH-12 Native Chromium Touch Gesture Source-Coverage QA HOLD
+name: MOBILE-PINCH-13 Real 2-Finger Photo Viewer Zoom + Exact Reset HOLD
 on:
   pull_request:
     paths:
@@ -325,6 +325,62 @@ jobs:
           assert.equal(r.familyAlpha,'HOLD');
           assert.equal(r.releaseAuthorized,false);
           CHECK
+      - name: Verify F13 true 2-finger pinch zoom in/out and exact photo-safe full-body reset
+        run: |
+          node --input-type=module <<'CHECK'
+          import assert from 'node:assert/strict';
+          import {readFileSync,readdirSync} from 'node:fs';
+          const dir='benchmark/mobile-pinch-13';
+          const r=JSON.parse(readFileSync(dir+'/results.json','utf8'));
+          assert.equal(r.actualNativeTwoFingerPinchCases.length,8);
+          assert.equal(r.realWebGLImages,32);
+          assert.equal(readdirSync(dir).filter(x=>x.endsWith('.png')).length,32);
+          assert.deepEqual(r.realOriginalAnatomical163BoneRigs,['female','male']);
+          assert.deepEqual(r.mobileWidths,[320,390,430]);
+          assert.equal(r.originalLicensedDenims,2);
+          assert.equal(new Set(r.actualNativeTwoFingerPinchCases.map(x=>x.sourceSHA256)).size,2);
+          for(const a of r.actualNativeTwoFingerPinchCases){
+           assert.equal(a.owner,'fixture-account-a');
+           assert.equal(a.original163BoneRig,true);
+           assert.match(a.sourceSHA256,/^[0-9a-f]{64}$/);
+           assert.deepEqual(a.in13.twoFingers,[41,42]);
+           assert.deepEqual(a.out13.twoFingers,[41,42]);
+           assert.equal(a.in13.nativeChromeTouch,true);
+           assert.equal(a.out13.nativeChromeTouch,true);
+           assert.equal(a.in13.steps,20);
+           assert.equal(a.out13.steps,20);
+           assert.equal(a.in13.physicalPhone,false);
+           assert.ok(a.firstDistance13>4.63&&a.firstDistance13<4.67);
+           assert.ok(a.nearDistance13>=2.5-1e-9&&a.nearDistance13<a.firstDistance13-.15);
+           assert.ok(a.farDistance13>a.nearDistance13+.15&&a.farDistance13<=6+1e-9);
+           assert.ok(Math.abs(a.resetDistance13-a.firstDistance13)<.02);
+           assert.ok(a.changedIn13>=50&&a.changedOut13>=50);
+           assert.ok(a.changedReset13<=2);
+           assert.ok(Math.abs(a.initialCameraX)<1e-9);
+           assert.ok(Math.abs(a.restoredCameraX)<1e-9);
+           assert.equal(a.resetClass,'front-photo');
+           assert.equal(a.noNewBVHContacts,true);
+           assert.equal(a.originalSourcePhotoAndSkinUntouched,true);
+           assert.equal(a.physicalPhoneVerified,false);
+           assert.equal(a.familyAlpha,'HOLD');
+           assert.equal(a.productionModified,false);
+           assert.equal(a.releaseAuthorized,false);
+          }
+          assert.equal(r.authenticChromeMultitouch,true);
+          assert.equal(r.fullBodyResetSourceExact,true);
+          assert.equal(r.physicalAndroidIPhoneTested,false);
+          assert.equal(r.humanPhotorealismApproved,false);
+          assert.equal(r.originalPhotoSourceAndAccountIsolated,true);
+          assert.equal(r.productionModified,false);
+          assert.equal(r.releaseAuthorized,false);
+          assert.equal(r.familyAlpha,'HOLD');
+          CHECK
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: MOBILE-PINCH-13-32-GENUINE-PHOTOGRAPHED-WEBGL-IMAGES-HOLD
+          path: benchmark/mobile-pinch-13/
+          if-no-files-found: error
       - uses: actions/upload-artifact@v4
         if: always()
         with:

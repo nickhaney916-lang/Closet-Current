@@ -28,7 +28,7 @@ const server=createServer(async(req,res)=>{
 });
 await new Promise(ok=>server.listen(0,'127.0.0.1',ok));
 const host='http://127.0.0.1:'+server.address().port;
-const screenshots=[],cases=[],contacts=[],sweeps=[],frozenDress=[],frozenDenim=[],denimSilhouetteComparisons=[],denimFairing08Comparisons=[],denimAngle09Comparisons=[],pointerRotation11=[],touchSwipe12=[],javascriptErrors=[],nonLocalRequests=[];
+const screenshots=[],cases=[],contacts=[],sweeps=[],frozenDress=[],frozenDenim=[],denimSilhouetteComparisons=[],denimFairing08Comparisons=[],denimAngle09Comparisons=[],pointerRotation11=[],touchSwipe12=[],pinchZoom13=[],javascriptErrors=[],nonLocalRequests=[];
 function monitor(page){
  page.on('pageerror',error=>javascriptErrors.push(String(error.message)));
  page.on('request',r=>{
@@ -64,6 +64,28 @@ async function originalCanvasTouchSwipe12(page){
  }
  return {fromX:Math.round(from.x),toX:Math.round(to.x),y:Math.round(from.y),
   steps:18,chromeNativeTouchEvents:true,physicalTouchHardwareUsed:false};
+}
+async function originalCanvasPinch13(page,zoomIn){
+ const b=await page.locator('#avatar').boundingBox();
+ assert.ok(b?.width>=220&&b?.height>=310,'Real 3D canvas required');
+ const cx=b.x+b.width*.5,cy=b.y+b.height*.5;
+ const start=b.width*(zoomIn?.115:.315),end=b.width*(zoomIn?.315:.115);
+ const session=await page.context().newCDPSession(page);let pressed=false;
+ const fingers=half=>[{x:cx-half,y:cy,id:41,force:1},{x:cx+half,y:cy,id:42,force:1}];
+ try{
+  await session.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:fingers(start)});
+  pressed=true;
+  for(let i=1;i<=20;i++){
+   await session.send('Input.dispatchTouchEvent',{type:'touchMove',
+    touchPoints:fingers(start+(end-start)*i/20)});
+   await page.waitForTimeout(16);
+  }
+  await session.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});pressed=false;
+ }finally{
+  if(pressed)await session.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]}).catch(()=>{});
+  await session.detach();
+ }
+ return {twoFingers:[41,42],nativeChromeTouch:true,steps:20,zoomIn,physicalPhone:false};
 }
 async function ready(page){
  await page.waitForFunction(()=>window.ccWardrobe10Diagnostics?.()?.viewerReady===true,null,{timeout:180000});
@@ -107,6 +129,7 @@ try{
   await mkdir('benchmark/denim-angle-09',{recursive:true});
  await mkdir('benchmark/source-rotate-11',{recursive:true});
  await mkdir('benchmark/source-touch-12',{recursive:true});
+ await mkdir('benchmark/mobile-pinch-13',{recursive:true});
  for(const width of [320,390,430]){
   const ctx=await browser.newContext({viewport:{width,height:900},deviceScaleFactor:1,isMobile:true,hasTouch:true});
   const p=await ctx.newPage();monitor(p);
@@ -405,6 +428,68 @@ try{
       isolatedBrowserSession:true,
       confirmedRearOriginalPhoto:false,originalPhotoRGBUVAndSkinUnmodified:true,
       physicalAndroidIphoneTested:false,productionModified:false,releaseAuthorized:false});
+     // F13: genuine native two-finger browser touch zoom, not app.zoom calls.
+     // The SAME isolated original-source owner session is used; the inherited
+     // reference page 'p' remains untouched for 0-pixel dress reset.
+     await touchPage12.locator('#reset-view').click();
+     await touchPage12.waitForFunction(()=>window.ccWardrobe10Diagnostics()?.photoCoverageViewClass==='front-photo');
+     // Match both screenshots at a settled render frame after all damped
+     // OrbitControls deltas have dissipated. The exact pixel gate remains <=2.
+     await touchPage12.waitForTimeout(650);
+     const initial13=await diag(touchPage12),firstDistance13=initial13.memory.cameraDistance;
+     assert.ok(Math.abs(firstDistance13-4.65)<.02,'Full-body reset must return to safe canonical camera distance');
+     assert.ok(Math.abs(initial13.memory.cameraPosition[0])<1e-9,
+      'The FIRST reset must cancel all residual yaw before photography, not only the second reset');
+     const front13=await touchPage12.locator('#avatar').screenshot();
+     const in13=await originalCanvasPinch13(touchPage12,true);
+     await touchPage12.waitForTimeout(600);
+     const near13=await diag(touchPage12),nearDistance13=near13.memory.cameraDistance;
+     const nearPng13=await touchPage12.locator('#avatar').screenshot();
+     const changedIn13=diff(await raw(front13),await raw(nearPng13));
+     assert.ok(nearDistance13>=2.5-1e-9&&nearDistance13<firstDistance13-.15&&changedIn13>=50,
+      'Native two-finger zoom-in must change real WebGL without exceeding original camera bounds');
+     const out13=await originalCanvasPinch13(touchPage12,false);
+     await touchPage12.waitForTimeout(600);
+     const far13=await diag(touchPage12),farDistance13=far13.memory.cameraDistance;
+     const farPng13=await touchPage12.locator('#avatar').screenshot();
+     const changedOut13=diff(await raw(nearPng13),await raw(farPng13));
+     const pinchDiag13={rig,width,denimIndex,firstDistance13,nearDistance13,
+      farDistance13,changedIn13,changedOut13};
+     console.log('F13 original source native pinch distances/pixels:',JSON.stringify(pinchDiag13));
+     assert.ok(farDistance13>nearDistance13+.15&&farDistance13<=6+1e-9&&changedOut13>=50,
+      'Native two-finger zoom-out must change original WebGL and stay bounded: '+JSON.stringify(pinchDiag13));
+     await touchPage12.locator('#reset-view').click();
+     await touchPage12.waitForTimeout(650);
+     const restored13=await diag(touchPage12);
+     const restorePng13=await touchPage12.locator('#avatar').screenshot();
+     const changedReset13=diff(await raw(front13),await raw(restorePng13));
+     assert.ok(Math.abs(restored13.memory.cameraDistance-firstDistance13)<.02);
+     assert.ok(Math.abs(restored13.memory.cameraPosition[0])<1e-9);
+     assert.ok(Math.abs(restored13.memory.cameraPosition[2]-initial13.memory.cameraPosition[2])<1e-9);
+     assert.equal(restored13.photoCoverageViewClass,'front-photo');
+     assert.equal(restored13.displayed3DSources?.bottom,sourceDenim);
+     assert.equal(restored13.account,'fixture-account-a');
+     assert.equal(restored13.bones,163);
+     assert.equal(restored13.verifiedOriginalRearPhotograph,false);
+     console.log('F13 exact original photo reset:',JSON.stringify({
+      rig,width,denimIndex,resetDifferencePixels:changedReset13,
+      initialDistance:firstDistance13,restoredDistance:restored13.memory.cameraDistance,
+      sourceSHA256:sourceDenim,initialCamera:initial13.memory.cameraPosition,
+      resetCamera:restored13.memory.cameraPosition,
+      initialTarget:initial13.memory.cameraTarget,resetTarget:restored13.memory.cameraTarget}));
+     assert.ok(changedReset13<=2,'Original source full-body reset must recover exact WebGL framing (<=2 changed RGB pixels): '+changedReset13);
+     for(const [name,png] of [['original-front',front13],['native-two-finger-zoom-in',nearPng13],
+       ['native-two-finger-zoom-out',farPng13],['reset-full-body',restorePng13]])
+      await writeFile('benchmark/mobile-pinch-13/'+prefix+'-'+name+'.png',png);
+     pinchZoom13.push({rig,width,denimIndex,sourceSHA256:sourceDenim,
+      owner:'fixture-account-a',original163BoneRig:true,in13,out13,
+      firstDistance13,nearDistance13,farDistance13,resetDistance13:restored13.memory.cameraDistance,
+      changedIn13,changedOut13,changedReset13,resetClass:restored13.photoCoverageViewClass,
+      initialCameraX:initial13.memory.cameraPosition[0],
+      restoredCameraX:restored13.memory.cameraPosition[0],
+      noNewBVHContacts:touchFit12.trueBVHBodyContactNoNew,
+      originalSourcePhotoAndSkinUntouched:true,physicalPhoneVerified:false,
+      familyAlpha:'HOLD',productionModified:false,releaseAuthorized:false});
      await touchPage12.locator('#logout').click();
      assert.equal((await diag(touchPage12)).sourcePhotoCoverageVisible,false);
      assert.equal(await touchPage12.locator('#photoCoverage').isVisible(),false);
@@ -607,6 +692,20 @@ try{
  assert.equal(await p.locator('#walk-left').isDisabled(),true);
  assert.equal(await p.evaluate(()=>{try{window.ccWardrobeGait02('play');return false;}catch{return true;}}),true);
  await ctx.close();
+ assert.equal(pinchZoom13.length,8,'All eight source-licensed two-finger zoom and reset cases');
+ assert.deepEqual([...new Set(pinchZoom13.map(x=>x.width))],[320,390,430]);
+ assert.deepEqual([...new Set(pinchZoom13.map(x=>x.rig))],['female','male']);
+ assert.equal(new Set(pinchZoom13.map(x=>x.sourceSHA256)).size,2);
+ assert.ok(pinchZoom13.every(x=>x.changedIn13>=50&&x.changedOut13>=50&&x.changedReset13<=2&&
+  x.noNewBVHContacts&&x.originalSourcePhotoAndSkinUntouched));
+ await writeFile('benchmark/mobile-pinch-13/results.json',JSON.stringify({
+  actualNativeTwoFingerPinchCases:pinchZoom13,
+  realWebGLImages:pinchZoom13.length*4,realOriginalAnatomical163BoneRigs:['female','male'],
+  mobileWidths:[320,390,430],originalLicensedDenims:2,
+  authenticChromeMultitouch:true,fullBodyResetSourceExact:true,
+  physicalAndroidIPhoneTested:false,humanPhotorealismApproved:false,
+  originalPhotoSourceAndAccountIsolated:true,productionModified:false,releaseAuthorized:false,familyAlpha:'HOLD'
+ },null,2));
  assert.equal(touchSwipe12.length,8,'Two anatomical rigs x 320/390/430 and 390 second original photo');
  assert.deepEqual([...new Set(touchSwipe12.map(x=>x.width))],[320,390,430]);
  assert.deepEqual([...new Set(touchSwipe12.map(x=>x.rig))],['female','male']);

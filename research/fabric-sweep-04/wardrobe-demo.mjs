@@ -110,7 +110,7 @@ function safeControls(){
  $('logout').disabled=!current().authenticated;
  $('signin').disabled=!!current().authenticated;
  const enabled=ok&&viewerReady;
- for(const id of ['front','side','back','zin','zout','turn','angle'])$(id).disabled=!enabled;
+ for(const id of ['front','side','back','zin','zout','reset-view','turn','angle'])$(id).disabled=!enabled;
  $('model').disabled=!ok;
  const verifiedDress=enabled&&!!last3D&&
   bound?.indexed?.byId?.get(slots.top)?.category==='Dresses'&&
@@ -387,6 +387,13 @@ $('angle').addEventListener('input',()=>{if(!viewerReady)return;
  updatePhotoCoverage10(app.getState().viewAngle??a);interactions++;});
 $('zin').addEventListener('click',()=>{if(viewerReady){app.zoom(.84);interactions++;}});
 $('zout').addEventListener('click',()=>{if(viewerReady){app.zoom(1.18);interactions++;}});
+$('reset-view').addEventListener('click',()=>{
+ if(!viewerReady||!authorized()||!last3D)return;
+ const reset=app.resetView();
+ $('angle').value='0';$('degree').textContent='0°';
+ updatePhotoCoverage10(reset.viewAngle);
+ interactions++;recorded('full-body-camera-reset-13');
+});
 $('turn').addEventListener('click',()=>{if(viewerReady){app.setSpin(!app.getState().spinEnabled);interactions++;}});
  for(const [id,action] of [['walk-left','left-step'],['walk-right','right-step'],['walk-reset','reset'],
    ['walk-play','play'],['walk-stop','stop'],['walk-audit','audit']]){
@@ -430,7 +437,7 @@ window.ccWardrobe10Diagnostics=()=>{
   displayed3DSources:last3D?.originalPhotoSHA256s||null,
   memory:state?{geometries:state.geometries,textures:state.textures,
    tracked:state.trackedGarmentGeometries,reclaimed:state.reclaimedGarmentGeometries,
-   frames:state.frames,cameraDistance:state.cameraDistance,drawPixels:state.drawPixels}:null,
+   frames:state.frames,cameraDistance:state.cameraDistance,cameraPosition:state.cameraPosition,cameraTarget:state.cameraTarget,drawPixels:state.drawPixels}:null,
   memorySamples:memorySamples.slice(-35),renderCount,interactions,transitions,swaps,
   retryCount,modelSwitches,
   noPrivateImagesUsed:true,produced3DFromArbitraryUserPhoto:false,
