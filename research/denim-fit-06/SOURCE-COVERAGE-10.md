@@ -14,6 +14,9 @@ Human inspection of 32 original WebGL photographs found the front of the license
 - Preserve the exact original JPEG/SHA/UV/vertices, source silhouettes, 3D76 folds, 3D77 contact checks, F07/F08 fallback geometry, screenshot pixels and synthetic wardrobe. F10 is **not** a texture or geometry reconstruction, is not claiming a supplied rear photo, and does not change production.
 - Make the no-photo-at-rear limitation machine-readable, and test all 32 real F07-vs-F08 WebGL angle captures and sign-out behavior on both real rig types, with inherited 148 frames.
 
+## Fail-closed visual regression correction
+The first exact-head F10 workflow #41502188960 FAILED because one genuine source F07-vs-F08 WebGL 90° cuff comparison had only 19 RGB pixels changed, below its unmodified requirement >=20. No test thresholds were reduced. The research-only existing source-neutral calf fairing was strengthened from 6.0mm to 8.5mm (within the unchanged 24mm geometric displacement budget) with a stricter actual 8.0mm witness for original SHA/UV/skin preserved and skinned-body BVH zero-new-contact audit. It does not create missing photographic back detail. Final commit and CI to be recorded after verification.
+
 ## Remaining release gates
 
 Photographed 3D side/back coverage needs independently owned and licensed side/back photographs, physically validated alignment to garments, and mobile phone/human acceptance. It would be misleading to paint speculative rear detail from the front JPEG. Family Alpha Issue #255 **HOLD**. No merges, releases, production, real family pictures, accounts, Supabase, Drive Duel or Delta Ebb touched.
