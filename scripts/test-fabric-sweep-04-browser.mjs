@@ -433,6 +433,9 @@ try{
      // reference page 'p' remains untouched for 0-pixel dress reset.
      await touchPage12.locator('#reset-view').click();
      await touchPage12.waitForFunction(()=>window.ccWardrobe10Diagnostics()?.photoCoverageViewClass==='front-photo');
+     // Match both screenshots at a settled render frame after all damped
+     // OrbitControls deltas have dissipated. The exact pixel gate remains <=2.
+     await touchPage12.waitForTimeout(650);
      const initial13=await diag(touchPage12),firstDistance13=initial13.memory.cameraDistance;
      assert.ok(Math.abs(firstDistance13-4.65)<.02,'Full-body reset must return to safe canonical camera distance');
      const front13=await touchPage12.locator('#avatar').screenshot();
@@ -464,6 +467,12 @@ try{
      assert.equal(restored13.account,'fixture-account-a');
      assert.equal(restored13.bones,163);
      assert.equal(restored13.verifiedOriginalRearPhotograph,false);
+     console.log('F13 exact original photo reset:',JSON.stringify({
+      rig,width,denimIndex,resetDifferencePixels:changedReset13,
+      initialDistance:firstDistance13,restoredDistance:restored13.memory.cameraDistance,
+      sourceSHA256:sourceDenim,initialCamera:initial13.memory.cameraPosition,
+      resetCamera:restored13.memory.cameraPosition,
+      initialTarget:initial13.memory.cameraTarget,resetTarget:restored13.memory.cameraTarget}));
      assert.ok(changedReset13<=2,'Original source full-body reset must recover exact WebGL framing (<=2 changed RGB pixels): '+changedReset13);
      for(const [name,png] of [['original-front',front13],['native-two-finger-zoom-in',nearPng13],
        ['native-two-finger-zoom-out',farPng13],['reset-full-body',restorePng13]])
