@@ -19,7 +19,7 @@ const ALLOWED=Object.freeze({
  female:{file:'female-cc0-rigged.glb',title:'Anatomical mannequin B'}
 });
 const COLORS=Object.freeze({porcelain:0xc3bdb5,slate:0x777f84});
-export function mountAnatomicalShowroom(canvas,{onChange=()=>{},refineFit=true,enableCuffFix=true,enableCuffFacing=true,enableCuffBridge=true,naturalFit=true,necklineSeams=true,dressNeckline=true,dressAnatomy=true,dressContact=true,skirtDrape=true,dressMobile74=false,registeredNeckline=true,naturalPantsDrape=true,posteriorJeansFairing=true,structuralPantsEnvelope=true,independentJeansLoft=true,crotchSeatPanel=true,sourceShirtWaistFit=true,clothWaistContact=true,shirtHangingSilhouette=true,denimHangingSilhouette=true,jeansPanelFall=false,independentGarments=false,poseContactFactory=null,tailoredShoulderSleeves=false,independentShoulderCaps=false,realisticShoulderContour=false,upperArmFabricVolume=false,sourceNeutralCollarRoll=false,rearShirtFabricRelief=false,naturalShoulderSleeveTransition=false,sourceMeasuredSleeveHang=false,poseConditionedSleeveDrape=false,anatomicalShirtSideFlow=false,crispSourcePhotoClarity=false,naturalShoulderFall61=false,trueShoulderTop64=false,photoDenimRearDrape73=false,photoDenimCalfHang74=false,photoDenimFolds75=false,photoDenimContinuity76=false,photoDenimContactAudit77=false,photoDenimKneePose78=false,photoDenimFlex79=false,premiumTurntable67=false,skirtSecondaryMotion01=false,poseDrivenDressWalk02=false,poseConditionedPleats03=false,staticDressFit05=false,staticDenimFit06=false,sourceDenimSilhouette07=false,sourceDenimCuffFairing08=false}={}){
+export function mountAnatomicalShowroom(canvas,{onChange=()=>{},onViewChange=()=>{},refineFit=true,enableCuffFix=true,enableCuffFacing=true,enableCuffBridge=true,naturalFit=true,necklineSeams=true,dressNeckline=true,dressAnatomy=true,dressContact=true,skirtDrape=true,dressMobile74=false,registeredNeckline=true,naturalPantsDrape=true,posteriorJeansFairing=true,structuralPantsEnvelope=true,independentJeansLoft=true,crotchSeatPanel=true,sourceShirtWaistFit=true,clothWaistContact=true,shirtHangingSilhouette=true,denimHangingSilhouette=true,jeansPanelFall=false,independentGarments=false,poseContactFactory=null,tailoredShoulderSleeves=false,independentShoulderCaps=false,realisticShoulderContour=false,upperArmFabricVolume=false,sourceNeutralCollarRoll=false,rearShirtFabricRelief=false,naturalShoulderSleeveTransition=false,sourceMeasuredSleeveHang=false,poseConditionedSleeveDrape=false,anatomicalShirtSideFlow=false,crispSourcePhotoClarity=false,naturalShoulderFall61=false,trueShoulderTop64=false,photoDenimRearDrape73=false,photoDenimCalfHang74=false,photoDenimFolds75=false,photoDenimContinuity76=false,photoDenimContactAudit77=false,photoDenimKneePose78=false,photoDenimFlex79=false,premiumTurntable67=false,skirtSecondaryMotion01=false,poseDrivenDressWalk02=false,poseConditionedPleats03=false,staticDressFit05=false,staticDenimFit06=false,sourceDenimSilhouette07=false,sourceDenimCuffFairing08=false}={}){
  if(!canvas||typeof canvas.getContext!=='function')throw Error('Canvas required');
  // Baseline comparison imports the untouched verified renderer.
  const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false,
@@ -38,6 +38,11 @@ export function mountAnatomicalShowroom(canvas,{onChange=()=>{},refineFit=true,e
  controls.minPolarAngle=.8;controls.maxPolarAngle=1.65;
  controls.target.set(0,1.04,0);
  controls.enableZoom=true;
+ // Report genuine OrbitControls drag/zoom/turntable camera angles to the
+ // provenance label without changing any original WebGL source pixels.
+ controls.addEventListener('change',()=>{
+  if(premiumTurntable67)onViewChange(viewAngleFromCamera(camera,controls.target));
+ });
  scene.add(new THREE.HemisphereLight(0xffffff,0xa7b8bb,1.35));
  const key=new THREE.DirectionalLight(0xfff3e5,2.8);
  key.position.set(-2.4,5.2,4);scene.add(key);
