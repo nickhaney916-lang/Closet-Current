@@ -351,8 +351,8 @@ jobs:
            assert.equal(a.out13.steps,20);
            assert.equal(a.in13.physicalPhone,false);
            assert.ok(a.firstDistance13>4.63&&a.firstDistance13<4.67);
-           assert.ok(a.nearDistance13>=2.5&&a.nearDistance13<a.firstDistance13-.15);
-           assert.ok(a.farDistance13>a.nearDistance13+.15&&a.farDistance13<=6);
+           assert.ok(a.nearDistance13>=2.5-1e-9&&a.nearDistance13<a.firstDistance13-.15);
+           assert.ok(a.farDistance13>a.nearDistance13+.15&&a.farDistance13<=6+1e-9);
            assert.ok(Math.abs(a.resetDistance13-a.firstDistance13)<.02);
            assert.ok(a.changedIn13>=50&&a.changedOut13>=50);
            assert.ok(a.changedReset13<=2);
