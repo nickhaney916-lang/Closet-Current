@@ -25,9 +25,11 @@ export function sourceDenimTaperWeights07(phase){
   throw Error('Anatomical denim source calf phase must be finite within observed geometry');
  // smooth(start,end,value): measured lower calf should be near zero knee ease,
  // while actual knee-side rear vertices receive a visible nonzero gentle break.
+ // Fade the inward calf silhouette in at its observed lower source row,
+ // avoiding a sharp band where F06 source-neutral geometry resumes.
  return Object.freeze({
   kneeEase:smooth(.10,.60,phase),
-  hemEase:1-smooth(.25,.70,phase)
+  hemEase:smooth(0,.12,phase)*(1-smooth(.25,.70,phase))
  });
 }
 export function settleDenimRest06(target=DENIM_FIT06.targetMeters){
