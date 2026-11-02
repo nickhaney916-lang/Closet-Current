@@ -448,8 +448,11 @@ try{
      const far13=await diag(touchPage12),farDistance13=far13.memory.cameraDistance;
      const farPng13=await touchPage12.locator('#avatar').screenshot();
      const changedOut13=diff(await raw(nearPng13),await raw(farPng13));
+     const pinchDiag13={rig,width,denimIndex,firstDistance13,nearDistance13,
+      farDistance13,changedIn13,changedOut13};
+     console.log('F13 original source native pinch distances/pixels:',JSON.stringify(pinchDiag13));
      assert.ok(farDistance13>nearDistance13+.15&&farDistance13<=6&&changedOut13>=50,
-      'Native two-finger zoom-out must change original WebGL and stay bounded');
+      'Native two-finger zoom-out must change original WebGL and stay bounded: '+JSON.stringify(pinchDiag13));
      await touchPage12.locator('#reset-view').click();
      await touchPage12.waitForTimeout(650);
      const restored13=await diag(touchPage12);
