@@ -19,7 +19,12 @@ test('Anatomical calf easing follows numeric smooth(start,end,phase) and does no
  const ankle=sourceDenimTaperWeights07(0),lower=sourceDenimTaperWeights07(.38),
   knee=sourceDenimTaperWeights07(.75),top=sourceDenimTaperWeights07(1);
  assert.equal(ankle.kneeEase,0);
- assert.equal(ankle.hemEase,1);
+ assert.equal(ankle.hemEase,0);
+ const lowerTransition=sourceDenimTaperWeights07(.12);
+ assert.ok(lowerTransition.hemEase>.95&&lowerTransition.hemEase<1);
+ assert.ok(sourceDenimTaperWeights07(.04).hemEase<lowerTransition.hemEase);
+ // Abrupt entry at phase zero pinches the original photographed calf mesh.
+ assert.ok(sourceDenimTaperWeights07(.001).hemEase<.001);
  assert.ok(lower.kneeEase>0&&lower.kneeEase<knee.kneeEase);
  assert.ok(lower.hemEase>0&&lower.hemEase<1);
  assert.equal(knee.kneeEase,1);
