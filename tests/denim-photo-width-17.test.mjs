@@ -46,7 +46,7 @@ test('W17 is default OFF; requires full P16 original source ancestry and approve
  assert.throws(()=>createPhotoDenimStaticFitter06({}, {},{sourcePhotoWidth17:true}),/W17 photo-measured/);
  assert.throws(()=>createPhotoDenimStaticFitter06({}, {},{
   sourcePosteriorContour16:true,sourcePhotoWidth17:true
- }),/source-SHA approved|W17 photo-measured/);
+ }),/source-SHA approved|W17 photo-measured|Posterior contour P16 requires/);
  const source=readFileSync('research/denim-fit-06/static-source-denim-fit.mjs','utf8');
  for(const field of ['frontJPEGUVRestSkinUnchanged17:true','unseenRearPhotoSynthesized17:false',
  'originalPhotoWidth17?.cutoutSHA256!==pants.stats.cutoutSHA256',
