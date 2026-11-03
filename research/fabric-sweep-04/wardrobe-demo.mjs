@@ -400,6 +400,9 @@ async function initViewer(){
        new URLSearchParams(location.search).get('denimSilhouette')==='after'&&
        new URLSearchParams(location.search).get('denimFit')==='after',
      sourceDenimWeave25:new URLSearchParams(location.search).get('denimWeave25')==='after'&&
+       new URLSearchParams(location.search).get('denimMaterial23')==='after',
+     sourceDenimHang26:new URLSearchParams(location.search).get('denimHang26')==='after'&&
+       new URLSearchParams(location.search).get('denimWeave25')==='after'&&
        new URLSearchParams(location.search).get('denimMaterial23')==='after'
   });
   canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();
@@ -527,6 +530,8 @@ window.ccWardrobe10Diagnostics=()=>{
       sourceDenimWeave25Compiled:state?.sourceDenimWeave25Compiled===true,
       sourceDenimWeave25Protected:state?.outfit?.pants?.originalSourceJPEGUVSkinRestUnchanged25===true,
       sourceDenimWeave25NoRearPhoto:state?.outfit?.pants?.noRearPhotoGenerated25===true,
+      sourceDenimHang26Enabled:state?.sourceDenimHang26Enabled||false,
+      sourceDenimHang26Proof:state?.outfit?.denimStaticFit06?.proof?.sourceNeutralHipKneeHang26===true,
       staticDenimFit06Enabled:state?.staticDenimFit06Enabled||false,
       staticDenimFit06State:state?.staticDenimFit06State||null,
      swept04Clock:state?.continuousGait04||null,
@@ -718,6 +723,16 @@ window.ccWardrobeDenimFreeze06=()=>{
      app.getState()?.outfit?.pants?.noRearPhotoGenerated25!==true||
      !app.getState()?.outfit?.pants?.sourceNeutralTwillNotPhoto25))
    throw Error('P25 refused synthetic rear photo or unprotected front original');
+  if(new URLSearchParams(location.search).get('denimHang26')==='after'&&
+    (!proof.sourceNeutralHipKneeHang26||!proof.originalSourceFrontJPEGUVRestSkinUnchanged26||
+     !proof.sideRearDrapeModeledNotPhotographed26||!proof.actual163BoneHipKneeAnchors26||
+     proof.sourceHipKneeHangMovedVertices26<30||
+     Math.min(...proof.sourceHipKneeHangPerLeg26)<12||
+     proof.sourceHipKneeHangRearMaxMeters26<.003||
+     proof.sourceHipKneeHangRearMaxMeters26>.004201||
+     proof.sourceHipKneeHangSideMaxMeters26>.001201||
+     proof.sourceHipKneeHangDropMaxMeters26>.002201))
+   throw Error('P26 true anatomical rear and side modeled drape failed genuine original SHA or 163-bone protection');
 
 
   const after=current();
