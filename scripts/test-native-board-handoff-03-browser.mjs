@@ -103,9 +103,17 @@ async function shot(page,engine,width,owner,stage){
  await writeFile(dir+'/'+name,png);
  screens.push({name,engine,width,owner,stage,sha256:sha(png)});
 }
+async function centerOriginalPhotoCards(page){
+ const cards=page.locator('#board02Preview');
+ await cards.evaluate(el=>el.scrollIntoView({block:'center',behavior:'instant'}));
+ const rect=await cards.boundingBox(),viewport=page.viewportSize();
+ assert.ok(rect&&rect.y>=4&&rect.y+rect.height<=viewport.height-90,
+  'All four original garment photos must fit above the fixed native mobile navigation');
+ return rect;
+}
 async function sourceCard(page,engine,width,owner,stage){
  const cards=page.locator('#board02Preview');
- await cards.scrollIntoViewIfNeeded();
+ await centerOriginalPhotoCards(page);
  const actual=await cards.locator('article').count();
  const photos=await cards.locator('img').count();
  assert.equal(actual,4,'Original dress, jacket, coat, and shoe cards must be rendered');
@@ -245,7 +253,7 @@ try{
     await page.evaluate(()=>{window.__native03.editor.open('fixture-native-A-dress-outfit');
       window.__native03.editor.setSlot('shoes','fixture-native-A-newshoes');
       window.__native03.show();});
-    await page.locator('#board02Preview').scrollIntoViewIfNeeded();
+    await centerOriginalPhotoCards(page);
     await shot(page,engine,width,'A','02-genuine-native-session-edit-draft');
     await sourceCard(page,engine,width,'A','02-original-source-card-element');
     assert.deepEqual(await getStored(page),before,'Draft preview cannot mutate authenticated owner database');
@@ -262,7 +270,7 @@ try{
     assert.deepEqual(after.saved[0].futureMetadata,{mustPreserve:true});
     assert.deepEqual(after.saved[1],before.saved[1]);
     await page.evaluate(()=>window.__native03.show());
-    await page.locator('#board02Preview').scrollIntoViewIfNeeded();
+    await centerOriginalPhotoCards(page);
     await shot(page,engine,width,'A','03-saved-and-preserved-original');
     const refreshed=await page.evaluate(async()=>{
      await window.closetAuth.getAccessToken({force:true});
@@ -310,7 +318,7 @@ try{
     assert.equal(crossOwnerDenied,true);
     assert.deepEqual(await getStored(page),bBefore,'Reading B original photo may not mutate B stored state');
     await page.evaluate(()=>window.__native03.show());
-    await page.locator('#board02Preview').scrollIntoViewIfNeeded();
+    await centerOriginalPhotoCards(page);
     await shot(page,engine,width,'B','05-independent-owner-B-with-originals');
     await sourceCard(page,engine,width,'B','05-original-source-card-element');
     cases.push({engine,width,realNativeAuthSource:true,verifiedNativeHTTP:'MOCK_ONLY',
@@ -320,7 +328,8 @@ try{
      tokenRefreshRevokesPriorPrivatePreview:true,
      pageReloadNativeAuthSessionPersisted:true,
      accountSwitchAtoB:true,ownerBCannotReadOwnerA:true,
-     donorSourceHonestFallback:true,privateJPEGHeadersNeverSentOffhost:true,
+     donorSourceHonestFallback:true,originalSourceCardsClearOfFixedNav:true,
+     privateJPEGHeadersNeverSentOffhost:true,
      realSupabaseRLS:'NOT VERIFIED',physicalPhones:'NOT TESTED',
      releaseAuthorized:false,familyAlpha:'HOLD'});
     await page.close();
