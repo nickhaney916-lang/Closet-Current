@@ -48,7 +48,7 @@ const preload=()=>{
  HTMLMediaElement.prototype.play=function(){
   if(this.id==='video'&&window.__mock.failNextPlay){
    window.__mock.failNextPlay=false;
-   return Promise.reject(new DOMException('Simulated video playback failure','NotAllowedError'));
+   return Promise.reject(new DOMException('Simulated video playback failure','AbortError'));
   }
   return Promise.resolve();
  };
