@@ -14,6 +14,7 @@ import * as T from 'three';
 import {isSourceVerifiedDenimId} from '../three-d-30/reviewed-photo-pants.mjs';
 import {sourcePhotoCalibratedCalfEase17,sourceMeasuredLegRelief18} from './original-photo-leg-width-17.mjs';
 import {sourcePhotoSignedCalf19} from './source-photo-signed-calf-19.mjs';
+import {sourceNeutralThighLine20,sourceNeutralCalfLine20} from './source-neutral-anatomical-line-20.mjs';
 export const DENIM_FIT06=Object.freeze({
  targetMeters:.0058,maxWorldShiftMeters:.0085,maxSteps:100,
  stableSteps:6,velocityTolerance:.000012,positionTolerance:.00002,
@@ -84,7 +85,9 @@ export function settleDenimRest06(target=DENIM_FIT06.targetMeters){
   fixedStepSeconds:DENIM_FIT06.timestepSeconds,releaseAuthorized:false});
 }
 function same(a,b){return a?.length===b?.length&&a.every((x,i)=>x===b[i]);}
-export function createPhotoDenimStaticFitter06(pants,root,{sourceSilhouette07=false,sourceFairing08=false,sourceRearThigh14=false,sourceSideThigh15=false,sourcePosteriorContour16=false,sourcePhotoWidth17=false,originalPhotoWidth17=null,sourcePhotoProfile18=false,sourcePhotoSigned19=false}={}){
+export function createPhotoDenimStaticFitter06(pants,root,{sourceSilhouette07=false,sourceFairing08=false,sourceRearThigh14=false,sourceSideThigh15=false,sourcePosteriorContour16=false,sourcePhotoWidth17=false,originalPhotoWidth17=null,sourcePhotoProfile18=false,sourcePhotoSigned19=false,sourceAnatomicalLine20=false}={}){
+ if(typeof sourceAnatomicalLine20!=='boolean'||(sourceAnatomicalLine20&&!sourcePhotoSigned19))
+  throw Error('P20 requires opt-in signed P19 and genuine original photographed bone-aligned fit');
  if(typeof sourcePhotoSigned19!=='boolean'||(sourcePhotoSigned19&&!sourcePhotoProfile18))
   throw Error('P19 requires the exact previously verified five-photo-station P18 fit');
  if(typeof sourcePhotoProfile18!=='boolean'||(sourcePhotoProfile18&&!sourcePhotoWidth17))
@@ -232,6 +235,8 @@ export function createPhotoDenimStaticFitter06(pants,root,{sourceSilhouette07=fa
   let width17Moved=0,width17Max=0;const width17PerLeg=[0,0];
   let profile18Moved=0,profile18Max=0;const profile18PerLeg=[0,0];
   let signed19Moved=0,signed19Max=0;const signed19PerLeg=[0,0];
+  let calf20Moved=0,calf20Max=0;const calf20PerLeg=[0,0];
+  let thigh20Moved=0,thigh20Max=0;const thigh20PerLeg=[0,0];
   for(const row of eligible){
    const kneeRest=sourceSilhouette07 ? .0015*row.kneeEase : 0;
    // Fit the lower source-neutral calf closer to its anatomical form.
@@ -256,9 +261,16 @@ export function createPhotoDenimStaticFitter06(pants,root,{sourceSilhouette07=fa
    const signed19=sourcePhotoSigned19?
     sourcePhotoSignedCalf19(row.sourceCalfPhase,
       originalPhotoWidth17.originalPhotoCalfProfileStations18[row.side]):0;
-   const radius=sourcePhotoSigned19?clamp(radius18+signed19,-.0235,.0235):radius18;
+   const radius19=sourcePhotoSigned19?clamp(radius18+signed19,-.0235,.0235):radius18;
+   // Reduce an over-rounded modeled calf surface while honoring true
+   // hem-to-knee PHOTO width and leaving original front pixels immutable.
+   const calf20=sourceAnatomicalLine20?
+    sourceNeutralCalfLine20(row.sourceCalfPhase,
+      originalPhotoWidth17.originalPhotoWidthRatios17[row.side]):0;
+   const radius=sourceAnatomicalLine20?clamp(radius19-calf20,-.0235,.0235):radius19;
    const applied18=Math.abs(radius18-baseRadius);
-   const applied19=Math.abs(radius-radius18);
+   const applied19=Math.abs(radius19-radius18);
+   const applied20=Math.abs(radius-radius19);
    const dx=radius*row.radialX,dz=radius*row.radialZ,
      shift=Math.hypot(dx,dy,dz);
    const budget=sourceSilhouette07?silhouette07.maxShiftMeters:DENIM_FIT06.maxWorldShiftMeters;
@@ -271,6 +283,8 @@ export function createPhotoDenimStaticFitter06(pants,root,{sourceSilhouette07=fa
    if(sourceFairing08&&cuffRelease>.001){cuffMoved++;maxCuffRelease=Math.max(maxCuffRelease,cuffRelease);}
    if(applied18>.0004){profile18Moved+=row.ids.length;profile18PerLeg[row.side]+=row.ids.length;
     profile18Max=Math.max(profile18Max,applied18);}
+   if(applied20>.0004){calf20Moved+=row.ids.length;calf20PerLeg[row.side]+=row.ids.length;
+    calf20Max=Math.max(calf20Max,applied20);}
    if(applied19>.0004){signed19Moved+=row.ids.length;signed19PerLeg[row.side]+=row.ids.length;
     signed19Max=Math.max(signed19Max,applied19);}
    if(photoWidth17>.0004){width17Moved+=row.ids.length;width17PerLeg[row.side]+=row.ids.length;
@@ -296,8 +310,15 @@ export function createPhotoDenimStaticFitter06(pants,root,{sourceSilhouette07=fa
     // smoothly into measured anatomical hip/knee rows. Source front never moves.
     const posterior=sourcePosteriorContour16?.0115*sourceNeutralPosteriorContour16(row.phase):0;
     if(Math.abs(delta)<.0004&&lateral<.0004&&posterior<.0004)continue;
-    const world=row.q.clone();world.z+=delta-posterior;
-    world.x+=(row.side===0?1:-1)*lateral;
+    // Draw back excess *modeled* posterior and lateral cloth volume, with
+    // exact zero at hip/knee. No reverse-side photo is fabricated.
+    const line20=sourceAnatomicalLine20?sourceNeutralThighLine20(row.phase):null;
+    const world=row.q.clone();world.z+=delta-posterior+(line20?.rearMeters||0);
+    world.x+=(row.side===0?1:-1)*(lateral-(line20?.sideMeters||0));
+    if(line20&&(line20.rearMeters>.0004||line20.sideMeters>.0004)){
+     thigh20Moved+=row.ids.length;thigh20PerLeg[row.side]+=row.ids.length;
+     thigh20Max=Math.max(thigh20Max,Math.hypot(line20.rearMeters,line20.sideMeters));
+    }
     const local=world.applyMatrix4(inv);
     for(const i of row.ids){p.setXYZ(i,local.x,local.y,local.z);changed++;rear14Moved++;rear14PerLeg[row.side]++;
      if(lateral>.0004){rear15Moved++;rear15PerLeg[row.side]++;}
@@ -306,7 +327,8 @@ export function createPhotoDenimStaticFitter06(pants,root,{sourceSilhouette07=fa
     rear14Max=Math.max(rear14Max,Math.abs(delta));
     rear15Max=Math.max(rear15Max,lateral);
     posterior16Max=Math.max(posterior16Max,posterior);
-    max=Math.max(max,Math.hypot(delta-posterior,lateral));
+    max=Math.max(max,Math.hypot(delta-posterior+(line20?.rearMeters||0),
+      lateral-(line20?.sideMeters||0)));
    }
    if(rear14Moved<40||Math.min(...rear14PerLeg)<15||rear14Max<.008||rear14Max>.0100001)
     throw Error('R14 actual source-neutral modeled thigh drape not visible/bounded: '+
@@ -332,6 +354,12 @@ export function createPhotoDenimStaticFitter06(pants,root,{sourceSilhouette07=fa
    throw Error('Photographed knee-to-hem taper not measurably improved: '+JSON.stringify({
     kneeMoved,hemMoved,taperAdditionalMean,max}));
 
+  if(sourceAnatomicalLine20&&(calf20Moved<25||Math.min(...calf20PerLeg)<10||
+    thigh20Moved<30||Math.min(...thigh20PerLeg)<12||
+    calf20Max<.0005||calf20Max>.0030001||
+    thigh20Max<.002||thigh20Max>.0048501))
+   throw Error('P20 bone-anchored source-neutral anatomical denim silhouette missing or excessive: '+
+    JSON.stringify({calf20Moved,calf20PerLeg,calf20Max,thigh20Moved,thigh20PerLeg,thigh20Max}));
   if(sourcePhotoSigned19&&(signed19Moved<25||Math.min(...signed19PerLeg)<10||
      signed19Max<.001||signed19Max>.0115001))
    throw Error('P19 signed original-photo hem direction not applied to both modeled legs: '+
@@ -404,6 +432,14 @@ export function createPhotoDenimStaticFitter06(pants,root,{sourceSilhouette07=fa
    signedSourceCalfPerLeg19:signed19PerLeg,
    sourcePhotoSignedShiftMaxMeters19:signed19Max,
    originalPhotoFrontUnchanged19:true,unphotographedRearUnchanged19:true,
+   sourceNeutralAnatomicalLine20:sourceAnatomicalLine20,
+   photoAnatomicalThighMovedVertices20:thigh20Moved,
+   photoAnatomicalThighPerLeg20:thigh20PerLeg,
+   photoAnatomicalThighMaxMeters20:thigh20Max,
+   photoAnatomicalCalfMovedVertices20:calf20Moved,
+   photoAnatomicalCalfPerLeg20:calf20PerLeg,
+   photoAnatomicalCalfMaxMeters20:calf20Max,
+   originalJPEGUVRestSkinProtected20:true,noInventedPhotographicRear20:true,
    sourceUVRestAndSkinByteIdentical:true,realBVHVerifiedByCaller:false,
    noUnseenTextureInvented:true,physicalPhoneApproved:false,
    humanPhotorealismApproved:false,releaseAuthorized:false});
