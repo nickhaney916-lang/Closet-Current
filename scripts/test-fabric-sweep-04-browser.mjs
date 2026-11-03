@@ -28,7 +28,7 @@ const server=createServer(async(req,res)=>{
 });
 await new Promise(ok=>server.listen(0,'127.0.0.1',ok));
 const host='http://127.0.0.1:'+server.address().port;
-const screenshots=[],cases=[],contacts=[],sweeps=[],frozenDress=[],frozenDenim=[],denimSilhouetteComparisons=[],denimFairing08Comparisons=[],denimAngle09Comparisons=[],denimRear14Comparisons=[],denimSide15Comparisons=[],denimPosterior16Comparisons=[],denimPhotoWidth17Comparisons=[],denimProfile18Comparisons=[],denimSigned19Comparisons=[],denimLine20Comparisons=[],denimFold21Comparisons=[],denimCuff22Comparisons=[],pointerRotation11=[],touchSwipe12=[],pinchZoom13=[],javascriptErrors=[],nonLocalRequests=[];
+const screenshots=[],cases=[],contacts=[],sweeps=[],frozenDress=[],frozenDenim=[],denimSilhouetteComparisons=[],denimFairing08Comparisons=[],denimAngle09Comparisons=[],denimRear14Comparisons=[],denimSide15Comparisons=[],denimPosterior16Comparisons=[],denimPhotoWidth17Comparisons=[],denimProfile18Comparisons=[],denimSigned19Comparisons=[],denimLine20Comparisons=[],denimFold21Comparisons=[],denimCuff22Comparisons=[],denimMaterial23Comparisons=[],pointerRotation11=[],touchSwipe12=[],pinchZoom13=[],javascriptErrors=[],nonLocalRequests=[];
 function monitor(page){
  page.on('pageerror',error=>javascriptErrors.push(String(error.message)));
  page.on('request',r=>{
@@ -139,6 +139,7 @@ try{
  await mkdir('benchmark/denim-anatomical-line-20',{recursive:true});
  await mkdir('benchmark/denim-knee-break-21',{recursive:true});
  await mkdir('benchmark/denim-cuff-stack-22',{recursive:true});
+ await mkdir('benchmark/denim-neutral-material-23',{recursive:true});
  for(const width of [320,390,430]){
   const ctx=await browser.newContext({viewport:{width,height:900},deviceScaleFactor:1,isMobile:true,hasTouch:true});
   const p=await ctx.newPage();monitor(p);
@@ -1202,6 +1203,67 @@ try{
                  physicalPhoneApproved:false,humanPhotorealismApproved:false,
                  productionModified:false,releaseAuthorized:false});
                }
+               // P23: exact authenticated source/owner/rig and P22 frozen
+               // 3D garment. NO geometry, original-photo or skin changes.
+               // Render only actual neutral unphotographed source-backed
+               // garment roughness as a physical studio BRDF, no fake rear.
+               const materialCtx23=await browser.newContext({
+                viewport:{width,height:900},deviceScaleFactor:1,isMobile:true,hasTouch:true});
+               try{
+                const materialPage23=await materialCtx23.newPage();monitor(materialPage23);
+                await materialPage23.goto(host+'/research/fabric-sweep-04/index.html?walk=after&folds=after&sweep=after&dressFit=after&denimFit=after&denimSilhouette=after&denimFairing=after&denimRear14=after&denimSide15=after&denimPosterior16=after&denimPhotoWidth17=after&denimProfile18=after&denimSigned19=after&denimLine20=after&denimFold21=after&denimStack22=after&denimMaterial23=after',{waitUntil:'domcontentloaded'});
+                if(rig==='male'){
+                 await materialPage23.waitForFunction(()=>window.ccWardrobe10Diagnostics?.()?.viewerReady===true,null,{timeout:180000});
+                 await materialPage23.locator('#model').selectOption('male');
+                 await materialPage23.waitForFunction(()=>window.ccWardrobe10Diagnostics()?.figure==='male'&&window.ccWardrobe10Diagnostics()?.viewerReady===true,null,{timeout:180000});
+                }
+                await ready(materialPage23);
+                await materialPage23.locator('#swap').click();
+                if(denimIndex===1)await materialPage23.locator('#swap').click();
+                await materialPage23.waitForFunction(()=>window.ccWardrobe10Diagnostics?.()?.outfitMode==='shirt-pants',null,{timeout:30000});
+                const state23=await diag(materialPage23);
+                assert.equal(state23.account,'fixture-account-a');
+                assert.equal(state23.bones,163);
+                assert.equal(state23.displayed3DSources?.bottom,sourceDenim);
+                assert.equal(state23.sourceDenimMaterial23Enabled,true);
+                assert.equal(state23.sourceDenimCuffStack22Enabled,true);
+                assert.equal(state23.sourceDenimMaterial23Protected,true);
+                assert.equal(state23.sourceDenimMaterial23NoRearPhoto,true);
+                const fit23=await materialPage23.evaluate(()=>window.ccWardrobeDenimFreeze06());
+                assert.equal(fit23.originalPhotoSHA256,sourceDenim);
+                assert.equal(fit23.originalJPEGUVRestSkinProtected22,true);
+                assert.equal(fit23.sourceNeutralCuffStack22,true);
+                assert.equal(fit23.trueBVHBodyContactNoNew,true);
+                assert.ok(fit23.bodyContactAfter<=fit23.bodyContactBefore);
+                // Exact same camera angles and source-pixel stream. Compare
+                // actual Chromium WebGL, not synthetic or staged mockups.
+                for(const angle of [90,135,180]){
+                 await stackPage22.evaluate(a=>window.ccWardrobe10View(a),angle);
+                 await materialPage23.evaluate(a=>window.ccWardrobe10View(a),angle);
+                 const before=await stackPage22.locator('#avatar').screenshot();
+                 const after=await materialPage23.locator('#avatar').screenshot();
+                 const changed=diff(await raw(before),await raw(after));
+                 assert.ok(changed>=20,'P23 honest neutral denim material real WebGL diff at '+angle+': '+changed);
+                 const key=prefix+'-view-'+angle;
+                 await writeFile('benchmark/denim-neutral-material-23/'+key+'-exact-p22.png',before);
+                 await writeFile('benchmark/denim-neutral-material-23/'+key+'-lit-p23.png',after);
+                 denimMaterial23Comparisons.push({rig,width,denimIndex,sourceDenim,angle,
+                  owner:'fixture-account-a',authentic163BoneSkinnedRig:true,
+                  trueOriginalPhotoSHA256:fit23.originalPhotoSHA256,
+                  originalSourceHemRatios:fit23.sourceCutoutLegWidthRatios17,
+                  realWebGLChangedRGBPixels:changed,
+                  sourcePhotoJPEGUVRestSkinProtected:true,
+                  photographFrontUsesOriginalBRDF:true,
+                  rearMaterialIsNeutralOnly:true,
+                  fakeRearTextureGenerated:false,
+                  genuineBodyContactsBefore:fit23.bodyContactBefore,
+                  genuineBodyContactsAfter:fit23.bodyContactAfter,
+                  humanPhotorealismApproved:false,physicalPhoneApproved:false,
+                  productionModified:false,releaseAuthorized:false});
+                }
+                await materialPage23.locator('#logout').click();
+                assert.equal((await diag(materialPage23)).sourcePhotoCoverageVisible,false);
+               }finally{await materialCtx23.close();}
                await stackPage22.locator('#logout').click();
                assert.equal((await diag(stackPage22)).sourcePhotoCoverageVisible,false);
               }finally{await stackCtx22.close();}
@@ -1262,6 +1324,21 @@ try{
  assert.equal(await p.evaluate(()=>{try{window.ccWardrobeGait02('play');return false;}catch{return true;}}),true);
  await ctx.close();
 
+ assert.equal(denimMaterial23Comparisons.length,12,'P23 demands 12 authentic original 163-bone matched views');
+ assert.equal(new Set(denimMaterial23Comparisons.map(x=>x.sourceDenim)).size,2);
+ assert.deepEqual([...new Set(denimMaterial23Comparisons.map(x=>x.angle))],[90,135,180]);
+ assert.ok(denimMaterial23Comparisons.every(x=>x.realWebGLChangedRGBPixels>=20&&
+  x.sourcePhotoJPEGUVRestSkinProtected&&x.photographFrontUsesOriginalBRDF&&
+  x.rearMaterialIsNeutralOnly&&!x.fakeRearTextureGenerated&&
+  x.genuineBodyContactsAfter<=x.genuineBodyContactsBefore&&!x.releaseAuthorized));
+ await writeFile('benchmark/denim-neutral-material-23/results.json',JSON.stringify({
+  sourceNeutralPhysicalBRDF23:denimMaterial23Comparisons,
+  actualMatchedWebGLFrames:24,realRigNames:['female','male'],
+  independentOriginalDenimSources:2,angles:[90,135,180],width:390,
+  originalPhotoSHAUVRestSkinProtected:true,noInventedRearPhoto:true,
+  physicalPhoneApproved:false,humanPhotoRealismApproved:false,
+  familyAlpha:'HOLD',productionModified:false,releaseAuthorized:false
+ },null,2));
  assert.equal(denimCuff22Comparisons.length,12,'P22 requires exact original photo 2 sources × 2 rigs × 3 real views');
  assert.equal(new Set(denimCuff22Comparisons.map(x=>x.sourceDenim)).size,2);
  assert.deepEqual([...new Set(denimCuff22Comparisons.map(x=>x.angle))],[90,135,180]);
