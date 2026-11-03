@@ -108,7 +108,11 @@ try{
     await writeAll([changed]);Object.assign(target,changed);render();
     await window.closetIndex02.refresh();
    });
-   assert.equal(await page.locator('#closetGrid article.card').count(),0);
+   // The now-empty Skirt subtype resets to the category's available
+   // types. Blue jeans stays in Bottoms; the manually corrected skirt leaves.
+   assert.equal(await page.locator('#closetGrid article.card').count(),1);
+   assert.doesNotMatch(await page.locator('#closetGrid').innerText(),/Blue Skirt/);
+   assert.match(await page.locator('#closetGrid').innerText(),/Blue Jeans/);
    await page.locator('#index02Category').selectOption('Dresses');
    await page.locator('#index02Type').selectOption('Casual dress');
    await page.waitForFunction(()=>window.closetIndex02?.state()?.matched===2);
