@@ -142,8 +142,12 @@ export function createLosslessBoard02({auth,io,makeId=()=>crypto.randomUUID()}={
  const reset=()=>{loaded=false;owner=null;generation=null;stored=null;wardrobe=[];cloud=null;
   fingerprint=null;opened=null;draft=null;dirty=false;pins=new Set();lastReceipt=null;};
  const live=()=>{if(closed)throw Error('BOARD02 editor disposed');return leaseFor(auth);};
- const check=()=>{const current=live();
-  if(!loaded||current.ownerId!==owner||current.generation!==generation){reset();throw Error('BOARD02 owner/session changed; previous private edit discarded');}
+ const check=()=>{
+  let current;
+  try{current=live();}catch(e){reset();throw Error('BOARD02 owner/session revoked; private draft invalidated');}
+  if(!loaded||current.ownerId!==owner||current.generation!==generation){
+   reset();throw Error('BOARD02 owner/session changed; previous private edit discarded');
+  }
   return current;
  };
  async function refresh(){
@@ -225,8 +229,7 @@ export function createLosslessBoard02({auth,io,makeId=()=>crypto.randomUUID()}={
   }else{
    if(opened===null)throw Error('BOARD02 open original before updating');
    const old=stored.saved[opened];
-   if(boardFingerprint02({current:old,saved:[]})!==boardFingerprint02({current:stored.saved[opened],saved:[]}))
-    throw Error('BOARD02 edit changed unexpectedly');
+   if(!obj(old)||!obj(old.slots))throw Error('BOARD02 original saved outfit missing');
    const identity=keyFor(old,opened);
    if(!old.id&&!old.outfit3dId&&!old.outfitId){
     const id='outfit3d-'+makeId();if(!goodId(id))throw Error('BOARD02 new durable ID invalid');
