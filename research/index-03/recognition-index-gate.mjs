@@ -59,10 +59,12 @@ export function reviewRecognitionForIndex({ownerId,recordOwnerId,recognition,sou
  const normalizedType=CATEGORIES.includes(category)&&types.get(category)?.has(itemType)?itemType:'Unknown';
  const reasons=[];
  if(!hasOriginalSourceProof(source))reasons.push('original-source-unverified');
- if(garmentCount!==1||!Number.isInteger(garmentCount))reasons.push('multiple-garments-require-isolation');
+ const isolated=segment?.verified===true&&SHA.test(segment.cutoutSHA256||'')&&
+  segment.originalSHA256===source?.sha256;
+ if(!Number.isInteger(garmentCount)||garmentCount<1||garmentCount>1&&!isolated)
+  reasons.push('multiple-garments-require-isolation');
  if(segment?.clipped)reasons.push('clipped-cutout');
- if(garmentCount>1&&!(segment?.verified===true&&SHA.test(segment.cutoutSHA256||'')&&
-  segment.originalSHA256===source?.sha256))reasons.push('cutout-identity-unverified');
+ if(garmentCount>1&&!isolated)reasons.push('cutout-identity-unverified');
  if(category==='Uncategorized')reasons.push('category-unconfirmed');
  if(normalizedType==='Unknown')reasons.push('type-unconfirmed');
  if(!manual&&(!recognition.strong||!known))reasons.push('recognition-unconfirmed');
