@@ -58,7 +58,7 @@ jobs:
           assert.equal(r.actualNativeApp,true);assert.equal(r.realIndexedDB,true);
           assert.equal(r.donorPR541Decision,true);assert.equal(r.accountIsolationFixture,true);
           assert.equal(r.verifiedOriginalSHA,true);assert.equal(r.cases,12);
-          assert.equal(r.screenshots,60);assert.equal(r.strips.length,12);
+          assert.equal(r.screenshots,72);assert.equal(r.strips.length,12);
           assert.deepEqual(r.widths,[320,390,430]);
           assert.deepEqual(r.engines,['chromium','webkit']);
           assert.deepEqual(r.errors,[]);
@@ -72,13 +72,15 @@ jobs:
             assert.equal(c.durable3DID,true);assert.equal(c.missingPieceId,true);
             assert.equal(c.donorMode,'dress');assert.equal(c.separateOwnerDenied,true);
             assert.equal(c.cancelNoWrite,true);assert.equal(c.reopenReadOnly,true);
+            assert.equal(c.saveAsNewUI,true);assert.equal(c.confirmedDeleteUI,true);
+            assert.equal(c.sessionInvalidationUI,true);
           }
           for(const s of [...r.screens,...r.strips]){
             assert.ok(existsSync(base+(s.name||s.file)),'Expected rendered file absent');
             const actual=createHash('sha256').update(readFileSync(base+(s.name||s.file))).digest('hex');
             assert.equal(actual,s.sha256,'A real screenshot hash must match file bytes');
           }
-          console.log('60 actual native browser screenshots + 12 before-after contact sheets SHA-gated; no approval for production');
+          console.log('72 actual native browser screenshots + 12 before-after contact sheets SHA-gated; no approval for production');
           NODE
       - name: Verify inherited original PR541 saved wardrobe 163-bone WebGL still runs
         run: |
