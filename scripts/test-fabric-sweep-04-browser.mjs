@@ -1226,6 +1226,8 @@ try{
                 assert.equal(state23.bones,163);
                 assert.equal(state23.displayed3DSources?.bottom,sourceDenim);
                 assert.equal(state23.sourceDenimMaterial23Enabled,true);
+                assert.equal(state23.sourceDenimMaterial23Compiled,true,
+                 'P23 must compile the new neutral-only shader on the actual rendered garment');
                 assert.equal(state23.sourceDenimCuffStack22Enabled,true);
                 assert.equal(state23.sourceDenimMaterial23Protected,true);
                 assert.equal(state23.sourceDenimMaterial23NoRearPhoto,true);
@@ -1243,10 +1245,12 @@ try{
                  const before=await stackPage22.locator('#avatar').screenshot();
                  const after=await materialPage23.locator('#avatar').screenshot();
                  const changed=diff(await raw(before),await raw(after));
-                 assert.ok(changed>=20,'P23 honest neutral denim material real WebGL diff at '+angle+': '+changed);
                  const key=prefix+'-view-'+angle;
+                 // Save actual before/after PNG evidence BEFORE asserting.
+                 // Even on failure, keep artifact for unambiguous WebGL debugging.
                  await writeFile('benchmark/denim-neutral-material-23/'+key+'-exact-p22.png',before);
                  await writeFile('benchmark/denim-neutral-material-23/'+key+'-lit-p23.png',after);
+                 assert.ok(changed>=20,'P23 honest neutral denim material real WebGL diff at '+angle+': '+changed);
                  denimMaterial23Comparisons.push({rig,width,denimIndex,sourceDenim,angle,
                   owner:'fixture-account-a',authentic163BoneSkinnedRig:true,
                   trueOriginalPhotoSHA256:fit23.originalPhotoSHA256,
