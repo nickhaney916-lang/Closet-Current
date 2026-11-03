@@ -53,7 +53,7 @@ test('P26 only calls the guarded existing photographed-immutable 163 bone P22 fi
  assert.ok(fit.includes('sideRearDrapeModeledNotPhotographed26:true'));
  assert.ok(fit.includes('originalSourceFrontJPEGUVRestSkinUnchanged26:true'));
  assert.ok(controller.includes('sourceHipKneeHang26:sourceDenimHang26'));
- assert.ok(controller.includes('sourceDenimHang26&&!sourceDenimWeave25'));
+ assert.ok(controller.includes('sourceDenimHang26&&(!sourceDenimWeave25||!sourceDenimCuffStack22||!staticDenimFit06)'),'Full P26 P25/P22/real frozen fit prerequisite must remain enforced');
  assert.ok(showroom.includes('sourceDenimHang26Enabled:sourceDenimHang26'));
  assert.ok(demo.includes("get('denimHang26')==='after'"));
  assert.ok(demo.includes('proof.sourceHipKneeHangMovedVertices26<30'));
