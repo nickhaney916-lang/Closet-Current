@@ -404,6 +404,9 @@ async function initViewer(){
      sourceDenimHang26:new URLSearchParams(location.search).get('denimHang26')==='after'&&
        new URLSearchParams(location.search).get('denimWeave25')==='after'&&
        new URLSearchParams(location.search).get('denimMaterial23')==='after',
+     sourceDenimPoseGuard29:new URLSearchParams(location.search).get('denimPose29')==='after'&&
+       new URLSearchParams(location.search).get('denimFlow28')==='after'&&
+       new URLSearchParams(location.search).get('flex79')==='after',
      sourceDenimFlow28:new URLSearchParams(location.search).get('denimFlow28')==='after'&&
        new URLSearchParams(location.search).get('denimHang26')==='after'&&
        new URLSearchParams(location.search).get('denimWeave25')==='after'&&
@@ -534,6 +537,8 @@ window.ccWardrobe10Diagnostics=()=>{
       sourceDenimWeave25Compiled:state?.sourceDenimWeave25Compiled===true,
       sourceDenimWeave25Protected:state?.outfit?.pants?.originalSourceJPEGUVSkinRestUnchanged25===true,
       sourceDenimWeave25NoRearPhoto:state?.outfit?.pants?.noRearPhotoGenerated25===true,
+      sourceDenimPose29Enabled:state?.sourceDenimPoseGuard29Enabled||false,
+      denimPose29:state?.outfit?.denimPose29||null,
       sourceDenimFlow28Enabled:state?.sourceDenimFlow28Enabled||false,
       sourceDenimFlow28Proof:state?.outfit?.denimStaticFit06?.proof?.sourceNeutralSeamFlow28===true,
       sourceDenimHang26Enabled:state?.sourceDenimHang26Enabled||false,
@@ -587,6 +592,38 @@ window.ccWardrobeFlexPose=next=>{
   flexChangedVertices:p.denimFlexChangedVertices79||0,
   flexActualBoundedShift:p.denimFlexActualBoundedShift79||0,
   releaseAuthorized:false};
+};
+// P29 real rig knee-pose continuity: never imply the fitted source-rest
+// silhouette remains valid after 3D78/79 has changed the actual knee bones.
+window.ccWardrobePoseProbe29=next=>{
+ const who=current(),state=app?.getState();
+ if(new URLSearchParams(location.search).get('denimPose29')!=='after'||
+   new URLSearchParams(location.search).get('flex79')!=='after'||
+   !authorized()||!viewerReady||!last3D||
+   !['source','left-12','right-12','both-16'].includes(next)||
+   state?.stats?.bones!==163||!state?.sourceDenimPoseGuard29Enabled)
+  throw Error('P29 exact original 163-bone photographed-denim pose audit required');
+ const sha=last3D.originalPhotoSHA256s?.bottom;
+ const stored=bound?.indexed?.byId?.get(slots.bottom)?.sourceSHA256;
+ if(!sha||sha!==stored||!bound||bound.ownerId!==who.ownerId||
+    bound.generation!==who.generation)
+  throw Error('P29 authenticated owner or original photographed denim SHA mismatch');
+ const data=app.auditKneePose78(next),p=data?.pants,guard=data?.denimPose29;
+ if(!p?.realKneeArticulationAudited78||
+    p.originalPhotoCoordinatesPreserved78!==true||
+    p.realKneeSkinnedBodyToDenimCrossings78!==0||
+    guard?.sourceSHA256!==sha||guard?.pose!==next||
+    (next!=='source'&&guard?.fitVisible!==false))
+  throw Error('P29 unverified authentic source or false posed-fit claim');
+ recorded('pose29-'+next+'-'+guard.phase);
+ return Object.freeze({account:who.ownerId,generation:who.generation,sourceSHA256:sha,
+   pose:next,phase:guard.phase,fitVisible:guard.fitVisible,
+   resumePending:guard.resumePending,
+   realKneeBones:p.originalRigKneePose78.actualKneeBones,
+   kneeDegrees:p.originalRigKneePose78.kneeJointDegrees,
+   realBodyContacts:p.realKneeSkinnedBodyToDenimCrossings78,
+   originalPhotoProtected:true,unphotographedBackIsModeled:true,
+   physicallyTested:false,dynamicClothApproved:false,releaseAuthorized:false});
 };
 // This function intentionally provides NO access to arbitrary geometry or accounts.
 window.ccWardrobeSkirtMotion01=action=>{
