@@ -40,7 +40,7 @@ const M=[
  ['boot','/benchmark/fixtures/commons-0088.jpg','Shoes','Ankle boots','Black'],
  ['blouse','/benchmark/fixtures/commons-0014.jpg','Tops','Blouse','Cream'],
  ['skirt','/benchmark/fixtures/commons-0041.jpg','Bottoms','Skirt','Blue'],
- ['dress','/benchmark/fixtures/commons-0053.jpg','Dresses','Casual dress','Red'],
+ ['dress','/benchmark/fixtures/commons-0053.jpg','Dresses','Casual dress','Black'],
  ['jacket','/benchmark/fixtures/commons-0064.jpg','Outerwear','Jacket','Black'],
  ['coat','/benchmark/fixtures/commons-0067.jpg','Outerwear','Coat','Gray']
 ];
