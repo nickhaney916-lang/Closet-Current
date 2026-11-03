@@ -1,0 +1,106 @@
+name: INDEX-03 Recognition Safety 59 Real Photo Replay NO DEPLOY
+on:
+  pull_request:
+    paths:
+      - 'research/index-03/**'
+      - 'tests/index-03-recognition-safety.test.mjs'
+      - 'scripts/evaluate-index-03-locked-replay.mjs'
+      - 'scripts/test-index-03-mobile-review.mjs'
+      - '.github/workflows/index-03-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  regression-and-licensed-replay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+      - name: Ensure isolated source-only change against pinned main
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor 39deed987afe2e5668d64e145835ad43ad14c7be HEAD
+          git diff --name-only 39deed987afe2e5668d64e145835ad43ad14c7be HEAD | while IFS= read -r path; do
+            case "$path" in
+              research/index-03/*|tests/index-03-recognition-safety.test.mjs|scripts/evaluate-index-03-locked-replay.mjs|scripts/test-index-03-mobile-review.mjs|.github/workflows/index-03-no-deploy.yml) ;;
+              *) echo "INDEX-03 unauthorized production change: $path"; exit 1 ;;
+            esac
+          done
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Static syntax
+        run: |
+          node --check research/index-03/recognition-index-gate.mjs
+          node --check tests/index-03-recognition-safety.test.mjs
+          node --check scripts/evaluate-index-03-locked-replay.mjs
+          node --check scripts/test-index-03-mobile-review.mjs
+      - name: Complete original Node regression and isolated source owner color tests
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Verify SHA of 59 original licensed JPEGs and replay historical model outputs
+        run: node scripts/evaluate-index-03-locked-replay.mjs
+      - name: Enforce recorded subtype false-confidence reduction without hiding review
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const r=JSON.parse(readFileSync('benchmark/index-03/replay.json','utf8'));
+          assert.equal(r.sha256Verified,59);
+          assert.equal(r.productionDeployed,false);
+          assert.equal(r.familyAlpha,'HOLD');
+          assert.ok(r.before.unsafeConfidentType>=4);
+          assert.equal(r.after.unsafeConfidentCategory,0);
+          assert.equal(r.after.unsafeConfidentType,0);
+          assert.ok(r.after.review>r.before.review);
+          assert.equal(r.colorAccuracy,null);
+          assert.equal(r.physicalPhoneTested,false);
+          console.log('Original source and replay safety pass');
+          NODE
+      - name: Install isolated Chromium for actual 320 390 430 saved-closet UI checks
+        run: |
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+      - name: Verify real browser photo integrity and saved corrections at mobile widths
+        run: node scripts/test-index-03-mobile-review.mjs
+      - name: Require screenshot evidence and no cross-owner or photo mutation
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const r=JSON.parse(readFileSync('benchmark/index-03/mobile/report.json','utf8'));
+          assert.equal(r.verdict,'PASS');
+          assert.deepEqual(r.results.map(x=>x.width),[320,390,430]);
+          assert.equal(r.screenshots,6);
+          assert.equal(r.errors.length,0);
+          assert.equal(r.outbound.length,0);
+          assert.ok(r.results.every(x=>x.realAppPage&&x.realIndexedDB&&x.originalBytesUnchanged&&
+           x.categoryCorrectionPersisted&&x.otherItemUnchanged&&x.licensedOriginalSHA256Verified));
+          assert.equal(r.realRecognitionMeasured,false);
+          assert.equal(r.physicalAndroidOrIphoneTested,false);
+          assert.equal(r.productionDeployed,false);
+          assert.equal(r.familyAlpha,'HOLD');
+          console.log('Actual browser 320 390 430 screenshot and private correction test passed');
+          NODE
+      - name: Upload 6 actual mobile-browser screenshot PNGs and assertions, NO DEPLOY
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: INDEX-03-320-390-430-SAVED-CLOSET-BROWSER-HOLD
+          path: benchmark/index-03/mobile/
+          if-no-files-found: warn
+      - name: Upload evidence ONLY; never deploy
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: INDEX-03-59-LICENSED-REAL-PHOTO-REPLAY-HOLD
+          path: benchmark/index-03/replay.json
+          if-no-files-found: warn
