@@ -755,6 +755,9 @@ jobs:
           assert.equal(new Set(r.sourceNeutralPhysicalBRDF23.map(x=>x.sourceDenim)).size,2);
           assert.ok(r.sourceNeutralPhysicalBRDF23.every(x=>
            x.realWebGLChangedRGBPixels>=20&&
+           x.actualGarmentVisible&&x.originalBlueDenimPixels>=2500&&
+           x.sourceBlueDenimPixelsAfter>=x.originalBlueDenimPixels*.80&&
+           x.denimSpecificChangedRGBPixels>=20&&
            x.sourcePhotoJPEGUVRestSkinProtected&&x.photographFrontUsesOriginalBRDF&&
            x.rearMaterialIsNeutralOnly&&!x.fakeRearTextureGenerated&&
            x.genuineBodyContactsAfter<=x.genuineBodyContactsBefore&&!x.releaseAuthorized));
