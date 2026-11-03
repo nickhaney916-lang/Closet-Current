@@ -1,0 +1,169 @@
+{
+  "schemaVersion": 1,
+  "source": "read-only-connected-supabase-catalog",
+  "observedDate": "2026-11-03",
+  "scope": "Catalog declarations and security advisors only; no closet records, auth users, images, or service tokens accessed",
+  "notes": [
+    "Observed via Supabase connector read-only list_tables/get_advisors/execute_sql SELECT pg_catalog and storage.buckets",
+    "Policy semantics cannot establish real JWT A/B server isolation without separate authorized account tests",
+    "Production and staging intentionally have different writer grants, RPC internals and storage update permissions"
+  ],
+  "production": {
+    "table": {
+      "name": "public.closet_backups",
+      "primaryKey": "owner_id",
+      "ownerType": "uuid",
+      "rlsEnabled": true,
+      "documentMaxBytes": 5242880
+    },
+    "ownerPolicy": {
+      "name": "closet_backup_owner",
+      "role": "authenticated",
+      "action": "ALL",
+      "using": "auth.uid() = owner_id",
+      "withCheck": "auth.uid() = owner_id"
+    },
+    "bucket": {
+      "name": "closet-private",
+      "public": false,
+      "maxBytes": 8388608,
+      "mimeTypes": [
+        "image/jpeg"
+      ]
+    },
+    "advisors": {
+      "leakedPasswordProtectionDisabled": true
+    },
+    "privileges": {
+      "anonSelect": false,
+      "anonInsert": false,
+      "authenticatedSelect": true,
+      "authenticatedInsert": true,
+      "authenticatedUpdate": true,
+      "authenticatedDelete": true
+    },
+    "rpc": {
+      "publicName": "public.save_closet_backup",
+      "publicWrapperSecurityDefiner": false,
+      "authenticatedExecute": true,
+      "anonExecute": false,
+      "ownerFromJWT": true,
+      "revisionCompareAndSwap": true,
+      "documentLimitBytes": 5242880
+    },
+    "storagePolicies": [
+      {
+        "cmd": "SELECT",
+        "role": "authenticated",
+        "bucket": "closet-private",
+        "ownerPath": "auth.uid()",
+        "withCheckOwner": false
+      },
+      {
+        "cmd": "INSERT",
+        "role": "authenticated",
+        "bucket": "closet-private",
+        "ownerPath": "auth.uid()",
+        "withCheckOwner": true
+      },
+      {
+        "cmd": "UPDATE",
+        "role": "authenticated",
+        "bucket": "closet-private",
+        "ownerPath": "auth.uid()",
+        "withCheckOwner": true
+      },
+      {
+        "cmd": "DELETE",
+        "role": "authenticated",
+        "bucket": "closet-private",
+        "ownerPath": "auth.uid()",
+        "withCheckOwner": false
+      }
+    ]
+  },
+  "staging": {
+    "table": {
+      "name": "public.closet_backups",
+      "primaryKey": "owner_id",
+      "ownerType": "uuid",
+      "rlsEnabled": true,
+      "documentMaxBytes": 5242880
+    },
+    "ownerPolicy": {
+      "name": "closet_backup_owner",
+      "role": "authenticated",
+      "action": "ALL",
+      "using": "auth.uid() = owner_id",
+      "withCheck": "auth.uid() = owner_id"
+    },
+    "bucket": {
+      "name": "closet-private",
+      "public": false,
+      "maxBytes": 8388608,
+      "mimeTypes": [
+        "image/jpeg"
+      ]
+    },
+    "advisors": {
+      "leakedPasswordProtectionDisabled": true
+    },
+    "privileges": {
+      "anonSelect": false,
+      "anonInsert": false,
+      "authenticatedSelect": true,
+      "authenticatedInsert": false,
+      "authenticatedUpdate": false,
+      "authenticatedDelete": false
+    },
+    "writer": {
+      "name": "closet_backup_writer",
+      "canLogin": false,
+      "bypassRLS": false,
+      "authenticatedMember": false,
+      "anonMember": false,
+      "canSelect": true,
+      "canInsert": true,
+      "canUpdate": true,
+      "canDelete": false
+    },
+    "rpc": {
+      "publicName": "public.save_closet_backup",
+      "publicWrapperSecurityDefiner": false,
+      "authenticatedExecute": true,
+      "anonExecute": false,
+      "ownerFromJWT": true,
+      "revisionCompareAndSwap": true,
+      "documentLimitBytes": 5242880,
+      "privateFunctionSchema": "closet_rpc_private",
+      "privateFunctionSecurityDefiner": true,
+      "privateFunctionSearchPathBlank": true,
+      "privateFunctionClaim": "request.jwt.claim.sub",
+      "privateFunctionOwnerWriteBound": true,
+      "privateFunctionAnonExecute": false
+    },
+    "storagePolicies": [
+      {
+        "cmd": "SELECT",
+        "role": "authenticated",
+        "bucket": "closet-private",
+        "ownerPath": "auth.uid()",
+        "withCheckOwner": false
+      },
+      {
+        "cmd": "INSERT",
+        "role": "authenticated",
+        "bucket": "closet-private",
+        "ownerPath": "auth.uid()",
+        "withCheckOwner": true
+      },
+      {
+        "cmd": "DELETE",
+        "role": "authenticated",
+        "bucket": "closet-private",
+        "ownerPath": "auth.uid()",
+        "withCheckOwner": false
+      }
+    ]
+  }
+}

@@ -1,0 +1,72 @@
+name: CLOUD-RLS-01 live-read-only metadata owner security acceptance NO DEPLOY
+on:
+  pull_request:
+    paths:
+      - 'research/cloud-rls-01/**'
+      - 'tests/cloud-rls-01.test.mjs'
+      - 'scripts/audit-cloud-rls-01.mjs'
+      - '.github/workflows/cloud-rls-01-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  catalog-only-security-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+      - name: Verify exact research ancestor and zero production or Supabase migrations
+        run: |
+          git merge-base --is-ancestor e3dce3658d570bc555e8027cc75c13793b857c7b HEAD
+          git diff --name-only e3dce3658d570bc555e8027cc75c13793b857c7b HEAD | while IFS= read -r path; do
+            case "$path" in
+              research/cloud-rls-01/*|tests/cloud-rls-01.test.mjs|scripts/audit-cloud-rls-01.mjs|.github/workflows/cloud-rls-01-no-deploy.yml) ;;
+              *) echo "Unauthorized CLOUD01 production/sync/auth/other app change: $path"; exit 1 ;;
+            esac
+          done
+          git diff --exit-code e3dce3658d570bc555e8027cc75c13793b857c7b -- public/ migrations/ supabase/
+      - name: Install test-only package dependencies (no database or API credentials)
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Syntax, build, full native Node regression suite including cloud read-only audit
+        run: |
+          node --check research/cloud-rls-01/read-only-policy-gate.mjs
+          node --check tests/cloud-rls-01.test.mjs
+          node --check scripts/audit-cloud-rls-01.mjs
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Generate independently reproducible read-only live metadata comparison
+        run: node scripts/audit-cloud-rls-01.mjs
+      - name: Strict static-policies-PASS but real A/B and production release-HOLD assertions
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const m=JSON.parse(readFileSync('benchmark/cloud-rls-01/acceptance.json','utf8'));
+          const r=m.result;
+          assert.equal(r.status,'PASS_READ_ONLY_METADATA_ONLY');
+          assert.ok(r.checkedControls>=20);
+          assert.equal(r.passedControls,r.checkedControls);
+          assert.deepEqual(r.failures,[]);
+          assert.equal(r.warnings.length,2);
+          assert.equal(r.customerRowsRead,false);
+          assert.equal(r.signedInTwoAccountProof,false);
+          assert.equal(r.liveDataAPIJWTProof,false);
+          assert.equal(r.liveStorageJWTProof,false);
+          assert.equal(m.realSignedInUserDataViewed,false);
+          assert.equal(m.realPhotoObjectsViewed,false);
+          assert.equal(m.productionSchemaMutated,false);
+          assert.equal(m.stagingSchemaMutated,false);
+          assert.equal(m.releaseAuthorized,false);
+          assert.equal(r.familyAlpha,'HOLD');
+          console.log('CLOUD01 catalog PASS, real signed-in A/B account/Storage tests NOT PERFORMED');
+          NODE
+      - name: Upload sanitized read-only catalog evidence only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: CLOUD01-owner-policy-snapshot-A-B-live-HOLD
+          path: benchmark/cloud-rls-01/acceptance.json
+          if-no-files-found: warn
