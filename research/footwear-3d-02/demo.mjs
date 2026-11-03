@@ -29,8 +29,10 @@ else {
  }
  async function select(id){
   if(!loaded)throw Error('Rig not loaded');
-  let cap=id==='commons-0080'?src1:id==='commons-0081'?src2:null;
-  const result=session.swap(cap);viewer.rotate(0);
+  let photoOnly=typeof id==='string'&&id.startsWith('photo:');
+  const key=photoOnly?id.slice(6):id;
+  let cap=key==='commons-0080'?src1:key==='commons-0081'?src2:null;
+  const result=session.swap(photoOnly?null:cap);viewer.rotate(0);
   const img=document.getElementById('original'),record=document.getElementById('record');
   img.src=cap?.photoUrl||'';img.hidden=!cap;
   record.textContent=cap?(cap.id+' · '+cap.attribution.author+' · '+cap.attribution.license+
@@ -52,7 +54,7 @@ else {
  }
  window.__footwear02={load,select,rotate,invalidate,state,checkOwner,audit:()=>{if(!session)throw Error('Research session cleared');return auditActualFootwear02StaticContact({viewer});},getSource:id=>id==='commons-0080'?src1:id==='commons-0081'?src2:null,
   dispose(){invalidate();viewer.stop();sources?.dispose();}};
- for(const [id,act]of [['bare',()=>select(null)],['photo',()=>select('unsupported')],['a',()=>select('commons-0080')],['b',()=>select('commons-0081')]])
+ for(const [id,act]of [['bare',()=>select(null)],['photo',()=>select('photo:commons-0080')],['a',()=>select('commons-0080')],['b',()=>select('commons-0081')]])
   document.getElementById(id).addEventListener('click',()=>act().catch(e=>show('Photo-only fallback: '+e.message)));
  init().catch(e=>{show('Original-photo fallback: '+e.message);window.__footwear02Error=e.message;});
 }
