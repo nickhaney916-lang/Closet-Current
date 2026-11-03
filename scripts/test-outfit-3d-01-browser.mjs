@@ -279,7 +279,7 @@ async function runWidth(width){
    await capture(page,{width,rig,label:'B-photo-only-blouse-skirt-jacket',angle:0,expectMode:'none'});
    if(rig==='female'){
     await page.locator('#outfit3D01Name').fill('B - photo fallback');
-    await page.locator('#outfit3D01Save').click();
+    await page.locator('#outfit3D01SaveNew').click();
     await page.waitForFunction(()=>window.outfit3DResearch.state().savedCount>=2);
    }
    // C: exact original photographed dress on real independent humanoid surface,
@@ -294,7 +294,7 @@ async function runWidth(width){
    for(const angle of [0,90,180])await capture(page,{width,rig,label:'C-dress-shoes-outer',angle,expectMode:'dress'});
    if(rig==='female'){
     await page.locator('#outfit3D01Name').fill('C - original dress');
-    await page.locator('#outfit3D01Save').click();
+    await page.locator('#outfit3D01SaveNew').click();
     await page.waitForFunction(()=>window.outfit3DResearch.state().savedCount>=3);
     // Close and reopen with the *actual durable owner IndexedDB outfit board*.
     await page.locator('#outfit3D01Close').click();
