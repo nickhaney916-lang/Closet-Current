@@ -12,7 +12,7 @@ import {requireSourceNeutralLight23} from './source-neutral-light-23.mjs';
 
 export const DENIM_NEUTRAL_WEAVE25=Object.freeze({
  version:25,textureType:'modeled-neutral-twill-not-a-photograph',
- maxDiffuseVariation:.11, photographedFrontOpacityProtection:.10,
+ maxDiffuseVariation:.065, photographedFrontOpacityProtection:.10,
  originalSourcePhotoUntouched:true,originalSourceUVUntouched:true,
  unseenRearImageGenerated:false,geometryModified:false,
  physicallyMeasuredWeave:false,humanPhotorealismApproved:false,
@@ -45,12 +45,12 @@ export function applyModeledNeutralWeave25Shader(fragmentShader,source,{enabled=
   throw Error('P25 refuses source-less or duplicate neutral textile shader');
  const twill=[
   anchor,
-  'float sourceNeutralWarpPhase25 = dot(vPantsSourceUV, vec2(96.0,21.0));',
-  'float sourceNeutralWeftPhase25 = dot(vPantsSourceUV, vec2(-24.0,82.0));',
-  'float sourceNeutralWarpAA25 = clamp(1.0 - 0.45 * fwidth(sourceNeutralWarpPhase25), 0.0, 1.0);',
-  'float sourceNeutralWeftAA25 = clamp(1.0 - 0.45 * fwidth(sourceNeutralWeftPhase25), 0.0, 1.0);',
-  'float sourceNeutralTwill25 = 0.72 * sin(sourceNeutralWarpPhase25) * sourceNeutralWarpAA25 + 0.28 * sin(sourceNeutralWeftPhase25) * sourceNeutralWeftAA25;',
-  'float sourceNeutralFabricRelief25 = 0.11 * sourceNeutralTwill25 * sourceNeutralUnphotographed23;',
+  'float sourceNeutralWarpPhase25 = dot(vPantsSourceUV, vec2(65.0,75.0));',
+  'float sourceNeutralWeftPhase25 = dot(vPantsSourceUV, vec2(-58.0,92.0));',
+  'float sourceNeutralWarpAA25 = clamp(1.0 - 0.30 * fwidth(sourceNeutralWarpPhase25), 0.0, 1.0);',
+  'float sourceNeutralWeftAA25 = clamp(1.0 - 0.30 * fwidth(sourceNeutralWeftPhase25), 0.0, 1.0);',
+  'float sourceNeutralTwill25 = 0.60 * sin(sourceNeutralWarpPhase25) * sourceNeutralWarpAA25 + 0.40 * sin(sourceNeutralWeftPhase25) * sourceNeutralWeftAA25;',
+  'float sourceNeutralFabricRelief25 = 0.065 * sourceNeutralTwill25 * sourceNeutralUnphotographed23;',
   'diffuseColor.rgb *= (1.0 + sourceNeutralFabricRelief25);'
  ].join('\n');
  return fragmentShader.replace(anchor,twill);
