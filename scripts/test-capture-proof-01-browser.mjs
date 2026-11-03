@@ -28,7 +28,7 @@ const fakeAuth='window.closetAuth={ready:Promise.resolve(),user:{id:"capture-pro
 const fakeCloud='window.closetCloud={beforeWrite:async()=>{},changed:()=>{},start:async()=>{},stop:async()=>{}};';
 const preload=()=>{
  window.__mock={denied:true,failPreferred:false,requestCount:0,tracksStopped:0,
-  requests:[],workerImages:[],outfitOriginal:null,cameraReady:false};
+  requests:[],workerImages:[],outfitOriginal:null,cameraReady:false,failNextPlay:false};
  const C=CanvasRenderingContext2D.prototype,draw=C.drawImage;
  C.drawImage=function(img,...args){
   if(img instanceof HTMLVideoElement&&img.id==='video'&&window.__cameraFixture)
@@ -45,7 +45,13 @@ const preload=()=>{
    return native?native.call(this):0;
   }});}catch{}
  }
- HTMLMediaElement.prototype.play=function(){return Promise.resolve();};
+ HTMLMediaElement.prototype.play=function(){
+  if(this.id==='video'&&window.__mock.failNextPlay){
+   window.__mock.failNextPlay=false;
+   return Promise.reject(new DOMException('Simulated video playback failure','NotAllowedError'));
+  }
+  return Promise.resolve();
+ };
  Object.defineProperty(navigator,'mediaDevices',{configurable:true,value:{
   getUserMedia:async constraints=>{
    window.__mock.requestCount++;window.__mock.requests.push(constraints);
@@ -220,6 +226,58 @@ try{
      assert.equal(saved.confirmed,true);
      assert.equal(saved.category,'Tops');
      await page.screenshot({path:out+'/'+name+'-'+width+'-07-confirmed-save.png',fullPage:true});
+     // Tamper retained original AFTER capture; manual Adjust must not write a
+     // photo whose canonical original bytes fail the pre-commit SHA check.
+     await page.evaluate(()=>{
+      const imported=batch.find(x=>x.importFilename==='licensed-fixture.png');
+      imported.originalPhoto.image=items.find(x=>x.itemType==='T-shirt').image;
+     });
+     await page.locator('#reviewGrid article.photo-result').first().getByRole('button',{name:'Adjust',exact:true}).click();
+     await page.locator('dialog.photo-adjust select[aria-label="Main category"]').selectOption('Bottoms');
+     await page.locator('dialog.photo-adjust select[aria-label="Item type"]').selectOption('Jeans');
+     await page.locator('dialog.photo-adjust input[aria-label="Color"]').fill('Purple');
+     await page.locator('dialog.photo-adjust form').evaluate(node=>node.requestSubmit());
+     await page.waitForFunction(()=>document.getElementById('message').textContent.includes('Could not save changes.'),null,{timeout:15000});
+     assert.equal(await page.evaluate(async()=>(await readAll()).length),1,
+      'tampering the original must never create or overwrite saved item');
+     assert.equal(await page.locator('dialog.photo-adjust[open]').count(),1,
+      'failed tampered input remains reviewable without silent close');
+     await page.screenshot({path:out+'/'+name+'-'+width+'-09-source-tamper-refused.png',fullPage:true});
+     await page.locator('dialog.photo-adjust button').filter({hasText:'Cancel'}).click();
+     // Failed video.play and interrupted visibility must stop tracks, restore
+     // controls and leave saved wardrobe untouched.
+     await page.evaluate(()=>{switchView('scan');setCaptureMode('single');
+      window.__mock.failPreferred=false;window.__mock.failNextPlay=true;});
+     const tracksBefore=await page.evaluate(()=>window.__mock.tracksStopped);
+     await page.locator('#start').click();
+     await page.waitForFunction(()=>document.getElementById('message').textContent.includes('Simulated video playback failure'));
+     assert.equal(await page.locator('#start').isDisabled(),false);
+     await page.locator('#start').click();
+     await page.waitForFunction(()=>!document.getElementById('cameraActions').hidden);
+     await page.evaluate(()=>{
+      Object.defineProperty(document,'hidden',{configurable:true,get:()=>true});
+      document.dispatchEvent(new Event('visibilitychange'));
+      delete document.hidden;
+     });
+     await page.waitForFunction(()=>document.getElementById('cameraActions').hidden);
+     assert.ok(await page.evaluate(()=>window.__mock.tracksStopped)>=tracksBefore+2,
+      'both failed playback and background interruption must stop camera tracks');
+     await page.screenshot({path:out+'/'+name+'-'+width+'-10-interruption-recovered.png',fullPage:true});
+     await page.locator('#start').click();
+     await page.waitForFunction(()=>!document.getElementById('cameraActions').hidden);
+     const beforeLogout=await page.evaluate(()=>batch.length);
+     await page.evaluate(()=>{
+      const g=window.__cameraFixture.getContext('2d');
+      g.fillStyle='#df722b';g.fillRect(0,0,window.__cameraFixture.width,window.__cameraFixture.height);
+      document.getElementById('takePhoto').click();
+      window.closetAuth.user=null;
+     });
+     await page.waitForFunction(()=>!captureProofTaking,null,{timeout:12000});
+     const stale=await page.evaluate(async()=>({draftCount:batch.length,
+      savedCount:(await readAll()).length}));
+     assert.equal(stale.draftCount,beforeLogout,'late camera proof must not enter old account draft');
+     assert.equal(stale.savedCount,1,'late camera proof must not save to wardrobe');
+     await page.evaluate(()=>{stopCamera();window.closetAuth.user={id:'capture-proof-a'};});
      // Outfit photo handoff is source-bound; output piece cannot assert verified segmentation.
      await page.evaluate(()=>{switchView('scan');setCaptureMode('outfit');});
      const jpg=await page.evaluate(()=>{
@@ -258,6 +316,8 @@ try{
       permissionDeniedAndRecovered:true,frontFacingFallback:true,
       originalFullResolution:true,unverifiedNeedsReview:true,
       originalImportConversionHonest:true,manualCorrectionSaved:true,
+      tamperedSourceRefused:true,failedPlaybackStopped:true,
+      visibilityInterruptStopped:true,logoutDuringPendingHashDiscarded:true,
       outfitOriginalHandoff:true,logoutClearsPrivateIndex:true,
       actualPhysicalPhone:false});
     }finally{await context.close();}
