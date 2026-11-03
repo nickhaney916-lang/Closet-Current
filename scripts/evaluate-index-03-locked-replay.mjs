@@ -24,6 +24,7 @@ const counters=()=>({count:0,negative:0,automatic:0,review:0,
  unsafeConfidentCategory:0,unsafeConfidentType:0,
  categoryCorrectAmongAll:0,typeCorrectAmongAll:0});
 const before=counters(),after=counters(),confusionBefore={},confusionAfter={};
+const typeConfusionBefore={},typeConfusionAfter={};
 const add=(summary,truth,pred,automatic,negative)=>{
  summary.count++;
  if(negative){summary.negative++;return;}
@@ -71,7 +72,9 @@ for(const [name,path] of grouped){
   for(const x of [before,stateBefore])add(x,truth,pred,autoBefore,negative);
   for(const x of [after,stateAfter])add(x,truth,pred,autoAfter,negative);
   if(!negative){mark(confusionBefore,sample.expectedCategory,autoBefore?pred.category||'Unknown':'REVIEW');
-   mark(confusionAfter,sample.expectedCategory,autoAfter?gate.category:'REVIEW');}
+   mark(confusionAfter,sample.expectedCategory,autoAfter?gate.category:'REVIEW');
+   mark(typeConfusionBefore,sample.expectedType,autoBefore?pred.type||'Unknown':'REVIEW');
+   mark(typeConfusionAfter,sample.expectedType,autoAfter?gate.itemType:'REVIEW');}
   rows.push({id:sample.id,cohort:name,expectedCategory:sample.expectedCategory,
    expectedType:sample.expectedType,predictedCategory:pred.category||null,
    predictedType:pred.type||null,beforeAuto:autoBefore,afterAuto:autoAfter,
@@ -87,6 +90,17 @@ const pct=(n,d)=>d?Number((100*n/d).toFixed(2)):null;
 const view=x=>({...x,automaticTypePrecisionPercent:pct(x.correctAutomaticType,x.automatic),
  automaticCategoryPrecisionPercent:pct(x.correctAutomaticCategory,x.automatic),
  automaticCoveragePercent:pct(x.automatic,x.count-x.negative)});
+const garmentRows=rows.filter(r=>r.expectedCategory!=='Uncategorized');
+const breakdown=key=>Object.fromEntries([...new Set(garmentRows.map(r=>r[key]))].sort().map(name=>{
+ const subset=garmentRows.filter(r=>r[key]===name);
+ return [name,{count:subset.length,beforeAutomatic:subset.filter(r=>r.beforeAuto).length,
+  afterAutomatic:subset.filter(r=>r.afterAuto).length,
+  beforeCorrectTypeAutomatic:subset.filter(r=>r.beforeAuto&&r.acceptedTypeCorrect).length,
+  afterCorrectTypeAutomatic:subset.filter(r=>r.afterAuto&&r.acceptedTypeCorrect).length,
+  beforeUnsafeConfidentType:subset.filter(r=>r.beforeAuto&&!r.acceptedTypeCorrect).length,
+  afterUnsafeConfidentType:subset.filter(r=>r.afterAuto&&!r.acceptedTypeCorrect).length,
+  afterReview:subset.filter(r=>!r.afterAuto).length}];
+}));
 const report={
  mode:'verified-original-fixture / historical-real-inference replay, NOT new model inference',
  historicalRun:historic.validation.realPhotoRun,modelCommit:historic.validatedCandidate,
@@ -94,6 +108,8 @@ const report={
  count:rows.length,before:view(before),after:view(after),
  cohorts:Object.fromEntries(Object.entries(perGroup).map(([k,v])=>[k,{before:view(v.before),after:view(v.after)}])),
  confusionCategoryBefore:confusionBefore,confusionCategoryAfter:confusionAfter,
+ confusionTypeBefore:typeConfusionBefore,confusionTypeAfter:typeConfusionAfter,
+ byGarmentCategory:breakdown('expectedCategory'),byGarmentType:breakdown('expectedType'),
  perGarment:rows,
  colorAccuracy:null,colorGroundTruthAvailable:false,multigarmentSegmentationMeasured:false,
  processingTimeMs:null,processingTimeEvidenceAvailable:rows.every(x=>x.recordedElapsedMs!==null),
