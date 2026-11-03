@@ -88,7 +88,7 @@ export function createMobileWardrobeIndex02({
   '.index02-review input{height:20px;width:20px}',
   '.index02-actions{display:flex;flex-wrap:wrap;gap:8px}',
   '.index02-panel #index02Status{margin:8px 0 0}',
-  '@media(max-width:360px){.index02-fields{grid-template-columns:minmax(0,1fr)}.index02-panel{padding:9px}}'
+  '@media(max-width:360px){.index02-fields{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.index02-panel{padding:8px}}'
  ].join('\n');
  doc.head?.append(style);
 
