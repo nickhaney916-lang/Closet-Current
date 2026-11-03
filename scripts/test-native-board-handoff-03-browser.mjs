@@ -103,6 +103,26 @@ async function shot(page,engine,width,owner,stage){
  await writeFile(dir+'/'+name,png);
  screens.push({name,engine,width,owner,stage,sha256:sha(png)});
 }
+async function sourceCard(page,engine,width,owner,stage){
+ const cards=page.locator('#board02Preview');
+ await cards.scrollIntoViewIfNeeded();
+ const actual=await cards.locator('article').count();
+ const photos=await cards.locator('img').count();
+ assert.equal(actual,4,'Original dress, jacket, coat, and shoe cards must be rendered');
+ assert.equal(photos,4,'Four genuine original JPEG previews must be visible');
+ const proof=await cards.locator('img').evaluateAll(imgs=>imgs.every(im=>
+  im.getAttribute('src')?.startsWith('data:image/jpeg;base64,')&&
+  im.naturalWidth>0&&im.naturalHeight>0));
+ assert.equal(proof,true,'Original JPEGs must be decoded and drawn by real browser');
+ const png=await cards.screenshot({animations:'disabled'});
+ const m=await sharp(png).metadata(),stats=await sharp(png).stats();
+ assert.ok(m.width>190&&m.width<=width,'Real photo-card crop width must fit mobile viewport');
+ assert.ok(m.height>=110&&png.length>4500&&
+  stats.channels.some(x=>x.stdev>7),'Original owner clothing previews must be visually present');
+ const name=engine+'-'+width+'-'+owner+'-'+stage+'.png';
+ await writeFile(dir+'/'+name,png);
+ screens.push({name,engine,width,owner,stage,elementCapture:true,photoCount:4,sha256:sha(png)});
+}
 async function signIn(page,owner){
  await page.locator('#authEmail').fill(owner+'@example.test');
  await page.locator('#authPassword').fill('native-research-only');
@@ -223,8 +243,11 @@ try{
     const aPlan=await ownerAcceptance(page,'fixture-native-A');
     assert.equal(aPlan.sourceHonestMode,'dress');
     await page.evaluate(()=>{window.__native03.editor.open('fixture-native-A-dress-outfit');
-      window.__native03.editor.setSlot('shoes','fixture-native-A-newshoes');});
+      window.__native03.editor.setSlot('shoes','fixture-native-A-newshoes');
+      window.__native03.show();});
+    await page.locator('#board02Preview').scrollIntoViewIfNeeded();
     await shot(page,engine,width,'A','02-genuine-native-session-edit-draft');
+    await sourceCard(page,engine,width,'A','02-original-source-card-element');
     assert.deepEqual(await getStored(page),before,'Draft preview cannot mutate authenticated owner database');
     const saved=await page.evaluate(async()=>{
      const receipt=await window.__native03.editor.save();
@@ -238,6 +261,8 @@ try{
     assert.equal(after.saved[0].outfit3dId,'fixture-native-A-3d-dress');
     assert.deepEqual(after.saved[0].futureMetadata,{mustPreserve:true});
     assert.deepEqual(after.saved[1],before.saved[1]);
+    await page.evaluate(()=>window.__native03.show());
+    await page.locator('#board02Preview').scrollIntoViewIfNeeded();
     await shot(page,engine,width,'A','03-saved-and-preserved-original');
     const refreshed=await page.evaluate(async()=>{
      await window.closetAuth.getAccessToken({force:true});
@@ -284,7 +309,10 @@ try{
     });
     assert.equal(crossOwnerDenied,true);
     assert.deepEqual(await getStored(page),bBefore,'Reading B original photo may not mutate B stored state');
+    await page.evaluate(()=>window.__native03.show());
+    await page.locator('#board02Preview').scrollIntoViewIfNeeded();
     await shot(page,engine,width,'B','05-independent-owner-B-with-originals');
+    await sourceCard(page,engine,width,'B','05-original-source-card-element');
     cases.push({engine,width,realNativeAuthSource:true,verifiedNativeHTTP:'MOCK_ONLY',
      independentOwnerFixtures:2,originalSourceSHA256:true,
      originalNativeStillLossy:true,losslessDraftNeverWritten:true,successfulCASWrite:true,
@@ -300,7 +328,8 @@ try{
   }
   await browser.close();browser=null;
  }
- assert.equal(cases.length,6);assert.equal(screens.length,30);
+ assert.equal(cases.length,6);assert.equal(screens.length,42);
+ assert.equal(screens.filter(x=>x.elementCapture).length,12);
  assert.deepEqual(errors,[]);
  assert.deepEqual(blocked.filter(x=>x.method!=='GET'),[]);
  for(const shotInfo of screens)
@@ -309,7 +338,7 @@ try{
   assert.equal(sha(await readFile('benchmark/fixtures/'+id+'.jpg')),source.sha256);
  }
  const result={priority:'NATIVE-BOARD-HANDOFF-03',caseCount:cases.length,
-  screenshotCount:screens.length,exactNativeApp:true,exactNativeAuthUnchanged:true,
+  screenshotCount:screens.length,sourcePhotoCardScreenshots:12,exactNativeApp:true,exactNativeAuthUnchanged:true,
   originalPhotoBytesPreserved:true,authHTTPMocked:true,
   actualBrowserStorage:true,authEpochFromExactPR550:true,
   losslessEditorFromExactPR552:true,sourceHonest3DDecisionFromExactPR541:true,
@@ -319,7 +348,7 @@ try{
   cases,screens,blocked,errors};
  await writeFile(dir+'/results.json',JSON.stringify(result,null,2));
  console.log('NATIVE03 genuine native auth->lossless saved board',JSON.stringify({
-  browserCases:6,originalSourceBrowserScreens:30,ownerSessionRevocation:true,
+  browserCases:6,originalSourceBrowserScreens:42,ownerSessionRevocation:true,
   originalNativeUnchanged:true,liveRLS:'NOT TESTED',familyAlpha:'HOLD'}));
 }catch(e){
  await writeFile(dir+'/ERROR.json',JSON.stringify({
