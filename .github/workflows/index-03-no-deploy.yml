@@ -26,6 +26,7 @@ jobs:
           fetch-depth: 0
       - name: Ensure isolated source-only change against pinned main
         run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
           git merge-base --is-ancestor 39deed987afe2e5668d64e145835ad43ad14c7be HEAD
           git diff --name-only 39deed987afe2e5668d64e145835ad43ad14c7be HEAD | while IFS= read -r path; do
             case "$path" in
