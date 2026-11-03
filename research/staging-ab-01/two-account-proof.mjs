@@ -27,10 +27,20 @@ export class StagingProofBlocked extends Error{
 export class StagingProofFailed extends Error{
  constructor(code){super('STAGING-AB-01 security acceptance failed: '+code);this.name='StagingProofFailed';this.code=code;}
 }
+function verifiedPublicKey(key){
+ if(!safe(key,5000)||/service.role|sb_secret_/i.test(key))return false;
+ if(key.startsWith('sb_publishable_'))return true;
+ // A legacy JWT anon key may be supplied to staging, but an admin JWT,
+ // including a service_role key passed under a misleading env name, cannot.
+ const parts=key.split('.');
+ if(parts.length!==3||parts.some(x=>!x))return false;
+ try{return JSON.parse(Buffer.from(parts[1],'base64url').toString('utf8')).role==='anon';}
+ catch{return false;}
+}
 function requireConfig(config){
  if(!config||config.origin!==STAGING_AB_01.origin)
   throw new StagingProofBlocked('STAGING_ORIGIN_PIN_REQUIRED');
- if(!safe(config.publicKey,5000)||/service.role|sb_secret_/i.test(config.publicKey))
+ if(!verifiedPublicKey(config.publicKey))
   throw new StagingProofBlocked('STAGING_PUBLIC_KEY_REQUIRED');
  const accounts=[config.a,config.b];
  for(const [i,account] of accounts.entries()){
@@ -152,8 +162,10 @@ export async function runStagingAB01({config,fetchImpl=globalThis.fetch}={}){
  const pass=(name)=>details.push(name);
  const aOwn=await selectBackup(config,fetchImpl,a);
  const bOwn=await selectBackup(config,fetchImpl,b);
- must(ownOnly(aOwn.rows,a.id,'OWNER_A_BACKUP_LEAK'),'OWNER_A_BACKUP_FIXTURE_NOT_FOUND');
- must(ownOnly(bOwn.rows,b.id,'OWNER_B_BACKUP_LEAK'),'OWNER_B_BACKUP_FIXTURE_NOT_FOUND');
+ if(!ownOnly(aOwn.rows,a.id,'OWNER_A_BACKUP_LEAK'))
+  throw new StagingProofBlocked('OWNER_A_BACKUP_FIXTURE_NOT_FOUND');
+ if(!ownOnly(bOwn.rows,b.id,'OWNER_B_BACKUP_LEAK'))
+  throw new StagingProofBlocked('OWNER_B_BACKUP_FIXTURE_NOT_FOUND');
  pass('A_AND_B_OWN_BACKUP_VISIBLE');
  const aCross=await selectBackup(config,fetchImpl,a,b.id);
  const bCross=await selectBackup(config,fetchImpl,b,a.id);
