@@ -272,14 +272,31 @@ export function createLosslessBoard02({auth,io,makeId=()=>crypto.randomUUID()}={
  function originalSnapshot(){check();return clone(stored);}
  function lastSave(){check();return lastReceipt;}
  function toPreview(){const state=inspect(),lookup=new Map(wardrobe.map(x=>[x.id,x]));
-  const selected=state.selected.map(x=>({...x,originalSHA256:x.sourceSHA256,
+  const selected=state.selected.map(x=>({...x,claimedSHA256:x.sourceSHA256,
+   originalSHA256:null,sourceVerified:false,
    color:lookup.get(x.itemId)?.color||'Unknown'}));
   return Object.freeze({ownerId:owner,generation,name:state.name,
    selected,missing:state.missing,needsReview:state.review,
    slots:state.slots,renderOnly:true,releaseAuthorized:false});
  }
+ async function toVerified3DPlan(){
+  const lease=check(),base=toPreview(),verified=[];
+  for(const field of base.selected){
+   const item=wardrobe.find(x=>x.id===field.itemId),proof=await verifyPhoto02(item);
+   const after=check();
+   if(after.ownerId!==lease.ownerId||after.generation!==lease.generation)
+    throw Error('BOARD02 private original JPEG verification interrupted by owner change');
+   verified.push(Object.freeze({...field,
+    originalSHA256:proof.verified?proof.sourceSHA256:null,
+    sourceVerified:proof.verified,sourceReviewReason:proof.reason}));
+  }
+  return Object.freeze({...base,selected:Object.freeze(verified),
+   originalJPEGsByteVerified:verified.every(x=>x.sourceVerified),
+   unverifiedCount:verified.filter(x=>!x.sourceVerified).length,
+   releaseAuthorized:false});
+ }
  function invalidate(){reset();}
  return Object.freeze({refresh,list,open,inspect,editName,pin,setSlot,swapShoes,cancel,
-  save,remove,originalSnapshot,lastSave,toPreview,invalidate,
+  save,remove,originalSnapshot,lastSave,toPreview,toVerified3DPlan,invalidate,
   dispose(){reset();closed=true;},researchOnly:true,releaseAuthorized:false});
 }
