@@ -133,7 +133,7 @@ try{
       return {sourceOwned:state.current.slots.top===owner+'-dress',
        donorOriginalPreserved:stillUnchanged,fixtureOwner:owner,
        nativeDropsJacketAndCoat:missingNativeJacket,
-       nativePreservedPhotographIDs:!Object.hasOwn(native,'outfit3dId'),
+       nativeErasesDurable3DID:!Object.hasOwn(native,'outfit3dId'),
        missingReferencePresent:state.saved[0].slots.bottom===owner+'-deleted-jeans',
        lossCount:report.issues.length,erasedDressLayers:report.erasedDressLayers,
        missingReferences:report.missingReferences,erased3DIDs:report.erased3DIDs,
@@ -144,7 +144,7 @@ try{
      assert.equal(evidence.sourceOwned,true);
      assert.equal(evidence.donorOriginalPreserved,true);
      assert.equal(evidence.nativeDropsJacketAndCoat,true);
-     assert.equal(evidence.nativePreservedPhotographIDs,true);
+     assert.equal(evidence.nativeErasesDurable3DID,true);
      assert.equal(evidence.missingReferencePresent,true);
      assert.ok(evidence.erasedDressLayers>=2);
      assert.ok(evidence.erased3DIDs>=2);
