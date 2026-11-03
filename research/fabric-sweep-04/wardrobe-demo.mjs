@@ -335,7 +335,15 @@ async function initViewer(){
        new URLSearchParams(location.search).get('denimRear14')==='after'&&
        new URLSearchParams(location.search).get('denimSide15')==='after'&&
        new URLSearchParams(location.search).get('denimPosterior16')==='after'&&
-       new URLSearchParams(location.search).get('denimPhotoWidth17')==='after'
+       new URLSearchParams(location.search).get('denimPhotoWidth17')==='after',
+     sourceDenimProfile18:new URLSearchParams(location.search).get('denimFit')==='after'&&
+       new URLSearchParams(location.search).get('denimSilhouette')==='after'&&
+       new URLSearchParams(location.search).get('denimFairing')==='after'&&
+       new URLSearchParams(location.search).get('denimRear14')==='after'&&
+       new URLSearchParams(location.search).get('denimSide15')==='after'&&
+       new URLSearchParams(location.search).get('denimPosterior16')==='after'&&
+       new URLSearchParams(location.search).get('denimPhotoWidth17')==='after'&&
+       new URLSearchParams(location.search).get('denimProfile18')==='after'
   });
   canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();
    if(token!==bootToken)return;
@@ -449,6 +457,7 @@ window.ccWardrobe10Diagnostics=()=>{
       sourceDenimSideThigh15Enabled:state?.sourceDenimSideThigh15Enabled||false,
       sourceDenimPosteriorContour16Enabled:state?.sourceDenimPosteriorContour16Enabled||false,
       sourceDenimPhotoWidth17Enabled:state?.sourceDenimPhotoWidth17Enabled||false,
+      sourceDenimProfile18Enabled:state?.sourceDenimProfile18Enabled||false,
       staticDenimFit06Enabled:state?.staticDenimFit06Enabled||false,
       staticDenimFit06State:state?.staticDenimFit06State||null,
      swept04Clock:state?.continuousGait04||null,
@@ -578,6 +587,18 @@ window.ccWardrobeDenimFreeze06=()=>{
      !Array.isArray(proof.sourceCutoutLegWidthRatios17)||
      proof.sourceCutoutLegWidthRatios17.length!==2))
     throw Error('W17 original garment photograph hem source-provenance or visual silhouette invalid');
+  if(new URLSearchParams(location.search).get('denimProfile18')==='after'&&
+    (!proof.sourceMeasuredOriginalCalfProfile18||
+     !proof.originalFrontSHAUVRestAndSkinProtected18||
+     !proof.noUnphotographedRearTexture18||
+     !Array.isArray(proof.originalPhotoFiveLegStations18)||
+     proof.originalPhotoFiveLegStations18.length!==2||
+     proof.originalPhotoFiveLegStations18.some(x=>x.length!==5)||
+     proof.photographedCalfProfileMovedVertices18<40||
+     Math.min(...proof.photographedCalfProfilePerLeg18)<15||
+     proof.photographedCalfProfileMaxShiftMeters18<.004||
+     proof.photographedCalfProfileMaxShiftMeters18>.0180001))
+   throw Error('P18 five source photo stations, original front or actual skinned drape invalid');
   const after=current();
   if(!after.authenticated||after.ownerId!==owner.ownerId||after.generation!==owner.generation||
     proof.originalPhotoSHA256!==expected||!proof.frontPhotographUnchanged||
