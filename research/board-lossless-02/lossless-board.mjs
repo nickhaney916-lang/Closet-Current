@@ -177,6 +177,14 @@ export function createLosslessBoard02({auth,io,makeId=()=>crypto.randomUUID()}={
   missing:inspectOutfit02(v,wardrobe,{ownerId:owner}).missing.length,
   review:inspectOutfit02(v,wardrobe,{ownerId:owner}).review.length
  })));}
+ function compatibleChoices(slot){
+  check();if(!allowed.has(slot))throw Error('BOARD02 unsupported outfit slot');
+  const already=new Set(Object.values(draft?.slots||{}));
+  return Object.freeze(wardrobe.filter(item=>slotFits(slot,item)&&
+   (item.id===draft?.slots?.[slot]||!already.has(item.id)))
+   .map(item=>Object.freeze({id:item.id,name:item.name||item.itemType||item.id,
+    category:item.category,itemType:item.itemType,ownerId:owner})));
+ }
  function open(id){check();if(!goodId(id))throw Error('BOARD02 saved ID required');
   const ix=stored.saved.findIndex((v,i)=>keyFor(v,i)===id);if(ix<0)throw Error('BOARD02 saved outfit not found');
   opened=ix;draft=clone(stored.saved[ix]);dirty=false;pins=new Set();
@@ -303,7 +311,7 @@ export function createLosslessBoard02({auth,io,makeId=()=>crypto.randomUUID()}={
    releaseAuthorized:false});
  }
  function invalidate(){reset();}
- return Object.freeze({refresh,list,open,inspect,editName,pin,setSlot,swapShoes,cancel,
+ return Object.freeze({refresh,list,open,inspect,compatibleChoices,editName,pin,setSlot,swapShoes,cancel,
   save,remove,originalSnapshot,lastSave,toPreview,toVerified3DPlan,invalidate,
   dispose(){reset();closed=true;},researchOnly:true,releaseAuthorized:false});
 }

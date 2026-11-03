@@ -66,7 +66,10 @@ export async function mountLosslessBoard02Research({doc=document,auth=window.clo
    const select=element(doc,'select');
    select.setAttribute('aria-label','Replace '+row.slot);
    let choices=[{id:row.itemId,name:'Keep original ID ('+row.itemId+')'},{id:'',name:'Remove this slot only'}];
-   choices.push(...available.filter(x=>x.id!==row.itemId&&x.category).map(x=>({id:x.id,name:x.name||x.itemType||x.id})));
+   // Only currently compatible owner-owned pieces are offered. The saved
+   // old reference remains visible even when its category now needs review.
+   choices.push(...editor.compatibleChoices(row.slot).filter(x=>x.id!==row.itemId)
+    .map(x=>({id:x.id,name:x.name||x.itemType||x.id})));
    for(const value of choices){const opt=element(doc,'option',value.name);opt.value=value.id;select.append(opt);}
    select.value=row.itemId;
    select.addEventListener('change',()=>run(async()=>{editor.setSlot(row.slot,select.value||null);show();tell('Edited draft only. Original save unchanged until Save changes.');}));

@@ -127,6 +127,17 @@ test('recategorizing preserved jacket or shoes triggers REVIEW without rewriting
  assert.equal((await f.read()).board.saved[0].slots.layer2,'jacket');
  f.db.close();
 });
+test('slot replacement picker lists only compatible, unselected owned garments',async()=>{
+ const f=await fixture();await f.editor.refresh();f.editor.open('outfit-legacy-1');
+ const available=f.editor.compatibleChoices('shoes');
+ assert.deepEqual(available.map(x=>x.id).sort(),['newshoes','shoes']);
+ assert.ok(available.every(x=>x.category==='Shoes'&&x.ownerId===f.id));
+ assert.ok(!available.some(x=>x.id==='jacket'||x.id==='dress'));
+ assert.deepEqual(f.editor.compatibleChoices('layer3').map(x=>x.id),['coat']);
+ assert.throws(()=>f.editor.compatibleChoices('unknown-slot'),/unsupported/);
+ assert.equal((await f.read()).board.saved[0].slots.layer3,'coat');
+ f.db.close();
+});
 test('pin, swap shoes, name edit and save-existing are atomic and preserve all unaffected references',async()=>{
  const f=await fixture(),pre=await f.read();await f.editor.refresh();f.editor.open('outfit-legacy-1');
  f.editor.pin('shoes');assert.throws(()=>f.editor.swapShoes('newshoes'),/pinned/);
