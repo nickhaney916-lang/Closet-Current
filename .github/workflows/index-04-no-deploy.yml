@@ -1,0 +1,92 @@
+name: INDEX-04 Authenticated Recognition To Saved Index NO DEPLOY
+on:
+  pull_request:
+    paths:
+      - 'research/wardrobe-index-01/**'
+      - 'research/wardrobe-index-02/**'
+      - 'research/index-03/**'
+      - 'research/index-04/**'
+      - 'public/app.js'
+      - 'tests/index-03-recognition-safety.test.mjs'
+      - 'tests/index-04-saved-recognition.test.mjs'
+      - 'scripts/test-index-04-browser.mjs'
+      - '.github/workflows/index-04-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  signed-in-source-checked-index:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+      - name: Exact verified INDEX-02 ancestor and restricted research-only change scope
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor f287ee5dd882ea202f9577a998e0b7f20b8d6c6c HEAD
+          git diff --name-only f287ee5dd882ea202f9577a998e0b7f20b8d6c6c HEAD | while IFS= read -r path; do
+            case "$path" in
+              research/index-03/*|research/index-04/*|tests/index-03-recognition-safety.test.mjs|tests/index-04-saved-recognition.test.mjs|scripts/test-index-04-browser.mjs|public/app.js|.github/workflows/index-04-no-deploy.yml|.github/workflows/wardrobe-index-02-no-deploy.yml) ;;
+              *) echo "INDEX-04 unauthorized change: $path"; exit 1;;
+            esac
+          done
+      - name: Isolated test harness setup (no deploy)
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+      - name: Static source and application syntax validation
+        run: |
+          node --check public/app.js
+          node --check research/wardrobe-index-01/owner-wardrobe-index.mjs
+          node --check research/wardrobe-index-02/mobile-index-app.mjs
+          node --check research/index-03/recognition-index-gate.mjs
+          node --check research/index-04/verified-saved-recognition.mjs
+          node --check tests/index-04-saved-recognition.test.mjs
+          node --check scripts/test-index-04-browser.mjs
+      - name: All three research priorities, actual source, owner and correction regressions
+        run: node --test tests/wardrobe-index-01.test.mjs tests/wardrobe-index-02.test.mjs tests/index-03-recognition-safety.test.mjs tests/index-04-saved-recognition.test.mjs
+      - name: Original Closet Current production behavior regression and build (no publish)
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: INDEX-02 actual 320 390 430 saved closet and category corrections
+        run: node scripts/test-wardrobe-index-02-browser.mjs
+      - name: INDEX-04 actual 320 390 430 safe review vs source-verified saved owner index
+        run: node scripts/test-index-04-browser.mjs
+      - name: Strict mobile/identity evidentiary requirements; NO DEPLOY
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const a=JSON.parse(readFileSync('benchmark/index-04/results.json','utf8'));
+          assert.equal(a.verdict,'PASS');
+          assert.deepEqual(a.evidence.map(x=>x.width),[320,390,430]);
+          assert.ok(a.evidence.every(x=>x.actualPublicApp&&x.actualIndexedDB&&x.realJPEGCanvasSource&&x.mockedModelOutput&&x.unverifiedIsReview&&x.provenSingleJpegAutosaved&&x.savedOwnerIndexRefreshed&&x.originalJpegRetained&&x.logoutClearsPrivateIndex&&!x.physicalPhoneTested));
+          assert.equal(a.realModelInference,false);
+          assert.equal(a.physicalPhoneApproved,false);
+          assert.equal(a.familyAlpha,'HOLD');
+          assert.equal(a.productionDeployed,false);
+          assert.equal(a.errors.length,0);
+          assert.equal(a.outbound.length,0);
+          const b=JSON.parse(readFileSync('benchmark/wardrobe-index-02/results.json','utf8'));
+          assert.equal(b.verdict,'PASS');
+          assert.deepEqual(b.evidence.map(x=>x.width),[320,390,430]);
+          assert.equal(b.errors.length,0);
+          assert.equal(b.outbound.length,0);
+          console.log('INDEX-04 true browser owner review/save/index and INDEX-02 corrections PASS');
+          NODE
+      - name: Upload genuine mobile browser screenshots and result evidence (HOLD)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: INDEX-04-OWNER-SOURCE-REAL-CHROMIUM-320-390-430-HOLD
+          path: |
+            benchmark/index-04/
+            benchmark/wardrobe-index-02/
+          if-no-files-found: warn
