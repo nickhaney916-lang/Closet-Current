@@ -73,6 +73,7 @@ for(const c of m.cases){
  assert.equal(c.accountSwitchAtoB,true);
  assert.equal(c.ownerBCannotReadOwnerA,true);
  assert.equal(c.donorSourceHonestFallback,true);
+ assert.equal(c.originalSourceCardsClearOfFixedNav,true);
  assert.equal(c.privateJPEGHeadersNeverSentOffhost,true);
  assert.equal(c.realSupabaseRLS,'NOT VERIFIED');
  assert.equal(c.physicalPhones,'NOT TESTED');
