@@ -32,7 +32,9 @@ export function applySourceNeutralLight23Shader(fragmentShader,source,{enabled=f
  if(!proof.enabled)return fragmentShader;
  const colorFragment=fragmentShader.indexOf('sourcePantsOpacity');
  const roughnessFragment=fragmentShader.indexOf('#include <roughnessmap_fragment>');
- if(colorFragment<0||roughnessFragment<0||colorFragment>roughnessFragment||
+ const lightingEnd=fragmentShader.indexOf('#include <lights_fragment_end>');
+ if(colorFragment<0||roughnessFragment<0||lightingEnd<0||
+    colorFragment>roughnessFragment||roughnessFragment>lightingEnd||
     fragmentShader.includes('sourceNeutralUnphotographed23'))
   throw Error('P23 missing authentic source front opacity gating or double-installed neutral lighting');
  // The existing physically based renderer uses actual mesh normal, real
@@ -45,7 +47,19 @@ export function applySourceNeutralLight23Shader(fragmentShader,source,{enabled=f
   'float sourceNeutralUnphotographed23 = 1.0 - smoothstep(0.01,0.10,sourcePantsOpacity);',
   'roughnessFactor = mix(roughnessFactor,0.68,sourceNeutralUnphotographed23);'
  ].join('\n');
- return fragmentShader.replace('#include <roughnessmap_fragment>',injection);
+ // The first run produced zero changed 8-bit rendered RGB pixels: roughness
+ // alone did not form a perceptible cloth highlight under the actual studio.
+ // Add a *bounded* neutral-only Fresnel-like fiber grazing response derived
+ // exclusively from real skinned garment normal, view direction and the
+ // SHA-measured original neutral RGB. No painted pattern or pixel synthesis.
+ // Reflected light remains the existing physical mesh/studio response.
+ const sheen=[
+  '#include <lights_fragment_end>',
+  'float sourceNeutralFiberGrazing23=pow(1.0-clamp(dot(geometry.normal,geometry.viewDir),0.0,1.0),1.7);',
+  'reflectedLight.indirectSpecular += diffuseColor.rgb * (0.19 * sourceNeutralFiberGrazing23 * sourceNeutralUnphotographed23);'
+ ].join('\n');
+ return fragmentShader.replace('#include <roughnessmap_fragment>',injection)
+  .replace('#include <lights_fragment_end>',sheen);
 }
 
 /**
