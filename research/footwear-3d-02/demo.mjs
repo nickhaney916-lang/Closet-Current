@@ -2,6 +2,7 @@
 import {mountAnatomicalShowroom} from './shoe-showroom.mjs';
 import {loadApprovedFootwear02,createFootwear02Session} from './source-shoes.mjs';
 import {loadSourceVetted3D69ResearchBundle} from '../three-d-69/sha-verified-original-garment-sources.mjs';
+import {auditActualFootwear02StaticContact} from './contact-audit.mjs';
 const q=new URLSearchParams(location.search),local=['localhost','127.0.0.1','[::1]'].includes(location.hostname);
 if(!local||q.get('footwear02')!=='research'){document.getElementById('status').textContent='Research OFF; original-photo fallback only';}
 else {
@@ -49,7 +50,7 @@ else {
   ]);
   await load('female');window.__footwear02Ready=true;show('Ready · source-verified research ONLY');
  }
- window.__footwear02={load,select,rotate,invalidate,state,checkOwner,getSource:id=>id==='commons-0080'?src1:id==='commons-0081'?src2:null,
+ window.__footwear02={load,select,rotate,invalidate,state,checkOwner,audit:()=>{if(!session)throw Error('Research session cleared');return auditActualFootwear02StaticContact({viewer});},getSource:id=>id==='commons-0080'?src1:id==='commons-0081'?src2:null,
   dispose(){invalidate();viewer.stop();sources?.dispose();}};
  for(const [id,act]of [['bare',()=>select(null)],['photo',()=>select('unsupported')],['a',()=>select('commons-0080')],['b',()=>select('commons-0081')]])
   document.getElementById(id).addEventListener('click',()=>act().catch(e=>show('Photo-only fallback: '+e.message)));
