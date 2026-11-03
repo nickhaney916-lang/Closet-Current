@@ -32,7 +32,7 @@ try{
  for(const width of widths){
   const context=await browser.newContext({viewport:{width,height:950},deviceScaleFactor:1});
   await context.route('**/*',route=>{
-   const url=new URL(route.request().url);
+   const url=new URL(route.request().url());
    if(url.hostname!=='127.0.0.1'){external.push({url:route.request().url,method:route.request().method()});return route.abort();}
    return route.continue();
   });
