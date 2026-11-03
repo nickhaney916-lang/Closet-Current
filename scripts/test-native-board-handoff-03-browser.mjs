@@ -161,7 +161,7 @@ async function ownerAcceptance(page,owner){
   if(decision.mode!=='dress'||!verified.originalJPEGsByteVerified||
      !decision.fallbackIds.includes(id+'-coat')||
      !decision.fallbackIds.includes(id+'-jacket')||
-     !decision.fallbackIds.includes(id+'-shoes'))
+     !decision.fallbackIds.includes(original.slots.shoes))
     throw Error('3D decision lost owner photo or fabricated unsupported garment mesh');
   const missing=e.open(id+'-missing-outfit');
   if(missing.missing.length!==1||missing.missing[0].itemId!==id+'-missing-jeans')
