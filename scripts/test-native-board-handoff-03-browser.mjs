@@ -138,7 +138,7 @@ async function mount(page){
   const {decideOutfit3D01}=await import('/donor/research/outfit-3d-01/source-true-viewer.mjs');
   const original=window.closetAuth;
   window.__native03=await mountNativeBoardHandoff03({
-   createNativeEpoch:createNativeAuthEpoch01,sourceHonest3DDecision:decideOutfit3D01});
+   createNativeEpoch:opts=>{window.__native03Epoch=createNativeAuthEpoch01(opts);return window.__native03Epoch;},sourceHonest3DDecision:decideOutfit3D01});
   const ui=window.__native03;
   return {status:ui.status,nativeUnchanged:window.closetAuth===original,
    originalNativeNoSyntheticEpoch:!('getSessionGeneration' in original)};
@@ -257,7 +257,7 @@ try{
     // After real browser reload, real native auth restores its rotated session.
     await page.reload({waitUntil:'domcontentloaded'});
     await page.waitForFunction(()=>window.closetAuth?.user?.id==='fixture-native-A'&&
-      document.getElementById('appShell')?.hidden===false&&typeof db!=='undefined');
+      document.getElementById('appShell')?.hidden===false&&db?.name==='closet-current-user-fixture-native-A');
     assert.deepEqual(await getStored(page),after);
     await mount(page);
     const reopening=await ownerAcceptance(page,'fixture-native-A');
@@ -276,13 +276,10 @@ try{
     assert.equal(bPlan.missingSavedId,'fixture-native-B-missing-jeans');
     const crossOwnerDenied=await page.evaluate(async()=>{
      const {createExistingBoard02IO}=await import('/research/board-lossless-02/existing-idb-cas.mjs');
-     const {createNativeAuthEpoch01}=await import('/authdonor/research/auth-epoch-01/native-session-epoch.mjs');
-     const bridge=createNativeAuthEpoch01({nativeAuth:window.closetAuth});await bridge.attest();
-     try{
-      try{await createExistingBoard02IO(bridge.auth).read({authenticated:true,
-       ownerId:'fixture-native-A',generation:bridge.auth.getSessionGeneration()});return false;}
-      catch{return true;}
-     }finally{bridge.dispose();}
+     const bridge=window.__native03Epoch;
+     try{await createExistingBoard02IO(bridge.auth).read({authenticated:true,
+      ownerId:'fixture-native-A',generation:bridge.auth.getSessionGeneration()});return false;}
+     catch{return true;}
     });
     assert.equal(crossOwnerDenied,true);
     assert.deepEqual(await getStored(page),bBefore,'Reading B original photo may not mutate B stored state');
