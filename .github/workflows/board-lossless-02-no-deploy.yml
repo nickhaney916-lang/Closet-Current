@@ -1,0 +1,129 @@
+name: BOARD-LOSSLESS-02 original owner saved outfit recovery and 3D compatibility NO DEPLOY
+on:
+  pull_request:
+    paths:
+      - 'research/board-lossless-02/**'
+      - 'tests/board-lossless-02.test.mjs'
+      - 'scripts/test-board-lossless-02-browser.mjs'
+      - '.github/workflows/board-lossless-02-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  original-native-owner-atomic-board-recovery:
+    runs-on: ubuntu-latest
+    timeout-minutes: 95
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+      - name: Exact BOARD-PRESERVE-01 source baseline and strict no-production scope
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor 0df63a6ce81506364b6f9a32b452bba178adae93 HEAD
+          git diff --name-only 0df63a6ce81506364b6f9a32b452bba178adae93 HEAD | while IFS= read -r p; do
+            case "$p" in
+              research/board-lossless-02/*|tests/board-lossless-02.test.mjs|scripts/test-board-lossless-02-browser.mjs|.github/workflows/board-lossless-02-no-deploy.yml) ;;
+              *) echo "BLOCKED: production, auth, outfit donor or parallel branch changed $p"; exit 1 ;;
+            esac
+          done
+      - name: Install pinned isolated Node IndexedDB Chromium WebKit and photo dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund fake-indexeddb@6.2.4 playwright@1.56.1 sharp@0.34.3 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Syntax and full new cloud/outfit/owner preservation unit regressions
+        run: |
+          for p in research/board-lossless-02/*.mjs tests/board-lossless-02.test.mjs scripts/test-board-lossless-02-browser.mjs; do node --check "$p"; done
+          node --test tests/board-lossless-02.test.mjs tests/board-preserve-01.test.mjs tests/outfit-board.test.cjs tests/cloud-backup.test.cjs
+          node scripts/build.mjs
+      - name: Fetch detached, unchanged exact verified PR541 owner-private 3D donor
+        run: |
+          git fetch --no-tags origin df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          git worktree add --detach .board02-donor-541 df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          test "$(git -C .board02-donor-541 rev-parse HEAD)" = df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          git -C .board02-donor-541 status --porcelain | grep -q . && { echo 'Donor worktree changed'; exit 1; } || true
+      - name: Actual unchanged native app Chromium and WebKit at 320 390 430 with source authentic photos
+        run: node scripts/test-board-lossless-02-browser.mjs
+      - name: Enforce evidence SHA, 2 owners, actual native loss reproduction and unchanged originals
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync,existsSync} from 'node:fs';
+          import {createHash} from 'node:crypto';
+          const base='benchmark/board-lossless-02/',r=JSON.parse(readFileSync(base+'results.json'));
+          assert.equal(r.actualNativeApp,true);assert.equal(r.realIndexedDB,true);
+          assert.equal(r.donorPR541Decision,true);assert.equal(r.accountIsolationFixture,true);
+          assert.equal(r.verifiedOriginalSHA,true);assert.equal(r.cases,12);
+          const locks=JSON.parse(readFileSync('benchmark/locked-photo-sources.json','utf8'));
+          assert.equal(Object.keys(r.sourceProof).length,6);
+          for(const [id,proof]of Object.entries(r.sourceProof)){
+            const locked=locks.find(x=>x.id===id);
+            assert.equal(locked?.verified,true);
+            assert.equal(proof.license,locked.attribution.license);
+            assert.equal(proof.provenance,locked.attribution.source);
+            assert.equal(proof.sha256,locked.sha256);
+            assert.equal(createHash('sha256').update(readFileSync('benchmark/fixtures/'+id+'.jpg')).digest('hex'),proof.sha256);
+          }
+          assert.equal(r.screenshots,72);assert.equal(r.strips.length,12);
+          assert.deepEqual(r.widths,[320,390,430]);
+          assert.deepEqual(r.engines,['chromium','webkit']);
+          assert.deepEqual(r.errors,[]);
+          assert.deepEqual(r.external.filter(x=>x.method!=='GET'),[]);
+          assert.equal(r.originalProductionChanged,false);assert.equal(r.realWebGLRendered,false);
+          assert.equal(r.physicalPhone,'NOT TESTED');assert.equal(r.liveSupabaseRLS,'NOT TESTED');
+          assert.equal(r.familyAlpha,'HOLD');
+          for(const c of r.evidence){
+            assert.equal(c.nativeLoss.jacket,false);assert.equal(c.nativeLoss.coat,false);
+            assert.equal(c.nativeLoss.durable,false);assert.equal(c.losslessJacketCoat,true);
+            assert.equal(c.durable3DID,true);assert.equal(c.missingPieceId,true);
+            assert.equal(c.donorMode,'dress');assert.equal(c.separateOwnerDenied,true);
+            assert.equal(c.cancelNoWrite,true);assert.equal(c.reopenReadOnly,true);
+            assert.equal(c.saveAsNewUI,true);assert.equal(c.confirmedDeleteUI,true);
+            assert.equal(c.sessionInvalidationUI,true);
+          }
+          for(const s of [...r.screens,...r.strips]){
+            assert.ok(existsSync(base+(s.name||s.file)),'Expected rendered file absent');
+            const actual=createHash('sha256').update(readFileSync(base+(s.name||s.file))).digest('hex');
+            assert.equal(actual,s.sha256,'A real screenshot hash must match file bytes');
+          }
+          console.log('72 actual native browser screenshots + 12 before-after contact sheets SHA-gated; no approval for production');
+          NODE
+      - name: Verify inherited original PR541 saved wardrobe 163-bone WebGL still runs
+        run: |
+          git fetch --no-tags origin 53f2ad344dc56a1477e343531c423aed0e66c17d dd6bac3fa9ff640d4f562cf925337440bdb5cf8f 3a572193987cb29389727426136c6eb3ac326783 dfb40889c4c1221fb1833b859e8a11ef38aeb76e
+          cd .board02-donor-541
+          # Browser server runs from this detached worktree; expose its exact
+          # pinned test dependencies here WITHOUT editing donor-tracked files.
+          ln -s ../node_modules node_modules
+          test -f node_modules/three/build/three.module.js
+          test -f node_modules/three-mesh-bvh/build/index.module.js
+          node scripts/build-three-d-31-jeans-proposal.mjs
+          node scripts/build-three-d-37-second-jeans.mjs
+          node scripts/build-work47-benchmark.mjs
+          node research/three-d-20/restore-approved-models.mjs
+          node --test tests/outfit-3d-01.test.mjs tests/three-d-69-indexed-photo-real-3d.test.mjs
+          node scripts/test-outfit-3d-01-browser.mjs
+      - name: Enforce 45 inherited genuine source-verified donor WebGL frames (NOT candidate screenshots)
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';import {readFileSync,existsSync} from 'node:fs';
+          const path='.board02-donor-541/benchmark/outfit-3d-01/',r=JSON.parse(readFileSync(path+'results.json'));
+          assert.equal(r.verdict,'PASS');assert.equal(r.screenshots,45);
+          assert.equal(r.realBrowserWebGL,true);assert.equal(r.originalPhotosVerified,true);
+          assert.equal(r.accountIsolation,true);assert.equal(r.productionModified,false);
+          for(const c of r.cases)assert.ok(existsSync(path+c.screenshot));
+          console.log('Unchanged PR541 45 genuine WebGL donor frames passed, separate from BOARD02 screenshots');
+          NODE
+      - name: Preserve real screenshot and FAIL/HOLD artifacts even if acceptance fails
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: BOARD-LOSSLESS-02-TRUE-NATIVE-WEBKIT-CHROMIUM-SOURCE-HOLD
+          path: |
+            benchmark/board-lossless-02/
+            .board02-donor-541/benchmark/outfit-3d-01/
+          if-no-files-found: warn
