@@ -54,7 +54,7 @@ export async function mountOutfit3D01Research({doc=document,auth=window.closetAu
  const close=el('button','outfit3D01Close','Close');header.append(close);dialog.append(header);
  const body=el('div');body.className='cc3d-body';
  const left=el('div');left.className='cc3d-viewer';
- const canvas=el('canvas','outfit3D01Canvas');canvas.setAttribute('aria-label','Rotatable 163 bone anatomical figure');left.append(canvas);
+ let canvas=el('canvas','outfit3D01Canvas');canvas.setAttribute('aria-label','Rotatable 163 bone anatomical figure');left.append(canvas);
  const views=el('div');views.className='cc3d-controls';
  for(const [id,label]of [['Front','Front'],['Side','Side'],['Back','Back'],['Rotate','Rotate']]){
   views.append(el('button','outfit3D01'+id,label));
@@ -213,6 +213,12 @@ export async function mountOutfit3D01Research({doc=document,auth=window.closetAu
  dialog.addEventListener('close',()=>{
   if(dead)return;shown=false;loadSerial++;
   presenter?.dispose();presenter=null;scene?.stop();scene=null;sources?.dispose();sources=null;
+  // The approved showroom.stop() deliberately force-loses its WebGL context
+  // after disposing meshes and skeletons. NEVER reuse that same canvas for a
+  // newly reopened owner/viewer; make a fresh DOM canvas/context each time.
+  const fresh=el('canvas','outfit3D01Canvas');
+  fresh.setAttribute('aria-label','Rotatable 163 bone anatomical figure');
+  canvas.replaceWith(fresh);canvas=fresh;
   control.invalidate();cards.replaceChildren();ready=false;rendered=null;
  });
  for(const [slot,picker]of selects)picker.onchange=()=>run(()=>{control.setSlot(slot,picker.value||null);update();});
