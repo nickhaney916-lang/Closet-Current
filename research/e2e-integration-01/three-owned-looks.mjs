@@ -44,7 +44,7 @@ export function suggestThreeOwnedOutfits(control,{pinnedId}={}){
  // Require one genuine owned top/dress AND one genuine owned shoe for an
  // independently recognizable full look. A separate lower body is required
  // for any non-dress top, not fabricated out of the mannequin.
- for(const top of tops){
+ search: for(const top of tops){
   const dress=top.category==='Dresses';
   const bottoms=dress?[null]:pool.bottom;
   if(!bottoms.length)continue;
@@ -66,11 +66,9 @@ export function suggestThreeOwnedOutfits(control,{pinnedId}={}){
      slots:Object.freeze(slots),pinnedId,onePieceDress:dress,
      originalPhotoFallbackRequired:true,meshCertified:false,
      accountOwner:lease.ownerId}));
-    if(combos.length>=3)break;
+    if(combos.length===3)break search;
    }
-   if(combos.length>=3)break;
   }
-  if(combos.length>=3)break;
  }
  // Some owned categories (accessories/coat) can be explicitly selected;
  // no shortcut can insert a not-owned garment or grant mesh approval.
