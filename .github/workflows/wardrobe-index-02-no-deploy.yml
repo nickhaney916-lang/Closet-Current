@@ -1,0 +1,82 @@
+name: INDEX-02 Authenticated Mobile Closet Index NO DEPLOY
+on:
+  pull_request:
+    paths:
+      - 'research/wardrobe-index-01/**'
+      - 'research/wardrobe-index-02/**'
+      - 'public/app.js'
+      - 'public/cloud-backup-bridge.js'
+      - 'scripts/test-wardrobe-index-02-browser.mjs'
+      - 'tests/wardrobe-index-01.test.mjs'
+      - 'tests/wardrobe-index-02.test.mjs'
+      - '.github/workflows/wardrobe-index-02-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  real-saved-closet-and-mobile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+      - name: Exact INDEX-01 ancestor and RESEARCH ONLY scope
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor 9087534732177608f9982b1301fb83bc4df0b3fe HEAD
+          git diff --name-only 9087534732177608f9982b1301fb83bc4df0b3fe HEAD | while IFS= read -r path; do
+            case "$path" in
+              research/wardrobe-index-02/*|tests/wardrobe-index-02.test.mjs|scripts/test-wardrobe-index-02-browser.mjs|public/app.js|public/cloud-backup-bridge.js|.github/workflows/wardrobe-index-02-no-deploy.yml) ;;
+              *) echo "INDEX-02 unauthorized change: $path"; exit 1;;
+            esac
+          done
+      - name: Install isolated test browser (no deployment)
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+      - name: Static JS syntax and original source protection
+        run: |
+          node --check research/wardrobe-index-02/mobile-index-app.mjs
+          node --check research/wardrobe-index-01/owner-wardrobe-index.mjs
+          node --check tests/wardrobe-index-02.test.mjs
+          node --check scripts/test-wardrobe-index-02-browser.mjs
+          node --check public/app.js
+          node --check public/cloud-backup-bridge.js
+      - name: INDEX-01 and INDEX-02 complete owner and correction tests
+        run: node --test tests/wardrobe-index-01.test.mjs tests/wardrobe-index-02.test.mjs
+      - name: Original Closet Current full application regression (no deploy)
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Actual 320 390 430 mobile Chromium signed-in My Closet screenshot QA
+        run: node scripts/test-wardrobe-index-02-browser.mjs
+      - name: Require all 3 mobile widths and real saved-owner corrections
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const r=JSON.parse(readFileSync('benchmark/wardrobe-index-02/results.json','utf8'));
+          assert.equal(r.verdict,'PASS');
+          assert.deepEqual(r.evidence.map(x=>x.width),[320,390,430]);
+          assert.ok(r.evidence.every(x=>x.realPublicClosetPage&&x.actualOwnerIndexedDB&&
+            x.correctedCategoryPropagatedToRealGrid&&x.originalSourcePixelsNotMutated&&
+            x.logoutBlockedPrivateIndex&&x.changedItemsInRealBrowser&&!x.physicalPhoneHardwareTested));
+          assert.equal(r.errors.length,0);
+          assert.equal(r.outbound.length,0);
+          assert.equal(r.productionDeployed,false);
+          assert.equal(r.familyAlpha,'HOLD');
+          assert.equal(r.realPhotoRecognitionBenchmarked,false);
+          console.log('Three genuine browser widths and owner/closet correction assertions PASS');
+          NODE
+      - name: Upload actual mobile index panel PNG evidence HOLD
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: INDEX-02-320-390-430-REAL-CLOSET-MOBILE-HOLD
+          path: benchmark/wardrobe-index-02/
+          if-no-files-found: warn
