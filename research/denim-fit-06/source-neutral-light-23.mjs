@@ -85,6 +85,10 @@ export function installSourceNeutralLight23(pants,source,{enabled=false}={}){
  material.onBeforeCompile=shader=>{
   priorCompile?.(shader);
   shader.fragmentShader=applySourceNeutralLight23Shader(shader.fragmentShader,source,{enabled:true});
+  if(!shader.fragmentShader.includes('sourceNeutralFiberGrazing23')||
+     !shader.fragmentShader.includes('sourceNeutralUnphotographed23'))
+   throw Error('P23 real 3D shader did not compile with genuine source-neutral lighting');
+  material.userData.cc23SourceNeutralShaderCompiled=true;
  };
  material.customProgramCacheKey=()=>String(priorCache?.()||'source-denim')+'-neutral-physical-brdf23';
  material.needsUpdate=true;
