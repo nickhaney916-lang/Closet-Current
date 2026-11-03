@@ -385,6 +385,19 @@ async function initViewer(){
        new URLSearchParams(location.search).get('denimRear14')==='after'&&
        new URLSearchParams(location.search).get('denimFairing')==='after'&&
        new URLSearchParams(location.search).get('denimSilhouette')==='after'&&
+       new URLSearchParams(location.search).get('denimFit')==='after',
+     sourceDenimMaterial23:new URLSearchParams(location.search).get('denimMaterial23')==='after'&&
+       new URLSearchParams(location.search).get('denimStack22')==='after'&&
+       new URLSearchParams(location.search).get('denimFold21')==='after'&&
+       new URLSearchParams(location.search).get('denimLine20')==='after'&&
+       new URLSearchParams(location.search).get('denimSigned19')==='after'&&
+       new URLSearchParams(location.search).get('denimProfile18')==='after'&&
+       new URLSearchParams(location.search).get('denimPhotoWidth17')==='after'&&
+       new URLSearchParams(location.search).get('denimPosterior16')==='after'&&
+       new URLSearchParams(location.search).get('denimSide15')==='after'&&
+       new URLSearchParams(location.search).get('denimRear14')==='after'&&
+       new URLSearchParams(location.search).get('denimFairing')==='after'&&
+       new URLSearchParams(location.search).get('denimSilhouette')==='after'&&
        new URLSearchParams(location.search).get('denimFit')==='after'
   });
   canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();
@@ -504,6 +517,10 @@ window.ccWardrobe10Diagnostics=()=>{
       sourceDenimLine20Enabled:state?.sourceDenimLine20Enabled||false,
       sourceDenimFold21Enabled:state?.sourceDenimFold21Enabled||false,
       sourceDenimCuffStack22Enabled:state?.sourceDenimCuffStack22Enabled||false,
+      sourceDenimMaterial23Enabled:state?.sourceDenimMaterial23Enabled||false,
+      sourceDenimMaterial23Compiled:state?.sourceDenimMaterial23Compiled===true,
+      sourceDenimMaterial23Protected:state?.outfit?.pants?.originalPhotoShaderProtected23===true,
+      sourceDenimMaterial23NoRearPhoto:state?.outfit?.pants?.unseenRearImageGenerated23===false,
       staticDenimFit06Enabled:state?.staticDenimFit06Enabled||false,
       staticDenimFit06State:state?.staticDenimFit06State||null,
      swept04Clock:state?.continuousGait04||null,
@@ -682,6 +699,13 @@ window.ccWardrobeDenimFreeze06=()=>{
      proof.sourceCuffStackMaxMeters22<.001||
      proof.sourceCuffStackMaxMeters22>.009157))
    throw Error('P22 original photographed denim protected diagonal cuff fold invalid');
+  if(new URLSearchParams(location.search).get('denimMaterial23')==='after'&&
+    (!app.getState()?.outfit?.pants?.sourceNeutralMaterial23||
+     !app.getState()?.outfit?.pants?.originalPhotoShaderProtected23||
+     app.getState()?.outfit?.pants?.unseenRearImageGenerated23!==false||
+     app.getState()?.outfit?.pants?.photoFrontOnly!==true||
+     app.getState()?.outfit?.pants?.originalImagePreserved!==true))
+   throw Error('P23 refused nonoriginal source or unprotected neutral denim physical material');
 
 
   const after=current();
