@@ -341,7 +341,7 @@ try{
   '--enable-unsafe-swiftshader','--enable-webgl','--no-sandbox']});
  for(const width of [320,390,430])await runWidth(width);
  assert.deepEqual(reports.map(x=>x.width),[320,390,430]);
- assert.equal(cases.length,42,'6 visual source cases plus 1 reopened per width, 2 figs: 42 genuine screenshots');
+ assert.equal(cases.length,45,'3 widths x (female 8 + male 7) = 45 real visual screenshots');
  assert.equal(leakedExternalPosts.length,0,'Owner JPEGs must never leave isolated browser');
  assert.equal(errors.length,0,'Unhandled real app/WebGL JS exceptions are not accepted');
  const result={verdict:'PASS',widths:[320,390,430],figures:['female','male'],
