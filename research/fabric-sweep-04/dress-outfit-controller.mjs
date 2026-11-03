@@ -3,6 +3,7 @@ import {createSourceTrueSkirtMotion} from '../fabric-motion-01/bounded-skirt-mot
 import {createSourceNeutralPosePleats03} from './pose-conditioned-source-pleats.mjs';
 import {createPhotographedDressStaticFit05} from '../dress-fit-05/static-source-dress-fit.mjs';
 import {createPhotoDenimStaticFitter06} from '../denim-fit-06/static-source-denim-fit.mjs';
+import {decideDenimPose29} from '../denim-pose-29/source-locked-pose-state-29.mjs';
 import {installSourceNeutralLight23} from '../denim-fit-06/source-neutral-light-23.mjs';
 import {installModeledNeutralWeave25} from '../denim-fit-06/source-neutral-weave-25.mjs';
 import {measureReviewedDenimOriginalWidth17} from '../denim-fit-06/original-photo-leg-width-17.mjs';
@@ -61,9 +62,11 @@ import {slopeTruePhotographedShoulderTop} from '../three-d-64/source-shoulder-to
 import {registerDressNeckline,clearNeckTriangleInteriors} from '../three-d-29/registered-neckline.mjs';
 export const OUTFITS=Object.freeze(['none','pants','shirt','shirt-pants','dress']);
 export function sourceForOutfit(mode){if(!OUTFITS.includes(mode))throw Error('Unsupported outfit');return mode==='dress'?'commons-0053':mode.includes('shirt')?'commons-0003':null;}
-export function createOutfitController(root,{refineFit=true,enableCuffFix=true,enableCuffFacing=true,enableCuffBridge=true,naturalFit=true,necklineSeams=true,dressNeckline=true,dressAnatomy=true,dressContact=true,skirtDrape=true,dressMobile74=false,registeredNeckline=true,naturalPantsDrape=true,posteriorJeansFairing=true,structuralPantsEnvelope=true,independentJeansLoft=true,crotchSeatPanel=true,sourceShirtWaistFit=true,clothWaistContact=true,shirtHangingSilhouette=true,denimHangingSilhouette=true,jeansPanelFall=false,independentGarments=false,poseContactFactory=null,tailoredShoulderSleeves=false,independentShoulderCaps=false,realisticShoulderContour=false,upperArmFabricVolume=false,sourceNeutralCollarRoll=false,rearShirtFabricRelief=false,naturalShoulderSleeveTransition=false,sourceMeasuredSleeveHang=false,poseConditionedSleeveDrape=false,anatomicalShirtSideFlow=false,naturalShoulderFall61=false,trueShoulderTop64=false,photoDenimRearDrape73=false,photoDenimCalfHang74=false,photoDenimFolds75=false,photoDenimContinuity76=false,photoDenimContactAudit77=false,photoDenimKneePose78=false,photoDenimFlex79=false,skirtSecondaryMotion01=false,posePleats03=false,staticDressFit05=false,staticDenimFit06=false,sourceDenimSilhouette07=false,sourceDenimCuffFairing08=false,sourceDenimRearThigh14=false,sourceDenimSideThigh15=false,sourceDenimPosteriorContour16=false,sourceDenimPhotoWidth17=false,sourceDenimProfile18=false,sourceDenimSigned19=false,sourceDenimLine20=false,sourceDenimFold21=false,sourceDenimCuffStack22=false,sourceDenimMaterial23=false,sourceDenimWeave25=false,sourceDenimHang26=false,sourceDenimFlow28=false}={}){
+export function createOutfitController(root,{refineFit=true,enableCuffFix=true,enableCuffFacing=true,enableCuffBridge=true,naturalFit=true,necklineSeams=true,dressNeckline=true,dressAnatomy=true,dressContact=true,skirtDrape=true,dressMobile74=false,registeredNeckline=true,naturalPantsDrape=true,posteriorJeansFairing=true,structuralPantsEnvelope=true,independentJeansLoft=true,crotchSeatPanel=true,sourceShirtWaistFit=true,clothWaistContact=true,shirtHangingSilhouette=true,denimHangingSilhouette=true,jeansPanelFall=false,independentGarments=false,poseContactFactory=null,tailoredShoulderSleeves=false,independentShoulderCaps=false,realisticShoulderContour=false,upperArmFabricVolume=false,sourceNeutralCollarRoll=false,rearShirtFabricRelief=false,naturalShoulderSleeveTransition=false,sourceMeasuredSleeveHang=false,poseConditionedSleeveDrape=false,anatomicalShirtSideFlow=false,naturalShoulderFall61=false,trueShoulderTop64=false,photoDenimRearDrape73=false,photoDenimCalfHang74=false,photoDenimFolds75=false,photoDenimContinuity76=false,photoDenimContactAudit77=false,photoDenimKneePose78=false,photoDenimFlex79=false,skirtSecondaryMotion01=false,posePleats03=false,staticDressFit05=false,staticDenimFit06=false,sourceDenimSilhouette07=false,sourceDenimCuffFairing08=false,sourceDenimRearThigh14=false,sourceDenimSideThigh15=false,sourceDenimPosteriorContour16=false,sourceDenimPhotoWidth17=false,sourceDenimProfile18=false,sourceDenimSigned19=false,sourceDenimLine20=false,sourceDenimFold21=false,sourceDenimCuffStack22=false,sourceDenimMaterial23=false,sourceDenimWeave25=false,sourceDenimHang26=false,sourceDenimFlow28=false,sourceDenimPoseGuard29=false}={}){
  if(typeof sourceDenimMaterial23!=='boolean'||(sourceDenimMaterial23&&!sourceDenimCuffStack22))
   throw Error('P23 requires exact original photographed P22 fit and explicit provenance-gated opt-in');
+ if(typeof sourceDenimPoseGuard29!=='boolean'||(sourceDenimPoseGuard29&&(!sourceDenimFlow28||!photoDenimFlex79||!photoDenimKneePose78||!staticDenimFit06)))
+  throw Error('P29 requires true original-photographed P28 fit and actual authenticated 163-bone 3D79 flex');
  if(typeof sourceDenimFlow28!=='boolean'||(sourceDenimFlow28&&!sourceDenimHang26))
   throw Error('P28 source-honest anatomical seam requires verified P26 original photographed denim');
  if(typeof sourceDenimHang26!=='boolean'||(sourceDenimHang26&&(!sourceDenimWeave25||!sourceDenimCuffStack22||!staticDenimFit06)))
@@ -82,9 +85,9 @@ export function createOutfitController(root,{refineFit=true,enableCuffFix=true,e
  // Canonical normals must be captured before the existing presentation clone.
  const fitPants=createPantsFitter(root),shoulders=captureShoulderSurface(root);prepareBodyPresentation(root);
  let contact=null;
- let parts={},mode='none',pose='relaxed',changes=0,closed=false,motion01=null,folds03=null,staticFit05=null,staticFit06=null;
+ let parts={},mode='none',pose='relaxed',changes=0,closed=false,motion01=null,folds03=null,staticFit05=null,staticFit06=null,poseGuard29=null;
  const all=p=>Object.values(p).flatMap(g=>g.meshes);
- const summarize=()=>({mode,pose,changes,slots:Object.keys(parts),garmentMeshes:all(parts).length,shirt:parts.shirt?{...parts.shirt.stats,sharedSkeleton:parts.shirt.sharedSkeleton}:null,pants:parts.pants?.stats||null,dress:parts.dress?.stats||null,fabricMotion:motion01?.state()||null,posePleats03:folds03?.state()||null,dressStaticFit05:staticFit05?.state()||null,denimStaticFit06:staticFit06?.state()||null,releaseAuthorized:false});
+ const summarize=()=>({mode,pose,changes,slots:Object.keys(parts),garmentMeshes:all(parts).length,shirt:parts.shirt?{...parts.shirt.stats,sharedSkeleton:parts.shirt.sharedSkeleton}:null,pants:parts.pants?.stats||null,dress:parts.dress?.stats||null,fabricMotion:motion01?.state()||null,posePleats03:folds03?.state()||null,dressStaticFit05:staticFit05?.state()||null,denimStaticFit06:staticFit06?.state()||null,denimPose29:poseGuard29,releaseAuthorized:false});
  function setOutfit(next,candidate,{reviewed=false,pantsCandidate=null,pantsReviewed=false}={}){
   if(closed)throw Error('Outfit controller closed');const id=sourceForOutfit(next);
   // Reject invalid review/source before detaching an existing valid outfit.
@@ -176,9 +179,24 @@ export function createOutfitController(root,{refineFit=true,enableCuffFix=true,e
   staticFit05?.dispose();staticFit05=newFit05;
   folds03?.dispose();folds03=newFolds03;
   motion01?.dispose();motion01=newMotion01;
-  contact?.dispose();Object.values(parts).forEach(g=>g.dispose());parts=built;mode=next;contact=builtContact;changes++;return summarize();
+  contact?.dispose();Object.values(parts).forEach(g=>g.dispose());parts=built;mode=next;contact=builtContact;poseGuard29=null;changes++;return summarize();
  }
- function setPose(next){if(closed)throw Error('Outfit controller closed');if(staticFit05?.state().frozen)staticFit05.restore();if(staticFit06?.state().frozen)staticFit06.restore();if(!independentGarments&&next.startsWith('blend-'))throw Error('Intermediate garment pose requires isolated independent research mode');setResearchPose(root,next);pose=next;contact?.fit(next);return summarize();}
+ function setPose(next){
+  if(closed)throw Error('Outfit controller closed');
+  if(staticFit05?.state().frozen)staticFit05.restore();
+  const wasDenimFitted=staticFit06?.state().frozen===true;
+  if(wasDenimFitted)staticFit06.restore();
+  if(!independentGarments&&next.startsWith('blend-'))
+   throw Error('Intermediate garment pose requires isolated independent research mode');
+  setResearchPose(root,next);pose=next;contact?.fit(next);
+  if(sourceDenimPoseGuard29&&(wasDenimFitted||poseGuard29)){
+   poseGuard29=Object.freeze({phase:'UNVERIFIED_OTHER_POSE_FALLBACK',fitVisible:false,
+    resumePending:false,sourceSHA256:parts.pants?.stats?.sourceSHA256||null,
+    pose:next,contactCertified:false,modeledBackNotPhotographed:true,
+    releaseAuthorized:false});
+  }
+  return summarize();
+ }
  function dispose(){if(closed)return;staticFit05?.dispose();staticFit05=null;staticFit06?.dispose();staticFit06=null;folds03?.dispose();folds03=null;motion01?.dispose();motion01=null;contact?.dispose();Object.values(parts).forEach(g=>g.dispose());parts={};mode='none';closed=true;releaseBodyPresentation(root);}
  function kickFabricMotion01(strength=1){if(closed||mode!=='dress'||!motion01)throw Error('Current real source dress required for bounded fabric movement');motion01.kick(strength);return motion01.state();}
  function stepFabricMotion01(dt){if(closed||mode!=='dress'||!motion01)throw Error('Current real source dress required for bounded fabric step');return { ...motion01.step(dt),...motion01.state()};}
@@ -219,21 +237,82 @@ export function createOutfitController(root,{refineFit=true,enableCuffFix=true,e
    !parts.pants?.stats?.auditedTrueSkinnedBodyToSourcePhotoDenim77||
    !parts.pants?.stats?.photoApplied)
    throw Error('Exact source-photographed 163-bone independent jeans required');
-  return staticFit06.freeze();
+  const proof=staticFit06.freeze();
+  if(sourceDenimPoseGuard29){
+   poseGuard29=Object.freeze({phase:'SOURCE_FIT_PENDING_BVH',fitVisible:false,
+    resumePending:true,sourceSHA256:parts.pants.stats.sourceSHA256,
+    pose:'source',contactCertified:false,modeledBackNotPhotographed:true,
+    releaseAuthorized:false});
+  }
+  return proof;
+ }
+ function certifyDenimRestPose29(proof){
+  if(!sourceDenimPoseGuard29||!staticFit06?.state().frozen||
+     !parts.pants?.stats?.sourceSHA256)
+   throw Error('P29 authenticated fitted original photo required for certifying source pose');
+  const sha=parts.pants.stats.sourceSHA256;
+  poseGuard29=decideDenimPose29({pose:'source',
+   previous:poseGuard29||{sourceSHA256:sha},restFitWasFrozen:true,
+   originalSourceSHA256:sha,originalPhotoPreserved:true,realKneeContactCount:0,
+   restRecoveryProof:{...proof,originalPhotoSHA256:sha}});
+  return poseGuard29;
  }
  function restoreDenimFit06(){
   if(!staticFit06||!['pants','shirt-pants'].includes(mode))
    throw Error('No source verified photographed jeans to restore');
-  staticFit06.restore();return staticFit06.state();
+  staticFit06.restore();
+  if(sourceDenimPoseGuard29)poseGuard29=Object.freeze({phase:'MANUAL_RESTORED_UNFITTED',
+   fitVisible:false,resumePending:false,sourceSHA256:parts.pants?.stats?.sourceSHA256||null,
+   pose:'source',contactCertified:false,modeledBackNotPhotographed:true,
+   releaseAuthorized:false});
+  return staticFit06.state();
  }
  function auditKneePose78(next){
   if(!photoDenimKneePose78||!parts.pants?.stats?.auditedTrueSkinnedBodyToSourcePhotoDenim77)
    throw Error('3D78 only original SHA-vetted 3D77 research denim can bend knee');
-  if(staticFit06?.state().frozen)staticFit06.restore();
+  const wasFitted=staticFit06?.state().frozen===true;
+  const prior=poseGuard29;
+  if(wasFitted)staticFit06.restore();
   const base=parts.pants.restoreGeometry79?.()||parts.pants;
   parts.pants=auditSourcePhotoDenimAlternativeKneePose78(base,root,{pose:next});
   if(photoDenimFlex79)parts.pants=bendSourceTrueDenim79(parts.pants,root,{pose:next});
+  if(sourceDenimPoseGuard29){
+   const st=parts.pants.stats,sha=st.sourceSHA256;
+   // A 3D78/79 pose is genuine bone-skinned cloth, never claim our P28
+   // frozen rest fit still applies to a bent knee: it has been restored.
+   const input={pose:next,previous:prior||{sourceSHA256:sha},
+    restFitWasFrozen:wasFitted,originalSourceSHA256:sha,
+    originalPhotoPreserved:st.originalPhotoCoordinatesPreserved78===true&&
+      st.originalPhotoUVRestFrontSkinPositionsBytePreserved77===true,
+    realKneeContactCount:st.realKneeSkinnedBodyToDenimCrossings78};
+   if(next!=='source')poseGuard29=decideDenimPose29(input);
+   else if(wasFitted||prior?.resumePending){
+    // Refit ONLY after actual original rig returns to source bone angles.
+    // Require two fresh true posed-BVH world-mesh collision audits.
+    let restProof=null;
+    try{
+     const before=auditDenimFit06();
+     const staticProof=staticFit06.freeze();
+     const after=auditDenimFit06();
+     if(after.sourceSHA256!==sha||before.sourceSHA256!==sha||
+        after.actualSkinnedDenimBodyTriangleCrossings>
+        before.actualSkinnedDenimBodyTriangleCrossings)
+      throw Error('P29 source-rest return introduced actual skinned body collision');
+     restProof={...staticProof,originalPhotoSHA256:sha,
+      bodyContactBefore:before.actualSkinnedDenimBodyTriangleCrossings,
+      bodyContactAfter:after.actualSkinnedDenimBodyTriangleCrossings,
+      trueBVHBodyContactNoNew:true};
+     poseGuard29=decideDenimPose29({...input,restRecoveryProof:restProof});
+    }catch(error){
+     staticFit06.restore();
+     poseGuard29=Object.freeze({phase:'SOURCE_RESTORATION_REVIEW',
+      fitVisible:false,resumePending:true,sourceSHA256:sha,pose:'source',
+      contactCertified:false,modeledBackNotPhotographed:true,
+      releaseAuthorized:false});
+    }
+   }else poseGuard29=decideDenimPose29(input);
+  }
   return summarize();
  }
- setPose(pose);return {setOutfit,setPose,getState:summarize,auditKneePose78,kickFabricMotion01,stepFabricMotion01,resetFabricMotion01,applyPosePleats03,resetPosePleats03,freezeDressFit05,restoreDressFit05,freezeDenimFit06,restoreDenimFit06,auditDenimFit06,dispose};
+ setPose(pose);return {setOutfit,setPose,getState:summarize,auditKneePose78,kickFabricMotion01,stepFabricMotion01,resetFabricMotion01,applyPosePleats03,resetPosePleats03,freezeDressFit05,restoreDressFit05,freezeDenimFit06,restoreDenimFit06,certifyDenimRestPose29,auditDenimFit06,dispose};
 }
