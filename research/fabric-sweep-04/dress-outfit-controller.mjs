@@ -4,6 +4,7 @@ import {createSourceNeutralPosePleats03} from './pose-conditioned-source-pleats.
 import {createPhotographedDressStaticFit05} from '../dress-fit-05/static-source-dress-fit.mjs';
 import {createPhotoDenimStaticFitter06} from '../denim-fit-06/static-source-denim-fit.mjs';
 import {installSourceNeutralLight23} from '../denim-fit-06/source-neutral-light-23.mjs';
+import {installModeledNeutralWeave25} from '../denim-fit-06/source-neutral-weave-25.mjs';
 import {measureReviewedDenimOriginalWidth17} from '../denim-fit-06/original-photo-leg-width-17.mjs';
 import {posedGeometry,triangleContacts} from '../three-d-42/posed-contact.mjs';
 import {createPoseConditionedSleeveContact} from '../three-d-56/pose-conditioned-sleeves.mjs';
@@ -60,9 +61,11 @@ import {slopeTruePhotographedShoulderTop} from '../three-d-64/source-shoulder-to
 import {registerDressNeckline,clearNeckTriangleInteriors} from '../three-d-29/registered-neckline.mjs';
 export const OUTFITS=Object.freeze(['none','pants','shirt','shirt-pants','dress']);
 export function sourceForOutfit(mode){if(!OUTFITS.includes(mode))throw Error('Unsupported outfit');return mode==='dress'?'commons-0053':mode.includes('shirt')?'commons-0003':null;}
-export function createOutfitController(root,{refineFit=true,enableCuffFix=true,enableCuffFacing=true,enableCuffBridge=true,naturalFit=true,necklineSeams=true,dressNeckline=true,dressAnatomy=true,dressContact=true,skirtDrape=true,dressMobile74=false,registeredNeckline=true,naturalPantsDrape=true,posteriorJeansFairing=true,structuralPantsEnvelope=true,independentJeansLoft=true,crotchSeatPanel=true,sourceShirtWaistFit=true,clothWaistContact=true,shirtHangingSilhouette=true,denimHangingSilhouette=true,jeansPanelFall=false,independentGarments=false,poseContactFactory=null,tailoredShoulderSleeves=false,independentShoulderCaps=false,realisticShoulderContour=false,upperArmFabricVolume=false,sourceNeutralCollarRoll=false,rearShirtFabricRelief=false,naturalShoulderSleeveTransition=false,sourceMeasuredSleeveHang=false,poseConditionedSleeveDrape=false,anatomicalShirtSideFlow=false,naturalShoulderFall61=false,trueShoulderTop64=false,photoDenimRearDrape73=false,photoDenimCalfHang74=false,photoDenimFolds75=false,photoDenimContinuity76=false,photoDenimContactAudit77=false,photoDenimKneePose78=false,photoDenimFlex79=false,skirtSecondaryMotion01=false,posePleats03=false,staticDressFit05=false,staticDenimFit06=false,sourceDenimSilhouette07=false,sourceDenimCuffFairing08=false,sourceDenimRearThigh14=false,sourceDenimSideThigh15=false,sourceDenimPosteriorContour16=false,sourceDenimPhotoWidth17=false,sourceDenimProfile18=false,sourceDenimSigned19=false,sourceDenimLine20=false,sourceDenimFold21=false,sourceDenimCuffStack22=false,sourceDenimMaterial23=false}={}){
+export function createOutfitController(root,{refineFit=true,enableCuffFix=true,enableCuffFacing=true,enableCuffBridge=true,naturalFit=true,necklineSeams=true,dressNeckline=true,dressAnatomy=true,dressContact=true,skirtDrape=true,dressMobile74=false,registeredNeckline=true,naturalPantsDrape=true,posteriorJeansFairing=true,structuralPantsEnvelope=true,independentJeansLoft=true,crotchSeatPanel=true,sourceShirtWaistFit=true,clothWaistContact=true,shirtHangingSilhouette=true,denimHangingSilhouette=true,jeansPanelFall=false,independentGarments=false,poseContactFactory=null,tailoredShoulderSleeves=false,independentShoulderCaps=false,realisticShoulderContour=false,upperArmFabricVolume=false,sourceNeutralCollarRoll=false,rearShirtFabricRelief=false,naturalShoulderSleeveTransition=false,sourceMeasuredSleeveHang=false,poseConditionedSleeveDrape=false,anatomicalShirtSideFlow=false,naturalShoulderFall61=false,trueShoulderTop64=false,photoDenimRearDrape73=false,photoDenimCalfHang74=false,photoDenimFolds75=false,photoDenimContinuity76=false,photoDenimContactAudit77=false,photoDenimKneePose78=false,photoDenimFlex79=false,skirtSecondaryMotion01=false,posePleats03=false,staticDressFit05=false,staticDenimFit06=false,sourceDenimSilhouette07=false,sourceDenimCuffFairing08=false,sourceDenimRearThigh14=false,sourceDenimSideThigh15=false,sourceDenimPosteriorContour16=false,sourceDenimPhotoWidth17=false,sourceDenimProfile18=false,sourceDenimSigned19=false,sourceDenimLine20=false,sourceDenimFold21=false,sourceDenimCuffStack22=false,sourceDenimMaterial23=false,sourceDenimWeave25=false}={}){
  if(typeof sourceDenimMaterial23!=='boolean'||(sourceDenimMaterial23&&!sourceDenimCuffStack22))
   throw Error('P23 requires exact original photographed P22 fit and explicit provenance-gated opt-in');
+ if(typeof sourceDenimWeave25!=='boolean'||(sourceDenimWeave25&&!sourceDenimMaterial23))
+  throw Error('P25 modeled textile requires exact P23 SHA-verified neutral material');
  if(independentGarments&&typeof poseContactFactory!=='function')throw Error('Independent garment triangle solver must be explicitly loaded');
  if(photoDenimCalfHang74&&!photoDenimRearDrape73)throw Error('3D74 requires exact 3D73 source photographed denim baseline');
  if(photoDenimFolds75&&!photoDenimCalfHang74)throw Error('3D75 requires exact 3D74 source photographed calf geometry baseline');
@@ -96,6 +99,8 @@ export function createOutfitController(root,{refineFit=true,enableCuffFix=true,e
      // module nor original photographed pixels; new shader only on neutral rear.
      if(sourceDenimMaterial23)
       built.pants=installSourceNeutralLight23(built.pants,pantsCandidate,{enabled:true});
+     if(sourceDenimWeave25)
+      built.pants=installModeledNeutralWeave25(built.pants,pantsCandidate,{enabled:true});
      if(naturalPantsDrape&&isSourceVerifiedDenimId(pantsCandidate.id)){
       built.pants=drapeSourceJeans(built.pants,root);
       if(posteriorJeansFairing){

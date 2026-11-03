@@ -398,7 +398,9 @@ async function initViewer(){
        new URLSearchParams(location.search).get('denimRear14')==='after'&&
        new URLSearchParams(location.search).get('denimFairing')==='after'&&
        new URLSearchParams(location.search).get('denimSilhouette')==='after'&&
-       new URLSearchParams(location.search).get('denimFit')==='after'
+       new URLSearchParams(location.search).get('denimFit')==='after',
+     sourceDenimWeave25:new URLSearchParams(location.search).get('denimWeave25')==='after'&&
+       new URLSearchParams(location.search).get('denimMaterial23')==='after'
   });
   canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();
    if(token!==bootToken)return;
@@ -521,6 +523,10 @@ window.ccWardrobe10Diagnostics=()=>{
       sourceDenimMaterial23Compiled:state?.sourceDenimMaterial23Compiled===true,
       sourceDenimMaterial23Protected:state?.outfit?.pants?.originalPhotoShaderProtected23===true,
       sourceDenimMaterial23NoRearPhoto:state?.outfit?.pants?.unseenRearImageGenerated23===false,
+      sourceDenimWeave25Enabled:state?.sourceDenimWeave25Enabled||false,
+      sourceDenimWeave25Compiled:state?.sourceDenimWeave25Compiled===true,
+      sourceDenimWeave25Protected:state?.outfit?.pants?.originalSourceJPEGUVSkinRestUnchanged25===true,
+      sourceDenimWeave25NoRearPhoto:state?.outfit?.pants?.noRearPhotoGenerated25===true,
       staticDenimFit06Enabled:state?.staticDenimFit06Enabled||false,
       staticDenimFit06State:state?.staticDenimFit06State||null,
      swept04Clock:state?.continuousGait04||null,
@@ -706,6 +712,12 @@ window.ccWardrobeDenimFreeze06=()=>{
      app.getState()?.outfit?.pants?.photoFrontOnly!==true||
      app.getState()?.outfit?.pants?.originalImagePreserved!==true))
    throw Error('P23 refused nonoriginal source or unprotected neutral denim physical material');
+  if(new URLSearchParams(location.search).get('denimWeave25')==='after'&&
+    (!app.getState()?.outfit?.pants?.sourceNeutralModeledTwill25||
+     !app.getState()?.outfit?.pants?.originalSourceJPEGUVSkinRestUnchanged25||
+     app.getState()?.outfit?.pants?.noRearPhotoGenerated25!==true||
+     !app.getState()?.outfit?.pants?.sourceNeutralTwillNotPhoto25))
+   throw Error('P25 refused synthetic rear photo or unprotected front original');
 
 
   const after=current();
