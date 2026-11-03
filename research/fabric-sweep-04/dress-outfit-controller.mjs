@@ -3,6 +3,7 @@ import {createSourceTrueSkirtMotion} from '../fabric-motion-01/bounded-skirt-mot
 import {createSourceNeutralPosePleats03} from './pose-conditioned-source-pleats.mjs';
 import {createPhotographedDressStaticFit05} from '../dress-fit-05/static-source-dress-fit.mjs';
 import {createPhotoDenimStaticFitter06} from '../denim-fit-06/static-source-denim-fit.mjs';
+import {installSourceNeutralLight23} from '../denim-fit-06/source-neutral-light-23.mjs';
 import {measureReviewedDenimOriginalWidth17} from '../denim-fit-06/original-photo-leg-width-17.mjs';
 import {posedGeometry,triangleContacts} from '../three-d-42/posed-contact.mjs';
 import {createPoseConditionedSleeveContact} from '../three-d-56/pose-conditioned-sleeves.mjs';
@@ -90,7 +91,11 @@ export function createOutfitController(root,{refineFit=true,enableCuffFix=true,e
    if(next==='pants'||next==='shirt-pants'){
     built.pants=fitPants({pose:'source'});
     if(pantsCandidate){
-     built.pants=projectReviewedPhotoPants(built.pants,pantsCandidate,{reviewed:pantsReviewed,sourceNeutralMaterial23:sourceDenimMaterial23});
+     built.pants=projectReviewedPhotoPants(built.pants,pantsCandidate,{reviewed:pantsReviewed});
+     // Source-protected material wrapper touches neither shared projection
+     // module nor original photographed pixels; new shader only on neutral rear.
+     if(sourceDenimMaterial23)
+      built.pants=installSourceNeutralLight23(built.pants,pantsCandidate,{enabled:true});
      if(naturalPantsDrape&&isSourceVerifiedDenimId(pantsCandidate.id)){
       built.pants=drapeSourceJeans(built.pants,root);
       if(posteriorJeansFairing){
