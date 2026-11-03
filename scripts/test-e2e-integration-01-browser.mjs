@@ -190,6 +190,10 @@ async function seedOtherLicensed(page,owner){
  },{owner,meta:rigManifest,pins});
 }
 async function mount(page){
+ // A full page reload defaults to Home; the donor launcher lives in My Closet.
+ // Test the real navigation before opening it; never force-click a hidden UI.
+ await page.evaluate(()=>switchView('closet'));
+ await page.waitForFunction(()=>!document.getElementById('closet').hidden);
  await page.evaluate(async()=>{
   const m=await import('/research/e2e-integration-01/cross-branch-adapter.mjs');
   window.e2eIntegration=await m.mountE2EIntegration01();
