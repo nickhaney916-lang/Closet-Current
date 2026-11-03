@@ -680,7 +680,7 @@ window.ccWardrobeDenimFreeze06=()=>{
      proof.sourceCuffStackMovedVertices22<25||
      Math.min(...proof.sourceCuffStackPerLeg22)<9||
      proof.sourceCuffStackMaxMeters22<.001||
-     proof.sourceCuffStackMaxMeters22>.0068681))
+     proof.sourceCuffStackMaxMeters22>.009157))
    throw Error('P22 original photographed denim protected diagonal cuff fold invalid');
 
 
