@@ -64,7 +64,7 @@ jobs:
           import {readFileSync,existsSync} from 'node:fs';
           const r=JSON.parse(readFileSync('benchmark/board-preserve-01/results.json'));
           const a=JSON.parse(readFileSync('benchmark/board-preserve-01-review/acceptance.json'));
-          assert.equal(r.cases,12);
+          assert.equal(r.caseCount,12);assert.equal(r.cases.length,12);
           assert.equal(r.browserScreenshots,12);
           assert.equal(r.screens.length,12);
           assert.equal(a.realAppScreenshots,12);
