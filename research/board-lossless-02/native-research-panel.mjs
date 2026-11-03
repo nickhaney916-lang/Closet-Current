@@ -4,7 +4,7 @@
  * PR541 donor 3D may be attached by a separate authorized research loader.
  */
 import {createExistingBoard02IO} from './existing-idb-cas.mjs';
-import {createLosslessBoard02,verifyPhoto02,BOARD02} from './lossless-board.mjs';
+import {createLosslessBoard02,BOARD02} from './lossless-board.mjs';
 const element=(doc,tag,text)=>{const e=doc.createElement(tag);if(text!==undefined)e.textContent=text;return e;};
 export async function mountLosslessBoard02Research({doc=document,auth=window.closetAuth,
  native3DDecision=null}={}){
@@ -90,14 +90,11 @@ export async function mountLosslessBoard02Research({doc=document,auth=window.clo
  button('Pin shoe choice',async()=>{editor.pin('shoes');show();tell('Shoe choice pinned in draft.');},'PinShoes');
  button('Unpin shoe choice',async()=>{editor.pin('shoes',false);show();tell('Shoe choice unpinned.');},'UnpinShoes');
  button('Check verified 3D plan',async()=>{
-  const plan=editor.toPreview();
-  const validated=[];
-  for(const field of plan.selected){
-   const row=available.find(x=>x.id===field.itemId),proof=await verifyPhoto02(row);
-   if(proof.verified)validated.push({...field,originalSHA256:proof.sourceSHA256});
-   else validated.push({...field,originalSHA256:null,sourceStatus:'PHOTO_ONLY_FALLBACK'});
-  }
-  const result=typeof native3DDecision==='function'?native3DDecision({...plan,selected:validated}):{mode:'none',fallbackIds:validated.map(x=>x.itemId)};
+  // Actual original JPEG bytes and current owner epoch are verified by the
+  // editor immediately before any donor-3D source capability decision.
+  const plan=await editor.toVerified3DPlan();
+  const result=typeof native3DDecision==='function'?native3DDecision(plan):
+   {mode:'none',fallbackIds:plan.selected.map(x=>x.itemId)};
   tell('3D source decision '+result.mode+' · '+(result.fallbackIds?.length||0)+' photo-only; no fabricated clothing mesh.');
  },'3D');
  const onRevoke=()=>{clearSensitive();editor.invalidate();tell('Account or session changed; private research preview cleared.');};

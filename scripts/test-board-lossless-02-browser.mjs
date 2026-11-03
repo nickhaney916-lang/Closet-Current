@@ -176,10 +176,12 @@ try{
     const donor=await page.evaluate(async id=>{
      const {decideOutfit3D01}=await import('/donor/research/outfit-3d-01/source-true-viewer.mjs');
      const e=window.__board02.editor;e.open(id);
-     const p=e.toPreview(),d=decideOutfit3D01(p);
-     return {mode:d.mode,fallbackIds:d.fallbackIds};
+     const unchecked=e.toPreview();
+     if(unchecked.selected.some(x=>x.originalSHA256!==null))throw Error('Unverified SHA sent to 3D');
+     const p=await e.toVerified3DPlan(),d=decideOutfit3D01(p);
+     return {mode:d.mode,fallbackIds:d.fallbackIds,originalSHA256Verified:p.originalJPEGsByteVerified};
     },first);
-    assert.equal(donor.mode,'dress');
+    assert.equal(donor.mode,'dress');assert.equal(donor.originalSHA256Verified,true);
     assert.ok(donor.fallbackIds.includes(owner+'-coat'));
     assert.ok(donor.fallbackIds.includes(owner+'-jacket'));
     assert.ok(donor.fallbackIds.includes(owner+'-newshoes'));

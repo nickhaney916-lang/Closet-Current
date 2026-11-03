@@ -226,6 +226,11 @@ test('source verification and 3D preview are fail-closed for unverified shoes an
  const p=f.editor.toPreview();assert.equal(p.missing[0].itemId,'deleted-jeans');
  assert.equal(p.selected.some(x=>x.slot==='shoes'),true);
  assert.equal(p.selected.some(x=>x.slot==='bottom'),false);
+ assert.ok(p.selected.every(x=>x.originalSHA256===null),'No unverified SHA is eligible for donor-3D');
+ const attested=await f.editor.toVerified3DPlan();
+ assert.ok(attested.selected.every(x=>x.sourceVerified===true));
+ assert.ok(attested.selected.every(x=>x.originalSHA256===originalSHA));
+ assert.equal(attested.originalJPEGsByteVerified,true);
  assert.equal(p.releaseAuthorized,false);
  f.db.close();
 });
