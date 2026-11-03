@@ -258,3 +258,54 @@ test('source verification and 3D preview are fail-closed for unverified shoes an
  assert.equal(p.releaseAuthorized,false);
  f.db.close();
 });
+
+
+test('storage interruption before commit cannot remove the previously valid saved outfit or cloud marker',async()=>{
+ const f=await fixture();const before=await f.read();
+ const interrupted=createLosslessBoard02({
+  auth:f.auth,makeId:()=>String(serial)+'-fail',
+  io:{read:f.io.read,compareAndWrite:async()=>{throw Error('Simulated storage quota/transaction interruption');}}
+ });
+ await interrupted.refresh();interrupted.open('outfit-legacy-1');
+ interrupted.editName('Uncommitted outfit must stay out of storage');
+ await assert.rejects(interrupted.save(),/Simulated storage quota\/transaction interruption/);
+ const after=await f.read();
+ assert.deepEqual(after.board,before.board);
+ assert.deepEqual(after.cloud,before.cloud);
+ assert.equal(interrupted.inspect().dirty,true,'Failed write stays an editable draft');
+ f.db.close();
+});
+test('token/session epoch rotation immediately before compare-and-write blocks stale owner update',async()=>{
+ const f=await fixture(),before=await f.read();
+ const io={read:f.io.read,compareAndWrite:async args=>{
+  // Represents a native token refresh rotating the attested generation while
+  // an asynchronous save request is pending, before any IDB write.
+  f.auth.gen++;
+  return f.io.compareAndWrite(args);
+ }};
+ const editor=createLosslessBoard02({auth:f.auth,io});
+ await editor.refresh();editor.open('outfit-legacy-1');
+ editor.editName('Stale token save must fail');
+ await assert.rejects(editor.save(),/revoked|stale|session/i);
+ assert.deepEqual((await f.read()).board,before.board);
+ assert.deepEqual((await f.read()).cloud,before.cloud);
+ assert.throws(()=>editor.inspect(),/owner\/session/);
+ f.db.close();
+});
+test('shirt, jeans, dress, skirt, jacket, coat and shoe recategorizations never lose original slot IDs',()=>{
+ const choices=[
+  ['top','shirt','Tops','T-shirt'],['bottom','jeans','Bottoms','Jeans'],
+  ['top','dress','Dresses','Casual dress'],['bottom','skirt','Bottoms','Skirt'],
+  ['layer2','jacket','Outerwear','Jacket'],['layer3','coat','Outerwear','Coat'],
+  ['shoes','shoes','Shoes','Sneakers']
+ ];
+ for(const [slot,id,category,itemType]of choices){
+  const board={slots:{[slot]:id},slotSources:{[slot]:{categoryAtSave:category}}};
+  const unchanged=JSON.stringify(board);
+  const result=inspectOutfit02(board,[{id,ownerId:'A',category:'Uncategorized',itemType}],{ownerId:'A'});
+  assert.equal(result.review.length,1,id+' recategorized piece is review');
+  assert.equal(result.review[0].itemId,id);
+  assert.equal(result.review[0].slot,slot);
+  assert.equal(JSON.stringify(board),unchanged,'No recategorization may rewrite original source');
+ }
+});
