@@ -1,0 +1,21 @@
+# DENIM-ANATOMICAL-HANG-26 — Actual 163-bone upper-leg side/rear drape, original-source-protected (DRAFT/HOLD)
+
+## Why this is the next main conversation priority
+The verified P25 neutral side/rear textile now looks less flat, but a purely material change is not enough. Increase the actual modeled *upper-leg hanging fabric* on anatomical male/female figures without inventing photographed rear pockets, changing authentic front pixels, replacing original source images, or touching the parallel recognition and outfit projects.
+
+## Implementation
+- Parent: verified P25 PR #540 exact commit `62438a64d90e38bb28f502de4c55d17505b6a968` (14/14 dedicated original-photo WebGL stages SUCCESS, 96 screenshots inspected).
+- New opt-in math `source-neutral-hip-knee-hang-26.mjs` computes a single smooth source-neutral hip-to-knee envelope: max **4.2mm posterior OUTWARD**, **1.2mm side OUTWARD**, **2.2mm gravity DOWNWARD**; zero at the actual knee and hip/waist boundary and no repeated waves or artificially photographed textile pattern.
+- Applied only inside the existing `static-source-denim-fit.mjs` *after* original photo registration and verified R14/S15/P16/P20 geometry, to existing independently sewn, source-photo-neutral rear/side upper-thigh rows. The original photographed front vertex row positions remain exactly unchanged; the original JPEG/RGB/cutout source SHA, UV, pantsRest, skinIndex and skinWeight arrays are independently snapshotted and protected. The total upper-leg model-space displacement budget stays capped at **24mm** instead of silently adding unlimited offsets.
+- P26 is opt-in `?denimHang26=after` and requires existing exact P25 modeled-neutral textile, P23 original front-preserved shader and P22 source-backed anatomical fit. The normal research application defaults P26 OFF. No production build, source image generation, user wardrobe database, account/login code, or source photo changed.
+- The real authenticated two-account research demo requires original licensed denim SHA at both save and render, real 163-bone figures, specific lower-body outfit slots and the existing true BVH body-contact check. New freeze proof shows actual moved garment vertices per leg, maximum source-neutral rear/side/drop displacement, exact original photo preservation and modeled-not-photographed provenance.
+
+## Verification
+- Node unit tests cover finite valid bone phase / left-right source leg, strict zero at hip/knee, bounds across 1,001 sample positions, unknown/malformed inputs, no generated textures and exact parent/historical source code protection.
+- Genuine Chromium WebGL benchmark: 3 viewport widths (320/390/430px) × 2 anatomical 163-bone figures × 2 genuine originally photographed licensed denim SHA sources × 4 camera angles (0/90/135/180) × 2 research versions (P25 baseline / P26 new anatomical hang) = **96 original-source WebGL screenshots / 48 matched pairs**. Save every PNG before asserting. Exact source photo integrity, real visible denim pixel count, meaningful side/rear visual change, no new BVH skinned body intersections and 2-account logout isolation.
+- Full original source JPEG segmentation and approved CC0 163-bone GLB restore must run first in dedicated no-deploy CI. Do not weaken real denim pixel/contact thresholds to make a test pass. Inspect actual screenshots on all mobile widths and both rigs, not just green actions.
+
+## Strict constraints and remaining gates
+- Modeling an unphotographed upper-thigh region does NOT mean its side/back are source-observed. No rear photograph, fake seams, AI garment/back images, user gallery writes, external network, synthetic source substituted for a real licensed original, or cross-account saved clothing.
+- This remains geometric source-neutral rest fitting, not fully validated cloth physics. Real Android Chrome / iPhone Safari acceptance, full human 10/10 photorealism, all private-clothing 3D support and multi-garment alpha release are NOT approved.
+- Draft PR; **never merge/deploy production**. Family Alpha #255 remains HOLD. Parallel #13 owns real recognition/indexing and parallel #14 owns saved wardrobe-to-humanoid outfit assembly. No modification to either. Drive Duel and Delta Ebb untouched.
