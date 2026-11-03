@@ -15,6 +15,7 @@ const sha=b=>createHash('sha256').update(b).digest('hex');
 assert.equal(m.priority,'NATIVE-BOARD-HANDOFF-03');
 assert.equal(m.caseCount,6);assert.equal(m.screenshotCount,42);
 assert.equal(m.sourcePhotoCardScreenshots,12);
+assert.equal(m.originalFullPagePhotoCrop,true);
 assert.equal(m.cases.length,6);assert.equal(m.screens.length,42);
 assert.equal(m.screens.filter(x=>x.elementCapture).length,12);
 assert.deepEqual(m.errors,[]);assert.deepEqual(m.blocked.filter(x=>x.method!=='GET'),[]);
@@ -35,7 +36,7 @@ for(const img of m.screens){
  assert.ok([320,390,430].includes(img.width));
  assert.ok(stages.includes(img.stage)||elementStages.includes(img.stage));
  assert.equal(!!img.elementCapture,elementStages.includes(img.stage));
- if(img.elementCapture)assert.equal(img.photoCount,4);
+ if(img.elementCapture){assert.equal(img.photoCount,4);assert.equal(img.cropSource,'original-full-page-rect');}
  assert.equal(ownerOf(img.stage),img.owner);
  const bytes=await readFile(base+'/'+img.name);
  assert.equal(sha(bytes),img.sha256,'Modified browser screenshot: '+img.name);
