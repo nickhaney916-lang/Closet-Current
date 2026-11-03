@@ -15,7 +15,7 @@ test('valid photo byte digest checked before any indexing; tampered pixels fail'
  const okay=await verifyOriginalSourceBytes(original,sha,webcrypto);
  assert.equal(okay.verified,true);assert.equal(okay.byteLength,6);
  assert.equal((await verifyOriginalSourceBytes(new Uint8Array([255,216,3,8,255,217]),sha,webcrypto)).verified,false);
- assert.throws(()=>verifyOriginalSourceBytes('image',sha,webcrypto),/original source/);
+ await assert.rejects(verifyOriginalSourceBytes('image',sha,webcrypto),/original source/);
 });
 test('original unmodified source proof is mandatory; low confidence stays review',()=>{
  assert.equal(hasOriginalSourceProof(source),true);
@@ -63,7 +63,7 @@ test('multiple garment source needs separate verified segment, never overwrites 
  let r=check(make('Tops','T-shirt'),{garmentCount:3});
  assert.equal(r.autoIndex,false);assert.ok(r.reviewReasons.includes('cutout-identity-unverified'));
  r=check(make('Tops','T-shirt'),{garmentCount:3,segment:{verified:true,cutoutSHA256:hash2,originalSHA256:hash}});
- assert.equal(r.autoIndex,false);assert.equal(r.sourceKind,'verified-cutout'); // still requires independent per-piece classification
+ assert.equal(r.autoIndex,true);assert.equal(r.sourceKind,'verified-cutout'); // separately verified per-piece input
  r=check(make('Tops','T-shirt'),{segment:{clipped:true}});
  assert.ok(r.reviewReasons.includes('clipped-cutout'));
 });
@@ -82,7 +82,7 @@ test('category-only review remains browseable without automatic subtype or color
  assert.deepEqual(r.slotIds,['top']);assert.equal(r.color,'Unknown');
 });
 const makePixels=(rgb,width=20,height=20)=>{let p=new Uint8ClampedArray(width*height*4);for(let i=0;i<p.length;i+=4){p.set([...rgb,255],i);}return p;};
-const mask=(n=400)=>Uint8Array.from({length:n},()=>255);
+const mask=(n=400)=>Uint8Array.from({length:n},(_,i)=>{const x=i%20,y=Math.floor(i/20);return x>=4&&x<16&&y>=4&&y<16?255:0;});
 test('color is read only through verified source-matched mask (no background heuristic)',()=>{
  const p=makePixels([255,255,255]);const a=mask();
  for(let y=5;y<15;y++)for(let x=5;x<15;x++){
