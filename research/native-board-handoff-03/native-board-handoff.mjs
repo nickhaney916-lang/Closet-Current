@@ -65,6 +65,11 @@ export async function mountNativeBoardHandoff03({
      signedTwoAccountRLSTested:false});
    },
    get section(){return !closed&&epoch.status().active?panel.section:null;},
+   show(){
+    if(closed||!epoch.status().active)
+     throw Error('NATIVE03 revoked: private source photos inaccessible');
+    return panel.show();
+   },
    dispose(){
     if(closed)return;closed=true;
     try{panel?.dispose();}finally{epoch.dispose();}
