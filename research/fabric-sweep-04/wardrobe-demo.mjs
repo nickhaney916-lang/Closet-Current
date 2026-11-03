@@ -362,7 +362,18 @@ async function initViewer(){
        new URLSearchParams(location.search).get('denimPhotoWidth17')==='after'&&
        new URLSearchParams(location.search).get('denimProfile18')==='after'&&
        new URLSearchParams(location.search).get('denimSigned19')==='after'&&
-       new URLSearchParams(location.search).get('denimLine20')==='after'
+       new URLSearchParams(location.search).get('denimLine20')==='after',
+     sourceDenimFold21:new URLSearchParams(location.search).get('denimFold21')==='after'&&
+       new URLSearchParams(location.search).get('denimLine20')==='after'&&
+       new URLSearchParams(location.search).get('denimSigned19')==='after'&&
+       new URLSearchParams(location.search).get('denimProfile18')==='after'&&
+       new URLSearchParams(location.search).get('denimPhotoWidth17')==='after'&&
+       new URLSearchParams(location.search).get('denimPosterior16')==='after'&&
+       new URLSearchParams(location.search).get('denimSide15')==='after'&&
+       new URLSearchParams(location.search).get('denimRear14')==='after'&&
+       new URLSearchParams(location.search).get('denimFairing')==='after'&&
+       new URLSearchParams(location.search).get('denimSilhouette')==='after'&&
+       new URLSearchParams(location.search).get('denimFit')==='after'
   });
   canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();
    if(token!==bootToken)return;
@@ -479,6 +490,7 @@ window.ccWardrobe10Diagnostics=()=>{
       sourceDenimProfile18Enabled:state?.sourceDenimProfile18Enabled||false,
       sourceDenimSigned19Enabled:state?.sourceDenimSigned19Enabled||false,
       sourceDenimLine20Enabled:state?.sourceDenimLine20Enabled||false,
+      sourceDenimFold21Enabled:state?.sourceDenimFold21Enabled||false,
       staticDenimFit06Enabled:state?.staticDenimFit06Enabled||false,
       staticDenimFit06State:state?.staticDenimFit06State||null,
      swept04Clock:state?.continuousGait04||null,
@@ -641,6 +653,14 @@ window.ccWardrobeDenimFreeze06=()=>{
      proof.photoAnatomicalCalfMaxMeters20<.0005||
      proof.photoAnatomicalCalfMaxMeters20>.0030001))
    throw Error('P20 original-photo protected bone-aligned model silhouette invalid');
+  if(new URLSearchParams(location.search).get('denimFold21')==='after'&&
+    (!proof.sourceNeutralKneeBreak21||!proof.originalJPEGUVRestSkinProtected21||
+     !proof.rearFoldIsModeledNotPhotographed21||
+     proof.sourceKneeBreakMovedVertices21<25||
+     Math.min(...proof.sourceKneeBreakPerLeg21)<9||
+     proof.sourceKneeBreakMaxMeters21<.001||
+     proof.sourceKneeBreakMaxMeters21>.0054001))
+   throw Error('P21 original-photo protected modeled bone knee break invalid');
 
 
   const after=current();
