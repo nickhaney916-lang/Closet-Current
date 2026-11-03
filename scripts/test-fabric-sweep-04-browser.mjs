@@ -28,7 +28,7 @@ const server=createServer(async(req,res)=>{
 });
 await new Promise(ok=>server.listen(0,'127.0.0.1',ok));
 const host='http://127.0.0.1:'+server.address().port;
-const screenshots=[],cases=[],contacts=[],sweeps=[],frozenDress=[],frozenDenim=[],denimSilhouetteComparisons=[],denimFairing08Comparisons=[],denimAngle09Comparisons=[],denimRear14Comparisons=[],denimSide15Comparisons=[],denimPosterior16Comparisons=[],denimPhotoWidth17Comparisons=[],denimProfile18Comparisons=[],denimSigned19Comparisons=[],denimLine20Comparisons=[],denimFold21Comparisons=[],pointerRotation11=[],touchSwipe12=[],pinchZoom13=[],javascriptErrors=[],nonLocalRequests=[];
+const screenshots=[],cases=[],contacts=[],sweeps=[],frozenDress=[],frozenDenim=[],denimSilhouetteComparisons=[],denimFairing08Comparisons=[],denimAngle09Comparisons=[],denimRear14Comparisons=[],denimSide15Comparisons=[],denimPosterior16Comparisons=[],denimPhotoWidth17Comparisons=[],denimProfile18Comparisons=[],denimSigned19Comparisons=[],denimLine20Comparisons=[],denimFold21Comparisons=[],denimCuff22Comparisons=[],pointerRotation11=[],touchSwipe12=[],pinchZoom13=[],javascriptErrors=[],nonLocalRequests=[];
 function monitor(page){
  page.on('pageerror',error=>javascriptErrors.push(String(error.message)));
  page.on('request',r=>{
@@ -138,6 +138,7 @@ try{
  await mkdir('benchmark/denim-signed-calf-19',{recursive:true});
  await mkdir('benchmark/denim-anatomical-line-20',{recursive:true});
  await mkdir('benchmark/denim-knee-break-21',{recursive:true});
+ await mkdir('benchmark/denim-cuff-stack-22',{recursive:true});
  for(const width of [320,390,430]){
   const ctx=await browser.newContext({viewport:{width,height:900},deviceScaleFactor:1,isMobile:true,hasTouch:true});
   const p=await ctx.newPage();monitor(p);
@@ -1142,6 +1143,68 @@ try{
                 humanPhotorealismApproved:false,
                 physicalPhoneApproved:false,productionModified:false,releaseAuthorized:false});
               }
+              // P22: exact authenticated saved photo, male/female figure,
+              // same 390px camera P21 baseline; separately fitted modeled
+              // side/rear cuff fold on real photo-derived original leg width.
+              const stackCtx22=await browser.newContext({
+               viewport:{width,height:900},deviceScaleFactor:1,isMobile:true,hasTouch:true});
+              try{
+               const stackPage22=await stackCtx22.newPage();monitor(stackPage22);
+               await stackPage22.goto(host+'/research/fabric-sweep-04/index.html?walk=after&folds=after&sweep=after&dressFit=after&denimFit=after&denimSilhouette=after&denimFairing=after&denimRear14=after&denimSide15=after&denimPosterior16=after&denimPhotoWidth17=after&denimProfile18=after&denimSigned19=after&denimLine20=after&denimFold21=after&denimStack22=after',{waitUntil:'domcontentloaded'});
+               if(rig==='male'){
+                await stackPage22.waitForFunction(()=>window.ccWardrobe10Diagnostics?.()?.viewerReady===true,null,{timeout:180000});
+                await stackPage22.locator('#model').selectOption('male');
+                await stackPage22.waitForFunction(()=>window.ccWardrobe10Diagnostics()?.figure==='male'&&window.ccWardrobe10Diagnostics()?.viewerReady===true,null,{timeout:180000});
+               }
+               await ready(stackPage22);
+               await stackPage22.locator('#swap').click();
+               if(denimIndex===1)await stackPage22.locator('#swap').click();
+               await stackPage22.waitForFunction(()=>window.ccWardrobe10Diagnostics?.()?.outfitMode==='shirt-pants',null,{timeout:30000});
+               const state22=await diag(stackPage22);
+               assert.equal(state22.sourceDenimCuffStack22Enabled,true);
+               assert.equal(state22.sourceDenimFold21Enabled,true);
+               assert.equal(state22.account,'fixture-account-a');
+               assert.equal(state22.bones,163);
+               assert.equal(state22.displayed3DSources?.bottom,sourceDenim);
+               const fit22=await stackPage22.evaluate(()=>window.ccWardrobeDenimFreeze06());
+               assert.equal(fit22.originalPhotoSHA256,sourceDenim);
+               assert.equal(fit22.sourceNeutralKneeBreak21,true);
+               assert.equal(fit22.sourceNeutralCuffStack22,true);
+               assert.equal(fit22.originalJPEGUVRestSkinProtected22,true);
+               assert.equal(fit22.modeledCuffStackNotPhotographed22,true);
+               assert.equal(fit22.trueBVHBodyContactNoNew,true);
+               assert.ok(fit22.bodyContactAfter<=fit22.bodyContactBefore);
+               assert.ok(fit22.sourceCuffStackMovedVertices22>=25);
+               assert.ok(Math.min(...fit22.sourceCuffStackPerLeg22)>=9);
+               assert.ok(fit22.sourceCuffStackMaxMeters22>=.001&&
+                fit22.sourceCuffStackMaxMeters22<=.0068681);
+               for(const angle of [90,135,180]){
+                await foldPage21.evaluate(a=>window.ccWardrobe10View(a),angle);
+                await stackPage22.evaluate(a=>window.ccWardrobe10View(a),angle);
+                const before=await foldPage21.locator('#avatar').screenshot();
+                const after=await stackPage22.locator('#avatar').screenshot();
+                const changed=diff(await raw(before),await raw(after));
+                assert.ok(changed>=20,'P22 original photographed denim 3D modeled cuff WebGL at '+angle+': '+changed);
+                const key=prefix+'-view-'+angle;
+                await writeFile('benchmark/denim-cuff-stack-22/'+key+'-exact-p21.png',before);
+                await writeFile('benchmark/denim-cuff-stack-22/'+key+'-stack-p22.png',after);
+                denimCuff22Comparisons.push({rig,width,denimIndex,sourceDenim,angle,
+                 owner:'fixture-account-a',authentic163BoneSkinnedRig:true,
+                 actualOriginalPhotoHemRatios:fit22.sourceCutoutLegWidthRatios17,
+                 realWebGLChangedRGBPixels:changed,
+                 cuffMovedVertices:fit22.sourceCuffStackMovedVertices22,
+                 cuffPerLeg:fit22.sourceCuffStackPerLeg22,
+                 cuffMaxMeters:fit22.sourceCuffStackMaxMeters22,
+                 originalFrontSHAUVRestSkinUnchanged:true,
+                 unphotographedRearModeledOnly:true,
+                 skinnedBodyContactsBefore:fit22.bodyContactBefore,
+                 skinnedBodyContactsAfter:fit22.bodyContactAfter,
+                 physicalPhoneApproved:false,humanPhotorealismApproved:false,
+                 productionModified:false,releaseAuthorized:false});
+               }
+               await stackPage22.locator('#logout').click();
+               assert.equal((await diag(stackPage22)).sourcePhotoCoverageVisible,false);
+              }finally{await stackCtx22.close();}
               await foldPage21.locator('#logout').click();
               assert.equal((await diag(foldPage21)).sourcePhotoCoverageVisible,false);
              }finally{await foldCtx21.close();}
@@ -1199,6 +1262,22 @@ try{
  assert.equal(await p.evaluate(()=>{try{window.ccWardrobeGait02('play');return false;}catch{return true;}}),true);
  await ctx.close();
 
+ assert.equal(denimCuff22Comparisons.length,12,'P22 requires exact original photo 2 sources × 2 rigs × 3 real views');
+ assert.equal(new Set(denimCuff22Comparisons.map(x=>x.sourceDenim)).size,2);
+ assert.deepEqual([...new Set(denimCuff22Comparisons.map(x=>x.angle))],[90,135,180]);
+ assert.ok(denimCuff22Comparisons.every(x=>x.realWebGLChangedRGBPixels>=20&&
+  x.cuffMovedVertices>=25&&Math.min(...x.cuffPerLeg)>=9&&
+  x.cuffMaxMeters>=.001&&x.cuffMaxMeters<=.0068681&&
+  x.originalFrontSHAUVRestSkinUnchanged&&x.unphotographedRearModeledOnly&&
+  x.skinnedBodyContactsAfter<=x.skinnedBodyContactsBefore&&!x.releaseAuthorized));
+ await writeFile('benchmark/denim-cuff-stack-22/results.json',JSON.stringify({
+  originalSourceCuffStackComparisons:denimCuff22Comparisons,
+  actualMatchedWebGLFrames:24,realRigNames:['female','male'],
+  independentOriginalDenimSources:2,angles:[90,135,180],width:390,
+  originalPhotoSHAUVRestSkinProtected:true,noInventedRearPhoto:true,
+  physicalPhoneApproved:false,humanPhotoRealismApproved:false,
+  familyAlpha:'HOLD',productionModified:false,releaseAuthorized:false
+ },null,2));
  assert.equal(denimFold21Comparisons.length,12,'P21 requires two real denim sources x two real rigs x three views');
  assert.equal(new Set(denimFold21Comparisons.map(x=>x.sourceDenim)).size,2);
  assert.deepEqual([...new Set(denimFold21Comparisons.map(x=>x.angle))],[90,135,180]);
