@@ -1,0 +1,8 @@
+# DENIM-KNEE-BREAK-21 — Research-only, draft, Family Alpha HOLD
+
+Parent: P20 PR #532, exact head `5a8ca624a1f18e97c79c5b9c3ac7cc8441c04b22`, dedicated Actions #41572962225 **SUCCESS**, original photo head verified.
+Goal: reduce calf puff and create one anatomically anchored non-periodic knee transition per leg on the **modeled, unphotographed** side/rear original independently sewn jeans. Preserve photo-sharp front. Original SHA-confirmed source RGBA five width stations change the bounded amplitude by denim cut; original 163-bone knee/ankle determines phase. Neither folds nor rear fabric pattern are claimed to be original photographic observations.
+
+Guardrail: default OFF, requires all earlier source/photo gates and explicit `denimFold21=after`. Bounds: calf tuck <= 4.26mm; knee crest <= 3.14mm; existing <=24mm cumulative model fit bound. Original JPEG RGB/alpha/SHA, front vertices, UV/rest, 163-bone skin identity, owner isolation remain immutable. Real skinned-body BVH check must have **zero newly introduced intersections**. No fabricated reverse photograph / texture, no production changes.
+
+Acceptance: pure test for source/phase/anchor/magnitude; genuine 2 independently photographed originals × 2 genuine male/female 163-bone skinned rigs × 90/135/180 degree cameras at 390px: 12 matched P20/P21 comparisons / 24 genuine WebGL PNGs, >=20 changed RGB pixels each, explicit original front/source/owner and skinned BVH check. Full inherited no-deploy GitHub Actions, inspect actual images. Human photorealism and physical Android/iPhone remain unapproved; release and Family Alpha HOLD.
