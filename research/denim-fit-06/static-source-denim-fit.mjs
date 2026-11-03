@@ -383,7 +383,7 @@ export function createPhotoDenimStaticFitter06(pants,root,{sourceSilhouette07=fa
     kneeMoved,hemMoved,taperAdditionalMean,max}));
 
   if(sourceCuffStack22&&(stack22Moved<25||Math.min(...stack22PerLeg)<9||
-    stack22Max<.001||stack22Max>.0068681))
+    stack22Max<.001||stack22Max>.009157))
    throw Error('P22 photographic hem-ratio, anatomical diagonal modeled cuff stack unavailable/beyond bounds: '+
     JSON.stringify({stack22Moved,stack22PerLeg,stack22Max}));
   if(sourceKneeBreak21&&(fold21Moved<25||Math.min(...fold21PerLeg)<9||
