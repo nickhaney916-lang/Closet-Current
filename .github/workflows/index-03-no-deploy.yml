@@ -14,6 +14,11 @@ jobs:
   regression-and-licensed-replay:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
     steps:
       - uses: actions/checkout@v4
         with:
@@ -63,7 +68,6 @@ jobs:
       - name: Install isolated Chromium for actual 320 390 430 saved-closet UI checks
         run: |
           npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
-          npx playwright install --with-deps chromium
       - name: Verify real browser photo integrity and saved corrections at mobile widths
         run: node scripts/test-index-03-mobile-review.mjs
       - name: Require screenshot evidence and no cross-owner or photo mutation
