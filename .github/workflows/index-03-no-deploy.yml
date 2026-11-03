@@ -37,8 +37,8 @@ jobs:
           node --check scripts/evaluate-index-03-locked-replay.mjs
       - name: Complete original Node regression and isolated source owner color tests
         run: |
-          node --test tests/*.test.cjs tests/*.test.mjs
           node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
       - name: Verify SHA of 59 original licensed JPEGs and replay historical model outputs
         run: node scripts/evaluate-index-03-locked-replay.mjs
       - name: Enforce recorded subtype false-confidence reduction without hiding review
