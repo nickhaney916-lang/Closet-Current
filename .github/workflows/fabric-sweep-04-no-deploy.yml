@@ -1,4 +1,4 @@
-name: DENIM-KNEE-BREAK-21 Original Photo Bone-Aligned Fabric 3D HOLD
+name: DENIM-CUFF-STACK-22 Original Photo Diagonal Sewn 3D HOLD
 on:
   pull_request:
     paths:
@@ -19,6 +19,7 @@ on:
       - 'tests/denim-signed-calf-19.test.mjs'
       - 'tests/denim-anatomical-line-20.test.mjs'
       - 'tests/denim-knee-break-21.test.mjs'
+      - 'tests/denim-cuff-stack-22.test.mjs'
       - 'tests/denim-angle-09.test.mjs'
       - 'tests/source-photo-coverage-10.test.mjs'
       - 'tests/garment-pixel-witness-10.test.mjs'
@@ -45,7 +46,7 @@ jobs:
           git merge-base --is-ancestor 7716c3876284bfa474f9964e7d5b0e69f629d79b HEAD
           git diff --name-only 7716c3876284bfa474f9964e7d5b0e69f629d79b HEAD | while IFS= read -r path; do
             case "$path" in
-              research/fabric-sweep-04/*|research/dress-fit-05/*|research/denim-fit-06/*|scripts/test-fabric-sweep-04-browser.mjs|tests/fabric-sweep-04.test.mjs|tests/dress-fit-05.test.mjs|tests/denim-fit-06.test.mjs|tests/denim-silhouette-07.test.mjs|tests/denim-fairing-08.test.mjs|tests/denim-rear-thigh-14.test.mjs|tests/denim-side-thigh-15.test.mjs|tests/denim-posterior-contour-16.test.mjs|tests/denim-photo-width-17.test.mjs|tests/denim-original-profile-18.test.mjs|tests/denim-signed-calf-19.test.mjs|tests/denim-anatomical-line-20.test.mjs|tests/denim-knee-break-21.test.mjs|tests/denim-angle-09.test.mjs|tests/source-photo-coverage-10.test.mjs|tests/garment-pixel-witness-10.test.mjs|.github/workflows/fabric-sweep-04-no-deploy.yml) ;;
+              research/fabric-sweep-04/*|research/dress-fit-05/*|research/denim-fit-06/*|scripts/test-fabric-sweep-04-browser.mjs|tests/fabric-sweep-04.test.mjs|tests/dress-fit-05.test.mjs|tests/denim-fit-06.test.mjs|tests/denim-silhouette-07.test.mjs|tests/denim-fairing-08.test.mjs|tests/denim-rear-thigh-14.test.mjs|tests/denim-side-thigh-15.test.mjs|tests/denim-posterior-contour-16.test.mjs|tests/denim-photo-width-17.test.mjs|tests/denim-original-profile-18.test.mjs|tests/denim-signed-calf-19.test.mjs|tests/denim-anatomical-line-20.test.mjs|tests/denim-knee-break-21.test.mjs|tests/denim-cuff-stack-22.test.mjs|tests/denim-angle-09.test.mjs|tests/source-photo-coverage-10.test.mjs|tests/garment-pixel-witness-10.test.mjs|.github/workflows/fabric-sweep-04-no-deploy.yml) ;;
               *) echo "UNAUTHORIZED sibling or production edit: $path"; exit 1 ;;
             esac
           done
@@ -69,6 +70,8 @@ jobs:
           node --check tests/denim-signed-calf-19.test.mjs
           node --check tests/denim-anatomical-line-20.test.mjs
           node --check tests/denim-knee-break-21.test.mjs
+          node --check tests/denim-cuff-stack-22.test.mjs
+          node --check research/denim-fit-06/source-neutral-cuff-stack-22.mjs
           node --check research/denim-fit-06/source-neutral-knee-break-21.mjs
           node --check research/denim-fit-06/source-neutral-anatomical-line-20.mjs
           node --check research/denim-fit-06/source-photo-signed-calf-19.mjs
@@ -79,7 +82,7 @@ jobs:
           node --check research/denim-fit-06/garment-pixel-witness-10.mjs
           node --check research/denim-fit-06/source-photo-coverage-10.mjs
           node --check scripts/test-fabric-sweep-04-browser.mjs
-          node --test tests/denim-rear-thigh-14.test.mjs tests/denim-side-thigh-15.test.mjs tests/denim-posterior-contour-16.test.mjs tests/denim-photo-width-17.test.mjs tests/denim-original-profile-18.test.mjs tests/denim-signed-calf-19.test.mjs tests/denim-anatomical-line-20.test.mjs tests/denim-knee-break-21.test.mjs tests/garment-pixel-witness-10.test.mjs tests/source-photo-coverage-10.test.mjs tests/denim-angle-09.test.mjs tests/denim-fairing-08.test.mjs tests/denim-silhouette-07.test.mjs tests/denim-fit-06.test.mjs tests/dress-fit-05.test.mjs tests/fabric-sweep-04.test.mjs tests/fabric-folds-03.test.mjs tests/fabric-walk-02.test.mjs tests/fabric-motion-01.test.mjs tests/integration-04-wardrobe-dress.test.mjs tests/dress-mobile-01.test.mjs tests/three-d-78-original-anatomical-knee-poses.test.mjs
+          node --test tests/denim-rear-thigh-14.test.mjs tests/denim-side-thigh-15.test.mjs tests/denim-posterior-contour-16.test.mjs tests/denim-photo-width-17.test.mjs tests/denim-original-profile-18.test.mjs tests/denim-signed-calf-19.test.mjs tests/denim-anatomical-line-20.test.mjs tests/denim-knee-break-21.test.mjs tests/denim-cuff-stack-22.test.mjs tests/garment-pixel-witness-10.test.mjs tests/source-photo-coverage-10.test.mjs tests/denim-angle-09.test.mjs tests/denim-fairing-08.test.mjs tests/denim-silhouette-07.test.mjs tests/denim-fit-06.test.mjs tests/dress-fit-05.test.mjs tests/fabric-sweep-04.test.mjs tests/fabric-folds-03.test.mjs tests/fabric-walk-02.test.mjs tests/fabric-motion-01.test.mjs tests/integration-04-wardrobe-dress.test.mjs tests/dress-mobile-01.test.mjs tests/three-d-78-original-anatomical-knee-poses.test.mjs
       - name: Generate unchanged source photograph / original garment segmentation
         run: |
           node scripts/build-three-d-31-jeans-proposal.mjs
@@ -702,6 +705,41 @@ jobs:
           assert.equal(r.productionModified,false);
           assert.equal(r.releaseAuthorized,false);
           CHECK
+      - name: Verify CUFF-STACK-22 original/photo real 163-bone mobile WebGL 90 135 180
+        run: |
+          node --input-type=module <<'CHECK'
+          import assert from 'node:assert/strict';
+          import {readFileSync,readdirSync} from 'node:fs';
+          const dir='benchmark/denim-cuff-stack-22';
+          const r=JSON.parse(readFileSync(dir+'/results.json'));
+          assert.equal(r.originalSourceCuffStackComparisons.length,12);
+          assert.equal(r.actualMatchedWebGLFrames,24);
+          assert.equal(readdirSync(dir).filter(f=>f.endsWith('.png')).length,24);
+          assert.deepEqual(r.realRigNames,['female','male']);
+          assert.equal(r.independentOriginalDenimSources,2);
+          assert.equal(r.width,390);
+          assert.deepEqual(r.angles,[90,135,180]);
+          assert.equal(new Set(r.originalSourceCuffStackComparisons.map(x=>x.sourceDenim)).size,2);
+          assert.ok(r.originalSourceCuffStackComparisons.every(x=>
+           x.realWebGLChangedRGBPixels>=20&&
+           x.cuffMovedVertices>=25&&Math.min(...x.cuffPerLeg)>=9&&
+           x.cuffMaxMeters>=.001&&x.cuffMaxMeters<=.009157&&
+           x.originalFrontSHAUVRestSkinUnchanged&&x.unphotographedRearModeledOnly&&
+           x.skinnedBodyContactsAfter<=x.skinnedBodyContactsBefore&&!x.releaseAuthorized));
+          assert.equal(r.originalPhotoSHAUVRestSkinProtected,true);
+          assert.equal(r.noInventedRearPhoto,true);
+          assert.equal(r.physicalPhoneApproved,false);
+          assert.equal(r.humanPhotoRealismApproved,false);
+          assert.equal(r.familyAlpha,'HOLD');
+          assert.equal(r.productionModified,false);
+          assert.equal(r.releaseAuthorized,false);
+          CHECK
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: DENIM-STACK-22-24-REAL-163-BONE-SOURCE-WEBGL-HOLD
+          path: benchmark/denim-cuff-stack-22/
+          if-no-files-found: error
       - uses: actions/upload-artifact@v4
         if: always()
         with:
