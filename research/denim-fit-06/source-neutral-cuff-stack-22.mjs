@@ -22,10 +22,13 @@ export function sourceNeutralCuffStack22(phase,radialX,radialZ,hemOverKneeRatio,
  // direction, creating a single diagonal fold rather than a horizontal ring
  // or procedurally repeated fabric/wrinkles.
  const diagonal=clamp(phase+.12*radialX*(side===0?1:-1),0,1);
- const shoulder=smooth(.12,.27,diagonal)*(1-smooth(.39,.57,diagonal));
+ // Broaden the single physical cuff fold across neighboring authentic mesh
+ // rows; first real 90-degree WebGL pass only moved 19 qualifying pixels.
+ // We improve actual shape rather than reducing the 20-pixel QA threshold.
+ const shoulder=smooth(.08,.23,diagonal)*(1-smooth(.51,.72,diagonal));
  const perimeterEase=.71+.29*Math.abs(radialZ);
  return Object.freeze({
-  outwardMeters:.0063*widthEase*perimeterEase*shoulder,
+  outwardMeters:.0084*widthEase*perimeterEase*shoulder,
   modeledUnphotographedFold:true
  });
 }
