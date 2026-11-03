@@ -303,9 +303,14 @@ async function runWidth(width){
     await page.locator('#outfit3D01Name').fill('C - original dress');
     await page.locator('#outfit3D01SaveNew').click();
     await page.waitForFunction(()=>window.outfit3DResearch.state().savedCount>=3);
-    // Close and reopen with the *actual durable owner IndexedDB outfit board*.
+    // The original renderer disposes/force-loses its WebGL context on close.
+    // The new 3D session must use a fresh canvas with no stale source meshes.
+    await page.evaluate(()=>{window.__oldOutfit3DCanvas=document.getElementById('outfit3D01Canvas');});
     await page.locator('#outfit3D01Close').click();
     assert.equal((await page.evaluate(()=>window.outfit3DResearch.state())).privateVisible,false);
+    assert.equal(await page.evaluate(()=>window.__oldOutfit3DCanvas!==
+      document.getElementById('outfit3D01Canvas')),true,
+      'Reopening must use a fresh WebGL context after actual renderer disposal');
     await page.locator('#outfit3D01Launch').click();
     await page.waitForFunction(()=>window.outfit3DResearch?.state().viewerReady===true,null,{timeout:140000});
     const choose=await page.locator('#outfit3D01Saved option').allTextContents();
