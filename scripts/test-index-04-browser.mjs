@@ -85,6 +85,10 @@ try{
     batch=[safe];await persistDraft();
     await recognizeItem(safe);
     const saved=(await readAll()).filter(x=>x.id===safe.id);
+    // The scanner schedules an additional queued draft write and INDEX-02
+    // refresh after the save transaction. Allow the committed write queue to
+    // settle before measuring the final owner-index generation.
+    await writes;
     await window.closetIndex02.refresh();
     return {unsafeStatus,unsafeSaved,unsafeDraft,
       verifiedSaved:saved.length===1,verifiedCategory:saved[0]?.category,
