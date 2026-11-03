@@ -82,12 +82,12 @@ jobs:
           git fetch --no-tags origin 53f2ad344dc56a1477e343531c423aed0e66c17d dd6bac3fa9ff640d4f562cf925337440bdb5cf8f 3a572193987cb29389727426136c6eb3ac326783 dfb40889c4c1221fb1833b859e8a11ef38aeb76e
           cd .e2e-outfit-541
           node research/three-d-20/restore-approved-models.mjs
+      - name: Cross-branch actual PR545 capture to real PR541 3D and private outfit saves
+        run: node scripts/test-e2e-integration-01-browser.mjs
       - name: Existing exact PR541 real anatomical owner WebGL regression (not mocks)
         run: |
           cd .e2e-outfit-541
           node scripts/test-outfit-3d-01-browser.mjs
-      - name: Cross-branch actual PR545 capture to real PR541 3D and private outfit saves
-        run: node scripts/test-e2e-integration-01-browser.mjs
       - name: Require complete six-browser acceptance, genuine 3D and strict HOLD boundaries
         run: |
           node --input-type=module <<'NODE'
