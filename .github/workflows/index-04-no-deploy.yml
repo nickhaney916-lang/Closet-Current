@@ -34,7 +34,7 @@ jobs:
           git merge-base --is-ancestor f287ee5dd882ea202f9577a998e0b7f20b8d6c6c HEAD
           git diff --name-only f287ee5dd882ea202f9577a998e0b7f20b8d6c6c HEAD | while IFS= read -r path; do
             case "$path" in
-              research/index-03/*|research/index-04/*|tests/index-03-recognition-safety.test.mjs|tests/index-04-saved-recognition.test.mjs|scripts/test-index-04-browser.mjs|public/app.js|.github/workflows/index-04-no-deploy.yml) ;;
+              research/index-03/*|research/index-04/*|tests/index-03-recognition-safety.test.mjs|tests/index-04-saved-recognition.test.mjs|scripts/test-index-04-browser.mjs|public/app.js|.github/workflows/index-04-no-deploy.yml|.github/workflows/wardrobe-index-02-no-deploy.yml) ;;
               *) echo "INDEX-04 unauthorized change: $path"; exit 1;;
             esac
           done
