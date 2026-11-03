@@ -518,6 +518,7 @@ window.ccWardrobe10Diagnostics=()=>{
       sourceDenimFold21Enabled:state?.sourceDenimFold21Enabled||false,
       sourceDenimCuffStack22Enabled:state?.sourceDenimCuffStack22Enabled||false,
       sourceDenimMaterial23Enabled:state?.sourceDenimMaterial23Enabled||false,
+      sourceDenimMaterial23Compiled:state?.sourceDenimMaterial23Compiled===true,
       sourceDenimMaterial23Protected:state?.outfit?.pants?.originalPhotoShaderProtected23===true,
       sourceDenimMaterial23NoRearPhoto:state?.outfit?.pants?.unseenRearImageGenerated23===false,
       staticDenimFit06Enabled:state?.staticDenimFit06Enabled||false,
