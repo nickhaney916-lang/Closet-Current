@@ -35,7 +35,7 @@ test('P25 original photographed-front/P23 shader unchanged unless explicit opt-i
  const s=applyModeledNeutralWeave25Shader(original,valid,{enabled:true});
  for(const token of ['sourceNeutralWarpPhase25','sourceNeutralWeftPhase25','sourceNeutralUnphotographed23',
   'sourceNeutralTwill25','fwidth(sourceNeutralWarpPhase25)','fwidth(sourceNeutralWeftPhase25)',
-  '0.11 * sourceNeutralTwill25 * sourceNeutralUnphotographed23','1.0 + sourceNeutralFabricRelief25',
+  '0.065 * sourceNeutralTwill25 * sourceNeutralUnphotographed23','1.0 + sourceNeutralFabricRelief25',
   'diffuseColor.rgb *= (1.0 + 0.28 * sourceNeutralFiberGrazing23 * sourceNeutralUnphotographed23)'])
   assert.ok(s.includes(token),token);
  assert.equal((s.match(/sourceNeutralTwill25 = /g)||[]).length,1);
