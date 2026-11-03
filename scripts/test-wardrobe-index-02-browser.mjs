@@ -85,9 +85,7 @@ try{
     await window.closetIndex02.refresh();
    },sample);
    await page.waitForFunction(()=>window.closetIndex02?.state()?.total===9,null,{timeout:30000});
-   await page.locator('[data-go-view="closet"]').first().click().catch(async()=>{
-    await page.evaluate(()=>switchView('closet'));
-   });
+   await page.evaluate(()=>switchView('closet'));
    await page.locator('#index02Category').selectOption('Bottoms');
    await page.waitForFunction(()=>window.closetIndex02?.state()?.matched===2);
    assert.equal(await page.locator('#closetGrid article.card').count(),2,'real main-closet cards must use index');
