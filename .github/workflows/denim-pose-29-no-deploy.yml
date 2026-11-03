@@ -1,0 +1,100 @@
+name: DENIM-POSE-29 source-photographed knee movement and true source fit recovery (NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'research/denim-pose-29/**'
+      - 'research/fabric-sweep-04/dress-outfit-controller.mjs'
+      - 'research/fabric-sweep-04/dress-mobile-showroom.mjs'
+      - 'research/fabric-sweep-04/wardrobe-demo.mjs'
+      - 'scripts/test-denim-pose-29-browser.mjs'
+      - 'scripts/audit-denim-pose-29.mjs'
+      - 'tests/denim-pose-29.test.mjs'
+      - '.github/workflows/denim-pose-29-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  true-knee-pose-photo-source-rest-acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+      - name: Exact accepted P28 ancestor and strictly scoped no-production changes
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor 8c124e76a3a8f51341cfb0af840761b7bfb71597 HEAD
+          git diff --name-only 8c124e76a3a8f51341cfb0af840761b7bfb71597 HEAD | while IFS= read -r path; do
+            case "$path" in
+              research/denim-pose-29/*|research/fabric-sweep-04/dress-outfit-controller.mjs|research/fabric-sweep-04/dress-mobile-showroom.mjs|research/fabric-sweep-04/wardrobe-demo.mjs|scripts/test-denim-pose-29-browser.mjs|scripts/audit-denim-pose-29.mjs|tests/denim-pose-29.test.mjs|.github/workflows/denim-pose-29-no-deploy.yml) ;;
+              *) echo "P29 unauthorized production/image/recognition/integration edit: $path"; exit 1 ;;
+            esac
+          done
+      - name: Install pinned 163-bone real WebGL browser, denim and image dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 three@0.180.0 playwright@1.56.1 three-mesh-bvh@0.9.2
+      - name: P29 static checks and complete inherited source/photo integrity tests
+        run: |
+          node --check research/denim-pose-29/source-locked-pose-state-29.mjs
+          node --check research/fabric-sweep-04/dress-outfit-controller.mjs
+          node --check research/fabric-sweep-04/dress-mobile-showroom.mjs
+          node --check research/fabric-sweep-04/wardrobe-demo.mjs
+          node --check scripts/test-denim-pose-29-browser.mjs
+          node --check scripts/audit-denim-pose-29.mjs
+          node --test tests/denim-pose-29.test.mjs tests/denim-seam-flow-28.test.mjs tests/denim-anatomical-hang-26.test.mjs tests/denim-source-neutral-weave-25.test.mjs tests/denim-visible-27.test.mjs
+      - name: Restore original licensed jeans and actual approved anatomical CC0 GLBs
+        run: |
+          node scripts/build-three-d-31-jeans-proposal.mjs
+          node scripts/build-three-d-37-second-jeans.mjs
+          node scripts/build-work47-benchmark.mjs
+          node --test tests/three-d-31-jeans-source.test.mjs tests/three-d-37-source-true.test.mjs
+          git fetch --no-tags origin 53f2ad344dc56a1477e343531c423aed0e66c17d dd6bac3fa9ff640d4f562cf925337440bdb5cf8f 3a572193987cb29389727426136c6eb3ac326783 dfb40889c4c1221fb1833b859e8a11ef38aeb76e
+          node research/three-d-20/restore-approved-models.mjs
+      - name: 96 genuine original photographed denim posed/recovered Chromium WebGL screenshots
+        run: node scripts/test-denim-pose-29-browser.mjs
+      - name: Independently hash every real WebGL photo and make 12 pose contact sheets
+        run: node scripts/audit-denim-pose-29.mjs
+      - name: Reject any unsupported source-rest fit, fake rear, body intersection or release
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync,existsSync} from 'node:fs';
+          const a=JSON.parse(readFileSync('benchmark/denim-pose-29/results.json'));
+          const b=JSON.parse(readFileSync('benchmark/denim-pose-29-review/visual-evidence.json'));
+          assert.equal(a.authenticWebGLFrames,96);
+          assert.equal(a.rows.length,96);
+          assert.equal(b.verifiedOriginalSourceWebGLFrames,96);
+          assert.equal(b.independentSHA256Verified,96);
+          assert.equal(b.contactSheets.length,12);
+          assert.ok(a.rows.every(x=>x.realBodyContacts===0&&x.originalPhotoProtected&&
+             x.exactOriginalJPEGUVAndSkinUnmodified&&!x.syntheticRearPhoto&&
+             x.account==='fixture-account-a'&&!x.releaseAuthorized));
+          assert.equal(a.rows.filter(x=>x.pose==='source'&&x.fitVisible).length,24);
+          assert.equal(a.rows.filter(x=>x.pose!=='source'&&!x.fitVisible).length,72);
+          assert.ok(b.contactSheets.every(x=>existsSync('benchmark/denim-pose-29-review/'+x.name)));
+          assert.equal(b.sourceP28RestRecoveryAudited,true);
+          assert.equal(b.humanRealismVerdict,'REVIEW');
+          assert.equal(b.consumerPhonesTested,false);
+          assert.equal(b.sweptCollisionCertified,false);
+          assert.equal(a.familyAlpha,'HOLD');
+          assert.equal(a.productionModified,false);
+          assert.equal(a.releaseAuthorized,false);
+          assert.deepEqual(a.errors,[]);
+          assert.deepEqual(a.external,[]);
+          console.log('P29 source-authentic 96 163-bone pose WebGL frames, 12 sheets, contact zero, physical phones HOLD');
+          NODE
+      - name: Upload genuine 96-frame source-photo and source-return evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: P29-96-real-163bone-denim-pose-photo-integrity-HOLD
+          path: |
+            benchmark/denim-pose-29/
+            benchmark/denim-pose-29-review/
+          if-no-files-found: warn
