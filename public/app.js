@@ -342,12 +342,13 @@ function applyLocalChoice(item,choice,overwrite=false){
  Object.assign(item,normalizeClothing(item));item.localStatus='Local suggestion applied. Confirm the category, sleeves, and seasons before saving.';
 }
 async function saveIndexed(item,index04ApprovedOwner=null){
- if(index04ResearchActive&&(!index04ApprovedOwner||window.closetAuth?.user?.id!==index04ApprovedOwner||db?.name!=='closet-current-user-'+index04ApprovedOwner))return false;
+ const index04Active=typeof index04ResearchActive!=='undefined'&&index04ResearchActive;
+ if(index04Active&&(!index04ApprovedOwner||window.closetAuth?.user?.id!==index04ApprovedOwner||db?.name!=='closet-current-user-'+index04ApprovedOwner))return false;
  const value={...normalizeClothing(item),name:item.name.trim()||'Closet piece',savedAt:new Date().toISOString(),indexedAt:new Date().toISOString()};
  const saved=await queued(()=>new Promise((resolve,reject)=>{
   if(!db)return reject(Error('Browser storage is unavailable.'));
   if(!batch.some(x=>x.id===item.id)||item.userAdjusted||item.requiresOwnershipConfirmation||
-     (index04ResearchActive&&(window.closetAuth?.user?.id!==index04ApprovedOwner||db?.name!=='closet-current-user-'+index04ApprovedOwner)))return resolve(false);
+     (index04Active&&(window.closetAuth?.user?.id!==index04ApprovedOwner||db?.name!=='closet-current-user-'+index04ApprovedOwner)))return resolve(false);
   const tx=db.transaction(['items','state'],'readwrite');
   tx.objectStore('items').put(value);
   tx.objectStore('state').put({id:'draft',batch:structuredClone(batch.filter(x=>x.id!==item.id))});
@@ -358,6 +359,7 @@ async function saveIndexed(item,index04ApprovedOwner=null){
  batch=batch.filter(x=>x.id!==item.id);persistDraft();return true;
 }
 async function recognizeItem(item){
+ const index04Active=typeof index04ResearchActive!=='undefined'&&index04ResearchActive;
  const scanStarted=Date.now();let savingIndexed=false,index04ApprovedOwner=null;recognitionState.activeId=item.id;item.scanFailed=false;item.saveFailed=false;item.localStatus='Checking photo quality…';render();
  try{
   const quality=await checkPhoto(item.recognitionPhoto?.image||item.image);
@@ -380,7 +382,7 @@ async function recognizeItem(item){
   // INDEX-04 opt-in: before any model label is applied or automatically saved,
   // independently prove original input bytes, owner, reviewed type and duplicate.
   // Missing evidence sends the existing unsaved item to Adjust, not the DB.
-  if(index04ResearchActive){
+  if(index04Active){
    try{
     const owner=window.closetAuth?.user?.id;
     if(!owner||db?.name!=='closet-current-user-'+owner)throw Error('owner-bound database missing');
@@ -424,7 +426,7 @@ async function recognizeItem(item){
   savingIndexed=true;
   const wasSaved=await saveIndexed(item,index04ApprovedOwner);
   if(wasSaved&&typeof recordDeviceEvent==='function')recordDeviceEvent('recognized_saved',{durationMs:Date.now()-scanStarted});
-  if(!wasSaved&&index04ResearchActive){item.localStatus='Owner changed or confirmation is needed. Your photo remains unsaved for review.';return true;}
+  if(!wasSaved&&index04Active){item.localStatus='Owner changed or confirmation is needed. Your photo remains unsaved for review.';return true;}
   if(recognitionState.phase==='save-failed')recognitionState.phase='ready';
   return true;
  }catch(error){
