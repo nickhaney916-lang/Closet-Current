@@ -82,15 +82,18 @@ try{
     // full-resolution identity assertion; this is a synthetic positive fixture.
     const safe=create('verified-'+innerWidth,{sourceSHA256:sha,
      sourceHashVerified:true,singleGarmentVerified:true});
-    batch=[safe];await persistDraft();
+    // Never lose an unverified review draft when a separate piece saves.
+    batch=[unsafe,safe];await persistDraft();
     await recognizeItem(safe);
     const saved=(await readAll()).filter(x=>x.id===safe.id);
     // The scanner schedules an additional queued draft write and INDEX-02
     // refresh after the save transaction. Allow the committed write queue to
     // settle before measuring the final owner-index generation.
     await writes;
+    const reviewDraft=await readDraft();
     await window.closetIndex02.refresh();
     return {unsafeStatus,unsafeSaved,unsafeDraft,
+      unsafeSurvivesOtherItemSave:reviewDraft.some(x=>x.id===unsafe.id&&x.image===image),
       verifiedSaved:saved.length===1,verifiedCategory:saved[0]?.category,
       verifiedType:saved[0]?.itemType,
       verifiedPhotoUnchanged:saved[0]?.image===image,
@@ -99,6 +102,7 @@ try{
    });
    assert.equal(facts.unsafeSaved,false,'uncertain original must not auto-save');
    assert.equal(facts.unsafeDraft,true,'unsaved review still preserves JPEG');
+   assert.equal(facts.unsafeSurvivesOtherItemSave,true,'unverified photo survives another saved item');
    assert.match(facts.unsafeStatus,/confirm.*Adjust/i,'review must be understandable');
    assert.equal(facts.verifiedSaved,true,'proof-backed recognition must save in real IDB');
    assert.equal(facts.verifiedPhotoUnchanged,true);
@@ -118,6 +122,10 @@ try{
    assert.equal(await page.locator('#closetGrid article.card').count(),1);
    await page.screenshot({path:output+'/'+width+'-actual-app-owner-index.png',fullPage:true});
    await page.evaluate(()=>switchView('review'));
+   assert.equal(await page.locator('#reviewGrid article.photo-result').count(),1,
+    'real review page must display retained original unverified photo');
+   assert.match(await page.locator('#reviewGrid article.photo-result').innerText(),
+    /confirm garment|Needs review/i,'review card must direct person to confirmation');
    await page.screenshot({path:output+'/'+width+'-real-review-page.png',fullPage:true});
    await page.evaluate(async()=>{
     window.closetAuth.user=null;
