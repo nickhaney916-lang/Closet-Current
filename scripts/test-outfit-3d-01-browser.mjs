@@ -54,12 +54,16 @@ const allSources={};
 let browser;
 async function jpegPixelProof(buffer,{denim=false,expectMode='none'}={}){
  const {data,info}=await sharp(buffer).removeAlpha().raw().toBuffer({resolveWithObject:true});
- let nonNeutral=0,denimBlue=0,anatomicalSilhouette=0;
+ let nonNeutral=0,denimBlue=0,anatomicalSilhouette=0,darkOriginalDressPixels=0;
  for(let y=0;y<info.height;y++)for(let x=0;x<info.width;x++){
   const i=(y*info.width+x)*3,[r,g,b]=[data[i],data[i+1],data[i+2]];
   const contrast=Math.max(r,g,b)-Math.min(r,g,b);
   if(contrast>24)nonNeutral++;
   if(b-r>24&&b-g>13&&g-r>8&&r>15)denimBlue++;
+  // Licensed Commons 0053 dress is genuinely BLACK with WHITE trim; requiring
+  // chromatic pixels would reject real, correctly displayed original fabric.
+  if(expectMode==='dress'&&x>info.width*.22&&x<info.width*.78&&
+    y>info.height*.2&&y<info.height*.8&&(r+g+b)/3<112)darkOriginalDressPixels++;
   // On intentionally unsupported all-photo outfits, no garment-color
   // mesh exists. Still require a visible neutral anatomical human, not a
   // blank background or a fake colored clothing mesh.
@@ -70,10 +74,13 @@ async function jpegPixelProof(buffer,{denim=false,expectMode='none'}={}){
  if(expectMode==='none')
   assert.ok(anatomicalSilhouette>=300,
    'Real neutral 163-bone humanoid silhouette required with photo-only outfit');
+ else if(expectMode==='dress')
+  assert.ok(darkOriginalDressPixels>=1200,
+   'Real source-verified BLACK photographed dress fabric required, not an empty mannequin');
  else assert.ok(nonNeutral>=300,
-   'Photographed skinned garment must visibly contain real source color');
+   'Photographed colored skinned garment must visibly retain source pixels');
  if(denim)assert.ok(denimBlue>=500,'Source photographed denim should be visibly blue');
- return {nonNeutral,denimBlue,anatomicalSilhouette,width:info.width,height:info.height};
+ return {nonNeutral,denimBlue,anatomicalSilhouette,darkOriginalDressPixels,width:info.width,height:info.height};
 }
 async function capture(page,{width,rig,label,angle=0,expectMode='none',denim=false}){
  const box=page.locator('#outfit3D01Canvas'),rect=await box.boundingBox();
