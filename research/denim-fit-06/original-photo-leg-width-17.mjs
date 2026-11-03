@@ -38,11 +38,22 @@ export function deriveOriginalPhotoLegWidth17({data,width,height,sourceId,source
  const hems=[band(.90,0),band(.90,1)];
  if([...knees,...hems].some(n=>n<4)||knees.some(n=>n>width*.38)||
   hems.some(n=>n>width*.38))throw Error('W17 incorrect original separate-leg segmentation');
+ // P18: preserve additional original-photo width stations from BOTH
+ // legs. This is real cutout alpha evidence, not procedural wrinkles.
+ const stationFractions18=[.60,.675,.75,.825,.90];
+ const stations18=[0,1].map(side=>stationFractions18.map(f=>band(f,side)));
+ const normalized18=stations18.map((values,side)=>values.map(x=>x/knees[side]));
+ if(normalized18.some(values=>values.some(x=>!Number.isFinite(x)||x<.26||x>2.5)))
+  throw Error('P18 untrustworthy original photographed multi-station leg profile');
  const ratio=hems.map((v,i)=>v/knees[i]);
  if(ratio.some(n=>!Number.isFinite(n)||n<.26||n>2.5))
   throw Error('W17 original photographed leg ratio cannot be trusted');
  return Object.freeze({sourceId,sourceSHA256,cutoutSHA256,
   originalPhotoWidthRatios17:Object.freeze(ratio),
+  originalPhotoCalfProfileStations18:Object.freeze(normalized18.map(x=>Object.freeze(x))),
+  originalPhotoCalfPixelStations18:Object.freeze(stations18.map(x=>Object.freeze(x))),
+  originalPhotoCalfFractions18:Object.freeze(stationFractions18),
+  sourceMeasuredLegProfiles18:true,
   kneePixelWidths17:Object.freeze(knees),hemPixelWidths17:Object.freeze(hems),
   photoAlphaSampleWidth17:width,photoAlphaSampleHeight17:height,
   originalPhotographedCutoutMeasured17:true,
@@ -79,4 +90,26 @@ export function sourcePhotoCalibratedCalfEase17(phase,ratio){
  const smooth=(a,b,v)=>{const z=clamp((v-a)/(b-a),0,1);return z*z*(3-2*z);};
  const falloff=smooth(.03,.17,t)*(1-smooth(.39,.70,t));
  return (.007+.011*clamp((ratio-.30)/1.75,0,1))*falloff;
+}
+
+// P18: continuous broad silhouette eased along multiple ACTUAL source alpha
+// stations (not fabricated fold texture). A real source-image width profile
+// affects side/rear drape; the photographed front surface remains fixed.
+export function sourceMeasuredLegRelief18(phase,stations){
+ if(!Number.isFinite(phase)||phase<0||phase>1||
+  !Array.isArray(stations)||stations.length!==5||
+  stations.some(x=>!Number.isFinite(x)||x<.26||x>2.5)||
+  Math.abs(stations[0]-1)>.025)
+  throw Error('P18 needs five finite true original-photo normalized calf widths');
+ const smooth=(a,b,v)=>{const t=clamp((v-a)/(b-a),0,1);return t*t*(3-2*t);};
+ const u=1-phase,pos=u*4,i=Math.min(3,Math.floor(pos));
+ const t=smooth(0,1,pos-i);
+ const measured=stations[i]*(1-t)+stations[i+1]*t;
+ const linear=1+(stations[4]-1)*u;
+ // Measured non-linear source outline, with a larger broad side/rear cloth
+ // silhouette so genuine source width can meaningfully influence the model.
+ const magnitude=clamp(.008+.006*(measured-.65),.005,.016);
+ const sourceCurve=clamp((measured-linear)*.018,-.005,.005);
+ const taper=smooth(.03,.22,phase)*(1-smooth(.75,.99,phase));
+ return clamp((magnitude+sourceCurve)*taper,0,.018);
 }
