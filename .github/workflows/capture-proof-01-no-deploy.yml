@@ -1,0 +1,87 @@
+name: CAPTURE-PROOF-01 Original Camera+Import Chromium WebKit NO DEPLOY
+on:
+  pull_request:
+    paths:
+      - 'research/capture-proof-01/**'
+      - 'public/app.js'
+      - 'public/index.html'
+      - 'public/outfit-capture.js'
+      - 'public/photo-crop-editor.js'
+      - 'tests/capture-proof-01.test.mjs'
+      - 'scripts/test-capture-proof-01-browser.mjs'
+      - '.github/workflows/capture-proof-01-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  original-photo-mobile-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+      - name: Independently pin INDEX-04 head and enforce narrow research scope
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor f1a79f697d978dba7462fc725d05503cbbf8385c HEAD
+          git diff --name-only f1a79f697d978dba7462fc725d05503cbbf8385c HEAD | while IFS= read -r path; do
+            case "$path" in
+              research/capture-proof-01/*|tests/capture-proof-01.test.mjs|scripts/test-capture-proof-01-browser.mjs|public/app.js|public/index.html|public/outfit-capture.js|public/photo-crop-editor.js|.github/workflows/capture-proof-01-no-deploy.yml|.github/workflows/index-04-no-deploy.yml|.github/workflows/wardrobe-index-02-no-deploy.yml) ;;
+              *) echo "CAPTURE-PROOF unauthorized path: $path"; exit 1;;
+            esac
+          done
+      - name: Install isolated browser test runner without packaging or deploy
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+      - name: Source syntax, proof source guards and two-browser QA syntax
+        run: |
+          node --check public/app.js
+          node --check public/outfit-capture.js
+          node --check public/photo-crop-editor.js
+          node --check research/capture-proof-01/source-proof.mjs
+          node --check tests/capture-proof-01.test.mjs
+          node --check scripts/test-capture-proof-01-browser.mjs
+      - name: Original camera JPEG, EXIF, PNG conversion and tampering regressions
+        run: node --test tests/capture-proof-01.test.mjs tests/index-04-saved-recognition.test.mjs tests/index-03-recognition-safety.test.mjs tests/wardrobe-index-01.test.mjs tests/wardrobe-index-02.test.mjs
+      - name: Complete existing Closet Current app regression and build (NEVER PUBLISH)
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: True mobile Chromium and WebKit 320 390 430 page/canvas/WebCrypto/IDB QA
+        run: node scripts/test-capture-proof-01-browser.mjs
+      - name: Strict evidence manifest and no-deploy acceptance
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const r=JSON.parse(readFileSync('benchmark/capture-proof-01/results.json','utf8'));
+          assert.equal(r.verdict,'PASS');
+          assert.deepEqual(r.results.map(x=>x.engine+':'+x.width),
+           ['chromium:320','chromium:390','chromium:430','webkit:320','webkit:390','webkit:430']);
+          assert.equal(r.errors.length,0);assert.equal(r.outbound.length,0);
+          assert.ok(r.results.every(x=>x.realPage&&x.realCanvasJPEG&&x.genuineWebCrypto&&
+           x.realIndexedDB&&x.simulatedCamera&&x.mockedWorkers&&
+           x.permissionDeniedAndRecovered&&x.frontFacingFallback&&
+           x.originalFullResolution&&x.unverifiedNeedsReview&&
+           x.originalImportConversionHonest&&x.manualCorrectionSaved&&x.outfitOriginalHandoff&&
+           x.logoutClearsPrivateIndex&&!x.actualPhysicalPhone));
+          assert.equal(r.physicalAndroidTested,false);
+          assert.equal(r.physicalIphoneTested,false);
+          assert.equal(r.freshNeuralInference,false);
+          assert.equal(r.productionDeployed,false);
+          assert.equal(r.familyAlpha,'HOLD');
+          console.log('CAPTURE-PROOF 6 genuine browser viewport scenarios and no-deploy PASS');
+          NODE
+      - name: Upload synthetic browser screenshots and integrity manifest HOLD
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: CAPTURE-PROOF-01-CHROMIUM-WEBKIT-320-390-430-SYNTHETIC-HOLD
+          path: benchmark/capture-proof-01/
+          if-no-files-found: warn
