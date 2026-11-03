@@ -1221,6 +1221,7 @@ try{
                 await materialPage23.locator('#swap').click();
                 if(denimIndex===1)await materialPage23.locator('#swap').click();
                 await materialPage23.waitForFunction(()=>window.ccWardrobe10Diagnostics?.()?.outfitMode==='shirt-pants',null,{timeout:30000});
+                await materialPage23.waitForFunction(()=>window.ccWardrobe10Diagnostics?.()?.sourceDenimMaterial23Compiled===true,null,{timeout:30000});
                 const state23=await diag(materialPage23);
                 assert.equal(state23.account,'fixture-account-a');
                 assert.equal(state23.bones,163);
