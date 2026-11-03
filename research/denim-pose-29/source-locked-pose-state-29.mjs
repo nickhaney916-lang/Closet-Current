@@ -26,6 +26,9 @@ export function decideDenimPose29({pose,previous=null,restFitWasFrozen=false,
    if(restRecoveryProof.originalPhotoSHA256!==originalSourceSHA256||
     restRecoveryProof.sourceJPEGUVSkinRestProtected28!==true||
     restRecoveryProof.sourceNeutralSeamFlow28!==true||
+    !Number.isSafeInteger(restRecoveryProof.bodyContactBefore)||
+    !Number.isSafeInteger(restRecoveryProof.bodyContactAfter)||
+    restRecoveryProof.bodyContactBefore<0||restRecoveryProof.bodyContactAfter<0||
     restRecoveryProof.bodyContactAfter>restRecoveryProof.bodyContactBefore||
     restRecoveryProof.trueBVHBodyContactNoNew!==true)
     throw Error('P29 cannot claim a restored source fit without genuine intact 163-bone photo and BVH proof');
