@@ -1,0 +1,138 @@
+name: STAGING-AB-01 signed two-account private backup/photo READ ONLY NO DEPLOY
+on:
+  pull_request:
+    paths:
+      - 'research/staging-ab-01/**'
+      - 'tests/staging-ab-01.test.mjs'
+      - 'scripts/run-staging-ab-01-live.mjs'
+      - '.github/workflows/staging-ab-01-no-deploy.yml'
+  workflow_dispatch:
+    inputs:
+      run_live_staging:
+        description: 'Run real server-verified A/B staging test using pre-provisioned test accounts and approved fixtures ONLY (no writes)'
+        type: boolean
+        default: false
+        required: true
+permissions:
+  contents: read
+jobs:
+  offline-failclosed-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+      - name: Require exact CLOUD-RLS-01 source and strictly isolated research edits
+        run: |
+          git merge-base --is-ancestor 32e62ec4d85e460ed7da5b187d6823ce7cac6ce7 HEAD
+          git diff --name-only 32e62ec4d85e460ed7da5b187d6823ce7cac6ce7 HEAD | while IFS= read -r path; do
+            case "$path" in
+              research/staging-ab-01/*|tests/staging-ab-01.test.mjs|scripts/run-staging-ab-01-live.mjs|.github/workflows/staging-ab-01-no-deploy.yml) ;;
+              *) echo "UNAUTHORIZED production/cloud/staging/schema/parallel change: $path"; exit 1;;
+            esac
+          done
+          git diff --exit-code 32e62ec4d85e460ed7da5b187d6823ce7cac6ce7 -- public/ migrations/ supabase/ docs/ 
+      - name: Install only test packages, never use production or staging secrets
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Verify source syntax, full existing app/identity/privacy regressions and genuine build
+        run: |
+          node --check research/staging-ab-01/two-account-proof.mjs
+          node --check tests/staging-ab-01.test.mjs
+          node --check scripts/run-staging-ab-01-live.mjs
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Confirm live runner without approved fixture secrets FAILS CLOSED (never false PASS)
+        run: |
+          set +e
+          env -u CC_STAGING_AB01_PUBLIC_KEY \
+            -u CC_STAGING_AB01_A_EMAIL -u CC_STAGING_AB01_A_PASSWORD \
+            -u CC_STAGING_AB01_A_PHOTO_PATH \
+            -u CC_STAGING_AB01_B_EMAIL -u CC_STAGING_AB01_B_PASSWORD \
+            -u CC_STAGING_AB01_B_PHOTO_PATH \
+            node scripts/run-staging-ab-01-live.mjs
+          code=$?
+          set -e
+          test "$code" -eq 2
+          node --input-type=module <<'NODE'
+          import {readFileSync} from 'node:fs';
+          import assert from 'node:assert/strict';
+          const m=JSON.parse(readFileSync('benchmark/staging-ab-01/acceptance.json','utf8'));
+          assert.equal(m.result,'LIVE_BLOCKED');
+          assert.equal(m.code,'STAGING_PUBLIC_KEY_REQUIRED');
+          assert.equal(m.liveTwoAccountProof,false);
+          assert.equal(m.noProductionAccess,true);
+          assert.equal(m.noStagingMutation,true);
+          assert.equal(m.releaseAuthorized,false);
+          console.log('STAGING_AB01: offline source/contract PASS; real A/B fixture proof EXPLICITLY BLOCKED');
+          NODE
+      - name: Re-run inherited immutable Supabase catalog security acceptance
+        run: |
+          node scripts/audit-cloud-rls-01.mjs
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const m=JSON.parse(readFileSync('benchmark/cloud-rls-01/acceptance.json'));
+          assert.equal(m.result.status,'PASS_READ_ONLY_METADATA_ONLY');
+          assert.equal(m.result.signedInTwoAccountProof,false);
+          assert.equal(m.releaseAuthorized,false);
+          console.log('Prior CLOUD-RLS-01 metadata gate preserved, never relabeled real live auth');
+          NODE
+      - name: Upload sanitized offline acceptance (no credentials or customer data)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: STAGING-AB01-offline-adversarial-contract-live-BLOCKED-HOLD
+          path: benchmark/staging-ab-01/acceptance.json
+          if-no-files-found: warn
+
+  staging-signed-user-proof-opt-in:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_live_staging == true }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: staging
+    concurrency:
+      group: closet-current-staging-two-account-qa-readonly
+      cancel-in-progress: false
+    env:
+      CC_STAGING_AB01_PUBLIC_KEY: ${{ secrets.CC_STAGING_AB01_PUBLIC_KEY }}
+      CC_STAGING_AB01_A_EMAIL: ${{ secrets.CC_STAGING_AB01_A_EMAIL }}
+      CC_STAGING_AB01_A_PASSWORD: ${{ secrets.CC_STAGING_AB01_A_PASSWORD }}
+      CC_STAGING_AB01_A_PHOTO_PATH: ${{ secrets.CC_STAGING_AB01_A_PHOTO_PATH }}
+      CC_STAGING_AB01_B_EMAIL: ${{ secrets.CC_STAGING_AB01_B_EMAIL }}
+      CC_STAGING_AB01_B_PASSWORD: ${{ secrets.CC_STAGING_AB01_B_PASSWORD }}
+      CC_STAGING_AB01_B_PHOTO_PATH: ${{ secrets.CC_STAGING_AB01_B_PHOTO_PATH }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - name: Test ONLY approved staging users, existing owned backups/photos and cross-owner deny
+        run: node scripts/run-staging-ab-01-live.mjs
+      - name: Require real two-account signed-token PASS while preserving all separate release HOLDS
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const r=JSON.parse(readFileSync('benchmark/staging-ab-01/acceptance.json','utf8'));
+          assert.equal(r.result,'PASS_LIVE_READ_ONLY');
+          assert.equal(r.authentication,'TWO_REAL_SERVER_VERIFIED_STAGING_SESSIONS');
+          assert.equal(r.verifiedOwnerAccounts,2);
+          assert.equal(r.verifiedOwnBackupFixtures,2);
+          assert.equal(r.verifiedOwnPrivateJPEGFixtures,2);
+          assert.equal(r.realSignedInReadIsolationVerified,true);
+          assert.equal(r.liveUpdateDeleteTested,false);
+          assert.equal(r.customerPhotoBytesRead,false);
+          assert.equal(r.secretsOrAccountIdsEmitted,false);
+          assert.equal(r.backendProductionAccessed,false);
+          assert.equal(r.releaseAuthorized,false);
+          assert.equal(r.familyAlpha,'HOLD');
+          console.log('Verified only read-only real signed staging JWT/REST/Storage owner isolation. Writes, real phones, production remain HOLD');
+          NODE
+      - name: Upload sanitized staging A/B result (no tokens, identities, photos or backup payloads)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: STAGING-AB01-real-server-verified-two-account-READONLY-no-deploy
+          path: benchmark/staging-ab-01/acceptance.json
+          if-no-files-found: warn
