@@ -77,6 +77,15 @@ async function checkImage(page,engine,width,owner,stage){
  await writeFile(dir+'/'+name,png);
  screens.push({name,sha256:hash(png),engine,width,owner,stage});
 }
+async function sourceCardDetail(page,engine,width,owner){
+ const name=engine+'-'+width+'-'+owner+'-source-cards-all-slots.png';
+ const png=await page.locator('#board02Preview').screenshot({animations:'disabled'});
+ const m=await sharp(png).metadata(),stats=await sharp(png).stats();
+ assert.ok(m.width<=width&&m.width>=width-65,'Real element crop width must be within viewport');
+ assert.ok(png.length>2000&&stats.channels.some(x=>x.stdev>10));
+ await writeFile(dir+'/'+name,png);
+ screens.push({name,sha256:hash(png),engine,width,owner,stage:'all-original-slot-cards',elementCapture:true});
+}
 async function setupPage(context,owner,engine,width){
  const page=await context.newPage();
  page.on('pageerror',e=>errors.push({engine,width,owner,message:e.message}));
@@ -133,13 +142,13 @@ try{
     });
     await checkImage(page,engine,width,owner,'before-native');
     const first=owner+'-dress-outfit';
-    const opened=await page.evaluate(id=>{
-     const e=window.__board02.editor;e.open(id);
-     window.__board02.show();return e.inspect();
-    },first);
+    await page.locator('#board02Saved').selectOption(first);
+    await page.waitForFunction(()=>document.querySelector('#boardLossless02Status').textContent.includes('Saved IDs retained'));
+    const opened=await page.evaluate(()=>window.__board02.editor.inspect());
     assert.equal(opened.slots.layer2,owner+'-jacket');assert.equal(opened.slots.layer3,owner+'-coat');
     assert.equal(opened.outerwear.length,2);
     await checkImage(page,engine,width,owner,'open-lossless');
+    await sourceCardDetail(page,engine,width,owner);
     assert.deepEqual(await board(page),before,'Read/render cannot write');
     const edited=await page.evaluate(()=>{
      const e=window.__board02.editor;
@@ -150,8 +159,9 @@ try{
     assert.equal(edited.blocked,true);assert.equal(edited.view.dirty,true);
     await checkImage(page,engine,width,owner,'unsaved-edit');
     assert.deepEqual(await board(page),before,'Draft cannot mutate existing stored state');
-    const receipt=await page.evaluate(()=>window.__board02.editor.save());
-    assert.equal(receipt.id,first);
+    await page.locator('#board02Save').click();
+    await page.waitForFunction(()=>document.querySelector('#boardLossless02Status').textContent.startsWith('Saved original outfit'));
+    const receipt={id:first};assert.equal(receipt.id,first);
     const after=await board(page);
     assert.equal(after.saved[0].slots.shoes,owner+'-newshoes');
     assert.equal(after.saved[0].slots.layer2,owner+'-jacket');
@@ -203,13 +213,47 @@ try{
     assert.equal(denied,true);
     await page.evaluate(()=>{
      const e=window.__board02.editor;e.open(window.closetAuth.user.id+'-dress-outfit');
-     e.editName('DO NOT SAVE');e.cancel();
+     e.editName('DO NOT SAVE');
     });
+    await page.locator('#board02Cancel').click();
+    await page.waitForFunction(()=>document.querySelector('#boardLossless02Status').textContent.startsWith('Canceled:'));
     assert.deepEqual(await board(page),after);
+    await page.evaluate(()=>window.__board02.editor.editName('Independent saved copy'));
+    await page.locator('#board02SaveNew').click();
+    await page.waitForFunction(()=>document.querySelector('#boardLossless02Status').textContent.startsWith('Saved separate new outfit'));
+    const copied=await board(page);
+    assert.equal(copied.saved.length,3);assert.deepEqual(copied.saved[0],after.saved[0]);
+    assert.equal(copied.saved[2].name,'Independent saved copy');
+    const copyId=copied.saved[2].id;
+    page.once('dialog',dialog=>dialog.accept());
+    await page.locator('#board02Delete').click();
+    await page.waitForFunction(()=>document.querySelector('#boardLossless02Status').textContent.startsWith('Confirmed outfit deletion'));
+    const cleaned=await board(page);
+    assert.equal(cleaned.saved.length,2);assert.deepEqual(cleaned.saved[0],after.saved[0]);
+    assert.equal(cleaned.saved.some(x=>x.id===copyId),false);
+    let twoTabConflict=false;
+    if(engine==='chromium'&&width===390&&owner.endsWith('-A')){
+     const other=await setupPage(context,owner,engine,width);await mount(other);
+     await page.evaluate(id=>{window.__board02.editor.open(id);window.__board02.editor.editName('Tab one accepted');},first);
+     await other.evaluate(id=>{window.__board02.editor.open(id);window.__board02.editor.editName('Tab two stale');},first);
+     await page.evaluate(()=>window.__board02.editor.save());
+     const denied=await other.evaluate(async()=>{
+      try{await window.__board02.editor.save();return false;}catch(e){return /CONFLICT/.test(e.message);}
+     });
+     assert.equal(denied,true,'Two actual same-owner browser tabs must never overwrite');
+     twoTabConflict=true;await other.close();
+    }
+    await page.evaluate(()=>{
+     window.__board02FixtureEpoch++;
+     window.dispatchEvent(new CustomEvent('closet:alpha-session-changed'));
+    });
+    assert.equal(await page.locator('#boardLossless02Status').textContent(),
+     'Account or session changed; private research preview cleared.');
     cases.push({engine,width,owner,nativeLoss:lost,losslessJacketCoat:true,
      durable3DID:true,missingPieceId:true,sourceSHA256:identity.sourceSHA256,
      donorMode:donor.mode,donorPhotoFallback:donor.fallbackIds,
      separateOwnerDenied:true,reopenReadOnly:true,cancelNoWrite:true,
+     saveAsNewUI:true,confirmedDeleteUI:true,sessionInvalidationUI:true,twoTabConflict,
      realRLS:'NOT TESTED',physicalPhone:'NOT TESTED',releaseAuthorized:false});
     await page.close();
    }
@@ -217,7 +261,7 @@ try{
   }
   await browser.close();browser=null;
  }
- assert.equal(cases.length,12);assert.equal(screens.length,60);
+ assert.equal(cases.length,12);assert.equal(screens.length,72);
  assert.deepEqual(errors,[]);
  assert.deepEqual(external.filter(x=>x.method!=='GET'),[]);
  for(const s of screens)assert.equal(hash(await readFile(dir+'/'+s.name)),s.sha256);
