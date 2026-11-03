@@ -1,0 +1,9 @@
+# DENIM-NEUTRAL-MATERIAL-23 — research-only, draft, Family Alpha HOLD
+
+Verified parent PR #534 P22 head `7f58da3796d45ae2080761c20860d3918eb308be`, dedicated Actions #41594136191 SUCCESS, 24 genuine matched original-photo WebGL shots independently inspected.
+
+## Goal
+The original photographed denim FRONT retains the exact original JPEG, alpha, cutout, UV, color, and skin/rest. The unphotographed SIDE/REAR currently derives only a neutral solid color from the original photographed pixels. Retain that honest neutral base but improve physically based microfacet lighting on the actual independently fitted 163-bone garment by reducing its baseline ultra-matte roughness (.96) to .68 **ONLY on fragments whose original source-photo opacity is <=1%, with a smooth transition to full historical roughness by 10%**. Existing MeshStandardMaterial computes physically based highlights from real geometry normals and studio lights. No fake weave, synthetic texture, rear pocket/stitch/print or fabricated source rear details. No geometry change, texture replacement, new account data or external image generation.
+
+## Safety/acceptance
+Default OFF; only when whole verified P22 photo hierarchy enabled and `denimMaterial23=after`. Original SHA-bound genuine source verification required, no invented photo, exact prior roughness wherever original front contributes more than 10%. 2 licensed source jeans × 2 genuine female/male 163-bone rigs × 90/135/180 = 12 camera-matched P22/P23 pairs/24 WebGL PNGs, >=20 RGB pixels changed on each, zero increased genuine skinned BVH intersections. Original account isolation and release hold. Full inherited no-deploy workflow, inspect all actual screenshots. 3D visual photorealism and physical iPhone/Android acceptance remain HOLD; no release, no production, no Drive Duel or Delta Ebb.
