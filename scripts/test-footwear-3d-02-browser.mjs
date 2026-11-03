@@ -24,7 +24,7 @@ const host='http://127.0.0.1:'+server.address().port;
 await mkdir(folder,{recursive:true});
 const digest=v=>createHash('sha256').update(v).digest('hex');
 const widths=[320,390,430],figures=['female','male'],choices=['commons-0080','commons-0081'],angles=[0,45,90,135,180,225,270,315,360];
-const cases=[],external=[],errors=[],originals={};
+const cases=[],comparisons=[],external=[],errors=[],originals={};
 for(const id of choices)originals[id]=digest(await readFile('benchmark/fixtures/'+id+'.jpg'));
 let browser;
 try{
@@ -51,6 +51,8 @@ try{
    // Before state: barefoot, not a generic substitute.
    const initial=await page.evaluate(()=>window.__footwear02.select(null));
    assert.equal(initial.status,'PHOTO_ONLY_FALLBACK');
+   const bare=await page.screenshot({animations:'disabled'});
+   await writeFile(folder+'/comparison-'+width+'-'+figure+'-bare.png',bare);
    for(const choice of choices){
     const result=await page.evaluate(id=>window.__footwear02.select(id),choice);
     assert.equal(result.status,'PROVISIONAL_SOURCE_INFORMED_MESH');
@@ -65,6 +67,11 @@ try{
     const live=await page.evaluate(()=>window.__footwear02.state());
     assert.equal(live.shoe.pairCount,2);assert.equal(live.shoe.meshCount,6);
     assert.equal(new Set(live.shoe.geometryIds).size,2);
+    if(choice==='commons-0080'){
+      await page.evaluate(()=>window.__footwear02.rotate(0));
+      const after=await page.screenshot({animations:'disabled'});
+      await writeFile(folder+'/comparison-'+width+'-'+figure+'-shoes.png',after);
+    }
     for(const angle of angles){
      const rotated=await page.evaluate(deg=>window.__footwear02.rotate(deg),angle);
      assert.equal(rotated.stats.bones,163);
@@ -83,7 +90,15 @@ try{
     }
    }
    // Unsupported photo fallback must not change shirt, jeans, or rig.
-   const fallback=await page.evaluate(()=>window.__footwear02.select('not-licensed'));
+   const fallback=await page.evaluate(()=>window.__footwear02.select('photo:commons-0080'));
+   const photoOnly=await page.screenshot({animations:'disabled'});
+   await writeFile(folder+'/comparison-'+width+'-'+figure+'-photo-fallback.png',photoOnly);
+   const trio=await Promise.all(['bare','photo-fallback','shoes'].map(k=>readFile(folder+'/comparison-'+width+'-'+figure+'-'+k+'.png')));
+   const combined=await sharp({create:{width:width*3,height:950,channels:4,background:'#f4f3ef'}})
+     .composite(trio.map((input,i)=>({input,top:0,left:i*width}))).png().toBuffer();
+   await writeFile(folder+'/comparison-'+width+'-'+figure+'-contact-sheet.png',combined);
+   comparisons.push({width,figure,bare:digest(trio[0]),photoOnly:digest(trio[1]),mesh:digest(trio[2]),
+     contactSheet:'comparison-'+width+'-'+figure+'-contact-sheet.png'});
    assert.equal(fallback.status,'PHOTO_ONLY_FALLBACK');
    const after=await page.evaluate(()=>window.__footwear02.state());
    assert.equal(after.outfit.mode,'shirt-pants');assert.equal(after.shoe.pairCount,0);
@@ -96,7 +111,7 @@ try{
  assert.equal(errors.length,0,'No browser page errors');
  for(const id of choices)assert.equal(digest(await readFile('benchmark/fixtures/'+id+'.jpg')),originals[id],'source unchanged');
  const results={status:'REVIEW_VISUAL',realWebGL:true,count:cases.length,widths,figures,choices,angles,
-  sources:originals,sourcePhotoBytePreserved:true,independentShoes:true,staticFloorWithin12mm:true,
+  sources:originals,comparisons,sourcePhotoBytePreserved:true,independentShoes:true,staticFloorWithin12mm:true,
   externalRequests:external,errors,physicalAndroid:'NOT TESTED',physicalIPhone:'NOT TESTED',
   photoProjectedMesh:false,sourceNeutralSides:true,continuousPhysicsCertified:false,
   humanVisualCertified:false,productionModified:false,familyAlpha:'HOLD',cases};
