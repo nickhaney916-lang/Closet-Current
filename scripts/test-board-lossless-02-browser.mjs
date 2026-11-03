@@ -13,7 +13,7 @@ const root=resolve('.'),donor=resolve('.board02-donor-541'),dir='benchmark/board
 await mkdir(dir,{recursive:true});
 const hash=b=>createHash('sha256').update(b).digest('hex');
 const sources={};
-for(const id of ['commons-0053','commons-0003','commons-0080']){
+for(const id of ['commons-0053','commons-0003','commons-0021','commons-0064','commons-0067','commons-0080']){
  const bytes=await readFile('benchmark/fixtures/'+id+'.jpg');
  sources[id]={sha256:hash(bytes),data:'data:image/jpeg;base64,'+bytes.toString('base64')};
 }
@@ -48,10 +48,10 @@ function fixture(owner){
   originalPhoto:{image:sources[pic].data,sha256:sources[pic].sha256}});
  return {items:[
   item('dress','Dresses','Casual dress','commons-0053'),
-  item('jacket','Outerwear','Jacket','commons-0003'),
-  item('coat','Outerwear','Coat','commons-0003'),
+  item('jacket','Outerwear','Jacket','commons-0064'),
+  item('coat','Outerwear','Coat','commons-0067'),
   item('shirt','Tops','T-shirt','commons-0003'),
-  item('jeans','Bottoms','Jeans','commons-0003'),
+  item('jeans','Bottoms','Jeans','commons-0021'),
   item('shoes','Shoes','Sneakers','commons-0080'),
   item('newshoes','Shoes','Sneakers','commons-0080')
  ],state:{id:'outfit-board',current:{name:'Preserved native current',slots:{},future:{keep:true}},
