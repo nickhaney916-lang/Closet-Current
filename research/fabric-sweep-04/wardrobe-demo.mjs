@@ -343,7 +343,16 @@ async function initViewer(){
        new URLSearchParams(location.search).get('denimSide15')==='after'&&
        new URLSearchParams(location.search).get('denimPosterior16')==='after'&&
        new URLSearchParams(location.search).get('denimPhotoWidth17')==='after'&&
-       new URLSearchParams(location.search).get('denimProfile18')==='after'
+       new URLSearchParams(location.search).get('denimProfile18')==='after',
+     sourceDenimSigned19:new URLSearchParams(location.search).get('denimFit')==='after'&&
+       new URLSearchParams(location.search).get('denimSilhouette')==='after'&&
+       new URLSearchParams(location.search).get('denimFairing')==='after'&&
+       new URLSearchParams(location.search).get('denimRear14')==='after'&&
+       new URLSearchParams(location.search).get('denimSide15')==='after'&&
+       new URLSearchParams(location.search).get('denimPosterior16')==='after'&&
+       new URLSearchParams(location.search).get('denimPhotoWidth17')==='after'&&
+       new URLSearchParams(location.search).get('denimProfile18')==='after'&&
+       new URLSearchParams(location.search).get('denimSigned19')==='after'
   });
   canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();
    if(token!==bootToken)return;
@@ -458,6 +467,7 @@ window.ccWardrobe10Diagnostics=()=>{
       sourceDenimPosteriorContour16Enabled:state?.sourceDenimPosteriorContour16Enabled||false,
       sourceDenimPhotoWidth17Enabled:state?.sourceDenimPhotoWidth17Enabled||false,
       sourceDenimProfile18Enabled:state?.sourceDenimProfile18Enabled||false,
+      sourceDenimSigned19Enabled:state?.sourceDenimSigned19Enabled||false,
       staticDenimFit06Enabled:state?.staticDenimFit06Enabled||false,
       staticDenimFit06State:state?.staticDenimFit06State||null,
      swept04Clock:state?.continuousGait04||null,
@@ -599,6 +609,15 @@ window.ccWardrobeDenimFreeze06=()=>{
      proof.photographedCalfProfileMaxShiftMeters18<.004||
      proof.photographedCalfProfileMaxShiftMeters18>.0180001))
    throw Error('P18 five source photo stations, original front or actual skinned drape invalid');
+  if(new URLSearchParams(location.search).get('denimSigned19')==='after'&&
+    (!proof.originalPhotoDirectionalCalf19||!proof.originalPhotoFrontUnchanged19||
+     !proof.unphotographedRearUnchanged19||
+     proof.signedSourceCalfMovedVertices19<25||
+     Math.min(...proof.signedSourceCalfPerLeg19)<10||
+     proof.sourcePhotoSignedShiftMaxMeters19<.001||
+     proof.sourcePhotoSignedShiftMaxMeters19>.0115001))
+   throw Error('P19 signed original photographed taper missing or untrusted');
+
   const after=current();
   if(!after.authenticated||after.ownerId!==owner.ownerId||after.generation!==owner.generation||
     proof.originalPhotoSHA256!==expected||!proof.frontPhotographUnchanged||

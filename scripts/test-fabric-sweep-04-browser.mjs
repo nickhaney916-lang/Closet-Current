@@ -28,7 +28,7 @@ const server=createServer(async(req,res)=>{
 });
 await new Promise(ok=>server.listen(0,'127.0.0.1',ok));
 const host='http://127.0.0.1:'+server.address().port;
-const screenshots=[],cases=[],contacts=[],sweeps=[],frozenDress=[],frozenDenim=[],denimSilhouetteComparisons=[],denimFairing08Comparisons=[],denimAngle09Comparisons=[],denimRear14Comparisons=[],denimSide15Comparisons=[],denimPosterior16Comparisons=[],denimPhotoWidth17Comparisons=[],denimProfile18Comparisons=[],pointerRotation11=[],touchSwipe12=[],pinchZoom13=[],javascriptErrors=[],nonLocalRequests=[];
+const screenshots=[],cases=[],contacts=[],sweeps=[],frozenDress=[],frozenDenim=[],denimSilhouetteComparisons=[],denimFairing08Comparisons=[],denimAngle09Comparisons=[],denimRear14Comparisons=[],denimSide15Comparisons=[],denimPosterior16Comparisons=[],denimPhotoWidth17Comparisons=[],denimProfile18Comparisons=[],denimSigned19Comparisons=[],pointerRotation11=[],touchSwipe12=[],pinchZoom13=[],javascriptErrors=[],nonLocalRequests=[];
 function monitor(page){
  page.on('pageerror',error=>javascriptErrors.push(String(error.message)));
  page.on('request',r=>{
@@ -135,6 +135,7 @@ try{
  await mkdir('benchmark/denim-posterior-contour-16',{recursive:true});
  await mkdir('benchmark/denim-photo-width-17',{recursive:true});
  await mkdir('benchmark/denim-original-profile-18',{recursive:true});
+ await mkdir('benchmark/denim-signed-calf-19',{recursive:true});
  for(const width of [320,390,430]){
   const ctx=await browser.newContext({viewport:{width,height:900},deviceScaleFactor:1,isMobile:true,hasTouch:true});
   const p=await ctx.newPage();monitor(p);
@@ -960,6 +961,68 @@ try{
              humanPhotorealismApproved:false,realDeviceVerified:false,
              productionModified:false,releaseAuthorized:false});
            }
+
+           // P19: real signed original-hem direction against exactly frozen
+           // P18, identical original source, camera, rig and account.
+           const signedCtx19=await browser.newContext({
+            viewport:{width,height:900},deviceScaleFactor:1,isMobile:true,hasTouch:true});
+           try{
+            const signedPage19=await signedCtx19.newPage();monitor(signedPage19);
+            await signedPage19.goto(host+'/research/fabric-sweep-04/index.html?walk=after&folds=after&sweep=after&dressFit=after&denimFit=after&denimSilhouette=after&denimFairing=after&denimRear14=after&denimSide15=after&denimPosterior16=after&denimPhotoWidth17=after&denimProfile18=after&denimSigned19=after',{waitUntil:'domcontentloaded'});
+            if(rig==='male'){
+             await signedPage19.waitForFunction(()=>window.ccWardrobe10Diagnostics?.()?.viewerReady===true,null,{timeout:180000});
+             await signedPage19.locator('#model').selectOption('male');
+             await signedPage19.waitForFunction(()=>window.ccWardrobe10Diagnostics()?.figure==='male'&&window.ccWardrobe10Diagnostics()?.viewerReady===true,null,{timeout:180000});
+            }
+            await ready(signedPage19);
+            await signedPage19.locator('#swap').click();
+            if(denimIndex===1)await signedPage19.locator('#swap').click();
+            await signedPage19.waitForFunction(()=>window.ccWardrobe10Diagnostics?.()?.outfitMode==='shirt-pants',null,{timeout:30000});
+            const state19=await diag(signedPage19);
+            assert.equal(state19.sourceDenimSigned19Enabled,true);
+            assert.equal(state19.displayed3DSources?.bottom,sourceDenim);
+            assert.equal(state19.account,'fixture-account-a');
+            assert.equal(state19.bones,163);
+            const fit19=await signedPage19.evaluate(()=>window.ccWardrobeDenimFreeze06());
+            assert.equal(fit19.originalPhotoSHA256,sourceDenim);
+            assert.equal(fit19.originalPhotoDirectionalCalf19,true);
+            assert.equal(fit19.originalPhotoFrontUnchanged19,true);
+            assert.equal(fit19.unphotographedRearUnchanged19,true);
+            assert.equal(fit19.trueBVHBodyContactNoNew,true);
+            assert.ok(fit19.bodyContactAfter<=fit19.bodyContactBefore);
+            assert.ok(fit19.signedSourceCalfMovedVertices19>=25);
+            assert.ok(Math.min(...fit19.signedSourceCalfPerLeg19)>=10);
+            assert.ok(fit19.sourcePhotoSignedShiftMaxMeters19>.001&&
+             fit19.sourcePhotoSignedShiftMaxMeters19<=.0115001);
+            const actualHemRatio=fit19.originalPhotoSignedRatios19;
+            assert.ok(actualHemRatio?.length===2);
+            assert.equal(actualHemRatio.every(v=>v<1),denimIndex===0);
+            for(const angle of [90,135]){
+             await profilePage18.evaluate(a=>window.ccWardrobe10View(a),angle);
+             await signedPage19.evaluate(a=>window.ccWardrobe10View(a),angle);
+             const before=await profilePage18.locator('#avatar').screenshot();
+             const after=await signedPage19.locator('#avatar').screenshot();
+             const changed19=diff(await raw(before),await raw(after));
+             assert.ok(changed19>=20,'P19 genuine signed hem shape must differ from P18 '+angle+': '+changed19);
+             const key=prefix+'-view-'+angle;
+             await writeFile('benchmark/denim-signed-calf-19/'+key+'-exact-p18.png',before);
+             await writeFile('benchmark/denim-signed-calf-19/'+key+'-signed-p19.png',after);
+             denimSigned19Comparisons.push({rig,width,denimIndex,sourceDenim,angle,
+              verifiedOriginalHemRatios:actualHemRatio,
+              expectedDirection:denimIndex===0?'inward':'outward',
+              changedRealWebGLRGBPixels:changed19,
+              sourceCalfMovedVertices19:fit19.signedSourceCalfMovedVertices19,
+              sourceCalfMovedPerLeg19:fit19.signedSourceCalfPerLeg19,
+              sourceCalfMaxShiftMeters19:fit19.sourcePhotoSignedShiftMaxMeters19,
+              originalFrontAnd163BoneSkinProtected:true,
+              genuineSkinnedBodyContactsBefore:fit19.bodyContactBefore,
+              genuineSkinnedBodyContactsAfter:fit19.bodyContactAfter,
+              inventedUnphotographedTexture:false,realDeviceVerified:false,
+              humanPhotorealismApproved:false,productionModified:false,releaseAuthorized:false});
+            }
+            await signedPage19.locator('#logout').click();
+            assert.equal((await diag(signedPage19)).sourcePhotoCoverageVisible,false);
+           }finally{await signedCtx19.close();}
            await profilePage18.locator('#logout').click();
            assert.equal((await diag(profilePage18)).sourcePhotoCoverageVisible,false);
           }finally{await profileCtx18.close();}
@@ -1008,6 +1071,18 @@ try{
  assert.equal(await p.evaluate(()=>{try{window.ccWardrobeGait02('play');return false;}catch{return true;}}),true);
  await ctx.close();
 
+ assert.equal(denimSigned19Comparisons.length,8,'P19 requires two original jeans x two rigs x two genuine side views');
+ assert.equal(new Set(denimSigned19Comparisons.map(x=>x.sourceDenim)).size,2);
+ assert.ok(denimSigned19Comparisons.every(x=>x.changedRealWebGLRGBPixels>=20&&
+  x.genuineSkinnedBodyContactsAfter<=x.genuineSkinnedBodyContactsBefore&&
+  x.originalFrontAnd163BoneSkinProtected&&!x.inventedUnphotographedTexture));
+ await writeFile('benchmark/denim-signed-calf-19/results.json',JSON.stringify({
+  signedOriginalSourceComparisons:denimSigned19Comparisons,actualWebGLFrames:16,
+  actualOriginal163BoneFigures:['female','male'],distinctOriginalJeanSources:2,
+  mobileWidth:390,angles:[90,135],originalPhotographsProtected:true,
+  fabricatedRear:false,realDeviceVerified:false,humanPhotorealismApproved:false,
+  familyAlpha:'HOLD',productionModified:false,releaseAuthorized:false
+ },null,2));
  assert.equal(denimProfile18Comparisons.length,8,'P18 original-photo profile comparisons require 2 source jeans x 2 rigs x 2 views');
  assert.deepEqual([...new Set(denimProfile18Comparisons.map(x=>x.angle))],[90,135]);
  assert.equal(new Set(denimProfile18Comparisons.map(x=>x.sourceDenim)).size,2);
