@@ -102,7 +102,13 @@ try{
    assert.equal(facts.verifiedType,'Jeans');
    assert.equal(facts.shaMatches,true);
    assert.equal(facts.indexedSavedCount,1);
-   await page.evaluate(()=>switchView('closet'));
+   // Exercise the same My Closet saved-snapshot reload/browse-all path as INDEX-02.
+   await page.evaluate(async()=>{
+    items=(await readAll()).map(normalizeClothing);
+    window.closetBrowseAll=true;
+    render();switchView('closet');
+    await window.closetIndex02.refresh();
+   });
    await page.locator('#index02Category').selectOption('Bottoms');
    await page.waitForFunction(()=>window.closetIndex02?.state()?.matched===1);
    assert.equal(await page.locator('#closetGrid article.card').count(),1);
