@@ -33,7 +33,7 @@ jobs:
           git merge-base --is-ancestor 9087534732177608f9982b1301fb83bc4df0b3fe HEAD
           git diff --name-only 9087534732177608f9982b1301fb83bc4df0b3fe HEAD | while IFS= read -r path; do
             case "$path" in
-              research/wardrobe-index-02/*|tests/wardrobe-index-02.test.mjs|scripts/test-wardrobe-index-02-browser.mjs|public/app.js|public/cloud-backup-bridge.js|.github/workflows/wardrobe-index-02-no-deploy.yml|research/index-03/*|research/index-04/*|tests/index-03-recognition-safety.test.mjs|tests/index-04-saved-recognition.test.mjs|scripts/test-index-04-browser.mjs|.github/workflows/index-04-no-deploy.yml) ;;
+              research/wardrobe-index-02/*|tests/wardrobe-index-02.test.mjs|scripts/test-wardrobe-index-02-browser.mjs|public/app.js|public/cloud-backup-bridge.js|.github/workflows/wardrobe-index-02-no-deploy.yml|research/index-03/*|research/index-04/*|tests/index-03-recognition-safety.test.mjs|tests/index-04-saved-recognition.test.mjs|scripts/test-index-04-browser.mjs|.github/workflows/index-04-no-deploy.yml|research/capture-proof-01/*|tests/capture-proof-01.test.mjs|scripts/test-capture-proof-01-browser.mjs|public/index.html|public/outfit-capture.js|public/photo-crop-editor.js|.github/workflows/capture-proof-01-no-deploy.yml) ;;
               *) echo "INDEX-02 unauthorized change: $path"; exit 1;;
             esac
           done
