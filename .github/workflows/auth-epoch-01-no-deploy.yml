@@ -1,0 +1,103 @@
+name: AUTH-EPOCH-01 genuine native auth session -> owner-private 3D controller (NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'research/auth-epoch-01/**'
+      - 'tests/auth-epoch-01.test.mjs'
+      - 'scripts/test-native-auth-epoch-01-browser.mjs'
+      - 'scripts/audit-native-auth-epoch-01.mjs'
+      - '.github/workflows/auth-epoch-01-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  native-auth-owned-closet-epoch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+      - name: Verify exact E2E PR547 and absolutely no production/parallel changes
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor e3dce3658d570bc555e8027cc75c13793b857c7b HEAD
+          git diff --name-only e3dce3658d570bc555e8027cc75c13793b857c7b HEAD | while IFS= read -r path; do
+            case "$path" in
+              research/auth-epoch-01/*|tests/auth-epoch-01.test.mjs|scripts/test-native-auth-epoch-01-browser.mjs|scripts/audit-native-auth-epoch-01.mjs|.github/workflows/auth-epoch-01-no-deploy.yml) ;;
+              *) echo "AUTH01 unauthorized production/camera/index/E2E/3D change: $path"; exit 1 ;;
+            esac
+          done
+          git diff --exit-code e3dce3658d570bc555e8027cc75c13793b857c7b -- public/auth.js public/app.js public/index.html public/outfit-board.js
+      - name: Install pinned browser, image and authentic source-read-only donor dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Pin exact genuine PR541 saved wardrobe/outfit IDB donor without merge
+        run: |
+          git fetch --no-tags origin df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          git worktree add --detach .auth01-outfit-541 df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          git config --global --add safe.directory "$GITHUB_WORKSPACE/.auth01-outfit-541"
+          ln -s ../node_modules .auth01-outfit-541/node_modules
+          test "$(git -C .auth01-outfit-541 rev-parse HEAD)" = df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+      - name: Check bridge, no-network/auth override, all native+E2E 315+ app tests and build
+        run: |
+          node --check research/auth-epoch-01/native-session-epoch.mjs
+          node --check research/auth-epoch-01/mount-real-native-e2e.mjs
+          node --check tests/auth-epoch-01.test.mjs
+          node --check scripts/test-native-auth-epoch-01-browser.mjs
+          node --check scripts/audit-native-auth-epoch-01.mjs
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Native real public/auth.js Chromium + WebKit account A/B, refresh, logout, donor owner IDB
+        run: node scripts/test-native-auth-epoch-01-browser.mjs
+      - name: Independently hash 42 genuine native-login screenshot states and make six contact sheets
+        run: node scripts/audit-native-auth-epoch-01.mjs
+      - name: Strict native bridge full evidence, provenance, owner, backend honesty, no production
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync,existsSync} from 'node:fs';
+          const r=JSON.parse(readFileSync('benchmark/auth-epoch-01/results.json','utf8'));
+          const a=JSON.parse(readFileSync('benchmark/auth-epoch-01-review/acceptance.json','utf8'));
+          assert.equal(r.browserCases,6);
+          assert.equal(r.screenshotCount,42);
+          assert.deepEqual(r.results.map(x=>x.engine+':'+x.width),
+            ['chromium:320','chromium:390','chromium:430','webkit:320','webkit:390','webkit:430']);
+          assert.ok(r.results.every(x=>x.pass&&x.actualOwnerBoundIDB&&
+            x.actualDonorOwnerOutfitController&&x.nativeRealAuthScript&&
+            !x.authHTTPVerifiedByRealSupabase&&!x.mobilePhysicalTested&&!x.releaseAuthorized));
+          assert.equal(r.realNativeLoginScript,true);
+          assert.equal(r.realProductionAuthSourceUnmodified,true);
+          assert.equal(r.originalSavedOutfitDonor,true);
+          assert.equal(r.monotonicSessionRevocation,true);
+          assert.equal(r.noNativeTokenExposure,true);
+          assert.equal(r.realBackendAuthenticationVerified,false);
+          assert.equal(r.mockedAuthHTTPResponses,true);
+          assert.equal(r.realSupabaseRLSVerified,false);
+          assert.equal(r.releaseAuthorized,false);
+          assert.equal(r.familyAlpha,'HOLD');
+          assert.equal(a.realBrowserScreenshotHashesVerified,42);
+          assert.equal(a.sheets.length,6);
+          assert.equal(a.exactNativeAuthSourceBrowserTested,true);
+          assert.equal(a.realCloudRLSVerified,false);
+          assert.ok(a.sheets.every(x=>existsSync('benchmark/auth-epoch-01-review/'+x.name)));
+          assert.deepEqual(r.errors,[]);
+          const unauthorizedNonGET=r.blocked.filter(x=>x.method!=='GET'&&
+           !x.url.startsWith('https://hlkgymugtfbirlpunsra.supabase.co'));
+          assert.deepEqual(unauthorizedNonGET,[]);
+          console.log('AUTH01: 6 real native source browser scenarios, 42 SHA screenshots, private donor IDB, no deployment, real RLS HOLD');
+          NODE
+      - name: Upload native-auth Chromium and WebKit evidence (HOLD, no deploy)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: AUTH01-42-native-auth-donor-outfit-IDB-browser-proofs-HOLD
+          path: |
+            benchmark/auth-epoch-01/
+            benchmark/auth-epoch-01-review/
+          if-no-files-found: warn
