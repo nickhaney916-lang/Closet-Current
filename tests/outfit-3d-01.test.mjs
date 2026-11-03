@@ -182,6 +182,25 @@ test('save and delete retain other outfits; reopens safely and save failure is r
  assert.equal(c.listSaved()[0].id,b.id);
  assert.equal(c.photoFor('jeans').original,base.find(x=>x.id==='jeans').originalPhoto.image);
 });
+test('save as new preserves the existing look; Save updates only the selected look',async()=>{
+ const h=harness(),c=h.create();await c.refresh();
+ c.setSlot('top','t');c.setSlot('bottom','jeans');c.setName('Existing outfit A');
+ const a=await c.save();
+ c.swap('bottom','shorts');c.setName('Different outfit B');
+ const b=await c.save({asNew:true});
+ assert.notEqual(a.id,b.id);assert.equal(c.listSaved().length,2);
+ const reopenedA=c.openSaved(a.id);
+ assert.equal(reopenedA.slots.bottom,'jeans');
+ assert.equal(reopenedA.name,'Existing outfit A');
+ const reopenedB=c.openSaved(b.id);
+ assert.equal(reopenedB.slots.bottom,'shorts');
+ assert.equal(reopenedB.name,'Different outfit B');
+ c.setSlot('shoes','sneaker');await c.save();
+ assert.equal(c.listSaved().length,2);
+ c.openSaved(a.id);assert.equal(c.plan().slots.shoes,undefined);
+ c.openSaved(b.id);assert.equal(c.plan().slots.shoes,'sneaker');
+ await assert.rejects(c.save({asNew:true,updateId:a.id}),/either updateId or save as new/);
+});
 test('stale board state rejects concurrent overwrite instead of losing saves',async()=>{
  const h=harness(),c=h.create();await c.refresh();c.setSlot('top','t');
  h.outfits.set('A',{current:{name:'Other edit',slots:{top:'dress'}},saved:[]});
