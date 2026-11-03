@@ -199,11 +199,12 @@ export function createOwnerOutfit3DController({auth,readSavedItems,loadOutfitSta
   // as visible missing-piece warnings, not silently become other garments.
   board=copyBoard(target);return plan();
  }
- async function save({updateId=null}={}){
+ async function save({updateId=null,asNew=false}={}){
   const lease=check(),p=plan();
   if(!p.saveReady)throw Error('Review missing, uncertain or conflicting pieces before saving');
-  if(saved.length>=50&&!updateId)throw Error('Maximum 50 saved outfits');
-  let nextId=updateId||board.outfit3dId;
+  if(asNew&&updateId)throw Error('Use either updateId or save as new, not both');
+  if(saved.length>=50&&(asNew||!updateId&&!board.outfit3dId))throw Error('Maximum 50 saved outfits');
+  let nextId=asNew?null:updateId||board.outfit3dId;
   if(nextId&&!saved.some(x=>x.outfit3dId===nextId))
    throw Error('Cannot overwrite a saved outfit from another account or stale snapshot');
   if(!nextId){nextId='outfit3d-'+createId();if(saved.some(x=>x.outfit3dId===nextId))throw Error('Duplicate saved outfit ID');}
