@@ -85,17 +85,15 @@ try{
      external.push(r.url());
    });
    await page.goto(host+'/research/fabric-sweep-04/index.html?'+qs,{waitUntil:'domcontentloaded'});
+   // IMPORTANT: true WebGL viewerReady is false before a verified source
+   // garment has been selected. Never wait for a model that has no clothes.
+   await page.waitForFunction(()=>window.ccWardrobe10Diagnostics?.()?.indexReady===true,null,{timeout:30000});
    for(const rig of ['female','male']){
-    if(rig==='male'){
-     await page.locator('#model').selectOption('male');
-     await page.waitForFunction(()=>window.ccWardrobe10Diagnostics?.()?.figure==='male'&&window.ccWardrobe10Diagnostics?.()?.viewerReady===true,null,{timeout:180000});
-    } else {
-     await page.waitForFunction(()=>window.ccWardrobe10Diagnostics?.()?.viewerReady===true,null,{timeout:180000});
-    }
+    if(rig==='male')await page.locator('#model').selectOption('male');
     for(const denimIndex of [0,1]){
      await page.locator('#category').selectOption('Dresses');
      await page.locator('#items .item').first().click();
-     await page.waitForFunction(()=>window.ccWardrobe10Diagnostics?.()?.viewerMode==='verified-3d'&&window.ccWardrobe10Diagnostics()?.outfitMode==='dress',null,{timeout:40000});
+     await page.waitForFunction(expected=>{const d=window.ccWardrobe10Diagnostics?.();return d?.viewerReady===true&&d.viewerMode==='verified-3d'&&d.outfitMode==='dress'&&d.figure===expected;},rig,{timeout:180000});
      await page.locator('#swap').click();
      if(denimIndex===1)await page.locator('#swap').click();
      await page.waitForFunction(()=>window.ccWardrobe10Diagnostics?.()?.outfitMode==='shirt-pants'&&window.ccWardrobe10Diagnostics()?.sourceDenimMaterial23Compiled===true,null,{timeout:40000});
