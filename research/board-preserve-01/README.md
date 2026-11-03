@@ -33,3 +33,11 @@ PR #541 correctly keeps missing owned references as review placeholders and supp
 4. No production app/deploy, branch merge, real cloud storage change, or unrelated apps touched.
 
 Completion requires exact SHA, dedicated CI evidence and audited browser artifacts. Until those exist, report IMPLEMENTED / VERIFICATION PENDING, not PASS.
+
+## Independent in-process V8 smoke validation before GitHub runner allocation
+
+The exact committed `native-outfit-loss-audit.mjs` blob SHA `7f36b638674d64f25ffc39a1661b1b2f04127c22` was executed against the exact unchanged native `public/outfit-board-engine.js` blob SHA `787df8a770d900b56aee25bb2987c420a5e11778` inside an isolated JavaScript V8 function. The isolated evaluator used a JSON-only `structuredClone` polyfill because that host exposes no native structuredClone; this is a **functional smoke check, not Node/Chromium/WebKit CI**.
+
+Observed: 2 genuine native dress outerwear reference losses, 1 genuine missing saved garment reference, 2 actual lost durable outfit3d IDs, original serialized input untouched, stale owner-epoch synchronous access refused, owner switch during asynchronous read refused, benign source list produces a comparison-safe receipt with `writeAuthorized=false`, and returned source snapshot cannot mutate the retained original. All four authored code scripts were separately syntax-parsed after removing ESM import/export declarations for that isolated check. No genuine screenshot has yet been rendered by this smoke check.
+
+**As of this addition:** GitHub Actions has not returned any workflow run for the PR head despite its no-deploy workflow being committed; preceding AUTH01 PR #550's queued run #41727687719 also has no assigned runner. **Dedicated browser/CI acceptance is PENDING / NOT TESTED, not PASS.**
