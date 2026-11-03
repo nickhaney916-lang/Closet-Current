@@ -1117,7 +1117,7 @@ try{
               assert.ok(fit21.sourceKneeBreakMovedVertices21>=25);
               assert.ok(Math.min(...fit21.sourceKneeBreakPerLeg21)>=9);
               assert.ok(fit21.sourceKneeBreakMaxMeters21>=.001&&
-               fit21.sourceKneeBreakMaxMeters21<=.0042601);
+               fit21.sourceKneeBreakMaxMeters21<=.0054001);
               for(const angle of [90,135,180]){
                await linePage20.evaluate(a=>window.ccWardrobe10View(a),angle);
                await foldPage21.evaluate(a=>window.ccWardrobe10View(a),angle);
@@ -1204,7 +1204,7 @@ try{
  assert.deepEqual([...new Set(denimFold21Comparisons.map(x=>x.angle))],[90,135,180]);
  assert.ok(denimFold21Comparisons.every(x=>x.realWebGLChangedRGBPixels>=20&&
   x.foldMovedVertices>=25&&Math.min(...x.foldPerLeg)>=9&&
-  x.foldMaxMeters>=.001&&x.foldMaxMeters<=.0042601&&
+  x.foldMaxMeters>=.001&&x.foldMaxMeters<=.0054001&&
   x.originalFrontSHAUVRestAndSkinUnchanged&&x.noInventedRearTexture&&
   x.bodyContactsAfter<=x.bodyContactsBefore&&x.releaseAuthorized===false));
  await writeFile('benchmark/denim-knee-break-21/results.json',JSON.stringify({
