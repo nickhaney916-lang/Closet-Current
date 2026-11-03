@@ -1,0 +1,45 @@
+name: INDEX-01 private wardrobe categories and source-safe indexing (NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'research/wardrobe-index-01/**'
+      - 'tests/wardrobe-index-01.test.mjs'
+      - '.github/workflows/wardrobe-index-01-no-deploy.yml'
+      - 'public/local-catalog.mjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  isolated-indexing:
+    name: Verify real clothing catalog, owner separation, duplicate guards, index rebuild
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Static JS syntax
+        run: |
+          node --check public/local-catalog.mjs
+          node --check research/wardrobe-index-01/owner-wardrobe-index.mjs
+          node --check tests/wardrobe-index-01.test.mjs
+      - name: Full owner-scoped wardrobe index regression
+        run: node --test tests/wardrobe-index-01.test.mjs
+      - name: Assert research, auth, source identity and no-external-request boundaries
+        run: |
+          node --input-type=module <<'NODE'
+          import {readFileSync} from 'node:fs';
+          import assert from 'node:assert/strict';
+          const source=readFileSync('research/wardrobe-index-01/owner-wardrobe-index.mjs','utf8');
+          const tests=readFileSync('tests/wardrobe-index-01.test.mjs','utf8');
+          const work=readFileSync('.github/workflows/wardrobe-index-01-no-deploy.yml','utf8');
+          assert.ok(source.includes("sourceHashVerified!==true"));
+          assert.ok(source.includes("owner-changed-during-read"));
+          assert.ok(source.includes("sameIdentity"));
+          assert.ok(tests.includes("1500 saved pieces"));
+          assert.ok(tests.includes("two-account isolation"));
+          assert.ok(!/\b(fetch\s*\(|XMLHttpRequest|localStorage|indexedDB\.open|postMessage\s*\()/i.test(source));
+          assert.ok(!/^\s*(?:uses:\s*(?:cloudflare|wrangler)|run:\s*(?:wrangler|supabase db push|npm run deploy))/mi.test(work));
+          console.log('INDEX-01 privacy, source verification and no-deploy research gates OK');
+          NODE
