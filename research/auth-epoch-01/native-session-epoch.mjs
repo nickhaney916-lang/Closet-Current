@@ -90,6 +90,9 @@ export function createNativeAuthEpoch01({
   if(disposed)throw Error('AUTH01 adapter disposed');
   if(attesting)throw Error('AUTH01 concurrent session admission refused');
   attesting=true;
+  // Even if native still retains its prior user/tokens while logout HTTP is
+  // pending, NEVER allow a late getAccessToken() to reopen a revoked lease.
+  const startedEpoch=epoch;
   try{
    await nativeAuth.ready;
    // Never trust a manually supplied owner ID with no active native token.
@@ -100,7 +103,8 @@ export function createNativeAuthEpoch01({
    const verified=current();
    if(verified.ownerId!==start.ownerId||verified.access!==nativeToken)
     throw Error('AUTH01 session switched during asynchronous native verification');
-   if(disposed)throw Error('AUTH01 admission disposed');
+   if(disposed||epoch!==startedEpoch)
+    throw Error('AUTH01 concurrent logout or session revocation interrupted admission');
    active=true;owner=verified.ownerId;access=verified.access;
    refresh=verified.refresh;expires=verified.expires;
    lastReason='admitted';epoch++;
