@@ -110,7 +110,19 @@ async function fill(page,slot,value){
   [slot,value],{timeout:40000});
 }
 async function waitMode(page,mode){
- await page.waitForFunction(mode=>{const d=window.outfit3DResearch?.state();return d?.viewerReady&&d.viewerMode===mode;},mode,{timeout:70000});
+ try{
+  await page.waitForFunction(expected=>{
+   const state=window.outfit3DResearch?.state();
+   return state?.viewerReady===true&&state.viewerMode===expected;
+  },mode,{timeout:70000});
+ }catch(error){
+  const diagnostics=await page.evaluate(()=>({
+   status:document.getElementById('outfit3D01Status')?.textContent,
+   state:window.outfit3DResearch?.state(),
+   note:document.getElementById('outfit3D01Note')?.textContent
+  }));
+  throw Error('Authentic 3D mode '+mode+' failed: '+JSON.stringify(diagnostics)+'; '+error.message);
+ }
 }
 async function seed(page,owner,meta){
  const output=await page.evaluate(async({owner,meta,pins})=>{
