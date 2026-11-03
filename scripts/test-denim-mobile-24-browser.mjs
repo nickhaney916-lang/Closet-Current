@@ -87,7 +87,19 @@ try{
    await page.goto(host+'/research/fabric-sweep-04/index.html?'+qs,{waitUntil:'domcontentloaded'});
    // IMPORTANT: true WebGL viewerReady is false before a verified source
    // garment has been selected. Never wait for a model that has no clothes.
-   await page.waitForFunction(()=>window.ccWardrobe10Diagnostics?.()?.indexReady===true,null,{timeout:30000});
+   try{
+    await page.waitForFunction(()=>window.ccWardrobe10Diagnostics?.()?.indexReady===true,null,{timeout:40000});
+   }catch(error){
+    const state=await page.evaluate(()=>({
+     hasDiagnostics:typeof window.ccWardrobe10Diagnostics==='function',
+     diagnostics:window.ccWardrobe10Diagnostics?.()||null,
+     bootStatus:document.querySelector('#status')?.textContent,
+     bodyText:document.body?.innerText?.slice(0,700),
+     viewerExists:!!document.querySelector('#avatar')
+    }));
+    console.error('MOBILE24_AUTHENTIC_BOOT_FAILURE',JSON.stringify({width,state,errors,external}));
+    throw error;
+   }
    for(const rig of ['female','male']){
     if(rig==='male')await page.locator('#model').selectOption('male');
     for(const denimIndex of [0,1]){
