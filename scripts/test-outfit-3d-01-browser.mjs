@@ -52,17 +52,28 @@ const PINS={
 };
 const allSources={};
 let browser;
-async function jpegPixelProof(buffer,{denim=false}={}){
+async function jpegPixelProof(buffer,{denim=false,expectMode='none'}={}){
  const {data,info}=await sharp(buffer).removeAlpha().raw().toBuffer({resolveWithObject:true});
- let nonNeutral=0,denimBlue=0;
- for(let i=0;i<data.length;i+=3){
-  const [r,g,b]=[data[i],data[i+1],data[i+2]];
-  if(Math.max(r,g,b)-Math.min(r,g,b)>24)nonNeutral++;
+ let nonNeutral=0,denimBlue=0,anatomicalSilhouette=0;
+ for(let y=0;y<info.height;y++)for(let x=0;x<info.width;x++){
+  const i=(y*info.width+x)*3,[r,g,b]=[data[i],data[i+1],data[i+2]];
+  const contrast=Math.max(r,g,b)-Math.min(r,g,b);
+  if(contrast>24)nonNeutral++;
   if(b-r>24&&b-g>13&&g-r>8&&r>15)denimBlue++;
+  // On intentionally unsupported all-photo outfits, no garment-color
+  // mesh exists. Still require a visible neutral anatomical human, not a
+  // blank background or a fake colored clothing mesh.
+  if(x>info.width*.18&&x<info.width*.82&&
+    y>info.height*.1&&y<info.height*.72&&
+    (r+g+b)/3<220&&contrast<28)anatomicalSilhouette++;
  }
- assert.ok(nonNeutral>=300,'Actual WebGL screenshot cannot be empty or monochrome');
+ if(expectMode==='none')
+  assert.ok(anatomicalSilhouette>=300,
+   'Real neutral 163-bone humanoid silhouette required with photo-only outfit');
+ else assert.ok(nonNeutral>=300,
+   'Photographed skinned garment must visibly contain real source color');
  if(denim)assert.ok(denimBlue>=500,'Source photographed denim should be visibly blue');
- return {nonNeutral,denimBlue,width:info.width,height:info.height};
+ return {nonNeutral,denimBlue,anatomicalSilhouette,width:info.width,height:info.height};
 }
 async function capture(page,{width,rig,label,angle=0,expectMode='none',denim=false}){
  const box=page.locator('#outfit3D01Canvas'),rect=await box.boundingBox();
@@ -88,9 +99,9 @@ async function capture(page,{width,rig,label,angle=0,expectMode='none',denim=fal
  assert.equal(dimensions.gl,true);
  assert.ok(dimensions.scroll<=width+2,'App horizontal overflow');
  const img=await box.screenshot();
- const pixel=await jpegPixelProof(img,{denim});
  const file=width+'-'+rig+'-'+label+'-angle-'+angle+'.png';
- await writeFile(folder+'/'+file,img);
+ await writeFile(folder+'/'+file,img); // Preserve genuine failure frame before pixel gates.
+ const pixel=await jpegPixelProof(img,{denim,expectMode});
  cases.push({width,rig,label,angle,screenshot:file,bones:d.bones,
   mode:d.viewerMode,meshes:d.meshCount,geometries:d.geometries,textures:d.textures,
   realWebGL:true,mobileWidthFits:true,sourceHonest:true,verifiedPhotoSHA:true,
