@@ -58,6 +58,16 @@ jobs:
           assert.equal(r.actualNativeApp,true);assert.equal(r.realIndexedDB,true);
           assert.equal(r.donorPR541Decision,true);assert.equal(r.accountIsolationFixture,true);
           assert.equal(r.verifiedOriginalSHA,true);assert.equal(r.cases,12);
+          const locks=JSON.parse(readFileSync('benchmark/locked-photo-sources.json','utf8'));
+          assert.equal(Object.keys(r.sourceProof).length,6);
+          for(const [id,proof]of Object.entries(r.sourceProof)){
+            const locked=locks.find(x=>x.id===id);
+            assert.equal(locked?.verified,true);
+            assert.equal(proof.license,locked.attribution.license);
+            assert.equal(proof.provenance,locked.attribution.source);
+            assert.equal(proof.sha256,locked.sha256);
+            assert.equal(createHash('sha256').update(readFileSync('benchmark/fixtures/'+id+'.jpg')).digest('hex'),proof.sha256);
+          }
           assert.equal(r.screenshots,72);assert.equal(r.strips.length,12);
           assert.deepEqual(r.widths,[320,390,430]);
           assert.deepEqual(r.engines,['chromium','webkit']);

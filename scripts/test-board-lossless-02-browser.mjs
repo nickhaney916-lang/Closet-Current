@@ -13,9 +13,17 @@ const root=resolve('.'),donor=resolve('.board02-donor-541'),dir='benchmark/board
 await mkdir(dir,{recursive:true});
 const hash=b=>createHash('sha256').update(b).digest('hex');
 const sources={};
+const sourceManifest=JSON.parse(await readFile('benchmark/locked-photo-sources.json','utf8'));
 for(const id of ['commons-0053','commons-0003','commons-0021','commons-0064','commons-0067','commons-0080']){
  const bytes=await readFile('benchmark/fixtures/'+id+'.jpg');
- sources[id]={sha256:hash(bytes),data:'data:image/jpeg;base64,'+bytes.toString('base64')};
+ const pin=sourceManifest.find(x=>x.id===id);
+ assert.equal(pin?.verified,true,'Source must be independently locked and verified');
+ assert.equal(pin?.image,id+'.jpg');
+ assert.equal(pin?.sha256,hash(bytes),'Original source fixture bytes must match pre-pinned license manifest');
+ assert.ok(typeof pin.attribution?.license==='string'&&pin.attribution.license.length>0);
+ assert.ok(pin.attribution.source?.startsWith('https://commons.wikimedia.org/wiki/File:'));
+ sources[id]={sha256:pin.sha256,license:pin.attribution.license,
+  provenance:pin.attribution.source,data:'data:image/jpeg;base64,'+bytes.toString('base64')};
 }
 const mime={'.js':'text/javascript','.mjs':'text/javascript','.html':'text/html','.css':'text/css',
  '.json':'application/json','.svg':'image/svg+xml','.jpg':'image/jpeg','.png':'image/png','.woff2':'font/woff2'};
@@ -265,6 +273,9 @@ try{
  assert.deepEqual(errors,[]);
  assert.deepEqual(external.filter(x=>x.method!=='GET'),[]);
  for(const s of screens)assert.equal(hash(await readFile(dir+'/'+s.name)),s.sha256);
+ for(const [id,proof] of Object.entries(sources))
+  assert.equal(hash(await readFile('benchmark/fixtures/'+id+'.jpg')),proof.sha256,
+   'Research browser may never change actual original JPEG file');
  for(const row of cases){
   const pair=screens.filter(s=>s.engine===row.engine&&s.width===row.width&&s.owner===row.owner);
   const parts=await Promise.all(['before-native','open-lossless'].map(async stage=>{
@@ -284,6 +295,8 @@ try{
   realWebGLRendered:false,originalProductionChanged:false,
   physicalPhone:'NOT TESTED',liveSupabaseRLS:'NOT TESTED',
   external,errors,sourceHashes:Object.fromEntries(Object.entries(sources).map(([k,v])=>[k,v.sha256])),
+  sourceProof:Object.fromEntries(Object.entries(sources).map(([k,v])=>[k,{
+   sha256:v.sha256,license:v.license,provenance:v.provenance}])),
   evidence:cases,screens,strips,familyAlpha:'HOLD'};
  await writeFile(dir+'/results.json',JSON.stringify(result,null,2));
  console.log('BOARD02_BROWSER_VERIFIED',JSON.stringify({cases:cases.length,
