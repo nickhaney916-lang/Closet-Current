@@ -108,7 +108,7 @@ async function signIn(page,owner){
  await page.locator('#authPassword').fill('native-research-only');
  await page.locator('#authSubmit').click();
  await page.waitForFunction(id=>window.closetAuth?.user?.id===id&&
-  document.getElementById('appShell')?.hidden===false,id,{timeout:25000});
+  document.getElementById('appShell')?.hidden===false,owner,{timeout:25000});
  await page.waitForFunction(()=>typeof db!=='undefined'&&
   db?.name==='closet-current-user-'+window.closetAuth.user.id);
 }
