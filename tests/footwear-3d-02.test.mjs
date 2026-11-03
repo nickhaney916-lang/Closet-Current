@@ -53,8 +53,10 @@ test('two independent real-proportion meshes, bounded floor, repeated swaps disp
  const {bytes:a}=await source('commons-0080'),{bytes:b}=await source('commons-0081');
  const ca=await loadApprovedFootwear02('commons-0080',{fetcher:fetcher(a)});
  const cb=await loadApprovedFootwear02('commons-0081',{fetcher:fetcher(b)});
+ let previouslyAttachedGeometry=null,previousDisposal={count:0};
  for(let i=0;i<24;i++){
   const result=session.swap(i%2?ca:cb);
+  if(previouslyAttachedGeometry)assert.equal(previousDisposal.count,1,'Swapping must dispose the previous real BufferGeometry');
   assert.equal(result.status,'PROVISIONAL_SOURCE_INFORMED_MESH');
   assert.equal(result.footMeasurements.length,2);assert.equal(result.independentLeftRight,true);
   assert.ok(result.groundErrors.every(v=>v<=.012));
@@ -62,6 +64,9 @@ test('two independent real-proportion meshes, bounded floor, repeated swaps disp
   assert.notEqual(state.geometryIds[0],state.geometryIds[1]);
   assert.deepEqual(state.camera,[0,1.3,4.25]);
   assert.equal(attached.size,2,'old shoe pairs must detach before next swap');
+  previouslyAttachedGeometry=[...attached][0].children[0].geometry;
+  previousDisposal={count:0};
+  previouslyAttachedGeometry.addEventListener('dispose',()=>{previousDisposal.count++;});
  }
  assert.equal(session.state().swaps,24);
  assert.equal(session.swap({id:'commons-0080',sourceSHA256:ca.sourceSHA256}).status,'PHOTO_ONLY_FALLBACK','forged source objects never pass WeakSet');

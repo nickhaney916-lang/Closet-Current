@@ -54,6 +54,7 @@ try{
    const bare=await page.screenshot({animations:'disabled'});
    await writeFile(folder+'/comparison-'+width+'-'+figure+'-bare.png',bare);
    for(const choice of choices){
+    const beforeCamera=await page.evaluate(()=>{window.__footwear02.rotate(135);return window.__footwear02.state().cameraPosition;});
     const result=await page.evaluate(id=>window.__footwear02.select(id),choice);
     assert.equal(result.status,'PROVISIONAL_SOURCE_INFORMED_MESH');
     assert.equal(result.sourceAuthenticated,true);
@@ -66,6 +67,7 @@ try{
     assert.ok(contact.perSide.every(x=>Number.isFinite(x.soleGroundClearanceM)));
     const live=await page.evaluate(()=>window.__footwear02.state());
     assert.equal(live.shoe.pairCount,2);assert.equal(live.shoe.meshCount,6);
+    assert.deepEqual(live.cameraPosition,beforeCamera,'Shoe swap must preserve actual selected camera orientation');
     assert.equal(new Set(live.shoe.geometryIds).size,2);
     if(choice==='commons-0080'){
       await page.evaluate(()=>window.__footwear02.rotate(0));
