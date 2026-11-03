@@ -125,6 +125,27 @@ try{
     assert.equal(first.redacted,true);
     assert.equal(first.privatePlanOwner,'fixture-native-A');
     assert.equal(first.closetDb,'closet-current-user-fixture-native-A');
+    // TRUE cross-branch mount on the unmodified real native auth script:
+    // the E2E adapter and donor research 3D panel receive our independently
+    // attested owner epoch, not window.closetAuth mutation or fixture epoch.
+    const mounted=await page.evaluate(async()=>{
+     const mod=await import('/research/auth-epoch-01/mount-real-native-e2e.mjs');
+     const panel=await mod.mountRealNativeE2EAuth01();
+     const snapshot=await panel.ui.refresh();
+     window.__auth01RealE2E=panel;
+     return {mounted:!!document.getElementById('outfit3D01Launch'),
+      actualDonor:panel.ui.controller===panel.ui.ui?.controller||
+       typeof panel.ui.controller?.plan==='function',
+      owner:snapshot.ownerId,
+      generation:snapshot.generation,
+      nativeAuthUntouched:!('getSessionGeneration' in window.closetAuth),
+      researchPanelReady:!!document.getElementById('e2e01Suggestions')};
+    });
+    assert.equal(mounted.mounted,true);
+    assert.equal(mounted.actualDonor,true);
+    assert.equal(mounted.owner,'fixture-native-A');
+    assert.equal(mounted.nativeAuthUntouched,true);
+    assert.equal(mounted.researchPanelReady,true);
     await image(page,engine,width,'02-real-auth-A-and-owner-private-board');
     // This exercises actual native refresh code, real browser localStorage,
     // and donor's actual saved-outfit controller with no mock epoch.
