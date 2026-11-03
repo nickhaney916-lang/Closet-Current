@@ -29,6 +29,7 @@ await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
 const host='http://127.0.0.1:'+server.address().port;
 const output='benchmark/wardrobe-index-02';
 await mkdir(output,{recursive:true});
+const blockedBaseline=[];
 const pictures=[
  // Both genuine original-source and recognition-image benchmarking are
  // separate tracks. These are visual-only test fixtures for index UI.
@@ -73,6 +74,12 @@ try{
     if(url===host+'/public/cloud-backup.js')return route.fulfill({status:200,contentType:'text/javascript',body:fakeBackup});
     if(url===host+'/public/cloud-backup-bridge.js')return route.fulfill({status:200,contentType:'text/javascript',body:''});
     if(url.startsWith(host+'/')||url.startsWith('data:')||url.startsWith('blob:'))return route.continue();
+    if(url.startsWith('https://fonts.googleapis.com/css2?family=')||
+       url.startsWith('https://raw.githubusercontent.com/nickhaney916-lang/Closet-Current/main/public/trend-data.json?')){
+     // Existing unmodified app trend/font requests are blocked in offline QA;
+     // any NEW off-device request from this index remains an error.
+     blockedBaseline.push(url);return route.abort();
+    }
     outbound.push(url);return route.abort();
    });
    await page.goto(host+'/public/index.html?index02=after',{waitUntil:'domcontentloaded'});
@@ -131,12 +138,12 @@ try{
  assert.equal(outbound.length,0,'No network outside local test server');
  assert.equal(errors.length,0,'Unexpected real browser console/page errors: '+errors.join(' | '));
  await writeFile(output+'/results.json',JSON.stringify({
-  verdict:'PASS',evidence,errors,outbound,productionDeployed:false,
+  verdict:'PASS',evidence,errors,outbound,blockedExistingSiteRequests:blockedBaseline,productionDeployed:false,
   familyAlpha:'HOLD',realPhotoRecognitionBenchmarked:false,physicalPhoneApproved:false
  },null,2));
  console.log('INDEX-02 real signed-in My Closet Chromium smoke PASS:',JSON.stringify(evidence));
 }catch(e){
- await writeFile(output+'/failure.json',JSON.stringify({error:String(e),errors,outbound,
+ await writeFile(output+'/failure.json',JSON.stringify({error:String(e),errors,outbound,blockedExistingSiteRequests:blockedBaseline,
   evidence,productionDeployed:false},null,2)).catch(()=>{});
  throw e;
 }finally{await browser?.close();await new Promise(resolve=>server.close(resolve));}
