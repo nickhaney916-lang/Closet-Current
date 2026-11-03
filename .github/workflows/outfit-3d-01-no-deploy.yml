@@ -1,0 +1,91 @@
+name: OUTFIT-3D-01 Private Saved Wardrobe to 163-Bone Outfit Research NO DEPLOY
+on:
+  pull_request:
+    paths:
+      - 'research/outfit-3d-01/**'
+      - 'scripts/test-outfit-3d-01-browser.mjs'
+      - 'tests/outfit-3d-01.test.mjs'
+      - '.github/workflows/outfit-3d-01-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  original-source-owner-outfit-and-3d:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+      - name: Exact MOBILE-24 parent plus ISOLATED own changes only
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor 04d5850a332276a424f6957fe11717e94429d47d HEAD
+          git diff --name-only 04d5850a332276a424f6957fe11717e94429d47d HEAD | while IFS= read -r path; do
+            case "$path" in
+              research/outfit-3d-01/*|scripts/test-outfit-3d-01-browser.mjs|tests/outfit-3d-01.test.mjs|.github/workflows/outfit-3d-01-no-deploy.yml) ;;
+              *) echo "OUTFIT3D-01 unauthorized production, recognition or 3D garment change: $path"; exit 1 ;;
+            esac
+          done
+      - name: Install test-only anatomical and browser dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 three@0.180.0 three-mesh-bvh@0.9.2 sharp@0.34.3
+      - name: Strict module syntax and existing build (NEVER DEPLOY)
+        run: |
+          node --check research/outfit-3d-01/owner-outfit-controller.mjs
+          node --check research/outfit-3d-01/saved-outfit-idb.mjs
+          node --check research/outfit-3d-01/source-true-viewer.mjs
+          node --check research/outfit-3d-01/research-panel.mjs
+          node --check tests/outfit-3d-01.test.mjs
+          node scripts/build.mjs
+      - name: New outfit ID/source and protected existing board/3D68 regression tests
+        run: |
+          node --test tests/outfit-3d-01.test.mjs tests/outfit-board.test.cjs tests/three-d-68-account-bound-bridge.test.mjs tests/three-d-68-saved-closet-to-3d.test.mjs tests/three-d-69-indexed-photo-real-3d.test.mjs
+      - name: Generate genuinely source-bound registered JPEGs and cutouts
+        run: |
+          node scripts/build-three-d-31-jeans-proposal.mjs
+          node scripts/build-three-d-37-second-jeans.mjs
+          node scripts/build-work47-benchmark.mjs
+      - name: Restore exact approved male and female CC0 anatomical GLBs
+        run: |
+          git fetch --no-tags origin 53f2ad344dc56a1477e343531c423aed0e66c17d dd6bac3fa9ff640d4f562cf925337440bdb5cf8f 3a572193987cb29389727426136c6eb3ac326783 dfb40889c4c1221fb1833b859e8a11ef38aeb76e
+          node research/three-d-20/restore-approved-models.mjs
+      - name: Actual owner IndexedDB outfit and mobile WebGL/browser screenshot QA
+        run: node scripts/test-outfit-3d-01-browser.mjs
+      - name: Enforce mobile, privacy, real 3D source truth and truthful fallback
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync,existsSync} from 'node:fs';
+          const r=JSON.parse(readFileSync('benchmark/outfit-3d-01/results.json','utf8'));
+          assert.equal(r.verdict,'PASS');
+          assert.deepEqual(r.widths,[320,390,430]);
+          assert.deepEqual(r.figures,['female','male']);
+          assert.equal(r.realBrowserWebGL,true);
+          assert.equal(r.originalPhotosVerified,true);
+          assert.equal(r.accountIsolation,true);
+          assert.equal(r.savedOutfitsReopened,true);
+          assert.equal(r.missingItemExplicit,true);
+          assert.equal(r.sourceBoundDressAndDenim,true);
+          assert.equal(r.productionModified,false);
+          assert.equal(r.realPhysicalPhonesTested,false);
+          assert.equal(r.familyAlpha,'HOLD');
+          assert.equal(r.errors.length,0);
+          assert.equal(r.leakedExternalPosts.length,0);
+          assert.ok(r.cases.every(x=>x.bones===163&&x.realWebGL&&x.mobileWidthFits&&x.verifiedPhotoSHA&&
+            x.sourceHonest&&x.accountPrivate&&!x.physicalPhoneApproval));
+          for(const c of r.cases)assert.ok(existsSync('benchmark/outfit-3d-01/'+c.screenshot));
+          console.log('Private saved original photographed WebGL outfits PASS; 3D and 2D limitations retained');
+          NODE
+      - name: Upload genuine 320/390/430 male/female WebGL + original photo evidence HOLD
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: OUTFIT-3D-01-OWNER-SAVED-3WIDTH-2FIGURE-REAL-WEBGL-HOLD
+          path: benchmark/outfit-3d-01/
+          if-no-files-found: warn
