@@ -445,6 +445,13 @@ export function mountAnatomicalShowroom(canvas,{onChange=()=>{},onViewChange=()=
      });
      return active;
     })(),
+  sourceDenimWeave25Enabled:sourceDenimWeave25,
+  sourceDenimWeave25Compiled:(()=>{
+   if(!sourceDenimWeave25||!selected)return false;
+   let compiled=false;
+   selected.traverse(m=>{if(m?.userData?.work60Pants&&m.material?.userData?.cc25SourceNeutralWeaveCompiled)compiled=true;});
+   return compiled;
+  })(),
   staticDenimFit06Enabled:staticDenimFit06,staticDenimFit06State:outfit?.getState()?.denimStaticFit06||null,
   gait02State:gait02?.state()||null,continuousGait04:continuityClock04?.state()||null,
    sampledSweptCollisionCertified:false,dressPresentation:dressPresentation.value,poseChanges,releaseAuthorized:false})
