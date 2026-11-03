@@ -1,0 +1,109 @@
+name: DENIM-ANATOMICAL-26 true 163-bone side/rear cloth hang WebGL QA (NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'research/denim-fit-06/source-neutral-hip-knee-hang-26.mjs'
+      - 'research/denim-fit-06/static-source-denim-fit.mjs'
+      - 'research/denim-anatomical-hang-26/**'
+      - 'research/fabric-sweep-04/dress-outfit-controller.mjs'
+      - 'research/fabric-sweep-04/dress-mobile-showroom.mjs'
+      - 'research/fabric-sweep-04/wardrobe-demo.mjs'
+      - 'scripts/test-denim-anatomical-hang-26-browser.mjs'
+      - 'tests/denim-anatomical-hang-26.test.mjs'
+      - '.github/workflows/denim-anatomical-hang-26-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  measured-original-denim-side-rear-and-frontend-photo-protection:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+      - name: Exact verified P24 ancestor and zero production/recognition/sibling changes
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor 62438a64d90e38bb28f502de4c55d17505b6a968 HEAD
+          git diff --name-only 62438a64d90e38bb28f502de4c55d17505b6a968 HEAD | while IFS= read -r path; do
+            case "$path" in
+              research/denim-fit-06/source-neutral-hip-knee-hang-26.mjs|research/denim-fit-06/static-source-denim-fit.mjs|research/denim-anatomical-hang-26/*|research/fabric-sweep-04/dress-outfit-controller.mjs|research/fabric-sweep-04/dress-mobile-showroom.mjs|research/fabric-sweep-04/wardrobe-demo.mjs|scripts/test-denim-anatomical-hang-26-browser.mjs|tests/denim-anatomical-hang-26.test.mjs|.github/workflows/denim-anatomical-hang-26-no-deploy.yml) ;;
+              *) echo "P26 UNAUTHORIZED photo/prod/recognition/outfit changes: $path"; exit 1 ;;
+
+            esac
+          done
+      - name: Pin genuine source, 163-bone rig and browser test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 three@0.180.0 playwright@1.56.1 three-mesh-bvh@0.9.2
+      - name: Complete P23 P24 P25 source, shader and no-fabrication regression
+        run: |
+          node --check research/denim-fit-06/source-neutral-hip-knee-hang-26.mjs
+          node --check research/denim-fit-06/static-source-denim-fit.mjs
+          node --check research/fabric-sweep-04/wardrobe-demo.mjs
+          node --check research/fabric-sweep-04/dress-outfit-controller.mjs
+          node --check research/fabric-sweep-04/dress-mobile-showroom.mjs
+          node --check scripts/test-denim-anatomical-hang-26-browser.mjs
+          node --test tests/denim-neutral-light-23.test.mjs tests/denim-mobile-24.test.mjs tests/denim-source-neutral-weave-25.test.mjs tests/denim-anatomical-hang-26.test.mjs
+      - name: Build exact licensed original JPEG samples, never a fabricated rear
+        run: |
+          node scripts/build-three-d-31-jeans-proposal.mjs
+          node scripts/build-three-d-37-second-jeans.mjs
+          node scripts/build-work47-benchmark.mjs
+          node --test tests/three-d-31-jeans-source.test.mjs tests/three-d-37-source-true.test.mjs
+      - name: Restore original approved 163-bone CC0 anatomical rigs
+        run: |
+          git fetch --no-tags origin 53f2ad344dc56a1477e343531c423aed0e66c17d dd6bac3fa9ff640d4f562cf925337440bdb5cf8f 3a572193987cb29389727426136c6eb3ac326783 dfb40889c4c1221fb1833b859e8a11ef38aeb76e
+          node research/three-d-20/restore-approved-models.mjs
+      - name: Render 96 actual original photographed WebGL before-after mobile views
+        run: node scripts/test-denim-anatomical-hang-26-browser.mjs
+      - name: Strict source-photo/cutout identity, neutral-only woven textile and pixel proof
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {existsSync,readFileSync} from 'node:fs';
+          const p='benchmark/denim-anatomical-hang-26/';
+          const r=JSON.parse(readFileSync(p+'results.json','utf8'));
+          assert.equal(r.genuineBeforeAfterWebGLFrames,96);
+          assert.equal(r.matchedGenuineOriginalDenimPairs,48);
+          assert.equal(r.results.length,48);
+          assert.deepEqual(r.mobileBrowserWidths,[320,390,430]);
+          assert.deepEqual(r.anatomical163BoneFigures,['female','male']);
+          assert.deepEqual(r.angles,[0,90,135,180]);
+          assert.equal(r.authenticPhotographedSources,2);
+          assert.equal(r.modeledAnatomicalHipKneeHang,true);
+          assert.equal(new Set(r.results.map(x=>x.sourceSHA256)).size,2);
+          assert.ok(r.results.every(x=>
+            x.owner==='fixture-account-a'&&x.bones===163&&x.P23Compiled&&x.P25Compiled&&x.P26Fitted&&
+            x.beforeVisibleDenimPixels>=1200&&
+            x.afterVisibleDenimPixels>=x.beforeVisibleDenimPixels*.80&&
+            x.afterVisibleDenimPixels>=1200&&x.noNewBVHContacts&&
+            x.originalFrontPhotoRGBUntouched&&x.sourceOriginalSHAUVRestSkinPreserved&&
+            x.noFabricatedRearPhoto&&x.neutralSurfaceExplicitlyModeled&&
+            !x.physicallyMeasuredWeave&&!x.physicalPhonesTested&&!x.humanPhotorealismApproved&&
+            !x.productionModified&&!x.releaseAuthorized));
+          assert.ok(r.results.filter(x=>x.angle!==0).every(x=>x.changedOnRealDenimPixels>=20));
+          assert.ok(r.results.filter(x=>x.angle===0).every(x=>x.changedOnRealDenimPixels<=x.beforeVisibleDenimPixels*.55));
+          for(const x of r.results)for(const suffix of ['-p25-source.png','-p26-anatomical.png'])
+            assert.ok(existsSync(p+x.width+'-'+x.rig+'-photo-'+x.denimIndex+'-angle-'+x.angle+suffix));
+          assert.deepEqual(r.errors,[]);
+          assert.deepEqual(r.external,[]);
+          assert.equal(r.familyAlpha,'HOLD');
+          assert.equal(r.physicalAndroidIPhoneTested,false);
+          assert.equal(r.humanPhotorealismApproved,false);
+          assert.equal(r.productionModified,false);
+          assert.equal(r.releaseAuthorized,false);
+          console.log('96 genuine original-JPEG 163-bone WebGL views pass P26 photo-protected hip-knee drape, no-new-contact and real-denim pixel checks');
+          NODE
+      - name: Upload all genuine P24/P25 exact matched WebGL PNGs for independent human review
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: DENIM-ANATOMICAL-26-96-GENUINE-320-390-430-WEBGL-SOURCE-PROTECTED-HOLD
+          path: benchmark/denim-anatomical-hang-26/
+          if-no-files-found: warn
