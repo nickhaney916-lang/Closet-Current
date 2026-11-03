@@ -69,7 +69,9 @@ jobs:
            x.realIndexedDB&&x.simulatedCamera&&x.mockedWorkers&&
            x.permissionDeniedAndRecovered&&x.frontFacingFallback&&
            x.originalFullResolution&&x.unverifiedNeedsReview&&
-           x.originalImportConversionHonest&&x.manualCorrectionSaved&&x.outfitOriginalHandoff&&
+           x.originalImportConversionHonest&&x.manualCorrectionSaved&&x.tamperedSourceRefused&&
+           x.failedPlaybackStopped&&x.visibilityInterruptStopped&&
+           x.logoutDuringPendingHashDiscarded&&x.outfitOriginalHandoff&&
            x.logoutClearsPrivateIndex&&!x.actualPhysicalPhone));
           assert.equal(r.physicalAndroidTested,false);
           assert.equal(r.physicalIphoneTested,false);
