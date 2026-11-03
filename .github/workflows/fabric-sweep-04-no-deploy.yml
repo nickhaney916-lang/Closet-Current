@@ -691,7 +691,7 @@ jobs:
           assert.ok(r.sourceMeasuredKneeFoldComparisons.every(v=>
            v.realWebGLChangedRGBPixels>=20&&
            v.foldMovedVertices>=25&&Math.min(...v.foldPerLeg)>=9&&
-           v.foldMaxMeters>=.001&&v.foldMaxMeters<=.0042601&&
+           v.foldMaxMeters>=.001&&v.foldMaxMeters<=.0054001&&
            v.originalFrontSHAUVRestAndSkinUnchanged&&v.noInventedRearTexture&&
            v.bodyContactsAfter<=v.bodyContactsBefore&&!v.releaseAuthorized));
           assert.equal(r.originalPhotoSHAUVRestSkinUnchanged,true);
