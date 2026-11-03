@@ -86,6 +86,11 @@ jobs:
         run: |
           git fetch --no-tags origin 53f2ad344dc56a1477e343531c423aed0e66c17d dd6bac3fa9ff640d4f562cf925337440bdb5cf8f 3a572193987cb29389727426136c6eb3ac326783 dfb40889c4c1221fb1833b859e8a11ef38aeb76e
           cd .board02-donor-541
+          # Browser server runs from this detached worktree; expose its exact
+          # pinned test dependencies here WITHOUT editing donor-tracked files.
+          ln -s ../node_modules node_modules
+          test -f node_modules/three/build/three.module.js
+          test -f node_modules/three-mesh-bvh/build/index.module.js
           node scripts/build-three-d-31-jeans-proposal.mjs
           node scripts/build-three-d-37-second-jeans.mjs
           node scripts/build-work47-benchmark.mjs
