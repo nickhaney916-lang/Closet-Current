@@ -313,7 +313,7 @@ async function runWidth(width){
     // outfit; re-read the actual owner IndexedDB record and confirm it persists.
     await fill(page,'shoes','qa-outfit-A-sneaker');
     await page.locator('#outfit3D01Save').click();
-    await page.waitForFunction(()=>document.getElementById('outfit3D01Status')?.textContent.includes('Outfit saved.'));
+    await page.waitForFunction(()=>document.getElementById('outfit3D01Status')?.textContent.includes('Outfit saved'));
     assert.equal((await page.evaluate(()=>window.outfit3DResearch.state())).savedCount,3);
     await page.locator('#outfit3D01Refresh').click();
     await page.waitForFunction(()=>window.outfit3DResearch.state().ready);
