@@ -19,10 +19,10 @@ function options(control,slot){
 }
 const signature=slots=>Object.entries(slots).sort(([a],[b])=>a.localeCompare(b))
  .map(([s,id])=>s+':'+id).join('|');
-function valid(slots,pinned){
+function valid(slots,pinned,dress){
  if(!slots.top||!slots.shoes||!Object.values(slots).includes(pinned))return false;
  if(new Set(Object.values(slots)).size!==Object.values(slots).length)return false;
- if(slots.topCategory==='Dresses'&&slots.bottom)return false;
+ if(dress&&slots.bottom)return false;
  return true;
 }
 export function suggestThreeOwnedOutfits(control,{pinnedId}={}){
@@ -54,7 +54,11 @@ export function suggestThreeOwnedOutfits(control,{pinnedId}={}){
     const slots={top:top.id,shoes:shoe.id};
     if(bottom)slots.bottom=bottom.id;
     if(layer)slots.layer2=layer.id;
-    if(!valid({...slots,topCategory:top.category},pinnedId))continue;
+    for(const slot of ['layer3','bag','accessory','finish']){
+     const owned=pool[slot].find(x=>x.id===pinnedId);
+     if(owned)slots[slot]=owned.id;
+    }
+    if(!valid(slots,pinnedId,dress))continue;
     const key=signature(slots);
     if(seen.has(key))continue;
     seen.add(key);
