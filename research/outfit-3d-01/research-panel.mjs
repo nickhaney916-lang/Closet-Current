@@ -77,7 +77,7 @@ export async function mountOutfit3D01Research({doc=document,auth=window.closetAu
   select.setAttribute('aria-label',title);selects.set(slot,select);picks.append(label(title,select));}
  right.append(picks);
  const ops=el('div');ops.className='cc3d-operations';
- for(const [id,title]of [['Save','Save outfit'],['Clear','Clear outfit'],['Refresh','Reload wardrobe'],['Delete','Delete saved outfit']]){
+ for(const [id,title]of [['Save','Save outfit'],['SaveNew','Save as new outfit'],['Clear','Clear outfit'],['Refresh','Reload wardrobe'],['Delete','Delete saved outfit']]){
   ops.append(el('button','outfit3D01'+id,title));
  }
  right.append(ops);
@@ -221,6 +221,11 @@ export async function mountOutfit3D01Research({doc=document,auth=window.closetAu
   control.setName(name.value);const result=await control.save();update();
   saved.value=result.id;doc.getElementById('outfit3D01Delete').disabled=false;
   putStatus('Outfit saved with actual wardrobe IDs. Select it again to reopen.');
+ });
+ doc.getElementById('outfit3D01SaveNew').onclick=()=>run(async()=>{
+  control.setName(name.value);const result=await control.save({asNew:true});update();
+  saved.value=result.id;doc.getElementById('outfit3D01Delete').disabled=false;
+  putStatus('New outfit saved separately. Earlier saved outfits are preserved.');
  });
  doc.getElementById('outfit3D01Clear').onclick=()=>run(()=>{control.clearSelection();update();});
  doc.getElementById('outfit3D01Refresh').onclick=()=>run(async()=>{await control.refresh();update();});
