@@ -152,7 +152,7 @@ async function seed(page,owner,meta){
   if(window.closetAuth?.user?.id===owner&&typeof window.render==='function'){
    // The live app still has its own in-memory snapshot: its existing logic
    // recognizes the same actual saved IndexedDB entries after refresh.
-   window.items=decoded.map(normalizeClothing);render();
+   items=decoded.map(normalizeClothing);render();
   }
   return {count:decoded.length,sources:decoded.map(x=>({id:x.id,sha:x.sourceSHA256})),
    originalsUnchanged:decoded.every(x=>x.image===x.originalPhoto.image)};
@@ -205,6 +205,8 @@ async function runWidth(width){
     await page.waitForFunction(()=>window.outfit3DResearch?.state().figure==='male'&&
      window.outfit3DResearch?.state().viewerReady,null,{timeout:70000});
    }
+   await page.locator('#outfit3D01Clear').click();
+   await page.waitForFunction(()=>Object.keys(window.outfit3DResearch.state().selected||{}).length===0);
    // A: genuinely saved original T-shirt + source-true photographed denim,
    // private original sneakers; shoes are never misrepresented as a 3D mesh.
    await fill(page,'top','qa-outfit-A-t');
@@ -284,26 +286,28 @@ async function runWidth(width){
      window.outfit3DResearch?.state().selected?.top==='qa-outfit-A-dress');
     assert.equal((await page.evaluate(()=>window.outfit3DResearch.state())).selected.layer2,'qa-outfit-A-jacket');
     await capture(page,{width,rig,label:'C-reopened-saved-original-dress',angle:0,expectMode:'dress'});
-    // Reopen saved A, remove its saved jeans from the actual owner wardrobe.
-    const aid=await page.locator('#outfit3D01Saved option').filter({hasText:'A - originals'}).getAttribute('value');
-    await page.evaluate(async()=>{
-     const open=indexedDB.open('closet-current-user-qa-outfit-A');
-     const db=await new Promise((resolve,reject)=>{open.onsuccess=()=>resolve(open.result);open.onerror=()=>reject(open.error);});
-     await new Promise((resolve,reject)=>{
-      const tx=db.transaction('items','readwrite');tx.objectStore('items').delete('qa-outfit-A-jeans');
-      tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);
-     });db.close();
-    });
-    await page.locator('#outfit3D01Refresh').click();
-    await page.waitForFunction(()=>window.outfit3DResearch.state().ready);
-    await page.locator('#outfit3D01Saved').selectOption(aid);
-    await page.waitForFunction(()=>window.outfit3DResearch.state().missing===1);
-    assert.ok((await page.locator('#outfit3D01Photos').innerText()).includes('deleted-saved-garment'));
-    await page.locator('#outfit3D01Save').click();
-    await page.waitForFunction(()=>document.getElementById('outfit3D01Status').textContent.includes('not saved'));
-    // Do not alter source photos or saved wardrobe to invent the missing item.
+
    }
   }
+  // After both figures are tested, remove one saved item and prove that
+  // reopening the existing outfit reports its exact missing ID, never substitutes.
+  const aid=await page.locator('#outfit3D01Saved option').filter({hasText:'A - originals'}).getAttribute('value');
+  await page.evaluate(async()=>{
+   const open=indexedDB.open('closet-current-user-qa-outfit-A');
+   const db=await new Promise((resolve,reject)=>{open.onsuccess=()=>resolve(open.result);open.onerror=()=>reject(open.error);});
+   await new Promise((resolve,reject)=>{
+    const tx=db.transaction('items','readwrite');tx.objectStore('items').delete('qa-outfit-A-jeans');
+    tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);
+   });db.close();
+  });
+  await page.locator('#outfit3D01Refresh').click();
+  await page.waitForFunction(()=>window.outfit3DResearch.state().ready);
+  await page.locator('#outfit3D01Saved').selectOption(aid);
+  await page.waitForFunction(()=>window.outfit3DResearch.state().missing===1);
+  assert.ok((await page.locator('#outfit3D01Photos').innerText()).includes('deleted-saved-garment'));
+  await page.locator('#outfit3D01Save').click();
+  await page.waitForFunction(()=>document.getElementById('outfit3D01Status').textContent.includes('not saved'));
+  // Original source files and unrelated saved items are never replaced.
   // Explicit sign-out must clear current private garment thumbnails and meshes.
   await page.evaluate(()=>window.__testLogout());
   assert.equal((await page.evaluate(()=>window.outfit3DResearch.state())).privateVisible,false);
