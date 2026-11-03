@@ -35,7 +35,7 @@ test('P28 guarded real source-neutral 163-bone fitter and default-off flag',()=>
  const showroom=readFileSync('research/fabric-sweep-04/dress-mobile-showroom.mjs','utf8');
  assert.ok(fit.includes('sourceNeutralSideSeamFlow28'));
  assert.ok(fit.includes('sourceSideSeamFlow28&&(!sourceHipKneeHang26||!sourceCuffStack22)'));
- assert.ok(fit.includes('photographed front denim vertex changed'));
+ assert.ok(fit.includes('Photographed front denim vertex changed'));
  assert.ok(fit.includes('DENIM_SEAM_FLOW28.maxTotalLocalShiftMeters'));
  assert.ok(ctrl.includes('sourceSideSeamFlow28:sourceDenimFlow28'));
  assert.ok(showroom.includes('sourceDenimFlow28'));
