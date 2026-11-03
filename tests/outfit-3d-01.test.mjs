@@ -18,7 +18,7 @@ const manifest=[
  ['boot','commons-0088','Shoes','Ankle boots','Black'],
  ['blouse','commons-0014','Tops','Blouse','Cream'],
  ['skirt','commons-0041','Bottoms','Skirt','Blue'],
- ['dress','commons-0053','Dresses','Casual dress','Red'],
+ ['dress','commons-0053','Dresses','Casual dress','Black'],
  ['jacket','commons-0064','Outerwear','Jacket','Black'],
  ['coat','commons-0067','Outerwear','Coat','Gray']
 ];
