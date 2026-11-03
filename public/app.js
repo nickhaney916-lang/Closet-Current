@@ -1,6 +1,8 @@
 'use strict';
 const $=id=>document.getElementById(id), categories=['Uncategorized','Tops','Bottoms','Dresses','Outerwear','Shoes','Accessories'];
 const recognitionAssetVersion=new URL(document.currentScript?.src||location.href).searchParams.get('v')||'';
+// INDEX-04 research-only: absent by default; no deploy or ordinary scanner change.
+const index04ResearchActive=new URLSearchParams(location.search).get('index04')==='after';
 let saving=false;const sessionCapturedIds=new Set();
 let localWorker,localReady=false,localBatch=false,localLoadPromise=null,recognitionUnavailable=false;const automaticQueue=[];let automaticRunning=false;const localJobs=new Map(),localPending=new Set();
 const recognitionState={phase:'idle',percent:null,activeId:null};
@@ -339,11 +341,13 @@ function applyLocalChoice(item,choice,overwrite=false){
  if(!item.name?.trim())item.name=choice.label.replace(/^a |^an /,'').replace(/^./,c=>c.toUpperCase());
  Object.assign(item,normalizeClothing(item));item.localStatus='Local suggestion applied. Confirm the category, sleeves, and seasons before saving.';
 }
-async function saveIndexed(item){
+async function saveIndexed(item,index04ApprovedOwner=null){
+ if(index04ResearchActive&&(!index04ApprovedOwner||window.closetAuth?.user?.id!==index04ApprovedOwner||db?.name!=='closet-current-user-'+index04ApprovedOwner))return false;
  const value={...normalizeClothing(item),name:item.name.trim()||'Closet piece',savedAt:new Date().toISOString(),indexedAt:new Date().toISOString()};
  const saved=await queued(()=>new Promise((resolve,reject)=>{
   if(!db)return reject(Error('Browser storage is unavailable.'));
-  if(!batch.some(x=>x.id===item.id)||item.userAdjusted||item.requiresOwnershipConfirmation)return resolve(false);
+  if(!batch.some(x=>x.id===item.id)||item.userAdjusted||item.requiresOwnershipConfirmation||
+     (index04ResearchActive&&(window.closetAuth?.user?.id!==index04ApprovedOwner||db?.name!=='closet-current-user-'+index04ApprovedOwner)))return resolve(false);
   const tx=db.transaction(['items','state'],'readwrite');
   tx.objectStore('items').put(value);
   tx.objectStore('state').put({id:'draft',batch:structuredClone(batch.filter(x=>x.id!==item.id))});
@@ -354,7 +358,7 @@ async function saveIndexed(item){
  batch=batch.filter(x=>x.id!==item.id);persistDraft();return true;
 }
 async function recognizeItem(item){
- const scanStarted=Date.now();let savingIndexed=false;recognitionState.activeId=item.id;item.scanFailed=false;item.saveFailed=false;item.localStatus='Checking photo quality…';render();
+ const scanStarted=Date.now();let savingIndexed=false,index04ApprovedOwner=null;recognitionState.activeId=item.id;item.scanFailed=false;item.saveFailed=false;item.localStatus='Checking photo quality…';render();
  try{
   const quality=await checkPhoto(item.recognitionPhoto?.image||item.image);
   if(!batch.some(x=>x.id===item.id))return;
@@ -373,6 +377,35 @@ async function recognizeItem(item){
   item.localAnalyzed=true;item.localChoices=[];
   // Diagnostic evidence contains category/type scores only, never wardrobe images.
   if(result.diagnostics)item.recognitionDiagnostics={reason:result.reason||null,...result.diagnostics};
+  // INDEX-04 opt-in: before any model label is applied or automatically saved,
+  // independently prove original input bytes, owner, reviewed type and duplicate.
+  // Missing evidence sends the existing unsaved item to Adjust, not the DB.
+  if(index04ResearchActive){
+   try{
+    const owner=window.closetAuth?.user?.id;
+    if(!owner||db?.name!=='closet-current-user-'+owner)throw Error('owner-bound database missing');
+    const saved=await readAll();
+    if(window.closetAuth?.user?.id!==owner||db?.name!=='closet-current-user-'+owner)
+     throw Error('account changed while reading');
+    const {evaluateOwnerSavedRecognition04}=await import('../research/index-04/verified-saved-recognition.mjs');
+    const decision=await evaluateOwnerSavedRecognition04({
+     ownerId:owner,currentOwner:()=>window.closetAuth?.user?.id||null,
+     record:item,recognition:result,savedItems:saved
+    });
+    if(!batch.some(x=>x.id===item.id))return true;
+    if(!decision.autoSaveSafe){
+     item.recognitionReviewReasons=[...decision.reviewReasons];
+     const suggested=decision.suggestion.category!=='Uncategorized'
+      ?'Photo suggests '+decision.suggestion.category+' · '+decision.suggestion.itemType+'. ':'';
+     item.localStatus=suggested+'Please confirm this garment and color in Adjust before saving. Original photo kept.';
+     return true;
+    }
+    index04ApprovedOwner=owner;
+   }catch{
+    item.localStatus='Automatic indexing needs source or account verification. Confirm this garment in Adjust; your photo is kept.';
+    return true;
+   }
+  }
   const corePartial=!result.strong&&result.categoryConfirmed&&result.categoryOnly&&result.choices?.[0]&&result.choices[0].itemType==='Unknown';
   if(corePartial){
    if(item.userAdjusted||!segmentationAllows(item,result.choices[0])){item.localStatus=item.userAdjusted?'Your adjustments are preserved. Save this piece when ready.':'The clothing checks disagree. Use Adjust or take a clearer photo.';return true;}
@@ -389,7 +422,9 @@ async function recognizeItem(item){
   if(item.requiresOwnershipConfirmation){item.localStatus='Identified. Add this piece only if it belongs in your closet.';return true;}
   item.localStatus='Recognized. Saving to your closet…';
   savingIndexed=true;
-  if(await saveIndexed(item))if(typeof recordDeviceEvent==='function')recordDeviceEvent('recognized_saved',{durationMs:Date.now()-scanStarted});
+  const wasSaved=await saveIndexed(item,index04ApprovedOwner);
+  if(wasSaved&&typeof recordDeviceEvent==='function')recordDeviceEvent('recognized_saved',{durationMs:Date.now()-scanStarted});
+  if(!wasSaved&&index04ResearchActive){item.localStatus='Owner changed or confirmation is needed. Your photo remains unsaved for review.';return true;}
   if(recognitionState.phase==='save-failed')recognitionState.phase='ready';
   return true;
  }catch(error){
