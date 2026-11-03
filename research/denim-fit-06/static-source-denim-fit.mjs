@@ -365,7 +365,8 @@ export function createPhotoDenimStaticFitter06(pants,root,{sourceSilhouette07=fa
      (seam28?.lateralMeters||0);
     const totalShift=Math.hypot(rearShift,sideShift,drop26);
     if((sourceHipKneeHang26||sourceSideSeamFlow28)&&(!Number.isFinite(totalShift)||
-       totalShift>DENIM_SEAM_FLOW28.maxTotalLocalShiftMeters))
+       totalShift>Math.min(DENIM_ANATOMICAL_HANG26.maximumTotalLocalShiftMeters,
+        DENIM_SEAM_FLOW28.maxTotalLocalShiftMeters)))
      throw Error('P26 upper thigh drape exceeds actual source-authenticated fit budget');
     const world=row.q.clone();world.z+=rearShift;
     world.x+=(row.side===0?1:-1)*sideShift;world.y-=drop26;
