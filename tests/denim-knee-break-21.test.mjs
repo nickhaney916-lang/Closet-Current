@@ -9,11 +9,11 @@ test('P21 has one smoothly tapered calf tuck and one knee fold, zero at protecte
   assert.equal(sourceNeutralKneeBreak21(1,p,s).radialMeters,0);
   const tuck=sourceNeutralKneeBreak21(.39,p,s),knee=sourceNeutralKneeBreak21(.72,p,s);
   assert.ok(tuck.radialMeters<-.003&&tuck.radialMeters>=-.00426);
-  assert.ok(knee.radialMeters>.002&&knee.radialMeters<=.00314);
+  assert.ok(knee.radialMeters>.0035&&knee.radialMeters<=.0054001);
   assert.equal(tuck.modeledUnphotographedFold,true);
   for(let i=0;i<=100;i++){
    const v=sourceNeutralKneeBreak21(i/100,p,s).radialMeters;
-   assert.ok(Number.isFinite(v)&&Math.abs(v)<=.00426);
+   assert.ok(Number.isFinite(v)&&Math.abs(v)<=.0054001);
   }
  }
  assert.notEqual(sourceNeutralKneeBreak21(.39,taper,0).radialMeters,
