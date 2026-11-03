@@ -32,7 +32,7 @@ export function validateBoard02(value,{ownerId=null}={}){
  if(!obj(value)||!obj(value.current)||!Array.isArray(value.saved)||value.saved.length>50)
   throw Error('BOARD02 existing native outfit board required (max 50)');
  if(value.id!==undefined&&value.id!=='outfit-board')throw Error('BOARD02 wrong state key');
- const all=[value.current,...value.saved],seen=new Set();
+ const all=[value.current,...value.saved],seen=new Map();
  for(let i=0;i<all.length;i++){
   const board=all[i];if(!obj(board)||!obj(board.slots))throw Error('BOARD02 invalid saved outfit');
   if(board.ownerId!==undefined&&board.ownerId!==ownerId&&ownerId!==null)
@@ -45,8 +45,15 @@ export function validateBoard02(value,{ownerId=null}={}){
   }
   for(const key of ['id','outfit3dId','outfitId'])if(board[key]!==undefined&&!goodId(board[key]))
    throw Error('BOARD02 corrupt durable saved-outfit identity');
-  if(i>0){const identity=board.id||board.outfit3dId||board.outfitId;
-   if(identity){if(seen.has(identity))throw Error('BOARD02 duplicate persistent saved-outfit ID');seen.add(identity);}
+  if(i>0){
+   // Native cloud merge keys by id; PR541 3D opens by outfit3dId. BOTH
+   // namespaces must stay unique, including cross-namespace collisions.
+   for(const alias of [board.id,board.outfit3dId,board.outfitId].filter(Boolean)){
+    const prior=seen.get(alias);
+    if(prior!==undefined&&prior!==i)
+     throw Error('BOARD02 duplicate persistent saved-outfit ID');
+    seen.set(alias,i);
+   }
   }
  }
  const serialized=JSON.stringify(value);

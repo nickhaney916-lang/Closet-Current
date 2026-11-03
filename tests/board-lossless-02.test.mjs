@@ -27,7 +27,9 @@ const cleanInput=()=>({
    correctionHistory:[{itemId:'dress',before:'Tops',after:'Dresses'}],
    future:{unknownFeature:{array:[{hello:'keep'}]}}},
   {id:'outfit-missing-2',outfit3dId:'outfit3d-missing-2',ownerId:'A',name:'Missing jeans recovery',
-   slots:{top:'shirt',bottom:'deleted-jeans',shoes:'shoes'},metadata:'keep this source ID'},
+   slots:{top:'shirt',bottom:'deleted-jeans',shoes:'shoes'},
+   slotSources:{bottom:{sha256:originalSHA,categoryAtSave:'Bottoms'}},
+   metadata:'keep this source ID'},
   {name:'Old native without outfit ID',slots:{top:'shirt',bottom:'jeans',shoes:'shoes'},extra:'legacy survives'}
  ],futureStateMetadata:{doNotStrip:true}});
 const goodItems=()=>[
@@ -102,8 +104,19 @@ test('missing garment retains original ID and exact slot; backup reconnects only
  assert.equal((await f.read()).board.saved[1].slots.bottom,'deleted-jeans');
  await patch(f.db,'items','deleted-jeans',{ownerId:f.id,category:'Bottoms',itemType:'Jeans',name:'Restored backed-up jeans',image:jpeg,originalPhoto:{image:jpeg,sha256:originalSHA}});
  await f.editor.refresh();v=f.editor.open('outfit-missing-2');
- assert.equal(v.missing.length,0);
+ assert.equal(v.missing.length,0);assert.equal(v.review.length,0);
  assert.equal(v.slots.bottom,'deleted-jeans','Same restored ID reconnects, never substitute');
+ assert.equal((await verifyPhoto02((await f.read()).items.find(x=>x.id==='deleted-jeans'))).verified,true);
+ f.db.close();
+});
+test('restored same ID but changed original JPEG SHA remains REVIEW, never auto-reconnected as valid',async()=>{
+ const f=await fixture();await f.editor.refresh();f.editor.open('outfit-missing-2');
+ await patch(f.db,'items','deleted-jeans',{ownerId:f.id,category:'Bottoms',itemType:'Jeans',
+  name:'Different-photo restored ID',image:jpeg,originalPhoto:{image:jpeg,sha256:'0'.repeat(64)}});
+ await f.editor.refresh();const v=f.editor.open('outfit-missing-2');
+ assert.equal(v.slots.bottom,'deleted-jeans');
+ assert.ok(v.review.some(x=>x.itemId==='deleted-jeans'&&/SHA/.test(x.reason)));
+ assert.equal((await f.read()).board.saved[1].slots.bottom,'deleted-jeans');
  f.db.close();
 });
 test('recategorizing preserved jacket or shoes triggers REVIEW without rewriting stored refs',async()=>{
@@ -212,6 +225,12 @@ test('native cloud backup engine accepts lossless snapshot, retains IDs on nonco
  // Cloud-backup loader may still normalize on native reload: this is research
  // storage compatibility, NOT deployed full cloud-RLS or UI acceptance.
  f.db.close();
+});
+test('cross-namespace durable ID collisions across native and 3D aliases fail closed',()=>{
+ const sample=cleanInput();sample.saved[1].outfit3dId=sample.saved[0].id;
+ assert.throws(()=>validateBoard02(sample),/duplicate persistent/);
+ sample.saved[1].outfit3dId=sample.saved[0].outfit3dId;
+ assert.throws(()=>validateBoard02(sample),/duplicate persistent/);
 });
 test('50-outfit limit and malformed unsafe future fields fail closed',async()=>{
  const source=cleanInput();source.saved=Array.from({length:50},(_,i)=>({id:'saved-'+i,name:'Look '+i,slots:{top:'shirt'},ownerId:'A'}));
