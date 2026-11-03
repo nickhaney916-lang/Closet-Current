@@ -1,0 +1,111 @@
+name: NATIVE-BOARD-HANDOFF-03 real native login plus lossless saved outfits (NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'research/native-board-handoff-03/**'
+      - 'scripts/test-native-board-handoff-03-browser.mjs'
+      - 'scripts/audit-native-board-handoff-03.mjs'
+      - 'tests/native-board-handoff-03.test.mjs'
+      - '.github/workflows/native-board-handoff-03-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  real-native-auth-owner-outfit-handoff:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+      - name: Verify exact isolated PR552 candidate SHA and zero production/parallel modifications
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor 14cfa56eaa537170ede18898b1b948eb80f58c4d HEAD
+          git diff --name-only 14cfa56eaa537170ede18898b1b948eb80f58c4d HEAD | while IFS= read -r p; do
+            case "$p" in
+              research/native-board-handoff-03/*|scripts/test-native-board-handoff-03-browser.mjs|scripts/audit-native-board-handoff-03.mjs|tests/native-board-handoff-03.test.mjs|.github/workflows/native-board-handoff-03-no-deploy.yml) ;;
+              *) echo "NATIVE03 unauthorized native auth, outfit donor, production, parallel, cloud or source photo change: $p"; exit 1;;
+            esac
+          done
+          git diff --exit-code 14cfa56eaa537170ede18898b1b948eb80f58c4d -- public/ migrations/ supabase/ benchmark/fixtures/
+      - name: Install pinned browser/synthetic IDB/photo dependencies in NO DEPLOY isolated CI
+        run: npm install --no-save --no-package-lock --no-audit --no-fund fake-indexeddb@6.2.4 playwright@1.56.1 sharp@0.34.3 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Verify genuine app regression suite and research module syntax
+        run: |
+          for path in research/native-board-handoff-03/*.mjs scripts/test-native-board-handoff-03-browser.mjs scripts/audit-native-board-handoff-03.mjs tests/native-board-handoff-03.test.mjs; do node --check "$path"; done
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Fetch independent AUTH01 and real PR541 exact verified sources without merging them
+        run: |
+          git fetch --no-tags origin 58d2178820b8a949cb49715696cfc977f79b72ef df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          git worktree add --detach .native03-auth-550 58d2178820b8a949cb49715696cfc977f79b72ef
+          git worktree add --detach .native03-outfit-541 df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          git config --global --add safe.directory "$GITHUB_WORKSPACE/.native03-auth-550"
+          git config --global --add safe.directory "$GITHUB_WORKSPACE/.native03-outfit-541"
+          test "$(git -C .native03-auth-550 rev-parse HEAD)" = 58d2178820b8a949cb49715696cfc977f79b72ef
+          test "$(git -C .native03-outfit-541 rev-parse HEAD)" = df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          test -f .native03-auth-550/research/auth-epoch-01/native-session-epoch.mjs
+          test -f .native03-outfit-541/research/outfit-3d-01/source-true-viewer.mjs
+          ln -s ../node_modules .native03-auth-550/node_modules
+          ln -s ../node_modules .native03-outfit-541/node_modules
+      - name: Six genuine Chromium and WebKit sessions at 320/390/430 with A-to-B native login and source-honest 3D
+        run: node scripts/test-native-board-handoff-03-browser.mjs
+      - name: Independently SHA-verify 30 mobile states and 12 real photo-card captures plus six review strips
+        run: node scripts/audit-native-board-handoff-03.mjs
+      - name: Strict privacy/source/owner/revocation/screenshot/correct fallback acceptance
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const r=JSON.parse(readFileSync('benchmark/native-board-handoff-03/results.json','utf8'));
+          const a=JSON.parse(readFileSync('benchmark/native-board-handoff-03-audit/acceptance.json','utf8'));
+          assert.equal(r.caseCount,6);
+          assert.equal(r.screenshotCount,42);
+          assert.equal(r.sourcePhotoCardScreenshots,12);
+          assert.equal(r.originalFullPagePhotoCrop,true);
+          assert.equal(r.authEpochFromExactPR550,true);
+          assert.equal(r.losslessEditorFromExactPR552,true);
+          assert.equal(r.sourceHonest3DDecisionFromExactPR541,true);
+          assert.equal(r.exactNativeAuthUnchanged,true);
+          assert.equal(r.originalPhotoBytesPreserved,true);
+          assert.equal(r.authHTTPMocked,true);
+          assert.equal(r.actualBrowserStorage,true);
+          assert.deepEqual(r.errors,[]);
+          assert.deepEqual(r.blocked.filter(x=>x.method!=='GET'),[]);
+          assert.ok(r.cases.every(x=>x.realNativeAuthSource&&x.originalSourceSHA256&&
+            x.originalNativeStillLossy&&x.losslessDraftNeverWritten&&x.successfulCASWrite&&
+            x.originalSaved3DIDsAndCoatsPreserved&&x.tokenRefreshRevokesPriorPrivatePreview&&
+            x.pageReloadNativeAuthSessionPersisted&&x.accountSwitchAtoB&&
+            x.ownerBCannotReadOwnerA&&x.donorSourceHonestFallback&&
+            x.originalSourceCardsClearOfFixedNav&&
+            x.privateJPEGHeadersNeverSentOffhost&&x.releaseAuthorized===false));
+          assert.equal(a.status,'PASS_BROWSER_RESEARCH_ONLY');
+          assert.equal(a.browserViewportScreenshotsIndependentlyVerified,30);
+          assert.equal(a.originalSourceCardScreenshotsIndependentlyVerified,12);
+          assert.equal(a.contactSheets.length,6);
+          assert.equal(a.serverSignedTwoAccountsVerified,false);
+          assert.equal(a.genuineSupabaseRLSVerified,false);
+          assert.equal(a.productionAppOutfitBoardMigrated,false);
+          assert.equal(r.actual3DMeshesRenderedInThisRun,false);
+          assert.equal(r.accountTwoJWTLive,false);
+          assert.equal(r.originalNativeEditorReplaced,false);
+          assert.equal(r.familyAlpha,'HOLD');
+          assert.equal(r.releaseAuthorized,false);
+          console.log('NATIVE03 COMPLETE browser/owner/original JPEG + real native login research only; consumer app and signed RLS HOLD');
+          NODE
+      - name: Upload original source mobile A/B and auth-switch evidence (research HOLD, NO DEPLOY)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: NATIVE03-genuine-native-login-lossless-owner-42-screens-HOLD
+          path: |
+            benchmark/native-board-handoff-03/
+            benchmark/native-board-handoff-03-audit/
+          if-no-files-found: warn
