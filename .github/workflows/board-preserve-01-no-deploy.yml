@@ -1,0 +1,102 @@
+name: BOARD-PRESERVE-01 non-destructive real saved-outfit native vs donor audit (NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'research/board-preserve-01/**'
+      - 'tests/board-preserve-01.test.mjs'
+      - 'scripts/test-board-preserve-01-browser.mjs'
+      - 'scripts/audit-board-preserve-01.mjs'
+      - '.github/workflows/board-preserve-01-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  authenticated-native-board-loss-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+      - name: Verify exact successful E2E PR547 ancestor and no production edits
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor e3dce3658d570bc555e8027cc75c13793b857c7b HEAD
+          git diff --name-only e3dce3658d570bc555e8027cc75c13793b857c7b HEAD | while IFS= read -r path; do
+            case "$path" in
+              research/board-preserve-01/*|tests/board-preserve-01.test.mjs|scripts/test-board-preserve-01-browser.mjs|scripts/audit-board-preserve-01.mjs|.github/workflows/board-preserve-01-no-deploy.yml) ;;
+              *) echo "BOARD01 unauthorized production/photo/auth/parallel code change: $path"; exit 1 ;;
+            esac
+          done
+          git diff --exit-code e3dce3658d570bc555e8027cc75c13793b857c7b -- public/app.js public/auth.js public/outfit-board.js public/outfit-board-engine.js public/index.html
+      - name: Install pinned genuine WebKit/Chromium and photo audit libraries
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Exact donor PR541 existing authenticated IndexedDB read without merging
+        run: |
+          git fetch --no-tags origin df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          git worktree add --detach .board01-outfit-541 df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          git config --global --add safe.directory "$GITHUB_WORKSPACE/.board01-outfit-541"
+          ln -s ../node_modules .board01-outfit-541/node_modules
+          test "$(git -C .board01-outfit-541 rev-parse HEAD)" = df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+      - name: Syntax + native normalizer/source-true/owner regression tests
+        run: |
+          node --check research/board-preserve-01/native-outfit-loss-audit.mjs
+          node --check scripts/test-board-preserve-01-browser.mjs
+          node --check scripts/audit-board-preserve-01.mjs
+          node --check tests/board-preserve-01.test.mjs
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+          (cd .board01-outfit-541 && node --test tests/outfit-3d-01.test.mjs tests/outfit-board.test.cjs)
+      - name: Real unchanged public app native cleaner and exact donor owner IndexedDB in 12 Chromium/WebKit cases
+        run: node scripts/test-board-preserve-01-browser.mjs
+      - name: SHA256 verify each genuine browser screenshot and six independent two-owner galleries
+        run: node scripts/audit-board-preserve-01.mjs
+      - name: Strict loss-detection/zero-modification/owner-state acceptance
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync,existsSync} from 'node:fs';
+          const r=JSON.parse(readFileSync('benchmark/board-preserve-01/results.json'));
+          const a=JSON.parse(readFileSync('benchmark/board-preserve-01-review/acceptance.json'));
+          assert.equal(r.caseCount,12);assert.equal(r.cases.length,12);
+          assert.equal(r.browserScreenshots,12);
+          assert.equal(r.screens.length,12);
+          assert.equal(a.realAppScreenshots,12);
+          assert.equal(a.allScreenshotSHA256sVerified,true);
+          assert.equal(a.contactSheets.length,6);
+          assert.equal(a.verifiedDonorExistingIDBRead,true);
+          assert.equal(r.originalDonorPR541IDBRead,true);
+          assert.equal(r.originalStateAndOutfitReferencesPreserved,true);
+          assert.equal(r.destructiveLegacyConversionBlocked,true);
+          assert.equal(r.independentOwnersInSameOrigin,true);
+          assert.deepEqual(r.errors,[]);
+          assert.deepEqual(r.external.filter(x=>x.method!=='GET'),[]);
+          assert.ok(r.cases.every(x=>x.donorOriginalPreserved&&x.nativeDropsJacketAndCoat&&
+           x.missingReferencePresent&&x.refused&&x.foreignDenied&&x.erasedDressLayers>=2&&
+           x.erased3DIDs>=2&&x.missingReferences>=1&&
+           x.reportVerdict==='REVIEW_DO_NOT_OVERWRITE'&&
+           x.writePermissionGranted===false&&x.productionChanged===false));
+          assert.ok(a.contactSheets.every(x=>existsSync('benchmark/board-preserve-01-review/'+x.name)));
+          assert.equal(r.realSupabaseRLSVerified,false);
+          assert.equal(a.realBackendRLSTested,false);
+          assert.equal(r.physicalAndroidIphoneTested,false);
+          assert.equal(r.productionModified,false);
+          assert.equal(r.familyAlpha,'HOLD');
+          assert.equal(r.releaseAuthorized,false);
+          console.log('BOARD01 genuine native original stored IDs preserved, destructive conversions rejected, 12 PNG/6 contact sheets, NO DEPLOY');
+          NODE
+      - name: Upload original native owner saved look browser evidence, strictly HOLD
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: BOARD01-original-private-board-preserved-native-vs-PR541-HOLD
+          path: |
+            benchmark/board-preserve-01/
+            benchmark/board-preserve-01-review/
+          if-no-files-found: warn
