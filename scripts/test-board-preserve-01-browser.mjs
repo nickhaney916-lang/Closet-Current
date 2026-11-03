@@ -182,7 +182,7 @@ try{
  assert.equal(screens.length,12);
  assert.deepEqual(errors,[]);
  assert.deepEqual(external.filter(x=>x.method!=='GET'),[]);
- const result={priority:'BOARD-PRESERVE-01',cases:cases.length,
+ const result={priority:'BOARD-PRESERVE-01',caseCount:cases.length,
   engines:['chromium','webkit'],widths:[320,390,430],
   nativeSourceCodeOriginal:true,originalDonorPR541IDBRead:true,
   independentOwnersInSameOrigin:true,destructiveLegacyConversionBlocked:true,
