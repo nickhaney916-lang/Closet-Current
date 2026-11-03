@@ -7,3 +7,12 @@ The original photographed denim FRONT retains the exact original JPEG, alpha, cu
 
 ## Safety/acceptance
 Default OFF; only when whole verified P22 photo hierarchy enabled and `denimMaterial23=after`. Original SHA-bound genuine source verification required, no invented photo, exact prior roughness wherever original front contributes more than 10%. 2 licensed source jeans × 2 genuine female/male 163-bone rigs × 90/135/180 = 12 camera-matched P22/P23 pairs/24 WebGL PNGs, >=20 RGB pixels changed on each, zero increased genuine skinned BVH intersections. Original account isolation and release hold. Full inherited no-deploy workflow, inspect all actual screenshots. 3D visual photorealism and physical iPhone/Android acceptance remain HOLD; no release, no production, no Drive Duel or Delta Ebb.
+
+
+## Independent genuine-WebGL rejection of a false automated PASS
+
+The complete CI run #41662643059 on the previous geometry/reflectedLight shader reported SUCCESS for all 50 steps and uploaded 24 real PNGs, but independent screenshot inspection found **the entire photographed jeans were invisible** in all 12 after images. Only the mannequin's green base-layer shorts and legs remained. Its 9,231–14,818 global RGB differences reflected jeans DISAPPEARANCE, not better clothing. This is a serious actual visual FAIL regardless of green CI. **Never accept screenshot difference alone.**
+
+Corrective shader avoids the unsafe `geometry.normal/geometry.viewDir/reflectedLight` scope and instead applies a bounded neutral-only photometric response after Three.js `normal_fragment_maps`, using the true `normal` and `vViewPosition` varyings. The prior original denim/front opacity and sourced original photo, SHA, UV, skin/rest remain unchanged. No procedural rear texture or photo simulation.
+
+Added strict positive WebGL visibility proof: count original denim-blue rendered pixels (blue relative to red/green). Each original P22 image must contain >=2,500 real blue denim pixels; each P23 image must preserve >=80% of its matched P22 blue area and >=2,000 blue pixels, and >=20 qualifying **blue-on-blue garment pixels** must actually change, independent of all-canvas changes. Both test-side and workflow aggregate enforce it. Pixel/photo integrity and body contact protection are unchanged. Review all 24 genuine actual renders and flag human photorealism HOLD unless visually accepted. This work remains draft; do not merge/deploy or approve Family Alpha. Previous false-positive CI run must never be cited as P23 visual acceptance.
