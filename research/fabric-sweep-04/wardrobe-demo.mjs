@@ -403,6 +403,10 @@ async function initViewer(){
        new URLSearchParams(location.search).get('denimMaterial23')==='after',
      sourceDenimHang26:new URLSearchParams(location.search).get('denimHang26')==='after'&&
        new URLSearchParams(location.search).get('denimWeave25')==='after'&&
+       new URLSearchParams(location.search).get('denimMaterial23')==='after',
+     sourceDenimFlow28:new URLSearchParams(location.search).get('denimFlow28')==='after'&&
+       new URLSearchParams(location.search).get('denimHang26')==='after'&&
+       new URLSearchParams(location.search).get('denimWeave25')==='after'&&
        new URLSearchParams(location.search).get('denimMaterial23')==='after'
   });
   canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();
@@ -530,6 +534,8 @@ window.ccWardrobe10Diagnostics=()=>{
       sourceDenimWeave25Compiled:state?.sourceDenimWeave25Compiled===true,
       sourceDenimWeave25Protected:state?.outfit?.pants?.originalSourceJPEGUVSkinRestUnchanged25===true,
       sourceDenimWeave25NoRearPhoto:state?.outfit?.pants?.noRearPhotoGenerated25===true,
+      sourceDenimFlow28Enabled:state?.sourceDenimFlow28Enabled||false,
+      sourceDenimFlow28Proof:state?.outfit?.denimStaticFit06?.proof?.sourceNeutralSeamFlow28===true,
       sourceDenimHang26Enabled:state?.sourceDenimHang26Enabled||false,
       sourceDenimHang26Proof:state?.outfit?.denimStaticFit06?.proof?.sourceNeutralHipKneeHang26===true,
       staticDenimFit06Enabled:state?.staticDenimFit06Enabled||false,
