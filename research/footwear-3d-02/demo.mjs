@@ -32,7 +32,8 @@ else {
   let photoOnly=typeof id==='string'&&id.startsWith('photo:');
   const key=photoOnly?id.slice(6):id;
   let cap=key==='commons-0080'?src1:key==='commons-0081'?src2:null;
-  const result=session.swap(photoOnly?null:cap);viewer.rotate(0);
+  // Keep the existing camera view exactly as selected by the user on every shoe swap.
+  const result=session.swap(photoOnly?null:cap);
   const img=document.getElementById('original'),record=document.getElementById('record');
   img.src=cap?.photoUrl||'';img.hidden=!cap;
   record.textContent=cap?(cap.id+' · '+cap.attribution.author+' · '+cap.attribution.license+
