@@ -16,6 +16,8 @@ export function sourcePhotoSignedCalf19(phase,stations){
   stations.some(x=>!Number.isFinite(x)||x<.26||x>2.5)||
   Math.abs(stations[0]-1)>.025)
   throw Error('P19 requires five actual normalized original photo width stations and a real calf phase');
+ // Exact zero at protected source endpoints (never return negative zero).
+ if(phase===0||phase===1)return 0;
  // Two neighboring measured stations at each end reduce one-row mask noise.
  const knee=.7*stations[0]+.3*stations[1];
  const hem=.7*stations[4]+.3*stations[3];
