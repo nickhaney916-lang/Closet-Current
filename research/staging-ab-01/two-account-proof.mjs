@@ -2,7 +2,7 @@
  * STAGING-AB-01: real Supabase REST + Storage RLS black-box test, READ ONLY.
  *
  * This code never uses service_role, elevated SQL, owner impersonation, RPC
- * writes, auth.admin, DELETE, PATCH, PUT or storage uploads. It requires two
+ * writes, administrative Auth methods, DELETE, PATCH, PUT or storage uploads. It requires two
  * independently server-verified staging login sessions and one preexisting
  * account-owned backup + one preexisting JPEG fixture for EACH account.
  *
