@@ -18,6 +18,7 @@ import {sourceNeutralThighLine20,sourceNeutralCalfLine20} from './source-neutral
 import {sourceNeutralKneeBreak21} from './source-neutral-knee-break-21.mjs';
 import {sourceNeutralCuffStack22} from './source-neutral-cuff-stack-22.mjs';
 import {sourceNeutralHipKneeHang26,DENIM_ANATOMICAL_HANG26} from './source-neutral-hip-knee-hang-26.mjs';
+import {sourceNeutralSideSeamFlow28,DENIM_SEAM_FLOW28} from './source-neutral-side-seam-flow-28.mjs';
 export const DENIM_FIT06=Object.freeze({
  targetMeters:.0058,maxWorldShiftMeters:.0085,maxSteps:100,
  stableSteps:6,velocityTolerance:.000012,positionTolerance:.00002,
@@ -88,7 +89,9 @@ export function settleDenimRest06(target=DENIM_FIT06.targetMeters){
   fixedStepSeconds:DENIM_FIT06.timestepSeconds,releaseAuthorized:false});
 }
 function same(a,b){return a?.length===b?.length&&a.every((x,i)=>x===b[i]);}
-export function createPhotoDenimStaticFitter06(pants,root,{sourceSilhouette07=false,sourceFairing08=false,sourceRearThigh14=false,sourceSideThigh15=false,sourcePosteriorContour16=false,sourcePhotoWidth17=false,originalPhotoWidth17=null,sourcePhotoProfile18=false,sourcePhotoSigned19=false,sourceAnatomicalLine20=false,sourceKneeBreak21=false,sourceCuffStack22=false,sourceHipKneeHang26=false}={}){
+export function createPhotoDenimStaticFitter06(pants,root,{sourceSilhouette07=false,sourceFairing08=false,sourceRearThigh14=false,sourceSideThigh15=false,sourcePosteriorContour16=false,sourcePhotoWidth17=false,originalPhotoWidth17=null,sourcePhotoProfile18=false,sourcePhotoSigned19=false,sourceAnatomicalLine20=false,sourceKneeBreak21=false,sourceCuffStack22=false,sourceHipKneeHang26=false,sourceSideSeamFlow28=false}={}){
+ if(typeof sourceSideSeamFlow28!=='boolean'||(sourceSideSeamFlow28&&(!sourceHipKneeHang26||!sourceCuffStack22)))
+  throw Error('P28 requires verified P26 163-bone source neutral garment fit');
  if(typeof sourceHipKneeHang26!=='boolean'||(sourceHipKneeHang26&&(!sourceCuffStack22||!sourceAnatomicalLine20||!sourcePosteriorContour16)))
   throw Error('P26 requires exact verified P25/P22 anatomical source-neutral hip and knee fit');
  if(typeof sourceCuffStack22!=='boolean'||(sourceCuffStack22&&!sourceKneeBreak21))
@@ -249,6 +252,7 @@ export function createPhotoDenimStaticFitter06(pants,root,{sourceSilhouette07=fa
   let fold21Moved=0,fold21Max=0;const fold21PerLeg=[0,0];
   let stack22Moved=0,stack22Max=0;const stack22PerLeg=[0,0];
   let hang26Moved=0,hang26RearMax=0,hang26SideMax=0,hang26DropMax=0;const hang26PerLeg=[0,0];
+  let flow28Moved=0,flow28SideMax=0,flow28RearMax=0;const flow28PerLeg=[0,0];
   for(const row of eligible){
    const kneeRest=sourceSilhouette07 ? .0015*row.kneeEase : 0;
    // Fit the lower source-neutral calf closer to its anatomical form.
@@ -348,11 +352,21 @@ export function createPhotoDenimStaticFitter06(pants,root,{sourceSilhouette07=fa
     // Draw back excess *modeled* posterior and lateral cloth volume, with
     // exact zero at hip/knee. No reverse-side photo is fabricated.
     const line20=sourceAnatomicalLine20?sourceNeutralThighLine20(row.phase):null;
-    const rearShift=delta-posterior+(line20?.rearMeters||0)-rear26;
-    const sideShift=lateral-(line20?.sideMeters||0)+side26;
+    // P28 redistributes modeled rear/side fabric relief toward the genuine
+    // skinned leg's LATERAL seam rather than adding a periodic cosmetic wrinkle.
+    // Never touch original photographed front rows or their UV/rest/skin data.
+    const leg28=legs[row.side],center28=T.MathUtils.lerp(
+     leg28.knee[0],leg28.hip[0],row.phase);
+    const seam28=sourceSideSeamFlow28?sourceNeutralSideSeamFlow28(
+     row.phase,row.side,Math.min(.29,Math.abs(row.q.x-center28))):null;
+    const rearShift=delta-posterior+(line20?.rearMeters||0)-rear26+
+     (seam28?.rearReleaseMeters||0);
+    const sideShift=lateral-(line20?.sideMeters||0)+side26+
+     (seam28?.lateralMeters||0);
     const totalShift=Math.hypot(rearShift,sideShift,drop26);
-    if(sourceHipKneeHang26&&(!Number.isFinite(totalShift)||
-       totalShift>DENIM_ANATOMICAL_HANG26.maximumTotalLocalShiftMeters))
+    if((sourceHipKneeHang26||sourceSideSeamFlow28)&&(!Number.isFinite(totalShift)||
+       totalShift>Math.min(DENIM_ANATOMICAL_HANG26.maximumTotalLocalShiftMeters,
+        DENIM_SEAM_FLOW28.maxTotalLocalShiftMeters)))
      throw Error('P26 upper thigh drape exceeds actual source-authenticated fit budget');
     const world=row.q.clone();world.z+=rearShift;
     world.x+=(row.side===0?1:-1)*sideShift;world.y-=drop26;
@@ -371,6 +385,11 @@ export function createPhotoDenimStaticFitter06(pants,root,{sourceSilhouette07=fa
      hang26SideMax=Math.max(hang26SideMax,side26);
      hang26DropMax=Math.max(hang26DropMax,drop26);
     }
+    if(seam28&&seam28.lateralMeters>.0004){
+     flow28Moved+=row.ids.length;flow28PerLeg[row.side]+=row.ids.length;
+     flow28SideMax=Math.max(flow28SideMax,seam28.lateralMeters);
+     flow28RearMax=Math.max(flow28RearMax,seam28.rearReleaseMeters);
+    }
     rear14Max=Math.max(rear14Max,Math.abs(delta));
     rear15Max=Math.max(rear15Max,lateral);
     posterior16Max=Math.max(posterior16Max,posterior);
@@ -387,6 +406,9 @@ export function createPhotoDenimStaticFitter06(pants,root,{sourceSilhouette07=fa
      Math.min(...posterior16PerLeg)<15||posterior16Max<.0105||posterior16Max>.0115001))
     throw Error('P16 missing true source-neutral posterior thigh geometry or excessive displacement: '+
      JSON.stringify({posterior16Moved,posterior16PerLeg,posterior16Max}));
+   if(sourceSideSeamFlow28&&(flow28Moved<30||Math.min(...flow28PerLeg)<12||
+     flow28SideMax<.005||flow28SideMax>DENIM_SEAM_FLOW28.maxLateralMeters+.000001))
+    throw Error('P28 original 163-bone lateral-seam modeled cloth adjustment not genuinely present');
    if(sourceHipKneeHang26&&(hang26Moved<30||Math.min(...hang26PerLeg)<12||
       hang26RearMax<.003||hang26RearMax>DENIM_ANATOMICAL_HANG26.maxRearMeters+.000001||
       hang26SideMax>DENIM_ANATOMICAL_HANG26.maxSideMeters+.000001||
@@ -512,6 +534,13 @@ export function createPhotoDenimStaticFitter06(pants,root,{sourceSilhouette07=fa
    sourceCuffStackMaxMeters22:stack22Max,
    originalJPEGUVRestSkinProtected22:true,
    modeledCuffStackNotPhotographed22:true,
+   sourceNeutralSeamFlow28:sourceSideSeamFlow28,
+   sourceSeamFlowMovedVertices28:flow28Moved,
+   sourceSeamFlowPerLeg28:flow28PerLeg,
+   sourceSeamFlowLateralMaxMeters28:flow28SideMax,
+   sourceSeamFlowRearReleaseMaxMeters28:flow28RearMax,
+   sourceSeamFlowModelledNotPhotographed28:true,
+   sourceJPEGUVSkinRestProtected28:true,
    sourceNeutralHipKneeHang26:sourceHipKneeHang26,
    sourceHipKneeHangMovedVertices26:hang26Moved,
    sourceHipKneeHangPerLeg26:hang26PerLeg,
