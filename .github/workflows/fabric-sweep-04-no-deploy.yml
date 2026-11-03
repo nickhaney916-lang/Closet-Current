@@ -21,7 +21,6 @@ on:
       - 'tests/denim-knee-break-21.test.mjs'
       - 'tests/denim-cuff-stack-22.test.mjs'
       - 'tests/denim-neutral-light-23.test.mjs'
-      - 'research/three-d-30/reviewed-photo-pants.mjs'
       - 'tests/denim-angle-09.test.mjs'
       - 'tests/source-photo-coverage-10.test.mjs'
       - 'tests/garment-pixel-witness-10.test.mjs'
@@ -48,7 +47,7 @@ jobs:
           git merge-base --is-ancestor 7716c3876284bfa474f9964e7d5b0e69f629d79b HEAD
           git diff --name-only 7716c3876284bfa474f9964e7d5b0e69f629d79b HEAD | while IFS= read -r path; do
             case "$path" in
-              research/fabric-sweep-04/*|research/dress-fit-05/*|research/denim-fit-06/*|scripts/test-fabric-sweep-04-browser.mjs|tests/fabric-sweep-04.test.mjs|tests/dress-fit-05.test.mjs|tests/denim-fit-06.test.mjs|tests/denim-silhouette-07.test.mjs|tests/denim-fairing-08.test.mjs|tests/denim-rear-thigh-14.test.mjs|tests/denim-side-thigh-15.test.mjs|tests/denim-posterior-contour-16.test.mjs|tests/denim-photo-width-17.test.mjs|tests/denim-original-profile-18.test.mjs|tests/denim-signed-calf-19.test.mjs|tests/denim-anatomical-line-20.test.mjs|tests/denim-knee-break-21.test.mjs|tests/denim-cuff-stack-22.test.mjs|tests/denim-neutral-light-23.test.mjs|research/three-d-30/reviewed-photo-pants.mjs|tests/denim-angle-09.test.mjs|tests/source-photo-coverage-10.test.mjs|tests/garment-pixel-witness-10.test.mjs|.github/workflows/fabric-sweep-04-no-deploy.yml) ;;
+              research/fabric-sweep-04/*|research/dress-fit-05/*|research/denim-fit-06/*|scripts/test-fabric-sweep-04-browser.mjs|tests/fabric-sweep-04.test.mjs|tests/dress-fit-05.test.mjs|tests/denim-fit-06.test.mjs|tests/denim-silhouette-07.test.mjs|tests/denim-fairing-08.test.mjs|tests/denim-rear-thigh-14.test.mjs|tests/denim-side-thigh-15.test.mjs|tests/denim-posterior-contour-16.test.mjs|tests/denim-photo-width-17.test.mjs|tests/denim-original-profile-18.test.mjs|tests/denim-signed-calf-19.test.mjs|tests/denim-anatomical-line-20.test.mjs|tests/denim-knee-break-21.test.mjs|tests/denim-cuff-stack-22.test.mjs|tests/denim-neutral-light-23.test.mjs|tests/denim-angle-09.test.mjs|tests/source-photo-coverage-10.test.mjs|tests/garment-pixel-witness-10.test.mjs|.github/workflows/fabric-sweep-04-no-deploy.yml) ;;
               *) echo "UNAUTHORIZED sibling or production edit: $path"; exit 1 ;;
             esac
           done
