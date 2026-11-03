@@ -308,6 +308,8 @@ async function runWidth(width){
     await page.evaluate(()=>{window.__oldOutfit3DCanvas=document.getElementById('outfit3D01Canvas');});
     await page.locator('#outfit3D01Close').click();
     assert.equal((await page.evaluate(()=>window.outfit3DResearch.state())).privateVisible,false);
+    await page.waitForFunction(()=>window.__oldOutfit3DCanvas!==
+      document.getElementById('outfit3D01Canvas'),null,{timeout:10000});
     assert.equal(await page.evaluate(()=>window.__oldOutfit3DCanvas!==
       document.getElementById('outfit3D01Canvas')),true,
       'Reopening must use a fresh WebGL context after actual renderer disposal');
