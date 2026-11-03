@@ -69,6 +69,7 @@ jobs:
           assert.equal(r.caseCount,6);
           assert.equal(r.screenshotCount,42);
           assert.equal(r.sourcePhotoCardScreenshots,12);
+          assert.equal(r.originalFullPagePhotoCrop,true);
           assert.equal(r.authEpochFromExactPR550,true);
           assert.equal(r.losslessEditorFromExactPR552,true);
           assert.equal(r.sourceHonest3DDecisionFromExactPR541,true);
