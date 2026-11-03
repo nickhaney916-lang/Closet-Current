@@ -7,7 +7,7 @@ import sharp from 'sharp';
 const base='benchmark/board-preserve-01',dir='benchmark/board-preserve-01-review';
 await mkdir(dir,{recursive:true});
 const report=JSON.parse(await readFile(join(base,'results.json'),'utf8'));
-assert.equal(report.cases,12);assert.equal(report.browserScreenshots,12);
+assert.equal(report.caseCount,12);assert.equal(report.cases.length,12);assert.equal(report.browserScreenshots,12);
 assert.equal(report.screens.length,12);assert.equal(report.nativeSourceCodeOriginal,true);
 assert.equal(report.originalDonorPR541IDBRead,true);
 assert.equal(report.originalStateAndOutfitReferencesPreserved,true);
