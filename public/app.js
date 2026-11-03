@@ -52,7 +52,11 @@ function writeAll(values){return queued(()=>new Promise((resolve,reject)=>{const
 function removeItem(id){return queued(()=>new Promise((resolve,reject)=>{const tx=db.transaction('items','readwrite');tx.objectStore('items').delete(id);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);}));}
 function persistDraft(){if(!db)return;const snapshot=structuredClone(batch);return queued(()=>new Promise((resolve,reject)=>{const tx=db.transaction('state','readwrite');tx.objectStore('state').put({id:'draft',batch:snapshot});tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);})).catch(()=>message('Your unfinished scan could not be backed up. Keep this page open and save or export your pieces.'));}
 function readDraft(){return new Promise((resolve,reject)=>{const r=db.transaction('state').objectStore('state').get('draft');r.onsuccess=()=>resolve(r.result?.batch||[]);r.onerror=()=>reject(r.error);});}
-function savePiece(value,nextBatch){return queued(()=>new Promise((resolve,reject)=>{const tx=db.transaction(['items','state'],'readwrite');tx.objectStore('items').put(value);tx.objectStore('state').put({id:'draft',batch:structuredClone(nextBatch)});tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);}));}
+function savePiece(value,nextBatch){return queued(()=>new Promise((resolve,reject)=>{
+ if(typeof captureProof01Active!=='undefined'&&captureProof01Active&&
+    (!captureProofOwner()||value.ownerId&&value.ownerId!==captureProofOwner()))
+  return reject(Error('Owner changed while saving a captured photograph'));
+ const tx=db.transaction(['items','state'],'readwrite');tx.objectStore('items').put(value);tx.objectStore('state').put({id:'draft',batch:structuredClone(nextBatch)});tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);}));}
 function node(tag,text,className){const n=document.createElement(tag);if(text)n.textContent=text;if(className)n.className=className;return n;}
 function empty(grid,title,subtitle){const n=node('div',null,'empty');n.append(node('h3',title),node('p',subtitle));grid.append(n);}
 function field(body,title,value,type='input'){const label=node('label',title),input=node(type);input.setAttribute('aria-label',title);if(type==='select'){for(const c of categories){const o=node('option',c);o.value=c;input.append(o);}}input.value=value||'';if(type==='input')input.maxLength=120;if(type==='textarea')input.maxLength=500;label.append(input);body.append(label);return input;}
@@ -123,6 +127,9 @@ function adjustPhoto(item){
  remove.onclick=async()=>{try{if(items.some(x=>x.id===item.id))await removeItem(item.id);items=items.filter(x=>x.id!==item.id);batch=batch.filter(x=>x.id!==item.id);sessionCapturedIds.delete(item.id);await persistDraft();dialog.close();render();}catch{message('Could not remove this photo. Try again.');}};
  form.onsubmit=async event=>{event.preventDefault();save.disabled=true;try{
   const value={...collect(),name:draft.name.trim()||(draft.itemType&&draft.itemType!=='Unknown'?draft.itemType:'Closet piece'),savedAt:new Date().toISOString(),userAdjusted:true,requiresOwnershipConfirmation:false};
+  if(typeof captureProof01Active!=='undefined'&&captureProof01Active&&
+     (!captureProofOwner()||item.ownerId&&item.ownerId!==captureProofOwner()))
+   throw Error('Owner changed. Sign in again before saving this photo.');
   if(typeof ClothingMemory!=='undefined')Object.assign(value,ClothingMemory.confirm(value));
   if(value.color&&value.colorSource==='photo-estimate')value.colorSource='user';
   await savePiece(value,batch.filter(x=>x.id!==item.id));
@@ -185,8 +192,10 @@ function candidate(image,options={}){
  if(typeof recordDeviceEvent==='function')recordDeviceEvent('photo_queued');
  if(typeof captureProof01Active!=='undefined'&&captureProof01Active){
   const proof=options.sourceProof||options.originalSourceProof;
+  if(proof&&!captureProofOwner())return false;
   if(proof?.sourceHashVerified===true&&proof.originalPhoto?.sha256===proof.sourceSHA256){
    item.originalPhoto=structuredClone(proof.originalPhoto);
+   item.ownerId=captureProofOwner();
    item.sourceSHA256=proof.sourceSHA256;item.sourceHashVerified=true;
    // A captured frame is NOT independently known to contain one garment.
    item.singleGarmentVerified=false;
@@ -265,7 +274,9 @@ async function startCamera(mode){
   if(!navigator.mediaDevices?.getUserMedia)throw Error('Camera access unavailable. Choose saved photos or a closet video instead.');
   const facing=typeof captureProof01Active!=='undefined'&&captureProof01Active?$('captureCameraFacing')?.value||'environment':'environment';
   let acquired;
-  try{acquired=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:facing},width:{ideal:1920},height:{ideal:1080}},audio:false});}
+  if(!(typeof captureProof01Active!=='undefined'&&captureProof01Active))
+   acquired=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}},audio:false});
+  else try{acquired=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:facing},width:{ideal:1920},height:{ideal:1080}},audio:false});}
   catch(error){
    if(!(typeof captureProof01Active!=='undefined'&&captureProof01Active&&
       ['OverconstrainedError','NotFoundError','NotReadableError'].includes(error.name)))throw error;
@@ -470,6 +481,12 @@ async function recognizeItem(item){
     item.localStatus='Automatic indexing needs source or account verification. Confirm this garment in Adjust; your photo is kept.';
     return true;
    }
+  }
+  // Proof of JPEG bytes is not independent proof of a single garment. With
+  // INDEX-04 disabled, CAPTURE-PROOF still fails closed to manual Adjust.
+  if(typeof captureProof01Active!=='undefined'&&captureProof01Active&&!index04Active){
+   item.localStatus='Original verified. Confirm garment category and color in Adjust before saving.';
+   return true;
   }
   const corePartial=!result.strong&&result.categoryConfirmed&&result.categoryOnly&&result.choices?.[0]&&result.choices[0].itemType==='Unknown';
   if(corePartial){
