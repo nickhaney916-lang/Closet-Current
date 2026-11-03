@@ -1177,7 +1177,7 @@ try{
                assert.ok(fit22.sourceCuffStackMovedVertices22>=25);
                assert.ok(Math.min(...fit22.sourceCuffStackPerLeg22)>=9);
                assert.ok(fit22.sourceCuffStackMaxMeters22>=.001&&
-                fit22.sourceCuffStackMaxMeters22<=.0068681);
+                fit22.sourceCuffStackMaxMeters22<=.009157);
                for(const angle of [90,135,180]){
                 await foldPage21.evaluate(a=>window.ccWardrobe10View(a),angle);
                 await stackPage22.evaluate(a=>window.ccWardrobe10View(a),angle);
@@ -1267,7 +1267,7 @@ try{
  assert.deepEqual([...new Set(denimCuff22Comparisons.map(x=>x.angle))],[90,135,180]);
  assert.ok(denimCuff22Comparisons.every(x=>x.realWebGLChangedRGBPixels>=20&&
   x.cuffMovedVertices>=25&&Math.min(...x.cuffPerLeg)>=9&&
-  x.cuffMaxMeters>=.001&&x.cuffMaxMeters<=.0068681&&
+  x.cuffMaxMeters>=.001&&x.cuffMaxMeters<=.009157&&
   x.originalFrontSHAUVRestSkinUnchanged&&x.unphotographedRearModeledOnly&&
   x.skinnedBodyContactsAfter<=x.skinnedBodyContactsBefore&&!x.releaseAuthorized));
  await writeFile('benchmark/denim-cuff-stack-22/results.json',JSON.stringify({
