@@ -68,8 +68,9 @@ function fixture(owner){
 const cases=[],screens=[],strips=[],errors=[],external=[];
 let browser;
 async function checkImage(page,engine,width,owner,stage){
+ assert.equal(page.viewportSize().width,width,'Actual browser viewport must equal tested mobile width');
  const name=engine+'-'+width+'-'+owner+'-'+stage+'.png';
- const png=await page.screenshot({fullPage:true,animations:'disabled'});
+ const png=await page.screenshot({fullPage:false,animations:'disabled'});
  const metadata=await sharp(png).metadata(),stats=await sharp(png).stats();
  assert.equal(metadata.width,width);assert.ok(png.length>4500);
  assert.ok(stats.channels.some(x=>x.stdev>10),'Genuine rendered screenshot not blank');
