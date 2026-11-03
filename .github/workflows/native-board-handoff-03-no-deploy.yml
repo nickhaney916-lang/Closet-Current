@@ -57,7 +57,7 @@ jobs:
           ln -s ../node_modules .native03-outfit-541/node_modules
       - name: Six genuine Chromium and WebKit sessions at 320/390/430 with A-to-B native login and source-honest 3D
         run: node scripts/test-native-board-handoff-03-browser.mjs
-      - name: Independently SHA-verify 30 real browser captures plus six review strips
+      - name: Independently SHA-verify 30 mobile states and 12 real photo-card captures plus six review strips
         run: node scripts/audit-native-board-handoff-03.mjs
       - name: Strict privacy/source/owner/revocation/screenshot/correct fallback acceptance
         run: |
@@ -67,7 +67,8 @@ jobs:
           const r=JSON.parse(readFileSync('benchmark/native-board-handoff-03/results.json','utf8'));
           const a=JSON.parse(readFileSync('benchmark/native-board-handoff-03-audit/acceptance.json','utf8'));
           assert.equal(r.caseCount,6);
-          assert.equal(r.screenshotCount,30);
+          assert.equal(r.screenshotCount,42);
+          assert.equal(r.sourcePhotoCardScreenshots,12);
           assert.equal(r.authEpochFromExactPR550,true);
           assert.equal(r.losslessEditorFromExactPR552,true);
           assert.equal(r.sourceHonest3DDecisionFromExactPR541,true);
@@ -85,6 +86,7 @@ jobs:
             x.privateJPEGHeadersNeverSentOffhost&&x.releaseAuthorized===false));
           assert.equal(a.status,'PASS_BROWSER_RESEARCH_ONLY');
           assert.equal(a.browserViewportScreenshotsIndependentlyVerified,30);
+          assert.equal(a.originalSourceCardScreenshotsIndependentlyVerified,12);
           assert.equal(a.contactSheets.length,6);
           assert.equal(a.serverSignedTwoAccountsVerified,false);
           assert.equal(a.genuineSupabaseRLSVerified,false);
@@ -100,7 +102,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: NATIVE03-genuine-native-login-lossless-owner-30-screens-HOLD
+          name: NATIVE03-genuine-native-login-lossless-owner-42-screens-HOLD
           path: |
             benchmark/native-board-handoff-03/
             benchmark/native-board-handoff-03-audit/
