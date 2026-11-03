@@ -17,6 +17,7 @@ import {sourcePhotoSignedCalf19} from './source-photo-signed-calf-19.mjs';
 import {sourceNeutralThighLine20,sourceNeutralCalfLine20} from './source-neutral-anatomical-line-20.mjs';
 import {sourceNeutralKneeBreak21} from './source-neutral-knee-break-21.mjs';
 import {sourceNeutralCuffStack22} from './source-neutral-cuff-stack-22.mjs';
+import {sourceNeutralHipKneeHang26,DENIM_ANATOMICAL_HANG26} from './source-neutral-hip-knee-hang-26.mjs';
 export const DENIM_FIT06=Object.freeze({
  targetMeters:.0058,maxWorldShiftMeters:.0085,maxSteps:100,
  stableSteps:6,velocityTolerance:.000012,positionTolerance:.00002,
@@ -87,7 +88,9 @@ export function settleDenimRest06(target=DENIM_FIT06.targetMeters){
   fixedStepSeconds:DENIM_FIT06.timestepSeconds,releaseAuthorized:false});
 }
 function same(a,b){return a?.length===b?.length&&a.every((x,i)=>x===b[i]);}
-export function createPhotoDenimStaticFitter06(pants,root,{sourceSilhouette07=false,sourceFairing08=false,sourceRearThigh14=false,sourceSideThigh15=false,sourcePosteriorContour16=false,sourcePhotoWidth17=false,originalPhotoWidth17=null,sourcePhotoProfile18=false,sourcePhotoSigned19=false,sourceAnatomicalLine20=false,sourceKneeBreak21=false,sourceCuffStack22=false}={}){
+export function createPhotoDenimStaticFitter06(pants,root,{sourceSilhouette07=false,sourceFairing08=false,sourceRearThigh14=false,sourceSideThigh15=false,sourcePosteriorContour16=false,sourcePhotoWidth17=false,originalPhotoWidth17=null,sourcePhotoProfile18=false,sourcePhotoSigned19=false,sourceAnatomicalLine20=false,sourceKneeBreak21=false,sourceCuffStack22=false,sourceHipKneeHang26=false}={}){
+ if(typeof sourceHipKneeHang26!=='boolean'||(sourceHipKneeHang26&&(!sourceCuffStack22||!sourceAnatomicalLine20||!sourcePosteriorContour16)))
+  throw Error('P26 requires exact verified P25/P22 anatomical source-neutral hip and knee fit');
  if(typeof sourceCuffStack22!=='boolean'||(sourceCuffStack22&&!sourceKneeBreak21))
   throw Error('P22 requires exact verified opt-in P21 source-grounded anatomical cloth fit');
  if(typeof sourceKneeBreak21!=='boolean'||(sourceKneeBreak21&&!sourceAnatomicalLine20))
@@ -245,6 +248,7 @@ export function createPhotoDenimStaticFitter06(pants,root,{sourceSilhouette07=fa
   let thigh20Moved=0,thigh20Max=0;const thigh20PerLeg=[0,0];
   let fold21Moved=0,fold21Max=0;const fold21PerLeg=[0,0];
   let stack22Moved=0,stack22Max=0;const stack22PerLeg=[0,0];
+  let hang26Moved=0,hang26RearMax=0,hang26SideMax=0,hang26DropMax=0;const hang26PerLeg=[0,0];
   for(const row of eligible){
    const kneeRest=sourceSilhouette07 ? .0015*row.kneeEase : 0;
    // Fit the lower source-neutral calf closer to its anatomical form.
@@ -337,12 +341,21 @@ export function createPhotoDenimStaticFitter06(pants,root,{sourceSilhouette07=fa
     // The broad posterior ease complements existing R14 and S15 and dies
     // smoothly into measured anatomical hip/knee rows. Source front never moves.
     const posterior=sourcePosteriorContour16?.0115*sourceNeutralPosteriorContour16(row.phase):0;
-    if(Math.abs(delta)<.0004&&lateral<.0004&&posterior<.0004)continue;
+    // True 163-bone hip/knee, ORIGINAL source-neutral side/rear sewn rows only.
+    const hang26=sourceHipKneeHang26?sourceNeutralHipKneeHang26(row.phase,row.side):null;
+    const rear26=hang26?.rearMeters||0,side26=hang26?.sideMeters||0,drop26=hang26?.dropMeters||0;
+    if(Math.abs(delta)<.0004&&lateral<.0004&&posterior<.0004&&rear26<.0004)continue;
     // Draw back excess *modeled* posterior and lateral cloth volume, with
     // exact zero at hip/knee. No reverse-side photo is fabricated.
     const line20=sourceAnatomicalLine20?sourceNeutralThighLine20(row.phase):null;
-    const world=row.q.clone();world.z+=delta-posterior+(line20?.rearMeters||0);
-    world.x+=(row.side===0?1:-1)*(lateral-(line20?.sideMeters||0));
+    const rearShift=delta-posterior+(line20?.rearMeters||0)-rear26;
+    const sideShift=lateral-(line20?.sideMeters||0)+side26;
+    const totalShift=Math.hypot(rearShift,sideShift,drop26);
+    if(sourceHipKneeHang26&&(!Number.isFinite(totalShift)||
+       totalShift>DENIM_ANATOMICAL_HANG26.maximumTotalLocalShiftMeters))
+     throw Error('P26 upper thigh drape exceeds actual source-authenticated fit budget');
+    const world=row.q.clone();world.z+=rearShift;
+    world.x+=(row.side===0?1:-1)*sideShift;world.y-=drop26;
     if(line20&&(line20.rearMeters>.0004||line20.sideMeters>.0004)){
      thigh20Moved+=row.ids.length;thigh20PerLeg[row.side]+=row.ids.length;
      thigh20Max=Math.max(thigh20Max,Math.hypot(line20.rearMeters,line20.sideMeters));
@@ -352,11 +365,16 @@ export function createPhotoDenimStaticFitter06(pants,root,{sourceSilhouette07=fa
      if(lateral>.0004){rear15Moved++;rear15PerLeg[row.side]++;}
      if(posterior>.0004){posterior16Moved++;posterior16PerLeg[row.side]++;}
     }
+    if(rear26>.0004){
+     hang26Moved+=row.ids.length;hang26PerLeg[row.side]+=row.ids.length;
+     hang26RearMax=Math.max(hang26RearMax,rear26);
+     hang26SideMax=Math.max(hang26SideMax,side26);
+     hang26DropMax=Math.max(hang26DropMax,drop26);
+    }
     rear14Max=Math.max(rear14Max,Math.abs(delta));
     rear15Max=Math.max(rear15Max,lateral);
     posterior16Max=Math.max(posterior16Max,posterior);
-    max=Math.max(max,Math.hypot(delta-posterior+(line20?.rearMeters||0),
-      lateral-(line20?.sideMeters||0)));
+    max=Math.max(max,totalShift);
    }
    if(rear14Moved<40||Math.min(...rear14PerLeg)<15||rear14Max<.008||rear14Max>.0100001)
     throw Error('R14 actual source-neutral modeled thigh drape not visible/bounded: '+
@@ -369,6 +387,12 @@ export function createPhotoDenimStaticFitter06(pants,root,{sourceSilhouette07=fa
      Math.min(...posterior16PerLeg)<15||posterior16Max<.0105||posterior16Max>.0115001))
     throw Error('P16 missing true source-neutral posterior thigh geometry or excessive displacement: '+
      JSON.stringify({posterior16Moved,posterior16PerLeg,posterior16Max}));
+   if(sourceHipKneeHang26&&(hang26Moved<30||Math.min(...hang26PerLeg)<12||
+      hang26RearMax<.003||hang26RearMax>DENIM_ANATOMICAL_HANG26.maxRearMeters+.000001||
+      hang26SideMax>DENIM_ANATOMICAL_HANG26.maxSideMeters+.000001||
+      hang26DropMax>DENIM_ANATOMICAL_HANG26.maxVerticalMeters+.000001))
+    throw Error('P26 original 163-bone hip-to-knee neutral drape missing or excessive: '+
+      JSON.stringify({hang26Moved,hang26PerLeg,hang26RearMax,hang26SideMax,hang26DropMax}));
   }
   p.needsUpdate=true;g.computeVertexNormals();g.computeBoundingBox();g.computeBoundingSphere();
   audit();
@@ -488,6 +512,15 @@ export function createPhotoDenimStaticFitter06(pants,root,{sourceSilhouette07=fa
    sourceCuffStackMaxMeters22:stack22Max,
    originalJPEGUVRestSkinProtected22:true,
    modeledCuffStackNotPhotographed22:true,
+   sourceNeutralHipKneeHang26:sourceHipKneeHang26,
+   sourceHipKneeHangMovedVertices26:hang26Moved,
+   sourceHipKneeHangPerLeg26:hang26PerLeg,
+   sourceHipKneeHangRearMaxMeters26:hang26RearMax,
+   sourceHipKneeHangSideMaxMeters26:hang26SideMax,
+   sourceHipKneeHangDropMaxMeters26:hang26DropMax,
+   originalSourceFrontJPEGUVRestSkinUnchanged26:true,
+   sideRearDrapeModeledNotPhotographed26:true,
+   actual163BoneHipKneeAnchors26:sourceHipKneeHang26,
    sourceUVRestAndSkinByteIdentical:true,realBVHVerifiedByCaller:false,
    noUnseenTextureInvented:true,physicalPhoneApproved:false,
    humanPhotorealismApproved:false,releaseAuthorized:false});
