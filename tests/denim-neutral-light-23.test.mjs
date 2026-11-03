@@ -23,15 +23,15 @@ test('P23 authenticated original front and neutral derived RGB only, otherwise f
  assert.throws(()=>requireSourceNeutralLight23({...fixture,ownerApproved:true},{enabled:true}),/P23 refuses/);
 });
 test('P23 restores unchanged baseline except genuinely unphotographed original pixels',()=>{
- const glsl='void main(){\n#include <color_fragment>\nfloat sourcePantsOpacity=1.0;\n#include <roughnessmap_fragment>\n#include <lights_fragment_end>\n}';
+ const glsl='void main(){\n#include <color_fragment>\nfloat sourcePantsOpacity=1.0;\n#include <roughnessmap_fragment>\n#include <normal_fragment_maps>\n}';
  assert.equal(applySourceNeutralLight23Shader(glsl,fixture),glsl);
  const out=applySourceNeutralLight23Shader(glsl,fixture,{enabled:true});
  assert.ok(out.includes('sourceNeutralUnphotographed23'));
  assert.ok(out.includes('1.0 - smoothstep(0.01,0.10,sourcePantsOpacity)'));
  assert.ok(out.includes('roughnessFactor = mix(roughnessFactor,0.68,sourceNeutralUnphotographed23)'));
- assert.ok(out.includes('geometry.normal,geometry.viewDir'),'P23 uses actual skinned normal and camera grazing angle, not a fake rear photo');
- assert.ok(out.includes('reflectedLight.indirectSpecular += diffuseColor.rgb'),'P23 remains bounded physically lit neutral denim');
- assert.ok(out.includes('sourceNeutralFiberGrazing23 * sourceNeutralUnphotographed23'),'P23 photo front exact roughness and specular shading unaffected');
+ assert.ok(out.includes('dot(normalize(normal),normalize(vViewPosition))'),'P23 uses actual skinned fragment normal and verified viewer direction, not unverified geometry scope');
+ assert.ok(out.includes('diffuseColor.rgb *= (1.0 + 0.28 * sourceNeutralFiberGrazing23 * sourceNeutralUnphotographed23)'),'P23 neutral-only fragment brightness bounded <=28%, no fake rear image');
+ assert.ok(out.includes('sourceNeutralFiberGrazing23 * sourceNeutralUnphotographed23'),'P23 original photographed front pixel path remains exactly unmodified');
  assert.ok(!/noise|sin\(|fract\(|pocket|rearTexture/i.test(out));
  assert.throws(()=>applySourceNeutralLight23Shader(glsl.replace('sourcePantsOpacity','sourceMissing'),fixture,{enabled:true}),/P23 missing/);
  assert.throws(()=>applySourceNeutralLight23Shader(out,fixture,{enabled:true}),/double-installed/);
