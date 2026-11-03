@@ -117,6 +117,28 @@ function diff(a,b){
  }
  return pixels;
 }
+/** Source-honest P23 visual witness: no green under-shorts masquerading as
+ * missing jeans and no global canvas changes mistaken for fabric changes.
+ * Analyze actual photographed source-blue RGB, not synthetic images. */
+function denimRGBPixel(r,g,b){return b-r>24&&b-g>13&&g-r>8&&r>15;}
+function originalDenimPixelCount23(im){
+ let n=0;for(let i=0;i<im.data.length;i+=3)
+  if(denimRGBPixel(im.data[i],im.data[i+1],im.data[i+2]))n++;
+ return n;
+}
+function realDenimPixelChanges23(a,b){
+ assert.equal(a.info.width,b.info.width);assert.equal(a.info.height,b.info.height);
+ let n=0;
+ for(let i=0;i<a.data.length;i+=3){
+  if(!denimRGBPixel(a.data[i],a.data[i+1],a.data[i+2])||
+     !denimRGBPixel(b.data[i],b.data[i+1],b.data[i+2]))continue;
+  const changed=Math.abs(a.data[i]-b.data[i])+
+    Math.abs(a.data[i+1]-b.data[i+1])+
+    Math.abs(a.data[i+2]-b.data[i+2]);
+  if(changed>24)n++;
+ }
+ return n;
+}
 let browser;
 try{
  browser=await chromium.launch({headless:true,args:[
@@ -1245,18 +1267,33 @@ try{
                  await materialPage23.evaluate(a=>window.ccWardrobe10View(a),angle);
                  const before=await stackPage22.locator('#avatar').screenshot();
                  const after=await materialPage23.locator('#avatar').screenshot();
-                 const changed=diff(await raw(before),await raw(after));
+                 const beforePixels=await raw(before),afterPixels=await raw(after);
+                 const changed=diff(beforePixels,afterPixels);
+                 const sourceBlue=originalDenimPixelCount23(beforePixels);
+                 const renderedBlue=originalDenimPixelCount23(afterPixels);
+                 const changedOnDenim=realDenimPixelChanges23(beforePixels,afterPixels);
                  const key=prefix+'-view-'+angle;
                  // Save actual before/after PNG evidence BEFORE asserting.
                  // Even on failure, keep artifact for unambiguous WebGL debugging.
                  await writeFile('benchmark/denim-neutral-material-23/'+key+'-exact-p22.png',before);
                  await writeFile('benchmark/denim-neutral-material-23/'+key+'-lit-p23.png',after);
+                 assert.ok(sourceBlue>=2500,'P23 original P22 blue denim must be genuinely visible');
+                 // This strict positive witness catches the second P23 attempt:
+                 // entire jeans disappeared while whole-canvas diff was huge.
+                 assert.ok(renderedBlue>=sourceBlue*.80&&renderedBlue>=2000,
+                  'P23 vanished jeans / blue source lost at '+angle+': '+renderedBlue+'/'+sourceBlue);
+                 assert.ok(changedOnDenim>=20,
+                  'P23 must change 20 ACTUAL denim pixels, not expose green briefs: '+changedOnDenim);
                  assert.ok(changed>=20,'P23 honest neutral denim material real WebGL diff at '+angle+': '+changed);
                  denimMaterial23Comparisons.push({rig,width,denimIndex,sourceDenim,angle,
                   owner:'fixture-account-a',authentic163BoneSkinnedRig:true,
                   trueOriginalPhotoSHA256:fit23.originalPhotoSHA256,
                   originalSourceHemRatios:fit23.sourceCutoutLegWidthRatios17,
                   realWebGLChangedRGBPixels:changed,
+                  originalBlueDenimPixels:sourceBlue,
+                  sourceBlueDenimPixelsAfter:renderedBlue,
+                  denimSpecificChangedRGBPixels:changedOnDenim,
+                  actualGarmentVisible:true,
                   sourcePhotoJPEGUVRestSkinProtected:true,
                   photographFrontUsesOriginalBRDF:true,
                   rearMaterialIsNeutralOnly:true,
@@ -1333,6 +1370,9 @@ try{
  assert.equal(new Set(denimMaterial23Comparisons.map(x=>x.sourceDenim)).size,2);
  assert.deepEqual([...new Set(denimMaterial23Comparisons.map(x=>x.angle))],[90,135,180]);
  assert.ok(denimMaterial23Comparisons.every(x=>x.realWebGLChangedRGBPixels>=20&&
+  x.actualGarmentVisible&&x.originalBlueDenimPixels>=2500&&
+  x.sourceBlueDenimPixelsAfter>=x.originalBlueDenimPixels*.80&&
+  x.denimSpecificChangedRGBPixels>=20&&
   x.sourcePhotoJPEGUVRestSkinProtected&&x.photographFrontUsesOriginalBRDF&&
   x.rearMaterialIsNeutralOnly&&!x.fakeRearTextureGenerated&&
   x.genuineBodyContactsAfter<=x.genuineBodyContactsBefore&&!x.releaseAuthorized));
