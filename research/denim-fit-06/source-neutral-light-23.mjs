@@ -7,6 +7,7 @@
  * the BRDF; keep those true normals and only lower the extremely matte .96
  * baseline roughness where the original source pixels contribute nothing.
  */
+import {isSourceVerifiedDenimId} from '../three-d-30/reviewed-photo-pants.mjs';
 export const DENIM_NEUTRAL_LIGHT23=Object.freeze({
  neutralRoughness:.68,originalRoughness:.96,
  neutralMaskStart:.01,neutralMaskEnd:.10,
@@ -45,4 +46,40 @@ export function applySourceNeutralLight23Shader(fragmentShader,source,{enabled=f
   'roughnessFactor = mix(roughnessFactor,0.68,sourceNeutralUnphotographed23);'
  ].join('\n');
  return fragmentShader.replace('#include <roughnessmap_fragment>',injection);
+}
+
+/**
+ * Isolated P23 wrapper. DO NOT edit the shared/photo-pinned 3D30 source
+ * projection: the three original-source CI suites explicitly protect it.
+ * Hook only this ephemeral, already SHA-validated garment material and
+ * delegate all geometry, original JPEG resources and disposal to the parent.
+ */
+export function installSourceNeutralLight23(pants,source,{enabled=false}={}){
+ if(!enabled)return pants;
+ const proof=requireSourceNeutralLight23(source,{enabled:true});
+ const mesh=pants?.meshes?.[0],material=mesh?.material;
+ if(pants?.meshes?.length!==1||!mesh?.isSkinnedMesh||
+    !material?.isMeshStandardMaterial||
+    !isSourceVerifiedDenimId(source.id)||
+    pants?.stats?.photoApplied!==true||
+    pants.stats.sourceSHA256!==source.sourceSHA256||
+    pants.stats.cutoutSHA256!==source.cutoutSHA256||
+    typeof pants.dispose!=='function')
+  throw Error('P23 source-honest BRDF requires original SHA-matched photo projected once onto genuine 163-bone sewn denim');
+ const priorCompile=material.onBeforeCompile;
+ const priorCache=material.customProgramCacheKey?.bind(material);
+ material.onBeforeCompile=shader=>{
+  priorCompile?.(shader);
+  shader.fragmentShader=applySourceNeutralLight23Shader(shader.fragmentShader,source,{enabled:true});
+ };
+ material.customProgramCacheKey=()=>String(priorCache?.()||'source-denim')+'-neutral-physical-brdf23';
+ material.needsUpdate=true;
+ return {...pants,stats:{...pants.stats,
+  sourceNeutralMaterial23:true,
+  sourceNeutralOriginalRoughness23:proof.originalRoughness,
+  sourceNeutralRoughness23:proof.neutralRoughness,
+  originalPhotoShaderProtected23:true,
+  unseenRearImageGenerated23:false,
+  physicalPhoneApproved23:false,humanVisualApproval23:false,
+  releaseAuthorized:false},dispose(){pants.dispose();}};
 }
