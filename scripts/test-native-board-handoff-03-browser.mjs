@@ -122,14 +122,28 @@ async function sourceCard(page,engine,width,owner,stage){
   im.getAttribute('src')?.startsWith('data:image/jpeg;base64,')&&
   im.naturalWidth>0&&im.naturalHeight>0));
  assert.equal(proof,true,'Original JPEGs must be decoded and drawn by real browser');
- const png=await cards.screenshot({animations:'disabled'});
+ // Capture the full original app page first, then crop using genuine
+ // document coordinates. Playwright element.screenshot() on this native
+ // mobile scroll container can include neighboring controls and omit the
+ // lower shoe card even when all four images are actually fully rendered.
+ const bounds=await cards.evaluate(el=>{
+  const r=el.getBoundingClientRect();
+  return {left:Math.round(r.left+scrollX),top:Math.round(r.top+scrollY),
+   width:Math.round(r.width),height:Math.round(r.height)};
+ });
+ const full=await page.screenshot({fullPage:true,animations:'disabled'});
+ const pageMeta=await sharp(full).metadata();
+ assert.ok(bounds.left>=0&&bounds.top>=0&&bounds.width>190&&bounds.height>110&&
+  bounds.left+bounds.width<=pageMeta.width&&bounds.top+bounds.height<=pageMeta.height,
+  'Actual original app photo-card crop must lie fully within full-page screenshot');
+ const png=await sharp(full).extract(bounds).png().toBuffer();
  const m=await sharp(png).metadata(),stats=await sharp(png).stats();
  assert.ok(m.width>190&&m.width<=width,'Real photo-card crop width must fit mobile viewport');
  assert.ok(m.height>=110&&png.length>4500&&
   stats.channels.some(x=>x.stdev>7),'Original owner clothing previews must be visually present');
  const name=engine+'-'+width+'-'+owner+'-'+stage+'.png';
  await writeFile(dir+'/'+name,png);
- screens.push({name,engine,width,owner,stage,elementCapture:true,photoCount:4,sha256:sha(png)});
+ screens.push({name,engine,width,owner,stage,elementCapture:true,photoCount:4,cropSource:'original-full-page-rect',sha256:sha(png)});
 }
 async function signIn(page,owner){
  await page.locator('#authEmail').fill(owner+'@example.test');
@@ -347,7 +361,8 @@ try{
   assert.equal(sha(await readFile('benchmark/fixtures/'+id+'.jpg')),source.sha256);
  }
  const result={priority:'NATIVE-BOARD-HANDOFF-03',caseCount:cases.length,
-  screenshotCount:screens.length,sourcePhotoCardScreenshots:12,exactNativeApp:true,exactNativeAuthUnchanged:true,
+  screenshotCount:screens.length,sourcePhotoCardScreenshots:12,
+  originalFullPagePhotoCrop:true,exactNativeApp:true,exactNativeAuthUnchanged:true,
   originalPhotoBytesPreserved:true,authHTTPMocked:true,
   actualBrowserStorage:true,authEpochFromExactPR550:true,
   losslessEditorFromExactPR552:true,sourceHonest3DDecisionFromExactPR541:true,
