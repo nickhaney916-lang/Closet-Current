@@ -83,6 +83,7 @@ jobs:
             x.originalSaved3DIDsAndCoatsPreserved&&x.tokenRefreshRevokesPriorPrivatePreview&&
             x.pageReloadNativeAuthSessionPersisted&&x.accountSwitchAtoB&&
             x.ownerBCannotReadOwnerA&&x.donorSourceHonestFallback&&
+            x.originalSourceCardsClearOfFixedNav&&
             x.privateJPEGHeadersNeverSentOffhost&&x.releaseAuthorized===false));
           assert.equal(a.status,'PASS_BROWSER_RESEARCH_ONLY');
           assert.equal(a.browserViewportScreenshotsIndependentlyVerified,30);
