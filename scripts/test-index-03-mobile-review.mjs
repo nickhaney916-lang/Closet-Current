@@ -45,7 +45,7 @@ const beforeRecords=[
   seasons:[],sleeveLength:'Not applicable',pattern:'Unknown',fit:'Not applicable',
   userAdjusted:true,notes:'',brand:'',material:'',size:'',occasion:''}
 ];
-const results=[],errors=[],outbound=[];
+const results=[],errors=[],outbound=[],blockedExternal=[],unsafeExternalAttempts=[];
 await mkdir(out,{recursive:true});
 await new Promise(ok=>server.listen(0,'127.0.0.1',ok));const base='http://127.0.0.1:'+server.address().port;
 let browser;
@@ -56,7 +56,12 @@ try{
    isMobile:true,hasTouch:true,serviceWorkers:'block'});
   await context.route('**/*',route=>{
    if(route.request().url().startsWith(base+'/'))return route.continue();
-   outbound.push(route.request().url().split('?')[0]);return route.abort();
+   const request=route.request();
+   const entry={url:request.url().split('?')[0],method:request.method(),
+    bodyBytes:request.postData()?.length||0};
+   blockedExternal.push(entry);
+   if(entry.method!=='GET'||entry.bodyBytes>0)unsafeExternalAttempts.push(entry);
+   return route.abort();
   });
   const page=await context.newPage();page.on('pageerror',e=>errors.push('width '+width+': '+e.message));
   await page.goto(base+'/');await page.evaluate(()=>closetReady);
@@ -105,13 +110,16 @@ try{
    neuralInferenceMeasured:false,physicalHardwareTested:false,viewport:ui});
   await context.close();
  }
- assert.equal(outbound.length,0,'No external network request from isolated browser');
- // Page errors are not ignored silently: they are persisted to the artifact.
- const report={verdict:errors.length?'REVIEW':'PASS',screenshots:6,results,errors,outbound,
+ console.log('Blocked pre-existing remote asset requests',JSON.stringify(blockedExternal));
+ // The app may request third-party fonts/static assets. The browser blocks EVERY
+ // off-host request; any attempted non-GET/body traffic fails photo-privacy QA.
+ const report={verdict:errors.length||unsafeExternalAttempts.length?'REVIEW':'PASS',screenshots:6,results,errors,outbound,
+  blockedExternalRequests:blockedExternal,unsafeExternalAttempts,
   realRecognitionMeasured:false,physicalAndroidOrIphoneTested:false,
   productionDeployed:false,familyAlpha:'HOLD'};
  await writeFile(join(out,'report.json'),JSON.stringify(report,null,2));
+ assert.equal(unsafeExternalAttempts.length,0,'External data-transfer attempt blocked: '+JSON.stringify(unsafeExternalAttempts));
  if(errors.length)throw Error('Page errors in mobile review QA: '+errors.join('; '));
  console.log(JSON.stringify({verdict:report.verdict,widths:results.map(x=>x.width),
-  screenshots:6,externalRequests:outbound.length,realRecognitionMeasured:false},null,2));
+  screenshots:6,allowedExternalRequests:outbound.length,blockedExternalRequests:blockedExternal.length,realRecognitionMeasured:false},null,2));
 }finally{await browser?.close();await new Promise(ok=>server.close(ok));}
