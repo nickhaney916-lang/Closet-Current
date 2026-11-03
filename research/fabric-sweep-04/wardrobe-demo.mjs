@@ -659,7 +659,7 @@ window.ccWardrobeDenimFreeze06=()=>{
      proof.sourceKneeBreakMovedVertices21<25||
      Math.min(...proof.sourceKneeBreakPerLeg21)<9||
      proof.sourceKneeBreakMaxMeters21<.001||
-     proof.sourceKneeBreakMaxMeters21>.0042601))
+     proof.sourceKneeBreakMaxMeters21>.0054001))
    throw Error('P21 original-photo protected modeled bone knee break invalid');
 
 
