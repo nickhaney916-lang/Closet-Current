@@ -72,7 +72,7 @@ for(const width of [320,390,430])for(const rig of ['female','male'])
  }
 const min=r=>Math.min(...rows.map(r)),max=r=>Math.max(...rows.map(r));
 const summary={
- priority:'DENIM-VISUAL-27',fullOriginalSourceScreenshots:96,verifiedPairs:rows.length,
+ priority:'DENIM-SEAM-FLOW-28',fullOriginalSourceScreenshots:96,verifiedPairs:rows.length,
  screenshotSHA256Proof:true,sourcePhotos:2,anatomicalFigures:['female','male'],
  viewportWidths:[320,390,430],angles:[0,90,135,180],
  contactSheetCount:contactSheets.length,contactSheets,
@@ -86,6 +86,8 @@ const summary={
  realPhoneAcceptance:'NOT_TESTED',photorealismAcceptance:'REVIEW',
  familyAlpha:'HOLD',productionModified:false,releaseAuthorized:false,
  cosmeticImprovementClaimed:false,
+ anatomicalSeamFlow28:true,
+ visibleSourceNeutralSeamDifferences:rows.filter(x=>x.angle!==0&&x.metrics.changedCommonDenimPixels>=20).length,
  notes:'A changed pixel count is not a validated increase in garment realism. Human visual review remains required.',
  comparisons:rows
 };
@@ -93,7 +95,7 @@ assert.equal(rows.length,proof.comparisons);
 assert.equal(contactSheets.length,12);
 assert.ok(summary.subtleComparisonCount>=0&&summary.subtleComparisonCount<=48);
 await writeFile(join(output,'visual-acceptance.json'),JSON.stringify(summary,null,2));
-console.log('DENIM27_REAL_WEBGL_VISUAL_QA',JSON.stringify({
+console.log('DENIM28_SEAM_FLOW_REAL_WEBGL_VISUAL_QA',JSON.stringify({
  pairs:rows.length,contactSheets:contactSheets.length,
  subtleComparisons:summary.subtleComparisonCount,
  acceptance:summary.photorealismAcceptance,production:'UNCHANGED'}));
