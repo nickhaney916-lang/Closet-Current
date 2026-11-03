@@ -37,10 +37,15 @@ test('P23 explicitly opt-in exact P22 source + never replace original photograph
  const p=readFileSync('research/three-d-30/reviewed-photo-pants.mjs','utf8');
  const app=readFileSync('research/fabric-sweep-04/wardrobe-demo.mjs','utf8');
  const ctl=readFileSync('research/fabric-sweep-04/dress-outfit-controller.mjs','utf8');
- assert.ok(p.includes('sourceNeutralMaterial23=false'));
- assert.ok(p.includes('applySourceNeutralLight23Shader'));
- assert.ok(p.includes("unseenRearImageGenerated23:false"));
- assert.ok(p.includes('originalPhotoShaderProtected23:true'));
+ assert.ok(p.includes("material.customProgramCacheKey=()=> 'cc3d30-reviewed-pants-front-v1'"),
+  'protected original photograph projection must remain baseline code');
+ assert.ok(!p.includes('sourceNeutralMaterial23'),
+  'P23 must not edit or opt-in from protected shared 3D30 source projection');
+ const neutral=readFileSync('research/denim-fit-06/source-neutral-light-23.mjs','utf8');
+ assert.ok(neutral.includes('export function installSourceNeutralLight23'));
+ assert.ok(neutral.includes('applySourceNeutralLight23Shader'));
+ assert.ok(neutral.includes("unseenRearImageGenerated23:false"));
+ assert.ok(neutral.includes('originalPhotoShaderProtected23:true'));
  assert.ok(ctl.includes('sourceDenimMaterial23&&!sourceDenimCuffStack22'));
  assert.ok(app.includes("get('denimMaterial23')==='after'"));
  assert.ok(app.includes('sourceDenimMaterial23Enabled'));
