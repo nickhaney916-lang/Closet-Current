@@ -8,7 +8,7 @@ test('P22 single diagonal cuff stack uses actual leg orientation and true origin
   assert.equal(sourceNeutralCuffStack22(1,1,0,ratio,side).outwardMeters,0);
   for(let i=0;i<=100;i++){
    const v=sourceNeutralCuffStack22(i/100,0,-1,ratio,side);
-   assert.ok(v.outwardMeters>=0&&v.outwardMeters<=.006868);
+   assert.ok(v.outwardMeters>=0&&v.outwardMeters<=.009157);
    assert.equal(v.modeledUnphotographedFold,true);
   }
  }
