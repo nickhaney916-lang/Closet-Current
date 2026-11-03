@@ -108,6 +108,24 @@ test('auth01 refuses a native async user switch or a token that does not equal t
  await assert.rejects(c.attest(),/AUTH01/);
  assert.equal(c.auth.user,null);c.dispose();
 });
+test('auth01 a late real native auth reply cannot RESURRECT a logout or tab-revoked lease',async()=>{
+ for(const source of ['logout','storage','pagehide']){
+  const f=fixture(),waiting=[];
+  f.nativeAuth.getAccessToken=()=>new Promise(resolve=>waiting.push(resolve));
+  const b=createNativeAuthEpoch01({nativeAuth:f.nativeAuth,win:f.win,doc:f.doc});
+  const admission=b.attest();
+  while(!waiting.length)await new Promise(r=>setImmediate(r));
+  if(source==='logout')f.logout.dispatchEvent({type:'click',isTrusted:true});
+  if(source==='storage')f.win.dispatchEvent({type:'storage',key:'closet-current-auth-v1'});
+  if(source==='pagehide')f.win.dispatchEvent({type:'pagehide'});
+  waiting.shift()('auth-token-A');
+  await assert.rejects(admission,/AUTH01/);
+  assert.equal(b.status().active,false);
+  assert.equal(b.auth.user,null);
+  assert.throws(()=>b.auth.getSessionGeneration(),/revoked/);
+  b.dispose();
+ }
+});
 test('auth01 fail closed across async token refresh; same user cannot retain old lease',async()=>{
  const f=fixture(),b=createNativeAuthEpoch01({nativeAuth:f.nativeAuth,win:f.win,doc:f.doc});
  await b.attest();
