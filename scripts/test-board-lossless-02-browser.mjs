@@ -87,7 +87,16 @@ async function checkImage(page,engine,width,owner,stage){
 }
 async function sourceCardDetail(page,engine,width,owner){
  const name=engine+'-'+width+'-'+owner+'-source-cards-all-slots.png';
- const png=await page.locator('#board02Preview').screenshot({animations:'disabled'});
+ const cards=page.locator('#board02Preview'),count=await cards.locator('article').count();
+ assert.equal(count,4,'Dress, jacket, coat and shoes must all be present');
+ // Center the real UI element within the 880px mobile viewport before taking
+ // its ACTUAL screenshot. The unchanged app has a fixed bottom tab bar;
+ // allowing it to occlude shoe/coat pixels would be false visual evidence.
+ await cards.evaluate(el=>el.scrollIntoView({block:'center',behavior:'instant'}));
+ const rect=await cards.boundingBox(),viewport=page.viewportSize();
+ assert.ok(rect&&rect.y>=4&&rect.y+rect.height<=viewport.height-70,
+  'All four original-photo cards must be visually clear of fixed mobile tab bar');
+ const png=await cards.screenshot({animations:'disabled'});
  const m=await sharp(png).metadata(),stats=await sharp(png).stats();
  assert.ok(m.width<=width&&m.width>=width-65,'Real element crop width must be within viewport');
  assert.ok(png.length>2000&&stats.channels.some(x=>x.stdev>10));
