@@ -4,7 +4,6 @@
  * invent a rear photo, or authorize a family preview.
  */
 import * as THREE from 'three';
-import {requireSourceNeutralLight23,applySourceNeutralLight23Shader} from '../denim-fit-06/source-neutral-light-23.mjs';
 export const PANTS_SOURCE=Object.freeze({
  id:'commons-0021',
  originalSHA256:'04c0ca5bed1bee26e83be98b9a992619b0777811a7fb8a99fe955939334bbd8c',
@@ -56,12 +55,8 @@ export function requireReviewedPhotoPants(source,{reviewed=false}={}){
  return source;
 }
 const clamp=(x,a=0,b=1)=>Math.min(b,Math.max(a,x));
-export function projectReviewedPhotoPants(pants,source,{reviewed=false,sourceNeutralMaterial23=false}={}){
+export function projectReviewedPhotoPants(pants,source,{reviewed=false}={}){
  requireReviewedPhotoPants(source,{reviewed});
- if(typeof sourceNeutralMaterial23!=='boolean'||
-    (sourceNeutralMaterial23&&!isSourceVerifiedDenimId(source?.id)))
-  throw Error('P23 only accepts genuine SHA-verified source denim neutral backing');
- requireSourceNeutralLight23(source,{enabled:sourceNeutralMaterial23});
  const mesh=pants?.meshes?.[0],g=mesh?.geometry,rest=g?.getAttribute('pantsRest');
  if(!mesh?.isSkinnedMesh||pants.meshes.length!==1||pants.stats?.photoApplied!==false||
  !rest||rest.itemSize!==3||rest.count!==g.getAttribute('position')?.count||
@@ -107,13 +102,8 @@ export function projectReviewedPhotoPants(pants,source,{reviewed=false,sourceNeu
    'varying vec2 vPantsSourceUV; varying float vPantsSourceFront; uniform sampler2D uPantsOriginalPhoto; void main() {');
   shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>',
    '#include <color_fragment>\nvec4 sourcePantsPixel=texture2D(uPantsOriginalPhoto,vPantsSourceUV); float sourcePantsOpacity=smoothstep(0.95,0.99,sourcePantsPixel.a)*smoothstep(0.20,0.80,vPantsSourceFront); diffuseColor.rgb=mix(diffuseColor.rgb,sourcePantsPixel.rgb,sourcePantsOpacity);');
-  // P23 never modifies the JPEG map, color mixing, UV or real geometry:
-  // only physical BRDF roughness where the source photo contributes no RGB.
-  if(sourceNeutralMaterial23)
-   shader.fragmentShader=applySourceNeutralLight23Shader(shader.fragmentShader,source,{enabled:true});
  };
- material.customProgramCacheKey=()=> sourceNeutralMaterial23?
-  'cc3d30-reviewed-pants-front-v1-neutral-microfacet23':'cc3d30-reviewed-pants-front-v1';
+ material.customProgramCacheKey=()=> 'cc3d30-reviewed-pants-front-v1';
  material.needsUpdate=true;
  let disposed=false;
  return {
@@ -121,10 +111,7 @@ export function projectReviewedPhotoPants(pants,source,{reviewed=false,sourceNeu
   stats:{...pants.stats,photoApplied:true,sourceId:source.id,
    sourceSHA256:source.sourceSHA256,cutoutSHA256:source.cutoutSHA256,
    originalImagePreserved:true,originalRGBPreserved:true,photoFrontOnly:true,
-   backMaterial:sourceNeutralMaterial23?'unphotographed-neutral-physical-brdf23':'unphotographed-neutral',
-   sourceDerivedNeutralColor:isSourceVerifiedDenimId(source.id),orientationReviewed:true,
-   sourceNeutralMaterial23,originalPhotoShaderProtected23:true,
-   unseenRearImageGenerated23:false,physicalPhoneApproved23:false,humanVisualApproval23:false,
+   backMaterial:'unphotographed-neutral',sourceDerivedNeutralColor:isSourceVerifiedDenimId(source.id),orientationReviewed:true,
    imageMapping:'original-source-front-projection-not-tailored-fit',
    collisionValidated:false,humanVisualApproval:false,releaseAuthorized:false},
   dispose(){if(disposed)return;disposed=true;texture.dispose();pants.dispose();}
