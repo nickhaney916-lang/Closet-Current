@@ -33,6 +33,8 @@ test('P29 source-rest return is NEVER approved without original SHA and real BVH
   p=>p.sourceNeutralSeamFlow28=false,
   p=>p.trueBVHBodyContactNoNew=false,
   p=>p.bodyContactAfter=1,
+  p=>p.bodyContactBefore=undefined,
+  p=>p.bodyContactAfter=NaN,
  ]){let p={...proof};change(p);assert.throws(()=>decide({...base,pose:'source',previous:bent,restFitWasFrozen:false,restRecoveryProof:p}),/P29/);}
 });
 test('P29 fail-closed on fake identity, unsupported pose or actual body collision',()=>{
@@ -46,7 +48,7 @@ test('P29 research opt-in is guarded in real outfit pose controller',()=>{
  const path='research/fabric-sweep-04/dress-outfit-controller.mjs';
  const s=readFileSync(path,'utf8');
  const demo=readFileSync('research/fabric-sweep-04/wardrobe-demo.mjs','utf8');
- assert.ok(s.includes('sourceDenimPoseGuard29&&(!sourceDenimFlow28||!photoDenimFlex79||!photoDenimKneePose78)'));
+ assert.ok(s.includes('sourceDenimPoseGuard29&&(!sourceDenimFlow28||!photoDenimFlex79||!photoDenimKneePose78||!staticDenimFit06)'));
  assert.ok(s.includes('decideDenimPose29'));
  assert.ok(s.includes('staticFit06.freeze()'));
  assert.ok(s.includes('denimPose29:poseGuard29'));
