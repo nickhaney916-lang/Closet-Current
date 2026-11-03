@@ -58,7 +58,7 @@ jobs:
           assert.equal(r.actualNativeApp,true);assert.equal(r.realIndexedDB,true);
           assert.equal(r.donorPR541Decision,true);assert.equal(r.accountIsolationFixture,true);
           assert.equal(r.verifiedOriginalSHA,true);assert.equal(r.cases,12);
-          assert.equal(r.screenshots,60);assert.equal(r.strips,12);
+          assert.equal(r.screenshots,60);assert.equal(r.strips.length,12);
           assert.deepEqual(r.widths,[320,390,430]);
           assert.deepEqual(r.engines,['chromium','webkit']);
           assert.deepEqual(r.errors,[]);
