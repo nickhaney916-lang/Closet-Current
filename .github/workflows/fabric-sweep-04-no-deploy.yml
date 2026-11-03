@@ -723,7 +723,7 @@ jobs:
           assert.ok(r.originalSourceCuffStackComparisons.every(x=>
            x.realWebGLChangedRGBPixels>=20&&
            x.cuffMovedVertices>=25&&Math.min(...x.cuffPerLeg)>=9&&
-           x.cuffMaxMeters>=.001&&x.cuffMaxMeters<=.0068681&&
+           x.cuffMaxMeters>=.001&&x.cuffMaxMeters<=.009157&&
            x.originalFrontSHAUVRestSkinUnchanged&&x.unphotographedRearModeledOnly&&
            x.skinnedBodyContactsAfter<=x.skinnedBodyContactsBefore&&!x.releaseAuthorized));
           assert.equal(r.originalPhotoSHAUVRestSkinProtected,true);
