@@ -76,6 +76,21 @@ export function createMobileWardrobeIndex02({
  const anchor=closetElement.querySelector('.closet-search');
  if(!anchor)throw Error('INDEX-02 missing My Closet search controls');
  anchor.insertAdjacentElement('afterend',root);
+ const style=make(doc,'style');
+ style.id='index02ResearchStyles';
+ style.textContent=[
+  '.index02-panel{border:1px solid #cecbd8;border-radius:12px;padding:12px;margin:10px 0;background:rgba(245,242,252,.7)}',
+  '.index02-panel>summary{font-weight:650;cursor:pointer;padding:4px 0}',
+  '.index02-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:12px 0}',
+  '.index02-label{display:flex;flex-direction:column;gap:4px;min-width:0;font-size:14px}',
+  '.index02-control{min-width:0;width:100%;min-height:44px;border:1px solid #a9a8b2;border-radius:8px;background:#fff;padding:8px;font-size:16px}',
+  '.index02-review{display:flex;flex-direction:row;align-items:center;gap:8px;font-size:14px}',
+  '.index02-review input{height:20px;width:20px}',
+  '.index02-actions{display:flex;flex-wrap:wrap;gap:8px}',
+  '.index02-panel #index02Status{margin:8px 0 0}',
+  '@media(max-width:360px){.index02-fields{grid-template-columns:minmax(0,1fr)}.index02-panel{padding:9px}}'
+ ].join('\n');
+ doc.head?.append(style);
 
  let filters=initial(),allowed=null,summary=null,owner=null,disposed=false;
  let serial=Promise.resolve(),version=0,ready=false,lastError=null;
@@ -148,7 +163,7 @@ export function createMobileWardrobeIndex02({
   if(guard())syncFacets();
   updated();
  }
- category.addEventListener('change',()=>{filters.itemType='';filters.color='';change();});
+ category.addEventListener('change',()=>{type.value='';color.value='';filters.itemType='';filters.color='';change();});
  type.addEventListener('change',change);
  color.addEventListener('change',change);
  search.addEventListener('input',change);
@@ -202,7 +217,7 @@ export function createMobileWardrobeIndex02({
    category.value=type.value=color.value=search.value='';review.checked=false;
    root.setAttribute('aria-busy','false');renderCounts();onRerender();
   },
-  destroy(){if(disposed)return;api.clear();disposed=true;root.remove();}
+  destroy(){if(disposed)return;api.clear();disposed=true;root.remove();style.remove();}
  };
  return Object.freeze(api);
 }
