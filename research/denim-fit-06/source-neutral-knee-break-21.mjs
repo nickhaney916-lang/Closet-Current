@@ -20,10 +20,15 @@ export function sourceNeutralKneeBreak21(phase,photoStations,side){
  // Original source width slope changes relative ease, not fake photo folds.
  const widthSlope=photoStations[1]-photoStations[4];
  const amplitude=clamp(.98+.22*widthSlope,.88,1.12)*(side===0?1:.94);
- const tuck=smooth(.17,.34,phase)*(1-smooth(.45,.57,phase));
- const crest=smooth(.49,.66,phase)*(1-smooth(.77,.94,phase));
- // The lower trough tempers puffy calf; a single gentle knee crest preserves
- // the sewn leg's fabric volume. Seam anchors smoothly return to zero.
- const radialMeters=amplitude*(.0028*crest-.0038*tuck);
+ // Spread the modelled fold across actual adjacent skinned knee/calf rows:
+ // the previous narrow crest changed only 19 WebGL RGB pixels at 90 degrees.
+ // The knee-facing portion expands OUTWARD (body-safe); the inward calf
+ // trough keeps its existing 3.8 mm maximum to avoid skin intersections.
+ const tuck=smooth(.12,.30,phase)*(1-smooth(.50,.66,phase));
+ const crest=smooth(.42,.58,phase)*(1-smooth(.82,.96,phase));
+ // One anatomical knee break, not a new painted pattern or periodic waves.
+ // Photo-front vertices and real cutout remain untouched; seam-boundary
+ // displacement is zero at both original knee/ankle endpoints.
+ const radialMeters=amplitude*(.0048*crest-.0038*tuck);
  return Object.freeze({radialMeters,modeledUnphotographedFold:true});
 }
