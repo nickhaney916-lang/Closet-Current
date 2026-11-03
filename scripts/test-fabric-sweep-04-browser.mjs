@@ -28,7 +28,7 @@ const server=createServer(async(req,res)=>{
 });
 await new Promise(ok=>server.listen(0,'127.0.0.1',ok));
 const host='http://127.0.0.1:'+server.address().port;
-const screenshots=[],cases=[],contacts=[],sweeps=[],frozenDress=[],frozenDenim=[],denimSilhouetteComparisons=[],denimFairing08Comparisons=[],denimAngle09Comparisons=[],denimRear14Comparisons=[],denimSide15Comparisons=[],denimPosterior16Comparisons=[],denimPhotoWidth17Comparisons=[],denimProfile18Comparisons=[],denimSigned19Comparisons=[],denimLine20Comparisons=[],pointerRotation11=[],touchSwipe12=[],pinchZoom13=[],javascriptErrors=[],nonLocalRequests=[];
+const screenshots=[],cases=[],contacts=[],sweeps=[],frozenDress=[],frozenDenim=[],denimSilhouetteComparisons=[],denimFairing08Comparisons=[],denimAngle09Comparisons=[],denimRear14Comparisons=[],denimSide15Comparisons=[],denimPosterior16Comparisons=[],denimPhotoWidth17Comparisons=[],denimProfile18Comparisons=[],denimSigned19Comparisons=[],denimLine20Comparisons=[],denimFold21Comparisons=[],pointerRotation11=[],touchSwipe12=[],pinchZoom13=[],javascriptErrors=[],nonLocalRequests=[];
 function monitor(page){
  page.on('pageerror',error=>javascriptErrors.push(String(error.message)));
  page.on('request',r=>{
@@ -137,6 +137,7 @@ try{
  await mkdir('benchmark/denim-original-profile-18',{recursive:true});
  await mkdir('benchmark/denim-signed-calf-19',{recursive:true});
  await mkdir('benchmark/denim-anatomical-line-20',{recursive:true});
+ await mkdir('benchmark/denim-knee-break-21',{recursive:true});
  for(const width of [320,390,430]){
   const ctx=await browser.newContext({viewport:{width,height:900},deviceScaleFactor:1,isMobile:true,hasTouch:true});
   const p=await ctx.newPage();monitor(p);
@@ -1083,6 +1084,67 @@ try{
                phoneHardwareVerified:false,humanPhotoRealismApproved:false,
                productionModified:false,releaseAuthorized:false});
              }
+             // P21: exact same source/account/rig/camera as verified P20,
+             // changing only the modeled nonphotographic side/rear knee break.
+             const foldCtx21=await browser.newContext({
+              viewport:{width,height:900},deviceScaleFactor:1,isMobile:true,hasTouch:true});
+             try{
+              const foldPage21=await foldCtx21.newPage();monitor(foldPage21);
+              await foldPage21.goto(host+'/research/fabric-sweep-04/index.html?walk=after&folds=after&sweep=after&dressFit=after&denimFit=after&denimSilhouette=after&denimFairing=after&denimRear14=after&denimSide15=after&denimPosterior16=after&denimPhotoWidth17=after&denimProfile18=after&denimSigned19=after&denimLine20=after&denimFold21=after',{waitUntil:'domcontentloaded'});
+              if(rig==='male'){
+               await foldPage21.waitForFunction(()=>window.ccWardrobe10Diagnostics?.()?.viewerReady===true,null,{timeout:180000});
+               await foldPage21.locator('#model').selectOption('male');
+               await foldPage21.waitForFunction(()=>window.ccWardrobe10Diagnostics()?.figure==='male'&&window.ccWardrobe10Diagnostics()?.viewerReady===true,null,{timeout:180000});
+              }
+              await ready(foldPage21);
+              await foldPage21.locator('#swap').click();
+              if(denimIndex===1)await foldPage21.locator('#swap').click();
+              await foldPage21.waitForFunction(()=>window.ccWardrobe10Diagnostics?.()?.outfitMode==='shirt-pants',null,{timeout:30000});
+              const state21=await diag(foldPage21);
+              assert.equal(state21.sourceDenimFold21Enabled,true);
+              assert.equal(state21.sourceDenimLine20Enabled,true);
+              assert.equal(state21.displayed3DSources?.bottom,sourceDenim);
+              assert.equal(state21.account,'fixture-account-a');
+              assert.equal(state21.bones,163);
+              const fit21=await foldPage21.evaluate(()=>window.ccWardrobeDenimFreeze06());
+              assert.equal(fit21.originalPhotoSHA256,sourceDenim);
+              assert.equal(fit21.sourceNeutralAnatomicalLine20,true);
+              assert.equal(fit21.sourceNeutralKneeBreak21,true);
+              assert.equal(fit21.originalJPEGUVRestSkinProtected21,true);
+              assert.equal(fit21.rearFoldIsModeledNotPhotographed21,true);
+              assert.equal(fit21.trueBVHBodyContactNoNew,true);
+              assert.ok(fit21.bodyContactAfter<=fit21.bodyContactBefore);
+              assert.ok(fit21.sourceKneeBreakMovedVertices21>=25);
+              assert.ok(Math.min(...fit21.sourceKneeBreakPerLeg21)>=9);
+              assert.ok(fit21.sourceKneeBreakMaxMeters21>=.001&&
+               fit21.sourceKneeBreakMaxMeters21<=.0042601);
+              for(const angle of [90,135,180]){
+               await linePage20.evaluate(a=>window.ccWardrobe10View(a),angle);
+               await foldPage21.evaluate(a=>window.ccWardrobe10View(a),angle);
+               const before=await linePage20.locator('#avatar').screenshot();
+               const after=await foldPage21.locator('#avatar').screenshot();
+               const changed=diff(await raw(before),await raw(after));
+               assert.ok(changed>=20,'P21 genuine original WebGL fabric knee-break diff at '+angle+': '+changed);
+               const key=prefix+'-view-'+angle;
+               await writeFile('benchmark/denim-knee-break-21/'+key+'-exact-p20.png',before);
+               await writeFile('benchmark/denim-knee-break-21/'+key+'-knee-p21.png',after);
+               denimFold21Comparisons.push({rig,width,denimIndex,sourceDenim,angle,
+                owner:'fixture-account-a',actual163BoneSkinnedRig:true,
+                originalPerLegSourceWidths:fit21.originalPhotoFiveLegStations18,
+                realWebGLChangedRGBPixels:changed,
+                foldMovedVertices:fit21.sourceKneeBreakMovedVertices21,
+                foldPerLeg:fit21.sourceKneeBreakPerLeg21,
+                foldMaxMeters:fit21.sourceKneeBreakMaxMeters21,
+                originalFrontSHAUVRestAndSkinUnchanged:true,
+                noInventedRearTexture:true,
+                bodyContactsBefore:fit21.bodyContactBefore,
+                bodyContactsAfter:fit21.bodyContactAfter,
+                humanPhotorealismApproved:false,
+                physicalPhoneApproved:false,productionModified:false,releaseAuthorized:false});
+              }
+              await foldPage21.locator('#logout').click();
+              assert.equal((await diag(foldPage21)).sourcePhotoCoverageVisible,false);
+             }finally{await foldCtx21.close();}
              await linePage20.locator('#logout').click();
              assert.equal((await diag(linePage20)).sourcePhotoCoverageVisible,false);
             }finally{await lineCtx20.close();}
@@ -1137,6 +1199,22 @@ try{
  assert.equal(await p.evaluate(()=>{try{window.ccWardrobeGait02('play');return false;}catch{return true;}}),true);
  await ctx.close();
 
+ assert.equal(denimFold21Comparisons.length,12,'P21 requires two real denim sources x two real rigs x three views');
+ assert.equal(new Set(denimFold21Comparisons.map(x=>x.sourceDenim)).size,2);
+ assert.deepEqual([...new Set(denimFold21Comparisons.map(x=>x.angle))],[90,135,180]);
+ assert.ok(denimFold21Comparisons.every(x=>x.realWebGLChangedRGBPixels>=20&&
+  x.foldMovedVertices>=25&&Math.min(...x.foldPerLeg)>=9&&
+  x.foldMaxMeters>=.001&&x.foldMaxMeters<=.0042601&&
+  x.originalFrontSHAUVRestAndSkinUnchanged&&x.noInventedRearTexture&&
+  x.bodyContactsAfter<=x.bodyContactsBefore&&x.releaseAuthorized===false));
+ await writeFile('benchmark/denim-knee-break-21/results.json',JSON.stringify({
+  sourceMeasuredKneeFoldComparisons:denimFold21Comparisons,
+  actualMatchedWebGLFrames:24,realRigNames:['female','male'],
+  realPhotographedJeansSources:2,angles:[90,135,180],width:390,
+  originalPhotoSHAUVRestSkinUnchanged:true,syntheticRearPhoto:false,
+  phoneHardwareVerified:false,humanPhotoRealismApproved:false,
+  familyAlpha:'HOLD',productionModified:false,releaseAuthorized:false
+ },null,2));
  assert.equal(denimLine20Comparisons.length,12,'P20 requires two real denim sources x two rigs x three views');
  assert.equal(new Set(denimLine20Comparisons.map(x=>x.sourceDenim)).size,2);
  assert.deepEqual([...new Set(denimLine20Comparisons.map(x=>x.angle))],[90,135,180]);
