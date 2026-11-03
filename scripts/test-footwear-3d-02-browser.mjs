@@ -58,6 +58,10 @@ try{
     assert.equal(result.independentLeftRight,true);
     assert.ok(result.groundErrors.every(n=>n>=0&&n<=.012));
     const expected=originals[choice];assert.equal(result.originalSHA256,expected);
+    const contact=await page.evaluate(()=>window.__footwear02.audit());
+    assert.equal(contact.realTrianglesMeasured,true);
+    assert.equal(contact.perSide.length,2);
+    assert.ok(contact.perSide.every(x=>Number.isFinite(x.soleGroundClearanceM)));
     const live=await page.evaluate(()=>window.__footwear02.state());
     assert.equal(live.shoe.pairCount,2);assert.equal(live.shoe.meshCount,6);
     assert.equal(new Set(live.shoe.geometryIds).size,2);
@@ -75,7 +79,7 @@ try{
      cases.push({file,sha256:digest(png),width,figure,source:choice,angle,webgl:true,
       originalSHA256:expected,bones:rotated.stats.bones,shoeMeshes:live.shoe.meshCount,
       actualDenim:base.outfit.pants.photoApplied,trueLeftRight:result.independentLeftRight,
-      floorErrors:result.groundErrors,photoTexture:false,sourceNeutralMissingViews:true});
+      floorErrors:result.groundErrors,actualBodyCrossings:contact.actualSkinnedBodyTriangleCrossings,actualDenimCrossings:contact.actualPhotographedDenimTriangleCrossings,hemMeasured:contact.perSide,photoTexture:false,sourceNeutralMissingViews:true});
     }
    }
    // Unsupported photo fallback must not change shirt, jeans, or rig.
