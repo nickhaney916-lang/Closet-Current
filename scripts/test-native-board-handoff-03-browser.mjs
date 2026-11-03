@@ -262,6 +262,7 @@ try{
     await mount(page);
     const reopening=await ownerAcceptance(page,'fixture-native-A');
     assert.equal(reopening.owner,'fixture-native-A');
+    await page.locator('details.account-menu > summary').click();
     await page.locator('#logout').click();
     await page.waitForFunction(()=>window.closetAuth?.user===null&&
       document.getElementById('authGate')?.hidden===false,{timeout:25000});
