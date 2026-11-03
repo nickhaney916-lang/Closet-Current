@@ -72,12 +72,16 @@ try{
     const create=(id,extra={})=>normalizeClothing({id,image,name:'',
      category:'Uncategorized',itemType:'Unknown',color:'Blue',confirmedColor:true,
      notes:'',...extra});
-    const unsafe=create('unverified-'+innerWidth);
+    // Distinct photos: the app correctly rejects two identical JPEGs,
+    // so verify one unproven garment beside one separate proven garment.
+    ctx.fillStyle='#e5bf40';ctx.fillRect(0,0,55,160);
+    const unsafePhoto=canvas.toDataURL('image/jpeg',.95);
+    const unsafe=create('unverified-'+innerWidth,{image:unsafePhoto});
     batch=[unsafe];await persistDraft();
     await recognizeItem(unsafe);
     const unsafeStatus=unsafe.localStatus;
     const unsafeSaved=(await readAll()).some(x=>x.id===unsafe.id);
-    const unsafeDraft=batch.some(x=>x.id===unsafe.id&&x.image===image);
+    const unsafeDraft=batch.some(x=>x.id===unsafe.id&&x.image===unsafePhoto);
     // Exactly the same actual JPEG is now accompanied by a verified separate
     // full-resolution identity assertion; this is a synthetic positive fixture.
     const safe=create('verified-'+innerWidth,{sourceSHA256:sha,
@@ -93,7 +97,7 @@ try{
     const reviewDraft=await readDraft();
     await window.closetIndex02.refresh();
     return {unsafeStatus,unsafeSaved,unsafeDraft,
-      unsafeSurvivesOtherItemSave:reviewDraft.some(x=>x.id===unsafe.id&&x.image===image),
+      unsafeSurvivesOtherItemSave:reviewDraft.some(x=>x.id===unsafe.id&&x.image===unsafePhoto),
       verifiedSaved:saved.length===1,verifiedCategory:saved[0]?.category,
       verifiedType:saved[0]?.itemType,
       verifiedPhotoUnchanged:saved[0]?.image===image,
