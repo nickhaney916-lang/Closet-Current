@@ -229,6 +229,11 @@ export function createOwnerOutfit3DController({auth,readSavedItems,loadOutfitSta
   fingerprint=snapshotKey(state);saved=nextSaved;board=nextCurrent;
   return Object.freeze({deleted:true,id:savedId});
  }
+ function labelFor(itemId){
+  check();const item=records.get(itemId);
+  if(!item)return 'Missing saved garment';
+  return stext(item.name)||[stext(item.color,35),stext(item.itemType,55)].filter(Boolean).join(' ')||'Saved garment';
+ }
  function photoFor(itemId){
   check();const record=records.get(itemId);
   if(!record)return null;
@@ -241,6 +246,6 @@ export function createOwnerOutfit3DController({auth,readSavedItems,loadOutfitSta
   check();return Object.freeze({ownerId:owner,generation,byId:new Map(index),releaseAuthorized:false});
  }
  return Object.freeze({refresh,plan,available,swap,setSlot,setName,clearSelection,listSaved,openSaved,
-  save,deleteSaved,photoFor,sourceIndex,checkCurrentSession:check,
+  save,deleteSaved,labelFor,photoFor,sourceIndex,checkCurrentSession:check,
   invalidate:clear,close(){clear();closed=true;},researchOnly:true,productionConnected:false});
 }
