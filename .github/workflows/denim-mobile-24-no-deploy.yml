@@ -43,6 +43,16 @@ jobs:
           node --check research/fabric-sweep-04/dress-outfit-controller.mjs
           node --check research/fabric-sweep-04/dress-mobile-showroom.mjs
           node --test tests/denim-neutral-light-23.test.mjs tests/denim-cuff-stack-22.test.mjs tests/denim-mobile-24.test.mjs
+      - name: Generate exact unchanged SHA-authenticated source JPEGs and segmentation
+        run: |
+          node scripts/build-three-d-31-jeans-proposal.mjs
+          node scripts/build-three-d-37-second-jeans.mjs
+          node scripts/build-work47-benchmark.mjs
+          node --test tests/three-d-31-jeans-source.test.mjs tests/three-d-37-source-true.test.mjs
+      - name: Restore SHA-verified CC0 original male and female 163-bone GLBs
+        run: |
+          git fetch --no-tags origin 53f2ad344dc56a1477e343531c423aed0e66c17d dd6bac3fa9ff640d4f562cf925337440bdb5cf8f 3a572193987cb29389727426136c6eb3ac326783 dfb40889c4c1221fb1833b859e8a11ef38aeb76e
+          node research/three-d-20/restore-approved-models.mjs
       - name: 48 original-163-bone mobile 320/390/430 WebGL screenshots
         run: node scripts/test-denim-mobile-24-browser.mjs
       - name: Confirm exact genuine source/mobile/privacy evidence, never physical phone approval
