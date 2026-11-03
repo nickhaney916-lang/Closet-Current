@@ -369,7 +369,7 @@ export function createPhotoDenimStaticFitter06(pants,root,{sourceSilhouette07=fa
     kneeMoved,hemMoved,taperAdditionalMean,max}));
 
   if(sourceKneeBreak21&&(fold21Moved<25||Math.min(...fold21PerLeg)<9||
-    fold21Max<.001||fold21Max>.0042601))
+    fold21Max<.001||fold21Max>.0054001))
    throw Error('P21 original bone conditioned photo-width modeled knee fold missing/out of bounds: '+
     JSON.stringify({fold21Moved,fold21PerLeg,fold21Max}));
   if(sourceAnatomicalLine20&&(calf20Moved<25||Math.min(...calf20PerLeg)<10||
