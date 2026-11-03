@@ -54,8 +54,7 @@ const rigManifest=[
  ['blouse','/benchmark/fixtures/commons-0014.jpg','Tops','Blouse','Cream'],
  ['skirt','/benchmark/fixtures/commons-0041.jpg','Bottoms','Skirt','Blue'],
  ['jacket','/benchmark/fixtures/commons-0064.jpg','Outerwear','Jacket','Black'],
- ['coat','/benchmark/fixtures/commons-0067.jpg','Outerwear','Coat','Gray'],
- ['bag','/benchmark/fixtures/commons-0102.jpg','Accessories','Bag','Black']
+ ['coat','/benchmark/fixtures/commons-0067.jpg','Outerwear','Coat','Gray']
 ];
 // Accessory filename is checked against the manifest before use; unsupported
 // fixture is simply omitted, never synthesized or declared verified.
@@ -167,6 +166,23 @@ async function seedOtherLicensed(page,owner){
     image:source,localAnalyzed:true,seasons:[]});
    added.push(record);
   }
+  // Clearly identified synthetic bag fixture; no unsupported license claim.
+  // Independently SHA-verify its JPEG just like real saved clothing.
+  const c=document.createElement('canvas');c.width=760;c.height=1100;
+  const g=c.getContext('2d');g.fillStyle='#e5d8c7';g.fillRect(0,0,c.width,c.height);
+  g.fillStyle='#272626';g.fillRect(175,370,415,440);
+  g.strokeStyle='#272626';g.lineWidth=32;g.beginPath();g.arc(380,400,145,Math.PI,0);g.stroke();
+  const source=c.toDataURL('image/jpeg',.94);
+  const raw=Uint8Array.from(atob(source.split(',')[1]),x=>x.charCodeAt(0));
+  const digest=await crypto.subtle.digest('SHA-256',raw);
+  const sha=Array.from(new Uint8Array(digest),x=>x.toString(16).padStart(2,'0')).join('');
+  const synthetic=normalizeClothing({id:owner+'-bag',ownerId:owner,
+   name:'Synthetic test accessory bag',category:'Accessories',itemType:'Bag',
+   color:'Black',colorSource:'user',userAdjusted:true,
+   notes:'Synthetic fixture; not a licensed customer photograph',image:source,
+   sourceSHA256:sha,sourceHashVerified:true,singleGarmentVerified:false,
+   originalPhoto:{image:source,sha256:sha,origin:'synthetic-fixture'}});
+  added.push(synthetic);
   if(added.length)await writeAll(added);
   items=(await readAll()).map(normalizeClothing);render();await window.closetIndex02.refresh();
   return {count:added.length,issues,shas:added.map(x=>({id:x.id,sha:x.sourceSHA256})),
@@ -282,7 +298,7 @@ async function runCase(browser,engine,width){
   await shot(page,engine,width,'04-import-reviewed-shirt');
   const seeded=await seedOtherLicensed(page,'e2e-fixture-A');
   if(seeded.issues.length)throw Error('Required true licensed sources unavailable: '+seeded.issues);
-  assert.equal(seeded.count,rigManifest.length);
+  assert.equal(seeded.count,rigManifest.length+1);
   const ready=await page.evaluate(()=>window.closetIndex02.state());
   assert.equal(ready.ready,true);
   // Genuine saved photo types in 6 visible real app categories.
