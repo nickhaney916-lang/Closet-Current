@@ -106,7 +106,7 @@ export function createSourceTrueOutfit3D01Viewer({viewer,controller,sources}={})
    sources.bundles.find(b=>b.pants.sourceSHA256===plan.selected.find(x=>x.slot==='bottom')?.originalSHA256):
    sources.bundles[0];
   if(!bundle)throw Error('Original source-bound denim candidate unavailable');
-  const [{prepareIndexedGarmentsFor3D,applyIndexed3DSelection}]=awaitlessModules();
+  const {prepareIndexedGarmentsFor3D,applyIndexed3DSelection}=awaitlessModules();
   const prepared=prepareIndexedGarmentsFor3D(indexedPlan,{
    shirtCandidate:bundle.shirt,pantsCandidate:decision.mode==='shirt-pants'?bundle.pants:null
   });
