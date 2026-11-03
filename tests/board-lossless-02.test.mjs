@@ -228,9 +228,14 @@ test('source verification and 3D preview are fail-closed for unverified shoes an
  assert.equal(p.selected.some(x=>x.slot==='bottom'),false);
  assert.ok(p.selected.every(x=>x.originalSHA256===null),'No unverified SHA is eligible for donor-3D');
  const attested=await f.editor.toVerified3DPlan();
- assert.ok(attested.selected.every(x=>x.sourceVerified===true));
- assert.ok(attested.selected.every(x=>x.originalSHA256===originalSHA));
- assert.equal(attested.originalJPEGsByteVerified,true);
+ // Shoes in this legacy fixture have an image but no pinned original SHA:
+ // never invent a verified 3D source just to turn an assertion green.
+ assert.equal(attested.unverifiedCount,1);
+ assert.equal(attested.originalJPEGsByteVerified,false);
+ assert.equal(attested.selected.find(x=>x.slot==='shoes').originalSHA256,null);
+ assert.equal(attested.selected.find(x=>x.slot==='shoes').sourceVerified,false);
+ assert.equal(attested.selected.find(x=>x.slot==='top').originalSHA256,originalSHA);
+ assert.equal(attested.selected.find(x=>x.slot==='top').sourceVerified,true);
  assert.equal(p.releaseAuthorized,false);
  f.db.close();
 });
