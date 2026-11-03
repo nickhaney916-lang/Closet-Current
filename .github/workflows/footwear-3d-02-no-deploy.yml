@@ -1,0 +1,84 @@
+name: FOOTWEAR-3D-02 Original CC0 Shoe to Independent 163-Bone Feet NO DEPLOY
+on:
+  pull_request:
+    paths:
+      - 'research/footwear-3d-02/**'
+      - 'tests/footwear-3d-02.test.mjs'
+      - 'scripts/test-footwear-3d-02-browser.mjs'
+      - '.github/workflows/footwear-3d-02-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verified-footwear-mobile-webgl:
+    runs-on: ubuntu-latest
+    timeout-minutes: 70
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+      - name: Exact PR541 baseline and STRICT footwear-only branch
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor df6885d6011cb33fb22dceb81a08f35a0ac4dd61 HEAD
+          git diff --name-only df6885d6011cb33fb22dceb81a08f35a0ac4dd61 HEAD | while IFS= read -r p; do
+            case "$p" in
+              research/footwear-3d-02/*|tests/footwear-3d-02.test.mjs|scripts/test-footwear-3d-02-browser.mjs|.github/workflows/footwear-3d-02-no-deploy.yml) ;;
+              *) echo "BLOCK cross-assignment or production modification $p"; exit 1 ;;
+            esac
+          done
+      - name: Pinned test-only Three browser dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 three@0.180.0 three-mesh-bvh@0.9.2 sharp@0.34.3
+      - name: Syntax, SHA/license and strict fail-closed mesh unit tests
+        run: |
+          for p in research/footwear-3d-02/*.mjs scripts/test-footwear-3d-02-browser.mjs tests/footwear-3d-02.test.mjs; do node --check "$p"; done
+          node --test tests/footwear-3d-02.test.mjs
+          node scripts/build.mjs
+      - name: Restore unchanged verified photographed clothing and real 163-bone rigs
+        run: |
+          git fetch --no-tags origin 53f2ad344dc56a1477e343531c423aed0e66c17d dd6bac3fa9ff640d4f562cf925337440bdb5cf8f 3a572193987cb29389727426136c6eb3ac326783 dfb40889c4c1221fb1833b859e8a11ef38aeb76e
+          node scripts/build-three-d-31-jeans-proposal.mjs
+          node scripts/build-three-d-37-second-jeans.mjs
+          node scripts/build-work47-benchmark.mjs
+          node research/three-d-20/restore-approved-models.mjs
+      - name: ACTUAL WebGL 108 mobile photographs/feet source/privacy screenshots
+        run: node scripts/test-footwear-3d-02-browser.mjs
+      - name: Strict real screenshots and no photorealism fabrication
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync,existsSync} from 'node:fs';
+          import {createHash} from 'node:crypto';
+          const p='benchmark/footwear-3d-02/',r=JSON.parse(readFileSync(p+'results.json'));
+          assert.equal(r.count,108);assert.equal(r.cases.length,108);
+          assert.deepEqual(r.widths,[320,390,430]);
+          assert.deepEqual(r.figures,['female','male']);
+          assert.deepEqual(r.angles,[0,45,90,135,180,225,270,315,360]);
+          assert.equal(r.realWebGL,true);assert.equal(r.independentShoes,true);
+          assert.equal(r.sourcePhotoBytePreserved,true);assert.equal(r.photoProjectedMesh,false);
+          assert.equal(r.humanVisualCertified,false);assert.equal(r.productionModified,false);
+          assert.deepEqual(r.externalRequests,[]);assert.deepEqual(r.errors,[]);
+          assert.equal(r.familyAlpha,'HOLD');
+          assert.equal(r.physicalAndroid,'NOT TESTED');assert.equal(r.physicalIPhone,'NOT TESTED');
+          for(const c of r.cases){
+            assert.ok(existsSync(p+c.file));
+            assert.equal(createHash('sha256').update(readFileSync(p+c.file)).digest('hex'),c.sha256);
+            assert.equal(c.bones,163);assert.equal(c.shoeMeshes,6);assert.equal(c.webgl,true);
+            assert.equal(c.actualDenim,true);assert.equal(c.trueLeftRight,true);
+            assert.ok(c.floorErrors.every(x=>x<=.012));
+          }
+          console.log('Actual WebGL screenshot hashes and two original source identities PASS; photo realism REVIEW');
+          NODE
+      - name: Publish research HOLD evidence even when tests fail
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: FOOTWEAR-3D-02-REAL-WEBGL-CC0-163BONE-HOLD
+          path: benchmark/footwear-3d-02/
+          if-no-files-found: warn
