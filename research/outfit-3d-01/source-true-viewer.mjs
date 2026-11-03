@@ -75,7 +75,7 @@ export function createSourceTrueOutfit3D01Viewer({viewer,controller,sources}={})
   const decision=decideOutfit3D01(plan),state=viewer.getState();
   if(state.loaded!==true||state.stats?.bones!==163||state.releaseAuthorized!==false)
    throw Error('Source-vetted 163-bone anatomical figure required');
-  const key=[owner.ownerId,owner.generation,state.kind,decision.mode,...decision.renderedIds].join('\u0000');
+  const key=[owner.ownerId,owner.generation,state.kind,decision.mode,...decision.renderedIds.map(id=>id+':'+(plan.selected.find(x=>x.itemId===id)?.originalSHA256||''))].join('\u0000');
   if(lastKey===key){reuseCalls++;return Object.freeze({...decision,reusedRenderer:true,
    actualMode:state.outfit?.mode||'none',meshCount:state.outfit?.garmentMeshes||0});}
   // A source or outfit change must detach/dispose stale meshes. Existing
