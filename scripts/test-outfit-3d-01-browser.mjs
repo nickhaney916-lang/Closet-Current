@@ -309,6 +309,17 @@ async function runWidth(width){
      window.outfit3DResearch?.state().selected?.top==='qa-outfit-A-dress');
     assert.equal((await page.evaluate(()=>window.outfit3DResearch.state())).selected.layer2,'qa-outfit-A-jacket');
     await capture(page,{width,rig,label:'C-reopened-saved-original-dress',angle:0,expectMode:'dress'});
+    // Save a replacement shoe on the reopened dress without creating a fourth
+    // outfit; re-read the actual owner IndexedDB record and confirm it persists.
+    await fill(page,'shoes','qa-outfit-A-sneaker');
+    await page.locator('#outfit3D01Save').click();
+    await page.waitForFunction(()=>document.getElementById('outfit3D01Status')?.textContent.includes('Outfit saved.'));
+    assert.equal((await page.evaluate(()=>window.outfit3DResearch.state())).savedCount,3);
+    await page.locator('#outfit3D01Refresh').click();
+    await page.waitForFunction(()=>window.outfit3DResearch.state().ready);
+    await page.locator('#outfit3D01Saved').selectOption(id);
+    await page.waitForFunction(()=>window.outfit3DResearch.state().selected?.shoes==='qa-outfit-A-sneaker');
+    assert.equal((await page.evaluate(()=>window.outfit3DResearch.state())).selected.top,'qa-outfit-A-dress');
 
    }
   }
