@@ -352,7 +352,17 @@ async function initViewer(){
        new URLSearchParams(location.search).get('denimPosterior16')==='after'&&
        new URLSearchParams(location.search).get('denimPhotoWidth17')==='after'&&
        new URLSearchParams(location.search).get('denimProfile18')==='after'&&
-       new URLSearchParams(location.search).get('denimSigned19')==='after'
+       new URLSearchParams(location.search).get('denimSigned19')==='after',
+     sourceDenimLine20:new URLSearchParams(location.search).get('denimFit')==='after'&&
+       new URLSearchParams(location.search).get('denimSilhouette')==='after'&&
+       new URLSearchParams(location.search).get('denimFairing')==='after'&&
+       new URLSearchParams(location.search).get('denimRear14')==='after'&&
+       new URLSearchParams(location.search).get('denimSide15')==='after'&&
+       new URLSearchParams(location.search).get('denimPosterior16')==='after'&&
+       new URLSearchParams(location.search).get('denimPhotoWidth17')==='after'&&
+       new URLSearchParams(location.search).get('denimProfile18')==='after'&&
+       new URLSearchParams(location.search).get('denimSigned19')==='after'&&
+       new URLSearchParams(location.search).get('denimLine20')==='after'
   });
   canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();
    if(token!==bootToken)return;
@@ -468,6 +478,7 @@ window.ccWardrobe10Diagnostics=()=>{
       sourceDenimPhotoWidth17Enabled:state?.sourceDenimPhotoWidth17Enabled||false,
       sourceDenimProfile18Enabled:state?.sourceDenimProfile18Enabled||false,
       sourceDenimSigned19Enabled:state?.sourceDenimSigned19Enabled||false,
+      sourceDenimLine20Enabled:state?.sourceDenimLine20Enabled||false,
       staticDenimFit06Enabled:state?.staticDenimFit06Enabled||false,
       staticDenimFit06State:state?.staticDenimFit06State||null,
      swept04Clock:state?.continuousGait04||null,
@@ -617,6 +628,20 @@ window.ccWardrobeDenimFreeze06=()=>{
      proof.sourcePhotoSignedShiftMaxMeters19<.001||
      proof.sourcePhotoSignedShiftMaxMeters19>.0115001))
    throw Error('P19 signed original photographed taper missing or untrusted');
+  if(new URLSearchParams(location.search).get('denimLine20')==='after'&&
+    (!proof.sourceNeutralAnatomicalLine20||
+     !proof.originalJPEGUVRestSkinProtected20||
+     !proof.noInventedPhotographicRear20||
+     proof.photoAnatomicalThighMovedVertices20<30||
+     Math.min(...proof.photoAnatomicalThighPerLeg20)<12||
+     proof.photoAnatomicalCalfMovedVertices20<25||
+     Math.min(...proof.photoAnatomicalCalfPerLeg20)<10||
+     proof.photoAnatomicalThighMaxMeters20<.002||
+     proof.photoAnatomicalThighMaxMeters20>.0048501||
+     proof.photoAnatomicalCalfMaxMeters20<.0005||
+     proof.photoAnatomicalCalfMaxMeters20>.0030001))
+   throw Error('P20 original-photo protected bone-aligned model silhouette invalid');
+
 
   const after=current();
   if(!after.authenticated||after.ownerId!==owner.ownerId||after.generation!==owner.generation||
