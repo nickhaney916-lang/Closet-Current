@@ -220,6 +220,8 @@ async function importAndConfirmNewRed(page,owner,width,engine){
  await button.click();
  await page.waitForFunction(id=>[...document.querySelectorAll('#styleOwned03Item option')]
   .some(x=>x.value===id),id,{timeout:30000});
+ assert.equal(await page.evaluate(()=>window.styleOwnedLive03Bridge.status().pinnedId),id,
+  'Explicitly confirmed newly photographed garment should become the pinned selection');
  assert.equal((await readItems(page)).find(x=>x.id===id).singleGarmentVerified,false,
   'One-item photo acknowledgment must be session-only, not a fabricated source/3D approval');
  return id;
