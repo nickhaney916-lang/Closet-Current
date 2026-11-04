@@ -28,6 +28,7 @@ export function verifiedRecord24({proof,ownerId,piece,now=new Date().toISOString
  if(!ownerId||typeof ownerId!=='string')fail('missing owner');
  if(!piece?.confirmed||!CATS24.has(piece.category)||!piece.color||piece.color==='Unknown'||
     !validCrop24(piece.cropBounds)||!JPEG24.test(piece.image)||!piece.id||
+    !piece.itemType||piece.itemType==='Unknown'||
     typeof piece.id!=='string'||!piece.instanceKey)fail('unreviewed or invalid piece');
  if(piece.manual&&!piece.cropReviewed)fail('manually detected piece needs crop review');
  const sourcePieceKey=pieceKey24(proof.sourceSHA256,piece.instanceKey);
