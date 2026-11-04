@@ -19,6 +19,7 @@ The native editor still saved category/type changes to IndexedDB, which hid the 
 ## Source fix
 
 - Restore the executable `ClothingMemory.confirm(updated)` on its own statement, after the actual `collect()` value and before **both** normal `writeAll` and owner-safe CAS `commitOwnerCorrection10` calls.
+- Clear the obsolete `learningReviewedWeek` marker explicitly on a successful Save preparation: the existing `Object.assign(updated, ClothingMemory.confirm(updated))` copies new `confirmedDetails` but does **not** propagate the `delete out.learningReviewedWeek` performed inside `ClothingMemory.confirm`. A genuine new Node test caught this second latent defect in both ordinary and CAS paths; do not weaken the test.
 - Preserve `photo-estimate` color source on notes/type edits, and preserve explicit `user` color edits and user-cleared blank. No new model classifications, color guesses, image uploads, or background learning.
 - Keep all original photograph/sourceSHA256, private owner database, existing outfit references, late worker stop, data persistence, security and category/subtype commit checks from parent intact.
 - Do not assert that all saved garments' labels are scientifically true: this only restores the intended explicit-save *non-color* training-example metadata path.
