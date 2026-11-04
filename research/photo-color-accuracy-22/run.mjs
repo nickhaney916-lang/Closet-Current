@@ -92,21 +92,18 @@ try{
      const url='/photo/'+row.id;
      const bytes=await (await fetch(url)).arrayBuffer();
      const digest=[...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))].map(x=>x.toString(16).padStart(2,'0')).join('');
-     const image=URL.createObjectURL(new Blob([bytes],{type:'image/jpeg'}));
      const results={};
-     try{
-      for(const key of ['baseline','updated']){
+     for(const key of ['baseline','updated']){
        window.PhotoColor=window[key+'Color'];
        try{
-        const estimate=(await window[key+'Check'](image)).colorEstimate;
+        const estimate=(await window[key+'Check'](url)).colorEstimate;
         const saved=ClothingDetails.fillColor({category:row.category},estimate);
         results[key]={estimate,accepted:saved.color??null};
        }catch(error){
         results[key]={estimate:null,accepted:null,processingError:error.name+': '+error.message};
        }
-      }
-      return {id:row.id,digest,...results};
-     }finally{URL.revokeObjectURL(image);}
+     }
+     return {id:row.id,digest,...results};
     },row);
     assert.equal(result.digest,row.sha256,'Browser-decoded source SHA');
     rows.push(result);
@@ -121,7 +118,11 @@ try{
     await page.evaluate(({row,result})=>window.showReview(row,result),{row,result});
     await page.locator('#color').selectOption(row.color);
     await page.getByRole('button',{name:'Save confirmed color locally'}).click();
-    const state=await page.evaluate(()=>window.verifyReview());
+    const state=await page.evaluate(async()=>{
+     try{await window.updatedCheck('/invalid-jpeg');throw Error('Invalid image unexpectedly decoded');}
+     catch(error){if(error.name!=='EncodingError')throw error;}
+     return window.verifyReview();
+    });
     assert.deepEqual(state,{manual:row.color,cleared:'',sourceStillVisible:true});
     const filename=engine+'-'+width+'-'+ids+'.png';
     const bytes=await page.screenshot({path:out+'/'+filename,fullPage:true});
