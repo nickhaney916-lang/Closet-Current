@@ -633,6 +633,12 @@ async function recognizeItem(item){
    item.localStatus='Original verified. Confirm garment category and color in Adjust before saving.';
    return true;
   }
+  // Safety14 subtype abstentions require explicit Adjust even when a photo-color estimate exists.
+  // Do not silently persist Unknown subtype as a successful automatic category-color index.
+  if(result.requiresSubtypeReview){
+   item.localStatus=(result.choices?.[0]?.category?'Photo suggests '+result.choices[0].category+'. ':'')+'Confirm the garment subtype and color in Adjust before saving. Original photo kept.';
+   return true;
+  }
   const corePartial=!result.strong&&result.categoryConfirmed&&result.categoryOnly&&result.choices?.[0]&&result.choices[0].itemType==='Unknown';
   if(corePartial){
    if(item.userAdjusted||!segmentationAllows(item,result.choices[0])){item.localStatus=item.userAdjusted?'Your adjustments are preserved. Save this piece when ready.':'The clothing checks disagree. Use Adjust or take a clearer photo.';return true;}
