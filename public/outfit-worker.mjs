@@ -23,12 +23,16 @@ self.onmessage=event=>{const request=event.data;chain=chain.then(async()=>{
   const output=await model(await processor(image)),{clothingLabelMap,clothingMaskGroups,cropClothingPhotoPixels,isolateClothingPixels,clothingColorSample}=await import('./outfit-segmentation.mjs'+new URL(import.meta.url).search);
   await import('./photo-color.js'+new URL(import.meta.url).search);
   const map=clothingLabelMap(output.logits.data,output.logits.dims);
-  const groups=request.multi24===true?
-   (await import('../research/multi-garment-capture-01/visible-groups.mjs')).visibleGarmentGroups24(map):
-   map.personDetected?clothingMaskGroups(map):[];let count=0;
+  const groups=request.multi16===true?
+   (await import('../research/auto-multi-diversity-16/visible-proposals-16.mjs')).visibleGarmentGroups16(map):
+   request.multi24===true?
+    (await import('../research/multi-garment-capture-01/visible-groups.mjs')).visibleGarmentGroups24(map):
+    map.personDetected?clothingMaskGroups(map):[];let count=0;
   for(const group of groups){
    const isolated=isolateClothingPixels(image,map,group),raw=cropClothingPhotoPixels(image,map,group),sample=clothingColorSample(image,map,group),b=raw.bounds;
-   const piece={image:await jpegData(new RawImage(isolated.data,isolated.width,isolated.height,3)),recognitionPhoto:{image:await jpegData(new RawImage(raw.data,raw.width,raw.height,3))},cropBounds:{x:b.left/image.width,y:b.top/image.height,width:b.width/image.width,height:b.height/image.height},colorEstimate:(()=>{const palette=PhotoColor.maskedPalette(sample.data,sample.width,sample.height);return palette&&!palette.needsConfirmation?{color:palette.primary,source:'photo-estimate',support:palette.colors[0]?.share||0,secondaryColor:palette.secondary}:null;})(),label:group.label,instanceKey:request.multi24===true?group.instanceKey:undefined,personDetected:map.personDetected,hint:{categories:group.categories,types:group.types||[],clipped:group.clipped,confidence:group.confidence}};
+   const piece={image:await jpegData(new RawImage(isolated.data,isolated.width,isolated.height,3)),recognitionPhoto:{image:await jpegData(new RawImage(raw.data,raw.width,raw.height,3))},cropBounds:{x:b.left/image.width,y:b.top/image.height,width:b.width/image.width,height:b.height/image.height},colorEstimate:(()=>{const palette=PhotoColor.maskedPalette(sample.data,sample.width,sample.height);return palette&&!palette.needsConfirmation?{color:palette.primary,source:'photo-estimate',support:palette.colors[0]?.share||0,secondaryColor:palette.secondary}:null;})(),label:group.label,instanceKey:(request.multi24===true||request.multi16===true)?group.instanceKey:undefined,personDetected:map.personDetected,
+    shoePartBoxes:request.multi16===true?group.shoePartBoxes||[]:undefined,requiresLayerReview:request.multi16===true?!!group.requiresLayerReview:false,
+    needsReview:request.multi16===true?true:undefined,hint:{categories:group.categories,types:group.types||[],clipped:group.clipped,confidence:group.confidence}};
    self.postMessage({type:'piece',id:request.id,piece});count++;
   }
   self.postMessage({type:'done',id:request.id,count});
