@@ -1,0 +1,59 @@
+name: MULTI-GARMENT-CAPTURE-01 original-photo group review NO DEPLOY
+on:
+  pull_request:
+    paths:
+      - 'public/outfit-capture.js'
+      - 'public/outfit-worker.mjs'
+      - 'research/multi-garment-capture-01/**'
+      - 'tests/multi-garment-capture-01.test.mjs'
+      - 'scripts/test-multi-garment-capture-01-browser.mjs'
+      - '.github/workflows/multi-garment-capture-01-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  research-atomic-original-multi-clothing-hold:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+      - name: Lock verified immutable MOBILE-NATIVE-09 baseline and changed path scope
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor d913e4f0b65c6b92cfbd1de4083e84692740707e HEAD
+          git diff --name-only d913e4f0b65c6b92cfbd1de4083e84692740707e HEAD | while IFS= read -r p; do
+            case "$p" in
+              public/outfit-capture.js|public/outfit-worker.mjs|research/multi-garment-capture-01/*|tests/multi-garment-capture-01.test.mjs|scripts/test-multi-garment-capture-01-browser.mjs|.github/workflows/multi-garment-capture-01-no-deploy.yml) ;;
+              *) echo "UNAUTHORIZED CHANGE: $p"; exit 1 ;;
+            esac
+          done
+          git diff --exit-code d913e4f0b65c6b92cfbd1de4083e84692740707e --             public/app.js public/auth.js public/index.html public/cloud-backup.js             public/outfit-board.js public/recognition-engine.mjs public/local-worker.mjs             research/native-3d-05/ research/native-photo-readiness-08/             research/native-consumer-board-04/ research/restore-atomic-01/             research/native-mobile-09/ migrations/ supabase/ .github/workflows/cloudflare-pages.yml
+      - name: Install browser/node dependencies without changing lockfiles
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Exact changed-file syntax and all inherited application Node regressions
+        run: |
+          node --check public/outfit-capture.js
+          node --check public/outfit-worker.mjs
+          node --check research/multi-garment-capture-01/visible-groups.mjs
+          node --check research/multi-garment-capture-01/atomic-group.mjs
+          node --check research/multi-garment-capture-01/review-ui.mjs
+          node --check scripts/test-multi-garment-capture-01-browser.mjs
+          node --test tests/*.cjs tests/*.mjs
+      - name: Real original licensed photo, human-reviewed triple save, native Outfit Builder, backup and owner B
+        run: node scripts/test-multi-garment-capture-01-browser.mjs
+      - name: Upload source integrity and genuine browser screenshots even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: multi24-genuine-original-mobile-review-and-owner-backup
+          path: benchmark/multi-garment-capture-01/
+          if-no-files-found: warn
+          retention-days: 30
