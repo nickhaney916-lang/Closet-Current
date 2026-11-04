@@ -23,12 +23,16 @@ function confirmed(row){
 function allowed(row,{reviewedSingle=false}={}){
  return row?.requiresOwnershipConfirmation!==true&&row?.possibleDuplicate!==true&&
   (row?.singleGarmentVerified!==false||reviewedSingle===true)&&row?.multipleGarments!==true&&
-  row?.scanFailed!==true&&row?.saveFailed!==true&&row?.category!=='Uncategorized';
+  // Worker failures remain recorded. Human correction + independent original
+  // SHA verification + one-item approval may permit only PHOTO-based styling.
+  (row?.scanFailed!==true||(row?.userAdjusted===true&&
+    (row?.singleGarmentVerified!==false||reviewedSingle===true)))&&
+  row?.saveFailed!==true&&row?.category!=='Uncategorized';
 }
 function needsExplicitSingleReview(row){
  return confirmed(row)&&row?.userAdjusted===true&&row?.singleGarmentVerified===false&&
   row?.multipleGarments!==true&&row?.requiresOwnershipConfirmation!==true&&
-  row?.possibleDuplicate!==true&&row?.scanFailed!==true&&row?.saveFailed!==true&&
+  row?.possibleDuplicate!==true&&row?.saveFailed!==true&&
   row?.category!=='Uncategorized';
 }
 export async function verifiedPrivateStyleRoster03(board,{singleItemReviews=new Map()}={}){
