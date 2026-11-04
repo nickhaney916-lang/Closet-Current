@@ -1,0 +1,23 @@
+# NATIVE-CONSUMER-BOARD-04 — source-honest actual consumer Outfit Builder integration
+**Main controller, isolated research branch.** Family Alpha #255 HOLD, no deployment, merge, production, staging or backend mutations.
+
+## Priority and sources
+- **Exact verified baseline:** PR #555 NATIVE-BOARD-HANDOFF-03 SHA `614c7d684b38456a32d1add11c816514c4af60d3`, run #41742834533 SUCCESS (42 genuine Chromium/WebKit native login + photographed garment screenshots). 
+- **Lossless storage:** Parallel #18 PR #552 exact SHA `14cfa56eaa537170ede18898b1b948eb80f58c4d`, run #41739769644 SUCCESS (72 original-app screenshots plus 45 original PR541 WebGL donor regression frames).
+- **Independent actual native epoch:** PR #550 SHA `58d2178820b8a949cb49715696cfc977f79b72ef`, exact original `native-session-epoch.mjs` copied byte-for-byte in this research subtree and verified in CI with `git show ... | cmp`.
+- **Default native lossy bug:** `public/outfit-board.js` loads, renders, selects, backs up and cloud-reloads via `cleanOutfitBoard`, which removes original dress outerwear, missing/reclassified IDs and 3D/future identity. PR #551 verified the regression. No consumer main-branch repair authorized.
+
+## Implementation: actual original consumer controls, not a separate research panel
+- In research branch *only*, actual `public/outfit-board.js` opt-in query `?nativeLossless04=research` delegates its **existing saved-list button**, existing figure/garment slots, picker, Outfit name inputs, standard `Save outfit` and native cloud reload to `consumer-board-controller.mjs`.
+- The **normal URL remains the original code path**, so this research does **not** change the currently deployed native app. `public/outfit-board-engine.js` original cleaner intentionally not modified.
+- Adapter attests native `getAccessToken` through exact PR550 owner/session epoch, reads existing user-owned IndexedDB **without writes** on open, view, render, cancel, and holds exact raw outfit records including dress+jacket+coat, missing item IDs, 3D IDs, unknown metadata. No background normalization or silent auto-rewrite.
+- Real consumer interface adds **Save changes**, **Cancel changes** and **Delete saved outfit** controls in the existing builder, research flag only. The existing **Save outfit** creates a separate outfit with fresh noncolliding IDs; source outfit retained. Slot picker and name change edit a draft. Real original private dress/coat/shoe JPEG previews remain visible. Missing/recategorized garments show missing/review placeholders instead of being dropped. Existing outfit saves use PR552's atomic owner+cloud-marker compare-and-swap, reject stale competing tab/cloud revision/session, preserve prior valid record on error.
+- `public/cloud-backup-bridge.js` **only behind research gate** prevents remote restore when no safe owner adapter exists or a local unsaved edit is present. It never changes cloud policies or server RPC. `public/app.js` research path **blocks JSON backup import before any wardrobe or outfit write**, rather than allowing the preexisting non-atomic import flow to lose original outfit IDs; atomic full closet import is **UNVERIFIED**, not silently enabled.
+- Source and production remained unchanged for native Auth, photo recognition/indexing, standalone Outfit Builder normalizer, original photos, Supabase or migrations. New research tests do not send real cloud JWTs or mutate staging, and all external endpoints apart from synthetic HTTP Auth responses are denied.
+
+## Required acceptance
+- Exact final HEAD GitHub no-deploy CI SUCCESS including inherited full native Node tests, locked original source compare, exact PR550 donor comparison, Chromium/WebKit × 320/390/430 real native **consumer screen** browser tests, owner A→B real native logout/login, original wardrobe images and preserved dress+jacket+coat and 3D ID, explicit draft/edit save vs no read-write, saved clone, confirmed delete refusal, existing cloud-sync CAS conflict, blocked import pre-mutation, missing-piece placeholder, 30 independent screenshot hashes and 6 source-visible galleries.
+- Real signed-in A/B Supabase JWT/Storage REST/RPC, cloud restoration across two devices, live writer permissions, full atomic old backup import, background sync race across actual browsers, original photo perception and actual physical iPhone/Android remain BLOCKED. Do NOT equate simulated login response and owner IDB with real production RLS acceptance.
+- **Do not merge/deploy until explicit authorization**, complete live security tests and safety/rollback review. Family Alpha #255 HOLD.
+
+**Research delivery status: CI pending until exact run completes. Do not claim successful screenshots before downloaded and independently reviewed.**

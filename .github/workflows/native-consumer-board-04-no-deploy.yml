@@ -1,0 +1,95 @@
+name: NATIVE-CONSUMER-BOARD-04 genuine lossless Outfit Builder NO DEPLOY
+on:
+  pull_request:
+    paths:
+      - 'public/outfit-board.js'
+      - 'public/app.js'
+      - 'public/cloud-backup-bridge.js'
+      - 'research/native-consumer-board-04/**'
+      - 'tests/native-consumer-board-04.test.mjs'
+      - 'scripts/test-native-consumer-board-04-browser.mjs'
+      - 'scripts/audit-native-consumer-board-04.mjs'
+      - '.github/workflows/native-consumer-board-04-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  native-outfit-builder-owner-lossless:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+      - name: Pin NATIVE03 exact verified 42-picture source and tightly scoped branch changes
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor 614c7d684b38456a32d1add11c816514c4af60d3 HEAD
+          git diff --name-only 614c7d684b38456a32d1add11c816514c4af60d3 HEAD | while IFS= read -r path; do
+            case "$path" in
+              public/outfit-board.js|public/app.js|public/cloud-backup-bridge.js|research/native-consumer-board-04/*|tests/native-consumer-board-04.test.mjs|scripts/test-native-consumer-board-04-browser.mjs|scripts/audit-native-consumer-board-04.mjs|.github/workflows/native-consumer-board-04-no-deploy.yml) ;;
+              *) echo "BLOCKED out of scope change $path"; exit 1 ;;
+            esac
+          done
+          git diff --exit-code 614c7d684b38456a32d1add11c816514c4af60d3 -- public/auth.js public/outfit-board-engine.js public/cloud-backup.js public/cloud-backup-engine.js public/index.html migrations/ supabase/ benchmark/fixtures/
+      - name: Verify vendored native epoch is byte-for-byte exact PR550, unmodified
+        run: |
+          git fetch --no-tags origin 58d2178820b8a949cb49715696cfc977f79b72ef
+          git show 58d2178820b8a949cb49715696cfc977f79b72ef:research/auth-epoch-01/native-session-epoch.mjs | cmp - research/native-consumer-board-04/native-session-epoch-550-pinned.mjs
+      - name: Install no-deploy isolated Chromium/WebKit/indexedDB/3D regression dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 fake-indexeddb@6.2.4 sharp@0.34.3 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Full native build and all inherited application plus BOARD04 source/regression tests
+        run: |
+          for path in research/native-consumer-board-04/*.mjs tests/native-consumer-board-04.test.mjs scripts/test-native-consumer-board-04-browser.mjs scripts/audit-native-consumer-board-04.mjs; do node --check "$path"; done
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Real unchanged native login, original consumer Outfit Builder and separate owner IDs at 320 390 430
+        run: node scripts/test-native-consumer-board-04-browser.mjs
+      - name: Independent 30 real mobile evidence SHA and six visual comparison galleries
+        run: node scripts/audit-native-consumer-board-04.mjs
+      - name: Strict native consumer data preservation, RLS false and Family Alpha HOLD
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const r=JSON.parse(readFileSync('benchmark/native-consumer-board-04/results.json'));
+          const a=JSON.parse(readFileSync('benchmark/native-consumer-board-04-audit/acceptance.json'));
+          assert.equal(r.realNativeUI,true);
+          assert.equal(r.cases,6);assert.equal(r.screenshots,30);
+          assert.equal(r.realOwnerIndexedDB,true);
+          assert.equal(r.originalPhotosUnchanged,true);
+          assert.equal(r.originalCleanerUnchanged,true);
+          assert.deepEqual(r.errors,[]);
+          assert.deepEqual(r.blocked.filter(x=>x.method!=='GET'),[]);
+          assert.ok(r.evidence.every(x=>x.actualNativeOutfitBuilder&&x.actualNativeAuthSource&&
+            x.onlyAuthHTTPMocked&&x.actualPrivateIndexedDB&&
+            x.originalJPEGSourceSHA&&x.sourceTrueDressWithTwoOuterwear&&
+            x.savedAnd3DIDsPreserved&&x.explicitCASWrite&&
+            x.readRenderCancelNoWrite&&x.cloudRestorePausedDuringEdit&&
+            x.cloudRevisionConflictDetected&&x.backupImportBlockedBeforeMutation&&
+            x.accountAtoBIsolation&&x.missingItemIDPreserved&&
+            x.releaseAuthorized===false));
+          assert.equal(a.status,'PASS_NATIVE_BROWSER_RESEARCH_ONLY');
+          assert.equal(a.realNativeScreensVerified,30);
+          assert.equal(a.comparisonGalleries,6);
+          assert.equal(a.liveSignedAccounts,false);
+          assert.equal(a.crossDeviceCloudRestoreVerified,false);
+          assert.equal(a.nativeDefaultModeUnchanged,true);
+          assert.equal(a.releaseAuthorized,false);assert.equal(a.familyAlpha,'HOLD');
+          console.log('Native consumer research PASS; unsigned auth fixtures, production migration and RLS remain HOLD');
+          NODE
+      - name: Keep all true browser screenshots / failure diagnostics / comparison receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: NATIVE04-consumer-outfit-builder-30-real-mobile-HOLD
+          path: |
+            benchmark/native-consumer-board-04/
+            benchmark/native-consumer-board-04-audit/
+          if-no-files-found: warn

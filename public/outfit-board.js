@@ -1,8 +1,33 @@
 'use strict';
+const nativeLossless04Active=typeof URLSearchParams==='function'&&typeof location!=='undefined'&&new URLSearchParams(location.search).get('nativeLossless04')==='research';
+let nativeLossless04=null;
 let currentBoard=cleanOutfitBoard({},[]),savedOutfitBoards=[],boardInitialized=false,choosingSlot='shoes';
+function nativeLossless04Notify(error){
+ const value=typeof error==='string'?error:String(error?.message||error);
+ $('boardSaveStatus').textContent='Research safety: '+value;
+}
+function nativeLossless04Edit(call){
+ if(!nativeLossless04||!nativeLossless04.status().active)
+  return nativeLossless04Notify('Signed-in private board not ready; no changes saved');
+ try{call();}catch(error){nativeLossless04Notify(error);}
+}
+function nativeLossless04ClearPreview(){
+ $('boardSlots').replaceChildren();$('savedBoards').replaceChildren();
+ $('boardPickerItems').replaceChildren();$('boardOwnedOptions').replaceChildren();
+ $('boardRecommendations').replaceChildren();
+ if($('boardPicker').open)$('boardPicker').close();
+}
 function boardLink(text,url,className='textlink'){const a=node('a',text,className);a.href=url;a.target='_blank';a.rel='noopener noreferrer';return a;}
-function boardBackup(){return {current:structuredClone(currentBoard),saved:structuredClone(savedOutfitBoards)};}
+function boardBackup(){
+ if(nativeLossless04Active){
+  if(!nativeLossless04||!nativeLossless04.status().active)
+   throw Error('Private outfit export requires a verified owner session');
+  return nativeLossless04.readOnlySnapshot();
+ }
+ return {current:structuredClone(currentBoard),saved:structuredClone(savedOutfitBoards)};
+}
 async function persistBoardState(){
+ if(nativeLossless04Active)throw Error('Unsafe native outfit write blocked; use lossless Save changes or Save outfit');
  if(!db){$('boardSaveStatus').textContent='Browser storage is unavailable. Keep this page open.';throw Error('Browser storage is unavailable.');}
  const snapshot=boardBackup();
  await queued(()=>new Promise((resolve,reject)=>{const tx=db.transaction('state','readwrite');tx.objectStore('state').put({id:'outfit-board',...snapshot});tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);}));
@@ -10,6 +35,10 @@ async function persistBoardState(){
 async function storeBoard(){try{await persistBoardState();return true;}catch{$('boardSaveStatus').textContent='This outfit could not be saved. Please try again.';return false;}}
 function syncBoardInputs(){for(const [id,key]of Object.entries({boardName:'name',boardOccasion:'occasion',boardSeason:'season',boardAudience:'audience',boardSize:'size',boardBudget:'budget'}))$(id).value=currentBoard[key]||'';}
 function selectBoardPiece(slotId,itemId){
+ if(nativeLossless04Active){
+  nativeLossless04Edit(()=>nativeLossless04.setSlot(slotId,itemId||null));
+  return Promise.resolve(false);
+ }
  delete currentBoard.ideas[slotId];
  for(const key of Object.keys(currentBoard.slots))if(currentBoard.slots[key]===itemId)delete currentBoard.slots[key];
  if(itemId)currentBoard.slots[slotId]=itemId;else delete currentBoard.slots[slotId];
@@ -24,14 +53,24 @@ function openBoardPicker(slotId){
 }
 function renderOutfitBoard(){
  if(!boardInitialized)return;
- currentBoard=cleanOutfitBoard(currentBoard,items);const top=items.find(x=>x.id===currentBoard.slots.top),dress=top?.category==='Dresses';
+ if(nativeLossless04Active){
+  if(!nativeLossless04||!nativeLossless04.status().active){
+   nativeLossless04ClearPreview();$('boardSummary').textContent='Private saved outfits locked · sign in again';return;
+  }
+  currentBoard=nativeLossless04.view();
+ }else currentBoard=cleanOutfitBoard(currentBoard,items);
+ const top=items.find(x=>x.id===currentBoard.slots.top),dress=top?.category==='Dresses';
  $('outfitFigure').classList.toggle('has-outer-coat',currentBoard.layerCount>=3);const slots=$('boardSlots');slots.replaceChildren();
  for(const slot of outfitSlots){
-  if(dress&&slot.level||slot.extra&&currentBoard.layerCount<slot.level)continue;
+  if((!nativeLossless04Active&&dress&&slot.level)||slot.extra&&currentBoard.layerCount<slot.level)continue;
   const item=items.find(x=>x.id===currentBoard.slots[slot.id]),idea=currentBoard.ideas[slot.id],covered=dress&&slot.id==='bottom';
-  const b=node('button',null,'board-slot board-slot-'+slot.id+(item?' owned':idea?' planned':' blank')+(covered?' covered':'')+(dress&&slot.id==='top'?' dress':''));b.type='button';b.disabled=covered;b.setAttribute('aria-label',covered?'Bottoms covered by your dress':slot.label+': '+(item?.name||(idea?idea.color+' '+idea.type:'empty'))+'. Choose a piece');
+  const retainedId=nativeLossless04Active&&!item?currentBoard.slots[slot.id]:null;
+  const needsReview=nativeLossless04Active&&item&&!slotAllows(slot,item);
+  const b=node('button',null,'board-slot board-slot-'+slot.id+(item?' owned':retainedId?' missing':idea?' planned':' blank')+(needsReview?' review':'')+(covered?' covered':'')+(dress&&slot.id==='top'?' dress':''));b.type='button';b.disabled=covered;b.setAttribute('aria-label',covered?'Bottoms covered by your dress':slot.label+': '+(needsReview?'Category needs review · ':'')+(item?.name||(retainedId?'Missing original '+retainedId:idea?idea.color+' '+idea.type:'empty'))+'. Choose a piece');
   b.append(node('span',slot.label,'slot-label'));
-  if(item){const im=node('img');im.src=item.image;im.alt=item.name;b.append(im,node('span',item.name||item.itemType,'slot-name'));}
+  if(item){const im=node('img');im.src=item.image;im.alt=item.name;b.append(im,node('span',item.name||item.itemType,'slot-name'));
+   if(needsReview)b.append(node('small','Review category · original reference kept'));}
+  else if(retainedId)b.append(node('span','Missing saved clothing','slot-name'),node('small','Original ID retained · replace this piece'));
   else if(covered)b.append(node('span','Covered by dress','slot-name'));
   else if(idea)b.append(node('span',idea.color+' '+idea.type,'slot-idea'),node('small','Shopping idea · not owned'));
   else b.append(node('span','+','slot-plus'),node('small',slot.optional?'Optional space':'Choose or find a piece'));
@@ -46,11 +85,15 @@ function renderBoardSuggestions(){
  const ownGrid=$('boardOwnedOptions');ownGrid.replaceChildren();
  for(const item of owned){const b=node('button',null,'board-owned-pick');b.type='button';const im=node('img');im.src=item.image;im.alt=item.name;b.append(im,node('span','Already in your closet'),node('strong',item.name),node('small','Use this piece'));b.onclick=()=>selectBoardPiece(target,item.id);ownGrid.append(b);}
  const grid=$('boardRecommendations');grid.replaceChildren();
- if((target==='bottom'||slot.level)&&items.find(x=>x.id===currentBoard.slots.top)?.category==='Dresses'){$('boardGapStatus').textContent='Choose shoes or optional finishing ideas for your dress.';ownGrid.replaceChildren();return;}
+ if((target==='bottom'||(!nativeLossless04Active&&slot.level))&&items.find(x=>x.id===currentBoard.slots.top)?.category==='Dresses'){$('boardGapStatus').textContent='Choose shoes or optional finishing ideas for your dress.';ownGrid.replaceChildren();return;}
  for(const idea of wardrobeGapIdeas(target,currentBoard,items)){
   const card=node('article',null,'gap-idea-card');card.append(node('p',idea.trendSource?'TREND-INSPIRED DIRECTION':'STYLING DIRECTION','eyebrow'),node('h3',idea.color+' '+(idea.label||idea.type)),node('p',idea.reason));
   if(idea.trendSource)card.append(boardLink('Read the magazine reference',idea.trendSource.url));
-  const preview=node('button','Try this idea on the board','secondary');preview.type='button';preview.onclick=()=>{delete currentBoard.slots[target];currentBoard.ideas[target]={type:idea.type,color:idea.color};renderOutfitBoard();storeBoard();};card.append(preview);
+  const preview=node('button','Try this idea on the board','secondary');preview.type='button';preview.onclick=()=>{
+   if(nativeLossless04Active)return nativeLossless04Edit(()=>nativeLossless04.setIdea(target,idea));
+   delete currentBoard.slots[target];currentBoard.ideas[target]={type:idea.type,color:idea.color};
+   renderOutfitBoard();storeBoard();
+  };card.append(preview);
   for(const example of idea.examples){const box=node('div',null,'product-example');box.append(node('small','PRODUCT EXAMPLE · CHECK SIZE / COLOR'),boardLink(example.name,example.url,'shop-link'),node('p',(Number.isFinite(example.priceAtCheck)?'Price at check: $'+example.priceAtCheck:'Price not confirmed')+' · '+trendLibraryDate(example.checkedAt||activeTrendLibrary?.updatedAt||'2026-10-12')+'. Confirm current price, color and size.','fine'));card.append(box);}
   for(const retailer of idea.retailerLinks||[])card.append(boardLink('Browse '+retailer.name,retailer.url,'shop-link'));
   card.append(boardLink('Compare stores for this piece',idea.shoppingUrl,'shop-link'),node('p','Search: '+idea.query,'fine'));grid.append(card);
@@ -59,23 +102,99 @@ function renderBoardSuggestions(){
 function renderSavedOutfitBoards(){
  const grid=$('savedBoards');grid.replaceChildren();
  if(!savedOutfitBoards.length){grid.append(node('p','Save a combination to return to it later.'));return;}
- for(const value of savedOutfitBoards){const b=node('button',value.name,'secondary');b.type='button';b.onclick=()=>{currentBoard=cleanOutfitBoard(value,items);syncBoardInputs();renderOutfitBoard();storeBoard();};grid.append(b);}
+ for(const [index,value] of savedOutfitBoards.entries()){
+  const label=(value.name||'My outfit')+(nativeLossless04Active&&Object.values(value.slots||{}).some(id=>!items.find(x=>x.id===id))?' · missing piece':'');
+  const b=node('button',label,'secondary');b.type='button';
+  b.onclick=()=>{
+   if(nativeLossless04Active)return nativeLossless04Edit(()=>nativeLossless04.selectSaved(index));
+   currentBoard=cleanOutfitBoard(value,items);syncBoardInputs();renderOutfitBoard();storeBoard();
+  };grid.append(b);
+ }
 }
 async function importBoardBackup(value){
+ if(nativeLossless04Active)
+  throw Error('Native backup import blocked in lossless research mode; atomic items/outfit restore is not yet accepted');
  if(!boardInitialized)await outfitBoardReady;
  if(!value||!Array.isArray(value.saved)||value.saved.length>50)throw Error('Invalid outfit board backup.');
  currentBoard=cleanOutfitBoard(value.current,items);savedOutfitBoards=value.saved.map(board=>cleanOutfitBoard(board,items));syncBoardInputs();await persistBoardState();renderOutfitBoard();
 }
 for(const slot of outfitSlots){const option=node('option',slot.label);option.value=slot.id;$('boardTarget').append(option);}$('boardTarget').value='shoes';$('boardTarget').onchange=renderBoardSuggestions;
-for(const [id,key]of Object.entries({boardName:'name',boardOccasion:'occasion',boardSeason:'season',boardAudience:'audience',boardSize:'size',boardBudget:'budget'}))$(id).onchange=()=>{currentBoard[key]=$(id).value;currentBoard=cleanOutfitBoard(currentBoard,items);renderOutfitBoard();storeBoard();};
+for(const [id,key]of Object.entries({boardName:'name',boardOccasion:'occasion',boardSeason:'season',boardAudience:'audience',boardSize:'size',boardBudget:'budget'}))$(id).onchange=()=>{
+ if(nativeLossless04Active)return nativeLossless04Edit(()=>nativeLossless04.setField(key,$(id).value));
+ currentBoard[key]=$(id).value;currentBoard=cleanOutfitBoard(currentBoard,items);renderOutfitBoard();storeBoard();
+};
 $('closeBoardPicker').onclick=()=>$('boardPicker').close();
 $('emptyBoardSlot').onclick=()=>{selectBoardPiece(choosingSlot,'');$('boardPicker').close();};
 $('shopBoardSlot').onclick=()=>{$('boardTarget').value=choosingSlot;$('boardPicker').close();renderBoardSuggestions();$('boardGapStatus').scrollIntoView({behavior:'smooth',block:'start'});};
-$('clearBoard').onclick=()=>{currentBoard=cleanOutfitBoard({},items);syncBoardInputs();renderOutfitBoard();storeBoard();};
-$('saveBoard').onclick=async()=>{if(!Object.keys(currentBoard.slots).length)return $('boardSaveStatus').textContent='Choose at least one piece from your own closet first.';if(savedOutfitBoards.length>=50)return $('boardSaveStatus').textContent='You can save up to 50 outfits.';$('saveBoard').disabled=true;try{savedOutfitBoards.push(structuredClone(currentBoard));await persistBoardState();$('boardSaveStatus').textContent='Outfit saved with references to your clothing photos.';renderSavedOutfitBoards();}catch{savedOutfitBoards.pop();$('boardSaveStatus').textContent='Could not save this outfit. Please try again.';}finally{$('saveBoard').disabled=false;}};
+$('clearBoard').onclick=()=>{
+ if(nativeLossless04Active)return nativeLossless04Edit(()=>nativeLossless04.startNew());
+ currentBoard=cleanOutfitBoard({},items);syncBoardInputs();renderOutfitBoard();storeBoard();
+};
+$('saveBoard').onclick=async()=>{
+ if(nativeLossless04Active){
+  if(!nativeLossless04||!nativeLossless04.status().active)return nativeLossless04Notify('Owner session required');
+  $('saveBoard').disabled=true;
+  try{await nativeLossless04.persist({asNew:true});}
+  catch(e){nativeLossless04Notify(e);}
+  finally{$('saveBoard').disabled=false;}
+  return;
+ }
+ if(!Object.keys(currentBoard.slots).length)return $('boardSaveStatus').textContent='Choose at least one piece from your own closet first.';if(savedOutfitBoards.length>=50)return $('boardSaveStatus').textContent='You can save up to 50 outfits.';$('saveBoard').disabled=true;try{savedOutfitBoards.push(structuredClone(currentBoard));await persistBoardState();$('boardSaveStatus').textContent='Outfit saved with references to your clothing photos.';renderSavedOutfitBoards();}catch{savedOutfitBoards.pop();$('boardSaveStatus').textContent='Could not save this outfit. Please try again.';}finally{$('saveBoard').disabled=false;}};
 function renderTrendReferences(){const grid=$('boardTrendSources');grid.replaceChildren();for(const source of outfitTrendSources)grid.append(boardLink(source.title,source.url));}
 renderTrendReferences();
-const outfitBoardReady=(async()=>{await closetReady;if(db){try{const state=await new Promise((resolve,reject)=>{const r=db.transaction('state').objectStore('state').get('outfit-board');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});if(state){currentBoard=cleanOutfitBoard(state.current,items);savedOutfitBoards=(state.saved||[]).slice(0,50).map(x=>cleanOutfitBoard(x,items));}}catch{$('boardSaveStatus').textContent='Saved outfits could not be loaded.';}}boardInitialized=true;syncBoardInputs();renderOutfitBoard();})();
+const outfitBoardReady=(async()=>{
+ await closetReady;
+ if(nativeLossless04Active){
+  try{
+   if(!db)throw Error('Authenticated owner database unavailable');
+   const {createNativeConsumerBoard04}=await import('../research/native-consumer-board-04/consumer-board-controller.mjs');
+   nativeLossless04=await createNativeConsumerBoard04({
+    onChange(value,{revoked}={}){
+     if(revoked){currentBoard=cleanOutfitBoard({},[]);savedOutfitBoards=[];nativeLossless04ClearPreview();return;}
+     if(value){currentBoard=value;
+      if(nativeLossless04&&nativeLossless04.status().active){
+       savedOutfitBoards=nativeLossless04.readOnlySnapshot().saved;
+       if(boardInitialized){syncBoardInputs();renderOutfitBoard();}
+      }
+     }
+    },
+    onStatus:message=>$('boardSaveStatus').textContent=message
+   });
+   window.nativeLossless04Bridge=nativeLossless04;
+   savedOutfitBoards=nativeLossless04.readOnlySnapshot().saved;
+   currentBoard=nativeLossless04.view();
+   const controls=node('div',null,'actions');controls.id='nativeLossless04Controls';
+   function addControl(id,label,fn){
+    const button=node('button',label,'secondary');button.type='button';button.id=id;
+    button.onclick=async()=>{
+     button.disabled=true;
+     try{await fn();}
+     catch(error){nativeLossless04Notify(error);}
+     finally{button.disabled=false;}
+    };controls.append(button);
+   }
+   addControl('native04SaveChanges','Save changes',()=>nativeLossless04.persist({asNew:false}));
+   addControl('native04CancelChanges','Cancel changes',()=>nativeLossless04.cancel());
+   addControl('native04DeleteOutfit','Delete saved outfit',async()=>{
+    const index=nativeLossless04.selected;
+    if(index===null)return nativeLossless04Notify('Open a saved outfit to delete it');
+    if(!confirm('Delete ONLY this saved outfit? Your clothing photos stay in My Closet.'))return;
+    await nativeLossless04.remove(index,{confirmed:true});
+   });
+   $('saveBoard').after(controls);
+  }catch(error){nativeLossless04Notify(error);nativeLossless04ClearPreview();}
+ }else if(db){
+  try{
+   const state=await new Promise((resolve,reject)=>{
+    const r=db.transaction('state').objectStore('state').get('outfit-board');
+    r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);
+   });
+   if(state){currentBoard=cleanOutfitBoard(state.current,items);
+    savedOutfitBoards=(state.saved||[]).slice(0,50).map(x=>cleanOutfitBoard(x,items));}
+  }catch{$('boardSaveStatus').textContent='Saved outfits could not be loaded.';}
+ }
+ boardInitialized=true;syncBoardInputs();renderOutfitBoard();
+})();
 
 const TREND_DATA_URL='https://raw.githubusercontent.com/nickhaney916-lang/Closet-Current/main/public/trend-data.json';
 const TREND_CACHE='closet-current-trend-library-v1';let trendLoading=false,trendLastCheck=0;
@@ -103,4 +222,19 @@ async function refreshTrendLibrary(force=false){
 })();
 window.addEventListener('focus',()=>refreshTrendLibrary());document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshTrendLibrary();});setInterval(()=>refreshTrendLibrary(),3600000);
 
-async function reloadCloudBoard(){const state=await new Promise((resolve,reject)=>{const r=db.transaction('state').objectStore('state').get('outfit-board');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});currentBoard=cleanOutfitBoard(state?.current||{},items);savedOutfitBoards=(state?.saved||[]).map(x=>cleanOutfitBoard(x,items));syncBoardInputs();renderOutfitBoard();}
+async function reloadCloudBoard(){
+ if(nativeLossless04Active){
+  if(!nativeLossless04)throw Error('Private lossless reload unavailable');
+  await nativeLossless04.load();
+  currentBoard=nativeLossless04.view();
+  savedOutfitBoards=nativeLossless04.readOnlySnapshot().saved;
+  syncBoardInputs();renderOutfitBoard();return;
+ }
+ const state=await new Promise((resolve,reject)=>{
+  const r=db.transaction('state').objectStore('state').get('outfit-board');
+  r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);
+ });
+ currentBoard=cleanOutfitBoard(state?.current||{},items);
+ savedOutfitBoards=(state?.saved||[]).map(x=>cleanOutfitBoard(x,items));
+ syncBoardInputs();renderOutfitBoard();
+}
