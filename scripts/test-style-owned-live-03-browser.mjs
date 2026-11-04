@@ -188,8 +188,27 @@ async function importAndConfirmNewRed(page,owner){
  assert.equal(ownerStored.category,'Tops');
  assert.equal(ownerStored.itemType,'T-shirt');
  assert.equal(ownerStored.color,'Red');
+ const diagnostics=await page.evaluate(async(id)=>{
+   const board=window.nativeLossless04Bridge,style=window.styleOwnedLive03Bridge;
+   let result=null;
+   try{const m=await import('/research/style-owned-live-03/native-style-panel.mjs');
+    const test=await m.verifiedPrivateStyleRoster03(board);
+    result={verified:test.items.map(x=>x.id),rejected:test.rejected,
+     ownerId:test.ownerId,generation:test.generation};}
+   catch(error){result={error:String(error?.message||error)};}
+   const saved=items.find(x=>x.id===id);
+   return {requestedId:id,style:style?.status(),board:board?.status(),
+    options:[...document.querySelectorAll('#styleOwned03Item option')].map(x=>x.value),
+    panelStatus:document.getElementById('styleOwned03Status')?.textContent,
+    boardSaveStatus:document.getElementById('boardSaveStatus')?.textContent,
+    saved:{ownerId:saved?.ownerId,id:saved?.id,sha:saved?.sourceSHA256,
+      originalSHA:saved?.originalPhoto?.sha256,sourceHash:saved?.sourceHash,
+      userAdjusted:saved?.userAdjusted,category:saved?.category,itemType:saved?.itemType},
+    directProof:result};
+  },id);
+  console.log('STYLE03_AFTER_SAVE_DIAGNOSTIC '+JSON.stringify(diagnostics).slice(0,5000));
  await page.waitForFunction(id=>[...document.querySelectorAll('#styleOwned03Item option')]
-  .some(x=>x.value===id),id,{timeout:30000});
+  .some(x=>x.value===id),id,{timeout:10000});
  return id;
 }
 async function createAndVerifyLooks(page,id,owner,width,engine,rich){
