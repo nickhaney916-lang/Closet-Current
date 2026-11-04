@@ -45,7 +45,8 @@ test('SAVE34 review UI locks cancellation, callbacks, image edits and snapshots 
  assert.match(ui,/snapshotConfirmations34\(state\.pieces,schema\)/);
  assert.match(ui,/submitting=true;redraw\(\);/);
  assert.match(ui,/pieces:snapshots/);
- assert.match(ui,/state\.pieces=state\.pieces\.filter\(x=>!references\.includes\(x\)\)/);
+ assert.match(ui,/view\.pieces=view\.pieces\.filter\(x=>!savedIds\.has\(x\.id\)\)/);
+ assert.match(ui,/function currentReview\(view,epoch\)/);
  assert.match(ui,/saveReceipt34\(rows\.length,notificationFailed,refreshFailed\)/);
  assert.match(ui,/for\(const control of card\.querySelectorAll\('button,input,select'\)\)/);
  assert.match(ui,/atomicSaveGarments24/);
