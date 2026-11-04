@@ -5,7 +5,7 @@ const ui=readFileSync('research/multi-garment-capture-01/review-ui.mjs','utf8');
 const harness=readFileSync('scripts/verify-review-worker-finality-38.mjs','utf8');
 const at=(pattern)=>{const m=pattern.exec(ui);assert.ok(m,pattern.source);return m.index;};
 test('WORKER38 revokes active worker and clears timeout before first IDB preflight',()=>{
- const lock=at(/submitting=true;freezeDetector38\(\);redraw\(\);/);
+ const lock=at(/submitting=true;redraw\(\);freezeDetector38\(\);/);
  const preflight=at(/const existing=await new Promise\(\(resolve,reject\)=>\{/);
  assert.ok(lock<preflight);
  assert.match(ui,/function freezeDetector38\(\)\{\s*if\(!job\)return false;\s*const running=job;job=null;\s*clearTimeout\(running.timeout\);\s*running.worker\?\.terminate\(\);/);
