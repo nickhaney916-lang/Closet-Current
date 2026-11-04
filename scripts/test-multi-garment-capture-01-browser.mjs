@@ -10,7 +10,7 @@ import {createServer} from 'node:http';
 import {createHash} from 'node:crypto';
 import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import {resolve,extname} from 'node:path';
-import {chromium} from 'playwright';
+import {chromium,webkit} from 'playwright';
 import sharp from 'sharp';
 const root=resolve('.'),dir=resolve('benchmark/multi-garment-capture-01');
 await mkdir(dir,{recursive:true});
@@ -46,21 +46,21 @@ await new Promise(done=>server.listen(0,'127.0.0.1',done));
 const origin='http://127.0.0.1:'+server.address().port,auth='https://hlkgymugtfbirlpunsra.supabase.co';
 const diagnostics={source:{url:sourceUrl,page:sourcePage,license,creator:'Rasmus K. Kristiansen',sha256:sourceHash,bytes:bytes.length,sourceHashPinned:!!expectedHash},cases:[],screenshots:[],unexpectedUploads:[],errors:[]};
 let browser;
-async function shot(page,width,stage){
+async function shot(page,width,stage,engine='chromium'){
  const png=await page.screenshot({animations:'disabled',fullPage:false});
  const meta=await sharp(png).metadata(),stats=await sharp(png).stats();
  assert.equal(meta.width,width);assert.ok(png.length>4000);
  assert.ok(stats.channels.some(x=>x.stdev>6),'Blank real browser screenshot');
- const file='chromium-'+width+'-'+stage+'.png';await writeFile(dir+'/'+file,png);
- diagnostics.screenshots.push({file,width,stage,sha256:sha(png)});
+ const file=engine+'-'+width+'-'+stage+'.png';await writeFile(dir+'/'+file,png);
+ diagnostics.screenshots.push({file,width,engine,stage,sha256:sha(png)});
 }
-async function fullShot(page,width,stage){
+async function fullShot(page,width,stage,engine='chromium'){
  const png=await page.screenshot({animations:'disabled',fullPage:true});
  const meta=await sharp(png).metadata(),stats=await sharp(png).stats();
  assert.equal(meta.width,width);assert.ok(meta.height>=920&&png.length>5000);
  assert.ok(stats.channels.some(x=>x.stdev>6),'Blank true full-page screenshot');
- const file='chromium-'+width+'-'+stage+'.png';await writeFile(dir+'/'+file,png);
- diagnostics.screenshots.push({file,width,stage,height:meta.height,sha256:sha(png),fullPage:true});
+ const file=engine+'-'+width+'-'+stage+'.png';await writeFile(dir+'/'+file,png);
+ diagnostics.screenshots.push({file,width,engine,stage,height:meta.height,sha256:sha(png),fullPage:true});
 }
 function authHTTP(route){
  const request=route.request(),url=new URL(request.url());
@@ -117,8 +117,8 @@ const cases=[
  {category:'Shoes',itemType:'Sneakers',color:'Blue',x:.35,y:.83,right:.72,bottom:.99}
 ];
 try{
- for(const width of [320,390,430]){
-  browser=await chromium.launch({headless:true,args:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+ for(const [engine,browserType] of [['chromium',chromium],['webkit',webkit]])for(const width of [320,390,430]){
+  browser=await browserType.launch({headless:true,...engine==='chromium'?{args:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']}:{}});
   const context=await browser.newContext({viewport:{width,height:920},isMobile:true,hasTouch:true,serviceWorkers:'block'});
   await context.route('**/*',route=>{
    const request=route.request(),u=request.url();
@@ -130,7 +130,7 @@ try{
   });
   const page=await context.newPage();
   page.on('pageerror',e=>diagnostics.errors.push({width,message:e.message}));
-  const url=origin+'/public/index.html?multi24=research&captureProof01=after&index04=after&nativeLossless04=research&nativeIndex07=research&index02=after&restoreAtomic01=research';
+  const url=origin+'/public/index.html?multi24=research&captureProof01=after&index04=after&nativeLossless04=research&nativeIndex07=research&index02=after&restoreAtomic01=research&styleOwned03=research&nativeCorrection10=research';
   await page.goto(url,{waitUntil:'domcontentloaded'});
   await login(page,'multi24-A');await boardSeed(page);
   await page.reload({waitUntil:'domcontentloaded'});
@@ -140,8 +140,8 @@ try{
   await page.locator('#outfitUpload').setInputFiles({name:'Shirt_and_tie_jeans_and_Converse.jpg',mimeType:'image/jpeg',buffer:bytes});
   await page.waitForFunction(hash=>window.multi24Research?.debug().sourceSHA256===hash,sourceHash,{timeout:30000});
   await page.locator('#multi24Research .multi24-source').scrollIntoViewIfNeeded();
-  await shot(page,width,'01-original-source');
-  await fullShot(page,width,'01-original-source-all');
+  await shot(page,width,'01-original-source',engine);
+  await fullShot(page,width,'01-original-source-all',engine);
   for(let i=0;i<3;i++)await page.getByRole('button',{name:'Add missed piece'}).click();
   assert.equal(await page.locator('#multi24Grid .multi24-card').count(),3);
   for(let i=0;i<3;i++){
@@ -153,8 +153,8 @@ try{
    await card.getByLabel('Color (confirm visually)').fill(p.color);
    await card.getByLabel('I confirm this visible garment, category and color').check();
   }
-  await fullShot(page,width,'02-three-reviewed-pieces-all');
-  await shot(page,width,'02-three-reviewed-pieces');
+  await fullShot(page,width,'02-three-reviewed-pieces-all',engine);
+  await shot(page,width,'02-three-reviewed-pieces',engine);
   await page.getByRole('button',{name:'Save confirmed pieces together'}).click();
   await page.waitForFunction(()=>document.getElementById('multi24Status')?.textContent.includes('3 separately confirmed garments'),null,{timeout:45000});
   const rows=await page.evaluate(()=>new Promise((resolve,reject)=>{
@@ -190,12 +190,41 @@ try{
   assert.equal(afterDuplicateCount,3,'Reimport failed closed without any new duplicate record');
 
   const byCategory=Object.fromEntries(rows.map(x=>[x.category,x.id]));
+  // INTEGRATION-12: same real native owner source and wardrobe drive Style.
+  // Three photographed garments make exactly ONE genuine pinned look, never
+  // three fabricated combinations or an unreviewed 3D-fit receipt.
+  const style=await page.evaluate(async ids=>{
+   const bridge=window.styleOwnedLive03Bridge;
+   if(!bridge?.status().active)throw Error('Real owner Style panel missing');
+   await bridge.refresh({quiet:true});
+   await bridge.selectGarment(ids.Tops);
+   const result=await bridge.generate();
+   if(result.combinations.length!==1||result.combinations[0].certified3D!==false)
+    throw Error('Must show one source-verified owned look, not three invented outfits');
+   bridge.selectSuggestion(0);
+   const before=bridge.status();
+   if(!before.dirty||before.selectedSlots.top!==ids.Tops||
+      before.selectedSlots.bottom!==ids.Bottoms||before.selectedSlots.shoes!==ids.Shoes)
+    throw Error('Pinned outfit did not use all three reviewed crop IDs');
+   const save=await bridge.save();
+   return {saved:save.saved,lookCount:result.combinations.length,
+    photoOnly:result.combinations[0].sourcePhotoFallbackRequired,
+    savedId:bridge.status().savedId};
+  },byCategory);
+  assert.equal(style.saved,true);
+  assert.equal(style.lookCount,1);
+  assert.ok(style.savedId&&style.photoOnly);
+  await page.evaluate(()=>switchView('stylist'));
+  assert.equal(await page.locator('#styleOwned03Pinned img').count(),1);
+  assert.equal(await page.locator('#styleOwned03Pending button').count(),0,
+   'reviewed VISIBLE pieces must not require falsely approving the whole image as one item');
+  await shot(page,width,'03b-native-styled-visible-crops',engine);
   await page.evaluate(()=>switchView('closet'));
   await page.locator('#search').fill('Blue');
   assert.ok(await page.locator('#closetGrid article.card').count()>=2);
-  await fullShot(page,width,'03-owner-private-index-all');
+  await fullShot(page,width,'03-owner-private-index-all',engine);
   await page.locator('#closetGrid article.card').first().scrollIntoViewIfNeeded();
-  await shot(page,width,'03-owner-private-index');
+  await shot(page,width,'03-owner-private-index',engine);
   await page.evaluate(ids=>{
    window.nativeLossless04Bridge.startNew();
    window.nativeLossless04Bridge.setSlot('top',ids.Tops);
@@ -248,29 +277,29 @@ try{
   assert.deepEqual(await page.evaluate(()=>window.nativeLossless04Bridge.view().slots),{
    top:byCategory.Tops,bottom:byCategory.Bottoms,shoes:byCategory.Shoes
   });
-  await fullShot(page,width,'04-saved-outfit-all');
+  await fullShot(page,width,'04-saved-outfit-all',engine);
   await page.evaluate(()=>document.getElementById('builder').scrollIntoView({block:'start',behavior:'instant'}));
-  await shot(page,width,'04-saved-outfit');
+  await shot(page,width,'04-saved-outfit',engine);
   await page.locator('.account-menu summary').click();
   await page.locator('#logout').click();
   await page.waitForFunction(()=>document.getElementById('authGate')?.hidden===false,null,{timeout:30000});
   assert.equal(await page.locator('#multi24Research img[src^="data:image/"]').count(),0);
-  await shot(page,width,'05-logout-photo-cleared');
+  await shot(page,width,'05-logout-photo-cleared',engine);
   await login(page,'multi24-B');
   assert.equal(await page.evaluate(()=>items.length),0,'Owner B cannot see A original photo or private items');
-  diagnostics.cases.push({width,pieces:3,sourceSHA256:sourceHash,reviewAccuracy:'3/3 human confirmed; automatic model intentionally unavailable',outfitSaved:true,v4Backup:true,v4Restore:true,reimportDuplicateBlocked:true,ownerPrivate:true});
+  diagnostics.cases.push({engine,width,pieces:3,stylePinnedAndSaved:true,styleLooks:style.lookCount,sourceSHA256:sourceHash,reviewAccuracy:'3/3 human confirmed; automatic model intentionally unavailable',outfitSaved:true,v4Backup:true,v4Restore:true,reimportDuplicateBlocked:true,ownerPrivate:true});
   await context.close();await browser.close();browser=null;
  }
  // Reproducible image contact sheet from actual screenshots, no generated cloth.
- for(const width of [320,390,430]){
-  const series=diagnostics.screenshots.filter(s=>s.width===width&&!s.fullPage);
+ for(const engine of ['chromium','webkit'])for(const width of [320,390,430]){
+  const series=diagnostics.screenshots.filter(s=>s.width===width&&s.file.startsWith(engine+'-')&&!s.fullPage);
   const composite=await sharp({create:{width:width*series.length,height:920,channels:4,background:'#ffffff'}})
    .composite(await Promise.all(series.map(async(s,i)=>({input:await readFile(dir+'/'+s.file),left:i*width,top:0})))).png().toBuffer();
-  await writeFile(dir+'/contact-'+width+'.png',composite);
+  await writeFile(dir+'/contact-'+engine+'-'+width+'.png',composite);
  }
  assert.deepEqual(diagnostics.unexpectedUploads,[]);
  await writeFile(dir+'/acceptance.json',JSON.stringify(diagnostics,null,2));
- console.log('MULTI24 BROWSER SUCCESS: '+JSON.stringify({sourceSHA256:sourceHash,cases:diagnostics.cases.length,screenshots:diagnostics.screenshots.length,license}));
+ console.log('INTEGRATION12 MULTI CAPTURE -> NATIVE STYLE BROWSER SUCCESS: '+JSON.stringify({sourceSHA256:sourceHash,cases:diagnostics.cases.length,screenshots:diagnostics.screenshots.length,license}));
 }catch(error){
  diagnostics.failure=String(error.stack||error);
  await writeFile(dir+'/acceptance.json',JSON.stringify(diagnostics,null,2));
