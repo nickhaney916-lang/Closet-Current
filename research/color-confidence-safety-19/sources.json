@@ -1,0 +1,38 @@
+{
+  "priority": "COLOR-CONFIDENCE-SAFETY-19",
+  "originalRegistry": "benchmark/locked-photo-sources.json",
+  "sampleSize": 6,
+  "annotationPolicy": "Source title only, not independent garment-primary-color ground truth; does not measure color accuracy.",
+  "samples": [
+    {
+      "id": "commons-0001",
+      "sourceDeclaredHint": "Blue / White / Gray print"
+    },
+    {
+      "id": "commons-0002",
+      "sourceDeclaredHint": "Red"
+    },
+    {
+      "id": "commons-0003",
+      "sourceDeclaredHint": "Black"
+    },
+    {
+      "id": "commons-0023",
+      "sourceDeclaredHint": "Blue"
+    },
+    {
+      "id": "commons-0024",
+      "sourceDeclaredHint": "Blue"
+    },
+    {
+      "id": "commons-0081",
+      "sourceDeclaredHint": "Black / White"
+    }
+  ],
+  "release": {
+    "familyAlpha": "HOLD",
+    "colorAccuracyCertified": false,
+    "userPhotosUsed": false,
+    "productionModified": false
+  }
+}
