@@ -72,3 +72,21 @@ test('true mask IoU unavailable without pixel-level human masks, regardless of b
  assert.equal(boxIoU16(box,box),1);
  assert.equal(score(frozen,cases()).truePixelMaskIoU,null);
 });
+
+test('fair proposal-level baseline and updated scores count the same shoe pair once, while shoe parts remain separate',()=>{
+ const out=cases(),visibleShoes=frozen[0].regions.filter(x=>x.family==='shoes').map(x=>x.box);
+ assert.equal(visibleShoes.length,2);
+ const right=Math.max(...visibleShoes.map(b=>b.x+b.width)),
+  bottom=Math.max(...visibleShoes.map(b=>b.y+b.height)),
+  left=Math.min(...visibleShoes.map(b=>b.x)),top=Math.min(...visibleShoes.map(b=>b.y));
+ const group={regionId:9,label:'Shoes',confidence:.98,needsReview:true,
+  box:{x:left,y:top,width:right-left,height:bottom-top}};
+ out[0].baseline=[group];out[0].updated=[{...group,shoePartBoxes:visibleShoes}];
+ const report=score(frozen,out);
+ assert.equal(report.results['chromium-baseline'].modelProposed,1);
+ assert.equal(report.results['chromium-updated'].modelProposed,1);
+ const row=report.records.find(r=>r.id===frozen[0].id&&r.browser==='chromium'&&r.mode==='updated');
+ assert.equal(row.updatedShoePartDiagnostic.matchedShoeBoxes,2);
+ assert.equal(report.primaryCountingUnit.includes('BOTH baseline and updated'),true);
+ assert.equal(report.truePixelMaskIoU,null);
+});
