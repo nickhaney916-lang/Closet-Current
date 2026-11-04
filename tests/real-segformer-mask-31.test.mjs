@@ -106,3 +106,17 @@ test('independent source research harness cannot certify new unseen-photo accura
  assert.match(file,/sourceOriginalDimensions/);
  assert.match(file,/originalSourceSHA256Verified:true/);
 });
+
+
+test('WebKit fallback receives genuine unchanged JPEG canvas pixels, never synthetic garment masks',()=>{
+ const worker=readFileSync('research/real-mask-evidence-31/worker.mjs','utf8');
+ const browser=readFileSync('scripts/verify-real-segformer-masks-31.mjs','utf8');
+ const runner=readFileSync('research/real-mask-evidence-31/runner.html','utf8');
+ assert.match(browser,/decodedAnalysis\.src=inference/);
+ assert.match(browser,/analysisRGBA=context\.getImageData\(0,0,analysisWidth,analysisHeight\)\.data/);
+ assert.match(browser,/engine==='webkit'/);
+ assert.match(worker,/new RawImage\(req\.analysisRGBA,req\.analysisWidth,req\.analysisHeight,4\)/);
+ assert.match(worker,/req\.analysisRGBA\.length!==req\.analysisWidth\*req\.analysisHeight\*4/);
+ assert.match(runner,/worker\.postMessage\(message,\[analysisRGBA\.buffer\]\)/);
+ assert.doesNotMatch(browser,/modelMask=|labelMapBase64=/);
+});
