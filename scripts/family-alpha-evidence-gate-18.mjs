@@ -125,7 +125,7 @@ export function renderFamilyAlphaMarkdown18(r){
  out+='## Immutable research PR evidence\n\n| PR | Verified research scope | Exact head CI | Scientific / controller status |\n| --- | --- | --- | --- |\n';
  for(const p of r.research)out+='| [#'+p.pr+'](https://github.com/'+r.repository+'/pull/'+p.pr+') | '+
   noHtml(p.workstream)+' | '+(p.exactWorkflow&&p.exactHead?'YES':'NO')+
-  ' | **'+p.status+'** — '+noHtml(p.limitations)+' |\n';
+  ' | **'+p.status+'** (`'+p.scientificStatus+'`) — '+noHtml(p.limitations)+' |\n';
  out+='\n## Mandatory pilot/Alpha evidence\n\n| Acceptance dimension | Status | Owner | Evidence/limitation |\n| --- | --- | --- | --- |\n';
  for(const x of r.releaseRequirements)out+='| '+noHtml(x.label)+' | **'+x.state+'** | '+
   noHtml(x.owner)+' | '+noHtml(x.evidence)+' |\n';
