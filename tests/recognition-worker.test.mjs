@@ -25,10 +25,10 @@ function setup({width=500,decodeError=false,detailError=false}={}){
 }
 test('worker keeps classification but drops disagreeing and uncertain details',async()=>{
  const h=setup(),result=await h.scan();assert.equal(result.strong,true);assert.equal(result.choices[0].itemType,'T-shirt');assert.deepEqual({...result.details},{pattern:'Solid',sleeveLength:'Sleeveless'});
- assert.equal(h.calls.length,9);assert.ok(h.calls.every(x=>x.image===h.calls[0].image));assert.ok(h.sent.some(x=>x.type==='identified'));
+ assert.equal(h.calls.length,13);assert.ok(h.calls.every(x=>x.image===h.calls[0].image));assert.ok(h.sent.some(x=>x.type==='identified'));
 });
 test('small photos still classify but cannot autosupply detailed attributes',async()=>{
- const h=setup({width:112}),result=await h.scan();assert.equal(result.strong,true);assert.deepEqual({...result.details},{});assert.equal(h.calls.length,4);
+ const h=setup({width:112}),result=await h.scan();assert.equal(result.strong,true);assert.deepEqual({...result.details},{});assert.equal(h.calls.length,8);
 });
 test('unreadable image returns a safe image error instead of categories',async()=>{
  const h=setup({decodeError:true});assert.equal(await h.scan(),undefined);assert.equal(h.calls.length,0);const error=h.sent.find(x=>x.type==='error');assert.equal(error.code,'image');assert.ok(!JSON.stringify(error).includes('private path'));
