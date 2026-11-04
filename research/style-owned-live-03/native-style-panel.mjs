@@ -252,9 +252,9 @@ export async function mountStyleOwnedLive03({
       sha256:row.sourceSHA256,category:row.category,itemType:row.itemType});
      await refresh({quiet:false});
      if(!byId(row.id))fail('ONE_ITEM_REVIEW_NOT_VERIFIED');
-     if(requestedReviewId===row.id||!pinId){
-      pinId=row.id;selector.value=row.id;displayPinned();requestedReviewId=null;
-     }
+     // The person explicitly reviewed THIS pictured garment. Make that
+     // source the visible pin instead of retaining an unrelated default coat.
+     pinId=row.id;selector.value=row.id;displayPinned();requestedReviewId=null;
      text('One original clothing photo confirmed. This does not approve 3D fitting. You can now generate owned outfits.');
     }catch(error){text('Unable to confirm this photograph: '+String(error.message||error));}
     finally{confirm.disabled=false;}
@@ -291,8 +291,10 @@ export async function mountStyleOwnedLive03({
   for(const [i,proposal] of (generated?.combinations||[]).entries()){
    const card=create('article',null,'look');
    card.append(create('strong','Look '+(i+1)),
-    create('p',Object.entries(proposal.slots).map(([slot,id])=>
-      slotNames[slot]+': '+(byId(id)?.name||byId(id)?.itemType||'Missing')).join(' · '),'small'));
+    create('p',Object.entries(proposal.slots).map(([slot,id])=>{
+     const original=byId(id),part=[original?.color,original?.itemType].filter(Boolean).join(' ');
+     return slotNames[slot]+': '+(part||'Missing original');
+    }).join(' · '),'small'));
    const photos=create('div',null,'photos');
    for(const id of Object.values(proposal.slots))photos.append(img(byId(id)));
    card.append(photos);
