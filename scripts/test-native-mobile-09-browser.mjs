@@ -189,7 +189,7 @@ try{
   assert.equal(touch.columns,2);
   assert.equal(touch.savedOutfitControls,3);
   assert.ok(touch.rects.every(r=>r.height>=48&&r.x>=-1&&r.right<=width+1),
-   'Every actual save/cancel/delete/viewer/readiness touch target must fit the phone');
+   'Every actual save/cancel/delete/viewer/readiness touch target must fit the phone: '+JSON.stringify(touch));
   assert.ok(touch.bodyScrollWidth<=width+1,'No horizontal page overflow at 320/390/430');
   assert.equal(touch.viewport,width);
   const ownerOriginal=await readBoard(page),itemOriginal=await readItems(page);
