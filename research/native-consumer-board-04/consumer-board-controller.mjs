@@ -98,6 +98,33 @@ export async function createNativeConsumerBoard04({
    savedCount:stored.saved.length,missingIds:missingCount(),
    releaseAuthorized:false};
  };
+ // NATIVE-INDEX-07: refresh ONLY the saved owner wardrobe after a new photo
+ // is confirmed, corrected or removed. The active outfit draft (including
+ // unsaved edits), selected outfit, cloud revision and expected board CAS are
+ // deliberately not rewritten. This is not a board reload or cloud write.
+ const refreshWardrobe=async()=>{
+  const lease=alive();
+  const snapshot=await io.read(lease);
+  alive();
+  if(epoch.auth.getSessionGeneration()!==lease.generation||
+     admitted.ownerId!==lease.ownerId||!Array.isArray(snapshot.items))
+   fail('WARDROBE_REFRESH_OWNER_CHANGED');
+  validateBoard02(snapshot.board,{ownerId:lease.ownerId});
+  if(boardFingerprint02(snapshot.board)!==expected)
+   fail('WARDROBE_REFRESH_BOARD_CONFLICT_RELOAD_REQUIRED');
+  const next=clone(snapshot.items);
+  const ids=new Set();
+  for(const row of next){
+   if(!validId(row.id)||ids.has(row.id)||
+      ['ownerId','userId','accountId'].some(key=>row[key]!==undefined&&row[key]!==lease.ownerId))
+    fail('WARDROBE_REFRESH_INVALID_PRIVATE_ITEM');
+   ids.add(row.id);
+  }
+  wardrobe=next;
+  emit('Saved closet updated · current outfit and unsaved edits preserved');
+  return {refreshed:true,itemCount:next.length,ownerPrivate:true,
+   originalSavedBoardUnchanged:true,releaseAuthorized:false};
+ };
  const selectSaved=index=>{
   alive();
   if(!Number.isInteger(index)||index<0||index>=stored.saved.length)fail('UNKNOWN_SAVED_OUTFIT');
@@ -225,7 +252,7 @@ export async function createNativeConsumerBoard04({
  try{await load();}
  catch(e){win.removeEventListener('closet:alpha-session-changed',invalidation);
   win.removeEventListener('pagehide',invalidation);epoch.dispose();throw e;}
- return Object.freeze({load,selectSaved,setSlot,setField,setIdea,startNew,cancel,persist,
+ return Object.freeze({load,refreshWardrobe,selectSaved,setSlot,setField,setIdea,startNew,cancel,persist,
   remove,list,readOnlySnapshot,status,view:()=>{alive();return published();},
   get selected(){alive();return opened;},get dirty(){alive();return dirty;},
   dispose(){if(closed)return;closed=true;
