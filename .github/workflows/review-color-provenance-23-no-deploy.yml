@@ -1,5 +1,8 @@
 name: REVIEW-COLOR-PROVENANCE-23 genuine edited form preserves estimated vs user color NO DEPLOY
 on:
+  push:
+    branches:
+      - research/review-color-provenance-23-main-20261104-HOLD
   pull_request:
     paths:
       - 'public/app.js'
