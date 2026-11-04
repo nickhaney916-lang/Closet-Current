@@ -350,6 +350,7 @@ try{
    const shirt=await readFile('benchmark/fixtures/'+fixture.image);
    assert.equal(sha(shirt),fixture.sha256);
    await page.evaluate(()=>switchView('scan'));
+   await page.locator('#captureOutfit').click();
    await page.locator('#outfitUpload').setInputFiles({name:'archived-shirt.jpg',mimeType:'image/jpeg',buffer:shirt});
    await page.waitForFunction(hash=>window.multi24Research?.debug().sourceSHA256===hash,fixture.sha256);
    await page.getByRole('button',{name:'Add missed piece'}).click();
