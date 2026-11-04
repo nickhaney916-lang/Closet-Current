@@ -159,6 +159,15 @@ async function readOnlyGithubJson(url,token){
  if(!response.ok)throw Error('QUALITY-LEDGER-24 read-only GitHub HTTP '+response.status);
  return response.json();
 }
+export function selectWork29CandidatePRs24(items){
+ must(Array.isArray(items),'GitHub search items must be an array');
+ // GitHub code/issue search matches the PR body as well as title. A main
+ // controller PR that mentions Work #29 is NOT a Work #29 handoff.
+ return items.filter(item=>Number.isInteger(item?.number)&&
+   typeof item?.title==='string'&&
+   /\bSIGNED-OWNER-PRIVACY-25\b/i.test(item.title))
+  .slice(0,20).map(x=>'#'+x.number+' '+x.title.slice(0,160));
+}
 export async function inspectWork29Github24(repository,token=process.env.GITHUB_TOKEN||''){
  const base='https://api.github.com/repos/'+repository;
  const [prResults,...branchResults]=await Promise.all([
@@ -170,8 +179,7 @@ export async function inspectWork29Github24(repository,token=process.env.GITHUB_
  must(Number.isInteger(prResults.total_count),'invalid search result');
  must(branchResults.every(Array.isArray),'invalid branch evidence');
  return {
-  candidatePRs:(prResults.items||[]).slice(0,20).map(x=>
-   '#'+x.number+' '+(x.title||'').slice(0,160)),
+  candidatePRs:selectWork29CandidatePRs24(prResults.items||[]),
   candidateBranches:branchResults.flat().map(x=>String(x.ref||'').replace('refs/heads/',''))
  };
 }
