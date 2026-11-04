@@ -7,6 +7,7 @@ on:
       - 'public/cloud-backup-bridge.js'
       - 'research/restore-atomic-01/**'
       - 'tests/restore-atomic-01.test.mjs'
+      - 'tests/restore-atomic-01-cloud.test.mjs'
       - 'scripts/test-restore-atomic-01-browser.mjs'
       - 'scripts/repro-restore-atomic-01-baseline.mjs'
       - 'scripts/audit-restore-atomic-01.mjs'
@@ -34,7 +35,7 @@ jobs:
           git merge-base --is-ancestor 56c9a814d6ecce5beae5d95043213faa2d8bb6f0 HEAD
           git diff --name-only 56c9a814d6ecce5beae5d95043213faa2d8bb6f0 HEAD | while IFS= read -r path; do
             case "$path" in
-              public/app.js|public/cloud-backup.js|public/cloud-backup-bridge.js|research/restore-atomic-01/*|tests/restore-atomic-01.test.mjs|scripts/test-restore-atomic-01-browser.mjs|scripts/repro-restore-atomic-01-baseline.mjs|scripts/audit-restore-atomic-01.mjs|.github/workflows/restore-atomic-01-no-deploy.yml) ;;
+              public/app.js|public/cloud-backup.js|public/cloud-backup-bridge.js|research/restore-atomic-01/*|tests/restore-atomic-01.test.mjs|tests/restore-atomic-01-cloud.test.mjs|scripts/test-restore-atomic-01-browser.mjs|scripts/repro-restore-atomic-01-baseline.mjs|scripts/audit-restore-atomic-01.mjs|.github/workflows/restore-atomic-01-no-deploy.yml) ;;
               *) echo "Out-of-scope change BLOCKED: $path"; exit 1 ;;
             esac
           done
@@ -43,7 +44,7 @@ jobs:
         run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 fake-indexeddb@6.2.4 sharp@0.34.3 three@0.180.0 three-mesh-bvh@0.9.2
       - name: Validate syntax, build and all inherited application tests
         run: |
-          for path in public/app.js public/cloud-backup.js public/cloud-backup-bridge.js research/restore-atomic-01/*.mjs tests/restore-atomic-01.test.mjs scripts/test-restore-atomic-01-browser.mjs scripts/repro-restore-atomic-01-baseline.mjs scripts/audit-restore-atomic-01.mjs; do node --check "$path"; done
+          for path in public/app.js public/cloud-backup.js public/cloud-backup-bridge.js research/restore-atomic-01/*.mjs tests/restore-atomic-01.test.mjs tests/restore-atomic-01-cloud.test.mjs scripts/test-restore-atomic-01-browser.mjs scripts/repro-restore-atomic-01-baseline.mjs scripts/audit-restore-atomic-01.mjs; do node --check "$path"; done
           node scripts/build.mjs
           node --test tests/*.test.cjs tests/*.test.mjs
       - name: Reproduce original default import partial-write bug on a synthetic owner
