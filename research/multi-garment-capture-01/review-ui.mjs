@@ -234,6 +234,8 @@ export function mountMultiGarmentCapture24({
  async function commit(){
   if(submitting)return;
   if(!state||!sameOwner())return reset('Account changed. No garments saved.');
+  const selected=state.pieces.filter(x=>x.confirmed);
+  if(!selected.length)return status.textContent='Select at least one reviewed garment.';
   let references,snapshots;
   try{
    ({references,snapshots}=snapshotConfirmations34(state.pieces,schema));
