@@ -13,6 +13,27 @@ const STATUS=Object.freeze({featureGate:'styleOwned03=research',
 const slotNames=Object.freeze({top:'Top / dress',bottom:'Pants / bottom',
  shoes:'Shoes',layer2:'Jacket',layer3:'Coat'});
 const validId=x=>typeof x==='string'&&x.length>0&&x.length<=160;
+// INTEGRATION-12: a photograph containing several garments is never an
+// original single-item photo. A separately confirmed VISIBLE CROP may be used
+// in owner-private 2D styling only; it cannot become a 3D-ready source.
+export function reviewedVisiblePiece12(row){
+ const hash=row?.sourceSHA256,rect=row?.extractionBounds;
+ return /^[a-f0-9]{64}$/.test(hash||'')&&
+  row.sourceExtraction==='visible-only'&&row.derivedAssetType==='reviewed-jpeg-crop'&&
+  row.extractionReview==='human-confirmed'&&row.sourceCropReviewed===true&&
+  row.sourceHashVerified===true&&row.sourcePhotoId===hash&&row.outfitSourceId===hash&&
+  row.originalPhoto?.sha256===hash&&
+  typeof row.sourcePieceKey==='string'&&row.sourcePieceKey.startsWith(hash+'/')&&
+  /^(seg-[0-9-]+|manual-[0-9-]+)$/.test(row.sourcePieceKey.slice(hash.length+1))&&
+  rect&&['x','y','width','height'].every(k=>Number.isFinite(rect[k]))&&
+  rect.x>=0&&rect.y>=0&&rect.width>.025&&rect.height>.025&&
+  rect.x+rect.width<=1.000001&&rect.y+rect.height<=1.000001&&
+  typeof row.image==='string'&&/^data:image\\/jpeg;base64,[A-Za-z0-9+/]+={0,2}$/.test(row.image)&&
+  row.userAdjusted===true&&typeof row.itemType==='string'&&
+  row.itemType!=='Unknown'&&row.itemType.length>0&&
+  row.singleGarmentVerified===false&&row.multipleGarments!==true&&
+  row.photoOnly===true&&row.threeDReady===false;
+}
 function confirmed(row){
  return row?.userAdjusted===true||
   row?.confirmedDetails?.category===row?.category&&
@@ -21,16 +42,20 @@ function confirmed(row){
    typeof row?.indexedAt==='string'&&row?.scanFailed!==true;
 }
 function allowed(row,{reviewedSingle=false}={}){
+ const reviewedCrop=reviewedVisiblePiece12(row);
  return row?.requiresOwnershipConfirmation!==true&&row?.possibleDuplicate!==true&&
-  (row?.singleGarmentVerified!==false||reviewedSingle===true)&&row?.multipleGarments!==true&&
+  (row?.singleGarmentVerified!==false||reviewedSingle===true||reviewedCrop)&&row?.multipleGarments!==true&&
   // Worker failures remain recorded. Human correction + independent original
   // SHA verification + one-item approval may permit only PHOTO-based styling.
   (row?.scanFailed!==true||(row?.userAdjusted===true&&
-    (row?.singleGarmentVerified!==false||reviewedSingle===true)))&&
+    (row?.singleGarmentVerified!==false||reviewedSingle===true||reviewedCrop)))&&
   row?.saveFailed!==true&&row?.category!=='Uncategorized';
 }
 function needsExplicitSingleReview(row){
- return confirmed(row)&&row?.userAdjusted===true&&row?.singleGarmentVerified===false&&
+ // Never invite a false "whole original shows one piece" confirmation for
+ // a known multi-garment crop with incomplete or corrupt region evidence.
+ return row?.sourceExtraction!=='visible-only'&&row?.derivedAssetType!=='reviewed-jpeg-crop'&&
+  confirmed(row)&&row?.userAdjusted===true&&row?.singleGarmentVerified===false&&
   row?.multipleGarments!==true&&row?.requiresOwnershipConfirmation!==true&&
   row?.possibleDuplicate!==true&&row?.saveFailed!==true&&
   row?.category!=='Uncategorized';
@@ -77,9 +102,12 @@ export async function verifiedPrivateStyleRoster03(board,{singleItemReviews=new 
    const after=board.sessionLease();
    if(after.ownerId!==first.ownerId||after.generation!==first.generation)
     throw Error('STYLE03 owner changed during original photograph digest');
+   const cropped=reviewedVisiblePiece12(row);
    verified.push(Object.freeze({...row,sourceVerified:true,categoryConfirmed:true,
     sourceSHA256:proof.sha256,originalByteLength:proof.byteLength,
-    genuinePhoto:row.originalPhoto.image}));
+    genuinePhoto:cropped?row.image:row.originalPhoto.image,
+    visibleCropPhotoOnly:cropped,sourcePhotoFallbackRequired:cropped||row.photoOnly===true,
+    threeDReady:cropped?false:row.threeDReady}));
   }catch(error){
    if(!board.status().active)throw Error('STYLE03 authentication revoked during source verification');
    rejected.push({id:row.id,reason:String(error.message||error)});
