@@ -120,7 +120,7 @@ test('newly captured original never bypasses one-garment confirmation or falsely
  const hash=createHash('sha256').update(bytes).digest('hex');
  const row={id:'new-red-uncertain',ownerId:owner,category:'Tops',itemType:'T-shirt',
   color:'Red',userAdjusted:true,singleGarmentVerified:false,
-  multipleGarments:false,sourceSHA256:hash,
+  multipleGarments:false,scanFailed:true,sourceSHA256:hash,
   originalPhoto:{image:'data:image/jpeg;base64,'+bytes.toString('base64'),sha256:hash}};
  const board={status:()=>({active:true}),
   sessionLease:()=>({ownerId:owner,generation:9}),
@@ -141,6 +141,8 @@ test('newly captured original never bypasses one-garment confirmation or falsely
  assert.equal(admitted.items[0].sourceSHA256,hash);
  assert.equal(admitted.items[0].singleGarmentVerified,false,
   'one-session outfit permission never promotes source or 3D readiness flag');
+ assert.equal(admitted.items[0].scanFailed,true,
+  'manual source review never fabricates successful AI recognition');
  const stale=new Map([[row.id,{...reviews.get(row.id),generation:8}]]);
  const refused=await verifiedPrivateStyleRoster03(board,{singleItemReviews:stale});
  assert.equal(refused.items.length,0);
