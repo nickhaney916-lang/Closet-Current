@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "priority": "SIGNED-OWNER-EVIDENCE-26",
+  "asOf": "2026-11-04",
+  "repository": "nickhaney916-lang/Closet-Current",
+  "sourceBase": {
+    "pr": 582,
+    "sha": "ed7abb0ada27501ad545975f13c8bc2ed59ffa90"
+  },
+  "work29": {
+    "pr": 581,
+    "sha": "2dd3ea96725aa1bcb797727ea31a7f99167ad3f5",
+    "runId": 41888655925,
+    "signedArtifactId": 13351329641,
+    "signedArtifactName": "signed-owner-privacy-25-local-http",
+    "browserArtifactId": 13352638055,
+    "browserArtifactName": "signed-owner-privacy-25-browser-fixture",
+    "signedChecks": 56,
+    "browserCases": 6,
+    "engines": [
+      "chromium",
+      "webkit"
+    ],
+    "widths": [
+      320,
+      390,
+      430
+    ],
+    "scope": "Disposable loopback Supabase, two real signed password sessions, synthetic JPEGs; actual app browser and IndexedDB with fixture auth, not hosted staging",
+    "limitations": {
+      "hostedSignedEnvironment": false,
+      "physicalPhone": false,
+      "signedBrowserToCloudE2E": false,
+      "fullOriginalWardrobePhotoUsers": false,
+      "bearerRevokedImmediatelyOnLogout": false,
+      "browserAuthIsFixture": true
+    }
+  },
+  "familyAlpha": {
+    "issue": 255,
+    "expectedState": "open",
+    "decision": "HOLD",
+    "releaseRequirementsUnverified": 9
+  },
+  "governance": {
+    "productionDeploy": false,
+    "stagingModify": false,
+    "mergeAllowed": false,
+    "alphaActivationAllowed": false,
+    "readOnlyGitHubAPI": true
+  }
+}
