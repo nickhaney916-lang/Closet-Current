@@ -4,6 +4,7 @@
  * subtype and color and one owner-bound IDB transaction commits the selection.
  */
 import {atomicSaveGarments24,validCrop24,pieceKey24,duplicatePieceKeys24} from './atomic-group.mjs';
+import {organizeReview28,reviewTier28} from './review-triage-28.mjs';
 const TYPES=['Tops','Bottoms','Dresses','Outerwear','Shoes'];
 const palette=['Black','White','Gray','Beige','Brown','Blue','Green','Red','Pink','Purple','Yellow','Orange','Multicolor'];
 const $=(root,id)=>root.getElementById(id);
@@ -34,6 +35,9 @@ export function mountMultiGarmentCapture24({
  .multi24 .multi24-source{max-width:100%;max-height:260px;object-fit:contain;border-radius:9px}
  .multi24 .multi24-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:.75rem}
  .multi24 .multi24-card{border:1px solid #d4d8d1;padding:.8rem;border-radius:10px;min-width:0}
+ .multi24 .multi28-heading{grid-column:1/-1;font-size:1rem;margin:.3rem 0 0;padding:.5rem;border-top:1px solid #c7c7c7}
+ .multi24 .multi24-card[data-review-tier=additional]{border-style:dashed}
+ .multi24 .multi24-card[data-review-tier=manual]{border-style:double}
  .multi24 .multi24-card img{display:block;max-width:100%;width:100%;height:150px;object-fit:contain}
  .multi24 label{display:grid;gap:.25rem;margin:.4rem 0;min-width:0}
  .multi24 input:not([type=checkbox]),.multi24 select{width:100%;max-width:100%;min-height:44px}
@@ -78,10 +82,25 @@ export function mountMultiGarmentCapture24({
  function redraw(){
   if(!state)return;grid.replaceChildren();
   original.hidden=false;add.disabled=false;
-  for(const [i,p]of state.pieces.entries()){
+  const review=organizeReview28(state.pieces);
+  root.dataset.priorityCount=String(review.priority.length);
+  root.dataset.additionalCount=String(review.additional.length);
+  root.dataset.manualCount=String(review.manual.length);
+  let previousTier='';
+  for(const [i,p]of review.ordered.entries()){
+   const tier=reviewTier28(p);
+   if(tier!==previousTier){
+    const heading=el('h4',
+     tier==='priority'?'Start review here · stronger location signal — still unverified':
+     tier==='manual'?'Your marked regions · confirm the exact crop':
+     'Other unverified regions · inspect closely or remove','multi28-heading');
+    heading.dataset.reviewTier=tier;
+    grid.append(heading);previousTier=tier;
+   }
    const card=el('article',null,'multi24-card');card.dataset.pieceKey=p.instanceKey;
+   card.dataset.reviewTier=tier;
    const image=el('img');image.src=p.image;image.alt='Visible garment '+(i+1)+' derived from unchanged source';
-   const caption=el('p',(p.manual?'Manually marked':'Detected')+' piece '+(i+1)+(p.hint?.clipped?' · edge cut off':'')+(p.hint?.confidence?' · mask confidence '+Math.round(100*p.hint.confidence)+'%':'')+' · requires review','fine');
+   const caption=el('p',(p.manual?'Manually marked':'Detected')+' piece '+(i+1)+(p.hint?.clipped?' · edge cut off':'')+(Number.isFinite(p.hint?.confidence)?' · model mask score '+Math.round(100*p.hint.confidence)+'/100 (uncalibrated)':'')+' · requires review; not automatically confirmed','fine');
    card.append(image,caption);
    card.append(selector('Main category',['Uncategorized',...TYPES],p.category,v=>{p.category=v;p.itemType='Unknown';p.confirmed=false;redraw();}));
    card.append(selector('Specific type',['Unknown',...(schema.types[p.category]||[])],p.itemType,v=>{p.itemType=v;p.confirmed=false;redraw();}));
@@ -146,7 +165,7 @@ export function mountMultiGarmentCapture24({
       if(job!==next)return;
       clearTimeout(next.timeout);next.worker.terminate();job=null;
       status.textContent=data.type==='error'?'Automatic extraction unavailable. Add and crop pieces manually; no items saved.':
-       state.pieces.length+' possible visible garment'+(state.pieces.length===1?'':'s')+' found. Confirm each; use Add missed piece if necessary.';
+       state.pieces.length+' unverified region'+(state.pieces.length===1?'':'s')+' found. Stronger suggestions appear first, other regions remain below. Confirm each or Add missed piece.';
      });
     }
    };

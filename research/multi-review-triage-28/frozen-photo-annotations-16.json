@@ -1,0 +1,823 @@
+[
+  {
+    "id": "commons-0003",
+    "split": "development",
+    "tags": [
+      "mannequin",
+      "partial-frame"
+    ],
+    "source": "https://upload.wikimedia.org/wikipedia/commons/0/0a/Zwart_shirt_met_lange_mouwen_van_merk_Armani_Jeans%2C_opdruk_letters_%E2%80%9CAJ%E2%80%9D_op_voorkant%2C_maat_M%2C_objectnr_86975-3.JPG",
+    "attribution": {
+      "id": "commons-0003",
+      "title": "File:Zwart shirt met lange mouwen van merk Armani Jeans, opdruk letters “AJ” op voorkant, maat M, objectnr 86975-3.JPG",
+      "source": "https://commons.wikimedia.org/wiki/File:Zwart_shirt_met_lange_mouwen_van_merk_Armani_Jeans,_opdruk_letters_%E2%80%9CAJ%E2%80%9D_op_voorkant,_maat_M,_objectnr_86975-3.JPG",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+      "author": "Armani?",
+      "credit": "https://museumrotterdam.nl/collectie/item/86975-3"
+    },
+    "width": 2592,
+    "height": 3872,
+    "bytes": 3520304,
+    "sha256": "c39bea50f22605060452394fbc7de0098f1608fce06bb8ac0606325087bcc340",
+    "regions": [
+      {
+        "family": "upper",
+        "label": "long-sleeve shirt",
+        "box": {
+          "x": 0.03,
+          "y": 0.01,
+          "width": 0.94,
+          "height": 0.62
+        }
+      },
+      {
+        "family": "bottom",
+        "label": "jeans",
+        "box": {
+          "x": 0.17,
+          "y": 0.55,
+          "width": 0.61,
+          "height": 0.45
+        }
+      }
+    ]
+  },
+  {
+    "id": "commons-0021",
+    "split": "held-out",
+    "tags": [
+      "worn",
+      "partial-frame"
+    ],
+    "source": "https://upload.wikimedia.org/wikipedia/commons/d/d2/Jeans_for_men.jpg",
+    "attribution": {
+      "id": "commons-0021",
+      "title": "File:Jeans for men.jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Jeans_for_men.jpg",
+      "license": "Public domain",
+      "licenseUrl": "",
+      "author": "Honeyhuyue",
+      "credit": "Own work"
+    },
+    "width": 564,
+    "height": 628,
+    "bytes": 95686,
+    "sha256": "04c0ca5bed1bee26e83be98b9a992619b0777811a7fb8a99fe955939334bbd8c",
+    "regions": [
+      {
+        "family": "upper",
+        "label": "shirt",
+        "box": {
+          "x": 0.34,
+          "y": 0,
+          "width": 0.39,
+          "height": 0.15
+        }
+      },
+      {
+        "family": "bottom",
+        "label": "jeans",
+        "box": {
+          "x": 0.25,
+          "y": 0.13,
+          "width": 0.46,
+          "height": 0.8
+        }
+      },
+      {
+        "family": "shoes",
+        "label": "sneaker pair",
+        "box": {
+          "x": 0.24,
+          "y": 0.86,
+          "width": 0.5,
+          "height": 0.13
+        }
+      }
+    ]
+  },
+  {
+    "id": "commons-0033",
+    "split": "development",
+    "tags": [
+      "worn",
+      "overlap",
+      "partial-frame"
+    ],
+    "source": "https://upload.wikimedia.org/wikipedia/commons/9/96/Men%27s_Shorts_-_Old_Bull_Lee_-_Orange.jpg",
+    "attribution": {
+      "id": "commons-0033",
+      "title": "File:Men's Shorts - Old Bull Lee - Orange.jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Men%27s_Shorts_-_Old_Bull_Lee_-_Orange.jpg",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+      "author": "OldBullLeeWasHere",
+      "credit": "Own work"
+    },
+    "width": 2448,
+    "height": 3060,
+    "bytes": 1122906,
+    "sha256": "004a2d15ea713ed25c0f3330224cb278f2d100070f65611f3e6efab86dd78f55",
+    "regions": [
+      {
+        "family": "upper",
+        "label": "shirt",
+        "box": {
+          "x": 0.18,
+          "y": 0,
+          "width": 0.56,
+          "height": 0.4
+        }
+      },
+      {
+        "family": "bottom",
+        "label": "shorts",
+        "box": {
+          "x": 0.19,
+          "y": 0.26,
+          "width": 0.49,
+          "height": 0.36
+        }
+      }
+    ]
+  },
+  {
+    "id": "commons-0052",
+    "split": "held-out",
+    "tags": [
+      "surface",
+      "overlap"
+    ],
+    "source": "https://upload.wikimedia.org/wikipedia/commons/3/3d/Costume%2C_swimming%2C_child%27s_%28AM_1994.201-1%29.jpg",
+    "attribution": {
+      "id": "commons-0052",
+      "title": "File:Costume, swimming, child's (AM 1994.201-1).jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Costume,_swimming,_child%27s_(AM_1994.201-1).jpg",
+      "license": "CC BY 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
+      "author": "",
+      "credit": "API data Catalogue record Photo"
+    },
+    "width": 1944,
+    "height": 2592,
+    "bytes": 2457886,
+    "sha256": "620fcae6afac202ed31de7b46c2581a2eeb44e53a81a02fbf3a6ff59290f8415",
+    "regions": [
+      {
+        "family": "dress",
+        "label": "swimming overdress",
+        "box": {
+          "x": 0,
+          "y": 0.01,
+          "width": 1,
+          "height": 0.74
+        }
+      },
+      {
+        "family": "bottom",
+        "label": "swimming shorts",
+        "box": {
+          "x": 0,
+          "y": 0.7,
+          "width": 0.99,
+          "height": 0.3
+        }
+      }
+    ]
+  },
+  {
+    "id": "commons-0062",
+    "split": "development",
+    "tags": [
+      "surface",
+      "pale-on-pale",
+      "single-control"
+    ],
+    "source": "https://upload.wikimedia.org/wikipedia/commons/5/5c/Jacket_%28AM_906-2%29.jpg",
+    "attribution": {
+      "id": "commons-0062",
+      "title": "File:Jacket (AM 906-2).jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Jacket_(AM_906-2).jpg",
+      "license": "CC BY 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
+      "author": "",
+      "credit": "API data Catalogue record Photo"
+    },
+    "width": 2592,
+    "height": 1944,
+    "bytes": 2086446,
+    "sha256": "7beff4dc36397e13a8f3e9c8a3e0b0a118f7d8dd601191686e4d2a35736f8a06",
+    "regions": [
+      {
+        "family": "upper",
+        "label": "pale jacket",
+        "box": {
+          "x": 0,
+          "y": 0.1,
+          "width": 1,
+          "height": 0.89
+        }
+      }
+    ]
+  },
+  {
+    "id": "commons-0064",
+    "split": "development",
+    "tags": [
+      "surface",
+      "partial-frame",
+      "single-control"
+    ],
+    "source": "https://upload.wikimedia.org/wikipedia/commons/a/a1/Jacket_%28AM_740158-3%29.jpg",
+    "attribution": {
+      "id": "commons-0064",
+      "title": "File:Jacket (AM 740158-3).jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Jacket_(AM_740158-3).jpg",
+      "license": "CC BY 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
+      "author": "",
+      "credit": "API data Catalogue record Photo"
+    },
+    "width": 2736,
+    "height": 3648,
+    "bytes": 1926868,
+    "sha256": "0a1742403ea7556ef099ee3aa5364464e8dd8263b789c0c103d18d4dee61ec8b",
+    "regions": [
+      {
+        "family": "upper",
+        "label": "jacket",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 1,
+          "height": 1
+        }
+      }
+    ]
+  },
+  {
+    "id": "commons-0065",
+    "split": "held-out",
+    "tags": [
+      "surface",
+      "partial-frame",
+      "single-control"
+    ],
+    "source": "https://upload.wikimedia.org/wikipedia/commons/3/30/Jacket%2C_woman%27s_%28AM_15987-1%29.jpg",
+    "attribution": {
+      "id": "commons-0065",
+      "title": "File:Jacket, woman's (AM 15987-1).jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Jacket,_woman%27s_(AM_15987-1).jpg",
+      "license": "CC BY 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
+      "author": "Unknown author Unknown author",
+      "credit": "API data Catalogue record Photo"
+    },
+    "width": 2592,
+    "height": 1944,
+    "bytes": 2037255,
+    "sha256": "544fe01dbe3b8b15fe1b1256c05566b33d5a4ae345c48872b33acc41e0653871",
+    "regions": [
+      {
+        "family": "upper",
+        "label": "black jacket",
+        "box": {
+          "x": 0,
+          "y": 0.01,
+          "width": 1,
+          "height": 0.87
+        }
+      }
+    ]
+  },
+  {
+    "id": "commons-0077",
+    "split": "development",
+    "tags": [
+      "surface",
+      "high-top",
+      "footwear-pair"
+    ],
+    "source": "https://upload.wikimedia.org/wikipedia/commons/6/60/Garrison_high-top_sneakers%2C_1940%2C_US_Army%2C_manufacturer_unknown_-_Bata_Shoe_Museum_-_DSC00771.JPG",
+    "attribution": {
+      "id": "commons-0077",
+      "title": "File:Garrison high-top sneakers, 1940, US Army, manufacturer unknown - Bata Shoe Museum - DSC00771.JPG",
+      "source": "https://commons.wikimedia.org/wiki/File:Garrison_high-top_sneakers,_1940,_US_Army,_manufacturer_unknown_-_Bata_Shoe_Museum_-_DSC00771.JPG",
+      "license": "CC0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+      "author": "Daderot",
+      "credit": "Own work"
+    },
+    "width": 5386,
+    "height": 2732,
+    "bytes": 4074638,
+    "sha256": "1bddaeb72712afb67bcc72954b9aec22e864245baf23370f19c723f080e9896d",
+    "regions": [
+      {
+        "family": "shoes",
+        "label": "high-top sneaker pair",
+        "box": {
+          "x": 0.08,
+          "y": 0.18,
+          "width": 0.89,
+          "height": 0.76
+        }
+      }
+    ]
+  },
+  {
+    "id": "commons-0078",
+    "split": "held-out",
+    "tags": [
+      "surface",
+      "high-top",
+      "footwear-pair"
+    ],
+    "source": "https://upload.wikimedia.org/wikipedia/commons/f/fe/Perfection_high-top_sneakers%2C_1900-1929_-_Bata_Shoe_Museum_-_DSC00727.JPG",
+    "attribution": {
+      "id": "commons-0078",
+      "title": "File:Perfection high-top sneakers, 1900-1929 - Bata Shoe Museum - DSC00727.JPG",
+      "source": "https://commons.wikimedia.org/wiki/File:Perfection_high-top_sneakers,_1900-1929_-_Bata_Shoe_Museum_-_DSC00727.JPG",
+      "license": "CC0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+      "author": "Daderot",
+      "credit": "Own work"
+    },
+    "width": 3648,
+    "height": 3981,
+    "bytes": 3017919,
+    "sha256": "df72edbb2c63eea34d811242259af749b2bfec1e592bb587cf68489a5bfc404c",
+    "regions": [
+      {
+        "family": "shoes",
+        "label": "high-top sneaker pair",
+        "box": {
+          "x": 0.04,
+          "y": 0.07,
+          "width": 0.85,
+          "height": 0.86
+        }
+      }
+    ]
+  },
+  {
+    "id": "commons-0079",
+    "split": "held-out",
+    "tags": [
+      "high-top",
+      "dark-on-dark",
+      "single-control"
+    ],
+    "source": "https://upload.wikimedia.org/wikipedia/commons/9/9d/Nike_SB_Dunk_High_MF_Doom.jpg",
+    "attribution": {
+      "id": "commons-0079",
+      "title": "File:Nike SB Dunk High MF Doom.jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Nike_SB_Dunk_High_MF_Doom.jpg",
+      "license": "CC BY 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+      "author": "TanSenpai from Philadelphia, United States",
+      "credit": "MF Doom's"
+    },
+    "width": 4288,
+    "height": 2848,
+    "bytes": 4047095,
+    "sha256": "9853e51a212e7012e136c3873000496da73ac18e0510fa7775921004fa8f5fa9",
+    "regions": [
+      {
+        "family": "shoes",
+        "label": "high-top sneaker",
+        "box": {
+          "x": 0.14,
+          "y": 0.11,
+          "width": 0.78,
+          "height": 0.8
+        }
+      }
+    ]
+  },
+  {
+    "id": "commons-0080",
+    "split": "held-out",
+    "tags": [
+      "worn",
+      "partial-frame",
+      "overlap"
+    ],
+    "source": "https://upload.wikimedia.org/wikipedia/commons/c/c7/Houston_sneakers_%28Unsplash%29.jpg",
+    "attribution": {
+      "id": "commons-0080",
+      "title": "File:Houston sneakers (Unsplash).jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Houston_sneakers_(Unsplash).jpg",
+      "license": "CC0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+      "author": "Ayo Ogunseinde armedshutter",
+      "credit": "https://unsplash.com/photos/Mp0qYV0fCfA Image at the Wayback Machine Gallery at the Wayback Machine"
+    },
+    "width": 5760,
+    "height": 3840,
+    "bytes": 14784257,
+    "sha256": "28216ece96ea1ab021dea9b4bd305e32caff674c3e6e5cb38c7304329b593ae7",
+    "regions": [
+      {
+        "family": "bottom",
+        "label": "jeans",
+        "box": {
+          "x": 0.17,
+          "y": 0,
+          "width": 0.4,
+          "height": 0.42
+        }
+      },
+      {
+        "family": "shoes",
+        "label": "sneakers",
+        "box": {
+          "x": 0.18,
+          "y": 0.26,
+          "width": 0.59,
+          "height": 0.42
+        }
+      }
+    ]
+  },
+  {
+    "id": "commons-0081",
+    "split": "development",
+    "tags": [
+      "worn",
+      "partial-frame",
+      "dark-on-dark"
+    ],
+    "source": "https://upload.wikimedia.org/wikipedia/commons/3/3a/Black_white_sneakers_logo_%28Unsplash%29.jpg",
+    "attribution": {
+      "id": "commons-0081",
+      "title": "File:Black white sneakers logo (Unsplash).jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Black_white_sneakers_logo_(Unsplash).jpg",
+      "license": "CC0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+      "author": "chuttersnap chuttersnap",
+      "credit": "https://unsplash.com/photos/qmusKxOAL24 Image at the Wayback Machine Gallery at the Wayback Machine"
+    },
+    "width": 6016,
+    "height": 4016,
+    "bytes": 678869,
+    "sha256": "914bda23bf2165125c55a5b597b089babe0c7c87c809be1a2e2cfa9c9e38b441",
+    "regions": [
+      {
+        "family": "bottom",
+        "label": "pants",
+        "box": {
+          "x": 0.34,
+          "y": 0,
+          "width": 0.45,
+          "height": 0.56
+        }
+      },
+      {
+        "family": "shoes",
+        "label": "sneakers",
+        "box": {
+          "x": 0.34,
+          "y": 0.33,
+          "width": 0.36,
+          "height": 0.58
+        }
+      }
+    ]
+  },
+  {
+    "id": "commons-0092",
+    "split": "held-out",
+    "tags": [
+      "surface",
+      "boots",
+      "footwear-pair",
+      "overlap"
+    ],
+    "source": "https://upload.wikimedia.org/wikipedia/commons/2/22/Boots_%28AM_762134-6%29.jpg",
+    "attribution": {
+      "id": "commons-0092",
+      "title": "File:Boots (AM 762134-6).jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Boots_(AM_762134-6).jpg",
+      "license": "CC BY 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
+      "author": "",
+      "credit": "API data Catalogue record Photo"
+    },
+    "width": 3264,
+    "height": 2328,
+    "bytes": 2868526,
+    "sha256": "985d62d47bb39966192678d4cf008d765bc2817ac42a98e7de7a7489e52f920f",
+    "regions": [
+      {
+        "family": "shoes",
+        "label": "boot pair",
+        "box": {
+          "x": 0.03,
+          "y": 0.02,
+          "width": 0.94,
+          "height": 0.96
+        }
+      }
+    ]
+  },
+  {
+    "id": "validation-0010",
+    "split": "held-out",
+    "tags": [
+      "worn",
+      "layered",
+      "overlap",
+      "boots"
+    ],
+    "source": "https://upload.wikimedia.org/wikipedia/commons/c/c2/Blue_Crushed_Velvet_Dress_with_blouse_underneath.jpg",
+    "attribution": {
+      "id": "validation-0010",
+      "title": "File:Blue Crushed Velvet Dress with blouse underneath.jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Blue_Crushed_Velvet_Dress_with_blouse_underneath.jpg",
+      "license": "CC BY-SA 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0",
+      "author": "Jamie",
+      "credit": "https://www.flickr.com/photos/63405864@N04/6786406687/in/dateposted/"
+    },
+    "width": 600,
+    "height": 766,
+    "bytes": 304955,
+    "sha256": "2e2d757d60b5bce8b1e34765c7b59c21ede85c7c69cfbf63d802566934b847c7",
+    "regions": [
+      {
+        "family": "dress",
+        "label": "velvet dress",
+        "box": {
+          "x": 0.22,
+          "y": 0.17,
+          "width": 0.39,
+          "height": 0.51
+        }
+      },
+      {
+        "family": "upper",
+        "label": "blouse visible at collar and cuffs",
+        "box": {
+          "x": 0.26,
+          "y": 0.16,
+          "width": 0.26,
+          "height": 0.35
+        }
+      },
+      {
+        "family": "shoes",
+        "label": "boots",
+        "box": {
+          "x": 0.42,
+          "y": 0.72,
+          "width": 0.27,
+          "height": 0.28
+        }
+      }
+    ]
+  },
+  {
+    "id": "validation-0023",
+    "split": "development",
+    "tags": [
+      "surface",
+      "high-top",
+      "footwear-pair",
+      "overlap"
+    ],
+    "source": "https://upload.wikimedia.org/wikipedia/commons/1/16/DKNY_Brave_Logo_Varsity_High-Top_Sneaker_23340363_schwarz_-_tigerlook_%281%29_%2816415389490%29.jpg",
+    "attribution": {
+      "id": "validation-0023",
+      "title": "File:DKNY Brave Logo Varsity High-Top Sneaker 23340363 schwarz - tigerlook (1) (16415389490).jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:DKNY_Brave_Logo_Varsity_High-Top_Sneaker_23340363_schwarz_-_tigerlook_(1)_(16415389490).jpg",
+      "license": "CC BY 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+      "author": "SPERA.de Designerschuhe, Taschen und Accessoires from Deutschland",
+      "credit": "DKNY Brave Logo Varsity High-Top Sneaker 23340363 schwarz / tigerlook (1)"
+    },
+    "width": 2500,
+    "height": 1656,
+    "bytes": 990920,
+    "sha256": "5229d0ee165a962b2c08c3897d5c8013ee4bc62df23e20cf530b411e838e279f",
+    "regions": [
+      {
+        "family": "shoes",
+        "label": "high-top sneaker pair",
+        "box": {
+          "x": 0.04,
+          "y": 0.23,
+          "width": 0.91,
+          "height": 0.69
+        }
+      }
+    ]
+  },
+  {
+    "id": "worn-rkk",
+    "split": "development",
+    "tags": [
+      "worn",
+      "household-lighting",
+      "dark-on-dark"
+    ],
+    "source": "https://upload.wikimedia.org/wikipedia/commons/b/b0/Shirt_and_tie%2C_jeans_and_Converse.jpg",
+    "attribution": {
+      "author": "Rasmus K. Kristiansen",
+      "license": "CC BY-SA 2.0",
+      "title": "Shirt and tie, jeans and Converse",
+      "source": "https://commons.wikimedia.org/wiki/File:Shirt_and_tie,_jeans_and_Converse.jpg",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0/"
+    },
+    "width": 800,
+    "height": 750,
+    "bytes": 104520,
+    "sha256": "e3df4503a89c244b28fa344ec170d6554fc06ad1d7cd331014fcb277df19d5ff",
+    "regions": [
+      {
+        "family": "upper",
+        "label": "shirt",
+        "box": {
+          "x": 0.38,
+          "y": 0.055,
+          "width": 0.4,
+          "height": 0.345
+        }
+      },
+      {
+        "family": "bottom",
+        "label": "jeans",
+        "box": {
+          "x": 0.37,
+          "y": 0.38,
+          "width": 0.39,
+          "height": 0.5
+        }
+      },
+      {
+        "family": "shoes",
+        "label": "Converse pair",
+        "box": {
+          "x": 0.35,
+          "y": 0.83,
+          "width": 0.37,
+          "height": 0.16
+        }
+      }
+    ]
+  },
+  {
+    "id": "two-shirts",
+    "split": "held-out",
+    "tags": [
+      "surface",
+      "same-family",
+      "overlap",
+      "household-lighting",
+      "partial-frame"
+    ],
+    "source": "https://upload.wikimedia.org/wikipedia/commons/2/27/Shirts_-_Photo_A_Day_7_1_2009_%283681113424%29.jpg",
+    "attribution": {
+      "title": "Shirts - Photo A Day 7 1 2009 (3681113424).jpg",
+      "author": "Atomic Taco",
+      "license": "CC BY-SA 2.0",
+      "source": "https://commons.wikimedia.org/wiki/File:Shirts_-_Photo_A_Day_7_1_2009_%283681113424%29.jpg",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0/"
+    },
+    "width": 3264,
+    "height": 2448,
+    "bytes": 3379522,
+    "sha256": "4608661009cc84c365cbbc8349ca119b214553daa6f76ecd9edab345f5859cc4",
+    "regions": [
+      {
+        "family": "upper",
+        "label": "yellow shirt",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 1,
+          "height": 0.66
+        }
+      },
+      {
+        "family": "upper",
+        "label": "blue shirt",
+        "box": {
+          "x": 0,
+          "y": 0.4,
+          "width": 1,
+          "height": 0.6
+        }
+      }
+    ]
+  },
+  {
+    "id": "flatlay-outfit",
+    "split": "development",
+    "tags": [
+      "surface",
+      "pale-on-pale",
+      "boots",
+      "footwear-pair"
+    ],
+    "source": "https://upload.wikimedia.org/wikipedia/commons/3/3b/Clothing_flatlay_%28Unsplash%29.jpg",
+    "attribution": {
+      "title": "Clothing flatlay (Unsplash).jpg",
+      "author": "NordWood Themes",
+      "license": "CC0 1.0",
+      "source": "https://commons.wikimedia.org/wiki/File:Clothing_flatlay_%28Unsplash%29.jpg",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
+    },
+    "width": 4773,
+    "height": 3182,
+    "bytes": 2501268,
+    "sha256": "adb60164c269198e15276bc3a9d5e4fb970676fe00a46d38fd7ea755b27cf360",
+    "regions": [
+      {
+        "family": "upper",
+        "label": "white shirt",
+        "box": {
+          "x": 0.55,
+          "y": 0.43,
+          "width": 0.26,
+          "height": 0.25
+        }
+      },
+      {
+        "family": "bottom",
+        "label": "folded slacks",
+        "box": {
+          "x": 0.54,
+          "y": 0.02,
+          "width": 0.21,
+          "height": 0.28
+        }
+      },
+      {
+        "family": "shoes",
+        "label": "boot pair",
+        "box": {
+          "x": 0.21,
+          "y": 0.02,
+          "width": 0.28,
+          "height": 0.56
+        }
+      }
+    ]
+  },
+  {
+    "id": "flatlay-womens",
+    "split": "held-out",
+    "tags": [
+      "surface",
+      "overlap",
+      "footwear-pair",
+      "partial-frame"
+    ],
+    "source": "https://upload.wikimedia.org/wikipedia/commons/e/e6/Outfit_%28Unsplash%29.jpg",
+    "attribution": {
+      "title": "Outfit (Unsplash).jpg",
+      "author": "Toa Heftiba",
+      "license": "CC0 1.0",
+      "source": "https://commons.wikimedia.org/wiki/File:Outfit_%28Unsplash%29.jpg",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
+    },
+    "width": 5184,
+    "height": 3456,
+    "bytes": 7245252,
+    "sha256": "31a7ca2138f559420f30d5cff164aee4eca38dc71fea99841544f3e586c67854",
+    "regions": [
+      {
+        "family": "upper",
+        "label": "striped top",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 0.58,
+          "height": 0.62
+        }
+      },
+      {
+        "family": "bottom",
+        "label": "dark trousers",
+        "box": {
+          "x": 0.61,
+          "y": 0,
+          "width": 0.39,
+          "height": 1
+        }
+      },
+      {
+        "family": "shoes",
+        "label": "sneaker pair",
+        "box": {
+          "x": 0.34,
+          "y": 0.31,
+          "width": 0.4,
+          "height": 0.63
+        }
+      }
+    ]
+  }
+]
