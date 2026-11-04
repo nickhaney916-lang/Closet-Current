@@ -1,8 +1,11 @@
-name: FAMILY-ALPHA-EVIDENCE-GATE-18 live PR and scientific readiness audit NO DEPLOY
+name: FAMILY-ALPHA-QUALITY-LEDGER-24 current PR scientific failures and Work29 health NO DEPLOY
 on:
   pull_request:
     paths:
       - 'research/family-alpha-evidence-gate-18/**'
+      - 'research/family-alpha-quality-ledger-24/**'
+      - 'scripts/family-alpha-quality-ledger-24.mjs'
+      - 'tests/family-alpha-quality-ledger-24.test.mjs'
       - 'scripts/family-alpha-evidence-gate-18.mjs'
       - 'tests/family-alpha-evidence-gate-18.test.mjs'
       - '.github/workflows/family-alpha-evidence-gate-18-no-deploy.yml'
@@ -30,10 +33,10 @@ jobs:
       - name: Prove baseline and source changes limited to independent research gate
         run: |
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          git merge-base --is-ancestor 0236182f72b29a7b4d4924f0b3f5754cb9956690 HEAD
-          git diff --name-only 0236182f72b29a7b4d4924f0b3f5754cb9956690 HEAD | while IFS= read -r p; do
+          git merge-base --is-ancestor 9012e01443f97f81b236a4f51afdbb6ad885aaaa HEAD
+          git diff --name-only 9012e01443f97f81b236a4f51afdbb6ad885aaaa HEAD | while IFS= read -r p; do
             case "$p" in
-              research/family-alpha-evidence-gate-18/*|scripts/family-alpha-evidence-gate-18.mjs|tests/family-alpha-evidence-gate-18.test.mjs|.github/workflows/family-alpha-evidence-gate-18-no-deploy.yml) ;;
+              research/family-alpha-quality-ledger-24/*|scripts/family-alpha-quality-ledger-24.mjs|tests/family-alpha-quality-ledger-24.test.mjs|.github/workflows/family-alpha-evidence-gate-18-no-deploy.yml) ;;
               *) echo "BLOCKED unrelated application/auth/photo/storage/3D/deploy change: $p"; exit 1 ;;
             esac
           done
@@ -42,18 +45,20 @@ jobs:
       - name: Build original app and run entire Node regression suite including scientific fail-closed gate
         run: |
           node --check scripts/family-alpha-evidence-gate-18.mjs
+          node --check scripts/family-alpha-quality-ledger-24.mjs
           node --check tests/family-alpha-evidence-gate-18.test.mjs
+          node --check tests/family-alpha-quality-ledger-24.test.mjs
           node scripts/build.mjs
           node --test tests/*.test.cjs tests/*.test.mjs
-      - name: READ-ONLY fetch actual GitHub issue 255, PR heads and dedicated Actions run results
-        run: node scripts/family-alpha-evidence-gate-18.mjs research/family-alpha-evidence-gate-18/manifest.json benchmark/family-alpha-evidence-18 --live
+      - name: READ-ONLY verify exact current PR heads and scientific failures and Work29 observable handoff
+        run: node scripts/family-alpha-quality-ledger-24.mjs research/family-alpha-quality-ledger-24/manifest.json benchmark/family-alpha-quality-24 --live
       - name: Upload sanitized pilot readiness report, no photos or credentials
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: FAMILY-ALPHA-18-source-locked-PR-scientific-gate-HOLD
+          name: FAMILY-ALPHA-24-source-locked-current-quality-and-security-HOLD
           path: |
-            benchmark/family-alpha-evidence-18/report.json
-            benchmark/family-alpha-evidence-18/report.md
+            benchmark/family-alpha-quality-24/report.json
+            benchmark/family-alpha-quality-24/report.md
           if-no-files-found: warn
           retention-days: 21
