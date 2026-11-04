@@ -355,7 +355,9 @@ try{
   assert.equal(await page.locator('#outfit3D01Photos img').count(),0);
   assert.equal(await page.evaluate(()=>!window.native3D05Bridge||!window.native3D05Bridge.state().active),true,
    'Native logout may destroy the whole research bridge or leave it revoked');
-  assert.equal(await page.evaluate(()=>window.nativePhotoReadiness08Bridge.state().active),false);
+  assert.equal(await page.evaluate(()=>!window.nativePhotoReadiness08Bridge||
+   !window.nativePhotoReadiness08Bridge.state().active),true,
+   'Native logout must revoke OR destroy all private source-readiness state');
   assert.equal(await page.locator('#nativeReadiness08Results img').count(),0,
    'Account A originals must disappear on logout');
   // Session B cannot inherit A preview, owner IDs, or original photo URLs.
