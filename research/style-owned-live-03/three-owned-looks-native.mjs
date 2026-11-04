@@ -78,12 +78,23 @@ function rankColor(a,b){
 }
 function quality(slots,byId,occasion){
  const top=byId.get(slots.top),bottom=byId.get(slots.bottom),shoes=byId.get(slots.shoes);
+ const want=String(occasion||'Casual').toLowerCase();
+ const cold=/winter|cold|chilly|snow|freez/.test(want);
  let value=rankColor(top,bottom||shoes)+rankColor(top,shoes);
- for(const id of Object.values(slots)){
-  const row=byId.get(id),want=occasion.toLowerCase();
+ // Score the core outfit and separately budget outerwear. Without explicit
+ // cold-weather context, adding both a coat and jacket must not beat a
+ // practical three-piece look just by having more "occasion" matches.
+ for(const id of [slots.top,slots.bottom,slots.shoes].filter(Boolean)){
+  const row=byId.get(id);
   if(row.occasion?.toLowerCase().includes(want))value+=2;
   if(want.includes('active')&&row.itemType==='Sneakers')value+=2;
   if(row.seasons?.length)value+=.1;
+ }
+ const outerCount=Number(!!slots.layer2)+Number(!!slots.layer3);
+ if(outerCount){
+  if(cold)value+=outerCount*1.5;
+  else value-=outerCount*3;
+  if(outerCount===2)value-=cold?2:12;
  }
  return value;
 }
