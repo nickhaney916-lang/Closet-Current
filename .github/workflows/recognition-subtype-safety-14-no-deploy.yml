@@ -4,7 +4,9 @@ on:
     paths:
       - 'public/recognition-engine.mjs'
       - 'public/local-worker.mjs'
+      - 'public/app.js'
       - 'tests/recognition-worker.test.mjs'
+      - 'tests/automatic-indexing.test.cjs'
       - 'tests/recognition-subtype-safety-14.test.mjs'
       - 'research/recognition-subtype-safety-14/**'
       - '.github/workflows/recognition-subtype-safety-14-no-deploy.yml'
@@ -31,11 +33,11 @@ jobs:
           git merge-base --is-ancestor d60c9fbc725d01ac991c6ab4b476971a9531ead4 HEAD
           git diff --name-only d60c9fbc725d01ac991c6ab4b476971a9531ead4 HEAD | while IFS= read -r p; do
             case "$p" in
-              public/recognition-engine.mjs|public/local-worker.mjs|tests/recognition-worker.test.mjs|tests/recognition-subtype-safety-14.test.mjs|research/recognition-subtype-safety-14/*|.github/workflows/recognition-subtype-safety-14-no-deploy.yml) ;;
+              public/recognition-engine.mjs|public/local-worker.mjs|public/app.js|tests/automatic-indexing.test.cjs|tests/recognition-worker.test.mjs|tests/recognition-subtype-safety-14.test.mjs|research/recognition-subtype-safety-14/*|.github/workflows/recognition-subtype-safety-14-no-deploy.yml) ;;
               *) echo "UNAUTHORIZED $p"; exit 1 ;;
             esac
           done
-          git diff --exit-code d60c9fbc725d01ac991c6ab4b476971a9531ead4 -- public/app.js public/auth.js public/recognition-photo.mjs public/recognition-vectors.json public/recognition-vectors.bin public/outfit-board.js public/cloud-backup.js public/outfit-capture.js benchmark/manifest-holdout-16.json benchmark/locked-photo-sources.json benchmark/regression-holdout-16.json benchmark/fixtures/ supabase/ migrations/ .github/workflows/pages.yml .github/workflows/cloudflare-pages.yml
+          git diff --exit-code d60c9fbc725d01ac991c6ab4b476971a9531ead4 -- public/auth.js public/recognition-photo.mjs public/recognition-vectors.json public/recognition-vectors.bin public/outfit-board.js public/cloud-backup.js public/outfit-capture.js benchmark/manifest-holdout-16.json benchmark/locked-photo-sources.json benchmark/regression-holdout-16.json benchmark/fixtures/ supabase/ migrations/ .github/workflows/pages.yml .github/workflows/cloudflare-pages.yml
       - name: Pinned research-only test dependencies
         run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
       - name: Complete unchanged Node suite, verification regressions and real application build
