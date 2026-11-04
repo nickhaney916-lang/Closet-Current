@@ -30,7 +30,8 @@ test('BOARD04 source refuses native lossy persistence and cloud restore on dirty
  assert.ok(native.includes('nativeLossless04.selectSaved(index)'));
  assert.ok(native.includes('Missing saved clothing'));
  assert.ok(app.includes('Import blocked in lossless research mode BEFORE any wardrobe write'));
- assert.ok(cloud.includes('window.nativeLossless04Bridge.status().dirty'));
+ assert.ok(cloud.includes('nativeLossless04RestoreSafe()'));
+ assert.ok(cloud.includes('state?.active===true&&state.dirty===false'));
  assert.ok(state.includes('io.compareAndWrite('));
  assert.ok(state.includes('expectedFingerprint:expected,expectedCloud:cloud'));
  assert.ok(state.includes("fail('NATIVE_IMPORT_REQUIRES_VERIFIED_ATOMIC_MIGRATION')"));
