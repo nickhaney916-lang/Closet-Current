@@ -467,6 +467,7 @@ try{
    originalPhoneViewportNoHorizontalOverflow:true,
    safeAreaHeaderSticky:true,
    noPrivateUIStyleAfterLogout:true,
+   mobileTouchMeasurements:touch,realViewerTouchMeasurements:viewerTouch,
    activeAnatomical3DRestoreBlocked:true,ownerACrossOwnerBRestoreBlocked:true,
    physicalPhoneApproved:false,liveSignedRLS:false,releaseAuthorized:false,
    familyAlpha:'HOLD'});
