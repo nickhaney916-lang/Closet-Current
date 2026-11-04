@@ -1,0 +1,60 @@
+name: FAMILY-ALPHA-EVIDENCE-GATE-18 live PR and scientific readiness audit NO DEPLOY
+on:
+  pull_request:
+    paths:
+      - 'research/family-alpha-evidence-gate-18/**'
+      - 'scripts/family-alpha-evidence-gate-18.mjs'
+      - 'tests/family-alpha-evidence-gate-18.test.mjs'
+      - '.github/workflows/family-alpha-evidence-gate-18-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  pull-requests: read
+  issues: read
+  actions: read
+jobs:
+  main-controller-live-evidence-audit-hold-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+      - name: Prove baseline and source changes limited to independent research gate
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor 0236182f72b29a7b4d4924f0b3f5754cb9956690 HEAD
+          git diff --name-only 0236182f72b29a7b4d4924f0b3f5754cb9956690 HEAD | while IFS= read -r p; do
+            case "$p" in
+              research/family-alpha-evidence-gate-18/*|scripts/family-alpha-evidence-gate-18.mjs|tests/family-alpha-evidence-gate-18.test.mjs|.github/workflows/family-alpha-evidence-gate-18-no-deploy.yml) ;;
+              *) echo "BLOCKED unrelated application/auth/photo/storage/3D/deploy change: $p"; exit 1 ;;
+            esac
+          done
+          git diff --exit-code 0236182f72b29a7b4d4924f0b3f5754cb9956690 -- public/ supabase/ migrations/ workers/ scripts/deploy* || true
+      - name: Install read-only regression dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Build original app and run entire Node regression suite including scientific fail-closed gate
+        run: |
+          node --check scripts/family-alpha-evidence-gate-18.mjs
+          node --check tests/family-alpha-evidence-gate-18.test.mjs
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: READ-ONLY fetch actual GitHub issue 255, PR heads and dedicated Actions run results
+        run: node scripts/family-alpha-evidence-gate-18.mjs research/family-alpha-evidence-gate-18/manifest.json benchmark/family-alpha-evidence-18 --live
+      - name: Upload sanitized pilot readiness report, no photos or credentials
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: FAMILY-ALPHA-18-source-locked-PR-scientific-gate-HOLD
+          path: |
+            benchmark/family-alpha-evidence-18/report.json
+            benchmark/family-alpha-evidence-18/report.md
+          if-no-files-found: warn
+          retention-days: 21
