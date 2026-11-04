@@ -1,0 +1,108 @@
+name: CATEGORY43 exact taxonomy and private atomic wardrobe correctness NO DEPLOY
+on:
+  push:
+    branches:
+      - research/category-subtype-commit-43-main-20261104-HOLD
+  pull_request:
+    paths:
+      - 'research/multi-garment-capture-01/commit-taxonomy-43.mjs'
+      - 'research/multi-garment-capture-01/atomic-group.mjs'
+      - 'research/category-subtype-commit-43/**'
+      - 'tests/category-subtype-commit-43.test.mjs'
+      - 'scripts/verify-category-subtype-commit-43.mjs'
+      - '.github/workflows/category-subtype-commit-43-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  exact-source-category-type-color-atomic-closet-no-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 38
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Require verified COLOR41 parent and strict nonproduction research file scope
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor cdffcba36c204657e39065a6e6e43cfd1a1c120d HEAD
+          git diff --name-only cdffcba36c204657e39065a6e6e43cfd1a1c120d HEAD >/tmp/type43-allowed
+          while IFS= read -r file; do
+            case "$file" in
+              research/multi-garment-capture-01/atomic-group.mjs|research/multi-garment-capture-01/commit-taxonomy-43.mjs|research/category-subtype-commit-43/*|tests/category-subtype-commit-43.test.mjs|scripts/verify-category-subtype-commit-43.mjs|.github/workflows/category-subtype-commit-43-no-deploy.yml) ;;
+              *) echo "BLOCKED unrelated production/staging/model/auth/3D code path: $file"; exit 1 ;;
+            esac
+          done </tmp/type43-allowed
+      - name: Install pinned inherited test dependencies without writing package files
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Build actual app and run ALL inherited plus CATEGORY43 subtype source-identity IDB tests
+        run: |
+          node --check research/multi-garment-capture-01/atomic-group.mjs
+          node --check research/multi-garment-capture-01/commit-taxonomy-43.mjs
+          node --check scripts/verify-category-subtype-commit-43.mjs
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Original source epoch review browser regression
+        run: node scripts/verify-review-source-epoch-34.mjs
+      - name: Immutable reviewed save and honest postcommit receipt browser regression
+        run: node scripts/verify-review-save-finality-34.mjs
+      - name: No late worker proposals after Save browser regression
+        run: node scripts/verify-review-worker-finality-38.mjs
+      - name: Native color authority and real owner IndexedDB browser regression
+        run: node scripts/verify-color-provenance-integration-41.mjs
+      - name: Actual browser UI human review then fail-closed wrong-category atomic batch
+        run: node scripts/verify-category-subtype-commit-43.mjs
+      - name: Independently audit six cases and 12 genuine PNG screenshot SHA/dimensions
+        run: |
+          node --input-type=module <<'EONODE'
+          import assert from 'node:assert/strict';
+          import {readFile} from 'node:fs/promises';
+          import {createHash} from 'node:crypto';
+          import sharp from 'sharp';
+          const dir='benchmark/category-subtype-commit-43/';
+          const r=JSON.parse(await readFile(dir+'browser.json','utf8'));
+          assert.equal(r.priority,'CATEGORY-SUBTYPE-COMMIT-43');
+          assert.equal(r.actualBrowserCases,6);
+          assert.equal(r.realSegFormerRun,false);
+          assert.equal(r.realCustomerData,false);
+          assert.equal(r.FamilyAlpha,'HOLD');
+          assert.deepEqual(r.unexpectedRequests,[]);assert.deepEqual(r.browserErrors,[]);
+          let count=0;
+          for(const engine of ['chromium','webkit'])for(const width of [320,390,430]){
+            const c=r.cases.find(x=>x.engine===engine&&x.width===width);
+            assert.ok(c?.realIndexedDBSingleAtomicCommit&&c.ownerIsolationOfSavedRecord);
+            assert.ok(c?.invalidCategorySubtypeBatchRejected&&c.zeroPartialAtomicWrites);
+            assert.ok(c?.sourceSubtypeRetained&&c.sourceIdentityVerified);
+            assert.ok(c?.postCommitErrorReceiptHonest);
+            assert.equal(c.originalSHA256,r.originalSHA256);
+            assert.equal(c.screenshots.length,2);
+            for(const shot of c.screenshots){
+              const b=await readFile(dir+shot.filename);
+              const meta=await sharp(b).metadata(),stats=await sharp(b).stats();
+              assert.equal(createHash('sha256').update(b).digest('hex'),shot.sha256);
+              assert.equal(meta.format,'png');assert.equal(meta.width,width);
+              assert.equal(meta.height,shot.height);assert.equal(b.length,shot.bytes);
+              assert.ok(meta.height>500&&stats.channels.some(c=>c.stdev>6));
+              count++;
+            }
+          }
+          assert.equal(count,12);
+          console.log('CATEGORY43 independent audit: 6 valid native human saves, 6 wrong-subtype rejected atomic batches, 12 PNG hashes/dimensions/pixels PASS; no deployed code');
+          EONODE
+      - name: Preserve only synthetic screenshots and owner-safe report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: CATEGORY43-six-private-native-browser-12-PNG-HOLD
+          path: |
+            benchmark/category-subtype-commit-43/browser.json
+            benchmark/category-subtype-commit-43/*.png
+          if-no-files-found: warn
+          retention-days: 21
