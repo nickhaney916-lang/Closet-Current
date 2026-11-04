@@ -81,6 +81,8 @@ test('actual opt-in editor has visible sections, retains all regions and never m
  assert.match(code,/grid\.append\(card\)/);
  assert.match(code,/still unverified/);
  assert.match(code,/Other unverified regions/);
+ assert.match(code,/model mask score/);
+ assert.doesNotMatch(code,/mask confidence/);
  assert.match(code,/manual:false,cropReviewed:true/);
  assert.match(code,/confirmed:false/);
  assert.match(code,/const selected=state\.pieces\.filter\(x=>x\.confirmed\)/);
