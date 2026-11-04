@@ -22,7 +22,8 @@ const server=createServer(async(req,res)=>{
   const path=new URL(req.url,'http://localhost').pathname;
   if(req.method!=='GET')throw Error('request blocked');
   if(path==='/'){res.writeHead(200,{'content-type':'text/html'}).end(html);return;}
-  if(!/^\/research\/multi-garment-capture-01\/(review-ui|atomic-group|review-triage-28)\.mjs$/.test(path))throw Error('request blocked');
+  if(!/^\/research\/multi-garment-capture-01\/(review-ui|atomic-group|review-triage-28)\.mjs$/.test(path)&&
+     path!=='/research/capture-proof-01/source-proof.mjs')throw Error('request blocked');
   res.writeHead(200,{'content-type':'text/javascript'}).end(await readFile(root+path));
  }catch{res.writeHead(404).end();}
 });
