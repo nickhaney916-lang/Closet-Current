@@ -24,17 +24,20 @@ test('stale editor save requires the EXACT source epoch, source object and selec
 });
 test('async save acquires lock before IDB preflight and freezes all explicitly selected garments',()=>{
  assert.match(app,/const selected=state\.pieces\.filter\(x=>x\.confirmed\)/);
- assert.match(app,/const chosen=structuredClone\(selected\)/);
+ assert.match(app,/snapshotConfirmations34\(state\.pieces,schema\)/);
+ assert.match(app,/pieces:snapshots/);
  assert.match(app,/submitting=true;redraw\(\);/);
  assert.match(app,/if\(!currentReview\(view,epoch\)\)return;/);
  assert.match(app,/currentOwner:\(\)=>currentReview\(view,epoch\)\?getOwner\(\):null/);
  assert.match(app,/view\.pieces=view\.pieces\.filter\(x=>!savedIds\.has\(x\.id\)\)/);
+ assert.match(app,/saveReceipt34\(rows\.length,notificationFailed,refreshFailed\)/);
  assert.match(app,/const db=getDb\(\)/);
  assert.match(app,/save rejected|Save rejected/);
  assert.match(app,/Garments were saved privately, but the wardrobe display could not refresh/);
 });
 test('editing and proposing while a batch is committing is disallowed',()=>{
  assert.match(app,/if\(!state\|\|submitting\)return;/);
+ assert.match(app,/cancel\.disabled=submitting/);
  assert.match(app,/if\(submitting\)return;/);
  assert.match(app,/add\.disabled=submitting;suggest\.disabled=submitting/);
  assert.match(app,/sel\.disabled=submitting/);
