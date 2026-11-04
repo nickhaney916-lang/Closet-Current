@@ -124,7 +124,8 @@ $('useCapturedOutfit').onclick=async()=>{
  catch{currentBoard=previous;syncBoardInputs();renderOutfitBoard();$('outfitSaveStatus').textContent='Could not open this outfit board. Your saved clothing is still in My closet.';}
 };
 closetReady.then(renderOutfitCapture);
-window.addEventListener('closet:session-locked',()=>{
+if(typeof window!=='undefined'&&typeof window.addEventListener==='function')
+ window.addEventListener('closet:session-locked',()=>{
  // AUTH36: a stale tab must not retain a retryable original or a pending
  // synthetic/actual outfit worker that still refers to the previous owner.
  if(outfitSplitJob){
