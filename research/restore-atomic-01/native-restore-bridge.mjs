@@ -25,6 +25,14 @@ export async function createNativeRestore01({
    db.name!=='closet-current-user-'+lease.ownerId)
    throw Error('RESTORE01 authenticated owner/session changed or unsaved outfit exists');
  };
+ // A visible 3D viewer is a separate read-only snapshot of saved outfit IDs.
+ // Prevent an owner-authorized restore or remote replacement from leaving that
+ // snapshot displayed against a newly replaced wardrobe. Never auto-close it
+ // before explicit owner action: fail closed and ask to close preview first.
+ const assert3DClosed=()=>{
+  if(win.native3D05Bridge?.state?.().active===true)
+   throw Error('RESTORE01 close the active 3D preview before restoring wardrobe');
+ };
  const exportJSON=async()=>{
   assertLease();
   const snap=await readOwnerSnapshot01(db,assertLease);
@@ -37,14 +45,14 @@ export async function createNativeRestore01({
   if(operation)throw Error('RESTORE01 restore in progress');
   operation=true;
   try{
-   assertLease();
+   assertLease();assert3DClosed();
    // Validate all photos and all saved references BEFORE asking to replace.
    const receipt=await validateRestore01(data,{ownerId:lease.ownerId});
    const snap=await readOwnerSnapshot01(db,assertLease);
    if(!confirm({incoming:receipt,existing:snap.rows.items.length,
     savedExisting:snap.restore.state['outfit-board']?.saved?.length||0}))
     return {cancelled:true,originalUntouched:true};
-   assertLease();
+   assertLease();assert3DClosed();
    const result=await restoreOwner01({db,assertLease,backup:data,
     ownerId:lease.ownerId,expectedFingerprint:snap.fingerprint,confirmed:true});
    assertLease();
@@ -57,7 +65,7 @@ export async function createNativeRestore01({
  // cloud-backup.js performs its own single-transaction apply/revision CAS.
  const allowCloud=async({document,revision,expectedRevision}={})=>{
   if(operation)return false;
-  assertLease();
+  assertLease();assert3DClosed();
   await validateRestore01(document,{ownerId:lease.ownerId,mode:'cloud'});
   assertLease();
   const snap=await readOwnerSnapshot01(db,assertLease);
