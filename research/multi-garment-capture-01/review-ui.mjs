@@ -251,15 +251,16 @@ export function mountMultiGarmentCapture24({
   if(submitting)return;
   if(!state||!sameOwner())return reset('Account changed. No garments saved.');
   const view=state,epoch=renderVersion,owner=view.owner,proof=view.proof;
-  const selected=structuredClone(view.pieces.filter(x=>x.confirmed));
-  if(!selected.length)return status.textContent='Select at least one reviewed garment.';
+  const selected=state.pieces.filter(x=>x.confirmed);
+  const chosen=structuredClone(selected);
+  if(!chosen.length)return status.textContent='Select at least one reviewed garment.';
   // Enter the submission lock BEFORE the first asynchronous IndexedDB read.
   // A later user input/cancel cannot relabel already confirmed pieces or
   // associate a stale selected crop with a newer photograph from the same owner.
   submitting=true;redraw();
   let persisted=false;
   try{
-   const invalid=selected.find(x=>!canConfirmScene32(x,schema)||
+   const invalid=chosen.find(x=>!canConfirmScene32(x,schema)||
     (x.manual&&!x.cropReviewed)||!validCrop24(x.cropBounds));
    if(invalid)throw Error('Confirm category, specific type, and color, and adjust crops for manually added items.');
    const db=getDb();
@@ -269,12 +270,12 @@ export function mountMultiGarmentCapture24({
    });
    if(!currentReview(view,epoch))return;
    const duplicates=duplicatePieceKeys24(existing,
-    selected.map(x=>({sourcePieceKey:pieceKey24(proof.sourceSHA256,x.instanceKey)})));
+    chosen.map(x=>({sourcePieceKey:pieceKey24(proof.sourceSHA256,x.instanceKey)})));
    if(duplicates.length)throw Error('Previously saved garment detected in this exact source. Deselect duplicate pieces.');
    if(!currentReview(view,epoch))return;
    status.textContent='Verifying original SHA-256 and saving all confirmed pieces atomically…';
    const rows=await queued(()=>atomicSaveGarments24({
-    db,proof,pieces:selected,ownerId:owner,
+    db,proof,pieces:chosen,ownerId:owner,
     currentOwner:()=>currentReview(view,epoch)?getOwner():null
    }));
    persisted=true;
@@ -282,7 +283,7 @@ export function mountMultiGarmentCapture24({
    // Once the transaction completes, the rows are genuinely persisted.
    // Never offer another click on a now-duplicate selected item even when
    // an external UI refresh fails after that durable commit.
-   const savedIds=new Set(selected.map(x=>x.id));
+   const savedIds=new Set(chosen.map(x=>x.id));
    view.pieces=view.pieces.filter(x=>!savedIds.has(x.id));
    await onSaved(rows);
    if(!currentReview(view,epoch))return;
