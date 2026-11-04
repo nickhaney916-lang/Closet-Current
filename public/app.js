@@ -79,8 +79,27 @@ async function captureProofVerifyBeforeSave(value){
  if(captureProofOwner()!==owner)
   throw Error('Owner changed during original-photo integrity check');
 }
-function savePiece(value,nextBatch){return queued(async()=>{
+function savePiece(value,nextBatch,{expectedSavedRow=null}={}){return queued(async()=>{
  await captureProofVerifyBeforeSave(value);
+ // CORRECTION10: only original SAVED garments, with a pre-edit row snapshot,
+ // use strict owner/photo CAS. Newly captured draft photo saves continue via
+ // unchanged existing save path. No change on the default app URL.
+ if(expectedSavedRow&&new URLSearchParams(location.search).get('nativeCorrection10')==='research'){
+  if(new URLSearchParams(location.search).get('nativeLossless04')!=='research'||
+     new URLSearchParams(location.search).get('nativeIndex07')!=='research')
+   throw Error('CORRECTION10 private Outfit Builder and live index required');
+  const {commitNativeCorrection10}=await import('../research/native-correction-10/owner-correction-cas.mjs');
+  const auth=window.closetAuth,owner=auth?.user?.id;
+  const assertOwner=()=>{
+   if(!owner||window.closetAuth!==auth||auth.user?.id!==owner||
+      db?.name!=='closet-current-user-'+owner||
+      $('authGate')?.hidden!==true||$('appShell')?.hidden!==false)
+    throw Error('CORRECTION10 owner changed during saved photo correction');
+  };
+  assertOwner();
+  return commitNativeCorrection10({db,ownerId:owner,before:expectedSavedRow,
+   after:value,nextBatch,assertOwner});
+ }
  return new Promise((resolve,reject)=>{const tx=db.transaction(['items','state'],'readwrite');
  tx.objectStore('items').put(value);tx.objectStore('state').put({id:'draft',batch:structuredClone(nextBatch)});
  tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);});
@@ -151,7 +170,15 @@ function adjustPhoto(item){
  }
  const save=node('button','Save changes','primary'),cancel=node('button','Cancel','secondary'),remove=node('button','Remove photo','secondary');
  cancel.type=remove.type='button';cancel.onclick=()=>dialog.close();
- const wasAdjusted=item.userAdjusted,wasScanning=localPending.has(item.id);item.userAdjusted=true;
+ // CORRECTION10: opening and canceling Adjust must not mutate the saved
+ // garment or turn unconfirmed classification into human review. Snapshot
+ // the exact original row BEFORE any dialog work for atomic stale-tab CAS.
+ const correction10=new URLSearchParams(location.search).get('nativeCorrection10')==='research'&&
+  new URLSearchParams(location.search).get('nativeIndex07')==='research'&&
+  new URLSearchParams(location.search).get('nativeLossless04')==='research';
+ const expectedSavedRow=correction10&&items.some(x=>x.id===item.id)?structuredClone(item):null;
+ const wasAdjusted=item.userAdjusted,wasScanning=localPending.has(item.id);
+ if(!correction10)item.userAdjusted=true;
  remove.onclick=async()=>{try{if(items.some(x=>x.id===item.id))await removeItem(item.id);items=items.filter(x=>x.id!==item.id);batch=batch.filter(x=>x.id!==item.id);sessionCapturedIds.delete(item.id);await persistDraft();dialog.close();render();}catch{message('Could not remove this photo. Try again.');}};
  form.onsubmit=async event=>{event.preventDefault();save.disabled=true;try{
   const value={...collect(),name:draft.name.trim()||(draft.itemType&&draft.itemType!=='Unknown'?draft.itemType:'Closet piece'),savedAt:new Date().toISOString(),userAdjusted:true,requiresOwnershipConfirmation:false};
@@ -160,10 +187,15 @@ function adjustPhoto(item){
    throw Error('Owner changed. Sign in again before saving this photo.');
   if(typeof ClothingMemory!=='undefined')Object.assign(value,ClothingMemory.confirm(value));
   if(value.color&&value.colorSource==='photo-estimate')value.colorSource='user';
-  await savePiece(value,batch.filter(x=>x.id!==item.id));
+  await savePiece(value,batch.filter(x=>x.id!==item.id),{expectedSavedRow});
   const existing=items.find(x=>x.id===item.id);if(existing)Object.assign(existing,value);else items.push(value);
   batch=batch.filter(x=>x.id!==item.id);await persistDraft();dialog.close();render();scheduleMemoryReview();
- }catch{save.disabled=false;message('Could not save changes. Try again.');}};
+ }catch(error){
+  save.disabled=false;
+  message(correction10?'Saved garment not overwritten. '+String(error.message||error)+
+   '. Reopen Adjust to review the latest clothing details.':
+   'Could not save changes. Try again.');
+ }};
  dialog.onclose=()=>{if(batch.some(x=>x.id===item.id)&&!wasAdjusted){item.userAdjusted=false;if(wasScanning&&item.localAnalyzed&&!localPending.has(item.id)){item.localAnalyzed=false;queueAutomatic(item);}}dialog.remove();};
  const actions=node('div',null,'actions');actions.append(save,cancel,remove);form.append(actions);dialog.append(form);document.body.append(dialog);dialog.showModal();
 }
