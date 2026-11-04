@@ -1,0 +1,104 @@
+name: RECOGNITION-SUBTYPE-SAFETY-14 real model and mobile no deploy
+on:
+  pull_request:
+    paths:
+      - 'public/recognition-engine.mjs'
+      - 'public/local-worker.mjs'
+      - 'public/app.js'
+      - 'tests/recognition-worker.test.mjs'
+      - 'tests/automatic-indexing.test.cjs'
+      - 'tests/recognition-subtype-safety-14.test.mjs'
+      - 'research/recognition-subtype-safety-14/**'
+      - '.github/workflows/recognition-subtype-safety-14-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  locked-photo-safe-index-no-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 115
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+      - name: Protect verified parent and independent photographed-source boundaries
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor d60c9fbc725d01ac991c6ab4b476971a9531ead4 HEAD
+          git diff --name-only d60c9fbc725d01ac991c6ab4b476971a9531ead4 HEAD | while IFS= read -r p; do
+            case "$p" in
+              public/recognition-engine.mjs|public/local-worker.mjs|public/app.js|tests/automatic-indexing.test.cjs|tests/recognition-worker.test.mjs|tests/recognition-subtype-safety-14.test.mjs|research/recognition-subtype-safety-14/*|.github/workflows/recognition-subtype-safety-14-no-deploy.yml) ;;
+              *) echo "UNAUTHORIZED $p"; exit 1 ;;
+            esac
+          done
+          git diff --exit-code d60c9fbc725d01ac991c6ab4b476971a9531ead4 -- public/auth.js public/recognition-photo.mjs public/recognition-vectors.json public/recognition-vectors.bin public/outfit-board.js public/cloud-backup.js public/outfit-capture.js benchmark/manifest-holdout-16.json benchmark/locked-photo-sources.json benchmark/regression-holdout-16.json benchmark/fixtures/ supabase/ migrations/ .github/workflows/pages.yml .github/workflows/cloudflare-pages.yml
+      - name: Pinned research-only test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Complete unchanged Node suite, verification regressions and real application build
+        run: |
+          node --check public/recognition-engine.mjs
+          node --check public/local-worker.mjs
+          node --check tests/recognition-subtype-safety-14.test.mjs
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Genuine Chromium and WebKit owner-private original photo and correction at 320 390 430
+        run: |
+          node scripts/test-multi-garment-capture-01-browser.mjs
+          node scripts/audit-native-multi-style-12.mjs
+          node scripts/test-native-style-correction-11-browser.mjs
+          node scripts/audit-native-style-correction-11.mjs
+      - name: Keep development sets disjoint from immutable licensed 16-photo holdout
+        run: |
+          node --input-type=module <<'NODE'
+          import {readFileSync,writeFileSync} from 'node:fs';
+          const r=p=>JSON.parse(readFileSync(p,'utf8'));
+          const sets=[r('benchmark/manifest-holdout-16.json'),r('benchmark/manifest-fresh-11.json'),r('benchmark/manifest-reviewed-32.json')];
+          if(sets.map(x=>x.length).join(',')!=='16,11,32')throw Error('Frozen population changed');
+          const seen=new Set();
+          for(const rows of sets)for(const x of rows){
+            if(seen.has(x.id)||!x.verified||x.mode!=='single')throw Error('Overlapping or unreviewed photo '+x.id);
+            seen.add(x.id);
+          }
+          writeFileSync('/tmp/reco14ids',[...seen].join(','));
+          NODE
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos "$(cat /tmp/reco14ids)"
+      - name: Re-run unmocked real FashionCLIP against unchanged frozen 16 original photographs
+        run: node scripts/run-browser-photo-benchmark.mjs benchmark/manifest-holdout-16.json benchmark/recognition-subtype-safety-14/holdout
+      - name: Real model, separate 11-photo licensed development examples
+        run: node scripts/run-browser-photo-benchmark.mjs benchmark/manifest-fresh-11.json benchmark/recognition-subtype-safety-14/development-11
+      - name: Real model, separate 32-photo licensed development examples
+        run: node scripts/run-browser-photo-benchmark.mjs benchmark/manifest-reviewed-32.json benchmark/recognition-subtype-safety-14/development-32
+      - name: Report actual measured scientific quality honestly, not as a fabricated CI pass
+        if: always()
+        run: |
+          if [ -f benchmark/recognition-subtype-safety-14/holdout/results.json ]; then
+            node scripts/audit-recognition-evidence-13.mjs benchmark/manifest-holdout-16.json benchmark/recognition-subtype-safety-14/holdout/results.json benchmark/locked-photo-sources.json benchmark/recognition-subtype-safety-14/holdout/evaluation.json actual-browser-inference
+          fi
+          for cohort in development-11 development-32; do
+            if [ -f "benchmark/recognition-subtype-safety-14/$cohort/results.json" ]; then
+              if [ "$cohort" = development-11 ]; then m=benchmark/manifest-fresh-11.json; else m=benchmark/manifest-reviewed-32.json; fi
+              node scripts/evaluate-recognition-benchmark.mjs "$m" "benchmark/recognition-subtype-safety-14/$cohort/results.json" > "benchmark/recognition-subtype-safety-14/$cohort/evaluation.json"
+            fi
+          done
+      - name: Preserve only sanitized metrics and licensed test screenshots, never raw family photos
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: RECOGNITION-SUBTYPE-SAFETY-14-MODEL-AND-BROWSER-HOLD
+          path: |
+            benchmark/recognition-subtype-safety-14/holdout/evaluation.json
+            benchmark/recognition-subtype-safety-14/development-11/evaluation.json
+            benchmark/recognition-subtype-safety-14/development-32/evaluation.json
+            benchmark/multi-garment-capture-01/
+            benchmark/style-owned-live-03/
+            benchmark/style-owned-live-03-audit/
+            benchmark/native-style-correction-11/
+            benchmark/native-style-correction-11-audit/
+          if-no-files-found: warn
+          retention-days: 21

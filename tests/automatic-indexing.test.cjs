@@ -122,3 +122,22 @@ test('outfit recognition uses original crop texture while masked garment color w
  c.candidate('isolated-display',{outfitSourceId:'capture',recognitionPhoto:{image:'raw-textured-crop'},originalPhoto:{image:'whole-outfit'},cropBounds:{x:.1,y:.2,width:.3,height:.4},colorEstimate:{color:'Blue'},segmentHint:{categories:['Tops'],types:[],clipped:false}});await done(c);
  assert.equal(modelImage,'raw-textured-crop');assert.equal(qualityImage,'raw-textured-crop');assert.equal(stored.length,1);assert.equal(stored[0].image,'isolated-display');assert.equal(stored[0].color,'Blue');assert.equal(stored[0].name,'Blue T-shirt');assert.equal(stored[0].colorMethod,'garment-mask');assert.equal(stored[0].originalPhoto.image,'whole-outfit');assert.equal(stored[0].recognitionPhoto.image,'raw-textured-crop');
 });
+
+test('Safety14 subtype review cannot auto-save Unknown type even with estimated color',async()=>{
+ const result={strong:false,categoryConfirmed:true,categoryOnly:true,requiresSubtypeReview:true,
+  choices:[{category:'Tops',itemType:'Unknown',label:'Tops'}],details:{}};
+ const {c,stored}=setup({quality:async()=>({blank:false,signature:[11,22,100],aspect:1,colorEstimate:{color:'Blue'}}),result});
+ c.candidate('uncertain-shirt');await done(c);
+ assert.equal(stored.length,0);assert.equal(c.items.length,0);assert.equal(c.batch.length,1);
+ assert.equal(c.batch[0].color,'Blue');assert.equal(c.batch[0].itemType,'Unknown');
+ assert.match(c.batch[0].localStatus,/Confirm the garment subtype and color in Adjust/);
+});
+test('Safety14 does not overwrite corrections made while recognition is in flight',async()=>{
+ let finish;const {c,stored}=setup({request:()=>new Promise(resolve=>finish=resolve)});
+ c.candidate('uncertain');await new Promise(setImmediate);
+ c.batch[0].category='Outerwear';c.batch[0].itemType='Cardigan';c.batch[0].userAdjusted=true;
+ finish({strong:false,categoryConfirmed:true,categoryOnly:true,requiresSubtypeReview:true,
+  choices:[{category:'Tops',itemType:'Unknown'}],details:{color:'White'}});await done(c);
+ assert.equal(stored.length,0);assert.equal(c.batch[0].itemType,'Cardigan');
+ assert.equal(c.batch[0].category,'Outerwear');
+});
