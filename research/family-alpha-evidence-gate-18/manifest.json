@@ -1,0 +1,124 @@
+{
+  "schemaVersion": 1,
+  "priority": "FAMILY-ALPHA-EVIDENCE-GATE-18",
+  "generatedFor": "2026-11-04",
+  "repository": "nickhaney916-lang/Closet-Current",
+  "alphaIssue": 255,
+  "sourceBase": {
+    "pr": 571,
+    "sha": "0236182f72b29a7b4d4924f0b3f5754cb9956690"
+  },
+  "governance": {
+    "productionDeployAllowed": false,
+    "mergeAllowed": false,
+    "familyAlphaHold": true,
+    "unverifiedCannotPass": true
+  },
+  "research": [
+    {
+      "pr": 569,
+      "workstream": "Human-reviewed multi-piece original to private closet and Style My New Clothes",
+      "pinnedHead": "ca23c25d6621ea41c29fc9bac5f32eefb829b550",
+      "dedicatedRunId": 41842338625,
+      "scientificStatus": "NARROW_RESEARCH_VERIFIED",
+      "limitations": "Human-reviewed three pieces; automatic detection accuracy not established by this PR."
+    },
+    {
+      "pr": 570,
+      "workstream": "Frozen 16-original FashionCLIP recognition measurement",
+      "pinnedHead": "d60c9fbc725d01ac991c6ab4b476971a9531ead4",
+      "dedicatedRunId": 41845576205,
+      "scientificStatus": "NEEDS_REWORK",
+      "limitations": "Three incorrect automatic subtypes on frozen set; no independent reviewed color labels."
+    },
+    {
+      "pr": 571,
+      "workstream": "One original worn outfit genuine SegFormer Chromium and WebKit",
+      "pinnedHead": "0236182f72b29a7b4d4924f0b3f5754cb9956690",
+      "dedicatedRunId": 41848650852,
+      "scientificStatus": "NARROW_RESEARCH_VERIFIED",
+      "limitations": "Three coarse visible regions matched in each of two browsers; only one unique photograph; no mask IoU."
+    },
+    {
+      "pr": 572,
+      "workstream": "Subtype safety changes reduce three wrong acceptances to one",
+      "pinnedHead": "0bd25ce27b9a1e4f8755de340e2e0c5da8b0b6c6",
+      "dedicatedRunId": 41849049461,
+      "scientificStatus": "NEEDS_REWORK",
+      "limitations": "Blouse to Tunic still incorrect automatic acceptance; frozen-set accepted subtype 3/4, coverage 4/13; legacy source-scope workflows red."
+    },
+    {
+      "pr": 573,
+      "workstream": "Independent 15-source automatic segmentation diversity benchmark (parallel #26)",
+      "pinnedHead": null,
+      "dedicatedRunId": null,
+      "scientificStatus": "IN_PROGRESS",
+      "limitations": "Parallel research branch is evolving; require human annotation, independent heldout evaluation, final exact-HEAD CI and acceptance before any model claim."
+    }
+  ],
+  "releaseRequirements": [
+    {
+      "id": "recognition-category-color",
+      "label": "Frozen independent phone-photo category AND primary-color acceptance; 50+ new images, per-category support and coverage",
+      "state": "UNVERIFIED",
+      "evidence": "docs/PILOT-READINESS.md; frozen 16-photo subtype failures PR #572",
+      "owner": "parallel-25-and-main-controller"
+    },
+    {
+      "id": "multi-garment-generalization",
+      "label": "Independent multi-scene segmentation benchmark, real precision/recall, acceptable false positives, overlapping/flat-lay photographs",
+      "state": "UNVERIFIED",
+      "evidence": "PR #571 one-photo limit; PR #573 in progress",
+      "owner": "parallel-26"
+    },
+    {
+      "id": "end-to-end-consumer",
+      "label": "Real camera to owner-private closet to styling to source-honest anatomical 3D, stable mobile browser acceptance",
+      "state": "UNVERIFIED",
+      "evidence": "Work parallel #27 assignment; no reviewed final integration PR",
+      "owner": "work-27"
+    },
+    {
+      "id": "signed-account-rls",
+      "label": "Live signed test-account A/B isolation and backup/restore on explicitly authorized staging",
+      "state": "UNVERIFIED",
+      "evidence": "Synthetic fixture tests are not signed live authorization",
+      "owner": "main-controller"
+    },
+    {
+      "id": "physical-phones",
+      "label": "Real Android and iPhone capture, import, account recovery, 3D and restore",
+      "state": "UNVERIFIED",
+      "evidence": "Only emulated browser viewports verified",
+      "owner": "main-controller"
+    },
+    {
+      "id": "real-email",
+      "label": "Verified SMTP sender/redirect allowlist, signup confirmation, external inbox and password reset",
+      "state": "UNVERIFIED",
+      "evidence": "docs/AUTH-EMAIL-READINESS.md; docs/PILOT-READINESS.md",
+      "owner": "main-controller"
+    },
+    {
+      "id": "privacy-deletion",
+      "label": "Owner-reviewed privacy terms, service operator, versioned consent and account/data deletion evidence",
+      "state": "UNVERIFIED",
+      "evidence": "docs/PILOT-READINESS.md",
+      "owner": "main-controller"
+    },
+    {
+      "id": "photorealistic-source-3d",
+      "label": "Actual source-consistent photographed garments on anatomical humanoid or explicit 2D/photo fallback without unsupported realism claims",
+      "state": "UNVERIFIED",
+      "evidence": "PR #564 and #569 research; Work #27 final audit not yet available",
+      "owner": "work-27"
+    },
+    {
+      "id": "independent-release-signoff",
+      "label": "Main-controller final acceptance, rollback, test evidence and explicit authorization for pilot only",
+      "state": "UNVERIFIED",
+      "evidence": "Family Alpha GitHub Issue #255 OPEN HOLD",
+      "owner": "main-controller"
+    }
+  ]
+}
