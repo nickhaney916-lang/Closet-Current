@@ -167,11 +167,15 @@ try{
   // A clicked original saved outfit rather than donor-created selection.
   await page.locator('#savedBoards button').first().click();
   assert.equal(await page.evaluate(()=>window.nativeLossless04Bridge.status().selected),0);
-  const previewOpened=await page.evaluate(()=>window.native3D05Bridge.open());
-  assert.equal(previewOpened.opened,true);
-  await page.waitForFunction(()=>window.native3D05Bridge.state().modelReady&&
+  // Real end-user button click: do NOT hold one long-running Playwright
+  // page.evaluate() open promise while WebGL imports/contexts are created.
+  // Native PR541 itself drives its browser test by DOM click + state wait.
+  await page.locator('#native3D05Preview').click();
+  await page.waitForFunction(()=>window.native3D05Bridge?.state().modelReady&&
    window.native3D05Bridge.state().viewerMode==='dress'&&
-   window.native3D05Bridge.state().bones===163,{timeout:150000});
+   window.native3D05Bridge.state().bones===163,null,{timeout:150000});
+  assert.equal(await page.evaluate(()=>window.native3D05Bridge.state().opened),
+   'native05-A-verified-dress-3D');
   const state=await page.evaluate(()=>window.native3D05Bridge.state());
   assert.equal(state.meshCount>=1,true);
   assert.ok(state.fallbackCount>=3,'Jacket coat shoes must remain photo-only');
