@@ -307,9 +307,14 @@ async function createAndVerifyLooks(page,id,owner,width,engine,rich){
  assert.equal(newSaved.slotSources.top.ownerId,owner);
  assert.equal(await page.evaluate(()=>window.nativeLossless04Bridge.status().dirty),false);
  assert.match(await page.locator('#styleOwned03Status').innerText(),/Saved!/);
+ assert.match(await page.locator('#styleOwned03SavedReceipt').innerText(),/Saved! Outfit added/);
+ assert.equal(await page.locator('#styleOwned03SwapButton-bottom').count(),0,
+  'Saved outfits must not show dead unsaved swap buttons');
  await capture(page,width,engine,'05-real-native-CAS-saved');
  await page.locator('#styleOwned03Reopen').click();
  assert.equal(await page.evaluate(()=>window.nativeLossless04Bridge.view().slots.top),id);
+ assert.match(await page.locator('#styleOwned03SavedReceipt').innerText(),/Reopened saved outfit/);
+ assert.equal(await page.evaluate(()=>window.styleOwnedLive03Bridge.status().reopened),true);
  await capture(page,width,engine,'06-reopened-source-IDs');
  const evidence={newId:id,ownedReferences:Object.values(newSaved.slots),
   sourceSha:photos['commons-0002'].sha256,distinctSignatures:combos.results.combinations.map(x=>x.signature),
@@ -317,6 +322,7 @@ async function createAndVerifyLooks(page,id,owner,width,engine,rich){
   unsavedSwitchRejected:true,regenerateRejectedWhileDirty:true,
   cancelRestoredPriorDraft:true,
   saved:newSaved.id,previousRecordsExact:true,nativeCAS:true,
+  inlineSaveReceipt:true,inlineReopenReceipt:true,savedReadOnly:true,
   nativeOutfitReopen:true,allPhotosFromExactOriginals:true};
  if(rich){
   const v4=await page.evaluate(async()=>(
