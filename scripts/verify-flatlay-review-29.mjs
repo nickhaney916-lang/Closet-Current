@@ -134,8 +134,13 @@ try{
       saveDisabled:save.disabled,status:root.querySelector('.multi24-status').textContent,
       noAutoSaves:window.__audit28.saved===0};
     });
+    const rawProbe=await page.evaluate(async()=>{
+     const {detectFlatlayFromImage29}=await import('/research/multi-garment-capture-01/flatlay-contrast-29.mjs');
+     const img=new Image();img.src=window.__reviewOriginal29;await img.decode();
+     return detectFlatlayFromImage29(img);
+    });
     assert.ok(fallback.fallbackCount>=1,
-     'solid neutral synthetic image must yield at least one manual-only background suggestion');
+     'solid neutral synthetic image must yield at least one manual-only background suggestion: '+JSON.stringify({fallback,probe:rawProbe}));
     assert.ok(fallback.after>fallback.before);
     assert.ok(fallback.manual>=2);
     assert.equal(fallback.saveDisabled,true);
