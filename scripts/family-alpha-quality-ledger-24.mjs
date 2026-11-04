@@ -61,6 +61,16 @@ export function evaluateQualityLedger24(manifest,live,work29={candidatePRs:[],ca
    a.currentCorrect<=color.evaluable,
    'inconsistent color denominators: '+engine);
  }
+ must(color.holdoutTotal===23&&
+  color.chromium.previousCorrect===16&&color.chromium.currentCorrect===17&&
+  color.chromium.accepted===7&&color.chromium.correctAccepted===6&&
+  color.chromium.incorrectAccepted===1&&
+  color.webkit.previousCorrect===14&&color.webkit.currentCorrect===16&&
+  color.webkit.accepted===4&&color.webkit.correctAccepted===4&&
+  color.webkit.incorrectAccepted===0,
+  'known 49-photo exact-head published scientific counts changed without a new independently verified research receipt');
+ must(seg.directChromiumProposals===24&&seg.directWebkitProposals===25,
+  'expected independently measured worker false-positive denominator changed');
  must(seg.uniqueOriginals===19&&seg.visibleTargets===35&&
   seg.directCorrectHits===8&&seg.reviewResizeHits===10&&seg.reviewResizeProposals===61&&
   seg.secondReviewerCount===0&&seg.maskIouGroundTruth===false,
