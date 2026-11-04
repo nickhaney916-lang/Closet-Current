@@ -1,0 +1,66 @@
+name: NATIVE-INTEGRATION-11 fast actual owner source correction and three looks NO DEPLOY
+on:
+  pull_request:
+    paths:
+      - 'public/app.js'
+      - 'research/style-owned-live-03/native-style-panel.mjs'
+      - 'research/native-correction-10/**'
+      - 'tests/native-correction-cas-10.test.mjs'
+      - 'scripts/test-native-style-correction-11-browser.mjs'
+      - 'scripts/audit-native-style-correction-11.mjs'
+      - 'research/native-style-correction-11/**'
+      - '.github/workflows/native-integration-11-fast-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  private-photo-review-to-three-owned-looks-fast-no-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+      - name: No changes outside pinned Style03 source x main owner correction
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor 120d2b2640b02c4870c20557e0d3e565a320bdf7 HEAD
+          git diff --name-only 120d2b2640b02c4870c20557e0d3e565a320bdf7 HEAD | while IFS= read -r p; do
+            case "$p" in
+              public/app.js|research/style-owned-live-03/native-style-panel.mjs|research/native-correction-10/*|tests/native-correction-cas-10.test.mjs|scripts/test-native-correction-10-browser.mjs|scripts/audit-native-correction-10.mjs|scripts/test-native-style-correction-11-browser.mjs|scripts/audit-native-style-correction-11.mjs|research/native-style-correction-11/*|.github/workflows/native-integration-11-fast-no-deploy.yml|.github/workflows/native-style-correction-11-no-deploy.yml|.github/workflows/native-correction-10-no-deploy.yml) ;;
+              *) echo "BLOCKED unrelated production or parallel change $p"; exit 1 ;;
+            esac
+          done
+          git diff --exit-code 120d2b2640b02c4870c20557e0d3e565a320bdf7 -- public/auth.js public/index.html public/outfit-board.js public/cloud-backup.js public/cloud-backup-bridge.js research/native-3d-05/ benchmark/fixtures/ migrations/ supabase/
+      - name: Pinned test dependencies, unchanged photographed benchmark
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Exact original JPEG, explicit one-item human review, pinned ID, own wardrobe unit suite
+        run: |
+          node --check research/style-owned-live-03/three-owned-looks-native.mjs
+          node --check research/style-owned-live-03/native-style-panel.mjs
+          node --check scripts/test-style-owned-live-03-browser.mjs
+          node --test tests/style-owned-live-03.test.mjs tests/native-correction-cas-10.test.mjs
+      - name: REAL original native app Chromium and WebKit 320/390/430 source-owner-photo-swap-save-restore
+        run: |
+          node scripts/test-style-owned-live-03-browser.mjs
+          node scripts/audit-style-owned-live-03.mjs
+          node scripts/test-native-style-correction-11-browser.mjs
+          node scripts/audit-native-style-correction-11.mjs
+      - name: Screenshot evidence even if failing, do not deploy
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: NATIVE-INTEGRATION-11-FAST-111-source-owner-mobile-HOLD
+          path: |
+            benchmark/style-owned-live-03/
+            benchmark/style-owned-live-03-audit/
+            benchmark/native-style-correction-11/
+            benchmark/native-style-correction-11-audit/
+          if-no-files-found: warn
+          retention-days: 14
