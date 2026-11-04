@@ -15,7 +15,29 @@ for(const engine of ['chromium','webkit'])for(const width of [320,390,430]){
  cases.push({engine,width,id:x.id,sourceSHA256:x.hash,screenshotSHA256:x.screenshotSHA256,predictedColor:x.palette?.primary||null,verified:true});
 }
 const index=JSON.parse(await readFile('benchmark/index-04/results.json','utf8'));
-assert.equal(index.evidence.length,3);assert.ok(index.evidence.every(x=>x.actualIndexedDB&&x.mockedModelOutput&&x.originalJpegRetained&&x.savedOwnerIndexRefreshed));
+assert.equal(index.evidence.length,3);
+assert.ok(index.evidence.every(x=>x.actualIndexedDB&&x.mockedModelOutput&&x.originalJpegRetained&&x.savedOwnerIndexRefreshed));
 assert.deepEqual(index.outbound,[]);
-await writeFile('benchmark/recognition-acceptance-40/browser-audit.json',JSON.stringify({colorCases:cases,actualBrowserColorCases:6,actualIndexedDbFixtureBrowserCases:3,modelOutputInIndexedDbFlow:'MOCKED NOT MODEL ACCURACY',physicalDevice:'UNVERIFIED'},null,2));
-console.log('INDEPENDENT40 audited 6 real color browser/screenshots and 3 real IndexedDB flows with MOCKED classification.');
+const indexScreens=[];
+for(const width of [320,390,430]){
+ assert.ok(index.evidence.some(x=>x.width===width),'Missing actual IndexedDB browser width');
+ for(const stage of ['actual-app-owner-index','real-review-page']){
+  const file=String(width)+'-'+stage+'.png',bytes=await readFile('benchmark/index-04/'+file);
+  const meta=await sharp(bytes).metadata(),stats=await sharp(bytes).stats();
+  assert.equal(meta.format,'png');
+  assert.equal(meta.width,width,'Actual app browser width mismatch');
+  assert.ok(meta.height>=900,'Truncated saved index/review screenshot');
+  assert.ok(stats.channels.some(c=>c.stdev>6),'Blank saved index/review screenshot');
+  const digest=createHash('sha256').update(bytes).digest('hex');
+  indexScreens.push({width,stage,file,sha256:digest,height:meta.height,nonblank:true,
+    actualIndexedDB:true,mockedModelOutput:true});
+ }
+}
+assert.equal(indexScreens.length,6,'Six IndexedDB screenshots required');
+await writeFile('benchmark/recognition-acceptance-40/browser-audit.json',JSON.stringify({
+ colorCases:cases,actualBrowserColorCases:6,actualIndexedDbFixtureBrowserCases:3,
+ indexScreenshots:indexScreens,totalSHAAndPixelAuditedScreenshots:12,
+ modelOutputInIndexedDbFlow:'MOCKED NOT MODEL ACCURACY',
+ fullRealModelToActualIndexedDb:'UNVERIFIED',physicalDevice:'UNVERIFIED',
+ familyAlpha:'HOLD'},null,2));
+console.log('INDEPENDENT40 verified 12 SHA/pixel nonblank browser screenshots, six genuine source-pixel color cases, three actual IndexedDB fixture cases with explicitly MOCKED classification.');
