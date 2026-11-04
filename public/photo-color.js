@@ -9,7 +9,7 @@
     // Neutral/earth colors are especially vulnerable to backgrounds, skin
     // and browser JPEG smoothing, so require near-uniform support.
     const neutral=['Black','White','Gray','Beige','Brown'].includes(color);
-    const minimumSupport=neutral?.90:.78;
+    const minimumSupport=neutral ? 0.90 : 0.78;
     if(support>=minimumSupport&&agrees>=3)return {color,source:'photo-estimate',support:+support.toFixed(3)};
   const chromatic=ranked.filter(([name,n])=>!['Black','White','Gray','Beige','Brown'].includes(name)&&n/total>=.12);if(chromatic.length>=2&&support<.55&&chromatic.reduce((sum,[,n])=>sum+n/total,0)>=.65)return {color:'Multicolor',source:'photo-estimate',support:+chromatic.reduce((sum,[,n])=>sum+n/total,0).toFixed(3)};return {color:support>=.6?color:'Multicolor',source:'photo-estimate',support:+support.toFixed(3),needsConfirmation:true};
  }
