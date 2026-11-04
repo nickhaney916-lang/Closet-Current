@@ -117,5 +117,8 @@ export function detectFlatlayFromImage29(image,{maxDimension=512}={}){
  if(!context)return no('canvas-unavailable');
  context.drawImage(image,0,0,canvas.width,canvas.height);
  const pixels=context.getImageData(0,0,canvas.width,canvas.height);
- return flatlayContrastBoxes29({...pixels,channels:4});
+ // Real browser ImageData exposes width/height/data through non-enumerable
+ // prototype getters. Spreading ImageData drops them and silently rejects
+ // every real photo; copy the three properties explicitly.
+ return flatlayContrastBoxes29({data:pixels.data,width:pixels.width,height:pixels.height,channels:4});
 }
