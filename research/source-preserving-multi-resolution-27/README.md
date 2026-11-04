@@ -1,0 +1,26 @@
+# SOURCE-PRESERVING-MULTI-RESOLUTION-27 — high-resolution original outfit photos safely enter segmentation
+
+**Main controller research, stacked on verified PR #583** exact `f7a9e3079981150565f3eec7090c5afb28ec8dea`. All work is isolated to an unmerged draft branch. Family Alpha Issue #255 OPEN/HOLD; never modify/merge/deploy production or existing staging. Nothing in this assignment changes Work #28 color research, Parallel #26 SegFormer segmentation model/accuracy evidence, Work #29 signed-owner security or any other project.
+
+## Actual source-confirmed defect
+
+Under `captureProof01Active`, `public/outfit-capture.js:readOutfitPhoto` uses `captureProofFromFile`, which preserves the imported JPEG's original resolution and SHA-256 identity. `startOutfitSplit` passed that original JPEG directly to the SegFormer worker. The worker rejected images with either dimension over **3072** pixels, as well as strings longer than **12 million base64 characters**. The unguarded legacy photo import already had a 3072 px compression step; hence users taking unmodified high-resolution phone photographs in the source-verified path could fail before model inference. Parallel #26's independent 19-photo dataset observed many 3072px direct-worker size rejections; this source/analysis boundary is one concrete contributor, **not** proof that fixing it improves model precision or recall.
+
+## Surgical implementation and source integrity
+
+- `public/outfit-capture.js`: `boundedOutfitAnalysisJPEG27` creates an in-memory **derived model input JPEG** from the unchanged source JPEG, limiting the long side to 3072 pixels (or falling back to 2560/2048 when the derived JPEG remains too large). A source already within limits is reused byte-for-byte. The helper rejects unsafe images over 8192 pixels/48 million pixels and invalid JPEG data URLs. After asynchronously resizing, the original signed-in owner and active job are **checked again** to drop results from stale sessions. Only the original JPEG is retained in `lastOutfitPhoto` and the `originalPhoto` stored with review candidates; the resized JPEG is never written to the phone gallery or private wardrobe.
+- `public/outfit-worker.mjs`: accepts original `image` and optional `analysisImage`, validates MIME/data size and pixel dimensions separately. SegFormer processes only the bounded `analysisImage`. `cropClothingPhotoPixels`, `isolateClothingPixels`, and `clothingColorSample` use the **original, full-resolution pixel data**, mapping normalized segmentation coordinates from model output onto the original. For safe same-image requests, avoids decoding the JPEG twice. Legacy callers with no derived input still fail closed for large originals; no silent model downscaling or false original identity.
+- Existing owner-private review, no auto-save without confirmation, duplicate policy, source SHA, index, V4 backup, real 3D readiness and all other product logic remain unchanged.
+
+## Acceptance and test scope
+
+`tests/source-preserving-multi-resolution-27.test.mjs` tests actual extracted application helper and actual worker source, including 4000×3000 full-original → 3072×2304 model-only JPEG, already-small image identity, a legitimate 13.2 million character original, too-large and malformed rejection, the owner/session race gate, proofed `originalPhoto` retention, separate inference dimensions, original-resolution crop bounds and legacy malformed/oversized failure.
+
+`scripts/verify-source-preserving-multi-resolution-27.mjs` executes the **actual application resizing helper in real Chromium and WebKit** at 320/390/430 mobile viewports against a locally generated synthetic red-shirt/blue-pants JPEG of 4032×3024. It recomputes SHA-256 of the original unchanged JPEG in both browsers, decodes and inspects derived image 3072×2304, records six real screenshots with SHA-256, blocks all external writes and tracks JavaScript errors. The fixture is **synthetic for boundary testing only**; it cannot establish scientific real-photo multi-garment segmentation accuracy, true source garment mask IoU, signed cloud authorization or physical Android/iPhone acceptance.
+
+## Limitations and release condition
+
+Research correctness of the original-versus-analysis image pipeline is distinct from SegFormer model usefulness. Parallel #26's scientific photo benchmark remains `NEEDS REWORK` (19 originals, 35 visible targets, 8/35 direct recall, many false positives). Resizing can permit the worker to execute on large originals but **cannot guarantee correct garment proposals** or unambiguous segmentation. Every candidate remains subject to human review and manual correction; nothing is automatically marked verified clothing or 3D-ready. Original content is not repinned, source hash is never derived from the resized JPEG and no photo is uploaded.
+
+Dedicated no-deploy Actions must verify exact parent source ancestry, strict app/test-only changed paths, actual app build, full inherited and new Node regression suite, six genuine Chromium/WebKit resize browser cases and PNG hashes. Review the final exact commit after fixing any failures. Family Alpha issue #255 remains HOLD, all nine release requirements remain unresolved, no merge or deployment.
+
