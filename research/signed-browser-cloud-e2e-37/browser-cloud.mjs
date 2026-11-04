@@ -116,7 +116,7 @@ async function loggedIn(page,account){
  const identity=await page.evaluate(async()=>({
   id:window.closetAuth.user.id,
   db:db.name,
-  token:await window.closetAuth.getAccessToken()
+  token:await window.closetAuth.getAccessToken({force:true})
  }));
  assert.equal(identity.id,account.id);
  assert.equal(identity.db,'closet-current-user-'+account.id);
@@ -220,7 +220,7 @@ async function waitCloud(account,token,photo){
  throw Error('Cloud backup was never confirmed server-side for the signed browser account');
 }
 async function screenshot(page,engine,width,stage){
- const bytes=await page.screenshot({animations:'disabled',fullPage:true});
+ const bytes=await page.screenshot({animations:'disabled',fullPage:true,mask:[page.locator('#accountLabel'),page.locator('#authEmail')]});
  const file=engine+'-'+width+'-'+stage+'.png';
  await writeFile(OUT+'/'+file,bytes);
  const meta=await sharp(bytes).metadata(),stat=await sharp(bytes).stats();
@@ -228,7 +228,7 @@ async function screenshot(page,engine,width,stage){
  assert.ok(meta.height>=560&&bytes.length>5000&&stat.channels.some(x=>x.stdev>5));
  return {file,sha256:sha(bytes),bytes:bytes.length,width,height:meta.height};
 }
-async function hostileCheck(actor,victim,token,victimToken,privatePath){
+async function hostileCheck(actor,victim,token,victimToken,privatePath,attackJPEG){
  const attacks=[];
  const attempt=async(name,path,method='GET',body)=>{
   const res=await jsonRequest(path,token,method,body);
@@ -247,12 +247,12 @@ async function hostileCheck(actor,victim,token,victimToken,privatePath){
  const list=await attempt('foreign photo LIST','/storage/v1/object/list/closet-private','POST',{prefix:victim.id});
  assert.ok(list.ok&&Array.isArray(list.data)&&list.data.length===0);
  for(const method of ['GET','PUT','DELETE']){
-  const r=await attempt('foreign photo '+method,'/storage/v1/object/closet-private/'+privatePath,method,method==='PUT'?Buffer.from('unauthorized'):undefined);
+  const r=await attempt('foreign photo '+method,'/storage/v1/object/closet-private/'+privatePath,method,method==='PUT'?attackJPEG:undefined);
   assert.ok([400,401,403,404].includes(r.status)||method==='DELETE'&&r.ok&&Array.isArray(r.data)&&r.data.length===0);
  }
  const sign=await attempt('foreign signed URL','/storage/v1/object/sign/closet-private/'+privatePath,'POST',{expiresIn:60});
  assert.ok([400,401,403,404].includes(sign.status));
- const spoof=await attempt('foreign prefix upload','/storage/v1/object/closet-private/'+victim.id+'/spoof.jpg','POST',Buffer.from('fake'));
+ const spoof=await attempt('foreign prefix upload','/storage/v1/object/closet-private/'+victim.id+'/spoof.jpg','POST',attackJPEG);
  assert.ok([400,401,403,404].includes(spoof.status));
  const tampered=await jsonRequest('/rest/v1/closet_backups?select=revision',token.slice(0,-8)+'tampered');
  assert.equal(tampered.status,401);
@@ -338,8 +338,8 @@ try{
     assert.ok(bRows.every(x=>x.ownerId===accountB.id&&x.sourceSHA256===photoB.sha));
     shots.push(await screenshot(page,engine,width,'07-b-saved'));
     const cloudB=await waitCloud(accountB,tokenB,photoB);
-    const denialsBA=await hostileCheck(accountB,accountA,tokenB,tokenA,cloudA.photoPaths[0]);
-    const denialsAB=await hostileCheck(accountA,accountB,tokenA,tokenB,cloudB.photoPaths[0]);
+    const denialsBA=await hostileCheck(accountB,accountA,tokenB,tokenA,cloudA.photoPaths[0],photoB.bytes);
+    const denialsAB=await hostileCheck(accountA,accountB,tokenA,tokenB,cloudB.photoPaths[0],photoA.bytes);
     shots.push(await screenshot(page,engine,width,'08-b-cloud-private'));
     await signOut(page);
     const aRestored=await recover(browser,engine,width,accountA,photoA,currentCase+'-recover-a',stats);
