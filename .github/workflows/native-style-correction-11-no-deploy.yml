@@ -36,7 +36,7 @@ jobs:
           git merge-base --is-ancestor 120d2b2640b02c4870c20557e0d3e565a320bdf7 HEAD
           git diff --name-only 120d2b2640b02c4870c20557e0d3e565a320bdf7 HEAD | while IFS= read -r p; do
             case "$p" in
-              public/app.js|research/style-owned-live-03/native-style-panel.mjs|research/native-correction-10/*|tests/native-correction-cas-10.test.mjs|scripts/test-native-correction-10-browser.mjs|scripts/audit-native-correction-10.mjs|scripts/test-style-owned-live-03-browser.mjs|scripts/test-native-style-correction-11-browser.mjs|scripts/audit-native-style-correction-11.mjs|research/native-style-correction-11/*|.github/workflows/native-style-correction-11-no-deploy.yml|.github/workflows/native-correction-10-no-deploy.yml) ;;
+              public/app.js|research/style-owned-live-03/native-style-panel.mjs|research/native-correction-10/*|tests/native-correction-cas-10.test.mjs|scripts/test-native-correction-10-browser.mjs|scripts/audit-native-correction-10.mjs|scripts/test-style-owned-live-03-browser.mjs|scripts/test-native-style-correction-11-browser.mjs|scripts/audit-native-style-correction-11.mjs|research/native-style-correction-11/*|.github/workflows/native-style-correction-11-no-deploy.yml|.github/workflows/native-integration-11-fast-no-deploy.yml|.github/workflows/native-correction-10-no-deploy.yml) ;;
               *) echo "BLOCKED: not part of narrowly scoped integrated owner-safe research: $p"; exit 1 ;;
             esac
           done
