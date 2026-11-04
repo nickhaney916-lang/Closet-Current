@@ -11,7 +11,9 @@ export function buildSourceSpecificRedShirt22(root,candidate){
  const bone=name=>{let found;root.traverse(o=>{if(o.isBone&&o.name.replaceAll('.','')===name)found=o;});if(!found)throw Error('Missing anatomical landmark '+name);return found.getWorldPosition(new T.Vector3());};
  const neck=bone('neck01'),waist=bone('spine04');
  const envelope=deriveTorsoEnvelope(root),photoSpan=originalPhotoSpan(source.textureImage,source.cropRect);
- const upperArmLimit=T.MathUtils.clamp(.45+.075*(source.contour.sleeveToHemRatio-1),.39,.60);
+ // Initial 24-view genuine screenshot audit exposed donor-length sleeves. Source
+ // commons-0002 is SHORT-SLEEVED: stop shell at the first upper-arm segment.
+ const upperArmLimit=T.MathUtils.clamp(.355+.035*(source.contour.sleeveToHemRatio-1),.345,.405);
  // Continuous open boundaries cut through existing anatomy, not cylinder parts.
  const planes=[p=>p.y-(waist.y-.025),p=>roundedNeckBoundary(p,neck.y,envelope.center),
   p=>upperArmLimit-Math.abs(p.x)];
