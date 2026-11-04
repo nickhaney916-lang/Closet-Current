@@ -100,7 +100,7 @@ export function mountMultiGarmentCapture24({
    const card=el('article',null,'multi24-card');card.dataset.pieceKey=p.instanceKey;
    card.dataset.reviewTier=tier;
    const image=el('img');image.src=p.image;image.alt='Visible garment '+(i+1)+' derived from unchanged source';
-   const caption=el('p',(p.manual?'Manually marked':'Detected')+' piece '+(i+1)+(p.hint?.clipped?' · edge cut off':'')+(p.hint?.confidence?' · mask confidence '+Math.round(100*p.hint.confidence)+'%':'')+' · requires review; not automatically confirmed','fine');
+   const caption=el('p',(p.manual?'Manually marked':'Detected')+' piece '+(i+1)+(p.hint?.clipped?' · edge cut off':'')+(Number.isFinite(p.hint?.confidence)?' · model mask score '+Math.round(100*p.hint.confidence)+'/100 (uncalibrated)':'')+' · requires review; not automatically confirmed','fine');
    card.append(image,caption);
    card.append(selector('Main category',['Uncategorized',...TYPES],p.category,v=>{p.category=v;p.itemType='Unknown';p.confirmed=false;redraw();}));
    card.append(selector('Specific type',['Unknown',...(schema.types[p.category]||[])],p.itemType,v=>{p.itemType=v;p.confirmed=false;redraw();}));
