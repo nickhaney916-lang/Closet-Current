@@ -1,0 +1,158 @@
+name: NATIVE-STYLE-CORRECTION-INTEGRATION-11 source photo correction to pinned owned looks NO DEPLOY
+on:
+  pull_request:
+    paths:
+      - 'public/app.js'
+      - 'research/style-owned-live-03/native-style-panel.mjs'
+      - 'research/native-correction-10/**'
+      - 'tests/native-correction-cas-10.test.mjs'
+      - 'scripts/test-native-correction-10-browser.mjs'
+      - 'scripts/audit-native-correction-10.mjs'
+      - 'scripts/test-style-owned-live-03-browser.mjs'
+      - 'scripts/test-native-style-correction-11-browser.mjs'
+      - 'scripts/audit-native-style-correction-11.mjs'
+      - 'research/native-style-correction-11/**'
+      - '.github/workflows/native-style-correction-11-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  real-owner-new-photo-three-owned-looks-and-atomic-backup-no-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 110
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+      - name: Protect pinned isolated parallel #23 from production and parallel code edits
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor 120d2b2640b02c4870c20557e0d3e565a320bdf7 HEAD
+          git diff --name-only 120d2b2640b02c4870c20557e0d3e565a320bdf7 HEAD | while IFS= read -r p; do
+            case "$p" in
+              public/app.js|research/style-owned-live-03/native-style-panel.mjs|research/native-correction-10/*|tests/native-correction-cas-10.test.mjs|scripts/test-native-correction-10-browser.mjs|scripts/audit-native-correction-10.mjs|scripts/test-style-owned-live-03-browser.mjs|scripts/test-native-style-correction-11-browser.mjs|scripts/audit-native-style-correction-11.mjs|research/native-style-correction-11/*|.github/workflows/native-style-correction-11-no-deploy.yml|.github/workflows/native-integration-11-fast-no-deploy.yml|.github/workflows/native-correction-10-no-deploy.yml) ;;
+              *) echo "BLOCKED: not part of narrowly scoped integrated owner-safe research: $p"; exit 1 ;;
+            esac
+          done
+          git diff --exit-code 120d2b2640b02c4870c20557e0d3e565a320bdf7 -- public/auth.js public/index.html public/outfit-board.js public/cloud-backup.js public/cloud-backup-bridge.js research/native-consumer-board-04/ research/native-3d-05/ research/native-photo-readiness-08/ research/user-photo-3d-01/ research/native-mobile-09/ benchmark/fixtures/ migrations/ supabase/ .github/workflows/cloudflare-pages.yml .github/workflows/pages.yml
+      - name: Install pinned research browser/test dependencies, never deploy
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Actual native source/build, complete existing and new Node regression
+        run: |
+          for p in public/app.js public/outfit-board.js research/native-consumer-board-04/consumer-board-controller.mjs research/style-owned-live-03/*.mjs research/native-correction-10/*.mjs tests/style-owned-live-03.test.mjs tests/native-correction-cas-10.test.mjs scripts/test-style-owned-live-03-browser.mjs scripts/audit-style-owned-live-03.mjs scripts/test-native-correction-10-browser.mjs scripts/audit-native-correction-10.mjs scripts/test-native-style-correction-11-browser.mjs scripts/audit-native-style-correction-11.mjs; do node --check "$p"; done
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+          node scripts/repro-restore-atomic-01-baseline.mjs
+      - name: Original native atomic backup and WebKit loss-and-restore baseline
+        run: |
+          node scripts/test-restore-atomic-01-browser.mjs
+          node scripts/audit-restore-atomic-01.mjs
+      - name: Pin untouched genuine 163-bone owner 3D donor from PR541
+        run: |
+          git fetch --no-tags origin df6885d6011cb33fb22dceb81a08f35a0ac4dd61 53f2ad344dc56a1477e343531c423aed0e66c17d dd6bac3fa9ff640d4f562cf925337440bdb5cf8f 3a572193987cb29389727426136c6eb3ac326783 dfb40889c4c1221fb1833b859e8a11ef38aeb76e
+          git worktree add --detach .native05-donor-541 df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          git config --global --add safe.directory "$GITHUB_WORKSPACE/.native05-donor-541"
+          test "$(git -C .native05-donor-541 rev-parse HEAD)" = df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          ln -s ../node_modules .native05-donor-541/node_modules
+          cd .native05-donor-541
+          node scripts/build-three-d-31-jeans-proposal.mjs
+          node scripts/build-three-d-37-second-jeans.mjs
+          node scripts/build-work47-benchmark.mjs
+          node research/three-d-20/restore-approved-models.mjs
+          node --test tests/outfit-3d-01.test.mjs
+      - name: Actual Style page source JPEG to 3 owner outfits, swaps, CAS and V4 restore Chromium and WebKit
+        run: |
+          node scripts/test-style-owned-live-03-browser.mjs
+          node scripts/audit-style-owned-live-03.mjs
+      - name: Real shared owner correction x native styled outfit staleness, original JPEG, recovery and WebKit
+        run: |
+          node scripts/test-native-correction-10-browser.mjs
+          node scripts/audit-native-correction-10.mjs
+          node scripts/test-native-style-correction-11-browser.mjs
+          node scripts/audit-native-style-correction-11.mjs
+      - name: Existing actual mobile native touches, research 3D donor and photo readiness regressions
+        run: |
+          node scripts/test-native-mobile-09-browser.mjs
+          node scripts/audit-native-mobile-09.mjs
+          node scripts/test-native-photo-readiness-08-browser.mjs
+          node scripts/audit-native-photo-readiness-08.mjs
+          node scripts/test-native-3d-05-browser.mjs
+          node scripts/audit-native-3d-05.mjs
+      - name: Existing owner-safe photo index and recovery plus original 3D source browser regressions
+        run: |
+          node scripts/test-native-restore-3d-06-browser.mjs
+          node scripts/audit-native-restore-3d-06.mjs
+          node scripts/test-native-index-live-07-browser.mjs
+          node scripts/audit-native-index-live-07.mjs
+          node scripts/test-user-photo-3d-01-browser.mjs
+          node scripts/audit-user-photo-3d-01.mjs
+      - name: Enforce owner source, genuine 2D, no arbitrary 3D and unchanged 15-picture benchmark
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const a=JSON.parse(readFileSync('benchmark/style-owned-live-03-audit/acceptance.json','utf8'));
+          assert.equal(a.actualAppBrowserCases,6);
+          assert.equal(a.genuineMobileBrowserScreenshots,51);
+          assert.equal(a.genuineBrowserGalleryCount,6);
+          assert.equal(a.pinNeverSubstituted,true);
+          assert.equal(a.losslessCASAndSavedOutfitIdentity,true);
+          assert.equal(a.actualV4AtomicLossRecoveryChromium,true);
+          assert.equal(a.realSignedRLS,false);
+          assert.equal(a.arbitraryPhoto3DReady,false);
+          assert.equal(a.productionDeployed,false);
+          assert.equal(a.familyAlpha,'HOLD');
+          const ci=JSON.parse(readFileSync('benchmark/native-style-correction-11-audit/acceptance.json','utf8'));
+          assert.equal(ci.priority,'NATIVE-STYLE-CORRECTION-INTEGRATION-11');
+          assert.equal(ci.actualAppBrowserCases,6);
+          assert.equal(ci.genuineMobileBrowserScreenshots,60);
+          assert.equal(ci.originalPhotoCategoryCorrectionIntegrated,true);
+          assert.equal(ci.staleThreeOwnedOutfitsBlockedWithoutLosingUnsavedBoard,true);
+          assert.equal(ci.savedOriginalOwnerOutfitAndSourceSHAUnchanged,true);
+          assert.equal(ci.integrationGalleries.length,3);
+          assert.equal(ci.realSignedRLS,false);
+          assert.equal(ci.arbitraryPhoto3DReady,false);
+          assert.equal(ci.familyAlpha,'HOLD');
+          const co=JSON.parse(readFileSync('benchmark/native-correction-10-audit/acceptance.json','utf8'));
+          assert.equal(co.verifiedBrowserScreenshots,42);
+          assert.equal(co.staleSecondTabCASRefusedAtomically,true);
+          const p=JSON.parse(readFileSync('benchmark/user-photo-3d-01-audit/acceptance.json','utf8'));
+          assert.equal(p.readiness['3D Ready'],0);
+          assert.equal(p.readiness['Needs Review'],12);
+          assert.equal(p.readiness['Photo-Only'],3);
+          console.log('INTEGRATION11 photo-corrected owner original shared with actual native styling, CAS and WebGL PASS; signed RLS/phone/Family Alpha HOLD');
+          NODE
+      - name: Preserve genuine real native screenshot PNG and owner/photo audit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: NATIVE-INTEGRATION-11-source-JPEG-CAS-153-new-and-inherited-browser-HOLD
+          path: |
+            benchmark/style-owned-live-03/
+            benchmark/style-owned-live-03-audit/
+            benchmark/native-style-correction-11/
+            benchmark/native-style-correction-11-audit/
+            benchmark/native-correction-10/
+            benchmark/native-correction-10-audit/
+            benchmark/native-mobile-09/
+            benchmark/native-mobile-09-audit/
+            benchmark/native-photo-readiness-08/
+            benchmark/native-photo-readiness-08-audit/
+            benchmark/native-3d-05/
+            benchmark/native-3d-05-audit/
+            benchmark/native-index-live-07/
+            benchmark/native-index-live-07-audit/
+            benchmark/native-restore-3d-06/
+            benchmark/native-restore-3d-06-audit/
+            benchmark/restore-atomic-01/
+            benchmark/restore-atomic-01-audit/
+            benchmark/user-photo-3d-01/
+            benchmark/user-photo-3d-01-audit/
+          if-no-files-found: warn
+          retention-days: 14
