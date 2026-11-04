@@ -30,10 +30,29 @@ let saving=false;const sessionCapturedIds=new Set();
 let localWorker,localReady=false,localBatch=false,localLoadPromise=null,recognitionUnavailable=false;const automaticQueue=[];let automaticRunning=false;const localJobs=new Map(),localPending=new Set();
 const recognitionState={phase:'idle',percent:null,activeId:null};
 let writes=Promise.resolve();
-function queued(work){const result=writes.then(async()=>{await window.closetCloud?.beforeWrite(db);return work();});writes=result.catch(()=>{});result.then(()=>window.closetCloud?.changed()).catch(()=>{});result.then(()=>window.closetIndex02?.refresh()).catch(()=>{});return result;}
+function queued(work){const result=writes.then(async()=>{window.closetAuth?.assertCurrent?.();await window.closetCloud?.beforeWrite(db);window.closetAuth?.assertCurrent?.();return work();});writes=result.catch(()=>{});result.then(()=>window.closetCloud?.changed()).catch(()=>{});result.then(()=>window.closetIndex02?.refresh()).catch(()=>{});return result;}
 let db,items=[],batch=[],stream,timer,busy=false,lastPixels=null,lastSaved=null,stable=0,lastCapture=0,session=0,audio,cadence;
 let cameraMode=null,cameraOpening=false,cameraRequest=0,captureProofTaking=false;
 const video=$('video'),canvas=document.createElement('canvas'),tiny=document.createElement('canvas');tiny.width=32;tiny.height=32;
+window.addEventListener('closet:session-locked',()=>{
+ // AUTH36: immediately revoke all owner-visible local photo state. Supabase
+ // signed RLS remains authoritative server-side; this protects stale tabs.
+ stopCamera();
+ for(const job of localJobs.values()){
+  clearTimeout(job.timer);job.reject(Error('Authenticated account session ended'));
+ }
+ localJobs.clear();
+ localWorker?.terminate();localWorker=null;
+ try{db?.close();}catch{}
+ db=null;items=[];batch=[];
+ for(const image of document.querySelectorAll('#appShell img, dialog img')){
+  const source=image.getAttribute('src');
+  if(source?.startsWith('blob:'))URL.revokeObjectURL(source);
+  if(source?.startsWith('blob:')||source?.startsWith('data:'))image.removeAttribute('src');
+ }
+ for(const dialog of document.querySelectorAll('dialog[open]'))dialog.close();
+});
+
 function message(t){$('message').textContent=t;}
 function switchView(view){
  if(!document.getElementById(view)?.classList.contains('view'))return;
@@ -463,7 +482,9 @@ $('import').onchange=async e=>{const file=e.target.files[0];e.target.value='';if
   if(new URLSearchParams(location.search).get('nativeLossless04')==='research')
    throw Error('Import blocked in lossless research mode BEFORE any wardrobe write: atomic wardrobe+outfit restore requires separate acceptance');if(data.format!=='closet-current'||![1,2,3].includes(data.version)||!Array.isArray(data.items)||data.items.length>1000)throw Error('Choose a Closet Current backup.');const valid=data.items.map(x=>{if(typeof x.id!=='string'||!x.id||typeof x.image!=='string'||!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(x.image)||x.image.length>3000000)throw Error('Backup contains an invalid image.');return normalizeClothing({...x,id:x.id.slice(0,100),image:x.image,name:String(x.name||'Closet piece').slice(0,120),category:categories.includes(x.category)?x.category:'Uncategorized',color:String(x.color||'').slice(0,120),notes:String(x.notes||'').slice(0,500),savedAt:String(x.savedAt||'')});});if(data.looks){if(!Array.isArray(data.looks)||data.looks.length>100)throw Error('Invalid inspiration backup.');data.looks=data.looks.map(validLook);}if(!confirm(`Import ${valid.length} pieces? Matching IDs will update existing pieces.`))return;await writeAll(valid);items=(await readAll()).map(normalizeClothing);if(data.looks)await importLooks(data.looks);if(data.outfitBoard&&typeof importBoardBackup==='function')await importBoardBackup(data.outfitBoard);render();message('Backup imported.');}catch(err){message(err.message||'Import failed.');}};
 window.addEventListener('pagehide',stopCamera);window.addEventListener('beforeunload',e=>{if(batch.length||busy){e.preventDefault();e.returnValue='';}});document.addEventListener('visibilitychange',()=>{if(document.hidden&&(stream||cameraOpening)){stopCamera();message('Camera stopped while the app was in the background. Your photos are ready to review.');}});
-const closetReady=(async()=>{await window.closetAuth.ready;try{db=await openDB();items=(await readAll()).map(normalizeClothing);batch=(await readDraft()).map(normalizeClothing);for(const item of batch)if(item.outfitSourceId&&item.requiresOwnershipConfirmation){item.requiresOwnershipConfirmation=false;item.localAnalyzed=false;}if(batch.length)message(`${batch.length} unfinished photos are waiting in More → Photo results.`);}catch{message('Browser storage is unavailable. Use a regular browser to save your closet.');}render();for(const item of batch)if(!item.localAnalyzed)queueAutomatic(item);})();
+const closetReady=(async()=>{await window.closetAuth.ready;try{window.closetAuth?.assertCurrent?.();const connection=await openDB();
+ try{window.closetAuth?.assertCurrent?.();}catch(error){connection.close();return;}
+ db=connection;items=(await readAll()).map(normalizeClothing);window.closetAuth?.assertCurrent?.();batch=(await readDraft()).map(normalizeClothing);window.closetAuth?.assertCurrent?.();for(const item of batch)if(item.outfitSourceId&&item.requiresOwnershipConfirmation){item.requiresOwnershipConfirmation=false;item.localAnalyzed=false;}if(batch.length)message(`${batch.length} unfinished photos are waiting in More → Photo results.`);}catch{message('Browser storage is unavailable. Use a regular browser to save your closet.');}render();for(const item of batch)if(!item.localAnalyzed)queueAutomatic(item);})();
 
 /**
  * INDEX-02 is opt-in research ONLY. Default app behavior does not load this
