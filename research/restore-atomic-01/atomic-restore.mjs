@@ -92,6 +92,9 @@ function validateShape(value,{ownerId,mode='file'}={}){
    throw Error('RESTORE01 invalid garment source identity');
   if(item.originalPhoto?.sha256!==undefined&&!sha.test(item.originalPhoto.sha256))
    throw Error('RESTORE01 invalid original-photo identity');
+  if(item.sourceSHA256&&item.originalPhoto?.sha256&&
+     item.sourceSHA256!==item.originalPhoto.sha256)
+   throw Error('RESTORE01 inconsistent original source identities');
   if(item.originalPhoto?.sha256&&!item.originalPhoto.image)
    throw Error('RESTORE01 missing pinned original JPEG');
   if(item.sourceSHA256&&!item.originalPhoto?.image&&!item.image)
