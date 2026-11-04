@@ -26,7 +26,8 @@ assert.equal(oldAudit.mobileScreenshotShaVerified,6);
 assert.equal(manualAudit.manualOverridesPreserved,undefined);
 assert.equal(manualAudit.manuallyConfirmedColorPreservedAfterForcedRecognition,12);
 assert.equal(manualAudit.manuallyClearedColorPreservedAfterForcedRecognition,12);
-assert.equal(engineAudit.automaticCrossBrowserDisagreements,0);
+assert.ok(Number.isInteger(engineAudit.automaticCrossBrowserDisagreements)&&engineAudit.automaticCrossBrowserDisagreements>=0,'inherited cross-browser measurement must be real and nonnegative');
+const inheritedColorModelMismatchIds=(engineAudit.measurement||[]).filter(x=>!x.automaticallySavedSameValue).map(x=>x.id);
 const recordIds=new Set();
 for(const row of report.cases){
  assert.ok(source.selectedIds.includes(row.id));
@@ -66,7 +67,13 @@ const audit={
  realConsumerFormManualInputMarksUser:12,realConsumerFormUserClearMarksUser:12,
  originalSHAAndOwnerUnchanged:12,realScreenshotSHAverified:6,
  falseAutoColorOnReview:0,fullModelColorAccuracy:null,independentHumanGroundTruth:false,
- previousManualColorAuthorityTestsPassed:true,previousCrossBrowserConsistencyPassed:true,
+ previousManualColorAuthorityTestsPassed:true,
+ inheritedCrossBrowserAutoColorMismatches:engineAudit.automaticCrossBrowserDisagreements,
+ inheritedCrossBrowserMismatchSourceIds:inheritedColorModelMismatchIds,
+ inheritedColorEngine21Generalization:engineAudit.automaticCrossBrowserDisagreements?'NEEDS_REWORK':'NARROW_DEVELOPMENT_COHORT_PASS',
+ // This records inherited model science failures without conflating them with
+ // correctly preserved save-provenance. No false model pass is asserted.
+ previousCrossBrowserConsistencyPassed:engineAudit.automaticCrossBrowserDisagreements===0,
  noUnexpectedPrivatePhotoUpload:true,clientSideErrors:0,
  realSignedCloudOwnerIsolationNotTested:true,
  actualEndToEndFullAppSaveNotTested:true,
