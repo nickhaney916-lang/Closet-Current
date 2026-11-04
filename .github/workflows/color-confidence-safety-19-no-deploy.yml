@@ -1,0 +1,59 @@
+name: COLOR-CONFIDENCE-SAFETY-19 original-photo color confirmation safety Chromium WebKit NO DEPLOY
+on:
+  pull_request:
+    paths:
+      - 'public/clothing-details.js'
+      - 'research/color-confidence-safety-19/**'
+      - 'scripts/test-color-confidence-19-real-photo.mjs'
+      - 'scripts/audit-color-confidence-19.mjs'
+      - 'tests/color-confidence-safety-19.test.cjs'
+      - '.github/workflows/color-confidence-safety-19-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  color-confidence-original-photo-check-no-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+      - name: Verify original PR571 ancestor and block modifications outside color safety research
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor 0236182f72b29a7b4d4924f0b3f5754cb9956690 HEAD
+          git diff --name-only 0236182f72b29a7b4d4924f0b3f5754cb9956690 HEAD | while IFS= read -r p; do
+            case "$p" in
+              public/clothing-details.js|research/color-confidence-safety-19/*|scripts/test-color-confidence-19-real-photo.mjs|scripts/audit-color-confidence-19.mjs|tests/color-confidence-safety-19.test.cjs|.github/workflows/color-confidence-safety-19-no-deploy.yml) ;;
+              *) echo "BLOCKED unrelated code or deployment change: $p"; exit 1 ;;
+            esac
+          done
+      - name: Install fixed browser research dependencies without modifying package files
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Build actual source and run full inherited Node tests plus new color safety regressions
+        run: |
+          node --check scripts/test-color-confidence-19-real-photo.mjs
+          node --check scripts/audit-color-confidence-19.mjs
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Run real unchanged licensed JPEGs through production browser photo-check and color field path
+        run: |
+          node scripts/test-color-confidence-19-real-photo.mjs
+          node scripts/audit-color-confidence-19.mjs
+      - name: Store source-locked sanitized evidence and licensed-photo mobile screenshots only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: COLOR-CONFIDENCE-19-genuine-original-photo-browser-review-safety-HOLD
+          path: |
+            benchmark/color-confidence-19/*.json
+            benchmark/color-confidence-19/*.png
+          if-no-files-found: warn
+          retention-days: 21

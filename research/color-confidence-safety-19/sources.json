@@ -1,0 +1,108 @@
+{
+  "priority": "COLOR-CONFIDENCE-SAFETY-19",
+  "originalRegistry": "benchmark/locked-photo-sources.json",
+  "sampleSize": 6,
+  "annotationPolicy": "Source title only, no independent color ground truth. Candidate image with changed SHA is excluded, explicitly recorded, never silently substituted.",
+  "samples": [
+    {
+      "id": "commons-0001",
+      "sourceDeclaredHint": "Blue / White / Gray print"
+    },
+    {
+      "id": "commons-0002",
+      "sourceDeclaredHint": "Red"
+    },
+    {
+      "id": "commons-0003",
+      "sourceDeclaredHint": "Black"
+    },
+    {
+      "id": "commons-0014",
+      "sourceDeclaredHint": "Blouse color not independently labeled"
+    },
+    {
+      "id": "commons-0016",
+      "sourceDeclaredHint": "Blouse color not independently labeled"
+    },
+    {
+      "id": "commons-0060",
+      "sourceDeclaredHint": "Jacket color not independently labeled"
+    },
+    {
+      "id": "commons-0078",
+      "sourceDeclaredHint": "High-top sneakers color not independently labeled"
+    },
+    {
+      "id": "commons-0033",
+      "sourceDeclaredHint": "Orange shorts"
+    },
+    {
+      "id": "commons-0035",
+      "sourceDeclaredHint": "Orange shorts"
+    },
+    {
+      "id": "commons-0049",
+      "sourceDeclaredHint": "Dress color not independently labeled"
+    },
+    {
+      "id": "commons-0053",
+      "sourceDeclaredHint": "Dress color not independently labeled"
+    },
+    {
+      "id": "commons-0077",
+      "sourceDeclaredHint": "High-top sneakers color not independently labeled"
+    },
+    {
+      "id": "validation-0021",
+      "sourceDeclaredHint": "Red/orange and white sneaker source title"
+    },
+    {
+      "id": "validation-0024",
+      "sourceDeclaredHint": "Silver sneaker source title"
+    },
+    {
+      "id": "commons-0021",
+      "sourceDeclaredHint": "Jeans (color not independently labeled)"
+    },
+    {
+      "id": "commons-0023",
+      "sourceDeclaredHint": "Blue"
+    },
+    {
+      "id": "commons-0024",
+      "sourceDeclaredHint": "Blue"
+    },
+    {
+      "id": "commons-0025",
+      "sourceDeclaredHint": "Blue"
+    },
+    {
+      "id": "commons-0081",
+      "sourceDeclaredHint": "Black / White"
+    },
+    {
+      "id": "validation-0010",
+      "sourceDeclaredHint": "Blue dress with blouse"
+    },
+    {
+      "id": "validation-0017",
+      "sourceDeclaredHint": "Gray jeans"
+    },
+    {
+      "id": "commons-0088",
+      "sourceDeclaredHint": "Boot (color not independently labeled)"
+    },
+    {
+      "id": "commons-0089",
+      "sourceDeclaredHint": "Boot (color not independently labeled)"
+    }
+  ],
+  "release": {
+    "familyAlpha": "HOLD",
+    "colorAccuracyCertified": false,
+    "userPhotosUsed": false,
+    "productionModified": false
+  },
+  "requiredVerifiedOriginals": 6,
+  "candidateCount": 23
+}
