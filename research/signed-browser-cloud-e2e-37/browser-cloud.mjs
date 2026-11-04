@@ -44,7 +44,7 @@ const staticServer=createServer(async(req,res)=>{
 });
 await new Promise(ok=>staticServer.listen(0,'127.0.0.1',ok));
 const ORIGIN='http://127.0.0.1:'+staticServer.address().port;
-const URL=ORIGIN+'/public/index.html?multi24=research&captureProof01=after&index04=after&nativeIndex07=research&nativeLossless04=research&index02=after';
+const APP_URL=ORIGIN+'/public/index.html?multi24=research&captureProof01=after&index04=after&nativeIndex07=research&nativeLossless04=research&index02=after';
 let currentCase='initial';
 async function jsonRequest(path,token,method='GET',body){
  const headers={apikey:KEY,...(token?{authorization:'Bearer '+token}:{})};
@@ -254,7 +254,6 @@ async function hostileCheck(actor,victim,token,victimToken,privatePath){
  assert.ok([400,401,403,404].includes(sign.status));
  const spoof=await attempt('foreign prefix upload','/storage/v1/object/closet-private/'+victim.id+'/spoof.jpg','POST',Buffer.from('fake'));
  assert.ok([400,401,403,404].includes(spoof.status));
- const jwt=await attempt('tampered bearer','/rest/v1/closet_backups?select=revision', 'GET');
  const tampered=await jsonRequest('/rest/v1/closet_backups?select=revision',token.slice(0,-8)+'tampered');
  assert.equal(tampered.status,401);
  const own=await jsonRequest('/rest/v1/closet_backups?select=revision,document&owner_id=eq.'+victim.id,victimToken);
@@ -270,12 +269,8 @@ async function recover(browser,engine,width,account,photo,tag,wireStats){
  const context=await browser.newContext({viewport:{width,height:940},isMobile:true,hasTouch:true,serviceWorkers:'block'});
  wireStats.push(wire(context,tag));
  const page=await context.newPage();
- await page.goto(URL,{waitUntil:'domcontentloaded'});
- const before=await page.evaluate(()=>new Promise((ok,fail)=>{
-  const r=indexedDB.open('closet-current-user-'+window.closetAuth?.user?.id);
-  // No account is authenticated yet: this new context contains no owner DB.
-  ok(window.closetAuth?.user===null);
- }));
+ await page.goto(APP_URL,{waitUntil:'domcontentloaded'});
+ const before=await page.evaluate(()=>window.closetAuth?.user===null);
  assert.equal(before,true,'New context must begin signed out');
  const token=await loggedIn(page,account);
  await page.waitForFunction(()=>document.getElementById('cloudStatus')?.textContent==='Cloud backup up to date'&&window.closetAuth?.user?.id,null,{timeout:35000});
@@ -304,7 +299,7 @@ try{
     stats.push(wire(context,currentCase));
     const page=await context.newPage();
     page.on('pageerror',e=>errorEvents.push(e.message.slice(0,140)));
-    await page.goto(URL,{waitUntil:'domcontentloaded'});
+    await page.goto(APP_URL,{waitUntil:'domcontentloaded'});
     await page.locator('#authEmail').fill(accountA.email);
     await page.locator('#authPassword').fill('invalid-credential');
     await page.locator('#authSubmit').click();
