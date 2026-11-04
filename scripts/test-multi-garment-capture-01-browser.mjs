@@ -59,7 +59,8 @@ function authHTTP(route){
  if(url.pathname==='/auth/v1/logout')return route.fulfill({status:204,body:''});
  if(url.pathname==='/auth/v1/token'){
   const data=JSON.parse(request.postData()||'{}'),type=url.searchParams.get('grant_type');
-  const owner=type==='password'&&/^multi24-[AB]@example\.test$/.test(data.email||'')?data.email.split('@')[0]:null;
+  const owner=type==='password'&&/^multi24-[AB]@example\.test$/.test(data.email||'')?data.email.split('@')[0]:
+   type==='refresh_token'&&/^multi24-refresh-multi24-[AB]$/.test(data.refresh_token||'')?data.refresh_token.slice('multi24-refresh-'.length):null;
   if(!owner)return route.fulfill({status:401,contentType:'application/json',body:'{"error":"Invalid test account"}'});
   return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({
    user:{id:owner,email:owner+'@example.test'},access_token:'multi24-fixture-'+owner,
