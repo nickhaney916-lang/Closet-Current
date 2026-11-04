@@ -49,7 +49,7 @@ test('fully uniform dark neutral and fully uniform red remain safe estimates',()
 });
 test('source-true masked palette remains unchanged by full-scene risk thresholds',()=>{
  const p=new Uint8ClampedArray(16*16*4);
- for(let i=0;i<16*16;i++)p.set(i<200?[40,40,40,255]:[230,230,230,0],i*4);
+ for(let i=0;i<16*16;i++)p.set(i<200?[120,120,120,255]:[230,230,230,0],i*4);
  const mask=PhotoColor.maskedPalette(p,16,16);
  assert.equal(mask.primary,'Gray');
  assert.equal(mask.needsConfirmation,false);
