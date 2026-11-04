@@ -31,7 +31,7 @@ test('proposal ordering is stable, lossless and never mutates source labels or c
  assert.deepEqual(next.ordered.map(x=>x.id),[
   'primary-one','primary-two','manual','lower-confidence','high-small'
  ]);
- assert.deepEqual(next.primary.map(x=>x.id),['primary-one','primary-two']);
+ assert.deepEqual(next.priority.map(x=>x.id),['primary-one','primary-two']);
  assert.deepEqual(next.manual.map(x=>x.id),['manual']);
  assert.deepEqual(next.additional.map(x=>x.id),['lower-confidence','high-small']);
  assert.deepEqual(inputs,original);
