@@ -68,7 +68,7 @@ try{
     {image:'data:image/jpeg;base64,'+bytes.toString('base64'),expectations:row.regions,sha256:row.sourceSha256});
    let result;
    try{
-    await page.waitForFunction(()=>window.__autoMulti15?.done,{timeout:470000});
+    await page.waitForFunction(()=>window.__autoMulti15?.done,null,{timeout:470000});
     result=await page.evaluate(()=>window.__autoMulti15.results);
    }catch{
     result={sourceSha256:row.sourceSha256,sourcePixelsVerified:true,modelExecuted:false,
