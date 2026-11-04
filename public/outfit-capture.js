@@ -86,3 +86,32 @@ $('useCapturedOutfit').onclick=async()=>{
  catch{currentBoard=previous;syncBoardInputs();renderOutfitBoard();$('outfitSaveStatus').textContent='Could not open this outfit board. Your saved clothing is still in My closet.';}
 };
 closetReady.then(renderOutfitCapture);
+
+
+// MULTI-GARMENT-CAPTURE-01 research-only owner-bound review and atomic save.
+if(new URLSearchParams(location.search).get('multi24')==='research'){
+ const enabled=captureProof01Active&&index04ResearchActive&&
+  new URLSearchParams(location.search).get('nativeIndex07')==='research'&&
+  new URLSearchParams(location.search).get('nativeLossless04')==='research';
+ if(!enabled)$('outfitSplitStatus').textContent='MULTI24 requires original-photo, private index and lossless-outfit research safety gates.';
+ else closetReady.then(async()=>{
+  const {mountMultiGarmentCapture24}=await import('../research/multi-garment-capture-01/review-ui.mjs');
+  window.multi24Research=mountMultiGarmentCapture24({
+   doc:document,active:true,recognitionAssetVersion,
+   getOwner:()=>captureProofOwner(),
+   makeProof:(file,owner)=>captureProofFromFile(file,owner),
+   getDb:()=>db,queued,refreshNative:()=>nativeIndex07Refresh(),
+   schema:clothingSchema,
+   onSaved:async rows=>{
+    for(const row of rows){items.push(normalizeClothing(row));sessionCapturedIds.add(row.id);}
+    render();
+   }
+  });
+  if(window.multi24Research?.active){
+   const intro=$('wholeOutfitCapture').querySelector('p.fine');
+   if(intro)intro.textContent='Research: photograph separated garments or visible pieces worn on a person. Review all suggested regions together. Only confirmed garments save as a group. Original JPEG bytes remain unchanged.';
+   $('captureSaveHint').textContent='Multi-item images require review before atomic save';
+   $('outfitSplitStatus').textContent='Whole-photo detection is for suggestions only. Select a photo below; no automatic save.';
+  }
+ }).catch(()=>{$('outfitSplitStatus').textContent='Research multi-item review could not load; no photos have been saved.';});
+}
