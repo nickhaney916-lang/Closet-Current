@@ -148,6 +148,7 @@ export async function mountStyleOwnedLive03({
  '#styleOwned03 .pending-item img{width:72px;height:83px;object-fit:contain;background:#f1f4f0}',
  '#styleOwned03 .pending-item button{width:100%;margin-top:5px;min-height:48px}',
  '#styleOwned03 .note{font-size:12px;color:#37584b}',
+ '#styleOwned03 .saved-receipt{font-size:13px;font-weight:700;color:#245b49;margin:10px 0;line-height:1.45}',
  '#styleOwned03 #styleOwned03Status{font-size:13px;font-weight:600;margin:7px 0;overflow-wrap:anywhere}',
  '#styleOwned03 [hidden]{display:none!important}',
  '@media(max-width:360px){#styleOwned03{padding:8px}#styleOwned03 .toolbar{gap:5px}#styleOwned03 .toolbar>*{flex-basis:125px}}',
@@ -175,7 +176,7 @@ export async function mountStyleOwnedLive03({
  const actualStyle=doc.getElementById('stylist');
  actualStyle.insertBefore(section,actualStyle.querySelector('.occasion-choices')||actualStyle.firstChild);
  let snapshot=null,active=null,current=null,history=[],generated=null,
-  pinId=null,styleDraft=false,savedId=null,busy=false,revoked=false,
+  pinId=null,styleDraft=false,savedId=null,reopened=false,busy=false,revoked=false,
   requestedReviewId=null,singleItemReviews=new Map();
  const guidance=Object.freeze({
   SAVE_OR_CANCEL_UNSAVED_STYLE_EDITS_BEFORE_REGENERATING:
@@ -203,7 +204,7 @@ export async function mountStyleOwnedLive03({
  };
  const clearPrivate=()=>{
   revoked=true;snapshot=null;active=null;current=null;history=[];generated=null;
-  pinId=null;styleDraft=false;savedId=null;requestedReviewId=null;
+  pinId=null;styleDraft=false;savedId=null;reopened=false;requestedReviewId=null;
   singleItemReviews.clear();pending.replaceChildren();pending.hidden=true;
   selector.replaceChildren();pin.replaceChildren();looks.replaceChildren();
   workspace.replaceChildren();text('Account changed · private photographed outfits cleared. Sign in to load this closet.');
@@ -282,7 +283,7 @@ export async function mountStyleOwnedLive03({
    const previous=snapshot,loaded=await verifiedPrivateStyleRoster03(board,{singleItemReviews});
    snapshot=loaded;revoked=false;
    if(previous&&(previous.ownerId!==loaded.ownerId||previous.generation!==loaded.generation)){
-    generated=null;current=null;history=[];styleDraft=false;savedId=null;
+    generated=null;current=null;history=[];styleDraft=false;savedId=null;reopened=false;
     looks.replaceChildren();workspace.replaceChildren();
     singleItemReviews.clear();requestedReviewId=null;
    }
@@ -340,13 +341,15 @@ export async function mountStyleOwnedLive03({
  function renderWorkspace(){
   workspace.replaceChildren();
   if(!current)return;
-  workspace.append(create('h3','Edit this outfit'));
+  const editable=styleDraft;
+  workspace.append(create('h3',editable?'Edit this outfit':'Saved outfit'));
   const slotDiv=create('div');
   for(const [slot,id]of Object.entries(current.slots)){
    const item=byId(id),piece=create('div',null,'piece');piece.append(img(item));
    const inner=create('div'),mark=slot===generated?.pinnedSlot;
    inner.append(create('strong',slotNames[slot]+': '+(item?.name||item?.itemType||id)));
    if(mark)inner.append(create('p','Pinned · this item cannot be replaced','note'));
+   else if(!editable)inner.append(create('p','Saved original photograph · view only','note'));
    else{
     const selector=create('select');selector.id='styleOwned03Swap-'+slot;
     selector.setAttribute('aria-label','Swap '+slotNames[slot]);
@@ -362,18 +365,26 @@ export async function mountStyleOwnedLive03({
    piece.append(inner);slotDiv.append(piece);
   }
   workspace.append(slotDiv);
-  const actions=create('div',null,'toolbar');
-  const undo=create('button','Undo last swap');undo.id='styleOwned03Undo';
-  undo.disabled=!history.length;
-  undo.onclick=()=>{try{undoSwap();}catch(error){text(String(error.message||error));}};
-  const cancel=create('button','Cancel changes');cancel.id='styleOwned03Cancel';
-  cancel.onclick=()=>{try{cancelChanges();}catch(error){text(String(error.message||error));}};
-  const save=create('button','Save this outfit','primary');save.id='styleOwned03Save';
-  save.onclick=async()=>{save.disabled=true;try{await saveCurrent();}
-   catch(error){text('Outfit not saved: '+String(error.message||error)+'. Correct the issue and try again.');}
-   finally{save.disabled=false;}};
-  actions.append(undo,cancel,save);workspace.append(actions);
+  if(editable){
+   const actions=create('div',null,'toolbar');
+   const undo=create('button','Undo last swap');undo.id='styleOwned03Undo';
+   undo.disabled=!history.length;
+   undo.onclick=()=>{try{undoSwap();}catch(error){text(String(error.message||error));}};
+   const cancel=create('button','Cancel changes');cancel.id='styleOwned03Cancel';
+   cancel.onclick=()=>{try{cancelChanges();}catch(error){text(String(error.message||error));}};
+   const save=create('button','Save this outfit','primary');save.id='styleOwned03Save';
+   save.onclick=async()=>{save.disabled=true;try{await saveCurrent();}
+    catch(error){text('Outfit not saved: '+String(error.message||error)+'. Correct the issue and try again.');}
+    finally{save.disabled=false;}};
+   actions.append(undo,cancel,save);workspace.append(actions);
+  }
   if(savedId){
+   const receipt=create('p',reopened?
+    'Reopened saved outfit · original photos and item references preserved.':
+    'Saved! Outfit added to your existing Saved outfits. Original photographs preserved.',
+    'saved-receipt');
+   receipt.id='styleOwned03SavedReceipt';receipt.setAttribute('role','status');
+   workspace.append(receipt);
    const reopen=create('button','Reopen saved outfit');reopen.id='styleOwned03Reopen';
    reopen.onclick=()=>{try{reopenSaved();}catch(error){text(String(error.message||error));}};
    workspace.append(reopen);
@@ -393,7 +404,7 @@ export async function mountStyleOwnedLive03({
    generated=suggestThreeNativeOwned03(rows(),{
     ownerId:snapshot.ownerId,pinnedId:pinId,
     occasion:doc.getElementById('stylistOccasion')?.value||'Casual'});
-   current=null;active=null;history=[];savedId=null;
+   current=null;active=null;history=[];savedId=null;reopened=false;
    looks.replaceChildren();workspace.replaceChildren();
    renderLooks();
    text(generated.reason+' Selected item stays pinned. Choose a look to swap or save it.');
@@ -415,7 +426,7 @@ export async function mountStyleOwnedLive03({
   active=proposal;
   applySlots(proposal.slots,proposal.sourceSHA256ById);
   current={slots:{...proposal.slots},sourceSHA256ById:{...proposal.sourceSHA256ById}};
-  history=[];savedId=null;
+  history=[];savedId=null;reopened=false;
   renderWorkspace();text('Original '+(byId(pinId)?.name||'clothing')+
    ' stays pinned. Swap one piece at a time; no outfit is saved yet.');
   return current;
@@ -443,7 +454,7 @@ export async function mountStyleOwnedLive03({
  }
  function cancelChanges(){
   if(styleDraft&&board.status().active)board.cancel();
-  styleDraft=false;current=null;active=null;history=[];savedId=null;
+  styleDraft=false;current=null;active=null;history=[];savedId=null;reopened=false;
   workspace.replaceChildren();text('Canceled unsaved edits. Existing saved outfits and original photos unchanged.');
  }
  async function saveCurrent(){
@@ -457,7 +468,7 @@ export async function mountStyleOwnedLive03({
       saved.slotSources?.[slot]?.sha256!==current.sourceSHA256ById[id])||
     before.saved.some(x=>!stored.saved.some(y=>y.id===x.id&&JSON.stringify(y)===JSON.stringify(x))))
    fail('SAVED_OUTFIT_VERIFY_FAILED');
-  savedId=saved.id;styleDraft=false;history=[];
+  savedId=saved.id;reopened=false;styleDraft=false;history=[];
   renderWorkspace();
   text('Saved! Outfit '+(saved.name||'Owned outfit')+
    ' is in your existing Saved outfits list. Backup sync pending; original clothing unchanged.');
@@ -471,6 +482,7 @@ export async function mountStyleOwnedLive03({
   const record=board.selectSaved(index);
   if(!Object.entries(current?.slots||{}).every(([slot,id])=>record.slots[slot]===id))
    fail('REOPENED_OUTFIT_REFERENCES_CHANGED');
+  reopened=true;renderWorkspace();
   text('Reopened saved look with original garment IDs; missing items are retained.');
   return record;
  }
@@ -487,7 +499,7 @@ export async function mountStyleOwnedLive03({
    fail('SELECTED_ITEM_MISSING_OR_NOT_VERIFIED');
   }
   requestedReviewId=null;pinId=itemId;selector.value=itemId;generated=null;current=null;active=null;
-  styleDraft=false;history=[];savedId=null;
+  styleDraft=false;history=[];savedId=null;reopened=false;
   looks.replaceChildren();workspace.replaceChildren();displayPinned();
   text('New original garment selected and pinned. Generate your owned outfits.');
   return itemId;
@@ -497,7 +509,7 @@ export async function mountStyleOwnedLive03({
    selector.value=pinId;text('Cancel the current unsaved look before changing your pinned piece.');return;
   }
   pinId=selector.value;generated=null;current=null;active=null;
-  history=[];savedId=null;looks.replaceChildren();workspace.replaceChildren();displayPinned();
+  history=[];savedId=null;reopened=false;looks.replaceChildren();workspace.replaceChildren();displayPinned();
  };
  refreshButton.onclick=()=>refresh().catch(error=>text(String(error.message||error)));
  generate.onclick=()=>generateLooks().catch(error=>text(String(error.message||error)));
@@ -512,7 +524,7 @@ export async function mountStyleOwnedLive03({
   active:!!snapshot&&board.status().active,ownerId:snapshot?.ownerId||null,
   pinnedId:pinId,lookCount:generated?.combinations.length||0,
   dirty:styleDraft&&board.status().dirty,selectedSlots:current?{...current.slots}:null,
-  savedId,sourceSHA256Verified:!!snapshot?.originalSHA256Verified,
+  savedId,reopened,sourceSHA256Verified:!!snapshot?.originalSHA256Verified,
   fallback:'genuine-original-photo-only-unless-independent-3d-donor-vetted',
   realSignedRLSVerified:false,releaseAuthorized:false,familyAlpha:'HOLD'}),
   refresh,selectGarment,generate:generateLooks,suggestions:()=>{live();return generated?structuredClone(generated):null;},selectSuggestion:chooseLook,
