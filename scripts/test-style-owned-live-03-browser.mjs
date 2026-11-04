@@ -435,7 +435,18 @@ try{
  }));
  assert.deepEqual(unexpectedExternal,[],
   'No external mutation, unknown domain or unblocked request is allowed');
- assert.deepEqual(results.consoleErrors,[]);
+ const expectedBlockedConsoleErrors=results.consoleErrors.filter(e=>
+  e.text==='Failed to load resource: net::ERR_FAILED'&&
+  results.external.some(blocked=>blocked.engine===e.engine&&
+   blocked.width===e.width&&blocked.method==='GET'&&
+   blocked.blocked===true&&permittedExternalReadOnly.has(blocked.host)));
+ const otherConsoleErrors=results.consoleErrors.filter(e=>
+  !expectedBlockedConsoleErrors.includes(e));
+ assert.deepEqual(otherConsoleErrors,[],
+  'Any console failure not attributable to the explicitly blocked old font/recognition GETs fails');
+ assert.ok(expectedBlockedConsoleErrors.length<=results.external.length,
+  'A failed-load console entry cannot outnumber its actual blocked GET evidence');
+ results.expectedBlockedConsoleErrors=expectedBlockedConsoleErrors.length;
  assert.equal(results.cases.every(x=>x.threeRealOriginalOwnedLooks&&
   x.actualInputAndHumanCorrection&&x.ownerBPrivate&&x.photosUnchanged),true);
  assert.equal(results.screenshots.length,51); // 9 Chromium and 8 WebKit stages per width including independent one-item confirmation
