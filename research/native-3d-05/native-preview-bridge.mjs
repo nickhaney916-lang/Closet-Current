@@ -88,6 +88,8 @@ export async function mountNative3D05({
  win.addEventListener('pagehide',invalidate);
  doc.getElementById('logout').addEventListener('click',logout,true);
  function lockDonorEditing(){
+  const donorLauncher=doc.getElementById('outfit3D01Launch');
+  if(donorLauncher){donorLauncher.hidden=true;donorLauncher.disabled=true;}
   for(const id of [...editButtons,...editInputs]){
    const element=doc.getElementById(id);
    if(element){element.disabled=true;element.setAttribute('aria-disabled','true');}
