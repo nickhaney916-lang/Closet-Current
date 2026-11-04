@@ -1,0 +1,42 @@
+name: AUTO-MULTI-DIVERSITY-16 licensed photo discovery ONLY no deploy
+on:
+  pull_request:
+    paths:
+      - 'research/auto-multi-diversity-16/candidate-sources.json'
+      - 'scripts/discover-auto-multi-16.mjs'
+      - '.github/workflows/auto-multi-diversity-16-discovery-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  download-verify-and-preview-public-commons-originals:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+      - name: Do not modify original user data or production
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor 0236182f72b29a7b4d4924f0b3f5754cb9956690 HEAD
+          git diff --exit-code 0236182f72b29a7b4d4924f0b3f5754cb9956690 -- public/ benchmark/fixtures/ supabase/ migrations/ .github/workflows/pages.yml .github/workflows/cloudflare-pages.yml
+      - name: Install isolated research dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3
+      - name: Download real original Commons JPEGs and SHA256 verify original vs preview
+        run: |
+          node --check scripts/discover-auto-multi-16.mjs
+          node scripts/discover-auto-multi-16.mjs
+      - name: Preserve review-only contact previews and immutable hashes, NOT original JPEGs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: AUTO-MULTI-16-licensed-contact-sources-preview-NO-ORIGINALS-HOLD
+          path: |
+            benchmark/auto-multi-16-discovery/*.json
+            benchmark/auto-multi-16-discovery/*.jpg
+          if-no-files-found: warn
+          retention-days: 21
