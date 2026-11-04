@@ -183,6 +183,7 @@ try{
   await page.waitForFunction(()=>window.nativeLossless04Bridge?.status().active,null,{timeout:45000});
   assert.equal(await page.evaluate(()=>items.length),3);
   assert.ok(await page.evaluate(()=>items.every(x=>x.originalPhoto?.sha256===x.sourceSHA256)));
+  await page.locator('.account-menu summary').click();
   await page.locator('#logout').click();
   await page.waitForFunction(()=>document.getElementById('authGate')?.hidden===false,null,{timeout:30000});
   assert.equal(await page.locator('#multi24Research img[src^="data:image/"]').count(),0);
