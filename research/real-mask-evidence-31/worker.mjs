@@ -92,6 +92,13 @@ self.onmessage=event=>{
     modelMask:[map.width,map.height],
     personDetected:map.personDetected,
     sourceMapLabelsSHA256:await sha(map.labels),
+    // Read-only, actual decoded model label pixels for visible audit overlays.
+    // The browser receives these only for public SHA-locked research photos.
+    labelMapBase64:(()=>{
+     let s='';for(let start=0;start<map.labels.length;start+=16000)
+      s+=String.fromCharCode(...map.labels.subarray(start,start+16000));
+     return btoa(s);
+    })(),
     maskPixelMembershipConserved:true,
     familyConservation:conservation,
     before:await Promise.all(before.map(describe)),
