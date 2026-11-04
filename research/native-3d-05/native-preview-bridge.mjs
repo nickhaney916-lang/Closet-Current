@@ -49,7 +49,8 @@ export async function mountNative3D05({
  importPinnedDonor=()=>import('/donor/research/outfit-3d-01/research-panel.mjs'),
  onStatus=()=>{}
 }={}){
- const params=win?.location?.search&&new URLSearchParams(win.location.search);
+ const params=typeof win?.location?.search==='string'?
+  new URLSearchParams(win.location.search):null;
  if(!win||!doc||params?.get('native3D05')!=='research'||
   params?.get('nativeLossless04')!=='research'||
   !consumer||typeof importPinnedDonor!=='function'||
