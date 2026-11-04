@@ -7,6 +7,7 @@ import {atomicSaveGarments24,validCrop24,pieceKey24,duplicatePieceKeys24} from '
 import {organizeReview28,reviewTier28} from './review-triage-28.mjs';
 import {detectFlatlayFromImage29} from './flatlay-contrast-29.mjs';
 import {sceneReviewDefaults32,canConfirmScene32} from './scene-class-guard-32.mjs';
+import {snapshotConfirmations34,saveReceipt34} from './review-save-finality-34.mjs';
 const TYPES=['Tops','Bottoms','Dresses','Outerwear','Shoes'];
 const palette=['Black','White','Gray','Beige','Brown','Blue','Green','Red','Pink','Purple','Yellow','Orange','Multicolor'];
 const $=(root,id)=>root.getElementById(id);
@@ -55,8 +56,11 @@ export function mountMultiGarmentCapture24({
  const grid=el('div',null,'multi24-grid');grid.id='multi24Grid';
  const actions=el('div',null,'multi24-actions');
  let state=null,canceled=false,job=null,renderVersion=0,submitting=false;
- const cancel=button('Cancel extraction',()=>reset('Unfinished extraction canceled; nothing was saved.'));
- const add=button('Add missed piece',()=>{if(!state)return;const crop={x:0,y:0,width:1,height:1};state.pieces.push({id:crypto.randomUUID(),instanceKey:manualKey(crop),cropBounds:crop,image:state.proof.image,manual:true,cropReviewed:false,category:'Uncategorized',itemType:'Unknown',color:'',confirmed:false,maskApplied:false,hint:null});redraw();});
+ const cancel=button('Cancel extraction',()=>{
+  if(submitting){status.textContent='Saving is in progress. Cancellation is unavailable once saving begins.';return;}
+  reset('Unfinished extraction canceled; nothing was saved.');
+ });
+ const add=button('Add missed piece',()=>{if(submitting||!state)return;const crop={x:0,y:0,width:1,height:1};state.pieces.push({id:crypto.randomUUID(),instanceKey:manualKey(crop),cropBounds:crop,image:state.proof.image,manual:true,cropReviewed:false,category:'Uncategorized',itemType:'Unknown',color:'',confirmed:false,maskApplied:false,hint:null});redraw();});
  const suggest=button('Suggest missed regions on a plain backdrop',()=>suggestFlatlay());
  const save=button('Save confirmed pieces together',()=>commit(),'primary');
  actions.append(add,suggest,save,cancel);
@@ -66,11 +70,13 @@ export function mountMultiGarmentCapture24({
  function revoke(){canceled=true;renderVersion++;job?.worker?.terminate();if(job)clearTimeout(job.timeout);job=null;state=null;original.removeAttribute('src');original.hidden=true;grid.replaceChildren();save.disabled=true;add.disabled=true;suggest.disabled=true;}
  function reset(text){revoke();status.textContent=text||'No unconfirmed photos were saved.';}
  async function crop(piece){
+  if(submitting)return;
   if(!sameOwner()){reset('Account changed; extraction canceled.');return;}
   try{
    await window.openPhotoCrop({...piece,originalPhoto:state.proof.originalPhoto},{
     analyze:async()=>null,
     save:async photo=>{
+     if(submitting)throw Error('A garment save is already in progress');
      if(!sameOwner())throw Error('Session changed');
      if(!validCrop24(photo.cropBounds))throw Error('Invalid crop');
      piece.image=photo.image;piece.cropBounds={...photo.cropBounds};piece.maskApplied=!!photo.maskApplied;
@@ -78,13 +84,13 @@ export function mountMultiGarmentCapture24({
      piece.confirmed=false;redraw();
     }
    });
-  }catch{status.textContent='Crop editor unavailable. The original photograph was not changed.';}
+  }catch{if(!submitting)status.textContent='Crop editor unavailable. The original photograph was not changed.';}
  }
- function input(label,value,change){const wrap=el('label',label),box=el('input');box.type='text';box.value=value||'';box.maxLength=120;box.oninput=()=>change(box.value);wrap.append(box);return wrap;}
- function selector(label,options,value,change){const wrap=el('label',label),sel=el('select');for(const v of options){const option=el('option',v);option.value=v;sel.append(option);}sel.value=options.includes(value)?value:options[0];sel.onchange=()=>change(sel.value);wrap.append(sel);return wrap;}
+ function input(label,value,change){const wrap=el('label',label),box=el('input');box.type='text';box.value=value||'';box.maxLength=120;box.oninput=()=>{if(!submitting)change(box.value);};wrap.append(box);return wrap;}
+ function selector(label,options,value,change){const wrap=el('label',label),sel=el('select');for(const v of options){const option=el('option',v);option.value=v;sel.append(option);}sel.value=options.includes(value)?value:options[0];sel.onchange=()=>{if(!submitting)change(sel.value);};wrap.append(sel);return wrap;}
  function redraw(){
   if(!state)return;grid.replaceChildren();
-  original.hidden=false;add.disabled=false;suggest.disabled=false;
+  original.hidden=false;add.disabled=submitting;suggest.disabled=submitting;cancel.disabled=submitting;
   const review=organizeReview28(state.pieces);
   root.dataset.priorityCount=String(review.priority.length);
   root.dataset.additionalCount=String(review.additional.length);
@@ -120,17 +126,20 @@ export function mountMultiGarmentCapture24({
    card.append(colorLabel,list);
    const confirmLabel=el('label');confirmBox=el('input');confirmBox.type='checkbox';
    confirmBox.disabled=!canConfirmScene32(p,schema);confirmBox.checked=!!p.confirmed&&!confirmBox.disabled;
-   confirmBox.onchange=()=>{p.confirmed=confirmBox.checked&&canConfirmScene32(p,schema);
+   confirmBox.onchange=()=>{if(submitting)return;
+    p.confirmed=confirmBox.checked&&canConfirmScene32(p,schema);
     save.disabled=!state.pieces.some(x=>x.confirmed);};
    confirmLabel.append(confirmBox,doc.createTextNode('I confirm this visible garment, category and color'));card.append(confirmLabel);
    const controls=el('div',null,'multi24-actions'),edit=button('Adjust crop/mask',()=>crop(p));
-   const remove=button('Remove detection',()=>{state.pieces.splice(state.pieces.indexOf(p),1);redraw();});
+   const remove=button('Remove detection',()=>{if(submitting||!state)return;state.pieces.splice(state.pieces.indexOf(p),1);redraw();});
    controls.append(edit,remove);card.append(controls);
+   if(submitting)for(const control of card.querySelectorAll('button,input,select'))control.disabled=true;
    grid.append(card);
   }
   save.disabled=!state.pieces.some(p=>p.confirmed)||submitting;
  }
  function suggestFlatlay(){
+  if(submitting)return;
   if(!state||!sameOwner())return reset('Account changed. No regions or photos saved.');
   const owner=state.owner,source=state.proof.sourceSHA256;
   const suggestion=detectFlatlayFromImage29(state.decoded);
@@ -223,28 +232,55 @@ export function mountMultiGarmentCapture24({
   }catch(error){reset('Could not verify photo: '+String(error.message||error));}
  }
  async function commit(){
-  if(submitting||!state||!sameOwner())return reset('Account changed. No garments saved.');
+  if(submitting)return;
+  if(!state||!sameOwner())return reset('Account changed. No garments saved.');
   const selected=state.pieces.filter(x=>x.confirmed);
   if(!selected.length)return status.textContent='Select at least one reviewed garment.';
+  let references,snapshots;
   try{
-   const invalid=selected.find(x=>!canConfirmScene32(x,schema)||
-    (x.manual&&!x.cropReviewed)||!validCrop24(x.cropBounds));
-   if(invalid)throw Error('Confirm category, specific type, and color, and adjust crops for manually added items.');
-   const duplicates=duplicatePieceKeys24(
-    await new Promise((resolve,reject)=>{const r=getDb().transaction('items').objectStore('items').getAll();r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);}),
-    selected.map(x=>({sourcePieceKey:pieceKey24(state.proof.sourceSHA256,x.instanceKey)}))
-   );
+   ({references,snapshots}=snapshotConfirmations34(state.pieces,schema));
+   // Preserve the inherited explicit guard as well as the independent immutable snapshot guard.
+   if(snapshots.some(x=>!canConfirmScene32(x,schema)||(x.manual&&!x.cropReviewed)))
+    throw Error('An unreviewed or invalid piece cannot be saved.');
+  }catch(error){status.textContent=String(error.message||error);return;}
+  // All controls and event callbacks stop modifying review facts BEFORE the
+  // first asynchronous IndexedDB read or queued callback can begin.
+  const owner=state.owner,proof=state.proof;
+  submitting=true;redraw();
+  status.textContent='Checking duplicate regions and saving the exact confirmed snapshot…';
+  try{
+   const existing=await new Promise((resolve,reject)=>{
+    const r=getDb().transaction('items').objectStore('items').getAll();
+    r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);
+   });
+   const duplicates=duplicatePieceKeys24(existing,
+    snapshots.map(x=>({sourcePieceKey:pieceKey24(proof.sourceSHA256,x.instanceKey)})));
    if(duplicates.length)throw Error('Previously saved garment detected in this exact source. Deselect duplicate pieces.');
-   submitting=true;save.disabled=true;status.textContent='Verifying original SHA-256 and saving all confirmed pieces atomically…';
-   const owner=state.owner,proof=state.proof,rows=await queued(()=>atomicSaveGarments24({
-    db:getDb(),proof,pieces:selected,ownerId:owner,currentOwner:getOwner
+   const rows=await queued(()=>atomicSaveGarments24({
+    db:getDb(),proof,pieces:snapshots,ownerId:owner,currentOwner:getOwner
    }));
-   if(getOwner()!==owner){reset('Account switched. Prior owner records stay private; reload to check.');return;}
-   await onSaved(rows);await refreshNative();
-   status.textContent=rows.length+' separately confirmed garments saved together. Each retains the exact original SHA-256.';
-   state.pieces=state.pieces.filter(x=>!selected.includes(x));redraw();
-  }catch(error){status.textContent='Save rejected; no newly selected batch pieces added. '+String(error.message||error);}
-  finally{submitting=false;if(state)redraw();}
+   // IndexedDB has committed. No notification or screen-refresh failure may
+   // ever be described as "nothing saved" or offer a duplicate retry.
+   if(!state||!sameOwner()){
+    reset('Account changed after save; confirmed pieces belong only to their original account.');
+    return;
+   }
+   state.pieces=state.pieces.filter(x=>!references.includes(x));
+   let notificationFailed=false,refreshFailed=false;
+   try{await onSaved(rows);}catch{notificationFailed=true;}
+   try{await refreshNative();}catch{refreshFailed=true;}
+   if(!state||!sameOwner()){
+    reset('Account changed after save; confirmed pieces belong only to their original account.');
+    return;
+   }
+   status.textContent=saveReceipt34(rows.length,notificationFailed,refreshFailed);
+  }catch(error){
+   if(state&&sameOwner())status.textContent='Save did not complete; no confirmed batch was acknowledged. '+String(error.message||error);
+  }finally{
+   submitting=false;
+   if(state)redraw();
+   else cancel.disabled=false;
+  }
  }
  const handle=event=>{const file=event.target.files?.[0];event.target.value='';if(file)startFile(file);};
  for(const id of ['outfitCamera','outfitUpload'])$(doc,id).onchange=handle;

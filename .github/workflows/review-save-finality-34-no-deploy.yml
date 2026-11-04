@@ -1,0 +1,100 @@
+name: REVIEW34 atomic save finality six browser engines NO DEPLOY
+on:
+  push:
+    branches:
+      - research/review-save-finality-34-main-20261104-HOLD
+  pull_request:
+    paths:
+      - 'research/multi-garment-capture-01/review-ui.mjs'
+      - 'research/multi-garment-capture-01/review-save-finality-34.mjs'
+      - 'research/review-save-finality-34/**'
+      - 'scripts/verify-review-save-finality-34.mjs'
+      - 'tests/review-save-finality-34.test.mjs'
+      - '.github/workflows/review-save-finality-34-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  isolated-owner-private-save-failover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify exact PRIOR verified research and prohibited-path isolation
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor 79e957719bd90f7f1cd1ae71ec4bde5ff14ae93c HEAD
+          git diff --name-only 79e957719bd90f7f1cd1ae71ec4bde5ff14ae93c HEAD > /tmp/review34-paths
+          while IFS= read -r p; do
+            case "$p" in
+              research/multi-garment-capture-01/review-ui.mjs|research/multi-garment-capture-01/review-save-finality-34.mjs|research/review-save-finality-34/*|scripts/verify-review-save-finality-34.mjs|tests/review-save-finality-34.test.mjs|.github/workflows/review-save-finality-34-no-deploy.yml) ;;
+              *) echo "BLOCKED unexpected production/staging/model/photo/privacy change: $p"; exit 1 ;;
+            esac
+          done < /tmp/review34-paths
+      - name: Install pinned isolated test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Build application and run entire inherited and new test suite
+        run: |
+          node --check research/multi-garment-capture-01/review-ui.mjs
+          node --check research/multi-garment-capture-01/review-save-finality-34.mjs
+          node --check scripts/verify-review-save-finality-34.mjs
+          node --check tests/review-save-finality-34.test.mjs
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Run actual IndexedDB save/cancel/refresh failure in Chromium and WebKit on three mobile widths
+        run: node scripts/verify-review-save-finality-34.mjs
+      - name: Independently inspect screenshot pixel variation and all 12 SHA-256 receipts
+        run: |
+          node --input-type=module <<'EONODE'
+          import assert from 'node:assert/strict';
+          import {readFile} from 'node:fs/promises';
+          import {createHash} from 'node:crypto';
+          import sharp from 'sharp';
+          const root='benchmark/review-save-finality-34/';
+          const report=JSON.parse(await readFile(root+'browser.json','utf8'));
+          assert.equal(report.priority,'REVIEW-SAVE-FINALITY-34');
+          assert.equal(report.actualBrowserCases,6);
+          assert.equal(report.realBrowsers,2);
+          assert.equal(report.realSegFormerRun,false);
+          assert.equal(report.realCustomerData,false);
+          assert.deepEqual(report.browserErrors,[]);
+          assert.deepEqual(report.unexpectedRequests,[]);
+          let count=0;
+          for(const engine of ['chromium','webkit'])for(const width of [320,390,430]){
+            const c=report.cases.find(x=>x.engine===engine&&x.width===width);
+            assert.ok(c?.confirmedSnapshotUnaffectedByStaleEdit&&c.cancellationBlockedDuringSave);
+            assert.ok(c.realIndexedDBSingleAtomicCommit&&c.postCommitErrorReceiptHonest);
+            assert.ok(c.sourceIdentityVerified&&c.ownerIsolationOfSavedRecord);
+            assert.equal(c.screenshots.length,2);
+            for(const s of c.screenshots){
+              const bytes=await readFile(root+s.filename);
+              assert.equal(createHash('sha256').update(bytes).digest('hex'),s.sha256);
+              const m=await sharp(bytes).metadata(),stats=await sharp(bytes).stats();
+              assert.equal(m.format,'png');assert.equal(m.width,width);
+              assert.equal(m.height,s.height);assert.equal(bytes.length,s.bytes);
+              assert.ok(stats.channels[0].stdev>6,'image must be nonblank');
+              count++;
+            }
+          }
+          assert.equal(count,12);
+          console.log('REVIEW34 6 real browser-IndexedDB transactions, 12 genuine screenshot SHA + pixel-variation checks PASS; Family Alpha HOLD');
+          EONODE
+      - name: Preserve browser evidence without deploying
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: REVIEW34-synthetic-original-real-IDB-12-screenshots-HOLD
+          path: |
+            benchmark/review-save-finality-34/browser.json
+            benchmark/review-save-finality-34/*.png
+          if-no-files-found: warn
+          retention-days: 21
