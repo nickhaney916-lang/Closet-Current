@@ -182,6 +182,14 @@ const outfitBoardReady=(async()=>{
     await nativeLossless04.remove(index,{confirmed:true});
    });
    $('saveBoard').after(controls);
+   if(typeof URLSearchParams==='function'&&
+     new URLSearchParams(location.search).get('native3D05')==='research'){
+    try{
+     const {mountNative3D05}=await import('../research/native-3d-05/native-preview-bridge.mjs');
+     window.native3D05Bridge=await mountNative3D05({consumer:nativeLossless04,
+      onStatus:value=>$('boardSaveStatus').textContent=value});
+    }catch(error){nativeLossless04Notify(error);}
+   }
   }catch(error){nativeLossless04Notify(error);nativeLossless04ClearPreview();}
  }else if(db){
   try{
