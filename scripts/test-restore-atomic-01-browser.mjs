@@ -154,6 +154,7 @@ try{
     catch(e){return {error:String(e.message||e)};}
    });
    assert.deepEqual(exportDiagnostic,{valid:true},'Original browser backup validation must succeed');
+   await page.evaluate(()=>switchView('closet'));
    await page.locator('details.closet-backup > summary').click();
    const downloadPromise=page.waitForEvent('download',{timeout:12000});
    await page.locator('#export').click();
@@ -212,6 +213,8 @@ try{
    await page.waitForFunction(()=>document.getElementById('authGate')?.hidden===false);
    await signIn(page,'restore01-B');await seed(page,fixture('restore01-B'));
    await page.reload();await page.waitForFunction(()=>window.restoreAtomic01Bridge?.status()?.active);
+   await page.evaluate(()=>switchView('closet'));
+   await page.locator('details.closet-backup > summary').click();
    await page.locator('#import').setInputFiles(makeFile(backup));
    assert.deepEqual(await stored(page),fixture('restore01-B').items);
    cases.push({engine,width,originalJPEGs:4,screenshots:5,
