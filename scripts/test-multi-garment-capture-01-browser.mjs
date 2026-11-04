@@ -167,6 +167,28 @@ try{
    x.originalPhoto.image==='data:image/jpeg;base64,'+bytes.toString('base64')&&
    !x.threeDReady&&x.ownerId==='multi24-A'));
   assert.deepEqual(rows.map(x=>x.category).sort(),['Bottoms','Shoes','Tops']);
+  // Real UI reimport: the same JPEG and the same hand-reviewed garment
+  // must not silently generate a duplicate record or partially save again.
+  await page.locator('#outfitUpload').setInputFiles({
+   name:'same-exact-licensed-photo.jpg',mimeType:'image/jpeg',buffer:bytes
+  });
+  await page.waitForFunction(hash=>window.multi24Research?.debug().sourceSHA256===hash,sourceHash,{timeout:30000});
+  await page.getByRole('button',{name:'Add missed piece'}).click();
+  await realCrop(page,0,cases[0]);
+  const dup=page.locator('#multi24Grid .multi24-card').first();
+  await dup.getByLabel('Main category').selectOption('Tops');
+  await dup.getByLabel('Specific type').selectOption('Button-down shirt');
+  await dup.getByLabel('Color (confirm visually)').fill('White');
+  await dup.getByLabel('I confirm this visible garment, category and color').check();
+  await page.getByRole('button',{name:'Save confirmed pieces together'}).click();
+  await page.waitForFunction(()=>document.getElementById('multi24Status')?.textContent.includes('Save rejected'),null,{timeout:30000});
+  assert.match(await page.locator('#multi24Status').innerText(),/duplicate/i);
+  const afterDuplicateCount=await page.evaluate(()=>new Promise((resolve,reject)=>{
+   const q=db.transaction('items').objectStore('items').count();
+   q.onsuccess=()=>resolve(q.result);q.onerror=()=>reject(q.error);
+  }));
+  assert.equal(afterDuplicateCount,3,'Reimport failed closed without any new duplicate record');
+
   const byCategory=Object.fromEntries(rows.map(x=>[x.category,x.id]));
   await page.evaluate(()=>switchView('closet'));
   await page.locator('#search').fill('Blue');
@@ -213,13 +235,18 @@ try{
    r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);
   }));
   assert.deepEqual(recoveredBoard,backup.state['outfit-board']);
-  await page.evaluate(()=>switchView('builder'));
-  await shot(page,width,'04-saved-outfit');
-  // Reload tests persistence, original-photo linkage and owner-only reads.
+  // Restores intentionally revoke stale native UI snapshots. Reload and
+  // explicitly reopen the existing saved outfit, then inspect real clothing.
   await page.reload({waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>window.nativeLossless04Bridge?.status().active,null,{timeout:45000});
   assert.equal(await page.evaluate(()=>items.length),3);
   assert.ok(await page.evaluate(()=>items.every(x=>x.originalPhoto?.sha256===x.sourceSHA256)));
+  await page.evaluate(()=>switchView('builder'));
+  await page.locator('#savedBoards button').first().click();
+  assert.deepEqual(await page.evaluate(()=>window.nativeLossless04Bridge.view().slots),{
+   top:byCategory.Tops,bottom:byCategory.Bottoms,shoes:byCategory.Shoes
+  });
+  await shot(page,width,'04-saved-outfit');
   await page.locator('.account-menu summary').click();
   await page.locator('#logout').click();
   await page.waitForFunction(()=>document.getElementById('authGate')?.hidden===false,null,{timeout:30000});
@@ -227,7 +254,7 @@ try{
   await shot(page,width,'05-logout-photo-cleared');
   await login(page,'multi24-B');
   assert.equal(await page.evaluate(()=>items.length),0,'Owner B cannot see A original photo or private items');
-  diagnostics.cases.push({width,pieces:3,sourceSHA256:sourceHash,reviewAccuracy:'3/3 human confirmed; automatic model intentionally unavailable',outfitSaved:true,v4Backup:true,v4Restore:true,ownerPrivate:true});
+  diagnostics.cases.push({width,pieces:3,sourceSHA256:sourceHash,reviewAccuracy:'3/3 human confirmed; automatic model intentionally unavailable',outfitSaved:true,v4Backup:true,v4Restore:true,reimportDuplicateBlocked:true,ownerPrivate:true});
   await context.close();await browser.close();browser=null;
  }
  // Reproducible image contact sheet from actual screenshots, no generated cloth.
