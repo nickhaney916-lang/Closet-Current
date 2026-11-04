@@ -19,7 +19,7 @@ const doc=(owner)=>({schemaVersion:1,items:[{id:owner+'-dress',ownerId:owner,
  slots:{top:owner+'-dress',layer2:'missing-jacket',layer3:'missing-coat'}}]}}});
 function environment(){
  const owner=randomUUID(),auth={ready:Promise.resolve(),user:{id:owner},
-  getAccessToken:async()=> 'fake-token-only'},authGate={hidden:true},
+  getAccessToken:async()=> 'fake-token'},authGate={hidden:true},
   shell={hidden:false},logout=new EventTarget();
  const elements={authGate,appShell:shell,logout};
  const docNode={getElementById:id=>elements[id]||null};
