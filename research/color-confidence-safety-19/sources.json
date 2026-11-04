@@ -17,6 +17,50 @@
       "sourceDeclaredHint": "Black"
     },
     {
+      "id": "commons-0014",
+      "sourceDeclaredHint": "Blouse color not independently labeled"
+    },
+    {
+      "id": "commons-0016",
+      "sourceDeclaredHint": "Blouse color not independently labeled"
+    },
+    {
+      "id": "commons-0060",
+      "sourceDeclaredHint": "Jacket color not independently labeled"
+    },
+    {
+      "id": "commons-0078",
+      "sourceDeclaredHint": "High-top sneakers color not independently labeled"
+    },
+    {
+      "id": "commons-0033",
+      "sourceDeclaredHint": "Orange shorts"
+    },
+    {
+      "id": "commons-0035",
+      "sourceDeclaredHint": "Orange shorts"
+    },
+    {
+      "id": "commons-0049",
+      "sourceDeclaredHint": "Dress color not independently labeled"
+    },
+    {
+      "id": "commons-0053",
+      "sourceDeclaredHint": "Dress color not independently labeled"
+    },
+    {
+      "id": "commons-0077",
+      "sourceDeclaredHint": "High-top sneakers color not independently labeled"
+    },
+    {
+      "id": "validation-0021",
+      "sourceDeclaredHint": "Red/orange and white sneaker source title"
+    },
+    {
+      "id": "validation-0024",
+      "sourceDeclaredHint": "Silver sneaker source title"
+    },
+    {
       "id": "commons-0021",
       "sourceDeclaredHint": "Jeans (color not independently labeled)"
     },
@@ -60,5 +104,5 @@
     "productionModified": false
   },
   "requiredVerifiedOriginals": 6,
-  "candidateCount": 12
+  "candidateCount": 23
 }
