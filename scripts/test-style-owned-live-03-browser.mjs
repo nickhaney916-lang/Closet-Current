@@ -248,6 +248,23 @@ async function createAndVerifyLooks(page,id,owner,width,engine,rich){
  assert.ok(combos.results.combinations.every(c=>c.slots.top===id&&
   c.slots.bottom&&c.slots.shoes&&Object.values(c.slots).every(x=>ownedIds.has(x))));
  await capture(page,width,engine,'02-three-real-suggestions');
+ // Do not silently discard an unfinished native outfit when another card or
+ // "Generate" is tapped. Verify explicit cancel restores its exact CAS draft.
+ const priorCurrent=await page.evaluate(()=>window.nativeLossless04Bridge.readOnlySnapshot().current);
+ await page.locator('#styleOwned03Choose1').click();
+ const firstUnsaved=await page.evaluate(()=>window.nativeLossless04Bridge.view());
+ await page.locator('#styleOwned03Choose2').click();
+ assert.match(await page.locator('#styleOwned03Status').innerText(),
+  /Save this outfit or tap Cancel changes before choosing/);
+ assert.deepEqual(await page.evaluate(()=>window.nativeLossless04Bridge.view()),firstUnsaved);
+ await page.locator('#styleOwned03Generate').click();
+ assert.match(await page.locator('#styleOwned03Status').innerText(),
+  /Save this outfit or tap Cancel changes before generating/);
+ assert.deepEqual(await page.evaluate(()=>window.nativeLossless04Bridge.view()),firstUnsaved);
+ await page.locator('#styleOwned03Cancel').click();
+ assert.equal(await page.evaluate(()=>window.nativeLossless04Bridge.status().dirty),false);
+ assert.deepEqual(await page.evaluate(()=>window.nativeLossless04Bridge.view()),priorCurrent,
+  'Cancel must restore the exact preexisting board current record');
  await page.locator('#styleOwned03Choose1').click();
  const first=await page.evaluate(()=>window.nativeLossless04Bridge.view());
  assert.equal(first.slots.top,id);
@@ -297,6 +314,8 @@ async function createAndVerifyLooks(page,id,owner,width,engine,rich){
  const evidence={newId:id,ownedReferences:Object.values(newSaved.slots),
   sourceSha:photos['commons-0002'].sha256,distinctSignatures:combos.results.combinations.map(x=>x.signature),
   pinnedNeverChanged:true,undoRestored:true,swapCommitted:true,
+  unsavedSwitchRejected:true,regenerateRejectedWhileDirty:true,
+  cancelRestoredPriorDraft:true,
   saved:newSaved.id,previousRecordsExact:true,nativeCAS:true,
   nativeOutfitReopen:true,allPhotosFromExactOriginals:true};
  if(rich){
