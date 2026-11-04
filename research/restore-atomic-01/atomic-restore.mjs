@@ -56,9 +56,10 @@ async function inspectImages(x,visited=new WeakSet()){
  visited.add(x);let count=0;
  if(!Array.isArray(x)&&typeof x.image==='string'&&x.image){
   if(x.image.startsWith('closet-photo:'))throw Error('RESTORE01 unresolved remote photo');
-  await photoProof(x.image,{hash:x.originalPhoto?.image===x.image?
-   (x.originalPhoto?.sha256||x.sourceSHA256||null):x.originalPhoto?.sha256&&
-   !x.originalPhoto.image?(x.originalPhoto.sha256):null});
+  await photoProof(x.image,{hash:x.sha256||
+   (x.originalPhoto?.image===x.image?
+    (x.originalPhoto?.sha256||x.sourceSHA256||null):
+    (!x.originalPhoto?.image?x.sourceSHA256||null:null))});
   count++;
  }
  for(const [key,value] of Object.entries(x)){
@@ -93,6 +94,8 @@ function validateShape(value,{ownerId,mode='file'}={}){
    throw Error('RESTORE01 invalid original-photo identity');
   if(item.originalPhoto?.sha256&&!item.originalPhoto.image)
    throw Error('RESTORE01 missing pinned original JPEG');
+  if(item.sourceSHA256&&!item.originalPhoto?.image&&!item.image)
+   throw Error('RESTORE01 missing original image for pinned source');
  }
  for(const [id,row] of Object.entries(value.state)){
   if(!object(row)||row.id!==id)throw Error('RESTORE01 inconsistent state row identity');
