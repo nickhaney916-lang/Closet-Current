@@ -4,7 +4,6 @@ on:
     paths:
       - 'research/auto-multi-diversity-16/**'
       - 'tests/auto-multi-diversity-16.test.mjs'
-      - 'scripts/test-multi-garment-capture-01-browser.mjs'
       - '.github/workflows/auto-multi-diversity-16-no-deploy.yml'
 permissions:
   contents: read
@@ -30,7 +29,7 @@ jobs:
           git merge-base --is-ancestor "$base" HEAD
           git diff --name-only "$base" HEAD | while IFS= read -r file; do
             case "$file" in
-              research/auto-multi-diversity-16/*|tests/auto-multi-diversity-16.test.mjs|scripts/test-multi-garment-capture-01-browser.mjs|.github/workflows/auto-multi-diversity-16-no-deploy.yml) ;;
+              research/auto-multi-diversity-16/*|tests/auto-multi-diversity-16.test.mjs|.github/workflows/auto-multi-diversity-16-no-deploy.yml) ;;
               *) echo "Unexpected scope: $file"; exit 1 ;;
             esac
           done
@@ -56,7 +55,7 @@ jobs:
         if: always() && !cancelled()
         env:
           MULTI16_NATIVE_AUTO: matrix
-        run: node scripts/test-multi-garment-capture-01-browser.mjs
+        run: node research/auto-multi-diversity-16/native-review-browser.mjs
       - uses: actions/upload-artifact@v4
         if: always() && !cancelled()
         with:

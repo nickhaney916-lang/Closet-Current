@@ -98,39 +98,54 @@ try {
     const results = [], networkFailures = [], externalWrites = [], screenshots = [];
     let browser;
     try {
-      const proxy = process.env.MULTI16_BROWSER_PROXY;
-      browser = await engines[engine].launch(proxy ? {proxy: {server: proxy, bypass: '127.0.0.1'}} : {});
-      const context = await browser.newContext({
-        viewport: {width: 390, height: 920}, isMobile: true, hasTouch: true, serviceWorkers: 'block',
-      });
-      const downloads = new Map();
-      await context.route('**/*', async route => {
-        const request = route.request();
-        if (!request.url().startsWith(origin + '/') && !['GET', 'HEAD'].includes(request.method())) {
-          externalWrites.push(request.method());
-          return route.abort();
-        }
-        if (request.method() === 'GET' && isPinnedModelAsset(request.url())) {
-          return routePinnedModelAsset(route, downloads);
-        }
-        return route.continue();
-      });
-      const page = await context.newPage();
-      const recordFailure = (url, detail) => {
-        if (!/^https?:/.test(url) || url.startsWith(origin + '/')) return;
-        const parsed = new URL(url);
-        const failure = {resource: parsed.origin + parsed.pathname, detail};
-        if (!networkFailures.some(x => x.resource === failure.resource && x.detail === detail)) {
-          networkFailures.push(failure);
-        }
-      };
-      page.on('requestfailed', request => recordFailure(request.url(), request.failure()?.errorText));
-      page.on('response', response => {
-        if (response.status() >= 400) recordFailure(response.url(), 'HTTP ' + response.status());
-      });
       const runner = origin + '/research/auto-multi-diversity-16/runner.html';
-      await page.goto(runner);
+      const downloads = new Map();
+      async function openPage() {
+        const proxy = process.env.MULTI16_BROWSER_PROXY;
+        browser = await engines[engine].launch(proxy ? {proxy: {server: proxy, bypass: '127.0.0.1'}} : {});
+        const context = await browser.newContext({
+          viewport: {width: 390, height: 920}, isMobile: true, hasTouch: true, serviceWorkers: 'block',
+        });
+        await context.route('**/*', async route => {
+          const request = route.request();
+          if (!request.url().startsWith(origin + '/') && !['GET', 'HEAD'].includes(request.method())) {
+            externalWrites.push(request.method());
+            return route.abort();
+          }
+          if (request.method() === 'GET' && isPinnedModelAsset(request.url())) {
+            return routePinnedModelAsset(route, downloads);
+          }
+          return route.continue();
+        });
+        const page = await context.newPage();
+        const recordFailure = (url, detail) => {
+          if (!/^https?:/.test(url) || url.startsWith(origin + '/')) return;
+          const parsed = new URL(url);
+          const failure = {resource: parsed.origin + parsed.pathname, detail};
+          if (!networkFailures.some(x => x.resource === failure.resource && x.detail === detail)) {
+            networkFailures.push(failure);
+          }
+        };
+        page.on('requestfailed', request => recordFailure(request.url(), request.failure()?.errorText));
+        page.on('response', response => {
+          if (response.status() >= 400) recordFailure(response.url(), 'HTTP ' + response.status());
+        });
+        await page.goto(runner);
+        return page;
+      }
+      let page = await openPage();
+      let decodedPixels = 0;
+      // WebKit can retain decoded data URLs and WASM allocations across jobs.
+      // Bound browser lifetime by input work, without skipping any photo.
+      const pixelBudget = engine === 'webkit' ? 50_000_000 : Infinity;
       for (const row of sources) {
+        const pixels = row.width * row.height;
+        if (decodedPixels && decodedPixels + pixels > pixelBudget) {
+          await browser.close();
+          page = await openPage();
+          decodedPixels = 0;
+        }
+        decodedPixels += pixels;
         const started = Date.now();
         const resized = await page.evaluate(async ({row, jpeg, inputMode}) => {
           document.querySelector('footer').textContent = [row.attribution.title,
@@ -184,7 +199,6 @@ try {
           await page.setViewportSize({width: 390, height: 920});
         }
       }
-      await context.close();
     } catch (error) {
       reports[engine] = {harnessError: error.message};
     } finally {

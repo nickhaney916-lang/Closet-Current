@@ -2,8 +2,8 @@
  * MULTI24 real original Closet Current browser acceptance (not a simulated UI).
  * Auth HTTP is a synthetic fixture; photographs are unchanged CC BY-SA 2.0
  * originals and all app storage writes use genuine per-owner IndexedDB.
- * The default verifies manual fallback with the model blocked. The opt-in
- * research case permits the pinned real model and verifies explicit review.
+ * Automatic model accuracy is audited separately; this exercises the
+ * conservative human-corrected fallback when the model is unavailable.
  */
 import assert from 'node:assert/strict';
 import {createServer} from 'node:http';
@@ -12,10 +12,7 @@ import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import {resolve,extname} from 'node:path';
 import {chromium,webkit} from 'playwright';
 import sharp from 'sharp';
-import {isPinnedModelAsset,routePinnedModelAsset} from '../research/auto-multi-diversity-16/model-assets.mjs';
-const automaticMode=process.env.MULTI16_NATIVE_AUTO;
-const automatic=automaticMode==='1'||automaticMode==='matrix';
-const root=resolve('.'),dir=resolve(automatic?'benchmark/auto-multi-16/native-auto':'benchmark/multi-garment-capture-01');
+const root=resolve('.'),dir=resolve('benchmark/multi-garment-capture-01');
 await mkdir(dir,{recursive:true});
 const sourceUrl='https://upload.wikimedia.org/wikipedia/commons/b/b0/Shirt_and_tie%2C_jeans_and_Converse.jpg';
 const license='https://creativecommons.org/licenses/by-sa/2.0/';
@@ -119,11 +116,8 @@ const cases=[
  {category:'Bottoms',itemType:'Jeans',color:'Blue',x:.37,y:.38,right:.76,bottom:.88},
  {category:'Shoes',itemType:'Sneakers',color:'Blue',x:.35,y:.83,right:.72,bottom:.99}
 ];
-const targetBrowsers=automaticMode==='1'?[['chromium',chromium]]:[['chromium',chromium],['webkit',webkit]];
-const targetWidths=automaticMode==='1'?[390]:[320,390,430];
-const downloads=new Map();
 try{
- for(const [engine,browserType] of targetBrowsers)for(const width of targetWidths){
+ for(const [engine,browserType] of [['chromium',chromium],['webkit',webkit]])for(const width of [320,390,430]){
   browser=await browserType.launch({headless:true,...engine==='chromium'?{args:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']}:{}});
   const context=await browser.newContext({viewport:{width,height:920},isMobile:true,hasTouch:true,serviceWorkers:'block'});
   await context.route('**/*',route=>{
@@ -132,8 +126,7 @@ try{
    if(u.startsWith(origin+'/')||u.startsWith('data:')||u.startsWith('blob:'+origin))return route.continue();
    if(u.startsWith(auth+'/auth/v1/'))return authHTTP(route);
    if(request.method()!=='GET')diagnostics.unexpectedUploads.push({width,method:request.method(),url:u});
-   if(automatic&&request.method()==='GET'&&isPinnedModelAsset(u))return routePinnedModelAsset(route,downloads);
-   return route.abort(); // Default run deliberately proves human-reviewed fallback.
+   return route.abort(); // model not available: prove human-reviewed fallback.
   });
   const page=await context.newPage();
   page.on('pageerror',e=>diagnostics.errors.push({width,message:e.message}));
@@ -149,22 +142,7 @@ try{
   await page.locator('#multi24Research .multi24-source').scrollIntoViewIfNeeded();
   await shot(page,width,'01-original-source',engine);
   await fullShot(page,width,'01-original-source-all',engine);
-  if(automatic){
-   await page.waitForFunction(()=>/possible visible garment/.test(document.getElementById('multi24Status')?.textContent),null,{timeout:305000});
-   const detected=page.locator('#multi24Grid .multi24-card[data-piece-key^="seg-"]');
-   assert.equal(await detected.count(),3,'Pinned worker must supply actual, reviewable proposals');
-   assert.equal(await detected.locator('input[type=checkbox]:checked').count(),0);
-   assert.equal(await page.getByRole('button',{name:'Save confirmed pieces together'}).isDisabled(),true);
-   assert.equal(await page.evaluate(()=>items.length),0,'Unconfirmed detections must stay out of the wardrobe');
-   await fullShot(page,width,'01b-genuine-unconfirmed-proposals',engine);
-   const proposedShoe=detected.filter({has:page.getByLabel('Main category').locator('option:checked[value="Shoes"]')});
-   assert.equal(await proposedShoe.count(),1);
-   await proposedShoe.getByRole('button',{name:'Remove detection'}).click();
-   assert.equal(await detected.count(),2);
-   await page.getByRole('button',{name:'Add missed piece'}).click();
-  }else{
-   for(let i=0;i<3;i++)await page.getByRole('button',{name:'Add missed piece'}).click();
-  }
+  for(let i=0;i<3;i++)await page.getByRole('button',{name:'Add missed piece'}).click();
   assert.equal(await page.locator('#multi24Grid .multi24-card').count(),3);
   for(let i=0;i<3;i++){
    const p=cases[i];
@@ -195,14 +173,12 @@ try{
    name:'same-exact-licensed-photo.jpg',mimeType:'image/jpeg',buffer:bytes
   });
   await page.waitForFunction(hash=>window.multi24Research?.debug().sourceSHA256===hash,sourceHash,{timeout:30000});
-  if(automatic)await page.waitForFunction(()=>/possible visible garment/.test(document.getElementById('multi24Status')?.textContent),null,{timeout:305000});
-  const duplicateIndex=automatic?3:0,duplicatePiece=cases[automatic?2:0];
   await page.getByRole('button',{name:'Add missed piece'}).click();
-  await realCrop(page,duplicateIndex,duplicatePiece);
-  const dup=page.locator('#multi24Grid .multi24-card').nth(duplicateIndex);
-  await dup.getByLabel('Main category').selectOption(duplicatePiece.category);
-  await dup.getByLabel('Specific type').selectOption(duplicatePiece.itemType);
-  await dup.getByLabel('Color (confirm visually)').fill(duplicatePiece.color);
+  await realCrop(page,0,cases[0]);
+  const dup=page.locator('#multi24Grid .multi24-card').first();
+  await dup.getByLabel('Main category').selectOption('Tops');
+  await dup.getByLabel('Specific type').selectOption('Button-down shirt');
+  await dup.getByLabel('Color (confirm visually)').fill('White');
   await dup.getByLabel('I confirm this visible garment, category and color').check();
   await page.getByRole('button',{name:'Save confirmed pieces together'}).click();
   await page.waitForFunction(()=>document.getElementById('multi24Status')?.textContent.includes('Save rejected'),null,{timeout:30000});
@@ -311,11 +287,11 @@ try{
   await shot(page,width,'05-logout-photo-cleared',engine);
   await login(page,'multi24-B');
   assert.equal(await page.evaluate(()=>items.length),0,'Owner B cannot see A original photo or private items');
-  diagnostics.cases.push({engine,width,pieces:3,stylePinnedAndSaved:true,styleLooks:style.lookCount,sourceSHA256:sourceHash,reviewAccuracy:automatic?'3/3 human confirmed after genuine proposals, correction and a manual replacement':'3/3 human confirmed; automatic model intentionally unavailable',outfitSaved:true,v4Backup:true,v4Restore:true,reimportDuplicateBlocked:true,ownerPrivate:true});
+  diagnostics.cases.push({engine,width,pieces:3,stylePinnedAndSaved:true,styleLooks:style.lookCount,sourceSHA256:sourceHash,reviewAccuracy:'3/3 human confirmed; automatic model intentionally unavailable',outfitSaved:true,v4Backup:true,v4Restore:true,reimportDuplicateBlocked:true,ownerPrivate:true});
   await context.close();await browser.close();browser=null;
  }
  // Reproducible image contact sheet from actual screenshots, no generated cloth.
- for(const [engine] of targetBrowsers)for(const width of targetWidths){
+ for(const engine of ['chromium','webkit'])for(const width of [320,390,430]){
   const series=diagnostics.screenshots.filter(s=>s.width===width&&s.file.startsWith(engine+'-')&&!s.fullPage);
   const composite=await sharp({create:{width:width*series.length,height:920,channels:4,background:'#ffffff'}})
    .composite(await Promise.all(series.map(async(s,i)=>({input:await readFile(dir+'/'+s.file),left:i*width,top:0})))).png().toBuffer();
