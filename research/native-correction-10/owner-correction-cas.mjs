@@ -78,7 +78,7 @@ export async function commitNativeCorrection10({
  if(!db||db.name!=='closet-current-user-'+ownerId||
     typeof db.transaction!=='function')
   throw Error('CORRECTION10_OWNER_PRIVATE_DATABASE_REQUIRED');
- if(!Array.isArray(nextBatch))throw Error('CORRECTION10_DRAFT_LIST_REQUIRED');
+ if(nextBatch!==null&&!Array.isArray(nextBatch))throw Error('CORRECTION10_DRAFT_LIST_REQUIRED');
  const decision=validateNativeCorrection10({before,after,ownerId});
  assertOwner();
  const original=await verifyNativeCorrectionSource10(before,{cryptoApi,atobFn});
@@ -90,8 +90,8 @@ export async function commitNativeCorrection10({
   const bad=e=>{if(settled)return;settled=true;reject(e);};
   try{
    assertOwner();
-   tx=db.transaction(['items','state'],'readwrite');
-   const items=tx.objectStore('items'),state=tx.objectStore('state');
+   tx=db.transaction(nextBatch===null?['items']:['items','state'],'readwrite');
+   const items=tx.objectStore('items'),state=nextBatch===null?null:tx.objectStore('state');
    const request=items.get(before.id);
    request.onsuccess=()=>{
     try{
@@ -100,7 +100,7 @@ export async function commitNativeCorrection10({
       throw Error('CORRECTION10_STALE_SAVED_GARMENT_REOPEN_EDITOR');
      identity(request.result,after);
      items.put(structuredClone(after));
-     state.put({id:'draft',batch:structuredClone(nextBatch)});
+     if(state)state.put({id:'draft',batch:structuredClone(nextBatch)});
     }catch(error){conflict=error;try{tx.abort();}catch{}}
    };
    request.onerror=()=>{conflict=request.error||Error('CORRECTION10_READ_FAILED');};
@@ -108,7 +108,8 @@ export async function commitNativeCorrection10({
     if(settled)return;settled=true;
     resolve({saved:true,ownerPrivate:true,originalJPEGVerified:original.verified,
      originalSHA256:decision.originalSHA,originalIDsPreserved:true,
-     atomicItemAndDraft:true,boardUnmodified:true,
+     atomicItemAndDraft:nextBatch!==null,draftUntouched:nextBatch===null,
+     boardUnmodified:true,
      productionAuthorized:false,familyAlpha:'HOLD'});
    };
    tx.onabort=()=>bad(conflict||tx.error||Error('CORRECTION10_ATOMIC_WRITE_ABORTED'));
