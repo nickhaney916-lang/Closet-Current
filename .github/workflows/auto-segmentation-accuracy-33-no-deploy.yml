@@ -87,7 +87,8 @@ jobs:
               assert.equal(source.candidateLocalization.correctlyLocalized>=source.baselineLocalization.correctlyLocalized,true);
               assert.equal(source.candidateLocalization.semanticCategoryAccuracy,null);
               assert.equal(source.candidateLocalization.independentlyVerifiedPixelIoU,null);
-              assert.deepEqual(source.before.matches,source.after.matches.filter(()=>true).length === source.before.matches.length ? source.before.matches : source.before.matches);
+              assert.equal(source.after.status,'completed');
+              assert.equal(source.before.status,'completed');
               assert.ok(source.actualInferenceElapsedMs>0);
               assert.ok(source.hostNodeRSSBytes>0);
               for(const m of source.memberCount)assert.equal(m.retainedWithoutChanges,true);
@@ -108,7 +109,7 @@ jobs:
           console.log('AUTO-33 6 REAL ONNX in 2 engines + 10 source-linked SHA-audited screenshots. Scientific generalization NOT certified. HOLD.');
           EONODE
       - name: Upload strictly public-source JPEG screenshot comparisons, SHA receipts, and sanitized box report ONLY
-        if: always()
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: AUTO-33-REAL-ONNX-original-pixel-contrast-NO-DEPLOY-HOLD
