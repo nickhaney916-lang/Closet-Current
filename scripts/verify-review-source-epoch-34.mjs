@@ -37,7 +37,7 @@ const server=createServer(async(req,res)=>{
   if(req.method!=='GET')throw Error('Writes forbidden');
   const path=new URL(req.url,'http://localhost').pathname;
   if(path==='/'){res.writeHead(200,{'content-type':'text/html'}).end(html);return;}
-  if(!/^\/research\/multi-garment-capture-01\/(review-ui|atomic-group|review-triage-28|flatlay-contrast-29|scene-class-guard-32)\.mjs$/.test(path)&&
+  if(!/^\/research\/multi-garment-capture-01\/(review-ui|atomic-group|review-triage-28|flatlay-contrast-29|scene-class-guard-32|review-save-finality-34)\.mjs$/.test(path)&&
      path!=='/research/capture-proof-01/source-proof.mjs')throw Error('Unapproved path '+path);
   res.writeHead(200,{'content-type':'text/javascript'}).end(await readFile(root+path));
  }catch{res.writeHead(404).end();}
@@ -189,14 +189,15 @@ try{
     assert.equal(stale.sourceSHA,sources.C.sha256);
     assert.equal(stale.cropUnchanged,true);
 
-    // An explicit human-reviewed C save, cancelled before async IDB lookup
-    // completes, must not continue to a storage commit.
+    // Once a save starts, ordinary Cancel is disabled. A trusted session
+    // invalidation may still revoke the pending source before preflight writes.
     await page.evaluate(()=>{
      const a=window.__race34,save=a.confirm();
      save.click();
      const root=document.getElementById('multi24Research');
      const cancel=[...root.querySelectorAll('button')].find(x=>x.textContent==='Cancel extraction');
-     cancel.click();
+     if(!cancel.disabled)throw Error('Save must disable ordinary cancellation');
+     window.dispatchEvent(new Event('closet:alpha-session-changed'));
     });
     await page.waitForTimeout(110);
     const afterCancel=await page.evaluate(async()=>{
