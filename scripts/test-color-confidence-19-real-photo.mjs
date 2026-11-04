@@ -19,8 +19,10 @@ const [samples,registry]=await Promise.all([
 ]);
 const rows=new Map(registry.map(x=>[x.id,x]));
 const sha=x=>createHash('sha256').update(x).digest('hex');
-assert.equal(samples.sampleSize,samples.samples.length);
-assert.equal(samples.samples.length,6);
+assert.equal(samples.requiredVerifiedOriginals,6);
+assert.equal(samples.candidateCount,samples.samples.length);
+assert.ok(samples.samples.length>=6);
+assert.equal(new Set(samples.samples.map(x=>x.id)).size,samples.samples.length);
 const cached=new Map();
 async function originalPhoto(sample){
  if(cached.has(sample.id))return cached.get(sample.id);
@@ -40,7 +42,10 @@ async function originalPhoto(sample){
     assert.equal(meta.format,'jpeg');
     assert.ok(meta.width>=100&&meta.height>=100&&body.length>2000);
     bytes=body;break;
-   }catch(err){failures.push(err.message.slice(0,150));if(attempt<2)await new Promise(r=>setTimeout(r,1200*(attempt+1)));}
+   }catch(err){failures.push(err.message.slice(0,150));
+    // A SHA mismatch is conclusive for this URL; a changed source is NEVER accepted.
+    if(/SHA changed|source original or thumbnail SHA changed/.test(err.message))break;
+    if(attempt<2)await new Promise(r=>setTimeout(r,1200*(attempt+1)));}
   }
   if(bytes)break;
  }
@@ -83,7 +88,18 @@ const server=createServer(async(req,res)=>{
 });
 await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
 const origin='http://127.0.0.1:'+server.address().port;
-const findings=[],screenshots=[],unexpectedUploads=[],runtimeErrors=[];
+const findings=[],screenshots=[],unexpectedUploads=[],runtimeErrors=[],quarantined=[];
+const selected=[];
+for(const candidate of samples.samples){
+ try{await originalPhoto(candidate);selected.push(candidate);if(selected.length===samples.requiredVerifiedOriginals)break;}
+ catch(err){quarantined.push({id:candidate.id,reason:/SHA changed|sha/i.test(err.message)?'source-sha-mismatch':'source-unavailable'});}
+}
+assert.equal(selected.length,samples.requiredVerifiedOriginals,
+ 'insufficient verified immutable licensed originals; do not substitute changed bytes');
+await writeFile(dir+'/source-quarantine.json',JSON.stringify({
+ candidateCount:samples.samples.length,requiredVerifiedOriginals:samples.requiredVerifiedOriginals,
+ selectedIds:selected.map(x=>x.id),quarantined,allAcceptedSourcesShaVerified:true
+},null,2));
 try{
  for(const [engine,browserType] of [['chromium',chromium],['webkit',webkit]]){
   const browser=await browserType.launch({headless:true});
@@ -98,7 +114,7 @@ try{
    const page=await context.newPage();
    page.on('pageerror',err=>runtimeErrors.push({engine,type:err.name}));
    let n=0;
-   for(const sample of samples.samples){
+   for(const sample of selected){
     const {bytes,source}=await originalPhoto(sample);
     await page.goto(origin+'/',{waitUntil:'load'});
     const value=await page.evaluate(async input=>{
@@ -146,7 +162,7 @@ try{
   }finally{await browser.close();}
  }
 }finally{await new Promise(done=>server.close(done));}
-assert.equal(findings.length,12);
+assert.equal(findings.length,selected.length*2);
 assert.deepEqual(unexpectedUploads,[],'model color test must never transmit original photos');
 assert.deepEqual(runtimeErrors,[]);
 assert.equal(screenshots.length,6);
@@ -155,7 +171,9 @@ const automatic=findings.filter(x=>!!x.storedColor);
 const report={
  priority:'COLOR-CONFIDENCE-SAFETY-19',
  actualBrowserEngines:['chromium','webkit'],
- uniqueLicensedOriginalPhotographs:samples.samples.length,
+ uniqueLicensedOriginalPhotographs:selected.length,
+ originalCandidateCount:samples.samples.length,
+ quarantinedSourceIds:quarantined.map(x=>x.id),
  originalSha256Verified:true,
  trueIndependentColorGroundTruthAvailable:false,
  measuredColorAccuracy:null,
@@ -174,7 +192,8 @@ await writeFile(dir+'/screenshots.json',JSON.stringify(screenshots,null,2));
 assert.equal(report.wrongUncertainAutoFills,0);
 console.log('COLOR CONFIDENCE 19 REAL ORIGINALS '+JSON.stringify({
  uniquePhotos:report.uniqueLicensedOriginalPhotographs,engines:report.actualBrowserEngines,
- photoCases:report.browserCases,reviewCases:report.uncertainReviewCases,
+ photoCases:report.browserCases,excludedSourceIds:report.quarantinedSourceIds,
+ reviewCases:report.uncertainReviewCases,
  automaticCases:report.autoFilledCases,uncertainWrongAutoFills:report.wrongUncertainAutoFills,
  sourceShaVerified:true,colorAccuracy:null,screenshots:screenshots.length,
  release:'HOLD'
