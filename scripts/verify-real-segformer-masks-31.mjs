@@ -98,7 +98,7 @@ try{
     const jpeg=originalBuffers.get(row.id);
     const imageData='data:image/jpeg;base64,'+jpeg.toString('base64');
     // Source JPEG SHA unchanged and isolated from resized in-memory model input.
-    const started=await page.evaluate(async ({row,imageData})=>{
+    const started=await page.evaluate(async ({row,imageData,engine})=>{
      const decoded=new Image();decoded.src=imageData;await decoded.decode();
      if(decoded.naturalWidth!==row.width||decoded.naturalHeight!==row.height)
       throw Error('Browser source image dimension mismatch');
@@ -111,14 +111,31 @@ try{
       canvas.getContext('2d').drawImage(decoded,0,0,canvas.width,canvas.height);
       inference=canvas.toDataURL('image/jpeg',.9);
      }
+     // WebKit module-worker Blob createImageBitmap can reject a genuine JPEG.
+     // Decode the SAME analysis JPEG using the real page canvas instead;
+     // transfer its RGBA pixels to actual ONNX model inference in worker.
+     let analysisRGBA=null,analysisWidth=null,analysisHeight=null;
+     if(engine==='webkit'){
+      const decodedAnalysis=new Image();decodedAnalysis.src=inference;
+      await decodedAnalysis.decode();
+      analysisWidth=decodedAnalysis.naturalWidth;
+      analysisHeight=decodedAnalysis.naturalHeight;
+      const canvas=document.createElement('canvas');
+      canvas.width=analysisWidth;canvas.height=analysisHeight;
+      const context=canvas.getContext('2d',{willReadFrequently:true});
+      if(!context)throw Error('WebKit analysis image canvas unavailable');
+      context.drawImage(decodedAnalysis,0,0,analysisWidth,analysisHeight);
+      analysisRGBA=context.getImageData(0,0,analysisWidth,analysisHeight).data;
+     }
      await window.runRealMask31({sourceId:row.id,sourceData:imageData,analysisData:inference,
+      analysisRGBA,analysisWidth,analysisHeight,
       originalWidth:row.width,originalHeight:row.height,
       annotation:row.regions,
       credit:row.attribution.title+' · '+row.attribution.author+' · '+row.attribution.license+
        ' · '+row.attribution.source,
       expectedSHA:row.sha256});
      return {resized:inference!==imageData};
-    },{row,imageData});
+    },{row,imageData,engine});
     await page.waitForFunction(()=>window.__realMask31.done,null,{timeout:395000});
     const state=await page.evaluate(()=>window.__realMask31);
     if(state.error||!state.report)throw Error('Actual SegFormer inference failed for '+engine+'/'+row.id+': '+state.error);
@@ -137,6 +154,7 @@ try{
     const after=scorePhoto(row.regions,{status:'completed',proposals:post});
     const item={id:row.id,originalSHA256:row.sha256,sourceLicense:row.attribution.license,
       sourceOriginalDimensions:[row.width,row.height],originalBytes:row.bytes,resized:started.resized,
+      modelInputDecode:engine==='webkit'?'page-canvas-decoded-analysis-JPEG-RGBA':'worker-RawImage-JPEG',
       analysisResolution:data.analysisResolution,actualPixelMapDimensions:data.modelMask,
       actualModelLabelMaskSHA256:data.sourceMapLabelsSHA256,
       perClassPixelMembershipUnchanged:true,memberCount:data.familyConservation,
