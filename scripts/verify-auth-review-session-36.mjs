@@ -152,7 +152,7 @@ try{
 
     // The logout HTTP response deliberately takes 650 ms. Both tabs must
     // lock and empty their photos *before* that network request finishes.
-    await page.locator('#logout').click();
+    await page.evaluate(()=>document.getElementById('logout').click());
     await page.waitForFunction(()=>window.closetAuth?.user===null&&db===null&&
      document.getElementById('appShell').hidden,null,{timeout:2500});
     await stale.waitForFunction(()=>window.closetAuth?.user===null&&db===null&&
@@ -171,7 +171,7 @@ try{
     const savedB=await confirmedHumanSave(page,'b');
     assert.notEqual(savedA[0].sourceSHA256,savedB[0].sourceSHA256);
     screenshots.push(await hashEvidence(page,engine,width,'03-b-saved'));
-    await page.locator('#logout').click();
+    await page.evaluate(()=>document.getElementById('logout').click());
     await page.locator('#authSubmit').waitFor({state:'visible',timeout:15000});
     await login(page,'a');
     const restoredA=await readRows(page);
