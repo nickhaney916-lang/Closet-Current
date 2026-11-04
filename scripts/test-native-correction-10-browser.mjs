@@ -475,10 +475,26 @@ try{
   assert.equal(parallelWrite.notes,'Changed in other tab; keep this');
   await editor10.locator('button.primary').filter({hasText:'Save changes'}).click();
   await page.waitForFunction(()=>document.getElementById('message')?.textContent
-    .includes('CORRECTION10_STALE_SAVED_GARMENT_REOPEN_EDITOR'),null,{timeout:10000});
+    .includes('Another tab changed this garment. Your edits were not saved.'),null,
+    {timeout:10000});
   assert.equal(await editor10.isVisible(),true,'Stale editor remains open until user cancels');
   assert.deepEqual((await readItems(page)).find(x=>x.id===newId),parallelWrite);
   assert.deepEqual(await readBoard(page),expectedBoard);
+  // A failed correction must not make the editor wider than a real phone.
+  const modalBounds=await page.evaluate(()=>{
+   const e=document.querySelector('dialog.clothing-editor');
+   const r=e.getBoundingClientRect(),buttons=[...e.querySelectorAll('.native-correction10-actions button')];
+   return {viewport:innerWidth,left:r.left,right:r.right,width:r.width,
+    horizontalScrollbar:e.scrollWidth>e.clientWidth,
+    buttons:buttons.map(b=>({width:b.getBoundingClientRect().width,
+     height:b.getBoundingClientRect().height})),message:document.getElementById('message').textContent};
+  });
+  assert.equal(modalBounds.viewport,width);
+  assert.ok(modalBounds.left>=-1&&modalBounds.right<=width+1,
+   'Stale editing failure must not push a modal off the narrow phone');
+  assert.equal(modalBounds.horizontalScrollbar,false,'No horizontally scrolling clothing editor');
+  assert.ok(modalBounds.buttons.length===2&&modalBounds.buttons.every(x=>x.height>=48),
+   'Both saved clothing actions must remain real 48px touch targets after CAS refusal');
   await take(page,width,'14-safe-stale-tab-refusal-with-original-protected');
   await editor10.locator('button').filter({hasText:'Cancel'}).click();
   await page.evaluate(()=>switchView('builder'));
