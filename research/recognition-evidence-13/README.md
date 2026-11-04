@@ -23,3 +23,13 @@ A test run may pass while recognition accuracy remains unacceptable. Do not merg
 ## Recommended next product fix after evidence
 
 Focus on *systematic* low-precision subtype groups from measured errors, adding conservative human review and independent confirmation before accepting labels. Avoid hardcoding one fixture ID or silently replacing stored user's confirmed category. Benchmark every prospective model change on separate held-out photos and multi-piece originals before acceptance.
+## Exact-HEAD independent execution and evidence — November 4, 2026
+
+- Exact starting HEAD `750712b03eb828ab4381ca59828b3f4408bd6e87`; draft research PR #570 stacked on unchanged independently accepted PR #569.
+- [Dedicated Actions #41845110091](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/41845110091) SUCCESS: protected-source scope, full build and inherited/new Node regressions, SHA-256-original photo downloads, genuine unmocked Chromium FashionCLIP inference, independent evaluation and sanitized artifact.
+- [Evidence artifact #13330831920](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/41845110091/artifacts/13330831920) independently downloaded. Actual inference: 16/16 outputs, 0 errors, 13 garments and 3 nonclothing controls. Category correct 8/13 (61.54%); 7/13 auto accepted and 7/7 accepted broad categories correct. Correct auto subtype 4/13 (30.77% coverage), 4/7 (57.14% precision); 3 wrong automatic subtypes (commons-0003 T-shirt versus Sweatshirt; commons-0014 Blouse versus Tunic; commons-0078 Sneakers versus Ankle boots). 1 category-only review, 5 abstentions; 3/3 nonclothing correctly rejected.
+- Historical and new actual runs differ only for commons-0060: a Jacket now auto accepted correctly instead of abstaining. Original locked photo annotations never changed.
+- **SCIENTIFIC QUALITY GATE: FAILED** due to 3 incorrectly accepted subtypes. A green CI result indicates valid measurement infrastructure, NOT model accuracy acceptance. Neither the held-out labels nor original image bytes were changed to boost scores.
+- Independently annotated color ground truth unavailable: COLOR ACCURACY NOT MEASURED. Automatic multi-garment segmentation precision/recall and the distinct historical 15-photo isolation QA: NOT MEASURED. Physical phone acceptance, real signed owner A/B Supabase RLS and universal 3D still HOLD.
+
+**Next independent technical priority:** investigate subtype-confusion patterns on separate development/tuning images, create conservative non-ID-specific review safeguards, then rerun the unchanged held-out 16, other real-photo sets and multi-piece original-photo segmentation. No photo-ID-specific tuning.
