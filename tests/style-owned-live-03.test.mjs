@@ -94,7 +94,7 @@ test('swap checks pinned ID, duplicates, categories and atomic new state',()=>{
  assert.equal(eligibleSlot03('bottom',rows.find(x=>x.id==='c-jeans')),true);
  assert.equal(eligibleSlot03('bottom',rows.find(x=>x.id==='i-dress')),false);
 });
-test('verified private original JPEG checked in native owner's roster, not admitted by color alone',async()=>{
+test('verified private original JPEG checked in native owner roster, not admitted by color alone',async()=>{
  const bytes=readFileSync('benchmark/fixtures/commons-0002.jpg');
  const hash=createHash('sha256').update(bytes).digest('hex');
  assert.equal(hash,'fef606d6ed7354a2238f1bcc2584942747ca6fa4a2b16b2e9eec21f639d10667');
