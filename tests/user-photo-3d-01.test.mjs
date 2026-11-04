@@ -15,7 +15,7 @@ export const benchmark=[
  ['commons-0021','Bottoms','Jeans'],['commons-0023','Bottoms','Jeans'],
  ['commons-0024','Bottoms','Jeans'],['commons-0035','Bottoms','Shorts'],
  ['commons-0041','Bottoms','Skirt'],
- ['commons-0046','Dresses','Dress'],['commons-0049','Dresses','Dress'],
+ ['validation-0003','Dresses','Dress'],['commons-0049','Dresses','Dress'],
  ['commons-0053','Dresses','Casual dress'],['commons-0059','Dresses','Dress and jacket'],
  ['validation-0001','Dresses','Summer dress']
 ];
