@@ -115,6 +115,45 @@ test('verified private original JPEG checked in native owner roster, not admitte
  assert.equal(rejection.items.length,0);
  assert.equal(rejection.rejected.length,1);
 });
+test('newly captured original never bypasses one-garment confirmation or falsely claims 3D readiness',async()=>{
+ const bytes=readFileSync('benchmark/fixtures/commons-0002.jpg');
+ const hash=createHash('sha256').update(bytes).digest('hex');
+ const row={id:'new-red-uncertain',ownerId:owner,category:'Tops',itemType:'T-shirt',
+  color:'Red',userAdjusted:true,singleGarmentVerified:false,
+  multipleGarments:false,sourceSHA256:hash,
+  originalPhoto:{image:'data:image/jpeg;base64,'+bytes.toString('base64'),sha256:hash}};
+ const board={status:()=>({active:true}),
+  sessionLease:()=>({ownerId:owner,generation:9}),
+  readOnlyWardrobe:()=>({ownerId:owner,generation:9,
+   boardFingerprint:'same',items:[structuredClone(row)]})};
+ const pending=await verifiedPrivateStyleRoster03(board);
+ assert.equal(pending.items.length,0,'manual category correction is not singleton proof');
+ assert.equal(pending.pending.length,1);
+ assert.equal(pending.pending[0].sourceSHA256,hash);
+ assert.equal(pending.pending[0].genuinePhoto,row.originalPhoto.image);
+ assert.equal(row.singleGarmentVerified,false);
+ const reviews=new Map([[row.id,{
+  ownerId:owner,generation:9,sha256:hash,category:'Tops',itemType:'T-shirt'
+ }]]);
+ const admitted=await verifiedPrivateStyleRoster03(board,{singleItemReviews:reviews});
+ assert.equal(admitted.items.length,1);
+ assert.equal(admitted.pending.length,0);
+ assert.equal(admitted.items[0].sourceSHA256,hash);
+ assert.equal(admitted.items[0].singleGarmentVerified,false,
+  'one-session outfit permission never promotes source or 3D readiness flag');
+ const stale=new Map([[row.id,{...reviews.get(row.id),generation:8}]]);
+ const refused=await verifiedPrivateStyleRoster03(board,{singleItemReviews:stale});
+ assert.equal(refused.items.length,0);
+ assert.equal(refused.pending.length,1);
+ const multi={...row,multipleGarments:true};
+ const blocked={...board,readOnlyWardrobe:()=>({...board.readOnlyWardrobe(),items:[multi]})};
+ const bad=await verifiedPrivateStyleRoster03(blocked,{singleItemReviews:reviews});
+ assert.equal(bad.items.length,0);
+ assert.equal(bad.pending.length,0);
+ assert.equal(bad.rejected.length,1);
+ assert.deepEqual(row,structuredClone(row));
+});
+
 test('async source verification refuses account rotation and reclassified item after digest',async()=>{
  const bytes=readFileSync('benchmark/fixtures/commons-0002.jpg');
  const hash=createHash('sha256').update(bytes).digest('hex');
