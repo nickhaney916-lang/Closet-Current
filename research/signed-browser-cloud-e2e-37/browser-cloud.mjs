@@ -321,7 +321,7 @@ try{
     shots.push(await screenshot(page,engine,width,'04-a-cloud'));
     const stale=await context.newPage();
     stale.on('pageerror',e=>errorEvents.push(e.message.slice(0,140)));
-    await stale.goto(URL,{waitUntil:'domcontentloaded'});
+    await stale.goto(APP_URL,{waitUntil:'domcontentloaded'});
     await stale.waitForFunction(id=>window.closetAuth?.user?.id===id&&window.multi24Research?.active===true,accountA.id,{timeout:25000});
     await chooseSource(stale,photoB,'unfinished-b');
     await page.evaluate(()=>document.getElementById('logout').click());
