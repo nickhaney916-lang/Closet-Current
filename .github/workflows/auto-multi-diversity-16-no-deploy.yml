@@ -1,0 +1,142 @@
+name: AUTO-MULTI-DIVERSITY-16 15 actual original photos strict no deploy
+on:
+  pull_request:
+    paths:
+      - 'research/auto-multi-diversity-16/**'
+      - 'scripts/discover-auto-multi-16.mjs'
+      - 'scripts/test-auto-multi-16-browser.mjs'
+      - 'scripts/audit-auto-multi-16.mjs'
+      - 'scripts/score-auto-multi-16.mjs'
+      - 'tests/auto-multi-diversity-16*.test.mjs'
+      - 'public/outfit-worker.mjs'
+      - 'public/outfit-capture.js'
+      - 'public/app.js'
+      - 'tests/outfit-capture.test.cjs'
+      - '.github/workflows/auto-multi-diversity-16-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  node-build-and-existing-safety-regressions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+      - name: Protect verified parent and forbid live image, user source, unrelated models or production changes
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor 0236182f72b29a7b4d4924f0b3f5754cb9956690 HEAD
+          git diff --name-only 0236182f72b29a7b4d4924f0b3f5754cb9956690 HEAD | while IFS= read -r p; do
+            case "$p" in
+              research/auto-multi-diversity-16/*|scripts/discover-auto-multi-16.mjs|scripts/test-auto-multi-16-browser.mjs|scripts/audit-auto-multi-16.mjs|scripts/score-auto-multi-16.mjs|tests/auto-multi-diversity-16*.test.mjs|public/outfit-worker.mjs|public/outfit-capture.js|public/app.js|tests/outfit-capture.test.cjs|.github/workflows/auto-multi-diversity-16-no-deploy.yml|.github/workflows/auto-multi-diversity-16-discovery-no-deploy.yml) ;;
+              *) echo "UNAUTHORIZED RESEARCH SOURCE $p"; exit 1 ;;
+            esac
+          done
+          git diff --exit-code 0236182f72b29a7b4d4924f0b3f5754cb9956690 -- public/auth.js public/local-worker.mjs public/recognition-engine.mjs public/recognition-vectors.bin public/recognition-vectors.json public/cloud-backup.js public/outfit-board.js benchmark/fixtures/ supabase/ migrations/ .github/workflows/pages.yml .github/workflows/cloudflare-pages.yml
+      - name: Install pinned isolated research/test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Complete full inherited Node suite plus new negative tests and actual application build
+        run: |
+          for p in public/outfit-worker.mjs public/outfit-capture.js research/auto-multi-diversity-16/visible-proposals-16.mjs scripts/test-auto-multi-16-browser.mjs scripts/audit-auto-multi-16.mjs scripts/score-auto-multi-16.mjs tests/auto-multi-diversity-16.test.mjs tests/auto-multi-diversity-16-scorer.test.mjs; do node --check "$p"; done
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+  genuine-segformer-mobile-evidence:
+    needs: node-build-and-existing-safety-regressions
+    strategy:
+      fail-fast: false
+      matrix:
+        slice: [0, 1, 2, 3, 4]
+    runs-on: ubuntu-latest
+    timeout-minutes: 100
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      AUTO_MULTI_16_SLICE: ${{ matrix.slice }}
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Install pinned no-deploy browser/SegFormer dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3
+      - name: Download only locked Wikimedia originals and compare same real model logits before after at 320 390 430
+        run: node scripts/test-auto-multi-16-browser.mjs
+      - name: Preserve sanitized REAL original-photograph screenshots and proposal boxes, NO raw JPEG bytes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: AUTO-MULTI-16-SLICE-${{ matrix.slice }}-MODEL-EVIDENCE-HOLD
+          path: |
+            benchmark/auto-multi-16/slice-${{ matrix.slice }}/*.json
+            benchmark/auto-multi-16/slice-${{ matrix.slice }}/*.png
+          if-no-files-found: warn
+          retention-days: 21
+  source-private-native-review-regressions:
+    needs: node-build-and-existing-safety-regressions
+    runs-on: ubuntu-latest
+    timeout-minutes: 100
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Pinned offline owner-private test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Verify genuine original-photo native multi-piece manual review and owner private Style/My Closet
+        run: |
+          node scripts/test-multi-garment-capture-01-browser.mjs
+          node scripts/audit-native-multi-style-12.mjs
+          node scripts/test-native-style-correction-11-browser.mjs
+          node scripts/audit-native-style-correction-11.mjs
+      - name: Preserve only licensed original-photo and owner-private synthetic test screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: AUTO-MULTI-16-OWNER-PRIVATE-BROWSER-REGRESSIONS-HOLD
+          path: |
+            benchmark/multi-garment-capture-01/
+            benchmark/style-owned-live-03/
+            benchmark/style-owned-live-03-audit/
+            benchmark/native-style-correction-11/
+            benchmark/native-style-correction-11-audit/
+          if-no-files-found: warn
+          retention-days: 21
+  independent-results-and-original-screenshot-audit:
+    needs: [genuine-segformer-mobile-evidence,source-private-native-review-regressions]
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: AUTO-MULTI-16-SLICE-*-MODEL-EVIDENCE-HOLD
+          path: benchmark/auto-multi-16/collected
+          merge-multiple: false
+      - name: Verify SHA-256 of all 90 genuine model mobile screenshot images and score 15 original photos
+        run: |
+          npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3
+          node scripts/audit-auto-multi-16.mjs
+      - name: Retain original-independent cohort score report (NO JPEG PHOTOS)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: AUTO-MULTI-16-15-DIVERSE-REAL-ORIGINALS-FINAL-METRICS-HOLD
+          path: |
+            benchmark/auto-multi-16/evaluation/*.json
+          if-no-files-found: warn
+          retention-days: 21
