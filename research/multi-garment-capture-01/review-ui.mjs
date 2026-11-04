@@ -79,6 +79,16 @@ export function mountMultiGarmentCapture24({
  }
  function revoke(){canceled=true;renderVersion++;job?.worker?.terminate();if(job)clearTimeout(job.timeout);job=null;state=null;original.removeAttribute('src');original.hidden=true;grid.replaceChildren();save.disabled=true;add.disabled=true;suggest.disabled=true;cancel.disabled=false;}
  function reset(text){revoke();status.textContent=text||'No unconfirmed photos were saved.';}
+ // WORKER-FINALITY-38: a confirmed Save is a one-way review boundary.
+ // Terminate the detector and revoke its session identity BEFORE first async
+ // IDB read. Previously visible unsaved suggestions stay available for review.
+ function freezeDetector38(){
+  if(!job)return false;
+  const running=job;job=null;
+  clearTimeout(running.timeout);
+  running.worker?.terminate();
+  return true;
+ }
  async function crop(piece){
   if(submitting)return;
   if(!sameOwner()){reset('Account changed; extraction canceled.');return;}
@@ -195,7 +205,7 @@ export function mountMultiGarmentCapture24({
   return denominator>0?intersection/denominator:0;
  }
  async function addDetected(raw,session){
-  if(!state||session!==job||!sameOwner())return;
+  if(submitting||!state||session!==job||!sameOwner())return;
   if(!raw?.instanceKey||!/^seg-[0-9-]+$/.test(raw.instanceKey)||!validCrop24(raw.cropBounds)||
     !Array.isArray(raw.hint?.categories)||!raw.hint.categories.some(x=>TYPES.includes(x)))return;
   if(state.pieces.some(x=>x.instanceKey===raw.instanceKey))return;
@@ -231,10 +241,10 @@ export function mountMultiGarmentCapture24({
    }
    if(!currentLoading(epoch,owner))return;
    const next={id:crypto.randomUUID(),worker:null,pending:[],timeout:null};job=next;
-   next.timeout=setTimeout(()=>{if(job===next){next.worker?.terminate();job=null;status.textContent='Local segmentation timed out. You can mark pieces manually; nothing was auto-saved.';}},300000);
+   next.timeout=setTimeout(()=>{if(job===next&&!submitting){next.worker?.terminate();job=null;status.textContent='Local segmentation timed out. You can mark pieces manually; nothing was auto-saved.';}},300000);
    next.worker=new Worker('outfit-worker.mjs'+(recognitionAssetVersion?'?v='+recognitionAssetVersion:''),{type:'module'});
    next.worker.onmessage=event=>{
-    if(job!==next||!sameOwner())return;
+    if(job!==next||submitting||!sameOwner())return;
     const data=event.data;if(data?.id!==next.id)return;
     if(data.type==='piece')next.pending.push(addDetected(data.piece,next));
     if(data.type==='progress')status.textContent=data.phase==='separating'?'Locating visible garment regions locally…':'Preparing local segmentation model…';
@@ -247,7 +257,7 @@ export function mountMultiGarmentCapture24({
      });
     }
    };
-   next.worker.onerror=()=>{if(job!==next)return;clearTimeout(next.timeout);next.worker.terminate();job=null;status.textContent='Local detection unavailable. Manually add and crop pieces; nothing saved.';};
+   next.worker.onerror=()=>{if(job!==next||submitting)return;clearTimeout(next.timeout);next.worker.terminate();job=null;status.textContent='Local detection unavailable. Manually add and crop pieces; nothing saved.';};
    next.worker.postMessage({id:next.id,image:inference,multi24:true});
   }catch(error){
    // A stale proof/decode must never clear a more recently selected source.
@@ -270,7 +280,7 @@ export function mountMultiGarmentCapture24({
   }catch(error){status.textContent=String(error.message||error);return;}
   // An immutable photo + confirmed-pieces snapshot is captured before any
   // asynchronous IndexedDB read, queued work or crop editor callback.
-  submitting=true;redraw();
+  submitting=true;freezeDetector38();redraw();
   status.textContent='Verifying original SHA-256 and saving your confirmed snapshot…';
   let persisted=false;
   try{
