@@ -43,6 +43,35 @@ jobs:
           node --check tests/auto-segmentation-accuracy-33.test.mjs
           node scripts/build.mjs
           node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Verify inherited native crop/category/owner review UI at 320 390 430 in Chromium and WebKit
+        run: |
+          node scripts/verify-scene-class-guard-32.mjs
+          node --input-type=module <<'EONODE'
+          import assert from 'node:assert/strict';
+          import {readFile} from 'node:fs/promises';
+          import {createHash} from 'node:crypto';
+          import sharp from 'sharp';
+          const folder='benchmark/scene-class-guard-32/';
+          const report=JSON.parse(await readFile(folder+'browser.json','utf8'));
+          assert.equal(report.actualUiCases,6);
+          assert.equal(report.segmentationModelActuallyRun,false);
+          assert.equal(report.noPersonModelClassAndColorNeverPrefilled,true);
+          assert.equal(report.explicitHumanCategoryTypeColorEnabledConfirmation,true);
+          assert.equal(report.originalUnchanged,true);
+          assert.equal(report.accountSwitchClears,true);
+          assert.equal(report.noAutoSave,true);
+          assert.deepEqual(report.unexpectedRequests,[]);
+          assert.deepEqual(report.browserErrors,[]);
+          for(const engine of ['chromium','webkit'])for(const width of [320,390,430]){
+            const row=report.cases.find(x=>x.engine===engine&&x.width===width);
+            assert.ok(row);
+            assert.ok(row.initialSceneDefaultsVerified&&row.explicitCategoryTypeColorRequired);
+            const image=await readFile(folder+row.filename);
+            assert.equal(createHash('sha256').update(image).digest('hex'),row.sha256);
+            assert.equal((await sharp(image).metadata()).width,width);
+          }
+          console.log('Six INHERITED native human review browser cases verified; these use synthetic proposals, separate from six genuine ONNX runs.');
+          EONODE
       - name: Execute genuine pinned ONNX in Chromium and WebKit and verify original JPEG SHA before source-derived contrast
         run: node scripts/verify-auto-segmentation-33.mjs
       - name: Independently verify model evidence, source identity, real screenshots and no unsupported conclusions
@@ -116,5 +145,7 @@ jobs:
           path: |
             benchmark/auto-segmentation-accuracy-33/report.json
             benchmark/auto-segmentation-accuracy-33/*.png
+            benchmark/scene-class-guard-32/browser.json
+            benchmark/scene-class-guard-32/*.png
           if-no-files-found: error
           retention-days: 21
