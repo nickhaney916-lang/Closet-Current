@@ -67,7 +67,8 @@ test('untrusted image type and canvas failure cannot silently produce a model in
 });
 test('live full-photo source is posted unchanged alongside derived analysis, after an owner/session guard',()=>{
  assert.match(capture,/job\.worker\.postMessage\(\{id:job\.id,image,analysisImage\}\)/);
- assert.match(capture,/if\(job!==outfitSplitJob\|\|guarded&&captureProofOwner\(\)!==job\.owner\)return/);
+ assert.match(capture,/if\(job!==outfitSplitJob\|\|captureProofOwner\(\)!==job\.owner\)return/);
+ assert.match(capture,/if\(!guarded\)job\.worker\.postMessage\(\{id:job\.id,image\}\)/);
  assert.match(capture,/originalPhoto:\{image\}/);
  assert.match(capture,/sourceSHA256|sourceHashVerified/);
  assert.doesNotMatch(helperCode,/fetch\(|localStorage|indexedDB|sessionStorage|gallery/i);
