@@ -1,0 +1,232 @@
+{
+  "schemaVersion": 1,
+  "priority": "FAMILY-ALPHA-QUALITY-LEDGER-24",
+  "generatedFor": "2026-11-04",
+  "repository": "nickhaney916-lang/Closet-Current",
+  "alphaIssue": 255,
+  "sourceBase": {
+    "pr": 574,
+    "sha": "9012e01443f97f81b236a4f51afdbb6ad885aaaa"
+  },
+  "governance": {
+    "productionDeployAllowed": false,
+    "mergeAllowed": false,
+    "familyAlphaHold": true,
+    "unverifiedCannotPass": true
+  },
+  "research": [
+    {
+      "pr": 569,
+      "workstream": "Human-reviewed multi-piece original to private closet and Style My New Clothes",
+      "pinnedHead": "ca23c25d6621ea41c29fc9bac5f32eefb829b550",
+      "dedicatedRunId": 41842338625,
+      "scientificStatus": "NARROW_RESEARCH_VERIFIED",
+      "limitations": "Human-reviewed three pieces; automatic detection accuracy not established by this PR."
+    },
+    {
+      "pr": 570,
+      "workstream": "Frozen 16-original FashionCLIP recognition measurement",
+      "pinnedHead": "d60c9fbc725d01ac991c6ab4b476971a9531ead4",
+      "dedicatedRunId": 41845576205,
+      "scientificStatus": "NEEDS_REWORK",
+      "limitations": "Three incorrect automatic subtypes on frozen set; no independent reviewed color labels."
+    },
+    {
+      "pr": 571,
+      "workstream": "One original worn outfit genuine SegFormer Chromium and WebKit",
+      "pinnedHead": "0236182f72b29a7b4d4924f0b3f5754cb9956690",
+      "dedicatedRunId": 41848650852,
+      "scientificStatus": "NARROW_RESEARCH_VERIFIED",
+      "limitations": "Three coarse visible regions matched in each of two browsers; only one unique photograph; no mask IoU."
+    },
+    {
+      "pr": 572,
+      "workstream": "Subtype safety changes reduce three wrong acceptances to one",
+      "pinnedHead": "0bd25ce27b9a1e4f8755de340e2e0c5da8b0b6c6",
+      "dedicatedRunId": 41849049461,
+      "scientificStatus": "NEEDS_REWORK",
+      "limitations": "Blouse to Tunic still incorrect automatic acceptance; frozen-set accepted subtype 3/4, coverage 4/13; legacy source-scope workflows red."
+    },
+    {
+      "pr": 573,
+      "workstream": "Early automatic multi-garment diversity experiment; superseded by completed PR #575",
+      "pinnedHead": null,
+      "dedicatedRunId": null,
+      "scientificStatus": "IN_PROGRESS",
+      "limitations": "PR #573 is unpinned/unaccepted separately; completed PR #575 provides final parallel #26 measurements, but independent human mask precision remains unverified."
+    },
+    {
+      "pr": 575,
+      "workstream": "19 unique original JPEG multi-garment segmentation precision/recall final evidence",
+      "pinnedHead": "241bd1ed75fb334f94877a8cddc471b41839af23",
+      "dedicatedRunId": 41856942601,
+      "scientificStatus": "NEEDS_REWORK",
+      "limitations": "35 visible targets; direct original: 8/24 Chromium precision, 8/25 WebKit, 8/35 recall each; review-resize 10/61 precision and 10/35 recall, with false positives. True pixel masks and second reviewer missing."
+    },
+    {
+      "pr": 578,
+      "workstream": "Whole-photo color auto-acceptance safeguards across Chromium and WebKit",
+      "pinnedHead": "876b680272b6e2c40be24410a14b92802bdf991b",
+      "dedicatedRunId": 41868815069,
+      "scientificStatus": "NEEDS_REWORK",
+      "limitations": "Original six-source safety smoke test passed, but independent six-source recheck in PR #579 found 2/6 identical SHA originals with differing browser automatic color decisions. No proven cross-browser generalization."
+    },
+    {
+      "pr": 579,
+      "workstream": "Manual vs photo-estimate color provenance survives genuine closet Save and browser form edits",
+      "pinnedHead": "e104f2001f6ab993bd88481bd2257c83663ae93e",
+      "dedicatedRunId": 41884473096,
+      "scientificStatus": "NARROW_RESEARCH_VERIFIED",
+      "limitations": "468 Node tests and 12 real browser form checks, only source provenance; inherited independent color model check recorded 2/6 auto-decision disagreements; no signed real-user cloud proof."
+    },
+    {
+      "pr": 580,
+      "workstream": "49 original real-photo provisional primary-color benchmark and background-aware review experiment",
+      "pinnedHead": "abb5e3744725c7f3b08a71c73559ceae0f872e8f",
+      "dedicatedRunId": 41882755511,
+      "scientificStatus": "NEEDS_REWORK",
+      "limitations": "49 originals, 45 evaluable and 4 ambiguous, zero independently human-certified labels. Chromium 17/45, WebKit 16/45 correct provisional colors after update; 3/49 cross-engine auto decisions differ and category+color 95% target unproven."
+    }
+  ],
+  "releaseRequirements": [
+    {
+      "id": "recognition-category-color",
+      "label": "Frozen independent phone-photo category AND primary-color acceptance; 50+ new images, per-category support and coverage",
+      "state": "UNVERIFIED",
+      "evidence": "PR #572 subtype wrong auto acceptance remains; PR #580 49 originals/45 provisional evaluable/0 human-certified; Chromium 17/45 and WebKit 16/45 final estimated color correct, NOT 95% pilot.",
+      "owner": "parallel-25-and-work-28"
+    },
+    {
+      "id": "multi-garment-generalization",
+      "label": "Independent multi-scene segmentation benchmark, real precision/recall, acceptable false positives, overlapping/flat-lay photographs",
+      "state": "UNVERIFIED",
+      "evidence": "PR #575 exact-head final multi-photo 19 original/35 visible targets had 8/35 direct recall; scientific NEEDS REWORK; no independently reviewed pixel masks.",
+      "owner": "parallel-26"
+    },
+    {
+      "id": "end-to-end-consumer",
+      "label": "Real camera to owner-private closet to styling to source-honest anatomical 3D, stable mobile browser acceptance",
+      "state": "UNVERIFIED",
+      "evidence": "Work parallel #27 assignment; no reviewed final integration PR",
+      "owner": "work-27"
+    },
+    {
+      "id": "signed-account-rls",
+      "label": "Live signed test-account A/B isolation and backup/restore on explicitly authorized staging",
+      "state": "UNVERIFIED",
+      "evidence": "SIGNED-OWNER-PRIVACY-25 Work #29 assigned; no final signed A/B HTTP positive and negative RLS/Storage evidence or final security PR observed at ledger preparation. Do not infer Work UI status from GitHub.",
+      "owner": "work-29"
+    },
+    {
+      "id": "physical-phones",
+      "label": "Real Android and iPhone capture, import, account recovery, 3D and restore",
+      "state": "UNVERIFIED",
+      "evidence": "Only emulated browser viewports verified",
+      "owner": "main-controller"
+    },
+    {
+      "id": "real-email",
+      "label": "Verified SMTP sender/redirect allowlist, signup confirmation, external inbox and password reset",
+      "state": "UNVERIFIED",
+      "evidence": "docs/AUTH-EMAIL-READINESS.md; docs/PILOT-READINESS.md",
+      "owner": "main-controller"
+    },
+    {
+      "id": "privacy-deletion",
+      "label": "Owner-reviewed privacy terms, service operator, versioned consent and account/data deletion evidence",
+      "state": "UNVERIFIED",
+      "evidence": "docs/PILOT-READINESS.md",
+      "owner": "main-controller"
+    },
+    {
+      "id": "photorealistic-source-3d",
+      "label": "Actual source-consistent photographed garments on anatomical humanoid or explicit 2D/photo fallback without unsupported realism claims",
+      "state": "UNVERIFIED",
+      "evidence": "PR #564 and #569 research; Work #27 final audit not yet available",
+      "owner": "work-27"
+    },
+    {
+      "id": "independent-release-signoff",
+      "label": "Main-controller final acceptance, rollback, test evidence and explicit authorization for pilot only",
+      "state": "UNVERIFIED",
+      "evidence": "Issue #255 OPEN/HOLD; research PR #578 color generalization and PR #580 true color accuracy NEEDS REWORK.",
+      "owner": "main-controller"
+    }
+  ],
+  "projectWorkstreams": [
+    {
+      "id": "work-27",
+      "name": "End-to-end consumer integration",
+      "evidenceStatus": "NOT_YET_VERIFIED",
+      "releaseCertified": false
+    },
+    {
+      "id": "work-28",
+      "name": "Primary clothing color accuracy",
+      "evidenceStatus": "RESEARCH_COMPLETE_SCIENCE_NEEDS_REWORK",
+      "pr": 580,
+      "releaseCertified": false
+    },
+    {
+      "id": "work-29",
+      "name": "SIGNED-OWNER-PRIVACY-25",
+      "evidenceStatus": "NO_VERIFIED_GITHUB_HANDOFF_YET",
+      "releaseCertified": false
+    },
+    {
+      "id": "parallel-26",
+      "name": "Multi-photo segmentation",
+      "evidenceStatus": "RESEARCH_COMPLETE_SCIENCE_NEEDS_REWORK",
+      "pr": 575,
+      "releaseCertified": false
+    }
+  ],
+  "scientificFacts": {
+    "color": {
+      "uniqueOriginals": 49,
+      "evaluable": 45,
+      "ambiguous": 4,
+      "humanIndependentlyValidated": 0,
+      "chromium": {
+        "previousCorrect": 16,
+        "currentCorrect": 17,
+        "accepted": 7,
+        "correctAccepted": 6,
+        "incorrectAccepted": 1
+      },
+      "webkit": {
+        "previousCorrect": 14,
+        "currentCorrect": 16,
+        "accepted": 4,
+        "correctAccepted": 4,
+        "incorrectAccepted": 0
+      },
+      "crossEngineAutoDisagreements": 3,
+      "holdoutTotal": 23
+    },
+    "segmentation": {
+      "uniqueOriginals": 19,
+      "visibleTargets": 35,
+      "directCorrectHits": 8,
+      "directChromiumProposals": 24,
+      "directWebkitProposals": 25,
+      "reviewResizeHits": 10,
+      "reviewResizeProposals": 61,
+      "secondReviewerCount": 0,
+      "maskIouGroundTruth": false
+    },
+    "work29": {
+      "signedIndependentAccountAandBHttpProof": false,
+      "authTokenValidated": false,
+      "externalSessionStateVisible": false,
+      "commitSha": null
+    },
+    "colorProvenance": {
+      "pr": 579,
+      "nodeTestsPassed": 468,
+      "browserCases": 12,
+      "scientificColorAccuracyCertified": false,
+      "followupBrowserAutoDecisionDisagreements": 2
+    }
+  }
+}
