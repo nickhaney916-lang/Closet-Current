@@ -49,7 +49,7 @@ for(const e of data.cases){
  else assert.equal(e.ownerA.v4Exported,false);
 }
 assert.equal(combinations.size,6);
-assert.equal(data.screenshots.length,45); // 8 Chromium per width; 7 WebKit per width
+assert.equal(data.screenshots.length,51); // 9 Chromium per width; 8 WebKit per width, including one-item photo review
 const seen=new Set(),verified=[];
 for(const s of data.screenshots){
  const key=[s.engine,s.width,s.stage].join('-');
