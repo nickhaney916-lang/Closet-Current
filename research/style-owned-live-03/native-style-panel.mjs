@@ -94,7 +94,7 @@ export async function verifiedPrivateStyleRoster03(board,{singleItemReviews=new 
   if(!fresh||fresh.category!==item.category||fresh.itemType!==item.itemType||
      fresh.sourceSHA256!==item.sourceSHA256||
      fresh.originalPhoto?.sha256!==item.sourceSHA256||
-     fresh.originalPhoto?.image!==item.originalPhoto.image)
+     fresh.originalPhoto?.image!==(item.originalPhoto?.image||item.genuinePhoto))
    throw Error('STYLE03 wardrobe photo or category changed during verification');
  }
  return Object.freeze({ownerId:first.ownerId,generation:first.generation,
