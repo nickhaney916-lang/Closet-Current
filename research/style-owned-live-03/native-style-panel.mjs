@@ -369,6 +369,8 @@ export async function mountStyleOwnedLive03({
  async function generateLooks(){
   if(busy)fail('BUSY');
   ensurePin();
+  if(styleDraft&&board.status().dirty)
+   fail('SAVE_OR_CANCEL_UNSAVED_STYLE_EDITS_BEFORE_REGENERATING');
   busy=true;generate.disabled=true;
   try{
    // Reverify source and owner after any newly committed photo/index change.
@@ -387,6 +389,10 @@ export async function mountStyleOwnedLive03({
  }
  function chooseLook(index){
   ensurePin();
+  // Never silently replace unfinished swaps or edits just because someone
+  // tapped a different suggested card; cancel or save explicitly first.
+  if(styleDraft&&board.status().dirty)
+   fail('CANCEL_OR_SAVE_UNSAVED_STYLE_LOOK_BEFORE_SWITCHING');
   const proposal=generated?.combinations[index];
   if(!proposal||proposal.pinnedId!==pinId)fail('UNKNOWN_OR_STALE_SUGGESTION');
   if(!styleDraft){
