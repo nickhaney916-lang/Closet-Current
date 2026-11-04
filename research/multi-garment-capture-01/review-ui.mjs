@@ -280,7 +280,7 @@ export function mountMultiGarmentCapture24({
   }catch(error){status.textContent=String(error.message||error);return;}
   // An immutable photo + confirmed-pieces snapshot is captured before any
   // asynchronous IndexedDB read, queued work or crop editor callback.
-  submitting=true;freezeDetector38();redraw();
+  submitting=true;redraw();freezeDetector38();
   status.textContent='Verifying original SHA-256 and saving your confirmed snapshot…';
   let persisted=false;
   try{
