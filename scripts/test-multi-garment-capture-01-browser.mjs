@@ -30,7 +30,7 @@ const fetchOriginal=async()=>{
   }catch(e){if(n===2)throw e;await new Promise(r=>setTimeout(r,1500*(n+1)));}
  }
 };
-const bytes=await fetchOriginal(),expectedHash=process.env.MULTI24_SOURCE_SHA256||'';
+const bytes=await fetchOriginal(),expectedHash='e3df4503a89c244b28fa344ec170d6554fc06ad1d7cd331014fcb277df19d5ff';
 const sourceHash=sha(bytes);
 if(expectedHash)assert.equal(sourceHash,expectedHash,'Licensed original changed; reject stale source lock');
 const types={'.js':'text/javascript','.mjs':'text/javascript','.html':'text/html','.css':'text/css','.json':'application/json','.bin':'application/octet-stream','.jpg':'image/jpeg','.png':'image/png','.glb':'model/gltf-binary'};
@@ -53,6 +53,14 @@ async function shot(page,width,stage){
  assert.ok(stats.channels.some(x=>x.stdev>6),'Blank real browser screenshot');
  const file='chromium-'+width+'-'+stage+'.png';await writeFile(dir+'/'+file,png);
  diagnostics.screenshots.push({file,width,stage,sha256:sha(png)});
+}
+async function fullShot(page,width,stage){
+ const png=await page.screenshot({animations:'disabled',fullPage:true});
+ const meta=await sharp(png).metadata(),stats=await sharp(png).stats();
+ assert.equal(meta.width,width);assert.ok(meta.height>=920&&png.length>5000);
+ assert.ok(stats.channels.some(x=>x.stdev>6),'Blank true full-page screenshot');
+ const file='chromium-'+width+'-'+stage+'.png';await writeFile(dir+'/'+file,png);
+ diagnostics.screenshots.push({file,width,stage,height:meta.height,sha256:sha(png),fullPage:true});
 }
 function authHTTP(route){
  const request=route.request(),url=new URL(request.url());
@@ -131,7 +139,9 @@ try{
   await page.locator('#captureOutfit').click();
   await page.locator('#outfitUpload').setInputFiles({name:'Shirt_and_tie_jeans_and_Converse.jpg',mimeType:'image/jpeg',buffer:bytes});
   await page.waitForFunction(hash=>window.multi24Research?.debug().sourceSHA256===hash,sourceHash,{timeout:30000});
+  await page.locator('#multi24Research .multi24-source').scrollIntoViewIfNeeded();
   await shot(page,width,'01-original-source');
+  await fullShot(page,width,'01-original-source-all');
   for(let i=0;i<3;i++)await page.getByRole('button',{name:'Add missed piece'}).click();
   assert.equal(await page.locator('#multi24Grid .multi24-card').count(),3);
   for(let i=0;i<3;i++){
@@ -143,6 +153,7 @@ try{
    await card.getByLabel('Color (confirm visually)').fill(p.color);
    await card.getByLabel('I confirm this visible garment, category and color').check();
   }
+  await fullShot(page,width,'02-three-reviewed-pieces-all');
   await shot(page,width,'02-three-reviewed-pieces');
   await page.getByRole('button',{name:'Save confirmed pieces together'}).click();
   await page.waitForFunction(()=>document.getElementById('multi24Status')?.textContent.includes('3 separately confirmed garments'),null,{timeout:45000});
@@ -195,7 +206,7 @@ try{
  }
  // Reproducible image contact sheet from actual screenshots, no generated cloth.
  for(const width of [320,390,430]){
-  const series=diagnostics.screenshots.filter(s=>s.width===width);
+  const series=diagnostics.screenshots.filter(s=>s.width===width&&!s.fullPage);
   const composite=await sharp({create:{width:width*series.length,height:920,channels:4,background:'#ffffff'}})
    .composite(await Promise.all(series.map(async(s,i)=>({input:await readFile(dir+'/'+s.file),left:i*width,top:0})))).png().toBuffer();
   await writeFile(dir+'/contact-'+width+'.png',composite);
