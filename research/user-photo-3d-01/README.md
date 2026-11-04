@@ -18,7 +18,7 @@ PR #541 source-true-viewer.mjs admits only two known locked photos: commons-0003
 ## Fifteen original licensed photograph benchmark
 Five tops: commons-0001, 0002, 0003, 0014, 0016.
 Five bottoms: commons-0021, 0023, 0024, 0035, 0041.
-Five dresses: commons-0046, 0049, 0053, 0059, validation-0001.
+Five dresses: commons-0049, 0053, 0059, validation-0001, validation-0003.
 
 Each is byte SHA-verified against locked-photo-sources.json, including genuine origin license attribution. Categories are supplied benchmark labels, NOT claimed as newly verified ML inference. Expected conservative result before independent human garment acceptance: 0 newly accepted 3D Ready, 12 Needs Review, 3 Photo-Only. These results must not be misrepresented as general clothing fitting success.
 
