@@ -11,7 +11,13 @@ permissions:
 jobs:
   download-verify-and-preview-public-commons-originals:
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        slice: [0, 1, 2, 3, 4]
+    env:
+      AUTO_MULTI_16_SLICE: ${{ matrix.slice }}
     container:
       image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
     steps:
@@ -34,7 +40,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: AUTO-MULTI-16-licensed-contact-sources-preview-NO-ORIGINALS-HOLD
+          name: AUTO-MULTI-16-licensed-slice-${{ matrix.slice }}-NO-ORIGINALS-HOLD
           path: |
             benchmark/auto-multi-16-discovery/*.json
             benchmark/auto-multi-16-discovery/*.jpg
