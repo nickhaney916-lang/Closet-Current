@@ -7,6 +7,7 @@ on:
     paths:
       - 'public/app.js'
       - 'tests/review-color-provenance-23.test.cjs'
+      - 'tests/user-color-authority-20.test.cjs'
       - 'scripts/test-color-confidence-19-real-photo.mjs'
       - 'scripts/audit-review-color-provenance-23.mjs'
       - 'research/review-color-provenance-23/**'
@@ -35,7 +36,7 @@ jobs:
           git merge-base --is-ancestor 876b680272b6e2c40be24410a14b92802bdf991b HEAD
           git diff --name-only 876b680272b6e2c40be24410a14b92802bdf991b HEAD | while IFS= read -r p; do
             case "$p" in
-              public/app.js|tests/review-color-provenance-23.test.cjs|scripts/test-color-confidence-19-real-photo.mjs|scripts/audit-review-color-provenance-23.mjs|research/review-color-provenance-23/*|.github/workflows/review-color-provenance-23-no-deploy.yml|.github/workflows/color-engine-consistency-21-no-deploy.yml) ;;
+              public/app.js|tests/review-color-provenance-23.test.cjs|tests/user-color-authority-20.test.cjs|scripts/test-color-confidence-19-real-photo.mjs|scripts/audit-review-color-provenance-23.mjs|research/review-color-provenance-23/*|.github/workflows/review-color-provenance-23-no-deploy.yml|.github/workflows/color-engine-consistency-21-no-deploy.yml) ;;
               *) echo "BLOCKED: unrelated app/model/auth/DB/3D/deploy file: $p"; exit 1 ;;
             esac
           done
