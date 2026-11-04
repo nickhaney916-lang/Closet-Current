@@ -106,6 +106,12 @@ async function stored(page,store='items'){
  }),store);
 }
 async function picture(page,engine,width,stage){
+ if(stage==='01-before-saved-photo-outfit'||stage==='03-after-atomic-owner-restore')
+  await page.locator('#outfitFigure').scrollIntoViewIfNeeded();
+ if(stage==='04-missing-garment-ID-placeholder')
+  await page.locator('#boardSlots .board-slot-bottom').scrollIntoViewIfNeeded();
+ if(stage==='05-reopened-edited-and-saved')
+  await page.locator('#savedBoards').scrollIntoViewIfNeeded();
  const bytes=await page.screenshot({animations:'disabled',fullPage:false});
  const m=await sharp(bytes).metadata(),stat=await sharp(bytes).stats();
  assert.equal(m.width,width);assert.ok(bytes.length>3500&&stat.channels.some(x=>x.stdev>5),
@@ -143,9 +149,18 @@ try{
    const origBoard=(await stored(page,'state')).find(x=>x.id==='outfit-board');
    const origItems=await stored(page);
    assert.equal(origItems.length,4);assert.equal(origBoard.saved[0].outfit3dId,'restore01-A-outfit3d');
-   const downloadPromise=page.waitForEvent('download');
+   const exportDiagnostic=await page.evaluate(async()=>{
+    try{return {valid:!!(await window.restoreAtomic01Bridge.exportJSON()).data};}
+    catch(e){return {error:String(e.message||e)};}
+   });
+   assert.deepEqual(exportDiagnostic,{valid:true},'Original browser backup validation must succeed');
+   await page.locator('details.closet-backup > summary').click();
+   const downloadPromise=page.waitForEvent('download',{timeout:12000});
    await page.locator('#export').click();
-   const download=await downloadPromise;
+   const download=await downloadPromise.catch(async e=>{
+    throw Error('Native backup download unavailable: '+e+'; app status: '+
+     await page.locator('#message').textContent());
+   });
    // Download verification uses streaming fallback below for Node runtimes.
    const chunks=[];for await(const chunk of await download.createReadStream())chunks.push(chunk);
    const backup=JSON.parse(Buffer.concat(chunks).toString('utf8'));
