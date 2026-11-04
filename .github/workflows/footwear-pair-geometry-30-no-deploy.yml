@@ -1,0 +1,125 @@
+name: FOOTWEAR-PAIR-30 real-shoe original-photo source integrity and bounded review geometry NO DEPLOY
+on:
+  push:
+    branches:
+      - research/footwear-pair-geometry-30-main-20261104-HOLD
+  pull_request:
+    paths:
+      - 'research/multi-garment-capture-01/visible-groups.mjs'
+      - 'research/multi-garment-capture-01/shoe-pair-geometry-30.mjs'
+      - 'research/footwear-pair-geometry-30/**'
+      - 'tests/footwear-pair-geometry-30.test.mjs'
+      - 'scripts/score-footwear-pair-30.mjs'
+      - 'scripts/verify-footwear-pair-browser-30.mjs'
+      - '.github/workflows/footwear-pair-geometry-30-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  exact-head-original-photo-safe-footwear-pair-research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify immutable parent source and research-only modifications
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor 1b4a6ff1b34c91d119ac60105531f3a5e4e171db HEAD
+          git diff --name-only 1b4a6ff1b34c91d119ac60105531f3a5e4e171db HEAD | while IFS= read -r p; do
+            case "$p" in
+              research/multi-garment-capture-01/visible-groups.mjs|research/multi-garment-capture-01/shoe-pair-geometry-30.mjs|research/footwear-pair-geometry-30/*|tests/footwear-pair-geometry-30.test.mjs|scripts/score-footwear-pair-30.mjs|scripts/verify-footwear-pair-browser-30.mjs|.github/workflows/footwear-pair-geometry-30-no-deploy.yml) ;;
+              *) echo "BLOCKED source changed outside single controlled shoe grouping research scope: $p"; exit 1 ;;
+            esac
+          done
+      - name: Install existing pinned Playwright and image utilities without modifying project lock
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Build actual Closet Current and run entire inherited plus new Node suite
+        run: |
+          node --check research/multi-garment-capture-01/shoe-pair-geometry-30.mjs
+          node --check research/multi-garment-capture-01/visible-groups.mjs
+          node --check scripts/score-footwear-pair-30.mjs
+          node --check scripts/verify-footwear-pair-browser-30.mjs
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Fetch immutable genuine real-photo model proposals and original public-domain JPEG READ ONLY
+        run: |
+          apt-get update -qq
+          DEBIAN_FRONTEND=noninteractive apt-get install -y -qq curl unzip
+          mkdir -p benchmark/footwear-pair-30
+          umask 077
+          curl --silent --show-error --fail --location --retry 3 --max-time 130 \
+            -H "Authorization: Bearer $GITHUB_TOKEN" \
+            -H 'Accept: application/vnd.github+json' \
+            'https://api.github.com/repos/nickhaney916-lang/Closet-Current/actions/artifacts/13340286217/zip' \
+            -o benchmark/footwear-pair-30/pr575-original-inference.zip
+          unzip -t benchmark/footwear-pair-30/pr575-original-inference.zip >/dev/null
+          unzip -p benchmark/footwear-pair-30/pr575-original-inference.zip auto-multi-16/app-equivalent.json > benchmark/footwear-pair-30/app-equivalent.json
+          echo 'c907ee1cbfb944d7ba055921606a13c67014e6656400b5f831b6535d66307100  benchmark/footwear-pair-30/app-equivalent.json' | sha256sum --check -
+          curl --silent --show-error --fail --location --retry 5 --retry-delay 4 --max-time 120 \
+            -A 'ClosetCurrentResearch/1.0 (Public-domain SHA original shoe-pair review)' \
+            'https://upload.wikimedia.org/wikipedia/commons/d/d2/Jeans_for_men.jpg' \
+            -o benchmark/footwear-pair-30/commons-0021.jpg
+          echo '04c0ca5bed1bee26e83be98b9a992619b0777811a7fb8a99fe955939334bbd8c  benchmark/footwear-pair-30/commons-0021.jpg' | sha256sum --check -
+      - name: Independently re-score actual historical 19-source SegFormer boxes before and after shoe-review grouping
+        run: node scripts/score-footwear-pair-30.mjs
+      - name: Execute real Chromium and WebKit original photo before-after shoe review visual at 320 390 430
+        run: node scripts/verify-footwear-pair-browser-30.mjs
+      - name: Independent six PNG SHA audit and honest frozen source score confirmation
+        run: |
+          node --input-type=module <<'EONODE'
+          import assert from 'node:assert/strict';
+          import {readFile} from 'node:fs/promises';
+          import {createHash} from 'node:crypto';
+          import sharp from 'sharp';
+          const path='benchmark/footwear-pair-30/';
+          const science=JSON.parse(await readFile(path+'frozen-pair-score.json','utf8'));
+          const browser=JSON.parse(await readFile(path+'browser.json','utf8'));
+          assert.equal(science.imageCount,19);assert.equal(science.annotatedGarmentBoxes,35);
+          assert.equal(science.resultType,'RETROSPECTIVE_BOUNDING_BOX_UNION_PROXY_ONLY');
+          assert.equal(science.originalModelRerun,false);assert.equal(science.independentlyHumanCertifiedNewHoldout,false);
+          for(const engine of ['chromium','webkit']){
+            const r=science.results[engine];
+            assert.equal(r.original.proposed,61);assert.equal(r.original.truePositives,10);
+            assert.equal(r.updated.proposed,60);assert.equal(r.updated.truePositives,11);
+            assert.deepEqual(r.affected.map(x=>x.id),['commons-0021']);
+          }
+          assert.equal(browser.actualBrowserCases,6);
+          assert.deepEqual(browser.errors,[]);assert.deepEqual(browser.blocked,[]);
+          assert.equal(browser.actualSegFormerModelRerun,false);
+          const ids=new Set();
+          for(const c of browser.results){
+            const key=c.engine+'-'+c.width;assert.ok(!ids.has(key));ids.add(key);
+            assert.equal(c.oneUnverifiedReviewCrop,true);
+            const bytes=await readFile(path+c.filename);
+            assert.equal(createHash('sha256').update(bytes).digest('hex'),c.sha256);
+            const info=await sharp(bytes).metadata();
+            assert.equal(info.format,'png');assert.equal(info.width,c.width);
+          }
+          assert.equal(ids.size,6);
+          console.log('FOOTWEAR-PAIR-30 19 original photo frozen-box proxy verified and all 6 real browser source SHA screenshots validated; Family Alpha HOLD');
+          EONODE
+      - name: Delete public original JPEG and raw archived model ZIP before publishing research evidence
+        if: always()
+        run: rm -f benchmark/footwear-pair-30/commons-0021.jpg benchmark/footwear-pair-30/pr575-original-inference.zip benchmark/footwear-pair-30/app-equivalent.json
+      - name: Upload only sanitized prior original-model source score and six genuine browser images
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: FOOTWEAR-PAIR-30-source-locked-actual-browser-and-frozen-box-proxy-HOLD
+          path: |
+            benchmark/footwear-pair-30/frozen-pair-score.json
+            benchmark/footwear-pair-30/browser.json
+            benchmark/footwear-pair-30/*.png
+          if-no-files-found: warn
+          retention-days: 21
