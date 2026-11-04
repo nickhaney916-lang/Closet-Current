@@ -13,6 +13,9 @@ import sharp from 'sharp';
 import {chromium,webkit} from 'playwright';
 
 const root=resolve('.'),dir=resolve('benchmark/color-confidence-19');
+const consumerAppSource=await readFile('public/app.js','utf8');
+const consumerFieldSlice=consumerAppSource.slice(consumerAppSource.indexOf('function node('),consumerAppSource.indexOf('function cropClothingPhoto('));
+assert.ok(consumerFieldSlice.includes('function clothingFields(')&&consumerFieldSlice.includes("item.colorSource='user'"),'must test actual consumer color event');
 const [samples,registry]=await Promise.all([
  readFile('research/color-confidence-safety-19/sources.json','utf8').then(JSON.parse),
  readFile('benchmark/locked-photo-sources.json','utf8').then(JSON.parse)
@@ -69,6 +72,7 @@ const html=[
  '<label for="manualColor">Your confirmed color</label><input id="manualColor" aria-label="Your confirmed color" value="" style="display:block;width:100%;padding:8px">',
  '<p id="authority" role="status">Manual correction not yet tested.</p></section>',
  '<p class="small">Source title is a label hint, not independently reviewed garment-color ground truth. No cloud or photo upload.</p></main>',
+ '<script src="/public/taxonomy.js"></script>',
  '<script src="/public/photo-color.js"></script>',
  '<script src="/public/clothing-details.js"></script>',
  '<script src="/public/photo-check.js"></script>',
@@ -81,7 +85,7 @@ const server=createServer(async(req,res)=>{
   if(url.pathname==='/'){
    res.writeHead(200,{'content-type':'text/html','cache-control':'no-store'});return res.end(html);
   }
-  if(!['/public/photo-color.js','/public/clothing-details.js','/public/photo-check.js'].includes(url.pathname))
+  if(!['/public/photo-color.js','/public/clothing-details.js','/public/photo-check.js','/public/taxonomy.js'].includes(url.pathname))
    throw Error('path not allowed');
   const path=resolve(root,'.'+url.pathname);
   const body=await readFile(path);
@@ -122,6 +126,7 @@ try{
    for(const sample of selected){
     const {bytes,source}=await originalPhoto(sample);
     await page.goto(origin+'/',{waitUntil:'load'});
+    await page.addScriptTag({content:'const items=[]; const categories=[\'Uncategorized\',...Object.keys(clothingSchema.types)];\n'+consumerFieldSlice});
     const value=await page.evaluate(async input=>{
      const photo='data:image/jpeg;base64,'+input.base64;
      document.getElementById('subject').src=photo;
@@ -168,6 +173,43 @@ try{
     });
     assert.equal(cleared.color,'');assert.equal(cleared.colorSource,'user');
     assert.equal(cleared.sourceSha256,source.sha256);
+    // Run the ACTUAL consumer clothingFields form (from public/app.js),
+    // not a reimplementation of its input provenance event handlers.
+    const formProof=await page.evaluate(input=>{
+     const original={id:'field-proof',image:'',name:'Research garment',
+      category:'Tops',itemType:'T-shirt',color:'Blue',colorSource:'photo-estimate',
+      notes:'',sourceSHA256:input.sha256,ownerId:'owner-research-only',
+      seasons:['Summer'],pattern:'Solid',fit:'Regular',sleeveLength:'Short sleeve'};
+     const section=document.createElement('section');
+     section.setAttribute('data-provenance-review','23');
+     document.querySelector('main').append(section);
+     const form=document.createElement('form'),item={...original};
+     section.append(form);
+     const collect=clothingFields(form,item);
+     const note=form.querySelector('[aria-label="Notes"]');
+     note.value='Edited non-color text only';
+     note.dispatchEvent(new Event('input',{bubbles:true}));
+     const nonColor=collect();
+     const color=form.querySelector('[aria-label="Color"]');
+     color.value='Green';color.dispatchEvent(new Event('input',{bubbles:true}));
+     const corrected=collect();
+     color.value='';color.dispatchEvent(new Event('input',{bubbles:true}));
+     const clearedColor=collect();
+     section.querySelector('form').replaceWith(document.createTextNode(
+      'Consumer review: note-only edit keeps photo estimate; user color edit and clear are tracked explicitly.'));
+     return {estimatedStillSource:nonColor.colorSource,estimatedColor:nonColor.color,
+      manualSource:corrected.colorSource,manualColor:corrected.color,
+      clearedSource:clearedColor.colorSource,clearedColor:clearedColor.color,
+      shaUnchanged:clearedColor.sourceSHA256===input.sha256,ownerId:clearedColor.ownerId};
+    },{sha256:source.sha256});
+    assert.equal(formProof.estimatedStillSource,'photo-estimate');
+    assert.equal(formProof.estimatedColor,'Blue');
+    assert.equal(formProof.manualSource,'user');
+    assert.equal(formProof.manualColor,'Green');
+    assert.equal(formProof.clearedSource,'user');
+    assert.equal(formProof.clearedColor,'');
+    assert.equal(formProof.shaUnchanged,true);
+    assert.equal(formProof.ownerId,'owner-research-only');
     await page.getByRole('textbox',{name:'Your confirmed color'}).fill('Green');
     await page.evaluate(()=>{document.getElementById('authority').textContent=
      'User Green retained after model replay; user-cleared blank also retained. Green is a test selection, not photo truth.';});
@@ -180,7 +222,7 @@ try{
     findings.push({engine,id:sample.id,sha256:source.sha256,originalBytes:bytes.length,
      sourceTitleHint:sample.sourceDeclaredHint,groundTruthColor:null,
      sourcePage:source.attribution.source,license:source.attribution.license,
-     ...value,userAuthority:{manualWon:manual.color==='Green'&&manual.colorSource==='user',
+     ...value,consumerReviewForm:formProof,userAuthority:{manualWon:manual.color==='Green'&&manual.colorSource==='user',
        clearWon:cleared.color===''&&cleared.colorSource==='user',sourceUnchanged:cleared.sourceSha256===source.sha256}});
     if(n<3){
      const width=[320,390,430][n];
@@ -222,6 +264,9 @@ const report={
  explicitManualColorPreserved:findings.filter(x=>x.userAuthority?.manualWon).length,
  explicitlyClearedColorPreserved:findings.filter(x=>x.userAuthority?.clearWon).length,
  allManualColorSourcesUnchanged:findings.every(x=>x.userAuthority?.sourceUnchanged===true),
+ noteOnlyColorProvenancePreserved:findings.filter(x=>x.consumerReviewForm?.estimatedStillSource==='photo-estimate').length,
+ consumerManualEditsPreserved:findings.filter(x=>x.consumerReviewForm?.manualSource==='user').length,
+ consumerManualClearsPreserved:findings.filter(x=>x.consumerReviewForm?.clearedSource==='user'&&x.consumerReviewForm?.clearedColor==='').length,
  noUnexpectedUploads:unexpectedUploads.length===0,
  jsErrors:runtimeErrors.length,
  mobileScreenshots:screenshots.length,
@@ -232,6 +277,9 @@ await writeFile(dir+'/report.json',JSON.stringify(report,null,2));
 await writeFile(dir+'/screenshots.json',JSON.stringify(screenshots,null,2));
 assert.equal(report.wrongUncertainAutoFills,0);
 assert.equal(report.explicitManualColorPreserved,12);
+assert.equal(report.noteOnlyColorProvenancePreserved,12);
+assert.equal(report.consumerManualEditsPreserved,12);
+assert.equal(report.consumerManualClearsPreserved,12);
 assert.equal(report.explicitlyClearedColorPreserved,12);
 assert.equal(report.allManualColorSourcesUnchanged,true);
 console.log('COLOR CONFIDENCE 19 REAL ORIGINALS '+JSON.stringify({
@@ -240,6 +288,7 @@ console.log('COLOR CONFIDENCE 19 REAL ORIGINALS '+JSON.stringify({
  reviewCases:report.uncertainReviewCases,
  automaticCases:report.autoFilledCases,uncertainWrongAutoFills:report.wrongUncertainAutoFills,
  sourceShaVerified:true,colorAccuracy:null,screenshots:screenshots.length,
+ realConsumerReviewNoteOnlyPreserved:report.noteOnlyColorProvenancePreserved,
  manualUserCorrectionsProtected:report.explicitManualColorPreserved,
  manualUserClearsProtected:report.explicitlyClearedColorPreserved,
  release:'HOLD'

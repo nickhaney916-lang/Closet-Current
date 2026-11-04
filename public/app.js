@@ -201,7 +201,9 @@ function adjustPhoto(item){
      (!captureProofOwner()||item.ownerId&&item.ownerId!==captureProofOwner()))
    throw Error('Owner changed. Sign in again before saving this photo.');
   if(typeof ClothingMemory!=='undefined')Object.assign(value,ClothingMemory.confirm(value));
-  if(value.color&&value.colorSource==='photo-estimate')value.colorSource='user';
+  // Do not relabel an untouched photo-color estimate as a user's explicit
+  // color correction merely because the garment's Save button was pressed.
+  // clothingFields marks colorSource='user' only on an actual color edit.
   await savePiece(value,batch.filter(x=>x.id!==item.id),{expectedSavedRow});
   const existing=items.find(x=>x.id===item.id);if(existing)Object.assign(existing,value);else items.push(value);
   batch=batch.filter(x=>x.id!==item.id);await persistDraft();dialog.close();render();scheduleMemoryReview();
@@ -274,7 +276,10 @@ function render(){
  if(expectedSavedRow){
   f.style.boxSizing='border-box';f.style.width='100%';
   f.style.maxWidth='100%';f.style.minWidth='0';
- }cancel.type='button';cancel.onclick=()=>dialog.close();f.onsubmit=async e=>{e.preventDefault();ok.disabled=true;try{const updated={...collect(),name:draft.name.trim()||'Closet piece'};if(updated.color&&updated.colorSource==='photo-estimate')updated.colorSource='user';if(typeof ClothingMemory!=='undefined')Object.assign(updated,ClothingMemory.confirm(updated));
+ }cancel.type='button';cancel.onclick=()=>dialog.close();f.onsubmit=async e=>{e.preventDefault();ok.disabled=true;try{const updated={...collect(),name:draft.name.trim()||'Closet piece'};
+  // Saving an unrelated detail is not a manual correction to this color.
+  // Preserve the original photo-estimate provenance unless the user edited Color.
+  if(typeof ClothingMemory!=='undefined')Object.assign(updated,ClothingMemory.confirm(updated));
  if(expectedSavedRow){
   updated.userAdjusted=true;updated.requiresOwnershipConfirmation=false;
   await queued(()=>commitOwnerCorrection10(updated,expectedSavedRow,null));

@@ -91,7 +91,8 @@ test('the actual camera/edit UI explicitly stamps manual colors and uses shared 
  const app=fs.readFileSync('public/app.js','utf8');
  const shared=fs.readFileSync('public/clothing-details.js','utf8');
  assert.match(app,/if\(key==='color'\)item\.colorSource='user'/);
- assert.match(app,/if\(value\.color&&value\.colorSource==='photo-estimate'\)value\.colorSource='user'/);
+ assert.doesNotMatch(app,/if\(value\.color&&value\.colorSource==='photo-estimate'\)value\.colorSource='user'/);
+ assert.doesNotMatch(app,/if\(updated\.color&&updated\.colorSource==='photo-estimate'\)updated\.colorSource='user'/);
  assert.match(app,/Object\.assign\(item,ClothingDetails\.fill\(item,result\.choices\[0\],result\.details\)\)/);
  assert.match(app,/ClothingDetails\.fillColor\(value,photo\.maskApplied\?/);
  assert.match(shared,/if\(key==='color'&&out\.colorSource==='user'\)continue/);
