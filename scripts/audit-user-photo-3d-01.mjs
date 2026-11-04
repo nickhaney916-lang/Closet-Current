@@ -16,22 +16,21 @@ const galleries=[];
 for(const width of [320,390,430]){
  const selected=data.screenshots.filter(x=>x.width===width);
  assert.deepEqual(selected.map(x=>x.group),[1,2,3]);
- const layers=[];let maxHeight=900;
+ const layers=[];
  for(let i=0;i<3;i++){
   const record=selected[i],bytes=await readFile(root+'/'+record.name);
   assert.equal(digest(bytes),record.sha256);
   const metadata=await sharp(bytes).metadata(),stats=await sharp(bytes).stats();
   assert.equal(metadata.format,'png');assert.equal(metadata.width,width);
-  assert.ok(metadata.height>=900&&metadata.height<2200);
-  maxHeight=Math.max(maxHeight,metadata.height);
+  assert.equal(metadata.height,900);
   assert.ok(stats.channels.some(x=>x.stdev>8));
   layers.push({input:bytes,left:i*width,top:0});
  }
- const jpeg=await sharp({create:{width:3*width,height:maxHeight,channels:4,
+ const jpeg=await sharp({create:{width:3*width,height:900,channels:4,
    background:{r:255,g:255,b:255,alpha:1}}}).composite(layers).jpeg({quality:85}).toBuffer();
  const filename='all-15-originals-chromium-'+width+'.jpg';
  await writeFile(out+'/'+filename,jpeg);
- galleries.push({width,height:maxHeight,filename,sha256:digest(jpeg)});
+ galleries.push({width,filename,sha256:digest(jpeg)});
 }
 await writeFile(out+'/acceptance.json',JSON.stringify({
  status:'PASS_ORIGINAL_SOURCE_READINESS_AND_PHOTO_FALLBACK_ONLY',
