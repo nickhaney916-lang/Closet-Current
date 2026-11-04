@@ -222,7 +222,8 @@ try{
    await page.locator('details.closet-backup > summary').click();
    await page.locator('#import').setInputFiles(makeFile(backup));
    await page.waitForFunction(()=>document.getElementById('message')?.textContent?.includes('owner'));
-   assert.deepEqual(await stored(page),fixture('restore01-B').items);
+   assert.deepEqual(await stored(page),fixture('restore01-B').items.sort((a,b)=>a.id.localeCompare(b.id)),
+    'Owner B genuine private IndexedDB sorted records must remain untouched');
    cases.push({engine,width,originalJPEGs:4,screenshots:5,
     ownerAandBIsolated:true,originalPhotosUnchanged:true,
     savedOutfit3dIdRetained:true,dressJacketCoatRetained:true,
