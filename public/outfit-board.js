@@ -150,6 +150,7 @@ const outfitBoardReady=(async()=>{
    const {createNativeConsumerBoard04}=await import('../research/native-consumer-board-04/consumer-board-controller.mjs');
    nativeLossless04=await createNativeConsumerBoard04({
     onChange(value,{revoked}={}){
+     window.nativePhotoReadiness08Bridge?.clear();
      if(revoked){currentBoard=cleanOutfitBoard({},[]);savedOutfitBoards=[];nativeLossless04ClearPreview();return;}
      if(value){currentBoard=value;
       if(nativeLossless04&&nativeLossless04.status().active){
@@ -188,6 +189,18 @@ const outfitBoardReady=(async()=>{
      const {mountNative3D05}=await import('../research/native-3d-05/native-preview-bridge.mjs');
      window.native3D05Bridge=await mountNative3D05({consumer:nativeLossless04,
       onStatus:value=>$('boardSaveStatus').textContent=value});
+    }catch(error){nativeLossless04Notify(error);}
+   }
+   // NATIVE-PHOTO-08: attach only after actual owner Outfit Builder controls
+   // are active; the underlying #560 source-original assessor stays unchanged.
+   if(new URLSearchParams(location.search).get('sourceReadiness08')==='research'&&
+      new URLSearchParams(location.search).get('native3D05')==='research'){
+    try{
+     const {mountNativeReadiness08}=await import('../research/native-photo-readiness-08/native-readiness-panel.mjs');
+     window.nativePhotoReadiness08Bridge=await mountNativeReadiness08({
+      board:nativeLossless04,db,
+      onStatus:value=>$('boardSaveStatus').textContent=value
+     });
     }catch(error){nativeLossless04Notify(error);}
    }
   }catch(error){nativeLossless04Notify(error);nativeLossless04ClearPreview();}
