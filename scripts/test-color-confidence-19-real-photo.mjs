@@ -169,6 +169,8 @@ try{
     assert.equal(cleared.color,'');assert.equal(cleared.colorSource,'user');
     assert.equal(cleared.sourceSha256,source.sha256);
     await page.getByRole('textbox',{name:'Your confirmed color'}).fill('Green');
+    await page.evaluate(()=>{document.getElementById('authority').textContent=
+     'User Green retained after model replay; user-cleared blank also retained. Green is a test selection, not photo truth.';});
     if(value.estimate?.needsConfirmation)assert.equal(value.storedColor,null,
      'uncertain actual photo color must not silently become a stored garment color');
     if(value.storedColor!==null){
