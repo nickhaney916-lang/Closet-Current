@@ -125,9 +125,9 @@ export async function mountStyleOwnedLive03({
  selector.setAttribute('aria-label','Choose your new owned clothing item');
  selectLabel.append(selector);
  const pin=create('div',null,'pinned');pin.id='styleOwned03Pinned';
- const refresh=create('button','Refresh my saved clothes');refresh.id='styleOwned03Refresh';
+ const refreshButton=create('button','Refresh my saved clothes');refreshButton.id='styleOwned03Refresh';
  const generate=create('button','Generate my three outfits','primary');generate.id='styleOwned03Generate';
- const toolbar=create('div',null,'toolbar');toolbar.append(refresh,generate);
+ const toolbar=create('div',null,'toolbar');toolbar.append(refreshButton,generate);
  const status=create('p','Checking this account’s saved clothing…');status.id='styleOwned03Status';
  status.setAttribute('role','status');status.setAttribute('aria-live','polite');
  const looks=create('div',null,'looks');looks.id='styleOwned03Suggestions';
@@ -182,7 +182,7 @@ export async function mountStyleOwnedLive03({
  }
  async function refresh({quiet=false}={}){
   if(busy)return false;
-  busy=true;refresh.disabled=true;
+  busy=true;refreshButton.disabled=true;
   try{
    const previous=snapshot,loaded=await verifiedPrivateStyleRoster03(board);
    snapshot=loaded;revoked=false;
@@ -195,7 +195,7 @@ export async function mountStyleOwnedLive03({
      ' pieces need photo/category review. Choose a new item, then generate.');
    return true;
   }catch(error){clearPrivate();text(String(error.message||error));throw error;}
-  finally{busy=false;refresh.disabled=false;}
+  finally{busy=false;refreshButton.disabled=false;}
  }
  function ensurePin(){
   live();
@@ -386,7 +386,7 @@ export async function mountStyleOwnedLive03({
   pinId=selector.value;generated=null;current=null;active=null;
   history=[];savedId=null;looks.replaceChildren();workspace.replaceChildren();displayPinned();
  };
- refresh.onclick=()=>refresh().catch(error=>text(String(error.message||error)));
+ refreshButton.onclick=()=>refresh().catch(error=>text(String(error.message||error)));
  generate.onclick=()=>generateLooks().catch(error=>text(String(error.message||error)));
  const onInventory=()=>{if(!revoked)refresh({quiet:true}).catch(()=>{});};
  win.addEventListener('closet:style-owned-inventory-committed',onInventory);
