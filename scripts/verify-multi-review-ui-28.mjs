@@ -13,7 +13,7 @@ const source='data:image/jpeg;base64,'+photo.toString('base64');
 const sourceSHA=createHash('sha256').update(photo).digest('hex');
 const html='<!doctype html><html lang="en"><head><meta name="viewport" content="width=device-width,initial-scale=1">'+
  '<style>body{font:15px system-ui;background:#f9f9f9;color:#222;margin:12px}main{max-width:800px;margin:auto}button{border:1px solid #aaa;border-radius:7px;padding:9px}</style>'+
- '</head><body><main><h2>Closet Current · Local garment review</h2>'+
+ '</head><body><main><h2>Closet Current - Local garment review</h2>'+
  '<p>Research-only. Original retained; every region requires confirmation.</p>'+
  '<section id="wholeOutfitCapture"></section><input id="outfitCamera" type="file" hidden>'+
  '<input id="outfitUpload" type="file" hidden></main></body></html>';
