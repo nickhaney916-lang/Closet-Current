@@ -242,7 +242,16 @@ function render(){
  renderPhotoResults($('scanResults'),results);
  const cg=$('closetGrid');cg.replaceChildren();const query=$('search').value.toLowerCase(),filter=$('filter').value,visible=(query||filter!=='All categories'||window.closetBrowseAll||window.closetSlotFilter)?items.filter(x=>(!window.closetSlotFilter||outfitSlots.some(slot=>slot.id===window.closetSlotFilter&&slotAllows(slot,x)))&&(!window.closetItemType||x.itemType===window.closetItemType)&&(!window.closetSleeves||window.closetSleeves.includes(x.sleeveLength))&&clothingMatches(x,query,filter,$('seasonFilter').value,$('sleeveFilter').value)&&(!window.closetIndex02||window.closetIndex02.includes(x.id))):[];
  if(!visible.length)empty(cg,items.length?'No matching pieces.':'Your closet is ready to grow.',items.length?'Try a different search or category.':'Save your first piece from the review tab.');
- for(const item of visible){const card=node('article',null,'card'),im=node('img');im.loading='lazy';im.src=item.image;im.alt=item.name;const body=node('div',null,'card-body');body.append(node('h3',item.name),node('p',[item.color,item.pattern].filter(x=>x&&x!=='Unknown'&&x!=='Not applicable').join(' · ')),node('p',item.seasons.length?item.seasons.join(' · '):'Season unknown'),node('p',[item.brand,item.size,item.material,item.occasion].filter(Boolean).join(' · ')),node('p',item.notes));if(item.itemType==='Unknown'&&item.color)body.append(node('p','Category and color saved · refine the type when convenient.','fine'));const actions=node('div',null,'actions'),edit=node('button','Adjust details','secondary'),del=node('button','Delete','secondary');edit.onclick=()=>{const dialog=document.createElement('dialog');dialog.className='clothing-editor';dialog.style.cssText='border:1px solid #d9ddd2;border-radius:8px;max-width:440px;width:90%;padding:24px';const f=node('form');const draft=structuredClone(item),collect=clothingFields(f,draft),
+ for(const item of visible){const card=node('article',null,'card'),im=node('img');im.loading='lazy';im.src=item.image;im.alt=item.name;const body=node('div',null,'card-body');body.append(node('h3',item.name),node('p',[item.color,item.pattern].filter(x=>x&&x!=='Unknown'&&x!=='Not applicable').join(' · ')),node('p',item.seasons.length?item.seasons.join(' · '):'Season unknown'),node('p',[item.brand,item.size,item.material,item.occasion].filter(Boolean).join(' · ')),node('p',item.notes));if(item.itemType==='Unknown'&&item.color)body.append(node('p','Category and color saved · refine the type when convenient.','fine'));const actions=node('div',null,'actions'),edit=node('button','Adjust details','secondary'),del=node('button','Delete','secondary');edit.onclick=()=>{const dialog=document.createElement('dialog');dialog.className='clothing-editor';dialog.style.cssText='border:1px solid #d9ddd2;border-radius:8px;max-width:440px;width:90%;padding:24px';
+ if(nativeCorrection10Active()){
+  // Mobile saved-item editors can otherwise extend past the viewport and
+  // their Save/Cancel buttons become covered by scrolling clothing fields.
+  // Scope safe scrolling to research mode; preserve default consumer UI.
+  dialog.style.maxHeight='min(90dvh,750px)';
+  dialog.style.overflowY='auto';
+  dialog.style.overscrollBehavior='contain';
+  dialog.style.scrollPaddingBottom='12px';
+ }const f=node('form');const draft=structuredClone(item),collect=clothingFields(f,draft),
   expectedSavedRow=nativeCorrection10Active()?structuredClone(item):null,
   ok=node('button','Save changes','primary'),cancel=node('button','Cancel','secondary');
  f.className='card';f.style.padding='15px';cancel.type='button';cancel.onclick=()=>dialog.close();f.onsubmit=async e=>{e.preventDefault();ok.disabled=true;try{const updated={...collect(),name:draft.name.trim()||'Closet piece'};if(updated.color&&updated.colorSource==='photo-estimate')updated.colorSource='user';if(typeof ClothingMemory!=='undefined')Object.assign(updated,ClothingMemory.confirm(updated));
@@ -256,7 +265,16 @@ function render(){
   message(expectedSavedRow?'Saved garment not overwritten. '+String(error.message||error)+
    '. Close and reopen Adjust details to review the latest saved item.':
    'Changes could not be saved.');
-  ok.disabled=false;}};f.append(ok,cancel);dialog.append(f);document.body.append(dialog);dialog.onclose=()=>dialog.remove();dialog.showModal();};del.onclick=async()=>{if(!confirm('Delete this closet piece?'))return;try{await removeItem(item.id);items=items.filter(x=>x.id!==item.id);render();}catch{message('Could not delete the piece.');}};if(typeof closetWearButton==='function')actions.append(closetWearButton(item));actions.append(edit,cropButton(item),del);body.append(actions);card.append(im,body);if(typeof enableClosetDrag==='function')enableClosetDrag(im,item);cg.append(card);}
+  ok.disabled=false;}};if(nativeCorrection10Active()){
+  const actionRow=node('div',null,'actions native-correction10-actions');
+  actionRow.style.cssText='position:sticky;bottom:0;z-index:3;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;background:#fff;padding:12px 3px max(12px,env(safe-area-inset-bottom,0px));border-top:1px solid #d9ddd2;min-width:0';
+  for(const button of [ok,cancel]){
+   button.style.minHeight='52px';button.style.width='100%';
+   button.style.padding='10px 6px';button.style.whiteSpace='normal';
+  }
+  actionRow.append(ok,cancel);f.append(actionRow);
+ }else f.append(ok,cancel);
+ dialog.append(f);document.body.append(dialog);dialog.onclose=()=>dialog.remove();dialog.showModal();};del.onclick=async()=>{if(!confirm('Delete this closet piece?'))return;try{await removeItem(item.id);items=items.filter(x=>x.id!==item.id);render();}catch{message('Could not delete the piece.');}};if(typeof closetWearButton==='function')actions.append(closetWearButton(item));actions.append(edit,cropButton(item),del);body.append(actions);card.append(im,body);if(typeof enableClosetDrag==='function')enableClosetDrag(im,item);cg.append(card);}
  if(typeof renderClosetBrowser==='function')renderClosetBrowser();
  if(typeof renderTrendMatches==='function')renderTrendMatches();if(typeof renderOutfitBoard==='function')renderOutfitBoard();if(typeof renderStyledCollection==='function')renderStyledCollection();if(typeof renderHomePieces==='function')renderHomePieces();if(typeof renderOutfitCapture==='function')renderOutfitCapture();
 }
