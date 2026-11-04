@@ -1,0 +1,3 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {thresholdBoundaryReport} from '../benchmark/modnet-boundary-report.mjs';
+test('reports removed pixels adjacent to retained foreground and isolated ones',()=>{const r=thresholdBoundaryReport(Uint8Array.from([255,150,0,0,0,150]),3,2,1,0);assert.equal(r.removed,2);assert.equal(r.adjacentToHigh,1);assert.equal(r.isolated,1);assert.equal(r.adjacentFraction,.5);});
+test('does not mutate input or claim accuracy',()=>{const m=Uint8Array.from([0,200,0,0]);const r=thresholdBoundaryReport(m,2,2,1,0);assert.equal(r.removed,0);assert.equal(r.adjacentFraction,null);assert.deepEqual([...m],[0,200,0,0]);});

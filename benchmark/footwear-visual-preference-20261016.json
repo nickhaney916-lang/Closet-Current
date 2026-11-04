@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "kind": "qualitative-visual-model-preference-not-ground-truth",
+  "date": "2026-10-16",
+  "source": "User reviewed the static three-way comparison images on Android",
+  "cases": [
+    {
+      "id": "commons-0079",
+      "garment": "sneakers",
+      "preferredModel": "MODNet",
+      "observedDefect": "Visible shadow at base of footwear",
+      "reviewStatus": "qualitative-feedback-only"
+    },
+    {
+      "id": "commons-0094",
+      "garment": "boots",
+      "preferredModel": "MODNet",
+      "observedDefect": "Visible shadow at base of footwear",
+      "reviewStatus": "qualitative-feedback-only"
+    }
+  ],
+  "reviewerStatement": "On both versions, the mod net looked substantially better",
+  "limitations": [
+    "Visual preference is not a pixel-accurate annotation",
+    "Unwanted connected floor or shadow pixels may remain",
+    "No claim about real accuracy, precision, recall, or IoU"
+  ],
+  "decision": "Prioritize MODNet in experimental footwear studies. Do not change production masking until independently approved reference outlines and shadow-removal checks are available.",
+  "reviewerFollowup": "MODNet left a shadow at the base of the footwear.",
+  "nextExperiment": "Generate non-destructive before/after previews targeting lower connected shadows. Protect visible sole and heel pixels; require human visual approval before production change."
+}

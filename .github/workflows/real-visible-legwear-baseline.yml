@@ -1,0 +1,39 @@
+name: Real visible sock boot and tights shoe baseline
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'benchmark/manifest-visible-legwear-2.json'
+      - 'scripts/run-real-visible-legwear-baseline.mjs'
+      - '.github/workflows/real-visible-legwear-baseline.yml'
+permissions:
+  contents: read
+jobs:
+  baseline-two-photos:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned image inference dependencies
+        run: npm install --no-save --no-package-lock @huggingface/transformers@3.8.1 sharp@0.34.4
+      - name: Validate visible-garment evidence and script
+        run: |
+          node --check scripts/run-real-visible-legwear-baseline.mjs
+          node --test tests/visible-garment-pairs.test.mjs
+      - name: Download two already-audited and hash-locked layered clothing photos
+        run: node scripts/download-reviewed-photos.mjs benchmark/manifest-visible-legwear-2.json benchmark/photos validation-0030,validation-0031
+      - name: Measure current model's semantic output without imaginary hosiery classes
+        run: node scripts/run-real-visible-legwear-baseline.mjs benchmark/real-visible-legwear-review
+      - name: Fail if result asserts any production recognition or fabricated accuracy
+        run: |
+          node -e "const s=require('./benchmark/real-visible-legwear-review/summary.json');if(s.status!=='complete'||s.cases.length!==2||s.currentCatalogRecognizesLegwear||s.semanticClassForLegwear||!s.originalSourcesVerified||s.productionAuthorized||s.reportedSegmentationAccuracy!==null||s.createdClosetItems!==0||s.cases.some(c=>c.modelCanSeparateShoesFromStockings||c.createdClosetItems))throw Error('Unverified hosiery recognition claim')"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: real-visible-boots-socks-and-stockings-shoes-baseline
+          path: benchmark/real-visible-legwear-review/
+          retention-days: 14

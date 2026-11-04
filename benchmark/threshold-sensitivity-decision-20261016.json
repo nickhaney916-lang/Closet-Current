@@ -1,0 +1,37 @@
+{
+  "date": "2026-10-16",
+  "runId": 38988031467,
+  "artifactId": 12082809891,
+  "selectedBaseline": "MODNet sharp threshold 128",
+  "decision": "Do not switch to 160 or 192 solely from mask shrinkage",
+  "comparison": {
+    "shorts": {
+      "at160": 13800,
+      "at192": 30410
+    },
+    "beigeDress": {
+      "at160": 5419,
+      "at192": 11765
+    },
+    "blackDress": {
+      "at160": 7964,
+      "at192": 17614
+    },
+    "jacket": {
+      "at160": 12380,
+      "at192": 26930
+    },
+    "sneakers": {
+      "at160": 9242,
+      "at192": 18618
+    },
+    "boots": {
+      "at160": 14185,
+      "at192": 29610
+    }
+  },
+  "groundTruthAvailable": false,
+  "shadowRemovalVerified": false,
+  "followUp": "Obtain independently reviewed shadow and garment-edge annotations, then test a garment-aware segmentation or mask refinement with measured shadow reduction and fabric retention.",
+  "productionChange": false
+}

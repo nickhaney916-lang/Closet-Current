@@ -1,0 +1,316 @@
+From 9268f9031689f122509a40a0f3b5810ffcd29064 Mon Sep 17 00:00:00 2001
+From: Codex <codex@openai.com>
+Date: Wed, 14 Oct 2026 22:34:41 -0500
+Subject: [PATCH] Measure primary color and category together in phone photo
+ checks
+
+---
+ .github/workflows/phone-photo-check.yml |  3 +++
+ docs/PHONE-PHOTO-VALIDATION.md          | 12 +++++++--
+ docs/PROGRESS-CHECKPOINT.md             |  6 +++++
+ public/phone-photo-benchmark.mjs        | 34 ++++++++++++++++-------
+ public/phone-photo-check.html           |  4 +--
+ public/phone-photo-check.mjs            | 22 ++++++++-------
+ scripts/run-phone-photo-check.mjs       |  8 +++---
+ tests/phone-photo-benchmark.test.mjs    | 36 +++++++++++++++++++++++++
+ 8 files changed, 99 insertions(+), 26 deletions(-)
+
+diff --git a/.github/workflows/phone-photo-check.yml b/.github/workflows/phone-photo-check.yml
+index 6db3cf3..51862b0 100644
+--- a/.github/workflows/phone-photo-check.yml
++++ b/.github/workflows/phone-photo-check.yml
+@@ -12,6 +12,9 @@ on:
+       - 'public/recognition-engine.mjs'
+       - 'public/recognition-vectors.*'
+       - 'public/photo-import.js'
++      - 'public/photo-color.js'
++      - 'public/photo-check.js'
++      - 'public/clothing-details.js'
+       - 'scripts/run-phone-photo-check.mjs'
+       - 'scripts/build.mjs'
+   workflow_dispatch:
+diff --git a/docs/PHONE-PHOTO-VALIDATION.md b/docs/PHONE-PHOTO-VALIDATION.md
+index 0ac07ac..67f3307 100644
+--- a/docs/PHONE-PHOTO-VALIDATION.md
++++ b/docs/PHONE-PHOTO-VALIDATION.md
+@@ -7,7 +7,7 @@ The existing 59-photo benchmark measures licensed public photographs. The availa
+ Open `phone-photo-check.html` on the app's website, or My account → Device help → Check clothing photo recognition. This optional page does not change the main navigation or add clothing to a wardrobe.
+ 
+ 1. Choose up to 20 single-garment photos, each smaller than 10 MB. Start with five to ten different items, including dresses, long tops, sneakers and boots. Include the full hem or soles and use ordinary backgrounds and lighting.
+-2. Choose each expected category yourself before running recognition. Choose an expected type only when you are sure; otherwise leave Check category only. Not clothing supports a negative example.
++2. Choose each expected category and primary color yourself before running recognition. The color menu uses the same 13 color families as the app; choose Multicolor when no single color describes the garment. Color is not requested for nonclothing photos. Choose an expected type only when you are sure; otherwise leave Check category only. Not clothing supports a negative example.
+ 3. Run the check. Labels remain locked through the completed test so predictions cannot influence the expected answers. Start over to change photos or labels.
+ 4. Download `closet-phone-photo-results.json` and attach it to the development conversation. Photos and original filenames are not included. If a particular error needs visual investigation, separately attach that garment photo and identify its numbered row.
+ 
+@@ -15,7 +15,11 @@ Photos stay in memory in the user's browser, use the same `photoToJPEG` import c
+ 
+ ## What the report measures
+ 
+-The report records independently supplied category/type labels, recognized category/type, automatic versus category-review outcomes, bounded scanner rejection diagnostics, error codes and elapsed times. It includes the release identifier and recognition-vector SHA256 to identify the version tested. Personal clothing names, file names, photos, data URLs, account identifiers, email addresses, raw exceptions and arbitrary diagnostic text are excluded.
++The report records independently supplied category/type/color labels, recognized category/type/color, the color source (photo estimate or recognition), automatic versus category-review outcomes, bounded scanner rejection diagnostics, error codes and elapsed times. It includes the release identifier and recognition-vector SHA256 to identify the version tested. Personal clothing names, file names, photos, data URLs, account identifiers, email addresses, raw exceptions and arbitrary diagnostic text are excluded.
++
++Report format version 2 adds primary-color and joint category/color counts. `coreChecked` includes every color-labeled garment, including runtime failures; `coreMatches` requires both an accepted correct category and the correct color. `automaticCoreChecked` counts automatic identifications among those garments, with `automaticCoreMatches` and `incorrectAutomaticCore` reporting correct and incorrect pairs. Read automatic precision and automatic coverage together; zero automatic identifications is not a successful accuracy result. Historical labels without colors remain supported and are excluded from color/joint counts.
++
++The check uses the production `checkPhoto` color sample and `ClothingDetails` merge rules for single-garment imports: a valid recognized color supersedes the photo estimate only after category acceptance. This does not validate whole-outfit masks, automatic crop completeness, wardrobe saving, or physical-device hardware.
+ 
+ Category and subtype accuracy are separate. A confirmed dress category with Unknown type counts as a category match and a type miss when the user supplied a type. Unlabeled types are excluded from type scoring. Runtime failures remain in the denominator rather than disappearing from the report. Incorrect automatic categories and types are explicitly counted; nonclothing rejections are scored separately.
+ 
+@@ -26,3 +30,7 @@ Model setup is bounded to five minutes and individual classifications to one min
+ Node tests cover label consistency, independent label snapshots, review-versus-automatic scoring, negative examples, report privacy, missing/duplicate results, timeouts and cancellation. The browser flow uses two licensed existing fixtures at a 390×844 touch viewport with the actual worker, checks the downloadable report and locked controls, and verifies restart during model loading. This validates the tooling, not physical phone hardware or broader accuracy. Actual phone test reports are still required before recognition tuning can use this new evidence.
+ 
+ All 166 automated checks passed. The [final real-worker phone flow](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/38582162963) passed with one correctly classified garment and one correctly rejected negative, no page errors, report privacy checks, label locking, cancellation and a layout check against the actual 390-pixel viewport. Production recognition assets and high-resolution camera code were not modified; Drive Duel was untouched.
++
++## Color-validation continuation — October 14, evening Pacific
++
++Added independent color labels and joint scoring without changing the main closet interface, camera, saved items, recognition models or production color rules. All 242 Node checks and the static build pass locally. The updated real-worker mobile workflow checks required color entry, locked controls, negative-example handling and safe version-2 exports. Its run status is recorded in the development checkpoint.
+diff --git a/docs/PROGRESS-CHECKPOINT.md b/docs/PROGRESS-CHECKPOINT.md
+index 76bbe31..2a36189 100644
+--- a/docs/PROGRESS-CHECKPOINT.md
++++ b/docs/PROGRESS-CHECKPOINT.md
+@@ -13,6 +13,12 @@ Saved at the owner's request before further personal testing. Stable application
+ 
+ Next work: follow [PILOT-READINESS.md](PILOT-READINESS.md). Prioritize labeled real-phone crops, category and primary-color accuracy, reliable saving, and email onboarding before adding features. No runtime or authentication settings changed for this checkpoint.
+ 
++## Phone color validation continuation — October 14, evening Pacific
++
++The optional phone-photo check now requires primary-color labels for garments before inference and exports version-2 reports with separate color, joint category/color, automatic precision counts and acceptance coverage counts. Negative examples do not require colors; historical category-only labels remain scoreable. Production single-garment color sampling and merge rules are reused. No main closet UI, recognition model, camera, auth or wardrobe behavior changed.
++
++Local validation: 242 Node checks and build passed. Real-worker browser validation is pending the updated GitHub workflow; local browser installation was unavailable. The change is committed on local branch `improve/phone-color-validation`. Automatic approval review rejected the remote push as an unapproved external repository mutation; explicit owner approval is needed before retrying. The live application has not changed. Real-phone garment evidence is still required before recognition tuning. Next: run 5–10 garment photos through the photo check, inspect category/color errors, then test targeted fixes against the frozen safeguards. Whole-outfit crop validation and external-inbox onboarding remain open.
++
+ ## Earlier checkpoint history
+ 
+ The dated notes below describe earlier states; the current checkpoint above supersedes their counts and open-item status.
+diff --git a/public/phone-photo-benchmark.mjs b/public/phone-photo-benchmark.mjs
+index 4614abb..395e63e 100644
+--- a/public/phone-photo-benchmark.mjs
++++ b/public/phone-photo-benchmark.mjs
+@@ -1,5 +1,13 @@
++import './clothing-details.js';
+ import {localCandidates} from './local-catalog.mjs';
+ 
++export const photoColors=['Black','White','Gray','Beige','Brown','Blue','Green','Red','Pink','Purple','Yellow','Orange','Multicolor'];
++export function phonePhotoColor(result,estimate){
++ const choice=result?.choices?.[0];
++ let item=globalThis.ClothingDetails.fillColor({category:choice?.category||'Uncategorized'},estimate);
++ if(choice&&(result.strong||result.categoryConfirmed))item=globalThis.ClothingDetails.fill(item,choice,result.details);
++ return {color:item.color||null,colorSource:item.colorSource||null};
++}
+ export const photoCategories=[...new Set(localCandidates.map(x=>x.category).filter(x=>x!=='Uncategorized'))];
+ export function photoTypes(category){return [...new Set(localCandidates.filter(x=>x.category===category).map(x=>x.itemType))];}
+ const errors=new Set(['image','network','memory','runtime','asset','unknown','timeout','cancelled','invalid_result']);
+@@ -12,14 +20,16 @@ export function lockPhotoLabels(annotations){
+   if(!categoryValid(row.category))throw Error('Choose the category for photo '+(i+1)+'.');
+   const type=row.type||null;
+   if(type&&(row.category==='Uncategorized'||!photoTypes(row.category).includes(type)))throw Error('Choose a matching clothing type for photo '+(i+1)+'.');
+-  return {id:'photo-'+String(i+1).padStart(3,'0'),expectedCategory:row.category,expectedType:type};
++  const color=row.color||null;
++  if(color&&(!photoColors.includes(color)||row.category==='Uncategorized'))throw Error('Choose a valid garment color for photo '+(i+1)+'.');
++  return {expectedColor:color,id:'photo-'+String(i+1).padStart(3,'0'),expectedCategory:row.category,expectedType:type};
+  });
+ }
+ export function photoFailure(id,code){
+  if(!safeId(id))throw Error('Invalid photo identifier.');
+  return {id,error:errors.has(code)?code:'unknown'};
+ }
+-export function phonePhotoResult(id,result,elapsedMs){
++export function phonePhotoResult(id,result,elapsedMs,colorPrediction={}){
+  if(!safeId(id))throw Error('Invalid photo identifier.');
+  const choice=result?.choices?.[0],category=choice?.category||null,type=choice?.itemType||null;
+  if(typeof result?.strong!=='boolean'||category&&!categoryValid(category)||type&&type!=='Unknown'&&!photoTypes(category).includes(type)||
+@@ -29,33 +39,39 @@ export function phonePhotoResult(id,result,elapsedMs){
+   const entries=result.diagnostics?.[group];if(!Array.isArray(entries))continue;
+   diagnostics[group]=entries.slice(0,3).filter(x=>categoryValid(x.category)&&Number.isFinite(x.score)&&x.score>=0&&x.score<=1).map(x=>({category:x.category,score:x.score,...(photoTypes(x.category).includes(x.type)?{type:x.type}:{})}));
+  }
+- return {id,prediction:{category,type},strong:result.strong,categoryConfirmed:result.categoryConfirmed===true,
++ const color=photoColors.includes(colorPrediction?.color)?colorPrediction.color:null;
++ const colorSource=color&&['photo-estimate','recognition'].includes(colorPrediction?.colorSource)?colorPrediction.colorSource:null;
++ return {id,prediction:{category,type,color,colorSource},strong:result.strong,categoryConfirmed:result.categoryConfirmed===true,
+   reason:reasons.has(result.reason)?result.reason:null,preprocessingRecovery:result.preprocessingRecovery===true,diagnostics,
+   elapsedMs:Number.isFinite(elapsedMs)&&elapsedMs>=0?Math.round(elapsedMs):null};
+ }
+ export function scorePhonePhotos(labels,results,{release,indexHash}={}){
+  // Rebuild the label snapshot so extra fields (filenames, notes, account data)
+  // can never become part of a downloaded report.
+- const expected=lockPhotoLabels(labels.map(x=>({category:x.expectedCategory,type:x.expectedType})));
++ const expected=lockPhotoLabels(labels.map(x=>({category:x.expectedCategory,type:x.expectedType,color:x.expectedColor})));
+  if(labels.some((x,i)=>x.id!==expected[i].id)||!Array.isArray(results)||results.length!==expected.length)throw Error('Incomplete photo test.');
+  const byId=new Map();
+  for(const r of results){if(!r||!safeId(r.id)||byId.has(r.id))throw Error('Duplicate or invalid photo result.');byId.set(r.id,r);}
+- const summary={photos:expected.length,garments:0,categoryMatches:0,typesChecked:0,typeMatches:0,automatic:0,review:0,uncertain:0,errors:0,incorrectAutomaticCategories:0,incorrectAutomaticTypes:0,negativePhotos:0,negativeRejected:0};
++ const summary={photos:expected.length,garments:0,categoryMatches:0,typesChecked:0,typeMatches:0,automatic:0,review:0,uncertain:0,errors:0,incorrectAutomaticCategories:0,incorrectAutomaticTypes:0,negativePhotos:0,negativeRejected:0,colorsChecked:0,colorMatches:0,coreChecked:0,coreMatches:0,automaticCoreChecked:0,automaticCoreMatches:0,incorrectAutomaticCore:0};
+  const photos=expected.map(item=>{
+   const raw=byId.get(item.id);if(!raw)throw Error('Missing photo result.');
+-  const safe=raw.error?photoFailure(item.id,raw.error):phonePhotoResult(item.id,{strong:raw.strong,categoryConfirmed:raw.categoryConfirmed,reason:raw.reason,diagnostics:raw.diagnostics,preprocessingRecovery:raw.preprocessingRecovery,choices:raw.prediction?.category?[{category:raw.prediction.category,itemType:raw.prediction.type}]:[]},raw.elapsedMs);
+-  if(item.expectedCategory==='Uncategorized')summary.negativePhotos++;else{summary.garments++;if(item.expectedType)summary.typesChecked++;}
++  const safe=raw.error?photoFailure(item.id,raw.error):phonePhotoResult(item.id,{strong:raw.strong,categoryConfirmed:raw.categoryConfirmed,reason:raw.reason,diagnostics:raw.diagnostics,preprocessingRecovery:raw.preprocessingRecovery,choices:raw.prediction?.category?[{category:raw.prediction.category,itemType:raw.prediction.type}]:[]},raw.elapsedMs,raw.prediction);
++  if(item.expectedCategory==='Uncategorized')summary.negativePhotos++;else{summary.garments++;if(item.expectedColor){summary.colorsChecked++;summary.coreChecked++;if(safe.strong)summary.automaticCoreChecked++;}if(item.expectedType)summary.typesChecked++;}
+   if(safe.error){summary.errors++;return {...item,...safe};}
+   const prediction=safe.prediction,identified=!!prediction.category&&prediction.category!=='Uncategorized';
+   const categoryMatch=item.expectedCategory==='Uncategorized'?!identified&&!safe.strong&&!safe.categoryConfirmed:prediction.category===item.expectedCategory&&(safe.strong||safe.categoryConfirmed);
++  const colorMatch=item.expectedColor?prediction.color===item.expectedColor:null;
++  const coreMatch=item.expectedColor?categoryMatch&&colorMatch:null;
++  if(colorMatch)summary.colorMatches++;if(coreMatch)summary.coreMatches++;
++  if(safe.strong&&item.expectedColor){if(coreMatch)summary.automaticCoreMatches++;else summary.incorrectAutomaticCore++;}
+   const typeMatch=item.expectedType?categoryMatch&&prediction.type===item.expectedType:null;
+   if(item.expectedCategory==='Uncategorized'){if(categoryMatch)summary.negativeRejected++;}
+   else{if(categoryMatch)summary.categoryMatches++;if(typeMatch)summary.typeMatches++;}
+   if(safe.strong){summary.automatic++;if(!categoryMatch)summary.incorrectAutomaticCategories++;if(item.expectedType&&!typeMatch)summary.incorrectAutomaticTypes++;}
+   else if(safe.categoryConfirmed)summary.review++;else summary.uncertain++;
+-  return {...item,...safe,categoryMatch,typeMatch};
++  return {...item,...safe,categoryMatch,typeMatch,colorMatch,coreMatch};
+  });
+- return {format:'closet-current-phone-photo-check',version:1,
++ return {format:'closet-current-phone-photo-check',version:2,
+   release:/^[a-f0-9]{12}$/.test(release||'')?release:null,
+   recognitionIndex:/^[a-f0-9]{64}$/.test(indexHash||'')?indexHash:null,
+   summary,photos};
+diff --git a/public/phone-photo-check.html b/public/phone-photo-check.html
+index 6aba0c9..08c4121 100644
+--- a/public/phone-photo-check.html
++++ b/public/phone-photo-check.html
+@@ -6,12 +6,12 @@
+ *{box-sizing:border-box}body{margin:0;background:#faf7f3;color:#29243c;font:16px system-ui;line-height:1.5}main{max-width:850px;margin:auto;padding:24px 18px}a{color:#5934a0}h1{font-size:clamp(26px,5vw,36px);line-height:1.15}button,input,select{font:inherit}button,.choose{display:inline-block;padding:12px 18px;border:0;border-radius:12px;background:#6440a3;color:white;min-height:48px;cursor:pointer}.secondary{background:#e9e2f0;color:#3b2860}button:disabled{opacity:.5;cursor:default}.choose{width:100%;max-width:100%}.choose input{display:block;width:100%;min-width:0;max-width:100%;margin-top:10px}.photos{display:grid;gap:16px;margin:22px 0}.photo{display:grid;grid-template-columns:135px 1fr;gap:16px;background:white;padding:16px;border-radius:16px;border:1px solid #e3dbea}.photo img{width:135px;height:160px;object-fit:contain;border-radius:8px;background:#f5f2f8}.photo label{display:block;margin-bottom:10px}.photo select{display:block;max-width:100%;width:100%;min-height:44px;margin-top:5px;padding:8px;border:1px solid #c8bbd7;border-radius:8px;background:white}.actions{display:flex;flex-wrap:wrap;gap:10px}#status,#summary{overflow-wrap:anywhere}.result{margin:6px 0;font-weight:600}.fine{font-size:14px;color:#63596f}#summary{background:#eee7f5;border-radius:12px;padding:16px}button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{outline:3px solid #f2a92c;outline-offset:3px}@media(max-width:480px){.photo{grid-template-columns:90px 1fr;padding:12px;gap:12px}.photo img{width:90px;height:130px}}[hidden]{display:none!important}
+ </style></head><body><main>
+ <a href="./">← Back to my closet</a><h1>Check clothing photos</h1>
+-<p>Choose photos of one garment at a time. Tell us what each item is before checking recognition.</p>
++<p>Choose photos of one garment at a time. Tell us what each item is and its primary color before checking recognition.</p>
+ <p class="fine">Photos stay in this browser. This check does not add clothing to your closet. You can download a report with labels and timings; it contains no photos or filenames.</p>
+ <label class="choose">Choose up to 20 photos<input id="photos" type="file" accept="image/*" multiple></label>
+ <p class="fine">Show the whole item, including dress hems and shoe soles. First use may take a few minutes to prepare recognition.</p>
+ <div id="photoRows" class="photos"></div>
+ <div class="actions"><button id="run" type="button" disabled>Check recognition</button><button id="restart" type="button" class="secondary" hidden>Start over</button><button id="download" type="button" class="secondary" hidden>Download results</button></div>
+ <p id="status" role="status" aria-live="polite">Choose your photos to begin.</p><div id="summary" hidden></div>
+-<script src="photo-import.js"></script><script type="module" src="phone-photo-check.mjs"></script>
++<script src="photo-color.js"></script><script src="photo-check.js"></script><script src="photo-import.js"></script><script type="module" src="phone-photo-check.mjs"></script>
+ </main></body></html>
+diff --git a/public/phone-photo-check.mjs b/public/phone-photo-check.mjs
+index b2e5631..d3100c2 100644
+--- a/public/phone-photo-check.mjs
++++ b/public/phone-photo-check.mjs
+@@ -1,8 +1,8 @@
+-import {photoCategories,photoTypes,lockPhotoLabels,phonePhotoResult,photoFailure,scorePhonePhotos} from './phone-photo-benchmark.mjs';
++import {photoCategories,photoTypes,photoColors,phonePhotoColor,lockPhotoLabels,phonePhotoResult,photoFailure,scorePhonePhotos} from './phone-photo-benchmark.mjs';
+ import {photoTestSession} from './photo-test-session.mjs';
+ const $=id=>document.getElementById(id);let rows=[],report=null,session=null,generation=0,locked=false;
+ function option(select,text,value){const item=document.createElement('option');item.textContent=text;item.value=value;select.append(item);}
+-function readiness(){ $('run').disabled=locked||!rows.length||rows.some(r=>!r.category.value); }
++function readiness(){ $('run').disabled=locked||!rows.length||rows.some(r=>!r.category.value||r.category.value!=='Uncategorized'&&!r.color.value); }
+ function reset({preserveFiles=false}={}){
+  generation++;session?.close();session=null;for(const row of rows){clearTimeout(row.decodeTimer);URL.revokeObjectURL(row.url);}rows=[];report=null;locked=false;
+  $('photoRows').replaceChildren();if(!preserveFiles)$('photos').value='';$('photos').disabled=false;$('run').textContent='Check recognition';$('run').disabled=true;$('restart').hidden=true;$('download').hidden=true;$('summary').hidden=true;$('status').textContent='Choose your photos to begin.';
+@@ -14,18 +14,19 @@ $('photos').onchange=()=>{
+  for(const [i,file] of files.entries()){
+   const card=document.createElement('section');card.className='photo';const url=URL.createObjectURL(file),image=document.createElement('img');image.src=url;image.alt='Photo '+(i+1);card.append(image);
+   const fields=document.createElement('div'),title=document.createElement('strong');title.textContent='Photo '+(i+1);fields.append(title);
+-  const category=document.createElement('select'),type=document.createElement('select');category.id='category-'+i;type.id='type-'+i;
++  const category=document.createElement('select'),type=document.createElement('select'),color=document.createElement('select');color.id='color-'+i;category.id='category-'+i;type.id='type-'+i;
+   const a=document.createElement('label');a.textContent='What is it?';a.append(category);option(category,'Choose a category','');for(const value of photoCategories)option(category,value,value);option(category,'Not clothing','Uncategorized');
+   const b=document.createElement('label');b.textContent='Clothing type (optional)';b.append(type);option(type,'Check category only','');type.disabled=true;
+-  category.onchange=()=>{type.replaceChildren();option(type,'Check category only','');for(const value of photoTypes(category.value))option(type,value,value);type.disabled=!category.value||category.value==='Uncategorized';readiness();};
+-  const result=document.createElement('p');result.className='result';result.id='result-'+i;fields.append(a,b,result);card.append(fields);$('photoRows').append(card);rows.push({file,url,category,type,result});
++  const c=document.createElement('label');c.textContent='Primary color';c.append(color);option(color,'Choose the main color','');for(const value of photoColors)option(color,value,value);color.onchange=readiness;
++  category.onchange=()=>{color.disabled=category.value==='Uncategorized';if(color.disabled)color.value='';type.replaceChildren();option(type,'Check category only','');for(const value of photoTypes(category.value))option(type,value,value);type.disabled=!category.value||category.value==='Uncategorized';readiness();};
++  const result=document.createElement('p');result.className='result';result.id='result-'+i;fields.append(a,c,b,result);card.append(fields);$('photoRows').append(card);rows.push({file,url,category,type,color,result});
+  }
+  $('restart').hidden=false;$('status').textContent='Choose the labels yourself. They will stay locked while recognition runs.';readiness();
+ };
+ $('run').onclick=async()=>{
+  const mine=generation;let labels;
+- try{labels=lockPhotoLabels(rows.map(r=>({category:r.category.value,type:r.type.value})));}catch(e){$('status').textContent=e.message;return;}
+- locked=true;report=null;$('download').hidden=true;$('summary').hidden=true;$('run').disabled=true;$('photos').disabled=true;for(const row of rows){row.category.disabled=true;row.type.disabled=true;row.result.textContent='Waiting…';}
++ try{labels=lockPhotoLabels(rows.map(r=>({category:r.category.value,type:r.type.value,color:r.color.value})));}catch(e){$('status').textContent=e.message;return;}
++ locked=true;report=null;$('download').hidden=true;$('summary').hidden=true;$('run').disabled=true;$('photos').disabled=true;for(const row of rows){row.category.disabled=true;row.type.disabled=true;row.color.disabled=true;row.result.textContent='Waiting…';}
+  const results=[];
+  try{
+   $('status').textContent='Preparing recognition…';
+@@ -36,13 +37,14 @@ $('run').onclick=async()=>{
+    try{
+     const image=await Promise.race([photoToJPEG(row.file),new Promise((_,reject)=>{row.decodeTimer=setTimeout(()=>reject(Object.assign(Error('Cannot open photo'),{code:'image'})),15000);})]);
+     clearTimeout(row.decodeTimer);if(mine!==generation)return;
+-    const raw=await session.call({type:'classify',image});result=phonePhotoResult(labels[i].id,raw,performance.now()-started);
++    const quality=await checkPhoto(image);if(mine!==generation)return;
++    const raw=await session.call({type:'classify',image});result=phonePhotoResult(labels[i].id,raw,performance.now()-started,phonePhotoColor(raw,quality.colorEstimate));
+    }catch(e){clearTimeout(row.decodeTimer);result=photoFailure(labels[i].id,e.code||'image');}
+    if(mine!==generation)return;results.push(result);
+-   row.result.textContent=result.error?'Could not finish this photo.':!result.strong&&!result.categoryConfirmed?(labels[i].expectedCategory==='Uncategorized'?'No clothing label accepted':'Needs review'):result.prediction.category+' · '+(result.prediction.type||'Unknown')+(result.categoryConfirmed&&!result.strong?' · Review type':'');
++   row.result.textContent=result.error?'Could not finish this photo.':!result.strong&&!result.categoryConfirmed?(labels[i].expectedCategory==='Uncategorized'?'No clothing label accepted':'Needs review'):result.prediction.category+' · '+(result.prediction.type||'Unknown')+' · '+(result.prediction.color||'Color unknown')+(result.categoryConfirmed&&!result.strong?' · Review type':'');
+   }
+   report=scorePhonePhotos(labels,results,{release:document.querySelector('meta[name="closet-release"]').content,indexHash:document.querySelector('meta[name="recognition-index"]').content});
+-  const s=report.summary;$('summary').textContent=s.categoryMatches+' of '+s.garments+' garment categories matched. '+s.typeMatches+' of '+s.typesChecked+' labeled types matched. '+s.errors+' photos could not finish.'+(s.negativePhotos?' '+s.negativeRejected+' of '+s.negativePhotos+' nonclothing photos rejected.':'');$('summary').hidden=false;$('download').hidden=false;$('status').textContent='Finished. Download the results, or start over with different photos.';
++  const s=report.summary;$('summary').textContent=s.categoryMatches+' of '+s.garments+' garment categories matched. '+s.typeMatches+' of '+s.typesChecked+' labeled types matched. '+s.errors+' photos could not finish. '+s.colorMatches+' of '+s.colorsChecked+' labeled colors matched. '+s.coreMatches+' of '+s.coreChecked+' matched both category and color. '+s.automaticCoreMatches+' of '+s.automaticCoreChecked+' automatic identifications matched both; '+s.automaticCoreChecked+' of '+s.coreChecked+' color-labeled garments were automatic.'+(s.negativePhotos?' '+s.negativeRejected+' of '+s.negativePhotos+' nonclothing photos rejected.':'');$('summary').hidden=false;$('download').hidden=false;$('status').textContent='Finished. Download the results, or start over with different photos.';
+  }catch(e){if(mine===generation){$('status').textContent='Recognition could not start. Try again, or start over with different photos.';$('run').textContent='Try again';$('run').disabled=false;}}
+  finally{if(mine===generation){session?.close();session=null;}}
+ };
+diff --git a/scripts/run-phone-photo-check.mjs b/scripts/run-phone-photo-check.mjs
+index 5e6dc10..21c4222 100644
+--- a/scripts/run-phone-photo-check.mjs
++++ b/scripts/run-phone-photo-check.mjs
+@@ -22,16 +22,18 @@ try{
+   {name:'PRIVATE_PHONE_NEGATIVE.jpg',mimeType:'image/jpeg',buffer:await readFile('benchmark/photos/commons-0090.jpg')}
+  ]);
+  await page.locator('#category-0').selectOption('Tops');await page.locator('#type-0').selectOption('T-shirt');assert.equal(await page.locator('#run').isDisabled(),true);
+- await page.locator('#category-1').selectOption('Uncategorized');await page.locator('#run').click();
++ await page.locator('#category-1').selectOption('Uncategorized');assert.equal(await page.locator('#run').isDisabled(),true);
++ await page.locator('#color-0').selectOption('Multicolor');assert.equal(await page.locator('#color-1').isDisabled(),true);await page.locator('#run').click();
++ assert.equal(await page.locator('#color-0').isDisabled(),true);
+  assert.equal(await page.locator('#category-0').isDisabled(),true);assert.equal(await page.locator('#photos').isDisabled(),true);
+  await page.locator('#download').waitFor({state:'visible',timeout:480000});
+  const downloadPromise=page.waitForEvent('download');await page.locator('#download').click();const download=await downloadPromise;const reportPath=join(output,'results.json');await download.saveAs(reportPath);
+- const raw=await readFile(reportPath,'utf8'),report=JSON.parse(raw);assert.ok(!raw.includes('PRIVATE_PHONE'));assert.ok(!raw.includes('data:image'));assert.equal(report.summary.photos,2);assert.equal(report.summary.errors,0);assert.equal(report.summary.categoryMatches,1);assert.equal(report.summary.typeMatches,1);assert.equal(report.summary.negativeRejected,1);assert.match(report.release,/^[a-f0-9]{12}$/);assert.equal(report.recognitionIndex,JSON.parse(await readFile('public/recognition-vectors.json','utf8')).sha256);
++ const raw=await readFile(reportPath,'utf8'),report=JSON.parse(raw);assert.ok(!raw.includes('PRIVATE_PHONE'));assert.ok(!raw.includes('data:image'));assert.equal(report.version,2);assert.equal(report.summary.colorsChecked,1);assert.equal(report.summary.coreChecked,1);assert.equal(report.summary.automaticCoreChecked,1);assert.equal(report.photos[0].expectedColor,'Multicolor');assert.ok(['photo-estimate','recognition'].includes(report.photos[0].prediction.colorSource));assert.equal(report.photos[1].expectedColor,null);assert.equal(report.summary.photos,2);assert.equal(report.summary.errors,0);assert.equal(report.summary.categoryMatches,1);assert.equal(report.summary.typeMatches,1);assert.equal(report.summary.negativeRejected,1);assert.match(report.release,/^[a-f0-9]{12}$/);assert.equal(report.recognitionIndex,JSON.parse(await readFile('public/recognition-vectors.json','utf8')).sha256);
+  assert.equal(await page.locator('#category-0').isDisabled(),true);
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=390&&innerWidth<=390),true);
+  await page.screenshot({path:join(output,'phone-photo-flow.png'),fullPage:true});
+  await page.locator('#restart').click();assert.equal(await page.locator('.photo').count(),0);assert.equal(await page.locator('#photos').isDisabled(),false);assert.equal(await page.locator('#download').isVisible(),false);
+- await page.locator('#photos').setInputFiles({name:'PRIVATE_PHONE_RETRY.jpg',mimeType:'image/jpeg',buffer:await readFile('benchmark/photos/commons-0001.jpg')});await page.locator('#category-0').selectOption('Tops');await page.locator('#run').click();await page.locator('#restart').click();
++ await page.locator('#photos').setInputFiles({name:'PRIVATE_PHONE_RETRY.jpg',mimeType:'image/jpeg',buffer:await readFile('benchmark/photos/commons-0001.jpg')});await page.locator('#category-0').selectOption('Tops');await page.locator('#color-0').selectOption('Multicolor');await page.locator('#run').click();await page.locator('#restart').click();
+  await page.waitForTimeout(150);assert.equal(await page.locator('.photo').count(),0);assert.equal(await page.locator('#status').innerText(),'Choose your photos to begin.');assert.deepEqual(pageErrors,[]);
+  await writeFile(join(output,'summary.json'),JSON.stringify({passed:true,realWorker:true,fixturePhotos:2,viewport:{width:390,height:844},lockedLabels:true,reportPrivacy:true,cancellation:true,pageErrors},null,2));
+  console.log('Phone photo-check flow passed with real recognition; private filenames excluded.');
+diff --git a/tests/phone-photo-benchmark.test.mjs b/tests/phone-photo-benchmark.test.mjs
+index 0aac809..0bb9a1c 100644
+--- a/tests/phone-photo-benchmark.test.mjs
++++ b/tests/phone-photo-benchmark.test.mjs
+@@ -46,3 +46,39 @@ test('reset cancels in-flight calls and worker errors never export their raw mes
+  const {session,worker}=sessionFixture();const p=session.call({type:'load'}),rejected=assert.rejects(p,e=>e.code==='cancelled');session.close();await rejected;assert.equal(worker.stopped,true);
+  const b=sessionFixture(),q=b.session.call({type:'load'}),failure=assert.rejects(q,e=>e.code==='runtime'&&!e.message.includes('PRIVATE_SECRET'));b.worker.onerror({message:'PRIVATE_SECRET'});await failure;
+ });
++
++test('primary-color labels are copied, optional for historical reports and invalid on negative examples',()=>{
++ const input=[{category:'Tops',color:'Blue'}],labels=lockPhotoLabels(input);input[0].color='Red';
++ assert.equal(labels[0].expectedColor,'Blue');assert.equal(lockPhotoLabels([{category:'Tops'}])[0].expectedColor,null);
++ assert.throws(()=>lockPhotoLabels([{category:'Tops',color:'PRIVATE_COLOR'}]),/color/);
++ assert.throws(()=>lockPhotoLabels([{category:'Uncategorized',color:'Blue'}]),/color/);
++});
++test('joint category/color precision and coverage retain review cases, unknowns and failed photos',()=>{
++ const labels=lockPhotoLabels([{category:'Tops',color:'Blue'},{category:'Tops',color:'Blue'},{category:'Dresses',color:'Red'},{category:'Shoes',color:'Black'},{category:'Bottoms',color:'Gray'},{category:'Tops'}]);
++ const make=(i,category,type,color,strong=true,categoryConfirmed=false)=>phonePhotoResult(labels[i].id,{strong,categoryConfirmed,choices:[{category,itemType:type}]},10,{color,colorSource:'recognition'});
++ const report=scorePhonePhotos(labels,[make(0,'Tops','T-shirt','Blue'),make(1,'Tops','T-shirt','Green'),make(2,'Dresses','Unknown','Red',false,true),make(3,'Shoes','Sneakers',null),photoFailure(labels[4].id,'image'),make(5,'Tops','T-shirt','Blue')]);
++ assert.equal(report.version,2);assert.equal(report.summary.colorsChecked,5);assert.equal(report.summary.colorMatches,2);
++ assert.equal(report.summary.coreChecked,5);assert.equal(report.summary.coreMatches,2);
++ assert.equal(report.summary.automaticCoreChecked,3);assert.equal(report.summary.automaticCoreMatches,1);assert.equal(report.summary.incorrectAutomaticCore,2);
++ assert.equal(report.photos[1].categoryMatch,true);assert.equal(report.photos[1].coreMatch,false);assert.equal(report.photos[5].colorMatch,null);
++});
++test('a correct color cannot hide an incorrect automatic garment category',()=>{
++ const labels=lockPhotoLabels([{category:'Dresses',color:'Red'}]);
++ const result=phonePhotoResult(labels[0].id,{strong:true,choices:[{category:'Tops',itemType:'Tunic'}]},10,{color:'Red',colorSource:'recognition'});
++ const report=scorePhonePhotos(labels,[result]);assert.equal(report.summary.colorMatches,1);assert.equal(report.summary.coreMatches,0);assert.equal(report.summary.incorrectAutomaticCore,1);
++});
++test('color report fields allow only known colors and sources and exclude arbitrary metadata',()=>{
++ const labels=lockPhotoLabels([{category:'Tops',color:'Blue'}]);
++ const result=phonePhotoResult(labels[0].id,{strong:true,choices:[{category:'Tops',itemType:'T-shirt'}]},10,{color:'Blue',colorSource:'PRIVATE_SOURCE',image:'PRIVATE_IMAGE'});
++ result.prediction.notes='PRIVATE_NOTE';const report=scorePhonePhotos(labels,[result]);
++ assert.equal(report.photos[0].prediction.colorSource,null);assert.ok(!JSON.stringify(report).includes('PRIVATE_'));
++ result.prediction.color='PRIVATE_COLOR';assert.equal(scorePhonePhotos(labels,[result]).photos[0].prediction.color,null);
++});
++test('phone color uses production photo fallback and recognized-field precedence',async()=>{
++ const {phonePhotoColor}=await import('../public/phone-photo-benchmark.mjs');
++ const choice={category:'Tops',itemType:'T-shirt'},estimate={color:'Blue',source:'photo-estimate'};
++ assert.deepEqual(phonePhotoColor({strong:true,choices:[choice],details:{color:'Red'}},estimate),{color:'Red',colorSource:'recognition'});
++ assert.deepEqual(phonePhotoColor({strong:true,choices:[choice],details:{}},estimate),{color:'Blue',colorSource:'photo-estimate'});
++ assert.deepEqual(phonePhotoColor({strong:false,choices:[choice],details:{color:'Red'}},estimate),{color:'Blue',colorSource:'photo-estimate'});
++ assert.deepEqual(phonePhotoColor({strong:false,choices:[]},null),{color:null,colorSource:null});
++});
+-- 
+2.51.1
+

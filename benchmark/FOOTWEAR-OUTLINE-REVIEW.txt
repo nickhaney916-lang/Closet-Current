@@ -1,0 +1,14 @@
+FOOTWEAR INDEPENDENT OUTLINE REVIEW — INTERNAL ONLY
+
+Sneakers: commons-0079.jpg and commons-0079.modnet-prediction.json
+Boots: commons-0094.jpg and commons-0094.modnet-prediction.json
+
+1. Open annotate-garment.html from the review pack.
+2. Load the matching photo and AI mask as an EDITABLE starting point.
+3. Correct all real shoe material (including laces, upper, sole, heel).
+4. Exclude floor pixels, reflections and shadows even if attached to the sole.
+5. Check fine details against the original high-resolution photograph; the editor canvas is reduced to a maximum dimension of 768 pixels.
+6. Export an annotation draft. A different reviewer must approve its edges before measurement.
+
+Do not treat an AI mask or simple Looks Good rating as independently approved ground truth.
+Do not change production recognition based on unscored experiments.

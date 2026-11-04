@@ -1,0 +1,9 @@
+# Actual-original vs generated garment presentation: 4-item research checkpoint
+
+**Date:** 2026-10-17. The team compared the actual benchmark-original *photo crops* to newly created illustrative isolated garments. The source crop sheet and output are available in this conversation as `closet-current-source-vs-generated-reconstruction.jpg`. Importantly, this is a **reference-inspired generative comparison**; the image generator did not establish verifiable source-conditioned, one-image-in / one-image-out edit provenance. Do not report it as such or as the FASHN API output.
+
+Visual outcome: four garments are cleaner and more tile-ready, but exact fidelity still fails the release gate. The orange shorts waistband/pocket construction is uncertain; the black jacket ribbon/lace detail may be altered; pale-gray jeans gain a new defined fly/pocket arrangement; black-coral sneakers preserve broad colors but individual shoe construction remains unverified.
+
+**New automated component:** `benchmark/garment-reconstruction-color-signals.mjs` compares only pixels in *independently provided garment masks* and detects obvious hue/chroma drift and brightness changes. It validates masks and source bindings and returns a research warning, never automatic image approval. Tests specifically cover orange-to-blue shorts, gray-to-blue jeans, dark fabrics, messy scene backgrounds, and tiny/invalid masks. A passing color comparison **does not verify seams, logos, garment type, texture, occluded sleeves, or the final garment's identity**.
+
+Actual source segmentation ground truth is not yet available for the four comparison examples; do not fabricate numeric fidelity scores from mask-free backgrounds. Full model quality requires paired approved photos, genuine one-source-one-output provenance, independently reviewed examples and false garment-change rates. No external provider billing/upload, no cloud modifications, no live deployment, no change to Drive Duel.

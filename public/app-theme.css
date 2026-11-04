@@ -120,3 +120,80 @@ header{padding-top:22px;padding-bottom:18px}.brand-mark{background:#7043ba;color
 .closet-layer-help{margin:6px 0 14px;color:var(--muted);font-size:12px}.closet-category-base{border-radius:16px 0 0 16px!important}.closet-categories[data-layers="0"] .closet-category-base{border-radius:16px!important}.closet-categories.wearing-dress .closet-category-base{height:58%;z-index:3}.closet-category-layer3{z-index:4}.outfit-figure.has-outer-coat{height:710px}.board-slot-layer3{left:18px;top:490px}@media(max-width:480px){.board-slot-layer3{left:8px;top:478px}}
 /* Dress browsing replaces the separates figure and its layering controls. */
 .closet-view-controls{justify-content:flex-end}.closet-view-controls:has(#closetSeparates:not([hidden])){justify-content:flex-start}.closet-view-controls #closetSeparates{margin:0;min-height:44px}.closet-categories.dress-mode .closet-category-base{height:58%;border-radius:18px!important}.closet-categories.dress-mode::before{clip-path:polygon(29% 0,71% 0,100% 29%,87% 35%,74% 17%,64% 42%,88% 100%,12% 100%,36% 42%,26% 17%,13% 35%,0 29%)}
+
+/* Inline fallback only when the automatic photo scan cannot confirm color. */
+.photo-result .quick-color-confirm{display:block;margin:12px 0 8px;font-size:14px;font-weight:650}
+.photo-result .quick-color-confirm>span{display:block;margin-bottom:4px;font-size:14px}
+.photo-result .quick-color-confirm select{width:100%;min-height:58px;font-size:17px;border:2px solid #9266c3;background:#fff;border-radius:16px}
+.photo-result .quick-color-confirm select:disabled{opacity:.65}
+
+/* Optional real AI try-on. Never visually substitutes the ordinary figure
+   until the private paid service returns an actual rendered image. */
+.ai-tryon-panel{margin:14px 0 20px;padding:16px;border:1px solid var(--line,#d7dccd);border-radius:16px;background:var(--surface,#fff)}
+.ai-tryon-panel h3{margin:0 0 8px;font-size:1.1rem}
+.ai-tryon-panel h3 small{font-weight:500;font-size:.72rem;opacity:.75}
+.ai-tryon-panel p{line-height:1.5}
+.ai-tryon-model-preview{display:flex;align-items:center;gap:12px;margin:12px 0 16px;padding:10px;border-radius:12px;background:#f6f4f6}
+.ai-tryon-model-preview img{display:block;width:96px;height:177px;object-fit:contain;flex:0 0 96px;border-radius:9px;background:#efeeeb}
+.ai-tryon-model-preview p{margin:0;font-size:13px;max-width:270px}
+@media(min-width:700px){.ai-tryon-model-preview img{width:128px;height:235px;flex-basis:128px}}
+.ai-tryon-controls{display:flex;flex-wrap:wrap;gap:12px;align-items:end}
+.ai-tryon-controls label{display:grid;gap:4px;font-weight:600;flex:1;min-width:145px}
+.ai-tryon-controls select,.ai-tryon-controls button{min-height:48px;font:inherit}
+.ai-tryon-controls button{flex:1;min-width:150px}
+.outfit-figure .ai-tryon-result{position:absolute;inset:0;width:100%;height:100%;max-height:none;object-fit:contain;background:#f0f0ee;z-index:1}
+.outfit-figure.ai-tryon-active .outfit-person{visibility:hidden}
+.outfit-figure.ai-tryon-active .board-slot{z-index:2;width:105px;min-height:52px;padding:5px;background:#fffefeea;box-shadow:0 2px 8px #00000020}
+.outfit-figure.ai-tryon-active .board-slot img{height:35px}
+.outfit-figure.ai-tryon-active .board-slot .slot-name{display:none}
+.ai-tryon-result[hidden]{display:none}
+
+
+/* One responsive closet rack, available for EVERY category. No 3D rendering. */
+.closet-presentation{display:flex;gap:9px;margin:0 0 12px;align-items:center}
+.closet-presentation[hidden],.closet-rack-hint[hidden],.closet-rack-nav[hidden]{display:none!important}
+.closet-presentation button{flex:1;min-height:48px;border-radius:15px;font-size:15px}
+.closet-presentation button.active{background:#6c3eaa;color:white;border-color:#6c3eaa}
+.closet-rack-hint{margin:4px 0 10px;color:#6a5b75;text-align:center}
+#closetGrid .closet-rack-picture{display:contents}
+#closetGrid .closet-rack-hardware{display:none}
+#closetGrid.rack-mode{display:flex;gap:16px;max-width:100%;overflow-x:auto;overflow-y:hidden;
+ padding:10px max(12px,calc((100% - 290px)/2)) 22px;scroll-snap-type:x mandatory;scroll-padding-inline:20px;
+ overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y}
+#closetGrid.rack-mode>.card{flex:0 0 min(290px,78vw);min-width:0;scroll-snap-align:center;overflow:hidden;
+ border-radius:22px;border:1px solid #d9cfe2;box-shadow:0 6px 20px #34234314}
+#closetGrid.rack-mode .closet-rack-picture{position:relative;display:flex;align-items:center;justify-content:center;
+ height:325px;background:linear-gradient(180deg,#ece7f1,#faf8fb)}
+#closetGrid.rack-mode .closet-rack-picture::before{content:'';position:absolute;left:0;right:0;top:24px;height:5px;
+ background:linear-gradient(#8c828d,#c4bdc7,#706975);z-index:1}
+#closetGrid.rack-mode .closet-rack-hardware{position:absolute;display:block;left:50%;top:24px;
+ width:120px;height:57px;color:#a49aa5;transform:translateX(-50%);z-index:2;pointer-events:none}
+#closetGrid.rack-mode .closet-rack-hardware svg{display:block;width:100%;height:100%}
+#closetGrid.rack-mode .rack-support-clips .closet-rack-hardware::after{content:'│             │';
+ position:absolute;left:8px;top:42px;white-space:pre;font-weight:800;font-size:15px;color:#918692}
+#closetGrid.rack-mode .closet-rack-picture img{position:relative;display:block;width:100%;height:256px;
+ margin-top:62px;padding:5px 14px;object-fit:contain;background:transparent;border:0;z-index:2;aspect-ratio:auto;max-height:none}
+#closetGrid.rack-mode .rack-support-shelf .closet-rack-hardware{display:none}
+#closetGrid.rack-mode .rack-support-shelf .closet-rack-picture::before{top:auto;bottom:13px;height:12px;
+ background:linear-gradient(#c5a984,#a78a68,#856849);border-radius:3px}
+#closetGrid.rack-mode .rack-support-shelf .closet-rack-picture img{margin-top:0;height:270px}
+#closetGrid.rack-mode .card-body{padding:12px 15px}
+#closetGrid.rack-mode .card-body h3{text-align:center;font-size:18px;margin:2px 0 8px}
+#closetGrid.rack-mode .card-body>p{display:none}
+#closetGrid.rack-mode .card .actions{display:flex;flex-wrap:wrap;gap:7px}
+#closetGrid.rack-mode .card .actions button{min-height:46px;flex:1 1 90px;font-size:13px}
+.closet-rack-nav{display:flex;gap:12px;justify-content:space-between;margin:8px 0 20px}
+.closet-rack-nav button{flex:1;min-height:48px}
+@media(max-width:480px){#closetGrid.rack-mode{gap:12px;padding-left:calc((100% - min(290px,78vw))/2);
+ padding-right:calc((100% - min(290px,78vw))/2)}}
+@media(prefers-reduced-motion:reduce){#closetGrid.rack-mode{scroll-behavior:auto}}
+
+/* Free, one-item-at-a-time rack navigation with a prominent position count. */
+.closet-rack-position{display:flex;justify-content:center;align-items:center;min-width:78px;
+ font-size:14px;font-weight:750;font-variant-numeric:tabular-nums;color:#432d59}
+.closet-rack-nav{align-items:center}
+.closet-rack-nav button:disabled{opacity:.45;cursor:not-allowed}
+#closetGrid.rack-mode{scroll-snap-stop:always}
+#closetGrid.rack-mode>.card{scroll-snap-stop:always}
+@media(max-width:390px){.closet-rack-nav{gap:7px}.closet-rack-position{min-width:56px;font-size:13px}
+ .closet-rack-nav button{font-size:14px;padding-inline:8px}}

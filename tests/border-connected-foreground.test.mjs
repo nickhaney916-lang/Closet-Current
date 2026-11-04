@@ -1,0 +1,3 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {borderConnectedForeground} from '../benchmark/border-connected-foreground.mjs';
+test('isolated centered garment is not border-connected',()=>{const r=borderConnectedForeground({width:3,height:3,runs:[4,1,4]});assert.equal(r.foregroundPixels,1);assert.equal(r.borderConnectedPixels,0);});
+test('connected garment reaching border is flagged without removal',()=>{const p={width:3,height:3,runs:[0,2,1,2,4]};const before=JSON.stringify(p),r=borderConnectedForeground(p);assert.equal(r.borderConnectedPixels,4);assert.equal(r.borderConnectedFraction,1);assert.equal(JSON.stringify(p),before);});

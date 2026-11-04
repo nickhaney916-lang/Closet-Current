@@ -1,0 +1,3 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {lowerFootwearDisagreement} from '../benchmark/lower-footwear-disagreement.mjs';
+test('counts lower disagreement without editing masks',()=>{const a={width:2,height:3,sourceSha256:'same',runs:[2,1,3]};const b={width:2,height:3,sourceSha256:'same',runs:[2,3,1]};const old=JSON.stringify([a,b]);const result=lowerFootwearDisagreement(a,b,{lowerFraction:1});assert.equal(result.shared,1);assert.equal(result.modnetOnly,2);assert.equal(result.reviewOnly,true);assert.equal(JSON.stringify([a,b]),old);});
+test('requires matching photo',()=>assert.throws(()=>lowerFootwearDisagreement({width:1,height:1,sourceSha256:'a',runs:[1]},{width:1,height:1,sourceSha256:'b',runs:[1]}),/Source/));

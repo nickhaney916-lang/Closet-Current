@@ -1,0 +1,479 @@
+{
+  "schemaVersion": 1,
+  "model": "ff13/fashion-clip",
+  "modelRevision": "0f99955d944c39bfd9d035a02ac273c7a44a406b",
+  "sourceWorkflow": "https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39054423372",
+  "actualModelResults": true,
+  "pixelAccuracyMeasured": false,
+  "automaticallySavedItems": 0,
+  "modelLoadNodeCpuMs": 957,
+  "note": "Scores are model probabilities over this candidate catalog; these are not segmentation accuracy estimates or independent-model checks.",
+  "cases": [
+    {
+      "id": "commons-0001",
+      "sourceSha256": "d20d66d4173f56c47e35540f081ecdfcee6e019df665ee245d967d126e117684",
+      "semanticClassesFromPriorRun": [
+        4,
+        5,
+        7
+      ],
+      "wholeTop3": [
+        {
+          "category": "Tops",
+          "itemType": "Blouse",
+          "score": 0.4977066131262687,
+          "label": "a blouse"
+        },
+        {
+          "category": "Tops",
+          "itemType": "T-shirt",
+          "score": 0.28691003038149926,
+          "label": "a T-shirt"
+        },
+        {
+          "category": "Tops",
+          "itemType": "Tunic",
+          "score": 0.1366624853650105,
+          "label": "a tunic"
+        }
+      ],
+      "confirmationTop3": [
+        {
+          "category": "Tops",
+          "itemType": "Blouse",
+          "score": 0.48969773652335274,
+          "label": "a blouse"
+        },
+        {
+          "category": "Tops",
+          "itemType": "T-shirt",
+          "score": 0.2752840195037909,
+          "label": "a T-shirt"
+        },
+        {
+          "category": "Tops",
+          "itemType": "Tunic",
+          "score": 0.1979260532714443,
+          "label": "a tunic"
+        }
+      ],
+      "proposedSemanticClass": 4,
+      "reviewReason": "weak-or-close-subtype-prediction",
+      "subtypeCandidate": null,
+      "candidateCategory": null,
+      "crossViewAgreement": true,
+      "autoCreatedItems": 0,
+      "duplicateItemsCreated": 0,
+      "expectedBenchmarkCategories": [
+        "Tops"
+      ]
+    },
+    {
+      "id": "commons-0003",
+      "sourceSha256": "cb909d7ad9c3940bfa4db0cc50b2ea7025faebe3dcec8fe80067f900760bba64",
+      "semanticClassesFromPriorRun": [
+        4,
+        6
+      ],
+      "wholeTop3": [
+        {
+          "category": "Tops",
+          "itemType": "Sweatshirt",
+          "score": 0.7125902769547092,
+          "label": "a sweatshirt"
+        },
+        {
+          "category": "Tops",
+          "itemType": "Sweater",
+          "score": 0.14102495036453547,
+          "label": "a knitted sweater"
+        },
+        {
+          "category": "Bottoms",
+          "itemType": "Jeans",
+          "score": 0.08505722025700241,
+          "label": "a pair of jeans"
+        }
+      ],
+      "confirmationTop3": [
+        {
+          "category": "Tops",
+          "itemType": "Sweatshirt",
+          "score": 0.7105817624578665,
+          "label": "a sweatshirt"
+        },
+        {
+          "category": "Tops",
+          "itemType": "Sweater",
+          "score": 0.13852554911235435,
+          "label": "a knitted sweater"
+        },
+        {
+          "category": "Bottoms",
+          "itemType": "Jeans",
+          "score": 0.10135894166605816,
+          "label": "a pair of jeans"
+        }
+      ],
+      "proposedSemanticClass": 4,
+      "reviewReason": "cross-view-subtype-consistent",
+      "subtypeCandidate": "Sweatshirt",
+      "candidateCategory": "Tops",
+      "crossViewAgreement": true,
+      "autoCreatedItems": 0,
+      "duplicateItemsCreated": 0,
+      "expectedBenchmarkCategories": [
+        "Tops"
+      ]
+    },
+    {
+      "id": "commons-0041",
+      "sourceSha256": "0e4d278fe02d2e527a5b73a08407dda8a57e5597260dc08461bc83e720cf2278",
+      "semanticClassesFromPriorRun": [
+        4,
+        5,
+        6
+      ],
+      "wholeTop3": [
+        {
+          "category": "Bottoms",
+          "itemType": "Skirt",
+          "score": 0.9960899058589172,
+          "label": "a skirt"
+        },
+        {
+          "category": "Bottoms",
+          "itemType": "Trousers",
+          "score": 0.0025337543334478753,
+          "label": "a pair of trousers"
+        },
+        {
+          "category": "Bottoms",
+          "itemType": "Shorts",
+          "score": 0.0006693985999039748,
+          "label": "a pair of shorts"
+        }
+      ],
+      "confirmationTop3": [
+        {
+          "category": "Bottoms",
+          "itemType": "Skirt",
+          "score": 0.9908556964023199,
+          "label": "a skirt"
+        },
+        {
+          "category": "Bottoms",
+          "itemType": "Trousers",
+          "score": 0.005949187220819562,
+          "label": "a pair of trousers"
+        },
+        {
+          "category": "Bottoms",
+          "itemType": "Shorts",
+          "score": 0.0014326538181849394,
+          "label": "a pair of shorts"
+        }
+      ],
+      "proposedSemanticClass": 5,
+      "reviewReason": "cross-view-subtype-consistent",
+      "subtypeCandidate": "Skirt",
+      "candidateCategory": "Bottoms",
+      "crossViewAgreement": true,
+      "autoCreatedItems": 0,
+      "duplicateItemsCreated": 0,
+      "expectedBenchmarkCategories": [
+        "Skirt"
+      ]
+    },
+    {
+      "id": "commons-0043",
+      "sourceSha256": "c8d0812ab69d698f5bf8dc5a14ace6b8034e4c74152471acf4f079fdd6d0c344",
+      "semanticClassesFromPriorRun": [
+        4,
+        5
+      ],
+      "wholeTop3": [
+        {
+          "category": "Bottoms",
+          "itemType": "Skirt",
+          "score": 0.9990479622211803,
+          "label": "a skirt"
+        },
+        {
+          "category": "Dresses",
+          "itemType": "Formal dress",
+          "score": 0.0006486543548626288,
+          "label": "a formal dress"
+        },
+        {
+          "category": "Accessories",
+          "itemType": "Belt",
+          "score": 0.00010647148385636818,
+          "label": "a belt"
+        }
+      ],
+      "confirmationTop3": [
+        {
+          "category": "Bottoms",
+          "itemType": "Skirt",
+          "score": 0.9861646180469601,
+          "label": "a skirt"
+        },
+        {
+          "category": "Dresses",
+          "itemType": "Formal dress",
+          "score": 0.008112302252430191,
+          "label": "a formal dress"
+        },
+        {
+          "category": "Accessories",
+          "itemType": "Belt",
+          "score": 0.0023341781365292494,
+          "label": "a belt"
+        }
+      ],
+      "proposedSemanticClass": 5,
+      "reviewReason": "cross-view-subtype-consistent",
+      "subtypeCandidate": "Skirt",
+      "candidateCategory": "Bottoms",
+      "crossViewAgreement": true,
+      "autoCreatedItems": 0,
+      "duplicateItemsCreated": 0,
+      "expectedBenchmarkCategories": [
+        "Skirt"
+      ]
+    },
+    {
+      "id": "commons-0060",
+      "sourceSha256": "198cd0d18fc3d2b9e2ff7d30ca024e860ee4b90dac3165890ed4e3721e5f153f",
+      "semanticClassesFromPriorRun": [
+        4,
+        6
+      ],
+      "wholeTop3": [
+        {
+          "category": "Outerwear",
+          "itemType": "Cardigan",
+          "score": 0.4738694799374559,
+          "label": "a cardigan"
+        },
+        {
+          "category": "Outerwear",
+          "itemType": "Jacket",
+          "score": 0.2365566460756372,
+          "label": "a jacket"
+        },
+        {
+          "category": "Tops",
+          "itemType": "Blouse",
+          "score": 0.13896879449327784,
+          "label": "a blouse"
+        }
+      ],
+      "confirmationTop3": [
+        {
+          "category": "Outerwear",
+          "itemType": "Jacket",
+          "score": 0.3559874968534029,
+          "label": "a jacket"
+        },
+        {
+          "category": "Outerwear",
+          "itemType": "Blazer",
+          "score": 0.3304157852522484,
+          "label": "a blazer"
+        },
+        {
+          "category": "Outerwear",
+          "itemType": "Cardigan",
+          "score": 0.2049253311542597,
+          "label": "a cardigan"
+        }
+      ],
+      "proposedSemanticClass": 4,
+      "reviewReason": "two-framings-disagree",
+      "subtypeCandidate": null,
+      "candidateCategory": null,
+      "crossViewAgreement": false,
+      "autoCreatedItems": 0,
+      "duplicateItemsCreated": 0,
+      "expectedBenchmarkCategories": [
+        "Outerwear"
+      ]
+    },
+    {
+      "id": "commons-0062",
+      "sourceSha256": "ed42247af077518ac3532d851a4330ae7cd69bee9969ab3f784431cfbc61f350",
+      "semanticClassesFromPriorRun": [
+        4,
+        7,
+        9
+      ],
+      "wholeTop3": [
+        {
+          "category": "Tops",
+          "itemType": "Blouse",
+          "score": 0.6652920611630272,
+          "label": "a blouse"
+        },
+        {
+          "category": "Outerwear",
+          "itemType": "Jacket",
+          "score": 0.2285840415158788,
+          "label": "a jacket"
+        },
+        {
+          "category": "Tops",
+          "itemType": "Tunic",
+          "score": 0.06069105714198379,
+          "label": "a tunic"
+        }
+      ],
+      "confirmationTop3": [
+        {
+          "category": "Outerwear",
+          "itemType": "Jacket",
+          "score": 0.7106855059068596,
+          "label": "a jacket"
+        },
+        {
+          "category": "Tops",
+          "itemType": "Blouse",
+          "score": 0.2408921899404188,
+          "label": "a blouse"
+        },
+        {
+          "category": "Tops",
+          "itemType": "Tunic",
+          "score": 0.017942584911593333,
+          "label": "a tunic"
+        }
+      ],
+      "proposedSemanticClass": 4,
+      "reviewReason": "two-framings-disagree",
+      "subtypeCandidate": null,
+      "candidateCategory": null,
+      "crossViewAgreement": false,
+      "autoCreatedItems": 0,
+      "duplicateItemsCreated": 0,
+      "expectedBenchmarkCategories": [
+        "Outerwear"
+      ]
+    },
+    {
+      "id": "commons-0059",
+      "sourceSha256": "f7b8eea8f6d741a5f685119cc5c92f69300a5f294940162429e3febd1482f44c",
+      "semanticClassesFromPriorRun": [
+        7
+      ],
+      "wholeTop3": [
+        {
+          "category": "Dresses",
+          "itemType": "Casual dress",
+          "score": 0.31987985718538864,
+          "label": "a casual dress"
+        },
+        {
+          "category": "Dresses",
+          "itemType": "Sweater dress",
+          "score": 0.277738767393387,
+          "label": "a sweater dress"
+        },
+        {
+          "category": "Dresses",
+          "itemType": "Formal dress",
+          "score": 0.21352137665045687,
+          "label": "a formal dress"
+        }
+      ],
+      "confirmationTop3": [
+        {
+          "category": "Tops",
+          "itemType": "Blouse",
+          "score": 0.25905067941387944,
+          "label": "a blouse"
+        },
+        {
+          "category": "Tops",
+          "itemType": "Tunic",
+          "score": 0.21194162331474123,
+          "label": "a tunic"
+        },
+        {
+          "category": "Dresses",
+          "itemType": "Formal dress",
+          "score": 0.18262262892902464,
+          "label": "a formal dress"
+        }
+      ],
+      "proposedSemanticClass": 7,
+      "reviewReason": "semantic-class-disagrees-with-candidate",
+      "subtypeCandidate": null,
+      "candidateCategory": null,
+      "crossViewAgreement": false,
+      "autoCreatedItems": 0,
+      "duplicateItemsCreated": 0,
+      "expectedBenchmarkCategories": [
+        "Outerwear",
+        "Dresses"
+      ]
+    },
+    {
+      "id": "validation-0008",
+      "sourceSha256": "16ed95a6212ecf0500c6b25047f3e9029fc49a04e4786b2c5f13c15d65e45f6f",
+      "semanticClassesFromPriorRun": [
+        4
+      ],
+      "wholeTop3": [
+        {
+          "category": "Accessories",
+          "itemType": "Scarf",
+          "score": 0.9228219500660717,
+          "label": "a scarf"
+        },
+        {
+          "category": "Accessories",
+          "itemType": "Hat",
+          "score": 0.03623033382405414,
+          "label": "a hat"
+        },
+        {
+          "category": "Tops",
+          "itemType": "Blouse",
+          "score": 0.026695139701324196,
+          "label": "a blouse"
+        }
+      ],
+      "confirmationTop3": [
+        {
+          "category": "Accessories",
+          "itemType": "Scarf",
+          "score": 0.900234045297109,
+          "label": "a scarf"
+        },
+        {
+          "category": "Accessories",
+          "itemType": "Hat",
+          "score": 0.04260069064401529,
+          "label": "a hat"
+        },
+        {
+          "category": "Tops",
+          "itemType": "Blouse",
+          "score": 0.041304896442073864,
+          "label": "a blouse"
+        }
+      ],
+      "proposedSemanticClass": null,
+      "reviewReason": "no-compatible-semantic-region",
+      "subtypeCandidate": null,
+      "candidateCategory": null,
+      "crossViewAgreement": true,
+      "autoCreatedItems": 0,
+      "duplicateItemsCreated": 0,
+      "expectedBenchmarkCategories": [
+        "Tops"
+      ]
+    }
+  ]
+}

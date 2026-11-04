@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "kind": "human-qualitative-model-preference",
+  "date": "2026-10-16",
+  "evidence": "User reviewed six four-way comparison PNGs from GitHub Actions run 38979090061",
+  "preferred": "MODNet",
+  "comparison": "SegFormer",
+  "userStatement": "Monet is the way to go. It was definitely clearer by far",
+  "scope": "Six benchmark garment photographs: shorts, beige dress, black dress, jacket, sneakers, boots",
+  "knownIssues": [
+    "Cast shadows remain beside or beneath clothing",
+    "Background leakage creates false garment extensions",
+    "Softened edges look better but require detail preservation"
+  ],
+  "decision": "Use MODNet plus conservative soft-edge treatment as experimental baseline for all categories; do not deploy to production until shadow/background-leakage defects are fixed and independently reviewed outlines validate garment preservation",
+  "groundTruthAvailable": false,
+  "productionChange": false
+}

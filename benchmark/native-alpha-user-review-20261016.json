@@ -1,0 +1,21 @@
+{
+  "date": "2026-10-16",
+  "review": "User viewed three-panel native MODNet alpha comparison",
+  "sourceRun": 38981759230,
+  "sourceArtifact": 12080964167,
+  "observations": {
+    "nativeAlpha": "Residual shadows remain",
+    "threshold128": "Right-hand threshold-128 cutouts visually clearer on dresses and some other garments; shadows remain",
+    "preference": "Favor threshold-128 presentation for clarity on reviewed examples, but do not assume universal superiority"
+  },
+  "decisions": {
+    "shadowEliminationVerified": false,
+    "qualityPreference": "threshold128-provisional",
+    "nextStep": "Compare threshold-128 with inside-only softened threshold and native alpha using enlarged edge images; isolate shadows as separate unsolved defect",
+    "productionChange": false
+  },
+  "limits": [
+    "Subjective visual feedback, no approved outlines",
+    "Do not report ground-truth performance from visual preference"
+  ]
+}

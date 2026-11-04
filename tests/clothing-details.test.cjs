@@ -8,3 +8,14 @@ test('shoes and accessories exclude garment fit and sleeves while retaining colo
 test('completion lists unresolved details including seasons without requiring optional label fields',()=>{assert.deepEqual(E.missing({category:'Tops',itemType:'T-shirt',color:'Blue',pattern:'Solid',fit:'Regular',sleeveLength:'Short sleeve',seasons:['Summer']}),[]);assert.ok(E.missing({category:'Dresses',itemType:'Unknown'}).includes('sleeves'));assert.ok(E.missing({category:'Dresses',itemType:'Unknown'}).includes('specific type'));});
 test('photo color remains useful without any recognized garment type',()=>{const result=E.fillColor({category:'Uncategorized',itemType:'Unknown',color:''},{color:'Blue'});assert.equal(result.color,'Blue');assert.equal(result.category,'Uncategorized');assert.equal(result.colorSource,'photo-estimate');});
 test('confirmed model color replaces a photo estimate while manually entered colors stay intact',()=>{const estimate={category:'Tops',color:'Gray',colorSource:'photo-estimate'};assert.equal(E.fill(estimate,shirt,{color:'Blue'}).color,'Blue');const manual={...estimate,color:'Teal',colorSource:'user'};assert.equal(E.fill(manual,shirt,{color:'Blue'}).color,'Teal');assert.equal(E.fillColor(manual,{color:'Red'}).color,'Teal');});
+
+test('an uncertain photograph color is not treated as verified wardrobe data',()=>{
+ const item={category:'Tops',itemType:'T-shirt',color:''};
+ assert.equal(E.fillColor(item,{color:'Brown',needsConfirmation:true}),item);
+ assert.equal(E.fillColor(item,{color:'Multicolor',needsConfirmation:true}),item);
+ assert.equal(E.fillColor(item,{color:'Orange',needsConfirmation:false}).color,'Orange');
+});
+test('automatically stored colors must be supported categories',()=>{
+ for(const color of ['Orange','Brown','Blue','Multicolor'])assert.equal(E.validColor(color),true);
+ for(const value of ['',undefined,'Unknown','Uncategorized','NeonUnicorn'])assert.equal(E.validColor(value),false);
+});

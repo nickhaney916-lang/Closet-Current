@@ -1,0 +1,42 @@
+name: Pilot normalization credit ledger safeguards
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'supabase/migrations/20261017_garment_normalize_pilot_credits.sql'
+      - 'tests/pilot-normalize-ledger.sql'
+      - '.github/workflows/pilot-normalize-ledger.yml'
+permissions:
+  contents: read
+jobs:
+  ephemeral-postgres-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: pilot_test_only
+          POSTGRES_DB: pilot_test_db
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate schema and strict atomic credit reservations in isolated PostgreSQL
+        env:
+          PGHOST: localhost
+          PGPORT: '5432'
+          PGUSER: postgres
+          PGPASSWORD: pilot_test_only
+          PGDATABASE: pilot_test_db
+        run: |
+          psql --version
+          psql -X -v ON_ERROR_STOP=1 -f tests/pilot-normalize-ledger.sql
+      - name: Ensure pilot migration contains no manual credit refunds
+        run: |
+          node -e "const fs=require('fs');const s=fs.readFileSync('supabase/migrations/20261017_garment_normalize_pilot_credits.sql','utf8').toLowerCase();if(!s.includes('pg_advisory_xact_lock')||!s.includes('daily_count>=2')||!s.includes('monthly_count>=100')||!s.includes(\"status='claimed'\")||s.includes('delete from public.garment_normalize_pilot_credits'))throw Error('Unsafe pilot spend control')"

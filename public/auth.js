@@ -32,7 +32,7 @@
  const modeHint=()=>signup?'Create an account with a username, email, and password of at least 8 characters.':'Have an account? Log in below. New here? Choose Create an account first.';
  function setBusy(on){
   busy=on;
-  for(const id of ['authSubmit','authMode','authReset','authResend'])$(id).disabled=on;
+  for(const id of ['authSubmit','authMode','authReset','authResend','authRetry'])$(id).disabled=on;
   $('authForm').setAttribute('aria-busy',String(on));
   $('authSubmit').textContent=recovery?(on?'Updating password…':'Save new password'):on?(signup?'Creating account…':'Logging in…'):(signup?'Create account':'Log in');
  }
@@ -51,8 +51,11 @@
  }
  $('authForm').addEventListener('invalid',event=>{
   const input=['authEmail','authPassword','authUsername'].map($).find(field=>!field.disabled&&field.validity&&field.validity.valid===false)||event.target;
-  const label=input.id==='authEmail'?'email':input.id==='authPassword'?'password':'username';
-  if(input.validity.valueMissing)status('Enter your '+label+' to '+(signup?'create an account.':'log in. New here? Choose Create an account first.'));
+  const label=input.id==='authEmail'?'email':input.id==='authPassword'?'password':
+   input.id==='pilotNoticeAck'?'pilot data notice':'username';
+  if(input.validity.valueMissing)status(input.id==='pilotNoticeAck'?
+   'Please review the pilot data notice before creating an account.':
+   'Enter your '+label+' to '+(signup?'create an account.':'log in. New here? Choose Create an account first.'));
   else if(input.validity.typeMismatch)status('Enter a valid email address.');
   else if(input.validity.tooShort)status(signup?'Your password must have at least 8 characters.':'Enter your password.');
   else if(input.validity.patternMismatch)status('Username must be 3–32 letters, numbers or underscores.');
@@ -73,7 +76,11 @@
   }finally{clearTimeout(timer);}
  }
  function showUser(data){
-  if(!data?.user?.id)throw Error('No verified user session');
+  // A successful HTTP response is not necessarily a usable login. Never
+  // expose the wardrobe until Auth supplies both an identity AND a token.
+  if(typeof data?.user?.id!=='string'||!data.user.id||
+     typeof data.access_token!=='string'||!data.access_token)
+   throw Error('No verified user session');
   session={...data,expires_at:Math.floor(Date.now()/1000)+(data.expires_in||3600)};window.closetAuth.user=data.user;
   localStorage.setItem(STORE,JSON.stringify({access_token:data.access_token,refresh_token:data.refresh_token,expires_at:Math.floor(Date.now()/1000)+(data.expires_in||3600)}));
   $('authGate').hidden=true;$('appShell').hidden=false;
@@ -83,6 +90,11 @@
  function setMode(on){
   setPasswordVisible(false);
   signup=on;$('usernameWrap').hidden=!on;$('authUsername').required=on;$('authUsername').disabled=!on;
+  // Pilot information review is required for NEW signup only. It is not a
+  // final legal agreement and never opts anyone into marketing emails.
+  $('pilotNoticeWrap').hidden=!on;
+  $('pilotNoticeAck').required=on;$('pilotNoticeAck').disabled=!on;
+  if(!on)$('pilotNoticeAck').checked=false;
   $('authPassword').minLength=on?8:1;
   $('authPassword').autocomplete=on?'new-password':'current-password';
   $('authSubmit').textContent=on?'Create account':'Log in';$('authMode').textContent=on?'Already have an account? Log in':'Create an account';
@@ -96,11 +108,13 @@
    if(recovery){
     if(password.length<8)throw Error('Your password must have at least 8 characters.');
     const user=await request('user',{password},session.access_token,'PUT');
+    if(user?.id!==session.user?.id)throw Error('Session account changed');
     recovery=false;showUser({...session,user});
    }else if(signup){
     const username=$('authUsername').value.trim();
     if(!/^[A-Za-z0-9_]{3,32}$/.test(username))throw Error('Username must be 3–32 letters, numbers or underscores.');
-    const data=await request('signup'+EMAIL_REDIRECT,{email,password,data:{username}});
+    const data=await request('signup'+EMAIL_REDIRECT,{email,password,
+     data:window.ClosetPilotNotice.signupMetadata(username,$('pilotNoticeAck').checked)});
     if(data.access_token&&data.user)showUser(data);
     else status('Check your email to confirm your account, then log in.');
    }else showUser(await request('token?grant_type=password',{email,password}));
@@ -128,6 +142,39 @@
   location.reload();
  };
  setMode(false);
+ // Network outages and transient server errors do NOT revoke a saved
+ // refresh token. Only a verified rejection of that token does. No user
+ // data or local closet becomes accessible until Auth returns a new token.
+ const temporaryRestoreFailure=error=>error instanceof TypeError||
+  error.name==='AbortError'||[408,429].includes(error.status)||
+  (Number.isInteger(error.status)&&error.status>=500);
+ async function restoreSavedLogin(){
+  if(busy||window.closetAuth.user)return;
+  let saved;
+  try{saved=JSON.parse(localStorage.getItem(STORE)||'null');}catch{
+   localStorage.removeItem(STORE);
+  }
+  if(typeof saved?.refresh_token!=='string'||!saved.refresh_token){
+   $('authRetry').hidden=true;return;
+  }
+  restoringSession=true;setBusy(true);$('authRetry').hidden=true;
+  status('Restoring your login…');
+  try{
+   const data=await request('token?grant_type=refresh_token',
+    {refresh_token:saved.refresh_token});
+   showUser(data);
+  }catch(error){
+   if(temporaryRestoreFailure(error)){
+    $('authRetry').hidden=false;
+    status('Could not restore your saved login. Your session is still saved on this device. Check your connection and choose Retry saved login.');
+   }else{
+    localStorage.removeItem(STORE);
+    $('authRetry').hidden=true;
+    status('Your login session has expired. Log in again.');
+   }
+  }finally{restoringSession=false;setBusy(false);}
+ }
+ $('authRetry').onclick=()=>restoreSavedLogin();
  (async()=>{
   try{
    const callback=new URLSearchParams((location.hash||'').replace(/^#/,''));
@@ -135,6 +182,7 @@
    const error=callback.get('error_code')||query.get('error_code')||callback.get('error')||query.get('error');
    const access=callback.get('access_token'),refresh=callback.get('refresh_token');
    if(error||access){
+    // Keep tokens out of browser history once processed or rejected.
     history.replaceState(null,'',location.pathname);
     if(error){status('This email link has expired or was already used. Log in below. If your email still needs confirmation, enter it and choose Resend confirmation email.');return;}
     setBusy(true);status('Verifying your email link…');
@@ -142,6 +190,8 @@
     const user=await request('user',null,access,'GET');
     const data={user,access_token:access,refresh_token:refresh,expires_in:Number(callback.get('expires_in'))||3600};
     if(callback.get('type')==='recovery'){
+     if(typeof user?.id!=='string'||!user.id||!refresh)
+      throw Error('No verified user session');
      session=data;recovery=true;$('authEmail').value=user.email||'';$('authEmail').disabled=true;
      $('authPassword').value='';$('authPassword').minLength=8;$('authPassword').autocomplete='new-password';
      $('authMode').hidden=true;$('authReset').hidden=true;$('authResend').hidden=true;
@@ -149,13 +199,12 @@
     }
     showUser(data);return;
    }
-   const saved=JSON.parse(localStorage.getItem(STORE)||'null');
-   if(saved?.refresh_token){
-    restoringSession=true;setBusy(true);status('Restoring your login…');
-    const data=await request('token?grant_type=refresh_token',{refresh_token:saved.refresh_token});
-    showUser(data);return;
-   }
-  }catch(error){localStorage.removeItem(STORE);status(restoringSession?(error instanceof TypeError?'Could not restore your login. Check your connection and log in again.':'Your login session has expired. Log in again.'):'This sign-in link could not be verified. Log in with your email and password, or request a fresh email link.');return;}finally{setBusy(false);}
+  }catch(error){
+   status('This sign-in link could not be verified. Log in with your email and password, or request a fresh email link.');
+   return;
+  }finally{setBusy(false);}
+  const saved=localStorage.getItem(STORE);
+  if(saved){await restoreSavedLogin();return;}
   status(modeHint());
  })();
 })();

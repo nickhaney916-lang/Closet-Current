@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "kind": "human-visual-experiment-review",
+  "date": "2026-10-16",
+  "experiment": "sparse-lower-row-removal-after-conservative-soft-alpha",
+  "decision": "rejected",
+  "reviewerObservation": "It did absolutely nothing to the shadows. Either on the side or to the bottom of image",
+  "findings": {
+    "modnet": "visually preferred for footwear",
+    "softenedEdges": "visually improved edges",
+    "sparseLowerRowRemoval": "no observable shadow improvement"
+  },
+  "nextWork": [
+    "Inspect shadow contamination along sides and base at native resolution",
+    "Evaluate object-aware shadow/background separation rather than row occupancy",
+    "Preserve shoe soles, hems and garment outlines",
+    "Require paired visual improvement and independent approved reference outlines before production"
+  ],
+  "productionChange": false
+}

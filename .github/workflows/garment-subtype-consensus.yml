@@ -1,0 +1,26 @@
+name: Experimental layered garment subtype consensus
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'benchmark/garment-subtype-consensus.mjs'
+      - 'tests/garment-subtype-consensus.test.mjs'
+      - 'benchmark/real-subtype-observations-20261017.json'
+      - 'tests/real-subtype-observations.test.mjs'
+      - '.github/workflows/garment-subtype-consensus.yml'
+permissions:
+  contents: read
+jobs:
+  subtype-gates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate garment subtypes from independent image framings
+        run: |
+          node --check benchmark/garment-subtype-consensus.mjs
+          node --test tests/garment-subtype-consensus.test.mjs tests/real-subtype-observations.test.mjs tests/multilayer-outfit-evaluation.test.mjs tests/multilayer-review-safety.test.mjs

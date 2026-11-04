@@ -40,3 +40,44 @@ Once configured, run explicitly authorized real inbox tests for signup, newest c
 - https://supabase.com/docs/guides/auth/debugging/error-codes
 
 The default sender is intended for limited testing, restricts recipients to organization members and currently allows two messages per hour according to the reviewed official documentation. Sender activation is still open. Camera resolution, simplified navigation, recognition assets and per-account local storage are unchanged.
+
+
+## October 18 pilot-auth stability checkpoint
+
+On draft PR #7 only, transient offline/session refresh failure now preserves
+the stored refresh token **without unlocking the private closet**. A visible
+"Retry saved login" control appears only when a saved refresh session cannot
+be restored due to an HTTP 5xx, 408/429, timeout or network outage; verified
+revoked sessions still require fresh login. Malformed successful Auth JSON
+cannot unlock the closet without a nonempty access token, and recovery
+cannot switch to an unexpected account.
+
+The [controlled browser run 39173979696](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39173979696)
+verified a 390×844 touch viewport, offline token preservation, successful
+retry, rejection of tokenless 200 responses and mismatched recovery, as
+well as the existing private cloud recovery suite. 767 Node tests passed,
+0 failed, 3 skipped. No live email was sent, and this does not verify a
+physical phone or actual email inbox.
+
+**Invitation blocker:** The app's existing `redirect_to` still points to
+GitHub Pages, whereas the documented deployed Cloudflare Pages origin is
+different. Before inviting external testers, verify the actual
+`Authentication > URL Configuration` allowlist, canonical domain,
+email templates using `RedirectTo`, sender SMTP/restrictions, and
+deliverability; only then consider updating the callback URL.
+No sender, email provider or billing settings were modified. Supabase
+current redirect guidance: https://supabase.com/docs/guides/auth/redirect-urls
+
+
+
+## Pilot data notice — October 18, 2026
+
+Draft PR #7 now links to a factual pilot notice from signup and the My
+account menu. New signups must acknowledge reading that specific version;
+Auth user metadata records its version/time but **cannot serve as a
+tamper-proof legal consent log**. No marketing consent is collected, no
+terms have been approved, and no real signup email was sent. The
+authentication callback still points at the existing GitHub Pages URL
+until Supabase redirect allowlist, sender setup and the canonical
+Cloudflare origin are verified. This is not a release authorization.
+

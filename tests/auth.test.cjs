@@ -7,13 +7,15 @@ const path=require('node:path');
 const source=fs.readFileSync(path.join(__dirname,'../public/auth.js'),'utf8');
 function app(fetchImpl=async()=>{throw new TypeError('network unavailable');},callback={},initialSession=null){
  const elements=new Map(),listeners={},timers=new Map(),requests=[];
- for(const id of ['authStatus','authForm','authSubmit','authMode','authReset','authResend','authEmail','authPassword','authPasswordToggle','authUsername','usernameWrap','authGate','appShell','accountLabel','logout']){
+ for(const id of ['authStatus','authForm','authSubmit','authMode','authReset','authResend','authRetry','authEmail','authPassword','authPasswordToggle','authUsername','usernameWrap','pilotNoticeWrap','pilotNoticeAck','authGate','appShell','accountLabel','logout']){
   elements.set(id,{id,value:'',hidden:false,disabled:false,required:false,textContent:'',setAttribute(){},addEventListener(name,fn){listeners[name]=fn;},checkValidity(){return true;}});
  }
+ elements.get('authRetry').hidden=true;
+ elements.get('appShell').hidden=true;
  elements.get('authEmail').value='test@example.invalid';
  elements.get('authPassword').value='test-password-only';
  elements.get('authUsername').value='test_user';
- const saved=new Map(),window={};if(initialSession)saved.set('closet-current-auth-v1',JSON.stringify(initialSession));let timerId=0,reloaded=false;
+ const saved=new Map(),window={ClosetPilotNotice:require('../public/pilot-notice.js')};if(initialSession)saved.set('closet-current-auth-v1',JSON.stringify(initialSession));let timerId=0,reloaded=false;
  vm.runInNewContext(source,{window,document:{getElementById:id=>elements.get(id)},localStorage:{getItem:key=>saved.get(key)||null,setItem:(key,value)=>saved.set(key,value),removeItem:key=>saved.delete(key)},location:{reload(){reloaded=true;},pathname:'/Closet-Current/',...callback},history:{replaceState(){}},URLSearchParams,AbortController,TypeError,setTimeout:fn=>{timers.set(++timerId,fn);return timerId;},clearTimeout:id=>timers.delete(id),fetch:async(...args)=>{requests.push(args);return fetchImpl(...args);}});
  return {get:id=>elements.get(id),listeners,timers,requests,window,saved,reloaded:()=>reloaded,submit:()=>elements.get('authForm').onsubmit({preventDefault(){}})};
 }
@@ -64,7 +66,7 @@ test('pending login blocks duplicates and a timeout restores controls',async()=>
 });
 test('signup requiring confirmation does not grant access prematurely',async()=>{
  const a=app(async()=>response({user:{id:'pending-user'}}));
- a.get('authMode').onclick();await a.submit();
+ a.get('authMode').onclick();a.get('pilotNoticeAck').checked=true;await a.submit();
  assert.match(a.requests[0][0],/signup\?redirect_to=/);
  assert.match(a.get('authStatus').textContent,/Check your email/);
  assert.equal(a.window.closetAuth.user,null);
@@ -78,7 +80,7 @@ test('valid login opens the closet after a verified session response',async()=>{
 });
 
 test('confirmation and reset emails explicitly target the live app',async()=>{
- const a=app(async()=>response({user:{id:'pending'}}));a.get('authMode').onclick();await a.submit();
+ const a=app(async()=>response({user:{id:'pending'}}));a.get('authMode').onclick();a.get('pilotNoticeAck').checked=true;await a.submit();
  assert.equal(new URL(a.requests[0][0]).searchParams.get('redirect_to'),'https://nickhaney916-lang.github.io/Closet-Current/');
  await a.get('authReset').onclick();assert.equal(new URL(a.requests[1][0]).searchParams.get('redirect_to'),'https://nickhaney916-lang.github.io/Closet-Current/');
 });
@@ -125,7 +127,7 @@ test('multiple empty login fields report the first invalid field rather than the
 test('blocked email delivery stays locked, restores controls and hides provider details',async()=>{
  for(const action of ['signup','reset','resend']){
   const a=app(async()=>response({error_code:'email_address_not_authorized',msg:'Private recipient and SMTP configuration details'},false));
-  if(action==='signup'){a.get('authMode').onclick();await a.submit();}else await a.get(action==='reset'?'authReset':'authResend').onclick();
+  if(action==='signup'){a.get('authMode').onclick();a.get('pilotNoticeAck').checked=true;await a.submit();}else await a.get(action==='reset'?'authReset':'authResend').onclick();
   assert.match(a.get('authStatus').textContent,/Email delivery is not ready/);
   assert.doesNotMatch(a.get('authStatus').textContent,/Private recipient|SMTP|Check your email|requested/);
   assert.equal(a.window.closetAuth.user,null);assert.equal(a.get('authSubmit').disabled,false);assert.equal(a.get('authResend').disabled,false);assert.equal(a.timers.size,0);
@@ -148,7 +150,7 @@ test('malformed successful email responses cannot report delivery success',async
 });
 test('disabled email provider and unsupported email address give actionable messages',async()=>{
  for(const [code,expected] of [['email_provider_disabled',/signup is temporarily unavailable/],['email_address_invalid',/valid email address that can receive/]]){
-  const a=app(async()=>response({code,msg:'Internal provider details'},false));a.get('authMode').onclick();await a.submit();
+  const a=app(async()=>response({code,msg:'Internal provider details'},false));a.get('authMode').onclick();a.get('pilotNoticeAck').checked=true;await a.submit();
   assert.match(a.get('authStatus').textContent,expected);assert.equal(a.window.closetAuth.user,null);assert.equal(a.get('authSubmit').disabled,false);
  }
 });
@@ -165,4 +167,133 @@ test('simultaneous cloud refreshes rotate the token only once and retain the acc
 test('cloud token refresh cannot switch to a different account',async()=>{
  let calls=0;const a=app(async()=>++calls===1?response({access_token:'old-access',refresh_token:'old-refresh',user:{id:'first-user'}}):response({access_token:'other-access',user:{id:'other-user'}}));await a.submit();
  await assert.rejects(a.window.closetAuth.getAccessToken({force:true}),/account changed/);assert.equal(a.window.closetAuth.user.id,'first-user');
+});
+
+
+test('temporarily offline stored login stays locked and refresh token survives for explicit retry',async()=>{
+ let available=false;
+ const a=app(async()=>available?
+  response({access_token:'recovered-access',refresh_token:'rotated-refresh',
+    user:{id:'same-account',email:'test@example.invalid'},expires_in:3600}):
+  Promise.reject(new TypeError('network unavailable')),{},{refresh_token:'original-refresh'});
+ await new Promise(setImmediate);
+ assert.equal(a.window.closetAuth.user,null);
+ assert.equal(a.get('appShell').hidden,true); // private closet stays locked
+ assert.equal(a.saved.has('closet-current-auth-v1'),true);
+ assert.equal(JSON.parse(a.saved.get('closet-current-auth-v1')).refresh_token,'original-refresh');
+ assert.equal(a.get('authRetry').hidden,false);
+ assert.match(a.get('authStatus').textContent,/Your session is still saved/);
+ assert.equal(a.get('authSubmit').disabled,false);
+ available=true;
+ await a.get('authRetry').onclick();
+ assert.equal(a.window.closetAuth.user.id,'same-account');
+ assert.equal(a.get('authRetry').hidden,true);
+ assert.equal(a.get('authGate').hidden,true);
+ assert.equal(JSON.parse(a.saved.get('closet-current-auth-v1')).refresh_token,'rotated-refresh');
+ assert.equal(a.requests.length,2);
+});
+test('HTTP 5xx and timeout preserve stored refresh token; service denial revokes it',async()=>{
+ for(const [kind,fetcher] of [
+  ['503',async()=>({...response({error_code:'temporarily_unavailable'},false),status:503})],
+  ['timeout',async(_url,{signal})=>new Promise((_ok,reject)=>signal.addEventListener('abort',()=>{
+   const err=new Error('aborted');err.name='AbortError';reject(err);
+  }))]
+ ]){
+  const a=app(fetcher,{},{refresh_token:'still-saved'});
+  if(kind==='timeout'){
+   // restoration starts synchronously and is in-flight; trigger the bounded timeout.
+   assert.equal(a.timers.size,1);
+   [...a.timers.values()][0]();
+  }
+  await new Promise(setImmediate);
+  assert.equal(a.window.closetAuth.user,null);
+  assert.equal(a.saved.has('closet-current-auth-v1'),true);
+  assert.equal(a.get('authRetry').hidden,false);
+ }
+ const denied=app(async()=>({...response({error_code:'invalid_grant',msg:'Refresh token not found'},false),status:401}),
+  {},{refresh_token:'revoked'});
+ await new Promise(setImmediate);
+ assert.equal(denied.get('authRetry').hidden,true);
+ assert.equal(denied.saved.has('closet-current-auth-v1'),false);
+ assert.match(denied.get('authStatus').textContent,/expired/);
+});
+test('200 OK without access token never opens closet, including recovery or login',async()=>{
+ for(const payload of [
+  {user:{id:'claimed-user'}},{access_token:'',user:{id:'claimed-user'}},
+  {access_token:'test',user:{}}
+ ]){
+  const a=app(async()=>response(payload));
+  await a.submit();
+  assert.equal(a.window.closetAuth.user,null);
+  assert.equal(a.get('authGate').hidden,false);
+  assert.equal(a.get('appShell').hidden,true);
+  assert.equal(a.saved.has('closet-current-auth-v1'),false);
+ }
+});
+test('password reset cannot authenticate a different user on same callback token',async()=>{
+ let calls=0;
+ const a=app(async()=>response(++calls===1?
+  {id:'recovery-owner',email:'test@example.invalid'}:
+  {id:'other-user',email:'test@example.invalid'}),
+  {hash:'#access_token=recovery-token&refresh_token=recovery-refresh&type=recovery'});
+ await new Promise(setImmediate);
+ assert.equal(a.window.closetAuth.user,null);
+ a.get('authPassword').value='new-password-long';
+ await a.submit();
+ assert.equal(a.window.closetAuth.user,null);
+ assert.equal(a.get('authGate').hidden,false);
+ assert.match(a.get('authStatus').textContent,/Session account changed/);
+});
+test('saved-session retries are serialized so double tapping does not send duplicate requests',async()=>{
+ let finish;
+ const a=app(()=>new Promise(resolve=>finish=resolve),{},{refresh_token:'retry-token'});
+ await new Promise(setImmediate);
+ assert.equal(a.requests.length,1);
+ assert.equal(a.get('authSubmit').disabled,true);
+ await a.get('authRetry').onclick();
+ assert.equal(a.requests.length,1);
+ finish(response({access_token:'success',refresh_token:'new',user:{id:'test-account'}}));
+ await new Promise(setImmediate);
+ assert.equal(a.window.closetAuth.user.id,'test-account');
+});
+
+
+test('early-pilot data notice acknowledgement gates signup but not login or recovery',async()=>{
+ const a=app(async()=>response({user:{id:'pending-signup'}}));
+ assert.equal(a.get('pilotNoticeWrap').hidden,true);
+ assert.equal(a.get('pilotNoticeAck').disabled,true);
+ a.get('authMode').onclick();
+ assert.equal(a.get('pilotNoticeWrap').hidden,false);
+ assert.equal(a.get('pilotNoticeAck').required,true);
+ assert.equal(a.get('pilotNoticeAck').disabled,false);
+ await a.submit();
+ assert.equal(a.requests.length,0,'never attempt signup without reviewed pilot data notice');
+ assert.equal(a.window.closetAuth.user,null);
+ assert.match(a.get('authStatus').textContent,/Review the pilot data notice/);
+ a.get('pilotNoticeAck').checked=true;await a.submit();
+ assert.equal(a.requests.length,1);
+ const signup=JSON.parse(a.requests[0][1].body);
+ assert.equal(signup.data.username,'test_user');
+ assert.equal(signup.data.pilot_data_notice_version,'pilot-data-notice-2026-10-18');
+ assert.match(signup.data.pilot_data_notice_acknowledged_at,/^20\d{2}-\d{2}-\d{2}T/);
+ assert.equal(Object.hasOwn(signup.data,'marketing_consent'),false);
+ assert.equal(a.window.closetAuth.user,null);
+ a.get('authMode').onclick();
+ assert.equal(a.get('pilotNoticeWrap').hidden,true);
+ assert.equal(a.get('pilotNoticeAck').required,false);
+ assert.equal(a.get('pilotNoticeAck').disabled,true);
+ assert.equal(a.get('pilotNoticeAck').checked,false);
+});
+test('pilot notice metadata rejects false acknowledgement and invalid times',()=>{
+ const notice=require('../public/pilot-notice.js');
+ assert.equal(notice.isAcknowledged('true'),false);
+ assert.throws(()=>notice.signupMetadata('test_user',false),/Review the pilot data notice/);
+ assert.throws(()=>notice.signupMetadata('test_user',true,new Date(NaN)),/Invalid timestamp/);
+ assert.equal(notice.signupMetadata('test_user',true,new Date('2026-10-18T00:00:00Z')).pilot_data_notice_acknowledged_at,
+  '2026-10-18T00:00:00.000Z');
+ const html=fs.readFileSync('public/pilot-data-notice.html','utf8');
+ assert.match(html,/previously uploaded private photo objects are/);
+ assert.match(html,/Self-service full-account deletion is not yet available/);
+ assert.match(html,/not final Terms of Service/);
+ assert.match(fs.readFileSync('public/index.html','utf8'),/href="pilot-data-notice.html"/);
 });

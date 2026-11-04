@@ -1,0 +1,52 @@
+{
+  "modelRepo": "pirocheto/schp-lip-20",
+  "modelUrl": "https://huggingface.co/pirocheto/schp-lip-20/resolve/main/onnx/schp-lip-20-int8-static.onnx",
+  "modelSha256": "871c9e209dc67d6be61c73dcc79cb49e638fcf5bbc35a19b4c7429eba0bfc046",
+  "modelLicense": "MIT",
+  "modelCard": "https://huggingface.co/pirocheto/schp-lip-20",
+  "modelFilename": "schp-lip-20-int8-static.onnx",
+  "inputSize": 473,
+  "means": [
+    0.406,
+    0.456,
+    0.485
+  ],
+  "stds": [
+    0.225,
+    0.224,
+    0.229
+  ],
+  "labels": [
+    "Background",
+    "Hat",
+    "Hair",
+    "Glove",
+    "Sunglasses",
+    "Upper-clothes",
+    "Dress",
+    "Coat",
+    "Socks",
+    "Pants",
+    "Jumpsuits",
+    "Scarf",
+    "Skirt",
+    "Face",
+    "Left-arm",
+    "Right-arm",
+    "Left-leg",
+    "Right-leg",
+    "Left-shoe",
+    "Right-shoe"
+  ],
+  "researchOnly": true,
+  "socksClass": 8,
+  "shoeClasses": [
+    18,
+    19
+  ],
+  "humanLegClasses": [
+    16,
+    17
+  ],
+  "stockingsOrTightsSeparateClass": false
+}

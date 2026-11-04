@@ -1,0 +1,46 @@
+{
+  "experiment": "2026-10-17 source-photo-vs-generated garment presentation",
+  "inputs": "Four independently licensed clothing originals; displayed in a source image sheet using benchmark photo crops",
+  "imageGenerationType": "reference-inspired experimental image generation; no verified direct per-item edit invocation to FASHN or other paid editing service",
+  "sourcePixelConditioningAuthenticated": false,
+  "pixelPerfectOriginalFileIdentityRecheckedInThisEvaluation": false,
+  "outputCanAutoSave": false,
+  "fidelityAccuracyPercent": null,
+  "modelCostUSD": 0,
+  "humanExpertGroundTruth": false,
+  "cases": [
+    {
+      "id": "commons-0035",
+      "category": "Bottoms",
+      "presentation": "substantially cleaner shorts",
+      "plausiblePreserved": "bright orange, elastic waist, loose-leg design, center fold",
+      "unresolved": "exact waistband closure, stitching, pockets, and visible tag/hanger details",
+      "status": "NOT_APPROVED"
+    },
+    {
+      "id": "commons-0065",
+      "category": "Outerwear",
+      "presentation": "more upright isolated jacket",
+      "plausiblePreserved": "black ruffled design, bell sleeves, ornate front fabric and hanging brown accessory",
+      "unresolved": "exact fabric construction, lacing, seams, buttons and layered accessory identity",
+      "status": "NOT_APPROVED"
+    },
+    {
+      "id": "validation-0017",
+      "category": "Bottoms",
+      "presentation": "cleaner upright jeans silhouette",
+      "plausiblePreserved": "pale gray tone and straight trouser legs",
+      "unresolved": "source wash, front pockets, fly closure, belt loops and authentic distress details",
+      "status": "NOT_APPROVED"
+    },
+    {
+      "id": "validation-0019",
+      "category": "Shoes",
+      "presentation": "clean isolated two-shoe arrangement",
+      "plausiblePreserved": "black mesh uppers, coral-orange sole and lining",
+      "unresolved": "eyelet layout, toe proportions, sole segments and authentic brand/model details",
+      "status": "NOT_APPROVED"
+    }
+  ],
+  "decision": "Good style target; no garment fidelity validation yet. Source original must always be retained."
+}

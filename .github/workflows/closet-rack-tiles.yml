@@ -1,0 +1,81 @@
+name: Universal closet rack and normalized tile tests
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'public/closet-tile-engine.js'
+      - 'public/closet-white-matte.js'
+      - 'public/closet-neutral-matte.js'
+      - 'public/garment-display-preview.js'
+      - 'public/garment-fidelity-review.js'
+      - 'public/garment-pose-normalizer.js'
+      - 'public/closet-rack-engine.js'
+      - 'public/index.html'
+      - 'public/app.js'
+      - 'public/closet-browser.js'
+      - 'public/app-theme.css'
+      - 'tests/closet-rack-tiles.test.cjs'
+      - 'tests/closet-white-matte.test.cjs'
+      - 'tests/closet-neutral-matte.test.cjs'
+      - 'tests/garment-display-preview.test.cjs'
+      - 'tests/garment-fidelity-review.test.mjs'
+      - 'tests/garment-pose-normalizer.test.cjs'
+      - 'scripts/run-real-pose-normalization.mjs'
+      - 'scripts/run-real-neutral-matte.mjs'
+      - '.github/workflows/closet-rack-tiles.yml'
+permissions:
+  contents: read
+jobs:
+  all-category-closet:
+    runs-on: ubuntu-latest
+    timeout-minutes: 16
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate browser scripts and data-preserving tile support
+        run: |
+          node --check public/garment-fidelity-review.js
+          node --check public/garment-display-preview.js
+          node --check public/garment-pose-normalizer.js
+          node --check public/closet-rack-engine.js
+          node --check public/closet-white-matte.js
+          node --check public/closet-neutral-matte.js
+          node --check public/closet-tile-engine.js
+          node --check public/closet-browser.js
+          node --check public/app.js
+          node --test tests/closet-neutral-matte.test.cjs tests/closet-white-matte.test.cjs tests/closet-rack-tiles.test.cjs tests/garment-pose-normalizer.test.cjs tests/garment-display-preview.test.cjs tests/garment-fidelity-review.test.mjs tests/closet-browser.test.cjs
+      - name: Install image decoder for licensed real-photo review
+        run: npm install --no-save --no-package-lock sharp@0.34.4
+      - name: Download 9 checksum-verified garment photographs
+        run: |
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos commons-0035,commons-0065,commons-0079,commons-0094
+          node scripts/download-reviewed-photos.mjs benchmark/manifest-fresh-11.json benchmark/photos validation-0017,validation-0019,validation-0021,validation-0023,validation-0024
+      - name: Compare original and proposed derived display normalization
+        run: node scripts/run-real-pose-normalization.mjs benchmark/real-pose-review
+      - name: Fail closed if photo quality is falsely reported as verified
+        run: |
+          node -e "const x=require('./benchmark/real-pose-review/summary.json');if(x.status!=='complete'||x.cases.length!==4||!x.sourcePhotosHashVerified||x.sourceGarmentPixelGroundTruth||x.normalizationAccuracy!==null||x.productionQualityApproved||x.alteredSavedClothes||x.cases.some(c=>!c.sourcePreserved||!c.outputNotAutoSaved||c.improvedVisualQualityMeasured))throw Error('Unsafe normalization report')"
+      - name: Compare actual licensed garment photos against free exterior matte preview
+        run: node scripts/run-real-neutral-matte.mjs benchmark/real-neutral-matte-review
+      - name: Verify real-source hashes and prevent false garment-identity claims
+        run: |
+          node -e "const x=require('./benchmark/real-neutral-matte-review/summary.json');if(x.status!=='complete'||!x.sourcePhotosHashVerified||x.cases.length!==9||x.licensedSources!==9||x.appRecordsModified||x.paidProviderCalls||x.reconstructionAccuracy!==null||x.autoApproveForLiveCustomers||x.cases.some(c=>!c.originalBytesVerified||!c.savedSourceUnchanged||c.automaticIdentityApproval))throw Error('Unsafe free-matte review')"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: licensed-original-versus-free-matte
+          path: benchmark/real-neutral-matte-review/
+          retention-days: 14
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: real-garment-pose-normalization-comparison
+          path: benchmark/real-pose-review/
+          retention-days: 14
+      - name: Build full app and verify all closet categories can use the rack
+        run: |
+          node scripts/build.mjs
+          node -e "const fs=require('fs');const h=fs.readFileSync('dist/index.html','utf8');const b=fs.readFileSync('dist/closet-browser.js','utf8');if(!h.includes('closetRackMode')||!h.includes('closet-tile-engine.js')||!h.includes('closet-white-matte.js')||!h.includes('closet-neutral-matte.js')||!h.includes('closet-rack-engine.js')||!h.includes('garment-pose-normalizer.js')||!h.includes('garment-display-preview.js')||!h.includes('garment-fidelity-review.js')||!b.includes('closetPresentationMode'))throw Error('Universal closet rack missing from build')"

@@ -1,0 +1,27 @@
+name: Safe private AI garment normalization preview contract
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'supabase/functions/garment-normalize/protocol.mjs'
+      - 'tests/garment-normalization-contract.test.mjs'
+      - '.github/workflows/garment-normalization-contract.yml'
+permissions:
+  contents: read
+jobs:
+  private-preview-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check private-only provider contract and no automatic cost
+        run: |
+          node --check supabase/functions/garment-normalize/protocol.mjs
+          node --test tests/garment-normalization-contract.test.mjs
+      - name: Do not accidentally deploy or expose provider secret
+        run: |
+          node -e "const fs=require('fs');const s=fs.readFileSync('supabase/functions/garment-normalize/protocol.mjs','utf8');if(!s.includes('NORMALIZE_PREVIEW_DEFAULT_ENABLED=false')||s.includes('fetch(')||s.includes('FASHN_API_KEY'))throw Error('Unsafe normalization contract: only schema planning is allowed')"

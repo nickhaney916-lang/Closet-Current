@@ -29,3 +29,24 @@ Separately, the actual Supabase Auth, REST and Storage APIs were exercised using
 Database transaction tests exercised owner read/write policies, denied cross-owner inserts and ownership changes, and denied anonymous table/function access. The test transaction was rolled back. Performance advisors returned no notices; no cloud-table or storage RLS warning was reported by security advisors. One pre-existing Auth warning remains: [leaked-password protection is disabled](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection). SMTP readiness is tracked separately.
 
 The schema source is `supabase/cloud-backup.sql`; the migration was applied through the Supabase connector. Raw verification booleans are in `cloud-backup-results.json`. No real phone hardware test is claimed, and the owner's actual nine items are uploaded only after their updated signed-in client runs successfully. Refresh loss in an existing browser session is not independently reproduced by these tests.
+
+
+## Development-branch cloud regression — October 18, 2026
+
+On draft PR #7, enabled cloud multi-device browser regression for the
+integration development branch. The production cloud client is unchanged.
+A controlled browser test now verifies manually confirmed Unsorted Clothing
+category/color syncing to another session, a source-identical original photo
+surviving sync and reload, and another user's synthetic account remaining
+isolated. The longer original suite still tests offline retry, deletion,
+parallel edits, lost responses, keep-both conflict recovery and corrupted
+photo retention. A legitimate edit conflict during the test was resolved
+through the app's existing **Keep both versions** control; cloud saves must
+never silently overwrite either user's changes.
+
+[Verified run 39173019247](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/39173019247)
+passed 762 of 765 Node tests (0 failed, 3 intentionally skipped)
+and the complete controlled multi-session browser recovery. No
+real subscriber account, live production deployment or fresh actual
+Supabase RLS validation was performed for this change.
+
