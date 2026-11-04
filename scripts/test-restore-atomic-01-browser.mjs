@@ -176,14 +176,16 @@ try{
     req.onsuccess=()=>b.put({...req.result,saved:[]});
     tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);
    }));
+   await page.evaluate(async()=>{items=(await readAll()).map(normalizeClothing);render();});
    await picture(page,engine,width,'02-before-recovery-storage-loss');
    const makeFile=o=>({name:'closet-v4.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(o))});
    const tampered=structuredClone(backup);tampered.items[0].originalPhoto.sha256='0'.repeat(64);
    await page.locator('#import').setInputFiles(makeFile(tampered));
-   await page.waitForFunction(()=>document.getElementById('message')?.textContent?.includes('original JPEG SHA mismatch'));
+   await page.waitForFunction(()=>document.getElementById('message')?.textContent?.includes('RESTORE01'));
    assert.equal((await stored(page)).length,3,'Invalid backup cannot mutate wardrobe');
    page.once('dialog',d=>d.dismiss());
    await page.locator('#import').setInputFiles(makeFile(backup));
+   await page.waitForFunction(()=>document.getElementById('message')?.textContent?.includes('Restore canceled'));
    assert.equal((await stored(page)).length,3,'Cancel cannot mutate wardrobe');
    page.once('dialog',d=>d.accept());
    await page.locator('#import').setInputFiles(makeFile(backup));
@@ -216,6 +218,7 @@ try{
    await page.evaluate(()=>switchView('closet'));
    await page.locator('details.closet-backup > summary').click();
    await page.locator('#import').setInputFiles(makeFile(backup));
+   await page.waitForFunction(()=>document.getElementById('message')?.textContent?.includes('owner'));
    assert.deepEqual(await stored(page),fixture('restore01-B').items);
    cases.push({engine,width,originalJPEGs:4,screenshots:5,
     ownerAandBIsolated:true,originalPhotosUnchanged:true,
