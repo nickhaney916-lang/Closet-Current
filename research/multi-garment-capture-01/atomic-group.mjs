@@ -4,9 +4,25 @@
  * No independent wardrobe, cloud endpoint, inference service or 3D assertion.
  */
 import {verifyStoredCanonical} from '../capture-proof-01/source-proof.mjs';
+export const COMMIT43_TYPES=Object.freeze({
+ Tops:Object.freeze(['T-shirt','Blouse','Button-down shirt','Polo','Tank top','Sweater','Sweatshirt','Hoodie','Tunic','Other']),
+ Bottoms:Object.freeze(['Jeans','Trousers','Leggings','Shorts','Skirt','Joggers','Other']),
+ Dresses:Object.freeze(['Casual dress','Shirt dress','Sweater dress','Formal dress','Jumpsuit','Romper','Other']),
+ Outerwear:Object.freeze(['Jacket','Coat','Blazer','Cardigan','Vest','Raincoat','Other']),
+ Shoes:Object.freeze(['Sneakers','Flats','Heels','Sandals','Ankle boots','Tall boots','Loafers','Other'])
+});
+export function validReviewTaxonomy43(category,itemType){
+ return Object.hasOwn(COMMIT43_TYPES,category)&&
+  typeof itemType==='string'&&COMMIT43_TYPES[category].includes(itemType);
+}
+export function reviewedColor43(color){
+ if(typeof color!=='string')return null;
+ const clean=color.trim();
+ return clean&&clean.length<=120&&clean.toLowerCase()!=='unknown'?clean:null;
+}
+
 export const SHA24=/^[a-f0-9]{64}$/;
 const JPEG24=/^data:image\/jpeg;base64,[A-Za-z0-9+/]+={0,2}$/;
-const CATS24=new Set(['Tops','Bottoms','Dresses','Outerwear','Shoes']);
 function fail(text){throw Error('MULTI24 '+text);}
 export function validCrop24(rect){
  return rect&&['x','y','width','height'].every(k=>Number.isFinite(rect[k]))&&
@@ -26,10 +42,16 @@ export function verifiedRecord24({proof,ownerId,piece,now=new Date().toISOString
  if(!proof?.sourceHashVerified||!SHA24.test(proof.sourceSHA256)||proof.originalPhoto?.sha256!==proof.sourceSHA256||
     proof.image!==proof.originalPhoto?.image||!JPEG24.test(proof.image))fail('original not authenticated');
  if(!ownerId||typeof ownerId!=='string')fail('missing owner');
- if(!piece?.confirmed||!CATS24.has(piece.category)||!piece.color||piece.color==='Unknown'||
-    !validCrop24(piece.cropBounds)||!JPEG24.test(piece.image)||!piece.id||
-    !piece.itemType||piece.itemType==='Unknown'||
-    typeof piece.id!=='string'||!piece.instanceKey)fail('unreviewed or invalid piece');
+ // CATEGORY43: enforce the CURRENT saved-closet schema at the last atomic
+ // boundary, not solely in a potentially stale UI or model-result adapter.
+ // A mismatched type would otherwise save successfully but normalize to
+ // Unknown when My Closet reopens it, silently losing the accepted detail.
+ const reviewedColor=reviewedColor43(piece?.color);
+ if(!piece?.confirmed||!validReviewTaxonomy43(piece.category,piece.itemType)||
+    !reviewedColor||!validCrop24(piece.cropBounds)||
+    !JPEG24.test(piece.image)||typeof piece.id!=='string'||!piece.id||
+    typeof piece.instanceKey!=='string'||!piece.instanceKey)
+  fail('unreviewed or invalid piece');
  if(piece.manual&&!piece.cropReviewed)fail('manually detected piece needs crop review');
  const sourcePieceKey=pieceKey24(proof.sourceSHA256,piece.instanceKey);
  return {
@@ -42,7 +64,7 @@ export function verifiedRecord24({proof,ownerId,piece,now=new Date().toISOString
   extractionBounds:{...piece.cropBounds},cropBounds:{...piece.cropBounds},
   image:piece.image,recognitionPhoto:{image:piece.image},
   name:String(piece.name||[piece.color,piece.itemType||piece.category].join(' ')).trim().slice(0,120),
-  category:piece.category,itemType:piece.itemType||'Unknown',color:String(piece.color).slice(0,120),
+  category:piece.category,itemType:piece.itemType,color:reviewedColor,
   colorSource:'user',userAdjusted:true,requiresOwnershipConfirmation:false,
   localAnalyzed:true,localStatus:'Confirmed and saved from original photo',
   segmentHint:piece.hint||null,maskApplied:!!piece.maskApplied,
