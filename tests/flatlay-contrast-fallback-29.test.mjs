@@ -57,7 +57,7 @@ test('empty, nearly full foreground and invalid image sizes fail safely',()=>{
  const a=photo();
  assert.equal(flatlayContrastBoxes29(a).boxes.length,0);
  const b=photo();b.fill(20,10,190,145,[0,0,0]);
- assert.equal(flatlayContrastBoxes29(b).eligible,false,'near-full frame is not a separated garment');
+ assert.equal(flatlayContrastBoxes29(b).boxes.length,0,'near-full frame is not a separated garment');
  assert.equal(flatlayContrastBoxes29({data:new Uint8Array(1),width:400,height:300}).eligible,false);
  assert.equal(flatlayContrastBoxes29({data:new Uint8Array(512*512*4),width:513,height:512}).eligible,false);
  assert.equal(flatlayContrastBoxes29(photo(),{limit:99}).eligible,false);
@@ -81,7 +81,7 @@ test('manual source review UI keeps original photos, requires reviewed crop and 
  assert.match(code,/confirmed:false/);
  assert.match(code,/piece\.image=photo\.image/);
  assert.match(code,/atomicSaveGarments24/);
- assert.match(code,/if\(p\.manual&&/);
+ assert.match(code,/x\.manual&&!x\.cropReviewed/);
  assert.doesNotMatch(code,/flatlay29:true,manual:false/);
  const helper=readFileSync('research/multi-garment-capture-01/flatlay-contrast-29.mjs','utf8');
  for(const s of ['fetch(','.postMessage(','indexedDB.open','window.localStorage','PhotoColor','category=','threeDReady:true'])
