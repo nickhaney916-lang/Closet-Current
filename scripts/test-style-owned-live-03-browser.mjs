@@ -58,7 +58,7 @@ const results={priority:'STYLE-OWNED-LIVE-03',
  ownerPrivateIndexedDB:true,originalJPEGReencoded:false,
  realSignedServerRLS:false,realPhysicalAndroidOrIphone:false,
  arbitraryFitted3D:false,familyAlpha:'HOLD',releaseAuthorized:false,
- cases:[],screenshots:[],errors:[],crashes:[],external:[],blockedPublicAssets:[],consoleErrors:[]};
+ cases:[],screenshots:[],errors:[],crashes:[],external:[],blockedPublicAssets:[],expectedOfflineConsole:[],consoleErrors:[]};
 let browser=null,tokens=0;
 const cloudStub="window.closetCloud={start:async()=>{},changed:()=>{},beforeWrite:async()=>{},sync:async()=>{}};";
 function fixture(owner){
@@ -344,8 +344,13 @@ try{
    const page=await context.newPage();
    page.on('pageerror',e=>results.errors.push({engine,width,message:String(e)}));
    page.on('crash',()=>results.crashes.push({engine,width}));
-   page.on('console',message=>{if(message.type()==='error')results.consoleErrors.push({
-    engine,width,text:message.text().slice(0,350)})});
+   page.on('console',message=>{
+    if(message.type()!=='error')return;
+    const value=message.text().slice(0,350);
+    if(/^Failed to load resource: net::ERR_(FAILED|ABORTED)$/.test(value))
+     results.expectedOfflineConsole.push({engine,width,text:value});
+    else results.consoleErrors.push({engine,width,text:value});
+   });
    await page.goto(origin+'/public/index.html?'+flags,{waitUntil:'domcontentloaded'});
    await prepare(page,ownerA);
    const preserved=await readBoard(page),preExisting=structuredClone(preserved.saved);
@@ -393,6 +398,9 @@ try{
  assert.ok(results.blockedPublicAssets.every(x=>x.blocked===true&&
   x.method==='GET'&&
   ['fonts.googleapis.com','raw.githubusercontent.com','cdn.jsdelivr.net'].includes(x.host)));
+ assert.ok(results.expectedOfflineConsole.every(row=>
+  results.blockedPublicAssets.some(x=>x.engine===row.engine&&x.width===row.width)),
+  'Offline ERR_FAILED must have a matching blocked public GET attempt');
  assert.deepEqual(results.consoleErrors,[]);
  assert.equal(results.cases.every(x=>x.threeRealOriginalOwnedLooks&&
   x.actualInputAndHumanCorrection&&x.ownerBPrivate&&x.photosUnchanged),true);
