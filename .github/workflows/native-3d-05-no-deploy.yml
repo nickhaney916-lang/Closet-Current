@@ -1,0 +1,100 @@
+name: NATIVE-3D-05 native saved outfits actual 163-bone source WebGL NO DEPLOY
+on:
+  pull_request:
+    paths:
+      - 'public/outfit-board.js'
+      - 'research/native-3d-05/**'
+      - 'tests/native-3d-05.test.mjs'
+      - 'scripts/test-native-3d-05-browser.mjs'
+      - 'scripts/audit-native-3d-05.mjs'
+      - '.github/workflows/native-3d-05-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  original-native-builder-pinned-source-163-bone-viewer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 95
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+      - name: Require immutable verified native consumer baseline PR556 and strict research scope
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor 56c9a814d6ecce5beae5d95043213faa2d8bb6f0 HEAD
+          git diff --name-only 56c9a814d6ecce5beae5d95043213faa2d8bb6f0 HEAD | while IFS= read -r p; do
+            case "$p" in
+              public/outfit-board.js|research/native-3d-05/*|tests/native-3d-05.test.mjs|scripts/test-native-3d-05-browser.mjs|scripts/audit-native-3d-05.mjs|.github/workflows/native-3d-05-no-deploy.yml) ;;
+              *) echo "BLOCKED: unrelated production, cloud, auth, source, styling or parallel change $p"; exit 1 ;;
+            esac
+          done
+          git diff --exit-code 56c9a814d6ecce5beae5d95043213faa2d8bb6f0 -- public/auth.js public/index.html public/cloud-backup.js public/cloud-backup-bridge.js public/cloud-backup-engine.js public/outfit-board-engine.js public/app.js migrations/ supabase/ benchmark/fixtures/
+      - name: Install pinned Chromium original-photo anatomical research dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Check full existing original app and new strict read-only preview regression suite
+        run: |
+          node --check research/native-3d-05/native-preview-bridge.mjs
+          node --check scripts/test-native-3d-05-browser.mjs
+          node --check scripts/audit-native-3d-05.mjs
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Fetch exact unmodified original-source anatomical PR541 and pinned source construction
+        run: |
+          git fetch --no-tags origin df6885d6011cb33fb22dceb81a08f35a0ac4dd61 53f2ad344dc56a1477e343531c423aed0e66c17d dd6bac3fa9ff640d4f562cf925337440bdb5cf8f 3a572193987cb29389727426136c6eb3ac326783 dfb40889c4c1221fb1833b859e8a11ef38aeb76e
+          git worktree add --detach .native05-donor-541 df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          git config --global --add safe.directory "$GITHUB_WORKSPACE/.native05-donor-541"
+          test "$(git -C .native05-donor-541 rev-parse HEAD)" = df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          ln -s ../node_modules .native05-donor-541/node_modules
+          cd .native05-donor-541
+          node scripts/build-three-d-31-jeans-proposal.mjs
+          node scripts/build-three-d-37-second-jeans.mjs
+          node scripts/build-work47-benchmark.mjs
+          node research/three-d-20/restore-approved-models.mjs
+          test -f benchmark/work47/manifest.json
+          node --test tests/outfit-3d-01.test.mjs
+      - name: Genuine browser full native owner selection then real original 163-bone WebGL 320 390 430
+        run: node scripts/test-native-3d-05-browser.mjs
+      - name: Independent 15 actual original source browser SHA screenshot and 3 gallery audit
+        run: node scripts/audit-native-3d-05.mjs
+      - name: Enforce no synthetic 3D garments, no writes and true release HOLD
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const r=JSON.parse(readFileSync('benchmark/native-3d-05/results.json','utf8'));
+          const a=JSON.parse(readFileSync('benchmark/native-3d-05-audit/acceptance.json','utf8'));
+          assert.equal(r.realWebGL,true);
+          assert.equal(r.cases,3);assert.equal(r.screenshots,15);
+          assert.equal(r.originalUserSavedStateUnmodified,true);
+          assert.equal(r.actual3DWithHonestUnsupportedPhotoFallback,true);
+          assert.ok(r.evidence.every(e=>e.realNativeBuilder&&e.exactSourceDonorPR541&&
+            e.authenticPhotoSourcedDress3D&&e.bones===163&&
+            e.renderedGenuineMeshes>=1&&e.nonVettedCoatJacketShoesPhotoFallback&&
+            e.readOnlyDonorActions&&e.noOutfitMutation&&e.unsavedEditsBlocked&&
+            e.sessionLogoutClears3D&&e.consumerStillActiveAfterViewerClose&&
+            e.separateAccountBPrivate&&e.missingIDsRetained&&
+            e.releaseAuthorized===false));
+          assert.equal(a.status,'PASS_REAL_BROWSER_163_BONE_RESEARCH_ONLY');
+          assert.equal(a.verifiedGenuine3DFrames,9);
+          assert.equal(a.verifiedBrowserScreenshots,15);
+          assert.equal(a.realSignedUsersVerified,false);
+          assert.equal(a.realPhysicalPhonesVerified,false);
+          assert.equal(a.releaseAuthorized,false);assert.equal(a.familyAlpha,'HOLD');
+          console.log('NATIVE05 3D REAL saved-ID anatomical research gate PASS; source fallback honest; production and signed RLS remain HOLD');
+          NODE
+      - name: Save 15 genuine screenshot source photos + three review galleries, no credentials
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: NATIVE05-real-source-verified-163-bone-browser-15-screens-HOLD
+          path: |
+            benchmark/native-3d-05/
+            benchmark/native-3d-05-audit/
+          if-no-files-found: warn
