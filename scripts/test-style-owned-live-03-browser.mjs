@@ -162,7 +162,7 @@ async function prepare(page,owner){
   window.closetIndex02?.state()?.ready===true,
   null,{timeout:40000});
 }
-async function importAndConfirmNewRed(page,owner){
+async function importAndConfirmNewRed(page,owner,width,engine){
  const b=readFileSync('benchmark/fixtures/commons-0002.jpg');
  await page.locator('#clothingPhotos').setInputFiles({
   name:'owned-original-red-tshirt.jpg',mimeType:'image/jpeg',buffer:b});
@@ -188,27 +188,24 @@ async function importAndConfirmNewRed(page,owner){
  assert.equal(ownerStored.category,'Tops');
  assert.equal(ownerStored.itemType,'T-shirt');
  assert.equal(ownerStored.color,'Red');
- const diagnostics=await page.evaluate(async(id)=>{
-   const board=window.nativeLossless04Bridge,style=window.styleOwnedLive03Bridge;
-   let result=null;
-   try{const m=await import('/research/style-owned-live-03/native-style-panel.mjs');
-    const test=await m.verifiedPrivateStyleRoster03(board);
-    result={verified:test.items.map(x=>x.id),rejected:test.rejected,
-     ownerId:test.ownerId,generation:test.generation};}
-   catch(error){result={error:String(error?.message||error)};}
-   const saved=items.find(x=>x.id===id);
-   return {requestedId:id,style:style?.status(),board:board?.status(),
-    options:[...document.querySelectorAll('#styleOwned03Item option')].map(x=>x.value),
-    panelStatus:document.getElementById('styleOwned03Status')?.textContent,
-    boardSaveStatus:document.getElementById('boardSaveStatus')?.textContent,
-    saved:{ownerId:saved?.ownerId,id:saved?.id,sha:saved?.sourceSHA256,
-      originalSHA:saved?.originalPhoto?.sha256,sourceHash:saved?.sourceHash,
-      userAdjusted:saved?.userAdjusted,category:saved?.category,itemType:saved?.itemType},
-    directProof:result};
-  },id);
-  console.log('STYLE03_AFTER_SAVE_DIAGNOSTIC '+JSON.stringify(diagnostics).slice(0,5000));
+ // The real camera/import pipeline deliberately records this image as
+ // singleGarmentVerified=false. A corrected clothing category does not
+ // magically prove this was a one-garment photograph.
+ assert.equal(ownerStored.singleGarmentVerified,false);
+ await page.evaluate(()=>switchView('stylist'));
+ await page.waitForFunction(id=>[...document.querySelectorAll(
+  '#styleOwned03Pending button[data-photo-item-id]')]
+  .some(b=>b.dataset.photoItemId===id),id,{timeout:30000});
+ assert.equal(await page.locator('#styleOwned03Item option[value="'+id+'"]').count(),0,
+  'Unreviewed original must not be silently admitted');
+ await capture(page,width,engine,'00-confirm-one-original-garment');
+ const button=page.locator('#styleOwned03Pending button[data-photo-item-id]')
+  .filter({hasText:'Yes, this photo shows one clothing item'}).first();
+ await button.click();
  await page.waitForFunction(id=>[...document.querySelectorAll('#styleOwned03Item option')]
-  .some(x=>x.value===id),id,{timeout:10000});
+  .some(x=>x.value===id),id,{timeout:30000});
+ assert.equal((await readItems(page)).find(x=>x.id===id).singleGarmentVerified,false,
+  'One-item photo acknowledgment must be session-only, not a fabricated source/3D approval');
  return id;
 }
 async function createAndVerifyLooks(page,id,owner,width,engine,rich){
@@ -345,7 +342,7 @@ try{
    await page.goto(origin+'/public/index.html?'+flags,{waitUntil:'domcontentloaded'});
    await prepare(page,ownerA);
    const preserved=await readBoard(page),preExisting=structuredClone(preserved.saved);
-   const red=await importAndConfirmNewRed(page,ownerA);
+   const red=await importAndConfirmNewRed(page,ownerA,width,engine);
    const scenario=await createAndVerifyLooks(page,red,ownerA,width,engine,
     engine==='chromium');
    const saved=await readBoard(page);
@@ -387,7 +384,7 @@ try{
  assert.deepEqual(results.consoleErrors,[]);
  assert.equal(results.cases.every(x=>x.threeRealOriginalOwnedLooks&&
   x.actualInputAndHumanCorrection&&x.ownerBPrivate&&x.photosUnchanged),true);
- assert.equal(results.screenshots.length,45); // 8 stages per Chromium, 7 per WebKit at each of three widths
+ assert.equal(results.screenshots.length,51); // 9 Chromium and 8 WebKit stages per width including independent one-item confirmation
  await writeFile(dir+'/results.json',JSON.stringify(results,null,2));
  console.log('STYLE03_NATIVE '+JSON.stringify({
   genuineBrowserCases:6,chromiumWidths:[320,390,430],
