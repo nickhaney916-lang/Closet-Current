@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Closet Current color research</title>
+<style>
+body{font:15px/1.45 system-ui;background:#f4eff7;color:#251d30;margin:0}
+main{max-width:520px;margin:auto;padding:16px;overflow-wrap:anywhere}
+img{width:100%;height:310px;object-fit:contain;background:white;border-radius:12px}
+label,select,button{display:block;margin-top:8px}select,button{min-height:44px}
+</style>
+<main><h1>Garment color review</h1><img id="photo" alt="Verified public clothing photograph">
+<p id="credit"></p><p id="status"></p>
+<label for="color">Your confirmed color</label><select id="color"></select>
+<button>Save confirmed color locally</button><p id="saved" role="status"></p></main>
+<script src="/baseline-color.js"></script><script src="/baseline-check.js"></script><script src="/details.js"></script>
+<script>
+const photo=document.getElementById('photo'),color=document.getElementById('color');
+let subject,result;
+for(const label of ['','Black','White','Gray','Beige','Brown','Blue','Green','Red','Pink','Purple','Yellow','Orange','Multicolor']){
+ const option=document.createElement('option');option.value=label;option.textContent=label||'Choose a color';color.append(option);
+}
+window.showReview=async(row,measurement)=>{
+ subject=row;result=measurement;photo.src='/photo/'+row.id;await photo.decode();
+ document.getElementById('credit').textContent=[row.id,row.author,row.license].join(' · ');
+ const e=measurement.updated;
+ document.getElementById('status').textContent=(e.estimate?.color||'No color suggestion')+' · '+(e.accepted?'Automatic estimate':'Review required')+' · provisional reference '+row.color;
+};
+const key=()=> 'color22-'+subject.sha256;
+document.querySelector('button').onclick=()=>{
+ localStorage.setItem(key(),JSON.stringify({category:subject.category,color:color.value,colorSource:'user'}));
+ document.getElementById('saved').textContent='Confirmed color saved locally · '+color.value;
+};
+window.verifyReview=()=>{
+ const item=JSON.parse(localStorage.getItem(key()));
+ const replay=value=>ClothingDetails.fillColor(ClothingDetails.fill(value,{category:subject.category},{color:'Orange'},true),result.updated.estimate).color;
+ return {manual:replay(item),cleared:replay({...item,color:''}),sourceStillVisible:photo.complete&&photo.naturalWidth>0};
+};
+</script></html>

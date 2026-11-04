@@ -22,5 +22,12 @@ async function checkPhoto(image){
  if(!decoded.width||!decoded.height)throw Error('The photo could not be decoded.');
  const sample=document.createElement('canvas');sample.width=16;sample.height=16;
  const ctx=sample.getContext('2d',{willReadFrequently:true});ctx.drawImage(decoded,0,0,16,16);
- const pixels=ctx.getImageData(0,0,16,16).data;return {...photoQuality(pixels),colorEstimate:window.PhotoColor?.estimate(pixels,16,16)||null,aspect:decoded.width/decoded.height};
+ const pixels=ctx.getImageData(0,0,16,16).data;
+ const result={...photoQuality(pixels),colorEstimate:window.PhotoColor?.estimate(pixels,16,16)||null,aspect:decoded.width/decoded.height};
+ if(result.colorEstimate&&window.PhotoColor.sceneSuggestion){
+  sample.width=48;sample.height=48;
+  ctx.drawImage(decoded,0,0,48,48);
+  result.colorEstimate=window.PhotoColor.sceneSuggestion(ctx.getImageData(0,0,48,48).data,48,48,result.colorEstimate);
+ }
+ return result;
 }
