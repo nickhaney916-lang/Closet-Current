@@ -1,0 +1,151 @@
+name: AUTO-SEGMENTATION-ACCURACY-33 genuine ONNX and contrast research NO DEPLOY
+on:
+  push:
+    branches:
+      - research/auto-segmentation-accuracy-33-par27-20261104-HOLD
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  independent-segmentation-negative-or-positive-evidence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      MULTI16_RELAY_MODEL: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Require verified Priority 32 ancestry and research-file allowlist
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor 79e957719bd90f7f1cd1ae71ec4bde5ff14ae93c HEAD
+          git diff --name-only 79e957719bd90f7f1cd1ae71ec4bde5ff14ae93c HEAD > /tmp/auto33-paths
+          while IFS= read -r p; do
+            case "$p" in
+              research/auto-segmentation-accuracy-33/*|scripts/verify-auto-segmentation-33.mjs|tests/auto-segmentation-accuracy-33.test.mjs|.github/workflows/auto-segmentation-accuracy-33-no-deploy.yml) ;;
+              *) echo "BLOCKED unapproved app/model/customer/staging/source change: $p"; exit 1 ;;
+            esac
+          done < /tmp/auto33-paths
+          test "$(git rev-list --count 79e957719bd90f7f1cd1ae71ec4bde5ff14ae93c..HEAD)" -ge 1
+      - name: Install inherited pinned test dependencies without changing lockfile
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Build complete actual application and run all inherited and new Node regressions
+        run: |
+          node --check research/auto-segmentation-accuracy-33/contrast-rescue-33.mjs
+          node --check scripts/verify-auto-segmentation-33.mjs
+          node --check tests/auto-segmentation-accuracy-33.test.mjs
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Verify inherited native crop/category/owner review UI at 320 390 430 in Chromium and WebKit
+        run: |
+          node scripts/verify-scene-class-guard-32.mjs
+          node --input-type=module <<'EONODE'
+          import assert from 'node:assert/strict';
+          import {readFile} from 'node:fs/promises';
+          import {createHash} from 'node:crypto';
+          import sharp from 'sharp';
+          const folder='benchmark/scene-class-guard-32/';
+          const report=JSON.parse(await readFile(folder+'browser.json','utf8'));
+          assert.equal(report.actualUiCases,6);
+          assert.equal(report.segmentationModelActuallyRun,false);
+          assert.equal(report.noPersonModelClassAndColorNeverPrefilled,true);
+          assert.equal(report.explicitHumanCategoryTypeColorEnabledConfirmation,true);
+          assert.equal(report.originalUnchanged,true);
+          assert.equal(report.accountSwitchClears,true);
+          assert.equal(report.noAutoSave,true);
+          assert.deepEqual(report.unexpectedRequests,[]);
+          assert.deepEqual(report.browserErrors,[]);
+          for(const engine of ['chromium','webkit'])for(const width of [320,390,430]){
+            const row=report.cases.find(x=>x.engine===engine&&x.width===width);
+            assert.ok(row);
+            assert.ok(row.initialSceneDefaultsVerified&&row.explicitCategoryTypeColorRequired);
+            const image=await readFile(folder+row.filename);
+            assert.equal(createHash('sha256').update(image).digest('hex'),row.sha256);
+            assert.equal((await sharp(image).metadata()).width,width);
+          }
+          console.log('Six INHERITED native human review browser cases verified; these use synthetic proposals, separate from six genuine ONNX runs.');
+          EONODE
+      - name: Execute genuine pinned ONNX in Chromium and WebKit and verify original JPEG SHA before source-derived contrast
+        run: node scripts/verify-auto-segmentation-33.mjs
+      - name: Independently verify model evidence, source identity, real screenshots and no unsupported conclusions
+        run: |
+          node --input-type=module <<'EONODE'
+          import assert from 'node:assert/strict';
+          import {readFile} from 'node:fs/promises';
+          import {createHash} from 'node:crypto';
+          import sharp from 'sharp';
+          const dir='benchmark/auto-segmentation-accuracy-33/';
+          const r=JSON.parse(await readFile(dir+'report.json','utf8'));
+          assert.equal(r.priority,'AUTO-SEGMENTATION-ACCURACY-33');
+          assert.equal(r.previousHead,'79e957719bd90f7f1cd1ae71ec4bde5ff14ae93c');
+          assert.equal(r.originalPhotoCount,3);
+          assert.equal(r.genuineModelExecutions,6);
+          assert.equal(r.pinnedModel,'Xenova/segformer_b0_clothes@a2489ea8e7ec1ee912190546bad31a4906ccca76');
+          assert.equal(r.originalSourceSHA256Verified,true);
+          assert.equal(r.sourcePhotosChanged,false);
+          assert.equal(r.sourceTruePixelMaskIoUAgainstIndependentHumanTruth,false);
+          assert.equal(r.realPhotoModelAccuracyCertified,false);
+          assert.equal(r.automaticSemanticImprovementClaimed,false);
+          assert.equal(r.untouchedNewPhotoCohort,false);
+          assert.equal(r.independentSecondReviewer,false);
+          assert.equal(r.pairedCandidateModelClassScoreUnchanged,true);
+          assert.equal(r.allSuggestionsRequireReview,true);
+          assert.equal(r.familyAlpha,'HOLD');
+          assert.deepEqual(r.unauthorizedRequests,[]);
+          assert.deepEqual(r.externalWrites,[]);
+          let screenshots=0;
+          for(const engine of ['chromium','webkit']){
+            const e=r.engines[engine];
+            assert.equal(e.realModelRuns,3);
+            assert.equal(e.sourceRows.length,3);
+            assert.deepEqual(e.errors,[]);
+            assert.equal(e.screenshots.length,5);
+            for(const source of e.sourceRows){
+              assert.equal(source.realPinnedONNXInference,true);
+              assert.equal(source.noGarmentAutoSaved,true);
+              assert.equal(source.independentHumanPixelMasks,false);
+              assert.equal(source.actualModelLabelMaskSHA256.length,64);
+              assert.equal(source.contrast.allUnclassified,true);
+              assert.equal(source.candidateLocalization.correctlyLocalized>=source.baselineLocalization.correctlyLocalized,true);
+              assert.equal(source.candidateLocalization.semanticCategoryAccuracy,null);
+              assert.equal(source.candidateLocalization.independentlyVerifiedPixelIoU,null);
+              assert.equal(source.after.status,'completed');
+              assert.equal(source.before.status,'completed');
+              assert.ok(source.actualInferenceElapsedMs>0);
+              assert.ok(source.hostNodeRSSBytes>0);
+              for(const m of source.memberCount)assert.equal(m.retainedWithoutChanges,true);
+            }
+            for(const screen of e.screenshots){
+              assert.equal(screen.realModelExecuted,true);
+              const bytes=await readFile(dir+screen.filename);
+              assert.equal(createHash('sha256').update(bytes).digest('hex'),screen.sha256);
+              const info=await sharp(bytes).metadata();
+              assert.equal(info.format,'png');
+              assert.equal(info.width,screen.width);
+              assert.ok(info.height>=650);
+              screenshots++;
+            }
+            assert.deepEqual(e.screenshots.filter(x=>x.sourceId==='commons-0021').map(x=>x.width),[320,390,430]);
+          }
+          assert.equal(screenshots,10);
+          console.log('AUTO-33 6 REAL ONNX in 2 engines + 10 source-linked SHA-audited screenshots. Scientific generalization NOT certified. HOLD.');
+          EONODE
+      - name: Upload strictly public-source JPEG screenshot comparisons, SHA receipts, and sanitized box report ONLY
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: AUTO-33-REAL-ONNX-original-pixel-contrast-NO-DEPLOY-HOLD
+          path: |
+            benchmark/auto-segmentation-accuracy-33/report.json
+            benchmark/auto-segmentation-accuracy-33/*.png
+            benchmark/scene-class-guard-32/browser.json
+            benchmark/scene-class-guard-32/*.png
+          if-no-files-found: error
+          retention-days: 21
