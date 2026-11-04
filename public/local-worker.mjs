@@ -75,6 +75,7 @@ self.onmessage=event=>{const request=event.data;chain=chain.then(async()=>{
    onStage:stage=>{scannerStage=stage;},
    onIdentified:()=>{}
   });
+  if(result.strong&&result.categoryOnly)result={...result,strong:false,categoryConfirmed:true,requiresSubtypeReview:true,reason:'isolated_subtype_review_required'};
   if(result.strong&&!result.categoryOnly)result=await verifyAutomaticSubtype14(model.whole,image,result,{confirmationModel:model.center,independentModel:model.subtypeSafety,sourceModel:model.originalWhole});
   if(result.strong&&!result.categoryOnly)self.postMessage({type:'identified',id:request.id,choice:result.choices[0]});
   let recognitionMemory;try{if(model.whole.features)recognitionMemory={version:1,modelKey:model.modelKey,features:await model.whole.features(image)};}catch{/* Optional memory cannot reject a garment. */}
