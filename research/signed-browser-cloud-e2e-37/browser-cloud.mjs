@@ -186,6 +186,30 @@ async function confirmedSave(page,photo,owner){
  }
  return saved;
 }
+async function rejectDuplicate(page,photo,owner){
+ const before=await rows(page);
+ assert.equal(before.length,3);
+ await chooseSource(page,photo,'duplicate-source');
+ await markPiece(page,0,owner);
+ await page.getByRole('button',{name:'Save confirmed pieces together'}).click();
+ await page.waitForFunction(()=>document.getElementById('multi24Status')?.textContent.includes('Save rejected before confirmed commit'),null,{timeout:20000});
+ const after=await rows(page);
+ assert.deepEqual(after.map(x=>x.id).sort(),before.map(x=>x.id).sort());
+ assert.equal(after.length,3,'Duplicate region must not add saved garment');
+}
+
+async function concurrentCAS(account,token,remote,photo){
+ const request={p_expected_revision:remote.revision,p_document:remote.document};
+ const path='/rest/v1/rpc/save_closet_backup';
+ const results=await Promise.all([jsonRequest(path,token,'POST',request),jsonRequest(path,token,'POST',request)]);
+ assert.ok(results.every(x=>x.status===200),'CAS must reach same genuine Supabase RPC');
+ assert.equal(results.filter(x=>x.data===remote.revision+1).length,1,'Concurrent writers: exactly one wins');
+ assert.equal(results.filter(x=>x.data===null).length,1,'Concurrent loser receives revision conflict');
+ const after=await serverBackup(account,token,photo);
+ assert.equal(after.revision,remote.revision+1);
+ return {actualConflict:true,revision:after.revision};
+}
+
 async function serverBackup(account,token,photo){
  const response=await jsonRequest('/rest/v1/closet_backups?select=revision,document&owner_id=eq.'+account.id,token);
  if(!response.ok||!Array.isArray(response.data)||response.data.length!==1)return null;
@@ -319,14 +343,19 @@ try{
     shots.push(await screenshot(page,engine,width,'03-a-saved'));
     const cloudA=await waitCloud(accountA,tokenA,photoA);
     shots.push(await screenshot(page,engine,width,'04-a-cloud'));
+    await rejectDuplicate(page,photoA,'a');
     const stale=await context.newPage();
     stale.on('pageerror',e=>errorEvents.push(e.message.slice(0,140)));
     await stale.goto(APP_URL,{waitUntil:'domcontentloaded'});
     await stale.waitForFunction(id=>window.closetAuth?.user?.id===id&&window.multi24Research?.active===true,accountA.id,{timeout:25000});
     await chooseSource(stale,photoB,'unfinished-b');
+    await stale.getByRole('button',{name:'Add missed piece'}).click();
+    await stale.locator('#multi24Research article.multi24-card').last().getByRole('button',{name:'Adjust crop/mask'}).click();
+    await stale.locator('dialog.photo-crop-editor').waitFor({state:'visible',timeout:10000});
     await page.evaluate(()=>document.getElementById('logout').click());
     await stale.waitForFunction(()=>window.closetAuth?.user===null&&db===null&&
-      document.getElementById('appShell').hidden&&document.querySelectorAll('#multi24Grid article').length===0,null,{timeout:4000});
+      document.getElementById('appShell').hidden&&document.querySelectorAll('#multi24Grid article').length===0&&
+      !document.querySelector('dialog.photo-crop-editor[open]'),null,{timeout:4000});
     shots.push(await screenshot(stale,engine,width,'05-locked-tab'));
     await page.locator('#authSubmit').waitFor({state:'visible',timeout:20000});
     const tokenB=await loggedIn(page,accountB);
@@ -341,6 +370,7 @@ try{
     const denialsBA=await hostileCheck(accountB,accountA,tokenB,tokenA,cloudA.photoPaths[0],photoB.bytes);
     const denialsAB=await hostileCheck(accountA,accountB,tokenA,tokenB,cloudB.photoPaths[0],photoA.bytes);
     shots.push(await screenshot(page,engine,width,'08-b-cloud-private'));
+    const cas=await concurrentCAS(accountB,tokenB,cloudB,photoB);
     await signOut(page);
     const aRestored=await recover(browser,engine,width,accountA,photoA,currentCase+'-recover-a',stats);
     shots.push(await screenshot(aRestored.page,engine,width,'09-a-cloud-recovered'));
@@ -359,6 +389,7 @@ try{
      ownerBIdHash:sha(Buffer.from(accountB.id)).slice(0,16),
      sourceA:photoA.sha,sourceB:photoB.sha,localSavedA:3,localSavedB:3,
      cloudRevisionA:cloudA.revision,cloudRevisionB:cloudB.revision,
+     duplicateRegionRejected:true,staleOpenCropRevoked:true,cloudConcurrentCAS:cas.actualConflict,
      ownerDeniedCrossAccessBothDirections:denialsAB.length>=9&&denialsBA.length>=9,
      originalJPEGVerified:true,freshRecoveryA:3,freshRecoveryB:3,
      transport:{auth:transport.filter(x=>x.path.startsWith('/auth/')).length,
