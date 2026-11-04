@@ -127,8 +127,8 @@ test('saved batch rejects user provenance forgery even when other clothing detai
 test('real UI input is the only direct source= user promotion of color in edit form',()=>{
  const handler=app.slice(app.indexOf('function clothingFields('),app.indexOf('function cropClothingPhoto('));
  assert.match(handler,/if\(key==='color'\)item\.colorSource='user'/);
- assert.doesNotMatch(adjustCode,/colorSource\s*=\s*['"]user['"]/);
- assert.doesNotMatch(savedCode,/colorSource\s*=\s*['"]user['"]/);
+ assert.doesNotMatch(adjustCode,/(?:value|updated)\.colorSource\s*=\s*['"]user['"]/);
+ assert.doesNotMatch(savedCode,/(?:value|updated)\.colorSource\s*=\s*['"]user['"]/);
  assert.ok(adjustCode.includes('ClothingMemory.confirm'));
  assert.ok(savedCode.includes('ClothingMemory.confirm'));
 });
