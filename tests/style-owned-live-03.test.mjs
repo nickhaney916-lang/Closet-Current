@@ -25,6 +25,9 @@ test('adapt actual PR547 source algorithm: three different real owned looks with
  assert.equal(result.status,'three-owned-outfits');
  assert.equal(result.combinations.length,3);
  assert.equal(new Set(result.combinations.map(x=>signature03(x.slots))).size,3);
+ assert.equal(Boolean(result.combinations[0].slots.layer2&&
+  result.combinations[0].slots.layer3),false,
+  'Casual styling must not favor a jacket plus coat solely for extra matching fields');
  const byId=new Map(items.map(x=>[x.id,x]));
  for(const p of result.combinations){
   assert.equal(p.slots.top,'a-new-red');
