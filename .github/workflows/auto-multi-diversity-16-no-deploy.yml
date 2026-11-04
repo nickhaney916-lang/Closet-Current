@@ -11,6 +11,7 @@ on:
       - 'public/outfit-worker.mjs'
       - 'public/outfit-capture.js'
       - 'public/app.js'
+      - 'public/index.html'
       - 'tests/outfit-capture.test.cjs'
       - '.github/workflows/auto-multi-diversity-16-no-deploy.yml'
   workflow_dispatch:
@@ -34,7 +35,7 @@ jobs:
           git merge-base --is-ancestor 0236182f72b29a7b4d4924f0b3f5754cb9956690 HEAD
           git diff --name-only 0236182f72b29a7b4d4924f0b3f5754cb9956690 HEAD | while IFS= read -r p; do
             case "$p" in
-              research/auto-multi-diversity-16/*|scripts/discover-auto-multi-16.mjs|scripts/test-auto-multi-16-browser.mjs|scripts/audit-auto-multi-16.mjs|scripts/score-auto-multi-16.mjs|tests/auto-multi-diversity-16*.test.mjs|public/outfit-worker.mjs|public/outfit-capture.js|public/app.js|tests/outfit-capture.test.cjs|.github/workflows/auto-multi-diversity-16-no-deploy.yml|.github/workflows/auto-multi-diversity-16-discovery-no-deploy.yml) ;;
+              research/auto-multi-diversity-16/*|scripts/discover-auto-multi-16.mjs|scripts/test-auto-multi-16-browser.mjs|scripts/audit-auto-multi-16.mjs|scripts/score-auto-multi-16.mjs|tests/auto-multi-diversity-16*.test.mjs|public/outfit-worker.mjs|public/outfit-capture.js|public/app.js|public/index.html|tests/outfit-capture.test.cjs|.github/workflows/auto-multi-diversity-16-no-deploy.yml|.github/workflows/auto-multi-diversity-16-discovery-no-deploy.yml) ;;
               *) echo "UNAUTHORIZED RESEARCH SOURCE $p"; exit 1 ;;
             esac
           done
