@@ -159,9 +159,9 @@ export function mountMultiGarmentCapture24({
   const selected=state.pieces.filter(x=>x.confirmed);
   if(!selected.length)return status.textContent='Select at least one reviewed garment.';
   try{
-   const invalid=selected.find(x=>!TYPES.includes(x.category)||!x.color?.trim()||x.color==='Unknown'||
+   const invalid=selected.find(x=>!TYPES.includes(x.category)||!x.itemType||x.itemType==='Unknown'||!x.color?.trim()||x.color==='Unknown'||
     (x.manual&&!x.cropReviewed)||!validCrop24(x.cropBounds));
-   if(invalid)throw Error('Confirm category and color, and adjust crops for manually added items.');
+   if(invalid)throw Error('Confirm category, specific type, and color, and adjust crops for manually added items.');
    const duplicates=duplicatePieceKeys24(
     await new Promise((resolve,reject)=>{const r=getDb().transaction('items').objectStore('items').getAll();r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);}),
     selected.map(x=>({sourcePieceKey:pieceKey24(state.proof.sourceSHA256,x.instanceKey)}))
