@@ -3,8 +3,8 @@ on:
   pull_request:
     paths:
       - 'research/auto-multi-diversity-16/**'
-      - 'research/auto-multi-model-evidence-15/runner.html'
       - 'tests/auto-multi-diversity-16.test.mjs'
+      - 'scripts/test-multi-garment-capture-01-browser.mjs'
       - '.github/workflows/auto-multi-diversity-16-no-deploy.yml'
 permissions:
   contents: read
@@ -30,7 +30,7 @@ jobs:
           git merge-base --is-ancestor "$base" HEAD
           git diff --name-only "$base" HEAD | while IFS= read -r file; do
             case "$file" in
-              research/auto-multi-diversity-16/*|research/auto-multi-model-evidence-15/runner.html|tests/auto-multi-diversity-16.test.mjs|.github/workflows/auto-multi-diversity-16-no-deploy.yml) ;;
+              research/auto-multi-diversity-16/*|tests/auto-multi-diversity-16.test.mjs|scripts/test-multi-garment-capture-01-browser.mjs|.github/workflows/auto-multi-diversity-16-no-deploy.yml) ;;
               *) echo "Unexpected scope: $file"; exit 1 ;;
             esac
           done
@@ -52,6 +52,11 @@ jobs:
         run: |
           node scripts/test-multi-garment-capture-01-browser.mjs
           node scripts/audit-native-multi-style-12.mjs
+      - name: Recheck genuine automatic proposals in native review across six mobile cases
+        if: always() && !cancelled()
+        env:
+          MULTI16_NATIVE_AUTO: matrix
+        run: node scripts/test-multi-garment-capture-01-browser.mjs
       - uses: actions/upload-artifact@v4
         if: always() && !cancelled()
         with:
@@ -59,6 +64,8 @@ jobs:
           path: |
             benchmark/auto-multi-16/*.json
             benchmark/auto-multi-16/*.png
+            benchmark/auto-multi-16/native-auto/*.json
+            benchmark/auto-multi-16/native-auto/*.png
             benchmark/multi-garment-capture-01/*.json
             benchmark/multi-garment-capture-01/*.png
           if-no-files-found: warn

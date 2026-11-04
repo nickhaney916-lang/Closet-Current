@@ -33,7 +33,7 @@ const drawBox=(r,label,kind)=>{
  const tag=document.createElement('span');tag.textContent=label;
  element.append(tag);$('overlays').append(element);
 };
-window.__startAutoMulti15=({image,inferenceImage=image,expectations,sha256})=>{
+window.__startAutoMulti15=({image,expectations,sha256})=>{
  if(window.__autoMulti15.started)throw Error('Only one original per browser process');
  window.__autoMulti15.started=true;
  $('original').src=image;$('status').textContent='Running actual SegFormer browser worker…';
@@ -71,7 +71,7 @@ window.__startAutoMulti15=({image,inferenceImage=image,expectations,sha256})=>{
  };
  worker.onerror=()=>finish('worker_runtime_error',false);
  const timer=setTimeout(()=>finish('worker_timeout',false),420000);
- worker.postMessage({id:15,type:'outfit',multi24:true,image:inferenceImage});
+ worker.postMessage({id:15,type:'outfit',multi24:true,image});
 };
 </script>
 </main></body></html>

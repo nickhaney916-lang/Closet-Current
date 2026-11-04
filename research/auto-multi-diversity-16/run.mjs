@@ -8,6 +8,7 @@ import {chromium, webkit} from 'playwright';
 import sharp from 'sharp';
 import {scorePhoto, summarizePhotos, verifySource} from './score.mjs';
 import {partitionProposals, PRIMARY_CONFIDENCE} from './triage.mjs';
+import {isPinnedModelAsset, routePinnedModelAsset} from './model-assets.mjs';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const out = resolve(process.env.MULTI16_OUTPUT ?? 'benchmark/auto-multi-16');
@@ -109,30 +110,10 @@ try {
           externalWrites.push(request.method());
           return route.abort();
         }
-        const url = new URL(request.url());
-        const allowedAsset = (url.hostname === 'cdn.jsdelivr.net' &&
-          url.pathname.startsWith('/npm/@huggingface/transformers@3.8.1/dist/')) ||
-          (url.hostname === 'huggingface.co' &&
-          url.pathname.startsWith('/Xenova/segformer_b0_clothes/resolve/a2489ea8e7ec1ee912190546bad31a4906ccca76/'));
-        if (!process.env.MULTI16_RELAY_MODEL || !allowedAsset || request.method() !== 'GET') {
-          return route.continue();
+        if (request.method() === 'GET' && isPinnedModelAsset(request.url())) {
+          return routePinnedModelAsset(route, downloads);
         }
-        if (!downloads.has(url.href)) {
-          downloads.set(url.href, fetch(url, {signal: AbortSignal.timeout(90000)}).then(async response => ({
-            status: response.status,
-            contentType: response.headers.get('content-type') ?? 'application/octet-stream',
-            body: Buffer.from(await response.arrayBuffer()),
-          })));
-        }
-        try {
-          const asset = await downloads.get(url.href);
-          return await route.fulfill({...asset, headers: {
-            'access-control-allow-origin': '*', 'content-type': asset.contentType,
-          }});
-        } catch {
-          downloads.delete(url.href);
-          return route.abort();
-        }
+        return route.continue();
       });
       const page = await context.newPage();
       const recordFailure = (url, detail) => {
@@ -147,9 +128,10 @@ try {
       page.on('response', response => {
         if (response.status() >= 400) recordFailure(response.url(), 'HTTP ' + response.status());
       });
+      const runner = origin + '/research/auto-multi-diversity-16/runner.html';
+      await page.goto(runner);
       for (const row of sources) {
         const started = Date.now();
-        await page.goto(origin + '/research/auto-multi-model-evidence-15/runner.html');
         const resized = await page.evaluate(async ({row, jpeg, inputMode}) => {
           document.querySelector('footer').textContent = [row.attribution.title,
             row.attribution.author, row.attribution.license, row.attribution.source,
@@ -166,7 +148,7 @@ try {
             canvas.getContext('2d').drawImage(decoded, 0, 0, canvas.width, canvas.height);
             inferenceImage = canvas.toDataURL('image/jpeg', 0.9);
           }
-          window.__startAutoMulti15({image: jpeg, inferenceImage, expectations: row.regions, sha256: row.sha256});
+          window.__startAutoMulti15({image: jpeg, inferenceImage, expectations: row.regions, sha256: row.sha256, reuseWorker: true});
           return inferenceImage !== jpeg;
         }, {row, inputMode, jpeg: 'data:image/jpeg;base64,' + sourceBytes.get(row.id).toString('base64')});
         let inference;
@@ -175,6 +157,7 @@ try {
           inference = await page.evaluate(() => window.__autoMulti15.results);
         } catch {
           inference = {modelExecuted: false, error: 'browser_timeout_or_crash', proposals: []};
+          await page.goto(runner);
         }
         const proposals = inference.proposals.map(p => ({...p, family: families[p.regionId] ?? 'unknown'}));
         const score = scorePhoto(row.regions, {status: inference.modelExecuted ? 'completed' : 'failed', proposals});
