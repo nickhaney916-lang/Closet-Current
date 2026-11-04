@@ -22,7 +22,7 @@ export const NATIVE_MOBILE_09_CSS=String.raw`
   white-space:normal;overflow-wrap:anywhere;line-height:1.2;text-align:center;
  }
  #nativeLossless04Controls #native04DeleteOutfit {grid-column:1/-1}
- #native3D05Preview,#nativeReadiness08Check {
+ #native3D05Preview,#nativeReadiness08 #nativeReadiness08Check {
   display:block;width:100%;max-width:100%;min-width:0;
   min-height:52px;padding:10px 8px;line-height:1.3;
   white-space:normal;overflow-wrap:anywhere;
