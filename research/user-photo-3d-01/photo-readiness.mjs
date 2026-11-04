@@ -104,9 +104,16 @@ export function attestFittedRender01({item,source,rig,views,humanReviewAccepted=
       (kind==='jeans'&&DENIM.includes(source.sha256))))
   throw Error('Unknown photographic geometry cannot be accepted');
  const state=rig?.getState?.();
+ const canvas=rig?.canvas,gl=canvas?.getContext?.('webgl2');
+ // An arbitrary JavaScript object with a garmentMeshes counter is NOT
+ // independent proof of a source-photo-fitted anatomical render.
  if(!state?.loaded||state.stats?.bones!==163||state.releaseAuthorized!==false||
-    !state.outfit||state.outfit.garmentMeshes<1||!rig?.canvas?.isConnected)
-  throw Error('Actual 163-bone mesh and connected WebGL canvas required');
+    !state.outfit||state.outfit.garmentMeshes<1||!canvas?.isConnected||
+    !gl||!String(gl.getParameter(gl.VERSION)).includes('WebGL'))
+  throw Error('Actual live WebGL2 163-bone mesh and canvas required');
+ const piece=kind==='dress'?state.outfit.dress:kind==='shirt'?state.outfit.shirt:state.outfit.pants;
+ if(piece?.sourceSHA256!==source.sha256)
+  throw Error('Displayed garment must be the exact independently source-bound photograph');
  const receipt=Object.freeze({ownerId:item.ownerId,itemId:item.id,sha256:source.sha256,kind,
    views:Object.freeze([...views]),researchOnly:true});
  minted.add(receipt);return receipt;
