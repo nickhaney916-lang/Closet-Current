@@ -20,25 +20,53 @@ function confirmed(row){
   row?.localAnalyzed===true&&row?.indexingLevel==='specific-type'&&
    typeof row?.indexedAt==='string'&&row?.scanFailed!==true;
 }
-function allowed(row){
+function allowed(row,{reviewedSingle=false}={}){
  return row?.requiresOwnershipConfirmation!==true&&row?.possibleDuplicate!==true&&
-  row?.singleGarmentVerified!==false&&row?.multipleGarments!==true&&
+  (row?.singleGarmentVerified!==false||reviewedSingle===true)&&row?.multipleGarments!==true&&
   row?.scanFailed!==true&&row?.saveFailed!==true&&row?.category!=='Uncategorized';
 }
-export async function verifiedPrivateStyleRoster03(board){
+function needsExplicitSingleReview(row){
+ return confirmed(row)&&row?.userAdjusted===true&&row?.singleGarmentVerified===false&&
+  row?.multipleGarments!==true&&row?.requiresOwnershipConfirmation!==true&&
+  row?.possibleDuplicate!==true&&row?.scanFailed!==true&&row?.saveFailed!==true&&
+  row?.category!=='Uncategorized';
+}
+export async function verifiedPrivateStyleRoster03(board,{singleItemReviews=new Map()}={}){
+ if(!(singleItemReviews instanceof Map))throw Error('STYLE03 owner-bound single-item reviews required');
  if(!board?.readOnlyWardrobe||!board?.sessionLease||!board?.status?.().active)
   throw Error('STYLE03 native owner-only Outfit Builder unavailable');
  const first=board.readOnlyWardrobe(),now=board.sessionLease();
  if(first.ownerId!==now.ownerId||first.generation!==now.generation||
     !Array.isArray(first.items)||first.items.length>1000)
   throw Error('STYLE03 signed-in owner changed before reading wardrobe');
- const all=new Set(),verified=[],rejected=[];
+ const all=new Set(),verified=[],pending=[],rejected=[];
  for(const row of first.items){
   if(!validId(row?.id)||all.has(row.id)||row.ownerId!==first.ownerId)
    throw Error('STYLE03 private wardrobe ID or account mismatch');
   all.add(row.id);
-  if(!confirmed(row)||!allowed(row)){
-   rejected.push({id:row.id,reason:'Requires correction or single-garment review'});continue;
+  const reviewable=needsExplicitSingleReview(row);
+  const authorization=singleItemReviews.get(row.id);
+  const explicitlyApproved=reviewable&&authorization?.ownerId===first.ownerId&&
+   authorization.generation===first.generation&&authorization.sha256===row.sourceSHA256&&
+   authorization.category===row.category&&authorization.itemType===row.itemType;
+  if(!confirmed(row)||!allowed(row,{reviewedSingle:explicitlyApproved})){
+   if(reviewable){
+    try{
+     const proof=await verifyOriginalPhoto01(row,{ownerId:first.ownerId});
+     const lease=board.sessionLease();
+     if(lease.ownerId!==first.ownerId||lease.generation!==first.generation)
+      throw Error('STYLE03 original photo owner changed during review');
+     pending.push(Object.freeze({id:row.id,ownerId:first.ownerId,
+      category:row.category,itemType:row.itemType,color:row.color||'',
+      name:row.name||row.itemType,sourceSHA256:proof.sha256,
+      genuinePhoto:row.originalPhoto.image,
+      reason:'Confirm this photograph shows exactly one item before styling'}));
+    }catch(error){
+     if(!board.status().active)throw Error('STYLE03 review photo session revoked');
+     rejected.push({id:row.id,reason:'Unverified original: '+String(error.message||error)});
+    }
+   }else rejected.push({id:row.id,reason:'Category, ownership, duplicates or garment count needs review'});
+   continue;
   }
   try{
    const proof=await verifyOriginalPhoto01(row,{ownerId:first.ownerId});
@@ -61,7 +89,7 @@ export async function verifiedPrivateStyleRoster03(board){
  // Check the fields used by the outfit generator against the fresh owner
  // snapshot; never rely on an out-of-date cached category after a correction.
  const byId=new Map(after.items.map(row=>[row.id,row]));
- for(const item of verified){
+ for(const item of [...verified,...pending]){
   const fresh=byId.get(item.id);
   if(!fresh||fresh.category!==item.category||fresh.itemType!==item.itemType||
      fresh.sourceSHA256!==item.sourceSHA256||
@@ -71,7 +99,7 @@ export async function verifiedPrivateStyleRoster03(board){
  }
  return Object.freeze({ownerId:first.ownerId,generation:first.generation,
   fingerprint:first.boardFingerprint,items:Object.freeze(verified),
-  rejected:Object.freeze(rejected),originalSHA256Verified:true,
+  pending:Object.freeze(pending),rejected:Object.freeze(rejected),originalSHA256Verified:true,
   noDatabaseMutation:true,releaseAuthorized:false});
 }
 
