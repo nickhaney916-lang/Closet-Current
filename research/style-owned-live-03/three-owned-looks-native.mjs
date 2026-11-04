@@ -110,6 +110,7 @@ export function suggestThreeNativeOwned03(rows,{ownerId,pinnedId,occasion='Casua
    pinnedId:pinnedId||null,combinations:Object.freeze([]),candidateCount:0,
    ownerId,releaseAuthorized:false});
  const pin=byId.get(pinnedId),slot=pinnedSlot03(pin);
+ const coldWeather=/winter|cold|chilly|snow|freez/i.test(String(occasion||''));
  const options=Object.fromEntries(SLOTS.map(s=>[s,valid.filter(r=>fits(s,r))
   .sort((a,b)=>a.id.localeCompare(b.id)).slice(0,28)]));
  const all=[],seen=new Set();
@@ -126,7 +127,7 @@ export function suggestThreeNativeOwned03(rows,{ownerId,pinnedId,occasion='Casua
     if(layer)s.layer2=layer.id;
     if(coat)s.layer3=coat.id;
     if(s[slot]!==pinnedId||!complete(s,byId))continue;
-    if(layer&&coat&&layer.id===coat.id)continue;
+    if(layer&&coat&&(!coldWeather||layer.id===coat.id))continue;
     const key=signature03(s);if(seen.has(key))continue;seen.add(key);
     all.push(Object.freeze({slots:Object.freeze(s),signature:key,
      score:quality(s,byId,occasion),pinnedId,onePieceDress:top.category==='Dresses',
