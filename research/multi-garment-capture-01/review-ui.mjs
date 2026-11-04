@@ -5,6 +5,7 @@
  */
 import {atomicSaveGarments24,validCrop24,pieceKey24,duplicatePieceKeys24} from './atomic-group.mjs';
 import {organizeReview28,reviewTier28} from './review-triage-28.mjs';
+import {detectFlatlayFromImage29} from './flatlay-contrast-29.mjs';
 const TYPES=['Tops','Bottoms','Dresses','Outerwear','Shoes'];
 const palette=['Black','White','Gray','Beige','Brown','Blue','Green','Red','Pink','Purple','Yellow','Orange','Multicolor'];
 const $=(root,id)=>root.getElementById(id);
@@ -55,12 +56,13 @@ export function mountMultiGarmentCapture24({
  let state=null,canceled=false,job=null,renderVersion=0,submitting=false;
  const cancel=button('Cancel extraction',()=>reset('Unfinished extraction canceled; nothing was saved.'));
  const add=button('Add missed piece',()=>{if(!state)return;const crop={x:0,y:0,width:1,height:1};state.pieces.push({id:crypto.randomUUID(),instanceKey:manualKey(crop),cropBounds:crop,image:state.proof.image,manual:true,cropReviewed:false,category:'Uncategorized',itemType:'Unknown',color:'',confirmed:false,maskApplied:false,hint:null});redraw();});
+ const suggest=button('Suggest missed regions on a plain backdrop',()=>suggestFlatlay());
  const save=button('Save confirmed pieces together',()=>commit(),'primary');
- actions.append(add,save,cancel);
+ actions.append(add,suggest,save,cancel);
  root.append(actions,grid);
  host.append(style,root);
  function sameOwner(){return !!state&&getOwner()===state.owner&&getDb()?.name==='closet-current-user-'+state.owner;}
- function revoke(){canceled=true;renderVersion++;job?.worker?.terminate();if(job)clearTimeout(job.timeout);job=null;state=null;original.removeAttribute('src');original.hidden=true;grid.replaceChildren();save.disabled=true;add.disabled=true;}
+ function revoke(){canceled=true;renderVersion++;job?.worker?.terminate();if(job)clearTimeout(job.timeout);job=null;state=null;original.removeAttribute('src');original.hidden=true;grid.replaceChildren();save.disabled=true;add.disabled=true;suggest.disabled=true;}
  function reset(text){revoke();status.textContent=text||'No unconfirmed photos were saved.';}
  async function crop(piece){
   if(!sameOwner()){reset('Account changed; extraction canceled.');return;}
@@ -81,7 +83,7 @@ export function mountMultiGarmentCapture24({
  function selector(label,options,value,change){const wrap=el('label',label),sel=el('select');for(const v of options){const option=el('option',v);option.value=v;sel.append(option);}sel.value=options.includes(value)?value:options[0];sel.onchange=()=>change(sel.value);wrap.append(sel);return wrap;}
  function redraw(){
   if(!state)return;grid.replaceChildren();
-  original.hidden=false;add.disabled=false;
+  original.hidden=false;add.disabled=false;suggest.disabled=false;
   const review=organizeReview28(state.pieces);
   root.dataset.priorityCount=String(review.priority.length);
   root.dataset.additionalCount=String(review.additional.length);
@@ -100,7 +102,7 @@ export function mountMultiGarmentCapture24({
    const card=el('article',null,'multi24-card');card.dataset.pieceKey=p.instanceKey;
    card.dataset.reviewTier=tier;
    const image=el('img');image.src=p.image;image.alt='Visible garment '+(i+1)+' derived from unchanged source';
-   const caption=el('p',(p.manual?'Manually marked':'Detected')+' piece '+(i+1)+(p.hint?.clipped?' · edge cut off':'')+(Number.isFinite(p.hint?.confidence)?' · model mask score '+Math.round(100*p.hint.confidence)+'/100 (uncalibrated)':'')+' · requires review; not automatically confirmed','fine');
+   const caption=el('p',(p.flatlay29?'Contrast-only suggestion — adjust crop; no clothing identity inferred':p.manual?'Manually marked':'Detected')+' piece '+(i+1)+(p.hint?.clipped?' · edge cut off':'')+(Number.isFinite(p.hint?.confidence)?' · model mask score '+Math.round(100*p.hint.confidence)+'/100 (uncalibrated)':'')+' · requires review; not automatically confirmed','fine');
    card.append(image,caption);
    card.append(selector('Main category',['Uncategorized',...TYPES],p.category,v=>{p.category=v;p.itemType='Unknown';p.confirmed=false;redraw();}));
    card.append(selector('Specific type',['Unknown',...(schema.types[p.category]||[])],p.itemType,v=>{p.itemType=v;p.confirmed=false;redraw();}));
@@ -118,6 +120,43 @@ export function mountMultiGarmentCapture24({
    grid.append(card);
   }
   save.disabled=!state.pieces.some(p=>p.confirmed)||submitting;
+ }
+ function suggestFlatlay(){
+  if(!state||!sameOwner())return reset('Account changed. No regions or photos saved.');
+  const owner=state.owner,source=state.proof.sourceSHA256;
+  const suggestion=detectFlatlayFromImage29(state.decoded);
+  if(!state||!sameOwner()||state.owner!==owner||state.proof.sourceSHA256!==source)
+   return reset('Account changed during background review. Nothing saved.');
+  if(!suggestion.eligible){
+   status.textContent='No safe uniform backdrop was found. Use Add missed piece and review the crop manually.';
+   return;
+  }
+  let added=0;
+  for(const rect of suggestion.boxes){
+   const cropBounds=normalizeRect(rect),instanceKey=manualKey(cropBounds);
+   // Preserve existing detected and user marked pieces; do not create
+   // duplicate same-source proposals on repeated clicks.
+   if(state.pieces.some(p=>p.instanceKey===instanceKey))continue;
+   const intersects=state.pieces.some(p=>!p.manual&&overlap29(p.cropBounds,cropBounds)>.80);
+   if(intersects)continue;
+   state.pieces.push({
+    id:crypto.randomUUID(),instanceKey,cropBounds,
+    image:jpegCrop(state.decoded,cropBounds),flatlay29:true,manual:true,
+    cropReviewed:false,category:'Uncategorized',itemType:'Unknown',
+    color:'',confirmed:false,maskApplied:false,hint:null
+   });added++;
+  }
+  redraw();
+  status.textContent=added+
+   ' plain-backdrop region(s) suggested for manual crop review. No type, color or garment accuracy is inferred; nothing was auto-saved.';
+ }
+ function overlap29(a,b){
+  if(!a||!b)return 0;
+  const dx=Math.max(0,Math.min(a.x+a.width,b.x+b.width)-Math.max(a.x,b.x));
+  const dy=Math.max(0,Math.min(a.y+a.height,b.y+b.height)-Math.max(a.y,b.y));
+  const intersection=dx*dy;
+  const denominator=a.width*a.height+b.width*b.height-intersection;
+  return denominator>0?intersection/denominator:0;
  }
  async function addDetected(raw,session){
   if(!state||session!==job||!sameOwner())return;
@@ -201,6 +240,6 @@ export function mountMultiGarmentCapture24({
  for(const id of ['outfitCamera','outfitUpload'])$(doc,id).onchange=handle;
  window.addEventListener('closet:alpha-session-changed',()=>reset('Session changed; unconfirmed clothes cleared.'));
  window.addEventListener('pagehide',()=>revoke());
- save.disabled=true;add.disabled=true;
+ save.disabled=true;add.disabled=true;suggest.disabled=true;
  return {active:true,startFile,reset,debug:()=>({owner:state?.owner,sourceSHA256:state?.proof?.sourceSHA256,pieces:state?.pieces.map(x=>({id:x.id,instanceKey:x.instanceKey,category:x.category,color:x.color,confirmed:x.confirmed}))||[],working:!!job})};
 }
