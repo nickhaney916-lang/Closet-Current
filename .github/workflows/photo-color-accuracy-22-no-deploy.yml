@@ -1,0 +1,54 @@
+name: PHOTO-COLOR-ACCURACY-22 frozen real-photo comparison NO DEPLOY
+on:
+  pull_request:
+    paths:
+      - 'research/photo-color-accuracy-22/**'
+      - 'public/photo-color.js'
+      - 'public/photo-check.js'
+      - 'tests/photo-color-accuracy-22.test.cjs'
+      - '.github/workflows/photo-color-accuracy-22-no-deploy.yml'
+permissions:
+  contents: read
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+      - name: Exact source ancestry and isolated research scope
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          base=876b680272b6e2c40be24410a14b92802bdf991b
+          git merge-base --is-ancestor "$base" HEAD
+          git diff --name-only "$base" HEAD | while IFS= read -r path; do
+            case "$path" in
+              research/photo-color-accuracy-22/*|public/photo-color.js|public/photo-check.js|tests/photo-color-accuracy-22.test.cjs|.github/workflows/photo-color-accuracy-22-no-deploy.yml) ;;
+              *) echo "Unexpected file $path"; exit 1 ;;
+            esac
+          done
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Build and full regression suite
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Real JPEGs, true Chromium and WebKit, and review persistence
+        run: node research/photo-color-accuracy-22/run.mjs
+      - name: Independent artifact audit
+        run: node research/photo-color-accuracy-22/audit.mjs
+      - uses: actions/upload-artifact@v4
+        if: always() && !cancelled()
+        with:
+          name: photo-color-accuracy-22-verified-evidence
+          path: |
+            benchmark/color-accuracy-22/*.json
+            benchmark/color-accuracy-22/*.png
+          if-no-files-found: warn
+          retention-days: 21

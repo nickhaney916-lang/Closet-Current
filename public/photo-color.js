@@ -14,6 +14,68 @@
   const chromatic=ranked.filter(([name,n])=>!['Black','White','Gray','Beige','Brown'].includes(name)&&n/total>=.12);if(chromatic.length>=2&&support<.55&&chromatic.reduce((sum,[,n])=>sum+n/total,0)>=.65)return {color:'Multicolor',source:'photo-estimate',support:+chromatic.reduce((sum,[,n])=>sum+n/total,0).toFixed(3)};return {color:support>=.6?color:'Multicolor',source:'photo-estimate',support:+support.toFixed(3),needsConfirmation:true};
  }
 
+ // A smooth frame edge is evidence of background, never a garment mask.
+ // Only discard matching pixels connected to the edge. Repeated garment
+ // colors inside the frame are retained when separated from the boundary.
+ function sceneSuggestion(pixels,width,height,baseline){
+  if(!baseline||!pixels||!Number.isInteger(width)||!Number.isInteger(height)||
+    width<8||height<8||width*height>4096||pixels.length!==width*height*4)return baseline;
+  const edges=[
+   Array.from({length:width},(_,x)=>x),
+   Array.from({length:width},(_,x)=>(height-1)*width+x),
+   Array.from({length:height},(_,y)=>y*width),
+   Array.from({length:height},(_,y)=>y*width+width-1)
+  ];
+  const border=edges.flat().filter(i=>pixels[i*4+3]>=250);
+  const near=(a,b)=>{
+   a*=4;b*=4;
+   return Math.abs(pixels[a]-pixels[b])<=30&&Math.abs(pixels[a+1]-pixels[b+1])<=30&&
+    Math.abs(pixels[a+2]-pixels[b+2])<=30;
+  };
+  let backdrop=-1,best=0;
+  for(let k=0;k<border.length;k+=4){
+   const sample=border[k];
+   const support=border.filter(i=>near(i,sample)).length;
+   if(support>best){best=support;backdrop=sample;}
+  }
+  const removed=new Uint8Array(width*height),queue=[];
+  if(best>=.55*edges.flat().length&&edges.filter(edge=>
+    edge.filter(i=>pixels[i*4+3]>=250&&near(i,backdrop)).length>=.4*edge.length).length>=3){
+   const add=i=>{
+    if(!removed[i]&&pixels[i*4+3]>=250&&near(i,backdrop)){removed[i]=1;queue.push(i);}
+   };
+   border.forEach(add);
+   for(let k=0;k<queue.length;k++){
+    const i=queue[k],x=i%width;
+    if(x>0)add(i-1);
+    if(x+1<width)add(i+1);
+    if(i>=width)add(i-width);
+    if(i+width<removed.length)add(i+width);
+   }
+  }
+  const counts=new Map();
+  let remaining=0,excluded=0;
+  for(let y=Math.floor(height*.2);y<Math.ceil(height*.8);y++){
+   for(let x=Math.floor(width*.2);x<Math.ceil(width*.8);x++){
+    const index=y*width+x,i=index*4;
+    if(pixels[i+3]<250)continue;
+    if(removed[index]){excluded++;continue;}
+    const name=family(pixels[i],pixels[i+1],pixels[i+2]);
+    counts.set(name,(counts.get(name)||0)+1);
+    remaining++;
+   }
+  }
+  if(remaining<32||remaining<.2*(remaining+excluded))return baseline;
+  const [[color,top],[,second=0]=[]]=[...counts].sort((a,b)=>b[1]-a[1]);
+  const hasBackdrop=excluded>=.12*(remaining+excluded);
+  const support=top/remaining,lead=(top-second)/remaining;
+  if(color===baseline.color||!hasBackdrop||support<.72||lead<.12||
+    (baseline.color!=='Multicolor'&&baseline.needsConfirmation))return baseline;
+  // Full-scene heuristics can improve a suggestion or retract a conflicting
+  // auto-fill. They cannot establish new automatic acceptance.
+  return {color,source:'photo-estimate',support:+support.toFixed(3),needsConfirmation:true};
+ }
+
  // Mask-aware palette: ignore transparent background and low-alpha antialias edges.
  // Keep uncertain colors for review instead of silently assigning them.
  function maskedPalette(pixels,width,height,{minimumAlpha=224,minimumShare=.12}={}){
@@ -30,5 +92,5 @@
   const primary=ranked[0][0],confidence=ranked[0][1]/total;
   return {primary,secondary:colors.find(x=>x.color!==primary)?.color||null,colors,coverage:+(total/(width*height)).toFixed(3),needsConfirmation:confidence<.6||total<100};
  }
- const api={family,estimate,maskedPalette};root.PhotoColor=api;if(typeof module!=='undefined')module.exports=api;
+ const api={family,estimate,sceneSuggestion,maskedPalette};root.PhotoColor=api;if(typeof module!=='undefined')module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);
