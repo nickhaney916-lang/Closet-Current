@@ -7,8 +7,17 @@ const report=JSON.parse(await readFile(dir+'/report.json','utf8'));
 const photos=JSON.parse(await readFile('research/color-confidence-safety-19/sources.json','utf8'));
 const registry=JSON.parse(await readFile('benchmark/locked-photo-sources.json','utf8'));
 const known=new Map(registry.map(x=>[x.id,x]));
+const quarantine=JSON.parse(await readFile(dir+'/source-quarantine.json','utf8'));
+assert.equal(quarantine.requiredVerifiedOriginals,6);
+assert.equal(quarantine.candidateCount,photos.samples.length);
+assert.equal(quarantine.selectedIds.length,6);
+assert.equal(new Set(quarantine.selectedIds).size,6);
+assert.deepEqual(quarantine.quarantined.map(x=>x.id),quarantine.quarantined.map(x=>x.id).filter((id,i,a)=>a.indexOf(id)===i));
+assert.ok(quarantine.quarantined.every(x=>['source-sha-mismatch','source-unavailable'].includes(x.reason)));
 assert.equal(report.priority,'COLOR-CONFIDENCE-SAFETY-19');
 assert.equal(report.uniqueLicensedOriginalPhotographs,6);
+assert.equal(report.originalCandidateCount,photos.candidateCount);
+assert.deepEqual(report.quarantinedSourceIds,quarantine.quarantined.map(x=>x.id));
 assert.equal(report.originalSha256Verified,true);
 assert.equal(report.trueIndependentColorGroundTruthAvailable,false);
 assert.equal(report.measuredColorAccuracy,null);
@@ -23,6 +32,7 @@ assert.equal(report.cases.length,12);
 const seen=new Set();
 for(const x of report.cases){
  assert.ok(['chromium','webkit'].includes(x.engine));
+ assert.ok(quarantine.selectedIds.includes(x.id));
  assert.ok(photos.samples.some(y=>y.id===x.id));
  const key=x.engine+'/'+x.id;
  assert.ok(!seen.has(key),'each real model photo+engine only once');
@@ -40,6 +50,7 @@ for(const x of report.cases){
  }
 }
 assert.equal(seen.size,12);
+assert.deepEqual([...new Set(report.cases.map(x=>x.id))].sort(),quarantine.selectedIds.slice().sort());
 const screenshots=JSON.parse(await readFile(dir+'/screenshots.json','utf8'));
 assert.equal(screenshots.length,6);
 const viewports=new Set();
@@ -56,7 +67,9 @@ for(const s of screenshots){
  assert.ok(stats.channels.some(x=>x.stdev>6),'blank screen cannot pass visual proof');
 }
 assert.equal(viewports.size,6);
-const verified={originalPhotos:photos.samples.length,realBrowserCases:seen.size,
+const verified={originalPhotos:quarantine.selectedIds.length,
+ candidatePhotos:photos.candidateCount,quarantinedSourceIds:quarantine.quarantined.map(x=>x.id),
+ realBrowserCases:seen.size,
  jsErrors:0,uncertainAutoSaved:0,originalShaIntegrity:true,
  noOriginalUploads:true,mobileScreenshotShaVerified:6,
  actualColorAccuracy:null,photoTitlesAreNotGroundTruth:true,
