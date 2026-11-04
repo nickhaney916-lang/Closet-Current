@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {evaluateQualityLedger24 as evaluate,renderQualityLedger24 as render}
+import {evaluateQualityLedger24 as evaluate,renderQualityLedger24 as render,
+ selectWork29CandidatePRs24 as selectWork29PRs}
  from '../scripts/family-alpha-quality-ledger-24.mjs';
 
 const source=JSON.parse(readFileSync('research/family-alpha-quality-ledger-24/manifest.json','utf8'));
@@ -155,4 +156,22 @@ test('markdown remains actionable, truthfully qualifies independent labels and s
  assert.ok(!md.includes('95% READY'));
  assert.ok(!md.includes('Signed owner proof: PASS'));
  assert.ok(!md.includes('data:image/'));
+});
+
+test('Work29 title matching ignores PRs mentioning security only in their body',()=>{
+ const result=selectWork29PRs([
+  {number:581,title:'SIGNED-OWNER-PRIVACY-25 disposable signed authorization (HOLD)',
+   body:'security tests ongoing'},
+  {number:582,title:'FAMILY-ALPHA-QUALITY-LEDGER-24: pin latest Work29 handoff',
+   body:'SIGNED-OWNER-PRIVACY-25 is pending'},
+  {number:583,title:'A different science task',
+   body:'SIGNED-OWNER-PRIVACY-25'},
+  {number:584,title:'signed-owner-privacy-25 owner isolation verified by draft'}
+ ]);
+ assert.deepEqual(result,[
+  '#581 SIGNED-OWNER-PRIVACY-25 disposable signed authorization (HOLD)',
+  '#584 signed-owner-privacy-25 owner isolation verified by draft'
+ ]);
+ assert.deepEqual(selectWork29PRs([]),[]);
+ assert.throws(()=>selectWork29PRs(null),/GitHub search items must be an array/);
 });
