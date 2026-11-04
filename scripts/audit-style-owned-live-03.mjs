@@ -51,6 +51,9 @@ for(const e of data.cases){
  assert.equal(e.ownerA.cancelRestoredPriorDraft,true);
  assert.equal(e.ownerA.nativeCAS,true);
  assert.equal(e.ownerA.nativeOutfitReopen,true);
+ assert.equal(e.ownerA.inlineSaveReceipt,true);
+ assert.equal(e.ownerA.inlineReopenReceipt,true);
+ assert.equal(e.ownerA.savedReadOnly,true);
  assert.equal(e.ownerA.previousRecordsExact,true);
  assert.equal(e.ownerA.allPhotosFromExactOriginals,true);
  assert.equal(e.ownerA.sourceSha,'fef606d6ed7354a2238f1bcc2584942747ca6fa4a2b16b2e9eec21f639d10667');
