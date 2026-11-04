@@ -5,7 +5,10 @@ import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import {join,resolve} from 'node:path';
 import sharp from 'sharp';
-const rows=JSON.parse(await readFile('research/auto-multi-diversity-16/candidate-sources.json','utf8'));
+const all=JSON.parse(await readFile('research/auto-multi-diversity-16/candidate-sources.json','utf8'));
+const slice=process.env.AUTO_MULTI_16_SLICE;
+const rows=slice===undefined?all:all.filter((_,index)=>Math.floor(index/3)===Number(slice));
+if(!rows.length||rows.length>15)throw Error('Invalid source selection');
 const out=resolve('benchmark/auto-multi-16-discovery');
 const originals=join(out,'originals');
 await mkdir(originals,{recursive:true});
@@ -18,7 +21,7 @@ for(const [i,row] of rows.entries()){
   const md5=digest('md5',Buffer.from(filename));
   const url='https://upload.wikimedia.org/wikipedia/commons/'+md5.slice(0,1)+'/'+md5.slice(0,2)+'/'+encodeURIComponent(filename);
   let buffer=null,lastError='';
-  for(let attempt=0;attempt<3&&!buffer;attempt++){
+  for(let attempt=0;attempt<5&&!buffer;attempt++){
    try{
     const response=await fetch(url,{headers:{'user-agent':'ClosetCurrentResearchEvidence/1.0 (Wikimedia licensed evaluation)'},signal:AbortSignal.timeout(45000)});
     if(!response.ok)throw Error('HTTP '+response.status);
@@ -26,13 +29,14 @@ for(const [i,row] of rows.entries()){
     if(contentLength>33000000)throw Error('source image too large');
     buffer=Buffer.from(await response.arrayBuffer());
     if(!buffer.length||buffer.length>33000000)throw Error('invalid length');
-   }catch(e){lastError=e.message;if(attempt<2)await delay((attempt+1)*1300);}
+   }catch(e){lastError=e.message;if(attempt<4)await delay((attempt+1)*7000);}
   }
   if(!buffer)throw Error(lastError);
   const meta=await sharp(buffer).metadata();
   if(meta.format!=='jpeg'||!meta.width||!meta.height)throw Error('not original JPEG');
   const sha256=digest('sha256',buffer),sha1=digest('sha1',buffer);
   await writeFile(join(originals,row.id+'.jpg'),buffer);
+  await delay(2500);
   const thumb=await sharp(buffer).rotate().resize({width:420,height:400,fit:'inside',withoutEnlargement:true}).jpeg({quality:81}).toBuffer();
   await writeFile(join(out,row.id+'-PREVIEW.jpg'),thumb);
   results.push({...row,sourceImage:url,sourceSha256:sha256,sourceSHA1:sha1,
@@ -57,4 +61,4 @@ if(results.length){
  const composites=thumbnails.map((input,i)=>({input,left:i%columns*450,top:Math.floor(i/columns)*450}));
  await sharp({create:{width:columns*450,height:rowsCount*450,channels:4,background:'#fff'}}).composite(composites).jpeg({quality:84}).toFile(join(out,'CONTACT-PREVIEW-NOT-ANNOTATIONS.jpg'));
 }
-if(failures.length||results.length!==15)process.exitCode=1;
+if(failures.length||results.length!==rows.length)process.exitCode=1;
