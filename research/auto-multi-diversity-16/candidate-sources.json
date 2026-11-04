@@ -111,8 +111,8 @@
     "id": "am16-13",
     "file": "Day 4 Vancouver Fashion Week - Spring Summer 2024 (53272710072).jpg",
     "scene": "runway",
-    "author": "Wikimedia Commons source",
-    "expectedLicense": "CC license verify",
+    "author": "GoToVan",
+    "expectedLicense": "CC BY 2.0",
     "sourcePage": "https://commons.wikimedia.org/wiki/File:Day_4_Vancouver_Fashion_Week_-_Spring_Summer_2024_(53272710072).jpg",
     "annotationStatus": "pending-human-visual-review"
   },
@@ -129,7 +129,7 @@
     "id": "am16-15",
     "file": "Wedding couple walking in Converse (Unsplash).jpg",
     "scene": "two-people-shoes",
-    "author": "Wikimedia Commons source",
+    "author": "photo-nic.co.uk nic",
     "expectedLicense": "CC0 1.0",
     "sourcePage": "https://commons.wikimedia.org/wiki/File:Wedding_couple_walking_in_Converse_(Unsplash).jpg",
     "annotationStatus": "pending-human-visual-review"
