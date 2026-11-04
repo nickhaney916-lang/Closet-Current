@@ -251,6 +251,7 @@ async function createAndVerifyLooks(page,id,owner,width,engine,rich){
  // Do not silently discard an unfinished native outfit when another card or
  // "Generate" is tapped. Verify explicit cancel restores its exact CAS draft.
  const priorCurrent=await page.evaluate(()=>window.nativeLossless04Bridge.readOnlySnapshot().current);
+ const priorEditorView=await page.evaluate(()=>window.nativeLossless04Bridge.view());
  await page.locator('#styleOwned03Choose1').click();
  const firstUnsaved=await page.evaluate(()=>window.nativeLossless04Bridge.view());
  await page.locator('#styleOwned03Choose2').click();
@@ -263,8 +264,10 @@ async function createAndVerifyLooks(page,id,owner,width,engine,rich){
  assert.deepEqual(await page.evaluate(()=>window.nativeLossless04Bridge.view()),firstUnsaved);
  await page.locator('#styleOwned03Cancel').click();
  assert.equal(await page.evaluate(()=>window.nativeLossless04Bridge.status().dirty),false);
- assert.deepEqual(await page.evaluate(()=>window.nativeLossless04Bridge.view()),priorCurrent,
-  'Cancel must restore the exact preexisting board current record');
+ assert.deepEqual(await page.evaluate(()=>window.nativeLossless04Bridge.readOnlySnapshot().current),priorCurrent,
+  'Cancel must preserve the entire exact stored current record and unknown metadata');
+ assert.deepEqual(await page.evaluate(()=>window.nativeLossless04Bridge.view()),priorEditorView,
+  'Cancel must restore the preexisting native editor view including its normalized defaults');
  await page.locator('#styleOwned03Choose1').click();
  const first=await page.evaluate(()=>window.nativeLossless04Bridge.view());
  assert.equal(first.slots.top,id);
