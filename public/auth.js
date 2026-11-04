@@ -15,10 +15,10 @@
   try{return JSON.parse(localStorage.getItem(STORE)||'null')?.epoch??null;}catch{return null;}
  }
  const stillCurrent=()=>epoch!==null&&currentEpoch()===epoch;
- function lockAccount(){
+ function lockAccount(showLogin=true){
   if(locked)return;
   locked=true;session=null;window.closetAuth.user=null;
-  $('appShell').hidden=true;$('authGate').hidden=false;
+  $('appShell').hidden=true;$('authGate').hidden=!showLogin;
   $('authStatus').textContent='This session ended. Reload to sign in again.';
   window.dispatchEvent(new Event('closet:session-locked'));
  }
@@ -153,7 +153,7 @@
  $('logout').onclick=async()=>{
   const token=session?.access_token;
   if(session&&stillCurrent())localStorage.removeItem(STORE);
-  lockAccount();
+  lockAccount(false);
   try{if(token)await request('logout',{},token);}catch{}
   // Reload closes the current account's IndexedDB connection and clears in-memory images.
   location.reload();

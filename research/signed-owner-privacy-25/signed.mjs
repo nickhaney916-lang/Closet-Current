@@ -18,6 +18,7 @@ const checks=[];
 const digest=bytes=>createHash('sha256').update(bytes).digest('hex');
 async function request(path,token,method='GET',body){
  const headers={apikey:key,...(token?{authorization:'Bearer '+token}:{})};
+ if(path.startsWith(table)&&['PATCH','DELETE'].includes(method))headers.prefer='return=representation';
  if(body!==undefined)headers['content-type']=Buffer.isBuffer(body)?'image/jpeg':'application/json';
  const response=await fetch(new URL(path,endpoint),{headers,method,body:body===undefined?undefined:Buffer.isBuffer(body)?body:JSON.stringify(body),redirect:'error',signal:AbortSignal.timeout(20000)});
  return {status:response.status,ok:response.ok,bytes:Buffer.from(await response.arrayBuffer())};
@@ -65,9 +66,11 @@ for(const [actor,victim] of [[a,b],[b,a]]){
  const read=await request(filter,actor.token);
  check(label+' backup and outfit hidden',read.ok&&json(read).length===0,read.status);
  const overwrite=await request(filter,actor.token,'PATCH',{document:actor.document});
- check(label+' direct overwrite cannot target foreign row',overwrite.ok||[401,403].includes(overwrite.status),overwrite.status);
+ check(label+' direct overwrite cannot target foreign row',
+  [401,403].includes(overwrite.status)||overwrite.ok&&overwrite.bytes.length>0&&json(overwrite).length===0,overwrite.status);
  const deletion=await request(filter,actor.token,'DELETE');
- check(label+' direct delete denied',[401,403].includes(deletion.status),deletion.status);
+ check(label+' direct delete cannot target foreign row',
+  [401,403].includes(deletion.status)||deletion.ok&&deletion.bytes.length>0&&json(deletion).length===0,deletion.status);
  const spoof=await request(table,actor.token,'POST',{owner_id:victim.id,document:actor.document});
  check(label+' forged owner insertion denied',[401,403].includes(spoof.status),spoof.status);
  const conflict=await request(rpc,actor.token,'POST',{p_expected_revision:99,p_document:actor.document});
