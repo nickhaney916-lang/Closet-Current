@@ -365,7 +365,7 @@ export async function mountStyleOwnedLive03({
   busy=true;generate.disabled=true;
   try{
    // Reverify source and owner after any newly committed photo/index change.
-   snapshot=await verifiedPrivateStyleRoster03(board);
+   snapshot=await verifiedPrivateStyleRoster03(board,{singleItemReviews});
    live();
    if(!byId(pinId))fail('SELECTED_PHOTO_WAS_REMOVED_OR_UNVERIFIED');
    generated=suggestThreeNativeOwned03(rows(),{
@@ -489,7 +489,7 @@ export async function mountStyleOwnedLive03({
   savedId,sourceSHA256Verified:!!snapshot?.originalSHA256Verified,
   fallback:'genuine-original-photo-only-unless-independent-3d-donor-vetted',
   realSignedRLSVerified:false,releaseAuthorized:false,familyAlpha:'HOLD'}),
-  refresh,selectGarment,generate:generateLooks,selectSuggestion:chooseLook,
+  refresh,selectGarment,generate:generateLooks,suggestions:()=>{live();return generated?structuredClone(generated):null;},selectSuggestion:chooseLook,
   swap:swapPiece,undo:undoSwap,cancel:cancelChanges,save:saveCurrent,reopen:reopenSaved,
   dispose(){win.removeEventListener('closet:style-owned-inventory-committed',onInventory);
    win.removeEventListener('closet:alpha-session-changed',onRevoked);
