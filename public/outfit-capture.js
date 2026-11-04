@@ -12,7 +12,7 @@ function finishOutfitSplit(job,text,failed=false){
  if(typeof recordDeviceEvent==='function')recordDeviceEvent(failed?'outfit_split_failed':'outfit_split_ready',{durationMs:Date.now()-job.started});
  clearTimeout(job.timer);job.worker?.terminate();outfitSplitJob=null;busy=false;controls(false);
  $('outfitSplitStatus').textContent=text;$('outfitRetry').hidden=!failed;renderOutfitCapture();
- if(job.added){if(!$('scan').hidden)switchView('review');$('outfitSaveStatus').textContent=failed?'The separated pieces below are kept. Return to Add clothes to try separating the rest again.':'Recognized pieces save automatically. Unclear or duplicate pieces remain here for review.';}
+ if(job.added){if(!$('scan').hidden)switchView('review');$('outfitSaveStatus').textContent=failed?'The separated pieces below are kept. Return to Add clothes to try separating the rest again.':'Automatic proposals need your crop, garment type and color confirmation in Adjust before saving.';}
 }
 function startOutfitSplit(image,sourceId=crypto.randomUUID(),proof=null){
  if(busy||outfitSplitJob)return;
@@ -41,13 +41,13 @@ function startOutfitSplit(image,sourceId=crypto.randomUUID(),proof=null){
     const p=data.piece;
     if(!p||typeof p.image!=='string'||p.image.length>8000000||!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(p.image)||!Array.isArray(p.hint?.categories)||p.hint.categories.some(x=>!categories.includes(x))||!Array.isArray(p.hint.types)||p.hint.types.length>8)return;
     if(p.recognitionPhoto&&(!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(p.recognitionPhoto.image)||p.recognitionPhoto.image.length>8000000))return;
-    if(candidate(p.image,{outfitSourceId:sourceId,segmentHint:p.hint,recognitionPhoto:p.recognitionPhoto,originalPhoto:{image},originalSourceProof:guarded?job.proof:null,cropBounds:p.cropBounds,colorEstimate:p.colorEstimate}))job.added++;renderOutfitCapture();return;
+    if(candidate(p.image,{outfitSourceId:sourceId,requiresReview:true,segmentHint:p.hint,recognitionPhoto:p.recognitionPhoto,originalPhoto:{image},originalSourceProof:guarded?job.proof:null,cropBounds:p.cropBounds,colorEstimate:p.colorEstimate}))job.added++;renderOutfitCapture();return;
    }
    if(data.type==='done')finishOutfitSplit(job,job.added?job.added+' individual clothing photos cropped. Categories are being checked.':'No new clothing pieces could be located. Try a clearer full-body photo; exact duplicates may already be in Photo results.',false);
    else if(data.type==='error')finishOutfitSplit(job,job.added?'Some pieces are kept; the rest could not be separated. Try again.':'This outfit could not be separated. Try another clear photo of one person, head to toe.',true);
   };
   job.worker.onerror=()=>finishOutfitSplit(job,'Outfit separation could not start. Your existing photos are kept. Try again.',true);
-  job.worker.postMessage({id:job.id,image});
+  job.worker.postMessage({id:job.id,image,multi16:true});
  }catch{finishOutfitSplit(job,'Outfit separation is unavailable on this device. Try again or use individual clothing photos.',true);}
 }
 async function readOutfitPhoto(file){
