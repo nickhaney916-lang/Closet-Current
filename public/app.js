@@ -290,6 +290,12 @@ function render(){
  }const f=node('form');const draft=structuredClone(item),collect=clothingFields(f,draft),
   expectedSavedRow=nativeCorrection10Active()?structuredClone(item):null,
   ok=node('button','Save changes','primary'),cancel=node('button','Cancel','secondary');
+ // Multi-piece rows are normalized for display but CAS needs the exact persisted row.
+ const storedReviewRow=expectedSavedRow?.sourcePieceKey?new Promise(resolve=>{
+  const request=db.transaction('items').objectStore('items').get(expectedSavedRow.id);
+  request.onsuccess=()=>resolve(request.result);
+  request.onerror=()=>resolve(null);
+ }):null;
  f.className='card';f.style.padding='15px';
  if(expectedSavedRow){
   f.style.boxSizing='border-box';f.style.width='100%';
@@ -298,7 +304,10 @@ function render(){
   // Explicit color edits retain their existing user-owned provenance.if(typeof ClothingMemory!=='undefined')Object.assign(updated,ClothingMemory.confirm(updated));
  if(expectedSavedRow){
   updated.userAdjusted=true;updated.requiresOwnershipConfirmation=false;
-  await queued(()=>commitOwnerCorrection10(updated,expectedSavedRow,null));
+  const before=expectedSavedRow.sourcePieceKey?await storedReviewRow:expectedSavedRow;
+  if(!before||expectedSavedRow.sourcePieceKey&&JSON.stringify(normalizeClothing(before))!==JSON.stringify(expectedSavedRow))
+   throw Error('CORRECTION10_STALE_SAVED_GARMENT_REOPEN_EDITOR');
+  await queued(()=>commitOwnerCorrection10(updated,before,null));
   await nativeIndex07Refresh();
  }else await writeAll([updated]);
  Object.assign(item,updated);dialog.close();render();scheduleMemoryReview();
