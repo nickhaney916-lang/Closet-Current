@@ -126,7 +126,11 @@ export function scoreAutoMulti16(manifest,results,{actualModelEvidence=false}={}
   demand(row.error===null||typeof row.error==='string','invalid model error');
   demand(!row.error||!row.modelExecuted,'false model success '+id);
   for(const mode of ['baseline','updated']){
-   const units=detectionUnits16(row[mode],{splitShoePairs:mode==='updated'});
+   // FAIR PRIMARY COMPARISON: both old and new contribute exactly one
+   // detector proposal per clothing-region group (a shoe pair is one item).
+   // Left/right shoe geometry is measured separately below, not inflated into
+   // updated-only detector proposal counts.
+   const units=detectionUnits16(row[mode],{splitShoePairs:false});
    const analysis=matchBoxes16(source.regions,units,.3);
    const t=totals[browser+'-'+mode];t.photos++;
    t.expected+=source.regions.length;t.supportedExpected+=analysis.supportedExpected;
@@ -135,9 +139,17 @@ export function scoreAutoMulti16(manifest,results,{actualModelEvidence=false}={}
    t.duplicates+=analysis.duplicates;t.wrongClass+=analysis.incorrectRegionCategories;
    t.backgroundExtra+=analysis.backgroundOrExtra;
    t.falsePositive+=analysis.proposed-analysis.matched;t.errors+=!row.modelExecuted||row.error?1:0;
+   const shoeParts=mode==='updated'?matchBoxes16(
+    source.regions.filter(x=>x.family==='shoes'),
+    detectionUnits16(row.updated,{splitShoePairs:true}).filter(x=>x.family==='shoes'),.3):null;
    records.push({id,browser,mode,scene:source.scene,
     expectedGarments:source.regions.length,modelExecuted:row.modelExecuted,error:!!row.error,
-    ...analysis});
+    ...analysis,updatedShoePartDiagnostic:shoeParts?{
+     expectedShoeBoxes:shoeParts.supportedExpected,
+     proposedVisibleShoeParts:shoeParts.proposed,
+     matchedShoeBoxes:shoeParts.matched,missedShoeBoxes:shoeParts.missed,
+     note:'Additional updated shoe-pair localization only; NOT a baseline-comparable garment precision measurement.'
+    }:null});
   }
  }
  const scored=Object.fromEntries(Object.entries(totals).map(([key,v])=>[key,{
@@ -151,6 +163,8 @@ export function scoreAutoMulti16(manifest,results,{actualModelEvidence=false}={}
   humanGroundTruthVerified:false,annotationStatus:'AI-ASSISTED VISUAL BOXES, independent human reviewer still required',
   frozenBeforeInference:true,sourceHashesRetained:true,maskGroundTruthPresent:false,
   truePixelMaskIoU:null,boxIoUThreshold:.3,
+  primaryCountingUnit:'One connected garment proposal per inferred garment group; paired shoes are one proposal for BOTH baseline and updated',
+  shoePartSecondary:'Visible left/right shoe localization evaluated separately only for updated proposal diagnostics, never mixed into before/after proposal precision',
   browserModels:['chromium','webkit'],cohorts:{development:10,heldout:5},
   results:scored,records,
   qualityGatePassed:false,qualityGateReason:'Human-reviewed region boxes and full mobile/real-world acceptance not independently established',
