@@ -1,0 +1,193 @@
+name: NATIVE-PHOTO-READINESS-08 original JPEG source honesty in native 3D NO DEPLOY
+on:
+  pull_request:
+    paths:
+      - 'public/outfit-board.js'
+      - 'research/native-photo-readiness-08/**'
+      - 'research/user-photo-3d-01/**'
+      - 'tests/native-photo-readiness-08.test.mjs'
+      - 'tests/user-photo-3d-01.test.mjs'
+      - 'scripts/test-native-photo-readiness-08-browser.mjs'
+      - 'scripts/audit-native-photo-readiness-08.mjs'
+      - 'scripts/test-user-photo-3d-01-browser.mjs'
+      - 'scripts/audit-user-photo-3d-01.mjs'
+      - 'research/native-consumer-board-04/consumer-board-controller.mjs'
+      - 'research/native-3d-05/**'
+      - 'research/restore-atomic-01/native-restore-bridge.mjs'
+      - 'tests/native-3d-05.test.mjs'
+      - 'scripts/test-native-3d-05-browser.mjs'
+      - 'scripts/audit-native-3d-05.mjs'
+      - 'scripts/test-native-restore-3d-06-browser.mjs'
+      - 'scripts/audit-native-restore-3d-06.mjs'
+      - 'scripts/test-native-index-live-07-browser.mjs'
+      - 'scripts/audit-native-index-live-07.mjs'
+      - 'research/native-index-live-07/**'
+      - '.github/workflows/native-photo-readiness-08-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  original-private-wardrobe-source-admission-and-no-fabricated-3d:
+    runs-on: ubuntu-latest
+    timeout-minutes: 110
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+      - name: Verify immutable verified main-controller PR561 and strict read-only integration scope
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor 21189b56d9f9f6ce57ad9dc795b9fe222544862e HEAD
+          git diff --name-only 21189b56d9f9f6ce57ad9dc795b9fe222544862e HEAD | while IFS= read -r p; do
+            case "$p" in
+              public/outfit-board.js|research/native-photo-readiness-08/*|research/user-photo-3d-01/*|tests/native-photo-readiness-08.test.mjs|tests/user-photo-3d-01.test.mjs|scripts/test-native-photo-readiness-08-browser.mjs|scripts/audit-native-photo-readiness-08.mjs|scripts/test-user-photo-3d-01-browser.mjs|scripts/audit-user-photo-3d-01.mjs|.github/workflows/native-photo-readiness-08-no-deploy.yml) ;;
+              *) echo "BLOCKED unexpected production, authorisation, donor or parallel path $p"; exit 1 ;;
+            esac
+          done
+          git diff --exit-code 21189b56d9f9f6ce57ad9dc795b9fe222544862e -- public/auth.js public/app.js public/index.html public/cloud-backup.js public/cloud-backup-bridge.js public/outfit-board-engine.js research/native-3d-05/ research/native-consumer-board-04/ research/restore-atomic-01/ research/wardrobe-index-01/ research/wardrobe-index-02/ benchmark/fixtures/ migrations/ supabase/
+      - name: Pin EXACT independent verified PR560 source classifier and 15 originals, no alteration
+        run: |
+          git fetch --no-tags origin 11d7398a674d83488faab074ed1f71eddd8c9dba
+          for p in research/user-photo-3d-01/photo-readiness.mjs research/user-photo-3d-01/benchmark.html tests/user-photo-3d-01.test.mjs scripts/test-user-photo-3d-01-browser.mjs scripts/audit-user-photo-3d-01.mjs; do
+            git show 11d7398a674d83488faab074ed1f71eddd8c9dba:"$p" > /tmp/photo-readiness-560-original
+            cmp "$p" /tmp/photo-readiness-560-original
+          done
+      - name: Install pinned browser and test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Build, strict syntax and full inherited node regression suite
+        run: |
+          for p in public/app.js public/outfit-board.js public/cloud-backup.js public/cloud-backup-bridge.js research/restore-atomic-01/*.mjs research/native-3d-05/*.mjs research/native-consumer-board-04/consumer-board-controller.mjs research/native-photo-readiness-08/*.mjs research/user-photo-3d-01/*.mjs scripts/test-native-photo-readiness-08-browser.mjs scripts/audit-native-photo-readiness-08.mjs scripts/test-user-photo-3d-01-browser.mjs scripts/audit-user-photo-3d-01.mjs scripts/test-native-restore-3d-06-browser.mjs scripts/audit-native-restore-3d-06.mjs scripts/test-native-index-live-07-browser.mjs scripts/audit-native-index-live-07.mjs; do node --check "$p"; done
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+          node scripts/repro-restore-atomic-01-baseline.mjs
+      - name: Actual original native consumer owner atomic save-export-restore and WebKit fallback
+        run: |
+          node scripts/test-restore-atomic-01-browser.mjs
+          node scripts/audit-restore-atomic-01.mjs
+      - name: Pin exact untouched 163-bone human + original photo donor PR541
+        run: |
+          git fetch --no-tags origin df6885d6011cb33fb22dceb81a08f35a0ac4dd61 53f2ad344dc56a1477e343531c423aed0e66c17d dd6bac3fa9ff640d4f562cf925337440bdb5cf8f 3a572193987cb29389727426136c6eb3ac326783 dfb40889c4c1221fb1833b859e8a11ef38aeb76e
+          git worktree add --detach .native05-donor-541 df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          git config --global --add safe.directory "$GITHUB_WORKSPACE/.native05-donor-541"
+          test "$(git -C .native05-donor-541 rev-parse HEAD)" = df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          ln -s ../node_modules .native05-donor-541/node_modules
+          cd .native05-donor-541
+          node scripts/build-three-d-31-jeans-proposal.mjs
+          node scripts/build-three-d-37-second-jeans.mjs
+          node scripts/build-work47-benchmark.mjs
+          node research/three-d-20/restore-approved-models.mjs
+          test -f benchmark/work47/manifest.json
+          node --test tests/outfit-3d-01.test.mjs
+      - name: Regression actual native consumer original 3D (no restore switch)
+        run: |
+          node scripts/test-native-3d-05-browser.mjs
+          node scripts/audit-native-3d-05.mjs
+      - name: Real atomic-loss-recovery-then-WebGL with owner A to B and active 3D fail-closed tests
+        run: |
+          node scripts/test-native-restore-3d-06-browser.mjs
+          node scripts/audit-native-restore-3d-06.mjs
+      - name: Real licensed original JPEG import, manual category, owner index, saved draft, CAS, V4 recovery and authentic 3D
+        run: |
+          node scripts/test-native-index-live-07-browser.mjs
+          node scripts/audit-native-index-live-07.mjs
+      - name: Original fifteen source photos, real owner IndexedDB and conservative readiness benchmark
+        run: |
+          node scripts/test-user-photo-3d-01-browser.mjs
+          node scripts/audit-user-photo-3d-01.mjs
+      - name: Actual native source readiness + no fake 3D + original source photos + owner logout
+        run: |
+          node scripts/test-native-photo-readiness-08-browser.mjs
+          node scripts/audit-native-photo-readiness-08.mjs
+      - name: Enforce factual recovery-plus-3D acceptance and immutable Family Alpha hold
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const r=JSON.parse(readFileSync('benchmark/native-restore-3d-06/results.json','utf8'));
+          const a=JSON.parse(readFileSync('benchmark/native-restore-3d-06-audit/acceptance.json','utf8'));
+          assert.equal(r.priority,'NATIVE-RESTORE-3D-06');
+          assert.equal(r.cases,3);assert.equal(r.screenshots,15);
+          assert.equal(r.restoredBeforeSourceTrue3D,true);
+          assert.equal(r.closedActive3DTransactionGate,true);
+          assert.equal(r.realWebGL,true);assert.deepEqual(r.crashes,[]);
+          assert.ok(r.evidence.every(e=>e.atomicLosslessV4RestoredBefore3D&&
+            e.exactRestoredOriginalPhotos&&e.activeAnatomical3DRestoreBlocked&&
+            e.ownerACrossOwnerBRestoreBlocked&&e.bones===163&&
+            e.authenticPhotoSourcedDress3D&&e.nonVettedCoatJacketShoesPhotoFallback&&
+            e.readOnlyDonorActions&&e.originalUserSavedStateUnmodified!==false&&
+            e.releaseAuthorized===false));
+          assert.equal(a.verifiedGenuine3DFrames,9);
+          assert.equal(a.verifiedBrowserScreenshots,15);
+          assert.equal(a.realSignedUsersVerified,false);
+          assert.equal(a.realPhysicalPhonesVerified,false);
+          assert.equal(a.productionDeployed,false);
+          assert.equal(a.familyAlpha,'HOLD');
+          assert.equal(a.releaseAuthorized,false);
+          const i=JSON.parse(readFileSync('benchmark/native-index-live-07/results.json','utf8'));
+          const ia=JSON.parse(readFileSync('benchmark/native-index-live-07-audit/acceptance.json','utf8'));
+          assert.equal(i.priority,'NATIVE-INDEX-LIVE-07');
+          assert.equal(i.cases,3);assert.equal(i.screenshots,18);
+          assert.equal(i.restoredBeforeSourceTrue3D,true);
+          assert.equal(i.realWebGL,true);assert.deepEqual(i.crashes,[]);
+          assert.ok(i.evidence.every(row=>row.realOriginalJPEGImportedManuallyCorrectedAndIndexed&&
+            row.previouslyStaleNewGarmentSavedToUnsavedOutfitWithoutReload&&
+            row.savedOriginalPhotoIncludedInV4Restore&&row.ownerACrossOwnerBRestoreBlocked&&
+            row.bones===163&&row.authenticPhotoSourcedDress3D&&
+            row.nonVettedCoatJacketShoesPhotoFallback&&row.releaseAuthorized===false));
+          assert.equal(ia.verifiedBrowserScreenshots,18);
+          assert.equal(ia.verifiedGenuine3DFrames,9);
+          assert.equal(ia.newCapturedOriginalPreservedThroughIndexAndBackup,true);
+          assert.equal(ia.unsavedDraftPreservedAcrossLiveWardrobeRefresh,true);
+          assert.equal(ia.realSignedUsersVerified,false);
+          assert.equal(ia.realPhysicalPhonesVerified,false);
+          assert.equal(ia.releaseAuthorized,false);assert.equal(ia.familyAlpha,'HOLD');
+          const p=JSON.parse(readFileSync('benchmark/user-photo-3d-01-audit/acceptance.json','utf8'));
+          const v=JSON.parse(readFileSync('benchmark/native-photo-readiness-08/results.json','utf8'));
+          const va=JSON.parse(readFileSync('benchmark/native-photo-readiness-08-audit/acceptance.json','utf8'));
+          assert.equal(p.originalJPEGShaVerified,15);
+          assert.equal(p.realChromiumScreenshots,9);
+          assert.equal(p.readiness['3D Ready'],0);
+          assert.equal(p.readiness['Needs Review'],12);
+          assert.equal(p.readiness['Photo-Only'],3);
+          assert.equal(v.priority,'NATIVE-PHOTO-READINESS-08');
+          assert.equal(v.cases,3);assert.equal(v.screenshots,24);
+          assert.deepEqual(v.errors,[]);assert.deepEqual(v.crashes,[]);
+          assert.ok(v.evidence.every(e=>e.ownerOriginalSourceReadinessShownBeforeWebGL&&
+           e.unsupportedShoesOuterwearRemainPhotoOnly&&
+           e.sourceReadinessBlockedOnLogoutAndForeignOwner&&
+           e.missingOriginalIDRetainedWithoutFabrication&&
+           e.realOriginalJPEGImportedManuallyCorrectedAndIndexed&&
+           e.realNativeBuilder&&e.bones===163&&e.releaseAuthorized===false));
+          assert.equal(va.verifiedBrowserScreenshots,24);
+          assert.equal(va.verifiedGenuine3DFrames,9);
+          assert.equal(va.trueSourceHashVerifiedBeforePhotoDisplay,true);
+          assert.equal(va.unknownUserSourceNeverAutoFitted,true);
+          assert.equal(va.releaseAuthorized,false);assert.equal(va.familyAlpha,'HOLD');
+          console.log('NATIVE-PHOTO-08 source-honest actual saved outfits + fifteen real photographed sources verified; real phone/RLS/10-10 fitting STILL HOLD');
+          NODE
+      - name: Preserve authentic mobile photos and 163-bone WebGL screenshot evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: NATIVE-PHOTO-READINESS-08-111-mobile-original-screens-HOLD
+          path: |
+            benchmark/restore-atomic-01/
+            benchmark/restore-atomic-01-audit/
+            benchmark/native-3d-05/
+            benchmark/native-3d-05-audit/
+            benchmark/native-restore-3d-06/
+            benchmark/native-restore-3d-06-audit/
+            benchmark/native-index-live-07/
+            benchmark/native-index-live-07-audit/
+            benchmark/native-photo-readiness-08/
+            benchmark/native-photo-readiness-08-audit/
+            benchmark/user-photo-3d-01/
+            benchmark/user-photo-3d-01-audit/
+          if-no-files-found: warn
+          retention-days: 14
