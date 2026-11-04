@@ -1,5 +1,5 @@
 'use strict';
-const nativeLossless04Active=new URLSearchParams(location.search).get('nativeLossless04')==='research';
+const nativeLossless04Active=typeof URLSearchParams==='function'&&typeof location!=='undefined'&&new URLSearchParams(location.search).get('nativeLossless04')==='research';
 let nativeLossless04=null;
 let currentBoard=cleanOutfitBoard({},[]),savedOutfitBoards=[],boardInitialized=false,choosingSlot='shoes';
 function nativeLossless04Notify(error){
