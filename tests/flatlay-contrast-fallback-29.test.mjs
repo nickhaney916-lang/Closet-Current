@@ -96,11 +96,19 @@ test('bounded canvas analysis uses exact source image but cannot modify or retai
    assert.equal(tag,'canvas');
    const obj={width:0,height:0,getContext:()=>({
     drawImage(...a){calls.push({size:[obj.width,obj.height],source:a[0]});},
-    getImageData(){return photo(512,384);}
+    getImageData(){
+     const image=photo(512,384);
+     // Browser ImageData data/width/height are inherited read-only getters,
+     // not enumerable own properties; a spread would silently drop them.
+     return Object.create(null,{
+      data:{get:()=>image.data},width:{get:()=>image.width},height:{get:()=>image.height}
+     });
+    }
    })};return obj;
   }};
   const r=detectFlatlayFromImage29(image);
   assert.equal(r.eligible,false,'blank uniform image is not evidence of clothing');
+  assert.equal(r.reason,'foreground-coverage-unsafe','real ImageData getters must reach the image analyzer');
   assert.equal(r.boxes.length,0);
   assert.deepEqual(calls.map(x=>x.size),[[512,384]]);
   assert.equal(calls[0].source,image);
