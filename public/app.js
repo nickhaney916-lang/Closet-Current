@@ -35,14 +35,17 @@ let db,items=[],batch=[],stream,timer,busy=false,lastPixels=null,lastSaved=null,
 let cameraMode=null,cameraOpening=false,cameraRequest=0,captureProofTaking=false;
 window.addEventListener('closet:session-locked',()=>{
  stopCamera();
+ const source=video.getAttribute('src');
+ if(source?.startsWith('blob:')){URL.revokeObjectURL(source);video.removeAttribute('src');video.load();}
  for(const job of localJobs.values()){clearTimeout(job.timer);job.reject(Error('Account session ended'));}
  localJobs.clear();localWorker?.terminate();localWorker=null;
  db?.close();db=null;items=[];batch=[];
- for(const image of $('appShell').querySelectorAll('img')){
+ for(const image of document.querySelectorAll('#appShell img, dialog img')){
   const source=image.getAttribute('src');
   if(source?.startsWith('blob:'))URL.revokeObjectURL(source);
   if(source?.startsWith('blob:')||source?.startsWith('data:'))image.removeAttribute('src');
  }
+ for(const dialog of document.querySelectorAll('dialog[open]'))dialog.close();
 });
 const video=$('video'),canvas=document.createElement('canvas'),tiny=document.createElement('canvas');tiny.width=32;tiny.height=32;
 function message(t){$('message').textContent=t;}

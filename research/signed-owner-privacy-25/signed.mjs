@@ -3,6 +3,7 @@ import {execFileSync} from 'node:child_process';
 import {randomUUID,randomBytes,createHash} from 'node:crypto';
 import {readFile,mkdir,writeFile} from 'node:fs/promises';
 import sharp from 'sharp';
+import {setTimeout as delay} from 'node:timers/promises';
 
 const config=Object.fromEntries((await readFile(process.env.SUPABASE_TEST_ENV,'utf8')).split('\n')
  .filter(line=>/^[A-Z_]+=/.test(line)).map(line=>{const i=line.indexOf('=');return [line.slice(0,i),line.slice(i+1).replace(/^"|"$/g,'')];}));
@@ -99,6 +100,15 @@ check('Signed logout succeeds',logout.ok,logout.status);
 const revoked=await request('/auth/v1/token?grant_type=refresh_token',null,'POST',{refresh_token:current.refresh_token});
 check('Signed logout revokes refresh credential',[400,401,403].includes(revoked.status),revoked.status);
 const residual=await request(table,current.access_token);
+const expiry=JSON.parse(Buffer.from(b.token.split('.')[1],'base64url')).exp;
+assert.ok(Number.isSafeInteger(expiry));
+const remaining=expiry*1000-Date.now();
+assert.ok(remaining<=65_000,'Disposable Auth must issue short-lived access tokens');
+await delay(Math.max(0,remaining+35_000));
+const expired=await request(table,b.token);
+check('Naturally expired signed credential denied',expired.status===401,expired.status);
+const recovered=await request('/auth/v1/token?grant_type=refresh_token',null,'POST',{refresh_token:b.refresh});
+check('Refresh after access expiry retains owner',recovered.ok&&json(recovered).user.id===b.id,recovered.status);
 const report={head:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),signedLocalSupabase:true,distinctAuthenticatedOwners:true,checks,
  logoutAccessTokenRemainsUsable:residual.ok&&json(residual).length===1,
  scope:'Disposable loopback; synthetic JPEGs; no hosted access'};

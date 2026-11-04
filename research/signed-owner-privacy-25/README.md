@@ -42,4 +42,4 @@ The signed job starts an isolated disposable Supabase stack in CI, installs the 
 | 569 | `ca23c25d6621ea41c29fc9bac5f32eefb829b550` | Native multi-photo style |
 | 574 | `9012e01443f97f81b236a4f51afdbb6ad885aaaa` | Release gate |
 
-The branch uses only the PR #579 parent tree. Donor head inspection is not a merge or a statement that every donor is in default. Separate staging, cloud application integration, physical-device behavior, expired-token timing, and complete browser lifecycle coverage are release gaps.
+The branch uses only the PR #579 parent tree. Donor head inspection is not a merge or a statement that every donor is in default. Separate staging, cloud application integration, physical-device behavior, and complete browser lifecycle coverage are release gaps. The disposable Auth config issues short-lived JWTs so the signed job can verify natural access-token expiry and subsequent refresh.

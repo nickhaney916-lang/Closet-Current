@@ -30,6 +30,8 @@ jobs:
           cd "$RUNNER_TEMP/closet-private29"
           supabase init
           sed -i 's/^project_id = .*/project_id = "closet-private29"/' supabase/config.toml
+          sed -i 's/^jwt_expiry = .*/jwt_expiry = 60/' supabase/config.toml
+          grep -q '^jwt_expiry = 60$' supabase/config.toml
           supabase start > "$RUNNER_TEMP/privacy29-stack.log" 2>&1 || { echo "Disposable Supabase startup failed"; exit 1; }
           umask 077
           supabase status -o env > "$RUNNER_TEMP/privacy29.env"

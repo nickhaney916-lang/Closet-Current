@@ -63,6 +63,10 @@ try{
     const stale=await open();
     await stale.waitForFunction(()=>window.closetAuth.user?.id==='owner-a'&&db?.name==='closet-current-user-owner-a');
     assert.equal(await first.evaluate(()=>window.closetAuth.user?.id),'owner-a','same epoch refresh keeps both tabs active');
+    await stale.evaluate(()=>switchView('closet'));
+    await stale.locator('#search').fill('Synthetic garment');
+    await stale.getByRole('button',{name:'Adjust details'}).click();
+    await stale.locator('dialog[open] img').waitFor({state:'visible'});
     await stale.evaluate(()=>{
      window.closetCloud.beforeWrite=()=>new Promise(done=>{window.releaseStale=done;});
      window.lateWrite=writeAll([{id:'delayed-foreign-write'}]).then(()=>false,()=>true);
@@ -70,6 +74,7 @@ try{
     await stale.waitForFunction(()=>!!window.releaseStale);
     await first.evaluate(()=>document.getElementById('logout').click());
     await stale.waitForFunction(()=>window.closetAuth.user===null&&db===null&&document.getElementById('appShell').hidden);
+    assert.equal(await stale.locator('dialog[open]').count(),0);
     const stopped=await stale.evaluate(async()=>{window.releaseStale();return window.lateWrite;});
     assert.equal(stopped,true);
     await first.locator('#authSubmit').waitFor({state:'visible'});

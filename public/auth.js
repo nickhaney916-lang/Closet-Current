@@ -170,7 +170,9 @@
     if(error){status('This email link has expired or was already used. Log in below. If your email still needs confirmation, enter it and choose Resend confirmation email.');return;}
     setBusy(true);status('Verifying your email link…');
     // Do not trust URL claims: verify the token with Supabase before unlocking any wardrobe.
+    const snapshot=localStorage.getItem(STORE);
     const user=await request('user',null,access,'GET');
+    if(localStorage.getItem(STORE)!==snapshot){lockAccount();return;}
     const data={user,access_token:access,refresh_token:refresh,expires_in:Number(callback.get('expires_in'))||3600};
     if(callback.get('type')==='recovery'){
      session=data;recovery=true;$('authEmail').value=user.email||'';$('authEmail').disabled=true;
