@@ -4,6 +4,9 @@ on:
     branches:
       - research/signed-browser-cloud-e2e-37-parallel30-20261104-HOLD
   workflow_dispatch:
+concurrency:
+  group: signed37-${{ github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:
