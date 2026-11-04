@@ -297,8 +297,23 @@ async function recover(browser,engine,width,account,photo,tag,wireStats){
  const before=await page.evaluate(()=>window.closetAuth?.user===null);
  assert.equal(before,true,'New context must begin signed out');
  const token=await loggedIn(page,account);
- await page.waitForFunction(()=>document.getElementById('cloudStatus')?.textContent==='Cloud backup up to date'&&window.closetAuth?.user?.id,null,{timeout:35000});
- await page.waitForFunction(()=>items?.length===3,null,{timeout:30000});
+ // Separate "remote photographs genuinely restored" from status UI messaging.
+ // If either fails, report only sanitized counts/marker flags, never JWTs.
+ const diagnose=()=>page.evaluate(()=>new Promise(done=>{
+  const board=window.nativeLossless04Bridge?.status?.();
+  const base={status:document.getElementById('cloudStatus')?.textContent,
+   localCount:typeof items==='undefined'?null:items.length,dbOpen:!!db,
+   boardActive:board?.active===true,boardDirty:board?.dirty===true};
+  if(!db)return done(base);
+  const r=db.transaction('state').objectStore('state').get('cloud-sync');
+  r.onsuccess=()=>{const m=r.result||{};done({...base,baseVersion:m.baseVersion||0,
+    localRevision:m.localRevision||0,dirty:m.dirty===true,needsRestore:m.needsRestore===true});};
+  r.onerror=()=>done(base);
+ }));
+ try{await page.waitForFunction(()=>items?.length===3,null,{timeout:35000});}
+ catch{throw Error('Actual cloud restore did not yield owner garment rows: '+JSON.stringify(await diagnose()));}
+ try{await page.waitForFunction(()=>document.getElementById('cloudStatus')?.textContent==='Cloud backup up to date',null,{timeout:10000});}
+ catch{throw Error('Actual cloud restore rows exist but UI did not confirm: '+JSON.stringify(await diagnose()));}
  const saved=await rows(page);
  assert.equal(saved.length,3);
  assert.equal(new Set(saved.map(x=>x.sourcePieceKey)).size,3);
