@@ -28,13 +28,13 @@
   }}}
  async function getRemote(){const response=await api('/rest/v1/closet_backups?select=revision,document&owner_id=eq.'+user);const rows=await response.json();if(!Array.isArray(rows)||rows.length>1)throw Error('Invalid cloud response');if(!rows.length)return null;const r=rows[0];if(!Number.isSafeInteger(r.revision)||r.revision<1)throw Error('Invalid cloud revision');E.validateDocument(r.document);return r;}
  async function apply(document,revision,expectedRevision){
-  if(callbacks.canRestore&&!callbacks.canRestore())return false;
+  if(callbacks.canRestore&&!await callbacks.canRestore())return false;
   const local=await decode(document);
   const restoreResearch=new URLSearchParams(location.search).get('restoreAtomic01')==='research';
   const guard=restoreResearch?window.restoreAtomic01Bridge:null;
   if(restoreResearch&&(!guard||
      !await guard.allowCloud({document:local,revision,expectedRevision})))return false;
-  if(callbacks.canRestore&&!callbacks.canRestore())return false;
+  if(callbacks.canRestore&&!await callbacks.canRestore())return false;
   let applied=false;
   await callbacks.capture(()=>transact(['items','state'],'readwrite',tx=>{const state=tx.objectStore('state'),r=state.get('cloud-sync');r.onsuccess=()=>{const m=r.result||markerDefault();if(restoreResearch)try{guard.assertLease();}catch{tx.abort();return;}if(m.localRevision!==expectedRevision||m.dirty)return;const store=tx.objectStore('items');store.clear();for(const item of local.items)store.put(item);for(const id of E.stateIds)state.delete(id);for(const row of Object.values(local.state))state.put(row);state.put({...m,dirty:false,resolutionIds:[],needsRestore:false,baseVersion:revision,baseDocument:document});applied=true;};}));
   if(applied)await callbacks.restored?.();return applied;
