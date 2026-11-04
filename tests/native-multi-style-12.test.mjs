@@ -96,7 +96,9 @@ test('category correction does not alter canonical SHA/source key, and tampered 
  const blocked=await verifiedPrivateStyleRoster03(board(tampered));
  assert.equal(blocked.items.length,2);
  assert.equal(blocked.rejected.length,1);
- assert.deepEqual(originals,rows());
+ assert.deepEqual(originals.map(x=>[x.id,x.sourcePieceKey,x.sourceSHA256,x.originalPhoto.sha256]),
+  rows().map(x=>[x.id,x.sourcePieceKey,x.sourceSHA256,x.originalPhoto.sha256]),
+  'permanent owner IDs and source hashes are deterministic; savedAt timestamps are not');
 });
 test('foreign owner and incorrect generation cannot share a multi-photo styling roster',async()=>{
  await assert.rejects(verifiedPrivateStyleRoster03(board(rows(),{id:'other-owner'})),/owner|mismatch/);
