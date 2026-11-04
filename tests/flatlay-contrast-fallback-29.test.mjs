@@ -100,7 +100,7 @@ test('bounded canvas analysis uses exact source image but cannot modify or retai
    })};return obj;
   }};
   const r=detectFlatlayFromImage29(image);
-  assert.equal(r.eligible,true);
+  assert.equal(r.eligible,false,'blank uniform image is not evidence of clothing');
   assert.equal(r.boxes.length,0);
   assert.deepEqual(calls.map(x=>x.size),[[512,384]]);
   assert.equal(calls[0].source,image);
