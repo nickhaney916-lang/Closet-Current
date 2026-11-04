@@ -145,7 +145,7 @@ try{
    assert.equal(origItems.length,4);assert.equal(origBoard.saved[0].outfit3dId,'restore01-A-outfit3d');
    const downloadPromise=page.waitForEvent('download');
    await page.locator('#export').click();
-   const download=await downloadPromise,buf=await (await download.createReadStream()).toArray?.();
+   const download=await downloadPromise;
    // Download verification uses streaming fallback below for Node runtimes.
    const chunks=[];for await(const chunk of await download.createReadStream())chunks.push(chunk);
    const backup=JSON.parse(Buffer.concat(chunks).toString('utf8'));
@@ -164,16 +164,15 @@ try{
    const makeFile=o=>({name:'closet-v4.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(o))});
    const tampered=structuredClone(backup);tampered.items[0].originalPhoto.sha256='0'.repeat(64);
    await page.locator('#import').setInputFiles(makeFile(tampered));
-   await page.waitForFunction(()=>document.getElementById('captureMessage')?.textContent?.includes('RESTORE01')||
-    document.body.textContent.includes('original JPEG SHA mismatch'));
+   await page.waitForFunction(()=>document.getElementById('message')?.textContent?.includes('original JPEG SHA mismatch'));
    assert.equal((await stored(page)).length,3,'Invalid backup cannot mutate wardrobe');
    page.once('dialog',d=>d.dismiss());
    await page.locator('#import').setInputFiles(makeFile(backup));
    assert.equal((await stored(page)).length,3,'Cancel cannot mutate wardrobe');
    page.once('dialog',d=>d.accept());
    await page.locator('#import').setInputFiles(makeFile(backup));
-   await page.waitForFunction(()=>window.nativeLossless04Bridge?.status()?.active&&
-    document.getElementById('boardSaveStatus')?.textContent?.length>=0);
+   await page.waitForFunction(()=>items.length===4&&window.nativeLossless04Bridge?.status()?.active&&
+    document.getElementById('message')?.textContent?.includes('restored together'));
    const after=await stored(page),afterBoard=(await stored(page,'state')).find(x=>x.id==='outfit-board');
    assert.deepEqual(after,origItems,'Each original JPEG and category correction must survive');
    assert.deepEqual(afterBoard,origBoard,'Original saved outfits and dangling references survive');
@@ -193,6 +192,7 @@ try{
    assert.equal(changed.saved[0].outfit3dId,'restore01-A-outfit3d');
    await picture(page,engine,width,'05-reopened-edited-and-saved');
    // Separate synthetic B cannot import A's owner-bound recovery.
+   await page.locator('details.account-menu > summary').click();
    await page.locator('#logout').click();
    await page.waitForFunction(()=>document.getElementById('authGate')?.hidden===false);
    await signIn(page,'restore01-B');await seed(page,fixture('restore01-B'));
