@@ -247,14 +247,24 @@ function render(){
   // Mobile saved-item editors can otherwise extend past the viewport and
   // their Save/Cancel buttons become covered by scrolling clothing fields.
   // Scope safe scrolling to research mode; preserve default consumer UI.
+  dialog.style.boxSizing='border-box';
+  dialog.style.width='calc(100vw - 24px)';
+  dialog.style.maxWidth='min(440px,calc(100vw - 24px))';
+  dialog.style.minWidth='0';
+  dialog.style.margin='auto';
   dialog.style.maxHeight='min(90dvh,750px)';
   dialog.style.overflowY='auto';
+  dialog.style.overflowX='hidden';
   dialog.style.overscrollBehavior='contain';
   dialog.style.scrollPaddingBottom='12px';
  }const f=node('form');const draft=structuredClone(item),collect=clothingFields(f,draft),
   expectedSavedRow=nativeCorrection10Active()?structuredClone(item):null,
   ok=node('button','Save changes','primary'),cancel=node('button','Cancel','secondary');
- f.className='card';f.style.padding='15px';cancel.type='button';cancel.onclick=()=>dialog.close();f.onsubmit=async e=>{e.preventDefault();ok.disabled=true;try{const updated={...collect(),name:draft.name.trim()||'Closet piece'};if(updated.color&&updated.colorSource==='photo-estimate')updated.colorSource='user';if(typeof ClothingMemory!=='undefined')Object.assign(updated,ClothingMemory.confirm(updated));
+ f.className='card';f.style.padding='15px';
+ if(expectedSavedRow){
+  f.style.boxSizing='border-box';f.style.width='100%';
+  f.style.maxWidth='100%';f.style.minWidth='0';
+ }cancel.type='button';cancel.onclick=()=>dialog.close();f.onsubmit=async e=>{e.preventDefault();ok.disabled=true;try{const updated={...collect(),name:draft.name.trim()||'Closet piece'};if(updated.color&&updated.colorSource==='photo-estimate')updated.colorSource='user';if(typeof ClothingMemory!=='undefined')Object.assign(updated,ClothingMemory.confirm(updated));
  if(expectedSavedRow){
   updated.userAdjusted=true;updated.requiresOwnershipConfirmation=false;
   await queued(()=>commitOwnerCorrection10(updated,expectedSavedRow,null));
@@ -262,8 +272,10 @@ function render(){
  }else await writeAll([updated]);
  Object.assign(item,updated);dialog.close();render();scheduleMemoryReview();
  }catch(error){
-  message(expectedSavedRow?'Saved garment not overwritten. '+String(error.message||error)+
-   '. Close and reopen Adjust details to review the latest saved item.':
+  message(expectedSavedRow?
+   String(error.message||error).includes('CORRECTION10_STALE_SAVED_GARMENT')?
+    'Another tab changed this garment. Your edits were not saved. Close and reopen Adjust details.':
+    'Changes were not saved. Check the original photo and sign-in, then reopen Adjust details.':
    'Changes could not be saved.');
   ok.disabled=false;}};if(nativeCorrection10Active()){
   const actionRow=node('div',null,'actions native-correction10-actions');
