@@ -1,0 +1,88 @@
+name: SIGNED-OWNER-PRIVACY-25 disposable auth and local browser NO DEPLOY
+on:
+  pull_request:
+    paths:
+      - 'research/signed-owner-privacy-25/**'
+      - 'public/auth.js'
+      - 'public/app.js'
+      - 'tests/auth.test.cjs'
+      - '.github/workflows/signed-owner-privacy-25-no-deploy.yml'
+permissions:
+  contents: read
+jobs:
+  signed-http:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.48.3
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3
+      - name: Start isolated local Supabase and install repository policies
+        env:
+          SUPABASE_TELEMETRY_DISABLED: 'true'
+        run: |
+          mkdir -p "$RUNNER_TEMP/closet-private29"
+          cd "$RUNNER_TEMP/closet-private29"
+          supabase init
+          sed -i 's/^project_id = .*/project_id = "closet-private29"/' supabase/config.toml
+          supabase start > "$RUNNER_TEMP/privacy29-stack.log" 2>&1 || { echo "Disposable Supabase startup failed"; exit 1; }
+          umask 077
+          supabase status -o env > "$RUNNER_TEMP/privacy29.env"
+          docker exec -i supabase_db_closet-private29 psql -U postgres -v ON_ERROR_STOP=1 < "$GITHUB_WORKSPACE/supabase/cloud-backup.sql"
+      - name: Real password sessions and adversarial signed HTTP authorization
+        run: SUPABASE_TEST_ENV="$RUNNER_TEMP/privacy29.env" node research/signed-owner-privacy-25/signed.mjs
+      - uses: actions/upload-artifact@v4
+        if: always() && !cancelled()
+        with:
+          name: signed-owner-privacy-25-local-http
+          path: benchmark/signed-owner-privacy-25/signed.json
+      - name: Stop disposable stack
+        if: always()
+        run: |
+          if test -f "$RUNNER_TEMP/closet-private29/supabase/config.toml"; then
+            cd "$RUNNER_TEMP/closet-private29"
+            supabase stop --no-backup >/dev/null 2>&1 || true
+          fi
+          rm -f "$RUNNER_TEMP/privacy29.env" "$RUNNER_TEMP/privacy29-stack.log"
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify pinned parent and isolated source scope
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          base=e104f2001f6ab993bd88481bd2257c83663ae93e
+          git merge-base --is-ancestor "$base" HEAD
+          git diff --name-only "$base" HEAD | while IFS= read -r path; do
+            case "$path" in
+              research/signed-owner-privacy-25/*|public/auth.js|public/app.js|tests/auth.test.cjs|.github/workflows/signed-owner-privacy-25-no-deploy.yml) ;;
+              *) echo "Unexpected file $path"; exit 1 ;;
+            esac
+          done
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - run: node scripts/build.mjs && node --test tests/*.test.cjs tests/*.test.mjs
+      - run: node research/signed-owner-privacy-25/browser.mjs
+      - name: Recheck atomic owner-bound restore with existing browser fixture
+        run: node scripts/test-restore-atomic-01-browser.mjs && node scripts/audit-restore-atomic-01.mjs
+      - uses: actions/upload-artifact@v4
+        if: always() && !cancelled()
+        with:
+          name: signed-owner-privacy-25-browser-fixture
+          path: |
+            benchmark/signed-owner-privacy-25/browser.json
+            benchmark/signed-owner-privacy-25/*.png

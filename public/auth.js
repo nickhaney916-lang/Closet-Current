@@ -10,14 +10,38 @@
  let resolveReady,rejectReady;
  const ready=new Promise((resolve,reject)=>{resolveReady=resolve;rejectReady=reject;});
  window.closetAuth={ready,user:null};
+ let storedSession=null,locked=false,epoch=null;
+ function currentEpoch(){
+  try{return JSON.parse(localStorage.getItem(STORE)||'null')?.epoch??null;}catch{return null;}
+ }
+ const stillCurrent=()=>epoch!==null&&currentEpoch()===epoch;
+ function lockAccount(){
+  if(locked)return;
+  locked=true;session=null;window.closetAuth.user=null;
+  $('appShell').hidden=true;$('authGate').hidden=false;
+  $('authStatus').textContent='This session ended. Reload to sign in again.';
+  window.dispatchEvent(new Event('closet:session-locked'));
+ }
+ window.closetAuth.assertCurrent=()=>{
+  if(!locked&&session&&!stillCurrent())lockAccount();
+  if(locked||!window.closetAuth.user?.id)throw Error('Account session ended');
+ };
+ window.addEventListener('storage',event=>{
+  if((event.key===STORE||event.key===null)&&session&&!stillCurrent())lockAccount();
+ });
+ window.addEventListener('pageshow',()=>{
+  if(session&&!stillCurrent())lockAccount();
+ });
  let signup=false,session=null,busy=false,recovery=false,restoringSession=false,refreshing=null;
  window.closetAuth.getAccessToken=async({force=false}={})=>{
+  window.closetAuth.assertCurrent();
   if(!session?.access_token||!window.closetAuth.user?.id)throw Error('Sign in required');
   if(force||session.expires_at<Date.now()/1000+60){
    if(!session.refresh_token)throw Error('Sign in again');
-   if(!refreshing){const expected=window.closetAuth.user.id;refreshing=request('token?grant_type=refresh_token',{refresh_token:session.refresh_token}).then(data=>{if(data.user?.id!==expected||!data.access_token)throw Error('Session account changed');showUser(data);}).finally(()=>{refreshing=null;});}
+   if(!refreshing){const expected=window.closetAuth.user.id;refreshing=request('token?grant_type=refresh_token',{refresh_token:session.refresh_token}).then(data=>{window.closetAuth.assertCurrent();if(data.user?.id!==expected||!data.access_token)throw Error('Session account changed');showUser(data);}).finally(()=>{refreshing=null;});}
    await refreshing;
   }
+  window.closetAuth.assertCurrent();
   return session.access_token;
  };
  const status=t=>$('authStatus').textContent=t;
@@ -72,10 +96,13 @@
    return data;
   }finally{clearTimeout(timer);}
  }
- function showUser(data){
+ function showUser(data,previousEpoch=epoch){
+  if(locked)throw Error('Account session ended');
   if(!data?.user?.id)throw Error('No verified user session');
   session={...data,expires_at:Math.floor(Date.now()/1000)+(data.expires_in||3600)};window.closetAuth.user=data.user;
-  localStorage.setItem(STORE,JSON.stringify({access_token:data.access_token,refresh_token:data.refresh_token,expires_at:Math.floor(Date.now()/1000)+(data.expires_in||3600)}));
+  epoch=previousEpoch||crypto.randomUUID();
+  storedSession=JSON.stringify({epoch,access_token:data.access_token,refresh_token:data.refresh_token,expires_at:session.expires_at});
+  localStorage.setItem(STORE,storedSession);
   $('authGate').hidden=true;$('appShell').hidden=false;
   $('accountLabel').textContent=data.user.user_metadata?.username||data.user.email||'My account';
   resolveReady(data.user);
@@ -90,20 +117,22 @@
  }
  $('authMode').onclick=()=>setMode(!signup);
  $('authForm').onsubmit=async e=>{
-  e.preventDefault();if(busy)return;setBusy(true);status(signup?'Creating your account…':'Checking your email and password…');
+  e.preventDefault();if(locked){location.reload();return;}if(busy)return;setBusy(true);status(signup?'Creating your account…':'Checking your email and password…');
   const email=$('authEmail').value.trim(),password=$('authPassword').value;
+  const original=localStorage.getItem(STORE);
+  const publish=data=>{if(localStorage.getItem(STORE)!==original){lockAccount();return;}showUser(data);};
   try{
    if(recovery){
     if(password.length<8)throw Error('Your password must have at least 8 characters.');
     const user=await request('user',{password},session.access_token,'PUT');
-    recovery=false;showUser({...session,user});
+    recovery=false;publish({...session,user});
    }else if(signup){
     const username=$('authUsername').value.trim();
     if(!/^[A-Za-z0-9_]{3,32}$/.test(username))throw Error('Username must be 3–32 letters, numbers or underscores.');
     const data=await request('signup'+EMAIL_REDIRECT,{email,password,data:{username}});
-    if(data.access_token&&data.user)showUser(data);
+    if(data.access_token&&data.user)publish(data);
     else status('Check your email to confirm your account, then log in.');
-   }else showUser(await request('token?grant_type=password',{email,password}));
+   }else publish(await request('token?grant_type=password',{email,password}));
   }catch(err){status(errorMessage(err));}finally{setBusy(false);}
  };
  $('authReset').onclick=async()=>{
@@ -122,8 +151,10 @@
   catch(err){status(errorMessage(err));}finally{setBusy(false);}
  };
  $('logout').onclick=async()=>{
-  try{if(session?.access_token)await request('logout',{},session.access_token);}catch{}
-  localStorage.removeItem(STORE);
+  const token=session?.access_token;
+  if(session&&stillCurrent())localStorage.removeItem(STORE);
+  lockAccount();
+  try{if(token)await request('logout',{},token);}catch{}
   // Reload closes the current account's IndexedDB connection and clears in-memory images.
   location.reload();
  };
@@ -149,13 +180,15 @@
     }
     showUser(data);return;
    }
-   const saved=JSON.parse(localStorage.getItem(STORE)||'null');
+   const snapshot=localStorage.getItem(STORE);
+   const saved=JSON.parse(snapshot||'null');
    if(saved?.refresh_token){
-    restoringSession=true;setBusy(true);status('Restoring your login…');
+    storedSession=snapshot;restoringSession=true;setBusy(true);status('Restoring your login…');
     const data=await request('token?grant_type=refresh_token',{refresh_token:saved.refresh_token});
-    showUser(data);return;
+    if(localStorage.getItem(STORE)!==snapshot){lockAccount();return;}
+    showUser(data,saved.epoch);return;
    }
-  }catch(error){localStorage.removeItem(STORE);status(restoringSession?(error instanceof TypeError?'Could not restore your login. Check your connection and log in again.':'Your login session has expired. Log in again.'):'This sign-in link could not be verified. Log in with your email and password, or request a fresh email link.');return;}finally{setBusy(false);}
+  }catch(error){if(!locked&&restoringSession&&localStorage.getItem(STORE)===storedSession)localStorage.removeItem(STORE);status(restoringSession?(error instanceof TypeError?'Could not restore your login. Check your connection and log in again.':'Your login session has expired. Log in again.'):'This sign-in link could not be verified. Log in with your email and password, or request a fresh email link.');return;}finally{setBusy(false);}
   status(modeHint());
  })();
 })();

@@ -13,8 +13,8 @@ function app(fetchImpl=async()=>{throw new TypeError('network unavailable');},ca
  elements.get('authEmail').value='test@example.invalid';
  elements.get('authPassword').value='test-password-only';
  elements.get('authUsername').value='test_user';
- const saved=new Map(),window={};if(initialSession)saved.set('closet-current-auth-v1',JSON.stringify(initialSession));let timerId=0,reloaded=false;
- vm.runInNewContext(source,{window,document:{getElementById:id=>elements.get(id)},localStorage:{getItem:key=>saved.get(key)||null,setItem:(key,value)=>saved.set(key,value),removeItem:key=>saved.delete(key)},location:{reload(){reloaded=true;},pathname:'/Closet-Current/',...callback},history:{replaceState(){}},URLSearchParams,AbortController,TypeError,setTimeout:fn=>{timers.set(++timerId,fn);return timerId;},clearTimeout:id=>timers.delete(id),fetch:async(...args)=>{requests.push(args);return fetchImpl(...args);}});
+ const saved=new Map(),window={addEventListener(name,fn){listeners[name]=fn;},dispatchEvent(){}};if(initialSession)saved.set('closet-current-auth-v1',JSON.stringify(initialSession));let timerId=0,reloaded=false;
+ vm.runInNewContext(source,{window,document:{getElementById:id=>elements.get(id)},localStorage:{getItem:key=>saved.get(key)||null,setItem:(key,value)=>saved.set(key,value),removeItem:key=>saved.delete(key)},location:{reload(){reloaded=true;},pathname:'/Closet-Current/',...callback},history:{replaceState(){}},crypto:require('node:crypto').webcrypto,Event,URLSearchParams,AbortController,TypeError,setTimeout:fn=>{timers.set(++timerId,fn);return timerId;},clearTimeout:id=>timers.delete(id),fetch:async(...args)=>{requests.push(args);return fetchImpl(...args);}});
  return {get:id=>elements.get(id),listeners,timers,requests,window,saved,reloaded:()=>reloaded,submit:()=>elements.get('authForm').onsubmit({preventDefault(){}})};
 }
 const response=(data,ok=true)=>({ok,json:async()=>data});
@@ -165,4 +165,30 @@ test('simultaneous cloud refreshes rotate the token only once and retain the acc
 test('cloud token refresh cannot switch to a different account',async()=>{
  let calls=0;const a=app(async()=>++calls===1?response({access_token:'old-access',refresh_token:'old-refresh',user:{id:'first-user'}}):response({access_token:'other-access',user:{id:'other-user'}}));await a.submit();
  await assert.rejects(a.window.closetAuth.getAccessToken({force:true}),/account changed/);assert.equal(a.window.closetAuth.user.id,'first-user');
+});
+
+test('an external session change locks an authenticated tab and rejects future tokens',async()=>{
+ const a=app(async()=>response({user:{id:'owner-a'},access_token:'a',refresh_token:'r'}));
+ await a.submit();
+ a.saved.set('closet-current-auth-v1',JSON.stringify({access_token:'b',refresh_token:'rb'}));
+ a.listeners.storage({key:'closet-current-auth-v1'});
+ assert.equal(a.window.closetAuth.user,null);
+ assert.equal(a.get('appShell').hidden,true);
+ await assert.rejects(a.window.closetAuth.getAccessToken(),/session ended/);
+ assert.equal(a.saved.has('closet-current-auth-v1'),true);
+});
+
+test('logout while a forced refresh is pending cannot resurrect the former owner',async()=>{
+ let finish;
+ const a=app(async(url)=>{
+  if(url.includes('grant_type=refresh_token'))return new Promise(done=>{finish=done;});
+  return response({user:{id:'owner-a'},access_token:'a',refresh_token:'r'});
+ });
+ await a.submit();
+ const refresh=a.window.closetAuth.getAccessToken({force:true});
+ await a.get('logout').onclick();
+ finish(response({user:{id:'owner-a'},access_token:'late',refresh_token:'late-r'}));
+ await assert.rejects(refresh,/session ended/);
+ assert.equal(a.window.closetAuth.user,null);
+ assert.equal(a.saved.has('closet-current-auth-v1'),false);
 });
