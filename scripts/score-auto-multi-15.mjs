@@ -109,10 +109,11 @@ export function scoreAutoMultiEvidence15(manifest,cases,{verifiedLiveInference=f
  ...summary,coarseBoxRecallProxyPercent:percent(summary.matchedCoarseRegions,summary.expectedCoarseRegions),
  allSourcesVerified:out.every(x=>x.sourcePixelsVerified),
  sourceRetained:true,automaticGarmentTypeAccuracyPercent:null,automaticMaskIoU:null,
- fullyAutomaticMultiGarmentRecallPercent:null,realMultiPhotoPopulation:summary.fullOutfitScenes,
- modelQualityAccepted:verifiedLiveInference&&summary.modelErrors===0&&
+ fullyAutomaticMultiGarmentRecallPercent:null,realMultiPhotoPopulation:new Set(manifest.filter(x=>x.scene==='worn-outfit').map(x=>x.sourceSha256)).size,
+ singlePhotoSmokeGatePassed:verifiedLiveInference&&summary.modelErrors===0&&
  summary.unmatchedCoarseRegions===0&&summary.unassignedProposals===0&&
  summary.scenesWithThreeProposedClasses===summary.scenesWithThreeExpectedClasses,
+ modelQualityAccepted:false, // One original photo can never certify real-world automatic segmentation quality.
  allProposalsRequireHumanReview:true,
  familyAlpha:'HOLD',productionDeployed:false,realOwnerRLSVerified:false,
  physicalPhonesVerified:false,cases:out};
