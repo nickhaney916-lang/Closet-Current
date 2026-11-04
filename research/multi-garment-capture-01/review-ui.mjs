@@ -313,6 +313,7 @@ export function mountMultiGarmentCapture24({
  const handle=event=>{const file=event.target.files?.[0];event.target.value='';if(file)startFile(file);};
  for(const id of ['outfitCamera','outfitUpload'])$(doc,id).onchange=handle;
  window.addEventListener('closet:alpha-session-changed',()=>reset('Session changed; unconfirmed clothes cleared.'));
+ window.addEventListener('closet:session-locked',()=>reset('Authenticated account session ended; unconfirmed photo and crops cleared.'));
  window.addEventListener('pagehide',()=>revoke());
  save.disabled=true;add.disabled=true;suggest.disabled=true;
  return {active:true,startFile,reset,debug:()=>({owner:state?.owner,sourceSHA256:state?.proof?.sourceSHA256,pieces:state?.pieces.map(x=>({id:x.id,instanceKey:x.instanceKey,category:x.category,color:x.color,confirmed:x.confirmed}))||[],working:!!job})};
