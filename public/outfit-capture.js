@@ -1,9 +1,10 @@
 'use strict';
-let outfitActiveId=null,lastOutfitPhoto='',outfitSplitJob=null,lastOutfitSourceProof=null;
+let outfitActiveId=null,lastOutfitPhoto='',outfitSplitJob=null,lastOutfitSourceProof=null,outfitSourceOwnerId=null;
 function renderOutfitCapture(){
  if(!outfitActiveId)outfitActiveId=batch.find(x=>x.outfitSourceId)?.outfitSourceId||null;
  const pending=batch.filter(x=>x.outfitSourceId===outfitActiveId),saved=items.filter(x=>x.outfitSourceId===outfitActiveId);
- $('outfitPieceActions').hidden=!outfitActiveId||(!pending.length&&!saved.length);
+ $('outfitPieceActions').hidden=!outfitActiveId||!lastOutfitPhoto;
+ $('outfitAddMissed').disabled=!outfitActiveId||!lastOutfitPhoto||!!outfitSplitJob||busy;
  $('outfitPieceSummary').textContent=saved.length+' saved'+(pending.some(x=>localPending.has(x.id))?' · checking photos…':'')+(pending.some(x=>!localPending.has(x.id))?' · some pieces need review':'');
  $('useCapturedOutfit').disabled=!saved.length;
 }
@@ -12,7 +13,7 @@ function finishOutfitSplit(job,text,failed=false){
  if(typeof recordDeviceEvent==='function')recordDeviceEvent(failed?'outfit_split_failed':'outfit_split_ready',{durationMs:Date.now()-job.started});
  clearTimeout(job.timer);job.worker?.terminate();outfitSplitJob=null;busy=false;controls(false);
  $('outfitSplitStatus').textContent=text;$('outfitRetry').hidden=!failed;renderOutfitCapture();
- if(job.added){if(!$('scan').hidden)switchView('review');$('outfitSaveStatus').textContent=failed?'The separated pieces below are kept. Return to Add clothes to try separating the rest again.':'Automatic proposals need your crop, garment type and color confirmation in Adjust before saving.';}
+ if(job.added||lastOutfitPhoto){if(!$('scan').hidden)switchView('review');$('outfitSaveStatus').textContent=failed?'The original is preserved. Add missed garments with a manual crop or try separation again from Add clothes.':job.added?'Automatic proposals need your crop, garment type and color confirmation in Adjust before saving.':'No garment was found automatically. Add a missed garment by selecting its crop from the original photo.';}
 }
 function startOutfitSplit(image,sourceId=crypto.randomUUID(),proof=null){
  if(busy||outfitSplitJob)return;
@@ -21,7 +22,7 @@ function startOutfitSplit(image,sourceId=crypto.randomUUID(),proof=null){
  if(guarded&&(!owner||!proof||proof.image!==image||proof.originalPhoto?.sha256!==proof.sourceSHA256)){
   $('outfitSplitStatus').textContent='Outfit source verification is missing. Choose the original photo again.';return;
  }
- stopCamera();busy=true;controls(true);outfitActiveId=sourceId;lastOutfitPhoto=image;if(guarded)lastOutfitSourceProof=proof;$('outfitRetry').hidden=true;$('outfitSaveStatus').textContent='';
+ stopCamera();busy=true;controls(true);outfitActiveId=sourceId;lastOutfitPhoto=image;outfitSourceOwnerId=owner;lastOutfitSourceProof=guarded?proof:null;$('outfitRetry').hidden=true;$('outfitSaveStatus').textContent='';
  if(typeof recordDeviceEvent==='function')recordDeviceEvent('outfit_split_start');
  const job={id:crypto.randomUUID(),sourceId,owner,proof,started:Date.now(),phase:'loading',worker:null,timer:null,added:0};outfitSplitJob=job;
  const timeout=()=>finishOutfitSplit(job,'Outfit separation timed out. Your existing and separated photos are kept. Try again with one person, head to toe.',true);
@@ -77,6 +78,45 @@ function capturedPieceSlot(item){
  if(['Tops','Dresses'].includes(item.category))return 'top';if(item.category==='Bottoms')return 'bottom';if(item.category==='Outerwear')return 'layer';if(item.category==='Shoes')return 'shoes';
  return item.itemType==='Bag'?'bag':['Jewelry','Sunglasses'].includes(item.itemType)?'accessory':['Belt','Scarf','Hat'].includes(item.itemType)?'finish':null;
 }
+$('outfitAddMissed').onclick=async()=>{
+ const guarded=typeof captureProof01Active!=='undefined'&&captureProof01Active;
+ const image=lastOutfitPhoto,sourceId=outfitActiveId,owner=outfitSourceOwnerId,proof=lastOutfitSourceProof;
+ if(!image||!sourceId||outfitSplitJob||busy||
+  guarded&&(!owner||captureProofOwner()!==owner||!proof?.sourceHashVerified||
+   proof?.originalPhoto?.sha256!==proof.sourceSHA256)){
+  $('outfitSaveStatus').textContent='Original photo or signed-in owner could not be verified. Choose the outfit photo again.';
+  return;
+ }
+ try{
+  await openPhotoCrop({
+   image,originalPhoto:proof?.originalPhoto||{image},
+   cropBounds:{x:.15,y:.15,width:.70,height:.70}
+  },{
+   // A missing piece has NO segmentation-derived subtype. Manual Adjust
+   // is mandatory; never generate type/color from this helper callback.
+   analyze:async()=>null,
+   save:async crop=>{
+    if(!crop?.image||!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(crop.image)||
+     crop.image.length>8000000||!crop.cropBounds||outfitActiveId!==sourceId||
+     outfitSplitJob||busy||guarded&&captureProofOwner()!==owner)
+     throw Error('Original photo, crop or owner changed');
+    const accepted=candidate(crop.image,{
+     outfitSourceId:sourceId,requiresReview:true,
+     originalPhoto:proof?.originalPhoto||{image},
+     originalSourceProof:guarded?proof:null,
+     recognitionPhoto:{image:crop.image},cropBounds:crop.cropBounds,
+     colorEstimate:crop.maskedColorEstimate||null
+    });
+    if(!accepted)throw Error('Duplicate or invalid crop');
+    renderOutfitCapture();
+    $('outfitSaveStatus').textContent='New garment crop added for review. Confirm type and color in Adjust before saving.';
+    if(!$('scan').hidden)switchView('review');
+   }
+  });
+ }catch{
+  $('outfitSaveStatus').textContent='Manual crop could not open. Your original photo remains unchanged. Try again.';
+ }
+};
 $('useCapturedOutfit').onclick=async()=>{
  await outfitBoardReady;const selected=items.filter(x=>x.outfitSourceId===outfitActiveId),slots={};
  for(const item of selected){const slot=capturedPieceSlot(item);if(slot&&(!slots[slot]||item.category==='Dresses'))slots[slot]=item.id;}
