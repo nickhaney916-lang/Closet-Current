@@ -308,7 +308,7 @@ try{
   await shot(page,width,'04-saved-outfit',engine);
   if(recognition42){
    await page.evaluate(()=>switchView('closet'));
-   await page.locator('#filter').selectOption('Shoes');
+   await page.locator('#closetCategories button[data-category="Shoes"]').click();
    await page.locator('#search').fill('Sneakers');
    const savedCard=page.locator('#closetGrid article.card').filter({hasText:'Blue Sneakers'});
    await savedCard.getByRole('button',{name:'Adjust details'}).click();
