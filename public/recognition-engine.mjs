@@ -443,7 +443,7 @@ export async function verifyAutomaticSubtype14(model,image,result,{
   score:Math.min(...views.map(x=>x.score))
  }:null;
  return {strong:false,categoryConfirmed:!!review,categoryOnly:!!review,
-  choices:review?[review]:[],details:{},
+  requiresSubtypeReview:true,choices:review?[review]:[],details:{},
   reason:unavailable?'subtype_verification_unavailable':'subtype_review_required',
   suggestedTypeForReview:type,subtypeChoicesForReview:types.map(x=>x.itemType),
   diagnostics:{subtypeVerification14:{views,originalView:source,
