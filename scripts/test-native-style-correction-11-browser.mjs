@@ -58,7 +58,7 @@ const results={priority:'NATIVE-STYLE-CORRECTION-INTEGRATION-11',
  ownerPrivateIndexedDB:true,originalJPEGReencoded:false,
  realSignedServerRLS:false,realPhysicalAndroidOrIphone:false,
  arbitraryFitted3D:false,familyAlpha:'HOLD',releaseAuthorized:false,
- cases:[],screenshots:[],errors:[],crashes:[],external:[],consoleErrors:[]};
+ cases:[],screenshots:[],errors:[],crashes:[],external:[],blockedPublicAssets:[],consoleErrors:[]};
 let browser=null,tokens=0;
 const cloudStub="window.closetCloud={start:async()=>{},changed:()=>{},beforeWrite:async()=>{},sync:async()=>{}};";
 function fixture(owner){
@@ -393,8 +393,21 @@ try{
     if(url.startsWith(origin+'/')||url.startsWith('blob:'+origin)||
        url.startsWith('data:'))return route.continue();
     if(url.startsWith(authOrigin+'/auth/v1/'))return authResponse(route);
-    results.external.push({engine,width,method:route.request().method(),
-     host:new URL(url).hostname});return route.abort();
+    // No third-party request is forwarded: abort even harmless public
+    // font, shared trend-data or CDN fetches. Audit the attempts separately
+    // so a blocked public GET is never mistaken for private-photo exfil.
+    const host=new URL(url).hostname,method=route.request().method();
+    const publicOnly=method==='GET'&&
+     ['fonts.googleapis.com','raw.githubusercontent.com','cdn.jsdelivr.net'].includes(host)&&
+     !url.includes(ownerA)&&!url.includes(ownerB)&&
+     !url.includes('data:image')&&!url.includes('sourceSHA256')&&
+     !url.includes(photos['commons-0002'].sha256);
+    if(publicOnly){
+     results.blockedPublicAssets.push({engine,width,host,method,blocked:true});
+     return route.abort();
+    }
+    results.external.push({engine,width,method,host,url:url.slice(0,200)});
+    return route.abort();
    });
    const page=await context.newPage();
    page.on('pageerror',e=>results.errors.push({engine,width,message:String(e)}));
@@ -442,7 +455,12 @@ try{
  assert.equal(results.cases.length,6);
  assert.deepEqual(results.errors,[]);
  assert.deepEqual(results.crashes,[]);
- assert.deepEqual(results.external,[]);
+ assert.deepEqual(results.external,[],
+   'No unapproved network target or private source parameter is allowed');
+ assert.ok(results.blockedPublicAssets.length>0);
+ assert.ok(results.blockedPublicAssets.every(x=>x.blocked===true&&
+  x.method==='GET'&&
+  ['fonts.googleapis.com','raw.githubusercontent.com','cdn.jsdelivr.net'].includes(x.host)));
  assert.deepEqual(results.consoleErrors,[]);
  assert.equal(results.cases.every(x=>x.threeRealOriginalOwnedLooks&&
   x.actualInputAndHumanCorrection&&x.ownerBPrivate&&x.photosUnchanged),true);
