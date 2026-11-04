@@ -203,6 +203,14 @@ const outfitBoardReady=(async()=>{
      });
     }catch(error){nativeLossless04Notify(error);}
    }
+   // MOBILE09: Research-only tactile and safe-area polish. It changes no
+   // saved record, cloth geometry, owner permission, or released stylesheet.
+   if(new URLSearchParams(location.search).get('nativeMobile09')==='research'){
+    try{
+     const {mountNativeMobile09}=await import('../research/native-mobile-09/mobile-comfort.mjs');
+     window.nativeMobile09Bridge=mountNativeMobile09({board:nativeLossless04});
+    }catch(error){nativeLossless04Notify(error);}
+   }
   }catch(error){nativeLossless04Notify(error);nativeLossless04ClearPreview();}
  }else if(db){
   try{
