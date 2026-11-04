@@ -20,7 +20,7 @@ export function boxIoU16(a,b){
  const w=Math.max(0,Math.min(a.x+a.width,b.x+b.width)-Math.max(a.x,b.x)),
   h=Math.max(0,Math.min(a.y+a.height,b.y+b.height)-Math.max(a.y,b.y));
  const intersection=w*h,union=a.width*a.height+b.width*b.height-intersection;
- return union?intersection/union:0;
+ return union?Math.min(1,Math.max(0,intersection/union)):0;
 }
 function distinct(rows,label){
  demand(Array.isArray(rows)&&rows.length>0,label+' empty');
