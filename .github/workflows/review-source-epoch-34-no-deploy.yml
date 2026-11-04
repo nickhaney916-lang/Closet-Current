@@ -1,0 +1,95 @@
+name: REVIEW-EPOCH-34 owner-bound source and save mobile acceptance NO DEPLOY
+on:
+  push:
+    branches:
+      - research/review-source-epoch-34-main-20261104-HOLD
+  pull_request:
+    paths:
+      - 'research/multi-garment-capture-01/review-ui.mjs'
+      - 'research/review-source-epoch-34/**'
+      - 'scripts/verify-review-source-epoch-34.mjs'
+      - 'tests/review-source-epoch-34.test.mjs'
+      - '.github/workflows/review-source-epoch-34-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  exact-source-epoch-and-real-browser-idb:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify exact PR589 source and strict no-deploy changed path allowlist
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor 79e957719bd90f7f1cd1ae71ec4bde5ff14ae93c HEAD
+          git diff --name-only 79e957719bd90f7f1cd1ae71ec4bde5ff14ae93c HEAD > /tmp/epoch34-paths
+          while IFS= read -r p; do
+            case "$p" in
+              research/multi-garment-capture-01/review-ui.mjs|research/review-source-epoch-34/*|scripts/verify-review-source-epoch-34.mjs|tests/review-source-epoch-34.test.mjs|.github/workflows/review-source-epoch-34-no-deploy.yml) ;;
+              *) echo "BLOCKED unexpected model/original/photo/storage/auth/production edit: $p"; exit 1 ;;
+            esac
+          done < /tmp/epoch34-paths
+      - name: Install fixed research testing dependencies without lockfile mutations
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Verify source syntax, build actual app and run ALL inherited Node tests
+        run: |
+          node --check research/multi-garment-capture-01/review-ui.mjs
+          node --check scripts/verify-review-source-epoch-34.mjs
+          node --check tests/review-source-epoch-34.test.mjs
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Real mobile Chromium and WebKit source competition, stale crop and owner-private IndexedDB acceptance
+        run: node scripts/verify-review-source-epoch-34.mjs
+      - name: Verify exact synthetic source provenance, native IDB effects and six screenshot PNG SHA receipts
+        run: |
+          node --input-type=module <<'EONODE'
+          import assert from 'node:assert/strict';
+          import {readFile} from 'node:fs/promises';
+          import {createHash} from 'node:crypto';
+          import sharp from 'sharp';
+          const base='benchmark/review-source-epoch-34/';
+          const r=JSON.parse(await readFile(base+'report.json','utf8'));
+          assert.equal(r.priority,'REVIEW-SOURCE-EPOCH-34');
+          assert.equal(r.actualUISessions,6);
+          assert.equal(r.realNativeIndexedDB,true);
+          assert.equal(r.actualReviewUI,true);
+          assert.equal(r.genuineSegFormerInference,false);
+          assert.equal(r.benchmarkOfSegmentationAccuracy,false);
+          assert.equal(r.physicalPhoneAcceptance,false);
+          assert.equal(r.familyAlpha,'HOLD');
+          assert.deepEqual(r.externalRequests,[]);assert.deepEqual(r.errors,[]);
+          assert.equal(Object.keys(r.sourceSHA).length,3);
+          for(const sha of Object.values(r.sourceSHA))assert.match(sha,/^[a-f0-9]{64}$/);
+          for(const engine of ['chromium','webkit'])for(const width of [320,390,430]){
+           const p=r.cases.find(x=>x.engine===engine&&x.width===width);
+           assert.ok(p&&p.staleSameOwnerPhotoIgnored&&p.staleCropRejected&&
+            p.cancelledSaveNoWrites&&p.finalValidSourceSavedInRealIDB&&p.ownerBound&&
+            p.sourcePhotoSHAUnchanged);
+           assert.equal(p.originalBSourceSHA,r.sourceSHA.B);
+           const png=await readFile(base+p.filename);
+           assert.equal(createHash('sha256').update(png).digest('hex'),p.sha256);
+           const info=await sharp(png).metadata();
+           assert.equal(info.format,'png');assert.equal(info.width,width);
+          }
+          console.log('REVIEW-EPOCH-34 six real browser IDB source-switch, stale editor, cancelled-save and screenshot SHA evidence verified — Family Alpha HOLD');
+          EONODE
+      - name: Attach sanitized synthetic-source screenshots and JSON evidence only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: REVIEW-EPOCH-34-real-browser-native-IDB-synthetic-evidence-HOLD
+          path: |
+            benchmark/review-source-epoch-34/report.json
+            benchmark/review-source-epoch-34/*.png
+          if-no-files-found: warn
+          retention-days: 21
