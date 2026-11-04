@@ -1,0 +1,43 @@
+import assert from 'node:assert/strict';
+import {readFile,writeFile} from 'node:fs/promises';
+import {createHash} from 'node:crypto';
+import sharp from 'sharp';
+const dir='benchmark/category-color-39-output/';
+const rows=JSON.parse(await readFile(dir+'browser-color.json','utf8')),registry=JSON.parse(await readFile('research/recognition-category-color-39/color-manifest.json','utf8'));
+const cases=[];
+assert.equal(rows.length,6);
+for(const engine of ['chromium','webkit'])for(const width of [320,390,430]){
+ const x=rows.find(y=>y.engine===engine&&y.width===width),truth=registry.find(y=>y.id===x?.id);
+ assert.ok(x&&truth);assert.equal(x.hash,truth.sha256,'Browser source identity mismatch');
+ const bytes=await readFile(dir+x.filename),meta=await sharp(bytes).metadata(),stats=await sharp(bytes).stats();
+ assert.equal(createHash('sha256').update(bytes).digest('hex'),x.screenshotSHA256);
+ assert.equal(meta.format,'png');assert.equal(meta.width,width);assert.equal(meta.height,760);assert.ok(stats.channels.some(z=>z.stdev>6),'Blank screenshot');
+ cases.push({engine,width,id:x.id,sourceSHA256:x.hash,screenshotSHA256:x.screenshotSHA256,predictedColor:x.palette?.primary||null,verified:true});
+}
+const index=JSON.parse(await readFile('benchmark/index-04/results.json','utf8'));
+assert.equal(index.evidence.length,3);
+assert.ok(index.evidence.every(x=>x.actualIndexedDB&&x.mockedModelOutput&&x.originalJpegRetained&&x.savedOwnerIndexRefreshed));
+assert.deepEqual(index.outbound,[]);
+const indexScreens=[];
+for(const width of [320,390,430]){
+ assert.ok(index.evidence.some(x=>x.width===width),'Missing actual IndexedDB browser width');
+ for(const stage of ['actual-app-owner-index','real-review-page']){
+  const file=String(width)+'-'+stage+'.png',bytes=await readFile('benchmark/index-04/'+file);
+  const meta=await sharp(bytes).metadata(),stats=await sharp(bytes).stats();
+  assert.equal(meta.format,'png');
+  assert.equal(meta.width,width,'Actual app browser width mismatch');
+  assert.ok(meta.height>=900,'Truncated saved index/review screenshot');
+  assert.ok(stats.channels.some(c=>c.stdev>6),'Blank saved index/review screenshot');
+  const digest=createHash('sha256').update(bytes).digest('hex');
+  indexScreens.push({width,stage,file,sha256:digest,height:meta.height,nonblank:true,
+    actualIndexedDB:true,mockedModelOutput:true});
+ }
+}
+assert.equal(indexScreens.length,6,'Six IndexedDB screenshots required');
+await writeFile('benchmark/recognition-acceptance-40/browser-audit.json',JSON.stringify({
+ colorCases:cases,actualBrowserColorCases:6,actualIndexedDbFixtureBrowserCases:3,
+ indexScreenshots:indexScreens,totalSHAAndPixelAuditedScreenshots:12,
+ modelOutputInIndexedDbFlow:'MOCKED NOT MODEL ACCURACY',
+ fullRealModelToActualIndexedDb:'UNVERIFIED',physicalDevice:'UNVERIFIED',
+ familyAlpha:'HOLD'},null,2));
+console.log('INDEPENDENT40 verified 12 SHA/pixel nonblank browser screenshots, six genuine source-pixel color cases, three actual IndexedDB fixture cases with explicitly MOCKED classification.');
