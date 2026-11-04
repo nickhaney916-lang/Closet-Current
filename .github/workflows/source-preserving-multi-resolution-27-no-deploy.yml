@@ -1,0 +1,62 @@
+name: SOURCE-MULTI-27 verified original high-resolution -> bounded worker analysis NO DEPLOY
+on:
+  push:
+    branches:
+      - research/source-preserving-multi-resolution-27-main-20261104-HOLD
+  pull_request:
+    paths:
+      - 'public/outfit-capture.js'
+      - 'public/outfit-worker.mjs'
+      - 'tests/source-preserving-multi-resolution-27.test.mjs'
+      - 'scripts/verify-source-preserving-multi-resolution-27.mjs'
+      - 'research/source-preserving-multi-resolution-27/**'
+      - '.github/workflows/source-preserving-multi-resolution-27-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  genuine-chromium-webkit-source-safe-analysis-no-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 32
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Exact source SHA ancestry and no-deploy changed-file whitelist
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor f7a9e3079981150565f3eec7090c5afb28ec8dea HEAD
+          git diff --name-only f7a9e3079981150565f3eec7090c5afb28ec8dea HEAD | while IFS= read -r p; do
+            case "$p" in
+              public/outfit-capture.js|public/outfit-worker.mjs|tests/source-preserving-multi-resolution-27.test.mjs|scripts/verify-source-preserving-multi-resolution-27.mjs|research/source-preserving-multi-resolution-27/*|.github/workflows/source-preserving-multi-resolution-27-no-deploy.yml) ;;
+              *) echo "BLOCKED unrelated auth/index/database/color/3D/deployment edit: $p"; exit 1 ;;
+            esac
+          done
+      - name: Install fixed existing test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: App build and every inherited plus new high-resolution Node test
+        run: |
+          node --check public/outfit-capture.js
+          node --check public/outfit-worker.mjs
+          node --check scripts/verify-source-preserving-multi-resolution-27.mjs
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Real 4032x3024 synthetic full-original SHA -> derived JPEG across actual Chromium and WebKit
+        run: node scripts/verify-source-preserving-multi-resolution-27.mjs
+      - name: Upload synthetic no-user-data PNGs and source identity audit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: SOURCE-MULTI-27-original-hash-vs-bounded-model-real-browser-HOLD
+          path: |
+            benchmark/source-preserving-multi-resolution-27/report.json
+            benchmark/source-preserving-multi-resolution-27/*.png
+          if-no-files-found: warn
+          retention-days: 21
