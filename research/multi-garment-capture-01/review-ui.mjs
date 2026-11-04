@@ -6,6 +6,7 @@
 import {atomicSaveGarments24,validCrop24,pieceKey24,duplicatePieceKeys24} from './atomic-group.mjs';
 import {organizeReview28,reviewTier28} from './review-triage-28.mjs';
 import {detectFlatlayFromImage29} from './flatlay-contrast-29.mjs';
+import {sceneReviewDefaults32,canConfirmScene32} from './scene-class-guard-32.mjs';
 const TYPES=['Tops','Bottoms','Dresses','Outerwear','Shoes'];
 const palette=['Black','White','Gray','Beige','Brown','Blue','Green','Red','Pink','Purple','Yellow','Orange','Multicolor'];
 const $=(root,id)=>root.getElementById(id);
@@ -102,17 +103,25 @@ export function mountMultiGarmentCapture24({
    const card=el('article',null,'multi24-card');card.dataset.pieceKey=p.instanceKey;
    card.dataset.reviewTier=tier;
    const image=el('img');image.src=p.image;image.alt='Visible garment '+(i+1)+' derived from unchanged source';
-   const caption=el('p',(p.flatlay29?'Contrast-only suggestion — adjust crop; no clothing identity inferred':p.manual?'Manually marked':'Detected')+' piece '+(i+1)+(p.hint?.clipped?' · edge cut off':'')+(Number.isFinite(p.hint?.confidence)?' · model mask score '+Math.round(100*p.hint.confidence)+'/100 (uncalibrated)':'')+' · requires review; not automatically confirmed','fine');
+   const caption=el('p',(p.flatlay29?'Contrast-only suggestion — adjust crop; no clothing identity inferred':p.manual?'Manually marked':'Detected')+' piece '+(i+1)+(p.hint?.clipped?' · edge cut off':'')+(Number.isFinite(p.hint?.confidence)?' · model mask score '+Math.round(100*p.hint.confidence)+'/100 (uncalibrated)':'')+(p.sceneReviewReason==='no-person-evidence'?' · No person was verified; choose category and color yourself':
+     p.sceneReviewReason&&p.sceneReviewReason!=='model-suggestion-requires-human-confirmation'?' · Model class needs manual review':'')+
+    ' · requires review; not automatically confirmed','fine');
    card.append(image,caption);
    card.append(selector('Main category',['Uncategorized',...TYPES],p.category,v=>{p.category=v;p.itemType='Unknown';p.confirmed=false;redraw();}));
    card.append(selector('Specific type',['Unknown',...(schema.types[p.category]||[])],p.itemType,v=>{p.itemType=v;p.confirmed=false;redraw();}));
-   const colorLabel=input('Color (confirm visually)',p.color,v=>{p.color=v.trim();p.confirmed=false;save.disabled=true;});
+   let confirmBox;
+   const colorLabel=input('Color (confirm visually)',p.color,v=>{
+    p.color=v.trim();p.confirmed=false;save.disabled=true;
+    if(confirmBox){confirmBox.checked=false;confirmBox.disabled=!canConfirmScene32(p,schema);}
+   });
    const colorInput=colorLabel.querySelector('input');colorInput.setAttribute('list','multi24Colors');
    const list=el('datalist');list.id='multi24Colors'+i;colorInput.setAttribute('list',list.id);
    for(const value of palette){const opt=el('option');opt.value=value;list.append(opt);}
    card.append(colorLabel,list);
-   const confirmLabel=el('label'),confirmBox=el('input');confirmBox.type='checkbox';confirmBox.checked=!!p.confirmed;
-   confirmBox.onchange=()=>{p.confirmed=confirmBox.checked;save.disabled=!state.pieces.some(x=>x.confirmed);};
+   const confirmLabel=el('label');confirmBox=el('input');confirmBox.type='checkbox';
+   confirmBox.disabled=!canConfirmScene32(p,schema);confirmBox.checked=!!p.confirmed&&!confirmBox.disabled;
+   confirmBox.onchange=()=>{p.confirmed=confirmBox.checked&&canConfirmScene32(p,schema);
+    save.disabled=!state.pieces.some(x=>x.confirmed);};
    confirmLabel.append(confirmBox,doc.createTextNode('I confirm this visible garment, category and color'));card.append(confirmLabel);
    const controls=el('div',null,'multi24-actions'),edit=button('Adjust crop/mask',()=>crop(p));
    const remove=button('Remove detection',()=>{state.pieces.splice(state.pieces.indexOf(p),1);redraw();});
@@ -164,13 +173,14 @@ export function mountMultiGarmentCapture24({
     !Array.isArray(raw.hint?.categories)||!raw.hint.categories.some(x=>TYPES.includes(x)))return;
   if(state.pieces.some(x=>x.instanceKey===raw.instanceKey))return;
   const sourceImage=state.decoded,box=normalizeRect(raw.cropBounds);
-  const unique=raw.hint.categories.filter(x=>TYPES.includes(x));
-  const category=unique.length===1?unique[0]:'Uncategorized';
+  // A real model score is not proof of garment type; without affirmative
+  // person evidence, never prefill the category or color (PR #588 failures).
+  const defaults=sceneReviewDefaults32(raw),category=defaults.category;
   state.pieces.push({
    id:crypto.randomUUID(),instanceKey:raw.instanceKey,cropBounds:box,
    image:jpegCrop(sourceImage,box),manual:false,cropReviewed:true,
-   category,itemType:'Unknown',color:raw.colorEstimate?.color||'',confirmed:false,
-   hint:{...raw.hint},maskApplied:false
+   category,itemType:'Unknown',color:defaults.color,confirmed:false,
+   sceneReviewReason:defaults.reason,hint:{...raw.hint},maskApplied:false
   });redraw();
  }
  async function startFile(file){
@@ -217,7 +227,7 @@ export function mountMultiGarmentCapture24({
   const selected=state.pieces.filter(x=>x.confirmed);
   if(!selected.length)return status.textContent='Select at least one reviewed garment.';
   try{
-   const invalid=selected.find(x=>!TYPES.includes(x.category)||!x.itemType||x.itemType==='Unknown'||!x.color?.trim()||x.color==='Unknown'||
+   const invalid=selected.find(x=>!canConfirmScene32(x,schema)||
     (x.manual&&!x.cropReviewed)||!validCrop24(x.cropBounds));
    if(invalid)throw Error('Confirm category, specific type, and color, and adjust crops for manually added items.');
    const duplicates=duplicatePieceKeys24(
