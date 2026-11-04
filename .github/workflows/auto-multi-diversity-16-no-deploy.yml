@@ -17,6 +17,7 @@ jobs:
       options: --shm-size=1gb
     env:
       PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      MULTI16_SOURCE_CACHE: /tmp/auto-multi-diversity-16-verified-originals
     steps:
       - uses: actions/checkout@v4
         with:
@@ -58,5 +59,7 @@ jobs:
           path: |
             benchmark/auto-multi-16/*.json
             benchmark/auto-multi-16/*.png
+            benchmark/multi-garment-capture-01/*.json
+            benchmark/multi-garment-capture-01/*.png
           if-no-files-found: warn
           retention-days: 21

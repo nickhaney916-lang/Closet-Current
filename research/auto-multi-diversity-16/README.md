@@ -19,8 +19,15 @@ node research/auto-multi-diversity-16/run.mjs
 MULTI16_INPUT=app-equivalent node research/auto-multi-diversity-16/run.mjs
 ```
 
-The first model pass gives the worker the unchanged JPEG. The second separately reproduces the existing review UI canvas resize for images above 3072 pixels on either side. It retains and displays the unchanged source. That pass can still benchmark a JPEG larger than the UI's 10 MiB import limit, so those records carry an explicit flag. The resize pass is an input experiment with the same model and proposal algorithm. It is not a change to the application detector. The CLI exits nonzero for incomplete runs, inference errors, or unexpected external writes even when partial results can be written.
+The first model pass gives the worker the unchanged JPEG. The second separately reproduces the existing review UI canvas resize for images above 3072 pixels on either side. It retains and displays the unchanged source. That pass can still benchmark a JPEG larger than the UI's 10 MiB import limit, so those records carry an explicit flag. The resize pass is an input experiment with the same model and proposal algorithm. It is not a change to the application detector. The CLI exits nonzero for incomplete runs, unexpected inference errors, or unexpected external writes even when partial results can be written.
 
 Set `MULTI16_ORIGINALS` to a directory containing the locked JPEGs by manifest ID to avoid downloading the images again. The optional `MULTI16_RELAY_MODEL=1` mode forwards only version-pinned model/library GETs through Node for workspaces where browser requests fail. It uses the actual downloaded model bytes and browser inference. The report marks the transport. Both modes use a research-only overlay and never save closet records. Existing native fallback tests exercise confirmation, manual crops, storage, styling and V4 restore separately.
 
 No physical device, 3D fit, automatic-save safety, arbitrary garment accuracy, or second-engine acceptance follows from the Node tests or a successful model smoke case.
+
+## Research confidence triage
+
+The review-resize development split retained all five matched boxes at a primary-tier confidence of 0.925, with zero of the 28 unmatched proposals in that tier. The cutoff is fixed and is evaluated separately against the unchanged held-out boxes. Lower-confidence proposals remain available as additional review candidates. This experiment changes no application controls, model output or wardrobe records. It measures the cost of presenting a smaller primary review set. The reported confidence is a component score rather than a calibrated probability.
+
+Source downloads are paced and retry rate limits and server errors. `MULTI16_SOURCE_CACHE` can reuse originals verified during the first CI pass. Raw JPEGs are excluded from the artifact glob.
+Expected direct-input worker size rejections still count as failures and missed targets in the accuracy results. The verification workflow distinguishes those known limits from asset-load, runtime and browser failures. A passing workflow only verifies execution and the manual fallback. There is no detector quality pass based on CI status.

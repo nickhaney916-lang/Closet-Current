@@ -47,3 +47,11 @@ test('source gate rejects changed bytes, resized data and non-JPEG metadata', ()
   assert.throws(() => verifySource(row, bytes, {...metadata, width: 19}), /identity mismatch/);
   assert.throws(() => verifySource(row, bytes, {...metadata, format: 'png'}), /identity mismatch/);
 });
+
+test('research confidence tiers retain every proposal for review', async () => {
+  const {partitionProposals} = await import('../research/auto-multi-diversity-16/triage.mjs');
+  const proposals = [0.924, 0.925, 1, NaN, 2].map(confidence => ({confidence}));
+  const {primary, additional} = partitionProposals(proposals);
+  assert.deepEqual(primary, [proposals[1], proposals[2]]);
+  assert.deepEqual(additional, [proposals[0], proposals[3], proposals[4]]);
+});
