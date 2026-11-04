@@ -53,7 +53,7 @@ const addActualPixelMask=(host,result)=>{
 const current={worker:null,id:0};
 let reusableWorker=null;
 window.__realMask31={done:false,report:null,error:null};
-window.runRealMask31=async({sourceId,sourceData,analysisData,originalWidth,originalHeight,
+window.runRealMask31=async({sourceId,sourceData,analysisData,analysisRGBA=null,analysisWidth=null,analysisHeight=null,originalWidth,originalHeight,
  annotation,credit,expectedSHA})=>{
  if(current.worker)throw Error('Already running a research mask');
  const bytes=Uint8Array.from(atob(sourceData.split(',')[1]),c=>c.charCodeAt(0));
@@ -101,6 +101,13 @@ window.runRealMask31=async({sourceId,sourceData,analysisData,originalWidth,origi
  };
  worker.onerror=e=>finish('Real model worker runtime failed: '+(e.message||'unknown'),null);
  const timeout=setTimeout(()=>finish('Real SegFormer model timed out; no acceptance',null),390000);
- worker.postMessage({id,sourceId,analysisImage:analysisData,originalWidth,originalHeight});
+ const message={id,sourceId,analysisImage:analysisData,originalWidth,originalHeight};
+ if(analysisRGBA!==null){
+  if(!(analysisRGBA instanceof Uint8ClampedArray)||analysisRGBA.length!==analysisWidth*analysisHeight*4)
+   throw Error('Invalid browser-decoded analysis pixel data');
+  message.analysisRGBA=analysisRGBA;
+  message.analysisWidth=analysisWidth;message.analysisHeight=analysisHeight;
+  worker.postMessage(message,[analysisRGBA.buffer]);
+ }else worker.postMessage(message);
 };
 </script></body></html>
