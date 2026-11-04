@@ -65,7 +65,9 @@ const html=[
  '<main><h1>Original photo → color review safety</h1><p>Research only. An uncertain estimate must never become a saved color.</p>',
  '<img id="subject" alt="Verified licensed original clothing image">',
  '<section class="panel"><p id="source">Source integrity: pending</p><p id="estimate">Estimated color: pending</p>',
- '<p id="decision">Saved wardrobe value: pending</p><p id="hint" class="small"></p></section>',
+ '<p id="decision">Saved wardrobe value: pending</p><p id="hint" class="small"></p>',
+ '<label for="manualColor">Your confirmed color</label><input id="manualColor" aria-label="Your confirmed color" value="" style="display:block;width:100%;padding:8px">',
+ '<p id="authority" role="status">Manual correction not yet tested.</p></section>',
  '<p class="small">Source title is a label hint, not independently reviewed garment-color ground truth. No cloud or photo upload.</p></main>',
  '<script src="/public/photo-color.js"></script>',
  '<script src="/public/clothing-details.js"></script>',
@@ -131,12 +133,42 @@ try{
        ' · needs confirmation: '+(proposed?.needsConfirmation===true?'YES':'NO');
      document.getElementById('decision').textContent='Auto-saved value: '+(stored.color||'None — review required');
      document.getElementById('hint').textContent='Source title hint only: '+input.hint;
+     window.__colorUser20={category:'Tops',itemType:'T-shirt',ownerId:'research-only',sourceSHA256:input.sha256,
+      originalPhoto:{sha256:input.sha256},color:'',colorSource:undefined,proposed};
+     document.getElementById('manualColor').oninput=event=>{
+      window.__colorUser20.color=event.target.value;
+      window.__colorUser20.colorSource='user';
+     };
      return {estimate:proposed?{color:proposed.color,needsConfirmation:proposed.needsConfirmation===true,
       support:proposed.support??null,source:proposed.source}:null,
       storedColor:stored.color||null,storedSource:stored.colorSource||null,
       originalSha256:stored.sourceSHA256,dimensions:[imageCheck.aspect]};
     },{base64:bytes.toString('base64'),sha256:source.sha256,hint:sample.sourceDeclaredHint});
     assert.equal(value.originalSha256,source.sha256);
+    // A real browser user gesture changes the color field via an input event.
+    // Green is a deliberate test correction, NOT independent garment color truth.
+    await page.getByRole('textbox',{name:'Your confirmed color'}).fill('Green');
+    const manual=await page.evaluate(()=>{
+     const item=window.__colorUser20,choice={category:'Tops',sleeveLength:'Long sleeve'};
+     const after=ClothingDetails.fill(item,choice,{color:'Blue',pattern:'Solid'},true);
+     const afterPhoto=ClothingDetails.fillColor(after,item.proposed);
+     document.getElementById('authority').textContent='User test choice Green → model overwrite attempted → '+afterPhoto.color;
+     return {color:afterPhoto.color,colorSource:afterPhoto.colorSource,
+      sourceSha256:afterPhoto.sourceSHA256,ownerId:afterPhoto.ownerId};
+    });
+    assert.equal(manual.color,'Green');assert.equal(manual.colorSource,'user');
+    assert.equal(manual.sourceSha256,source.sha256);assert.equal(manual.ownerId,'research-only');
+    await page.getByRole('textbox',{name:'Your confirmed color'}).fill('');
+    const cleared=await page.evaluate(()=>{
+     const item=window.__colorUser20,choice={category:'Tops',sleeveLength:'Long sleeve'};
+     const after=ClothingDetails.fill(item,choice,{color:'Red',pattern:'Solid'},true);
+     const afterPhoto=ClothingDetails.fillColor(after,item.proposed);
+     document.getElementById('authority').textContent='User cleared color intentionally → guess rejected';
+     return {color:afterPhoto.color,colorSource:afterPhoto.colorSource,sourceSha256:afterPhoto.sourceSHA256};
+    });
+    assert.equal(cleared.color,'');assert.equal(cleared.colorSource,'user');
+    assert.equal(cleared.sourceSha256,source.sha256);
+    await page.getByRole('textbox',{name:'Your confirmed color'}).fill('Green');
     if(value.estimate?.needsConfirmation)assert.equal(value.storedColor,null,
      'uncertain actual photo color must not silently become a stored garment color');
     if(value.storedColor!==null){
@@ -146,7 +178,8 @@ try{
     findings.push({engine,id:sample.id,sha256:source.sha256,originalBytes:bytes.length,
      sourceTitleHint:sample.sourceDeclaredHint,groundTruthColor:null,
      sourcePage:source.attribution.source,license:source.attribution.license,
-     ...value});
+     ...value,userAuthority:{manualWon:manual.color==='Green'&&manual.colorSource==='user',
+       clearWon:cleared.color===''&&cleared.colorSource==='user',sourceUnchanged:cleared.sourceSha256===source.sha256}});
     if(n<3){
      const width=[320,390,430][n];
      await page.setViewportSize({width,height:780});
@@ -184,6 +217,9 @@ const report={
  browserCases:findings.length,
  uncertainReviewCases:review.length,autoFilledCases:automatic.length,
  wrongUncertainAutoFills:findings.filter(x=>x.estimate?.needsConfirmation&&x.storedColor).length,
+ explicitManualColorPreserved:findings.filter(x=>x.userAuthority?.manualWon).length,
+ explicitlyClearedColorPreserved:findings.filter(x=>x.userAuthority?.clearWon).length,
+ allManualColorSourcesUnchanged:findings.every(x=>x.userAuthority?.sourceUnchanged===true),
  noUnexpectedUploads:unexpectedUploads.length===0,
  jsErrors:runtimeErrors.length,
  mobileScreenshots:screenshots.length,
@@ -193,11 +229,16 @@ const report={
 await writeFile(dir+'/report.json',JSON.stringify(report,null,2));
 await writeFile(dir+'/screenshots.json',JSON.stringify(screenshots,null,2));
 assert.equal(report.wrongUncertainAutoFills,0);
+assert.equal(report.explicitManualColorPreserved,12);
+assert.equal(report.explicitlyClearedColorPreserved,12);
+assert.equal(report.allManualColorSourcesUnchanged,true);
 console.log('COLOR CONFIDENCE 19 REAL ORIGINALS '+JSON.stringify({
  uniquePhotos:report.uniqueLicensedOriginalPhotographs,engines:report.actualBrowserEngines,
  photoCases:report.browserCases,excludedSourceIds:report.quarantinedSourceIds,
  reviewCases:report.uncertainReviewCases,
  automaticCases:report.autoFilledCases,uncertainWrongAutoFills:report.wrongUncertainAutoFills,
  sourceShaVerified:true,colorAccuracy:null,screenshots:screenshots.length,
+ manualUserCorrectionsProtected:report.explicitManualColorPreserved,
+ manualUserClearsProtected:report.explicitlyClearedColorPreserved,
  release:'HOLD'
 }));
