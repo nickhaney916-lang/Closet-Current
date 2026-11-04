@@ -1,0 +1,137 @@
+[
+  {
+    "id": "am16-01",
+    "file": "Shirt and tie, jeans and Converse.jpg",
+    "scene": "worn-layered",
+    "author": "Rasmus K. Kristiansen",
+    "expectedLicense": "CC BY-SA 2.0",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:Shirt_and_tie%2C_jeans_and_Converse.jpg",
+    "annotationStatus": "pending-human-visual-review"
+  },
+  {
+    "id": "am16-02",
+    "file": "Clothing flatlay (Unsplash).jpg",
+    "scene": "flat-lay-pale",
+    "author": "NordWood Themes",
+    "expectedLicense": "CC0 1.0",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:Clothing_flatlay_(Unsplash).jpg",
+    "annotationStatus": "pending-human-visual-review"
+  },
+  {
+    "id": "am16-03",
+    "file": "Outfit (Unsplash).jpg",
+    "scene": "flat-lay-womens",
+    "author": "Toa Heftiba",
+    "expectedLicense": "CC0 1.0",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:Outfit_(Unsplash).jpg",
+    "annotationStatus": "pending-human-visual-review"
+  },
+  {
+    "id": "am16-04",
+    "file": "Clothing organized at home (Unsplash).jpg",
+    "scene": "same-class-hanging",
+    "author": "Tim Wright",
+    "expectedLicense": "CC0 1.0",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:Clothing_organized_at_home_(Unsplash).jpg",
+    "annotationStatus": "pending-human-visual-review"
+  },
+  {
+    "id": "am16-05",
+    "file": "Shoes and tie in flatlay (Unsplash).jpg",
+    "scene": "flat-lay-accessory-negative",
+    "author": "Markus Spiske",
+    "expectedLicense": "CC0 1.0",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:Shoes_and_tie_in_flatlay_(Unsplash).jpg",
+    "annotationStatus": "pending-human-visual-review"
+  },
+  {
+    "id": "am16-06",
+    "file": "Grunge Outfit.jpg",
+    "scene": "worn-casual",
+    "author": "Anettemgonzalez",
+    "expectedLicense": "CC BY-SA 4.0",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:Grunge_Outfit.jpg",
+    "annotationStatus": "pending-human-visual-review"
+  },
+  {
+    "id": "am16-07",
+    "file": "Grunge H&M.jpg",
+    "scene": "worn-layered-lowlight",
+    "author": "Kauey",
+    "expectedLicense": "CC BY-SA 4.0",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:Grunge_H%26M.jpg",
+    "annotationStatus": "pending-human-visual-review"
+  },
+  {
+    "id": "am16-08",
+    "file": "A person wearing jeans and jacket.jpg",
+    "scene": "worn-casual",
+    "author": "Ahmadali74",
+    "expectedLicense": "CC0 1.0",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:A_person_wearing_jeans_and_jacket.jpg",
+    "annotationStatus": "pending-human-visual-review"
+  },
+  {
+    "id": "am16-09",
+    "file": "Portrait of a man contemplating.jpg",
+    "scene": "worn-jacket-hat",
+    "author": "Dave Is Killa",
+    "expectedLicense": "CC BY-SA 4.0",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:Portrait_of_a_man_contemplating.jpg",
+    "annotationStatus": "pending-human-visual-review"
+  },
+  {
+    "id": "am16-10",
+    "file": "Blue Crushed Velvet Dress with Polka Dot Tights and Ankle Boots.jpg",
+    "scene": "worn-dress-layered",
+    "author": "Jamie",
+    "expectedLicense": "CC BY-SA 2.0",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:Blue_Crushed_Velvet_Dress_with_Polka_Dot_Tights_and_Ankle_Boots.jpg",
+    "annotationStatus": "pending-human-visual-review"
+  },
+  {
+    "id": "am16-11",
+    "file": "A woman stands with a vintage camera, dressed in a denim jacket and jeans.jpg",
+    "scene": "worn-jacket-jeans",
+    "author": "Shixart1985",
+    "expectedLicense": "CC BY 2.0",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:A_woman_stands_with_a_vintage_camera%2C_dressed_in_a_denim_jacket_and_jeans.jpg",
+    "annotationStatus": "pending-human-visual-review"
+  },
+  {
+    "id": "am16-12",
+    "file": "King Soundzvibe Press Photo - Vibrant Street Style in Orange Tee and Bucket Cap.jpg",
+    "scene": "worn-accessories",
+    "author": "King Soundzvibe",
+    "expectedLicense": "CC BY-SA 4.0",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:King_Soundzvibe_Press_Photo_-_Vibrant_Street_Style_in_Orange_Tee_and_Bucket_Cap.jpg",
+    "annotationStatus": "pending-human-visual-review"
+  },
+  {
+    "id": "am16-13",
+    "file": "Day 4 Vancouver Fashion Week - Spring Summer 2024 (53272710072).jpg",
+    "scene": "runway",
+    "author": "Wikimedia Commons source",
+    "expectedLicense": "CC license verify",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:Day_4_Vancouver_Fashion_Week_-_Spring_Summer_2024_(53272710072).jpg",
+    "annotationStatus": "pending-human-visual-review"
+  },
+  {
+    "id": "am16-14",
+    "file": "McQueen, Musée des beaux-arts - 33.jpg",
+    "scene": "museum-multi-outfit",
+    "author": "LilianaUwU",
+    "expectedLicense": "CC BY-SA 4.0",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:McQueen%2C_Mus%C3%A9e_des_beaux-arts_-_33.jpg",
+    "annotationStatus": "pending-human-visual-review"
+  },
+  {
+    "id": "am16-15",
+    "file": "Wedding couple walking in Converse (Unsplash).jpg",
+    "scene": "two-people-shoes",
+    "author": "Wikimedia Commons source",
+    "expectedLicense": "CC0 1.0",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:Wedding_couple_walking_in_Converse_(Unsplash).jpg",
+    "annotationStatus": "pending-human-visual-review"
+  }
+]
