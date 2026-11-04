@@ -23,6 +23,26 @@ self.onmessage=event=>{const request=event.data;chain=chain.then(async()=>{
   const output=await model(await processor(image)),{clothingLabelMap,clothingMaskGroups,cropClothingPhotoPixels,isolateClothingPixels,clothingColorSample}=await import('./outfit-segmentation.mjs'+new URL(import.meta.url).search);
   await import('./photo-color.js'+new URL(import.meta.url).search);
   const map=clothingLabelMap(output.logits.data,output.logits.dims);
+  if(request.measure16===true){
+   // EXACT SAME model logits, evaluated before any crop or save. Benchmark
+   // metadata contains boxes only, never image bytes or source-owner data.
+   const baseline=(await import('../research/multi-garment-capture-01/visible-groups.mjs')).visibleGarmentGroups24(map);
+   const updated=(await import('../research/auto-multi-diversity-16/visible-proposals-16.mjs')).visibleGarmentGroups16(map);
+   const clean=rows=>rows.map(g=>({
+    regionId:g.id,label:g.label,confidence:g.confidence,needsReview:true,
+    box:{x:g.bounds.left/map.width,y:g.bounds.top/map.height,
+     width:(g.bounds.right-g.bounds.left)/map.width,
+     height:(g.bounds.bottom-g.bounds.top)/map.height},
+    shoePartBoxes:(g.shoePartBoxes||[]).map(b=>({
+     x:b.left/map.width,y:b.top/map.height,
+     width:(b.right-b.left)/map.width,height:(b.bottom-b.top)/map.height})),
+    clipped:!!g.clipped,requiresLayerReview:!!g.requiresLayerReview
+   }));
+   self.postMessage({type:'proposal-evidence16',id:request.id,
+    baseline:clean(baseline),updated:clean(updated),
+    segmentationWidth:map.width,segmentationHeight:map.height,
+    personDetected:map.personDetected,maskGroundTruthPresent:false});
+  }
   const groups=request.multi16===true?
    (await import('../research/auto-multi-diversity-16/visible-proposals-16.mjs')).visibleGarmentGroups16(map):
    request.multi24===true?
