@@ -30,7 +30,7 @@ jobs:
           git merge-base --is-ancestor "$parent" HEAD
           git diff --name-only "$parent" HEAD | while IFS= read -r path; do
             case "$path" in
-              public/outfit-capture.js|research/multi-garment-capture-01/atomic-group.mjs|research/multi-garment-capture-01/review-ui.mjs|research/multi-garment-capture-01/recognition-review-42*|tests/recognition-review-42.test.mjs|scripts/test-multi-garment-capture-01-browser.mjs|.github/workflows/recognition-to-closet-42-no-deploy.yml) ;;
+              public/app.js|public/outfit-capture.js|research/multi-garment-capture-01/atomic-group.mjs|research/multi-garment-capture-01/review-ui.mjs|research/multi-garment-capture-01/recognition-review-42*|tests/recognition-review-42.test.mjs|scripts/test-multi-garment-capture-01-browser.mjs|.github/workflows/recognition-to-closet-42-no-deploy.yml) ;;
               *) echo "Unexpected path $path"; exit 1 ;;
             esac
           done
@@ -42,6 +42,7 @@ jobs:
       - name: Genuine inference to owner-private native closet
         run: RECOGNITION42=1 node scripts/test-multi-garment-capture-01-browser.mjs
       - name: Inherited source, save and owner safety in both engines
+        if: always()
         run: |
           node scripts/verify-review-source-epoch-34.mjs
           node scripts/verify-review-worker-finality-38.mjs

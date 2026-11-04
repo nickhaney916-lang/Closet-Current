@@ -326,7 +326,9 @@ try{
    assert.equal(await color.inputValue(),'Blue');
    await color.fill('');
    await editor.getByRole('button',{name:'Save changes'}).click();
-   await editor.waitFor({state:'hidden'});
+   await editor.waitFor({state:'hidden',timeout:8000}).catch(async error=>{
+    throw Error((await page.locator('#message').textContent())+' '+error.message);
+   });
    await savedCard.getByRole('button',{name:'Adjust details'}).click();
    assert.equal(await color.inputValue(),'');
    assert.equal(await editor.getByLabel('Item type',{exact:true}).inputValue(),'Sneakers');
