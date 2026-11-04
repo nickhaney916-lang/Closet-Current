@@ -22,7 +22,7 @@ const ids=[
  ['commons-0021','Bottoms','Jeans'],['commons-0023','Bottoms','Jeans'],
  ['commons-0024','Bottoms','Jeans'],['commons-0035','Bottoms','Shorts'],
  ['commons-0041','Bottoms','Skirt'],
- ['validation-0003','Dresses','Dress'],['commons-0049','Dresses','Dress'],
+ ['commons-0046','Dresses','Dress'],['commons-0049','Dresses','Dress'],
  ['commons-0053','Dresses','Casual dress'],['commons-0059','Dresses','Dress and jacket'],
  ['validation-0001','Dresses','Summer dress']
 ];
@@ -173,9 +173,9 @@ try{
   for(let g=0;g<3;g++){
    await page.evaluate(i=>window.__photo21.showPage(i),g);
    await page.locator('#tiles img').last().evaluate(el=>el.decode());
-   const png=await page.screenshot({animations:'disabled',fullPage:true});
+   const png=await page.screenshot({animations:'disabled'});
    const meta=await sharp(png).metadata(),stats=await sharp(png).stats();
-   assert.equal(meta.width,width);assert.ok(meta.height>=900&&meta.height<2200);
+   assert.equal(meta.width,width);assert.equal(meta.height,900);
    assert.ok(stats.channels.some(x=>x.stdev>8),'Blank photo review screenshot');
    const name='chromium-'+width+'-photos-'+(g+1)+'.png';
    await writeFile(dir+'/'+name,png);
