@@ -1,0 +1,53 @@
+name: Recognition to private closet 42 NO DEPLOY
+on:
+  pull_request:
+    paths:
+      - '**/recognition-review-42*'
+      - '.github/workflows/recognition-to-closet-42-no-deploy.yml'
+permissions:
+  contents: read
+jobs:
+  acceptance:
+    if: github.head_ref == 'research/recognition-to-closet-42'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify exact identity, ancestry and file scope
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
+          parent=cdffcba36c204657e39065a6e6e43cfd1a1c120d
+          git merge-base --is-ancestor "$parent" HEAD
+          git diff --name-only "$parent" HEAD | while IFS= read -r path; do
+            case "$path" in
+              public/outfit-capture.js|research/multi-garment-capture-01/atomic-group.mjs|research/multi-garment-capture-01/review-ui.mjs|research/multi-garment-capture-01/recognition-review-42*|tests/recognition-review-42.test.mjs|scripts/test-multi-garment-capture-01-browser.mjs|.github/workflows/recognition-to-closet-42-no-deploy.yml) ;;
+              *) echo "Unexpected path $path"; exit 1 ;;
+            esac
+          done
+      - name: Build and full Node suite
+        run: |
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Genuine inference to owner-private native closet
+        run: RECOGNITION42=1 node scripts/test-multi-garment-capture-01-browser.mjs
+      - name: Inherited source, save and owner safety in both engines
+        run: |
+          node scripts/verify-review-source-epoch-34.mjs
+          node scripts/verify-review-worker-finality-38.mjs
+          node scripts/verify-color-provenance-integration-41.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: recognition-to-closet-42
+          path: benchmark/recognition-to-closet-42/

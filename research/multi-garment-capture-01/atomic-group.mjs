@@ -43,6 +43,7 @@ export function verifiedRecord24({proof,ownerId,piece,now=new Date().toISOString
   image:piece.image,recognitionPhoto:{image:piece.image},
   name:String(piece.name||[piece.color,piece.itemType||piece.category].join(' ')).trim().slice(0,120),
   category:piece.category,itemType:piece.itemType||'Unknown',color:String(piece.color).slice(0,120),
+  ...(piece.recognitionSuggestion42?{recognitionSuggestion42:structuredClone(piece.recognitionSuggestion42)}:{}),
   colorSource:'user',userAdjusted:true,requiresOwnershipConfirmation:false,
   localAnalyzed:true,localStatus:'Confirmed and saved from original photo',
   segmentHint:piece.hint||null,maskApplied:!!piece.maskApplied,

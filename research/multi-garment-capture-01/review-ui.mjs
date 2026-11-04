@@ -28,7 +28,7 @@ function normalizeRect(rect){
 function manualKey(b){return 'manual-'+[b.x,b.y,b.width,b.height].map(v=>Math.round(v*1000)).join('-');}
 export function mountMultiGarmentCapture24({
  doc=document,getOwner,makeProof,getDb,queued,refreshNative,onSaved,
- recognitionAssetVersion='',schema,active
+ recognitionAssetVersion='',schema,active,recognitionReview42=false
 }){
  if(!active||!getOwner()||!schema?.types)return {active:false};
  const host=$ (doc,'wholeOutfitCapture');
@@ -77,7 +77,9 @@ export function mountMultiGarmentCapture24({
   return !canceled&&renderVersion===epoch&&getOwner()===owner&&
    getDb()?.name==='closet-current-user-'+owner;
  }
- function revoke(){canceled=true;renderVersion++;job?.worker?.terminate();if(job)clearTimeout(job.timeout);job=null;state=null;original.removeAttribute('src');original.hidden=true;grid.replaceChildren();save.disabled=true;add.disabled=true;suggest.disabled=true;cancel.disabled=false;}
+ let classification42;
+ function cancelClassification42(){classification42?.controller.abort();classification42=null;}
+ function revoke(){cancelClassification42();canceled=true;renderVersion++;job?.worker?.terminate();if(job)clearTimeout(job.timeout);job=null;state=null;original.removeAttribute('src');original.hidden=true;grid.replaceChildren();save.disabled=true;add.disabled=true;suggest.disabled=true;cancel.disabled=false;}
  function reset(text){revoke();status.textContent=text||'No unconfirmed photos were saved.';}
  // WORKER-FINALITY-38: a confirmed Save is a one-way review boundary.
  // Terminate the detector and revoke its session identity BEFORE first async
@@ -102,6 +104,9 @@ export function mountMultiGarmentCapture24({
      if(!currentReview(view,epoch)||!view.pieces.includes(piece))
       throw Error('Source changed; stale crop cannot affect the current photograph');
      if(!validCrop24(photo.cropBounds))throw Error('Invalid crop');
+     if(classification42?.piece===piece)cancelClassification42();
+     delete piece.recognitionSuggestion42;
+     delete piece.recognitionStatus42;
      piece.image=photo.image;piece.cropBounds={...photo.cropBounds};piece.maskApplied=!!photo.maskApplied;
      piece.cropReviewed=true;if(piece.manual)piece.instanceKey=manualKey(piece.cropBounds);
      piece.confirmed=false;redraw();
@@ -110,6 +115,33 @@ export function mountMultiGarmentCapture24({
   }catch{
    if(currentReview(view,epoch))
     status.textContent='Crop editor unavailable. The original photograph was not changed.';
+  }
+ }
+ async function classifyReviewed42(piece){
+  if(submitting||!sameOwner()||!piece.cropReviewed||!state.pieces.includes(piece))return;
+  const view=state,epoch=renderVersion;
+  if(classification42){
+   delete classification42.piece.recognitionStatus42;
+   cancelClassification42();
+  }
+  const request={piece,controller:new AbortController()};
+  classification42=request;
+  const valid=()=>classification42===request&&!submitting&&currentReview(view,epoch)&&view.pieces.includes(piece);
+  piece.recognitionStatus42='Checking the original and reviewed crop locally…';
+  redraw();
+  try{
+   const {recognizeReviewedCrop42}=await import('./recognition-review-42.mjs');
+   if(!valid())return;
+   const result=await recognizeReviewedCrop42({original:view.proof.image,crop:piece.image,
+    signal:request.controller.signal,version:recognitionAssetVersion,schema,palette,categories:TYPES});
+   if(!valid())return;
+   piece.recognitionSuggestion42=result;
+   delete piece.recognitionStatus42;
+  }catch{
+   if(!valid())return;
+   piece.recognitionStatus42='Local recognition unavailable. Enter the garment details manually.';
+  }finally{
+   if(valid()){classification42=null;redraw();}
   }
  }
  function input(label,value,change){const wrap=el('label',label),box=el('input');box.type='text';box.value=value||'';box.maxLength=120;box.oninput=()=>{if(!submitting)change(box.value);};wrap.append(box);return wrap;}
@@ -139,6 +171,17 @@ export function mountMultiGarmentCapture24({
      p.sceneReviewReason&&p.sceneReviewReason!=='model-suggestion-requires-human-confirmation'?' · Model class needs manual review':'')+
     ' · requires review; not automatically confirmed','fine');
    card.append(image,caption);
+   if(recognitionReview42&&p.cropReviewed){
+    const result=p.recognitionSuggestion42;
+    const review=el('p',p.recognitionStatus42||(result?
+     'AI crop suggestion · '+[result.category||'Category uncertain',result.itemType||'Type uncertain',
+      result.color||'Color uncertain'].join(' · ')+' · Confirm visually.':'Run local AI on this reviewed crop.'),'fine');
+    review.dataset.recognition42=result?'result':'status';
+    review.setAttribute('role','status');
+    const classify=button('Suggest category, type and color',()=>classifyReviewed42(p));
+    classify.disabled=classification42?.piece===p;
+    card.append(review,classify);
+   }
    card.append(selector('Main category',['Uncategorized',...TYPES],p.category,v=>{p.category=v;p.itemType='Unknown';p.confirmed=false;redraw();}));
    card.append(selector('Specific type',['Unknown',...(schema.types[p.category]||[])],p.itemType,v=>{p.itemType=v;p.confirmed=false;redraw();}));
    let confirmBox;
@@ -158,7 +201,7 @@ export function mountMultiGarmentCapture24({
     save.disabled=!state.pieces.some(x=>x.confirmed);};
    confirmLabel.append(confirmBox,doc.createTextNode('I confirm this visible garment, category and color'));card.append(confirmLabel);
    const controls=el('div',null,'multi24-actions'),edit=button('Adjust crop/mask',()=>crop(p));
-   const remove=button('Remove detection',()=>{if(submitting||!state||!state.pieces.includes(p))return;state.pieces.splice(state.pieces.indexOf(p),1);redraw();});
+   const remove=button('Remove detection',()=>{if(submitting||!state||!state.pieces.includes(p))return;if(classification42?.piece===p)cancelClassification42();state.pieces.splice(state.pieces.indexOf(p),1);redraw();});
    edit.disabled=submitting;remove.disabled=submitting;
    controls.append(edit,remove);card.append(controls);
    if(submitting)for(const control of card.querySelectorAll('button,input,select'))control.disabled=true;
@@ -280,6 +323,8 @@ export function mountMultiGarmentCapture24({
   }catch(error){status.textContent=String(error.message||error);return;}
   // An immutable photo + confirmed-pieces snapshot is captured before any
   // asynchronous IndexedDB read, queued work or crop editor callback.
+  if(classification42)delete classification42.piece.recognitionStatus42;
+  cancelClassification42();
   submitting=true;redraw();freezeDetector38();
   status.textContent='Verifying original SHA-256 and saving your confirmed snapshot…';
   let persisted=false;
