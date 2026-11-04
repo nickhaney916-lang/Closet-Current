@@ -1,0 +1,53 @@
+name: Category and color 39 research evidence NO DEPLOY
+on:
+  pull_request:
+    paths:
+      - 'research/recognition-category-color-39/**'
+      - '.github/workflows/recognition-category-color-39-no-deploy.yml'
+permissions:
+  contents: read
+jobs:
+  research:
+    if: github.head_ref == 'research/recognition-category-color-39'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify exact research scope
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor a299f9f956fff7cd2045ae5faf0afa86bdc7b669 HEAD
+          git diff --name-only a299f9f956fff7cd2045ae5faf0afa86bdc7b669 HEAD | while IFS= read -r path; do
+            case "$path" in
+              research/recognition-category-color-39/*|.github/workflows/recognition-category-color-39-no-deploy.yml) ;;
+              *) echo "Unexpected change: $path"; exit 1 ;;
+            esac
+          done
+      - name: Build and run inherited tests
+        run: |
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Score provisional color and audit both browser engines
+        run: |
+          mkdir -p benchmark/category-color-39-output
+          node research/recognition-category-color-39/compare-color.mjs > benchmark/category-color-39-output/color.json
+          node research/recognition-category-color-39/browser-color.mjs
+      - name: Rerun real FashionCLIP baseline
+        run: |
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json
+          timeout 12m node scripts/run-browser-photo-benchmark.mjs benchmark/manifest-holdout-16.json benchmark/category-color-39-output/classification
+          node scripts/evaluate-recognition-benchmark.mjs benchmark/manifest-holdout-16.json benchmark/category-color-39-output/classification/results.json > benchmark/category-color-39-output/classification/evaluation.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: category-color-39-research
+          path: benchmark/category-color-39-output/
