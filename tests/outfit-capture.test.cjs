@@ -50,3 +50,49 @@ test('genuine multi16 connected-components request is explicit and all proposals
  assert.equal(h.c.batch[0].requiresOwnershipConfirmation,true);
  assert.deepEqual([...h.c.batch[0].segmentHint.categories],['Tops','Outerwear']);
 });
+
+test('zero automatic proposals keep original and permit explicit manual Add Missed crop',async()=>{
+ const h=setup(),image='data:image/jpeg;base64,AAAA';
+ h.c.startOutfitSplit(image,'source-original');h.emit({type:'done',count:0});
+ assert.equal(h.c.items.length,0);
+ assert.equal(h.el('outfitPieceActions').hidden,false);
+ assert.equal(h.el('outfitAddMissed').disabled,false);
+ let opened=0;
+ h.c.openPhotoCrop=async(item,{analyze,save})=>{
+  opened++;assert.equal(item.originalPhoto.image,image);
+  assert.equal(await analyze('data:image/jpeg;base64,AABB'),null);
+  await save({image:'data:image/jpeg;base64,AABB',
+   cropBounds:{x:.2,y:.3,width:.4,height:.5}});
+ };
+ await h.el('outfitAddMissed').onclick();
+ assert.equal(opened,1);assert.equal(h.c.batch.length,1);
+ assert.equal(h.c.batch[0].originalPhoto.image,image);
+ assert.equal(h.c.batch[0].recognitionPhoto.image,'data:image/jpeg;base64,AABB');
+ assert.equal(h.c.batch[0].requiresOwnershipConfirmation,true);
+ assert.equal(h.c.items.length,0,'manual crop requires user category/color Adjust before storage');
+});
+test('manual Add Missed refuses duplicate crop and preserves original existing review item',async()=>{
+ const h=setup(),image='data:image/jpeg;base64,AAAA';
+ h.c.startOutfitSplit(image,'source-original');h.emit({type:'done',count:0});
+ h.c.openPhotoCrop=async(item,{save})=>{
+  await save({image:'data:image/jpeg;base64,AABB',
+   cropBounds:{x:.2,y:.3,width:.4,height:.5}});
+ };
+ await h.el('outfitAddMissed').onclick();
+ assert.equal(h.c.batch.length,1);
+ await h.el('outfitAddMissed').onclick();
+ assert.equal(h.c.batch.length,1,'duplicate manual crop cannot create second wardrobe item');
+ assert.equal(h.c.items.length,0);
+});
+test('owner session change refuses to open another account original Add Missed dialog',async()=>{
+ const h=setup(),image='data:image/jpeg;base64,AAAA';
+ let owner='A',opened=false;
+ h.c.captureProof01Active=true;h.c.captureProofOwner=()=>owner;
+ const proof={image,sourceSHA256:'a'.repeat(64),sourceHashVerified:true,
+  originalPhoto:{image,sha256:'a'.repeat(64)}};
+ h.c.startOutfitSplit(image,'owner-A-source',proof);h.emit({type:'done',count:0});
+ h.c.openPhotoCrop=async()=>{opened=true;};
+ owner='B';await h.el('outfitAddMissed').onclick();
+ assert.equal(opened,false);assert.equal(h.c.items.length,0);assert.equal(h.c.batch.length,0);
+ assert.match(h.el('outfitSaveStatus').textContent,/owner could not be verified/);
+});
