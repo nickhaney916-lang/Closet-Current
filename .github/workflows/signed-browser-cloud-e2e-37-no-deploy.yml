@@ -1,0 +1,137 @@
+name: SIGNED37 genuine two-owner browser cloud E2E NO DEPLOY
+on:
+  push:
+    branches:
+      - research/signed-browser-cloud-e2e-37-parallel30-20261104-HOLD
+  workflow_dispatch:
+concurrency:
+  group: signed37-${{ github.ref }}
+  cancel-in-progress: true
+permissions:
+  contents: read
+jobs:
+  genuine-signed-browser-cloud-e2e:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+    env:
+      SUPABASE_TELEMETRY_DISABLED: 'true'
+      CI: 'true'
+    steps:
+      - name: Read-only exact commit checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Require PR 594 exact ancestor and research-only paths
+        run: |
+          set -euo pipefail
+          BASE=77d5c760c847d6e2f544512e80fd8598fd610dad
+          git cat-file -e "$BASE^{commit}"
+          git merge-base --is-ancestor "$BASE" HEAD
+          test "$(git rev-list --count "$BASE..HEAD")" -gt 0
+          git diff --name-only "$BASE" HEAD > "$RUNNER_TEMP/signed37-paths"
+          while IFS= read -r file; do
+            case "$file" in
+              research/signed-browser-cloud-e2e-37/*|.github/workflows/signed-browser-cloud-e2e-37-no-deploy.yml|tests/signed-browser-cloud-e2e-37.test.mjs|public/cloud-backup.js|public/cloud-backup-bridge.js) ;;
+              *) echo "BLOCKED production/staging/unowned change: $file"; exit 1 ;;
+            esac
+          done < "$RUNNER_TEMP/signed37-paths"
+          echo "SIGNED37 source $(git rev-parse HEAD) based on PR #594; no production or staging changes"
+      - name: Install pinned browser research dependencies
+        run: |
+          npm install --no-save --no-package-lock --no-audit --no-fund \
+            playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 \
+            three@0.180.0 three-mesh-bvh@0.9.2
+          npx playwright install --with-deps chromium webkit
+      - name: Full inherited and new Node tests and build
+        run: |
+          node --check research/signed-browser-cloud-e2e-37/browser-cloud.mjs
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs | tee "$RUNNER_TEMP/signed37-node-tests.txt"
+      - name: Pin Supabase CLI v2 explicitly due November 2026 v3 breaking changes
+        uses: supabase/setup-cli@v1
+        with:
+          version: 2.48.3
+      - name: Start isolated local Auth PostgREST Storage and repository policies
+        run: |
+          set -euo pipefail
+          supabase --version
+          mkdir -p "$RUNNER_TEMP/closet-signed37"
+          cd "$RUNNER_TEMP/closet-signed37"
+          supabase init
+          sed -i 's/^project_id = .*/project_id = "closet-signed37"/' supabase/config.toml
+          sed -i 's/^jwt_expiry = .*/jwt_expiry = 3600/' supabase/config.toml
+          grep -q '^jwt_expiry = 3600$' supabase/config.toml
+          if ! supabase start > "$RUNNER_TEMP/signed37-stack.log" 2>&1; then
+            echo 'Disposable Supabase startup failed (no hosted fallback)'; exit 1
+          fi
+          umask 077
+          supabase status -o env > "$RUNNER_TEMP/signed37.env"
+          docker exec -i supabase_db_closet-signed37 \
+            psql -U postgres -v ON_ERROR_STOP=1 < "$GITHUB_WORKSPACE/supabase/cloud-backup.sql"
+      - name: Six actual signed browser-to-Supabase two-owner workflows
+        run: SUPABASE_TEST_ENV="$RUNNER_TEMP/signed37.env" node research/signed-browser-cloud-e2e-37/browser-cloud.mjs
+      - name: Independent exact head 6 cases 60 PNG SHA audit
+        run: |
+          node --input-type=module <<'EONODE'
+          import assert from 'node:assert/strict';
+          import {readFile} from 'node:fs/promises';
+          import {createHash} from 'node:crypto';
+          import {execFileSync} from 'node:child_process';
+          import sharp from 'sharp';
+          const dir='benchmark/signed-browser-cloud-e2e-37/';
+          const r=JSON.parse(await readFile(dir+'report.json','utf8'));
+          assert.equal(r.priority,'SIGNED-BROWSER-CLOUD-E2E-37');
+          assert.equal(r.head,execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim());
+          assert.equal(r.parent,'77d5c760c847d6e2f544512e80fd8598fd610dad');
+          for(const k of ['realSignedBrowserToCloud','distinctAuthenticatedOwners','localSupabaseOnly','originalBytesVerified'])
+            assert.equal(r[k],true);
+          for(const k of ['authResponsesFabricated','cloudAdapterStubbed','segmentationModelRun','physicalDevicesTested','productionTouched','stagingTouched'])
+            assert.equal(r[k],false);
+          assert.equal(r.FamilyAlpha,'HOLD');
+          assert.equal(r.browserCases,6);assert.equal(r.screenshots,60);
+          assert.deepEqual(r.externalWritesBlocked,[]);
+          let checked=0;
+          for(const engine of ['chromium','webkit'])for(const width of [320,390,430]){
+            const c=r.cases.find(x=>x.engine===engine&&x.width===width);
+            assert.ok(c?.accountIdsDistinct&&c.realServerAuth&&c.originalJPEGVerified&&c.ownerDeniedCrossAccessBothDirections);
+            assert.equal(c.localSavedA,3);assert.equal(c.localSavedB,3);
+            assert.equal(c.freshRecoveryA,3);assert.equal(c.freshRecoveryB,3);
+            assert.notEqual(c.ownerAIdHash,c.ownerBIdHash);
+            assert.notEqual(c.sourceA,c.sourceB);
+            assert.ok(c.transport.auth>0&&c.transport.storage>0&&c.transport.rest>0);
+            assert.equal(c.screenshots.length,10);
+            for(const shot of c.screenshots){
+              const buf=await readFile(dir+shot.file);
+              const meta=await sharp(buf).metadata(),stat=await sharp(buf).stats();
+              assert.equal(createHash('sha256').update(buf).digest('hex'),shot.sha256);
+              assert.equal(meta.format,'png');assert.equal(meta.width,width);
+              assert.equal(meta.height,shot.height);assert.equal(buf.length,shot.bytes);
+              assert.ok(stat.channels.some(x=>x.stdev>5));
+              checked++;
+            }
+          }
+          assert.equal(checked,60);
+          const serialized=JSON.stringify(r);
+          for(const pat of [/Bearer\s+\S+/i,/refresh_token/i,/password\s*[:=]/i,/service_role/i,/sb_secret_/i,/@example\.test/i])
+            assert.ok(!pat.test(serialized),'Potential credential leak');
+          console.log('SIGNED37 PASS: six signed browser-to-real-local-Supabase cases, 60 audited synthetic PNGs');
+          EONODE
+      - name: Upload only synthetic sanitized evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: SIGNED37-genuine-browser-local-cloud-research-HOLD
+          path: |
+            benchmark/signed-browser-cloud-e2e-37/report.json
+            benchmark/signed-browser-cloud-e2e-37/*.png
+          if-no-files-found: warn
+          retention-days: 21
+      - name: Destroy disposable Supabase accounts database and secrets
+        if: always()
+        run: |
+          if test -f "$RUNNER_TEMP/closet-signed37/supabase/config.toml"; then
+            cd "$RUNNER_TEMP/closet-signed37"
+            supabase stop --no-backup >/dev/null 2>&1 || true
+          fi
+          rm -f "$RUNNER_TEMP/signed37.env" "$RUNNER_TEMP/signed37-stack.log" "$RUNNER_TEMP/signed37-node-tests.txt"
