@@ -298,8 +298,12 @@ function render(){
   // COLOR41: Notes/type edits preserve estimated color provenance; only a
   // direct Color input marks source=user. Still record deliberately reviewed
   // category, subtype, and other *non-color* facts as confirmed learning.
-  if(typeof ClothingMemory!=='undefined')
+  if(typeof ClothingMemory!=='undefined'){
    Object.assign(updated,ClothingMemory.confirm(updated));
+   // Object.assign does not transfer deletions from the confirmed copy.
+   // Reopen weekly garment learning after deliberately saving an edit.
+   delete updated.learningReviewedWeek;
+  }
  if(expectedSavedRow){
   updated.userAdjusted=true;updated.requiresOwnershipConfirmation=false;
   await queued(()=>commitOwnerCorrection10(updated,expectedSavedRow,null));
