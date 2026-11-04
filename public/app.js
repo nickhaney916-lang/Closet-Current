@@ -79,27 +79,32 @@ async function captureProofVerifyBeforeSave(value){
  if(captureProofOwner()!==owner)
   throw Error('Owner changed during original-photo integrity check');
 }
+function nativeCorrection10Active(){
+ const query=new URLSearchParams(location.search);
+ return query.get('nativeCorrection10')==='research'&&
+  query.get('nativeLossless04')==='research'&&query.get('nativeIndex07')==='research';
+}
+async function commitOwnerCorrection10(value,expectedSavedRow,nextBatch){
+ if(!nativeCorrection10Active())throw Error('CORRECTION10 explicit private research gate required');
+ const {commitNativeCorrection10}=await import('../research/native-correction-10/owner-correction-cas.mjs');
+ const auth=window.closetAuth,owner=auth?.user?.id;
+ const assertOwner=()=>{
+  if(!owner||window.closetAuth!==auth||auth.user?.id!==owner||
+     db?.name!=='closet-current-user-'+owner||
+     $('authGate')?.hidden!==true||$('appShell')?.hidden!==false)
+   throw Error('CORRECTION10 owner changed during saved clothing correction');
+ };
+ assertOwner();
+ return commitNativeCorrection10({db,ownerId:owner,before:expectedSavedRow,
+  after:value,nextBatch,assertOwner});
+}
 function savePiece(value,nextBatch,{expectedSavedRow=null}={}){return queued(async()=>{
  await captureProofVerifyBeforeSave(value);
  // CORRECTION10: only original SAVED garments, with a pre-edit row snapshot,
  // use strict owner/photo CAS. Newly captured draft photo saves continue via
  // unchanged existing save path. No change on the default app URL.
- if(expectedSavedRow&&new URLSearchParams(location.search).get('nativeCorrection10')==='research'){
-  if(new URLSearchParams(location.search).get('nativeLossless04')!=='research'||
-     new URLSearchParams(location.search).get('nativeIndex07')!=='research')
-   throw Error('CORRECTION10 private Outfit Builder and live index required');
-  const {commitNativeCorrection10}=await import('../research/native-correction-10/owner-correction-cas.mjs');
-  const auth=window.closetAuth,owner=auth?.user?.id;
-  const assertOwner=()=>{
-   if(!owner||window.closetAuth!==auth||auth.user?.id!==owner||
-      db?.name!=='closet-current-user-'+owner||
-      $('authGate')?.hidden!==true||$('appShell')?.hidden!==false)
-    throw Error('CORRECTION10 owner changed during saved photo correction');
-  };
-  assertOwner();
-  return commitNativeCorrection10({db,ownerId:owner,before:expectedSavedRow,
-   after:value,nextBatch,assertOwner});
- }
+ if(expectedSavedRow&&new URLSearchParams(location.search).get('nativeCorrection10')==='research')
+  return commitOwnerCorrection10(value,expectedSavedRow,nextBatch);
  return new Promise((resolve,reject)=>{const tx=db.transaction(['items','state'],'readwrite');
  tx.objectStore('items').put(value);tx.objectStore('state').put({id:'draft',batch:structuredClone(nextBatch)});
  tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);});
@@ -237,7 +242,21 @@ function render(){
  renderPhotoResults($('scanResults'),results);
  const cg=$('closetGrid');cg.replaceChildren();const query=$('search').value.toLowerCase(),filter=$('filter').value,visible=(query||filter!=='All categories'||window.closetBrowseAll||window.closetSlotFilter)?items.filter(x=>(!window.closetSlotFilter||outfitSlots.some(slot=>slot.id===window.closetSlotFilter&&slotAllows(slot,x)))&&(!window.closetItemType||x.itemType===window.closetItemType)&&(!window.closetSleeves||window.closetSleeves.includes(x.sleeveLength))&&clothingMatches(x,query,filter,$('seasonFilter').value,$('sleeveFilter').value)&&(!window.closetIndex02||window.closetIndex02.includes(x.id))):[];
  if(!visible.length)empty(cg,items.length?'No matching pieces.':'Your closet is ready to grow.',items.length?'Try a different search or category.':'Save your first piece from the review tab.');
- for(const item of visible){const card=node('article',null,'card'),im=node('img');im.loading='lazy';im.src=item.image;im.alt=item.name;const body=node('div',null,'card-body');body.append(node('h3',item.name),node('p',[item.color,item.pattern].filter(x=>x&&x!=='Unknown'&&x!=='Not applicable').join(' · ')),node('p',item.seasons.length?item.seasons.join(' · '):'Season unknown'),node('p',[item.brand,item.size,item.material,item.occasion].filter(Boolean).join(' · ')),node('p',item.notes));if(item.itemType==='Unknown'&&item.color)body.append(node('p','Category and color saved · refine the type when convenient.','fine'));const actions=node('div',null,'actions'),edit=node('button','Adjust details','secondary'),del=node('button','Delete','secondary');edit.onclick=()=>{const dialog=document.createElement('dialog');dialog.className='clothing-editor';dialog.style.cssText='border:1px solid #d9ddd2;border-radius:8px;max-width:440px;width:90%;padding:24px';const f=node('form');const draft=structuredClone(item),collect=clothingFields(f,draft),ok=node('button','Save changes','primary'),cancel=node('button','Cancel','secondary');f.className='card';f.style.padding='15px';cancel.type='button';cancel.onclick=()=>dialog.close();f.onsubmit=async e=>{e.preventDefault();ok.disabled=true;try{const updated={...collect(),name:draft.name.trim()||'Closet piece'};if(updated.color&&updated.colorSource==='photo-estimate')updated.colorSource='user';if(typeof ClothingMemory!=='undefined')Object.assign(updated,ClothingMemory.confirm(updated));await writeAll([updated]);Object.assign(item,updated);dialog.close();render();scheduleMemoryReview();}catch{message('Changes could not be saved.');ok.disabled=false;}};f.append(ok,cancel);dialog.append(f);document.body.append(dialog);dialog.onclose=()=>dialog.remove();dialog.showModal();};del.onclick=async()=>{if(!confirm('Delete this closet piece?'))return;try{await removeItem(item.id);items=items.filter(x=>x.id!==item.id);render();}catch{message('Could not delete the piece.');}};if(typeof closetWearButton==='function')actions.append(closetWearButton(item));actions.append(edit,cropButton(item),del);body.append(actions);card.append(im,body);if(typeof enableClosetDrag==='function')enableClosetDrag(im,item);cg.append(card);}
+ for(const item of visible){const card=node('article',null,'card'),im=node('img');im.loading='lazy';im.src=item.image;im.alt=item.name;const body=node('div',null,'card-body');body.append(node('h3',item.name),node('p',[item.color,item.pattern].filter(x=>x&&x!=='Unknown'&&x!=='Not applicable').join(' · ')),node('p',item.seasons.length?item.seasons.join(' · '):'Season unknown'),node('p',[item.brand,item.size,item.material,item.occasion].filter(Boolean).join(' · ')),node('p',item.notes));if(item.itemType==='Unknown'&&item.color)body.append(node('p','Category and color saved · refine the type when convenient.','fine'));const actions=node('div',null,'actions'),edit=node('button','Adjust details','secondary'),del=node('button','Delete','secondary');edit.onclick=()=>{const dialog=document.createElement('dialog');dialog.className='clothing-editor';dialog.style.cssText='border:1px solid #d9ddd2;border-radius:8px;max-width:440px;width:90%;padding:24px';const f=node('form');const draft=structuredClone(item),collect=clothingFields(f,draft),
+  expectedSavedRow=nativeCorrection10Active()?structuredClone(item):null,
+  ok=node('button','Save changes','primary'),cancel=node('button','Cancel','secondary');
+ f.className='card';f.style.padding='15px';cancel.type='button';cancel.onclick=()=>dialog.close();f.onsubmit=async e=>{e.preventDefault();ok.disabled=true;try{const updated={...collect(),name:draft.name.trim()||'Closet piece'};if(updated.color&&updated.colorSource==='photo-estimate')updated.colorSource='user';if(typeof ClothingMemory!=='undefined')Object.assign(updated,ClothingMemory.confirm(updated));
+ if(expectedSavedRow){
+  updated.userAdjusted=true;updated.requiresOwnershipConfirmation=false;
+  await queued(()=>commitOwnerCorrection10(updated,expectedSavedRow,null));
+  await nativeIndex07Refresh();
+ }else await writeAll([updated]);
+ Object.assign(item,updated);dialog.close();render();scheduleMemoryReview();
+ }catch(error){
+  message(expectedSavedRow?'Saved garment not overwritten. '+String(error.message||error)+
+   '. Close and reopen Adjust details to review the latest saved item.':
+   'Changes could not be saved.');
+  ok.disabled=false;}};f.append(ok,cancel);dialog.append(f);document.body.append(dialog);dialog.onclose=()=>dialog.remove();dialog.showModal();};del.onclick=async()=>{if(!confirm('Delete this closet piece?'))return;try{await removeItem(item.id);items=items.filter(x=>x.id!==item.id);render();}catch{message('Could not delete the piece.');}};if(typeof closetWearButton==='function')actions.append(closetWearButton(item));actions.append(edit,cropButton(item),del);body.append(actions);card.append(im,body);if(typeof enableClosetDrag==='function')enableClosetDrag(im,item);cg.append(card);}
  if(typeof renderClosetBrowser==='function')renderClosetBrowser();
  if(typeof renderTrendMatches==='function')renderTrendMatches();if(typeof renderOutfitBoard==='function')renderOutfitBoard();if(typeof renderStyledCollection==='function')renderStyledCollection();if(typeof renderHomePieces==='function')renderHomePieces();if(typeof renderOutfitCapture==='function')renderOutfitCapture();
 }
