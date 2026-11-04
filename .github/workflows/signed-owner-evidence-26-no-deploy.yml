@@ -1,0 +1,90 @@
+name: SIGNED-OWNER-EVIDENCE-26 actual Work29 signed receipts and mobile evidence NO DEPLOY
+on:
+  push:
+    branches:
+      - research/signed-owner-evidence-26-main-20261104-HOLD
+  pull_request:
+    paths:
+      - 'research/signed-owner-evidence-26/**'
+      - 'scripts/audit-signed-owner-evidence-26.mjs'
+      - 'tests/signed-owner-evidence-26.test.mjs'
+      - '.github/workflows/signed-owner-evidence-26-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  pull-requests: read
+  issues: read
+  actions: read
+jobs:
+  review-real-signed-evidence-research-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Enforce exact verified parent and read-only research source whitelist
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor ed7abb0ada27501ad545975f13c8bc2ed59ffa90 HEAD
+          git diff --name-only ed7abb0ada27501ad545975f13c8bc2ed59ffa90 HEAD | while IFS= read -r p; do
+            case "$p" in
+              research/signed-owner-evidence-26/*|scripts/audit-signed-owner-evidence-26.mjs|tests/signed-owner-evidence-26.test.mjs|.github/workflows/signed-owner-evidence-26-no-deploy.yml) ;;
+              *) echo "BLOCKED unrelated app/auth/photo/3D/cloud/deploy change: $p"; exit 1 ;;
+            esac
+          done
+      - name: Install existing Node research test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Build app and run FULL inherited plus security receipt tests
+        run: |
+          node --check scripts/audit-signed-owner-evidence-26.mjs
+          node --check tests/signed-owner-evidence-26.test.mjs
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Fetch exact Work29 immutable synthetic signed and browser research artifacts READ ONLY
+        run: |
+          command -v unzip >/dev/null || { echo 'unzip is required for independent source ZIP inspection'; exit 1; }
+          command -v curl >/dev/null || { echo 'curl is required for read-only GitHub artifact GET'; exit 1; }
+          mkdir -p benchmark/signed-owner-evidence-26/raw
+          umask 077
+          curl --silent --show-error --fail --location --max-time 100 --retry 2 \
+            -H "Authorization: Bearer $GITHUB_TOKEN" \
+            -H 'Accept: application/vnd.github+json' \
+            'https://api.github.com/repos/nickhaney916-lang/Closet-Current/actions/artifacts/13351329641/zip' \
+            -o benchmark/signed-owner-evidence-26/raw/signed.zip
+          curl --silent --show-error --fail --location --max-time 100 --retry 2 \
+            -H "Authorization: Bearer $GITHUB_TOKEN" \
+            -H 'Accept: application/vnd.github+json' \
+            'https://api.github.com/repos/nickhaney916-lang/Closet-Current/actions/artifacts/13352638055/zip' \
+            -o benchmark/signed-owner-evidence-26/raw/browser.zip
+          unzip -t benchmark/signed-owner-evidence-26/raw/signed.zip >/dev/null
+          unzip -t benchmark/signed-owner-evidence-26/raw/browser.zip >/dev/null
+      - name: Independently prove exact Work29 head jobs signed HTTP negatives and screenshot SHA evidence
+        run: |
+          node scripts/audit-signed-owner-evidence-26.mjs \
+            research/signed-owner-evidence-26/manifest.json \
+            benchmark/signed-owner-evidence-26 \
+            benchmark/signed-owner-evidence-26/raw/signed.zip \
+            benchmark/signed-owner-evidence-26/raw/browser.zip \
+            --live
+      - name: Remove raw fixture artifacts before sanitized evidence upload
+        if: always()
+        run: rm -rf benchmark/signed-owner-evidence-26/raw
+      - name: Upload exact independent signed owner evidence and explicit release HOLD only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: SIGNED-OWNER-EVIDENCE-26-real-signed-local-not-hosted-HOLD
+          path: |
+            benchmark/signed-owner-evidence-26/report.json
+            benchmark/signed-owner-evidence-26/report.md
+          if-no-files-found: warn
+          retention-days: 21
