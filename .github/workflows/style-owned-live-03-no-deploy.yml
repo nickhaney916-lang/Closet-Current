@@ -33,7 +33,7 @@ jobs:
           git merge-base --is-ancestor d913e4f0b65c6b92cfbd1de4083e84692740707e HEAD
           git diff --name-only d913e4f0b65c6b92cfbd1de4083e84692740707e HEAD | while IFS= read -r p; do
             case "$p" in
-              public/app.js|public/outfit-board.js|research/native-consumer-board-04/consumer-board-controller.mjs|research/style-owned-live-03/*|tests/style-owned-live-03.test.mjs|scripts/test-style-owned-live-03-browser.mjs|scripts/audit-style-owned-live-03.mjs|.github/workflows/style-owned-live-03-no-deploy.yml) ;;
+              public/app.js|public/outfit-board.js|research/native-consumer-board-04/consumer-board-controller.mjs|research/style-owned-live-03/*|tests/style-owned-live-03.test.mjs|scripts/test-style-owned-live-03-browser.mjs|scripts/audit-style-owned-live-03.mjs|.github/workflows/style-owned-live-03-no-deploy.yml|.github/workflows/style-owned-live-03-fast-no-deploy.yml) ;;
               *) echo "BLOCKED OUTSIDE STYLE-OWNED-LIVE-03 RESEARCH OWNER: $p"; exit 1 ;;
             esac
           done
