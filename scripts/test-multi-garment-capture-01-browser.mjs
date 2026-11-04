@@ -187,6 +187,32 @@ try{
   assert.deepEqual(backup.state['outfit-board'].saved.at(-1).slots,{
    top:byCategory.Tops,bottom:byCategory.Bottoms,shoes:byCategory.Shoes
   });
+  // Genuine authorized owner recovery: deliberately lose source shirt from
+  // actual IDB, then restore all original JPEG bytes and saved outfit slots.
+  await page.evaluate(id=>new Promise((resolve,reject)=>{
+   const tx=db.transaction('items','readwrite');
+   tx.objectStore('items').delete(id);
+   tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);
+  }),byCategory.Tops);
+  assert.equal(await page.evaluate(()=>new Promise((resolve,reject)=>{
+   const r=db.transaction('items').objectStore('items').count();
+   r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);
+  })),2);
+  const recovered=await page.evaluate(doc=>
+   window.restoreAtomic01Bridge.importBackup(doc,{confirm:()=>true}),backup);
+  assert.equal(recovered.cancelled,undefined);
+  const recoveredRows=await page.evaluate(()=>new Promise((resolve,reject)=>{
+   const r=db.transaction('items').objectStore('items').getAll();
+   r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);
+  }));
+  assert.equal(recoveredRows.length,3);
+  assert.ok(recoveredRows.every(x=>x.originalPhoto.sha256===sourceHash&&
+   x.originalPhoto.image==='data:image/jpeg;base64,'+bytes.toString('base64')));
+  const recoveredBoard=await page.evaluate(()=>new Promise((resolve,reject)=>{
+   const r=db.transaction('state').objectStore('state').get('outfit-board');
+   r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);
+  }));
+  assert.deepEqual(recoveredBoard,backup.state['outfit-board']);
   await page.evaluate(()=>switchView('builder'));
   await shot(page,width,'04-saved-outfit');
   // Reload tests persistence, original-photo linkage and owner-only reads.
@@ -201,7 +227,7 @@ try{
   await shot(page,width,'05-logout-photo-cleared');
   await login(page,'multi24-B');
   assert.equal(await page.evaluate(()=>items.length),0,'Owner B cannot see A original photo or private items');
-  diagnostics.cases.push({width,pieces:3,sourceSHA256:sourceHash,reviewAccuracy:'3/3 human confirmed; automatic model intentionally unavailable',outfitSaved:true,v4Backup:true,ownerPrivate:true});
+  diagnostics.cases.push({width,pieces:3,sourceSHA256:sourceHash,reviewAccuracy:'3/3 human confirmed; automatic model intentionally unavailable',outfitSaved:true,v4Backup:true,v4Restore:true,ownerPrivate:true});
   await context.close();await browser.close();browser=null;
  }
  // Reproducible image contact sheet from actual screenshots, no generated cloth.
