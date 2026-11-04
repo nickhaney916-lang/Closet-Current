@@ -4,7 +4,8 @@ import {randomUUID,webcrypto,createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import 'fake-indexeddb/auto';
 import {createNativeRestore01} from '../research/restore-atomic-01/native-restore-bridge.mjs';
-import {mergeDocuments,keepBothDocuments} from '../public/cloud-backup-engine.js';
+import cloudEngine from '../public/cloud-backup-engine.js';
+const {mergeDocuments,keepBothDocuments}=cloudEngine;
 if(!globalThis.crypto)globalThis.crypto=webcrypto;
 
 const bytes=readFileSync('benchmark/fixtures/commons-0053.jpg');
