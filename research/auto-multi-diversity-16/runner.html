@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Closet Current · Automatic multi-piece model evidence (RESEARCH ONLY)</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#faf7f3;color:#27213b;font:15px/1.45 system-ui}
+main{margin:auto;padding:12px;max-width:660px}
+h1{font-size:22px;line-height:1.15;margin:0 0 8px}
+p{margin:7px 0}
+.small{font-size:12px;color:#493e59}
+#canvas{position:relative;width:100%;border:1px solid #ccc6d5;border-radius:12px;overflow:hidden;background:#ece8f2;margin:14px auto}
+#original{display:block;width:100%;height:auto}
+.box{position:absolute;border:3px solid #5934aa;outline:1px solid white;pointer-events:none}
+.box.expected{border:2px dashed #177559}
+.box>span{display:block;position:absolute;top:0;left:0;padding:2px 4px;background:#fff;color:#271c44;font-weight:700;font-size:10px;white-space:nowrap;max-width:calc(100vw - 24px);overflow:hidden}
+#status{background:#f1eaf8;padding:10px;border-radius:10px;font-weight:600}
+footer{font-size:11px;color:#483b55;padding:10px 0;overflow-wrap:anywhere}
+</style></head><body>
+<main><h1>Automatic garment proposal audit</h1>
+<p>Research-only real SegFormer run. Source image stays unchanged. Purple boxes: automatic proposals. Dashed green: visually annotated reference boxes. No garments are saved.</p>
+<p id="status" role="status">Waiting for genuine browser model…</p>
+<section id="canvas"><img id="original" alt="Licensed original clothing photograph"><div id="overlays"></div></section>
+<p class="small" id="summary">No generated proposals yet. All proposals require person confirmation.</p>
+<footer>Photograph © Rasmus K. Kristiansen · CC BY-SA 2.0 · Wikimedia Commons, “Shirt and tie, jeans and Converse.” Source SHA-256 checked before use. The image is intentionally reused unchanged for research.</footer>
+<script type="module">
+const $=id=>document.getElementById(id);
+window.__autoMulti15={done:false,results:null,started:false};
+let reusableWorker=null;
+let sequence=14;
+const drawBox=(r,label,kind)=>{
+ const element=document.createElement('div');
+ element.className='box '+kind;
+ for(const [property,val] of Object.entries({left:r.x,top:r.y,width:r.width,height:r.height}))
+  element.style[property]=(val*100)+'%';
+ const tag=document.createElement('span');tag.textContent=label;
+ element.append(tag);$('overlays').append(element);
+};
+window.__startAutoMulti15=({image,inferenceImage=image,expectations,sha256,reuseWorker=false})=>{
+ if(window.__autoMulti15.started&&(!reuseWorker||!window.__autoMulti15.done))
+  throw Error('An original is already running or this is a single-photo session');
+ window.__autoMulti15={started:true,done:false,results:null};
+ $('overlays').replaceChildren();
+ $('original').src=image;$('status').textContent='Running actual SegFormer browser worker…';
+ for(const x of expectations)drawBox(x.box,'Reviewed '+x.family,'expected');
+ const worker=reusableWorker??new Worker('/public/outfit-worker.mjs',{type:'module'});
+ if(reuseWorker)reusableWorker=worker;
+ const requestId=++sequence;
+ const proposals=[];let lastProgress=null,complete=false;
+ const finish=(error,success)=>{
+  if(complete)return;complete=true;clearTimeout(timer);
+  if(!reuseWorker||error==='worker_timeout'||error==='worker_runtime_error'){
+   worker.terminate();
+   if(reusableWorker===worker)reusableWorker=null;
+  }
+  const clean=proposals.map(p=>({regionId:p.regionId,label:p.label,confidence:p.confidence,
+   box:p.box,needsReview:true,clipped:p.clipped}));
+  window.__autoMulti15.results={modelExecuted:success,error:error||null,proposals:clean,
+   progress:lastProgress,sourceSha256:sha256,browser:null,sourcePixelsVerified:true};
+  window.__autoMulti15.done=true;
+  $('status').textContent=error?'Model did not finish — '+error:
+    'Actual SegFormer completed: '+clean.length+' unconfirmed visible-region proposals';
+  $('summary').textContent='Model proposals: '+clean.length+'. Every item requires manual review before saving; no 3D readiness is claimed.';
+  for(const p of clean)drawBox(p.box,p.label+' · '+p.confidence.toFixed(2),'automatic');
+ };
+ worker.onmessage=({data})=>{
+  if(data.id!==requestId)return;
+  if(data.type==='progress'){lastProgress=data.phase;return;}
+  if(data.type==='piece'){
+   const b=data.piece?.cropBounds;
+   if(!b){finish('worker_piece_missing_crop',false);return;}
+   proposals.push({regionId:Number(data.piece?.label==='Upper garment'?4:
+    data.piece?.label==='Skirt'?5:data.piece?.label==='Bottoms'?6:
+    data.piece?.label==='Dress'?7:data.piece?.label==='Shoes'?9:-1),
+    label:data.piece?.label||'Unlabeled',confidence:Number(data.piece?.hint?.confidence),
+    box:{x:b.x,y:b.y,width:b.width,height:b.height},
+    clipped:!!data.piece?.hint?.clipped});
+   return;
+  }
+  if(data.type==='done'){finish(null,true);return;}
+  if(data.type==='error'){finish('worker_reported_failure',false);}
+ };
+ worker.onerror=()=>finish('worker_runtime_error',false);
+ const timer=setTimeout(()=>finish('worker_timeout',false),420000);
+ worker.postMessage({id:requestId,type:'outfit',multi24:true,image:inferenceImage});
+};
+</script>
+</main></body></html>

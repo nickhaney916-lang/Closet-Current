@@ -1,0 +1,71 @@
+name: AUTO-MULTI-DIVERSITY-16 original-photo benchmark NO DEPLOY
+on:
+  pull_request:
+    paths:
+      - 'research/auto-multi-diversity-16/**'
+      - 'tests/auto-multi-diversity-16.test.mjs'
+      - '.github/workflows/auto-multi-diversity-16-no-deploy.yml'
+permissions:
+  contents: read
+jobs:
+  research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      MULTI16_SOURCE_CACHE: /tmp/auto-multi-diversity-16-verified-originals
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+      - name: Verify exact research source and isolate changes
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          base=0236182f72b29a7b4d4924f0b3f5754cb9956690
+          git merge-base --is-ancestor "$base" HEAD
+          git diff --name-only "$base" HEAD | while IFS= read -r file; do
+            case "$file" in
+              research/auto-multi-diversity-16/*|tests/auto-multi-diversity-16.test.mjs|.github/workflows/auto-multi-diversity-16-no-deploy.yml) ;;
+              *) echo "Unexpected scope: $file"; exit 1 ;;
+            esac
+          done
+      - name: Install pinned test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Build and run complete Node regressions
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Original-source worker benchmark in Chromium and WebKit
+        run: node research/auto-multi-diversity-16/run.mjs
+      - name: Measure the existing review resize separately
+        if: always() && !cancelled()
+        env:
+          MULTI16_INPUT: app-equivalent
+        run: node research/auto-multi-diversity-16/run.mjs
+      - name: Recheck actual native manual fallback, ownership, styling and restore
+        if: always() && !cancelled()
+        run: |
+          node scripts/test-multi-garment-capture-01-browser.mjs
+          node scripts/audit-native-multi-style-12.mjs
+      - name: Recheck genuine automatic proposals in native review across six mobile cases
+        if: always() && !cancelled()
+        env:
+          MULTI16_NATIVE_AUTO: matrix
+        run: node research/auto-multi-diversity-16/native-review-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always() && !cancelled()
+        with:
+          name: auto-multi-diversity-16-licensed-browser-evidence
+          path: |
+            benchmark/auto-multi-16/*.json
+            benchmark/auto-multi-16/*.png
+            benchmark/auto-multi-16/native-auto/*.json
+            benchmark/auto-multi-16/native-auto/*.png
+            benchmark/multi-garment-capture-01/*.json
+            benchmark/multi-garment-capture-01/*.png
+          if-no-files-found: warn
+          retention-days: 21
