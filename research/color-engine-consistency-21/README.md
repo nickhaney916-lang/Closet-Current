@@ -1,0 +1,27 @@
+# COLOR-ENGINE-CONSISTENCY-21 — conservative automatic photo-color indexing across Chromium/WebKit
+
+**Main-controller research only**, stacked on exact ACCEPTED research PR #577 SHA `b71b2c7e33c6b67ba66ae7b7be3a24f923311133`. **Family Alpha Issue #255 OPEN/HOLD.** No merge/deploy. No changes to model, SegFormer, subtype recognition, private storage/auth, cloud RLS, crop/mask geometry, 3D, production, or the Parallel #25, #26, and Work #27 assignments.
+
+## Actual independently observed mismatch
+
+The final SHA-audited original-photo artifact of PR #577 [GitHub Actions #41862760077, artifact #13340008487](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/41862760077/artifacts/13340008487) contains the **same unchanged JPEG** running through `public/photo-check.js` → `public/photo-color.js` → `public/clothing-details.js` in real Chromium and WebKit. For original `commons-0003` the automatic neutral Black acceptance differed (Chromium support 0.58, REVIEW vs WebKit support 0.62, AUTO Black). For original `validation-0024` Gray sneaker, Chromium 0.85 AUTO Gray vs WebKit 0.63 REVIEW. That means two of six unique paired originals had inconsistent automatic save decisions. These are not an independently annotated color-accuracy benchmark, and the recorded results are actual PR #577 observations, not invented before/after results.
+
+## Narrow implementation
+
+`public/photo-color.js` keeps its original color-family classification and all source-compatible schemas. A whole-photo 16×16 sample now needs at least **0.78 category support for a chromatic automatic color** or **0.90 for Black/White/Gray/Beige/Brown**, plus the existing three-quadrant agreement. Otherwise the estimate remains visible as a *review-only suggestion* (`needsConfirmation:true`) instead of becoming a saved color. The stricter neutral threshold is intentional: neutral backgrounds, clothing and skin are difficult to separate from the full-scene sample. This is a precautionary safety policy derived from known browser inconsistency, not a statistically estimated general accuracy optimum. It reduces automatic coverage and may require more confirmation. Mask-aware garment-only palettes are **not changed**.
+
+`tests/color-engine-consistency-21.test.cjs` checks deliberately constructed 70/80/90% hue-support boundaries, strict neutral and comparatively useful strong chromatic auto-classification, fully uniform black/white/red behavior, zero-alpha failure and existing user color authority.
+
+`scripts/audit-color-engine-consistency-21.mjs` reuses the actual SHA-locked six-photo Chromium+WebKit browser acceptance harness from PR #577, checks the real pixel source identity in each engine, compares each pair's actual `storedColor` values from the genuine browser `PhotoColor.estimate` and `ClothingDetails.fillColor`, checks zero browser-inconsistent automatic acceptances while retaining at least one genuinely strongly supported auto case, independently verifies six screenshot SHA-256 digests and confirms manual-color overrides and user-cleared blanks are still protected.
+
+### What is and isn't proved
+
+Acceptance is only for this limited **development-cohort consistency smoke test**, with six unique publicly licensed originals in two browser engines, not general per-category primary-color correctness, 95% category+color Family Alpha quality, independent human-labeled pixel masks, physical Android/iPhone, real signed two-user RLS or comprehensive consumer E2E. Exact same photo across Chromium and WebKit counts **ONE unique original**, not two. Retained manually reviewed source integrity is not asserted as independent photos' garment color labels. Cross-browser review-only *suggestion labels* may still differ and must never be falsely called auto-accepted.
+
+Prior PR #577 baseline was 2/6 pairs with a differing automatically saved value; the new result must be *measured again* on the actual live source-selected cohort. External Wikimedia thumbnails can change or become rate-limited, so the inherited harness may select a different combination from its transparent 23-candidate pool. Each original must pass its repository-pinned SHA-256 or it is explicitly excluded; if insufficient valid originals, CI fails rather than fabricate results. Comparisons involving the two prior mismatch images may differ from the observed six-photo mix; a matched-source before/after comparison should only be made when the exact source IDs agree.
+
+## Reproducible acceptance
+
+Run `node --test tests/color-engine-consistency-21.test.cjs`, plus `node scripts/build.mjs && node --test tests/*.test.cjs tests/*.test.mjs`. Then after installing browser test dependencies, run `node scripts/test-color-confidence-19-real-photo.mjs && node scripts/audit-color-confidence-19.mjs && node scripts/audit-user-color-authority-20.mjs && node scripts/audit-color-engine-consistency-21.mjs`. The independent dedicated no-deploy GitHub Actions workflow verifies exact PR #577 ancestry, locks changed-file scope, runs the full build/Node suite and real unmocked browser photo-check functions in Chromium and WebKit at 320/390/430, SHA-verifies six screenshots and exports only sanitized source metadata and licensed-photo review screenshots.
+
+**Scientific and governance verdict:** zero inconsistent auto-filled colors on the actual tested sources is a narrow SOURCE COLOR SAFETY result, not human color accuracy certification. Family Alpha Issue #255 HOLD. **NEVER MERGE OR DEPLOY** without separate explicit user approval and broader independent acceptance.
