@@ -7,6 +7,7 @@ import {atomicSaveGarments24,validCrop24,pieceKey24,duplicatePieceKeys24} from '
 import {organizeReview28,reviewTier28} from './review-triage-28.mjs';
 import {detectFlatlayFromImage29} from './flatlay-contrast-29.mjs';
 import {sceneReviewDefaults32,canConfirmScene32} from './scene-class-guard-32.mjs';
+import {snapshotConfirmations34,saveReceipt34} from './review-save-finality-34.mjs';
 const TYPES=['Tops','Bottoms','Dresses','Outerwear','Shoes'];
 const palette=['Black','White','Gray','Beige','Brown','Blue','Green','Red','Pink','Purple','Yellow','Orange','Multicolor'];
 const $=(root,id)=>root.getElementById(id);
@@ -55,7 +56,10 @@ export function mountMultiGarmentCapture24({
  const grid=el('div',null,'multi24-grid');grid.id='multi24Grid';
  const actions=el('div',null,'multi24-actions');
  let state=null,canceled=false,job=null,renderVersion=0,submitting=false;
- const cancel=button('Cancel extraction',()=>reset('Unfinished extraction canceled; nothing was saved.'));
+ const cancel=button('Cancel extraction',()=>{
+  if(submitting){status.textContent='Saving is in progress. Cancellation is unavailable once saving begins.';return;}
+  reset('Unfinished extraction canceled; nothing was saved.');
+ });
  const add=button('Add missed piece',()=>{if(!state||submitting)return;const crop={x:0,y:0,width:1,height:1};state.pieces.push({id:crypto.randomUUID(),instanceKey:manualKey(crop),cropBounds:crop,image:state.proof.image,manual:true,cropReviewed:false,category:'Uncategorized',itemType:'Unknown',color:'',confirmed:false,maskApplied:false,hint:null});redraw();});
  const suggest=button('Suggest missed regions on a plain backdrop',()=>suggestFlatlay());
  const save=button('Save confirmed pieces together',()=>commit(),'primary');
@@ -73,7 +77,7 @@ export function mountMultiGarmentCapture24({
   return !canceled&&renderVersion===epoch&&getOwner()===owner&&
    getDb()?.name==='closet-current-user-'+owner;
  }
- function revoke(){canceled=true;renderVersion++;job?.worker?.terminate();if(job)clearTimeout(job.timeout);job=null;state=null;original.removeAttribute('src');original.hidden=true;grid.replaceChildren();save.disabled=true;add.disabled=true;suggest.disabled=true;}
+ function revoke(){canceled=true;renderVersion++;job?.worker?.terminate();if(job)clearTimeout(job.timeout);job=null;state=null;original.removeAttribute('src');original.hidden=true;grid.replaceChildren();save.disabled=true;add.disabled=true;suggest.disabled=true;cancel.disabled=false;}
  function reset(text){revoke();status.textContent=text||'No unconfirmed photos were saved.';}
  async function crop(piece){
   if(submitting)return;
@@ -84,6 +88,7 @@ export function mountMultiGarmentCapture24({
    await window.openPhotoCrop({...piece,originalPhoto:view.proof.originalPhoto},{
     analyze:async()=>null,
     save:async photo=>{
+     if(submitting)throw Error('A garment save is already in progress');
      if(!currentReview(view,epoch)||!view.pieces.includes(piece))
       throw Error('Source changed; stale crop cannot affect the current photograph');
      if(!validCrop24(photo.cropBounds))throw Error('Invalid crop');
@@ -97,11 +102,11 @@ export function mountMultiGarmentCapture24({
     status.textContent='Crop editor unavailable. The original photograph was not changed.';
   }
  }
- function input(label,value,change){const wrap=el('label',label),box=el('input');box.type='text';box.value=value||'';box.maxLength=120;box.oninput=()=>change(box.value);wrap.append(box);return wrap;}
+ function input(label,value,change){const wrap=el('label',label),box=el('input');box.type='text';box.value=value||'';box.maxLength=120;box.oninput=()=>{if(!submitting)change(box.value);};wrap.append(box);return wrap;}
  function selector(label,options,value,change){const wrap=el('label',label),sel=el('select');for(const v of options){const option=el('option',v);option.value=v;sel.append(option);}sel.value=options.includes(value)?value:options[0];sel.disabled=submitting;sel.onchange=()=>{if(!submitting)change(sel.value);};wrap.append(sel);return wrap;}
  function redraw(){
   if(!state)return;grid.replaceChildren();
-  original.hidden=false;add.disabled=submitting;suggest.disabled=submitting;
+  original.hidden=false;add.disabled=submitting;suggest.disabled=submitting;cancel.disabled=submitting;
   const review=organizeReview28(state.pieces);
   root.dataset.priorityCount=String(review.priority.length);
   root.dataset.additionalCount=String(review.additional.length);
@@ -138,13 +143,15 @@ export function mountMultiGarmentCapture24({
    card.append(colorLabel,list);
    const confirmLabel=el('label');confirmBox=el('input');confirmBox.type='checkbox';
    confirmBox.disabled=submitting||!canConfirmScene32(p,schema);confirmBox.checked=!!p.confirmed&&canConfirmScene32(p,schema);
-   confirmBox.onchange=()=>{p.confirmed=confirmBox.checked&&canConfirmScene32(p,schema);
+   confirmBox.onchange=()=>{if(submitting)return;
+    p.confirmed=confirmBox.checked&&canConfirmScene32(p,schema);
     save.disabled=!state.pieces.some(x=>x.confirmed);};
    confirmLabel.append(confirmBox,doc.createTextNode('I confirm this visible garment, category and color'));card.append(confirmLabel);
    const controls=el('div',null,'multi24-actions'),edit=button('Adjust crop/mask',()=>crop(p));
    const remove=button('Remove detection',()=>{if(submitting||!state||!state.pieces.includes(p))return;state.pieces.splice(state.pieces.indexOf(p),1);redraw();});
    edit.disabled=submitting;remove.disabled=submitting;
    controls.append(edit,remove);card.append(controls);
+   if(submitting)for(const control of card.querySelectorAll('button,input,select'))control.disabled=true;
    grid.append(card);
   }
   save.disabled=!state.pieces.some(p=>p.confirmed)||submitting;
@@ -252,17 +259,21 @@ export function mountMultiGarmentCapture24({
   if(!state||!sameOwner())return reset('Account changed. No garments saved.');
   const view=state,epoch=renderVersion,owner=view.owner,proof=view.proof;
   const selected=state.pieces.filter(x=>x.confirmed);
-  const chosen=structuredClone(selected);
-  if(!chosen.length)return status.textContent='Select at least one reviewed garment.';
-  // Enter the submission lock BEFORE the first asynchronous IndexedDB read.
-  // A later user input/cancel cannot relabel already confirmed pieces or
-  // associate a stale selected crop with a newer photograph from the same owner.
+  if(!selected.length)return status.textContent='Select at least one reviewed garment.';
+  let references,snapshots;
+  try{
+   ({references,snapshots}=snapshotConfirmations34(state.pieces,schema));
+   // Preserve original explicit human-confirmation and manual crop-review guard.
+   if(snapshots.some(x=>!canConfirmScene32(x,schema)||(x.manual&&!x.cropReviewed)||
+       !validCrop24(x.cropBounds)))
+    throw Error('An unreviewed or invalid garment cannot be saved.');
+  }catch(error){status.textContent=String(error.message||error);return;}
+  // An immutable photo + confirmed-pieces snapshot is captured before any
+  // asynchronous IndexedDB read, queued work or crop editor callback.
   submitting=true;redraw();
+  status.textContent='Verifying original SHA-256 and saving your confirmed snapshot…';
   let persisted=false;
   try{
-   const invalid=chosen.find(x=>!canConfirmScene32(x,schema)||
-    (x.manual&&!x.cropReviewed)||!validCrop24(x.cropBounds));
-   if(invalid)throw Error('Confirm category, specific type, and color, and adjust crops for manually added items.');
    const db=getDb();
    const existing=await new Promise((resolve,reject)=>{
     const r=db.transaction('items').objectStore('items').getAll();
@@ -270,33 +281,33 @@ export function mountMultiGarmentCapture24({
    });
    if(!currentReview(view,epoch))return;
    const duplicates=duplicatePieceKeys24(existing,
-    chosen.map(x=>({sourcePieceKey:pieceKey24(proof.sourceSHA256,x.instanceKey)})));
+    snapshots.map(x=>({sourcePieceKey:pieceKey24(proof.sourceSHA256,x.instanceKey)})));
    if(duplicates.length)throw Error('Previously saved garment detected in this exact source. Deselect duplicate pieces.');
    if(!currentReview(view,epoch))return;
-   status.textContent='Verifying original SHA-256 and saving all confirmed pieces atomically…';
    const rows=await queued(()=>atomicSaveGarments24({
-    db,proof,pieces:chosen,ownerId:owner,
+    db,proof,pieces:snapshots,ownerId:owner,
     currentOwner:()=>currentReview(view,epoch)?getOwner():null
    }));
    persisted=true;
    if(!currentReview(view,epoch))return;
-   // Once the transaction completes, the rows are genuinely persisted.
-   // Never offer another click on a now-duplicate selected item even when
-   // an external UI refresh fails after that durable commit.
-   const savedIds=new Set(chosen.map(x=>x.id));
+   // The IndexedDB transaction has already completed. Do not keep saved
+   // pieces in a retryable list if downstream refresh/notification fails.
+   const savedIds=new Set(references.map(x=>x.id));
    view.pieces=view.pieces.filter(x=>!savedIds.has(x.id));
-   await onSaved(rows);
+   let notificationFailed=false,refreshFailed=false;
+   try{await onSaved(rows);}catch{notificationFailed=true;}
    if(!currentReview(view,epoch))return;
-   await refreshNative();
+   try{await refreshNative();}catch{refreshFailed=true;}
    if(!currentReview(view,epoch))return;
-   status.textContent=rows.length+' separately confirmed garments saved together. Each retains the exact original SHA-256.';
+   status.textContent=saveReceipt34(rows.length,notificationFailed,refreshFailed);
   }catch(error){
    if(currentReview(view,epoch))status.textContent=persisted?
-    'Garments were saved privately, but the wardrobe display could not refresh. Reload My closet to verify.':
-    'Save rejected; no newly selected batch pieces added. '+String(error.message||error);
+    'Garments were saved privately, but the wardrobe display could not refresh. Reload My Closet to verify.':
+    'Save rejected before confirmed commit. '+String(error.message||error);
   }finally{
    submitting=false;
    if(currentReview(view,epoch))redraw();
+   else cancel.disabled=false;
   }
  }
  const handle=event=>{const file=event.target.files?.[0];event.target.value='';if(file)startFile(file);};
