@@ -1,0 +1,107 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+import {createHash,webcrypto} from 'node:crypto';
+import {indexedDB} from 'fake-indexeddb';
+import {visibleGarmentGroups24} from '../research/multi-garment-capture-01/visible-groups.mjs';
+import {atomicSaveGarments24,verifiedRecord24,pieceKey24,validCrop24} from '../research/multi-garment-capture-01/atomic-group.mjs';
+const sha=b=>createHash('sha256').update(b).digest('hex');
+function map(w=40,h=40){
+ const labels=new Uint8Array(w*h),confidence=new Float32Array(w*h);
+ return {width:w,height:h,labels,confidence,personDetected:false,
+  paint(id,x,y,ww,hh){for(let iy=y;iy<y+hh;iy++)for(let ix=x;ix<x+ww;ix++){
+   const i=iy*w+ix;labels[i]=id;confidence[i]=.98;}}};
+}
+function fakeDB(owner){
+ return new Promise((resolve,reject)=>{
+  const r=indexedDB.open('closet-current-user-'+owner,1);
+  r.onupgradeneeded=()=>r.result.createObjectStore('items',{keyPath:'id'});
+  r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);
+ });
+}
+const getAll=db=>new Promise((resolve,reject)=>{
+ const r=db.transaction('items').objectStore('items').getAll();
+ r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);
+});
+async function source(){
+ const bytes=await readFile('benchmark/fixtures/commons-0003.jpg'),hash=sha(bytes);
+ const locked=JSON.parse(await readFile('benchmark/locked-photo-sources.json','utf8'))
+  .find(x=>x.id==='commons-0003');
+ assert.equal(locked.sha256,hash);assert.equal(locked.verified,true);
+ const image='data:image/jpeg;base64,'+bytes.toString('base64');
+ return {image,sourceSHA256:hash,sourceHashVerified:true,
+  originalPhoto:{image,sha256:hash,width:800,height:900,origin:'licensed-fixture'}};
+}
+const piece=(id,category,color,index)=>({
+ id,instanceKey:'seg-'+[4,6,9][index]+'-'+index+'-3-8-10-1',
+ image:'data:image/jpeg;base64,/9j/2Q==',cropBounds:{x:index*.2,y:.1,width:.18,height:.4},
+ confirmed:true,category,itemType:['T-shirt','Jeans','Sneakers'][index],color,
+ hint:{categories:[category],confidence:.98},cropReviewed:true
+});
+test('flat lay: shirt, jeans and paired shoes are 3 regions without requiring a person',()=>{
+ const a=map();a.paint(4,3,2,12,10);a.paint(6,21,3,11,24);
+ a.paint(9,3,29,6,6);a.paint(9,12,30,6,6);
+ const regions=visibleGarmentGroups24(a);
+ assert.deepEqual(regions.map(x=>x.label),['Upper garment','Bottoms','Shoes']);
+ assert.equal(regions[2].count,72);
+ assert.ok(regions.every(x=>x.needsReview));
+});
+test('separate same-category tops stay separate, no invented hidden garment',()=>{
+ const a=map();a.paint(4,2,2,10,12);a.paint(4,20,2,10,12);
+ assert.equal(visibleGarmentGroups24(a).length,2);
+ const b=map();b.paint(4,2,2,28,12);
+ assert.equal(visibleGarmentGroups24(b).length,1,'overlapping fabric cannot be guessed into two tops');
+ assert.equal(visibleGarmentGroups24(map()).length,0);
+});
+test('skin or model background never becomes an automatically detected clothing item',()=>{
+ const a=map();a.paint(11,4,4,20,20);a.paint(12,10,25,18,10);
+ assert.deepEqual(visibleGarmentGroups24(a),[]);
+});
+test('tiny specks and partial ambiguous masks fail conservative segmentation',()=>{
+ const a=map();a.paint(4,2,2,2,2);a.paint(6,10,10,3,2);
+ assert.deepEqual(visibleGarmentGroups24(a),[]);
+ a.paint(7,11,11,8,8);a.confidence.fill(.62);
+ assert.deepEqual(visibleGarmentGroups24(a),[]);
+});
+test('exact immutable source SHA and owner-private 3-piece atomic commit',async()=>{
+ const proof=await source(),db=await fakeDB('alice-m24'),owner=()=> 'alice-m24';
+ const pieces=[piece('shirt','Tops','Red',0),piece('jeans','Bottoms','Blue',1),piece('shoes','Shoes','Black',2)];
+ const result=await atomicSaveGarments24({db,proof,pieces,ownerId:'alice-m24',currentOwner:owner});
+ assert.equal(result.length,3);
+ const rows=await getAll(db);assert.equal(rows.length,3);
+ assert.equal(new Set(rows.map(x=>x.id)).size,3);
+ assert.equal(new Set(rows.map(x=>x.sourcePieceKey)).size,3);
+ assert.ok(rows.every(x=>x.sourceSHA256===proof.sourceSHA256&&x.originalPhoto.image===proof.image&&
+  x.originalPhoto.sha256===proof.sourceSHA256&&x.userAdjusted&&x.sourceCropReviewed&&
+  !x.singleGarmentVerified&&!x.threeDReady&&x.ownerId==='alice-m24'));
+ assert.deepEqual(rows.map(x=>x.category).sort(),['Bottoms','Shoes','Tops']);
+ assert.deepEqual(rows.map(x=>x.color).sort(),['Black','Blue','Red']);
+ const first={...rows[0],color:'Green'};
+ const tx=db.transaction('items','readwrite');tx.objectStore('items').put(first);
+ await new Promise(resolve=>tx.oncomplete=resolve);
+ assert.equal((await getAll(db))[0].color,'Green','independent corrections survive');
+ db.close();
+});
+test('repeat exact photograph keys abort an entire new group; distinct same-source garments are valid',async()=>{
+ const proof=await source(),db=await fakeDB('dup-m24'),owner=()=> 'dup-m24';
+ await atomicSaveGarments24({db,proof,pieces:[piece('one','Tops','Red',0)],ownerId:'dup-m24',currentOwner:owner});
+ await assert.rejects(atomicSaveGarments24({db,proof,pieces:[piece('fresh','Tops','Red',0),piece('other','Bottoms','Blue',1)],ownerId:'dup-m24',currentOwner:owner}),/duplicate/i);
+ assert.equal((await getAll(db)).length,1,'no partial second item in aborted batch');
+ await atomicSaveGarments24({db,proof,pieces:[piece('other','Bottoms','Blue',1)],ownerId:'dup-m24',currentOwner:owner});
+ assert.equal((await getAll(db)).length,2);
+ db.close();
+});
+test('mismatched SHA, changed owner, unreviewed garment and repeated instance are rejected',async()=>{
+ const proof=await source(),db=await fakeDB('reject-m24'),good=piece('one','Tops','Red',0);
+ await assert.rejects(atomicSaveGarments24({db,proof:{...proof,sourceSHA256:'a'.repeat(64),originalPhoto:{...proof.originalPhoto,sha256:'a'.repeat(64)}},pieces:[good],ownerId:'reject-m24',currentOwner:()=> 'reject-m24'}),/SHA/i);
+ await assert.rejects(atomicSaveGarments24({db,proof,pieces:[good],ownerId:'reject-m24',currentOwner:()=> 'bob'}),/owner/i);
+ await assert.rejects(atomicSaveGarments24({db,proof,pieces:[{...good,confirmed:false}],ownerId:'reject-m24',currentOwner:()=> 'reject-m24'}),/unreviewed/i);
+ await assert.rejects(atomicSaveGarments24({db,proof,pieces:[good,{...good,id:'two'}],ownerId:'reject-m24',currentOwner:()=> 'reject-m24'}),/duplicate/i);
+ assert.equal((await getAll(db)).length,0);db.close();
+});
+test('manual missed region must have an explicitly reviewed valid crop, not a guessed entire person',async()=>{
+ const proof=await source(),p={...piece('manual','Shoes','Black',2),manual:true,cropReviewed:false,instanceKey:'manual-120-340-230-300'};
+ assert.throws(()=>verifiedRecord24({proof,ownerId:'any',piece:p}),/crop review/);
+ assert.ok(validCrop24({x:.12,y:.34,width:.23,height:.3}));
+ assert.equal(pieceKey24(proof.sourceSHA256,p.instanceKey),proof.sourceSHA256+'/manual-120-340-230-300');
+});
