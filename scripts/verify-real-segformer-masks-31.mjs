@@ -119,7 +119,7 @@ try{
       expectedSHA:row.sha256});
      return {resized:inference!==imageData};
     },{row,imageData});
-    await page.waitForFunction(()=>window.__realMask31.done,{timeout:395000});
+    await page.waitForFunction(()=>window.__realMask31.done,null,{timeout:395000});
     const state=await page.evaluate(()=>window.__realMask31);
     if(state.error||!state.report)throw Error('Actual SegFormer inference failed for '+engine+'/'+row.id+': '+state.error);
     const data=state.report;
