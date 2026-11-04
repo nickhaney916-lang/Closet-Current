@@ -1,0 +1,69 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Closet Current · SegFormer 15 licensed real-photo comparison (HOLD)</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#fbf8f5;color:#26223a;font:14px/1.4 system-ui}
+main{max-width:680px;margin:0 auto;padding:12px}h1{font-size:20px;line-height:1.2;margin:0 0 8px}
+p{margin:6px 0}#photo{position:relative;width:100%;border:1px solid #c9c9d9;border-radius:9px;overflow:hidden;background:#eee}
+#original{display:block;width:100%;height:auto}#overlays{position:absolute;inset:0;pointer-events:none}
+.box{position:absolute;border:2px solid #663cc4}.box.expected{border:2px dashed #26845b}
+.box span{position:absolute;top:0;left:0;background:#fff;color:#222;font-size:9px;padding:1px 2px}
+#status{padding:9px;margin:8px 0;border-radius:9px;background:#eee9f8;font-weight:600}
+small{font-size:11px;display:block;max-width:100%;overflow-wrap:anywhere;word-break:break-word}
+#metrics{overflow-wrap:anywhere;word-break:break-word}
+#status{overflow-wrap:anywhere}
+</style></head><body><main>
+<h1>Real garment-region proposals — research only</h1>
+<p>Solid purple = SegFormer proposed region; dashed green = provisional independent-of-model visual bounding box. Original source is retained. No proposed garment is saved or verified without manual human confirmation.</p>
+<p id="status">Preparing licensed photograph</p>
+<section id="photo"><img id="original" alt="Original Wikimedia Commons photograph"><div id="overlays"></div></section>
+<p id="metrics"></p><small id="license">Source attribution appears here</small>
+<script type="module">
+const $=id=>document.getElementById(id);
+const worker=new Worker('/public/outfit-worker.mjs',{type:'module'}),pending=new Map();
+worker.onmessage=({data})=>{
+ const task=pending.get(data.id);if(!task)return;
+ if(data.type==='proposal-evidence16'){task.proposals=data;return;}
+ if(data.type==='piece'){task.pieces++;return;}
+ if(data.type==='error'){
+  pending.delete(data.id);task.resolve({modelExecuted:false,error:'segformer_worker_error',baseline:[],updated:[],pieces:task.pieces});return;
+ }
+ if(data.type==='done'){
+  pending.delete(data.id);
+  task.resolve({modelExecuted:!!task.proposals,error:task.proposals?null:'missing_model_evidence',
+   baseline:task.proposals?.baseline||[],updated:task.proposals?.updated||[],
+   segmentationWidth:task.proposals?.segmentationWidth||null,
+   segmentationHeight:task.proposals?.segmentationHeight||null,
+   personDetected:task.proposals?.personDetected||false,pieces:task.pieces});
+ }
+};
+worker.onerror=()=>{for(const task of pending.values())task.resolve({modelExecuted:false,error:'worker_runtime_error',baseline:[],updated:[],pieces:task.pieces});pending.clear();};
+function draw(box,text,type){
+ const node=document.createElement('div');node.className='box '+type;
+ for(const [key,value] of Object.entries({left:box.x,top:box.y,width:box.width,height:box.height}))
+  node.style[key]=(value*100)+'%';
+ const label=document.createElement('span');label.textContent=text;node.append(label);$('overlays').append(node);
+}
+window.__autoMulti16={ready:true};
+window.__runPhoto16=async function(input){
+ if(pending.size)throw Error('One original at a time');
+ $('overlays').replaceChildren();
+ $('original').src=input.originalImage;
+ $('license').textContent=input.attribution+' · '+input.license+' · '+input.sourcePage;
+ $('status').textContent='Running the genuine SegFormer model on photo '+input.id;
+ const requestId=Number(input.sequence);
+ const answer=await new Promise(resolve=>{
+  const task={resolve,pieces:0,proposals:null};pending.set(requestId,task);
+  worker.postMessage({id:requestId,type:'outfit',image:input.modelInputImage,multi16:true,measure16:true});
+  setTimeout(()=>{if(!pending.has(requestId))return;pending.delete(requestId);
+   resolve({modelExecuted:false,error:'real_model_timeout',baseline:[],updated:[],pieces:task.pieces});},420000);
+ });
+ for(const region of input.regions)if(region.family!=='unsupported')draw(region.box,region.family,'expected');
+ for(const region of answer.updated)draw(region.box,region.label+' '+region.confidence.toFixed(2),'automatic');
+ $('metrics').textContent='Model '+(answer.modelExecuted?'completed':'failed')+
+   '; baseline '+answer.baseline.length+' proposals; updated '+answer.updated.length+
+   ' proposals. All need human crop/category/color confirmation.';
+ $('status').textContent=answer.modelExecuted?'Real model completed — proposal-only':'Model did not complete; original photo retained';
+ return answer;
+};
+</script></main></body></html>

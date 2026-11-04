@@ -1,0 +1,897 @@
+[
+  {
+    "id": "am16-01",
+    "file": "Shirt and tie, jeans and Converse.jpg",
+    "scene": "worn-layered",
+    "author": "Rasmus K. Kristiansen",
+    "expectedLicense": "CC BY-SA 2.0",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:Shirt_and_tie%2C_jeans_and_Converse.jpg",
+    "annotationStatus": "PROVISIONAL_NOT_INDEPENDENT_HUMAN_VERIFIED",
+    "sourceSha256": "e3df4503a89c244b28fa344ec170d6554fc06ad1d7cd331014fcb277df19d5ff",
+    "originalBytes": 104520,
+    "width": 800,
+    "height": 750,
+    "originalJpeg": true,
+    "license": "CC BY-SA 2.0",
+    "regions": [
+      {
+        "family": "upper",
+        "box": {
+          "x": 0.35,
+          "y": 0.05,
+          "width": 0.41,
+          "height": 0.4
+        },
+        "description": "shirt"
+      },
+      {
+        "family": "upper",
+        "box": {
+          "x": 0.13,
+          "y": 0.32,
+          "width": 0.28,
+          "height": 0.36
+        },
+        "description": "held jacket"
+      },
+      {
+        "family": "bottom",
+        "box": {
+          "x": 0.35,
+          "y": 0.39,
+          "width": 0.35,
+          "height": 0.46
+        },
+        "description": "jeans"
+      },
+      {
+        "family": "shoes",
+        "box": {
+          "x": 0.37,
+          "y": 0.86,
+          "width": 0.12,
+          "height": 0.12
+        },
+        "description": "left sneaker"
+      },
+      {
+        "family": "shoes",
+        "box": {
+          "x": 0.5,
+          "y": 0.86,
+          "width": 0.12,
+          "height": 0.12
+        },
+        "description": "right sneaker"
+      }
+    ],
+    "sourceIdentityLocked": true,
+    "annotationMethod": "assistant-visual-annotation-before-model-predictions",
+    "humanReviewerVerified": false,
+    "pixelMasksAvailable": false
+  },
+  {
+    "id": "am16-02",
+    "file": "Clothing flatlay (Unsplash).jpg",
+    "scene": "flat-lay-pale",
+    "author": "NordWood Themes",
+    "expectedLicense": "CC0 1.0",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:Clothing_flatlay_(Unsplash).jpg",
+    "annotationStatus": "PROVISIONAL_NOT_INDEPENDENT_HUMAN_VERIFIED",
+    "sourceSha256": "adb60164c269198e15276bc3a9d5e4fb970676fe00a46d38fd7ea755b27cf360",
+    "originalBytes": 2501268,
+    "width": 4773,
+    "height": 3182,
+    "originalJpeg": true,
+    "license": "CC0 1.0",
+    "regions": [
+      {
+        "family": "shoes",
+        "box": {
+          "x": 0.21,
+          "y": 0.04,
+          "width": 0.29,
+          "height": 0.27
+        },
+        "description": "leather boot one"
+      },
+      {
+        "family": "shoes",
+        "box": {
+          "x": 0.21,
+          "y": 0.28,
+          "width": 0.3,
+          "height": 0.31
+        },
+        "description": "leather boot two"
+      },
+      {
+        "family": "bottom",
+        "box": {
+          "x": 0.54,
+          "y": 0.01,
+          "width": 0.24,
+          "height": 0.3
+        },
+        "description": "gray trousers"
+      },
+      {
+        "family": "upper",
+        "box": {
+          "x": 0.56,
+          "y": 0.44,
+          "width": 0.22,
+          "height": 0.24
+        },
+        "description": "pale tee"
+      },
+      {
+        "family": "belt",
+        "box": {
+          "x": 0.49,
+          "y": 0.01,
+          "width": 0.07,
+          "height": 0.7
+        },
+        "description": "brown belt"
+      },
+      {
+        "family": "sunglasses",
+        "box": {
+          "x": 0.6,
+          "y": 0.3,
+          "width": 0.18,
+          "height": 0.14
+        },
+        "description": "sunglasses"
+      }
+    ],
+    "sourceIdentityLocked": true,
+    "annotationMethod": "assistant-visual-annotation-before-model-predictions",
+    "humanReviewerVerified": false,
+    "pixelMasksAvailable": false
+  },
+  {
+    "id": "am16-03",
+    "file": "Outfit (Unsplash).jpg",
+    "scene": "flat-lay-womens",
+    "author": "Toa Heftiba",
+    "expectedLicense": "CC0 1.0",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:Outfit_(Unsplash).jpg",
+    "annotationStatus": "PROVISIONAL_NOT_INDEPENDENT_HUMAN_VERIFIED",
+    "sourceSha256": "31a7ca2138f559420f30d5cff164aee4eca38dc71fea99841544f3e586c67854",
+    "originalBytes": 7245252,
+    "width": 5184,
+    "height": 3456,
+    "originalJpeg": true,
+    "license": "CC0 1.0",
+    "regions": [
+      {
+        "family": "upper",
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 0.64,
+          "height": 0.57
+        },
+        "description": "striped shirt"
+      },
+      {
+        "family": "bottom",
+        "box": {
+          "x": 0.7,
+          "y": 0,
+          "width": 0.3,
+          "height": 0.98
+        },
+        "description": "dark trousers"
+      },
+      {
+        "family": "shoes",
+        "box": {
+          "x": 0.5,
+          "y": 0.46,
+          "width": 0.29,
+          "height": 0.28
+        },
+        "description": "shoe upper"
+      },
+      {
+        "family": "shoes",
+        "box": {
+          "x": 0.49,
+          "y": 0.63,
+          "width": 0.3,
+          "height": 0.23
+        },
+        "description": "shoe lower"
+      }
+    ],
+    "sourceIdentityLocked": true,
+    "annotationMethod": "assistant-visual-annotation-before-model-predictions",
+    "humanReviewerVerified": false,
+    "pixelMasksAvailable": false
+  },
+  {
+    "id": "am16-04",
+    "file": "Clothing organized at home (Unsplash).jpg",
+    "scene": "same-class-hanging",
+    "author": "Tim Wright",
+    "expectedLicense": "CC0 1.0",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:Clothing_organized_at_home_(Unsplash).jpg",
+    "annotationStatus": "PROVISIONAL_NOT_INDEPENDENT_HUMAN_VERIFIED",
+    "sourceSha256": "7d34561e6183433845d9758644968149b38426a80f8684981dd1fbaa9909d003",
+    "originalBytes": 2981488,
+    "width": 5049,
+    "height": 3366,
+    "originalJpeg": true,
+    "license": "CC0 1.0",
+    "regions": [
+      {
+        "family": "upper",
+        "box": {
+          "x": 0,
+          "y": 0.2,
+          "width": 1,
+          "height": 0.78
+        },
+        "description": "single clearly visible dark patterned shirt; blurred background garments not separately annotatable"
+      }
+    ],
+    "sourceIdentityLocked": true,
+    "annotationMethod": "assistant-visual-annotation-before-model-predictions",
+    "humanReviewerVerified": false,
+    "pixelMasksAvailable": false
+  },
+  {
+    "id": "am16-05",
+    "file": "Shoes and tie in flatlay (Unsplash).jpg",
+    "scene": "flat-lay-accessory-negative",
+    "author": "Markus Spiske",
+    "expectedLicense": "CC0 1.0",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:Shoes_and_tie_in_flatlay_(Unsplash).jpg",
+    "annotationStatus": "PROVISIONAL_NOT_INDEPENDENT_HUMAN_VERIFIED",
+    "sourceSha256": "9c38abda662e26c30778deaea9562ddea46e6461cf09411927728b89e4546738",
+    "originalBytes": 17293203,
+    "width": 5760,
+    "height": 3840,
+    "originalJpeg": true,
+    "license": "CC0 1.0",
+    "regions": [
+      {
+        "family": "shoes",
+        "box": {
+          "x": 0.16,
+          "y": 0.13,
+          "width": 0.23,
+          "height": 0.48
+        },
+        "description": "leather shoe one"
+      },
+      {
+        "family": "shoes",
+        "box": {
+          "x": 0.39,
+          "y": 0.18,
+          "width": 0.18,
+          "height": 0.42
+        },
+        "description": "leather shoe two"
+      },
+      {
+        "family": "unsupported",
+        "box": {
+          "x": 0.53,
+          "y": 0.23,
+          "width": 0.15,
+          "height": 0.51
+        },
+        "description": "necktie — no corresponding current SegFormer garment class"
+      }
+    ],
+    "sourceIdentityLocked": true,
+    "annotationMethod": "assistant-visual-annotation-before-model-predictions",
+    "humanReviewerVerified": false,
+    "pixelMasksAvailable": false
+  },
+  {
+    "id": "am16-06",
+    "file": "Grunge Outfit.jpg",
+    "scene": "worn-casual",
+    "author": "Anettemgonzalez",
+    "expectedLicense": "CC BY-SA 4.0",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:Grunge_Outfit.jpg",
+    "annotationStatus": "PROVISIONAL_NOT_INDEPENDENT_HUMAN_VERIFIED",
+    "sourceSha256": "8ccdf10674d9ed93ed6cfa12dbe430816cdad81c9ec5c7fe60f8bc5ee58a1bf3",
+    "originalBytes": 296210,
+    "width": 976,
+    "height": 1736,
+    "originalJpeg": true,
+    "license": "CC BY-SA 4.0",
+    "regions": [
+      {
+        "family": "upper",
+        "box": {
+          "x": 0,
+          "y": 0.15,
+          "width": 0.99,
+          "height": 0.43
+        },
+        "description": "red-black flannel"
+      },
+      {
+        "family": "bottom",
+        "box": {
+          "x": 0.04,
+          "y": 0.48,
+          "width": 0.83,
+          "height": 0.43
+        },
+        "description": "blue jeans"
+      }
+    ],
+    "sourceIdentityLocked": true,
+    "annotationMethod": "assistant-visual-annotation-before-model-predictions",
+    "humanReviewerVerified": false,
+    "pixelMasksAvailable": false
+  },
+  {
+    "id": "am16-07",
+    "file": "Grunge H&M.jpg",
+    "scene": "worn-layered-lowlight",
+    "author": "Kauey",
+    "expectedLicense": "CC BY-SA 4.0",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:Grunge_H%26M.jpg",
+    "annotationStatus": "PROVISIONAL_NOT_INDEPENDENT_HUMAN_VERIFIED",
+    "sourceSha256": "c4a42d78e9112d8d2e5a77c5be6e00e8582acc5fb070ddd853d711053fc6aa65",
+    "originalBytes": 1195105,
+    "width": 1777,
+    "height": 2960,
+    "originalJpeg": true,
+    "license": "CC BY-SA 4.0",
+    "regions": [
+      {
+        "family": "upper",
+        "box": {
+          "x": 0.2,
+          "y": 0.13,
+          "width": 0.65,
+          "height": 0.48
+        },
+        "description": "open plaid outer shirt"
+      },
+      {
+        "family": "upper",
+        "box": {
+          "x": 0.34,
+          "y": 0.21,
+          "width": 0.45,
+          "height": 0.36
+        },
+        "description": "graphic T-shirt partially underneath"
+      },
+      {
+        "family": "bottom",
+        "box": {
+          "x": 0.33,
+          "y": 0.55,
+          "width": 0.48,
+          "height": 0.44
+        },
+        "description": "light jeans"
+      }
+    ],
+    "sourceIdentityLocked": true,
+    "annotationMethod": "assistant-visual-annotation-before-model-predictions",
+    "humanReviewerVerified": false,
+    "pixelMasksAvailable": false
+  },
+  {
+    "id": "am16-08",
+    "file": "A person wearing jeans and jacket.jpg",
+    "scene": "worn-casual",
+    "author": "Ahmadali74",
+    "expectedLicense": "CC0 1.0",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:A_person_wearing_jeans_and_jacket.jpg",
+    "annotationStatus": "PROVISIONAL_NOT_INDEPENDENT_HUMAN_VERIFIED",
+    "sourceSha256": "a7db32c60a0a468b017578225aad59cd9c1a70d8bba3f9d2e21678c85c1740bf",
+    "originalBytes": 79084,
+    "width": 640,
+    "height": 1315,
+    "originalJpeg": true,
+    "license": "CC0 1.0",
+    "regions": [
+      {
+        "family": "upper",
+        "box": {
+          "x": 0.18,
+          "y": 0.24,
+          "width": 0.69,
+          "height": 0.39
+        },
+        "description": "gray blazer"
+      },
+      {
+        "family": "upper",
+        "box": {
+          "x": 0.39,
+          "y": 0.31,
+          "width": 0.24,
+          "height": 0.29
+        },
+        "description": "pale dress shirt underneath"
+      },
+      {
+        "family": "bottom",
+        "box": {
+          "x": 0.26,
+          "y": 0.6,
+          "width": 0.62,
+          "height": 0.39
+        },
+        "description": "blue jeans"
+      }
+    ],
+    "sourceIdentityLocked": true,
+    "annotationMethod": "assistant-visual-annotation-before-model-predictions",
+    "humanReviewerVerified": false,
+    "pixelMasksAvailable": false
+  },
+  {
+    "id": "am16-09",
+    "file": "Portrait of a man contemplating.jpg",
+    "scene": "worn-jacket-hat",
+    "author": "Dave Is Killa",
+    "expectedLicense": "CC BY-SA 4.0",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:Portrait_of_a_man_contemplating.jpg",
+    "annotationStatus": "PROVISIONAL_NOT_INDEPENDENT_HUMAN_VERIFIED",
+    "sourceSha256": "d2affe89d48517eb45e88eb525ce9d763ccbb1db47681d784ad6215396833cf5",
+    "originalBytes": 15783989,
+    "width": 6912,
+    "height": 9216,
+    "originalJpeg": true,
+    "license": "CC BY-SA 4.0",
+    "regions": [
+      {
+        "family": "hat",
+        "box": {
+          "x": 0.4,
+          "y": 0.05,
+          "width": 0.2,
+          "height": 0.19
+        },
+        "description": "flat cap"
+      },
+      {
+        "family": "upper",
+        "box": {
+          "x": 0.22,
+          "y": 0.2,
+          "width": 0.57,
+          "height": 0.42
+        },
+        "description": "dark denim jacket"
+      },
+      {
+        "family": "bottom",
+        "box": {
+          "x": 0.28,
+          "y": 0.56,
+          "width": 0.56,
+          "height": 0.28
+        },
+        "description": "dark jeans"
+      },
+      {
+        "family": "shoes",
+        "box": {
+          "x": 0.32,
+          "y": 0.8,
+          "width": 0.3,
+          "height": 0.18
+        },
+        "description": "visible black shoe"
+      }
+    ],
+    "sourceIdentityLocked": true,
+    "annotationMethod": "assistant-visual-annotation-before-model-predictions",
+    "humanReviewerVerified": false,
+    "pixelMasksAvailable": false
+  },
+  {
+    "id": "am16-10",
+    "file": "Blue Crushed Velvet Dress with Polka Dot Tights and Ankle Boots.jpg",
+    "scene": "worn-dress-layered",
+    "author": "Jamie",
+    "expectedLicense": "CC BY-SA 2.0",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:Blue_Crushed_Velvet_Dress_with_Polka_Dot_Tights_and_Ankle_Boots.jpg",
+    "annotationStatus": "PROVISIONAL_NOT_INDEPENDENT_HUMAN_VERIFIED",
+    "sourceSha256": "cb74bc40f4ff4d10b5a854273109a45148843e2291b6af3e0768dcc6925c6095",
+    "originalBytes": 267249,
+    "width": 640,
+    "height": 960,
+    "originalJpeg": true,
+    "license": "CC BY-SA 2.0",
+    "regions": [
+      {
+        "family": "upper",
+        "box": {
+          "x": 0.15,
+          "y": 0.23,
+          "width": 0.68,
+          "height": 0.39
+        },
+        "description": "black leather jacket"
+      },
+      {
+        "family": "dress",
+        "box": {
+          "x": 0.3,
+          "y": 0.26,
+          "width": 0.45,
+          "height": 0.48
+        },
+        "description": "blue velvet dress"
+      },
+      {
+        "family": "bottom",
+        "box": {
+          "x": 0.3,
+          "y": 0.67,
+          "width": 0.47,
+          "height": 0.25
+        },
+        "description": "visible tights"
+      },
+      {
+        "family": "shoes",
+        "box": {
+          "x": 0.33,
+          "y": 0.87,
+          "width": 0.38,
+          "height": 0.12
+        },
+        "description": "ankle boots"
+      }
+    ],
+    "sourceIdentityLocked": true,
+    "annotationMethod": "assistant-visual-annotation-before-model-predictions",
+    "humanReviewerVerified": false,
+    "pixelMasksAvailable": false
+  },
+  {
+    "id": "am16-11",
+    "file": "A woman stands with a vintage camera, dressed in a denim jacket and jeans.jpg",
+    "scene": "worn-jacket-jeans",
+    "author": "Shixart1985",
+    "expectedLicense": "CC BY 2.0",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:A_woman_stands_with_a_vintage_camera%2C_dressed_in_a_denim_jacket_and_jeans.jpg",
+    "annotationStatus": "PROVISIONAL_NOT_INDEPENDENT_HUMAN_VERIFIED",
+    "sourceSha256": "82ea6cf8eb55d9023869eb0ab8b590de4a62a4d1feb4fa0ee427599538601bc9",
+    "originalBytes": 13933931,
+    "width": 4016,
+    "height": 6016,
+    "originalJpeg": true,
+    "license": "CC BY 2.0",
+    "regions": [
+      {
+        "family": "upper",
+        "box": {
+          "x": 0.1,
+          "y": 0.02,
+          "width": 0.83,
+          "height": 0.69
+        },
+        "description": "denim jacket"
+      },
+      {
+        "family": "upper",
+        "box": {
+          "x": 0.36,
+          "y": 0.2,
+          "width": 0.29,
+          "height": 0.38
+        },
+        "description": "inner top partially visible"
+      },
+      {
+        "family": "bottom",
+        "box": {
+          "x": 0.32,
+          "y": 0.64,
+          "width": 0.54,
+          "height": 0.35
+        },
+        "description": "blue jeans"
+      }
+    ],
+    "sourceIdentityLocked": true,
+    "annotationMethod": "assistant-visual-annotation-before-model-predictions",
+    "humanReviewerVerified": false,
+    "pixelMasksAvailable": false
+  },
+  {
+    "id": "am16-12",
+    "file": "King Soundzvibe Press Photo - Vibrant Street Style in Orange Tee and Bucket Cap.jpg",
+    "scene": "worn-accessories",
+    "author": "King Soundzvibe",
+    "expectedLicense": "CC BY-SA 4.0",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:King_Soundzvibe_Press_Photo_-_Vibrant_Street_Style_in_Orange_Tee_and_Bucket_Cap.jpg",
+    "annotationStatus": "PROVISIONAL_NOT_INDEPENDENT_HUMAN_VERIFIED",
+    "sourceSha256": "aa739b6211f0424393c33f0cf145b8e2d99113bcc83fdeccd1688da0b2303a28",
+    "originalBytes": 2728717,
+    "width": 3675,
+    "height": 3675,
+    "originalJpeg": true,
+    "license": "CC BY-SA 4.0",
+    "regions": [
+      {
+        "family": "hat",
+        "box": {
+          "x": 0.4,
+          "y": 0,
+          "width": 0.28,
+          "height": 0.22
+        },
+        "description": "bucket hat"
+      },
+      {
+        "family": "upper",
+        "box": {
+          "x": 0.25,
+          "y": 0.21,
+          "width": 0.56,
+          "height": 0.41
+        },
+        "description": "orange top"
+      },
+      {
+        "family": "bottom",
+        "box": {
+          "x": 0.17,
+          "y": 0.49,
+          "width": 0.65,
+          "height": 0.43
+        },
+        "description": "light pants"
+      },
+      {
+        "family": "shoes",
+        "box": {
+          "x": 0.2,
+          "y": 0.8,
+          "width": 0.24,
+          "height": 0.19
+        },
+        "description": "left sneaker"
+      },
+      {
+        "family": "shoes",
+        "box": {
+          "x": 0.68,
+          "y": 0.78,
+          "width": 0.21,
+          "height": 0.2
+        },
+        "description": "right sneaker"
+      },
+      {
+        "family": "bag",
+        "box": {
+          "x": 0.52,
+          "y": 0.34,
+          "width": 0.27,
+          "height": 0.29
+        },
+        "description": "crossbody red bag"
+      }
+    ],
+    "sourceIdentityLocked": true,
+    "annotationMethod": "assistant-visual-annotation-before-model-predictions",
+    "humanReviewerVerified": false,
+    "pixelMasksAvailable": false
+  },
+  {
+    "id": "am16-13",
+    "file": "Day 4 Vancouver Fashion Week - Spring Summer 2024 (53272710072).jpg",
+    "scene": "runway",
+    "author": "GoToVan",
+    "expectedLicense": "CC BY 2.0",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:Day_4_Vancouver_Fashion_Week_-_Spring_Summer_2024_(53272710072).jpg",
+    "annotationStatus": "PROVISIONAL_NOT_INDEPENDENT_HUMAN_VERIFIED",
+    "sourceSha256": "f020951308df34b98d467aa8245760f1fbf45463f8b009e412f04a0b5ad541cf",
+    "originalBytes": 1260703,
+    "width": 5472,
+    "height": 3648,
+    "originalJpeg": true,
+    "license": "CC BY 2.0",
+    "regions": [
+      {
+        "family": "upper",
+        "box": {
+          "x": 0.41,
+          "y": 0.22,
+          "width": 0.28,
+          "height": 0.34
+        },
+        "description": "runway patterned top"
+      },
+      {
+        "family": "bottom",
+        "box": {
+          "x": 0.43,
+          "y": 0.55,
+          "width": 0.25,
+          "height": 0.36
+        },
+        "description": "runway trousers"
+      },
+      {
+        "family": "shoes",
+        "box": {
+          "x": 0.45,
+          "y": 0.91,
+          "width": 0.17,
+          "height": 0.08
+        },
+        "description": "runway footwear"
+      }
+    ],
+    "sourceIdentityLocked": true,
+    "annotationMethod": "assistant-visual-annotation-before-model-predictions",
+    "humanReviewerVerified": false,
+    "pixelMasksAvailable": false
+  },
+  {
+    "id": "am16-14",
+    "file": "McQueen, Musée des beaux-arts - 33.jpg",
+    "scene": "museum-multi-outfit",
+    "author": "LilianaUwU",
+    "expectedLicense": "CC BY-SA 4.0",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:McQueen%2C_Mus%C3%A9e_des_beaux-arts_-_33.jpg",
+    "annotationStatus": "PROVISIONAL_NOT_INDEPENDENT_HUMAN_VERIFIED",
+    "sourceSha256": "540e9dbf6dd31ca152ad39fa55940ded3ba461e2cf56208e8e71526645b18b89",
+    "originalBytes": 1952757,
+    "width": 3611,
+    "height": 2382,
+    "originalJpeg": true,
+    "license": "CC BY-SA 4.0",
+    "regions": [
+      {
+        "family": "dress",
+        "box": {
+          "x": 0.08,
+          "y": 0.22,
+          "width": 0.26,
+          "height": 0.37
+        },
+        "description": "left mannequin dress"
+      },
+      {
+        "family": "upper",
+        "box": {
+          "x": 0.33,
+          "y": 0.23,
+          "width": 0.32,
+          "height": 0.36
+        },
+        "description": "center mannequin jacket or fitted upper"
+      },
+      {
+        "family": "bottom",
+        "box": {
+          "x": 0.39,
+          "y": 0.57,
+          "width": 0.23,
+          "height": 0.2
+        },
+        "description": "center mannequin trousers"
+      },
+      {
+        "family": "shoes",
+        "box": {
+          "x": 0.38,
+          "y": 0.77,
+          "width": 0.25,
+          "height": 0.21
+        },
+        "description": "center tall boots"
+      },
+      {
+        "family": "dress",
+        "box": {
+          "x": 0.66,
+          "y": 0.22,
+          "width": 0.29,
+          "height": 0.52
+        },
+        "description": "right mannequin black dress"
+      },
+      {
+        "family": "shoes",
+        "box": {
+          "x": 0.74,
+          "y": 0.75,
+          "width": 0.18,
+          "height": 0.15
+        },
+        "description": "right mannequin shoes"
+      }
+    ],
+    "sourceIdentityLocked": true,
+    "annotationMethod": "assistant-visual-annotation-before-model-predictions",
+    "humanReviewerVerified": false,
+    "pixelMasksAvailable": false
+  },
+  {
+    "id": "am16-15",
+    "file": "Wedding couple walking in Converse (Unsplash).jpg",
+    "scene": "two-people-shoes",
+    "author": "photo-nic.co.uk nic",
+    "expectedLicense": "CC0 1.0",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:Wedding_couple_walking_in_Converse_(Unsplash).jpg",
+    "annotationStatus": "PROVISIONAL_NOT_INDEPENDENT_HUMAN_VERIFIED",
+    "sourceSha256": "0f0cf7d38e35773eb517257b161b9afb5bd06845022b7c6dcb1e41843c0f144d",
+    "originalBytes": 4760710,
+    "width": 4104,
+    "height": 2736,
+    "originalJpeg": true,
+    "license": "CC0 1.0",
+    "regions": [
+      {
+        "family": "dress",
+        "box": {
+          "x": 0.01,
+          "y": 0,
+          "width": 0.46,
+          "height": 0.69
+        },
+        "description": "left person's white dress, lower part"
+      },
+      {
+        "family": "bottom",
+        "box": {
+          "x": 0.56,
+          "y": 0.01,
+          "width": 0.4,
+          "height": 0.72
+        },
+        "description": "right person's dark trousers"
+      },
+      {
+        "family": "shoes",
+        "box": {
+          "x": 0.13,
+          "y": 0.56,
+          "width": 0.24,
+          "height": 0.23
+        },
+        "description": "left person's visible shoe"
+      },
+      {
+        "family": "shoes",
+        "box": {
+          "x": 0.64,
+          "y": 0.57,
+          "width": 0.22,
+          "height": 0.17
+        },
+        "description": "right person's one Converse"
+      },
+      {
+        "family": "shoes",
+        "box": {
+          "x": 0.75,
+          "y": 0.79,
+          "width": 0.23,
+          "height": 0.2
+        },
+        "description": "right person's second Converse"
+      }
+    ],
+    "sourceIdentityLocked": true,
+    "annotationMethod": "assistant-visual-annotation-before-model-predictions",
+    "humanReviewerVerified": false,
+    "pixelMasksAvailable": false
+  }
+]
