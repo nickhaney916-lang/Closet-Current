@@ -186,7 +186,7 @@ export function mountMultiGarmentCapture24({
     const review=el('p',p.recognitionStatus42||(result?
      'AI crop suggestion · '+[result.category||'Category uncertain',result.itemType||'Type uncertain',
       result.color?(result.color+(result.colorSource==='recognition'?'':' (pixel estimate)')):'Color uncertain'].join(' · ')+' · Confirm visually.':'Run local AI on this reviewed crop.'),'fine');
-    review.dataset.recognition42=result?'result':'status';
+    review.dataset.recognition42=p.recognitionStatus42?.startsWith('Local recognition unavailable')?'error':result?'result':'status';
     review.setAttribute('role','status');
     const classify=button('Suggest category, type and color',()=>classifyReviewed42(p));
     classify.disabled=classification42?.piece===p;

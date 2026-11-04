@@ -45,7 +45,7 @@ const server=createServer(async(req,res)=>{
 });
 await new Promise(done=>server.listen(0,'127.0.0.1',done));
 const origin='http://127.0.0.1:'+server.address().port,auth='https://hlkgymugtfbirlpunsra.supabase.co';
-const diagnostics={source:{url:sourceUrl,page:sourcePage,license,creator:'Rasmus K. Kristiansen',sha256:sourceHash,bytes:bytes.length,sourceHashPinned:!!expectedHash},cases:[],screenshots:[],unexpectedUploads:[],errors:[]};
+const diagnostics={modelRequestFailures:[],source:{url:sourceUrl,page:sourcePage,license,creator:'Rasmus K. Kristiansen',sha256:sourceHash,bytes:bytes.length,sourceHashPinned:!!expectedHash},cases:[],screenshots:[],unexpectedUploads:[],errors:[]};
 let browser;
 async function shot(page,width,stage,engine='chromium'){
  const png=await page.screenshot({animations:'disabled',fullPage:false});
@@ -130,12 +130,18 @@ try{
     const asset=new URL(u);
     if(asset.hostname==='cdn.jsdelivr.net'&&asset.pathname.startsWith('/npm/@huggingface/transformers@3.8.1/dist/')||
        asset.hostname==='huggingface.co'&&asset.pathname.startsWith('/ff13/fashion-clip/resolve/0f99955d944c39bfd9d035a02ac273c7a44a406b/')||
-       /^(cas-bridge|cas-server|transfer)\.xethub\.hf\.co$/.test(asset.hostname))return route.continue();
+       (/^(cas-bridge|cas-server|transfer)\.xethub\.hf\.co$/.test(asset.hostname)||
+        asset.hostname==='us.aws.cdn.hf.co'&&asset.pathname.startsWith('/xet-bridge-us/')))return route.continue();
    }
    if(request.method()!=='GET')diagnostics.unexpectedUploads.push({width,method:request.method(),url:u});
    return route.abort(); // model not available: prove human-reviewed fallback.
   });
   const page=await context.newPage();
+  context.on('requestfailed',request=>{
+   const host=new URL(request.url()).hostname;
+   if(recognition42&&['cdn.jsdelivr.net','huggingface.co','us.aws.cdn.hf.co'].includes(host))
+    diagnostics.modelRequestFailures.push({engine,width,host,reason:request.failure()?.errorText});
+  });
   page.on('pageerror',e=>diagnostics.errors.push({width,message:e.message}));
   const url=origin+'/public/index.html?multi24=research&captureProof01=after&index04=after&nativeLossless04=research&nativeIndex07=research&index02=after&restoreAtomic01=research&styleOwned03=research&nativeCorrection10=research';
   await page.goto(url+(recognition42?'&recognitionReview42=research':''),{waitUntil:'domcontentloaded'});
@@ -158,8 +164,10 @@ try{
    const card=page.locator('#multi24Grid .multi24-card').nth(i);
    if(recognition42&&i===2){
     await card.getByRole('button',{name:'Suggest category, type and color'}).click();
-    const result=card.locator('[data-recognition42="result"]');
-    await result.waitFor({timeout:150000});
+    const result=card.locator('[data-recognition42="result"], [data-recognition42="error"]');
+    await result.waitFor({timeout:250000});
+    assert.equal(await result.getAttribute('data-recognition42'),'result',
+     'Genuine classifier unavailable: '+JSON.stringify(diagnostics.modelRequestFailures));
     aiSuggestion=await result.innerText();
     assert.equal(await card.getByLabel('Main category').inputValue(),'Uncategorized');
     assert.equal(await card.getByLabel('Specific type').inputValue(),'Unknown');
