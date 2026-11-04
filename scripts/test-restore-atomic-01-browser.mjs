@@ -78,7 +78,7 @@ const fixture=owner=>{
      shoes:owner+'-shoes'},future:{futureId:'stay'}},
     {id:owner+'-missing',outfit3dId:owner+'-missing3d',ownerId:owner,
      name:'Missing jeans still referenced',
-     slots:{top:owner+'-dress',bottom:owner+'-deleted-jeans'},
+     slots:{top:owner+'-removed-shirt',bottom:owner+'-deleted-jeans'},
      future:{displayPhotoOnly:true}}]}
  };
 };
@@ -109,7 +109,7 @@ async function picture(page,engine,width,stage){
  if(stage==='01-before-saved-photo-outfit'||stage==='03-after-atomic-owner-restore')
   await page.locator('#outfitFigure').scrollIntoViewIfNeeded();
  if(stage==='04-missing-garment-ID-placeholder')
-  await page.locator('#boardSlots .board-slot-bottom').scrollIntoViewIfNeeded();
+  await page.locator('#outfitFigure').scrollIntoViewIfNeeded();
  if(stage==='05-reopened-edited-and-saved')
   await page.locator('#savedBoards').scrollIntoViewIfNeeded();
  const bytes=await page.screenshot({animations:'disabled',fullPage:false});
@@ -198,6 +198,9 @@ try{
    await page.locator('#savedBoards button').first().click();
    await picture(page,engine,width,'03-after-atomic-owner-restore');
    await page.locator('#savedBoards button').nth(1).click();
+   await page.waitForFunction(()=>document.getElementById('boardSlots')?.textContent?.includes('Missing saved clothing'));
+   assert.equal((await stored(page,'state')).find(x=>x.id==='outfit-board').saved[1].slots.bottom,
+    'restore01-A-deleted-jeans','Temporarily missing garment reference must stay durable');
    await picture(page,engine,width,'04-missing-garment-ID-placeholder');
    await page.locator('#savedBoards button').first().click();
    await page.locator('#boardName').fill('Restored then edited');
