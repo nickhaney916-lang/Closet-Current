@@ -54,54 +54,58 @@ test('SIGNED37 CI pins ancestor, isolates Docker stack and blocks deployment',()
  assert.doesNotMatch(flow,/(?:firebase deploy|pages deploy|supabase db push|npm run deploy|gh pr merge)/i);
 });
 
-test('SIGNED37 signed cloud restore awaits native research owner lease twice',()=>{
+test('SIGNED37 keeps native/cloud legacy synchronous fail-closed safety contract',()=>{
  const cloud=read('public/cloud-backup.js');
- assert.equal(cloud.split('if(callbacks.canRestore&&!await callbacks.canRestore())return false;').length-1,2,
-  'Owner lease must be awaited before and after source-photo decode');
+ assert.equal(cloud.split('if(callbacks.canRestore&&!callbacks.canRestore())return false;').length-1,2,
+  'Unchanged sync owner lease guard both before and after photo decode');
  const bridge=read('public/cloud-backup-bridge.js');
- assert.match(bridge,/canRestore:async\(\)=>/);
- assert.match(bridge,/await nativeLossless04RestoreSafe\(\)/);
+ assert.match(bridge,/canRestore:\(\)=>/);
+ assert.match(bridge,/nativeLossless04RestoreSafe\(\)/);
  assert.match(bridge,/await board\.load\(\)/);
  assert.match(bridge,/db\.name!=='closet-current-user-'\+owner/);
+ assert.match(bridge,/state\?\.active===true&&state\.dirty===false/);
 });
 
-test('SIGNED37 real bridge code re-attests only unchanged owner and fails closed with unsaved edits',async()=>{
+test('SIGNED37 real sync bridge safely re-attests same owner after token refresh',async()=>{
  const {runInNewContext}=await import('node:vm');
  const source=read('public/cloud-backup-bridge.js');
- const obj={
+ const board={
   active:false,dirty:false,loadCount:0,
   status(){return {active:this.active,dirty:this.dirty};},
   async load(){this.loadCount++;this.active=true;}
  };
- const user={id:'auth-owner-a'};
- const auth={user,assertCurrent(){if(!this.user?.id)throw Error('Owner expired');}};
+ const auth={user:{id:'auth-owner-a'},assertCurrent(){if(!this.user?.id)throw Error('Owner expired');}};
  let captured=null;
  const sandbox={
-  window:{closetAuth:auth,nativeLossless04Bridge:obj,closetCloud:{async start(_db,c){captured=c;}}},
+  window:{closetAuth:auth,nativeLossless04Bridge:board,closetCloud:{async start(_db,c){captured=c;}}},
   db:{name:'closet-current-user-auth-owner-a'},
   document:{getElementById:()=>({hidden:false}),querySelector:()=>null},
-  location:{search:'?nativeLossless04=research'},
-  URLSearchParams,closetReady:Promise.resolve(),outfitBoardReady:Promise.resolve(),
-  inspirationReady:Promise.resolve(),busy:false,automaticRunning:false,memoryReviewRunning:false
+  location:{search:'?nativeLossless04=research'},URLSearchParams,
+  closetReady:Promise.resolve(),outfitBoardReady:Promise.resolve(),inspirationReady:Promise.resolve(),
+  busy:false,automaticRunning:false,memoryReviewRunning:false
  };
  runInNewContext(source,sandbox);
- assert.equal(await sandbox.nativeLossless04RestoreSafe(),true);
- assert.equal(obj.loadCount,1);
- assert.equal(obj.active,true);
- assert.equal(await sandbox.nativeLossless04RestoreSafe(),true);
- assert.equal(obj.loadCount,1,'Valid lease must not re-attest unnecessarily');
- obj.dirty=true;
- assert.equal(await sandbox.nativeLossless04RestoreSafe(),false,'Unsaved owner draft blocks recovery');
- obj.dirty=false;obj.active=false;
- sandbox.db.name='closet-current-user-auth-owner-b';
- assert.equal(await sandbox.nativeLossless04RestoreSafe(),false,'Owner DB mismatch must fail before lease read');
- sandbox.db.name='closet-current-user-auth-owner-a';
- obj.load=async()=>{obj.loadCount++;throw Error('Research lease refused');};
- assert.equal(await sandbox.nativeLossless04RestoreSafe(),false,'Failed admission must not authorize restore');
- obj.load=async()=>{obj.loadCount++;auth.user={id:'auth-owner-b'};obj.active=true;};
- assert.equal(await sandbox.nativeLossless04RestoreSafe(),false,'Owner changes during async re-attestation fail closed');
- sandbox.location.search='';
- assert.equal(await sandbox.nativeLossless04RestoreSafe(),true,'Default nonresearch cloud path preserved');
+ assert.equal(sandbox.nativeLossless04RestoreSafe(),false,'Return false until owner re-attest finishes');
  await new Promise(r=>setImmediate(r));
+ assert.equal(board.loadCount,1);
+ assert.equal(sandbox.nativeLossless04RestoreSafe(),true,'Same verified owner allowed after re-attest');
+ assert.equal(board.loadCount,1,'No repeat admission for valid lease');
+ board.dirty=true;
+ assert.equal(sandbox.nativeLossless04RestoreSafe(),false,'Dirty unsaved outfit never overwritten');
+ board.dirty=false;board.active=false;
+ sandbox.db.name='closet-current-user-auth-owner-b';
+ assert.equal(sandbox.nativeLossless04RestoreSafe(),false,'Cross-owner DB name mismatch fails closed');
+ sandbox.db.name='closet-current-user-auth-owner-a';
+ board.load=async()=>{board.loadCount++;throw Error('Lease denied');};
+ assert.equal(sandbox.nativeLossless04RestoreSafe(),false);
+ await new Promise(r=>setImmediate(r));
+ assert.equal(sandbox.nativeLossless04RestoreSafe(),false,'Rejected attestation remains closed');
+ await new Promise(r=>setImmediate(r));
+ board.load=async()=>{board.loadCount++;auth.user={id:'auth-owner-b'};board.active=true;};
+ assert.equal(sandbox.nativeLossless04RestoreSafe(),false);
+ await new Promise(r=>setImmediate(r));
+ assert.equal(sandbox.nativeLossless04RestoreSafe(),false,'Asynchronous owner transition must remain closed');
+ sandbox.location.search='';
+ assert.equal(sandbox.nativeLossless04RestoreSafe(),true,'No behavior change to ordinary nonresearch app');
  assert.equal(typeof captured?.canRestore,'function');
 });
