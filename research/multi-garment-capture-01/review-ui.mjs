@@ -237,6 +237,9 @@ export function mountMultiGarmentCapture24({
   let references,snapshots;
   try{
    ({references,snapshots}=snapshotConfirmations34(state.pieces,schema));
+   // Preserve the inherited explicit guard as well as the independent immutable snapshot guard.
+   if(snapshots.some(x=>!canConfirmScene32(x,schema)||(x.manual&&!x.cropReviewed)))
+    throw Error('An unreviewed or invalid piece cannot be saved.');
   }catch(error){status.textContent=String(error.message||error);return;}
   // All controls and event callbacks stop modifying review facts BEFORE the
   // first asynchronous IndexedDB read or queued callback can begin.
