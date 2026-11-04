@@ -1,0 +1,80 @@
+name: RESTORE-ATOMIC-01 lossless owner backup and recovery NO DEPLOY
+on:
+  pull_request:
+    paths:
+      - 'public/app.js'
+      - 'public/cloud-backup.js'
+      - 'public/cloud-backup-bridge.js'
+      - 'research/restore-atomic-01/**'
+      - 'tests/restore-atomic-01.test.mjs'
+      - 'scripts/test-restore-atomic-01-browser.mjs'
+      - 'scripts/audit-restore-atomic-01.mjs'
+      - '.github/workflows/restore-atomic-01-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  atomic-restore-private-source-honest-research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+      - name: Pin verified BOARD04 source and reject out-of-scope changes
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor 56c9a814d6ecce5beae5d95043213faa2d8bb6f0 HEAD
+          git diff --name-only 56c9a814d6ecce5beae5d95043213faa2d8bb6f0 HEAD | while IFS= read -r path; do
+            case "$path" in
+              public/app.js|public/cloud-backup.js|public/cloud-backup-bridge.js|research/restore-atomic-01/*|tests/restore-atomic-01.test.mjs|scripts/test-restore-atomic-01-browser.mjs|scripts/audit-restore-atomic-01.mjs|.github/workflows/restore-atomic-01-no-deploy.yml) ;;
+              *) echo "Out-of-scope change BLOCKED: $path"; exit 1 ;;
+            esac
+          done
+          git diff --exit-code 56c9a814d6ecce5beae5d95043213faa2d8bb6f0 -- public/auth.js public/outfit-board.js public/outfit-board-engine.js research/board-lossless-02/ research/native-consumer-board-04/ supabase/ benchmark/fixtures/
+      - name: Install isolated real Chromium/WebKit and deterministic IndexedDB dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 fake-indexeddb@6.2.4 sharp@0.34.3 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Validate syntax, build and all inherited application tests
+        run: |
+          for path in public/app.js public/cloud-backup.js public/cloud-backup-bridge.js research/restore-atomic-01/*.mjs tests/restore-atomic-01.test.mjs scripts/test-restore-atomic-01-browser.mjs scripts/audit-restore-atomic-01.mjs; do node --check "$path"; done
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Genuine browser save-export-restore-reopen-edit-save owners A and B
+        run: node scripts/test-restore-atomic-01-browser.mjs
+      - name: Independent PNG hashes and before-after contact-sheet audit
+        run: node scripts/audit-restore-atomic-01.mjs
+      - name: Release and privacy gates remain blocked
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const r=JSON.parse(readFileSync('benchmark/restore-atomic-01/results.json'));
+          const a=JSON.parse(readFileSync('benchmark/restore-atomic-01-audit/acceptance.json'));
+          assert.equal(r.cases.length,6);assert.equal(r.screenshots.length,30);
+          assert.ok(r.cases.every(x=>x.originalPhotosUnchanged&&
+            x.savedOutfit3dIdRetained&&x.dressJacketCoatRetained&&
+            x.missingReferencesRetained&&x.atomicRestoreAndNativeEdit&&
+            x.ownerAandBIsolated&&!x.realSignedCloudJWT&&!x.releaseAuthorized));
+          assert.equal(a.verifiedOriginalPNG,30);
+          assert.equal(a.comparisonGalleries,6);
+          assert.equal(a.realLiveTwoOwnerRLS,false);
+          assert.equal(a.releaseAuthorized,false);
+          assert.equal(a.familyAlpha,'HOLD');
+          console.log('RESTORE01 research only: live RLS and physical devices BLOCKED');
+          NODE
+      - name: Persist genuine browser evidence and failures (no secrets)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: RESTORE01-30-real-mobile-private-HOLD
+          path: |
+            benchmark/restore-atomic-01/
+            benchmark/restore-atomic-01-audit/
+          if-no-files-found: warn
+          retention-days: 14
