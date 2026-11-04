@@ -1,0 +1,104 @@
+name: REAL-MASK-31 genuine pinned SegFormer original-photo model pixels comparison NO DEPLOY
+on:
+  push:
+    branches:
+      - research/real-mask-evidence-31-main-20261104-HOLD
+  pull_request:
+    paths:
+      - 'research/real-mask-evidence-31/**'
+      - 'scripts/verify-real-segformer-masks-31.mjs'
+      - 'tests/real-segformer-mask-31.test.mjs'
+      - '.github/workflows/real-segformer-mask-31-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  independent-real-model-and-source-mask-comparison:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      MULTI16_RELAY_MODEL: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Require prior verified PR587 SHA and source/metadata allowlist only
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor 7cd43be5e2cdb7be7473ab029a595d6b81e725ee HEAD
+          git diff --name-only 7cd43be5e2cdb7be7473ab029a595d6b81e725ee HEAD | while IFS= read -r p; do
+            case "$p" in
+              research/real-mask-evidence-31/*|scripts/verify-real-segformer-masks-31.mjs|tests/real-segformer-mask-31.test.mjs|.github/workflows/real-segformer-mask-31-no-deploy.yml) ;;
+              *) echo "BLOCKED unexpected actual photo/auth/model/storage/3D/production code edit: $p"; exit 1 ;;
+            esac
+          done
+      - name: Install fixed research dependency versions without editing lockfiles
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Verify model/research source syntax and build entire actual app with every Node regression
+        run: |
+          node --check research/real-mask-evidence-31/worker.mjs
+          node --check research/real-mask-evidence-31/legacy-visible-groups.mjs
+          node --check scripts/verify-real-segformer-masks-31.mjs
+          node --check tests/real-segformer-mask-31.test.mjs
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Run REAL pinned SegFormer ONNX in Chromium and WebKit on three exact SHA original licensed JPEGs
+        run: node scripts/verify-real-segformer-masks-31.mjs
+      - name: Independently audit genuine mask fingerprints, source SHA and browser screenshot geometry
+        run: |
+          node --input-type=module <<'EONODE'
+          import assert from 'node:assert/strict';
+          import {readFile} from 'node:fs/promises';
+          import {createHash} from 'node:crypto';
+          import sharp from 'sharp';
+          const base='benchmark/real-mask-evidence-31/';
+          const r=JSON.parse(await readFile(base+'report.json','utf8'));
+          assert.equal(r.priority,'REAL-SEGFORMER-PIXEL-MASK-31');
+          assert.equal(r.originalPhotoCount,3);assert.equal(r.genuineModelExecutions,6);
+          assert.equal(r.sourceTruePixelMaskIoUAgainstIndependentHumanTruth,false);
+          assert.equal(r.realPhotoModelAccuracyCertified,false);
+          assert.equal(r.independentBlindAnnotators,0);
+          assert.equal(r.pixelMembershipExactlyPreservedByGrouping,true);
+          assert.deepEqual(r.unauthorizedRequests,[]);assert.deepEqual(r.externalWrites,[]);
+          const expectedIds=['commons-0021','two-shirts','flatlay-outfit'];
+          const widths=[320,390,430];
+          for(const engine of ['chromium','webkit']){
+            const e=r.engines[engine];assert.equal(e.realModelRuns,3);
+            assert.equal(e.sourceRows.length,3);assert.deepEqual(e.errors,[]);
+            assert.deepEqual(e.sourceRows.map(x=>x.id),expectedIds);
+            assert.equal(e.screenshots.length,5);
+            for(const p of e.sourceRows){
+              assert.equal(p.realPinnedONNXInference,true);
+              assert.equal(p.perClassPixelMembershipUnchanged,true);
+              assert.equal(p.independentHumanPixelMasks,false);
+              assert.equal(p.actualModelLabelMaskSHA256.length,64);
+              assert.equal(p.before.groups.every(x=>x.needsReview===true),true);
+              assert.equal(p.after.groups.every(x=>x.needsReview===true),true);
+              for(const m of p.memberCount)assert.equal(m.retainedWithoutChanges,true);
+            }
+            for(const photo of e.screenshots){
+              assert.equal(photo.realModelExecuted,true);
+              const bytes=await readFile(base+photo.filename);
+              assert.equal(createHash('sha256').update(bytes).digest('hex'),photo.sha256);
+              const im=await sharp(bytes).metadata();
+              assert.equal(im.format,'png');assert.equal(im.width,photo.width);
+            }
+          }
+          console.log('MASK-31 exact original SHA, six genuine model executions, true class mask conservation and 10 browser screenshots verified — Family Alpha HOLD');
+          EONODE
+      - name: Upload ONLY sanitized group/mask SHA reports and public-source screenshots; no original JPEGs, model assets or user photos
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: REAL-MASK-31-genuine-ONNX-browser-mask-before-after-source-SHA-HOLD
+          path: |
+            benchmark/real-mask-evidence-31/report.json
+            benchmark/real-mask-evidence-31/*.png
+          if-no-files-found: warn
+          retention-days: 21
