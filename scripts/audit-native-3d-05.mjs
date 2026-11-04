@@ -16,6 +16,8 @@ assert.equal(report.realWebGL,true);
 assert.equal(report.originalNativeAuthHTTPOnlyMocked,true);
 assert.equal(report.realSignedRLS,false);
 assert.equal(report.originalUserSavedStateUnmodified,true);
+assert.equal(report.isolatedChromiumProcessPerWidth,true);
+assert.deepEqual(report.crashes,[]);
 assert.equal(report.familyAlpha,'HOLD');assert.equal(report.releaseAuthorized,false);
 const steps=['01-original-native-builder','02-genuine-163-bone-front-dress',
  '03-genuine-163-bone-side-dress','04-genuine-163-bone-rear-neutral',
