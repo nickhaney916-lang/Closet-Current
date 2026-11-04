@@ -37,7 +37,7 @@ test('real bounded RGB photo pixel proposals are always category/color agnostic,
   assert.equal(p.instanceSeparationClaimed,false);assert.equal(p.sourceSHA256,sha);
  }
  assert.equal(createHash('sha256').update(img.data).digest('hex'),hash);
- assert.deepEqual(img.data,original);
+ assert.deepEqual(Buffer.from(img.data),original);
 });
 test('matching known model crop suppresses only near-duplicate region, not unrelated garments',()=>{
  const img=photo();img.fill(24,20,75,100,[25,50,145]);img.fill(115,22,168,100,[169,35,75]);
