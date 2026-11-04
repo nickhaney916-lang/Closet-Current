@@ -28,7 +28,8 @@ function build([tag,category,itemType],who=owner){
   image:'data:image/jpeg;base64,'+image.toString('base64'),
   multipleGarments:tag==='commons-0059',userAdjusted:true};
 }
-const items=specs.map(build);
+const items=specs.map(spec=>build(spec)); // map index must never masquerade as owner ID
+assert.ok(items.every(x=>x.ownerId===owner));
 test('fifteen original licensed photographs stay unchanged, unreviewed meshes never accepted',async()=>{
  const perType={};
  for(const x of items){
