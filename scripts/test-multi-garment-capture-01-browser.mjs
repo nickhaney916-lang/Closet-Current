@@ -193,6 +193,8 @@ try{
   await page.evaluate(()=>switchView('closet'));
   await page.locator('#search').fill('Blue');
   assert.ok(await page.locator('#closetGrid article.card').count()>=2);
+  await fullShot(page,width,'03-owner-private-index-all');
+  await page.locator('#closetGrid article.card').first().scrollIntoViewIfNeeded();
   await shot(page,width,'03-owner-private-index');
   await page.evaluate(ids=>{
    window.nativeLossless04Bridge.startNew();
@@ -246,6 +248,8 @@ try{
   assert.deepEqual(await page.evaluate(()=>window.nativeLossless04Bridge.view().slots),{
    top:byCategory.Tops,bottom:byCategory.Bottoms,shoes:byCategory.Shoes
   });
+  await fullShot(page,width,'04-saved-outfit-all');
+  await page.evaluate(()=>document.getElementById('builder').scrollIntoView({block:'start',behavior:'instant'}));
   await shot(page,width,'04-saved-outfit');
   await page.locator('.account-menu summary').click();
   await page.locator('#logout').click();
