@@ -343,6 +343,37 @@ try{
    await fullShot(page,width,'reopened-owner-color-correction',engine);
    await editor.getByRole('button',{name:'Cancel'}).click();
   }
+  let shirtEvidence=null;
+  if(recognition42&&engine==='chromium'&&width===390){
+   const manifest=JSON.parse(await readFile('benchmark/locked-photo-sources.json','utf8'));
+   const fixture=manifest.find(source=>source.id==='commons-0003');
+   const shirt=await readFile('benchmark/fixtures/'+fixture.image);
+   assert.equal(sha(shirt),fixture.sha256);
+   await page.evaluate(()=>switchView('scan'));
+   await page.locator('#outfitUpload').setInputFiles({name:'archived-shirt.jpg',mimeType:'image/jpeg',buffer:shirt});
+   await page.waitForFunction(hash=>window.multi24Research?.debug().sourceSHA256===hash,fixture.sha256);
+   await page.getByRole('button',{name:'Add missed piece'}).click();
+   await realCrop(page,0,{x:.04,y:.04,right:.96,bottom:.96});
+   const card=page.locator('#multi24Grid .multi24-card').first();
+   await card.getByRole('button',{name:'Suggest category, type and color'}).click();
+   await card.locator('[data-recognition42="result"]').waitFor({timeout:250000});
+   await fullShot(page,width,'second-source-ai-review',engine);
+   await card.getByLabel('Main category').selectOption('Tops');
+   await card.getByLabel('Specific type').selectOption('T-shirt');
+   await card.getByLabel('Color (confirm visually)').fill('Black');
+   await card.getByLabel('I confirm this visible garment, category and color').check();
+   await page.getByRole('button',{name:'Save confirmed pieces together'}).click();
+   await page.waitForFunction(hash=>items.some(item=>item.sourceSHA256===hash),fixture.sha256);
+   const row=await page.evaluate(hash=>items.find(item=>item.sourceSHA256===hash),fixture.sha256);
+   assert.equal(row.originalPhoto.image,'data:image/jpeg;base64,'+shirt.toString('base64'));
+   assert.equal(row.ownerId,'multi24-A');
+   assert.equal(row.itemType,'T-shirt');
+   assert.equal(row.color,'Black');
+   assert.ok(row.recognitionSuggestion42);
+   shirtEvidence={sha256:fixture.sha256,source:'archived fixture commons-0003',
+    attribution:fixture.attribution,suggestion:row.recognitionSuggestion42,
+    confirmed:{category:row.category,itemType:row.itemType,color:row.color}};
+  }
   await page.locator('.account-menu summary').click();
   await page.locator('#logout').click();
   await page.waitForFunction(()=>document.getElementById('authGate')?.hidden===false,null,{timeout:30000});
@@ -350,7 +381,7 @@ try{
   await shot(page,width,'05-logout-photo-cleared',engine);
   await login(page,'multi24-B');
   assert.equal(await page.evaluate(()=>items.length),0,'Owner B cannot see A original photo or private items');
-  diagnostics.cases.push({engine,width,pieces:3,stylePinnedAndSaved:true,styleLooks:style.lookCount,sourceSHA256:sourceHash,reviewAccuracy:'3/3 human confirmed',aiSuggestion:aiSuggestion??null,reopenedUserColorClear:recognition42,recognitionEvidence:shoes.recognitionSuggestion42??null,outfitSaved:true,v4Backup:true,v4Restore:true,reimportDuplicateBlocked:true,ownerPrivate:true});
+  diagnostics.cases.push({engine,width,pieces:3,stylePinnedAndSaved:true,styleLooks:style.lookCount,sourceSHA256:sourceHash,reviewAccuracy:'3/3 human confirmed',aiSuggestion:aiSuggestion??null,reopenedUserColorClear:recognition42,shirtEvidence,recognitionEvidence:shoes.recognitionSuggestion42??null,outfitSaved:true,v4Backup:true,v4Restore:true,reimportDuplicateBlocked:true,ownerPrivate:true});
   await context.close();await browser.close();browser=null;
  }
  // Reproducible image contact sheet from actual screenshots, no generated cloth.
