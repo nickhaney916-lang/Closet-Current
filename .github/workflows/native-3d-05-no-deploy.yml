@@ -71,6 +71,8 @@ jobs:
           const r=JSON.parse(readFileSync('benchmark/native-3d-05/results.json','utf8'));
           const a=JSON.parse(readFileSync('benchmark/native-3d-05-audit/acceptance.json','utf8'));
           assert.equal(r.realWebGL,true);
+          assert.equal(r.isolatedChromiumProcessPerWidth,true);
+          assert.deepEqual(r.crashes,[]);
           assert.equal(r.cases,3);assert.equal(r.screenshots,15);
           assert.equal(r.originalUserSavedStateUnmodified,true);
           assert.equal(r.actual3DWithHonestUnsupportedPhotoFallback,true);
