@@ -177,7 +177,20 @@ export async function mountStyleOwnedLive03({
  let snapshot=null,active=null,current=null,history=[],generated=null,
   pinId=null,styleDraft=false,savedId=null,busy=false,revoked=false,
   requestedReviewId=null,singleItemReviews=new Map();
- const fail=message=>{throw Error('STYLE03 '+message);};
+ const guidance=Object.freeze({
+  SAVE_OR_CANCEL_UNSAVED_STYLE_EDITS_BEFORE_REGENERATING:
+   'Save this outfit or tap Cancel changes before generating new looks.',
+  CANCEL_OR_SAVE_UNSAVED_STYLE_LOOK_BEFORE_SWITCHING:
+   'Save this outfit or tap Cancel changes before choosing a different look.',
+  SAVE_OR_CANCEL_EXISTING_UNSAVED_NATIVE_OUTFIT_FIRST:
+   'Save or cancel unfinished Outfit Builder edits before creating another look.',
+  SESSION_CHANGED:'Your account changed. Sign in again to protect your private closet.',
+  STALE_WARDROBE_OR_BOARD:'Your saved closet changed. Refresh and review before continuing.',
+  SOURCE_CHANGED_OR_GARMENT_DELETED:'A garment changed or was removed. Refresh your closet first.',
+  CHOOSE_SUGGESTION_BEFORE_SAVING:'Choose one owned outfit before saving.',
+  NO_SWAP_TO_UNDO:'There is no swap to undo.'
+ });
+ const fail=message=>{throw Error('STYLE03 '+(guidance[message]||message));};
  const text=message=>{status.textContent=message;onStatus(message);};
  const rows=()=>snapshot?.items||[];
  const byId=id=>rows().find(x=>x.id===id);
