@@ -397,3 +397,55 @@ export async function classifyIsolatedGarment(model,image,{hint,confirmationMode
  onIdentified(choice);const details=sameType?await readVerifiedDetails(model,confirmationModel,image,choice,onStage):{};
  return {strong:true,categoryOnly:!sameType,choices:[{...choice,sleeveLength:details.sleeveLength||choice.sleeveLength}],details};
 }
+
+
+// RECOGNITION-SUBTYPE-SAFETY-14. Scores from differently framed views use
+// the same FashionCLIP model; agreement is a precaution, NOT calibrated
+// probability or evidence from an independently trained model.
+export async function verifyAutomaticSubtype14(model,image,result,{
+ confirmationModel,independentModel,sourceModel
+}={}){
+ if(!result?.strong||result.categoryOnly||result.choices?.[0]?.itemType==='Unknown')return result;
+ const chosen=result.choices?.[0],category=chosen?.category,type=chosen?.itemType;
+ const types=localCandidates.filter(x=>x.category===category);
+ if(!types.some(x=>x.itemType===type))return {strong:false,choices:[],details:{},reason:'subtype_unverified'};
+ const labels=[...types,...localCandidates.filter(x=>x.category==='Uncategorized')].map(x=>x.label);
+ // Category-wide thresholds, never individual photo IDs or held-out labels.
+ const gate=category==='Shoes'?{s:[.90,.82,.82],m:[.67,.52,.52]}:
+  category==='Tops'?{s:[.88,.78,.78],m:[.62,.44,.44]}:
+  {s:[.76,.69,.69],m:[.40,.27,.27]};
+ const views=[];let unavailable=false;
+ for(const [i,fn] of [model,confirmationModel,independentModel].entries()){
+  if(typeof fn!=='function'){unavailable=true;break;}
+  try{
+   const ranked=clothingChoices(await fn(image,labels,options)),top=ranked[0];
+   views.push({frame:i,category:top?.category||null,type:top?.itemType||null,
+    score:top?.score??0,margin:(top?.score??0)-(ranked[1]?.score??0)});
+  }catch{unavailable=true;break;}
+ }
+ let source=null;
+ if(typeof sourceModel!=='function')unavailable=true;
+ else try{
+  const ranked=clothingChoices(await sourceModel(image,labels,options)),top=ranked[0];
+  source={category:top?.category||null,type:top?.itemType||null,
+   score:top?.score??0,margin:(top?.score??0)-(ranked[1]?.score??0)};
+ }catch{unavailable=true;}
+ const consistent=!unavailable&&views.length===3&&views.every((v,i)=>
+  v.category===category&&v.type===type&&v.score>=gate.s[i]&&v.margin>=gate.m[i]);
+ const contrary=source&&source.score>=.65&&source.margin>=.22&&
+  (source.category!==category||source.type!==type);
+ if(consistent&&!contrary)return {...result,subtypeVerified14:true};
+ const categorySupported=views.length===3&&views.every(v=>v.category===category)&&
+  (!contrary||source.category===category);
+ const review=categorySupported?{
+  label:category,category,itemType:'Unknown',
+  sleeveLength:['Bottoms','Shoes','Accessories'].includes(category)?'Not applicable':'Unknown',
+  score:Math.min(...views.map(x=>x.score))
+ }:null;
+ return {strong:false,categoryConfirmed:!!review,categoryOnly:!!review,
+  choices:review?[review]:[],details:{},
+  reason:unavailable?'subtype_verification_unavailable':'subtype_review_required',
+  suggestedTypeForReview:type,subtypeChoicesForReview:types.map(x=>x.itemType),
+  diagnostics:{subtypeVerification14:{views,originalView:source,
+   correlatedModelViews:true,sameCategory:categorySupported}}};
+}
