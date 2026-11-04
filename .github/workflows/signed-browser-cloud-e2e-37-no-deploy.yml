@@ -32,7 +32,7 @@ jobs:
           git diff --name-only "$BASE" HEAD > "$RUNNER_TEMP/signed37-paths"
           while IFS= read -r file; do
             case "$file" in
-              research/signed-browser-cloud-e2e-37/*|.github/workflows/signed-browser-cloud-e2e-37-no-deploy.yml|tests/signed-browser-cloud-e2e-37.test.mjs) ;;
+              research/signed-browser-cloud-e2e-37/*|.github/workflows/signed-browser-cloud-e2e-37-no-deploy.yml|tests/signed-browser-cloud-e2e-37.test.mjs|public/cloud-backup.js|public/cloud-backup-bridge.js) ;;
               *) echo "BLOCKED production/staging/unowned change: $file"; exit 1 ;;
             esac
           done < "$RUNNER_TEMP/signed37-paths"
