@@ -5,6 +5,7 @@ import {createHash,webcrypto} from 'node:crypto';
 import {indexedDB} from 'fake-indexeddb';
 import {visibleGarmentGroups24} from '../research/multi-garment-capture-01/visible-groups.mjs';
 import {atomicSaveGarments24,verifiedRecord24,pieceKey24,validCrop24} from '../research/multi-garment-capture-01/atomic-group.mjs';
+if(!globalThis.crypto?.subtle)globalThis.crypto=webcrypto;
 const sha=b=>createHash('sha256').update(b).digest('hex');
 function map(w=40,h=40){
  const labels=new Uint8Array(w*h),confidence=new Float32Array(w*h);
