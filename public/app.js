@@ -48,8 +48,19 @@ function switchView(view){
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>switchView(b.dataset.view));
 function openDB(){return new Promise((resolve,reject)=>{const r=indexedDB.open('closet-current-user-'+window.closetAuth.user.id,2);r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains('items'))r.result.createObjectStore('items',{keyPath:'id'});if(!r.result.objectStoreNames.contains('state'))r.result.createObjectStore('state',{keyPath:'id'});};r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});}
 function readAll(){return new Promise((resolve,reject)=>{const r=db.transaction('items').objectStore('items').getAll();r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});}
-function writeAll(values){return queued(()=>new Promise((resolve,reject)=>{const tx=db.transaction('items','readwrite');for(const v of values)tx.objectStore('items').put(v);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);}));}
-function removeItem(id){return queued(()=>new Promise((resolve,reject)=>{const tx=db.transaction('items','readwrite');tx.objectStore('items').delete(id);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);}));}
+// NATIVE-INDEX-07 opt-in only: refresh the original native outfit controller
+// after a committed saved-item mutation, not on every draft/photo write.
+// Owner/session/CAS attestation is performed by the controller itself.
+async function nativeIndex07Refresh(){
+ if(new URLSearchParams(location.search).get('nativeIndex07')!=='research')return;
+ const bridge=window.nativeLossless04Bridge;
+ if(!bridge?.refreshWardrobe)return;
+ try{await bridge.refreshWardrobe();}
+ catch(error){const status=$('boardSaveStatus');if(status)
+  status.textContent='New clothing saved; outfit builder needs a safe reload. '+String(error.message||error);}
+}
+function writeAll(values){return queued(()=>new Promise((resolve,reject)=>{const tx=db.transaction('items','readwrite');for(const v of values)tx.objectStore('items').put(v);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);}));.then(async value=>{await nativeIndex07Refresh();return value;});}
+function removeItem(id){return queued(()=>new Promise((resolve,reject)=>{const tx=db.transaction('items','readwrite');tx.objectStore('items').delete(id);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);}));.then(async value=>{await nativeIndex07Refresh();return value;});}
 function persistDraft(){if(!db)return;const snapshot=structuredClone(batch);return queued(()=>new Promise((resolve,reject)=>{const tx=db.transaction('state','readwrite');tx.objectStore('state').put({id:'draft',batch:snapshot});tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);})).catch(()=>message('Your unfinished scan could not be backed up. Keep this page open and save or export your pieces.'));}
 function readDraft(){return new Promise((resolve,reject)=>{const r=db.transaction('state').objectStore('state').get('draft');r.onsuccess=()=>resolve(r.result?.batch||[]);r.onerror=()=>reject(r.error);});}
 async function captureProofVerifyBeforeSave(value){
@@ -73,7 +84,7 @@ function savePiece(value,nextBatch){return queued(async()=>{
  return new Promise((resolve,reject)=>{const tx=db.transaction(['items','state'],'readwrite');
  tx.objectStore('items').put(value);tx.objectStore('state').put({id:'draft',batch:structuredClone(nextBatch)});
  tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);});
-});}
+});.then(async result=>{await nativeIndex07Refresh();return result;});}
 function node(tag,text,className){const n=document.createElement(tag);if(text)n.textContent=text;if(className)n.className=className;return n;}
 function empty(grid,title,subtitle){const n=node('div',null,'empty');n.append(node('h3',title),node('p',subtitle));grid.append(n);}
 function field(body,title,value,type='input'){const label=node('label',title),input=node(type);input.setAttribute('aria-label',title);if(type==='select'){for(const c of categories){const o=node('option',c);o.value=c;input.append(o);}}input.value=value||'';if(type==='input')input.maxLength=120;if(type==='textarea')input.maxLength=500;label.append(input);body.append(label);return input;}
@@ -473,7 +484,7 @@ async function saveIndexed(item,index04ApprovedOwner=null){
  }));
  if(!saved)return false;
  if(!items.some(x=>x.id===item.id))items.push(value);
- batch=batch.filter(x=>x.id!==item.id);persistDraft();return true;
+ batch=batch.filter(x=>x.id!==item.id);persistDraft();await nativeIndex07Refresh();return true;
 }
 async function recognizeItem(item){
  const index04Active=typeof index04ResearchActive!=='undefined'&&index04ResearchActive;
