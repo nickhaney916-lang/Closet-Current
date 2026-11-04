@@ -59,7 +59,20 @@ self.onmessage=event=>{
     throw Error('Invalid bounded source-locked model request');
    const {model,processor,RawImage}=await loaded(id);
    self.postMessage({id,type:'progress',phase:'infer'});
-   const input=await RawImage.read(req.analysisImage);
+   // WebKit intermittently rejects createImageBitmap(Blob) in a module
+   // worker. The page can transfer the exact decoded *analysis JPEG* RGBA
+   // pixels instead; these are real browser image pixels, not synthetic masks.
+   let input;
+   if(req.analysisRGBA!==undefined){
+    if(!(req.analysisRGBA instanceof Uint8ClampedArray)||
+       !Number.isInteger(req.analysisWidth)||!Number.isInteger(req.analysisHeight)||
+       req.analysisWidth<1||req.analysisHeight<1||
+       req.analysisWidth>3072||req.analysisHeight>3072||
+       req.analysisWidth*req.analysisHeight>3072*3072||
+       req.analysisRGBA.length!==req.analysisWidth*req.analysisHeight*4)
+     throw Error('Invalid bounded browser decoded model-analysis pixels');
+    input=new RawImage(req.analysisRGBA,req.analysisWidth,req.analysisHeight,4);
+   }else input=await RawImage.read(req.analysisImage);
    if(input.width>3072||input.height>3072||input.width*input.height>3072*3072)
     throw Error('Oversized inference input');
    const logits=await model(await processor(input));
