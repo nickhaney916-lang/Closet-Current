@@ -46,6 +46,7 @@ jobs:
           node --check research/multi-garment-capture-01/atomic-group.mjs
           node --check research/multi-garment-capture-01/review-ui.mjs
           node --check scripts/test-multi-garment-capture-01-browser.mjs
+          node scripts/build.mjs
           node --test tests/*.cjs tests/*.mjs
       - name: Real original licensed photo, human-reviewed triple save, native Outfit Builder, backup and owner B
         run: node scripts/test-multi-garment-capture-01-browser.mjs
