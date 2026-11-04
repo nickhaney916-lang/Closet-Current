@@ -1,0 +1,62 @@
+name: STYLE-OWNED-LIVE-03 fast real native source and mobile browser NO DEPLOY
+on:
+  pull_request:
+    paths:
+      - 'research/style-owned-live-03/**'
+      - 'public/app.js'
+      - 'public/outfit-board.js'
+      - 'research/native-consumer-board-04/consumer-board-controller.mjs'
+      - 'scripts/test-style-owned-live-03-browser.mjs'
+      - 'scripts/audit-style-owned-live-03.mjs'
+      - 'tests/style-owned-live-03.test.mjs'
+      - '.github/workflows/style-owned-live-03-fast-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  private-photo-review-to-three-owned-looks-fast-no-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+      - name: No production, auth, photos, donor, cloud or deployments changed
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor d913e4f0b65c6b92cfbd1de4083e84692740707e HEAD
+          git diff --name-only d913e4f0b65c6b92cfbd1de4083e84692740707e HEAD | while IFS= read -r p; do
+            case "$p" in
+              public/app.js|public/outfit-board.js|research/native-consumer-board-04/consumer-board-controller.mjs|research/style-owned-live-03/*|tests/style-owned-live-03.test.mjs|scripts/test-style-owned-live-03-browser.mjs|scripts/audit-style-owned-live-03.mjs|.github/workflows/style-owned-live-03-no-deploy.yml|.github/workflows/style-owned-live-03-fast-no-deploy.yml) ;;
+              *) echo "BLOCKED unrelated production or other feature path: $p"; exit 1 ;;
+            esac
+          done
+          git diff --exit-code d913e4f0b65c6b92cfbd1de4083e84692740707e -- public/auth.js public/index.html public/cloud-backup.js public/cloud-backup-bridge.js research/native-3d-05/ research/native-photo-readiness-08/ research/three-d-*/ benchmark/fixtures/ migrations/ supabase/
+      - name: Pinned test dependencies, unchanged photographed benchmark
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Exact original JPEG, explicit one-item human review, pinned ID, own wardrobe unit suite
+        run: |
+          node --check research/style-owned-live-03/three-owned-looks-native.mjs
+          node --check research/style-owned-live-03/native-style-panel.mjs
+          node --check scripts/test-style-owned-live-03-browser.mjs
+          node --test tests/style-owned-live-03.test.mjs
+      - name: REAL original native app Chromium and WebKit 320/390/430 source-owner-photo-swap-save-restore
+        run: |
+          node scripts/test-style-owned-live-03-browser.mjs
+          node scripts/audit-style-owned-live-03.mjs
+      - name: Screenshot evidence even if failing, do not deploy
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: STYLE-OWNED-03-FAST-51-real-mobile-photos-HOLD
+          path: |
+            benchmark/style-owned-live-03/
+            benchmark/style-owned-live-03-audit/
+          if-no-files-found: warn
+          retention-days: 14
