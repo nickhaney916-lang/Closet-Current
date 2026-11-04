@@ -4,7 +4,23 @@
  * No independent wardrobe, cloud endpoint, inference service or 3D assertion.
  */
 import {verifyStoredCanonical} from '../capture-proof-01/source-proof.mjs';
-import {validReviewTaxonomy43,reviewedColor43} from './commit-taxonomy-43.mjs';
+export const COMMIT43_TYPES=Object.freeze({
+ Tops:Object.freeze(['T-shirt','Blouse','Button-down shirt','Polo','Tank top','Sweater','Sweatshirt','Hoodie','Tunic','Other']),
+ Bottoms:Object.freeze(['Jeans','Trousers','Leggings','Shorts','Skirt','Joggers','Other']),
+ Dresses:Object.freeze(['Casual dress','Shirt dress','Sweater dress','Formal dress','Jumpsuit','Romper','Other']),
+ Outerwear:Object.freeze(['Jacket','Coat','Blazer','Cardigan','Vest','Raincoat','Other']),
+ Shoes:Object.freeze(['Sneakers','Flats','Heels','Sandals','Ankle boots','Tall boots','Loafers','Other'])
+});
+export function validReviewTaxonomy43(category,itemType){
+ return Object.hasOwn(COMMIT43_TYPES,category)&&
+  typeof itemType==='string'&&COMMIT43_TYPES[category].includes(itemType);
+}
+export function reviewedColor43(color){
+ if(typeof color!=='string')return null;
+ const clean=color.trim();
+ return clean&&clean.length<=120&&clean.toLowerCase()!=='unknown'?clean:null;
+}
+
 export const SHA24=/^[a-f0-9]{64}$/;
 const JPEG24=/^data:image\/jpeg;base64,[A-Za-z0-9+/]+={0,2}$/;
 function fail(text){throw Error('MULTI24 '+text);}
