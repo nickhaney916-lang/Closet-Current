@@ -1,0 +1,122 @@
+name: PHOTO-FIT-3D-02 photographed red shirt anatomical fitting NO DEPLOY
+on:
+  pull_request:
+    paths:
+      - 'research/photo-fit-3d-02/**'
+      - 'tests/photo-fit-3d-02.test.mjs'
+      - 'scripts/test-photo-fit-3d-02-browser.mjs'
+      - 'scripts/audit-photo-fit-3d-02.mjs'
+      - '.github/workflows/photo-fit-3d-02-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  exact-sha-source-real-webgl-human-review-hold:
+    runs-on: ubuntu-latest
+    timeout-minutes: 110
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+      - name: Pin accepted 08 and reject production, authorization, donor or photo writes
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor 68d76e42c26e4a83866157f16f6c3435d21c0b66 HEAD
+          git diff --name-only 68d76e42c26e4a83866157f16f6c3435d21c0b66 HEAD | while IFS= read -r p; do
+            case "$p" in
+              research/photo-fit-3d-02/*|tests/photo-fit-3d-02.test.mjs|scripts/test-photo-fit-3d-02-browser.mjs|scripts/audit-photo-fit-3d-02.mjs|.github/workflows/photo-fit-3d-02-no-deploy.yml) ;;
+              *) echo "REJECT unrelated production/private/account/donor/migration change: $p"; exit 1 ;;
+            esac
+          done
+          git diff --exit-code 68d76e42c26e4a83866157f16f6c3435d21c0b66 -- public/ research/native-photo-readiness-08/ research/user-photo-3d-01/ research/native-3d-05/ research/native-index-live-07/ research/restore-atomic-01/ benchmark/fixtures/ migrations/ supabase/ .github/workflows/cloudflare-pages.yml .github/workflows/pages.yml
+      - name: Pin exact independent PR541 anatomical donor
+        run: |
+          git fetch --no-tags origin df6885d6011cb33fb22dceb81a08f35a0ac4dd61 53f2ad344dc56a1477e343531c423aed0e66c17d dd6bac3fa9ff640d4f562cf925337440bdb5cf8f 3a572193987cb29389727426136c6eb3ac326783 dfb40889c4c1221fb1833b859e8a11ef38aeb76e
+          git worktree add --detach .photo22-donor-541 df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          test "$(git -C .photo22-donor-541 rev-parse HEAD)" = df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          git config --global --add safe.directory "$GITHUB_WORKSPACE/.photo22-donor-541"
+          ln -s .photo22-donor-541 .native05-donor-541
+      - name: Install pinned test-only dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Build current app, syntax, source integrity and full inherited Node regression
+        run: |
+          for p in research/photo-fit-3d-02/*.mjs scripts/test-photo-fit-3d-02-browser.mjs scripts/audit-photo-fit-3d-02.mjs tests/photo-fit-3d-02.test.mjs; do node --check "$p"; done
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+          node scripts/repro-restore-atomic-01-baseline.mjs
+      - name: Generate genuine immutable donor anatomical resources
+        run: |
+          ln -s ../node_modules .photo22-donor-541/node_modules
+          cd .photo22-donor-541
+          node scripts/build-three-d-31-jeans-proposal.mjs
+          node scripts/build-three-d-37-second-jeans.mjs
+          node scripts/build-work47-benchmark.mjs
+          node research/three-d-20/restore-approved-models.mjs
+          test -f research/three-d-06/models/male-cc0-rigged.glb
+          test -f research/three-d-06/models/female-cc0-rigged.glb
+          node --test tests/outfit-3d-01.test.mjs
+      - name: NEW original red-shirt source, real 163-bone male female at 4 angles and 3 widths
+        run: |
+          node scripts/test-photo-fit-3d-02-browser.mjs
+          node scripts/audit-photo-fit-3d-02.mjs
+      - name: Original verified native owner, original source, saved outfit, atomic restore and WebGL regressions
+        run: |
+          node scripts/test-native-photo-readiness-08-browser.mjs
+          node scripts/audit-native-photo-readiness-08.mjs
+          node scripts/test-native-index-live-07-browser.mjs
+          node scripts/audit-native-index-live-07.mjs
+          node scripts/test-native-3d-05-browser.mjs
+          node scripts/audit-native-3d-05.mjs
+          node scripts/test-native-restore-3d-06-browser.mjs
+          node scripts/audit-native-restore-3d-06.mjs
+          node scripts/test-restore-atomic-01-browser.mjs
+          node scripts/audit-restore-atomic-01.mjs
+          node scripts/test-user-photo-3d-01-browser.mjs
+          node scripts/audit-user-photo-3d-01.mjs
+      - name: Final source and protected original readiness assertions
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const n=JSON.parse(readFileSync('benchmark/photo-fit-3d-02-audit/acceptance.json','utf8'));
+          assert.equal(n.verifiedRealWebGLScreenshots,24);
+          assert.equal(n.verifiedTwoRigFourAngleCases,3);
+          assert.equal(n.originalJPEGShaVerified,true);
+          assert.equal(n.humanFitAccepted,false);
+          assert.equal(n.universalPhotoFitClaim,false);
+          assert.equal(n.familyAlpha,'HOLD');
+          assert.equal(n.releaseAuthorized,false);
+          const p=JSON.parse(readFileSync('benchmark/user-photo-3d-01-audit/acceptance.json','utf8'));
+          assert.equal(p.readiness['3D Ready'],0);
+          assert.equal(p.readiness['Needs Review'],12);
+          assert.equal(p.readiness['Photo-Only'],3);
+          console.log('PHOTO22 real NEW 3D source prototype verified; human fit approval PENDING and Family Alpha HOLD.');
+          NODE
+      - name: Preserve actual source-photo versus WebGL evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: PHOTO-FIT-3D-02-24-genuine-WebGL-mobile-source-HOLD
+          path: |
+            benchmark/photo-fit-3d-02/
+            benchmark/photo-fit-3d-02-audit/
+            benchmark/native-photo-readiness-08/
+            benchmark/native-photo-readiness-08-audit/
+            benchmark/native-index-live-07/
+            benchmark/native-index-live-07-audit/
+            benchmark/native-3d-05/
+            benchmark/native-3d-05-audit/
+            benchmark/native-restore-3d-06/
+            benchmark/native-restore-3d-06-audit/
+            benchmark/restore-atomic-01/
+            benchmark/restore-atomic-01-audit/
+            benchmark/user-photo-3d-01/
+            benchmark/user-photo-3d-01-audit/
+          if-no-files-found: warn
+          retention-days: 14
