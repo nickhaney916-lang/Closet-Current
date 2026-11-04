@@ -94,7 +94,8 @@ test('research worker runs genuine pinned ONNX and fingerprints raw model pixel 
  assert.match(file,/maskPixelMembershipConserved:true/);
  assert.match(file,/visibleGarmentGroups24\(map/);
  assert.match(file,/oldGroups\(map/);
- assert.doesNotMatch(file,/localStorage|indexedDB|supabase|\\.insert\\(|\\.upsert\\(|\\.delete\\(/);
+ for(const token of ['localStorage','indexedDB','supabase','.insert(','.upsert(','.delete('])
+  assert.ok(!file.includes(token),'research model worker must never access owner cloud or storage');
 });
 test('independent source research harness cannot certify new unseen-photo accuracy or raw human mask IoU',()=>{
  const file=readFileSync('scripts/verify-real-segformer-masks-31.mjs','utf8');
