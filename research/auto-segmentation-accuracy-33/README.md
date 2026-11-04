@@ -1,0 +1,27 @@
+# AUTO-SEGMENTATION-ACCURACY-33 — Source-locked real-model falsification experiment (Parallel #27)
+
+**RESEARCH ONLY — NOT FOR MERGE OR DEPLOY. Family Alpha Issue #255 remains HOLD.**
+
+Base: PR #589 `SCENE-CLASS-TRUST-32`, exact SHA `79e957719bd90f7f1cd1ae71ec4bde5ff14ae93c`, previously passing no-deploy Actions #41918745343. This branch never updates source application files, production, staging, storage, authentication, or fitted 3D garments.
+
+## Precise hypothesis / intervention
+
+The pinned SegFormer B0 clothing semantic model has genuine failures on overlapping shirts (0/2 category-aware box matches, shirt pixels mislabeled skirt) and flat-lay clothing (0/3, wrong dress fragments). Human-gated PR #589 prevents unsafe prefill but cannot fix pixels. This experiment **does not substitute a fabricated instance model**: it independently tests whether the already-implemented, deterministic, bounded pixel-contrast detector can add useful **UNCLASSIFIED review rectangles** on the original source photographs, without altering a single model pixel. It is a complementary foreground **localization** hypothesis, not recognition or automatic garment classification.
+
+- `contrast-rescue-33.mjs`: requires externally SHA-verified unchanged original JPEG provenance and in-memory bounded decoded pixels; calls the existing flat-lay detector; suppresses only essentially identical crop rectangles (IoU >0.85); returns review-only rectangles explicitly set to Uncategorized, Unknown, blank color, unconfirmed, unreviewed, unsaved; never calls network, camera roll, owner-private storage, or user model. It cannot guess touching garment instances or unseen garment surfaces.
+- `scoreReviewLocalization33`: maximum-cardinality one-to-one **class-agnostic** IoU >=0.5; outputs null for semantic accuracy or independently verified pixel IoU. A wrong skirt/dress class label cannot be credited as a correct garment classification.
+- `verify-auto-segmentation-33.mjs`: reproduces the actual PINNED `Xenova/segformer_b0_clothes` ONNX model revision `a2489ea8e7ec1ee912190546bad31a4906ccca76` with Transformers.js 3.8.1, real Chromium/WebKit, six actual model runs (three original JPEGs × two engines) via the unchanged PR #588 model worker and browser runner. Downloads the exact locked original source with original width, height, byte length, SHA-256 and license; bounded analysis JPEG is derived in memory. Node sharp decodes the genuine verified original independently to a <=512px RGB raster for contrast proposals, and source identity remains unchanged. Browser screenshot overlays: actual global SegFormer pixel-label map, reference annotation boxes (single researcher), old/new shoe-grouping, plus yellow dashed **unclassified** contrast rectangles on right panel. All masks and crop paths are source-linked and unsaved.
+
+## Evaluation limitations (not a holdout)
+
+The three genuine licensed photographs `commons-0021`, `two-shirts`, and `flatlay-outfit` were already used in PR #588 and PR #575. Their original JPEG sources, license, dimensions, bytes and SHA are in `research/multi-review-triage-28/frozen-photo-annotations-16.json`. The existing reference rectangles have **one researcher**, not two independent blinded annotators. No independent pixel-level masks exist.
+
+We measure: source-verified original/JPEG/model-mask hash, class-aware baseline and post-shoe-group scores (both real SegFormer), class-free model localization vs union of genuine model and contrast proposals, total false proposals, and elapsed inference and host-runner RSS (not equivalent to GPU/WebKit memory). Every case, including zero-proposal negatives, remains in the report. No synthetic boxes or hand-drawn masks are used to claim real-model improvement. Unit tests use synthetic arrays strictly to verify safety invariants; real photograph results are separately labeled.
+
+This experiment cannot establish class/color accuracy, overlap instance separation, true IoU against human pixel masks, independent unseen-cohort generalization, physical-phone acceptance, or any right to auto-save. Even if extra regions improve box localization on this sample, **scientific verdict remains NEEDS REWORK**, not Family Alpha PASS.
+
+## Reproduce / acceptance
+
+On the isolated branch, the new `auto-segmentation-accuracy-33-no-deploy.yml` requires exact source ancestry and a 4-path research allowlist; runs inherited application build and all Node regressions; demands actual model download+inference in real Chromium and WebKit; tests six mobile viewport screenshots (320/390/430 across two engines) plus two hard cases at 390 each, verifies every original SHA/model-map SHA/screenshot SHA and no unauthorized browser network writes, and uploads public licensed original photo comparison screenshots with sanitized report. Missing original/model/assets/browser checks **fail** the CI job rather than silently count as success.
+
+**Integration recommendation:** keep the app source unchanged. Do not add automatic foreground boxes to the user experience unless a separate genuinely new, independently annotated sample demonstrates useful precision and an operator can verify multiple overlaps versus one object. Follow-on priority is clothing-specific **instance segmentation model and human-reviewed pixel masks** on a prospective untouched photo set, then calibrated class/color recognition and category corrections. Family Alpha HOLD.
