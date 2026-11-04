@@ -51,6 +51,7 @@ const addActualPixelMask=(host,result)=>{
  return labels;
 };
 const current={worker:null,id:0};
+let reusableWorker=null;
 window.__realMask31={done:false,report:null,error:null};
 window.runRealMask31=async({sourceId,sourceData,analysisData,originalWidth,originalHeight,
  annotation,credit,expectedSHA})=>{
@@ -62,11 +63,13 @@ window.runRealMask31=async({sourceId,sourceData,analysisData,originalWidth,origi
  $('credit').textContent=credit;
  $('before').querySelector('img').src=sourceData;
  $('after').querySelector('img').src=sourceData;
- const worker=new Worker('/research/real-mask-evidence-31/worker.mjs',{type:'module'});
+ const worker=reusableWorker??new Worker('/research/real-mask-evidence-31/worker.mjs',{type:'module'});
+ reusableWorker=worker;
  const id=++current.id;current.worker=worker;
  let ended=false;const finish=(error,result)=>{
   if(ended)return;ended=true;clearTimeout(timeout);
-  worker.terminate();current.worker=null;
+  current.worker=null;
+  if(error){worker.terminate();if(reusableWorker===worker)reusableWorker=null;}
   if(error){$('status').textContent=error;
    window.__realMask31={done:true,error,report:null,sourceId};return;}
   (async()=>{
