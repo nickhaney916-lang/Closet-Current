@@ -180,7 +180,7 @@ try{
    const rects=sample.map(bounds);
    return {active:window.nativeMobile09Bridge.state().active,
     display:getComputedStyle(byId('nativeLossless04Controls')).display,
-    columns:getComputedStyle(byId('nativeLossless04Controls')).gridTemplateColumns.split(/\\s+/).length,
+    columns:getComputedStyle(byId('nativeLossless04Controls')).gridTemplateColumns.trim().split(/\s+/).length,
     rects,savedOutfitControls:buttons.length,
     bodyScrollWidth:document.documentElement.scrollWidth,viewport:innerWidth};
   });
