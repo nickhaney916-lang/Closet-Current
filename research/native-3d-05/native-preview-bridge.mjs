@@ -68,18 +68,22 @@ export async function mountNative3D05({
  if(!anchor||!anchor.parentElement)
   throw Error('NATIVE05 requires verified normal consumer Save Changes controls');
  anchor.after(button);button.after(status);
- let epoch=null,panel=null,opened=null,closed=false,attempt=0;
+ let epoch=null,panel=null,opened=null,closed=false,attempt=0,cleaning=false;
  const notify=value=>{const s=String(value);status.textContent=s;onStatus(s);};
- function cleanup(reason='Saved outfit preview closed'){
-  attempt++;
-  try{panel?.destroy();}catch{}
-  panel=null;
-  try{epoch?.dispose();}catch{}
-  epoch=null;opened=null;
-  notify(reason);
+ function cleanup(reason='Saved outfit preview closed',{revoke=false}={}){
+  if(cleaning)return;
+  cleaning=true;attempt++;
+  const oldPanel=panel;panel=null;opened=null;
+  const oldEpoch=revoke?epoch:null;
+  if(revoke)epoch=null;
+  try{try{oldPanel?.destroy();}catch{}try{oldEpoch?.dispose();}catch{}}
+  finally{cleaning=false;notify(reason);}
+  // Explicitly closing 3D never disposes the valid native auth epoch:
+  // PR550 disposal broadcasts session-changed and would otherwise clear
+  // the consumer's separately verified saved-outfit editor.
  }
- const invalidate=()=>cleanup('Account/session changed · private 3D preview cleared');
- const logout=()=>cleanup('Signed out · private 3D preview cleared');
+ const invalidate=()=>cleanup('Account/session changed · private 3D preview cleared',{revoke:true});
+ const logout=()=>cleanup('Signed out · private 3D preview cleared',{revoke:true});
  win.addEventListener('closet:alpha-session-changed',invalidate);
  win.addEventListener('pagehide',invalidate);
  doc.getElementById('logout').addEventListener('click',logout,true);
@@ -106,8 +110,10 @@ export async function mountNative3D05({
   const selected=validateNative3D05Selection({consumer,originalNativeAuth:nativeAuth,win,doc});
   button.disabled=true;notify('Verifying owner wardrobe and loading original-photo anatomical 3D…');
   try{
-   epoch=createNativeAuthEpoch01({nativeAuth,win,doc});
-   const lease=await epoch.attest();
+   if(!epoch)epoch=createNativeAuthEpoch01({nativeAuth,win,doc});
+   const lease=epoch.status().active?
+    {ownerId:nativeAuth.user.id,generation:epoch.auth.getSessionGeneration()}:
+    await epoch.attest();
    if(request!==attempt||lease.ownerId!==selected.ownerId||!epoch.status().active)
     throw Error('NATIVE05 original account changed before viewer admission');
    const donor=await importPinnedDonor();
@@ -161,7 +167,7 @@ export async function mountNative3D05({
   win.removeEventListener('closet:alpha-session-changed',invalidate);
   win.removeEventListener('pagehide',invalidate);
   doc.getElementById('logout').removeEventListener('click',logout,true);
-  cleanup('3D research viewer disposed');
+  cleanup('3D research viewer disposed',{revoke:true});
   button.remove();status.remove();
  };
  notify('Choose a saved outfit, then preview verified 3D (unsaved edits must be saved).');
