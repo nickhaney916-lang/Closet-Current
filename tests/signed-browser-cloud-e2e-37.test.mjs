@@ -53,3 +53,55 @@ test('SIGNED37 CI pins ancestor, isolates Docker stack and blocks deployment',()
  assert.match(flow,/playwright install --with-deps chromium webkit/);
  assert.doesNotMatch(flow,/(?:firebase deploy|pages deploy|supabase db push|npm run deploy|gh pr merge)/i);
 });
+
+test('SIGNED37 signed cloud restore awaits native research owner lease twice',()=>{
+ const cloud=read('public/cloud-backup.js');
+ assert.equal(cloud.split('if(callbacks.canRestore&&!await callbacks.canRestore())return false;').length-1,2,
+  'Owner lease must be awaited before and after source-photo decode');
+ const bridge=read('public/cloud-backup-bridge.js');
+ assert.match(bridge,/canRestore:async\(\)=>/);
+ assert.match(bridge,/await nativeLossless04RestoreSafe\(\)/);
+ assert.match(bridge,/await board\.load\(\)/);
+ assert.match(bridge,/db\.name!=='closet-current-user-'\+owner/);
+});
+
+test('SIGNED37 real bridge code re-attests only unchanged owner and fails closed with unsaved edits',async()=>{
+ const {runInNewContext}=await import('node:vm');
+ const source=read('public/cloud-backup-bridge.js');
+ const obj={
+  active:false,dirty:false,loadCount:0,
+  status(){return {active:this.active,dirty:this.dirty};},
+  async load(){this.loadCount++;this.active=true;}
+ };
+ const user={id:'auth-owner-a'};
+ const auth={user,assertCurrent(){if(!this.user?.id)throw Error('Owner expired');}};
+ let captured=null;
+ const sandbox={
+  window:{closetAuth:auth,nativeLossless04Bridge:obj,closetCloud:{async start(_db,c){captured=c;}}},
+  db:{name:'closet-current-user-auth-owner-a'},
+  document:{getElementById:()=>({hidden:false}),querySelector:()=>null},
+  location:{search:'?nativeLossless04=research'},
+  URLSearchParams,closetReady:Promise.resolve(),outfitBoardReady:Promise.resolve(),
+  inspirationReady:Promise.resolve(),busy:false,automaticRunning:false,memoryReviewRunning:false
+ };
+ runInNewContext(source,sandbox);
+ assert.equal(await sandbox.nativeLossless04RestoreSafe(),true);
+ assert.equal(obj.loadCount,1);
+ assert.equal(obj.active,true);
+ assert.equal(await sandbox.nativeLossless04RestoreSafe(),true);
+ assert.equal(obj.loadCount,1,'Valid lease must not re-attest unnecessarily');
+ obj.dirty=true;
+ assert.equal(await sandbox.nativeLossless04RestoreSafe(),false,'Unsaved owner draft blocks recovery');
+ obj.dirty=false;obj.active=false;
+ sandbox.db.name='closet-current-user-auth-owner-b';
+ assert.equal(await sandbox.nativeLossless04RestoreSafe(),false,'Owner DB mismatch must fail before lease read');
+ sandbox.db.name='closet-current-user-auth-owner-a';
+ obj.load=async()=>{obj.loadCount++;throw Error('Research lease refused');};
+ assert.equal(await sandbox.nativeLossless04RestoreSafe(),false,'Failed admission must not authorize restore');
+ obj.load=async()=>{obj.loadCount++;auth.user={id:'auth-owner-b'};obj.active=true;};
+ assert.equal(await sandbox.nativeLossless04RestoreSafe(),false,'Owner changes during async re-attestation fail closed');
+ sandbox.location.search='';
+ assert.equal(await sandbox.nativeLossless04RestoreSafe(),true,'Default nonresearch cloud path preserved');
+ await new Promise(r=>setImmediate(r));
+ assert.equal(typeof captured?.canRestore,'function');
+});
