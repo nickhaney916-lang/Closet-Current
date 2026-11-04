@@ -46,6 +46,9 @@ for(const e of data.cases){
  assert.equal(e.ownerA.pinnedNeverChanged,true);
  assert.equal(e.ownerA.undoRestored,true);
  assert.equal(e.ownerA.swapCommitted,true);
+ assert.equal(e.ownerA.unsavedSwitchRejected,true);
+ assert.equal(e.ownerA.regenerateRejectedWhileDirty,true);
+ assert.equal(e.ownerA.cancelRestoredPriorDraft,true);
  assert.equal(e.ownerA.nativeCAS,true);
  assert.equal(e.ownerA.nativeOutfitReopen,true);
  assert.equal(e.ownerA.previousRecordsExact,true);
