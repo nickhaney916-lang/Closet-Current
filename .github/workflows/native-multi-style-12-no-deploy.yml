@@ -1,0 +1,79 @@
+name: NATIVE-MULTI-STYLE-INTEGRATION-12 three real photo pieces to owned native outfit NO DEPLOY
+on:
+  pull_request:
+    paths:
+      - 'public/outfit-capture.js'
+      - 'public/outfit-worker.mjs'
+      - 'research/multi-garment-capture-01/**'
+      - 'research/style-owned-live-03/native-style-panel.mjs'
+      - 'research/native-multi-style-12/**'
+      - 'tests/multi-garment-capture-01.test.mjs'
+      - 'tests/native-multi-style-12.test.mjs'
+      - 'scripts/test-multi-garment-capture-01-browser.mjs'
+      - 'scripts/audit-native-multi-style-12.mjs'
+      - '.github/workflows/native-multi-style-12-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  owner-original-multi-photo-atomic-styling-and-source-cas-no-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 110
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+      - name: Pin PR568 and protect source, auth, cloud, production and unrelated 3D
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor 058aeda3c46303e481d6c84223bae6a2464667fd HEAD
+          git diff --name-only 058aeda3c46303e481d6c84223bae6a2464667fd HEAD | while IFS= read -r p; do
+            case "$p" in
+              public/outfit-capture.js|public/outfit-worker.mjs|research/multi-garment-capture-01/*|research/native-multi-style-12/*|research/style-owned-live-03/native-style-panel.mjs|tests/multi-garment-capture-01.test.mjs|tests/native-multi-style-12.test.mjs|scripts/test-multi-garment-capture-01-browser.mjs|scripts/audit-native-multi-style-12.mjs|.github/workflows/native-multi-style-12-no-deploy.yml) ;;
+              *) echo "BLOCKED unrelated source: $p"; exit 1 ;;
+            esac
+          done
+          git diff --exit-code 058aeda3c46303e481d6c84223bae6a2464667fd -- public/auth.js public/app.js public/index.html public/outfit-board.js public/cloud-backup.js public/cloud-backup-bridge.js research/native-consumer-board-04/ research/native-correction-10/ research/native-3d-05/ research/native-photo-readiness-08/ research/user-photo-3d-01/ benchmark/fixtures/ migrations/ supabase/ .github/workflows/cloudflare-pages.yml .github/workflows/pages.yml
+      - name: Install pinned research dependencies with no package modifications
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Syntax, real app build, full inherited plus new owner/source unit suites
+        run: |
+          for p in public/outfit-capture.js public/outfit-worker.mjs research/multi-garment-capture-01/*.mjs research/style-owned-live-03/*.mjs scripts/test-multi-garment-capture-01-browser.mjs scripts/audit-native-multi-style-12.mjs tests/native-multi-style-12.test.mjs; do node --check "$p"; done
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Source-canonical 3 actual clothes to private native Style, saved outfit, V4 and owner B Chromium WebKit
+        run: |
+          node scripts/test-multi-garment-capture-01-browser.mjs
+          node scripts/audit-native-multi-style-12.mjs
+      - name: Prior real native style + source correction Chromium/WebKit 320 390 430 regression
+        run: |
+          node scripts/test-style-owned-live-03-browser.mjs
+          node scripts/audit-style-owned-live-03.mjs
+          node scripts/test-native-style-correction-11-browser.mjs
+          node scripts/audit-native-style-correction-11.mjs
+      - name: Independent 3D photo readiness remains no arbitrary 3D claim and backup baseline
+        run: |
+          node scripts/repro-restore-atomic-01-baseline.mjs
+          node scripts/test-restore-atomic-01-browser.mjs
+          node scripts/audit-restore-atomic-01.mjs
+      - name: Preserve true browser screenshots and audit even on failure, no deploy
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: NATIVE-MULTI-STYLE-12-source-original-60-photos-six-cases-HOLD
+          path: |
+            benchmark/multi-garment-capture-01/
+            benchmark/style-owned-live-03/
+            benchmark/style-owned-live-03-audit/
+            benchmark/native-style-correction-11/
+            benchmark/native-style-correction-11-audit/
+            benchmark/restore-atomic-01/
+            benchmark/restore-atomic-01-audit/
+          if-no-files-found: warn
+          retention-days: 21
