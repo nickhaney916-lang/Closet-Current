@@ -126,7 +126,7 @@ try{
    for(const sample of selected){
     const {bytes,source}=await originalPhoto(sample);
     await page.goto(origin+'/',{waitUntil:'load'});
-    await page.addScriptTag({content:'const items=[];\n'+consumerFieldSlice});
+    await page.addScriptTag({content:'const items=[]; const categories=[\'Uncategorized\',...Object.keys(clothingSchema.types)];\n'+consumerFieldSlice});
     const value=await page.evaluate(async input=>{
      const photo='data:image/jpeg;base64,'+input.base64;
      document.getElementById('subject').src=photo;
