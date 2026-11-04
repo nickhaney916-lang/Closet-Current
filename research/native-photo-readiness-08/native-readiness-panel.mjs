@@ -52,7 +52,14 @@ export async function assessSavedNative08({ownerId,saved,items,assertOwner=()=>{
   }
   // Missing owner proof or source SHA fails CLOSED. Its bytes must not appear
   // in the status cards until the exact original JPEG verifies successfully.
-  const result=await assessWardrobePhoto01(item,{ownerId});
+  let result;
+  try{result=await assessWardrobePhoto01(item,{ownerId});}
+  catch(error){
+   // Legacy ownerless rows must remain visible as photo-only metadata, not
+   // become fitted 3D or break every valid garment in the selected outfit.
+   result={readiness:'Photo-Only',reason:'Original owner/source proof unavailable; keep photo private until reviewed',
+    originalPhotoVerified:false,sourceSHA256:null};
+  }
   assertOwner();
   const verified=result.originalPhotoVerified===true;
   entries.push(Object.freeze({
