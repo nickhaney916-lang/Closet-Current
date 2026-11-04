@@ -138,6 +138,10 @@ export async function mountStyleOwnedLive03({
  '#styleOwned03 .piece{display:grid;grid-template-columns:64px minmax(0,1fr);align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #e0e9e3}',
  '#styleOwned03 .piece img{width:64px;height:70px;object-fit:contain;background:#f1f4f0}',
  '#styleOwned03 .piece button{min-height:44px;margin-top:4px}',
+ '#styleOwned03 .pending-review{background:#fff;border:1px solid #bfcfc6;padding:8px;border-radius:8px;margin:8px 0}',
+ '#styleOwned03 .pending-item{display:grid;grid-template-columns:72px minmax(0,1fr);gap:8px;align-items:center;margin:7px 0}',
+ '#styleOwned03 .pending-item img{width:72px;height:83px;object-fit:contain;background:#f1f4f0}',
+ '#styleOwned03 .pending-item button{width:100%;margin-top:5px;min-height:48px}',
  '#styleOwned03 .note{font-size:12px;color:#37584b}',
  '#styleOwned03 #styleOwned03Status{font-size:13px;font-weight:600;margin:7px 0;overflow-wrap:anywhere}',
  '#styleOwned03 [hidden]{display:none!important}',
@@ -152,6 +156,7 @@ export async function mountStyleOwnedLive03({
  const selector=create('select');selector.id='styleOwned03Item';
  selector.setAttribute('aria-label','Choose your new owned clothing item');
  selectLabel.append(selector);
+ const pending=create('section',null,'pending-review');pending.id='styleOwned03Pending';pending.hidden=true;
  const pin=create('div',null,'pinned');pin.id='styleOwned03Pinned';
  const refreshButton=create('button','Refresh my saved clothes');refreshButton.id='styleOwned03Refresh';
  const generate=create('button','Generate my three outfits','primary');generate.id='styleOwned03Generate';
@@ -161,11 +166,12 @@ export async function mountStyleOwnedLive03({
  const looks=create('div',null,'looks');looks.id='styleOwned03Suggestions';
  const workspace=create('section');workspace.id='styleOwned03Workspace';
  const caution=create('p','Research-only. Approved, source-bound 163-bone 3D previews remain in the existing Outfit Builder after you save. Any other clothing stays as its genuine original photo.','note');
- section.append(heading,explain,selectLabel,pin,toolbar,status,looks,workspace,caution);
+ section.append(heading,explain,selectLabel,pending,pin,toolbar,status,looks,workspace,caution);
  const actualStyle=doc.getElementById('stylist');
  actualStyle.insertBefore(section,actualStyle.querySelector('.occasion-choices')||actualStyle.firstChild);
  let snapshot=null,active=null,current=null,history=[],generated=null,
-  pinId=null,styleDraft=false,savedId=null,busy=false,revoked=false;
+  pinId=null,styleDraft=false,savedId=null,busy=false,revoked=false,
+  requestedReviewId=null,singleItemReviews=new Map();
  const fail=message=>{throw Error('STYLE03 '+message);};
  const text=message=>{status.textContent=message;onStatus(message);};
  const rows=()=>snapshot?.items||[];
@@ -179,7 +185,8 @@ export async function mountStyleOwnedLive03({
  };
  const clearPrivate=()=>{
   revoked=true;snapshot=null;active=null;current=null;history=[];generated=null;
-  pinId=null;styleDraft=false;savedId=null;
+  pinId=null;styleDraft=false;savedId=null;requestedReviewId=null;
+  singleItemReviews.clear();pending.replaceChildren();pending.hidden=true;
   selector.replaceChildren();pin.replaceChildren();looks.replaceChildren();
   workspace.replaceChildren();text('Account changed · private photographed outfits cleared. Sign in to load this closet.');
  };
@@ -208,19 +215,63 @@ export async function mountStyleOwnedLive03({
   if(pinId)selector.value=pinId;
   displayPinned();
  }
+
+ function renderPending(){
+  pending.replaceChildren();
+  const rowsPending=snapshot?.pending||[];
+  pending.hidden=!rowsPending.length;
+  if(!rowsPending.length)return;
+  pending.append(create('strong','One quick photo check'),
+   create('p','These saved originals have confirmed clothing details but were not yet checked to show one item. Confirm each photo before allowing it into outfits. This never changes the photo or makes it 3D Ready.','small'));
+  for(const row of rowsPending){
+   const card=create('div',null,'pending-item');card.append(img(row,72));
+   const body=create('div');
+   body.append(create('strong',row.name||row.itemType),
+    create('p',[row.category,row.itemType,row.color].filter(Boolean).join(' · '),'small'),
+    create('p','Original SHA-256 '+row.sourceSHA256.slice(0,14)+'…','note'));
+   const confirm=create('button','Yes, this photo shows one clothing item');
+   confirm.type='button';confirm.dataset.photoItemId=row.id;
+   confirm.onclick=async()=>{
+    confirm.disabled=true;
+    try{
+     const lease=live(),snapshotNow=board.readOnlyWardrobe();
+     const original=snapshotNow.items.find(x=>x.id===row.id);
+     if(!original||original.ownerId!==lease.ownerId||
+        original.sourceSHA256!==row.sourceSHA256||
+        original.originalPhoto?.sha256!==row.sourceSHA256||
+        original.originalPhoto?.image!==row.genuinePhoto||
+        original.category!==row.category||original.itemType!==row.itemType||
+        !needsExplicitSingleReview(original))
+      fail('ONE_ITEM_PHOTO_CHANGED_OR_NOT_ELIGIBLE');
+     singleItemReviews.set(row.id,{ownerId:lease.ownerId,generation:lease.generation,
+      sha256:row.sourceSHA256,category:row.category,itemType:row.itemType});
+     await refresh({quiet:false});
+     if(!byId(row.id))fail('ONE_ITEM_REVIEW_NOT_VERIFIED');
+     if(requestedReviewId===row.id||!pinId){
+      pinId=row.id;selector.value=row.id;displayPinned();requestedReviewId=null;
+     }
+     text('One original clothing photo confirmed. This does not approve 3D fitting. You can now generate owned outfits.');
+    }catch(error){text('Unable to confirm this photograph: '+String(error.message||error));}
+    finally{confirm.disabled=false;}
+   };
+   body.append(confirm);card.append(body);pending.append(card);
+  }
+ }
  async function refresh({quiet=false}={}){
   if(busy)return false;
   busy=true;refreshButton.disabled=true;
   try{
-   const previous=snapshot,loaded=await verifiedPrivateStyleRoster03(board);
+   const previous=snapshot,loaded=await verifiedPrivateStyleRoster03(board,{singleItemReviews});
    snapshot=loaded;revoked=false;
    if(previous&&(previous.ownerId!==loaded.ownerId||previous.generation!==loaded.generation)){
     generated=null;current=null;history=[];styleDraft=false;savedId=null;
     looks.replaceChildren();workspace.replaceChildren();
+    singleItemReviews.clear();requestedReviewId=null;
    }
-   renderOptions();
-   if(!quiet)text(rows().length+' SHA-verified owned pieces ready. '+loaded.rejected.length+
-     ' pieces need photo/category review. Choose a new item, then generate.');
+   renderOptions();renderPending();
+   if(!quiet||loaded.pending.length)text(rows().length+' SHA-verified owned pieces ready. '+
+     loaded.pending.length+' originals need one-item photo confirmation; '+
+     loaded.rejected.length+' need further category/source review.');
    return true;
   }catch(error){clearPrivate();text(String(error.message||error));throw error;}
   finally{busy=false;refreshButton.disabled=false;}
@@ -400,8 +451,16 @@ export async function mountStyleOwnedLive03({
  async function selectGarment(itemId){
   if(styleDraft&&board.status().dirty)fail('CANCEL_UNSAVED_OUTFIT_BEFORE_CHANGING_PIN');
   await refresh({quiet:true});
-  if(!byId(itemId))fail('SELECTED_ITEM_MISSING_OR_NOT_VERIFIED');
-  pinId=itemId;selector.value=itemId;generated=null;current=null;active=null;
+  if(!byId(itemId)){
+   if(snapshot?.pending?.some(row=>row.id===itemId)){
+    requestedReviewId=itemId;
+    pending.scrollIntoView({block:'center',behavior:'auto'});
+    text('Confirm the one-item photograph shown above to make this saved garment selectable.');
+    return itemId;
+   }
+   fail('SELECTED_ITEM_MISSING_OR_NOT_VERIFIED');
+  }
+  requestedReviewId=null;pinId=itemId;selector.value=itemId;generated=null;current=null;active=null;
   styleDraft=false;history=[];savedId=null;
   looks.replaceChildren();workspace.replaceChildren();displayPinned();
   text('New original garment selected and pinned. Generate your owned outfits.');
@@ -416,7 +475,7 @@ export async function mountStyleOwnedLive03({
  };
  refreshButton.onclick=()=>refresh().catch(error=>text(String(error.message||error)));
  generate.onclick=()=>generateLooks().catch(error=>text(String(error.message||error)));
- const onInventory=()=>{if(!revoked)refresh({quiet:true}).catch(()=>{});};
+ const onInventory=()=>{if(!revoked)refresh({quiet:true}).catch(error=>text('Saved closet refresh needs review: '+String(error.message||error)));};
  win.addEventListener('closet:style-owned-inventory-committed',onInventory);
  const onRevoked=()=>clearPrivate();
  win.addEventListener('closet:alpha-session-changed',onRevoked);
