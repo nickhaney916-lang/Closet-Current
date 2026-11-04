@@ -75,18 +75,18 @@ test('untrusted success booleans and unsupported sources cannot mint acceptance'
   rig:{getState:()=>({loaded:true,stats:{bones:163},releaseAuthorized:false,outfit:{garmentMeshes:2}}),canvas:{isConnected:true}},
   views:['front','side','rear'],humanReviewAccepted:true}),/Unknown photographic geometry/);
 });
-test('even accepted receipt must match owner original photo and item, and requires all angles',async()=>{
+test('fake 163-bone counters and a generic rig never certify an actual source-fitted WebGL garment',async()=>{
  const row=items[2],source=await verifyOriginalPhoto01(row,{ownerId:owner});
- const rig={canvas:{isConnected:true},getState:()=>({loaded:true,stats:{bones:163},
+ const generic={canvas:{isConnected:true},getState:()=>({loaded:true,stats:{bones:163},
    outfit:{garmentMeshes:2},releaseAuthorized:false})};
- assert.throws(()=>attestFittedRender01({item:row,source,rig,views:['front','side'],
-  humanReviewAccepted:true}),/angles/);
- const receipt=attestFittedRender01({item:row,source,rig,views:['front','side','rear'],
-  humanReviewAccepted:true});
- const result=await assessWardrobePhoto01(row,{ownerId:owner,renderReceipt:receipt});
- assert.equal(result.readiness,'3D Ready');assert.equal(result.rendered3D,true);
- await assert.rejects(()=>assessWardrobePhoto01({...row,id:'another-id'},{
-  ownerId:owner,renderReceipt:receipt}),/Untrusted/);
+ assert.throws(()=>attestFittedRender01({item:row,source,rig:generic,
+   views:['front','side','rear'],humanReviewAccepted:true}),/Actual live WebGL2/);
+ const fakeWebGL={canvas:{isConnected:true,getContext:()=>({getParameter:()=> 'WebGL 2.0',VERSION:1})},
+   getState:()=>({loaded:true,stats:{bones:163},outfit:{garmentMeshes:2},releaseAuthorized:false})};
+ assert.throws(()=>attestFittedRender01({item:row,source,rig:fakeWebGL,
+   views:['front','side','rear'],humanReviewAccepted:true}),/exact independently source-bound/);
+ const result=await assessWardrobePhoto01(row,{ownerId:owner});
+ assert.equal(result.readiness,'Needs Review');
 });
 test('invalid source hash, tampered full JPEG, missing original, foreign user fail closed',async()=>{
  const x=items[0];
