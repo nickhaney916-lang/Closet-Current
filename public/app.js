@@ -55,7 +55,17 @@ async function nativeIndex07Refresh(){
  if(new URLSearchParams(location.search).get('nativeIndex07')!=='research')return;
  const bridge=window.nativeLossless04Bridge;
  if(!bridge?.refreshWardrobe)return;
- try{await bridge.refreshWardrobe();if(new URLSearchParams(location.search).get('styleOwned03')==='research')window.dispatchEvent(new Event('closet:style-owned-inventory-committed'));}
+ try{
+   await bridge.refreshWardrobe();
+   if(new URLSearchParams(location.search).get('styleOwned03')==='research'){
+    // A confirmed photo is not instantly selectable if this secondary source
+    // digest runs fire-and-forget. Await only the same signed-in native
+    // controller's new SHA-verified saved roster. Never write a second DB.
+    const stylePanel=window.styleOwnedLive03Bridge;
+    if(stylePanel?.refresh)await stylePanel.refresh({quiet:true});
+    else window.dispatchEvent(new Event('closet:style-owned-inventory-committed'));
+   }
+  }
  catch(error){const status=$('boardSaveStatus');if(status)
   status.textContent='New clothing saved; outfit builder needs a safe reload. '+String(error.message||error);}
 }
