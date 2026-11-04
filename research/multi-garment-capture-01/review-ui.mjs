@@ -108,6 +108,7 @@ export function mountMultiGarmentCapture24({
      delete piece.recognitionSuggestion42;
      delete piece.recognitionStatus42;
      piece.image=photo.image;piece.cropBounds={...photo.cropBounds};piece.maskApplied=!!photo.maskApplied;
+     piece.maskedColorEstimate=photo.maskApplied?photo.maskedColorEstimate:null;
      piece.cropReviewed=true;if(piece.manual)piece.instanceKey=manualKey(piece.cropBounds);
      piece.confirmed=false;redraw();
     }
@@ -135,6 +136,15 @@ export function mountMultiGarmentCapture24({
    const result=await recognizeReviewedCrop42({original:view.proof.image,crop:piece.image,
     signal:request.controller.signal,version:recognitionAssetVersion,schema,palette,categories:TYPES});
    if(!valid())return;
+   if(!result.color&&typeof window.checkPhoto==='function'){
+    const estimate=piece.maskApplied?piece.maskedColorEstimate:
+     (await window.checkPhoto(piece.image).catch(()=>null))?.colorEstimate;
+    if(!valid())return;
+    if(palette.includes(estimate?.color)){
+     result.color=estimate.color;
+     result.colorSource=piece.maskApplied?'mask-pixel-estimate':'crop-pixel-estimate';
+    }
+   }
    piece.recognitionSuggestion42=result;
    delete piece.recognitionStatus42;
   }catch{
@@ -175,7 +185,7 @@ export function mountMultiGarmentCapture24({
     const result=p.recognitionSuggestion42;
     const review=el('p',p.recognitionStatus42||(result?
      'AI crop suggestion · '+[result.category||'Category uncertain',result.itemType||'Type uncertain',
-      result.color||'Color uncertain'].join(' · ')+' · Confirm visually.':'Run local AI on this reviewed crop.'),'fine');
+      result.color?(result.color+(result.colorSource==='recognition'?'':' (pixel estimate)')):'Color uncertain'].join(' · ')+' · Confirm visually.':'Run local AI on this reviewed crop.'),'fine');
     review.dataset.recognition42=result?'result':'status';
     review.setAttribute('role','status');
     const classify=button('Suggest category, type and color',()=>classifyReviewed42(p));

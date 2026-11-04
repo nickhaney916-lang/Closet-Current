@@ -306,6 +306,33 @@ try{
   await fullShot(page,width,'04-saved-outfit-all',engine);
   await page.evaluate(()=>document.getElementById('builder').scrollIntoView({block:'start',behavior:'instant'}));
   await shot(page,width,'04-saved-outfit',engine);
+  if(recognition42){
+   await page.evaluate(()=>switchView('closet'));
+   await page.locator('#filter').selectOption('Shoes');
+   await page.locator('#search').fill('Sneakers');
+   const savedCard=page.locator('#closetGrid article.card').filter({hasText:'Blue Sneakers'});
+   await savedCard.getByRole('button',{name:'Adjust details'}).click();
+   const editor=page.locator('dialog.clothing-editor');
+   await editor.locator('details.optional-details').evaluate(details=>{details.open=true;});
+   const color=editor.getByLabel('Color',{exact:true});
+   assert.equal(await color.inputValue(),'Blue');
+   await color.fill('');
+   await editor.getByRole('button',{name:'Save changes'}).click();
+   await editor.waitFor({state:'hidden'});
+   await savedCard.getByRole('button',{name:'Adjust details'}).click();
+   assert.equal(await color.inputValue(),'');
+   assert.equal(await editor.getByLabel('Item type',{exact:true}).inputValue(),'Sneakers');
+   const edited=await page.evaluate(id=>new Promise((resolve,reject)=>{
+    const req=db.transaction('items').objectStore('items').get(id);
+    req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);
+   }),byCategory.Shoes);
+   assert.equal(edited.color,'');
+   assert.equal(edited.colorSource,'user');
+   assert.equal(edited.originalPhoto.image,shoes.originalPhoto.image);
+   assert.deepEqual(edited.recognitionSuggestion42,shoes.recognitionSuggestion42);
+   await fullShot(page,width,'reopened-owner-color-correction',engine);
+   await editor.getByRole('button',{name:'Cancel'}).click();
+  }
   await page.locator('.account-menu summary').click();
   await page.locator('#logout').click();
   await page.waitForFunction(()=>document.getElementById('authGate')?.hidden===false,null,{timeout:30000});
@@ -313,7 +340,7 @@ try{
   await shot(page,width,'05-logout-photo-cleared',engine);
   await login(page,'multi24-B');
   assert.equal(await page.evaluate(()=>items.length),0,'Owner B cannot see A original photo or private items');
-  diagnostics.cases.push({engine,width,pieces:3,stylePinnedAndSaved:true,styleLooks:style.lookCount,sourceSHA256:sourceHash,reviewAccuracy:'3/3 human confirmed',aiSuggestion:aiSuggestion??null,recognitionEvidence:shoes.recognitionSuggestion42??null,outfitSaved:true,v4Backup:true,v4Restore:true,reimportDuplicateBlocked:true,ownerPrivate:true});
+  diagnostics.cases.push({engine,width,pieces:3,stylePinnedAndSaved:true,styleLooks:style.lookCount,sourceSHA256:sourceHash,reviewAccuracy:'3/3 human confirmed',aiSuggestion:aiSuggestion??null,reopenedUserColorClear:recognition42,recognitionEvidence:shoes.recognitionSuggestion42??null,outfitSaved:true,v4Backup:true,v4Restore:true,reimportDuplicateBlocked:true,ownerPrivate:true});
   await context.close();await browser.close();browser=null;
  }
  // Reproducible image contact sheet from actual screenshots, no generated cloth.

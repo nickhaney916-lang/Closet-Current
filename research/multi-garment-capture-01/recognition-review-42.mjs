@@ -18,7 +18,9 @@ export async function recognizeReviewedCrop42({original,crop,version,signal,sche
   const request=image=>new Promise((resolve,reject)=>{
    signal.throwIfAborted();
    const id=crypto.randomUUID();
+   let settled=false;
    const cleanup=()=>{
+    settled=true;
     clearTimeout(timer);
     signal.removeEventListener('abort',abort);
     worker.onmessage=null;
@@ -30,16 +32,19 @@ export async function recognizeReviewedCrop42({original,crop,version,signal,sche
    signal.addEventListener('abort',abort,{once:true});
    worker.onerror=fail;
    worker.onmessage=({data})=>{
-    if(data?.id!==id)return;
+    if(settled||data?.id!==id)return;
     if(data.type==='error')fail();
     if(data.type==='result'){cleanup();resolve(data);}
    };
    try{worker.postMessage({type:'classify',id,image});}catch{fail();}
   });
   const originalContext=normalizeSuggestion42(await request(original),schema,palette,categories);
-  const suggestion=normalizeSuggestion42(await request(crop),schema,palette,categories);
+  const cropResult=await request(crop);
+  const suggestion=normalizeSuggestion42(cropResult,schema,palette,categories);
   // The full-frame result is context only. It cannot supply a missing crop label.
-  return {source:'local-fashionclip',originalContext,...suggestion};
+  return {source:'local-fashionclip',originalContext,...suggestion,
+   colorSource:suggestion.color?'recognition':null,
+   status:suggestion.itemType?'subtype-suggested':suggestion.category?'category-only':'abstained'};
  } finally {
   worker.terminate();
  }
