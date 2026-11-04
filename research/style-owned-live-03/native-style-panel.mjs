@@ -171,7 +171,12 @@ export async function mountStyleOwnedLive03({
  actualStyle.insertBefore(section,actualStyle.querySelector('.occasion-choices')||actualStyle.firstChild);
  let snapshot=null,active=null,current=null,history=[],generated=null,
   pinId=null,styleDraft=false,savedId=null,busy=false,revoked=false,
-  requestedReviewId=null,singleItemReviews=new Map();
+  requestedReviewId=null,singleItemReviews=new Map(),
+  proposedRosterSignature=null,proposalStale=false;
+ const rosterSignature=data=>[...(data?.items||[]),...(data?.pending||[])]
+  .map(row=>[row.id,row.category,row.itemType,row.color||'',row.sourceSHA256,
+   (data.items||[]).some(x=>x.id===row.id)?'admitted':'one-item-review'].join('|'))
+  .sort().join(';');
  const fail=message=>{throw Error('STYLE03 '+message);};
  const text=message=>{status.textContent=message;onStatus(message);};
  const rows=()=>snapshot?.items||[];
@@ -186,7 +191,7 @@ export async function mountStyleOwnedLive03({
  const clearPrivate=()=>{
   revoked=true;snapshot=null;active=null;current=null;history=[];generated=null;
   pinId=null;styleDraft=false;savedId=null;requestedReviewId=null;
-  singleItemReviews.clear();pending.replaceChildren();pending.hidden=true;
+  singleItemReviews.clear();proposedRosterSignature=null;proposalStale=false;pending.replaceChildren();pending.hidden=true;
   selector.replaceChildren();pin.replaceChildren();looks.replaceChildren();
   workspace.replaceChildren();text('Account changed · private photographed outfits cleared. Sign in to load this closet.');
  };
@@ -263,13 +268,24 @@ export async function mountStyleOwnedLive03({
   try{
    const previous=snapshot,loaded=await verifiedPrivateStyleRoster03(board,{singleItemReviews});
    snapshot=loaded;revoked=false;
+   if(proposedRosterSignature&&rosterSignature(loaded)!==proposedRosterSignature){
+    proposalStale=true;
+    // An active unsaved native outfit is retained, not silently canceled.
+    // Its stale category references cannot be swapped or saved.
+    if(!styleDraft){
+     generated=null;current=null;active=null;history=[];savedId=null;
+     proposedRosterSignature=null;
+     looks.replaceChildren();workspace.replaceChildren();
+    }
+   }
    if(previous&&(previous.ownerId!==loaded.ownerId||previous.generation!==loaded.generation)){
     generated=null;current=null;history=[];styleDraft=false;savedId=null;
     looks.replaceChildren();workspace.replaceChildren();
     singleItemReviews.clear();requestedReviewId=null;
    }
    renderOptions();renderPending();
-   if(!quiet||loaded.pending.length)text(rows().length+' SHA-verified owned pieces ready. '+
+   if(proposalStale)text('Saved clothing categories or source-review eligibility changed. Cancel unfinished styling and regenerate before saving. Original outfit references remain intact.');
+   else if(!quiet||loaded.pending.length)text(rows().length+' SHA-verified owned pieces ready. '+
      loaded.pending.length+' originals need one-item photo confirmation; '+
      loaded.rejected.length+' need further category/source review.');
    return true;
@@ -278,6 +294,7 @@ export async function mountStyleOwnedLive03({
  }
  function ensurePin(){
   live();
+  if(proposalStale&&styleDraft)fail('GARMENT_CORRECTED_CANCEL_UNSAVED_LOOK_BEFORE_REGENERATING');
   if(!byId(pinId))fail('SELECTED_ORIGINAL_MISSING');
   if(board.status().dirty&&!styleDraft)fail('SAVE_OR_CANCEL_EXISTING_UNSAVED_NATIVE_OUTFIT_FIRST');
  }
@@ -299,10 +316,19 @@ export async function mountStyleOwnedLive03({
  }
  function ensureSameCurrentSources(){
   live();
+  if(proposalStale)fail('GARMENT_CORRECTED_CANCEL_AND_REGENERATE');
   const fresh=board.readOnlyWardrobe();
   if(fresh.boardFingerprint!==snapshot.fingerprint||fresh.ownerId!==snapshot.ownerId||
     fresh.generation!==snapshot.generation)fail('STALE_WARDROBE_OR_BOARD');
   const map=new Map(fresh.items.map(x=>[x.id,x]));
+  for(const [slot,id] of Object.entries(current?.slots||{})){
+   const latest=map.get(id),admitted=byId(id);
+   if(!latest||!admitted||!eligibleSlot03(slot,latest)||
+      admitted.category!==latest.category||
+      admitted.itemType!==latest.itemType||
+      admitted.color!==latest.color)
+    fail('GARMENT_CATEGORY_CHANGED_REVIEW_AND_REGENERATE');
+  }
   for(const [id,hash] of Object.entries(active?.sourceSHA256ById||{})){
    const row=map.get(id);
    if(!row||row.ownerId!==snapshot.ownerId||row.sourceSHA256!==hash||
@@ -361,6 +387,8 @@ export async function mountStyleOwnedLive03({
  }
  async function generateLooks(){
   if(busy)fail('BUSY');
+  if(styleDraft&&board.status().dirty)
+   fail('CANCEL_UNSAVED_OUTFIT_BEFORE_REGENERATING');
   ensurePin();
   busy=true;generate.disabled=true;
   try{
@@ -368,6 +396,7 @@ export async function mountStyleOwnedLive03({
    snapshot=await verifiedPrivateStyleRoster03(board,{singleItemReviews});
    live();
    if(!byId(pinId))fail('SELECTED_PHOTO_WAS_REMOVED_OR_UNVERIFIED');
+   proposalStale=false;proposedRosterSignature=rosterSignature(snapshot);
    generated=suggestThreeNativeOwned03(rows(),{
     ownerId:snapshot.ownerId,pinnedId:pinId,
     occasion:doc.getElementById('stylistOccasion')?.value||'Casual'});
@@ -395,6 +424,7 @@ export async function mountStyleOwnedLive03({
   return current;
  }
  function swapPiece(slot,itemId){
+  if(proposalStale)fail('GARMENT_CORRECTED_CANCEL_AND_REGENERATE');
   if(!current||!styleDraft)fail('CHOOSE_OWNED_OUTFIT_FIRST');
   const next=validateOwnedSwap03(rows(),{ownerId:snapshot.ownerId,pinnedId:pinId,
    slots:current.slots,slot,itemId});
@@ -408,6 +438,7 @@ export async function mountStyleOwnedLive03({
   return current;
  }
  function undoSwap(){
+  if(proposalStale)fail('GARMENT_CORRECTED_CANCEL_AND_REGENERATE');
   if(!history.length||!current)fail('NO_SWAP_TO_UNDO');
   const previous=history.at(-1);
   applySlots(previous.slots,previous.sourceSHA256ById);
@@ -418,6 +449,8 @@ export async function mountStyleOwnedLive03({
  function cancelChanges(){
   if(styleDraft&&board.status().active)board.cancel();
   styleDraft=false;current=null;active=null;history=[];savedId=null;
+  proposalStale=false;proposedRosterSignature=null;generated=null;
+  looks.replaceChildren();
   workspace.replaceChildren();text('Canceled unsaved edits. Existing saved outfits and original photos unchanged.');
  }
  async function saveCurrent(){
@@ -431,7 +464,7 @@ export async function mountStyleOwnedLive03({
       saved.slotSources?.[slot]?.sha256!==current.sourceSHA256ById[id])||
     before.saved.some(x=>!stored.saved.some(y=>y.id===x.id&&JSON.stringify(y)===JSON.stringify(x))))
    fail('SAVED_OUTFIT_VERIFY_FAILED');
-  savedId=saved.id;styleDraft=false;history=[];
+  savedId=saved.id;styleDraft=false;history=[];proposalStale=false;
   renderWorkspace();
   text('Saved! Outfit '+(saved.name||'Owned outfit')+
    ' is in your existing Saved outfits list. Backup sync pending; original clothing unchanged.');
@@ -460,7 +493,7 @@ export async function mountStyleOwnedLive03({
    }
    fail('SELECTED_ITEM_MISSING_OR_NOT_VERIFIED');
   }
-  requestedReviewId=null;pinId=itemId;selector.value=itemId;generated=null;current=null;active=null;
+  requestedReviewId=null;pinId=itemId;selector.value=itemId;generated=null;current=null;active=null;proposalStale=false;proposedRosterSignature=null;
   styleDraft=false;history=[];savedId=null;
   looks.replaceChildren();workspace.replaceChildren();displayPinned();
   text('New original garment selected and pinned. Generate your owned outfits.');
@@ -470,7 +503,7 @@ export async function mountStyleOwnedLive03({
   if(styleDraft&&board.status().dirty){
    selector.value=pinId;text('Cancel the current unsaved look before changing your pinned piece.');return;
   }
-  pinId=selector.value;generated=null;current=null;active=null;
+  pinId=selector.value;generated=null;current=null;active=null;proposalStale=false;proposedRosterSignature=null;
   history=[];savedId=null;looks.replaceChildren();workspace.replaceChildren();displayPinned();
  };
  refreshButton.onclick=()=>refresh().catch(error=>text(String(error.message||error)));
