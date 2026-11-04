@@ -180,6 +180,8 @@ try{
     // Yellow review rectangles are distinct from real SegFormer pixel overlay.
     await page.evaluate(({proposals})=>{
       const host=document.getElementById('after');
+      for(const stale of document.querySelectorAll('.contrast-33-legend'))stale.remove();
+      host.parentElement.querySelector('h2').textContent='SegFormer + unclassified source contrast (review only)';
       for(const proposal of proposals){
         const div=document.createElement('div'),b=proposal.box;
         div.className='box contrast-33-review-only';
@@ -188,10 +190,11 @@ try{
           border:'3px dashed #f5bb23',pointerEvents:'none'});
         div.dataset.unclassified='true';host.append(div);
       }
-      const legend=document.createElement('p');
+      const legend=document.createElement('p');legend.className='contrast-33-legend';
       legend.textContent='Yellow dashed = unclassified original-pixel contrast rectangles requiring explicit human review; not model classes, not verified instances.';
       document.getElementById('after-summary').after(legend);
     },{proposals:rescue.proposals});
+    assert.equal(await page.evaluate(()=>document.querySelectorAll('.contrast-33-legend').length),1,'a single source contrast legend required');
     const item={id:row.id,originalSHA256:row.sha256,sourceLicense:row.attribution.license,
       sourceOriginalDimensions:[row.width,row.height],originalBytes:row.bytes,resized:started.resized,
       modelInputDecode:engine==='webkit'?'page-canvas-decoded-analysis-JPEG-RGBA':'worker-RawImage-JPEG',
