@@ -220,7 +220,8 @@ function adjustPhoto(item){
      (!captureProofOwner()||item.ownerId&&item.ownerId!==captureProofOwner()))
    throw Error('Owner changed. Sign in again before saving this photo.');
   if(typeof ClothingMemory!=='undefined')Object.assign(value,ClothingMemory.confirm(value));
-  if(value.color&&value.colorSource==='photo-estimate')value.colorSource='user';
+  // COLOR41: Save does not prove an AI-estimated color was changed by the user.
+  // clothingFields itself marks colorSource='user' on explicit color input.
   await savePiece(value,batch.filter(x=>x.id!==item.id),{expectedSavedRow});
   const existing=items.find(x=>x.id===item.id);if(existing)Object.assign(existing,value);else items.push(value);
   batch=batch.filter(x=>x.id!==item.id);await persistDraft();dialog.close();render();scheduleMemoryReview();
@@ -293,7 +294,8 @@ function render(){
  if(expectedSavedRow){
   f.style.boxSizing='border-box';f.style.width='100%';
   f.style.maxWidth='100%';f.style.minWidth='0';
- }cancel.type='button';cancel.onclick=()=>dialog.close();f.onsubmit=async e=>{e.preventDefault();ok.disabled=true;try{const updated={...collect(),name:draft.name.trim()||'Closet piece'};if(updated.color&&updated.colorSource==='photo-estimate')updated.colorSource='user';if(typeof ClothingMemory!=='undefined')Object.assign(updated,ClothingMemory.confirm(updated));
+ }cancel.type='button';cancel.onclick=()=>dialog.close();f.onsubmit=async e=>{e.preventDefault();ok.disabled=true;try{const updated={...collect(),name:draft.name.trim()||'Closet piece'};// COLOR41: Notes/type edits must preserve provenance of photo-estimated colors.
+  // Explicit color edits retain their existing user-owned provenance.if(typeof ClothingMemory!=='undefined')Object.assign(updated,ClothingMemory.confirm(updated));
  if(expectedSavedRow){
   updated.userAdjusted=true;updated.requiresOwnershipConfirmation=false;
   await queued(()=>commitOwnerCorrection10(updated,expectedSavedRow,null));
