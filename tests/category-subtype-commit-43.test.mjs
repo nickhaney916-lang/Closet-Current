@@ -89,7 +89,7 @@ test('CATEGORY43 atomic mixed batch fails closed before any extra garment writes
 });
 test('CATEGORY43 review UI and persistence are both guarded independently, not merely a model confidence flag',async()=>{
  const proof=await photo();
- const schema={types:Object.fromEntries(keys.map(key=>[key,[...COMMIT43_TYPES[key]]))};
+ const schema={types:Object.fromEntries(keys.map(key=>[key,[...COMMIT43_TYPES[key]]]))};
  const bad=piece('fake','Shoes','T-shirt','Blue');
  assert.equal(canConfirmScene32(bad,schema),false);
  assert.throws(()=>verifiedRecord24({proof,ownerId:'guard',piece:bad}),/unreviewed or invalid/);
