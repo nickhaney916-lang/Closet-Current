@@ -1,0 +1,107 @@
+name: COLOR41 original photo human-color authority safe native save NO DEPLOY
+on:
+  push:
+    branches:
+      - research/color-provenance-integration-41-main-20261104-HOLD
+  pull_request:
+    paths:
+      - 'public/app.js'
+      - 'public/clothing-details.js'
+      - 'tests/user-color-authority-20.test.cjs'
+      - 'tests/review-color-provenance-23.test.cjs'
+      - 'scripts/verify-color-provenance-integration-41.mjs'
+      - 'research/color-provenance-integration-41/**'
+      - '.github/workflows/color-provenance-integration-41-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  native-photo-color-provenance-and-real-two-engine-owner-closet:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Exact verified parent ancestry and zero deploy/hosted/other source edits
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor a299f9f956fff7cd2045ae5faf0afa86bdc7b669 HEAD
+          git diff --name-only a299f9f956fff7cd2045ae5faf0afa86bdc7b669 HEAD >/tmp/color41-paths
+          while IFS= read -r file; do
+            case "$file" in
+              public/app.js|public/clothing-details.js|tests/user-color-authority-20.test.cjs|tests/review-color-provenance-23.test.cjs|scripts/verify-color-provenance-integration-41.mjs|research/color-provenance-integration-41/*|.github/workflows/color-provenance-integration-41-no-deploy.yml) ;;
+              *) echo "BLOCKED out-of-scope or deployment: $file"; exit 1 ;;
+            esac
+          done </tmp/color41-paths
+      - name: Install pinned browser and native test dependencies without changing package files
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Complete real app build, ALL inherited plus donor save/source authority Node tests
+        run: |
+          node --check public/app.js
+          node --check public/clothing-details.js
+          node --check scripts/verify-color-provenance-integration-41.mjs
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Verify inherited real source-epoch owner crop/editor browser rejection
+        run: node scripts/verify-review-source-epoch-34.mjs
+      - name: Verify inherited exact confirmed save and honest receipts browser flows
+        run: node scripts/verify-review-save-finality-34.mjs
+      - name: Verify inherited no-late-detector mutation after Save starts
+        run: node scripts/verify-review-worker-finality-38.mjs
+      - name: Actual native consumer clothingFields photo color + user authority and real browser IndexedDB
+        run: node scripts/verify-color-provenance-integration-41.mjs
+      - name: Independently audit six color-provenance mobile cases and 18 genuine PNG images
+        run: |
+          node --input-type=module <<'EONODE'
+          import assert from 'node:assert/strict';
+          import {readFile} from 'node:fs/promises';
+          import {createHash} from 'node:crypto';
+          import sharp from 'sharp';
+          const dir='benchmark/color-provenance-integration-41/';
+          const report=JSON.parse(await readFile(dir+'browser.json','utf8'));
+          assert.equal(report.priority,'COLOR-PROVENANCE-INTEGRATION-41');
+          assert.equal(report.realBrowserCases,6);
+          assert.equal(report.realRecognitionAccuracyMeasured,false);
+          assert.equal(report.realSignedBrowserCloudVerified,false);
+          assert.equal(report.physicalDeviceVerified,false);
+          assert.equal(report.FamilyAlpha,'HOLD');
+          assert.deepEqual(report.errors,[]);assert.deepEqual(report.unexpected,[]);
+          let count=0;
+          for(const engine of ['chromium','webkit'])for(const width of [320,390,430]){
+            const row=report.cases.find(x=>x.engine===engine&&x.width===width);
+            assert.ok(row?.actualBrowserImageDecode&&row.noteOnlyEstimatePreserved);
+            assert.ok(row.userColorProtectedFromOverwrite&&row.manualClearProtected);
+            assert.ok(row.actualOwnerNamedIndexedDBWriteAndRead&&row.originalPhotoRetained);
+            assert.ok(row.untrustedModelAccuracyNotClaimed);
+            assert.equal(row.originalSHA256,report.originalSHA256);
+            assert.equal(row.screenshots.length,3);
+            for(const shot of row.screenshots){
+              const b=await readFile(dir+shot.filename),m=await sharp(b).metadata(),stats=await sharp(b).stats();
+              assert.equal(createHash('sha256').update(b).digest('hex'),shot.sha256);
+              assert.equal(m.format,'png');assert.equal(m.width,width);assert.equal(m.height,shot.height);
+              assert.equal(b.length,shot.bytes);
+              assert.ok(m.height>500&&stats.channels.some(c=>c.stdev>6));
+              count++;
+            }
+          }
+          assert.equal(count,18);
+          console.log('COLOR41 independently audited 6 native edit/IDB cases and 18 PNG SHA/dimension/pixel checks PASS; scientific primary-color accuracy NOT MEASURED');
+          EONODE
+      - name: Archive only sanitized synthetic browser photos and scope evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: COLOR41-native-human-color-truth-six-browser-18-PNG-HOLD
+          path: |
+            benchmark/color-provenance-integration-41/browser.json
+            benchmark/color-provenance-integration-41/*.png
+          if-no-files-found: warn
+          retention-days: 21
