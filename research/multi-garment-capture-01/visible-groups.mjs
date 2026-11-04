@@ -5,6 +5,7 @@
  * identity, ownership, hidden sides, or ready-to-fit 3D surfaces.
  */
 import {clothingRegions} from '../../public/outfit-segmentation.mjs';
+import {shoePairEligible30,boundsForShoePair30} from './shoe-pair-geometry-30.mjs';
 
 const ALLOWED=new Set([4,5,6,7,9]); // top/outerwear, skirt, lower, dress, shoes
 const cutoff=(w,h)=>Math.max(12,Math.ceil(w*h*.001));
@@ -37,12 +38,9 @@ export function visibleGarmentGroups24(map,{limit=12}={}){
  const paired=new Set(),result=[];
  for(let i=0;i<shoes.length;i++)for(let j=i+1;j<shoes.length;j++){
   const a=shoes[i],b=shoes[j];if(paired.has(a)||paired.has(b))continue;
-  const yDelta=Math.abs((a.bounds.top+a.bounds.bottom-b.bounds.top-b.bounds.bottom)/2);
-  const separation=Math.max(0,b.bounds.left-a.bounds.right);
-  if(yDelta>h*.12||separation>w*.15)continue;
+  if(!shoePairEligible30(a.bounds,b.bounds,w,h))continue;
   result.push({id:9,component:[...a.component,...b.component],
-   bounds:{left:Math.min(a.bounds.left,b.bounds.left),top:Math.min(a.bounds.top,b.bounds.top),
-    right:Math.max(a.bounds.right,b.bounds.right),bottom:Math.max(a.bounds.bottom,b.bounds.bottom)},
+   bounds:boundsForShoePair30(a.bounds,b.bounds),
    avg:(a.avg*a.component.length+b.avg*b.component.length)/(a.component.length+b.component.length)});
   paired.add(a);paired.add(b);break;
  }
