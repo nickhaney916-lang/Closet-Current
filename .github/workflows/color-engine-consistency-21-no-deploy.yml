@@ -53,10 +53,11 @@ jobs:
           node scripts/test-color-confidence-19-real-photo.mjs
           node scripts/audit-color-confidence-19.mjs
           node scripts/audit-user-color-authority-20.mjs
-          node scripts/audit-review-color-provenance-23.mjs
       - name: Explicit independent inherited #21 color-model science check (may FAIL; remain HOLD)
         continue-on-error: true
         run: node scripts/audit-color-engine-consistency-21.mjs
+      - name: Independently assert genuine #23 source-provenance browser results and record #21 science verdict
+        run: node scripts/audit-review-color-provenance-23.mjs
       - name: Upload source integrity, color provenance proof and genuine phone-width screenshots only
         if: always()
         uses: actions/upload-artifact@v4
