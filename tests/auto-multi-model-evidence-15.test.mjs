@@ -12,7 +12,10 @@ const cases=()=>source.map(row=>({id:row.id,sourceSha256:row.sourceSha256,browse
  modelExecuted:true,error:null,sourcePixelsVerified:true,proposals:proposals(row)}));
 test('two independent browser runs of one original: 3 coarse human-reviewed regions each, never mask IoU',()=>{
  const result=score(source,cases(),{verifiedLiveInference:true});
- assert.equal(result.cases.length,2);assert.equal(result.expectedCoarseRegions,6);
+ assert.equal(result.cases.length,2);assert.equal(result.realMultiPhotoPopulation,1,'same original shown in two browsers is one photo, not two photos');
+ assert.equal(result.singlePhotoSmokeGatePassed,true);
+ assert.equal(result.modelQualityAccepted,false,'one photo never certifies real-world model quality');
+ assert.equal(result.expectedCoarseRegions,6);
  assert.equal(result.matchedCoarseRegions,6);assert.equal(result.coarseBoxRecallProxyPercent,100);
  assert.equal(result.modelProposals,6);assert.equal(result.unmatchedCoarseRegions,0);
  assert.equal(result.allSourcesVerified,true);assert.equal(result.modelErrors,0);
