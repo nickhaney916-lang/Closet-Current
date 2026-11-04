@@ -84,6 +84,10 @@ jobs:
           node research/three-d-20/restore-approved-models.mjs
           test -f benchmark/work47/manifest.json
           node --test tests/outfit-3d-01.test.mjs
+      - name: Actual native source readiness + no fake 3D + original source photos + owner logout
+        run: |
+          node scripts/test-native-photo-readiness-08-browser.mjs
+          node scripts/audit-native-photo-readiness-08.mjs
       - name: Regression actual native consumer original 3D (no restore switch)
         run: |
           node scripts/test-native-3d-05-browser.mjs
@@ -100,10 +104,6 @@ jobs:
         run: |
           node scripts/test-user-photo-3d-01-browser.mjs
           node scripts/audit-user-photo-3d-01.mjs
-      - name: Actual native source readiness + no fake 3D + original source photos + owner logout
-        run: |
-          node scripts/test-native-photo-readiness-08-browser.mjs
-          node scripts/audit-native-photo-readiness-08.mjs
       - name: Enforce factual recovery-plus-3D acceptance and immutable Family Alpha hold
         run: |
           node --input-type=module <<'NODE'
