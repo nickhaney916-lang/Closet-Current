@@ -192,6 +192,22 @@ async function importAndConfirmNewRed(page,owner,width,engine){
  // singleGarmentVerified=false. A corrected clothing category does not
  // magically prove this was a one-garment photograph.
  assert.equal(ownerStored.singleGarmentVerified,false);
+ const photoGate=await page.evaluate(async id=>{
+  const original=items.find(x=>x.id===id);
+  const m=await import('/research/style-owned-live-03/native-style-panel.mjs');
+  const roster=await m.verifiedPrivateStyleRoster03(window.nativeLossless04Bridge);
+  return {itemId:id,sourceFlags:{
+   singleGarmentVerified:original?.singleGarmentVerified,
+   multipleGarments:original?.multipleGarments,
+   requiresOwnershipConfirmation:original?.requiresOwnershipConfirmation,
+   possibleDuplicate:original?.possibleDuplicate,
+   scanFailed:original?.scanFailed,saveFailed:original?.saveFailed,
+   userAdjusted:original?.userAdjusted},
+   verified:roster.items.map(x=>x.id),pending:roster.pending.map(x=>x.id),
+   rejected:roster.rejected,status:window.styleOwnedLive03Bridge?.status()
+  };
+ },id);
+ console.log('STYLE03_SINGLE_REVIEW_DIAGNOSTIC '+JSON.stringify(photoGate).slice(0,2400));
  await page.evaluate(()=>switchView('stylist'));
  await page.waitForFunction(id=>[...document.querySelectorAll(
   '#styleOwned03Pending button[data-photo-item-id]')]
