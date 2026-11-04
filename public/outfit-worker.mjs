@@ -27,7 +27,7 @@ self.onmessage=event=>{const request=event.data;chain=chain.then(async()=>{
   // SegFormer receives a bounded *derived* analysis input. All returned
   // crops, color samples and original JPEG records still use image above.
   // Existing callers without a derived image remain bounded to 3072 px.
-  const inference=request.analysisImage===undefined?image:await RawImage.read(request.analysisImage);
+  const inference=request.analysisImage===undefined||request.analysisImage===request.image?image:await RawImage.read(request.analysisImage);
   if(!inference.width||!inference.height||Math.max(inference.width,inference.height)>3072||
      inference.width*inference.height>3072*3072||
      (request.analysisImage===undefined&&Math.max(image.width,image.height)>3072))
