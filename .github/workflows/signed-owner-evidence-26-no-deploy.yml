@@ -49,6 +49,10 @@ jobs:
           node --check tests/signed-owner-evidence-26.test.mjs
           node scripts/build.mjs
           node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Install read-only ZIP inspection utilities inside pinned research container
+        run: |
+          apt-get update -qq
+          DEBIAN_FRONTEND=noninteractive apt-get install -y -qq unzip curl
       - name: Fetch exact Work29 immutable synthetic signed and browser research artifacts READ ONLY
         run: |
           command -v unzip >/dev/null || { echo 'unzip is required for independent source ZIP inspection'; exit 1; }
