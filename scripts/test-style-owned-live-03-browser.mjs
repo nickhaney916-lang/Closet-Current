@@ -368,7 +368,7 @@ try{
  assert.deepEqual(results.consoleErrors,[]);
  assert.equal(results.cases.every(x=>x.threeRealOriginalOwnedLooks&&
   x.actualInputAndHumanCorrection&&x.ownerBPrivate&&x.photosUnchanged),true);
- assert.ok(results.screenshots.length>=48);
+ assert.equal(results.screenshots.length,45); // 8 stages per Chromium, 7 per WebKit at each of three widths
  await writeFile(dir+'/results.json',JSON.stringify(results,null,2));
  console.log('STYLE03_NATIVE '+JSON.stringify({
   genuineBrowserCases:6,chromiumWidths:[320,390,430],
