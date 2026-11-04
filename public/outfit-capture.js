@@ -14,6 +14,33 @@ function finishOutfitSplit(job,text,failed=false){
  $('outfitSplitStatus').textContent=text;$('outfitRetry').hidden=!failed;renderOutfitCapture();
  if(job.added){if(!$('scan').hidden)switchView('review');$('outfitSaveStatus').textContent=failed?'The separated pieces below are kept. Return to Add clothes to try separating the rest again.':'Recognized pieces save automatically. Unclear or duplicate pieces remain here for review.';}
 }
+// SOURCE-PRESERVING-MULTI-RESOLUTION-27: create an in-memory *derived*
+// model input. A verified full-resolution original is never cropped, hashed
+// again, replaced, uploaded or written to the phone gallery by this function.
+// The worker receives BOTH images and scales mask coordinates to the original.
+async function boundedOutfitAnalysisJPEG27(original){
+ if(typeof original!=='string'||!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(original))
+  throw Error('Invalid original JPEG for outfit analysis.');
+ const image=new Image();image.src=original;await image.decode();
+ const width=image.naturalWidth||image.width,height=image.naturalHeight||image.height;
+ if(!Number.isInteger(width)||!Number.isInteger(height)||width<1||height<1||
+    width>8192||height>8192||width*height>48000000)
+  throw Error('Outfit photo size exceeds safe in-memory analysis limits.');
+ if(Math.max(width,height)<=3072&&original.length<=11500000)return original;
+ for(const [maxSize,quality] of [[3072,.9],[2560,.85],[2048,.8]]){
+  const ratio=Math.min(1,maxSize/Math.max(width,height));
+  const canvas=document.createElement('canvas');
+  canvas.width=Math.max(1,Math.round(width*ratio));
+  canvas.height=Math.max(1,Math.round(height*ratio));
+  const ctx=canvas.getContext('2d');
+  if(!ctx)throw Error('Outfit analysis canvas unavailable.');
+  ctx.drawImage(image,0,0,canvas.width,canvas.height);
+  const resized=canvas.toDataURL('image/jpeg',quality);
+  if(/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(resized)&&
+     resized.length<=11500000)return resized;
+ }
+ throw Error('Outfit analysis photo could not be reduced safely.');
+}
 function startOutfitSplit(image,sourceId=crypto.randomUUID(),proof=null){
  if(busy||outfitSplitJob)return;
  const guarded=typeof captureProof01Active!=='undefined'&&captureProof01Active;
@@ -47,7 +74,18 @@ function startOutfitSplit(image,sourceId=crypto.randomUUID(),proof=null){
    else if(data.type==='error')finishOutfitSplit(job,job.added?'Some pieces are kept; the rest could not be separated. Try again.':'This outfit could not be separated. Try another clear photo of one person, head to toe.',true);
   };
   job.worker.onerror=()=>finishOutfitSplit(job,'Outfit separation could not start. Your existing photos are kept. Try again.',true);
-  job.worker.postMessage({id:job.id,image});
+  // Legacy photo conversion is already <=3072 px. Keep its long-standing
+  // synchronous worker behavior and current camera/retry callbacks intact.
+  if(!guarded)job.worker.postMessage({id:job.id,image});
+  else {
+   // Keep verified original data URL and source proof untouched; only the
+   // bounded analysis JPEG is derived. Recheck owner after async decoding.
+   (async()=>{
+    const analysisImage=await boundedOutfitAnalysisJPEG27(image);
+    if(job!==outfitSplitJob||captureProofOwner()!==job.owner)return;
+    job.worker.postMessage({id:job.id,image,analysisImage});
+   })().catch(()=>finishOutfitSplit(job,'This high-resolution photo could not be prepared for outfit separation. The original photo remains unchanged; try individual photos.',true));
+  }
  }catch{finishOutfitSplit(job,'Outfit separation is unavailable on this device. Try again or use individual clothing photos.',true);}
 }
 async function readOutfitPhoto(file){

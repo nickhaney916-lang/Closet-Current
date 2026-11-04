@@ -17,10 +17,22 @@ async function jpegData(image){
 let chain=Promise.resolve();
 self.onmessage=event=>{const request=event.data;chain=chain.then(async()=>{
  try{
-  if(typeof request.image!=='string'||!/^data:image\/jpeg;base64,/.test(request.image)||request.image.length>12000000)throw Error('Invalid outfit photo.');
+  if(typeof request.image!=='string'||!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(request.image)||request.image.length>15000000)throw Error('Invalid outfit photo.');
+  if(request.analysisImage!==undefined&&(typeof request.analysisImage!=='string'||!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(request.analysisImage)||request.analysisImage.length>12000000))throw Error('Invalid derived outfit analysis image.');
   const {model,processor,RawImage}=await load(request.id);self.postMessage({type:'progress',id:request.id,phase:'separating'});
-  const image=await RawImage.read(request.image);if(!image.width||!image.height||Math.max(image.width,image.height)>3072)throw Error('Invalid outfit photo dimensions.');
-  const output=await model(await processor(image)),{clothingLabelMap,clothingMaskGroups,cropClothingPhotoPixels,isolateClothingPixels,clothingColorSample}=await import('./outfit-segmentation.mjs'+new URL(import.meta.url).search);
+  const image=await RawImage.read(request.image);
+  if(!Number.isInteger(image.width)||!Number.isInteger(image.height)||
+     image.width<1||image.height<1||image.width>8192||image.height>8192||
+     image.width*image.height>48000000)throw Error('Invalid original outfit photo dimensions.');
+  // SegFormer receives a bounded *derived* analysis input. All returned
+  // crops, color samples and original JPEG records still use image above.
+  // Existing callers without a derived image remain bounded to 3072 px.
+  const inference=request.analysisImage===undefined||request.analysisImage===request.image?image:await RawImage.read(request.analysisImage);
+  if(!inference.width||!inference.height||Math.max(inference.width,inference.height)>3072||
+     inference.width*inference.height>3072*3072||
+     (request.analysisImage===undefined&&Math.max(image.width,image.height)>3072))
+   throw Error('Invalid derived outfit analysis dimensions.');
+  const output=await model(await processor(inference)),{clothingLabelMap,clothingMaskGroups,cropClothingPhotoPixels,isolateClothingPixels,clothingColorSample}=await import('./outfit-segmentation.mjs'+new URL(import.meta.url).search);
   await import('./photo-color.js'+new URL(import.meta.url).search);
   const map=clothingLabelMap(output.logits.data,output.logits.dims);
   const groups=request.multi24===true?
