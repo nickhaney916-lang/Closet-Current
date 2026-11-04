@@ -219,16 +219,10 @@ async function createAndVerifyLooks(page,id,owner,width,engine,rich){
  await page.waitForFunction(()=>window.styleOwnedLive03Bridge?.status()?.lookCount===3,
   null,{timeout:25000});
  assert.equal(await page.locator('#styleOwned03Suggestions .look').count(),3);
- const combos=await page.evaluate(async()=>{
-  const m=await import('/research/style-owned-live-03/three-owned-looks-native.mjs');
-  const ctrl=window.styleOwnedLive03Bridge;
-  return {state:ctrl.status(),results:m.suggestThreeNativeOwned03(
-    (await import('/research/style-owned-live-03/native-style-panel.mjs')).verifiedPrivateStyleRoster03?
-    // Access only the authenticated existing controller's private saved items.
-    (await (await import('/research/style-owned-live-03/native-style-panel.mjs'))
-     .verifiedPrivateStyleRoster03(window.nativeLossless04Bridge)).items:[],
-    {ownerId:window.closetAuth.user.id,pinnedId:ctrl.status().pinnedId})};
- });
+ const combos=await page.evaluate(()=>({
+  state:window.styleOwnedLive03Bridge.status(),
+  results:window.styleOwnedLive03Bridge.suggestions()
+ }));
  assert.equal(combos.state.pinnedId,id);
  assert.equal(combos.results.combinations.length,3);
  assert.equal(new Set(combos.results.combinations.map(c=>c.signature)).size,3);
