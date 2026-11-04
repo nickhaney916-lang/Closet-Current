@@ -90,7 +90,7 @@ jobs:
           import {readFileSync} from 'node:fs';
           const a=JSON.parse(readFileSync('benchmark/style-owned-live-03-audit/acceptance.json','utf8'));
           assert.equal(a.actualAppBrowserCases,6);
-          assert.equal(a.genuineMobileBrowserScreenshots,45);
+          assert.equal(a.genuineMobileBrowserScreenshots,51);
           assert.equal(a.genuineBrowserGalleryCount,6);
           assert.equal(a.pinNeverSubstituted,true);
           assert.equal(a.losslessCASAndSavedOutfitIdentity,true);
@@ -109,7 +109,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: STYLE-OWNED-LIVE-03-native-actual-photos-45-browser-shots-HOLD
+          name: STYLE-OWNED-LIVE-03-native-actual-photos-51-browser-shots-HOLD
           path: |
             benchmark/style-owned-live-03/
             benchmark/style-owned-live-03-audit/
