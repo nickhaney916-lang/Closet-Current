@@ -1,0 +1,125 @@
+name: MULTI-REVIEW-TRIAGE-28 genuine SegFormer frozen-score replay + mobile review NO DEPLOY
+on:
+  push:
+    branches:
+      - research/multi-review-triage-28-main-20261104-HOLD
+  pull_request:
+    paths:
+      - 'research/multi-garment-capture-01/review-triage-28.mjs'
+      - 'research/multi-garment-capture-01/review-ui.mjs'
+      - 'research/multi-review-triage-28/**'
+      - 'tests/multi-review-triage-28.test.mjs'
+      - 'scripts/score-multi-review-triage-28.mjs'
+      - 'scripts/verify-multi-review-ui-28.mjs'
+      - '.github/workflows/multi-review-triage-28-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  scientific-review-ranking-not-model-accuracy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify ancestry and research-only source change allowlist
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor 599065825b18a67636af75ad5edc4e8eb86c80fc HEAD
+          git diff --name-only 599065825b18a67636af75ad5edc4e8eb86c80fc HEAD | while IFS= read -r p; do
+            case "$p" in
+              research/multi-garment-capture-01/review-ui.mjs|research/multi-garment-capture-01/review-triage-28.mjs|research/multi-review-triage-28/*|tests/multi-review-triage-28.test.mjs|scripts/score-multi-review-triage-28.mjs|scripts/verify-multi-review-ui-28.mjs|.github/workflows/multi-review-triage-28-no-deploy.yml) ;;
+              *) echo "BLOCKED unexpected app/auth/recognition/cloud/3D/deploy source change: $p"; exit 1 ;;
+            esac
+          done
+      - name: Install pinned research deps only, no package mutations
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Build actual app, run ALL old and new Node safety tests
+        run: |
+          node --check research/multi-garment-capture-01/review-ui.mjs
+          node --check scripts/score-multi-review-triage-28.mjs
+          node --check scripts/verify-multi-review-ui-28.mjs
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Exercise actual opted-in native review in both genuine browsers at phone widths
+        run: node scripts/verify-multi-review-ui-28.mjs
+      - name: Install ZIP utilities for immutable prior real-photograph SegFormer evidence
+        run: |
+          apt-get update -qq
+          DEBIAN_FRONTEND=noninteractive apt-get install -y -qq curl unzip
+      - name: Read actual frozen original-photo SegFormer artifact #13340286217 (NO new inference)
+        run: |
+          mkdir -p benchmark/multi-review-triage-28
+          umask 077
+          curl --silent --show-error --fail --location --max-time 140 --retry 3 \
+            -H "Authorization: Bearer $GITHUB_TOKEN" \
+            -H 'Accept: application/vnd.github+json' \
+            'https://api.github.com/repos/nickhaney916-lang/Closet-Current/actions/artifacts/13340286217/zip' \
+            -o benchmark/multi-review-triage-28/pr575-frozen-artifact.zip
+          unzip -t benchmark/multi-review-triage-28/pr575-frozen-artifact.zip >/dev/null
+          unzip -p benchmark/multi-review-triage-28/pr575-frozen-artifact.zip auto-multi-16/app-equivalent.json > benchmark/multi-review-triage-28/app-equivalent.json
+          sha256sum benchmark/multi-review-triage-28/app-equivalent.json
+          node scripts/score-multi-review-triage-28.mjs
+      - name: Independently validate real screenshot byte hashes, retained suggestions and scientific HOLD
+        run: |
+          node --input-type=module <<'EONODE'
+          import assert from 'node:assert/strict';
+          import {readFile} from 'node:fs/promises';
+          import {createHash} from 'node:crypto';
+          import sharp from 'sharp';
+          const dir='benchmark/multi-review-triage-28/';
+          const view=JSON.parse(await readFile(dir+'browser.json','utf8'));
+          const science=JSON.parse(await readFile(dir+'score.json','utf8'));
+          assert.equal(view.realBrowsers,2);assert.equal(view.actualUiCases,6);
+          assert.deepEqual(view.unexpectedRequests,[]);assert.deepEqual(view.browserErrors,[]);
+          assert.equal(view.noAutoSave,true);assert.equal(view.accountSwitchClears,true);
+          assert.equal(science.licensedOriginalPhotoCount,19);
+          assert.equal(science.annotatedVisibleTargets,35);
+          assert.equal(science.prospectiveUntouchedHoldout,false);
+          for(const engine of ['chromium','webkit']){
+            const s=science.results[engine].metrics.all;
+            assert.equal(s.original.proposed,61);
+            assert.equal(s.original.truePositives,10);
+            assert.equal(s.priority.proposed,9);
+            assert.equal(s.priority.truePositives,8);
+            assert.equal(s.priority.falsePositives,1);
+            assert.equal(s.additionalCount,52);
+            assert.equal(s.allRetained.proposed,61);
+          }
+          const distinct=new Set();
+          for(const row of view.cases){
+            const id=row.engine+'-'+row.width;
+            assert.ok(!distinct.has(id));distinct.add(id);
+            const data=await readFile(dir+row.filename);
+            assert.equal(createHash('sha256').update(data).digest('hex'),row.sha256);
+            const dims=await sharp(data).metadata();
+            assert.equal(dims.format,'png');assert.equal(dims.width,row.width);
+            assert.equal(row.noAutosaves,true);assert.equal(row.ownerSwitchClears,true);
+          }
+          assert.equal(distinct.size,6);
+          console.log('MULTI-REVIEW-28 INDEPENDENT AUDIT PASS: 19 real original sources, 8/9 retrospective prioritized boxes, ALL 61 retained; six screenshot SHAs; new-photo quality NOT proven');
+          EONODE
+      - name: Delete original inherited artifact ZIP and parsed model traces before share
+        if: always()
+        run: rm -f benchmark/multi-review-triage-28/pr575-frozen-artifact.zip benchmark/multi-review-triage-28/app-equivalent.json
+      - name: Upload only public-source quality metrics and synthetic UI screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: MULTI-REVIEW-TRIAGE-28-real-model-frozen-ranking-and-mobile-review-HOLD
+          path: |
+            benchmark/multi-review-triage-28/score.json
+            benchmark/multi-review-triage-28/browser.json
+            benchmark/multi-review-triage-28/*.png
+          if-no-files-found: warn
+          retention-days: 21
