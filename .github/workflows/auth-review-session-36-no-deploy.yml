@@ -1,0 +1,164 @@
+name: AUTH36 signed local owners plus native browser review NO DEPLOY
+on:
+  push:
+    branches:
+      - research/auth-review-session-isolation-36-main-20261104-HOLD
+  pull_request:
+    paths:
+      - 'public/auth.js'
+      - 'public/app.js'
+      - 'public/outfit-capture.js'
+      - 'research/multi-garment-capture-01/review-ui.mjs'
+      - 'research/auth-review-session-36/**'
+      - 'scripts/verify-auth-review-session-36.mjs'
+      - 'tests/auth.test.cjs'
+      - 'tests/auth-review-session-36.test.mjs'
+      - '.github/workflows/auth-review-session-36-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  exact-head-native-two-owner-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify exact parent ancestry and no production or staging modifications
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor bdef04a59f4586044b2adc027a37c5dbe04ba4b8 HEAD
+          git diff --name-only bdef04a59f4586044b2adc027a37c5dbe04ba4b8 HEAD > /tmp/auth36-paths
+          while IFS= read -r file; do
+            case "$file" in
+              public/auth.js|public/app.js|public/outfit-capture.js|research/multi-garment-capture-01/review-ui.mjs|research/auth-review-session-36/*|scripts/verify-auth-review-session-36.mjs|tests/auth.test.cjs|tests/auth-review-session-36.test.mjs|.github/workflows/auth-review-session-36-no-deploy.yml) ;;
+              *) echo "BLOCKED non-allowlisted source / production / staging / model change: $file"; exit 1 ;;
+            esac
+          done < /tmp/auth36-paths
+      - name: Pinned local verification dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Source syntax, real app build and ALL existing and new Node regression tests
+        run: |
+          node --check public/auth.js
+          node --check public/app.js
+          node --check public/outfit-capture.js
+          node --check research/multi-garment-capture-01/review-ui.mjs
+          node --check scripts/verify-auth-review-session-36.mjs
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Real native browser A to B private garment review and immediate cross-tab logout
+        run: node scripts/verify-auth-review-session-36.mjs
+      - name: Audit all 24 browser screenshot SHA, owner evidence and nonblank pixels
+        run: |
+          node --input-type=module <<'EONODE'
+          import assert from 'node:assert/strict';
+          import {readFile} from 'node:fs/promises';
+          import {createHash} from 'node:crypto';
+          import sharp from 'sharp';
+          const dir='benchmark/auth-review-session-36/browser/';
+          const r=JSON.parse(await readFile(dir+'report.json','utf8'));
+          assert.equal(r.priority,'AUTH-REVIEW-SESSION-36');
+          assert.equal(r.browserCases,6);assert.equal(r.realNativeIndexedDB,true);
+          assert.equal(r.realSignedBrowserToCloud,false);
+          assert.equal(r.segFormerActuallyRun,false);
+          assert.deepEqual(r.unexpectedUploads,[]);assert.deepEqual(r.pageErrors,[]);
+          assert.equal(r.FamilyAlpha,'HOLD');
+          let count=0;
+          for(const engine of ['chromium','webkit'])for(const width of [320,390,430]){
+            const row=r.cases.find(x=>x.engine===engine&&x.width===width);
+            assert.ok(row?.ownerBCannotAccessA&&row.staleTabLocked&&row.previousAccountReopens);
+            assert.ok(row.realNativeIndexedDB&&row.originalBytesVerified&&row.humanConfirmed);
+            assert.notEqual(row.sourceA,row.sourceB);
+            assert.equal(row.screenshots.length,4);
+            for(const shot of row.screenshots){
+              const bytes=await readFile(dir+shot.file),meta=await sharp(bytes).metadata(),stat=await sharp(bytes).stats();
+              assert.equal(createHash('sha256').update(bytes).digest('hex'),shot.sha256);
+              assert.equal(meta.format,'png');assert.equal(meta.width,width);
+              assert.equal(meta.height,shot.height);assert.equal(bytes.length,shot.bytes);
+              assert.ok(stat.channels.some(x=>x.stdev>6));
+              count++;
+            }
+          }
+          assert.equal(count,24);
+          console.log('AUTH36 6 actual native two-owner browser flows plus 24 genuine PNG screenshot hashes PASS; signed browser-to-cloud UNVERIFIED');
+          EONODE
+      - name: Preserve local fixture auth and browser evidence with no deployment
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: AUTH36-browser-two-private-closets-fixture-auth-HOLD
+          path: |
+            benchmark/auth-review-session-36/browser/report.json
+            benchmark/auth-review-session-36/browser/*.png
+          if-no-files-found: warn
+          retention-days: 21
+  real-two-signed-owners-disposable-http:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: \${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.48.3
+      - name: Install only local test fixture dependency
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3
+      - name: Start disposable offline Supabase with repository SQL policies
+        env:
+          SUPABASE_TELEMETRY_DISABLED: 'true'
+        run: |
+          mkdir -p "$RUNNER_TEMP/closet-auth36"
+          cd "$RUNNER_TEMP/closet-auth36"
+          supabase init
+          sed -i 's/^project_id = .*/project_id = "closet-auth36"/' supabase/config.toml
+          sed -i 's/^jwt_expiry = .*/jwt_expiry = 60/' supabase/config.toml
+          grep -q '^jwt_expiry = 60$' supabase/config.toml
+          supabase start > "$RUNNER_TEMP/auth36-stack.log" 2>&1 || { echo "Disposable Supabase startup failed"; exit 1; }
+          umask 077
+          supabase status -o env > "$RUNNER_TEMP/auth36.env"
+          docker exec -i supabase_db_closet-auth36 psql -U postgres -v ON_ERROR_STOP=1 < "$GITHUB_WORKSPACE/supabase/cloud-backup.sql"
+      - name: Verify two independent signed password logins, private RLS and JWT refresh/expiry
+        run: SUPABASE_TEST_ENV="$RUNNER_TEMP/auth36.env" node research/auth-review-session-36/signed-local.mjs
+      - name: Independently verify signed local HTTP report and explicit limited scope
+        run: |
+          node --input-type=module <<'EONODE'
+          import assert from 'node:assert/strict';
+          import {readFile} from 'node:fs/promises';
+          const r=JSON.parse(await readFile('benchmark/auth-review-session-36/signed.json','utf8'));
+          assert.equal(r.head,process.env.GITHUB_SHA);
+          assert.equal(r.signedLocalSupabase,true);
+          assert.equal(r.distinctAuthenticatedOwners,true);
+          assert.equal(r.scope,'Disposable loopback; synthetic JPEGs; no hosted access');
+          assert.ok(r.checks.length>=56);
+          for(const c of r.checks)assert.ok(Number.isInteger(c.status));
+          assert.ok(r.checks.some(c=>c.name.includes('foreign photo')));
+          assert.ok(r.checks.some(c=>c.name.includes('Naturally expired')));
+          console.log('AUTH36 signed, independently authenticated local RLS/Storage/JWT lifecycle checks:',r.checks.length);
+          EONODE
+      - name: Upload sanitized signed local backend report only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: AUTH36-real-two-signed-disposable-local-Supabase-HOLD
+          path: benchmark/auth-review-session-36/signed.json
+          if-no-files-found: warn
+          retention-days: 21
+      - name: Destroy disposable stack and local credentials
+        if: always()
+        run: |
+          if test -f "$RUNNER_TEMP/closet-auth36/supabase/config.toml"; then
+            cd "$RUNNER_TEMP/closet-auth36"
+            supabase stop --no-backup >/dev/null 2>&1 || true
+          fi
+          rm -f "$RUNNER_TEMP/auth36.env" "$RUNNER_TEMP/auth36-stack.log"
