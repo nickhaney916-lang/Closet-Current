@@ -1,0 +1,79 @@
+name: INDEPENDENT40 real-photo acceptance HOLD NO DEPLOY
+on:
+  push:
+    branches:
+      - research/independent-recognition-acceptance-40-par32-20261104-HOLD
+  pull_request:
+    paths:
+      - 'research/independent-recognition-40/**'
+      - 'tests/independent-recognition-40.test.mjs'
+      - '.github/workflows/independent-recognition-40-no-deploy.yml'
+permissions:
+  contents: read
+jobs:
+  independent-original-photo-QA-HOLD:
+    runs-on: ubuntu-latest
+    timeout-minutes: 80
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify immutable Work31 parent and freeze original photo/label blobs
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor f4464188c6fddaca35f8e06f54506fa856df455d HEAD
+          git diff --name-only f4464188c6fddaca35f8e06f54506fa856df455d HEAD | while IFS= read -r file; do
+            case "$file" in
+              research/independent-recognition-40/*|tests/independent-recognition-40.test.mjs|.github/workflows/independent-recognition-40-no-deploy.yml) ;;
+              *) echo "BLOCKED out-of-scope change: $file"; exit 1 ;;
+            esac
+          done
+          test "$(git hash-object benchmark/manifest-holdout-16.json)" = 7e04ff08568c9bcdd7cef7d95a790505cf492561
+          test "$(git hash-object benchmark/locked-photo-sources.json)" = 5af9b4412e861d6cb6c638e4a414aedcb813f16e
+          test "$(git hash-object benchmark/regression-holdout-16.json)" = 87d6d171bda91f95f32df665ea1a8d6e46736191
+          test "$(git hash-object research/recognition-category-color-39/color-manifest.json)" = 1f068e048a58910606a4100792ffaf68dffa13c2
+      - name: Install pinned research-only testing
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Build and inherited Node suite
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Verify source JPEG SHA, dimensions and near-duplicate flags
+        run: node research/independent-recognition-40/verify-images.mjs
+      - name: Score frozen historical observations and actual paired color experiment independently
+        run: |
+          node research/recognition-category-color-39/compare-color.mjs > benchmark/recognition-acceptance-40/paired-color.json
+          node research/independent-recognition-40/score.mjs benchmark/recognition-acceptance-40/paired-color.json benchmark/regression-holdout-16.json recorded-historical benchmark/recognition-acceptance-40/historical.json
+      - name: Actual JPEG color browser measurement in Chromium and WebKit, 320/390/430
+        run: node research/recognition-category-color-39/browser-color.mjs
+      - name: SHA-locked genuine FashionCLIP worker inference, actual Chromium
+        run: |
+          ids=$(node -e "const x=require('./benchmark/manifest-holdout-16.json');console.log(x.map(y=>y.id).join(','))")
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos "$ids"
+          node scripts/run-browser-photo-benchmark.mjs benchmark/manifest-holdout-16.json benchmark/recognition-acceptance-40/classification
+          node research/independent-recognition-40/score.mjs benchmark/recognition-acceptance-40/paired-color.json benchmark/recognition-acceptance-40/classification/results.json actual-unmocked-browser benchmark/recognition-acceptance-40/actual.json
+      - name: Actual IndexedDB fixture save and independent screenshot/SHA validation
+        run: |
+          node scripts/test-index-04-browser.mjs
+          node research/independent-recognition-40/audit-browser.mjs
+      - name: Preserve research only sanitized reports and browser artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: INDEPENDENT40-44-photo-matrices-browser-HOLD
+          path: |
+            benchmark/recognition-acceptance-40/*.json
+            benchmark/recognition-acceptance-40/classification/*.json
+            benchmark/category-color-39-output/*.json
+            benchmark/category-color-39-output/*.png
+            benchmark/index-04/*.json
+            benchmark/index-04/*.png
+          if-no-files-found: warn
+          retention-days: 21
