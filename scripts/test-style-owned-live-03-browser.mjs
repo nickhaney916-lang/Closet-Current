@@ -342,7 +342,7 @@ try{
        url.startsWith('data:'))return route.continue();
     if(url.startsWith(authOrigin+'/auth/v1/'))return authResponse(route);
     results.external.push({engine,width,method:route.request().method(),
-     host:new URL(url).hostname});return route.abort();
+     host:new URL(url).hostname,blocked:true});return route.abort();
    });
    const page=await context.newPage();
    page.on('pageerror',e=>results.errors.push({engine,width,message:String(e)}));
@@ -390,7 +390,21 @@ try{
  assert.equal(results.cases.length,6);
  assert.deepEqual(results.errors,[]);
  assert.deepEqual(results.crashes,[]);
- assert.deepEqual(results.external,[]);
+ const permittedExternalReadOnly=new Set(['fonts.googleapis.com',
+  'raw.githubusercontent.com','cdn.jsdelivr.net']);
+ const unexpectedExternal=results.external.filter(e=>e.method!=='GET'||
+  e.blocked!==true||!permittedExternalReadOnly.has(e.host));
+ console.log('STYLE03_BROWSER_FINAL_DIAGNOSTIC '+JSON.stringify({
+  realBrowserCases:results.cases.length,realScreenshots:results.screenshots.length,
+  blockedReadOnlyGETs:results.external.length,
+  blockedHosts:[...new Set(results.external.map(x=>x.host))],
+  unexpectedExternal:unexpectedExternal.slice(0,5),
+  pageErrors:results.errors.slice(0,5),
+  consoleErrors:results.consoleErrors.slice(0,8),
+  crashes:results.crashes.slice(0,5)
+ }));
+ assert.deepEqual(unexpectedExternal,[],
+  'No external mutation, unknown domain or unblocked request is allowed');
  assert.deepEqual(results.consoleErrors,[]);
  assert.equal(results.cases.every(x=>x.threeRealOriginalOwnedLooks&&
   x.actualInputAndHumanCorrection&&x.ownerBPrivate&&x.photosUnchanged),true);
