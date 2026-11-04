@@ -94,7 +94,7 @@ jobs:
             assert.equal(r.updated.proposed,60);assert.equal(r.updated.truePositives,11);
             assert.deepEqual(r.affected.map(x=>x.id),['commons-0021']);
           }
-          assert.equal(browser.actualBrowserCases,6);
+          assert.equal(browser.realBrowserCases,6);
           assert.deepEqual(browser.errors,[]);assert.deepEqual(browser.blocked,[]);
           assert.equal(browser.actualSegFormerModelRerun,false);
           const ids=new Set();
