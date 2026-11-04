@@ -29,7 +29,7 @@ const complete=(s,byId)=>{
   : top?.category==='Tops'&&!!s.bottom;
 };
 function fits(slot,row){
- if(!SLOT_CATEGORIES[slot]?.includes(row.category))return false;
+ if(!row||!SLOT_CATEGORIES[slot]?.includes(row.category))return false;
  if(slot==='layer2')return ['Jacket','Blazer','Vest','Cardigan'].includes(row.itemType);
  if(slot==='layer3')return ['Coat','Raincoat'].includes(row.itemType);
  return true;
