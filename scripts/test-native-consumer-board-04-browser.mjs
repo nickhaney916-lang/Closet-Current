@@ -240,8 +240,18 @@ try{
    await page.waitForFunction(()=>window.closetAuth?.user===null&&
      document.getElementById('authGate')?.hidden===false);
    assert.equal(await page.locator('#boardSlots img').count(),0,'Logout must clear old private images');
-   assert.equal(await page.evaluate(()=>window.__native04CloudSettings?.canRestore()),false,
-    'Logged-out private owner cloud restore must also remain paused');
+   const revokedRestore=await page.evaluate(()=>({
+    directGate:typeof nativeLossless04RestoreSafe==='function'?nativeLossless04RestoreSafe():null,
+    nativeCloudBridgeInstalled:typeof window.__native04CloudSettings?.canRestore==='function',
+    cloudRestore:window.__native04CloudSettings?.canRestore?.(),
+    privateSessionActive:window.nativeLossless04Bridge?.status()?.active===true
+   }));
+   assert.equal(revokedRestore.privateSessionActive,false);
+   assert.equal(revokedRestore.directGate,false,
+    'The real native cloud restore guard must remain closed after logout');
+   if(revokedRestore.nativeCloudBridgeInstalled)
+    assert.equal(revokedRestore.cloudRestore,false,
+     'An installed cloud restore callback cannot authorize the logged-out owner');
    await signIn(page,'native04-B');
    await seed(page,fixture('native04-B'));
    await page.reload({waitUntil:'domcontentloaded'});
