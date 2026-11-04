@@ -89,7 +89,7 @@ closetReady.then(renderOutfitCapture);
 
 
 // MULTI-GARMENT-CAPTURE-01 research-only owner-bound review and atomic save.
-if(new URLSearchParams(location.search).get('multi24')==='research'){
+if(typeof location!=='undefined'&&typeof URLSearchParams!=='undefined'&&new URLSearchParams(location.search).get('multi24')==='research'){
  const enabled=captureProof01Active&&index04ResearchActive&&
   new URLSearchParams(location.search).get('nativeIndex07')==='research'&&
   new URLSearchParams(location.search).get('nativeLossless04')==='research';
