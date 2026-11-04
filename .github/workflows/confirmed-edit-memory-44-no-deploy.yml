@@ -1,0 +1,110 @@
+name: CONFIRM44 real saved editor category/type learning and user-color authority NO DEPLOY
+on:
+  push:
+    branches:
+      - research/confirmed-edit-memory-44-main-20261104-HOLD
+  pull_request:
+    paths:
+      - 'public/app.js'
+      - 'tests/confirmed-edit-memory-44.test.cjs'
+      - 'scripts/verify-confirmed-edit-memory-44.mjs'
+      - 'research/confirmed-edit-memory-44/**'
+      - '.github/workflows/confirmed-edit-memory-44-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  exact-source-saved-editor-confirmed-memory-and-original-owner-idb:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Pin exact CATEGORY43 verified HEAD and strict saved-editor research scope
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor 4190ecc5fda8a3325fa83927f95ffabb5d65be65 HEAD
+          git diff --name-only 4190ecc5fda8a3325fa83927f95ffabb5d65be65 HEAD >/tmp/confirm44-paths
+          while IFS= read -r file; do
+            case "$file" in
+              public/app.js|tests/confirmed-edit-memory-44.test.cjs|scripts/verify-confirmed-edit-memory-44.mjs|research/confirmed-edit-memory-44/*|.github/workflows/confirmed-edit-memory-44-no-deploy.yml) ;;
+              *) echo "BLOCKED unrelated model, cloud, staging, auth, app, deployment or 3D change: $file"; exit 1 ;;
+            esac
+          done </tmp/confirm44-paths
+      - name: Install pinned native browser + fake indexedDB dependencies without package file mutation
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Full app build and ALL inherited plus source-executed Saved My Closet submit tests
+        run: |
+          node --check public/app.js
+          node --check scripts/verify-confirmed-edit-memory-44.mjs
+          node --check tests/confirmed-edit-memory-44.test.cjs
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Existing source epoch ownership rejection in real mobile browsers
+        run: node scripts/verify-review-source-epoch-34.mjs
+      - name: Existing exact immutable multi-garment receipt in real mobile browsers
+        run: node scripts/verify-review-save-finality-34.mjs
+      - name: Existing model worker callback finality in real mobile browsers
+        run: node scripts/verify-review-worker-finality-38.mjs
+      - name: Existing photo color edit authority with original SHA and real IndexedDB
+        run: node scripts/verify-color-provenance-integration-41.mjs
+      - name: Existing taxonomy commit contract and all-or-nothing owner save
+        run: node scripts/verify-category-subtype-commit-43.mjs
+      - name: NEW native saved edit actual source closure, confirmed memory and owner IndexedDB
+        run: node scripts/verify-confirmed-edit-memory-44.mjs
+      - name: Independently audit six real browser cases and 18 PNG hash pixel width and metadata proofs
+        run: |
+          node --input-type=module <<'EONODE'
+          import assert from 'node:assert/strict';
+          import {readFile} from 'node:fs/promises';
+          import {createHash} from 'node:crypto';
+          import sharp from 'sharp';
+          const dir='benchmark/confirmed-edit-memory-44/';
+          const report=JSON.parse(await readFile(dir+'browser.json','utf8'));
+          assert.equal(report.priority,'CONFIRMED-EDIT-MEMORY-44');
+          assert.equal(report.realBrowserCases,6);
+          assert.equal(report.realRecognitionAccuracyMeasured,false);
+          assert.equal(report.realSignedBrowserCloudVerified,false);
+          assert.equal(report.physicalDeviceVerified,false);
+          assert.equal(report.FamilyAlpha,'HOLD');
+          assert.deepEqual(report.errors,[]);assert.deepEqual(report.unexpected,[]);
+          let shots=0;
+          for(const engine of ['chromium','webkit'])for(const width of [320,390,430]){
+            const row=report.cases.find(x=>x.engine===engine&&x.width===width);
+            assert.ok(row?.actualBrowserImageDecode&&row.nativeSavedEditorConfirmedMemory);
+            assert.ok(row.estimatedColorNotPromoted&&row.noteOnlyEstimatePreserved);
+            assert.ok(row.userColorProtectedFromOverwrite&&row.manualClearProtected);
+            assert.ok(row.actualOwnerNamedIndexedDBWriteAndRead&&row.originalPhotoRetained);
+            assert.equal(row.originalSHA256,report.originalSHA256);
+            assert.equal(row.screenshots.length,3);
+            for(const shot of row.screenshots){
+              const b=await readFile(dir+shot.filename),meta=await sharp(b).metadata(),
+                stats=await sharp(b).stats();
+              assert.equal(createHash('sha256').update(b).digest('hex'),shot.sha256);
+              assert.equal(meta.format,'png');assert.equal(meta.width,width);
+              assert.equal(meta.height,shot.height);assert.equal(b.length,shot.bytes);
+              assert.ok(meta.height>500&&stats.channels.some(c=>c.stdev>6));
+              shots++;
+            }
+          }
+          assert.equal(shots,18);
+          console.log('CONFIRM44 independently verified six true saved editor source handlers with IDB and 18 PNG SHA/pixel audits; scientific model accuracy unverified');
+          EONODE
+      - name: Archive sanitized synthetic source, browser records, and 18 PNGs only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: CONFIRM44-six-saved-editor-native-browser-18-PNG-HOLD
+          path: |
+            benchmark/confirmed-edit-memory-44/browser.json
+            benchmark/confirmed-edit-memory-44/*.png
+          if-no-files-found: warn
+          retention-days: 21

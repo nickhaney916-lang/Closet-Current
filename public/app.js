@@ -294,8 +294,16 @@ function render(){
  if(expectedSavedRow){
   f.style.boxSizing='border-box';f.style.width='100%';
   f.style.maxWidth='100%';f.style.minWidth='0';
- }cancel.type='button';cancel.onclick=()=>dialog.close();f.onsubmit=async e=>{e.preventDefault();ok.disabled=true;try{const updated={...collect(),name:draft.name.trim()||'Closet piece'};// COLOR41: Notes/type edits must preserve provenance of photo-estimated colors.
-  // Explicit color edits retain their existing user-owned provenance.if(typeof ClothingMemory!=='undefined')Object.assign(updated,ClothingMemory.confirm(updated));
+ }cancel.type='button';cancel.onclick=()=>dialog.close();f.onsubmit=async e=>{e.preventDefault();ok.disabled=true;try{const updated={...collect(),name:draft.name.trim()||'Closet piece'};
+  // COLOR41: Notes/type edits preserve estimated color provenance; only a
+  // direct Color input marks source=user. Still record deliberately reviewed
+  // category, subtype, and other *non-color* facts as confirmed learning.
+  if(typeof ClothingMemory!=='undefined'){
+   Object.assign(updated,ClothingMemory.confirm(updated));
+   // Object.assign does not transfer deletions from the confirmed copy.
+   // Reopen weekly garment learning after deliberately saving an edit.
+   delete updated.learningReviewedWeek;
+  }
  if(expectedSavedRow){
   updated.userAdjusted=true;updated.requiresOwnershipConfirmation=false;
   await queued(()=>commitOwnerCorrection10(updated,expectedSavedRow,null));
