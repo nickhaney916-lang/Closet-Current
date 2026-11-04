@@ -194,6 +194,33 @@ try{
    const after=await stored(page),afterBoard=(await stored(page,'state')).find(x=>x.id==='outfit-board');
    assert.deepEqual(after,origItems,'Each original JPEG and category correction must survive');
    assert.deepEqual(afterBoard,origBoard,'Original saved outfits and dangling references survive');
+   // Reach the EXISTING BOARD02 source-honest preview decision on exactly
+   // the restored records, not an invented fitted 3D mesh or lossy copy.
+   const previewDecision=await page.evaluate(async()=>{
+    const {inspectOutfit02,verifyPhoto02}=await import('/research/board-lossless-02/lossless-board.mjs');
+    const rows=await readAll();
+    const snapshot=await new Promise((resolve,reject)=>{
+     const request=db.transaction('state').objectStore('state').get('outfit-board');
+     request.onsuccess=()=>resolve(request.result);
+     request.onerror=()=>reject(request.error);
+    });
+    const fitted=inspectOutfit02(snapshot.saved[0],rows,{ownerId:'restore01-A'});
+    const missing=inspectOutfit02(snapshot.saved[1],rows,{ownerId:'restore01-A'});
+    const photos=await Promise.all(rows.map(x=>verifyPhoto02(x)));
+    return {sourceHonest:fitted.sourceHonest,selected:fitted.selected.map(x=>x.slot).sort(),
+     missing:missing.missing.map(x=>x.itemId).sort(),
+     missingStillPreviewable:missing.sourceHonest,
+     sourcePhotographsVerified:photos.every(x=>x.verified),
+     original3dId:snapshot.saved[0].outfit3dId,
+     fabricated3DApproval:false};
+   });
+   assert.equal(previewDecision.sourceHonest,true);
+   assert.deepEqual(previewDecision.selected,['layer2','layer3','shoes','top']);
+   assert.deepEqual(previewDecision.missing,['restore01-A-deleted-jeans','restore01-A-removed-shirt']);
+   assert.equal(previewDecision.missingStillPreviewable,true);
+   assert.equal(previewDecision.sourcePhotographsVerified,true);
+   assert.equal(previewDecision.original3dId,'restore01-A-outfit3d');
+   assert.equal(previewDecision.fabricated3DApproval,false);
    await page.evaluate(()=>switchView('builder'));
    await page.locator('#savedBoards button').first().click();
    await picture(page,engine,width,'03-after-atomic-owner-restore');
