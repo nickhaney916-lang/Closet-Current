@@ -2,7 +2,7 @@
   "priority": "COLOR-CONFIDENCE-SAFETY-19",
   "originalRegistry": "benchmark/locked-photo-sources.json",
   "sampleSize": 6,
-  "annotationPolicy": "Source title only, not independent garment-primary-color ground truth; does not measure color accuracy.",
+  "annotationPolicy": "Source title only, no independent color ground truth. Candidate image with changed SHA is excluded, explicitly recorded, never silently substituted.",
   "samples": [
     {
       "id": "commons-0001",
@@ -17,6 +17,10 @@
       "sourceDeclaredHint": "Black"
     },
     {
+      "id": "commons-0021",
+      "sourceDeclaredHint": "Jeans (color not independently labeled)"
+    },
+    {
       "id": "commons-0023",
       "sourceDeclaredHint": "Blue"
     },
@@ -25,8 +29,28 @@
       "sourceDeclaredHint": "Blue"
     },
     {
+      "id": "commons-0025",
+      "sourceDeclaredHint": "Blue"
+    },
+    {
       "id": "commons-0081",
       "sourceDeclaredHint": "Black / White"
+    },
+    {
+      "id": "validation-0010",
+      "sourceDeclaredHint": "Blue dress with blouse"
+    },
+    {
+      "id": "validation-0017",
+      "sourceDeclaredHint": "Gray jeans"
+    },
+    {
+      "id": "commons-0088",
+      "sourceDeclaredHint": "Boot (color not independently labeled)"
+    },
+    {
+      "id": "commons-0089",
+      "sourceDeclaredHint": "Boot (color not independently labeled)"
     }
   ],
   "release": {
@@ -34,5 +58,7 @@
     "colorAccuracyCertified": false,
     "userPhotosUsed": false,
     "productionModified": false
-  }
+  },
+  "requiredVerifiedOriginals": 6,
+  "candidateCount": 12
 }
