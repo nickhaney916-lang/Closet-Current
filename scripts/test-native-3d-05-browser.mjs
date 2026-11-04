@@ -199,7 +199,8 @@ try{
   await page.waitForFunction(()=>window.closetAuth?.user===null&&
    document.getElementById('authGate')?.hidden===false);
   assert.equal(await page.locator('#outfit3D01Photos img').count(),0);
-  assert.equal(await page.evaluate(()=>window.native3D05Bridge.state().active),false);
+  assert.equal(await page.evaluate(()=>!window.native3D05Bridge||!window.native3D05Bridge.state().active),true,
+   'Native logout may destroy the whole research bridge or leave it revoked');
   // Session B cannot inherit A preview, owner IDs, or original photo URLs.
   await login(page,'native05-B');
   await seed(page,'native05-B');
