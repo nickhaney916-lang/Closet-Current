@@ -51,7 +51,7 @@ export function garmentKind01(item){
  if(/outerwear|shoe|accessor|jacket|coat/.test(category))return 'unsupported';
  return 'unsupported';
 }
-export async function assessWardrobePhoto01(item,{ownerId,subtle,renderReceipt=null}={}){
+export async function assessWardrobePhoto01(item,{ownerId,subtle,sessionGeneration=null,renderReceipt=null}={}){
  if(!id(ownerId)||!o(item)||!id(item.id)||item.ownerId!==ownerId)
   throw Error('Owner-private wardrobe required; refuse foreign source');
  const kind=garmentKind01(item),result={ownerId,itemId:item.id,category:item.category||'',
@@ -75,7 +75,7 @@ export async function assessWardrobePhoto01(item,{ownerId,subtle,renderReceipt=n
   'Pinned original source exists; independently inspect true mesh fit, front/side/rear and human acceptance':
   'No independently verified cutout, shoulder/waist/hem geometry or source UV for this photograph';
  if(renderReceipt!==null){
-  if(!isAcceptedReceipt01(renderReceipt,item,source.sha256,kind))
+  if(!isAcceptedReceipt01(renderReceipt,item,source.sha256,kind,sessionGeneration))
    throw Error('Untrusted 3D render acceptance; cannot mark as ready');
   result.readiness='3D Ready';result.rendered3D=true;
   result.reason='Original source and 163-bone renderer verified with accepted fitting review; rear remains neutral';
@@ -83,16 +83,17 @@ export async function assessWardrobePhoto01(item,{ownerId,subtle,renderReceipt=n
  return Object.freeze(result);
 }
 const minted=new WeakSet();
-function isAcceptedReceipt01(receipt,item,sha256,kind){
+function isAcceptedReceipt01(receipt,item,sha256,kind,generation){
  return o(receipt)&&minted.has(receipt)&&receipt.ownerId===item.ownerId&&
-  receipt.itemId===item.id&&receipt.sha256===sha256&&receipt.kind===kind;
+  receipt.itemId===item.id&&receipt.sha256===sha256&&receipt.kind===kind&&
+  Number.isSafeInteger(generation)&&receipt.sessionGeneration===generation;
 }
 /**
  * This proof can be minted ONLY by the controller after actual WebGL screenshots,
  * front/side/rear inspection and independent human approval. A string, generic
  * mesh, photo hash, or test flag alone is not sufficient.
  */
-export function attestFittedRender01({item,source,rig,views,humanReviewAccepted=false}={}){
+export function attestFittedRender01({item,source,rig,views,sessionGeneration,humanReviewAccepted=false}={}){
  if(!humanReviewAccepted)throw Error('Human visual acceptance is required');
  if(!o(item)||!id(item.id)||!o(source)||source.ownerId!==item.ownerId||
     source.itemId!==item.id||!sha.test(source.sha256)||!Array.isArray(views)||
@@ -114,7 +115,9 @@ export function attestFittedRender01({item,source,rig,views,humanReviewAccepted=
  const piece=kind==='dress'?state.outfit.dress:kind==='shirt'?state.outfit.shirt:state.outfit.pants;
  if(piece?.sourceSHA256!==source.sha256)
   throw Error('Displayed garment must be the exact independently source-bound photograph');
- const receipt=Object.freeze({ownerId:item.ownerId,itemId:item.id,sha256:source.sha256,kind,
+ if(!Number.isSafeInteger(sessionGeneration)||sessionGeneration<0)
+  throw Error('Native authentication session generation required');
+ const receipt=Object.freeze({ownerId:item.ownerId,itemId:item.id,sha256:source.sha256,kind,sessionGeneration,
    views:Object.freeze([...views]),researchOnly:true});
  minted.add(receipt);return receipt;
 }
