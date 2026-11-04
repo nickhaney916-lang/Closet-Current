@@ -45,9 +45,8 @@ const server=createServer(async(req,res)=>{
 await new Promise(done=>server.listen(0,'127.0.0.1',done));
 const origin='http://127.0.0.1:'+server.address().port;
 const authOrigin='https://hlkgymugtfbirlpunsra.supabase.co';
-const browser=await chromium.launch({headless:true,args:[
- '--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
-const external=[],errors=[],cases=[],screens=[];
+let browser=null;
+const external=[],errors=[],cases=[],screens=[],navigations=[],crashes=[];
 let tokenCount=0;
 const cloudStub="window.closetCloud={start:async()=>{},changed:()=>{},beforeWrite:async()=>{},sync:async()=>{}};";
 function fixture(owner){
@@ -131,6 +130,10 @@ function authHttp(route){
 }
 try{
  for(const width of [320,390,430]){
+  // A fresh Chromium/GPU process per real WebGL width avoids stale prior
+  // 163-bone canvas contexts, renderer memory and stale browser navigation.
+  browser=await chromium.launch({headless:true,args:[
+   '--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
   const ctx=await browser.newContext({viewport:{width,height:920},deviceScaleFactor:1,
    isMobile:true,hasTouch:true,serviceWorkers:'block'});
   await ctx.route('**/*',route=>{
@@ -146,6 +149,9 @@ try{
   });
   const page=await ctx.newPage();
   page.on('pageerror',e=>errors.push({width,message:e.message}));
+  page.on('framenavigated',f=>{if(f===page.mainFrame())
+   navigations.push({width,path:new URL(f.url()).pathname,query:new URL(f.url()).search});});
+  page.on('crash',()=>crashes.push({width,kind:'renderer-crash'}));
   await page.goto(origin+'/public/index.html?nativeLossless04=research&native3D05=research',
     {waitUntil:'domcontentloaded'});
   await login(page,'native05-A');
@@ -225,7 +231,9 @@ try{
    physicalPhoneApproved:false,liveSignedRLS:false,releaseAuthorized:false,
    familyAlpha:'HOLD'});
   await page.close();await ctx.close();
+  await browser.close();browser=null;
  }
+ assert.equal(crashes.length,0,'No real WebGL viewport may crash');
  assert.equal(cases.length,3);assert.equal(screens.length,15);
  assert.deepEqual(errors,[]);
  assert.deepEqual(external.filter(x=>x.method!=='GET'),[]);
@@ -237,14 +245,15 @@ try{
   realSignedRLS:false,originalUserSavedStateUnmodified:true,
   actual3DWithHonestUnsupportedPhotoFallback:true,
   physicalPhone:'NOT TESTED',familyAlpha:'HOLD',releaseAuthorized:false,
-  evidence:cases,screens,errors,external};
+  evidence:cases,screens,errors,external,
+  navigations,crashes,isolatedChromiumProcessPerWidth:true};
  await writeFile(dir+'/results.json',JSON.stringify(result,null,2));
  console.log('NATIVE05_BROWSER_3D_VERIFIED',JSON.stringify({cases:3,
    real163BoneWebGL:true,realMobileScreenshots:15,familyAlpha:'HOLD'}));
 }catch(error){
  await writeFile(dir+'/ERROR.json',JSON.stringify({
   message:String(error?.stack||error),cases:cases.length,
-  screens:screens.length,errors,external},null,2));throw error;
+  screens:screens.length,errors,external,navigations,crashes},null,2));throw error;
 }finally{
- await browser.close();await new Promise(done=>server.close(done));
+ await browser?.close();await new Promise(done=>server.close(done));
 }
