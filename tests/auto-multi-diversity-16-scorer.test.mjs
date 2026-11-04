@@ -51,7 +51,7 @@ test('duplicate same-class proposal and wrong class are separate false positives
 });
 test('invalid or unreviewed models cannot fabricate success',()=>{
  const valid=cases(),missing=valid.slice(1);
- assert.throws(()=>score(frozen,missing),/30/);
+ assert.throws(()=>score(frozen,missing),/exact 15 originals in 2 distinct model engines required/);
  const swapped=cases();swapped[0].sourceSha256='0'.repeat(64);
  assert.throws(()=>score(frozen,swapped),/source identity/);
  const untrusted=cases();untrusted[0].updated=[{regionId:4,label:'Upper garment',confidence:.9,
