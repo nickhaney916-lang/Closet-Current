@@ -338,7 +338,7 @@ $('export').onclick=async()=>{if(typeof outfitBoardReady!=='undefined')await out
    const {data}=await window.restoreAtomic01Bridge.exportJSON();
    const blob=new Blob([JSON.stringify(data)],{type:'application/json'});
    const url=URL.createObjectURL(blob),a=node('a');a.href=url;
-   a.download='closet-current-owner-backup-v4.json';a.click();
+   a.download='closet-current-owner-backup-v4.json';document.body.append(a);a.click();a.remove();
    setTimeout(()=>URL.revokeObjectURL(url),1000);
    message('Private lossless backup exported. Store this file securely.');
   }catch(e){message(e.message||'Private backup failed; no data changed.');}
