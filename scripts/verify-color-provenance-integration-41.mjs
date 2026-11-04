@@ -73,6 +73,7 @@ try {
       refusedUncertain:true,refusedInvalid:true,sourceUnchanged:item.originalPhoto.image===sourceData};
     },{sourceData,sha});
     assert.ok(initial.sourceUnchanged&&initial.refusedUncertain&&initial.refusedInvalid);
+    await page.locator('details.optional-details').evaluate(el=>{el.open=true;});
     const notes=page.getByLabel('Notes',{exact:true}),color=page.getByLabel('Color',{exact:true});
     await notes.fill('Changed only my notes');
     const noteOnly=await page.evaluate(()=>{
