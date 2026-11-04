@@ -1,0 +1,88 @@
+[
+  {
+    "id": "worn-rkk-chromium",
+    "browser": "chromium",
+    "scene": "worn-outfit",
+    "licensed": true,
+    "originalJpeg": true,
+    "sourceSha256": "e3df4503a89c244b28fa344ec170d6554fc06ad1d7cd331014fcb277df19d5ff",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:Shirt_and_tie,_jeans_and_Converse.jpg",
+    "license": "CC BY-SA 2.0",
+    "author": "Rasmus K. Kristiansen",
+    "sourceImage": "https://upload.wikimedia.org/wikipedia/commons/b/b0/Shirt_and_tie%2C_jeans_and_Converse.jpg",
+    "originalBytes": 104520,
+    "annotation": "Three human-reviewed coarse boxes in earlier PR #569; NOT mask ground truth",
+    "regions": [
+      {
+        "family": "upper",
+        "box": {
+          "x": 0.38,
+          "y": 0.055,
+          "width": 0.4,
+          "height": 0.345
+        }
+      },
+      {
+        "family": "bottom",
+        "box": {
+          "x": 0.37,
+          "y": 0.38,
+          "width": 0.39,
+          "height": 0.5
+        }
+      },
+      {
+        "family": "shoes",
+        "box": {
+          "x": 0.35,
+          "y": 0.83,
+          "width": 0.37,
+          "height": 0.16
+        }
+      }
+    ]
+  },
+  {
+    "id": "worn-rkk-webkit",
+    "browser": "webkit",
+    "scene": "worn-outfit",
+    "licensed": true,
+    "originalJpeg": true,
+    "sourceSha256": "e3df4503a89c244b28fa344ec170d6554fc06ad1d7cd331014fcb277df19d5ff",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:Shirt_and_tie,_jeans_and_Converse.jpg",
+    "license": "CC BY-SA 2.0",
+    "author": "Rasmus K. Kristiansen",
+    "sourceImage": "https://upload.wikimedia.org/wikipedia/commons/b/b0/Shirt_and_tie%2C_jeans_and_Converse.jpg",
+    "originalBytes": 104520,
+    "annotation": "Three human-reviewed coarse boxes in earlier PR #569; NOT mask ground truth",
+    "regions": [
+      {
+        "family": "upper",
+        "box": {
+          "x": 0.38,
+          "y": 0.055,
+          "width": 0.4,
+          "height": 0.345
+        }
+      },
+      {
+        "family": "bottom",
+        "box": {
+          "x": 0.37,
+          "y": 0.38,
+          "width": 0.39,
+          "height": 0.5
+        }
+      },
+      {
+        "family": "shoes",
+        "box": {
+          "x": 0.35,
+          "y": 0.83,
+          "width": 0.37,
+          "height": 0.16
+        }
+      }
+    ]
+  }
+]

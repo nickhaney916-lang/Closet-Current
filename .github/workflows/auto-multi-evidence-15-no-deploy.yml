@@ -1,0 +1,62 @@
+name: AUTO-MULTI-MODEL-EVIDENCE-15 genuine SegFormer original-photo Chromium WebKit NO DEPLOY
+on:
+  pull_request:
+    paths:
+      - 'research/auto-multi-model-evidence-15/**'
+      - 'scripts/score-auto-multi-15.mjs'
+      - 'scripts/test-auto-multi-15-browser.mjs'
+      - 'scripts/audit-auto-multi-15.mjs'
+      - 'tests/auto-multi-model-evidence-15.test.mjs'
+      - '.github/workflows/auto-multi-evidence-15-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  exact-source-multi-photo-model-and-human-review-no-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 100
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+      - name: Pin verified multi-piece native PR569 and protect prior application, user data, cloud and unrelated 3D
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor ca23c25d6621ea41c29fc9bac5f32eefb829b550 HEAD
+          git diff --name-only ca23c25d6621ea41c29fc9bac5f32eefb829b550 HEAD | while IFS= read -r p; do
+            case "$p" in
+              research/auto-multi-model-evidence-15/*|scripts/score-auto-multi-15.mjs|scripts/test-auto-multi-15-browser.mjs|scripts/audit-auto-multi-15.mjs|tests/auto-multi-model-evidence-15.test.mjs|.github/workflows/auto-multi-evidence-15-no-deploy.yml) ;;
+              *) echo "BLOCKED unexpected source $p"; exit 1 ;;
+            esac
+          done
+          git diff --exit-code ca23c25d6621ea41c29fc9bac5f32eefb829b550 -- public/ benchmark/fixtures/ supabase/ migrations/ .github/workflows/cloudflare-pages.yml .github/workflows/pages.yml
+      - name: Install pinned browser research testing dependencies without changing package files
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Verify source, parse all new research scripts, build actual app and execute full Node regressions
+        run: |
+          node --check scripts/score-auto-multi-15.mjs
+          node --check scripts/test-auto-multi-15-browser.mjs
+          node --check scripts/audit-auto-multi-15.mjs
+          node --check tests/auto-multi-model-evidence-15.test.mjs
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Run UNMOCKED SegFormer against unchanged licensed worn multi-garment JPEG in real Chromium and WebKit
+        run: |
+          node scripts/test-auto-multi-15-browser.mjs
+          node scripts/audit-auto-multi-15.mjs
+      - name: Preserve sanitized results and genuine browser original-photo screenshot proof, never raw JPEG
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: AUTO-MULTI-15-real-SegFormer-two-browser-original-photo-source-HOLD
+          path: |
+            benchmark/auto-multi-15/*.json
+            benchmark/auto-multi-15/*.png
+          if-no-files-found: warn
+          retention-days: 21
