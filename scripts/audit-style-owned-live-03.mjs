@@ -22,8 +22,17 @@ assert.equal(data.realPhysicalAndroidOrIphone,false);
 assert.equal(data.arbitraryFitted3D,false);
 assert.equal(data.familyAlpha,'HOLD');
 assert.equal(data.releaseAuthorized,false);
-for(const key of ['errors','crashes','external','consoleErrors'])
+for(const key of ['errors','crashes','consoleErrors'])
  assert.deepEqual(data[key],[],key+' browser failure cannot be silently waived');
+// The existing app attempts read-only font/recognition GETs. Those are
+// deliberately BLOCKED by the browser. Never confuse blocked reads with
+// successful external requests; reject any unknown host or write method.
+const trustedReadOnly=new Set(['fonts.googleapis.com','raw.githubusercontent.com',
+ 'cdn.jsdelivr.net']);
+assert.ok(Array.isArray(data.external));
+assert.ok(data.external.every(e=>e.method==='GET'&&e.blocked===true&&
+ trustedReadOnly.has(e.host)),
+ 'Any unblocked request, unknown external host, POST/PUT/PATCH/DELETE or image exfiltration blocks acceptance');
 assert.equal(data.cases.length,6);
 const combinations=new Set();
 for(const e of data.cases){
@@ -96,6 +105,9 @@ await writeFile('benchmark/style-owned-live-03-audit/acceptance.json',JSON.strin
  actualV4AtomicLossRecoveryChromium:true,
  genuineMobileBrowserScreenshots:verified.length,
  genuineBrowserGalleryCount:galleries.length,
+ blockedLegacyExternalReadOnlyGETs:data.external.length,
+ blockedHosts:[...new Set(data.external.map(e=>e.host))],
+ prohibitedExternalWrites:0,externalUploads:0,
  galleries,realSignedRLS:false,realPhysicalPhones:false,
  arbitraryPhoto3DReady:false,familyAlpha:'HOLD',productionDeployed:false,
  releaseAuthorized:false
