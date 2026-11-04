@@ -94,12 +94,15 @@ for(const candidate of samples.samples){
  try{await originalPhoto(candidate);selected.push(candidate);if(selected.length===samples.requiredVerifiedOriginals)break;}
  catch(err){quarantined.push({id:candidate.id,reason:/SHA changed|sha/i.test(err.message)?'source-sha-mismatch':'source-unavailable'});}
 }
-assert.equal(selected.length,samples.requiredVerifiedOriginals,
- 'insufficient verified immutable licensed originals; do not substitute changed bytes');
 await writeFile(dir+'/source-quarantine.json',JSON.stringify({
  candidateCount:samples.samples.length,requiredVerifiedOriginals:samples.requiredVerifiedOriginals,
  selectedIds:selected.map(x=>x.id),quarantined,allAcceptedSourcesShaVerified:true
 },null,2));
+console.log('COLOR-CONFIDENCE-19 source verification '+JSON.stringify({
+ verifiedIds:selected.map(x=>x.id),excluded:quarantined,
+ required:samples.requiredVerifiedOriginals}));
+assert.equal(selected.length,samples.requiredVerifiedOriginals,
+ 'insufficient verified immutable licensed originals; do not substitute changed bytes');
 try{
  for(const [engine,browserType] of [['chromium',chromium],['webkit',webkit]]){
   const browser=await browserType.launch({headless:true});
