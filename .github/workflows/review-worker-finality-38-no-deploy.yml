@@ -1,0 +1,105 @@
+name: WORKER38 late detector save isolation and mobile original SHA NO DEPLOY
+on:
+  push:
+    branches:
+      - research/review-worker-finality-38-main-20261104-HOLD
+  pull_request:
+    paths:
+      - 'research/multi-garment-capture-01/review-ui.mjs'
+      - 'research/review-worker-finality-38/**'
+      - 'scripts/verify-review-worker-finality-38.mjs'
+      - 'tests/review-worker-finality-38.test.mjs'
+      - '.github/workflows/review-worker-finality-38-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  exact-source-confirmed-save-vs-late-model-worker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Pin exact verified AUTH36 source and prohibit other code/staging/production edits
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor 77d5c760c847d6e2f544512e80fd8598fd610dad HEAD
+          git diff --name-only 77d5c760c847d6e2f544512e80fd8598fd610dad HEAD >/tmp/worker38-scoped
+          while IFS= read -r file; do
+            case "$file" in
+              research/multi-garment-capture-01/review-ui.mjs|research/review-worker-finality-38/*|scripts/verify-review-worker-finality-38.mjs|tests/review-worker-finality-38.test.mjs|.github/workflows/review-worker-finality-38-no-deploy.yml) ;;
+              *) echo "BLOCKED out-of-scope source or staging/production edit: $file"; exit 1 ;;
+            esac
+          done </tmp/worker38-scoped
+      - name: Install pinned synthetic browser test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Actual app build and ALL inherited plus new Node tests
+        run: |
+          node --check research/multi-garment-capture-01/review-ui.mjs
+          node --check scripts/verify-review-worker-finality-38.mjs
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Regression source epoch in actual Chromium and WebKit plus native IndexedDB
+        run: node scripts/verify-review-source-epoch-34.mjs
+      - name: Regression atomic save finality and truthful postcommit display failure
+        run: node scripts/verify-review-save-finality-34.mjs
+      - name: New genuine browser active-worker late piece/progress/error rejection
+        run: node scripts/verify-review-worker-finality-38.mjs
+      - name: Independently inspect six mobile cases and 12 PNG screenshot hashes
+        run: |
+          node --input-type=module <<'EONODE'
+          import assert from 'node:assert/strict';
+          import {readFile} from 'node:fs/promises';
+          import {createHash} from 'node:crypto';
+          import sharp from 'sharp';
+          const dir='benchmark/review-worker-finality-38/';
+          const report=JSON.parse(await readFile(dir+'browser.json','utf8'));
+          assert.equal(report.priority,'REVIEW-WORKER-FINALITY-38');
+          assert.equal(report.actualBrowserCases,6);
+          assert.equal(report.realBrowsers,2);
+          assert.equal(report.realSegFormerRun,false);
+          assert.equal(report.realCustomerData,false);
+          assert.equal(report.FamilyAlpha,'HOLD');
+          assert.deepEqual(report.unexpectedRequests,[]);
+          assert.deepEqual(report.browserErrors,[]);
+          let count=0;
+          for(const engine of ['chromium','webkit'])for(const width of [320,390,430]){
+            const row=report.cases.find(x=>x.engine===engine&&x.width===width);
+            assert.ok(row?.workerTerminatedOnSave&&row.modelPieceProgressErrorDoneCallbacksBlocked);
+            assert.ok(row?.lateWorkerReceiptUnaffected);
+            assert.ok(row.realIndexedDBSingleAtomicCommit&&row.postCommitErrorReceiptHonest);
+            assert.ok(row.confirmedSnapshotUnaffectedByStaleEdit&&row.cancellationBlockedDuringSave);
+            assert.ok(row.sourceIdentityVerified&&row.ownerIsolationOfSavedRecord);
+            assert.equal(row.originalSHA256,report.originalSHA256);
+            assert.equal(row.screenshots.length,2);
+            for(const shot of row.screenshots){
+              const bytes=await readFile(dir+shot.filename);
+              const meta=await sharp(bytes).metadata(),stats=await sharp(bytes).stats();
+              assert.equal(createHash('sha256').update(bytes).digest('hex'),shot.sha256);
+              assert.equal(meta.format,'png');assert.equal(meta.width,width);
+              assert.equal(meta.height,shot.height);assert.equal(bytes.length,shot.bytes);
+              assert.ok(meta.height>500&&stats.channels.some(c=>c.stdev>6));
+              count++;
+            }
+          }
+          assert.equal(count,12);
+          console.log('WORKER38 independent 6 live-worker browser / 12 screenshot SHA+pixel audits PASS; no customer images or deployment');
+          EONODE
+      - name: Preserve sanitized synthetic PNGs and per-case evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: WORKER38-six-browser-live-worker-12-screenshot-HOLD
+          path: |
+            benchmark/review-worker-finality-38/browser.json
+            benchmark/review-worker-finality-38/*.png
+          if-no-files-found: warn
+          retention-days: 21
