@@ -125,6 +125,71 @@ export async function createNativeConsumerBoard04({
   return {refreshed:true,itemCount:next.length,ownerPrivate:true,
    originalSavedBoardUnchanged:true,releaseAuthorized:false};
  };
+ // STYLE-OWNED-LIVE-03: strictly research-only native owner wardrobe read.
+ // The generator never reads a separate database or writes private photos.
+ // A fresh lease/fingerprint proves the very same BOARD04 owner epoch and
+ // underlying CAS state used to save an explicit finished suggestion.
+ const readOnlyWardrobe=()=>{
+  if(new URLSearchParams(win.location.search).get('styleOwned03')!=='research')
+   fail('STYLE03_RESEARCH_NOT_ENABLED');
+  const lease=alive();
+  return Object.freeze({ownerId:lease.ownerId,generation:lease.generation,
+   items:clone(wardrobe),boardFingerprint:expected,originalRecordsUntouched:true,
+   releaseAuthorized:false});
+ };
+ const sessionLease=()=>{
+  if(new URLSearchParams(win.location.search).get('styleOwned03')!=='research')
+   fail('STYLE03_RESEARCH_NOT_ENABLED');
+  return alive();
+ };
+ // Apply the complete suggestion/swap with ONE guarded native change().
+ // This is an unsaved draft transaction and never calls storage/clearSelection.
+ // The verified original source bound to every selected item is rechecked
+ // against the fresh private wardrobe; stale generation/reclassified/deleted
+ // or duplicate garment IDs fail before ANY change to the visible draft.
+ const applyOwnedSlots=({selected,sourceHashes,ownerId,generation,fingerprint}={})=>{
+  if(new URLSearchParams(win.location.search).get('styleOwned03')!=='research')
+   fail('STYLE03_RESEARCH_NOT_ENABLED');
+  const lease=alive();
+  if(lease.ownerId!==ownerId||lease.generation!==generation||
+     fingerprint!==expected)fail('STYLE03_STALE_OWNER_OR_BOARD');
+  if(!selected||typeof selected!=='object'||Array.isArray(selected)||
+     !sourceHashes||typeof sourceHashes!=='object'||Array.isArray(sourceHashes))
+   fail('STYLE03_BAD_SUGGESTION');
+  const selectedEntries=Object.entries(selected),ids=new Set();
+  if(selectedEntries.length<2||selectedEntries.length>5||!selected.top||!selected.shoes)
+   fail('STYLE03_INCOMPLETE_LOOK');
+  for(const [slot,itemId]of selectedEntries){
+   if(!['top','bottom','shoes','layer2','layer3'].includes(slot)||
+      !validId(itemId)||ids.has(itemId))fail('STYLE03_DUPLICATE_OR_UNKNOWN_SLOT');
+   const row=wardrobe.find(x=>x.id===itemId);
+   if(!itemFits(slot,row)||row?.ownerId!==lease.ownerId||
+      !/^[a-f0-9]{64}$/.test(sourceHashes[itemId]||'')||
+      row.originalPhoto?.sha256!==sourceHashes[itemId]||
+      row.sourceSHA256!==sourceHashes[itemId])
+    fail('STYLE03_SOURCE_OR_CATEGORY_CHANGED');
+   ids.add(itemId);
+  }
+  const top=wardrobe.find(row=>row.id===selected.top);
+  if(top.category==='Dresses'&&(selected.bottom||selected.layer)||
+     top.category!=='Dresses'&&(!selected.bottom||top.category!=='Tops'))
+   fail('STYLE03_DRESS_OR_MISSING_BOTTOM_CONFLICT');
+  const result=change(d=>{
+   d.slots=clone(selected);
+   d.slotSources={};
+   for(const [slot,itemId]of selectedEntries){
+    const row=wardrobe.find(x=>x.id===itemId);
+    d.slotSources[slot]={sha256:sourceHashes[itemId],ownerId:lease.ownerId,
+     categoryAtSave:row.category,itemTypeAtSave:row.itemType};
+   }
+   // These are exclusively OWNED clothing slots; inherited shopping ideas
+   // must not appear as a substitute for actual photo-backed pieces.
+   d.ideas={};
+   d.layerCount=selected.layer3?3:selected.layer2?2:0;
+  });
+  return Object.freeze({draft:result,ownerId:lease.ownerId,generation:lease.generation,
+   sourcePhotosUnmodified:true,savePending:true,releaseAuthorized:false});
+ };
  const selectSaved=index=>{
   alive();
   if(!Number.isInteger(index)||index<0||index>=stored.saved.length)fail('UNKNOWN_SAVED_OUTFIT');
@@ -252,7 +317,7 @@ export async function createNativeConsumerBoard04({
  try{await load();}
  catch(e){win.removeEventListener('closet:alpha-session-changed',invalidation);
   win.removeEventListener('pagehide',invalidation);epoch.dispose();throw e;}
- return Object.freeze({load,refreshWardrobe,selectSaved,setSlot,setField,setIdea,startNew,cancel,persist,
+ return Object.freeze({load,refreshWardrobe,readOnlyWardrobe,sessionLease,applyOwnedSlots,selectSaved,setSlot,setField,setIdea,startNew,cancel,persist,
   remove,list,readOnlySnapshot,status,view:()=>{alive();return published();},
   get selected(){alive();return opened;},get dirty(){alive();return dirty;},
   dispose(){if(closed)return;closed=true;

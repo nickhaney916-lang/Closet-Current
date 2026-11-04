@@ -203,6 +203,18 @@ const outfitBoardReady=(async()=>{
      });
     }catch(error){nativeLossless04Notify(error);}
    }
+   // STYLE03: Actual native Style screen, not a separate wardrobe editor.
+   // Guarded original photos and pinned owned looks use this very same native
+   // authenticated BOARD04 controller and its lossless compare-and-swap.
+   if(new URLSearchParams(location.search).get('styleOwned03')==='research'&&
+      new URLSearchParams(location.search).get('nativeIndex07')==='research'){
+    try{
+     const {mountStyleOwnedLive03}=await import('../research/style-owned-live-03/native-style-panel.mjs');
+     window.styleOwnedLive03Bridge=await mountStyleOwnedLive03({
+      board:nativeLossless04,onStatus:()=>{}
+     });
+    }catch(error){nativeLossless04Notify(error);}
+   }
    // MOBILE09: Research-only tactile and safe-area polish. It changes no
    // saved record, cloth geometry, owner permission, or released stylesheet.
    if(new URLSearchParams(location.search).get('nativeMobile09')==='research'){
