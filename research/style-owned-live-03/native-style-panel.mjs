@@ -28,7 +28,7 @@ export function reviewedVisiblePiece12(row){
   rect&&['x','y','width','height'].every(k=>Number.isFinite(rect[k]))&&
   rect.x>=0&&rect.y>=0&&rect.width>.025&&rect.height>.025&&
   rect.x+rect.width<=1.000001&&rect.y+rect.height<=1.000001&&
-  typeof row.image==='string'&&/^data:image\\/jpeg;base64,[A-Za-z0-9+/]+={0,2}$/.test(row.image)&&
+  typeof row.image==='string'&&/^data:image\/jpeg;base64,[A-Za-z0-9+/]+={0,2}$/.test(row.image)&&
   row.userAdjusted===true&&typeof row.itemType==='string'&&
   row.itemType!=='Unknown'&&row.itemType.length>0&&
   row.singleGarmentVerified===false&&row.multipleGarments!==true&&
