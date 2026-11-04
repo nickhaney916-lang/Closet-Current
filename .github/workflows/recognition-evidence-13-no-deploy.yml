@@ -1,0 +1,76 @@
+name: RECOGNITION-EVIDENCE-13 16 locked originals real worker accuracy NO DEPLOY
+on:
+  pull_request:
+    paths:
+      - 'scripts/audit-recognition-evidence-13.mjs'
+      - 'tests/recognition-evidence-13.test.mjs'
+      - 'research/recognition-evidence-13/**'
+      - '.github/workflows/recognition-evidence-13-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-locked-model-evidence-no-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 80
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+      - name: Pin PR569 and protect original image, auth, model, wardrobe and 3D
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor ca23c25d6621ea41c29fc9bac5f32eefb829b550 HEAD
+          git diff --name-only ca23c25d6621ea41c29fc9bac5f32eefb829b550 HEAD > /tmp/recognition13-changes.txt
+          while IFS= read -r p; do
+            case "$p" in
+              scripts/audit-recognition-evidence-13.mjs|tests/recognition-evidence-13.test.mjs|research/recognition-evidence-13/*|.github/workflows/recognition-evidence-13-no-deploy.yml) ;;
+              *) echo "UNAUTHORIZED SOURCE MODIFICATION $p"; exit 1 ;;
+            esac
+          done < /tmp/recognition13-changes.txt
+          test -s /tmp/recognition13-changes.txt
+          git diff --exit-code ca23c25d6621ea41c29fc9bac5f32eefb829b550 -- public/ benchmark/manifest-holdout-16.json benchmark/locked-photo-sources.json benchmark/regression-holdout-16.json supabase/ migrations/ .github/workflows/pages.yml .github/workflows/cloudflare-pages.yml
+      - name: Install pinned research-only tools
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Run tests, build and unchanged inherited source/owner regressions
+        run: |
+          node --check scripts/audit-recognition-evidence-13.mjs
+          node --check tests/recognition-evidence-13.test.mjs
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Report historic baseline explicitly as historical
+        run: |
+          node scripts/audit-recognition-evidence-13.mjs benchmark/manifest-holdout-16.json benchmark/regression-holdout-16.json benchmark/locked-photo-sources.json benchmark/recognition-evidence-13/historical.json historical-baseline
+      - name: Obtain unchanged human-reviewed licensed photo bytes verified by SHA-256
+        run: |
+          ids=$(node --input-type=module -e "import {readFileSync} from 'node:fs';const rows=JSON.parse(readFileSync('benchmark/manifest-holdout-16.json','utf8'));console.log(rows.map(x=>x.id).join(','));")
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos "$ids"
+      - name: Run real FashionCLIP worker on 16 original photos in Chromium
+        run: |
+          node scripts/run-browser-photo-benchmark.mjs benchmark/manifest-holdout-16.json benchmark/recognition-evidence-13/actual
+      - name: Score actual wrong autos, reviews, negatives and errors honestly
+        if: always()
+        run: |
+          if [ -f benchmark/recognition-evidence-13/actual/results.json ]; then
+            node scripts/audit-recognition-evidence-13.mjs benchmark/manifest-holdout-16.json benchmark/recognition-evidence-13/actual/results.json benchmark/locked-photo-sources.json benchmark/recognition-evidence-13/actual/evaluation-13.json actual-browser-inference
+          else
+            echo 'No model results were generated; current recognition accuracy is NOT MEASURED.'
+          fi
+      - name: Retain sanitized metrics only; exclude original JPEGs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: RECOGNITION-EVIDENCE-13-real-worker-16-locked-originals-HOLD
+          path: |
+            benchmark/recognition-evidence-13/historical.json
+            benchmark/recognition-evidence-13/actual/results.json
+            benchmark/recognition-evidence-13/actual/evaluation-13.json
+            benchmark/recognition-evidence-13/actual/run-summary.json
+          if-no-files-found: warn
+          retention-days: 21
