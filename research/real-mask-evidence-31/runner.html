@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Closet Current — actual SegFormer pixel mask comparison</title>
+<style>
+*{box-sizing:border-box}body{font:14px/1.45 system-ui;background:#f4f4f6;color:#242631;margin:0}
+main{max-width:990px;margin:auto;padding:12px}
+h1{font-size:21px;line-height:1.2;margin:0 0 8px}
+h2{font-size:15px;margin:10px 0 5px}.note{padding:8px;border-radius:7px;background:#ebe8d9}
+.compare{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:12px}
+.panel{background:#fff;border:1px solid #bcc1c9;border-radius:9px;padding:8px}
+.photo{position:relative;aspect-ratio:1;max-height:420px;overflow:hidden;background:#ddd}
+.photo img{width:100%;height:100%;display:block;object-fit:fill}
+.photo canvas{position:absolute;inset:0;width:100%;height:100%;opacity:.35;image-rendering:pixelated}
+.box{position:absolute;border:2px solid #ab3144;pointer-events:none}
+.box.legacy{border-color:#ad4b24}.box.current{border-color:#145aab}
+.box.expected{border:2px dashed #137e54}
+code{font-size:11px;overflow-wrap:anywhere}#status{padding:10px;background:#eff1ff}
+footer{font-size:11px;overflow-wrap:anywhere}
+</style></head><body><main>
+<h1>Real model pixel-mask evidence — source-verified photographs</h1>
+<p class="note">RESEARCH ONLY · Same original JPEG and same real pinned SegFormer logits. Orange: old review groups. Blue: new review groups. Green dashed: single-reviewer reference boxes. Semi-transparent colors are actual pixel labels, not invented masks. All suggestions unverified.</p>
+<p id="status" role="status">Model not started</p>
+<div class="compare">
+<section class="panel"><h2>Before shoe grouping</h2><div id="before" class="photo"><img alt="Licensed original clothing photograph"></div><p id="before-summary"></p></section>
+<section class="panel"><h2>After shoe grouping</h2><div id="after" class="photo"><img alt="Same exact original photograph"></div><p id="after-summary"></p></section>
+</div>
+<p id="model-summary"></p><footer id="credit"></footer>
+</main>
+<script type="module">
+const $=id=>document.getElementById(id);
+const box=(node,b,cls)=>{
+ const div=document.createElement('div');div.className='box '+cls;
+ Object.assign(div.style,{left:100*b.x+'%',top:100*b.y+'%',
+  width:100*b.width+'%',height:100*b.height+'%'});
+ node.append(div);
+};
+const hash=async data=>[...new Uint8Array(await crypto.subtle.digest('SHA-256',data))]
+ .map(v=>v.toString(16).padStart(2,'0')).join('');
+const addActualPixelMask=(host,result)=>{
+ const [width,height]=result.modelMask,labels=Uint8Array.from(atob(result.labelMapBase64),x=>x.charCodeAt(0));
+ if(labels.length!==width*height)throw Error('Model pixel map was truncated');
+ const canvas=document.createElement('canvas');canvas.width=width;canvas.height=height;
+ const ctx=canvas.getContext('2d'),rgba=ctx.createImageData(width,height);
+ for(let i=0;i<labels.length;i++){
+  const color=({4:[200,35,45],5:[185,115,15],6:[30,75,190],
+   7:[126,38,150],9:[10,133,90]})[labels[i]];
+  if(!color)continue;
+  rgba.data.set([...color,255],i*4);
+ }
+ ctx.putImageData(rgba,0,0);host.append(canvas);
+ return labels;
+};
+const current={worker:null,id:0};
+window.__realMask31={done:false,report:null,error:null};
+window.runRealMask31=async({sourceId,sourceData,analysisData,originalWidth,originalHeight,
+ annotation,credit,expectedSHA})=>{
+ if(current.worker)throw Error('Already running a research mask');
+ const bytes=Uint8Array.from(atob(sourceData.split(',')[1]),c=>c.charCodeAt(0));
+ if(await hash(bytes)!==expectedSHA)throw Error('Original licensed source SHA mismatch');
+ window.__realMask31={done:false,report:null,error:null,sourceId};
+ $('status').textContent='Loading genuine pinned SegFormer and analyzing original-derived photo…';
+ $('credit').textContent=credit;
+ $('before').querySelector('img').src=sourceData;
+ $('after').querySelector('img').src=sourceData;
+ const worker=new Worker('/research/real-mask-evidence-31/worker.mjs',{type:'module'});
+ const id=++current.id;current.worker=worker;
+ let ended=false;const finish=(error,result)=>{
+  if(ended)return;ended=true;clearTimeout(timeout);
+  worker.terminate();current.worker=null;
+  if(error){$('status').textContent=error;
+   window.__realMask31={done:true,error,report:null,sourceId};return;}
+  (async()=>{
+   for(const type of ['before','after']){
+    const host=$(type);
+    for(const extra of [...host.querySelectorAll('canvas,.box')])extra.remove();
+    const label=addActualPixelMask(host,result);
+    if(await hash(label)!==result.sourceMapLabelsSHA256)
+     throw Error('Returned actual mask SHA does not match model evidence');
+    annotation.forEach(a=>box(host,a.box,'expected'));
+    result[type].forEach(part=>box(host,part.crop,type==='before'?'legacy':'current'));
+    $(type+'-summary').textContent=result[type].length+
+     ' review proposals; '+result[type].filter(p=>p.regionId===9).length+
+     ' shoe region(s). Every crop needs user confirmation.';
+   }
+   $('model-summary').textContent='Original SHA '+expectedSHA.slice(0,16)+
+    '… · Mask SHA '+result.sourceMapLabelsSHA256.slice(0,16)+
+    '… · Source pixel membership unchanged: '+result.maskPixelMembershipConserved;
+   $('status').textContent='Real SegFormer model completed. Source and actual mask hashes verified.';
+   const {labelMapBase64,...safe}=result;
+   window.__realMask31={done:true,error:null,report:{...safe,sourceSHA256:expectedSHA},sourceId};
+  })().catch(e=>{$('status').textContent=e.message;
+   window.__realMask31={done:true,error:e.message,report:null,sourceId}});
+ };
+ worker.onmessage=e=>{
+  if(e.data.id!==id)return;
+  if(e.data.type==='done')finish(null,e.data.result);
+  if(e.data.type==='error')finish('Genuine model failed: '+e.data.error+' '+(e.data.stage||''),null);
+ };
+ worker.onerror=e=>finish('Real model worker runtime failed: '+(e.message||'unknown'),null);
+ const timeout=setTimeout(()=>finish('Real SegFormer model timed out; no acceptance',null),390000);
+ worker.postMessage({id,sourceId,analysisImage:analysisData,originalWidth,originalHeight});
+};
+</script></body></html>
