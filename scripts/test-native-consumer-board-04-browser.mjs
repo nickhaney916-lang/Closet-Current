@@ -240,6 +240,8 @@ try{
    await page.waitForFunction(()=>window.closetAuth?.user===null&&
      document.getElementById('authGate')?.hidden===false);
    assert.equal(await page.locator('#boardSlots img').count(),0,'Logout must clear old private images');
+   assert.equal(await page.evaluate(()=>window.__native04CloudSettings?.canRestore()),false,
+    'Logged-out private owner cloud restore must also remain paused');
    await signIn(page,'native04-B');
    await seed(page,fixture('native04-B'));
    await page.reload({waitUntil:'domcontentloaded'});
