@@ -1,0 +1,111 @@
+name: UNIFY35 source-session and atomic-save integrated browser acceptance NO DEPLOY
+on:
+  push:
+    branches:
+      - research/review-session-save-unified-35-main-20261104-HOLD
+  pull_request:
+    paths:
+      - 'research/multi-garment-capture-01/review-ui.mjs'
+      - 'research/multi-garment-capture-01/review-save-finality-34.mjs'
+      - 'research/review-source-save-unification-35/**'
+      - 'scripts/verify-review-source-epoch-34.mjs'
+      - 'scripts/verify-review-save-finality-34.mjs'
+      - 'tests/review-source-epoch-34.test.mjs'
+      - 'tests/review-save-finality-34.test.mjs'
+      - '.github/workflows/review-source-save-unification-35-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  integrated-source-and-save-safety:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify immutable source branch and prohibit unrelated edits
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor a163fdf785466bf1b1e937aec6f87422824c6bee HEAD
+          git diff --name-only a163fdf785466bf1b1e937aec6f87422824c6bee HEAD > /tmp/unify35-changed
+          while IFS= read -r path; do
+            case "$path" in
+              research/multi-garment-capture-01/review-ui.mjs|research/multi-garment-capture-01/review-save-finality-34.mjs|research/review-source-save-unification-35/*|scripts/verify-review-source-epoch-34.mjs|scripts/verify-review-save-finality-34.mjs|tests/review-source-epoch-34.test.mjs|tests/review-save-finality-34.test.mjs|.github/workflows/review-source-save-unification-35-no-deploy.yml) ;;
+              *) echo "BLOCKED unexpected source or production/staging change: $path"; exit 1 ;;
+            esac
+          done < /tmp/unify35-changed
+      - name: Install pinned Playwright and synthetic test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Actual app build and ALL inherited and new Node regression tests
+        run: |
+          node --check research/multi-garment-capture-01/review-ui.mjs
+          node --check research/multi-garment-capture-01/review-save-finality-34.mjs
+          node --check scripts/verify-review-source-epoch-34.mjs
+          node --check scripts/verify-review-save-finality-34.mjs
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Genuine browser UI source epoch and trusted-session invalidation
+        run: node scripts/verify-review-source-epoch-34.mjs
+      - name: Genuine browser UI delayed atomic commit and postcommit failure receipts
+        run: node scripts/verify-review-save-finality-34.mjs
+      - name: Independently audit 18 browser screenshots, exact source metadata, and owner-private transaction results
+        run: |
+          node --input-type=module <<'EONODE'
+          import assert from 'node:assert/strict';
+          import {readFile} from 'node:fs/promises';
+          import {createHash} from 'node:crypto';
+          import sharp from 'sharp';
+          const a=JSON.parse(await readFile('benchmark/review-source-epoch-34/report.json','utf8'));
+          const b=JSON.parse(await readFile('benchmark/review-save-finality-34/browser.json','utf8'));
+          assert.equal(a.actualUISessions,6);assert.equal(a.realNativeIndexedDB,true);
+          assert.equal(a.genuineSegFormerInference,false);
+          assert.equal(a.benchmarkOfSegmentationAccuracy,false);
+          assert.deepEqual(a.externalRequests,[]);assert.deepEqual(a.errors,[]);
+          assert.equal(b.actualBrowserCases,6);assert.equal(b.realBrowsers,2);
+          assert.equal(b.realSegFormerRun,false);
+          assert.equal(b.realCustomerData,false);
+          assert.deepEqual(b.unexpectedRequests,[]);assert.deepEqual(b.browserErrors,[]);
+          let count=0;
+          const audit=async(base,file,sha,width)=>{
+            const bytes=await readFile(base+file);
+            assert.equal(createHash('sha256').update(bytes).digest('hex'),sha);
+            const m=await sharp(bytes).metadata(),stats=await sharp(bytes).stats();
+            assert.equal(m.format,'png');assert.equal(m.width,width);
+            assert.ok(m.height>500&&bytes.length>8000&&stats.channels[0].stdev>6);
+            count++;
+          };
+          for(const engine of ['chromium','webkit'])for(const width of [320,390,430]){
+            const x=a.cases.find(x=>x.engine===engine&&x.width===width);
+            const y=b.cases.find(x=>x.engine===engine&&x.width===width);
+            assert.ok(x?.staleSameOwnerPhotoIgnored&&x.staleCropRejected&&x.cancelledSaveNoWrites);
+            assert.ok(x.finalValidSourceSavedInRealIDB&&x.ownerBound&&x.sourcePhotoSHAUnchanged);
+            assert.ok(y?.confirmedSnapshotUnaffectedByStaleEdit&&y.cancellationBlockedDuringSave);
+            assert.ok(y.realIndexedDBSingleAtomicCommit&&y.postCommitErrorReceiptHonest);
+            assert.ok(y.sourceIdentityVerified&&y.ownerIsolationOfSavedRecord);
+            await audit('benchmark/review-source-epoch-34/',x.filename,x.sha256,width);
+            assert.equal(y.screenshots.length,2);
+            for(const s of y.screenshots)await audit('benchmark/review-save-finality-34/',s.filename,s.sha256,width);
+          }
+          assert.equal(count,18);
+          console.log('UNIFY35 12 real Chromium/WebKit source+save cases / 18 screenshot hash and pixel checks VERIFIED; no production or staging changes');
+          EONODE
+      - name: Attach noncustomer synthetic review screenshots and receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: UNIFY35-real-browser-IDB-synthetic-photo-18-screenshots-HOLD
+          path: |
+            benchmark/review-source-epoch-34/report.json
+            benchmark/review-source-epoch-34/*.png
+            benchmark/review-save-finality-34/browser.json
+            benchmark/review-save-finality-34/*.png
+          if-no-files-found: warn
+          retention-days: 21
