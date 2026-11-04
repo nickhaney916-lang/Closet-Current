@@ -136,7 +136,7 @@ jobs:
           import assert from 'node:assert/strict';
           import {readFile} from 'node:fs/promises';
           const r=JSON.parse(await readFile('benchmark/auth-review-session-36/signed.json','utf8'));
-          assert.equal(r.head,process.env.GITHUB_SHA);
+          assert.equal(r.head,(await import('node:child_process')).execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),'signed report must bind to exact tested source checkout, not PR synthetic merge SHA');
           assert.equal(r.signedLocalSupabase,true);
           assert.equal(r.distinctAuthenticatedOwners,true);
           assert.equal(r.scope,'Disposable loopback; synthetic JPEGs; no hosted access');
