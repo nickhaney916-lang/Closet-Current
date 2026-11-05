@@ -6,10 +6,12 @@
 
 - **Priority #74 baseline:** draft PR [#630](https://github.com/nickhaney916-lang/Closet-Current/pull/630), exact commit `f51d4f82c456a2e1442417a8330f024b14d6c344`.
 - **Priority #69 camera research:** draft PR [#626](https://github.com/nickhaney916-lang/Closet-Current/pull/626), commit `c7f954e3abf47e98749c7acf7c0b685bfc6f77ec`, based instead on Priority #68 commit `143ff1294cabd531b8eb6ad23b5a2c9f62b3dc9a`.
-- **Integration branch:** `research/camera-to-closet-integration-75-work-HOLD`; implementation commit `e17a628fa74883b70ac9043d258f5889d7353631`; exact head tested by run #42098851628 `6ec79a6037fcc3af779036bcc1ed91a1088ebff4` (report-only follow-up).
+- **Integration branch:** `research/camera-to-closet-integration-75-work-HOLD`; implementation commit `e17a628fa74883b70ac9043d258f5889d7353631`; exact implementation-plus-report head tested by run #42099274967: `8abb1a9b24ef29470d664cc023fd62d7b22d1f01`.
 - **Integration draft PR:** [#632](https://github.com/nickhaney916-lang/Closet-Current/pull/632), targeted to Priority #74 research branch `research/cancel-reviewed-capture-74-main-20261105-HOLD`.
-- **Exact-head CI run:** [run #42098851628](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/42098851628), success.
-- **Evidence artifact:** [72 screenshot PNGs, source/result data and screenshot hash manifest](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/42098851628/artifacts/13449241410), 10,415,380 bytes.
+- **Exact-head CI run:** [run #42099274967](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/42099274967), success.
+- **Evidence artifact:** [72 screenshot PNGs, source/result data and screenshot hash manifest](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/42099274967/artifacts/13449391886), 10,409,657 bytes.
+
+Artifact SHA-256: `1785388e3be0497b55faf866d1410067d0a3ff768c27d455a9f521bd92bad37b`.
 
 ## Compatibility decision
 
