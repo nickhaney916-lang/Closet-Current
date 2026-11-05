@@ -21,6 +21,40 @@ export function reviewedColor43(color){
  return clean&&clean.length<=120&&clean.toLowerCase()!=='unknown'?clean:null;
 }
 
+/**
+ * HINT50: SegFormer/local-worker metadata is untrusted evidence, never a
+ * garment classification or private-user annotation. Retain ONLY bounded
+ * taxonomy-mapped category/type hints, finite 0..1 mask score, and a boolean
+ * clipped indicator. Never persist raw worker payloads, images, arbitrary
+ * text, remote paths, owner IDs, nested data, or prototype keys.
+ */
+const SEGMENT50_CATEGORIES=Object.freeze(['Tops','Bottoms','Dresses','Outerwear','Shoes']);
+const SEGMENT50_TYPES=new Set(Object.values(COMMIT43_TYPES).flat());
+function boundedLabels50(value,allow,max){
+ if(!Array.isArray(value))return [];
+ const out=[];
+ for(const candidate of value.slice(0,24)){
+  if(typeof candidate==='string'&&allow.has(candidate)&&!out.includes(candidate))
+   out.push(candidate);
+  if(out.length>=max)break;
+ }
+ return out;
+}
+const SEGMENT50_CATEGORY_SET=new Set(SEGMENT50_CATEGORIES);
+export function sanitizeSegmentHint50(hint,{manual=false}={}){
+ // A manually marked/contrast-only crop must never acquire an invented
+ // detector score, even if a caller submits a counterfeit hint.
+ if(manual||!hint||typeof hint!=='object'||Array.isArray(hint))return null;
+ const categories=boundedLabels50(hint.categories,SEGMENT50_CATEGORY_SET,5);
+ const types=boundedLabels50(hint.types,SEGMENT50_TYPES,6)
+  .filter(type=>categories.some(category=>COMMIT43_TYPES[category].includes(type)));
+ const confidence=typeof hint.confidence==='number'&&Number.isFinite(hint.confidence)&&
+  hint.confidence>=0&&hint.confidence<=1?hint.confidence:null;
+ const clipped=typeof hint.clipped==='boolean'?hint.clipped:null;
+ if(!categories.length&&!types.length&&confidence===null&&clipped===null)return null;
+ return {categories,types,clipped,confidence};
+}
+
 export const SHA24=/^[a-f0-9]{64}$/;
 const JPEG24=/^data:image\/jpeg;base64,[A-Za-z0-9+/]+={0,2}$/;
 function fail(text){throw Error('MULTI24 '+text);}
@@ -112,6 +146,7 @@ export function verifiedRecord24({proof,ownerId,piece,now=new Date().toISOString
   fail('unreviewed or invalid piece');
  if(piece.manual&&!piece.cropReviewed)fail('manually detected piece needs crop review');
  const sourcePieceKey=pieceKey24(proof.sourceSHA256,piece.instanceKey);
+ const segmentHint50=sanitizeSegmentHint50(piece.hint,{manual:piece.manual===true});
  return {
   id:piece.id,ownerId,sourcePieceKey,
   outfitSourceId:proof.sourceSHA256,sourcePhotoId:proof.sourceSHA256,
@@ -127,8 +162,8 @@ export function verifiedRecord24({proof,ownerId,piece,now=new Date().toISOString
    {recognitionSuggestion42:safeSuggestion45(piece.recognitionSuggestion42,sourcePieceKey,piece.cropBounds,proof.sourceSHA256)}:{}),
   colorSource:'user',userAdjusted:true,requiresOwnershipConfirmation:false,
   localAnalyzed:true,localStatus:'Confirmed and saved from original photo',
-  segmentHint:piece.hint||null,maskApplied:!!piece.maskApplied,
-  sourceSegmentationConfidence:piece.hint?.confidence??null,
+  segmentHint:segmentHint50,maskApplied:piece.maskApplied===true,
+  sourceSegmentationConfidence:segmentHint50?.confidence??null,
   possibleDuplicate:false,threeDReady:false,photoOnly:true,
   savedAt:now,indexedAt:now,
   notes:'',seasons:[],brand:'',size:'',material:'',occasion:''
@@ -168,7 +203,12 @@ export async function atomicSaveGarments24({db,proof,pieces,ownerId,currentOwner
  if(!Array.isArray(pieces)||!pieces.length||pieces.length>24)fail('select 1–24 garments');
  // Immutable snapshot is taken before any WebCrypto digest or IndexedDB wait.
  // A concurrent user edit/crop cannot replace bytes while a batch is pending.
- const piecesAtCall=structuredClone(pieces);
+ // Drop bulky/unrecognized worker hints BEFORE cloning an immutable
+ // confirmation snapshot; otherwise arbitrary nested detector data could
+ // waste memory while hashing even though it never belongs in the closet.
+ const piecesAtCall=pieces.map(piece=>structuredClone({
+  ...piece,hint:sanitizeSegmentHint50(piece?.hint,{manual:piece?.manual===true})
+ }));
  if(!await verifyStoredCanonical(proof))fail('canonical JPEG SHA-256 mismatch');
  if(currentOwner()!==ownerId||db.name!=='closet-current-user-'+ownerId)
   fail('session changed during SHA-256');
