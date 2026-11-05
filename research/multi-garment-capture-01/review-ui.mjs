@@ -218,10 +218,19 @@ export function mountMultiGarmentCapture24({
      colorEvidence.primary+(colorEvidence.secondary?' / '+colorEvidence.secondary:'')+
      ' · Check the original and confirm color yourself.','fine'):null;
     if(preview)preview.dataset.colorReview46='unverified';
+    // SUBTYPE47: show conflicting candidate types but NEVER preselect either.
+    // An AI "strong" tag is not a calibrated probability or human verification.
+    const subtypeRisk=result?.subtypeReview47;
+    const risk= subtypeRisk?.needsConfirmation===true?
+     el('p','Subtype needs manual comparison: '+subtypeRisk.candidate+
+      ' or '+subtypeRisk.alternative+
+      '. The model has previously confused these types. Choose the correct one yourself.','fine'):null;
+    if(risk)risk.dataset.subtypeReview47='manual-required';
     const classify=button('Suggest category, type and color',()=>classifyReviewed42(p));
     classify.disabled=classification42?.piece===p;
     card.append(review);
     if(preview)card.append(preview);
+    if(risk)card.append(risk);
     card.append(classify);
    }
    card.append(selector('Main category',['Uncategorized',...TYPES],p.category,v=>{p.category=v;p.itemType='Unknown';p.confirmed=false;redraw();}));
