@@ -157,7 +157,12 @@ test('INPUT49 async save captures an immutable snapshot before SHA checks, even 
  try {
   const pending=atomicSaveGarments24({db,proof,ownerId:owner,currentOwner:()=>owner,pieces:[selected]});
   selected.image=cropB;selected.itemType='Sweatshirt';selected.color='Red';
-  selected.recognitionSuggestion42.inputBinding49.cropSHA256='0'.repeat(64);
+  // Receipt itself is intentionally immutable. Replace caller's reference
+  // after atomicSaveGarments24 snapshots it, rather than mutating the frozen
+  // digest created by bindInputs49.
+  selected.recognitionSuggestion42.inputBinding49={
+   ...receipt,cropSHA256:'0'.repeat(64)
+  };
   const output=await pending;
   assert.equal(output.length,1);
   assert.equal(output[0].image,cropA);
