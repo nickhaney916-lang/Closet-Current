@@ -23,9 +23,12 @@ function hasCleanHumanIdentity(x){
   x.independent===true&&x.method==='direct-human-visual-review'&&
   typeof x.reviewedAt==='string'&&!Number.isNaN(Date.parse(x.reviewedAt));
 }
-function label60(x,isNegative){
+function label60(x){
  if(!x||typeof x!=='object'||Array.isArray(x))return null;
- if(isNegative)return x.category==='Uncategorized'&&x.itemType==='Unknown'&&x.primaryColor===null?
+ // BLIND61: provisional expectedCategory is NOT independent ground truth.
+ // Two human reviewers are allowed to discover a historical mislabel.
+ if(x.category==='Uncategorized')return x.itemType==='Unknown'&&x.primaryColor===null&&
+  (x.secondaryColor===null||x.secondaryColor===undefined)?
   {category:'Uncategorized',itemType:'Unknown',primaryColor:null,secondaryColor:null}:null;
  if(!validReviewTaxonomy43(x.category,x.itemType)||!colorSet.has(x.primaryColor)||
   (x.secondaryColor!==null&&x.secondaryColor!==undefined&&!colorSet.has(x.secondaryColor)))return null;
@@ -38,20 +41,19 @@ export function resolveIndependentTruth60(row,claim){
  if(!claim||!SHA.test(row.sha256)||claim.sourceSHA256!==row.sha256||
    !Array.isArray(claim.independentReviews)||claim.independentReviews.length!==2)
   return {accepted:false,reason:'two-source-bound-human-reviews-required'};
- const isNegative=row.expectedCategory==='Uncategorized';
  const [one,two]=claim.independentReviews;
  if(!hasCleanHumanIdentity(one)||!hasCleanHumanIdentity(two)||one.reviewerId===two.reviewerId)
   return {accepted:false,reason:'distinct-human-reviewers-required'};
  if(one.sourceSHA256!==row.sha256||two.sourceSHA256!==row.sha256)
   return {accepted:false,reason:'review-source-SHA-mismatch'};
- const a=label60(one,isNegative),b=label60(two,isNegative);
+ const a=label60(one),b=label60(two);
  if(!a||!b)return {accepted:false,reason:'invalid-category-subtype-or-color-label'};
  if(same(a,b))return {accepted:true,label:a,method:'two-independent-agree'};
  const arb=claim.adjudication;
  if(!hasCleanHumanIdentity(arb)||[one.reviewerId,two.reviewerId].includes(arb.reviewerId)||
    arb.sourceSHA256!==row.sha256)
   return {accepted:false,reason:'independent-third-human-adjudication-required'};
- const third=label60(arb,isNegative);
+ const third=label60(arb);
  if(!third)return {accepted:false,reason:'invalid-adjudicator-label'};
  return {accepted:true,label:third,method:'third-human-adjudicated'};
 }
@@ -102,7 +104,10 @@ export function auditRecognitionEvidence60({sets,sourceRows,adjudications={},pre
  const locked=rows.filter(x=>x.split==='locked-evaluation');
  const lockedGarments=locked.filter(x=>!x.isNegative),lockedNegatives=locked.filter(x=>x.isNegative);
  const lockedGroundTruth=locked.filter(x=>adjudicated.has(x.id));
+ const independentlyLabeledLockedGarments=lockedGroundTruth.filter(x=>adjudicated.get(x.id).label.category!=='Uncategorized');
+ const independentlyLabeledLockedNegatives=lockedGroundTruth.filter(x=>adjudicated.get(x.id).label.category==='Uncategorized');
  const perClass=Object.fromEntries(CATEGORIES60.map(c=>[c,lockedGarments.filter(x=>x.expectedCategory===c).length]));
+ const realPerClass=Object.fromEntries(CATEGORIES60.map(c=>[c,independentlyLabeledLockedGarments.filter(x=>adjudicated.get(x.id).label.category===c).length]));
  let predictionQuality=null;
  if(predictions!==null){
   if(!Array.isArray(predictions))fail('prediction rows not an array');
@@ -120,7 +125,7 @@ export function auditRecognitionEvidence60({sets,sourceRows,adjudications={},pre
   let broad=0,subtype=0,color=0,correctNeg=0,accepted=0,acceptedCorrect=0,garmentN=0,negativeN=0;
   for(const x of lockedWithTruth){
    const p=got.get(x.id),truth=adjudicated.get(x.id).label;
-   if(x.isNegative){negativeN++;if(p.category===null||p.category==='Uncategorized')correctNeg++;continue;}
+   if(truth.category==='Uncategorized'){negativeN++;if(p.category===null||p.category==='Uncategorized')correctNeg++;continue;}
    garmentN++;
    if(p.category===truth.category)broad++;
    if(p.category===truth.category&&p.itemType===truth.itemType)subtype++;
@@ -147,12 +152,15 @@ export function auditRecognitionEvidence60({sets,sourceRows,adjudications={},pre
  need(lockedGarments.length>=30,'insufficient-locked-garment-sample-min-30');
  need(lockedNegatives.length>=10,'insufficient-locked-non-garment-controls-min-10');
  need(CATEGORIES60.every(c=>perClass[c]>=5),'insufficient-locked-per-category-representation');
+ need(independentlyLabeledLockedGarments.length>=30,'insufficient-independently-labeled-locked-garments-min-30');
+ need(independentlyLabeledLockedNegatives.length>=10,'insufficient-independently-labeled-locked-negatives-min-10');
+ need(CATEGORIES60.every(c=>realPerClass[c]>=5),'insufficient-independent-locked-per-category-representation');
  need(adjudicated.size===rows.length,'independent-human-ground-truth-or-primary-color-missing');
  need(predictionQuality!==null,'no-complete-per-photo-pinned-model-results');
  if(predictionQuality){
   need(predictionQuality.missingLockedPredictionIds.length===0,'incomplete-locked-predictions');
-  need(predictionQuality.measuredIndependentGarments===lockedGarments.length,'unscored-locked-garment-truth');
-  need(predictionQuality.measuredIndependentNegatives===lockedNegatives.length,'unscored-locked-negative-truth');
+  need(predictionQuality.measuredIndependentGarments===independentlyLabeledLockedGarments.length,'unscored-locked-garment-truth');
+  need(predictionQuality.measuredIndependentNegatives===independentlyLabeledLockedNegatives.length,'unscored-locked-negative-truth');
   for(const [k,min] of [['broadCategory',.95],['exactSubtype',.9],['primaryColor',.9],['acceptedSubtypePrecision',.95],['nonGarmentRejection',.95]]){
    need(predictionQuality[k]?.estimate!==null&&predictionQuality[k]?.estimate>=min,'model-'+k+'-below-minimum');
   }
@@ -165,7 +173,9 @@ export function auditRecognitionEvidence60({sets,sourceRows,adjudications={},pre
    lockedGarments:lockedGarments.length,lockedNegatives:lockedNegatives.length,
    independentlyAdjudicated:adjudicated.size,lockedIndependentlyAdjudicated:lockedGroundTruth.length,
    preliminaryHistoricalColorLabels:rows.filter(x=>OWN.call(sets[x.split].find(z=>z.id===x.id),'expectedPrimaryColor')).length,
-   outOfScopeHistoricalLabels:rows.filter(x=>x.outOfScopeProvisional).map(x=>({id:x.id,split:x.split,category:x.expectedCategory,itemType:x.expectedType}))},
-  perClassLockedProvisional:perClass,failures,pendingHumanReviews:pending,
+   outOfScopeHistoricalLabels:rows.filter(x=>x.outOfScopeProvisional).map(x=>({id:x.id,split:x.split,category:x.expectedCategory,itemType:x.expectedType})),
+   independentlyLabeledLockedGarments:independentlyLabeledLockedGarments.length,
+   independentlyLabeledLockedNegatives:independentlyLabeledLockedNegatives.length},
+  perClassLockedProvisional:perClass,perClassLockedIndependent:realPerClass,failures,pendingHumanReviews:pending,
   measuredIndependentMetrics:predictionQuality};
 }
