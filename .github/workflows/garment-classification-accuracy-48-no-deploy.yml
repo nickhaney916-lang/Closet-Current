@@ -1,8 +1,5 @@
 name: GARMENT-CLASSIFICATION-ACCURACY-48 actual-photo paired recognition NO DEPLOY
 on:
-  push:
-    branches:
-      - research/garment-classification-accuracy-48-main-20261105-HOLD
   pull_request:
     paths:
       - 'public/app.js'
@@ -45,6 +42,7 @@ jobs:
           while IFS= read -r p; do
             case "$p" in
               public/app.js|public/benchmark-runner.mjs|public/local-worker.mjs|public/recognition-vectors-accuracy-48.bin|public/recognition-vectors-accuracy-48.json|research/garment-classification-accuracy-48/*|research/multi-garment-capture-01/recognition-review-42.mjs|scripts/audit-classification-accuracy-48-dataset.mjs|scripts/build-classification-accuracy-48-candidate.mjs|scripts/evaluate-classification-accuracy-48.mjs|scripts/run-browser-photo-benchmark.mjs|scripts/test-multi-garment-capture-01-browser.mjs|tests/classification-accuracy-48.test.mjs|.github/workflows/garment-classification-accuracy-48-no-deploy.yml) ;;
+              benchmark/classification-accuracy-48/dataset-audit.json|public/app.js|public/benchmark-runner.mjs|public/local-worker.mjs|public/recognition-vectors-accuracy-48.bin|public/recognition-vectors-accuracy-48.json|research/garment-classification-accuracy-48/*|research/multi-garment-capture-01/recognition-review-42.mjs|scripts/audit-classification-accuracy-48-dataset.mjs|scripts/build-classification-accuracy-48-candidate.mjs|scripts/evaluate-classification-accuracy-48.mjs|scripts/run-browser-photo-benchmark.mjs|scripts/test-multi-garment-capture-01-browser.mjs|tests/classification-accuracy-48.test.mjs|.github/workflows/garment-classification-accuracy-48-no-deploy.yml) ;;
               *) echo "BLOCKED deployment, model-runtime default, cloud or unrelated file: $p"; exit 1 ;;
             esac
           done </tmp/classification48-paths
