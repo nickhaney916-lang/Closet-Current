@@ -4,10 +4,11 @@
  */
 import assert from 'node:assert/strict';
 import {createServer} from 'node:http';
-import {readFile,mkdir,writeFile,rm} from 'node:fs/promises';
+import {readFile,readdir,mkdir,writeFile,rm} from 'node:fs/promises';
 import {extname,resolve} from 'node:path';
 import {createHash} from 'node:crypto';
 import {chromium,webkit} from 'playwright';
+import sharp from 'sharp';
 const root=resolve('.');
 const mime={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.json':'application/json','.png':'image/png','.jpg':'image/jpeg'};
 const server=createServer(async(req,res)=>{
@@ -371,6 +372,19 @@ try{
   physicalAndroidTested:false,physicalIphoneTested:false,
   freshNeuralInference:false,familyAlpha:'HOLD'};
  await writeFile(out+'/results.json',JSON.stringify(report,null,2));
+ const screenshotFiles=(await readdir(out))
+  .filter(file=>/^(chromium|webkit)-\d+-(?:0[1-9]|10|11)-.*\.png$/.test(file)).sort();
+ assert.equal(screenshotFiles.length,results.length*11,'one real screenshot for every browser scenario');
+ const screenshots=[];
+ for(const file of screenshotFiles){
+  const bytes=await readFile(out+'/'+file),metadata=await sharp(bytes).metadata(),stats=await sharp(bytes).stats();
+  const expectedWidth=Number(file.match(/-(\d+)-/)[1]);
+  assert.equal(metadata.width,expectedWidth,'screenshot CSS width must match viewport: '+file);
+  assert.ok(metadata.height>0&&stats.entropy>0,'screenshot must contain visible image data: '+file);
+  screenshots.push({file,sha256:createHash('sha256').update(bytes).digest('hex'),
+   bytes:bytes.length,width:metadata.width,height:metadata.height,entropy:stats.entropy});
+ }
+ await writeFile(out+'/screenshots-manifest.json',JSON.stringify({count:screenshots.length,screenshots},null,2));
  await rm(out+'/failure.json',{force:true});
  console.log('CAPTURE-PROOF-01 browser integrity and review PASS',JSON.stringify(results));
 }catch(e){
