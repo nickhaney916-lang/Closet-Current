@@ -31,6 +31,7 @@ const rows=db=>new Promise((resolve,reject)=>{
 });
 test('SNAPSHOT78 snapshot first allowlists confirmed facts before clone even with uncloneable functions and giant detector metadata',()=>{
  const original=basic();
+ original.manual=false;original.instanceKey='seg-4-4-5-50-60-1';
  original.extraWorkerPayload={credential:'never-save',frames:new Uint8Array(1024*1024),uncloneable:()=>{}};
  original.uncloneable=()=>{};
  original.name=()=>{throw Error('not a reviewed name')};
@@ -50,6 +51,7 @@ test('SNAPSHOT78 snapshot first allowlists confirmed facts before clone even wit
 });
 test('SNAPSHOT78 bounded human/AI snapshot remains immutable across later color/crop/model edits',()=>{
  const original=basic();
+ original.manual=false;original.instanceKey='seg-4-4-5-50-60-1';
  original.hint.randomField={junk:()=>{}};
  original.name='Custom white blouse';
  original.recognitionSuggestion42={
@@ -97,6 +99,8 @@ test('SNAPSHOT78 actual owner-private atomic store succeeds with noncloneable un
     requestedAssetTag:'research-asset-78'},extraneous:{callback:()=>{}}
   };
   const {snapshots}=snapshotConfirmations34([original],schema,proof);
+  assert.equal(snapshots[0].hint,null,
+   'Manual crop must NEVER acquire model detector hint metadata');
   const saved=await atomicSaveGarments24({db,proof,ownerId:owner,currentOwner:()=>owner,pieces:snapshots});
   assert.equal(saved.length,1);
   const actual=await rows(db);
