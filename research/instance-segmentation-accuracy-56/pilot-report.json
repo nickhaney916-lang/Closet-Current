@@ -1,0 +1,1325 @@
+{
+  "assignment": "INSTANCE-SEGMENTATION-ACCURACY-56",
+  "model": {
+    "id": "HasanKabir23/Yolov26s-DeepFashion2",
+    "revision": "670bd8b4a9a94c687c85df0b1376497c40a3759b",
+    "sha256": "485bc106721febbd82fe24297e12a9fb49a435a552afff1e6b76308716555f76",
+    "onnxOutputs": {
+      "detections": [
+        1,
+        300,
+        38
+      ],
+      "maskPrototypes": [
+        1,
+        32,
+        104,
+        104
+      ]
+    },
+    "provider": "ONNX Runtime CPU",
+    "inputSize": [
+      416,
+      416
+    ],
+    "confidenceThreshold": 0.5,
+    "NMS": "model end-to-end outputs; no additional NMS"
+  },
+  "dataset": {
+    "photoCount": 15,
+    "groundTruthInstances": 24,
+    "fixtureSource": "existing benchmark/fixtures JPEGs; normalized annotations from frozen-photo-annotations-16.json",
+    "annotationQuality": "historical single-reviewer coarse boxes; not blinded or independent; no pixel masks, no colors; some fixtures are resized derivatives",
+    "splitStatus": "historical split metadata retained; not a locked test set for this candidate",
+    "photos": [
+      {
+        "id": "commons-0003",
+        "priorSplit": "development",
+        "fixtureSha256": "cb909d7ad9c3940bfa4db0cc50b2ea7025faebe3dcec8fe80067f900760bba64",
+        "fixtureDimensions": [
+          1920,
+          2868
+        ],
+        "annotationSourcePhotoSha256": "c39bea50f22605060452394fbc7de0098f1608fce06bb8ac0606325087bcc340"
+      },
+      {
+        "id": "commons-0021",
+        "priorSplit": "held-out",
+        "fixtureSha256": "04c0ca5bed1bee26e83be98b9a992619b0777811a7fb8a99fe955939334bbd8c",
+        "fixtureDimensions": [
+          564,
+          628
+        ],
+        "annotationSourcePhotoSha256": "04c0ca5bed1bee26e83be98b9a992619b0777811a7fb8a99fe955939334bbd8c"
+      },
+      {
+        "id": "commons-0033",
+        "priorSplit": "development",
+        "fixtureSha256": "7e31adee6fabca386faabd8ca6f0f1f4d93291f74cb84a6ab10cb4bd724cd2f7",
+        "fixtureDimensions": [
+          1920,
+          2400
+        ],
+        "annotationSourcePhotoSha256": "004a2d15ea713ed25c0f3330224cb278f2d100070f65611f3e6efab86dd78f55"
+      },
+      {
+        "id": "commons-0052",
+        "priorSplit": "held-out",
+        "fixtureSha256": "a6efd0e1d007ba63c0afd2afe9697f336336944d949d57c67e3aedbfe68e9824",
+        "fixtureDimensions": [
+          1920,
+          2560
+        ],
+        "annotationSourcePhotoSha256": "620fcae6afac202ed31de7b46c2581a2eeb44e53a81a02fbf3a6ff59290f8415"
+      },
+      {
+        "id": "commons-0062",
+        "priorSplit": "development",
+        "fixtureSha256": "ed42247af077518ac3532d851a4330ae7cd69bee9969ab3f784431cfbc61f350",
+        "fixtureDimensions": [
+          1920,
+          1440
+        ],
+        "annotationSourcePhotoSha256": "7beff4dc36397e13a8f3e9c8a3e0b0a118f7d8dd601191686e4d2a35736f8a06"
+      },
+      {
+        "id": "commons-0064",
+        "priorSplit": "development",
+        "fixtureSha256": "bb68b22a7fdaff20e71eb969bb5d857598a5ca6f4b47f172dc7a8623b7bd6b83",
+        "fixtureDimensions": [
+          1920,
+          2560
+        ],
+        "annotationSourcePhotoSha256": "0a1742403ea7556ef099ee3aa5364464e8dd8263b789c0c103d18d4dee61ec8b"
+      },
+      {
+        "id": "commons-0065",
+        "priorSplit": "held-out",
+        "fixtureSha256": "0d094b023d86942acbc89fc5a4bc02968c1b5d0b2c78639cdeb985f522a78494",
+        "fixtureDimensions": [
+          1920,
+          1440
+        ],
+        "annotationSourcePhotoSha256": "544fe01dbe3b8b15fe1b1256c05566b33d5a4ae345c48872b33acc41e0653871"
+      },
+      {
+        "id": "commons-0077",
+        "priorSplit": "development",
+        "fixtureSha256": "b968758a00cd458040b90ca31a48c5aafe6f3cab4fe708f021bc3a341a58cf70",
+        "fixtureDimensions": [
+          1920,
+          974
+        ],
+        "annotationSourcePhotoSha256": "1bddaeb72712afb67bcc72954b9aec22e864245baf23370f19c723f080e9896d"
+      },
+      {
+        "id": "commons-0078",
+        "priorSplit": "held-out",
+        "fixtureSha256": "ba080a9a5d4aa68c193738e728e83c45b6a833a9bf80c45de4d2b35ece38154e",
+        "fixtureDimensions": [
+          1920,
+          2095
+        ],
+        "annotationSourcePhotoSha256": "df72edbb2c63eea34d811242259af749b2bfec1e592bb587cf68489a5bfc404c"
+      },
+      {
+        "id": "commons-0079",
+        "priorSplit": "held-out",
+        "fixtureSha256": "b577483e5244dfb53e60cc8a0b54a4130e695cf388e5534e38a2b04580727ec6",
+        "fixtureDimensions": [
+          1920,
+          1275
+        ],
+        "annotationSourcePhotoSha256": "9853e51a212e7012e136c3873000496da73ac18e0510fa7775921004fa8f5fa9"
+      },
+      {
+        "id": "commons-0080",
+        "priorSplit": "held-out",
+        "fixtureSha256": "4675887ee36dbaeb894faf1e0879b05473f39fb555024424d52fcdce37d35bb9",
+        "fixtureDimensions": [
+          1920,
+          1280
+        ],
+        "annotationSourcePhotoSha256": "28216ece96ea1ab021dea9b4bd305e32caff674c3e6e5cb38c7304329b593ae7"
+      },
+      {
+        "id": "commons-0081",
+        "priorSplit": "development",
+        "fixtureSha256": "72b53abd07e9438fd5a11631f6595c10d2abc98fda432d22611a58ba3b289952",
+        "fixtureDimensions": [
+          1920,
+          1282
+        ],
+        "annotationSourcePhotoSha256": "914bda23bf2165125c55a5b597b089babe0c7c87c809be1a2e2cfa9c9e38b441"
+      },
+      {
+        "id": "commons-0092",
+        "priorSplit": "held-out",
+        "fixtureSha256": "e098a78500ada7159c9cbea6559ef3c64c87b8e2417fc96487cb34570ca8754d",
+        "fixtureDimensions": [
+          1920,
+          1369
+        ],
+        "annotationSourcePhotoSha256": "985d62d47bb39966192678d4cf008d765bc2817ac42a98e7de7a7489e52f920f"
+      },
+      {
+        "id": "validation-0010",
+        "priorSplit": "held-out",
+        "fixtureSha256": "2e2d757d60b5bce8b1e34765c7b59c21ede85c7c69cfbf63d802566934b847c7",
+        "fixtureDimensions": [
+          600,
+          766
+        ],
+        "annotationSourcePhotoSha256": "2e2d757d60b5bce8b1e34765c7b59c21ede85c7c69cfbf63d802566934b847c7"
+      },
+      {
+        "id": "validation-0023",
+        "priorSplit": "development",
+        "fixtureSha256": "4fa7836d0275c1d393b6e71db0044674d04e4fc2c09e6c8946ca8ad8eed5276b",
+        "fixtureDimensions": [
+          1920,
+          1272
+        ],
+        "annotationSourcePhotoSha256": "5229d0ee165a962b2c08c3897d5c8013ee4bc62df23e20cf530b411e838e279f"
+      }
+    ]
+  },
+  "metricDefinition": "Greedy confidence-ordered one-to-one matching by broad family and normalized box IoU >= 0.50. Shoes/accessories remain labeled ground truth; candidate has no corresponding class.",
+  "counts": {
+    "tp": 9,
+    "fp": 19,
+    "fn": 15
+  },
+  "precision": 0.32142857142857145,
+  "recall": 0.375,
+  "f1": 0.34615384615384615,
+  "meanMatchedBoxIou": 0.893061,
+  "pixelMaskIou": null,
+  "categoryAccuracy": null,
+  "subtypeAccuracy": null,
+  "primaryColorAccuracy": null,
+  "sameClassInstanceSeparation": "not measured; benchmark has no qualifying two-identical-category fixture with per-instance adjudication",
+  "timing": {
+    "coldLoadMs": 107.357,
+    "warmCpuInferenceMs": [
+      52.165,
+      36.539,
+      23.98,
+      31.438,
+      24.541,
+      27.381,
+      31.706,
+      30.052,
+      27.688,
+      38.15,
+      27.015,
+      37.939,
+      15.303,
+      28.658,
+      15.514
+    ]
+  },
+  "rows": [
+    {
+      "id": "commons-0003",
+      "priorSplit": "development",
+      "fixtureSha256": "cb909d7ad9c3940bfa4db0cc50b2ea7025faebe3dcec8fe80067f900760bba64",
+      "fixtureDimensions": [
+        1920,
+        2868
+      ],
+      "groundTruthSourcePhotoSha256": "c39bea50f22605060452394fbc7de0098f1608fce06bb8ac0606325087bcc340",
+      "groundTruthCount": 2,
+      "proposals": [
+        {
+          "classId": 1,
+          "subtype": "long_sleeve_top",
+          "family": "upper",
+          "confidence": 0.961872,
+          "box": [
+            0.044364682204431766,
+            0.018573797666109525,
+            0.9661818030926821,
+            0.6309052980863131
+          ],
+          "maskShape": [
+            104,
+            104
+          ],
+          "maskPixelCount": 1642,
+          "maskSha256": "58974bf477c6436f83837d13db6743ac45a939378627740fbc2b35701ac35120"
+        },
+        {
+          "classId": 7,
+          "subtype": "trousers",
+          "family": "bottom",
+          "confidence": 0.947742,
+          "box": [
+            0.19829032403959646,
+            0.5076128519498385,
+            0.7781055916985162,
+            1
+          ],
+          "maskShape": [
+            104,
+            104
+          ],
+          "maskPixelCount": 0,
+          "maskSha256": "eb3db1453c0dac39bee30c72831d2c6b32faf64b3132fc519e1dc25fc1fea05a"
+        },
+        {
+          "classId": 7,
+          "subtype": "trousers",
+          "family": "bottom",
+          "confidence": 0.876418,
+          "box": [
+            0.196474034151585,
+            0.4921291424677922,
+            0.4770916726091783,
+            1
+          ],
+          "maskShape": [
+            104,
+            104
+          ],
+          "maskPixelCount": 843,
+          "maskSha256": "24319bae026811e9e0b28cc8d442273beaa6358adc3513aca55157bb5a9d2d42"
+        },
+        {
+          "classId": 1,
+          "subtype": "long_sleeve_top",
+          "family": "upper",
+          "confidence": 0.869926,
+          "box": [
+            0.7487779795694695,
+            0.08655588443462665,
+            0.9643956465686826,
+            0.6201587090125451
+          ],
+          "maskShape": [
+            104,
+            104
+          ],
+          "maskPixelCount": 69,
+          "maskSha256": "68c1aeca2cbaa7efa283eb51f740f1f7e3b3352d380c52e94a22140d289fe1b3"
+        },
+        {
+          "classId": 7,
+          "subtype": "trousers",
+          "family": "bottom",
+          "confidence": 0.817229,
+          "box": [
+            0.4575284230623314,
+            0.5241846671471229,
+            0.7774220199036084,
+            1
+          ],
+          "maskShape": [
+            104,
+            104
+          ],
+          "maskPixelCount": 891,
+          "maskSha256": "ea2cb7f44117c7947bb6c1347097d7721da05fceb5174cde5a8ea798b065b3c9"
+        },
+        {
+          "classId": 1,
+          "subtype": "long_sleeve_top",
+          "family": "upper",
+          "confidence": 0.555964,
+          "box": [
+            0.04194361185856003,
+            0.06816878685584435,
+            0.2629308357513208,
+            0.6313332777756911
+          ],
+          "maskShape": [
+            104,
+            104
+          ],
+          "maskPixelCount": 86,
+          "maskSha256": "18ce4cfb1d57486697454071f97a5640380f4891aa0780acc2c0d0b2a49c905c"
+        },
+        {
+          "classId": 1,
+          "subtype": "long_sleeve_top",
+          "family": "upper",
+          "confidence": 0.512572,
+          "box": [
+            0.04156087971419739,
+            0.35468897452721226,
+            0.1712977457389557,
+            0.6360274828397311
+          ],
+          "maskShape": [
+            104,
+            104
+          ],
+          "maskPixelCount": 30,
+          "maskSha256": "88366c4c888e7d96603e4c772de7d1b177e0817bb1037aaa3a0143e271b8af6e"
+        }
+      ],
+      "truePositives": 2,
+      "falsePositives": 5,
+      "falseNegatives": 0,
+      "matches": [
+        {
+          "groundTruthIndex": 0,
+          "iou": 0.965712,
+          "proposalClass": "long_sleeve_top",
+          "groundTruthLabel": "long-sleeve shirt"
+        },
+        {
+          "groundTruthIndex": 1,
+          "iou": 0.872408,
+          "proposalClass": "trousers",
+          "groundTruthLabel": "jeans"
+        }
+      ],
+      "latencyMsCpu": 52.165,
+      "groundTruth": [
+        {
+          "family": "upper",
+          "label": "long-sleeve shirt",
+          "box": [
+            0.03,
+            0.01,
+            0.97,
+            0.63
+          ]
+        },
+        {
+          "family": "bottom",
+          "label": "jeans",
+          "box": [
+            0.17,
+            0.55,
+            0.78,
+            1.0
+          ]
+        }
+      ]
+    },
+    {
+      "id": "commons-0021",
+      "priorSplit": "held-out",
+      "fixtureSha256": "04c0ca5bed1bee26e83be98b9a992619b0777811a7fb8a99fe955939334bbd8c",
+      "fixtureDimensions": [
+        564,
+        628
+      ],
+      "groundTruthSourcePhotoSha256": "04c0ca5bed1bee26e83be98b9a992619b0777811a7fb8a99fe955939334bbd8c",
+      "groundTruthCount": 3,
+      "proposals": [
+        {
+          "classId": 7,
+          "subtype": "trousers",
+          "family": "bottom",
+          "confidence": 0.963429,
+          "box": [
+            0.26347000203668114,
+            0.12172959401057316,
+            0.6850590833368149,
+            0.9577906681941106
+          ],
+          "maskShape": [
+            104,
+            104
+          ],
+          "maskPixelCount": 0,
+          "maskSha256": "eb3db1453c0dac39bee30c72831d2c6b32faf64b3132fc519e1dc25fc1fea05a"
+        },
+        {
+          "classId": 7,
+          "subtype": "trousers",
+          "family": "bottom",
+          "confidence": 0.949961,
+          "box": [
+            0.26401797207919037,
+            0.12050753373366135,
+            0.5256997990735712,
+            0.9535733736478366
+          ],
+          "maskShape": [
+            104,
+            104
+          ],
+          "maskPixelCount": 1138,
+          "maskSha256": "09be4bb1df5634f649151d3fbaca754fdba49763e3481384d5b60444422eb99b"
+        },
+        {
+          "classId": 7,
+          "subtype": "trousers",
+          "family": "bottom",
+          "confidence": 0.886749,
+          "box": [
+            0.50970854733717,
+            0.1231831037081205,
+            0.6841755423316344,
+            0.9394949399507962
+          ],
+          "maskShape": [
+            104,
+            104
+          ],
+          "maskPixelCount": 1128,
+          "maskSha256": "7facc9d68a54a5d0d2003a847f89c8b70be0a6ced1ba363c972f12682decb85a"
+        },
+        {
+          "classId": 7,
+          "subtype": "trousers",
+          "family": "bottom",
+          "confidence": 0.871085,
+          "box": [
+            0.5094987185881099,
+            0.11991647573617789,
+            0.6840401715773312,
+            0.9394168120164138
+          ],
+          "maskShape": [
+            104,
+            104
+          ],
+          "maskPixelCount": 1118,
+          "maskSha256": "f2d12afa3bc76fb5ce232d3e597e8a6b274a3ff60110a617621fbd2fb6eb7de7"
+        },
+        {
+          "classId": 0,
+          "subtype": "short_sleeve_top",
+          "family": "upper",
+          "confidence": 0.77142,
+          "box": [
+            0.3610150342319101,
+            0,
+            0.6688253637303643,
+            0.14198778225825384
+          ],
+          "maskShape": [
+            104,
+            104
+          ],
+          "maskPixelCount": 385,
+          "maskSha256": "fd3fd756d05dd7ec8b7eb96c93b8539c4a52d277d434f29e862e4364f78130df"
+        }
+      ],
+      "truePositives": 2,
+      "falsePositives": 3,
+      "falseNegatives": 1,
+      "matches": [
+        {
+          "groundTruthIndex": 1,
+          "iou": 0.880137,
+          "proposalClass": "trousers",
+          "groundTruthLabel": "jeans"
+        },
+        {
+          "groundTruthIndex": 0,
+          "iou": 0.747099,
+          "proposalClass": "short_sleeve_top",
+          "groundTruthLabel": "shirt"
+        }
+      ],
+      "latencyMsCpu": 36.539,
+      "groundTruth": [
+        {
+          "family": "upper",
+          "label": "shirt",
+          "box": [
+            0.34,
+            0,
+            0.73,
+            0.15
+          ]
+        },
+        {
+          "family": "bottom",
+          "label": "jeans",
+          "box": [
+            0.25,
+            0.13,
+            0.71,
+            0.93
+          ]
+        },
+        {
+          "family": "shoes",
+          "label": "sneaker pair",
+          "box": [
+            0.24,
+            0.86,
+            0.74,
+            0.99
+          ]
+        }
+      ]
+    },
+    {
+      "id": "commons-0033",
+      "priorSplit": "development",
+      "fixtureSha256": "7e31adee6fabca386faabd8ca6f0f1f4d93291f74cb84a6ab10cb4bd724cd2f7",
+      "fixtureDimensions": [
+        1920,
+        2400
+      ],
+      "groundTruthSourcePhotoSha256": "004a2d15ea713ed25c0f3330224cb278f2d100070f65611f3e6efab86dd78f55",
+      "groundTruthCount": 2,
+      "proposals": [
+        {
+          "classId": 1,
+          "subtype": "long_sleeve_top",
+          "family": "upper",
+          "confidence": 0.947956,
+          "box": [
+            0.18371813433306353,
+            0.0004386259959294246,
+            0.7367095489043731,
+            0.3903643534733699
+          ],
+          "maskShape": [
+            104,
+            104
+          ],
+          "maskPixelCount": 714,
+          "maskSha256": "917519315afa53bd5063fac0044771eb8685d93d1f83915d619ccf96225842ce"
+        },
+        {
+          "classId": 6,
+          "subtype": "shorts",
+          "family": "bottom",
+          "confidence": 0.942039,
+          "box": [
+            0.2005220476213518,
+            0.2458837215717022,
+            0.647498145117774,
+            0.609801879295936
+          ],
+          "maskShape": [
+            104,
+            104
+          ],
+          "maskPixelCount": 0,
+          "maskSha256": "eb3db1453c0dac39bee30c72831d2c6b32faf64b3132fc519e1dc25fc1fea05a"
+        },
+        {
+          "classId": 6,
+          "subtype": "shorts",
+          "family": "bottom",
+          "confidence": 0.921922,
+          "box": [
+            0.20102996367949982,
+            0.24452614784240723,
+            0.4656247433957395,
+            0.5880878155048077
+          ],
+          "maskShape": [
+            104,
+            104
+          ],
+          "maskPixelCount": 592,
+          "maskSha256": "ba7d2e36fb8dd6b5328eb9d29394331fb65b308673be48494771d60ab1d54cbe"
+        },
+        {
+          "classId": 6,
+          "subtype": "shorts",
+          "family": "bottom",
+          "confidence": 0.894582,
+          "box": [
+            0.44972655150267454,
+            0.26354028628422665,
+            0.6473162310259478,
+            0.6105484595665565
+          ],
+          "maskShape": [
+            104,
+            104
+          ],
+          "maskPixelCount": 522,
+          "maskSha256": "b088b3c37e057ba234e2b29dfbda8988c9de0942d274b02bde423443f850fd93"
+        },
+        {
+          "classId": 1,
+          "subtype": "long_sleeve_top",
+          "family": "upper",
+          "confidence": 0.838276,
+          "box": [
+            0.18270851112342812,
+            0,
+            0.3082011454814189,
+            0.19770081226642316
+          ],
+          "maskShape": [
+            104,
+            104
+          ],
+          "maskPixelCount": 63,
+          "maskSha256": "8a7cef495f88fb4a73117f433fd6c01910ef01111309caf2f4dde248295d9c62"
+        },
+        {
+          "classId": 1,
+          "subtype": "long_sleeve_top",
+          "family": "upper",
+          "confidence": 0.673048,
+          "box": [
+            0.6117723253038194,
+            0,
+            0.7381303117081925,
+            0.22133909738980806
+          ],
+          "maskShape": [
+            104,
+            104
+          ],
+          "maskPixelCount": 106,
+          "maskSha256": "a4657ceba18379a448208c8a6dddf32f989359e73bec411fb9b80bfa27dedfc1"
+        }
+      ],
+      "truePositives": 2,
+      "falsePositives": 4,
+      "falseNegatives": 0,
+      "matches": [
+        {
+          "groundTruthIndex": 0,
+          "iou": 0.962614,
+          "proposalClass": "long_sleeve_top",
+          "groundTruthLabel": "shirt"
+        },
+        {
+          "groundTruthIndex": 1,
+          "iou": 0.855746,
+          "proposalClass": "shorts",
+          "groundTruthLabel": "shorts"
+        }
+      ],
+      "latencyMsCpu": 23.98,
+      "groundTruth": [
+        {
+          "family": "upper",
+          "label": "shirt",
+          "box": [
+            0.18,
+            0,
+            0.74,
+            0.4
+          ]
+        },
+        {
+          "family": "bottom",
+          "label": "shorts",
+          "box": [
+            0.19,
+            0.26,
+            0.6799999999999999,
+            0.62
+          ]
+        }
+      ]
+    },
+    {
+      "id": "commons-0052",
+      "priorSplit": "held-out",
+      "fixtureSha256": "a6efd0e1d007ba63c0afd2afe9697f336336944d949d57c67e3aedbfe68e9824",
+      "fixtureDimensions": [
+        1920,
+        2560
+      ],
+      "groundTruthSourcePhotoSha256": "620fcae6afac202ed31de7b46c2581a2eeb44e53a81a02fbf3a6ff59290f8415",
+      "groundTruthCount": 2,
+      "proposals": [],
+      "truePositives": 0,
+      "falsePositives": 0,
+      "falseNegatives": 2,
+      "matches": [],
+      "latencyMsCpu": 31.438,
+      "groundTruth": [
+        {
+          "family": "dress",
+          "label": "swimming overdress",
+          "box": [
+            0,
+            0.01,
+            1,
+            0.75
+          ]
+        },
+        {
+          "family": "bottom",
+          "label": "swimming shorts",
+          "box": [
+            0,
+            0.7,
+            0.99,
+            1.0
+          ]
+        }
+      ]
+    },
+    {
+      "id": "commons-0062",
+      "priorSplit": "development",
+      "fixtureSha256": "ed42247af077518ac3532d851a4330ae7cd69bee9969ab3f784431cfbc61f350",
+      "fixtureDimensions": [
+        1920,
+        1440
+      ],
+      "groundTruthSourcePhotoSha256": "7beff4dc36397e13a8f3e9c8a3e0b0a118f7d8dd601191686e4d2a35736f8a06",
+      "groundTruthCount": 1,
+      "proposals": [
+        {
+          "classId": 1,
+          "subtype": "long_sleeve_top",
+          "family": "upper",
+          "confidence": 0.671444,
+          "box": [
+            0.757565058194674,
+            0.15800994481795874,
+            0.9989401010366586,
+            0.5661534040402143
+          ],
+          "maskShape": [
+            104,
+            104
+          ],
+          "maskPixelCount": 213,
+          "maskSha256": "ffe09d0beda660c2407ca31c26a849a114f98eda24e489dadc00aa20c32b97fd"
+        }
+      ],
+      "truePositives": 0,
+      "falsePositives": 1,
+      "falseNegatives": 1,
+      "matches": [],
+      "latencyMsCpu": 24.541,
+      "groundTruth": [
+        {
+          "family": "upper",
+          "label": "pale jacket",
+          "box": [
+            0,
+            0.1,
+            1,
+            0.99
+          ]
+        }
+      ]
+    },
+    {
+      "id": "commons-0064",
+      "priorSplit": "development",
+      "fixtureSha256": "bb68b22a7fdaff20e71eb969bb5d857598a5ca6f4b47f172dc7a8623b7bd6b83",
+      "fixtureDimensions": [
+        1920,
+        2560
+      ],
+      "groundTruthSourcePhotoSha256": "0a1742403ea7556ef099ee3aa5364464e8dd8263b789c0c103d18d4dee61ec8b",
+      "groundTruthCount": 1,
+      "proposals": [
+        {
+          "classId": 3,
+          "subtype": "long_sleeve_outwear",
+          "family": "upper",
+          "confidence": 0.777296,
+          "box": [
+            0.0030426612267127405,
+            0.021672835716834433,
+            1,
+            0.9993575169489934
+          ],
+          "maskShape": [
+            104,
+            104
+          ],
+          "maskPixelCount": 1369,
+          "maskSha256": "a7ae903f882f0857e18ce9290aefaa340195303c72e63d1319fcef4d827a9631"
+        },
+        {
+          "classId": 3,
+          "subtype": "long_sleeve_outwear",
+          "family": "upper",
+          "confidence": 0.583498,
+          "box": [
+            0.3415100391094501,
+            0.03296356934767503,
+            0.9980286818284255,
+            0.9995320393488958
+          ],
+          "maskShape": [
+            104,
+            104
+          ],
+          "maskPixelCount": 3270,
+          "maskSha256": "b81f60d2460790e40291824a5088581c712dd1ba529805da6eb9deeaf1d4adc4"
+        }
+      ],
+      "truePositives": 1,
+      "falsePositives": 1,
+      "falseNegatives": 0,
+      "matches": [
+        {
+          "groundTruthIndex": 0,
+          "iou": 0.97471,
+          "proposalClass": "long_sleeve_outwear",
+          "groundTruthLabel": "jacket"
+        }
+      ],
+      "latencyMsCpu": 27.381,
+      "groundTruth": [
+        {
+          "family": "upper",
+          "label": "jacket",
+          "box": [
+            0,
+            0,
+            1,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "id": "commons-0065",
+      "priorSplit": "held-out",
+      "fixtureSha256": "0d094b023d86942acbc89fc5a4bc02968c1b5d0b2c78639cdeb985f522a78494",
+      "fixtureDimensions": [
+        1920,
+        1440
+      ],
+      "groundTruthSourcePhotoSha256": "544fe01dbe3b8b15fe1b1256c05566b33d5a4ae345c48872b33acc41e0653871",
+      "groundTruthCount": 1,
+      "proposals": [
+        {
+          "classId": 3,
+          "subtype": "long_sleeve_outwear",
+          "family": "upper",
+          "confidence": 0.552285,
+          "box": [
+            0.00017357789553128756,
+            0.11515573354867789,
+            0.2589385692889874,
+            0.5229574839274088
+          ],
+          "maskShape": [
+            104,
+            104
+          ],
+          "maskPixelCount": 357,
+          "maskSha256": "2a6a5c49dd6cbdb6185561cb097557f17c2c1922a0411c16a3e82f4572242a67"
+        },
+        {
+          "classId": 3,
+          "subtype": "long_sleeve_outwear",
+          "family": "upper",
+          "confidence": 0.507509,
+          "box": [
+            0.014488917130690355,
+            0.021098846044295873,
+            0.9606511042668269,
+            0.8603973388671875
+          ],
+          "maskShape": [
+            104,
+            104
+          ],
+          "maskPixelCount": 169,
+          "maskSha256": "43985ef488682174a7508cd39c4079fb1653501861d4877cb95353dd1c164ebc"
+        }
+      ],
+      "truePositives": 1,
+      "falsePositives": 1,
+      "falseNegatives": 0,
+      "matches": [
+        {
+          "groundTruthIndex": 0,
+          "iou": 0.912773,
+          "proposalClass": "long_sleeve_outwear",
+          "groundTruthLabel": "black jacket"
+        }
+      ],
+      "latencyMsCpu": 31.706,
+      "groundTruth": [
+        {
+          "family": "upper",
+          "label": "black jacket",
+          "box": [
+            0,
+            0.01,
+            1,
+            0.88
+          ]
+        }
+      ]
+    },
+    {
+      "id": "commons-0077",
+      "priorSplit": "development",
+      "fixtureSha256": "b968758a00cd458040b90ca31a48c5aafe6f3cab4fe708f021bc3a341a58cf70",
+      "fixtureDimensions": [
+        1920,
+        974
+      ],
+      "groundTruthSourcePhotoSha256": "1bddaeb72712afb67bcc72954b9aec22e864245baf23370f19c723f080e9896d",
+      "groundTruthCount": 1,
+      "proposals": [],
+      "truePositives": 0,
+      "falsePositives": 0,
+      "falseNegatives": 1,
+      "matches": [],
+      "latencyMsCpu": 30.052,
+      "groundTruth": [
+        {
+          "family": "shoes",
+          "label": "high-top sneaker pair",
+          "box": [
+            0.08,
+            0.18,
+            0.97,
+            0.94
+          ]
+        }
+      ]
+    },
+    {
+      "id": "commons-0078",
+      "priorSplit": "held-out",
+      "fixtureSha256": "ba080a9a5d4aa68c193738e728e83c45b6a833a9bf80c45de4d2b35ece38154e",
+      "fixtureDimensions": [
+        1920,
+        2095
+      ],
+      "groundTruthSourcePhotoSha256": "df72edbb2c63eea34d811242259af749b2bfec1e592bb587cf68489a5bfc404c",
+      "groundTruthCount": 1,
+      "proposals": [],
+      "truePositives": 0,
+      "falsePositives": 0,
+      "falseNegatives": 1,
+      "matches": [],
+      "latencyMsCpu": 27.688,
+      "groundTruth": [
+        {
+          "family": "shoes",
+          "label": "high-top sneaker pair",
+          "box": [
+            0.04,
+            0.07,
+            0.89,
+            0.9299999999999999
+          ]
+        }
+      ]
+    },
+    {
+      "id": "commons-0079",
+      "priorSplit": "held-out",
+      "fixtureSha256": "b577483e5244dfb53e60cc8a0b54a4130e695cf388e5534e38a2b04580727ec6",
+      "fixtureDimensions": [
+        1920,
+        1275
+      ],
+      "groundTruthSourcePhotoSha256": "9853e51a212e7012e136c3873000496da73ac18e0510fa7775921004fa8f5fa9",
+      "groundTruthCount": 1,
+      "proposals": [],
+      "truePositives": 0,
+      "falsePositives": 0,
+      "falseNegatives": 1,
+      "matches": [],
+      "latencyMsCpu": 38.15,
+      "groundTruth": [
+        {
+          "family": "shoes",
+          "label": "high-top sneaker",
+          "box": [
+            0.14,
+            0.11,
+            0.92,
+            0.91
+          ]
+        }
+      ]
+    },
+    {
+      "id": "commons-0080",
+      "priorSplit": "held-out",
+      "fixtureSha256": "4675887ee36dbaeb894faf1e0879b05473f39fb555024424d52fcdce37d35bb9",
+      "fixtureDimensions": [
+        1920,
+        1280
+      ],
+      "groundTruthSourcePhotoSha256": "28216ece96ea1ab021dea9b4bd305e32caff674c3e6e5cb38c7304329b593ae7",
+      "groundTruthCount": 2,
+      "proposals": [
+        {
+          "classId": 7,
+          "subtype": "trousers",
+          "family": "bottom",
+          "confidence": 0.651844,
+          "box": [
+            0.24841013321509728,
+            0.2686476724672834,
+            0.7585396399864783,
+            0.6349189290070792
+          ],
+          "maskShape": [
+            104,
+            104
+          ],
+          "maskPixelCount": 103,
+          "maskSha256": "6732db3907de1d164c563fb770e5c2a4f1aacc4600609aaf0207bd1420995883"
+        }
+      ],
+      "truePositives": 0,
+      "falsePositives": 1,
+      "falseNegatives": 2,
+      "matches": [],
+      "latencyMsCpu": 27.015,
+      "groundTruth": [
+        {
+          "family": "bottom",
+          "label": "jeans",
+          "box": [
+            0.17,
+            0,
+            0.5700000000000001,
+            0.42
+          ]
+        },
+        {
+          "family": "shoes",
+          "label": "sneakers",
+          "box": [
+            0.18,
+            0.26,
+            0.77,
+            0.6799999999999999
+          ]
+        }
+      ]
+    },
+    {
+      "id": "commons-0081",
+      "priorSplit": "development",
+      "fixtureSha256": "72b53abd07e9438fd5a11631f6595c10d2abc98fda432d22611a58ba3b289952",
+      "fixtureDimensions": [
+        1920,
+        1282
+      ],
+      "groundTruthSourcePhotoSha256": "914bda23bf2165125c55a5b597b089babe0c7c87c809be1a2e2cfa9c9e38b441",
+      "groundTruthCount": 2,
+      "proposals": [
+        {
+          "classId": 7,
+          "subtype": "trousers",
+          "family": "bottom",
+          "confidence": 0.75366,
+          "box": [
+            0.3429756164550781,
+            0,
+            0.7585215935340295,
+            0.5253812940858251
+          ],
+          "maskShape": [
+            104,
+            104
+          ],
+          "maskPixelCount": 0,
+          "maskSha256": "eb3db1453c0dac39bee30c72831d2c6b32faf64b3132fc519e1dc25fc1fea05a"
+        }
+      ],
+      "truePositives": 1,
+      "falsePositives": 0,
+      "falseNegatives": 1,
+      "matches": [
+        {
+          "groundTruthIndex": 0,
+          "iou": 0.86635,
+          "proposalClass": "trousers",
+          "groundTruthLabel": "pants"
+        }
+      ],
+      "latencyMsCpu": 37.939,
+      "groundTruth": [
+        {
+          "family": "bottom",
+          "label": "pants",
+          "box": [
+            0.34,
+            0,
+            0.79,
+            0.56
+          ]
+        },
+        {
+          "family": "shoes",
+          "label": "sneakers",
+          "box": [
+            0.34,
+            0.33,
+            0.7,
+            0.9099999999999999
+          ]
+        }
+      ]
+    },
+    {
+      "id": "commons-0092",
+      "priorSplit": "held-out",
+      "fixtureSha256": "e098a78500ada7159c9cbea6559ef3c64c87b8e2417fc96487cb34570ca8754d",
+      "fixtureDimensions": [
+        1920,
+        1369
+      ],
+      "groundTruthSourcePhotoSha256": "985d62d47bb39966192678d4cf008d765bc2817ac42a98e7de7a7489e52f920f",
+      "groundTruthCount": 1,
+      "proposals": [
+        {
+          "classId": 7,
+          "subtype": "trousers",
+          "family": "bottom",
+          "confidence": 0.755724,
+          "box": [
+            0.05840715995201698,
+            0.07346978492608375,
+            0.9668415509737455,
+            0.9696166170165194
+          ],
+          "maskShape": [
+            104,
+            104
+          ],
+          "maskPixelCount": 3749,
+          "maskSha256": "4619a73493b518a42329177c491902a48dcc9847e70dd8d6e35995ded4bf7ca6"
+        }
+      ],
+      "truePositives": 0,
+      "falsePositives": 1,
+      "falseNegatives": 1,
+      "matches": [],
+      "latencyMsCpu": 15.303,
+      "groundTruth": [
+        {
+          "family": "shoes",
+          "label": "boot pair",
+          "box": [
+            0.03,
+            0.02,
+            0.97,
+            0.98
+          ]
+        }
+      ]
+    },
+    {
+      "id": "validation-0010",
+      "priorSplit": "held-out",
+      "fixtureSha256": "2e2d757d60b5bce8b1e34765c7b59c21ede85c7c69cfbf63d802566934b847c7",
+      "fixtureDimensions": [
+        600,
+        766
+      ],
+      "groundTruthSourcePhotoSha256": "2e2d757d60b5bce8b1e34765c7b59c21ede85c7c69cfbf63d802566934b847c7",
+      "groundTruthCount": 3,
+      "proposals": [
+        {
+          "classId": 1,
+          "subtype": "long_sleeve_top",
+          "family": "upper",
+          "confidence": 0.528432,
+          "box": [
+            0.2572109947906681,
+            0.36152949699988735,
+            0.32073717175817196,
+            0.4998773428109976
+          ],
+          "maskShape": [
+            104,
+            104
+          ],
+          "maskPixelCount": 13,
+          "maskSha256": "903f35168edabcdb7a4f4bde460c4896c221f461172e7c57bcee8a6cf195939f"
+        }
+      ],
+      "truePositives": 0,
+      "falsePositives": 1,
+      "falseNegatives": 3,
+      "matches": [],
+      "latencyMsCpu": 28.658,
+      "groundTruth": [
+        {
+          "family": "dress",
+          "label": "velvet dress",
+          "box": [
+            0.22,
+            0.17,
+            0.61,
+            0.68
+          ]
+        },
+        {
+          "family": "upper",
+          "label": "blouse visible at collar and cuffs",
+          "box": [
+            0.26,
+            0.16,
+            0.52,
+            0.51
+          ]
+        },
+        {
+          "family": "shoes",
+          "label": "boots",
+          "box": [
+            0.42,
+            0.72,
+            0.69,
+            1.0
+          ]
+        }
+      ]
+    },
+    {
+      "id": "validation-0023",
+      "priorSplit": "development",
+      "fixtureSha256": "4fa7836d0275c1d393b6e71db0044674d04e4fc2c09e6c8946ca8ad8eed5276b",
+      "fixtureDimensions": [
+        1920,
+        1272
+      ],
+      "groundTruthSourcePhotoSha256": "5229d0ee165a962b2c08c3897d5c8013ee4bc62df23e20cf530b411e838e279f",
+      "groundTruthCount": 1,
+      "proposals": [
+        {
+          "classId": 7,
+          "subtype": "trousers",
+          "family": "bottom",
+          "confidence": 0.523373,
+          "box": [
+            0.0966335810147799,
+            0.06694600202035213,
+            0.9173746842604417,
+            0.7866188823312953
+          ],
+          "maskShape": [
+            104,
+            104
+          ],
+          "maskPixelCount": 2603,
+          "maskSha256": "299f315b83a83f7fa2f429c425e3f680722d3f3b2779772ea09702f88e152a76"
+        }
+      ],
+      "truePositives": 0,
+      "falsePositives": 1,
+      "falseNegatives": 1,
+      "matches": [],
+      "latencyMsCpu": 15.514,
+      "groundTruth": [
+        {
+          "family": "shoes",
+          "label": "high-top sneaker pair",
+          "box": [
+            0.04,
+            0.23,
+            0.9500000000000001,
+            0.9199999999999999
+          ]
+        }
+      ]
+    }
+  ],
+  "verdict": "NEEDS REWORK: candidate is an unaudited third-party baseline with known coverage gaps and provenance/licensing metadata conflict; pilot labels are weak; no browser/app integration or independent validation."
+}

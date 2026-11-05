@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Instance segmentation candidate research</title>
+  <style>
+    :root{font:16px system-ui,sans-serif;color:#17202a;background:#f1f4f7}
+    body{margin:0;padding:12px}main{max-width:900px;margin:auto}h1{font-size:1.15rem}
+    .notice{padding:10px;border:1px solid #b74b37;background:#fff2ef;border-radius:8px}
+    .status{padding:8px;background:#e8eef4;border-radius:6px;overflow-wrap:anywhere}
+    .item{margin:12px 0;padding:10px;background:#fff;border-radius:8px}
+    .item img{display:block;width:100%;height:auto}.meta{font-size:.85rem;line-height:1.45}
+    @media(min-width:600px){body{padding:20px}}
+  </style>
+  <script src="/node_modules/onnxruntime-web/dist/ort.min.js"></script>
+  <script type="module" src="/research/instance-segmentation-accuracy-56/browser-runner.mjs"></script>
+</head>
+<body>
+<main>
+  <h1>YOLO fashion instance model — research review</h1>
+  <p class="notice">Unverified model proposals. Inspect the source image and every crop before use. Nothing is saved.</p>
+  <p id="status" class="status">Initializing…</p>
+  <section id="results"></section>
+</main>
+</body>
+</html>
