@@ -717,7 +717,12 @@ try{
    let warnings=0,msg='';
    page.once('dialog',async d=>{warnings++;msg=d.message();await d.dismiss();});
    await page.getByRole('button',{name:'Save confirmed pieces together'}).click();
-   assert.equal(warnings,1,'Must ask before excluding earlier saved shirt');
+   assert.equal(warnings,1,'Must ask before excluding earlier saved shirt: '+JSON.stringify({
+    originalSavedKey:initial[0].sourcePieceKey,
+    originalSavedBounds:initial[0].cropBounds,
+    reviewed:before.pieces.map(x=>({key:x.instanceKey,category:x.category,confirmed:x.confirmed})),
+    status:await page.locator('#multi24Status').innerText()
+   }));
    assert.match(msg,/previously saved garment.*new confirmed garment/i);
    await page.waitForFunction(()=>document.querySelector('#multi24Status')?.textContent.includes(
     'Mixed save canceled'),null,{timeout:45000});
