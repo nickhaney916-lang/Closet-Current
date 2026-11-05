@@ -7,9 +7,17 @@ import sharp from 'sharp';
 import {chromium,webkit} from 'playwright';
 
 const root=resolve('.'),modelPath='/tmp/closet-current-yolo26s-deepfashion2.onnx';
-const model=await readFile(modelPath);
 const modelSha='485bc106721febbd82fe24297e12a9fb49a435a552afff1e6b76308716555f76';
 const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
+let model;
+try{model=await readFile(modelPath);}catch(error){
+  if(error?.code!=='ENOENT')throw error;
+  const url='https://huggingface.co/HasanKabir23/Yolov26s-DeepFashion2/resolve/670bd8b4a9a94c687c85df0b1376497c40a3759b/best.onnx';
+  const response=await fetch(url,{redirect:'follow'});
+  if(!response.ok)throw Error('Pinned model download failed: HTTP '+response.status);
+  model=Buffer.from(await response.arrayBuffer());
+  await writeFile(modelPath,model);
+}
 assert.equal(sha(model),modelSha,'pinned candidate ONNX changed');
 const photos=['commons-0021','commons-0033','commons-0080'];
 const types={'.mjs':'text/javascript','.html':'text/html','.wasm':'application/wasm','.jpg':'image/jpeg','.js':'text/javascript'};
