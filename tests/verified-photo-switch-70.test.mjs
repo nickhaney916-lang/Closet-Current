@@ -86,7 +86,7 @@ test('SOURCE70 original review is NEVER reset by a failing replacement photo',()
 test('SOURCE70 selection and logout revoke both invalidate pending decoded files',()=>{
  const s=readFileSync('research/multi-garment-capture-01/review-ui.mjs','utf8');
  assert.match(s,/let state=null,canceled=false,job=null,renderVersion=0,selectionEpoch70=0/);
- assert.match(s,/function revoke\(\)\{selectionEpoch70\+\+;cancelClassification42\(\)/);
+ assert.match(s,/function revoke\(\)\{cancelClassification42\(\);canceled=true;renderVersion\+\+;selectionEpoch70\+\+/);
  assert.match(s,/const selection=\+\+selectionEpoch70,priorEpoch=epoch/);
  assert.match(s,/sourcePreflightStillCurrent70\(\{/);
  assert.match(s,/getDb\(\)\?\.name,submitting/);
