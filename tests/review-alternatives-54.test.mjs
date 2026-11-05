@@ -118,3 +118,12 @@ test('REVIEW54 genuine worker uncertain output produces candidates while origina
   if(oldCrypto===undefined)delete globalThis.crypto;else globalThis.crypto=oldCrypto;
  }
 });
+
+test('REVIEW54 no lower-scored false garment options on non-garment or excluded top category',()=>{
+ for(const first of ['Uncategorized','Accessories','Hat','unknown']){
+  assert.deepEqual(candidates({strong:false,reason:'category_uncertain',diagnostics:{
+   category:[{category:first,score:.95},{category:'Dresses',score:.03}],
+   overall:[{category:'Dresses',type:'Formal dress',score:.80}]
+  }}),[]);
+ }
+});
