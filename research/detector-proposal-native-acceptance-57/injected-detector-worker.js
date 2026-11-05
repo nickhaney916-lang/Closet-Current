@@ -35,7 +35,17 @@
     // Relay asynchronous, session-bound normal worker messages through the
     // native onmessage handler; never mutate private state or call UI APIs.
     setTimeout(()=>{
-     if(!mock.terminated)mock.onmessage?.({data:{id:request.id,type:'piece',piece:raw}});
+     if(mock.terminated)return;
+     if(window.__DETECTOR58===true){
+      // Adversarial stream: 1,000 distinct valid worker regions. No model
+      // inference or accuracy is claimed. Native code must cap DOM/bytes.
+      for(let i=0;i<1000;i++){
+       if(mock.terminated)return;
+       mock.onmessage?.({data:{id:request.id,type:'piece',piece:{
+        ...raw,instanceKey:'seg-'+i+'-100-100-700-700-1'
+       }}});
+      }
+     }else mock.onmessage?.({data:{id:request.id,type:'piece',piece:raw}});
     },10);
     setTimeout(()=>{
      if(!mock.terminated)mock.onmessage?.({data:{id:request.id,type:'done'}});
