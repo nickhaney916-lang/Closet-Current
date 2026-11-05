@@ -1,0 +1,115 @@
+name: SNAPSHOT51 minimize untrusted garment save payload NO DEPLOY
+on:
+  push:
+    branches:
+      - research/minimal-piece-snapshot-51-main-20261104-HOLD
+  pull_request:
+    paths:
+      - 'research/multi-garment-capture-01/atomic-group.mjs'
+      - 'research/minimal-piece-snapshot-51/**'
+      - 'tests/minimal-piece-snapshot-51.test.mjs'
+      - '.github/workflows/minimal-piece-snapshot-51-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  owner-private-minimal-snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Require exact successful HINT50 parent and strictly bounded research edits
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor 9dfe4e5308080a9aba0ed94196b71e8360fc3c81 HEAD
+          git diff --name-only 9dfe4e5308080a9aba0ed94196b71e8360fc3c81 HEAD > /tmp/snapshot51-changes
+          while IFS= read -r p; do
+            case "$p" in
+              research/multi-garment-capture-01/atomic-group.mjs|research/minimal-piece-snapshot-51/*|tests/minimal-piece-snapshot-51.test.mjs|.github/workflows/minimal-piece-snapshot-51-no-deploy.yml) ;;
+              *) echo "BLOCKED unrelated, production, staging, model or cloud changes: $p"; exit 1 ;;
+            esac
+          done </tmp/snapshot51-changes
+      - name: Install pinned test-only packages without modifying package manifest
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Build app and run entire inherited Node suite plus six SNAPSHOT51 integrity tests
+        run: |
+          node --check research/multi-garment-capture-01/atomic-group.mjs
+          node --check tests/minimal-piece-snapshot-51.test.mjs
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Real Chromium/WebKit 320 390 430 reviewed original JPEG and hostile SegFormer metadata save
+        run: node scripts/verify-segmentation-hint-sanitization-50.mjs
+      - name: Source SHA, actual IndexedDB, owner-B privacy and exact six browser screenshots
+        run: |
+          node --input-type=module <<'EONODE'
+          import assert from 'node:assert/strict';
+          import {readFile} from 'node:fs/promises';
+          import {createHash} from 'node:crypto';
+          import sharp from 'sharp';
+          const dir='benchmark/segmentation-hint-sanitization-50/';
+          const r=JSON.parse(await readFile(dir+'browser.json','utf8'));
+          assert.equal(r.cases.length,6);
+          assert.equal(r.screenshots.length,12);
+          assert.deepEqual(r.errors,[]);
+          assert.deepEqual(r.unexpectedRequests,[]);
+          for(const engine of ['chromium','webkit'])for(const width of [320,390,430]){
+            const c=r.cases.find(x=>x.engine===engine&&x.width===width);
+            assert.ok(c?.ownerPrivate&&c?.duplicateBlocked&&c?.foreignOwnerEmpty&&c?.rawPayloadExcluded);
+            assert.equal(c.originalSHA256,r.originalSHA256);
+          }
+          for(const x of r.screenshots){
+            const bytes=await readFile(dir+x.name),meta=await sharp(bytes).metadata(),stats=await sharp(bytes).stats();
+            assert.equal(createHash('sha256').update(bytes).digest('hex'),x.sha256);
+            assert.equal(meta.format,'png');assert.equal(meta.width,x.width);assert.equal(meta.height,x.height);
+            assert.ok(stats.channels.some(c=>c.stdev>6));
+          }
+          console.log('SNAPSHOT51 source-locked real browser/owner IndexedDB and 12 PNG SHA/pixel audits pass');
+          EONODE
+      - name: Real six Chromium/WebKit original FashionCLIP and manually confirmed private wardrobe with owner B
+        run: RECOGNITION42=1 node scripts/test-multi-garment-capture-01-browser.mjs
+      - name: Verify six actual AI original/crop receipts, human authority, owner privacy, V4 restore and screenshots
+        run: |
+          node --input-type=module <<'EONODE'
+          import assert from 'node:assert/strict';
+          import {readFile} from 'node:fs/promises';
+          import {createHash} from 'node:crypto';
+          import sharp from 'sharp';
+          const dir='benchmark/recognition-to-closet-42/';
+          const r=JSON.parse(await readFile(dir+'acceptance.json','utf8'));
+          assert.equal(r.cases.length,6);assert.deepEqual(r.errors,[]);
+          assert.deepEqual(r.unexpectedUploads,[]);
+          assert.equal(r.source.sha256,'e3df4503a89c244b28fa344ec170d6554fc06ad1d7cd331014fcb277df19d5ff');
+          for(const engine of ['chromium','webkit'])for(const width of [320,390,430]){
+            const c=r.cases.find(x=>x.engine===engine&&x.width===width);
+            assert.ok(c?.ownerPrivate&&c?.outfitSaved&&c?.v4Backup&&c?.v4Restore&&c?.reimportDuplicateBlocked);
+            assert.equal(c.sourceSHA256,r.source.sha256);
+            assert.equal(c.recognitionEvidence?.source,'local-fashionclip');
+            assert.equal(c.recognitionEvidence?.inputBinding49?.sourceSHA256,r.source.sha256);
+            assert.match(c.recognitionEvidence?.inputBinding49?.cropSHA256,/^[0-9a-f]{64}$/);
+          }
+          assert.ok(r.screenshots.length>=73);
+          for(const s of r.screenshots){
+            const bytes=await readFile(dir+s.file),meta=await sharp(bytes).metadata(),stats=await sharp(bytes).stats();
+            assert.equal(createHash('sha256').update(bytes).digest('hex'),s.sha256);
+            assert.equal(meta.width,s.width);assert.equal(meta.format,'png');
+            assert.ok(stats.channels.some(c=>c.stdev>6));
+          }
+          console.log('SNAPSHOT51 genuine FashionCLIP and owner-private full browser acceptance: six cases, '+r.screenshots.length+' screenshot SHA/pixel audits PASS');
+          EONODE
+      - name: Preserve research evidence only — never publish or deploy
+        uses: actions/upload-artifact@v4
+        with:
+          name: SNAPSHOT51-minimal-input-owner-private-acceptance-HOLD
+          path: |
+            benchmark/segmentation-hint-sanitization-50/
+            benchmark/recognition-to-closet-42/
+          retention-days: 14
