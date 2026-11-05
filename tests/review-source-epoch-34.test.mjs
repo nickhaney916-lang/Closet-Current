@@ -10,7 +10,7 @@ test('WORKER38 revokes active worker and clears timeout before first IDB preflig
  assert.ok(lock<preflight);
  assert.match(ui,/function freezeDetector38\(\)\{\s*if\(!job\)return false;\s*const running=job;job=null;\s*clearTimeout\(running.timeout\);\s*running.worker\?\.terminate\(\);/);
  assert.match(ui,/const view=state,epoch=renderVersion,owner=view.owner,proof=view.proof/);
- assert.match(ui,/snapshotConfirmations34\(state.pieces,schema\)/);
+ assert.match(ui,/snapshotConfirmations34\(state.pieces,schema,proof\)/);
 });
 test('WORKER38 late proposals cannot append or redraw reviewed pieces during Save',()=>{
  assert.match(ui,/async function addDetected\(raw,session\)\{\s*if\(submitting\|\|!state\|\|session!==job\|\|!sameOwner\(\)\|\|\s*state\.pieces\.length>=MAX_TOTAL_REGIONS58\)return;/);
