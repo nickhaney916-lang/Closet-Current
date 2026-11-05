@@ -203,7 +203,12 @@ export async function atomicSaveGarments24({db,proof,pieces,ownerId,currentOwner
  if(!Array.isArray(pieces)||!pieces.length||pieces.length>24)fail('select 1–24 garments');
  // Immutable snapshot is taken before any WebCrypto digest or IndexedDB wait.
  // A concurrent user edit/crop cannot replace bytes while a batch is pending.
- const piecesAtCall=structuredClone(pieces);
+ // Drop bulky/unrecognized worker hints BEFORE cloning an immutable
+ // confirmation snapshot; otherwise arbitrary nested detector data could
+ // waste memory while hashing even though it never belongs in the closet.
+ const piecesAtCall=pieces.map(piece=>structuredClone({
+  ...piece,hint:sanitizeSegmentHint50(piece?.hint,{manual:piece?.manual===true})
+ }));
  if(!await verifyStoredCanonical(proof))fail('canonical JPEG SHA-256 mismatch');
  if(currentOwner()!==ownerId||db.name!=='closet-current-user-'+ownerId)
   fail('session changed during SHA-256');
