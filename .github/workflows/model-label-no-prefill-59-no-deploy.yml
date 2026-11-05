@@ -8,6 +8,7 @@ on:
       - 'research/multi-garment-capture-01/scene-class-guard-32.mjs'
       - 'research/multi-garment-capture-01/review-ui.mjs'
       - 'tests/scene-class-guard-32.test.mjs'
+      - 'tests/auto-detection-confirmed-crop-55.test.mjs'
       - 'tests/model-label-no-prefill-59.test.mjs'
       - 'scripts/test-multi-garment-capture-01-browser.mjs'
       - 'research/model-label-no-prefill-59/**'
@@ -37,7 +38,7 @@ jobs:
           git diff --name-only 3f0bb1b5fb0ccc90ad8f74c024dfbab8ea889d36 HEAD > /tmp/label59-files
           while IFS= read -r path; do
             case "$path" in
-              research/multi-garment-capture-01/scene-class-guard-32.mjs|research/multi-garment-capture-01/review-ui.mjs|tests/scene-class-guard-32.test.mjs|tests/model-label-no-prefill-59.test.mjs|scripts/test-multi-garment-capture-01-browser.mjs|research/model-label-no-prefill-59/*|.github/workflows/model-label-no-prefill-59-no-deploy.yml) ;;
+              research/multi-garment-capture-01/scene-class-guard-32.mjs|research/multi-garment-capture-01/review-ui.mjs|tests/scene-class-guard-32.test.mjs|tests/auto-detection-confirmed-crop-55.test.mjs|tests/model-label-no-prefill-59.test.mjs|scripts/test-multi-garment-capture-01-browser.mjs|research/model-label-no-prefill-59/*|.github/workflows/model-label-no-prefill-59-no-deploy.yml) ;;
               *) echo "BLOCKED production/staging or unrelated edit: $path"; exit 1 ;;
             esac
           done < /tmp/label59-files
