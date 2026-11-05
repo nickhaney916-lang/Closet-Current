@@ -150,6 +150,7 @@ if(typeof location!=='undefined'&&typeof URLSearchParams!=='undefined'&&new URLS
   const {mountMultiGarmentCapture24}=await import('../research/multi-garment-capture-01/review-ui.mjs');
   window.multi24Research=mountMultiGarmentCapture24({
    doc:document,active:true,recognitionAssetVersion,
+   recognitionReview42:new URLSearchParams(location.search).get('recognitionReview42')==='research',
    getOwner:()=>captureProofOwner(),
    makeProof:(file,owner)=>captureProofFromFile(file,owner),
    getDb:()=>db,queued,refreshNative:()=>nativeIndex07Refresh(),
