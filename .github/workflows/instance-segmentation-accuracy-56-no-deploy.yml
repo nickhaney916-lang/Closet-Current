@@ -13,6 +13,7 @@ permissions:
 jobs:
   pinned-model-research-only:
     runs-on: ubuntu-24.04
+    container: mcr.microsoft.com/playwright:v1.56.1-noble
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
@@ -34,23 +35,13 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - name: Install pinned browser dependencies and Python inference runtime
+      - name: Install pinned browser dependencies
         run: |
           npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 onnxruntime-web@1.23.2
-          python -m pip install --disable-pip-version-check onnxruntime==1.23.2 numpy==2.2.6 Pillow==11.3.0
-      - name: Install WebKit system dependencies and Chromium/WebKit browser binaries
-        run: |
-          npx playwright install-deps webkit
-          npx playwright install chromium webkit
       - name: Build application and run inherited Node regression suite
         run: |
           node scripts/build.mjs
           node --test tests/*.test.cjs tests/*.test.mjs
-      - name: Run actual pinned ONNX instance-mask CPU pilot on frozen photo fixtures
-        run: python research/instance-segmentation-accuracy-56/evaluate_yolo26_candidate.py
       - name: Run actual pinned ONNX instance-mask WASM inference in Chromium and WebKit at three widths
         run: node scripts/verify-instance-segmentation-accuracy-56-browser.mjs
       - name: Archive only sanitized metrics and screenshot evidence
