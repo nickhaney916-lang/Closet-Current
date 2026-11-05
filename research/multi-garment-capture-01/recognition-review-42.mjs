@@ -10,7 +10,11 @@ export function assetTag49(value){
 }
 export async function bindInputs49({sourceSHA256,cropImage,requestedAssetVersion=''}) {
  if(!SHA49.test(sourceSHA256||''))throw Error('INPUT49 invalid source JPEG identity');
- const cropSHA256=await digestBytes(jpegBytes(cropImage));
+ const cropBytes=jpegBytes(cropImage);
+ // JPEG SOI/EOI alone is not a usable decoded crop: four-byte FF D8 FF D9
+ // dummy data must not acquire a believable FashionCLIP input receipt.
+ if(cropBytes.length<128)throw Error('INPUT49 invalid reviewed JPEG length');
+ const cropSHA256=await digestBytes(cropBytes);
  return Object.freeze({
   sourceSHA256,cropSHA256,requestedAssetTag:assetTag49(requestedAssetVersion),
   hashAlgorithm:'SHA-256'
