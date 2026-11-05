@@ -2,6 +2,7 @@
 const $=id=>document.getElementById(id), categories=['Uncategorized','Tops','Bottoms','Dresses','Outerwear','Shoes','Accessories'];
 const recognitionAssetVersion=new URL(document.currentScript?.src||location.href).searchParams.get('v')||'';
 const captureProof01Active=new URLSearchParams(location.search).get('captureProof01')==='after';
+const mobileCameraToCloset75Active=new URLSearchParams(location.search).get('cameraCloset75')==='after';
 // Research only: loaded dynamically from full repository host, outside production dist.
 const captureProof01Module=()=>import('../research/capture-proof-01/source-proof.mjs');
 function captureProofOwner(){
@@ -390,7 +391,7 @@ function stopCamera(){
  $('placeholder').hidden=false;$('cameraChoices').hidden=false;$('cameraActions').hidden=true;
  controls(false);$('captureState').textContent='Camera stopped · your photos are ready to review';
 }
-function controls(disabled){for(const id of ['start','startAuto','upload','interval','clothingPhotos','outfitCamera','outfitUpload','outfitRetry','captureSingle','captureOutfit'])$(id).disabled=disabled;}
+function controls(disabled){for(const id of ['start','startAuto','upload','interval','clothingPhotos','singleCameraCapture','outfitCamera','outfitUpload','outfitRetry','captureSingle','captureOutfit'])$(id).disabled=disabled;}
 function finishScan(){
  const wasManual=cameraMode==='manual';
  if(!wasManual&&stream&&session===0&&video.readyState>=2&&video.videoWidth){try{if(!(typeof captureProof01Active!=='undefined'&&captureProof01Active))candidate(snap());}catch{}}
@@ -475,6 +476,7 @@ async function startCamera(mode){
  finally{busy=false;if(!stream)controls(false);}
 }
 if(typeof captureProof01Active!=='undefined'&&captureProof01Active)$('captureCameraFacingWrap').hidden=false;
+if(typeof mobileCameraToCloset75Active!=='undefined'&&mobileCameraToCloset75Active)$('singleCameraCaptureWrap').hidden=false;
 $('start').onclick=()=>startCamera('manual');
 $('startAuto').onclick=()=>startCamera('auto');
 $('takePhoto').onclick=takePhoto;
@@ -726,7 +728,8 @@ async function importClothingPhotos(files){
  if(files.length>20)return message('Choose up to 20 clothing photos per batch.');
  stopCamera();busy=true;controls(true);session=0;
  try{
-  const proofMode=typeof captureProof01Active!=='undefined'&&captureProof01Active;
+  const proofMode=(typeof captureProof01Active!=='undefined'&&captureProof01Active)||
+   (typeof mobileCameraToCloset75Active!=='undefined'&&mobileCameraToCloset75Active);
   const owner=proofMode?captureProofOwner():null;
   if(proofMode&&!owner)throw Error('Please sign in before importing photos.');
   const decode=proofMode?file=>captureProofFromFile(file,owner):photoToJPEG;
@@ -743,6 +746,13 @@ async function importClothingPhotos(files){
  }finally{busy=false;controls(false);}
 }
 $('clothingPhotos').onchange=event=>{const files=Array.from(event.target.files);event.target.value='';importClothingPhotos(files);};
+$('singleCameraCapture').onchange=event=>{
+ const files=Array.from(event.target.files||[]);event.target.value='';
+ if(!files.length)return; // Picker cancellation leaves every existing review untouched.
+ if(!(typeof mobileCameraToCloset75Active!=='undefined'&&mobileCameraToCloset75Active))return;
+ importClothingPhotos(files);
+};
+$('singleCameraCapture').addEventListener('cancel',()=>{}); // Native picker cancel is intentionally a no-op.
 
 let memoryReviewTimer=null,memoryReviewRunning=false;
 function scheduleMemoryReview(){
