@@ -90,7 +90,7 @@ test('REVIEW54 category-only choice is possible but never silently invents a spe
  assert.equal(piece.confirmed,false);
 });
 test('REVIEW54 genuine worker uncertain output produces candidates while original and crop remain separate',async()=>{
- const previousWorker=globalThis.Worker,oldCrypto=globalThis.crypto,controller=new AbortController();
+ const previousWorker=globalThis.Worker,controller=new AbortController();
  let worker;
  globalThis.Worker=class{
   constructor(url){this.url=url;worker=this;}
@@ -101,7 +101,6 @@ test('REVIEW54 genuine worker uncertain output produces candidates while origina
   }
   terminate(){this.closed=true;}
  };
- globalThis.crypto={randomUUID:()=>String(Math.random())};
  try{
   const r=await recognizeReviewedCrop42({original:'original',crop:'crop',version:'54test',
    signal:controller.signal,schema,palette:['Blue'],categories});
@@ -115,7 +114,6 @@ test('REVIEW54 genuine worker uncertain output produces candidates while origina
   assert.equal(worker.closed,true);
  }finally{
   globalThis.Worker=previousWorker;
-  if(oldCrypto===undefined)delete globalThis.crypto;else globalThis.crypto=oldCrypto;
  }
 });
 
