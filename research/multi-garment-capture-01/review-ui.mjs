@@ -209,12 +209,18 @@ export function mountMultiGarmentCapture24({
     grid.append(heading);previousTier=tier;
    }
    const card=el('article',null,'multi24-card');card.dataset.pieceKey=p.instanceKey;
+   card.dataset.cropReviewed55=p.cropReviewed===true?'confirmed':'unreviewed';
    card.dataset.reviewTier=tier;
    const image=el('img');image.src=p.image;image.alt='Visible garment '+(i+1)+' derived from unchanged source';
    const caption=el('p',(p.flatlay29?'Contrast-only suggestion — adjust crop; no clothing identity inferred':p.manual?'Manually marked':'Detected')+' piece '+(i+1)+(p.hint?.clipped?' · edge cut off':'')+(Number.isFinite(p.hint?.confidence)?' · model mask score '+Math.round(100*p.hint.confidence)+'/100 (uncalibrated)':'')+(p.sceneReviewReason==='no-person-evidence'?' · No person was verified; choose category and color yourself':
      p.sceneReviewReason&&p.sceneReviewReason!=='model-suggestion-requires-human-confirmation'?' · Model class needs manual review':'')+
     ' · requires review; not automatically confirmed','fine');
    card.append(image,caption);
+   if(p.cropReviewed!==true){
+    const cropWarning=el('p','Unverified detection: inspect the original and use Adjust crop/mask before you can confirm or save this garment. Model confidence is not garment accuracy.','fine');
+    cropWarning.dataset.cropReview55='required';cropWarning.setAttribute('role','status');
+    card.append(cropWarning);
+   }
    if(recognitionReview42&&p.cropReviewed){
     const result=p.recognitionSuggestion42;
     const review=el('p',p.recognitionStatus42||(result?
@@ -318,7 +324,7 @@ export function mountMultiGarmentCapture24({
   const defaults=sceneReviewDefaults32(raw),category=defaults.category;
   state.pieces.push({
    id:crypto.randomUUID(),instanceKey:raw.instanceKey,cropBounds:box,
-   image:jpegCrop(sourceImage,box),manual:false,cropReviewed:true,
+   image:jpegCrop(sourceImage,box),manual:false,cropReviewed:false,
    category,itemType:'Unknown',color:defaults.color,confirmed:false,
    sceneReviewReason:defaults.reason,hint:{...raw.hint},maskApplied:false
   });redraw();
@@ -377,7 +383,7 @@ export function mountMultiGarmentCapture24({
   try{
    ({references,snapshots}=snapshotConfirmations34(state.pieces,schema));
    // Preserve original explicit human-confirmation and manual crop-review guard.
-   if(snapshots.some(x=>!canConfirmScene32(x,schema)||(x.manual&&!x.cropReviewed)||
+   if(snapshots.some(x=>!canConfirmScene32(x,schema)||x.cropReviewed!==true||
        !validCrop24(x.cropBounds)))
     throw Error('An unreviewed or invalid garment cannot be saved.');
   }catch(error){status.textContent=String(error.message||error);return;}
