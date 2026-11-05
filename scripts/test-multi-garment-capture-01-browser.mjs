@@ -714,16 +714,16 @@ try{
     crops:[...document.querySelectorAll('#multi24Grid .multi24-card img')].map(i=>i.src)
    }));
    assert.equal(before.pieces.filter(x=>x.confirmed).length,3);
-   let warnings=0,msg='';
-   page.once('dialog',async d=>{warnings++;msg=d.message();await d.dismiss();});
    await page.getByRole('button',{name:'Save confirmed pieces together'}).click();
-   assert.equal(warnings,1,'Must ask before excluding earlier saved shirt: '+JSON.stringify({
-    originalSavedKey:initial[0].sourcePieceKey,
-    originalSavedBounds:initial[0].cropBounds,
-    reviewed:before.pieces.map(x=>({key:x.instanceKey,category:x.category,confirmed:x.confirmed})),
-    status:await page.locator('#multi24Status').innerText()
-   }));
-   assert.match(msg,/previously saved garment.*new confirmed garment/i);
+   // An in-app dialog works reliably AFTER asynchronous IndexedDB lookup,
+   // unlike window.confirm() suppressed without mobile user activation.
+   const decision=page.locator('dialog.multi24-mixed-dialog');
+   await decision.waitFor({state:'visible',timeout:30000});
+   assert.match(await decision.innerText(),/previously saved garment.*new confirmed garment/i);
+   assert.equal(await decision.getByRole('button',{name:'Keep my review'}).isVisible(),true);
+   assert.equal(await decision.getByRole('button',{name:'Save new garments only'}).isVisible(),true);
+   await decision.getByRole('button',{name:'Keep my review'}).click();
+   await decision.waitFor({state:'hidden'});
    await page.waitForFunction(()=>document.querySelector('#multi24Status')?.textContent.includes(
     'Mixed save canceled'),null,{timeout:45000});
    const kept=await page.evaluate(()=>({
@@ -738,10 +738,10 @@ try{
     r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);
    })),1,'Declined mixed save cannot write another item');
    await fullShot(page,width,'02a-mixed-duplicate-dismiss-keeps-new-confirmed-all',engine);
-   let accepted=0;
-   page.once('dialog',async d=>{accepted++;await d.accept();});
    await page.getByRole('button',{name:'Save confirmed pieces together'}).click();
-   assert.equal(accepted,1);
+   await decision.waitFor({state:'visible',timeout:30000});
+   await decision.getByRole('button',{name:'Save new garments only'}).click();
+   await decision.waitFor({state:'hidden'});
    await page.waitForFunction(()=>document.querySelector('#multi24Status')?.textContent.includes(
     '2 separately confirmed garments saved together'),null,{timeout:45000});
    const all=await page.evaluate(()=>new Promise((resolve,reject)=>{
