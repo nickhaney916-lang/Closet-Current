@@ -10,6 +10,7 @@ on:
       - 'scripts/test-multi-garment-capture-01-browser.mjs'
       - 'scripts/audit-verified-photo-switch-70-browser.mjs'
       - 'tests/verified-photo-switch-70.test.mjs'
+      - 'tests/review-worker-finality-38.test.mjs'
       - '.github/workflows/verified-photo-switch-70-no-deploy.yml'
   workflow_dispatch:
 permissions:
@@ -36,7 +37,7 @@ jobs:
           git diff --name-only 143ff1294cabd531b8eb6ad23b5a2c9f62b3dc9a HEAD >/tmp/source70-files
           while IFS= read -r path; do
             case "$path" in
-              research/verified-photo-switch-70/*|research/multi-garment-capture-01/review-ui.mjs|scripts/test-multi-garment-capture-01-browser.mjs|scripts/audit-verified-photo-switch-70-browser.mjs|tests/verified-photo-switch-70.test.mjs|.github/workflows/verified-photo-switch-70-no-deploy.yml) ;;
+              research/verified-photo-switch-70/*|research/multi-garment-capture-01/review-ui.mjs|scripts/test-multi-garment-capture-01-browser.mjs|scripts/audit-verified-photo-switch-70-browser.mjs|tests/verified-photo-switch-70.test.mjs|tests/review-worker-finality-38.test.mjs|.github/workflows/verified-photo-switch-70-no-deploy.yml) ;;
               *) echo "BLOCKED production/staging or unrelated source change: $path"; exit 1 ;;
             esac
           done </tmp/source70-files
