@@ -60,6 +60,10 @@ jobs:
           path: benchmark/review-alternatives-54/source
       - name: Audit 59 source-locked genuine photo predictions without altering baseline outputs or locked labels
         run: node scripts/audit-review-alternatives-54.mjs
+      - name: Native browser human-option clicks on source-pinned original with archived actual uncertain model outputs
+        run: node scripts/test-review-alternatives-54-browser.mjs
+      - name: Independently validate the 12 option review screenshots and all six human confirmation cases
+        run: node scripts/audit-review-alternatives-54-browser.mjs
       - name: Verify actual pinned local FashionCLIP image features in Chromium and WebKit
         run: node scripts/probe-real-model-assets-52.mjs
       - name: Run six genuine app original-photo reviewed-crop and owner-private outfit/save/restore scenarios
@@ -68,10 +72,6 @@ jobs:
         run: node scripts/test-multi-garment-capture-01-browser.mjs
       - name: Verify 73 real model/private app screenshots and explicitly classify known WebKit teardown cancellations
         run: node scripts/audit-review54-native-52.mjs
-      - name: Native browser human-option clicks on source-pinned original with archived actual uncertain model outputs
-        run: node scripts/test-review-alternatives-54-browser.mjs
-      - name: Independently validate the 12 option review screenshots and all six human confirmation cases
-        run: node scripts/audit-review-alternatives-54-browser.mjs
       - name: Archive measured accuracy, human review, screenshot and genuine model network evidence
         if: always()
         uses: actions/upload-artifact@v4
