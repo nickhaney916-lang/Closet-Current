@@ -42,9 +42,13 @@ jobs:
           done < /tmp/model52-files
       - name: Install pinned test-only packages
         run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Run inherited full Node regression plus MODEL52 network-origin safety tests
+        run: node --test tests/*.test.cjs tests/*.test.mjs
       - name: Build release-shaped research app only
         run: |
           node --check scripts/probe-real-model-assets-52.mjs
+          node --check scripts/audit-model-asset-reliability-52.mjs
+          node --check scripts/test-multi-garment-capture-01-browser.mjs
           node scripts/build.mjs
       - name: Probe actual original JPEG through local FashionCLIP worker Chromium and WebKit
         run: node scripts/probe-real-model-assets-52.mjs
