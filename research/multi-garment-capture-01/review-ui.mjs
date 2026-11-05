@@ -80,8 +80,14 @@ export function mountMultiGarmentCapture24({
   if(state.pieces.length>=MAX_TOTAL_REGIONS58){status.textContent='Review limit of 24 regions reached. Remove an incorrect region before adding another.';return;}
   const crop={x:0,y:0,width:1,height:1};state.pieces.push({id:crypto.randomUUID(),instanceKey:manualKey(crop),cropBounds:crop,image:state.proof.image,manual:true,cropReviewed:false,category:'Uncategorized',itemType:'Unknown',color:'',confirmed:false,maskApplied:false,hint:null});redraw();});
  const suggest=button('Suggest missed regions on a plain backdrop',()=>suggestFlatlay());
+ // DETECTOR65: retain the same original photo while ending an unreliable
+ // local model; manual crops and earlier human decisions remain accessible.
+ const stop=button('Stop AI; keep manual review',()=>{
+  if(submitting||!job)return;
+  detectorFallback65(job,'Automatic detection stopped by you.');
+ });
  const save=button('Save confirmed pieces together',()=>commit(),'primary');
- actions.append(add,suggest,save,cancel);
+ actions.append(add,suggest,stop,save,cancel);
  root.append(actions,grid);
  host.append(style,root);
  function sameOwner(){return !!state&&getOwner()===state.owner&&getDb()?.name==='closet-current-user-'+state.owner;}
@@ -97,7 +103,7 @@ export function mountMultiGarmentCapture24({
  }
  let classification42;
  function cancelClassification42(){classification42?.controller.abort();classification42=null;}
- function revoke(){cancelClassification42();canceled=true;renderVersion++;job?.worker?.terminate();if(job)clearTimeout(job.timeout);job=null;state=null;original.removeAttribute('src');original.hidden=true;grid.replaceChildren();save.disabled=true;add.disabled=true;suggest.disabled=true;cancel.disabled=false;}
+ function revoke(){cancelClassification42();canceled=true;renderVersion++;job?.worker?.terminate();if(job)clearTimeout(job.timeout);job=null;state=null;original.removeAttribute('src');original.hidden=true;grid.replaceChildren();save.disabled=true;add.disabled=true;suggest.disabled=true;stop.disabled=true;cancel.disabled=false;}
  function reset(text){revoke();status.textContent=text||'No unconfirmed photos were saved.';}
  // WORKER-FINALITY-38: a confirmed Save is a one-way review boundary.
  // Terminate the detector and revoke its session identity BEFORE first async
@@ -107,6 +113,18 @@ export function mountMultiGarmentCapture24({
   const running=job;job=null;
   clearTimeout(running.timeout);
   running.worker?.terminate();
+  return true;
+ }
+ // Keep verified original, already reviewed crops and actual owner session.
+ // Every stale worker packet is rejected once job identity is revoked.
+ function detectorFallback65(session,reason){
+  if(!state||job!==session||submitting)return false;
+  if(!sameOwner()){reset('Account changed; extraction canceled.');return false;}
+  session.terminal=true;
+  freezeDetector38();
+  redraw();
+  status.textContent=reason+' The verified original photo and '+state.pieces.length+
+   ' unverified review region(s) remain. Add missed piece, adjust crop, and choose category, subtype and color manually. Nothing was automatically saved.';
   return true;
  }
  async function crop(piece){
@@ -201,6 +219,7 @@ export function mountMultiGarmentCapture24({
   original.hidden=false;
   add.disabled=submitting||state.pieces.length>=MAX_TOTAL_REGIONS58;
   suggest.disabled=submitting||state.pieces.length>=MAX_TOTAL_REGIONS58;
+  stop.disabled=submitting||!job;
   cancel.disabled=submitting;
   const review=organizeReview28(state.pieces);
   root.dataset.priorityCount=String(review.priority.length);
@@ -369,32 +388,47 @@ export function mountMultiGarmentCapture24({
     c.getContext('2d').drawImage(decoded,0,0,c.width,c.height);inference=c.toDataURL('image/jpeg',.9);
    }
    if(!currentLoading(epoch,owner))return;
-   const next={id:crypto.randomUUID(),worker:null,pending:[],timeout:null,received:0,ignored:0};job=next;
-   next.timeout=setTimeout(()=>{if(job===next&&!submitting){next.worker?.terminate();job=null;status.textContent='Local segmentation timed out. You can mark pieces manually; nothing was auto-saved.';}},300000);
-   next.worker=new Worker('outfit-worker.mjs'+(recognitionAssetVersion?'?v='+recognitionAssetVersion:''),{type:'module'});
-   next.worker.onmessage=event=>{
-    if(job!==next||submitting||!sameOwner())return;
-    const data=event.data;if(data?.id!==next.id)return;
-    if(data.type==='piece'){
+   const next={id:crypto.randomUUID(),worker:null,pending:[],timeout:null,received:0,ignored:0,terminal:false};job=next;
+   // Real 300s model timeout. The standalone browser QA fixture can
+   // accelerate this timer only in an isolated test page.
+   next.timeout=setTimeout(()=>{if(job===next&&!submitting)detectorFallback65(next,'Local segmentation timed out.');},300000);
+   try{
+    next.worker=new Worker('outfit-worker.mjs'+(recognitionAssetVersion?'?v='+recognitionAssetVersion:''),{type:'module'});
+    next.worker.onmessage=event=>{
+     if(job!==next||submitting||!sameOwner())return;
+     // A completion/error message is final: no further piece, progress or
+     // duplicate completion may modify a human review in this session.
+     if(next.terminal)return;
+     const data=event.data;if(data?.id!==next.id)return;
+     if(data.type==='piece'){
       next.received++;
       const accepted=intakeProposal58(data.piece,state?.pieces||[],next.received);
       if(accepted.accepted)next.pending.push(addDetected(accepted.piece,next));
       else next.ignored++;
      }
-    if(data.type==='progress')status.textContent=data.phase==='separating'?'Locating visible garment regions locally…':'Preparing local segmentation model…';
-    if(data.type==='done'||data.type==='error'){
-     Promise.all(next.pending).finally(()=>{
-      if(job!==next)return;
-      clearTimeout(next.timeout);next.worker.terminate();job=null;
-      status.textContent=data.type==='error'?'Automatic extraction unavailable. Add and crop pieces manually; no items saved.':
-       state.pieces.length+' unverified region'+(state.pieces.length===1?'':'s')+' found. '+
-        (next.ignored?next.ignored+' extra, duplicate or invalid detector proposals were ignored for mobile reliability. ':'')+
-        'Stronger suggestions appear first, other regions remain below. Inspect each crop or Add missed piece.';
-     });
-    }
-   };
-   next.worker.onerror=()=>{if(job!==next||submitting)return;clearTimeout(next.timeout);next.worker.terminate();job=null;status.textContent='Local detection unavailable. Manually add and crop pieces; nothing saved.';};
-   next.worker.postMessage({id:next.id,image:inference,multi24:true});
+     if(data.type==='progress')status.textContent=data.phase==='separating'?'Locating visible garment regions locally…':'Preparing local segmentation model…';
+     if(data.type==='done'||data.type==='error'){
+      next.terminal=true;
+      Promise.all(next.pending).finally(()=>{
+       if(job!==next)return;
+       const failed=data.type==='error';
+       clearTimeout(next.timeout);next.worker.terminate();job=null;
+       redraw();
+       status.textContent=failed?'Automatic extraction unavailable. Add and crop pieces manually; no items saved.':
+        state.pieces.length+' unverified region'+(state.pieces.length===1?'':'s')+' found. '+
+         (next.ignored?next.ignored+' extra, duplicate or invalid detector proposals were ignored for mobile reliability. ':'')+
+         'Stronger suggestions appear first, other regions remain below. Inspect each crop or Add missed piece.';
+      });
+     }
+    };
+    next.worker.onerror=()=>{if(job!==next||submitting)return;detectorFallback65(next,'Local detection worker failed.');};
+    next.worker.onmessageerror=()=>detectorFallback65(next,'Local detection returned an unreadable message.');
+    // Worker construction and postMessage errors are NOT source proof errors.
+    next.worker.postMessage({id:next.id,image:inference,multi24:true});
+    redraw();
+   }catch(workerError){
+    detectorFallback65(next,'Local detection could not start.');
+   }
   }catch(error){
    // A stale proof/decode must never clear a more recently selected source.
    if(currentLoading(epoch,owner))reset('Could not verify photo: '+String(error.message||error));
