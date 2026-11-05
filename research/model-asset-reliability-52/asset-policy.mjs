@@ -20,3 +20,23 @@ export function allowedFashionClipAsset52(request){
  if(host==='us.aws.cdn.hf.co')return path.startsWith('/xet-bridge-us/');
  return false;
 }
+
+/**
+ * Classify browser-QA failures without treating deliberately blocked optional
+ * SegFormer detection as failed FashionCLIP type/category inference.
+ * Never inspect a URL query or return token/owner/customer data.
+ */
+export const SEGFORMER52_REVISION='a2489ea8e7ec1ee912190546bad31a4906ccca76';
+export function modelAssetFamily52(record){
+ const host=record?.host,path=record?.path;
+ if(typeof host!=='string'||typeof path!=='string')return 'unknown';
+ if(host==='huggingface.co'){
+  if(path.startsWith('/Xenova/segformer_b0_clothes/resolve/'+SEGFORMER52_REVISION+'/')||
+     path.startsWith('/api/resolve-cache/models/Xenova/segformer_b0_clothes/'+SEGFORMER52_REVISION+'/'))return 'optional-segformer';
+  if(path.startsWith('/ff13/fashion-clip/resolve/'+MODEL52_REVISION+'/')||
+     path.startsWith('/api/resolve-cache/models/ff13/fashion-clip/'+MODEL52_REVISION+'/'))return 'fashionclip';
+ }
+ if(host==='cdn.jsdelivr.net'&&path.startsWith('/npm/@huggingface/transformers@3.8.1/dist/'))return 'shared-transformers-runtime';
+ if(host==='us.aws.cdn.hf.co'&&path.startsWith('/xet-bridge-us/'))return 'shared-model-cdn';
+ return 'unknown';
+}
