@@ -342,12 +342,23 @@ try{
    }
    assert.equal(await unreviewed.getAttribute('data-crop-reviewed55'),'unreviewed');
   }else await page.getByRole('button',{name:'Add missed piece'}).click();
-  // NEARDUP67: genuine crop-editor mouse movement 0.003 of the original
-  // width (roughly 2-3 original pixels). Its manual sourcePieceKey changes,
-  // but it depicts the very same shirt from one immutable source JPEG.
-  const recrop67=near67?{...cases[0],x:cases[0].x+.003,right:cases[0].right+.003}:cases[0];
-  await realCrop(page,0,recrop67);
+  // NEARDUP67: genuine crop-editor accessibility action after the first
+  // ordinary crop. Native ArrowRight on the top-left handle changes LEFT
+  // by exactly 0.01 normalized units while preserving right/bottom;
+  // with the observed ~0.61-wide shirt crop its IoU remains >0.98.
+  // This creates a reliably DIFFERENT rounded manual key at every viewport;
+  // subpixel pointer drags can round to the same key on phones.
+  await realCrop(page,0,cases[0]);
   if(near67){
+   const firstCard=page.locator('#multi24Grid .multi24-card').first();
+   await firstCard.getByRole('button',{name:'Adjust crop/mask'}).click();
+   const dialog=page.locator('dialog.photo-crop-editor');
+   await dialog.waitFor({state:'visible'});
+   const corner=dialog.locator('.crop-handle.nw');
+   await corner.focus();
+   await corner.press('ArrowRight');
+   await dialog.getByRole('button',{name:'Save crop'}).click();
+   await dialog.waitFor({state:'hidden'});
    const current=await page.evaluate(()=>window.multi24Research.debug().pieces[0].instanceKey);
    const saved=rows.find(row=>row.category==='Tops').sourcePieceKey;
    assert.notEqual(sourceHash+'/'+current,saved,
