@@ -52,10 +52,19 @@ function safeSuggestion45(input,sourcePieceKey,cropBounds){
   };
  };
  const current=safe(input),originalContext=safe(input.originalContext);
+ // COLOR46: only a bounded palette observation, never an approved color.
+ // Ignore arbitrary raw pixels, opaque masks, injected metadata or confidence.
+ const pixel=input.colorReview46;
+ const colorReview46=pixel?.source==='reviewed-crop-pixels'&&
+  pixel.needsConfirmation===true&&suggestionColors45.has(pixel.primary)?
+   {source:'reviewed-crop-pixels',primary:pixel.primary,
+    secondary:suggestionColors45.has(pixel.secondary)&&pixel.secondary!==pixel.primary?pixel.secondary:null,
+    needsConfirmation:true}:null;
  return {
   source:'local-fashionclip',
   ...current,originalContext,
-  colorSource:current.color&&['recognition','mask-pixel-estimate','crop-pixel-estimate'].includes(input.colorSource)?input.colorSource:null,
+  ...(colorReview46?{colorReview46}:{}),
+  colorSource:current.color&&['recognition','mask-pixel-estimate','crop-pixel-estimate','reviewed-crop-pixel-estimate'].includes(input.colorSource)?input.colorSource:null,
   status:current.itemType?'subtype-suggested':current.category?'category-only':'abstained',
   sourcePieceKey,cropBounds:{...cropBounds}
  };

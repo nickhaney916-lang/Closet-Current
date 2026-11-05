@@ -169,6 +169,12 @@ try{
     assert.equal(await result.getAttribute('data-recognition42'),'result',
      'Genuine classifier unavailable: '+JSON.stringify(diagnostics.modelRequestFailures));
     aiSuggestion=await result.innerText();
+    // COLOR46: this is a genuinely computed reviewed JPEG region-pixel
+    // color, separate from FashionCLIP class suggestion and never verified.
+    const colorAdvice=card.locator('[data-color-review46="unverified"]');
+    await colorAdvice.waitFor({state:'visible'});
+    assert.match(await colorAdvice.innerText(),/Reviewed crop pixel color.*unverified.*confirm color yourself/i);
+    assert.equal(await card.getByLabel('Color (confirm visually)').inputValue(),'');
     assert.equal(await card.getByLabel('Main category').inputValue(),'Uncategorized');
     assert.equal(await card.getByLabel('Specific type').inputValue(),'Unknown');
     assert.equal(await card.getByLabel('Color (confirm visually)').inputValue(),'');
@@ -197,6 +203,9 @@ try{
   const shoes=rows.find(row=>row.category==='Shoes');
   if(recognition42){
    assert.equal(shoes.recognitionSuggestion42?.source,'local-fashionclip');
+   assert.equal(shoes.recognitionSuggestion42.colorReview46?.source,'reviewed-crop-pixels');
+   assert.equal(shoes.recognitionSuggestion42.colorReview46?.needsConfirmation,true);
+   assert.ok(['Black','White','Gray','Beige','Brown','Blue','Green','Red','Pink','Purple','Yellow','Orange','Multicolor'].includes(shoes.recognitionSuggestion42.colorReview46.primary));
    assert.equal(shoes.itemType,'Sneakers');
    assert.equal(shoes.color,'Blue');
    assert.equal(shoes.colorSource,'user');
@@ -371,6 +380,8 @@ try{
    assert.equal(row.itemType,'T-shirt');
    assert.equal(row.color,'Black');
    assert.ok(row.recognitionSuggestion42);
+   assert.equal(row.recognitionSuggestion42.colorReview46?.needsConfirmation,true);
+   assert.equal(row.recognitionSuggestion42.colorReview46?.source,'reviewed-crop-pixels');
    shirtEvidence={sha256:fixture.sha256,source:'archived fixture commons-0003',
     attribution:fixture.attribution,suggestion:row.recognitionSuggestion42,
     confirmed:{category:row.category,itemType:row.itemType,color:row.color}};
