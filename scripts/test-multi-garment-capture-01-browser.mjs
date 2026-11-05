@@ -17,8 +17,9 @@ const recognition42=process.env.RECOGNITION42==='1';
 const name66=process.env.NAME66==='1';
 const near67=process.env.NEARDUP67==='1';
 const source70=process.env.SOURCE70==='1';
-const switch68=process.env.SWITCH68==='1'||source70;
-if(switch68&&(near67||name66||process.env.DETECTOR57==='1'||process.env.DETECTOR58==='1'||process.env.DETECTOR65==='1'||recognition42))
+const switch68=process.env.SWITCH68==='1';
+const photoSwitch70=switch68||source70;
+if(photoSwitch70&&(near67||name66||process.env.DETECTOR57==='1'||process.env.DETECTOR58==='1'||process.env.DETECTOR65==='1'||recognition42))
  throw Error('SWITCH68 must use isolated genuine photo and human review browser acceptance');
 if(near67&&(name66||process.env.DETECTOR57==='1'||process.env.DETECTOR58==='1'||process.env.DETECTOR65==='1'))
  throw Error('NEARDUP67 native manual crop regression is a distinct source-identity acceptance mode');
@@ -54,9 +55,9 @@ const fetchOriginal=async()=>{
 const bytes=await fetchOriginal(),expectedHash='e3df4503a89c244b28fa344ec170d6554fc06ad1d7cd331014fcb277df19d5ff';
 const sourceHash=sha(bytes);
 if(expectedHash)assert.equal(sourceHash,expectedHash,'Licensed original changed; reject stale source lock');
-const replacementBytes=switch68?await readFile('benchmark/fixtures/commons-0046.jpg'):null;
-const replacementHash=switch68?sha(replacementBytes):null;
-if(switch68){
+const replacementBytes=photoSwitch70?await readFile('benchmark/fixtures/commons-0046.jpg'):null;
+const replacementHash=photoSwitch70?sha(replacementBytes):null;
+if(photoSwitch70){
  assert.equal(replacementHash,'7f94b8bc8edc340200f0353968f54868dc72e3180bc191530e19f2a82ce91ead');
  assert.notEqual(replacementHash,sourceHash);
  const meta=await sharp(replacementBytes).metadata();
@@ -303,7 +304,7 @@ try{
   }
   await fullShot(page,width,'02-three-reviewed-pieces-all',engine);
   await shot(page,width,'02-three-reviewed-pieces',engine);
-  if(switch68){
+  if(photoSwitch70){
    // A genuinely distinct, separately licensed original JPEG is selected
    // while all three human-corrected garments are still only in memory.
    // Dismiss the real browser confirm and verify every photo byte/crop/label
@@ -471,7 +472,7 @@ try{
    q.onsuccess=()=>resolve(q.result);q.onerror=()=>reject(q.error);
   }));
   assert.equal(afterDuplicateCount,3,'Reimport failed closed without any new duplicate record');
-  if(switch68){
+  if(photoSwitch70){
    // After a legitimate duplicate-save rejection the old source still has
    // exactly one manually confirmed crop. Approving an explicit switch must
    // revoke that UNSAVED crop, never the three already committed garments.
@@ -755,7 +756,7 @@ try{
   assert.equal(await page.evaluate(()=>items.length),0,'Owner B cannot see A original photo or private items');
   diagnostics.cases.push({engine,width,pieces:3,detectorMessageReplay57:detector57,detectorFloodBound58:detector58,detectorFailureRecovery65:detector65,detectorFaultMode65:failureMode65,
    nearDuplicateCropKeyRejected67:near67,
-   uncommittedPhotoSwitchProtected68:switch68,
+   uncommittedPhotoSwitchProtected68:photoSwitch70,
    verifiedPhotoSwitch70:source70,
    correctedAutoNameAndIndex66:name66,stylePinnedAndSaved:true,styleLooks:style.lookCount,sourceSHA256:sourceHash,reviewAccuracy:'3/3 human confirmed',aiSuggestion:aiSuggestion??null,reopenedUserColorClear:recognition42,shirtEvidence,recognitionEvidence:shoes.recognitionSuggestion42??null,outfitSaved:true,v4Backup:true,v4Restore:true,reimportDuplicateBlocked:true,ownerPrivate:true});
   await context.close();await browser.close();browser=null;
