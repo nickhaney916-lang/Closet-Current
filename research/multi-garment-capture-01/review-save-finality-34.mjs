@@ -4,10 +4,10 @@
  * live UI objects that a deferred queue or crop callback may later change.
  * No photo is uploaded; no database access or model changes occur here.
  */
-import {validCrop24} from './atomic-group.mjs';
+import {validCrop24,minimalPieceSnapshot51} from './atomic-group.mjs';
 import {canConfirmScene32} from './scene-class-guard-32.mjs';
 
-export function snapshotConfirmations34(pieces,schema) {
+export function snapshotConfirmations34(pieces,schema,proof) {
  if(!Array.isArray(pieces))throw Error('REVIEW34 missing review list');
  const references=pieces.filter(p=>p?.confirmed===true);
  if(!references.length)throw Error('Select at least one reviewed garment.');
@@ -15,9 +15,14 @@ export function snapshotConfirmations34(pieces,schema) {
   if(!canConfirmScene32(piece,schema)||!validCrop24(piece.cropBounds)||
      (piece.manual&&!piece.cropReviewed))
    throw Error('Confirm category, specific type, and color, and adjust crops for manually added items.');
-  // Clone nested bounds, hint and crop image, not merely the outer object.
-  // Never expose this snapshot to subsequent UI edit handlers.
-  return structuredClone(piece);
+  // SNAPSHOT78: allowlist and sanitize BEFORE structuredClone. Cloning the
+  // entire live review piece used to fail on noncloneable/large detector,
+  // browser or diagnostic metadata even when all human-confirmed facts were
+  // correct. The atomic record boundary already uses the exact SNAPSHOT51
+  // allowlist; reuse it here with the verified original proof to retain only
+  // correctly bound optional AI source/crop receipts.
+  // Never expose this immutable snapshot to later UI edit handlers.
+  return structuredClone(minimalPieceSnapshot51(piece,proof));
  });
  if(new Set(snapshots.map(p=>p.id)).size!==snapshots.length||
     new Set(snapshots.map(p=>p.instanceKey)).size!==snapshots.length)
