@@ -10,6 +10,11 @@ const PHOTOS = [
 ];
 const sha256 = async bytes => [...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))]
   .map(x=>x.toString(16).padStart(2,'0')).join('');
+function jpegDataUrl(bytes){
+  const values=new Uint8Array(bytes);let binary='';
+  for(let i=0;i<values.length;i+=0x8000)binary+=String.fromCharCode(...values.subarray(i,i+0x8000));
+  return 'data:image/jpeg;base64,'+btoa(binary);
+}
 const status = text => { document.querySelector('#status').textContent = text; };
 
 function makeInput(image) {
@@ -67,8 +72,10 @@ async function run(){
     const response=await fetch('/benchmark/fixtures/'+photo.id+'.jpg',{cache:'no-store'});
     if(!response.ok)throw Error('Fixture load failed: '+photo.id);
     const bytes=await response.arrayBuffer(),sourceSha=await sha256(bytes);
-    const url=URL.createObjectURL(new Blob([bytes],{type:'image/jpeg'}));
-    const image=new Image();image.src=url;await image.decode();
+    // WebKit can reject createImageBitmap/Blob-backed JPEG decoding with an
+    // EncodingError. Decode the same unchanged JPEG bytes as a data URL in the
+    // page, then canvas-read those pixels for WASM inference.
+    const image=new Image();image.src=jpegDataUrl(bytes);await image.decode();
     const geometry=makeInput(image),input=new window.ort.Tensor('float32',geometry.tensor,[1,3,416,416]);
     const started=performance.now();
     const result=await session.run({images:input});
@@ -95,7 +102,6 @@ async function run(){
     const maskPixels=proposals.map(x=>x.maskPixels),details={sourceSha,inferenceMs,maskPixels,overlay};
     showPhoto(photo,image,details,geometry,proposals);
     outputs.push({photo:photo.id,sourceSha256:sourceSha,dimensions:[image.naturalWidth,image.naturalHeight],proposalCount:proposals.length,proposals,coldLoadMs,inferenceMs});
-    URL.revokeObjectURL(url);
   }
   window.__instance56={done:true,engine:window.navigator.userAgent.includes('AppleWebKit')?'browser':'browser',coldLoadMs,outputs};
   status(`ONNX Runtime Web WASM: loaded in ${coldLoadMs.toFixed(0)} ms; 3 real JPEG inferences complete. Every detection is unreviewed.`);

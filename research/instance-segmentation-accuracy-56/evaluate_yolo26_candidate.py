@@ -154,8 +154,9 @@ def evaluate_photo(session, row, image_path):
 
 def main():
     annotations = json.loads((ROOT/"research/multi-review-triage-28/frozen-photo-annotations-16.json").read_text())
+    pinned_model_path = model_path()
     load_start = time.perf_counter()
-    session = ort.InferenceSession(str(model_path()), providers=["CPUExecutionProvider"])
+    session = ort.InferenceSession(str(pinned_model_path), providers=["CPUExecutionProvider"])
     cold_load_ms = round((time.perf_counter()-load_start)*1000, 3)
     if session.get_providers() != ["CPUExecutionProvider"]:
         raise RuntimeError("Unexpected inference provider")
@@ -182,7 +183,8 @@ def main():
         "meanMatchedBoxIou": sum(m["iou"] for r in rows for m in r["matches"])/max(1,tp),
         "pixelMaskIou": None, "categoryAccuracy": None, "subtypeAccuracy": None,
         "primaryColorAccuracy": None, "sameClassInstanceSeparation": "not measured; benchmark has no qualifying two-identical-category fixture with per-instance adjudication",
-        "timing": {"coldLoadMs": cold_load_ms, "warmCpuInferenceMs": [x["latencyMsCpu"] for x in rows]},
+        "timing": {"coldSessionCreateMs": cold_load_ms, "modelDownloadMeasured": False,
+                    "warmCpuInferenceMs": [x["latencyMsCpu"] for x in rows]},
         "rows": rows,
         "verdict": "NEEDS REWORK: candidate is an unaudited third-party baseline with known coverage gaps and provenance/licensing metadata conflict; pilot labels are weak; no browser/app integration or independent validation.",
     }

@@ -200,23 +200,24 @@
   "primaryColorAccuracy": null,
   "sameClassInstanceSeparation": "not measured; benchmark has no qualifying two-identical-category fixture with per-instance adjudication",
   "timing": {
-    "coldLoadMs": 107.357,
+    "coldSessionCreateMs": 76.534,
+    "modelDownloadMeasured": false,
     "warmCpuInferenceMs": [
-      52.165,
-      36.539,
-      23.98,
-      31.438,
-      24.541,
-      27.381,
-      31.706,
-      30.052,
-      27.688,
-      38.15,
-      27.015,
-      37.939,
-      15.303,
-      28.658,
-      15.514
+      22.003,
+      20.107,
+      18.619,
+      16.831,
+      21.957,
+      19.614,
+      17.45,
+      16.465,
+      16.655,
+      27.082,
+      38.774,
+      28.905,
+      27.869,
+      29.7,
+      28.734
     ]
   },
   "rows": [
@@ -375,7 +376,7 @@
           "groundTruthLabel": "jeans"
         }
       ],
-      "latencyMsCpu": 52.165,
+      "latencyMsCpu": 22.003,
       "groundTruth": [
         {
           "family": "upper",
@@ -518,7 +519,7 @@
           "groundTruthLabel": "shirt"
         }
       ],
-      "latencyMsCpu": 36.539,
+      "latencyMsCpu": 20.107,
       "groundTruth": [
         {
           "family": "upper",
@@ -689,7 +690,7 @@
           "groundTruthLabel": "shorts"
         }
       ],
-      "latencyMsCpu": 23.98,
+      "latencyMsCpu": 18.619,
       "groundTruth": [
         {
           "family": "upper",
@@ -728,7 +729,7 @@
       "falsePositives": 0,
       "falseNegatives": 2,
       "matches": [],
-      "latencyMsCpu": 31.438,
+      "latencyMsCpu": 16.831,
       "groundTruth": [
         {
           "family": "dress",
@@ -786,7 +787,7 @@
       "falsePositives": 1,
       "falseNegatives": 1,
       "matches": [],
-      "latencyMsCpu": 24.541,
+      "latencyMsCpu": 21.957,
       "groundTruth": [
         {
           "family": "upper",
@@ -859,7 +860,7 @@
           "groundTruthLabel": "jacket"
         }
       ],
-      "latencyMsCpu": 27.381,
+      "latencyMsCpu": 19.614,
       "groundTruth": [
         {
           "family": "upper",
@@ -932,7 +933,7 @@
           "groundTruthLabel": "black jacket"
         }
       ],
-      "latencyMsCpu": 31.706,
+      "latencyMsCpu": 17.45,
       "groundTruth": [
         {
           "family": "upper",
@@ -961,7 +962,7 @@
       "falsePositives": 0,
       "falseNegatives": 1,
       "matches": [],
-      "latencyMsCpu": 30.052,
+      "latencyMsCpu": 16.465,
       "groundTruth": [
         {
           "family": "shoes",
@@ -990,7 +991,7 @@
       "falsePositives": 0,
       "falseNegatives": 1,
       "matches": [],
-      "latencyMsCpu": 27.688,
+      "latencyMsCpu": 16.655,
       "groundTruth": [
         {
           "family": "shoes",
@@ -1019,7 +1020,7 @@
       "falsePositives": 0,
       "falseNegatives": 1,
       "matches": [],
-      "latencyMsCpu": 38.15,
+      "latencyMsCpu": 27.082,
       "groundTruth": [
         {
           "family": "shoes",
@@ -1067,7 +1068,7 @@
       "falsePositives": 1,
       "falseNegatives": 2,
       "matches": [],
-      "latencyMsCpu": 27.015,
+      "latencyMsCpu": 38.774,
       "groundTruth": [
         {
           "family": "bottom",
@@ -1132,7 +1133,7 @@
           "groundTruthLabel": "pants"
         }
       ],
-      "latencyMsCpu": 37.939,
+      "latencyMsCpu": 28.905,
       "groundTruth": [
         {
           "family": "bottom",
@@ -1190,7 +1191,7 @@
       "falsePositives": 1,
       "falseNegatives": 1,
       "matches": [],
-      "latencyMsCpu": 15.303,
+      "latencyMsCpu": 27.869,
       "groundTruth": [
         {
           "family": "shoes",
@@ -1238,7 +1239,7 @@
       "falsePositives": 1,
       "falseNegatives": 3,
       "matches": [],
-      "latencyMsCpu": 28.658,
+      "latencyMsCpu": 29.7,
       "groundTruth": [
         {
           "family": "dress",
@@ -1306,7 +1307,7 @@
       "falsePositives": 1,
       "falseNegatives": 1,
       "matches": [],
-      "latencyMsCpu": 15.514,
+      "latencyMsCpu": 28.734,
       "groundTruth": [
         {
           "family": "shoes",

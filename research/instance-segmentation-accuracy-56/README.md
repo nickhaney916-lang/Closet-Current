@@ -23,7 +23,7 @@ The detected architecture is true instance segmentation (each detection has sepa
 
 ## Pilot method and measured results
 
-Run `python research/instance-segmentation-accuracy-56/evaluate_yolo26_candidate.py` with Python packages `onnxruntime`, `onnx`, `numpy`, and `Pillow`. The runner loads the frozen photo annotations from Priority #28 and the 15 corresponding existing `benchmark/fixtures` JPEGs. It records the actual fixture SHA-256 and the source-photo SHA associated with each annotation. It preserves historical split tags, uses the model's 416-square input with letterbox padding, and accepts proposals at the model-card-recommended confidence threshold of 0.50. No confidence threshold was tuned on these images; the ONNX model emits its own end-to-end detections and no second NMS pass is applied.
+Run `python research/instance-segmentation-accuracy-56/evaluate_yolo26_candidate.py` with Python packages `onnxruntime`, `numpy`, and `Pillow`. The runner loads the frozen photo annotations from Priority #28 and the 15 corresponding existing `benchmark/fixtures` JPEGs. It records the actual fixture SHA-256 and the source-photo SHA associated with each annotation. It preserves historical split tags, uses the model's 416-square input with letterbox padding, and accepts proposals at the model-card-recommended confidence threshold of 0.50. No confidence threshold was tuned on these images; the ONNX model emits its own end-to-end detections and no second NMS pass is applied.
 
 One-to-one matching is greedy by confidence and requires category-family agreement and normalized bounding-box IoU >= 0.50. Existing annotations provide 24 coarse garment boxes. They were labeled once in earlier research, were not independently adjudicated or blinded for this candidate, and some model input fixtures are resized JPEG derivatives. The dataset is not a locked test set. Shoes remain in the ground-truth count despite the model having no shoe class, because absent category coverage is a real product failure.
 
@@ -37,7 +37,7 @@ One-to-one matching is greedy by confidence and requires category-family agreeme
 | Pixel-mask IoU | Not measured; no pixel-mask ground truth |
 | Category / subtype / color accuracy | Not measured; labels do not support independent adjudication |
 | Same-class instance separation | Not measured; no qualifying independently labeled same-class pair in this cohort |
-| Host CPU session creation / mean warm inference | 107 ms / 30 ms; model download is excluded and these are not mobile timings |
+| Host CPU session creation / mean warm inference | 77 ms / 23 ms; model download is excluded and these are not mobile timings |
 | Chromium WASM cold model load / warm inference | 1,060 ms / 369, 201, 206 ms over three photos |
 | WebKit WASM | Not locally run; WebKit's Linux system libraries are unavailable in this workspace |
 

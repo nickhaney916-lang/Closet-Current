@@ -5,7 +5,7 @@
   "mode": "actual ONNX Runtime Web WASM inference on SHA-recorded public benchmark fixture JPEG bytes; some fixtures are resized derivatives; read-only harness; no closet saves",
   "browsers": {
     "chromium": {
-      "coldModelLoadMs": 1059.5,
+      "coldModelLoadMs": 1017.7000000001863,
       "photos": [
         {
           "photo": "commons-0021",
@@ -82,8 +82,8 @@
               "maskSha256": "7c96e70fd79868dd094a750ec550d22b36142db3b93dda6fd98d5666c401a9ba"
             }
           ],
-          "coldLoadMs": 1059.5,
-          "inferenceMs": 376.1999999997206
+          "coldLoadMs": 1017.7000000001863,
+          "inferenceMs": 561.7000000001863
         },
         {
           "photo": "commons-0033",
@@ -173,8 +173,8 @@
               "maskSha256": "6e8aa3fdaf7792cc9ca9c4f65475204e47c71209995e7e4453701f241c6f70cb"
             }
           ],
-          "coldLoadMs": 1059.5,
-          "inferenceMs": 245.6999999997206
+          "coldLoadMs": 1017.7000000001863,
+          "inferenceMs": 207.89999999990687
         },
         {
           "photo": "commons-0080",
@@ -199,8 +199,8 @@
               "maskSha256": "4682b8ead49a8741990008ff7ab54f546a7d3caf2cf9318bdffe5f8a8438e9bc"
             }
           ],
-          "coldLoadMs": 1059.5,
-          "inferenceMs": 210.60000000009313
+          "coldLoadMs": 1017.7000000001863,
+          "inferenceMs": 249
         }
       ],
       "screenshots": [
@@ -209,24 +209,24 @@
           "width": 320,
           "height": 1910,
           "file": "chromium-320.png",
-          "bytes": 402404,
-          "sha256": "cce53e4dae738caeb694d3d2d6a3467e9b5ebd6bf53195a4460c102334ebd321"
+          "bytes": 402290,
+          "sha256": "ec20d8349beb20455a41172fc7e98897eeda6a7def061ad68469e89998672495"
         },
         {
           "engine": "chromium",
           "width": 390,
           "height": 1987,
           "file": "chromium-390.png",
-          "bytes": 549298,
-          "sha256": "89c12f8907dbedbb11612ae295163f67e7d5fafc25b65c66b9b6ed116ebf630d"
+          "bytes": 549179,
+          "sha256": "067e006e29d8100b57fecf437a2bd43a40e1a18c7bf614a0ee3b5e01461b7f91"
         },
         {
           "engine": "chromium",
           "width": 430,
           "height": 2079,
           "file": "chromium-430.png",
-          "bytes": 639806,
-          "sha256": "fd6e99e33f921cfacd4ccfb5739b2b354c77cc53826d98c1ceb30059fc19867b"
+          "bytes": 639664,
+          "sha256": "6410883d6cd648dc04a376fba298878eded9bc1c21ef75b7f712baacfcbc2ebb"
         }
       ],
       "errors": [],
