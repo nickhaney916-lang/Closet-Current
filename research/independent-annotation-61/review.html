@@ -32,6 +32,9 @@ details{color:#3d5369}.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}.
 <section class="panel" id="setup">
  <label for="packetFile">Import an unlabelled reviewer packet (A, B or adjudicator C)</label>
  <input id="packetFile" type="file" accept="application/json,.json">
+ <label for="resumeFile">Resume your OWN saved partial review (optional; after loading the matching packet)</label>
+ <input id="resumeFile" type="file" accept="application/json,.json" disabled>
+ <p id="checkpointStatus" class="muted" role="status" aria-live="polite">Nothing is saved in browser storage. Export your review JSON before leaving; to resume, import the same packet first, then your own prior export.</p>
  <label for="reviewerId">Your reviewer identifier (3–80 letters, numbers, . _ -)</label>
  <input id="reviewerId" type="text" autocomplete="off" placeholder="e.g. external-reviewer-01" maxlength="80">
  <label class="checkboxline" for="independence"><input id="independence" type="checkbox">I personally inspect the photographs without looking at the previous labels, model predictions or another reviewer's answers.</label>
@@ -64,16 +67,17 @@ details{color:#3d5369}.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}.
 <section class="panel" id="exportPanel" hidden>
  <p id="progress" aria-live="polite"></p>
  <button id="export" type="button">Export my reviews as JSON</button>
- <p class="muted">Partial exports are allowed and explicitly marked incomplete. Do not send this file to another reviewer before both have finished. No image files are embedded or uploaded.</p>
+ <p class="muted">Partial exports are allowed, explicitly marked incomplete, and can be resumed only with the same source-locked packet and reviewer identity. No automatic browser storage, original image bytes, or uploads. Keep A/B exports separate and private.</p>
 </section>
 </main>
 <footer>Review is not an automated prediction, cryptographic signature or permission to release the app.</footer>
-<script>
+<script type="module">
+import {validateResume63,verifyPacketDigest63} from '../reviewer-checkpoint-integrity-63/resume-guard.mjs';
 'use strict';
 (() => {
  const $=id=>document.getElementById(id);
  const taxonomy=['Tops','Bottoms','Dresses','Outerwear','Shoes'];
- let packet=null,index=0,rows=new Map();
+ let packet=null,index=0,rows=new Map(),packetEpoch=0,dirtySinceExport=false;
  let photoLoaded=false;
  const idRegex=/^[A-Za-z0-9._-]{3,80}$/;
  function options(node,values,first='-- Select --'){
@@ -93,6 +97,8 @@ details{color:#3d5369}.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}.
   const row=rows.get(item.id);
   photoLoaded=false;
   $('photoError').textContent='Local original-photo preview; never uploaded.';
+  $('photo').dataset.expectedSource=item.image;
+  $('photo').removeAttribute('src');
   $('photo').src='../../benchmark/fixtures/'+encodeURIComponent(item.image);
   $('counter').textContent='Photograph '+(index+1)+' / '+packet.total+' · Reviewer '+packet.role;
   $('identity').textContent='Source identity '+item.id+' · SHA-256 '+item.sourceSHA256.slice(0,16)+'…';
@@ -112,36 +118,83 @@ details{color:#3d5369}.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}.
   if(!packet)return;
   const uncertain=[...rows.values()].filter(x=>x.uncertain).length;
   $('progress').textContent=rows.size+' / '+packet.total+' source photographs reviewed ('+uncertain+
-   ' marked uncertain). This does not mean independent agreement or scientific approval.';
+   ' marked uncertain). This does not mean independent agreement or scientific approval.'+
+   (dirtySinceExport?' Export a JSON checkpoint before leaving; your latest changes are only in memory.':'');
  }
- $('photo').onload=()=>{photoLoaded=$('photo').naturalWidth>0;$('photoError').textContent=photoLoaded?'Original JPEG preview loaded locally.':'';};
+ $('photo').onload=()=>{
+  const img=$('photo'),item=packet?.items[index];
+  photoLoaded=!!item&&img.naturalWidth>0&&
+   img.dataset.expectedSource===item.image&&
+   decodeURIComponent(new URL(img.src,location.href).pathname).endsWith('/'+item.image);
+  $('photoError').textContent=photoLoaded?'Original JPEG preview loaded locally.':'Image identity changed; this photo cannot be reviewed.';
+ };
  $('photo').onerror=()=>{photoLoaded=false;$('photoError').textContent='Original JPEG cannot be loaded. Do not record a label. Check packet and local fixture paths.';};
  $('category').onchange=()=>{refreshType();if($('category').value==='Uncategorized'){$('primaryColor').value='';$('secondaryColor').value='';}};
  $('uncertain').onchange=()=>{$('fields').hidden=$('uncertain').checked;};
  $('packetFile').onchange=async()=>{
-  packet=null;rows=new Map();$('review').hidden=true;$('exportPanel').hidden=true;
+  const file=$('packetFile').files?.[0];if(!file)return;
+  if(rows.size&&dirtySinceExport&&!confirm('Your current observations are not exported. Switch reviewer packets and discard them?')){
+   $('packetFile').value='';return;
+  }
+  const epoch=++packetEpoch;
   try{
-   const file=$('packetFile').files?.[0];if(!file)return;
+   if(file.size>500_000)throw Error('Review packet file exceeds permitted size');
    const parsed=JSON.parse(await file.text());
+   if(epoch!==packetEpoch)return;
    if(parsed.schema!=='closet-current-blind-packet-61/v1'||
       !['A','B','C'].includes(parsed.role)||typeof parsed.packetId!=='string'||
       !Array.isArray(parsed.items)||!parsed.items.length||parsed.total!==parsed.items.length||
       !parsed.taxonomy||!Array.isArray(parsed.colors))throw Error('Not a valid blind review packet');
    const ids=new Set();
    for(const i of parsed.items){
-    if(!/^[a-zA-Z0-9._-]{1,90}$/.test(i.id)||!/^[a-zA-Z0-9._-]+\.jpg$/i.test(i.image)||
+    if(!/^[a-zA-Z0-9._-]{1,90}$/.test(i.id)||!/^[a-zA-Z0-9._-]+\\.jpg$/i.test(i.image)||
        !/^[a-f0-9]{64}$/.test(i.sourceSHA256)||ids.has(i.id))
      throw Error('Invalid/duplicate source identity in packet');
     ids.add(i.id);
    }
-   // Packet hashes and source image hashes are verified by the independent
-   // Node audit on export. This browser makes no remote requests.
-   packet=parsed;index=0;
+   await verifyPacketDigest63(parsed);
+   if(epoch!==packetEpoch)return;
+   packet=parsed;index=0;rows=new Map();dirtySinceExport=false;
+   $('reviewerId').value='';$('independence').checked=false;
+   $('resumeFile').disabled=false;$('resumeFile').value='';
    options($('category'),['Uncategorized',...taxonomy]);
    options($('primaryColor'),packet.colors);
    options($('secondaryColor'),packet.colors,'None / not applicable');
-   $('review').hidden=false;$('exportPanel').hidden=false;render();
-  }catch(e){$('photoError').textContent=e.message;alert('Packet rejected: '+e.message);}
+   $('review').hidden=false;$('exportPanel').hidden=false;
+   $('checkpointStatus').textContent='Packet '+packet.role+' SHA-256 verified. To resume, import only your own previous exported review JSON. No browser autosave.';
+   render();
+  }catch(e){
+   $('packetFile').value='';
+   $('checkpointStatus').textContent='Packet rejected without replacing current reviews: '+e.message;
+  }
+ };
+ $('resumeFile').onchange=async()=>{
+  const file=$('resumeFile').files?.[0];if(!file||!packet)return;
+  const epoch=packetEpoch,activePacket=packet;
+  try{
+   if(file.size>500_000)throw Error('Review checkpoint exceeds permitted size');
+   const incoming=JSON.parse(await file.text());
+   if(epoch!==packetEpoch||activePacket!==packet)throw Error('Source packet changed during checkpoint import');
+   const entered=$('reviewerId').value.trim();
+   const restored=validateResume63(packet,incoming,{expectedReviewerId:entered||null});
+   if(rows.size&&dirtySinceExport&&!confirm('Your current unsaved observations will be replaced with the imported checkpoint. Continue?')){
+    $('checkpointStatus').textContent='Checkpoint import canceled; existing observations retained.';return;
+   }
+   // Only atomically assign state after every packet, identity, photo SHA,
+   // color, subtype and duplicate check succeeds. Never merge two reviewers.
+   rows=new Map(restored.rows.map(row=>[row.id,row]));
+   $('reviewerId').value=restored.reviewerId;
+   $('independence').checked=false;
+   dirtySinceExport=false;
+   index=packet.items.findIndex(p=>!rows.has(p.id));
+   if(index<0)index=packet.items.length-1;
+   render();
+   $('checkpointStatus').textContent='Restored '+restored.reviewed+' / '+restored.total+
+    ' source-verified observations for reviewer '+restored.reviewerId+
+    '. Reconfirm your personal independence before recording or exporting.';
+  }catch(e){
+   $('checkpointStatus').textContent='Checkpoint rejected; previous observations preserved: '+e.message;
+  }finally{$('resumeFile').value='';}
  };
  $('previous').onclick=()=>{if(index>0){index--;render();}};
  $('next').onclick=()=>{if(packet&&index<packet.items.length-1){index++;render();}};
@@ -175,7 +228,8 @@ details{color:#3d5369}.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}.
    independent:true,method:'direct-human-visual-review',
    reviewedAt:new Date().toISOString(),category,itemType,primaryColor,secondaryColor,
    uncertain,uncertaintyReason:uncertain?reason:null,notes:uncertain?null:reason});
-  warn('Your observation recorded locally. No data was transmitted.');progress();
+  dirtySinceExport=true;
+  warn('Your observation recorded in memory. Export the JSON checkpoint before leaving. No data was transmitted.');progress();
  };
  $('export').onclick=()=>{
   if(!packet)return;
@@ -191,11 +245,14 @@ details{color:#3d5369}.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}.
     identityVerification:'SELF_ATTESTED_NOT_INDEPENDENTLY_VERIFIED',
     modelPredictionsViewed:false,reviewerPeerAnswersViewed:false,
     rows:packet.items.filter(x=>rows.has(x.id)).map(x=>rows.get(x.id))};
+  try{validateResume63(packet,exp,{expectedReviewerId:reviewerId});}
+  catch(e){warn('Checkpoint invalid; export refused: '+e.message);return;}
   const blob=new Blob([JSON.stringify(exp,null,2)+'\n'],{type:'application/json'});
   const url=URL.createObjectURL(blob),a=document.createElement('a');
   a.href=url;a.download='Closet-Current-Reviewer-'+packet.role+'-'+reviewerId+'.json';
   document.body.append(a);a.click();a.remove();
   setTimeout(()=>URL.revokeObjectURL(url),1000);
+  dirtySinceExport=false;progress();
   warn('Review JSON exported locally. '+(exp.incomplete?'This is a PARTIAL review.':'All photographs have a recorded response.'));
  };
 })();
