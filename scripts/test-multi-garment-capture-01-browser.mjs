@@ -203,6 +203,13 @@ try{
   const shoes=rows.find(row=>row.category==='Shoes');
   if(recognition42){
    assert.equal(shoes.recognitionSuggestion42?.source,'local-fashionclip');
+   // INPUT49: actual source and cropped input bytes are hashed independently
+   // at inference and rechecked against the confirmed saved IndexedDB row.
+   const input49=shoes.recognitionSuggestion42.inputBinding49;
+   assert.equal(input49?.hashAlgorithm,'SHA-256');
+   assert.equal(input49?.sourceSHA256,sourceHash);
+   assert.equal(input49?.cropSHA256,sha(Buffer.from(shoes.image.split(',')[1],'base64')));
+   assert.ok(/^[A-Za-z0-9._-]{1,80}$/.test(input49?.requestedAssetTag||''));
    assert.equal(shoes.recognitionSuggestion42.colorReview46?.source,'reviewed-crop-pixels');
    assert.equal(shoes.recognitionSuggestion42.colorReview46?.needsConfirmation,true);
    assert.ok(['Black','White','Gray','Beige','Brown','Blue','Green','Red','Pink','Purple','Yellow','Orange','Multicolor'].includes(shoes.recognitionSuggestion42.colorReview46.primary));
@@ -389,6 +396,9 @@ try{
    assert.equal(row.color,'Black');
    assert.ok(row.recognitionSuggestion42);
    assert.equal(row.recognitionSuggestion42.itemType,null,'Dangerous AI subtype withheld');
+   assert.equal(row.recognitionSuggestion42.inputBinding49?.sourceSHA256,fixture.sha256);
+   assert.equal(row.recognitionSuggestion42.inputBinding49?.cropSHA256,
+    sha(Buffer.from(row.image.split(',')[1],'base64')));
    assert.equal(row.recognitionSuggestion42.status,'category-only');
    assert.equal(row.recognitionSuggestion42.subtypeReview47?.needsConfirmation,true);
    assert.equal(row.recognitionSuggestion42.subtypeReview47?.candidate,'Sweatshirt');

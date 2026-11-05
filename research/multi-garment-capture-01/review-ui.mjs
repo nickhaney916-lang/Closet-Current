@@ -146,11 +146,20 @@ export function mountMultiGarmentCapture24({
   piece.recognitionStatus42='Checking the original and reviewed crop locally…';
   redraw();
   try{
-   const {recognizeReviewedCrop42,boundedCropColor46}=await import('./recognition-review-42.mjs');
+   const {recognizeReviewedCrop42,boundedCropColor46,bindInputs49}=await import('./recognition-review-42.mjs');
    if(!valid())return;
-   const result=await recognizeReviewedCrop42({original:view.proof.image,crop:piece.image,
+   // INPUT49: bind exact crop bytes before the worker starts; detected-piece
+   // instance keys can remain unchanged even when an image is re-cropped.
+   const cropAtInference=piece.image;
+   const binding49=await bindInputs49({
+    sourceSHA256:view.proof.sourceSHA256,cropImage:cropAtInference,
+    requestedAssetVersion:recognitionAssetVersion
+   });
+   if(!valid()||piece.image!==cropAtInference)return;
+   const result=await recognizeReviewedCrop42({original:view.proof.image,crop:cropAtInference,
     signal:request.controller.signal,version:recognitionAssetVersion,schema,palette,categories:TYPES});
-   if(!valid())return;
+   if(!valid()||piece.image!==cropAtInference)return;
+   result.inputBinding49=binding49;
    const pixels=await reviewedPixelPalette46(piece);
    if(!valid())return;
    const reviewedColor=boundedCropColor46(pixels,palette);

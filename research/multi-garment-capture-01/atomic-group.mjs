@@ -3,7 +3,7 @@
  * Uses the real existing 'items' IDB store and v4 backup-compatible records.
  * No independent wardrobe, cloud endpoint, inference service or 3D assertion.
  */
-import {verifyStoredCanonical} from '../capture-proof-01/source-proof.mjs';
+import {verifyStoredCanonical,jpegBytes,digestBytes} from '../capture-proof-01/source-proof.mjs';
 export const COMMIT43_TYPES=Object.freeze({
  Tops:Object.freeze(['T-shirt','Blouse','Button-down shirt','Polo','Tank top','Sweater','Sweatshirt','Hoodie','Tunic','Other']),
  Bottoms:Object.freeze(['Jeans','Trousers','Leggings','Shorts','Skirt','Joggers','Other']),
@@ -41,7 +41,7 @@ export function duplicatePieceKeys24(saved,selected){
 // MODEL45: the source-verified AI observation remains a bounded suggestion,
 // never authoritative human category/type/color fields or arbitrary worker data.
 const suggestionColors45=new Set(['Black','White','Gray','Beige','Brown','Blue','Green','Red','Pink','Purple','Yellow','Orange','Multicolor']);
-function safeSuggestion45(input,sourcePieceKey,cropBounds){
+function safeSuggestion45(input,sourcePieceKey,cropBounds,proofSourceSHA256){
  if(!input||input.source!=='local-fashionclip')return null;
  const safe=raw=>{
   const category=Object.hasOwn(COMMIT43_TYPES,raw?.category)?raw.category:null;
@@ -52,6 +52,17 @@ function safeSuggestion45(input,sourcePieceKey,cropBounds){
   };
  };
  const current=safe(input),originalContext=safe(input.originalContext);
+ // INPUT49: only retain bounded source/crop bytes hashes after the
+ // all-or-nothing atomic helper has independently compared JPEG bytes.
+ // This is a local input-binding receipt, NOT a signed model-weight proof.
+ const receipt=input.inputBinding49;
+ const inputBinding49=receipt?.hashAlgorithm==='SHA-256'&&
+  receipt.sourceSHA256===proofSourceSHA256&&
+  /^[0-9a-f]{64}$/.test(receipt.cropSHA256||'')&&
+  typeof receipt.requestedAssetTag==='string'&&
+  /^[A-Za-z0-9._-]{1,80}$/.test(receipt.requestedAssetTag)?
+  {sourceSHA256:receipt.sourceSHA256,cropSHA256:receipt.cropSHA256,
+   requestedAssetTag:receipt.requestedAssetTag,hashAlgorithm:'SHA-256'}:null;
  // SUBTYPE47: store the exact bounded ambiguity observed by the local model
  // adapter, not an untrusted high-confidence subtype asserted as verified.
  // The human-confirmed saved garment remains authoritative.
@@ -79,6 +90,7 @@ function safeSuggestion45(input,sourcePieceKey,cropBounds){
   ...current,originalContext,
   ...(colorReview46?{colorReview46}:{}),
   ...(subtypeReview47?{subtypeReview47}:{}),
+  ...(inputBinding49?{inputBinding49}:{}),
   colorSource:current.color&&['recognition','mask-pixel-estimate','crop-pixel-estimate','reviewed-crop-pixel-estimate'].includes(input.colorSource)?input.colorSource:null,
   status:current.itemType?'subtype-suggested':current.category?'category-only':'abstained',
   sourcePieceKey,cropBounds:{...cropBounds}
@@ -111,8 +123,8 @@ export function verifiedRecord24({proof,ownerId,piece,now=new Date().toISOString
   image:piece.image,recognitionPhoto:{image:piece.image},
   name:String(piece.name||[piece.color,piece.itemType||piece.category].join(' ')).trim().slice(0,120),
   category:piece.category,itemType:piece.itemType,color:reviewedColor,
-  ...(safeSuggestion45(piece.recognitionSuggestion42,sourcePieceKey,piece.cropBounds)?
-   {recognitionSuggestion42:safeSuggestion45(piece.recognitionSuggestion42,sourcePieceKey,piece.cropBounds)}:{}),
+  ...(safeSuggestion45(piece.recognitionSuggestion42,sourcePieceKey,piece.cropBounds,proof.sourceSHA256)?
+   {recognitionSuggestion42:safeSuggestion45(piece.recognitionSuggestion42,sourcePieceKey,piece.cropBounds,proof.sourceSHA256)}:{}),
   colorSource:'user',userAdjusted:true,requiresOwnershipConfirmation:false,
   localAnalyzed:true,localStatus:'Confirmed and saved from original photo',
   segmentHint:piece.hint||null,maskApplied:!!piece.maskApplied,
@@ -122,15 +134,48 @@ export function verifiedRecord24({proof,ownerId,piece,now=new Date().toISOString
   notes:'',seasons:[],brand:'',size:'',material:'',occasion:''
  };
 }
+/**
+ * INPUT49: snapshot and re-verify any optional model receipt against the
+ * actual crop bytes immediately before saving. A forged/stale proposal is
+ * dropped without rejecting or changing an independently human-confirmed
+ * garment. Legacy unbound suggestions remain explicitly unbound.
+ */
+export async function verifiedModelPieces49(pieces,proof){
+ const snapshots=structuredClone(pieces);
+ for(const piece of snapshots){
+  const binding=piece?.recognitionSuggestion42?.inputBinding49;
+  if(!binding)continue;
+  let valid=false;
+  try{
+   valid=binding.hashAlgorithm==='SHA-256'&&
+    binding.sourceSHA256===proof.sourceSHA256&&
+    /^[0-9a-f]{64}$/.test(binding.cropSHA256||'')&&
+    /^[A-Za-z0-9._-]{1,80}$/.test(binding.requestedAssetTag||'')&&
+    (await (async()=>{
+     const bytes=jpegBytes(piece.image);
+     return bytes.length>=128&&await digestBytes(bytes)===binding.cropSHA256;
+    })());
+  }catch{/* Forged image bytes must not poison user-confirmed clothing. */}
+  if(!valid)delete piece.recognitionSuggestion42;
+ }
+ return snapshots;
+}
+
 /** One readwrite IDB transaction, including read-time duplicate/CAS checks. */
 export async function atomicSaveGarments24({db,proof,pieces,ownerId,currentOwner,now}){
  if(!db||db.name!=='closet-current-user-'+ownerId||currentOwner()!==ownerId)
   fail('owner database or session mismatch');
  if(!Array.isArray(pieces)||!pieces.length||pieces.length>24)fail('select 1–24 garments');
+ // Immutable snapshot is taken before any WebCrypto digest or IndexedDB wait.
+ // A concurrent user edit/crop cannot replace bytes while a batch is pending.
+ const piecesAtCall=structuredClone(pieces);
  if(!await verifyStoredCanonical(proof))fail('canonical JPEG SHA-256 mismatch');
  if(currentOwner()!==ownerId||db.name!=='closet-current-user-'+ownerId)
   fail('session changed during SHA-256');
- const records=pieces.map(piece=>verifiedRecord24({proof,ownerId,piece,now}));
+ const checkedPieces=await verifiedModelPieces49(piecesAtCall,proof);
+ if(currentOwner()!==ownerId||db.name!=='closet-current-user-'+ownerId)
+  fail('session changed during optional crop validation');
+ const records=checkedPieces.map(piece=>verifiedRecord24({proof,ownerId,piece,now}));
  if(new Set(records.map(x=>x.id)).size!==records.length||
     new Set(records.map(x=>x.sourcePieceKey)).size!==records.length)
   fail('duplicate records inside one batch');

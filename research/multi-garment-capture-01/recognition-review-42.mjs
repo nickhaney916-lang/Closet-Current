@@ -1,3 +1,26 @@
+import {jpegBytes,digestBytes} from '../capture-proof-01/source-proof.mjs';
+
+// INPUT49: SHA-256 binds actual reviewed JPEG bytes to each local classifier
+// proposal. The requested asset tag identifies the URL cache tag only; it is
+// NOT an attestation of the downloaded FashionCLIP model weights.
+const SHA49=/^[0-9a-f]{64}$/;
+const TAG49=/^[A-Za-z0-9._-]{1,80}$/;
+export function assetTag49(value){
+ return typeof value==='string'&&TAG49.test(value)?value:'unversioned';
+}
+export async function bindInputs49({sourceSHA256,cropImage,requestedAssetVersion=''}) {
+ if(!SHA49.test(sourceSHA256||''))throw Error('INPUT49 invalid source JPEG identity');
+ const cropBytes=jpegBytes(cropImage);
+ // JPEG SOI/EOI alone is not a usable decoded crop: four-byte FF D8 FF D9
+ // dummy data must not acquire a believable FashionCLIP input receipt.
+ if(cropBytes.length<128)throw Error('INPUT49 invalid reviewed JPEG length');
+ const cropSHA256=await digestBytes(cropBytes);
+ return Object.freeze({
+  sourceSHA256,cropSHA256,requestedAssetTag:assetTag49(requestedAssetVersion),
+  hashAlgorithm:'SHA-256'
+ });
+}
+
 /**
  * COLOR46: A reviewed crop's pixel palette is an UNVERIFIED observation.
  * This function only constrains labels, and never infers a mask or certifies

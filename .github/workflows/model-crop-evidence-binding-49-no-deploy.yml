@@ -1,0 +1,163 @@
+name: INPUT49 actual original JPEG and local AI reviewed crop byte provenance NO DEPLOY
+on:
+  push:
+    branches:
+      - research/model-crop-evidence-binding-49-main-20261104-HOLD
+  pull_request:
+    paths:
+      - 'research/multi-garment-capture-01/review-ui.mjs'
+      - 'research/multi-garment-capture-01/recognition-review-42.mjs'
+      - 'research/multi-garment-capture-01/atomic-group.mjs'
+      - 'research/model-crop-evidence-binding-49/**'
+      - 'tests/model-crop-evidence-binding-49.test.mjs'
+      - 'scripts/test-multi-garment-capture-01-browser.mjs'
+      - '.github/workflows/model-crop-evidence-binding-49-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  model-crop-identity-owner-private-fashionclip-safety:
+    runs-on: ubuntu-latest
+    timeout-minutes: 48
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Enforce exact fully-green SUBTYPE47 parent and no deployment or unrelated source edits
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor 5c55e8fe462af19fbae31618a2e587175260f68c HEAD
+          git diff --name-only 5c55e8fe462af19fbae31618a2e587175260f68c HEAD > /tmp/input49-paths
+          while IFS= read -r p; do
+            case "$p" in
+              research/multi-garment-capture-01/review-ui.mjs|research/multi-garment-capture-01/recognition-review-42.mjs|research/multi-garment-capture-01/atomic-group.mjs|research/model-crop-evidence-binding-49/*|tests/model-crop-evidence-binding-49.test.mjs|scripts/test-multi-garment-capture-01-browser.mjs|.github/workflows/model-crop-evidence-binding-49-no-deploy.yml) ;;
+              *) echo "BLOCKED out-of-scope deployment/other project/cloud/model changes: $p"; exit 1 ;;
+            esac
+          done </tmp/input49-paths
+      - name: Install pinned test tools without changing package files
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Real app build and complete inherited plus INPUT49 Node safety regression tests
+        run: |
+          node --check research/multi-garment-capture-01/review-ui.mjs
+          node --check research/multi-garment-capture-01/recognition-review-42.mjs
+          node --check research/multi-garment-capture-01/atomic-group.mjs
+          node --check research/recognition-category-color-39/compare-color.mjs
+          node --check scripts/test-multi-garment-capture-01-browser.mjs
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Reproduce exact donor genuine-photo paired color research, including inherited nonblind holdout
+        run: |
+          mkdir -p benchmark/model-crop-evidence-binding-49
+          node research/recognition-category-color-39/compare-color.mjs > benchmark/model-crop-evidence-binding-49/color-compare.json
+          node --input-type=module <<'EONODE'
+          import assert from 'node:assert/strict';
+          import {readFile} from 'node:fs/promises';
+          const d=JSON.parse(await readFile('benchmark/model-crop-evidence-binding-49/color-compare.json','utf8'));
+          assert.equal(d.annotationStatus,'provisional-visual');
+          assert.equal(d.rows.length,35);
+          for(const [split,expected] of Object.entries({
+            development:{n:19,baseline:6,candidate:11},
+            holdout:{n:16,baseline:5,candidate:7}
+          })){
+            const row=d.splits[split];
+            assert.equal(row.baseline.attempted,expected.n);
+            assert.equal(row.candidate.attempted,expected.n);
+            assert.equal(row.baseline.correct,expected.baseline);
+            assert.equal(row.candidate.correct,expected.candidate);
+            assert.equal(row.candidate.accepted,0);
+          }
+          assert.equal(d.rows.filter(x=>x.candidate!==x.expected).length,17);
+          console.log('INPUT49 genuine archived SHA-locked provisional paired photos: 11/35 scene -> 18/35 reviewed crop; zero automatically accepted; blind ground truth NOT certified');
+          EONODE
+      - name: Inherited source epoch no-stale-photo native mobile browser guard
+        run: node scripts/verify-review-source-epoch-34.mjs
+      - name: Inherited immutable verified save and honest receipt native mobile browser guard
+        run: node scripts/verify-review-save-finality-34.mjs
+      - name: Inherited no late SegFormer worker mutation after Save
+        run: node scripts/verify-review-worker-finality-38.mjs
+      - name: Inherited user-color authority and original source photo IndexedDB
+        run: node scripts/verify-color-provenance-integration-41.mjs
+      - name: Inherited private atomic category/subtype validation and duplicate rejection
+        run: node scripts/verify-category-subtype-commit-43.mjs
+      - name: Inherited confirmed noncolor garment learning and private saved edits
+        run: node scripts/verify-confirmed-edit-memory-44.mjs
+      - name: REAL FashionCLIP original photo and reviewed crop SHA-256 association, owner-private atomic save and human-confirmed subtype
+        run: RECOGNITION42=1 node scripts/test-multi-garment-capture-01-browser.mjs
+      - name: Independent SHA-bound source/crop original JPEG and protected saved human facts plus screenshot audit
+        run: |
+          node --input-type=module <<'EONODE'
+          import assert from 'node:assert/strict';
+          import {readFile} from 'node:fs/promises';
+          import {createHash} from 'node:crypto';
+          import sharp from 'sharp';
+          const dir='benchmark/recognition-to-closet-42/';
+          const r=JSON.parse(await readFile(dir+'acceptance.json','utf8'));
+          assert.equal(r.source.sha256,'e3df4503a89c244b28fa344ec170d6554fc06ad1d7cd331014fcb277df19d5ff');
+          assert.equal(r.source.sourceHashPinned,true);
+          assert.equal(r.cases.length,6);
+          assert.deepEqual(r.unexpectedUploads,[]);
+          assert.deepEqual(r.errors,[]);
+          let count=0;
+          const palette=new Set(['Black','White','Gray','Beige','Brown','Blue','Green','Red','Pink','Purple','Yellow','Orange','Multicolor']);
+          for(const engine of ['chromium','webkit'])for(const width of [320,390,430]){
+            const c=r.cases.find(x=>x.engine===engine&&x.width===width);
+            assert.ok(c?.ownerPrivate&&c?.outfitSaved&&c?.reimportDuplicateBlocked&&c?.v4Backup&&c?.v4Restore);
+            assert.equal(c.reopenedUserColorClear,true);
+            assert.equal(c.sourceSHA256,r.source.sha256);
+            assert.equal(c.recognitionEvidence?.source,'local-fashionclip');
+            // INPUT49: these hashes identify the actual source JPEG and the
+            // exact reviewed crop bytes supplied to this real worker run.
+            assert.equal(c.recognitionEvidence?.inputBinding49?.hashAlgorithm,'SHA-256');
+            assert.equal(c.recognitionEvidence?.inputBinding49?.sourceSHA256,r.source.sha256);
+            assert.match(c.recognitionEvidence?.inputBinding49?.cropSHA256,/^[0-9a-f]{64}$/);
+            assert.match(c.recognitionEvidence?.inputBinding49?.requestedAssetTag,/^[A-Za-z0-9._-]{1,80}$/);
+            assert.equal(c.recognitionEvidence?.colorReview46?.source,'reviewed-crop-pixels');
+            assert.equal(c.recognitionEvidence?.colorReview46?.needsConfirmation,true);
+            assert.ok(palette.has(c.recognitionEvidence?.colorReview46?.primary));
+            assert.equal(c.recognitionEvidence.sourcePieceKey.slice(0,64),r.source.sha256);
+            if(engine==='chromium'&&width===390){
+              assert.equal(c.shirtEvidence?.suggestion?.colorReview46?.needsConfirmation,true);
+              assert.equal(c.shirtEvidence?.suggestion?.status,'category-only');
+              assert.equal(c.shirtEvidence?.suggestion?.itemType,null);
+              assert.equal(c.shirtEvidence?.suggestion?.subtypeReview47?.candidate,'Sweatshirt');
+              assert.equal(c.shirtEvidence?.suggestion?.subtypeReview47?.alternative,'T-shirt');
+              assert.equal(c.shirtEvidence?.suggestion?.subtypeReview47?.needsConfirmation,true);
+              assert.equal(c.shirtEvidence?.confirmed?.itemType,'T-shirt');
+              assert.equal(c.shirtEvidence?.suggestion?.inputBinding49?.sourceSHA256,c.shirtEvidence.sha256);
+              assert.match(c.shirtEvidence?.suggestion?.inputBinding49?.cropSHA256,/^[0-9a-f]{64}$/);
+            }
+          }
+          assert.ok(r.screenshots.length>=73);
+          for(const s of r.screenshots){
+            const b=await readFile(dir+s.file),m=await sharp(b).metadata(),stats=await sharp(b).stats();
+            assert.equal(createHash('sha256').update(b).digest('hex'),s.sha256);
+            assert.equal(m.format,'png');assert.equal(m.width,s.width);
+            assert.ok(m.height>=400&&b.length>4000&&stats.channels.some(x=>x.stdev>6));
+            count++;
+          }
+          for(const engine of ['chromium','webkit'])for(const width of [320,390,430]){
+            const b=await readFile(dir+'contact-'+engine+'-'+width+'.png');
+            const m=await sharp(b).metadata(),stats=await sharp(b).stats();
+            assert.equal(m.format,'png');assert.ok(m.width>=width*2&&m.height===920);
+            assert.ok(stats.channels.some(x=>x.stdev>6));
+          }
+          console.log('INPUT49 native actual FashionCLIP reviewed color proposal, manually confirmed different owner row: 6/6, '+count+' real screenshot SHA/pixels, six contacts PASS. No automatic 95% science claim.');
+          EONODE
+      - name: Retain only licensed research evidence and audit results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: INPUT49-licensed-reviewed-region-FashionCLIP-private-closet-HOLD
+          path: |
+            benchmark/model-crop-evidence-binding-49/color-compare.json
+            benchmark/recognition-to-closet-42/acceptance.json
+            benchmark/recognition-to-closet-42/*.png
+          if-no-files-found: warn
+          retention-days: 21
