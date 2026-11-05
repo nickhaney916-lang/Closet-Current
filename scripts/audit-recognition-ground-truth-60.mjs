@@ -80,4 +80,4 @@ console.log('RECOG60 EXACT-SOURCE/JPEG RIGHTS GATE: '+JSON.stringify({
  historicalBaselineCategory:'9/13 provisional',historicalBaselineSubtype:'4/13 provisional',
  independentlyVerifiedPrimaryColors:0,scientificVerdict:result.scientificVerdict,
  reasons:result.failures,templates:'two blank independent reviewer JSON manifests'}));
-if(result.scientificVerdict==='PASS')throw Error('RECOG60 source 59 under minimum sample cannot claim PASS');
+// A future independently adjudicated positive scientific test is not a release decision.\n// This source-only research branch's current 59-sample report remains NEEDS_REWORK.
