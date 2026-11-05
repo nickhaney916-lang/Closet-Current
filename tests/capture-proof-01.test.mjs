@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {webcrypto,createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import {captureCanonicalJPEG,importCanonicalPhoto,verifyStoredCanonical,
- jpegBytes,jpegOrientation,digestBytes} from '../research/capture-proof-01/source-proof.mjs';
+ jpegBytes,jpegOrientation,digestBytes,sniffPhotoMime} from '../research/capture-proof-01/source-proof.mjs';
 
 const jpeg=Uint8Array.from([255,216,255,224,0,8,74,70,73,70,255,217]);
 const original='data:image/jpeg;base64,'+Buffer.from(jpeg).toString('base64');
@@ -32,6 +32,24 @@ test('independent imported JPEG bytes retained unchanged and input sha equals ca
  assert.equal(p.originalPhoto.originalFileBytes,jpeg.length);
  assert.equal(p.originalPhoto.transformed,false);
  assert.equal(await verifyStoredCanonical(p,{cryptoProvider:webcrypto}),true);
+});
+test('signature wins when mobile picker omits MIME; JPEG bytes and SHA stay exact',async()=>{
+ const p=await importCanonicalPhoto(file(jpeg,'','camera-image'),options);
+ assert.equal(sniffPhotoMime(jpeg),'image/jpeg');
+ assert.equal(p.originalPhoto.originalFileType,'image/jpeg');
+ assert.equal(p.originalPhoto.originalFileSha256,sha);
+ assert.equal(p.sourceSHA256,sha);assert.equal(p.originalPhoto.transformed,false);
+});
+test('contradictory, unknown, and corrupt image sources are rejected before replacement',async()=>{
+ await assert.rejects(importCanonicalPhoto(file(jpeg,'image/png'),options),/contradicts image bytes/);
+ await assert.rejects(importCanonicalPhoto(file(Uint8Array.from([1,2,3,4,5,6,7,8,9,10,11,12]),'application/octet-stream'),options),/unsupported or unrecognized image signature/);
+ await assert.rejects(importCanonicalPhoto(file(jpeg,'image/jpeg'),{...options,decode:async()=>{throw Error('decode failed');}}),/decode failed/);
+});
+test('HEIC and HEIF are only identified by container signature and still require decode',async()=>{
+ const heic=Uint8Array.from([0,0,0,24,102,116,121,112,104,101,105,99,0,0,0,0,104,101,105,99]);
+ const heif=Uint8Array.from([0,0,0,24,102,116,121,112,109,105,102,49,0,0,0,0,109,105,102,49]);
+ assert.equal(sniffPhotoMime(heic),'image/heic');assert.equal(sniffPhotoMime(heif),'image/heif');
+ await assert.rejects(importCanonicalPhoto(file(heic,'image/heic'),{...options,decode:async()=>{throw Error('decoder unavailable');}}),/decoder unavailable/);
 });
 test('PNG→full-resolution JPEG preserves separate real source hash and explicit transformation truth',async()=>{
  const png=Uint8Array.from([137,80,78,71,13,10,26,10,1,2,3,4]);
@@ -80,7 +98,7 @@ test('reject fabricated digest/invalid JPEG, giant media, malformed dimensions a
  await assert.rejects(captureCanonicalJPEG(original,{width:0,height:400,cryptoProvider:webcrypto}),/dimensions/);
  await assert.rejects(captureCanonicalJPEG(original,{width:99999,height:99999,cryptoProvider:webcrypto}),/dimensions/);
  await assert.rejects(importCanonicalPhoto(file([1,2,3,4],'image/jpeg'),options),/false JPEG MIME/);
- await assert.rejects(importCanonicalPhoto(file([1,2,3,4],'application/octet-stream'),options),/unsupported image format/);
+ await assert.rejects(importCanonicalPhoto(file([1,2,3,4],'application/octet-stream'),options),/unsupported or unrecognized image signature/);
  await assert.rejects(importCanonicalPhoto({...file(jpeg),size:111},options),/changed during read/);
  await assert.rejects(digestBytes(new Uint8Array(),webcrypto),/original bytes/);
 });
@@ -115,9 +133,15 @@ test('actual opt-in app connects original before model and preserves original ha
  assert.ok(crop.includes('...(item.originalPhoto||{}),image:source'));
  assert.ok(outfit.includes('originalSourceProof:guarded?job.proof:null'));
  assert.ok(html.includes('captureCameraFacing'));
+ assert.ok(html.includes('singleCameraCapture'));
+ assert.ok(html.includes('capture="environment"'));
+ assert.ok(app.includes("get('cameraCloset75')==='after'"));
+ assert.ok(app.includes("$('singleCameraCapture').onchange"));
+ assert.ok(app.includes("addEventListener('cancel'"));
 });
 test('no unapproved network, native gallery, cloud or model upload is present in proof producer',()=>{
  const src=readFileSync('research/capture-proof-01/source-proof.mjs','utf8');
  assert.doesNotMatch(src,/\bfetch\s*\(|XMLHttpRequest|sendBeacon|postMessage|localStorage|indexedDB|navigator\.share|showSaveFilePicker|\.download\s*=/);
  assert.match(src,/cryptoProvider\.subtle\.digest/);
 });
+

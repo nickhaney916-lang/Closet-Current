@@ -15,7 +15,7 @@ async function readPhotoBatch(files,decode,onPhoto){
  for(const file of files){
   let reason=null;
   if(file.size>10*1024*1024)reason='larger than 10 MB';
-  else if(!file.type.startsWith('image/')&&!/\\.(jpe?g|png|webp|avif|heic|heif)$/i.test(file.name))reason='not an image';
+  else if(!file.type.startsWith('image/')&&!/\.(jpe?g|png|webp|avif|heic|heif)$/i.test(file.name))reason='not an image';
   if(reason){errors.push(file.name+': '+reason);results.push({name:file.name,status:'rejected',reason});continue;}
   try{
    const image=await decode(file),accepted=await onPhoto(image,file);
@@ -29,3 +29,4 @@ async function readPhotoBatch(files,decode,onPhoto){
  }
  return {added,errors,results};
 }
+
