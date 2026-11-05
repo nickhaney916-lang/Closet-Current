@@ -12,7 +12,8 @@ import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import {resolve,extname} from 'node:path';
 import {chromium,webkit} from 'playwright';
 import sharp from 'sharp';
-const root=resolve('.'),dir=resolve('benchmark/multi-garment-capture-01');
+const recognition42=process.env.RECOGNITION42==='1';
+const root=resolve('.'),dir=resolve(recognition42?'benchmark/recognition-to-closet-42':'benchmark/multi-garment-capture-01');
 await mkdir(dir,{recursive:true});
 const sourceUrl='https://upload.wikimedia.org/wikipedia/commons/b/b0/Shirt_and_tie%2C_jeans_and_Converse.jpg';
 const license='https://creativecommons.org/licenses/by-sa/2.0/';
@@ -44,7 +45,7 @@ const server=createServer(async(req,res)=>{
 });
 await new Promise(done=>server.listen(0,'127.0.0.1',done));
 const origin='http://127.0.0.1:'+server.address().port,auth='https://hlkgymugtfbirlpunsra.supabase.co';
-const diagnostics={source:{url:sourceUrl,page:sourcePage,license,creator:'Rasmus K. Kristiansen',sha256:sourceHash,bytes:bytes.length,sourceHashPinned:!!expectedHash},cases:[],screenshots:[],unexpectedUploads:[],errors:[]};
+const diagnostics={modelRequestFailures:[],source:{url:sourceUrl,page:sourcePage,license,creator:'Rasmus K. Kristiansen',sha256:sourceHash,bytes:bytes.length,sourceHashPinned:!!expectedHash},cases:[],screenshots:[],unexpectedUploads:[],errors:[]};
 let browser;
 async function shot(page,width,stage,engine='chromium'){
  const png=await page.screenshot({animations:'disabled',fullPage:false});
@@ -125,13 +126,25 @@ try{
    if(u===origin+'/public/cloud-backup.js')return route.fulfill({status:200,contentType:'text/javascript',body:'window.closetCloud={start:async()=>{},changed:()=>{},beforeWrite:async()=>{},sync:async()=>{}};'});
    if(u.startsWith(origin+'/')||u.startsWith('data:')||u.startsWith('blob:'+origin))return route.continue();
    if(u.startsWith(auth+'/auth/v1/'))return authHTTP(route);
+   if(recognition42&&request.method()==='GET'){
+    const asset=new URL(u);
+    if(asset.hostname==='cdn.jsdelivr.net'&&asset.pathname.startsWith('/npm/@huggingface/transformers@3.8.1/dist/')||
+       asset.hostname==='huggingface.co'&&asset.pathname.startsWith('/ff13/fashion-clip/resolve/0f99955d944c39bfd9d035a02ac273c7a44a406b/')||
+       (/^(cas-bridge|cas-server|transfer)\.xethub\.hf\.co$/.test(asset.hostname)||
+        asset.hostname==='us.aws.cdn.hf.co'&&asset.pathname.startsWith('/xet-bridge-us/')))return route.continue();
+   }
    if(request.method()!=='GET')diagnostics.unexpectedUploads.push({width,method:request.method(),url:u});
    return route.abort(); // model not available: prove human-reviewed fallback.
   });
   const page=await context.newPage();
+  context.on('requestfailed',request=>{
+   const host=new URL(request.url()).hostname;
+   if(recognition42&&['cdn.jsdelivr.net','huggingface.co','us.aws.cdn.hf.co'].includes(host))
+    diagnostics.modelRequestFailures.push({engine,width,host,reason:request.failure()?.errorText});
+  });
   page.on('pageerror',e=>diagnostics.errors.push({width,message:e.message}));
   const url=origin+'/public/index.html?multi24=research&captureProof01=after&index04=after&nativeLossless04=research&nativeIndex07=research&index02=after&restoreAtomic01=research&styleOwned03=research&nativeCorrection10=research';
-  await page.goto(url,{waitUntil:'domcontentloaded'});
+  await page.goto(url+(recognition42?'&recognitionReview42=research':''),{waitUntil:'domcontentloaded'});
   await login(page,'multi24-A');await boardSeed(page);
   await page.reload({waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>window.nativeLossless04Bridge?.status().active&&window.multi24Research?.active===true&&window.closetIndex02?.state()?.ready===true,null,{timeout:45000});
@@ -144,10 +157,24 @@ try{
   await fullShot(page,width,'01-original-source-all',engine);
   for(let i=0;i<3;i++)await page.getByRole('button',{name:'Add missed piece'}).click();
   assert.equal(await page.locator('#multi24Grid .multi24-card').count(),3);
+  let aiSuggestion;
   for(let i=0;i<3;i++){
    const p=cases[i];
    await realCrop(page,i,p);
    const card=page.locator('#multi24Grid .multi24-card').nth(i);
+   if(recognition42&&i===2){
+    await card.getByRole('button',{name:'Suggest category, type and color'}).click();
+    const result=card.locator('[data-recognition42="result"], [data-recognition42="error"]');
+    await result.waitFor({timeout:250000});
+    assert.equal(await result.getAttribute('data-recognition42'),'result',
+     'Genuine classifier unavailable: '+JSON.stringify(diagnostics.modelRequestFailures));
+    aiSuggestion=await result.innerText();
+    assert.equal(await card.getByLabel('Main category').inputValue(),'Uncategorized');
+    assert.equal(await card.getByLabel('Specific type').inputValue(),'Unknown');
+    assert.equal(await card.getByLabel('Color (confirm visually)').inputValue(),'');
+    assert.ok(await card.getByLabel('I confirm this visible garment, category and color').isDisabled());
+    await fullShot(page,width,'ai-suggestion-before-review',engine);
+   }
    await card.getByLabel('Main category').selectOption(p.category);
    await card.getByLabel('Specific type').selectOption(p.itemType);
    await card.getByLabel('Color (confirm visually)').fill(p.color);
@@ -167,6 +194,13 @@ try{
    x.originalPhoto.image==='data:image/jpeg;base64,'+bytes.toString('base64')&&
    !x.threeDReady&&x.ownerId==='multi24-A'));
   assert.deepEqual(rows.map(x=>x.category).sort(),['Bottoms','Shoes','Tops']);
+  const shoes=rows.find(row=>row.category==='Shoes');
+  if(recognition42){
+   assert.equal(shoes.recognitionSuggestion42?.source,'local-fashionclip');
+   assert.equal(shoes.itemType,'Sneakers');
+   assert.equal(shoes.color,'Blue');
+   assert.equal(shoes.colorSource,'user');
+  }
   // Real UI reimport: the same JPEG and the same hand-reviewed garment
   // must not silently generate a duplicate record or partially save again.
   await page.locator('#outfitUpload').setInputFiles({
@@ -280,6 +314,67 @@ try{
   await fullShot(page,width,'04-saved-outfit-all',engine);
   await page.evaluate(()=>document.getElementById('builder').scrollIntoView({block:'start',behavior:'instant'}));
   await shot(page,width,'04-saved-outfit',engine);
+  if(recognition42){
+   await page.evaluate(()=>switchView('closet'));
+   await page.locator('#closetCategories button[data-category="Shoes"]').click();
+   await page.locator('#search').fill('Sneakers');
+   const savedCard=page.locator('#closetGrid article.card').filter({hasText:'Blue Sneakers'});
+   await savedCard.getByRole('button',{name:'Adjust details'}).click();
+   const editor=page.locator('dialog.clothing-editor');
+   await editor.locator('details.optional-details').evaluate(details=>{details.open=true;});
+   const color=editor.getByLabel('Color',{exact:true});
+   assert.equal(await color.inputValue(),'Blue');
+   await color.fill('');
+   await editor.getByRole('button',{name:'Save changes'}).click();
+   await editor.waitFor({state:'hidden',timeout:8000}).catch(async error=>{
+    throw Error((await page.locator('#message').textContent())+' '+error.message);
+   });
+   await savedCard.getByRole('button',{name:'Adjust details'}).click();
+   assert.equal(await color.inputValue(),'');
+   assert.equal(await editor.getByLabel('Item type',{exact:true}).inputValue(),'Sneakers');
+   const edited=await page.evaluate(id=>new Promise((resolve,reject)=>{
+    const req=db.transaction('items').objectStore('items').get(id);
+    req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);
+   }),byCategory.Shoes);
+   assert.equal(edited.color,'');
+   assert.equal(edited.colorSource,'user');
+   assert.equal(edited.originalPhoto.image,shoes.originalPhoto.image);
+   assert.deepEqual(edited.recognitionSuggestion42,shoes.recognitionSuggestion42);
+   await fullShot(page,width,'reopened-owner-color-correction',engine);
+   await editor.getByRole('button',{name:'Cancel'}).click();
+  }
+  let shirtEvidence=null;
+  if(recognition42&&engine==='chromium'&&width===390){
+   const manifest=JSON.parse(await readFile('benchmark/locked-photo-sources.json','utf8'));
+   const fixture=manifest.find(source=>source.id==='commons-0003');
+   const shirt=await readFile('benchmark/fixtures/'+fixture.image);
+   assert.equal(sha(shirt),fixture.sha256);
+   await page.evaluate(()=>switchView('scan'));
+   await page.locator('#captureOutfit').click();
+   await page.locator('#outfitUpload').setInputFiles({name:'archived-shirt.jpg',mimeType:'image/jpeg',buffer:shirt});
+   await page.waitForFunction(hash=>window.multi24Research?.debug().sourceSHA256===hash,fixture.sha256);
+   await page.getByRole('button',{name:'Add missed piece'}).click();
+   await realCrop(page,0,{x:.04,y:.04,right:.96,bottom:.96});
+   const card=page.locator('#multi24Grid .multi24-card').first();
+   await card.getByRole('button',{name:'Suggest category, type and color'}).click();
+   await card.locator('[data-recognition42="result"]').waitFor({timeout:250000});
+   await fullShot(page,width,'second-source-ai-review',engine);
+   await card.getByLabel('Main category').selectOption('Tops');
+   await card.getByLabel('Specific type').selectOption('T-shirt');
+   await card.getByLabel('Color (confirm visually)').fill('Black');
+   await card.getByLabel('I confirm this visible garment, category and color').check();
+   await page.getByRole('button',{name:'Save confirmed pieces together'}).click();
+   await page.waitForFunction(hash=>items.some(item=>item.sourceSHA256===hash),fixture.sha256);
+   const row=await page.evaluate(hash=>items.find(item=>item.sourceSHA256===hash),fixture.sha256);
+   assert.equal(row.originalPhoto.image,'data:image/jpeg;base64,'+shirt.toString('base64'));
+   assert.equal(row.ownerId,'multi24-A');
+   assert.equal(row.itemType,'T-shirt');
+   assert.equal(row.color,'Black');
+   assert.ok(row.recognitionSuggestion42);
+   shirtEvidence={sha256:fixture.sha256,source:'archived fixture commons-0003',
+    attribution:fixture.attribution,suggestion:row.recognitionSuggestion42,
+    confirmed:{category:row.category,itemType:row.itemType,color:row.color}};
+  }
   await page.locator('.account-menu summary').click();
   await page.locator('#logout').click();
   await page.waitForFunction(()=>document.getElementById('authGate')?.hidden===false,null,{timeout:30000});
@@ -287,7 +382,7 @@ try{
   await shot(page,width,'05-logout-photo-cleared',engine);
   await login(page,'multi24-B');
   assert.equal(await page.evaluate(()=>items.length),0,'Owner B cannot see A original photo or private items');
-  diagnostics.cases.push({engine,width,pieces:3,stylePinnedAndSaved:true,styleLooks:style.lookCount,sourceSHA256:sourceHash,reviewAccuracy:'3/3 human confirmed; automatic model intentionally unavailable',outfitSaved:true,v4Backup:true,v4Restore:true,reimportDuplicateBlocked:true,ownerPrivate:true});
+  diagnostics.cases.push({engine,width,pieces:3,stylePinnedAndSaved:true,styleLooks:style.lookCount,sourceSHA256:sourceHash,reviewAccuracy:'3/3 human confirmed',aiSuggestion:aiSuggestion??null,reopenedUserColorClear:recognition42,shirtEvidence,recognitionEvidence:shoes.recognitionSuggestion42??null,outfitSaved:true,v4Backup:true,v4Restore:true,reimportDuplicateBlocked:true,ownerPrivate:true});
   await context.close();await browser.close();browser=null;
  }
  // Reproducible image contact sheet from actual screenshots, no generated cloth.

@@ -38,6 +38,28 @@ export function duplicatePieceKeys24(saved,selected){
  const known=new Set((saved||[]).map(x=>x.sourcePieceKey).filter(Boolean));
  return selected.filter(x=>known.has(x.sourcePieceKey)).map(x=>x.sourcePieceKey);
 }
+// MODEL45: the source-verified AI observation remains a bounded suggestion,
+// never authoritative human category/type/color fields or arbitrary worker data.
+const suggestionColors45=new Set(['Black','White','Gray','Beige','Brown','Blue','Green','Red','Pink','Purple','Yellow','Orange','Multicolor']);
+function safeSuggestion45(input,sourcePieceKey,cropBounds){
+ if(!input||input.source!=='local-fashionclip')return null;
+ const safe=raw=>{
+  const category=Object.hasOwn(COMMIT43_TYPES,raw?.category)?raw.category:null;
+  return {
+   category,
+   itemType:category&&validReviewTaxonomy43(category,raw?.itemType)?raw.itemType:null,
+   color:suggestionColors45.has(raw?.color)?raw.color:null
+  };
+ };
+ const current=safe(input),originalContext=safe(input.originalContext);
+ return {
+  source:'local-fashionclip',
+  ...current,originalContext,
+  colorSource:current.color&&['recognition','mask-pixel-estimate','crop-pixel-estimate'].includes(input.colorSource)?input.colorSource:null,
+  status:current.itemType?'subtype-suggested':current.category?'category-only':'abstained',
+  sourcePieceKey,cropBounds:{...cropBounds}
+ };
+}
 export function verifiedRecord24({proof,ownerId,piece,now=new Date().toISOString()}){
  if(!proof?.sourceHashVerified||!SHA24.test(proof.sourceSHA256)||proof.originalPhoto?.sha256!==proof.sourceSHA256||
     proof.image!==proof.originalPhoto?.image||!JPEG24.test(proof.image))fail('original not authenticated');
@@ -65,6 +87,8 @@ export function verifiedRecord24({proof,ownerId,piece,now=new Date().toISOString
   image:piece.image,recognitionPhoto:{image:piece.image},
   name:String(piece.name||[piece.color,piece.itemType||piece.category].join(' ')).trim().slice(0,120),
   category:piece.category,itemType:piece.itemType,color:reviewedColor,
+  ...(safeSuggestion45(piece.recognitionSuggestion42,sourcePieceKey,piece.cropBounds)?
+   {recognitionSuggestion42:safeSuggestion45(piece.recognitionSuggestion42,sourcePieceKey,piece.cropBounds)}:{}),
   colorSource:'user',userAdjusted:true,requiresOwnershipConfirmation:false,
   localAnalyzed:true,localStatus:'Confirmed and saved from original photo',
   segmentHint:piece.hint||null,maskApplied:!!piece.maskApplied,

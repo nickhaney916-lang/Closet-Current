@@ -306,7 +306,19 @@ function render(){
   }
  if(expectedSavedRow){
   updated.userAdjusted=true;updated.requiresOwnershipConfirmation=false;
-  await queued(()=>commitOwnerCorrection10(updated,expectedSavedRow,null));
+  // MODEL45: Multi-piece IndexedDB rows may be normalized for display; CAS
+  // must compare and write against the EXACT persisted row (not a normalized
+  // snapshot). Re-read under the owner's DB; fail closed on conflicting edits.
+  const before=expectedSavedRow.sourcePieceKey?await new Promise(resolve=>{
+   try{
+    const r=db.transaction('items').objectStore('items').get(expectedSavedRow.id);
+    r.onsuccess=()=>resolve(r.result);r.onerror=()=>resolve(null);
+   }catch{resolve(null);}
+  }):expectedSavedRow;
+  if(!before||(expectedSavedRow.sourcePieceKey&&
+    JSON.stringify(normalizeClothing(before))!==JSON.stringify(expectedSavedRow)))
+   throw Error('CORRECTION10_STALE_SAVED_GARMENT_REOPEN_EDITOR');
+  await queued(()=>commitOwnerCorrection10(updated,before,null));
   await nativeIndex07Refresh();
  }else await writeAll([updated]);
  Object.assign(item,updated);dialog.close();render();scheduleMemoryReview();
