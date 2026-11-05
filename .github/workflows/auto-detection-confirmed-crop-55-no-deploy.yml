@@ -8,6 +8,8 @@ on:
       - 'research/multi-garment-capture-01/review-ui.mjs'
       - 'research/multi-garment-capture-01/scene-class-guard-32.mjs'
       - 'tests/auto-detection-confirmed-crop-55.test.mjs'
+      - 'tests/flatlay-contrast-fallback-29.test.mjs'
+      - 'tests/multi-review-triage-28.test.mjs'
       - 'research/auto-detection-confirmed-crop-55/**'
       - '.github/workflows/auto-detection-confirmed-crop-55-no-deploy.yml'
   workflow_dispatch:
@@ -35,7 +37,7 @@ jobs:
           git diff --name-only 05107691cee5bbf7429b824aa0b1444fcb70ae5b HEAD > /tmp/safety55-files
           while IFS= read -r path; do
             case "$path" in
-              research/multi-garment-capture-01/review-ui.mjs|research/multi-garment-capture-01/scene-class-guard-32.mjs|tests/auto-detection-confirmed-crop-55.test.mjs|research/auto-detection-confirmed-crop-55/*|.github/workflows/auto-detection-confirmed-crop-55-no-deploy.yml) ;;
+              research/multi-garment-capture-01/review-ui.mjs|research/multi-garment-capture-01/scene-class-guard-32.mjs|tests/auto-detection-confirmed-crop-55.test.mjs|tests/flatlay-contrast-fallback-29.test.mjs|tests/multi-review-triage-28.test.mjs|research/auto-detection-confirmed-crop-55/*|.github/workflows/auto-detection-confirmed-crop-55-no-deploy.yml) ;;
               *) echo "BLOCKED production/staging or unrelated change: $path"; exit 1 ;;
             esac
           done < /tmp/safety55-files
