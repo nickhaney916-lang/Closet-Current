@@ -1,0 +1,94 @@
+name: BLIND61 independent human garment category/color review workflow NO DEPLOY
+on:
+  push:
+    branches:
+      - research/blinded-human-color-review-61-main-20261105-HOLD
+  pull_request:
+    paths:
+      - 'research/independent-annotation-61/**'
+      - 'research/recognition-ground-truth-gate-60/ground-truth-gate.mjs'
+      - 'scripts/build-blinded-human-review-61.mjs'
+      - 'scripts/reconcile-blinded-human-review-61.mjs'
+      - 'scripts/test-blinded-human-review-61-browser.mjs'
+      - 'scripts/audit-blinded-human-review-61-browser.mjs'
+      - 'tests/independent-annotation-61.test.mjs'
+      - '.github/workflows/blinded-human-color-review-61-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  locked-source-independent-human-review-protocol:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Strict exact independently verified RECOG60 parent and research-only changed files
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor 6b385c5a0fabb55031f81191bb2dc9819623af56 HEAD
+          git diff --name-only 6b385c5a0fabb55031f81191bb2dc9819623af56 HEAD > /tmp/blind61-files
+          while IFS= read -r path; do
+            case "$path" in
+              research/independent-annotation-61/*|research/recognition-ground-truth-gate-60/ground-truth-gate.mjs|scripts/build-blinded-human-review-61.mjs|scripts/reconcile-blinded-human-review-61.mjs|scripts/test-blinded-human-review-61-browser.mjs|scripts/audit-blinded-human-review-61-browser.mjs|tests/independent-annotation-61.test.mjs|.github/workflows/blinded-human-color-review-61-no-deploy.yml) ;;
+              *) echo "BLOCKED production/staging or unrelated edit: $path"; exit 1 ;;
+            esac
+          done < /tmp/blind61-files
+      - name: Install pinned browser and source-audit test libraries
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Build app; full inherited and BLIND61 original source/adjudication safety Node regressions
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Reverify original 59 licensed JPEGs and honest RECOG60 scientific HOLD
+        run: |
+          node scripts/audit-recognition-ground-truth-60.mjs
+          node --input-type=module -e '
+            import {readFileSync} from "node:fs";
+            const r=JSON.parse(readFileSync("benchmark/recognition-ground-truth-gate-60/acceptance-report.json","utf8"));
+            if(r.scientificVerdict!=="NEEDS_REWORK"||r.releaseAuthorized!==false||r.photoEvidence.sha256Verified!==59||
+             r.counts.independentlyAdjudicated!==0||r.counts.preliminaryHistoricalColorLabels!==0)
+             throw Error("BLIND61 no actual human labels: source audit must stay scientific HOLD");
+          '
+      - name: Generate both blinded human packets from verified actual source JPEG bytes without labels
+        run: |
+          node scripts/build-blinded-human-review-61.mjs
+          node --input-type=module -e '
+            import {readFileSync} from "node:fs";
+            const a=JSON.parse(readFileSync("benchmark/independent-annotation-61/packet-A.json","utf8"));
+            const b=JSON.parse(readFileSync("benchmark/independent-annotation-61/packet-B.json","utf8"));
+            if(a.total!==59||b.total!==59||a.packetId===b.packetId)throw Error("No independent blinded packets");
+            for(const p of [a,b]){
+              if(p.items.some(row=>Object.keys(row).sort().join(",")!=="id,image,sourceSHA256"))
+                throw Error("Prior model/label leak in human packet");
+            }
+          '
+      - name: Six actual original licensed-JPEG Chromium/WebKit mobile-width blinded reviewer interface cases
+        run: node scripts/test-blinded-human-review-61-browser.mjs
+      - name: Audit 18 actual screenshot SHA, pixel dimension and blinded reviewer isolation evidence
+        run: node scripts/audit-blinded-human-review-61-browser.mjs
+      - name: Six original photograph owner-private camera review closet saved outfit and recovery regressions
+        run: node scripts/test-multi-garment-capture-01-browser.mjs
+      - name: Archive only blinded packets, source audit, synthetic QA screenshots and explicit human-label absence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: BLIND61-source-verified-offline-human-review-protocol-HOLD
+          path: |
+            benchmark/independent-annotation-61/packet-A.json
+            benchmark/independent-annotation-61/packet-B.json
+            benchmark/independent-annotation-61/packet-audit.json
+            benchmark/independent-annotation-61/browser-evidence/acceptance.json
+            benchmark/independent-annotation-61/browser-evidence/*.png
+            benchmark/recognition-ground-truth-gate-60/acceptance-report.json
+            benchmark/multi-garment-capture-01/acceptance.json
+          if-no-files-found: warn
+          retention-days: 14
