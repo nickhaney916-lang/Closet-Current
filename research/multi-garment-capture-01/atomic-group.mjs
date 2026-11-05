@@ -196,6 +196,39 @@ export async function verifiedModelPieces49(pieces,proof){
  return snapshots;
 }
 
+/**
+ * SNAPSHOT51: The confirmed save must never deep-clone an untrusted garment
+ * review object wholesale. A local worker, browser extension or stale UI can
+ * leave unrelated binary masks, raw image copies, credentials, uncloneable
+ * values or huge diagnostic objects on that input. Select only the fields
+ * consumed by verifiedRecord24 / verifiedModelPieces49 BEFORE cloning.
+ *
+ * Preserve a malformed submitted model receipt as an invalid sentinel:
+ * INPUT49 must still discard that whole forged/stale AI suggestion rather
+ * than reinterpret it as an innocent legacy/unbound suggestion.
+ */
+export function minimalPieceSnapshot51(piece,proof){
+ const p=piece&&typeof piece==='object'?piece:{};
+ const r=p.cropBounds;
+ const cropBounds=r&&typeof r==='object'?{
+  x:r.x,y:r.y,width:r.width,height:r.height
+ }:r;
+ const sourceKey=String(proof?.sourceSHA256||'')+'/'+String(p.instanceKey||'');
+ const rawAI=p.recognitionSuggestion42;
+ let recognitionSuggestion42=safeSuggestion45(rawAI,sourceKey,cropBounds,proof?.sourceSHA256);
+ if(recognitionSuggestion42&&rawAI?.inputBinding49&&!recognitionSuggestion42.inputBinding49){
+  recognitionSuggestion42={...recognitionSuggestion42,inputBinding49:{hashAlgorithm:'INVALID'}};
+ }
+ return {
+  id:p.id,instanceKey:p.instanceKey,image:p.image,cropBounds,
+  cropReviewed:p.cropReviewed,confirmed:p.confirmed,category:p.category,
+  itemType:p.itemType,color:p.color,manual:p.manual,
+  name:typeof p.name==='string'?p.name.slice(0,120):p.name,
+  hint:sanitizeSegmentHint50(p.hint,{manual:p.manual===true}),
+  maskApplied:p.maskApplied===true,recognitionSuggestion42
+ };
+}
+
 /** One readwrite IDB transaction, including read-time duplicate/CAS checks. */
 export async function atomicSaveGarments24({db,proof,pieces,ownerId,currentOwner,now}){
  if(!db||db.name!=='closet-current-user-'+ownerId||currentOwner()!==ownerId)
@@ -206,9 +239,7 @@ export async function atomicSaveGarments24({db,proof,pieces,ownerId,currentOwner
  // Drop bulky/unrecognized worker hints BEFORE cloning an immutable
  // confirmation snapshot; otherwise arbitrary nested detector data could
  // waste memory while hashing even though it never belongs in the closet.
- const piecesAtCall=pieces.map(piece=>structuredClone({
-  ...piece,hint:sanitizeSegmentHint50(piece?.hint,{manual:piece?.manual===true})
- }));
+ const piecesAtCall=pieces.map(piece=>structuredClone(minimalPieceSnapshot51(piece,proof)));
  if(!await verifyStoredCanonical(proof))fail('canonical JPEG SHA-256 mismatch');
  if(currentOwner()!==ownerId||db.name!=='closet-current-user-'+ownerId)
   fail('session changed during SHA-256');
