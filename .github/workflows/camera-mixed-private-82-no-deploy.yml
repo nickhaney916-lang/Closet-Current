@@ -1,0 +1,102 @@
+name: CAMERA-MIXED82 research combined real camera picker and human-consented private save NO DEPLOY
+on:
+  push:
+    branches:
+      - research/camera-mixed-private-save-82-main-20261105-HOLD
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  merge-camera79-with-mixed80-owner-private-closet:
+    runs-on: ubuntu-latest
+    timeout-minutes: 65
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Lock both independently verified parent commits and exact changed-file scope
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          CAMERA79=5c9e88eb311886d0ad59eb9c1a3a5dd6599b24fe
+          MIXED80=1f69ff8d713da3ad6b58f6d11a5a027f5b5d718d
+          test "$(git rev-parse HEAD^1)" = "$MIXED80"
+          test "$(git rev-parse HEAD^2)" = "$CAMERA79"
+          git merge-base --is-ancestor "$CAMERA79" HEAD
+          git merge-base --is-ancestor "$MIXED80" HEAD
+          git diff --name-only "$MIXED80" HEAD >/tmp/camera-mixed82-files
+          while IFS= read -r path; do
+            case "$path" in
+              public/app.js|public/index.html|public/photo-import.js|research/capture-proof-01/source-proof.mjs|research/camera-main-unified-79/COMPATIBILITY.md|research/camera-main-unified-79/REPORT.md|scripts/test-camera-to-closet-79-browser.mjs|tests/camera-main-unified-79.test.mjs|tests/capture-proof-01.test.mjs|tests/photo-import.test.cjs|.github/workflows/camera-main-unified-79-no-deploy.yml|research/camera-mixed-private-82/REPORT.md|tests/camera-mixed-private-82.test.mjs|.github/workflows/camera-mixed-private-82-no-deploy.yml) ;;
+              *) echo "Blocked unrelated scope: $path"; exit 1 ;;
+            esac
+          done </tmp/camera-mixed82-files
+          ! git diff --name-only "$MIXED80" HEAD | grep -E '^(\.env|supabase/|server/|deploy/|\.github/workflows/.*deploy)' 
+      - name: Install pinned research-only browser testing dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Exact merged source syntax, production build and full inherited Node tests
+        run: |
+          node --check public/app.js
+          node --check public/photo-import.js
+          node --check research/multi-garment-capture-01/review-ui.mjs
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Six real file-input rear-camera-to-reviewed-closet mobile-width workflows
+        run: node scripts/test-camera-to-closet-79-browser.mjs
+      - name: Six true original-JPEG owner-consented mixed-duplicate NEW-garment mobile workflows
+        run: MIXED80=1 node scripts/test-multi-garment-capture-01-browser.mjs
+      - name: Independently audit native mixed-save browser screenshot evidence
+        run: node scripts/audit-mixed-saved-new-clothes-80-browser.mjs
+      - name: Six full owner-private closet-style-outfit-backup-isolation mobile workflows
+        run: node scripts/test-multi-garment-capture-01-browser.mjs
+      - name: Six native before-clone original-photo snapshot protection workflows
+        run: SNAPSHOT78=1 node scripts/test-multi-garment-capture-01-browser.mjs
+      - name: Independently audit safe-snapshot mobile screenshot evidence
+        run: node scripts/audit-allowlisted-review-snapshot-78-browser.mjs
+      - name: Assert combined acceptance evidence is real and disclose hardware limitations
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const read=p=>JSON.parse(readFileSync(p,'utf8'));
+          const camera=read('benchmark/camera-to-closet-75/results.json');
+          const cm=read('benchmark/camera-to-closet-75/screenshots-manifest.json');
+          const mixed=read('benchmark/mixed-saved-new-clothes-80/acceptance.json');
+          const snapshots=read('benchmark/allowlisted-review-snapshot-78/acceptance.json');
+          assert.equal(camera.verdict,'PASS');
+          assert.equal(camera.results.length,6);
+          assert.ok(camera.results.every(r=>r.singleCameraOriginalBytesPreserved&&r.nativePickerCancelKeepsReview&&r.manualCorrectionSaved&&!r.actualPhysicalPhone));
+          assert.equal(camera.physicalAndroidTested,false);
+          assert.equal(camera.physicalIphoneTested,false);
+          assert.equal(cm.count,72);
+          assert.equal(cm.screenshots.length,72);
+          assert.equal(mixed.cases.length,6);
+          assert.ok(mixed.cases.every(c=>c.mixedPreviouslySavedAndNew80&&c.ownerPrivate&&c.v4Backup&&c.v4Restore&&c.outfitSaved));
+          assert.equal(snapshots.cases.length,6);
+          assert.equal(snapshots.screenshots.length,72);
+          assert.ok(snapshots.cases.every(c=>c.reviewSnapshotSanitized78&&c.ownerPrivate));
+          assert.equal(camera.productionDeployed,false);
+          assert.equal(camera.familyAlpha,'HOLD');
+          console.log('CAMERA-MIXED82: 6 camera + 6 owner-consented mixed-save + 6 inherited full owner-private + 6 safe-snapshot browser workflows PASS, physical phones NOT VERIFIED, no deploy');
+          NODE
+      - name: Upload sanitized exact-head browser evidence, never customer data
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: CAMERA-MIXED82-combined-browser-HOLD-NO-DEPLOY
+          path: |
+            benchmark/camera-to-closet-75/results.json
+            benchmark/camera-to-closet-75/screenshots-manifest.json
+            benchmark/camera-to-closet-75/*.png
+            benchmark/mixed-saved-new-clothes-80/acceptance.json
+            benchmark/mixed-saved-new-clothes-80/*.png
+            benchmark/allowlisted-review-snapshot-78/acceptance.json
+            benchmark/allowlisted-review-snapshot-78/*.png
+          if-no-files-found: warn
+          retention-days: 14
